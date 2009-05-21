@@ -695,23 +695,22 @@ void PlayerDriver::handleSetDataSource(PlayerSetDataSource* command)
     } else {
         mDataSource->SetDataSourceFormatType((const char*)PVMF_MIME_FORMAT_UNKNOWN); // Let PV figure it out
         delete mLocalContextData;
-        mLocalContextData = new PVMFSourceContextData();
-        mLocalContextData->EnableCommonSourceContext();
-        PVMFSourceContextDataCommon* commonContext = mLocalContextData->CommonData();
+        mLocalContextData = NULL;
+
         int fd;
         long long offset;
         long long len;
         if (sscanf(url, "sharedfd://%d:%lld:%lld", &fd, &offset, &len) == 3) {
-            LOGV("handleSetDataSource- parsed sharedfd = %d, %lld, %lld",fd, offset, len);
+            mLocalContextData = new PVMFSourceContextData();
+            mLocalContextData->EnableCommonSourceContext();
+            PVMFSourceContextDataCommon* commonContext = mLocalContextData->CommonData();
             lseek64(fd, offset, SEEK_CUR);
             TOsclFileHandle fh = fdopen(fd,"rb");
             OsclFileHandle* sourcehandle = new OsclFileHandle(fh);
             commonContext->iFileHandle = sourcehandle;
             mDataSource->SetDataSourceContextData((OsclAny*)mLocalContextData);
         } else {
-            LOGE("handleSetDataSource - could not interpret sharedfd");
-            commandFailed(command);
-            return;
+            LOGV("handleSetDataSource - called with a filepath - %s",url);
         }
     }
 
