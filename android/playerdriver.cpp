@@ -1358,6 +1358,7 @@ void PlayerDriver::HandleInformationalEvent(const PVAsyncInformationalEvent& aEv
 
         default:
             LOGV("HandleInformationalEvent: type=%d UNHANDLED", status);
+            mPvPlayer->sendEvent(MEDIA_INFO, ::android::MEDIA_INFO_UNKNOWN, status);
             break;
     }
 }
