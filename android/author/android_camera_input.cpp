@@ -87,7 +87,9 @@ AndroidCameraInput::~AndroidCameraInput()
 {
     LOGV("destructor");
     if (mCamera != NULL) {
+#if 0 // JBQ
         mCamera->setRecordingCallback(NULL, this);
+#endif
         ReleaseQueuedFrames();
         if ((mFlags & FLAGS_HOT_CAMERA) == 0) {
             LOGV("camera was cold when we started, stopping preview");
@@ -968,7 +970,9 @@ PVMFStatus AndroidCameraInput::DoStart()
     if (mCamera == NULL) {
         status = PVMFFailure;
     } else {
+#if 0 // JBQ
         mCamera->setRecordingCallback(recording_frame_callback, this);
+#endif
         if (mCamera->startRecording() != NO_ERROR) {
             status = PVMFFailure;
         } else {
@@ -994,7 +998,9 @@ PVMFStatus AndroidCameraInput::DoReset()
     iDataEventCounter = 0;
     if ( (iState == STATE_STARTED) || (iState == STATE_PAUSED) ) {
     if (mCamera != NULL) {
+#if 0 // JBQ
         mCamera->setRecordingCallback(NULL, this);
+#endif
         mCamera->stopRecording();
         ReleaseQueuedFrames();
     }
@@ -1025,7 +1031,9 @@ PVMFStatus AndroidCameraInput::DoStop(const AndroidCameraInputCmd& aCmd)
     LOGV("DoStop");
     iDataEventCounter = 0;
     if (mCamera != NULL) {
+#if 0 // JBQ
     mCamera->setRecordingCallback(NULL, this);
+#endif
     mCamera->stopRecording();
     ReleaseQueuedFrames();
     }
@@ -1119,7 +1127,9 @@ PVMFStatus AndroidCameraInput::SetCamera(const sp<android::ICamera>& camera)
     }
 
     // Connect our client to the camera remote
+#if 0 // JBQ
     mCamera = new Camera(camera);
+#endif
     if (mCamera == NULL) {
         LOGE("Unable to connect to camera");
         return PVMFErrNoResources;
