@@ -165,6 +165,20 @@ private:
     }
 };
 
+class AndroidCameraInput;
+class AndroidCameraInputListener : public CameraListener
+{
+public:
+    AndroidCameraInputListener(AndroidCameraInput* input) { mCameraInput = input; }
+    virtual void notify(int32_t msgType, int32_t ext1, int32_t ext2) {}
+    virtual void postData(int32_t msgType, const sp<IMemory>& dataPtr);
+    virtual void postDataTimestamp(nsecs_t timestamp, int32_t msgType, const sp<IMemory>& dataPtr);
+    void release() { mCameraInput = NULL; }
+private:
+    AndroidCameraInputListener();
+    AndroidCameraInput* mCameraInput;
+};
+
 class AndroidCameraInput
     : public OsclTimerObject,
       public PvmiMIOControl,
@@ -290,7 +304,7 @@ public:
     PVMFStatus SetCamera(const sp<android::ICamera>& camera);
 
     // add for Camcorder
-    PVMFStatus              postWriteAsync(const sp<IMemory>& frame);
+    PVMFStatus              postWriteAsync(nsecs_t timestamp, const sp<IMemory>& frame);
 
     bool isRecorderStarting() { return iState==STATE_STARTED?true:false; }
 
@@ -385,6 +399,8 @@ private:
     int32                   mFrameRefCount;
     int32                   mFlags;
 
+    // callback interface
+    sp<AndroidCameraInputListener>  mListener;
 
     // State machine
     enum AndroidCameraInputState

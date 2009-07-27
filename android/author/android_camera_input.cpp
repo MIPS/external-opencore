@@ -63,6 +63,9 @@ AndroidCameraInput::AndroidCameraInput()
     mFlags = 0;
     iFrameQueue.reserve(5);
     iFrameQueueMutex.Create();
+
+    // setup callback listener
+    mListener = new AndroidCameraInputListener(this);
 }
 
 void AndroidCameraInput::ReleaseQueuedFrames()
@@ -87,9 +90,7 @@ AndroidCameraInput::~AndroidCameraInput()
 {
     LOGV("destructor");
     if (mCamera != NULL) {
-#if 0 // JBQ
-        mCamera->setRecordingCallback(NULL, this);
-#endif
+        mCamera->setListener(NULL);
         ReleaseQueuedFrames();
         if ((mFlags & FLAGS_HOT_CAMERA) == 0) {
             LOGV("camera was cold when we started, stopping preview");
@@ -109,6 +110,7 @@ AndroidCameraInput::~AndroidCameraInput()
         LOGW("mHeap reference count is not zero?!");
     }
     iFrameQueueMutex.Close();
+    mListener.clear();
 }
 
 OSCL_EXPORT_REF
@@ -370,9 +372,9 @@ PVMFCommandId AndroidCameraInput::CancelCommand(PVMFCommandId aCmdId,
 OSCL_EXPORT_REF
 void AndroidCameraInput::setPeer(PvmiMediaTransfer* aPeer)
 {
-    LOGV("setPeer iPeer 0x%x aPeer 0x%x", iPeer, aPeer);
+    LOGV("setPeer iPeer %p aPeer %p", iPeer, aPeer);
     if(iPeer && aPeer){
-    LOGE("setPeer iPeer 0x%x aPeer 0x%x", iPeer, aPeer);
+        LOGE("setPeer iPeer %p aPeer %p", iPeer, aPeer);
         OSCL_LEAVE(OsclErrGeneral);
         return;
     }
@@ -755,7 +757,7 @@ void AndroidCameraInput::Run()
                             data.iFrameSize, data.iXferHeader););
             } else {
                 //FIXME Check why camera sends NULL frames
-                LOGE("Ln %d ERROR null pointer");
+                LOGE("Ln %d ERROR null pointer", __LINE__);
                 error = OsclErrBadHandle;
             }
 
@@ -887,20 +889,6 @@ void AndroidCameraInput::DoRequestCompleted(const AndroidCameraInputCmd& aCmd, P
     }
 }
 
-static void recording_frame_callback(const sp<IMemory>& frame, void *cookie)
-{
-    LOGV("recording_frame_callback");
-    AndroidCameraInput* input = (AndroidCameraInput*) cookie;
-
-    // this must not happen, and we can't release the frame if it does happen
-    if (!input) {
-        LOGE("Error - CameraInput has not been initialized");
-        return;
-    }
-    
-    input->postWriteAsync(frame);
-}
-
 PVMFStatus AndroidCameraInput::DoInit()
 {
     LOGV("DoInit()");
@@ -970,9 +958,7 @@ PVMFStatus AndroidCameraInput::DoStart()
     if (mCamera == NULL) {
         status = PVMFFailure;
     } else {
-#if 0 // JBQ
-        mCamera->setRecordingCallback(recording_frame_callback, this);
-#endif
+        mCamera->setListener(mListener);
         if (mCamera->startRecording() != NO_ERROR) {
             status = PVMFFailure;
         } else {
@@ -980,6 +966,7 @@ PVMFStatus AndroidCameraInput::DoStart()
             status = PVMFSuccess;
         }
     }
+    iStartTickCount = (uint32) (systemTime() / 1000000L);
     AddDataEventToQueue(iMilliSecondsPerDataEvent);
     return status;
 }
@@ -998,9 +985,7 @@ PVMFStatus AndroidCameraInput::DoReset()
     iDataEventCounter = 0;
     if ( (iState == STATE_STARTED) || (iState == STATE_PAUSED) ) {
     if (mCamera != NULL) {
-#if 0 // JBQ
-        mCamera->setRecordingCallback(NULL, this);
-#endif
+        mCamera->setListener(NULL);
         mCamera->stopRecording();
         ReleaseQueuedFrames();
     }
@@ -1031,9 +1016,7 @@ PVMFStatus AndroidCameraInput::DoStop(const AndroidCameraInputCmd& aCmd)
     LOGV("DoStop");
     iDataEventCounter = 0;
     if (mCamera != NULL) {
-#if 0 // JBQ
-    mCamera->setRecordingCallback(NULL, this);
-#endif
+    mCamera->setListener(NULL);
     mCamera->stopRecording();
     ReleaseQueuedFrames();
     }
@@ -1127,9 +1110,7 @@ PVMFStatus AndroidCameraInput::SetCamera(const sp<android::ICamera>& camera)
     }
 
     // Connect our client to the camera remote
-#if 0 // JBQ
-    mCamera = new Camera(camera);
-#endif
+    mCamera = Camera::create(camera);
     if (mCamera == NULL) {
         LOGE("Unable to connect to camera");
         return PVMFErrNoResources;
@@ -1144,7 +1125,7 @@ PVMFStatus AndroidCameraInput::SetCamera(const sp<android::ICamera>& camera)
     return PVMFSuccess;
 }
 
-PVMFStatus AndroidCameraInput::postWriteAsync(const sp<IMemory>& frame)
+PVMFStatus AndroidCameraInput::postWriteAsync(nsecs_t timestamp, const sp<IMemory>& frame)
 {
     LOGV("postWriteAsync");
 
@@ -1161,15 +1142,13 @@ PVMFStatus AndroidCameraInput::postWriteAsync(const sp<IMemory>& frame)
         return PVMFSuccess;
     }
 
-    // if first event, set timestamp to zero
-    if (iDataEventCounter == 0) {
-        iStartTickCount = systemTime(SYSTEM_TIME_MONOTONIC) / 1000000;
-        iTimeStamp = 0;
-    } else {
-        uint32 timeStamp = (systemTime(SYSTEM_TIME_MONOTONIC) / 1000000) - iStartTickCount;
+    // calculate timestamp as offset from start time
+    uint32 t = (uint32)(timestamp / 1000000L) - iStartTickCount;
+
     // Make sure that no two samples have the same timestamp
-        if (iTimeStamp != timeStamp) {
-            iTimeStamp = timeStamp;
+    if (iDataEventCounter != 0) {
+        if (iTimeStamp != t) {
+            iTimeStamp = t;
         } else {
             ++iTimeStamp;
         }
@@ -1208,5 +1187,17 @@ PVMFStatus AndroidCameraInput::postWriteAsync(const sp<IMemory>& frame)
     RunIfNotReady();
 
     return PVMFSuccess; 
+}
+
+// camera callback interface
+void AndroidCameraInputListener::postData(int32_t msgType, const sp<IMemory>& dataPtr)
+{
+}
+
+void AndroidCameraInputListener::postDataTimestamp(nsecs_t timestamp, int32_t msgType, const sp<IMemory>& dataPtr)
+{
+    if ((mCameraInput != NULL) && (msgType == CAMERA_MSG_VIDEO_FRAME)) {
+        mCameraInput->postWriteAsync(timestamp, dataPtr);
+    }
 }
 
