@@ -21,9 +21,9 @@
 #include "pv_2way_media.h"
 #include "pvmf_media_input_node_factory.h"
 
-int PV2WayMediaInputMIONodeFactory::CreateMedia()
+int PV2WayMediaInputMIONodeFactory::CreateMedia(PvmiMIOFileInputSettings& aFileSettings)
 {
-    iMediaControl = PvmiMIOFileInputFactory::Create(iFileSettings);
+    iMediaControl = PvmiMIOFileInputFactory::Create(aFileSettings);
     return PVMFSuccess;
 }
 
@@ -35,14 +35,14 @@ void PV2WayMediaInputMIONodeFactory::DeleteMedia()
 
 void PV2WayMediaInputMIONodeFactory::Delete(PVMFNodeInterface** aMioNode)
 {
-    DeleteMedia();
     PvmfMediaInputNodeFactory::Delete(*aMioNode);
+    DeleteMedia();
     *aMioNode = NULL;
 }
 
-PVMFNodeInterface* PV2WayMediaInputMIONodeFactory::Create()
+PVMFNodeInterface* PV2WayMediaInputMIONodeFactory::Create(PvmiMIOFileInputSettings& aFileSettings)
 {
-    CreateMedia();
+    CreateMedia(aFileSettings);
     PVMFNodeInterface* mioNode = NULL;
     int error = 0;
     OSCL_TRY(error, mioNode = PvmfMediaInputNodeFactory::Create(iMediaControl));

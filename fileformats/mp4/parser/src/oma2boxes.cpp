@@ -961,13 +961,12 @@ uint16 EcnvBox::getHeight() const
 AVCSampleEntry* EcnvBox::getAVCSampleEntry()
 {
     AVCSampleEntry* avc_sample_entry = NULL;
-    if (_pAVCConfigurationBox != NULL) {
+    if (_pAVCConfigurationBox != NULL)
+    {
         PV_MP4_FF_NEW(NULL, AVCSampleEntry, (_pAVCConfigurationBox , getDecoderSpecificInfo(), getWidth(), getHeight()), avc_sample_entry);
     }
-
     return avc_sample_entry;
 }
-
 
 // Destructor
 EcnvBox::~EcnvBox()

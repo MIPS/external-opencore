@@ -323,6 +323,14 @@ OSCL_EXPORT_REF void DownloadContainer::setEventReporterSupportObjects()
     iEventReport->setSupportObject(iNodeOutput, EventReporterSupportObjectType_OutputObject);
 }
 
+OSCL_EXPORT_REF void DownloadContainer::requiredSocketReconnect(const bool aForceSocketReconnect)
+{
+    //Need to reconnect before GET cmd if error response is replied at HEAD cmd on HTTP/1.1
+    OsclSharedPtr<PVDlCfgFile> aCfgFile = iCfgFileContainer->getCfgFile();
+    if (aCfgFile->getHttpVersion() == 1)
+        iForceSocketReconnect = aForceSocketReconnect;
+}
+
 ////////////////////////////////////////////////////////////////////////////////////
 //////  pvHttpDownloadOutput implementation
 ////////////////////////////////////////////////////////////////////////////////////
@@ -634,9 +642,10 @@ OSCL_EXPORT_REF bool pvDownloadControl::checkSendingNotification(const bool aDow
 {
     if (aDownloadComplete)
     {
-        LOGINFODATAPATH((0, "pvDownloadControl::checkDownloadCompleteForResumeNotification()  Download is complete, final download rate = %dbps", (iProtocol->getDownloadRate() << 3)));
+        LOGINFODATAPATH((0, "pvDownloadControl::checkDownloadCompleteForResumeNotification()  Download is complete, final download rate = %dbps, iDownloadComplete=%d",
+                         (iProtocol->getDownloadRate() << 3), (uint32)iDownloadComplete));
     }
-    iDownloadComplete = aDownloadComplete;
+    if (!iDownloadComplete) iDownloadComplete = aDownloadComplete;
     // update iFileSize to minimize dependency on protocol object and improve the efficiency
     updateFileSize();
 
@@ -649,7 +658,7 @@ OSCL_EXPORT_REF bool pvDownloadControl::checkSendingNotification(const bool aDow
     setProtocolInfo();
 
     // send download complete notification to parser node
-    if (aDownloadComplete) sendDownloadCompleteNotification();
+    if (iDownloadComplete) sendDownloadCompleteNotification();
 
     // update download clock
     if (!iDownloadComplete) updateDownloadClock();
@@ -1467,7 +1476,7 @@ OSCL_EXPORT_REF bool downloadEventReporter::checkContentInfoEvent(const uint32 d
     return checkContentTruncated(downloadStatus);
 }
 
-bool downloadEventReporter::checkContentLengthOrTooLarge()
+OSCL_EXPORT_REF bool downloadEventReporter::checkContentLengthOrTooLarge()
 {
     // PVMFInfoContentLength
     uint32 fileSize = iInterfacingObjectContainer->getFileSize();
@@ -1489,7 +1498,7 @@ bool downloadEventReporter::checkContentLengthOrTooLarge()
 }
 
 // check and send PVMFInfoContentTruncated
-bool downloadEventReporter::checkContentTruncated(const uint32 downloadStatus)
+OSCL_EXPORT_REF bool downloadEventReporter::checkContentTruncated(const uint32 downloadStatus)
 {
     if (!iStarted) return true;
     if (!iSendContentTruncateEvent)

@@ -36,6 +36,8 @@
 
 class PVMFMediaClock;
 class OsclMemPoolResizableAllocator;
+class mediaInfo;
+class PayloadParserRegistry;
 ///////////////////////////////////////////////////////////////////////////////
 //Common data structures for all configs
 ///////////////////////////////////////////////////////////////////////////////
@@ -91,6 +93,8 @@ class PVMFJitterBufferExtensionInterface : public PVInterface
                 int aNumSenders,
                 uint32 aRR,
                 uint32 aRS) = 0;
+        OSCL_IMPORT_REF virtual bool setPortMediaParams(PVMFPortInterface* aPort,
+                mediaInfo* aMediaInfo = NULL)  = 0;
         OSCL_IMPORT_REF virtual PVMFTimestamp getActualMediaDataTSAfterSeek() = 0;
         OSCL_IMPORT_REF virtual PVMFTimestamp getMaxMediaDataTS() = 0;
         OSCL_IMPORT_REF virtual void addRef() = 0;
@@ -114,7 +118,7 @@ class PVMFJitterBufferExtensionInterface : public PVInterface
 
         OSCL_IMPORT_REF virtual bool NotifyAutoPauseComplete() = 0;
         OSCL_IMPORT_REF virtual bool NotifyAutoResumeComplete() = 0;
-        OSCL_IMPORT_REF virtual PVMFStatus SetInputMediaHeaderPreParsed(PVMFPortInterface* aPort,
+        OSCL_IMPORT_REF virtual void SetInputMediaHeaderPreParsed(PVMFPortInterface* aPort,
                 bool aHeaderPreParsed) = 0;
         OSCL_IMPORT_REF virtual PVMFStatus HasSessionDurationExpired(bool& aExpired) = 0;
         OSCL_IMPORT_REF virtual bool PurgeElementsWithNPTLessThan(NptTimeFormat& aNPTTime) = 0;
@@ -125,6 +129,11 @@ class PVMFJitterBufferExtensionInterface : public PVInterface
         OSCL_IMPORT_REF virtual void StartOutputPorts() = 0;
         OSCL_IMPORT_REF virtual void StopOutputPorts() = 0;
         OSCL_IMPORT_REF virtual bool PrepareForPlaylistSwitch() = 0;
+
+        //Extenstion interfaces to support "Paylaod parsing in JB node"
+        OSCL_IMPORT_REF virtual void setPayloadParserRegistry(PayloadParserRegistry*) = 0;
+        OSCL_IMPORT_REF virtual PVMFStatus setPortDataLogging(bool logEnable, OSCL_String* logPath = NULL) = 0;
+
 };
 
 //Mimetype and Uuid for the extension interface

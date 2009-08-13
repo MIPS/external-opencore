@@ -435,49 +435,6 @@ class PVMFMP4FFParserOutPort : public PvmfPortBaseImpl,
         PVMFStatus getParametersSync(PvmiMIOSession aSession, PvmiKeyType aIdentifier,
                                      PvmiKvp*& aParameters, int& num_parameter_elements,    PvmiCapabilityContext aContext);
         PVMFStatus releaseParameters(PvmiMIOSession aSession, PvmiKvp* aParameters, int num_elements);
-        void setParametersSync(PvmiMIOSession aSession, PvmiKvp* aParameters,
-                               int num_elements, PvmiKvp * & aRet_kvp);
-        PVMFStatus verifyParametersSync(PvmiMIOSession aSession, PvmiKvp* aParameters, int num_elements);
-
-        /* Unsupported PvmiCapabilityAndConfig methods */
-        void setObserver(PvmiConfigAndCapabilityCmdObserver* aObserver)
-        {
-            OSCL_UNUSED_ARG(aObserver);
-        };
-        void createContext(PvmiMIOSession aSession, PvmiCapabilityContext& aContext)
-        {
-            OSCL_UNUSED_ARG(aSession);
-            OSCL_UNUSED_ARG(aContext);
-        };
-        void setContextParameters(PvmiMIOSession aSession, PvmiCapabilityContext& aContext,
-                                  PvmiKvp* aParameters, int num_parameter_elements)
-        {
-            OSCL_UNUSED_ARG(aSession);
-            OSCL_UNUSED_ARG(aContext);
-            OSCL_UNUSED_ARG(aParameters);
-            OSCL_UNUSED_ARG(num_parameter_elements);
-        };
-        void DeleteContext(PvmiMIOSession aSession, PvmiCapabilityContext& aContext)
-        {
-            OSCL_UNUSED_ARG(aSession);
-            OSCL_UNUSED_ARG(aContext);
-        };
-        PVMFCommandId setParametersAsync(PvmiMIOSession aSession, PvmiKvp* aParameters,
-                                         int num_elements, PvmiKvp*& aRet_kvp, OsclAny* context = NULL)
-        {
-            OSCL_UNUSED_ARG(aRet_kvp);
-            OSCL_UNUSED_ARG(aSession);
-            OSCL_UNUSED_ARG(aParameters);
-            OSCL_UNUSED_ARG(num_elements);
-            OSCL_UNUSED_ARG(context);
-            return -1;
-        }
-        uint32 getCapabilityMetric(PvmiMIOSession aSession)
-        {
-            OSCL_UNUSED_ARG(aSession);
-            return 0;
-        }
-
 
     private:
         void Construct();

@@ -34,7 +34,7 @@ PVA_FF_TextSampleEntry::PVA_FF_TextSampleEntry()
 
     init();
     recomputeSize();
-
+    _pBackgroundRGBA = NULL;
 
 }
 

@@ -45,41 +45,13 @@
 #include "pvmi_mio_comm_loopback_factory.h"
 #endif
 
-#include "pv_2way_unittest_source_and_sinks.h"
+#ifndef PV_2WAY_SOURCE_AND_SINKS_BASE_H_INCLUDED
+#include "pv_2way_source_and_sinks_base.h"
+#endif
 
-#define RX_LOGGER_TAG _STRLIT_CHAR("pvcommionode.rx.bin")
-#define TX_LOGGER_TAG _STRLIT_CHAR("pvcommionode.tx.bin")
-#define PVSIP2WAY_PROFILE _STRLIT_CHAR("pvSIP2Way")
-#define PVSIPDEMO_ADDRESS _STRLIT_CHAR("sip:pvSIPDemo@")
-#define PVSIPDEMO2_ADDRESS _STRLIT_CHAR("sip:pvSIPDemo2@")
-#define PVSIP_DEFAULT_REALM _STRLIT_CHAR("pvrealm")
-
-
-#define TEST_RX_LOG_FILENAME _STRLIT("commrx.bin")
-#define TEST_TX_LOG_FILENAME _STRLIT("commtx.bin")
-#define TEST_LOG_FILENAME _STRLIT("test2way.log")
-#define AUDIO_SOURCE_FILENAME _STRLIT("audio_in.if2")
-#define AUDIO_SOURCE3_FILENAME _STRLIT("audio_in.amr")
-#define AUDIO_SOURCE_RAW_FILENAME _STRLIT("pcm16testinput.pcm")
-#define AUDIO_SINK_FILENAME _STRLIT("audio_if2_out.dat")
-#define AUDIO_SINK_RAW_FILENAME _STRLIT("audio_pcm16_out.dat")
-#define AUDIO_SINK2_FILENAME _STRLIT("audio_ietf_out.dat")
-#define VIDEO_SOURCE_YUV_FILENAME _STRLIT("yuv420video.yuv")
-#define VIDEO_SOURCE_H263_FILENAME _STRLIT("h263video.h263")
-#define VIDEO_SOURCE_M4V_FILENAME _STRLIT("m4vvideo.m4v")
-#define VIDEO_SINK_YUV_FILENAME _STRLIT("video_yuv_out.dat")
-#define VIDEO_SINK_H263_FILENAME _STRLIT("video_h263_out.dat")
-#define VIDEO_SINK_M4V_FILENAME _STRLIT("video_m4v_out.dat")
-#define VIDEO_PREVIEW_FILENAME _STRLIT("video_preview_out.dat")
-#define RECORDED_CALL_FILENAME _STRLIT("recorded_call.mp4")
-#define AUDIO_ONLY_PLAY_FILENAME _STRLIT("pv-amr-122_novisual.3gp")
-#define AUDIO_H263_PLAY_FILENAME _STRLIT("pv-amr-122_h263-64.3gp")
-#define AUDIO_MPEG4_PLAY_FILENAME _STRLIT("pv2-amr122_mpeg4-rvlcs-64.3gp")
-#define H263_ONLY_PLAY_FILENAME _STRLIT("pv-noaudio_h263-64.3gp")
-#define MPEG4_ONLY_PLAY_FILENAME _STRLIT("pv2-noaudio_mpeg4-rvlcs-64.3gp")
-#define SQCIF_PLAY_FILENAME _STRLIT("sqcif1.3gp")
-#define QVGA_PLAY_FILENAME _STRLIT("qvga.3gp")
-
+#ifndef PV2WAY_FILE_NAMES_H_INCLUDED
+#include "pv2way_file_names.h"
+#endif
 
 class engine_timer;
 
@@ -89,8 +61,7 @@ class engine_test : public test_case,
         public OsclActiveObject,
         public PVCommandStatusObserver,
         public PVInformationalEventObserver,
-        public PVErrorEventObserver,
-        public PV2WaySourceAndSinksObserver
+        public PVErrorEventObserver
 
 {
     public:

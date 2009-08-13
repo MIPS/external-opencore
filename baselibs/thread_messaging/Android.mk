@@ -9,7 +9,7 @@ LOCAL_SRC_FILES := \
 
 LOCAL_MODULE := libpvthreadmessaging
 
-LOCAL_CFLAGS :=  $(PV_CFLAGS)
+LOCAL_CFLAGS :=   $(PV_CFLAGS)
 
 
 

@@ -40,6 +40,7 @@ void connect_test::test()
         }
     }
 
+    TestCompleted(this);
     this->RemoveFromScheduler();
 }
 

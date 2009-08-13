@@ -52,31 +52,38 @@ class PVA_FF_MpegSampleEntry : public PVA_FF_SampleEntry
         // Getting and setting the Mpeg4 VOL header
         virtual PVA_FF_DecoderSpecificInfo *getDecoderSpecificInfo() const
         {
-            return _pes->getDecoderSpecificInfo();
+            if (_pes != NULL)
+                return _pes->getDecoderSpecificInfo();
+            return NULL;
         }
         virtual void addDecoderSpecificInfo(PVA_FF_DecoderSpecificInfo *pinfo)
         {
-            _pes->addDecoderSpecificInfo(pinfo);
+            if (_pes != NULL)
+                _pes->addDecoderSpecificInfo(pinfo);
         }
 
         void nextSampleSize(uint32 size)
         {
-            _pes->nextSampleSize(size);
+            if (_pes != NULL)
+                _pes->nextSampleSize(size);
         }
 
         void setMaxBufferSizeDB(uint32 max)
         {
-            _pes->setMaxBufferSizeDB(max);
+            if (_pes != NULL)
+                _pes->setMaxBufferSizeDB(max);
         }
 
         void setESID(uint16 esid)
         {
-            _pes->setESID(esid);
+            if (_pes != NULL)
+                _pes->setESID(esid);
         }
 
         void writeMaxSampleSize(MP4_AUTHOR_FF_FILE_IO_WRAP *_afp)
         {
-            _pes->writeMaxSampleSize(_afp);
+            if (_pes != NULL)
+                _pes->writeMaxSampleSize(_afp);
         }
 
     private:

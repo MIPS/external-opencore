@@ -26,15 +26,13 @@
 class PV2WayMediaOutputMIONodeFactory : public PV2WayMIONodeFactory
 {
     public:
-        PV2WayMediaOutputMIONodeFactory(PvmiMIOFileInputSettings aFileSettings) :
-                iFileSettings(aFileSettings) {};
+        PV2WayMediaOutputMIONodeFactory() {};
         virtual ~PV2WayMediaOutputMIONodeFactory() {};
-        virtual PVMFNodeInterface* Create();
+        virtual PVMFNodeInterface* Create(PvmiMIOFileInputSettings& aFileSettings);
         virtual void Delete(PVMFNodeInterface** mioNode);
     private:
         PvmiMIOControl* iMediaControl;
-        PvmiMIOFileInputSettings iFileSettings;
-        int CreateMedia();
+        int CreateMedia(PvmiMIOFileInputSettings& aFileSettings);
         void DeleteMedia();
 
 };

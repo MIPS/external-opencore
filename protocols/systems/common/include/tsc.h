@@ -83,7 +83,6 @@ class TSC : public PVInterface
             }
             return NULL;
         }
-        //virtual TPVStatusCode SetCapability(CapabilitySet* capabilities) = 0;
         virtual CPvtTerminalCapability* GetRemoteCapability() = 0;
         virtual TSCState GetTscState()
         {

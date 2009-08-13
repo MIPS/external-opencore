@@ -25,15 +25,22 @@ const uint PVMF_SIMPLE_MEDIA_BUF_DEFAULT_SIZE = 200;
 
 OSCL_EXPORT_REF bool PVMFSimpleMediaBuffer::appendMediaFragment(OsclRefCounterMemFrag& memfrag)
 {
-    buffer.ptr = memfrag.getMemFragPtr();
-    buffer.len = memfrag.getMemFragSize();
-    return true;
+    OSCL_ASSERT(memfrag.getRefCounter() == refcnt);
+
+    if (capacity >= (iBufferLen + memfrag.getMemFrag().len))
+    {
+        iBufferFragments.push_back(memfrag.getMemFrag());
+        iBufferLen += memfrag.getMemFrag().len;
+        return true;
+    }
+
+    return false;
 }
 
 OSCL_EXPORT_REF bool PVMFSimpleMediaBuffer::clearMediaFragments()
 {
-    buffer.ptr = NULL;
-    buffer.len = 0;
+    iBufferFragments.clear();
+    iBufferLen = 0;
     return true;
 }
 
@@ -59,17 +66,17 @@ OSCL_EXPORT_REF uint32 PVMFSimpleMediaBuffer::getErrorsFlag()
 
 OSCL_EXPORT_REF uint32 PVMFSimpleMediaBuffer::getNumFragments()
 {
-    return 1;
+    return iBufferFragments.size();
 }
 
 OSCL_EXPORT_REF bool PVMFSimpleMediaBuffer::getMediaFragment(uint32 index, OsclRefCounterMemFrag& memfrag)
 {
-    if (index != 0)
+    if (index >= iBufferFragments.size())
     {
         return false;
     }
 
-    memfrag = OsclRefCounterMemFrag(buffer, refcnt, capacity);
+    memfrag = OsclRefCounterMemFrag(iBufferFragments[index], refcnt, ((index == 0) && (iBufferFragments.size() == 1)) ? capacity : iBufferFragments[index].len);
 
     // explicitly addref
     refcnt->addRef();
@@ -81,17 +88,19 @@ OSCL_EXPORT_REF bool PVMFSimpleMediaBuffer::getMediaFragment(uint32 index, OsclR
 OSCL_EXPORT_REF bool PVMFSimpleMediaBuffer::getMediaFragmentSize(uint32 index, uint32& size)
 {
     size = 0;
-    if (index != 0)
+
+    if (index >= iBufferFragments.size())
     {
         return false;
     }
-    size = buffer.len;
+
+    size = iBufferFragments[index].len;
     return true;
 }
 
 OSCL_EXPORT_REF uint32 PVMFSimpleMediaBuffer::getFilledSize()
 {
-    return buffer.len;
+    return iBufferLen;
 }
 
 OSCL_EXPORT_REF uint32 PVMFSimpleMediaBuffer::getCapacity()
@@ -107,17 +116,15 @@ OSCL_EXPORT_REF void PVMFSimpleMediaBuffer::setCapacity(uint32 aCapacity)
 
 OSCL_EXPORT_REF bool PVMFSimpleMediaBuffer::setMediaFragFilledLen(uint32 index, uint32 len)
 {
-    if (index != 0)
+    if ((index >= iBufferFragments.size()) || (len > capacity))
     {
         return false;
     }
 
-    if (len > capacity)
-    {
-        return false;
-    }
+    iBufferLen -= iBufferFragments[index].len;
+    iBufferLen += len;
+    iBufferFragments[index].len = len;
 
-    buffer.len = len;
     return true;
 }
 
@@ -145,8 +152,12 @@ OSCL_EXPORT_REF PVMFSimpleMediaBuffer::PVMFSimpleMediaBuffer(void * ptr,
         OsclRefCounter *my_refcnt) :
         marker_info(0), random_access_point(false), errors_flag(0)
 {
-    buffer.ptr = ptr;
-    buffer.len = 0;
+    OsclMemoryFragment frag;
+    frag.ptr = ptr;
+    frag.len = 0;
+    iBufferFragments.push_back(frag);
+
+    iBufferLen = 0;
     capacity = in_capacity;
     refcnt = my_refcnt;
 }
@@ -173,14 +184,17 @@ class SimpleMediaBufferCombinedCleanupDA : public OsclDestructDealloc
         virtual void destruct_and_dealloc(OsclAny* ptr)
         {
             // no need to call destructors in this case just dealloc
+            const uint8* const my_ptr = (uint8*)ptr;
+            const uint aligned_refcnt_size = oscl_mem_aligned_size(sizeof(OsclRefCounterDA));
+            const uint aligned_cleanup_size = oscl_mem_aligned_size(sizeof(SimpleMediaBufferCombinedCleanupDA));
+            PVMFMediaDataImpl* media_data_ptr = OSCL_REINTERPRET_CAST(PVMFMediaDataImpl*, (my_ptr + aligned_refcnt_size + aligned_cleanup_size));
+            media_data_ptr->~PVMFMediaDataImpl();
             gen_alloc->deallocate(ptr);
         }
 
     private:
         Oscl_DefAlloc* gen_alloc;
 };
-
-
 
 OSCL_EXPORT_REF OsclSharedPtr<PVMFMediaDataImpl> PVMFSimpleMediaBufferCombinedAlloc::allocate(uint32 requested_size)
 {
@@ -221,4 +235,3 @@ OSCL_EXPORT_REF OsclSharedPtr<PVMFMediaDataImpl> PVMFSimpleMediaBufferCombinedAl
     shared_media_data.Bind(media_data_ptr, my_refcnt);
     return shared_media_data;
 }
-

@@ -31,8 +31,8 @@
 #ifndef PVMF_PORT_BASE_IMPL_H_INCLUDED
 #include "pvmf_port_base_impl.h"
 #endif
-#ifndef PVMI_CONFIG_AND_CAPABILITY_H_INCLUDED
-#include "pvmi_config_and_capability.h"
+#ifndef PVMI_CONFIG_AND_CAPABILITY_BASE_H_INCLUDED
+#include "pvmi_config_and_capability_base.h"
 #endif
 
 //Default vector reserve size
@@ -58,8 +58,9 @@
  * Output (source) ports assume the connected port uses the
  * same flow-control scheme.
  */
-class PVMFFileDummyInputPort : public PvmfPortBaseImpl,
-        public PvmiCapabilityAndConfig
+class PVMFFileDummyInputPort
+        : public PvmfPortBaseImpl
+        , public PvmiCapabilityAndConfigBase
 {
     public:
         /**
@@ -95,21 +96,12 @@ class PVMFFileDummyInputPort : public PvmfPortBaseImpl,
         /** Destructor */
         ~PVMFFileDummyInputPort();
 
-        // Implement pure virtuals from PvmiCapabilityAndConfig interface
-        OSCL_IMPORT_REF void setObserver(PvmiConfigAndCapabilityCmdObserver* aObserver);
+        // from PvmiCapabilityAndConfig interface
         OSCL_IMPORT_REF PVMFStatus getParametersSync(PvmiMIOSession aSession, PvmiKeyType aIdentifier,
-                PvmiKvp*& aParameters, int& num_parameter_elements,
-                PvmiCapabilityContext aContext);
+                PvmiKvp*& aParameters, int& num_parameter_elements, PvmiCapabilityContext aContext);
         OSCL_IMPORT_REF PVMFStatus releaseParameters(PvmiMIOSession aSession, PvmiKvp* aParameters, int num_elements);
-        OSCL_IMPORT_REF void createContext(PvmiMIOSession aSession, PvmiCapabilityContext& aContext);
-        OSCL_IMPORT_REF void setContextParameters(PvmiMIOSession aSession, PvmiCapabilityContext& aContext,
-                PvmiKvp* aParameters, int num_parameter_elements);
-        OSCL_IMPORT_REF void DeleteContext(PvmiMIOSession aSession, PvmiCapabilityContext& aContext);
         OSCL_IMPORT_REF void setParametersSync(PvmiMIOSession aSession, PvmiKvp* aParameters,
                                                int num_elements, PvmiKvp * & aRet_kvp);
-        OSCL_IMPORT_REF PVMFCommandId setParametersAsync(PvmiMIOSession aSession, PvmiKvp* aParameters,
-                int num_elements, PvmiKvp*& aRet_kvp, OsclAny* context = NULL);
-        OSCL_IMPORT_REF uint32 getCapabilityMetric(PvmiMIOSession aSession);
         OSCL_IMPORT_REF PVMFStatus verifyParametersSync(PvmiMIOSession aSession, PvmiKvp* aParameters, int num_elements);
 
         // Implement virtuals from PVMFPortBaseImpl

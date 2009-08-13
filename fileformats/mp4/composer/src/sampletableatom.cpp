@@ -88,182 +88,85 @@ PVA_FF_SampleTableAtom::~PVA_FF_SampleTableAtom()
 // Update the member atoms with the next sample received
 void
 PVA_FF_SampleTableAtom::nextSample(int32 mediaType,
-                                   void *psample,
-                                   uint32 size,
-                                   uint32 ts,
-                                   uint8 flags,
-                                   uint32 baseOffset,
+                                   PVMP4FFComposerSampleParam *pSampleParam,
                                    bool oChunkStart)
 {
+    if (pSampleParam == NULL)
+        return;
+
+    OSCL_UNUSED_ARG(mediaType);
     // Update timeToSampleAtom with new sample
-    _ptimeToSampleAtom->nextSample(ts);
+    _ptimeToSampleAtom->nextSample(pSampleParam->_timeStamp);
 
     // Update sampleDescriptionAtom with new sample
-    int32 index = _psampleDescriptionAtom->nextSample(size, flags);
+    int32 index = _psampleDescriptionAtom->nextSample(pSampleParam->_sampleSize, pSampleParam->_flags);
     // Update sampleSizeAtom with new sample
-    _psampleSizeAtom->nextSample(size);
+    _psampleSizeAtom->nextSample(pSampleParam->_sampleSize);
 
     // Update sampleToChunk atom with new sample - returns whether or not the
     // new sample fp the beginning of a new chunk
     bool isChunkStart;
 
-    isChunkStart = _psampleToChunkAtom->nextSample(index, size, oChunkStart);
+    isChunkStart = _psampleToChunkAtom->nextSample(index, pSampleParam->_sampleSize, oChunkStart);
 
     if (_oInterLeaveMode)
     {
         // Updates chunkOffset atom with new sample
-        _pchunkOffsetAtom->nextSample(size, isChunkStart, baseOffset);
+        _pchunkOffsetAtom->nextSample(pSampleParam->_sampleSize, isChunkStart, pSampleParam->_baseOffset);
     }
     else
     {
         // Updates chunkOffset atom with new sample
-        _pchunkOffsetAtom->nextSample(size, isChunkStart);
+        _pchunkOffsetAtom->nextSample(pSampleParam->_sampleSize, isChunkStart);
     }
 
     // Update the syncSampleAtom with the new sample - cast to IMediaSample
     if (_psyncSampleAtom != NULL)
     {
-        _psyncSampleAtom->nextSample(flags);
+        _psyncSampleAtom->nextSample(pSampleParam->_flags);
     }
-    OSCL_UNUSED_ARG(mediaType);
-    OSCL_UNUSED_ARG(psample);
 }
 
 void
 PVA_FF_SampleTableAtom::nextTextSample(int32 mediaType,
-                                       void *psample,
-                                       uint32 size,
-                                       uint32 ts,
-                                       uint8 flags,
-                                       int32 index,
-                                       uint32 baseOffset,
+                                       PVMP4FFComposerSampleParam *pSampleParam,
                                        bool oChunkStart)
 {
-    OSCL_UNUSED_ARG(psample);
+    if (pSampleParam == NULL)
+        return;
+
     OSCL_UNUSED_ARG(mediaType);
     // Update timeToSampleAtom with new sample
-    _ptimeToSampleAtom->nextSample(ts);
+    _ptimeToSampleAtom->nextSample(pSampleParam->_timeStamp);
 
     // Update sampleDescriptionAtom with new sample
-    int32 sdindex = _psampleDescriptionAtom->nextTextSample(size, flags, index);
+    int32 sdindex = _psampleDescriptionAtom->nextTextSample(pSampleParam->_sampleSize, pSampleParam->_flags, pSampleParam->_index);
     // Update sampleSizeAtom with new sample
-    _psampleSizeAtom->nextSample(size);
+    _psampleSizeAtom->nextSample(pSampleParam->_sampleSize);
 
     // Update sampleToChunk atom with new sample - returns whether or not the
     // new sample fp the beginning of a new chunk
     bool isChunkStart;
 
-    isChunkStart = _psampleToChunkAtom->nextSample(sdindex, size, oChunkStart);
+    isChunkStart = _psampleToChunkAtom->nextSample(sdindex, pSampleParam->_sampleSize, oChunkStart);
 
     if (_oInterLeaveMode)
     {
         // Updates chunkOffset atom with new sample
-        _pchunkOffsetAtom->nextSample(size, isChunkStart, baseOffset);
+        _pchunkOffsetAtom->nextSample(pSampleParam->_sampleSize, isChunkStart, pSampleParam->_baseOffset);
     }
     else
     {
         // Updates chunkOffset atom with new sample
-        _pchunkOffsetAtom->nextSample(size, isChunkStart);
+        _pchunkOffsetAtom->nextSample(pSampleParam->_sampleSize, isChunkStart);
     }
 
     // Update the syncSampleAtom with the new sample - cast to IMediaSample
     if (_psyncSampleAtom != NULL)
     {
-        _psyncSampleAtom->nextSample(flags);
+        _psyncSampleAtom->nextSample(pSampleParam->_flags);
     }
 
-
-}
-
-void
-PVA_FF_SampleTableAtom::nextSample(int32 mediaType,
-                                   Oscl_Vector <OsclMemoryFragment, OsclMemAllocator>& fragmentList,
-                                   uint32 size,
-                                   uint32 ts,
-                                   uint8 flags,
-                                   uint32 baseOffset,
-                                   bool oChunkStart)
-{
-
-    // Update timeToSampleAtom with new sample
-    _ptimeToSampleAtom->nextSample(ts);
-
-    // Update sampleDescriptionAtom with new sample
-    int32 index = _psampleDescriptionAtom->nextSample(size, flags);
-
-    // Update sampleSizeAtom with new sample
-    _psampleSizeAtom->nextSample(size);
-
-    // Update sampleToChunk atom with new sample - returns whether or not the
-    // new sample fp the beginning of a new chunk
-    bool isChunkStart;
-
-    isChunkStart = _psampleToChunkAtom->nextSample(index, size, oChunkStart);
-
-    if (_oInterLeaveMode)
-    {
-        // Updates chunkOffset atom with new sample
-        _pchunkOffsetAtom->nextSample(size, isChunkStart, baseOffset);
-    }
-    else
-    {
-        // Updates chunkOffset atom with new sample
-        _pchunkOffsetAtom->nextSample(size, isChunkStart);
-    }
-
-    // Update the syncSampleAtom with the new sample - cast to IMediaSample
-    if (_psyncSampleAtom != NULL)
-    {
-        _psyncSampleAtom->nextSample(flags);
-    }
-
-    OSCL_UNUSED_ARG(mediaType);
-    OSCL_UNUSED_ARG(fragmentList);
-}
-
-void
-PVA_FF_SampleTableAtom::nextTextSample(int32 mediaType,
-                                       Oscl_Vector <OsclMemoryFragment, OsclMemAllocator>& fragmentList,
-                                       uint32 size,
-                                       uint32 ts,
-                                       uint8 flags,
-                                       int32 index,
-                                       uint32 baseOffset,
-                                       bool oChunkStart)
-{
-    OSCL_UNUSED_ARG(mediaType);
-    OSCL_UNUSED_ARG(fragmentList);
-    // Update timeToSampleAtom with new sample
-    _ptimeToSampleAtom->nextSample(ts);
-
-    // Update sampleDescriptionAtom with new sample
-    int32 sdindex = _psampleDescriptionAtom->nextTextSample(size, flags, index);
-
-    // Update sampleSizeAtom with new sample
-    _psampleSizeAtom->nextSample(size);
-
-    // Update sampleToChunk atom with new sample - returns whether or not the
-    // new sample fp the beginning of a new chunk
-    bool isChunkStart;
-
-    isChunkStart = _psampleToChunkAtom->nextSample(sdindex, size, oChunkStart);
-
-    if (_oInterLeaveMode)
-    {
-        // Updates chunkOffset atom with new sample
-        _pchunkOffsetAtom->nextSample(size, isChunkStart, baseOffset);
-    }
-    else
-    {
-        // Updates chunkOffset atom with new sample
-        _pchunkOffsetAtom->nextSample(size, isChunkStart);
-    }
-
-    // Update the syncSampleAtom with the new sample - cast to IMediaSample
-    if (_psyncSampleAtom != NULL)
-    {
-        _psyncSampleAtom->nextSample(flags);
-    }
 
 }
 

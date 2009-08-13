@@ -44,7 +44,7 @@ define format_shared_lib_names
 endef
 
 define convert_component_lib_makefile_name
-  $(patsubst %,%/Android.mk,$(patsubst $(SRC_ROOT)/%,\$$(PV_TOP)/%,$1))
+  $(patsubst $(SRC_ROOT)/%,\$$(PV_TOP)/%,$1)
 endef
 
 define output_include_list
@@ -61,6 +61,10 @@ endef
 
 define extra_lib_list
   $(if $(strip $1),$(PRINTF) "\nLOCAL_WHOLE_STATIC_LIBRARIES += $1\n" >> $2,)
+endef
+
+define extra_sharedlib_list
+  $(if $(strip $1),$(PRINTF) "\nLOCAL_SHARED_LIBRARIES := $1\n" >> $2,)
 endef
 
 define extra_include_list
@@ -93,8 +97,7 @@ Android_$1.mk: FORCE
 	$$(quiet) echo "" >> $$@
 	$$(quiet) echo "LOCAL_MODULE := lib$1" >> $$@
 	$$(quiet) $$(call is_prelinking_allowed,$$($1_PRELINK),$$@)
-	$$(quiet) echo "" >> $$@
-	$$(quiet) echo "-include $$(esc_dollar)(PV_TOP)/Android_platform_extras.mk" >> $$@
+	$$(quiet) $$(call extra_sharedlib_list, $$(EXTRA_SHARED_LIBRARIES_$1),$$@)
 	$$(quiet) echo "" >> $$@
 	$$(quiet) echo "-include $$(esc_dollar)(PV_TOP)/Android_system_extras.mk" >> $$@
 	$$(quiet) echo "" >> $$@
@@ -113,7 +116,7 @@ endef
 #### Start generation of top level makefile #######
 
 define include_module_mk_list
- $(PRINTF) "$(subst $(SPACE)include,include,$(foreach elem,$1,include \$$(PV_TOP)/build_config/opencore_dynamic/Android_$(elem).mk\n))" >> $2
+ $(PRINTF) "$(subst $(SPACE)include,include,$(foreach elem,$1,include $(patsubst $(SRC_ROOT)/%,\$$(PV_TOP)/%,$(CFG_DIR))/Android_$(elem).mk\n))" >> $2
 endef
 
 define include_test_mk_list
@@ -134,16 +137,24 @@ $1: FORCE
 	$$(quiet) echo "ifeq ($$(esc_dollar)(BUILD_PV_2WAY),1)" >> $$@
 	$$(quiet) $$(call include_module_mk_list,$3,$$@)
 	$$(quiet) echo "endif" >> $$@
+	$$(quiet) echo "ifeq ($$(esc_dollar)(BUILD_PV_ME),1)" >> $$@
+	$$(quiet) $$(call include_module_mk_list,$4,$$@)
+	$$(quiet) echo "endif" >> $$@
 	$$(quiet) $$(call include_staticlibs_list,$$(LIBDIR_static),$$@)
 	$$(quiet) echo "ifeq ($$(esc_dollar)(BUILD_PV_TEST_APPS),1)" >> $$@
-	$$(quiet) $$(call include_test_mk_list,$$(TESTAPPS_WO_2WAY),$$@)
+	$$(quiet) $$(call include_test_mk_list,$$(TESTAPPS_WO_2WAY_PVME),$$@)
 	$$(quiet) echo "ifeq ($$(esc_dollar)(BUILD_PV_2WAY),1)" >> $$@
 	$$(quiet) $$(call include_test_mk_list,$$(2WAY_TESTAPP),$$@)
+	$$(quiet) echo "endif" >> $$@
+	$$(quiet) echo "ifeq ($$(esc_dollar)(BUILD_PV_ME),1)" >> $$@
+	$$(quiet) $$(call include_test_mk_list,$$(PVME_TESTAPP),$$@)
 	$$(quiet) echo "endif" >> $$@
 	$$(quiet) echo "endif" >> $$@
 	$$(quiet) echo "" >> $$@
 	$$(quiet) echo "endif" >> $$@
 endef
+
+BUILD_CFG_DIR := $(patsubst $(SRC_ROOT)/%,(PV_TOP)/%,$(CFG_DIR))
 
 define create_opencore_config_mk
 $1: FORCE
@@ -169,6 +180,9 @@ $1: FORCE
 	$$(quiet) echo "" >> $$@
 	$$(quiet) echo "  PV_INCLUDES := \\" >> $$@
 	$$(quiet) $(PRINTF) "\t$$(esc_dollar)(PV_TOP)/android \\\\\n" >> $$@
+	$$(quiet) $(PRINTF) "\t$$(esc_dollar)(PV_TOP)/../sqlite/dist \\\\\n" >> $$@
+	$$(quiet) $(PRINTF) "\t$$(esc_dollar)(PV_TOP)/../../frameworks/base/core/jni \\\\\n" >> $$@
+	$$(quiet) $(PRINTF) "\t$$(esc_dollar)(JNI_H_INCLUDE) \\\\\n" >> $$@
 	$$(quiet) $(PRINTF) "\t$$(esc_dollar)(PV_TOP)/extern_libs_v2/khronos/openmax/include \\\\\n" >> $$@
 	$$(quiet) $(PRINTF) "\t$$(esc_dollar)(PV_TOP)/engines/common/include \\\\\n" >> $$@
 	$$(quiet) $(PRINTF) "\t$$(esc_dollar)(PV_TOP)/engines/player/config/android \\\\\n" >> $$@
@@ -181,7 +195,7 @@ $1: FORCE
 	$$(quiet) $(PRINTF) "\t$$(esc_dollar)(PV_TOP)/oscl/oscl/config/shared \\\\\n" >> $$@
 	$$(quiet) $(PRINTF) "\t$$(esc_dollar)(PV_TOP)/engines/author/include \\\\\n" >> $$@
 	$$(quiet) $(PRINTF) "\t$$(esc_dollar)(PV_TOP)/android/drm/oma1/src \\\\\n" >> $$@
-	$$(quiet) $(PRINTF) "\t$$(esc_dollar)(PV_TOP)/build_config/opencore_dynamic \\\\\n" >> $$@
+	$$(quiet) $(PRINTF) "\t$$(esc_dollar)$(BUILD_CFG_DIR) \\\\\n" >> $$@
 	$$(quiet) $(PRINTF) "\t$$(esc_dollar)(TARGET_OUT_HEADERS)/$$(esc_dollar)(PV_COPY_HEADERS_TO)" >> $$@
 	$$(quiet) echo "" >> $$@
 	$$(quiet) echo "" >> $$@
@@ -209,17 +223,27 @@ endef
 #  Append top-level Android.mk
 ANDROID_TOPLEVEL_MAKE_NAME := Android.mk
 OPENCORE_CONFIG_MAKE_NAME := Config.mk
-ANDROID_MAKE_NAMES := $(patsubst %,Android_%.mk,$(SHARED_LIB_TARGET_LIST)) $(ANDROID_TOPLEVEL_MAKE_NAME) $(OPENCORE_CONFIG_MAKE_NAME)
 
-$(strip $(foreach lib,$(SHARED_LIB_TARGET_LIST),$(eval $(call create_aggregate_lib_android_mk,$(lib)))))
+# The ANDROID_AGGREGATE_LIB_LIST is built from SHARED_LIB_TARGET_LIST by stripping out those aggregate libraries that end 
+# up being empty in the Android build.  This typically happens because the library as part of the platform for Android 
+# so we don't need to build our own version.
+ANDROID_AGGREGATE_LIB_LIST :=
+$(strip $(foreach lib,$(SHARED_LIB_TARGET_LIST),$(if $(strip $($(lib)_CUMULATIVE_TARGET_LIST) $(EXTRA_LIBS_$(lib))),$(eval ANDROID_AGGREGATE_LIB_LIST += $(lib)),)))
+ANDROID_MAKE_NAMES := $(patsubst %,Android_%.mk,$(ANDROID_AGGREGATE_LIB_LIST)) $(ANDROID_TOPLEVEL_MAKE_NAME) $(OPENCORE_CONFIG_MAKE_NAME)
 
-# Need the ability exclude 2way by default
+$(strip $(foreach lib,$(ANDROID_AGGREGATE_LIB_LIST),$(eval $(call create_aggregate_lib_android_mk,$(lib)))))
+
+# Need the ability exclude 2way and pvme by default
 2WAY_SHARED_LIB := opencore_2way
-SHARED_LIB_TARGET_LIST_WO_2WAY := $(strip $(subst $(2WAY_SHARED_LIB),,$(SHARED_LIB_TARGET_LIST)))
+PVME_SHARED_LIB := opencore_pvme
+SHARED_LIB_TARGET_LIST_WO_2WAY := $(strip $(subst $(2WAY_SHARED_LIB),,$(ANDROID_AGGREGATE_LIB_LIST)))
+SHARED_LIB_TARGET_LIST_WO_2WAY_PVME := $(strip $(subst $(PVME_SHARED_LIB),,$(SHARED_LIB_TARGET_LIST_WO_2WAY)))
 2WAY_TESTAPP := pv2way_omx_engine_test
+PVME_TESTAPP := pvme_test
 TESTAPPS_WO_2WAY := $(strip $(subst $(2WAY_TESTAPP),,$(TESTAPPS)))
+TESTAPPS_WO_2WAY_PVME := $(strip $(subst $(PVME_TESTAPP),,$(TESTAPPS_WO_2WAY)))
 
-$(eval $(call create_toplevel_android_mk,$(ANDROID_TOPLEVEL_MAKE_NAME),$(SHARED_LIB_TARGET_LIST_WO_2WAY),$(2WAY_SHARED_LIB)))
+$(eval $(call create_toplevel_android_mk,$(ANDROID_TOPLEVEL_MAKE_NAME),$(SHARED_LIB_TARGET_LIST_WO_2WAY_PVME),$(2WAY_SHARED_LIB),$(PVME_SHARED_LIB)))
 $(eval $(call create_opencore_config_mk,$(OPENCORE_CONFIG_MAKE_NAME)))
 
 
@@ -242,35 +266,109 @@ opencore_config_mk_clean: FORCE
 #
 else
 
-ifeq ($(LOCAL_ANDROID_MK_PATH),)
-  LOCAL_ANDROID_MK_PATH := $(patsubst /%,%,$(call strip_two_levels_up,$(subst $(SRC_ROOT),$$(SRC_ROOT),$(strip $(LOCAL_PATH)))/local.mk))
-endif
+define check_solib_plugins
+$(if $(strip $1),$(if $(strip $(filter opencore,$(subst _, ,$2))),,$1),)
+endef
 
-CUMULATIVE_ANDROID_MK_PATH := $(CUMULATIVE_ANDROID_MK_PATH) $(LOCAL_ANDROID_MK_PATH)
 
 define include_system_extras
   $(if $(strip $(filter $1,BUILD_EXECUTABLE)),$(PRINTF) "\n-include \$$(PV_TOP)/Android_system_extras.mk\n" >> $2,)
 endef
 
-#$(eval ANDROID_MAKE_NAMES := $(LOCAL_ANDROID_MK_PATH)/Android.mk)
-ANDROID_MAKE_NAMES := $(LOCAL_PATH)/../../Android.mk
+ifeq ($(LOCAL_ANDROID_MK_PATH),)
+  LOCAL_ANDROID_MK_PATH := $(strip $(call strip_two_levels_up,$(strip $(LOCAL_PATH)/local.mk)))
+endif
 
+# $(warning ***** LOCAL_ANDROID_MK_PATH = $(LOCAL_ANDROID_MK_PATH))
+
+
+ifneq ($(strip $(call check_solib_plugins,$($(TARGET)_plugins_$(SOLIB)),$(SOLIB))),)
+# These rules are to handle cases where we build the same sources into
+# different libraries with the different compile flags.  This support is 
+# hopefully temporary as the sources should really be refactored so the 
+# common part is separated and does not need to be built into multiple libs.
+
+ANDROID_MAKE_NAMES := $(LOCAL_ANDROID_MK_PATH)/Android$(SOLIB_TARGET_COMP).mk
+ANDROID_TMP_LOCAL_SRCDIR := $(patsubst %src,%src$(SOLIB_TARGET_COMP),$(LOCAL_SRCDIR))
+ANDROID_TMP_SRCDIR := $(patsubst %src,%src$(SOLIB_TARGET_COMP),$(SRCDIR))
+
+ANDROID_TMP_LOCAL_INC := $(subst $(LOCAL_SRCDIR),$(ANDROID_TMP_LOCAL_SRCDIR),$(LOCAL_TOTAL_INCDIRS))
+ANDROID_TMP_LOCAL_INC := $(subst $(SRC_ROOT),\$$(PV_TOP),$(ANDROID_TMP_LOCAL_INC)) \$$(PV_INCLUDES)
+ANDROID_TMP_ASMDIRS :=   $(subst $(LOCAL_SRCDIR),$(ANDROID_TMP_LOCAL_SRCDIR),$(LOCAL_ASM_INCDIRS))
+ANDROID_TMP_ASMDIRS := $(subst $(SRC_ROOT),\$$(PV_TOP),$(ANDROID_TMP_ASMDIRS))
+
+ANDROID_TMP_TARGET := $(TARGET)$(SOLIB_TARGET_COMP)
+
+ifeq ($($(TARGET)_libtype),shared-archive)
+# strip the last word from target and add the new android target
+CUMULATIVE_TARGET_LIST := $(call truncate,$(CUMULATIVE_TARGET_LIST)) $(ANDROID_TMP_TARGET)
+# must also create a new "fullname" variable because the CML2 template 
+# will use the values in the CUMULATIVE_TARGET_LIST to map to the 
+# "fullname" variables which hold the corresponding library path
+$(ANDROID_TMP_TARGET)$(SOLIB_TARGET_COMP)_fullname := $(LIBTARGET)
+endif
+
+$(ANDROID_MAKE_NAMES): $(ANDROID_TMP_LOCAL_SRCDIR)
+# $(warning defining copy srcdir for $(ANDROID_TMP_LOCAL_SRCDIR))
+
+
+$(ANDROID_TMP_LOCAL_SRCDIR): ANDROID_SRCDIR_TO_COPY := $(LOCAL_SRCDIR)
+$(ANDROID_TMP_LOCAL_SRCDIR): FORCE
+	echo "Copying $(ANDROID_SRCDIR_TO_COPY) to $@"
+	$(quiet) $(CP) -r $(ANDROID_SRCDIR_TO_COPY) $@
+
+android_clean: $(ANDROID_TMP_LOCAL_SRCDIR)_android_srcdir_clean $(ANDROID_TMP_LOCAL_SRCDIR)_android_mk_clean
+
+$(ANDROID_TMP_LOCAL_SRCDIR)_android_srcdir_clean: ANDROID_DIRS_TO_CLEAN := $(ANDROID_TMP_LOCAL_SRCDIR)
+
+$(ANDROID_TMP_LOCAL_SRCDIR)_android_srcdir_clean: FORCE
+	@echo "Cleaning dir $(ANDROID_DIRS_TO_CLEAN)"
+	$(quiet) $(RMDIR) $(ANDROID_DIRS_TO_CLEAN)
+
+$(ANDROID_TMP_LOCAL_SRCDIR)_android_mk_clean: ANDROID_MAKE_FILES_TO_CLEAN := $(ANDROID_MAKE_NAMES)
+
+$(ANDROID_TMP_LOCAL_SRCDIR)_android_mk_clean: FORCE
+	$(quiet) $(RM) $(ANDROID_MAKE_FILES_TO_CLEAN)
+
+
+else
+
+ANDROID_MAKE_NAMES := $(LOCAL_ANDROID_MK_PATH)/Android.mk
+ANDROID_TMP_LOCAL_SRCDIR := $(LOCAL_SRCDIR)
+ANDROID_TMP_SRCDIR := $(SRCDIR)
 ANDROID_TMP_LOCAL_INC := $(subst $(SRC_ROOT),\$$(PV_TOP),$(LOCAL_TOTAL_INCDIRS)) \$$(PV_INCLUDES)
+ANDROID_TMP_ASMDIRS := $(subst $(SRC_ROOT),\$$(PV_TOP),$(LOCAL_ASM_INCDIRS))
+ANDROID_TMP_TARGET := $(TARGET)
+
+android_clean: $(LOCAL_PATH)_android_mk_clean
+
+$(LOCAL_PATH)_android_mk_clean: ANDROID_MAKE_FILES_TO_CLEAN := $(ANDROID_MAKE_NAMES)
+
+$(LOCAL_PATH)_android_mk_clean: FORCE
+	$(quiet) $(RM) $(ANDROID_MAKE_FILES_TO_CLEAN)
+
+endif
+
+# $(warning ***** ANDROID_MAKE_NAMES = $(ANDROID_MAKE_NAMES))
+
+CUMULATIVE_MAKEFILES := $(CUMULATIVE_MAKEFILES) $(ANDROID_MAKE_NAMES)
 
 ANDROID_PATH_COMPONENTS := $(subst /, ,$(LOCAL_PATH))
 
 AND_LOCAL_ARM_MODE := $(if $(strip $(filter codecs_v2,$(ANDROID_PATH_COMPONENTS))),LOCAL_ARM_MODE := arm,)
 
-$(ANDROID_MAKE_NAMES): ANDROID_CPP_SRCS := $(if $(strip $(SRCS)),$(patsubst %,$(call go_up_two_levels,$(SRCDIR))/%,$(filter %.cpp,$(SRCS))),)
-$(ANDROID_MAKE_NAMES): ANDROID_ASM_SRCS := $(if $(strip $(SRCS)),$(patsubst %,$(call go_up_two_levels,$(SRCDIR))/%,$(filter-out %.cpp,$(SRCS))),)
-$(ANDROID_MAKE_NAMES): ANDROID_TARGET := $(if $(strip $(filter prog,$(TARGET_TYPE))),"LOCAL_MODULE :=" $(TARGET),$(if $(strip $(TARGET)),"LOCAL_MODULE :=" lib$(TARGET),))
+$(ANDROID_MAKE_NAMES): ANDROID_CPP_SRCS := $(if $(strip $(SRCS)),$(patsubst %,$(call go_up_two_levels,$(ANDROID_TMP_SRCDIR))/%,$(filter %.cpp,$(SRCS))),)
+$(ANDROID_MAKE_NAMES): ANDROID_ASM_SRCS := $(if $(strip $(SRCS)),$(patsubst %,$(call go_up_two_levels,$(ANDROID_TMP_SRCDIR))/%,$(filter-out %.cpp,$(SRCS))),)
+$(ANDROID_MAKE_NAMES): ANDROID_TARGET := $(if $(strip $(filter prog,$(TARGET_TYPE))),"LOCAL_MODULE :=" $(TARGET),$(if $(strip $(TARGET)),"LOCAL_MODULE :=" lib$(ANDROID_TMP_TARGET),))
 $(ANDROID_MAKE_NAMES): ANDROID_HDRS := $(patsubst %,$(call go_up_two_levels,$(INCSRCDIR))/%,$(HDRS))
-$(ANDROID_MAKE_NAMES): ANDROID_C_FLAGS := $(filter-out %PV_ARM_GCC_V5,$(XCPPFLAGS))
+$(ANDROID_MAKE_NAMES): ANDROID_C_FLAGS := $(filter-out %PV_ARM_GCC_V5,$(XCPPFLAGS)) $(ANDROID_TMP_ASMDIRS)
 $(ANDROID_MAKE_NAMES): ANDROID_C_INC := $(ANDROID_TMP_LOCAL_INC)
 $(ANDROID_MAKE_NAMES): ANDROID_ARM_MODE := $(AND_LOCAL_ARM_MODE)
 $(ANDROID_MAKE_NAMES): ANDROID_MAKE_TYPE := $(if $(strip $(filter prog,$(TARGET_TYPE))),BUILD_EXECUTABLE,$(if $(strip $(SRCS)),BUILD_STATIC_LIBRARY,BUILD_COPY_HEADERS))
 $(ANDROID_MAKE_NAMES): ANDROID_STATIC_LIBS := $(foreach library,$(LIBS),$(if $(findstring $(strip $(BUILD_ROOT)/installed_lib/$(BUILD_ARCH)/lib$(library)$(TARGET_NAME_SUFFIX).a), $(ALL_LIBS)),lib$(library),))
 $(ANDROID_MAKE_NAMES): ANDROID_SHARED_LIBS := $(foreach library,$(LIBS),$(if $(findstring $(strip $(BUILD_ROOT)/installed_lib/$(BUILD_ARCH)/lib$(library)$(TARGET_NAME_SUFFIX).so), $(SHARED_LIB_FULLNAMES)),lib$(library),))
+
+
 
 $(ANDROID_MAKE_NAMES): FORCE
 	$(quiet) echo "LOCAL_PATH := \$$(call my-dir)" > $@
@@ -301,13 +399,6 @@ $(ANDROID_MAKE_NAMES): FORCE
 	$(quiet) $(call include_system_extras,$(ANDROID_MAKE_TYPE),$@)
 	$(quiet) echo "" >> $@
 	$(quiet) echo "include \$$($(ANDROID_MAKE_TYPE))" >> $@
-
-android_clean: $(LOCAL_PATH)_android_mk_clean
-
-$(LOCAL_PATH)_android_mk_clean: ANDROID_MAKE_FILES_TO_CLEAN := $(ANDROID_MAKE_NAMES)
-
-$(LOCAL_PATH)_android_mk_clean: FORCE
-	$(quiet) $(RM) $(ANDROID_MAKE_FILES_TO_CLEAN)
 
 
 endif

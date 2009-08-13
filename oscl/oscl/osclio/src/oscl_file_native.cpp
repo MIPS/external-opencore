@@ -132,17 +132,17 @@ int32 OsclNativeFile::Open(const oscl_wchar *filename, uint32 mode
             return -1;
         }
 #else
-    //Convert to UTF8
-    char convfilename[OSCL_IO_FILENAME_MAXLEN];
-    if (0 == oscl_UnicodeToUTF8(filename, oscl_strlen(filename), convfilename, OSCL_IO_FILENAME_MAXLEN))
-    {
-        return -1;
-    }
+        //Convert to UTF8
+        char convfilename[OSCL_IO_FILENAME_MAXLEN];
+        if (0 == oscl_UnicodeToUTF8(filename, oscl_strlen(filename), convfilename, OSCL_IO_FILENAME_MAXLEN))
+        {
+            return -1;
+        }
 
-    if ((iFile = fopen(convfilename, openmode)) == NULL)
-    {
-        return -1;
-    }
+        if ((iFile = fopen(convfilename, openmode)) == NULL)
+        {
+            return -1;
+        }
 #endif
         return 0;
     }
@@ -313,10 +313,11 @@ int32 OsclNativeFile::Seek(TOsclFileOffset offset, Oscl_File::seek_type origin)
                 seekmode = SEEK_SET;
             else if (origin == Oscl_File::SEEKEND)
                 seekmode = SEEK_END;
+
 #if OSCL_HAS_LARGE_FILE_SUPPORT
             return fseeko(iFile, offset, seekmode);
 #else
-    return fseek(iFile, offset, seekmode);
+            return fseek(iFile, offset, seekmode);
 #endif
         }
     }
@@ -332,7 +333,7 @@ TOsclFileOffset OsclNativeFile::Tell()
 #if OSCL_HAS_LARGE_FILE_SUPPORT
         result = ftello(iFile);
 #else
-    result = ftell(iFile);
+        result = ftell(iFile);
 #endif
     }
     return result;

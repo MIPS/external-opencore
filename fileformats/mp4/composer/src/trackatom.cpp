@@ -44,7 +44,6 @@ PVA_FF_TrackAtom::PVA_FF_TrackAtom(int32 type,
     _success = true;
     FIRST_SAMPLE = true;
     _intialTrackTimeOffsetInMilliSeconds = 0;
-
     _eList = NULL;
     _mediaType = type;
 
@@ -110,19 +109,18 @@ PVA_FF_TrackAtom::~PVA_FF_TrackAtom()
 
 void
 PVA_FF_TrackAtom::nextSample(int32 mediaType,
-                             void *psample,
-                             uint32 size,
-                             uint32 ts,
-                             uint8 flags,
-                             uint32 baseOffset,
+                             PVMP4FFComposerSampleParam *pSampleParam,
                              bool oChunkStart)
 {
+    if (pSampleParam == NULL)
+        return;
+
     uint32 ts_in_milliseconds = 0;
     uint32 mediaTimeScale = getMediaTimeScale();
 
     if (mediaTimeScale != 0)
     {
-        ts_in_milliseconds = (uint32)((ts * 1000.0f) / mediaTimeScale);
+        ts_in_milliseconds = (uint32)((pSampleParam->_timeStamp * 1000.0f) / mediaTimeScale);
 
         // Add sample to track header so can update its _duration
         // which is supposed to be in movie time scale
@@ -132,7 +130,7 @@ PVA_FF_TrackAtom::nextSample(int32 mediaType,
     if (FIRST_SAMPLE)
     {
         FIRST_SAMPLE = false;
-        if (ts != 0)
+        if (pSampleParam->_timeStamp != 0)
         {
             PV_MP4_FF_NEW(fp->auditCB, PVA_FF_EditAtom, (), _eList);
 
@@ -149,36 +147,34 @@ PVA_FF_TrackAtom::nextSample(int32 mediaType,
         }
     }
 
-    _pmediaAtom->nextSample(mediaType, psample, size, ts,
-                            flags, baseOffset, oChunkStart);
+    _pmediaAtom->nextSample(mediaType, pSampleParam, oChunkStart);
 }
+
 
 void
 PVA_FF_TrackAtom::nextTextSample(int32 mediaType,
-                                 void *psample,
-                                 uint32 size,
-                                 uint32 ts,
-                                 uint8 flags,
-                                 int32 index,
-                                 uint32 baseOffset,
+                                 PVMP4FFComposerSampleParam *pSampleParam,
                                  bool oChunkStart)
 {
+    if (pSampleParam == NULL)
+        return;
+
     uint32 ts_in_milliseconds = 0;
     uint32 mediaTimeScale = getMediaTimeScale();
 
     if (mediaTimeScale != 0)
     {
-        ts_in_milliseconds = (uint32)((ts * 1000.0f) / mediaTimeScale);
+        ts_in_milliseconds = (uint32)((pSampleParam->_timeStamp * 1000.0f) / mediaTimeScale);
 
         // Add sample to track header so can update its _duration
         // which is supposed to be in movie time scale
-        _ptrackHeader->addSample(ts_in_milliseconds);
+        _ptrackHeader->addSample(ts_in_milliseconds, pSampleParam->_sampleDuration);
     }
 
     if (FIRST_SAMPLE)
     {
         FIRST_SAMPLE = false;
-        if (ts != 0)
+        if (pSampleParam->_timeStamp != 0)
         {
             PV_MP4_FF_NEW(fp->auditCB, PVA_FF_EditAtom, (), _eList);
 
@@ -195,100 +191,7 @@ PVA_FF_TrackAtom::nextTextSample(int32 mediaType,
         }
     }
 
-    _pmediaAtom->nextTextSample(mediaType, psample, size, ts,
-                                flags, index, baseOffset, oChunkStart);
-}
-
-void
-PVA_FF_TrackAtom::nextSample(int32 mediaType,
-                             Oscl_Vector <OsclMemoryFragment, OsclMemAllocator>& fragmentList,
-                             uint32 size,
-                             uint32 ts,
-                             uint8 flags,
-                             uint32 baseOffset,
-                             bool oChunkStart)
-{
-    uint32 ts_in_milliseconds = 0;
-    uint32 mediaTimeScale = getMediaTimeScale();
-
-    if (mediaTimeScale != 0)
-    {
-        ts_in_milliseconds = (uint32)((ts * 1000.0f) / mediaTimeScale);
-
-        // Add sample to track header so can update its _duration
-        // which is supposed to be in movie time scale
-        _ptrackHeader->addSample(ts_in_milliseconds);
-    }
-
-    if (FIRST_SAMPLE)
-    {
-        FIRST_SAMPLE = false;
-        if (ts != 0)
-        {
-            PV_MP4_FF_NEW(fp->auditCB, PVA_FF_EditAtom, (), _eList);
-
-            _eList->setParent(this);
-
-            //Edit durations are sposed to be movie time scale
-            _eList->addEmptyEdit(ts_in_milliseconds);
-
-            _intialTrackTimeOffsetInMilliSeconds = ts_in_milliseconds;
-        }
-        else
-        {
-            _eList = NULL;
-        }
-    }
-
-    _pmediaAtom->nextSample(mediaType, fragmentList, size, ts,
-                            flags, baseOffset, oChunkStart);
-
-}
-
-void
-PVA_FF_TrackAtom::nextTextSample(int32 mediaType,
-                                 Oscl_Vector <OsclMemoryFragment, OsclMemAllocator>& fragmentList,
-                                 uint32 size,
-                                 uint32 ts,
-                                 uint8 flags,
-                                 int32 index,
-                                 uint32 baseOffset,
-                                 bool oChunkStart)
-{
-    uint32 ts_in_milliseconds = 0;
-    uint32 mediaTimeScale = getMediaTimeScale();
-
-    if (mediaTimeScale != 0)
-    {
-        ts_in_milliseconds = (uint32)((ts * 1000.0f) / mediaTimeScale);
-
-        // Add sample to track header so can update its _duration
-        // which is supposed to be in movie time scale
-        _ptrackHeader->addSample(ts_in_milliseconds);
-    }
-
-    if (FIRST_SAMPLE)
-    {
-        FIRST_SAMPLE = false;
-        if (ts != 0)
-        {
-            PV_MP4_FF_NEW(fp->auditCB, PVA_FF_EditAtom, (), _eList);
-
-            _eList->setParent(this);
-
-            //Edit durations are sposed to be movie time scale
-            _eList->addEmptyEdit(ts_in_milliseconds);
-
-            _intialTrackTimeOffsetInMilliSeconds = ts_in_milliseconds;
-        }
-        else
-        {
-            _eList = NULL;
-        }
-    }
-
-    _pmediaAtom->nextTextSample(mediaType, fragmentList, size, ts,
-                                flags, index, baseOffset, oChunkStart);
+    _pmediaAtom->nextTextSample(mediaType, pSampleParam, oChunkStart);
 
 }
 

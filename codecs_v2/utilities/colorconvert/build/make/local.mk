@@ -43,7 +43,7 @@ HDRS :=  cczoomrotationbase.h \
 	ccyuv420toyuv420semi.h
 
 ifneq ($(ARCHITECTURE),android)
-SRCS += cczoomrotation12.h \
+HDRS += cczoomrotation12.h \
         cczoomrotation24.h \
         cczoomrotation32.h \
 	ccrgb24torgb16.h \

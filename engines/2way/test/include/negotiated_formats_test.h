@@ -17,58 +17,51 @@
  */
 #ifndef NEGOTIATED_FORMATS_TEST_H_INCLUDED
 #define NEGOTIATED_FORMATS_TEST_H_INCLUDED
-
 #include "av_test.h"
 
-//
-//
-//
-// NOTE: This file is a work-in-progress
+#ifndef PV_2WAY_MIO_H_INCLUDED
+#include "pv_2way_mio.h"
+#endif
+
+#include "pv_2way_test_extension_interface.h"
 
 class negotiated_formats_test : public av_test
 {
     public:
         negotiated_formats_test(bool aUseProxy = false)
-                : av_test(aUseProxy, 1)
+                : av_test(aUseProxy),
+                iQueryTestInterfaceCmdId(0),
+                iTempTestConfigInterface(NULL),
+                iTestConfigInterface(NULL)
         {
-            iUsingAudio = true;
-            iUsingVideo = true;
         }
 
         ~negotiated_formats_test()
         {
         }
 
-        /*        void test();
+        // need to store the expected formats that we'll find
+        void AddExpectedFormat(TPVDirection aDir, PV2WayMediaType aType, const char* const aFormat);
 
-                void Run();
+        void RstCmdCompleted();
 
-                void DoCancel();
+    protected:
+        void test();
 
+    private:
+        void TimerCallback();
 
-                void TimerCallback();
+        void CommandCompleted(const PVCmdResponse& aResponse);
+        void CreateParts();
+        virtual void ConnectSucceeded();
+        PVCommandId iQueryTestInterfaceCmdId;
+        PVInterface* iTempTestConfigInterface;
+        PV2WayTestExtensionInterface* iTestConfigInterface;
 
-            private:
-                virtual void ConnectSucceeded();
-                bool start_async_test();
-                virtual void InitFailed();
-                virtual void ConnectFailed();
-                virtual void AudioAddSinkCompleted();
-                virtual void AudioAddSourceCompleted();
-                virtual void VideoAddSinkFailed();
-                virtual void VideoAddSinkSucceeded();
-                virtual void VideoAddSourceSucceeded();
-                virtual void VideoAddSourceFailed();
-                virtual void RstCmdCompleted();
-
-                virtual void AudioRemoveSourceCompleted();
-                virtual void AudioRemoveSinkCompleted();
-
-                virtual void VideoRemoveSourceCompleted();
-                virtual void VideoRemoveSinkCompleted();
-
-                void CheckForTimeToDisconnect();
-        */
+        Oscl_Vector<FormatCapabilityInfo, OsclMemAllocator> iInAudFormatCapability;
+        Oscl_Vector<FormatCapabilityInfo, OsclMemAllocator> iOutAudFormatCapability;
+        Oscl_Vector<FormatCapabilityInfo, OsclMemAllocator> iInVidFormatCapability;
+        Oscl_Vector<FormatCapabilityInfo, OsclMemAllocator> iOutVidFormatCapability;
 };
 
 

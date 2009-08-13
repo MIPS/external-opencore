@@ -651,28 +651,28 @@ OSCL_EXPORT_REF Bool PVCleanUpVideoDecoder(VideoDecControls *decCtrl)
             {
                 video->prevEnhcVop->uChan = NULL;
                 video->prevEnhcVop->vChan = NULL;
-    if (video->prevEnhcVop->yChan) oscl_free(video->prevEnhcVop->yChan);
-    oscl_free(video->prevEnhcVop);
+                if (video->prevEnhcVop->yChan) oscl_free(video->prevEnhcVop->yChan);
+                oscl_free(video->prevEnhcVop);
             }
         }
         if (video->currVop)
         {
 
 #ifndef PV_MEMORY_POOL
-    video->currVop->uChan = NULL;
-    video->currVop->vChan = NULL;
-    if (video->currVop->yChan)
-        oscl_free(video->currVop->yChan);
+            video->currVop->uChan = NULL;
+            video->currVop->vChan = NULL;
+            if (video->currVop->yChan)
+                oscl_free(video->currVop->yChan);
 #endif
             oscl_free(video->currVop);
         }
         if (video->prevVop)
         {
 #ifndef PV_MEMORY_POOL
-    video->prevVop->uChan = NULL;
-    video->prevVop->vChan = NULL;
-    if (video->prevVop->yChan)
-        oscl_free(video->prevVop->yChan);
+            video->prevVop->uChan = NULL;
+            video->prevVop->vChan = NULL;
+            if (video->prevVop->yChan)
+                oscl_free(video->prevVop->yChan);
 #endif
             oscl_free(video->prevVop);
         }

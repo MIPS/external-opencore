@@ -30,8 +30,9 @@
 #ifndef PVMI_CONFIG_AND_CAPABILITY_UTILS_H_INCLUDED
 #include "pvmi_config_and_capability_utils.h"
 #endif
-
-typedef OsclMemAllocator PVMFAACParserNodeAllocator;
+#ifndef PVMF_NODE_INTERFACE_IMPL_H_INCLUDED
+#include "pvmf_node_interface_impl.h"
+#endif
 
 #define PVMF_AACPARSERNODE_LOGERROR(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_REL,iLogger,PVLOGMSG_ERR,m);
 #define PVMF_AACPARSERNODE_LOGWARNING(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_REL,iLogger,PVLOGMSG_WARNING,m);
@@ -41,18 +42,14 @@ typedef OsclMemAllocator PVMFAACParserNodeAllocator;
 #define PVMF_AACPARSERNODE_LOGINFO(m) PVMF_AACPARSERNODE_LOGINFOMED(m)
 #define PVMF_AACPARSERNODE_LOGSTACKTRACE(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG,iLogger,PVLOGMSG_STACK_TRACE,m);
 #define PVMF_AACPARSERNODE_LOGDATATRAFFIC(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_REL,iDataPathLogger,PVLOGMSG_INFO,m);
-#define PVMF_AACPARSERNODE_LOGCLOCK(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_REL,iClockLogger,PVLOGMSG_INFO,m);
 #define PVMF_AACPARSERNODE_LOGBIN(iPortLogger, m) PVLOGGER_LOGBIN(PVLOGMSG_INST_LLDBG, iPortLogger, PVLOGMSG_ERR, m);
-
-
-
-
 
 class PVMFAACFFParserNode;
 class PVAACFFNodeTrackPortInfo;
 
-class PVMFAACFFParserOutPort : public PvmfPortBaseImpl
-        , public PvmiCapabilityAndConfig
+class PVMFAACFFParserOutPort
+        : public PvmfPortBaseImpl
+        , public PvmiCapabilityAndConfigBase
 {
     public:
         /**
@@ -62,7 +59,7 @@ class PVMFAACFFParserOutPort : public PvmfPortBaseImpl
          * @param aNode Container node
          */
         PVMFAACFFParserOutPort(int32 aTag
-                               , PVMFNodeInterface* aNode);
+                               , PVMFNodeInterfaceImpl* aNode);
 
         /**
          * Constructor that allows the node to configure the data queues of this port.
@@ -107,48 +104,6 @@ class PVMFAACFFParserOutPort : public PvmfPortBaseImpl
         PVMFStatus getParametersSync(PvmiMIOSession aSession, PvmiKeyType aIdentifier,
                                      PvmiKvp*& aParameters, int& num_parameter_elements,    PvmiCapabilityContext aContext);
         PVMFStatus releaseParameters(PvmiMIOSession aSession, PvmiKvp* aParameters, int num_elements);
-        void setParametersSync(PvmiMIOSession aSession, PvmiKvp* aParameters,
-                               int num_elements, PvmiKvp * & aRet_kvp);
-        PVMFStatus verifyParametersSync(PvmiMIOSession aSession, PvmiKvp* aParameters, int num_elements);
-
-        /* Unsupported PvmiCapabilityAndConfig methods */
-        void setObserver(PvmiConfigAndCapabilityCmdObserver* aObserver)
-        {
-            OSCL_UNUSED_ARG(aObserver);
-        };
-        void createContext(PvmiMIOSession aSession, PvmiCapabilityContext& aContext)
-        {
-            OSCL_UNUSED_ARG(aSession);
-            OSCL_UNUSED_ARG(aContext);
-        };
-        void setContextParameters(PvmiMIOSession aSession, PvmiCapabilityContext& aContext,
-                                  PvmiKvp* aParameters, int num_parameter_elements)
-        {
-            OSCL_UNUSED_ARG(aSession);
-            OSCL_UNUSED_ARG(aContext);
-            OSCL_UNUSED_ARG(aParameters);
-            OSCL_UNUSED_ARG(num_parameter_elements);
-        };
-        void DeleteContext(PvmiMIOSession aSession, PvmiCapabilityContext& aContext)
-        {
-            OSCL_UNUSED_ARG(aSession);
-            OSCL_UNUSED_ARG(aContext);
-        };
-        PVMFCommandId setParametersAsync(PvmiMIOSession aSession, PvmiKvp* aParameters,
-                                         int num_elements, PvmiKvp*& aRet_kvp, OsclAny* context = NULL)
-        {
-            OSCL_UNUSED_ARG(aRet_kvp);
-            OSCL_UNUSED_ARG(aSession);
-            OSCL_UNUSED_ARG(aParameters);
-            OSCL_UNUSED_ARG(num_elements);
-            OSCL_UNUSED_ARG(context);
-            return -1;
-        }
-        uint32 getCapabilityMetric(PvmiMIOSession aSession)
-        {
-            OSCL_UNUSED_ARG(aSession);
-            return 0;
-        }
 
 
     private:
@@ -162,12 +117,9 @@ class PVMFAACFFParserOutPort : public PvmfPortBaseImpl
 
 
         PVLogger *iLogger;
-        uint32 iNumFramesGenerated; //number of source frames generated.
-        uint32 iNumFramesConsumed; //number of frames consumed & discarded.
 
         PVMFAACFFParserNode* iAACParserNode;
         friend class Oscl_TAlloc<PVMFAACFFParserOutPort, OsclMemAllocator>;
-//  friend class PVMFSampleNodeCustomInterface1Impl;
 };
 
 #endif // PVMF_AACFFPARSER_OUTPORT_H_INCLUDED

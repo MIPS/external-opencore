@@ -82,6 +82,8 @@ PVA_FF_InterLeaveBuffer::PVA_FF_InterLeaveBuffer(uint32 mediaType,
     PV_MP4_FF_NEW(fp->auditCB, uint32VecType, (), _pSampleSizeVec);
     PV_MP4_FF_NEW(fp->auditCB, uint8VecType, (), _pSampleFlagsVec);
     PV_MP4_FF_NEW(fp->auditCB, int32VecType, (), _pIndexVec);
+    PV_MP4_FF_NEW(fp->auditCB, uint32VecType, (), _pSampleDurationVec);
+
 
 }
 
@@ -98,16 +100,18 @@ PVA_FF_InterLeaveBuffer::~PVA_FF_InterLeaveBuffer()
         PV_MP4_FF_TEMPLATED_DELETE(NULL, uint8VecType, Oscl_Vector, _pSampleFlagsVec);
     if (_pIndexVec)
         PV_MP4_FF_TEMPLATED_DELETE(NULL, int32VecType, Oscl_Vector, _pIndexVec);
+    if (_pSampleDurationVec)
+        PV_MP4_FF_TEMPLATED_DELETE(NULL, uint32VecType, Oscl_Vector, _pSampleDurationVec);
 }
 
 // given sample is added to interleave buffer and
 // sample parameters stored in parameter vectors
 bool
-PVA_FF_InterLeaveBuffer::addSampleToInterLeaveBuffer(
-    Oscl_Vector < OsclMemoryFragment,
-    OsclMemAllocator > & fragmentList,
-    uint32 size, uint32 ts, uint8 flags, int32 index)
+PVA_FF_InterLeaveBuffer::addSampleToInterLeaveBuffer(PVMP4FFComposerSampleParam *pSampleParam)
 {
+    if (pSampleParam == NULL)
+        return false;
+
     // temporary variables
     uint32 bytesWritten = 0;
     uint32 length = 0;
@@ -118,42 +122,42 @@ PVA_FF_InterLeaveBuffer::addSampleToInterLeaveBuffer(
     {
         uint8* currPtr = _interLeaveBuffer + _currInterLeaveBufferSize;
 
-        if (checkInterLeaveBufferSpace(size))
+        if (checkInterLeaveBufferSpace(pSampleParam->_sampleSize))
         {
             if (_mediaType == MEDIA_TYPE_VISUAL && _codecType == CODEC_TYPE_AVC_VIDEO)
             {
-                for (ii = 0; ii < fragmentList.size(); ii++)
+                for (ii = 0; ii < pSampleParam->_fragmentList.size(); ii++)
                 {
                     // read NAL length in Big Endian format
-                    stream.Attach((OsclAny*) &(fragmentList[ii].len), 4);
+                    stream.Attach((OsclAny*) &(pSampleParam->_fragmentList[ii].len), 4);
                     stream >> length;
 
                     // compose nal length in two bytes
                     oscl_memcpy((OsclAny*)(currPtr + bytesWritten), ((uint8*)&length), 4);
 
                     // write NAL uint
-                    oscl_memcpy((OsclAny*)(currPtr + bytesWritten + 4), (OsclAny*)fragmentList[ii].ptr, fragmentList[ii].len);
-                    bytesWritten += (fragmentList[ii].len + 4);
+                    oscl_memcpy((OsclAny*)(currPtr + bytesWritten + 4), (OsclAny*)pSampleParam->_fragmentList[ii].ptr, pSampleParam->_fragmentList[ii].len);
+                    bytesWritten += (pSampleParam->_fragmentList[ii].len + 4);
                 }
             }
             else
             {
-                for (ii = 0; ii < fragmentList.size(); ii++)
+                for (ii = 0; ii < pSampleParam->_fragmentList.size(); ii++)
                 {
-                    oscl_memcpy(currPtr + bytesWritten, fragmentList[ii].ptr, fragmentList[ii].len);
-                    bytesWritten += fragmentList[ii].len;
+                    oscl_memcpy(currPtr + bytesWritten, pSampleParam->_fragmentList[ii].ptr, pSampleParam->_fragmentList[ii].len);
+                    bytesWritten += pSampleParam->_fragmentList[ii].len;
                 }
             }
 
-            _currInterLeaveBufferSize += size;
-            _lastInterLeaveBufferTS = ts;
+            _currInterLeaveBufferSize += pSampleParam->_sampleSize;
+            _lastInterLeaveBufferTS = pSampleParam->_timeStamp;
 
             //Store meta data params
-            _pTimeStampVec->push_back(ts);
-            _pSampleSizeVec->push_back(size);
-            _pSampleFlagsVec->push_back(flags);
-            _pIndexVec->push_back(index);
-
+            _pTimeStampVec->push_back(pSampleParam->_timeStamp);
+            _pSampleSizeVec->push_back(pSampleParam->_sampleSize);
+            _pSampleFlagsVec->push_back(pSampleParam->_flags);
+            _pIndexVec->push_back(pSampleParam->_index);
+            _pSampleDurationVec->push_back(pSampleParam->_sampleDuration);
             return true;
         }
     }
@@ -198,6 +202,11 @@ PVA_FF_InterLeaveBuffer::getTextIndexVec()
     return _pIndexVec;
 }
 
+Oscl_Vector<uint32, OsclMemAllocator>*
+PVA_FF_InterLeaveBuffer::getSampleDurationVec()
+{
+    return _pSampleDurationVec;
+}
 
 // reset interleave buffer, reset parameter vectors
 uint8*
@@ -214,11 +223,13 @@ PVA_FF_InterLeaveBuffer::resetInterLeaveBuffer(uint32 &chunkSize)
     PV_MP4_FF_TEMPLATED_DELETE(NULL, uint32VecType, Oscl_Vector, _pSampleSizeVec);
     PV_MP4_FF_TEMPLATED_DELETE(NULL, uint8VecType, Oscl_Vector, _pSampleFlagsVec);
     PV_MP4_FF_TEMPLATED_DELETE(NULL, int32VecType, Oscl_Vector, _pIndexVec);
+    PV_MP4_FF_TEMPLATED_DELETE(NULL, uint32VecType, Oscl_Vector, _pSampleDurationVec);
 
     PV_MP4_FF_NEW(fp->auditCB, uint32VecType, (), _pTimeStampVec);
     PV_MP4_FF_NEW(fp->auditCB, uint32VecType, (), _pSampleSizeVec);
     PV_MP4_FF_NEW(fp->auditCB, uint8VecType, (), _pSampleFlagsVec);
     PV_MP4_FF_NEW(fp->auditCB, int32VecType, (), _pIndexVec);
+    PV_MP4_FF_NEW(fp->auditCB, uint32VecType, (), _pSampleDurationVec);
 
     return (_interLeaveBuffer);
 }

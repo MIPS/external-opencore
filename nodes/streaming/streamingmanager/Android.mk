@@ -8,12 +8,14 @@ LOCAL_SRC_FILES := \
  	src/../plugins/common/src/pvmf_sm_fsp_base_impl.cpp \
  	src/../plugins/common/src/pvmf_sm_fsp_base_cpm_support.cpp \
  	src/../plugins/rtspunicast/src/pvmf_sm_rtsp_unicast_node_factory.cpp \
- 	src/../plugins/rtspunicast/src/pvmf_sm_fsp_rtsp_unicast.cpp
+ 	src/../plugins/rtspunicast/src/pvmf_sm_fsp_rtsp_unicast.cpp \
+ 	src/../plugins/rtsptunicast/src/pvmf_sm_rtspt_unicast_node_factory.cpp \
+ 	src/../plugins/rtsptunicast/src/pvmf_sm_fsp_rtspt_unicast.cpp
 
 
 LOCAL_MODULE := libpvstreamingmanagernode
 
-LOCAL_CFLAGS :=  $(PV_CFLAGS)
+LOCAL_CFLAGS :=   $(PV_CFLAGS)
 
 
 
@@ -50,6 +52,7 @@ LOCAL_C_INCLUDES := \
  	$(PV_TOP)/nodes/streaming/jitterbuffernode/jitterbuffer/rtp/include \
  	$(PV_TOP)/protocols/rtsp_client_engine/src \
  	$(PV_TOP)/nodes/streaming/streamingmanager/plugins/rtspunicast/include \
+ 	$(PV_TOP)/nodes/streaming/streamingmanager/plugins/rtsptunicast/include \
  	$(PV_TOP)/nodes/streaming/jitterbuffernode/jitterbuffer/rtp/include \
  	$(PV_INCLUDES)
 

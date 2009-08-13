@@ -345,9 +345,14 @@ OMX_BOOL AvcDecoder_OMX::AvcDecodeVideo_OMX(OMX_U8* aOutBuffer, OMX_U32* aOutput
             (*iFrameCount)++;
         }
 
-        if ((AVCDEC_NO_DATA == Status) || (AVCDEC_NOT_SUPPORTED == Status) ||
-                (AVCDEC_NO_BUFFER == Status) || (AVCDEC_MEMORY_FAIL == Status) ||
-                (AVCDEC_FAIL == Status))
+        if (AVCDEC_NOT_SUPPORTED == Status)
+        {
+            aOutputLength = 0;
+            aOutBuffer = NULL;
+            return OMX_TRUE;
+        }
+        else if ((AVCDEC_NO_DATA == Status) || (AVCDEC_FAIL == Status) ||
+                 (AVCDEC_NO_BUFFER == Status) || (AVCDEC_MEMORY_FAIL == Status))
         {
             if (AVCDEC_FAIL == Status)
             {

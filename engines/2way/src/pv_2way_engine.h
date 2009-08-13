@@ -62,8 +62,13 @@
 #include "pv_2way_test_extension_interface.h"
 #endif
 
-#include "pv_2way_codecspecifier_interface.h"
+#ifndef OSCL_MUTEX_H_INCLUDED
+#include "oscl_mutex.h"
+#endif
 
+#ifndef PV_2WAY_CODECSPECIFIER_H_INCLUDED
+#include "pv_2way_codecspecifier_interface.h"
+#endif
 
 // COMM and Stack related
 #ifndef NO_2WAY_324
@@ -337,21 +342,6 @@ enum TPV2WayCommandType
     PVT_COMMAND_CANCEL_ALL_COMMANDS,
 
     PVT_LAST_COMMAND
-};
-
-// This function returns a priority index for each format type.
-uint32 GetPriorityIndexForPVMFFormatType(PVMFFormatType aFormatType);
-
-//Priority to MP4 over H.263
-template<class Alloc> struct PV2WayRegFormatTypeCompare
-{
-    bool operator()(const PVMFFormatType& x, const PVMFFormatType& y) const
-    {
-        uint32 x_val = GetPriorityIndexForPVMFFormatType(x);
-        uint32 y_val = GetPriorityIndexForPVMFFormatType(y);
-
-        return (x_val < y_val) ? true : false;
-    }
 };
 
 class TPV2WayNotificationInfo
@@ -798,7 +788,7 @@ class CPV324m2Way : OsclActiveObject,
 
 
         // test extension interface
-        bool AcceptableFormatsMatch(
+        bool NegotiatedFormatsMatch(
             Oscl_Vector<FormatCapabilityInfo, OsclMemAllocator>& iInAudFormatCapability,
             Oscl_Vector<FormatCapabilityInfo, OsclMemAllocator>& iOutAudFormatCapability,
             Oscl_Vector<FormatCapabilityInfo, OsclMemAllocator>& iInVidFormatCapability,
@@ -878,19 +868,19 @@ class CPV324m2Way : OsclActiveObject,
         void SetPreferredCodecs(PV2WayInitInfo& aInitInfo);
 
         void SelectPreferredCodecs(TPVDirection aDir,
-                                   Oscl_Vector<CodecSpecifier*, OsclMemAllocator>& aAppAudioFormats,
-                                   Oscl_Vector<CodecSpecifier*, OsclMemAllocator>& aAppVideoFormats);
+                                   Oscl_Vector<PVMFFormatType, OsclMemAllocator>& aAppAudioFormats,
+                                   Oscl_Vector<PVMFFormatType, OsclMemAllocator>& aAppVideoFormats);
 
 
-        CodecSpecifier* FindFormatType(PVMFFormatType aFormatType,
-                                       Oscl_Vector<CodecSpecifier*, OsclMemAllocator>& aAudioFormats,
-                                       Oscl_Vector<CodecSpecifier*, OsclMemAllocator>& aVideoFormats);
+        PVMFFormatType FindFormatType(PVMFFormatType aFormatType,
+                                      Oscl_Vector<PVMFFormatType, OsclMemAllocator>& aAudioFormats,
+                                      Oscl_Vector<PVMFFormatType, OsclMemAllocator>& aVideoFormats);
         bool IsSupported(const PVMFFormatType& aInputFmtType,
                          const PVMFFormatType& aOutputFmtType);
 
         const char* CanConvertFormat(TPVDirection aDir,
                                      PVMFFormatType aThisFmtType,
-                                     Oscl_Vector<CodecSpecifier*, OsclMemAllocator>& aThatFormatList);
+                                     Oscl_Vector<PVMFFormatType, OsclMemAllocator>& aThatFormatList);
 
         void DoSelectFormat(TPVDirection aDir,
                             PVMFFormatType aFormatType,
@@ -952,6 +942,10 @@ class CPV324m2Way : OsclActiveObject,
         void SupportedSinkNodeInterfaces(TPV2WayNode* aNode);
         typedef PV2WayRegFormatTypeCompare<OsclMemAllocator> pvmf_format_type_key_compare_class;
 
+        bool NegotiatedFormatsMatch(
+            Oscl_Vector<FormatCapabilityInfo, OsclMemAllocator>& aInFormatCapability,
+            Oscl_Map < PVMFFormatType, FormatCapabilityInfo,
+            OsclMemAllocator, pvmf_format_type_key_compare_class > & aFormats);
 
         void ConvertMapToVector(Oscl_Map<PVMFFormatType, FormatCapabilityInfo, OsclMemAllocator, pvmf_format_type_key_compare_class>& aCodecs, Oscl_Vector<FormatCapabilityInfo, OsclMemAllocator>& aFormatCapability);
 
@@ -1243,6 +1237,7 @@ class CPV324m2Way : OsclActiveObject,
         TPV2WayCmdInfo *iAddDataSourceVideoCmd;
 
         int32 iReferenceCount;
+
 };
 
 #endif

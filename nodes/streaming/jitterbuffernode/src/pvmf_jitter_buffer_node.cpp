@@ -220,7 +220,12 @@ void PVMFJitterBufferNode::ResetNodeParams(bool aReleaseMemory)
             if (pPortParams->iTag == PVMF_JITTER_BUFFER_PORT_TYPE_INPUT)
             {
                 if (ipJitterBufferFactory)
+                {
+                    IPayloadParser* payLoadParser = NULL;
+                    pPortParams->ipJitterBuffer->getPayloadParser(payLoadParser);
+                    PVMFJitterBufferMisc::DestroyPayloadParser(iPayloadParserRegistry, pPortParams->iMimeType.get_cstr(), payLoadParser);
                     ipJitterBufferFactory->Destroy(pPortParams->ipJitterBuffer);
+                }
             }
 
             OSCL_DELETE(&pPortParams->irPort);
@@ -230,6 +235,8 @@ void PVMFJitterBufferNode::ResetNodeParams(bool aReleaseMemory)
         iPortVector.clear();
         iPortVector.Reconstruct();
     }
+
+    iPayloadParserRegistry = NULL;
 
     PVMF_JBNODE_LOGINFO((0, "PVMFJitterBufferNode::ResetNodeParams Out -"));
     return;
@@ -1030,8 +1037,22 @@ bool PVMFJitterBufferNode::PrepareForRepositioning(bool oUseExpectedClientClockV
 
 bool PVMFJitterBufferNode::SetPortSSRC(PVMFPortInterface* aPort, uint32 aSSRC)
 {
+    bool retval = false;
     PVMF_JBNODE_LOGINFO((0, "PVMFJitterBufferNode::SetPortSSRC aPort[%x], aSSRC[%d]", aPort, aSSRC));
-    return ipJitterBufferMisc->SetPortSSRC(aPort, aSSRC);
+    if (aPort)
+    {
+        Oscl_Vector<PVMFJitterBufferPortParams*, OsclMemAllocator>::const_iterator iter;
+        for (iter = iPortParamsQueue.begin(); iter != iPortParamsQueue.end() ; ++iter)
+        {
+            if (iter && (*iter) && (&((*iter)->irPort) == aPort))
+            {
+                retval = true;
+                ipJitterBufferMisc->SetPortSSRC(aPort, aSSRC);
+                break;
+            }
+        }
+    }
+    return retval;
 }
 
 bool PVMFJitterBufferNode::SetPortRTPParams(PVMFPortInterface* aPort,
@@ -1152,6 +1173,38 @@ PVMFStatus PVMFJitterBufferNode::SetServerInfo(PVMFJitterBufferFireWallPacketInf
         }
     }
     return PVMFSuccess;
+}
+
+bool PVMFJitterBufferNode::setPortMediaParams(PVMFPortInterface* aPort,
+        mediaInfo* aMediaInfo)
+{
+    bool retval = false;
+
+    if (ipJitterBufferMisc)
+    {
+        retval = ipJitterBufferMisc->setPortMediaParams(aPort, aMediaInfo);
+    }
+
+    return retval;
+}
+
+void PVMFJitterBufferNode::setPayloadParserRegistry(PayloadParserRegistry* aRegistry)
+{
+    iPayloadParserRegistry = aRegistry;
+}
+
+PVMFStatus PVMFJitterBufferNode::setPortDataLogging(bool logEnable, OSCL_String* logPath)
+{
+    PVMFStatus status = PVMFFailure;
+    Oscl_Vector<PVMFJitterBufferPortParams*, OsclMemAllocator>::iterator iter;
+    for (iter = iPortParamsQueue.begin(); iter != iPortParamsQueue.end(); iter++)
+    {
+        if (iter && (*iter) && ((*iter)->ipJitterBuffer) && (PVMF_JITTER_BUFFER_PORT_TYPE_INPUT == (*iter)->iTag))
+        {
+            (*iter)->ipJitterBuffer->SetDataLogging(logEnable, logPath);
+        }
+    }
+    return status;
 }
 
 PVMFStatus PVMFJitterBufferNode::NotifyOutOfBandEOS()
@@ -1307,20 +1360,18 @@ void PVMFJitterBufferNode::FlushJitterBuffer()
     }
 }
 
-PVMFStatus PVMFJitterBufferNode::SetInputMediaHeaderPreParsed(PVMFPortInterface* aPort,
+void PVMFJitterBufferNode::SetInputMediaHeaderPreParsed(PVMFPortInterface* aPort,
         bool aHeaderPreParsed)
 {
-    PVMFStatus status = PVMFFailure;
     PVMFJitterBufferPort *port = OSCL_STATIC_CAST(PVMFJitterBufferPort*, aPort);
     if (port)
     {
         PVMFJitterBufferPortParams* portParams = port->GetPortParams();
         if (portParams && portParams->ipJitterBuffer)
         {
-            status = portParams->ipJitterBuffer->SetInputPacketHeaderPreparsed(aHeaderPreParsed);
+            portParams->ipJitterBuffer->SetInputPacketHeaderPreparsed(aHeaderPreParsed);
         }
     }
-    return status;
 }
 
 PVMFStatus PVMFJitterBufferNode::HasSessionDurationExpired(bool& aExpired)
@@ -1717,16 +1768,16 @@ PVMFStatus PVMFJitterBufferNode::ProcessIncomingMsg(PVMFJitterBufferPortParams* 
 
     aPortParams->iNumMediaMsgsRecvd++;
 
-    if (aPortParams->iMonitorForRemoteActivity == true)
-    {
-        CancelEventCallBack(JB_INCOMING_MEDIA_INACTIVITY_DURATION_EXPIRED);
-        RequestEventCallBack(JB_INCOMING_MEDIA_INACTIVITY_DURATION_EXPIRED);
-    }
-
     switch (aPortParams->iTag)
     {
         case PVMF_JITTER_BUFFER_PORT_TYPE_INPUT:
         {
+
+            if (aPortParams->iMonitorForRemoteActivity == true)
+            {
+                CancelEventCallBack(JB_INCOMING_MEDIA_INACTIVITY_DURATION_EXPIRED);
+                RequestEventCallBack(JB_INCOMING_MEDIA_INACTIVITY_DURATION_EXPIRED);
+            }
             /* Parse packet header - mainly to retrieve time stamp */
             PVMFJitterBuffer* jitterBuffer = aPortParams->ipJitterBuffer;
             if (jitterBuffer == NULL)
@@ -1954,7 +2005,6 @@ PVMFJitterBufferNode::SendData(PVMFPortInterface* aPort)
 
         portParamsPtr->iCanReceivePktFromJB = false;
         jitterBuffer->NotifyCanRetrievePacket();
-        return PVMFErrNotReady;
     }
 
     return status;
@@ -2500,6 +2550,7 @@ void PVMFJitterBufferNode::DoRequestPort(PVMFJitterBufferNodeCommand& aCmd)
         {
             jbPtr->SetBroadCastSession();
         }
+        jbPtr->setPayloadParser(PVMFJitterBufferMisc::CreatePayloadParser(iPayloadParserRegistry, pPortParams->iMimeType.get_cstr()));
     }
 
     if (!PushPortParamsToQ(pPortParams))
@@ -2613,6 +2664,9 @@ void PVMFJitterBufferNode::DoReleasePort(PVMFJitterBufferNodeCommand& aCmd)
             {
                 if (pPortParams->iTag == PVMF_JITTER_BUFFER_PORT_TYPE_INPUT)
                 {
+                    IPayloadParser* payloadParser = NULL;
+                    pPortParams->ipJitterBuffer->getPayloadParser(payloadParser);
+                    PVMFJitterBufferMisc::DestroyPayloadParser(iPayloadParserRegistry, pPortParams->iMimeType.get_cstr(), payloadParser);
                     ipJitterBufferFactory->Destroy(pPortParams->ipJitterBuffer);
                 }
                 iPortParamsQueue.erase(it);
@@ -2791,7 +2845,19 @@ void PVMFJitterBufferNode::DoStart(PVMFJitterBufferNodeCommand& aCmd)
             }
 
             if (!ipJitterBufferMisc->IsSessionExpired())
+            {
                 RequestEventCallBack(JB_INCOMING_MEDIA_INACTIVITY_DURATION_EXPIRED);
+                /* Enable remote activity monitoring */
+                Oscl_Vector<PVMFJitterBufferPortParams*, OsclMemAllocator>::iterator it;
+                for (it = iPortParamsQueue.begin(); it != iPortParamsQueue.end(); it++)
+                {
+                    PVMFJitterBufferPortParams* pPortParams = *it;
+                    if (pPortParams->iTag == PVMF_JITTER_BUFFER_PORT_TYPE_INPUT)
+                    {
+                        pPortParams->iMonitorForRemoteActivity = true;
+                    }
+                }
+            }
 
             /* If auto paused, implies jitter buffer is not empty */
             if ((iDelayEstablished == false) ||
@@ -2866,16 +2932,6 @@ void PVMFJitterBufferNode::CompleteStart()
                 SetState(EPVMFNodeStarted);
                 /* Enable Output Ports */
                 StartOutputPorts();
-                /* Enable remote activity monitoring */
-                Oscl_Vector<PVMFJitterBufferPortParams*, OsclMemAllocator>::iterator it;
-                for (it = iPortParamsQueue.begin(); it != iPortParamsQueue.end(); it++)
-                {
-                    PVMFJitterBufferPortParams* pPortParams = *it;
-                    if (pPortParams->iTag == PVMF_JITTER_BUFFER_PORT_TYPE_INPUT)
-                    {
-                        pPortParams->iMonitorForRemoteActivity = true;
-                    }
-                }
                 CommandComplete(aCmd, PVMFSuccess);
                 /* Erase the command from the current queue */
                 iCurrentCommand.Erase(&iCurrentCommand.front());
@@ -3274,6 +3330,11 @@ void PVMFJitterBufferNode::ProcessJBInfoEvent(PVMFAsyncEvent& aEvent)
         }
         break;
         case PVMFJitterBufferNodeStreamThinningRecommended:
+        {
+            PVMFNodeInterface::ReportInfoEvent(aEvent);
+        }
+        break;
+        case PVMFJitterBufferNodePayloadParserError:
         {
             PVMFNodeInterface::ReportInfoEvent(aEvent);
         }

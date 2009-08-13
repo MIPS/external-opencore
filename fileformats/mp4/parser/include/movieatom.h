@@ -539,7 +539,7 @@ class MovieAtom : public Atom
         }
 
         // Gnre ** Starts **
-        uint16 getITunesGnreID() const
+        int16 getITunesGnreID() const
         {
             if (_pUserDataAtom)
             {
@@ -548,10 +548,10 @@ class MovieAtom : public Atom
                     return _pUserDataAtom->getITunesGnreID();
                 }
                 else
-                    return 0;
+                    return 0xFF;
             }
             else
-                return 0;
+                return 0xFF;
         }
 
 

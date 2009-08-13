@@ -215,7 +215,6 @@ class EcnaBox : public SampleEntry
 };
 
 class AVCSampleEntry;
-
 class EcnvBox : public SampleEntry
 {
 
@@ -243,7 +242,7 @@ class EcnvBox : public SampleEntry
         uint16 getWidth() const;
         uint16 getHeight() const;
 
-        // Construct an AVCSampleEntry. The caller is responsible for 
+        // Construct an AVCSampleEntry. The caller is responsible for
         // deleting the object.
         AVCSampleEntry* getAVCSampleEntry();
 

@@ -139,23 +139,12 @@ class PVMFOMXVideoDecNode
         uint32 GetNumMetadataValues(PVMFMetadataList& aKeyList);
         //**********End PVMFMetadataExtensionInterface
 
-
-        //==============================================================================
-
-        OMX_ERRORTYPE EventHandlerProcessing(OMX_OUT OMX_HANDLETYPE aComponent,
-                                             OMX_OUT OMX_PTR aAppData,
-                                             OMX_OUT OMX_EVENTTYPE aEvent,
-                                             OMX_OUT OMX_U32 aData1,
-                                             OMX_OUT OMX_U32 aData2,
-                                             OMX_OUT OMX_PTR aEventData);
-
         // for WMV params
         bool VerifyParametersSync(PvmiMIOSession aSession, PvmiKvp* aParameters, int num_elements);
-    protected:
+    private:
 
         void DoQueryUuid(PVMFOMXBaseDecNodeCommand&);
         void DoRequestPort(PVMFOMXBaseDecNodeCommand&);
-        void DoReleasePort(PVMFOMXBaseDecNodeCommand&);
         PVMFStatus DoGetNodeMetadataKey(PVMFOMXBaseDecNodeCommand&);
         PVMFStatus DoGetNodeMetadataValue(PVMFOMXBaseDecNodeCommand&);
         PVMFStatus HandlePortReEnable();
@@ -180,7 +169,8 @@ class PVMFOMXVideoDecNode
         PVMFStatus DoVerifyAndSetM4VDecoderParameter(PvmiKvp& aParameter, bool aSetParam);
 
         PVMFStatus GetProfileAndLevel(PVMF_MPEGVideoProfileType& aProfile, PVMF_MPEGVideoLevelType& aLevel);
-        int32 GetNAL_OMXNode(uint8** bitstream, int* size);
+        int32 GetNAL_OMXNode(uint8** bitstream, uint32* size);
+        bool ParseAndReWrapH264RAW(PVMFSharedMediaDataPtr& aMediaDataPtr);
 
         OMX_COLOR_FORMATTYPE iOMXVideoColorFormat;
         OMX_VIDEO_CODINGTYPE iOMXVideoCompressionFormat;

@@ -37,11 +37,18 @@
 
 #include "pvmi_media_io_fileoutput.h"
 
-#ifdef PERF_TEST
-#include "pvmf_fileinput_settings.h"
-#endif
 #include "pv_2way_mio_node_factory.h"
 #include "pv_2way_codecspecifier.h"
+
+#ifndef PVMF_FORMAT_TYPE_H_INCLUDED
+#include "pvmf_format_type.h"
+#endif
+
+#ifndef OSCL_MAP_H_INCLUDED
+#include "oscl_map.h"
+#endif
+
+class LipSyncDummyMIOSettings;
 
 #define TITLE_LENGTH   300
 #define FILENAME_LEN   255
@@ -68,11 +75,23 @@ TPVChannelId GetIdFromLocalBuffer(PVAsyncInformationalEvent &aEvent);
 TPVDirection GetDir(int32 dir);
 PV2WayMediaType GetMediaType(int32 mediaType);
 
+typedef PV2WayRegFormatTypeCompare<OsclMemAllocator> pvmf_format_type_key_compare_class;
+
+class PV2WayMIOObserver
+{
+    public:
+        virtual PVMFNodeInterface* CreateMIONode(CodecSpecifier* aformat, TPVDirection adir) = 0;
+        virtual void DeleteMIONode(CodecSpecifier* aformat,
+                                   TPVDirection adir,
+                                   PVMFNodeInterface** aMioNode) = 0;
+
+};
 
 class PV2WayMIO
 {
     public:
-        OSCL_IMPORT_REF PV2WayMIO(Oscl_Vector<CodecSpecifier*, OsclMemAllocator>* aFormats);
+        OSCL_IMPORT_REF PV2WayMIO(Oscl_Vector<PVMFFormatType, OsclMemAllocator>* aFormats,
+                                  PV2WayMIOObserver* aObserver);
         virtual OSCL_IMPORT_REF ~PV2WayMIO();
 
         OSCL_IMPORT_REF PVCommandId Add();
@@ -109,13 +128,13 @@ class PV2WayMIO
         {
             iPreviewHandle = aPreviewHandle;
         }
-        virtual OSCL_IMPORT_REF int CreateMioNodeFactory(CodecSpecifier* aSelectedCodec) = 0;
-        virtual OSCL_IMPORT_REF int Create();
+        //virtual OSCL_IMPORT_REF int Create();
         virtual OSCL_IMPORT_REF void Delete();
 
 
         OSCL_IMPORT_REF void AddCompleted(const PVCmdResponse& aResponse);
         OSCL_IMPORT_REF void RemoveCompleted(const PVCmdResponse& aResponse);
+
 
         bool IsAddId(PVCommandId aAddId)
         {
@@ -158,17 +177,34 @@ class PV2WayMIO
         virtual OSCL_IMPORT_REF int AddCodec(PVMFFormatType aFormat);
         virtual OSCL_IMPORT_REF int AddCodec(PvmiMIOFileInputSettings& aFileSettings) = 0;
         virtual OSCL_IMPORT_REF int AddCodec(PVMFFileInputSettings& aFileSettings) = 0;
+        virtual OSCL_IMPORT_REF int AddCodec(LipSyncDummyMIOSettings& aSettings) = 0;
 
         OSCL_IMPORT_REF void ClearCodecs()
         {
+            Oscl_Map < PVMFFormatType, CodecSpecifier*,
+            OsclMemAllocator, pvmf_format_type_key_compare_class >::iterator it =
+                iFormatsMap.begin();
+            // loop through each, delete
+            while (it != iFormatsMap.end())
+            {
+                CodecSpecifier* codec = (*it++).second;
+                OSCL_DELETE(codec);
+            }
+            iFormatsMap.clear();
             iFormats->clear();
+            iSelectedCodec = NULL;
+            iMySelectedFormat = PVMF_MIME_FORMAT_UNKNOWN;
         }
 
         OSCL_IMPORT_REF int AddFormat(PVMFFormatType aFormat);
         OSCL_IMPORT_REF int AddFormat(PvmiMIOFileInputSettings& format);
         OSCL_IMPORT_REF int AddFormat(PVMFFileInputSettings& format);
+        OSCL_IMPORT_REF int AddFormat(LipSyncDummyMIOSettings& format);
+        PVMFFormatType& GetSelectedFormat()
+        {
+            return iMySelectedFormat;
+        }
     protected:
-        CodecSpecifier* FormatInList(const char* aFormatToFind);
         CodecSpecifier* FormatInList(PVMFFormatType& aType);
 
 
@@ -202,7 +238,10 @@ class PV2WayMIO
         bool iRemoving;
         bool iClosing;
 
-        Oscl_Vector<CodecSpecifier*, OsclMemAllocator>* iFormats;
+
+        Oscl_Map < PVMFFormatType, CodecSpecifier*,
+        OsclMemAllocator, pvmf_format_type_key_compare_class > iFormatsMap;
+        Oscl_Vector<PVMFFormatType, OsclMemAllocator>* iFormats;
 
 
         PVMFNodeInterface*      iMioNode;
@@ -218,11 +257,14 @@ class PV2WayMIO
 
         PV2WayMediaType iMyType;
         TPVDirection iMyDir;
+        PVMFFormatType iMySelectedFormat;
 
 
         uint32              iPreviewHandle;
         CPV2WayInterface*   iTerminal;
         PVLogger*           iLogger;
+        PV2WayMIOObserver*  iObserver;
+        CodecSpecifier*     iSelectedCodec;
 };
 
 

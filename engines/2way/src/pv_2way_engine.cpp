@@ -49,6 +49,7 @@
 
 #ifdef PV2WAY_USE_OMX
 #include "OMX_Core.h"
+#include "pv_omxcore.h"
 #include "pvmf_omx_videodec_factory.h"
 #include "pvmf_omx_enc_factory.h"
 #include "pvmf_omx_audiodec_factory.h"
@@ -100,6 +101,10 @@
 #endif
 
 #include "pv_proxied_interface.h"
+
+#ifndef PVMF_FORMAT_TYPE_H_INCLUDED
+#include "pvmf_format_type.h"
+#endif
 
 // Define entry point for this DLL
 OSCL_DLL_ENTRY_POINT_DEFAULT()
@@ -320,12 +325,13 @@ CPV324m2Way::CPV324m2Way() :
 #endif
     iAddDataSourceVideoCmd = NULL;
 #ifdef PV2WAY_USE_OMX
-    OMX_Init();
+    OMX_MasterInit();
 #endif // PV2WAY_USE_OMX
 
     //creating timers
     iEndSessionTimer = OSCL_NEW(OsclTimer<OsclMemAllocator>, (END_SESSION_TIMER, END_SESSION_TIMER_FREQUENCY));
     iRemoteDisconnectTimer = OSCL_NEW(OsclTimer<OsclMemAllocator>, (REMOTE_DISCONNECT_TIMER, REMOTE_DISCONNECT_TIMER_FREQUENCY));
+
 }
 
 CPV324m2Way::~CPV324m2Way()
@@ -349,6 +355,8 @@ CPV324m2Way::~CPV324m2Way()
     iOutgoingAudioCodecs.clear();
     iIncomingVideoCodecs.clear();
     iOutgoingVideoCodecs.clear();
+
+
     iFormatCapability.clear();
     iClock.Stop();
     iSinkNodeList.clear();
@@ -420,7 +428,7 @@ CPV324m2Way::~CPV324m2Way()
     }
 
 #ifdef PV2WAY_USE_OMX
-    OMX_Deinit();
+    OMX_MasterDeinit();
 #endif
 
     if (iEndSessionTimer)
@@ -436,7 +444,6 @@ CPV324m2Way::~CPV324m2Way()
         OSCL_DELETE(iRemoteDisconnectTimer);
         iRemoteDisconnectTimer = NULL;
     }
-
 
     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                     (0, "CPV324m2Way::~CPV324m2Way - done\n"));
@@ -4127,20 +4134,20 @@ void CPV324m2Way::DisconnectRequestReceived()
         switch (iState)
         {
             case EDisconnecting:
-                iAudioDecDatapath->TSCPortClosed();
-                iAudioEncDatapath->TSCPortClosed();
-                iVideoDecDatapath->TSCPortClosed();
-                iVideoEncDatapath->TSCPortClosed();
+                if (iAudioDecDatapath) iAudioDecDatapath->TSCPortClosed();
+                if (iAudioEncDatapath) iAudioEncDatapath->TSCPortClosed();
+                if (iVideoDecDatapath) iVideoDecDatapath->TSCPortClosed();
+                if (iVideoEncDatapath) iVideoEncDatapath->TSCPortClosed();
 
                 CheckState();
                 break;
 
             case EConnecting:
             case EConnected:
-                iAudioDecDatapath->TSCPortClosed();
-                iAudioEncDatapath->TSCPortClosed();
-                iVideoDecDatapath->TSCPortClosed();
-                iVideoEncDatapath->TSCPortClosed();
+                if (iAudioDecDatapath) iAudioDecDatapath->TSCPortClosed();
+                if (iAudioEncDatapath) iAudioEncDatapath->TSCPortClosed();
+                if (iVideoDecDatapath) iVideoDecDatapath->TSCPortClosed();
+                if (iVideoEncDatapath) iVideoEncDatapath->TSCPortClosed();
 
 
                 iRemoteDisconnectTimer->SetObserver(this);
@@ -4181,6 +4188,8 @@ PVMFStatus CPV324m2Way::EstablishChannel(TPVDirection aDir,
                         (0, "CPV324m2Way::EstablishChannel Memory allocation failed!\n"));
         return PVMFErrNoMemory;
     }
+
+    ////////////////////////////////////////////////////////////////
 
     Oscl_Map < PVMFFormatType, FormatCapabilityInfo, OsclMemAllocator,
     pvmf_format_type_key_compare_class > * codec_list = NULL;
@@ -4265,6 +4274,7 @@ PVMFStatus CPV324m2Way::EstablishChannel(TPVDirection aDir,
         return PVMFFailure;
     }
 
+
     if ((*it).second.iPriority == ENG)
     {
         // Set the app format to the stored raw format type
@@ -4275,6 +4285,8 @@ PVMFStatus CPV324m2Way::EstablishChannel(TPVDirection aDir,
         // Set the app format to the compressed type
         aAppFormatType = aFormatType;
     }
+    ////////////////////////////////////////////////////////////////
+
     datapath->SetFormat(aFormatType);
     datapath->SetSourceSinkFormat(aAppFormatType);
 
@@ -4999,8 +5011,8 @@ bool CPV324m2Way::IsNodeReset(PVMFNodeInterface& aNode)
 // iOutgoingAudioCodecs, etc.
 ///////////////////////////////////////////////////////////////////
 void CPV324m2Way::SelectPreferredCodecs(TPVDirection aDir,
-                                        Oscl_Vector<CodecSpecifier*, OsclMemAllocator>& aAppAudioFormats,
-                                        Oscl_Vector<CodecSpecifier*, OsclMemAllocator>& aAppVideoFormats)
+                                        Oscl_Vector<PVMFFormatType, OsclMemAllocator>& aAppAudioFormats,
+                                        Oscl_Vector<PVMFFormatType, OsclMemAllocator>& aAppVideoFormats)
 {
     // Iterate over formats supported by the stack
     Oscl_Map < PVMFFormatType, CPvtMediaCapability*, OsclMemAllocator,
@@ -5012,18 +5024,16 @@ void CPV324m2Way::SelectPreferredCodecs(TPVDirection aDir,
         PVMFFormatType stackFormatType = media_capability->GetFormatType();
         // Is stack preferred format present in application formats ?
         const char* format_str = NULL;
-        CodecSpecifier* format = FindFormatType(stackFormatType,
-                                                aAppAudioFormats, aAppVideoFormats);
-        if (format)
+        PVMFFormatType format = FindFormatType(stackFormatType,
+                                               aAppAudioFormats, aAppVideoFormats);
+        if (format != PVMF_MIME_FORMAT_UNKNOWN)
         {
             // the stack-supported format is found within the MIO-specified codecs
-            format_str = format->GetFormat().getMIMEStrPtr();
+            format_str = format.getMIMEStrPtr();
             PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
                             (0, "CPV324m2Way::SelectPreferredCodecs ***** format was found: %s ******",
-                             format_str));
-        }
-        if (format_str)
-        {
+                             stackFormatType.getMIMEStrPtr()));
+
             // no conversion necessary- stack supports format given by application/MIOs
             DoSelectFormat(aDir, stackFormatType, format_str, APP);
         }
@@ -5076,6 +5086,8 @@ void CPV324m2Way::SetPreferredCodecs(PV2WayInitInfo& aInitInfo)
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                     (0, "CPV324m2Way::SetPreferredCodecs: Outgoing"));
+    ////////////////////////////////////////////////////////////////
+
     // given aInitInfo from app, match up with the stack preferred codecs and engine codecs
     // side effect is that iIncomingVideoCodecs, etc are set.
     SelectPreferredCodecs(OUTGOING, aInitInfo.iOutgoingAudioFormats, aInitInfo.iOutgoingVideoFormats);
@@ -5116,6 +5128,8 @@ void CPV324m2Way::SetPreferredCodecs(PV2WayInitInfo& aInitInfo)
 
     iOutgoingChannelParams.push_back(outAudioChannelParams);
     iOutgoingChannelParams.push_back(outVideoChannelParams);
+    ////////////////////////////////////////////////////////////////
+
 }
 
 
@@ -5586,14 +5600,18 @@ int32 CPV324m2Way::GetStackNodePortTag(TPV2WayPortTagType tagType)
 
 bool CPV324m2Way::AllChannelsOpened()
 {
-    return ((iIncomingAudioTrackTag != INVALID_TRACK_ID ||
-             !iIncomingAudioCodecs.size()) &&
-            (iIncomingVideoTrackTag != INVALID_TRACK_ID ||
-             !iIncomingVideoCodecs.size()) &&
-            (iOutgoingAudioTrackTag != INVALID_TRACK_ID ||
-             !iOutgoingAudioCodecs.size()) &&
-            (iOutgoingVideoTrackTag != INVALID_TRACK_ID ||
-             !iOutgoingVideoCodecs.size()));
+    ////////////////////////////////////////////////////////////////
+
+    bool retval = ((iIncomingAudioTrackTag != INVALID_TRACK_ID ||
+                    !iIncomingAudioCodecs.size()) &&
+                   (iIncomingVideoTrackTag != INVALID_TRACK_ID ||
+                    !iIncomingVideoCodecs.size()) &&
+                   (iOutgoingAudioTrackTag != INVALID_TRACK_ID ||
+                    !iOutgoingAudioCodecs.size()) &&
+                   (iOutgoingVideoTrackTag != INVALID_TRACK_ID ||
+                    !iOutgoingVideoCodecs.size()));
+    ////////////////////////////////////////////////////////////////
+    return retval;
 }
 
 #endif //NO_2WAY_324
@@ -5893,19 +5911,19 @@ void CPV324m2Way::GetStackSupportedFormats()
 }
 
 
-CodecSpecifier* CPV324m2Way::FindFormatType(PVMFFormatType aFormatType,
-        Oscl_Vector<CodecSpecifier*, OsclMemAllocator>& aAudioFormats,
-        Oscl_Vector<CodecSpecifier*, OsclMemAllocator>& aVideoFormats)
+PVMFFormatType CPV324m2Way::FindFormatType(PVMFFormatType aFormatType,
+        Oscl_Vector<PVMFFormatType, OsclMemAllocator>& aAudioFormats,
+        Oscl_Vector<PVMFFormatType, OsclMemAllocator>& aVideoFormats)
 {
     uint32 i = 0;
 
     for (i = 0; i < aAudioFormats.size(); i++)
     {
-        PVMFFormatType temp = aAudioFormats[i]->GetFormat();
+        PVMFFormatType temp = aAudioFormats[i];
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
                         (0, "CPV324m2Way::FindFormatType ***** aFormat %s aAudioFormat %s ******",
-                         aFormatType.getMIMEStrPtr(), aAudioFormats[i]->GetFormat().getMIMEStrPtr()));
-        if (aAudioFormats[i]->IsFormat(aFormatType))
+                         aFormatType.getMIMEStrPtr(), aAudioFormats[i].getMIMEStrPtr()));
+        if (aAudioFormats[i] == aFormatType)
         {
             return aAudioFormats[i];
         }
@@ -5915,18 +5933,18 @@ CodecSpecifier* CPV324m2Way::FindFormatType(PVMFFormatType aFormatType,
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
                         (0, "CPV324m2Way::FindFormatType ***** aFormat %s aVideoFormat %s ******",
-                         aFormatType.getMIMEStrPtr(), aVideoFormats[i]->GetFormat().getMIMEStrPtr()));
-        if (aVideoFormats[i]->IsFormat(aFormatType))
+                         aFormatType.getMIMEStrPtr(), aVideoFormats[i].getMIMEStrPtr()));
+        if (aVideoFormats[i] == aFormatType)
         {
             return aVideoFormats[i];
         }
     }
-    return NULL;
+    return PVMF_MIME_FORMAT_UNKNOWN;
 }
 
 const char* CPV324m2Way::CanConvertFormat(TPVDirection aDir,
         PVMFFormatType aThisFmtType,
-        Oscl_Vector<CodecSpecifier*, OsclMemAllocator>& aThatFormatList)
+        Oscl_Vector<PVMFFormatType, OsclMemAllocator>& aThatFormatList)
 {
     PVMFFormatType aInputFmtType = PVMF_MIME_FORMAT_UNKNOWN;
     PVMFFormatType aOutputFmtType = PVMF_MIME_FORMAT_UNKNOWN;
@@ -5935,7 +5953,7 @@ const char* CPV324m2Way::CanConvertFormat(TPVDirection aDir,
 
     for (uint32 i = 0; i < aThatFormatList.size(); i++)
     {
-        PVMFFormatType thatFmtType = aThatFormatList[i]->GetFormat();
+        PVMFFormatType thatFmtType = aThatFormatList[i];
         aInputFmtType = (aDir == INCOMING) ? aThisFmtType : thatFmtType;
         aOutputFmtType = (aDir == INCOMING) ? thatFmtType : aThisFmtType;
         if (IsSupported(aInputFmtType, aOutputFmtType))
@@ -6001,19 +6019,6 @@ void CPV324m2Way::DoSelectFormat(TPVDirection aDir,
     (*the_app_map)[aFormatType] = aFormatTypeApp;
 
     RegisterMioLatency(aFormatStr, true, aFormatType);
+
 }
 
-// This function returns a priority index for each format type.
-#define PV2WAY_ENGINE_PRIORITY_INDEX_FOR_FORMAT_TYPE_START 0
-#define PV2WAY_ENGINE_PRIORITY_INDEX_FOR_FORMAT_TYPE_END 0xFF
-uint32 GetPriorityIndexForPVMFFormatType(PVMFFormatType aFormatType)
-{
-    if (aFormatType == PVMF_MIME_AMR_IF2)
-        return PV2WAY_ENGINE_PRIORITY_INDEX_FOR_FORMAT_TYPE_START;
-    else if (aFormatType == PVMF_MIME_M4V)
-        return PV2WAY_ENGINE_PRIORITY_INDEX_FOR_FORMAT_TYPE_START + 1;
-    else if (aFormatType == PVMF_MIME_H2632000)
-        return PV2WAY_ENGINE_PRIORITY_INDEX_FOR_FORMAT_TYPE_START + 2;
-    else
-        return PV2WAY_ENGINE_PRIORITY_INDEX_FOR_FORMAT_TYPE_END;
-}

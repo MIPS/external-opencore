@@ -950,6 +950,17 @@ void PVMFVideoParserNode::HandlePortActivity(const PVMFPortActivity& aActivity)
         case PVMF_PORT_ACTIVITY_DISCONNECT:
             //clear the node input queue when either port is disconnected.
             break;
+        case PVMF_PORT_ACTIVITY_CONNECTED_PORT_READY:
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                            (0, "PVMFVideoParserNode::HandlePortActivity: Connected port ready"));
+            //This message is send by destination port to notify that the earlier Send
+            //call that failed due to its busy status can be resumed now.
+            if (aActivity.iPort
+                    && aActivity.iPort->OutgoingMsgQueueSize() > 0)
+            {
+                ProcessOutgoingMsg(aActivity.iPort);
+            }
+            break;
         default:
             break;
     }
@@ -1042,7 +1053,12 @@ PVMFStatus PVMFVideoParserNode::ProcessOutgoingMsg(PVMFPortInterface* aPort)
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                     (0, "0x%x PVMFVideoParserNode::ProcessOutgoingMsg: aPort=0x%x", this, aPort));
 
-    PVMFStatus status = aPort->Send();
+    PVMFStatus status = PVMFSuccess;
+    while (status == PVMFSuccess)
+    {
+        status = aPort->Send();
+    }
+
     if (status == PVMFErrBusy)
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,

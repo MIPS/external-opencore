@@ -970,7 +970,8 @@ uint32 Mpeg4File::getNumGenre()
     {
         numGenre++;
     }
-    if (getITunesGnreID() > 0)
+    int16 gnreId = getITunesGnreID();
+    if ((gnreId >= 0) && gnreId <= MAX_GENRE_ID_IN_ID3_TABLE) //Total GenreIDs present in ID3 Genre table is 147
     {
         numGenre++;
     }
@@ -1004,6 +1005,16 @@ PVMFStatus Mpeg4File::populateGenreVector()
     if (getITunesGnreString().get_size() > 0)
     {
         OSCL_wHeapString<OsclMemAllocator> valuestring = getITunesGnreString();
+        genreValues.push_front(valuestring);
+        iGenreLangCode.push_front(0);
+        iGenreCharType.push_front(ORIGINAL_CHAR_TYPE_UNKNOWN);
+    }
+    int16 gnreId = getITunesGnreID();
+    if ((gnreId >= 0) && gnreId <= MAX_GENRE_ID_IN_ID3_TABLE) //Total GenreIDs present in ID3 Genre table is 147
+    {
+        oscl_wchar genreStr[256];
+        oscl_UTF8ToUnicode((char*)ID3V1_GENRE[gnreId], 64, genreStr, 64);
+        OSCL_wHeapString<OsclMemAllocator> valuestring(genreStr);
         genreValues.push_front(valuestring);
         iGenreLangCode.push_front(0);
         iGenreCharType.push_front(ORIGINAL_CHAR_TYPE_UNKNOWN);

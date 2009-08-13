@@ -14,16 +14,44 @@
 <tr><td nowrap align=right valign=top>virtual void&nbsp;</td><td valign=bottom><a class="el" href="classPV2WayTestExtensionInterface.html#a0">addRef</a> ()=0</td></tr>
 <tr><td nowrap align=right valign=top>virtual void&nbsp;</td><td valign=bottom><a class="el" href="classPV2WayTestExtensionInterface.html#a1">removeRef</a> ()=0</td></tr>
 <tr><td nowrap align=right valign=top>virtual bool&nbsp;</td><td valign=bottom><a class="el" href="classPV2WayTestExtensionInterface.html#a2">queryInterface</a> (const PVUuid &amp;uuid, PVInterface *&amp;iface)=0</td></tr>
-<tr><td nowrap align=right valign=top>virtual bool&nbsp;</td><td valign=bottom><a class="el" href="classPV2WayTestExtensionInterface.html#a3">AcceptableFormatsMatch</a> (Oscl_Vector&lt; FormatCapabilityInfo, OsclMemAllocator &gt; &amp;iInAudFormatCapability, Oscl_Vector&lt; FormatCapabilityInfo, OsclMemAllocator &gt; &amp;iOutAudFormatCapability, Oscl_Vector&lt; FormatCapabilityInfo, OsclMemAllocator &gt; &amp;iInVidFormatCapability, Oscl_Vector&lt; FormatCapabilityInfo, OsclMemAllocator &gt; &amp;iOutVidFormatCapability)=0</td></tr>
+<tr><td nowrap align=right valign=top>virtual bool&nbsp;</td><td valign=bottom><a class="el" href="classPV2WayTestExtensionInterface.html#a3">NegotiatedFormatsMatch</a> (Oscl_Vector&lt; FormatCapabilityInfo, OsclMemAllocator &gt; &amp;iInAudFormatCapability, Oscl_Vector&lt; FormatCapabilityInfo, OsclMemAllocator &gt; &amp;iOutAudFormatCapability, Oscl_Vector&lt; FormatCapabilityInfo, OsclMemAllocator &gt; &amp;iInVidFormatCapability, Oscl_Vector&lt; FormatCapabilityInfo, OsclMemAllocator &gt; &amp;iOutVidFormatCapability)=0</td></tr>
 </table>
 <hr><h2>Member Function Documentation</h2>
-<a name="a3" doxytag="PV2WayTestExtensionInterface::AcceptableFormatsMatch"></a><p>
+<a name="a0" doxytag="PV2WayTestExtensionInterface::addRef"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
       <table cellpadding="0" cellspacing="0" border="0">
         <tr>
-          <td class="md" nowrap valign="top"> virtual bool PV2WayTestExtensionInterface::AcceptableFormatsMatch </td>
+          <td class="md" nowrap valign="top"> virtual void PV2WayTestExtensionInterface::addRef </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="mdname1" valign="top" nowrap>&nbsp;          </td>
+          <td class="md" valign="top">)&nbsp;</td>
+          <td class="md" nowrap><code> [pure virtual]</code></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+Increment reference counter for this interface.     </td>
+  </tr>
+</table>
+<a name="a3" doxytag="PV2WayTestExtensionInterface::NegotiatedFormatsMatch"></a><p>
+<table width="100%" cellpadding="2" cellspacing="0" border="0">
+  <tr>
+    <td class="md">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> virtual bool PV2WayTestExtensionInterface::NegotiatedFormatsMatch </td>
           <td class="md" valign="top">(&nbsp;</td>
           <td class="md" nowrap valign="top">Oscl_Vector&lt; FormatCapabilityInfo, OsclMemAllocator &gt; &amp;&nbsp;</td>
           <td class="mdname" nowrap>&nbsp; <em>iInAudFormatCapability</em>, </td>
@@ -65,34 +93,6 @@
 
 <p>
     </td>
-  </tr>
-</table>
-<a name="a0" doxytag="PV2WayTestExtensionInterface::addRef"></a><p>
-<table width="100%" cellpadding="2" cellspacing="0" border="0">
-  <tr>
-    <td class="md">
-      <table cellpadding="0" cellspacing="0" border="0">
-        <tr>
-          <td class="md" nowrap valign="top"> virtual void PV2WayTestExtensionInterface::addRef </td>
-          <td class="md" valign="top">(&nbsp;</td>
-          <td class="mdname1" valign="top" nowrap>&nbsp;          </td>
-          <td class="md" valign="top">)&nbsp;</td>
-          <td class="md" nowrap><code> [pure virtual]</code></td>
-        </tr>
-
-      </table>
-    </td>
-  </tr>
-</table>
-<table cellspacing=5 cellpadding=0 border=0>
-  <tr>
-    <td>
-      &nbsp;
-    </td>
-    <td>
-
-<p>
-Increment reference counter for this interface.     </td>
   </tr>
 </table>
 <a name="a2" doxytag="PV2WayTestExtensionInterface::queryInterface"></a><p>
@@ -172,7 +172,7 @@ Decrement reference counter for this interface.     </td>
 <hr>The documentation for this class was generated from the following file:<ul>
 <li><a class="el" href="pv__2way__test__extension__interface_8h-source.html">pv_2way_test_extension_interface.h</a></ul>
 <hr size="1"><img src="pvlogo_small.jpg"><address style="align: right;"><small>PV2Way Engine</small>
-<address style="align: left;"><small>Posting Version: OPENCORE_20090517 </small>
+<address style="align: left;"><small>Posting Version: CORE_7.501.1.1 </small>
 </small></address>
 </body>
 </html>

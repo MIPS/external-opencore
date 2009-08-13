@@ -307,7 +307,7 @@ int32 cc32(uint8 **src, uint8 *dst, int32 *disp, uint8 *clip)
 #if RGB_FORMAT
             *((uint32 *)(pDst + dst_pitch4))    =   tmp0 | (tmp1 << 8) | (tmp2 << 16)  ; /* bgr */
 #else
-*((uint32 *)(pDst + dst_pitch4))    =   tmp2 | (tmp1 << 8) | (tmp0 << 16);  /* rgb */
+            *((uint32 *)(pDst + dst_pitch4))    =   tmp2 | (tmp1 << 8) | (tmp0 << 16);  /* rgb */
 #endif
 
             Y   >>= 8;
@@ -323,7 +323,7 @@ int32 cc32(uint8 **src, uint8 *dst, int32 *disp, uint8 *clip)
 #if RGB_FORMAT
             *((uint32 *)(pDst + dst_pitch4 + 4))    =   tmp0 | (tmp1 << 8) | (tmp2 << 16)  ; /* bgr */
 #else
-*((uint32 *)(pDst + dst_pitch4 + 4))    =   tmp2 | (tmp1 << 8) | (tmp0 << 16);  /* rgb */
+            *((uint32 *)(pDst + dst_pitch4 + 4))    =   tmp2 | (tmp1 << 8) | (tmp0 << 16);  /* rgb */
 #endif
 
             //load the top two pixels
@@ -340,7 +340,7 @@ int32 cc32(uint8 **src, uint8 *dst, int32 *disp, uint8 *clip)
 #if RGB_FORMAT
             *((uint32 *)(pDst)) =   tmp0 | (tmp1 << 8) | (tmp2 << 16)  ; /* bgr */
 #else
-*((uint32 *)(pDst)) =   tmp2 | (tmp1 << 8) | (tmp0 << 16);  /* rgb */
+            *((uint32 *)(pDst)) =   tmp2 | (tmp1 << 8) | (tmp0 << 16);  /* rgb */
 #endif
             Y   >>= 8;
 
@@ -356,7 +356,7 @@ int32 cc32(uint8 **src, uint8 *dst, int32 *disp, uint8 *clip)
 #if RGB_FORMAT
             *((uint32 *)(pDst + 4)) =   tmp0 | (tmp1 << 8) | (tmp2 << 16)  ; /* bgr */
 #else
-*((uint32 *)(pDst + 4)) =   tmp2 | (tmp1 << 8) | (tmp0 << 16);  /* rgb */
+            *((uint32 *)(pDst + 4)) =   tmp2 | (tmp1 << 8) | (tmp0 << 16);  /* rgb */
 #endif
             pDst += 8;
         }//end of COL

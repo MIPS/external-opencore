@@ -344,7 +344,7 @@ OMX_ERRORTYPE OmxDecTestBase::EventHandler(OMX_OUT OMX_HANDLETYPE aComponent,
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "OmxDecTestBase::EventHandler() - Error returned in the callback"));
 
-        if (OMX_ErrorSameState == aData1)
+        if (OMX_ErrorSameState == (OMX_S32)aData1)
         {
             PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "OmxDecTestBase::EventHandler() - Same State Error, trying to proceed"));
             if (StateCleanUp == iState)
@@ -356,7 +356,7 @@ OMX_ERRORTYPE OmxDecTestBase::EventHandler(OMX_OUT OMX_HANDLETYPE aComponent,
                 }
             }
         }
-        else if (OMX_ErrorStreamCorrupt == aData1)
+        else if (OMX_ErrorStreamCorrupt == (OMX_S32)aData1)
         {
             /* Don't do anything right now for the stream corrupt error,
              * just count the number of such callbacks and let the decoder to proceed */
@@ -676,7 +676,6 @@ OMX_ERRORTYPE CallbackContainer::CallbackEventHandler(OMX_OUT OMX_HANDLETYPE aCo
         OMX_OUT OMX_PTR aEventData)
 {
 #if PROXY_INTERFACE
-    OMX_S32 ii = 0;
 
     OmxDecTestBase *client_ptr = (OmxDecTestBase *) aAppData;
 
@@ -711,7 +710,6 @@ OMX_ERRORTYPE CallbackContainer::CallbackEmptyBufferDone(OMX_OUT OMX_HANDLETYPE 
         OMX_OUT OMX_BUFFERHEADERTYPE* aBuffer)
 {
 #if PROXY_INTERFACE
-    OMX_S32 ii = 0;
 
     OmxDecTestBase *client_ptr = (OmxDecTestBase *) aAppData;
     EmptyBufferDoneSpecificData* ED = (EmptyBufferDoneSpecificData*) client_ptr->ipThreadSafeHandlerEmptyBufferDone->iMemoryPool->allocate(sizeof(EmptyBufferDoneSpecificData));
@@ -741,7 +739,6 @@ OMX_ERRORTYPE CallbackContainer::CallbackFillBufferDone(OMX_OUT OMX_HANDLETYPE a
         OMX_OUT OMX_BUFFERHEADERTYPE* aBuffer)
 {
 #if PROXY_INTERFACE
-    OMX_S32 ii = 0;
 
     OmxDecTestBase *client_ptr = (OmxDecTestBase *) aAppData;
     FillBufferDoneSpecificData* ED = (FillBufferDoneSpecificData*) client_ptr->ipThreadSafeHandlerFillBufferDone->iMemoryPool->allocate(sizeof(FillBufferDoneSpecificData));

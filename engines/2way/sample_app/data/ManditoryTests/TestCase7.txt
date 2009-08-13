@@ -1,0 +1,72 @@
+#Test Case Name - This should be at the start
+Name TestCase7
+
+# Terminal Setup
+# These setings configure how the terminal will be setup
+# There are seperate settings for terminal A and Terminal B
+# Settings set here do no require the full set
+# Default settings will be set on the terminal. The settings explictly set here
+# will override the default settings of the terminal
+# Terminal A 
+Terminal A
+MSD undef
+# capabilties
+Caps
+# Receive Caps
+Receive
+# Audio OLC caps
+Audio 
+AMR
+G7321
+# Video OLC caps
+Video 
+H.263BL
+MP4SP
+# Send Caps
+Send
+# Audio
+Audio
+AMR
+G7321
+# Video
+Video
+H.263BL
+Mp4SP
+#- This is not supported as of now
+BER bit error injection 
+
+#Terminal B
+Terminal B
+MSD undef
+# capabilties
+Caps
+# Receive Caps
+Receive
+# Audio OLC caps
+Audio 
+AMR
+G7321
+# Video OLC caps
+Video 
+H.263BL
+MP4SP
+# Send Caps
+Send
+# Audio
+Audio
+AMR
+G7321
+# Video
+Video
+H.263BL
+Mp4SP
+#- This is not supported as of now
+BER bit error injection 
+
+# Specify the actions to be performed
+# Specify the Expected behaviour
+
+# 1. Selection of H.223 Annex B at both terminals
+# 2. NSRP + CCSRL is used
+# 3. RespMsg_terminalCapabilitySetAck received
+

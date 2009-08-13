@@ -32,7 +32,7 @@
 #ifndef PV_UUID_H_INCLUDED
 #include "pv_uuid.h"
 #endif
-#ifndef PVMF_FORMAT_TYPE_H_INCLUDED
+#ifndef PVMF_EVENT_HANDLING_H_INCLUDED
 #include "pvmf_event_handling.h"
 #endif
 #ifndef PVMF_META_DATA_TYPES_H_INCLUDED

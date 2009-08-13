@@ -50,6 +50,7 @@ typedef struct _PVMediaInputTestParam
     OSCL_HeapString<OsclMemAllocator> iOPFileInfo;
     OSCL_HeapString<OsclMemAllocator> iVideoEncInfo;
     OSCL_HeapString<OsclMemAllocator> iAudioEncInfo;
+    OSCL_HeapString<OsclMemAllocator> iAacEncProfileInfo;
     OSCL_HeapString<OsclMemAllocator> iComposerInfo;
     uint32 iLoopTime;
     bool iRealTimeAuthoring;

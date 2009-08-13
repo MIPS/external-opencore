@@ -73,6 +73,7 @@ typedef struct
     OMX_U16 Channels;
     OMX_U16 BitsPerSample;
     OMX_U32 SamplesPerSec;
+    OMX_U32 SamplesPerFrame;
 } AudioOMXConfigParserOutputs;
 
 typedef struct

@@ -185,6 +185,8 @@ OMX_ERRORTYPE OmxComponentAmrEncoderAO::ConstructComponent(OMX_PTR pAppData, OMX
     iPVCapabilityFlags.iOMXComponentUsesNALStartCodes = OMX_FALSE;
     iPVCapabilityFlags.iOMXComponentCanHandleIncompleteFrames = OMX_TRUE;
     iPVCapabilityFlags.iOMXComponentUsesFullAVCFrames = OMX_FALSE;
+    iPVCapabilityFlags.iOMXComponentUsesInterleaved2BNALSizes = OMX_FALSE;
+    iPVCapabilityFlags.iOMXComponentUsesInterleaved4BNALSizes = OMX_FALSE;
 
     if (ipAppPriv)
     {
@@ -610,6 +612,8 @@ OmxComponentAmrEncoderAO::OmxComponentAmrEncoderAO()
     iOutputFrameLength = 0;
     iActualNumberOutputFrames = 0;
     iMaxNumberOutputFrames = 0;
+    iCurrentTimestamp = 0;
+    iInputCurrLength = 0;
 
     if (!IsAdded())
     {

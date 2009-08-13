@@ -76,8 +76,8 @@
 #ifndef PV_PLAYER_NODE_REGISTRY_INTERFACE_H_INCLUDED
 #include "pv_player_node_registry_interface.h"
 #endif
-#ifndef PVMI_CONFIG_AND_CAPABILITY_H_INCLUDED
-#include "pvmi_config_and_capability.h"
+#ifndef PVMI_CONFIG_AND_CAPABILITY_BASE_H_INCLUDED
+#include "pvmi_config_and_capability_base.h"
 #endif
 
 // only include pvmf_downloadmanager_config.h if CML2 is NOT being used
@@ -596,7 +596,7 @@ class PVMFDownloadManagerRecognizerContainer
 class PVMFDownloadManagerNode
         : public PVMFNodeInterface
         , public OsclActiveObject
-        , public PvmiCapabilityAndConfig
+        , public PvmiCapabilityAndConfigBase
         //required extension interfaces for player source nodes.
         , public PVMFDataSourceInitializationExtensionInterface
         , public PVMFTrackSelectionExtensionInterface
@@ -708,22 +708,8 @@ class PVMFDownloadManagerNode
         virtual PVMFStatus releaseParameters(PvmiMIOSession aSession,
                                              PvmiKvp* aParameters,
                                              int num_elements);
-        virtual void createContext(PvmiMIOSession aSession, PvmiCapabilityContext& aContext);
-        virtual void setContextParameters(PvmiMIOSession aSession, PvmiCapabilityContext& aContext,
-                                          PvmiKvp* aParameters, int num_parameter_elements);
-        virtual void DeleteContext(PvmiMIOSession aSession,
-                                   PvmiCapabilityContext& aContext);
         virtual void setParametersSync(PvmiMIOSession aSession, PvmiKvp* aParameters,
                                        int num_elements, PvmiKvp * & aRet_kvp);
-        virtual PVMFCommandId setParametersAsync(PvmiMIOSession aSession,
-                PvmiKvp* aParameters,
-                int num_elements,
-                PvmiKvp*& aRet_kvp,
-                OsclAny* context = NULL);
-        virtual uint32 getCapabilityMetric(PvmiMIOSession aSession);
-        virtual PVMFStatus verifyParametersSync(PvmiMIOSession aSession,
-                                                PvmiKvp* aParameters,
-                                                int num_elements);
 
         //from PVMFMediaClockStateObserver
         void ClockStateUpdated();
@@ -916,7 +902,7 @@ class PVMFDownloadManagerNode
         bool iRecognizerError;//set when recognizer fails.
         PVMFStatus iRecognizerStartStatus;
 
-        bool iInitFailedLicenseRequired; //set when PVMFErrLicenseRequired failed
+        bool iInitFailedLicenseRequired; //set when PVMFErrDrmLicenseNotFound failed
 
         void ContinueInitAfterTrackSelectDecision();
         void ContinueFromDownloadTrackSelectionPoint();

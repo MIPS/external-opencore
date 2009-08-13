@@ -18,26 +18,41 @@
 
 #include "pv_2way_dummy_output_mio_node_factory.h"
 #include "pv_2way_interface.h"
-#include "pvmf_fileoutput_factory.h"
-#include "pvmf_dummy_fileoutput_factory.h"
 #include "pv_2way_media.h"
+#include "lipsync_dummy_output_mio.h"
+#include "lipsync_dummy_settings.h"
+#include "pv_media_output_node_factory.h"
 
+int PV2WayDummyOutputMIONodeFactory::CreateMedia(LipSyncDummyMIOSettings& aSettings)
+{
+    iMediaControl = OSCL_NEW(LipSyncDummyOutputMIO, (aSettings));
+    return PVMFSuccess;
+}
 
+void PV2WayDummyOutputMIONodeFactory::DeleteMedia()
+{
+    OSCL_DELETE(iMediaControl);
+    iMediaControl = NULL;
+}
 
 void PV2WayDummyOutputMIONodeFactory::Delete(PVMFNodeInterface** aMioNode)
 {
-    PVMFDummyFileOutputNodeFactory::DeleteDummyFileOutput(*aMioNode);
+    PVMediaOutputNodeFactory::DeleteMediaOutputNode(*aMioNode);
     *aMioNode = NULL;
+    DeleteMedia();
 }
 
-PVMFNodeInterface* PV2WayDummyOutputMIONodeFactory::Create()
+PVMFNodeInterface* PV2WayDummyOutputMIONodeFactory::Create(LipSyncDummyMIOSettings& aSettings)
 {
-    PVMFFormatType fileSettings = PV2WayMedia::GetMediaFormat(iPerfFileSettings.iFileName.get_cstr());
-    return PVMFDummyFileOutputNodeFactory::CreateDummyFileOutput(iPerfFileSettings.iFileName, fileSettings);
+    PVMFNodeInterface* mioNode = NULL;
+    if (PVMFSuccess == CreateMedia(aSettings))
+    {
+        int error = 0;
+        OSCL_TRY(error, mioNode = PVMediaOutputNodeFactory::CreateMediaOutputNode(iMediaControl));
+    }
+
+    return mioNode;
 }
-
-
-
 
 
 

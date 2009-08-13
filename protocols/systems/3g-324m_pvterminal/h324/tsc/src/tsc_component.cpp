@@ -78,6 +78,17 @@ TSC_component::TSC_component(TSC_statemanager& aTSCStateManager,
 
 }
 
+TSC_component::~TSC_component()
+{
+    if (iLocalTcs)
+    {
+        Delete_TerminalCapabilitySet(iLocalTcs);
+        OSCL_DEFAULT_FREE(iLocalTcs);
+        iLocalTcs = NULL;
+    }
+    ResetTsc();
+}
+
 void TSC_component::SetMembers(H245* aH245, H223* aH223, TSCObserver* aTSCObserver)
 {
     iTSCObserver = aTSCObserver;
@@ -123,9 +134,9 @@ void TSC_component::InitVarsLocal()
     iAllowAl1Audio = OFF;
     iAllowAl2Audio = ON;
     iAllowAl3Audio = OFF;
-    iUseAl1Video = true;
-    iUseAl2Video = true;
-    iUseAl3Video = true;
+    iUseAl1Video = ON;
+    iUseAl2Video = ON;
+    iUseAl3Video = ON;
 }
 
 void TSC_component::InitTsc()
@@ -156,6 +167,13 @@ void TSC_component::ResetTsc()
         iWaitingForOblcTimer = NULL;
     }
     iTSCchannelcontrol.Reset();
+
+    if (iLocalTcs)
+    {
+        Delete_TerminalCapabilitySet(iLocalTcs);
+        OSCL_DEFAULT_FREE(iLocalTcs);
+        iLocalTcs = NULL;
+    }
 }
 
 void TSC_component::Disconnect()
@@ -270,7 +288,8 @@ TSC_component::GetOutgoingLayer(PV2WayMediaType media_type, uint32 max_sample_si
 
 void TSC_component::SetAlConfig(PV2WayMediaType media_type,
                                 TPVAdaptationLayer layer,
-                                bool allow)
+                                bool allow,
+                                bool use)
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                     (0, "TSC_component::SetAlConfig"));
@@ -282,19 +301,34 @@ void TSC_component::SetAlConfig(PV2WayMediaType media_type,
     {
         case PV_AUDIO:
             if (layer == PVT_AL1)
+            {
                 iAllowAl1Audio = allow;
+            }
             else if (layer == PVT_AL2)
+            {
                 iAllowAl2Audio = allow;
+            }
             else if (layer == PVT_AL3)
+            {
                 iAllowAl3Audio = allow;
+            }
             break;
         case PV_VIDEO:
             if (layer == PVT_AL1)
+            {
                 iAllowAl1Video = allow;
+                iUseAl1Video = use;
+            }
             else if (layer == PVT_AL2)
+            {
                 iAllowAl2Video = allow;
+                iUseAl2Video = use;
+            }
             else if (layer == PVT_AL3)
+            {
                 iAllowAl3Video = allow;
+                iUseAl3Video = use;
+            }
             break;
         case PV_DATA:
         default:
@@ -2213,6 +2247,7 @@ void TSC_component::CheckOutgoingChannel(OlcParam* olc_param, PVMFStatus status)
                         (0, "TSC_component::CheckOutgoingChannel ERROR Failed to lookup channel."));
         return;
     }
+
     outgoing_channel->Resume();
     // Request fast update from the engine
     iTSCObserver->RequestFrameUpdate(outgoing_channel);

@@ -35,7 +35,7 @@ class PVA_FF_TrackHeaderAtom : public PVA_FF_FullAtom
         virtual ~PVA_FF_TrackHeaderAtom();
         void init(int32 type);
 
-        void addSample(uint32 ts);
+        void addSample(uint32 ts, uint32 sampleDuration = 0);
         void updateLastTSEntry(uint32 ts);
 
         // Media type gets adn sets
@@ -85,7 +85,12 @@ class PVA_FF_TrackHeaderAtom : public PVA_FF_FullAtom
         }
         uint32 getDuration() const
         {
-            return (_duration + _deltaTS);
+            uint32 total_duration = 0;
+            total_duration = (_duration + _deltaTS);
+            if (!total_duration)
+                total_duration = _currTrackDuration;
+
+            return total_duration;
         }
 
         // TimeScale gets and sets - in terms of the MOVIE timescale
@@ -130,6 +135,7 @@ class PVA_FF_TrackHeaderAtom : public PVA_FF_FullAtom
         uint32 _deltaTS;
         uint16 _height;
         uint16 _width;
+        uint32 _currTrackDuration;
 
 };
 

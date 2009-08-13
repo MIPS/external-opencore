@@ -140,6 +140,12 @@
 #define PVMF_DRM_INFO_REDIRECT_TIMES_VALUE "dla/num-redirect;valtype=uint32"
 
 /*
+ * Content header
+ */
+#define PVMF_DRM_INFO_CONTENT_HEADER_QUERY "drm/content-header"
+#define PVMF_DRM_INFO_CONTENT_HEADER_VALUE "drm/content-header;valtype=uint8*"
+
+/*
  * Opaque data for enveloped content
  */
 #define PVMF_DRM_INFO_ENVELOPE_DATA_SIZE_QUERY "drm/envelope-data-size"

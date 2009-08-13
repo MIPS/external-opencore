@@ -43,7 +43,9 @@ OSCL_EXPORT_REF OsclSemaphore::OsclSemaphore()
 OSCL_EXPORT_REF OsclSemaphore::~OsclSemaphore()
 {
     //make sure it was closed
+
     OSCL_ASSERT(!bCreated);
+
 }
 
 

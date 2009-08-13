@@ -301,15 +301,14 @@ void H223LowerLayer::TimeoutOccurred(int32 timerID, int32 timeoutInfo)
     }
 }
 
-/* H223PduParcomObserver virtuals */
 uint32 H223LowerLayer::MuxPduIndicate(uint8* pPdu, uint32 pduSz, int32 fClosing, int32 muxCode)
 {
-    return iObserver->GetParcomObserver()->MuxPduIndicate(pPdu, pduSz, fClosing, muxCode);
+    return iObserver->MuxPduIndicate(pPdu, pduSz, fClosing, muxCode);
 }
 
 void H223LowerLayer::MuxPduErrIndicate(EMuxPduError err)
 {
-    iObserver->GetParcomObserver()->MuxPduErrIndicate(err);
+    iObserver->MuxPduErrIndicate(err);
 }
 
 void H223LowerLayer::MuxSetupComplete(PVMFStatus status, TPVH223Level level)
@@ -325,7 +324,7 @@ void H223LowerLayer::MuxSetupComplete(PVMFStatus status, TPVH223Level level)
     {
         iLevelSetupComplete = true;
     }
-    SignalLevelSetupComplete(status);
+    SignalLevelSetupComplete(status, level);
 }
 
 void H223LowerLayer::Run()
@@ -475,7 +474,7 @@ void H223LowerLayer::Parse(uint8* buf, uint16 size)
         if (CheckLevelWithSync(buf, size, &used_bytes))
         {
             PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "Mux[LL]: Level Setup Complete - %d\n", iParcom->GetLevel()));
-            SignalLevelSetupComplete(PVMFSuccess);
+            SignalLevelSetupComplete(PVMFSuccess, iParcom->GetLevel());
         }
     }
     if (iDataReceptionStart)
@@ -561,12 +560,12 @@ void H223LowerLayer::PacketIn(PVMFSharedMediaDataPtr aMediaData)
 }
 
 
-void H223LowerLayer::SignalLevelSetupComplete(PVMFStatus status)
+void H223LowerLayer::SignalLevelSetupComplete(PVMFStatus status, TPVH223Level level)
 {
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223LowerLayer::SignalLevelSetupComplete"));
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223LowerLayer::SignalLevelSetupComplete status=%d, level=%d", status, level));
     TimeValue timenow;
     iLevelSetupTime = timenow - iStartTimeTx;
-    iObserver->LevelSetupComplete(status, iParcom->GetLevel());
+    iObserver->LevelSetupComplete(status, level);
 }
 
 void H223LowerLayer::DoStuffing(TPVH223Level level,
@@ -695,7 +694,7 @@ bool H223LowerLayer::CheckLevel(uint8* pData, uint16 size, uint16* used_bytes, i
                     iSyncDetected = true;
                     int32 err;
                     OSCL_TRY(err, CreateParcom((TPVH223Level)level))
-                    OSCL_FIRST_CATCH_ANY(err, SignalLevelSetupComplete(PVMFErrNoMemory));
+                    OSCL_FIRST_CATCH_ANY(err, SignalLevelSetupComplete(PVMFErrNoMemory, (TPVH223Level)level));
                     iObserver->LevelSetupComplete(PVMFPending, (TPVH223Level)level);
                     return false;
                 }
@@ -705,6 +704,12 @@ bool H223LowerLayer::CheckLevel(uint8* pData, uint16 size, uint16* used_bytes, i
 
     *used_bytes = (uint16)(pos - pData);
     return false;
+}
+
+void H223LowerLayer::SetLevelCheckCount(uint16 aCount)
+{
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223LowerLayer::SetLevelCheckCount(%d)", aCount));
+    iSyncCheckCount = aCount;
 }
 
 void H223LowerLayer::ResetStats()

@@ -403,30 +403,6 @@ OSCL_EXPORT_REF PVMFStatus PVMFDummyFileOutputInPort::releaseParameters(PvmiMIOS
     }
 }
 
-////////////////////////////////////////////////////////////////////////////
-OSCL_EXPORT_REF void PVMFDummyFileOutputInPort::createContext(PvmiMIOSession session, PvmiCapabilityContext& context)
-{
-    OSCL_UNUSED_ARG(session);
-    OSCL_UNUSED_ARG(context);
-}
-
-////////////////////////////////////////////////////////////////////////////
-OSCL_EXPORT_REF void PVMFDummyFileOutputInPort::setContextParameters(PvmiMIOSession session,
-        PvmiCapabilityContext& context,
-        PvmiKvp* parameters, int num_parameter_elements)
-{
-    OSCL_UNUSED_ARG(session);
-    OSCL_UNUSED_ARG(context);
-    OSCL_UNUSED_ARG(parameters);
-    OSCL_UNUSED_ARG(num_parameter_elements);
-}
-
-////////////////////////////////////////////////////////////////////////////
-OSCL_EXPORT_REF void PVMFDummyFileOutputInPort::DeleteContext(PvmiMIOSession session, PvmiCapabilityContext& context)
-{
-    OSCL_UNUSED_ARG(session);
-    OSCL_UNUSED_ARG(context);
-}
 
 ////////////////////////////////////////////////////////////////////////////
 OSCL_EXPORT_REF void PVMFDummyFileOutputInPort::setParametersSync(PvmiMIOSession session, PvmiKvp* parameters,
@@ -448,27 +424,6 @@ OSCL_EXPORT_REF void PVMFDummyFileOutputInPort::setParametersSync(PvmiMIOSession
     }
 }
 
-////////////////////////////////////////////////////////////////////////////
-OSCL_EXPORT_REF PVMFCommandId PVMFDummyFileOutputInPort::setParametersAsync(PvmiMIOSession session,
-        PvmiKvp* parameters,
-        int num_elements,
-        PvmiKvp*& ret_kvp,
-        OsclAny* context)
-{
-    OSCL_UNUSED_ARG(session);
-    OSCL_UNUSED_ARG(parameters);
-    OSCL_UNUSED_ARG(num_elements);
-    OSCL_UNUSED_ARG(ret_kvp);
-    OSCL_UNUSED_ARG(context);
-    return -1;
-}
-
-////////////////////////////////////////////////////////////////////////////
-OSCL_EXPORT_REF uint32 PVMFDummyFileOutputInPort::getCapabilityMetric(PvmiMIOSession session)
-{
-    OSCL_UNUSED_ARG(session);
-    return 0;
-}
 
 ////////////////////////////////////////////////////////////////////////////
 OSCL_EXPORT_REF PVMFStatus PVMFDummyFileOutputInPort::verifyParametersSync(PvmiMIOSession session,

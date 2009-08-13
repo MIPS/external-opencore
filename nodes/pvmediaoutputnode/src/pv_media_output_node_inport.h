@@ -58,8 +58,8 @@
 #ifndef PVMF_NODE_INTERFACE_H_INCLUDED
 #include "pvmf_node_interface.h"
 #endif
-#ifndef PVMI_CONFIG_AND_CAPABILITY_H_INCLUDED
-#include "pvmi_config_and_capability.h"
+#ifndef PVMI_CONFIG_AND_CAPABILITY_BASE_H_INCLUDED
+#include "pvmi_config_and_capability_base.h"
 #endif
 #ifndef OSCL_STRING_CONTAINERS_H_INCLUDED
 #include "oscl_string_containers.h"
@@ -78,12 +78,13 @@ enum PVMFMediaOutputNodePortMediaTimeStatus
 
 #define THRESHOLD_FOR_DROPPED_VIDEO_FRAMES 120
 
-class PVMediaOutputNodePort : public OsclTimerObject
+class PVMediaOutputNodePort
+        : public OsclTimerObject
         , public PvmfPortBaseImpl
         , public PvmfNodesSyncControlInterface
         , public PvmiMediaTransfer
         , public PVMFPortActivityHandler
-        , public PvmiCapabilityAndConfig
+        , public PvmiCapabilityAndConfigBase
         , public PVMFMediaClockObserver
         , public PVMFMediaClockStateObserver
         , public PVMFMediaClockNotificationsObs
@@ -166,18 +167,6 @@ class PVMediaOutputNodePort : public OsclTimerObject
 
         // Unsupported PvmiCapabilityAndConfig methods
         void virtual setObserver(PvmiConfigAndCapabilityCmdObserver*) {};
-        void virtual createContext(PvmiMIOSession , PvmiCapabilityContext&) {};
-        void virtual setContextParameters(PvmiMIOSession , PvmiCapabilityContext& , PvmiKvp* , int) {};
-        void virtual DeleteContext(PvmiMIOSession , PvmiCapabilityContext&) {};
-        PVMFCommandId virtual setParametersAsync(PvmiMIOSession , PvmiKvp* , int , PvmiKvp*& , OsclAny* context = NULL)
-        {
-            OSCL_UNUSED_ARG(context);
-            return -1;
-        }
-        uint32 virtual getCapabilityMetric(PvmiMIOSession)
-        {
-            return 0;
-        }
 
         // To support config interface
         void QueryInterface(const PVUuid &aUuid, OsclAny*&aPtr)

@@ -27,6 +27,18 @@
 #include "pvmf_basic_errorinfomessage.h"
 #endif
 
+#ifndef MEDIAINFO_H
+#include "media_info.h"
+#endif
+
+#ifndef PAYLOAD_PARSER_REGISTRY_H_INCLUDED
+#include "payload_parser_registry.h"
+#endif
+
+#ifndef PAYLOADPARSER_FACTORY_BASE_H_INCLUDED
+#include "payload_parser_factory.h"
+#endif
+
 OSCL_EXPORT_REF PVMFJitterBufferMisc* PVMFJitterBufferMisc::New(PVMFJitterBufferMiscObserver* aObserver, PVMFMediaClock& aClientPlaybackClock, Oscl_Vector<PVMFJitterBufferPortParams*, OsclMemAllocator>& aPortParamsQueue)
 {
     int32 err = OsclErrNone;
@@ -750,7 +762,7 @@ OSCL_EXPORT_REF bool PVMFJitterBufferMisc::SetPlayRange(int32 aStartTimeInMS, in
     return true;
 }
 
-OSCL_EXPORT_REF bool PVMFJitterBufferMisc::SetPortSSRC(PVMFPortInterface* aPort, uint32 aSSRC)
+OSCL_EXPORT_REF void PVMFJitterBufferMisc::SetPortSSRC(PVMFPortInterface* aPort, uint32 aSSRC)
 {
     bool isUpdateRequest = false;
 
@@ -768,16 +780,14 @@ OSCL_EXPORT_REF bool PVMFJitterBufferMisc::SetPortSSRC(PVMFPortInterface* aPort,
     if (!isUpdateRequest)
     {
         //Update with the JB
-        Oscl_Vector<PVMFJitterBufferPortParams*, OsclMemAllocator>::iterator iter;
-        for (iter = irPortParamsQueue.begin(); iter != irPortParamsQueue.end() ; iter++)
+        Oscl_Vector<PVMFJitterBufferPortParams*, OsclMemAllocator>::const_iterator iter;
+        for (iter = irPortParamsQueue.begin(); iter != irPortParamsQueue.end() ; ++iter)
         {
-            PVMFJitterBufferPortParams* pPortParam = *iter;
-            if (pPortParam && ((&pPortParam->irPort) == aPort))
+            if (iter && (*iter) && (&((*iter)->irPort) == aPort))
             {
-                PVMFJitterBuffer* jitterBuffer = pPortParam->ipJitterBuffer;
-                if (jitterBuffer)
+                if ((*iter)->ipJitterBuffer)
                 {
-                    jitterBuffer->setSSRC(aSSRC);
+                    (*iter)->ipJitterBuffer->setSSRC(aSSRC);
                 }
                 break;
             }
@@ -786,7 +796,6 @@ OSCL_EXPORT_REF bool PVMFJitterBufferMisc::SetPortSSRC(PVMFPortInterface* aPort,
         RTPSessionInfoForFirewallExchange rtpSessioninfo(aPort, aSSRC);
         iRTPExchangeInfosForFirewallExchange.push_back(rtpSessioninfo);
     }
-    return true;
 }
 
 OSCL_EXPORT_REF uint32 PVMFJitterBufferMisc::GetEstimatedServerClockValue()
@@ -810,10 +819,10 @@ OSCL_EXPORT_REF void PVMFJitterBufferMisc::SetServerInfo(PVMFJitterBufferFireWal
         {
             if (iRTPExchangeInfosForFirewallExchange.size() == 0)//We haven't got the exchange info for the firewall pkts yet, lets assume ssrc to be zero for all the feedback ports
             {
-                Oscl_Vector<PVMFJitterBufferPortParams*, OsclMemAllocator>::iterator it;
-                for (it = irPortParamsQueue.begin(); it != irPortParamsQueue.end(); it++)
+                Oscl_Vector<PVMFJitterBufferPortParams*, OsclMemAllocator>::iterator iter;
+                for (iter = irPortParamsQueue.begin(); iter != irPortParamsQueue.end(); ++iter)
                 {
-                    PVMFJitterBufferPortParams* portParams = *it;
+                    PVMFJitterBufferPortParams* portParams = *iter;
                     if (portParams->iTag == PVMF_JITTER_BUFFER_PORT_TYPE_INPUT)
                     {
                         RTPSessionInfoForFirewallExchange rtpSessioninfo(&portParams->irPort, 0);
@@ -941,6 +950,27 @@ OSCL_EXPORT_REF PVMFTimestamp PVMFJitterBufferMisc::GetActualMediaDataTSAfterSee
     }
 
     return mediaTS;
+}
+
+OSCL_EXPORT_REF bool PVMFJitterBufferMisc::setPortMediaParams(PVMFPortInterface* aPort,
+        mediaInfo* aMediaInfo)
+{
+    bool retval = false;
+
+    Oscl_Vector<PVMFJitterBufferPortParams*, OsclMemAllocator>::iterator iter;
+    for (iter = irPortParamsQueue.begin(); iter != irPortParamsQueue.end() ; ++iter)
+    {
+        if (iter && ((*iter)->iTag == PVMF_JITTER_BUFFER_PORT_TYPE_INPUT) && (aPort == &((*iter)->irPort)))
+        {
+            if ((*iter)->ipJitterBuffer != NULL)
+            {
+                retval = (*iter)->ipJitterBuffer->setPortMediaParams(aMediaInfo);
+                break;
+            }
+        }
+    }
+
+    return retval;
 }
 
 OSCL_EXPORT_REF void PVMFJitterBufferMisc::SetMediaClockConverter(PVMFPortInterface* apPort, MediaClockConverter* apMediaClockConverter)
@@ -1216,4 +1246,110 @@ bool PVMFJitterBufferMisc::LocateFeedBackPort(PVMFJitterBufferPortParams*& aInpu
         }
     }
     return false;
+}
+
+OSCL_EXPORT_REF IPayloadParser* PVMFJitterBufferMisc::CreatePayloadParser(PayloadParserRegistry* aPayLoadParserRegistry, const char* aMimeStr)
+{
+    if (!aMimeStr)
+    {
+        return NULL;
+    }
+
+    char* const mimeStrToCompare = OSCL_ARRAY_NEW(char, oscl_strlen(aMimeStr) + 1);
+    {
+        uint32 ii = 0;
+        for (ii = 0; ii < oscl_strlen(aMimeStr); ii++)
+        {
+            mimeStrToCompare[ii] = oscl_tolower(aMimeStr[ii]);
+        }
+        mimeStrToCompare[ii] = '\0';
+    }
+
+    //aMimeStr may include prefix rtp/
+    const char* possiblePrefixToNeglect = "rtp/";
+    char* mimeStr = NULL;
+    char* prefixIndexPtr = oscl_strstr(mimeStrToCompare, possiblePrefixToNeglect);
+    if (prefixIndexPtr)
+    {
+        mimeStr = prefixIndexPtr + oscl_strlen(possiblePrefixToNeglect);
+    }
+    else
+    {
+        mimeStr = OSCL_CONST_CAST(char*, aMimeStr);
+    }
+
+    IPayloadParser* retval = NULL;
+    if (aPayLoadParserRegistry)
+    {
+        OsclMemoryFragment memFrag;
+        memFrag.ptr = (OsclAny*)(mimeStr);
+        memFrag.len = oscl_strlen(mimeStr);
+        IPayloadParserFactory* factory = aPayLoadParserRegistry->lookupPayloadParserFactory(memFrag);
+        if (factory == NULL)
+        {
+#if (PVLOGGER_INST_LEVEL > PVLOGMSG_INST_LLDBG)
+            PVLogger* logger = PVLogger::GetLoggerObject("PVMFJitterBufferMisc");
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, logger, PVLOGMSG_ERR, (0, "PVMFJitterBufferMisc::GetPayloadParserRegistry: Error - Invalid Factory Mime %s ", mimeStr));
+#endif
+        }
+        else
+        {
+            retval = factory->createPayloadParser();
+        }
+    }
+    OSCL_ARRAY_DELETE(mimeStrToCompare);
+    return retval;
+}
+
+OSCL_EXPORT_REF PVMFStatus PVMFJitterBufferMisc::DestroyPayloadParser(PayloadParserRegistry* aPayLoadParserRegistry, const char* aMimeStr, IPayloadParser* aPayloadParser)
+{
+    PVMFStatus status = PVMFSuccess;
+
+    if (!aMimeStr)
+    {
+        return PVMFFailure;
+    }
+
+    char* const mimeStrToCompare = OSCL_ARRAY_NEW(char, oscl_strlen(aMimeStr) + 1);
+    {
+        uint32 ii = 0;
+        for (ii = 0; ii < oscl_strlen(aMimeStr); ii++)
+        {
+            mimeStrToCompare[ii] = oscl_tolower(aMimeStr[ii]);
+        }
+        mimeStrToCompare[ii] = '\0';
+    }
+
+    //aMimeStr may include prefix rtp/
+    const char* possiblePrefixToNeglect = "rtp/";
+    char* mimeStr = NULL;
+    char* prefixIndexPtr = oscl_strstr(mimeStrToCompare, possiblePrefixToNeglect);
+    if (prefixIndexPtr)
+    {
+        mimeStr = prefixIndexPtr + oscl_strlen(possiblePrefixToNeglect);
+    }
+    else
+    {
+        mimeStr = OSCL_CONST_CAST(char*, aMimeStr);
+    }
+
+    if (aPayLoadParserRegistry)
+    {
+        OsclMemoryFragment memFrag;
+        memFrag.ptr = (OsclAny*)(mimeStr);
+        memFrag.len = oscl_strlen(mimeStr);
+        IPayloadParserFactory* factory =
+            aPayLoadParserRegistry->lookupPayloadParserFactory(memFrag);
+        if (factory == NULL)
+        {
+#if (PVLOGGER_INST_LEVEL > PVLOGMSG_INST_LLDBG)
+            PVLogger* logger = PVLogger::GetLoggerObject("PVMFJitterBufferMisc");
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, logger, PVLOGMSG_ERR, (0, "PVMFJitterBufferMisc::DestroyPayloadParser: Error - Invalid Factory %s", mimeStr));
+#endif
+            status = PVMFFailure;
+        }
+        factory->destroyPayloadParser(aPayloadParser);
+    }
+    OSCL_ARRAY_DELETE(mimeStrToCompare);
+    return status;
 }

@@ -642,10 +642,26 @@ MP3ErrorType MP3Parser::ParseMP3File(PVFile * fpUsed, bool aEnableCRC)
     iSamplesPerFrame = spfIndexTable[iMP3HeaderInfo.frameVer][iMP3HeaderInfo.layerID];
     iSamplingRate = srIndexTable[((iMP3HeaderInfo.frameVer)*4) + iMP3HeaderInfo.srIndex];
 
-    if (mp3Type != EXINGType && mp3Type != EVBRIType)
+    // If the mp3Type is XING or VBRI, then first check if they have a valid duration
+    // If the header has no valid duration then just mark the content to as a VBR content
+    if (mp3Type == EXINGType || mp3Type == EVBRIType)
     {
-        // if XING or VBRI Headers are not present then we need to build our own TOC for
-        // repositioning.
+        // Get the duration
+        GetDurationFromVBRIHeader(iClipDurationFromVBRIHeader);
+        if (iClipDurationFromVBRIHeader == 0)
+        {
+            // not a valid duration, just set the clip to be VBR type
+            mp3Type = EVBRType;
+        }
+    }
+
+    // If XING or VBRI Headers are not present then we need to build our own TOC for
+    // repositioning.
+    // And even if XING header is present and TOC flags are not present we need to build
+    // our own TOC.
+    if ((mp3Type != EXINGType || !(iXingHeader.flags & TOC_FLAG)) &&
+            mp3Type != EVBRIType)
+    {
         iTOC = OSCL_ARRAY_NEW(int32, MAX_TOC_ENTRY_COUNT + 1);
         oscl_memset(iTOC, 0, sizeof(iTOC));
     }
@@ -687,6 +703,14 @@ MP3ErrorType MP3Parser::ScanMP3File(PVFile * fpUsed, uint32 aFramesToScan)
     {
         // if Duration can be obtained from either VBRI/XING Headers or from metadata,
         // we will not scan the file for duration
+        return MP3_DURATION_PRESENT;
+    }
+
+    if (iTOC == NULL)
+    {
+        // Not a valid condition this should never happen, except if
+        // there was memory allocation failure during ParseMP3File.
+        // Just return Mp3DurationPresent here to avoid any further calls of ScanMp3File
         return MP3_DURATION_PRESENT;
     }
 
@@ -1597,11 +1621,6 @@ BEGIN:
         // At EOF
         iCurrFrameNumber--;
         framesize = 0;
-        timestamp = GetTimestampForCurrentSample();
-        if (mp3CDInfo.BitRate > 0)
-        {
-            iTimestamp = uint32(timestamp + (OsclFloat) mp3CDInfo.FrameLengthInBytes * 8000.00f / mp3CDInfo.BitRate);
-        }
         if (0 != contentLength)
         {
             // if content length is known, check for reading beyond EOF
@@ -1615,6 +1634,7 @@ BEGIN:
         {
             return err;
         }
+
         return MP3_INSUFFICIENT_DATA;
     }
 
@@ -1626,14 +1646,6 @@ BEGIN:
     }
 
     framesize = mp3FrameSizeInBytes;
-    timestamp = GetTimestampForCurrentSample();
-
-    // update timestamp for next sample
-    // calculate frameDuration
-    if (mp3CDInfo.BitRate > 0)
-    {
-        iTimestamp = uint32(timestamp + (OsclFloat) mp3CDInfo.FrameLengthInBytes * 8000.00f / mp3CDInfo.BitRate);
-    }
 
     // Take into account the header (4 Bytes) already read up front
     // to obtain the correct Frame Size in Bytes
@@ -1655,6 +1667,13 @@ BEGIN:
         return MP3_INSUFFICIENT_DATA;
     }
 
+    timestamp = GetTimestampForCurrentSample();
+    // update timestamp for next sample
+    // calculate frameDuration
+    if (mp3CDInfo.BitRate > 0)
+    {
+        iTimestamp = uint32(timestamp + (OsclFloat) mp3CDInfo.FrameLengthInBytes * 8000.00f / mp3CDInfo.BitRate);
+    }
     return MP3_SUCCESS;
 }
 
@@ -1700,7 +1719,7 @@ uint32 MP3Parser::SeekPointFromTimestamp(uint32 &timestamp)
     }
 
     // XING - Use VBR TOC Header
-    if ((mp3Type == EXINGType) && (iXingHeader.flags & TOC_FLAG))
+    if ((mp3Type == EXINGType) && (iXingHeader.flags & TOC_FLAG) && timestamp > 0)
     {
         // Interpolate in TOC to get file seek point in bytes
         OsclFloat fpc = (OsclFloat)timestamp / (OsclFloat)iClipDurationFromVBRIHeader;
@@ -1745,7 +1764,7 @@ uint32 MP3Parser::SeekPointFromTimestamp(uint32 &timestamp)
             percent = 0;
         }
     }
-    else if (mp3Type == EVBRIType)
+    else if (mp3Type == EVBRIType && timestamp > 0)
         // //////////////////////////////////////////////////////////
         // CBR or VBRI
     {
@@ -2721,7 +2740,7 @@ MP3ErrorType MP3Parser::GetDurationFromVBRIHeader(uint32 &aClipDuration)
         return MP3_ERROR_UNKNOWN;
     }
 
-    iClipDurationFromVBRIHeader = iNumberOfFrames * iSamplesPerFrame / iSamplingRate * 1000;
+    iClipDurationFromVBRIHeader = (uint32)((OsclFloat)(iNumberOfFrames * iSamplesPerFrame) / iSamplingRate * 1000.00f);
     aClipDuration = iClipDurationFromVBRIHeader;
     return MP3_SUCCESS;
 }
@@ -2925,7 +2944,6 @@ void MP3Parser::FillTOCTable(uint32 aFilePos, uint32 aTimeStampToFrame)
         iTimestampPrev = iTimestampPrev - iBinWidth;
         iBinWidth = 2 * iBinWidth;
         iTOCFilledCount = MAX_TOC_ENTRY_COUNT / 2;
-        return;
     }
 }
 

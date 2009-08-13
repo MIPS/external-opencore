@@ -204,9 +204,9 @@ PVA_FF_Mpeg4File::init(int32 mediaType,
     _fileWriteFailed = false;
 
     _o3GPPTrack = true;
-    _oWMFTrack  = false;
-    _oPVMMTrack = false;
     _oMPEGTrack = false;
+    _oAVCTrack  = false;
+    _oTextTrack = false;
 
     _oFileRenderCalled = false;
     _oUserDataPopulated = false;
@@ -231,7 +231,6 @@ PVA_FF_Mpeg4File::init(int32 mediaType,
 
     _aFs = osclFileServerSession;
 
-    _nextAvailableODID = 1;
     _tempFileIndex = 'a';
 
     _pmediaDataAtomVec  = NULL;
@@ -241,22 +240,6 @@ PVA_FF_Mpeg4File::init(int32 mediaType,
     _pFileTypeAtom      = NULL;
 
     _initialUserDataSize     = 0;
-    _oDirectRenderEnabled    = false;
-
-    _oSetTitleDone          = false;
-    _oSetAuthorDone         = false;
-    _oSetCopyrightDone      = false;
-    _oSetDescriptionDone    = false;
-    _oSetRatingDone         = false;
-    _oSetCreationDateDone   = false;
-    _oSetPerformerDone      = false;
-    _oSetRatingDone         = false;
-    _oSetGenreDone          = false;
-    _oSetClassificationDone = false;
-    _oSetLocationInfoDone   = false;
-    _oSetAlbumDone          = false;
-    _oSetRecordingYearDone  = false;
-
 
     _totalTempFileRemoval = false;
     _oUserDataUpFront     = true;
@@ -279,10 +262,6 @@ PVA_FF_Mpeg4File::init(int32 mediaType,
             (PVMP4FF_3GPP_DOWNLOAD_MODE))
     {
         //Not possible to remove temp files, without output file name being set
-        if (_outputFileNameSet == false)
-        {
-            return false;
-        }
         _oInterLeaveEnabled   = true;
         _totalTempFileRemoval = true;
         _oUserDataUpFront     = false;
@@ -324,9 +303,6 @@ PVA_FF_Mpeg4File::init(int32 mediaType,
         PV_MP4_FF_NEW(fp->auditCB, PVA_FF_MovieFragmentRandomAccessAtom, (), _pMfraAtom);
     }
 
-    // IODS uses the first ODID, hence the increment here.
-    _nextAvailableODID++;
-
     // Create miscellaneous vector of atoms
     PV_MP4_FF_NEW(fp->auditCB, PVA_FF_MediaDataAtomVecType, (), _pmediaDataAtomVec);
 
@@ -340,14 +316,16 @@ PVA_FF_Mpeg4File::init(int32 mediaType,
     {
         PV_MP4_FF_NEW(fp->auditCB, PVA_FF_InterLeaveBufferVecType, (), _pInterLeaveBufferVec);
         PVA_FF_MediaDataAtom *mda = NULL;
+        PVA_FF_UNICODE_STRING_PARAM emptyString = PVA_FF_UNICODE_HEAP_STRING(_STRLIT_WCHAR(""));
+
         if (!_totalTempFileRemoval)
         {
             // Create PVA_FF_MediaDataAtom
-            PV_MP4_FF_NEW(fp->auditCB, PVA_FF_MediaDataAtom, (_tempOutputPath,
+            PV_MP4_FF_NEW(fp->auditCB, PVA_FF_MediaDataAtom, (emptyString, NULL,
+                          _aFs, iCacheSize,
+                          _tempOutputPath,
                           _tempFilePostfix,
-                          _tempFileIndex,
-                          MEDIA_DATA_ON_DISK,
-                          _aFs, iCacheSize),
+                          _tempFileIndex),
                           mda);
 
             _tempFileIndex++;
@@ -356,11 +334,11 @@ PVA_FF_Mpeg4File::init(int32 mediaType,
         {
             if (_oFileOpenedOutsideAFFLib)
             {
-                PV_MP4_FF_NEW(fp->auditCB, PVA_FF_MediaDataAtom, (_outputFileHandle, _aFs, iCacheSize), mda);
+                PV_MP4_FF_NEW(fp->auditCB, PVA_FF_MediaDataAtom, (emptyString, _outputFileHandle, _aFs, iCacheSize), mda);
             }
             else
             {
-                PV_MP4_FF_NEW(fp->auditCB, PVA_FF_MediaDataAtom, (_outputFileName, _aFs, iCacheSize), mda);
+                PV_MP4_FF_NEW(fp->auditCB, PVA_FF_MediaDataAtom, (_outputFileName, NULL, _aFs, iCacheSize), mda);
             }
         }
 
@@ -385,10 +363,7 @@ PVA_FF_Mpeg4File::init(int32 mediaType,
 bool
 PVA_FF_Mpeg4File::setOutputFileName(PVA_FF_UNICODE_STRING_PARAM outputFileName)
 {
-    _targetFileName           = (_STRLIT(""));
-    _oPartialTempFileRemoval  = false;
     _outputFileName           = _STRLIT("");
-    _outputFileNameSet        = false;
     _outputFileHandle         = NULL;
     _targetFileHandle         = NULL;
     _oFileOpenedOutsideAFFLib = false;
@@ -396,13 +371,6 @@ PVA_FF_Mpeg4File::setOutputFileName(PVA_FF_UNICODE_STRING_PARAM outputFileName)
     if (outputFileName.get_size() > 0)
     {
         _outputFileName   += outputFileName;
-        _outputFileNameSet = true;
-
-        if (!_oPartialTempFileRemoval)
-        {
-            _targetFileName += outputFileName;
-            _oPartialTempFileRemoval = true;
-        }
         return true;
     }
     return false;
@@ -411,10 +379,6 @@ PVA_FF_Mpeg4File::setOutputFileName(PVA_FF_UNICODE_STRING_PARAM outputFileName)
 bool
 PVA_FF_Mpeg4File::setOutputFileHandle(MP4_AUTHOR_FF_FILE_HANDLE outputFileHandle)
 {
-    _targetFileName           = (_STRLIT(""));
-    _oPartialTempFileRemoval  = false;
-    _outputFileName           = _STRLIT("");
-    _outputFileNameSet        = false;
     _outputFileHandle         = NULL;
     _targetFileHandle         = NULL;
     _oFileOpenedOutsideAFFLib = false;
@@ -422,13 +386,6 @@ PVA_FF_Mpeg4File::setOutputFileHandle(MP4_AUTHOR_FF_FILE_HANDLE outputFileHandle
     if (outputFileHandle != NULL)
     {
         _outputFileHandle  = outputFileHandle;
-        _outputFileNameSet = true;
-
-        if (!_oPartialTempFileRemoval)
-        {
-            _targetFileHandle = outputFileHandle;
-            _oPartialTempFileRemoval = true;
-        }
         _oFileOpenedOutsideAFFLib = true;
         return true;
     }
@@ -436,62 +393,25 @@ PVA_FF_Mpeg4File::setOutputFileHandle(MP4_AUTHOR_FF_FILE_HANDLE outputFileHandle
 }
 
 uint32
-PVA_FF_Mpeg4File::addTrack(int32 mediaType,
-                           int32 codecType,
-                           bool oDirectRender,
-                           uint8 profile,
-                           uint8 profileComp,
-                           uint8 level)
+PVA_FF_Mpeg4File::addTrack(int32 mediaType, int32 codecType, uint8 profile,
+                           uint8 profileComp, uint8 level)
 {
     uint32 TrackID = 0;
     PVA_FF_TrackAtom *pmediatrack = NULL;
     _codecType = codecType;
     PVA_FF_MediaDataAtom *mda = NULL;
     PVA_FF_InterLeaveBuffer *pInterLeaveBuffer = NULL;
-
     if (!_oInterLeaveEnabled)
     {
-        if (oDirectRender)
-        {
-            if (!_oDirectRenderEnabled)
-            {
-                if ((_oPartialTempFileRemoval) &&
-                        (_totalTempFileRemoval == false))
-                {
-                    _oDirectRenderEnabled = true;
+        PVA_FF_UNICODE_STRING_PARAM emptyString = PVA_FF_UNICODE_HEAP_STRING(_STRLIT_WCHAR(""));
+        //create new track - media will be stored in temp file
+        PV_MP4_FF_NEW(fp->auditCB, PVA_FF_MediaDataAtom, (emptyString, NULL,
+                      _aFs, iCacheSize,
+                      _tempOutputPath,
+                      _tempFilePostfix,
+                      _tempFileIndex), mda);
 
-                    if (_oFileOpenedOutsideAFFLib)
-                    {
-                        PV_MP4_FF_NEW(fp->auditCB, PVA_FF_MediaDataAtom, (_targetFileHandle, _aFs, iCacheSize), mda);
-                    }
-                    else
-                    {
-                        PV_MP4_FF_NEW(fp->auditCB, PVA_FF_MediaDataAtom, (_targetFileName, _aFs, iCacheSize), mda);
-                    }
-                }
-                else
-                {
-                    //Target File name not set
-                    return (INVALID_TRACK_ID);
-                }
-            }
-            else
-            {
-                //Multiple Tracks cannot be directly rendered
-                return (INVALID_TRACK_ID);
-            }
-        }
-        else
-        {
-            //create new track - media will be stored in temp file
-            PV_MP4_FF_NEW(fp->auditCB, PVA_FF_MediaDataAtom, (_tempOutputPath,
-                          _tempFilePostfix,
-                          _tempFileIndex,
-                          MEDIA_DATA_ON_DISK,
-                          _aFs, iCacheSize), mda);
-
-            _tempFileIndex++;
-        }
+        _tempFileIndex++;
         addMediaDataAtom(mda);
     }
     else
@@ -543,10 +463,14 @@ PVA_FF_Mpeg4File::addTrack(int32 mediaType,
 
     if ((uint32) mediaType == MEDIA_TYPE_VISUAL)
     {
-        if ((codecType == CODEC_TYPE_BASELINE_H263_VIDEO) ||
-                (codecType == CODEC_TYPE_AVC_VIDEO))
+        if (codecType == CODEC_TYPE_BASELINE_H263_VIDEO)
         {
             _o3GPPTrack = true;
+        }
+        else if (codecType == CODEC_TYPE_AVC_VIDEO)
+        {
+            _o3GPPTrack = true;
+            _oAVCTrack  = true;
         }
         else if (codecType == CODEC_TYPE_MPEG4_VIDEO)
         {
@@ -588,6 +512,7 @@ PVA_FF_Mpeg4File::addTrack(int32 mediaType,
         if (codecType == CODEC_TYPE_TIMED_TEXT)
         {
             _o3GPPTrack = true;
+            _oTextTrack = true;
         }
         // Create default video track and add it to moov atom
         PV_MP4_FF_NEW(fp->auditCB, PVA_FF_TrackAtom, (MEDIA_TYPE_TEXT,
@@ -616,12 +541,6 @@ PVA_FF_Mpeg4File::addTrack(int32 mediaType,
         // just added (with a 1-based index NOT a zero-based index)
         TrackID = pmediatrack->getTrackID();
     }
-
-    if (TrackID > INITIAL_TRACK_ID)
-        _interLeaveDuration = DEFAULT_INTERLEAVE_INTERVAL;
-    else
-        _interLeaveDuration = 0; // No need to interleave if there is just one track
-
     recomputeSize();
     return (TrackID);
 }
@@ -651,11 +570,11 @@ PVA_FF_Mpeg4File::setTimeScale(uint32 trackID, uint32 rate)
 
 //this will work same as the addsampletotrack but this
 //will be called only for timed text file format
-bool PVA_FF_Mpeg4File::addTextSampleToTrack(uint32 trackID,
-        Oscl_Vector <OsclMemoryFragment, OsclMemAllocator>& fragmentList,
-        uint32 ts, uint8 flags, int32 index, uint8* textsamplemodifier)
+bool PVA_FF_Mpeg4File::addTextSampleToTrack(uint32 trackID, PVMP4FFComposerSampleParam *pSampleParam)
 {
-    OSCL_UNUSED_ARG(textsamplemodifier);
+    if (pSampleParam == NULL)
+        return false;
+
     PVA_FF_TrackAtom *mediaTrack;
     uint32 mediaType;
     int32 codecType;
@@ -664,25 +583,27 @@ bool PVA_FF_Mpeg4File::addTextSampleToTrack(uint32 trackID,
     mediaTrack = _pmovieAtom->getMediaTrack(trackID);
     mediaType  = mediaTrack->getMediaType();
     codecType = _pmovieAtom->getCodecType(trackID);
-
     // Create media sample buffer and size field
     uint32 size = 0;
     // temporary variables
     uint32 ii = 0;
     OsclBinIStreamBigEndian stream;
 
-    if (!fragmentList.empty())
+    if (!pSampleParam->_fragmentList.empty())
     {
         if (mediaType == MEDIA_TYPE_TEXT)//CALCULATES SIZE OF TIMED TEXT SAMPLE
         {
-            for (ii = 0; ii < fragmentList.size(); ii++)
+            for (ii = 0; ii < pSampleParam->_fragmentList.size(); ii++)
             {
-                size += fragmentList[ii].len;
+                size += pSampleParam->_fragmentList[ii].len;
             }
         }
     }
 
     PVA_FF_MediaDataAtom *mdatAtom = getMediaDataAtomForTrack(trackID);
+
+    pSampleParam->_sampleSize = size;
+
     if (mediaType == MEDIA_TYPE_TEXT)
     {
         if (_modifiable)
@@ -697,18 +618,18 @@ bool PVA_FF_Mpeg4File::addTextSampleToTrack(uint32 trackID,
                 {
                     if (_oInterLeaveEnabled)
                     {
-                        if (!addTextMediaSampleInterleave(trackID, fragmentList, size, ts, flags, index))
+                        if (!addTextMediaSampleInterleave(trackID, pSampleParam))
                         {
                             return false;
                         }
                     }
                     else
                     {
-                        if (!mdatAtom->addRawSample((fragmentList), (size), mediaType, codecType))
+                        if (!mdatAtom->addRawSample((pSampleParam->_fragmentList), (pSampleParam->_sampleSize), mediaType, codecType))
                         {
                             retVal = false;
                         }
-                        _pmovieAtom->addTextSampleToTrack(trackID, fragmentList, size, ts, flags, index);
+                        _pmovieAtom->addTextSampleToTrack(trackID, pSampleParam);
                     }
                 }
             }
@@ -744,10 +665,11 @@ PVA_FF_Mpeg4File::getMovieFragmentDuration()
 
 
 bool
-PVA_FF_Mpeg4File::addSampleToTrack(uint32 trackID,
-                                   Oscl_Vector <OsclMemoryFragment, OsclMemAllocator>& fragmentList, // vector which contains either NALs or a sample
-                                   uint32 ts, uint8 flags)
+PVA_FF_Mpeg4File::addSampleToTrack(uint32 trackID, PVMP4FFComposerSampleParam *pSampleParam)
 {
+    if (pSampleParam == NULL)
+        return false;
+
     PVA_FF_TrackAtom *mediaTrack;
     uint32 mediaType;
     int32 codecType;
@@ -764,26 +686,27 @@ PVA_FF_Mpeg4File::addSampleToTrack(uint32 trackID,
     uint32 ii = 0;
     OsclBinIStreamBigEndian stream;
     OsclMemoryFragment fragment;
-    if (!fragmentList.empty())
+    if (!pSampleParam->_fragmentList.empty())
     {
         // calculate size of AVC sample
         if (mediaType == MEDIA_TYPE_VISUAL && codecType == CODEC_TYPE_AVC_VIDEO)
         {
             // compose AVC sample
-            for (uint32 ii = 0; ii < fragmentList.size(); ii++)
+            for (uint32 ii = 0; ii < pSampleParam->_fragmentList.size(); ii++)
             {
-                size += (fragmentList[ii].len + 4); // length + '2' size of NAL unit length field
+                size += (pSampleParam->_fragmentList[ii].len + 4); // length + '2' size of NAL unit length field
             }
         }
         // all memory fragments in the vector combines into one sample
         else
         {
-            for (ii = 0; ii < fragmentList.size(); ii++)
+            for (ii = 0; ii < pSampleParam->_fragmentList.size(); ii++)
             {
-                size += fragmentList[ii].len;
+                size += pSampleParam->_fragmentList[ii].len;
             }
         }
     }
+    pSampleParam->_sampleSize = size;
 
     PVA_FF_MediaDataAtom *mdatAtom = getMediaDataAtomForTrack(trackID);
     if (mediaType == MEDIA_TYPE_AUDIO)
@@ -801,29 +724,29 @@ PVA_FF_Mpeg4File::addSampleToTrack(uint32 trackID,
                         if (track != NULL)
                         {
                             // FT is in the first byte that comes off the encoder
-                            flags = *((uint8*)(fragmentList.front().ptr));
+                            pSampleParam->_flags = *((uint8*)(pSampleParam->_fragmentList.front().ptr));
                             uint32 mode_set = 0;
-                            if (flags < 16)
+                            if (pSampleParam->_flags < 16)
                             {
-                                mode_set = AMRModeSetMask[(flags&0x0f)];
+                                mode_set = AMRModeSetMask[(pSampleParam->_flags&0x0f)];
                             }
-                            if (flags < 9)
+                            if (pSampleParam->_flags < 9)
                             {
                                 // JUST TO ENSURE THAT THE PADDED BITS ARE ZERO
-                                fragment = fragmentList.back();
+                                fragment = pSampleParam->_fragmentList.back();
                                 if (mediaTrack->getCodecType() == CODEC_TYPE_AMR_AUDIO)
                                 {
-                                    ((uint8*)fragment.ptr)[ fragment.len - 1] &= aAMRNBZeroSetMask[(flags&0x0f)];
+                                    ((uint8*)fragment.ptr)[ fragment.len - 1] &= aAMRNBZeroSetMask[(pSampleParam->_flags&0x0f)];
                                 }
                                 else if (mediaTrack->getCodecType() == CODEC_TYPE_AMR_WB_AUDIO)
                                 {
-                                    ((uint8*)fragment.ptr)[ fragment.len - 1] &= aAMRWBZeroSetMask[(flags&0x0f)];
+                                    ((uint8*)fragment.ptr)[ fragment.len - 1] &= aAMRWBZeroSetMask[(pSampleParam->_flags&0x0f)];
                                 }
 
                             }
                             if (_oInterLeaveEnabled)
                             {
-                                if (!addMediaSampleInterleave(trackID, fragmentList, size, ts, flags))
+                                if (!addMediaSampleInterleave(trackID, pSampleParam))
                                 {
                                     return false;
                                 }
@@ -831,13 +754,14 @@ PVA_FF_Mpeg4File::addSampleToTrack(uint32 trackID,
                             else
                             {
                                 // Add to mdat PVA_FF_Atom for the specified track
-                                if (!mdatAtom->addRawSample(fragmentList, size, mediaType, codecType))
+                                if (!mdatAtom->addRawSample(pSampleParam->_fragmentList,
+                                                            pSampleParam->_sampleSize,
+                                                            mediaType, codecType))
                                 {
                                     retVal = false;
                                 }
                                 // Add to moov atom (in turn adds to tracks)
-                                _pmovieAtom->addSampleToTrack(trackID, fragmentList, size,
-                                                              ts, flags);
+                                _pmovieAtom->addSampleToTrack(trackID, pSampleParam);
                             }
                         }
                     }
@@ -852,7 +776,7 @@ PVA_FF_Mpeg4File::addSampleToTrack(uint32 trackID,
                     {
                         if (_oInterLeaveEnabled)
                         {
-                            if (!addMediaSampleInterleave(trackID, fragmentList, size, ts, flags))
+                            if (!addMediaSampleInterleave(trackID, pSampleParam))
                             {
                                 return false;
                             }
@@ -862,16 +786,15 @@ PVA_FF_Mpeg4File::addSampleToTrack(uint32 trackID,
 
                             // Add to mdat PVA_FF_Atom for the specified track
 
-                            if (!mdatAtom->addRawSample((fragmentList), (size), mediaType, codecType))
+                            if (!mdatAtom->addRawSample((pSampleParam->_fragmentList), (size), mediaType, codecType))
                             {
                                 retVal = false;
                             }
 
-                            flags = 0;
+                            pSampleParam->_flags = 0;
 
                             // Add to moov atom (in turn adds to tracks)
-                            _pmovieAtom->addSampleToTrack(trackID, fragmentList, size,
-                                                          ts, flags);
+                            _pmovieAtom->addSampleToTrack(trackID, pSampleParam);
                         }
                     }
                 }
@@ -926,7 +849,7 @@ PVA_FF_Mpeg4File::addSampleToTrack(uint32 trackID,
                 {
                     if (_oInterLeaveEnabled)
                     {
-                        if (!addMediaSampleInterleave(trackID, fragmentList, size, ts, flags))
+                        if (!addMediaSampleInterleave(trackID, pSampleParam))
                         {
                             return false;
                         }
@@ -934,11 +857,11 @@ PVA_FF_Mpeg4File::addSampleToTrack(uint32 trackID,
                     else
                     {
 
-                        if (!mdatAtom->addRawSample((fragmentList), (size), mediaType, codecType))
+                        if (!mdatAtom->addRawSample((pSampleParam->_fragmentList), (size), mediaType, codecType))
                         {
                             retVal = false;
                         }
-                        _pmovieAtom->addSampleToTrack(trackID, fragmentList, size, ts, flags);
+                        _pmovieAtom->addSampleToTrack(trackID, pSampleParam);
                     }
                 }
             }
@@ -967,56 +890,36 @@ PVA_FF_Mpeg4File::setVersion(PVA_FF_UNICODE_STRING_PARAM version, uint16 langCod
 void
 PVA_FF_Mpeg4File::setTitle(PVA_FF_UNICODE_STRING_PARAM title, uint16 langCode)
 {
-    if (!_oSetTitleDone)
+    if (_pmovieAtom != NULL)
     {
-        _oSetTitleDone = true;
-        _title = title;
-        if (_pmovieAtom != NULL)
-        {
-            _pmovieAtom->setTitleInfo(title, langCode);
-        }
+        _pmovieAtom->setTitleInfo(title, langCode);
     }
 }
 
 void
 PVA_FF_Mpeg4File::setAuthor(PVA_FF_UNICODE_STRING_PARAM author, uint16 langCode)
 {
-    if (!_oSetAuthorDone)
+    if (_pmovieAtom != NULL)
     {
-        _oSetAuthorDone = true;
-        _author = author;
-        if (_pmovieAtom != NULL)
-        {
-            _pmovieAtom->setAuthorInfo(author, langCode);
-        }
+        _pmovieAtom->setAuthorInfo(author, langCode);
     }
 }
 
 void
 PVA_FF_Mpeg4File::setCopyright(PVA_FF_UNICODE_STRING_PARAM copyright, uint16 langCode)
 {
-    if (!_oSetCopyrightDone)
+    if (_pmovieAtom != NULL)
     {
-        _oSetCopyrightDone = true;
-        _copyright = copyright;
-        if (_pmovieAtom != NULL)
-        {
-            _pmovieAtom->setCopyRightInfo(copyright, langCode);
-        }
+        _pmovieAtom->setCopyRightInfo(copyright, langCode);
     }
 }
 
 void
 PVA_FF_Mpeg4File::setDescription(PVA_FF_UNICODE_STRING_PARAM description, uint16 langCode)
 {
-    if (!_oSetDescriptionDone)
+    if (_pmovieAtom != NULL)
     {
-        _oSetDescriptionDone = true;
-        _description = description;
-        if (_pmovieAtom != NULL)
-        {
-            _pmovieAtom->setDescription(description, langCode);
-        }
+        _pmovieAtom->setDescription(description, langCode);
     }
 }
 
@@ -1026,55 +929,27 @@ PVA_FF_Mpeg4File::setRating(PVA_FF_UNICODE_STRING_PARAM ratingInfo,
                             uint32 ratingEntity,
                             uint32 ratingCriteria)
 {
-    OSCL_UNUSED_ARG(langCode);
-
-    if (!_oSetRatingDone)
+    if (_pmovieAtom != NULL)
     {
-        _oSetRatingDone = true;
-        _ratingInfo = ratingInfo;
-        _ratingEntity = ratingEntity;
-        _ratingCriteria = ratingCriteria;
-        if (_pmovieAtom != NULL)
-        {
-            _pmovieAtom->setRatingInfo(ratingInfo, ratingEntity, ratingCriteria, langCode);
-        }
-
+        _pmovieAtom->setRatingInfo(ratingInfo, ratingEntity, ratingCriteria, langCode);
     }
 }
 
 void
 PVA_FF_Mpeg4File::setPerformer(PVA_FF_UNICODE_STRING_PARAM performer, uint16 langCode)
 {
-    OSCL_UNUSED_ARG(langCode);
-
-    if (!_oSetPerformerDone)
+    if (_pmovieAtom != NULL)
     {
-        _oSetPerformerDone = true;
-        _performer = performer;
-
-        if (_pmovieAtom != NULL)
-        {
-            _pmovieAtom->setPerformerInfo(performer, langCode);
-        }
-
+        _pmovieAtom->setPerformerInfo(performer, langCode);
     }
 }
 
 void
 PVA_FF_Mpeg4File::setGenre(PVA_FF_UNICODE_STRING_PARAM genre, uint16 langCode)
 {
-    OSCL_UNUSED_ARG(langCode);
-
-    if (!_oSetGenreDone)
+    if (_pmovieAtom != NULL)
     {
-        _oSetGenreDone = true;
-        _genre = genre;
-
-        if (_pmovieAtom != NULL)
-        {
-            _pmovieAtom->setGenreInfo(genre, langCode);
-        }
-
+        _pmovieAtom->setGenreInfo(genre, langCode);
     }
 }
 
@@ -1083,30 +958,15 @@ PVA_FF_Mpeg4File::setClassification(PVA_FF_UNICODE_STRING_PARAM classificationIn
                                     uint32 classificationEntity, uint16 classificationTable,
                                     uint16 langCode)
 {
-    OSCL_UNUSED_ARG(langCode);
-
-    if (!_oSetClassificationDone)
+    if (_pmovieAtom != NULL)
     {
-        _oSetClassificationDone = true;
-        _classificationInfo = classificationInfo;
-        _classificationEntity = classificationEntity;
-        _classificationTable = classificationTable;
-
-        if (_pmovieAtom != NULL)
-        {
-            _pmovieAtom->setClassificationInfo(classificationInfo, classificationEntity, classificationTable, langCode);
-        }
+        _pmovieAtom->setClassificationInfo(classificationInfo, classificationEntity, classificationTable, langCode);
     }
 }
 
 void
 PVA_FF_Mpeg4File::setKeyWord(uint8 keyWordSize, PVA_FF_UNICODE_HEAP_STRING keyWordInfo, uint16 langCode)
 {
-    OSCL_UNUSED_ARG(langCode);
-
-    _keyWordSize = keyWordSize;
-    _keyWordInfo = keyWordInfo;
-
     if (_pmovieAtom != NULL)
     {
         _pmovieAtom->setKeyWordsInfo(keyWordSize, keyWordInfo, langCode);
@@ -1116,37 +976,18 @@ PVA_FF_Mpeg4File::setKeyWord(uint8 keyWordSize, PVA_FF_UNICODE_HEAP_STRING keyWo
 void
 PVA_FF_Mpeg4File::setLocationInfo(PvmfAssetInfo3GPPLocationStruct *ptr_loc_struct)
 {
-    if (!_oSetLocationInfoDone)
+    if (_pmovieAtom != NULL)
     {
-        _oSetLocationInfoDone = true;
-        _locationName = ptr_loc_struct->_location_name;
-        _locationInfoAstrBody = ptr_loc_struct->_astronomical_body;
-        _locationInfoAddNotes = ptr_loc_struct->_additional_notes;
-        _locationInfoRole = ptr_loc_struct->_role;
-        _locationInfoLongitude = ptr_loc_struct->_longitude;
-        _locationInfoAltitude = ptr_loc_struct->_altitude;
-        _locationInfoLatitude = ptr_loc_struct->_latitude;
-
-        if (_pmovieAtom != NULL)
-        {
-            _pmovieAtom->setLocationInfo(ptr_loc_struct);
-        }
+        _pmovieAtom->setLocationInfo(ptr_loc_struct);
     }
 }
 
 void
 PVA_FF_Mpeg4File::setAlbumInfo(PVA_FF_UNICODE_STRING_PARAM albumInfo, uint16 langCode)
 {
-    if (!_oSetAlbumDone)
+    if (_pmovieAtom != NULL)
     {
-        _oSetAlbumDone = true;
-        _albumInfo = albumInfo;
-
-        if (_pmovieAtom != NULL)
-        {
-            _pmovieAtom->setAlbumInfo(albumInfo, langCode);
-        }
-
+        _pmovieAtom->setAlbumInfo(albumInfo, langCode);
     }
 }
 
@@ -1162,27 +1003,16 @@ PVA_FF_Mpeg4File::setAlbumTrackNumber(uint8 trackNumber)
 void
 PVA_FF_Mpeg4File::setRecordingYear(uint16 recordingYear)
 {
-    if (!_oSetRecordingYearDone)
+    if (_pmovieAtom != NULL)
     {
-        _oSetRecordingYearDone = true;
-        _recordingYear = recordingYear;
-
-        if (_pmovieAtom != NULL)
-        {
-            _pmovieAtom->setRecordingYearInfo(recordingYear);
-        }
-
+        _pmovieAtom->setRecordingYearInfo(recordingYear);
     }
 }
 
 void
 PVA_FF_Mpeg4File::setCreationDate(PVA_FF_UNICODE_STRING_PARAM creationDate)
 {
-    if (!_oSetCreationDateDone)
-    {
-        _oSetCreationDateDone = true;
-        _creationDate = creationDate;
-    }
+    _creationDate = creationDate;
 }
 
 void
@@ -1283,36 +1113,50 @@ PVA_FF_Mpeg4File::renderToFileStream(MP4_AUTHOR_FF_FILE_IO_WRAP *fp)
     {
         if (_o3GPPTrack)
         {
-            setMajorBrand(BRAND_3GPP4);
-            setMajorBrandVersion(VERSION_3GPP4);
+            if (_oMovieFragmentEnabled)
+            {
+                setMajorBrand(BRAND_3GPP6);
+                setMajorBrandVersion(VERSION_3GPP6);
+            }
+            else if (_oTextTrack)
+            {
+                setMajorBrand(BRAND_3GPP5);
+                setMajorBrandVersion(VERSION_3GPP5);
+            }
+            else
+            {
+                setMajorBrand(BRAND_3GPP4);
+                setMajorBrandVersion(VERSION_3GPP4);
+            }
         }
         else if (_oMPEGTrack)
         {
-            setMajorBrand(BRAND_MPEG4);
-            setMajorBrandVersion(VERSION_MPEG4);
+            setMajorBrand(BRAND_MP41);
+            setMajorBrandVersion(VERSION_MP41);
         }
-        else if (_oPVMMTrack)
-        {
-            setMajorBrand(PVMM_BRAND);
-            setMajorBrandVersion(PVMM_VERSION);
-        }
-
         /*
          * Add compatible brands
          */
         if (_o3GPPTrack)
         {
             addCompatibleBrand(BRAND_3GPP4);
-        }
-        if (_oPVMMTrack)
-        {
-            addCompatibleBrand(PVMM_BRAND);
+
+            if (_oTextTrack)
+                addCompatibleBrand(BRAND_3GPP5);
         }
         if (_oMPEGTrack)
         {
-            addCompatibleBrand(BRAND_MPEG4);
+            addCompatibleBrand(BRAND_MP41);
+            addCompatibleBrand(BRAND_MP42);
         }
-        addCompatibleBrand(BRAND_3GPP5);
+        if (_oAVCTrack)
+        {
+            addCompatibleBrand(BRAND_AVC);
+        }
+        addCompatibleBrand(BRAND_ISOM);
+        addCompatibleBrand(BRAND_3G2A);
+        addCompatibleBrand(BRAND_3G2B);
+        addCompatibleBrand(BRAND_3G2C);
     }
 
     uint32 time = convertCreationTime(_creationDate);
@@ -1320,17 +1164,14 @@ PVA_FF_Mpeg4File::renderToFileStream(MP4_AUTHOR_FF_FILE_IO_WRAP *fp)
     _pmovieAtom->getMutableMovieHeaderAtom().setCreationTime(time);
     _pmovieAtom->getMutableMovieHeaderAtom().setModificationTime(time);
 
-    if ((_o3GPPTrack == true) || (_oPVMMTrack == true) || (_oMPEGTrack == true))
+    if ((_o3GPPTrack == true) || (_oMPEGTrack == true))
     {
         _pFileTypeAtom->renderToFileStream(fp);
 
         metaDataSize += _pFileTypeAtom->getSize();
     }
     {
-        if (!_oDirectRenderEnabled)
-        {
-            populateUserDataAtom();
-        }
+        populateUserDataAtom();
     }
     if (!_fileAuthoringFlags)
     {
@@ -1345,9 +1186,9 @@ PVA_FF_Mpeg4File::renderToFileStream(MP4_AUTHOR_FF_FILE_IO_WRAP *fp)
             }
         }
     }
-    if ((_oDirectRenderEnabled) || (_totalTempFileRemoval))
+    if ((_totalTempFileRemoval))
     {
-        PVA_FF_AtomUtils::seekFromStart(fp, _directRenderFileOffset);
+        PVA_FF_AtomUtils::seekFromStart(fp, _offsetDataRenderedToFile);
     }
 
     _oFileRenderCalled = true;
@@ -1370,7 +1211,7 @@ PVA_FF_Mpeg4File::renderToFileStream(MP4_AUTHOR_FF_FILE_IO_WRAP *fp)
         {
             PVA_FF_MediaDataAtom *mdat = (*_pmediaDataAtomVec)[i];
 
-            if (!(mdat->IsTargetRender()))
+            if (!_totalTempFileRemoval)
             {
                 Oscl_Vector<PVA_FF_TrackAtom*, OsclMemAllocator> *trefVec =
                     (*_pmediaDataAtomVec)[i]->getTrackReferencePtrVec();
@@ -1404,66 +1245,62 @@ PVA_FF_Mpeg4File::renderToFileStream(MP4_AUTHOR_FF_FILE_IO_WRAP *fp)
     // Render all mediaData atoms to the file stream
     for (i = size - 1; i >= 0; i--)
     {
-        bool oRenderMdat = true;
-        if (oRenderMdat)
+        if (!_totalTempFileRemoval)
         {
-            if (!((*_pmediaDataAtomVec)[i]->IsTargetRender()))
+            if (!((*_pmediaDataAtomVec)[i]->renderToFileStream(fp)))
             {
-                if (!((*_pmediaDataAtomVec)[i]->renderToFileStream(fp)))
-                {
-                    _fileWriteFailed = true;
-                    return false;
-                }
-                if ((*_pmediaDataAtomVec)[i]->_targetFileWriteError == true)
-                {
-                    _fileWriteFailed = true;
-                    return false;
-                }
+                _fileWriteFailed = true;
+                return false;
+            }
+            if ((*_pmediaDataAtomVec)[i]->_targetFileWriteError == true)
+            {
+                _fileWriteFailed = true;
+                return false;
+            }
 
-                if (!_oMovieAtomUpfront)
+            if (!_oMovieAtomUpfront)
+            {
+                chunkFileOffset =
+                    (*_pmediaDataAtomVec)[i]->getFileOffsetForChunkStart();
+                if (chunkFileOffset != 0)
                 {
-                    chunkFileOffset =
-                        (*_pmediaDataAtomVec)[i]->getFileOffsetForChunkStart();
-                    if (chunkFileOffset != 0)
+                    // Only true when fp a PVA_FF_MediaDataAtom
+
+                    Oscl_Vector<PVA_FF_TrackAtom*, OsclMemAllocator> *trefVec =
+                        (*_pmediaDataAtomVec)[i]->getTrackReferencePtrVec();
+
+
+                    if (trefVec != NULL)
                     {
-                        // Only true when fp a PVA_FF_MediaDataAtom
-
-                        Oscl_Vector<PVA_FF_TrackAtom*, OsclMemAllocator> *trefVec =
-                            (*_pmediaDataAtomVec)[i]->getTrackReferencePtrVec();
-
-
-                        if (trefVec != NULL)
+                        for (uint32 trefVecIndex = 0;
+                                trefVecIndex < trefVec->size();
+                                trefVecIndex++)
                         {
-                            for (uint32 trefVecIndex = 0;
-                                    trefVecIndex < trefVec->size();
-                                    trefVecIndex++)
-                            {
-                                (*trefVec)[trefVecIndex]->updateAtomFileOffsets(chunkFileOffset);
-                            }
+                            (*trefVec)[trefVecIndex]->updateAtomFileOffsets(chunkFileOffset);
                         }
                     }
                 }
             }
-            else
+        }
+        else
+        {
+            if (!_oMovieAtomUpfront)
             {
-                if (!_oMovieAtomUpfront)
+                chunkFileOffset =
+                    (*_pmediaDataAtomVec)[i]->getFileOffsetForChunkStart();
+
+                if (chunkFileOffset != 0)
                 {
-                    chunkFileOffset =
-                        (*_pmediaDataAtomVec)[i]->getFileOffsetForChunkStart();
+                    // Only true when fp a PVA_FF_MediaDataAtom
 
-                    if (chunkFileOffset != 0)
+                    Oscl_Vector<PVA_FF_TrackAtom*, OsclMemAllocator> *trefVec = (*_pmediaDataAtomVec)[i]->getTrackReferencePtrVec();
+                    if (trefVec != NULL)
                     {
-                        // Only true when fp a PVA_FF_MediaDataAtom
-
-                        Oscl_Vector<PVA_FF_TrackAtom*, OsclMemAllocator> *trefVec = (*_pmediaDataAtomVec)[i]->getTrackReferencePtrVec();
-                        if (trefVec != NULL)
+                        for (uint32 trefVecIndex = 0;
+                                trefVecIndex < trefVec->size();
+                                trefVecIndex++)
                         {
-                            for (uint32 trefVecIndex = 0;
-                                    trefVecIndex < trefVec->size();
-                                    trefVecIndex++)
-                            {
-                                (*trefVec)[trefVecIndex]->updateAtomFileOffsets(chunkFileOffset);
-                            }
+                            (*trefVec)[trefVecIndex]->updateAtomFileOffsets(chunkFileOffset);
                         }
                     }
                 }
@@ -1544,36 +1381,31 @@ PVA_FF_Mpeg4File::renderToFile(PVA_FF_UNICODE_STRING_PARAM filename)
         }
 
         bool targetRender = false;
-        _directRenderFileOffset = 0;
+        _offsetDataRenderedToFile = 0;
 
-        if ((_oDirectRenderEnabled) || (_totalTempFileRemoval))
+        if (_totalTempFileRemoval)
         {
             for (uint32 k = 0; k < _pmediaDataAtomVec->size(); k++)
             {
-                bool tempVal = ((*_pmediaDataAtomVec)[k]->IsTargetRender());
-
-                if (tempVal)
+                if (targetRender)
                 {
-                    if (targetRender)
+                    //Only one track is allowed to be rendered directly onto the target
+                    //file
+                    status = false;
+                }
+                else
+                {
+                    targetRender = true;
+
+                    if (!((*_pmediaDataAtomVec)[k]->closeTargetFile()))
                     {
-                        //Only one track is allowed to be rendered directly onto the target
-                        //file
                         status = false;
                     }
-                    else
-                    {
-                        targetRender = true;
 
-                        if (!((*_pmediaDataAtomVec)[k]->closeTargetFile()))
-                        {
-                            status = false;
-                        }
-
-                        fp._filePtr = ((*_pmediaDataAtomVec)[k]->getTargetFilePtr());
-                        fp._osclFileServerSession = OSCL_STATIC_CAST(Oscl_FileServer*, _aFs);
-                        _directRenderFileOffset =
-                            ((*_pmediaDataAtomVec)[k]->getTotalDataRenderedToTargetFileInDirectRenderMode());
-                    }
+                    fp._filePtr = ((*_pmediaDataAtomVec)[k]->getTargetFilePtr());
+                    fp._osclFileServerSession = OSCL_STATIC_CAST(Oscl_FileServer*, _aFs);
+                    _offsetDataRenderedToFile =
+                        ((*_pmediaDataAtomVec)[k]->getTotalDataRenderedToTargetFile());
                 }
             }
         }
@@ -1612,7 +1444,7 @@ PVA_FF_Mpeg4File::renderToFile(PVA_FF_UNICODE_STRING_PARAM filename)
         // flush interleave buffers into last TRUN
         for (uint32 k = 0; k < _pmediaDataAtomVec->size(); k++)
         {
-            if ((*_pmediaDataAtomVec)[k]->IsTargetRender())
+            if (_totalTempFileRemoval)
             {
                 Oscl_Vector<PVA_FF_TrackAtom*, OsclMemAllocator> *trefVec =
                     (*_pmediaDataAtomVec)[k]->getTrackReferencePtrVec();
@@ -1715,6 +1547,8 @@ PVA_FF_Mpeg4File::getMediaDataAtomForTrack(uint32 trackID)
 bool
 PVA_FF_Mpeg4File::addMultipleAccessUnitsToTrack(uint32 trackID, GAU *pgau)
 {
+
+
     PVA_FF_TrackAtom *mediaTrack;
     uint32 mediaType;
     bool retVal = true;
@@ -1800,10 +1634,12 @@ PVA_FF_Mpeg4File::addMultipleAccessUnitsToTrack(uint32 trackID, GAU *pgau)
                         }
                     }
                     // Add to moov atom (in turn adds to tracks)
-                    _pmovieAtom->addSampleToTrack(trackID, NULL,
-                                                  (pgau->info[k].len + 1),
-                                                  pgau->info[k].ts,
-                                                  (uint8)pgau->info[k].sample_info);
+
+                    PVMP4FFComposerSampleParam sampleParam;
+                    sampleParam._sampleSize = pgau->info[k].len + 1;
+                    sampleParam._timeStamp = pgau->info[k].ts;
+                    sampleParam._flags = (uint8)pgau->info[k].sample_info;
+                    _pmovieAtom->addSampleToTrack(trackID, &sampleParam);
                 }
             }
             else
@@ -1821,10 +1657,11 @@ PVA_FF_Mpeg4File::addMultipleAccessUnitsToTrack(uint32 trackID, GAU *pgau)
                 for (uint32 j = 0; j < pgau->numMediaSamples; j++)
                 {
                     // Add to moov atom (in turn adds to tracks)
-                    _pmovieAtom->addSampleToTrack(trackID, NULL,
-                                                  pgau->info[j].len,
-                                                  pgau->info[j].ts,
-                                                  (uint8)pgau->info[j].sample_info);
+                    PVMP4FFComposerSampleParam sampleParam;
+                    sampleParam._sampleSize = pgau->info[j].len + 1;
+                    sampleParam._timeStamp = pgau->info[j].ts;
+                    sampleParam._flags = (uint8)pgau->info[j].sample_info;
+                    _pmovieAtom->addSampleToTrack(trackID, &sampleParam);
                 }
             }
         }
@@ -1846,10 +1683,11 @@ PVA_FF_Mpeg4File::addMultipleAccessUnitsToTrack(uint32 trackID, GAU *pgau)
             for (uint32 j = 0; j < pgau->numMediaSamples; j++)
             {
                 // Add to moov atom (in turn adds to tracks)
-                _pmovieAtom->addSampleToTrack(trackID, NULL,
-                                              pgau->info[j].len,
-                                              pgau->info[j].ts,
-                                              (uint8)pgau->info[j].sample_info);
+                PVMP4FFComposerSampleParam sampleParam;
+                sampleParam._sampleSize = pgau->info[j].len + 1;
+                sampleParam._timeStamp = pgau->info[j].ts;
+                sampleParam._flags = (uint8)pgau->info[j].sample_info;
+                _pmovieAtom->addSampleToTrack(trackID, &sampleParam);
             }
         }
     }
@@ -1880,38 +1718,52 @@ PVA_FF_Mpeg4File::renderTruncatedFile(PVA_FF_UNICODE_STRING_PARAM filename)
 
     if (_o3GPPTrack)
     {
-        setMajorBrand(BRAND_3GPP4);
-        setMajorBrandVersion(VERSION_3GPP4);
+        if (_oMovieFragmentEnabled)
+        {
+            setMajorBrand(BRAND_3GPP6);
+            setMajorBrandVersion(VERSION_3GPP6);
+        }
+        else if (_oTextTrack)
+        {
+            setMajorBrand(BRAND_3GPP5);
+            setMajorBrandVersion(VERSION_3GPP5);
+        }
+        else
+        {
+            setMajorBrand(BRAND_3GPP4);
+            setMajorBrandVersion(VERSION_3GPP4);
+        }
     }
     else if (_oMPEGTrack)
     {
-        setMajorBrand(BRAND_MPEG4);
-        setMajorBrandVersion(VERSION_MPEG4);
+        setMajorBrand(BRAND_MP41);
+        setMajorBrandVersion(VERSION_MP41);
     }
-    else if (_oPVMMTrack)
-    {
-        setMajorBrand(PVMM_BRAND);
-        setMajorBrandVersion(PVMM_VERSION);
-    }
-
     /*
      * Add compatible brands
      */
     if (_o3GPPTrack)
     {
         addCompatibleBrand(BRAND_3GPP4);
-    }
-    if (_oPVMMTrack)
-    {
-        addCompatibleBrand(PVMM_BRAND);
+
+        if (_oTextTrack)
+            addCompatibleBrand(BRAND_3GPP5);
     }
     if (_oMPEGTrack)
     {
-        addCompatibleBrand(BRAND_MPEG4);
+        addCompatibleBrand(BRAND_MP41);
+        addCompatibleBrand(BRAND_MP42);
     }
-    addCompatibleBrand(BRAND_3GPP5);
+    if (_oAVCTrack)
+    {
+        addCompatibleBrand(BRAND_AVC);
+    }
+    addCompatibleBrand(BRAND_ISOM);
+    addCompatibleBrand(BRAND_3G2A);
+    addCompatibleBrand(BRAND_3G2B);
+    addCompatibleBrand(BRAND_3G2C);
 
-    if ((_o3GPPTrack == true) || (_oPVMMTrack == true) || (_oMPEGTrack == true))
+    if ((_o3GPPTrack == true) || (_oMPEGTrack == true))
     {
         _pFileTypeAtom->renderToFileStream(&fp);
     }
@@ -2202,6 +2054,8 @@ PVA_FF_Mpeg4File::flushInterLeaveBuffer(uint32 trackID)
 
         Oscl_Vector<uint8, OsclMemAllocator> *flagsVec = pInterLeaveBuffer->getFlagsVec();
 
+        Oscl_Vector<uint32, OsclMemAllocator> *sampleDurationVec = pInterLeaveBuffer->getSampleDurationVec();
+
         Oscl_Vector<int32, OsclMemAllocator> *indexVec = NULL;
 
         if (mediaType == MEDIA_TYPE_TEXT && codecType == CODEC_TYPE_TIMED_TEXT)
@@ -2213,39 +2067,29 @@ PVA_FF_Mpeg4File::flushInterLeaveBuffer(uint32 trackID)
 
         if (numBufferedSamples > 0)
         {
+            PVMP4FFComposerSampleParam sampleParam;
+
+            sampleParam._baseOffset = _baseOffset;
             for (int32 i = 0; i < numBufferedSamples; i++)
             {
+                sampleParam._timeStamp = (*tsVec)[i];
+                sampleParam._sampleSize = (*sizeVec)[i];
+                sampleParam._flags = (*flagsVec)[i];
+
                 if (mediaType == MEDIA_TYPE_TEXT && codecType == CODEC_TYPE_TIMED_TEXT)
                 {
-                    uint32 sampleTS   = (*tsVec)[i];
-                    uint32 sampleSize = (*sizeVec)[i];
-                    uint8  sampleFlag = (*flagsVec)[i];
-                    int32  sampleIndex = (*indexVec)[i];
-
+                    sampleParam._index = (*indexVec)[i];
+                    sampleParam._sampleDuration = (*sampleDurationVec)[i];
                     // Add to moov atom (in turn adds to tracks)
                     _pmovieAtom->addTextSampleToTrack(trackID,
-                                                      NULL,
-                                                      sampleSize,
-                                                      sampleTS,
-                                                      sampleFlag,
-                                                      sampleIndex,
-                                                      _baseOffset,
+                                                      &sampleParam,
                                                       _oChunkStart);
-
                 }
                 else
                 {
-                    uint32 sampleTS   = (*tsVec)[i];
-                    uint32 sampleSize = (*sizeVec)[i];
-                    uint8  sampleFlag = (*flagsVec)[i];
-
                     // Add to moov atom (in turn adds to tracks)
                     _pmovieAtom->addSampleToTrack(trackID,
-                                                  NULL,
-                                                  sampleSize,
-                                                  sampleTS,
-                                                  sampleFlag,
-                                                  _baseOffset,
+                                                  &sampleParam,
                                                   _oChunkStart);
                 }
 
@@ -2427,7 +2271,23 @@ PVA_FF_Mpeg4File::prepareToEncode()
 {
     if (_oInterLeaveEnabled)
     {
-        if (!_totalTempFileRemoval)
+        uint32 numTracks = _pmovieAtom->getNumberOfTracks();
+        if (numTracks == 1)
+        {
+            _oInterLeaveEnabled = false;
+            if (NULL != _pInterLeaveBufferVec)
+            {
+                // delete all interleave buffers
+                int32 size = _pInterLeaveBufferVec->size();
+                for (int32 i = 0; i < size; i++)
+                {
+                    PV_MP4_FF_DELETE(NULL, PVA_FF_MediaDataAtom, (*_pInterLeaveBufferVec)[i]);
+                }
+                // Delete the vectors themselves
+                PV_MP4_FF_TEMPLATED_DELETE(NULL, PVA_FF_InterLeaveBufferVecType, Oscl_Vector, _pInterLeaveBufferVec);
+            }
+        }
+        else if (!_totalTempFileRemoval)
         {
             return true;
         }
@@ -2443,6 +2303,11 @@ PVA_FF_Mpeg4File::prepareToEncode()
             setMajorBrand(BRAND_3GPP6);
             setMajorBrandVersion(VERSION_3GPP6);
         }
+        else if (_oTextTrack)
+        {
+            setMajorBrand(BRAND_3GPP5);
+            setMajorBrandVersion(VERSION_3GPP5);
+        }
         else
         {
             setMajorBrand(BRAND_3GPP4);
@@ -2451,13 +2316,8 @@ PVA_FF_Mpeg4File::prepareToEncode()
     }
     else if (_oMPEGTrack)
     {
-        setMajorBrand(BRAND_MPEG4);
-        setMajorBrandVersion(VERSION_MPEG4);
-    }
-    else if (_oPVMMTrack)
-    {
-        setMajorBrand(PVMM_BRAND);
-        setMajorBrandVersion(PVMM_VERSION);
+        setMajorBrand(BRAND_MP41);
+        setMajorBrandVersion(VERSION_MP41);
     }
 
     /*
@@ -2470,76 +2330,33 @@ PVA_FF_Mpeg4File::prepareToEncode()
         else
             addCompatibleBrand(BRAND_3GPP4);
     }
-    if (_oPVMMTrack)
-    {
-        addCompatibleBrand(PVMM_BRAND);
-    }
     if (_oMPEGTrack)
     {
-        addCompatibleBrand(BRAND_MPEG4);
+        addCompatibleBrand(BRAND_MP41);
+        addCompatibleBrand(BRAND_MP42);
     }
-
     if (!_oMovieFragmentEnabled)
     {
         addCompatibleBrand(BRAND_3GPP6);
     }
+    if (_oAVCTrack)
+    {
+        addCompatibleBrand(BRAND_AVC);
+    }
+    addCompatibleBrand(BRAND_ISOM);
+    addCompatibleBrand(BRAND_3G2A);
+    addCompatibleBrand(BRAND_3G2B);
+    addCompatibleBrand(BRAND_3G2C);
 
     _initialUserDataSize += _pFileTypeAtom->getSize();
 
     _oFtypPopulated = true;
 
-    if (_oDirectRenderEnabled)
-    {
-        if ((_oSetTitleDone        == false) ||
-                (_oSetAuthorDone       == false) ||
-                (_oSetCopyrightDone    == false) ||
-                (_oSetDescriptionDone  == false) ||
-                (_oSetRatingDone       == false) ||
-                (_oSetCreationDateDone == false) ||
-                (_pmediaDataAtomVec->size() == 0))
-        {
-            // Requirements for this API not met
-            return false;
-        }
-
-        /*
-         * If VOL Header had not been set, use the pre defined
-         * value.
-         */
-        for (uint32 j = 0; j < _pmediaDataAtomVec->size(); j++)
-        {
-            PVA_FF_TrackAtom *pTrack  =
-                (PVA_FF_TrackAtom *)((*_pmediaDataAtomVec)[j]->getTrackReferencePtr());
-
-            uint32 codecType = pTrack->getCodecType();
-            // uint32 trackID = pTrack->getTrackID();
-            uint32 mediaType = pTrack->getMediaType();
-
-            if (mediaType == MEDIA_TYPE_VISUAL)
-            {
-                if (codecType == CODEC_TYPE_MPEG4_VIDEO)
-                {
-                    if (!pTrack->IsDecoderSpecificInfoSet())
-                    {
-                        _initialUserDataSize +=
-                            MAX_PV_BASE_SIMPLE_PROFILE_VOL_HEADER_SIZE;
-                    }
-                }
-            }
-        }
-        {
-            populateUserDataAtom();
-            _initialUserDataSize += _puserDataAtom->getSize();
-        }
-    }
-
     bool targetRender = false;
 
     for (uint32 j = 0; j < _pmediaDataAtomVec->size(); j++)
     {
-        bool tempVal = ((*_pmediaDataAtomVec)[j]->IsTargetRender());
-
-        if (tempVal)
+        if (_totalTempFileRemoval)
         {
             if (targetRender)
             {
@@ -2565,19 +2382,22 @@ PVA_FF_Mpeg4File::populateUserDataAtom()
 }
 
 bool
-PVA_FF_Mpeg4File::addMediaSampleInterleave(uint32 trackID,
-        Oscl_Vector < OsclMemoryFragment,
-        OsclMemAllocator > & fragmentList,
-        uint32 size, uint32 ts, uint8 flags)
+PVA_FF_Mpeg4File::addMediaSampleInterleave(uint32 trackID, PVMP4FFComposerSampleParam *pSampleParam)
 {
+    if (pSampleParam == NULL)
+        return false;
+
     PVA_FF_TrackAtom *mediaTrack = _pmovieAtom->getMediaTrack(trackID);
     PVA_FF_MediaDataAtom *mdatAtom = getMediaDataAtomForTrack(trackID);
     PVA_FF_InterLeaveBuffer *pInterLeaveBuffer = getInterLeaveBuffer(trackID);
     int32 codecType = _pmovieAtom->getCodecType(trackID);
     uint32 mediaType = mediaTrack->getMediaType();
-    int32 index = 0;
+
+    pSampleParam->_index = 0;
+    pSampleParam->_baseOffset = _baseOffset;
+
     if (true == _oComposeMoofAtom)
-        _pmovieAtom->SetMaxSampleSize(trackID, size);
+        _pmovieAtom->SetMaxSampleSize(trackID, pSampleParam->_sampleSize);
     if (_oFirstSampleEditMode)
     {
         _oChunkStart = true;
@@ -2591,19 +2411,15 @@ PVA_FF_Mpeg4File::addMediaSampleInterleave(uint32 trackID,
         {
             // Add to moov atom (in turn adds to tracks)
             _pmovieAtom->addSampleToTrack(trackID,
-                                          fragmentList,
-                                          size,
-                                          ts,
-                                          flags,
-                                          _baseOffset,
+                                          pSampleParam,
                                           _oChunkStart);
             _oChunkStart = false;
 
-            if (!mdatAtom->addRawSample(fragmentList, size, mediaType, codecType))
+            if (!mdatAtom->addRawSample(pSampleParam->_fragmentList, pSampleParam->_sampleSize, mediaType, codecType))
             {
                 return false;
             }
-            _baseOffset += size;
+            _baseOffset += pSampleParam->_sampleSize;
             return true;
         }
     }
@@ -2640,7 +2456,7 @@ PVA_FF_Mpeg4File::addMediaSampleInterleave(uint32 trackID,
             for (uint32 kk = 0; kk < _pmediaDataAtomVec->size(); kk++)
             {
                 // add track fragments from MDAT with interleaved data
-                if ((*_pmediaDataAtomVec)[kk]->IsTargetRender())
+                if (_totalTempFileRemoval)
                 {
                     Oscl_Vector<PVA_FF_TrackAtom*, OsclMemAllocator> *trefVec =
                         (*_pmediaDataAtomVec)[kk]->getTrackReferencePtrVec();
@@ -2665,7 +2481,8 @@ PVA_FF_Mpeg4File::addMediaSampleInterleave(uint32 trackID,
 
             // form new MDAT atom
             PVA_FF_MediaDataAtom *pMdatAtom = NULL;
-            PV_MP4_FF_NEW(fp->auditCB, PVA_FF_MediaDataAtom, (_targetFileHandle, _aFs, iCacheSize), pMdatAtom);
+            PVA_FF_UNICODE_STRING_PARAM emptyString = PVA_FF_UNICODE_HEAP_STRING(_STRLIT_WCHAR(""));
+            PV_MP4_FF_NEW(fp->auditCB, PVA_FF_MediaDataAtom, (emptyString, _targetFileHandle, _aFs, iCacheSize), pMdatAtom);
 
             _pCurrentMediaDataAtom = pMdatAtom;
 
@@ -2673,7 +2490,7 @@ PVA_FF_Mpeg4File::addMediaSampleInterleave(uint32 trackID,
             _currentMoofOffset = _baseOffset;
 
             // base offset set to start of mdat (after fourcc code) as base data offset
-            _baseOffset += _pCurrentMediaDataAtom->prepareTargetFileForFragments(_directRenderFileOffset);
+            _baseOffset += _pCurrentMediaDataAtom->prepareTargetFileForFragments(_offsetDataRenderedToFile);
 
         }
 
@@ -2682,11 +2499,11 @@ PVA_FF_Mpeg4File::addMediaSampleInterleave(uint32 trackID,
     if (_oMovieFragmentEnabled == false || _oComposeMoofAtom == false)
     {
 
-        if (!pInterLeaveBuffer->checkInterLeaveBufferSpace(size))
+        if (!pInterLeaveBuffer->checkInterLeaveBufferSpace(pSampleParam->_sampleSize))
         {
             // Set Chunk end time to the last sample TS
             // in the interleave buffer
-            pInterLeaveBuffer->setLastChunkEndTime(ts);
+            pInterLeaveBuffer->setLastChunkEndTime(pSampleParam->_timeStamp);
 
             _oChunkStart = true;
 
@@ -2701,19 +2518,18 @@ PVA_FF_Mpeg4File::addMediaSampleInterleave(uint32 trackID,
 
             int32 numBufferedSamples = tsVec->size();
 
+            pSampleParam->_baseOffset = _baseOffset;
             for (int32 ii = 0; ii < numBufferedSamples; ii++)
             {
-                uint32 sampleTS   = (*tsVec)[ii];
-                uint32 sampleSize = (*sizeVec)[ii];
-                uint8  sampleFlag = (*flagsVec)[ii];
+                PVMP4FFComposerSampleParam  sampleParam;
+                sampleParam._timeStamp   = (*tsVec)[ii];
+                sampleParam._sampleSize = (*sizeVec)[ii];
+                sampleParam._flags = (*flagsVec)[ii];
+                sampleParam._baseOffset = _baseOffset;
 
                 // Add to moov atom (in turn adds to tracks)
                 _pmovieAtom->addSampleToTrack(trackID,
-                                              fragmentList,
-                                              sampleSize,
-                                              sampleTS,
-                                              sampleFlag,
-                                              _baseOffset,
+                                              &sampleParam,
                                               _oChunkStart);
 
                 _oChunkStart = false;
@@ -2730,17 +2546,17 @@ PVA_FF_Mpeg4File::addMediaSampleInterleave(uint32 trackID,
                     return false;
                 }
                 _baseOffset += chunkSize;
+                pSampleParam->_baseOffset = _baseOffset;
             }
 
-            if (!(pInterLeaveBuffer->addSampleToInterLeaveBuffer(fragmentList,
-                    size, ts, flags, index)))
+            if (!(pInterLeaveBuffer->addSampleToInterLeaveBuffer(pSampleParam)))
             {
                 return false;
             }
         }
         else
         {
-            if (checkInterLeaveDuration(trackID, ts))
+            if (checkInterLeaveDuration(trackID, pSampleParam->_timeStamp))
             {
                 _oChunkStart = true;
 
@@ -2755,20 +2571,17 @@ PVA_FF_Mpeg4File::addMediaSampleInterleave(uint32 trackID,
 
                 int32 numBufferedSamples = tsVec->size();
 
+                pSampleParam->_baseOffset = _baseOffset;
                 for (int32 ii = 0; ii < numBufferedSamples; ii++)
                 {
-                    uint32 sampleTS   = (*tsVec)[ii];
-                    uint32 sampleSize = (*sizeVec)[ii];
-                    uint8  sampleFlag = (*flagsVec)[ii];
+                    PVMP4FFComposerSampleParam  sampleParam;
+                    sampleParam._timeStamp   = (*tsVec)[ii];
+                    sampleParam._sampleSize = (*sizeVec)[ii];
+                    sampleParam._flags = (*flagsVec)[ii];
+                    sampleParam._baseOffset = _baseOffset;
 
                     // Add to moov atom (in turn adds to tracks)
-                    _pmovieAtom->addSampleToTrack(trackID,
-                                                  fragmentList,
-                                                  sampleSize,
-                                                  sampleTS,
-                                                  sampleFlag,
-                                                  _baseOffset,
-                                                  _oChunkStart);
+                    _pmovieAtom->addSampleToTrack(trackID, &sampleParam, _oChunkStart);
 
                     _oChunkStart = false;
                 }
@@ -2784,15 +2597,15 @@ PVA_FF_Mpeg4File::addMediaSampleInterleave(uint32 trackID,
                         return false;
                     }
                     _baseOffset += chunkSize;
+                    pSampleParam->_baseOffset = _baseOffset;
                 }
             }
             else
             {
                 _oChunkStart = false;
             }
-
-            if (!(pInterLeaveBuffer->addSampleToInterLeaveBuffer(fragmentList,
-                    size, ts, flags, index)))
+            pSampleParam->_baseOffset = _baseOffset;
+            if (!(pInterLeaveBuffer->addSampleToInterLeaveBuffer(pSampleParam)))
             {
                 return false;
             }
@@ -2812,11 +2625,11 @@ PVA_FF_Mpeg4File::addMediaSampleInterleave(uint32 trackID,
             PVA_FF_TrackFragmentAtom *pCurrentTrackFragment;
             pCurrentTrackFragment = _pCurrentMoofAtom->getTrackFragment(trackID);
 
-            if (!pInterLeaveBuffer->checkInterLeaveBufferSpace(size))
+            if (!pInterLeaveBuffer->checkInterLeaveBufferSpace(pSampleParam->_sampleSize))
             {
                 // Set trun end time to the last sample TS
                 // in the interleave buffer
-                pInterLeaveBuffer->setLastChunkEndTime(ts);
+                pInterLeaveBuffer->setLastChunkEndTime(pSampleParam->_timeStamp);
 
                 _oTrunStart = true;
 
@@ -2873,7 +2686,7 @@ PVA_FF_Mpeg4File::addMediaSampleInterleave(uint32 trackID,
                     _oTrunStart = false;
                 }
 
-                pCurrentTrackFragment->updateLastTSEntry(ts);
+                pCurrentTrackFragment->updateLastTSEntry(pSampleParam->_timeStamp);
 
                 if (numBufferedSamples > 0)
                 {
@@ -2888,14 +2701,15 @@ PVA_FF_Mpeg4File::addMediaSampleInterleave(uint32 trackID,
                     _baseOffset += trunSize;
                 }
 
-                if (!(pInterLeaveBuffer->addSampleToInterLeaveBuffer(fragmentList, size, ts, flags, index)))
+                pSampleParam->_baseOffset = _baseOffset;
+                if (!(pInterLeaveBuffer->addSampleToInterLeaveBuffer(pSampleParam)))
                 {
                     return false;
                 }
             }
             else
             {
-                if (checkInterLeaveDuration(trackID, ts))
+                if (checkInterLeaveDuration(trackID, pSampleParam->_timeStamp))
                 {
                     _oTrunStart = true;
 
@@ -2953,7 +2767,7 @@ PVA_FF_Mpeg4File::addMediaSampleInterleave(uint32 trackID,
                         _oTrunStart = false;
                     }
 
-                    pCurrentTrackFragment->updateLastTSEntry(ts);
+                    pCurrentTrackFragment->updateLastTSEntry(pSampleParam->_timeStamp);
 
                     if (numBufferedSamples > 0)
                     {
@@ -2973,8 +2787,8 @@ PVA_FF_Mpeg4File::addMediaSampleInterleave(uint32 trackID,
                     _oTrunStart = false;
                 }
 
-                if (!(pInterLeaveBuffer->addSampleToInterLeaveBuffer(fragmentList, size,
-                        ts, flags, index)))
+                pSampleParam->_baseOffset = _baseOffset;
+                if (!(pInterLeaveBuffer->addSampleToInterLeaveBuffer(pSampleParam)))
                 {
                     return false;
                 }
@@ -2984,8 +2798,9 @@ PVA_FF_Mpeg4File::addMediaSampleInterleave(uint32 trackID,
         {
 
             // add sample
-            if (!(pInterLeaveBuffer->addSampleToInterLeaveBuffer(fragmentList, size,
-                    ts, flags, index)))
+            pSampleParam->_baseOffset = _baseOffset;
+
+            if (!(pInterLeaveBuffer->addSampleToInterLeaveBuffer(pSampleParam)))
             {
                 return false;
             }
@@ -2995,7 +2810,7 @@ PVA_FF_Mpeg4File::addMediaSampleInterleave(uint32 trackID,
             // update last sample TS entry
             for (kk = 0; kk < _pmediaDataAtomVec->size(); kk++)
             {
-                if ((*_pmediaDataAtomVec)[kk]->IsTargetRender())
+                if (_totalTempFileRemoval)
                 {
 
                     Oscl_Vector<PVA_FF_TrackAtom*, OsclMemAllocator> *trefVec =
@@ -3041,7 +2856,7 @@ PVA_FF_Mpeg4File::addMediaSampleInterleave(uint32 trackID,
             // add track fragments
             for (kk = 0; kk < _pmediaDataAtomVec->size(); kk++)
             {
-                if ((*_pmediaDataAtomVec)[kk]->IsTargetRender())
+                if (_totalTempFileRemoval)
                 {
                     Oscl_Vector<PVA_FF_TrackAtom*, OsclMemAllocator> *trefVec =
                         (*_pmediaDataAtomVec)[kk]->getTrackReferencePtrVec();
@@ -3067,7 +2882,8 @@ PVA_FF_Mpeg4File::addMediaSampleInterleave(uint32 trackID,
 
             // form new MDAT atom
             PVA_FF_MediaDataAtom *pMdatAtom = NULL;
-            PV_MP4_FF_NEW(fp->auditCB, PVA_FF_MediaDataAtom, (_targetFileHandle, _aFs, iCacheSize), pMdatAtom);
+            PVA_FF_UNICODE_STRING_PARAM emptyString = PVA_FF_UNICODE_HEAP_STRING(_STRLIT_WCHAR(""));
+            PV_MP4_FF_NEW(fp->auditCB, PVA_FF_MediaDataAtom, (emptyString, _targetFileHandle, _aFs, iCacheSize), pMdatAtom);
 
             _pCurrentMediaDataAtom = pMdatAtom;
 
@@ -3075,20 +2891,18 @@ PVA_FF_Mpeg4File::addMediaSampleInterleave(uint32 trackID,
             _currentMoofOffset = _baseOffset;
 
             // base offset set to start of mdat (after fourcc code) as base data offset
-            _baseOffset += _pCurrentMediaDataAtom->prepareTargetFileForFragments(_directRenderFileOffset);
-
+            _baseOffset += _pCurrentMediaDataAtom->prepareTargetFileForFragments(_offsetDataRenderedToFile);
         }
-
     }
     return true;
-
 }
 
 bool
-PVA_FF_Mpeg4File::addTextMediaSampleInterleave(uint32 trackID,
-        Oscl_Vector <OsclMemoryFragment, OsclMemAllocator>& fragmentList,
-        uint32 size, uint32 ts, uint8 flags, int32 index)
+PVA_FF_Mpeg4File::addTextMediaSampleInterleave(uint32 trackID, PVMP4FFComposerSampleParam *pSampleParam)
 {
+    if (pSampleParam == NULL)
+        return false;
+
     PVA_FF_TrackAtom *mediaTrack = _pmovieAtom->getMediaTrack(trackID);
     PVA_FF_MediaDataAtom *mdatAtom = getMediaDataAtomForTrack(trackID);
     PVA_FF_InterLeaveBuffer *pInterLeaveBuffer = getInterLeaveBuffer(trackID);
@@ -3107,26 +2921,23 @@ PVA_FF_Mpeg4File::addTextMediaSampleInterleave(uint32 trackID,
         if (mediaTrack->IsFirstSample())
         {
             // Add to moov atom (in turn adds to tracks)
+            pSampleParam->_baseOffset = _baseOffset;
+
             _pmovieAtom->addTextSampleToTrack(trackID,
-                                              fragmentList,
-                                              size,
-                                              ts,
-                                              flags,
-                                              index,
-                                              _baseOffset,
+                                              pSampleParam,
                                               _oChunkStart);
             _oChunkStart = false;
 
-            if (!mdatAtom->addRawSample(fragmentList, size, mediaType, codecType))
+            if (!mdatAtom->addRawSample(pSampleParam->_fragmentList, pSampleParam->_sampleSize, mediaType, codecType))
             {
                 return false;
             }
-            _baseOffset += size;
+            _baseOffset += pSampleParam->_sampleSize;
             return true;
         }
     }
 
-    if (!pInterLeaveBuffer->checkInterLeaveBufferSpace(size))
+    if (!pInterLeaveBuffer->checkInterLeaveBufferSpace(pSampleParam->_sampleSize))
     {
         // Set Chunk end time to the last sample TS
         // in the interleave buffer
@@ -3148,21 +2959,19 @@ PVA_FF_Mpeg4File::addTextMediaSampleInterleave(uint32 trackID,
 
         int32 numBufferedSamples = tsVec->size();
 
+        pSampleParam->_baseOffset = _baseOffset;
         for (int32 i = 0; i < numBufferedSamples; i++)
         {
-            uint32 sampleTS   = (*tsVec)[i];
-            uint32 sampleSize = (*sizeVec)[i];
-            uint8  sampleFlag = (*flagsVec)[i];
-            int32 sampleIndex = (*indexVec)[i];
+            PVMP4FFComposerSampleParam  sampleParam;
+            sampleParam._timeStamp   = (*tsVec)[i];
+            sampleParam._sampleSize = (*sizeVec)[i];
+            sampleParam._flags = (*flagsVec)[i];
+            sampleParam._index = (*indexVec)[i];
+            sampleParam._baseOffset = _baseOffset;
 
             // Add to moov atom (in turn adds to tracks)
             _pmovieAtom->addTextSampleToTrack(trackID,
-                                              fragmentList,
-                                              sampleSize,
-                                              sampleTS,
-                                              sampleFlag,
-                                              sampleIndex,
-                                              _baseOffset,
+                                              &sampleParam,
                                               _oChunkStart);
 
             _oChunkStart = false;
@@ -3181,16 +2990,16 @@ PVA_FF_Mpeg4File::addTextMediaSampleInterleave(uint32 trackID,
             }
             _baseOffset += chunkSize;
         }
+        pSampleParam->_baseOffset = _baseOffset;
 
-        if (!(pInterLeaveBuffer->addSampleToInterLeaveBuffer(fragmentList,
-                size, ts, flags, index)))
+        if (!(pInterLeaveBuffer->addSampleToInterLeaveBuffer(pSampleParam)))
         {
             return false;
         }
     }
     else
     {
-        if (checkInterLeaveDuration(trackID, ts))
+        if (checkInterLeaveDuration(trackID, pSampleParam->_timeStamp))
         {
             _oChunkStart = true;
 
@@ -3208,21 +3017,19 @@ PVA_FF_Mpeg4File::addTextMediaSampleInterleave(uint32 trackID,
 
             int32 numBufferedSamples = tsVec->size();
 
+            pSampleParam->_baseOffset = _baseOffset;
             for (int32 i = 0; i < numBufferedSamples; i++)
             {
-                uint32 sampleTS   = (*tsVec)[i];
-                uint32 sampleSize = (*sizeVec)[i];
-                uint8  sampleFlag = (*flagsVec)[i];
-                int32 sampleIndex = (*indexVec)[i];
+                PVMP4FFComposerSampleParam  sampleParam;
+                sampleParam._timeStamp   = (*tsVec)[i];
+                sampleParam._sampleSize = (*sizeVec)[i];
+                sampleParam._flags = (*flagsVec)[i];
+                sampleParam._index = (*indexVec)[i];
+                sampleParam._baseOffset = _baseOffset;
 
                 // Add to moov atom (in turn adds to tracks)
                 _pmovieAtom->addTextSampleToTrack(trackID,
-                                                  fragmentList,
-                                                  sampleSize,
-                                                  sampleTS,
-                                                  sampleFlag,
-                                                  sampleIndex,
-                                                  _baseOffset,
+                                                  &sampleParam,
                                                   _oChunkStart);
 
 
@@ -3249,7 +3056,8 @@ PVA_FF_Mpeg4File::addTextMediaSampleInterleave(uint32 trackID,
             _oChunkStart = false;
         }
 
-        if (!(pInterLeaveBuffer->addSampleToInterLeaveBuffer(fragmentList, size, ts, flags , index)))
+        pSampleParam->_baseOffset = _baseOffset;
+        if (!(pInterLeaveBuffer->addSampleToInterLeaveBuffer(pSampleParam)))
         {
             return false;
         }
@@ -3323,37 +3131,32 @@ PVA_FF_Mpeg4File::renderMoovAtom()
     }
 
     bool targetRender = false;
-    _directRenderFileOffset = 0;
+    _offsetDataRenderedToFile = 0;
 
-    if ((_oDirectRenderEnabled) || (_totalTempFileRemoval))
+    if (_totalTempFileRemoval)
     {
         for (uint32 kk = 0; kk < _pmediaDataAtomVec->size(); kk++)
         {
-            bool tempVal = ((*_pmediaDataAtomVec)[kk]->IsTargetRender());
-
-            if (tempVal)
+            if (targetRender)
             {
-                if (targetRender)
+                //Only one track is allowed to be rendered directly onto the target
+                //file
+                return false;
+            }
+            else
+            {
+                targetRender = true;
+
+                if (!((*_pmediaDataAtomVec)[kk]->closeTargetFile()))
                 {
-                    //Only one track is allowed to be rendered directly onto the target
-                    //file
                     return false;
                 }
-                else
-                {
-                    targetRender = true;
 
-                    if (!((*_pmediaDataAtomVec)[kk]->closeTargetFile()))
-                    {
-                        return false;
-                    }
+                fp._filePtr = ((*_pmediaDataAtomVec)[kk]->getTargetFilePtr());
+                fp._osclFileServerSession = OSCL_STATIC_CAST(Oscl_FileServer*, _aFs);
 
-                    fp._filePtr = ((*_pmediaDataAtomVec)[kk]->getTargetFilePtr());
-                    fp._osclFileServerSession = OSCL_STATIC_CAST(Oscl_FileServer*, _aFs);
-
-                    _directRenderFileOffset =
-                        ((*_pmediaDataAtomVec)[kk]->getTotalDataRenderedToTargetFileInDirectRenderMode());
-                }
+                _offsetDataRenderedToFile =
+                    ((*_pmediaDataAtomVec)[kk]->getTotalDataRenderedToTargetFile());
             }
         }
     }
@@ -3367,8 +3170,8 @@ PVA_FF_Mpeg4File::renderMoovAtom()
     {
         return false;
     }
-    _directRenderFileOffset = PVA_FF_AtomUtils::getCurrentFilePosition(&fp); // hereafter movie fragments are written
-    _baseOffset = _directRenderFileOffset; // base offset is used to set base data offset of Moof
+    _offsetDataRenderedToFile = PVA_FF_AtomUtils::getCurrentFilePosition(&fp); // hereafter movie fragments are written
+    _baseOffset = _offsetDataRenderedToFile; // base offset is used to set base data offset of Moof
 
 
     // store target file handle used to write further movie fragments
@@ -3391,7 +3194,8 @@ PVA_FF_Mpeg4File::renderMovieFragments()
 
     fileWriteOffset = PVA_FF_AtomUtils::getCurrentFilePosition(&fp);
 
-    _pCurrentMediaDataAtom->closeTargetFile();
+    if (_totalTempFileRemoval)
+        _pCurrentMediaDataAtom->closeTargetFile();
 
     size = _pCurrentMediaDataAtom->getMediaDataSize();
 
@@ -3405,8 +3209,8 @@ PVA_FF_Mpeg4File::renderMovieFragments()
         return false;
     }
 
-    _directRenderFileOffset = PVA_FF_AtomUtils::getCurrentFilePosition(&fp); // hereafter further movie fragments are written
-    _baseOffset = _directRenderFileOffset; // base offset is used to set base data offset of Moof
+    _offsetDataRenderedToFile = PVA_FF_AtomUtils::getCurrentFilePosition(&fp); // hereafter further movie fragments are written
+    _baseOffset = _offsetDataRenderedToFile; // base offset is used to set base data offset of Moof
 
     return true;
 }

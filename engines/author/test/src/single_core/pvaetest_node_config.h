@@ -48,7 +48,7 @@ extern const uint32 KAACAudioBitrate;
 class PVAETestNodeConfig
 {
     public:
-        static bool ConfigureAudioEncoder(PVInterface* aInterface, const PvmfMimeString& aMimeType, uint32 aAudioBitrate = 0)
+        static bool ConfigureAudioEncoder(PVInterface* aInterface, const PvmfMimeString& aMimeType, const PvmfMimeString& aAacProfileType, uint32 aAudioBitrate = 0)
         {
             if (!aInterface)
             {
@@ -156,7 +156,54 @@ class PVAETestNodeConfig
                     return false;
                 //config->SetOutputNumChannel();  do not set, use the input ones
                 //config->SetOutputSamplingRate();
+
+                if ((pv_mime_strcmp(aAacProfileType.get_cstr(), (char*)KAACEncProfileType) == 0))
+                {
+                    if (config->SetOutputAacProfile(PV_AAC_ENC_LC) != PVMFSuccess)
+                        return false;
+                }
+                else if ((pv_mime_strcmp(aAacProfileType.get_cstr(), (char*)KAACPlusEncProfileType) == 0))
+                {
+                    if (config->SetOutputAacProfile(PV_AAC_ENC_HE) != PVMFSuccess)
+                        return false;
+                }
+                else if ((pv_mime_strcmp(aAacProfileType.get_cstr(), (char*)KEAACPlusEncProfileType) == 0))
+                {
+                    if (config->SetOutputAacProfile(PV_AAC_ENC_HE_PS) != PVMFSuccess)
+                        return false;
+                }
+                else
+                {
+                    return false;
+                }
+
             }
+            else if (aMimeType == KAACMP4EncMimeType)
+            {
+                if (config->SetOutputBitRate(0) != PVMFSuccess) // let encoder choose default.
+                    return false;
+
+                if ((pv_mime_strcmp(aAacProfileType.get_cstr(), (char*)KAACEncProfileType) == 0))
+                {
+                    if (config->SetOutputAacProfile(PV_AAC_ENC_LC) != PVMFSuccess)
+                        return false;
+                }
+                else if ((pv_mime_strcmp(aAacProfileType.get_cstr(), (char*)KAACPlusEncProfileType) == 0))
+                {
+                    if (config->SetOutputAacProfile(PV_AAC_ENC_HE) != PVMFSuccess)
+                        return false;
+                }
+                else if ((pv_mime_strcmp(aAacProfileType.get_cstr(), (char*)KEAACPlusEncProfileType) == 0))
+                {
+                    if (config->SetOutputAacProfile(PV_AAC_ENC_HE_PS) != PVMFSuccess)
+                        return false;
+                }
+                else
+                {
+                    return false;
+                }
+            }
+
 
             return true;
         }

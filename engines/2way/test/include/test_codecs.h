@@ -173,6 +173,11 @@ class TestCodecs
         PvmiMIOFileInputSettings iVideoSinkYUVFileSettings;
         PvmiMIOFileInputSettings iVideoSinkH263FileSettings;
         PvmiMIOFileInputSettings iVideoSinkM4VFileSettings;
+
+        LipSyncDummyMIOSettings iDummyAudioSourceSettings;
+        LipSyncDummyMIOSettings iDummyAudioSinkSettings;
+        LipSyncDummyMIOSettings iDummyVideoSourceSettings;
+        LipSyncDummyMIOSettings iDummyVideoSinkSettings;
 };
 
 #endif

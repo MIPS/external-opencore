@@ -44,9 +44,9 @@ class ITunesILstMetaDataAtom
         }
 
         // Gnre ** Starts **
-        uint16 getGnreID() const
+        int16 getGnreID() const
         {
-            return _gnreID;
+            return _gnreID - 1;
         }
         OSCL_wHeapString<OsclMemAllocator> getGnreString() const
         {

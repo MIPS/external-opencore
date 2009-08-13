@@ -48,8 +48,8 @@
 #ifndef PVAE_NODE_UTILITY_H_INCLUDED
 #include "pvaenodeutility.h"
 #endif
-#ifndef PVMI_CONFIG_AND_CAPABILITY_H_INCLUDED
-#include "pvmi_config_and_capability.h"
+#ifndef PVMI_CONFIG_AND_CAPABILITY_BASE_H_INCLUDED
+#include "pvmi_config_and_capability_base.h"
 #endif
 #ifndef PVMF_MEDIA_CLOCK_H_INCLUDED
 #include "pvmf_media_clock.h"
@@ -145,12 +145,13 @@ const PVAuthorKeyStringData PVAuthorConfigProdInfoKeys[PVAUTHORCONFIG_PRODINFO_N
 /**
  * PVAuthorEngine Class
  */
-class PVAuthorEngine : public PVAuthorEngineInterface,
-        public OsclTimerObject,
-        public PVMFNodeErrorEventObserver,
-        public PVMFNodeInfoEventObserver,
-        public PVAENodeUtilObserver,
-        public PvmiCapabilityAndConfig
+class PVAuthorEngine
+        : public PVAuthorEngineInterface
+        , public OsclTimerObject
+        , public PVMFNodeErrorEventObserver
+        , public PVMFNodeInfoEventObserver
+        , public PVAENodeUtilObserver
+        , public PvmiCapabilityAndConfigBase
 {
     public:
         static PVAuthorEngineInterface* Create(PVCommandStatusObserver* aCmdStatusObserver,
@@ -218,11 +219,8 @@ class PVAuthorEngine : public PVAuthorEngineInterface,
         PVMFStatus getParametersSync(PvmiMIOSession aSession, PvmiKeyType aIdentifier, PvmiKvp*& aParameters, int& aNumParamElements, PvmiCapabilityContext aContext);
         PVMFStatus releaseParameters(PvmiMIOSession aSession, PvmiKvp* aParameters, int aNumElements);
         void createContext(PvmiMIOSession aSession, PvmiCapabilityContext& aContext);
-        void setContextParameters(PvmiMIOSession aSession, PvmiCapabilityContext& aContext, PvmiKvp* aParameters, int aNumParamElements);
-        void DeleteContext(PvmiMIOSession aSession, PvmiCapabilityContext& aContext);
         void setParametersSync(PvmiMIOSession aSession, PvmiKvp* aParameters, int aNumElements, PvmiKvp* &aRetKVP);
         PVMFCommandId setParametersAsync(PvmiMIOSession aSession, PvmiKvp* aParameters, int aNumElements, PvmiKvp*& aRetKVP, OsclAny* aContext = NULL);
-        uint32 getCapabilityMetric(PvmiMIOSession aSession);
         PVMFStatus verifyParametersSync(PvmiMIOSession aSession, PvmiKvp* aParameters, int aNumElements);
         // functions used by cap-config class virtual functions
         bool queryInterface(const PVUuid& uuid, PVInterface*& iface);

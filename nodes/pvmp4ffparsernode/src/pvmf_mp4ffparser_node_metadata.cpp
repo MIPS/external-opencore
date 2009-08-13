@@ -39,6 +39,8 @@ static const char PVMP4_ALL_METADATA_KEY[] = "all";
 static const char PVMP4METADATA_CLIP_TYPE_KEY[] = "clip-type";
 static const char PVMP4METADATA_ALBUM_KEY[] = "album";
 static const char PVMP4METADATA_COMMENT_KEY[] = "comment";
+static const char PVMP4METADATA_GRAPHICS_KEY[] = "graphic;format=APIC";
+static const char PVMP4METADATA_NUM_GRAPHICS_KEY[] = "graphic/num-frames;format=APIC";
 
 
 static const char PVMP4METADATA_LOCATION_KEY[] = "location;format=3GPP_LOCATION";
@@ -64,7 +66,6 @@ static const char PVMP4METADATA_GROUPING_KEY[] = "grouping";
 static const char PVMP4METADATA_TRACKDATA_KEY[] = "track data";
 static const char PVMP4METADATA_COMPILATION_KEY[] = "compilation";
 static const char PVMP4METADATA_TEMPO_KEY[] = "tempo";
-static const char PVMP4METADATA_COVER_KEY[] = "cover";
 static const char PVMP4METADATA_DISKDATA_KEY[] = "disk";
 static const char PVMP4METADATA_FREEFORMDATA_KEY[] = "free form data";
 static const char PVMP4METADATA_CDDBID_KEY[] = "CD identifier";
@@ -275,9 +276,9 @@ uint32 PVMFMP4FFParserNode::GetNumMetadataValues(PVMFMetadataList& aKeyList)
             // Increment the counter for the number of values found so far
             ++numvalentries;
         }
-        else if (oscl_strcmp(aKeyList[lcv].get_cstr(), PVMP4METADATA_COVER_KEY) == 0)
+        else if (oscl_strcmp(aKeyList[lcv].get_cstr(), PVMP4METADATA_GRAPHICS_KEY) == 0)
         {
-            // Cover
+            // Graphic
             // Increment the counter for the number of values found so far
             ++numvalentries;
         }
@@ -345,8 +346,9 @@ uint32 PVMFMP4FFParserNode::GetNumMetadataValues(PVMFMetadataList& aKeyList)
                  (iMP4FileHandle->getNumGenre() > 0))
         {
             // Genre
-            // Increment the counter for the number of values found so far
-            ++numvalentries;
+            uint32 countGenre = 0;
+            countGenre = iMP4FileHandle->getNumGenre();
+            numvalentries += countGenre;
         }
         else if (oscl_strcmp(aKeyList[lcv].get_cstr(), PVMP4METADATA_KEYWORD_KEY) == 0)
         {
@@ -380,8 +382,6 @@ uint32 PVMFMP4FFParserNode::GetNumMetadataValues(PVMFMetadataList& aKeyList)
         {
             // COMPATIBLE BRAND
             // Increment the counter for the number of values found so far
-            ++numvalentries;
-
             Oscl_Vector<uint32, OsclMemAllocator> *Compatiblebrand_Vec = iMP4FileHandle->getCompatibiltyList();
             if (Compatiblebrand_Vec)
             {
@@ -545,7 +545,10 @@ uint32 PVMFMP4FFParserNode::GetNumMetadataValues(PVMFMetadataList& aKeyList)
                 break;
             }
             //get track id from index
-            uint32 trackID = startindex + 1;
+            uint32 iIdList[16];
+            iMP4FileHandle->getTrackIDList(iIdList, (numtracks < 16) ? numtracks : 16);
+            uint32 trackID = iIdList[startindex];
+
             OSCL_HeapString<OsclMemAllocator> trackMIMEType;
 
             iMP4FileHandle->getTrackMIMEType(trackID, trackMIMEType);
@@ -792,6 +795,74 @@ uint32 PVMFMP4FFParserNode::GetNumMetadataValues(PVMFMetadataList& aKeyList)
                     {
                         ++numvalentries;
                     }
+                }
+            }
+        }
+        else if (oscl_strstr(aKeyList[lcv].get_cstr(), PVMP4METADATA_TRACKINFO_AUDIO_NUMCHANNELS_KEY) != NULL)
+        {
+            // Determine the index requested. Default to all tracks
+            // Check if the file has at least one track
+            int32 numtracks = iMP4FileHandle->getNumTracks();
+            if (numtracks <= 0)
+            {
+                break;
+            }
+            uint32 startindex = 0;
+            uint32 endindex = (uint32)numtracks - 1;
+            // Check if the index parameter is present
+            const char* indexstr = oscl_strstr(aKeyList[lcv].get_cstr(), PVMP4METADATA_INDEX);
+            if (indexstr != NULL)
+            {
+                // Retrieve the index values
+                GetIndexParamValues(indexstr, startindex, endindex);
+            }
+            // Validate the indices
+            if (startindex > endindex || startindex >= (uint32)numtracks || endindex >= (uint32)numtracks)
+            {
+                break;
+            }
+
+            // Return a KVP for each index
+            for (uint32 i = startindex; i <= endindex; ++i)
+            {
+                if (iMP4FileHandle->getTrackMediaType(trackidlist[i]) == MEDIA_TYPE_AUDIO)
+                {
+                    // Increment the counter for the number of values found so far
+                    numvalentries++;
+                }
+            }
+        }
+        else if (oscl_strstr(aKeyList[lcv].get_cstr(), PVMP4METADATA_TRACKINFO_AUDIO_BITS_PER_SAMPLE_KEY) != NULL)
+        {
+            // Determine the index requested. Default to all tracks
+            // Check if the file has at least one track
+            int32 numtracks = iMP4FileHandle->getNumTracks();
+            if (numtracks <= 0)
+            {
+                break;
+            }
+            uint32 startindex = 0;
+            uint32 endindex = (uint32)numtracks - 1;
+            // Check if the index parameter is present
+            const char* indexstr = oscl_strstr(aKeyList[lcv].get_cstr(), PVMP4METADATA_INDEX);
+            if (indexstr != NULL)
+            {
+                // Retrieve the index values
+                GetIndexParamValues(indexstr, startindex, endindex);
+            }
+            // Validate the indices
+            if (startindex > endindex || startindex >= (uint32)numtracks || endindex >= (uint32)numtracks)
+            {
+                break;
+            }
+
+            // Return a KVP for each index
+            for (uint32 i = startindex; i <= endindex; ++i)
+            {
+                if (iMP4FileHandle->getTrackMediaType(trackidlist[i]) == MEDIA_TYPE_AUDIO)
+                {
+                    // Increment the counter for the number of values found so far
+                    numvalentries++;
                 }
             }
         }
@@ -1541,8 +1612,7 @@ PVMFStatus PVMFMP4FFParserNode::InitMetaData()
         if (timescale > 0 && timescale != 1000)
         {
             // Convert to milliseconds
-            MediaClockConverter mcc(timescale);
-            mcc.update_clock(duration);
+            MediaClockConverter mcc(timescale, duration);
             durationms = mcc.get_converted_ts(1000);
         }
         CreateDurationInfoMsg(durationms);
@@ -1563,7 +1633,7 @@ PVMFStatus PVMFMP4FFParserNode::InitMetaData()
     }
     if (iMP4FileHandle->getITunesImageData() != NULL)
     {
-        PushToAvailableMetadataKeysList(PVMP4METADATA_COVER_KEY);
+        PushToAvailableMetadataKeysList(PVMP4METADATA_GRAPHICS_KEY);
     }
     if (iMP4FileHandle->getITunesLyrics().get_size() > 0)
     {
@@ -2153,7 +2223,7 @@ PVMFStatus PVMFMP4FFParserNode::DoGetMetadataValues(PVMFMP4FFParserNodeCommand& 
             }
 
 
-            else if (oscl_strcmp((*keylistptr)[lcv].get_cstr(), PVMP4METADATA_COVER_KEY) == 0)
+            else if (oscl_strcmp((*keylistptr)[lcv].get_cstr(), PVMP4METADATA_GRAPHICS_KEY) == 0)
             {
 
                 KeyVal.key = NULL;
@@ -2169,7 +2239,7 @@ PVMFStatus PVMFMP4FFParserNode::DoGetMetadataValues(PVMFMP4FFParserNodeCommand& 
                 {
 
                     PvmfApicStruct*  imagedata = iMP4FileHandle->getITunesImageData();
-                    PVMFStatus retval = PVMFCreateKVPUtils::CreateKVPForKSVValue(KeyVal, PVMP4METADATA_COVER_KEY, OSCL_STATIC_CAST(OsclAny*, imagedata));
+                    PVMFStatus retval = PVMFCreateKVPUtils::CreateKVPForKSVValue(KeyVal, PVMP4METADATA_GRAPHICS_KEY, OSCL_STATIC_CAST(OsclAny*, imagedata));
 
                     if (retval != PVMFSuccess && retval != PVMFErrArgument)
                     {
@@ -3209,15 +3279,15 @@ PVMFStatus PVMFMP4FFParserNode::DoGetMetadataValues(PVMFMP4FFParserNodeCommand& 
                 {
                     for (idx = 0; idx < (int32)countGenre ; idx++)
                     {
-                        // Increment the counter for the number of values found so far
-                        ++numvalentries;
-
                         // Create a value entry if past the starting index
-                        if (numvalentries > starting_index)
+                        if (numvalentries >= starting_index)
                         {
 
                             if (iMP4FileHandle->getGenre(idx, valuestring, iLangCode, charType) != PVMFErrArgument)
                             {
+                                // Increment the counter for the number of values found so far
+                                ++numvalentries;
+
                                 char lang_param[43];
                                 if (iLangCode != 0)
                                 {
@@ -3280,44 +3350,6 @@ PVMFStatus PVMFMP4FFParserNode::DoGetMetadataValues(PVMFMP4FFParserNodeCommand& 
                                     }
                                 }
                             }
-                            uint32 value = iMP4FileHandle->getITunesGnreID();
-                            if ((idx == 0) && (value != 0))
-                            {
-                                KeyVal.key = NULL;
-                                KeyVal.value.pWChar_value = NULL;
-                                KeyVal.value.pChar_value = NULL;
-                                retval = PVMFCreateKVPUtils::CreateKVPForUInt32Value(KeyVal, PVMP4METADATA_GENRE_KEY, value);
-
-                                if (retval != PVMFSuccess && retval != PVMFErrArgument)
-                                {
-                                    break;
-                                }
-                                // Add the KVP to the list if the key string was created
-                                if (KeyVal.key != NULL)
-                                {
-                                    leavecode = AddToValueList(*valuelistptr, KeyVal);
-                                    if (leavecode != 0)
-                                    {
-                                        KeyVal.key = NULL;
-                                    }
-                                    else
-                                    {
-                                        // Increment the value list entry counter
-                                        ++numentriesadded;
-                                        IsMetadataValAddedBefore = true;
-                                    }
-
-                                    // Check if the max number of value entries were added
-                                    if (max_entries > 0 && numentriesadded >= max_entries)
-                                    {
-                                        iMP4ParserNodeMetadataValueCount = (*valuelistptr).size();
-                                        return PVMFSuccess;
-                                    }
-
-                                }
-
-                            }
-
                         }
                     }
 

@@ -26,18 +26,19 @@
 #ifndef PVMF_SOCKET_NODE_H_INCLUDED
 #include "pvmf_socket_node.h"
 #endif
+
 #ifndef PVMF_RTSP_ENGINE_NODE_FACTORY_H_INCLUDED
 #include "pvrtsp_client_engine_factory.h"
 #endif
+
 #ifndef PVMF_JITTER_BUFFER_NODE_H_INCLUDED
 #include "pvmf_jitter_buffer_node.h"
 #endif
-#ifndef PVMF_MEDIALAYER_NODE_H_INCLUDED
-#include "pvmf_medialayer_node.h"
-#endif
+
 #ifndef PVRTSP_ENGINE_NODE_EXTENSION_INTERFACE_H_INCLUDED
 #include "pvrtspenginenodeextensioninterface.h"
 #endif
+
 #ifndef PVMF_MEDIA_PRESENTATION_INFO_H_INCLUDED
 #include "pvmf_media_presentation_info.h"
 #endif
@@ -143,15 +144,15 @@ void PVMFSMRTSPUnicastNode::Construct()
              PopulatePayloadParserRegistry();
              CreateChildNodes();
              QueryChildNodesExtentionInterface();
-             // pass the payload parser registry on to the media layer node
-             PVMFSMFSPChildNodeContainer* iMediaLayerNodeContainer =
-                 getChildNodeContainer(PVMF_SM_FSP_MEDIA_LAYER_NODE);
-             OSCL_ASSERT(iMediaLayerNodeContainer);
-             PVMFMediaLayerNodeExtensionInterface* mlExtIntf = NULL;
-             if (iMediaLayerNodeContainer)
-             mlExtIntf = (PVMFMediaLayerNodeExtensionInterface*)(iMediaLayerNodeContainer->iExtensions[0]);
-             if (mlExtIntf)
-                 mlExtIntf->setPayloadParserRegistry(PayloadParserRegistry::GetPayloadParserRegistry());
+             // pass the payload parser registry on to the jitter buffer node
+             PVMFSMFSPChildNodeContainer* iJitterBufferNodeContainer =
+                 getChildNodeContainer(PVMF_SM_FSP_JITTER_BUFFER_NODE);
+             OSCL_ASSERT(iJitterBufferNodeContainer);
+             PVMFJitterBufferExtensionInterface* jbExtnIntf = NULL;
+             if (iJitterBufferNodeContainer)
+             jbExtnIntf = (PVMFJitterBufferExtensionInterface*)(iJitterBufferNodeContainer->iExtensions[0]);
+             if (jbExtnIntf)
+                 jbExtnIntf->setPayloadParserRegistry(PayloadParserRegistry::GetPayloadParserRegistry());
                 );
     if (err != OsclErrNone)
     {
@@ -254,41 +255,9 @@ void PVMFSMRTSPUnicastNode::CreateChildNodes()
     sJitterBufferNodeContainer.iExtensionUuids.push_back(PVMF_JITTERBUFFERNODE_EXTENSIONINTERFACE_UUID);
     iFSPChildNodeContainerVec.push_back(sJitterBufferNodeContainer);
 
-
-    /*
-     * Create media layer node
-     */
-    OsclExclusivePtr<PVMFNodeInterface> mediaLayerNodeAutoPtr;
-    PVMFNodeInterface* iMediaLayerNode;
-    iMediaLayerNode = OSCL_NEW(PVMFMediaLayerNode, (OsclActiveObject::EPriorityNominal));
-
-    mediaLayerNodeAutoPtr.set(iMediaLayerNode);
-
-    PVMFSMFSPChildNodeContainer sMediaLayerNodeContainer;
-
-    PVMFNodeSessionInfo mediaLayerSession(this,
-                                          this,
-                                          OSCL_REINTERPRET_CAST(OsclAny*,
-                                                                iMediaLayerNode),
-                                          this,
-                                          OSCL_REINTERPRET_CAST(OsclAny*,
-                                                                iMediaLayerNode));
-
-    sMediaLayerNodeContainer.iNode = iMediaLayerNode;
-    sMediaLayerNodeContainer.iSessionId =
-        iMediaLayerNode->Connect(mediaLayerSession);
-    sMediaLayerNodeContainer.iNodeTag =
-        PVMF_SM_FSP_MEDIA_LAYER_NODE;
-    sMediaLayerNodeContainer.commandStartOffset =
-        PVMF_SM_FSP_MEDIA_LAYER_COMMAND_START;
-    /* Push back the known UUID in case there are no queries */
-    sMediaLayerNodeContainer.iExtensionUuids.push_back(PVMF_MEDIALAYERNODE_EXTENSIONINTERFACE_UUID);
-    iFSPChildNodeContainerVec.push_back(sMediaLayerNodeContainer);
-
     sessionControllerAutoPtr.release();
     socketNodeAutoPtr.release();
     jitterBufferNodeAutoPtr.release();
-    mediaLayerNodeAutoPtr.release();
 }
 
 void PVMFSMRTSPUnicastNode::DestroyChildNodes()
@@ -313,10 +282,6 @@ void PVMFSMRTSPUnicastNode::DestroyChildNodes()
         else if (iFSPChildNodeContainerVec[i].iNodeTag == PVMF_SM_FSP_JITTER_BUFFER_NODE)
         {
             OSCL_DELETE(OSCL_STATIC_CAST(PVMFJitterBufferNode*, iFSPChildNodeContainerVec[i].iNode));
-        }
-        else if (iFSPChildNodeContainerVec[i].iNodeTag == PVMF_SM_FSP_MEDIA_LAYER_NODE)
-        {
-            OSCL_DELETE(OSCL_STATIC_CAST(PVMFMediaLayerNode*, iFSPChildNodeContainerVec[i].iNode));
         }
         iFSPChildNodeContainerVec[i].iNode = NULL;
     }
@@ -435,12 +400,6 @@ void PVMFSMRTSPUnicastNode::QueryChildNodesExtentionInterface()
             case PVMF_SM_FSP_JITTER_BUFFER_NODE:
             {
                 PVMFJitterBufferNode * tmpPtr = OSCL_STATIC_CAST(PVMFJitterBufferNode *, it->iNode);
-                interfacePtr = OSCL_STATIC_CAST(PVInterface*, tmpPtr);
-            }
-            break;
-            case PVMF_SM_FSP_MEDIA_LAYER_NODE:
-            {
-                PVMFMediaLayerNode * tmpPtr = OSCL_STATIC_CAST(PVMFMediaLayerNode *, it->iNode);
                 interfacePtr = OSCL_STATIC_CAST(PVInterface*, tmpPtr);
             }
             break;
@@ -1282,22 +1241,6 @@ bool PVMFSMRTSPUnicastNode::ConstructGraphFor3GPPUDPStreaming()
     }
     iNumRequestPortsPending += numPortsRequested;
 
-    if (!RequestMediaLayerPorts(PVMF_MEDIALAYER_PORT_TYPE_INPUT,
-                                numPortsRequested))
-    {
-        PVMF_SM_RTSP_LOGERROR((0, "StreamingManagerNode:ConstructGraphFor3GPPUDPStreaming - RequestMediaLayerPorts(PVMF_MEDIALAYER_PORT_TYPE_INPUT) Failed"));
-        return false;
-    }
-    iNumRequestPortsPending += numPortsRequested;
-
-    if (!RequestMediaLayerPorts(PVMF_MEDIALAYER_PORT_TYPE_OUTPUT,
-                                numPortsRequested))
-    {
-        PVMF_SM_RTSP_LOGERROR((0, "StreamingManagerNode:ConstructGraphFor3GPPUDPStreaming - RequestMediaLayerPorts(PVMF_MEDIALAYER_PORT_TYPE_OUTPUT) Failed"));
-        return false;
-    }
-    iNumRequestPortsPending += numPortsRequested;
-
     return true;
 }
 
@@ -1657,9 +1600,7 @@ bool PVMFSMRTSPUnicastNode::GraphConnect()
                     (trackInfo.iNetworkNodeRTCPPort == NULL) ||
                     (trackInfo.iJitterBufferInputPort == NULL) ||
                     (trackInfo.iJitterBufferOutputPort == NULL) ||
-                    (trackInfo.iJitterBufferRTCPPort == NULL) ||
-                    (trackInfo.iMediaLayerInputPort == NULL) ||
-                    (trackInfo.iMediaLayerOutputPort == NULL))
+                    (trackInfo.iJitterBufferRTCPPort == NULL))
             {
                 PVMF_SM_RTSP_LOGERROR((0, "StreamingManagerNode:GraphConnectFor3GPPUDPStreaming - Invalid Ports"));
                 return false;
@@ -1673,21 +1614,6 @@ bool PVMFSMRTSPUnicastNode::GraphConnect()
 
             PVMF_SM_RTSP_LOGINFO((0, "PVMFSM:GraphConnectFor3GPPUDPStreaming - Connected Network - JB Input"));
             PVMF_SM_RTSP_LOGINFO((0, "PVMFSM:GraphConnectFor3GPPUDPStreaming - NetworkPort=0x%x - JBInputPort=0x%x", trackInfo.iNetworkNodePort, trackInfo.iJitterBufferInputPort));
-
-            if (status != PVMFSuccess)
-            {
-                return false;
-            }
-
-            /*
-             * connect jitter_buffer_node_output_port <->
-             * media_layer_input_port
-             */
-            status = ConnectPortPairs(trackInfo.iJitterBufferOutputPort,
-                                      trackInfo.iMediaLayerInputPort);
-
-            PVMF_SM_RTSP_LOGINFO((0, "PVMFSM:GraphConnectFor3GPPUDPStreaming - JB Output - ML Input"));
-            PVMF_SM_RTSP_LOGINFO((0, "PVMFSM:GraphConnectFor3GPPUDPStreaming - JB Output=0x%x - ML Input=0x%x", trackInfo.iJitterBufferOutputPort, trackInfo.iMediaLayerInputPort));
 
             if (status != PVMFSuccess)
             {
@@ -1761,9 +1687,9 @@ void PVMFSMRTSPUnicastNode::DoRequestPort(PVMFSMFSPBaseNodeCommand& aCmd)
             CommandComplete(iInputCommands, aCmd, PVMFErrArgument, NULL, &eventuuid, &errcode);
             return;
         }
-        if (trackInfo->iMediaLayerOutputPort == NULL)
+        if (trackInfo->iJitterBufferOutputPort == NULL)
         {
-            PVMF_SM_RTSP_LOGERROR((0, "PVMFSMRTSPUnicastNode::DoRequestPort: iMediaLayerOutputPort NULL"));
+            PVMF_SM_RTSP_LOGERROR((0, "PVMFSMRTSPUnicastNode::DoRequestPort: iJitterBufferOutputPort NULL"));
             CommandComplete(iInputCommands, aCmd, PVMFFailure, NULL, &eventuuid, &errcode);
             return;
         }
@@ -1774,7 +1700,7 @@ void PVMFSMRTSPUnicastNode::DoRequestPort(PVMFSMFSPBaseNodeCommand& aCmd)
         CommandComplete(iInputCommands,
                         aCmd,
                         PVMFSuccess,
-                        (OsclAny*)(trackInfo->iMediaLayerOutputPort));
+                        (OsclAny*)(trackInfo->iJitterBufferOutputPort));
 
         PVMF_SM_RTSP_LOGINFO((0, "PVMFSMRTSPUnicastNode::DoRequestPort Success"));
     }
@@ -1809,7 +1735,7 @@ void PVMFSMRTSPUnicastNode::DoReleasePort(PVMFSMFSPBaseNodeCommand& aCmd)
             it != iTrackInfoVec.end();
             it++)
     {
-        if (it->iMediaLayerOutputPort == port)
+        if (it->iJitterBufferOutputPort == port)
         {
             trackInfo = it;
             break;
@@ -1826,7 +1752,7 @@ void PVMFSMRTSPUnicastNode::DoReleasePort(PVMFSMFSPBaseNodeCommand& aCmd)
         CommandComplete(iInputCommands, aCmd, PVMFErrArgument, NULL, &eventuuid, &errcode);
         return;
     }
-    PVMFStatus status = it->iMediaLayerOutputPort->Disconnect();
+    PVMFStatus status = it->iJitterBufferOutputPort->Disconnect();
 
     if (status != PVMFSuccess)
     {
@@ -2575,7 +2501,7 @@ PVMFStatus PVMFSMRTSPUnicastNode::GetConfigParameter(PvmiKvp*& aParameters,
                     return PVMFErrNoMemory;
                 }
                 rui32->min = 0;
-                rui32->max = DEFAULT_MAX_INACTIVITY_DURATION_IN_MS;
+                rui32->max = UINT32_MAX;//max of 32 bit
                 aParameters[0].value.key_specific_value = (void*)rui32;
             }
             break;
@@ -2823,36 +2749,6 @@ PVMFStatus PVMFSMRTSPUnicastNode::releaseParameters(PvmiMIOSession aSession,
     return PVMFSuccess;
 }
 
-void PVMFSMRTSPUnicastNode::createContext(PvmiMIOSession aSession,
-        PvmiCapabilityContext& aContext)
-{
-    OSCL_UNUSED_ARG(aSession);
-    OSCL_UNUSED_ARG(aContext);
-    // not supported
-    OSCL_LEAVE(PVMFErrNotSupported);
-}
-
-void PVMFSMRTSPUnicastNode::setContextParameters(PvmiMIOSession aSession,
-        PvmiCapabilityContext& aContext,
-        PvmiKvp* aParameters,
-        int num_parameter_elements)
-{
-    OSCL_UNUSED_ARG(aSession);
-    OSCL_UNUSED_ARG(aContext);
-    OSCL_UNUSED_ARG(aParameters);
-    OSCL_UNUSED_ARG(num_parameter_elements);
-    // not supported
-    OSCL_LEAVE(PVMFErrNotSupported);
-}
-
-void PVMFSMRTSPUnicastNode::DeleteContext(PvmiMIOSession aSession,
-        PvmiCapabilityContext& aContext)
-{
-    OSCL_UNUSED_ARG(aSession);
-    OSCL_UNUSED_ARG(aContext);
-    // not supported
-    OSCL_LEAVE(PVMFErrNotSupported);
-}
 
 void PVMFSMRTSPUnicastNode::setParametersSync(PvmiMIOSession aSession, PvmiKvp* aParameters,
         int num_elements, PvmiKvp* &aRet_kvp)
@@ -2944,13 +2840,6 @@ void PVMFSMRTSPUnicastNode::setParametersSync(PvmiMIOSession aSession, PvmiKvp* 
                     (0, "PVMFSMRTSPUnicastNode::setParametersSync() Out"));
 }
 
-
-
-uint32 PVMFSMRTSPUnicastNode::getCapabilityMetric(PvmiMIOSession aSession)
-{
-    OSCL_UNUSED_ARG(aSession);
-    return 0;
-}
 
 PVMFStatus PVMFSMRTSPUnicastNode::verifyParametersSync(PvmiMIOSession aSession,
         PvmiKvp* aParameters,
@@ -3162,13 +3051,6 @@ PVMFStatus PVMFSMRTSPUnicastNode::VerifyAndSetConfigParameter(int index, PvmiKvp
             OSCL_ASSERT(jbExtIntf);
             if (!jbExtIntf)
                 return PVMFFailure;
-            //validate input value...
-            if (aParameter.value.uint32_value > DEFAULT_MAX_INACTIVITY_DURATION_IN_MS)
-            {
-                PVMF_SM_RTSP_LOGERROR((0, "PVMFSMRTSPUnicastNode::VerifyAndSetConfigParameter() "
-                                       "Trying to set max inactivity duration greater than allowed inactivity duration"));
-                return PVMFErrArgument;
-            }
             if (set)
             {
                 //update the maximum alloyed delay for the incoming msg at input port of JB node
@@ -3457,21 +3339,6 @@ PVMFStatus PVMFSMRTSPUnicastNode::SetClientPlayBackClock(PVMFMediaClock* aClient
         (iJitterBufferNodeContainer->iExtensions[0]);
 
     jbExtIntf->setClientPlayBackClock(aClientClock);
-
-    PVMFSMFSPChildNodeContainer* iMediaLayerNodeContainer =
-        getChildNodeContainer(PVMF_SM_FSP_MEDIA_LAYER_NODE);
-
-    if (iMediaLayerNodeContainer == NULL)
-    {
-        OSCL_LEAVE(OsclErrBadHandle);
-        return PVMFFailure;
-    }
-
-    PVMFMediaLayerNodeExtensionInterface* mlExtIntf =
-        (PVMFMediaLayerNodeExtensionInterface*)
-        (iMediaLayerNodeContainer->iExtensions[0]);
-
-    mlExtIntf->setClientPlayBackClock(aClientClock);
 
     return PVMFSuccess;
 }
@@ -4140,14 +4007,6 @@ void PVMFSMRTSPUnicastNode::HandleChildNodeCommandCompletion(const PVMFCmdResp& 
     {
         HandleJitterBufferCommandCompleted(aResponse, aPerformErrHandling);
     }
-    else if ((cmdContextData->cmd >=
-              PVMF_SM_FSP_MEDIA_LAYER_COMMAND_START) &&
-             (cmdContextData->cmd <
-              PVMF_SM_FSP_HTTP_SESSION_CONTROLLER_COMMAND_START))
-
-    {
-        HandleMediaLayerCommandCompleted(aResponse, aPerformErrHandling);
-    }
     else
     {
         OSCL_ASSERT(false);
@@ -4768,10 +4627,14 @@ void PVMFSMRTSPUnicastNode::HandleJitterBufferCommandCompleted(const PVMFCmdResp
             PVMFRTSPTrackInfo* trackInfo =
                 FindTrackInfo(cmdContextData->portContext.trackID);
 
-            OSCL_ASSERT(trackInfo);
-
             PVMFPortInterface* port =
                 (PVMFPortInterface*)aResponse.GetEventData();
+
+            OSCL_ASSERT(trackInfo && port);
+            if (!trackInfo || ! port)
+            {
+                return;
+            }
 
             uint32 bitrate = 0;
 
@@ -4783,6 +4646,16 @@ void PVMFSMRTSPUnicastNode::HandleJitterBufferCommandCompleted(const PVMFCmdResp
                     bitrate = trackInfo->bitRate;
                     trackInfo->iJitterBufferInputPort = port;
                 }
+                mediaInfo* mInfo = NULL;
+                SDPInfo* sdpInfo = iSdpInfo.GetRep();
+                if (sdpInfo == NULL)
+                {
+                    OSCL_LEAVE(OsclErrBadHandle);
+                    return;
+                }
+                if (trackInfo)
+                    mInfo = sdpInfo->getMediaInfoBasedOnID(trackInfo->trackID);
+                jbExtIntf->setPortMediaParams(port, mInfo);
                 iJitterBufferNodeContainer->iInputPorts.push_back(port);
             }
             else if (cmdContextData->portContext.portTag ==
@@ -4817,201 +4690,6 @@ void PVMFSMRTSPUnicastNode::HandleJitterBufferCommandCompleted(const PVMFCmdResp
         break;
 
         case PVMF_SM_FSP_JITTER_BUFFER_CANCEL_ALL_COMMANDS:
-        {
-            CompleteChildNodesCmdCancellation();
-        }
-        break;
-
-        default:
-            break;
-    }
-    return;
-}
-
-void PVMFSMRTSPUnicastNode::HandleMediaLayerCommandCompleted(const PVMFCmdResp& aResponse, bool& aPerformErrHandling)
-{
-    aPerformErrHandling = false;
-    PVMFSMFSPChildNodeContainer* iMediaLayerNodeContainer =
-        getChildNodeContainer(PVMF_SM_FSP_MEDIA_LAYER_NODE);
-    if (iMediaLayerNodeContainer == NULL)
-    {
-        OSCL_LEAVE(OsclErrBadHandle);
-        return;
-    }
-
-    PVMFSMFSPCommandContext *cmdContextData =
-        OSCL_REINTERPRET_CAST(PVMFSMFSPCommandContext*, aResponse.GetContext());
-    cmdContextData->oFree = true;
-
-    PVMF_SM_RTSP_LOGINFO((0, "PVMFSMRTSPUnicastNode::HandleMediaLayerCommandCompleted In - cmd [%d] iMediaLayerNodeContainer->iNodeCmdState [%d] iInterfaceState[%d]", cmdContextData->cmd, iMediaLayerNodeContainer->iNodeCmdState, iInterfaceState));
-    OSCL_ASSERT(cmdContextData->cmd != PVMF_SM_FSP_MEDIA_LAYER_QUERY_UUID);
-    OSCL_ASSERT(cmdContextData->cmd != PVMF_SM_FSP_MEDIA_LAYER_QUERY_INTERFACE);
-
-    if (iMediaLayerNodeContainer->iNodeCmdState == PVMFSMFSP_NODE_CMD_PENDING)
-    {
-        if (cmdContextData->cmd == PVMF_SM_FSP_MEDIA_LAYER_REQUEST_PORT)
-        {
-            //This is last of the request ports
-            OSCL_ASSERT(iMediaLayerNodeContainer->iNumRequestPortsPending > 0);
-            if (--iMediaLayerNodeContainer->iNumRequestPortsPending == 0)
-            {
-                iMediaLayerNodeContainer->iNodeCmdState = PVMFSMFSP_NODE_CMD_IDLE;
-            }
-        }
-        else
-        {
-            iMediaLayerNodeContainer->iNodeCmdState = PVMFSMFSP_NODE_CMD_IDLE;
-        }
-    }
-    else if (iMediaLayerNodeContainer->iNodeCmdState == PVMFSMFSP_NODE_CMD_CANCEL_PENDING)
-    {
-        if ((cmdContextData->parentCmd == PVMF_SMFSP_NODE_CANCELALLCOMMANDS) || (cmdContextData->parentCmd == PVMF_SMFSP_NODE_CANCELCOMMAND) || (cmdContextData->parentCmd == PVMF_SMFSP_NODE_CANCEL_DUE_TO_ERROR))
-        {
-            iMediaLayerNodeContainer->iNodeCmdState = PVMFSMFSP_NODE_CMD_IDLE;
-        }
-        else
-        {
-            PVMF_SM_RTSP_LOGINFO((0, "PVMFSMRTSPUnicastNode::HandleMediaLayerCommandCompleted cmd completion for cmd other than cancel during cancellation"));
-            //if cancel is pending and if the parent cmd is not cancel then this is
-            //is most likely the cmd that is being cancelled.
-            //we ignore cmd completes from child nodes if cancel is pending
-            //we simply wait on cancel complete and cancel the pending cmd
-            return;
-        }
-    }
-    else if (iMediaLayerNodeContainer->iNodeCmdState == PVMFSMFSP_NODE_CMD_IDLE)
-    {
-        PVMF_SM_RTSP_LOGINFO((0, "PVMFSMRTSPUnicastNode::HandleMediaLayerCommandCompleted container in IDLE state already"));
-        /*
-         * This is to handle a usecase where a node reports cmd complete for cancelall first
-         * and then reports cmd complete on the cmd that was meant to be cancelled.
-         * There are two possible scenarios that could arise based on this:
-         * i) SM node has reported cmd complete on both canceall and the cmd meant to be cancelled
-         * to engine by the time cmd complete on the cmd that was meant to be cancelled arrives
-         * from the child node. In this case iNodeCmdState would be PVMFSMFSP_NODE_CMD_NO_PENDING.
-         * ii) SM node is still waiting on some other child nodes to complete cancelall.
-         * In this case iNodeCmdState would be PVMFSMFSP_NODE_CMD_IDLE.
-         * In either case iNodeCmdState cannot be PVMFSMFSP_NODE_CMD_PENDING or PVMFSMFSP_NODE_CMD_IDLE
-         * (recall that we call ResetNodeContainerCmdState  prior to issuing cancelall)
-         * Or this is the case of node reporting cmd complete multiple times for a cmd, which
-         * also can be ignored
-         */
-        return;
-    }
-    if (EPVMFNodeError == iInterfaceState)//If interface is in err state, let the err handler do processing
-    {
-        aPerformErrHandling = true;
-        return;
-    }
-
-    if (aResponse.GetCmdStatus() != PVMFSuccess)
-    {
-        if (aResponse.GetCmdStatus() != PVMFErrCancelled)
-        {
-            aPerformErrHandling = true;
-        }
-
-        PVMF_SM_RTSP_LOGERROR((0, "PVMFSMRTSPUnicastNode::HandleMediaLayerCommandCompleted - Command failed - context=0x%x, status=0x%x", aResponse.GetContext(), aResponse.GetCmdStatus()));
-        if (IsBusy())
-        {
-            Cancel();
-            RunIfNotReady();
-        }
-        return;
-    }
-
-    switch (cmdContextData->cmd)
-    {
-        case PVMF_SM_FSP_MEDIA_LAYER_INIT:
-            CompleteInit();
-            break;
-
-        case PVMF_SM_FSP_MEDIA_LAYER_PREPARE:
-            CompletePrepare();
-            break;
-
-        case PVMF_SM_FSP_MEDIA_LAYER_START:
-        {
-            CompleteStart();
-        }
-        break;
-
-        case PVMF_SM_FSP_MEDIA_LAYER_STOP:
-        {
-            CompleteStop();
-        }
-        break;
-
-        case PVMF_SM_FSP_MEDIA_LAYER_FLUSH:
-            CompleteFlush();
-            break;
-
-        case PVMF_SM_FSP_MEDIA_LAYER_PAUSE:
-            CompletePause();
-            break;
-
-        case PVMF_SM_FSP_MEDIA_LAYER_RESET:
-            CompleteReset();
-            break;
-
-        case PVMF_SM_FSP_MEDIA_LAYER_REQUEST_PORT:
-        {
-            PVMFMediaLayerNodeExtensionInterface* mlExtIntf =
-                (PVMFMediaLayerNodeExtensionInterface*)
-                (iMediaLayerNodeContainer->iExtensions[0]);
-
-            if (mlExtIntf == NULL)
-            {
-                OSCL_LEAVE(OsclErrBadHandle);
-                return;
-            }
-
-            /*
-             * Save the port in TrackInfo
-             */
-            PVMFRTSPTrackInfo* trackInfo =
-                FindTrackInfo(cmdContextData->portContext.trackID);
-
-            PVMFPortInterface* port =
-                (PVMFPortInterface*)aResponse.GetEventData();
-            OSCL_ASSERT(trackInfo && port);
-
-            if (cmdContextData->portContext.portTag ==
-                    PVMF_MEDIALAYER_PORT_TYPE_INPUT)
-            {
-                if (trackInfo)
-                    trackInfo->iMediaLayerInputPort = port;
-                iMediaLayerNodeContainer->iInputPorts.push_back(port);
-            }
-            else if (cmdContextData->portContext.portTag ==
-                     PVMF_MEDIALAYER_PORT_TYPE_OUTPUT)
-            {
-                if (trackInfo)
-                    trackInfo->iMediaLayerOutputPort = port;
-                iMediaLayerNodeContainer->iOutputPorts.push_back(port);
-                uint32 preroll32 = 0;
-                const bool live = false;
-                mlExtIntf->setOutPortStreamParams(port,
-                                                  cmdContextData->portContext.trackID,
-                                                  preroll32,
-                                                  live);
-            }
-            mediaInfo* mInfo = NULL;
-
-            SDPInfo* sdpInfo = iSdpInfo.GetRep();
-            if (sdpInfo == NULL)
-            {
-                OSCL_LEAVE(OsclErrBadHandle);
-                return;
-            }
-            if (trackInfo)
-                mInfo = sdpInfo->getMediaInfoBasedOnID(trackInfo->trackID);
-            mlExtIntf->setPortMediaParams(port, trackInfo->iTrackConfig, mInfo);
-            CompleteGraphConstruct();
-        }
-        break;
-
-        case PVMF_SM_FSP_MEDIA_LAYER_CANCEL_ALL_COMMANDS:
         {
             CompleteChildNodesCmdCancellation();
         }
@@ -5452,21 +5130,6 @@ void PVMFSMRTSPUnicastNode::GetActualMediaTSAfterSeek()
         (PVMFJitterBufferExtensionInterface*)
         (iJitterBufferNodeContainer->iExtensions[0]);
 
-    PVMFSMFSPChildNodeContainer* iMediaLayerNodeContainer =
-        getChildNodeContainer(PVMF_SM_FSP_MEDIA_LAYER_NODE);
-    if (iMediaLayerNodeContainer == NULL)
-    {
-        OSCL_LEAVE(OsclErrBadHandle);
-        return;
-    }
-    PVMFMediaLayerNodeExtensionInterface* mlExtIntf =
-        (PVMFMediaLayerNodeExtensionInterface*)
-        (iMediaLayerNodeContainer->iExtensions[0]);
-    if (mlExtIntf == NULL)
-    {
-        OSCL_LEAVE(OsclErrBadHandle);
-        return;
-    }
     iActualMediaDataTS = jbExtIntf->getActualMediaDataTSAfterSeek();
     if (iActualMediaDataTSPtr != NULL)
     {
@@ -6100,17 +5763,6 @@ bool PVMFSMRTSPUnicastNode::SendSessionControlStartCompleteParams()
         (PVMFJitterBufferExtensionInterface*)
         (iJitterBufferNodeContainer->iExtensions[0]);
 
-    PVMFSMFSPChildNodeContainer* iMediaLayerNodeContainer =
-        getChildNodeContainer(PVMF_SM_FSP_MEDIA_LAYER_NODE);
-    if (iMediaLayerNodeContainer == NULL)
-    {
-        OSCL_LEAVE(OsclErrBadHandle);
-        return false;
-    }
-    PVMFMediaLayerNodeExtensionInterface* mlExtIntf =
-        (PVMFMediaLayerNodeExtensionInterface*)
-        (iMediaLayerNodeContainer->iExtensions[0]);
-
     bool end_is_set = true;
     int32 startTime = 0;
     int32 stopTime  = 0;
@@ -6211,10 +5863,6 @@ bool PVMFSMRTSPUnicastNode::SendSessionControlStartCompleteParams()
         return false;
     }
 
-    if (mlExtIntf->setPlayRange(startTime, stopTime, iRepositioning) != true)
-    {
-        return false;
-    }
     return true;
 }
 
@@ -6370,15 +6018,6 @@ void PVMFSMRTSPUnicastNode::GetMaxMediaTS()
         (PVMFJitterBufferExtensionInterface*)
         (iJitterBufferNodeContainer->iExtensions[0]);
 
-    PVMFSMFSPChildNodeContainer* iMediaLayerNodeContainer =
-        getChildNodeContainer(PVMF_SM_FSP_MEDIA_LAYER_NODE);
-    if (iMediaLayerNodeContainer == NULL) OSCL_LEAVE(OsclErrBadHandle);
-    PVMFMediaLayerNodeExtensionInterface* mlExtIntf =
-        (PVMFMediaLayerNodeExtensionInterface*)
-        (iMediaLayerNodeContainer->iExtensions[0]);
-    if (mlExtIntf == NULL) OSCL_LEAVE(OsclErrBadHandle);
-    PVMFPortInterface* mlInPort = iMediaLayerNodeContainer->iInputPorts[0];
-
     if ((iSessionSourceInfo->_sessionType == PVMF_MIME_DATA_SOURCE_RTSP_URL) ||
             (iSessionSourceInfo->_sessionType == PVMF_MIME_DATA_SOURCE_SDP_FILE))
     {
@@ -6395,15 +6034,6 @@ void PVMFSMRTSPUnicastNode::GetMaxMediaTS()
             PVMF_SM_RTSP_LOG_COMMAND_REPOS((0, "PVMFStreamingManagerNode::GetActualMediaTSAfterSeek - ActualMediaDataTS=%d",
                                             iPVMFDataSourcePositionParamsPtr->iActualMediaDataTS));
         }
-    }
-    else if (iSessionSourceInfo->_sessionType == PVMF_MIME_DATA_SOURCE_MS_HTTP_STREAMING_URL)
-    {
-        iActualRepositionStartNPTInMS = jbExtIntf->getActualMediaDataTSAfterSeek();
-        *iActualRepositionStartNPTInMSPtr = iActualRepositionStartNPTInMS;
-        iActualMediaDataTS = mlExtIntf->getMaxOutPortTimestamp(mlInPort);
-        *iActualMediaDataTSPtr = iActualMediaDataTS;
-        PVMF_SM_RTSP_LOG_COMMAND_REPOS((0, "PVMFStreamingManagerNode::GetActualMediaTSAfterSeek - TargetNPT = %d, ActualNPT=%d, ActualMediaDataTS=%d",
-                                        iRepositionRequestedStartNPTInMS, *iActualRepositionStartNPTInMSPtr, *iActualMediaDataTSPtr));
     }
 }
 

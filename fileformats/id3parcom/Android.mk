@@ -7,7 +7,7 @@ LOCAL_SRC_FILES := \
 
 LOCAL_MODULE := libpvid3parcom
 
-LOCAL_CFLAGS :=  $(PV_CFLAGS)
+LOCAL_CFLAGS :=   $(PV_CFLAGS)
 
 
 

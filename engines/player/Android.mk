@@ -11,7 +11,7 @@ LOCAL_SRC_FILES := \
 
 LOCAL_MODULE := libpvplayer_engine
 
-LOCAL_CFLAGS :=  $(PV_CFLAGS)
+LOCAL_CFLAGS :=   $(PV_CFLAGS)
 
 
 

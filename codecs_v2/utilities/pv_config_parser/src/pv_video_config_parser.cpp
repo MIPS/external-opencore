@@ -59,6 +59,9 @@
 #define FOURCC_mp42     mmioFOURCC_WMC('m','p','4','2')
 #define FOURCC_mp43     mmioFOURCC_WMC('m','p','4','3')
 
+// For PlayReady
+#define FOURCC_PRDY     mmioFOURCC_WMC('P','R','D','Y')
+
 
 OSCL_DLL_ENTRY_POINT_DEFAULT()
 
@@ -108,35 +111,9 @@ OSCL_EXPORT_REF int16 pv_video_config_parser(pvVideoConfigParserInputs *aInputs,
         int32 width, height, display_width, display_height = 0;
         int32 profile_idc, level_idc = 0;
 
-        uint8 *tp = aInputs->inPtr;
-
-        if (aInputs->inBytes > 1)
-        {
-            if (tp[0] == 0 && tp[1] == 0)
-            {
-                // ByteStream Format
-                uint8* tmp_ptr = tp;
-                uint8* buffer_begin = tp;
-                int16 length = 0;
-                int initbufsize = aInputs->inBytes;
-                int tConfigSize = 0;
-                do
-                {
-                    tmp_ptr += length;
-                    length = GetNAL_Config(&tmp_ptr, &initbufsize);
-                    buffer_begin[0] = length & 0xFF;
-                    buffer_begin[1] = (length >> 8) & 0xFF;
-                    oscl_memcpy(buffer_begin + 2, tmp_ptr, length);
-                    buffer_begin += (length + 2);
-                    tConfigSize += (length + 2);
-                }
-                while (initbufsize > 0);
-            }
-        }
-
         // check codec info and get settings
         int16 retval;
-        retval = iGetAVCConfigInfo(tp,
+        retval = iGetAVCConfigInfo(aInputs->inPtr,
                                    aInputs->inBytes,
                                    (int*) & width,
                                    (int*) & height,
@@ -176,6 +153,14 @@ OSCL_EXPORT_REF int16 pv_video_config_parser(pvVideoConfigParserInputs *aInputs,
         /* Code to Check if comp is WMV1 then return not supported */
         pData += 4;
         LoadDWORD(dwdat, pData);
+
+        if (dwdat == FOURCC_PRDY)
+        {
+            pData += aInputs->inBytes - 35; // check the last 4 bytes;
+            LoadDWORD(dwdat, pData); // real FOURCC
+            pData = aInputs->inPtr + 31;
+        }
+
         uint32 NewCompression = dwdat;
         uint32 NewSeqHeader = 0;
         uint32 NewProfile = 0;
@@ -273,6 +258,11 @@ int32 GetNAL_Config(uint8** bitstream, int32* size)
         if (count == 2 && nal_unit[i] == 0x01)
         {
             i -= 2;
+            break;
+        }
+        else if (count == 3 && nal_unit[i] == 0x01)
+        {
+            i -= 3;
             break;
         }
 

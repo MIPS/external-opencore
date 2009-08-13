@@ -64,9 +64,9 @@
 
 
 
-#if RUN_CPMJUPITER_TESTCASES
-#ifndef TEST_PV_PLAYER_ENGINE_TESTSET_CPMJUPITER_H_INCLUDED
-#include "test_pv_player_engine_testset_cpmjupiter.h"
+#if RUN_CPMPLAYREADY_TESTCASES
+#ifndef TEST_PV_PLAYER_ENGINE_TESTSET_CPMPLAYREADY_H_INCLUDED
+#include "test_pv_player_engine_testset_cpmplayready.h"
 #endif
 #endif
 
@@ -122,6 +122,7 @@
 #endif
 
 #include "OMX_Core.h"
+#include "pv_omxcore.h"
 
 #ifndef OSCL_UTF8CONV_H
 #include "oscl_utf8conv.h"
@@ -763,8 +764,8 @@ void FindSourceFile(cmd_line* command_line, OSCL_HeapString<OsclMemAllocator> &a
             aInputFileFormatType = PVMF_MIME_AMRFF;
         }
         // RTSP URL
-        else  if ((!oscl_strncmp("rtsp", aFileNameInfo.get_cstr(), 4)) ||
-                  (!oscl_strncmp("RTSP", aFileNameInfo.get_cstr(), 4)))
+        else  if ((!oscl_strncmp("rtsp:", aFileNameInfo.get_cstr(), 5)) ||
+                  (!oscl_strncmp("RTSP:", aFileNameInfo.get_cstr(), 5)))
         {
             aInputFileFormatType = PVMF_MIME_DATA_SOURCE_RTSP_URL;
         }
@@ -822,7 +823,7 @@ void FindSourceFile(cmd_line* command_line, OSCL_HeapString<OsclMemAllocator> &a
         {
 //            aInputFileFormatType = PVMF_MIME_MIDIFF;
         }
-        // unrecognized eny (Jupiter envelope) files go to the still image node
+        // unrecognized eny (PlayReady envelope) files go to the still image node
         else  if (oscl_strstr(aFileNameInfo.get_cstr(), ".eny") != NULL || oscl_strstr(aFileNameInfo.get_cstr(), ".ENY") != NULL)
         {
             aInputFileFormatType = PVMF_MIME_IMAGE_FORMAT;
@@ -1406,10 +1407,10 @@ void FindLoggerNode(cmd_line* command_line, int32& lognode, FILE* aFile)
         {
             lognode = 12;   //file-io and hds access log only
         }
-#if RUN_CPMJUPITER_TESTCASES
-        else if (oscl_strcmp(iSourceFind, "-logjupiter") == 0)
+#if RUN_CPMPLAYREADY_TESTCASES
+        else if (oscl_strcmp(iSourceFind, "-logplayready") == 0)
         {
-            lognode = 13;   //jupiter DRM only
+            lognode = 13;   //playready DRM only
         }
 #endif
         else if (oscl_strcmp(iSourceFind, "-logperfmin") == 0)
@@ -1684,7 +1685,7 @@ int local_main(FILE *filehandle, cmd_line* command_line)
     OsclBase::Init();
     OsclErrorTrap::Init();
     OsclMem::Init();
-    OMX_Init();
+    OMX_MasterInit();
 
 
     {
@@ -1710,7 +1711,7 @@ int local_main(FILE *filehandle, cmd_line* command_line)
         fprintf(file, "Error!  Leave %d\n", err);
     }
     //Cleanup
-    OMX_Deinit();
+    OMX_MasterDeinit();
 
 #if !(OSCL_BYPASS_MEMMGT)
     //Check for memory leaks before cleaning up OsclMem.
@@ -1735,6 +1736,7 @@ int local_main(FILE *filehandle, cmd_line* command_line)
         uint32 leaks = auditCB.pAudit->MM_GetNumAllocNodes();
         if (leaks != 0)
         {
+            result = 1;
             if (oPrintDetailedMemLeakInfo)
             {
                 fprintf(file, "ERROR: %d Memory leaks detected!\n", leaks);
@@ -3024,6 +3026,7 @@ void pvplayer_engine_test::test()
                 ((pvplayer_async_test_ppb_normal*)iCurrentTest)->enableTwice();
                 ((pvplayer_async_test_ppb_normal*)iCurrentTest)->useLongClip();
                 ((pvplayer_async_test_ppb_normal*)iCurrentTest)->iTestCaseName = _STRLIT_CHAR("MP4 Progressive Playback Start Pause Seek Resume Twice");
+                ((pvplayer_async_test_ppb_normal*)iCurrentTest)->SetVerifyNumBufferingCompleteEvent();
                 break;
 
             case ProgPlaybackMP4SeekStartTest:
@@ -3231,6 +3234,10 @@ void pvplayer_engine_test::test()
                 fprintf(file, "Janus CPM tests not enabled\n");
                 break;
 
+            case CleanDataStoreMeasurement_JanusCPMTest:
+                fprintf(file, "Janus CPM tests not enabled\n");
+                break;
+
             case OpenPlayStop_JanusCPMTest:
                 fprintf(file, "Janus CPM tests not enabled\n");
                 break;
@@ -3263,361 +3270,430 @@ void pvplayer_engine_test::test()
                 fprintf(file, "Janus CPM tests not enabled\n");
                 break;
 
-            case DLA_QueryEngine_JupiterCPMTest_v2_WMA:
-#if RUN_CPMJUPITER_TESTCASES
-                iCurrentTest = new pvplayer_async_test_jupitercpm_query(testparam
-                        , EJupContentType_v2_WMA);
+            case ContentHeaderRetrieval_JanusCPMTest:
+                fprintf(file, "Janus CPM tests not enabled\n");
+                break;
+
+            case DLA_QueryEngine_PlayReadyCPMTest_v2_WMA:
+#if RUN_CPMPLAYREADY_TESTCASES
+                iCurrentTest = new pvplayer_async_test_playreadycpm_query(testparam
+                        , EPlayReadyContentType_v2_WMA);
 #else
-                fprintf(file, "Jupiter CPM tests not enabled\n");
+                fprintf(file, "PlayReady CPM tests not enabled\n");
 #endif
                 break;
 
-            case DLA_QueryEngine_JupiterCPMTest_v24_WMA:
-#if RUN_CPMJUPITER_TESTCASES
-                iCurrentTest = new pvplayer_async_test_jupitercpm_query(testparam
-                        , EJupContentType_v24_WMA);
+            case DLA_QueryEngine_PlayReadyCPMTest_v24_WMA:
+#if RUN_CPMPLAYREADY_TESTCASES
+                //@TBD - disabling test for now
+                fprintf(file, "Test disabled\n");
+                //     iCurrentTest = new pvplayer_async_test_playreadycpm_query(testparam,
+                //     EPlayReadyContentType_v24_WMA);
 #else
-                fprintf(file, "Jupiter CPM tests not enabled\n");
+                fprintf(file, "PlayReady CPM tests not enabled\n");
 #endif
                 break;
 
-            case DLA_QueryEngine_JupiterCPMTest_v4_Enveloped_ASF:
-#if RUN_CPMJUPITER_TESTCASES
-                iCurrentTest = new pvplayer_async_test_jupitercpm_query(testparam
-                        , EJupContentType_v4_Enveloped_ASF);
+            case DLA_QueryEngine_PlayReadyCPMTest_v4_Enveloped_ASF:
+#if RUN_CPMPLAYREADY_TESTCASES
+                //@TBD - disabling test for now
+                fprintf(file, "Test disabled\n");
+                //iCurrentTest = new pvplayer_async_test_playreadycpm_query(testparam
+                //        , EPlayReadyContentType_v4_Enveloped_ASF);
 #else
-                fprintf(file, "Jupiter CPM tests not enabled\n");
+                fprintf(file, "PlayReady CPM tests not enabled\n");
 #endif
                 break;
 
-            case DLA_QueryEngine_JupiterCPMTest_v4_Enveloped_MP4:
-#if RUN_CPMJUPITER_TESTCASES
-                iCurrentTest = new pvplayer_async_test_jupitercpm_query(testparam
-                        , EJupContentType_v4_Enveloped_MP4);
+            case DLA_QueryEngine_PlayReadyCPMTest_v4_Enveloped_MP4:
+#if RUN_CPMPLAYREADY_TESTCASES
+                //@TBD - disabling test for now
+                fprintf(file, "Test disabled\n");
+                //iCurrentTest = new pvplayer_async_test_playreadycpm_query(testparam
+                //        , EPlayReadyContentType_v4_Enveloped_MP4);
 #else
-                fprintf(file, "Jupiter CPM tests not enabled\n");
+                fprintf(file, "PlayReady CPM tests not enabled\n");
 #endif
                 break;
 
-            case DLA_QueryEngine_JupiterCPMTest_v4_Enveloped_Image:
-#if RUN_CPMJUPITER_TESTCASES
-                iCurrentTest = new pvplayer_async_test_jupitercpm_query(testparam
-                        , EJupContentType_v4_Enveloped_Image);
+            case DLA_QueryEngine_PlayReadyCPMTest_v4_Enveloped_Image:
+#if RUN_CPMPLAYREADY_TESTCASES
+                //@TBD - disabling test for now
+                fprintf(file, "Test disabled\n");
+                //iCurrentTest = new pvplayer_async_test_playreadycpm_query(testparam
+                //        , EPlayReadyContentType_v4_Enveloped_Image);
 #else
-                fprintf(file, "Jupiter CPM tests not enabled\n");
+                fprintf(file, "PlayReady CPM tests not enabled\n");
 #endif
                 break;
 
-            case DLA_EnvelopeRead_JupiterCPMTest_v4_Enveloped_Image:
-#if RUN_CPMJUPITER_TESTCASES
-                iCurrentTest = new pvplayer_async_test_jupitercpm_dla_envelopeimageread(testparam
-                        , EJupContentType_v4_Enveloped_Image);
+            case DLA_EnvelopeRead_PlayReadyCPMTest_v4_Enveloped_Image:
+#if RUN_CPMPLAYREADY_TESTCASES
+                //@TBD - disabling test for now
+                fprintf(file, "Test disabled\n");
+                //iCurrentTest = new pvplayer_async_test_playreadycpm_dla_envelopeimageread(testparam
+                //        , EPlayReadyContentType_v4_Enveloped_Image);
 #else
-                fprintf(file, "Jupiter CPM tests not enabled\n");
+                fprintf(file, "PlayReady CPM tests not enabled\n");
 #endif
                 break;
 
-            case DLA_OpenPlayStop_JupiterCPMTest_v2_WMA:
-#if RUN_CPMJUPITER_TESTCASES
-                iCurrentTest = new pvplayer_async_test_jupitercpm_dla_openplaystop(testparam
-                        , EJupContentType_v2_WMA);
+            case DLA_OpenPlayStop_PlayReadyCPMTest_v2_WMA:
+#if RUN_CPMPLAYREADY_TESTCASES
+                iCurrentTest = new pvplayer_async_test_playreadycpm_dla_openplaystop(testparam
+                        , EPlayReadyContentType_v2_WMA);
 #else
-                fprintf(file, "Jupiter CPM tests not enabled\n");
+                fprintf(file, "PlayReady CPM tests not enabled\n");
 #endif
                 break;
 
-            case DLA_OpenPlayStop_JupiterCPMTest_v2_WMV:
-#if RUN_CPMJUPITER_TESTCASES
-                iCurrentTest = new pvplayer_async_test_jupitercpm_dla_openplaystop(testparam
-                        , EJupContentType_v2_WMV);
+            case DLA_OpenPlayStop_PlayReadyCPMTest_v2_WMV:
+#if RUN_CPMPLAYREADY_TESTCASES
+                iCurrentTest = new pvplayer_async_test_playreadycpm_dla_openplaystop(testparam
+                        , EPlayReadyContentType_v2_WMV);
 #else
-                fprintf(file, "Jupiter CPM tests not enabled\n");
+                fprintf(file, "PlayReady CPM tests not enabled\n");
 #endif
                 break;
 
-            case DLA_OpenPlayStop_JupiterCPMTest_v24_WMA:
-#if RUN_CPMJUPITER_TESTCASES
-                iCurrentTest = new pvplayer_async_test_jupitercpm_dla_openplaystop(testparam
-                        , EJupContentType_v24_WMA);
+            case DLA_OpenPlayStop_PlayReadyCPMTest_v24_WMA:
+#if RUN_CPMPLAYREADY_TESTCASES
+                //@TBD - disabling test for now
+                fprintf(file, "Test disabled\n");
+                //iCurrentTest = new pvplayer_async_test_playreadycpm_dla_openplaystop(testparam
+                //        , EPlayReadyContentType_v24_WMA);
 #else
-                fprintf(file, "Jupiter CPM tests not enabled\n");
+                fprintf(file, "PlayReady CPM tests not enabled\n");
 #endif
                 break;
 
-            case DLA_OpenPlayStop_JupiterCPMTest_redirect:
-#if RUN_CPMJUPITER_TESTCASES
-                iCurrentTest = new pvplayer_async_test_jupitercpm_dla_envelopeimageread(testparam
-                        , EJupContentType_v4_Enveloped_Image
-                        , EJupLicenseType_DLA_With_Redirect);
+            case DLA_OpenPlayStop_PlayReadyCPMTest_redirect:
+#if RUN_CPMPLAYREADY_TESTCASES
+                //@TBD - disabling test for now
+                fprintf(file, "Test disabled\n");
+                //iCurrentTest = new pvplayer_async_test_playreadycpm_dla_envelopeimageread(testparam
+                //        , EPlayReadyContentType_v4_Enveloped_Image
+                //        , EPlayReadyLicenseType_DLA_With_Redirect);
 #else
-                fprintf(file, "Jupiter CPM tests not enabled\n");
+                fprintf(file, "PlayReady CPM tests not enabled\n");
 #endif
                 break;
 
-            case DLA_OpenPlayStop_JupiterCPMTest_v4_WMA:
-#if RUN_CPMJUPITER_TESTCASES
-                iCurrentTest = new pvplayer_async_test_jupitercpm_dla_openplaystop(testparam
-                        , EJupContentType_v4_WMA);
+            case DLA_OpenPlayStop_PlayReadyCPMTest_v4_WMA:
+#if RUN_CPMPLAYREADY_TESTCASES
+                //@TBD - disabling test for now
+                //fprintf(file, "Test disabled\n");
+                iCurrentTest = new pvplayer_async_test_playreadycpm_dla_openplaystop(testparam
+                        , EPlayReadyContentType_v4_WMA);
 #else
-                fprintf(file, "Jupiter CPM tests not enabled\n");
+                fprintf(file, "PlayReady CPM tests not enabled\n");
 #endif
                 break;
 
-            case DLA_OpenPlayStop_JupiterCPMTest_v4_WMV:
-#if RUN_CPMJUPITER_TESTCASES
-                iCurrentTest = new pvplayer_async_test_jupitercpm_dla_openplaystop(testparam
-                        , EJupContentType_v4_WMV);
+            case DLA_OpenPlayStop_PlayReadyCPMTest_v4_WMV:
+#if RUN_CPMPLAYREADY_TESTCASES
+                iCurrentTest = new pvplayer_async_test_playreadycpm_dla_openplaystop(testparam
+                        , EPlayReadyContentType_v4_WMV);
 #else
-                fprintf(file, "Jupiter CPM tests not enabled\n");
+                fprintf(file, "PlayReady CPM tests not enabled\n");
 #endif
                 break;
 
-            case DLA_OpenPlayStop_JupiterCPMTest_v4_AAC:
-#if RUN_CPMJUPITER_TESTCASES
-                iCurrentTest = new pvplayer_async_test_jupitercpm_dla_openplaystop(testparam
-                        , EJupContentType_v4_AAC);
+            case DLA_OpenPlayStop_PlayReadyCPMTest_v4_AAC:
+#if RUN_CPMPLAYREADY_TESTCASES
+                //@TBD - disabling test for now
+                fprintf(file, "Test disabled\n");
+                //iCurrentTest = new pvplayer_async_test_playreadycpm_dla_openplaystop(testparam
+                //        , EPlayReadyContentType_v4_AAC);
 #else
-                fprintf(file, "Jupiter CPM tests not enabled\n");
+                fprintf(file, "PlayReady CPM tests not enabled\n");
 #endif
                 break;
 
-            case DLA_OpenPlayStop_JupiterCPMTest_v4_H264:
-#if RUN_CPMJUPITER_TESTCASES
-                iCurrentTest = new pvplayer_async_test_jupitercpm_dla_openplaystop(testparam
-                        , EJupContentType_v4_H264);
+            case DLA_OpenPlayStop_PlayReadyCPMTest_v4_AACP:
+#if RUN_CPMPLAYREADY_TESTCASES
+                //@TBD - disabling test for now
+                fprintf(file, "Test disabled\n");
+                //iCurrentTest = new pvplayer_async_test_playreadycpm_dla_openplaystop(testparam
+                //        , EPlayReadyContentType_v4_AACP);
 #else
-                fprintf(file, "Jupiter CPM tests not enabled\n");
+                fprintf(file, "PlayReady CPM tests not enabled\n");
 #endif
                 break;
 
-            case DLA_OpenPlayStop_JupiterCPMTest_v4_Enveloped_ASF:
-#if RUN_CPMJUPITER_TESTCASES
-                iCurrentTest = new pvplayer_async_test_jupitercpm_dla_openplaystop(testparam
-                        , EJupContentType_v4_Enveloped_ASF);
+            case DLA_OpenPlayStop_PlayReadyCPMTest_v4_H264:
+#if RUN_CPMPLAYREADY_TESTCASES
+                //@TBD - disabling test for now
+                fprintf(file, "Test disabled\n");
+                //iCurrentTest = new pvplayer_async_test_playreadycpm_dla_openplaystop(testparam
+                //        , EPlayReadyContentType_v4_H264);
 #else
-                fprintf(file, "Jupiter CPM tests not enabled\n");
+                fprintf(file, "PlayReady CPM tests not enabled\n");
 #endif
                 break;
 
-            case DLA_OpenPlayStop_JupiterCPMTest_v4_Enveloped_MP4:
-#if RUN_CPMJUPITER_TESTCASES
-                iCurrentTest = new pvplayer_async_test_jupitercpm_dla_openplaystop(testparam
-                        , EJupContentType_v4_Enveloped_MP4);
+            case DLA_OpenPlayStop_PlayReadyCPMTest_v4_Enveloped_ASF:
+#if RUN_CPMPLAYREADY_TESTCASES
+                //@TBD - disabling test for now
+                fprintf(file, "Test disabled\n");
+                //iCurrentTest = new pvplayer_async_test_playreadycpm_dla_openplaystop(testparam
+                //        , EPlayReadyContentType_v4_Enveloped_ASF);
 #else
-                fprintf(file, "Jupiter CPM tests not enabled\n");
+                fprintf(file, "PlayReady CPM tests not enabled\n");
 #endif
                 break;
 
-            case DLA_OpenPlayStop_JupiterCPMTest_unprotected_H264:
-#if RUN_CPMJUPITER_TESTCASES
-                iCurrentTest = new pvplayer_async_test_jupitercpm_dla_openplaystop(testparam
-                        , EJupContentType_unprotected_H264_in_ASF);
+            case DLA_OpenPlayStop_PlayReadyCPMTest_v4_Enveloped_MP4:
+#if RUN_CPMPLAYREADY_TESTCASES
+                //@TBD - disabling test for now
+                fprintf(file, "Test disabled\n");
+                //iCurrentTest = new pvplayer_async_test_playreadycpm_dla_openplaystop(testparam
+                //        , EPlayReadyContentType_v4_Enveloped_MP4);
 #else
-                fprintf(file, "Jupiter CPM tests not enabled\n");
+                fprintf(file, "PlayReady CPM tests not enabled\n");
 #endif
                 break;
 
-            case DLA_OpenPlayStop_JupiterCPMTest_unprotected_AAC:
-#if RUN_CPMJUPITER_TESTCASES
-                iCurrentTest = new pvplayer_async_test_jupitercpm_dla_openplaystop(testparam
-                        , EJupContentType_unprotected_AAC_in_ASF);
+            case DLA_OpenPlayStop_PlayReadyCPMTest_unprotected_H264:
+#if RUN_CPMPLAYREADY_TESTCASES
+                iCurrentTest = new pvplayer_async_test_playreadycpm_dla_openplaystop(testparam
+                        , EPlayReadyContentType_unprotected_H264_in_ASF);
 #else
-                fprintf(file, "Jupiter CPM tests not enabled\n");
+                fprintf(file, "PlayReady CPM tests not enabled\n");
 #endif
                 break;
 
-            case DLA_OpenPlayStop_JupiterCPMTest_v24_WMA_fallback:
-#if RUN_CPMJUPITER_TESTCASES
-                iCurrentTest = new pvplayer_async_test_jupitercpm_dla_openplaystop(testparam
-                        , EJupContentType_v24_WMA
-                        , EJupLicenseType_DLA_With_Fallback);
+            case DLA_OpenPlayStop_PlayReadyCPMTest_unprotected_AAC:
+#if RUN_CPMPLAYREADY_TESTCASES
+                iCurrentTest = new pvplayer_async_test_playreadycpm_dla_openplaystop(testparam
+                        , EPlayReadyContentType_unprotected_AAC_in_ASF);
 #else
-                fprintf(file, "Jupiter CPM tests not enabled\n");
+                fprintf(file, "PlayReady CPM tests not enabled\n");
 #endif
                 break;
 
-            case DLA_OpenPlayStop_JupiterCPMTest_v24_WMV:
-#if RUN_CPMJUPITER_TESTCASES
-                iCurrentTest = new pvplayer_async_test_jupitercpm_dla_openplaystop(testparam
-                        , EJupContentType_v24_WMV);
+            case DLA_OpenPlayStop_PlayReadyCPMTest_v24_WMA_fallback:
+#if RUN_CPMPLAYREADY_TESTCASES
+                //@TBD - disabling test for now
+                fprintf(file, "Test disabled\n");
+                //iCurrentTest = new pvplayer_async_test_playreadycpm_dla_openplaystop(testparam
+                //        , EPlayReadyContentType_v24_WMA
+                //        , EPlayReadyLicenseType_DLA_With_Fallback);
 #else
-                fprintf(file, "Jupiter CPM tests not enabled\n");
+                fprintf(file, "PlayReady CPM tests not enabled\n");
 #endif
                 break;
 
-            case DLA_OpenPlayStop_JupiterCPMTest_v4_WMA_ringtone:
-#if RUN_CPMJUPITER_TESTCASES
-                iCurrentTest = new pvplayer_async_test_jupitercpm_dla_openplaystop(testparam
-                        , EJupContentType_v4_WMA
-                        , EJupLicenseType_DLA_With_Ringtone);
+            case DLA_OpenPlayStop_PlayReadyCPMTest_v24_WMV:
+#if RUN_CPMPLAYREADY_TESTCASES
+                //@TBD - disabling test for now
+                fprintf(file, "Test disabled\n");
+                //iCurrentTest = new pvplayer_async_test_playreadycpm_dla_openplaystop(testparam
+                //        , EPlayReadyContentType_v24_WMV);
 #else
-                fprintf(file, "Jupiter CPM tests not enabled\n");
+                fprintf(file, "PlayReady CPM tests not enabled\n");
 #endif
                 break;
 
-            case DLA_OpenPlayStop_JupiterCPMTest_v4_WMA_domain:
-#if RUN_CPMJUPITER_TESTCASES
-                iCurrentTest = new pvplayer_async_test_jupitercpm_dla_openplaystop(testparam
-                        , EJupContentType_v4_WMA
-                        , EJupLicenseType_DLA_With_Domain);
+            case DLA_OpenPlayStop_PlayReadyCPMTest_v4_WMA_ringtone:
+#if RUN_CPMPLAYREADY_TESTCASES
+                //@TBD - disabling test for now
+                fprintf(file, "Test disabled\n");
+                //iCurrentTest = new pvplayer_async_test_playreadycpm_dla_openplaystop(testparam
+                //        , EPlayReadyContentType_v4_WMA
+                //        , EPlayReadyLicenseType_DLA_With_Ringtone);
 #else
-                fprintf(file, "Jupiter CPM tests not enabled\n");
+                fprintf(file, "PlayReady CPM tests not enabled\n");
 #endif
                 break;
 
-            case DLA_OpenPlayStop_JupiterCPMTest_v4_WMA_domain_renew:
-#if RUN_CPMJUPITER_TESTCASES
-                iCurrentTest = new pvplayer_async_test_jupitercpm_dla_openplaystop(testparam
-                        , EJupContentType_v4_WMA
-                        , EJupLicenseType_DLA_With_DomainRenew);
+            case DLA_OpenPlayStop_PlayReadyCPMTest_v4_WMA_domain:
+#if RUN_CPMPLAYREADY_TESTCASES
+                //@TBD - disabling test for now
+                fprintf(file, "Test disabled\n");
+                //iCurrentTest = new pvplayer_async_test_playreadycpm_dla_openplaystop(testparam
+                //        , EPlayReadyContentType_v4_WMA
+                //        , EPlayReadyLicenseType_DLA_With_Domain);
 #else
-                fprintf(file, "Jupiter CPM tests not enabled\n");
+                fprintf(file, "PlayReady CPM tests not enabled\n");
 #endif
                 break;
 
-            case DLA_OpenPlayStop_JupiterCPMTest_v4_WMA_domain_offline:
-#if RUN_CPMJUPITER_TESTCASES
-                iCurrentTest = new pvplayer_async_test_jupitercpm_dla_openplaystop(testparam
-                        , EJupContentType_v4_WMA
-                        , EJupLicenseType_DLA_With_DomainOffline);
+            case DLA_OpenPlayStop_PlayReadyCPMTest_v4_WMA_domain_renew:
+#if RUN_CPMPLAYREADY_TESTCASES
+                //@TBD - disabling test for now
+                fprintf(file, "Test disabled\n");
+                //iCurrentTest = new pvplayer_async_test_playreadycpm_dla_openplaystop(testparam
+                //        , EPlayReadyContentType_v4_WMA
+                //        , EPlayReadyLicenseType_DLA_With_DomainRenew);
 #else
-                fprintf(file, "Jupiter CPM tests not enabled\n");
+                fprintf(file, "PlayReady CPM tests not enabled\n");
 #endif
                 break;
 
-            case DLA_OpenPlayStop_JupiterCPMTest_v4_WMA_domain_history:
-#if RUN_CPMJUPITER_TESTCASES
-                iCurrentTest = new pvplayer_async_test_jupitercpm_dla_openplaystop(testparam
-                        , EJupContentType_v4_WMA
-                        , EJupLicenseType_DLA_With_DomainHistory);
+            case DLA_OpenPlayStop_PlayReadyCPMTest_v4_WMA_domain_offline:
+#if RUN_CPMPLAYREADY_TESTCASES
+                //@TBD - disabling test for now
+                fprintf(file, "Test disabled\n");
+                //iCurrentTest = new pvplayer_async_test_playreadycpm_dla_openplaystop(testparam
+                //        , EPlayReadyContentType_v4_WMA
+                //        , EPlayReadyLicenseType_DLA_With_DomainOffline);
 #else
-                fprintf(file, "Jupiter CPM tests not enabled\n");
+                fprintf(file, "PlayReady CPM tests not enabled\n");
 #endif
                 break;
 
-            case DLA_JoinDomain_JupiterCPMTest:
-#if RUN_CPMJUPITER_TESTCASES
-                iCurrentTest = new pvplayer_async_test_jupitercpm_joindomain(testparam);
+            case DLA_OpenPlayStop_PlayReadyCPMTest_v4_WMA_domain_history:
+#if RUN_CPMPLAYREADY_TESTCASES
+                //@TBD - disabling test for now
+                fprintf(file, "Test disabled\n");
+                //iCurrentTest = new pvplayer_async_test_playreadycpm_dla_openplaystop(testparam
+                //        , EPlayReadyContentType_v4_WMA
+                //        , EPlayReadyLicenseType_DLA_With_DomainHistory);
 #else
-                fprintf(file, "Jupiter CPM tests not enabled\n");
+                fprintf(file, "PlayReady CPM tests not enabled\n");
 #endif
                 break;
 
-            case DLA_LeaveDomain_JupiterCPMTest:
-#if RUN_CPMJUPITER_TESTCASES
-                iCurrentTest = new pvplayer_async_test_jupitercpm_leavedomain(testparam);
+            case DLA_JoinDomain_PlayReadyCPMTest:
+#if RUN_CPMPLAYREADY_TESTCASES
+                iCurrentTest = new pvplayer_async_test_playreadycpm_joindomain(testparam);
 #else
-                fprintf(file, "Jupiter CPM tests not enabled\n");
+                fprintf(file, "PlayReady CPM tests not enabled\n");
 #endif
                 break;
 
-            case DLA_MeteringByCert_JupiterCPMTest:
-#if (RUN_CPMJUPITER_TESTCASES && RUN_CPMJUPITER_METERING_TESTCASES)
-                iCurrentTest = new pvplayer_async_test_jupitercpm_dla_metering_or_sync(testparam
+            case DLA_LeaveDomain_PlayReadyCPMTest:
+#if RUN_CPMPLAYREADY_TESTCASES
+                iCurrentTest = new pvplayer_async_test_playreadycpm_leavedomain(testparam);
+#else
+                fprintf(file, "PlayReady CPM tests not enabled\n");
+#endif
+                break;
+
+            case DLA_MeteringByCert_PlayReadyCPMTest:
+#if (RUN_CPMPLAYREADY_TESTCASES && RUN_CPMPLAYREADY_METERING_TESTCASES)
+                iCurrentTest = new pvplayer_async_test_playreadycpm_dla_metering_or_sync(testparam
                         , EPVMeterTestType_byCert
-                        , EJupContentType_mixed
-                        , EJupLicenseType_DLA_With_Metering);
+                        , EPlayReadyContentType_mixed
+                        , EPlayReadyLicenseType_DLA_With_Metering);
 #else
-                fprintf(file, "Jupiter CPM tests not enabled\n");
+                fprintf(file, "PlayReady CPM tests not enabled\n");
 #endif
                 break;
 
-            case DLA_MeteringByMID_JupiterCPMTest:
-#if (RUN_CPMJUPITER_TESTCASES && RUN_CPMJUPITER_METERING_TESTCASES)
-                iCurrentTest = new pvplayer_async_test_jupitercpm_dla_metering_or_sync(testparam
+            case DLA_MeteringByMID_PlayReadyCPMTest:
+#if (RUN_CPMPLAYREADY_TESTCASES && RUN_CPMPLAYREADY_METERING_TESTCASES)
+                iCurrentTest = new pvplayer_async_test_playreadycpm_dla_metering_or_sync(testparam
                         , EPVMeterTestType_byMID
-                        , EJupContentType_mixed
-                        , EJupLicenseType_DLA_With_Metering);
+                        , EPlayReadyContentType_mixed
+                        , EPlayReadyLicenseType_DLA_With_Metering);
 #else
-                fprintf(file, "Jupiter CPM tests not enabled\n");
+                fprintf(file, "PlayReady CPM tests not enabled\n");
 #endif
                 break;
 
-            case DLA_MeteringAll_JupiterCPMTest:
-#if (RUN_CPMJUPITER_TESTCASES && RUN_CPMJUPITER_METERING_TESTCASES)
-                iCurrentTest = new pvplayer_async_test_jupitercpm_dla_metering_or_sync(testparam
+            case DLA_MeteringAll_PlayReadyCPMTest:
+#if (RUN_CPMPLAYREADY_TESTCASES && RUN_CPMPLAYREADY_METERING_TESTCASES)
+                iCurrentTest = new pvplayer_async_test_playreadycpm_dla_metering_or_sync(testparam
                         , EPVMeterTestType_All
-                        , EJupContentType_mixed
-                        , EJupLicenseType_DLA_With_Metering);
+                        , EPlayReadyContentType_mixed
+                        , EPlayReadyLicenseType_DLA_With_Metering);
 #else
-                fprintf(file, "Jupiter CPM tests not enabled\n");
+                fprintf(file, "PlayReady CPM tests not enabled\n");
 #endif
                 break;
 
-            case DLA_LicenseUpdateAll_JupiterCPMTest:
-#if RUN_CPMJUPITER_TESTCASES
-                iCurrentTest = new pvplayer_async_test_jupitercpm_dla_metering_or_sync(testparam
-                        , EPVMeterTestType_SyncAll
-                        , EJupContentType_mixed
-                        , EJupLicenseType_DLA_With_Sync);
+            case DLA_LicenseUpdateAll_PlayReadyCPMTest:
+#if RUN_CPMPLAYREADY_TESTCASES
+                //@TBD - disabling test for now
+                fprintf(file, "Test disabled\n");
+                //iCurrentTest = new pvplayer_async_test_playreadycpm_dla_metering_or_sync(testparam
+                //        , EPVMeterTestType_SyncAll
+                //        , EPlayReadyContentType_mixed
+                //        , EPlayReadyLicenseType_DLA_With_Sync);
 #else
-                fprintf(file, "Jupiter CPM tests not enabled\n");
+                fprintf(file, "PlayReady CPM tests not enabled\n");
 #endif
                 break;
 
-            case DLA_LicenseUpdateExpired_JupiterCPMTest:
-#if RUN_CPMJUPITER_TESTCASES
-                iCurrentTest = new pvplayer_async_test_jupitercpm_dla_metering_or_sync(testparam
-                        , EPVMeterTestType_SyncExpiredOnly
-                        , EJupContentType_mixed
-                        , EJupLicenseType_DLA_With_Sync);
+            case DLA_LicenseUpdateExpired_PlayReadyCPMTest:
+#if RUN_CPMPLAYREADY_TESTCASES
+                //@TBD - disabling test for now
+                fprintf(file, "Test disabled\n");
+                //iCurrentTest = new pvplayer_async_test_playreadycpm_dla_metering_or_sync(testparam
+                //        , EPVMeterTestType_SyncExpiredOnly
+                //        , EPlayReadyContentType_mixed
+                //        , EPlayReadyLicenseType_DLA_With_Sync);
 #else
-                fprintf(file, "Jupiter CPM tests not enabled\n");
+                fprintf(file, "PlayReady CPM tests not enabled\n");
 #endif
                 break;
 
 
-            case DLA_DeleteLicense_JupiterCPMTest_v2_Content:
-#if RUN_CPMJUPITER_TESTCASES
-                iCurrentTest = new pvplayer_async_test_jupitercpm_deletelicense(testparam, EJupContentType_v2_WMA, EJupLicenseType_DLA);
+            case DLA_DeleteLicense_PlayReadyCPMTest_v2_Content:
+#if RUN_CPMPLAYREADY_TESTCASES
+                iCurrentTest = new pvplayer_async_test_playreadycpm_deletelicense(testparam, EPlayReadyContentType_v2_WMA, EPlayReadyLicenseType_DLA);
 #else
-                fprintf(file, "Jupiter CPM tests not enabled\n");
+                fprintf(file, "PlayReady CPM tests not enabled\n");
 #endif
                 break;
 
-            case DLA_DeleteLicense_JupiterCPMTest_v24_Content:
-#if RUN_CPMJUPITER_TESTCASES
-                iCurrentTest = new pvplayer_async_test_jupitercpm_deletelicense(testparam, EJupContentType_v24_WMA, EJupLicenseType_DLA);
+            case DLA_DeleteLicense_PlayReadyCPMTest_v24_Content:
+#if RUN_CPMPLAYREADY_TESTCASES
+                //@TBD - disabling test for now
+                fprintf(file, "Test disabled\n");
+                //iCurrentTest = new pvplayer_async_test_playreadycpm_deletelicense(testparam, EPlayReadyContentType_v24_WMA, EPlayReadyLicenseType_DLA);
 #else
-                fprintf(file, "Jupiter CPM tests not enabled\n");
+                fprintf(file, "PlayReady CPM tests not enabled\n");
 #endif
                 break;
 
-            case DLA_CancelAcquireLicense_JupiterCPMTest_v4_Enveloped_Image:
-#if RUN_CPMJUPITER_TESTCASES
-                iCurrentTest = new pvplayer_async_test_jupitercpm_dla_cancelacquirelicense_envelopeimageread(testparam
-                        , EJupContentType_v4_Enveloped_Image);
+            case DLA_CancelAcquireLicense_PlayReadyCPMTest_v4_Enveloped_Image:
+#if RUN_CPMPLAYREADY_TESTCASES
+                //@TBD - disabling test for now
+                fprintf(file, "Test disabled\n");
+                //iCurrentTest = new pvplayer_async_test_playreadycpm_dla_cancelacquirelicense_envelopeimageread(testparam
+                //        , EPlayReadyContentType_v4_Enveloped_Image);
 #else
-                fprintf(file, "Jupiter CPM tests not enabled\n");
+                fprintf(file, "PlayReady CPM tests not enabled\n");
 #endif
                 break;
 
-            case DLA_CancelAcquireLicense_JupiterCPMTest_v2_Content:
-#if RUN_CPMJUPITER_TESTCASES
-                iCurrentTest = new pvplayer_async_test_jupitercpm_cancelacquirelicense(testparam, EJupContentType_v2_WMA, EJupLicenseType_DLA);
+            case DLA_CancelAcquireLicense_PlayReadyCPMTest_v2_Content:
+#if RUN_CPMPLAYREADY_TESTCASES
+                iCurrentTest = new pvplayer_async_test_playreadycpm_cancelacquirelicense(testparam, EPlayReadyContentType_v2_WMA, EPlayReadyLicenseType_DLA);
 #else
-                fprintf(file, "Jupiter CPM tests not enabled\n");
+                fprintf(file, "PlayReady CPM tests not enabled\n");
 #endif
                 break;
 
-            case DLA_CancelAcquireLicense_JupiterCPMTest_v24_Content:
-#if RUN_CPMJUPITER_TESTCASES
-                iCurrentTest = new pvplayer_async_test_jupitercpm_cancelacquirelicense(testparam, EJupContentType_v24_WMA, EJupLicenseType_DLA);
+            case DLA_CancelAcquireLicense_PlayReadyCPMTest_v24_Content:
+#if RUN_CPMPLAYREADY_TESTCASES
+                //@TBD - disabling test for now
+                fprintf(file, "Test disabled\n");
+                //iCurrentTest = new pvplayer_async_test_playreadycpm_cancelacquirelicense(testparam, EPlayReadyContentType_v24_WMA, EPlayReadyLicenseType_DLA);
 #else
-                fprintf(file, "Jupiter CPM tests not enabled\n");
+                fprintf(file, "PlayReady CPM tests not enabled\n");
 #endif
                 break;
 
-            case DLA_CancelAcquireLicense_JupiterCPMTest_v4_Enveloped_MP4:
-#if RUN_CPMJUPITER_TESTCASES
-                iCurrentTest = new pvplayer_async_test_jupitercpm_cancelacquirelicense(testparam, EJupContentType_v4_Enveloped_MP4, EJupLicenseType_DLA);
+            case DLA_CancelAcquireLicense_PlayReadyCPMTest_v4_Enveloped_MP4:
+#if RUN_CPMPLAYREADY_TESTCASES
+                //@TBD - disabling test for now
+                fprintf(file, "Test disabled\n");
+                //iCurrentTest = new pvplayer_async_test_playreadycpm_cancelacquirelicense(testparam, EPlayReadyContentType_v4_Enveloped_MP4, EPlayReadyLicenseType_DLA);
 #else
-                fprintf(file, "Jupiter CPM tests not enabled\n");
+                fprintf(file, "PlayReady CPM tests not enabled\n");
 #endif
                 break;
 
             case DLA_PDL_OpenPlayUntilEOS_JanusCPMTest:
                 fprintf(file, "Janus CPM + PDL tests not enabled\n");
+                break;
+
+            case DLA_PPB_OpenPlayUntilEOS_JanusCPMTest:
+                fprintf(file, "Janus CPM + PPB tests not enabled\n");
                 break;
 
             case StreamingOpenPlayUntilEOSTest:
@@ -6002,12 +6078,12 @@ void pvplayer_engine_test::test()
             }
             break;
 
-            case DLA_StreamingOpenPlayUntilEOST_JupiterCPMTest:
+            case DLA_StreamingOpenPlayUntilEOST_PlayReadyCPMTest:
             {
-#if RUN_CPMJUPITER_TESTCASES
-                fprintf(file, "DLA_StreamingOpenPlayUntilEOST_JupiterCPMTest");
+#if RUN_CPMPLAYREADY_TESTCASES
+                fprintf(file, "DLA_StreamingOpenPlayUntilEOST_PlayReadyCPMTest");
                 iCurrentTest =
-                    new pvplayer_async_test_jupitercpm_DLAstreamingopenplaystop(testparam,
+                    new pvplayer_async_test_playreadycpm_DLAstreamingopenplaystop(testparam,
                             PVMF_MIME_YUV420,
                             PVMF_MIME_PCM16,
                             iCurrentTestNumber,
@@ -6018,17 +6094,17 @@ void pvplayer_engine_test::test()
                             false,
                             false);
 #else
-                fprintf(file, "Jupiter Streaming tests not enabled\n");
+                fprintf(file, "PlayReady Streaming tests not enabled\n");
 #endif
             }
             break;
 
-            case DLA_StreamingOpenPlayPausePlayUntilEOS_JupiterCPMTest:
+            case DLA_StreamingOpenPlayPausePlayUntilEOS_PlayReadyCPMTest:
             {
-#if RUN_CPMJUPITER_TESTCASES
-                fprintf(file, "DLA_StreamingOpenPlayPausePlayUntilEOS_JupiterCPMTest");
+#if RUN_CPMPLAYREADY_TESTCASES
+                fprintf(file, "DLA_StreamingOpenPlayPausePlayUntilEOS_PlayReadyCPMTest");
                 iCurrentTest =
-                    new pvplayer_async_test_jupitercpm_DLAstreamingopenplaystop(testparam,
+                    new pvplayer_async_test_playreadycpm_DLAstreamingopenplaystop(testparam,
                             PVMF_MIME_YUV420,
                             PVMF_MIME_PCM16,
                             iCurrentTestNumber,
@@ -6039,16 +6115,16 @@ void pvplayer_engine_test::test()
                             false,
                             false);
 #else
-                fprintf(file, "Jupiter Streaming tests not enabled\n");
+                fprintf(file, "PlayReady Streaming tests not enabled\n");
 #endif
             }
             break;
 
-            case DLA_StreamingOpenPlaySeekPlayUntilEOS_JupiterCPMTest:
+            case DLA_StreamingOpenPlaySeekPlayUntilEOS_PlayReadyCPMTest:
             {
-#if RUN_CPMJUPITER_TESTCASES
-                fprintf(file, "DLA_StreamingOpenPlaySeekPlayUntilEOS_JupiterCPMTest");
-                iCurrentTest = new pvplayer_async_test_jupitercpm_DLAstreamingopenplaystop(testparam,
+#if RUN_CPMPLAYREADY_TESTCASES
+                fprintf(file, "DLA_StreamingOpenPlaySeekPlayUntilEOS_PlayReadyCPMTest");
+                iCurrentTest = new pvplayer_async_test_playreadycpm_DLAstreamingopenplaystop(testparam,
                         PVMF_MIME_YUV420,
                         PVMF_MIME_PCM16,
                         iCurrentTestNumber,
@@ -6059,17 +6135,17 @@ void pvplayer_engine_test::test()
                         false,
                         false);
 #else
-                fprintf(file, "Jupiter Streaming tests not enabled\n");
+                fprintf(file, "PlayReady Streaming tests not enabled\n");
 #endif
             }
             break;
 
-            case DLA_StreamingMultiplePlayUntilEOS_JupiterCPMTest:
+            case DLA_StreamingMultiplePlayUntilEOS_PlayReadyCPMTest:
             {
-#if RUN_CPMJUPITER_TESTCASES
-                fprintf(file, "DLA_StreamingMultiplePlayUntilEOS_JupiterCPMTest");
+#if RUN_CPMPLAYREADY_TESTCASES
+                fprintf(file, "DLA_StreamingMultiplePlayUntilEOS_PlayReadyCPMTest");
                 iCurrentTest =
-                    new pvplayer_async_test_jupitercpm_DLAstreamingopenplaystop(testparam,
+                    new pvplayer_async_test_playreadycpm_DLAstreamingopenplaystop(testparam,
                             PVMF_MIME_YUV420,
                             PVMF_MIME_PCM16,
                             iCurrentTestNumber,
@@ -6080,21 +6156,21 @@ void pvplayer_engine_test::test()
                             false,
                             false);
 
-                pvplayer_async_test_jupitercpm_DLAstreamingopenplaystop* ptr =
-                    (pvplayer_async_test_jupitercpm_DLAstreamingopenplaystop*)iCurrentTest;
+                pvplayer_async_test_playreadycpm_DLAstreamingopenplaystop* ptr =
+                    (pvplayer_async_test_playreadycpm_DLAstreamingopenplaystop*)iCurrentTest;
                 ptr->setMultiplePlayMode(2);
                 fprintf(file, "\n0x%x 0x%x setMultiplePlayMode\n", ptr, iCurrentTest);
 #else
-                fprintf(file, "Jupiter Streaming tests not enabled\n");
+                fprintf(file, "PlayReady Streaming tests not enabled\n");
 #endif
             }
             break;
 
-            case DLA_StreamingProtocolRollOverTest_JupiterCPMTest:
+            case DLA_StreamingProtocolRollOverTest_PlayReadyCPMTest:
             {
-#if RUN_CPMJUPITER_TESTCASES
-                fprintf(file, "DLA_StreamingProtocolRollOverTest_JupiterCPMTest");
-                iCurrentTest = new pvplayer_async_test_jupitercpm_DLAstreamingopenplaystop(testparam,
+#if RUN_CPMPLAYREADY_TESTCASES
+                fprintf(file, "DLA_StreamingProtocolRollOverTest_PlayReadyCPMTest");
+                iCurrentTest = new pvplayer_async_test_playreadycpm_DLAstreamingopenplaystop(testparam,
                         PVMF_MIME_YUV420,
                         PVMF_MIME_PCM16,
                         iCurrentTestNumber,
@@ -6105,18 +6181,18 @@ void pvplayer_engine_test::test()
                         false,
                         false);
 
-                ((pvplayer_async_test_jupitercpm_DLAstreamingopenplaystop*)iCurrentTest)->setProtocolRollOverMode();
+                ((pvplayer_async_test_playreadycpm_DLAstreamingopenplaystop*)iCurrentTest)->setProtocolRollOverMode();
 #else
-                fprintf(file, "Jupiter Streaming tests not enabled\n");
+                fprintf(file, "PlayReady Streaming tests not enabled\n");
 #endif
             }
             break;
 
-            case DLA_StreamingProtocolRollOverTestWithUnknownURLType_JupiterCPMTest:
+            case DLA_StreamingProtocolRollOverTestWithUnknownURLType_PlayReadyCPMTest:
             {
-#if RUN_CPMJUPITER_TESTCASES
-                fprintf(file, "DLA_StreamingProtocolRollOverTestWithUnknownURLType_JupiterCPMTest");
-                iCurrentTest = new pvplayer_async_test_jupitercpm_DLAstreamingopenplaystop(testparam,
+#if RUN_CPMPLAYREADY_TESTCASES
+                fprintf(file, "DLA_StreamingProtocolRollOverTestWithUnknownURLType_PlayReadyCPMTest");
+                iCurrentTest = new pvplayer_async_test_playreadycpm_DLAstreamingopenplaystop(testparam,
                         PVMF_MIME_YUV420,
                         PVMF_MIME_PCM16,
                         iCurrentTestNumber,
@@ -6127,9 +6203,9 @@ void pvplayer_engine_test::test()
                         false,
                         false);
 
-                ((pvplayer_async_test_jupitercpm_DLAstreamingopenplaystop*)iCurrentTest)->setProtocolRollOverModeWithUnknownURL();
+                ((pvplayer_async_test_playreadycpm_DLAstreamingopenplaystop*)iCurrentTest)->setProtocolRollOverModeWithUnknownURL();
 #else
-                fprintf(file, "Jupiter Streaming tests not enabled\n");
+                fprintf(file, "PlayReady Streaming tests not enabled\n");
 #endif
             }
             break;
@@ -6696,11 +6772,11 @@ void pvplayer_engine_test::test()
             }
             break;
 
-            case DLA_StreamingCancelAcquireLicense_JupiterCPMTest:
+            case DLA_StreamingCancelAcquireLicense_PlayReadyCPMTest:
             {
-#if RUN_CPMJUPITER_TESTCASES
-                fprintf(file, "DLA_StreamingCancelAcquireLicense_JupiterCPMTest");
-                iCurrentTest = new pvplayer_async_test_jupitercpm_DLAstreamingopenplaystop(testparam,
+#if RUN_CPMPLAYREADY_TESTCASES
+                fprintf(file, "DLA_StreamingCancelAcquireLicense_PlayReadyCPMTest");
+                iCurrentTest = new pvplayer_async_test_playreadycpm_DLAstreamingopenplaystop(testparam,
                         PVMF_MIME_YUV420,
                         PVMF_MIME_PCM16,
                         iCurrentTestNumber,
@@ -6712,7 +6788,7 @@ void pvplayer_engine_test::test()
                         true);
 
 #else
-                fprintf(file, "Jupiter Streaming tests not enabled\n");
+                fprintf(file, "PlayReady Streaming tests not enabled\n");
 #endif
             }
             break;
@@ -7699,27 +7775,27 @@ void pvplayer_engine_test::SetupLoggerScheduler()
             clocknode->SetLogLevel(PVLOGMSG_DEBUG + 1);
         }
         break;
-#if RUN_CPMJUPITER_TESTCASES
-        case 13://-logjupiter
+#if RUN_CPMPLAYREADY_TESTCASES
+        case 13://-logplayready
         {
-            //jupiter debugging.
+            //playready debugging.
             PVLogger *loggernode;
-            loggernode = PVLogger::GetLoggerObject("PVDrmManagerJupiter");
+            loggernode = PVLogger::GetLoggerObject("PVDrmManagerPlayReady");
             loggernode->AddAppender(appenderPtr);
             loggernode->SetLogLevel(PVLOGMSG_DEBUG);
             loggernode = PVLogger::GetLoggerObject("PVWMDRM");
             loggernode->AddAppender(appenderPtr);
             loggernode->SetLogLevel(PVLOGMSG_DEBUG);
             //loggernode->SetLogLevel(PVLOGMSG_DEBUG+1);//for ChkDR and Oem time logging
-            loggernode = PVLogger::GetLoggerObject("PVMFJupiterPlugin");
+            loggernode = PVLogger::GetLoggerObject("PVMFPlayReadyPlugin");
             loggernode->AddAppender(appenderPtr);
             loggernode->SetLogLevel(PVLOGMSG_DEBUG);
             /*
-            loggernode = PVLogger::GetLoggerObject("PVMFJupiterPluginLocalSyncAccessInterfaceImpl");
+            loggernode = PVLogger::GetLoggerObject("PVMFPlayReadyPluginLocalSyncAccessInterfaceImpl");
             loggernode->AddAppender(appenderPtr);
             loggernode->SetLogLevel(PVLOGMSG_DEBUG);
             */
-            loggernode = PVLogger::GetLoggerObject("PVMFJupiterUtility");
+            loggernode = PVLogger::GetLoggerObject("PVMFPlayReadyUtility");
             loggernode->AddAppender(appenderPtr);
             loggernode->SetLogLevel(PVLOGMSG_DEBUG);
             loggernode = PVLogger::GetLoggerObject("HTTPRequest");

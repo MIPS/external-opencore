@@ -41,7 +41,6 @@
 #include "oscl_mem.h"
 #endif
 
-#include "pv_2way_codecspecifier_interface.h"
 
 // CONSTANTS
 /** The starting error code for 2way specific errors **/
@@ -255,22 +254,22 @@ class PV2WayInitInfo
         /**
         *  The list of audio formats that can be transmitted
          **/
-        Oscl_Vector<CodecSpecifier*, OsclMemAllocator> iOutgoingAudioFormats;
+        Oscl_Vector<PVMFFormatType, OsclMemAllocator> iOutgoingAudioFormats;
 
         /**
         *  The list of video formats that can be transmitted
          **/
-        Oscl_Vector<CodecSpecifier*, OsclMemAllocator> iOutgoingVideoFormats;
+        Oscl_Vector<PVMFFormatType, OsclMemAllocator> iOutgoingVideoFormats;
 
         /**
         *  The list of audio formats that can be received
          **/
-        Oscl_Vector<CodecSpecifier*, OsclMemAllocator> iIncomingAudioFormats;
+        Oscl_Vector<PVMFFormatType, OsclMemAllocator> iIncomingAudioFormats;
 
         /**
         *  The list of video formats that can be received
          **/
-        Oscl_Vector<CodecSpecifier*, OsclMemAllocator> iIncomingVideoFormats;
+        Oscl_Vector<PVMFFormatType, OsclMemAllocator> iIncomingVideoFormats;
 
 };
 

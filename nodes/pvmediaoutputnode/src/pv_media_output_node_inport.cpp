@@ -18,7 +18,7 @@
 /**
  *
  * @file pvmi_io_interface_node_inport.cpp
- * @brief Input port for media io interface wrapper node
+ * @brief Input port for media io interface wrapper node.
  *
  */
 
@@ -1761,11 +1761,12 @@ void PVMediaOutputNodePort::Run()
                 else if (iCurrentMediaMsg->getFormatID() < PVMF_MEDIA_CMD_FORMAT_IDS_START)
                 {
                     iTotalFrames++;
-                    PVMF_MOPORT_LOGDATAPATH((0, "PVMediaOutputNodePort::Run - MediaMsg Recvd - Seq=%d, TS=%d, Fmt=%s, Qs=%d",
+                    PVMF_MOPORT_LOGDATAPATH((0, "PVMediaOutputNodePort::Run - MediaMsg Recvd - Seq=%d, TS=%d, Fmt=%s, Qs=%d, Dur=%d",
                                              iCurrentMediaMsg->getSeqNum(),
                                              iCurrentMediaMsg->getTimestamp(),
                                              iSinkFormatString.get_str(),
-                                             IncomingMsgQueueSize()));
+                                             IncomingMsgQueueSize(),
+                                             iCurrentMediaMsg->getDuration()));
                 }
             }
 
@@ -2027,11 +2028,12 @@ void PVMediaOutputNodePort::HandlePortActivity(const PVMFPortActivity& aActivity
                                 else if (iCurrentMediaMsg->getFormatID() < PVMF_MEDIA_CMD_FORMAT_IDS_START)
                                 {
                                     iTotalFrames++;
-                                    PVMF_MOPORT_LOGDATAPATH((0, "PVMediaOutputNodePort::HPA - MediaMsg Recvd - Seq=%d, TS=%d, Fmt=%s, Qs=%d",
+                                    PVMF_MOPORT_LOGDATAPATH((0, "PVMediaOutputNodePort::HPA - MediaMsg Recvd - Seq=%d, TS=%d, Fmt=%s, Qs=%d, Dur=%d",
                                                              iCurrentMediaMsg->getSeqNum(),
                                                              iCurrentMediaMsg->getTimestamp(),
                                                              iSinkFormatString.get_str(),
-                                                             IncomingMsgQueueSize()));
+                                                             IncomingMsgQueueSize(),
+                                                             iCurrentMediaMsg->getDuration()));
                                 }
 
                                 SendData();
@@ -2127,8 +2129,8 @@ PVMFStatus PVMediaOutputNodePort::ConfigMIO(PvmiKvp* aParameters, PvmiKvp* &aRet
 
                 if (err != OsclErrNone || aRetParameters)
                 {
-                    PVMF_MOPORT_LOGERROR((0, "PVMediaOutputNodePort::ConfigMIO setParametersSync of PVMF_FORMAT_SPECIFIC_INFO_KEY_AUDIO failed "));
-                    PVMF_MOPORT_LOGDATAPATH((0, "PVMediaOutputNodePort::ConfigMIO setParametersSync of PVMF_FORMAT_SPECIFIC_INFO_KEY_AUDIO failed "));
+                    PVMF_MOPORT_LOGERROR((0, "PVMediaOutputNodePort::ConfigMIO setParametersSync of PVMF_FORMAT_SPECIFIC_INFO_KEY_PCM failed "));
+                    PVMF_MOPORT_LOGDATAPATH((0, "PVMediaOutputNodePort::ConfigMIO setParametersSync of PVMF_FORMAT_SPECIFIC_INFO_KEY_PCM failed "));
 
                     // TO DO: when all MIOs are updated to support this key - the error event needs to be sent out
                     // for now - to maintain bw compatibility - don't send the error event
@@ -2148,27 +2150,27 @@ PVMFStatus PVMediaOutputNodePort::ConfigMIO(PvmiKvp* aParameters, PvmiKvp* &aRet
             {
                 PVMFYuvFormatSpecificInfo0* yuvInfo = (PVMFYuvFormatSpecificInfo0*)data;
                 PVMF_MOPORT_LOGDATAPATH((0, "PVMediaOutputNodePort::ConfigMIO - Width=%d, Height=%d, DispWidth=%d, DispHeight=%d",
-                                         yuvInfo->width, yuvInfo->height, yuvInfo->display_width, yuvInfo->display_height));
+                                         yuvInfo->buffer_width, yuvInfo->buffer_height, yuvInfo->viewable_width, yuvInfo->viewable_height));
                 //Send yuv info.
                 //ignore any failures since not all MIO may suppport the parameters.
                 //Note: send the parameters individually since some MIO may not know
                 //how to process arrays.
                 status = SetMIOParameterUint32((char*)MOUT_VIDEO_WIDTH_KEY,
-                                               yuvInfo->width);
+                                               yuvInfo->buffer_width);
                 if (status == PVMFSuccess)
                 {
                     status = SetMIOParameterUint32((char*)MOUT_VIDEO_HEIGHT_KEY,
-                                                   yuvInfo->height);
+                                                   yuvInfo->buffer_height);
                 }
                 if (status == PVMFSuccess)
                 {
                     status = SetMIOParameterUint32((char*)MOUT_VIDEO_DISPLAY_WIDTH_KEY,
-                                                   yuvInfo->display_width);
+                                                   yuvInfo->viewable_width);
                 }
                 if (status == PVMFSuccess)
                 {
                     status = SetMIOParameterUint32((char*)MOUT_VIDEO_DISPLAY_HEIGHT_KEY,
-                                                   yuvInfo->display_height);
+                                                   yuvInfo->viewable_height);
                 }
                 if (status == PVMFSuccess)
                 {
@@ -2189,8 +2191,8 @@ PVMFStatus PVMediaOutputNodePort::ConfigMIO(PvmiKvp* aParameters, PvmiKvp* &aRet
 
                 if (err != OsclErrNone || aRetParameters)
                 {
-                    PVMF_MOPORT_LOGERROR((0, "PVMediaOutputNodePort::ConfigMIO setParametersSync of PVMF_FORMAT_SPECIFIC_INFO_KEY_VIDEO failed "));
-                    PVMF_MOPORT_LOGDATAPATH((0, "PVMediaOutputNodePort::ConfigMIO setParametersSync of PVMF_FORMAT_SPECIFIC_INFO_KEY_VIDEO failed "));
+                    PVMF_MOPORT_LOGERROR((0, "PVMediaOutputNodePort::ConfigMIO setParametersSync of PVMF_FORMAT_SPECIFIC_INFO_KEY_YUV failed "));
+                    PVMF_MOPORT_LOGDATAPATH((0, "PVMediaOutputNodePort::ConfigMIO setParametersSync of PVMF_FORMAT_SPECIFIC_INFO_KEY_YUV failed "));
                     // TO DO: when all MIOs are updated to support this key - the error event needs to be sent out
                     // for now - to maintain bw compatibility - don't send the error event
                     //iNode->ReportErrorEvent(PVMFErrPortProcessing, NULL, PVMFMoutNodeErr_MediaIOSetParameterSync);
@@ -2664,7 +2666,17 @@ bool PVMediaOutputNodePort::DataToSkip(PVMFSharedMediaMsgPtr& aMsg)
         if (iSendStartOfDataEvent == true)
         {
             delta = 0;
-            bool tsEarly = PVTimeComparisonUtils::IsEarlier(aMsg->getTimestamp(), iSkipTimestamp, delta);
+            // get the marker info to check if duration is available
+            PVMFSharedMediaDataPtr mediaData;
+            convertToPVMFMediaData(mediaData, aMsg);
+
+            uint32 duration = 0;
+            if (mediaData->getMarkerInfo() & PVMF_MEDIA_DATA_MARKER_INFO_DURATION_AVAILABLE_BIT)
+            {
+                duration = mediaData->getDuration();
+            }
+
+            bool tsEarly = PVTimeComparisonUtils::IsEarlier((aMsg->getTimestamp() + duration), iSkipTimestamp, delta);
             if (tsEarly && delta > 0)
             {
                 //a zero delta could mean the timestamps are equal

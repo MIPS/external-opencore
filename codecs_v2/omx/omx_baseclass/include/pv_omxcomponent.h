@@ -105,6 +105,7 @@ typedef struct ComponentPortType
     OMX_VIDEO_PARAM_H263TYPE         VideoH263;
     OMX_VIDEO_PARAM_AVCTYPE          VideoAvc;
     OMX_VIDEO_PARAM_WMVTYPE          VideoWmv;
+    OMX_VIDEO_PARAM_RVTYPE           VideoRv;
 
     //VIDEO ENCODER SPECIFIC PARAMETERS
     OMX_CONFIG_ROTATIONTYPE             VideoOrientationType;
@@ -400,7 +401,8 @@ class OmxComponentBase : public OsclActiveObject
         }
 
         OMX_BOOL AssemblePartialFrames(OMX_BUFFERHEADERTYPE* aInputBuffer);
-        virtual OSCL_IMPORT_REF OMX_BOOL ParseFullAVCFramesIntoNALs(OMX_BUFFERHEADERTYPE* aInputBuffer);
+        OSCL_IMPORT_REF virtual OMX_BOOL ParseFullAVCFramesIntoNALs(OMX_BUFFERHEADERTYPE* aInputBuffer);
+        OSCL_IMPORT_REF virtual OMX_BOOL DetectStartCodeLength(OMX_U8* aBitstream, OMX_U8** aNalUnit, OMX_U32 aBufSize, OMX_U32* aSCSize);
         OMX_ERRORTYPE MessageHandler(CoreMessage* Message);
         OMX_ERRORTYPE DoStateSet(OMX_U32);
 

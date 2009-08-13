@@ -248,7 +248,9 @@ class CPV2WayDatapath : public HeapBase, public CPV2WayNodeCommandObserver
                 i2Way(a2Way),
                 iLogger(aLogger),
                 iAllPortsConnected(false)
-        {};
+        {
+            iReadSourceSinkFormatLock.Create();
+        };
 
         virtual ~CPV2WayDatapath()
         {
@@ -258,6 +260,7 @@ class CPV2WayDatapath : public HeapBase, public CPV2WayNodeCommandObserver
                 iFsi = NULL;
                 iFsiLen = 0;
             }
+            iReadSourceSinkFormatLock.Close();
         };
 
         bool IsPortInDatapath(PVMFPortInterface *aPort);
@@ -278,11 +281,17 @@ class CPV2WayDatapath : public HeapBase, public CPV2WayNodeCommandObserver
         }
         void SetFormat(PVMFFormatType aFormatType)
         {
+            iReadSourceSinkFormatLock.Lock();
             iFormat = aFormatType;
+            iReadSourceSinkFormatLock.Unlock();
         }
         PVMFFormatType GetFormat()
         {
-            return iFormat;
+            PVMFFormatType retval;
+            iReadSourceSinkFormatLock.TryLock();
+            retval = iFormat;
+            iReadSourceSinkFormatLock.Unlock();
+            return retval;
         }
 
         void CommandHandler(PV2WayNodeCmdType aType, const PVMFCmdResp& aResponse);
@@ -368,6 +377,8 @@ class CPV2WayDatapath : public HeapBase, public CPV2WayNodeCommandObserver
         PVMFFormatType iFormat;
         // The format type of the terminating source/sink
         PVMFFormatType iSourceSinkFormat;
+        OsclMutex iReadSourceSinkFormatLock;
+
 
         CPV324m2Way *i2Way;
         PVLogger *iLogger;

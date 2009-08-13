@@ -48,8 +48,8 @@
 #ifndef PVMI_MEDIA_TRANSFER_H_INCLUDED
 #include "pvmi_media_transfer.h"
 #endif
-#ifndef PVMI_CONFIG_AND_CAPABILITY_H_INCLUDED
-#include "pvmi_config_and_capability.h"
+#ifndef PVMI_CONFIG_AND_CAPABILITY_BASE_H_INCLUDED
+#include "pvmi_config_and_capability_base.h"
 #endif
 #ifndef PVMI_MIO_COMM_DATA_BUFFER_H_INCLUDED
 #include "pvmi_mio_comm_data_buffer.h"
@@ -151,10 +151,11 @@ class PvmiMIOCommLoopbackMediaData
 };
 
 
-class PvmiMIOCommLoopback : public OsclTimerObject,
-        public PvmiMIOControl,
-        public PvmiMediaTransfer,
-        public PvmiCapabilityAndConfig
+class PvmiMIOCommLoopback
+        : public OsclTimerObject
+        , public PvmiMIOControl
+        , public PvmiMediaTransfer
+        , public PvmiCapabilityAndConfigBase
 {
     public:
         PvmiMIOCommLoopback(const PvmiMIOCommLoopbackSettings& aSettings);
@@ -209,25 +210,14 @@ class PvmiMIOCommLoopback : public OsclTimerObject,
         OSCL_IMPORT_REF void cancelCommand(PVMFCommandId aCmdId);
         OSCL_IMPORT_REF void cancelAllCommands();
 
-        // Pure virtuals from PvmiCapabilityAndConfig
-        OSCL_IMPORT_REF void setObserver(PvmiConfigAndCapabilityCmdObserver* aObserver);
+        // from PvmiCapabilityAndConfig
         OSCL_IMPORT_REF PVMFStatus getParametersSync(PvmiMIOSession aSession, PvmiKeyType aIdentifier,
                 PvmiKvp*& aParameters, int& num_parameter_elements,
                 PvmiCapabilityContext aContext);
         OSCL_IMPORT_REF PVMFStatus releaseParameters(PvmiMIOSession aSession, PvmiKvp* aParameters,
                 int num_elements);
-        OSCL_IMPORT_REF void createContext(PvmiMIOSession aSession, PvmiCapabilityContext& aContext);
-        OSCL_IMPORT_REF void setContextParameters(PvmiMIOSession aSession, PvmiCapabilityContext& aContext,
-                PvmiKvp* aParameters, int num_parameter_elements);
-        OSCL_IMPORT_REF void DeleteContext(PvmiMIOSession aSession, PvmiCapabilityContext& aContext);
         OSCL_IMPORT_REF void setParametersSync(PvmiMIOSession aSession, PvmiKvp* aParameters,
                                                int num_elements, PvmiKvp * & aRet_kvp);
-        OSCL_IMPORT_REF PVMFCommandId setParametersAsync(PvmiMIOSession aSession, PvmiKvp* aParameters,
-                int num_elements, PvmiKvp*& aRet_kvp,
-                OsclAny* context = NULL);
-        OSCL_IMPORT_REF uint32 getCapabilityMetric(PvmiMIOSession aSession);
-        OSCL_IMPORT_REF PVMFStatus verifyParametersSync(PvmiMIOSession aSession,
-                PvmiKvp* aParameters, int num_elements);
 
     private:
         void Run();

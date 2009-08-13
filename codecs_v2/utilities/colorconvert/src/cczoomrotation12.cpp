@@ -269,282 +269,282 @@ int32 ColorConvert12::get_frame12(uint8 **src, uint8 *dst,
                                   DisplayProperties *disp, uint8 *ClipTable, uint8 *pExtraParam)
 {
     {
-        asm("stmfd		sp!, {r0, r4-r11, r14}");
-        asm("mov		r0, r1"); //src
-        asm("mov		r1, r2"); //dst
-        asm("mov		r2, r3"); //disp
-        asm("ldr		r3, [sp, #40]");  //COFF_TBL
+        asm("stmfd    sp!, {r0, r4-r11, r14}");
+        asm("mov    r0, r1"); //src
+        asm("mov    r1, r2"); //dst
+        asm("mov    r2, r3"); //disp
+        asm("ldr    r3, [sp, #40]");  //COFF_TBL
 
-        asm("ldmfd		r2, {r4-r9};");
+        asm("ldmfd    r2, {r4-r9};");
 
-        asm("rsb		r8, r6, r4, lsl #1;");    //r8 = src_pitch*2-src_width
-        asm("sub		r9, r4, r6;");            //r9 = src_pitch - src_width
-        asm("mov		r9, r9, lsr #1;");        //r9 = (src_pitch - src_width)/2
-        asm("rsb		r10,r6, r5, lsl #1;");    //r10= (dst_pitch - src_width)
-        asm("mov		r10, r10, lsl #1;");  //r10= (dst_pitch - src_width)*2
-        asm("sub		r6, r6, #1;");            //r6 = src_width-1
-        asm("orr		r6, r4, r6, lsl #18;");   //r6 = src_pitch | ( (src_width-1)<<18)
+        asm("rsb    r8, r6, r4, lsl #1;");    //r8 = src_pitch*2-src_width
+        asm("sub    r9, r4, r6;");            //r9 = src_pitch - src_width
+        asm("mov    r9, r9, lsr #1;");        //r9 = (src_pitch - src_width)/2
+        asm("rsb    r10,r6, r5, lsl #1;");    //r10= (dst_pitch - src_width)
+        asm("mov    r10, r10, lsl #1;");  //r10= (dst_pitch - src_width)*2
+        asm("sub    r6, r6, #1;");            //r6 = src_width-1
+        asm("orr    r6, r4, r6, lsl #18;");   //r6 = src_pitch | ( (src_width-1)<<18)
         //dst_pitch, r6, src_height, src_pitch*2-src_width, (src_pitch - src_width)/2, (dst_pitch - src_width)*2
-        asm("stmfd		sp!, {r5-r10};");
-        asm("ldmfd		r0, {r4, r5, r7};");    //pY, pCb, pCr
-        asm("stmfd		sp!, { r5, r7 };");     //push pCb, pCr
+        asm("stmfd    sp!, {r5-r10};");
+        asm("ldmfd    r0, {r4, r5, r7};");    //pY, pCb, pCr
+        asm("stmfd    sp!, { r5, r7 };");     //push pCb, pCr
 
         asm("LOOP_ROW:");
-        asm("ldr		r9, [sp, #76]");      //load r9 = ErrRow
+        asm("ldr    r9, [sp, #76]");      //load r9 = ErrRow
 
-        asm("mov		r8, #0");             //; reset error from left pixel
+        asm("mov    r8, #0");             //; reset error from left pixel
         asm("LOOP_COL:");
-        asm("ldmfd		sp!, { r5, r7 }");      //load pCb, pCr
-        asm("ldrb		r0, [r5], #1");          //Cb
-        asm("ldrb		r2, [r7], #1");          //Cr
-        asm("stmfd		sp!, { r5, r7 }");
-        asm("mov		r10, r6, lsl #16");       //r10 = src_pitch <<16;
-        asm("ldrb		r10, [r4, r10, lsr #16]");//r10 = Y (bottom left)
+        asm("ldmfd    sp!, { r5, r7 }");      //load pCb, pCr
+        asm("ldrb    r0, [r5], #1");          //Cb
+        asm("ldrb    r2, [r7], #1");          //Cr
+        asm("stmfd    sp!, { r5, r7 }");
+        asm("mov    r10, r6, lsl #16");       //r10 = src_pitch <<16;
+        asm("ldrb    r10, [r4, r10, lsr #16]");//r10 = Y (bottom left)
 
-        asm("sub		r0, r0, #128;");      //r0 = Cb-128
-        asm("sub		r2, r2, #128;");      //r2 = Cr-128
+        asm("sub    r0, r0, #128;");      //r0 = Cb-128
+        asm("sub    r2, r2, #128;");      //r2 = Cr-128
 
-        asm("ldr		r7,   =45774");
-        asm("ldr		r11,  =22014");
-        asm("mul		r7, r2, r7");         //r7    =   (Cr-128)*JCoeff[0];
-        asm("mla		r7, r0, r11, r7");        //r7    =   (Cb-128)*22014 + (Cr-128)*JCoeff[0];
-        asm("ldr		r11, =89859");
-        asm("mul		r2, r11, r2");            //r2    =   (Cr-128)*89859
-        asm("ldr		r11, =113618");
-        asm("mul		r0, r11, r0");            //r0    =   (Cb-128)*113618
+        asm("ldr    r7,   =45774");
+        asm("ldr    r11,  =22014");
+        asm("mul    r7, r2, r7");         //r7    =   (Cr-128)*JCoeff[0];
+        asm("mla    r7, r0, r11, r7");        //r7    =   (Cb-128)*22014 + (Cr-128)*JCoeff[0];
+        asm("ldr    r11, =89859");
+        asm("mul    r2, r11, r2");            //r2    =   (Cr-128)*89859
+        asm("ldr    r11, =113618");
+        asm("mul    r0, r11, r0");            //r0    =   (Cb-128)*113618
 
-        asm("add		r11, r2, r10, lsl #16");  // (Cr-128)*89859 + (Y<<16)
-        asm("rsb		r12, r7, r10, lsl #16");  // (Y<<16) - ((Cb-128)*22014 + (Cr-128)*JCoeff[0])
-        asm("add		r14, r0, r10, lsl #16");  // (Cb-128)*113618 + (Y<<16)
+        asm("add    r11, r2, r10, lsl #16");  // (Cr-128)*89859 + (Y<<16)
+        asm("rsb    r12, r7, r10, lsl #16");  // (Y<<16) - ((Cb-128)*22014 + (Cr-128)*JCoeff[0])
+        asm("add    r14, r0, r10, lsl #16");  // (Cb-128)*113618 + (Y<<16)
 
-        asm("ldr		r10, [r9, r6, lsr #16]"); //;load error from upper row/pixel
-        asm("add		r8, r8, r10, lsr #1");        //get the bottom error, only the LSB 16 bits is meaningful
+        asm("ldr    r10, [r9, r6, lsr #16]"); //;load error from upper row/pixel
+        asm("add    r8, r8, r10, lsr #1");        //get the bottom error, only the LSB 16 bits is meaningful
 
-        asm("and		r10, r8, #0xF");          //error B
-        asm("add		r14, r14, r10");
-        asm("and		r10, r8, #0xF0");         //error G
-        asm("add		r12, r12, r10, lsr #4");
-        asm("and		r10, r8, #0xF00");            //error R
+        asm("and    r10, r8, #0xF");          //error B
+        asm("add    r14, r14, r10");
+        asm("and    r10, r8, #0xF0");         //error G
+        asm("add    r12, r12, r10, lsr #4");
+        asm("and    r10, r8, #0xF00");            //error R
 
-        asm("add		r11, r11, r10, lsr #8");
+        asm("add    r11, r11, r10, lsr #8");
 
-        asm("ldrb		r11, [r3, r11, asr #16]");
-        asm("ldrb		r12, [r3, r12, asr #16]");
-        asm("ldrb		r14, [r3, r14, asr #16]");
+        asm("ldrb    r11, [r3, r11, asr #16]");
+        asm("ldrb    r12, [r3, r12, asr #16]");
+        asm("ldrb    r14, [r3, r14, asr #16]");
 
 #ifdef  OUTPUT_RGB_565
         // get RGB_565
-        asm("mov		r10, r11, lsr #3");
-        asm("mov		r10, r10, lsl #6");
-        asm("orr		r10, r10, r12, lsr #2");
-        asm("mov		r10, r10, lsl #5");
-        asm("orr		r10, r10, r14, lsr #3");
+        asm("mov    r10, r11, lsr #3");
+        asm("mov    r10, r10, lsl #6");
+        asm("orr    r10, r10, r12, lsr #2");
+        asm("mov    r10, r10, lsl #5");
+        asm("orr    r10, r10, r14, lsr #3");
 #else
         //RGB_444
-        asm("and		r10, r12, #0xF0");            //G
-        asm("orr		r10, r10, r14, lsr #4");  //B
-        asm("and		r11, r11, #0xF0");
-        asm("orr		r10, r10, r11, lsl #4");  //R
+        asm("and    r10, r12, #0xF0");            //G
+        asm("orr    r10, r10, r14, lsr #4");  //B
+        asm("and    r11, r11, #0xF0");
+        asm("orr    r10, r10, r11, lsl #4");  //R
 #endif
 
-        asm("and		r11, r11, #0xE");
-        asm("and		r12, r12, #0xE");
-        asm("and		r14, r14, #0xE");
+        asm("and    r11, r11, #0xE");
+        asm("and    r12, r12, #0xE");
+        asm("and    r14, r14, #0xE");
 
-        asm("orr		r11, r11, r12, lsl #4");
+        asm("orr    r11, r11, r12, lsl #4");
 
-        asm("ldr		r12, [sp, #8]");      //should be det_pitch
-        asm("add		r1, r1, r12, lsl #1");    //pDst move to bottom left pixel
+        asm("ldr    r12, [sp, #8]");      //should be det_pitch
+        asm("add    r1, r1, r12, lsl #1");    //pDst move to bottom left pixel
 
-        asm("strh		r10, [r1]");         //  store bottom left pixel
-        asm("sub		r1, r1, r12, lsl #1");
+        asm("strh    r10, [r1]");         //  store bottom left pixel
+        asm("sub    r1, r1, r12, lsl #1");
 
         //////**************************/////////////////////
-        asm("orr		r10, r11, r14, lsl #8");  //RGB dither error
+        asm("orr    r10, r11, r14, lsl #8");  //RGB dither error
 
-        asm("mov		r8, r8, lsr #16");
-        asm("mov		r8, r8, lsl #16");
-        asm("orr		r8, r8, r10, lsr #1");
+        asm("mov    r8, r8, lsr #16");
+        asm("mov    r8, r8, lsl #16");
+        asm("orr    r8, r8, r10, lsr #1");
 
-        asm("ldrb		r14, [r4], #1");     // p14 = Y (top left)
+        asm("ldrb    r14, [r4], #1");     // p14 = Y (top left)
 
-        asm("add		r11, r2, r14, lsl #16");
-        asm("rsb		r12, r7, r14, lsl #16");
-        asm("add		r14, r0, r14, lsl #16");
+        asm("add    r11, r2, r14, lsl #16");
+        asm("rsb    r12, r7, r14, lsl #16");
+        asm("add    r14, r0, r14, lsl #16");
 
-        asm("add		r8, r8, r10, lsl #15");   //get the top error, only the HSB 16 bits is meaningful
+        asm("add    r8, r8, r10, lsl #15");   //get the top error, only the HSB 16 bits is meaningful
 
-        asm("and		r10, r8,	#0xF0000");      //error B
-        asm("add		r14, r14, r10, lsr #16");
-        asm("and		r10, r8, #0xF00000");     //error G
-        asm("add		r12, r12, r10, lsr #20");
-        asm("and		r10, r8, #0xF000000");        //error R
-        asm("add		r11, r11, r10, lsr #24");
+        asm("and    r10, r8,  #0xF0000");      //error B
+        asm("add    r14, r14, r10, lsr #16");
+        asm("and    r10, r8, #0xF00000");     //error G
+        asm("add    r12, r12, r10, lsr #20");
+        asm("and    r10, r8, #0xF000000");        //error R
+        asm("add    r11, r11, r10, lsr #24");
 
         //clip
 
-        asm("ldrb		r11, [r3, r11, asr #16]");
-        asm("ldrb		r12, [r3, r12, asr #16]");
-        asm("ldrb		r14, [r3, r14, asr #16]");
+        asm("ldrb    r11, [r3, r11, asr #16]");
+        asm("ldrb    r12, [r3, r12, asr #16]");
+        asm("ldrb    r14, [r3, r14, asr #16]");
 
 #ifdef  OUTPUT_RGB_565
         // get RGB_565
-        asm("mov		r10, r11, lsr #3");
-        asm("mov		r10, r10, lsl #6");
-        asm("orr		r10, r10, r12, lsr #2");
-        asm("mov		r10, r10, lsl #5");
-        asm("orr		r10, r10, r14, lsr #3");
+        asm("mov    r10, r11, lsr #3");
+        asm("mov    r10, r10, lsl #6");
+        asm("orr    r10, r10, r12, lsr #2");
+        asm("mov    r10, r10, lsl #5");
+        asm("orr    r10, r10, r14, lsr #3");
 #else
         //RGB_444
-        asm("and		r10, r12, #0xF0");            //G
-        asm("orr		r10, r10, r14, lsr #4");  //B
-        asm("and		r11, r11, #0xF0");
-        asm("orr		r10, r10, r11, lsl #4");  //R
+        asm("and    r10, r12, #0xF0");            //G
+        asm("orr    r10, r10, r14, lsr #4");  //B
+        asm("and    r11, r11, #0xF0");
+        asm("orr    r10, r10, r11, lsl #4");  //R
 #endif
 
 
-        asm("strh		r10, [r1], #2"); //strore top left RGB
+        asm("strh    r10, [r1], #2"); //strore top left RGB
 
-        asm("and		r11, r11, #0xE");
-        asm("and		r12, r12, #0xE");
-        asm("and		r14, r14, #0xE");
+        asm("and    r11, r11, #0xE");
+        asm("and    r12, r12, #0xE");
+        asm("and    r14, r14, #0xE");
 
-        asm("orr		r11, r11, r12, lsl #4");
-        asm("orr		r11, r11, r14, lsl #8");
+        asm("orr    r11, r11, r12, lsl #4");
+        asm("orr    r11, r11, r14, lsl #8");
 
-        asm("mov		r8, r8, lsl #16");
-        asm("mov		r8, r8, lsr #16");
-        asm("orr		r8, r8, r11, lsl #15");
+        asm("mov    r8, r8, lsl #16");
+        asm("mov    r8, r8, lsr #16");
+        asm("orr    r8, r8, r11, lsl #15");
 
-        asm("str		r11, [r9, r6, lsr #16]");
+        asm("str    r11, [r9, r6, lsr #16]");
 
-        asm("sub		r6, r6, #0x40000");       //col
+        asm("sub    r6, r6, #0x40000");       //col
 
         /********************************LEFT END, RIGHT BEGIN****************/
 
-        asm("mov		r10, r6, lsl #16");
-        asm("ldrb		r10, [r4, r10, lsr #16]");
+        asm("mov    r10, r6, lsl #16");
+        asm("ldrb    r10, [r4, r10, lsr #16]");
 
-        asm("add		r11, r2, r10, lsl #16");
-        asm("rsb		r12, r7, r10, lsl #16");
-        asm("add		r14, r0, r10, lsl #16");
+        asm("add    r11, r2, r10, lsl #16");
+        asm("rsb    r12, r7, r10, lsl #16");
+        asm("add    r14, r0, r10, lsl #16");
 
-        asm("ldr		r10, [r9, r6, lsr #16]");
+        asm("ldr    r10, [r9, r6, lsr #16]");
 
-        asm("add		r8, r8, r10, lsr #1");
+        asm("add    r8, r8, r10, lsr #1");
 
-        asm("and		r10, r8,	#0xF");
-        asm("add		r14, r14, r10");
-        asm("and		r10, r8, #0xF0");
-        asm("add		r12, r12, r10, lsr #4");
-        asm("and		r10, r8, #0xF00");
-        asm("add		r11, r11, r10, lsr #8");
+        asm("and    r10, r8,  #0xF");
+        asm("add    r14, r14, r10");
+        asm("and    r10, r8, #0xF0");
+        asm("add    r12, r12, r10, lsr #4");
+        asm("and    r10, r8, #0xF00");
+        asm("add    r11, r11, r10, lsr #8");
 
-        asm("ldrb		r11, [r3, r11, asr #16]");
-        asm("ldrb		r12, [r3, r12, asr #16]");
-        asm("ldrb		r14, [r3, r14, asr #16]");
+        asm("ldrb    r11, [r3, r11, asr #16]");
+        asm("ldrb    r12, [r3, r12, asr #16]");
+        asm("ldrb    r14, [r3, r14, asr #16]");
 
 #ifdef  OUTPUT_RGB_565
         // get RGB_565
-        asm("mov		r10, r11, lsr #3");
-        asm("mov		r10, r10, lsl #6");
-        asm("orr		r10, r10, r12, lsr #2");
-        asm("mov		r10, r10, lsl #5");
-        asm("orr		r10, r10, r14, lsr #3");
+        asm("mov    r10, r11, lsr #3");
+        asm("mov    r10, r10, lsl #6");
+        asm("orr    r10, r10, r12, lsr #2");
+        asm("mov    r10, r10, lsl #5");
+        asm("orr    r10, r10, r14, lsr #3");
 #else
         //RGB_444
-        asm("and		r10, r12, #0xF0");            //G
-        asm("orr		r10, r10, r14, lsr #4");  //B
-        asm("and		r11, r11, #0xF0");
-        asm("orr		r10, r10, r11, lsl #4");  //R
+        asm("and    r10, r12, #0xF0");            //G
+        asm("orr    r10, r10, r14, lsr #4");  //B
+        asm("and    r11, r11, #0xF0");
+        asm("orr    r10, r10, r11, lsl #4");  //R
 #endif
 
-        asm("and		r11, r11, #0xE");
-        asm("and		r12, r12, #0xE");
-        asm("and		r14, r14, #0xE");
+        asm("and    r11, r11, #0xE");
+        asm("and    r12, r12, #0xE");
+        asm("and    r14, r14, #0xE");
 
-        asm("orr		r11, r11, r12, lsl #4");
+        asm("orr    r11, r11, r12, lsl #4");
 
-        asm("ldr		r12, [sp, #8]");
+        asm("ldr    r12, [sp, #8]");
 
-        asm("add		r1, r1, r12, lsl #1");
+        asm("add    r1, r1, r12, lsl #1");
 
-        asm("strh		r10, [r1]");         //store RGB bottom right
-        asm("sub		r1, r1, r12, lsl #1");
+        asm("strh    r10, [r1]");         //store RGB bottom right
+        asm("sub    r1, r1, r12, lsl #1");
 
-        asm("orr		r10, r11, r14, lsl #8");
+        asm("orr    r10, r11, r14, lsl #8");
 
-        asm("mov		r8, r8, lsr #16");
-        asm("mov		r8, r8, lsl #16");
-        asm("orr		r8, r8, r10, lsr #1");
+        asm("mov    r8, r8, lsr #16");
+        asm("mov    r8, r8, lsl #16");
+        asm("orr    r8, r8, r10, lsr #1");
 
-        asm("ldrb		r14, [r4], #1");     //r14 = Y (top right pixel)
+        asm("ldrb    r14, [r4], #1");     //r14 = Y (top right pixel)
 
-        asm("add		r11, r2, r14, lsl #16");
-        asm("rsb		r12, r7, r14, lsl #16");
-        asm("add		r14, r0, r14, lsl #16");
+        asm("add    r11, r2, r14, lsl #16");
+        asm("rsb    r12, r7, r14, lsl #16");
+        asm("add    r14, r0, r14, lsl #16");
 
-        asm("add		r8, r8, r10, lsl #15");
+        asm("add    r8, r8, r10, lsl #15");
 
-        asm("and		r10, r8,	#0xF0000");
-        asm("add		r14, r14, r10, lsr #16");
-        asm("and		r10, r8, #0xF00000");
-        asm("add		r12, r12, r10, lsr #20");
-        asm("and		r10, r8, #0xF000000");
-        asm("add		r11, r11, r10, lsr #24");
+        asm("and    r10, r8,  #0xF0000");
+        asm("add    r14, r14, r10, lsr #16");
+        asm("and    r10, r8, #0xF00000");
+        asm("add    r12, r12, r10, lsr #20");
+        asm("and    r10, r8, #0xF000000");
+        asm("add    r11, r11, r10, lsr #24");
 
-        asm("ldrb		r11, [r3, r11, asr #16]");
-        asm("ldrb		r12, [r3, r12, asr #16]");
-        asm("ldrb		r14, [r3, r14, asr #16]");
+        asm("ldrb    r11, [r3, r11, asr #16]");
+        asm("ldrb    r12, [r3, r12, asr #16]");
+        asm("ldrb    r14, [r3, r14, asr #16]");
 #ifdef  OUTPUT_RGB_565
         // get RGB_565
-        asm("mov		r10, r11, lsr #3");
-        asm("mov		r10, r10, lsl #6");
-        asm("orr		r10, r10, r12, lsr #2");
-        asm("mov		r10, r10, lsl #5");
-        asm("orr		r10, r10, r14, lsr #3");
+        asm("mov    r10, r11, lsr #3");
+        asm("mov    r10, r10, lsl #6");
+        asm("orr    r10, r10, r12, lsr #2");
+        asm("mov    r10, r10, lsl #5");
+        asm("orr    r10, r10, r14, lsr #3");
 #else
         //RGB_444
-        asm("and		r10, r12, #0xF0");            //G
-        asm("orr		r10, r10, r14, lsr #4");  //B
-        asm("and		r11, r11, #0xF0");
-        asm("orr		r10, r10, r11, lsl #4");  //R
+        asm("and    r10, r12, #0xF0");            //G
+        asm("orr    r10, r10, r14, lsr #4");  //B
+        asm("and    r11, r11, #0xF0");
+        asm("orr    r10, r10, r11, lsl #4");  //R
 #endif
 
-        asm("strh		r10, [r1], #2");     //store RGB (top right pixel)
+        asm("strh    r10, [r1], #2");     //store RGB (top right pixel)
 
-        asm("and		r11, r11, #0xE");
-        asm("and		r12, r12, #0xE");
-        asm("and		r14, r14, #0xE");
+        asm("and    r11, r11, #0xE");
+        asm("and    r12, r12, #0xE");
+        asm("and    r14, r14, #0xE");
 
-        asm("orr		r11, r11, r12, lsl #4");
-        asm("orr		r11, r11, r14, lsl #8");
+        asm("orr    r11, r11, r12, lsl #4");
+        asm("orr    r11, r11, r14, lsl #8");
 
-        asm("mov		r8, r8, lsl #16");
-        asm("mov		r8, r8, lsr #16");
-        asm("orr		r8, r8, r11, lsl #15");
+        asm("mov    r8, r8, lsl #16");
+        asm("mov    r8, r8, lsr #16");
+        asm("orr    r8, r8, r11, lsl #15");
 
-        asm("str		r11, [r9, r6, lsr #16]	; ");//Att: error left shift by 1 bit
+        asm("str    r11, [r9, r6, lsr #16]  ; ");//Att: error left shift by 1 bit
 
-        asm("subs		r6, r6, #0x40000");
+        asm("subs    r6, r6, #0x40000");
 
-        asm("bgt		LOOP_COL");
+        asm("bgt    LOOP_COL");
 
-        asm("add		sp, sp, #8");
-        asm("ldmfd		sp, {r5-r10}");
-        asm("add		r4, r4, r8");
-        asm("add		r5, r5, r9");
-        asm("add		r7, r7, r9");
-        asm("add		r1, r1, r10");
-        asm("subs		r7, r7, #2;");
-        asm("str		r7, [sp, #8]");
+        asm("add    sp, sp, #8");
+        asm("ldmfd    sp, {r5-r10}");
+        asm("add    r4, r4, r8");
+        asm("add    r5, r5, r9");
+        asm("add    r7, r7, r9");
+        asm("add    r1, r1, r10");
+        asm("subs    r7, r7, #2;");
+        asm("str    r7, [sp, #8]");
 
-        asm("sub		sp, sp, #8");
-        asm("bgt		LOOP_ROW");
+        asm("sub    sp, sp, #8");
+        asm("bgt    LOOP_ROW");
 
-        asm("mov		r0, #1");
-        asm("add		sp, sp, #32");
-        asm("ldmfd		sp!, {r0, r4-r11, pc}");
+        asm("mov    r0, #1");
+        asm("add    sp, sp, #32");
+        asm("ldmfd    sp!, {r0, r4-r11, pc}");
 //      asm(".ltorg");
     }
     return 1;
@@ -1922,7 +1922,7 @@ int32 cc12scaling(uint8 **src, uint8 *dst, int *disp,
         asm("MOV      r0,#1");
 //        asm("BX       lr");
         asm("L1.4688:");
-        asm(".align		0");
+        asm(".align    0");
         asm("L1.4692:");
         asm(".word      0x00015f03");
         asm("L1.4696:");
@@ -2868,7 +2868,7 @@ int32 cc12sc_rotate(uint8 **src, uint8 *dst, int *disp,
         asm("MOV      r0,#1");
 //        asm("BX       lr");
         asm("L1.6820:");
-        asm(".align		0");
+        asm(".align    0");
         asm("L1.6824:");
         asm(".word      0x00015f03");
         asm("L1.6828:");

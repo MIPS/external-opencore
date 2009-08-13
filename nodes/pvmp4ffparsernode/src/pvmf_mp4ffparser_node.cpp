@@ -146,7 +146,7 @@ PVMFMP4FFParserNode::PVMFMP4FFParserNode(int32 aPriority) :
     iDataStreamFactory         = NULL;
     iDataStreamReadCapacityObserver = NULL;
     iDownloadComplete          = false;
-    iProgressivelyDownlodable  = false;
+    iProgressivelyPlayable  = false;
     iFastTrackSession          = false;
 
     iLastNPTCalcInConvertSizeToTime = 0;
@@ -3086,7 +3086,7 @@ PVMFStatus PVMFMP4FFParserNode::DoCancelCurrentCommand(PVMFMP4FFParserNodeComman
             {
                 return PVMFPending;
             }
-            if (iProgressivelyDownlodable == true && iDataStreamRequestPending)
+            if (iProgressivelyPlayable == true && iDataStreamRequestPending)
             {
                 // send a cancel notification to datastream module.
                 iDataStreamRequestPending = false;
@@ -3104,7 +3104,7 @@ PVMFStatus PVMFMP4FFParserNode::DoCancelCurrentCommand(PVMFMP4FFParserNodeComman
                     CommandComplete(iCurrentCommand, aCmd, PVMFFailure);
                 }
             }
-            else if (download_progress_interface != NULL && iProgressivelyDownlodable == false)
+            else if (download_progress_interface != NULL && iProgressivelyPlayable == false)
             {
                 // call cancel resume notification and complete Init as cancelled.
                 download_progress_interface->cancelResumeNotification();
@@ -3298,8 +3298,7 @@ PVMFStatus PVMFMP4FFParserNode::DoSetDataSourcePosition(PVMFMP4FFParserNodeComma
     if (timescale > 0 && timescale != 1000)
     {
         // Convert to milliseconds
-        MediaClockConverter mcc(timescale);
-        mcc.update_clock(duration);
+        MediaClockConverter mcc(timescale, duration);
         durationms = mcc.get_converted_ts(1000);
     }
     if ((targetNPT >= durationms) && (PVMF_DATA_SOURCE_DIRECTION_REVERSE != iPlayBackDirection))
@@ -3464,6 +3463,19 @@ PVMFStatus PVMFMP4FFParserNode::DoSetDataSourcePosition(PVMFMP4FFParserNodeComma
     retValPerTrack = (int32*) OSCL_MALLOC(iNodeTrackPortList.size() * sizeof(int32));
     retNumSamplesPerTrack = (uint32*) OSCL_MALLOC(iNodeTrackPortList.size() * sizeof(uint32));
 
+    if ((trackTSAfterRepo == NULL) || (retValPerTrack == NULL) || (retNumSamplesPerTrack == NULL))
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
+                        (0, "PVMFMP4FFParserNode::DoSetDataSourcePosition() Memory alloc for array to keep the timestamp of the samples failed"));
+        OSCL_FREE(trackTSAfterRepo);
+        trackTSAfterRepo = NULL;
+        OSCL_FREE(retValPerTrack);
+        retValPerTrack = NULL;
+        OSCL_FREE(retNumSamplesPerTrack);
+        retNumSamplesPerTrack = NULL;
+        return PVMFErrNoMemory;
+    }
+
     for (i = 0; i < iNodeTrackPortList.size(); i++)
     {
         // Peek the next sample to get the duration of the last sample
@@ -3524,10 +3536,12 @@ PVMFStatus PVMFMP4FFParserNode::DoSetDataSourcePosition(PVMFMP4FFParserNodeComma
                 aEventCode = PVMFFFErrMisc;
             }
             OSCL_ARRAY_DELETE(trackList);
-            OSCL_DELETE(trackTSAfterRepo);
-            OSCL_DELETE(retValPerTrack);
-            OSCL_DELETE(retNumSamplesPerTrack);
+            OSCL_FREE(trackTSAfterRepo);
             trackTSAfterRepo = NULL;
+            OSCL_FREE(retValPerTrack);
+            retValPerTrack = NULL;
+            OSCL_FREE(retNumSamplesPerTrack);
+            retNumSamplesPerTrack = NULL;
             return PVMFErrResource;
         }
     }
@@ -3648,10 +3662,12 @@ PVMFStatus PVMFMP4FFParserNode::DoSetDataSourcePosition(PVMFMP4FFParserNodeComma
 
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFMP4FFParserNode::DoSetDataSourcePosition() Out"));
     OSCL_ARRAY_DELETE(trackList);
-    OSCL_DELETE(trackTSAfterRepo);
+    OSCL_FREE(trackTSAfterRepo);
     trackTSAfterRepo = NULL;
-    OSCL_DELETE(retValPerTrack);
-    OSCL_DELETE(retNumSamplesPerTrack);
+    OSCL_FREE(retValPerTrack);
+    retValPerTrack = NULL;
+    OSCL_FREE(retNumSamplesPerTrack);
+    retNumSamplesPerTrack = NULL;
     return PVMFSuccess;
 }
 
@@ -4940,23 +4956,29 @@ bool PVMFMP4FFParserNode::RetrieveTrackData(PVMP4FFNodeTrackPortInfo& aTrackPort
 
             if (!autopaused)
             {
-                uint32 requestedTimestamp = aTrackPortInfo.iTimestamp;
-                // If Parser library reported Insufficient data after seek, the requested
-                // timestamp here should be TS of sample from new position, so peek the
-                // sample.
-                if (israndomaccesspt)
-                {
-                    uint32 numSamples = 1;
-                    MediaMetaInfo info;
+                uint32 requestedTimestamp = 0;
+                // if parser library reported Insufficient data during playback or after seek,
+                // peek the next sample and try to get the timestamp of the sample to be passed
+                // to PE node for requesting a resume notification.
+                uint32 numSamples = 1;
+                MediaMetaInfo info;
 
-                    retval = iMP4FileHandle->peekNextBundledAccessUnits(aTrackPortInfo.iTrackId, &numSamples, &info);
-                    if (((retval == EVERYTHING_FINE) || (retval == END_OF_TRACK))
-                            && (numSamples > 0))
-                    {
-                        aTrackPortInfo.iClockConverter->set_clock(info.ts, 0);
-                        requestedTimestamp = aTrackPortInfo.iClockConverter->get_converted_ts(1000);
-                    }
+                retval = iMP4FileHandle->peekNextBundledAccessUnits(aTrackPortInfo.iTrackId, &numSamples, &info);
+                if (((retval == EVERYTHING_FINE) || (retval == END_OF_TRACK))
+                        && (numSamples > 0))
+                {
+                    // we peek the next sample even in Underflow during playback use-case so as to pass the exact
+                    // timestamp to PE node. It can happen aTrackPortInfo.iTimestamp will not represent exact timestamp
+                    // if there has been many seek requests before this Underflow.
+                    aTrackPortInfo.iClockConverter->set_clock(info.ts, 0);
                 }
+                else
+                {
+                    // if the parser library could not peek the next sample, so just use the
+                    // current sample timestamp to be passed to the PE node.
+                    aTrackPortInfo.iClockConverter->set_clock(aTrackPortInfo.iTimestamp, 0);
+                }
+                requestedTimestamp = aTrackPortInfo.iClockConverter->get_converted_ts(1000);
 
                 if ((NULL != iDataStreamInterface) && (0 != iDataStreamInterface->QueryBufferingCapacity()))
                 {
@@ -5975,7 +5997,7 @@ void PVMFMP4FFParserNode::CleanupFileSource()
 
     iDownloadComplete = false;
     iMP4HeaderSize = 0;
-    iProgressivelyDownlodable = false;
+    iProgressivelyPlayable = false;
     iCPMSequenceInProgress = false;
     iFastTrackSession = false;
     iProtectedFile = false;
@@ -6243,7 +6265,8 @@ void PVMFMP4FFParserNode::playResumeNotification(bool aDownloadComplete)
 
 void PVMFMP4FFParserNode::notifyDownloadComplete()
 {
-    if (!iProgressivelyDownlodable)
+    iDownloadComplete = true;
+    if (!iProgressivelyPlayable)
     {
         //in case of non-PDL files, we have to hold back on init complete
         //till donwnload is fully complete. So if that is the case, call
@@ -7788,18 +7811,18 @@ PVMFStatus PVMFMP4FFParserNode::CheckForMP4HeaderAvailability()
         }
 
 
-        bool isProgressiveDownloadable = false;
+        bool isProgressivelyPlayable = false;
         MP4_ERROR_CODE retCode =
             IMpeg4File::GetMetaDataSize(iDataStreamFactory,
-                                        isProgressiveDownloadable,
+                                        isProgressivelyPlayable,
                                         iMP4HeaderSize);
 
         if (retCode == EVERYTHING_FINE)
         {
-            if (isProgressiveDownloadable == true)
+            if (isProgressivelyPlayable == true)
             {
                 PVMF_MP4FFPARSERNODE_LOGDATATRAFFIC((0, "PVMFMP4FFParserNode::CheckForMP4HeaderAvailability() - MetaData ends at file offset %d", iMP4HeaderSize));
-                iProgressivelyDownlodable = true;
+                iProgressivelyPlayable = true;
                 // inform data stream that a range of bytes needs to be cached persistently (offset 0, size of moov atom)
                 iDataStreamInterface->MakePersistent(0, iMP4HeaderSize);
 
@@ -7819,17 +7842,47 @@ PVMFStatus PVMFMP4FFParserNode::CheckForMP4HeaderAvailability()
             }
             else
             {
-                iProgressivelyDownlodable = false;
+                iProgressivelyPlayable = false;
                 if (iDownloadComplete == false)
                 {
+                    // For PDL use-case always send the Info event and wait for download complete
+                    // And
+                    // For PS use-cases we need to check if the total file can be downloaded into the cache or not
+                    // before sending the info event and wait for download complete OR
+                    // send the failure for Init command.
+                    uint32 cacheSize = 0;
+                    cacheSize = iDataStreamInterface->QueryBufferingCapacity();
+                    if (cacheSize != 0)
+                    {
+                        // If the content length is not known OR
+                        // If the file cannot be completely downloaded to the cache
+                        // (means File Size greater than cache size), error out.
+                        if ((iDownloadFileSize == 0) || (iDownloadFileSize > cacheSize))
+                        {
+                            // ToDo - Improvement - If DownloadFileSize is not known player can still try to Download file in cache,
+                            // if file is downloaded completely in cache player can play the file.
+                            PVMF_MP4FFPARSERNODE_LOGDATATRAFFIC((0,
+                                                                 "PVMFMP4FFParserNode::CheckForMP4HeaderAvailability() - MP4 File Not Progressively Streamable - Cannot be downloaded completely to cache, error out"));
+                            return PVMFErrContentInvalidForProgressivePlayback;
+                        }
+                        else
+                        {
+                            // The content length is known and the complete file can be downloaded to the cache,
+                            // wait for download complete.
+                            PVMF_MP4FFPARSERNODE_LOGDATATRAFFIC((0,
+                                                                 "PVMFMP4FFParserNode::CheckForMP4HeaderAvailability() - MP4 File Not Progressively Streamable - File can be downloaded completely to cache"));
+                        }
+                    }
                     PVUuid uuid = PVMFFileFormatEventTypesUUID;
                     int32 infocode = PVMFMP4FFParserInfoNotPseudostreamableFile;
                     ReportMP4FFParserInfoEvent(PVMFInfoRemoteSourceNotification, NULL, &uuid, &infocode);
-                    PVMF_MP4FFPARSERNODE_LOGDATATRAFFIC((0, "PVMFMP4FFParserNode::CheckForMP4HeaderAvailability() - MP4 File Not Progressively Downloadable - Waiting for download complete"));
+                    PVMF_MP4FFPARSERNODE_LOGDATATRAFFIC((0,
+                                                         "PVMFMP4FFParserNode::CheckForMP4HeaderAvailability() - MP4 File Not Progressively Playable - Waiting for download complete"));
                 }
                 else
                 {
-                    PVMF_MP4FFPARSERNODE_LOGDATATRAFFIC((0, "PVMFMP4FFParserNode::CheckForMP4HeaderAvailability() - MP4 File Not Progressively Downloadable - Download completed - Attempting to parse header"));
+                    PVMF_MP4FFPARSERNODE_LOGDATATRAFFIC((0,
+                                                         "PVMFMP4FFParserNode::CheckForMP4HeaderAvailability() - MP4 File Not Progressively Playable - Download completed - Attempting to parse header"));
                     return PVMFSuccess;
                 }
                 /*
@@ -7874,21 +7927,6 @@ PVMFStatus PVMFMP4FFParserNode::CheckForMP4HeaderAvailability()
                         (iMP4HeaderSize + MP4_MIN_BYTES_FOR_GETTING_MOVIE_HDR_SIZE));
             iDataStreamRequestPending = true;
             return PVMFPending;
-        }
-        else if (retCode == NOT_PROGRESSIVE_STREAMABLE)
-        {
-            if (iDownloadComplete == false)
-            {
-                PVUuid uuid = PVMFFileFormatEventTypesUUID;
-                int32 infocode = PVMFMP4FFParserInfoNotPseudostreamableFile;
-                ReportMP4FFParserInfoEvent(PVMFInfoRemoteSourceNotification, NULL, &uuid, &infocode);
-                PVMF_MP4FFPARSERNODE_LOGDATATRAFFIC((0, "PVMFMP4FFParserNode::CheckForMP4HeaderAvailability() - MP4 File Not Progressively Downloadable - Waiting for download complete"));
-            }
-            else
-            {
-                PVMF_MP4FFPARSERNODE_LOGDATATRAFFIC((0, "PVMFMP4FFParserNode::CheckForMP4HeaderAvailability() - MP4 File Not Progressively Downloadable - Download completed - Attempting to parse header"));
-                return PVMFSuccess;
-            }
         }
         else
         {
@@ -8673,6 +8711,7 @@ uint32 PVMFMP4FFParserNode::GetNumAudioChannels(uint32 aId)
     uint32 num_channels = 0;
     uint8 audioObjectType;
     uint8 sampleRateIndex;
+    uint32 samplesPerFrame;
 
     OSCL_HeapString<OsclMemAllocator> trackMIMEType;
     iMP4FileHandle->getTrackMIMEType(aId, trackMIMEType);
@@ -8698,7 +8737,8 @@ uint32 PVMFMP4FFParserNode::GetNumAudioChannels(uint32 aId)
                                &audioObjectType,
                                &specinfosize,
                                &sampleRateIndex,
-                               &num_channels);
+                               &num_channels,
+                               &samplesPerFrame);
         }
     }
 
@@ -8711,6 +8751,7 @@ uint32 PVMFMP4FFParserNode::GetAudioSampleRate(uint32 aId)
     uint32 num_channels;
     uint8 audioObjectType;
     uint8 sampleRateIndex;
+    uint32 samplesPerFrame;
 
     const uint32 sample_freq_table[13] =
         {96000, 88200, 64000, 48000,
@@ -8747,7 +8788,8 @@ uint32 PVMFMP4FFParserNode::GetAudioSampleRate(uint32 aId)
                                &audioObjectType,
                                &specinfosize,
                                &sampleRateIndex,
-                               &num_channels);
+                               &num_channels,
+                               &samplesPerFrame);
             if (sampleRateIndex < 13)
             {
                 sample_rate = sample_freq_table[(uint32)sampleRateIndex];

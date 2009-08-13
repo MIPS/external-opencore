@@ -89,24 +89,18 @@ OSCL_EXPORT_REF void PvmiCapabilityAndConfigPortFormatImpl::setParametersSync(Pv
         int num_elements, PvmiKvp * & aRet_kvp)
 {
     OSCL_UNUSED_ARG(aSession);
-    if (!aParameters || (num_elements != 1) ||
-            (pv_mime_strcmp(aParameters->key, iFormatValTypeString.get_str()) != 0))
+    if ((0 == aParameters) ||
+            (1 != num_elements) ||
+            (0 != pv_mime_strcmp(aParameters->key, iFormatValTypeString.get_str())) ||
+            (false == IsFormatSupported(aParameters->value.pChar_value)))
     {
         aRet_kvp = aParameters;
-        OSCL_LEAVE(OsclErrArgument);
-    }
-    else if (IsFormatSupported(aParameters->value.pChar_value))
-    {
-        aRet_kvp = NULL;
-        iFormat = (PVMFFormatType)aParameters->value.pChar_value;
-        //notify derived class of format update.
-        //This function may leave.
-        FormatUpdated();
     }
     else
     {
-        aRet_kvp = aParameters;
-        OSCL_LEAVE(OsclErrArgument);
+        aRet_kvp = NULL;
+        iFormat = (PVMFFormatType)aParameters->value.pChar_value;
+        FormatUpdated();                // notify derived class of format update
     }
 }
 

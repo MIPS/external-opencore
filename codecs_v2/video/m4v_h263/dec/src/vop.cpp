@@ -328,7 +328,9 @@ decode_vol:
 
         /* aspect ratio info */
         tmpvar = (uint32) BitstreamReadBits16(stream, 4);
-        if (tmpvar == 0) return PV_FAIL;
+//      Commenting out PV_FAIL return in aspect ratio info is 0. Don't think there is bitstream corruption.
+//      It's just bad encoding. We can make a change to our decoder to ignore this type of encoding flaw.
+//      if (tmpvar == 0) return PV_FAIL;
         if (tmpvar == 0xf /* extended_par */)
         {
             /* width */
@@ -978,14 +980,7 @@ PV_STATUS DecodeVOPHeader(VideoDecData *video, Vop *currVop, Bool use_ext_timest
     /* read vop_fcode_backward */
     if (currVop->predictionType == B_VOP)
     {
-        tmpvar = (uint32) BitstreamReadBits16(stream, 3);
-        if (tmpvar < 1)
-        {
-            currVop->fcodeBackward = 1;
-            status = PV_FAIL;
-            goto return_point;
-        }
-        currVop->fcodeBackward = tmpvar;
+        return PV_FAIL; // return this for now.
     }
     else
     {

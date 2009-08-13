@@ -25,6 +25,7 @@
 
 #define Response1xxStartStatusCode  100
 #define Response1xxEndStatusCode    200
+#define Response305StatusCode       305
 
 class UserCommands
 {
@@ -153,6 +154,7 @@ class ProtocolStateObserver
         virtual void ProtocolRequestAvailable(uint32 aRequestType = ProtocolRequestType_Normaldata) = 0; // need to send to port
 };
 
+class RedirectComposer;
 // This class is based on state pattern, to encapsulate all state specific behavior.
 class ProtocolState : public HttpParsingBasicObjectObserver,
         public UserCommands
@@ -210,9 +212,12 @@ class ProtocolState : public HttpParsingBasicObjectObserver,
         {
             return (iParser == NULL ? 0 : iParser->getStatusCode());
         }
-        bool getRedirectURI(OSCL_String &aRedirectUri)
+        bool getRedirectURI(OSCL_String &aRedirectUri);
+        bool getAllRedirectURI(Oscl_Vector<OSCL_HeapString<OsclMemAllocator>, OsclMemAllocator> &aRedirectVec);
+
+        uint32 getHttpVersionNum()
         {
-            return iParser->getRedirectURI(aRedirectUri);
+            return iParser->getHttpVersionNum();
         }
         bool getContentType(OSCL_String &aContentType)
         {
@@ -310,7 +315,8 @@ class ProtocolState : public HttpParsingBasicObjectObserver,
                 iParser(NULL),
                 iProcessingState(EHttpProcessingMicroState_SendRequest),
                 iObserver(NULL),
-                iNeedGetResponsePreCheck(true)
+                iNeedGetResponsePreCheck(true),
+                iRedirect(NULL)
         {
             iDataPathLogger = PVLogger::GetLoggerObject("datapath.sourcenode.protocolenginenode");
         }
@@ -321,6 +327,7 @@ class ProtocolState : public HttpParsingBasicObjectObserver,
             iParser   = NULL;
             iObserver = NULL;
             iDataPathLogger = NULL;
+            deleteRedirectComposer();
         };
 
         virtual void reset()
@@ -329,6 +336,8 @@ class ProtocolState : public HttpParsingBasicObjectObserver,
             if (iParser) iParser->reset();
             iNeedGetResponsePreCheck = true;
         }
+
+        void storeRedirectUrl(int32 errorCode);
 
     protected:
         // From HttpParsingBasicObjectObserver
@@ -383,6 +392,12 @@ class ProtocolState : public HttpParsingBasicObjectObserver,
             return false;
         }
 
+        bool is1xxResponse()
+        {
+            int32 statusCode = iParser->getStatusCode();
+            return (statusCode >= Response1xxStartStatusCode && statusCode < Response1xxEndStatusCode);
+        }
+
     private:
 
         // factor processMicroState() into the following methods to prevent processMicroState() getting bloated
@@ -394,12 +409,6 @@ class ProtocolState : public HttpParsingBasicObjectObserver,
         bool isErrorResponse(int32 &status)
         {
             return (status == PROCESS_SERVER_RESPONSE_ERROR || status < 0);
-        }
-
-        bool is1xxResponse()
-        {
-            int32 statusCode = iParser->getStatusCode();
-            return (statusCode >= Response1xxStartStatusCode && statusCode < Response1xxEndStatusCode);
         }
 
         bool isGotEOS(int32& status)
@@ -424,6 +433,8 @@ class ProtocolState : public HttpParsingBasicObjectObserver,
         // called by constructAuthenHeader()
         int32 base64enc(char *data, char *out);
 
+        void deleteRedirectComposer();
+
     protected:
         // http composer and parser should be life-time long, shouldn't be affected by state transition.
         // So protocol object owns these two objects.
@@ -437,6 +448,8 @@ class ProtocolState : public HttpParsingBasicObjectObserver,
         bool iNeedGetResponsePreCheck;
         ProtocolEngineOutputDataSideInfo iDataSideInfo;
         PVLogger *iDataPathLogger;
+        RedirectComposer *iRedirect;
+
 };
 
 // This observer class is designed to notify protocol user (specifically, node) when one protocol state is completely finished, i.e.
@@ -588,6 +601,14 @@ class HttpBasedProtocol : public ProtocolStateObserver,
         {
             return iCurrState->getRedirectURI(aRedirectUri);
         }
+        bool getAllRedirectURI(Oscl_Vector<OSCL_HeapString<OsclMemAllocator>, OsclMemAllocator> &aRedirectVec)
+        {
+            return iCurrState->getAllRedirectURI(aRedirectVec);
+        }
+        uint32 getHttpVersionNum()
+        {
+            return iCurrState->getHttpVersionNum();
+        }
         bool getContentType(OSCL_String &aContentType)
         {
             return iCurrState->getContentType(aContentType);
@@ -674,6 +695,34 @@ class HttpBasedProtocol : public ProtocolStateObserver,
         ProtocolObserver *iObserver;
         HTTPComposer *iComposer;
         HttpParsingBasicObject *iParser; // wrap http parser to do parsing for each input media data
+};
+
+class RedirectComposer
+{
+    public:
+        RedirectComposer(HttpParsingBasicObject *aParser): iParser(aParser)
+        {
+            iCntNum = 0;
+        }
+
+        void storeRedirectUrl();
+        bool getRedirectURI(OSCL_String &aRedirectUri);
+        bool getAllRedirectURI(Oscl_Vector<OSCL_HeapString<OsclMemAllocator>, OsclMemAllocator> &aRedirectVec);
+        bool deleteAllRedirectURI();
+        bool isRedirect();
+        ~RedirectComposer()
+        {
+            deleteAllRedirectURI();
+        }
+
+    private:
+        bool validateUrl(OSCL_HeapString<OsclMemAllocator> newUrl); //true :: Url already present
+
+        // Redirect URLs
+        Oscl_Vector<OSCL_HeapString<OsclMemAllocator>, OsclMemAllocator> iRedirectUrlVec;
+        uint32 iCntNum;
+        HttpParsingBasicObject* iParser;
+
 };
 
 #endif // PVMF_PROTOCOLENGINE_H_INCLUDED

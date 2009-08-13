@@ -16,7 +16,7 @@
  * -------------------------------------------------------------------
  */
 #include "oscl_rand.h"
-#include "logicalchannel.h"
+
 #include "pvmf_simple_media_buffer.h"
 #include "pvmf_media_data.h"
 #include "pvmf_media_cmd.h"
@@ -25,6 +25,8 @@
 #ifndef OSCL_MIME_STRING_UTILS_H
 #include "pv_mime_string_utils.h"
 #endif
+
+#include "logicalchannel.h"
 
 #ifndef PER_COPIER
 #include "h245_copier.h"
@@ -46,10 +48,38 @@
 #define H223_INCOMING_CHANNEL_NUM_MEDIA_DATA 300
 #define H223_INCOMING_CHANNEL_NUM_FRAGS_IN_MEDIA_DATA (3*1024/128)
 #define PV2WAY_BPS_TO_BYTES_PER_MSEC_RIGHT_SHIFT 13
-
-
 #define H223_LCN_IN_TIMESTAMP_BASE 40
+#ifdef LIP_SYNC_TESTING
 
+#define H263_START_BYTE_1 0x00
+#define H263_START_BYTE_2 0x00
+#define H263_START_BYTE_3 0x80
+
+#define VOP_START_BYTE_1 0x00
+#define VOP_START_BYTE_2 0x00
+#define VOP_START_BYTE_3 0x01
+#define VOP_START_BYTE_4 0xB6
+#define VOP_START_BYTE_5 0xB0
+#endif
+
+#ifdef LIP_SYNC_TESTING
+/***********************Outgoing side********************/
+uint32  g_Checkcount = 0;
+int g_CheckSampleTime = -1;
+uint32  g_Incmtsmsec = 0;
+bool g_OnlyOneTime = true;
+/*****************************************************************/
+//Incoming side
+uint32 g_IncmAudioTS = 0;
+uint32  g_IncmVideoTS = 0;
+uint32 g_TotalCountIncm = 0;
+int g_DiffIncmVidAudTS = 0;
+int g_iSqrIncCalVidAudTS = 0;
+int  g_IncRtMnSqCalc = 0;
+/**********************************************************************/
+int  g_RecTimeStamp = 0;
+
+#endif
 
 H223LogicalChannel::H223LogicalChannel(TPVChannelId num,
                                        bool segmentable,
@@ -189,7 +219,11 @@ H223OutgoingChannel::H223OutgoingChannel(TPVChannelId num,
         iMediaMsgMemoryPool(NULL),
         iMediaDataEntryAlloc(NULL),
         iMediaFragGroupAlloc(NULL),
-        iPduPktMemPool(NULL)
+        iPduPktMemPool(NULL),
+        iMediaDataAlloc(&iMemAlloc)
+
+
+
 {
     iLogger = PVLogger::GetLoggerObject("3g324m.h223.H223OutgoingChannel");
     iOutgoingVideoLogger = PVLogger::GetLoggerObject("datapath.outgoing.video.h223.lcn");
@@ -206,6 +240,17 @@ H223OutgoingChannel::H223OutgoingChannel(TPVChannelId num,
     iBufferMediaBytes = 0;
     iCurPduTimestamp = 0;
     iNumPendingPdus = 0;
+    iTsmsec = 0;
+    iOnlyOnce = false;
+#ifdef LIP_SYNC_TESTING
+    iAudioOutTS = 0;
+    iVideoOutTS = 0;
+    iDiffVideoAudioTS = 0;
+    iSqrCalVidAudTS = 0;
+    iRtMnSqCalc = 0;
+    iTotalCountOut = 0;
+    iParams = ShareParams::Instance();
+#endif
     iMuxingStarted = false;
     iWaitForRandomAccessPoint = false;
     iBufferSizeMs = DEF_OUTGOING_CHANNEL_BUFFER_SIZE_MS;
@@ -320,7 +365,7 @@ PVMFStatus H223OutgoingChannel::PutData(PVMFSharedMediaMsgPtr media_msg)
     }
     else if (iNumPendingPdus == (iNumMediaData - 1))
     {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223OutgoingChannel::PutData - ERROR Overflow, iNumPendingPdus=%d", iNumPendingPdus));
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223OutgoingChannel::PutData - ERROR Overflow, iNumPendingPdus=%u", iNumPendingPdus));
         return PVMFErrOverflow;
     }
 
@@ -338,7 +383,7 @@ PVMFStatus H223OutgoingChannel::PutData(PVMFSharedMediaMsgPtr media_msg)
 
     if ((mediaData->getNumFragments() + num_frags_required + iNumPendingPdus) >= (iNumMediaData - 1))
     {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223OutgoingChannel::PutData - ERROR Overflow, iNumPendingPdus=%d, num_frags_required=%d,iNumMediaData=%d", iNumPendingPdus, num_frags_required, iNumMediaData));
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223OutgoingChannel::PutData - ERROR Overflow, iNumPendingPdus=%u, num_frags_required=%d,iNumMediaData=%d", iNumPendingPdus, num_frags_required, iNumMediaData));
         Flush();
         /* Start re-buffering */
         BufferMedia((uint16)iSetBufferMediaMs);
@@ -508,6 +553,16 @@ PVMFStatus H223OutgoingChannel::CompletePdu()
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223OutgoingChannel::CompletePdu Memory allocation failedlcn=%d, CompletePacket status=%d", lcn, status));
         return status;
     }
+
+
+#ifdef LIP_SYNC_TESTING
+    if (iParams->iUncompressed == true)
+    {
+        AppendLipSyncTS();
+    }
+#endif
+
+
     // Add it to the outgoing queue
     status = AppendOutgoingPkt(iCurPdu, iCurPduTimestamp);
     if (status != PVMFSuccess)
@@ -575,6 +630,7 @@ PVMFStatus H223OutgoingChannel::AppendOutgoingPkt(OsclSharedPtr<PVMFMediaDataImp
 
 bool H223OutgoingChannel::GetNextPacket(PVMFSharedMediaDataPtr& aMediaData, PVMFStatus aStatus)
 {
+
     if (!iMuxingStarted && aStatus == PVMFSuccess)
         iMuxingStarted = true;
 
@@ -605,10 +661,15 @@ bool H223OutgoingChannel::GetNextPacket(PVMFSharedMediaDataPtr& aMediaData, PVMF
     else
     {
         lastMediaData->next = first->next;
+
     }
+
+
     first->~LCMediaDataEntry();
     iMediaDataEntryAlloc->deallocate(first);
 
+
+    OSCL_ASSERT(iNumPendingPdus);
     iNumPendingPdus--;
     return true;
 }
@@ -625,6 +686,7 @@ OsclAny H223OutgoingChannel::Flush()
     //PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0,"H223OutgoingChannel::Flush\n"));
 
     PVMFSharedMediaDataPtr aMediaData;
+
     // clear messages in input queue
     ClearMsgQueues();
     // go through pending queue
@@ -685,6 +747,7 @@ OSCL_EXPORT_REF PVMFStatus H223OutgoingChannel::Connect(PVMFPortInterface* aPort
     }
 
     PvmiCapabilityAndConfig* config = NULL;
+
     OsclAny* tempInterface = NULL;
     aPort->QueryInterface(PVMI_CAPABILITY_AND_CONFIG_PVUUID, tempInterface);
     config = OSCL_STATIC_CAST(PvmiCapabilityAndConfig*, tempInterface);
@@ -745,7 +808,8 @@ OSCL_EXPORT_REF PVMFStatus H223OutgoingChannel::PeerConnect(PVMFPortInterface* a
     if (status != PVMFSuccess)
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "H223OutgoingChannel::PeerConnect: Error - Settings negotiation failed. status=%d", status));
-        return status;
+        // Ignore errors for now
+        status = PVMFSuccess;
     }
 
 
@@ -759,7 +823,6 @@ PVMFStatus H223OutgoingChannel::NegotiateFSISettings(PvmiCapabilityAndConfig* aC
 {
     PvmiKvp* kvp = NULL;
     int numParams = 0;
-
     // Preconfigured FSI
     uint8* pc_fsi = NULL;
     unsigned pc_fsilen = ::GetFormatSpecificInfo(iDataType, pc_fsi);
@@ -791,7 +854,8 @@ PVMFStatus H223OutgoingChannel::NegotiateFSISettings(PvmiCapabilityAndConfig* aC
         {
             PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223OutgoingChannel::NegotiateFSISettings, Failed to set FSI on peer, err=%d", err));
         }
-        return err;
+        // Temp change to return success. Enc node does not support setting FSI yet.  This will cause port connect to fail.
+        return PVMFSuccess;
     }
 
 
@@ -1220,6 +1284,9 @@ void H223OutgoingChannel::HandlePortActivity(const PVMFPortActivity &aActivity)
         aStatus = DequeueIncomingMsg(aMsg);
         if (aStatus == PVMFSuccess)
         {
+
+            DetectSkewInd(aMsg);
+
             PutData(aMsg);
         }
         else
@@ -1252,7 +1319,7 @@ OSCL_EXPORT_REF PVMFStatus H223OutgoingControlChannel::PeerConnect(PVMFPortInter
 }
 PVMFStatus H223OutgoingControlChannel::PutData(PVMFSharedMediaMsgPtr aMsg)
 {
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223OutgoingControlChannel::PutData - iNumPendingPdus=%d,iNumMediaData=%d", iNumPendingPdus, iNumMediaData));
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223OutgoingControlChannel::PutData - iNumPendingPdus=%u,iNumMediaData=%u\n", iNumPendingPdus, iNumMediaData));
 
     PVMFSharedMediaDataPtr mediaData;
     convertToPVMFMediaData(mediaData, aMsg);
@@ -1263,7 +1330,7 @@ PVMFStatus H223OutgoingControlChannel::PutData(PVMFSharedMediaMsgPtr aMsg)
     PV_STAT_INCR(iNumBytesIn, (mediaData->getFilledSize()))
 
     OsclSharedPtr<PVMFMediaDataImpl> pdu;
-    pdu = iMediaFragGroupAlloc->allocate();
+    pdu = StartAlPdu();
 
     if (!pdu)
     {
@@ -1354,12 +1421,18 @@ H223IncomingChannel::H223IncomingChannel(TPVChannelId num,
         iPduSize(al->GetPduSize()),
         iCurPduSize(0),
         iRenderingSkew(0)
+
 {
+#ifdef LIP_SYNC_TESTING
+    iParam = ShareParams::Instance();
+#endif
     iLogger = PVLogger::GetLoggerObject("3g324m.h223.H223IncomingChannel");
     iIncomingAudioLogger = PVLogger::GetLoggerObject("datapath.incoming.audio.h223.lcn");
     iIncomingVideoLogger = PVLogger::GetLoggerObject("datapath.incoming.video.h223.lcn");
     iAlPduFragPos = NULL;
+
     ResetStats();
+
 }
 
 H223IncomingChannel::~H223IncomingChannel()
@@ -1537,6 +1610,7 @@ PVMFStatus H223IncomingChannel::AlPduData(uint8* buf, uint16 len)
 
 PVMFStatus H223IncomingChannel::AlDispatch()
 {
+
     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223IncomingChannel::AlDispatch lcn=%d, iCurPduSize=%d, sn=%d", lcn, iCurPduSize, iNumSdusIn));
     IncomingALPduInfo info;
 
@@ -1560,12 +1634,20 @@ PVMFStatus H223IncomingChannel::AlDispatch()
         iAlPduMediaData->appendMediaFragment(iAlPduFrag);
     }
 
+    PVMFFormatType mediaType = GetFormatType();
+#ifdef LIP_SYNC_TESTING
+    if ((mediaType.isVideo() && iParam->iUncompressed == true))
+    {
+        ExtractTimestamp();
+    }
+#endif
+
     /* Parse AL headers etc */
     iAl->ParsePacket(iAlPduMediaData, info);
     int32 len = info.sdu_size;
     if (len <= 0)
     {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223OutgoingChannel::AlDispatch Empty SDU lcn=%d, len=%d", lcn, len));
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223IncomingChannel::AlDispatch Empty SDU lcn=%d, len=%d", lcn, len));
         ResetAlPdu();
         return PVMFErrCorrupt;
     }
@@ -1599,6 +1681,7 @@ PVMFStatus H223IncomingChannel::AlDispatch()
         return PVMFErrNoMemory;
     }
 
+
     PVMFTimestamp baseTimestamp = 0;
     SetSampleTimestamps(baseTimestamp);
     aMediaData->setTimestamp(baseTimestamp);
@@ -1608,12 +1691,24 @@ PVMFStatus H223IncomingChannel::AlDispatch()
     PVMFSharedMediaMsgPtr aMediaMsg;
     convertToPVMFMediaMsg(aMediaMsg, aMediaData);
 
-    PVMFFormatType mediaType = GetFormatType();
     if (mediaType.isCompressed() && mediaType.isAudio())
     {
         // we are using only full audio frames
         aMediaData->setMarkerInfo(PVMF_MEDIA_DATA_MARKER_INFO_M_BIT);
     }
+#ifdef LIP_SYNC_TESTING
+
+    if (mediaType.isAudio() || mediaType.isVideo())
+    {
+        OsclRefCounterMemFrag memFrag;
+        aMediaData->getMediaFragment(0, memFrag);
+        uint8* buf = (uint8*)memFrag.getMemFragPtr();
+        // we are using only full audio frames
+        DetectFrameBoundary(buf, baseTimestamp);
+
+    }
+#endif
+
 
     if (IsConnected())
     {
@@ -1663,6 +1758,7 @@ PVMFStatus H223IncomingChannel::Connect(PVMFPortInterface* aPort)
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223IncomingChannel::Connect Error: Already connected"));
         return PVMFFailure;
     }
+
 
     PvmiCapabilityAndConfig* config = NULL;
     OsclAny * tempInterface = NULL;
@@ -1737,7 +1833,10 @@ OsclAny H223IncomingChannel::LogStats()
 PVMFStatus H223IncomingChannel::DispatchPendingSdus()
 {
     if (!iConnectedPort)
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223IncomingChannel::DispatchPendingSdus: Not connected"));
         return PVMFFailure;
+    }
     if (iPendingSdus.size())
     {
         /* Dispatch any pending sdus */
@@ -2114,7 +2213,7 @@ void H223IncomingChannel::SetSampleTimestamps(PVMFTimestamp& aTSOffset)
         skewDelta = iRenderingSkew - iIncomingSkew;
         if (iMediaType.isCompressed() && iMediaType.isAudio())
         {
-            aTSOffset = (PVMFTimestamp)(iAudioLatency + PARSING_JITTER_DURATION);
+            aTSOffset = (PVMFTimestamp)(iAudioLatency);
         }
         else if (iMediaType.isCompressed() && iMediaType.isVideo())
         {
@@ -2126,14 +2225,299 @@ void H223IncomingChannel::SetSampleTimestamps(PVMFTimestamp& aTSOffset)
         skewDelta = iIncomingSkew - iRenderingSkew;
         if (iMediaType.isCompressed() && iMediaType.isAudio())
         {
-            aTSOffset = (PVMFTimestamp)(iAudioLatency + PARSING_JITTER_DURATION + skewDelta);
+            aTSOffset = (PVMFTimestamp)(iAudioLatency + skewDelta);
         }
         else if (iMediaType.isCompressed() && iMediaType.isVideo())
         {
             aTSOffset = (PVMFTimestamp)(iVideoLatency + PARSING_JITTER_DURATION);
         }
     }
+
+#ifdef LIP_SYNC_TESTING
+
+    /**************************************************************************************************
+       this is the check, to get unique sample TS on dummy output node side.So for this purpose, we are
+       checking the original video TS with the previous TS.If this condition is true then only we are
+       modifying the value of aTSOffset.
+
+     ***************************************************************************************************/
+
+    if ((g_CheckSampleTime != g_RecTimeStamp) && (iParam->iUncompressed == true))
+    {
+        g_CheckSampleTime = g_RecTimeStamp;
+        g_Checkcount++;
+        aTSOffset += g_Checkcount;
+
+    }
+#endif
+
     aTSOffset += iCurTimestamp;
 }
+
+/* *****************************************************************************************************
+*  Function : DetectSkewInd()
+*  Date     : 6/15/2009
+*  Purpose  : The purpose of this function is to calculate skew (difference b/w audio and video TS)
+*              on stack outgoing side.Audio and Video both sending TS through observer and we are calculating
+                actual skew in cpvh223multiplex.cpp. Function name CalculateSkew()
+*  INPUT    : aMsg
+*  Return   : NONE
+*
+*
+* *************************************************************************************************/
+void H223OutgoingChannel::DetectSkewInd(PVMFSharedMediaMsgPtr aMsg)
+{
+
+    PVMFFormatType mediaType = GetFormatType();
+    uint32 audio = 0;
+    uint32 video = 0;
+    if (mediaType.isCompressed() && (mediaType.isAudio() || mediaType.isVideo()))
+    {
+        if (mediaType.isCompressed() && mediaType.isAudio())
+        {
+            audio = (uint32)aMsg->getTimestamp();
+            iObserver->CalculateSkew(lcn, 0, audio, 0);
+
+        }
+        else if (mediaType.isCompressed() && mediaType.isVideo())
+        {
+            video = (uint32)aMsg->getTimestamp();
+            iObserver->CalculateSkew(lcn, 1, video, 0);
+            CalcRMSInfo(video, audio);
+
+        }
+    }
+}
+/* *****************************************************************************************************
+*  Function : CalcRMSInfo()
+*  Date     : 6/15/2009
+*  Purpose  : The purpose of this function is to Calculate skew on stack outgoing side.In this function we are
+               reciving the video and audio TS. The main thing is that we are calculting the skew, when we
+               recieves the video TS with last Audio TS.This function is also for lip-sync calculation
+*  INPUT    : VideoData,AudioData
+*  Return   : NONE
+*
+*
+* *************************************************************************************************/
+void H223OutgoingChannel::CalcRMSInfo(uint32 aVideoData, uint32 aAudioData)
+{
+
+    if (iOnlyOnce == false)
+    {
+
+        uint32 tick_ct_val = OsclTickCount::TickCount();
+        iTsmsec = OsclTickCount::TicksToMsec(tick_ct_val);
+        iOnlyOnce = true;
+    }
+
+    int Diff = aVideoData - iTsmsec;
+    if (Diff >= 60000)
+    {
+        /*End Of TIMER EOT=1*/
+
+        iObserver->CalculateSkew(lcn, 0, 0, 1);
+    }
+
+
+
+}
+
+
+#ifdef LIP_SYNC_TESTING
+
+/* *****************************************************************************************************
+*  Function : CalculateRMSInfo()
+*  Date     : 6/15/2009
+*  Purpose  : The purpose of this function is to Calculate skew on stack incoming side.In this function we are
+               reciving the video and audio TS. The main thing is that we are calculting the skew, when we
+               recieves the video TS with last Audio TS.
+*  INPUT    : VideoData,AudioData
+*  Return   : NONE
+*
+*
+* *************************************************************************************************/
+void H223IncomingChannel::CalculateRMSInfo(uint32 aVideoData, uint32 aAudioData)
+{
+    g_DiffIncmVidAudTS = aVideoData - aAudioData;
+    g_iSqrIncCalVidAudTS += (g_DiffIncmVidAudTS * g_DiffIncmVidAudTS);
+
+    if (g_OnlyOneTime)
+    {
+        uint32 tick_ct_val;
+        tick_ct_val = OsclTickCount::TickCount();
+        g_Incmtsmsec = OsclTickCount::TicksToMsec(tick_ct_val);
+        g_OnlyOneTime = 0;
+    }
+
+
+
+    int Diff = aVideoData - g_Incmtsmsec;
+    if (Diff >= 60000)
+    {
+        if (g_TotalCountIncm == 0)
+        {
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                            (0, "Not be able to calculate RMS because Total count value is zero  TotalCount=%d", g_TotalCountIncm));
+
+        }
+        else
+        {
+            g_IncRtMnSqCalc = (int32)sqrt(g_iSqrIncCalVidAudTS / g_TotalCountIncm);
+        }
+
+    }
+    g_TotalCountIncm++;
+
+}
+
+/* *****************************************************************************************************
+*  Function : DetectFrameBoundary()
+*  Date     : 6/15/2009
+*  Purpose  : The purpose of this function is to Detect frame boundary that whether the format is MPEG-4 or H263,
+               In this function we are sending  original VideoTS to dummy output MIO node through observer.
+               The reason is we dont want to pass the same to specific decoder, as decoder will modify the TS.
+               This is we are doing for calculating lip-sync skew.
+
+*  INPUT    : buf,aTimestamp
+*  Return   : NONE
+*
+*
+* *************************************************************************************************/
+void H223IncomingChannel::DetectFrameBoundary(uint8* aBuf, uint32 aTimestamp)
+{
+    PVMFFormatType mediaType = GetFormatType();
+
+    /********************This is for MPEG-4 Header and H263 Header***********************************/
+    if ((mediaType.isCompressed() && (mediaType.isAudio() || mediaType.isVideo())))
+    {
+
+        if (mediaType.isCompressed() && mediaType.isAudio())
+        {
+            g_IncmAudioTS = *(((uint32*)aBuf));
+
+        }
+
+        if (mediaType.isCompressed() && mediaType.isVideo())
+        {
+            /*This check is for VOL header*/
+            if ((aBuf[0] == VOP_START_BYTE_1) &&
+                    (aBuf[1] == VOP_START_BYTE_2) &&
+                    (aBuf[2] == VOP_START_BYTE_3) &&
+                    (aBuf[3] == VOP_START_BYTE_5))
+            {
+
+                g_IncmVideoTS = g_RecTimeStamp;
+                CalculateRMSInfo(g_IncmVideoTS, g_IncmAudioTS);
+                iParam->iObserver->MIOFramesTimeStamps(0, g_RecTimeStamp, aTimestamp);
+
+            }
+            /*This Check is for MP4 Header*/
+            else if ((aBuf[0] == VOP_START_BYTE_1) &&
+                     (aBuf[1] == VOP_START_BYTE_2) &&
+                     (aBuf[2] == VOP_START_BYTE_3) &&
+                     (aBuf[3] == VOP_START_BYTE_4))
+            {
+
+                g_IncmVideoTS = g_RecTimeStamp;
+                CalculateRMSInfo(g_IncmVideoTS, g_IncmAudioTS);
+                iParam->iObserver->MIOFramesTimeStamps(0, g_RecTimeStamp, aTimestamp);
+
+
+
+            }
+            /*This check is for H263 Header*/
+            else if ((aBuf[0] == H263_START_BYTE_1) &&
+                     (aBuf[1] == H263_START_BYTE_2) &&
+                     (aBuf[2] == H263_START_BYTE_3))
+            {
+
+                g_IncmVideoTS = *(((uint32*)aBuf) + 1);
+                CalculateRMSInfo(g_IncmVideoTS, g_IncmAudioTS);
+
+
+
+            }
+
+        }
+
+    }
+
+}
+/* *****************************************************************************************************
+*  Function : ExtractTimestamp()
+*  Date     : 6/15/2009
+*  Purpose  : The purpose of this function is to extract original TS on stack incoming side.So for each SDU's
+               we are extracting original video TS.This also we are doing for uncompressed video.Later we will
+               add the same functionality for uncompressed audio only.This functionality is also for lip-sync
+               detection.
+*  INPUT    : NONE
+*  Return   : NONE
+*
+*
+* *************************************************************************************************/
+void H223IncomingChannel::ExtractTimestamp()
+{
+    PVMFFormatType mediaType = GetFormatType();
+    if (lcn != 0)
+    {
+        if (mediaType.isCompressed() && mediaType.isVideo())
+        {
+            OsclRefCounterMemFrag MemFrag;
+            OsclRefCounterMemFrag tsFrag;
+            OsclRefCounterMemFrag frag;
+            uint32 FragSize = 0;
+            uint8* CheckTSbuff = 0;
+            for (uint32 i = 0; i < iAlPduMediaData->getNumFragments(); i++)
+            {
+                iAlPduMediaData->getMediaFragment(i, frag);
+                uint8* buf = (uint8*)frag.getMemFragPtr();
+                FragSize = frag.getMemFragSize();
+                CheckTSbuff = (uint8*)(buf + FragSize);
+            }
+            uint8* TimeStamp = (uint8*)(CheckTSbuff - 4);
+            g_RecTimeStamp = (uint32)(*((uint32*)TimeStamp));
+            iAlPduMediaData->getMediaFragment(0, tsFrag);
+            iAlPduMediaData->setMediaFragFilledLen(iAlPduMediaData->getNumFragments() - 1, FragSize - 4);
+
+        }
+    }
+
+}
+
+
+/* ***********************************************************************************
+*  Function : AppendLipSyncTS()
+*  Date     : 6/15/2009
+*  Purpose  : The purpose of this function is to append four bytes(Video TS)
+*               on every sdu's.Here we are doing for Video only.this is
+*              we are doing for to get original Video TS at stack incoming side.
+*
+*  INPUT    : NONE
+*  Return   : NONE
+*
+*
+* **********************************************************************************/
+void  H223OutgoingChannel::AppendLipSyncTS()
+{
+
+
+    if (iMediaType.isCompressed() && iMediaType.isVideo())
+    {
+        PVMFSharedMediaDataPtr hdrTSData;
+        OsclRefCounterMemFrag tsFrag;
+        OsclSharedPtr<PVMFMediaDataImpl> addTsImpl =  iMediaDataAlloc.allocate(4);
+        hdrTSData = PVMFMediaData::createMediaData(addTsImpl);
+
+        hdrTSData->getMediaFragment(0, tsFrag);
+        tsFrag.getMemFrag().len = 4;
+        uint32* SendBuff = (uint32*) tsFrag.getMemFragPtr();
+        SendBuff[0] = iCurPduTimestamp;
+        iCurPdu->appendMediaFragment(tsFrag);
+
+    }
+
+
+}
+#endif
 
 

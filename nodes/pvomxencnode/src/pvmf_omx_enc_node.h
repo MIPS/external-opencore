@@ -146,12 +146,14 @@
 typedef struct OutputBufCtrlStruct
 {
     OMX_BUFFERHEADERTYPE *pBufHdr;
+    OsclAny *pMemPoolEntry;
 } OutputBufCtrlStruct;
 
 typedef struct InputBufCtrlStruct
 {
     OMX_BUFFERHEADERTYPE *pBufHdr;
     PVMFSharedMediaDataPtr pMediaData;
+    OsclAny *pMemPoolEntry;
 } InputBufCtrlStruct;
 
 
@@ -385,19 +387,6 @@ enum EncContentType
     EI_H264
 };
 
-/** Rate control type. */
-enum EncRateControlType
-{
-    /** Constant quality, variable bit rate, fixed quantization level. */
-    ECONSTANT_Q,
-
-    /** Short-term constant bit rate control. */
-    ECBR_1,
-
-    /** Long-term constant bit rate control. */
-    EVBR_1
-};
-
 /** Targeted profile and level to encode. */
 enum EncM4VProfileLevel
 {
@@ -522,7 +511,7 @@ typedef struct PV_VideoEncodeParam
 
     /** Specifies the rate control algorithm among one of the following constant Q,
     CBR and VBR.  The structure EncRateControlType is defined above.*/
-    EncRateControlType iRateControlType;
+    PVMFVENRateControlType iRateControlType;
 
     /** Specifies the initial quantization parameter for the first I-frame. If constant Q
     rate control is used, this QP will be used for all the I-frames. This number must be
@@ -594,11 +583,6 @@ typedef struct PV_VideoEncodeParam
     bool                iEnableFrameQuality;
 
 
-    /** Specifies the type of the access whether it is streaming, EI_H263, EI_M4V_STREAMING
-    (data partitioning mode) or download, EI_M4V_DOWNLOAD (combined mode).*/
-    EncContentType      iContentType;
-
-
     /** Specifies high quality but also high complexity mode for rate control. */
     bool                iRDOptimal;
 
@@ -621,6 +605,18 @@ typedef struct PV_VideoEncodeParam
     /** Specifies that no frame skipping is allowed. Frame skipping is a tool used to
     control the average number of bits spent to meet the target bit rate. */
     bool                iNoFrameSkip;
+
+
+    /** Specify short header mode in MPEG4 */
+    bool                iShortHeader;
+
+    /** Specifies whethere data partitioning mode is used or not. Has no meaning if encoding H.263 or short header */
+    bool                iDataPartitioning;
+
+
+    /** Specifies whether Resync markers are used or not Has no meaning if iDataPartitioning is on */
+    bool                iResyncMarker;
+
 
     /** Specifies whether RVLC (reversible VLC) is to be used or not.
     */
@@ -705,6 +701,11 @@ typedef struct PV_AudioEncodeParam
     //
     uint32  iMaxNumOutputFramesPerBuffer;
 
+    // DESCRIPTION: Aac profile types:
+    //              PV_AAC_ENC_LC  = LC
+    //              PV_AAC_ENC_HE = AAC+
+    //              PV_AAC_ENC_HE_PS = eAAC+
+    PVMF_AAC_Profile   iAacOutputProfile;
 
 } PV_AudioEncodeParam;
 
@@ -885,7 +886,7 @@ class PVMFOMXEncNode
         , public OsclMemPoolFixedChunkAllocatorObserver
         , public PVMFOMXEncNodeExtensionInterface
         , public PVMFMetadataExtensionInterface
-        , public PvmiCapabilityAndConfig
+        , public PvmiCapabilityAndConfigBase
         , public PVMp4H263EncExtensionInterface
         , public PVAudioEncExtensionInterface
 {
@@ -992,15 +993,9 @@ class PVMFOMXEncNode
 
 
         // From PvmiCapabilityAndConfig
-        void setObserver(PvmiConfigAndCapabilityCmdObserver* aObserver);
         PVMFStatus getParametersSync(PvmiMIOSession aSession, PvmiKeyType aIdentifier, PvmiKvp*& aParameters, int& aNumParamElements, PvmiCapabilityContext aContext);
         PVMFStatus releaseParameters(PvmiMIOSession aSession, PvmiKvp* aParameters, int aNumElements);
-        void createContext(PvmiMIOSession aSession, PvmiCapabilityContext& aContext);
-        void setContextParameters(PvmiMIOSession aSession, PvmiCapabilityContext& aContext, PvmiKvp* aParameters, int aNumParamElements);
-        void DeleteContext(PvmiMIOSession aSession, PvmiCapabilityContext& aContext);
         void setParametersSync(PvmiMIOSession aSession, PvmiKvp* aParameters, int aNumElements, PvmiKvp* &aRetKVP);
-        PVMFCommandId setParametersAsync(PvmiMIOSession aSession, PvmiKvp* aParameters, int aNumElements, PvmiKvp*& aRetKVP, OsclAny* aContext = NULL);
-        uint32 getCapabilityMetric(PvmiMIOSession aSession);
         PVMFStatus verifyParametersSync(PvmiMIOSession aSession, PvmiKvp* aParameters, int aNumElements);
 
         // Virtual functions of PVMp4H263EncExtensionInterface
@@ -1033,6 +1028,7 @@ class PVMFOMXEncNode
         OSCL_IMPORT_REF PVMFStatus SetOutputBitRate(uint32 aBitRate);
         OSCL_IMPORT_REF PVMFStatus SetOutputNumChannel(uint32 aNumChannel);
         OSCL_IMPORT_REF PVMFStatus SetOutputSamplingRate(uint32 aSamplingRate);
+        OSCL_IMPORT_REF PVMFStatus SetOutputAacProfile(PVMF_AAC_Profile aAacOutputProfile);
 
 
         PVMFStatus SetInputSamplingRate(uint32 aSamplingRate);
@@ -1160,6 +1156,7 @@ class PVMFOMXEncNode
 
         bool ParseFullAVCFramesIntoNALs(OMX_BUFFERHEADERTYPE* aOutputBuffer);
         bool AVCAnnexBGetNALUnit(uint8 *bitstream, uint8 **nal_unit, int32 *size, bool getPtrOnly);
+        bool CheckM4vVopStartCode(uint8* data, int* len);
 
         friend class PVMFOMXEncPort;
 
@@ -1194,6 +1191,8 @@ class PVMFOMXEncNode
         // Number of output buffers (negotiated with component)
         uint32 iNumOutputBuffers;
 
+        // desired output buffer alignmen (read from the component port)
+        uint32 iOutputBufferAlignment;
         // Number of output buffers in possession of the component or downstream,
         // namely, number of unavailable buffers
         uint32 iNumOutstandingOutputBuffers;
@@ -1205,12 +1204,16 @@ class PVMFOMXEncNode
         bool iOutputBuffersFreed;
 
 
+
         // INPUT BUFFER RELATED MEMBERS
         OsclMemPoolFixedChunkAllocator *iInBufMemoryPool;
         uint32 iOMXComponentInputBufferSize; // size of input buffer that the component sees (negotiated with the component)
         uint32 iInputAllocSize;     // size of input buffer to allocate (OMX_ALLOCATE_BUFFER =  size of buf header )
         // (OMX_USE_BUFFER = size of buf header + iOMXCoponentInputBufferSize)
         uint32 iNumInputBuffers; // total num of input buffers (negotiated with component)
+
+        // desired input buffer alignment (read from the component port)
+        uint32 iInputBufferAlignment;
 
         uint32 iNumOutstandingInputBuffers; // number of input buffers in use (i.e. unavailable)
 
@@ -1257,6 +1260,8 @@ class PVMFOMXEncNode
         bool iOMXComponentSupportsPartialFrames;
         bool iOMXComponentCanHandleIncompleteFrames;
         bool iOMXComponentUsesFullAVCFrames;
+        bool iOMXComponentUsesInterleaved2BNALSizes;
+        bool iOMXComponentUsesInterleaved4BNALSizes;
 
         bool iSetMarkerBitForEveryFrag;
         bool iIsOMXComponentMultiThreaded;
@@ -1402,10 +1407,11 @@ class PVMFOMXEncNode
         uint32 iEndOfNALFlagOut;
         OMX_TICKS iTimeStampOut;
         uint32 iBufferLenOut;
-        OsclAny **out_ctrl_struct_ptr ;
-        OsclAny **out_buff_hdr_ptr ;
-        OsclAny **in_ctrl_struct_ptr ;
-        OsclAny **in_buff_hdr_ptr ;
+
+        OutputBufCtrlStruct *out_ctrl_struct_ptr;
+
+        InputBufCtrlStruct *in_ctrl_struct_ptr;
+
 
         // timescale, timestamp conversions
         uint32 iTimeScale;

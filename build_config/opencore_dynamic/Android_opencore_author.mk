@@ -10,7 +10,7 @@ LOCAL_WHOLE_STATIC_LIBRARIES +=  libandroidpvauthor
 
 LOCAL_MODULE := libopencore_author
 
--include $(PV_TOP)/Android_platform_extras.mk
+LOCAL_SHARED_LIBRARIES :=  libutils libcutils libui libandroid_runtime libmedia liblog libicuuc
 
 -include $(PV_TOP)/Android_system_extras.mk
 

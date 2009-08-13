@@ -62,12 +62,13 @@
 // Forward declaration
 class PvmfMediaInputNode;
 
-class PvmfMediaInputNodeOutPort : public OsclTimerObject,
-        public OsclMemPoolFixedChunkAllocatorObserver,
-        public PvmfPortBaseImpl,
-        public PvmiMediaTransfer,
-        public PVMFPortActivityHandler,
-        public PvmiCapabilityAndConfig
+class PvmfMediaInputNodeOutPort
+        : public OsclTimerObject
+        , public OsclMemPoolFixedChunkAllocatorObserver
+        , public PvmfPortBaseImpl
+        , public PvmiMediaTransfer
+        , public PVMFPortActivityHandler
+        , public PvmiCapabilityAndConfigBase
 {
     public:
         PvmfMediaInputNodeOutPort(PvmfMediaInputNode* aNode, const char* aName = NULL);
@@ -120,15 +121,8 @@ class PvmfMediaInputNodeOutPort : public OsclTimerObject,
                 PvmiKvp*& aParameters, int& num_parameter_elements,
                 PvmiCapabilityContext aContext);
         OSCL_IMPORT_REF PVMFStatus releaseParameters(PvmiMIOSession aSession, PvmiKvp* aParameters, int num_elements);
-        OSCL_IMPORT_REF void createContext(PvmiMIOSession aSession, PvmiCapabilityContext& aContext);
-        OSCL_IMPORT_REF void setContextParameters(PvmiMIOSession aSession, PvmiCapabilityContext& aContext,
-                PvmiKvp* aParameters, int num_parameter_elements);
-        OSCL_IMPORT_REF void DeleteContext(PvmiMIOSession aSession, PvmiCapabilityContext& aContext);
         OSCL_IMPORT_REF void setParametersSync(PvmiMIOSession aSession, PvmiKvp* aParameters,
                                                int num_elements, PvmiKvp * & aRet_kvp);
-        OSCL_IMPORT_REF PVMFCommandId setParametersAsync(PvmiMIOSession aSession, PvmiKvp* aParameters,
-                int num_elements, PvmiKvp*& aRet_kvp, OsclAny* context = NULL);
-        OSCL_IMPORT_REF uint32 getCapabilityMetric(PvmiMIOSession aSession);
         OSCL_IMPORT_REF PVMFStatus verifyParametersSync(PvmiMIOSession aSession, PvmiKvp* aParameters, int num_elements);
         void SendEndOfTrackCommand(const PvmiMediaXferHeader& data_header_info);
 

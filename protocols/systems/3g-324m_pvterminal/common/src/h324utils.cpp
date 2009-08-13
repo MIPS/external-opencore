@@ -19,6 +19,8 @@
 #include "oscl_dll.h"
 #include "oscl_map.h"
 
+#define PV_H245_VERSION 0x0A // 10
+
 OSCL_DLL_ENTRY_POINT_DEFAULT()
 static const uint32 g_num_ones[] =
 {
@@ -1252,7 +1254,7 @@ PS_TerminalCapabilitySet GenerateTcs(MultiplexCapabilityInfo& mux_cap_info,
     x2ProtocolIdentifierData[2] = 0x81;
     x2ProtocolIdentifierData[3] = 0x75;
     x2ProtocolIdentifierData[4] = 0x00;
-    x2ProtocolIdentifierData[5] = 0x06;
+    x2ProtocolIdentifierData[5] = PV_H245_VERSION;
     ret->protocolIdentifier.data = x2ProtocolIdentifierData;
 
     ret->option_of_multiplexCapability = ON;

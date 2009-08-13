@@ -69,8 +69,6 @@ class PVMFRTSPTrackInfo
             iNetworkNodePort = NULL;
             iJitterBufferInputPort = NULL;
             iJitterBufferOutputPort = NULL;
-            iMediaLayerInputPort = NULL;
-            iMediaLayerOutputPort = NULL;
             iJitterBufferRTCPPort = NULL;
             iNetworkNodeRTCPPort = NULL;
             iSessionControllerOutputPort = NULL;
@@ -98,8 +96,6 @@ class PVMFRTSPTrackInfo
             iNetworkNodePort = a.iNetworkNodePort;
             iJitterBufferInputPort = a.iJitterBufferInputPort;
             iJitterBufferOutputPort = a.iJitterBufferOutputPort;
-            iMediaLayerInputPort = a.iMediaLayerInputPort;
-            iMediaLayerOutputPort = a.iMediaLayerOutputPort;
             iJitterBufferRTCPPort = a.iJitterBufferRTCPPort;
             iNetworkNodeRTCPPort = a.iNetworkNodeRTCPPort;
             iSessionControllerOutputPort = a.iSessionControllerOutputPort;
@@ -131,8 +127,6 @@ class PVMFRTSPTrackInfo
                 iNetworkNodePort = a.iNetworkNodePort;
                 iJitterBufferInputPort = a.iJitterBufferInputPort;
                 iJitterBufferOutputPort = a.iJitterBufferOutputPort;
-                iMediaLayerInputPort = a.iMediaLayerInputPort;
-                iMediaLayerOutputPort = a.iMediaLayerOutputPort;
                 iJitterBufferRTCPPort = a.iJitterBufferRTCPPort;
                 iNetworkNodeRTCPPort = a.iNetworkNodeRTCPPort;
                 iSessionControllerOutputPort = a.iSessionControllerOutputPort;
@@ -164,8 +158,6 @@ class PVMFRTSPTrackInfo
         PVMFPortInterface* iNetworkNodePort;
         PVMFPortInterface* iJitterBufferInputPort;
         PVMFPortInterface* iJitterBufferOutputPort;
-        PVMFPortInterface* iMediaLayerInputPort;
-        PVMFPortInterface* iMediaLayerOutputPort;
         PVMFPortInterface* iJitterBufferRTCPPort;
         PVMFPortInterface* iNetworkNodeRTCPPort;
         PVMFPortInterface* iSessionControllerOutputPort;
@@ -232,15 +224,8 @@ class PVMFSMRTSPUnicastNode: public PVMFSMFSPBaseNode
         virtual PVMFStatus releaseParameters(PvmiMIOSession aSession,
                                              PvmiKvp* aParameters,
                                              int num_elements);
-
-        virtual void createContext(PvmiMIOSession aSession, PvmiCapabilityContext& aContext);
-        virtual void setContextParameters(PvmiMIOSession aSession, PvmiCapabilityContext& aContext,
-                                          PvmiKvp* aParameters, int num_parameter_elements);
-        virtual void DeleteContext(PvmiMIOSession aSession,
-                                   PvmiCapabilityContext& aContext);
         virtual void setParametersSync(PvmiMIOSession aSession, PvmiKvp* aParameters,
                                        int num_elements, PvmiKvp * & aRet_kvp);
-        virtual uint32 getCapabilityMetric(PvmiMIOSession aSession);
         virtual PVMFStatus verifyParametersSync(PvmiMIOSession aSession,
                                                 PvmiKvp* aParameters,
                                                 int num_elements);
@@ -353,7 +338,6 @@ class PVMFSMRTSPUnicastNode: public PVMFSMFSPBaseNode
         void HandleSocketNodeCommandCompleted(const PVMFCmdResp&, bool& aPerformErrHandling);
         void HandleRTSPSessionControllerCommandCompleted(const PVMFCmdResp&, bool& aPerformErrHandling);
         void HandleJitterBufferCommandCompleted(const PVMFCmdResp&, bool& aPerformErrHandling);
-        void HandleMediaLayerCommandCompleted(const PVMFCmdResp&, bool& aPerformErrHandling);
         PVMFStatus GetConfigParameter(PvmiKvp*& aParameters, int& aNumParamElements,
                                       int32 aIndex, PvmiKvpAttr reqattr);
         PVMFStatus VerifyAndSetConfigParameter(int index, PvmiKvp& aParameter, bool set);

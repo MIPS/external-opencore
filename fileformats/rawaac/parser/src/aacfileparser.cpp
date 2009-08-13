@@ -1290,8 +1290,10 @@ int32 AACBitstreamObject::getFileInfo(int32& fileSize, TAACFormat& format, uint8
             {
 
                 int32 config_header_size = iActual_size;
+                uint32 samplesPerFrame;
+
                 int32 status = GetActualAacConfig(pBuffer,
-                                                  &iAudioObjectType, &config_header_size, &sampleFreqIndex, &iChannelConfig);
+                                                  &iAudioObjectType, &config_header_size, &sampleFreqIndex, &iChannelConfig, &samplesPerFrame);
                 if (status != SUCCESS) return AACBitstreamObject::MISC_ERROR;
 
                 // Retrieve the audio object type
@@ -2501,6 +2503,8 @@ OSCL_EXPORT_REF ParserErrorCode CAACFileParser::getAACHeaderLen(OSCL_wString& aC
     TAACFormat formatTemp;
     if (ipBSOTemp->getFileInfo(iAACFileSizeTemp, formatTemp, sampleFreqTableValueTemp, bitRateValueTemp, tempHeaderLenValue, aClip))
     {
+        iAACFileTemp.Close();
+        PV_AAC_FF_DELETE(NULL, AACBitstreamObject, ipBSOTemp);
         return FILE_OPEN_ERROR;
     }
     if (formatTemp == EAACADTS)

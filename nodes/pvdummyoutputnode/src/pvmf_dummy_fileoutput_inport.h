@@ -43,9 +43,6 @@
 #ifndef PVMF_PORT_BASE_IMPL_H_INCLUDED
 #include "pvmf_port_base_impl.h"
 #endif
-#ifndef PVMI_CONFIG_AND_CAPABILITY_H_INCLUDED
-#include "pvmi_config_and_capability.h"
-#endif
 #ifndef PVMI_CONFIG_AND_CAPABILITY_UTILS_H_INCLUDED
 #include "pvmi_config_and_capability_utils.h"
 #endif
@@ -62,8 +59,9 @@ class PVMFDummyFileOutputNode;
 
 #define PVMF_MAX_CMDID_CNTR 0x7FFFFFFF
 #define PVMF_MAX_TIME_STAMP 0xFFFFFFFF
-class PVMFDummyFileOutputInPort : public PvmfPortBaseImpl
-        , public PvmiCapabilityAndConfig
+class PVMFDummyFileOutputInPort
+        : public PvmfPortBaseImpl
+        , public PvmiCapabilityAndConfigBase
         , public PvmfSyncUtilDataQueueObserver
         , public OsclTimerObject
         , public PvmfNodesSyncControlInterface
@@ -104,15 +102,8 @@ class PVMFDummyFileOutputInPort : public PvmfPortBaseImpl
                 PvmiKvp*& aParameters, int& num_parameter_elements,
                 PvmiCapabilityContext aContext);
         OSCL_IMPORT_REF PVMFStatus releaseParameters(PvmiMIOSession aSession, PvmiKvp* aParameters, int num_elements);
-        OSCL_IMPORT_REF void createContext(PvmiMIOSession aSession, PvmiCapabilityContext& aContext);
-        OSCL_IMPORT_REF void setContextParameters(PvmiMIOSession aSession, PvmiCapabilityContext& aContext,
-                PvmiKvp* aParameters, int num_parameter_elements);
-        OSCL_IMPORT_REF void DeleteContext(PvmiMIOSession aSession, PvmiCapabilityContext& aContext);
         OSCL_IMPORT_REF void setParametersSync(PvmiMIOSession aSession, PvmiKvp* aParameters,
                                                int num_elements, PvmiKvp * & aRet_kvp);
-        OSCL_IMPORT_REF PVMFCommandId setParametersAsync(PvmiMIOSession aSession, PvmiKvp* aParameters,
-                int num_elements, PvmiKvp*& aRet_kvp, OsclAny* context = NULL);
-        OSCL_IMPORT_REF uint32 getCapabilityMetric(PvmiMIOSession aSession);
         OSCL_IMPORT_REF PVMFStatus verifyParametersSync(PvmiMIOSession aSession, PvmiKvp* aParameters, int num_elements);
 
         // Pure virtuals from PVMFPortInterface

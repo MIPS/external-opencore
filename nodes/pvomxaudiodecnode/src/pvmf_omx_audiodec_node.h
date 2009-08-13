@@ -35,16 +35,6 @@
 #define PVOMXAUDIODEC_MP3_DEFAULT_SAMPLES_PER_FRAME 1152
 #define PVOMXAUDIO_MAX_SUPPORTED_FORMAT 31
 
-struct channelSampleInfo
-{
-    uint32 desiredChannels;
-    uint32 samplingRate;
-    uint32 bitsPerSample;
-    uint32 num_buffers;
-    uint32 buffer_size;
-};
-
-
 // fwd class declaration
 class PV_LATM_Parser;
 
@@ -71,7 +61,7 @@ const PVOMXBaseDecNodeKeyStringData PVOMXAudioDecNodeConfigRenderKeys[PVOMXAUDIO
 
 
 /////////////////////////////////////////////////////////////////////////////////////////
-/////////###############################################################
+//////////###############################################################
 //// ###################################################################
 
 //Mimetypes for the custom interface
@@ -94,27 +84,16 @@ class PVMFOMXAudioDecNode
         uint32 GetNumMetadataValues(PVMFMetadataList& aKeyList);
         //**********End PVMFMetadataExtensionInterface
 
-
-        //==============================================================================
-
-        OMX_ERRORTYPE EventHandlerProcessing(OMX_OUT OMX_HANDLETYPE aComponent,
-                                             OMX_OUT OMX_PTR aAppData,
-                                             OMX_OUT OMX_EVENTTYPE aEvent,
-                                             OMX_OUT OMX_U32 aData1,
-                                             OMX_OUT OMX_U32 aData2,
-                                             OMX_OUT OMX_PTR aEventData);
-
         // for WMA params
         bool VerifyParametersSync(PvmiMIOSession aSession, PvmiKvp* aParameters, int num_elements);
 
         PVMFStatus DoCapConfigVerifyParameters(PvmiKvp* aParameters, int aNumElements);
         void DoCapConfigSetParameters(PvmiKvp* aParameters, int aNumElements, PvmiKvp* &aRetKVP);
 
-    protected:
+    private:
 
         void DoQueryUuid(PVMFOMXBaseDecNodeCommand&);
         void DoRequestPort(PVMFOMXBaseDecNodeCommand&);
-        void DoReleasePort(PVMFOMXBaseDecNodeCommand&);
         PVMFStatus DoGetNodeMetadataKey(PVMFOMXBaseDecNodeCommand&);
         PVMFStatus DoGetNodeMetadataValue(PVMFOMXBaseDecNodeCommand&);
         bool ProcessIncomingMsg(PVMFPortInterface* aPort);
@@ -131,6 +110,8 @@ class PVMFOMXAudioDecNode
         PVMFStatus DeleteLATMParser(void);
 
         bool ReleaseAllPorts();
+
+        bool CreateAACConfigDataFromASF(uint8 *inptr, uint32 inlen, uint8 *outptr, uint32 &outlen);
 
         OMX_AUDIO_CODINGTYPE iOMXAudioCompressionFormat;
 

@@ -111,11 +111,13 @@ class CFastRep
                 , size(0)
                 , buffer(NULL)
                 , writable(false)
+                , overwrite(false)
         {}
         uint32 maxsize;
         uint32 size;
         OsclAny* buffer;
         bool writable;
+        bool overwrite;
         OSCL_IMPORT_REF void set_w(char* cp, uint32 len, uint32 maxlen);
         OSCL_IMPORT_REF void set_w(oscl_wchar* cp, uint32 len, uint32 maxlen);
         OSCL_IMPORT_REF void set_r(const char* cp, uint32 len);

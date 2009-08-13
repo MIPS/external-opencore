@@ -469,7 +469,7 @@ bool OmxComponentEncTest::WriteOutput(OMX_U8* aOutBuff, OMX_U32 aSize)
         fwrite(StartCode, sizeof(OMX_U8), 3, ipOutputFile);
     }
 
-    OMX_S32 BytesWritten = fwrite(aOutBuff, sizeof(OMX_U8), aSize, ipOutputFile);
+    OMX_U32 BytesWritten = fwrite(aOutBuff, sizeof(OMX_U8), aSize, ipOutputFile);
     return (BytesWritten == aSize);
 }
 
@@ -477,7 +477,6 @@ bool OmxComponentEncTest::WriteOutput(OMX_U8* aOutBuff, OMX_U32 aSize)
  * Active Object class's Run () function
  * Control all the states of AO & sends API's to the component
  */
-static OMX_BOOL DisableRun = OMX_FALSE;
 
 void OmxComponentEncTest::Run()
 {
@@ -501,9 +500,9 @@ void OmxComponentEncTest::Run()
             CHECK_MEM(ipAppPriv, "Component_Handle");
 
             //This should be the first call to the component to load it.
-            Err = OMX_Init();
-            CHECK_ERROR(Err, "OMX_Init");
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG, (0, "OmxComponentEncTest::Run() - OMX_Init done"));
+            Err = OMX_MasterInit();
+            CHECK_ERROR(Err, "OMX_MasterInit");
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG, (0, "OmxComponentEncTest::Run() - OMX_MasterInit done"));
 
             //Setting the callbacks
             if (NULL != iRole)
@@ -515,7 +514,7 @@ void OmxComponentEncTest::Run()
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG, (0, "OmxComponentEncTest::Run() - Finding out the components that can support the role %s", iRole));
 
                 // call once to find out the number of components that can fit the role
-                Err = OMX_GetComponentsOfRole(iRole, &NumComps, NULL);
+                Err = OMX_MasterGetComponentsOfRole(iRole, &NumComps, NULL);
 
                 if (OMX_ErrorNone != Err || NumComps < 1)
                 {
@@ -543,13 +542,13 @@ void OmxComponentEncTest::Run()
                 }
 
                 // call 2nd time to get the component names
-                Err = OMX_GetComponentsOfRole(iRole, &NumComps, (OMX_U8**) pCompOfRole);
+                Err = OMX_MasterGetComponentsOfRole(iRole, &NumComps, (OMX_U8**) pCompOfRole);
                 CHECK_ERROR(Err, "GetComponentsOfRole");
 
                 for (ii = 0; ii < NumComps; ii++)
                 {
                     // try to create component
-                    Err = OMX_GetHandle(&ipAppPriv->Handle, (OMX_STRING) pCompOfRole[ii], (OMX_PTR) this, iCallbacks->getCallbackStruct());
+                    Err = OMX_MasterGetHandle(&ipAppPriv->Handle, (OMX_STRING) pCompOfRole[ii], (OMX_PTR) this, iCallbacks->getCallbackStruct());
                     // if successful, no need to continue
                     if ((OMX_ErrorNone == Err) && (NULL != ipAppPriv->Handle))
                     {
@@ -646,7 +645,8 @@ void OmxComponentEncTest::Run()
 
                     if ((0 == oscl_strcmp(iFormat, "M4V")) | (0 == oscl_strcmp(iFormat, "H264")))
                     {
-                        OMX_U32 InputFrameSize;
+                        //Assign a default frame size, will change later based on color format
+                        OMX_U32 InputFrameSize = (iFrameWidth * iFrameHeight * 3);
 
                         if (OMX_COLOR_Format24bitRGB888 == iColorFormat)
                         {
@@ -663,6 +663,14 @@ void OmxComponentEncTest::Run()
                         else if (OMX_COLOR_FormatYUV420SemiPlanar == iColorFormat)
                         {
                             InputFrameSize = (iFrameWidth * iFrameHeight * 3) >> 1;
+                        }
+                        else
+                        {
+                            //We do not handle more color formats, return an error
+                            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
+                                            (0, "OmxComponentEncTest::Run() - Unsupported Color Format %d, Returning Error", iColorFormat));
+                            StopOnError();
+                            break;
                         }
 
                         iInBufferSize = InputFrameSize;
@@ -1489,7 +1497,7 @@ void OmxComponentEncTest::Run()
                     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
                                     (0, "OmxComponentEncTest::RunL() - Free the Component Handle"));
 
-                    Err = OMX_FreeHandle(ipAppPriv->Handle);
+                    Err = OMX_MasterFreeHandle(ipAppPriv->Handle);
 
                     if (OMX_ErrorNone != Err)
                     {
@@ -1502,10 +1510,10 @@ void OmxComponentEncTest::Run()
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
                             (0, "OmxComponentEncTest::RunL() - De-initialize the omx component"));
 
-            Err = OMX_Deinit();
+            Err = OMX_MasterDeinit();
             if (OMX_ErrorNone != Err)
             {
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "OmxComponentEncTest::RunL() - OMX_Deinit Error"));
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "OmxComponentEncTest::RunL() - OMX_MasterDeinit Error"));
                 iTestStatus = OMX_FALSE;
             }
 
@@ -1624,6 +1632,11 @@ void OmxComponentEncTest::Run()
         }
 
         break;
+
+        default:
+        {
+            break;
+        }
     }
 
     return;
@@ -1869,7 +1882,7 @@ OMX_BOOL OmxComponentEncTest::ParseM4vLine(const char* line_start,
             {
                 Extract(line_start, line_end, temp1, len1);
                 PV_atoi(temp1, 'd', temp);
-                iFrameWidth = temp;
+                iFrameHeight = temp;
             }
             break;
             case INPUT_FRAMERATE_M4V:

@@ -76,7 +76,7 @@ class Oscl_FileFind
          * @param buf buffer for returned pathname (utf8).
          * @param buflen size in wide characters of buf.  If buf is not large enough to hold the returned string, NULL is returned, and GetLastError is set to E_BUFFER_TOO_SMALL.
          *
-         * @return returns a pointer to buffer supplied, which contains the pathname of the next found element, or NULL otherwise.On a NULL return value, GetLastError() returns a more detailed error.
+         * @return returns a pointer to buffer supplied, which contains the pathname of the first found element, or NULL otherwise.On a NULL return value, GetLastError() returns a more detailed error.
          */
         OSCL_IMPORT_REF const char *FindFirst(const char *directory, const char *pattern, char *buf, uint32 buflen);
         /**
@@ -87,7 +87,7 @@ class Oscl_FileFind
          * @param buf buffer for returned pathname (utf16).
          * @param buflen size in wide characters of buf.  If buf is not large enough to hold the returned string, NULL is returned, and GetLastError is set to E_BUFFER_TOO_SMALL.
          *
-         * @return returns a pointer to buffer supplied, which contains the pathname of the next found element, or NULL otherwise.  On a NULL return value, GetLastError() returns a more detailed error.
+         * @return returns a pointer to buffer supplied, which contains the pathname of the first found element, or NULL otherwise.  On a NULL return value, GetLastError() returns a more detailed error.
          */
         OSCL_IMPORT_REF const oscl_wchar *FindFirst(const oscl_wchar *directory, const oscl_wchar *pattern, oscl_wchar *buf, uint32 buflen);
         /**

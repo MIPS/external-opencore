@@ -198,6 +198,13 @@ class PVMFCPMPassThruPlugInOMA1 : public OsclActiveObject,
                                                 Oscl_Vector<PVUuid, OsclMemAllocator>& aUuids,
                                                 bool aExactUuidsOnly = false,
                                                 const OsclAny* aContext = NULL);
+        bool HasQueryInterfaceSync()
+        {
+            return true;
+        }
+        OSCL_IMPORT_REF PVMFCommandId QueryInterfaceSync(PVMFSessionId aSession,
+                const PVUuid& aUuid,
+                PVInterface*& aInterfacePtr);
         OSCL_IMPORT_REF PVMFCommandId QueryInterface(PVMFSessionId aSession,
                 const PVUuid& aUuid,
                 PVInterface*& aInterfacePtr,

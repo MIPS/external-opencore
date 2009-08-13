@@ -425,6 +425,14 @@ typedef pthread_mutex_t TOsclBasicLockObject;
 typedef TOsclBasicLockObject __verify__TOsclBasicLockObject__defined__;
 #endif
 
+/**
+\def OSCL_HAS_PRAGMA_PACK macro should be set to 1 if the compiler supports
+pragma pack, 0 if it does not.
+*/
+#ifndef OSCL_HAS_PRAGMA_PACK
+#error "ERROR: OSCL_HAS_PRAGMA_PACK must be defined to 0 or 1"
+#endif
+
 /*! @} */
 
 #endif // OSCLCONFIG_CHECK_H_INCLUDED

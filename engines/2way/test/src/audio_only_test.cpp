@@ -43,8 +43,9 @@ void audio_only_test::test()
         }
     }
 
-    this->RemoveFromScheduler();
     test_is_true(iTestStatus);
+    TestCompleted(this);
+    this->RemoveFromScheduler();
 }
 
 

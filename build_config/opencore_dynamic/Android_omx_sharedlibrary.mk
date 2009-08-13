@@ -12,8 +12,6 @@ LOCAL_MODULE := libomx_sharedlibrary
 
 LOCAL_PRELINK_MODULE := false
 
--include $(PV_TOP)/Android_platform_extras.mk
-
 -include $(PV_TOP)/Android_system_extras.mk
 
 LOCAL_SHARED_LIBRARIES +=   libopencore_common

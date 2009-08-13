@@ -303,7 +303,7 @@ SampleDescriptionAtom::SampleDescriptionAtom(MP4_FF_FILE *fp,
 
                             EcnvBox* ebox = (EcnvBox*)entry;
                             AVCSampleEntry* pAVCSampleEntry = ebox->getAVCSampleEntry();
-                            if (pAVCSampleEntry) 
+                            if (pAVCSampleEntry)
                             {
                                 _oAVC = true;
                                 pAVCSampleEntry->setParent(this);

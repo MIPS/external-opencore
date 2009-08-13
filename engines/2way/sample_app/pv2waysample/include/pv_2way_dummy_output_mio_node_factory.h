@@ -20,22 +20,20 @@
 
 #include "pvmf_node_interface.h"
 #include "pv_2way_mio_node_factory.h"
-#include "pvmf_fileinput_settings.h"
-
+#include "lipsync_dummy_settings.h"
+class PvmiMIOControl;
 
 class PV2WayDummyOutputMIONodeFactory : public PV2WayMIONodeFactory
 {
     public:
-        PV2WayDummyOutputMIONodeFactory(PVMFFileInputSettings aPerfFileSettings):
-                iPerfFileSettings(aPerfFileSettings) {};
+        PV2WayDummyOutputMIONodeFactory() {};
         virtual ~PV2WayDummyOutputMIONodeFactory() {};
-        virtual PVMFNodeInterface* Create();
+        virtual PVMFNodeInterface* Create(LipSyncDummyMIOSettings& aSettings);
         virtual void Delete(PVMFNodeInterface** mioNode);
     private:
-        PVMFFileInputSettings iPerfFileSettings;
-
+        PvmiMIOControl* iMediaControl;
+        int CreateMedia(LipSyncDummyMIOSettings& aSettings);
+        void DeleteMedia();
 };
-
-
 
 #endif

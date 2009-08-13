@@ -85,6 +85,7 @@ class DownloadContainer : public ProtocolContainer
             return iNeedCheckResumeNotificationManually;
         }
         OSCL_IMPORT_REF void setEventReporterSupportObjects();
+        OSCL_IMPORT_REF void requiredSocketReconnect(const bool aForceSocketReconnect = true);
 
     protected:
         bool iForceSocketReconnect;
@@ -532,8 +533,8 @@ class downloadEventReporter : public EventReporter
         OSCL_IMPORT_REF void enableBufferingCompleteEvent();
         OSCL_IMPORT_REF void sendBufferStatusEvent();
 
-        virtual bool checkContentLengthOrTooLarge();
-        virtual bool checkContentTruncated(const uint32 downloadStatus);
+        OSCL_IMPORT_REF virtual bool checkContentLengthOrTooLarge();
+        OSCL_IMPORT_REF virtual bool checkContentTruncated(const uint32 downloadStatus);
 
     protected:
         virtual bool needToCheckContentInfoEvent()

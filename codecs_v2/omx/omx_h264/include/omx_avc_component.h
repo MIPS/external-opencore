@@ -32,15 +32,13 @@
 #include "avc_dec.h"
 #endif
 
-#if (defined(TEST_FULL_AVC_FRAME_MODE) || defined(TEST_FULL_AVC_FRAME_MODE_SC))
+#if (defined(TEST_FULL_AVC_FRAME_MODE) || defined(TEST_FULL_AVC_FRAME_MODE_SC) || defined(TEST_FULL_AVC_FRAME_MODE_I2BNS) || defined(TEST_FULL_AVC_FRAME_MODE_I4BNS))
 #define INPUT_BUFFER_SIZE_AVC (2000 * MAX_NAL_PER_FRAME)
 #else
 #define INPUT_BUFFER_SIZE_AVC 2000
 #undef MAX_NAL_PER_FRAME
 #define MAX_NAL_PER_FRAME 1 /* this component doesn't need to suppoart more than 1 NAL per frame in this mode, so overwrite default */
 #endif
-
-#define NAL_START_CODE_SIZE 4
 
 //qcif - output 176*144*3/2
 #define OUTPUT_BUFFER_SIZE_AVC 38016
@@ -75,6 +73,10 @@ class OpenmaxAvcAO : public OmxComponentVideo
             OMX_IN  OMX_INDEXTYPE nIndex,
             OMX_INOUT OMX_PTR pComponentConfigStructure);
 
+        OMX_BOOL DetectStartCodeLength(OMX_U8* aBitstream,
+                                       OMX_U8** aNalUnit,
+                                       OMX_U32 aBufSize,
+                                       OMX_U32* aSCSize);
 
     private:
 
@@ -83,9 +85,11 @@ class OpenmaxAvcAO : public OmxComponentVideo
 
         // variables for "frame" mode i.e. iOMXComponentNeedsFullAVCFrames is turned on
         OMX_U32 iNALSizeArray[MAX_NAL_PER_FRAME]; // 100 should be more than enough NALs per frame
+        OMX_U32 iNALStartCodeSizeArray[MAX_NAL_PER_FRAME]; // 100 should be more than enough NALs per frame
         OMX_U32 iCurrNAL;
         OMX_U32 iNumNALs;
         OMX_U32 iNALOffset;
+        OMX_U32 iSizeOfNALSize;
 };
 
 

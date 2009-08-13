@@ -43,8 +43,6 @@ LOCAL_WHOLE_STATIC_LIBRARIES := \
 
 LOCAL_MODULE := libopencore_common
 
--include $(PV_TOP)/Android_platform_extras.mk
-
 -include $(PV_TOP)/Android_system_extras.mk
 
 LOCAL_SHARED_LIBRARIES +=   

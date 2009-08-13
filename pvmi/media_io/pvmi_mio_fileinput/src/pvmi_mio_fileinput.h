@@ -51,8 +51,8 @@
 #ifndef PVMI_MEDIA_TRANSFER_H_INCLUDED
 #include "pvmi_media_transfer.h"
 #endif
-#ifndef PVMI_CONFIG_AND_CAPABILITY_H_INCLUDED
-#include "pvmi_config_and_capability.h"
+#ifndef PVMI_CONFIG_AND_CAPABILITY_BASE_H_INCLUDED
+#include "pvmi_config_and_capability_base.h"
 #endif
 #ifndef PVMF_SIMPLE_MEDIA_BUFFER_H_INCLUDED
 #include "pvmf_simple_media_buffer.h"
@@ -60,6 +60,10 @@
 #ifndef PVMI_MIO_FILEINPUT_FACTORY_H_INCLUDED
 #include "pvmi_mio_fileinput_factory.h"
 #endif
+#ifndef OSCL_TIME_H_INCLUDED
+#include "oscl_time.h"
+#endif
+
 
 // Forward declaration
 class PvmiMIOFileInputSettings;
@@ -151,10 +155,11 @@ class PvmiMIOFileInputMediaData
         bool iNotification;
 };
 
-class PvmiMIOFileInput : public OsclTimerObject,
-        public PvmiMIOControl,
-        public PvmiMediaTransfer,
-        public PvmiCapabilityAndConfig
+class PvmiMIOFileInput
+        : public OsclTimerObject
+        , public PvmiMIOControl
+        , public PvmiMediaTransfer
+        , public PvmiCapabilityAndConfigBase
 
 {
     public:
@@ -210,25 +215,14 @@ class PvmiMIOFileInput : public OsclTimerObject,
         OSCL_IMPORT_REF void cancelCommand(PVMFCommandId aCmdId);
         OSCL_IMPORT_REF void cancelAllCommands();
 
-        // Pure virtuals from PvmiCapabilityAndConfig
-        OSCL_IMPORT_REF void setObserver(PvmiConfigAndCapabilityCmdObserver* aObserver);
+        // from PvmiCapabilityAndConfig
         OSCL_IMPORT_REF PVMFStatus getParametersSync(PvmiMIOSession aSession, PvmiKeyType aIdentifier,
                 PvmiKvp*& aParameters, int& num_parameter_elements,
                 PvmiCapabilityContext aContext);
         OSCL_IMPORT_REF PVMFStatus releaseParameters(PvmiMIOSession aSession, PvmiKvp* aParameters,
                 int num_elements);
-        OSCL_IMPORT_REF void createContext(PvmiMIOSession aSession, PvmiCapabilityContext& aContext);
-        OSCL_IMPORT_REF void setContextParameters(PvmiMIOSession aSession, PvmiCapabilityContext& aContext,
-                PvmiKvp* aParameters, int num_parameter_elements);
-        OSCL_IMPORT_REF void DeleteContext(PvmiMIOSession aSession, PvmiCapabilityContext& aContext);
         OSCL_IMPORT_REF void setParametersSync(PvmiMIOSession aSession, PvmiKvp* aParameters,
                                                int num_elements, PvmiKvp * & aRet_kvp);
-        OSCL_IMPORT_REF PVMFCommandId setParametersAsync(PvmiMIOSession aSession, PvmiKvp* aParameters,
-                int num_elements, PvmiKvp*& aRet_kvp,
-                OsclAny* context = NULL);
-        OSCL_IMPORT_REF uint32 getCapabilityMetric(PvmiMIOSession aSession);
-        OSCL_IMPORT_REF PVMFStatus verifyParametersSync(PvmiMIOSession aSession,
-                PvmiKvp* aParameters, int num_elements);
         OSCL_IMPORT_REF uint32 GetStreamDuration();
         OSCL_IMPORT_REF void SetAuthoringDuration(uint32);
 
@@ -339,6 +333,8 @@ class PvmiMIOFileInput : public OsclTimerObject,
         int32 iMilliSecondsPerDataEvent;
         int32 iMicroSecondsPerDataEvent;
         PVMFTimestamp iTimeStamp;
+        PVMFTimestamp iReadTimeStamp; // to remove warning about variable clobbered by 'longjmp' or 'vfork'
+
 
         uint32 iPreTS;
         uint32 iCount;
@@ -366,6 +362,8 @@ class PvmiMIOFileInput : public OsclTimerObject,
         PvmiMIOFileInputState iState;
         uint32 iAuthoringDuration;
         uint32 iStreamDuration;  //in msec
+        TimeValue iStartTime;
+        PVMFTimestamp iStartTimestamp;
 
         // Format specific info
         OsclRefCounterMemFrag iFormatSpecificInfo;

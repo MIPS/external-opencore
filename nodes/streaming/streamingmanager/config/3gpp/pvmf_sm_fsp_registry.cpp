@@ -23,6 +23,10 @@
 #include "pvmf_sm_rtsp_unicast_node_factory.h"
 #endif
 
+#ifndef PVMF_SM_RTSPT_UNICAST_NODE_FACTORY_H_INCLUDED
+#include "pvmf_sm_rtspt_unicast_node_factory.h"
+#endif
+
 PVMFSMFSPRegistry::PVMFSMFSPRegistry()
 {
     PVMFSMFSPInfo fspInfo;
@@ -35,6 +39,14 @@ PVMFSMFSPRegistry::PVMFSMFSPRegistry()
     fspInfo.iSMFSPCreateFunc = PVMFSMRTSPUnicastNodeFactory::CreateSMRTSPUnicastNodeFactory;
     fspInfo.iSMFSPReleaseFunc = PVMFSMRTSPUnicastNodeFactory::DeleteSMRTSPUnicastNodeFactory;
     iType.push_back(fspInfo);
+
+    fspInfo.iSourceFormatTypes.clear();
+    fspInfo.iSourceFormatTypes.push_back(PVMF_MIME_DATA_SOURCE_RTSP_TUNNELLING);
+    fspInfo.iSMFSPUUID = KPVMFSMRTSPTUnicastNodeUuid;
+    fspInfo.iSMFSPCreateFunc = PVMFSMRTSPTUnicastNodeFactory::CreateSMRTSPTUnicastNode;
+    fspInfo.iSMFSPReleaseFunc = PVMFSMRTSPTUnicastNodeFactory::DeleteSMRTSPTUnicastNode;
+    iType.push_back(fspInfo);
+
 }
 
 PVMFSMFSPRegistry::~PVMFSMFSPRegistry()

@@ -19,7 +19,7 @@
 #define TEST_ENGINE_UTILITY_H_HEADER
 
 #include "unit_test_args.h"
-#define MAX_324_TEST 35
+#define MAX_324_TEST 100000
 
 void FindTestRange(cmd_line* command_line,
                    int32& iFirstTest,

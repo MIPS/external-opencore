@@ -23,7 +23,8 @@
 OMX_BOOL OmxEncTestBufferNegotiation::NegotiateParameters()
 {
     OMX_ERRORTYPE Err;
-    OMX_S32 NumPorts, ii;
+    OMX_S32 NumPorts;
+    OMX_U32 ii;
 
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "OmxEncTestBufferNegotiation::NegotiateParameters() - IN"));
 
@@ -236,8 +237,8 @@ OMX_BOOL OmxEncTestBufferNegotiation::NegotiateParameters()
     INIT_GETPARAMETER_STRUCT(OMX_PARAM_PORTDEFINITIONTYPE, iParamPort);
     Err = OMX_GetParameter(ipAppPriv->Handle, OMX_IndexParamPortDefinition, &iParamPort);
 
-    if ((OMX_ErrorNone != Err) || (iParamPort.nBufferCountActual != iInBufferCount) ||
-            (iParamPort.nBufferSize != iInBufferSize))
+    if ((OMX_ErrorNone != Err) || (iParamPort.nBufferCountActual != (OMX_U32)iInBufferCount) ||
+            (iParamPort.nBufferSize != (OMX_U32)iInBufferSize))
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
                         (0, "OmxEncTestBufferNegotiation::NegotiateParameters() - Buffer parameter verificication failed with Get/Set Parameter combination on port %d, OUT", iInputPortIndex));
@@ -304,8 +305,8 @@ OMX_BOOL OmxEncTestBufferNegotiation::NegotiateParameters()
     iParamPort.nPortIndex = iOutputPortIndex;
 
     Err = OMX_GetParameter(ipAppPriv->Handle, OMX_IndexParamPortDefinition, &iParamPort);
-    if ((OMX_ErrorNone != Err) || (iParamPort.nBufferCountActual != iOutBufferCount)
-            || (iParamPort.nBufferSize != iOutBufferSize))
+    if ((OMX_ErrorNone != Err) || (iParamPort.nBufferCountActual != (OMX_U32)iOutBufferCount)
+            || (iParamPort.nBufferSize != (OMX_U32)iOutBufferSize))
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
                         (0, "OmxEncTestBufferNegotiation::NegotiateParameters() - Buffer parameter verificication failed with Get/Set Parameter combination on port %d, OUT", iOutputPortIndex));
@@ -902,20 +903,20 @@ void OmxEncTestBufferNegotiation::Run()
             CHECK_MEM(ipAppPriv, "Component_Handle");
 
             //This should be the first call to the component to load it.
-            Err = OMX_Init();
-            CHECK_ERROR(Err, "OMX_Init");
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG, (0, "OmxEncTestBufferNegotiation::Run() - OMX_Init done"));
+            Err = OMX_MasterInit();
+            CHECK_ERROR(Err, "OMX_MasterInit");
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG, (0, "OmxEncTestBufferNegotiation::Run() - OMX_MasterInit done"));
 
             if (NULL != iRole)
             {
                 OMX_U32 NumComps = 0;
                 OMX_STRING* pCompOfRole = NULL;
-                OMX_BOOL IsRoleSupported = OMX_FALSE;
+
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG, (0, "OmxEncTestBufferNegotiation::Run() - Finding out the role for the component %s", iRole));
 
                 //Given the role, determine the component first & then get the handle
                 // Call once to find out the number of components that can fit the role
-                Err = OMX_GetComponentsOfRole(iRole, &NumComps, NULL);
+                Err = OMX_MasterGetComponentsOfRole(iRole, &NumComps, NULL);
 
                 if (OMX_ErrorNone != Err || NumComps < 1)
                 {
@@ -943,13 +944,13 @@ void OmxEncTestBufferNegotiation::Run()
                 }
 
                 // call 2nd time to get the component names
-                Err = OMX_GetComponentsOfRole(iRole, &NumComps, (OMX_U8**) pCompOfRole);
+                Err = OMX_MasterGetComponentsOfRole(iRole, &NumComps, (OMX_U8**) pCompOfRole);
                 CHECK_ERROR(Err, "GetComponentsOfRole");
 
                 for (ii = 0; ii < NumComps; ii++)
                 {
                     // try to create component
-                    Err = OMX_GetHandle(&ipAppPriv->Handle, (OMX_STRING) pCompOfRole[ii], (OMX_PTR) this , iCallbacks->getCallbackStruct());
+                    Err = OMX_MasterGetHandle(&ipAppPriv->Handle, (OMX_STRING) pCompOfRole[ii], (OMX_PTR) this , iCallbacks->getCallbackStruct());
                     // if successful, no need to continue
                     if ((OMX_ErrorNone == Err) && (NULL != ipAppPriv->Handle))
                     {
@@ -1187,7 +1188,7 @@ void OmxEncTestBufferNegotiation::Run()
                     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
                                     (0, "OmxEncTestBufferNegotiation::Run() - Free the Component Handle"));
 
-                    Err = OMX_FreeHandle(ipAppPriv->Handle);
+                    Err = OMX_MasterFreeHandle(ipAppPriv->Handle);
 
                     if (OMX_ErrorNone != Err)
                     {
@@ -1199,10 +1200,10 @@ void OmxEncTestBufferNegotiation::Run()
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
                             (0, "OmxEncTestBufferNegotiation::Run() - De-initialize the omx component"));
 
-            Err = OMX_Deinit();
+            Err = OMX_MasterDeinit();
             if (OMX_ErrorNone != Err)
             {
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "OmxEncTestBufferNegotiation::Run() - OMX_Deinit Error"));
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "OmxEncTestBufferNegotiation::Run() - OMX_MasterDeinit Error"));
                 iTestStatus = OMX_FALSE;
             }
 

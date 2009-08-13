@@ -1,0 +1,12 @@
+# This is a Configuration file #
+###################################################
+#FILE TYPE - This should be at the start
+GCFTESTCASE
+Terminal A
+# Connection Capabilities
+COMMNODE SOCKET
+CONNECTIONTYPE SERVER
+IP 127.0.0.1
+PORT 12000
+
+

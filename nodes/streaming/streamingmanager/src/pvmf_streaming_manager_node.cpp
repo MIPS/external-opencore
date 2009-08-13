@@ -511,16 +511,8 @@ PVMFStatus PVMFStreamingManagerNode::SetSourceInitializationData(OSCL_wString& a
         }
     }
 
-    PVMFFormatType fspSrcFormat = aSourceFormat;
-    //Check if tunelling plugin is to be instantiated?
-    if (aSourceFormat == PVMF_MIME_DATA_SOURCE_RTSP_URL)//check for SDP files too???
-    {
-        OSCL_wStackString<8> rtsptScheme(_STRLIT_WCHAR("rtspt"));
-        if (oscl_strncmp(rtsptScheme.get_cstr(), aSourceURL.get_cstr(), 5) == 0)
-        {
-            fspSrcFormat = PVMF_MIME_DATA_SOURCE_RTSP_TUNNELLING;
-        }
-    }
+    PVMFFormatType fspSrcFormat = CheckForRTSPTunnelling(aSourceURL, aSourceFormat, aSourceData) ?
+                                  PVMF_MIME_DATA_SOURCE_RTSP_TUNNELLING : aSourceFormat;
 
     Oscl_Vector<PVUuid, OsclMemAllocator> srcNodeUuidVec;
     if (PVMFSuccess == iSMFSPRegistry->QueryRegistry(fspSrcFormat, srcNodeUuidVec))
@@ -795,4 +787,97 @@ void PVMFStreamingManagerNode::addRef()
 void PVMFStreamingManagerNode::removeRef()
 {
 
+}
+
+//Check if tunelling plugin is to be instantiated?
+bool PVMFStreamingManagerNode::CheckForRTSPTunnelling(OSCL_wString& aSourceURL,
+        PVMFFormatType aSourceFormat,
+        OsclAny* aSourceData)
+{
+    bool retval = false;
+    if (aSourceFormat == PVMF_MIME_DATA_SOURCE_RTSP_URL) //check for SDP files too???
+    {
+        OSCL_wStackString<8> rtsptScheme(_STRLIT_WCHAR("rtspt"));
+        if (oscl_strncmp(rtsptScheme.get_cstr(), aSourceURL.get_cstr(), 5) == 0)
+        {
+            retval = true;
+        }
+    }
+    // Parse SDP to check if the control URL contains rtspt
+    else if (aSourceFormat == PVMF_MIME_DATA_SOURCE_SDP_FILE)
+    {
+        /* Parse SDP file contents into a buffer */
+        Oscl_FileServer fileServ;
+        Oscl_File osclFile;
+        fileServ.Connect();
+        PVMFSourceContextData* atempData = (PVMFSourceContextData*)aSourceData;
+        if (atempData && atempData->CommonData() && atempData->CommonData()->iFileHandle)
+        {
+            OsclFileHandle* tempHandle = atempData ->CommonData()->iFileHandle;
+            osclFile.SetFileHandle(tempHandle);
+        }
+
+        if (osclFile.Open(aSourceURL.get_cstr(),
+                          Oscl_File::MODE_READ,
+                          fileServ) != 0)
+        {
+            PVMF_SM_LOGSTACKTRACE((0, "PVMFStreamingManagerNode::CheckForRTSPTunnelling - Unable to open SDP file"));
+            return retval;
+        }
+
+        /* Get File Size */
+        osclFile.Seek(0, Oscl_File::SEEKEND);
+        int32 fileSize = (TOsclFileOffsetInt32)osclFile.Tell();
+        osclFile.Seek(0, Oscl_File::SEEKSET);
+
+        if (fileSize <= 0)
+        {
+            PVMF_SM_LOGSTACKTRACE((0, "PVMFStreamingManagerNode::CheckForRTSPTunnelling - Corrupt SDP file"));
+            return retval;
+        }
+
+        OsclMemAllocDestructDealloc<uint8> my_alloc;
+        OsclRefCounter* my_refcnt;
+        uint aligned_refcnt_size =
+            oscl_mem_aligned_size(sizeof(OsclRefCounterSA< OsclMemAllocDestructDealloc<uint8> >));
+        /*
+         * To acct for null char, as SDP buffer is treated akin to a string by the
+         * SDP parser lib.
+         */
+        uint allocsize = oscl_mem_aligned_size(aligned_refcnt_size + fileSize + 2);
+        uint8* my_ptr = NULL;
+        int32 leaveCode = 0;
+        OSCL_TRY(leaveCode,
+                 my_ptr = OSCL_STATIC_CAST(uint8*, my_alloc.ALLOCATE(allocsize)));
+        if (leaveCode != OsclErrNone)
+        {
+            PVMF_SM_LOGSTACKTRACE((0, "PVMFStreamingManagerNode::CheckForRTSPTunnelling - Error Memory Allocation failed"));
+        }
+
+        if (!my_ptr)
+        {
+            PVMF_SM_LOGSTACKTRACE((0, "PVMFStreamingManagerNode::CheckForRTSPTunnelling - Unable to process SDP file"));
+            return retval;
+        }
+
+        my_refcnt = OSCL_PLACEMENT_NEW(my_ptr, OsclRefCounterSA< OsclMemAllocDestructDealloc<uint8> >(my_ptr));
+        my_ptr += aligned_refcnt_size;
+
+        OsclMemoryFragment memfrag;
+        memfrag.len = fileSize;
+        memfrag.ptr = my_ptr;
+
+        OsclRefCounterMemFrag tmpRefcntMemFrag(memfrag, my_refcnt, memfrag.len);
+        osclFile.Read(memfrag.ptr, 1, fileSize);
+
+        char rtsptSchemeChar[] = "rtspt";
+        if (oscl_strstr((char*)memfrag.ptr, (char*)rtsptSchemeChar) != NULL)
+        {
+            retval = true;
+        }
+        osclFile.Close();
+        fileServ.Close();
+    }
+
+    return retval;
 }

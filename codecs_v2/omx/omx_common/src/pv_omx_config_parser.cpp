@@ -24,8 +24,18 @@
 #endif
 
 #include "pv_omx_config_parser.h"
+#include "pv_omxcore.h"
 
+#if (USE_DYNAMIC_LOAD_OMX_COMPONENTS == 0)
+// in case of static build - just redirect master omx core call to local pv core call
+OSCL_EXPORT_REF OMX_BOOL OMX_MasterConfigParser(
+    OMX_PTR aInputParameters,
+    OMX_PTR aOutputParameters)
 
+{
+    return OMXConfigParser(aInputParameters, aOutputParameters);
+}
+#endif
 
 OSCL_EXPORT_REF OMX_BOOL OMXConfigParser(
     OMX_PTR aInputParameters,
@@ -57,12 +67,8 @@ OSCL_EXPORT_REF OMX_BOOL OMXConfigParser(
                 aInputs.iMimeType = PVMF_MIME_AAC_SIZEHDR;
 
             }
-            else if (0 == oscl_strcmp(pInputs->cComponentRole, (OMX_STRING)"audio_decoder.amr"))
-            {
-                aInputs.iMimeType = PVMF_MIME_AMR;
-
-            }
-            else if (0 == oscl_strcmp(pInputs->cComponentRole, (OMX_STRING)"audio_decoder.amrnb"))
+            else if ((0 == oscl_strcmp(pInputs->cComponentRole, (OMX_STRING)"audio_decoder.amr")) ||
+                     (0 == oscl_strcmp(pInputs->cComponentRole, (OMX_STRING)"audio_decoder.amrnb")))
             {
                 aInputs.iMimeType = PVMF_MIME_AMR;
 
@@ -98,7 +104,12 @@ OSCL_EXPORT_REF OMX_BOOL OMXConfigParser(
             aInputs.inPtr = pInputs->inPtr;
             aInputs.inBytes = pInputs->inBytes;
 
-            if (0 == oscl_strcmp(pInputs->cComponentRole, (OMX_STRING)"video_decoder.wmv"))
+            if (0 == oscl_strcmp(pInputs->cComponentRole, (OMX_STRING)"video_decoder.rv"))
+            {
+                aInputs.iMimeType = PVMF_MIME_REAL_VIDEO;
+
+            }
+            else if (0 == oscl_strcmp(pInputs->cComponentRole, (OMX_STRING)"video_decoder.wmv"))
             {
                 aInputs.iMimeType = PVMF_MIME_WMV;
 

@@ -29,6 +29,11 @@
 #ifndef OSCL_MEM_H_INCLUDED
 #include "oscl_mem.h"
 #endif
+
+#ifndef OSCL_VECTOR_H_INCLUDED
+#include "oscl_vector.h"
+#endif
+
 /**
  * The PVMFSimpleMediaBuffer class is a basic MediaDataImpl
  * implementation that allows for a single buffer memory
@@ -73,10 +78,19 @@ class PVMFSimpleMediaBuffer : public PVMFMediaDataImpl
         uint32 marker_info;
         bool random_access_point;
         uint32 errors_flag;
-        OsclMemoryFragment buffer;
         uint32 capacity;
+        uint32 iBufferLen;
         OsclRefCounter* refcnt;
 
+        //In the beginning, there'll be only one fragment in the vector and that will comprize of the single buffer.only
+        //As this MediaDataImpl flows thru the graph, intermediate node may choose to fragmnet the buffer and
+        //may push inthe fragments to the data impl.
+
+        //This vector will contain the fragments, and wont keep track of the refcount.
+        //Implementation requires fragments requested to be appended should belong to the
+        //simple buffer originally created while creating instance of PVMFSimpleMediaBuffer
+
+        Oscl_Vector<OsclMemoryFragment, OsclMemAllocator> iBufferFragments;
 };
 
 

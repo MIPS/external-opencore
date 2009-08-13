@@ -51,6 +51,28 @@
 #include "oscl_mem.h"
 #endif
 
+/** Conversion operations for OSCL_String classes
+*/
+enum TOSCL_StringOp
+{
+    //Compress from wide-character to single-wide without any conversion.
+    //This operation is only appropriate for ASCII strings.
+    EOSCL_StringOp_CompressASCII
+    //Compress from wide-character to single-side with UTF-16 to UTF-8 conversion
+    , EOSCL_StringOp_UTF16ToUTF8
+};
+
+/** Conversion operations for OSCL_wString classes
+*/
+enum TOSCL_wStringOp
+{
+    //Expand from single-wide to wide-character without any conversion.
+    //This operation is only appropriate for ASCII strings.
+    EOSCL_wStringOp_ExpandASCII
+    //Expand from single-wide to wide-character with UTF-8 to UTF-16 conversion.
+    , EOSCL_wStringOp_UTF8ToUTF16
+};
+
 /**
     A common base class for string classes with
     "char" character format
@@ -147,6 +169,20 @@ class OSCL_String : public HeapBase
         */
         OSCL_IMPORT_REF virtual chartype read(uint32 index)const;
 
+        /**
+            This function allocates a temp storage for performing one of
+            the following operations based on TOSCL_StringOp
+            - compress src string from oscl_wchar to utf8.
+            - convert src string from oscl_wchar to utf8.
+            call parent set_rep() to copy resulting string.
+            @param src: reference input string
+            @param len: length of string to operate on
+            @param op: type operation mentioned above
+            @param aAlloc: optional, memory allocator if available
+            @return length of compressed or converted string exclude terminated '\0'.
+        */
+        OSCL_IMPORT_REF virtual uint32 setrep_to_char(const oscl_wchar* src, uint32 len,
+                TOSCL_StringOp op, Oscl_DefAlloc* aAlloc);
         /**
             This function performs a hash operation on the string.
             If the string is not writable, the function leaves.
@@ -252,6 +288,9 @@ class OSCL_wString
         OSCL_IMPORT_REF chartype operator[](uint32 index) const;
 
         OSCL_IMPORT_REF virtual chartype read(uint32 index)const;
+
+        OSCL_IMPORT_REF virtual uint32 setrep_to_wide_char(const char* src, uint32 len,
+                TOSCL_wStringOp op, Oscl_DefAlloc* aAlloc);
 
         OSCL_IMPORT_REF virtual int8 hash() const;
 

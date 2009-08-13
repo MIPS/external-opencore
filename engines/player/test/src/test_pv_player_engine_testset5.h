@@ -612,8 +612,10 @@ class pvplayer_async_test_ppb_base : public pvplayer_async_test_base
                 , iShoutcastPlayStopPlay(false)
                 , iUseLongClip(false)
                 , iSessionDuration(0)
+                , iVerifyNumBufferingCompleteEvent(false)
         {
             iNumBufferingStart = iNumBufferingComplete = iNumUnderflow = iNumDataReady = iNumEOS = 0;
+            iStartTick = iEndTick = 0;
         }
 
         virtual ~pvplayer_async_test_ppb_base() {}
@@ -697,6 +699,13 @@ class pvplayer_async_test_ppb_base : public pvplayer_async_test_base
         int32 iNumUnderflow;
         int32 iNumDataReady;
         int32 iNumEOS;
+        uint32 iStartTick;
+        uint32 iEndTick;
+
+        void SetVerifyNumBufferingCompleteEvent()
+        {
+            iVerifyNumBufferingCompleteEvent = true;
+        }
 
         bool iContentTooLarge;
 
@@ -823,6 +832,9 @@ class pvplayer_async_test_ppb_base : public pvplayer_async_test_base
         void PrintJanusError(const PVCmdResponse& aResponse);
 
         uint32 iSessionDuration;
+
+        //Flag for specific case
+        bool iVerifyNumBufferingCompleteEvent;
 
     private:
         void HandleProtocolEngineNodeErrors(int32 aErr);

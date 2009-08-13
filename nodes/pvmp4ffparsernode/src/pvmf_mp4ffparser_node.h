@@ -510,22 +510,23 @@ enum BaseKeys_SelectionType
 
 #define PVMFFFPARSERNODE_MAX_NUM_TRACKS 6
 
-class PVMFMP4FFParserNode : public OsclTimerObject,
-        public PVMFNodeInterface,
-        public PVMFDataSourceInitializationExtensionInterface,
-        public PVMFTrackSelectionExtensionInterface,
-        public PvmfDataSourcePlaybackControlInterface,
-        public PVMFMetadataExtensionInterface,
-        public PVMFTrackLevelInfoExtensionInterface,
-        public PVMFCPMStatusObserver,
-        public PvmiDataStreamObserver,
-        public PVMIDatastreamuserInterface,
-        public PVMFFormatProgDownloadSupportInterface,
-        public OsclTimerObserver,
-        public PVMFCPMPluginLicenseInterface,
-        public PvmiCapabilityAndConfig,
-        public PVMFMediaClockStateObserver, // For observing the playback clock states
-        public PvmfDataSourceDirectionControlInterface
+class PVMFMP4FFParserNode
+        : public OsclTimerObject
+        , public PVMFNodeInterface
+        , public PVMFDataSourceInitializationExtensionInterface
+        , public PVMFTrackSelectionExtensionInterface
+        , public PvmfDataSourcePlaybackControlInterface
+        , public PVMFMetadataExtensionInterface
+        , public PVMFTrackLevelInfoExtensionInterface
+        , public PVMFCPMStatusObserver
+        , public PvmiDataStreamObserver
+        , public PVMIDatastreamuserInterface
+        , public PVMFFormatProgDownloadSupportInterface
+        , public OsclTimerObserver
+        , public PVMFCPMPluginLicenseInterface
+        , public PvmiCapabilityAndConfigBase
+        , public PVMFMediaClockStateObserver // For observing the playback clock states
+        , public PvmfDataSourceDirectionControlInterface
 {
     public:
         PVMFMP4FFParserNode(int32 aPriority = OsclActiveObject::EPriorityNominal);
@@ -581,19 +582,8 @@ class PVMFMP4FFParserNode : public OsclTimerObject,
         virtual PVMFStatus releaseParameters(PvmiMIOSession aSession,
                                              PvmiKvp* aParameters,
                                              int num_elements);
-        virtual void createContext(PvmiMIOSession aSession, PvmiCapabilityContext& aContext);
-        virtual void setContextParameters(PvmiMIOSession aSession, PvmiCapabilityContext& aContext,
-                                          PvmiKvp* aParameters, int num_parameter_elements);
-        virtual void DeleteContext(PvmiMIOSession aSession,
-                                   PvmiCapabilityContext& aContext);
         virtual void setParametersSync(PvmiMIOSession aSession, PvmiKvp* aParameters,
                                        int num_elements, PvmiKvp * & aRet_kvp);
-        virtual PVMFCommandId setParametersAsync(PvmiMIOSession aSession,
-                PvmiKvp* aParameters,
-                int num_elements,
-                PvmiKvp*& aRet_kvp,
-                OsclAny* context = NULL);
-        virtual uint32 getCapabilityMetric(PvmiMIOSession aSession);
         virtual PVMFStatus verifyParametersSync(PvmiMIOSession aSession,
                                                 PvmiKvp* aParameters,
                                                 int num_elements);
@@ -980,7 +970,7 @@ class PVMFMP4FFParserNode : public OsclTimerObject,
         PvmiDataStreamCommandId iRequestReadCapacityNotificationID;
         uint32 iMP4HeaderSize;
         bool iDownloadComplete;
-        bool iProgressivelyDownlodable;
+        bool iProgressivelyPlayable;
         uint32 iLastNPTCalcInConvertSizeToTime;
         uint32 iFileSizeLastConvertedToTime;
         bool iFastTrackSession;

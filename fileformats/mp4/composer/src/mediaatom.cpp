@@ -63,62 +63,27 @@ PVA_FF_MediaAtom::~PVA_FF_MediaAtom()
 
 void
 PVA_FF_MediaAtom::nextSample(int32 mediaType,
-                             void *psample,
-                             uint32 size,
-                             uint32 ts,
-                             uint8 flags,
-                             uint32 baseOffset,
+                             PVMP4FFComposerSampleParam *pSampleParam,
                              bool oChunkStart)
 {
-    _pmediaInformation->nextSample(mediaType, psample, size, ts,
-                                   flags, baseOffset, oChunkStart);
-    _pmediaHeader->addSample(ts);
+    if (pSampleParam == NULL)
+        return;
+    _pmediaInformation->nextSample(mediaType, pSampleParam, oChunkStart);
+
+    _pmediaHeader->addSample(pSampleParam->_timeStamp);
 }
 
 void
 PVA_FF_MediaAtom::nextTextSample(int32 mediaType,
-                                 void *psample,
-                                 uint32 size,
-                                 uint32 ts,
-                                 uint8 flags,
-                                 int32 index,
-                                 uint32 baseOffset,
+                                 PVMP4FFComposerSampleParam *pSampleParam,
                                  bool oChunkStart)
 {
-    _pmediaInformation->nextTextSample(mediaType, psample, size, ts,
-                                       flags, index, baseOffset, oChunkStart);
-    _pmediaHeader->addSample(ts);
-}
+    if (pSampleParam == NULL)
+        return;
 
-void
-PVA_FF_MediaAtom::nextSample(int32 mediaType,
-                             Oscl_Vector <OsclMemoryFragment, OsclMemAllocator>& fragmentList,
-                             uint32 size,
-                             uint32 ts,
-                             uint8 flags,
-                             uint32 baseOffset,
-                             bool oChunkStart)
-{
-    _pmediaInformation->nextSample(mediaType, fragmentList, size, ts,
-                                   flags, baseOffset, oChunkStart);
+    _pmediaInformation->nextTextSample(mediaType, pSampleParam, oChunkStart);
 
-    _pmediaHeader->addSample(ts);
-}
-
-void
-PVA_FF_MediaAtom::nextTextSample(int32 mediaType,
-                                 Oscl_Vector <OsclMemoryFragment, OsclMemAllocator>& fragmentList,
-                                 uint32 size,
-                                 uint32 ts,
-                                 uint8 flags,
-                                 int32 index,
-                                 uint32 baseOffset,
-                                 bool oChunkStart)
-{
-    _pmediaInformation->nextTextSample(mediaType, fragmentList, size, ts,
-                                       flags, index, baseOffset, oChunkStart);
-
-    _pmediaHeader->addSample(ts);
+    _pmediaHeader->addSample(pSampleParam->_timeStamp);
 }
 
 bool

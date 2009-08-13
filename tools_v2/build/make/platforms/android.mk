@@ -19,6 +19,8 @@ PROCESSOR := arm
 # include the common engine header files in the search path
 INCDIRS += \
     -I $(ANDROID_BASE)/headers/include \
+    -I $(ANDROID_BASE)/headers/include/media \
+    -I $(ANDROID_BASE)/headers/include/core_jni \
     -I $(ANDROID_BASE)/headers/system/bionic/libc/arch-arm/include \
     -I $(ANDROID_BASE)/headers/system/bionic/libc/include \
     -I $(ANDROID_BASE)/headers/system/bionic/libstdc++/include \
@@ -32,14 +34,16 @@ INCDIRS += \
 	-I $(ANDROID_BASE)/headers/skia/include
 
 # Compiler options
-CPPFLAGS += -fomit-frame-pointer -fno-strict-aliasing -finline-limit=64 -msoft-float -O2 -march=armv5te -fno-rtti -fno-exceptions -mtune=xscale -fpic -mthumb-interwork -ffunction-sections -funwind-tables -finline-functions -fno-inline-functions-called-once -fgcse-after-reload -frerun-cse-after-loop -frename-registers -Wstrict-aliasing=2 -fstack-protector -D__ARM_ARCH_5__ -D__ARM_ARCH_5T__ -D__ARM_ARCH_5E__ -D__ARM_ARCH_5TE__ -MD -include $(ANDROID_BASE)/headers/system/core/include/arch/linux-arm/AndroidConfig.h -DANDROID -fmessage-length=0 -DSK_RELEASE -DNDEBUG -DUDEBUG -fvisibility-inlines-hidden -Os -DENABLE_MEMORY_PLAYBACK -fno-short-enums 
+CPPFLAGS += -fomit-frame-pointer -msoft-float -march=armv5te -fno-rtti -fno-exceptions -mtune=xscale -fpic -ffunction-sections -funwind-tables -finline-functions -fno-inline-functions-called-once -fgcse-after-reload -frerun-cse-after-loop -frename-registers -Wstrict-aliasing=2 -fstack-protector -D__ARM_ARCH_5__ -D__ARM_ARCH_5T__ -D__ARM_ARCH_5E__ -D__ARM_ARCH_5TE__ -MD -include $(ANDROID_BASE)/headers/system/core/include/arch/linux-arm/AndroidConfig.h -DANDROID -fmessage-length=0 -DSK_RELEASE -DNDEBUG -DUDEBUG -fvisibility-inlines-hidden -DENABLE_MEMORY_PLAYBACK -fno-short-enums 
 
 # Idea is to build only libraries in arm mode and the rest in thumb mode
-OPTIMIZE_FOR_SIZE := -mthumb
+OPTIMIZE_FOR_SIZE := -Os -mthumb -mthumb-interwork -finline-limit=64 -fno-strict-aliasing 
+OPTIMIZE_FOR_PERFORMANCE := -O2 -mno-thumb-interwork -finline-limit=300 -fstrict-aliasing -funswitch-loops
 
-CXXFLAGS = -W -Wall -Wno-unused -Wno-non-virtual-dtor -Wno-multichar
-
-override SYSLIBS = -lc -lm -ldl -lstdc++ -landroid_runtime -lcutils -lutils
+CXXFLAGS := -W -Wall -Wno-unused -Wno-non-virtual-dtor -Wno-multichar
+OPT_CXXFLAG :=
+CFLAGS := -W -Wall -Wno-unused -Wno-non-virtual-dtor -Wno-multichar
+override SYSLIBS = -lc -lm -ldl -lstdc++ -landroid_runtime -lcutils -lutils -lsgl
 
 SONAME_ARG := -Wl,-T,$(ANDROID_BASE)/config/armelf.xsc -Wl,--gc-sections -L$(ANDROID_BASE)/prebuilt/obj/lib -Wl,--whole-archive -Wl,-h,
 SHARED_PRE_LDFLAGS := -nostdlib -Wl,-shared,-Bsymbolic 

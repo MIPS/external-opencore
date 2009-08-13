@@ -68,16 +68,11 @@ typedef enum STATE_TYPE
                                 it cannot determine it's state properly */
     StateUnLoaded,
 
-    StateLoading,
-
     StateLoaded,      /**< component has been loaded but has not completed
                                 initialization.  The OMX_SetParameter macro
                                 and the OMX_GetParameter macro are the only
                                 valid macros allowed to be sent to the
                                 component in this state. */
-    StateDecodeHeader,
-    StateDisablePort,
-    StateDynamicReconfig,
     StateIdle,        /**< component initialization has been completed
                                 successfully and the component is ready to
                                 to start. */
@@ -87,11 +82,7 @@ typedef enum STATE_TYPE
     StateStopping,
     StateCleanUp,
     StateStop,
-    StateWaitForResources, /**< component is waiting for resources, either after
-                                preemption or before it gets the resources requested.
-                                See specification for complete details. */
-    StateError,             /* Go to this state in case any error occur inbetween*/
-    StateMax = 0X7FFFFFFF
+    StateError             /* Go to this state in case any error occur inbetween*/
 } STATE_TYPE;
 
 

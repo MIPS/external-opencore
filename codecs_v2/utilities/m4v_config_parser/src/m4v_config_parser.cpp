@@ -299,10 +299,11 @@ decode_vol:
 
             ReadBits(psBits, 1, &codeword);
 
-            if (!codeword)
+            // if this bit is set to 0, there are B-VOPs */
+            /*if (!codeword)
             {
                 return MP4_INVALID_VOL_PARAM;
-            }
+            }*/
 
             ReadBits(psBits, 1, &codeword);
             if (codeword)   /* if (vbv_parameters) {}, page 36 */

@@ -521,7 +521,6 @@ void PVFrameAndMetadataUtility::Run()
             iAPICmdErrMsg->removeRef();
             iAPICmdErrMsg = NULL;
         }
-        return;
     }
 
     // Check if CancelAll() request was made
@@ -1316,80 +1315,6 @@ void PVFrameAndMetadataUtility::UtilityCommandCompleted(PVCommandId aId, OsclAny
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVFrameAndMetadataUtility::UtilityCommandCompleted() iCmdStatusObserver is NULL"));
     }
-}
-
-void PVFrameAndMetadataUtility::setObserver(PvmiConfigAndCapabilityCmdObserver* aObserver)
-{
-    OSCL_UNUSED_ARG(aObserver);
-    OsclError::Leave(OsclErrNotSupported);
-}
-
-PVMFStatus PVFrameAndMetadataUtility::getParametersSync(PvmiMIOSession aSession, PvmiKeyType aIdentifier, PvmiKvp*& aParameters, int& aNumParamElements, PvmiCapabilityContext aContext)
-{
-    OSCL_UNUSED_ARG(aSession);
-    OSCL_UNUSED_ARG(aIdentifier);
-    OSCL_UNUSED_ARG(aParameters);
-    OSCL_UNUSED_ARG(aNumParamElements);
-    OSCL_UNUSED_ARG(aContext);
-
-    return PVMFErrNotSupported;
-}
-
-PVMFStatus PVFrameAndMetadataUtility::releaseParameters(PvmiMIOSession aSession, PvmiKvp* aParameters, int aNumElements)
-{
-    OSCL_UNUSED_ARG(aSession);
-    OSCL_UNUSED_ARG(aParameters);
-    OSCL_UNUSED_ARG(aNumElements);
-
-    return PVMFErrNotSupported;
-}
-
-void PVFrameAndMetadataUtility::createContext(PvmiMIOSession aSession, PvmiCapabilityContext& aContext)
-{
-    OSCL_UNUSED_ARG(aSession);
-    OSCL_UNUSED_ARG(aContext);
-    OsclError::Leave(OsclErrNotSupported);
-}
-
-void PVFrameAndMetadataUtility::DeleteContext(PvmiMIOSession aSession, PvmiCapabilityContext& aContext)
-{
-    OSCL_UNUSED_ARG(aSession);
-    OSCL_UNUSED_ARG(aContext);
-}
-
-void PVFrameAndMetadataUtility::setContextParameters(PvmiMIOSession aSession, PvmiCapabilityContext& aContext, PvmiKvp* aParameters, int aNumParamElements)
-{
-    OSCL_UNUSED_ARG(aSession);
-    OSCL_UNUSED_ARG(aParameters);
-    OSCL_UNUSED_ARG(aNumParamElements);
-    OSCL_UNUSED_ARG(aContext);
-}
-
-PVMFCommandId PVFrameAndMetadataUtility::setParametersAsync(PvmiMIOSession aSession, PvmiKvp* aParameters, int aNumElements, PvmiKvp*& aRetKVP, OsclAny* aContext)
-{
-    OSCL_UNUSED_ARG(aSession);
-    OSCL_UNUSED_ARG(aParameters);
-    OSCL_UNUSED_ARG(aNumElements);
-    OSCL_UNUSED_ARG(aRetKVP);
-    OSCL_UNUSED_ARG(aContext);
-
-    return PVMFErrNotSupported;
-}
-
-uint32 PVFrameAndMetadataUtility::getCapabilityMetric(PvmiMIOSession aSession)
-{
-    OSCL_UNUSED_ARG(aSession);
-    OsclError::Leave(OsclErrNotSupported);
-    return 0;
-}
-
-PVMFStatus PVFrameAndMetadataUtility::verifyParametersSync(PvmiMIOSession aSession, PvmiKvp* aParameters, int aNumElements)
-{
-    OSCL_UNUSED_ARG(aSession);
-    OSCL_UNUSED_ARG(aParameters);
-    OSCL_UNUSED_ARG(aNumElements);
-
-    return PVMFErrNotSupported;
 }
 
 

@@ -173,7 +173,6 @@ Int inv_long_complex_rot(
 
     p_Data_Int_precision = (Int16 *)Data;
 
-    exp = 16 - pv_normalize(max);
 
 
     /*
@@ -197,10 +196,7 @@ Int inv_long_complex_rot(
 
     px_4 = (Int16 *)pData_in_2;
 
-
-
-    exp -= 1;
-
+    exp = 16 - pv_normalize(max) - 1;
 
     for (i = INV_LONG_CX_ROT_LENGTH >> 1; i != 0; i--)
     {

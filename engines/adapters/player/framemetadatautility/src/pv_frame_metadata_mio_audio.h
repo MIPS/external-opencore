@@ -30,8 +30,8 @@
 #ifndef PVMI_MEDIA_IO_OBSERVER_H_INCLUDED
 #include "pvmi_media_io_observer.h"
 #endif
-#ifndef PVMI_CONFIG_AND_CAPABILITY_H_INCLUDED
-#include "pvmi_config_and_capability.h"
+#ifndef PVMI_CONFIG_AND_CAPABILITY_BASE_H_INCLUDED
+#include "pvmi_config_and_capability_base.h"
 #endif
 #ifndef OSCL_STRING_CONTAINERS_H_INCLUDED
 #include "oscl_string_containers.h"
@@ -39,10 +39,6 @@
 #ifndef PVMI_MEDIA_IO_CLOCK_EXTENSION_H_INCLUDED
 #include "pvmi_media_io_clock_extension.h"
 #endif
-
-// To maintain the count of supported uncompressed audio formats.
-// Should be updated whenever new format is added
-#define PVMF_SUPPORTED_UNCOMPRESSED_AUDIO_FORMATS_COUNT 6
 
 class PVLogger;
 class PVMFMediaClock;
@@ -83,10 +79,11 @@ class PVFMAudioMIOActiveTimingSupport: public PvmiClockExtensionInterface
 // for pvFrameAndMetadata utility.
 // This class constitutes the Media IO component
 
-class PVFMAudioMIO : public OsclTimerObject,
-        public PvmiMIOControl,
-        public PvmiMediaTransfer,
-        public PvmiCapabilityAndConfig
+class PVFMAudioMIO
+        : public OsclTimerObject
+        , public PvmiMIOControl
+        , public PvmiMediaTransfer
+        , public PvmiCapabilityAndConfigBase
 {
     public:
         PVFMAudioMIO();
@@ -135,18 +132,10 @@ class PVFMAudioMIO : public OsclTimerObject,
         void cancelAllCommands();
 
         // From PvmiCapabilityAndConfig
-        void setObserver(PvmiConfigAndCapabilityCmdObserver* aObserver);
         PVMFStatus getParametersSync(PvmiMIOSession aSession, PvmiKeyType aIdentifier, PvmiKvp*& aParameters,
                                      int& num_parameter_elements, PvmiCapabilityContext aContext);
         PVMFStatus releaseParameters(PvmiMIOSession aSession, PvmiKvp* aParameters, int num_elements);
-        void createContext(PvmiMIOSession aSession, PvmiCapabilityContext& aContext);
-        void setContextParameters(PvmiMIOSession aSession, PvmiCapabilityContext& aContext, PvmiKvp* aParameters,
-                                  int num_parameter_elements);
-        void DeleteContext(PvmiMIOSession aSession, PvmiCapabilityContext& aContext);
         void setParametersSync(PvmiMIOSession aSession, PvmiKvp* aParameters, int num_elements, PvmiKvp*& aRet_kvp);
-        PVMFCommandId setParametersAsync(PvmiMIOSession aSession, PvmiKvp* aParameters, int num_elements,
-                                         PvmiKvp*& aRet_kvp, OsclAny* context = NULL);
-        uint32 getCapabilityMetric(PvmiMIOSession aSession);
         PVMFStatus verifyParametersSync(PvmiMIOSession aSession, PvmiKvp* aParameters, int num_elements);
 
     private:
@@ -225,8 +214,15 @@ class PVFMAudioMIO : public OsclTimerObject,
         bool iIsMIOConfigured;
         bool iWriteBusy;
 
+        int32 iNumberOfBuffers;
+        int32 iBufferSize;
+        bool iNumberOfBuffersValid;
+        bool iBufferSizeValid;
+
         // For logging
         PVLogger* iLogger;
+
+        Oscl_Vector<PVMFFormatType, OsclMemAllocator> iInputFormatCapability;
 
 };
 

@@ -40,6 +40,10 @@
 #include "pv_engine_observer_message.h"
 #include "tsc_h324m_config_interface.h"
 #include "engine_test.h"
+#include "pv_2way_source_and_sinks_file.h"
+#include "pv_2way_source_and_sinks_dummy.h"
+#include "lipsync_dummy_output_mio.h"
+#include "lipsync_dummy_input_mio.h"
 
 #ifndef NO_2WAY_324
 #include "pv_comms_io_node_factory.h"
@@ -48,50 +52,22 @@
 
 #include "test_codecs.h"
 
-#define RX_LOGGER_TAG _STRLIT_CHAR("pvcommionode.rx.bin")
-#define TX_LOGGER_TAG _STRLIT_CHAR("pvcommionode.tx.bin")
-#define PVSIP2WAY_PROFILE _STRLIT_CHAR("pvSIP2Way")
-#define PVSIPDEMO_ADDRESS _STRLIT_CHAR("sip:pvSIPDemo@")
-#define PVSIPDEMO2_ADDRESS _STRLIT_CHAR("sip:pvSIPDemo2@")
-#define PVSIP_DEFAULT_REALM _STRLIT_CHAR("pvrealm")
 
-
-#define TEST_RX_LOG_FILENAME _STRLIT("commrx.bin")
-#define TEST_TX_LOG_FILENAME _STRLIT("commtx.bin")
-#define TEST_LOG_FILENAME _STRLIT("test2way.log")
-#define AUDIO_SOURCE_FILENAME _STRLIT("audio_in.if2")
-#define AUDIO_SOURCE3_FILENAME _STRLIT("audio_in.amr")
-#define AUDIO_SOURCE_RAW_FILENAME _STRLIT("pcm16testinput.pcm")
-#define AUDIO_SINK_FILENAME _STRLIT("audio_if2_out.dat")
-#define AUDIO_SINK_RAW_FILENAME _STRLIT("audio_pcm16_out.dat")
-#define AUDIO_SINK2_FILENAME _STRLIT("audio_ietf_out.dat")
-#define VIDEO_SOURCE_YUV_FILENAME _STRLIT("yuv420video.yuv")
-#define VIDEO_SOURCE_H263_FILENAME _STRLIT("h263video.h263")
-#define VIDEO_SOURCE_M4V_FILENAME _STRLIT("m4vvideo.m4v")
-#define VIDEO_SINK_YUV_FILENAME _STRLIT("video_yuv_out.dat")
-#define VIDEO_SINK_H263_FILENAME _STRLIT("video_h263_out.dat")
-#define VIDEO_SINK_M4V_FILENAME _STRLIT("video_m4v_out.dat")
-#define VIDEO_PREVIEW_FILENAME _STRLIT("video_preview_out.dat")
-#define RECORDED_CALL_FILENAME _STRLIT("recorded_call.mp4")
-#define AUDIO_ONLY_PLAY_FILENAME _STRLIT("pv-amr-122_novisual.3gp")
-#define AUDIO_H263_PLAY_FILENAME _STRLIT("pv-amr-122_h263-64.3gp")
-#define AUDIO_MPEG4_PLAY_FILENAME _STRLIT("pv2-amr122_mpeg4-rvlcs-64.3gp")
-#define H263_ONLY_PLAY_FILENAME _STRLIT("pv-noaudio_h263-64.3gp")
-#define MPEG4_ONLY_PLAY_FILENAME _STRLIT("pv2-noaudio_mpeg4-rvlcs-64.3gp")
-#define SQCIF_PLAY_FILENAME _STRLIT("sqcif1.3gp")
-#define QVGA_PLAY_FILENAME _STRLIT("qvga.3gp")
-
-
-
-#define LOG_FILE_NAME _STRLIT("pvlog.txt")
-
+#ifndef PV2WAY_FILE_NAMES_H_INCLUDED
+#include "pv2way_file_names.h"
+#endif
 
 
 class engine_test_suite : public test_case
 {
     public:
         engine_test_suite();
-        PV2WayUnitTestSourceAndSinks* CreateSourceAndSinks(engine_test* test,
+        PV2WaySourceAndSinksFile* CreateSourceAndSinks(engine_test* test,
+                const char* const aAudSrcFormatType,
+                const char* const aAudSinkFormatType,
+                const char* const aVidSrcFormatType,
+                const char* const aVidSinkFormatType);
+        PV2WayDummySourceAndSinks* CreateLipSyncSourceAndSinks(engine_test* test,
                 const char* const aAudSrcFormatType,
                 const char* const aAudSinkFormatType,
                 const char* const aVidSrcFormatType,
@@ -106,6 +82,7 @@ class engine_test_suite : public test_case
         void AddAudioTests(const bool aProxy, int32 firstTest, int32 lastTest);
         void AddVideoTests(const bool aProxy, int32 firstTest, int32 lastTest);
         void AddBasicAVTests(const bool aProxy, int32 firstTest, int32 lastTest);
+        void AddLipSyncTests(const bool aProxy, int32 firstTest, int32 lastTest);
         void AddAcceptableFormatsTests(const bool aProxy, int32 firstTest, int32 lastTest);
         void AddNegotiatedFormatsTests(const bool aProxy, int32 firstTest, int32 lastTest);
 

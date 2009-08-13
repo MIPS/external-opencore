@@ -180,6 +180,7 @@ class HTTPParserInput
 
         // pass ending CRLF
         void skipCRLF();
+        void skipCRLFChunkedCoding();
 
     private:
 
@@ -291,6 +292,10 @@ class HTTPParserHeaderObject : public HTTPParserBaseObject
         uint32 getStatusCode() const
         {
             return iStatusCode;
+        }
+        uint32 getHttpVersionNum()
+        {
+            return iHttpVersionNum;
         }
         uint32 getNumFields()
         {

@@ -1,0 +1,14 @@
+# This is a capabalities and config file
+####################################################
+
+#Test Case Name - This should be at the start
+FILECAP
+
+# Audio Capabilities 
+TYPE AUDIO
+SAMPLE 8000
+CHANNELS 1
+ALOOP ON
+ASIMULATION ON
+
+

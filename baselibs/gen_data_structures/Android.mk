@@ -13,7 +13,7 @@ LOCAL_SRC_FILES := \
 
 LOCAL_MODULE := libpvgendatastruct
 
-LOCAL_CFLAGS :=  $(PV_CFLAGS)
+LOCAL_CFLAGS :=   $(PV_CFLAGS)
 
 
 

@@ -59,8 +59,9 @@ class PVMFFileOutputNode;
 #define PVMF_FILE_OUTPUT_PORT_INPUT_FORMATS "x-pvmf/file/encode/input_formats"
 #define PVMF_FILE_OUTPUT_PORT_INPUT_FORMATS_VALTYPE "x-pvmf/port/formattype;valtype=char*"
 
-class PVMFFileOutputInPort : public PvmfPortBaseImpl
-        , public PvmiCapabilityAndConfig
+class PVMFFileOutputInPort
+        : public PvmfPortBaseImpl
+        , public PvmiCapabilityAndConfigBase
         , public PvmfSyncUtilDataQueueObserver
         , public OsclTimerObject
         , public PvmfNodesSyncControlInterface
@@ -101,15 +102,8 @@ class PVMFFileOutputInPort : public PvmfPortBaseImpl
                 PvmiKvp*& aParameters, int& num_parameter_elements,
                 PvmiCapabilityContext aContext);
         OSCL_IMPORT_REF PVMFStatus releaseParameters(PvmiMIOSession aSession, PvmiKvp* aParameters, int num_elements);
-        OSCL_IMPORT_REF void createContext(PvmiMIOSession aSession, PvmiCapabilityContext& aContext);
-        OSCL_IMPORT_REF void setContextParameters(PvmiMIOSession aSession, PvmiCapabilityContext& aContext,
-                PvmiKvp* aParameters, int num_parameter_elements);
-        OSCL_IMPORT_REF void DeleteContext(PvmiMIOSession aSession, PvmiCapabilityContext& aContext);
         OSCL_IMPORT_REF void setParametersSync(PvmiMIOSession aSession, PvmiKvp* aParameters,
                                                int num_elements, PvmiKvp * & aRet_kvp);
-        OSCL_IMPORT_REF PVMFCommandId setParametersAsync(PvmiMIOSession aSession, PvmiKvp* aParameters,
-                int num_elements, PvmiKvp*& aRet_kvp, OsclAny* context = NULL);
-        OSCL_IMPORT_REF uint32 getCapabilityMetric(PvmiMIOSession aSession);
         OSCL_IMPORT_REF PVMFStatus verifyParametersSync(PvmiMIOSession aSession, PvmiKvp* aParameters, int num_elements);
 
         // Pure virtuals from PVMFPortInterface

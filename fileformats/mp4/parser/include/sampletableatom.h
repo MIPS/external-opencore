@@ -162,7 +162,7 @@ class SampleTableAtom : public Atom
 
         void  resetPlayBack();
         void  resetTrackToEOT();
-        int32 resetPlayBackbyTime(int32 time, bool oDependsOn);
+        int32 resetPlayBackbyTime(uint32 time, bool oDependsOn);
         int32 queryRepositionTime(int32 time, bool oDependsOn, bool bBeforeRequestedTime);
 
         int32 IsResetNeeded(int32 time);

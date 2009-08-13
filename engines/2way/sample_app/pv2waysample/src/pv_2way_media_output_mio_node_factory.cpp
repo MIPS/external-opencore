@@ -23,9 +23,9 @@
 #include "pvmi_media_io_fileoutput.h"
 #include "pv_media_output_node_factory.h"
 
-int PV2WayMediaOutputMIONodeFactory::CreateMedia()
+int PV2WayMediaOutputMIONodeFactory::CreateMedia(PvmiMIOFileInputSettings& aFileSettings)
 {
-    PVMFFormatType pvmf_mediatype = iFileSettings.iMediaFormat;
+    PVMFFormatType pvmf_mediatype = aFileSettings.iMediaFormat;
     MediaType mio_media_type = MEDIATYPE_UNKNOWN;
     bool compressed = false;
     if (pvmf_mediatype.isAudio())
@@ -47,7 +47,7 @@ int PV2WayMediaOutputMIONodeFactory::CreateMedia()
     }
 
     PVRefFileOutput* apRefFileOutput = OSCL_NEW(PVRefFileOutput,
-                                       (iFileSettings.iFileName.get_cstr(), mio_media_type, compressed));
+                                       (aFileSettings.iFileName.get_cstr(), mio_media_type, compressed));
     apRefFileOutput->setUserClockExtnInterface(compressed);
     iMediaControl =  OSCL_REINTERPRET_CAST(PvmiMIOControl*, apRefFileOutput);
     return PVMFSuccess;
@@ -66,10 +66,10 @@ void PV2WayMediaOutputMIONodeFactory::Delete(PVMFNodeInterface** aMioNode)
     DeleteMedia();
 }
 
-PVMFNodeInterface* PV2WayMediaOutputMIONodeFactory::Create()
+PVMFNodeInterface* PV2WayMediaOutputMIONodeFactory::Create(PvmiMIOFileInputSettings& aFileSettings)
 {
     PVMFNodeInterface* mioNode = NULL;
-    if (PVMFSuccess == CreateMedia())
+    if (PVMFSuccess == CreateMedia(aFileSettings))
     {
         int error = 0;
         OSCL_TRY(error, mioNode = PVMediaOutputNodeFactory::CreateMediaOutputNode(iMediaControl));

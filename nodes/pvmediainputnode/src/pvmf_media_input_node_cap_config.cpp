@@ -87,58 +87,6 @@ const uint MediaInputNodeConfig_NumBaseKeys =
 //                  PvmiCapConfigInterface
 ////////////////////////////////////////////////////////////////////////////
 
-void PvmfMediaInputNode::createContext(PvmiMIOSession aSession,
-                                       PvmiCapabilityContext& aContext)
-{
-    OSCL_UNUSED_ARG(aSession);
-    OSCL_UNUSED_ARG(aContext);
-    // not supported
-    OSCL_LEAVE(PVMFErrNotSupported);
-}
-
-void PvmfMediaInputNode::setContextParameters(PvmiMIOSession aSession,
-        PvmiCapabilityContext& aContext,
-        PvmiKvp* aParameters,
-        int aNumElements)
-{
-    OSCL_UNUSED_ARG(aSession);
-    OSCL_UNUSED_ARG(aContext);
-    OSCL_UNUSED_ARG(aParameters);
-    OSCL_UNUSED_ARG(aNumElements);
-    // not supported
-    OSCL_LEAVE(PVMFErrNotSupported);
-}
-
-void PvmfMediaInputNode::DeleteContext(PvmiMIOSession aSession,
-                                       PvmiCapabilityContext& aContext)
-{
-    OSCL_UNUSED_ARG(aSession);
-    OSCL_UNUSED_ARG(aContext);
-    // not supported
-    OSCL_LEAVE(PVMFErrNotSupported);
-}
-
-PVMFCommandId PvmfMediaInputNode::setParametersAsync(PvmiMIOSession aSession,
-        PvmiKvp* aParameters,
-        int aNumElements,
-        PvmiKvp*& aRet_kvp,
-        OsclAny* aContext)
-{
-    OSCL_UNUSED_ARG(aSession);
-    OSCL_UNUSED_ARG(aContext);
-    OSCL_UNUSED_ARG(aParameters);
-    OSCL_UNUSED_ARG(aNumElements);
-    OSCL_UNUSED_ARG(aRet_kvp);
-
-    return 0;
-}
-
-uint32 PvmfMediaInputNode::getCapabilityMetric(PvmiMIOSession aSession)
-{
-    OSCL_UNUSED_ARG(aSession);
-    return 0;
-}
-
 PVMFStatus PvmfMediaInputNode::verifyParametersSync(PvmiMIOSession aSession, PvmiKvp* aParameters, int aNumElements)
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PvmfMediaInputNode::verifyParametersSync()"));

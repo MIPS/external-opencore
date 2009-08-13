@@ -408,6 +408,21 @@ OSCL_EXPORT_REF OMX_BOOL OmxComponentBase::ParseFullAVCFramesIntoNALs(OMX_BUFFER
     return OMX_FALSE;
 }
 
+/* This routine finds the size of the start code without finding the size of the NAL as well*/
+OSCL_EXPORT_REF OMX_BOOL OmxComponentBase::DetectStartCodeLength(OMX_U8* aBitstream, OMX_U8** aNalUnit, OMX_U32 aBufSize, OMX_U32* aSCSize)
+{
+    OSCL_ASSERT(OMX_FALSE);
+    // we should never arrive here if this is not an AVC component, since iOMXComponentUsesNALStartCodes (which is tested before calling this function)
+    // should only be set for an AVC component
+
+    OSCL_UNUSED_ARG(aBitstream);
+    OSCL_UNUSED_ARG(aNalUnit);
+    OSCL_UNUSED_ARG(aBufSize);
+    OSCL_UNUSED_ARG(aSCSize);
+
+    return OMX_FALSE;
+}
+
 /** This function assembles multiple input buffers into
     * one frame with the marker flag OMX_BUFFERFLAG_ENDOFFRAME set
     */
@@ -431,12 +446,24 @@ OMX_BOOL OmxComponentBase::AssemblePartialFrames(OMX_BUFFERHEADERTYPE* aInputBuf
                 iInputCurrLength = ipInputBuffer->nFilledLen;
 
                 //Only applicable for H.264 component
-#ifdef INSERT_NAL_START_CODE
-                // this is the case of 1 full NAL in 1 buffer
-                // if start codes are inserted, skip the start code
-                iInputCurrLength = ipInputBuffer->nFilledLen - 4;
-                ipInputBuffer->nOffset += 4;
-#endif
+                if ((iPVCapabilityFlags.iOMXComponentUsesNALStartCodes == OMX_TRUE) &&
+                        (iPVCapabilityFlags.iOMXComponentUsesFullAVCFrames == OMX_FALSE))
+                {
+                    // this is the case of 1 full NAL in 1 buffer
+                    // if start codes are inserted, skip the start code
+                    OMX_U8* nal_ptr;
+                    OMX_U32 sc_size;
+
+                    if (OMX_FALSE == DetectStartCodeLength(ipInputBuffer->pBuffer + ipInputBuffer->nOffset, &nal_ptr, ipInputBuffer->nFilledLen, &sc_size))
+                    {
+                        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE, (0, "OmxComponentBase : AssemblePartialFrames ERROR"));
+                        return OMX_FALSE;
+                    }
+
+                    iInputCurrLength = ipInputBuffer->nFilledLen - sc_size;
+                    ipInputBuffer->nOffset += sc_size;
+                }
+
                 ipFrameDecodeBuffer = ipInputBuffer->pBuffer + ipInputBuffer->nOffset;
                 //capture the timestamp to be send to the corresponding output buffer
                 iFrameTimestamp = ipInputBuffer->nTimeStamp;
@@ -488,18 +515,25 @@ OMX_BOOL OmxComponentBase::AssemblePartialFrames(OMX_BUFFERHEADERTYPE* aInputBuf
                      NULL);
                 }
             }
-
-#ifdef INSERT_NAL_START_CODE
-            else
+            else if ((iPVCapabilityFlags.iOMXComponentUsesNALStartCodes == OMX_TRUE) &&
+                     (iPVCapabilityFlags.iOMXComponentUsesFullAVCFrames == OMX_FALSE))
             {
                 // this is the case of a partial NAL in 1 buffer
                 // this is the first fragment of a nal
 
                 // if start codes are inserted, skip the start code
-                ipInputBuffer->nFilledLen -= 4;
-                ipInputBuffer->nOffset += 4;
+                OMX_U8* nal_ptr;
+                OMX_U32 sc_size;
+
+                if (OMX_FALSE == DetectStartCodeLength(ipInputBuffer->pBuffer + ipInputBuffer->nOffset, &nal_ptr, ipInputBuffer->nFilledLen, &sc_size))
+                {
+                    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE, (0, "OmxComponentBase : AssemblePartialFrames ERROR"));
+                    return OMX_FALSE;
+                }
+
+                ipInputBuffer->nFilledLen -= sc_size;
+                ipInputBuffer->nOffset += sc_size;
             }
-#endif
 
             if ((ipInputBuffer->nFlags & OMX_BUFFERFLAG_ENDOFFRAME) != 0)
             {
@@ -3715,6 +3749,7 @@ OSCL_EXPORT_REF OMX_ERRORTYPE OmxComponentVideo::GetParameter(
     OMX_VIDEO_PARAM_H263TYPE* pVideoH263;
     OMX_VIDEO_PARAM_AVCTYPE* pVideoAvc;
     OMX_VIDEO_PARAM_WMVTYPE* pVideoWmv;
+    OMX_VIDEO_PARAM_RVTYPE*  pVideoRv;
 
     //Video encoder configuration parameters
     OMX_CONFIG_ROTATIONTYPE*             pVideoRotation;
@@ -3842,6 +3877,20 @@ OSCL_EXPORT_REF OMX_ERRORTYPE OmxComponentVideo::GetParameter(
             PortIndex = pVideoWmv->nPortIndex;
             oscl_memcpy(pVideoWmv, &ipPorts[PortIndex]->VideoWmv, sizeof(OMX_VIDEO_PARAM_WMVTYPE));
             SetHeader(pVideoWmv, sizeof(OMX_VIDEO_PARAM_WMVTYPE));
+        }
+        break;
+
+        case OMX_IndexParamVideoRv:
+        {
+            pVideoRv = (OMX_VIDEO_PARAM_RVTYPE*)ComponentParameterStructure;
+            if (pVideoRv->nPortIndex != iCompressedFormatPortNum)
+            {
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE, (0, "OmxComponentVideo : GetParameter error bad port index"));
+                return OMX_ErrorBadPortIndex;
+            }
+            PortIndex = pVideoRv->nPortIndex;
+            oscl_memcpy(pVideoRv, &ipPorts[PortIndex]->VideoRv, sizeof(OMX_VIDEO_PARAM_RVTYPE));
+            SetHeader(pVideoRv, sizeof(OMX_VIDEO_PARAM_RVTYPE));
         }
         break;
 
@@ -4060,6 +4109,7 @@ OSCL_EXPORT_REF OMX_ERRORTYPE OmxComponentVideo::SetParameter(
     OMX_VIDEO_PARAM_H263TYPE*    pVideoH263;
     OMX_VIDEO_PARAM_WMVTYPE*     pVideoWmv;
     OMX_VIDEO_PARAM_AVCTYPE*     pVideoAvc;
+    OMX_VIDEO_PARAM_RVTYPE*      pVideoRv;
 
     //Video encoder configuration parameters
     OMX_CONFIG_ROTATIONTYPE*             pVideoRotation;
@@ -4178,6 +4228,20 @@ OSCL_EXPORT_REF OMX_ERRORTYPE OmxComponentVideo::SetParameter(
         }
         break;
 
+        case OMX_IndexParamVideoRv:
+        {
+            pVideoRv = (OMX_VIDEO_PARAM_RVTYPE*)ComponentParameterStructure;
+            PortIndex = pVideoRv->nPortIndex;
+            /*Check Structure Header and verify component state*/
+            ErrorType = ParameterSanityCheck(hComponent, PortIndex, pVideoRv, sizeof(OMX_VIDEO_PARAM_RVTYPE));
+            if (ErrorType != OMX_ErrorNone)
+            {
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE, (0, "OmxComponentVideo : SetParameter error param check failed"));
+                return ErrorType;
+            }
+            oscl_memcpy(&ipPorts[PortIndex]->VideoRv, pVideoRv, sizeof(OMX_VIDEO_PARAM_RVTYPE));
+        }
+        break;
 
         case OMX_IndexParamVideoProfileLevelCurrent:
         {

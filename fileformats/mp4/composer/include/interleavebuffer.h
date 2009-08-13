@@ -37,9 +37,7 @@ class PVA_FF_InterLeaveBuffer
 
         virtual ~PVA_FF_InterLeaveBuffer();
 
-        bool    addSampleToInterLeaveBuffer(Oscl_Vector < OsclMemoryFragment,
-                                            OsclMemAllocator > & fragmentList,
-                                            uint32 size, uint32 ts, uint8 flags, int32 index);
+        bool    addSampleToInterLeaveBuffer(PVMP4FFComposerSampleParam *pSampleParam);
 
         bool    checkInterLeaveBufferSpace(uint32 size);
 
@@ -47,6 +45,7 @@ class PVA_FF_InterLeaveBuffer
         Oscl_Vector<uint32, OsclMemAllocator>* getSampleSizeVec();
         Oscl_Vector<uint8, OsclMemAllocator>* getFlagsVec();
         Oscl_Vector<int32, OsclMemAllocator>* getTextIndexVec();
+        Oscl_Vector<uint32, OsclMemAllocator>* getSampleDurationVec();
 
         uint8*  resetInterLeaveBuffer(uint32 &chunkSize);
         uint32  getCurrentInterLeaveBufferSize();
@@ -79,6 +78,7 @@ class PVA_FF_InterLeaveBuffer
         Oscl_Vector<uint32, OsclMemAllocator>* _pSampleSizeVec;
         Oscl_Vector<uint8, OsclMemAllocator>* _pSampleFlagsVec;
         Oscl_Vector<int32, OsclMemAllocator>* _pIndexVec;
+        Oscl_Vector<uint32, OsclMemAllocator>* _pSampleDurationVec;
 
 };
 

@@ -36,7 +36,6 @@
 #include "pvmi_config_and_capability_utils.h"
 #endif
 
-
 #ifndef OSCL_SCHEDULER_AO_H_INCLUDED
 #include "oscl_scheduler_ao.h"
 #endif
@@ -69,8 +68,8 @@
 #include "pvmf_format_type.h"
 #endif
 
-#ifndef PVMF_NODE_INTERFACE_H_INCLUDED
-#include "pvmf_node_interface.h"
+#ifndef PVMF_NODE_INTERFACE_IMPL_H_INCLUDED
+#include "pvmf_node_interface_impl.h"
 #endif
 
 #ifndef PVMF_NODE_UTILS_H_INCLUDED
@@ -101,18 +100,12 @@
 #include "pvmf_resizable_simple_mediamsg.h"
 #endif
 
-typedef OsclMemAllocator PVMFAMRParserNodeAllocator;
 
 #define PVMF_AMRPARSERNODE_LOGERROR(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_REL,iLogger,PVLOGMSG_ERR,m);
-#define PVMF_AMRPARSERNODE_LOGWARNING(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_REL,iLogger,PVLOGMSG_WARNING,m);
-#define PVMF_AMRPARSERNODE_LOGINFOHI(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG,iLogger,PVLOGMSG_INFO,m);
 #define PVMF_AMRPARSERNODE_LOGINFOMED(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_MLDBG,iLogger,PVLOGMSG_INFO,m);
-#define PVMF_AMRPARSERNODE_LOGINFOLOW(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG,iLogger,PVLOGMSG_INFO,m);
 #define PVMF_AMRPARSERNODE_LOGINFO(m) PVMF_AMRPARSERNODE_LOGINFOMED(m)
 #define PVMF_AMRPARSERNODE_LOGSTACKTRACE(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG,iLogger,PVLOGMSG_STACK_TRACE,m);
 #define PVMF_AMRPARSERNODE_LOGDATATRAFFIC(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_REL,iDataPathLogger,PVLOGMSG_INFO,m);
-#define PVMF_AMRPARSERNODE_LOGCLOCK(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_REL,iClockLogger,PVLOGMSG_INFO,m);
-#define PVMF_AMRPARSERNODE_LOGBIN(iPortLogger, m) PVLOGGER_LOGBIN(PVLOGMSG_INST_LLDBG, iPortLogger, PVLOGMSG_ERR, m);
 
 
 class PVMFAMRParserNodeLoggerDestructDealloc : public OsclDestructDealloc
@@ -180,8 +173,8 @@ class PVAMRFFNodeTrackPortInfo : public OsclMemPoolFixedChunkAllocatorObserver,
 
             iSendBOS = false;
 
-            iLogger = PVLogger::GetLoggerObject("PVMFASFParserNode");
-            iDataPathLogger = PVLogger::GetLoggerObject("datapath.asfparsernode");
+            iLogger = PVLogger::GetLoggerObject("PVMFAMRFFParserNode");
+            iDataPathLogger = PVLogger::GetLoggerObject("datapath.sourcenode.amrparsernode");
             if (iDataPathLogger)
                 iDataPathLogger->DisableAppenderInheritance();
             iClockLogger = PVLogger::GetLoggerObject("clock");
@@ -287,7 +280,7 @@ class PVAMRFFNodeTrackPortInfo : public OsclMemPoolFixedChunkAllocatorObserver,
         uint64 iTrackDuration;
 
         /* PVMF mime type for track */
-        OSCL_HeapString<PVMFAMRParserNodeAllocator> iTrackMimeType;
+        OSCL_HeapString<OsclMemAllocator> iTrackMimeType;
 
         /* Format type for the port */
         PVMFFormatType iFormatType;
@@ -348,7 +341,7 @@ class PVAMRFFNodeTrackPortInfo : public OsclMemPoolFixedChunkAllocatorObserver,
         // Memory pool for simple media data
         PVMFMemPoolFixedChunkAllocator *iMediaDataMemPool;
         // AMR FF parser node handle
-        OsclTimerObject* iNode;
+        PVMFNodeInterfaceImpl* iNode;
         // Sequence number
         uint32 iSeqNum;
         // Timestamp offset
@@ -364,14 +357,15 @@ class PVAMRFFNodeTrackPortInfo : public OsclMemPoolFixedChunkAllocatorObserver,
         PVLogger* iClockLogger;
         /* bitstream logging */
         PVLogger* iPortLogger;
-        OSCL_HeapString<PVMFAMRParserNodeAllocator> iLogFile;
+        OSCL_HeapString<OsclMemAllocator> iLogFile;
         bool oFormatSpecificInfoLogged;
 
         OsclSharedPtr<PVLoggerAppender> iBinAppenderPtr;
 };
 
-class PVMFAMRFFParserOutPort : public PvmfPortBaseImpl
-        , public PvmiCapabilityAndConfig
+class PVMFAMRFFParserOutPort
+        : public PvmfPortBaseImpl
+        , public PvmiCapabilityAndConfigBase
 {
     public:
         /**
@@ -381,7 +375,7 @@ class PVMFAMRFFParserOutPort : public PvmfPortBaseImpl
          * @param aNode Container node
          */
         PVMFAMRFFParserOutPort(int32 aTag
-                               , PVMFNodeInterface* aNode);
+                               , PVMFNodeInterfaceImpl* aNode);
 
         /**
          * Constructor that allows the node to configure the data queues of this port.
@@ -396,7 +390,7 @@ class PVMFAMRFFParserOutPort : public PvmfPortBaseImpl
          * This value should be between 0 - 100.
          */
         PVMFAMRFFParserOutPort(int32 aTag
-                               , PVMFNodeInterface* aNode
+                               , PVMFNodeInterfaceImpl* aNode
                                , uint32 aInCapacity
                                , uint32 aInReserve
                                , uint32 aInThreshold
@@ -429,48 +423,7 @@ class PVMFAMRFFParserOutPort : public PvmfPortBaseImpl
         PVMFStatus getParametersSync(PvmiMIOSession aSession, PvmiKeyType aIdentifier,
                                      PvmiKvp*& aParameters, int& num_parameter_elements,    PvmiCapabilityContext aContext);
         PVMFStatus releaseParameters(PvmiMIOSession aSession, PvmiKvp* aParameters, int num_elements);
-        void setParametersSync(PvmiMIOSession aSession, PvmiKvp* aParameters,
-                               int num_elements, PvmiKvp * & aRet_kvp);
-        PVMFStatus verifyParametersSync(PvmiMIOSession aSession, PvmiKvp* aParameters, int num_elements);
 
-        /* Unsupported PvmiCapabilityAndConfig methods */
-        void setObserver(PvmiConfigAndCapabilityCmdObserver* aObserver)
-        {
-            OSCL_UNUSED_ARG(aObserver);
-        };
-        void createContext(PvmiMIOSession aSession, PvmiCapabilityContext& aContext)
-        {
-            OSCL_UNUSED_ARG(aSession);
-            OSCL_UNUSED_ARG(aContext);
-        };
-        void setContextParameters(PvmiMIOSession aSession, PvmiCapabilityContext& aContext,
-                                  PvmiKvp* aParameters, int num_parameter_elements)
-        {
-            OSCL_UNUSED_ARG(aSession);
-            OSCL_UNUSED_ARG(aContext);
-            OSCL_UNUSED_ARG(aParameters);
-            OSCL_UNUSED_ARG(num_parameter_elements);
-        };
-        void DeleteContext(PvmiMIOSession aSession, PvmiCapabilityContext& aContext)
-        {
-            OSCL_UNUSED_ARG(aSession);
-            OSCL_UNUSED_ARG(aContext);
-        };
-        PVMFCommandId setParametersAsync(PvmiMIOSession aSession, PvmiKvp* aParameters,
-                                         int num_elements, PvmiKvp*& aRet_kvp, OsclAny* context = NULL)
-        {
-            OSCL_UNUSED_ARG(aRet_kvp);
-            OSCL_UNUSED_ARG(aSession);
-            OSCL_UNUSED_ARG(aParameters);
-            OSCL_UNUSED_ARG(num_elements);
-            OSCL_UNUSED_ARG(context);
-            return -1;
-        }
-        uint32 getCapabilityMetric(PvmiMIOSession aSession)
-        {
-            OSCL_UNUSED_ARG(aSession);
-            return 0;
-        }
 
     private:
         void Construct();

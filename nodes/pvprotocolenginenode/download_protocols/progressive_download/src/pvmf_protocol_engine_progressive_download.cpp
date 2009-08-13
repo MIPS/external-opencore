@@ -32,6 +32,17 @@ OSCL_EXPORT_REF bool ProgressiveDownloadState_HEAD::setHeaderFields()
     if (!DownloadState::setHeaderFields()) return false;
     if (!ProtocolState::constructAuthenHeader(iCfgFile->GetUserId(), iCfgFile->GetUserAuth())) return false;
 
+    if ((HTTPVersion)iCfgFile->getHttpVersion() == 0)
+    {
+        // change "Connection" field
+        StrCSumPtrLen connectionKey = "Connection";
+        char *nullPtr = NULL; // remove "Connection" field
+        if (!iComposer->setField(connectionKey, nullPtr)) return false;
+        // reset "Connection: Close"
+        StrPtrLen  connectionValue = "Close";
+        if (!iComposer->setField(connectionKey, &connectionValue)) return false;
+    }
+
     return setExtensionFields(iCfgFile->getExtensionHeaderKeys(),
                               iCfgFile->getExtensionHeaderValues(),
                               iCfgFile->getHTTPMethodMasksForExtensionHeader(),
@@ -41,7 +52,7 @@ OSCL_EXPORT_REF bool ProgressiveDownloadState_HEAD::setHeaderFields()
 
 OSCL_EXPORT_REF int32 ProgressiveDownloadState_HEAD::checkParsingStatus(int32 parsingStatus)
 {
-    if (parsingStatus == HttpParsingBasicObject::PARSE_SUCCESS_END_OF_INPUT && iParser->isHttpHeaderParsed())
+    if (parsingStatus == HttpParsingBasicObject::PARSE_SUCCESS_END_OF_INPUT && iParser->isHttpHeaderParsed() && !is1xxResponse())
         return PROCESS_SUCCESS_END_OF_MESSAGE;
 
     return ProtocolState::checkParsingStatus(parsingStatus);
@@ -105,7 +116,7 @@ OSCL_EXPORT_REF bool ProgressiveDownloadState_GET::setRangeHeaderFields()
         {
             StrCSumPtrLen rangeKey = "Range";
             char buffer[64];
-            oscl_snprintf(buffer, 64, "bytes=%d-%d", iCfgFile->GetCurrentFileSize(), iCfgFile->GetOverallFileSize());
+            oscl_snprintf(buffer, 64, "bytes=%d-%d", iCfgFile->GetCurrentFileSize(), (iCfgFile->GetOverallFileSize() - 1));
             LOGINFODATAPATH((0, "ProgressiveDownloadState_GET::setHeaderFields(), Range: bytes=%d-", iCfgFile->GetCurrentFileSize()));
             if (!iComposer->setField(rangeKey, buffer)) return false;
         }

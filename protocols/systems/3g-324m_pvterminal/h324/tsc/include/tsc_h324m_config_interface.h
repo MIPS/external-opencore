@@ -194,6 +194,7 @@ class H324MConfigInterface : public PVInterface
         * @param aMediaType The media type, i.e audio, video, data
         * @param aLayer The adaptation layer
         * @param aAllow Is this adaptation layer allowed for this media type ?
+        * @param aUse Is this adaptation layer used for video media type ?
         * @param aContextData
         *         Optional opaque data that will be passed back to the user with the command response
         * @returns A unique command id for asynchronous completion
@@ -201,6 +202,7 @@ class H324MConfigInterface : public PVInterface
         virtual PVMFCommandId SetALConfiguration(TPVMediaType_t aMediaType,
                 TPVAdaptationLayer aLayer,
                 bool aAllow,
+                bool aUse = true,
                 OsclAny* aContextData = NULL) = 0;
 
         /**

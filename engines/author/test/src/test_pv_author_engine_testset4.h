@@ -38,7 +38,7 @@ class pvauthor_async_compressed_test_errorhandling: public pvauthor_async_test_b
                 const char* aInputFileNameVideo, const char* aInputFileNameText, const char* aOutputFileName,
                 PVAETestInputType aAudioInputType, PVAETestInputType aVideoInputType,
                 PVAETestInputType aTextInputType, const char* aComposerMimeType,
-                const char* aAudioEncoderMimeType, const char* aVideoEncoderMimeType,
+                const char* aAudioEncoderMimeType, const char* aAacEncoderProfileMimeType, const char* aVideoEncoderMimeType,
                 const char* aTextEncoderMimeType, AVTConfig aAVTConfig, bool aPauseResumeEnable, uint32 aAuthoringTime,
                 FAIL_STATE aFailState)
 
@@ -46,6 +46,7 @@ class pvauthor_async_compressed_test_errorhandling: public pvauthor_async_test_b
 
                 , iComposerMimeType(aComposerMimeType)
                 , iAudioEncoderMimeType(aAudioEncoderMimeType)
+                , iAacEncoderProfileMimeType(aAacEncoderProfileMimeType)
                 , iVideoEncoderMimeType(aVideoEncoderMimeType)
                 , iTextEncoderMimeType(aTextEncoderMimeType)
                 , iAudioInputType(aAudioInputType)
@@ -91,10 +92,6 @@ class pvauthor_async_compressed_test_errorhandling: public pvauthor_async_test_b
                 // no Authoring time given
                 iTestDuration = KAuthoringSessionUnit * 1000 * 1000; // use default authoring time here
             }
-            iInputFileNameAudio = NULL;
-            iInputFileNameVideo = NULL;
-            iInputFileNameText = NULL;
-            iOutputFileName = NULL;
 
             if (oscl_strlen(aInputFileNameAudio) != 0)
             {
@@ -139,14 +136,13 @@ class pvauthor_async_compressed_test_errorhandling: public pvauthor_async_test_b
         void CommandCompleted(const PVCmdResponse& aResponse);
 
         PVAECmdType iState;
-        // Test output
-        OSCL_wHeapString<OsclMemAllocator> iOutputFileName;
         OSCL_wHeapString<OsclMemAllocator> iInputFileNameAudio;
         OSCL_wHeapString<OsclMemAllocator> iInputFileNameVideo;
         OSCL_wHeapString<OsclMemAllocator> iInputFileNameText;
 
         OSCL_HeapString<OsclMemAllocator> iComposerMimeType;
         OSCL_HeapString<OsclMemAllocator> iAudioEncoderMimeType;
+        OSCL_HeapString<OsclMemAllocator> iAacEncoderProfileMimeType;
         OSCL_HeapString<OsclMemAllocator> iVideoEncoderMimeType;
         OSCL_HeapString<OsclMemAllocator> iTextEncoderMimeType;
         // Test inputs

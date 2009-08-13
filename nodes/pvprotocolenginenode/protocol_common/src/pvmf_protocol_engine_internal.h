@@ -656,7 +656,12 @@ class HttpParsingBasicObject
         {
             return iHttpHeaderParsed;
         }
-        OSCL_IMPORT_REF bool getRedirectURI(OSCL_String &aRedirectUri);
+        uint32 getHttpVersionNum()
+        {
+            return iParser->getHttpVersionNum();
+        }
+        OSCL_IMPORT_REF uint32 getRedirectURINum();
+        OSCL_IMPORT_REF bool getRedirectURI(OSCL_String &aRedirectUri, uint32 i);
         OSCL_IMPORT_REF bool getContentType(OSCL_String &aContentType);
         OSCL_IMPORT_REF bool getAuthenInfo(OSCL_String &aRealm);
         OSCL_IMPORT_REF bool isServerSupportBasicAuthentication();

@@ -16,7 +16,9 @@
  * -------------------------------------------------------------------
  */
 #include "pv_2way_source.h"
+#ifdef PV2WAY_WIN32_GUI
 #include "testcaseparser.h"
+#endif
 
 #include "pv_2way_media.h"
 #include "pv_mime_string_utils.h"
@@ -28,17 +30,18 @@ int PV2WaySource::AddCodec(PvmiMIOFileInputSettings& aFileSettings)
     {
         aFileSettings.iMediaFormat = PV2WayMedia::GetMediaFormat(aFileSettings.iFileName.get_cstr());
     }
+#ifdef PV2WAY_WIN32_GUI
+    TestCaseParser parser;
+    // for sources parse the con file - want to find out the format
+    if (!parser.ParseConFile(aFileSettings))
+        return -1;
+#endif
     AddFormat(aFileSettings);
     if (pv_mime_strcmp(aFileSettings.iMediaFormat.getMIMEStrPtr(), PVMF_MIME_M4V) == 0)
     {
         // add this explicitly so an additional YUV will be added
         PV2WayMIO::AddCodec(PVMFFormatType(PVMF_MIME_YUV420));
     }
-#ifdef PV2WAY_WIN32_GUI
-    // for sources parse the con file - want to find out the format
-    if (!ParseConFile(aFileSettings))
-        return -1;
-#endif
     return 0;
 }
 
@@ -46,6 +49,17 @@ int PV2WaySource::AddCodec(PVMFFileInputSettings& aFileSettings)
 {
     AddFormat(aFileSettings);
     if (pv_mime_strcmp(aFileSettings.iMediaFormat.getMIMEStrPtr(), PVMF_MIME_M4V) == 0)
+    {
+        // add this explicitly so an additional YUV will be added
+        PV2WayMIO::AddCodec(PVMFFormatType(PVMF_MIME_YUV420));
+    }
+    return 0;
+}
+
+int PV2WaySource::AddCodec(LipSyncDummyMIOSettings& aSettings)
+{
+    AddFormat(aSettings);
+    if (pv_mime_strcmp(aSettings.iMediaFormat.getMIMEStrPtr(), PVMF_MIME_M4V) == 0)
     {
         // add this explicitly so an additional YUV will be added
         PV2WayMIO::AddCodec(PVMFFormatType(PVMF_MIME_YUV420));

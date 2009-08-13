@@ -86,6 +86,7 @@ typedef OSCL_String PvmfMimeString;
 #define PVMF_MIME_YUV422_SEMIPLANAR          "X-YUV-422-SEMIPLANAR"
 #define PVMF_MIME_YUV422_PACKEDSEMIPLANAR    "X-YUV-422-PACKEDSEMIPLANAR"
 #define PVMF_MIME_YUV422_INTERLEAVED_UYVY    "X-YUV-422-INTERLEAVED-UYVY"
+#define PVMF_MIME_YUV422_INTERLEAVED_YUYV    "X-YUV-422-INTERLEAVED-YUYV"
 #define PVMF_MIME_YUV420_SEMIPLANAR_YVU      "X-YUV-420-SEMIPLANAR-YUV"
 
 // MIME strings for compressed audio formats
@@ -133,6 +134,11 @@ typedef OSCL_String PvmfMimeString;
 //H264 streamed as per RFC 3984
 #define PVMF_MIME_H264_VIDEO "video/H264"
 // WMV7, WMV8, WMV9
+#define PVMF_MIME_FLV1  "video/x-flv"
+
+#define PVMF_MIME_VP6 "video/x-vp6"
+
+
 #define PVMF_MIME_WMV        "video/x-ms-wmv"
 // RV8, RV0
 #define PVMF_MIME_REAL_VIDEO          "video/vnd.rn-realvideo"
@@ -149,6 +155,7 @@ typedef OSCL_String PvmfMimeString;
 #define PVMF_MIME_AACFF          "X-AAC-FF"
 #define PVMF_MIME_MP3FF          "X-MP3-FF"
 #define PVMF_MIME_WAVFF          "X-WAV-FF"
+#define PVMF_MIME_FLVFF          "x-pvmf/mux/flv"
 #define PVMF_MIME_ASFFF          "x-pvmf/mux/asf"
 #define PVMF_MIME_RMFF           "x-pvmf/mux/rm"
 #define PVMF_MIME_DIVXFF         "x-pvmf/mux/divx"

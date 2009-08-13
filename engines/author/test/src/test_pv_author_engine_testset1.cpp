@@ -236,7 +236,7 @@ int pvauthor_async_test_miscellaneous::CreateVideoInput()
                 status = testInput.CreateInputNode(H263_FILE, iInputFileNameVideo, iAVTConfig);
             }
             break;
-        case M4V_Input_AOnly_3gpTest:
+        case M4V_Input_VOnly_3gpTest:
             PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_DEBUG,
                             (0, "pvauthor_async_test_miscellaneous::CreateVideoTestInput: M4V input"));
             if (testInput.IsTestInputTypeSupported(M4V_FILE))
@@ -247,7 +247,7 @@ int pvauthor_async_test_miscellaneous::CreateVideoInput()
             }
             break;
 
-        case AVC_Input_AOnly_3gpTest:
+        case AVC_Input_VOnly_3gpTest:
             PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_DEBUG,
                             (0, "pvauthor_async_test_miscellaneous::CreateVideoTestInput: AVC input"));
             if (testInput.IsTestInputTypeSupported(AVC_FILE))
@@ -367,8 +367,8 @@ void pvauthor_async_test_miscellaneous::SelectComposer()
         case AMR_YUV_TEXT_Input_AVT_3gpTest:
         case AMRWB_Input_AOnly_3gpTest:
         case AAC_Input_AOnly_3gpTest:
-        case M4V_Input_AOnly_3gpTest:
-        case AVC_Input_AOnly_3gpTest:
+        case M4V_Input_VOnly_3gpTest:
+        case AVC_Input_VOnly_3gpTest:
             iComposerMimeType = K3gpComposerMimeType;
             break;
 
@@ -433,21 +433,21 @@ bool pvauthor_async_test_miscellaneous::ConfigAmrAacComposer()
     {
         case AMR_FOutput_Test:
         case AMR_FileOutput_Test_UsingExternalFileHandle:
-            if (iOutputFileName == NULL)
+            if (iOutputFileName.get_size() == 0)
             {
                 iOutputFileName = KFOAOnlyAMRTestOutput;
             }
             break;
 
         case AMRWB_FOutput_Test:
-            if (iOutputFileName == NULL)
+            if (iOutputFileName.get_size() == 0)
             {
                 iOutputFileName = KFOAOnlyAMRWBTestOutput;
             }
             break;
 
         case AACADIF_FOutput_Test:
-            if (iOutputFileName == NULL)
+            if (iOutputFileName.get_size() == 0)
             {
                 iOutputFileName = KFOAOnlyAACADIFTestOutput;
             }
@@ -455,7 +455,7 @@ bool pvauthor_async_test_miscellaneous::ConfigAmrAacComposer()
 
 
         case AACADTS_FOutput_Test:
-            if (iOutputFileName == NULL)
+            if (iOutputFileName.get_size() == 0)
             {
                 iOutputFileName = KFOAOnlyAACADTSTestOutput;
             }
@@ -521,82 +521,82 @@ bool pvauthor_async_test_miscellaneous::ConfigMp43gpComposer()
     switch (iTestCaseNum)
     {
         case AMR_Input_AOnly_3gpTest:
-            if (iOutputFileName == NULL)
+            if (iOutputFileName.get_size() == 0)
             {
                 iOutputFileName = KAMRInputAOnly3gpTestOutput;
             }
             break;
         case H263_Input_VOnly_3gpTest:
-            if (iOutputFileName == NULL)
+            if (iOutputFileName.get_size() == 0)
             {
                 iOutputFileName = KH263InputVOnly3gpTestOutput;
             }
             break;
         case AMR_YUV_Input_AV_3gpTest:
-            if (iOutputFileName == NULL)
+            if (iOutputFileName.get_size() == 0)
             {
                 iOutputFileName = KAMRYUVInputAV3gpTestOutput;
             }
             break;
         case AMR_H263_Input_AV_3gpTest:
-            if (iOutputFileName == NULL)
+            if (iOutputFileName.get_size() == 0)
             {
                 iOutputFileName = KAMRH263InputAV3gpTestOutput;
             }
             break;
         case AMR_YUV_Input_AV_M4V_AMR_Output_3gpTest:
-            if (iOutputFileName == NULL)
+            if (iOutputFileName.get_size() == 0)
             {
                 iOutputFileName = KAMRYUVInputAVMp4TestOutput;
             }
             break;
         case TEXT_Input_TOnly_3gpTest:
         case TEXT_Input_TOnly_3gp_LongetivityTest:
-            if (iOutputFileName == NULL)
+            if (iOutputFileName.get_size() == 0)
             {
                 iOutputFileName = KTEXTInputMp4TestOutput;
             }
             break;
         case AMR_TEXT_Input_AT_3gpTest:
         case AMR_TEXT_Input_AT_3gp_LongetivityTest:
-            if (iOutputFileName == NULL)
+            if (iOutputFileName.get_size() == 0)
             {
                 iOutputFileName = KAMRTEXTInputMp4TestOutput;
             }
             break;
         case YUV_TEXT_Input_VT_3gpTest:
         case YUV_TEXT_Input_VT_3gp_LongetivityTest:
-            if (iOutputFileName == NULL)
+            if (iOutputFileName.get_size() == 0)
             {
                 iOutputFileName = KYUVTEXTInputMp4TestOutput;
             }
             break;
         case AMR_YUV_TEXT_Input_AVT_3gpTest:
         case AMR_YUV_TEXT_Input_AVT_3gp_LongetivityTest:
-            if (iOutputFileName == NULL)
+            if (iOutputFileName.get_size() == 0)
             {
                 iOutputFileName = KYUVAMRTEXTInputAVTMp4TestOutput;
             }
             break;
         case AMRWB_Input_AOnly_3gpTest:
-            if (iOutputFileName == NULL)
+            if (iOutputFileName.get_size() == 0)
             {
                 iOutputFileName = KAMRWBInputAOnly3gpTestOutput;
             }
             break;
         case AAC_Input_AOnly_3gpTest:
-            if (iOutputFileName == NULL)
+            if (iOutputFileName.get_size() == 0)
             {
                 iOutputFileName = KAACInputAOnly3gpTestOutput;
             }
             break;
-        case M4V_Input_AOnly_3gpTest:
-            if (iOutputFileName == NULL)
+        case M4V_Input_VOnly_3gpTest:
+            if (iOutputFileName.get_size() == 0)
             {
                 iOutputFileName = KM4VInputVOnly3gpTestOutput;
             }
             break;
-        case AVC_Input_AOnly_3gpTest:
+        case AVC_Input_VOnly_3gpTest:
         {
             iOutputFileName = KAVCInputVOnly3gpTestOutput;
         }
@@ -751,11 +751,11 @@ bool pvauthor_async_test_miscellaneous::AddVideoMediaTrack()
         case AMR_YUV_Input_AV_M4V_AMR_Output_3gpTest:
         case YUV_TEXT_Input_VT_3gpTest:
         case AMR_YUV_TEXT_Input_AVT_3gpTest:
-        case M4V_Input_AOnly_3gpTest:
+        case M4V_Input_VOnly_3gpTest:
             iVideoEncoderMimeType = KMp4EncMimeType;
             break;
 
-        case AVC_Input_AOnly_3gpTest:
+        case AVC_Input_VOnly_3gpTest:
             iVideoEncoderMimeType = KH264EncMimeType;
             break;
 
@@ -892,7 +892,7 @@ bool pvauthor_async_test_miscellaneous::ConfigureAudioEncoder()
         return true;
     }
 
-    return PVAETestNodeConfig::ConfigureAudioEncoder(iAudioEncoderConfig, iAudioEncoderMimeType);
+    return PVAETestNodeConfig::ConfigureAudioEncoder(iAudioEncoderConfig, iAudioEncoderMimeType, iAacEncoderProfileMimeType);
 }
 
 
@@ -1032,7 +1032,6 @@ void pvauthor_async_test_miscellaneous::Cleanup()
 
     DeleteTestInputs();
     fileserv.Close();
-    iOutputFileName = NULL;
     if (iFileHandle)
     {
         OSCL_DELETE(iFileHandle);
@@ -1504,7 +1503,6 @@ void pvauthor_async_test_miscellaneous::CommandCompleted(const PVCmdResponse& aR
         case PVAE_CMD_STOP:
             if (aResponse.GetCmdStatus() == PVMFSuccess)
             {
-                iOutputFileName = NULL;
                 iState = PVAE_CMD_RESET;
                 RunIfNotReady();
             }
@@ -1554,7 +1552,6 @@ void pvauthor_async_test_miscellaneous::CommandCompleted(const PVCmdResponse& aR
                 {
                     return;//We will wait for all RemoveDataSource calls to complete
                 }
-                iOutputFileName = NULL;
                 if (!DeleteTestInputs())
                 {
                     PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_ERR,

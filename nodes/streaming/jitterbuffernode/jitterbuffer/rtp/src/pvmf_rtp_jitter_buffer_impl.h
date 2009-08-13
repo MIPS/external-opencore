@@ -43,8 +43,7 @@ class PVMFRTPJitterBufferImpl: public PVMFJitterBufferImpl
         OSCL_IMPORT_REF uint32 getInterArrivalJitter();
         OSCL_IMPORT_REF virtual void PurgeElementsWithSeqNumsLessThan(uint32 aSeqNum, uint32 aPlayerClockMS);
         OSCL_IMPORT_REF virtual void PurgeElementsWithTimestampLessThan(PVMFTimestamp aTS);
-        OSCL_IMPORT_REF virtual PVMFSharedMediaDataPtr& GetFirstDataPacket(void);
-        OSCL_IMPORT_REF virtual bool GetRTPTimeStampOffset(uint32& aTimeStampOffset);
+        OSCL_IMPORT_REF virtual bool GetRTPTimeStampOffset(uint32& aTimeStampOffset) const;
         OSCL_IMPORT_REF virtual void  SetRTPTimeStampOffset(uint32 newTSBase);
         OSCL_IMPORT_REF virtual bool NotifyFreeSpaceAvailable();
         OSCL_IMPORT_REF virtual void SetEarlyDecodingTimeInMilliSeconds(uint32 duration);
@@ -104,6 +103,26 @@ class PVMFRTPJitterBufferImpl: public PVMFJitterBufferImpl
         void DeterminePrevTimeStamp(uint32 aSeqNum);
         void ComputeMaxAdjustedRTPTS();
         PVMFStatus PerformFlowControl(bool aIncomingPacket);
+        PayloadParserStatus ParsePayload(PVMFSharedMediaMsgPtr& aMediaMsgPtr);
+        virtual bool PendingAccessUnitsAvlToSend() const
+        {
+            return (iAccessUnits.size() > 0);
+        }
+        virtual void ClearAvlAccessUnits()
+        {
+            iAccessUnits.clear();
+        }
+        virtual PVMFStatus GetParsedMediaMsg(PVMFSharedMediaMsgPtr& aMediaMsgPtr);
+
+        void AllocateMediaDataGroupMediaMsg(OsclSharedPtr<PVMFMediaDataImpl>& aMediaDataImplPtr)
+        {
+            int32 err = OsclErrNone;
+            OSCL_TRY(err, aMediaDataImplPtr = ipMediaDataGroupAllocOutputMediaMsg->allocate());
+            if ((err != OsclErrNone) || (aMediaDataImplPtr.GetRep() == NULL))
+            {
+                OSCL_LEAVE(PVMFErrNoMemory);
+            }
+        }
 
         PVMFMediaClock* iPacketArrivalClock;
         PVLogger*   ipRTPInfoTrackerLogger;
@@ -134,6 +153,13 @@ class PVMFRTPJitterBufferImpl: public PVMFJitterBufferImpl
         uint32 iPrevNptTimeInRTPTimeScale;
         MediaClockConverter iMediaClockConvertor;
         PVMFRTPInfoParams iLatestPurgedRTPInfoParams;
+
+        Oscl_Vector<IPayloadParser::Payload, OsclMemAllocator> iAccessUnits; //Output of payload parser
+
+        PVUid32 iCurrFormatId;
+
+        PVLogger* ipParserInLogger;
+        PVLogger* ipParserOutLogger;
 };
 #endif
 

@@ -2165,7 +2165,7 @@ bool PVMFSMFSPBaseNode::IsFatalErrorEvent(const PVMFEventType& event)
 
 bool PVMFSMFSPBaseNode::ErrorHandlingRequired(PVMFStatus aStatus)
 {
-    if ((EPVMFNodeIdle != iInterfaceState) && (PVMFSuccess != aStatus) && (PVMFErrCancelled != aStatus) && (PVMFErrLicenseRequired != aStatus) && (PVMFErrNotSupported != aStatus) && (PVMFErrArgument != aStatus))
+    if ((EPVMFNodeIdle != iInterfaceState) && (PVMFSuccess != aStatus) && (PVMFErrCancelled != aStatus) && (PVMFErrDrmLicenseNotFound != aStatus) && (PVMFErrDrmLicenseExpired != aStatus) && (PVMFErrNotSupported != aStatus) && (PVMFErrArgument != aStatus))
     {
         return true;
     }

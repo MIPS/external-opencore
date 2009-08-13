@@ -612,9 +612,9 @@ void PVMediaInputAuthorEngineTest::test()
 
                     //fprintf(iFile, "\nCurrently executing test:%d\n\n", iNextTestCase);
                     fprintf(iFile, "Begin test with the following parameters:\
-\t\t\t\t\nInput File Name : %s\nOutput File Name: %s,\nVideo Encoder: %s,\nAudio Encoder: %s,\
+\t\t\t\t\nInput File Name : %s\nOutput File Name: %s,\nVideo Encoder: %s,\nAudio Encoder: %s, \nAac Encoder Profile: %s,\
 \t\t\t\t\nComposer: %s\n", iMediaInputParam.iIPFileInfo.get_cstr(), iMediaInputParam.iOPFileInfo.get_cstr(),
-                    iMediaInputParam.iVideoEncInfo.get_cstr(), iMediaInputParam.iAudioEncInfo.get_cstr(),
+                    iMediaInputParam.iVideoEncInfo.get_cstr(), iMediaInputParam.iAudioEncInfo.get_cstr(), iMediaInputParam.iAacEncProfileInfo.get_cstr(),
                     iMediaInputParam.iComposerInfo.get_cstr());
 
 

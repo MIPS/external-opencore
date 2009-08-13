@@ -35,10 +35,9 @@ class pv_mediainput_async_test_opencomposestop: public pvauthor_async_test_base,
         pv_mediainput_async_test_opencomposestop(PVAuthorAsyncTestParam aTestParam, PVMediaInputTestParam aMediaParam, bool aPauseResumeEnable,
                 bool aUseExtrnFileDesc = false)
                 : pvauthor_async_test_base(aTestParam)
-                , iOutputFileName(NULL)
-                , iInputFileName(NULL)
                 , iComposerMimeType(aMediaParam.iComposerInfo)
                 , iAudioEncoderMimeType(aMediaParam.iAudioEncInfo)
+                , iAacEncoderProfileMimeType(aMediaParam.iAacEncProfileInfo)
                 , iVideoEncoderMimeType(aMediaParam.iVideoEncInfo)
                 , iMediaInputType(aMediaParam.iInputFormat)
                 , iLoopTime(aMediaParam.iLoopTime)
@@ -101,12 +100,11 @@ class pv_mediainput_async_test_opencomposestop: public pvauthor_async_test_base,
         void CommandCompleted(const PVCmdResponse& aResponse);
 
         PVAECmdType iState;
-        // Test output
-        OSCL_wHeapString<OsclMemAllocator> iOutputFileName;
         OSCL_wHeapString<OsclMemAllocator> iInputFileName;
 
         OSCL_HeapString<OsclMemAllocator> iComposerMimeType;
         OSCL_HeapString<OsclMemAllocator> iAudioEncoderMimeType;
+        OSCL_HeapString<OsclMemAllocator> iAacEncoderProfileMimeType;
         OSCL_HeapString<OsclMemAllocator> iVideoEncoderMimeType;
 
         //test input type

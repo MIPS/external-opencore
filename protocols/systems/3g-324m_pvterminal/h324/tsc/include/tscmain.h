@@ -132,11 +132,6 @@ class SimpleStackElement;
 #define TSC_WNSRP_MUX_ENTRY_NUMBER 15
 #define TSC_INCOMING_CHANNEL_MASK (1<<16)
 
-// For requesting ports
-#define PVMF_AUDIO_OUTGOING_MIMETYPE    "x-pvmf/audio;dir=outgoing"
-#define PVMF_VIDEO_OUTGOING_MIMETYPE    "x-pvmf/video;dir=outgoing"
-#define PVMF_INCOMING_MIMETYPE          "x-pvmf/dir=incoming"
-#define PVMF_OUTGOING_MIMETYPE          "x-pvmf/dir=outgoing"
 
 /*---------------------------------------------------------------------------*/
 /*  Constant Definition                                                      */
@@ -297,7 +292,6 @@ class TSC_324m : public TSC,
 
         TPVStatusCode SetTimerRes(uint32 timer_res);
 
-        //virtual TPVStatusCode SetCapability(CapabilitySet* capabilities) = 0;
         virtual TPVStatusCode ResetTsc();
         virtual TPVStatusCode Connect(uint16 info_len = 0, uint8* info_buf = NULL);
         virtual TPVStatusCode Disconnect();
@@ -382,6 +376,10 @@ class TSC_324m : public TSC,
         void ResetStats();
         void LogStats(TPVDirection dir);
 
+        OSCL_IMPORT_REF TPVH223Level GetMultiplexLevel()
+        {
+            return iH223Level;
+        }
         /* Set muliplex level.  Can be called when the node is in the Initialized state */
         OSCL_IMPORT_REF void SetMultiplexLevel(TPVH223Level muxLevel);
         OSCL_IMPORT_REF void SetSduSize(TPVDirection direction, uint16 size, TPVAdaptationLayer al);
@@ -400,7 +398,8 @@ class TSC_324m : public TSC,
         OSCL_IMPORT_REF void SetEndSessionTimeout(uint32 timeout);
         OSCL_IMPORT_REF void SetAlConfig(PV2WayMediaType media_type,
                                          TPVAdaptationLayer layer,
-                                         bool allow);
+                                         bool allow,
+                                         bool use);
         OSCL_IMPORT_REF void SetTimerCounter(TPVH324TimerCounter aTimerCounter,
                                              uint8 aSeries, uint32 aSeriesOffset, uint32 aValue);
         OSCL_IMPORT_REF void SetVideoResolutions(TPVDirection dir, Oscl_Vector<PVMFVideoResolutionRange, OsclMemAllocator>& resolutions);
@@ -425,6 +424,8 @@ class TSC_324m : public TSC,
         void SetMioLatency(int32 aLatency, bool aAudio);
 
     private:
+        void Cleanup();
+
         /* Function Prototypes */
         void CommandComplete(Tsc324mNodeCmdQ& aCmdQ, Tsc324mNodeCommand& aCmd, PVMFStatus aStatus, OsclAny* aEventData = NULL);
 

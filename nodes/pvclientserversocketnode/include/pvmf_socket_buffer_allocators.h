@@ -140,6 +140,11 @@ class PVMFSocketBufferCleanupDA : public OsclDestructDealloc
 
         virtual void destruct_and_dealloc(OsclAny* ptr)
         {
+            const uint8* const my_ptr = (uint8*)ptr;
+            const uint aligned_refcnt_size = oscl_mem_aligned_size(sizeof(OsclRefCounterDA));
+            const uint aligned_cleanup_size = oscl_mem_aligned_size(sizeof(PVMFSocketBufferCleanupDA));
+            PVMFMediaDataImpl* media_data_ptr = OSCL_REINTERPRET_CAST(PVMFMediaDataImpl*, (my_ptr + aligned_refcnt_size + aligned_cleanup_size));
+            media_data_ptr->~PVMFMediaDataImpl();
             gen_alloc->deallocate(ptr);
             /*
              * in case there are no outstanding buffers delete the allocator
@@ -1338,6 +1343,12 @@ class PVMFSMSharedBufferAllocWithReSizeCleanupDA : public OsclDestructDealloc
             Oscl_DefAlloc* myalloc = gen_alloc;
             PVMFSMSharedBufferAllocWithReSize* socketDataAllocator =
                 reinterpret_cast<PVMFSMSharedBufferAllocWithReSize*>(myalloc);
+
+            uint8* const my_ptr = (uint8*)ptr;
+            const uint aligned_refcnt_size = oscl_mem_aligned_size(sizeof(OsclRefCounterDA));
+            const uint aligned_cleanup_size = oscl_mem_aligned_size(sizeof(PVMFSMSharedBufferAllocWithReSizeCleanupDA));
+            PVMFMediaDataImpl* media_data_ptr = (PVMFMediaDataImpl*)(my_ptr + aligned_refcnt_size + aligned_cleanup_size);
+            media_data_ptr->~PVMFMediaDataImpl();
             gen_alloc->deallocate(ptr);
 
             uint32 numBuffers = socketDataAllocator->getNumOutStandingBuffers();

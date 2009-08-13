@@ -26,7 +26,7 @@
 #include "pv_mime_string_utils.h"
 #endif
 
-PVMFAACFFParserOutPort::PVMFAACFFParserOutPort(int32 aTag, PVMFNodeInterface* aNode)
+PVMFAACFFParserOutPort::PVMFAACFFParserOutPort(int32 aTag, PVMFNodeInterfaceImpl* aNode)
         : PvmfPortBaseImpl(aTag, aNode, "AacFFParOut(Audio)")
 {
     iAACParserNode = OSCL_STATIC_CAST(PVMFAACFFParserNode*, aNode);
@@ -38,8 +38,6 @@ void PVMFAACFFParserOutPort::Construct()
 {
     iLogger = PVLogger::GetLoggerObject("PVMFAACParserOutPort");
     oscl_memset(&iStats, 0, sizeof(PvmfPortBaseImplStats));
-    iNumFramesGenerated = 0;
-    iNumFramesConsumed = 0;
 }
 
 PVMFAACFFParserOutPort::~PVMFAACFFParserOutPort()
@@ -161,29 +159,6 @@ PVMFStatus PVMFAACFFParserOutPort::releaseParameters(PvmiMIOSession aSession,
         alloc.deallocate((OsclAny*)(aParameters->key));
         return PVMFSuccess;
     }
-    return PVMFErrNotSupported;
-}
-
-void PVMFAACFFParserOutPort::setParametersSync(PvmiMIOSession aSession,
-        PvmiKvp* aParameters,
-        int num_elements,
-        PvmiKvp * & aRet_kvp)
-{
-    OSCL_UNUSED_ARG(aSession);
-    OSCL_UNUSED_ARG(aParameters);
-    OSCL_UNUSED_ARG(aRet_kvp);
-    OSCL_UNUSED_ARG(num_elements);
-
-}
-
-PVMFStatus PVMFAACFFParserOutPort::verifyParametersSync(PvmiMIOSession aSession,
-        PvmiKvp* aParameters,
-        int num_elements)
-{
-    OSCL_UNUSED_ARG(aSession);
-    OSCL_UNUSED_ARG(aParameters);
-    OSCL_UNUSED_ARG(num_elements);
-
     return PVMFErrNotSupported;
 }
 

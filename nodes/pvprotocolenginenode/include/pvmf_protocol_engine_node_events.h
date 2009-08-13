@@ -117,7 +117,7 @@ enum PVProtocolEngineNodeErrorEventType
     PVProtocolEngineNodeErrorHTTPErrorCode401_InvalidRealm,                                                                 // 1317
     PVProtocolEngineNodeErrorHTTPErrorCode401_UnsupportedAuthenticationType,                                                // 1318
     PVProtocolEngineNodeErrorHTTPErrorCode401_NoAuthenticationHeader,                                                       // 1319
-
+    PVProtocolEngineNodeErrorHTTPErrorCode305_Proxy,                  // 1320
 
     PVProtocolEngineNodeErrorNotHTTPErrorEnd                                = PVProtocolEngineNodeErrorEventStart + 299,
 
@@ -216,6 +216,31 @@ enum PVProtocolEngineNodeErrorEventType
     // general Unknown code
     PVProtocolEngineNodeErrorHTTPCodeUnknown,
     PVProtocolEngineNodeErrorEventEnd
+};
+
+class PVMFProtocolEngineNodeErrorRedirect: public PVMFBasicErrorInfoMessage
+{
+    public:
+        PVMFProtocolEngineNodeErrorRedirect(int32 aCode, PVUuid& aUuid, PVMFErrorInfoMessageInterface* aNextMsg = NULL)
+                : PVMFBasicErrorInfoMessage(aCode, aUuid, aNextMsg)
+        {}
+
+        int32 iRedirectNum;
+        Oscl_Vector<OSCL_HeapString<OsclMemAllocator>, OsclMemAllocator> iRedirectVec;
+
+        void destroy()
+        {
+            OSCL_DELETE(this);
+        }
+        bool queryInterface(const PVUuid& uuid, PVInterface*& iface)
+        {
+            if (uuid == PVProtocolEngineNodeErrorEventTypesUUID)
+            {
+                iface = this;
+                return true;
+            }
+            return PVMFBasicErrorInfoMessage::queryInterface(uuid, iface);
+        }
 };
 
 #endif // PVMF_PROTOCOL_ENGINE_NODE_EVENTS_H_INCLUDED

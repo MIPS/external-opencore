@@ -867,6 +867,18 @@ PVMFMemoryBufferReadDataStreamImpl::SetSourceRequestObserver(PvmiDataStreamReque
 }
 
 
+OSCL_EXPORT_REF PvmiDataStreamStatus PVMFMemoryBufferReadDataStreamImpl::SetBufferingCapacity(uint32 aMinCapacity, uint32 aTrimMargin)
+{
+    if (NULL == iWriteDataStream)
+    {
+        LOGERROR((0, "PVMFMemoryBufferReadDataStreamImpl::SetBufferingCapacity failed - no write data stream.\n"));
+        return PVDS_FAILURE;
+    }
+
+    return iWriteDataStream->SetBufferingCapacity(aMinCapacity, aTrimMargin);
+}
+
+
 OSCL_EXPORT_REF uint32
 PVMFMemoryBufferReadDataStreamImpl::QueryBufferingCapacity()
 {
@@ -880,6 +892,21 @@ PVMFMemoryBufferReadDataStreamImpl::QueryBufferingCapacity()
     LOGTRACE((0, "PVMFMemoryBufferReadDataStreamImpl::QueryBufferingCapacity returning %d", capacity));
     return capacity;
 }
+
+
+OSCL_EXPORT_REF uint32 PVMFMemoryBufferReadDataStreamImpl::QueryBufferingTrimMargin()
+{
+    uint32 margin = 0;
+
+    if (NULL != iWriteDataStream)
+    {
+        margin = iWriteDataStream->QueryBufferingTrimMargin();
+    }
+
+    LOGTRACE((0, "PVMFMemoryBufferReadDataStreamImpl::QueryBufferingTrimMargin returning %d", margin));
+    return margin;
+}
+
 
 // The data to be made persistent may be already in the temp cache.
 // If so, copy the data from temp cache into perm cache.
@@ -1966,8 +1993,17 @@ PVMFMemoryBufferWriteDataStreamImpl::Reposition(PvmiDataStreamSession aSessionID
         {
             if (smallest < iFilePtrPos)
             {
-                //LOGE("Ln %d Do nothing. found %d smalltest %d", __LINE__, found, smallest );
-                return status;
+                uint32 firstTempOffset = 0;
+                uint32 lastTempOffset = 0;
+                iTempCache->GetFileOffsets(firstTempOffset, lastTempOffset);
+
+                uint32 bytesToWait = aOffset - lastTempOffset;
+                if (bytesToWait <= PV_MBDS_FWD_SEEKING_NO_GET_REQUEST_THRESHOLD)
+                {
+                    LOGDEBUG((0, "Ln %d Do nothing. found %d smalltest %d bytesToWait %d", __LINE__, found, smallest, bytesToWait));
+                    return status;
+                }
+
             }
 
             if ((smallest >= iFilePtrPos) &&
@@ -2230,6 +2266,25 @@ PVMFMemoryBufferWriteDataStreamImpl::SourceRequestCompleted(const PVMFCmdResp& a
 }
 
 
+OSCL_EXPORT_REF PvmiDataStreamStatus PVMFMemoryBufferWriteDataStreamImpl::SetBufferingCapacity(uint32 aMinCapacity, uint32 aTrimMargin)
+{
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_INFO, (2, "PVMFMemoryBufferWriteDataStreamImpl::SetBufferingCapacity capacity=%d trim margin=%d", aMinCapacity, aTrimMargin));
+
+    iTempCacheCapacity = aMinCapacity;
+    if (MBDS_STREAM_FORMAT_SHOUTCAST == iStreamFormat)
+    {
+        iTempCacheTrimThreshold = PV_MBDS_TEMP_CACHE_TRIM_THRESHOLD_SC(iTempCacheCapacity);
+        iTempCacheTrimMargin = PV_MBDS_TEMP_CACHE_TRIM_MARGIN_SC;
+    }
+    else
+    {
+        iTempCacheTrimThreshold = PV_MBDS_TEMP_CACHE_TRIM_THRESHOLD_PS(iTempCacheCapacity);
+        iTempCacheTrimMargin = aTrimMargin;
+    }
+    return PVDS_SUCCESS;
+}
+
+
 OSCL_EXPORT_REF uint32
 PVMFMemoryBufferWriteDataStreamImpl::QueryBufferingCapacity()
 {
@@ -2237,6 +2292,12 @@ PVMFMemoryBufferWriteDataStreamImpl::QueryBufferingCapacity()
 
     // return the minimum size of the cache/sliding window
     return iTempCacheCapacity;
+}
+
+OSCL_EXPORT_REF uint32 PVMFMemoryBufferWriteDataStreamImpl::QueryBufferingTrimMargin()
+{
+    LOGTRACE((0, "PVMFMemoryBufferWriteDataStreamImpl::QueryBufferingTrimMargin returning %d", iTempCacheTrimMargin));
+    return iTempCacheTrimMargin;
 }
 
 OSCL_EXPORT_REF PvmiDataStreamStatus

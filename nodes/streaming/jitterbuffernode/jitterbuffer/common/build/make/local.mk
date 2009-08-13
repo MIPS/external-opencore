@@ -9,8 +9,9 @@ TARGET := pvjitterbuffer
 XCXXFLAGS += $(FLAG_COMPILE_WARNINGS_AS_ERRORS)
 
 # Added this to for osclconfig.h
-XINCDIRS += -I ../../../../../../common/include -I ../../../../../streamingmanager/plugins/mshttp/config -I ../../../../../streamingmanager/include -I ../../../../../../../protocols/rtp/src
-XINCDIRS += -I ../../../../../common/include
+XINCDIRS += ../../../../../../common/include  ../../../../../streamingmanager/include ../../../../../../../protocols/rtp/src
+XINCDIRS += ../../../../../common/include
+
 
 SRCDIR := ../../src
 INCSRCDIR := ../../include

@@ -88,13 +88,13 @@ void OmxDecTestCompRole::Run()
             ipAppPriv = (AppPrivateType*) oscl_malloc(sizeof(AppPrivateType));
             CHECK_MEM_ROLE_TEST(ipAppPriv, "Component_Handle");
 
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG, (0, "OmxDecTestCompRole::Run() - OMX_Init pre"));
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG, (0, "OmxDecTestCompRole::Run() - OMX_MasterInit pre"));
 
 
             //This should be the first call to the component to load it.
-            Err = OMX_Init();
-            CHECK_ERROR_ROLE_TEST(Err, "OMX_Init");
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG, (0, "OmxDecTestCompRole::Run() - OMX_Init done"));
+            Err = OMX_MasterInit();
+            CHECK_ERROR_ROLE_TEST(Err, "OMX_MasterInit");
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG, (0, "OmxDecTestCompRole::Run() - OMX_MasterInit done"));
 
 
             if (NULL != iName)
@@ -103,7 +103,7 @@ void OmxDecTestCompRole::Run()
                                 (0, "OmxDecTestCompRole::Run() - Finding out whether the component %s supports the correct role", iName));
 
                 //Given the component name, verify whether it supports correct role or not
-                Err = OMX_GetRolesOfComponent(iName, &NumComps, NULL);
+                Err = OMX_MasterGetRolesOfComponent(iName, &NumComps, NULL);
 
                 if (OMX_ErrorNone != Err || NumComps < 1)
                 {
@@ -132,7 +132,7 @@ void OmxDecTestCompRole::Run()
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
                                 (0, "OmxDecTestCompRole::Run() - Find out the roles supported now"));
 
-                Err = OMX_GetRolesOfComponent(iName, &NumComps, (OMX_U8**) pCompOfRole);
+                Err = OMX_MasterGetRolesOfComponent(iName, &NumComps, (OMX_U8**) pCompOfRole);
                 CHECK_ERROR_ROLE_TEST(Err, "GetRolesOfComponent");
 
                 for (ii = 0; ii < NumComps; ii++)
@@ -154,7 +154,7 @@ void OmxDecTestCompRole::Run()
                     break;
                 }
 
-                Err = OMX_GetHandle(&ipAppPriv->Handle, iName, (OMX_PTR) this , iCallbacks->getCallbackStruct());
+                Err = OMX_MasterGetHandle(&ipAppPriv->Handle, iName, (OMX_PTR) this , iCallbacks->getCallbackStruct());
 
                 // check if there was a problem
                 CHECK_ERROR_ROLE_TEST(Err, "GetHandle");
@@ -169,7 +169,7 @@ void OmxDecTestCompRole::Run()
 
                 //Given the role, determine the component first & then get the handle
                 // Call once to find out the number of components that can fit the role
-                Err = OMX_GetComponentsOfRole(iRole, &NumComps, NULL);
+                Err = OMX_MasterGetComponentsOfRole(iRole, &NumComps, NULL);
 
                 if (OMX_ErrorNone != Err || NumComps < 1)
                 {
@@ -198,13 +198,13 @@ void OmxDecTestCompRole::Run()
                 }
 
                 // call 2nd time to get the component names
-                Err = OMX_GetComponentsOfRole(iRole, &NumComps, (OMX_U8**) pCompOfRole);
+                Err = OMX_MasterGetComponentsOfRole(iRole, &NumComps, (OMX_U8**) pCompOfRole);
                 CHECK_ERROR_ROLE_TEST(Err, "GetComponentsOfRole");
 
                 for (ii = 0; ii < NumComps; ii++)
                 {
                     // try to create component
-                    Err = OMX_GetHandle(&ipAppPriv->Handle, (OMX_STRING) pCompOfRole[ii], (OMX_PTR) this, iCallbacks->getCallbackStruct());
+                    Err = OMX_MasterGetHandle(&ipAppPriv->Handle, (OMX_STRING) pCompOfRole[ii], (OMX_PTR) this, iCallbacks->getCallbackStruct());
                     // if successful, no need to continue
                     if ((OMX_ErrorNone == Err) && (NULL != ipAppPriv->Handle))
                     {
@@ -255,7 +255,7 @@ void OmxDecTestCompRole::Run()
                     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
                                     (0, "OmxDecTestCompRole::Run() - Free the Component Handle"));
 
-                    Err = OMX_FreeHandle(ipAppPriv->Handle);
+                    Err = OMX_MasterFreeHandle(ipAppPriv->Handle);
                     if (OMX_ErrorNone != Err)
                     {
                         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "OmxDecTestCompRole::Run() - FreeHandle Error"));
@@ -267,10 +267,10 @@ void OmxDecTestCompRole::Run()
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
                             (0, "OmxDecTestCompRole::Run() - De-initialize the omx component"));
 
-            Err = OMX_Deinit();
+            Err = OMX_MasterDeinit();
             if (OMX_ErrorNone != Err)
             {
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "OmxDecTestCompRole::Run() - OMX_Deinit Error"));
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "OmxDecTestCompRole::Run() - OMX_MasterDeinit Error"));
                 iTestStatus = OMX_FALSE;
             }
 

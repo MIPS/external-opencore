@@ -83,6 +83,7 @@
 #include "pvmf_mp4ffparser_events.h"
 #endif
 
+OsclFileHandle* iFileHandle;
 FILE *fp;
 //
 // pvplayer_async_test_printmetadata section
@@ -1114,7 +1115,8 @@ void pvplayer_async_test_printmetadata::PrintMetadataInfo()
         fprintf(iTestMsgOutputFile, "Key %d: %s\n", (i + 1), iMetadataKeyList[i].get_cstr());
     }
 
-    fprintf(iTestMsgOutputFile, "\nMetadata value list (count=%d):\n", iMetadataValueList.size());
+    fprintf(iTestMsgOutputFile, "\nMetadata value list (count=%d, iNumValues=%d):\n", iMetadataValueList.size(), iNumValues);
+    PVPATB_TEST_IS_TRUE(iMetadataValueList.size() == (uint32)iNumValues);
     for (i = 0; i < iMetadataValueList.size(); ++i)
     {
 
@@ -2848,13 +2850,12 @@ void pvplayer_async_test_playuntileos_using_external_file_handle::Run()
 
             if (!iLocalDataSource)
             {
-                OsclFileHandle* fileHandle = NULL;
                 fp = fopen((char*)iFileName, "rb");
                 if (fp)
                 {
-                    fileHandle = OSCL_NEW(OsclFileHandle, (fp));
+                    iFileHandle = OSCL_NEW(OsclFileHandle, (fp));
                 }
-                if (fileHandle == NULL)
+                if (iFileHandle == NULL)
                 {
                     if (fp)
                     {
@@ -2866,7 +2867,7 @@ void pvplayer_async_test_playuntileos_using_external_file_handle::Run()
                     return;
                 }
                 iLocalDataSource = OSCL_NEW(PVMFLocalDataSource, ());
-                iLocalDataSource->iFileHandle = fileHandle;
+                iLocalDataSource->iFileHandle = iFileHandle;
                 iDataSource->SetDataSourceContextData(iLocalDataSource);
             }
 
@@ -3019,6 +3020,11 @@ void pvplayer_async_test_playuntileos_using_external_file_handle::Run()
             PVPATB_TEST_IS_TRUE(PVPlayerFactory::DeletePlayer(iPlayer));
             iPlayer = NULL;
 
+            if (iFileHandle)
+            {
+                OSCL_DELETE(iFileHandle);
+                iFileHandle = NULL;
+            }
             if (fp)
             {
                 fclose(fp);

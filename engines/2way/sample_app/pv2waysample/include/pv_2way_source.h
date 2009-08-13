@@ -30,8 +30,9 @@
 class PV2WaySource : public PV2WayMIO
 {
     public:
-        PV2WaySource(Oscl_Vector<CodecSpecifier*, OsclMemAllocator>* aFormats) :
-                PV2WayMIO(aFormats)
+        PV2WaySource(Oscl_Vector<PVMFFormatType, OsclMemAllocator>* aFormats,
+                     PV2WayMIOObserver* aObserver) :
+                PV2WayMIO(aFormats, aObserver)
         {
             iMyDir = OUTGOING;
         };
@@ -41,6 +42,7 @@ class PV2WaySource : public PV2WayMIO
 
         int AddCodec(PvmiMIOFileInputSettings& aFileSettings);
         int AddCodec(PVMFFileInputSettings& aFileSettings);
+        int AddCodec(LipSyncDummyMIOSettings& aSettings);
 
     protected:
 

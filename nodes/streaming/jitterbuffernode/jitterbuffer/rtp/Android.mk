@@ -8,7 +8,7 @@ LOCAL_SRC_FILES := \
 
 LOCAL_MODULE := libpvjitterbufferrtp
 
-LOCAL_CFLAGS :=  $(PV_CFLAGS)
+LOCAL_CFLAGS :=   $(PV_CFLAGS)
 
 
 
@@ -20,7 +20,6 @@ LOCAL_C_INCLUDES := \
 	$(PV_TOP)/nodes/streaming/jitterbuffernode/jitterbuffer/rtp/src \
  	$(PV_TOP)/nodes/streaming/jitterbuffernode/jitterbuffer/rtp/include \
  	$(PV_TOP)/nodes/common/include \
- 	$(PV_TOP)/nodes/streaming/streamingmanager/plugins/mshttp/config \
  	$(PV_TOP)/nodes/streaming/streamingmanager/include \
  	$(PV_TOP)/protocols/rtp/src \
  	$(PV_TOP)/nodes/streaming/common/include \

@@ -58,9 +58,12 @@ OSCL_EXPORT_REF bool ProgressiveDownloadContainer::createProtocolObjects()
 
 OSCL_EXPORT_REF bool ProgressiveDownloadContainer::needSocketReconnect()
 {
+    OsclSharedPtr<PVDlCfgFile> aCfgFile = iCfgFileContainer->getCfgFile();
+
     // currently, only disallow socket reconnect for head request disabled during prepare->start
     if (iObserver->GetObserverState() == (uint32)EPVMFNodePrepared &&
-            iInterfacingObjectContainer->getHttpHeadRequestDisabled() &&
+            (iInterfacingObjectContainer->getHttpHeadRequestDisabled() ||
+             (!iInterfacingObjectContainer->getHttpHeadRequestDisabled() && aCfgFile->getHttpVersion() == 1)) &&
             !iForceSocketReconnect) return false;
     return true;
 }

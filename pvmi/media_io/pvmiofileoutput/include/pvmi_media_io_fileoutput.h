@@ -33,8 +33,8 @@
 #ifndef OSCL_FILE_IO_H_INCLUDED
 #include "oscl_file_io.h"
 #endif
-#ifndef PVMI_CONFIG_AND_CAPABILITY_H_INCLUDED
-#include "pvmi_config_and_capability.h"
+#ifndef PVMI_CONFIG_AND_CAPABILITY_BASE_H_INCLUDED
+#include "pvmi_config_and_capability_base.h"
 #endif
 #ifndef OSCL_STRING_CONTAINERS_H_INCLUDED
 #include "oscl_string_containers.h"
@@ -166,10 +166,11 @@ class PVRefFileOutputActiveTimingSupport: public PvmiClockExtensionInterface
 // This class implements the reference media IO for file output.
 // This class constitutes the Media IO component
 
-class PVRefFileOutput : public OsclTimerObject
+class PVRefFileOutput
+        : public OsclTimerObject
         , public PvmiMIOControl
         , public PvmiMediaTransfer
-        , public PvmiCapabilityAndConfig
+        , public PvmiCapabilityAndConfigBase
         , public PvmiClockExtensionInterface
 
 {
@@ -263,29 +264,15 @@ class PVRefFileOutput : public OsclTimerObject
 
         OSCL_IMPORT_REF void setUserClockExtnInterface(bool aEnable);
 
-        // Pure virtuals from PvmiCapabilityAndConfig
-
-        void setObserver(PvmiConfigAndCapabilityCmdObserver* aObserver);
+        // from PvmiCapabilityAndConfig
 
         PVMFStatus getParametersSync(PvmiMIOSession aSession, PvmiKeyType aIdentifier,
                                      PvmiKvp*& aParameters, int& num_parameter_elements, PvmiCapabilityContext aContext);
 
         PVMFStatus releaseParameters(PvmiMIOSession aSession, PvmiKvp* aParameters, int num_elements);
 
-        void createContext(PvmiMIOSession aSession, PvmiCapabilityContext& aContext);
-
-        void setContextParameters(PvmiMIOSession aSession, PvmiCapabilityContext& aContext,
-                                  PvmiKvp* aParameters, int num_parameter_elements);
-
-        void DeleteContext(PvmiMIOSession aSession, PvmiCapabilityContext& aContext);
-
         void setParametersSync(PvmiMIOSession aSession, PvmiKvp* aParameters,
                                int num_elements, PvmiKvp * & aRet_kvp);
-
-        PVMFCommandId setParametersAsync(PvmiMIOSession aSession, PvmiKvp* aParameters,
-                                         int num_elements, PvmiKvp*& aRet_kvp, OsclAny* context = NULL);
-
-        uint32 getCapabilityMetric(PvmiMIOSession aSession);
 
         PVMFStatus verifyParametersSync(PvmiMIOSession aSession, PvmiKvp* aParameters, int num_elements);
 

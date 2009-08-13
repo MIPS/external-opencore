@@ -119,6 +119,7 @@ OSCL_EXPORT_REF int32 oscl_UnicodeToUTF8(const oscl_wchar *szSrc, int32 nSrcLen,
                 ch_tmp_byte = (char)(((szSrc[i] & 0x3c0) >> 6) + 1);
                 strDest[i_cur_output++] = (char)(ch_tmp_byte >> 2 | 0xf0);
                 strDest[i_cur_output++] = (char)(((ch_tmp_byte & 0x03) | 0x80) | (szSrc[i] & 0x3e) >> 2);
+                /* @todo Handle surrogate pairs */
             }
             else
             {
@@ -139,7 +140,7 @@ OSCL_EXPORT_REF int32 oscl_UnicodeToUTF8(const oscl_wchar *szSrc, int32 nSrcLen,
                 strDest[i_cur_output] = '\0'; /* Terminate string */
                 return 0; /* ERROR_INSUFFICIENT_BUFFER */
             }
-        } /* @todo Handle surrogate pairs */
+        }
     }
 
     strDest[i_cur_output] = '\0'; /* Terminate string */
@@ -180,6 +181,7 @@ OSCL_EXPORT_REF int32 oscl_UTF8ToUnicode(const char *szSrc, int32 nSrcLen, oscl_
     unsigned char *pszSrc = (unsigned char *)szSrc;  /* cast to avoid signed/unsigned promomtion problems */
     while (i < nSrcLen)
     {
+        /* @todo Handle surrogate pairs */
         if (SIGMASK_3_1 <= pszSrc[i]) /* 1st byte of 3 byte representation */
         {
             if (i + 2 < nSrcLen && i_cur_output + 1 < nDestLen)

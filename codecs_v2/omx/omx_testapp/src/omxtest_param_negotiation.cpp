@@ -24,7 +24,8 @@
 OMX_BOOL OmxDecTestBufferNegotiation::NegotiateParameters()
 {
     OMX_ERRORTYPE Err;
-    OMX_S32 NumPorts, ii;
+    OMX_S32 NumPorts;
+    OMX_U32 ii;
 
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "OmxDecTestBufferNegotiation::NegotiateParameters() - IN"));
 
@@ -228,8 +229,8 @@ OMX_BOOL OmxDecTestBufferNegotiation::NegotiateParameters()
     INIT_GETPARAMETER_STRUCT(OMX_PARAM_PORTDEFINITIONTYPE, iParamPort);
     Err = OMX_GetParameter(ipAppPriv->Handle, OMX_IndexParamPortDefinition, &iParamPort);
 
-    if ((OMX_ErrorNone != Err) || (iParamPort.nBufferCountActual != iInBufferCount) ||
-            (iParamPort.nBufferSize != iInBufferSize))
+    if ((OMX_ErrorNone != Err) || (iParamPort.nBufferCountActual != (OMX_U32)iInBufferCount) ||
+            (iParamPort.nBufferSize != (OMX_U32)iInBufferSize))
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
                         (0, "OmxDecTestBufferNegotiation::NegotiateParameters() - Buffer parameter verificication failed with Get/Set Parameter combination on port %d, OUT", iInputPortIndex));
@@ -307,8 +308,8 @@ OMX_BOOL OmxDecTestBufferNegotiation::NegotiateParameters()
     iParamPort.nPortIndex = iOutputPortIndex;
 
     Err = OMX_GetParameter(ipAppPriv->Handle, OMX_IndexParamPortDefinition, &iParamPort);
-    if ((OMX_ErrorNone != Err) || (iParamPort.nBufferCountActual != iOutBufferCount)
-            || (iParamPort.nBufferSize != iOutBufferSize))
+    if ((OMX_ErrorNone != Err) || (iParamPort.nBufferCountActual != (OMX_U32)iOutBufferCount)
+            || (iParamPort.nBufferSize != (OMX_U32)iOutBufferSize))
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
                         (0, "OmxDecTestBufferNegotiation::NegotiateParameters() - Buffer parameter verificication failed with Get/Set Parameter combination on port %d, OUT", iOutputPortIndex));
@@ -332,6 +333,7 @@ OMX_BOOL OmxDecTestBufferNegotiation::ParamTestVideoPort()
     OMX_VIDEO_PARAM_AVCTYPE FormatAvc;
     OMX_VIDEO_PARAM_MPEG4TYPE FormatMpeg4;
     OMX_VIDEO_PARAM_WMVTYPE FormatWmv;
+    OMX_VIDEO_PARAM_WMVTYPE FormatRv;
     OMX_VIDEO_PARAM_H263TYPE FormatH263;
 
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "OmxDecTestBufferNegotiation::ParamTestVideoPort() - IN"));
@@ -506,6 +508,33 @@ OMX_BOOL OmxDecTestBufferNegotiation::ParamTestVideoPort()
                             {
                                 PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
                                                 (0, "OmxDecTestBufferNegotiation::ParamTestVideoPort() - Port %i returned error while setting format OMX_VIDEO_CodingWMV", PortIndex));
+                                return OMX_FALSE;
+                            }
+                        }
+                        break;
+
+                        case OMX_VIDEO_CodingRV:
+                        {
+                            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
+                                            (0, "OmxDecTestBufferNegotiation::ParamTestVideoPort() - RV compression format found on port %d, Verifying the Get/Set Parameter combination", PortIndex));
+
+                            INIT_GETPARAMETER_STRUCT(OMX_VIDEO_PARAM_RVTYPE, FormatRv);
+                            FormatRv.nPortIndex = PortIndex;
+
+                            //Check the Get and Set Parameter api's with the compressed format
+                            Err = OMX_GetParameter(ipAppPriv->Handle, OMX_IndexParamVideoRv, &FormatRv);
+                            if (OMX_ErrorNone != Err)
+                            {
+                                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
+                                                (0, "OmxDecTestBufferNegotiation::ParamTestVideoPort() - Port %i returned error for format OMX_VIDEO_CodingRV", PortIndex));
+                                return OMX_FALSE;
+                            }
+
+                            Err = OMX_SetParameter(ipAppPriv->Handle, OMX_IndexParamVideoRv, &FormatRv);
+                            if (OMX_ErrorNone != Err)
+                            {
+                                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
+                                                (0, "OmxDecTestBufferNegotiation::ParamTestVideoPort() - Port %i returned error while setting format OMX_VIDEO_CodingRV", PortIndex));
                                 return OMX_FALSE;
                             }
                         }
@@ -905,13 +934,13 @@ void OmxDecTestBufferNegotiation::Run()
             CHECK_MEM(ipAppPriv, "Component_Handle");
 
             //This should be the first call to the component to load it.
-            Err = OMX_Init();
-            CHECK_ERROR(Err, "OMX_Init");
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG, (0, "OmxDecTestBufferNegotiation::Run() - OMX_Init done"));
+            Err = OMX_MasterInit();
+            CHECK_ERROR(Err, "OMX_MasterInit");
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG, (0, "OmxDecTestBufferNegotiation::Run() - OMX_MasterInit done"));
 
             if (NULL != iName)
             {
-                Err = OMX_GetHandle(&ipAppPriv->Handle, iName, (OMX_PTR) this , iCallbacks->getCallbackStruct());
+                Err = OMX_MasterGetHandle(&ipAppPriv->Handle, iName, (OMX_PTR) this , iCallbacks->getCallbackStruct());
                 CHECK_ERROR(Err, "GetHandle");
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG, (0, "OmxDecTestBufferNegotiation::Run() - Got Handle for the component %s", iName));
             }
@@ -919,12 +948,12 @@ void OmxDecTestBufferNegotiation::Run()
             {
                 OMX_U32 NumComps = 0;
                 OMX_STRING* pCompOfRole = NULL;
-                OMX_BOOL IsRoleSupported = OMX_FALSE;
+
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG, (0, "OmxDecTestBufferNegotiation::Run() - Finding out the role for the component %s", iRole));
 
                 //Given the role, determine the component first & then get the handle
                 // Call once to find out the number of components that can fit the role
-                Err = OMX_GetComponentsOfRole(iRole, &NumComps, NULL);
+                Err = OMX_MasterGetComponentsOfRole(iRole, &NumComps, NULL);
 
                 if (OMX_ErrorNone != Err || NumComps < 1)
                 {
@@ -952,13 +981,13 @@ void OmxDecTestBufferNegotiation::Run()
                 }
 
                 // call 2nd time to get the component names
-                Err = OMX_GetComponentsOfRole(iRole, &NumComps, (OMX_U8**) pCompOfRole);
+                Err = OMX_MasterGetComponentsOfRole(iRole, &NumComps, (OMX_U8**) pCompOfRole);
                 CHECK_ERROR(Err, "GetComponentsOfRole");
 
                 for (ii = 0; ii < NumComps; ii++)
                 {
                     // try to create component
-                    Err = OMX_GetHandle(&ipAppPriv->Handle, (OMX_STRING) pCompOfRole[ii], (OMX_PTR) this , iCallbacks->getCallbackStruct());
+                    Err = OMX_MasterGetHandle(&ipAppPriv->Handle, (OMX_STRING) pCompOfRole[ii], (OMX_PTR) this , iCallbacks->getCallbackStruct());
                     // if successful, no need to continue
                     if ((OMX_ErrorNone == Err) && (NULL != ipAppPriv->Handle))
                     {
@@ -1197,7 +1226,7 @@ void OmxDecTestBufferNegotiation::Run()
                     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
                                     (0, "OmxDecTestBufferNegotiation::Run() - Free the Component Handle"));
 
-                    Err = OMX_FreeHandle(ipAppPriv->Handle);
+                    Err = OMX_MasterFreeHandle(ipAppPriv->Handle);
 
                     if (OMX_ErrorNone != Err)
                     {
@@ -1209,10 +1238,10 @@ void OmxDecTestBufferNegotiation::Run()
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
                             (0, "OmxDecTestBufferNegotiation::Run() - De-initialize the omx component"));
 
-            Err = OMX_Deinit();
+            Err = OMX_MasterDeinit();
             if (OMX_ErrorNone != Err)
             {
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "OmxDecTestBufferNegotiation::Run() - OMX_Deinit Error"));
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "OmxDecTestBufferNegotiation::Run() - OMX_MasterDeinit Error"));
                 iTestStatus = OMX_FALSE;
             }
 

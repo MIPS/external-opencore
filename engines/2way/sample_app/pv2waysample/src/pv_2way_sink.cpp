@@ -44,3 +44,14 @@ int PV2WaySink::AddCodec(PVMFFileInputSettings& aFileSettings)
     }
     return AddFormat(aFileSettings);
 }
+
+int PV2WaySink::AddCodec(LipSyncDummyMIOSettings& aSettings)
+{
+    if (pv_mime_strcmp(aSettings.iMediaFormat.getMIMEStrPtr(), PVMF_MIME_M4V) == 0)
+    {
+        // add this explicitly so an additional YUV will be added
+        PV2WayMIO::AddCodec(PVMFFormatType(PVMF_MIME_YUV420));
+    }
+    return AddFormat(aSettings);
+}
+

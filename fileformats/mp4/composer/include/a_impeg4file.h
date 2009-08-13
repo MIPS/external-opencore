@@ -31,16 +31,8 @@
 #include "a_isucceedfail.h"
 #include "a_atomdefs.h"
 
-#ifndef OSCL_STRING_CONTAINERS_H_INCLUDED
-#include "oscl_string_containers.h"
-#endif
-
 #ifndef OSCL_FILE_IO_H_INCLUDED
 #include "oscl_file_io.h"
-#endif
-
-#ifndef OSCL_VECTOR_H_INCLUDED
-#include "oscl_vector.h"
 #endif
 
 #ifndef TEXTSAMPLEDESCINFO_H
@@ -299,17 +291,12 @@ class PVA_FF_IMpeg4File : public PVA_FF_ISucceedFail
 
         virtual uint32  addTrack(int32 mediaType,
                                  int32 codecType,
-                                 bool oDirectRender = false,
                                  uint8 profile = 1,
                                  uint8 profileComp = 0xFF,
                                  uint8 level = 0xFF) = 0;
 
-        virtual bool addSampleToTrack(uint32 trackID,
-                                      Oscl_Vector <OsclMemoryFragment, OsclMemAllocator>& fragmentList, // vector which contains either NALs or samples
-                                      uint32 ts, uint8 flags) = 0;
-        virtual bool addTextSampleToTrack(uint32 trackID,
-                                          Oscl_Vector <OsclMemoryFragment, OsclMemAllocator>& fragmentList, // vector which contains either NALs or samples
-                                          uint32 ts, uint8 flags, int32 index, uint8* modifierinfo) = 0;
+        virtual bool addSampleToTrack(uint32 trackID, PVMP4FFComposerSampleParam *pSampleParam) = 0;
+        virtual bool addTextSampleToTrack(uint32 trackID, PVMP4FFComposerSampleParam *pSampleParam) = 0;
         virtual void addTrackReference(uint32 currtrackID, int32 reftrackID) = 0;
         virtual void setTargetBitRate(uint32 trackID, uint32 bitrate) = 0;
         virtual void setTimeScale(uint32 trackID, uint32 rate) = 0;

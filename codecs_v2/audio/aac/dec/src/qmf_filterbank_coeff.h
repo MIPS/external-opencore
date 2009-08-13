@@ -54,7 +54,7 @@
 ; Declare variables used in this module but defined elsewhere
 ----------------------------------------------------------------------------*/
 
-#define Qfmt(x)   (Int16)(x*(((Int32)1<<15)*1.11111111111111111F) + (x>=0?0.5F:-0.5F))
+#define Qfmt(x)   (Int16)(x*(((Int32)1<<15)*0.78567420131839F) + (x>=0?0.5F:-0.5F))
 
 
 #define Qfmt30(x)   (Int32)(x*((Int32)1<<30) + (x>=0?0.5F:-0.5F))

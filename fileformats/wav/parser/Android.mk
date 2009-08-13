@@ -7,7 +7,7 @@ LOCAL_SRC_FILES := \
 
 LOCAL_MODULE := libpvwav
 
-LOCAL_CFLAGS :=  $(PV_CFLAGS)
+LOCAL_CFLAGS :=   $(PV_CFLAGS)
 
 
 

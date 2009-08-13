@@ -21,11 +21,7 @@ ifdef NO2WAY324
 XCPPFLAGS += -DNO_2WAY_324
 endif
 
-ifeq ($(USING_OMX),1)
 XCPPFLAGS += -DPV2WAY_USE_OMX 
-else
-XCPPFLAGS += -DPV_USE_AMR_CODECS
-endif 
 
 
 XINCDIRS +=  ../../src  ../../include  ../../../common/include  \
@@ -43,13 +39,12 @@ XINCDIRS +=  ../../src  ../../include  ../../../common/include  \
 ../../../../nodes/streaming/common/include \
 ../../../../nodes/pvmediainputnode/include 
 
-ifeq ($(USING_OMX),1)
+# OMX directories
 XINCDIRS +=  ../../../../extern_libs_v2/khronos/openmax/include \
   ../../../../nodes/pvomxvideodecnode/include \
   ../../../../nodes/pvomxbasedecnode/include \
   ../../../../nodes/pvomxaudiodecnode/include \
   ../../../../nodes/pvomxencnode/include
-endif
 
 
 SRCDIR := ../../src
@@ -92,4 +87,4 @@ sdkinfo_header_macro := PV_2WAY_SDKINFO
 sdkinfo_label_macro := PV2WAY_ENGINE_SDKINFO_LABEL
 sdkinfo_date_macro := PV2WAY_ENGINE_SDKINFO_DATE
 
-include $(MK)/sdkinfo_nr.mk 
+include $(MK)/sdkinfo.mk 

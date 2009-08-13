@@ -19,52 +19,100 @@
 #include "pv_2way_engine.h"
 #endif
 
-//
-//
-//
-// NOTE: This file is a work-in-progress
-// It gives a flavor of what is to come with changes
-// with the 2way test extension interface
-
 
 #include "pvlogger.h"
+#include "pv_2way_dec_data_channel_datapath.h"
+#include "pv_2way_enc_data_channel_datapath.h"
 
+#include "pv_mime_string_utils.h"
 
 
 ///////////////////////////////////////////////////////////////////
-// CPV324m2Way::SetPreferredCodecs
-// This function takes the selection of codecs from the MIOs/app
-// and uses these to select the appropriate codecs for the stack node
-// it also sets these as the expected codecs in the channels.
+// CPV324m2Way::NegotiatedFormatsMatch
+//
 //
 ///////////////////////////////////////////////////////////////////
-bool CPV324m2Way::AcceptableFormatsMatch(
-    Oscl_Vector<FormatCapabilityInfo, OsclMemAllocator>& iInAudFormatCapability,
-    Oscl_Vector<FormatCapabilityInfo, OsclMemAllocator>& iOutAudFormatCapability,
-    Oscl_Vector<FormatCapabilityInfo, OsclMemAllocator>& iInVidFormatCapability,
-    Oscl_Vector<FormatCapabilityInfo, OsclMemAllocator>& iOutVidFormatCapability)
+bool CPV324m2Way::NegotiatedFormatsMatch(
+    Oscl_Vector<FormatCapabilityInfo, OsclMemAllocator>& aInAudFormatCapability,
+    Oscl_Vector<FormatCapabilityInfo, OsclMemAllocator>& aOutAudFormatCapability,
+    Oscl_Vector<FormatCapabilityInfo, OsclMemAllocator>& aInVidFormatCapability,
+    Oscl_Vector<FormatCapabilityInfo, OsclMemAllocator>& aOutVidFormatCapability)
 {
-    bool result = false;
+    bool result1 = true;
+    bool result2 = true;
+    bool result3 = true;
+    bool result4 = true;
     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                    (0, "CPV324m2Way::AcceptableFormatsMatch"));
+                    (0, "CPV324m2Way::NegotiatedFormatsMatch"));
 
-    // go through inAudioChannelParams, see that codecs match
-    // iOutgoingChannelParams
 
-    //iIncomingAudioCodecs, etc
+    PVMFFormatType formatEncAudio = iAudioEncDatapath->GetSourceSinkFormat();
+    PVMFFormatType formatEncVideo = iVideoEncDatapath->GetSourceSinkFormat();
+    PVMFFormatType formatDecAudio = iAudioEncDatapath->GetSourceSinkFormat();
+    PVMFFormatType formatDecVideo = iVideoEncDatapath->GetSourceSinkFormat();
 
-    /*    FormatCapabilityInfo formatCap;
-        if (formatCap.format === otherFormatCap.format)
-        {
-        }
-        else
-        {
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                            (0, "CPV324m2Way::AcceptableFormatsMatch: FOUND A MISMATCH"));
-            return false;
-        }
-        */
-    return result;
+    uint totalSize = aOutAudFormatCapability.size();
+    if (totalSize == 0)
+    {
+        return false;
+    }
+    FormatCapabilityInfo formatInfo = aOutAudFormatCapability[0];
+    if (pv_mime_strcmp(formatEncAudio.getMIMEStrPtr(),
+                       formatInfo.format.getMIMEStrPtr()) == 0)
+    {
+        result1 = true;
+    }
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "CPV324m2Way::NegotiatedFormatsMatch match on audio %d", result1));
+
+    ////////////////////////////////////////////////
+    totalSize = aOutVidFormatCapability.size();
+    if (totalSize == 0)
+    {
+        return false;
+    }
+    formatInfo = aOutVidFormatCapability[0];
+    if (pv_mime_strcmp(formatEncVideo.getMIMEStrPtr(),
+                       formatInfo.format.getMIMEStrPtr()) == 0)
+    {
+        result2 = true;
+    }
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "CPV324m2Way::NegotiatedFormatsMatch match on video %d", result2));
+
+    ////////////////////////////////////////////////
+    totalSize = aInAudFormatCapability.size();
+    if (totalSize == 0)
+    {
+        return false;
+    }
+    formatInfo = aInAudFormatCapability[0];
+    if (pv_mime_strcmp(formatDecVideo.getMIMEStrPtr(),
+                       formatInfo.format.getMIMEStrPtr()) == 0)
+    {
+        result3 = true;
+    }
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "CPV324m2Way::NegotiatedFormatsMatch match on video %d", result3));
+
+    ////////////////////////////////////////////////
+    totalSize = aInVidFormatCapability.size();
+    if (totalSize == 0)
+    {
+        return false;
+    }
+    formatInfo = aInVidFormatCapability[0];
+    if (pv_mime_strcmp(formatEncVideo.getMIMEStrPtr(),
+                       formatInfo.format.getMIMEStrPtr()) == 0)
+    {
+        result4 = true;
+    }
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "CPV324m2Way::NegotiatedFormatsMatch match on video %d", result4));
+    ///////////////////////////////////////////////
+
+
+    return result1 && result2 && result3 && result4;
 }
 
 bool CPV324m2Way::queryInterface(const PVUuid& uuid, PVInterface*& iface)

@@ -11,7 +11,7 @@ LOCAL_SRC_FILES := \
 
 LOCAL_MODULE := libpvmp4ffparsernode
 
-LOCAL_CFLAGS :=  $(PV_CFLAGS)
+LOCAL_CFLAGS :=   $(PV_CFLAGS)
 
 
 

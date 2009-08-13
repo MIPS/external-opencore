@@ -36,7 +36,7 @@ class pvauthor_async_test_miscellaneous: public pvauthor_async_test_base
                                           const char* aInputFileNameVideo, const char* aInputFileNameText,
                                           const char* aOutputFileName, PVAETestInputType aAudioInputType,
                                           PVAETestInputType aVideoInputType, PVAETestInputType aTextInputType,
-                                          const char* aComposerMimeType, const char* aAudioEncoderMimeType, const char* aVideoEncoderMimeType,
+                                          const char* aComposerMimeType, const char* aAudioEncoderMimeType, const char* aAacEncoderProfileMimeType, const char* aVideoEncoderMimeType,
                                           const char* aTextEncoderMimeType, AVTConfig aAVTConfig, bool aPauseResumeEnable, uint32 aAuthoringTime,
                                           bool aUseExtrnFileDesc = false)
 
@@ -44,6 +44,7 @@ class pvauthor_async_test_miscellaneous: public pvauthor_async_test_base
 
                 , iComposerMimeType(aComposerMimeType)
                 , iAudioEncoderMimeType(aAudioEncoderMimeType)
+                , iAacEncoderProfileMimeType(aAacEncoderProfileMimeType)
                 , iVideoEncoderMimeType(aVideoEncoderMimeType)
                 , iTextEncoderMimeType(aTextEncoderMimeType)
                 , iAudioInputType(aAudioInputType)
@@ -91,11 +92,6 @@ class pvauthor_async_test_miscellaneous: public pvauthor_async_test_base
                 iTestDuration = KAuthoringSessionUnit * 1000 * 1000; // use default authoring time here
             }
 
-            iInputFileNameAudio = NULL;
-            iInputFileNameVideo = NULL;
-            iInputFileNameText = NULL;
-            iOutputFileName = NULL;
-
             if (oscl_strlen(aInputFileNameAudio) != 0)
             {
                 oscl_wchar output1[ARRAY_SIZE];
@@ -139,8 +135,6 @@ class pvauthor_async_test_miscellaneous: public pvauthor_async_test_base
         void CommandCompleted(const PVCmdResponse& aResponse);
 
         PVAECmdType iState;
-        // Test output
-        OSCL_wHeapString<OsclMemAllocator> iOutputFileName;
         OSCL_wHeapString<OsclMemAllocator> iInputFileNameAudio;
         OSCL_wHeapString<OsclMemAllocator> iInputFileNameVideo;
         OSCL_wHeapString<OsclMemAllocator> iInputFileNameText;
@@ -148,6 +142,7 @@ class pvauthor_async_test_miscellaneous: public pvauthor_async_test_base
 
         OSCL_HeapString<OsclMemAllocator> iComposerMimeType;
         OSCL_HeapString<OsclMemAllocator> iAudioEncoderMimeType;
+        OSCL_HeapString<OsclMemAllocator> iAacEncoderProfileMimeType;
         OSCL_HeapString<OsclMemAllocator> iVideoEncoderMimeType;
         OSCL_HeapString<OsclMemAllocator> iTextEncoderMimeType;
         // Test inputs

@@ -132,24 +132,7 @@ uint32 TSC_324m::VendorIdRecv(PS_ControlMsgHeader  pReceiveInf)
                      pVendorIdentification->vendor.index,
                      pVendorIdentification->option_of_productNumber,
                      pVendorIdentification->option_of_versionNumber));
-    if (iVendorR)
-    {
-        OSCL_DELETE(iVendorR);
-        iVendorR = NULL;
-    }
-
-    if (iProductNumberR)
-    {
-        OSCL_DEFAULT_FREE(iProductNumberR);
-        iProductNumberR = NULL;
-        iProductNumberLenR = 0;
-    }
-    if (iVersionNumberR)
-    {
-        OSCL_DEFAULT_FREE(iVersionNumberR);
-        iVersionNumberR = NULL;
-        iVersionNumberLenR = 0;
-    }
+    Cleanup();
 
     if (pVendorIdentification->vendor.index == 0) // object identifier
     {

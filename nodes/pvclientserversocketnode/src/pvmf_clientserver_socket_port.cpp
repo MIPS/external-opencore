@@ -174,23 +174,9 @@ void PVMFClientServerSocketPort::setParametersSync(PvmiMIOSession aSession,
     PVLOGGER_LOGMSG(PVLOGMSG_INST_MLDBG, iLogger, PVLOGMSG_INFO, (0, "PVMFClientServerSocketPort::setParametersSync: aSession=0x%x, aParameters=0x%x, num_elements=%d, aRet_kvp=0x%x",
                     aSession, aParameters, num_elements, aRet_kvp));
     OSCL_UNUSED_ARG(aSession);
-    if (!aParameters || (num_elements != 1) ||
-            (pv_mime_strcmp(aParameters->key, PVMF_CLIENTSERVER_SOCKET_PORT_SPECIFIC_ALLOCATOR_VALTYPE) != 0))
-    {
-        aRet_kvp = aParameters;
-        OSCL_LEAVE(OsclErrArgument);
-    }
-    if (aParameters->value.key_specific_value == NULL)
-    {
-        aRet_kvp = aParameters;
-        OSCL_LEAVE(OsclErrArgument);
-    }
-    else
-    {
-        aRet_kvp = NULL;
-        iAllocSharedPtr =
-            *((OsclSharedPtr<PVMFSharedSocketDataBufferAlloc>*)(aParameters->value.key_specific_value));
-    }
+    OSCL_UNUSED_ARG(aParameters);
+    OSCL_UNUSED_ARG(num_elements);
+    OSCL_UNUSED_ARG(aRet_kvp);
 }
 
 

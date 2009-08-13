@@ -60,10 +60,9 @@ void test_base::QueryInterfaceSucceeded()
     {
         iH324MConfig->SetObserver(this);
 
-        {
+        PVUuid uuid = PVUuidH324ComponentInterface;
 
-            iH324MConfig->queryInterface(PVUuidH324ComponentInterface, (PVInterface*&)iComponentInterface);
-        }
+        iH324MConfig->queryInterface(uuid, (PVInterface*&)iComponentInterface);
     }
     // now we have created the component, we can do init.
     Init();
@@ -103,6 +102,7 @@ void test_base::InitSucceeded()
 
 void test_base::InitFailed()
 {
+    printf("\n*************** Test FAILED: InitFailed *************** \n");
     if (timer)
     {
         timer->Cancel();
@@ -119,6 +119,7 @@ void test_base::EncoderIFSucceeded()
 
 void test_base::EncoderIFFailed()
 {
+    printf("\n*************** Test FAILED: EncoderIF Failed *************** \n");
 }
 
 void test_base::ConnectSucceeded()
@@ -146,6 +147,7 @@ void test_base::CancelCmdCompleted()
 
 void test_base::RstCmdCompleted()
 {
+    cleanup();
     RunIfNotReady();
 }
 
@@ -160,18 +162,32 @@ void test_base::DisCmdFailed()
     printf("test_base::DisCmdFailed() \n");
 }
 
-void test_base::AudioAddSinkCompleted()
+void test_base::AudioAddSinkSucceeded()
 {
     iAudioSinkAdded = true;
     if (iAudioSourceAdded && timer)
         timer->RunIfNotReady(TEST_DURATION);
 }
 
-void test_base::AudioAddSourceCompleted()
+void test_base::AudioAddSourceSucceeded()
 {
     iAudioSourceAdded = true;
     if (iAudioSinkAdded && timer)
         timer->RunIfNotReady(TEST_DURATION);
+}
+
+void test_base::AudioAddSinkFailed()
+{
+    printf("\n****** Test FAILED: add audio sink failed \n");
+    test_is_true(false);
+    disconnect();
+}
+
+void test_base::AudioAddSourceFailed()
+{
+    printf("\n****** Test FAILED: add audio source failed \n");
+    test_is_true(false);
+    disconnect();
 }
 
 void test_base::VideoAddSinkSucceeded()
@@ -181,7 +197,7 @@ void test_base::VideoAddSinkSucceeded()
 
 void test_base::VideoAddSinkFailed()
 {
-    printf("\n*************** Test FAILED: add video sink failed *************** \n");
+    printf("\n***** Test FAILED: add video sink failed  \n");
     test_is_true(false);
     disconnect();
 }
@@ -193,6 +209,7 @@ void test_base::VideoAddSourceSucceeded()
 
 void test_base::VideoAddSourceFailed()
 {
+    printf("\n***** Test FAILED: add video source failed \n");
     iVideoSourceAdded = false;
 }
 
@@ -311,11 +328,25 @@ void test_base::CommandCompleted(const PVCmdResponse& aResponse)
     }
     else if (iAudioAddSinkId == cmdId)
     {
-        AudioAddSinkCompleted();
+        if (aResponse.GetCmdStatus() == PVMFSuccess)
+        {
+            AudioAddSinkSucceeded();
+        }
+        else
+        {
+            AudioAddSinkFailed();
+        }
     }
     else if (iAudioAddSourceId == cmdId)
     {
-        AudioAddSourceCompleted();
+        if (aResponse.GetCmdStatus() == PVMFSuccess)
+        {
+            AudioAddSourceSucceeded();
+        }
+        else
+        {
+            AudioAddSourceFailed();
+        }
     }
     else if (iAudioRemoveSourceId == cmdId)
     {
@@ -554,4 +585,16 @@ void test_base::HandleInformationalEvent(const PVAsyncInformationalEvent& aEvent
         default:
             break;
     }
+}
+
+void test_base::TestCompleted(test_case *tc)
+{
+    // Print out the result for this test case
+    const test_result the_result = tc->last_result();
+    fprintf(fileoutput, "\nResults for Test Case %d:\n", iTestNum);
+    fprintf(fileoutput, "Successes %d, Failures %d\n"
+            , the_result.success_count() - iTotalSuccess, the_result.failures().size() - iTotalFail);
+    fflush(fileoutput);
+    iTotalSuccess = the_result.success_count();
+    iTotalFail = the_result.failures().size();
 }

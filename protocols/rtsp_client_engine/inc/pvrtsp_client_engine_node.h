@@ -252,7 +252,7 @@ class SessionInfo
                 roundTripDelay(0),
                 iSessionCompleted(false)
         {
-            iUserAgent += _STRLIT_CHAR("PVPlayer4.0");
+            iUserAgent += _STRLIT_CHAR("PVPlayer ");
             iReqPlayRange.format = RtspRangeType::INVALID_RANGE;
         };
 
@@ -877,7 +877,6 @@ class PVRTSPEngineNode
         bool rtspParserLoop(void);
 
         PVMFStatus DispatchCommand(PVRTSPEngineCommand& aCmd);
-        void MoveCmdToCancelQueue(PVRTSPEngineCommand& aCmd);
 
         PVMFStatus DoInitNode(PVRTSPEngineCommand &aCmd);
         PVMFStatus DoPrepareNode(PVRTSPEngineCommand &aCmd);
@@ -953,6 +952,8 @@ class PVRTSPEngineNode
 
         void MapRTSPCodeToEventCode(RTSPStatusCode aStatusCode,
                                     int32& aEventCode);
+        PVMFStatus CancelCurrentOps();
+        void CheckCancelAllSuccess();
         //allocate aReqBufSize memory for iEmbeddedData
         bool PrepareEmbeddedDataMemory(uint32 aReqBufSize, OsclMemoryFragment &);
         bool DispatchEmbeddedData(uint32 aChannelID);
@@ -987,6 +988,10 @@ class PVRTSPEngineNode
 
         void ResetSessionInfo(void);
         PVRTSPEngineNodeExtensionInterface* iExtensionInterface;
+        OSCL_HeapString<PVRTSPEngineNodeAllocator> iRtspPrefixedURL;
+
+        RTSPEntityBody iEmbeddedData;
+
 };
 
 #endif //PVRTSP_CLIENT_ENGINE_NODE_H

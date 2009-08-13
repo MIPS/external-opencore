@@ -186,18 +186,14 @@ class PVA_FF_Mpeg4File : public PVA_FF_IMpeg4File, public PVA_FF_Parentable
 
         uint32 addTrack(int32 mediaType,
                         int32 codecType,
-                        bool oDirectRender = false,
                         uint8 profile = 1,
                         uint8 profileComp = 0xFF,
                         uint8 level = 0xFF);
 
-        bool addSampleToTrack(uint32 trackID,
-                              Oscl_Vector <OsclMemoryFragment, OsclMemAllocator>& fragmentList,
-                              uint32 ts, uint8 flags);
+        bool addSampleToTrack(uint32 trackID, PVMP4FFComposerSampleParam *pSampleParam);
+
         //special API for Timed text
-        bool addTextSampleToTrack(uint32 trackID,
-                                  Oscl_Vector <OsclMemoryFragment, OsclMemAllocator>& fragmentList,
-                                  uint32 ts, uint8 flags, int32 index, uint8* Textsamplemodifier);
+        bool addTextSampleToTrack(uint32 trackID, PVMP4FFComposerSampleParam *pSampleParam);
 
         void addTrackReference(uint32 currtrackID, int32 reftrackID);
         void setTargetBitRate(uint32 trackID, uint32 bitrate);
@@ -240,13 +236,9 @@ class PVA_FF_Mpeg4File : public PVA_FF_IMpeg4File, public PVA_FF_Parentable
             return false;
         }
 
-        bool addMediaSampleInterleave(uint32 trackID,
-                                      Oscl_Vector <OsclMemoryFragment, OsclMemAllocator>& fragmentList,
-                                      uint32 size, uint32 ts, uint8 flags);
+        bool addMediaSampleInterleave(uint32 trackID, PVMP4FFComposerSampleParam *pSampleParam);
 
-        bool addTextMediaSampleInterleave(uint32 trackID,
-                                          Oscl_Vector <OsclMemoryFragment, OsclMemAllocator>& fragmentList,
-                                          uint32 size, uint32 ts, uint8 flags, int32 index);
+        bool addTextMediaSampleInterleave(uint32 trackID, PVMP4FFComposerSampleParam *pSampleParam);
         //interleave buffer vector functions
         void addInterLeaveBuffer(PVA_FF_InterLeaveBuffer    *pInterLeaveBuffer);
         PVA_FF_InterLeaveBuffer*    getInterLeaveBuffer(uint32  trackID);
@@ -323,7 +315,6 @@ class PVA_FF_Mpeg4File : public PVA_FF_IMpeg4File, public PVA_FF_Parentable
 
 
         PVA_FF_UNICODE_HEAP_STRING _creationDate;
-        bool         _oSetCreationDateDone;
 
         virtual void recomputeSize();
 
@@ -384,9 +375,9 @@ class PVA_FF_Mpeg4File : public PVA_FF_IMpeg4File, public PVA_FF_Parentable
         bool _oFtypPopulated;
 
         bool _o3GPPTrack;
-        bool _oWMFTrack;
         bool _oMPEGTrack;
-        bool _oPVMMTrack;
+        bool _oAVCTrack;
+        bool _oTextTrack;
 
         uint32 _fileAuthoringFlags;
         bool   _oInterLeaveEnabled;
@@ -406,15 +397,12 @@ class PVA_FF_Mpeg4File : public PVA_FF_IMpeg4File, public PVA_FF_Parentable
         PVA_FF_UNICODE_HEAP_STRING _targetFileName;
         MP4_AUTHOR_FF_FILE_HANDLE  _targetFileHandle;
 
-        bool        _oPartialTempFileRemoval;
-        bool        _oDirectRenderEnabled;
         uint32      _initialUserDataSize;
-        uint32      _directRenderFileOffset;
+        uint32      _offsetDataRenderedToFile;
 
         PVA_FF_UNICODE_HEAP_STRING _outputFileName;
         MP4_AUTHOR_FF_FILE_HANDLE  _outputFileHandle;
 
-        bool        _outputFileNameSet;
         bool        _totalTempFileRemoval;
         bool        _oUserDataUpFront;
 

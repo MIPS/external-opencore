@@ -47,8 +47,8 @@ OSCL_DLL_ENTRY_POINT_DEFAULT()
 
 // Audio Media IO component base class implementation
 OSCL_EXPORT_REF AndroidAudioMIO::AndroidAudioMIO(const char* name)
-    : OsclTimerObject(OsclActiveObject::EPriorityNominal, name),
-    iWriteCompleteAO(NULL)
+        : OsclTimerObject(OsclActiveObject::EPriorityNominal, name),
+        iWriteCompleteAO(NULL)
 {
     initData();
 }
@@ -95,10 +95,12 @@ void AndroidAudioMIO::ResetData()
 void AndroidAudioMIO::Cleanup()
 {
     LOGV("Cleanup in");
-    while (!iCommandResponseQueue.empty()) {
-        if (iObserver) {
+    while (!iCommandResponseQueue.empty())
+    {
+        if (iObserver)
+        {
             iObserver->RequestCompleted(PVMFCmdResp(iCommandResponseQueue[0].iCmdId,
-                        iCommandResponseQueue[0].iContext, iCommandResponseQueue[0].iStatus));
+                                                    iCommandResponseQueue[0].iContext, iCommandResponseQueue[0].iStatus));
         }
         iCommandResponseQueue.erase(&iCommandResponseQueue[0]);
     }
@@ -107,7 +109,8 @@ void AndroidAudioMIO::Cleanup()
     returnAllBuffers();
 
     // delete the request active object
-    if (iWriteCompleteAO) {
+    if (iWriteCompleteAO)
+    {
         OSCL_DELETE(iWriteCompleteAO);
         iWriteCompleteAO = NULL;
     }
@@ -117,7 +120,7 @@ void AndroidAudioMIO::Cleanup()
 
 PVMFStatus AndroidAudioMIO::connect(PvmiMIOSession& aSession, PvmiMIOObserver* aObserver)
 {
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0,"AndroidAudioMIO::connect() called"));
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "AndroidAudioMIO::connect() called"));
 
     // currently supports only one session
     if (iObserver) return PVMFFailure;
@@ -127,24 +130,24 @@ PVMFStatus AndroidAudioMIO::connect(PvmiMIOSession& aSession, PvmiMIOObserver* a
 
 PVMFStatus AndroidAudioMIO::disconnect(PvmiMIOSession aSession)
 {
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0,"AndroidAudioMIO::disconnect() called"));
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "AndroidAudioMIO::disconnect() called"));
     iObserver = NULL;
     return PVMFSuccess;
 }
 
 
 PvmiMediaTransfer* AndroidAudioMIO::createMediaTransfer(PvmiMIOSession& aSession,
-                            PvmiKvp* read_formats, int32 read_flags,
-                            PvmiKvp* write_formats, int32 write_flags)
+        PvmiKvp* read_formats, int32 read_flags,
+        PvmiKvp* write_formats, int32 write_flags)
 {
     // create the request active object
     // such when audio output thread is done with a buffer
     // it can put the buffer on the write response queue
     // and schedule this MIO to run, to return the buffer
     // to the engine
-    iWriteCompleteAO = OSCL_NEW(AndroidAudioOutputThreadSafeCallbackAO,(this, 5));
+    iWriteCompleteAO = OSCL_NEW(AndroidAudioOutputThreadSafeCallbackAO, (this, 5));
 
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0,"AndroidAudioMIO::createMediaTransfer() called"));
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "AndroidAudioMIO::createMediaTransfer() called"));
     return (PvmiMediaTransfer*)this;
 }
 
@@ -169,14 +172,16 @@ void AndroidAudioMIO::ProcessWriteResponseQueue()
     const OsclAny* context = 0;
 
     iWriteResponseQueueLock.Lock();
-    while (!iWriteResponseQueue.empty()) {
+    while (!iWriteResponseQueue.empty())
+    {
         status = iWriteResponseQueue[0].iStatus;
         cmdId = iWriteResponseQueue[0].iCmdId;
         context = (OsclAny*)iWriteResponseQueue[0].iContext;
         iWriteResponseQueue.erase(&iWriteResponseQueue[0]);
         iWriteResponseQueueLock.Unlock();
-        if (iPeer) {
-            LOGV("Return buffer(%d) status(%d) context(%p)", cmdId,status,context);
+        if (iPeer)
+        {
+            LOGV("Return buffer(%d) status(%d) context(%p)", cmdId, status, context);
             iPeer->writeComplete(status, cmdId, (OsclAny*)context);
         }
         iWriteResponseQueueLock.Lock();
@@ -186,20 +191,21 @@ void AndroidAudioMIO::ProcessWriteResponseQueue()
 }
 
 PVMFCommandId AndroidAudioMIO::QueryUUID(const PvmfMimeString& aMimeType,
-                                        Oscl_Vector<PVUuid, OsclMemAllocator>& aUuids,
-                                        bool aExactUuidsOnly, const OsclAny* aContext)
+        Oscl_Vector<PVUuid, OsclMemAllocator>& aUuids,
+        bool aExactUuidsOnly, const OsclAny* aContext)
 {
     LOGV("QueryUUID");
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0,"AndroidAudioMIO::QueryUUID() called"));
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "AndroidAudioMIO::QueryUUID() called"));
     return QueueCmdResponse(PVMFFailure, aContext);
 }
 
 PVMFCommandId AndroidAudioMIO::QueryInterface(const PVUuid& aUuid, PVInterface*& aInterfacePtr, const OsclAny* aContext)
 {
     LOGV("QueryInterface");
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0,"AndroidAudioMIO::QueryInterface() called"));
-    PVMFStatus status=PVMFFailure;
-    if (aUuid == PVMI_CAPABILITY_AND_CONFIG_PVUUID) {
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "AndroidAudioMIO::QueryInterface() called"));
+    PVMFStatus status = PVMFFailure;
+    if (aUuid == PVMI_CAPABILITY_AND_CONFIG_PVUUID)
+    {
         PvmiCapabilityAndConfig* myInterface = OSCL_STATIC_CAST(PvmiCapabilityAndConfig*, this);
         aInterfacePtr = OSCL_STATIC_CAST(PVInterface*, myInterface);
         status = PVMFSuccess;
@@ -210,23 +216,23 @@ PVMFCommandId AndroidAudioMIO::QueryInterface(const PVUuid& aUuid, PVInterface*&
 PVMFCommandId AndroidAudioMIO::Init(const OsclAny* aContext)
 {
     LOGV("Init (%p)", aContext);
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0,"AndroidAudioMIO::Init() called"));
-    iState=STATE_MIO_INITIALIZED;
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "AndroidAudioMIO::Init() called"));
+    iState = STATE_MIO_INITIALIZED;
     return QueueCmdResponse(PVMFSuccess, aContext);
 }
 
 PVMFCommandId AndroidAudioMIO::Reset(const OsclAny* aContext)
 {
     LOGV("Reset (%p)", aContext);
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0,"AndroidAudioMIO::Reset() called"));
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "AndroidAudioMIO::Reset() called"));
     return QueueCmdResponse(PVMFSuccess, aContext);
 }
 
 PVMFCommandId AndroidAudioMIO::Start(const OsclAny* aContext)
 {
-    // Start is NO-OP 
+    // Start is NO-OP
     LOGV("Start (%p)", aContext);
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0,"AndroidAudioMIO::Start() called"));
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "AndroidAudioMIO::Start() called"));
     iState = STATE_MIO_STARTED;
     return QueueCmdResponse(PVMFSuccess, aContext);
 }
@@ -234,7 +240,7 @@ PVMFCommandId AndroidAudioMIO::Start(const OsclAny* aContext)
 PVMFCommandId AndroidAudioMIO::Pause(const OsclAny* aContext)
 {
     LOGV("Pause (%p)", aContext);
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0,"AndroidAudioMIO::Pause() called"));
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "AndroidAudioMIO::Pause() called"));
     iState = STATE_MIO_PAUSED;
     return QueueCmdResponse(PVMFSuccess, aContext);
 }
@@ -243,7 +249,7 @@ PVMFCommandId AndroidAudioMIO::Pause(const OsclAny* aContext)
 PVMFCommandId AndroidAudioMIO::Flush(const OsclAny* aContext)
 {
     LOGV("Flush (%p)", aContext);
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0,"AndroidAudioMIO::Flush() called"));
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "AndroidAudioMIO::Flush() called"));
     iState = STATE_MIO_INITIALIZED;
     return QueueCmdResponse(PVMFSuccess, aContext);
 }
@@ -251,21 +257,21 @@ PVMFCommandId AndroidAudioMIO::Flush(const OsclAny* aContext)
 PVMFCommandId AndroidAudioMIO::DiscardData(const OsclAny* aContext)
 {
     LOGV("DiscardData (%p)", aContext);
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0,"AndroidAudioMIO::DiscardData() called"));
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "AndroidAudioMIO::DiscardData() called"));
     return DiscardData(UINT_MAX, aContext);
 }
 
 PVMFCommandId AndroidAudioMIO::DiscardData(PVMFTimestamp aTimestamp, const OsclAny* aContext)
 {
     LOGV("DiscardData (%u, %p)", aTimestamp, aContext);
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0,"AndroidAudioMIO::DiscardData() called"));
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "AndroidAudioMIO::DiscardData() called"));
     return QueueCmdResponse(PVMFSuccess, aContext);
 }
 
 PVMFCommandId AndroidAudioMIO::Stop(const OsclAny* aContext)
 {
     LOGV("Stop (%p)", aContext);
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0,"AndroidAudioMIO::Stop() called"));
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "AndroidAudioMIO::Stop() called"));
     iState = STATE_MIO_INITIALIZED;
     return QueueCmdResponse(PVMFSuccess, aContext);
 }
@@ -273,7 +279,7 @@ PVMFCommandId AndroidAudioMIO::Stop(const OsclAny* aContext)
 PVMFCommandId AndroidAudioMIO::CancelAllCommands(const OsclAny* aContext)
 {
     LOGV("CancelAllCommands (%p)", aContext);
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0,"AndroidAudioMIO::CancelAllCommands() called"));
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "AndroidAudioMIO::CancelAllCommands() called"));
 
     //commands are executed immediately upon being received, so
     //it isn't really possible to cancel them.
@@ -283,12 +289,14 @@ PVMFCommandId AndroidAudioMIO::CancelAllCommands(const OsclAny* aContext)
 PVMFCommandId AndroidAudioMIO::CancelCommand(PVMFCommandId aCmdId, const OsclAny* aContext)
 {
     LOGV("CancelCommand (%u, %p)", aCmdId, aContext);
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0,"AndroidAudioMIO::CancelCommand() called"));
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "AndroidAudioMIO::CancelCommand() called"));
 
     //see if the response is still queued.
     PVMFStatus status = PVMFFailure;
-    for (uint32 i = 0; i < iCommandResponseQueue.size(); i++) {
-        if (iCommandResponseQueue[i].iCmdId == aCmdId) {
+    for (uint32 i = 0; i < iCommandResponseQueue.size(); i++)
+    {
+        if (iCommandResponseQueue[i].iCmdId == aCmdId)
+        {
             status = PVMFSuccess;
             break;
         }
@@ -299,19 +307,21 @@ PVMFCommandId AndroidAudioMIO::CancelCommand(PVMFCommandId aCmdId, const OsclAny
 void AndroidAudioMIO::ThreadLogon()
 {
     LOGV("ThreadLogon() called ");
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0,"AndroidAudioMIO::ThreadLogon() called"));
-    if (iState == STATE_MIO_IDLE) {
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "AndroidAudioMIO::ThreadLogon() called"));
+    if (iState == STATE_MIO_IDLE)
+    {
         iLogger = PVLogger::GetLoggerObject("AndroidAudioMIO\n");
         AddToScheduler();
-        iState=STATE_MIO_LOGGED_ON;
+        iState = STATE_MIO_LOGGED_ON;
     }
 }
 
 void AndroidAudioMIO::ThreadLogoff()
 {
     LOGV("ThreadLogoff() called");
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0,"AndroidAudioMIO::ThreadLogoff() called"));
-    if (iState!=STATE_MIO_IDLE) {
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "AndroidAudioMIO::ThreadLogoff() called"));
+    if (iState != STATE_MIO_IDLE)
+    {
         RemoveFromScheduler();
         iLogger = NULL;
         iState = STATE_MIO_IDLE;
@@ -321,7 +331,7 @@ void AndroidAudioMIO::ThreadLogoff()
 
 void AndroidAudioMIO::setPeer(PvmiMediaTransfer* aPeer)
 {
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0,"AndroidAudioMIO::setPeer() called"));
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "AndroidAudioMIO::setPeer() called"));
     // Set the observer
     iPeer = aPeer;
 }
@@ -336,7 +346,7 @@ bool AndroidAudioMIO::CheckWriteBusy(uint32 aSeqNum)
 }
 
 PVMFCommandId AndroidAudioMIO::writeAsync(uint8 aFormatType, int32 aFormatIndex, uint8* aData, uint32 aDataLen,
-                                        const PvmiMediaXferHeader& data_header_info, OsclAny* aContext)
+        const PvmiMediaXferHeader& data_header_info, OsclAny* aContext)
 {
     // Do a leave if MIO is not configured except when it is an EOS
     if (!iAudioThreadCreatedAndMIOConfigured
@@ -357,102 +367,114 @@ PVMFCommandId AndroidAudioMIO::writeAsync(uint8 aFormatType, int32 aFormatIndex,
 
     //LOGV("writeAsync() called seqnum %d ts %d flags %d context %d formattype %d formatindex %d",aSeqNum, aTimestamp, flags,aContext,aFormatType,aFormatIndex);
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-        (0,"AndroidAudioMIO::writeAsync() seqnum %d ts %d flags %d context %d",
-         aSeqNum, aTimestamp, flags,aContext));
+                    (0, "AndroidAudioMIO::writeAsync() seqnum %d ts %d flags %d context %d",
+                     aSeqNum, aTimestamp, flags, aContext));
 
-    PVMFStatus status=PVMFFailure;
+    PVMFStatus status = PVMFFailure;
 
-    switch(aFormatType) {
-    case PVMI_MEDIAXFER_FMT_TYPE_COMMAND :
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-            (0,"AndroidAudioMIO::writeAsync() called with Command info."));
-        //ignore
-        LOGV("PVMI_MEDIAXFER_FMT_TYPE_COMMAND");
-        status = PVMFSuccess;
-        break;
-
-    case PVMI_MEDIAXFER_FMT_TYPE_NOTIFICATION :
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-            (0,"AndroidAudioMIO::writeAsync() called with Notification info."));
-        switch(aFormatIndex) {
-        case PVMI_MEDIAXFER_FMT_INDEX_END_OF_STREAM:
-            LOGV("PVMI_MEDIAXFER_FMT_INDEX_END_OF_STREAM");
-            bWriteComplete = false; //force an empty buffer through the audio thread
-            break;
-        default:
-            break;
-        }
-        //ignore
-        status = PVMFSuccess;
-        break;
-
-    case PVMI_MEDIAXFER_FMT_TYPE_DATA :
-        switch(aFormatIndex) {
-        case PVMI_MEDIAXFER_FMT_INDEX_FMT_SPECIFIC_INFO:
+    switch (aFormatType)
+    {
+        case PVMI_MEDIAXFER_FMT_TYPE_COMMAND :
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                            (0, "AndroidAudioMIO::writeAsync() called with Command info."));
+            //ignore
+            LOGV("PVMI_MEDIAXFER_FMT_TYPE_COMMAND");
             status = PVMFSuccess;
-            LOGV("PVMI_MEDIAXFER_FMT_INDEX_FMT_SPECIFIC_INFO");
             break;
 
-        case PVMI_MEDIAXFER_FMT_INDEX_DATA:
-            LOGV("PVMI_MEDIAXFER_FMT_INDEX_DATA");
-            //data contains the media bitstream.
+        case PVMI_MEDIAXFER_FMT_TYPE_NOTIFICATION :
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                            (0, "AndroidAudioMIO::writeAsync() called with Notification info."));
+            switch (aFormatIndex)
+            {
+                case PVMI_MEDIAXFER_FMT_INDEX_END_OF_STREAM:
+                    LOGV("PVMI_MEDIAXFER_FMT_INDEX_END_OF_STREAM");
+                    bWriteComplete = false; //force an empty buffer through the audio thread
+                    break;
+                default:
+                    break;
+            }
+            //ignore
+            status = PVMFSuccess;
+            break;
 
-            //Check whether we can accept data now and leave if we can't.
-            if (CheckWriteBusy(aSeqNum)) {
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_ERR,
-                    (0,"AndroidAudioMIO::writeAsync: Entering busy state"));
+        case PVMI_MEDIAXFER_FMT_TYPE_DATA :
+            switch (aFormatIndex)
+            {
+                case PVMI_MEDIAXFER_FMT_INDEX_FMT_SPECIFIC_INFO:
+                    status = PVMFSuccess;
+                    LOGV("PVMI_MEDIAXFER_FMT_INDEX_FMT_SPECIFIC_INFO");
+                    break;
 
-                //schedule an event to re-start the data flow.
-                iWriteBusy = true;
-                bWriteComplete = false;
+                case PVMI_MEDIAXFER_FMT_INDEX_DATA:
+                    LOGV("PVMI_MEDIAXFER_FMT_INDEX_DATA");
+                    //data contains the media bitstream.
 
-                // Rich:: commenting in this line.
-                //        Need some timeout here just in case.
-                //        I have no evidence of any problems.
-                RunIfNotReady(10 * 1000);
-                OSCL_LEAVE(OsclErrBusy);
-            } else {
-                if (aDataLen > 0) {
-                    // this buffer will be queued by the audio output thread to process
-                    // this buffer cannot be write completed until
-                    // it has been processed by the audio output thread
-                    bWriteComplete = false;
-                } else { 
-                       LOGE("writeAsync() called with aDataLen==0");
-                       PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_INFO,
-                            (0,"AndroidAudioMIO::writeAsync() called aDataLen==0."));
-                }
-                status = PVMFSuccess;
+                    //Check whether we can accept data now and leave if we can't.
+                    if (CheckWriteBusy(aSeqNum))
+                    {
+                        PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_ERR,
+                                        (0, "AndroidAudioMIO::writeAsync: Entering busy state"));
+
+                        //schedule an event to re-start the data flow.
+                        iWriteBusy = true;
+                        bWriteComplete = false;
+
+                        // Rich:: commenting in this line.
+                        //        Need some timeout here just in case.
+                        //        I have no evidence of any problems.
+                        RunIfNotReady(10 * 1000);
+                        OSCL_LEAVE(OsclErrBusy);
+                    }
+                    else
+                    {
+                        if (aDataLen > 0)
+                        {
+                            // this buffer will be queued by the audio output thread to process
+                            // this buffer cannot be write completed until
+                            // it has been processed by the audio output thread
+                            bWriteComplete = false;
+                        }
+                        else
+                        {
+                            LOGE("writeAsync() called with aDataLen==0");
+                            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_INFO,
+                                            (0, "AndroidAudioMIO::writeAsync() called aDataLen==0."));
+                        }
+                        status = PVMFSuccess;
+                    }
+                    break;
+
+                default:
+                    LOGE("Error unrecognized format index =%u", aFormatIndex);
+                    PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_ERR,
+                                    (0, "AndroidAudioMIO::writeAsync: Error - unrecognized format index"));
+                    status = PVMFFailure;
+                    break;
             }
             break;
 
         default:
-            LOGE("Error unrecognized format index =%u", aFormatIndex);
+            LOGE("Error unrecognized format type =%u", aFormatType);
             PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_ERR,
-                (0,"AndroidAudioMIO::writeAsync: Error - unrecognized format index"));
+                            (0, "AndroidAudioMIO::writeAsync: Error - unrecognized format type"));
             status = PVMFFailure;
             break;
-        }
-        break;
-
-    default:
-        LOGE("Error unrecognized format type =%u", aFormatType);
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_ERR,
-            (0,"AndroidAudioMIO::writeAsync: Error - unrecognized format type"));
-        status = PVMFFailure;
-        break;
     }
 
     //Schedule asynchronous response
-    PVMFCommandId cmdid=iCommandCounter++;
-    if (bWriteComplete) {
+    PVMFCommandId cmdid = iCommandCounter++;
+    if (bWriteComplete)
+    {
         LOGV("write complete (%d)", cmdid);
         WriteResponse resp(status, cmdid, aContext, aTimestamp);
         iWriteResponseQueueLock.Lock();
         iWriteResponseQueue.push_back(resp);
         iWriteResponseQueueLock.Unlock();
         RunIfNotReady();
-    } else if (!iWriteBusy) {
+    }
+    else if (!iWriteBusy)
+    {
         writeAudioBuffer(aData, aDataLen, cmdid, aContext, aTimestamp);
     }
     LOGV("data queued = %u", iDataQueued);
@@ -461,32 +483,35 @@ PVMFCommandId AndroidAudioMIO::writeAsync(uint8 aFormatType, int32 aFormatIndex,
 }
 
 PVMFStatus AndroidAudioMIO::getParametersSync(PvmiMIOSession aSession, PvmiKeyType aIdentifier,
-                                              PvmiKvp*& aParameters, int& num_parameter_elements,
-                                              PvmiCapabilityContext aContext)
+        PvmiKvp*& aParameters, int& num_parameter_elements,
+        PvmiCapabilityContext aContext)
 {
-    LOGV("getParametersSync in %s",aIdentifier);
+    LOGV("getParametersSync in %s", aIdentifier);
     OSCL_UNUSED_ARG(aSession);
     OSCL_UNUSED_ARG(aContext);
-    aParameters=NULL;
-    num_parameter_elements=0;
+    aParameters = NULL;
+    num_parameter_elements = 0;
     PVMFStatus status = PVMFFailure;
 
-    if(pv_mime_strcmp(aIdentifier, INPUT_FORMATS_CAP_QUERY) == 0) {
+    if (pv_mime_strcmp(aIdentifier, INPUT_FORMATS_CAP_QUERY) == 0)
+    {
         //This is a query for the list of supported formats.
-        aParameters=(PvmiKvp*)oscl_malloc(2 * sizeof(PvmiKvp));
-        if (aParameters) {
+        aParameters = (PvmiKvp*)oscl_malloc(2 * sizeof(PvmiKvp));
+        if (aParameters)
+        {
             aParameters[num_parameter_elements++].value.pChar_value = (char*)PVMF_MIME_PCM16;
             aParameters[num_parameter_elements++].value.pChar_value = (char*)PVMF_MIME_PCM8;
             status = PVMFSuccess;
         }
-        else{
+        else
+        {
             status = PVMFErrNoMemory;
         }
     }
     //other queries are not currently supported.
 
     //unrecognized key.
-    LOGV("getParametersSync out status %d",status);
+    LOGV("getParametersSync out status %d", status);
     return status;
 }
 
@@ -497,11 +522,12 @@ PVMFStatus AndroidAudioMIO::releaseParameters(PvmiMIOSession aSession, PvmiKvp* 
     OSCL_UNUSED_ARG(num_elements);
     PVMFStatus status = PVMFFailure;
     //release parameters that were allocated by this component.
-    if (aParameters) {
+    if (aParameters)
+    {
         oscl_free(aParameters);
         status = PVMFSuccess;
     }
-    LOGV("releaseParameters out status %d",status);
+    LOGV("releaseParameters out status %d", status);
     return status;
 }
 
@@ -511,16 +537,20 @@ PVMFStatus AndroidAudioMIO::verifyParametersSync(PvmiMIOSession aSession, PvmiKv
     //LOGV("verifyParametersSync in");
 
     // Go through each parameter
-    for (int32 i=0; i<num_elements; i++) {
+    for (int32 i = 0; i < num_elements; i++)
+    {
         char* compstr = NULL;
         pv_mime_string_extract_type(0, aParameters[i].key, compstr);
-        if (pv_mime_strcmp(compstr, _STRLIT_CHAR("x-pvmf/media/format-type")) == 0) {
+        if (pv_mime_strcmp(compstr, _STRLIT_CHAR("x-pvmf/media/format-type")) == 0)
+        {
             if ((pv_mime_strcmp(aParameters[i].value.pChar_value, PVMF_MIME_PCM8) == 0) ||
-                (pv_mime_strcmp(aParameters[i].value.pChar_value, PVMF_MIME_PCM16) == 0)
-               ) {
+                    (pv_mime_strcmp(aParameters[i].value.pChar_value, PVMF_MIME_PCM16) == 0)
+               )
+            {
                 return PVMFSuccess;
             }
-            else {
+            else
+            {
                 return PVMFErrNotSupported;
             }
         }
@@ -536,29 +566,64 @@ void AndroidAudioMIO::setParametersSync(PvmiMIOSession aSession, PvmiKvp* aParam
     //LOGV("setParametersSync in");
     aRet_kvp = NULL;
 
-    for (int32 i=0;i<num_elements;i++) {
+    for (int32 i = 0; i < num_elements; i++)
+    {
         //Check against known audio parameter keys...
-        if (pv_mime_strcmp(aParameters[i].key, MOUT_AUDIO_FORMAT_KEY) == 0) {
+        if (pv_mime_strcmp(aParameters[i].key, MOUT_AUDIO_FORMAT_KEY) == 0)
+        {
             LOGV("Audio format: %s", aParameters[i].value.pChar_value);
-            iAudioFormat=aParameters[i].value.pChar_value;
+            iAudioFormat = aParameters[i].value.pChar_value;
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                (0,"AndroidAudioOutput::setParametersSync() Audio Format Key, Value %s",aParameters[i].value.pChar_value));
-        } else if (pv_mime_strcmp(aParameters[i].key, MOUT_AUDIO_SAMPLING_RATE_KEY) == 0) {
-            iAudioSamplingRate=(int32)aParameters[i].value.uint32_value;
-            iAudioSamplingRateValid=true;
+                            (0, "AndroidAudioOutput::setParametersSync() Audio Format Key, Value %s", aParameters[i].value.pChar_value));
+        }
+        else if (pv_mime_strcmp(aParameters[i].key, MOUT_AUDIO_SAMPLING_RATE_KEY) == 0)
+        {
+            iAudioSamplingRate = (int32)aParameters[i].value.uint32_value;
+            iAudioSamplingRateValid = true;
             // LOGD("iAudioSamplingRate=%d", iAudioSamplingRate);
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                (0,"AndroidAudioMIO::setParametersSync() Audio Sampling Rate Key, Value %d",iAudioSamplingRate));
-        } else if (pv_mime_strcmp(aParameters[i].key, MOUT_AUDIO_NUM_CHANNELS_KEY) == 0) {
-            iAudioNumChannels=(int32)aParameters[i].value.uint32_value;
-            iAudioNumChannelsValid=true;
+                            (0, "AndroidAudioMIO::setParametersSync() Audio Sampling Rate Key, Value %d", iAudioSamplingRate));
+        }
+        else if (pv_mime_strcmp(aParameters[i].key, MOUT_AUDIO_NUM_CHANNELS_KEY) == 0)
+        {
+            iAudioNumChannels = (int32)aParameters[i].value.uint32_value;
+            iAudioNumChannelsValid = true;
             // LOGD("iAudioNumChannels=%d", iAudioNumChannels);
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                (0,"AndroidAudioMIO::setParametersSync() Audio Num Channels Key, Value %d",iAudioNumChannels));
-        } else {
+                            (0, "AndroidAudioMIO::setParametersSync() Audio Num Channels Key, Value %d", iAudioNumChannels));
+        }
+        else if (pv_mime_strcmp(aParameters[i].key, PVMF_FORMAT_SPECIFIC_INFO_KEY_PCM) == 0)
+        {
+            channelSampleInfo* pcm16Info = (channelSampleInfo*)aParameters->value.key_specific_value;
+
+            iAudioSamplingRate = pcm16Info->samplingRate;
+            iAudioSamplingRateValid = true;
+            // LOGD("iAudioSamplingRate=%d", iAudioSamplingRate);
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                            (0, "AndroidAudioMIO::setParametersSync() FSI PCM Key, Audio Sampling Rate, Value %d", iAudioSamplingRate));
+
+            iAudioNumChannels = pcm16Info->desiredChannels;
+            iAudioNumChannelsValid = true;
+            // LOGD("iAudioNumChannels=%d", iAudioNumChannels);
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                            (0, "AndroidAudioMIO::setParametersSync() FSI PCM Key, Audio Num Channels, Value %d", iAudioNumChannels));
+
+            iNumberOfBuffers = (int32)pcm16Info->num_buffers;
+            iNumberOfBuffersValid = true;
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                            (0, "AndroidAudioMIO::setParametersSync() FSI PCM Key, Number of Buffers, Value %d", iNumberOfBuffers));
+
+            iBufferSize = (int32)pcm16Info->buffer_size;
+            iBufferSizeValid = true;
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                            (0, "AndroidAudioMIO::setParametersSync() FSI PCM Key, Buffer Size, Value %d", iBufferSize));
+
+        }
+        else
+        {
             //if we get here the key is unrecognized.
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                (0,"AndroidAudioMIO::setParametersSync() Error, unrecognized key %s",aParameters[i].key));
+                            (0, "AndroidAudioMIO::setParametersSync() Error, unrecognized key %s", aParameters[i].key));
 
             //set the return value to indicate the unrecognized key
             //and return.
@@ -576,11 +641,13 @@ void AndroidAudioMIO::setParametersSync(PvmiMIOSession aSession, PvmiKvp* aParam
 
 void AndroidAudioMIO::Run()
 {
-    while (!iCommandResponseQueue.empty()) {
-        if (iObserver) {
+    while (!iCommandResponseQueue.empty())
+    {
+        if (iObserver)
+        {
             iObserver->RequestCompleted(PVMFCmdResp(iCommandResponseQueue[0].iCmdId,
-                        iCommandResponseQueue[0].iContext,
-                        iCommandResponseQueue[0].iStatus));
+                                                    iCommandResponseQueue[0].iContext,
+                                                    iCommandResponseQueue[0].iStatus));
         }
         iCommandResponseQueue.erase(&iCommandResponseQueue[0]);
     }
@@ -589,7 +656,8 @@ void AndroidAudioMIO::Run()
     ProcessWriteResponseQueue();
 
     //Re-start the data transfer if needed.
-    if (iWriteBusy) {
+    if (iWriteBusy)
+    {
         iWriteBusy = false;
         iPeer->statusUpdate(PVMI_MEDIAXFER_STATUS_WRITE);
     }
@@ -601,9 +669,12 @@ void AndroidAudioMIO::sendResponse(PVMFCommandId cmdid, const OsclAny* context, 
     LOGV("sendResponse :: return buffer (%d) timestamp(%d) context(%p)", cmdid, timestamp, context);
     WriteResponse resp(PVMFSuccess, cmdid, context, timestamp);
     iWriteResponseQueueLock.Lock();
-    if (iWriteResponseQueue.size() < iWriteResponseQueue.capacity()) {
+    if (iWriteResponseQueue.size() < iWriteResponseQueue.capacity())
+    {
         iWriteResponseQueue.push_back(resp);
-    } else {
+    }
+    else
+    {
         LOGE("Exceeded response queue capacity");
     }
     iWriteResponseQueueLock.Unlock();
@@ -625,15 +696,15 @@ void AndroidAudioMIO::setAudioSink(const sp<MediaPlayerInterface::AudioSink>& au
 OSCL_EXPORT_REF PVMFStatus AndroidAudioMIOActiveTimingSupport::SetClock(PVMFMediaClock *clockVal)
 {
     LOGV("ATS :: SetClock in");
-    iClock=clockVal;
-    
+    iClock = clockVal;
+
     return PVMFSuccess;
 }
 
 void AndroidAudioMIOActiveTimingSupport::NotificationsInterfaceDestroyed()
 {
     LOGV("ATS :: NotificationsInterfaceDestroyed in");
-    iClockNotificationsInf=NULL;
+    iClockNotificationsInf = NULL;
 }
 
 
@@ -643,12 +714,13 @@ OSCL_EXPORT_REF bool AndroidAudioMIOActiveTimingSupport::queryInterface(const PV
     PVUuid uuid;
     queryUuid(uuid);
     bool status = false;
-    if (uuid == aUuid) {
+    if (uuid == aUuid)
+    {
         PvmiClockExtensionInterface* myInterface = OSCL_STATIC_CAST(PvmiClockExtensionInterface*, this);
         aInterface = OSCL_STATIC_CAST(PVInterface*, myInterface);
         status = true;
     }
-    LOGV("ATS :: queryInterface out status %d",status);
+    LOGV("ATS :: queryInterface out status %d", status);
     return status;
 }
 
@@ -661,35 +733,39 @@ void AndroidAudioMIOActiveTimingSupport::queryUuid(PVUuid& uuid)
 void AndroidAudioMIOActiveTimingSupport::ClockStateUpdated()
 {
     LOGV("ATS :: ClockStateUpdated in");
-    if (iClock) {
-       
+    if (iClock)
+    {
+
         PVMFMediaClock::PVMFMediaClockState newClockState = iClock->GetState();
-        if (newClockState != iClockState) {
+        if (newClockState != iClockState)
+        {
             iClockState = newClockState;
-            switch (iClockState) {
-            case PVMFMediaClock::STOPPED:
-                LOGV("A/V clock stopped");
-                break;
-            case PVMFMediaClock::RUNNING:
-                LOGV("A/V clock running");
-                // must be seeking, get new clock offset for A/V sync
-                if (iUpdateClock) {
-                    bool overflowFlag = false;
-                    uint32 currentTimeBase32 = 0;
-                    iClock->GetCurrentTime32(iStartTime, overflowFlag, PVMF_MEDIA_CLOCK_MSEC, currentTimeBase32);
-                    iFrameCount = 0;
-                    iUpdateClock = false;
-                    LOGV("update iStartTime: %d", iStartTime);
-                }
-                LOGV("signal thread to start");
-                if (iAudioThreadSem) iAudioThreadSem->Signal();
-                break;
-            case PVMFMediaClock::PAUSED:
-                LOGV("A/V clock paused");
-                break;
-            default:
-                LOGE("Wrong clock state!");
-                break;
+            switch (iClockState)
+            {
+                case PVMFMediaClock::STOPPED:
+                    LOGV("A/V clock stopped");
+                    break;
+                case PVMFMediaClock::RUNNING:
+                    LOGV("A/V clock running");
+                    // must be seeking, get new clock offset for A/V sync
+                    if (iUpdateClock)
+                    {
+                        bool overflowFlag = false;
+                        uint32 currentTimeBase32 = 0;
+                        iClock->GetCurrentTime32(iStartTime, overflowFlag, PVMF_MEDIA_CLOCK_MSEC, currentTimeBase32);
+                        iFrameCount = 0;
+                        iUpdateClock = false;
+                        LOGV("update iStartTime: %d", iStartTime);
+                    }
+                    LOGV("signal thread to start");
+                    if (iAudioThreadSem) iAudioThreadSem->Signal();
+                    break;
+                case PVMFMediaClock::PAUSED:
+                    LOGV("A/V clock paused");
+                    break;
+                default:
+                    LOGE("Wrong clock state!");
+                    break;
             }
         }
     }
@@ -699,7 +775,8 @@ void AndroidAudioMIOActiveTimingSupport::ClockStateUpdated()
 void AndroidAudioMIOActiveTimingSupport::UpdateClock()
 {
     LOGV("ATS :: UpdateClock in");
-    if (iClock && (iClockState == PVMFMediaClock::RUNNING)) {
+    if (iClock && (iClockState == PVMFMediaClock::RUNNING))
+    {
         uint32 clockTime32, timeBaseTime32, updateClock32;
         int32 correction = 0;
         bool overflowFlag = false;
@@ -709,42 +786,50 @@ void AndroidAudioMIOActiveTimingSupport::UpdateClock()
 
         // calculate sample clock
         updateClock32 = iFrameCount * iMsecsPerFrame;
-        LOGV("sample clock = %u frameCount(%u) msecsPerFrame(%f)", updateClock32,iFrameCount,iMsecsPerFrame);
+        LOGV("sample clock = %u frameCount(%u) msecsPerFrame(%f)", updateClock32, iFrameCount, iMsecsPerFrame);
 
         // startup - force clock backwards to compensate for latency
-        if (updateClock32 < iDriverLatency) {
-            LOGV("iStartTime = %u , iDriverLatency = %u",iStartTime, iDriverLatency);
+        if (updateClock32 < iDriverLatency)
+        {
+            LOGV("iStartTime = %u , iDriverLatency = %u", iStartTime, iDriverLatency);
             correction = iStartTime - clockTime32;
-            LOGV("latency stall - forcing clock (correction = %d)",correction);
+            LOGV("latency stall - forcing clock (correction = %d)", correction);
         }
 
         // normal play mode - check delta between PV engine clock and sample clock
-        else {
+        else
+        {
             correction = (updateClock32 - iDriverLatency) - (clockTime32 - iStartTime);
-            LOGV("clock drift (correction = (updateClock32(%d)-iDriverLatency(%d))-(clockTime32(%d)-iStartTime(%d))= %d)",updateClock32,iDriverLatency,clockTime32,iStartTime,correction);
+            LOGV("clock drift (correction = (updateClock32(%d)-iDriverLatency(%d))-(clockTime32(%d)-iStartTime(%d))= %d)", updateClock32, iDriverLatency, clockTime32, iStartTime, correction);
         }
 
         // do clock correction if drift exceeds threshold
-        if (OSCL_ABS(correction) > iMinCorrection) {
-            if (correction > iMaxCorrection) {
+        if (OSCL_ABS(correction) > iMinCorrection)
+        {
+            if (correction > iMaxCorrection)
+            {
                 correction = iMaxCorrection;
-            } else if (correction < -iMaxCorrection) {
+            }
+            else if (correction < -iMaxCorrection)
+            {
                 correction = -iMaxCorrection;
             }
             updateClock32 = clockTime32 + correction;
             LOGV("drift correction = %d, new clock = %u", correction, updateClock32);
-            PVMFMediaClockAdjustTimeStatus adjustmentstatus = 
-            iClock->AdjustClockTime32(clockTime32, timeBaseTime32, updateClock32,PVMF_MEDIA_CLOCK_MSEC,overflowFlag);
+            PVMFMediaClockAdjustTimeStatus adjustmentstatus =
+                iClock->AdjustClockTime32(clockTime32, timeBaseTime32, updateClock32, PVMF_MEDIA_CLOCK_MSEC, overflowFlag);
 
             if ((PVMF_MEDIA_CLOCK_ADJUST_SUCCESS != adjustmentstatus))
             {
-                LOGE("Error adjusting clock status = %d",adjustmentstatus);
+                LOGE("Error adjusting clock status = %d", adjustmentstatus);
             }
-            if(overflowFlag) {
-            LOGE("Adjusting clock caused overflow");
+            if (overflowFlag)
+            {
+                LOGE("Adjusting clock caused overflow");
             }
         }
-        else{
+        else
+        {
             LOGV("ATS :: sample clock and pv clock are close enough no need to update");
         }
     }
@@ -754,10 +839,11 @@ void AndroidAudioMIOActiveTimingSupport::setDriverLatency(uint32 latency)
 {
     LOGV("ATS :: setDriverLatency in");
     iDriverLatency = latency;
-    if (iClock){
+    if (iClock)
+    {
         LOGV("register latency to media clock and set clockobserver");
-        PVMFStatus ret = iClock->ConstructMediaClockNotificationsInterface(iClockNotificationsInf,*this,latency);
-        if(iClockNotificationsInf && (PVMFSuccess == ret))
+        PVMFStatus ret = iClock->ConstructMediaClockNotificationsInterface(iClockNotificationsInf, *this, latency);
+        if (iClockNotificationsInf && (PVMFSuccess == ret))
         {
             iClockNotificationsInf->SetClockStateObserver(*this);
         }

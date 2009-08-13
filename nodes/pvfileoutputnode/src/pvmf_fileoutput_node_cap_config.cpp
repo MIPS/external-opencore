@@ -241,56 +241,6 @@ PVMFStatus PVMFFileOutputNode::VerifyAndSetConfigParameter(PvmiKvp& aParameter, 
 //                  PvmiCapConfigInterface Virtual Functions
 ////////////////////////////////////////////////////////////////////////////
 
-void PVMFFileOutputNode::createContext(PvmiMIOSession aSession,
-                                       PvmiCapabilityContext& aContext)
-{
-    OSCL_UNUSED_ARG(aSession);
-    OSCL_UNUSED_ARG(aContext);
-    // not supported
-    OSCL_LEAVE(PVMFErrNotSupported);
-}
-
-void PVMFFileOutputNode::setContextParameters(PvmiMIOSession aSession,
-        PvmiCapabilityContext& aContext,
-        PvmiKvp* aParameters,
-        int aNumElements)
-{
-    OSCL_UNUSED_ARG(aSession);
-    OSCL_UNUSED_ARG(aContext);
-    OSCL_UNUSED_ARG(aParameters);
-    OSCL_UNUSED_ARG(aNumElements);
-    // not supported
-    OSCL_LEAVE(PVMFErrNotSupported);
-}
-
-void PVMFFileOutputNode::DeleteContext(PvmiMIOSession aSession,
-                                       PvmiCapabilityContext& aContext)
-{
-    OSCL_UNUSED_ARG(aSession);
-    OSCL_UNUSED_ARG(aContext);
-    // not supported
-    OSCL_LEAVE(PVMFErrNotSupported);
-}
-
-PVMFCommandId PVMFFileOutputNode::setParametersAsync(PvmiMIOSession aSession,
-        PvmiKvp* aParameters,
-        int aNumElements,
-        PvmiKvp*& aRet_kvp,
-        OsclAny* aContext)
-{
-    OSCL_UNUSED_ARG(aSession);
-    OSCL_UNUSED_ARG(aContext);
-    OSCL_UNUSED_ARG(aParameters);
-    OSCL_UNUSED_ARG(aRet_kvp);
-    OSCL_UNUSED_ARG(aNumElements);
-    return 0;
-}
-
-uint32 PVMFFileOutputNode::getCapabilityMetric(PvmiMIOSession aSession)
-{
-    OSCL_UNUSED_ARG(aSession);
-    return 0;
-}
 
 PVMFStatus PVMFFileOutputNode::verifyParametersSync(PvmiMIOSession aSession, PvmiKvp* aParameters, int aNumElements)
 {

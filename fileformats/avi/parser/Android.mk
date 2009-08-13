@@ -12,7 +12,7 @@ LOCAL_SRC_FILES := \
 
 LOCAL_MODULE := libpvavifileparser
 
-LOCAL_CFLAGS :=  $(PV_CFLAGS)
+LOCAL_CFLAGS :=   $(PV_CFLAGS)
 
 
 

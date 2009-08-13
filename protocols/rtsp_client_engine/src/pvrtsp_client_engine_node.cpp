@@ -693,8 +693,8 @@ OSCL_EXPORT_REF  PVMFStatus PVRTSPEngineNode::SetClientParameters(OSCL_wString& 
         //\engines\player\src\pv_player_sdkinfo.h
         //#define PVPLAYER_ENGINE_SDKINFO_LABEL "PVPLAYER 04.07.00.01"
         //iSessionInfo.iUserAgent = PVPLAYER_ENGINE_SDKINFO_LABEL;
-        //iSessionInfo.iUserAgent += (char*)tmpBuf;
-        iSessionInfo.iUserAgent = (char*)tmpBuf;
+        iSessionInfo.iUserAgent += (char*)tmpBuf;
+        //iSessionInfo.iUserAgent = (char*)tmpBuf;
     }
 
     if (aUserNetwork.get_size() > 0)
@@ -914,6 +914,11 @@ OSCL_EXPORT_REF  void PVRTSPEngineNode::HandleSocketEvent(int32 aId, TPVSocketFx
         return;
     }
 
+    if (!iCancelCmdQueue.empty())
+    {
+        CheckCancelAllSuccess();
+    }
+
     //save info
     SocketEvent tmpSockEvent;
     tmpSockEvent.iSockId    = aId;
@@ -1022,7 +1027,13 @@ OSCL_EXPORT_REF void PVRTSPEngineNode::HandleDNSEvent(int32 aId, TPVDNSFxn aFxn,
 
     if ((aId == REQ_DNS_LOOKUP_ID) && (aFxn == EPVDNSGetHostByName))
     {
-        {//wrap the DNS event as an socket event
+        if (!iCancelCmdQueue.empty())
+        {
+            CheckCancelAllSuccess();
+        }
+        else
+        {
+            //wrap the DNS event as an socket event
             SocketEvent tmpSockEvent;
             {//TBD type mismatch
                 tmpSockEvent.iSockId    = aId;
@@ -1038,11 +1049,10 @@ OSCL_EXPORT_REF void PVRTSPEngineNode::HandleDNSEvent(int32 aId, TPVDNSFxn aFxn,
             }
 
             iSocketEventQueue.push_back(tmpSockEvent);
+            ChangeInternalState(PVRTSP_ENGINE_NODE_STATE_CONNECT);
+            RunIfNotReady();
+            return;
         }
-
-        ChangeInternalState(PVRTSP_ENGINE_NODE_STATE_CONNECT);
-        RunIfNotReady();
-        return;
     }
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVRTSPEngineNode::HandleDNSEvent() unsolicited event"));
 }
@@ -1381,8 +1391,11 @@ PVMFStatus PVRTSPEngineNode::DispatchCommand(PVRTSPEngineCommand& aCmd)
 
         case PVMF_GENERIC_NODE_CANCELALLCOMMANDS:
             iRet = DoCancelAllCommands(aCmd);
+            if (iRet == PVMFSuccess)
+            {
+                return iRet;
+            }
             break;
-
 
         case PVMF_GENERIC_NODE_FLUSH:
             iRet = DoFlush(aCmd);
@@ -1608,14 +1621,6 @@ void PVRTSPEngineNode::CommandComplete(PVRTSPEngineNodeCmdQ& aCmdQ,
     if (errormsg)
     {
         errormsg->removeRef();
-    }
-
-    //There may be a cancel command that was just waiting on the running command to finish.
-    //If so, complete the cancel command now.
-    if (&aCmdQ == &iRunningCmdQueue
-            && !iCancelCmdQueue.empty())
-    {
-        CommandComplete(iCancelCmdQueue, iCancelCmdQueue.front(), PVMFSuccess);
     }
 }
 
@@ -3279,6 +3284,8 @@ PVMFStatus PVRTSPEngineNode::composeSessionURL(RTSPOutgoingMessage &aMsg)
 PVMFStatus PVRTSPEngineNode::composeMediaURL(int aTrackID, StrPtrLen &aMediaURI)
 {
     OSCL_StackString<16> rtsp_str = _STRLIT_CHAR("rtsp");
+    OSCL_StackString<16> rtspt_str = _STRLIT_CHAR("rtspt");
+    OSCL_StackString<16> schemeDelimiter = _STRLIT_CHAR("://");
 
     const char *sdpMediaURL = (iSessionInfo.iSDPinfo->getMediaInfoBasedOnID(aTrackID))->getControlURL();
     if (sdpMediaURL == NULL)
@@ -3288,6 +3295,24 @@ PVMFStatus PVRTSPEngineNode::composeMediaURL(int aTrackID, StrPtrLen &aMediaURI)
 
     if (!oscl_strncmp(sdpMediaURL, rtsp_str.get_cstr(), rtsp_str.get_size()))
     {
+        if (!oscl_strncmp(sdpMediaURL, rtspt_str.get_cstr(), rtspt_str.get_size()))
+        {
+            const char* actualURL = oscl_strstr(sdpMediaURL, schemeDelimiter.get_cstr());
+            if (actualURL == NULL)
+            {
+                return PVMFErrArgument;
+            }
+            else
+            {
+                actualURL += schemeDelimiter.get_size();
+            }
+            iRtspPrefixedURL += rtsp_str.get_cstr();
+            iRtspPrefixedURL += schemeDelimiter.get_cstr();
+            iRtspPrefixedURL += actualURL;
+
+            aMediaURI = iRtspPrefixedURL.get_cstr();
+        }
+        else
         {
             aMediaURI = sdpMediaURL;
         }
@@ -3525,12 +3550,12 @@ PVMFStatus PVRTSPEngineNode::processIncomingMessage(RTSPIncomingMessage &iIncomi
                             //between "RTP/AVP/UDP" or "x-pn-tng/tcp"; and for "x-pn-tng/tcp",
                             //we only do http cloaking. 06/03/21
                             ibIsRealRDT = false;
-                                if ((iIncomingMsg.transport[0].protocol != RtspTransport::RTP_PROTOCOL)
-                                        || (iIncomingMsg.transport[0].profile != RtspTransport::AVP_PROFILE))
-                                {//PVMFRTSPClientEngineNodeErrorUnsupportedTransport
-                                    iCurrentErrorCode = PVMFRTSPClientEngineNodeErrorMalformedRTSPMessage;
-                                    return PVMFFailure;
-                                }
+                            if ((iIncomingMsg.transport[0].protocol != RtspTransport::RTP_PROTOCOL)
+                                    || (iIncomingMsg.transport[0].profile != RtspTransport::AVP_PROFILE))
+                            {//PVMFRTSPClientEngineNodeErrorUnsupportedTransport
+                                iCurrentErrorCode = PVMFRTSPClientEngineNodeErrorMalformedRTSPMessage;
+                                return PVMFFailure;
+                            }
                         }
 
                         iSessionInfo.iSelectedStream[i].ssrcIsSet = iIncomingMsg.transport[0].ssrcIsSet;
@@ -4955,7 +4980,7 @@ media_data_imp->getMediaFragment(0, iEntityMemFrag);
 
             case RTSPParser::WAITING_FOR_EMBEDDED_DATA_MEMORY:
             {//TCP streaming
-                RTSPEntityBody iEmbeddedData;
+
                 if (!PrepareEmbeddedDataMemory(iIncomingMsg.contentLength, iEmbeddedData))
                 {//no memory available TBD
                     bLoop = false;
@@ -5113,6 +5138,7 @@ PVMFStatus PVRTSPEngineNode::resetSocket(bool aImmediate)
     }
 
     bool waitOnAsyncOp = false;
+    PVMFStatus iRet = PVMFSuccess;
     while (!waitOnAsyncOp)
     {
         switch (iSocketCleanupState)
@@ -5124,95 +5150,7 @@ PVMFStatus PVRTSPEngineNode::resetSocket(bool aImmediate)
 
             case ESocketCleanup_CancelCurrentOp:
                 //Step 1: Cancel current operations
-
-                //Cancel ops on DNS
-                if (iDNS.iDns)
-                {
-                    if (iDNS.iState.iPending
-                            && !iDNS.iState.iCanceled)
-                    {
-                        iDNS.iDns->CancelGetHostByName();
-                        iDNS.iState.iCanceled = true;
-                        if (iLogger)
-                        {
-                            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVRTSPEngineNode::resetSocket() Cancel GetHostByName"));
-                        }
-                    }
-                }
-
-                //Cancel ops on send socket.
-                if (iSendSocket.iSocket)
-                {
-                    if (iSendSocket.iConnectState.iPending
-                            && !iSendSocket.iConnectState.iCanceled)
-                    {
-                        iSendSocket.iSocket->CancelConnect();
-                        iSendSocket.iConnectState.iCanceled = true;
-                        if (iLogger)
-                        {
-                            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVRTSPEngineNode::resetSocket() Cancel Connect"));
-                        }
-                    }
-                    if (iSendSocket.iSendState.iPending
-                            && !iSendSocket.iSendState.iCanceled)
-                    {
-                        iSendSocket.iSocket->CancelSend();
-                        iSendSocket.iSendState.iCanceled = true;
-                        if (iLogger)
-                        {
-                            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVRTSPEngineNode::resetSocket() Cancel Send"));
-                        }
-                    }
-                    if (iSendSocket.iRecvState.iPending
-                            && !iSendSocket.iRecvState.iCanceled)
-                    {
-                        iSendSocket.iSocket->CancelRecv();
-                        iSendSocket.iRecvState.iCanceled = true;
-                        if (iLogger)
-                        {
-                            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVRTSPEngineNode::resetSocket() Cancel Recv"));
-                        }
-                    }
-                    OSCL_ASSERT(!iSendSocket.iShutdownState.iPending);
-                }
-
-                //Cancel ops on recv socket only when it's
-                //a unique socket.
-                if (iRecvSocket.iSocket
-                        && iRecvSocket.iSocket != iSendSocket.iSocket)
-                {
-                    if (iRecvSocket.iConnectState.iPending
-                            && !iRecvSocket.iConnectState.iCanceled)
-                    {
-                        iRecvSocket.iSocket->CancelConnect();
-                        iRecvSocket.iConnectState.iCanceled = true;
-                        if (iLogger)
-                        {
-                            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVRTSPEngineNode::resetSocket() Cancel Connect (recv sock)"));
-                        }
-                    }
-                    if (iRecvSocket.iSendState.iPending
-                            && !iRecvSocket.iSendState.iCanceled)
-                    {
-                        iRecvSocket.iSocket->CancelSend();
-                        iRecvSocket.iSendState.iCanceled = true;
-                        if (iLogger)
-                        {
-                            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVRTSPEngineNode::resetSocket() Cancel Send (recv sock)"));
-                        }
-                    }
-                    if (iRecvSocket.iRecvState.iPending
-                            && !iRecvSocket.iRecvState.iCanceled)
-                    {
-                        iRecvSocket.iSocket->CancelRecv();
-                        iRecvSocket.iRecvState.iCanceled = true;
-                        if (iLogger)
-                        {
-                            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVRTSPEngineNode::resetSocket() Cancel Recv (recv sock)"));
-                        }
-                    }
-                    OSCL_ASSERT(!iRecvSocket.iShutdownState.iPending);
-                }
+                iRet = CancelCurrentOps();
 
                 if (iDNS.IsBusy()
                         || iSendSocket.IsBusy()
@@ -5562,33 +5500,152 @@ bool GetPostCorrelationObject::update()
  */
 PVMFStatus PVRTSPEngineNode::DoCancelAllCommands(PVRTSPEngineCommand& aCmd)
 {
-    /* cancel all queued commands */
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVRTSPEngineNode::DoCancelAllCommands IN iState = %d", iState));
+    PVMFStatus iRet = PVMFSuccess;
+    // cancel all queued commands
     while (!iPendingCmdQueue.empty())
-        CommandComplete(iPendingCmdQueue, iPendingCmdQueue[1], PVMFErrCancelled);
+        CommandComplete(iPendingCmdQueue, iPendingCmdQueue[0], PVMFErrCancelled);
 
-    if (iRunningCmdQueue.size() > 1)
+    // cancel possible pending timers
+    iWatchdogTimer->Cancel(REQ_TIMER_WATCHDOG_ID);
+    iWatchdogTimer->Cancel(REQ_TIMER_KEEPALIVE_ID);
+    // We need to enable bNoSendPending flag here since we have failed all the cmds except cancelall.
+    // Afterwards, engine will call reset and RTSP node need to send teardown and recv the response.
+    bNoSendPending = true;
+    bNoRecvPending = false; //prevent doing recv() after the cancelall
+    iSocketEventQueue.clear();
+    clearOutgoingMsgQueue();
+
+    iRet = CancelCurrentOps();
+
+    // cancel all current cmd and put cancelall into iCancelCmdQueue
+    while (!iRunningCmdQueue.empty())
     {
-        MoveCmdToCancelQueue(aCmd);
-        return PVMFPending;
+        if (iRunningCmdQueue[0].iCmd == PVMF_GENERIC_NODE_CANCELALLCOMMANDS)
+        {
+            iCancelCmdQueue.StoreL(iRunningCmdQueue[0]);
+            iRunningCmdQueue.Erase(&iRunningCmdQueue[0]);
+        }
+        else
+        {
+            CommandComplete(iRunningCmdQueue, iRunningCmdQueue[0], PVMFErrCancelled);
+        }
     }
 
-    return PVMFSuccess;
-}
+    // Delete possible server response
+    if (bSrvRespPending)
+    {
+        if (iSrvResponse)
+        {
+            OSCL_DELETE(iSrvResponse);
+            iSrvResponse = NULL;
+        }
+        bSrvRespPending = false;
+    }
 
-void PVRTSPEngineNode::MoveCmdToCancelQueue(PVRTSPEngineCommand& aCmd)
-{
-    /*
-     * note: the StoreL cannot fail since the queue is never more than 1 deep
-     * and we reserved space.
-     */
-    iCancelCmdQueue.StoreL(aCmd);
-    iRunningCmdQueue.Erase(&aCmd);
-}
+    if (iRet == PVMFSuccess)
+    {
+        // In case no socket op cancellation is pending, complete cancelall
+        CommandComplete(iCancelCmdQueue, iCancelCmdQueue.front(), PVMFSuccess);
+    }
 
+    return iRet;
+}
 
 OsclSharedPtr<PVMFMediaDataImpl> PVRTSPEngineNode::AllocateMediaData(int32& errCode)
 {
     OsclSharedPtr<PVMFMediaDataImpl> mediaDataImplOut;
     OSCL_TRY(errCode, mediaDataImplOut = ipFragGroupAllocator->allocate());
     return mediaDataImplOut;
+}
+
+PVMFStatus PVRTSPEngineNode::CancelCurrentOps()
+{
+    PVMFStatus iRet = PVMFSuccess;
+    //Cancel current operations
+    //Cancel ops on DNS
+    if (iDNS.iDns)
+    {
+        if (iDNS.iState.iPending
+                && !iDNS.iState.iCanceled)
+        {
+            iDNS.iDns->CancelGetHostByName();
+            iDNS.iState.iCanceled = true;
+            iRet = PVMFPending;
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVRTSPEngineNode::CancelCurrentOps() Cancel GetHostByName"));
+        }
+    }
+    //Cancel ops on send socket.
+    if (iSendSocket.iSocket)
+    {
+        if (iSendSocket.iConnectState.iPending
+                && !iSendSocket.iConnectState.iCanceled)
+        {
+            iSendSocket.iSocket->CancelConnect();
+            iSendSocket.iConnectState.iCanceled = true;
+            iRet = PVMFPending;
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVRTSPEngineNode::CancelCurrentOps() Cancel Connect"));
+        }
+        if (iSendSocket.iSendState.iPending
+                && !iSendSocket.iSendState.iCanceled)
+        {
+            iSendSocket.iSocket->CancelSend();
+            iSendSocket.iSendState.iCanceled = true;
+            iRet = PVMFPending;
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVRTSPEngineNode::CancelCurrentOps() Cancel Send"));
+        }
+        if (iSendSocket.iRecvState.iPending
+                && !iSendSocket.iRecvState.iCanceled)
+        {
+            iSendSocket.iSocket->CancelRecv();
+            iSendSocket.iRecvState.iCanceled = true;
+            iRet = PVMFPending;
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVRTSPEngineNode::CancelCurrentOps() Cancel Recv"));
+        }
+        OSCL_ASSERT(!iSendSocket.iShutdownState.iPending);
+    }
+
+    //Cancel ops on recv socket only when it's
+    //a unique socket.
+    if (iRecvSocket.iSocket
+            && iRecvSocket.iSocket != iSendSocket.iSocket)
+    {
+        if (iRecvSocket.iConnectState.iPending
+                && !iRecvSocket.iConnectState.iCanceled)
+        {
+            iRecvSocket.iSocket->CancelConnect();
+            iRecvSocket.iConnectState.iCanceled = true;
+            iRet = PVMFPending;
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVRTSPEngineNode::CancelCurrentOps() Cancel Connect (recv sock)"));
+        }
+        if (iRecvSocket.iSendState.iPending
+                && !iRecvSocket.iSendState.iCanceled)
+        {
+            iRecvSocket.iSocket->CancelSend();
+            iRecvSocket.iSendState.iCanceled = true;
+            iRet = PVMFPending;
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVRTSPEngineNode::CancelCurrentOps() Cancel Send (recv sock)"));
+        }
+        if (iRecvSocket.iRecvState.iPending
+                && !iRecvSocket.iRecvState.iCanceled)
+        {
+            iRecvSocket.iSocket->CancelRecv();
+            iRecvSocket.iRecvState.iCanceled = true;
+            iRet = PVMFPending;
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVRTSPEngineNode::CancelCurrentOps() Cancel Recv (recv sock)"));
+        }
+        OSCL_ASSERT(!iRecvSocket.iShutdownState.iPending);
+    }
+    return iRet;
+}
+
+void PVRTSPEngineNode::CheckCancelAllSuccess()
+{
+    /* Cancelall cmd has been queued, ignore any callback from socket */
+    if ((iNumHostCallback + iNumConnectCallback + iNumSendCallback + iNumRecvCallback) == 0)
+    {
+        iWatchdogTimer->Cancel(REQ_TIMER_WATCHDOG_ID);
+        CommandComplete(iCancelCmdQueue, iCancelCmdQueue.front(), PVMFSuccess);
+    }
+    return;
 }

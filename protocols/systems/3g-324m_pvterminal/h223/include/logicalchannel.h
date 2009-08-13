@@ -15,11 +15,17 @@
  * and limitations under the License.
  * -------------------------------------------------------------------
  */
+
 #if !defined(LOGICAL_CHANNEL_H)
 #define LOGICAL_CHANNEL_H
 #include "oscl_mem.h"
 #include "adaptationlayer.h"
 #include "h324utils.h"
+
+#ifdef LIP_SYNC_TESTING
+#include "lipsync_singleton_object.h"
+#endif
+
 
 #ifndef OSCL_MEM_MEMPOOL_H_INCLUDED
 #include "oscl_mem_mempool.h"
@@ -34,6 +40,7 @@
 #endif
 
 #ifndef PVMF_MEDIA_DATA_H_INCLUDED
+
 #include "pvmf_media_data.h"
 #endif
 
@@ -61,6 +68,8 @@
 #include "pvmi_config_and_capability_utils.h"
 #endif
 
+
+
 #define INVALID_MUX_CODE 0xFF
 #define DEF_NUM_MEDIA_DATA 100
 #define SKEW_CHECK_INTERVAL 2000
@@ -71,7 +80,8 @@ uint8* ptrbuf = pkt->GetMediaPtr();\
 PVDEBUG_LOG_BITSTREAM(iDebug, (comp, ptrbuf, pkt->GetMediaSize()) );\
 pkt->ClearMediaPtr();\
 }
-
+class Skew_Detection_Timer;
+class Incm_Skew_Detection_Timer;
 class LCMediaDataEntry
 {
     public:
@@ -107,6 +117,7 @@ class LogicalChannelObserver
         virtual void LogicalChannelError(TPVDirection direction, TPVChannelId id, PVMFStatus error) = 0;
         virtual void SkewDetected(TPVChannelId lcn1, TPVChannelId lcn2, uint32 skew) = 0;
         virtual void ReceivedFormatSpecificInfo(TPVChannelId lcn, uint8* fsi, uint32 fsi_len) = 0;
+        virtual void CalculateSkew(int lcn, bool CheckAudVid, int Timestamp, bool CheckEot) = 0;
 };
 
 class H223LogicalChannel : public PvmfPortBaseImpl,
@@ -260,7 +271,11 @@ class H223LogicalChannel : public PvmfPortBaseImpl,
 
 /* For outgoing A/V/C ( to be muxed) */
 class H223OutgoingChannel : public H223LogicalChannel
+
+
 {
+
+
     public:
         H223OutgoingChannel(TPVChannelId num,
                             bool segmentable,
@@ -293,7 +308,28 @@ class H223OutgoingChannel : public H223LogicalChannel
 
         void BufferMedia(uint16 aMs);
         void SetBufferSizeMs(uint32 buffer_size_ms);
+        Skew_Detection_Timer* inputTimer;
 
+#ifdef LIP_SYNC_TESTING
+        void StartTimer();
+        bool iDisconnected;
+        void TimerCallback();
+        int  CheckValue();
+        void AppendLipSyncTS();
+        uint32 iAudioOutTS;
+        uint32 iVideoOutTS;
+        int32 iDiffVideoAudioTS;
+        int32 iSqrCalVidAudTS ;
+        int32  iRtMnSqCalc ;
+        uint32 iTotalCountOut;
+        ShareParams *iParams;
+
+#endif
+
+
+
+        void DetectSkewInd(PVMFSharedMediaMsgPtr aMsg);
+        void CalcRMSInfo(uint32 VideoData, uint32 AudioData);
         uint32 GetNumBytesTransferred()
         {
             return iNumBytesIn;
@@ -347,9 +383,12 @@ class H223OutgoingChannel : public H223LogicalChannel
         OsclMemPoolFixedChunkAllocator* iMediaDataEntryAlloc;
         LCMediaDataEntry* lastMediaData;
         PVMFMediaFragGroupCombinedAlloc<OsclMemAllocator>* iMediaFragGroupAlloc;
-        OsclMemPoolFixedChunkAllocator* iPduPktMemPool;
-        OsclSharedPtr<PVMFMediaDataImpl> iCurPdu;
 
+        OsclMemPoolFixedChunkAllocator* iPduPktMemPool;
+        OsclMemAllocator iMemAlloc;
+        PVMFSimpleMediaBufferCombinedAlloc iMediaDataAlloc;
+
+        OsclSharedPtr<PVMFMediaDataImpl> iCurPdu;
         TimeValue iCreateTime;
         TimeValue iStartTime;
         uint32 iNumPacketsIn;
@@ -362,6 +401,7 @@ class H223OutgoingChannel : public H223LogicalChannel
         uint32 iMaxSduMuxTime;
         uint32 iNumFlush;
         uint32 iNumBytesFlushed;
+        PVMFSharedMediaDataPtr ihdrTSData;
         // skew related
         LogicalChannelInfo* iSkewReferenceChannel;
         int32 iSetBufferMediaMs;
@@ -371,12 +411,16 @@ class H223OutgoingChannel : public H223LogicalChannel
         bool iMuxingStarted;
         PVMFTimestamp iCurPduTimestamp;
         uint32 iNumPendingPdus;
+        uint32 iTsmsec;
+        bool iOnlyOnce;
         PVLogger* iOutgoingAudioLogger;
         PVLogger* iOutgoingVideoLogger;
         bool iWaitForRandomAccessPoint;
         uint32 iBufferSizeMs;
         OsclRefCounterMemFrag iFsiFrag;
+
 };
+
 
 class H223OutgoingControlChannel : public H223OutgoingChannel
 {
@@ -433,12 +477,23 @@ class H223IncomingChannel : public H223LogicalChannel
         PVMFStatus AlPduData(uint8* buf, uint16 len);
 
         PVMFStatus AlDispatch();
-
         OsclAny ResetAlPdu();
         OsclAny AllocateAlPdu();
         OsclAny AppendAlPduFrag();
         uint32 CopyAlPduData(uint8* buf, uint16 len);
         uint32 CopyToCurrentFrag(uint8* buf, uint16 len);
+
+        Incm_Skew_Detection_Timer* inputTimerIncm;
+
+#ifdef LIP_SYNC_TESTING
+        bool iIncmDisconnected;
+        void StartTimer();
+        void TimerCallback();
+        ShareParams* iParam;
+        void CalculateRMSInfo(uint32 VideoData, uint32 AudioData);
+        void DetectFrameBoundary(uint8* buffer, uint32 aTimestamp);
+        void ExtractTimestamp();
+#endif
 
         OsclAny Flush();
 
@@ -512,6 +567,7 @@ class H223IncomingChannel : public H223LogicalChannel
         PVLogger* iIncomingAudioLogger;
         PVLogger* iIncomingVideoLogger;
         int32 iRenderingSkew;
+
 };
 
 class MuxSduData
@@ -524,6 +580,7 @@ class MuxSduData
         uint16 cur_frag_num;
         uint16 cur_pos;
 };
+
 typedef Oscl_Vector<MuxSduData, OsclMemAllocator> MuxSduDataList;
 
 #endif

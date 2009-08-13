@@ -619,20 +619,40 @@ PVMFStatus CPV2WayDatapath::PortStatusChange(PVMFNodeInterface *aNode, PVMFComma
                     {
                         portParams.key = OSCL_CONST_CAST(char*, MOUT_AUDIO_SAMPLING_RATE_KEY);
                         portParams.value.uint32_value = 8000;
+                        portParams.length = oscl_strlen(portParams.key);
+                        portParams.capacity = portParams.length;
+                        error = SetParametersSync((PvmiCapabilityAndConfig *)configPtr,
+                                                  &portParams, portParamsReturn);
+                        if (error && portParamsReturn != NULL)
+                        {
+                            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "CPV2WayDatapath::PortStatusChange setParametersSync failed %d at parameter %x!\n", error, portParamsReturn));
+                            return PVMFFailure;
+                        }
+                        portParams.key = OSCL_CONST_CAST(char*, MOUT_AUDIO_NUM_CHANNELS_KEY);
+                        portParams.value.uint32_value = 1;
+                        portParams.length = oscl_strlen(portParams.key);
+                        portParams.capacity = portParams.length;
+                        error = SetParametersSync((PvmiCapabilityAndConfig *)configPtr,
+                                                  &portParams, portParamsReturn);
+                        if (error && portParamsReturn != NULL)
+                        {
+                            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "CPV2WayDatapath::PortStatusChange setParametersSync failed %d at parameter %x!\n", error, portParamsReturn));
+                            return PVMFFailure;
+                        }
                     }
                     else
                     {
                         portParams.key = OSCL_CONST_CAST(char*, MOUT_VIDEO_HEIGHT_KEY);
                         portParams.value.uint32_value = 176;
-                    }
-                    portParams.length = oscl_strlen(portParams.key);
-                    portParams.capacity = portParams.length;
-                    error = SetParametersSync((PvmiCapabilityAndConfig *)configPtr,
-                                              &portParams, portParamsReturn);
-                    if (error && portParamsReturn != NULL)
-                    {
-                        error = 0;
-                        portParamsReturn = NULL;
+                        portParams.length = oscl_strlen(portParams.key);
+                        portParams.capacity = portParams.length;
+                        error = SetParametersSync((PvmiCapabilityAndConfig *)configPtr,
+                                                  &portParams, portParamsReturn);
+                        if (error && portParamsReturn != NULL)
+                        {
+                            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "CPV2WayDatapath::PortStatusChange setParametersSync failed %d at parameter %x!\n", error, portParamsReturn));
+                            return PVMFFailure;
+                        }
                     }
                 }
 
@@ -1453,7 +1473,11 @@ PVMFFormatType CPV2WayDatapath::GetPortFormatType(PVMFPortInterface &aPort,
                         (format.isVideo() && iFormat.isVideo()) ||
                         (format.isFile() && iFormat.isFile()))
                 {
-                    format_datapath_media_type = format;
+                    // keep the first found format in safe until there is a match in other port
+                    if (format_datapath_media_type == PVMF_MIME_FORMAT_UNKNOWN)
+                    {
+                        format_datapath_media_type = format;
+                    }
                 }
                 // loop through other port, look for a match
                 // if there is a match return it

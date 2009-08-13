@@ -19,3 +19,5 @@ rem *** Setup the default environment ***
 if not exist ($?DEFAULT_SETUP_PATH) set DEFAULT_SETUP_PATH=../default
 call %DEFAULT_SETUP_PATH%/setup.bat %1
 
+rem *** Append output path of DLLs in PATH ***
+set PATH=%BUILD_ROOT%\installed_lib\win32;%PATH%

@@ -37,9 +37,10 @@ only.
 #ifndef PVMI_CONFIG_AND_CAPABILITY_UTILS_H_INCLUDED
 #define PVMI_CONFIG_AND_CAPABILITY_UTILS_H_INCLUDED
 
-#ifndef PVMI_CONFIG_AND_CAPABILITY_H_INCLUDED
-#include "pvmi_config_and_capability.h"
+#ifndef PVMI_CONFIG_AND_CAPABILITY_BASE_H_INCLUDED
+#include "pvmi_config_and_capability_base.h"
 #endif
+
 #ifndef OSCL_STRING_CONTAINERS_H_INCLUDED
 #include "oscl_string_containers.h"
 #endif
@@ -60,7 +61,7 @@ OSCL_IMPORT_REF PVMFStatus AllocateKvp(OsclMemAllocator& aAlloc, PvmiKvp*& aKvp,
 ** routines.
 */
 class PvmiCapabilityAndConfigPortFormatImpl
-        : public PvmiCapabilityAndConfig
+        : public PvmiCapabilityAndConfigBase
 {
     public:
         PvmiCapabilityAndConfigPortFormatImpl()
@@ -87,28 +88,13 @@ class PvmiCapabilityAndConfigPortFormatImpl
         //propagate to the caller of setParametersSync
         virtual void FormatUpdated() = 0;
 
-        // Implement pure virtuals from PvmiCapabilityAndConfig interface
+        // PvmiCapabilityAndConfig interface
         OSCL_IMPORT_REF virtual PVMFStatus getParametersSync(PvmiMIOSession aSession, PvmiKeyType aIdentifier,
                 PvmiKvp*& aParameters, int& num_parameter_elements, PvmiCapabilityContext aContext);
         OSCL_IMPORT_REF virtual PVMFStatus releaseParameters(PvmiMIOSession aSession, PvmiKvp* aParameters, int num_elements);
         OSCL_IMPORT_REF virtual void setParametersSync(PvmiMIOSession aSession, PvmiKvp* aParameters,
                 int num_elements, PvmiKvp * & aRet_kvp);
         OSCL_IMPORT_REF virtual PVMFStatus verifyParametersSync(PvmiMIOSession aSession, PvmiKvp* aParameters, int num_elements);
-
-        // Unsupported PvmiCapabilityAndConfig methods
-        void virtual setObserver(PvmiConfigAndCapabilityCmdObserver*) {};
-        void virtual createContext(PvmiMIOSession , PvmiCapabilityContext&) {};
-        void virtual setContextParameters(PvmiMIOSession , PvmiCapabilityContext& , PvmiKvp* , int) {};
-        void virtual DeleteContext(PvmiMIOSession , PvmiCapabilityContext&) {};
-        PVMFCommandId virtual setParametersAsync(PvmiMIOSession , PvmiKvp* , int , PvmiKvp*& , OsclAny* context = NULL)
-        {
-            OSCL_UNUSED_ARG(context);
-            return -1;
-        }
-        uint32 virtual getCapabilityMetric(PvmiMIOSession)
-        {
-            return 0;
-        }
 
 
         PVMFFormatType iFormat;

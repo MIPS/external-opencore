@@ -57,6 +57,7 @@ LIBS :=  pv_video_config_parser \
 	pv_aac_dec \
 	pvmp3 \
 	wmadecoder \
+        wmavoicedecoder \
 	wmvdecoder \
 	colorconvert \
 	unit_test \

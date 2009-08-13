@@ -60,11 +60,14 @@ LIBS :=  pv_video_config_parser \
 	m4v_config \
         omx_wmv_component_lib \
         wmvdecoder \
+        omx_rv_component_lib \
+        rvdecoder \
 	omx_aac_component_lib \
         pv_aac_dec \
         pv_aac_enc \
 	omx_wma_component_lib \
         wmadecoder \
+        wmavoicedecoder \
         omx_baseclass_lib \
         pv_config_parser \
         colorconvert \

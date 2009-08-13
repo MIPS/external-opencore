@@ -402,14 +402,15 @@ class PVFMVideoMIO;
 class PVFMAudioMIO;
 class OsclMemPoolResizableAllocator;
 
-class PVFrameAndMetadataUtility : public OsclTimerObject,
-        public PVFrameAndMetadataInterface,
-        public PvmiCapabilityAndConfig,
-        public PVCommandStatusObserver,
-        public PVErrorEventObserver,
-        public PVInformationalEventObserver,
-        public PVFMVideoMIOGetFrameObserver,
-        public OsclTimerObserver
+class PVFrameAndMetadataUtility
+        : public OsclTimerObject
+        , public PVFrameAndMetadataInterface
+        , public PvmiCapabilityAndConfigBase
+        , public PVCommandStatusObserver
+        , public PVErrorEventObserver
+        , public PVInformationalEventObserver
+        , public PVFMVideoMIOGetFrameObserver
+        , public OsclTimerObserver
 {
     public:
         static PVFrameAndMetadataUtility* New(char *aOutputFormatMIMEType,
@@ -436,16 +437,7 @@ class PVFrameAndMetadataUtility : public OsclTimerObject,
         void        SetThumbnailDimensions(uint32 aWidth, uint32 aHeight);
         void        GetThumbnailDimensions(uint32 &aWidth, uint32 &aHeight);
         // From PvmiCapabilityAndConfig
-        void setObserver(PvmiConfigAndCapabilityCmdObserver* aObserver);
-        PVMFStatus getParametersSync(PvmiMIOSession aSession, PvmiKeyType aIdentifier, PvmiKvp*& aParameters, int& aNumParamElements, PvmiCapabilityContext aContext);
-        PVMFStatus releaseParameters(PvmiMIOSession aSession, PvmiKvp* aParameters, int aNumElements);
-        void createContext(PvmiMIOSession aSession, PvmiCapabilityContext& aContext);
-        void setContextParameters(PvmiMIOSession aSession, PvmiCapabilityContext& aContext, PvmiKvp* aParameters, int aNumParamElements);
-        void DeleteContext(PvmiMIOSession aSession, PvmiCapabilityContext& aContext);
         void setParametersSync(PvmiMIOSession aSession, PvmiKvp* aParameters, int aNumElements, PvmiKvp* &aRetKVP);
-        PVMFCommandId setParametersAsync(PvmiMIOSession aSession, PvmiKvp* aParameters, int aNumElements, PvmiKvp*& aRetKVP, OsclAny* aContext = NULL);
-        uint32 getCapabilityMetric(PvmiMIOSession aSession);
-        PVMFStatus verifyParametersSync(PvmiMIOSession aSession, PvmiKvp* aParameters, int aNumElements);
 
     private:
         PVMFBasicErrorInfoMessage* CreateBasicErrInfoMessage(PVMFErrorInfoMessageInterface* nextmsg, PVFMErrorEventType aErrEvent = PVFMErrPlayerEngine);

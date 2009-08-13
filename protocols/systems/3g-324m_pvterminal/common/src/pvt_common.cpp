@@ -787,4 +787,19 @@ OSCL_EXPORT_REF bool CodecRequiresFsi(PVCodecType_t codec)
     return ret;
 }
 
+// This function returns a priority index for each format type.
+#define PV2WAY_ENGINE_PRIORITY_INDEX_FOR_FORMAT_TYPE_START 0
+#define PV2WAY_ENGINE_PRIORITY_INDEX_FOR_FORMAT_TYPE_END 0xFF
+OSCL_EXPORT_REF uint32 GetPriorityIndexForPVMFFormatType(PVMFFormatType aFormatType)
+{
+    if (aFormatType == PVMF_MIME_AMR_IF2)
+        return PV2WAY_ENGINE_PRIORITY_INDEX_FOR_FORMAT_TYPE_START;
+    else if (aFormatType == PVMF_MIME_M4V)
+        return PV2WAY_ENGINE_PRIORITY_INDEX_FOR_FORMAT_TYPE_START + 1;
+    else if (aFormatType == PVMF_MIME_H2632000)
+        return PV2WAY_ENGINE_PRIORITY_INDEX_FOR_FORMAT_TYPE_START + 2;
+    else
+        return PV2WAY_ENGINE_PRIORITY_INDEX_FOR_FORMAT_TYPE_END;
+}
+
 

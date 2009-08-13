@@ -6,9 +6,9 @@ include $(MK)/clear.mk
 
 TARGET := pv_frame_metadata_utility_test
 
-XCPPFLAGS += -DBUILD_OMX_DEC_NODE
+XCPPFLAGS := -DBUILD_OMX_DEC_NODE
 
-XINCDIRS += ../../config/common ../../../../../../../extern_libs_v2/khronos/openmax/include
+XINCDIRS := ../../config/common ../../../../../../../extern_libs_v2/khronos/openmax/include
 
 SRCDIR := ../../src
 INCSRCDIR := ../../src
@@ -19,7 +19,7 @@ SRCS := test_pv_frame_metadata_utility.cpp \
 
 LIBS :=  pvframemetadatautility \
         colorconvert \
-pvplayer_engine \
+        pvplayer_engine \
         pvfileoutputnode \
         pvpvxparser \
         pvmp3ffparsernode \
@@ -94,6 +94,7 @@ pvplayer_engine \
         wmvdecoder \
         omx_wma_component_lib \
         wmadecoder \
+        wmavoicedecoder \
         pvasfffparsernode \
         pvasfff \
         pvjanusplugin \
@@ -113,6 +114,7 @@ pvplayer_engine \
         pvrmffparsernode \
         pvrmffparser \
         pvrmff \
+        pvrmffrecognizer_utility \
         realaudio_deinterleaver \
         pvid3parcom \
         pvgendatastruct \
@@ -134,13 +136,13 @@ pvplayer_engine \
         threadsafe_callback_ao \
         packetsources_default \
         unit_test \
-	asfrecognizer_utility \
-	scsp \
+        asfrecognizer_utility \
+        scsp \
         pvdivxffrecognizer \
         pvdivxffparsernode \
         pv_divxfile_parser \
         pvamrffrecognizer \
-		divxrecognizer_utility
+        divxrecognizer_utility
 
 SYSLIBS += $(SYS_THREAD_LIB)
 

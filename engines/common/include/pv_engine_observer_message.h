@@ -34,7 +34,9 @@
 #ifndef PV_ENGINE_TYPES_H_INCLUDED
 #include "pv_engine_types.h"
 #endif
-
+#ifndef PVMF_ERRORINFOMESSAGE_EXTENSION_H_INCLUDED
+#include "pvmf_errorinfomessage_extension.h"
+#endif
 
 // CLASS DECLARATION
 /**
@@ -118,6 +120,34 @@ class PVCmdResponse : public PVMFCmdResp
         int32 GetResponseDataSize()const
         {
             return iEventDataSize;
+        }
+
+        /*
+         Method to retrieve message interface associated with the specified UUID from the error list
+         @param auuid UUID for the event code's group
+         @param aface output argument contains message interface if successful.
+         @return PVMFSuccess if found, PVMFFailure otherwise;
+         */
+        PVMFStatus GetExtendedErrorInfoMessage(const PVUuid& auuid, PVInterface*& aface)const
+        {
+            PVInterface* tmpface = (PVInterface*)GetEventExtensionInterface();
+            if (tmpface)
+            {
+                PVInterface* errMsg = NULL;
+                if (tmpface->queryInterface(PVMFErrorInfoMessageInterfaceUUID, errMsg))
+                {
+                    //search error list matches with auuid
+                    PVMFErrorInfoMessageInterface* nextErr =
+                        OSCL_DYNAMIC_CAST(PVMFErrorInfoMessageInterface*, errMsg)->GetNextMessage();
+                    while (nextErr)
+                    {
+                        if (nextErr->queryInterface(auuid, aface))
+                            return PVMFSuccess;
+                        nextErr = nextErr->GetNextMessage();
+                    }
+                }
+            }
+            return PVMFFailure;
         }
 
     private:

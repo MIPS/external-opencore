@@ -932,7 +932,7 @@ class Mpeg4File : public IMpeg4File, public Parentable
         }
 
         // Gnre ** Starts **
-        uint16 getITunesGnreID() const
+        int16 getITunesGnreID() const
         {
             if (_pmovieAtom != NULL)
             {
@@ -942,10 +942,10 @@ class Mpeg4File : public IMpeg4File, public Parentable
                     return _pmovieAtom->getITunesGnreID();
                 }
                 else
-                    return 0;
+                    return 0xFF;
             }
             else
-                return 0;
+                return 0xFF;
         }
 
 

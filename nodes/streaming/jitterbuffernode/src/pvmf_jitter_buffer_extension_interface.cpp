@@ -236,11 +236,11 @@ PVMFJitterBufferExtensionInterfaceImpl::NotifyAutoResumeComplete()
     return (iContainer->NotifyAutoResumeComplete());
 }
 
-OSCL_EXPORT_REF PVMFStatus
+OSCL_EXPORT_REF void
 PVMFJitterBufferExtensionInterfaceImpl::SetInputMediaHeaderPreParsed(PVMFPortInterface* aPort,
         bool aHeaderPreParsed)
 {
-    return (iContainer->SetInputMediaHeaderPreParsed(aPort, aHeaderPreParsed));
+    iContainer->SetInputMediaHeaderPreParsed(aPort, aHeaderPreParsed);
 }
 
 OSCL_EXPORT_REF PVMFStatus
@@ -302,4 +302,23 @@ OSCL_EXPORT_REF bool
 PVMFJitterBufferExtensionInterfaceImpl::PrepareForPlaylistSwitch()
 {
     return (iContainer->PrepareForPlaylistSwitch());
+}
+
+OSCL_EXPORT_REF bool
+PVMFJitterBufferExtensionInterfaceImpl::setPortMediaParams(PVMFPortInterface* aPort,
+        mediaInfo* aMediaInfo)
+{
+    return (iContainer->setPortMediaParams(aPort, aMediaInfo));
+}
+
+OSCL_EXPORT_REF void
+PVMFJitterBufferExtensionInterfaceImpl::setPayloadParserRegistry(PayloadParserRegistry* aPayloadParseReg)
+{
+    iContainer->setPayloadParserRegistry(aPayloadParseReg);
+}
+
+OSCL_EXPORT_REF PVMFStatus
+PVMFJitterBufferExtensionInterfaceImpl::setPortDataLogging(bool logEnable, OSCL_String* logPath)
+{
+    return (iContainer->setPortDataLogging(logEnable, logPath));
 }

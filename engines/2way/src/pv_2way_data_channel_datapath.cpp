@@ -124,6 +124,7 @@ bool CPV2WayDataChannelDatapath::ParentIsClosing()
 
 void CPV2WayDataChannelDatapath::CommandComplete(PVMFStatus aStatus)
 {
+    if (!iCmdInfo) return;
     iCmdInfo->status = aStatus;
     i2Way->Dispatch(iCmdInfo);
     iCmdInfo = NULL;

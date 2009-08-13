@@ -322,16 +322,19 @@ class PVH324MessageSetALConfiguration : public CPVH324InterfaceCmdMessage
         PVH324MessageSetALConfiguration(TPVMediaType_t aMediaType,
                                         TPVAdaptationLayer aLayer,
                                         bool aAllow,
+                                        bool aUse,
                                         OsclAny* aContextData,
                                         TPVCmnCommandId aId)
                 : CPVH324InterfaceCmdMessage(PVT_H324_COMMAND_SET_AL_CONFIGURATION, aContextData, aId),
                 iMediaType(aMediaType),
                 iLayer(aLayer),
-                iAllow(aAllow)
+                iAllow(aAllow),
+                iUse(aUse)
         {}
         TPVMediaType_t iMediaType;
         TPVAdaptationLayer iLayer;
         bool iAllow;
+        bool iUse;
 };
 
 class PVH324MessageSetTimerCounter: public CPVH324InterfaceCmdMessage
@@ -678,10 +681,10 @@ PVMFCommandId H324MConfig::SetTerminalType(uint8 aTerminalType, OsclAny* aContex
 };
 
 PVMFCommandId H324MConfig::SetALConfiguration(TPVMediaType_t aMediaType, TPVAdaptationLayer aLayer,
-        bool aAllow, OsclAny* aContextData)
+        bool aAllow, bool aUse, OsclAny* aContextData)
 {
     OSCL_UNUSED_ARG(aContextData);
-    iH324M->SetAlConfig(aMediaType, aLayer, aAllow);
+    iH324M->SetAlConfig(aMediaType, aLayer, aAllow, aUse);
     SendCmdResponse(iCommandId, aContextData, PVMFSuccess);
     return iCommandId++;
 };
@@ -1153,10 +1156,11 @@ PVMFCommandId H324MConfigProxied::SetTerminalType(uint8 aTerminalType, OsclAny* 
 }
 
 PVMFCommandId H324MConfigProxied::SetALConfiguration(TPVMediaType_t aMediaType, TPVAdaptationLayer aLayer,
-        bool aAllow, OsclAny* aContextData)
+        bool aAllow, bool aUse, OsclAny* aContextData)
 {
     PVH324MessageSetALConfiguration *cmd = NULL;
-    cmd = OSCL_NEW(PVH324MessageSetALConfiguration, (aMediaType, aLayer, aAllow, aContextData, iCommandId));
+    cmd = OSCL_NEW(PVH324MessageSetALConfiguration,
+                   (aMediaType, aLayer, aAllow, aUse, aContextData, iCommandId));
     int32 error = 0;
     OSCL_TRY(error, iMainProxy->SendCommand(iProxyId, cmd));
     OSCL_FIRST_CATCH_ANY(error, PVH324MessageUtils::DestroyMessage(cmd););
@@ -1616,7 +1620,7 @@ void H324MConfigProxied::HandleCommand(TPVProxyMsgId aMsgId, OsclAny *aMsg)
                 if (msg)
                 {
                     commandId = iH324MConfigIF->SetALConfiguration(msg->iMediaType, msg->iLayer,
-                                msg->iAllow, (CPVCmnInterfaceCmdMessage*)aMsg);
+                                msg->iAllow, msg->iUse, (CPVCmnInterfaceCmdMessage*)aMsg);
                 }
                 else
                 {

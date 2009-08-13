@@ -603,22 +603,28 @@ void PVMFProtocolEngineNode::CommandComplete(PVMFProtocolEngineNodeCmdQ& aCmdQ,
         OsclAny* aEventData,
         PVUuid* aEventUUID,
         int32* aEventCode,
-        int32 aEventDataLen)
+        int32 aEventDataLen,
+        PVInterface* extmsg)
 
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFProtocolEngineNode:CommandComplete Id %d Cmd %d Status %d Context %d Data %d"
                     , aCmd.iId, aCmd.iCmd, aStatus, aCmd.iContext, aEventData));
 
-    PVInterface* extif = NULL;
-    PVMFBasicErrorInfoMessage* errormsg = NULL;
-    if (aEventUUID && aEventCode)
+    if (aStatus == PVMFErrRedirect)
     {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFProtocolEngineNode:CommandComplete Redirect"));
+        aEventData = 0;
+        aEventDataLen = 0;
+    }
+    else if (aEventUUID && aEventCode)
+    {
+        PVMFBasicErrorInfoMessage* errormsg = NULL;
         errormsg = OSCL_NEW(PVMFBasicErrorInfoMessage, (*aEventCode, *aEventUUID, NULL));
-        extif = OSCL_STATIC_CAST(PVInterface*, errormsg);
+        extmsg = OSCL_STATIC_CAST(PVInterface*, errormsg);
     }
 
     //create response
-    PVMFCmdResp resp(aCmd.iId, aCmd.iContext, aStatus, extif, aEventData);
+    PVMFCmdResp resp(aCmd.iId, aCmd.iContext, aStatus, extmsg, aEventData);
     if (aEventDataLen != 0)
     {
         resp.SetEventDataLen(aEventDataLen);
@@ -632,7 +638,7 @@ void PVMFProtocolEngineNode::CommandComplete(PVMFProtocolEngineNodeCmdQ& aCmdQ,
     //Report completion to the session observer.
     ReportCmdCompleteEvent(session, resp);
 
-    if (errormsg) errormsg->removeRef();
+    if (extmsg) extmsg->removeRef();
 }
 
 
@@ -1247,24 +1253,30 @@ void PVMFProtocolEngineNode::ReportInfoEvent(PVMFEventType aEventType, OsclAny* 
 void PVMFProtocolEngineNode::ReportErrorEvent(PVMFEventType aEventType,
         OsclAny* aEventData,
         const int32 aEventCode,
-        int32 aEventDataLen)
+        int32 aEventDataLen,
+        PVInterface* extmsg)
 {
     LOGINFO((0, "PVMFProtocolEngineNode::ReportErrorEvent() Type %d Data %d"
              , aEventType, aEventData));
 
-    PVMFBasicErrorInfoMessage*msg  = NULL;
-
-    if (aEventCode != 0)
+    if (aEventType == PVMFErrRedirect)
     {
+        aEventData = 0;
+        aEventDataLen = 0;
+    }
+    else if (aEventCode != 0)
+    {
+        PVMFBasicErrorInfoMessage*msg  = NULL;
         // extended error event with aEventCode
         PVUuid uuid = PVProtocolEngineNodeErrorEventTypesUUID;
         msg = OSCL_NEW(PVMFBasicErrorInfoMessage, (aEventCode, uuid, NULL));
+        extmsg = OSCL_STATIC_CAST(PVInterface*, msg);
     }
 
     PVMFAsyncEvent event(PVMFErrorEvent,
                          aEventType,
                          NULL, // context
-                         msg,
+                         extmsg,
                          aEventData,
                          NULL,
                          0);
@@ -1273,8 +1285,7 @@ void PVMFProtocolEngineNode::ReportErrorEvent(PVMFEventType aEventType,
         event.SetEventDataLen(aEventDataLen);
 
     PVMFNodeInterface::ReportErrorEvent(event);
-    if (msg) msg->removeRef();
-
+    if (extmsg) extmsg->removeRef();
 }
 
 /////////////////////////////////////////////////////
@@ -1879,6 +1890,7 @@ void PVMFProtocolEngineNode::ProtocolStateError(int32 aErrorCode)
 {
     if (iProtocol->isCurrentStateOptional())
     {
+        iProtocolContainer->requiredSocketReconnect(true);
         PVProtocolEngineNodeInternalEvent aEvent(PVProtocolEngineNodeInternalEventType_ServerResponseError_Bypassing);
         DispatchInternalEvent(&aEvent);
     }
@@ -2598,11 +2610,13 @@ bool PVProtocolEngineNodeInternalEventHandler::completePendingCommandWithError(P
         else   // extension error event
         {
             PVUuid uuid = PVProtocolEngineNodeErrorEventTypesUUID;
-            int32 basePVMFErrorCode = getBasePVMFErrorReturnCode(errorCode);
             char *errEventData = NULL;
             uint32 errEventDataLen = 0;
-            handleErrResponse(basePVMFErrorCode, errorCode, errEventData, errEventDataLen);
-            iNode->CommandComplete(iNode->iCurrentCommand, iNode->iCurrentCommand.front(), basePVMFErrorCode, errEventData, &uuid, &errorCode, errEventDataLen);
+            PVInterface* extmsg = NULL;
+
+            handleErrResponse(errorCode, errEventData, errEventDataLen, extmsg);
+            int32 basePVMFErrorCode = getBasePVMFErrorReturnCode(errorCode);
+            iNode->CommandComplete(iNode->iCurrentCommand, iNode->iCurrentCommand.front(), basePVMFErrorCode, errEventData, &uuid, &errorCode, errEventDataLen, extmsg);
             LOGINFODATAPATH((0, "PVProtocolEngineNodeInternalEventHandler::completePendingCommandWithError(), basePVMFErrorCode=%d, extensionErrorCode=%d",
                              basePVMFErrorCode, errorCode));
         }
@@ -2614,11 +2628,13 @@ bool PVProtocolEngineNodeInternalEventHandler::completePendingCommandWithError(P
             iNode->ReportErrorEvent(errorCode);
         else
         {
-            int32 basePVMFErrorCode = getBasePVMFErrorReturnCode(errorCode, false); // false for error event
             char *errEventData = NULL;
             uint32 eventDataLen = 0;
-            handleErrResponse(basePVMFErrorCode, errorCode, errEventData, eventDataLen);
-            iNode->ReportErrorEvent(basePVMFErrorCode, errEventData, errorCode, eventDataLen);
+            PVInterface* extmsg = NULL;
+
+            handleErrResponse(errorCode, errEventData, eventDataLen, extmsg);
+            int32 basePVMFErrorCode = getBasePVMFErrorReturnCode(errorCode, false); // false for error event
+            iNode->ReportErrorEvent(basePVMFErrorCode, errEventData, errorCode, eventDataLen, extmsg);
             LOGINFODATAPATH((0, "PVProtocolEngineNodeInternalEventHandler::completePendingCommandWithError(), basePVMFErrorCode=%d, extensionErrorCode=%d",
                              basePVMFErrorCode, errorCode));
         }
@@ -2665,6 +2681,11 @@ int32 PVProtocolEngineNodeInternalEventHandler::getBasePVMFErrorReturnCode(const
                 pvmfReturnCode = PVMFErrRedirect;
             }
             break;
+
+        case PVProtocolEngineNodeErrorHTTPErrorCode305_Proxy:
+            pvmfReturnCode = PVMFErrRedirect;
+            break;
+
         default:
             break;
     }
@@ -2672,16 +2693,15 @@ int32 PVProtocolEngineNodeInternalEventHandler::getBasePVMFErrorReturnCode(const
     return pvmfReturnCode;
 }
 
-void PVProtocolEngineNodeInternalEventHandler::handleErrResponse(int32 &aBaseCode, int32 &errCode, char* &aEventData, uint32 &aEventDataLen)
+void PVProtocolEngineNodeInternalEventHandler::handleErrResponse(int32 &errCode, char* &aEventData, uint32 &aEventDataLen, PVInterface* &extmsg)
 {
-    if (aBaseCode == PVMFErrRedirect)
+    handleAuthenErrResponse(errCode, aEventData, aEventDataLen);
+
+    if (((errCode == PVProtocolEngineNodeErrorHTTPRedirect_TrialsExceedLimit &&
+            iNode->iInterfacingObjectContainer->getNumRedirectTrials() == 0)) ||
+            (errCode == PVProtocolEngineNodeErrorHTTPErrorCode305_Proxy))
     {
-        handleRedirectErrResponse(aEventData, aEventDataLen);
-    }
-    else
-    {
-        handleAuthenErrResponse(errCode, aEventData, aEventDataLen);
-        aBaseCode = getBasePVMFErrorReturnCode(errCode);
+        handleRedirectErrResponse(errCode, extmsg);
     }
 }
 
@@ -2715,20 +2735,14 @@ void PVProtocolEngineNodeInternalEventHandler::handleAuthenErrResponse(int32 &aE
     }
 }
 
-void PVProtocolEngineNodeInternalEventHandler::handleRedirectErrResponse(char* &aEventData, uint32 &aEventDataLen)
+void PVProtocolEngineNodeInternalEventHandler::handleRedirectErrResponse(int32 &errCode, PVInterface* &extmsg)
 {
-    aEventData = NULL;
-    aEventDataLen = 0;
-    // set the new url into info event
-    OSCL_HeapString<OsclMemAllocator> newUrl;
-    iNode->iProtocol->getRedirectURI(newUrl);
+    PVUuid uuid = PVProtocolEngineNodeErrorEventTypesUUID;
+    PVMFProtocolEngineNodeErrorRedirect*msg = (OSCL_NEW(PVMFProtocolEngineNodeErrorRedirect, (errCode, uuid, NULL)));
 
-    // then set this value
-    iNode->iInterfacingObjectContainer->setURI(newUrl, true);
-    iNode->iProtocol->setURI(iNode->iInterfacingObjectContainer->getURIObject());
-
-    aEventData = (char*)iNode->iInterfacingObjectContainer->getURIObject().getURI().get_cstr();
-    aEventDataLen = iNode->iInterfacingObjectContainer->getURIObject().getURI().get_size() + 1;
+    iNode->iProtocol->getAllRedirectURI(msg->iRedirectVec);
+    msg->iRedirectNum = msg->iRedirectVec.size();
+    extmsg = (PVInterface*)msg;
 }
 
 inline bool PVProtocolEngineNodeInternalEventHandler::isCurrEventMatchCurrPendingCommand(uint32 aCurrEventId)
@@ -2770,7 +2784,37 @@ bool PVProtocolEngineNodeInternalEventHandler::completePendingCommand(PVProtocol
     if (!isCurrEventMatchCurrPendingCommand((uint32)aEvent.iEventId)) return false;
 
     PVMFProtocolEngineNodeCommand& aCmd = iNode->iCurrentCommand.front();
-    iNode->SetState(SetStateByCommand[aCmd.iCmd-(int32)PVMF_GENERIC_NODE_INIT]);
+
+    TPVMFNodeInterfaceState state = EPVMFNodeError;
+    switch (aCmd.iCmd)
+    {
+        case PVMF_GENERIC_NODE_INIT:
+            state = EPVMFNodeInitialized;
+            break;
+        case PVMF_GENERIC_NODE_STOP:
+        case PVMF_GENERIC_NODE_PREPARE:
+            state = EPVMFNodePrepared;
+            break;
+        case PVPROTOCOLENGINE_NODE_CMD_SEEK:
+        case PVPROTOCOLENGINE_NODE_CMD_BITSTREAM_SWITCH:
+        case PVMF_GENERIC_NODE_FLUSH:
+        case PVMF_GENERIC_NODE_START:
+            state = EPVMFNodeStarted;
+            break;
+        case PVMF_GENERIC_NODE_PAUSE:
+            state = EPVMFNodePaused;
+            break;
+        case PVMF_GENERIC_NODE_RESET:
+            state = EPVMFNodeCreated;
+            break;
+        case PVMF_GENERIC_NODE_CANCELCOMMAND:
+        case PVMF_GENERIC_NODE_CANCELALLCOMMANDS:
+            state = EPVMFNodeLastState;
+            break;
+        default:
+            break;
+    }
+    iNode->SetState(state);
     iNode->CommandComplete(iNode->iCurrentCommand, aCmd, PVMFSuccess);
     return true;
 }
@@ -2860,6 +2904,13 @@ int32 ProtocolStateErrorHandler::checkRedirectHandling(const int32 aErrorCode)
     int32 errCode = parseServerResponseCode(aErrorCode, isInfoEvent);
     uint32 numRedirectTrials = iNode->iInterfacingObjectContainer->getNumRedirectTrials();
     uint32 numCurrRedirectTrials = iNode->iInterfacingObjectContainer->getCurrNumRedirectTrials();
+
+    // check HTTP1.1 && 305 this case, it should be error out.
+    if ((aErrorCode == Response305StatusCode) && (iNode->iProtocol->getHttpVersionNum() == HTTP_V11))
+    {
+        errCode = PVProtocolEngineNodeErrorHTTPErrorCode305_Proxy;
+        return errCode;
+    }
 
     if (isInfoEvent && ++numCurrRedirectTrials <= numRedirectTrials)
     {

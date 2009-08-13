@@ -19,21 +19,11 @@
 #include "pvmf_wavffparser_defs.h"
 #include "wav_parsernode_tunables.h"
 #include "pvmf_wavffparser_port.h"
-#include "pvwavfileparser.h"
 #include "media_clock_converter.h"
-#include "pv_gau.h"
-#include "pvlogger.h"
-#include "oscl_error_codes.h"
 #include "pvmf_fileformat_events.h"
-#include "pvmf_basic_errorinfomessage.h"
-#include "pvmf_media_cmd.h"
-#include "pvmf_media_msg_format_ids.h"
 #include "pv_mime_string_utils.h"
-#include "oscl_stdstring.h"
-#include "oscl_snprintf.h"
 #include "pvmi_kvp_util.h"
 #include "pvmf_local_data_source.h"
-#include "pvmf_source_context_data.h"
 
 static const char PVWAVMETADATA_ALL_METADATA_KEY[] = "all";
 
@@ -52,34 +42,23 @@ static const char PVWAVMETADATA_INDEX0[] = "index=0";
 
 
 PVMFWAVFFParserNode::PVMFWAVFFParserNode(int32 aPriority) :
-        OsclTimerObject(aPriority, "PVMFWAVFFParserNode"),
-        iStreamID(0),
+        PVMFNodeInterfaceImpl(aPriority, "PVMFWAVFFParserNode"),
         iOutPort(NULL),
         iLogger(NULL),
-        iCmdRespPort(NULL),
-        iFileHandle(NULL),
         iWAVParser(NULL),
-        iExtensionRefCount(0)
+        iFileHandle(NULL)
 {
     int32 err;
     OSCL_TRY(err,
-
-             //Create the input command queue.  Use a reserve to avoid lots of dynamic memory allocation.
-             iInputCommands.Construct(PVMF_WAVFFPARSER_NODE_COMMAND_ID_START, PVMF_WAVFFPARSER_NODE_COMMAND_VECTOR_RESERVE);
-
-             //Create the "current command" queue.  It will only contain one
-             //command at a time, so use a reserve of 1.
-             iCurrentCommand.Construct(0, 1);
-
              //Set the node capability data.
              //This node can support an unlimited number of ports.
-             iCapability.iCanSupportMultipleInputPorts = false;
-             iCapability.iCanSupportMultipleOutputPorts = false;
-             iCapability.iHasMaxNumberOfPorts = true;
-             iCapability.iMaxNumberOfPorts = 2;//no maximum
-             iCapability.iInputFormatCapability.push_back(PVMF_MIME_WAVFF);
-             iCapability.iOutputFormatCapability.push_back(PVMF_MIME_PCM8);
-             iCapability.iOutputFormatCapability.push_back(PVMF_MIME_PCM16);
+             iNodeCapability.iCanSupportMultipleInputPorts = false;
+             iNodeCapability.iCanSupportMultipleOutputPorts = false;
+             iNodeCapability.iHasMaxNumberOfPorts = true;
+             iNodeCapability.iMaxNumberOfPorts = 2;//no maximum
+             iNodeCapability.iInputFormatCapability.push_back(PVMF_MIME_WAVFF);
+             iNodeCapability.iOutputFormatCapability.push_back(PVMF_MIME_PCM8);
+             iNodeCapability.iOutputFormatCapability.push_back(PVMF_MIME_PCM16);
             );
 
     if (err != OsclErrNone)
@@ -87,10 +66,9 @@ PVMFWAVFFParserNode::PVMFWAVFFParserNode(int32 aPriority) :
         //if a leave happened, cleanup and re-throw the error
         iInputCommands.clear();
         iCurrentCommand.clear();
-        iCapability.iInputFormatCapability.clear();
-        iCapability.iOutputFormatCapability.clear();
-        OSCL_CLEANUP_BASE_CLASS(PVMFNodeInterface);
-        OSCL_CLEANUP_BASE_CLASS(OsclTimerObject);
+        iNodeCapability.iInputFormatCapability.clear();
+        iNodeCapability.iOutputFormatCapability.clear();
+        OSCL_CLEANUP_BASE_CLASS(PVMFNodeInterfaceImpl);
         OSCL_LEAVE(err);
     }
 
@@ -100,19 +78,6 @@ PVMFWAVFFParserNode::PVMFWAVFFParserNode(int32 aPriority) :
 PVMFWAVFFParserNode::~PVMFWAVFFParserNode()
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFWAVFFParserNode::~PVMFWAVFFParserNode() called"));
-    //Cleanup commands
-    //The command queues are self-deleting, but we want to
-    //notify the observer of unprocessed commands.
-
-    while (!iCurrentCommand.empty())
-    {
-        CommandComplete(iCurrentCommand, iCurrentCommand.front(), PVMFFailure);
-    }
-
-    while (!iInputCommands.empty())
-    {
-        CommandComplete(iInputCommands, iInputCommands.front(), PVMFFailure);
-    }
 
     //cleanup port activity events
     iPortActivityQueue.clear();
@@ -125,235 +90,16 @@ PVMFWAVFFParserNode::~PVMFWAVFFParserNode()
     iFileServer.Close();
 }
 
-
-/**
- //Do thread-specific node creation and go to "Idle" state.
- */
-PVMFStatus PVMFWAVFFParserNode::ThreadLogon()
-{
-
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_MLDBG, iLogger, PVLOGMSG_INFO, (0, "PVMFWAVFFParserNode:ThreadLogon"));
-    switch (iInterfaceState)
-    {
-        case EPVMFNodeCreated:
-            if (!IsAdded())
-                AddToScheduler();
-
-            iLogger = PVLogger::GetLoggerObject("PVMFWAVFFParserNode");
-            SetState(EPVMFNodeIdle);
-            return PVMFSuccess;
-
-        default:
-            return PVMFErrInvalidState;
-    }
-}
-
-
-/**
- //Do thread-specific node cleanup and go to "Created" state.
- */
-PVMFStatus PVMFWAVFFParserNode::ThreadLogoff()
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_MLDBG, iLogger, PVLOGMSG_INFO, (0, "PVMFWAVFFParserNode:ThreadLogoff"));
-
-    switch (iInterfaceState)
-    {
-        case EPVMFNodeIdle:
-            if (IsAdded())
-                RemoveFromScheduler();
-
-            iLogger = NULL;
-            SetState(EPVMFNodeCreated);
-            return PVMFSuccess;
-
-        default:
-            return PVMFErrInvalidState;
-    }
-}
-
-
-PVMFStatus PVMFWAVFFParserNode::GetCapability(PVMFNodeCapability& aNodeCapability)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFWAVFFParserNode::GetCapability() called"));
-
-    // TODO: Return the appropriate format capability
-    aNodeCapability = iCapability;
-    return PVMFSuccess;
-}
-
-
-PVMFPortIter* PVMFWAVFFParserNode::GetPorts(const PVMFPortFilter* aFilter)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFWAVFFParserNode::GetPorts() called"));
-
-    OSCL_UNUSED_ARG(aFilter);
-    // TODO: Return the currently available ports
-    return NULL;
-}
-
-/**
- //Queue an asynchronous node command
- */
-PVMFCommandId PVMFWAVFFParserNode::QueryUUID(PVMFSessionId s, const PvmfMimeString& aMimeType,
-        Oscl_Vector<PVUuid, OsclMemAllocator>& aUuids,
-        bool aExactUuidsOnly, const OsclAny* aContext)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_MLDBG, iLogger, PVLOGMSG_INFO, (0, "PVMFWAVFFParserNode:QueryUUID"));
-    PVMFWAVFFNodeCommand cmd;
-    cmd.PVMFWAVFFNodeCommandBase::Construct(s, PVMF_GENERIC_NODE_QUERYUUID, aMimeType, aUuids, aExactUuidsOnly, aContext);
-    return QueueCommandL(cmd);
-}
-
-/**
- //Queue an asynchronous node command
- */
-PVMFCommandId PVMFWAVFFParserNode::QueryInterface(PVMFSessionId s, const PVUuid& aUuid,
-        PVInterface*& aInterfacePtr,
-        const OsclAny* aContext)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_MLDBG, iLogger, PVLOGMSG_INFO, (0, "PVMFWAVFFParserNode:QueryInterface"));
-    PVMFWAVFFNodeCommand cmd;
-    cmd.PVMFWAVFFNodeCommandBase::Construct(s, PVMF_GENERIC_NODE_QUERYINTERFACE, aUuid, aInterfacePtr, aContext);
-    return QueueCommandL(cmd);
-}
-
-/**
- //Queue an asynchronous node command
- */
-PVMFCommandId PVMFWAVFFParserNode::RequestPort(PVMFSessionId s, int32 aPortTag, const PvmfMimeString* aPortConfig, const OsclAny* aContext)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_MLDBG, iLogger, PVLOGMSG_INFO, (0, "PVMFWAVFFParserNode:RequestPort"));
-    PVMFWAVFFNodeCommand cmd;
-    cmd.PVMFWAVFFNodeCommandBase::Construct(s, PVMF_GENERIC_NODE_REQUESTPORT, aPortTag, aPortConfig, aContext);
-    return QueueCommandL(cmd);
-}
-
-
-/**
- //Queue an asynchronous node command
- */
-PVMFCommandId PVMFWAVFFParserNode::ReleasePort(PVMFSessionId s, PVMFPortInterface& aPort, const OsclAny* aContext)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_MLDBG, iLogger, PVLOGMSG_INFO, (0, "PVMFWAVFFParserNode:ReleasePort"));
-    PVMFWAVFFNodeCommand cmd;
-    cmd.PVMFWAVFFNodeCommandBase::Construct(s, PVMF_GENERIC_NODE_RELEASEPORT, aPort, aContext);
-    return QueueCommandL(cmd);
-}
-
-/**
- //Queue an asynchronous node command
- */
-PVMFCommandId PVMFWAVFFParserNode::Init(PVMFSessionId s, const OsclAny* aContext)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_MLDBG, iLogger, PVLOGMSG_INFO, (0, "PVMFWAVFFParserNode:Init"));
-    PVMFWAVFFNodeCommand cmd;
-    cmd.PVMFWAVFFNodeCommandBase::Construct(s, PVMF_GENERIC_NODE_INIT, aContext);
-    return QueueCommandL(cmd);
-}
-
-/**
- //Queue an asynchronous node command
- */
-PVMFCommandId PVMFWAVFFParserNode::Prepare(PVMFSessionId s, const OsclAny* aContext)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_MLDBG, iLogger, PVLOGMSG_INFO, (0, "PVMFWAVFFParserNode:Prepare"));
-    PVMFWAVFFNodeCommand cmd;
-    cmd.PVMFWAVFFNodeCommandBase::Construct(s, PVMF_GENERIC_NODE_PREPARE, aContext);
-    return QueueCommandL(cmd);
-}
-
-/**
- //Queue an asynchronous node command
- */
-PVMFCommandId PVMFWAVFFParserNode::Start(PVMFSessionId s, const OsclAny* aContext)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_MLDBG, iLogger, PVLOGMSG_INFO, (0, "PVMFWAVFFParserNode:Start"));
-    PVMFWAVFFNodeCommand cmd;
-    cmd.PVMFWAVFFNodeCommandBase::Construct(s, PVMF_GENERIC_NODE_START, aContext);
-    return QueueCommandL(cmd);
-}
-
-/**
- //Queue an asynchronous node command
- */
-PVMFCommandId PVMFWAVFFParserNode::Stop(PVMFSessionId s, const OsclAny* aContext)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_MLDBG, iLogger, PVLOGMSG_INFO, (0, "PVMFWAVFFParserNode:Stop"));
-    PVMFWAVFFNodeCommand cmd;
-    cmd.PVMFWAVFFNodeCommandBase::Construct(s, PVMF_GENERIC_NODE_STOP, aContext);
-    return QueueCommandL(cmd);
-}
-
-/**
- //Queue an asynchronous node command
- */
-PVMFCommandId PVMFWAVFFParserNode::Pause(PVMFSessionId s, const OsclAny* aContext)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_MLDBG, iLogger, PVLOGMSG_INFO, (0, "PVMFWAVFFParserNode:Pause"));
-    PVMFWAVFFNodeCommand cmd;
-    cmd.PVMFWAVFFNodeCommandBase::Construct(s, PVMF_GENERIC_NODE_PAUSE, aContext);
-    return QueueCommandL(cmd);
-}
-
-/**
- //Queue an asynchronous node command
- */
-PVMFCommandId PVMFWAVFFParserNode::Flush(PVMFSessionId s, const OsclAny* aContext)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_MLDBG, iLogger, PVLOGMSG_INFO, (0, "PVMFWAVFFParserNode:Flush"));
-    PVMFWAVFFNodeCommand cmd;
-    cmd.PVMFWAVFFNodeCommandBase::Construct(s, PVMF_GENERIC_NODE_FLUSH, aContext);
-    return QueueCommandL(cmd);
-}
-
-/**
- //Queue an asynchronous node command
- */
-PVMFCommandId PVMFWAVFFParserNode::Reset(PVMFSessionId s, const OsclAny* aContext)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_MLDBG, iLogger, PVLOGMSG_INFO, (0, "PVMFWAVFFParserNode:Reset"));
-    PVMFWAVFFNodeCommand cmd;
-    cmd.PVMFWAVFFNodeCommandBase::Construct(s, PVMF_GENERIC_NODE_RESET, aContext);
-    return QueueCommandL(cmd);
-}
-
-/**
- //Queue an asynchronous node command
- */
-PVMFCommandId PVMFWAVFFParserNode::CancelAllCommands(PVMFSessionId s, const OsclAny* aContext)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_MLDBG, iLogger, PVLOGMSG_INFO, (0, "PVMFWAVFFParserNode:CancelAllCommands"));
-    PVMFWAVFFNodeCommand cmd;
-    cmd.PVMFWAVFFNodeCommandBase::Construct(s, PVMF_GENERIC_NODE_CANCELALLCOMMANDS, aContext);
-    return QueueCommandL(cmd);
-}
-
-/**
- //Queue an asynchronous node command
- */
-PVMFCommandId PVMFWAVFFParserNode::CancelCommand(PVMFSessionId s, PVMFCommandId aCmdId, const OsclAny* aContext)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_MLDBG, iLogger, PVLOGMSG_INFO, (0, "PVMFWAVFFParserNode:CancelCommand"));
-    PVMFWAVFFNodeCommand cmd;
-    cmd.PVMFWAVFFNodeCommandBase::Construct(s, PVMF_GENERIC_NODE_CANCELCOMMAND, aCmdId, aContext);
-    return QueueCommandL(cmd);
-}
-
-
-
 /////////////////////
 // Private Section //
 /////////////////////
 void PVMFWAVFFParserNode::Construct()
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFWAVFFParserNode::Construct()"));
-
     iFileServer.Connect();
-
     iAvailableMetadataKeys.reserve(PVMF_WAV_NUM_METADATA_VALUES);
     iAvailableMetadataKeys.clear();
 }
-
 
 void PVMFWAVFFParserNode::Run()
 {
@@ -364,13 +110,9 @@ void PVMFWAVFFParserNode::Run()
     {
         if (ProcessCommand(iInputCommands.front()))
         {
-            //note: need to check the state before re-scheduling
-            //since the node could have been reset in the ProcessCommand call.
-            if (iInterfaceState != EPVMFNodeCreated)
-                RunIfNotReady();
-
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFWAVFFParserNode::Run() Out 1"));
-
+            // base node takes care of rescheduling the node
+            // if there are more commands pending for execution.
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFWAVFFParserNode::Run() Command Processed"));
             return;
         }
     }
@@ -388,10 +130,12 @@ void PVMFWAVFFParserNode::Run()
                 break; //processed a port
         }
 
-        //Re-schedule
-        RunIfNotReady();
+        // port activity queue might be empty by this time.
+        // being a source, data needs to be sent out.
+        // for kicking off the data queuing schedule the node.
+        Reschedule();
 
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFWAVFFParserNode::Run() Out 2"));
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFWAVFFParserNode::Run() Port Queue Processed"));
         return;
     }
 
@@ -400,8 +144,8 @@ void PVMFWAVFFParserNode::Run()
     {
         if (HandleTrackState()) // Handle track state returns true if there is more data to be sent.
         {
-            // Run again if there is more data to send out
-            RunIfNotReady();
+            // schedule again if there is more data to send out
+            Reschedule();
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFWAVFFParserNode::Run() Out 33"));
         }
 
@@ -416,9 +160,8 @@ void PVMFWAVFFParserNode::Run()
     {
         if (iOutPort->OutgoingMsgQueueSize() > 0)
         {
-            //need to wait on completion...
-            RunIfNotReady();
-
+            // schedule again if there is more data to send out
+            Reschedule();
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFWAVFFParserNode::Run() Out 4"));
 
             return;
@@ -429,7 +172,7 @@ void PVMFWAVFFParserNode::Run()
         //resume port input so the ports can be re-started.
         iOutPort->ResumeInput();
         CommandComplete(iCurrentCommand, iCurrentCommand.front(), PVMFSuccess);
-        RunIfNotReady();
+        Reschedule();
     }
 
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFWAVFFParserNode::Run() Out 5"));
@@ -561,8 +304,11 @@ bool PVMFWAVFFParserNode::HandleTrackState()
             case PVWAVFFNodeTrackPortInfo::TRACKSTATE_TRANSMITTING_SENDDATA:
                 if (iSelectedTrackList[i].iSendBOS)
                 {
-                    if (!SendBeginOfMediaStreamCommand(iSelectedTrackList[i]))
+                    uint32 timestamp = iSelectedTrackList[i].iClockConverter->get_converted_ts(COMMON_PLAYBACK_CLOCK_TIMESCALE);
+                    if (!SendBeginOfMediaStreamCommand(iSelectedTrackList[i].iPort, iStreamID, timestamp))
                         return true;
+
+                    iSelectedTrackList[i].iSendBOS = false;
 
                     if (!iSelectedTrackList[i].iMediaData)
                     {
@@ -579,13 +325,17 @@ bool PVMFWAVFFParserNode::HandleTrackState()
                 break;
 
             case PVWAVFFNodeTrackPortInfo::TRACKSTATE_SEND_ENDOFTRACK:
+            {
+                uint32 timestamp = iSelectedTrackList[i].iClockConverter->get_converted_ts(COMMON_PLAYBACK_CLOCK_TIMESCALE);
                 if (iSelectedTrackList[i].iSendBOS)
                 {
-                    if (!SendBeginOfMediaStreamCommand(iSelectedTrackList[i]))
+                    if (!SendBeginOfMediaStreamCommand(iSelectedTrackList[i].iPort, iStreamID, timestamp))
                         return true;
+
+                    iSelectedTrackList[i].iSendBOS = false;
                 }
 
-                if (SendEndOfTrackCommand(iSelectedTrackList[i]))
+                if (SendEndOfTrackCommand(iSelectedTrackList[i].iPort, iStreamID, timestamp, iSelectedTrackList[i].iSeqNum++))
                 {
                     // EOS sent successfully.
                     iSelectedTrackList[i].iState = PVWAVFFNodeTrackPortInfo::TRACKSTATE_ENDOFTRACK;
@@ -598,7 +348,7 @@ bool PVMFWAVFFParserNode::HandleTrackState()
                     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_NOTICE, (0, "PVMFWAVFFParserNode::HandleTrackState EOS media command sending failed"));
                     ret_status = true;
                 }
-
+            }
             case PVWAVFFNodeTrackPortInfo::TRACKSTATE_MEDIADATAPOOLEMPTY:
             case PVWAVFFNodeTrackPortInfo::TRACKSTATE_INITIALIZED:
             case PVWAVFFNodeTrackPortInfo::TRACKSTATE_ENDOFTRACK:
@@ -629,45 +379,38 @@ bool PVMFWAVFFParserNode::RetrieveTrackData(PVWAVFFNodeTrackPortInfo& aTrackPort
         if (errcode == OsclErrNoResources)
         {
             aTrackPortInfo.iTrackDataMemoryPool->notifyfreechunkavailable(aTrackPortInfo);  // Enable flag to receive event when next deallocate() is called on pool
-            return false;
         }
         else if (errcode == OsclErrNoMemory)
         {
             // Memory allocation for the pool failed
             aTrackPortInfo.iState = PVWAVFFNodeTrackPortInfo::TRACKSTATE_ERROR;
             ReportErrorEvent(PVMFErrNoMemory, NULL);
-            return false;
         }
         else if (errcode == OsclErrArgument)
         {
             // Invalid parameters passed to mempool
             aTrackPortInfo.iState = PVWAVFFNodeTrackPortInfo::TRACKSTATE_ERROR;
             ReportErrorEvent(PVMFErrArgument, NULL);
-            return false;
         }
         else
         {
             // General error
             aTrackPortInfo.iState = PVWAVFFNodeTrackPortInfo::TRACKSTATE_ERROR;
             ReportErrorEvent(PVMFFailure, NULL);
-            return false;
         }
+        return false;
     }
 
 
     // Now create a PVMF media data from pool
-    errcode = OsclErrNoResources;
+    errcode = OsclErrNone;
     PVMFSharedMediaDataPtr mediadataout;
     mediadataout = PVMFMediaData::createMediaData(mediaDataImplOut, aTrackPortInfo.iMediaDataMemPool);
 
-    if (mediadataout.GetRep() != NULL)
+    if (mediadataout.GetRep() == NULL)
     {
-        errcode = OsclErrNone;
-    }
-
-    else
-    {
-        aTrackPortInfo.iMediaDataMemPool->notifyfreechunkavailable(aTrackPortInfo);     // Enable flag to receive event when next deallocate() is called on pool
+        // Enable flag to receive event when next deallocate() is called on pool
+        aTrackPortInfo.iMediaDataMemPool->notifyfreechunkavailable(aTrackPortInfo);
         return false;
     }
 
@@ -687,7 +430,8 @@ bool PVMFWAVFFParserNode::RetrieveTrackData(PVWAVFFNodeTrackPortInfo& aTrackPort
             // Only partial sample so return and set active to call HandleTrackState() again
             if (retcode != PVWAVPARSER_END_OF_FILE)
             {
-                RunIfNotReady();
+                // schedule again there might be more data to send out
+                Reschedule();
                 return false;
             }
         }
@@ -698,16 +442,13 @@ bool PVMFWAVFFParserNode::RetrieveTrackData(PVWAVFFNodeTrackPortInfo& aTrackPort
 
             // set the timestamp
             uint32 timestamp = aTrackPortInfo.iClockConverter->get_converted_ts(COMMON_PLAYBACK_CLOCK_TIMESCALE);
-
             // set the timestamp
             mediadataout->setTimestamp(timestamp);
-
             // set the sequence number
             mediadataout->setSeqNum(aTrackPortInfo.iSeqNum++);
-
             // set the stream id
             mediadataout->setStreamID(iStreamID);
-
+            // set the media data
             aTrackPortInfo.iMediaData = mediadataout;
 
             // increment the clock based on this sample duration
@@ -719,7 +460,8 @@ bool PVMFWAVFFParserNode::RetrieveTrackData(PVWAVFFNodeTrackPortInfo& aTrackPort
         {
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFWAVFFParserNode::RetrieveTrackData() WAV Parser END_OF_FILE"));
 
-            if (SendEndOfTrackCommand(aTrackPortInfo))
+            uint32 timestamp = aTrackPortInfo.iClockConverter->get_converted_ts(COMMON_PLAYBACK_CLOCK_TIMESCALE);
+            if (SendEndOfTrackCommand(aTrackPortInfo.iPort, iStreamID, timestamp, aTrackPortInfo.iSeqNum++))
             {
                 // EOS message sent so change state
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE, (0, "PVMFWAVFFParserNode::RetrieveTrackData() Sending EOS message succeeded"));
@@ -753,7 +495,7 @@ bool PVMFWAVFFParserNode::RetrieveTrackData(PVWAVFFNodeTrackPortInfo& aTrackPort
         // Report error event
         PVMFBasicErrorInfoMessage* eventmsg = NULL;
         errcode = 0;
-        OSCL_TRY(errcode, eventmsg = OSCL_NEW(PVMFBasicErrorInfoMessage, (eventcode, eventuuid, NULL)));
+        OSCL_TRY(errcode, eventmsg = PVMF_BASE_NODE_NEW(PVMFBasicErrorInfoMessage, (eventcode, eventuuid, NULL)));
         if (errcode == 0)
         {
             PVMFAsyncEvent asyncevent(PVMFErrorEvent, PVMFErrResource, NULL, OSCL_STATIC_CAST(PVInterface*, eventmsg), NULL, NULL, 0);
@@ -783,7 +525,6 @@ bool PVMFWAVFFParserNode::SendTrackData(PVWAVFFNodeTrackPortInfo& aTrackPortInfo
 
 bool PVMFWAVFFParserNode::CheckAvailabilityForSendingNewTrackData(PVWAVFFNodeTrackPortInfo& aTrackPortInfo)
 {
-
     // check if the output queue of output port is not full
     if (aTrackPortInfo.iPort && aTrackPortInfo.iPort->IsOutgoingQueueBusy())
     {
@@ -802,7 +543,6 @@ bool PVMFWAVFFParserNode::CheckAvailabilityForSendingNewTrackData(PVWAVFFNodeTra
 /////////////////////////////////////////////////////
 void PVMFWAVFFParserNode::HandlePortActivity(const PVMFPortActivity &aActivity)
 {
-
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                     (0, "0x%x PVMFWAVFFParserNode::PortActivity: port=0x%x, type=%d",
                      this, aActivity.iPort, aActivity.iType));
@@ -862,146 +602,47 @@ void PVMFWAVFFParserNode::QueuePortActivity(const PVMFPortActivity &aActivity)
     }
     else
     {
-        //wake up the AO to process the port activity event.
-        RunIfNotReady();
+        // schedule again to process the port activity
+        Reschedule();
     }
 }
-
-bool PVMFWAVFFParserNode::ProcessCommand(PVMFWAVFFNodeCommand& aCmd)
+PVMFStatus PVMFWAVFFParserNode::HandleExtensionAPICommands(PVMFNodeCommand& aCmd)
 {
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                    (0, "0x%x PVMFWAVFFParserNode::ProcessCommand: cmd %d",
-                     this, aCmd.iCmd));
-
-    //normally this node will not start processing one command
-    //until the prior one is finished.  However, a hi priority
-    //command such as Cancel must be able to interrupt a command
-    //in progress.
-    if (!iCurrentCommand.empty() && !aCmd.hipri())
-        return false;
-
+    PVMFStatus status = PVMFFailure;
     switch (aCmd.iCmd)
     {
-        case PVMF_GENERIC_NODE_QUERYUUID:
-            DoQueryUuid(aCmd);
+        case PVMF_GENERIC_NODE_SET_DATASOURCE_POSITION:
+            status = DoSetDataSourcePosition(aCmd);
             break;
-
-        case PVMF_GENERIC_NODE_QUERYINTERFACE:
-            DoQueryInterface(aCmd);
+        case PVMF_GENERIC_NODE_QUERY_DATASOURCE_POSITION:
+            status = DoQueryDataSourcePosition(aCmd);
             break;
-
-        case PVMF_GENERIC_NODE_REQUESTPORT:
-            DoRequestPort(aCmd);
+        case PVMF_GENERIC_NODE_SET_DATASOURCE_RATE:
+            status = DoSetDataSourceRate(aCmd);
             break;
-
-        case PVMF_GENERIC_NODE_RELEASEPORT:
-            DoReleasePort(aCmd);
+        case PVMF_GENERIC_NODE_GETNODEMETADATAKEYS:
+            status = DoGetNodeMetadataKey(aCmd);
             break;
-
-        case PVMF_GENERIC_NODE_INIT:
-            DoInit(aCmd);
+        case PVMF_GENERIC_NODE_GETNODEMETADATAVALUES:
+            status = DoGetNodeMetadataValue(aCmd);
             break;
-
-        case PVMF_GENERIC_NODE_PREPARE:
-            DoPrepare(aCmd);
-            break;
-
-        case PVMF_GENERIC_NODE_START:
-            DoStart(aCmd);
-            break;
-
-        case PVMF_GENERIC_NODE_STOP:
-            DoStop(aCmd);
-            break;
-
-        case PVMF_GENERIC_NODE_FLUSH:
-            DoFlush(aCmd);
-            break;
-
-        case PVMF_GENERIC_NODE_PAUSE:
-            DoPause(aCmd);
-            break;
-
-        case PVMF_GENERIC_NODE_RESET:
-            DoReset(aCmd);
-            break;
-
-        case PVMF_GENERIC_NODE_CANCELALLCOMMANDS:
-            DoCancelAllCommands(aCmd);
-            break;
-
-        case PVMF_GENERIC_NODE_CANCELCOMMAND:
-            DoCancelCommand(aCmd);
-            break;
-
-        case PVWAVFF_NODE_CMD_SETDATASOURCEPOSITION:
-            DoSetDataSourcePosition(aCmd);
-            break;
-
-        case PVWAVFF_NODE_CMD_QUERYDATASOURCEPOSITION:
-            DoQueryDataSourcePosition(aCmd);
-            break;
-
-        case PVWAVFF_NODE_CMD_SETDATASOURCERATE:
-            DoSetDataSourceRate(aCmd);
-            break;
-
-        case PVWAVFF_NODE_CMD_GETNODEMETADATAKEY:
-        {
-            PVMFStatus retval = DoGetNodeMetadataKey(aCmd);
-            CommandComplete(iInputCommands, aCmd, retval);
-        }
-        break;
-
-        case PVWAVFF_NODE_CMD_GETNODEMETADATAVALUE:
-        {
-            PVMFStatus retval = DoGetNodeMetadataValue(aCmd);
-            CommandComplete(iInputCommands, aCmd, retval);
-        }
-        break;
-
-        default://unknown command type
-            CommandComplete(iInputCommands, aCmd, PVMFFailure);
+        default:
+            // lets log it
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
+                            (0, "PVMFWAVFFParserNode::HandleExtensionAPICommands: Error - Unkwown Extn API cmd"));
+            OSCL_ASSERT(false);
             break;
     }
-
-    return true;
+    return status;
 }
 
-/////////////////////////////////////////////////////
-// Event reporting routines.
-/////////////////////////////////////////////////////
-void PVMFWAVFFParserNode::SetState(TPVMFNodeInterfaceState s)
+PVMFStatus PVMFWAVFFParserNode::DoQueryUuid(PVMFNodeCommand& aCmd)
 {
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_MLDBG, iLogger, PVLOGMSG_INFO, (0, "PVMFWAVFFParserNode:SetState %d", s));
-    PVMFNodeInterface::SetState(s);
-}
-
-
-void PVMFWAVFFParserNode::ReportErrorEvent(PVMFEventType aEventType, OsclAny* aEventData)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_MLDBG, iLogger, PVLOGMSG_INFO, (0, "PVMFWAVFFParserNode:ReportErrorEvent Type %d Data %d"
-                    , aEventType, aEventData));
-
-    PVMFNodeInterface::ReportErrorEvent(aEventType, aEventData);
-}
-
-void PVMFWAVFFParserNode::ReportInfoEvent(PVMFEventType aEventType, OsclAny* aEventData)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_MLDBG, iLogger, PVLOGMSG_INFO, (0, "PVMFWAVFFParserNode:ReportInfoEvent Type %d Data %d"
-                    , aEventType, aEventData));
-
-    PVMFNodeInterface::ReportInfoEvent(aEventType, aEventData);
-}
-
-void PVMFWAVFFParserNode::DoQueryUuid(PVMFWAVFFNodeCommand& aCmd)
-{
-
     //This node supports Query UUID from any state
     OSCL_String* mimetype;
     Oscl_Vector<PVUuid, OsclMemAllocator> *uuidvec;
     bool exactmatch;
-    aCmd.PVMFWAVFFNodeCommandBase::Parse(mimetype, uuidvec, exactmatch);
+    aCmd.PVMFNodeCommandBase::Parse(mimetype, uuidvec, exactmatch);
 
     //right now, supported UUID is pushed directly. It needs to check for MIME type first
     if (*mimetype == PVMF_DATA_SOURCE_INIT_INTERFACE_MIMETYPE)
@@ -1024,89 +665,65 @@ void PVMFWAVFFParserNode::DoQueryUuid(PVMFWAVFFNodeCommand& aCmd)
         PVUuid uuid(KPVMFMetadataExtensionUuid);
         uuidvec->push_back(uuid);
     }
-    CommandComplete(iInputCommands, aCmd, PVMFSuccess);
+    return PVMFSuccess;
 }
 
-void PVMFWAVFFParserNode::DoQueryInterface(PVMFWAVFFNodeCommand&  aCmd)
+PVMFStatus PVMFWAVFFParserNode::DoQueryInterface(PVMFNodeCommand&  aCmd)
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                     (0, "PVMFWAVFFParserNode::DoQueryInterface"));
 
     PVUuid* uuid;
     PVInterface** ptr;
-    aCmd.PVMFWAVFFNodeCommandBase::Parse(uuid, ptr);
+    aCmd.PVMFNodeCommandBase::Parse(uuid, ptr);
+    PVMFStatus status = PVMFFailure;
 
     if (queryInterface(*uuid, *ptr))
     {
         (*ptr)->addRef();
-        CommandComplete(iInputCommands, aCmd, PVMFSuccess);
+        status = PVMFSuccess;
     }
-    else
-    {
-        CommandComplete(iInputCommands, aCmd, PVMFFailure);
-    }
+    return status;
 }
 
-void PVMFWAVFFParserNode::DoInit(PVMFWAVFFNodeCommand& aCmd)
+PVMFStatus PVMFWAVFFParserNode::DoInit(PVMFNodeCommand& aCmd)
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFWAVFFParserNode::DoInitNode() In"));
 
-    PVMFStatus iRet = PVMFSuccess;
-    // initialize the nextState to error
-    TPVMFNodeInterfaceState nextState = EPVMFNodeError;
-    switch (iInterfaceState)
-    {
-        case EPVMFNodeIdle:
-
-            // first initialize the state to error
-            //this node doesn't need to do anything to get ready
-            //to start.
-
-            break;
-
-        default:
-            iRet = PVMFErrInvalidState;
-            CommandComplete(iInputCommands, aCmd, iRet);
-            return;
-    }
-
     if (iWAVParser != NULL)
     {
-        iRet = PVMFFailure;
         SetState(EPVMFNodeError);
-        CommandComplete(iInputCommands, aCmd, iRet);
-        return;
+        return PVMFFailure;
     }
 
+    PVMFStatus iRet = PVMFSuccess;
+
     int32 leavecode = 0;
-    OSCL_TRY(leavecode, iWAVParser = OSCL_NEW(PV_Wav_Parser, ()));
+    OSCL_TRY(leavecode, iWAVParser = PVMF_BASE_NODE_NEW(PV_Wav_Parser, ()));
     OSCL_FIRST_CATCH_ANY(leavecode,
                          SetState(EPVMFNodeError);
-                         CommandComplete(iInputCommands, aCmd, PVMFErrNoMemory);
-                         return;);
+                         return PVMFFailure;);
     if (iWAVParser)
     {
-        if (iWAVParser->InitWavParser(iFilename, &iFileServer, iFileHandle) != PVWAVPARSER_OK)
+        if (iWAVParser->InitWavParser(iSourceURL, &iFileServer, iFileHandle) != PVWAVPARSER_OK)
         {
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
                             (0, "PVMFWAVFFParserNode::DoInit Error attempting to initialize the WAV parser"));
-            OSCL_DELETE(iWAVParser);
+            PVMF_BASE_NODE_DELETE(iWAVParser);
             iWAVParser = NULL;
             iRet = PVMFFailure;
-            CommandComplete(iInputCommands, aCmd, iRet);
-            return;
         }
         else if (!iWAVParser->RetrieveFileInfo(wavinfo))
         {
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
                             (0, "PVMFWAVFFParserNode::DoInit Error attempting to retrieve the WAV file info"));
-            OSCL_DELETE(iWAVParser);
+            PVMF_BASE_NODE_DELETE(iWAVParser);
             iWAVParser = NULL;
             iRet = PVMFFailure;
         }
         else if (!verify_supported_format())
         {
-            OSCL_DELETE(iWAVParser);
+            PVMF_BASE_NODE_DELETE(iWAVParser);
             iWAVParser = NULL;
             iRet = PVMFErrNotSupported;
         }
@@ -1141,21 +758,17 @@ void PVMFWAVFFParserNode::DoInit(PVMFWAVFFNodeCommand& aCmd)
             OSCL_TRY(error, InitializeTrackStructure());
             OSCL_FIRST_CATCH_ANY(error,
                                  PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR, (0, "PVMFWAVFFParserNode::DoInitNode: Error - initializing tracks"));
-                                 OSCL_DELETE(iOutPort);
+                                 PVMF_BASE_NODE_DELETE(iOutPort);
                                  iOutPort = NULL;
                                  iSelectedTrackList.erase(iSelectedTrackList.begin());
-                                 OSCL_DELETE(iWAVParser);
+                                 PVMF_BASE_NODE_DELETE(iWAVParser);
                                  iWAVParser = NULL;
-                                 iRet = PVMFFailure;
                                  SetState(EPVMFNodeError);
-                                 CommandComplete(iInputCommands, aCmd, iRet);
-                                 return;);
-
+                                 return PVMFFailure;);
 
             if (iOutPort && iOutPort->IsConnected())
             {
                 // set the new parameters on the connected port
-
                 OsclAny* temp = NULL;
                 iOutPort->iConnectedPort->QueryInterface(PVMI_CAPABILITY_AND_CONFIG_PVUUID, temp);
                 PvmiCapabilityAndConfig *config = OSCL_STATIC_CAST(PvmiCapabilityAndConfig*, temp);
@@ -1165,10 +778,8 @@ void PVMFWAVFFParserNode::DoInit(PVMFWAVFFNodeCommand& aCmd)
                     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
                                     (0, "PVMFWAVFFParserNode::DoInitNode: Error - Peer port does not support capability interface"));
 
-                    iRet = PVMFFailure;
                     SetState(EPVMFNodeError);
-                    CommandComplete(iInputCommands, aCmd, iRet);
-                    return;
+                    return PVMFFailure;
                 }
                 PVMFStatus status = PVMFSuccess;
 
@@ -1176,12 +787,9 @@ void PVMFWAVFFParserNode::DoInit(PVMFWAVFFNodeCommand& aCmd)
 
                 if (status != PVMFSuccess)
                 {
-                    iRet = PVMFFailure;
                     SetState(EPVMFNodeError);
-                    CommandComplete(iInputCommands, aCmd, iRet);
-                    return;
+                    return PVMFFailure;
                 }
-
             }
 
             // Add the available metadata keys to the vector
@@ -1225,8 +833,6 @@ void PVMFWAVFFParserNode::DoInit(PVMFWAVFFNodeCommand& aCmd)
                 leavecode = 0;
                 OSCL_TRY(leavecode, iAvailableMetadataKeys.push_back(PVWAVMETADATA_TRACKINFO_AUDIO_BITSPERSAMPLE_KEY));
             }
-
-            nextState = EPVMFNodeInitialized;
             iRet = PVMFSuccess;
         }
     }
@@ -1234,9 +840,7 @@ void PVMFWAVFFParserNode::DoInit(PVMFWAVFFNodeCommand& aCmd)
     {
         iRet = PVMFErrNoMemory;
     }
-
-    SetState(nextState);
-    CommandComplete(iInputCommands, aCmd, iRet);
+    return iRet;
 }
 
 // verify that the format is supported
@@ -1248,133 +852,44 @@ bool PVMFWAVFFParserNode::verify_supported_format()
         case PVWAV_ITU_G711_ALAW:
         case PVWAV_ITU_G711_ULAW:
             return true;
-
         default:
             break;
     }
     return false;
 }
 
-/**
- //Called by the command handler AO to do the node Prepare
- */
-void PVMFWAVFFParserNode::DoPrepare(PVMFWAVFFNodeCommand& aCmd)
-{
-    switch (iInterfaceState)
-    {
-        case EPVMFNodeInitialized:
-            //this node doesn't need to do anything to get ready
-            //to start.
-            SetState(EPVMFNodePrepared);
-            CommandComplete(iInputCommands, aCmd, PVMFSuccess);
-            break;
-
-        default:
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
-                            (0, "PVMFWAVFFParserNode::DoPrepare: Error -- wrong state %d\n", iInterfaceState));
-            CommandComplete(iInputCommands, aCmd, PVMFErrInvalidState);
-            break;
-    }
-}
-
-void PVMFWAVFFParserNode::DoStart(PVMFWAVFFNodeCommand& aCmd)
+PVMFStatus PVMFWAVFFParserNode::DoStop(PVMFNodeCommand& aCmd)
 {
     PVMFStatus status = PVMFSuccess;
-    switch (iInterfaceState)
+    // stop and reset position to beginning
+    ResetAllTracks();
+    // Reset the WAV FF to beginning
+    if (iWAVParser)
     {
-        case EPVMFNodePrepared:
-        case EPVMFNodePaused:
-            SetState(EPVMFNodeStarted);
-            break;
-
-        default:
-            status = PVMFErrInvalidState;
-            break;
+        iWAVParser->SeekPCMSample(0);
     }
+    //clear msg queue
+    if (iOutPort)
+        iOutPort->ClearMsgQueues();
+    // Clear scheduled port activities
+    iPortActivityQueue.clear();
 
-    RunIfNotReady(1);
-    CommandComplete(iInputCommands, aCmd, status);
+    return status;
 }
 
-void PVMFWAVFFParserNode::DoStop(PVMFWAVFFNodeCommand& aCmd)
+PVMFStatus PVMFWAVFFParserNode::DoFlush(PVMFNodeCommand& aCmd)
 {
-    PVMFStatus status = PVMFSuccess;
-    switch (iInterfaceState)
+    //the flush is asynchronous.  move the command from
+    //the input command queue to the current command, where
+    //it will remain until the flush completes.
+    int32 err = OsclErrNone;
+    OSCL_TRY(err, iCurrentCommand.StoreL(aCmd););
+    if (err != OsclErrNone)
     {
-        case EPVMFNodeStarted:
-        case EPVMFNodePaused:
-            // stop and reset position to beginning
-            ResetAllTracks();
-
-            // Reset the WAV FF to beginning
-            if (iWAVParser)
-            {
-                iWAVParser->SeekPCMSample(0);
-            }
-
-            //clear msg queue
-            if (iOutPort)
-                iOutPort->ClearMsgQueues();
-            // Clear scheduled port activities
-            iPortActivityQueue.clear();
-
-            //transition to Prepared state
-            SetState(EPVMFNodePrepared);
-            break;
-
-        default:
-            status = PVMFErrInvalidState;
-            break;
+        return PVMFErrNoMemory;
     }
-
-    CommandComplete(iInputCommands, aCmd, status);
-}
-
-
-void PVMFWAVFFParserNode::DoPause(PVMFWAVFFNodeCommand& aCmd)
-{
-    PVMFStatus status = PVMFSuccess;
-    switch (iInterfaceState)
-    {
-        case EPVMFNodeStarted:
-            SetState(EPVMFNodePaused);
-            break;
-
-        default:
-            status = PVMFErrInvalidState;
-            break;
-    }
-
-    CommandComplete(iInputCommands, aCmd, status);
-}
-
-void PVMFWAVFFParserNode::DoFlush(PVMFWAVFFNodeCommand& aCmd)
-{
-    PVMFStatus status = PVMFSuccess;
-    switch (iInterfaceState)
-    {
-        case EPVMFNodeStarted:
-        case EPVMFNodePaused:
-            //the flush is asynchronous.  move the command from
-            //the input command queue to the current command, where
-            //it will remain until the flush completes.
-
-            int32 err;
-            OSCL_TRY(err, iCurrentCommand.StoreL(aCmd););
-            if (err != OsclErrNone)
-            {
-                CommandComplete(iInputCommands, aCmd, PVMFErrNoMemory);
-                return;
-            }
-            iInputCommands.Erase(&aCmd);
-            break;
-
-        default:
-            status = PVMFErrInvalidState;
-            break;
-    }
-
-    CommandComplete(iInputCommands, aCmd, status);
+    iInputCommands.Erase(&aCmd);
+    return PVMFPending;
 }
 
 
@@ -1387,73 +902,61 @@ bool PVMFWAVFFParserNode::FlushPending()
             && iCurrentCommand.front().iCmd == PVMF_GENERIC_NODE_FLUSH);
 }
 
-void PVMFWAVFFParserNode::DoReset(PVMFWAVFFNodeCommand& aCmd)
+PVMFStatus PVMFWAVFFParserNode::DoReset(PVMFNodeCommand& aCmd)
 {
     ReleaseAllPorts();
     //discard any port activity events
     iPortActivityQueue.clear();
     CleanupFileSource();
-    SetState(EPVMFNodeIdle);
-    CommandComplete(iInputCommands, aCmd, PVMFSuccess);
-
+    return PVMFSuccess;
 }
 
-void PVMFWAVFFParserNode::DoCancelAllCommands(PVMFWAVFFNodeCommand& aCmd)
+PVMFStatus PVMFWAVFFParserNode::DoCancelAllCommands(PVMFNodeCommand& aCmd)
 {
     //first cancel the current command if any
-    {
-        while (!iCurrentCommand.empty())
-            CommandComplete(iCurrentCommand, iCurrentCommand[0], PVMFErrCancelled);
-    }
+    while (!iCurrentCommand.empty())
+        CommandComplete(iCurrentCommand, iCurrentCommand[0], PVMFErrCancelled);
 
     //next cancel all queued commands
-    {
-        //start at element 1 since this cancel command is element 0.
-        while (iInputCommands.size() > 1)
-            CommandComplete(iInputCommands, iInputCommands[1], PVMFErrCancelled);
-    }
+    //start at element 1 since this cancel command is element 0.
+    while (iInputCommands.size() > 1)
+        CommandComplete(iInputCommands, iInputCommands[1], PVMFErrCancelled);
 
     //finally, report cancel complete.
-    CommandComplete(iInputCommands, aCmd, PVMFSuccess);
+    return PVMFSuccess;
 }
 
 /**
  //Called by the command handler AO to do the Cancel single command
  */
-void PVMFWAVFFParserNode::DoCancelCommand(PVMFWAVFFNodeCommand& aCmd)
+PVMFStatus PVMFWAVFFParserNode::DoCancelCommand(PVMFNodeCommand& aCmd)
 {
     //extract the command ID from the parameters.
     PVMFCommandId id;
-    aCmd.PVMFWAVFFNodeCommandBase::Parse(id);
+    aCmd.PVMFNodeCommandBase::Parse(id);
 
     //first check "current" command if any
+    PVMFNodeCommand* cmd = iCurrentCommand.FindById(id);
+    if (cmd)
     {
-        PVMFWAVFFNodeCommand* cmd = iCurrentCommand.FindById(id);
-        if (cmd)
-        {
-            //cancel the queued command
-            CommandComplete(iCurrentCommand, *cmd, PVMFErrCancelled);
-            //report cancel success
-            CommandComplete(iInputCommands, aCmd, PVMFSuccess);
-            return;
-        }
+        //cancel the queued command
+        CommandComplete(iCurrentCommand, *cmd, PVMFErrCancelled);
+        //report cancel success
+        return PVMFSuccess;
     }
 
     //next check input queue.
+    //start at element 1 since this cancel command is element 0.
+    cmd = iInputCommands.FindById(id, 1);
+    if (cmd)
     {
-        //start at element 1 since this cancel command is element 0.
-        PVMFWAVFFNodeCommand* cmd = iInputCommands.FindById(id, 1);
-        if (cmd)
-        {
-            //cancel the queued command
-            CommandComplete(iInputCommands, *cmd, PVMFErrCancelled);
-            //report cancel success
-            CommandComplete(iInputCommands, aCmd, PVMFSuccess);
-            return;
-        }
+        //cancel the queued command
+        CommandComplete(iInputCommands, *cmd, PVMFErrCancelled);
+        //report cancel success
+        return PVMFSuccess;
     }
     //if we get here the command isn't queued so the cancel fails.
-    CommandComplete(iInputCommands, aCmd, PVMFFailure);
+    return PVMFFailure;
 }
 
 
@@ -1463,26 +966,25 @@ void PVMFWAVFFParserNode::InitializeTrackStructure()
     trackdata_num_samples = (wavinfo.SampleRate * PVWAV_MSEC_PER_BUFFER) / 1000; // samples in buffer
     trackdata_bufsize = trackdata_num_samples * wavinfo.BytesPerSample * wavinfo.NumChannels;
 
-    iSelectedTrackList[0].iClockConverter = OSCL_NEW(MediaClockConverter, (wavinfo.SampleRate));
-    iSelectedTrackList[0].iTrackDataMemoryPool = OSCL_NEW(OsclMemPoolFixedChunkAllocator, (PVWAVFF_MEDIADATA_POOLNUM));
-    iSelectedTrackList[0].iMediaDataImplAlloc = OSCL_NEW(PVMFSimpleMediaBufferCombinedAlloc, (iSelectedTrackList[0].iTrackDataMemoryPool));
-    iSelectedTrackList[0].iMediaDataMemPool = OSCL_NEW(PVMFMemPoolFixedChunkAllocator, ("WavFFPar", PVWAVFF_MEDIADATA_POOLNUM, PVWAVFF_MEDIADATA_CHUNKSIZE));
+    iSelectedTrackList[0].iClockConverter = PVMF_BASE_NODE_NEW(MediaClockConverter, (wavinfo.SampleRate));
+    iSelectedTrackList[0].iTrackDataMemoryPool = PVMF_BASE_NODE_NEW(OsclMemPoolFixedChunkAllocator, (PVWAVFF_MEDIADATA_POOLNUM));
+    iSelectedTrackList[0].iMediaDataImplAlloc = PVMF_BASE_NODE_NEW(PVMFSimpleMediaBufferCombinedAlloc, (iSelectedTrackList[0].iTrackDataMemoryPool));
+    iSelectedTrackList[0].iMediaDataMemPool = PVMF_BASE_NODE_NEW(PVMFMemPoolFixedChunkAllocator, ("WavFFPar", PVWAVFF_MEDIADATA_POOLNUM, PVWAVFF_MEDIADATA_CHUNKSIZE));
     if (iSelectedTrackList[0].iMediaDataMemPool)
     {
         iSelectedTrackList[0].iMediaDataMemPool->enablenullpointerreturn();
     }
-
 }
 
 
-void PVMFWAVFFParserNode::DoRequestPort(PVMFWAVFFNodeCommand& aCmd)
+PVMFStatus PVMFWAVFFParserNode::DoRequestPort(PVMFNodeCommand& aCmd, PVMFPortInterface*& aPort)
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFWAVFFParserNode::DoRequestPort() In"));
 
     //retrieve port tag.
     int32 tag;
     OSCL_String* portconfig;
-    aCmd.PVMFWAVFFNodeCommandBase::Parse(tag, portconfig);
+    aCmd.PVMFNodeCommandBase::Parse(tag, portconfig);
 
     //validate the tag...
     if (tag != PVMF_WAVFFPARSER_NODE_PORT_TYPE_SOURCE)
@@ -1490,15 +992,12 @@ void PVMFWAVFFParserNode::DoRequestPort(PVMFWAVFFNodeCommand& aCmd)
         //bad port tag
         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
                         (0, "PVMFWAVFFParserNode::DoRequestPort: Error - Invalid port tag"));
-        CommandComplete(iInputCommands, aCmd, PVMFFailure);
-        return;
+        return PVMFFailure;
     }
 
 
     // Allocate a port based on the request
     // Return the pointer to the port in the command complete message
-    iCmdRespPort = NULL;
-
     //check the tag
     if ((int32)aCmd.iParam1 == PVMF_WAVFFPARSER_NODE_PORT_TYPE_SOURCE)
     {
@@ -1508,17 +1007,15 @@ void PVMFWAVFFParserNode::DoRequestPort(PVMFWAVFFNodeCommand& aCmd)
             // only supporting one track
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
                             (0, "PVMFWAVFFParserNode::DoRequestPort: Only supporting one output port"));
-            CommandComplete(iInputCommands, aCmd, PVMFFailure);
-            return;
+            return PVMFFailure;
         }
 
-        iOutPort = OSCL_NEW(PVMFWAVFFParserOutPort, (PVMF_WAVFFPARSER_NODE_PORT_TYPE_SOURCE, this));
+        iOutPort = PVMF_BASE_NODE_NEW(PVMFWAVFFParserOutPort, (PVMF_WAVFFPARSER_NODE_PORT_TYPE_SOURCE, this));
         if (!iOutPort)
         {
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
                             (0, "PVMFWAVFFParserNode::DoRequestPort: Error - Can't create output port"));
-            CommandComplete(iInputCommands, aCmd, PVMFFailure);
-            return;
+            return PVMFFailure;
         }
 
         if (iSelectedTrackList.size() > 0)
@@ -1545,37 +1042,31 @@ void PVMFWAVFFParserNode::DoRequestPort(PVMFWAVFFNodeCommand& aCmd)
             int error;
             OSCL_TRY(error, InitializeTrackStructure());
             OSCL_FIRST_CATCH_ANY(error, PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR, (0, "PVMFWAVFFParserNode::RequestPort: Error - initializing tracks"));
-                                 OSCL_DELETE(iOutPort);
+                                 PVMF_BASE_NODE_DELETE(iOutPort);
                                  iOutPort = NULL;
                                  iSelectedTrackList.erase(iSelectedTrackList.begin());
-                                 OSCL_DELETE(iWAVParser);
+                                 PVMF_BASE_NODE_DELETE(iWAVParser);
                                  iWAVParser = NULL;
                                  SetState(EPVMFNodeError);
-                                 CommandComplete(iInputCommands, aCmd, PVMFFailure);
-                                 return;);
+                                 return PVMFFailure;);
 
         }
 
         iPortActivityQueue.reserve(PVMF_WAVFFPARSER_NODE_COMMAND_VECTOR_RESERVE);
-
-        iCmdRespPort = iOutPort;
-
     }
     else
     {
         // don't support other types yet
         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
                         (0, "PVMFWAVFFParserNode::DoRequestPort: Error - unsupported port type"));
-        CommandComplete(iInputCommands, aCmd, PVMFFailure);
-        return;
+        return PVMFFailure;
     }
-
-    CommandComplete(iInputCommands, aCmd, PVMFSuccess, (OsclAny*)iCmdRespPort);
+    aPort = iOutPort;
+    return PVMFSuccess;
 }
 
-void PVMFWAVFFParserNode::DoReleasePort(PVMFWAVFFNodeCommand& aCmd)
+PVMFStatus PVMFWAVFFParserNode::DoReleasePort(PVMFNodeCommand& aCmd)
 {
-
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                     (0, "PVMFWAVFFParserNode::DoReleasePort"));
 
@@ -1597,14 +1088,14 @@ void PVMFWAVFFParserNode::DoReleasePort(PVMFWAVFFNodeCommand& aCmd)
             if (iSelectedTrackList[i].iPort)
             {
                 iSelectedTrackList[i].iPort->Disconnect();
-                OSCL_DELETE(((PVMFWAVFFParserOutPort*)iSelectedTrackList[i].iPort));
+                PVMF_BASE_NODE_DELETE(((PVMFWAVFFParserOutPort*)iSelectedTrackList[i].iPort));
                 iSelectedTrackList[i].iPort = NULL;
                 iOutPort = NULL;
             }
-            OSCL_DELETE(iSelectedTrackList[i].iClockConverter);
-            OSCL_DELETE(iSelectedTrackList[i].iTrackDataMemoryPool);
-            OSCL_DELETE(iSelectedTrackList[i].iMediaDataImplAlloc);
-            OSCL_DELETE(iSelectedTrackList[i].iMediaDataMemPool);
+            PVMF_BASE_NODE_DELETE(iSelectedTrackList[i].iClockConverter);
+            PVMF_BASE_NODE_DELETE(iSelectedTrackList[i].iTrackDataMemoryPool);
+            PVMF_BASE_NODE_DELETE(iSelectedTrackList[i].iMediaDataImplAlloc);
+            PVMF_BASE_NODE_DELETE(iSelectedTrackList[i].iMediaDataMemPool);
             iSelectedTrackList.erase(iSelectedTrackList.begin() + i);
             break;
         }
@@ -1613,10 +1104,9 @@ void PVMFWAVFFParserNode::DoReleasePort(PVMFWAVFFNodeCommand& aCmd)
 
     if (i >= maxtrack)
     {
-        CommandComplete(iInputCommands, aCmd, PVMFErrBadHandle);
+        return PVMFErrBadHandle;
     }
-
-    CommandComplete(iInputCommands, aCmd, PVMFSuccess);
+    return PVMFSuccess;
 }
 
 
@@ -1632,7 +1122,6 @@ void PVMFWAVFFParserNode::ResetAllTracks()
 
 bool PVMFWAVFFParserNode::ReleaseAllPorts()
 {
-
     while (!iSelectedTrackList.empty())
     {
         if (iSelectedTrackList[0].iPort)
@@ -1640,88 +1129,31 @@ bool PVMFWAVFFParserNode::ReleaseAllPorts()
             iSelectedTrackList[0].iPort->Disconnect();
         }
         iSelectedTrackList[0].iMediaData.Unbind();
-        OSCL_DELETE(iSelectedTrackList[0].iClockConverter);
-        OSCL_DELETE(iSelectedTrackList[0].iTrackDataMemoryPool);
-        OSCL_DELETE(iSelectedTrackList[0].iMediaDataImplAlloc);
-        OSCL_DELETE(iSelectedTrackList[0].iMediaDataMemPool);
+        PVMF_BASE_NODE_DELETE(iSelectedTrackList[0].iClockConverter);
+        PVMF_BASE_NODE_DELETE(iSelectedTrackList[0].iTrackDataMemoryPool);
+        PVMF_BASE_NODE_DELETE(iSelectedTrackList[0].iMediaDataImplAlloc);
+        PVMF_BASE_NODE_DELETE(iSelectedTrackList[0].iMediaDataMemPool);
         iSelectedTrackList.erase(iSelectedTrackList.begin());
     }
 
     if (iOutPort)
     {
-        OSCL_DELETE(iOutPort);
+        PVMF_BASE_NODE_DELETE(iOutPort);
         iOutPort = NULL;
     }
-
     return true;
 }
 
 void PVMFWAVFFParserNode::CleanupFileSource()
 {
-    if (iFileHandle)
-    {
-        OSCL_DELETE(iFileHandle);
-        iFileHandle = NULL;
-    }
-
     iAvailableMetadataKeys.clear();
 
     if (iWAVParser)
     {
-        OSCL_DELETE(iWAVParser);
+        PVMF_BASE_NODE_DELETE(iWAVParser);
         iWAVParser = NULL;
     }
 }
-
-
-void PVMFWAVFFParserNode::CommandComplete(PVMFWAVFFNodeCmdQ& aCmdQ, PVMFWAVFFNodeCommand& aCmd, PVMFStatus aStatus, OsclAny* aEventData, PVUuid* aEventUUID, int32* aEventCode)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_MLDBG, iLogger, PVLOGMSG_INFO, (0, "PVMFWAVFFParserNode:CommandComplete Id %d Cmd %d Status %d Context %d Data %d"
-                    , aCmd.iId, aCmd.iCmd, aStatus, aCmd.iContext, aEventData));
-
-    PVInterface* extif = NULL;
-    PVMFBasicErrorInfoMessage* errormsg = NULL;
-    if (aEventUUID && aEventCode)
-    {
-        int32 leavecode = 0;
-        OSCL_TRY(leavecode, errormsg = OSCL_NEW(PVMFBasicErrorInfoMessage, (*aEventCode, *aEventUUID, NULL)));
-        if (leavecode == 0)
-        {
-            extif = OSCL_STATIC_CAST(PVInterface*, errormsg);
-        }
-    }
-
-    //create response
-    PVMFCmdResp resp(aCmd.iId, aCmd.iContext, aStatus, extif, aEventData);
-    PVMFSessionId session = aCmd.iSession;
-
-    //Erase the command from the queue.
-    aCmdQ.Erase(&aCmd);
-
-    //Report completion to the session observer.
-    ReportCmdCompleteEvent(session, resp);
-
-    if (errormsg)
-    {
-        errormsg->removeRef();
-    }
-}
-
-
-PVMFCommandId PVMFWAVFFParserNode::QueueCommandL(PVMFWAVFFNodeCommand& aCmd)
-{
-    if (IsAdded())
-    {
-        PVMFCommandId id;
-        id = iInputCommands.AddL(aCmd);
-        /* Wakeup the AO */
-        RunIfNotReady();
-        return id;
-    }
-    OSCL_LEAVE(OsclErrInvalidState);
-    return -1;
-}
-
 
 bool PVMFWAVFFParserNode::HandleOutgoingQueueReady(PVMFPortInterface* aPortInterface)
 {
@@ -1743,7 +1175,6 @@ bool PVMFWAVFFParserNode::HandleOutgoingQueueReady(PVMFPortInterface* aPortInter
             return true;
         }
     }
-
     // No match found.
     return false;
 }
@@ -1818,8 +1249,8 @@ PVMFStatus PVMFWAVFFParserNode::SetSourceInitializationData(OSCL_wString& aSourc
     {
         return PVMFFailure;
     }
-
-    iFilename = aSourceURL;
+    iSourceFormat = aSourceFormat;
+    iSourceURL = aSourceURL;
     if (aSourceData)
     {
         PVInterface* pvInterface = OSCL_STATIC_CAST(PVInterface*, aSourceData);
@@ -1831,7 +1262,7 @@ PVMFStatus PVMFWAVFFParserNode::SetSourceInitializationData(OSCL_wString& aSourc
             PVMFLocalDataSource* opaqueData = OSCL_STATIC_CAST(PVMFLocalDataSource*, localDataSrc);
             if (opaqueData->iFileHandle)
             {
-                iFileHandle = OSCL_NEW(OsclFileHandle, (*(opaqueData->iFileHandle)));
+                iFileHandle = PVMF_BASE_NODE_NEW(OsclFileHandle, (*(opaqueData->iFileHandle)));
             }
         }
         else
@@ -1848,7 +1279,7 @@ PVMFStatus PVMFWAVFFParserNode::SetSourceInitializationData(OSCL_wString& aSourc
                         OSCL_STATIC_CAST(PVMFSourceContextDataCommon*, commonDataContext);
                     if (cContext->iFileHandle)
                     {
-                        iFileHandle = OSCL_NEW(OsclFileHandle, (*(cContext->iFileHandle)));
+                        iFileHandle = PVMF_BASE_NODE_NEW(OsclFileHandle, (*(cContext->iFileHandle)));
                     }
                 }
             }
@@ -1952,16 +1383,12 @@ PVMFStatus PVMFWAVFFParserNode::SelectTracks(PVMFMediaPresentationInfo& aInfo)
 ///////////// Implementation of PVWAVFFNodeTrackPortInfo //////////////////////
 void PVWAVFFNodeTrackPortInfo::freechunkavailable(OsclAny*)
 {
-    // Activate the parent node if necessary
+    // schedule parent as it might be waiting for memory to be freed
     if (iNode)
     {
-        if (iNode->IsAdded())
-        {
-            iNode->RunIfNotReady();
-        }
+        iNode->Reschedule();
     }
 }
-
 
 // From PvmfDataSourcePlaybackControlInterface
 PVMFCommandId PVMFWAVFFParserNode::SetDataSourcePosition(PVMFSessionId aSessionId, PVMFTimestamp aTargetNPT, PVMFTimestamp& aActualNPT, PVMFTimestamp& aActualMediaDataTS, bool aSeekToSyncPoint, uint32 aStreamID, OsclAny* aContext)
@@ -1970,8 +1397,8 @@ PVMFCommandId PVMFWAVFFParserNode::SetDataSourcePosition(PVMFSessionId aSessionI
                     (0, "PVMFWAVParserNode::SetDataSourcePosition: aTargetNPT=%d, aSeekToSyncPoint=%d, aContext=0x%x",
                      aTargetNPT, aSeekToSyncPoint, aContext));
 
-    PVMFWAVFFNodeCommand cmd;
-    cmd.PVMFWAVFFNodeCommand::Construct(aSessionId, PVWAVFF_NODE_CMD_SETDATASOURCEPOSITION, aTargetNPT, &aActualNPT,  &aActualMediaDataTS, aSeekToSyncPoint, aStreamID, aContext);
+    PVMFNodeCommand cmd;
+    cmd.PVMFNodeCommand::Construct(aSessionId, PVMF_GENERIC_NODE_SET_DATASOURCE_POSITION, aTargetNPT, &aActualNPT,  &aActualMediaDataTS, aSeekToSyncPoint, aStreamID, aContext);
     return QueueCommandL(cmd);
 }
 
@@ -1982,8 +1409,8 @@ PVMFCommandId PVMFWAVFFParserNode::QueryDataSourcePosition(PVMFSessionId aSessio
                     (0, "PVMFWAVParserNode::QueryDataSourcePosition: aTargetNPT=%d, aSeekToSyncPoint=%d, aContext=0x%x",
                      aTargetNPT, aSeekToSyncPoint, aContext));
 
-    PVMFWAVFFNodeCommand cmd;
-    cmd.PVMFWAVFFNodeCommand::Construct(aSessionId, PVWAVFF_NODE_CMD_QUERYDATASOURCEPOSITION, aTargetNPT, &aActualNPT, aSeekToSyncPoint, aContext);
+    PVMFNodeCommand cmd;
+    cmd.PVMFNodeCommand::Construct(aSessionId, PVMF_GENERIC_NODE_QUERY_DATASOURCE_POSITION, aTargetNPT, &aActualNPT, aSeekToSyncPoint, aContext);
     return QueueCommandL(cmd);
 }
 
@@ -1999,9 +1426,9 @@ PVMFCommandId PVMFWAVFFParserNode::QueryDataSourcePosition(PVMFSessionId aSessio
                      aTargetNPT, aSeekToSyncPoint,  aContext));
     OSCL_UNUSED_ARG(aSeekPointAfterTargetNPT);
 
-    PVMFWAVFFNodeCommand cmd;
+    PVMFNodeCommand cmd;
     // Construct not changed, aSeekPointBeforeTargetNPThas replace aAcutalNPT
-    cmd.PVMFWAVFFNodeCommand::Construct(aSessionId, PVWAVFF_NODE_CMD_QUERYDATASOURCEPOSITION, aTargetNPT, &aSeekPointBeforeTargetNPT, aSeekToSyncPoint, aContext);
+    cmd.PVMFNodeCommand::Construct(aSessionId, PVMF_GENERIC_NODE_QUERY_DATASOURCE_POSITION, aTargetNPT, &aSeekPointBeforeTargetNPT, aSeekToSyncPoint, aContext);
     return QueueCommandL(cmd);
 }
 
@@ -2010,12 +1437,12 @@ PVMFCommandId PVMFWAVFFParserNode::SetDataSourceRate(PVMFSessionId aSessionId, i
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFWAVFFParserNode::SetDataSourceRate() called"));
 
-    PVMFWAVFFNodeCommand cmd;
-    cmd.PVMFWAVFFNodeCommand::Construct(aSessionId, PVWAVFF_NODE_CMD_SETDATASOURCERATE, aRate, aTimebase, aContext);
+    PVMFNodeCommand cmd;
+    cmd.PVMFNodeCommand::Construct(aSessionId, PVMF_GENERIC_NODE_SET_DATASOURCE_RATE, aRate, aTimebase, aContext);
     return QueueCommandL(cmd);
 }
 
-void PVMFWAVFFParserNode::DoSetDataSourcePosition(PVMFWAVFFNodeCommand& aCmd)
+PVMFStatus PVMFWAVFFParserNode::DoSetDataSourcePosition(PVMFNodeCommand& aCmd)
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFWAVFFParserNode::DoSetDataSourcePosition() In"));
 
@@ -2024,7 +1451,7 @@ void PVMFWAVFFParserNode::DoSetDataSourcePosition(PVMFWAVFFNodeCommand& aCmd)
     uint32* actualMediaDataTS = NULL;
     bool jumpToIFrame = false;
     uint32 streamID = 0;
-    aCmd.PVMFWAVFFNodeCommand::Parse(targetNPT, actualNPT, actualMediaDataTS, jumpToIFrame, streamID);
+    aCmd.PVMFNodeCommand::Parse(targetNPT, actualNPT, actualMediaDataTS, jumpToIFrame, streamID);
 
     uint32 i = 0;
     for (i = 0; i < iSelectedTrackList.size(); ++i)
@@ -2086,7 +1513,7 @@ void PVMFWAVFFParserNode::DoSetDataSourcePosition(PVMFWAVFFNodeCommand& aCmd)
             eventuuid = PVMFFileFormatEventTypesUUID;
             eventcode = PVMFFFErrMisc;
         }
-        CommandComplete(iInputCommands, aCmd, PVMFErrResource, NULL, &eventuuid, &eventcode);
+        return PVMFErrResource;
     }
     else
     {
@@ -2112,14 +1539,13 @@ void PVMFWAVFFParserNode::DoSetDataSourcePosition(PVMFWAVFFNodeCommand& aCmd)
                 }
             }
         }
-        CommandComplete(iInputCommands, aCmd, PVMFSuccess);
     }
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFWAVFFParserNode::DoSetDataSourcePosition() Out"));
-
+    return PVMFSuccess;
 }
 
 
-void PVMFWAVFFParserNode::DoQueryDataSourcePosition(PVMFWAVFFNodeCommand& aCmd)
+PVMFStatus PVMFWAVFFParserNode::DoQueryDataSourcePosition(PVMFNodeCommand& aCmd)
 {
     uint32 targetNPT = 0;
     uint32* actualNPT = NULL;
@@ -2127,11 +1553,10 @@ void PVMFWAVFFParserNode::DoQueryDataSourcePosition(PVMFWAVFFNodeCommand& aCmd)
 
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFMP4FFParserNode::DoQueryDataSourcePosition() In"));
 
-    aCmd.PVMFWAVFFNodeCommand::Parse(targetNPT, actualNPT, seektosyncpoint);
+    aCmd.PVMFNodeCommand::Parse(targetNPT, actualNPT, seektosyncpoint);
     if (actualNPT == NULL)
     {
-        CommandComplete(iInputCommands, aCmd, PVMFErrArgument);
-        return;
+        return PVMFErrArgument;
     }
 
     // compute the sample corresponding to the target NPT
@@ -2152,13 +1577,12 @@ void PVMFWAVFFParserNode::DoQueryDataSourcePosition(PVMFWAVFFNodeCommand& aCmd)
         *actualNPT = (position_msec * 1000) / wavinfo.NumSamples + position_sec * 1000;
     }
 
-    CommandComplete(iInputCommands, aCmd, PVMFSuccess);
-
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFMP4FFParserNode::DoQueryDataSourcePosition() Out"));
+    return PVMFSuccess;
 }
 
 
-void PVMFWAVFFParserNode::DoSetDataSourceRate(PVMFWAVFFNodeCommand& aCmd)
+PVMFStatus PVMFWAVFFParserNode::DoSetDataSourceRate(PVMFNodeCommand& aCmd)
 {
 
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFWAVFFParserNode::DoSetDataSourceRate() In"));
@@ -2167,7 +1591,7 @@ void PVMFWAVFFParserNode::DoSetDataSourceRate(PVMFWAVFFNodeCommand& aCmd)
     int32 rate;
     PVMFTimebase* timebase = NULL;
     PVMFStatus cmdstatus = PVMFSuccess;
-    aCmd.PVMFWAVFFNodeCommand::Parse(rate, timebase);
+    aCmd.PVMFNodeCommand::Parse(rate, timebase);
 
     if (timebase == NULL)
     {
@@ -2183,11 +1607,8 @@ void PVMFWAVFFParserNode::DoSetDataSourceRate(PVMFWAVFFNodeCommand& aCmd)
         // Allow outside timebase
     }
 
-    // complete the command
-    CommandComplete(iInputCommands, aCmd, cmdstatus);
-
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFWAVFFParserNode::DoSetDataSourceRate() Out"));
-
+    return cmdstatus;
 }
 
 
@@ -2221,71 +1642,7 @@ bool PVMFWAVFFParserNode::MapWAVErrorCodeToEventCode(int32 aWAVErrCode, PVUuid& 
     return true;
 }
 
-
-
-bool PVMFWAVFFParserNode::SendEndOfTrackCommand(PVWAVFFNodeTrackPortInfo& aTrackPortInfo)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFWAVFFParserNode::SendEndOfTrackCommand() In"));
-
-    PVMFSharedMediaCmdPtr sharedMediaCmdPtr = PVMFMediaCmd::createMediaCmd();
-
-    sharedMediaCmdPtr->setFormatID(PVMF_MEDIA_CMD_EOS_FORMAT_ID);
-
-    sharedMediaCmdPtr->setStreamID(iStreamID);
-
-    // Set timestamp
-    uint32 timestamp = aTrackPortInfo.iClockConverter->get_converted_ts(COMMON_PLAYBACK_CLOCK_TIMESCALE);
-    sharedMediaCmdPtr->setTimestamp(timestamp);
-
-    // Set the sequence number
-    sharedMediaCmdPtr->setSeqNum(aTrackPortInfo.iSeqNum++);
-
-    PVMFSharedMediaMsgPtr mediaMsgOut;
-    convertToPVMFMediaCmdMsg(mediaMsgOut, sharedMediaCmdPtr);
-
-    if (aTrackPortInfo.iPort->QueueOutgoingMsg(mediaMsgOut) != PVMFSuccess)
-    {
-        // Output queue is busy, so wait for the output queue being ready
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
-                        (0, "PVMFWAVFFParserNode::SendEndOfTrackCommand: Outgoing queue busy. "));
-        return false;
-    }
-
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFWAVFFParserNode::SendEndOfTrackCommand() Out"));
-    return true;
-}
-
-
-bool PVMFWAVFFParserNode::SendBeginOfMediaStreamCommand(PVWAVFFNodeTrackPortInfo& aTrackPortInfo)
-{
-    PVMFSharedMediaCmdPtr sharedMediaCmdPtr = PVMFMediaCmd::createMediaCmd();
-    sharedMediaCmdPtr->setFormatID(PVMF_MEDIA_CMD_BOS_FORMAT_ID);
-
-    uint32 timestamp = aTrackPortInfo.iClockConverter->get_converted_ts(COMMON_PLAYBACK_CLOCK_TIMESCALE);
-    sharedMediaCmdPtr->setTimestamp(timestamp);
-
-    uint32 seqNum = 0;
-    sharedMediaCmdPtr->setSeqNum(seqNum);
-
-    PVMFSharedMediaMsgPtr mediaMsgOut;
-    convertToPVMFMediaCmdMsg(mediaMsgOut, sharedMediaCmdPtr);
-    mediaMsgOut->setStreamID(iStreamID);
-
-    if (aTrackPortInfo.iPort->QueueOutgoingMsg(mediaMsgOut) != PVMFSuccess)
-    {
-        // Output queue is busy, so wait for the output queue being ready
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
-                        (0, "PVMFWAVFFParserNode::SendBeginOfMediaStreamCommand: Outgoing queue busy. "));
-        return false;
-    }
-    aTrackPortInfo.iSendBOS = false;
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFWAVFFParserNode::SendBeginOfMediaStreamCommand() Out StreamId %d ", iStreamID));
-    return true;
-}
-
-
 // Metadata handling
-
 uint32 PVMFWAVFFParserNode::GetNumMetadataKeys(char* aQueryKeyString)
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFWAVFFParserNode::GetNumMetadataKeys() called"));
@@ -2380,8 +1737,8 @@ PVMFCommandId PVMFWAVFFParserNode::GetNodeMetadataKeys(PVMFSessionId aSessionId,
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFWAVFFParserNode::GetNodeMetadataKeys() called"));
 
-    PVMFWAVFFNodeCommand cmd;
-    cmd.PVMFWAVFFNodeCommand::Construct(aSessionId, PVWAVFF_NODE_CMD_GETNODEMETADATAKEY, aKeyList, starting_index, max_entries, query_key, aContext);
+    PVMFNodeCommand cmd;
+    cmd.PVMFNodeCommand::Construct(aSessionId, PVMF_GENERIC_NODE_GETNODEMETADATAKEYS, aKeyList, starting_index, max_entries, query_key, aContext);
     return QueueCommandL(cmd);
 }
 
@@ -2390,8 +1747,8 @@ PVMFCommandId PVMFWAVFFParserNode::GetNodeMetadataValues(PVMFSessionId aSessionI
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFWAVFFParserNode::GetNodeMetadataValue() called"));
 
-    PVMFWAVFFNodeCommand cmd;
-    cmd.PVMFWAVFFNodeCommand::Construct(aSessionId, PVWAVFF_NODE_CMD_GETNODEMETADATAVALUE, aKeyList, aValueList, starting_index, max_entries, aContext);
+    PVMFNodeCommand cmd;
+    cmd.PVMFNodeCommand::Construct(aSessionId, PVMF_GENERIC_NODE_GETNODEMETADATAVALUES, aKeyList, aValueList, starting_index, max_entries, aContext);
     return QueueCommandL(cmd);
 }
 
@@ -2432,7 +1789,7 @@ PVMFStatus PVMFWAVFFParserNode::ReleaseNodeMetadataValues(Oscl_Vector<PvmiKvp, O
                 case PVMI_KVPVALTYPE_WCHARPTR:
                     if (aValueList[i].value.pWChar_value != NULL)
                     {
-                        OSCL_ARRAY_DELETE(aValueList[i].value.pWChar_value);
+                        PVMF_BASE_NODE_ARRAY_DELETE(aValueList[i].value.pWChar_value);
                         aValueList[i].value.pWChar_value = NULL;
                     }
                     break;
@@ -2440,7 +1797,7 @@ PVMFStatus PVMFWAVFFParserNode::ReleaseNodeMetadataValues(Oscl_Vector<PvmiKvp, O
                 case PVMI_KVPVALTYPE_CHARPTR:
                     if (aValueList[i].value.pChar_value != NULL)
                     {
-                        OSCL_ARRAY_DELETE(aValueList[i].value.pChar_value);
+                        PVMF_BASE_NODE_ARRAY_DELETE(aValueList[i].value.pChar_value);
                         aValueList[i].value.pChar_value = NULL;
                     }
                     break;
@@ -2455,7 +1812,7 @@ PVMFStatus PVMFWAVFFParserNode::ReleaseNodeMetadataValues(Oscl_Vector<PvmiKvp, O
                     break;
             }
 
-            OSCL_ARRAY_DELETE(aValueList[i].key);
+            PVMF_BASE_NODE_ARRAY_DELETE(aValueList[i].key);
             aValueList[i].key = NULL;
         }
     }
@@ -2463,7 +1820,7 @@ PVMFStatus PVMFWAVFFParserNode::ReleaseNodeMetadataValues(Oscl_Vector<PvmiKvp, O
     return PVMFSuccess;
 }
 
-PVMFStatus PVMFWAVFFParserNode::DoGetNodeMetadataKey(PVMFWAVFFNodeCommand& aCmd)
+PVMFStatus PVMFWAVFFParserNode::DoGetNodeMetadataKey(PVMFNodeCommand& aCmd)
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFWAVFFParserNode::DoGetNodeMetadataKey() In"));
 
@@ -2472,7 +1829,7 @@ PVMFStatus PVMFWAVFFParserNode::DoGetNodeMetadataKey(PVMFWAVFFNodeCommand& aCmd)
     int32 max_entries;
     char* query_key;
 
-    aCmd.PVMFWAVFFNodeCommand::Parse(keylistptr, starting_index, max_entries, query_key);
+    aCmd.PVMFNodeCommand::Parse(keylistptr, starting_index, max_entries, query_key);
 
     // Check parameters
     if (keylistptr == NULL)
@@ -2539,7 +1896,7 @@ PVMFStatus PVMFWAVFFParserNode::DoGetNodeMetadataKey(PVMFWAVFFNodeCommand& aCmd)
 
 
 
-PVMFStatus PVMFWAVFFParserNode::DoGetNodeMetadataValue(PVMFWAVFFNodeCommand& aCmd)
+PVMFStatus PVMFWAVFFParserNode::DoGetNodeMetadataValue(PVMFNodeCommand& aCmd)
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFWAVFFParserNode::DoGetMetadataValue() In"));
 
@@ -2554,7 +1911,7 @@ PVMFStatus PVMFWAVFFParserNode::DoGetNodeMetadataValue(PVMFWAVFFNodeCommand& aCm
     uint32 starting_index;
     int32 max_entries;
 
-    aCmd.PVMFWAVFFNodeCommand::Parse(keylistptr_in, valuelistptr, starting_index, max_entries);
+    aCmd.PVMFNodeCommand::Parse(keylistptr_in, valuelistptr, starting_index, max_entries);
 
     // Check the parameters
     if (keylistptr_in == NULL || valuelistptr == NULL)
@@ -2925,12 +2282,12 @@ PVMFStatus PVMFWAVFFParserNode::DoGetNodeMetadataValue(PVMFWAVFFNodeCommand& aCm
                     // Memory allocation failed so clean up
                     if (KeyVal.key)
                     {
-                        OSCL_ARRAY_DELETE(KeyVal.key);
+                        PVMF_BASE_NODE_ARRAY_DELETE(KeyVal.key);
                         KeyVal.key = NULL;
                     }
                     if (KeyVal.value.pChar_value)
                     {
-                        OSCL_ARRAY_DELETE(KeyVal.value.pChar_value);
+                        PVMF_BASE_NODE_ARRAY_DELETE(KeyVal.value.pChar_value);
                     }
                     break;
                 }
@@ -2947,7 +2304,7 @@ PVMFStatus PVMFWAVFFParserNode::DoGetNodeMetadataValue(PVMFWAVFFNodeCommand& aCm
                     case PVMI_KVPVALTYPE_CHARPTR:
                         if (KeyVal.value.pChar_value != NULL)
                         {
-                            OSCL_ARRAY_DELETE(KeyVal.value.pChar_value);
+                            PVMF_BASE_NODE_ARRAY_DELETE(KeyVal.value.pChar_value);
                             KeyVal.value.pChar_value = NULL;
                         }
                         break;
@@ -2957,7 +2314,7 @@ PVMFStatus PVMFWAVFFParserNode::DoGetNodeMetadataValue(PVMFWAVFFNodeCommand& aCm
                         break;
                 }
 
-                OSCL_ARRAY_DELETE(KeyVal.key);
+                PVMF_BASE_NODE_ARRAY_DELETE(KeyVal.key);
                 KeyVal.key = NULL;
             }
             else
@@ -3104,7 +2461,7 @@ int32 PVMFWAVFFParserNode::CreateNewArray(char*& aPtr, int32 aLen)
 {
     int32 leavecode = 0;
     OSCL_TRY(leavecode,
-             aPtr = OSCL_ARRAY_NEW(char, aLen););
+             aPtr = PVMF_BASE_NODE_ARRAY_NEW(char, aLen););
     return leavecode;
 }
 

@@ -424,37 +424,6 @@ PVMFStatus PVMFMP4FFParserNode::releaseParameters(PvmiMIOSession aSession,
     return PVMFSuccess;
 }
 
-void PVMFMP4FFParserNode::createContext(PvmiMIOSession aSession,
-                                        PvmiCapabilityContext& aContext)
-{
-    OSCL_UNUSED_ARG(aSession);
-    OSCL_UNUSED_ARG(aContext);
-    // not supported
-    OSCL_LEAVE(PVMFErrNotSupported);
-}
-
-void PVMFMP4FFParserNode::setContextParameters(PvmiMIOSession aSession,
-        PvmiCapabilityContext& aContext,
-        PvmiKvp* aParameters,
-        int num_parameter_elements)
-{
-    OSCL_UNUSED_ARG(aSession);
-    OSCL_UNUSED_ARG(aContext);
-    OSCL_UNUSED_ARG(aParameters);
-    OSCL_UNUSED_ARG(num_parameter_elements);
-    // not supported
-    OSCL_LEAVE(PVMFErrNotSupported);
-}
-
-void PVMFMP4FFParserNode::DeleteContext(PvmiMIOSession aSession,
-                                        PvmiCapabilityContext& aContext)
-{
-    OSCL_UNUSED_ARG(aSession);
-    OSCL_UNUSED_ARG(aContext);
-    // not supported
-    OSCL_LEAVE(PVMFErrNotSupported);
-}
-
 
 void PVMFMP4FFParserNode::setParametersSync(PvmiMIOSession aSession, PvmiKvp* aParameters,
         int num_elements, PvmiKvp* &aRet_kvp)
@@ -621,28 +590,6 @@ void PVMFMP4FFParserNode::setParametersSync(PvmiMIOSession aSession, PvmiKvp* aP
     PVMF_MP4FFPARSERNODE_LOGINFO((0, "PVMFMP4FFParserNode::setParametersSync() Out"));
 }
 
-PVMFCommandId PVMFMP4FFParserNode::setParametersAsync(PvmiMIOSession aSession,
-        PvmiKvp* aParameters,
-        int num_elements,
-        PvmiKvp*& aRet_kvp,
-        OsclAny* context)
-{
-    OSCL_UNUSED_ARG(aSession);
-    OSCL_UNUSED_ARG(aParameters);
-    OSCL_UNUSED_ARG(num_elements);
-    OSCL_UNUSED_ARG(aRet_kvp);
-    OSCL_UNUSED_ARG(context);
-    // not supported
-    OSCL_LEAVE(OsclErrNotSupported);
-    // to satisfy compiler, need to return
-    return 0;
-}
-
-uint32 PVMFMP4FFParserNode::getCapabilityMetric(PvmiMIOSession aSession)
-{
-    OSCL_UNUSED_ARG(aSession);
-    return 0;
-}
 
 PVMFStatus PVMFMP4FFParserNode::verifyParametersSync(PvmiMIOSession aSession,
         PvmiKvp* aParameters,

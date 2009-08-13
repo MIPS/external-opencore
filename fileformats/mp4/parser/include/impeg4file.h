@@ -466,7 +466,7 @@ class IMpeg4File : public ISucceedFail
         //APIs to return the no. of genre and their metadata values respectively.
         virtual uint32 getNumGenre() = 0;
         virtual PVMFStatus getGenre(uint32 index, OSCL_wString& aVal, uint16& aLangCode, MP4FFParserOriginalCharEnc& aCharEncType) = 0;
-        virtual uint16 getITunesGnreID() const = 0;
+        virtual int16 getITunesGnreID() const = 0;
 
         //APIs to return the no. of year and their metadata values respectively.
         virtual uint32 getNumYear() = 0;

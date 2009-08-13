@@ -53,4 +53,4 @@ sdkinfo_header_macro := PV_PLAYER_SDKINFO
 sdkinfo_label_macro := PVPLAYER_ENGINE_SDKINFO_LABEL
 sdkinfo_date_macro := PVPLAYER_ENGINE_SDKINFO_DATE
 
-include $(MK)/sdkinfo_nr.mk
+include $(MK)/sdkinfo.mk

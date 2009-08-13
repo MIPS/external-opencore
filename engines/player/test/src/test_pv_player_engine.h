@@ -158,6 +158,7 @@ typedef enum
     STATE_GETMETADATAVALUELIST,
     STATE_ADDDATASINK_VIDEO,
     STATE_ADDDATASINK_AUDIO,
+    STATE_ADDDATASINK_TEXT,
     STATE_PREPARE,
     STATE_WAIT_FOR_DATAREADY,
     STATE_WAIT_FOR_BUFFCOMPLETE,
@@ -171,6 +172,7 @@ typedef enum
     STATE_STOP,
     STATE_REMOVEDATASINK_VIDEO,
     STATE_REMOVEDATASINK_AUDIO,
+    STATE_REMOVEDATASINK_TEXT,
     STATE_RESET,
     STATE_REMOVEDATASOURCE,
     STATE_CLEANUPANDCOMPLETE,
@@ -1624,6 +1626,23 @@ class pvplayer_engine_test : public test_case,
              */
             DLA_PDL_OpenPlayUntilEOS_JanusCPMTest,//1167
 
+            //Janus tests for license extension interface
+            /**
+             * @test (1168) ContentHeaderRetrieval_JanusCPMTest
+             */
+            ContentHeaderRetrieval_JanusCPMTest,//1168
+            /**
+             * @test (1169) DLA_PPB_OpenPlayUntilEOS_JanusCPMTest Test
+             */
+            DLA_PPB_OpenPlayUntilEOS_JanusCPMTest,//1169
+
+
+            //Janus tests for performance measurement of CleanDataStore API
+            /**
+             * @test (1170) CleanDataStoreMeasurement_JanusCPMTest
+             */
+            CleanDataStoreMeasurement_JanusCPMTest,//1170
+
             //this range RESERVED for future Janus tests.
 
             /**
@@ -2043,60 +2062,61 @@ class pvplayer_engine_test : public test_case,
             ApplicationInvolvedTrackSelectionTestNoTracks = 1308,
 
             //Metadata Query tests
-            DLA_QueryEngine_JupiterCPMTest_v2_WMA = 1400,
-            DLA_QueryEngine_JupiterCPMTest_v24_WMA,//1401
-            DLA_QueryEngine_JupiterCPMTest_v4_Enveloped_ASF,//1402
-            DLA_QueryEngine_JupiterCPMTest_v4_Enveloped_MP4,//1403
-            DLA_QueryEngine_JupiterCPMTest_v4_Enveloped_Image,//1404
+            DLA_QueryEngine_PlayReadyCPMTest_v2_WMA = 1400,
+            DLA_QueryEngine_PlayReadyCPMTest_v24_WMA,//1401
+            DLA_QueryEngine_PlayReadyCPMTest_v4_Enveloped_ASF,//1402
+            DLA_QueryEngine_PlayReadyCPMTest_v4_Enveloped_MP4,//1403
+            DLA_QueryEngine_PlayReadyCPMTest_v4_Enveloped_Image,//1404
             //Enveloped image tests
-            DLA_EnvelopeRead_JupiterCPMTest_v4_Enveloped_Image,//1405
+            DLA_EnvelopeRead_PlayReadyCPMTest_v4_Enveloped_Image,//1405
             //Multi-media format tests
-            DLA_OpenPlayStop_JupiterCPMTest_v2_WMA,//1406
-            DLA_OpenPlayStop_JupiterCPMTest_v2_WMV,//1407
-            DLA_OpenPlayStop_JupiterCPMTest_v24_WMA,//1408
-            DLA_OpenPlayStop_JupiterCPMTest_v24_WMV,//1409
-            DLA_OpenPlayStop_JupiterCPMTest_v4_WMA,//1410
-            DLA_OpenPlayStop_JupiterCPMTest_v4_WMV,//1411
-            DLA_OpenPlayStop_JupiterCPMTest_v4_AAC,//1412
-            DLA_OpenPlayStop_JupiterCPMTest_v4_H264,//1413
-            DLA_OpenPlayStop_JupiterCPMTest_v4_Enveloped_ASF,//1414
-            DLA_OpenPlayStop_JupiterCPMTest_v4_Enveloped_MP4,//1415
-            DLA_OpenPlayStop_JupiterCPMTest_unprotected_H264,//1416
-            DLA_OpenPlayStop_JupiterCPMTest_unprotected_AAC,//1417
+            DLA_OpenPlayStop_PlayReadyCPMTest_v2_WMA,//1406
+            DLA_OpenPlayStop_PlayReadyCPMTest_v2_WMV,//1407
+            DLA_OpenPlayStop_PlayReadyCPMTest_v24_WMA,//1408
+            DLA_OpenPlayStop_PlayReadyCPMTest_v24_WMV,//1409
+            DLA_OpenPlayStop_PlayReadyCPMTest_v4_WMA,//1410
+            DLA_OpenPlayStop_PlayReadyCPMTest_v4_WMV,//1411
+            DLA_OpenPlayStop_PlayReadyCPMTest_v4_AAC,//1412
+            DLA_OpenPlayStop_PlayReadyCPMTest_v4_H264,//1413
+            DLA_OpenPlayStop_PlayReadyCPMTest_v4_Enveloped_ASF,//1414
+            DLA_OpenPlayStop_PlayReadyCPMTest_v4_Enveloped_MP4,//1415
+            DLA_OpenPlayStop_PlayReadyCPMTest_unprotected_H264,//1416
+            DLA_OpenPlayStop_PlayReadyCPMTest_unprotected_AAC,//1417
             //Special license protocol sequence tests
-            DLA_OpenPlayStop_JupiterCPMTest_redirect,//1418
-            DLA_OpenPlayStop_JupiterCPMTest_v24_WMA_fallback,//1419
-            DLA_OpenPlayStop_JupiterCPMTest_v4_WMA_ringtone,//1420
-            DLA_OpenPlayStop_JupiterCPMTest_v4_WMA_domain,//1421
-            DLA_OpenPlayStop_JupiterCPMTest_v4_WMA_domain_renew,//1422
-            DLA_OpenPlayStop_JupiterCPMTest_v4_WMA_domain_offline,//1423
-            DLA_OpenPlayStop_JupiterCPMTest_v4_WMA_domain_history,//1424
-            //Jupiter utility tests
-            DLA_JoinDomain_JupiterCPMTest,//1425
-            DLA_LeaveDomain_JupiterCPMTest,//1426
-            DLA_DeleteLicense_JupiterCPMTest_v2_Content,//1427
-            DLA_DeleteLicense_JupiterCPMTest_v24_Content,//1428
-            DLA_MeteringByCert_JupiterCPMTest,//1429
-            DLA_MeteringByMID_JupiterCPMTest,//1430
-            DLA_MeteringAll_JupiterCPMTest,//1431
-            DLA_LicenseUpdateAll_JupiterCPMTest,//1432
-            DLA_LicenseUpdateExpired_JupiterCPMTest,//1433
-            //Jupiter CancelAcquireLicense tests
-            DLA_CancelAcquireLicense_JupiterCPMTest_v4_Enveloped_Image,//1434
-            DLA_CancelAcquireLicense_JupiterCPMTest_v2_Content,//1435
-            DLA_CancelAcquireLicense_JupiterCPMTest_v24_Content,//1436
-            DLA_CancelAcquireLicense_JupiterCPMTest_v4_Enveloped_MP4,//1437
-            //Jupiter streaming tests.
-            DLA_StreamingOpenPlayUntilEOST_JupiterCPMTest,//1438
-            DLA_StreamingOpenPlayPausePlayUntilEOS_JupiterCPMTest,//1439
-            DLA_StreamingOpenPlaySeekPlayUntilEOS_JupiterCPMTest,//1440
-            DLA_StreamingMultiplePlayUntilEOS_JupiterCPMTest,//1441
-            DLA_StreamingCancelAcquireLicense_JupiterCPMTest,//1442
-            DLA_StreamingProtocolRollOverTest_JupiterCPMTest,//1443
-            DLA_StreamingProtocolRollOverTestWithUnknownURLType_JupiterCPMTest,//1444
-            //RESERVED FOR FUTURE JUPITER CPM TESTS.
-            LastJupiterCPMTest = 1599,//placeholder
-            //End JUPITER CPM TESTS.
+            DLA_OpenPlayStop_PlayReadyCPMTest_redirect,//1418
+            DLA_OpenPlayStop_PlayReadyCPMTest_v24_WMA_fallback,//1419
+            DLA_OpenPlayStop_PlayReadyCPMTest_v4_WMA_ringtone,//1420
+            DLA_OpenPlayStop_PlayReadyCPMTest_v4_WMA_domain,//1421
+            DLA_OpenPlayStop_PlayReadyCPMTest_v4_WMA_domain_renew,//1422
+            DLA_OpenPlayStop_PlayReadyCPMTest_v4_WMA_domain_offline,//1423
+            DLA_OpenPlayStop_PlayReadyCPMTest_v4_WMA_domain_history,//1424
+            //PlayReady utility tests
+            DLA_JoinDomain_PlayReadyCPMTest,//1425
+            DLA_LeaveDomain_PlayReadyCPMTest,//1426
+            DLA_DeleteLicense_PlayReadyCPMTest_v2_Content,//1427
+            DLA_DeleteLicense_PlayReadyCPMTest_v24_Content,//1428
+            DLA_MeteringByCert_PlayReadyCPMTest,//1429
+            DLA_MeteringByMID_PlayReadyCPMTest,//1430
+            DLA_MeteringAll_PlayReadyCPMTest,//1431
+            DLA_LicenseUpdateAll_PlayReadyCPMTest,//1432
+            DLA_LicenseUpdateExpired_PlayReadyCPMTest,//1433
+            //PlayReady CancelAcquireLicense tests
+            DLA_CancelAcquireLicense_PlayReadyCPMTest_v4_Enveloped_Image,//1434
+            DLA_CancelAcquireLicense_PlayReadyCPMTest_v2_Content,//1435
+            DLA_CancelAcquireLicense_PlayReadyCPMTest_v24_Content,//1436
+            DLA_CancelAcquireLicense_PlayReadyCPMTest_v4_Enveloped_MP4,//1437
+            //PlayReady streaming tests.
+            DLA_StreamingOpenPlayUntilEOST_PlayReadyCPMTest,//1438
+            DLA_StreamingOpenPlayPausePlayUntilEOS_PlayReadyCPMTest,//1439
+            DLA_StreamingOpenPlaySeekPlayUntilEOS_PlayReadyCPMTest,//1440
+            DLA_StreamingMultiplePlayUntilEOS_PlayReadyCPMTest,//1441
+            DLA_StreamingCancelAcquireLicense_PlayReadyCPMTest,//1442
+            DLA_StreamingProtocolRollOverTest_PlayReadyCPMTest,//1443
+            DLA_StreamingProtocolRollOverTestWithUnknownURLType_PlayReadyCPMTest,//1444
+            DLA_OpenPlayStop_PlayReadyCPMTest_v4_AACP,//1445
+            //RESERVED FOR FUTURE PLAYREADY CPM TESTS.
+            LastPlayReadyCPMTest = 1599,//placeholder
+            //End PLAYREADY CPM TESTS.
             /*
              * Note: Starting PVR tests from 1600 since the number of tests exceed the range
              * from 895 and 900 (the earlier location of the tests)

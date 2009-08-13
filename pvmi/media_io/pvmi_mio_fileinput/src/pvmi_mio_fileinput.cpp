@@ -85,7 +85,7 @@ PvmiMIOFileInput::~PvmiMIOFileInput()
     }
     if (configinfo)
     {
-        OSCL_DELETE(configinfo);
+        oscl_free(configinfo);
         configinfo = NULL;
     }
     DoReset();
@@ -486,11 +486,6 @@ OSCL_EXPORT_REF void PvmiMIOFileInput::cancelAllCommands()
     OSCL_LEAVE(OsclErrNotSupported);
 }
 
-////////////////////////////////////////////////////////////////////////////
-OSCL_EXPORT_REF void PvmiMIOFileInput::setObserver(PvmiConfigAndCapabilityCmdObserver* aObserver)
-{
-    OSCL_UNUSED_ARG(aObserver);
-}
 
 ////////////////////////////////////////////////////////////////////////////
 OSCL_EXPORT_REF PVMFStatus PvmiMIOFileInput::getParametersSync(PvmiMIOSession session,
@@ -677,31 +672,6 @@ OSCL_EXPORT_REF PVMFStatus PvmiMIOFileInput::releaseParameters(PvmiMIOSession se
 }
 
 ////////////////////////////////////////////////////////////////////////////
-OSCL_EXPORT_REF void PvmiMIOFileInput::createContext(PvmiMIOSession session, PvmiCapabilityContext& context)
-{
-    OSCL_UNUSED_ARG(session);
-    OSCL_UNUSED_ARG(context);
-}
-
-////////////////////////////////////////////////////////////////////////////
-OSCL_EXPORT_REF void PvmiMIOFileInput::setContextParameters(PvmiMIOSession session,
-        PvmiCapabilityContext& context,
-        PvmiKvp* parameters, int num_parameter_elements)
-{
-    OSCL_UNUSED_ARG(session);
-    OSCL_UNUSED_ARG(context);
-    OSCL_UNUSED_ARG(parameters);
-    OSCL_UNUSED_ARG(num_parameter_elements);
-}
-
-////////////////////////////////////////////////////////////////////////////
-OSCL_EXPORT_REF void PvmiMIOFileInput::DeleteContext(PvmiMIOSession session, PvmiCapabilityContext& context)
-{
-    OSCL_UNUSED_ARG(session);
-    OSCL_UNUSED_ARG(context);
-}
-
-////////////////////////////////////////////////////////////////////////////
 OSCL_EXPORT_REF void PvmiMIOFileInput::setParametersSync(PvmiMIOSession session, PvmiKvp* parameters,
         int num_elements, PvmiKvp*& ret_kvp)
 {
@@ -721,38 +691,7 @@ OSCL_EXPORT_REF void PvmiMIOFileInput::setParametersSync(PvmiMIOSession session,
     }
 }
 
-////////////////////////////////////////////////////////////////////////////
-OSCL_EXPORT_REF PVMFCommandId PvmiMIOFileInput::setParametersAsync(PvmiMIOSession session,
-        PvmiKvp* parameters,
-        int num_elements,
-        PvmiKvp*& ret_kvp,
-        OsclAny* context)
-{
-    OSCL_UNUSED_ARG(session);
-    OSCL_UNUSED_ARG(parameters);
-    OSCL_UNUSED_ARG(num_elements);
-    OSCL_UNUSED_ARG(ret_kvp);
-    OSCL_UNUSED_ARG(context);
-    OSCL_LEAVE(OsclErrNotSupported);
-    return -1;
-}
 
-////////////////////////////////////////////////////////////////////////////
-OSCL_EXPORT_REF uint32 PvmiMIOFileInput::getCapabilityMetric(PvmiMIOSession session)
-{
-    OSCL_UNUSED_ARG(session);
-    return 0;
-}
-
-////////////////////////////////////////////////////////////////////////////
-OSCL_EXPORT_REF PVMFStatus PvmiMIOFileInput::verifyParametersSync(PvmiMIOSession session,
-        PvmiKvp* parameters, int num_elements)
-{
-    OSCL_UNUSED_ARG(session);
-    OSCL_UNUSED_ARG(parameters);
-    OSCL_UNUSED_ARG(num_elements);
-    return PVMFErrNotSupported;
-}
 ////////////////////////////////////////////////////////////////////////////
 OSCL_EXPORT_REF uint32 PvmiMIOFileInput::GetStreamDuration()
 {
@@ -785,6 +724,7 @@ PvmiMIOFileInput::PvmiMIOFileInput(const PvmiMIOFileInputSettings& aSettings)
         iTotalNumFrames(0),
         iFileHeaderSize(0),
         iTimeStamp(0),
+        iReadTimeStamp(0),
         iPreTS(0),
         iCount(0),
         iMediaBufferMemPool(NULL),
@@ -793,6 +733,7 @@ PvmiMIOFileInput::PvmiMIOFileInput(const PvmiMIOFileInputSettings& aSettings)
         iState(STATE_IDLE),
         iAuthoringDuration(0),
         iStreamDuration(0),
+        iStartTimestamp(0),
         iFormatSpecificInfoSize(0),
         iFSIKvp(NULL),
         iConfigSize(0),
@@ -839,7 +780,11 @@ void PvmiMIOFileInput::Run()
                 break;
 
             case DATA_EVENT:
-                DoRead();
+                if (PVMFSuccess != DoRead())
+                {
+                    iStartTimestamp = iTimeStamp;
+                    iStartTime.set_to_current_time();
+                }
                 break;
 
             case CMD_QUERY_UUID:
@@ -1356,6 +1301,12 @@ PVMFStatus PvmiMIOFileInput::DoInit()
             iFsOpened_log = true;
         }
 
+        if (iFsOpened_log)
+        {
+            iFs_log.Close();
+            iFsOpened_log = false;
+        }
+
         if (iFileOpened_log ||
                 0 != iLogFile.Open(iSettings.iLogFileName.get_cstr(), Oscl_File::MODE_READ | Oscl_File::MODE_BINARY, iFs_log))
         {
@@ -1686,6 +1637,9 @@ PVMFStatus PvmiMIOFileInput::DoStart()
             return PVMFFailure;
     }
 
+    iStartTime.set_to_current_time();
+    iStartTimestamp = 0;
+
     AddDataEventToQueue(0);
     return PVMFSuccess;
 }
@@ -1741,7 +1695,7 @@ PVMFStatus PvmiMIOFileInput::DoRead()
     }
 
     uint32 bytesToRead = 0;
-    uint32 timeStamp = 0;
+    iReadTimeStamp = 0;
     // allocate bytesToRead number of bytes
     uint8* data = NULL;
     uint32 writeAsyncID = 0;
@@ -1750,14 +1704,14 @@ PVMFStatus PvmiMIOFileInput::DoRead()
     if ((iSettings.iMediaFormat == PVMF_MIME_M4V) || (iSettings.iMediaFormat == PVMF_MIME_ISO_AVC_SAMPLE_FORMAT))
     {
         bytesToRead = iFrameSizeVector[iDataEventCounter % iTotalNumFrames];
-        timeStamp = iTimeStampVector[iDataEventCounter % iTotalNumFrames];
+        iReadTimeStamp = iTimeStampVector[iDataEventCounter % iTotalNumFrames];
         ++iDataEventCounter;
     }
     else if (iSettings.iMediaFormat == PVMF_MIME_H2631998 ||
              iSettings.iMediaFormat == PVMF_MIME_H2632000)
     {
         bytesToRead = iFrameSizeVector[iDataEventCounter % iTotalNumFrames];
-        timeStamp = (int32)(iDataEventCounter * 1000 / iSettings.iFrameRate);
+        iReadTimeStamp = (uint32)(iDataEventCounter * 1000 / iSettings.iFrameRate);
         ++iDataEventCounter;
     }
     else if (iSettings.iMediaFormat == PVMF_MIME_3GPP_TIMEDTEXT)
@@ -1771,19 +1725,19 @@ PVMFStatus PvmiMIOFileInput::DoRead()
         }
         if (iPreTS > ts)
         {
-            timeStamp = ts + iPreTS;
+            iReadTimeStamp = ts + iPreTS;
         }
         else
         {
-            timeStamp = ts;
-            iPreTS = timeStamp;
+            iReadTimeStamp = ts;
+            iPreTS = iReadTimeStamp;
         }
         ++iDataEventCounter;
     }
     else if (iSettings.iMediaFormat == PVMF_MIME_MPEG4_AUDIO)
     {
         bytesToRead = iFrameSizeVector[iDataEventCounter % iTotalNumFrames];
-        timeStamp = iTimeStampVector[iDataEventCounter % iTotalNumFrames];
+        iReadTimeStamp = iTimeStampVector[iDataEventCounter % iTotalNumFrames];
         ++iDataEventCounter;
     }
     else if (iSettings.iMediaFormat == PVMF_MIME_AMR_IF2 ||
@@ -1794,7 +1748,7 @@ PVMFStatus PvmiMIOFileInput::DoRead()
              iSettings.iMediaFormat == PVMF_MIME_MP3)
     {
         bytesToRead = iFrameSizeVector[iDataEventCounter % iTotalNumFrames];
-        timeStamp = iTimeStamp;
+        iReadTimeStamp = iTimeStamp;
         iTimeStamp += iMilliSecondsPerDataEvent;
         ++iDataEventCounter;
     }
@@ -1802,14 +1756,14 @@ PVMFStatus PvmiMIOFileInput::DoRead()
              iSettings.iMediaFormat == PVMF_MIME_RGB16)
     {
         bytesToRead = iFrameSizeVector[0];
-        timeStamp = (int32)(iDataEventCounter * 1000 / iSettings.iFrameRate);
+        iReadTimeStamp = (uint32)(iDataEventCounter * 1000 / iSettings.iFrameRate);
         ++iDataEventCounter;
     }
     else if (iSettings.iMediaFormat == PVMF_MIME_PCM16)
     {
         bytesToRead = iFrameSizeVector[0];
         float chunkrate = (float)(1000 / AMR_FRAME_DELAY) / iSettings.iNum20msFramesPerChunk;
-        timeStamp = (uint32)(iDataEventCounter * 1000 / chunkrate);
+        iReadTimeStamp = (uint32)(iDataEventCounter * 1000 / chunkrate);
         ++iDataEventCounter;
     }
     else
@@ -1829,7 +1783,7 @@ PVMFStatus PvmiMIOFileInput::DoRead()
                         (0, "PvmiMIOFileInput::No buffer available, wait till next data event"));
 
         AddDataEventToQueue(iMicroSecondsPerDataEvent);
-        return PVMFSuccess;
+        return PVMFPending;
     }
 
     // Read the frame from file
@@ -1838,12 +1792,12 @@ PVMFStatus PvmiMIOFileInput::DoRead()
 
     if (iSettings.iMediaFormat == PVMF_MIME_3GPP_TIMEDTEXT)
     {
-        stopTimeStamp = (timeStamp / iSettings.iTimescale) * 1000; //in msec
+        stopTimeStamp = (iReadTimeStamp / iSettings.iTimescale) * 1000; //in msec
 
     }
     else
     {
-        stopTimeStamp = timeStamp;
+        stopTimeStamp = iReadTimeStamp;
     }
 
     if (iConfigSize)
@@ -1908,7 +1862,7 @@ PVMFStatus PvmiMIOFileInput::DoRead()
 
                 PvmiMediaXferHeader data_hdr;
                 data_hdr.seq_num = iDataEventCounter - 1;
-                data_hdr.timestamp = timeStamp;
+                data_hdr.timestamp = iReadTimeStamp;
                 data_hdr.flags = 0;
                 data_hdr.duration = 0;
                 data_hdr.stream_id = 0;
@@ -1958,11 +1912,15 @@ PVMFStatus PvmiMIOFileInput::DoRead()
         // send data to Peer & store the id
         PvmiMediaXferHeader data_hdr;
         data_hdr.seq_num = iDataEventCounter - 1;
-        data_hdr.timestamp = timeStamp;
+        data_hdr.timestamp = iReadTimeStamp;
         data_hdr.flags = 0;
         data_hdr.duration = 0;
         data_hdr.stream_id = 0;
-
+        if (iSettings.iMediaFormat == PVMF_MIME_3GPP_TIMEDTEXT)
+        {
+            data_hdr.flags |= PVMI_MEDIAXFER_MEDIA_DATA_FLAG_DURATION_AVAILABLE_BIT;
+            data_hdr.duration = iStreamDuration;
+        }
         if (((iSettings.iMediaFormat == PVMF_MIME_MPEG4_AUDIO) ||
                 (iSettings.iMediaFormat == PVMF_MIME_M4V)) &&
                 (1 == iDataEventCounter))
@@ -1983,6 +1941,17 @@ PVMFStatus PvmiMIOFileInput::DoRead()
                             (0, "PvmiMIOFileInput::DoRead - Peer missing"));
             return PVMFSuccess;
         }
+
+        // Queue the next data event
+        TimeValue currentTime;
+        currentTime.set_to_current_time();
+
+        TimeValue deltaTimeVal = currentTime - iStartTime;
+        int32 t1 = iReadTimeStamp;
+        int32 t2 = iStartTimestamp;
+        int32 deltaTimestamp = t1 - t2;
+        //int32 deltaTimestamp = iReadTimeStamp - iStartTimestamp;
+
         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
                         (0, "PvmiMIOFileInput::DoRead - Calling WriteAsync - Size=%d, TS=%d, Seq=%d, Mime=%s, MicroSecPerDataEvent=%d",
                          bytesToRead, data_hdr.timestamp, data_hdr.seq_num, iSettings.iMediaFormat.getMIMEStrPtr(), iMicroSecondsPerDataEvent));
@@ -2006,8 +1975,16 @@ PVMFStatus PvmiMIOFileInput::DoRead()
             iMediaBufferMemPool->deallocate(data);
         }
 
-        // Queue the next data event
-        AddDataEventToQueue(iMicroSecondsPerDataEvent);
+        if (deltaTimeVal.to_msec() > deltaTimestamp)
+        {
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
+                            (0, "PvmiMIOFileInput::DoRead - We are running late %dms", deltaTimeVal.to_msec() - deltaTimestamp));
+            AddDataEventToQueue(0);
+        }
+        else
+        {
+            AddDataEventToQueue(iMicroSecondsPerDataEvent);
+        }
     }
     return PVMFSuccess;
 }
@@ -2053,7 +2030,7 @@ int32 PvmiMIOFileInput::GetIF2FrameSize(uint8 aFrameType)
 int32 PvmiMIOFileInput::GetIETFFrameSize(uint8 aFrameType,
         PVMFFormatType aFormat)
 {
-    uint8 frameType = (uint8)(aFrameType >> 3) & 0x0f;
+    uint8 frameType = (uint8)((aFrameType >> 3) & 0x0f);
     if (aFormat == PVMF_MIME_AMR_IETF)
     {
         // Find frame size for each frame type
@@ -2282,6 +2259,7 @@ PVMFStatus PvmiMIOFileInput::VerifyAndSetParameter(PvmiKvp* aKvp, bool aSetParam
     {
         iPeerCapConfig = OSCL_STATIC_CAST(PvmiCapabilityAndConfig*, aKvp->value.key_specific_value);
         LOG_DEBUG((0, "PvmiMIOFileInput::VerifyAndSetParameter: PVMF_MEDIA_INPUT_NODE_CAP_CONFIG_INTERFACE_KEY - Ptr=0x%x", iPeerCapConfig));
+        return PVMFSuccess;
     }
 
     LOG_ERR((0, "PvmiMIOFileInput::VerifyAndSetParameter: Error - Unsupported parameter"));
@@ -2644,6 +2622,8 @@ PVMFStatus PvmiMIOFileInput::Get_Timed_Config_Info()
         {
             OSCL_DELETE(ipDecoderinfo);
             ipDecoderinfo = NULL;
+            OSCL_FREE(val);
+            val = NULL;
             return PVMFFailure;
         }
         aKvp->value.key_specific_value = ipDecoderinfo;
@@ -2659,11 +2639,16 @@ PVMFStatus PvmiMIOFileInput::Get_Timed_Config_Info()
             iAlloc.deallocate(aKvp);
             if (err != 0)
             {
+                OSCL_FREE(val);
+                val = NULL;
                 return PVMFFailure;
             }
         }
         else
         {
+            iAlloc.deallocate(aKvp);
+            OSCL_FREE(val);
+            val = NULL;
             return PVMFFailure;
         }
     }
@@ -2885,6 +2870,7 @@ PVMFStatus PvmiMIOFileInput::Send_SPS_PPS_info()
             status = AllocateKvp(aKvp, (PvmiKeyType)VIDEO_AVC_OUTPUT_SPS_CUR_VALUE, 1);
             if (status != PVMFSuccess)
             {
+                OSCL_DELETE(my_ptr1);
                 return PVMFFailure;
             }
             aKvp->value.key_specific_value = iFormat_SPS_Info.ptr;
@@ -2902,6 +2888,8 @@ PVMFStatus PvmiMIOFileInput::Send_SPS_PPS_info()
             }
             else
             {
+                OSCL_DELETE(my_ptr1);
+                iAlloc.deallocate(aKvp);
                 return PVMFFailure;
             }
         }
@@ -2920,6 +2908,7 @@ PVMFStatus PvmiMIOFileInput::Send_SPS_PPS_info()
             status = AllocateKvp(aKvp, (PvmiKeyType)VIDEO_AVC_OUTPUT_PPS_CUR_VALUE, 1);
             if (status != PVMFSuccess)
             {
+                OSCL_DELETE(my_ptr2);
                 return PVMFFailure;
             }
             aKvp->value.key_specific_value = iFormat_PPS_Info.ptr;
@@ -2937,6 +2926,8 @@ PVMFStatus PvmiMIOFileInput::Send_SPS_PPS_info()
             }
             else
             {
+                OSCL_DELETE(my_ptr2);
+                iAlloc.deallocate(aKvp);
                 return PVMFFailure;
             }
         }

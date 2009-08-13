@@ -15,7 +15,6 @@
  * and limitations under the License.
  * -------------------------------------------------------------------
  */
-
 #ifndef PVMF_NODE_UTILS_H_INCLUDED
 #define PVMF_NODE_UTILS_H_INCLUDED
 
@@ -205,10 +204,24 @@ enum TPVMFGenericNodeCommand
     , PVMF_GENERIC_NODE_RESET
     , PVMF_GENERIC_NODE_CANCELALLCOMMANDS
     , PVMF_GENERIC_NODE_CANCELCOMMAND
+    //From PvmfDataSourcePlaybackControlInterface
+    , PVMF_GENERIC_NODE_SET_DATASOURCE_POSITION
+    , PVMF_GENERIC_NODE_QUERY_DATASOURCE_POSITION
+    , PVMF_GENERIC_NODE_SET_DATASOURCE_RATE
+    //From PVMFMetadataExtensionInterface
+    , PVMF_GENERIC_NODE_GETNODEMETADATAKEYS
+    , PVMF_GENERIC_NODE_GETNODEMETADATAVALUES
+    //From PvmfDataSourceDirectionControlInterface
+    , PVMF_GENERIC_NODE_SET_DATASOURCE_DIRECTION
+    //From PVMFCPMPluginLicenseInterface
+    , PVMF_GENERIC_NODE_GET_LICENSE_W
+    , PVMF_GENERIC_NODE_GET_LICENSE
+    , PVMF_GENERIC_NODE_CANCEL_GET_LICENSE
+    //Node Private command
+    , PVMF_GENERIC_NODE_CAPCONFIG_SETPARAMS
     , PVMF_GENERIC_NODE_COMMAND_LAST //a placeholder for adding
     //node-specific commands to this list.
 };
-
 /**
 //A node command class with constructors and destructors
 //for all of the generic asynchronous node commands.

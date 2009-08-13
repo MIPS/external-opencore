@@ -114,22 +114,10 @@ class PVA_FF_MovieAtom : public PVA_FF_Atom, public PVA_FF_ISucceedFail
         void addTextDecoderSpecificInfo(PVA_FF_TextSampleDescInfo *pinfo, int32 trackID);
 
         PVA_FF_TrackAtom *getMediaTrack(uint32 trackID);
-        void addSampleToTrack(uint32 trackID, uint8 *psample,
-                              uint32 size, uint32 ts, uint8 flags,
-                              uint32 baseOffset = 0, bool _oChunkStart = false);
 
-        void addTextSampleToTrack(uint32 trackID, uint8 *psample,
-                                  uint32 size, uint32 ts, uint8 flags, int32 index,
-                                  uint32 baseOffset = 0, bool _oChunkStart = false);
+        void addTextSampleToTrack(uint32 trackID, PVMP4FFComposerSampleParam *pSampleParam, bool _oChunkStart = false);
 
-        void addSampleToTrack(uint32 trackID,
-                              Oscl_Vector <OsclMemoryFragment, OsclMemAllocator>& fragmentList,
-                              uint32 size, uint32 ts, uint8 flags,
-                              uint32 baseOffset = 0, bool _oChunkStart = false);
-        void addTextSampleToTrack(uint32 trackID,
-                                  Oscl_Vector <OsclMemoryFragment, OsclMemAllocator>& fragmentList,
-                                  uint32 size, uint32 ts, uint8 flags, int32 index,
-                                  uint32 baseOffset = 0, bool _oChunkStart = false);
+        void addSampleToTrack(uint32 trackID, PVMP4FFComposerSampleParam *pSampleParam, bool _oChunkStart = false);
 
         bool reAuthorFirstSampleInTrack(uint32 trackID,
                                         uint32 size,
@@ -340,6 +328,12 @@ class PVA_FF_MovieAtom : public PVA_FF_Atom, public PVA_FF_ISucceedFail
             }
 
             return false;
+        }
+        uint32  getNumberOfTracks()
+        {
+            if (_pMediaTrackVec)
+                return _pMediaTrackVec->size();
+            return 0;
         }
 
         // Movie Fragment : add movie extend atom usage APIs

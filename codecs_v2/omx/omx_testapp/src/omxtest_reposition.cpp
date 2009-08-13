@@ -217,7 +217,7 @@ OMX_ERRORTYPE OmxDecTestReposition::EventHandler(OMX_OUT OMX_HANDLETYPE aCompone
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "OmxDecTestReposition::EventHandler() - Error returned in the callback"));
 
-        if (OMX_ErrorSameState == aData1)
+        if (OMX_ErrorSameState == (OMX_S32)aData1)
         {
             PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "OmxDecTestReposition::EventHandler() - Same State Error, trying to proceed"));
             if (StateCleanUp == iState)
@@ -229,7 +229,7 @@ OMX_ERRORTYPE OmxDecTestReposition::EventHandler(OMX_OUT OMX_HANDLETYPE aCompone
                 }
             }
         }
-        else if (OMX_ErrorStreamCorrupt == aData1)
+        else if (OMX_ErrorStreamCorrupt == (OMX_S32)aData1)
         {
             /* Don't do anything right now for the stream corrupt error,
              * just count the number of such callbacks and let the decoder to proceed */
@@ -259,7 +259,7 @@ OMX_BOOL OmxDecTestReposition::ResetStream()
     fclose(ipOutputFile);
     ipOutputFile = NULL;
 
-    rewind(ipInputFile);
+    fseek(ipInputFile, 0, SEEK_SET);
 
     //Open the same output file again for the new data to be written
     ipOutputFile = fopen(iOutFileName, "wb");
@@ -321,7 +321,7 @@ void OmxDecTestReposition::Run()
 
             //Run this test case only for Audio component currently, exit if video comes
             if (0 == oscl_strcmp(iFormat, "H264") || 0 == oscl_strcmp(iFormat, "M4V")
-                    || 0 == oscl_strcmp(iFormat, "WMV") || 0 == oscl_strcmp(iFormat, "H263"))
+                    || 0 == oscl_strcmp(iFormat, "WMV") || 0 == oscl_strcmp(iFormat, "H263") || 0 == oscl_strcmp(iFormat, "RV"))
             {
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "OmxDecTestReposition::Run() - ERROR, This test can't be run for Video component"));
 #ifdef PRINT_RESULT
@@ -367,13 +367,13 @@ void OmxDecTestReposition::Run()
             }
 
             //This should be the first call to the component to load it.
-            Err = OMX_Init();
-            CHECK_ERROR(Err, "OMX_Init");
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG, (0, "OmxDecTestReposition::Run() - OMX_Init done"));
+            Err = OMX_MasterInit();
+            CHECK_ERROR(Err, "OMX_MasterInit");
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG, (0, "OmxDecTestReposition::Run() - OMX_MasterInit done"));
 
             if (NULL != iName)
             {
-                Err = OMX_GetHandle(&ipAppPriv->Handle, iName, (OMX_PTR) this , iCallbacks->getCallbackStruct());
+                Err = OMX_MasterGetHandle(&ipAppPriv->Handle, iName, (OMX_PTR) this , iCallbacks->getCallbackStruct());
                 CHECK_ERROR(Err, "GetHandle");
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG, (0, "OmxDecTestReposition::Run() - Got Handle for the component %s", iName));
             }
@@ -385,7 +385,7 @@ void OmxDecTestReposition::Run()
 
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG, (0, "OmxDecTestReposition::Run() - Finding out the role for the component %s", iRole));
                 // call once to find out the number of components that can fit the role
-                Err = OMX_GetComponentsOfRole(iRole, &NumComps, NULL);
+                Err = OMX_MasterGetComponentsOfRole(iRole, &NumComps, NULL);
 
                 if (OMX_ErrorNone != Err || NumComps < 1)
                 {
@@ -413,13 +413,13 @@ void OmxDecTestReposition::Run()
                 }
 
                 // call 2nd time to get the component names
-                Err = OMX_GetComponentsOfRole(iRole, &NumComps, (OMX_U8**) pCompOfRole);
+                Err = OMX_MasterGetComponentsOfRole(iRole, &NumComps, (OMX_U8**) pCompOfRole);
                 CHECK_ERROR(Err, "GetComponentsOfRole");
 
                 for (ii = 0; ii < NumComps; ii++)
                 {
                     // try to create component
-                    Err = OMX_GetHandle(&ipAppPriv->Handle, (OMX_STRING) pCompOfRole[ii], (OMX_PTR) this, iCallbacks->getCallbackStruct());
+                    Err = OMX_MasterGetHandle(&ipAppPriv->Handle, (OMX_STRING) pCompOfRole[ii], (OMX_PTR) this, iCallbacks->getCallbackStruct());
                     // if successful, no need to continue
                     if ((OMX_ErrorNone == Err) && (NULL != ipAppPriv->Handle))
                     {
@@ -460,6 +460,15 @@ void OmxDecTestReposition::Run()
             }
 
             CHECK_ERROR(Err, "GetParameter_Audio/Video_Init");
+
+            // Number of ports must be at least 2 of them (in&out)
+            if (iPortInit.nPorts < 2)
+            {
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                                (0, "OmxComponentDecTest::Run() There is insuffucient %d ports", iPortInit.nPorts));
+                StopOnError();
+                break;
+            }
 
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG, (0, "OmxDecTestReposition::Run() - GetParameter called for OMX_IndexParamAudioInit/OMX_IndexParamVideoInit"));
             for (ii = 0; ii < iPortInit.nPorts; ii++)
@@ -588,6 +597,10 @@ void OmxDecTestReposition::Run()
             else if (0 == oscl_strcmp(iFormat, "WMV"))
             {
                 pGetInputFrame = &OmxComponentDecTest::GetInputFrameWmv;
+            }
+            else if (0 == oscl_strcmp(iFormat, "RV"))
+            {
+                pGetInputFrame = &OmxComponentDecTest::GetInputFrameRv;
             }
             else if (0 == oscl_strcmp(iFormat, "AMR"))
             {
@@ -927,13 +940,28 @@ void OmxDecTestReposition::Run()
             iPendingCommands = 1;
 
             if (0 == oscl_strcmp(iFormat, "H264") || 0 == oscl_strcmp(iFormat, "H263")
-                    || 0 == oscl_strcmp(iFormat, "M4V"))
+                    || 0 == oscl_strcmp(iFormat, "M4V") || 0 == oscl_strcmp(iFormat, "RV"))
             {
                 iOutBufferSize = ((iParamPort.format.video.nFrameWidth + 15) & ~15) * ((iParamPort.format.video.nFrameHeight + 15) & ~15) * 3 / 2;
+
+                if (iOutBufferSize < (OMX_S32)iParamPort.nBufferSize)
+                {
+                    iOutBufferSize = iParamPort.nBufferSize;
+                }
             }
             else if (0 == oscl_strcmp(iFormat, "WMV"))
             {
                 iOutBufferSize = ((iParamPort.format.video.nFrameWidth + 3) & ~3) * ((iParamPort.format.video.nFrameHeight + 3) & ~3) * 3 / 2;
+
+                if (iOutBufferSize < (OMX_S32)iParamPort.nBufferSize)
+                {
+                    iOutBufferSize = iParamPort.nBufferSize;
+                }
+            }
+            else
+            {
+                //For audio components take the size from the component
+                iOutBufferSize = iParamPort.nBufferSize;
             }
 
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
@@ -1219,7 +1247,7 @@ void OmxDecTestReposition::Run()
                     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
                                     (0, "OmxDecTestReposition::Run() - Free the Component Handle"));
 
-                    Err = OMX_FreeHandle(ipAppPriv->Handle);
+                    Err = OMX_MasterFreeHandle(ipAppPriv->Handle);
                     if (OMX_ErrorNone != Err)
                     {
                         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "OmxDecTestReposition::Run() - FreeHandle Error"));
@@ -1231,10 +1259,10 @@ void OmxDecTestReposition::Run()
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
                             (0, "OmxDecTestReposition::Run() - De-initialize the omx component"));
 
-            Err = OMX_Deinit();
+            Err = OMX_MasterDeinit();
             if (OMX_ErrorNone != Err)
             {
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "OmxDecTestReposition::Run() - OMX_Deinit Error"));
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "OmxDecTestReposition::Run() - OMX_MasterDeinit Error"));
                 iTestStatus = OMX_FALSE;
             }
 

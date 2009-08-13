@@ -901,9 +901,10 @@ void pvplayer_async_test_cpmdlapassthru::CommandCompleted(const PVCmdResponse& a
                     iState = STATE_REMOVEDATASOURCE;
                     RunIfNotReady();
                 }
-                else if (aResponse.GetCmdStatus() == PVMFErrLicenseRequired)
+                else if (aResponse.GetCmdStatus() == PVMFErrDrmLicenseNotFound
+                         || aResponse.GetCmdStatus() == PVMFErrDrmLicenseExpired)
                 {
-                    fprintf(iTestMsgOutputFile, " ...PVMFErrLicenseRequired\n");
+                    fprintf(iTestMsgOutputFile, " ...DRM License Needed\n");
                     // Try to acquire the license.
                     iState = STATE_QUERYLICENSEACQIF;
                     RunIfNotReady();

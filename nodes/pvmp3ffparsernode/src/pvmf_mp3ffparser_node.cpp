@@ -1084,41 +1084,6 @@ PVMFStatus PVMFMP3FFParserNode::DoInit(PVMFMP3FFParserNodeCommand& aCmd)
     switch (iInterfaceState)
     {
         case EPVMFNodeIdle:
-            if (iMP3File == NULL)
-            {
-                // Instantiate the IMpeg3File object, this class represents the mp3ff library
-                MP3ErrorType bSuccess = MP3_SUCCESS;
-
-                PVMFDataStreamFactory* dsFactory = iCPMContainer.iCPMContentAccessFactory;
-                if ((dsFactory == NULL) && (iDataStreamFactory != NULL))
-                {
-#if PV_HAS_SHOUTCAST_SUPPORT_ENABLED
-                    if (iSourceFormat == PVMF_MIME_DATA_SOURCE_SHOUTCAST_URL && iSCSPFactory != NULL && iSCSP != NULL)
-                    {
-
-                        dsFactory = iSCSPFactory;
-                        iSCSP->RequestMetadataUpdates(iDataStreamSessionID, *this, iMetadataBufSize, iMetadataBuf);
-                    }
-                    else
-                    {
-                        dsFactory = iDataStreamFactory;
-                    }
-#else
-                    dsFactory = iDataStreamFactory;
-#endif
-                }
-
-                // Try block start
-                PVMFStatus returncode = CreateMP3FileObject(bSuccess, dsFactory);
-                // Try block end
-
-                if ((returncode != PVMFSuccess) || !iMP3File || (bSuccess != MP3_SUCCESS))
-                {
-                    // creation of IMpeg3File object failed or resulted in error
-                    SetState(EPVMFNodeError);
-                    return PVMFErrResource;
-                }
-            }
             //we need to go through the CPM sequence to check access on the file.
             if (oWaitingOnLicense == false)
             {
@@ -1128,24 +1093,6 @@ PVMFStatus PVMFMP3FFParserNode::DoInit(PVMFMP3FFParserNodeCommand& aCmd)
             {
                 Push(iCPMContainer, PVMFSubNodeContainerBaseMp3::ECPMApproveUsage);
                 Push(iCPMContainer, PVMFSubNodeContainerBaseMp3::ECPMCheckUsage);
-            }
-
-            // enable the duration scanner for local playback only
-            if (!iDataStreamFactory && !iDurationCalcAO)
-            {
-                int32 leavecode = 0;
-                OSCL_TRY(leavecode, iDurationCalcAO = OSCL_NEW(PVMp3DurationCalculator,
-                                                      (OsclActiveObject::EPriorityIdle, iMP3File, this)));
-                if (leavecode)
-                {
-                    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                                    (0, "PVMFMP3FFParserNode::DoInit() Duration Scan is disabled. DurationCalcAO not created"));
-                }
-
-                if (iDurationCalcAO)
-                {
-                    iDurationCalcAO->ScheduleAO();
-                }
             }
 
             RunIfNotReady();
@@ -1205,6 +1152,25 @@ PVMFStatus PVMFMP3FFParserNode::DoPrepare(PVMFMP3FFParserNodeCommand& aCmd)
             // Data is not available, autopause the track.
             iAutoPaused = true;
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG, (0, "PVMFMP3FFParserNode::DoPrepare() - Auto Pause Triggered, TS = %d", ts));
+        }
+    }
+    else
+    {
+        // enable the duration scanner for local playback only
+        if (!iDurationCalcAO)
+        {
+            int32 leavecode = 0;
+            OSCL_TRY(leavecode, iDurationCalcAO = OSCL_NEW(PVMp3DurationCalculator,
+                                                  (OsclActiveObject::EPriorityIdle, iMP3File, this)));
+            if (leavecode || !iDurationCalcAO)
+            {
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                                (0, "PVMFMP3FFParserNode::DoInit() Duration Scan is disabled. DurationCalcAO not created"));
+            }
+            else
+            {
+                iDurationCalcAO->ScheduleAO();
+            }
         }
     }
     return PVMFSuccess;
@@ -3049,12 +3015,11 @@ PVMFStatus PVMFMP3FFParserNode::ReleaseNodeMetadataValues(Oscl_Vector<PvmiKvp, O
         return PVMFErrArgument;
     }
 
-    if (end >= aValueList.size())
-        // Go through the specified values and free it
-        for (uint32 i = start; i < end; i++)
-        {
-            iMP3File->ReleaseMetadataValue(aValueList[i]);
-        }
+    // Go through the specified values and free it
+    for (uint32 i = start; i < end; i++)
+    {
+        iMP3File->ReleaseMetadataValue(aValueList[i]);
+    }
     return PVMFSuccess;
 }
 
@@ -4107,6 +4072,20 @@ void PVMFMP3FFParserNode::DataStreamErrorEvent(const PVMFAsyncEvent& aEvent)
 
 PVMFStatus PVMFMP3FFParserNode::CheckForMP3HeaderAvailability()
 {
+
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "PVMFMP3FFParserNode::CheckForMP3HeaderAvailability In"));
+    if (iMP3File == NULL)
+    {
+        PVMFStatus retval = SetupParserObject();
+        if (retval != PVMFSuccess)
+        {
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                            (0, "PVMFMP3FFParserNode::CheckForMP3HeaderAvailability setup parser object failed."));
+            return retval;
+        }
+    }
+
     if (iDataStreamInterface != NULL)
     {
         uint32 minBytesRequired = 0;
@@ -4412,3 +4391,65 @@ PVMFStatus PVMFMP3FFParserNode::ParseShoutcastMetadata(char* aMetadataBuf, uint3
     }
     return PVMFSuccess;
 }
+
+PVMFStatus PVMFMP3FFParserNode::SetupParserObject()
+{
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "PVMFMP3FFParserNode:SetupParserObject() In"));
+
+    if (iMP3File == NULL)
+    {
+        // Instantiate the IMpeg3File object, this class represents the mp3ff library
+        MP3ErrorType bSuccess = MP3_SUCCESS;
+
+        PVMFDataStreamFactory* dsFactory = iCPMContainer.iCPMContentAccessFactory;
+        if ((dsFactory == NULL) && (iDataStreamFactory != NULL))
+        {
+#if PV_HAS_SHOUTCAST_SUPPORT_ENABLED
+            if (iSourceFormat == PVMF_MIME_DATA_SOURCE_SHOUTCAST_URL && iSCSPFactory != NULL && iSCSP != NULL)
+            {
+                dsFactory = iSCSPFactory;
+                iSCSP->RequestMetadataUpdates(iDataStreamSessionID, *this, iMetadataBufSize, iMetadataBuf);
+            }
+            else
+            {
+                dsFactory = iDataStreamFactory;
+            }
+#else
+            dsFactory = iDataStreamFactory;
+#endif
+        }
+
+        // Try block start
+        PVMFStatus returncode = CreateMP3FileObject(bSuccess, dsFactory);
+        // Try block end
+
+        if ((returncode != PVMFSuccess) || !iMP3File || (bSuccess != MP3_SUCCESS))
+        {
+            // creation of IMpeg3File object failed or resulted in error
+            SetState(EPVMFNodeError);
+            return PVMFErrResource;
+        }
+    }
+
+    // enable the duration scanner for local playback only
+    if (!iDataStreamFactory && !iDurationCalcAO)
+    {
+        int32 leavecode = 0;
+        OSCL_TRY(leavecode, iDurationCalcAO = OSCL_NEW(PVMp3DurationCalculator,
+                                              (OsclActiveObject::EPriorityIdle, iMP3File, this)));
+        if (leavecode)
+        {
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                            (0, "PVMFMP3FFParserNode::DoInit() Duration Scan is disabled. DurationCalcAO not created"));
+        }
+
+        if (iDurationCalcAO)
+        {
+            iDurationCalcAO->ScheduleAO();
+        }
+    }
+    return PVMFSuccess;
+}
+
+

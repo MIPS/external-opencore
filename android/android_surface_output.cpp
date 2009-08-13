@@ -39,7 +39,7 @@ OSCL_DLL_ENTRY_POINT_DEFAULT()
 using namespace android;
 
 OSCL_EXPORT_REF AndroidSurfaceOutput::AndroidSurfaceOutput() :
-    OsclTimerObject(OsclActiveObject::EPriorityNominal, "androidsurfaceoutput")
+        OsclTimerObject(OsclActiveObject::EPriorityNominal, "androidsurfaceoutput")
 {
     initData();
 
@@ -61,28 +61,28 @@ status_t AndroidSurfaceOutput::set(PVPlayer* pvPlayer, const sp<ISurface>& surfa
 void AndroidSurfaceOutput::initData()
 {
     iVideoHeight = iVideoWidth = iVideoDisplayHeight = iVideoDisplayWidth = 0;
-    iVideoFormat=PVMF_MIME_FORMAT_UNKNOWN;
+    iVideoFormat = PVMF_MIME_FORMAT_UNKNOWN;
     resetVideoParameterFlags();
 
-    iCommandCounter=0;
-    iLogger=NULL;
+    iCommandCounter = 0;
+    iLogger = NULL;
     iCommandResponseQueue.reserve(5);
     iWriteResponseQueue.reserve(5);
-    iObserver=NULL;
-    iLogger=NULL;
-    iPeer=NULL;
-    iState=STATE_IDLE;
+    iObserver = NULL;
+    iLogger = NULL;
+    iPeer = NULL;
+    iState = STATE_IDLE;
     iIsMIOConfigured = false;
 }
 
 void AndroidSurfaceOutput::ResetData()
-    //reset all data from this session.
+//reset all data from this session.
 {
     Cleanup();
 
     //reset all the received media parameters.
-    iVideoFormatString="";
-    iVideoFormat=PVMF_MIME_FORMAT_UNKNOWN;
+    iVideoFormatString = "";
+    iVideoFormat = PVMF_MIME_FORMAT_UNKNOWN;
     resetVideoParameterFlags();
     iIsMIOConfigured = false;
 }
@@ -108,12 +108,14 @@ bool AndroidSurfaceOutput::checkVideoParameterFlags()
 void AndroidSurfaceOutput::processWriteResponseQueue(int numFramesToHold)
 {
     LOGV("processWriteResponseQueue: queued = %d, numFramesToHold = %d",
-            iWriteResponseQueue.size(), numFramesToHold);
-    while (iWriteResponseQueue.size() > numFramesToHold) {
-        if (iPeer) {
+         iWriteResponseQueue.size(), numFramesToHold);
+    while (iWriteResponseQueue.size() > numFramesToHold)
+    {
+        if (iPeer)
+        {
             iPeer->writeComplete(iWriteResponseQueue[0].iStatus,
-                    iWriteResponseQueue[0].iCmdId,
-                    (OsclAny*)iWriteResponseQueue[0].iContext);
+                                 iWriteResponseQueue[0].iCmdId,
+                                 (OsclAny*)iWriteResponseQueue[0].iContext);
         }
         iWriteResponseQueue.erase(&iWriteResponseQueue[0]);
     }
@@ -122,7 +124,7 @@ void AndroidSurfaceOutput::processWriteResponseQueue(int numFramesToHold)
 void AndroidSurfaceOutput::Cleanup()
 //cleanup all allocated memory and release resources.
 {
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0,"AndroidSurfaceOutput::Cleanup() In"));
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "AndroidSurfaceOutput::Cleanup() In"));
     while (!iCommandResponseQueue.empty())
     {
         if (iObserver)
@@ -135,8 +137,8 @@ void AndroidSurfaceOutput::Cleanup()
     // We'll close frame buf and delete here for now.
     closeFrameBuf();
 
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0,"AndroidSurfaceOutput::Cleanup() Out"));
- }
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "AndroidSurfaceOutput::Cleanup() Out"));
+}
 
 OSCL_EXPORT_REF AndroidSurfaceOutput::~AndroidSurfaceOutput()
 {
@@ -146,7 +148,7 @@ OSCL_EXPORT_REF AndroidSurfaceOutput::~AndroidSurfaceOutput()
 
 PVMFStatus AndroidSurfaceOutput::connect(PvmiMIOSession& aSession, PvmiMIOObserver* aObserver)
 {
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0,"AndroidSurfaceOutput::connect() called"));
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "AndroidSurfaceOutput::connect() called"));
     // Each Session could have its own set of Configuration parameters
     //in an array of structures and the session ID could be an index to that array.
 
@@ -154,25 +156,25 @@ PVMFStatus AndroidSurfaceOutput::connect(PvmiMIOSession& aSession, PvmiMIOObserv
     if (iObserver)
         return PVMFFailure;
 
-    iObserver=aObserver;
+    iObserver = aObserver;
     return PVMFSuccess;
 }
 
 
 PVMFStatus AndroidSurfaceOutput::disconnect(PvmiMIOSession aSession)
 {
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0,"AndroidSurfaceOutput::disconnect() called"));
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "AndroidSurfaceOutput::disconnect() called"));
     //currently supports only one session
-    iObserver=NULL;
+    iObserver = NULL;
     return PVMFSuccess;
 }
 
 
-PvmiMediaTransfer* AndroidSurfaceOutput::createMediaTransfer(PvmiMIOSession& aSession, 
-                                                        PvmiKvp* read_formats, int32 read_flags,
-                                                        PvmiKvp* write_formats, int32 write_flags)
+PvmiMediaTransfer* AndroidSurfaceOutput::createMediaTransfer(PvmiMIOSession& aSession,
+        PvmiKvp* read_formats, int32 read_flags,
+        PvmiKvp* write_formats, int32 write_flags)
 {
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0,"AndroidSurfaceOutput::createMediaTransfer() called"));
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "AndroidSurfaceOutput::createMediaTransfer() called"));
     return (PvmiMediaTransfer*)this;
 }
 
@@ -189,24 +191,24 @@ void AndroidSurfaceOutput::QueueCommandResponse(CommandResponse& aResp)
     RunIfNotReady();
 }
 
-PVMFCommandId AndroidSurfaceOutput::QueryUUID(const PvmfMimeString& aMimeType, 
-                                        Oscl_Vector<PVUuid, OsclMemAllocator>& aUuids,
-                                        bool aExactUuidsOnly, const OsclAny* aContext)
+PVMFCommandId AndroidSurfaceOutput::QueryUUID(const PvmfMimeString& aMimeType,
+        Oscl_Vector<PVUuid, OsclMemAllocator>& aUuids,
+        bool aExactUuidsOnly, const OsclAny* aContext)
 {
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0,"AndroidSurfaceOutput::QueryUUID() called"));
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "AndroidSurfaceOutput::QueryUUID() called"));
 
     OSCL_UNUSED_ARG(aMimeType);
     OSCL_UNUSED_ARG(aExactUuidsOnly);
 
-    PVMFCommandId cmdid=iCommandCounter++;
+    PVMFCommandId cmdid = iCommandCounter++;
 
-    PVMFStatus status=PVMFFailure;
+    PVMFStatus status = PVMFFailure;
     int32 err ;
     OSCL_TRY(err, aUuids.push_back(PVMI_CAPABILITY_AND_CONFIG_PVUUID););
-    if (err==OsclErrNone)
-        status= PVMFSuccess;
+    if (err == OsclErrNone)
+        status = PVMFSuccess;
 
-    CommandResponse resp(status,cmdid,aContext);
+    CommandResponse resp(status, cmdid, aContext);
     QueueCommandResponse(resp);
     return cmdid;
 }
@@ -214,23 +216,23 @@ PVMFCommandId AndroidSurfaceOutput::QueryUUID(const PvmfMimeString& aMimeType,
 
 PVMFCommandId AndroidSurfaceOutput::QueryInterface(const PVUuid& aUuid, PVInterface*& aInterfacePtr, const OsclAny* aContext)
 {
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0,"AndroidSurfaceOutput::QueryInterface() called"));
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "AndroidSurfaceOutput::QueryInterface() called"));
 
-    PVMFCommandId cmdid=iCommandCounter++;
+    PVMFCommandId cmdid = iCommandCounter++;
 
-    PVMFStatus status=PVMFFailure;
-    if(aUuid == PVMI_CAPABILITY_AND_CONFIG_PVUUID)
+    PVMFStatus status = PVMFFailure;
+    if (aUuid == PVMI_CAPABILITY_AND_CONFIG_PVUUID)
     {
-        PvmiCapabilityAndConfig* myInterface = OSCL_STATIC_CAST(PvmiCapabilityAndConfig*,this);
+        PvmiCapabilityAndConfig* myInterface = OSCL_STATIC_CAST(PvmiCapabilityAndConfig*, this);
         aInterfacePtr = OSCL_STATIC_CAST(PVInterface*, myInterface);
-        status= PVMFSuccess;
+        status = PVMFSuccess;
     }
     else
     {
-        status=PVMFFailure;
+        status = PVMFFailure;
     }
 
-    CommandResponse resp(status,cmdid,aContext);
+    CommandResponse resp(status, cmdid, aContext);
     QueueCommandResponse(resp);
     return cmdid;
 }
@@ -238,33 +240,33 @@ PVMFCommandId AndroidSurfaceOutput::QueryInterface(const PVUuid& aUuid, PVInterf
 
 void AndroidSurfaceOutput::deleteMediaTransfer(PvmiMIOSession& aSession, PvmiMediaTransfer* media_transfer)
 {
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0,"AndroidSurfaceOutput::deleteMediaTransfer() called"));
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "AndroidSurfaceOutput::deleteMediaTransfer() called"));
     // This class is implementing the media transfer, so no cleanup is needed
 }
 
 
 PVMFCommandId AndroidSurfaceOutput:: Init(const OsclAny* aContext)
 {
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0,"AndroidSurfaceOutput::Init() called"));
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "AndroidSurfaceOutput::Init() called"));
 
-    PVMFCommandId cmdid=iCommandCounter++;
+    PVMFCommandId cmdid = iCommandCounter++;
 
-    PVMFStatus status=PVMFFailure;
+    PVMFStatus status = PVMFFailure;
 
-    switch(iState)
+    switch (iState)
     {
-    case STATE_LOGGED_ON:
-        status=PVMFSuccess;
-        iState=STATE_INITIALIZED;
-        break;
+        case STATE_LOGGED_ON:
+            status = PVMFSuccess;
+            iState = STATE_INITIALIZED;
+            break;
 
-    default:
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0,"AndroidSurfaceOutput::Invalid State"));
-        status=PVMFErrInvalidState;
-        break;
+        default:
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "AndroidSurfaceOutput::Invalid State"));
+            status = PVMFErrInvalidState;
+            break;
     }
 
-    CommandResponse resp(status,cmdid,aContext);
+    CommandResponse resp(status, cmdid, aContext);
     QueueCommandResponse(resp);
     return cmdid;
 }
@@ -272,8 +274,8 @@ PVMFCommandId AndroidSurfaceOutput:: Init(const OsclAny* aContext)
 PVMFCommandId AndroidSurfaceOutput::Reset(const OsclAny* aContext)
 {
     ResetData();
-    PVMFCommandId cmdid=iCommandCounter++;
-    CommandResponse resp(PVMFSuccess,cmdid,aContext);
+    PVMFCommandId cmdid = iCommandCounter++;
+    CommandResponse resp(PVMFSuccess, cmdid, aContext);
     QueueCommandResponse(resp);
     return cmdid;
 }
@@ -282,28 +284,28 @@ PVMFCommandId AndroidSurfaceOutput::Reset(const OsclAny* aContext)
 PVMFCommandId AndroidSurfaceOutput::Start(const OsclAny* aContext)
 {
     iEosReceived = false;
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0,"AndroidSurfaceOutput::Start() called"));
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "AndroidSurfaceOutput::Start() called"));
 
-    PVMFCommandId cmdid=iCommandCounter++;
+    PVMFCommandId cmdid = iCommandCounter++;
 
-    PVMFStatus status=PVMFFailure;
+    PVMFStatus status = PVMFFailure;
 
-    switch(iState)
+    switch (iState)
     {
-    case STATE_INITIALIZED:
-    case STATE_PAUSED:
+        case STATE_INITIALIZED:
+        case STATE_PAUSED:
 
-        iState=STATE_STARTED;
-        processWriteResponseQueue(0);
-        status=PVMFSuccess;
-        break;
+            iState = STATE_STARTED;
+            processWriteResponseQueue(0);
+            status = PVMFSuccess;
+            break;
 
-    default:
-        status=PVMFErrInvalidState;
-        break;
+        default:
+            status = PVMFErrInvalidState;
+            break;
     }
 
-    CommandResponse resp(status,cmdid,aContext);
+    CommandResponse resp(status, cmdid, aContext);
     QueueCommandResponse(resp);
     return cmdid;
 }
@@ -316,33 +318,34 @@ void AndroidSurfaceOutput::postLastFrame()
 
 PVMFCommandId AndroidSurfaceOutput::Pause(const OsclAny* aContext)
 {
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0,"AndroidSurfaceOutput::Pause() called"));
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "AndroidSurfaceOutput::Pause() called"));
 
-    PVMFCommandId cmdid=iCommandCounter++;
+    PVMFCommandId cmdid = iCommandCounter++;
 
-    PVMFStatus status=PVMFFailure;
+    PVMFStatus status = PVMFFailure;
 
-    switch(iState)
+    switch (iState)
     {
-    case STATE_STARTED:
+        case STATE_STARTED:
 
-        iState=STATE_PAUSED;
-        status=PVMFSuccess;
+            iState = STATE_PAUSED;
+            status = PVMFSuccess;
 
-        // post last buffer to prevent stale data
-        // if not configured, PVMFMIOConfigurationComplete is not sent
-        // there should not be any media data.
-    if(iIsMIOConfigured) { 
-        postLastFrame();
-        }
-        break;
+            // post last buffer to prevent stale data
+            // if not configured, PVMFMIOConfigurationComplete is not sent
+            // there should not be any media data.
+            if (iIsMIOConfigured)
+            {
+                postLastFrame();
+            }
+            break;
 
-    default:
-        status=PVMFErrInvalidState;
-        break;
+        default:
+            status = PVMFErrInvalidState;
+            break;
     }
 
-    CommandResponse resp(status,cmdid,aContext);
+    CommandResponse resp(status, cmdid, aContext);
     QueueCommandResponse(resp);
     return cmdid;
 }
@@ -350,162 +353,162 @@ PVMFCommandId AndroidSurfaceOutput::Pause(const OsclAny* aContext)
 
 PVMFCommandId AndroidSurfaceOutput::Flush(const OsclAny* aContext)
 {
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0,"AndroidSurfaceOutput::Flush() called"));
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "AndroidSurfaceOutput::Flush() called"));
 
-    PVMFCommandId cmdid=iCommandCounter++;
+    PVMFCommandId cmdid = iCommandCounter++;
 
-    PVMFStatus status=PVMFFailure;
+    PVMFStatus status = PVMFFailure;
 
-    switch(iState)
+    switch (iState)
     {
-    case STATE_STARTED:
+        case STATE_STARTED:
 
-        iState=STATE_INITIALIZED;
-        status=PVMFSuccess;
-        break;
+            iState = STATE_INITIALIZED;
+            status = PVMFSuccess;
+            break;
 
-    default:
-        status=PVMFErrInvalidState;
-        break;
+        default:
+            status = PVMFErrInvalidState;
+            break;
     }
 
-    CommandResponse resp(status,cmdid,aContext);
+    CommandResponse resp(status, cmdid, aContext);
     QueueCommandResponse(resp);
     return cmdid;
 }
 
 PVMFCommandId AndroidSurfaceOutput::DiscardData(const OsclAny* aContext)
 {
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0,"AndroidSurfaceOutput::DiscardData() called"));
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "AndroidSurfaceOutput::DiscardData() called"));
 
-    PVMFCommandId cmdid=iCommandCounter++;
+    PVMFCommandId cmdid = iCommandCounter++;
 
     //this component doesn't buffer data, so there's nothing
     //needed here.
 
-    PVMFStatus status=PVMFSuccess;
+    PVMFStatus status = PVMFSuccess;
     processWriteResponseQueue(0);
 
-    CommandResponse resp(status,cmdid,aContext);
+    CommandResponse resp(status, cmdid, aContext);
     QueueCommandResponse(resp);
     return cmdid;
 }
 
 PVMFCommandId AndroidSurfaceOutput::DiscardData(PVMFTimestamp aTimestamp, const OsclAny* aContext)
 {
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0,"AndroidSurfaceOutput::DiscardData() called"));
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "AndroidSurfaceOutput::DiscardData() called"));
 
-    PVMFCommandId cmdid=iCommandCounter++;
+    PVMFCommandId cmdid = iCommandCounter++;
 
     aTimestamp = 0;
 
     //this component doesn't buffer data, so there's nothing
     //needed here.
 
-    PVMFStatus status=PVMFSuccess;
+    PVMFStatus status = PVMFSuccess;
     processWriteResponseQueue(0);
 
-    CommandResponse resp(status,cmdid,aContext);
+    CommandResponse resp(status, cmdid, aContext);
     QueueCommandResponse(resp);
     return cmdid;
 }
 
 PVMFCommandId AndroidSurfaceOutput::Stop(const OsclAny* aContext)
 {
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0,"AndroidSurfaceOutput::Stop() called"));
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "AndroidSurfaceOutput::Stop() called"));
 
-    PVMFCommandId cmdid=iCommandCounter++;
+    PVMFCommandId cmdid = iCommandCounter++;
 
-    PVMFStatus status=PVMFFailure;
+    PVMFStatus status = PVMFFailure;
 
-    switch(iState)
+    switch (iState)
     {
-    case STATE_STARTED:
-    case STATE_PAUSED:
+        case STATE_STARTED:
+        case STATE_PAUSED:
 
 #ifdef PERFORMANCE_MEASUREMENTS_ENABLED
-        // FIXME: This should be moved to OMAP library
-    PVOmapVideoProfile.MarkEndTime();
-    PVOmapVideoProfile.PrintStats();
-    PVOmapVideoProfile.Reset();
+            // FIXME: This should be moved to OMAP library
+            PVOmapVideoProfile.MarkEndTime();
+            PVOmapVideoProfile.PrintStats();
+            PVOmapVideoProfile.Reset();
 #endif
 
-        iState=STATE_INITIALIZED;
-        status=PVMFSuccess;
-        break;
+            iState = STATE_INITIALIZED;
+            status = PVMFSuccess;
+            break;
 
-    default:
-        status=PVMFErrInvalidState;
-        break;
+        default:
+            status = PVMFErrInvalidState;
+            break;
     }
 
-    CommandResponse resp(status,cmdid,aContext);
+    CommandResponse resp(status, cmdid, aContext);
     QueueCommandResponse(resp);
     return cmdid;
 }
 
 PVMFCommandId AndroidSurfaceOutput::CancelAllCommands(const OsclAny* aContext)
 {
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0,"AndroidSurfaceOutput::CancelAllCommands() called"));
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "AndroidSurfaceOutput::CancelAllCommands() called"));
 
-    PVMFCommandId cmdid=iCommandCounter++;
+    PVMFCommandId cmdid = iCommandCounter++;
 
     //commands are executed immediately upon being received, so
     //it isn't really possible to cancel them.
 
-    PVMFStatus status=PVMFSuccess;
+    PVMFStatus status = PVMFSuccess;
 
-    CommandResponse resp(status,cmdid,aContext);
+    CommandResponse resp(status, cmdid, aContext);
     QueueCommandResponse(resp);
     return cmdid;
 }
 
 PVMFCommandId AndroidSurfaceOutput::CancelCommand(PVMFCommandId aCmdId, const OsclAny* aContext)
 {
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0,"AndroidSurfaceOutput::CancelCommand() called"));
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "AndroidSurfaceOutput::CancelCommand() called"));
 
-    PVMFCommandId cmdid=iCommandCounter++;
+    PVMFCommandId cmdid = iCommandCounter++;
 
     //commands are executed immediately upon being received, so
     //it isn't really possible to cancel them.
 
     //see if the response is still queued.
-    PVMFStatus status=PVMFFailure;
-    for (uint32 i=0;i<iCommandResponseQueue.size();i++)
+    PVMFStatus status = PVMFFailure;
+    for (uint32 i = 0; i < iCommandResponseQueue.size(); i++)
     {
-        if (iCommandResponseQueue[i].iCmdId==aCmdId)
+        if (iCommandResponseQueue[i].iCmdId == aCmdId)
         {
-            status=PVMFSuccess;
+            status = PVMFSuccess;
             break;
         }
     }
 
-    CommandResponse resp(status,cmdid,aContext);
+    CommandResponse resp(status, cmdid, aContext);
     QueueCommandResponse(resp);
     return cmdid;
 }
 
 void AndroidSurfaceOutput::ThreadLogon()
 {
-    if(iState==STATE_IDLE)
+    if (iState == STATE_IDLE)
     {
         iLogger = PVLogger::GetLoggerObject("PVOmapVideo");
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0,"AndroidSurfaceOutput::ThreadLogon() called"));
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "AndroidSurfaceOutput::ThreadLogon() called"));
         AddToScheduler();
-        iState=STATE_LOGGED_ON;
+        iState = STATE_LOGGED_ON;
     }
 }
 
 
 void AndroidSurfaceOutput::ThreadLogoff()
-{   
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0,"AndroidSurfaceOutput::ThreadLogoff() called"));
-    
-    if(iState!=STATE_IDLE)
+{
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "AndroidSurfaceOutput::ThreadLogoff() called"));
+
+    if (iState != STATE_IDLE)
     {
         RemoveFromScheduler();
-        iLogger=NULL;
-        iState=STATE_IDLE;
+        iLogger = NULL;
+        iState = STATE_IDLE;
         //Reset all data from this session
         ResetData();
     }
@@ -514,15 +517,15 @@ void AndroidSurfaceOutput::ThreadLogoff()
 
 void AndroidSurfaceOutput::setPeer(PvmiMediaTransfer* aPeer)
 {
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0,"AndroidSurfaceOutput::setPeer() called"));
-    // Set the observer 
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "AndroidSurfaceOutput::setPeer() called"));
+    // Set the observer
     iPeer = aPeer;
 }
 
 
 void AndroidSurfaceOutput::useMemoryAllocators(OsclMemAllocator* write_alloc)
 {
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0,"AndroidSurfaceOutput::useMemoryAllocators() called"));
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "AndroidSurfaceOutput::useMemoryAllocators() called"));
     //not supported.
 }
 
@@ -535,7 +538,7 @@ bool AndroidSurfaceOutput::CheckWriteBusy(uint32 aSeqNum)
 }
 
 PVMFCommandId AndroidSurfaceOutput::writeAsync(uint8 aFormatType, int32 aFormatIndex, uint8* aData, uint32 aDataLen,
-                                        const PvmiMediaXferHeader& data_header_info, OsclAny* aContext)
+        const PvmiMediaXferHeader& data_header_info, OsclAny* aContext)
 {
     // Do a leave if MIO is not configured except when it is an EOS
     if (!iIsMIOConfigured
@@ -548,107 +551,107 @@ PVMFCommandId AndroidSurfaceOutput::writeAsync(uint8 aFormatType, int32 aFormatI
         return -1;
     }
 
-    uint32 aSeqNum=data_header_info.seq_num;
-    PVMFTimestamp aTimestamp=data_header_info.timestamp;
-    uint32 flags=data_header_info.flags;
+    uint32 aSeqNum = data_header_info.seq_num;
+    PVMFTimestamp aTimestamp = data_header_info.timestamp;
+    uint32 flags = data_header_info.flags;
 
     if (aSeqNum < 6)
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-            (0,"AndroidSurfaceOutput::writeAsync() seqnum %d ts %d context %d",aSeqNum,aTimestamp,aContext));
+                        (0, "AndroidSurfaceOutput::writeAsync() seqnum %d ts %d context %d", aSeqNum, aTimestamp, aContext));
 
         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-            (0,"AndroidSurfaceOutput::writeAsync() Format Type %d Format Index %d length %d",aFormatType,aFormatIndex,aDataLen));
+                        (0, "AndroidSurfaceOutput::writeAsync() Format Type %d Format Index %d length %d", aFormatType, aFormatIndex, aDataLen));
     }
 
-    PVMFStatus status=PVMFFailure;
+    PVMFStatus status = PVMFFailure;
 
-    switch(aFormatType)
+    switch (aFormatType)
     {
-    case PVMI_MEDIAXFER_FMT_TYPE_COMMAND :
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-            (0,"AndroidSurfaceOutput::writeAsync() called with Command info."));
-        //ignore
-        status= PVMFSuccess;
-        break;
-
-    case PVMI_MEDIAXFER_FMT_TYPE_NOTIFICATION :
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-            (0,"AndroidSurfaceOutput::writeAsync() called with Notification info."));
-        switch(aFormatIndex)
-        {
-        case PVMI_MEDIAXFER_FMT_INDEX_END_OF_STREAM:
-            iEosReceived = true;
-            break;
-        default:
-            break;
-        }
-        //ignore
-        status= PVMFSuccess;
-        break;
-
-    case PVMI_MEDIAXFER_FMT_TYPE_DATA :
-        switch(aFormatIndex)
-        {
-        case PVMI_MEDIAXFER_FMT_INDEX_FMT_SPECIFIC_INFO:
-            //format-specific info contains codec headers.
+        case PVMI_MEDIAXFER_FMT_TYPE_COMMAND :
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                (0,"AndroidSurfaceOutput::writeAsync() called with format-specific info."));
-
-            if (iState<STATE_INITIALIZED)
-            {
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_ERR,
-                    (0,"AndroidSurfaceOutput::writeAsync: Error - Invalid state"));
-                status=PVMFErrInvalidState;
-            }
-            else
-            {
-                status= PVMFSuccess;
-            }
-
+                            (0, "AndroidSurfaceOutput::writeAsync() called with Command info."));
+            //ignore
+            status = PVMFSuccess;
             break;
 
-        case PVMI_MEDIAXFER_FMT_INDEX_DATA:
-            //data contains the media bitstream.
-
-            //Verify the state
-            if (iState!=STATE_STARTED)
+        case PVMI_MEDIAXFER_FMT_TYPE_NOTIFICATION :
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                            (0, "AndroidSurfaceOutput::writeAsync() called with Notification info."));
+            switch (aFormatIndex)
             {
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_ERR,
-                    (0,"AndroidSurfaceOutput::writeAsync: Error - Invalid state"));
-                status=PVMFErrInvalidState;
+                case PVMI_MEDIAXFER_FMT_INDEX_END_OF_STREAM:
+                    iEosReceived = true;
+                    break;
+                default:
+                    break;
             }
-            else
+            //ignore
+            status = PVMFSuccess;
+            break;
+
+        case PVMI_MEDIAXFER_FMT_TYPE_DATA :
+            switch (aFormatIndex)
             {
+                case PVMI_MEDIAXFER_FMT_INDEX_FMT_SPECIFIC_INFO:
+                    //format-specific info contains codec headers.
+                    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                                    (0, "AndroidSurfaceOutput::writeAsync() called with format-specific info."));
 
-                //printf("V WriteAsync { seq=%d, ts=%d }\n", data_header_info.seq_num, data_header_info.timestamp);
+                    if (iState < STATE_INITIALIZED)
+                    {
+                        PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_ERR,
+                                        (0, "AndroidSurfaceOutput::writeAsync: Error - Invalid state"));
+                        status = PVMFErrInvalidState;
+                    }
+                    else
+                    {
+                        status = PVMFSuccess;
+                    }
 
-                // Call playback to send data to IVA for Color Convert
-                status = writeFrameBuf(aData, aDataLen, data_header_info);
+                    break;
 
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_ERR,
-                   (0,"AndroidSurfaceOutput::writeAsync: Playback Progress - frame %d",iFrameNumber++));
+                case PVMI_MEDIAXFER_FMT_INDEX_DATA:
+                    //data contains the media bitstream.
+
+                    //Verify the state
+                    if (iState != STATE_STARTED)
+                    {
+                        PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_ERR,
+                                        (0, "AndroidSurfaceOutput::writeAsync: Error - Invalid state"));
+                        status = PVMFErrInvalidState;
+                    }
+                    else
+                    {
+
+                        //printf("V WriteAsync { seq=%d, ts=%d }\n", data_header_info.seq_num, data_header_info.timestamp);
+
+                        // Call playback to send data to IVA for Color Convert
+                        status = writeFrameBuf(aData, aDataLen, data_header_info);
+
+                        PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_ERR,
+                                        (0, "AndroidSurfaceOutput::writeAsync: Playback Progress - frame %d", iFrameNumber++));
+                    }
+                    break;
+
+                default:
+                    PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_ERR,
+                                    (0, "AndroidSurfaceOutput::writeAsync: Error - unrecognized format index"));
+                    status = PVMFFailure;
+                    break;
             }
             break;
 
         default:
             PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_ERR,
-                (0,"AndroidSurfaceOutput::writeAsync: Error - unrecognized format index"));
-            status= PVMFFailure;
+                            (0, "AndroidSurfaceOutput::writeAsync: Error - unrecognized format type"));
+            status = PVMFFailure;
             break;
-        }
-        break;
-
-    default:
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_ERR,
-            (0,"AndroidSurfaceOutput::writeAsync: Error - unrecognized format type"));
-        status= PVMFFailure;
-        break;
     }
 
     //Schedule asynchronous response
-    PVMFCommandId cmdid=iCommandCounter++;
-    WriteResponse resp(status,cmdid,aContext,aTimestamp);
+    PVMFCommandId cmdid = iCommandCounter++;
+    WriteResponse resp(status, cmdid, aContext, aTimestamp);
     iWriteResponseQueue.push_back(resp);
     RunIfNotReady();
 
@@ -657,15 +660,15 @@ PVMFCommandId AndroidSurfaceOutput::writeAsync(uint8 aFormatType, int32 aFormatI
 
 void AndroidSurfaceOutput::writeComplete(PVMFStatus aStatus, PVMFCommandId  write_cmd_id, OsclAny* aContext)
 {
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0,"AndroidSurfaceOutput::writeComplete() called"));
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "AndroidSurfaceOutput::writeComplete() called"));
     //won't be called since this component is a sink.
 }
 
 
 PVMFCommandId  AndroidSurfaceOutput::readAsync(uint8* data, uint32 max_data_len, OsclAny* aContext,
-                                            int32* formats, uint16 num_formats)
+        int32* formats, uint16 num_formats)
 {
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0,"AndroidSurfaceOutput::readAsync() called"));
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "AndroidSurfaceOutput::readAsync() called"));
     //read not supported.
     OsclError::Leave(OsclErrNotSupported);
     return -1;
@@ -673,23 +676,23 @@ PVMFCommandId  AndroidSurfaceOutput::readAsync(uint8* data, uint32 max_data_len,
 
 
 void AndroidSurfaceOutput::readComplete(PVMFStatus aStatus, PVMFCommandId  read_cmd_id, int32 format_index,
-                                    const PvmiMediaXferHeader& data_header_info, OsclAny* aContext)
+                                        const PvmiMediaXferHeader& data_header_info, OsclAny* aContext)
 {
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0,"AndroidSurfaceOutput::readComplete() called"));
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "AndroidSurfaceOutput::readComplete() called"));
     //won't be called since this component is a sink.
 }
 
 
 void AndroidSurfaceOutput::statusUpdate(uint32 status_flags)
 {
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0,"AndroidSurfaceOutput::statusUpdate() called"));
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "AndroidSurfaceOutput::statusUpdate() called"));
     //won't be called since this component is a sink.
 }
 
 
 void AndroidSurfaceOutput::cancelCommand(PVMFCommandId  command_id)
 {
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0,"AndroidSurfaceOutput::cancelCommand() called"));
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "AndroidSurfaceOutput::cancelCommand() called"));
 
     //the purpose of this API is to cancel a writeAsync command and report
     //completion ASAP.
@@ -702,25 +705,25 @@ void AndroidSurfaceOutput::cancelCommand(PVMFCommandId  command_id)
 
 void AndroidSurfaceOutput::cancelAllCommands()
 {
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0,"AndroidSurfaceOutput::cancelAllCommands() called"));
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "AndroidSurfaceOutput::cancelAllCommands() called"));
 
     //the purpose of this API is to cancel all writeAsync commands and report
     //completion ASAP.
 
-    //in this implementaiton, the write commands are executed immediately 
+    //in this implementaiton, the write commands are executed immediately
     //when received so it isn't really possible to cancel.
     //just report completion immediately.
 
-    for (uint32 i=0;i<iWriteResponseQueue.size();i++)
+    for (uint32 i = 0; i < iWriteResponseQueue.size(); i++)
     {
         //report completion
         if (iPeer)
-            iPeer->writeComplete(iWriteResponseQueue[i].iStatus,iWriteResponseQueue[i].iCmdId,(OsclAny*)iWriteResponseQueue[i].iContext);
+            iPeer->writeComplete(iWriteResponseQueue[i].iStatus, iWriteResponseQueue[i].iCmdId, (OsclAny*)iWriteResponseQueue[i].iContext);
         iWriteResponseQueue.erase(&iWriteResponseQueue[i]);
     }
 }
 
-void AndroidSurfaceOutput::setObserver (PvmiConfigAndCapabilityCmdObserver* aObserver)
+void AndroidSurfaceOutput::setObserver(PvmiConfigAndCapabilityCmdObserver* aObserver)
 {
     OSCL_UNUSED_ARG(aObserver);
     //not needed since this component only supports synchronous capability & config
@@ -728,19 +731,19 @@ void AndroidSurfaceOutput::setObserver (PvmiConfigAndCapabilityCmdObserver* aObs
 }
 
 PVMFStatus AndroidSurfaceOutput::getParametersSync(PvmiMIOSession aSession, PvmiKeyType aIdentifier,
-                                              PvmiKvp*& aParameters, int& num_parameter_elements,
-                                              PvmiCapabilityContext aContext)
+        PvmiKvp*& aParameters, int& num_parameter_elements,
+        PvmiCapabilityContext aContext)
 {
     OSCL_UNUSED_ARG(aSession);
     OSCL_UNUSED_ARG(aContext);
-    aParameters=NULL;
+    aParameters = NULL;
 
     // This is a query for the list of supported formats.
-    if(pv_mime_strcmp(aIdentifier, INPUT_FORMATS_CAP_QUERY) == 0)
+    if (pv_mime_strcmp(aIdentifier, INPUT_FORMATS_CAP_QUERY) == 0)
     {
-        aParameters=(PvmiKvp*)oscl_malloc(sizeof(PvmiKvp));
+        aParameters = (PvmiKvp*)oscl_malloc(sizeof(PvmiKvp));
         if (aParameters == NULL) return PVMFErrNoMemory;
-        aParameters[num_parameter_elements++].value.pChar_value=(char*) PVMF_MIME_YUV420;
+        aParameters[num_parameter_elements++].value.pChar_value = (char*) PVMF_MIME_YUV420;
 
         return PVMFSuccess;
     }
@@ -766,7 +769,7 @@ void AndroidSurfaceOutput ::createContext(PvmiMIOSession aSession, PvmiCapabilit
 }
 
 void AndroidSurfaceOutput::setContextParameters(PvmiMIOSession aSession, PvmiCapabilityContext& aContext,
-                                           PvmiKvp* aParameters, int num_parameter_elements)
+        PvmiKvp* aParameters, int num_parameter_elements)
 {
     OsclError::Leave(OsclErrNotSupported);
 }
@@ -778,70 +781,126 @@ void AndroidSurfaceOutput::DeleteContext(PvmiMIOSession aSession, PvmiCapability
 
 
 void AndroidSurfaceOutput::setParametersSync(PvmiMIOSession aSession, PvmiKvp* aParameters,
-                                        int num_elements, PvmiKvp * & aRet_kvp)
+        int num_elements, PvmiKvp * & aRet_kvp)
 {
     OSCL_UNUSED_ARG(aSession);
 
     aRet_kvp = NULL;
 
     LOGV("setParametersSync");
-    for (int32 i=0;i<num_elements;i++)
+    for (int32 i = 0; i < num_elements; i++)
     {
         //Check against known video parameter keys...
         if (pv_mime_strcmp(aParameters[i].key, MOUT_VIDEO_FORMAT_KEY) == 0)
         {
-            iVideoFormatString=aParameters[i].value.pChar_value;
-            iVideoFormat=iVideoFormatString.get_str();
+            iVideoFormatString = aParameters[i].value.pChar_value;
+            iVideoFormat = iVideoFormatString.get_str();
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                (0,"AndroidSurfaceOutput::setParametersSync() Video Format Key, Value %s",iVideoFormatString.get_str()));
+                            (0, "AndroidSurfaceOutput::setParametersSync() Video Format Key, Value %s", iVideoFormatString.get_str()));
         }
         else if (pv_mime_strcmp(aParameters[i].key, MOUT_VIDEO_WIDTH_KEY) == 0)
         {
-            iVideoWidth=(int32)aParameters[i].value.uint32_value;
+            iVideoWidth = (int32)aParameters[i].value.uint32_value;
             iVideoParameterFlags |= VIDEO_WIDTH_VALID;
             LOGV("iVideoWidth=%d", iVideoWidth);
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                (0,"AndroidSurfaceOutput::setParametersSync() Video Width Key, Value %d",iVideoWidth));
+                            (0, "AndroidSurfaceOutput::setParametersSync() Video Width Key, Value %d", iVideoWidth));
         }
         else if (pv_mime_strcmp(aParameters[i].key, MOUT_VIDEO_HEIGHT_KEY) == 0)
         {
-            iVideoHeight=(int32)aParameters[i].value.uint32_value;
+            iVideoHeight = (int32)aParameters[i].value.uint32_value;
             iVideoParameterFlags |= VIDEO_HEIGHT_VALID;
             LOGV("iVideoHeight=%d", iVideoHeight);
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                (0,"AndroidSurfaceOutput::setParametersSync() Video Height Key, Value %d",iVideoHeight));
+                            (0, "AndroidSurfaceOutput::setParametersSync() Video Height Key, Value %d", iVideoHeight));
         }
         else if (pv_mime_strcmp(aParameters[i].key, MOUT_VIDEO_DISPLAY_HEIGHT_KEY) == 0)
         {
-            iVideoDisplayHeight=(int32)aParameters[i].value.uint32_value;
+            iVideoDisplayHeight = (int32)aParameters[i].value.uint32_value;
             iVideoParameterFlags |= DISPLAY_HEIGHT_VALID;
             LOGV("iVideoDisplayHeight=%d", iVideoDisplayHeight);
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                (0,"AndroidSurfaceOutput::setParametersSync() Video Display Height Key, Value %d",iVideoDisplayHeight));
+                            (0, "AndroidSurfaceOutput::setParametersSync() Video Display Height Key, Value %d", iVideoDisplayHeight));
         }
         else if (pv_mime_strcmp(aParameters[i].key, MOUT_VIDEO_DISPLAY_WIDTH_KEY) == 0)
         {
-            iVideoDisplayWidth=(int32)aParameters[i].value.uint32_value;
+            iVideoDisplayWidth = (int32)aParameters[i].value.uint32_value;
             iVideoParameterFlags |= DISPLAY_WIDTH_VALID;
             LOGV("iVideoDisplayWidth=%d", iVideoDisplayWidth);
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                (0,"AndroidSurfaceOutput::setParametersSync() Video Display Width Key, Value %d",iVideoDisplayWidth));
+                            (0, "AndroidSurfaceOutput::setParametersSync() Video Display Width Key, Value %d", iVideoDisplayWidth));
         }
         else if (pv_mime_strcmp(aParameters[i].key, MOUT_VIDEO_SUBFORMAT_KEY) == 0)
         {
-            iVideoSubFormat=aParameters[i].value.pChar_value;
+            iVideoSubFormat = aParameters[i].value.pChar_value;
             iVideoParameterFlags |= VIDEO_SUBFORMAT_VALID;
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                    (0,"AndroidSurfaceOutput::setParametersSync() Video SubFormat Key, Value %s",iVideoSubFormat.getMIMEStrPtr()));
+                            (0, "AndroidSurfaceOutput::setParametersSync() Video SubFormat Key, Value %s", iVideoSubFormat.getMIMEStrPtr()));
 
-LOGV("VIDEO SUBFORMAT SET TO %s\n",iVideoSubFormat.getMIMEStrPtr());
+            LOGV("VIDEO SUBFORMAT SET TO %s\n", iVideoSubFormat.getMIMEStrPtr());
+        }
+        //All FSI for video will be set here in one go
+        else if (pv_mime_strcmp(aParameters[i].key, PVMF_FORMAT_SPECIFIC_INFO_KEY_YUV) == 0)
+        {
+            PVMFYuvFormatSpecificInfo0* yuvInfo = (PVMFYuvFormatSpecificInfo0*)aParameters->value.key_specific_value;
+
+            iVideoWidth = (int32)yuvInfo->buffer_width;
+            iVideoParameterFlags |= VIDEO_WIDTH_VALID;
+
+            LOGV("iVideoWidth=%d", iVideoWidth);
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                            (0, "AndroidSurfaceOutput::setParametersSync() FSI_YUV Key, Video Width, Value %d", iVideoWidth));
+
+            iVideoHeight = (int32)yuvInfo->buffer_height;
+            iVideoParameterFlags |= VIDEO_HEIGHT_VALID;
+
+            LOGV("iVideoHeight=%d", iVideoHeight);
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                            (0, "AndroidSurfaceOutput::setParametersSync() FSI_YUV Key, Video Height, Value %d", iVideoHeight));
+
+            iVideoDisplayHeight = (int32)yuvInfo->viewable_height;
+            iVideoParameterFlags |= DISPLAY_HEIGHT_VALID;
+
+            LOGV("iVideoDisplayHeight=%d", iVideoDisplayHeight);
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                            (0, "AndroidSurfaceOutput::setParametersSync() FSI_YUV Key, Video Display Height, Value %d", iVideoDisplayHeight));
+
+            iVideoDisplayWidth = (int32)yuvInfo->viewable_width;
+            iVideoParameterFlags |= DISPLAY_WIDTH_VALID;
+
+            LOGV("iVideoDisplayWidth=%d", iVideoDisplayWidth);
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                            (0, "AndroidSurfaceOutput::setParametersSync() FSI_YUV Key, Video Display Width, Value %d", iVideoDisplayWidth));
+
+            iVideoSubFormat = (PVMFFormatType)yuvInfo->video_format;
+            iVideoParameterFlags |= VIDEO_SUBFORMAT_VALID;
+
+            LOGV("VIDEO SUBFORMAT SET TO %s\n", iVideoSubFormat.getMIMEStrPtr());
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                            (0, "AndroidSurfaceOutput::setParametersSync() Video SubFormat Key, Value %s", iVideoSubFormat.getMIMEStrPtr()));
+
+
+
+            iNumberOfBuffers = (int32)yuvInfo->num_buffers;
+            iNumberOfBuffersValid = true;
+
+            LOGV("iNumberOfBuffers=%d", iNumberOfBuffers);
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                            (0, "AndroidSurfaceOutput::setParametersSync() FSI_YUV Key, Number of Buffer, Value %d", iNumberOfBuffers));
+
+            iBufferSize = (int32)yuvInfo->buffer_size;
+            iBufferSizeValid = true;
+
+            LOGV("iBufferSize=%d", iBufferSize);
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                            (0, "AndroidSurfaceOutput::setParametersSync() FSI_YUV Key, Buffer Size, Value %d", iBufferSize));
         }
         else
         {
             //if we get here the key is unrecognized.
 
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                (0,"AndroidSurfaceOutput::setParametersSync() Error, unrecognized key = %s", aParameters[i].key));
+                            (0, "AndroidSurfaceOutput::setParametersSync() Error, unrecognized key = %s", aParameters[i].key));
 
             //set the return value to indicate the unrecognized key
             //and return.
@@ -851,16 +910,16 @@ LOGV("VIDEO SUBFORMAT SET TO %s\n",iVideoSubFormat.getMIMEStrPtr());
     }
     uint32 mycache = iVideoParameterFlags ;
     // if initialization is complete, update the app display info
-    if( checkVideoParameterFlags() )
-    initCheck();
+    if (checkVideoParameterFlags())
+        initCheck();
     iVideoParameterFlags = mycache;
 
-    // when all necessary parameters are received, send 
+    // when all necessary parameters are received, send
     // PVMFMIOConfigurationComplete event to observer
-    if(!iIsMIOConfigured && checkVideoParameterFlags() )
+    if (!iIsMIOConfigured && checkVideoParameterFlags())
     {
         iIsMIOConfigured = true;
-        if(iObserver)
+        if (iObserver)
         {
             iObserver->ReportInfoEvent(PVMFMIOConfigurationComplete);
         }
@@ -868,30 +927,34 @@ LOGV("VIDEO SUBFORMAT SET TO %s\n",iVideoSubFormat.getMIMEStrPtr());
 }
 
 PVMFCommandId AndroidSurfaceOutput::setParametersAsync(PvmiMIOSession aSession, PvmiKvp* aParameters,
-                                                  int num_elements, PvmiKvp*& aRet_kvp, OsclAny* context)
+        int num_elements, PvmiKvp*& aRet_kvp, OsclAny* context)
 {
     OsclError::Leave(OsclErrNotSupported);
     return -1;
 }
 
-uint32 AndroidSurfaceOutput::getCapabilityMetric (PvmiMIOSession aSession)
+uint32 AndroidSurfaceOutput::getCapabilityMetric(PvmiMIOSession aSession)
 {
     return 0;
 }
 
-PVMFStatus AndroidSurfaceOutput::verifyParametersSync (PvmiMIOSession aSession, PvmiKvp* aParameters, int num_elements)
+PVMFStatus AndroidSurfaceOutput::verifyParametersSync(PvmiMIOSession aSession, PvmiKvp* aParameters, int num_elements)
 {
     OSCL_UNUSED_ARG(aSession);
 
     // Go through each parameter
-    for (int32 i=0; i<num_elements; i++) {
+    for (int32 i = 0; i < num_elements; i++)
+    {
         char* compstr = NULL;
         pv_mime_string_extract_type(0, aParameters[i].key, compstr);
-        if (pv_mime_strcmp(compstr, _STRLIT_CHAR("x-pvmf/media/format-type")) == 0) {
-            if (pv_mime_strcmp(aParameters[i].value.pChar_value, PVMF_MIME_YUV420) == 0) {
+        if (pv_mime_strcmp(compstr, _STRLIT_CHAR("x-pvmf/media/format-type")) == 0)
+        {
+            if (pv_mime_strcmp(aParameters[i].value.pChar_value, PVMF_MIME_YUV420) == 0)
+            {
                 return PVMFSuccess;
             }
-            else {
+            else
+            {
                 return PVMFErrNotSupported;
             }
         }
@@ -914,10 +977,13 @@ void AndroidSurfaceOutput::Run()
     }
 
     //send async write completion
-    if (iEosReceived) {
+    if (iEosReceived)
+    {
         LOGV("Flushing buffers after EOS");
         processWriteResponseQueue(0);
-    } else {
+    }
+    else
+    {
         processWriteResponseQueue(1);
     }
 }
@@ -952,17 +1018,19 @@ OSCL_EXPORT_REF bool AndroidSurfaceOutput::initCheck()
 
     // create frame buffer heap and register with surfaceflinger
     mFrameHeap = new MemoryHeapBase(frameSize * kBufferCount);
-    if (mFrameHeap->heapID() < 0) {
-    LOGE("Error creating frame buffer heap");
-    return false;
+    if (mFrameHeap->heapID() < 0)
+    {
+        LOGE("Error creating frame buffer heap");
+        return false;
     }
-    
+
     ISurface::BufferHeap buffers(displayWidth, displayHeight,
-            frameWidth, frameHeight, PIXEL_FORMAT_RGB_565, mFrameHeap);
+                                 frameWidth, frameHeight, PIXEL_FORMAT_RGB_565, mFrameHeap);
     mSurface->registerBuffers(buffers);
 
     // create frame buffers
-    for (int i = 0; i < kBufferCount; i++) {
+    for (int i = 0; i < kBufferCount; i++)
+    {
         mFrameBuffers[i] = i * frameSize;
     }
 
@@ -1001,14 +1069,16 @@ OSCL_EXPORT_REF void AndroidSurfaceOutput::closeFrameBuf()
     if (!mInitialized) return;
 
     mInitialized = false;
-    if (mSurface.get()) {
+    if (mSurface.get())
+    {
         LOGV("unregisterBuffers");
         mSurface->unregisterBuffers();
     }
 
     // free frame buffers
     LOGV("free frame buffers");
-    for (int i = 0; i < kBufferCount; i++) {
+    for (int i = 0; i < kBufferCount; i++)
+    {
         mFrameBuffers[i] = 0;
     }
 
@@ -1025,7 +1095,8 @@ OSCL_EXPORT_REF void AndroidSurfaceOutput::closeFrameBuf()
     }
 }
 
-OSCL_EXPORT_REF bool AndroidSurfaceOutput::GetVideoSize(int *w, int *h) {
+OSCL_EXPORT_REF bool AndroidSurfaceOutput::GetVideoSize(int *w, int *h)
+{
 
     *w = iVideoDisplayWidth;
     *h = iVideoDisplayHeight;

@@ -201,6 +201,8 @@ OMX_ERRORTYPE OmxComponentAvcEncAO::ConstructComponent(OMX_PTR pAppData, OMX_PTR
     iPVCapabilityFlags.iOMXComponentUsesNALStartCodes = OMX_FALSE;
     iPVCapabilityFlags.iOMXComponentCanHandleIncompleteFrames = OMX_TRUE;
     iPVCapabilityFlags.iOMXComponentUsesFullAVCFrames = OMX_TRUE;
+    iPVCapabilityFlags.iOMXComponentUsesInterleaved2BNALSizes = OMX_FALSE;
+    iPVCapabilityFlags.iOMXComponentUsesInterleaved4BNALSizes = OMX_FALSE;
 #elif defined(TEST_FULL_AVC_FRAME_MODE_SC)
     /* output buffers based on frame boundaries instead of NAL boundaries and specify NAL boundaries
      * with NAL start codes
@@ -212,6 +214,34 @@ OMX_ERRORTYPE OmxComponentAvcEncAO::ConstructComponent(OMX_PTR pAppData, OMX_PTR
     iPVCapabilityFlags.iOMXComponentUsesNALStartCodes = OMX_TRUE;
     iPVCapabilityFlags.iOMXComponentCanHandleIncompleteFrames = OMX_TRUE;
     iPVCapabilityFlags.iOMXComponentUsesFullAVCFrames = OMX_TRUE;
+    iPVCapabilityFlags.iOMXComponentUsesInterleaved2BNALSizes = OMX_FALSE;
+    iPVCapabilityFlags.iOMXComponentUsesInterleaved4BNALSizes = OMX_FALSE;
+#elif defined(TEST_FULL_AVC_FRAME_MODE_I2BNS)
+    /* output buffers based on frame boundaries instead of NAL boundaries and specify NAL boundaries
+     * with interleaved 2 byte NAL sizes
+     */
+    iPVCapabilityFlags.iOMXComponentSupportsExternalInputBufferAlloc = OMX_TRUE;
+    iPVCapabilityFlags.iOMXComponentSupportsExternalOutputBufferAlloc = OMX_TRUE;
+    iPVCapabilityFlags.iOMXComponentSupportsMovableInputBuffers = OMX_TRUE;
+    iPVCapabilityFlags.iOMXComponentSupportsPartialFrames = OMX_TRUE;
+    iPVCapabilityFlags.iOMXComponentUsesNALStartCodes = OMX_FALSE;
+    iPVCapabilityFlags.iOMXComponentCanHandleIncompleteFrames = OMX_TRUE;
+    iPVCapabilityFlags.iOMXComponentUsesFullAVCFrames = OMX_TRUE;
+    iPVCapabilityFlags.iOMXComponentUsesInterleaved2BNALSizes = OMX_TRUE;
+    iPVCapabilityFlags.iOMXComponentUsesInterleaved4BNALSizes = OMX_FALSE;
+#elif defined(TEST_FULL_AVC_FRAME_MODE_I4BNS)
+    /* output buffers based on frame boundaries instead of NAL boundaries and specify NAL boundaries
+     * with interleaved 4 byte NAL sizes
+     */
+    iPVCapabilityFlags.iOMXComponentSupportsExternalInputBufferAlloc = OMX_TRUE;
+    iPVCapabilityFlags.iOMXComponentSupportsExternalOutputBufferAlloc = OMX_TRUE;
+    iPVCapabilityFlags.iOMXComponentSupportsMovableInputBuffers = OMX_TRUE;
+    iPVCapabilityFlags.iOMXComponentSupportsPartialFrames = OMX_TRUE;
+    iPVCapabilityFlags.iOMXComponentUsesNALStartCodes = OMX_FALSE;
+    iPVCapabilityFlags.iOMXComponentCanHandleIncompleteFrames = OMX_TRUE;
+    iPVCapabilityFlags.iOMXComponentUsesFullAVCFrames = OMX_TRUE;
+    iPVCapabilityFlags.iOMXComponentUsesInterleaved2BNALSizes = OMX_FALSE;
+    iPVCapabilityFlags.iOMXComponentUsesInterleaved4BNALSizes = OMX_TRUE;
 #else
     iPVCapabilityFlags.iOMXComponentSupportsExternalInputBufferAlloc = OMX_TRUE;
     iPVCapabilityFlags.iOMXComponentSupportsExternalOutputBufferAlloc = OMX_TRUE;
@@ -220,7 +250,22 @@ OMX_ERRORTYPE OmxComponentAvcEncAO::ConstructComponent(OMX_PTR pAppData, OMX_PTR
     iPVCapabilityFlags.iOMXComponentUsesNALStartCodes = OMX_FALSE;
     iPVCapabilityFlags.iOMXComponentCanHandleIncompleteFrames = OMX_TRUE;
     iPVCapabilityFlags.iOMXComponentUsesFullAVCFrames = OMX_FALSE;
+    iPVCapabilityFlags.iOMXComponentUsesInterleaved2BNALSizes = OMX_FALSE;
+    iPVCapabilityFlags.iOMXComponentUsesInterleaved4BNALSizes = OMX_FALSE;
 #endif
+
+    if (iPVCapabilityFlags.iOMXComponentUsesInterleaved2BNALSizes)
+    {
+        iSizeOfNALSize = sizeof(OMX_U16);
+    }
+    else if (iPVCapabilityFlags.iOMXComponentUsesInterleaved4BNALSizes)
+    {
+        iSizeOfNALSize = sizeof(OMX_U32);
+    }
+    else
+    {
+        iSizeOfNALSize = 0;
+    }
 
     if (ipAppPriv)
     {
@@ -559,6 +604,12 @@ void OmxComponentAvcEncAO::ProcessData()
                 ipOutputBuffer->nFilledLen += 4;
                 iNALSizeSum += 4;
             }
+            else if (iPVCapabilityFlags.iOMXComponentUsesInterleaved2BNALSizes || iPVCapabilityFlags.iOMXComponentUsesInterleaved4BNALSizes)
+            {
+                // save space for size to be written later
+                ipOutputBuffer->nFilledLen += iSizeOfNALSize;
+                iNALSizeSum += iSizeOfNALSize;
+            }
 
 
             /* If some output data was left to be send from the last processing due to
@@ -623,7 +674,10 @@ void OmxComponentAvcEncAO::ProcessData()
             OMX_S32 filledLength = ipOutputBuffer->nOffset + ipOutputBuffer->nFilledLen;
             pOutBuffer = ipOutputBuffer->pBuffer + (OMX_U32)filledLength;
 
-            if (iPVCapabilityFlags.iOMXComponentUsesFullAVCFrames && !iPVCapabilityFlags.iOMXComponentUsesNALStartCodes)
+            if (iPVCapabilityFlags.iOMXComponentUsesFullAVCFrames
+                    && !iPVCapabilityFlags.iOMXComponentUsesNALStartCodes
+                    && !iPVCapabilityFlags.iOMXComponentUsesInterleaved2BNALSizes
+                    && !iPVCapabilityFlags.iOMXComponentUsesInterleaved4BNALSizes)
             {
                 OutputLength = (OMX_U32)(((OMX_S32)ipOutputBuffer->nAllocLen - filledLength - (46 + 4 * (iNALCount + 1))) > 0) ? (ipOutputBuffer->nAllocLen - filledLength - (46 + 4 * (iNALCount + 1))) : 0;
                 // (20 + 4 * (iNALCount + 1) + 20 + 6) is size of extra data
@@ -731,14 +785,22 @@ void OmxComponentAvcEncAO::ProcessData()
 
         }
 
-        if (!iPVCapabilityFlags.iOMXComponentUsesNALStartCodes)
+        if (!iPVCapabilityFlags.iOMXComponentUsesNALStartCodes && !iPVCapabilityFlags.iOMXComponentUsesInterleaved2BNALSizes && !iPVCapabilityFlags.iOMXComponentUsesInterleaved4BNALSizes)
         {
             if (iEndOfOutputFrame || ((ipOutputBuffer->nFilledLen > 0) && (OMX_FALSE == iNewOutBufRequired)))
             {
                 ManageFrameBoundaries();
             }
         }
-        else if (ipOutputBuffer->nFilledLen > 4) // therefore only if more than just start code in buffer
+        else if (iPVCapabilityFlags.iOMXComponentUsesNALStartCodes && ipOutputBuffer->nFilledLen > 4) // therefore only if more than just start code or nal size in buffer
+        {
+            if (iEndOfOutputFrame || (OMX_FALSE == iNewOutBufRequired))
+            {
+                ManageFrameBoundaries();
+            }
+        }
+        else if ((iPVCapabilityFlags.iOMXComponentUsesInterleaved2BNALSizes || iPVCapabilityFlags.iOMXComponentUsesInterleaved4BNALSizes)
+                 && ipOutputBuffer->nFilledLen > iSizeOfNALSize) // therefore only if more than just start code
         {
             if (iEndOfOutputFrame || (OMX_FALSE == iNewOutBufRequired))
             {
@@ -1165,6 +1227,33 @@ void OmxComponentAvcEncAO::ManageFrameBoundaries()
         {
             ipOutputBuffer->nFilledLen = 0;
         }
+        else if (iPVCapabilityFlags.iOMXComponentUsesInterleaved2BNALSizes || iPVCapabilityFlags.iOMXComponentUsesInterleaved4BNALSizes)
+        {
+            if (ipOutputBuffer->nFilledLen == iSizeOfNALSize)
+            {
+                ipOutputBuffer->nFilledLen = 0;
+            }
+            else
+            {
+                OMX_U32 CurrNALSize = ipOutputBuffer->nFilledLen - iNALSizeSum;
+                if (CurrNALSize > 0)
+                {
+                    // write nal size in space before last NAL
+                    if (iSizeOfNALSize == sizeof(OMX_U16))
+                    {
+                        OMX_U16 tempU16CurrNALSize = (OMX_U16)CurrNALSize;
+                        oscl_memcpy(ipOutputBuffer->pBuffer + ipOutputBuffer->nOffset + iNALSizeSum - iSizeOfNALSize, &tempU16CurrNALSize, iSizeOfNALSize);
+                    }
+                    else if (iSizeOfNALSize == sizeof(OMX_U32))
+                    {
+                        OMX_U32 tempU32CurrNALSize = (OMX_U32)CurrNALSize;
+                        oscl_memcpy(ipOutputBuffer->pBuffer + ipOutputBuffer->nOffset + iNALSizeSum - iSizeOfNALSize, &tempU32CurrNALSize, iSizeOfNALSize);
+                    }
+
+                    // no need to save space for next size, since this must be a sps or pps
+                }
+            }
+        }
 
 
         //Attach the end of frame flag while sending out the last piece of output buffer
@@ -1195,6 +1284,27 @@ void OmxComponentAvcEncAO::ManageFrameBoundaries()
                 ipOutputBuffer->nFilledLen += 4;
                 iNALSizeSum += 4;
             }
+            else if (iPVCapabilityFlags.iOMXComponentUsesInterleaved2BNALSizes || iPVCapabilityFlags.iOMXComponentUsesInterleaved4BNALSizes)
+            {
+                // write nal size in space before last NAL
+                if (iSizeOfNALSize == sizeof(OMX_U16))
+                {
+                    OMX_U16 tempU16CurrNALSize = (OMX_U16)CurrNALSize;
+                    oscl_memcpy(ipOutputBuffer->pBuffer + ipOutputBuffer->nOffset + iNALSizeSum - iSizeOfNALSize, &tempU16CurrNALSize, iSizeOfNALSize);
+                }
+                else if (iSizeOfNALSize == sizeof(OMX_U32))
+                {
+                    OMX_U32 tempU32CurrNALSize = (OMX_U32)CurrNALSize;
+                    oscl_memcpy(ipOutputBuffer->pBuffer + ipOutputBuffer->nOffset + iNALSizeSum - iSizeOfNALSize, &tempU32CurrNALSize, iSizeOfNALSize);
+                }
+
+                // add space for next size
+                if (!iEndOfOutputFrame && !iEndofStream)
+                {
+                    ipOutputBuffer->nFilledLen += iSizeOfNALSize;
+                    iNALSizeSum += iSizeOfNALSize;
+                }
+            }
 
             iNALSizeArray[iNALCount] = CurrNALSize;
             iNALSizeSum += iNALSizeArray[iNALCount];
@@ -1203,7 +1313,7 @@ void OmxComponentAvcEncAO::ManageFrameBoundaries()
 
         if (iEndOfOutputFrame || iEndofStream)
         {
-            if (!iPVCapabilityFlags.iOMXComponentUsesNALStartCodes)
+            if (!iPVCapabilityFlags.iOMXComponentUsesNALStartCodes && !iPVCapabilityFlags.iOMXComponentUsesInterleaved2BNALSizes && !iPVCapabilityFlags.iOMXComponentUsesInterleaved4BNALSizes)
             {
                 if (OMX_FALSE == AppendExtraDataToBuffer(ipOutputBuffer, (OMX_EXTRADATATYPE) OMX_ExtraDataNALSizeArray, (OMX_U8*) iNALSizeArray, sizeof(uint32) * iNALCount))
                 {

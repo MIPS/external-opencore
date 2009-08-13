@@ -414,22 +414,35 @@ Int get_audio_specific_config(tDec_Int_File   * const pVars)
                     if (pVars->aacPlusEnabled == true)
                     {
 #ifdef AAC_PLUS
-                        pVars->mc_info.upsamplingFactor = (samp_rate_info[extensionSamplingFrequencyIndex].samp_rate >> 1) ==
-                                                          samp_rate_info[pVars->prog_config.sampling_rate_idx].samp_rate ? 2 : 1;
-
-                        if ((Int)extensionSamplingFrequencyIndex == pVars->prog_config.sampling_rate_idx)
+                        if (extensionSamplingFrequencyIndex < 3)
                         {
                             /*
-                             *  Disable SBR decoding for any sbr-downsampled file whose SF is >= 24 KHz
+                             *  Disable SBR/PS for any sampling freq. > 48 KHz
+                             *  3GPP request support up to Level 2, == max AAC/SBR present
+                             *  24/48 KHz
                              */
-                            if (pVars->prog_config.sampling_rate_idx < 6)
+                            pVars->aacPlusEnabled = false;
+                        }
+                        else
+                        {
+                            pVars->mc_info.upsamplingFactor = (samp_rate_info[extensionSamplingFrequencyIndex].samp_rate >> 1) ==
+                                                              samp_rate_info[pVars->prog_config.sampling_rate_idx].samp_rate ? 2 : 1;
+
+                            if ((Int)extensionSamplingFrequencyIndex == pVars->prog_config.sampling_rate_idx)
                             {
-                                pVars->aacPlusEnabled = false;
+                                /*
+                                 *  Disable SBR decoding for any sbr-downsampled file whose SF is >= 24 KHz
+                                 */
+                                if (pVars->prog_config.sampling_rate_idx < 6)
+                                {
+                                    pVars->aacPlusEnabled = false;
+                                }
+
+                                pVars->mc_info.bDownSampledSbr = true;
                             }
 
-                            pVars->mc_info.bDownSampledSbr = true;
+                            pVars->prog_config.sampling_rate_idx = extensionSamplingFrequencyIndex;
                         }
-                        pVars->prog_config.sampling_rate_idx = extensionSamplingFrequencyIndex;
 
 #endif
                     }
@@ -492,6 +505,14 @@ Int get_audio_specific_config(tDec_Int_File   * const pVars)
                 pVars->sbrDecoderData.SbrChannel[0].syncState = SBR_NOT_INITIALIZED;
                 pVars->sbrDecoderData.SbrChannel[1].syncState = SBR_NOT_INITIALIZED;
 
+            }
+            else
+            {
+                /*
+                 *  Disable SBR decoding for any implicit-signalig clip whose SF is > 24 KHz
+                 *  sbr-downsampling has to be implicit
+                 */
+                pVars->aacPlusEnabled = false;
             }
 #endif
 

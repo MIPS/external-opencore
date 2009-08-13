@@ -535,30 +535,6 @@ OSCL_EXPORT_REF PVMFStatus PVCommsIONodePort::releaseParameters(PvmiMIOSession s
     return PVMFFailure;
 }
 
-////////////////////////////////////////////////////////////////////////////
-OSCL_EXPORT_REF void PVCommsIONodePort::createContext(PvmiMIOSession session, PvmiCapabilityContext& context)
-{
-    OSCL_UNUSED_ARG(session);
-    OSCL_UNUSED_ARG(context);
-}
-
-////////////////////////////////////////////////////////////////////////////
-OSCL_EXPORT_REF void PVCommsIONodePort::setContextParameters(PvmiMIOSession session,
-        PvmiCapabilityContext& context,
-        PvmiKvp* parameters, int num_parameter_elements)
-{
-    OSCL_UNUSED_ARG(session);
-    OSCL_UNUSED_ARG(context);
-    OSCL_UNUSED_ARG(parameters);
-    OSCL_UNUSED_ARG(num_parameter_elements);
-}
-
-////////////////////////////////////////////////////////////////////////////
-OSCL_EXPORT_REF void PVCommsIONodePort::DeleteContext(PvmiMIOSession session, PvmiCapabilityContext& context)
-{
-    OSCL_UNUSED_ARG(session);
-    OSCL_UNUSED_ARG(context);
-}
 
 ////////////////////////////////////////////////////////////////////////////
 OSCL_EXPORT_REF void PVCommsIONodePort::setParametersSync(PvmiMIOSession session, PvmiKvp* parameters,
@@ -604,28 +580,6 @@ OSCL_EXPORT_REF void PVCommsIONodePort::setParametersSync(PvmiMIOSession session
     }
 }
 
-////////////////////////////////////////////////////////////////////////////
-OSCL_EXPORT_REF PVMFCommandId PVCommsIONodePort::setParametersAsync(PvmiMIOSession session,
-        PvmiKvp* parameters,
-        int num_elements,
-        PvmiKvp*& ret_kvp,
-        OsclAny* context)
-{
-    OSCL_UNUSED_ARG(session);
-    OSCL_UNUSED_ARG(parameters);
-    OSCL_UNUSED_ARG(num_elements);
-    OSCL_UNUSED_ARG(ret_kvp);
-    OSCL_UNUSED_ARG(context);
-    OsclError::Leave(OsclErrNotSupported);
-    return -1;
-}
-
-////////////////////////////////////////////////////////////////////////////
-OSCL_EXPORT_REF uint32 PVCommsIONodePort::getCapabilityMetric(PvmiMIOSession session)
-{
-    OSCL_UNUSED_ARG(session);
-    return 0;
-}
 
 ////////////////////////////////////////////////////////////////////////////
 OSCL_EXPORT_REF PVMFStatus PVCommsIONodePort::verifyParametersSync(PvmiMIOSession session,

@@ -25,6 +25,7 @@ extern int local_main(FILE *filehandle, cmd_line* cmd_line_ptr);
 
 #include "unit_test_local_string.h"
 
+
 int main(int argc, char **argv)
 {
     FILE* filehandle = stdout;
@@ -33,7 +34,6 @@ int main(int argc, char **argv)
     cmd_line *command_line_ptr;
     cmd_line_linux command_line;
     command_line_ptr = &command_line;
-
     // remove leading and trailing quotation marks
     for (int i = 0; i < argc; ++i)
     {
@@ -48,8 +48,6 @@ int main(int argc, char **argv)
                 argv[i][strEnd] = 0;
         }
     }
-
-
     if (argc > 1)
     {
         // output to file
@@ -65,7 +63,6 @@ int main(int argc, char **argv)
             n += 2;
         }
     }
-
     command_line.setup(argc - n, &argv[n]);
     return local_main(filehandle, command_line_ptr);
 

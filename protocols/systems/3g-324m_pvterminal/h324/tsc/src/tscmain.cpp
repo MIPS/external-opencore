@@ -40,6 +40,10 @@
 #include "oscl_mem.h"
 #include "oscl_mem_audit.h"
 #endif
+
+#define OSCL_DISABLE_WARNING_FUNCTION_CALL_MISSING_ARGUMRNT_LIST
+#include "osclconfig_compiler_warnings.h"
+
 #define PV_2WAY_TSC_TIMER_ID "PV_2WAY_TSC_TIMER"
 #define PV_2WAY_TSC_TIMER_INTERVAL 1 /* 1 second */
 
@@ -178,6 +182,30 @@ void TSC_324m::initVarsLocal()
     }
 }
 
+void TSC_324m::Cleanup()
+{
+    /* Terminal ID for vendor identification */
+    /* Local terminal id */
+    if (iVendorR)
+    {
+        OSCL_DELETE(iVendorR);
+        iVendorR = NULL;
+    }
+    if (iProductNumberR)
+    {
+        OSCL_DEFAULT_FREE(iProductNumberR);
+        iProductNumberR = NULL;
+    }
+    if (iVersionNumberR)
+    {
+        OSCL_DEFAULT_FREE(iVersionNumberR);
+        iVersionNumberR = NULL;
+    }
+    iProductNumberLenR = 0;
+    iVersionNumberLenR = 0;
+
+}
+
 void TSC_324m::initVarsSession()
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
@@ -190,25 +218,7 @@ void TSC_324m::initVarsSession()
 
     iMaxMuxPduCapabilityR = false;
 
-    /* Terminal ID for vendor identification */
-    /* Local terminal id */
-    if (iVendorR)
-    {
-        OSCL_DELETE(iVendorR);
-    }
-    if (iProductNumberR)
-    {
-        OSCL_DEFAULT_FREE(iProductNumberR);
-    }
-    if (iVersionNumberR)
-    {
-        OSCL_DEFAULT_FREE(iVersionNumberR);
-    }
-    iVendorR = NULL;
-    iProductNumberR = NULL;
-    iProductNumberLenR = 0;
-    iVersionNumberR = NULL;
-    iVersionNumberLenR = 0;
+    Cleanup();
 
     iH223Level = TSC_H223_LEVEL_DEFAULT;
 
@@ -653,6 +663,7 @@ void TSC_324m::DataReceptionStart()
     {
         levelSetupTimeoutInfo = 1; // Level setup can commence again if it fails the first time
     }
+    iH223->SetLevelCheckCount(iTSCcomponent->GetLevelCheckCount());
     iTimer->Request(PV_TSC_LEVEL_SETUP_TIMER_ID, levelSetupTimeoutInfo,
                     DEFAULT_TCS_LEVEL_SETUP_TIMEOUT_SECONDS, this);
 }
@@ -823,13 +834,12 @@ TPVStatusCode TSC_324m::Disconnect()
         OSCL_DELETE(param);
     }
 
-    initVarsSession();
+    Cleanup();
     return ret;
 }
 
 TPVStatusCode TSC_324m::Abort()
 {
-//  iMutex->Lock();
     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                     (0, "TSC: Abort."));
     //LogStats(OUTGOING);
@@ -862,9 +872,8 @@ TPVStatusCode TSC_324m::Abort()
     Ce = iH245->GetCE();
     Ce->SetObserver(this);
 
-    initVarsSession();
+    Cleanup();
 
-//  iMutex->Unlock();
     return ret;
 }
 
@@ -1278,6 +1287,7 @@ void TSC_324m::TimeoutOccurred(int32 timerID, int32 timeoutInfo)
             iH223->EnableStuffing(true);
             iH223->SetInterleavingMultiplexFlags(0, NULL);
             iH223->SetMuxLevel(TSC_H223_LEVEL_DEFAULT);
+            iH223->SetLevelCheckCount(iTSCcomponent->GetLevelCheckCount());
             /* Start timer to receive TCS */
             iTimer->Request(PV_TSC_LEVEL_SETUP_TIMER_ID, 0,
                             DEFAULT_TCS_LEVEL_SETUP_TIMEOUT_SECONDS, this);
@@ -1661,7 +1671,7 @@ void TSC_324m::DoRequestPort(Tsc324mNodeCommand& cmd)
                 port = iH223->GetLowerLayer();
             }
         }
-        else if (*aPortConfig == PVMF_AUDIO_OUTGOING_MIMETYPE)
+        else if (*aPortConfig == PV2WAY_AUDIO_OUTGOING_MIMETYPE)
         {
             // Audio x-pvmf/audio;dir=outgoing to identify the outgoing audio channel
             port = FindOutgoingPort(PV_AUDIO);
@@ -1673,7 +1683,7 @@ void TSC_324m::DoRequestPort(Tsc324mNodeCommand& cmd)
                                  aPortTag));
             }
         }
-        else if (*aPortConfig == PVMF_VIDEO_OUTGOING_MIMETYPE)
+        else if (*aPortConfig == PV2WAY_VIDEO_OUTGOING_MIMETYPE)
         {
             // Video x-pvmf/video;dir=outgoing to identify the outgoing video channel
             port = FindOutgoingPort(PV_VIDEO);
@@ -1686,7 +1696,7 @@ void TSC_324m::DoRequestPort(Tsc324mNodeCommand& cmd)
             }
         }
 
-        else if (*aPortConfig == PVMF_INCOMING_MIMETYPE || (aPortTag < 0))
+        else if (*aPortConfig == PV2WAY_INCOMING_MIMETYPE || (aPortTag < 0))
         {
             if (aPortTag < 0)
             {
@@ -1710,7 +1720,7 @@ void TSC_324m::DoRequestPort(Tsc324mNodeCommand& cmd)
             }
         }
 
-        else //if (*aPortConfig == PVMF_OUTGOING_MIMETYPE || aPortTag >=0)
+        else //if (*aPortConfig == PV2WAY_OUTGOING_MIMETYPE || aPortTag >=0)
         {
             //x-pvmf/dir=outgoing
             // Outgoing
@@ -2056,9 +2066,10 @@ OSCL_EXPORT_REF void TSC_324m::SetIncomingChannelConfig(
 
 OSCL_EXPORT_REF void TSC_324m::SetAlConfig(PV2WayMediaType media_type,
         TPVAdaptationLayer layer,
-        bool allow)
+        bool allow,
+        bool use)
 {
-    iTSCcomponent->SetAlConfig(media_type, layer, allow);
+    iTSCcomponent->SetAlConfig(media_type, layer, allow, use);
 }
 
 PVMFCommandId TSC_324m::QueryUUID(PVMFSessionId aSession,

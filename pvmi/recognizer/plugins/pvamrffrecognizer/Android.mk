@@ -8,7 +8,7 @@ LOCAL_SRC_FILES := \
 
 LOCAL_MODULE := libpvamrffrecognizer
 
-LOCAL_CFLAGS :=  $(PV_CFLAGS)
+LOCAL_CFLAGS :=   $(PV_CFLAGS)
 
 
 

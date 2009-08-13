@@ -171,10 +171,9 @@ bool PVFirewallPacketExchanger::ComposeFirewallPacket(PVMFJitterBufferFireWallPa
     return true;
 }
 
-void PVFirewallPacketExchanger::GetRTPSessionInfo(RTPSessionInfoForFirewallExchange& aRTPSessionInfo) const
+const RTPSessionInfoForFirewallExchange& PVFirewallPacketExchanger::GetRTPSessionInfo() const
 {
-    aRTPSessionInfo.ipRTPDataJitterBufferPort = iRTPSessionInfoForFirewallExchange.ipRTPDataJitterBufferPort;
-    aRTPSessionInfo.iSSRC = iRTPSessionInfoForFirewallExchange.iSSRC;
+    return iRTPSessionInfoForFirewallExchange;
 }
 
 void PVFirewallPacketExchanger::SetRTPSessionInfo(const RTPSessionInfoForFirewallExchange& aRTPSessionInfo)
@@ -218,15 +217,12 @@ OSCL_EXPORT_REF PVFirewallPacketExchangeImpl::~PVFirewallPacketExchangeImpl()
 
 OSCL_EXPORT_REF void PVFirewallPacketExchangeImpl::SetRTPSessionInfoForFirewallExchange(const RTPSessionInfoForFirewallExchange& aRTPSessionInfo)
 {
-    Oscl_Vector<PVFirewallPacketExchanger*, OsclMemAllocator>::iterator firewallPacketExchangersIter;
-    for (firewallPacketExchangersIter = iFirewallPacketExchangers.begin(); firewallPacketExchangersIter != iFirewallPacketExchangers.end(); firewallPacketExchangersIter++)
+    Oscl_Vector<PVFirewallPacketExchanger*, OsclMemAllocator>::const_iterator iter;
+    for (iter = iFirewallPacketExchangers.begin(); iter != iFirewallPacketExchangers.end(); ++iter)
     {
-        PVFirewallPacketExchanger* firewallPktExchanger = *firewallPacketExchangersIter;
-        RTPSessionInfoForFirewallExchange exchangeInfo;
-        firewallPktExchanger->GetRTPSessionInfo(exchangeInfo);
-        if (exchangeInfo.ipRTPDataJitterBufferPort == aRTPSessionInfo.ipRTPDataJitterBufferPort)
+        if ((*iter)->GetRTPSessionInfo().ipRTPDataJitterBufferPort == aRTPSessionInfo.ipRTPDataJitterBufferPort)
         {
-            firewallPktExchanger->SetRTPSessionInfo(aRTPSessionInfo);
+            (*iter)->SetRTPSessionInfo(aRTPSessionInfo);
             return;
         }
     }

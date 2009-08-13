@@ -151,6 +151,9 @@ class PVMFStreamingManagerNode : public PVMFNodeInterface,
                              OsclAny* aEventData = NULL,
                              PVUuid* aEventUUID = NULL,
                              int32* aEventCode = NULL);
+        bool CheckForRTSPTunnelling(OSCL_wString& aSourceURL,
+                                    PVMFFormatType aSourceFormat,
+                                    OsclAny* aSourceData);
 
         PVMFStreamingManagerNodeCmdQ iInputCommands;
 

@@ -64,94 +64,86 @@
 // until dynamic registry - register all components
 // unconditionally - may error out at load time
 
-OMX_ERRORTYPE Mpeg4Register();
-OMX_ERRORTYPE H263Register();
-OMX_ERRORTYPE AvcRegister();
-OMX_ERRORTYPE WmvRegister();
-OMX_ERRORTYPE AacRegister();
-OMX_ERRORTYPE AmrRegister();
-OMX_ERRORTYPE Mp3Register();
-OMX_ERRORTYPE WmaRegister();
+OMX_ERRORTYPE Mpeg4Register(OMXGlobalData *data);
+OMX_ERRORTYPE H263Register(OMXGlobalData *data);
+OMX_ERRORTYPE AvcRegister(OMXGlobalData *data);
+OMX_ERRORTYPE WmvRegister(OMXGlobalData *data);
+OMX_ERRORTYPE RvRegister(OMXGlobalData *data);
+OMX_ERRORTYPE AacRegister(OMXGlobalData *data);
+OMX_ERRORTYPE AmrRegister(OMXGlobalData *data);
+OMX_ERRORTYPE Mp3Register(OMXGlobalData *data);
+OMX_ERRORTYPE WmaRegister(OMXGlobalData *data);
 
-OMX_ERRORTYPE AmrEncRegister();
-OMX_ERRORTYPE Mpeg4EncRegister();
-OMX_ERRORTYPE H263EncRegister();
-OMX_ERRORTYPE AvcEncRegister();
-OMX_ERRORTYPE AacEncRegister();
+OMX_ERRORTYPE AmrEncRegister(OMXGlobalData *data);
+OMX_ERRORTYPE Mpeg4EncRegister(OMXGlobalData *data);
+OMX_ERRORTYPE H263EncRegister(OMXGlobalData *data);
+OMX_ERRORTYPE AvcEncRegister(OMXGlobalData *data);
+OMX_ERRORTYPE AacEncRegister(OMXGlobalData *data);
 
 
 #else
 
 #if REGISTER_OMX_M4V_COMPONENT
-OMX_ERRORTYPE Mpeg4Register();
+OMX_ERRORTYPE Mpeg4Register(OMXGlobalData *data);
 #endif
 
 #if REGISTER_OMX_H263_COMPONENT
-OMX_ERRORTYPE H263Register();
+OMX_ERRORTYPE H263Register(OMXGlobalData *data);
 #endif
 
 #if REGISTER_OMX_AVC_COMPONENT
-OMX_ERRORTYPE AvcRegister();
+OMX_ERRORTYPE AvcRegister(OMXGlobalData *data);
 #endif
 
 #if REGISTER_OMX_WMV_COMPONENT
-OMX_ERRORTYPE WmvRegister();
+OMX_ERRORTYPE WmvRegister(OMXGlobalData *data);
 #endif
 
+#if REGISTER_OMX_RV_COMPONENT
+OMX_ERRORTYPE RvRegister(OMXGlobalData *data);
+#endif
 #if REGISTER_OMX_AAC_COMPONENT
-OMX_ERRORTYPE AacRegister();
+OMX_ERRORTYPE AacRegister(OMXGlobalData *data);
 #endif
 
 #if REGISTER_OMX_AMR_COMPONENT
-OMX_ERRORTYPE AmrRegister();
+OMX_ERRORTYPE AmrRegister(OMXGlobalData *data);
 #endif
 
 #if REGISTER_OMX_MP3_COMPONENT
-OMX_ERRORTYPE Mp3Register();
+OMX_ERRORTYPE Mp3Register(OMXGlobalData *data);
 #endif
 
 #if REGISTER_OMX_WMA_COMPONENT
-OMX_ERRORTYPE WmaRegister();
+OMX_ERRORTYPE WmaRegister(OMXGlobalData *data);
 #endif
 
 #if REGISTER_OMX_AMRENC_COMPONENT
-OMX_ERRORTYPE AmrEncRegister();
+OMX_ERRORTYPE AmrEncRegister(OMXGlobalData *data);
 #endif
 
 #if REGISTER_OMX_M4VENC_COMPONENT
-OMX_ERRORTYPE Mpeg4EncRegister();
+OMX_ERRORTYPE Mpeg4EncRegister(OMXGlobalData *data);
 #endif
 
 #if REGISTER_OMX_H263ENC_COMPONENT
-OMX_ERRORTYPE H263EncRegister();
+OMX_ERRORTYPE H263EncRegister(OMXGlobalData *data);
 #endif
 
 #if REGISTER_OMX_AVCENC_COMPONENT
-OMX_ERRORTYPE AvcEncRegister();
+OMX_ERRORTYPE AvcEncRegister(OMXGlobalData *data);
 #endif
 
 #if REGISTER_OMX_AACENC_COMPONENT
-OMX_ERRORTYPE AacEncRegister();
+OMX_ERRORTYPE AacEncRegister(OMXGlobalData *data);
 #endif
 #endif
 OSCL_DLL_ENTRY_POINT_DEFAULT()
 
 /* Initializes the component */
-static OMX_ERRORTYPE _OMX_Init()
+static OMX_ERRORTYPE _OMX_Init(OMXGlobalData *data)
 {
     OMX_ERRORTYPE Status = OMX_ErrorNone;
-    int32 error;
-    //get global data structure
-    OMXGlobalData* data = (OMXGlobalData*)OsclSingletonRegistry::lockAndGetInstance(OSCL_SINGLETON_ID_OMX, error);
-    if (error) // can't access registry
-    {
-        return OMX_ErrorInsufficientResources;
-    }
-    else if (!data) // singleton object has been destroyed
-    {
-        OsclSingletonRegistry::registerInstanceAndUnlock(data, OSCL_SINGLETON_ID_OMX, error);
-        return OMX_ErrorInsufficientResources;
-    }
 
 #if PROXY_INTERFACE
     ProxyApplication_OMX** pProxyTerm = data->ipProxyTerm;
@@ -173,80 +165,75 @@ static OMX_ERRORTYPE _OMX_Init()
 #endif
     }
 
-    //Release the singleton.
-    OsclSingletonRegistry::registerInstanceAndUnlock(data, OSCL_SINGLETON_ID_OMX, error);
-    if (error)
-    {
-        //registry error
-        Status = OMX_ErrorUndefined;
-        return Status;
-    }
-
 #if USE_DYNAMIC_LOAD_OMX_COMPONENTS
 //unconditional registration
     // MPEG4
-    Status = Mpeg4Register();
+    Status = Mpeg4Register(data);
     if (Status != OMX_ErrorNone)
         return Status;
 
 
     //H263
-    Status = H263Register();
+    Status = H263Register(data);
     if (Status != OMX_ErrorNone)
         return Status;
 
     // AVC
-    Status = AvcRegister();
+    Status = AvcRegister(data);
     if (Status != OMX_ErrorNone)
         return Status;
 
     // WMV
-    Status = WmvRegister();
+    Status = WmvRegister(data);
     if (Status != OMX_ErrorNone)
         return Status;
 
+    // RV
+    Status = RvRegister(data);
+    if (Status != OMX_ErrorNone)
+        return Status;
     // AAC
-    Status = AacRegister();
+    Status = AacRegister(data);
     if (Status != OMX_ErrorNone)
         return Status;
 
     // AMR
-    Status = AmrRegister();
+    Status = AmrRegister(data);
     if (Status != OMX_ErrorNone)
         return Status;
 
     // MP3
-    Status = Mp3Register();
+    Status = Mp3Register(data);
     if (Status != OMX_ErrorNone)
         return Status;
 
     // WMA
-    Status = WmaRegister();
+    Status = WmaRegister(data);
     if (Status != OMX_ErrorNone)
         return Status;
 
     //AMR ENCODER
-    Status = AmrEncRegister();
+    Status = AmrEncRegister(data);
     if (Status != OMX_ErrorNone)
         return Status;
 
     //MPEG4 Encoder
-    Status = Mpeg4EncRegister();
+    Status = Mpeg4EncRegister(data);
     if (Status != OMX_ErrorNone)
         return Status;
 
     //H263 Encoder
-    Status = H263EncRegister();
+    Status = H263EncRegister(data);
     if (Status != OMX_ErrorNone)
         return Status;
 
     //H264/AVC Encoder
-    Status = AvcEncRegister();
+    Status = AvcEncRegister(data);
     if (Status != OMX_ErrorNone)
         return Status;
 
     //AAC Encoder
-    Status = AacEncRegister();
+    Status = AacEncRegister(data);
     if (Status != OMX_ErrorNone)
         return Status;
 
@@ -255,90 +242,97 @@ static OMX_ERRORTYPE _OMX_Init()
     // REGISTER COMPONENT TYPES (ONE BY ONE)
 #if REGISTER_OMX_M4V_COMPONENT
     // MPEG4
-    Status = Mpeg4Register();
+    Status = Mpeg4Register(data);
     if (Status != OMX_ErrorNone)
         return Status;
 #endif
 
 #if REGISTER_OMX_H263_COMPONENT
     //H263
-    Status = H263Register();
+    Status = H263Register(data);
     if (Status != OMX_ErrorNone)
         return Status;
 #endif
 
 #if REGISTER_OMX_AVC_COMPONENT
     // AVC
-    Status = AvcRegister();
+    Status = AvcRegister(data);
     if (Status != OMX_ErrorNone)
         return Status;
 #endif
 
 #if REGISTER_OMX_WMV_COMPONENT
     // WMV
-    Status = WmvRegister();
+    Status = WmvRegister(data);
+    if (Status != OMX_ErrorNone)
+        return Status;
+#endif
+
+#if REGISTER_OMX_RV_COMPONENT
+    // RV
+    Status = RvRegister(data);
     if (Status != OMX_ErrorNone)
         return Status;
 #endif
 
 #if REGISTER_OMX_AAC_COMPONENT
     // AAC
-    Status = AacRegister();
+    Status = AacRegister(data);
     if (Status != OMX_ErrorNone)
         return Status;
 #endif
 
 #if REGISTER_OMX_AMR_COMPONENT
     // AMR
-    Status = AmrRegister();
+    Status = AmrRegister(data);
     if (Status != OMX_ErrorNone)
         return Status;
 #endif
 
 #if REGISTER_OMX_MP3_COMPONENT
     // MP3
-    Status = Mp3Register();
+    Status = Mp3Register(data);
     if (Status != OMX_ErrorNone)
         return Status;
 #endif
 
 #if REGISTER_OMX_WMA_COMPONENT
     // WMA
-    Status = WmaRegister();
+    Status = WmaRegister(data);
     if (Status != OMX_ErrorNone)
         return Status;
 #endif
 
 #if REGISTER_OMX_AMRENC_COMPONENT
     //AMR ENCODER
-    Status = AmrEncRegister();
+    Status = AmrEncRegister(data);
     if (Status != OMX_ErrorNone)
         return Status;
 #endif
 
 #if REGISTER_OMX_M4VENC_COMPONENT
     //MPEG4 Encoder
-    Status = Mpeg4EncRegister();
+    Status = Mpeg4EncRegister(data);
     if (Status != OMX_ErrorNone)
         return Status;
 #endif
 
 #if REGISTER_OMX_H263ENC_COMPONENT
     //H263 Encoder
-    Status = H263EncRegister();
+    Status = H263EncRegister(data);
     if (Status != OMX_ErrorNone)
         return Status;
 #endif
 #if REGISTER_OMX_AVCENC_COMPONENT
     //H264/AVC Encoder
-    Status = AvcEncRegister();
+    Status = AvcEncRegister(data);
     if (Status != OMX_ErrorNone)
         return Status;
 #endif
 
 #if REGISTER_OMX_AACENC_COMPONENT
     //AAC Encoder
-    Status = AacEncRegister();
+    Status = AacEncRegister(data);
     if (Status != OMX_ErrorNone)
         return Status;
 #endif
@@ -347,15 +341,23 @@ static OMX_ERRORTYPE _OMX_Init()
 }
 
 //this routine is needed to avoid a longjmp clobber warning
-static void _Try_OMX_Init(int32& aError, OMX_ERRORTYPE& aStatus)
+static void _Try_OMX_Init(int32& aError, OMX_ERRORTYPE& aStatus, OMXGlobalData *data)
 {
-    OSCL_TRY(aError, aStatus = _OMX_Init(););
+    OSCL_TRY(aError, aStatus = _OMX_Init(data););
 }
 //this routine is needed to avoid a longjmp clobber warning
 static void _Try_OMX_Create(int32& aError, OMXGlobalData*& aData)
 {
     OSCL_TRY(aError, aData = OSCL_NEW(OMXGlobalData, ()););
 }
+
+#if (USE_DYNAMIC_LOAD_OMX_COMPONENTS == 0)
+// in case of static build - just redirect master omx core call to local pv core call
+OSCL_EXPORT_REF OMX_ERRORTYPE OMX_MasterInit()
+{
+    return OMX_Init();
+}
+#endif
 
 OSCL_EXPORT_REF OMX_ERRORTYPE OMX_Init()
 {
@@ -408,19 +410,10 @@ OSCL_EXPORT_REF OMX_ERRORTYPE OMX_Init()
             status = OMX_ErrorInsufficientResources;//some leave happened.
         }
 
-        //Release the singleton.
-        OsclSingletonRegistry::registerInstanceAndUnlock(data, OSCL_SINGLETON_ID_OMX, error);
-        if (error)
-        {
-            //registry error
-            status = OMX_ErrorUndefined;
-            return status;
-        }
-
         //If create succeeded, then init the OMX globals.
         if (status == OMX_ErrorNone)
         {
-            _Try_OMX_Init(error, status);
+            _Try_OMX_Init(error, status, data);
             if (error != OsclErrNone)
             {
                 status = OMX_ErrorUndefined;//probably no memory.
@@ -431,6 +424,15 @@ OSCL_EXPORT_REF OMX_ERRORTYPE OMX_Init()
                 //so we can cleanup later.
                 data->iOsclInit = osclInit;
             }
+        }
+
+        //Release the singleton.
+        OsclSingletonRegistry::registerInstanceAndUnlock(data, OSCL_SINGLETON_ID_OMX, error);
+        if (error)
+        {
+            //registry error
+            status = OMX_ErrorUndefined;
+            return status;
         }
     }
 
@@ -532,6 +534,14 @@ static void _Try_Data_Cleanup(int32 &aError, OMXGlobalData* aData)
     OSCL_TRY(aError, OSCL_DELETE(aData););
 }
 
+#if (USE_DYNAMIC_LOAD_OMX_COMPONENTS == 0)
+// in case of static build - just redirect master omx core call to local pv core call
+OSCL_EXPORT_REF OMX_ERRORTYPE OMX_MasterDeinit()
+{
+    return OMX_Deinit();
+}
+#endif
+
 OSCL_EXPORT_REF OMX_ERRORTYPE OMX_Deinit()
 {
     OMX_ERRORTYPE status = OMX_ErrorNone;
@@ -627,6 +637,18 @@ static void _Cleanup_Component(ProxyApplication_OMX* aProxyTerm, OMX_OUT OMX_HAN
     }
 
     OsclSingletonRegistry::registerInstanceAndUnlock(data, OSCL_SINGLETON_ID_OMX, error);
+}
+#endif
+
+#if (USE_DYNAMIC_LOAD_OMX_COMPONENTS == 0)
+// in case of static build - just redirect master omx core call to local pv core call
+OSCL_EXPORT_REF OMX_ERRORTYPE OMX_APIENTRY OMX_MasterGetHandle(OMX_OUT OMX_HANDLETYPE* pHandle,
+        OMX_IN  OMX_STRING cComponentName,
+        OMX_IN  OMX_PTR pAppData,
+        OMX_IN  OMX_CALLBACKTYPE* pCallBacks)
+{
+
+    return OMX_GetHandle(pHandle, cComponentName, pAppData, pCallBacks);
 }
 #endif
 
@@ -869,6 +891,13 @@ OSCL_EXPORT_REF OMX_ERRORTYPE OMX_APIENTRY OMX_GetHandle(OMX_OUT OMX_HANDLETYPE*
     return ErrorType;
 }
 
+#if (USE_DYNAMIC_LOAD_OMX_COMPONENTS == 0)
+// in case of static build - just redirect master omx core call to local pv core call
+OSCL_EXPORT_REF OMX_ERRORTYPE OMX_APIENTRY OMX_MasterFreeHandle(OMX_IN OMX_HANDLETYPE hComponent)
+{
+    return OMX_FreeHandle(hComponent);
+}
+#endif
 
 OSCL_EXPORT_REF OMX_ERRORTYPE OMX_APIENTRY OMX_FreeHandle(OMX_IN OMX_HANDLETYPE hComponent)
 {
@@ -965,6 +994,17 @@ OSCL_EXPORT_REF OMX_ERRORTYPE OMX_APIENTRY OMX_FreeHandle(OMX_IN OMX_HANDLETYPE 
 
 }
 
+#if (USE_DYNAMIC_LOAD_OMX_COMPONENTS == 0)
+// in case of static build - just redirect master omx core call to local pv core call
+OSCL_EXPORT_REF OMX_ERRORTYPE OMX_APIENTRY OMX_MasterComponentNameEnum(
+    OMX_OUT OMX_STRING cComponentName,
+    OMX_IN  OMX_U32 nNameLength,
+    OMX_IN  OMX_U32 nIndex)
+{
+    return OMX_ComponentNameEnum(cComponentName, nNameLength, nIndex);
+}
+#endif
+
 //This is a method to be called directly under testapp thread
 OSCL_EXPORT_REF OMX_ERRORTYPE OMX_APIENTRY OMX_ComponentNameEnum(
     OMX_OUT OMX_STRING cComponentName,
@@ -1002,6 +1042,18 @@ OSCL_EXPORT_REF OMX_ERRORTYPE OMX_APIENTRY OMX_ComponentNameEnum(
 
 }
 
+#if (USE_DYNAMIC_LOAD_OMX_COMPONENTS == 0)
+// in case of static build - just redirect master omx core call to local pv core call
+OSCL_EXPORT_REF OMX_ERRORTYPE OMX_MasterSetupTunnel(
+    OMX_IN  OMX_HANDLETYPE hOutput,
+    OMX_IN  OMX_U32 nPortOutput,
+    OMX_IN  OMX_HANDLETYPE hInput,
+    OMX_IN  OMX_U32 nPortInput)
+{
+    return OMX_SetupTunnel(hOutput, nPortOutput, hInput, nPortInput);
+}
+#endif
+
 OSCL_EXPORT_REF OMX_ERRORTYPE OMX_SetupTunnel(
     OMX_IN  OMX_HANDLETYPE hOutput,
     OMX_IN  OMX_U32 nPortOutput,
@@ -1016,6 +1068,15 @@ OSCL_EXPORT_REF OMX_ERRORTYPE OMX_SetupTunnel(
 }
 
 
+#if (USE_DYNAMIC_LOAD_OMX_COMPONENTS == 0)
+// in case of static build - just redirect master omx core call to local pv core call
+OSCL_EXPORT_REF OMX_ERRORTYPE OMX_MasterGetContentPipe(
+    OMX_OUT OMX_HANDLETYPE *hPipe,
+    OMX_IN OMX_STRING szURI)
+{
+    return OMX_GetContentPipe(hPipe, szURI);
+}
+#endif
 
 OSCL_EXPORT_REF OMX_ERRORTYPE OMX_GetContentPipe(
     OMX_OUT OMX_HANDLETYPE *hPipe,
@@ -1031,6 +1092,17 @@ OSCL_EXPORT_REF OMX_ERRORTYPE OMX_GetContentPipe(
 /////////////// Given a compName, find the component and then return its role(s)
 ///////////////// It's the caller's responsibility to provide enough space for the role(s)
 ////////////////////////////////////////////////////////////////////////////
+#if (USE_DYNAMIC_LOAD_OMX_COMPONENTS == 0)
+// in case of static build - just redirect master omx core call to local pv core call
+OSCL_EXPORT_REF OMX_ERRORTYPE OMX_MasterGetRolesOfComponent(
+    OMX_IN      OMX_STRING compName,
+    OMX_INOUT   OMX_U32* pNumRoles,
+    OMX_OUT     OMX_U8** roles)
+{
+    return OMX_GetRolesOfComponent(compName, pNumRoles, roles);
+}
+#endif
+
 OSCL_EXPORT_REF OMX_ERRORTYPE OMX_GetRolesOfComponent(
     OMX_IN      OMX_STRING compName,
     OMX_INOUT   OMX_U32* pNumRoles,
@@ -1088,6 +1160,17 @@ OSCL_EXPORT_REF OMX_ERRORTYPE OMX_GetRolesOfComponent(
 //////////// so it may need to make the call twice. Once to find number of components, and 2nd time
 //////////// to find their actual names
 //////////////////////////////////////////////////////////////////////////////////
+#if (USE_DYNAMIC_LOAD_OMX_COMPONENTS == 0)
+// in case of static build - just redirect master omx core call to local pv core call
+OSCL_EXPORT_REF OMX_ERRORTYPE OMX_MasterGetComponentsOfRole(
+    OMX_IN      OMX_STRING role,
+    OMX_INOUT   OMX_U32 *pNumComps,
+    OMX_INOUT   OMX_U8  **compNames)
+{
+    return OMX_GetComponentsOfRole(role, pNumComps, compNames);
+}
+#endif
+
 OSCL_EXPORT_REF OMX_ERRORTYPE OMX_GetComponentsOfRole(
     OMX_IN      OMX_STRING role,
     OMX_INOUT   OMX_U32 *pNumComps,

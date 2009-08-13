@@ -33,9 +33,15 @@
 #include "oscl_bin_stream.h"
 #endif
 
+#ifndef OSCL_STRING_CONTAINERS_H_INCLUDED
+#include "oscl_string_containers.h"
+#endif
+
+#ifndef OSCL_VECTOR_H_INCLUDED
+#include "oscl_vector.h"
+#endif
+
 #include "pv_mp4ffcomposer_config.h"
-static const int32 MEDIA_DATA_IN_MEMORY = 0;
-static const int32 MEDIA_DATA_ON_DISK = 1;
 
 static const uint32 DEFAULT_PRESENTATION_TIMESCALE = 1000; // For milliseconds
 static const uint32 INITIAL_TRACK_ID = 1; // Initial track ID for first track added to this movie
@@ -158,11 +164,17 @@ const uint32    AUDIO_SAMPLE_ENTRY = FourCharConstToUint32('m', 'p', '4', 'a');
 const uint32    VIDEO_SAMPLE_ENTRY = FourCharConstToUint32('m', 'p', '4', 'v');
 
 const uint32    FILE_TYPE_ATOM = FourCharConstToUint32('f', 't', 'y', 'p');
-const uint32    PVMM_BRAND = FourCharConstToUint32('p', 'v', 'm', 'm');
+const uint32    BRAND_ISOM = FourCharConstToUint32('i', 's', 'o', 'm');
 const uint32    BRAND_3GPP4 = FourCharConstToUint32('3', 'g', 'p', '4');
 const uint32    BRAND_3GPP5 = FourCharConstToUint32('3', 'g', 'p', '5');
 const uint32    BRAND_3GPP6 = FourCharConstToUint32('3', 'g', 'p', '6');
-const uint32    BRAND_MPEG4 = FourCharConstToUint32('m', 'p', '4', '1');
+const uint32    BRAND_MP41 = FourCharConstToUint32('m', 'p', '4', '1');
+const uint32    BRAND_MP42 = FourCharConstToUint32('m', 'p', '4', '2');
+const uint32    BRAND_AVC = FourCharConstToUint32('a', 'v', 'c', '1');
+
+const uint32    BRAND_3G2A = FourCharConstToUint32('3', 'g', '2', 'a');
+const uint32    BRAND_3G2B = FourCharConstToUint32('3', 'g', '2', 'b');
+const uint32    BRAND_3G2C = FourCharConstToUint32('3', 'g', '2', 'c');
 
 const uint32    TREF_TYPE_OD = FourCharConstToUint32('m', 'p', 'o', 'd');
 const uint32    TREF_TYPE_DEPEND = FourCharConstToUint32('d', 'p', 'n', 'd');
@@ -175,8 +187,6 @@ const uint32    AMR_SPECIFIC_ATOM = FourCharConstToUint32('d', 'a', 'm', 'r');
 const uint32    H263_SPECIFIC_ATOM = FourCharConstToUint32('d', '2', '6', '3');
 const uint32    AVC_SAMPLE_ENTRY = FourCharConstToUint32('a', 'v', 'c', '1');
 const uint32    AVC_CONFIGURATION_BOX = FourCharConstToUint32('a', 'v', 'c', 'C');
-
-const uint32    BRAND_MMP4 = FourCharConstToUint32('m', 'm', 'p', '4');
 
 
 const uint32    ASSET_INFO_TITLE_ATOM = FourCharConstToUint32('t', 'i', 't', 'l');
@@ -206,11 +216,8 @@ const uint32    TRACK_FRAGMENT_RANDOM_ACCESS_ATOM = FourCharConstToUint32('t', '
 const uint32    MOVIE_FRAGMENT_RANDOM_ACCESS_OFFSET_ATOM = FourCharConstToUint32('m', 'f', 'r', 'o');
 
 // MORE TBA - add specific protocols into type value
-
-#define PVMM_VERSION  0x00010000
-#define WMF_VERSION   0x00010001
 #define VERSION_3GPP4 0x00000300
-#define VERSION_MPEG4 0x00000000
+#define VERSION_MP41  0x00000000
 #define VERSION_MMP4  0x00000001
 #define VERSION_3GPP5 0x00000100
 #define VERSION_3GPP6 0x00000600
@@ -248,7 +255,7 @@ typedef enum
 #define AMR_INTERLEAVE_BUFFER_SIZE    2048
 #define AMR_WB_INTERLEAVE_BUFFER_SIZE 4096
 #define AAC_INTERLEAVE_BUFFER_SIZE   12000  // Calc with 96 Kbps as max
-#define VIDEO_INTERLEAVE_BUFFER_SIZE 128000 // 2 x Bitrate @ 256 kbps
+#define VIDEO_INTERLEAVE_BUFFER_SIZE 256000
 #define TEXT_INTERLEAVE_BUFFER_SIZE  12000
 
 #define MAX_PV_BASE_SIMPLE_PROFILE_VOL_HEADER_SIZE 28
@@ -307,6 +314,30 @@ typedef enum
 
 #define DEFAULT_MOVIE_FRAGMENT_DURATION_IN_MS 10000
 
+class PVMP4FFComposerSampleParam
+{
+    public:
+        PVMP4FFComposerSampleParam()
+        {
+            _psample = NULL;
+            _timeStamp = 0;
+            _flags = 0;
+            _sampleDuration = 0;
+            _sampleSize = 0;
+            _baseOffset = 0;
+            _index = 0;
+            _ptextSampleModifier = NULL;
+        }
+
+        Oscl_Vector<OsclMemoryFragment, OsclMemAllocator> _fragmentList;
+        uint8 *_psample;
+        uint32 _timeStamp;
+        uint8 _flags;
+        uint32 _sampleDuration;
+        uint32 _sampleSize;
+        uint32 _baseOffset;
+        int32 _index;
+        uint8* _ptextSampleModifier;
+};
+
 #endif
-
-

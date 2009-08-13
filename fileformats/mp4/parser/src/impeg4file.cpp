@@ -567,10 +567,10 @@ IMpeg4File::IsProgressiveDownloadable(MP4_FF_FILE_REFERENCE filePtr,
 
 OSCL_EXPORT_REF MP4_ERROR_CODE
 IMpeg4File::GetMetaDataSize(PVMFCPMPluginAccessInterfaceFactory* aCPMAccessFactory,
-                            bool& oIsProgressiveDownloadable,
+                            bool& oIsProgressivePlayable,
                             uint32& metaDataSize)
 {
-    oIsProgressiveDownloadable = false;
+    oIsProgressivePlayable = false;
     metaDataSize  = 0;
 
     /* use a dummy string for file name */
@@ -655,15 +655,8 @@ IMpeg4File::GetMetaDataSize(PVMFCPMPluginAccessInterfaceFactory* aCPMAccessFacto
 
     if (oMovieAtomFound || oMediaDataAtomFound)
     {
-        //at most one of two can be true
-        oIsProgressiveDownloadable = oMovieAtomFound;
+        oIsProgressivePlayable = oMovieAtomFound;
         mp4ErrorCode = EVERYTHING_FINE;
-    }
-
-    if (!oMovieAtomFound && (0 != AtomUtils::getFileBufferingCapacity(fp)))
-    {
-        // can't support progressive playback if no movie atom found
-        mp4ErrorCode = NOT_PROGRESSIVE_STREAMABLE;
     }
 
     AtomUtils::CloseMP4File(fp);

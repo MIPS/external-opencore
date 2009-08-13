@@ -1,0 +1,14 @@
+# This is a capabalities and config file #
+###################################################
+#Test Case Name - This should be at the start
+FILECAP
+
+# Video Capabilities 
+TYPE VIDEO
+TIMESCALE 1000
+FRAMEHEIGHT 144
+FRAMEWIDTH 176
+FRAMERATE 7.5
+VLOOP ON
+VSIMULATION ON
+

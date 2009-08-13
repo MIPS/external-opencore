@@ -217,7 +217,7 @@ class PVMFJitterBufferExtensionInterfaceImpl :
 
         OSCL_IMPORT_REF bool NotifyAutoResumeComplete();
 
-        OSCL_IMPORT_REF PVMFStatus SetInputMediaHeaderPreParsed(PVMFPortInterface* aPort,
+        OSCL_IMPORT_REF void SetInputMediaHeaderPreParsed(PVMFPortInterface* aPort,
                 bool aHeaderPreParsed);
 
         OSCL_IMPORT_REF PVMFStatus HasSessionDurationExpired(bool& aExpired);
@@ -234,6 +234,11 @@ class PVMFJitterBufferExtensionInterfaceImpl :
         OSCL_IMPORT_REF virtual void GetJitterBufferMemPoolInfo(const PvmfPortBaseImpl* aPort, uint32& aSize, uint32& aResizeSize, uint32& aMaxNumResizes, uint32& aExpectedNumberOfBlocksPerBuffer) const;
         OSCL_IMPORT_REF void SetJitterBufferChunkAllocator(OsclMemPoolResizableAllocator* aDataBufferAllocator, const PVMFPortInterface* aPort);
         OSCL_IMPORT_REF virtual bool PrepareForPlaylistSwitch();
+
+        OSCL_IMPORT_REF virtual bool setPortMediaParams(PVMFPortInterface* aPort,
+                mediaInfo* aMediaInfo = NULL);
+        OSCL_IMPORT_REF virtual void setPayloadParserRegistry(PayloadParserRegistry*);
+        OSCL_IMPORT_REF virtual PVMFStatus setPortDataLogging(bool logEnable, OSCL_String* logPath = NULL);
 
     private:
         PVMFJitterBufferNode *iContainer;

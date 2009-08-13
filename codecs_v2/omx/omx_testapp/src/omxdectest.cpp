@@ -126,7 +126,7 @@ void usage(FILE* filehandle)
     fprintf(filehandle, "-i      {input_file2}: 2nd input file for dynamic reconfig, etc.\n");
     fprintf(filehandle, "-r      {ref_file}:   Reference file for output verification\n");
     fprintf(filehandle, "-c/-n   {CodecType/ComponentName}\n");
-    fprintf(filehandle, "        CodecType could be avc, aac, mpeg4, h263, wmv, amr, mp3, wma\n");
+    fprintf(filehandle, "        CodecType could be avc, aac, mpeg4, h263, wmv, rv, amr, mp3, wma\n");
     fprintf(filehandle, "-t x y  {A range of test cases to run}\n ");
     fprintf(filehandle, "        To run one test case use same index for x and y - Default is ALL\n");
     fprintf(filehandle, "-l      log to file\n");
@@ -339,6 +339,11 @@ int local_main(FILE* filehandle, cmd_line* command_line)
                             oscl_strncpy(Role, "video_decoder.wmv", oscl_strlen("video_decoder.wmv") + 1);
                             oscl_strncpy(ComponentFormat, "WMV", oscl_strlen("WMV") + 1);
                         }
+                        else if (NULL != (Result = (OMX_STRING) oscl_strstr(argstr, "rv")))
+                        {
+                            oscl_strncpy(Role, "video_decoder.rv", oscl_strlen("video_decoder.rv") + 1);
+                            oscl_strncpy(ComponentFormat, "RV", oscl_strlen("RV") + 1);
+                        }
                         else if (NULL != (Result = (OMX_STRING) oscl_strstr(argstr, "amr")))
                         {
                             oscl_strncpy(Role, "audio_decoder.amr", oscl_strlen("audio_decoder.amr") + 1);
@@ -500,7 +505,7 @@ int local_main(FILE* filehandle, cmd_line* command_line)
             {
                 case GET_ROLES_TEST:
                 {
-                    fprintf(filehandle, "\nStarting test %4d: GET_ROLES_TEST \n", CurrentTestNumber);
+                    fprintf(filehandle, "\nStarting test %4d: GET_ROLES_TEST \n", (int32)CurrentTestNumber);
 
                     pCurrentTest =  OSCL_NEW(OmxDecTestCompRole, (filehandle, pInputFile, pOutputFile,
                                              OutFileName, pRefFileName, ComponentName, Role,
@@ -527,7 +532,7 @@ int local_main(FILE* filehandle, cmd_line* command_line)
 
                 case BUFFER_NEGOTIATION_TEST:
                 {
-                    fprintf(filehandle, "\nStarting test %4d: BUFFER_NEGOTIATION_TEST \n", CurrentTestNumber);
+                    fprintf(filehandle, "\nStarting test %4d: BUFFER_NEGOTIATION_TEST \n", (int32)CurrentTestNumber);
 
                     pCurrentTest = OSCL_NEW(OmxDecTestBufferNegotiation, (filehandle, pInputFile, pOutputFile,
                                             OutFileName, pRefFileName, ComponentName, Role,
@@ -554,7 +559,7 @@ int local_main(FILE* filehandle, cmd_line* command_line)
                     OMX_BOOL iCallbackFlag1, iCallbackFlag2;
 
                     /* Run the testcase for FILE 1 */
-                    fprintf(filehandle, "\nStarting test %4d: DYNAMIC_PORT_RECONFIG for %s\n", CurrentTestNumber, InFileName);
+                    fprintf(filehandle, "\nStarting test %4d: DYNAMIC_PORT_RECONFIG for %s\n", (int32)CurrentTestNumber, InFileName);
 
                     pInputFile = fopen(InFileName, "rb");
                     pOutputFile = fopen(OutFileName, "wb");
@@ -597,7 +602,7 @@ int local_main(FILE* filehandle, cmd_line* command_line)
                     }
 
                     pOutputFile = fopen(OutFileName, "wb");
-                    fprintf(filehandle, "\nStarting test %4d: DYNAMIC_PORT_RECONFIG for %s\n", CurrentTestNumber, InFileName2);
+                    fprintf(filehandle, "\nStarting test %4d: DYNAMIC_PORT_RECONFIG for %s\n", (int32)CurrentTestNumber, InFileName2);
 
                     pCurrentTest = OSCL_NEW(OmxDecTestPortReconfig, (filehandle, pInputFile, pOutputFile,
                                             OutFileName, pRefFileName, ComponentName, Role,
@@ -633,7 +638,7 @@ int local_main(FILE* filehandle, cmd_line* command_line)
 
                 case PORT_RECONFIG_TRANSITION_TEST:
                 {
-                    fprintf(filehandle, "\nStarting test %4d: PORT_RECONFIG_TRANSITION_TEST\n", CurrentTestNumber);
+                    fprintf(filehandle, "\nStarting test %4d: PORT_RECONFIG_TRANSITION_TEST\n", (int32)CurrentTestNumber);
 
                     pInputFile = fopen(InFileName, "rb");
                     pOutputFile = fopen(OutFileName, "wb");
@@ -665,7 +670,7 @@ int local_main(FILE* filehandle, cmd_line* command_line)
 
                 case PORT_RECONFIG_TRANSITION_TEST_2:
                 {
-                    fprintf(filehandle, "\nStarting test %4d: PORT_RECONFIG_TRANSITION_TEST_2\n", CurrentTestNumber);
+                    fprintf(filehandle, "\nStarting test %4d: PORT_RECONFIG_TRANSITION_TEST_2\n", (int32)CurrentTestNumber);
 
                     pInputFile = fopen(InFileName, "rb");
                     pOutputFile = fopen(OutFileName, "wb");
@@ -696,7 +701,7 @@ int local_main(FILE* filehandle, cmd_line* command_line)
 
                 case PORT_RECONFIG_TRANSITION_TEST_3:
                 {
-                    fprintf(filehandle, "\nStarting test %4d: PORT_RECONFIG_TRANSITION_TEST_3\n", CurrentTestNumber);
+                    fprintf(filehandle, "\nStarting test %4d: PORT_RECONFIG_TRANSITION_TEST_3\n", (int32)CurrentTestNumber);
 
                     pInputFile = fopen(InFileName, "rb");
                     pOutputFile = fopen(OutFileName, "wb");
@@ -728,7 +733,7 @@ int local_main(FILE* filehandle, cmd_line* command_line)
 
                 case FLUSH_PORT_TEST:
                 {
-                    fprintf(filehandle, "\nStarting test %4d: FLUSH_PORT_TEST \n", CurrentTestNumber);
+                    fprintf(filehandle, "\nStarting test %4d: FLUSH_PORT_TEST \n", (int32)CurrentTestNumber);
 
                     pInputFile = fopen(InFileName, "rb");
                     pOutputFile = fopen(OutFileName, "wb");
@@ -760,7 +765,7 @@ int local_main(FILE* filehandle, cmd_line* command_line)
 
                 case EOS_AFTER_FLUSH_PORT_TEST:
                 {
-                    fprintf(filehandle, "\nStarting test %4d: EOS_AFTER_FLUSH_PORT_TEST \n", CurrentTestNumber);
+                    fprintf(filehandle, "\nStarting test %4d: EOS_AFTER_FLUSH_PORT_TEST \n", (int32)CurrentTestNumber);
 
                     pInputFile = fopen(InFileName, "rb");
                     pOutputFile = fopen(OutFileName, "wb");
@@ -792,7 +797,7 @@ int local_main(FILE* filehandle, cmd_line* command_line)
 
                 case NORMAL_SEQ_TEST:
                 {
-                    fprintf(filehandle, "\nStarting test %4d: NORMAL_SEQ_TEST \n", CurrentTestNumber);
+                    fprintf(filehandle, "\nStarting test %4d: NORMAL_SEQ_TEST \n", (int32)CurrentTestNumber);
 
                     pInputFile = fopen(InFileName, "rb");
                     pOutputFile = fopen(OutFileName, "wb");
@@ -821,7 +826,7 @@ int local_main(FILE* filehandle, cmd_line* command_line)
 
                 case NORMAL_SEQ_TEST_USEBUFF:
                 {
-                    fprintf(filehandle, "\nStarting test %4d: NORMAL_SEQ_TEST_USEBUFF \n", CurrentTestNumber);
+                    fprintf(filehandle, "\nStarting test %4d: NORMAL_SEQ_TEST_USEBUFF \n", (int32)CurrentTestNumber);
 
                     pInputFile = fopen(InFileName, "rb");
                     pOutputFile = fopen(OutFileName, "wb");
@@ -850,7 +855,7 @@ int local_main(FILE* filehandle, cmd_line* command_line)
 
                 case ENDOFSTREAM_MISSING_TEST:
                 {
-                    fprintf(filehandle, "\nStarting test %4d: ENDOFSTREAM_MISSING_TEST \n", CurrentTestNumber);
+                    fprintf(filehandle, "\nStarting test %4d: ENDOFSTREAM_MISSING_TEST \n", (int32)CurrentTestNumber);
 
                     pInputFile = fopen(InFileName, "rb");
                     pOutputFile = fopen(OutFileName, "wb");
@@ -882,7 +887,7 @@ int local_main(FILE* filehandle, cmd_line* command_line)
 
                 case PARTIAL_FRAMES_TEST:
                 {
-                    fprintf(filehandle, "\nStarting test %4d: PARTIAL_FRAMES_TEST \n", CurrentTestNumber);
+                    fprintf(filehandle, "\nStarting test %4d: PARTIAL_FRAMES_TEST \n", (int32)CurrentTestNumber);
 
                     pInputFile = fopen(InFileName, "rb");
                     pOutputFile = fopen(OutFileName, "wb");
@@ -909,7 +914,7 @@ int local_main(FILE* filehandle, cmd_line* command_line)
 
                 case EXTRA_PARTIAL_FRAMES_TEST:
                 {
-                    fprintf(filehandle, "\nStarting test %4d: EXTRA_PARTIAL_FRAMES_TEST \n", CurrentTestNumber);
+                    fprintf(filehandle, "\nStarting test %4d: EXTRA_PARTIAL_FRAMES_TEST \n", (int32)CurrentTestNumber);
 
                     pInputFile = fopen(InFileName, "rb");
                     pOutputFile = fopen(OutFileName, "wb");
@@ -938,7 +943,7 @@ int local_main(FILE* filehandle, cmd_line* command_line)
 
                 case INPUT_OUTPUT_BUFFER_BUSY_TEST:
                 {
-                    fprintf(filehandle, "\nStarting test %4d: INPUT_OUTPUT_BUFFER_BUSY_TEST \n", CurrentTestNumber);
+                    fprintf(filehandle, "\nStarting test %4d: INPUT_OUTPUT_BUFFER_BUSY_TEST \n", (int32)CurrentTestNumber);
 
                     pInputFile = fopen(InFileName, "rb");
                     pOutputFile = fopen(OutFileName, "wb");
@@ -968,7 +973,7 @@ int local_main(FILE* filehandle, cmd_line* command_line)
 
                 case PAUSE_RESUME_TEST:
                 {
-                    fprintf(filehandle, "\nStarting test %4d: PAUSE_RESUME_TEST \n", CurrentTestNumber);
+                    fprintf(filehandle, "\nStarting test %4d: PAUSE_RESUME_TEST \n", (int32)CurrentTestNumber);
 
                     pInputFile = fopen(InFileName, "rb");
                     pOutputFile = fopen(OutFileName, "wb");
@@ -997,7 +1002,7 @@ int local_main(FILE* filehandle, cmd_line* command_line)
 
                 case REPOSITIONING_TEST:
                 {
-                    fprintf(filehandle, "\nStarting test %4d: REPOSITIONING_TEST \n", CurrentTestNumber);
+                    fprintf(filehandle, "\nStarting test %4d: REPOSITIONING_TEST \n", (int32)CurrentTestNumber);
 
                     pInputFile = fopen(InFileName, "rb");
                     pOutputFile = fopen(OutFileName, "wb");
@@ -1026,7 +1031,7 @@ int local_main(FILE* filehandle, cmd_line* command_line)
 
                 case MISSING_NAL_TEST:
                 {
-                    fprintf(filehandle, "\nStarting test %4d: MISSING_NAL_TEST\n", CurrentTestNumber);
+                    fprintf(filehandle, "\nStarting test %4d: MISSING_NAL_TEST\n", (int32)CurrentTestNumber);
 
                     pInputFile = fopen(InFileName, "rb");
                     pOutputFile = fopen(OutFileName, "wb");
@@ -1058,7 +1063,7 @@ int local_main(FILE* filehandle, cmd_line* command_line)
 
                 case CORRUPT_NAL_TEST:
                 {
-                    fprintf(filehandle, "\nStarting test %4d: CORRUPT_NAL_TEST\n", CurrentTestNumber);
+                    fprintf(filehandle, "\nStarting test %4d: CORRUPT_NAL_TEST\n", (int32)CurrentTestNumber);
 
                     pInputFile = fopen(InFileName, "rb");
                     pOutputFile = fopen(OutFileName, "wb");
@@ -1090,7 +1095,7 @@ int local_main(FILE* filehandle, cmd_line* command_line)
 
                 case INCOMPLETE_NAL_TEST:
                 {
-                    fprintf(filehandle, "\nStarting test %4d: INCOMPLETE_NAL_TEST\n", CurrentTestNumber);
+                    fprintf(filehandle, "\nStarting test %4d: INCOMPLETE_NAL_TEST\n", (int32)CurrentTestNumber);
 
                     pInputFile = fopen(InFileName, "rb");
                     pOutputFile = fopen(OutFileName, "wb");
@@ -1638,7 +1643,7 @@ int32 omx_m4v_getNextVideoSample(int32 layer, uint8 **buf, int32 max_buffer_size
             nBytesRead += skip;
             max_buffer_size -= nBytesRead;
             if (max_buffer_size < 0)  max_buffer_size = 0;
-            timestamp[0] = -1;
+            timestamp[0] = 0xffffffff;
         }
     }
     return nBytesRead;
@@ -1679,7 +1684,7 @@ OMX_ERRORTYPE OmxComponentDecTest::GetInputFrameMpeg4()
             {
                 if (!iFragmentInProgress && !iDivideBuffer)
                 {
-                    TimeStamp = -1;
+                    TimeStamp = 0xffffffff;
                     Size = omx_m4v_getNextVideoSample(0, &ipBitstreamBuffer, iMaxSize, &TimeStamp);
 
                     iMaxSize -= Size;
@@ -1878,7 +1883,7 @@ OMX_ERRORTYPE OmxComponentDecTest::GetInputFrameH263()
             {
                 if (!iFragmentInProgress && !iDivideBuffer)
                 {
-                    TimeStamp = -1;
+                    TimeStamp = 0xffffffff;
 
                     Size = omx_m4v_getNextVideoSample(0, &ipBitstreamBuffer, iMaxSize, &TimeStamp);
 
@@ -2667,7 +2672,217 @@ OMX_ERRORTYPE OmxComponentDecTest::GetInputFrameWmv()
     return OMX_ErrorNone;
 }
 
+//Read the data from input file & pass it to the RV component
+OMX_ERRORTYPE OmxComponentDecTest::GetInputFrameRv()
+{
+    OMX_S32 Index;
+    OMX_S32 Size;
+    OMX_ERRORTYPE Status;
+    OMX_S32 ReadCount;
+    OMX_S32 TempSize;
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "OmxComponentDecTest::GetInputFrameRv() - IN"));
 
+    if (OMX_TRUE == iInputReady)
+    {
+        if (OMX_TRUE == iInputWasRefused)
+        {
+            Index = iInIndex; //use previously found and saved Index, do not read the file (this was done earlier)
+            iInputWasRefused = OMX_FALSE; // reset the flag
+        }
+        else
+        {
+            Index = 0;
+            while (OMX_FALSE == ipInputAvail[Index] && Index < iInBufferCount)
+            {
+                Index++;
+            }
+
+            if (iInBufferCount == Index)
+            {
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG, (0, "OmxComponentDecTest::GetInputFrameRv() - Input buffer not available, OUT"));
+                return OMX_ErrorNone;
+            }
+
+            if (iHeaderSent)
+            {
+                if (!iFragmentInProgress && !iDivideBuffer)
+                {
+                    ReadCount = fread(&Size, 1, FRAME_SIZE_FIELD, ipInputFile); // read in 1st 4 bytes
+                    iCurFrag = 0;
+
+                    if (ReadCount < FRAME_SIZE_FIELD)
+                    {
+                        iStopProcessingInput = OMX_TRUE;
+                        iInIndex = Index;
+                        iLastInputFrame = iFrameNum;
+
+                        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "OmxComponentDecTest::GetInputFrameRv() - Input file has ended, OUT"));
+                        return OMX_ErrorNone;
+                    }
+
+                    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG, (0, "OmxComponentDecTest::GetInputFrameRv() - Next frame size is %d", Size));
+
+                    for (OMX_S32 kk = 0; kk < iNumSimFrags - 1; kk++)
+                    {
+                        iSimFragSize[kk] = Size / iNumSimFrags;
+                    }
+
+                    iSimFragSize[iNumSimFrags - 1] = Size - (iNumSimFrags - 1) * (Size / iNumSimFrags); // last fragment
+                }
+
+
+                if (OMX_FALSE == iDivideBuffer)
+                {
+                    Size = iSimFragSize[iCurFrag];
+                    iCurFrag++;
+
+                    if (iCurFrag == iNumSimFrags)
+                    {
+                        iFragmentInProgress = OMX_FALSE;
+                    }
+                    else
+                    {
+                        iFragmentInProgress = OMX_TRUE;
+                    }
+
+                    if (Size > iInBufferSize)
+                    {
+                        iDivideBuffer = OMX_TRUE;
+
+                        TempSize = iInBufferSize;
+
+                        iRemainingFrameSize = Size - TempSize;
+                        Size = TempSize;
+
+                    }
+                }
+                else
+                {
+                    if ((Size = iRemainingFrameSize) < iInBufferSize)
+                    {
+                        iRemainingFrameSize = 0;
+                        iDivideBuffer = OMX_FALSE;
+                    }
+                    else
+                    {
+
+                        iRemainingFrameSize = Size - iInBufferSize;
+                        Size = iInBufferSize;
+                    }
+                }
+
+
+                ReadCount = fread(ipInBuffer[Index]->pBuffer, 1, Size, ipInputFile);
+
+                if (ReadCount < Size)
+                {
+                    iStopProcessingInput = OMX_TRUE;
+                    iInIndex = Index;
+                    iLastInputFrame = iFrameNum;
+
+                    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "OmxComponentDecTest::GetInputFrameRv() - Input file read error, OUT"));
+
+                    return OMX_ErrorNone;   // corrupted file !!
+                }
+
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
+                                (0, "OmxComponentDecTest::GetInputFrameRv() - Bytes read from input file %d", Size));
+
+                ipInBuffer[Index]->nFilledLen = Size;
+                ipInBuffer[Index]->nOffset = 0;  // for now all data starts at the beginning of the buffer
+            }
+            else
+            {
+                ReadCount = fread(&Size, 1, FRAME_SIZE_FIELD, ipInputFile); // read in 1st 4 bytes
+                if (ReadCount < FRAME_SIZE_FIELD)
+                {
+                    iStopProcessingInput = OMX_TRUE;
+                    iInIndex = Index;
+                    iLastInputFrame = iFrameNum;
+
+                    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "OmxComponentDecTest::GetInputFrameRv() - Input file has ended, OUT"));
+                    return OMX_ErrorNone;
+                }
+
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG, (0, "OmxComponentDecTest::GetInputFrameRv() - Next frame size is %d", Size));
+
+                ReadCount = fread(ipInBuffer[Index]->pBuffer, 1, Size, ipInputFile);
+                if (ReadCount < Size)
+                {
+                    iStopProcessingInput = OMX_TRUE;
+                    iInIndex = Index;
+                    iLastInputFrame = iFrameNum;
+
+                    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "OmxComponentDecTest::GetInputFrameRv() - Input file read error, OUT"));
+                    return OMX_ErrorNone;   // corrupted file !!
+                }
+
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
+                                (0, "OmxComponentDecTest::GetInputFrameRv() - Bytes read from input file %d", Size));
+
+                ipInBuffer[Index]->nFilledLen = Size;
+                ipInBuffer[Index]->nOffset = 0;
+                iHeaderSent = OMX_TRUE;
+            }
+
+            if (iFragmentInProgress || iDivideBuffer)
+            {
+                ipInBuffer[Index]->nFlags  = 0;
+
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
+                                (0, "OmxComponentDecTest::GetInputFrameRv() - Input buffer of index %d without any marker", Index));
+            }
+            else
+            {
+                iFrameNum++;
+                ipInBuffer[Index]->nFlags |= OMX_BUFFERFLAG_ENDOFFRAME;
+
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
+                                (0, "OmxComponentDecTest::GetInputFrameRv() - Input buffer of index %d with OMX_BUFFERFLAG_ENDOFFRAME flag marked", Index));
+            }
+        }
+
+
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
+                        (0, "OmxComponentDecTest::GetInputFrameRv() - Calling EmptyThisBuffer with Alloc Len %d, Filled Len %d Offset %d TimeStamp %d",
+                         ipInBuffer[Index]->nAllocLen, ipInBuffer[Index]->nFilledLen, ipInBuffer[Index]->nOffset, ipInBuffer[Index]->nTimeStamp));
+
+        Status = OMX_EmptyThisBuffer(ipAppPriv->Handle, ipInBuffer[Index]);
+        if (OMX_ErrorNone == Status)
+        {
+            ipInputAvail[Index] = OMX_FALSE; // mark unavailable
+
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
+                            (0, "OmxComponentDecTest::GetInputFrameRv() - Sent the input buffer sucessfully, OUT"));
+            return OMX_ErrorNone;
+        }
+        else if (OMX_ErrorInsufficientResources == Status)
+        {
+            iInIndex = Index; // save the current input buffer, wait for call back
+            iInputReady = OMX_FALSE;
+            iInputWasRefused = OMX_TRUE;
+
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "OmxComponentDecTest::GetInputFrameRv() - EmptyThisBuffer failed with Error OMX_ErrorInsufficientResources, OUT"));
+            return OMX_ErrorInsufficientResources;
+        }
+        else
+        {
+            iStopProcessingInput = OMX_TRUE;
+            iLastInputFrame = iFrameNum;
+
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "OmxComponentDecTest::GetInputFrameRv() - ERROR, EmptyThisBuffer failed, OUT"));
+            return OMX_ErrorNone;
+        }
+    }
+    else
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "OmxComponentDecTest::GetInputFrameRv() - ERROR, Input is not ready to be sent, OUT"));
+        return OMX_ErrorInsufficientResources;
+    }
+
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "OmxComponentDecTest::GetInputFrameRv() - OUT"));
+    return OMX_ErrorNone;
+}
 
 //Read the data from input file & pass it to the Mp3 component
 OMX_ERRORTYPE OmxComponentDecTest::GetInputFrameMp3()
@@ -3067,7 +3282,7 @@ bool OmxComponentDecTest::WriteOutput(OMX_U8* aOutBuff, OMX_U32 aSize)
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "OmxComponentDecTest::WriteOutput() called, Num of bytes %d", aSize));
 
-    OMX_S32 BytesWritten = fwrite(aOutBuff, sizeof(OMX_U8), aSize, ipOutputFile);
+    OMX_U32 BytesWritten = fwrite(aOutBuff, sizeof(OMX_U8), aSize, ipOutputFile);
     return (BytesWritten == aSize);
 }
 
@@ -3122,14 +3337,14 @@ void OmxComponentDecTest::Run()
             }
 
             //This should be the first call to the component to load it.
-            Err = OMX_Init();
-            CHECK_ERROR(Err, "OMX_Init");
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG, (0, "OmxComponentDecTest::Run() - OMX_Init done"));
+            Err = OMX_MasterInit();
+            CHECK_ERROR(Err, "OMX_MasterInit");
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG, (0, "OmxComponentDecTest::Run() - OMX_MasterInit done"));
 
 
             if (NULL != iName)
             {
-                Err = OMX_GetHandle(&ipAppPriv->Handle, iName, (OMX_PTR) this , iCallbacks->getCallbackStruct());
+                Err = OMX_MasterGetHandle(&ipAppPriv->Handle, iName, (OMX_PTR) this , iCallbacks->getCallbackStruct());
                 CHECK_ERROR(Err, "GetHandle");
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG, (0, "OmxComponentDecTest::Run() - Got Handle for the component %s", iName));
             }
@@ -3142,7 +3357,7 @@ void OmxComponentDecTest::Run()
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG, (0, "OmxComponentDecTest::Run() - Finding out the components that can support the role %s", iRole));
 
                 // call once to find out the number of components that can fit the role
-                Err = OMX_GetComponentsOfRole(iRole, &NumComps, NULL);
+                Err = OMX_MasterGetComponentsOfRole(iRole, &NumComps, NULL);
 
                 if (OMX_ErrorNone != Err || NumComps < 1)
                 {
@@ -3170,13 +3385,13 @@ void OmxComponentDecTest::Run()
                 }
 
                 // call 2nd time to get the component names
-                Err = OMX_GetComponentsOfRole(iRole, &NumComps, (OMX_U8**) pCompOfRole);
+                Err = OMX_MasterGetComponentsOfRole(iRole, &NumComps, (OMX_U8**) pCompOfRole);
                 CHECK_ERROR(Err, "GetComponentsOfRole");
 
                 for (ii = 0; ii < NumComps; ii++)
                 {
                     // try to create component
-                    Err = OMX_GetHandle(&ipAppPriv->Handle, (OMX_STRING) pCompOfRole[ii], (OMX_PTR) this, iCallbacks->getCallbackStruct());
+                    Err = OMX_MasterGetHandle(&ipAppPriv->Handle, (OMX_STRING) pCompOfRole[ii], (OMX_PTR) this, iCallbacks->getCallbackStruct());
                     // if successful, no need to continue
                     if ((OMX_ErrorNone == Err) && (NULL != ipAppPriv->Handle))
                     {
@@ -3219,6 +3434,15 @@ void OmxComponentDecTest::Run()
             }
 
             CHECK_ERROR(Err, "GetParameter_Audio/Video_Init");
+
+            // Number of ports must be at least 2 of them (in&out)
+            if (iPortInit.nPorts < 2)
+            {
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                                (0, "OmxComponentDecTest::Run() There is insuffucient %d ports", iPortInit.nPorts));
+                StopOnError();
+                break;
+            }
 
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG, (0, "OmxComponentDecTest::Run() - GetParameter called for OMX_IndexParamAudioInit/OMX_IndexParamVideoInit"));
 
@@ -3327,7 +3551,6 @@ void OmxComponentDecTest::Run()
             {
                 pGetInputFrame = &OmxComponentDecTest::GetInputFrameAac;
 
-                //iPcmMode.nSize = sizeof (OMX_AUDIO_PARAM_PCMMODETYPE);
                 INIT_GETPARAMETER_STRUCT(OMX_AUDIO_PARAM_PCMMODETYPE, iPcmMode);
                 iPcmMode.nPortIndex = iOutputPortIndex;
 
@@ -3349,6 +3572,10 @@ void OmxComponentDecTest::Run()
             else if (0 == oscl_strcmp(iFormat, "WMV"))
             {
                 pGetInputFrame = &OmxComponentDecTest::GetInputFrameWmv;
+            }
+            else if (0 == oscl_strcmp(iFormat, "RV"))
+            {
+                pGetInputFrame = &OmxComponentDecTest::GetInputFrameRv;
             }
             else if (0 == oscl_strcmp(iFormat, "AMR"))
             {
@@ -3421,7 +3648,6 @@ void OmxComponentDecTest::Run()
             {
                 pGetInputFrame = &OmxComponentDecTest::GetInputFrameMp3;
 
-                //iPcmMode.nSize = sizeof (OMX_AUDIO_PARAM_PCMMODETYPE);
                 INIT_GETPARAMETER_STRUCT(OMX_AUDIO_PARAM_PCMMODETYPE, iPcmMode);
                 iPcmMode.nPortIndex = iOutputPortIndex;
 
@@ -3694,14 +3920,30 @@ void OmxComponentDecTest::Run()
             iPendingCommands = 1;
 
             if (0 == oscl_strcmp(iFormat, "H264") || 0 == oscl_strcmp(iFormat, "H263")
-                    || 0 == oscl_strcmp(iFormat, "M4V"))
+                    || 0 == oscl_strcmp(iFormat, "M4V") || 0 == oscl_strcmp(iFormat, "RV"))
             {
                 iOutBufferSize = ((iParamPort.format.video.nFrameWidth + 15) & ~15) * ((iParamPort.format.video.nFrameHeight + 15) & ~15) * 3 / 2;
+
+                if (iOutBufferSize < (OMX_S32)iParamPort.nBufferSize)
+                {
+                    iOutBufferSize = iParamPort.nBufferSize;
+                }
             }
             else if (0 == oscl_strcmp(iFormat, "WMV"))
             {
                 iOutBufferSize = ((iParamPort.format.video.nFrameWidth + 3) & ~3) * ((iParamPort.format.video.nFrameHeight + 3) & ~3) * 3 / 2;
+
+                if (iOutBufferSize < (OMX_S32)iParamPort.nBufferSize)
+                {
+                    iOutBufferSize = iParamPort.nBufferSize;
+                }
             }
+            else
+            {
+                //For audio components take the size from the component
+                iOutBufferSize = iParamPort.nBufferSize;
+            }
+
 
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
                             (0, "OmxComponentDecTest::Run() - Allocating buffer again after port reconfigutauion has been complete"));
@@ -3939,7 +4181,7 @@ void OmxComponentDecTest::Run()
                     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
                                     (0, "OmxComponentDecTest::Run() - Free the Component Handle"));
 
-                    Err = OMX_FreeHandle(ipAppPriv->Handle);
+                    Err = OMX_MasterFreeHandle(ipAppPriv->Handle);
                     if (OMX_ErrorNone != Err)
                     {
                         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "OmxComponentDecTest::Run() - FreeHandle Error"));
@@ -3951,10 +4193,10 @@ void OmxComponentDecTest::Run()
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
                             (0, "OmxComponentDecTest::Run() - De-initialize the omx component"));
 
-            Err = OMX_Deinit();
+            Err = OMX_MasterDeinit();
             if (OMX_ErrorNone != Err)
             {
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "OmxComponentDecTest::Run() - OMX_Deinit Error"));
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "OmxComponentDecTest::Run() - OMX_MasterDeinit Error"));
                 iTestStatus = OMX_FALSE;
             }
 
@@ -4089,8 +4331,8 @@ void OmxComponentDecTest::VerifyOutput(OMX_U8 aTestName[])
 {
     FILE* pRefFilePointer = NULL;
     FILE* pOutFilePointer = NULL;
-    OMX_S32 FileSize1, FileSize2, Count = 0;
-    OMX_S16 Num1, Num2, Diff;
+    OMX_S32 FileSize1, FileSize2;
+    OMX_S16 Num1, Num2, Diff = 0;
 
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "OmxComponentDecTest::VerifyOutput() IN"));
 
@@ -4106,11 +4348,11 @@ void OmxComponentDecTest::VerifyOutput(OMX_U8 aTestName[])
         {
             fseek(pOutFilePointer, 0, SEEK_END);
             FileSize1 = ftell(pOutFilePointer);
-            rewind(pOutFilePointer);
+            fseek(pOutFilePointer, 0, SEEK_SET);
 
             fseek(pRefFilePointer, 0, SEEK_END);
             FileSize2 = ftell(pRefFilePointer);
-            rewind(pRefFilePointer);
+            fseek(pRefFilePointer, 0, SEEK_SET);
 
             if (FileSize1 == FileSize2)
             {
@@ -4444,7 +4686,7 @@ int32 Mp3BitstreamObject::Mp3FrameSynchronization(OMX_S32* aFrameSize)
 {
     uint16 val;
     OMX_BOOL Err;
-    int32 retval;
+    int32 retval = 1;
     int32 numBytes;
 
     pVars->pBuffer = ipBuffer;

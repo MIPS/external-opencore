@@ -256,21 +256,21 @@ bool pvauthor_async_compressed_test_errorhandling::ConfigAmrAacComposer()
     {
         case AMR_FOutput_Test:
         case AMR_FileOutput_Test_UsingExternalFileHandle:
-            if (iOutputFileName == NULL)
+            if (iOutputFileName.get_size() == 0)
             {
                 iOutputFileName = KFOAOnlyAMRTestOutput;
             }
             break;
 
         case AMRWB_FOutput_Test:
-            if (iOutputFileName == NULL)
+            if (iOutputFileName.get_size() == 0)
             {
                 iOutputFileName = KFOAOnlyAMRWBTestOutput;
             }
             break;
 
         case AACADIF_FOutput_Test:
-            if (iOutputFileName == NULL)
+            if (iOutputFileName.get_size() == 0)
             {
                 iOutputFileName = KFOAOnlyAACADIFTestOutput;
             }
@@ -278,7 +278,7 @@ bool pvauthor_async_compressed_test_errorhandling::ConfigAmrAacComposer()
 
 
         case AACADTS_FOutput_Test:
-            if (iOutputFileName == NULL)
+            if (iOutputFileName.get_size() == 0)
             {
                 iOutputFileName = KFOAOnlyAACADTSTestOutput;
             }
@@ -323,7 +323,7 @@ bool pvauthor_async_compressed_test_errorhandling::ConfigMp43gpComposer()
     {
         case ErrorHandling_WrongTextInputFileNameTest:
         case ErrorHandling_MediaInputNodeStartFailed:
-            if (iOutputFileName == NULL)
+            if (iOutputFileName.get_size() == 0)
             {
                 iOutputFileName = KAMRYUVInputAV3gpTestOutput;
             }
@@ -597,7 +597,7 @@ bool pvauthor_async_compressed_test_errorhandling::ConfigureAudioEncoder()
         return true;
     }
 
-    return PVAETestNodeConfig::ConfigureAudioEncoder(iAudioEncoderConfig, iAudioEncoderMimeType);
+    return PVAETestNodeConfig::ConfigureAudioEncoder(iAudioEncoderConfig, iAudioEncoderMimeType, iAacEncoderProfileMimeType);
 }
 
 ////////////////////////////////////////////////////////////////////////////
@@ -667,7 +667,6 @@ void pvauthor_async_compressed_test_errorhandling::Cleanup()
     }
 
     DeleteTestInputs();
-    iOutputFileName = NULL;
 }
 
 
@@ -1158,7 +1157,6 @@ void pvauthor_async_compressed_test_errorhandling::CommandCompleted(const PVCmdR
         case PVAE_CMD_STOP:
             if (aResponse.GetCmdStatus() == PVMFSuccess)
             {
-                iOutputFileName = NULL;
                 iState = PVAE_CMD_RESET;
                 RunIfNotReady();
             }
@@ -1208,7 +1206,6 @@ void pvauthor_async_compressed_test_errorhandling::CommandCompleted(const PVCmdR
                 {
                     return;//We will wait for all RemoveDataSource calls to complete
                 }
-                iOutputFileName = NULL;
                 if (!DeleteTestInputs())
                 {
                     PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_ERR,

@@ -159,6 +159,12 @@
 #define KAACADTSEncMimeType         "/x-pvmf/audio/encode/aac/adts"
 #define KTextEncMimeType "/x-pvmf/text/encode/txt"
 
+
+// aac profile mime type
+#define KAACEncProfileType "/x-pvmf/audio/encode/profile/aac-lc"
+#define KAACPlusEncProfileType "/x-pvmf/audio/encode/profile/aacplus"
+#define KEAACPlusEncProfileType "/x-pvmf/audio/encode/profile/eaacplus"
+
 // Default input settings
 extern const uint32 KVideoBitrate ;
 extern const uint32 KVideoFrameWidth ;
@@ -408,14 +414,14 @@ typedef enum
      *       If no cmdline arguments given it uses the default files i.e. "m4v_input.m4v" and
      *       "m4v_input.log"
      */
-    M4V_Input_AOnly_3gpTest = 20,
+    M4V_Input_VOnly_3gpTest = 20,
     /**
      * @test(20) Takes AVC bitstream and corresponding log file and authors H264 3GP file.
      *       -video <video filename> -videoconfigfile <video logfile> -output <output filename>.
      *       If no cmdline arguments given it uses the default files i.e. "avc_input.avc" and
      *       "avc_input.log"
      */
-    AVC_Input_AOnly_3gpTest = 21,
+    AVC_Input_VOnly_3gpTest = 21,
     /**
      * @test (22) Placeholder test
      */
@@ -487,7 +493,7 @@ typedef enum
     UnCompressed_NormalTestBegin = 200,
     /**
      * @test (201) This test case takes an AVI file as input and creates a 3gp file as output.
-     * -source <input filename> -output <output filename> -encV <video encoder type> -encA  <audio encoder type> [-realtime]
+     * -source <input filename> -output <output filename> -encV <video encoder type> -encA  <audio encoder type> -aactype <aac profile type> [-realtime]
      * The value for
      * -encV :0 M4V
      *       :1 H263
@@ -497,6 +503,9 @@ typedef enum
      *       2: AAC-ADIF
      *       3: AAC-ADTS
      *       4: AAC-MPEG4_AUDIO
+     * -aactype 0: AAC-LC
+     *          1: AAC-PLUS
+     *          2: EAAC-PLUS
      * If we do not mention the input file and output filenames, it uses "testinput.avi".
      * If we donot pass [-realtime] it will author in ASAP mode.
      */
@@ -786,7 +795,7 @@ typedef enum
     /**
      * @test (301) This test case takes and AVI file as an input and creates an output file for a given duration of time.
      *             The output file can also be created in realtime mode.
-     * -source <input filename> -output <output filename> -encV <video encoder type> -encA  <audio encoder type> [-realtime]
+     * -source <input filename> -output <output filename> -encV <video encoder type> -encA  <audio encoder type> -aactype <aac profile type> [-realtime]
      * The value for
      * -encV :0 M4V
      *       :1 H263
@@ -796,6 +805,9 @@ typedef enum
      *       2: AAC-ADIF
      *       3: AAC-ADTS
      *       4: AAC-MPEG4_AUDIO
+     * -aactype 0: AAC-LC
+     *          1: AAC-PLUS
+     *          2: EAAC-PLUS
      * If we do not mention the input file and output filenames, it uses "testinput.avi".
      * If we donot pass [-realtime] it will author in ASAP mode.
      */
@@ -1416,6 +1428,7 @@ class pvauthor_async_test_observer
 
 
 ////////////////////////////////////////////////////////////////////////////
+class IMpeg4File;
 class pvauthor_async_test_base : public OsclTimerObject,
         public PVCommandStatusObserver,
         public PVErrorEventObserver,
@@ -1436,10 +1449,16 @@ class pvauthor_async_test_base : public OsclTimerObject,
         virtual void HandleErrorEvent(const PVAsyncErrorEvent& /*aEvent*/) {}
         virtual void HandleInformationalEvent(const PVAsyncInformationalEvent& /*aEvent*/) {}
 
+        virtual void VerifyOutputFile();
+        virtual PVMFStatus VerifySessionParameters(IMpeg4File* aMp4FF);
+        virtual PVMFStatus VerifyTrackParameters(IMpeg4File* aMp4FF);
+
         pvauthor_async_test_observer* iObserver;
         test_case* iTestCase;
         int32 iTestCaseNum;
         FILE* iStdOut;
+        // Test output
+        OSCL_wHeapString<OsclMemAllocator> iOutputFileName;
 };
 
 

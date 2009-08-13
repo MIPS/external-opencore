@@ -1,8 +1,6 @@
 #
 # Automatically generated, don't edit
 #
-# At: Fri, 08 May 2009 15:19:39 +0000
-# Linux version 2.6.22-14-generic (buildd@terranova) (gcc version 4.1.3 20070929 (prerelease) (Ubuntu 4.1.2-16ubuntu2)) #1 SMP Tue Feb 12 07:42:25 UTC 2008
 
 #
 # PV Code Base Configuration System
@@ -32,15 +30,16 @@ download_support=y
 fasttrack_download_support=n
 mp4local_support=y
 divxlocal_support=n
+rmff_support=n
 asflocal_support=n
 janus_support=n
 oma1_passthru_support=y
-wmdrmplat_support=n
-wmdrmdev_support=n
-wmdrmsysclk_support=n
+wmdrminternalsettings_support=n
+wmdrmoemsettings_support=n
 mtp_db_support=n
 pvdb_config_support=n
 mtp_config_support=n
+usb_transport_support=n
 
 
 #
@@ -81,6 +80,9 @@ asfrecognizer_utility_lib=n
 pv_divxfile_parser_lib=n
 scsp_lib=m
 divxrecognizer_utility_lib=n
+pvflvff_lib=n
+pvrmffrecognizer_utility_lib=n
+flvrecognizer_utility_lib=n
 
 
 #
@@ -99,6 +101,7 @@ omx_common_lib=m
 omx_m4v_component_lib=m
 omx_queue_lib=m
 omx_wmv_component_lib=n
+omx_rv_component_lib=n
 pvomx_proxy_lib=m
 omx_aac_component_lib=m
 omx_amr_component_lib=m
@@ -125,6 +128,11 @@ gsm_amr_headers_lib=m
 pvmp3_lib=m
 pvra8decoder_lib=n
 wmadecoder_lib=n
+wma_std_support=m
+wma_pro_support=m
+wmavoicedecoder_lib=n
+wma_voice_support=m
+wma_common_hdrs_lib=n
 pvg726decoder_lib=n
 
 
@@ -167,7 +175,7 @@ unicastpvr_support=n
 broadcastpvr_support=n
 pvrfileplayback_support=n
 
-pvmedialayernode_lib=m
+pvmedialayernode_lib=n
 pvjitterbuffernode_lib=m
 
 #
@@ -262,6 +270,7 @@ pvdummyoutputnode_lib=m
 pvdivxffparsernode_lib=n
 pvstillimagenode_lib=n
 g726decnode_lib=n
+pvflvffparsernode_lib=n
 
 
 #
@@ -294,9 +303,6 @@ sdp_opencore=m
 
 rdt_parser_lib=n
 pv_rtsp_parcom_lib=m
-pvrtsp_cli_eng_node_lib=n
-pvrtsp_cli_eng_node_3gpp_lib=n
-pvrtsp_cli_eng_node_opencore_lib=m
 rtppayloadparser_lib=m
 
 #
@@ -343,6 +349,8 @@ oma1_passthru_plugin_lib=m
 pvjanusplugin_lib=n
 cpm_headers_lib=m
 pvoma1lockstream_lib=n
+pvplayreadyplugin_lib=n
+pvplayreadyutility_lib=n
 
 
 #
@@ -369,6 +377,7 @@ standard_bcast_ps_support=n
 pvmf_lib=m
 realaudio_deinterleaver_lib=n
 pvdbmanager_lib=n
+pvdb_recovery_utility_lib=n
 
 
 #
@@ -441,6 +450,7 @@ pv2waysample_lib=m
 
 engines_common_headers_lib=m
 pvframemetadatautility_lib=m
+pvmetadata_engine_lib=m
 
 
 #
@@ -451,6 +461,7 @@ pvmtpip_engine_lib=n
 pviptransport_lib=n
 pvsqlite_lib=n
 pvwmdrm_lib=n
+pvwmdrmmd_lib=n
 wmdrm_config=n
 
 

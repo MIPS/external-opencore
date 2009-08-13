@@ -34,7 +34,7 @@ class PVAuthorEngineTest : public test_case,
                            const char* aInputFileName2, const char* aInputFileName3, const char* aOutputFileName,
                            AVTConfig iAVTConfig, PVAETestInputType aAudioInputType,
                            PVAETestInputType aVideoInputType, PVAETestInputType aTextInputType, const char* aComposerMimeType,
-                           const char* aAudioEncoderMimeType, const char* aVideoEncoderMimeType, const char* aTextEncoderMimeType, uint32 aAuthoringTime);
+                           const char* aAudioEncoderMimeType, const char* aAacEncoderProfileMimeType, const char* aVideoEncoderMimeType, const char* aTextEncoderMimeType, uint32 aAuthoringTime);
 
         ~PVAuthorEngineTest();
         // From test_case
@@ -76,6 +76,7 @@ class PVAuthorEngineTest : public test_case,
         PVAETestInputType iTextInputType;
         OSCL_HeapString<OsclMemAllocator> iComposerMimeType;
         OSCL_HeapString<OsclMemAllocator> iAudioEncoderMimeType;
+        OSCL_HeapString<OsclMemAllocator> iAacEncoderProfileMimeType;
         OSCL_HeapString<OsclMemAllocator> iVideoEncoderMimeType;
         OSCL_HeapString<OsclMemAllocator> iTextEncoderMimeType;
         AVTConfig iAVTConfig;
@@ -87,10 +88,10 @@ class PVAuthorEngineTest : public test_case,
 class PVAuthorEngineTestSuite : public test_case
 {
     public:
-        PVAuthorEngineTestSuite(FILE* aStdOut, int32 aFirstTest, int32 aLastTest, const char* iInputFileName1, const char* iInputFileName2, const char* iInputFileName3, const char* iOutputFileName, AVTConfig iAVTConfig, PVAETestInputType aAudioInputType, PVAETestInputType aVideoInputType,  PVAETestInputType aTextInputType, const char* aComposerMimeType, const char* aAudioEncoderMimeType, const char* aVideoEncoderMimeType, const char* aTextEncoderMimeType, uint aAuthoringTime) : test_case()
+        PVAuthorEngineTestSuite(FILE* aStdOut, int32 aFirstTest, int32 aLastTest, const char* iInputFileName1, const char* iInputFileName2, const char* iInputFileName3, const char* iOutputFileName, AVTConfig iAVTConfig, PVAETestInputType aAudioInputType, PVAETestInputType aVideoInputType,  PVAETestInputType aTextInputType, const char* aComposerMimeType, const char* aAudioEncoderMimeType, const char* aAacEncoderProfileMimeType, const char* aVideoEncoderMimeType, const char* aTextEncoderMimeType, uint aAuthoringTime) : test_case()
         {
             adopt_test_case(new PVAuthorEngineTest(aStdOut, aFirstTest, aLastTest, iInputFileName1, iInputFileName2, iInputFileName3, iOutputFileName,
-                                                   iAVTConfig, aAudioInputType, aVideoInputType, aTextInputType, aComposerMimeType, aAudioEncoderMimeType, aVideoEncoderMimeType, aTextEncoderMimeType, aAuthoringTime));
+                                                   iAVTConfig, aAudioInputType, aVideoInputType, aTextInputType, aComposerMimeType, aAudioEncoderMimeType, aAacEncoderProfileMimeType, aVideoEncoderMimeType, aTextEncoderMimeType, aAuthoringTime));
         }
         ~PVAuthorEngineTestSuite() {};
 };

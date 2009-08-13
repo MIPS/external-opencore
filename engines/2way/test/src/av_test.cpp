@@ -40,6 +40,7 @@ void av_test::test()
         }
     }
 
+    TestCompleted(this);
     this->RemoveFromScheduler();
 }
 
@@ -70,6 +71,10 @@ void av_test::Run()
 
 void av_test::DoCancel()
 {
+    int error = 0;
+    OSCL_TRY(error, iCancelCmdId = terminal->CancelAllCommands());
+    test_is_true(false);
+    reset();
 }
 
 void av_test::ConnectSucceeded()
@@ -86,50 +91,58 @@ void av_test::InitFailed()
 
 void av_test::ConnectFailed()
 {
+    fprintf(fileoutput, "\n*** Connect Failed \n");
 }
 
-void av_test::AudioAddSinkCompleted()
+void av_test::AudioAddSinkSucceeded()
 {
     iAudioSinkAdded = true;
-    if (iAudioSourceAdded && iVideoSourceAdded && iVideoSinkAdded)
+    if (CheckAllSourceAndSinkAdded())
+    {
         timer->RunIfNotReady(TEST_DURATION);
+    }
 }
 
-void av_test::AudioAddSourceCompleted()
+void av_test::AudioAddSourceSucceeded()
 {
     iAudioSourceAdded = true;
-    if (iAudioSinkAdded && iVideoSourceAdded && iVideoSinkAdded)
+    if (CheckAllSourceAndSinkAdded())
+    {
         timer->RunIfNotReady(TEST_DURATION);
-}
-
-void av_test::VideoAddSinkFailed()
-{
-    VideoAddSinkSucceeded();
+    }
 }
 
 void av_test::VideoAddSinkSucceeded()
 {
     iVideoSinkAdded = true;
-    if (iVideoSourceAdded && iAudioSourceAdded && iAudioSinkAdded)
+    if (CheckAllSourceAndSinkAdded())
+    {
         timer->RunIfNotReady(TEST_DURATION);
+    }
 }
 
 void av_test::VideoAddSourceSucceeded()
 {
     iVideoSourceAdded = true;
-    if (iVideoSinkAdded && iAudioSourceAdded && iAudioSinkAdded)
+    if (CheckAllSourceAndSinkAdded())
+    {
         timer->RunIfNotReady(TEST_DURATION);
-}
-
-void av_test::VideoAddSourceFailed()
-{
-    VideoAddSourceSucceeded();
+    }
 }
 
 void av_test::RstCmdCompleted()
 {
     test_is_true(true);
     test_base::RstCmdCompleted();
+}
+
+bool av_test::CheckAllSourceAndSinkAdded()
+{
+    return (iAudioSourceAdded &&
+            iAudioSinkAdded &&
+            iVideoSourceAdded &&
+            iVideoSinkAdded);
+
 }
 
 void av_test::CheckForTimeToDisconnect()
@@ -174,7 +187,14 @@ void av_test::VideoRemoveSinkCompleted()
 
 void av_test::TimerCallback()
 {
-    int error = 0;
+    if (inumCalled > 5)
+    {
+        fprintf(fileoutput, "\n Giving up waiting for process to finish \n");
+        iTestStatus = false;
+        DoCancel();
+        return;
+    }
+    inumCalled++;
     if (!iAudioSourceAdded ||
             !iAudioSinkAdded ||
             !iVideoSourceAdded ||
@@ -184,7 +204,12 @@ void av_test::TimerCallback()
         timer->RunIfNotReady(TEST_DURATION);
         return;
     }
+    FinishTimerCallback();
+}
 
+void av_test::FinishTimerCallback()
+{
+    int error = 0;
     fprintf(fileoutput, "\nRemoving source and sinks \n");
     OSCL_TRY(error, iVideoRemoveSourceId = iSourceAndSinks->RemoveVideoSource());
     if (error)

@@ -44,7 +44,7 @@ endif
 
 LOCAL_MODULE := libpvmp3
 
-LOCAL_CFLAGS :=  $(PV_CFLAGS)
+LOCAL_CFLAGS :=   $(PV_CFLAGS)
 
 LOCAL_ARM_MODE := arm
 

@@ -29,7 +29,7 @@
 
 #define LOG_OUTPUT_TO_FILE  1
 
-// Define entry point for this DLL
+// Define entry point for this DLL.
 OSCL_DLL_ENTRY_POINT_DEFAULT()
 
 //The factory functions.
@@ -58,7 +58,6 @@ OSCL_EXPORT_REF void PVMFMediaFileOutputRegistryFactory::ReleaseMediaIO(PvmiMIOC
 OSCL_EXPORT_REF PVRefFileOutput::PVRefFileOutput(const OSCL_wString& aFileName, bool logStrings)
         : OsclTimerObject(OsclActiveObject::EPriorityNominal, "pvreffileoutput")
         , iOutputFileName(aFileName)
-        , iCompressedMedia(false)
 #if (LOG_OUTPUT_TO_FILE)
         , iLogOutputToFile(true)
 #else
@@ -78,7 +77,6 @@ OSCL_EXPORT_REF PVRefFileOutput::PVRefFileOutput(const OSCL_wString& aFileName
         , bool logStrings)
         : OsclTimerObject(OsclActiveObject::EPriorityNominal, "pvreffileoutput")
         , iOutputFileName(aFileName)
-        , iCompressedMedia(false)
 #if (LOG_OUTPUT_TO_FILE)
         , iLogOutputToFile(true)
 #else
@@ -110,7 +108,6 @@ OSCL_EXPORT_REF PVRefFileOutput::PVRefFileOutput(const oscl_wchar* aFileName
         , bool aActiveTiming)
         : OsclTimerObject(OsclActiveObject::EPriorityNominal, "pvreffileoutput")
         , iOutputFileName(aFileName)
-        , iCompressedMedia(false)
 #if (LOG_OUTPUT_TO_FILE)
         , iLogOutputToFile(true)
 #else
@@ -275,7 +272,7 @@ void PVRefFileOutput::ResetData()
 void PVRefFileOutput::Cleanup()
 //cleanup all allocated memory and release resources.
 {
-    if (iFileOpened)
+    if (iFileOpened && iLogOutputToFile)
     {
         iOutputFile.Flush();
         iOutputFile.Close();
@@ -489,7 +486,7 @@ PVMFCommandId PVRefFileOutput:: Init(const OsclAny* aContext)
     switch (iState)
     {
         case STATE_LOGGED_ON:
-            if (!iFileOpened)
+            if (!iFileOpened && iLogOutputToFile)
             {
                 if (iOutputFile.Open(iOutputFileName.get_cstr(), Oscl_File::MODE_READWRITE | Oscl_File::MODE_BINARY, iFs) != 0)
                 {
@@ -601,7 +598,10 @@ PVMFCommandId PVRefFileOutput::Flush(const OsclAny* aContext)
     switch (iState)
     {
         case STATE_STARTED:
-            iOutputFile.Flush();
+            if (iFileOpened && iLogOutputToFile)
+            {
+                iOutputFile.Flush();
+            }
             iState = STATE_INITIALIZED;
             status = PVMFSuccess;
             break;
@@ -1307,12 +1307,6 @@ void PVRefFileOutput::cancelAllCommands()
 
 }
 
-void PVRefFileOutput::setObserver(PvmiConfigAndCapabilityCmdObserver* aObserver)
-{
-    OSCL_UNUSED_ARG(aObserver);
-    //not needed since this component only supports synchronous capability & config
-    //APIs.
-}
 
 PVMFStatus PVRefFileOutput::getParametersSync(PvmiMIOSession aSession, PvmiKeyType aIdentifier,
         PvmiKvp*& aParameters, int& num_parameter_elements,
@@ -1537,6 +1531,10 @@ PVMFStatus PVRefFileOutput::getParametersSync(PvmiMIOSession aSession, PvmiKeyTy
         return PVMFSuccess;
     }
 #if TEST_BUFFER_ALLOCATOR
+    else if (pv_mime_strcmp(aIdentifier, PVMF_SUPPORT_FOR_BUFFER_ALLOCATOR_IN_MIO_KEY) == 0)
+    {
+        return PVMFSuccess;
+    }
     else if (pv_mime_strcmp(aIdentifier, PVMF_BUFFER_ALLOCATOR_KEY) == 0)
     {
         int32 err;
@@ -1576,33 +1574,6 @@ PVMFStatus PVRefFileOutput::releaseParameters(PvmiMIOSession aSession, PvmiKvp* 
         return PVMFSuccess;
     }
     return PVMFFailure;
-}
-
-void PVRefFileOutput::createContext(PvmiMIOSession aSession, PvmiCapabilityContext& aContext)
-{
-    OSCL_UNUSED_ARG(aSession);
-    OSCL_UNUSED_ARG(aContext);
-
-    OsclError::Leave(OsclErrNotSupported);
-}
-
-void PVRefFileOutput::setContextParameters(PvmiMIOSession aSession, PvmiCapabilityContext& aContext,
-        PvmiKvp* aParameters, int num_parameter_elements)
-{
-    OSCL_UNUSED_ARG(aSession);
-    OSCL_UNUSED_ARG(aContext);
-    OSCL_UNUSED_ARG(aParameters);
-    OSCL_UNUSED_ARG(num_parameter_elements);
-
-    OsclError::Leave(OsclErrNotSupported);
-}
-
-void PVRefFileOutput::DeleteContext(PvmiMIOSession aSession, PvmiCapabilityContext& aContext)
-{
-    OSCL_UNUSED_ARG(aSession);
-    OSCL_UNUSED_ARG(aContext);
-
-    OsclError::Leave(OsclErrNotSupported);
 }
 
 
@@ -1717,7 +1688,7 @@ void PVRefFileOutput::setParametersSync(PvmiMIOSession aSession,
         }
         else if (pv_mime_strcmp(aParameters[i].key, PVMF_FORMAT_SPECIFIC_INFO_KEY) == 0)
         {
-            if (!iFileOpened)
+            if (!iFileOpened && iLogOutputToFile)
             {
                 if (iOutputFile.Open(iOutputFileName.get_cstr(), Oscl_File::MODE_READWRITE | Oscl_File::MODE_BINARY, iFs) != 0)
                 {
@@ -1741,30 +1712,49 @@ void PVRefFileOutput::setParametersSync(PvmiMIOSession aSession,
                 }
             }
         }
-        //All FSI for video will be set here in one go
+        // All FSI for video will be set here in one go
         else if (pv_mime_strcmp(aParameters[i].key, PVMF_FORMAT_SPECIFIC_INFO_KEY_YUV) == 0)
         {
-            uint8* data = (uint8*)aParameters->value.key_specific_value;
-            PVMFYuvFormatSpecificInfo0* yuvInfo = (PVMFYuvFormatSpecificInfo0*)data;
+            PVMFYuvFormatSpecificInfo0* yuvInfo = (PVMFYuvFormatSpecificInfo0*)aParameters->value.key_specific_value;
 
-            iVideoWidth = (int32)yuvInfo->width;
-            iVideoWidthValid = true;
+            if (iVideoWidth != (int32)yuvInfo->buffer_width)
+                iInitializeAVIDone = false;
+            iVideoWidth = (int32)yuvInfo->buffer_width;
+            if (iVideoWidth)
+                iVideoWidthValid = true;
+            else
+                iVideoWidthValid = false;
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                             (0, "PVRefFileOutput::setParametersSync() Video Width, Value %d", iVideoWidth));
 
-            iVideoHeight = (int32)yuvInfo->height;
-            iVideoHeightValid = true;
+            if (iVideoHeight != (int32)yuvInfo->buffer_height)
+                iInitializeAVIDone = false;
+            iVideoHeight = (int32)yuvInfo->buffer_height;
+            if (iVideoHeight)
+                iVideoHeightValid = true;
+            else
+                iVideoHeightValid = false;
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                             (0, "PVRefFileOutput::setParametersSync() Video Height, Value %d", iVideoHeight));
 
-            iVideoDisplayHeight = (int32)yuvInfo->display_height;
-            iVideoDisplayHeightValid = true;
+            if (iVideoDisplayHeight != (int32)yuvInfo->viewable_height)
+                iInitializeAVIDone = false;
+            iVideoDisplayHeight = (int32)yuvInfo->viewable_height;
+            if (iVideoDisplayHeight)
+                iVideoDisplayHeightValid = true;
+            else
+                iVideoDisplayHeightValid = false;
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                             (0, "PVRefFileOutput::setParametersSync() Video Display Height, Value %d", iVideoDisplayHeight));
 
 
-            iVideoDisplayWidth = (int32)yuvInfo->display_width;
-            iVideoDisplayWidthValid = true;
+            if (iVideoDisplayWidth != (int32)yuvInfo->viewable_width)
+                iInitializeAVIDone = false;
+            iVideoDisplayWidth = (int32)yuvInfo->viewable_width;
+            if (iVideoDisplayWidth)
+                iVideoDisplayWidthValid = true;
+            else
+                iVideoDisplayWidthValid = false;
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                             (0, "PVRefFileOutput::setParametersSync() Video Display Width, Value %d", iVideoDisplayWidth));
 
@@ -1780,18 +1770,23 @@ void PVRefFileOutput::setParametersSync(PvmiMIOSession aSession,
         //All FSI for audio will be set here in one go
         else if (pv_mime_strcmp(aParameters[i].key, PVMF_FORMAT_SPECIFIC_INFO_KEY_PCM) == 0)
         {
-            uint8* data = (uint8*)aParameters->value.key_specific_value;
-            channelSampleInfo* pcm16Info = (channelSampleInfo*)data;
+            channelSampleInfo* pcm16Info = (channelSampleInfo*)aParameters->value.key_specific_value;
 
             iAudioSamplingRate = pcm16Info->samplingRate;
-            iAudioSamplingRateValid = true;
+            if (iAudioSamplingRate)
+                iAudioSamplingRateValid = true;
+            else
+                iAudioSamplingRateValid = false;
             iFmtSubchunk.sampleRate = iAudioSamplingRate;
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                             (0, "PVRefFileOutput::setParametersSync() Audio Sampling Rate, Value %d", iAudioSamplingRate));
 
 
             iAudioNumChannels = pcm16Info->desiredChannels;
-            iAudioNumChannelsValid = true;
+            if (iAudioNumChannels)
+                iAudioNumChannelsValid = true;
+            else
+                iAudioNumChannelsValid = false;
             iFmtSubchunk.numChannels = iAudioNumChannels;
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                             (0, "PVRefFileOutput::setParametersSync() Audio Num Channels, Value %d", iAudioNumChannels));
@@ -1856,25 +1851,6 @@ void PVRefFileOutput::setParametersSync(PvmiMIOSession aSession,
     }
 }
 
-PVMFCommandId PVRefFileOutput::setParametersAsync(PvmiMIOSession aSession, PvmiKvp* aParameters,
-        int num_elements, PvmiKvp*& aRet_kvp, OsclAny* context)
-{
-    OSCL_UNUSED_ARG(aSession);
-    OSCL_UNUSED_ARG(aParameters);
-    OSCL_UNUSED_ARG(num_elements);
-    OSCL_UNUSED_ARG(aRet_kvp);
-    OSCL_UNUSED_ARG(context);
-
-    OsclError::Leave(OsclErrNotSupported);
-    return 0;
-}
-
-uint32 PVRefFileOutput::getCapabilityMetric(PvmiMIOSession aSession)
-{
-    OSCL_UNUSED_ARG(aSession);
-
-    return 0;
-}
 
 PVMFStatus PVRefFileOutput::verifyParametersSync(PvmiMIOSession aSession,
         PvmiKvp* aParameters,
@@ -2211,25 +2187,33 @@ uint32 PVRefFileOutputActiveTimingSupport::GetDelayMsec(PVMFTimestamp& aTs)
 PVMFStatus PVRefFileOutput::HandleReConfig(uint32 aReconfigSeqNum)
 {
     PVMFStatus status = PVMFFailure;
-    /* Close the existing file and open a new one */
-    if (iFileOpened)
-    {
-        iOutputFile.Close();
-    }
-    iFileOpened = false;
 
-    aReconfigSeqNum++;
-    oscl_wchar append[8];
-    OSCL_wStackString<8> fmt(_STRLIT_WCHAR("%d"));
-    oscl_snprintf(append, 8, fmt.get_cstr(), aReconfigSeqNum);
-    append[7] = (oscl_wchar)'\0';
-    OSCL_wStackString<32> appendString(append);
-    iOutputFileName += appendString.get_cstr();
-    if (iOutputFile.Open(iOutputFileName.get_cstr(), Oscl_File::MODE_READWRITE | Oscl_File::MODE_BINARY, iFs) == 0)
+    if (!iLogOutputToFile)
     {
         status = PVMFSuccess;
-        iFileOpened = true;
-        iParametersLogged = false;
+    }
+    else
+    {
+        /* Close the existing file and open a new one */
+        if (iFileOpened)
+        {
+            iOutputFile.Close();
+        }
+        iFileOpened = false;
+
+        aReconfigSeqNum++;
+        oscl_wchar append[8];
+        OSCL_wStackString<8> fmt(_STRLIT_WCHAR("%d"));
+        oscl_snprintf(append, 8, fmt.get_cstr(), aReconfigSeqNum);
+        append[7] = (oscl_wchar)'\0';
+        OSCL_wStackString<32> appendString(append);
+        iOutputFileName += appendString.get_cstr();
+        if (iOutputFile.Open(iOutputFileName.get_cstr(), Oscl_File::MODE_READWRITE | Oscl_File::MODE_BINARY, iFs) == 0)
+        {
+            status = PVMFSuccess;
+            iFileOpened = true;
+            iParametersLogged = false;
+        }
     }
     return status;
 }

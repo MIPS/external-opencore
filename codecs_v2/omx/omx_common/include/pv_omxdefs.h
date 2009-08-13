@@ -20,7 +20,7 @@
 
 /** Maximum number of base_component component instances */
 //#define MAX_SUPPORTED_COMPONENTS 10       // e.g. 10 = PV -MP4, PV-H263, PV-AVC, PV-WMV, PV-AAC, PV-AMR, PV-MP3, ...
-#define MAX_SUPPORTED_COMPONENTS 15         // e.g. 10 = PV -MP4, PV-H263, PV-AVC, PV-WMV, PV-AAC, PV-AMR, PV-MP3, ...
+#define MAX_SUPPORTED_COMPONENTS 17         // e.g. 10 = PV -MP4, PV-H263, PV-AVC, PV-WMV, PV-AAC, PV-AMR, PV-MP3, ...
 #define MAX_INSTANTIATED_COMPONENTS 7
 
 //#define INSERT_NAL_START_CODE
@@ -50,9 +50,11 @@
 #define PV_OMX_LOGGER_OUTPUT 0
 #endif
 
-// The following is needed for dll linking of APIs
-#define __OMX_EXPORTS
 
+// The following is needed for dll linking of APIs
+#ifndef __OMX_EXPORTS
+#define __OMX_EXPORTS
+#endif
 /**
  * Port Specific Macro's
  */

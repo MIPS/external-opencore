@@ -48,6 +48,7 @@ void video_only_test::test()
         }
     }
 
+    TestCompleted(this);
     this->RemoveFromScheduler();
 }
 

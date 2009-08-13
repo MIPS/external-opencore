@@ -54,7 +54,8 @@ typedef enum
     PVMF_VIDEOPARSER_NODE_PORT_TYPE_SOURCE,
 } PVMFVideoParserPortType;
 
-class PVMFVideoParserPort : public PvmfPortBaseImpl
+class PVMFVideoParserPort
+        : public PvmfPortBaseImpl
         , public PvmiCapabilityAndConfigPortFormatImpl
 {
     public:
@@ -86,9 +87,6 @@ class PVMFVideoParserPort : public PvmfPortBaseImpl
         PVMFStatus getParametersSync(PvmiMIOSession aSession, PvmiKeyType aIdentifier,
                                      PvmiKvp*& aParameters, int& num_parameter_elements,    PvmiCapabilityContext aContext);
         PVMFStatus releaseParameters(PvmiMIOSession aSession, PvmiKvp* aParameters, int num_elements);
-        void setParametersSync(PvmiMIOSession aSession, PvmiKvp* aParameters,
-                               int num_elements, PvmiKvp * & aRet_kvp);
-        PVMFStatus verifyParametersSync(PvmiMIOSession aSession, PvmiKvp* aParameters, int num_elements);
 
     private:
         void Construct(int32 aTag, PVMFFormatType format, uint8* aFormatSpecificInfo, uint32 aFormatSpecificInfoLen);

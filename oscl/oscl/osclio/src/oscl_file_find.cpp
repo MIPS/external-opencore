@@ -161,7 +161,7 @@ OSCL_EXPORT_REF const char *Oscl_FileFind::FindFirst(const char *directory, cons
             // d_type is not all available on all lunix system, using stat() instead
             if (itr == 0)
             {   // first find filetype
-                if (stat(pEnt->d_name, &statbuf) == 0)
+                if (stat(iDirEntVec[0].get_cstr(), &statbuf) == 0)
                 {
                     type = (S_ISDIR(statbuf.st_mode)) ? DIR_TYPE : FILE_TYPE;
                 }

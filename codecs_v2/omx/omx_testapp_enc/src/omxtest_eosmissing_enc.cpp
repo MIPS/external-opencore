@@ -21,7 +21,6 @@
  * Active Object class's Run () function
  * Control all the states of AO & sends API's to the component
  */
-static OMX_BOOL DisableRun = OMX_FALSE;
 
 void OmxEncTestEosMissing::Run()
 {
@@ -45,9 +44,9 @@ void OmxEncTestEosMissing::Run()
             CHECK_MEM(ipAppPriv, "Component_Handle");
 
             //This should be the first call to the component to load it.
-            Err = OMX_Init();
-            CHECK_ERROR(Err, "OMX_Init");
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG, (0, "OmxEncTestEosMissing::Run() - OMX_Init done"));
+            Err = OMX_MasterInit();
+            CHECK_ERROR(Err, "OMX_MasterInit");
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG, (0, "OmxEncTestEosMissing::Run() - OMX_MasterInit done"));
 
 
 
@@ -60,7 +59,7 @@ void OmxEncTestEosMissing::Run()
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG, (0, "OmxEncTestEosMissing::Run() - Finding out the role for the component %s", iRole));
 
                 // call once to find out the number of components that can fit the role
-                Err = OMX_GetComponentsOfRole(iRole, &NumComps, NULL);
+                Err = OMX_MasterGetComponentsOfRole(iRole, &NumComps, NULL);
 
                 if (OMX_ErrorNone != Err || NumComps < 1)
                 {
@@ -88,13 +87,13 @@ void OmxEncTestEosMissing::Run()
                 }
 
                 // call 2nd time to get the component names
-                Err = OMX_GetComponentsOfRole(iRole, &NumComps, (OMX_U8**) pCompOfRole);
+                Err = OMX_MasterGetComponentsOfRole(iRole, &NumComps, (OMX_U8**) pCompOfRole);
                 CHECK_ERROR(Err, "GetComponentsOfRole");
 
                 for (ii = 0; ii < NumComps; ii++)
                 {
                     // try to create component
-                    Err = OMX_GetHandle(&ipAppPriv->Handle, (OMX_STRING) pCompOfRole[ii], (OMX_PTR) this, iCallbacks->getCallbackStruct());
+                    Err = OMX_MasterGetHandle(&ipAppPriv->Handle, (OMX_STRING) pCompOfRole[ii], (OMX_PTR) this, iCallbacks->getCallbackStruct());
                     // if successful, no need to continue
                     if ((OMX_ErrorNone == Err) && (NULL != ipAppPriv->Handle))
                     {
@@ -195,7 +194,8 @@ void OmxEncTestEosMissing::Run()
 
                     if ((0 == oscl_strcmp(iFormat, "M4V")) | (0 == oscl_strcmp(iFormat, "H264")))
                     {
-                        OMX_U32 InputFrameSize;
+                        //Assign a default frame size, will change later based on color format
+                        OMX_U32 InputFrameSize = (iFrameWidth * iFrameHeight * 3);
 
                         if (OMX_COLOR_Format24bitRGB888 == iColorFormat)
                         {
@@ -212,6 +212,14 @@ void OmxEncTestEosMissing::Run()
                         else if (OMX_COLOR_FormatYUV420SemiPlanar == iColorFormat)
                         {
                             InputFrameSize = (iFrameWidth * iFrameHeight * 3) >> 1;
+                        }
+                        else
+                        {
+                            //We do not handle more color formats, return an error
+                            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
+                                            (0, "OmxEncTestEosMissing::Run() - Unsupported Color Format %d, Returning Error", iColorFormat));
+                            StopOnError();
+                            break;
                         }
 
                         iInBufferSize = InputFrameSize;
@@ -783,7 +791,6 @@ void OmxEncTestEosMissing::Run()
             static OMX_ERRORTYPE Status;
             OMX_S32 Index;
             OMX_BOOL MoreOutput;
-            static OMX_BOOL FlagTemp = OMX_FALSE;
 
             OMX_ERRORTYPE Err = OMX_ErrorNone;
 
@@ -980,7 +987,7 @@ void OmxEncTestEosMissing::Run()
                     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
                                     (0, "OmxEncTestEosMissing::Run() - Free the Component Handle"));
 
-                    Err = OMX_FreeHandle(ipAppPriv->Handle);
+                    Err = OMX_MasterFreeHandle(ipAppPriv->Handle);
                     if (OMX_ErrorNone != Err)
                     {
                         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "OmxEncTestEosMissing::Run() - FreeHandle Error"));
@@ -992,10 +999,10 @@ void OmxEncTestEosMissing::Run()
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
                             (0, "OmxEncTestEosMissing::Run() - De-initialize the omx component"));
 
-            Err = OMX_Deinit();
+            Err = OMX_MasterDeinit();
             if (OMX_ErrorNone != Err)
             {
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "OmxEncTestEosMissing::Run() - OMX_Deinit Error"));
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "OmxEncTestEosMissing::Run() - OMX_MasterDeinit Error"));
                 iTestStatus = OMX_FALSE;
             }
 

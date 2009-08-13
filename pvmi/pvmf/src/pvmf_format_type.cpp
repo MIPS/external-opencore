@@ -36,6 +36,8 @@ OSCL_EXPORT_REF bool PVMFFormatType::isCompressed() const
             (pv_mime_strcmp(iMimeStr.c_str(), PVMF_MIME_ALAW) == 0) ||
             (pv_mime_strcmp(iMimeStr.c_str(), PVMF_MIME_YUV420) == 0) ||
             (pv_mime_strcmp(iMimeStr.c_str(), PVMF_MIME_YUV422) == 0) ||
+            (pv_mime_strcmp(iMimeStr.c_str(), PVMF_MIME_YUV422_INTERLEAVED_UYVY) == 0) ||
+            (pv_mime_strcmp(iMimeStr.c_str(), PVMF_MIME_YUV422_INTERLEAVED_YUYV) == 0) ||
             (pv_mime_strcmp(iMimeStr.c_str(), PVMF_MIME_RGB8) == 0) ||
             (pv_mime_strcmp(iMimeStr.c_str(), PVMF_MIME_RGB12) == 0) ||
             (pv_mime_strcmp(iMimeStr.c_str(), PVMF_MIME_RGB16) == 0) ||
@@ -92,6 +94,8 @@ OSCL_EXPORT_REF bool PVMFFormatType::isVideo() const
     //PV internal video media types
     if ((pv_mime_strcmp(iMimeStr.c_str(), PVMF_MIME_YUV420) == 0) ||
             (pv_mime_strcmp(iMimeStr.c_str(), PVMF_MIME_YUV422) == 0) ||
+            (pv_mime_strcmp(iMimeStr.c_str(), PVMF_MIME_YUV422_INTERLEAVED_UYVY) == 0) ||
+            (pv_mime_strcmp(iMimeStr.c_str(), PVMF_MIME_YUV422_INTERLEAVED_YUYV) == 0) ||
             (pv_mime_strcmp(iMimeStr.c_str(), PVMF_MIME_RGB8) == 0) ||
             (pv_mime_strcmp(iMimeStr.c_str(), PVMF_MIME_RGB12) == 0) ||
             (pv_mime_strcmp(iMimeStr.c_str(), PVMF_MIME_RGB16) == 0) ||
@@ -146,6 +150,7 @@ OSCL_EXPORT_REF bool PVMFFormatType::isFile() const
             (pv_mime_strcmp(iMimeStr.c_str(), PVMF_MIME_RMFF) == 0) ||
             (pv_mime_strcmp(iMimeStr.c_str(), PVMF_MIME_DIVXFF) == 0) ||
             (pv_mime_strcmp(iMimeStr.c_str(), PVMF_MIME_MIDIFF) == 0) ||
+            (pv_mime_strcmp(iMimeStr.c_str(), PVMF_MIME_FLVFF) == 0) ||
             (pv_mime_strcmp(iMimeStr.c_str(), PVMF_MIME_AVIFF) == 0))
         return true;
 

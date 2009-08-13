@@ -148,6 +148,28 @@ PVMFStatus PVMFJitterBufferPort::Connect(PVMFPortInterface* aPort)
         }
     }
 
+
+    //If the ports of this node will act as the src node's port
+    if ((irJitterBufferNode.iPayloadParserRegistry) && (iPortType == PVMF_JITTER_BUFFER_PORT_TYPE_OUTPUT))
+    {
+        OsclAny* temp = NULL;
+        aPort->QueryInterface(PVMI_CAPABILITY_AND_CONFIG_PVUUID, temp);
+        PvmiCapabilityAndConfig *config = OSCL_STATIC_CAST(PvmiCapabilityAndConfig*, temp);
+        if ((config != NULL))
+        {
+            if (!(pvmiSetPortFormatSpecificInfoSync(config, PVMF_FORMAT_SPECIFIC_INFO_KEY)))
+            {
+                PVMF_JBNODE_LOGERROR((0, "PVMFMediaLayerPort::Connect: Error - Unable To Send Format Specific Info To Peer"));
+                return PVMFFailure;
+            }
+            if (!(pvmiSetPortFormatSpecificInfoSync(config, PVMF_DATAPATH_PORT_MAX_NUM_MEDIA_MSGS_KEY)))
+            {
+                PVMF_JBNODE_LOGERROR((0, "PVMFMediaLayerPort::Connect: Error - Unable To Send Max Num Media Msg Key To Peer"));
+                return PVMFFailure;
+            }
+        }
+    }
+
     //Automatically connect the peer.
     if (aPort->PeerConnect(this) != PVMFSuccess)
     {
@@ -160,6 +182,8 @@ PVMFStatus PVMFJitterBufferPort::Connect(PVMFPortInterface* aPort)
     PortActivity(PVMF_PORT_ACTIVITY_CONNECT);
     return PVMFSuccess;
 }
+
+
 ////////////////////////////////////////////////////////////////////////////
 PVMFStatus PVMFJitterBufferPort::getParametersSync(PvmiMIOSession aSession,
         PvmiKeyType aIdentifier,
@@ -167,12 +191,28 @@ PVMFStatus PVMFJitterBufferPort::getParametersSync(PvmiMIOSession aSession,
         int& num_parameter_elements,
         PvmiCapabilityContext aContext)
 {
-    OSCL_UNUSED_ARG(aIdentifier);
-    OSCL_UNUSED_ARG(aParameters);
     OSCL_UNUSED_ARG(aSession);
-    OSCL_UNUSED_ARG(num_parameter_elements);
     OSCL_UNUSED_ARG(aContext);
 
+    if (irJitterBufferNode.iPayloadParserRegistry)
+    {
+        num_parameter_elements = 0;
+        if (pv_mime_strcmp(aIdentifier, PVMF_FORMAT_SPECIFIC_INFO_KEY) == 0)
+        {
+            if (!pvmiGetPortFormatSpecificInfoSync(PVMF_FORMAT_SPECIFIC_INFO_KEY, aParameters))
+            {
+                return PVMFFailure;
+            }
+        }
+        else if (pv_mime_strcmp(aIdentifier, PVMF_DATAPATH_PORT_MAX_NUM_MEDIA_MSGS_KEY) == 0)
+        {
+            if (!pvmiGetPortFormatSpecificInfoSync(PVMF_DATAPATH_PORT_MAX_NUM_MEDIA_MSGS_KEY, aParameters))
+            {
+                return PVMFFailure;
+            }
+        }
+        num_parameter_elements = 1;
+    }
     return PVMFErrNotSupported;
 }
 
@@ -195,33 +235,17 @@ PVMFStatus PVMFJitterBufferPort::releaseParameters(PvmiMIOSession aSession,
     }
 
     OsclMemAllocator alloc;
-    alloc.deallocate((OsclAny*)(aParameters));
+
+    if (pv_mime_strcmp(aParameters->key, PVMF_FORMAT_SPECIFIC_INFO_KEY) == 0)
+    {
+        OsclMemAllocator alloc;
+        alloc.deallocate((OsclAny*)(aParameters->key));
+    }
+
+    alloc.deallocate((OsclAny*)(aParameters));//need to check deallocs
     return PVMFSuccess;
 }
 
-////////////////////////////////////////////////////////////////////////////
-void PVMFJitterBufferPort::setParametersSync(PvmiMIOSession aSession,
-        PvmiKvp* aParameters,
-        int num_elements,
-        PvmiKvp * & aRet_kvp)
-{
-    OSCL_UNUSED_ARG(aSession);
-    OSCL_UNUSED_ARG(aParameters);
-    OSCL_UNUSED_ARG(num_elements);
-
-    aRet_kvp = NULL;
-    OSCL_LEAVE(OsclErrNotSupported);
-}
-
-////////////////////////////////////////////////////////////////////////////
-PVMFStatus PVMFJitterBufferPort::verifyParametersSync(PvmiMIOSession aSession, PvmiKvp* aParameters, int num_elements)
-{
-    OSCL_UNUSED_ARG(aSession);
-    OSCL_UNUSED_ARG(aParameters);
-    OSCL_UNUSED_ARG(num_elements);
-
-    return PVMFErrNotSupported;
-}
 
 ////////////////////////////////////////////////////////////////////////////
 PVMFStatus PVMFJitterBufferPort::QueueOutgoingMsg(PVMFSharedMediaMsgPtr aMsg)
@@ -248,6 +272,8 @@ PVMFStatus PVMFJitterBufferPort::QueueOutgoingMsg(PVMFSharedMediaMsgPtr aMsg)
             PVMF_JBNODE_LOGINFO((0, "PVMFJitterBufferPort::QueueOutgoingMsg: Connected Port Incoming queue in busy / flushing state"));
             return PVMFErrBusy;
         }
+
+        // In case there are data pending in iOutgoingQueue, we should try sending them first.??????
 
         // Add message to outgoing queue and notify the node of the activity
         // There is no need to trap the push_back, since it cannot leave in this usage
@@ -298,8 +324,167 @@ bool PVMFJitterBufferPort::IsOutgoingQueueBusy()
 }
 
 
+bool PVMFJitterBufferPort::pvmiSetPortFormatSpecificInfoSync(PvmiCapabilityAndConfig *aPort,
+        const char* aFormatValType)
+{
+    /*
+     * Create PvmiKvp for capability settings
+     */
+    if (pv_mime_strcmp(aFormatValType, PVMF_FORMAT_SPECIFIC_INFO_KEY) == 0)
+    {
+        OsclMemAllocator alloc;
+        PvmiKvp kvp;
+        kvp.key = NULL;
+        kvp.length = oscl_strlen(aFormatValType) + 1; // +1 for \0
+        kvp.key = (PvmiKeyType)alloc.ALLOCATE(kvp.length);
+        if (kvp.key == NULL)
+        {
+            return false;
+        }
+        oscl_strncpy(kvp.key, aFormatValType, kvp.length);
+        OsclRefCounterMemFrag trackConfig;
+
+        if ((!iPortParams->ipJitterBuffer) && (iPortParams->iTag != PVMF_JITTER_BUFFER_PORT_TYPE_INPUT))
+        {
+            PVMFJitterBufferPortParams* portParams = NULL;
+            if (LocateInputPort(portParams, iPortParams))
+            {
+                if (portParams && portParams->ipJitterBuffer)
+                {
+                    portParams->ipJitterBuffer->GetTrackConfig(trackConfig);
+                }
+            }
+        }
+        else
+        {
+            iPortParams->ipJitterBuffer->GetTrackConfig(trackConfig);
+        }
+
+        if (trackConfig.getMemFragSize() == 0)
+        {
+            kvp.value.key_specific_value = 0;
+            kvp.capacity = 0;
+        }
+        else
+        {
+            kvp.value.key_specific_value = (OsclAny*)(trackConfig.getMemFragPtr());
+            kvp.capacity = trackConfig.getMemFragSize();
+        }
+        PvmiKvp* retKvp = NULL; // for return value
+        int32 err;
+        OSCL_TRY(err, aPort->setParametersSync(NULL, &kvp, 1, retKvp););
+        /* ignore the error for now */
+        alloc.deallocate((OsclAny*)(kvp.key));
+        return true;
+    }
+    else if (pv_mime_strcmp(aFormatValType, PVMF_DATAPATH_PORT_MAX_NUM_MEDIA_MSGS_KEY) == 0)
+    {
+        OsclMemAllocator alloc;
+        PvmiKvp kvp;
+        kvp.key = NULL;
+        kvp.length = oscl_strlen(aFormatValType) + 1; // +1 for \0
+        kvp.key = (PvmiKeyType)alloc.ALLOCATE(kvp.length);
+        if (kvp.key == NULL)
+        {
+            return false;
+        }
+        oscl_strncpy(kvp.key, aFormatValType, kvp.length);
+
+        kvp.value.uint32_value = MEDIALAYERNODE_MAXNUM_MEDIA_DATA; //need to get from JB
+        PvmiKvp* retKvp = NULL; // for return value
+        int32 err;
+        OSCL_TRY(err, aPort->setParametersSync(NULL, &kvp, 1, retKvp););
+        /* ignore the error for now */
+        alloc.deallocate((OsclAny*)(kvp.key));
+        return true;
+    }
+    return false;
+}
+
+bool
+PVMFJitterBufferPort::pvmiGetPortFormatSpecificInfoSync(const char* aFormatValType,
+        PvmiKvp*& aKvp) const
+{
+    if (pv_mime_strcmp(aFormatValType, PVMF_FORMAT_SPECIFIC_INFO_KEY) == 0)
+    {
+        OsclMemAllocator alloc;
+        aKvp->key = NULL;
+        aKvp->length = oscl_strlen(aFormatValType) + 1; // +1 for \0
+        aKvp->key = (PvmiKeyType)alloc.ALLOCATE(aKvp->length);
+        if (aKvp->key == NULL)
+        {
+            return false;
+        }
+        oscl_strncpy(aKvp->key, aFormatValType, aKvp->length);
+
+        OsclRefCounterMemFrag trackConfig;
+        if ((!iPortParams->ipJitterBuffer) && (iPortParams->iTag != PVMF_JITTER_BUFFER_PORT_TYPE_INPUT))
+        {
+            PVMFJitterBufferPortParams* portParams = NULL;
+            LocateInputPort(portParams, iPortParams);
+            if (portParams && portParams->ipJitterBuffer)
+            {
+                portParams->ipJitterBuffer->GetTrackConfig(trackConfig);
+            }
+        }
+        else
+        {
+            iPortParams->ipJitterBuffer->GetTrackConfig(trackConfig);
+        }
+
+        if (trackConfig.getMemFragSize() == 0)
+        {
+            aKvp->value.key_specific_value = 0;
+            aKvp->capacity = 0;
+        }
+        else
+        {
+            aKvp->value.key_specific_value = (OsclAny*)(trackConfig.getMemFragPtr());
+            aKvp->capacity = trackConfig.getMemFragSize();
+        }
+        return true;
+    }
+    else if (pv_mime_strcmp(aFormatValType, PVMF_DATAPATH_PORT_MAX_NUM_MEDIA_MSGS_KEY) == 0)
+    {
+        OsclMemAllocator alloc;
+        aKvp->key = NULL;
+        aKvp->length = oscl_strlen(aFormatValType) + 1; // +1 for \0
+        aKvp->key = (PvmiKeyType)alloc.ALLOCATE(aKvp->length);
+        if (aKvp->key == NULL)
+        {
+            return false;
+        }
+        oscl_strncpy(aKvp->key, aFormatValType, aKvp->length);
+        aKvp->value.uint32_value = MEDIALAYERNODE_MAXNUM_MEDIA_DATA; //need to get from the JB
+        return true;
+    }
+    return false;
+}
 
 
+bool PVMFJitterBufferPort::LocateInputPort(PVMFJitterBufferPortParams*& aInputPortParamsPtr, PVMFJitterBufferPortParams* aReferencePortParamsPtr) const
+{
+    const uint32 referencePortId = aReferencePortParamsPtr->iId;
 
+    /* input port id must be outputPortId - 1 */
+
+
+    Oscl_Vector<PVMFJitterBufferPortParams*, OsclMemAllocator>::const_iterator it;
+
+    for (it = irJitterBufferNode.iPortParamsQueue.begin(); it != irJitterBufferNode.iPortParamsQueue.end(); ++it)
+    {
+        PVMFJitterBufferPortParams* portParams = *it;
+        if (((portParams->iTag == PVMF_JITTER_BUFFER_PORT_TYPE_INPUT) &&
+                ((int32)portParams->iId == (int32)referencePortId - 1)) ||
+                ((portParams->iTag == PVMF_JITTER_BUFFER_PORT_TYPE_INPUT) &&
+                 ((int32)portParams->iId == (int32)referencePortId - 2))
+           )
+        {
+            aInputPortParamsPtr = portParams;
+            return true;
+        }
+    }
+    return false;
+}
 
 

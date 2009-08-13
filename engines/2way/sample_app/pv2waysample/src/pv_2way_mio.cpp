@@ -45,7 +45,8 @@ PV2WayMediaType GetMediaType(int mediaType)
 }
 
 
-OSCL_EXPORT_REF PV2WayMIO::PV2WayMIO(Oscl_Vector<CodecSpecifier* , OsclMemAllocator>* aFormats) :
+OSCL_EXPORT_REF PV2WayMIO::PV2WayMIO(Oscl_Vector<PVMFFormatType, OsclMemAllocator>* aFormats,
+                                     PV2WayMIOObserver* aObserver) :
         iAdded(false),
         iRemoving(false),
         iClosing(false),
@@ -60,55 +61,30 @@ OSCL_EXPORT_REF PV2WayMIO::PV2WayMIO(Oscl_Vector<CodecSpecifier* , OsclMemAlloca
         iNextChannelId(0),
         iPreviewHandle(0),
         iTerminal(NULL),
-        iLogger(NULL)
+        iLogger(NULL),
+        iObserver(aObserver),
+        iSelectedCodec(NULL)
 {
+    iMySelectedFormat = PVMF_MIME_FORMAT_UNKNOWN;
 };
 
 
 OSCL_EXPORT_REF PV2WayMIO::~PV2WayMIO()
 {
-    uint32 numElems = iFormats->size();
-    for (uint32 i = 0; i < numElems; i++)
-    {
-        CodecSpecifier* temp = iFormats->back();
-        iFormats->pop_back();
-        OSCL_DELETE(temp);
-        temp = NULL;
-    }
     Delete();
 }
 
 OSCL_EXPORT_REF void PV2WayMIO::Delete()
 {
     iAdded = false;
-    if (iMioNodeFactory)
+    if (iMioNode)
     {
-        iMioNodeFactory->Delete(&iMioNode);
-        OSCL_DELETE(iMioNodeFactory);
-        iMioNodeFactory = NULL;
+        iObserver->DeleteMIONode(iSelectedCodec, iMyDir, &iMioNode);
     }
     iMioNode = NULL;
+    ClearCodecs();
 }
 
-
-OSCL_EXPORT_REF int PV2WayMIO::Create()
-{
-    // creates MIO Node using the MioNodeFactory
-    if (!iMioNodeFactory)
-    {
-        return PVMFFailure;
-    }
-    if (!iMioNode)
-    {
-        iMioNode = iMioNodeFactory->Create();
-    }
-    if (!iMioNode)
-    {
-        OutputInfo("PV2WayMIO::Create():: Error creating MIO Node Factory!");
-        return PVMFFailure;
-    }
-    return PVMFSuccess;
-}
 
 OSCL_EXPORT_REF void PV2WayMIO::ResetCompleted()
 {
@@ -222,7 +198,7 @@ OSCL_EXPORT_REF void PV2WayMIO::Closed()
         iChannelId = iNextChannelId;
         iNextChannelId = 0;
         //iObserver->Initialize(iMyType, iMyDir);
-        Create();
+        //Create();
         Add();
     }
 }
@@ -279,12 +255,16 @@ OSCL_EXPORT_REF PVCommandId PV2WayMIO::HandleEvent(const PVAsyncInformationalEve
         iChannelId = id;
         // format matching capabilities and create- create can tell us which kind to create
         // including which file we should use, etc.
-        CodecSpecifier* selectedCodec = FormatMatchesCapabilities(aEvent);
-        if (selectedCodec)
+        iSelectedCodec = FormatMatchesCapabilities(aEvent);
+        if (iSelectedCodec)
         {
-            CreateMioNodeFactory(selectedCodec);
-            Create();
+            iMioNode = iObserver->CreateMIONode(iSelectedCodec, iMyDir);
+            iMySelectedFormat = iSelectedCodec->GetFormat();
             retvalue = Add();
+        }
+        else
+        {
+            OutputInfo("\nDid not find a codec!!! \n");
         }
     }
     return retvalue;
@@ -302,57 +282,68 @@ void PV2WayMIO::ParseResponse(const PVAsyncInformationalEvent& aEvent,
     aMedia_type = aEvent.GetLocalBuffer()[0];
 }
 
-OSCL_EXPORT_REF int PV2WayMIO::AddFormat(PvmiMIOFileInputSettings& format)
+OSCL_EXPORT_REF int PV2WayMIO::AddFormat(PvmiMIOFileInputSettings& aformat)
 {
-    CodecSpecifier* temp = OSCL_NEW(MIOFileCodecSpecifier, (format));
-    iFormats->push_back(temp);
+    CodecSpecifier* temp = OSCL_NEW(MIOFileCodecSpecifier, (aformat));
+    PVMFFormatType format = temp->GetFormat();
+    iFormatsMap[format] = temp;
+    iFormats->push_back(temp->GetFormat());
     return 0;
 }
 
-OSCL_EXPORT_REF int PV2WayMIO::AddFormat(PVMFFileInputSettings& format)
+OSCL_EXPORT_REF int PV2WayMIO::AddFormat(PVMFFileInputSettings& aformat)
 {
-    CodecSpecifier* temp = OSCL_NEW(FileCodecSpecifier, (format));
-    iFormats->push_back(temp);
+    CodecSpecifier* temp = OSCL_NEW(FileCodecSpecifier, (aformat));
+    iFormatsMap[temp->GetFormat()] = temp;
+    iFormats->push_back(temp->GetFormat());
     return 0;
 }
 
-OSCL_EXPORT_REF int PV2WayMIO::AddFormat(PVMFFormatType format)
+OSCL_EXPORT_REF int PV2WayMIO::AddFormat(PVMFFormatType aformat)
 {
-    CodecSpecifier* temp = OSCL_NEW(CharCodecSpecifier, (format));
-    iFormats->push_back(temp);
+    CodecSpecifier* temp = OSCL_NEW(CharCodecSpecifier, (aformat));
+    iFormatsMap[temp->GetFormat()] = temp;
+    iFormats->push_back(temp->GetFormat());
     return 0;
 }
 
-CodecSpecifier* PV2WayMIO::FormatInList(const char* formatToFind)
+OSCL_EXPORT_REF int PV2WayMIO::AddFormat(LipSyncDummyMIOSettings& aformat)
 {
-    for (uint32 i = 0; i < iFormats->size(); i++)
-    {
-        if (oscl_strcmp((*iFormats)[i]->GetFormat().getMIMEStrPtr(), formatToFind) == 0)
-        {
-            return (*iFormats)[i];
-        }
-    }
-    return NULL;
+    CodecSpecifier* temp = OSCL_NEW(DummyMIOCodecSpecifier, (aformat));
+    iFormatsMap[temp->GetFormat()] = temp;
+    iFormats->push_back(temp->GetFormat());
+    return 0;
 }
 
 OSCL_EXPORT_REF void PV2WayMIO::PrintFormatTypes()
 {
-    if (iFormats->size() == 0)
+    Oscl_Map < PVMFFormatType, CodecSpecifier*,
+    OsclMemAllocator, pvmf_format_type_key_compare_class >::iterator it =
+        iFormatsMap.begin();
+    if (it == iFormatsMap.end())
     {
         OutputInfo("No formats added.");
         return;
     }
     // loop through each, output values
-    for (uint32 i = 0; i < iFormats->size(); i++)
+    while (it != iFormatsMap.end())
     {
-        OutputInfo((*iFormats)[i]->GetFormat().getMIMEStrPtr());
+        CodecSpecifier* codec = (*it++).second;
+        PVMFFormatType format = codec->GetFormat();
+        OutputInfo("%s", format.getMIMEStrPtr());
         OutputInfo(" ");
     }
 }
 
 CodecSpecifier* PV2WayMIO::FormatInList(PVMFFormatType& type)
 {
-    return FormatInList(type);
+    Oscl_Map < PVMFFormatType, CodecSpecifier*,
+    OsclMemAllocator, pvmf_format_type_key_compare_class >::iterator it =
+        iFormatsMap.begin();
+    it = iFormatsMap.find(type);
+    if (!(it == iFormatsMap.end()))
+        return (*it).second;
+    return NULL;
 }
 
 // this is FormatMatchesCapabilities for Audio
@@ -362,7 +353,7 @@ CodecSpecifier* PV2WayMIO::FormatMatchesCapabilities(const PVAsyncInformationalE
     int aMedia_Type = 0;
     ParseResponse(aEvent, aMimeString, aMedia_Type);
     // compare to what in iFormats instead.
-    CodecSpecifier* formatInList = FormatInList(aMimeString.getMIMEStrPtr());
+    CodecSpecifier* formatInList = FormatInList(aMimeString);
     if (!formatInList)
     {
         OutputInfo("Format %s does not match application capability\n", aMimeString.getMIMEStrPtr());

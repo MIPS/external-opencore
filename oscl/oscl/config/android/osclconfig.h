@@ -74,11 +74,10 @@
  */
 #define __TFS__ <>
 
-#define OSCL_BEGIN_PACKED
+#define OSCL_HAS_PRAGMA_PACK 0
 #define OSCL_PACKED_VAR(x)  x __attribute__((packed))
 #define OSCL_PACKED_STRUCT_BEGIN
 #define OSCL_PACKED_STRUCT_END  __attribute__((packed))
-#define OSCL_END_PACKED
 
 //set this to 1 to enable OSCL_ASSERT in release builds.
 #define OSCL_ASSERT_ALWAYS 0

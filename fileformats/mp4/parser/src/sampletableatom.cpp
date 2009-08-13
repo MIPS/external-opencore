@@ -1577,7 +1577,7 @@ int32 SampleTableAtom::queryRepositionTime(int32 time, bool oDependsOn, bool bBe
     return trueTS;
 }
 
-int32 SampleTableAtom::resetPlayBackbyTime(int32 time, bool oDependsOn)
+int32 SampleTableAtom::resetPlayBackbyTime(uint32 time, bool oDependsOn)
 {
     int32 trueTS = 0;
     int32 retValA = 0 , retValB = 0;
@@ -1594,7 +1594,7 @@ int32 SampleTableAtom::resetPlayBackbyTime(int32 time, bool oDependsOn)
     _remainingFramesInSample = 0;
     _amrTempBufferOffset = 0;
 
-    if (time > (int32)_trackStartTSOffset)
+    if (time > _trackStartTSOffset)
     {
         int32 _tempSampleNumber =
             getTimeToSampleAtom().getSampleNumberFromTimestamp(time - _trackStartTSOffset);
@@ -3141,6 +3141,11 @@ int32 SampleTableAtom::getOffsetByTime(uint32 ts, int32* sampleFileOffset)
 
     // return NULL if sampleNum is past end of stream
     uint32 numSamples = _psampleSizeAtom->getSampleCount();
+
+    if (numSamples == 0)
+    {
+        return DEFAULT_ERROR;
+    }
 
     if (sampleNum >= (int32)numSamples)
     {

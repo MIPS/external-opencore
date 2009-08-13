@@ -52,7 +52,9 @@ class test_base : public engine_test,
                 iTempH324MConfigIterface(NULL),
                 iSourceAndSinks(NULL),
                 iUsingAudio(false),
-                iUsingVideo(false)
+                iUsingVideo(false),
+                iTotalSuccess(0),
+                iTotalFail(0)
         {
             iTestNum = iTestCounter;
             test_base::iTestCounter++;
@@ -66,7 +68,7 @@ class test_base : public engine_test,
                 OSCL_DELETE(iSourceAndSinks);
             }
         }
-        void AddSourceAndSinks(PV2WayUnitTestSourceAndSinks* aSourceAndSinks)
+        void AddSourceAndSinks(PV2WaySourceAndSinksBase* aSourceAndSinks)
         {
             iSourceAndSinks = aSourceAndSinks;
             if (iSourceAndSinks && terminal)
@@ -77,7 +79,10 @@ class test_base : public engine_test,
         void StartTimer()
         {
         }
-
+        static uint32 GetTestCounter()
+        {
+            return test_base::iTestCounter;
+        }
         void cleanup()
         {
             if (iH324MConfig)
@@ -110,6 +115,7 @@ class test_base : public engine_test,
         };
         void InitializeLogs();
         void HandleInformationalEvent(const PVAsyncInformationalEvent& aEvent);
+        void TestCompleted(test_case *tc);
 
         virtual bool Init();
         virtual void CommandCompleted(const PVCmdResponse& aResponse);
@@ -144,8 +150,10 @@ class test_base : public engine_test,
 
 
         // audio
-        virtual void AudioAddSinkCompleted();
-        virtual void AudioAddSourceCompleted();
+        virtual void AudioAddSinkSucceeded();
+        virtual void AudioAddSinkFailed();
+        virtual void AudioAddSourceSucceeded();
+        virtual void AudioAddSourceFailed();
         virtual void AudioRemoveSourceCompleted();
         virtual void AudioRemoveSinkCompleted();
 
@@ -176,13 +184,14 @@ class test_base : public engine_test,
         PVMFFormatType iVidSrcFormatType, iVidSinkFormatType;
         PVInterface* iTempH324MConfigIterface;
 
-        PV2WayUnitTestSourceAndSinks* iSourceAndSinks;
+        PV2WaySourceAndSinksBase* iSourceAndSinks;
 
         bool iUsingAudio;
         bool iUsingVideo;
         static uint32 iTestCounter;
         int iTestNum;
-
+        int iTotalSuccess;
+        int iTotalFail;
 };
 
 

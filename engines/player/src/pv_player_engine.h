@@ -98,8 +98,8 @@
 #include "oscl_mem_mempool.h"
 #endif
 
-#ifndef PVMI_CONFIG_AND_CAPABILITY_H_INCLUDED
-#include "pvmi_config_and_capability.h"
+#ifndef PVMI_CONFIG_AND_CAPABILITY_BASE_H_INCLUDED
+#include "pvmi_config_and_capability_base.h"
 #endif
 
 #ifndef PV_PLAYER_LICENSE_ACQUISITION_INTERFACE_H_INCLUDED
@@ -875,20 +875,21 @@ class PVPlayerWatchdogTimerObserver
 };
 
 
-class PVPlayerEngine : public OsclTimerObject,
-        public PVPlayerInterface,
-        public PvmiCapabilityAndConfig,
-        public PVMFNodeCmdStatusObserver,
-        public PVMFNodeInfoEventObserver,
-        public PVMFNodeErrorEventObserver,
-        public PVPlayerDatapathObserver,
-        public OsclTimerObserver,
-        public PVPlayerLicenseAcquisitionInterface,
-        public PVPlayerRecognizerRegistryObserver,
-        public PVPlayerWatchdogTimerObserver,
-        public PVPlayerTrackSelectionInterface,
-        public PVMFMediaClockNotificationsObs,
-        public ThreadSafeQueueObserver
+class PVPlayerEngine
+        : public OsclTimerObject
+        , public PVPlayerInterface
+        , public PvmiCapabilityAndConfigBase
+        , public PVMFNodeCmdStatusObserver
+        , public PVMFNodeInfoEventObserver
+        , public PVMFNodeErrorEventObserver
+        , public PVPlayerDatapathObserver
+        , public OsclTimerObserver
+        , public PVPlayerLicenseAcquisitionInterface
+        , public PVPlayerRecognizerRegistryObserver
+        , public PVPlayerWatchdogTimerObserver
+        , public PVPlayerTrackSelectionInterface
+        , public PVMFMediaClockNotificationsObs
+        , public ThreadSafeQueueObserver
 {
     public:
         static PVPlayerEngine* New(PVCommandStatusObserver *aCmdObserver,
@@ -936,11 +937,8 @@ class PVPlayerEngine : public OsclTimerObject,
         PVMFStatus getParametersSync(PvmiMIOSession aSession, PvmiKeyType aIdentifier, PvmiKvp*& aParameters, int& aNumParamElements, PvmiCapabilityContext aContext);
         PVMFStatus releaseParameters(PvmiMIOSession aSession, PvmiKvp* aParameters, int aNumElements);
         void createContext(PvmiMIOSession aSession, PvmiCapabilityContext& aContext);
-        void setContextParameters(PvmiMIOSession aSession, PvmiCapabilityContext& aContext, PvmiKvp* aParameters, int aNumParamElements);
-        void DeleteContext(PvmiMIOSession aSession, PvmiCapabilityContext& aContext);
         void setParametersSync(PvmiMIOSession aSession, PvmiKvp* aParameters, int aNumElements, PvmiKvp* &aRetKVP);
         PVMFCommandId setParametersAsync(PvmiMIOSession aSession, PvmiKvp* aParameters, int aNumElements, PvmiKvp*& aRetKVP, OsclAny* aContext = NULL);
-        uint32 getCapabilityMetric(PvmiMIOSession aSession);
         PVMFStatus verifyParametersSync(PvmiMIOSession aSession, PvmiKvp* aParameters, int aNumElements);
 
         // From PVPlayerLicenseAcquisitionInterface

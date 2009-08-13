@@ -98,7 +98,7 @@ LOCAL_SRC_FILES := \
 
 LOCAL_MODULE := libpvmp4ff
 
-LOCAL_CFLAGS :=  $(PV_CFLAGS)
+LOCAL_CFLAGS :=   $(PV_CFLAGS)
 
 
 

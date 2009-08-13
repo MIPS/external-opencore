@@ -360,15 +360,15 @@ class PVMFSMSessionSourceInfo
 //implementation class for extension interface
 class PVMFStreamingManagerNode;
 
-class PVMFStreamingManagerExtensionInterfaceImpl :
-        public PVInterfaceImpl<PVMFStreamingManagerNodeAllocator>,
-        public PVMFDataSourceInitializationExtensionInterface,
-        public PVMFTrackSelectionExtensionInterface,
-        public PVMFStreamingManagerExtensionInterface,
-        public PvmfDataSourcePlaybackControlInterface,
-        public PVMFMetadataExtensionInterface,
-        public PvmiCapabilityAndConfig,
-        public PVMFCPMPluginLicenseInterface
+class PVMFStreamingManagerExtensionInterfaceImpl
+        : public PVInterfaceImpl<PVMFStreamingManagerNodeAllocator>
+        , public PVMFDataSourceInitializationExtensionInterface
+        , public PVMFTrackSelectionExtensionInterface
+        , public PVMFStreamingManagerExtensionInterface
+        , public PvmfDataSourcePlaybackControlInterface
+        , public PVMFMetadataExtensionInterface
+        , public PvmiCapabilityAndConfigBase
+        , public PVMFCPMPluginLicenseInterface
 {
     public:
         PVMFStreamingManagerExtensionInterfaceImpl(PVMFStreamingManagerNode*,

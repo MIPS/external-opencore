@@ -122,6 +122,13 @@ typedef uint32 TPVChannelId;
 #define OFF     0
 #define PVT_NOT_SET (-1)
 
+
+// For requesting ports
+#define PV2WAY_AUDIO_OUTGOING_MIMETYPE    "x-pvmf/audio;dir=outgoing"
+#define PV2WAY_VIDEO_OUTGOING_MIMETYPE    "x-pvmf/video;dir=outgoing"
+#define PV2WAY_INCOMING_MIMETYPE          "x-pvmf/dir=incoming"
+#define PV2WAY_OUTGOING_MIMETYPE          "x-pvmf/dir=outgoing"
+
 const int KPVDefaultVideoBitRate = 42000; // bits/s
 const int KPVDefaultFrameRate = 5;   // frames/s
 const int KPVDefaultIFrameInterval = 10000;  // s
@@ -1052,5 +1059,23 @@ typedef PoolMemAlloc<10> PoolMemAlloc_OsclMemAllocator_10;
 OSCL_IMPORT_REF PV2WayMediaType GetMediaType(PVCodecType_t codec);
 OSCL_IMPORT_REF void GetSampleSize(PVMFFormatType aFormatType, uint32* aMin, uint32* aMax);
 OSCL_IMPORT_REF bool CodecRequiresFsi(PVCodecType_t codec);
+
+
+// This function returns a priority index for each format type.
+OSCL_IMPORT_REF uint32 GetPriorityIndexForPVMFFormatType(PVMFFormatType aFormatType);
+
+//Priority to MP4 over H.263
+template<class Alloc> struct PV2WayRegFormatTypeCompare
+{
+    bool operator()(const PVMFFormatType& x, const PVMFFormatType& y) const
+    {
+        uint32 x_val = GetPriorityIndexForPVMFFormatType(x);
+        uint32 y_val = GetPriorityIndexForPVMFFormatType(y);
+
+        return (x_val < y_val) ? true : false;
+    }
+};
+
+typedef PV2WayRegFormatTypeCompare<OsclMemAllocator> pvmf_format_type_key_compare_class;
 
 #endif

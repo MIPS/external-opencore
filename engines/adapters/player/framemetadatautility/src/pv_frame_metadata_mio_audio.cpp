@@ -47,7 +47,14 @@ void PVFMAudioMIO::InitData()
     iPeer = NULL;
     iState = STATE_IDLE;
 
-
+    // Init the input format capabilities vector
+    iInputFormatCapability.clear();
+    iInputFormatCapability.push_back(PVMF_MIME_PCM);
+    iInputFormatCapability.push_back(PVMF_MIME_PCM8);
+    iInputFormatCapability.push_back(PVMF_MIME_PCM16);
+    iInputFormatCapability.push_back(PVMF_MIME_PCM16_BE);
+    iInputFormatCapability.push_back(PVMF_MIME_ULAW);
+    iInputFormatCapability.push_back(PVMF_MIME_ALAW);
 }
 
 
@@ -694,17 +701,6 @@ void PVFMAudioMIO::cancelAllCommands()
 }
 
 
-void PVFMAudioMIO::setObserver(PvmiConfigAndCapabilityCmdObserver* aObserver)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFMAudioMIO::setObserver() called"));
-
-    OSCL_UNUSED_ARG(aObserver);
-
-    // Not needed since this component only supports synchronous capability & config APIs.
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_INFO, (0, "PVFMAudioMIO::setObserver() NOT SUPPORTED"));
-}
-
-
 PVMFStatus PVFMAudioMIO::getParametersSync(PvmiMIOSession aSession, PvmiKeyType aIdentifier, PvmiKvp*& aParameters,
         int& num_parameter_elements, PvmiCapabilityContext aContext)
 {
@@ -722,17 +718,17 @@ PVMFStatus PVFMAudioMIO::getParametersSync(PvmiMIOSession aSession, PvmiKeyType 
         // This component supports any audio format
         // Generate a list of all the PVMF audio formats...
 
-        uint32 count = PVMF_SUPPORTED_UNCOMPRESSED_AUDIO_FORMATS_COUNT;
+        uint32 count = iInputFormatCapability.size();
         aParameters = (PvmiKvp*)oscl_malloc(count * sizeof(PvmiKvp));
 
         if (aParameters)
         {
-            aParameters[num_parameter_elements++].value.pChar_value = (char*)PVMF_MIME_PCM;
-            aParameters[num_parameter_elements++].value.pChar_value = (char*)PVMF_MIME_PCM8;
-            aParameters[num_parameter_elements++].value.pChar_value = (char*)PVMF_MIME_PCM16;
-            aParameters[num_parameter_elements++].value.pChar_value = (char*)PVMF_MIME_PCM16_BE;
-            aParameters[num_parameter_elements++].value.pChar_value = (char*)PVMF_MIME_ULAW;
-            aParameters[num_parameter_elements++].value.pChar_value = (char*)PVMF_MIME_ALAW;
+            num_parameter_elements = 0;
+            Oscl_Vector<PVMFFormatType, OsclMemAllocator>::iterator it;
+            for (it = iInputFormatCapability.begin(); it != iInputFormatCapability.end(); it++)
+            {
+                aParameters[num_parameter_elements++].value.pChar_value = OSCL_STATIC_CAST(char*, it->getMIMEStrPtr());
+            }
             return PVMFSuccess;
         }
         return PVMFErrNoMemory;
@@ -757,45 +753,6 @@ PVMFStatus PVFMAudioMIO::releaseParameters(PvmiMIOSession aSession, PvmiKvp* aPa
         return PVMFSuccess;
     }
     return PVMFFailure;
-}
-
-
-void PVFMAudioMIO::createContext(PvmiMIOSession aSession, PvmiCapabilityContext& aContext)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFMAudioMIO::createContext() called"));
-
-    OSCL_UNUSED_ARG(aSession);
-    OSCL_UNUSED_ARG(aContext);
-
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_INFO, (0, "PVFMAudioMIO::createContext() NOT SUPPORTED"));
-    OsclError::Leave(OsclErrNotSupported);
-}
-
-
-void PVFMAudioMIO::setContextParameters(PvmiMIOSession aSession, PvmiCapabilityContext& aContext,
-                                        PvmiKvp* aParameters, int num_parameter_elements)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFMAudioMIO::setContextParameters() called"));
-
-    OSCL_UNUSED_ARG(aSession);
-    OSCL_UNUSED_ARG(aContext);
-    OSCL_UNUSED_ARG(aParameters);
-    OSCL_UNUSED_ARG(num_parameter_elements);
-
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_INFO, (0, "PVFMAudioMIO::setContextParameters() NOT SUPPORTED"));
-    OsclError::Leave(OsclErrNotSupported);
-}
-
-
-void PVFMAudioMIO::DeleteContext(PvmiMIOSession aSession, PvmiCapabilityContext& aContext)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFMAudioMIO::DeleteContext() called"));
-
-    OSCL_UNUSED_ARG(aSession);
-    OSCL_UNUSED_ARG(aContext);
-
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_INFO, (0, "PVFMAudioMIO::DeleteContext() NOT SUPPORTED"));
-    OsclError::Leave(OsclErrNotSupported);
 }
 
 
@@ -830,6 +787,38 @@ void PVFMAudioMIO::setParametersSync(PvmiMIOSession aSession, PvmiKvp* aParamete
         else if (pv_mime_strcmp(aParameters[i].key, PVMF_FORMAT_SPECIFIC_INFO_KEY) == 0)
         {
             //  iOutputFile.Write(aParameters[i].value.pChar_value, sizeof(uint8), (int32)aParameters[i].capacity);
+        }
+        //All FSI for audio will be set here in one go
+        else if (pv_mime_strcmp(aParameters[i].key, PVMF_FORMAT_SPECIFIC_INFO_KEY_PCM) == 0)
+        {
+            channelSampleInfo* pcm16Info = (channelSampleInfo*)aParameters->value.key_specific_value;
+
+            iAudioSamplingRate = pcm16Info->samplingRate;
+            if (iAudioSamplingRate)
+                iAudioSamplingRateValid = true;
+            else
+                iAudioSamplingRateValid = false;
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                            (0, "PVFMAudioMIO::setParametersSync() Audio Sampling Rate Key, Value %d", iAudioSamplingRate));
+
+            iAudioNumChannels = pcm16Info->desiredChannels;
+            if (iAudioNumChannels)
+                iAudioNumChannelsValid = true;
+            else
+                iAudioNumChannelsValid = false;
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                            (0, "PVFMAudioMIO::setParametersSync() Audio Num Channels Key, Value %d", iAudioNumChannels));
+
+            iNumberOfBuffers = (int32)pcm16Info->num_buffers;
+            iNumberOfBuffersValid = true;
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                            (0, "PVFMAudioMIO::setParametersSync() Number of Buffer, Value %d", iNumberOfBuffers));
+
+            iBufferSize = (int32)pcm16Info->buffer_size;
+            iBufferSizeValid = true;
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                            (0, "PVFMAudioMIO::setParametersSync() Buffer Size, Value %d", iBufferSize));
+
         }
         else
         {
@@ -871,32 +860,6 @@ void PVFMAudioMIO::setParametersSync(PvmiMIOSession aSession, PvmiKvp* aParamete
 }
 
 
-PVMFCommandId PVFMAudioMIO::setParametersAsync(PvmiMIOSession aSession, PvmiKvp* aParameters, int num_elements, PvmiKvp*& aRet_kvp, OsclAny* context)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFMAudioMIO::setParametersAsync() called"));
-
-    OSCL_UNUSED_ARG(aSession);
-    OSCL_UNUSED_ARG(aParameters);
-    OSCL_UNUSED_ARG(num_elements);
-    OSCL_UNUSED_ARG(aRet_kvp);
-    OSCL_UNUSED_ARG(context);
-
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_INFO, (0, "PVFMAudioMIO::setParamaetersAsync() NOT SUPPORTED"));
-    OsclError::Leave(OsclErrNotSupported);
-    return -1;
-}
-
-
-uint32 PVFMAudioMIO::getCapabilityMetric(PvmiMIOSession aSession)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFMAudioMIO::getCapabilityMetric() called"));
-
-    OSCL_UNUSED_ARG(aSession);
-
-    return 0;
-}
-
-
 PVMFStatus PVFMAudioMIO::verifyParametersSync(PvmiMIOSession aSession, PvmiKvp* aParameters, int num_elements)
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFMAudioMIO::verifyParametersSync() called"));
@@ -913,19 +876,16 @@ PVMFStatus PVFMAudioMIO::verifyParametersSync(PvmiMIOSession aSession, PvmiKvp* 
         if (pv_mime_strcmp(compstr, _STRLIT_CHAR("x-pvmf/media/format-type")) == 0)
         {
             //This component supports PCM8 or PCM16 only.
-            if ((pv_mime_strcmp(aParameters[paramind].value.pChar_value, PVMF_MIME_PCM8) == 0) ||
-                    (pv_mime_strcmp(aParameters[paramind].value.pChar_value, PVMF_MIME_PCM16) == 0) ||
-                    (pv_mime_strcmp(aParameters[paramind].value.pChar_value, PVMF_MIME_PCM16) == 0) ||
-                    (pv_mime_strcmp(aParameters[paramind].value.pChar_value, PVMF_MIME_PCM16_BE) == 0) ||
-                    (pv_mime_strcmp(aParameters[paramind].value.pChar_value, PVMF_MIME_ULAW) == 0) ||
-                    (pv_mime_strcmp(aParameters[paramind].value.pChar_value, PVMF_MIME_ALAW) == 0))
+            Oscl_Vector<PVMFFormatType, OsclMemAllocator>::iterator it;
+            for (it = iInputFormatCapability.begin(); it != iInputFormatCapability.end(); it++)
             {
-                return PVMFSuccess;
+                if (pv_mime_strcmp(aParameters[paramind].value.pChar_value, it->getMIMEStrPtr()) == 0)
+                {
+                    return PVMFSuccess;
+                }
             }
-            else
-            {
-                return PVMFErrNotSupported;
-            }
+            // Not found on the list of supported input formats
+            return PVMFErrNotSupported;
         }
     }
     // For all other parameters return success.

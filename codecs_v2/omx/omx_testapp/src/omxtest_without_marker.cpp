@@ -62,14 +62,14 @@ void OmxDecTestWithoutMarker::Run()
             }
 
             //This should be the first call to the component to load it.
-            Err = OMX_Init();
-            CHECK_ERROR(Err, "OMX_Init");
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG, (0, "OmxDecTestWithoutMarker::Run() - OMX_Init done"));
+            Err = OMX_MasterInit();
+            CHECK_ERROR(Err, "OMX_MasterInit");
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG, (0, "OmxDecTestWithoutMarker::Run() - OMX_MasterInit done"));
 
 
             if (NULL != iName)
             {
-                Err = OMX_GetHandle(&ipAppPriv->Handle, iName, (OMX_PTR) this , iCallbacks->getCallbackStruct());
+                Err = OMX_MasterGetHandle(&ipAppPriv->Handle, iName, (OMX_PTR) this , iCallbacks->getCallbackStruct());
                 CHECK_ERROR(Err, "GetHandle");
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG, (0, "OmxDecTestWithoutMarker::Run() - Got Handle for the component %s", iName));
             }
@@ -81,7 +81,7 @@ void OmxDecTestWithoutMarker::Run()
 
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG, (0, "OmxDecTestWithoutMarker::Run() - Finding out the role for the component %s", iRole));
                 // call once to find out the number of components that can fit the role
-                Err = OMX_GetComponentsOfRole(iRole, &NumComps, NULL);
+                Err = OMX_MasterGetComponentsOfRole(iRole, &NumComps, NULL);
 
                 if (OMX_ErrorNone != Err || NumComps < 1)
                 {
@@ -109,13 +109,13 @@ void OmxDecTestWithoutMarker::Run()
                 }
 
                 // call 2nd time to get the component names
-                Err = OMX_GetComponentsOfRole(iRole, &NumComps, (OMX_U8**) pCompOfRole);
+                Err = OMX_MasterGetComponentsOfRole(iRole, &NumComps, (OMX_U8**) pCompOfRole);
                 CHECK_ERROR(Err, "GetComponentsOfRole");
 
                 for (ii = 0; ii < NumComps; ii++)
                 {
                     // try to create component
-                    Err = OMX_GetHandle(&ipAppPriv->Handle, (OMX_STRING) pCompOfRole[ii], (OMX_PTR) this, iCallbacks->getCallbackStruct());
+                    Err = OMX_MasterGetHandle(&ipAppPriv->Handle, (OMX_STRING) pCompOfRole[ii], (OMX_PTR) this, iCallbacks->getCallbackStruct());
                     // if successful, no need to continue
                     if ((OMX_ErrorNone == Err) && (NULL != ipAppPriv->Handle))
                     {
@@ -157,6 +157,15 @@ void OmxDecTestWithoutMarker::Run()
             }
 
             CHECK_ERROR(Err, "GetParameter_Audio/Video_Init");
+
+            // Number of ports must be at least 2 of them (in&out)
+            if (iPortInit.nPorts < 2)
+            {
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                                (0, "OmxComponentDecTest::Run() There is insuffucient %d ports", iPortInit.nPorts));
+                StopOnError();
+                break;
+            }
 
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG, (0, "OmxDecTestWithoutMarker::Run() - GetParameter called for OMX_IndexParamAudioInit/OMX_IndexParamVideoInit"));
             for (ii = 0; ii < iPortInit.nPorts; ii++)
@@ -268,6 +277,12 @@ void OmxDecTestWithoutMarker::Run()
                 /* WMV decoder can't handle chunk of data, so parse the frame boundaries
                 * & the send it to component*/
                 pGetInputFrame =  &OmxComponentDecTest::GetInputFrameWmv;
+            }
+            else if (0 == oscl_strcmp(iFormat, "RV"))
+            {
+                /* RV decoder can't handle chunk of data, so parse the frame boundaries
+                * & the send it to component*/
+                pGetInputFrame =  &OmxComponentDecTest::GetInputFrameRv;
             }
             else if (0 == oscl_strcmp(iFormat, "AMR"))
             {
@@ -455,7 +470,7 @@ void OmxDecTestWithoutMarker::Run()
 
             if (!FlagTemp)
             {
-                if (0 == oscl_strcmp(iFormat, "WMV") || 0 == oscl_strcmp(iFormat, "WMA"))
+                if (0 == oscl_strcmp(iFormat, "WMV") || 0 == oscl_strcmp(iFormat, "WMA") || 0 == oscl_strcmp(iFormat, "RV"))
                 {
                     (*this.*pGetInputFrame)();
                 }
@@ -569,13 +584,28 @@ void OmxDecTestWithoutMarker::Run()
             iPendingCommands = 1;
 
             if (0 == oscl_strcmp(iFormat, "H264") || 0 == oscl_strcmp(iFormat, "H263")
-                    || 0 == oscl_strcmp(iFormat, "M4V"))
+                    || 0 == oscl_strcmp(iFormat, "M4V") || 0 == oscl_strcmp(iFormat, "RV"))
             {
                 iOutBufferSize = ((iParamPort.format.video.nFrameWidth + 15) & ~15) * ((iParamPort.format.video.nFrameHeight + 15) & ~15) * 3 / 2;
+
+                if (iOutBufferSize < (OMX_S32)iParamPort.nBufferSize)
+                {
+                    iOutBufferSize = iParamPort.nBufferSize;
+                }
             }
             else if (0 == oscl_strcmp(iFormat, "WMV"))
             {
                 iOutBufferSize = ((iParamPort.format.video.nFrameWidth + 3) & ~3) * ((iParamPort.format.video.nFrameHeight + 3) & ~3) * 3 / 2;
+
+                if (iOutBufferSize < (OMX_S32)iParamPort.nBufferSize)
+                {
+                    iOutBufferSize = iParamPort.nBufferSize;
+                }
+            }
+            else
+            {
+                //For audio components take the size from the component
+                iOutBufferSize = iParamPort.nBufferSize;
             }
 
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
@@ -642,7 +672,7 @@ void OmxDecTestWithoutMarker::Run()
 
             if (!iStopProcessingInput || (OMX_ErrorInsufficientResources == Status))
             {
-                if (0 == oscl_strcmp(iFormat, "WMV") || 0 == oscl_strcmp(iFormat, "WMA"))
+                if (0 == oscl_strcmp(iFormat, "WMV") || 0 == oscl_strcmp(iFormat, "WMA") || 0 == oscl_strcmp(iFormat, "RV"))
                 {
                     (*this.*pGetInputFrame)();
                 }
@@ -811,7 +841,7 @@ void OmxDecTestWithoutMarker::Run()
                     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
                                     (0, "OmxDecTestWithoutMarker::Run() - Free the Component Handle"));
 
-                    Err = OMX_FreeHandle(ipAppPriv->Handle);
+                    Err = OMX_MasterFreeHandle(ipAppPriv->Handle);
                     if (OMX_ErrorNone != Err)
                     {
                         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "OmxDecTestWithoutMarker::Run() - FreeHandle Error"));
@@ -823,10 +853,10 @@ void OmxDecTestWithoutMarker::Run()
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
                             (0, "OmxDecTestWithoutMarker::Run() - De-initialize the omx component"));
 
-            Err = OMX_Deinit();
+            Err = OMX_MasterDeinit();
             if (OMX_ErrorNone != Err)
             {
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "OmxDecTestWithoutMarker::Run() - OMX_Deinit Error"));
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "OmxDecTestWithoutMarker::Run() - OMX_MasterDeinit Error"));
                 iTestStatus = OMX_FALSE;
             }
 

@@ -1,0 +1,99 @@
+# This is a sample template for the Default Settings
+####################################################
+
+# Terminal Setup
+# These settings configure how the terminal will be setup
+# There are separate settings for terminal A and Terminal B
+# Settings set here do no require the full set
+# Default settings will be set on the terminal. The settings explicitly set here
+# will override the default settings of the engine and will be overridden by
+# the test case file settings
+# Terminal A 
+Terminal A
+# Set the starting level - The highest level
+# The final level that is negotiated will depend on the starting level of the peer
+# Annex B with Header
+H.223Muxlevel 2
+# Video AL'S supported
+AL Video
+AL3ALLOW on
+AL2ALLOW on
+AL1ALLOW off
+# Audio ALS supported
+AL Audio
+AL3ALLOW off
+AL2ALLOW on
+AL1ALLOW off
+# The SDU sizes
+MaxSDUSize
+AL3ALLOW 1024
+AL2ALLOW 1024
+# MSD Determination 
+# Master indicates terminal should be master
+# Slave indicates terminal should be slave
+# undef indicates this is not defined and msd happens as specified in the standard
+MSD undef
+# capabilties
+Caps Receive
+# Audio OLC caps
+Audio 
+AMR
+# Video OLC caps
+Video 
+MP4SP
+H.263BL
+# Send Caps
+Caps Send
+# Audio
+Audio
+AMR
+# Video
+Video
+MP4SP
+H.263BL
+
+# H.263P3 - Is this supported
+
+# Terminal B 
+Terminal B
+# Set the starting level - The highest level
+# The final level that is negotiated will depend on the starting level of the peer
+# Annex B with Header
+H.223Muxlevel 2
+# Video ALS supported
+AL Video
+AL3ALLOW on
+AL2ALLOW on
+AL1ALLOW off
+# Audio ALS supported
+AL Audio
+AL3ALLOW off
+AL2ALLOW on
+AL1ALLOW off
+# The SDU sizes
+MaxSDUSize
+AL3ALLOW 1024
+AL2ALLOW 1024
+# MSD Determination
+MSD undef
+# capabilties
+# Receive Caps
+Caps Receive
+# Audio OLC caps
+Audio 
+AMR
+# Video OLC caps
+Video 
+MP4SP
+H.263BL
+# Send Caps
+Caps Send
+# Audio
+Audio
+AMR
+# Video
+Video 
+MP4SP
+H.263BL
+
+# H.263P3 - Is this supported

@@ -651,7 +651,13 @@ void CPV2WayProxyAdapter::CommandCompleted(const PVCmdResponse& aResponse)
             tface->addRef();
         }
 
-        if (tface != NULL && aResponse.GetCmdStatus() == PVMFSuccess)
+        if (uuid == PV2WayTestEncExtensionUUID)
+        {
+            // for requests for non-proxied interface- such as the test interface.
+            // don't need to proxy response.
+            status = PVMFSuccess;
+        }
+        else if (tface != NULL && aResponse.GetCmdStatus() == PVMFSuccess)
         {
             PVProxiedInterface* proxiedinterface = NULL;
             PVInterface* tempInterface = NULL;

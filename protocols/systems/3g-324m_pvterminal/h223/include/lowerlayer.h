@@ -86,8 +86,9 @@ class LowerLayerObserver
         virtual PVMFStatus GetOutgoingMuxPdus(MuxPduPacketList& packets) = 0;
         virtual void LevelSetupComplete(PVMFStatus status, TPVH223Level level) = 0;
         virtual void DataReceptionStart() = 0;
-        virtual H223PduParcomObserver* GetParcomObserver()  = 0;
         virtual void LowerLayerError(TPVDirection direction, PVMFStatus error) = 0;
+        virtual uint32 MuxPduIndicate(uint8* pPdu, uint32 pduSz, int32 fClosing, int32 muxCode) = 0;
+        virtual void MuxPduErrIndicate(EMuxPduError err) = 0;
 };
 
 
@@ -105,8 +106,6 @@ class H223LowerLayer : public PvmfPortBaseImpl,
         void SetObserver(LowerLayerObserver* observer)
         {
             iObserver = observer;
-            if (iParcom.GetRep())
-                iParcom->SetObserver(iObserver->GetParcomObserver());
         }
 
         LowerLayerObserver* GetObserver()
@@ -137,6 +136,9 @@ class H223LowerLayer : public PvmfPortBaseImpl,
         {
             return iParcom->GetLevel();
         }
+
+        // set number of stuffing frames needed in level setup
+        void SetLevelCheckCount(uint16 aCount);
 
         TPVStatusCode SetBitrate(uint32 bitRate);
 
@@ -205,7 +207,7 @@ class H223LowerLayer : public PvmfPortBaseImpl,
         void Parse(uint8* buf, uint16 size);
         bool CheckLevel(uint8* pData, uint16 size , uint16* used_bytes, int* sync_detected);
         bool CheckLevelWithSync(uint8* pData, uint16 size, uint16* used_bytes) ;
-        void SignalLevelSetupComplete(PVMFStatus status);
+        void SignalLevelSetupComplete(PVMFStatus status, TPVH223Level level);
 
         void Run();
         void DoCancel();

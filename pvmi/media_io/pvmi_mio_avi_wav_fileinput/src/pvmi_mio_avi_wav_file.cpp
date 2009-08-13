@@ -460,12 +460,6 @@ OSCL_EXPORT_REF void PvmiMIOAviWavFile::cancelAllCommands()
 }
 
 ////////////////////////////////////////////////////////////////////////////
-OSCL_EXPORT_REF void PvmiMIOAviWavFile::setObserver(PvmiConfigAndCapabilityCmdObserver* aObserver)
-{
-    OSCL_UNUSED_ARG(aObserver);
-}
-
-////////////////////////////////////////////////////////////////////////////
 OSCL_EXPORT_REF PVMFStatus PvmiMIOAviWavFile::getParametersSync(PvmiMIOSession aSession,
         PvmiKeyType aIdentifier,
         PvmiKvp*& aParameters,
@@ -612,30 +606,6 @@ OSCL_EXPORT_REF PVMFStatus PvmiMIOAviWavFile::releaseParameters(PvmiMIOSession a
     }
 }
 
-////////////////////////////////////////////////////////////////////////////
-OSCL_EXPORT_REF void PvmiMIOAviWavFile::createContext(PvmiMIOSession aSession, PvmiCapabilityContext& aContext)
-{
-    OSCL_UNUSED_ARG(aSession);
-    OSCL_UNUSED_ARG(aContext);
-}
-
-////////////////////////////////////////////////////////////////////////////
-OSCL_EXPORT_REF void PvmiMIOAviWavFile::setContextParameters(PvmiMIOSession aSession,
-        PvmiCapabilityContext& aContext,
-        PvmiKvp* aParameters, int aNum_parameter_elements)
-{
-    OSCL_UNUSED_ARG(aSession);
-    OSCL_UNUSED_ARG(aContext);
-    OSCL_UNUSED_ARG(aParameters);
-    OSCL_UNUSED_ARG(aNum_parameter_elements);
-}
-
-////////////////////////////////////////////////////////////////////////////
-OSCL_EXPORT_REF void PvmiMIOAviWavFile::DeleteContext(PvmiMIOSession aSession, PvmiCapabilityContext& aContext)
-{
-    OSCL_UNUSED_ARG(aSession);
-    OSCL_UNUSED_ARG(aContext);
-}
 
 ////////////////////////////////////////////////////////////////////////////
 OSCL_EXPORT_REF void PvmiMIOAviWavFile::setParametersSync(PvmiMIOSession aSession, PvmiKvp* aParameters,
@@ -657,38 +627,6 @@ OSCL_EXPORT_REF void PvmiMIOAviWavFile::setParametersSync(PvmiMIOSession aSessio
     }
 }
 
-////////////////////////////////////////////////////////////////////////////
-OSCL_EXPORT_REF PVMFCommandId PvmiMIOAviWavFile::setParametersAsync(PvmiMIOSession aSession,
-        PvmiKvp* aParameters,
-        int aNum_elements,
-        PvmiKvp*& aRet_kvp,
-        OsclAny* aContext)
-{
-    OSCL_UNUSED_ARG(aSession);
-    OSCL_UNUSED_ARG(aParameters);
-    OSCL_UNUSED_ARG(aNum_elements);
-    OSCL_UNUSED_ARG(aRet_kvp);
-    OSCL_UNUSED_ARG(aContext);
-    OSCL_LEAVE(OsclErrNotSupported);
-    return -1;
-}
-
-////////////////////////////////////////////////////////////////////////////
-OSCL_EXPORT_REF uint32 PvmiMIOAviWavFile::getCapabilityMetric(PvmiMIOSession aSession)
-{
-    OSCL_UNUSED_ARG(aSession);
-    return 0;
-}
-
-////////////////////////////////////////////////////////////////////////////
-OSCL_EXPORT_REF PVMFStatus PvmiMIOAviWavFile::verifyParametersSync(PvmiMIOSession aSession,
-        PvmiKvp* aParameters, int aNum_elements)
-{
-    OSCL_UNUSED_ARG(aSession);
-    OSCL_UNUSED_ARG(aParameters);
-    OSCL_UNUSED_ARG(aNum_elements);
-    return PVMFErrNotSupported;
-}
 
 ////////////////////////////////////////////////////////////////////////////
 //                            Private methods

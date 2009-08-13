@@ -161,7 +161,8 @@ void dct_16(Int32 vec[], Int flag)
     tmp3 = fxp_mul32_by_16((itmp_e1 - itmp_e2) << 1, Qfmt15(0.65328148243819F));
     tmp2 = (itmp_e1 + itmp_e2);
 
-    vec[ 0]  = (tmp0 + tmp2) >> 1;
+    vec[ 0]  = tmp0 >> 1;
+    vec[ 0] += tmp2 >> 1;
     vec[ 8]  = fxp_mul32_by_16((tmp0 - tmp2), Qfmt15(0.70710678118655F));
     vec[12]  = fxp_mul32_by_16((tmp1 - tmp3) << 1, Qfmt15(0.70710678118655F));
     vec[ 4]  =  tmp1 + tmp3;

@@ -112,6 +112,8 @@ class HTTPParser
         OSCL_IMPORT_REF uint32 getNumberOfFieldsByKey(const StrCSumPtrLen &aNewFieldName);
         // get the status code, 1xx, 2xx, 3xx, 4xx, 5xx
         OSCL_IMPORT_REF uint32 getHTTPStatusCode();
+        // get the number of HTTP version
+        OSCL_IMPORT_REF uint32 getHttpVersionNum();
         /////////////////////////////////////////////////////////////////////////////////////////////
 
         // reset the parser to parse a new HTTP response

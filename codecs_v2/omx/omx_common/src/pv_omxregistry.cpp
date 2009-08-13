@@ -45,46 +45,6 @@ OMX_ERRORTYPE OmxComponentFactoryDynamicDestructor(OMX_IN OMX_HANDLETYPE pHandle
 #endif
 
 
-OMX_ERRORTYPE ComponentRegister(ComponentRegistrationType *pCRT)
-{
-    int32 error;
-    OMX_S32 ii;
-
-    OMXGlobalData* data = (OMXGlobalData*)OsclSingletonRegistry::lockAndGetInstance(OSCL_SINGLETON_ID_OMX, error);
-    if (error) // can't access registry
-    {
-        return OMX_ErrorInvalidState;
-    }
-    else if (!data) // singleton object has been destroyed
-    {
-        OsclSingletonRegistry::registerInstanceAndUnlock(data, OSCL_SINGLETON_ID_OMX, error);
-        return OMX_ErrorInvalidState;
-    }
-
-    for (ii = 0; ii < MAX_SUPPORTED_COMPONENTS; ii++)
-    {
-        if (NULL == data->ipRegTemplateList[ii])
-        {
-            data->ipRegTemplateList[ii] = pCRT;
-            break;
-        }
-    }
-
-    OsclSingletonRegistry::registerInstanceAndUnlock(data, OSCL_SINGLETON_ID_OMX, error);
-    if (error)
-    {
-        //registry error
-        return OMX_ErrorUndefined;
-    }
-
-    if (MAX_SUPPORTED_COMPONENTS == ii)
-    {
-        return OMX_ErrorInsufficientResources;
-    }
-
-    return OMX_ErrorNone;
-}
-
 #if REGISTER_OMX_M4V_COMPONENT
 #if (DYNAMIC_LOAD_OMX_M4V_COMPONENT == 0)
 // external factory functions needed for creation of each component (or stubs for testing)
@@ -95,8 +55,9 @@ extern OMX_ERRORTYPE Mpeg4OmxComponentDestructor(OMX_IN OMX_HANDLETYPE pHandle, 
 
 #if (REGISTER_OMX_M4V_COMPONENT) || (USE_DYNAMIC_LOAD_OMX_COMPONENTS)
 /////////////////////////////////////////////////////////////////////////////
-OMX_ERRORTYPE Mpeg4Register()
+OMX_ERRORTYPE Mpeg4Register(OMXGlobalData *data)
 {
+    OMX_S32 ii;
     ComponentRegistrationType *pCRT = (ComponentRegistrationType *) oscl_malloc(sizeof(ComponentRegistrationType));
 
     if (pCRT)
@@ -143,7 +104,21 @@ OMX_ERRORTYPE Mpeg4Register()
         return OMX_ErrorInsufficientResources;
     }
 
-    return  ComponentRegister(pCRT);
+    for (ii = 0; ii < MAX_SUPPORTED_COMPONENTS; ii++)
+    {
+        if (NULL == data->ipRegTemplateList[ii])
+        {
+            data->ipRegTemplateList[ii] = pCRT;
+            break;
+        }
+    }
+
+    if (MAX_SUPPORTED_COMPONENTS == ii)
+    {
+        return OMX_ErrorInsufficientResources;
+    }
+
+    return OMX_ErrorNone;
 }
 
 
@@ -159,8 +134,9 @@ extern OMX_ERRORTYPE H263OmxComponentDestructor(OMX_IN OMX_HANDLETYPE pHandle, O
 #endif
 #if (REGISTER_OMX_H263_COMPONENT) || (USE_DYNAMIC_LOAD_OMX_COMPONENTS)
 /////////////////////////////////////////////////////////////////////////////
-OMX_ERRORTYPE H263Register()
+OMX_ERRORTYPE H263Register(OMXGlobalData *data)
 {
+    OMX_S32 ii;
     ComponentRegistrationType *pCRT = (ComponentRegistrationType *) oscl_malloc(sizeof(ComponentRegistrationType));
 
     if (pCRT)
@@ -207,7 +183,21 @@ OMX_ERRORTYPE H263Register()
         return OMX_ErrorInsufficientResources;
     }
 
-    return  ComponentRegister(pCRT);
+    for (ii = 0; ii < MAX_SUPPORTED_COMPONENTS; ii++)
+    {
+        if (NULL == data->ipRegTemplateList[ii])
+        {
+            data->ipRegTemplateList[ii] = pCRT;
+            break;
+        }
+    }
+
+    if (MAX_SUPPORTED_COMPONENTS == ii)
+    {
+        return OMX_ErrorInsufficientResources;
+    }
+
+    return OMX_ErrorNone;
 }
 #endif
 ////////////////////////////////////////////////////////////////////////////////////
@@ -220,8 +210,9 @@ extern OMX_ERRORTYPE AvcOmxComponentDestructor(OMX_IN OMX_HANDLETYPE pHandle, OM
 #endif
 #if (REGISTER_OMX_AVC_COMPONENT) || (USE_DYNAMIC_LOAD_OMX_COMPONENTS)
 /////////////////////////////////////////////////////////////////////
-OMX_ERRORTYPE AvcRegister()
+OMX_ERRORTYPE AvcRegister(OMXGlobalData *data)
 {
+    OMX_S32 ii;
     ComponentRegistrationType *pCRT = (ComponentRegistrationType *) oscl_malloc(sizeof(ComponentRegistrationType));
 
     if (pCRT)
@@ -267,7 +258,21 @@ OMX_ERRORTYPE AvcRegister()
         return OMX_ErrorInsufficientResources;
     }
 
-    return  ComponentRegister(pCRT);
+    for (ii = 0; ii < MAX_SUPPORTED_COMPONENTS; ii++)
+    {
+        if (NULL == data->ipRegTemplateList[ii])
+        {
+            data->ipRegTemplateList[ii] = pCRT;
+            break;
+        }
+    }
+
+    if (MAX_SUPPORTED_COMPONENTS == ii)
+    {
+        return OMX_ErrorInsufficientResources;
+    }
+
+    return OMX_ErrorNone;
 }
 #endif
 ////////////////////////////////////////////////////////////////////////////////////
@@ -280,8 +285,9 @@ extern OMX_ERRORTYPE WmvOmxComponentDestructor(OMX_IN OMX_HANDLETYPE pHandle, OM
 #endif
 #if (REGISTER_OMX_WMV_COMPONENT) || (USE_DYNAMIC_LOAD_OMX_COMPONENTS)
 /////////////////////////////////////////////////////////////////////
-OMX_ERRORTYPE WmvRegister()
+OMX_ERRORTYPE WmvRegister(OMXGlobalData *data)
 {
+    OMX_S32 ii;
     ComponentRegistrationType *pCRT = (ComponentRegistrationType *) oscl_malloc(sizeof(ComponentRegistrationType));
 
     if (pCRT)
@@ -327,9 +333,100 @@ OMX_ERRORTYPE WmvRegister()
         return OMX_ErrorInsufficientResources;
     }
 
-    return  ComponentRegister(pCRT);
+    for (ii = 0; ii < MAX_SUPPORTED_COMPONENTS; ii++)
+    {
+        if (NULL == data->ipRegTemplateList[ii])
+        {
+            data->ipRegTemplateList[ii] = pCRT;
+            break;
+        }
+    }
+
+    if (MAX_SUPPORTED_COMPONENTS == ii)
+    {
+        return OMX_ErrorInsufficientResources;
+    }
+
+    return OMX_ErrorNone;
 }
 #endif
+
+////////////////////////////////////////////////////////////////////////////////////
+
+#if REGISTER_OMX_RV_COMPONENT
+#if (DYNAMIC_LOAD_OMX_RV_COMPONENT == 0)
+extern OMX_ERRORTYPE RvOmxComponentFactory(OMX_OUT OMX_HANDLETYPE* pHandle, OMX_IN  OMX_PTR pAppData, OMX_IN OMX_PTR pProxy, OMX_STRING aOmxLibName, OMX_PTR &aOmxLib, OMX_PTR aOsclUuid, OMX_U32 &aRefCount);
+extern OMX_ERRORTYPE RvOmxComponentDestructor(OMX_IN OMX_HANDLETYPE pHandle, OMX_PTR &aOmxLib, OMX_PTR aOsclUuid, OMX_U32 &aRefCount);
+#endif
+#endif
+#if (REGISTER_OMX_RV_COMPONENT) || (USE_DYNAMIC_LOAD_OMX_COMPONENTS)
+/////////////////////////////////////////////////////////////////////
+OMX_ERRORTYPE RvRegister(OMXGlobalData *data)
+{
+    OMX_S32 ii;
+    ComponentRegistrationType *pCRT = (ComponentRegistrationType *) oscl_malloc(sizeof(ComponentRegistrationType));
+
+    if (pCRT)
+    {
+        pCRT->ComponentName = (OMX_STRING)"OMX.PV.rvdec";
+        pCRT->RoleString[0] = (OMX_STRING)"video_decoder.rv";
+        pCRT->NumberOfRolesSupported = 1;
+        pCRT->SharedLibraryOsclUuid = NULL;
+#if USE_DYNAMIC_LOAD_OMX_COMPONENTS
+        pCRT->FunctionPtrCreateComponent = &OmxComponentFactoryDynamicCreate;
+        pCRT->FunctionPtrDestroyComponent = &OmxComponentFactoryDynamicDestructor;
+        pCRT->SharedLibraryName = (OMX_STRING)"libomx_rvdec_sharedlibrary";
+        pCRT->SharedLibraryPtr = NULL;
+
+        OsclUuid *temp = (OsclUuid *) oscl_malloc(sizeof(OsclUuid));
+        if (temp == NULL)
+        {
+            oscl_free(pCRT); // free allocated memory
+            return OMX_ErrorInsufficientResources;
+        }
+        OSCL_PLACEMENT_NEW(temp, PV_OMX_RVDEC_UUID);
+
+        pCRT->SharedLibraryOsclUuid = (OMX_PTR) temp;
+        pCRT->SharedLibraryRefCounter = 0;
+#endif
+#if REGISTER_OMX_RV_COMPONENT
+#if (DYNAMIC_LOAD_OMX_RV_COMPONENT == 0)
+        pCRT->FunctionPtrCreateComponent = &RvOmxComponentFactory;
+        pCRT->FunctionPtrDestroyComponent = &RvOmxComponentDestructor;
+        pCRT->SharedLibraryName = NULL;
+        pCRT->SharedLibraryPtr = NULL;
+
+        if (pCRT->SharedLibraryOsclUuid)
+            oscl_free(pCRT->SharedLibraryOsclUuid);
+
+        pCRT->SharedLibraryOsclUuid = NULL;
+        pCRT->SharedLibraryRefCounter = 0;
+#endif
+#endif
+    }
+    else
+    {
+        return OMX_ErrorInsufficientResources;
+    }
+
+    for (ii = 0; ii < MAX_SUPPORTED_COMPONENTS; ii++)
+    {
+        if (NULL == data->ipRegTemplateList[ii])
+        {
+            data->ipRegTemplateList[ii] = pCRT;
+            break;
+        }
+    }
+
+    if (MAX_SUPPORTED_COMPONENTS == ii)
+    {
+        return OMX_ErrorInsufficientResources;
+    }
+
+    return OMX_ErrorNone;
+}
+#endif
+
 ///////////////////////////////////////////////////////////////////////////////////////////////
 #if REGISTER_OMX_AAC_COMPONENT
 // external factory functions needed for creation of each component (or stubs for testing)
@@ -340,8 +437,9 @@ extern OMX_ERRORTYPE AacOmxComponentDestructor(OMX_IN OMX_HANDLETYPE pHandle, OM
 #endif
 #if (REGISTER_OMX_AAC_COMPONENT) || (USE_DYNAMIC_LOAD_OMX_COMPONENTS)
 /////////////////////////////////////////////////////////////////////////////
-OMX_ERRORTYPE AacRegister()
+OMX_ERRORTYPE AacRegister(OMXGlobalData *data)
 {
+    OMX_S32 ii;
     ComponentRegistrationType *pCRT = (ComponentRegistrationType *) oscl_malloc(sizeof(ComponentRegistrationType));
 
     if (pCRT)
@@ -388,7 +486,21 @@ OMX_ERRORTYPE AacRegister()
         return OMX_ErrorInsufficientResources;
     }
 
-    return  ComponentRegister(pCRT);
+    for (ii = 0; ii < MAX_SUPPORTED_COMPONENTS; ii++)
+    {
+        if (NULL == data->ipRegTemplateList[ii])
+        {
+            data->ipRegTemplateList[ii] = pCRT;
+            break;
+        }
+    }
+
+    if (MAX_SUPPORTED_COMPONENTS == ii)
+    {
+        return OMX_ErrorInsufficientResources;
+    }
+
+    return OMX_ErrorNone;
 }
 #endif
 
@@ -402,8 +514,9 @@ extern OMX_ERRORTYPE AmrOmxComponentDestructor(OMX_IN OMX_HANDLETYPE pHandle, OM
 #endif
 #if (REGISTER_OMX_AMR_COMPONENT) || (USE_DYNAMIC_LOAD_OMX_COMPONENTS)
 /////////////////////////////////////////////////////////////////////////////
-OMX_ERRORTYPE AmrRegister()
+OMX_ERRORTYPE AmrRegister(OMXGlobalData *data)
 {
+    OMX_S32 ii;
     ComponentRegistrationType *pCRT = (ComponentRegistrationType *) oscl_malloc(sizeof(ComponentRegistrationType));
 
     if (pCRT)
@@ -453,7 +566,21 @@ OMX_ERRORTYPE AmrRegister()
         return OMX_ErrorInsufficientResources;
     }
 
-    return  ComponentRegister(pCRT);
+    for (ii = 0; ii < MAX_SUPPORTED_COMPONENTS; ii++)
+    {
+        if (NULL == data->ipRegTemplateList[ii])
+        {
+            data->ipRegTemplateList[ii] = pCRT;
+            break;
+        }
+    }
+
+    if (MAX_SUPPORTED_COMPONENTS == ii)
+    {
+        return OMX_ErrorInsufficientResources;
+    }
+
+    return OMX_ErrorNone;
 }
 #endif
 
@@ -467,8 +594,9 @@ extern OMX_ERRORTYPE Mp3OmxComponentDestructor(OMX_IN OMX_HANDLETYPE pHandle, OM
 #endif
 #if (REGISTER_OMX_MP3_COMPONENT) || (USE_DYNAMIC_LOAD_OMX_COMPONENTS)
 /////////////////////////////////////////////////////////////////////////////
-OMX_ERRORTYPE Mp3Register()
+OMX_ERRORTYPE Mp3Register(OMXGlobalData *data)
 {
+    OMX_S32 ii;
     ComponentRegistrationType *pCRT = (ComponentRegistrationType *) oscl_malloc(sizeof(ComponentRegistrationType));
 
     if (pCRT)
@@ -515,7 +643,21 @@ OMX_ERRORTYPE Mp3Register()
         return OMX_ErrorInsufficientResources;
     }
 
-    return  ComponentRegister(pCRT);
+    for (ii = 0; ii < MAX_SUPPORTED_COMPONENTS; ii++)
+    {
+        if (NULL == data->ipRegTemplateList[ii])
+        {
+            data->ipRegTemplateList[ii] = pCRT;
+            break;
+        }
+    }
+
+    if (MAX_SUPPORTED_COMPONENTS == ii)
+    {
+        return OMX_ErrorInsufficientResources;
+    }
+
+    return OMX_ErrorNone;
 }
 #endif
 
@@ -529,8 +671,9 @@ extern OMX_ERRORTYPE WmaOmxComponentDestructor(OMX_IN OMX_HANDLETYPE pHandle, OM
 #endif
 #if (REGISTER_OMX_WMA_COMPONENT) || (USE_DYNAMIC_LOAD_OMX_COMPONENTS)
 /////////////////////////////////////////////////////////////////////////////
-OMX_ERRORTYPE WmaRegister()
+OMX_ERRORTYPE WmaRegister(OMXGlobalData *data)
 {
+    OMX_S32 ii;
     ComponentRegistrationType *pCRT = (ComponentRegistrationType *) oscl_malloc(sizeof(ComponentRegistrationType));
 
     if (pCRT)
@@ -577,7 +720,21 @@ OMX_ERRORTYPE WmaRegister()
         return OMX_ErrorInsufficientResources;
     }
 
-    return  ComponentRegister(pCRT);
+    for (ii = 0; ii < MAX_SUPPORTED_COMPONENTS; ii++)
+    {
+        if (NULL == data->ipRegTemplateList[ii])
+        {
+            data->ipRegTemplateList[ii] = pCRT;
+            break;
+        }
+    }
+
+    if (MAX_SUPPORTED_COMPONENTS == ii)
+    {
+        return OMX_ErrorInsufficientResources;
+    }
+
+    return OMX_ErrorNone;
 }
 #endif
 
@@ -591,8 +748,9 @@ extern OMX_ERRORTYPE AmrEncOmxComponentDestructor(OMX_IN OMX_HANDLETYPE pHandle,
 #endif
 #if (REGISTER_OMX_AMRENC_COMPONENT) || (USE_DYNAMIC_LOAD_OMX_COMPONENTS)
 /////////////////////////////////////////////////////////////////////////////
-OMX_ERRORTYPE AmrEncRegister()
+OMX_ERRORTYPE AmrEncRegister(OMXGlobalData *data)
 {
+    OMX_S32 ii;
     ComponentRegistrationType* pCRT = (ComponentRegistrationType*) oscl_malloc(sizeof(ComponentRegistrationType));
 
     if (pCRT)
@@ -639,7 +797,21 @@ OMX_ERRORTYPE AmrEncRegister()
         return OMX_ErrorInsufficientResources;
     }
 
-    return  ComponentRegister(pCRT);
+    for (ii = 0; ii < MAX_SUPPORTED_COMPONENTS; ii++)
+    {
+        if (NULL == data->ipRegTemplateList[ii])
+        {
+            data->ipRegTemplateList[ii] = pCRT;
+            break;
+        }
+    }
+
+    if (MAX_SUPPORTED_COMPONENTS == ii)
+    {
+        return OMX_ErrorInsufficientResources;
+    }
+
+    return OMX_ErrorNone;
 }
 #endif
 
@@ -654,8 +826,9 @@ extern OMX_ERRORTYPE Mpeg4EncOmxComponentDestructor(OMX_IN OMX_HANDLETYPE pHandl
 #endif
 #if (REGISTER_OMX_M4VENC_COMPONENT) || (USE_DYNAMIC_LOAD_OMX_COMPONENTS)
 /////////////////////////////////////////////////////////////////////////////
-OMX_ERRORTYPE Mpeg4EncRegister()
+OMX_ERRORTYPE Mpeg4EncRegister(OMXGlobalData *data)
 {
+    OMX_S32 ii;
     ComponentRegistrationType* pCRT = (ComponentRegistrationType*) oscl_malloc(sizeof(ComponentRegistrationType));
 
     if (pCRT)
@@ -703,7 +876,21 @@ OMX_ERRORTYPE Mpeg4EncRegister()
         return OMX_ErrorInsufficientResources;
     }
 
-    return  ComponentRegister(pCRT);
+    for (ii = 0; ii < MAX_SUPPORTED_COMPONENTS; ii++)
+    {
+        if (NULL == data->ipRegTemplateList[ii])
+        {
+            data->ipRegTemplateList[ii] = pCRT;
+            break;
+        }
+    }
+
+    if (MAX_SUPPORTED_COMPONENTS == ii)
+    {
+        return OMX_ErrorInsufficientResources;
+    }
+
+    return OMX_ErrorNone;
 }
 #endif
 
@@ -716,8 +903,9 @@ extern OMX_ERRORTYPE H263EncOmxComponentDestructor(OMX_IN OMX_HANDLETYPE pHandle
 #endif
 #if (REGISTER_OMX_H263ENC_COMPONENT) || (USE_DYNAMIC_LOAD_OMX_COMPONENTS)
 /////////////////////////////////////////////////////////////////////////////
-OMX_ERRORTYPE H263EncRegister()
+OMX_ERRORTYPE H263EncRegister(OMXGlobalData *data)
 {
+    OMX_S32 ii;
     ComponentRegistrationType* pCRT = (ComponentRegistrationType*) oscl_malloc(sizeof(ComponentRegistrationType));
 
     if (pCRT)
@@ -765,7 +953,21 @@ OMX_ERRORTYPE H263EncRegister()
         return OMX_ErrorInsufficientResources;
     }
 
-    return  ComponentRegister(pCRT);
+    for (ii = 0; ii < MAX_SUPPORTED_COMPONENTS; ii++)
+    {
+        if (NULL == data->ipRegTemplateList[ii])
+        {
+            data->ipRegTemplateList[ii] = pCRT;
+            break;
+        }
+    }
+
+    if (MAX_SUPPORTED_COMPONENTS == ii)
+    {
+        return OMX_ErrorInsufficientResources;
+    }
+
+    return OMX_ErrorNone;
 }
 #endif
 
@@ -780,8 +982,9 @@ extern OMX_ERRORTYPE AvcEncOmxComponentDestructor(OMX_IN OMX_HANDLETYPE pHandle,
 #endif
 #if (REGISTER_OMX_AVCENC_COMPONENT) || (USE_DYNAMIC_LOAD_OMX_COMPONENTS)
 /////////////////////////////////////////////////////////////////////////////
-OMX_ERRORTYPE AvcEncRegister()
+OMX_ERRORTYPE AvcEncRegister(OMXGlobalData *data)
 {
+    OMX_S32 ii;
     ComponentRegistrationType* pCRT = (ComponentRegistrationType*) oscl_malloc(sizeof(ComponentRegistrationType));
 
     if (pCRT)
@@ -830,7 +1033,21 @@ OMX_ERRORTYPE AvcEncRegister()
         return OMX_ErrorInsufficientResources;
     }
 
-    return  ComponentRegister(pCRT);
+    for (ii = 0; ii < MAX_SUPPORTED_COMPONENTS; ii++)
+    {
+        if (NULL == data->ipRegTemplateList[ii])
+        {
+            data->ipRegTemplateList[ii] = pCRT;
+            break;
+        }
+    }
+
+    if (MAX_SUPPORTED_COMPONENTS == ii)
+    {
+        return OMX_ErrorInsufficientResources;
+    }
+
+    return OMX_ErrorNone;
 }
 #endif
 
@@ -844,8 +1061,9 @@ extern OMX_ERRORTYPE AacEncOmxComponentDestructor(OMX_IN OMX_HANDLETYPE pHandle,
 #endif
 #if (REGISTER_OMX_AACENC_COMPONENT) || (USE_DYNAMIC_LOAD_OMX_COMPONENTS)
 /////////////////////////////////////////////////////////////////////////////
-OMX_ERRORTYPE AacEncRegister()
+OMX_ERRORTYPE AacEncRegister(OMXGlobalData *data)
 {
+    OMX_S32 ii;
     ComponentRegistrationType* pCRT = (ComponentRegistrationType*) oscl_malloc(sizeof(ComponentRegistrationType));
 
     if (pCRT)
@@ -894,7 +1112,21 @@ OMX_ERRORTYPE AacEncRegister()
         return OMX_ErrorInsufficientResources;
     }
 
-    return  ComponentRegister(pCRT);
+    for (ii = 0; ii < MAX_SUPPORTED_COMPONENTS; ii++)
+    {
+        if (NULL == data->ipRegTemplateList[ii])
+        {
+            data->ipRegTemplateList[ii] = pCRT;
+            break;
+        }
+    }
+
+    if (MAX_SUPPORTED_COMPONENTS == ii)
+    {
+        return OMX_ErrorInsufficientResources;
+    }
+
+    return OMX_ErrorNone;
 }
 #endif
 

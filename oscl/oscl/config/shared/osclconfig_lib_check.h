@@ -51,6 +51,8 @@ OSCL_HAS_RUNTIME_LIB_LOADING_SUPPORT should be set to 1 if the platform has basi
 #error "ERROR: PV_DYNAMIC_LOADING_CONFIG_FILE_PATH must be set to a path where the config files are expected to be present"
 #endif
 
+#endif // OSCL_HAS_RUNTIME_LIB_LOADING_SUPPORT
+
 /*
 ** When OSCL_HAS_RUNTIME_LIB_LOADING_SUPPORT is 1,
 ** PV_RUNTIME_LIB_FILENAME_EXTENSION should be set.
@@ -58,8 +60,6 @@ OSCL_HAS_RUNTIME_LIB_LOADING_SUPPORT should be set to 1 if the platform has basi
 #if !defined(PV_RUNTIME_LIB_FILENAME_EXTENSION)
 #error "ERROR: PV_RUNTIME_LIB_FILENAME_EXTENSION must be specified for use as the dynamic library file extension"
 #endif
-
-#endif // OSCL_HAS_RUNTIME_LIB_LOADING_SUPPORT
 
 
 /*! @} */

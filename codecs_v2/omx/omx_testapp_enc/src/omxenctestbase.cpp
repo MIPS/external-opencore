@@ -125,13 +125,6 @@ OsclReturnCode OmxEncTestBase::ProcessCallbackEventHandler(OsclAny* P)
     EventHandler(aComponent, aAppData, aEvent, aData1, aData2, aEventData);
 
     // release the allocated memory when no longer needed
-    //ED->hComponent = NULL;
-    //ED->nData1 = 0;
-    //ED->nData2 = 0;
-    //ED->pAppData = NULL;
-    //ED->pEventData = NULL;
-
-    // release the allocated memory when no longer needed
     ipThreadSafeHandlerEventHandler->iMemoryPool->deallocate(ED);
     ED = NULL;
 
@@ -175,9 +168,7 @@ OMX_ERRORTYPE OmxEncTestBase::EventHandler(OMX_OUT OMX_HANDLETYPE aComponent,
                     break;
 
                 case OMX_StateIdle:
-                    if (StateStopping == iState || StateExecuting == iState ||
-                            StateDynamicReconfig == iState || StateDisablePort == iState
-                            || StateDecodeHeader == iState)
+                    if (StateStopping == iState || StateExecuting == iState)
                     {
                         iState = StateCleanUp;
                         if (0 == --iPendingCommands)
@@ -210,34 +201,6 @@ OMX_ERRORTYPE OmxEncTestBase::EventHandler(OMX_OUT OMX_HANDLETYPE aComponent,
                     break;
             }
         }
-        else if (OMX_CommandPortDisable == aData1)
-        {
-            iState = StateDynamicReconfig;
-            if (0 == --iPendingCommands)
-            {
-                RunIfNotReady();
-            }
-        }
-        else if (OMX_CommandPortEnable == aData1)
-        {
-            //Change the state from Reconfig to Executing on receiving this callback
-            iState = StateExecuting;
-            if (0 == --iPendingCommands)
-            {
-                RunIfNotReady();
-            }
-        }
-    }
-    else if (OMX_EventPortSettingsChanged == aEvent)
-    {
-        if (StateDecodeHeader == iState || StateExecuting == iState)
-        {
-            iState = StateDisablePort;
-        }
-        if (0 == --iPendingCommands)
-        {
-            RunIfNotReady();
-        }
     }
     else if (OMX_EventBufferFlag == aEvent)
     {   //callback for EOS  //Change the state on receiving EOS callback
@@ -250,7 +213,7 @@ OMX_ERRORTYPE OmxEncTestBase::EventHandler(OMX_OUT OMX_HANDLETYPE aComponent,
     }
     else if (OMX_EventError == aEvent)
     {
-        if (OMX_ErrorSameState == aData1)
+        if (OMX_ErrorSameState == (OMX_S32)aData1)
         {
             printf("Component reported SameState Error, try to proceed\n");
             if (StateCleanUp == iState)
@@ -262,7 +225,7 @@ OMX_ERRORTYPE OmxEncTestBase::EventHandler(OMX_OUT OMX_HANDLETYPE aComponent,
                 }
             }
         }
-        else if (OMX_ErrorStreamCorrupt == aData1)
+        else if (OMX_ErrorStreamCorrupt == (OMX_S32)aData1)
         {
             /* Don't do anything right now for the stream corrupt error,
              * just count the number of such callbacks and let the component to proceed */
@@ -293,10 +256,6 @@ OsclReturnCode OmxEncTestBase::ProcessCallbackEmptyBufferDone(OsclAny* P)
     // release the allocated memory when no longer needed
     ipThreadSafeHandlerEmptyBufferDone->iMemoryPool->deallocate(ED);
     ED = NULL;
-
-    //ED->hComponent = NULL;
-    //ED->pAppData = NULL;
-    //ED->pBuffer = NULL;
 
     return OsclSuccess;
 }
@@ -365,10 +324,6 @@ OsclReturnCode OmxEncTestBase::ProcessCallbackFillBufferDone(OsclAny* P)
     // release the allocated memory when no longer needed
     ipThreadSafeHandlerFillBufferDone->iMemoryPool->deallocate(ED);
     ED = NULL;
-
-    //ED->hComponent = NULL;
-    //ED->pAppData = NULL;
-    //ED->pBuffer = NULL;
 
     return OsclSuccess;
 }
@@ -478,11 +433,6 @@ OMX_BOOL OmxEncTestBase::VerifyAllBuffersReturned()
     return AllBuffersReturned;
 }
 
-//#if PROXY_INTERFACE
-//struct EventHandlerSpecificData* CallbackContainer::pEventHandlerArray[EVENT_HANDLER_QUEUE_DEPTH];
-//struct EmptyBufferDoneSpecificData* CallbackContainer::pEmptyBufferDoneArray[EMPTY_BUFFER_DONE_QUEUE_DEPTH];
-//struct FillBufferDoneSpecificData* CallbackContainer::pFillBufferDoneArray[FILL_BUFFER_DONE_QUEUE_DEPTH];
-//#endif
 
 CallbackParentInt* CallbackContainer::iParent = NULL;
 
@@ -493,12 +443,6 @@ CallbackContainer::CallbackContainer(CallbackParentInt *parentinterface)
     iCallbackType.EventHandler = CallbackEventHandler;
     iCallbackType.EmptyBufferDone = CallbackEmptyBufferDone;
     iCallbackType.FillBufferDone = CallbackFillBufferDone;
-
-//#if PROXY_INTERFACE
-//    oscl_memset(pEventHandlerArray, 0, sizeof(pEventHandlerArray));
-//    oscl_memset(pEmptyBufferDoneArray, 0, sizeof(pEmptyBufferDoneArray));
-//    oscl_memset(pFillBufferDoneArray, 0, sizeof(pFillBufferDoneArray));
-//#endif
 };
 
 
@@ -512,14 +456,6 @@ OMX_ERRORTYPE CallbackContainer::CallbackEventHandler(OMX_OUT OMX_HANDLETYPE aCo
         OMX_OUT OMX_PTR aEventData)
 {
 #if PROXY_INTERFACE
-    //OMX_S32 ii = 0;
-
-    //while (NULL != pEventHandlerArray[ii]->hComponent && ii < EVENT_HANDLER_QUEUE_DEPTH)
-    //{
-    //    ii++;
-    //}
-
-    //EventHandlerSpecificData* ED = pEventHandlerArray[ii];
 
 
     // allocate the memory for the callback event specific data
@@ -557,14 +493,6 @@ OMX_ERRORTYPE CallbackContainer::CallbackEmptyBufferDone(OMX_OUT OMX_HANDLETYPE 
         OMX_OUT OMX_BUFFERHEADERTYPE* aBuffer)
 {
 #if PROXY_INTERFACE
-    // OMX_S32 ii = 0;
-
-    //while (NULL != pEmptyBufferDoneArray[ii]->hComponent && ii < EMPTY_BUFFER_DONE_QUEUE_DEPTH)
-    //{
-    //    ii++;
-    //}
-
-    //EmptyBufferDoneSpecificData* ED = pEmptyBufferDoneArray[ii];
 
     // allocate the memory for the callback event specific data
     EmptyBufferDoneSpecificData* ED = (EmptyBufferDoneSpecificData*) iParent->ipThreadSafeHandlerEmptyBufferDone->iMemoryPool->allocate(sizeof(EmptyBufferDoneSpecificData));
@@ -598,14 +526,6 @@ OMX_ERRORTYPE CallbackContainer::CallbackFillBufferDone(OMX_OUT OMX_HANDLETYPE a
         OMX_OUT OMX_BUFFERHEADERTYPE* aBuffer)
 {
 #if PROXY_INTERFACE
-    //OMX_S32 ii = 0;
-
-    //while (NULL != pFillBufferDoneArray[ii]->hComponent && ii < FILL_BUFFER_DONE_QUEUE_DEPTH)
-    //{
-    //    ii++;
-    //}
-
-    //FillBufferDoneSpecificData* ED = pFillBufferDoneArray[ii];
 
     // allocate the memory for the callback event specific data
     FillBufferDoneSpecificData* ED = (FillBufferDoneSpecificData*) iParent->ipThreadSafeHandlerFillBufferDone->iMemoryPool->allocate(sizeof(FillBufferDoneSpecificData));

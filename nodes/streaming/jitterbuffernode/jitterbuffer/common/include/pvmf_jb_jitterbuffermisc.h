@@ -51,6 +51,7 @@
 #endif
 
 class PVLogger;
+class mediaInfo;
 
 class PVMFJitterBufferMiscObserver
 {
@@ -105,7 +106,7 @@ class PVMFJitterBufferMisc: public PVRTCPProtoImplementorObserver
                                           bool aPlayAfterASeek,
                                           bool aStopTimeAvailable);
 
-        OSCL_IMPORT_REF bool SetPortSSRC(PVMFPortInterface* aPort, uint32 aSSRC);
+        OSCL_IMPORT_REF void SetPortSSRC(PVMFPortInterface* aPort, uint32 aSSRC);
 
         OSCL_IMPORT_REF uint32 GetEstimatedServerClockValue();
 
@@ -116,8 +117,15 @@ class PVMFJitterBufferMisc: public PVRTCPProtoImplementorObserver
         OSCL_IMPORT_REF PVMFTimestamp GetMaxMediaDataTS();
         OSCL_IMPORT_REF PVMFTimestamp GetActualMediaDataTSAfterSeek();
 
+
+        OSCL_IMPORT_REF virtual bool setPortMediaParams(PVMFPortInterface* aPort,
+                mediaInfo* aMediaInfo = NULL);
+
         OSCL_IMPORT_REF void SetMediaClockConverter(PVMFPortInterface* apPort, MediaClockConverter* apMediaClockConverter);
         OSCL_IMPORT_REF void ProcessFirstPacketAfterSeek();
+
+        OSCL_IMPORT_REF static IPayloadParser* CreatePayloadParser(PayloadParserRegistry* aPayLoadParserRegistry, const char* aMimeStr);
+        OSCL_IMPORT_REF static PVMFStatus DestroyPayloadParser(PayloadParserRegistry* aPayLoadParserRegistry, const char* aMimeStr, IPayloadParser* aPayloadParser);
 
         void ProcessCallback(CLOCK_NOTIFICATION_INTF_TYPE aClockNotificationInterfaceType, uint32 aCallBkId, const OsclAny* aContext, PVMFStatus aStatus);
         virtual void PVMFJBSessionDurationTimerEvent();

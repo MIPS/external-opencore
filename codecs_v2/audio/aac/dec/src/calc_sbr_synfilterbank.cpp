@@ -98,9 +98,8 @@ Copyright (c) ISO/IEC 2002.
 #if defined (PV_ARM_V5)
 
 
-__inline Int16 sat(Int32 y)
+__inline Int16 sat1(Int32 y)
 {
-    Int32 x;
     __asm
     {
         qdadd y, y, y
@@ -110,8 +109,8 @@ __inline Int16 sat(Int32 y)
     return((Int16)y);
 }
 
-#define saturate2( a, b, c, d)      *c = sat( a);   \
-                                    *d = sat( b);   \
+#define saturate2( a, b, c, d)      *c = sat1( a);   \
+                                    *d = sat1( b);   \
                                     c += 2;         \
                                     d -= 2;
 
@@ -192,8 +191,6 @@ __inline Int16 sat(Int32 y)
                                     }                                        \
                                     *d = (Int16)b;                           \
                                     d -= 2;
-
-
 #endif
 
 /*----------------------------------------------------------------------------
@@ -264,7 +261,7 @@ void calc_sbr_synfilterbank_LC(Int32 * Sr,
 
         tmp1 = V[ 704];
         tmp2 = V[ 768];
-        realAccu1 =  fxp_mac_16_by_16(tmp1, Qfmt(0.853738560F), ROUND_SYNFIL);
+        realAccu1 =  fxp_mac_16_by_16(tmp1, Qfmt(0.853738560F), ROUND_SYNFIL1);
         realAccu1 =  fxp_mac_16_by_16(tmp2, Qfmt(-0.361158990F), realAccu1);
         tmp1 = -V[ 512];
         tmp2 =  V[ 960];
@@ -282,7 +279,7 @@ void calc_sbr_synfilterbank_LC(Int32 * Sr,
 
         tmp1 = V[  32];
         tmp2 = V[1248];
-        realAccu2 =  fxp_mac_16_by_16(tmp1, Qfmt(-0.000665042F), ROUND_SYNFIL);
+        realAccu2 =  fxp_mac_16_by_16(tmp1, Qfmt(-0.000665042F), ROUND_SYNFIL2);
         realAccu2 =  fxp_mac_16_by_16(tmp2, Qfmt(-0.000665042F), realAccu2);
         tmp1 = V[ 224];
         tmp2 = V[1056];

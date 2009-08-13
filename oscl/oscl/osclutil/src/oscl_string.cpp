@@ -27,6 +27,7 @@
 #include "oscl_string.h"
 #include "oscl_error.h"
 #include "oscl_stdstring.h"
+#include "oscl_utf8conv.h"
 
 #ifndef OSCL_COMBINED_DLL
 #include "oscl_dll.h"
@@ -287,6 +288,72 @@ OSCL_EXPORT_REF void OSCL_wString::write(uint32 offset, uint32 length, const cha
         //write within current length
         oscl_strncpy(curbuf + offset, ptr, length);
     }
+}
+
+// **************************************************************
+OSCL_EXPORT_REF uint32 OSCL_String::setrep_to_char(const oscl_wchar* src,
+        uint32 len, TOSCL_StringOp op, Oscl_DefAlloc* aAlloc)
+//default implementation-- may be replaced by derived class
+{
+    // utf8 can occupy up to MAX_NUMBER_OF_BYTE_PER_UTF8 bytes per char
+    uint maxutf8len = (len + 1) * MAX_NUMBER_OF_BYTE_PER_UTF8;
+    char* ptr = NULL;
+    if (aAlloc)
+        ptr = (char*) aAlloc->allocate(maxutf8len);
+    else
+        ptr = (char*) OSCL_MALLOC(maxutf8len);
+    uint32 i = 0;
+    if (!ptr)
+        return 0;
+    if (op == EOSCL_StringOp_CompressASCII)
+    {     //casting from wide-character to single-wide without conversion
+        for (; i < len ; i++)
+            ptr[i] = (char)src[i];
+        ptr[i] = '\0';
+    }
+    else if (op == EOSCL_StringOp_UTF16ToUTF8)
+        i = oscl_UnicodeToUTF8(src, len, ptr, maxutf8len);
+    if (i || len == 0) // len==0 case always successes even in utf8conv
+        set_rep(ptr);
+    if (aAlloc)
+        aAlloc->deallocate(ptr);
+    else
+        OSCL_FREE(ptr);
+    if (len > 0 && i == 0)
+        OsclError::Leave(OsclErrNoMemory);//utf8conv failure.
+    return i;
+}
+
+// **************************************************************
+OSCL_EXPORT_REF uint32 OSCL_wString::setrep_to_wide_char(const char* src,
+        uint32 len, TOSCL_wStringOp op, Oscl_DefAlloc* aAlloc)
+//default implementation-- may be replaced by derived class
+{
+    oscl_wchar* ptr = NULL;
+    if (aAlloc)
+        ptr = (oscl_wchar*) aAlloc->allocate(sizeof(oscl_wchar) * (len + 1));
+    else
+        ptr = (oscl_wchar*) OSCL_MALLOC(sizeof(oscl_wchar) * (len + 1));
+    if (!ptr)
+        return 0;
+    uint32 i = 0;
+    if (op == EOSCL_wStringOp_ExpandASCII)
+    {     //casting from single-wide to wide-character without conversion
+        for (; i < len; i++)
+            ptr[i] = (oscl_wchar)src[i];
+        ptr[i] = '\0';
+    }
+    else if (op == EOSCL_wStringOp_UTF8ToUTF16)
+        i = oscl_UTF8ToUnicode(src, len, ptr, len + 1);
+    if (i || len == 0) // len==0 case always successes even in utf8conv
+        set_rep(ptr);
+    if (aAlloc)
+        aAlloc->deallocate(ptr);
+    else
+        OSCL_FREE(ptr);
+    if (len > 0 && i == 0)
+        OsclError::Leave(OsclErrNoMemory);//utf8conv failure.
+    return i;
 }
 
 // **************************************************************

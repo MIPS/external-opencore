@@ -1,9 +1,12 @@
 # Get the current local path as the first operation
 LOCAL_PATH := $(call get_makefile_dir)
 
-# include the CML2 configuration
-include $(CFG_DIR)/pv_config_selected.mk
-include $(CFG_DIR)/pv_config_derived.mk
+CML2_START_RULES := start.cml
+CML2_BASE_OUTPUT_NAME := pv_config
+
+include $(MK)/cml2.mk
+
+# The following lines should come after the inclusion of $(MK)/cml2.mk
 
 # define some basic preprocessor conditionals that may be needed
 # to get the pv_config.h file to be included

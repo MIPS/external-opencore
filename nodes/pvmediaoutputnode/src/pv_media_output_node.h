@@ -53,8 +53,8 @@
 #ifndef PVMI_MEDIA_IO_OBSERVER_H_INCLUDED
 #include "pvmi_media_io_observer.h"
 #endif
-#ifndef PVMI_CONFIG_AND_CAPABILITY_H_INCLUDED
-#include "pvmi_config_and_capability.h"
+#ifndef PVMI_CONFIG_AND_CAPABILITY_BASE_H_INCLUDED
+#include "pvmi_config_and_capability_base.h"
 #endif
 #ifndef PVMF_NODES_SYNC_CONTROL_H_INCLUDED
 #include "pvmf_nodes_sync_control.h"
@@ -148,11 +148,12 @@ typedef PVMFNodeCommandQueue<PVMediaOutputNodeCmd, OsclMemAllocator> PVMediaOutp
 /**
  * class PVMediaOutputNode is a node wrapper around the io interface
  */
-class PVMediaOutputNode : public OsclActiveObject,
-        public PVMFNodeInterface,
-        public PvmiMIOObserver,
-        public PvmfNodesSyncControlInterface,
-        public PvmiCapabilityAndConfig
+class PVMediaOutputNode
+        : public OsclActiveObject
+        , public PVMFNodeInterface
+        , public PvmiMIOObserver
+        , public PvmfNodesSyncControlInterface
+        , public PvmiCapabilityAndConfigBase
 {
     public:
         static PVMFNodeInterface* Create(PvmiMIOControl* aIOInterfacePtr);
@@ -237,50 +238,6 @@ class PVMediaOutputNode : public OsclActiveObject,
         OSCL_IMPORT_REF virtual PVMFStatus verifyParametersSync(PvmiMIOSession aSession, PvmiKvp* aParameters, int aNumElements);
         OSCL_IMPORT_REF virtual PVMFStatus getParametersSync(PvmiMIOSession aSession, PvmiKeyType aIdentifier, PvmiKvp*& aParameters, int& aNumParamElements, PvmiCapabilityContext aContext);
         OSCL_IMPORT_REF virtual PVMFStatus releaseParameters(PvmiMIOSession aSession, PvmiKvp* aParameters, int aNumElements);
-
-        // Unsupported PvmiCapabilityAndConfig methods
-        void virtual setObserver(PvmiConfigAndCapabilityCmdObserver* aObserver)
-        {
-            OSCL_UNUSED_ARG(aObserver);
-        };
-        void virtual createContext(PvmiMIOSession aSession, PvmiCapabilityContext& aContext)
-        {
-            OSCL_UNUSED_ARG(aSession);
-            OSCL_UNUSED_ARG(aContext);
-        };
-        void virtual setContextParameters(PvmiMIOSession aSession, PvmiCapabilityContext& aContext, PvmiKvp* aParameters, int aNumParamElements)
-        {
-            OSCL_UNUSED_ARG(aSession);
-            OSCL_UNUSED_ARG(aContext);
-            OSCL_UNUSED_ARG(aParameters);
-            OSCL_UNUSED_ARG(aNumParamElements);
-        };
-        void virtual DeleteContext(PvmiMIOSession aSession, PvmiCapabilityContext& aContext)
-        {
-            OSCL_UNUSED_ARG(aSession);
-            OSCL_UNUSED_ARG(aContext);
-        };
-        void virtual setParametersSync(PvmiMIOSession aSession, PvmiKvp* aParameters, int aNumElements, PvmiKvp* &aRetKVP)
-        {
-            OSCL_UNUSED_ARG(aSession);
-            OSCL_UNUSED_ARG(aParameters);
-            OSCL_UNUSED_ARG(aNumElements);
-            OSCL_UNUSED_ARG(aRetKVP);
-        };
-        PVMFCommandId virtual setParametersAsync(PvmiMIOSession aSession, PvmiKvp* aParameters, int aNumElements, PvmiKvp*& aRetKVP, OsclAny* aContext = NULL)
-        {
-            OSCL_UNUSED_ARG(aSession);
-            OSCL_UNUSED_ARG(aParameters);
-            OSCL_UNUSED_ARG(aNumElements);
-            OSCL_UNUSED_ARG(aRetKVP);
-            OSCL_UNUSED_ARG(aContext);
-            return -1;
-        }
-        uint32 virtual getCapabilityMetric(PvmiMIOSession aSession)
-        {
-            OSCL_UNUSED_ARG(aSession);
-            return 0;
-        };
 
         uint32 getClockRate()
         {

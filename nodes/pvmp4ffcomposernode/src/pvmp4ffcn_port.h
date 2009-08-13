@@ -35,8 +35,8 @@
 #ifndef PVMF_NODE_INTERFACE_H_INCLUDED
 #include "pvmf_node_interface.h"
 #endif
-#ifndef PVMI_CONFIG_AND_CAPABILITY_H_INCLUDED
-#include "pvmi_config_and_capability.h"
+#ifndef PVMI_CONFIG_AND_CAPABILITY_BASE_H_INCLUDED
+#include "pvmi_config_and_capability_base.h"
 #endif
 #ifndef TEXTSAMPLEDESCINFO_H
 #include "textsampledescinfo.h"
@@ -78,10 +78,11 @@ class PVMP4FFCNFormatSpecificConfig
         uint32 iNALLenSize;
 };
 
-class PVMp4FFComposerPort : public PvmfPortBaseImpl,
-        public PvmiCapabilityAndConfig,
-        public PVMFPortActivityHandler,
-        public OsclActiveObject
+class PVMp4FFComposerPort
+        : public PvmfPortBaseImpl
+        , public PvmiCapabilityAndConfigBase
+        , public PVMFPortActivityHandler
+        , public OsclActiveObject
 {
     public:
         PVMp4FFComposerPort(int32 aTag, PVMp4FFComposerNode* aNode, int32 aPriority, const char* aName = NULL);
@@ -98,15 +99,8 @@ class PVMp4FFComposerPort : public PvmfPortBaseImpl,
                 PvmiKvp*& aParameters, int& num_parameter_elements,
                 PvmiCapabilityContext aContext);
         OSCL_IMPORT_REF PVMFStatus releaseParameters(PvmiMIOSession aSession, PvmiKvp* aParameters, int num_elements);
-        OSCL_IMPORT_REF void createContext(PvmiMIOSession aSession, PvmiCapabilityContext& aContext);
-        OSCL_IMPORT_REF void setContextParameters(PvmiMIOSession aSession, PvmiCapabilityContext& aContext,
-                PvmiKvp* aParameters, int num_parameter_elements);
-        OSCL_IMPORT_REF void DeleteContext(PvmiMIOSession aSession, PvmiCapabilityContext& aContext);
         OSCL_IMPORT_REF void setParametersSync(PvmiMIOSession aSession, PvmiKvp* aParameters,
                                                int num_elements, PvmiKvp * & aRet_kvp);
-        OSCL_IMPORT_REF PVMFCommandId setParametersAsync(PvmiMIOSession aSession, PvmiKvp* aParameters,
-                int num_elements, PvmiKvp*& aRet_kvp, OsclAny* context = NULL);
-        OSCL_IMPORT_REF uint32 getCapabilityMetric(PvmiMIOSession aSession);
         OSCL_IMPORT_REF PVMFStatus verifyParametersSync(PvmiMIOSession aSession, PvmiKvp* aParameters, int num_elements);
 
         // For node to notify the port that it's ready to process incoming message

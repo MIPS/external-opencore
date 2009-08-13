@@ -401,11 +401,19 @@ void HttpParsingBasicObject::setDownloadSize(const uint32 aInitialSize)
     iTotalDLSizeForPrevEOS = iTotalDLSizeAtCurrEOS = iTotalDLHttpBodySize;
 }
 
-OSCL_EXPORT_REF bool HttpParsingBasicObject::getRedirectURI(OSCL_String &aRedirectUri)
+OSCL_EXPORT_REF uint32 HttpParsingBasicObject::getRedirectURINum()
+{
+    StrCSumPtrLen aLocation = "Location";
+    uint32 numFieldsByKey = iParser->getNumberOfFieldsByKey(aLocation);
+
+    return numFieldsByKey;
+}
+
+OSCL_EXPORT_REF bool HttpParsingBasicObject::getRedirectURI(OSCL_String &aRedirectUri, uint32 i)
 {
     StrCSumPtrLen aLocation = "Location";
     StrPtrLen url;
-    if (iParser->getField(aLocation, url))
+    if (iParser->getField(aLocation, url, i))
     {
         if (url.length() > MIN_URL_LENGTH)   // MIN_URL_LENGTH = 1
         {
@@ -625,11 +633,19 @@ int32 ProtocolState::doProcessMicroStateGetResponse(INPUT_DATA_QUEUE &aDataQueue
             iObserver->ProtocolStateComplete(aInfo);
         }
         iNeedGetResponsePreCheck = true;
+
+        if (iRedirect && (!iRedirect->isRedirect()))
+        {
+            deleteRedirectComposer();
+        }
+
     }
+
     if (isErrorResponse(status))
     {
         int32 errorCode = status;
         if (status >= 0) errorCode = iParser->getStatusCode();
+        storeRedirectUrl(errorCode);
         LOGINFODATAPATH((0, "ProtocolState::processMicroState() error status, errCode=%d", errorCode));
         iObserver->ProtocolStateError(errorCode);
     }
@@ -911,3 +927,139 @@ int32 ProtocolState::base64enc(char *data, char *out)
     return index;
 }
 
+void ProtocolState::storeRedirectUrl(int32 errorCode)
+{
+    if ((PROTOCOLENGINE_REDIRECT_STATUS_CODE_START <= errorCode)
+            && (errorCode <= PROTOCOLENGINE_REDIRECT_STATUS_CODE_END))
+    {
+        if (NULL == iRedirect)
+        {
+            iRedirect = OSCL_NEW(RedirectComposer, (iParser));
+        }
+        if (NULL != iRedirect)
+        {
+            iRedirect->storeRedirectUrl();
+        }
+        return;
+    }
+    deleteRedirectComposer();
+}
+
+bool ProtocolState::getRedirectURI(OSCL_String &aRedirectUri)
+{
+    if (NULL != iRedirect)
+    {
+        return iRedirect->getRedirectURI(aRedirectUri);
+    }
+    else
+    {
+        return false;
+    }
+}
+
+bool ProtocolState::getAllRedirectURI(Oscl_Vector<OSCL_HeapString<OsclMemAllocator>, OsclMemAllocator> &aRedirectVec)
+{
+    if (NULL != iRedirect)
+    {
+        return iRedirect->getAllRedirectURI(aRedirectVec);
+    }
+    else
+    {
+        return false;
+    }
+}
+
+
+void ProtocolState::deleteRedirectComposer()
+{
+    if (iRedirect)
+    {
+        OSCL_DELETE(iRedirect);
+        iRedirect = NULL;
+    }
+}
+
+void RedirectComposer::storeRedirectUrl()
+{
+    OSCL_HeapString<OsclMemAllocator> newUrl;
+
+    int32 errorCode = iParser->getStatusCode();
+    if ((iParser->getHttpVersionNum() == HTTP_V11) && (errorCode == Response305StatusCode))
+    {
+        iRedirectUrlVec.clear();
+        iCntNum = 0;
+    }
+    uint32 redirectUrlNum = iParser->getRedirectURINum();
+
+    for (uint32 i = 0; i < redirectUrlNum ; i++)
+    {
+        if (iParser->getRedirectURI(newUrl, i))
+        {
+            if (validateUrl(newUrl))
+            {
+                iRedirectUrlVec.push_back(newUrl);
+            }
+        }
+        else
+        {
+            iRedirectUrlVec.clear();
+            iCntNum = 0;
+        }
+    }
+
+    return;
+}
+
+bool RedirectComposer::validateUrl(OSCL_HeapString<OsclMemAllocator> newUrl)
+{
+    Oscl_Vector<OSCL_HeapString<OsclMemAllocator>, OsclMemAllocator>::iterator it;
+
+    for (it = iRedirectUrlVec.begin(); it < iRedirectUrlVec.end(); it++)
+    {
+        if (!oscl_strcmp(newUrl.get_str(), it->get_str()))
+        {
+            return false;
+        }
+    }
+    return true;
+}
+
+bool RedirectComposer::getRedirectURI(OSCL_String &aRedirectUri)
+{
+    if (iCntNum < iRedirectUrlVec.size())
+    {
+        aRedirectUri = iRedirectUrlVec[iCntNum++];
+        return true;
+    }
+    return false;
+}
+
+bool RedirectComposer::getAllRedirectURI(Oscl_Vector<OSCL_HeapString<OsclMemAllocator>, OsclMemAllocator> &aRedirectVec)
+{
+    if (iCntNum < iRedirectUrlVec.size())
+    {
+        uint32 i = iCntNum;
+        for (; i < iRedirectUrlVec.size(); i++)
+        {
+            aRedirectVec.push_back(iRedirectUrlVec[i]);
+        }
+        return true;
+    }
+    return false;
+}
+
+bool RedirectComposer::deleteAllRedirectURI()
+{
+    if (!iRedirectUrlVec.empty()) iRedirectUrlVec.clear();
+    return true;
+}
+
+bool RedirectComposer::isRedirect()
+{
+    uint32 errorCode = iParser->getStatusCode();
+    if ((errorCode >= PROTOCOLENGINE_REDIRECT_STATUS_CODE_START) || (PROTOCOLENGINE_REDIRECT_STATUS_CODE_END >= errorCode))
+    {
+        return true;
+    }
+    return false;
+}

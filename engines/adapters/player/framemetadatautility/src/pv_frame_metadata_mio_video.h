@@ -30,8 +30,8 @@
 #ifndef PVMI_MEDIA_IO_OBSERVER_H_INCLUDED
 #include "pvmi_media_io_observer.h"
 #endif
-#ifndef PVMI_CONFIG_AND_CAPABILITY_H_INCLUDED
-#include "pvmi_config_and_capability.h"
+#ifndef PVMI_CONFIG_AND_CAPABILITY_BASE_H_INCLUDED
+#include "pvmi_config_and_capability_base.h"
 #endif
 #ifndef OSCL_STRING_CONTAINERS_H_INCLUDED
 #include "oscl_string_containers.h"
@@ -39,14 +39,13 @@
 #ifndef PVMI_MEDIA_IO_CLOCK_EXTENSION_H_INCLUDED
 #include "pvmi_media_io_clock_extension.h"
 #endif
+#ifndef CCYUV422TOYUV420_H_INCLUDED
+#include "ccyuv422toyuv420.h"
+#endif
 
 class PVLogger;
 class PVMFMediaClock;
 class ColorConvertBase;
-
-// To maintain the count of supported uncompressed video formats.
-// Should be updated whenever new format is added
-#define PVMF_SUPPORTED_UNCOMPRESSED_VIDEO_FORMATS_COUNT 6
 
 class PVFMVideoMIOGetFrameObserver
 {
@@ -83,10 +82,11 @@ class PVFMVideoMIOActiveTimingSupport: public PvmiClockExtensionInterface
 // for pvFrameAndMetadata utility.
 // This class constitutes the Media IO component
 
-class PVFMVideoMIO : public OsclTimerObject,
-        public PvmiMIOControl,
-        public PvmiMediaTransfer,
-        public PvmiCapabilityAndConfig
+class PVFMVideoMIO
+        : public OsclTimerObject
+        , public PvmiMIOControl
+        , public PvmiMediaTransfer
+        , public PvmiCapabilityAndConfigBase
 {
     public:
         PVFMVideoMIO();
@@ -135,18 +135,10 @@ class PVFMVideoMIO : public OsclTimerObject,
         void cancelAllCommands();
 
         // From PvmiCapabilityAndConfig
-        void setObserver(PvmiConfigAndCapabilityCmdObserver* aObserver);
         PVMFStatus getParametersSync(PvmiMIOSession aSession, PvmiKeyType aIdentifier, PvmiKvp*& aParameters,
                                      int& num_parameter_elements, PvmiCapabilityContext aContext);
         PVMFStatus releaseParameters(PvmiMIOSession aSession, PvmiKvp* aParameters, int num_elements);
-        void createContext(PvmiMIOSession aSession, PvmiCapabilityContext& aContext);
-        void setContextParameters(PvmiMIOSession aSession, PvmiCapabilityContext& aContext, PvmiKvp* aParameters,
-                                  int num_parameter_elements);
-        void DeleteContext(PvmiMIOSession aSession, PvmiCapabilityContext& aContext);
         void setParametersSync(PvmiMIOSession aSession, PvmiKvp* aParameters, int num_elements, PvmiKvp*& aRet_kvp);
-        PVMFCommandId setParametersAsync(PvmiMIOSession aSession, PvmiKvp* aParameters, int num_elements,
-                                         PvmiKvp*& aRet_kvp, OsclAny* context = NULL);
-        uint32 getCapabilityMetric(PvmiMIOSession aSession);
         PVMFStatus verifyParametersSync(PvmiMIOSession aSession, PvmiKvp* aParameters, int num_elements);
 
         void setThumbnailDimensions(uint32 aWidth, uint32 aHeight);
@@ -168,6 +160,11 @@ class PVFMVideoMIO : public OsclTimerObject,
         PVMFStatus CreateYUVToRGBColorConverter(ColorConvertBase*& aCC, PVMFFormatType aRGBFormatType);
         PVMFStatus DestroyYUVToRGBColorConverter(ColorConvertBase*& aCC, PVMFFormatType aRGBFormatType);
         void convertYUV420SPtoYUV420(void* src, void* dst, uint32 len);
+
+        PVMFStatus CreateYUV422toYUV420ColorConvert();
+        PVMFStatus InitYUV422toYUV420ColorConvert(uint32 aSrcWidth, uint32 aSrcHeight,
+                uint32 aDestWidth, uint32 aDestHeight);
+        void DestroyYUV422toYUV420ColorConvert();
 
         PvmiMediaTransfer* iPeer;
 
@@ -232,6 +229,11 @@ class PVFMVideoMIO : public OsclTimerObject,
         bool iIsMIOConfigured;
         bool iWriteBusy;
 
+        int32 iNumberOfBuffers;
+        int32 iBufferSize;
+        bool iNumberOfBuffersValid;
+        bool iBufferSizeValid;
+
         uint32 iThumbnailWidth;
         uint32 iThumbnailHeight;
 
@@ -264,6 +266,10 @@ class PVFMVideoMIO : public OsclTimerObject,
             uint32 iFrameHeight;
         };
         PVFMVideoMIOFrameRetrieval iFrameRetrievalInfo;
+
+        Oscl_Vector<PVMFFormatType, OsclMemAllocator> iInputFormatCapability;
+
+        CCYUV422toYUV420 *iYUV422toYUV420ColorConvert;
 };
 
 #endif // PV_FRAME_METADATA_MIO_VIDEO_H_INCLUDED

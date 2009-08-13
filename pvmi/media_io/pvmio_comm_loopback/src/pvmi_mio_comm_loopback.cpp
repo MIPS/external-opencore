@@ -473,12 +473,6 @@ OSCL_EXPORT_REF void PvmiMIOCommLoopback::cancelAllCommands()
 }
 
 ////////////////////////////////////////////////////////////////////////////
-OSCL_EXPORT_REF void PvmiMIOCommLoopback::setObserver(PvmiConfigAndCapabilityCmdObserver* aObserver)
-{
-    OSCL_UNUSED_ARG(aObserver);
-}
-
-////////////////////////////////////////////////////////////////////////////
 OSCL_EXPORT_REF PVMFStatus PvmiMIOCommLoopback::getParametersSync(PvmiMIOSession session,
         PvmiKeyType identifier,
         PvmiKvp*& parameters,
@@ -572,30 +566,6 @@ OSCL_EXPORT_REF PVMFStatus PvmiMIOCommLoopback::releaseParameters(PvmiMIOSession
     }
 }
 
-////////////////////////////////////////////////////////////////////////////
-OSCL_EXPORT_REF void PvmiMIOCommLoopback::createContext(PvmiMIOSession session, PvmiCapabilityContext& context)
-{
-    OSCL_UNUSED_ARG(session);
-    OSCL_UNUSED_ARG(context);
-}
-
-////////////////////////////////////////////////////////////////////////////
-OSCL_EXPORT_REF void PvmiMIOCommLoopback::setContextParameters(PvmiMIOSession session,
-        PvmiCapabilityContext& context,
-        PvmiKvp* parameters, int num_parameter_elements)
-{
-    OSCL_UNUSED_ARG(session);
-    OSCL_UNUSED_ARG(context);
-    OSCL_UNUSED_ARG(parameters);
-    OSCL_UNUSED_ARG(num_parameter_elements);
-}
-
-////////////////////////////////////////////////////////////////////////////
-OSCL_EXPORT_REF void PvmiMIOCommLoopback::DeleteContext(PvmiMIOSession session, PvmiCapabilityContext& context)
-{
-    OSCL_UNUSED_ARG(session);
-    OSCL_UNUSED_ARG(context);
-}
 
 ////////////////////////////////////////////////////////////////////////////
 OSCL_EXPORT_REF void PvmiMIOCommLoopback::setParametersSync(PvmiMIOSession session, PvmiKvp* parameters,
@@ -616,38 +586,6 @@ OSCL_EXPORT_REF void PvmiMIOCommLoopback::setParametersSync(PvmiMIOSession sessi
     }
 }
 
-////////////////////////////////////////////////////////////////////////////
-OSCL_EXPORT_REF PVMFCommandId PvmiMIOCommLoopback::setParametersAsync(PvmiMIOSession session,
-        PvmiKvp* parameters,
-        int num_elements,
-        PvmiKvp*& ret_kvp,
-        OsclAny* context)
-{
-    OSCL_UNUSED_ARG(session);
-    OSCL_UNUSED_ARG(parameters);
-    OSCL_UNUSED_ARG(num_elements);
-    OSCL_UNUSED_ARG(ret_kvp);
-    OSCL_UNUSED_ARG(context);
-    OSCL_LEAVE(OsclErrNotSupported);
-    return -1;
-}
-
-////////////////////////////////////////////////////////////////////////////
-OSCL_EXPORT_REF uint32 PvmiMIOCommLoopback::getCapabilityMetric(PvmiMIOSession session)
-{
-    OSCL_UNUSED_ARG(session);
-    return 0;
-}
-
-////////////////////////////////////////////////////////////////////////////
-OSCL_EXPORT_REF PVMFStatus PvmiMIOCommLoopback::verifyParametersSync(PvmiMIOSession session,
-        PvmiKvp* parameters, int num_elements)
-{
-    OSCL_UNUSED_ARG(session);
-    OSCL_UNUSED_ARG(parameters);
-    OSCL_UNUSED_ARG(num_elements);
-    return PVMFErrNotSupported;
-}
 
 ////////////////////////////////////////////////////////////////////////////
 //                            Private methods

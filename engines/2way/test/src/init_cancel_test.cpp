@@ -37,6 +37,7 @@ void init_cancel_test::test()
         }
     }
 
+    TestCompleted(this);
     this->RemoveFromScheduler();
 }
 

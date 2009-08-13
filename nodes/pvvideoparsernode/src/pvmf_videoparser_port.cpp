@@ -219,34 +219,6 @@ PVMFStatus PVMFVideoParserPort::releaseParameters(PvmiMIOSession aSession,
     return PvmiCapabilityAndConfigPortFormatImpl::releaseParameters(aSession, aParameters, num_elements);
 }
 
-void PVMFVideoParserPort::setParametersSync(PvmiMIOSession aSession,
-        PvmiKvp* aParameters,
-        int num_elements,
-        PvmiKvp * & aRet_kvp)
-{
-    OSCL_UNUSED_ARG(aSession);
-    OSCL_UNUSED_ARG(aParameters);
-    OSCL_UNUSED_ARG(aRet_kvp);
-    OSCL_UNUSED_ARG(num_elements);
-
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_MLDBG, iLogger, PVLOGMSG_INFO
-                    , (0, "PVMFVideoParserPort::getParametersSync: aSession=0x%x, aParameters=0x%x, num_elements=%d, aRet_kvp=0x%x",
-                       aSession, aParameters, num_elements, aRet_kvp));
-}
-
-PVMFStatus PVMFVideoParserPort::verifyParametersSync(PvmiMIOSession aSession,
-        PvmiKvp* aParameters,
-        int num_elements)
-{
-    OSCL_UNUSED_ARG(aSession);
-    OSCL_UNUSED_ARG(aParameters);
-    OSCL_UNUSED_ARG(num_elements);
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_MLDBG, iLogger, PVLOGMSG_INFO
-                    , (0, "PVMFVideoParserPort::verifyParametersSync: aSession=0x%x, aParameters=0x%x, num_elements=%d",
-                       aSession, aParameters, num_elements));
-    return PVMFErrNotSupported;
-}
-
 
 bool
 PVMFVideoParserPort::pvmiSetPortFormatSpecificInfoSync(PvmiCapabilityAndConfig *aPort,

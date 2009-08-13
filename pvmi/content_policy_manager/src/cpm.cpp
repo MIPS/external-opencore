@@ -152,6 +152,92 @@ static void _RemoveLoadablePlugins(CPMPluginRegistry* aRegistry)
 }
 #endif //USE_LOADABLE_MODULES
 
+PVMFCPMPluginAuthenticationInterface* CPMPlugInParams::PlugInAuthenticationInterface()
+{
+    if (!iPlugInAuthenticationInterface
+            && iPlugInInterface->HasQueryInterfaceSync())
+    {
+        PVInterface* temp;
+        iPlugInInterface->QueryInterfaceSync(iPlugInSessionID,
+                                             PVMFCPMPluginAuthenticationInterfaceUuid,
+                                             temp);
+        iPlugInAuthenticationInterface = OSCL_STATIC_CAST(PVMFCPMPluginAuthenticationInterface*, temp);
+
+    }
+    return iPlugInAuthenticationInterface;
+}
+
+PVMFCPMPluginAuthorizationInterface* CPMPlugInParams::PlugInAuthorizationInterface()
+{
+    if (!iPlugInAuthorizationInterface
+            && iPlugInInterface->HasQueryInterfaceSync())
+    {
+        PVInterface* temp;
+        iPlugInInterface->QueryInterfaceSync(iPlugInSessionID,
+                                             PVMFCPMPluginAuthorizationInterfaceUuid,
+                                             temp);
+        iPlugInAuthorizationInterface = OSCL_STATIC_CAST(PVMFCPMPluginAuthorizationInterface*, temp);
+    }
+    return iPlugInAuthorizationInterface;
+}
+
+PVMFCPMPluginAccessInterfaceFactory* CPMPlugInParams::PlugInAccessInterfaceFactory()
+{
+    if (!iPlugInAccessInterfaceFactory
+            && iPlugInInterface->HasQueryInterfaceSync())
+    {
+        PVInterface* temp;
+        iPlugInInterface->QueryInterfaceSync(iPlugInSessionID,
+                                             PVMFCPMPluginAccessInterfaceFactoryUuid,
+                                             temp);
+        iPlugInAccessInterfaceFactory = OSCL_STATIC_CAST(PVMFCPMPluginAccessInterfaceFactory*, temp);
+    }
+    return iPlugInAccessInterfaceFactory;
+}
+
+PVMFMetadataExtensionInterface* CPMPlugInParams::PlugInMetaDataExtensionInterface()
+{
+    if (!iPlugInMetaDataExtensionInterface
+            && iPlugInInterface->HasQueryInterfaceSync())
+    {
+        PVInterface* temp;
+        iPlugInInterface->QueryInterfaceSync(iPlugInSessionID,
+                                             KPVMFMetadataExtensionUuid,
+                                             temp);
+        iPlugInMetaDataExtensionInterface = OSCL_STATIC_CAST(PVMFMetadataExtensionInterface*, temp);
+    }
+    return iPlugInMetaDataExtensionInterface;
+}
+
+PVMFCPMPluginLicenseInterface* CPMPlugInParams::PlugInLicenseInterface()
+{
+    if (!iPlugInLicenseInterface
+            && iPlugInInterface->HasQueryInterfaceSync())
+    {
+        PVInterface* temp;
+        iPlugInInterface->QueryInterfaceSync(iPlugInSessionID,
+                                             PVMFCPMPluginLicenseInterfaceUuid,
+                                             temp);
+        iPlugInLicenseInterface = OSCL_STATIC_CAST(PVMFCPMPluginLicenseInterface*, temp);
+    }
+    return iPlugInLicenseInterface;
+}
+
+PvmiCapabilityAndConfig* CPMPlugInParams::PlugInCapConfigExtensionInterface()
+{
+    if (!iPlugInCapConfigExtensionInterface
+            && iPlugInInterface->HasQueryInterfaceSync())
+    {
+        PVInterface* temp;
+        iPlugInInterface->QueryInterfaceSync(iPlugInSessionID,
+                                             PVMI_CAPABILITY_AND_CONFIG_PVUUID,
+                                             temp);
+        iPlugInCapConfigExtensionInterface = OSCL_STATIC_CAST(PvmiCapabilityAndConfig*, temp);
+    }
+    return iPlugInCapConfigExtensionInterface;
+}
+
+
 static CPMPluginRegistry* PopulateCPMPluginRegistry()
 {
     //Create registry
@@ -255,11 +341,12 @@ OSCL_EXPORT_REF PVMFCPMImpl::PVMFCPMImpl(PVMFCPMStatusObserver& aObserver,
     iNumQueryMetaDataExtensionInterfacePending = 0;
     iNumQueryMetaDataExtensionInterfaceComplete = 0;
     iLicenseInterface = NULL;
+    iAccessPlugin = NULL;
     iNumQueryCapConfigExtensionInterfacePending = 0;
     iNumQueryCapConfigExtensionInterfaceComplete = 0;
 
-    iGetMetaDataKeysFromPlugInsDone = false;
-    iGetMetaDataKeysInProgress = false;
+    iGetMetaDataKeysSessionId = 0;
+    iGetMetaDataValuesSessionId = 0;
 
     iExtensionRefCount = 0;
     iGetLicenseCmdId = 0;
@@ -322,7 +409,7 @@ PVMFCPMImpl::~PVMFCPMImpl()
 
     /* Clear all vectors */
     iPlugInParamsVec.clear();
-    iActivePlugInParamsVec.clear();
+    iAccessPlugin = NULL; //clear the iterator corresponding to iPlugInParamsVec
     iContentUsageContextVec.clear();
     iListofActiveSessions.clear();
 }
@@ -358,7 +445,7 @@ OSCL_EXPORT_REF void PVMFCPMImpl::ThreadLogon()
         iPluginRegistry = NULL;
         /* Clear all vectors */
         iPlugInParamsVec.clear();
-        iActivePlugInParamsVec.clear();
+        iAccessPlugin = NULL; //clear the iterator corresponding to iPlugInParamsVec
         iContentUsageContextVec.clear();
         iListofActiveSessions.clear();
         /**/
@@ -390,6 +477,7 @@ OSCL_EXPORT_REF void PVMFCPMImpl::ThreadLogoff()
         iPluginRegistry = NULL;
         //clear the plugin params vec since all plugins are destroyed.
         iPlugInParamsVec.clear();
+        iAccessPlugin = NULL; //clear the iterator corresponding to iPlugInParamsVec
     }
 
     Cancel();
@@ -483,26 +571,14 @@ PVMFCPMImpl::GetContentAccessFactory(PVMFSessionId aSessionId,
 {
     PVMF_CPM_LOGINFO((0, "PVMFCPMImpl::GetContentAccessFactory"));
 
-    aContentAccessFactory = NULL;
-    CPMSessionInfo* sInfo = LookUpSessionInfo(aSessionId);
-    if (sInfo != NULL)
+    Oscl_Vector<CPMPlugInParams, OsclMemAllocator>::iterator it = LookUpAccessPlugIn(aSessionId);
+    if (it)
     {
-        Oscl_Vector<CPMPlugInParams, OsclMemAllocator>::iterator it;
-        for (it = iActivePlugInParamsVec.begin(); it != iActivePlugInParamsVec.end(); it++)
-        {
-            if (it->iPlugInID == sInfo->iAccessPlugInID)
-            {
-                it->iPlugInAccessInterfaceFactory->addRef();
-                aContentAccessFactory = it->iPlugInAccessInterfaceFactory;
-                return PVMFSuccess;
-            }
-        }
-        PVMF_CPM_LOGERROR((0, "PVMFCPMImpl::GetContentAccessFactory - No Access Plugin"));
+        it->PlugInAccessInterfaceFactory()->addRef();
+        aContentAccessFactory = it->PlugInAccessInterfaceFactory();
+        return PVMFSuccess;
     }
-    else
-    {
-        PVMF_CPM_LOGERROR((0, "PVMFCPMImpl::GetContentAccessFactory - Invalid Session ID"));
-    }
+    PVMF_CPM_LOGERROR((0, "PVMFCPMImpl::GetContentAccessFactory - No Access Plugin"));
     return PVMFFailure;
 }
 
@@ -529,17 +605,10 @@ PVMFCPMImpl::ApproveUsage(PVMFSessionId aSessionId,
 PVMFCPMContentType PVMFCPMImpl::GetCPMContentType(PVMFSessionId aSessionId)
 {
     PVMF_CPM_LOGINFO((0, "PVMFCPMImpl::GetCPMContentType"));
-    CPMSessionInfo* sInfo = LookUpSessionInfo(aSessionId);
-    if (sInfo != NULL)
+    Oscl_Vector<CPMPlugInParams, OsclMemAllocator>::iterator it = LookUpAccessPlugIn(aSessionId);
+    if (it)
     {
-        Oscl_Vector<CPMPlugInParams, OsclMemAllocator>::iterator it;
-        for (it = iActivePlugInParamsVec.begin(); it != iActivePlugInParamsVec.end(); it++)
-        {
-            if (it->iPlugInID == sInfo->iAccessPlugInID)
-            {
-                return (it->iPlugInInterface->GetCPMContentType());
-            }
-        }
+        return (it->iPlugInInterface->GetCPMContentType());
     }
     return PVMF_CPM_CONTENT_FORMAT_UNKNOWN;
 }
@@ -547,19 +616,12 @@ PVMFCPMContentType PVMFCPMImpl::GetCPMContentType(PVMFSessionId aSessionId)
 OSCL_EXPORT_REF PVMFStatus PVMFCPMImpl::GetCPMContentFilename(PVMFSessionId aSessionId, OSCL_wString& aFileName)
 {
     PVMF_CPM_LOGINFO((0, "PVMFCPMImpl::GetCPMContentFilename"));
-    CPMSessionInfo* sInfo = LookUpSessionInfo(aSessionId);
-    if (sInfo != NULL)
+    Oscl_Vector<CPMPlugInParams, OsclMemAllocator>::iterator it = LookUpAccessPlugIn(aSessionId);
+    if (it)
     {
-        Oscl_Vector<CPMPlugInParams, OsclMemAllocator>::iterator it;
-        for (it = iActivePlugInParamsVec.begin(); it != iActivePlugInParamsVec.end(); it++)
-        {
-            if (it->iPlugInID == sInfo->iAccessPlugInID)
-            {
-                return (it->iPlugInInterface->GetCPMContentFilename(aFileName));
-            }
-        }
+        return (it->iPlugInInterface->GetCPMContentFilename(aFileName));
     }
-    return PVMF_CPM_CONTENT_FORMAT_UNKNOWN;
+    return PVMFFailure;
 }
 
 
@@ -658,8 +720,9 @@ PVMFCPMImpl::ReleaseNodeMetadataKeys(PVMFMetadataList& aKeyList,
         aEndKeyIndex = aKeyList.size() - 1;
     }
 
-    Oscl_Vector<CPMPlugInParams, OsclMemAllocator>::iterator it;
-    for (it = iActivePlugInParamsVec.begin(); it != iActivePlugInParamsVec.end(); it++)
+    //Use the session ID from the prior GetMetaDataKeys command.
+    Oscl_Vector<CPMPlugInParams, OsclMemAllocator>::iterator it = LookUpAccessPlugIn(iGetMetaDataKeysSessionId);
+    if (it)
     {
         uint32 plugInStartIndex = it->iMetaDataKeyStartIndex;
         uint32 plugInEndIndex = it->iMetaDataKeyEndIndex;
@@ -680,9 +743,9 @@ PVMFCPMImpl::ReleaseNodeMetadataKeys(PVMFMetadataList& aKeyList,
                 releaseEndIndex = aEndKeyIndex;
             }
 
-            if (NULL != it->iPlugInMetaDataExtensionInterface)
+            if (NULL != it->PlugInMetaDataExtensionInterface())
             {
-                it->iPlugInMetaDataExtensionInterface->ReleaseNodeMetadataKeys(aKeyList,
+                it->PlugInMetaDataExtensionInterface()->ReleaseNodeMetadataKeys(aKeyList,
                         releaseStartIndex,
                         releaseEndIndex);
             }
@@ -712,8 +775,9 @@ PVMFCPMImpl::ReleaseNodeMetadataValues(Oscl_Vector<PvmiKvp, OsclMemAllocator>& a
         aEndValueIndex = aValueList.size() - 1;
     }
 
-    Oscl_Vector<CPMPlugInParams, OsclMemAllocator>::iterator it;
-    for (it = iActivePlugInParamsVec.begin(); it != iActivePlugInParamsVec.end(); it++)
+    //Use session ID from the prior GetMetadatValues command.
+    Oscl_Vector<CPMPlugInParams, OsclMemAllocator>::iterator it = LookUpAccessPlugIn(iGetMetaDataValuesSessionId);
+    if (it)
     {
         uint32 plugInStartIndex = it->iMetaDataValueStartIndex;
         uint32 plugInEndIndex = it->iMetaDataValueEndIndex;
@@ -733,9 +797,9 @@ PVMFCPMImpl::ReleaseNodeMetadataValues(Oscl_Vector<PvmiKvp, OsclMemAllocator>& a
             {
                 releaseEndIndex = aEndValueIndex;
             }
-            if (NULL != it->iPlugInMetaDataExtensionInterface)
+            if (NULL != it->PlugInMetaDataExtensionInterface())
             {
-                it->iPlugInMetaDataExtensionInterface->ReleaseNodeMetadataValues(aValueList,
+                it->PlugInMetaDataExtensionInterface()->ReleaseNodeMetadataValues(aValueList,
                         releaseStartIndex,
                         releaseEndIndex);
             }
@@ -936,7 +1000,8 @@ bool PVMFCPMImpl::ProcessCommand(PVMFCPMCommand& aCmd)
 
         case PVMF_CPM_GET_METADATA_KEYS:
         {
-            PVMFStatus status = DoGetMetadataKeys(aCmd);
+            iGetMetaDataKeysSessionId = aCmd.iSession;
+            PVMFStatus status = DoGetMetadataKeys_P(aCmd);
             if (status != PVMFPending)
             {
                 CommandComplete(iInputCommands, aCmd, status);
@@ -949,6 +1014,7 @@ bool PVMFCPMImpl::ProcessCommand(PVMFCPMCommand& aCmd)
         break;
 
         case PVMF_CPM_GET_METADATA_VALUES:
+            iGetMetaDataValuesSessionId = aCmd.iSession;
             DoGetMetadataValues(aCmd);
             break;
 
@@ -958,7 +1024,7 @@ bool PVMFCPMImpl::ProcessCommand(PVMFCPMCommand& aCmd)
 
         case PVMF_CPM_GET_LICENSE_W:
         {
-            PVMFStatus status = DoGetLicense(aCmd, true);
+            PVMFStatus status = DoGetLicense_P(aCmd, true);
             if (status == PVMFPending)
             {
                 MoveCmdToCurrentQueue(aCmd);
@@ -972,7 +1038,7 @@ bool PVMFCPMImpl::ProcessCommand(PVMFCPMCommand& aCmd)
 
         case PVMF_CPM_GET_LICENSE:
         {
-            PVMFStatus status = DoGetLicense(aCmd);
+            PVMFStatus status = DoGetLicense_P(aCmd);
             if (status == PVMFPending)
             {
                 MoveCmdToCurrentQueue(aCmd);
@@ -1025,6 +1091,7 @@ void PVMFCPMImpl::DoInit(PVMFCPMCommand& aCmd)
             plugInParams.iPlugInInterface = &iface;
             plugInParams.iPlugInData = _pPlugInData;
             iPlugInParamsVec.push_back(plugInParams);
+            iAccessPlugin = NULL; //clear the iterator corresponding to iPlugInParamsVec
         }
     }
     /* Connect with all plugins */
@@ -1103,28 +1170,35 @@ PVMFStatus PVMFCPMImpl::QueryForPlugInMetaDataExtensionInterface()
         Oscl_Vector<CPMPlugInParams, OsclMemAllocator>::iterator it;
         for (it = iPlugInParamsVec.begin(); it != iPlugInParamsVec.end(); it++)
         {
-            /* Get MetaDataExtension interface */
-            PVMFCPMCommandContext* internalCmd = RequestNewInternalCmd();
-            if (internalCmd != NULL)
+            if (!it->iPlugInInterface->HasQueryInterfaceSync())
             {
-                internalCmd->cmd =
-                    PVMF_CPM_INTERNAL_QUERY_METADATA_EXTENSION_INTERFACE_CMD;
-                internalCmd->parentCmd = PVMF_CPM_INIT;
-                internalCmd->plugInID = it->iPlugInID;
-                OsclAny *cmdContextData =
-                    OSCL_REINTERPRET_CAST(OsclAny*, internalCmd);
-                it->iPlugInMetaDataExtensionInterfacePVI = NULL;
-                it->iPlugInInterface->QueryInterface(it->iPlugInSessionID,
-                                                     KPVMFMetadataExtensionUuid,
-                                                     it->iPlugInMetaDataExtensionInterfacePVI,
-                                                     cmdContextData);
-                iNumQueryMetaDataExtensionInterfacePending++;
-            }
-            else
-            {
-                return PVMFErrNoMemory;
+                /* Get MetaDataExtension interface */
+                PVMFCPMCommandContext* internalCmd = RequestNewInternalCmd();
+                if (internalCmd != NULL)
+                {
+                    internalCmd->cmd =
+                        PVMF_CPM_INTERNAL_QUERY_METADATA_EXTENSION_INTERFACE_CMD;
+                    internalCmd->parentCmd = PVMF_CPM_INIT;
+                    internalCmd->plugInID = it->iPlugInID;
+                    OsclAny *cmdContextData =
+                        OSCL_REINTERPRET_CAST(OsclAny*, internalCmd);
+                    it->iPlugInMetaDataExtensionInterfacePVI = NULL;
+                    it->iPlugInInterface->QueryInterface(it->iPlugInSessionID,
+                                                         KPVMFMetadataExtensionUuid,
+                                                         it->iPlugInMetaDataExtensionInterfacePVI,
+                                                         cmdContextData);
+                    iNumQueryMetaDataExtensionInterfacePending++;
+                }
+                else
+                {
+                    return PVMFErrNoMemory;
+                }
             }
         }
+
+        if (iNumQueryMetaDataExtensionInterfacePending == 0)
+            CompleteMetaDataExtInterfaceQueryFromPlugIns();
+
         return PVMFSuccess;
     }
     /* No registered plugins */
@@ -1157,28 +1231,35 @@ PVMFStatus PVMFCPMImpl::QueryForPlugInCapConfigInterface()
         Oscl_Vector<CPMPlugInParams, OsclMemAllocator>::iterator it;
         for (it = iPlugInParamsVec.begin(); it != iPlugInParamsVec.end(); it++)
         {
-            /* Get MetaDataExtension interface */
-            PVMFCPMCommandContext* internalCmd = RequestNewInternalCmd();
-            if (internalCmd != NULL)
+            if (!it->iPlugInInterface->HasQueryInterfaceSync())
             {
-                internalCmd->cmd =
-                    PVMF_CPM_INTERNAL_QUERY_CAP_CONFIG_INTERFACE_CMD;
-                internalCmd->parentCmd = PVMF_CPM_INIT;
-                internalCmd->plugInID = it->iPlugInID;
-                OsclAny *cmdContextData =
-                    OSCL_REINTERPRET_CAST(OsclAny*, internalCmd);
-                it->iPlugInCapConfigExtensionInterfacePVI = NULL;
-                it->iPlugInInterface->QueryInterface(it->iPlugInSessionID,
-                                                     PVMI_CAPABILITY_AND_CONFIG_PVUUID,
-                                                     it->iPlugInCapConfigExtensionInterfacePVI,
-                                                     cmdContextData);
-                iNumQueryCapConfigExtensionInterfacePending++;
-            }
-            else
-            {
-                return PVMFErrNoMemory;
+                /* Get MetaDataExtension interface */
+                PVMFCPMCommandContext* internalCmd = RequestNewInternalCmd();
+                if (internalCmd != NULL)
+                {
+                    internalCmd->cmd =
+                        PVMF_CPM_INTERNAL_QUERY_CAP_CONFIG_INTERFACE_CMD;
+                    internalCmd->parentCmd = PVMF_CPM_INIT;
+                    internalCmd->plugInID = it->iPlugInID;
+                    OsclAny *cmdContextData =
+                        OSCL_REINTERPRET_CAST(OsclAny*, internalCmd);
+                    it->iPlugInCapConfigExtensionInterfacePVI = NULL;
+                    it->iPlugInInterface->QueryInterface(it->iPlugInSessionID,
+                                                         PVMI_CAPABILITY_AND_CONFIG_PVUUID,
+                                                         it->iPlugInCapConfigExtensionInterfacePVI,
+                                                         cmdContextData);
+                    iNumQueryCapConfigExtensionInterfacePending++;
+                }
+                else
+                {
+                    return PVMFErrNoMemory;
+                }
             }
         }
+
+        if (iNumQueryCapConfigExtensionInterfacePending == 0)
+            CompleteCapConfigExtInterfaceQueryFromPlugIns();
+
         return PVMFSuccess;
     }
     /* No registered plugins */
@@ -1211,28 +1292,35 @@ PVMFStatus PVMFCPMImpl::QueryForPlugInAuthenticationInterface()
         Oscl_Vector<CPMPlugInParams, OsclMemAllocator>::iterator it;
         for (it = iPlugInParamsVec.begin(); it != iPlugInParamsVec.end(); it++)
         {
-            /* Get Authentication interface */
-            PVMFCPMCommandContext* internalCmd = RequestNewInternalCmd();
-            if (internalCmd != NULL)
+            if (!it->iPlugInInterface->HasQueryInterfaceSync())
             {
-                internalCmd->cmd =
-                    PVMF_CPM_INTERNAL_QUERY_AUTHENTICATION_INTERFACE_CMD;
-                internalCmd->parentCmd = PVMF_CPM_INIT;
-                internalCmd->plugInID = it->iPlugInID;
-                OsclAny *cmdContextData =
-                    OSCL_REINTERPRET_CAST(OsclAny*, internalCmd);
-                it->iPlugInAuthenticationInterfacePVI = NULL;
-                it->iPlugInInterface->QueryInterface(it->iPlugInSessionID,
-                                                     PVMFCPMPluginAuthenticationInterfaceUuid,
-                                                     it->iPlugInAuthenticationInterfacePVI,
-                                                     cmdContextData);
-                iNumQueryAuthenticationInterfacePending++;
-            }
-            else
-            {
-                return PVMFErrNoMemory;
+                /* Get Authentication interface */
+                PVMFCPMCommandContext* internalCmd = RequestNewInternalCmd();
+                if (internalCmd != NULL)
+                {
+                    internalCmd->cmd =
+                        PVMF_CPM_INTERNAL_QUERY_AUTHENTICATION_INTERFACE_CMD;
+                    internalCmd->parentCmd = PVMF_CPM_INIT;
+                    internalCmd->plugInID = it->iPlugInID;
+                    OsclAny *cmdContextData =
+                        OSCL_REINTERPRET_CAST(OsclAny*, internalCmd);
+                    it->iPlugInAuthenticationInterfacePVI = NULL;
+                    it->iPlugInInterface->QueryInterface(it->iPlugInSessionID,
+                                                         PVMFCPMPluginAuthenticationInterfaceUuid,
+                                                         it->iPlugInAuthenticationInterfacePVI,
+                                                         cmdContextData);
+                    iNumQueryAuthenticationInterfacePending++;
+                }
+                else
+                {
+                    return PVMFErrNoMemory;
+                }
             }
         }
+
+        if (iNumQueryAuthenticationInterfacePending == 0)
+            CompleteCPMInit();
+
         return PVMFSuccess;
     }
     /* No registered plugins */
@@ -1296,7 +1384,7 @@ PVMFStatus PVMFCPMImpl::AuthenticateWithAllRegisteredPlugIns(PVMFSessionId aSess
                     OsclAny *cmdContextData =
                         OSCL_REINTERPRET_CAST(OsclAny*, internalCmd);
 
-                    it->iPlugInAuthenticationInterface->AuthenticateUser(it->iPlugInSessionID,
+                    it->PlugInAuthenticationInterface()->AuthenticateUser(it->iPlugInSessionID,
                             it->iPlugInData,
                             cmdContextData);
                     sessionInfo->iNumPlugInAunthenticateRequestsPending++;
@@ -1368,15 +1456,12 @@ void PVMFCPMImpl::DoRegisterContent(PVMFCPMCommand& aCmd)
         PVMFStatus status = PopulateListOfActivePlugIns(sInfo);
         if (status == PVMFSuccess)
         {
+            MoveCmdToCurrentQueue(aCmd);
             status = QueryForAuthorizationInterface(sInfo);
-            if (status == PVMFSuccess)
-            {
-                MoveCmdToCurrentQueue(aCmd);
-            }
-            else
+            if (status != PVMFSuccess)
             {
                 PVMF_CPM_LOGERROR((0, "PVMFCPMImpl::DoRegisterContent - QueryForAuthorizationInterface Failed"));
-                CommandComplete(iInputCommands, aCmd, status);
+                CommandComplete(iCurrentCommand, aCmd, status);
             }
         }
         else
@@ -1394,33 +1479,29 @@ void PVMFCPMImpl::DoRegisterContent(PVMFCPMCommand& aCmd)
 
 PVMFStatus PVMFCPMImpl::PopulateListOfActivePlugIns(CPMSessionInfo* aInfo)
 {
+    PVMFStatus status = PVMFErrNotSupported;   //no plugins care about this clip
+
     Oscl_Vector<CPMPlugInParams, OsclMemAllocator>::iterator it;
     for (it = iPlugInParamsVec.begin(); it != iPlugInParamsVec.end(); it++)
     {
-        PVMFStatus status =
-            it->iPlugInInterface->SetSourceInitializationData(aInfo->iSourceURL,
-                    aInfo->iSourceFormatType,
-                    aInfo->iSourceData);
-        if (status == PVMFSuccess)
+        if (it->iPlugInInterface->SetSourceInitializationData(aInfo->iSourceURL,
+                aInfo->iSourceFormatType,
+                aInfo->iSourceData) == PVMFSuccess)
         {
             /* Add this plug to the active list */
-            iActivePlugInParamsVec.push_back(*it);
+            it->iActive = true;
+            status = PVMFSuccess;
         }
     }
-    if (iActivePlugInParamsVec.size() > 0)
-    {
-        return PVMFSuccess;
-    }
-    //no plugins care about this clip
-    return PVMFErrNotSupported;
+    return status;
 }
 
 PVMFStatus PVMFCPMImpl::QueryForAuthorizationInterface(CPMSessionInfo* aInfo)
 {
-    if (iActivePlugInParamsVec.size() > 0)
+    Oscl_Vector<CPMPlugInParams, OsclMemAllocator>::iterator it;
+    for (it = iPlugInParamsVec.begin(); it != iPlugInParamsVec.end() && it->iActive; it++)
     {
-        Oscl_Vector<CPMPlugInParams, OsclMemAllocator>::iterator it;
-        for (it = iActivePlugInParamsVec.begin(); it != iActivePlugInParamsVec.end(); it++)
+        if (!it->iPlugInInterface->HasQueryInterfaceSync())
         {
             PVMFCPMCommandContext* internalCmd = RequestNewInternalCmd();
             if (internalCmd != NULL)
@@ -1444,19 +1525,20 @@ PVMFStatus PVMFCPMImpl::QueryForAuthorizationInterface(CPMSessionInfo* aInfo)
                 return PVMFErrNoMemory;
             }
         }
-        return PVMFSuccess;
     }
-    /* No active plugins */
-    PVMF_CPM_LOGERROR((0, "PVMFCPMImpl::QueryForAuthorizationInterface - No Active Plugins"));
-    return PVMFFailure;
+
+    if (aInfo->iNumPlugInAuthorizeInterfaceQueryRequestsPending == 0)
+        CompleteRegisterContentPhase1(aInfo);
+
+    return PVMFSuccess;
 }
 
 PVMFStatus PVMFCPMImpl::QueryForAccessInterfaceFactory(CPMSessionInfo* aInfo)
 {
-    if (iActivePlugInParamsVec.size() > 0)
+    Oscl_Vector<CPMPlugInParams, OsclMemAllocator>::iterator it;
+    for (it = iPlugInParamsVec.begin(); it != iPlugInParamsVec.end() && it->iActive; it++)
     {
-        Oscl_Vector<CPMPlugInParams, OsclMemAllocator>::iterator it;
-        for (it = iActivePlugInParamsVec.begin(); it != iActivePlugInParamsVec.end(); it++)
+        if (!it->iPlugInInterface->HasQueryInterfaceSync())
         {
             PVMFCPMCommandContext* internalCmd = RequestNewInternalCmd();
             if (internalCmd != NULL)
@@ -1480,19 +1562,20 @@ PVMFStatus PVMFCPMImpl::QueryForAccessInterfaceFactory(CPMSessionInfo* aInfo)
                 return PVMFErrNoMemory;
             }
         }
-        return PVMFSuccess;
     }
-    /* No active plugins */
-    PVMF_CPM_LOGERROR((0, "PVMFCPMImpl::QueryForAccessInterfaceFactory - No Active Plugins"));
-    return PVMFFailure;
+
+    if (aInfo->iNumPlugInAccessInterfaceFactoryQueryRequestsPending == 0)
+        CompleteRegisterContentPhase2(aInfo);
+
+    return PVMFSuccess;
 }
 
 PVMFStatus PVMFCPMImpl::DetermineAccessPlugIn(CPMSessionInfo* aInfo)
 {
     Oscl_Vector<CPMPlugInParams, OsclMemAllocator>::iterator it;
-    for (it = iActivePlugInParamsVec.begin(); it != iActivePlugInParamsVec.end(); it++)
+    for (it = iPlugInParamsVec.begin(); it != iPlugInParamsVec.end() && it->iActive; it++)
     {
-        if (it->iPlugInAccessInterfaceFactory != NULL)
+        if (it->PlugInAccessInterfaceFactory() != NULL)
         {
             aInfo->iAccessPlugInID = it->iPlugInID;
             return PVMFSuccess;
@@ -1504,10 +1587,10 @@ PVMFStatus PVMFCPMImpl::DetermineAccessPlugIn(CPMSessionInfo* aInfo)
 
 PVMFStatus PVMFCPMImpl::QueryForLicenseInterface(CPMSessionInfo* aInfo)
 {
-    if (iActivePlugInParamsVec.size() > 0)
+    Oscl_Vector<CPMPlugInParams, OsclMemAllocator>::iterator it;
+    for (it = iPlugInParamsVec.begin(); it != iPlugInParamsVec.end() && it->iActive; it++)
     {
-        Oscl_Vector<CPMPlugInParams, OsclMemAllocator>::iterator it;
-        for (it = iActivePlugInParamsVec.begin(); it != iActivePlugInParamsVec.end(); it++)
+        if (!it->iPlugInInterface->HasQueryInterfaceSync())
         {
             PVMFCPMCommandContext* internalCmd = RequestNewInternalCmd();
             if (internalCmd != NULL)
@@ -1531,11 +1614,12 @@ PVMFStatus PVMFCPMImpl::QueryForLicenseInterface(CPMSessionInfo* aInfo)
                 return PVMFErrNoMemory;
             }
         }
-        return PVMFSuccess;
     }
-    /* No active plugins */
-    PVMF_CPM_LOGERROR((0, "PVMFCPMImpl::QueryForLicenseInterface - No Active Plugins"));
-    return PVMFFailure;
+
+    if (aInfo->iNumPlugInLicenseAcquisitionInterfaceRequestsPending == 0)
+        CompleteRegisterContentPhase3(aInfo);
+
+    return PVMFSuccess;
 }
 
 void PVMFCPMImpl::CompleteRegisterContentPhase1(CPMSessionInfo* aInfo)
@@ -1549,8 +1633,6 @@ void PVMFCPMImpl::CompleteRegisterContentPhase1(CPMSessionInfo* aInfo)
     }
     else
     {
-        aInfo->iNumPlugInAuthorizeInterfaceQueryRequestsComplete++;
-
         if (aInfo->iNumPlugInAuthorizeInterfaceQueryRequestsComplete ==
                 aInfo->iNumPlugInAuthorizeInterfaceQueryRequestsPending)
         {
@@ -1563,6 +1645,7 @@ void PVMFCPMImpl::CompleteRegisterContentPhase1(CPMSessionInfo* aInfo)
                                 status);
             }
         }
+        //else keep waiting on replies
     }
     return;
 }
@@ -1578,8 +1661,6 @@ void PVMFCPMImpl::CompleteRegisterContentPhase2(CPMSessionInfo* aInfo)
     }
     else
     {
-        aInfo->iNumPlugInAccessInterfaceFactoryQueryRequestsComplete++;
-
         if (aInfo->iNumPlugInAccessInterfaceFactoryQueryRequestsComplete ==
                 aInfo->iNumPlugInAccessInterfaceFactoryQueryRequestsPending)
         {
@@ -1601,6 +1682,7 @@ void PVMFCPMImpl::CompleteRegisterContentPhase2(CPMSessionInfo* aInfo)
                 }
             }
         }
+        //else keep waiting on replies
     }
     return;
 }
@@ -1616,8 +1698,6 @@ void PVMFCPMImpl::CompleteRegisterContentPhase3(CPMSessionInfo* aInfo)
     }
     else
     {
-        aInfo->iNumPlugInLicenseAcquisitionInterfaceRequestsComplete++;
-
         if (aInfo->iNumPlugInLicenseAcquisitionInterfaceRequestsComplete ==
                 aInfo->iNumPlugInLicenseAcquisitionInterfaceRequestsPending)
         {
@@ -1625,6 +1705,7 @@ void PVMFCPMImpl::CompleteRegisterContentPhase3(CPMSessionInfo* aInfo)
                             iCurrentCommand.front(),
                             PVMFSuccess);
         }
+        //else keep waiting on replies
     }
     return;
 }
@@ -1661,69 +1742,57 @@ void PVMFCPMImpl::DoApproveUsage(PVMFCPMCommand& aCmd)
 
 PVMFStatus PVMFCPMImpl::RequestApprovalFromActivePlugIns(PVMFCPMCommand& aCmd)
 {
-    if (iActivePlugInParamsVec.size() > 0)
+    OsclAny* temp1 = NULL;
+    OsclAny* temp2 = NULL;
+    OsclAny* temp3 = NULL;
+    OsclAny* temp4 = NULL;
+
+    aCmd.Parse(temp1, temp2, temp3, temp4);
+
+    PvmiKvp* requestedUsage = OSCL_STATIC_CAST(PvmiKvp*, temp1);
+    PvmiKvp* approvedUsage = OSCL_STATIC_CAST(PvmiKvp*, temp2);
+    PvmiKvp* authorizationData = OSCL_STATIC_CAST(PvmiKvp*, temp3);
+    PVMFCPMUsageID* usageID = OSCL_STATIC_CAST(PVMFCPMUsageID*, temp4);
+
+    CPMContentUsageContext* usageContext = LookUpContentUsageContext(*usageID);
+    Oscl_Vector<CPMPlugInParams, OsclMemAllocator>::iterator it = LookUpAccessPlugIn(aCmd.iSession);
+    if (it)
     {
-        OsclAny* temp1 = NULL;
-        OsclAny* temp2 = NULL;
-        OsclAny* temp3 = NULL;
-        OsclAny* temp4 = NULL;
-
-        aCmd.Parse(temp1, temp2, temp3, temp4);
-
-        PvmiKvp* requestedUsage = OSCL_STATIC_CAST(PvmiKvp*, temp1);
-        PvmiKvp* approvedUsage = OSCL_STATIC_CAST(PvmiKvp*, temp2);
-        PvmiKvp* authorizationData = OSCL_STATIC_CAST(PvmiKvp*, temp3);
-        PVMFCPMUsageID* usageID = OSCL_STATIC_CAST(PVMFCPMUsageID*, temp4);
-
-        CPMSessionInfo* sInfo = NULL; // initialize to ensure that if LookUpSeesionInfo() fail, sInfo will be NULL
-        sInfo = LookUpSessionInfo(aCmd.iSession);
-        OSCL_ASSERT(sInfo);
-        if (!sInfo)
+        PVMFCPMCommandContext* internalCmd = RequestNewInternalCmd();
+        if (internalCmd != NULL)
         {
-            PVMF_CPM_LOGERROR((0, "PVMFCPMImpl::RequestApprovalFromActivePlugIns - No Session Info"));
-            return PVMFFailure;
-        }
+            internalCmd->cmd = PVMF_CPM_INTERNAL_AUTHORIZE_CMD;
+            internalCmd->parentCmd = PVMF_CPM_APPROVE_USAGE;
+            internalCmd->plugInID = it->iPlugInID;
+            internalCmd->usageid = *usageID;
+            OsclAny *cmdContextData =
+                OSCL_REINTERPRET_CAST(OsclAny*, internalCmd);
 
-        CPMContentUsageContext* usageContext = LookUpContentUsageContext(*usageID);
-        Oscl_Vector<CPMPlugInParams, OsclMemAllocator>::iterator it;
-        for (it = iActivePlugInParamsVec.begin(); it != iActivePlugInParamsVec.end(); it++)
-        {
-            if (it->iPlugInID == sInfo->iAccessPlugInID)
+            it->PlugInAuthorizationInterface()->AuthorizeUsage(it->iPlugInSessionID,
+                    *requestedUsage,
+                    *approvedUsage,
+                    *authorizationData,
+                    it->iAuthorizationRequestTimeOut,
+                    cmdContextData);
+            OSCL_ASSERT(usageContext);
+            if (!usageContext)
             {
-                PVMFCPMCommandContext* internalCmd = RequestNewInternalCmd();
-                if (internalCmd != NULL)
-                {
-                    internalCmd->cmd = PVMF_CPM_INTERNAL_AUTHORIZE_CMD;
-                    internalCmd->parentCmd = PVMF_CPM_APPROVE_USAGE;
-                    internalCmd->plugInID = it->iPlugInID;
-                    internalCmd->usageid = *usageID;
-                    OsclAny *cmdContextData =
-                        OSCL_REINTERPRET_CAST(OsclAny*, internalCmd);
-
-                    it->iPlugInAuthorizationInterface->AuthorizeUsage(it->iPlugInSessionID,
-                            *requestedUsage,
-                            *approvedUsage,
-                            *authorizationData,
-                            it->iAuthorizationRequestTimeOut,
-                            cmdContextData);
-                    OSCL_ASSERT(usageContext);
-                    if (!usageContext)
-                    {
-                        return PVMFFailure;
-                    }
-                    usageContext->iNumAuthorizeRequestsPending++;
-                }
-                else
-                {
-                    return PVMFErrNoMemory;
-                }
+                return PVMFFailure;
             }
+            usageContext->iNumAuthorizeRequestsPending++;
+        }
+        else
+        {
+            return PVMFErrNoMemory;
         }
         return PVMFSuccess;
     }
-    /* No active plugins */
-    PVMF_CPM_LOGERROR((0, "PVMFCPMImpl::RequestApprovalFromActivePlugIns - No Active Plugins"));
-    return PVMFFailure;
+    else
+    {
+        /* No access plugin */
+        PVMF_CPM_LOGERROR((0, "PVMFCPMImpl::RequestApprovalFromActivePlugIns - No Access Plugin"));
+        return PVMFFailure;
+    }
 }
 
 void PVMFCPMImpl::CompleteApproveUsage(CPMContentUsageContext* aContext)
@@ -1742,95 +1811,59 @@ void PVMFCPMImpl::CompleteApproveUsage(CPMContentUsageContext* aContext)
         if (aContext->iNumAuthorizeRequestsComplete ==
                 aContext->iNumAuthorizeRequestsPending)
         {
-            if (CheckForMetaDataInterfaceAvailability())
+            PVMFStatus status = QueryForMetaDataKeys_P(iCurrentCommand.front());
+            if (status != PVMFPending)
             {
-                PVMFStatus status = QueryForMetaDataKeys(iCurrentCommand.front());
-                if (status != PVMFSuccess)
-                {
-                    CommandComplete(iCurrentCommand,
-                                    iCurrentCommand.front(),
-                                    status);
-                }
-            }
-            else
-            {
-                // No meta data
                 CommandComplete(iCurrentCommand,
                                 iCurrentCommand.front(),
-                                PVMFSuccess);
+                                status);
             }
         }
     }
     return;
 }
 
-bool PVMFCPMImpl::CheckForMetaDataInterfaceAvailability()
+PVMFStatus PVMFCPMImpl::QueryForMetaDataKeys_P(PVMFCPMCommand& aParentCmd)
 {
-    uint32 num = 0;
-    if (iActivePlugInParamsVec.size() > 0)
+    PVMFStatus status = PVMFSuccess;
+
+    Oscl_Vector<CPMPlugInParams, OsclMemAllocator>::iterator it = LookUpAccessPlugIn(aParentCmd.iSession);
+    if (it)
     {
-        Oscl_Vector<CPMPlugInParams, OsclMemAllocator>::iterator it;
-        for (it = iActivePlugInParamsVec.begin(); it != iActivePlugInParamsVec.end(); it++)
+        if (it->PlugInMetaDataExtensionInterface() != NULL)
         {
-            if (it->iPlugInMetaDataExtensionInterface != NULL)
+            PVMFCPMCommandContext* internalCmd = RequestNewInternalCmd();
+            if (internalCmd != NULL)
             {
-                num++;
-            }
-        }
-        if (num > 0)
-        {
-            return true;
-        }
-    }
-    return false;
-}
+                internalCmd->cmd =
+                    PVMF_CPM_INTERNAL_GET_PLUGIN_META_DATA_KEYS_CMD;
+                internalCmd->parentCmd = aParentCmd.iCmd;
+                internalCmd->plugInID = it->iPlugInID;
+                OsclAny *cmdContextData =
+                    OSCL_REINTERPRET_CAST(OsclAny*, internalCmd);
 
-PVMFStatus PVMFCPMImpl::QueryForMetaDataKeys(PVMFCPMCommand& aParentCmd)
-{
-    if (iActivePlugInParamsVec.size() > 0)
-    {
-        Oscl_Vector<CPMPlugInParams, OsclMemAllocator>::iterator it;
-        for (it = iActivePlugInParamsVec.begin(); it != iActivePlugInParamsVec.end(); it++)
-        {
-            if (it->iPlugInMetaDataExtensionInterface != NULL)
-            {
-                PVMFCPMCommandContext* internalCmd = RequestNewInternalCmd();
-                if (internalCmd != NULL)
-                {
-                    internalCmd->cmd =
-                        PVMF_CPM_INTERNAL_GET_PLUGIN_META_DATA_KEYS_CMD;
-                    internalCmd->parentCmd = aParentCmd.iCmd;
-                    internalCmd->plugInID = it->iPlugInID;
-                    OsclAny *cmdContextData =
-                        OSCL_REINTERPRET_CAST(OsclAny*, internalCmd);
+                it->iNumMetaDataKeysAvailable  = 0;
+                it->iAvailableMetadataKeys.clear();
 
-                    it->iNumMetaDataKeysAvailable  = 0;
-                    it->iAvailableMetadataKeys.clear();
+                it->iNumMetaDataKeysAvailable =
+                    it->PlugInMetaDataExtensionInterface()->GetNumMetadataKeys();
+                it->PlugInMetaDataExtensionInterface()->GetNodeMetadataKeys(it->iPlugInSessionID,
+                        it->iAvailableMetadataKeys,
+                        0,
+                        it->iNumMetaDataKeysAvailable,
+                        NULL,
+                        cmdContextData);
 
-                    it->iNumMetaDataKeysAvailable =
-                        it->iPlugInMetaDataExtensionInterface->GetNumMetadataKeys();
-                    it->iPlugInMetaDataExtensionInterface->GetNodeMetadataKeys(it->iPlugInSessionID,
-                            it->iAvailableMetadataKeys,
-                            0,
-                            it->iNumMetaDataKeysAvailable,
-                            NULL,
-                            cmdContextData);
-                }
-                else
-                {
-                    return PVMFErrNoMemory;
-                }
+                status = PVMFPending;
+
             }
             else
             {
-                it->iGetMetaDataKeysComplete = true;
+                return PVMFErrNoMemory;
             }
         }
-        return PVMFSuccess;
     }
-    /* No active plugins */
-    PVMF_CPM_LOGERROR((0, "PVMFCPMImpl::QueryForMetaDataKeys - No Active Plugins"));
-    return PVMFFailure;
+    return status;
 }
 
 void PVMFCPMImpl::CompleteGetMetaDataKeys(uint32 aPlugInID)
@@ -1845,39 +1878,23 @@ void PVMFCPMImpl::CompleteGetMetaDataKeys(uint32 aPlugInID)
     }
     else
     {
-        pluginInParams->iGetMetaDataKeysComplete = true;
-        if (CheckForGetMetaDataKeysCompletion())
+        if (iCurrentCommand.front().iCmd == PVMF_CPM_GET_METADATA_KEYS)
         {
-            PVMFStatus status = PVMFSuccess;
-            if (iGetMetaDataKeysInProgress == true)
-            {
-                status = CompleteDoGetMetadataKeys(iCurrentCommand.front());
-            }
+            PVMFStatus status = CompleteDoGetMetadataKeys(iCurrentCommand.front());
+
             CommandComplete(iCurrentCommand,
                             iCurrentCommand.front(),
                             status);
-            iGetMetaDataKeysFromPlugInsDone = true;
+        }
+        else
+        {
+            CommandComplete(iCurrentCommand,
+                            iCurrentCommand.front(),
+                            PVMFSuccess);
         }
     }
     return;
 }
-
-bool PVMFCPMImpl::CheckForGetMetaDataKeysCompletion()
-{
-    Oscl_Vector<CPMPlugInParams, OsclMemAllocator>::iterator it;
-    for (it = iActivePlugInParamsVec.begin(); it != iActivePlugInParamsVec.end(); it++)
-    {
-        if (it->iPlugInMetaDataExtensionInterface != NULL)
-        {
-            if (it->iGetMetaDataKeysComplete == false)
-            {
-                return false;
-            }
-        }
-    }
-    return true;
-}
-
 
 void PVMFCPMImpl::DoUsageComplete(PVMFCPMCommand& aCmd)
 {
@@ -1893,8 +1910,8 @@ void PVMFCPMImpl::DoUsageComplete(PVMFCPMCommand& aCmd)
 
     PVMFCPMUsageID* usageID = OSCL_STATIC_CAST(PVMFCPMUsageID*, temp);
 
-    PVMFStatus status = SendUsageCompleteToRegisteredPlugIns(*usageID);
-    if (status == PVMFSuccess)
+    PVMFStatus status = SendUsageCompleteToRegisteredPlugIns_P(*usageID);
+    if (status == PVMFPending)
     {
         MoveCmdToCurrentQueue(aCmd);
     }
@@ -1905,46 +1922,43 @@ void PVMFCPMImpl::DoUsageComplete(PVMFCPMCommand& aCmd)
     }
 }
 
-PVMFStatus PVMFCPMImpl::SendUsageCompleteToRegisteredPlugIns(PVMFCPMUsageID aID)
+PVMFStatus PVMFCPMImpl::SendUsageCompleteToRegisteredPlugIns_P(PVMFCPMUsageID aID)
 {
-    if (iActivePlugInParamsVec.size() > 0)
+    CPMContentUsageContext* usageContext = LookUpContentUsageContext(aID);
+    if (usageContext != NULL)
     {
-        CPMContentUsageContext* usageContext = LookUpContentUsageContext(aID);
-        if (usageContext != NULL)
+        Oscl_Vector<CPMPlugInParams, OsclMemAllocator>::iterator it;
+        for (it = iPlugInParamsVec.begin(); it != iPlugInParamsVec.end() && it->iActive; it++)
         {
-            Oscl_Vector<CPMPlugInParams, OsclMemAllocator>::iterator it;
-            for (it = iActivePlugInParamsVec.begin(); it != iActivePlugInParamsVec.end(); it++)
+            PVMFCPMCommandContext* internalCmd = RequestNewInternalCmd();
+            if (internalCmd != NULL)
             {
-                PVMFCPMCommandContext* internalCmd = RequestNewInternalCmd();
-                if (internalCmd != NULL)
-                {
-                    internalCmd->cmd = PVMF_CPM_INTERNAL_USAGE_COMPLETE_CMD;
-                    internalCmd->parentCmd = PVMF_CPM_USAGE_COMPLETE;
-                    internalCmd->plugInID = it->iPlugInID;
-                    internalCmd->usageid = aID;
-                    OsclAny *cmdContextData =
-                        OSCL_REINTERPRET_CAST(OsclAny*, internalCmd);
+                internalCmd->cmd = PVMF_CPM_INTERNAL_USAGE_COMPLETE_CMD;
+                internalCmd->parentCmd = PVMF_CPM_USAGE_COMPLETE;
+                internalCmd->plugInID = it->iPlugInID;
+                internalCmd->usageid = aID;
+                OsclAny *cmdContextData =
+                    OSCL_REINTERPRET_CAST(OsclAny*, internalCmd);
 
-                    it->iPlugInAuthorizationInterface->UsageComplete(it->iPlugInSessionID,
-                            cmdContextData);
-                    usageContext->iNumUsageCompleteRequestsPending++;
-                }
-                else
-                {
-                    return PVMFErrNoMemory;
-                }
+                it->PlugInAuthorizationInterface()->UsageComplete(it->iPlugInSessionID,
+                        cmdContextData);
+                usageContext->iNumUsageCompleteRequestsPending++;
             }
-            return PVMFSuccess;
+            else
+            {
+                return PVMFErrNoMemory;
+            }
         }
-        else
-        {
-            PVMF_CPM_LOGERROR((0, "PVMFCPMImpl::SendUsageCompleteToRegisteredPlugIns - Invalid UsageContext"));
-            return PVMFFailure;
-        }
+        if (usageContext->iNumUsageCompleteRequestsPending > 0)
+            return PVMFPending;
+
+        return PVMFSuccess;
     }
-    /* No active plugins */
-    PVMF_CPM_LOGERROR((0, "PVMFCPMImpl::SendUsageCompleteToRegisteredPlugIns - No Active Plugins"));
-    return PVMFFailure;
+    else
+    {
+        PVMF_CPM_LOGERROR((0, "PVMFCPMImpl::SendUsageCompleteToRegisteredPlugIns - Invalid UsageContext"));
+        return PVMFFailure;
+    }
 }
 
 void PVMFCPMImpl::CompleteUsageComplete(CPMContentUsageContext* aContext)
@@ -2015,10 +2029,6 @@ void PVMFCPMImpl::DoReset(PVMFCPMCommand& aCmd)
     iNumRegisteredPlugInInitComplete = 0;
     iNumQueryMetaDataExtensionInterfacePending = 0;
     iNumQueryMetaDataExtensionInterfaceComplete = 0;
-
-    iGetMetaDataKeysFromPlugInsDone = false;
-    iGetMetaDataKeysInProgress = false;
-
 }
 
 PVMFStatus PVMFCPMImpl::ResetRegisteredPlugIns()
@@ -2216,6 +2226,8 @@ void PVMFCPMImpl::CPMPluginCommandCompleted(const PVMFCmdResp& aResponse)
             }
             CPMSessionInfo* sessionInfo =
                 LookUpSessionInfo(cmdContextData->sessionid);
+            if (sessionInfo)
+                sessionInfo->iNumPlugInAuthorizeInterfaceQueryRequestsComplete++;
             CompleteRegisterContentPhase1(sessionInfo);
         }
         break;
@@ -2233,6 +2245,8 @@ void PVMFCPMImpl::CPMPluginCommandCompleted(const PVMFCmdResp& aResponse)
             }
             CPMSessionInfo* sessionInfo =
                 LookUpSessionInfo(cmdContextData->sessionid);
+            if (sessionInfo)
+                sessionInfo->iNumPlugInAccessInterfaceFactoryQueryRequestsComplete++;
             CompleteRegisterContentPhase2(sessionInfo);
         }
         break;
@@ -2250,6 +2264,8 @@ void PVMFCPMImpl::CPMPluginCommandCompleted(const PVMFCmdResp& aResponse)
             }
             CPMSessionInfo* sessionInfo =
                 LookUpSessionInfo(cmdContextData->sessionid);
+            if (sessionInfo)
+                sessionInfo->iNumPlugInLicenseAcquisitionInterfaceRequestsComplete++;
             CompleteRegisterContentPhase3(sessionInfo);
         }
         break;
@@ -2335,6 +2351,32 @@ PVMFCPMImpl::LookUpSessionInfo(PVMFSessionId aID)
     return NULL;
 }
 
+Oscl_Vector<CPMPlugInParams, OsclMemAllocator>::iterator PVMFCPMImpl::LookUpAccessPlugIn(PVMFSessionId aId)
+{
+    if (!iAccessPlugin)
+    {
+        //look up the access plugin & save the iterator.
+        CPMSessionInfo* sInfo = LookUpSessionInfo(aId);
+        if (sInfo)
+        {
+            Oscl_Vector<CPMPlugInParams, OsclMemAllocator>::iterator it;
+            for (it = iPlugInParamsVec.begin(); it != iPlugInParamsVec.end() && it->iActive; it++)
+            {
+                if (it->iPlugInID == sInfo->iAccessPlugInID)
+                {
+                    iAccessPlugin = it;
+                    break;
+                }
+            }
+        }
+        else
+        {
+            PVMF_CPM_LOGERROR((0, "PVMFCPMImpl::LookUpAccessPlugIn - Invalid Session ID"));
+        }
+    }
+    return iAccessPlugin;
+}
+
 CPMContentUsageContext* PVMFCPMImpl::LookUpContentUsageContext(PVMFCPMUsageID aID)
 {
     Oscl_Vector<CPMContentUsageContext, OsclMemAllocator>::iterator it;
@@ -2364,7 +2406,7 @@ CPMPlugInParams* PVMFCPMImpl::LookUpPlugInParams(uint32 aID)
 CPMPlugInParams* PVMFCPMImpl::LookUpPlugInParamsFromActiveList(uint32 aID)
 {
     Oscl_Vector<CPMPlugInParams, OsclMemAllocator>::iterator it;
-    for (it = iActivePlugInParamsVec.begin(); it != iActivePlugInParamsVec.end(); it++)
+    for (it = iPlugInParamsVec.begin(); it != iPlugInParamsVec.end() && it->iActive; it++)
     {
         if (it->iPlugInID == aID)
         {
@@ -2377,79 +2419,79 @@ CPMPlugInParams* PVMFCPMImpl::LookUpPlugInParamsFromActiveList(uint32 aID)
 OSCL_EXPORT_REF uint32
 PVMFCPMImpl::GetNumMetadataKeys(char* aQueryKeyString)
 {
-    uint32 numMetaDataKeys = 0;
-    if (iActivePlugInParamsVec.size() > 0)
+    //There's no session ID in this API.  Just use the first session.  If any node tries to
+    //open multiple CPM sessions, this will break.
+    if (iListofActiveSessions.size() != 1)
     {
-        Oscl_Vector<CPMPlugInParams, OsclMemAllocator>::iterator it;
-        for (it = iActivePlugInParamsVec.begin(); it != iActivePlugInParamsVec.end(); it++)
+        PVMF_CPM_LOGERROR((0, "PVMFCPMImpl::GetNumMetadataKeys - Invalid number of sessions"));
+        return 0;
+    }
+
+    uint32 numMetaDataKeys = 0;
+    Oscl_Vector<CPMPlugInParams, OsclMemAllocator>::iterator it = LookUpAccessPlugIn(iListofActiveSessions[0].iSessionId);
+    if (it)
+    {
+        if (NULL != it->PlugInMetaDataExtensionInterface())
         {
-            if (NULL != it->iPlugInMetaDataExtensionInterface)
-            {
-                numMetaDataKeys +=
-                    it->iPlugInMetaDataExtensionInterface->GetNumMetadataKeys(aQueryKeyString);
-            }
+            numMetaDataKeys +=
+                it->PlugInMetaDataExtensionInterface()->GetNumMetadataKeys(aQueryKeyString);
         }
         return numMetaDataKeys;
     }
-    /* No active plugins */
-    PVMF_CPM_LOGERROR((0, "PVMFCPMImpl::GetNumMetadataKeys - No Active Plugins"));
-    return numMetaDataKeys;
+    else
+    {
+        /* No access plugins */
+        PVMF_CPM_LOGERROR((0, "PVMFCPMImpl::GetNumMetadataKeys - No Access Plugin"));
+        return numMetaDataKeys;
+    }
 }
 
 OSCL_EXPORT_REF uint32
 PVMFCPMImpl::GetNumMetadataValues(PVMFMetadataList& aKeyList)
 {
-    uint32 numMetaDataValues = 0;
-    if (iActivePlugInParamsVec.size() > 0)
+    //There's no session ID in this API.  Just use the first session.  If any node tries to
+    //open multiple CPM sessions, this will break.
+    if (iListofActiveSessions.size() != 1)
     {
-        Oscl_Vector<CPMPlugInParams, OsclMemAllocator>::iterator it;
-        for (it = iActivePlugInParamsVec.begin(); it != iActivePlugInParamsVec.end(); it++)
+        PVMF_CPM_LOGERROR((0, "PVMFCPMImpl::GetNumMetadataValues - Invalid number of sessions"));
+        return 0;
+    }
+
+    uint32 numMetaDataValues = 0;
+    Oscl_Vector<CPMPlugInParams, OsclMemAllocator>::iterator it = LookUpAccessPlugIn(iListofActiveSessions[0].iSessionId);
+    if (it)
+    {
+        if (NULL != it->PlugInMetaDataExtensionInterface())
         {
-            if (NULL != it->iPlugInMetaDataExtensionInterface)
-            {
-                numMetaDataValues +=
-                    it->iPlugInMetaDataExtensionInterface->GetNumMetadataValues(aKeyList);
-            }
+            numMetaDataValues +=
+                it->PlugInMetaDataExtensionInterface()->GetNumMetadataValues(aKeyList);
         }
         return numMetaDataValues;
     }
-    /* No active plugins */
-    PVMF_CPM_LOGERROR((0, "PVMFCPMImpl::GetNumMetadataValues - No Active Plugins"));
-    return numMetaDataValues;
+    else
+    {
+        /* No access plugins */
+        PVMF_CPM_LOGERROR((0, "PVMFCPMImpl::GetNumMetadataValues - No Access Plugin"));
+        return numMetaDataValues;
+    }
 }
 
 PVMFStatus
-PVMFCPMImpl::DoGetMetadataKeys(PVMFCPMCommand& aCmd)
+PVMFCPMImpl::DoGetMetadataKeys_P(PVMFCPMCommand& aCmd)
 {
     PVMF_CPM_LOGINFO((0, "PVMFCPMImpl::DoGetMetadataKeys Called"));
-    if (iActivePlugInParamsVec.size() == 0)
-    {
-        PVMF_CPM_LOGERROR((0, "PVMFCPMImpl::DoGetMetadataKeys - No Active Plugins"));
-        return PVMFErrInvalidState;
-    }
 
-    iGetMetaDataKeysInProgress = true;
+    PVMFStatus status = QueryForMetaDataKeys_P(aCmd);
 
-    if (iGetMetaDataKeysFromPlugInsDone == false)
-    {
-        if (CheckForMetaDataInterfaceAvailability())
-        {
-            PVMFStatus status = QueryForMetaDataKeys(aCmd);
-            if (status != PVMFSuccess)
-            {
-                PVMF_CPM_LOGERROR((0, "PVMFCPMImpl::DoGetMetadataKeys - QueryForMetaDataKeys Failed"));
-                return status;
-            }
-            return PVMFPending;
-        }
-    }
-    return (CompleteDoGetMetadataKeys(aCmd));
+    if (status != PVMFPending)
+        return (CompleteDoGetMetadataKeys(aCmd));
+
+    return status;
 }
+
 PVMFStatus
 PVMFCPMImpl::CompleteDoGetMetadataKeys(PVMFCPMCommand& aCmd)
 {
-    iGetMetaDataKeysInProgress = false;
-
     int32 leavecode = OsclErrNone;
     PVMFMetadataList* keylistptr = NULL;
     int32 starting_index;
@@ -2473,8 +2515,8 @@ PVMFCPMImpl::CompleteDoGetMetadataKeys(PVMFCPMCommand& aCmd)
     /* Copy the requested keys from all active plugins */
     uint32 num_entries = 0;
     int32 num_added = 0;
-    Oscl_Vector<CPMPlugInParams, OsclMemAllocator>::iterator it;
-    for (it = iActivePlugInParamsVec.begin(); it != iActivePlugInParamsVec.end(); it++)
+    Oscl_Vector<CPMPlugInParams, OsclMemAllocator>::iterator it = LookUpAccessPlugIn(aCmd.iSession);
+    if (it)
     {
         it->iMetaDataKeyStartIndex = keylistptr->size();
         for (uint32 lcv = 0; lcv < it->iAvailableMetadataKeys.size(); lcv++)
@@ -2532,14 +2574,6 @@ PVMFCPMImpl::DoGetMetadataValues(PVMFCPMCommand& aCmd)
     PVMF_CPM_LOGINFO((0, "PVMFCPMImpl::DoGetMetadataValues Called"));
     MoveCmdToCurrentQueue(aCmd);
 
-    if (iActivePlugInParamsVec.size() == 0)
-    {
-        PVMF_CPM_LOGERROR((0, "PVMFCPMImpl::DoGetMetadataValues - No Active Plugins"));
-        CommandComplete(iCurrentCommand,
-                        iCurrentCommand.front(),
-                        PVMFErrInvalidState);
-        return;
-    }
 
     iKeyListPtr = NULL;
     iValueListPtr = NULL;
@@ -2577,143 +2611,73 @@ PVMFCPMImpl::DoGetMetadataValues(PVMFCPMCommand& aCmd)
         return;
     }
 
-    if (iActivePlugInParamsVec.size() > 0)
+    Oscl_Vector<CPMPlugInParams, OsclMemAllocator>::iterator it = LookUpAccessPlugIn(aCmd.iSession);
+    if (it)
     {
-        if (IsGetMetaDataValuesFromPlugInsComplete() == false)
+        PVMFStatus status = SendGetMetaDataValuesToPlugIn_P(it);
+        if (status != PVMFPending)
         {
-            CPMPlugInParams* plugInParams =
-                LookUpNextPlugInForGetMetaDataValues();
-
-            SendGetMetaDataValuesToPlugIn(plugInParams);
-            return;
-        }
-        else
-        {
-            PVMF_CPM_LOGINFO((0, "PVMFCPMImpl::DoGetMetadataValues - No Active Plugins With MetaData Support"));
+            PVMF_CPM_LOGINFO((0, "PVMFCPMImpl::DoGetMetadataValues - No Access Plugin With MetaData Support"));
             CommandComplete(iCurrentCommand,
                             iCurrentCommand.front(),
-                            PVMFSuccess);
-            return;
+                            status);
         }
+        return;
     }
-    /* No active plugins */
-    PVMF_CPM_LOGERROR((0, "PVMFCPMImpl::DoGetMetadataValues - No Active Plugins"));
-    CommandComplete(iCurrentCommand,
-                    iCurrentCommand.front(),
-                    PVMFFailure);
-    return;
-}
-
-CPMPlugInParams* PVMFCPMImpl::LookUpNextPlugInForGetMetaDataValues()
-{
-    Oscl_Vector<CPMPlugInParams, OsclMemAllocator>::iterator it;
-    for (it = iActivePlugInParamsVec.begin(); it != iActivePlugInParamsVec.end(); it++)
+    else
     {
-        if (it->iGetMetaDataValuesComplete == false)
-        {
-            return (it);
-        }
+        /* No Access plugin */
+        PVMF_CPM_LOGERROR((0, "PVMFCPMImpl::DoGetMetadataValues - No Access Plugin"));
+        CommandComplete(iCurrentCommand,
+                        iCurrentCommand.front(),
+                        PVMFFailure);
     }
-    return NULL;
 }
 
-bool PVMFCPMImpl::IsGetMetaDataValuesFromPlugInsComplete()
-{
-    Oscl_Vector<CPMPlugInParams, OsclMemAllocator>::iterator it;
-    for (it = iActivePlugInParamsVec.begin(); it != iActivePlugInParamsVec.end(); it++)
-    {
-        if (it->iPlugInMetaDataExtensionInterface == NULL)
-        {
-            /* No metadata ext intf - so treat it as complete */
-            it->iGetMetaDataValuesComplete = true;
-        }
-        else
-        {
-            if (it->iGetMetaDataValuesComplete == false)
-            {
-                return false;
-            }
-        }
-    }
-    return true;
-}
-
-void
-PVMFCPMImpl::SendGetMetaDataValuesToPlugIn(CPMPlugInParams* aParams)
+PVMFStatus
+PVMFCPMImpl::SendGetMetaDataValuesToPlugIn_P(CPMPlugInParams* aParams)
 {
     if (aParams != NULL)
     {
-        PVMFCPMCommandContext* internalCmd = RequestNewInternalCmd();
-        if (internalCmd != NULL)
+        if (aParams->PlugInMetaDataExtensionInterface())
         {
-            internalCmd->cmd =
-                PVMF_CPM_INTERNAL_GET_PLUGIN_META_DATA_VALUES_CMD;
-            internalCmd->parentCmd = PVMF_CPM_GET_METADATA_VALUES;
-            internalCmd->plugInID = aParams->iPlugInID;
-            OsclAny *cmdContextData =
-                OSCL_REINTERPRET_CAST(OsclAny*, internalCmd);
+            PVMFCPMCommandContext* internalCmd = RequestNewInternalCmd();
+            if (internalCmd != NULL)
+            {
+                internalCmd->cmd =
+                    PVMF_CPM_INTERNAL_GET_PLUGIN_META_DATA_VALUES_CMD;
+                internalCmd->parentCmd = PVMF_CPM_GET_METADATA_VALUES;
+                internalCmd->sessionid = aParams->iPlugInSessionID;
+                OsclAny *cmdContextData =
+                    OSCL_REINTERPRET_CAST(OsclAny*, internalCmd);
 
-            aParams->iNumMetaDataValuesAvailable =
-                aParams->iPlugInMetaDataExtensionInterface->GetNumMetadataValues((PVMFMetadataList&)(*iKeyListPtr));
-            aParams->iMetaDataValueStartIndex = iValueListPtr->size();
-            aParams->iPlugInMetaDataExtensionInterface->GetNodeMetadataValues(aParams->iPlugInSessionID,
-                    (PVMFMetadataList&)(*iKeyListPtr),
-                    (Oscl_Vector<PvmiKvp, OsclMemAllocator>&)(*iValueListPtr),
-                    0,
-                    aParams->iNumMetaDataValuesAvailable,
-                    cmdContextData);
-        }
-        else
-        {
-            PVMF_CPM_LOGERROR((0, "PVMFCPMImpl::RequestMetaDataValues - SendGetMetaDataValuesToPlugIn Failed"));
-            CommandComplete(iCurrentCommand,
-                            iCurrentCommand.front(),
-                            PVMFErrNoMemory);
-            return;
+                aParams->iNumMetaDataValuesAvailable =
+                    aParams->PlugInMetaDataExtensionInterface()->GetNumMetadataValues((PVMFMetadataList&)(*iKeyListPtr));
+                aParams->iMetaDataValueStartIndex = iValueListPtr->size();
+                aParams->PlugInMetaDataExtensionInterface()->GetNodeMetadataValues(aParams->iPlugInSessionID,
+                        (PVMFMetadataList&)(*iKeyListPtr),
+                        (Oscl_Vector<PvmiKvp, OsclMemAllocator>&)(*iValueListPtr),
+                        0,
+                        aParams->iNumMetaDataValuesAvailable,
+                        cmdContextData);
+                return PVMFPending;
+            }
         }
     }
+    return PVMFSuccess;
 }
 
 void
 PVMFCPMImpl::CompleteGetMetaDataValues(PVMFCPMCommandContext* aContext)
 {
-    if (iActivePlugInParamsVec.size() > 0)
-    {
-        CPMPlugInParams* currPlugInParams =
-            LookUpPlugInParamsFromActiveList(aContext->plugInID);
-        OSCL_ASSERT(currPlugInParams);
-        if (!currPlugInParams)
-            return; // unlikely: lookup failed.
-        currPlugInParams->iMetaDataValueEndIndex = iValueListPtr->size();
-        currPlugInParams->iGetMetaDataValuesComplete = true;
+    Oscl_Vector<CPMPlugInParams, OsclMemAllocator>::iterator it = LookUpAccessPlugIn(aContext->sessionid);
+    if (!it)
+        return; // unlikely: lookup failed.
+    it->iMetaDataValueEndIndex = iValueListPtr->size();
 
-        if (IsGetMetaDataValuesFromPlugInsComplete() == false)
-        {
-            CPMPlugInParams* nextPlugInParams =
-                LookUpNextPlugInForGetMetaDataValues();
-
-            SendGetMetaDataValuesToPlugIn(nextPlugInParams);
-        }
-        else
-        {
-            /* Reset for future retrievals */
-            Oscl_Vector<CPMPlugInParams, OsclMemAllocator>::iterator it;
-            for (it = iActivePlugInParamsVec.begin(); it != iActivePlugInParamsVec.end(); it++)
-            {
-                it->iGetMetaDataValuesComplete = false;
-            }
-            CommandComplete(iCurrentCommand,
-                            iCurrentCommand.front(),
-                            PVMFSuccess);
-        }
-        return;
-    }
-    /* No active plugins */
-    PVMF_CPM_LOGERROR((0, "PVMFCPMImpl::CompleteGetMetaDataValues - No Active Plugins"));
     CommandComplete(iCurrentCommand,
                     iCurrentCommand.front(),
-                    PVMFFailure);
-    return;
+                    PVMFSuccess);
 }
 
 PVMFStatus PVMFCPMImpl::getParametersSync(PvmiMIOSession aSession,
@@ -2739,13 +2703,13 @@ PVMFStatus PVMFCPMImpl::releaseParameters(PvmiMIOSession aSession,
     PVMFStatus status = PVMFFailure;
     if (aParameters)
     {
-        Oscl_Vector<CPMPlugInParams, OsclMemAllocator>::iterator it;
-        for (it = iActivePlugInParamsVec.begin(); it != iActivePlugInParamsVec.end(); it++)
+        Oscl_Vector<CPMPlugInParams, OsclMemAllocator>::iterator it = LookUpAccessPlugIn((PVMFSessionId)aSession);
+        if (it)
         {
-            if (it->iPlugInCapConfigExtensionInterface != NULL)
+            if (it->PlugInCapConfigExtensionInterface() != NULL)
             {
                 status =
-                    it->iPlugInCapConfigExtensionInterface->releaseParameters(aSession,
+                    it->PlugInCapConfigExtensionInterface()->releaseParameters(aSession,
                             aParameters,
                             num_elements);
             }
@@ -2760,14 +2724,14 @@ void PVMFCPMImpl::setParametersSync(PvmiMIOSession aSession,
                                     int num_elements,
                                     PvmiKvp*& aRet_kvp)
 {
-    Oscl_Vector<CPMPlugInParams, OsclMemAllocator>::iterator it;
-    for (it = iActivePlugInParamsVec.begin(); it != iActivePlugInParamsVec.end(); it++)
+    Oscl_Vector<CPMPlugInParams, OsclMemAllocator>::iterator it = LookUpAccessPlugIn((PVMFSessionId)aSession);
+    if (it)
     {
-        if (it->iPlugInCapConfigExtensionInterface != NULL)
+        if (it->PlugInCapConfigExtensionInterface() != NULL)
         {
             int32 err = OsclErrNone;
             OSCL_TRY(err,
-                     it->iPlugInCapConfigExtensionInterface->setParametersSync(aSession,
+                     it->PlugInCapConfigExtensionInterface()->setParametersSync(aSession,
                              aParameters,
                              num_elements,
                              aRet_kvp););
@@ -2782,19 +2746,20 @@ PVMFStatus PVMFCPMImpl::verifyParametersSync(PvmiMIOSession aSession,
         int num_elements)
 {
     PVMFStatus status = PVMFFailure;
-    Oscl_Vector<CPMPlugInParams, OsclMemAllocator>::iterator it;
-    for (it = iActivePlugInParamsVec.begin(); it != iActivePlugInParamsVec.end(); it++)
+    Oscl_Vector<CPMPlugInParams, OsclMemAllocator>::iterator it = LookUpAccessPlugIn((PVMFSessionId)aSession);
+    if (it)
     {
-        if (it->iPlugInCapConfigExtensionInterface != NULL)
+        if (it->PlugInCapConfigExtensionInterface() != NULL)
         {
             status =
-                it->iPlugInCapConfigExtensionInterface->verifyParametersSync(aSession,
+                it->PlugInCapConfigExtensionInterface()->verifyParametersSync(aSession,
                         aParameters,
                         num_elements);
         }
     }
     return status;
 }
+
 PVMFCommandId
 PVMFCPMImpl::GetLicense(PVMFSessionId aSessionId,
                         OSCL_wString& aContentName,
@@ -2855,23 +2820,16 @@ PVMFStatus PVMFCPMImpl::GetLicenseStatus(
     return PVMFFailure;
 }
 
-PVMFStatus PVMFCPMImpl::DoGetLicense(PVMFCPMCommand& aCmd,
-                                     bool aWideCharVersion)
+PVMFStatus PVMFCPMImpl::DoGetLicense_P(PVMFCPMCommand& aCmd,
+                                       bool aWideCharVersion)
 {
     iLicenseInterface = NULL;
-    CPMSessionInfo* sInfo = LookUpSessionInfo(aCmd.iSession);
     CPMPlugInParams* pluginParamsPtr = NULL;
-    Oscl_Vector<CPMPlugInParams, OsclMemAllocator>::iterator it;
-    if (sInfo != NULL)
+    Oscl_Vector<CPMPlugInParams, OsclMemAllocator>::iterator it = LookUpAccessPlugIn(aCmd.iSession);
+    if (it)
     {
-        for (it = iActivePlugInParamsVec.begin(); it != iActivePlugInParamsVec.end(); it++)
-        {
-            if (it->iPlugInID == sInfo->iAccessPlugInID)
-            {
-                iLicenseInterface = it->iPlugInLicenseInterface;
-                pluginParamsPtr = it;
-            }
-        }
+        iLicenseInterface = it->PlugInLicenseInterface();
+        pluginParamsPtr = it;
     }
 
     if (iLicenseInterface == NULL)
@@ -2906,6 +2864,7 @@ PVMFStatus PVMFCPMImpl::DoGetLicense(PVMFCPMCommand& aCmd,
                                               dataSize,
                                               timeoutMsec,
                                               cmdContextData);
+            return PVMFPending;
         }
         else
         {
@@ -2938,6 +2897,7 @@ PVMFStatus PVMFCPMImpl::DoGetLicense(PVMFCPMCommand& aCmd,
                                               dataSize,
                                               timeoutMsec,
                                               cmdContextData);
+            return PVMFPending;
         }
         else
         {
@@ -2945,7 +2905,6 @@ PVMFStatus PVMFCPMImpl::DoGetLicense(PVMFCPMCommand& aCmd,
             return PVMFErrNoMemory;
         }
     }
-    return PVMFPending;
 }
 
 void PVMFCPMImpl::CompleteGetLicense()
@@ -2965,19 +2924,12 @@ void PVMFCPMImpl::DoCancelGetLicense(PVMFCPMCommand& aCmd)
     PVMFStatus status = PVMFErrArgument;
 
     iLicenseInterface = NULL;
-    CPMSessionInfo* sInfo = LookUpSessionInfo(aCmd.iSession);
     CPMPlugInParams* pluginParamsPtr = NULL;
-    Oscl_Vector<CPMPlugInParams, OsclMemAllocator>::iterator it;
-    if (sInfo != NULL)
+    Oscl_Vector<CPMPlugInParams, OsclMemAllocator>::iterator it = LookUpAccessPlugIn(aCmd.iSession);
+    if (it)
     {
-        for (it = iActivePlugInParamsVec.begin(); it != iActivePlugInParamsVec.end(); it++)
-        {
-            if (it->iPlugInID == sInfo->iAccessPlugInID)
-            {
-                iLicenseInterface = it->iPlugInLicenseInterface;
-                pluginParamsPtr = it;
-            }
-        }
+        iLicenseInterface = it->PlugInLicenseInterface();
+        pluginParamsPtr = it;
     }
 
     /* first check "current" command if any */

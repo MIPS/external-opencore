@@ -19,7 +19,20 @@ else
   OBJSUBDIR:=dbg
 endif
 
+ifneq ($(strip $(OPTIMIZE_FOR_PERFORMANCE_OVER_SIZE)),true)
+  XCXXFLAGS += $(OPTIMIZE_FOR_SIZE)
+else
+  XCXXFLAGS += $(OPTIMIZE_FOR_PERFORMANCE)
+endif
+
 OBJDIR := $(patsubst $(SRC_ROOT)/%,$(BUILD_ROOT)/%,$(abspath $(LOCAL_PATH)/$(OUTPUT_DIR_COMPONENT)/$(OBJSUBDIR)))
+
+#
+# Include a local makefile fragment for src and flags specific for an architecture.
+# Include the template after expanding value for OBJDIR
+#
+-include $(call process_include_list,$(LOCAL_PATH),$(BUILD_ARCH).mk)
+
 
 $(eval $(call set-src-and-obj-names,$(SRCS),$(LOCAL_SRCDIR)))
 
@@ -41,8 +54,11 @@ endif
 LOCAL_XINCDIRS := $(abspath $(patsubst ../%,$(LOCAL_PATH)/../%,$(patsubst -I%,%,$(XINCDIRS))))
 
 LOCAL_TOTAL_INCDIRS := $(LOCAL_SRCDIR) $(LOCAL_INCSRCDIR) $(LOCAL_XINCDIRS)
+LOCAL_ASM_INCDIRS := $(abspath $(patsubst ../%,$(LOCAL_PATH)/../%,$(XASMINCDIRS)))
+LOCAL_ASM_INCDIRS := $(if $(strip $(LOCAL_ASM_INCDIRS)), $(patsubst %, $(ASM_INCLUDE_FLAG)%,$(LOCAL_ASM_INCDIRS)),)
 
-$(COMPILED_OBJS): XPFLAGS := $(XCPPFLAGS) $(patsubst %,-I%,$(LOCAL_TOTAL_INCDIRS))
+
+$(COMPILED_OBJS): XPFLAGS := $(XCPPFLAGS) $(patsubst %,-I%,$(LOCAL_TOTAL_INCDIRS)) $(LOCAL_ASM_INCDIRS)
 $(COMPILED_OBJS): XXFLAGS := $(XCXXFLAGS)
 
 # remove any leading / trailing whitespace
@@ -63,14 +79,6 @@ $(OBJDIR)/%.$(OBJ_EXT): $(LOCAL_SRCDIR)/%.cpp
 $(OBJDIR)/%.$(OBJ_EXT): $(LOCAL_SRCDIR)/%.c
 	$(call make-c-obj-and-depend,$<,$@,$(subst .$(OBJ_EXT),.d,$@),$(XPFLAGS),$(XXFLAGS))
 
-
-#ifeq ($(HOST_ARCH), win32)
-#  vpath %.so $(LIB_DIRS:$(LIBCOMPFLAG)%=%)
-#  vpath %.$(STAT_LIB_EXT) $(LIB_DIRS:$(LIBCOMPFLAG)%=%)
-#else
-#  vpath lib%.so $(LIB_DIRS:$(LIBCOMPFLAG)%=%)
-#  vpath lib%.$(STAT_LIB_EXT) $(LIB_DIRS:$(LIBCOMPFLAG)%=%)
-#endif
 
 LOCAL_LIBDIRS := $(abspath $(patsubst ../%,$(LOCAL_PATH)/../%,$(patsubst $(LIBCOMPFLAG)%,%,$(XLIBDIRS))))
 
@@ -112,7 +120,7 @@ run_$(TARGET)_SOURCE_DIR := $(LOCAL_PATH)
 ###incluede targest for test apps###########
 run_$(TARGET): $(REALTARGET)
 		$(call cd_and_run_test,$($@_SOURCE_DIR),$<,$($@_TEST_ARGS),$($@_SOURCE_ARGS))
-	
+
 run_test: run_$(TARGET)
 build_$(TARGET): $(REALTARGET)
 build_test: build_$(TARGET)

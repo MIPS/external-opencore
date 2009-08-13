@@ -734,7 +734,6 @@ void pvplayer_async_test_cpmopenplaystopreset::Run()
             iDataSource->SetDataSourceFormatType(iFileType);
 
             //This illustrates the use of CPM with a file source.
-
             if (iUsingDataStreamInput)
             {
                 //Create a data stream factory for recognizer (a)
@@ -17430,6 +17429,7 @@ void pvplayer_async_test_multipauseseekresume::HandleInformationalEvent(const PV
 #include "pvmf_local_data_source.h"
 #include "oscl_scheduler.h"
 #include "OMX_Core.h"
+#include "pv_omxcore.h"
 #include "oscl_mem_audit.h"
 
 //test observer function for the 2nd instance.
@@ -17458,7 +17458,7 @@ void pvplayer_async_test_multiple_instance::InThread(pvplayer_async_test_multipl
 {
     //Init Oscl
     OsclMem::Init();
-    OMX_Init();
+    OMX_MasterInit();
     PVLogger::Init();
     OsclScheduler::Init("pvplayer_async_test_multiple_instance");
 
@@ -17489,7 +17489,7 @@ void pvplayer_async_test_multiple_instance::InThread(pvplayer_async_test_multipl
     //Cleanup Oscl.
     OsclScheduler::Cleanup();
     PVLogger::Cleanup();
-    OMX_Deinit();
+    OMX_MasterDeinit();
     //note: there's no memory leak check here since
     //this thread exits before the main thread.
     OsclMem::Cleanup();

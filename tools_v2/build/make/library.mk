@@ -37,6 +37,10 @@ ifneq ($(strip $(MY_TARGET_PLUGINS)),)
 include $(call process_include_list,$(LOCAL_PATH),$(MY_TARGET_PLUGINS))
 endif
 
+#
+# Include a local makefile fragment for src and flags specific for an architecture.
+#
+-include $(call process_include_list,$(LOCAL_PATH),$(BUILD_ARCH).mk)
 
 #
 # See if there are any additional src files listed. E.g. assembly src files for codecs
@@ -107,6 +111,8 @@ endif
 
 ifneq ($(strip $(OPTIMIZE_FOR_PERFORMANCE_OVER_SIZE)),true)
   XCXXFLAGS += $(OPTIMIZE_FOR_SIZE)
+else
+  XCXXFLAGS += $(OPTIMIZE_FOR_PERFORMANCE)
 endif
 
 OBJDIR := $(subst $(SRC_ROOT),$(BUILD_ROOT),$(abspath $(LOCAL_PATH)/$(OUTPUT_DIR_COMPONENT)$(SOLIB_OBJDIR_COMP)/$(OBJSUBDIR)))
@@ -154,10 +160,12 @@ LOCAL_XINCDIRS := $(abspath $(patsubst ../%,$(LOCAL_PATH)/../%,$(patsubst -I%,%,
 
 
 LOCAL_TOTAL_INCDIRS := $(LOCAL_SRCDIR) $(LOCAL_INCSRCDIR) $(LOCAL_XINCDIRS)
+LOCAL_ASM_INCDIRS := $(abspath $(patsubst ../%,$(LOCAL_PATH)/../%,$(XASMINCDIRS)))
+LOCAL_ASM_INCDIRS := $(if $(strip $(LOCAL_ASM_INCDIRS)), $(patsubst %, $(ASM_INCLUDE_FLAG)%,$(LOCAL_ASM_INCDIRS)),)
 
 # $(info  LOCAL_TOTAL_INCDIRS = $(LOCAL_TOTAL_INCDIRS), XCXXFLAGS = $(XCXXFLAGS))
 
-$(COMPILED_OBJS): XPFLAGS := $(XCPPFLAGS) $(patsubst %,-I%,$(LOCAL_TOTAL_INCDIRS))
+$(COMPILED_OBJS): XPFLAGS := $(XCPPFLAGS) $(patsubst %,-I%,$(LOCAL_TOTAL_INCDIRS)) $(LOCAL_ASM_INCDIRS)
 $(COMPILED_OBJS): XXFLAGS := $(XCXXFLAGS)
 
 #$(info remote_dirs = $(REMOTE_DIRS))

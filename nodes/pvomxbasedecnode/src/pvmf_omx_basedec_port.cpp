@@ -146,9 +146,12 @@ PVMFOMXDecPort::pvmiGetBufferAllocatorSpecificInfoSync(PvmiKeyType aIdentifier, 
             if (PVMFSuccess == status)
             {
                 // config->releaseParameters(NULL, aParameters, aNumParamElements);
+                return true;
             }
+            else
+                return false;
         }
-        return true;
+
     }
     return false;
 }

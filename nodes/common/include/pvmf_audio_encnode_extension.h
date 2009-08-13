@@ -65,6 +65,14 @@ typedef enum
 } PVMF_GSMAMR_Rate;
 
 
+typedef enum
+{
+    PV_AAC_ENC_LC = 0,         //AAC Low Complexity
+    PV_AAC_ENC_HE,             //AAC High Efficiency (object type SBR, HE-AAC profile)
+    PV_AAC_ENC_HE_PS           //AAC High Efficiency with Parametric Stereo coding (HE-AAC v2, object type PS)
+} PVMF_AAC_Profile;
+
+
 ////////////////////////////////////////////////////////////////////////////
 class PVAudioEncExtensionInterface : public PVInterface
 {
@@ -120,6 +128,12 @@ class PVAudioEncExtensionInterface : public PVInterface
          * @return PVMFSuccess if successful, else see PVMF return code.
          */
         virtual PVMFStatus SetMaxNumOutputFramesPerBuffer(uint32 aNumOutputFrames) = 0;
+        /**
+         * Sets the aac encoder profile
+         * @param aNumOutputFrames, maximum number of output frames
+         * @return PVMFSuccess if successful, else see PVMF return code.
+         */
+        virtual PVMFStatus SetOutputAacProfile(PVMF_AAC_Profile aAacOutputProfile) = 0;
 };
 
 #endif // PVMF_AUDIO_ENCNODE_EXTENSION_H_INCLUDED

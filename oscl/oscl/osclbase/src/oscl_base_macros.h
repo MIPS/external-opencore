@@ -141,13 +141,6 @@
 #define OSCL_PACKED_VAR     "error"
 #endif
 
-#ifndef OSCL_BEGIN_PACKED
-#define OSCL_BEGIN_PACKED   "error"
-#endif
-
-#ifndef OSCL_END_PACKED
-#define OSCL_END_PACKED     "error"
-#endif
 
 /*! @} */
 

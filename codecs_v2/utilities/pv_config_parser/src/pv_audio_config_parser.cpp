@@ -47,8 +47,9 @@
 #define WAVE_FORMAT_WMASPDIF 0x164
 #define WAVE_FORMAT_WMAUDIO3_ES  0x0166
 #define WAVE_FORMAT_WMAUDIO_LOSSLESS_ES  0x0167
+#define WAVE_FORMAT_PLAYREADY 0x5052
 
-#define WAVE_FORMAT_MSSPEECH  10
+#define WAVE_FORMAT_WMAVOICE9  10
 
 //AdvancedEncodeOpt
 #define ENCOPT4_PLUSVER   0xe000
@@ -57,22 +58,20 @@
 #define ENCOPT4_PLUSV2    0x2000
 #define ENCOPT4_PLUSV3    0x4000
 
+#define AAC_DEFAULT_SAMPLES_PER_FRAME 1024
+
 //-------------------------------------------------------------------------------------
-// WMA Macros - define all of the WMA formats that PV can support even if those libraries or functionality is not turned on in the CML2 build config
-#if !defined(BUILD_WMASTD)
-#define BUILD_WMASTD
-#endif
-
-#if !defined(BUILD_WMAPRO)
-#define BUILD_WMAPRO
-#endif
-
+// WMA Macros
 #if defined(BUILD_WMAPROPLUS) && !defined(BUILD_WMAPRO)
 #define BUILD_WMAPRO
 #endif
 
 #if defined(BUILD_WMAPRO) && !defined(BUILD_WMAPROPLUS)
 #define BUILD_WMAPROPLUS
+#endif
+
+#if defined(BUILD_WMAPROPLUS) && !defined(WMAPLUS_64KBPS_PROFILE_ONLY)
+#define WMAPLUS_64KBPS_PROFILE_ONLY
 #endif
 //-------------------------------------------------------------------------------------
 
@@ -95,6 +94,14 @@ OSCL_EXPORT_REF int32 pv_audio_config_parser(pvAudioConfigParserInputs *aInputs,
         /**** decoder header *******/
         uint8* tp = aInputs->inPtr;
         LoadWORD(wdata , tp);
+
+        if (wdata == WAVE_FORMAT_PLAYREADY)
+        {
+            tp += aInputs->inBytes - 4; // skip ahead to check the last 2 bytes.
+            LoadWORD(wdata, tp);
+            tp = aInputs->inPtr + 2; //restart from this location.
+        }
+
 
         switch (wdata)
         {
@@ -126,7 +133,7 @@ OSCL_EXPORT_REF int32 pv_audio_config_parser(pvAudioConfigParserInputs *aInputs,
 
 #if !defined(BUILD_WMALSL)
                 bBitStreamSupported = false;
-#endif  // BUILD_WMALSL 
+#endif  // BUILD_WMALSL
 
                 // more limits according to the current PV WMA implementation
                 // do not supoprt multi-channel
@@ -308,35 +315,54 @@ OSCL_EXPORT_REF int32 pv_audio_config_parser(pvAudioConfigParserInputs *aInputs,
             break;
 
             // WMA Voice
-            case WAVE_FORMAT_MSSPEECH:
+            case WAVE_FORMAT_WMAVOICE9:
             {
-                if (aInputs->inBytes < 18)
+                if (aInputs->inBytes < 64) // sizeof(WMAVOICEWAVEFORMAT)
                 {
                     bBitStreamValid = false;
                     break;
                 }
 
-                tp = aInputs->inPtr +  4;
+                LoadWORD(wdata, tp);
+                aOutputs->Channels = wdata;
+
                 LoadDWORD(dwdata, tp);
-                aOutputs->SamplesPerSec  = dwdata;
-                tp = aInputs->inPtr +  8;
+                aOutputs->SamplesPerSec = dwdata;
+
                 LoadDWORD(dwdata, tp);
-                //AvgBytesPerSec = dwdata;
-                tp = aInputs->inPtr + 12;
-                LoadWORD(wdata , tp);
-                //BlockAlign     = wdata;
-                tp = aInputs->inPtr +  2;
-                LoadWORD(wdata , tp);
-                aOutputs->Channels       = wdata;
-                tp = aInputs->inPtr +  14;
-                LoadWORD(wdata , tp);
-                aOutputs->BitsPerSample  = wdata;
+                // wmavFormat.wfx.nAvgBytesPerSec
+
+                LoadWORD(wdata, tp);
+                // wmavFormat.wfx.nBlockAlign = wdata;
+
+                LoadWORD(wdata, tp);
+                aOutputs->BitsPerSample = wdata;
+
+                // WMAVoice is always mono, 16-bit
+                if (aOutputs->Channels != 1)
+                {
+                    bBitStreamValid = false;
+                }
+
+                if (aOutputs->BitsPerSample != 16)
+                {
+                    bBitStreamValid = false;
+                }
+
+                if ((aOutputs->SamplesPerSec != 8000)
+                        && (aOutputs->SamplesPerSec != 11025)
+                        && (aOutputs->SamplesPerSec != 16000)
+                        && (aOutputs->SamplesPerSec != 22050))
+                {
+                    bBitStreamValid = false;
+                }
 
 #if !defined(BUILD_WMAVOICE)
                 bBitStreamSupported = false;
-#endif // BUILD_WMAVOICE
+#endif
             }
             break;
+
 
             case WAVE_FORMAT_WMASPDIF:
             case WAVE_FORMAT_WMAUDIO2_ES:
@@ -365,6 +391,15 @@ OSCL_EXPORT_REF int32 pv_audio_config_parser(pvAudioConfigParserInputs *aInputs,
         int32   bytes_consumed, status;
         uint8   aAudioObjectType, SamplingRateIndex;
         uint32  NumChannels;
+        uint32  SamplesPerFrame;
+
+        const uint32 SampleFreqTable[13] =
+        {
+            96000, 88200, 64000, 48000,
+            44100, 32000, 24000, 22050,
+            16000, 12000, 11025, 8000,
+            7350
+        };
 
         bytes_consumed = (int32)aInputs->inBytes;
 
@@ -372,7 +407,8 @@ OSCL_EXPORT_REF int32 pv_audio_config_parser(pvAudioConfigParserInputs *aInputs,
                                     &aAudioObjectType,
                                     &bytes_consumed,
                                     &SamplingRateIndex,
-                                    &NumChannels);
+                                    &NumChannels,
+                                    &SamplesPerFrame);
 
         aOutputs->Channels = (uint16)NumChannels;
         if (aOutputs->Channels > 2)
@@ -381,6 +417,17 @@ OSCL_EXPORT_REF int32 pv_audio_config_parser(pvAudioConfigParserInputs *aInputs,
             bBitStreamValid = false;
         }
 
+        if (SamplingRateIndex < 13)
+        {
+            aOutputs->SamplesPerSec = SampleFreqTable[(uint32)SamplingRateIndex];
+        }
+        else
+        {
+            // not a valid sampling rate for the AAC
+            bBitStreamValid = false;
+        }
+
+        aOutputs->SamplesPerFrame = SamplesPerFrame;
     }
 
     if (!bBitStreamValid)

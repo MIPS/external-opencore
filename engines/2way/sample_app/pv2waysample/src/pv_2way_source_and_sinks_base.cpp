@@ -16,16 +16,11 @@
  * -------------------------------------------------------------------
  */
 #include "pv_2way_source_and_sinks_base.h"
-
-#include "pv_2way_audio_sink.h"
-#include "pv_2way_audio_source.h"
-#include "pv_2way_video_sink.h"
-#include "pv_2way_video_source.h"
+#include "pv_2way_sink.h"
+#include "pv_2way_source.h"
 
 
-OSCL_EXPORT_REF PV2WaySourceAndSinksBase::PV2WaySourceAndSinksBase(PV2WaySourceAndSinksObserver* aSourceSinksObserver,
-        PV2Way324InitInfo& aSdkInitInfo):
-        iObserver(aSourceSinksObserver),
+OSCL_EXPORT_REF PV2WaySourceAndSinksBase::PV2WaySourceAndSinksBase(PV2Way324InitInfo& aSdkInitInfo):
         iAudioStartRecId(-1),
         iAudioStopRecId(-1),
         iVideoStartRecId(-1),
@@ -37,22 +32,42 @@ OSCL_EXPORT_REF PV2WaySourceAndSinksBase::PV2WaySourceAndSinksBase(PV2WaySourceA
         iVideoSource(NULL),
         iTerminal(NULL)
 {
-    iAudioSink = OSCL_NEW(PV2WayAudioSink,
-                          (&iSdkInitInfo.iIncomingAudioFormats));
-    iAudioSource = OSCL_NEW(PV2WayAudioSource,
-                            (&iSdkInitInfo.iOutgoingAudioFormats));
-    iVideoSink = OSCL_NEW(PV2WayVideoSink,
-                          (&iSdkInitInfo.iIncomingVideoFormats));
-    iVideoSource = OSCL_NEW(PV2WayVideoSource,
-                            (&iSdkInitInfo.iOutgoingVideoFormats));
+    iAudioSink = OSCL_NEW(PV2WaySink,
+                          (&iSdkInitInfo.iIncomingAudioFormats, this));
+    iAudioSource = OSCL_NEW(PV2WaySource,
+                            (&iSdkInitInfo.iOutgoingAudioFormats, this));
+    iVideoSink = OSCL_NEW(PV2WaySink,
+                          (&iSdkInitInfo.iIncomingVideoFormats, this));
+    iVideoSource = OSCL_NEW(PV2WaySource,
+                            (&iSdkInitInfo.iOutgoingVideoFormats, this));
 }
 
 
 OSCL_EXPORT_REF PV2WaySourceAndSinksBase::~PV2WaySourceAndSinksBase()
 {
-    Cleanup();
 }
 
+int PV2WaySourceAndSinksBase::GetEngineCmdState(PVCommandId aCmdId)
+{
+    if (iAudioSource->IsAddId(aCmdId))
+        return EPVTestCmdAddAudioDataSource;
+    else if (iAudioSource->IsRemoveId(aCmdId))
+        return EPVTestCmdRemoveAudioDataSource;
+    else if (iVideoSource->IsAddId(aCmdId))
+        return EPVTestCmdAddVideoDataSource;
+    else if (iVideoSource->IsRemoveId(aCmdId))
+        return EPVTestCmdRemoveVideoDataSource;
+    else if (iAudioSink->IsAddId(aCmdId))
+        return EPVTestCmdAddAudioDataSink;
+    else if (iAudioSink->IsRemoveId(aCmdId))
+        return EPVTestCmdRemoveAudioDataSink;
+    else if (iVideoSink->IsAddId(aCmdId))
+        return EPVTestCmdAddVideoDataSink;
+    else if (iVideoSink->IsRemoveId(aCmdId))
+        return EPVTestCmdRemoveVideoDataSink;
+    else
+        return EPVTestCmdIdle;
+}
 OSCL_EXPORT_REF void PV2WaySourceAndSinksBase::Init()
 {
     iAudioSink->Init();
@@ -69,15 +84,15 @@ OSCL_EXPORT_REF void PV2WaySourceAndSinksBase::Cleanup()
         OSCL_DELETE(iAudioSink);
         iAudioSink = NULL;
     }
-    if (iAudioSource)
-    {
-        OSCL_DELETE(iAudioSource);
-        iAudioSource = NULL;
-    }
     if (iVideoSink)
     {
         OSCL_DELETE(iVideoSink);
         iVideoSink = NULL;
+    }
+    if (iAudioSource)
+    {
+        OSCL_DELETE(iAudioSource);
+        iAudioSource = NULL;
     }
     if (iVideoSource)
     {
@@ -170,48 +185,6 @@ PV2WayMIO* PV2WaySourceAndSinksBase::GetMIO(TPVDirection aDir,
 
 }
 
-OSCL_EXPORT_REF int PV2WaySourceAndSinksBase::AddPreferredCodec(TPVDirection aDir,
-        PV2WayMediaType aMediaType,
-        PVMFFormatType aFormat)
-{
-    PV2WayMIO* mio = GetMIO(aDir, aMediaType);
-    if (mio)
-    {
-        mio->AddCodec(aFormat);
-        return 0;
-    }
-    OutputInfo("PV2WaySourceAndSinksBase::AddPreferredCodec: Error!  No MIO of given dir, type");
-    return -1;
-}
-
-OSCL_EXPORT_REF int PV2WaySourceAndSinksBase::AddPreferredCodec(TPVDirection aDir,
-        PV2WayMediaType aMediaType,
-        PvmiMIOFileInputSettings& aFileSettings)
-{
-    PV2WayMIO* mio = GetMIO(aDir, aMediaType);
-    if (mio)
-    {
-        mio->AddCodec(aFileSettings);
-        return 0;
-    }
-    OutputInfo("PV2WaySourceAndSinksBase::AddPreferredCodec: Error!  No MIO of given dir, type");
-    return -1;
-}
-
-
-OSCL_EXPORT_REF int PV2WaySourceAndSinksBase::AddPreferredCodec(TPVDirection aDir,
-        PV2WayMediaType aMediaType,
-        PVMFFileInputSettings& aFileSettings)
-{
-    PV2WayMIO* mio = GetMIO(aDir, aMediaType);
-    if (mio)
-    {
-        mio->AddCodec(aFileSettings);
-        return 0;
-    }
-    OutputInfo("PV2WaySourceAndSinksBase::AddPreferredCodec: Error!  No MIO of given dir, type");
-    return -1;
-}
 
 OSCL_EXPORT_REF void PV2WaySourceAndSinksBase::CommandCompleted(const PVCmdResponse& aResponse)
 {
@@ -327,45 +300,14 @@ OSCL_EXPORT_REF void PV2WaySourceAndSinksBase::PrintFormatTypes()
     iVideoSource->PrintFormatTypes();
 }
 
-#ifdef PERF_TEST
-OSCL_EXPORT_REF int PV2WaySourceAndSinksBase::SetPerfFileSettings()
+OSCL_EXPORT_REF bool PV2WaySourceAndSinksBase::FormatMatchesSelectedCodec(TPVDirection aDir,
+        PV2WayMediaType aMediaType, PVMFFormatType& aFormat)
 {
-    PVMFFileInputSettings audioSourceFileSettings;
-    audioSourceFileSettings.iMediaFormat = PVMF_MIME_AMR_IF2;
-    audioSourceFileSettings.iLoopInputFile = true;
-    audioSourceFileSettings.iFileName = AUDIO_SOURCE_FILENAME_FOR_PERF;
-    audioSourceFileSettings.iSamplingFrequency = 8000;
-    audioSourceFileSettings.iNumChannels = 1;
-    audioSourceFileSettings.iFrameRateSimulation = true;
-    iAudioSource->AddCodec(audioSourceFileSettings);
-
-    // create audio sink for performance testing
-    PVMFFileInputSettings audioSinkFileSettings;
-    audioSinkFileSettings.iFileName = AUDIO_SINK_FILENAME;
-    audioSinkFileSettings.iMediaFormat = PVMF_MIME_AMR_IF2;
-    iAudioSink->AddCodec(audioSinkFileSettings);
-
-    // create the video source for performance testing
-    PVMFFileInputSettings videoSourceFileSettings;
-    videoSourceFileSettings.iMediaFormat = PVMF_MIME_H2632000; // console was: PVMF_MIME_H263
-    videoSourceFileSettings.iLoopInputFile = true;
-    videoSourceFileSettings.iFileName = VIDEO_SOURCE_FILENAME_FOR_PERF;
-    videoSourceFileSettings.iTimescale = VIDEO_TIMESCALE;
-    videoSourceFileSettings.iFrameHeight = VIDEO_FRAMEHEIGHT;
-    videoSourceFileSettings.iFrameWidth = VIDEO_FRAMEWIDTH;
-    videoSourceFileSettings.iFrameRate = VIDEO_FRAMERATE;
-    videoSourceFileSettings.iFrameRateSimulation = true;
-    iVideoSource->AddCodec(videoSourceFileSettings);
-
-    // create the video sink for performance testing
-    PVMFFileInputSettings videoSinkFileSettings;
-    videoSinkFileSettings.iFileName = VIDEO_SINK_FILENAME;
-    videoSinkFileSettings.iMediaFormat = PVMF_MIME_H2632000;
-    iVideoSink->AddCodec(videoSinkFileSettings);
-
-    return PVMFSuccess;
+    PVMFFormatType& form = GetMIO(aDir, aMediaType)->GetSelectedFormat();
+    OutputInfo(" Expected: %s and Found: %s match? %d --------\n",
+               aFormat.getMIMEStrPtr(), form.getMIMEStrPtr(), (form == aFormat));
+    return (form == aFormat) ? true : false;
 }
 
-#endif
 
 

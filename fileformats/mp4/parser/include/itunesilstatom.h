@@ -178,9 +178,11 @@ class ITunesGenreAtom: public ITunesMetaDataAtom
         ITunesGenreAtom(MP4_FF_FILE *fp, uint32 size, uint32 type);
         ~ITunesGenreAtom();
 
-        uint16 getGnreID() const
+        int16 getGnreID() const
         {
-            return _gnreID;
+            return _gnreID - 1; //As per iTunes spec "genre-id" stored in iTunes files is
+            //one more than the what is defined in ID3V1 spec,
+            //substracting 1 to make it mapable on ID3V1 Genre table
         }
 
         OSCL_wHeapString<OsclMemAllocator> getGnreString() const
@@ -541,7 +543,7 @@ class ITunesILSTAtom : public Atom
         }
 
         // Gnre ** Starts **
-        uint16 getGnreID() const
+        int16 getGnreID() const
         {
             if (_pITunesGenreAtom)
             {
@@ -550,10 +552,10 @@ class ITunesILSTAtom : public Atom
                     return _pITunesGenreAtom->getGnreID();
                 }
                 else
-                    return 0;
+                    return 0xFF;
             }
             else
-                return 0;
+                return 0xFF;
         }
 
 

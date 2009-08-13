@@ -29,6 +29,7 @@ class av_test : public test_base
         {
             iUsingAudio = true;
             iUsingVideo = true;
+            inumCalled = 0;
         }
 
         ~av_test()
@@ -42,19 +43,22 @@ class av_test : public test_base
         void DoCancel();
 
 
-        void TimerCallback();
+        virtual void TimerCallback();
+        void FinishTimerCallback();
+    protected:
+        bool start_async_test();
+        bool CheckAllSourceAndSinkAdded();
+
+        int inumCalled;
 
     private:
         virtual void ConnectSucceeded();
-        bool start_async_test();
         virtual void InitFailed();
         virtual void ConnectFailed();
-        virtual void AudioAddSinkCompleted();
-        virtual void AudioAddSourceCompleted();
-        virtual void VideoAddSinkFailed();
+        virtual void AudioAddSinkSucceeded();
+        virtual void AudioAddSourceSucceeded();
         virtual void VideoAddSinkSucceeded();
         virtual void VideoAddSourceSucceeded();
-        virtual void VideoAddSourceFailed();
         virtual void RstCmdCompleted();
 
         virtual void AudioRemoveSourceCompleted();

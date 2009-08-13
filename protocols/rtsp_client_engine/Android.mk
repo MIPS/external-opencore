@@ -11,7 +11,7 @@ LOCAL_SRC_FILES := \
 
 LOCAL_MODULE := libpvrtsp_cli_eng_node
 
-LOCAL_CFLAGS :=  $(PV_CFLAGS)
+LOCAL_CFLAGS :=   $(PV_CFLAGS)
 
 
 
@@ -22,7 +22,6 @@ LOCAL_SHARED_LIBRARIES :=
 LOCAL_C_INCLUDES := \
 	$(PV_TOP)/protocols/rtsp_client_engine/src \
  	$(PV_TOP)/protocols/rtsp_client_engine/inc \
- 	$(PV_TOP)/nodes/streaming/streamingmanager/config/3gpp \
  	$(PV_TOP)/protocols/rtsp_parcom/src \
  	$(PV_TOP)/protocols/rtp/src \
  	$(PV_TOP)/baselibs/gen_data_structures/src \
@@ -31,6 +30,7 @@ LOCAL_C_INCLUDES := \
  	$(PV_TOP)/baselibs/pvcrypto/src \
  	$(PV_TOP)/protocols/rdt_parser/include \
  	$(PV_TOP)/nodes/streaming/common/include \
+ 	$(PV_TOP)/nodes/streaming/streamingmanager/config/3gpp \
  	$(PV_INCLUDES)
 
 LOCAL_COPY_HEADERS_TO := $(PV_COPY_HEADERS_TO)

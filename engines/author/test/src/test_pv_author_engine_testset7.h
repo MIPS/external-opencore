@@ -33,6 +33,7 @@ class pv_mediainput_async_test_reset: public pvauthor_async_test_base
                 , iInputFileName(NULL)
                 , iComposerMimeType(aMediaParam.iComposerInfo)
                 , iAudioEncoderMimeType(aMediaParam.iAudioEncInfo)
+                , iAacEncoderProfileMimeType(aMediaParam.iAacEncProfileInfo)
                 , iVideoEncoderMimeType(aMediaParam.iVideoEncInfo)
                 , iMediaInputType(aMediaParam.iInputFormat)
                 , iAuthor(NULL)
@@ -133,6 +134,7 @@ class pv_mediainput_async_test_reset: public pvauthor_async_test_base
 
         OSCL_HeapString<OsclMemAllocator> iComposerMimeType;
         OSCL_HeapString<OsclMemAllocator> iAudioEncoderMimeType;
+        OSCL_HeapString<OsclMemAllocator> iAacEncoderProfileMimeType;
         OSCL_HeapString<OsclMemAllocator> iVideoEncoderMimeType;
 
         //test input type

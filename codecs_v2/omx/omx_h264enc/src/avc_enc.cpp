@@ -430,12 +430,12 @@ OMX_ERRORTYPE AvcEncoder_OMX::AvcEncInit(OMX_VIDEO_PORTDEFINITIONTYPE aInputPara
 
     aEncOption.num_ref_frame = 1;   //We only support this value
 
-    //Since FMO is disabled in our case, num of slice group is always 1
-#if (defined(TEST_FULL_AVC_FRAME_MODE) || defined(TEST_FULL_AVC_FRAME_MODE_SC))
+#if (defined(TEST_FULL_AVC_FRAME_MODE) || defined(TEST_FULL_AVC_FRAME_MODE_SC) || defined(TEST_FULL_AVC_FRAME_MODE_I2BNS) || defined(TEST_FULL_AVC_FRAME_MODE_I4BNS))
     aEncOption.num_slice_group = 4;
     aEncOption.fmo_type = 6;
     aEncOption.use_overrun_buffer = AVC_OFF; // since we are to be outputing full frame buffers
 #else
+    //Since FMO is disabled in our case, num of slice group is always 1
     aEncOption.num_slice_group = 1;
     aEncOption.fmo_type = 0;    //Disabled in this case
     aEncOption.use_overrun_buffer = AVC_ON;

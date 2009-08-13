@@ -1,0 +1,71 @@
+#Test Case Name - This should be at the start
+Name TestCase11 - OLC Video al3 controlFieldOctets 0-0
+
+# Terminal Setup
+# These setings configure how the terminal will be setup
+# There are seperate settings for terminal A and Terminal B
+# Settings set here do no require the full set
+# Default settings will be set on the terminal. The settings explictly set here
+# will override the default settings of the terminal
+# Terminal A 
+Terminal A
+H.223Muxlevel 2
+# Any AL option specified here will override all the al options in the default 
+# setting
+AL Video
+AL2Allow on
+AL2USE off
+MSD undef
+#- This is not supported as of now
+BER bit error injection 
+# Audio OLC caps
+Caps
+Receive
+Audio 
+AMR
+# Video OLC caps
+Video 
+H.263BL
+AL3CFO 0
+
+#Terminal B
+Terminal B
+H.223Muxlevel 2
+# Any AL option specified here will override all the al options in the default 
+# setting
+AL Video
+AL2Allow on
+AL2USE off
+# Audio - use defaults
+MSD undef
+#- This is not supported as of now
+BER bit error injection 
+# Audio OLC caps
+Caps
+Receive
+Audio 
+AMR
+# Video OLC caps
+Video 
+H.263BL
+AL3CFO 0
+
+# Specify the actions to be performed
+
+# 1. Configure terminal(s) according to Default Endpoint Settings (clause 1.3) and Terminal Setup.
+# 2. Establish call session.
+# 3. Validate expected behaviour checkpoint 7.
+# 4. Terminate call session.
+
+# Specify the Expected behaviour
+
+# 1. Level setup on Muxlevel 2
+# 2. RespMsg_terminalCapabilitySetAck received
+# 3. RespMsg_masterSlaveDeterminationAck received
+# 4. RespMsg_openLogicalChannelAck for Audio received
+# 5. RespMsg_openLogicalChannelAck (Master, Slave unidir)||IndMsg_openLogicalChannelConfirm (Slave bidir) for Video received
+# 6. RespMsg_multiplexEntrySendAck for all mux table entries
+# 7. Encoding + Sending/Reception + Decoding of Video/Audio
+# 8. CmdMsg_endSessionCommand sent
+# Order: 1, 2-3, 4-7, 8
+

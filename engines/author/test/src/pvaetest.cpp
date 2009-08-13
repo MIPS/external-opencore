@@ -41,6 +41,15 @@
 
 #if USE_OMX_ENC_NODE
 #include "OMX_Core.h"
+#include "pv_omxcore.h"
+#endif
+
+#ifndef MP4FFFREC_H_INCLUDED
+#include "pvmp4ffrec.h"
+#endif
+
+#ifndef IMPEG4FILE_H_INCLUDED
+#include "impeg4file.h"
 #endif
 
 FILE* file;
@@ -90,7 +99,7 @@ bool LoadVideoConfiguration(OSCL_HeapString<OsclMemAllocator>& aVideoConfigFileN
 PVAuthorEngineTest::PVAuthorEngineTest(FILE* aStdOut, int32 aFirstTest, int32 aLastTest,
                                        const char* aInputFileNameAudio, const char* aInputFileNameVideo, const char* aInputFileNameText, const char* aOutputFileName, AVTConfig aAVTConfig,
                                        PVAETestInputType aAudioInputType, PVAETestInputType aVideoInputType,  PVAETestInputType aTextInputType,
-                                       const char* aComposerMimeType, const char* aAudioEncoderMimeType, const char* aVideoEncoderMimeType,  const char* aTextEncoderMimeType, uint32 aAuthoringTime):
+                                       const char* aComposerMimeType, const char* aAudioEncoderMimeType, const char* aAacEncoderProfileMimeType, const char* aVideoEncoderMimeType,  const char* aTextEncoderMimeType, uint32 aAuthoringTime):
 
         iCurrentTest(NULL),
         iFirstTest(aFirstTest),
@@ -103,6 +112,7 @@ PVAuthorEngineTest::PVAuthorEngineTest(FILE* aStdOut, int32 aFirstTest, int32 aL
         iTextInputType(aTextInputType),
         iComposerMimeType(aComposerMimeType),
         iAudioEncoderMimeType(aAudioEncoderMimeType),
+        iAacEncoderProfileMimeType(aAacEncoderProfileMimeType),
         iVideoEncoderMimeType(aVideoEncoderMimeType),
         iTextEncoderMimeType(aTextEncoderMimeType),
         iAVTConfig(aAVTConfig),
@@ -298,73 +308,73 @@ void PVAuthorEngineTest::RunTestCases()
             fprintf(iStdOut, "AMR to A-Only .3gp Test\n");
             iCurrentTest = new pvauthor_async_test_miscellaneous(testparam, (const char*)iInputFileNameAudio.get_cstr(), (const char*)iInputFileNameVideo.get_cstr(), (const char*)iInputFileNameText.get_cstr(),
                     (const char*)iOutputFileName.get_cstr(), iAudioInputType, iVideoInputType, iTextInputType,
-                    iComposerMimeType.get_cstr(), iAudioEncoderMimeType.get_cstr(), iVideoEncoderMimeType.get_cstr(),  iTextEncoderMimeType.get_cstr(), iAVTConfig, false, KTestDuration);
+                    iComposerMimeType.get_cstr(), iAudioEncoderMimeType.get_cstr(), iAacEncoderProfileMimeType.get_cstr(), iVideoEncoderMimeType.get_cstr(),  iTextEncoderMimeType.get_cstr(), iAVTConfig, false, KTestDuration);
             break;
         case H263_Input_VOnly_3gpTest:
             fprintf(iStdOut, "H263 to V-Only .3gp Test\n");
             iCurrentTest = new pvauthor_async_test_miscellaneous(testparam, (const char*)iInputFileNameAudio.get_cstr(), (const char*)iInputFileNameVideo.get_cstr(), (const char*)iInputFileNameText.get_cstr(),
                     (const char*)iOutputFileName.get_cstr(), iAudioInputType, iVideoInputType, iTextInputType,
-                    iComposerMimeType.get_cstr(), iAudioEncoderMimeType.get_cstr(), iVideoEncoderMimeType.get_cstr(),  iTextEncoderMimeType.get_cstr(), iAVTConfig, false, KTestDuration);
+                    iComposerMimeType.get_cstr(), iAudioEncoderMimeType.get_cstr(), iAacEncoderProfileMimeType.get_cstr(), iVideoEncoderMimeType.get_cstr(),  iTextEncoderMimeType.get_cstr(), iAVTConfig, false, KTestDuration);
             break;
         case AMR_YUV_Input_AV_3gpTest:
             fprintf(iStdOut, "AMR & YUV to AV .3gp Test\n");
             iCurrentTest = new pvauthor_async_test_miscellaneous(testparam, (const char*)iInputFileNameAudio.get_cstr(), (const char*)iInputFileNameVideo.get_cstr(), (const char*)iInputFileNameText.get_cstr(),
                     (const char*)iOutputFileName.get_cstr(), iAudioInputType, iVideoInputType, iTextInputType,
-                    iComposerMimeType.get_cstr(), iAudioEncoderMimeType.get_cstr(), iVideoEncoderMimeType.get_cstr(),  iTextEncoderMimeType.get_cstr(), iAVTConfig, false, KTestDuration);
+                    iComposerMimeType.get_cstr(), iAudioEncoderMimeType.get_cstr(), iAacEncoderProfileMimeType.get_cstr(), iVideoEncoderMimeType.get_cstr(),  iTextEncoderMimeType.get_cstr(), iAVTConfig, false, KTestDuration);
             break;
         case AMR_H263_Input_AV_3gpTest:
             fprintf(iStdOut, "AMR & H263 to AV .3gp Test\n");
             iCurrentTest = new pvauthor_async_test_miscellaneous(testparam, (const char*)iInputFileNameAudio.get_cstr(), (const char*)iInputFileNameVideo.get_cstr(), (const char*)iInputFileNameText.get_cstr(),
                     (const char*)iOutputFileName.get_cstr(), iAudioInputType, iVideoInputType, iTextInputType,
-                    iComposerMimeType.get_cstr(), iAudioEncoderMimeType.get_cstr(), iVideoEncoderMimeType.get_cstr(),  iTextEncoderMimeType.get_cstr(), iAVTConfig, false, KTestDuration);
+                    iComposerMimeType.get_cstr(), iAudioEncoderMimeType.get_cstr(), iAacEncoderProfileMimeType.get_cstr(), iVideoEncoderMimeType.get_cstr(),  iTextEncoderMimeType.get_cstr(), iAVTConfig, false, KTestDuration);
             break;
         case AMR_YUV_Input_AV_M4V_AMR_Output_3gpTest:
             fprintf(iStdOut, "AMR & YUV to AV using M4V Encoder .3gp Test\n");
             iCurrentTest = new pvauthor_async_test_miscellaneous(testparam, (const char*)iInputFileNameAudio.get_cstr(), (const char*)iInputFileNameVideo.get_cstr(), (const char*)iInputFileNameText.get_cstr(),
                     (const char*)iOutputFileName.get_cstr(), iAudioInputType, iVideoInputType, iTextInputType,
-                    iComposerMimeType.get_cstr(), iAudioEncoderMimeType.get_cstr(), iVideoEncoderMimeType.get_cstr(),  iTextEncoderMimeType.get_cstr(), iAVTConfig, false, KTestDuration);
+                    iComposerMimeType.get_cstr(), iAudioEncoderMimeType.get_cstr(), iAacEncoderProfileMimeType.get_cstr(), iVideoEncoderMimeType.get_cstr(),  iTextEncoderMimeType.get_cstr(), iAVTConfig, false, KTestDuration);
             break;
         case AMR_FOutput_Test:
             fprintf(iStdOut, "AMR Input to .amr Test\n");
             iCurrentTest = new pvauthor_async_test_miscellaneous(testparam, (const char*)iInputFileNameAudio.get_cstr(), (const char*)iInputFileNameVideo.get_cstr(), (const char*)iInputFileNameText.get_cstr(),
                     (const char*)iOutputFileName.get_cstr(), iAudioInputType, iVideoInputType, iTextInputType,
-                    iComposerMimeType.get_cstr(), iAudioEncoderMimeType.get_cstr(), iVideoEncoderMimeType.get_cstr(),  iTextEncoderMimeType.get_cstr(), iAVTConfig, false, KTestDuration);
+                    iComposerMimeType.get_cstr(), iAudioEncoderMimeType.get_cstr(), iAacEncoderProfileMimeType.get_cstr(), iVideoEncoderMimeType.get_cstr(),  iTextEncoderMimeType.get_cstr(), iAVTConfig, false, KTestDuration);
             break;
         case AACADIF_FOutput_Test:
             fprintf(iStdOut, "AAC-ADIF Input to .aac Test\n");
             iCurrentTest = new pvauthor_async_test_miscellaneous(testparam, (const char*)iInputFileNameAudio.get_cstr(), (const char*)iInputFileNameVideo.get_cstr(), (const char*)iInputFileNameText.get_cstr(),
                     (const char*)iOutputFileName.get_cstr(), iAudioInputType, iVideoInputType, iTextInputType,
-                    iComposerMimeType.get_cstr(), iAudioEncoderMimeType.get_cstr(), iVideoEncoderMimeType.get_cstr(),  iTextEncoderMimeType.get_cstr(), iAVTConfig, false, KTestDuration);
+                    iComposerMimeType.get_cstr(), iAudioEncoderMimeType.get_cstr(), iAacEncoderProfileMimeType.get_cstr(), iVideoEncoderMimeType.get_cstr(),  iTextEncoderMimeType.get_cstr(), iAVTConfig, false, KTestDuration);
             break;
         case AACADTS_FOutput_Test:
             fprintf(iStdOut, "AAC-ADTS Input to .aac Test\n");
             iCurrentTest = new pvauthor_async_test_miscellaneous(testparam, (const char*)iInputFileNameAudio.get_cstr(), (const char*)iInputFileNameVideo.get_cstr(), (const char*)iInputFileNameText.get_cstr(),
                     (const char*)iOutputFileName.get_cstr(), iAudioInputType, iVideoInputType, iTextInputType,
-                    iComposerMimeType.get_cstr(), iAudioEncoderMimeType.get_cstr(), iVideoEncoderMimeType.get_cstr(),  iTextEncoderMimeType.get_cstr(), iAVTConfig, false, KTestDuration);
+                    iComposerMimeType.get_cstr(), iAudioEncoderMimeType.get_cstr(), iAacEncoderProfileMimeType.get_cstr(), iVideoEncoderMimeType.get_cstr(),  iTextEncoderMimeType.get_cstr(), iAVTConfig, false, KTestDuration);
             break;
         case AMRWB_Input_AOnly_3gpTest:
             fprintf(iStdOut, "AMR-WB to A-Only .3gp Test\n");
             iCurrentTest = new pvauthor_async_test_miscellaneous(testparam, (const char*)iInputFileNameAudio.get_cstr(), (const char*)iInputFileNameVideo.get_cstr(), (const char*)iInputFileNameText.get_cstr(),
                     (const char*)iOutputFileName.get_cstr(), iAudioInputType, iVideoInputType, iTextInputType,
-                    iComposerMimeType.get_cstr(), iAudioEncoderMimeType.get_cstr(), iVideoEncoderMimeType.get_cstr(),  iTextEncoderMimeType.get_cstr(), iAVTConfig, false, KTestDuration);
+                    iComposerMimeType.get_cstr(), iAudioEncoderMimeType.get_cstr(), iAacEncoderProfileMimeType.get_cstr(), iVideoEncoderMimeType.get_cstr(),  iTextEncoderMimeType.get_cstr(), iAVTConfig, false, KTestDuration);
             break;
         case AMRWB_FOutput_Test:
             fprintf(iStdOut, "AMR-WB Input to .awb Test\n");
             iCurrentTest = new pvauthor_async_test_miscellaneous(testparam, (const char*)iInputFileNameAudio.get_cstr(), (const char*)iInputFileNameVideo.get_cstr(), (const char*)iInputFileNameText.get_cstr(),
                     (const char*)iOutputFileName.get_cstr(), iAudioInputType, iVideoInputType, iTextInputType,
-                    iComposerMimeType.get_cstr(), iAudioEncoderMimeType.get_cstr(), iVideoEncoderMimeType.get_cstr(),  iTextEncoderMimeType.get_cstr(), iAVTConfig, false, KTestDuration);
+                    iComposerMimeType.get_cstr(), iAudioEncoderMimeType.get_cstr(), iAacEncoderProfileMimeType.get_cstr(), iVideoEncoderMimeType.get_cstr(),  iTextEncoderMimeType.get_cstr(), iAVTConfig, false, KTestDuration);
             break;
         case ErrorHandling_WrongTextInputFileNameTest:
             fprintf(iStdOut, "ErrorHandling_WrongTextInputFileNameTest Test\n");
             iCurrentTest = new pvauthor_async_compressed_test_errorhandling(testparam, (const char*)iInputFileNameAudio.get_cstr(), (const char*)iInputFileNameVideo.get_cstr(), (const char*)iInputFileNameText.get_cstr(),
                     (const char*)iOutputFileName.get_cstr(), iAudioInputType, iVideoInputType, iTextInputType,
-                    iComposerMimeType.get_cstr(), iAudioEncoderMimeType.get_cstr(), iVideoEncoderMimeType.get_cstr(),  iTextEncoderMimeType.get_cstr(), iAVTConfig, false, KTestDuration, ERROR_NOSTATE);
+                    iComposerMimeType.get_cstr(), iAudioEncoderMimeType.get_cstr(), iAacEncoderProfileMimeType.get_cstr(), iVideoEncoderMimeType.get_cstr(),  iTextEncoderMimeType.get_cstr(), iAVTConfig, false, KTestDuration, ERROR_NOSTATE);
             break;
         case ErrorHandling_WrongOutputPathTest:
             fprintf(iStdOut, "ErrorHandling_WrongOutputPathTest Test\n");
             iCurrentTest = new pvauthor_async_compressed_test_errorhandling(testparam, (const char*)iInputFileNameAudio.get_cstr(), (const char*)iInputFileNameVideo.get_cstr(), (const char*)iInputFileNameText.get_cstr(),
                     (const char*)iOutputFileName.get_cstr(), iAudioInputType, iVideoInputType, iTextInputType,
-                    iComposerMimeType.get_cstr(), iAudioEncoderMimeType.get_cstr(), iVideoEncoderMimeType.get_cstr(),  iTextEncoderMimeType.get_cstr(), iAVTConfig, false, KTestDuration, ERROR_NOSTATE);
+                    iComposerMimeType.get_cstr(), iAudioEncoderMimeType.get_cstr(), iAacEncoderProfileMimeType.get_cstr(), iVideoEncoderMimeType.get_cstr(),  iTextEncoderMimeType.get_cstr(), iAVTConfig, false, KTestDuration, ERROR_NOSTATE);
             break;
 
         case ErrorHandling_MediaInputNodeStartFailed:
@@ -376,7 +386,7 @@ void PVAuthorEngineTest::RunTestCases()
 #else
             iCurrentTest = new pvauthor_async_compressed_test_errorhandling(testparam, (const char*)iInputFileNameAudio.get_cstr(), (const char*)iInputFileNameVideo.get_cstr(), (const char*)iInputFileNameText.get_cstr(),
                     (const char*)iOutputFileName.get_cstr(), iAudioInputType, iVideoInputType, iTextInputType,
-                    iComposerMimeType.get_cstr(), iAudioEncoderMimeType.get_cstr(), iVideoEncoderMimeType.get_cstr(),  iTextEncoderMimeType.get_cstr(), iAVTConfig, false, KTestDuration, ERROR_MEDIAINPUTNODE_ADDDATASOURCE_START);
+                    iComposerMimeType.get_cstr(), iAudioEncoderMimeType.get_cstr(), iAacEncoderProfileMimeType.get_cstr(), iVideoEncoderMimeType.get_cstr(),  iTextEncoderMimeType.get_cstr(), iAVTConfig, false, KTestDuration, ERROR_MEDIAINPUTNODE_ADDDATASOURCE_START);
             break;
 #endif
         case TEXT_Input_TOnly_3gpTest:
@@ -394,66 +404,65 @@ void PVAuthorEngineTest::RunTestCases()
             iAVTConfig.iTextLogFile = UnicodeToUTF8;
             iCurrentTest = new pvauthor_async_test_miscellaneous(testparam, (const char*)iInputFileNameAudio.get_cstr(), (const char*)iInputFileNameVideo.get_cstr(), (const char*)iInputFileNameText.get_cstr(),
                     (const char*)iOutputFileName.get_cstr(), iAudioInputType, iVideoInputType, iTextInputType,
-                    iComposerMimeType.get_cstr(), iAudioEncoderMimeType.get_cstr(), iVideoEncoderMimeType.get_cstr(),  iTextEncoderMimeType.get_cstr(), iAVTConfig, false, KTestDuration);
+                    iComposerMimeType.get_cstr(), iAudioEncoderMimeType.get_cstr(), iAacEncoderProfileMimeType.get_cstr(), iVideoEncoderMimeType.get_cstr(),  iTextEncoderMimeType.get_cstr(), iAVTConfig, false, KTestDuration);
         }
         break;
         case AMR_TEXT_Input_AT_3gpTest:
             fprintf(iStdOut, "AMR/TEXT .3gp Test\n");
             iCurrentTest = new pvauthor_async_test_miscellaneous(testparam, (const char*)iInputFileNameAudio.get_cstr(), (const char*)iInputFileNameVideo.get_cstr(), (const char*)iInputFileNameText.get_cstr(),
                     (const char*)iOutputFileName.get_cstr(), iAudioInputType, iVideoInputType, iTextInputType,
-                    iComposerMimeType.get_cstr(), iAudioEncoderMimeType.get_cstr(), iVideoEncoderMimeType.get_cstr(),  iTextEncoderMimeType.get_cstr(), iAVTConfig, false, KTestDuration);
+                    iComposerMimeType.get_cstr(), iAudioEncoderMimeType.get_cstr(), iAacEncoderProfileMimeType.get_cstr(), iVideoEncoderMimeType.get_cstr(),  iTextEncoderMimeType.get_cstr(), iAVTConfig, false, KTestDuration);
             break;
         case YUV_TEXT_Input_VT_3gpTest:
             fprintf(iStdOut, "YUV/TEXT .3gp Test\n");
             iCurrentTest = new pvauthor_async_test_miscellaneous(testparam, (const char*)iInputFileNameAudio.get_cstr(), (const char*)iInputFileNameVideo.get_cstr(), (const char*)iInputFileNameText.get_cstr(),
                     (const char*)iOutputFileName.get_cstr(), iAudioInputType, iVideoInputType, iTextInputType,
-                    iComposerMimeType.get_cstr(), iAudioEncoderMimeType.get_cstr(), iVideoEncoderMimeType.get_cstr(),  iTextEncoderMimeType.get_cstr(), iAVTConfig, false, KTestDuration);
+                    iComposerMimeType.get_cstr(), iAudioEncoderMimeType.get_cstr(), iAacEncoderProfileMimeType.get_cstr(), iVideoEncoderMimeType.get_cstr(),  iTextEncoderMimeType.get_cstr(), iAVTConfig, false, KTestDuration);
             break;
         case AMR_YUV_TEXT_Input_AVT_3gpTest:
             fprintf(iStdOut, "YUV/AMR/TEXT .3gp Test\n");
             iCurrentTest = new pvauthor_async_test_miscellaneous(testparam, (const char*)iInputFileNameAudio.get_cstr(), (const char*)iInputFileNameVideo.get_cstr(), (const char*)iInputFileNameText.get_cstr(),
                     (const char*)iOutputFileName.get_cstr(), iAudioInputType, iVideoInputType, iTextInputType,
-                    iComposerMimeType.get_cstr(), iAudioEncoderMimeType.get_cstr(), iVideoEncoderMimeType.get_cstr(),  iTextEncoderMimeType.get_cstr(), iAVTConfig, false, KTestDuration);
+                    iComposerMimeType.get_cstr(), iAudioEncoderMimeType.get_cstr(), iAacEncoderProfileMimeType.get_cstr(), iVideoEncoderMimeType.get_cstr(),  iTextEncoderMimeType.get_cstr(), iAVTConfig, false, KTestDuration);
             break;
 
             // longetivity test
-
         case TEXT_Input_TOnly_3gp_LongetivityTest:
             fprintf(iStdOut, "TEXT_Input_TOnly_3gp_LongetivityTest test \n");
             iCurrentTest = new pvauthor_async_test_miscellaneous(testparam, (const char*)iInputFileNameAudio.get_cstr(), (const char*)iInputFileNameVideo.get_cstr(), (const char*)iInputFileNameText.get_cstr(),
                     (const char*)iOutputFileName.get_cstr(), iAudioInputType, iVideoInputType, iTextInputType,
-                    iComposerMimeType.get_cstr(), iAudioEncoderMimeType.get_cstr(), iVideoEncoderMimeType.get_cstr(),  iTextEncoderMimeType.get_cstr(), iAVTConfig, false, iAuthoringTime);
+                    iComposerMimeType.get_cstr(), iAudioEncoderMimeType.get_cstr(), iAacEncoderProfileMimeType.get_cstr(), iVideoEncoderMimeType.get_cstr(),  iTextEncoderMimeType.get_cstr(), iAVTConfig, false, iAuthoringTime);
             break;
 
         case AMR_TEXT_Input_AT_3gp_LongetivityTest:
             fprintf(iStdOut, "AMR_TEXT_Input_AT_3gp_LongetivityTest test \n");
             iCurrentTest = new pvauthor_async_test_miscellaneous(testparam, (const char*)iInputFileNameAudio.get_cstr(), (const char*)iInputFileNameVideo.get_cstr(), (const char*)iInputFileNameText.get_cstr(),
                     (const char*)iOutputFileName.get_cstr(), iAudioInputType, iVideoInputType, iTextInputType,
-                    iComposerMimeType.get_cstr(), iAudioEncoderMimeType.get_cstr(), iVideoEncoderMimeType.get_cstr(),  iTextEncoderMimeType.get_cstr(), iAVTConfig, false, iAuthoringTime);
+                    iComposerMimeType.get_cstr(), iAudioEncoderMimeType.get_cstr(), iAacEncoderProfileMimeType.get_cstr(), iVideoEncoderMimeType.get_cstr(),  iTextEncoderMimeType.get_cstr(), iAVTConfig, false, iAuthoringTime);
             break;
 
         case YUV_TEXT_Input_VT_3gp_LongetivityTest:
-            fprintf(iStdOut, "YUV_TEXT_Input_VT_3gp_LongetivityTest test \n");
             iCurrentTest = new pvauthor_async_test_miscellaneous(testparam, (const char*)iInputFileNameAudio.get_cstr(), (const char*)iInputFileNameVideo.get_cstr(), (const char*)iInputFileNameText.get_cstr(),
                     (const char*)iOutputFileName.get_cstr(), iAudioInputType, iVideoInputType, iTextInputType,
-                    iComposerMimeType.get_cstr(), iAudioEncoderMimeType.get_cstr(), iVideoEncoderMimeType.get_cstr(),  iTextEncoderMimeType.get_cstr(), iAVTConfig, false, iAuthoringTime);
+                    iComposerMimeType.get_cstr(), iAudioEncoderMimeType.get_cstr(), iAacEncoderProfileMimeType.get_cstr(), iVideoEncoderMimeType.get_cstr(),  iTextEncoderMimeType.get_cstr(), iAVTConfig, false, iAuthoringTime);
             break;
 
         case AMR_YUV_TEXT_Input_AVT_3gp_LongetivityTest:
             fprintf(iStdOut, "AMR_YUV_TEXT_Input_AVT_3gp_LongetivityTest test \n");
             iCurrentTest = new pvauthor_async_test_miscellaneous(testparam, (const char*)iInputFileNameAudio.get_cstr(), (const char*)iInputFileNameVideo.get_cstr(), (const char*)iInputFileNameText.get_cstr(),
                     (const char*)iOutputFileName.get_cstr(), iAudioInputType, iVideoInputType, iTextInputType,
-                    iComposerMimeType.get_cstr(), iAudioEncoderMimeType.get_cstr(), iVideoEncoderMimeType.get_cstr(),  iTextEncoderMimeType.get_cstr(), iAVTConfig, false, iAuthoringTime);
+                    iComposerMimeType.get_cstr(), iAudioEncoderMimeType.get_cstr(), iAacEncoderProfileMimeType.get_cstr(), iVideoEncoderMimeType.get_cstr(),  iTextEncoderMimeType.get_cstr(), iAVTConfig, false, iAuthoringTime);
             break;
 
         case AMR_FileOutput_Test_UsingExternalFileHandle:
             fprintf(iStdOut, "AMR Input to .amr using external file handle Test\n");
             iCurrentTest = new pvauthor_async_test_miscellaneous(testparam, (const char*)iInputFileNameAudio.get_cstr(), (const char*)iInputFileNameVideo.get_cstr(), (const char*)iInputFileNameText.get_cstr(),
                     (const char*)iOutputFileName.get_cstr(), iAudioInputType, iVideoInputType, iTextInputType,
-                    iComposerMimeType.get_cstr(), iAudioEncoderMimeType.get_cstr(), iVideoEncoderMimeType.get_cstr(),  iTextEncoderMimeType.get_cstr(), iAVTConfig, false, KTestDuration, true);
+                    iComposerMimeType.get_cstr(), iAudioEncoderMimeType.get_cstr(), iAacEncoderProfileMimeType.get_cstr(), iVideoEncoderMimeType.get_cstr(),  iTextEncoderMimeType.get_cstr(), iAVTConfig, false, KTestDuration, true);
             break;
 
         case AAC_Input_AOnly_3gpTest:
+            fprintf(iStdOut, "AAC to A-Only .3gp Test\n");
             if (iAVTConfig.iAudioLogFile == NULL)
             {
                 char UnicodeToUTF8[256];
@@ -461,21 +470,20 @@ void PVAuthorEngineTest::RunTestCases()
                 oscl_UnicodeToUTF8(KAACLogTestInput, oscl_strlen(KAACLogTestInput), UnicodeToUTF8, 255);
                 aAVTConfig.iAudioLogFile = UnicodeToUTF8;
                 LoadAudioConfiguration(aAVTConfig.iAudioLogFile, aAVTConfig, NULL);
-                fprintf(iStdOut, "AAC to A-Only .3gp Test\n");
                 iCurrentTest = new pvauthor_async_test_miscellaneous(testparam, (const char*)iInputFileNameAudio.get_cstr(), (const char*)iInputFileNameVideo.get_cstr(), (const char*)iInputFileNameText.get_cstr(),
                         (const char*)iOutputFileName.get_cstr(), iAudioInputType, iVideoInputType, iTextInputType,
-                        iComposerMimeType.get_cstr(), iAudioEncoderMimeType.get_cstr(), iVideoEncoderMimeType.get_cstr(),  iTextEncoderMimeType.get_cstr(), aAVTConfig, false, KTestDuration);
+                        iComposerMimeType.get_cstr(), iAudioEncoderMimeType.get_cstr(), iAacEncoderProfileMimeType.get_cstr(), iVideoEncoderMimeType.get_cstr(),  iTextEncoderMimeType.get_cstr(), aAVTConfig, false, KTestDuration);
             }
             else
             {
-                fprintf(iStdOut, "AAC to A-Only .3gp Test\n");
                 iCurrentTest = new pvauthor_async_test_miscellaneous(testparam, (const char*)iInputFileNameAudio.get_cstr(), (const char*)iInputFileNameVideo.get_cstr(), (const char*)iInputFileNameText.get_cstr(),
                         (const char*)iOutputFileName.get_cstr(), iAudioInputType, iVideoInputType, iTextInputType,
-                        iComposerMimeType.get_cstr(), iAudioEncoderMimeType.get_cstr(), iVideoEncoderMimeType.get_cstr(),  iTextEncoderMimeType.get_cstr(), iAVTConfig, false, KTestDuration);
+                        iComposerMimeType.get_cstr(), iAudioEncoderMimeType.get_cstr(), iAacEncoderProfileMimeType.get_cstr(), iVideoEncoderMimeType.get_cstr(),  iTextEncoderMimeType.get_cstr(), iAVTConfig, false, KTestDuration);
             }
             break;
 
-        case M4V_Input_AOnly_3gpTest:
+        case M4V_Input_VOnly_3gpTest:
+            fprintf(iStdOut, "M4V to V-Only .3gp Test\n");
             if (iAVTConfig.iVideoLogFile == NULL)
             {
                 char UnicodeToUTF8[256];
@@ -483,21 +491,20 @@ void PVAuthorEngineTest::RunTestCases()
                 oscl_UnicodeToUTF8(KM4VLogTestInput, oscl_strlen(KM4VLogTestInput), UnicodeToUTF8, 255);
                 aAVTConfig.iVideoLogFile = UnicodeToUTF8;
                 LoadVideoConfiguration(aAVTConfig.iVideoLogFile, aAVTConfig, NULL);
-                fprintf(iStdOut, "M4V to V-Only .3gp Test\n");
                 iCurrentTest = new pvauthor_async_test_miscellaneous(testparam, (const char*)iInputFileNameAudio.get_cstr(), (const char*)iInputFileNameVideo.get_cstr(), (const char*)iInputFileNameText.get_cstr(),
                         (const char*)iOutputFileName.get_cstr(), iAudioInputType, iVideoInputType, iTextInputType,
-                        iComposerMimeType.get_cstr(), iAudioEncoderMimeType.get_cstr(), iVideoEncoderMimeType.get_cstr(),  iTextEncoderMimeType.get_cstr(), aAVTConfig, false, KTestDuration);
+                        iComposerMimeType.get_cstr(), iAudioEncoderMimeType.get_cstr(), iAacEncoderProfileMimeType.get_cstr(), iVideoEncoderMimeType.get_cstr(),  iTextEncoderMimeType.get_cstr(), aAVTConfig, false, KTestDuration);
             }
             else
             {
-                fprintf(iStdOut, "M4V to V-Only .3gp Test\n");
                 iCurrentTest = new pvauthor_async_test_miscellaneous(testparam, (const char*)iInputFileNameAudio.get_cstr(), (const char*)iInputFileNameVideo.get_cstr(), (const char*)iInputFileNameText.get_cstr(),
                         (const char*)iOutputFileName.get_cstr(), iAudioInputType, iVideoInputType, iTextInputType,
-                        iComposerMimeType.get_cstr(), iAudioEncoderMimeType.get_cstr(), iVideoEncoderMimeType.get_cstr(),  iTextEncoderMimeType.get_cstr(), iAVTConfig, false, KTestDuration);
+                        iComposerMimeType.get_cstr(), iAudioEncoderMimeType.get_cstr(), iAacEncoderProfileMimeType.get_cstr(), iVideoEncoderMimeType.get_cstr(),  iTextEncoderMimeType.get_cstr(), iAVTConfig, false, KTestDuration);
             }
             break;
 
-        case AVC_Input_AOnly_3gpTest:
+        case AVC_Input_VOnly_3gpTest:
+            fprintf(iStdOut, "AVC to V-Only .3gp Test\n");
             if (iAVTConfig.iVideoLogFile == NULL)
             {
                 char UnicodeToUTF8[256];
@@ -505,17 +512,16 @@ void PVAuthorEngineTest::RunTestCases()
                 oscl_UnicodeToUTF8(KAVCLogTestInput, oscl_strlen(KAVCLogTestInput), UnicodeToUTF8, 255);
                 aAVTConfig.iVideoLogFile = UnicodeToUTF8;
                 LoadVideoConfiguration(aAVTConfig.iVideoLogFile, aAVTConfig, NULL);
-                fprintf(iStdOut, "AVC to V-Only .3gp Test\n");
                 iCurrentTest = new pvauthor_async_test_miscellaneous(testparam, (const char*)iInputFileNameAudio.get_cstr(), (const char*)iInputFileNameVideo.get_cstr(), (const char*)iInputFileNameText.get_cstr(),
                         (const char*)iOutputFileName.get_cstr(), iAudioInputType, iVideoInputType, iTextInputType,
-                        iComposerMimeType.get_cstr(), iAudioEncoderMimeType.get_cstr(), iVideoEncoderMimeType.get_cstr(),  iTextEncoderMimeType.get_cstr(), aAVTConfig, false, KTestDuration);
+                        iComposerMimeType.get_cstr(), iAudioEncoderMimeType.get_cstr(), iAacEncoderProfileMimeType.get_cstr(), iVideoEncoderMimeType.get_cstr(),  iTextEncoderMimeType.get_cstr(), aAVTConfig, false, KTestDuration);
             }
             else
             {
                 fprintf(iStdOut, "AVC to V-Only .3gp Test\n");
                 iCurrentTest = new pvauthor_async_test_miscellaneous(testparam, (const char*)iInputFileNameAudio.get_cstr(), (const char*)iInputFileNameVideo.get_cstr(), (const char*)iInputFileNameText.get_cstr(),
                         (const char*)iOutputFileName.get_cstr(), iAudioInputType, iVideoInputType, iTextInputType,
-                        iComposerMimeType.get_cstr(), iAudioEncoderMimeType.get_cstr(), iVideoEncoderMimeType.get_cstr(),  iTextEncoderMimeType.get_cstr(), iAVTConfig, false, KTestDuration);
+                        iComposerMimeType.get_cstr(), iAudioEncoderMimeType.get_cstr(), iAacEncoderProfileMimeType.get_cstr(), iVideoEncoderMimeType.get_cstr(),  iTextEncoderMimeType.get_cstr(), iAVTConfig, false, KTestDuration);
             }
             break;
 
@@ -526,6 +532,9 @@ void PVAuthorEngineTest::RunTestCases()
 }
 void PVAuthorEngineTest::CompleteTest(test_case &aTC)
 {
+    //verify output file
+    iCurrentTest->VerifyOutputFile();
+
     // Print out the result for this test case
     const test_result the_result = aTC.last_result();
     fprintf(file, "  Successes %d, Failures %d\n"
@@ -1642,7 +1651,7 @@ bool CheckSourceAndOutputFiles(cmd_line* aCommandLine, int32 firsttest, int32 la
                 return false;
             }
             break;
-        case M4V_Input_AOnly_3gpTest:
+        case M4V_Input_VOnly_3gpTest:
             bVideoTest = true;
             if (!(oscl_strstr(aInputVideoFileName.get_cstr(), ".m4v") != NULL || oscl_strstr(aInputVideoFileName.get_cstr(), ".M4V") != NULL))
             {
@@ -1650,7 +1659,7 @@ bool CheckSourceAndOutputFiles(cmd_line* aCommandLine, int32 firsttest, int32 la
                 return false;
             }
             break;
-        case AVC_Input_AOnly_3gpTest:
+        case AVC_Input_VOnly_3gpTest:
             bVideoTest = true;
             if (!(oscl_strstr(aInputVideoFileName.get_cstr(), ".avc") != NULL || oscl_strstr(aInputVideoFileName.get_cstr(), ".AVC") != NULL))
             {
@@ -1763,7 +1772,7 @@ int local_main(FILE* filehandle, cmd_line* command_line)
     OsclMem::Init();
 
 #if USE_OMX_ENC_NODE
-    OMX_Init();
+    OMX_MasterInit();
 #endif
 
     {
@@ -1790,7 +1799,7 @@ int local_main(FILE* filehandle, cmd_line* command_line)
         fprintf(file, "Error!  Leave %d\n", err);
     }
 #if USE_OMX_ENC_NODE
-    OMX_Deinit();
+    OMX_MasterDeinit();
 #endif
     //Cleanup
 #if !(OSCL_BYPASS_MEMMGT)
@@ -1817,6 +1826,7 @@ int local_main(FILE* filehandle, cmd_line* command_line)
             uint32 leaks = auditCB.pAudit->MM_GetNumAllocNodes();
             if (leaks != 0)
             {
+                retVal = 1;
                 if (oPrintDetailedMemLeakInfo)
                 {
                     fprintf(file, "ERROR: %d Memory leaks detected!\n", leaks);
@@ -2210,6 +2220,98 @@ void FindAudioEncoder(cmd_line* command_line, OSCL_HeapString<OsclMemAllocator>&
     }
 }
 
+
+//get aac audio encoder profile type from arguments
+// -aactype 0: AAC LC
+//          1: AAC+
+//          2: eAAC+
+
+void FindAacAudioType(cmd_line* command_line, OSCL_HeapString<OsclMemAllocator>& aAacAudioEncoderType, FILE *aFile)
+{
+    int cmdArgIndex = 0;
+    bool cmdline_iswchar = command_line->is_wchar();
+
+    int count = command_line->get_count();
+
+    // Search for the "-aactype" argument
+    for (int ii = 0; ii < count; ii++)
+    {
+        char argstr[128];
+
+        // Convert to UTF8 if necessary
+        if (cmdline_iswchar)
+        {
+            oscl_wchar* argwstr = NULL;
+            command_line->get_arg(ii, argwstr);
+            oscl_UnicodeToUTF8(argwstr, oscl_strlen(argwstr), argstr, 128);
+            argstr[127] = '\0';
+        }
+        else
+        {
+            char* tmpargstr = NULL;
+            command_line->get_arg(ii, tmpargstr);
+            uint32 len = oscl_strlen(tmpargstr);
+            oscl_strncpy(argstr, tmpargstr, len);
+            argstr[len] = '\0';
+        }
+
+        // Do the string compare
+        if (oscl_strcmp(argstr, "-help") == 0)
+        {
+            fprintf(aFile, "AAC Audio Encoder Profile Type option. Default is AAC LC:\n");
+            fprintf(aFile, "  -aactype \n");
+            fprintf(aFile, "  specifies the aac encoder profile type to be used for authoring\n  0:AAC LC\n  1:AAC+\n  2:eAAC+\n");
+            fprintf(aFile, "  e.g -aactype 0 \n\n");
+        }
+        else if (oscl_strcmp(argstr, "-aactype") == 0)
+        {
+            cmdArgIndex = ++ii;
+            break;
+        }
+    }
+
+    if (cmdArgIndex > 0)
+    {
+        uint32 AacProfileType = 0;
+
+        // Convert to UTF8 if necessary
+        if (cmdline_iswchar)
+        {
+            oscl_wchar* cmdArg;
+            command_line->get_arg(cmdArgIndex, cmdArg);
+            char tmpstr[3];
+            oscl_UnicodeToUTF8(cmdArg, oscl_strlen(cmdArg), tmpstr, 3);
+            tmpstr[2] = '\0';
+            PV_atoi(tmpstr, 'd', 1, AacProfileType);
+        }
+        else
+        {
+            char* cmdArg = NULL;
+            command_line->get_arg(cmdArgIndex, cmdArg);
+            PV_atoi(cmdArg, 'd', 1, AacProfileType);
+
+        }
+
+        switch (AacProfileType)
+        {
+            case 0:
+                aAacAudioEncoderType = KAACEncProfileType;
+                break;
+            case 1:
+                aAacAudioEncoderType = KAACPlusEncProfileType;
+                break;
+            case 2:
+                aAacAudioEncoderType = KEAACPlusEncProfileType;
+                break;
+            default:
+                fprintf(aFile, "AAC Encoder Profile Type not supported - Using AAC LC as default\n");
+                break;
+        }
+
+    }
+}
+
+
 bool FindAuthoringMode(cmd_line* command_line, FILE *aFile)
 {
     bool iAuthoringMode = false;
@@ -2317,8 +2419,9 @@ int RunCompressedTest(cmd_line *aCommandLine, int32 &iFirstTest, int32 &iLastTes
     PVAETestInputType aTextInputType = INVALID_INPUT_TYPE;  // param3
     OSCL_HeapString<OsclMemAllocator> aComposerMimeType = NULL; // param3
     OSCL_HeapString<OsclMemAllocator> aAudioEncoderMimeType = NULL; // param4
-    OSCL_HeapString<OsclMemAllocator> aVideoEncoderMimeType = NULL; // param5
-    OSCL_HeapString<OsclMemAllocator> aTextEncoderMimeType = NULL;  // param6
+    OSCL_HeapString<OsclMemAllocator> aAacEncoderProfileMimeType = NULL; // param5
+    OSCL_HeapString<OsclMemAllocator> aVideoEncoderMimeType = NULL; // param6
+    OSCL_HeapString<OsclMemAllocator> aTextEncoderMimeType = NULL;  // param7
 
     //If -audio , -video, -text and -output tags are not specified, we will assume hard coded input and output filenames(So no need to check validity of args)
     if (!((audiofilenameinfo.get_size() == 0) &&
@@ -2360,7 +2463,7 @@ int RunCompressedTest(cmd_line *aCommandLine, int32 &iFirstTest, int32 &iLastTes
                      audiofilenameinfo.get_cstr(), videofilenameinfo.get_cstr(), textfilenameinfo.get_cstr(),
                      outputfilenameinfo.get_cstr(), aAVTConfig,
                      aAudioInputType, aVideoInputType, aTextInputType,
-                     aComposerMimeType.get_cstr(), aAudioEncoderMimeType.get_cstr(), aVideoEncoderMimeType.get_cstr(), aTextEncoderMimeType.get_cstr(), AuthoringTime);
+                     aComposerMimeType.get_cstr(), aAudioEncoderMimeType.get_cstr(), aAacEncoderProfileMimeType.get_cstr(), aVideoEncoderMimeType.get_cstr(), aTextEncoderMimeType.get_cstr(), AuthoringTime);
 
              testSuite->run_test();
              //if (runTestErr != OSCL_ERR_NONE)
@@ -2395,6 +2498,7 @@ int RunUnCompressedTest(cmd_line *aCommandLine, int32 &aFirstTest, int32 &aLastT
     OSCL_HeapString<OsclMemAllocator> outputfilenameinfo;
     OSCL_HeapString<OsclMemAllocator> videoencoderinfo;
     OSCL_HeapString<OsclMemAllocator> audioencoderinfo;
+    OSCL_HeapString<OsclMemAllocator> aacencoderprofileinfo;
     OSCL_HeapString<OsclMemAllocator> configfileinfo;
     PVMFFormatType inputformattype ;
     PVMediaInputAuthorEngineTestParam testparam;
@@ -2404,6 +2508,7 @@ int RunUnCompressedTest(cmd_line *aCommandLine, int32 &aFirstTest, int32 &aLastT
     FindOutputFile(aCommandLine, outputfilenameinfo, file);
     FindVideoEncoder(aCommandLine, videoencoderinfo, file);
     FindAudioEncoder(aCommandLine, audioencoderinfo, file);
+    FindAacAudioType(aCommandLine, aacencoderprofileinfo, file);
 
     testparam.iFirstTest = aFirstTest;
     testparam.iLastTest = aLastTest;
@@ -2413,6 +2518,7 @@ int RunUnCompressedTest(cmd_line *aCommandLine, int32 &aFirstTest, int32 &aLastT
     testparam.iMediainputParam.iOPFileInfo = outputfilenameinfo;
     testparam.iMediainputParam.iVideoEncInfo = videoencoderinfo;
     testparam.iMediainputParam.iAudioEncInfo = audioencoderinfo;
+    testparam.iMediainputParam.iAacEncProfileInfo = aacencoderprofileinfo;
     testparam.iMediainputParam.iComposerInfo = FindComposerType(outputfilenameinfo, file);
 
     //setting the default configuration info
@@ -2481,6 +2587,17 @@ int RunUnCompressedTest(cmd_line *aCommandLine, int32 &aFirstTest, int32 &aLastT
             testparam.iMediainputParam.iAudioEncInfo = SOURCENAME_PREPEND_STRING;
             testparam.iMediainputParam.iAudioEncInfo += KAMRNbEncMimeType;
             fprintf(file, "Audio Encoder: DEFAULT (Refer TC documentation)\n");
+        }
+        if (testparam.iMediainputParam.iAacEncProfileInfo.get_size() != 0)
+        {
+            fprintf(file, "AAC Encoder Profile: %s\n", testparam.iMediainputParam.iAacEncProfileInfo.get_cstr());
+        }
+        else
+        {
+            //we set it to AAC LC here, later on this might get overridden in some testcases
+            testparam.iMediainputParam.iAacEncProfileInfo = SOURCENAME_PREPEND_STRING;
+            testparam.iMediainputParam.iAacEncProfileInfo += KAACEncProfileType;
+            fprintf(file, "Aac Encoder Profile: DEFAULT (Refer TC documentation)\n");
         }
         if (testparam.iMediainputParam.iComposerInfo.get_size() != 0)
         {
@@ -2557,6 +2674,7 @@ int _local_main(FILE *filehandle, cmd_line *command_line)
         FindOutputFile(command_line, filenameinfo, file);
         FindVideoEncoder(command_line, filenameinfo, file);
         FindAudioEncoder(command_line, filenameinfo, file);
+        FindAacAudioType(command_line, filenameinfo, file);
         FindAuthoringTime(command_line, (uint32&)err, file);
 
         fprintf(file, "NO CMD LINE ARGS WERE REQUIRED TO RUN COMPRESSED ERROR HANDLING TESTS [test range from:%d to %d]\n\n", KCompressed_Errorhandling_TestBegin, KCompressed_Errorhandling_TestEnd);
@@ -2608,5 +2726,204 @@ int _local_main(FILE *filehandle, cmd_line *command_line)
     }
     return retVal;
 }
+
+PVMFStatus pvauthor_async_test_base::VerifySessionParameters(IMpeg4File* aFF)
+{
+    if (aFF == NULL)
+    {
+        fprintf(iStdOut, "VerifySessionParameters - Invalid Ptr\n");
+        return PVMFFailure;
+    }
+    else
+    {
+        //check movie timescale
+        uint32 movietimescale = aFF->getMovieTimescale();
+        if (movietimescale == 0)
+        {
+            fprintf(iStdOut, "MP4 Movie timescale zero\n");
+            return PVMFFailure;
+        }
+        uint32 movieduration = Oscl_Int64_Utils::get_uint64_lower32(aFF->getMovieDuration());
+        if (movieduration == 0)
+        {
+            fprintf(iStdOut, "MP4 Movie duration zero\n");
+            return PVMFFailure;
+        }
+        int32 numTracks = aFF->getNumTracks();
+        if (numTracks == 0)
+        {
+            fprintf(iStdOut, "No Valid Media Tracks in file\n");
+            return PVMFFailure;
+        }
+    }
+    return PVMFSuccess;
+}
+
+PVMFStatus pvauthor_async_test_base::VerifyTrackParameters(IMpeg4File* aFF)
+{
+    if (aFF == NULL)
+    {
+        fprintf(iStdOut, "VerifyTrackParameters - Invalid Ptr\n");
+        return PVMFFailure;
+    }
+    else
+    {
+        int32 numTracks = aFF->getNumTracks();
+        if (numTracks == 0)
+        {
+            fprintf(iStdOut, "No Valid Media Tracks in file\n");
+            return PVMFFailure;
+        }
+        else
+        {
+            uint32 trackList[32] = {0};
+            aFF->getTrackWholeIDList(trackList);
+            for (int32 i = 0; i < numTracks; i++)
+            {
+                uint32 trackID = trackList[i];
+                //check track mimetype
+                OSCL_HeapString<OsclMemAllocator> trackMIMEType;
+                aFF->getTrackMIMEType(trackID, trackMIMEType);
+                fprintf(iStdOut, "Track MIME Type = %s\n", trackMIMEType.get_str());
+                //check track timescale
+                uint32 tracktimescale = aFF->getTrackMediaTimescale(trackID);
+                if (tracktimescale == 0)
+                {
+                    fprintf(iStdOut, "Track timescale zero - TrackID=%d, Mime=%s\n", trackID, trackMIMEType.get_cstr());
+                    return PVMFFailure;
+                }
+                //check track duration
+                uint32 trackduration = Oscl_Int64_Utils::get_uint64_lower32(aFF->getTrackDuration(trackID));
+                if (trackduration == 0)
+                {
+                    fprintf(iStdOut, "Track duration zero - TrackID=%d, Mime=%s\n", trackID, trackMIMEType.get_cstr());
+                    return PVMFFailure;
+                }
+                //check track numsamples
+                uint32 numsamples = aFF->getSampleCountInTrack(trackID);
+                if (numsamples == 0)
+                {
+                    fprintf(iStdOut, "No Samples In Track - TrackID=%d, Mime=%s\n", trackID, trackMIMEType.get_cstr());
+                    return PVMFFailure;
+                }
+                //for video tracks check num key samples
+                if ((oscl_strncmp(trackMIMEType.get_str(), PVMF_MIME_M4V, oscl_strlen(PVMF_MIME_M4V)) == 0) ||
+                        (oscl_strncmp(trackMIMEType.get_str(), PVMF_MIME_H264_VIDEO_MP4, oscl_strlen(PVMF_MIME_H264_VIDEO_MP4)) == 0) ||
+                        (oscl_strncmp(trackMIMEType.get_str(), PVMF_MIME_H2632000, oscl_strlen(PVMF_MIME_H2632000)) == 0))
+                {
+                    uint32 numKeySamples = aFF->getNumKeyFrames(trackID);
+                    if (numKeySamples == 0)
+                    {
+                        fprintf(iStdOut, "No Key Samples In Track - TrackID=%d, Mime=%s\n", trackID, trackMIMEType.get_cstr());
+                        return PVMFFailure;
+                    }
+                }
+            }
+        }
+    }
+    return PVMFSuccess;
+}
+
+void pvauthor_async_test_base::VerifyOutputFile()
+{
+    fprintf(iStdOut, "Verifying Authored File...\n");
+    IMpeg4File *mp4ff = NULL;
+    PVMFStatus status = PVMFErrNotSupported;
+    //check if it is .amr file first
+    if (MP4FileRecognizer::IsMP4File(iOutputFileName) == true)
+    {
+        //parse the file
+        mp4ff = IMpeg4File::readMP4File(iOutputFileName, NULL);
+        if (mp4ff != NULL)
+        {
+            if (mp4ff->MP4Success())
+            {
+                //we were able to parse the file successfully
+                //now verify parameters
+                status = VerifySessionParameters(mp4ff);
+                if (status == PVMFSuccess)
+                {
+                    status = VerifyTrackParameters(mp4ff);
+                }
+            }
+            else
+            {
+                fprintf(iStdOut, "IMpeg4File::readMP4File Failed - Err=%d\n", mp4ff->GetMP4Error());
+                status = PVMFFailure;
+            }
+        }
+        else
+        {
+            fprintf(iStdOut, "IMpeg4File::readMP4File returns NULL\n");
+            status = PVMFFailure;
+        }
+    }
+    else
+    {
+        Oscl_FileServer fs;
+        if (fs.Connect() != 0)
+        {
+            fprintf(iStdOut, "FileServer Connect Failed\n");
+            status = PVMFFailure;
+        }
+        else
+        {
+            Oscl_File file;
+            if (0 != file.Open(iOutputFileName.get_cstr(), Oscl_File::MODE_READ | Oscl_File::MODE_BINARY, fs))
+            {
+                fprintf(iStdOut, "Oscl File Open Failed\n");
+                status = PVMFFailure;
+            }
+            else
+            {
+                uint8 data[32] = {0};
+                //read 9 chars
+                //AMR-NB magic word - "#!AMR\n" (or 0x2321414d520a in hexadecimal) (6 characters)
+                //AMR-WB magic word - "#!AMR-WB\n" (or 0x2321414d522d57420a in hexadecimal) (9 characters)
+                file.Read((OsclAny*)data, sizeof(uint8), 9);
+                file.Close();
+                if ((data[0] == '#') &&
+                        (data[1] == '!') &&
+                        (data[2] == 'A') &&
+                        (data[3] == 'M') &&
+                        (data[4] == 'R'))
+                {
+                    if (data[5] == '\n')
+                    {
+                        fprintf(iStdOut, "AMR File\n");
+                        status = PVMFSuccess;
+                    }
+                    else if ((data[5] == '-') &&
+                             (data[6] == 'W') &&
+                             (data[7] == 'B') &&
+                             (data[8] == '\n'))
+                    {
+                        fprintf(iStdOut, "AMR-WB File\n");
+                        status = PVMFSuccess;
+                    }
+                    else
+                    {
+                        fprintf(iStdOut, "Corrupt AMR File\n");
+                        status = PVMFFailure;
+                    }
+                }
+                else
+                {
+                    fprintf(iStdOut, "Possibly AAC File\n");
+                    status = PVMFSuccess;
+                }
+            }
+        }
+    }
+    if (mp4ff != NULL)
+    {
+        IMpeg4File::DestroyMP4FileObject(mp4ff);
+    }
+    if (status != PVMFSuccess)
+    {
+        PVPATB_TEST_IS_TRUE(false);
+    }
+}
+
 
 

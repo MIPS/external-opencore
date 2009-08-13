@@ -405,13 +405,12 @@ class CPMPlugInParams
             iConnected = false;
             iAuthorized = false;
             iNumMetaDataKeysAvailable = 0;
-            iGetMetaDataValuesComplete = false;
             iNumMetaDataValuesAvailable = 0;
             iMetaDataKeyStartIndex = 0;
             iMetaDataKeyEndIndex = 0;
             iMetaDataValueStartIndex = 0;
             iMetaDataValueEndIndex = 0;
-            iGetMetaDataKeysComplete = false;
+            iActive = false;
         };
 
         PVMFSessionId iPlugInSessionID;
@@ -437,13 +436,20 @@ class CPMPlugInParams
         bool iAuthorized;
         uint32 iNumMetaDataKeysAvailable;
         Oscl_Vector<OSCL_HeapString<OsclMemAllocator>, OsclMemAllocator> iAvailableMetadataKeys;
-        bool iGetMetaDataValuesComplete;
         uint32 iNumMetaDataValuesAvailable;
         uint32 iMetaDataKeyStartIndex;
         uint32 iMetaDataKeyEndIndex;
         uint32 iMetaDataValueStartIndex;
         uint32 iMetaDataValueEndIndex;
-        bool iGetMetaDataKeysComplete;
+
+        PVMFCPMPluginAuthenticationInterface* PlugInAuthenticationInterface();
+        PVMFCPMPluginAuthorizationInterface* PlugInAuthorizationInterface();
+        PVMFCPMPluginAccessInterfaceFactory* PlugInAccessInterfaceFactory();
+        PVMFMetadataExtensionInterface* PlugInMetaDataExtensionInterface();
+        PVMFCPMPluginLicenseInterface* PlugInLicenseInterface();
+        PvmiCapabilityAndConfig* PlugInCapConfigExtensionInterface();
+
+        bool iActive;
 };
 
 class CPMContentUsageContext
@@ -485,12 +491,13 @@ typedef struct tagPVMFCPMCommandContext
     PVMFCPMUsageID usageid;
 } PVMFCPMCommandContext;
 
-class PVMFCPMImpl : public OsclActiveObject,
-        public PVMFCPM,
-        public PVMFMetadataExtensionInterface,
-        public PvmiCapabilityAndConfig,
-        public PVMFCPMPluginCmdStatusObserver,
-        public PVMFCPMPluginLicenseInterface
+class PVMFCPMImpl
+        : public OsclActiveObject
+        , public PVMFCPM
+        , public PVMFMetadataExtensionInterface
+        , public PvmiCapabilityAndConfigBase
+        , public PVMFCPMPluginCmdStatusObserver
+        , public PVMFCPMPluginLicenseInterface
 {
     public:
         OSCL_IMPORT_REF PVMFCPMImpl(PVMFCPMStatusObserver& aObserver,
@@ -634,49 +641,6 @@ class PVMFCPMImpl : public OsclActiveObject,
         PVMFStatus verifyParametersSync(PvmiMIOSession aSession,
                                         PvmiKvp* aParameters,
                                         int num_elements);
-        /* Unsupported PvmiCapabilityAndConfig methods */
-        void setObserver(PvmiConfigAndCapabilityCmdObserver* aObserver)
-        {
-            OSCL_UNUSED_ARG(aObserver);
-        };
-        void createContext(PvmiMIOSession aSession, PvmiCapabilityContext& aContext)
-        {
-            OSCL_UNUSED_ARG(aSession);
-            OSCL_UNUSED_ARG(aContext);
-        };
-        void setContextParameters(PvmiMIOSession aSession,
-                                  PvmiCapabilityContext& aContext,
-                                  PvmiKvp* aParameters,
-                                  int num_parameter_elements)
-        {
-            OSCL_UNUSED_ARG(aSession);
-            OSCL_UNUSED_ARG(aContext);
-            OSCL_UNUSED_ARG(aParameters);
-            OSCL_UNUSED_ARG(num_parameter_elements);
-        };
-        void DeleteContext(PvmiMIOSession aSession, PvmiCapabilityContext& aContext)
-        {
-            OSCL_UNUSED_ARG(aSession);
-            OSCL_UNUSED_ARG(aContext);
-        };
-        PVMFCommandId setParametersAsync(PvmiMIOSession aSession,
-                                         PvmiKvp* aParameters,
-                                         int num_elements,
-                                         PvmiKvp*& aRet_kvp,
-                                         OsclAny* context = NULL)
-        {
-            OSCL_UNUSED_ARG(aRet_kvp);
-            OSCL_UNUSED_ARG(aSession);
-            OSCL_UNUSED_ARG(aParameters);
-            OSCL_UNUSED_ARG(num_elements);
-            OSCL_UNUSED_ARG(context);
-            return -1;
-        }
-        uint32 getCapabilityMetric(PvmiMIOSession aSession)
-        {
-            OSCL_UNUSED_ARG(aSession);
-            return 0;
-        }
 
     private:
         void Run();
@@ -731,13 +695,11 @@ class PVMFCPMImpl : public OsclActiveObject,
         void DoApproveUsage(PVMFCPMCommand&);
         PVMFStatus RequestApprovalFromActivePlugIns(PVMFCPMCommand& aCmd);
         void CompleteApproveUsage(CPMContentUsageContext*);
-        bool CheckForMetaDataInterfaceAvailability();
-        PVMFStatus QueryForMetaDataKeys(PVMFCPMCommand& aParentCmd);
+        PVMFStatus QueryForMetaDataKeys_P(PVMFCPMCommand& aParentCmd);
         void CompleteGetMetaDataKeys(uint32);
-        bool CheckForGetMetaDataKeysCompletion();
 
         void DoUsageComplete(PVMFCPMCommand&);
-        PVMFStatus SendUsageCompleteToRegisteredPlugIns(PVMFCPMUsageID);
+        PVMFStatus SendUsageCompleteToRegisteredPlugIns_P(PVMFCPMUsageID);
         void CompleteUsageComplete(CPMContentUsageContext*);
 
         void DoCloseSession(PVMFCPMCommand&);
@@ -746,18 +708,16 @@ class PVMFCPMImpl : public OsclActiveObject,
         PVMFStatus ResetRegisteredPlugIns();
         void CompleteCPMReset();
 
-        PVMFStatus DoGetMetadataKeys(PVMFCPMCommand& aCmd);
+        PVMFStatus DoGetMetadataKeys_P(PVMFCPMCommand& aCmd);
         void DoGetMetadataValues(PVMFCPMCommand& aCmd);
         PVMFStatus CompleteDoGetMetadataKeys(PVMFCPMCommand& aCmd);
-        CPMPlugInParams* LookUpNextPlugInForGetMetaDataValues();
-        bool IsGetMetaDataValuesFromPlugInsComplete();
-        void SendGetMetaDataValuesToPlugIn(CPMPlugInParams*);
+        PVMFStatus SendGetMetaDataValuesToPlugIn_P(CPMPlugInParams*);
         void CompleteGetMetaDataValues(PVMFCPMCommandContext*);
 
         void DoQueryInterface(PVMFCPMCommand&);
 
-        PVMFStatus DoGetLicense(PVMFCPMCommand& aCmd,
-                                bool aWideCharVersion = false);
+        PVMFStatus DoGetLicense_P(PVMFCPMCommand& aCmd,
+                                  bool aWideCharVersion = false);
         void CompleteGetLicense();
         void DoCancelGetLicense(PVMFCPMCommand& aCmd);
 
@@ -765,12 +725,13 @@ class PVMFCPMImpl : public OsclActiveObject,
         CPMContentUsageContext* LookUpContentUsageContext(PVMFCPMUsageID);
         CPMPlugInParams* LookUpPlugInParams(uint32);
         CPMPlugInParams* LookUpPlugInParamsFromActiveList(uint32);
+        Oscl_Vector<CPMPlugInParams, OsclMemAllocator>::iterator LookUpAccessPlugIn(PVMFSessionId);
+        Oscl_Vector<CPMPlugInParams, OsclMemAllocator>::iterator iAccessPlugin;
         int32 PushKVPKey(OSCL_String& aString, PVMFMetadataList& aKeyList);
         PVLogger* iLogger;
 
         CPMPluginRegistry* iPluginRegistry;
         Oscl_Vector<CPMPlugInParams, OsclMemAllocator> iPlugInParamsVec;
-        Oscl_Vector<CPMPlugInParams, OsclMemAllocator> iActivePlugInParamsVec;
         Oscl_Vector<CPMContentUsageContext, OsclMemAllocator> iContentUsageContextVec;
         Oscl_Vector<CPMSessionInfo, OsclMemAllocator> iListofActiveSessions;
 
@@ -785,8 +746,8 @@ class PVMFCPMImpl : public OsclActiveObject,
         uint32 iNumRegisteredPlugInResetPending;
         uint32 iNumRegisteredPlugInResetComplete;
 
-        bool iGetMetaDataKeysFromPlugInsDone;
-        bool iGetMetaDataKeysInProgress;
+        PVMFSessionId iGetMetaDataKeysSessionId;
+        PVMFSessionId iGetMetaDataValuesSessionId;
 
         /* Metadata related */
         uint32 iExtensionRefCount;

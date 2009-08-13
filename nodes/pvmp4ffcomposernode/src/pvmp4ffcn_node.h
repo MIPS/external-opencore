@@ -75,8 +75,8 @@
 #include "pvmf_composer_size_and_duration.h"
 #endif
 
-#ifndef PVMI_CONFIG_AND_CAPABILITY_H_INCLUDED
-#include "pvmi_config_and_capability.h"
+#ifndef PVMI_CONFIG_AND_CAPABILITY_BASE_H_INCLUDED
+#include "pvmi_config_and_capability_base.h"
 #endif
 #ifndef PVMF_MEDIA_MSG_FORMAT_IDS_H_INCLUDED
 #include "pvmf_media_msg_format_ids.h"
@@ -85,6 +85,7 @@
 #ifndef PVMI_KVP_H_INCLUDED
 #include "pvmi_kvp.h"
 #endif
+
 // Forward declaration
 class PVMp4FFComposerPort;
 
@@ -107,13 +108,24 @@ typedef PVMFPortVector<PVMp4FFComposerPort, PVMp4FFCNAlloc> PVMp4FFCNPortVector;
 #include "pvmf_media_clock.h"
 #endif
 
+#ifdef ANDROID
+#include <utils/RefBase.h>
+
+namespace android
+{
+class FragmentWriter;
+}
+
+#endif
+
 ////////////////////////////////////////////////////////////////////////////
-class PVMp4FFComposerNode : public PVMFNodeInterface,
-        public OsclActiveObject,
-        public PVMp4FFCNTrackConfigInterface,
-        public PVMp4FFCNClipConfigInterface,
-        public PvmfComposerSizeAndDurationInterface,
-        public PvmiCapabilityAndConfig
+class PVMp4FFComposerNode
+        : public PVMFNodeInterface
+        , public OsclActiveObject
+        , public PVMp4FFCNTrackConfigInterface
+        , public PVMp4FFCNClipConfigInterface
+        , public PvmfComposerSizeAndDurationInterface
+        , public PvmiCapabilityAndConfigBase
 {
     public:
         PVMp4FFComposerNode(int32 aPriority);
@@ -208,15 +220,8 @@ class PVMp4FFComposerNode : public PVMFNodeInterface,
                                      PvmiKvp*& aParameters, int& num_parameter_elements,
                                      PvmiCapabilityContext aContext);
         PVMFStatus releaseParameters(PvmiMIOSession aSession, PvmiKvp* aParameters, int num_elements);
-        void createContext(PvmiMIOSession aSession, PvmiCapabilityContext& aContext);
-        void setContextParameters(PvmiMIOSession aSession, PvmiCapabilityContext& aContext,
-                                  PvmiKvp* aParameters, int num_parameter_elements);
-        void DeleteContext(PvmiMIOSession aSession, PvmiCapabilityContext& aContext);
         void setParametersSync(PvmiMIOSession aSession, PvmiKvp* aParameters,
                                int num_elements, PvmiKvp * & aRet_kvp);
-        PVMFCommandId setParametersAsync(PvmiMIOSession aSession, PvmiKvp* aParameters,
-                                         int num_elements, PvmiKvp*& aRet_kvp, OsclAny* context = NULL);
-        uint32 getCapabilityMetric(PvmiMIOSession aSession);
         PVMFStatus verifyParametersSync(PvmiMIOSession aSession, PvmiKvp* aParameters, int aNumElements);
 
         // function used in getParametersSync of capability class
@@ -226,6 +231,9 @@ class PVMp4FFComposerNode : public PVMFNodeInterface,
         PVMFStatus VerifyAndSetConfigParameter(PvmiKvp& aParameter, bool aSetParam);
 
     private:
+#ifdef ANDROID
+        friend class android::FragmentWriter;  // Access AddSampleToTrack
+#endif
 
         // Pure virtual from OsclActiveObject
         void Run();
@@ -269,7 +277,8 @@ class PVMp4FFComposerNode : public PVMFNodeInterface,
                                     uint32 aSeqNum,
                                     uint32& aTimestamp,
                                     int32 aTrackId,
-                                    PVMp4FFComposerPort *aPort);
+                                    PVMp4FFComposerPort *aPort,
+                                    uint32 aSampleDuration = 0);
         int32 GetIETFFrameSize(uint8 aFrameType, int32 aCodecType);
 
         /////////////////////////////////////////////////////
@@ -351,10 +360,20 @@ class PVMp4FFComposerNode : public PVMFNodeInterface,
         uint32 iPresentationTimescale;
         uint32 iMovieFragmentDuration;
         Oscl_File* iFileObject;
+
+#ifdef ANDROID
+        // Fragment to track writer thread.
+        android::sp<android::FragmentWriter> iFragmentWriter;
+
+        // Marker to report to the author node an event. It is really of
+        // type PVMFComposerSizeAndDurationEvent but there is no value
+        // in the enum for 'none' so we use a generic int.
+        int iMaxReachedEvent;
+        bool iMaxReachedReported;
+#endif
         // Meta data strings
         struct PVMP4FFCN_MetaDataString
         {
-public:
             PVMP4FFCN_MetaDataString(): iClassificationEntity(0), iClassificationTable(0), iLangCode(0) {};
             OSCL_wHeapString<OsclMemAllocator> iDataString;
             uint32 iClassificationEntity;
@@ -455,6 +474,7 @@ public:
         bool IsMPEG4KeyFrame(Oscl_Vector <OsclMemoryFragment, OsclMemAllocator>& aList);
         bool IsH263KeyFrame(Oscl_Vector <OsclMemoryFragment, OsclMemAllocator>& aList);
         void GetTextSDIndex(uint32 aSampleNum, int32& aIndex);
+        PVMP4FFComposerSampleParam *iSampleParam;
 };
 
 #endif // PVMP4FFC_NODE_H_INCLUDED

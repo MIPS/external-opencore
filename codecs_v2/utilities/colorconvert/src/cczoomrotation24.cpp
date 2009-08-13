@@ -313,7 +313,7 @@ int32 cc24(uint8 **src, uint8 *dst, int32 *disp, uint8 *clip)
 #if RGB_FORMAT
             rgb =   tmp0 | (tmp1 << 8); /* r1 & g1 */
 #else
-rgb =   tmp2 | (tmp1 << 8); /* b1 & g1 */
+            rgb =   tmp2 | (tmp1 << 8); /* b1 & g1 */
 #endif
             Y   = (Y << 8) & 0xFF0000;
 #if RGB_FORMAT
@@ -324,12 +324,12 @@ rgb =   tmp2 | (tmp1 << 8); /* b1 & g1 */
             tmp2    =   Y + Cb;
             tmp2    =   clip[tmp2>>16];
 #else
-tmp2    =   Y + Cb;
-tmp2    =   clip[tmp2>>16];
-rgb     |= (tmp2 << 24);
-rgb     |= (tmp0 << 16); //tmp0 | (tmp2<<8); /* r1 & b2 */
-tmp0    =   Y + Cr;
-tmp0    =   clip[tmp0>>16];
+            tmp2    =   Y + Cb;
+            tmp2    =   clip[tmp2>>16];
+            rgb     |= (tmp2 << 24);
+            rgb     |= (tmp0 << 16); //tmp0 | (tmp2<<8); /* r1 & b2 */
+            tmp0    =   Y + Cr;
+            tmp0    =   clip[tmp0>>16];
 #endif
             *((uint32 *)(pDst + dst_pitch3))    =   rgb;
 
@@ -338,7 +338,7 @@ tmp0    =   clip[tmp0>>16];
 #if RGB_FORMAT
             rgb2    =   tmp1 | (tmp2 << 8); /* g2 & b2 */
 #else
-rgb2    =   tmp1 | (tmp0 << 8); /* g2 & r2 */
+            rgb2    =   tmp1 | (tmp0 << 8); /* g2 & r2 */
 #endif
             //load the top two pixels
             Y   =   *pY++;
@@ -355,7 +355,7 @@ rgb2    =   tmp1 | (tmp0 << 8); /* g2 & r2 */
 #if RGB_FORMAT
             rgb =   tmp0 | (tmp1 << 8); /* r1 & g1 */
 #else
-rgb =   tmp2 | (tmp1 << 8); /* b1 & g1 */
+            rgb =   tmp2 | (tmp1 << 8); /* b1 & g1 */
 #endif
             Y   = (Y << 8) & 0xFF0000;
 
@@ -367,12 +367,12 @@ rgb =   tmp2 | (tmp1 << 8); /* b1 & g1 */
             tmp2    =   Y + Cb;
             tmp2    =   clip[tmp2>>16];
 #else
-tmp2    =   Y + Cb;
-tmp2    =   clip[tmp2>>16];
-rgb     |= (tmp2 << 24);
-rgb     |= (tmp0 << 16); //tmp0 | (tmp2<<8); /* b1 & r2 */
-tmp0    =   Y + Cr;
-tmp0    =   clip[tmp0>>16];
+            tmp2    =   Y + Cb;
+            tmp2    =   clip[tmp2>>16];
+            rgb     |= (tmp2 << 24);
+            rgb     |= (tmp0 << 16); //tmp0 | (tmp2<<8); /* b1 & r2 */
+            tmp0    =   Y + Cr;
+            tmp0    =   clip[tmp0>>16];
 #endif
             *((uint32 *)(pDst)) =   rgb;
 
@@ -382,7 +382,7 @@ tmp0    =   clip[tmp0>>16];
 #if RGB_FORMAT
             rgb =   tmp1 | (tmp2 << 8); /* g2 & b2 */
 #else
-rgb =   tmp1 | (tmp0 << 8); /* g2 & r2 */
+            rgb =   tmp1 | (tmp0 << 8); /* g2 & r2 */
 #endif
 
             //// next 2x2 pixels
@@ -415,8 +415,8 @@ rgb =   tmp1 | (tmp0 << 8); /* g2 & r2 */
             rgb2    |= (tmp0 << 16);
             //rgb   =   tmp0 | (tmp1<<8); /* r3 & g3 */
 #else
-rgb2    |= (tmp1 << 24);
-rgb2    |= (tmp2 << 16);
+            rgb2    |= (tmp1 << 24);
+            rgb2    |= (tmp2 << 16);
 //rgb   =   tmp2 | (tmp1<<8); /* b3 & g3 */
 #endif
             *((uint32 *)(pDst + dst_pitch3 + 4)) = rgb2;
@@ -429,11 +429,11 @@ rgb2    |= (tmp2 << 16);
             tmp2    =   Y + Cb;
             tmp2    =   clip[tmp2>>16];
 #else
-tmp2    =   Y + Cb;
-tmp2    =   clip[tmp2>>16];
-rgb2    =   tmp0 | (tmp2 << 8); /* r3 & b4 */
-tmp0    =   Y + Cr;
-tmp0    =   clip[tmp0>>16];
+            tmp2    =   Y + Cb;
+            tmp2    =   clip[tmp2>>16];
+            rgb2    =   tmp0 | (tmp2 << 8); /* r3 & b4 */
+            tmp0    =   Y + Cr;
+            tmp0    =   clip[tmp0>>16];
 #endif
             tmp1    =   Y - Cg;
             tmp1    =   clip[tmp1>>16];
@@ -441,8 +441,8 @@ tmp0    =   clip[tmp0>>16];
             rgb2    |= (tmp2 << 24);
             rgb2    |= (tmp1 << 16); // tmp1|(tmp2<<8); /* g2 & b2 */
 #else
-rgb2    |= (tmp0 << 24);
-rgb2    |= (tmp1 << 16); // tmp1|(tmp0<<8); /* g2 & r2 */
+            rgb2    |= (tmp0 << 24);
+            rgb2    |= (tmp1 << 16); // tmp1|(tmp0<<8); /* g2 & r2 */
 #endif
             *((uint32 *)(pDst + dst_pitch3 + 8)) = rgb2;
 
@@ -462,8 +462,8 @@ rgb2    |= (tmp1 << 16); // tmp1|(tmp0<<8); /* g2 & r2 */
             rgb     |= (tmp1 << 24);
             rgb     |= (tmp0 << 16); //tmp0 | (tmp1<<8); /* r1 & g1 */
 #else
-rgb     |= (tmp1 << 24);
-rgb     |= (tmp2 << 16); //tmp2 | (tmp1<<8); /* b1 & g1 */
+            rgb     |= (tmp1 << 24);
+            rgb     |= (tmp2 << 16); //tmp2 | (tmp1<<8); /* b1 & g1 */
 #endif
             *((uint32*)(pDst + 4)) = rgb;
 
@@ -476,11 +476,11 @@ rgb     |= (tmp2 << 16); //tmp2 | (tmp1<<8); /* b1 & g1 */
             tmp2    =   Y + Cb;
             tmp2    =   clip[tmp2>>16];
 #else
-tmp2    =   Y + Cb;
-tmp2    =   clip[tmp2>>16];
-rgb     =   tmp0 | (tmp2 << 8); /* b1 & r2 */
-tmp0    =   Y + Cr;
-tmp0    =   clip[tmp0>>16];
+            tmp2    =   Y + Cb;
+            tmp2    =   clip[tmp2>>16];
+            rgb     =   tmp0 | (tmp2 << 8); /* b1 & r2 */
+            tmp0    =   Y + Cr;
+            tmp0    =   clip[tmp0>>16];
 #endif
 
             tmp1    =   Y - Cg;
@@ -490,8 +490,8 @@ tmp0    =   clip[tmp0>>16];
             rgb     |= (tmp2 << 24);
             rgb     |= (tmp1 << 16);  //tmp1|(tmp2<<8); /* g2 & b2 */
 #else
-rgb     |= (tmp0 << 24);
-rgb     |= (tmp1 << 16);  //tmp1|(tmp0<<8); /* g2 & r2 */
+            rgb     |= (tmp0 << 24);
+            rgb     |= (tmp1 << 16);  //tmp1|(tmp0<<8); /* g2 & r2 */
 #endif
             *((uint32*)(pDst + 8)) = rgb;
 

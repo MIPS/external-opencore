@@ -76,13 +76,13 @@ void Oscl_File::OldCacheDefaults()
 
     SetNativeAccessMode(ESymbianAccessMode_RfileBuf);
 
-#if defined(OSCL_FILE_BUFFER_MAX_SIZE) 
+#if defined(OSCL_FILE_BUFFER_MAX_SIZE)
     //native buffer size defaults to max buffer size
 
     SetNativeBufferSize(OSCL_FILE_BUFFER_MAX_SIZE);
 #endif
 
-#if defined(OSCL_ASYNC_READ_BUFFER_SIZE) 
+#if defined(OSCL_ASYNC_READ_BUFFER_SIZE)
     // enable async file read operation
 
     SetAsyncReadBufferSize(OSCL_ASYNC_READ_BUFFER_SIZE);

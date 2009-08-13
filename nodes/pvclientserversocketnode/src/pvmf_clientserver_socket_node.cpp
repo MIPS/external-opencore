@@ -1760,7 +1760,7 @@ void PVMFClientServerSocketNode::HandleRecvComplete(PVMFStatus aStatus, PVMFSock
     if (!aSocketActivity || !iSockConfig->iPVMFPort
             || !iSockConfig->iPVMFPort->IsConnected())
     {
-        OSCL_ASSERT(aStatus != PVMFSuccess);
+        //OSCL_ASSERT(aStatus != PVMFSuccess);
         ReportSocketNodeError(PVMFErrResource, PVMFSocketNodeErrorSocketFailure);
         //release media data
         if (iSockConfig->iPendingRecvMediaData.GetRep())

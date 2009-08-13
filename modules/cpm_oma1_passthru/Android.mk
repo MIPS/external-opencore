@@ -7,7 +7,7 @@ LOCAL_SRC_FILES := \
 
 LOCAL_MODULE := libpvoma1passthruplugininterface
 
-LOCAL_CFLAGS :=  $(PV_CFLAGS)
+LOCAL_CFLAGS :=   $(PV_CFLAGS)
 
 
 

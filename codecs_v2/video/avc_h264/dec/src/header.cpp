@@ -375,6 +375,12 @@ AVCDec_Status DecodePPS(AVCDecObject *decvid, AVCCommonObj *video, AVCDecBitstre
     if (picParam->num_slice_groups_minus1 > 0)
     {
         ue_v(stream, &(picParam->slice_group_map_type));
+        if (picParam->slice_group_map_type > 6)
+        {
+            status = AVCDEC_FAIL; /* out of range */
+            goto clean_up;
+        }
+
         if (picParam->slice_group_map_type == 0)
         {
             for (iGroup = 0; iGroup <= (int)picParam->num_slice_groups_minus1; iGroup++)
@@ -444,11 +450,6 @@ AVCDec_Status DecodePPS(AVCDecObject *decvid, AVCCommonObj *video, AVCDecBitstre
                 BitstreamReadBits(stream, numBits, &(picParam->slice_group_id[i]));
             }
         }
-        else
-        {
-            status = AVCDEC_FAIL; /* out of range */
-            goto clean_up;
-        }
     }
 
     ue_v(stream, &(picParam->num_ref_idx_l0_active_minus1));
@@ -498,6 +499,13 @@ AVCDec_Status DecodePPS(AVCDecObject *decvid, AVCCommonObj *video, AVCDecBitstre
     picParam->deblocking_filter_control_present_flag = temp_uint >> 2;
     picParam->constrained_intra_pred_flag = (temp_uint >> 1) & 1;
     picParam->redundant_pic_cnt_present_flag = temp_uint & 1;
+
+    // add this final check
+    if (decvid->seqParams[picParam->seq_parameter_set_id] == NULL) // associated SPS is not found
+    {
+        status = AVCDEC_FAIL;
+        goto clean_up;
+    }
 
     // now that everything is OK - we may want to allocate the structure
     /* 2.1 if picParams[pic_param_set_id] is NULL, allocate it. */
@@ -695,21 +703,14 @@ AVCDec_Status DecodeSliceHeader(AVCDecObject *decvid, AVCCommonObj *video, AVCDe
         {
             ue_v(stream, &(sliceHdr->num_ref_idx_l0_active_minus1));
         }
-        else  /* the following condition is not allowed if the flag is zero */
-        {
-            if ((slice_type == AVC_P_SLICE) && currPPS->num_ref_idx_l0_active_minus1 > 15)
-            {
-                return AVCDEC_FAIL; /* not allowed */
-            }
-        }
     }
 
-
-    if (sliceHdr->num_ref_idx_l0_active_minus1 > 15 ||
-            sliceHdr->num_ref_idx_l1_active_minus1 > 15)
+    // check bound
+    if (sliceHdr->num_ref_idx_l0_active_minus1 > 15) // ||sliceHdr->num_ref_idx_l1_active_minus1 > 31)
     {
         return AVCDEC_FAIL; /* not allowed */
     }
+
     /* if MbaffFrameFlag =1,
     max value of index is num_ref_idx_l0_active_minus1 for frame MBs and
     2*sliceHdr->num_ref_idx_l0_active_minus1 + 1 for field MBs */
@@ -893,6 +894,11 @@ AVCDec_Status ref_pic_list_reordering(AVCCommonObj *video, AVCDecBitstream *stre
             }
             while (sliceHdr->reordering_of_pic_nums_idc_l0[i-1] != 3
                     && i <= (int)sliceHdr->num_ref_idx_l0_active_minus1 + 1) ;
+
+            if (sliceHdr->reordering_of_pic_nums_idc_l0[i-1] != 3) // only way to exit the while loop
+            {
+                return AVCDEC_FAIL;
+            }
         }
     }
     return AVCDEC_SUCCESS;

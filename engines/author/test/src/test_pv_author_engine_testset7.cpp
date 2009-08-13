@@ -443,7 +443,7 @@ bool pv_mediainput_async_test_reset::ConfigureAudioEncoder()
         return true;
     }
 
-    if (!PVAETestNodeConfig::ConfigureAudioEncoder(iAudioEncoderConfig, iAudioEncoderMimeType))
+    if (!PVAETestNodeConfig::ConfigureAudioEncoder(iAudioEncoderConfig, iAudioEncoderMimeType, iAacEncoderProfileMimeType))
     {
         return false;
     }
@@ -483,8 +483,6 @@ void pv_mediainput_async_test_reset::Cleanup()
         PVAuthorEngineFactory::DeleteAuthor(iAuthor);
         iAuthor = NULL;
     }
-
-    iOutputFileName = NULL;
     iFileServer.Close();
 }
 
@@ -951,7 +949,6 @@ void pv_mediainput_async_test_reset::CommandCompleted(const PVCmdResponse& aResp
         {
             if (aResponse.GetCmdStatus() == PVMFSuccess)
             {
-                iOutputFileName = NULL;
                 iState = PVAE_CMD_RESET;
                 RunIfNotReady();
             }
@@ -1015,7 +1012,6 @@ void pv_mediainput_async_test_reset::CommandCompleted(const PVCmdResponse& aResp
             {
                 if (EngineCmdComplete())
                 {
-                    iOutputFileName = NULL;
                     iMIOComponent.DeleteInputNode();
                     if (iMediaInputType == PVMF_MIME_AVIFF)
                     {

@@ -119,14 +119,20 @@
 typedef struct OutputBufCtrlStruct
 {
     OMX_BUFFERHEADERTYPE *pBufHdr;
+    OsclAny *pMemPoolEntry;
 } OutputBufCtrlStruct;
 
-typedef struct InputBufCtrlStruct
+class InputBufCtrlStruct
 {
-    OMX_BUFFERHEADERTYPE *pBufHdr;
-    PVMFSharedMediaDataPtr pMediaData;
-} InputBufCtrlStruct;
+    public:
+        InputBufCtrlStruct(): pBufHdr(NULL), pMemPoolEntry(NULL) {}
 
+    public:
+        OMX_BUFFERHEADERTYPE *pBufHdr;
+        // PVMFSharedMediaDataPtr is a OsclSharedPtr and this object is already set to NULL in its constructor.
+        PVMFSharedMediaDataPtr pMediaData;
+        OsclAny *pMemPoolEntry;
+};
 
 // fwd class declaration
 class PVLogger;
@@ -155,7 +161,7 @@ OMX_ERRORTYPE CallbackFillBufferDone(OMX_OUT OMX_HANDLETYPE aComponent,
 //Default values for number of Input/Output buffers. If the component needs more than this, it will be
 // negotiated. If the component does not need more than this number, the default is used
 #define NUMBER_INPUT_BUFFER 5
-#define NUMBER_OUTPUT_BUFFER 9
+#define NUMBER_OUTPUT_BUFFER 17
 
 // nal start code is 0001
 #define NAL_START_CODE_SIZE 4
@@ -186,11 +192,40 @@ class PVOMXDecBufferSharedPtrWrapperCombinedCleanupDA : public OsclDestructDeall
                 buf_alloc->deallocate(ptr_to_data_to_dealloc);
             }
 
+            const uint8* const my_ptr = (uint8*)ptr;
+            const uint aligned_refcnt_size = oscl_mem_aligned_size(sizeof(OsclRefCounterDA));
+            const uint aligned_cleanup_size = oscl_mem_aligned_size(sizeof(PVOMXDecBufferSharedPtrWrapperCombinedCleanupDA));
+            PVMFMediaDataImpl* media_data_ptr = OSCL_REINTERPRET_CAST(PVMFMediaDataImpl*, (my_ptr + aligned_refcnt_size + aligned_cleanup_size));
+            media_data_ptr->~PVMFMediaDataImpl();
             // finally, free the shared ptr wrapper memory
             oscl_free(ptr);
         }
 
     private:
+        Oscl_DefAlloc* buf_alloc;
+        void *ptr_to_data_to_dealloc;
+};
+
+class PVOMXDecInputBufferSharedPtrWrapperCombinedCleanupDA : public OsclDestructDealloc
+{
+    public:
+        PVOMXDecInputBufferSharedPtrWrapperCombinedCleanupDA(OsclRefCounterDA* refcnt) :
+                ref_cnt(refcnt)
+        {
+            ref_cnt->addRef();
+        };
+        virtual ~PVOMXDecInputBufferSharedPtrWrapperCombinedCleanupDA() {};
+
+        virtual void destruct_and_dealloc(OsclAny* ptr)
+        {
+            ref_cnt->removeRef();
+            // this is needed to completely free PVMFMediaDataImpl, since it allocates memory for the frag list
+            ((PVMFMediaDataImpl*)ptr)->~PVMFMediaDataImpl();
+            oscl_free(ptr);
+        }
+
+    private:
+        OsclRefCounterDA* ref_cnt;
         Oscl_DefAlloc* buf_alloc;
         void *ptr_to_data_to_dealloc;
 };
@@ -347,8 +382,7 @@ class PVMFOMXBaseDecNode
         , public OsclMemPoolFixedChunkAllocatorObserver
         , public PVMFOMXBaseDecNodeExtensionInterface
         , public PVMFMetadataExtensionInterface
-        , public PvmiCapabilityAndConfig
-
+        , public PvmiCapabilityAndConfigBase
 {
     public:
         OSCL_IMPORT_REF PVMFOMXBaseDecNode(int32 aPriority, const char aAOName[]);
@@ -428,12 +462,12 @@ class PVMFOMXBaseDecNode
 
         //==============================================================================
 
-        OSCL_IMPORT_REF virtual OMX_ERRORTYPE EventHandlerProcessing(OMX_OUT OMX_HANDLETYPE aComponent,
+        OSCL_IMPORT_REF OMX_ERRORTYPE EventHandlerProcessing(OMX_OUT OMX_HANDLETYPE aComponent,
                 OMX_OUT OMX_PTR aAppData,
                 OMX_OUT OMX_EVENTTYPE aEvent,
                 OMX_OUT OMX_U32 aData1,
                 OMX_OUT OMX_U32 aData2,
-                OMX_OUT OMX_PTR aEventData) = 0;
+                OMX_OUT OMX_PTR aEventData);
 
         OSCL_IMPORT_REF OMX_ERRORTYPE EmptyBufferDoneProcessing(OMX_OUT OMX_HANDLETYPE aComponent,
                 OMX_OUT OMX_PTR aAppData,
@@ -443,22 +477,18 @@ class PVMFOMXBaseDecNode
                 OMX_OUT OMX_PTR aAppData,
                 OMX_OUT OMX_BUFFERHEADERTYPE* aBuffer);
 
+
         bool IsComponentMultiThreaded()
         {
             return iIsOMXComponentMultiThreaded;
         };
 
         // From PvmiCapabilityAndConfig
-        OSCL_IMPORT_REF void setObserver(PvmiConfigAndCapabilityCmdObserver* aObserver);
         OSCL_IMPORT_REF PVMFStatus getParametersSync(PvmiMIOSession aSession, PvmiKeyType aIdentifier, PvmiKvp*& aParameters, int& aNumParamElements, PvmiCapabilityContext aContext);
         OSCL_IMPORT_REF PVMFStatus releaseParameters(PvmiMIOSession aSession, PvmiKvp* aParameters, int aNumElements);
-        OSCL_IMPORT_REF void createContext(PvmiMIOSession aSession, PvmiCapabilityContext& aContext);
-        OSCL_IMPORT_REF void setContextParameters(PvmiMIOSession aSession, PvmiCapabilityContext& aContext, PvmiKvp* aParameters, int aNumParamElements);
-        OSCL_IMPORT_REF void DeleteContext(PvmiMIOSession aSession, PvmiCapabilityContext& aContext);
         OSCL_IMPORT_REF void setParametersSync(PvmiMIOSession aSession, PvmiKvp* aParameters, int aNumElements, PvmiKvp* &aRetKVP);
-        OSCL_IMPORT_REF PVMFCommandId setParametersAsync(PvmiMIOSession aSession, PvmiKvp* aParameters, int aNumElements, PvmiKvp*& aRetKVP, OsclAny* aContext = NULL);
-        OSCL_IMPORT_REF uint32 getCapabilityMetric(PvmiMIOSession aSession);
         OSCL_IMPORT_REF PVMFStatus verifyParametersSync(PvmiMIOSession aSession, PvmiKvp* aParameters, int aNumElements);
+
         OSCL_IMPORT_REF virtual bool ProcessIncomingMsg(PVMFPortInterface* aPort);
         OSCL_IMPORT_REF void Run();
     protected:
@@ -467,7 +497,7 @@ class PVMFOMXBaseDecNode
         virtual void DoQueryUuid(PVMFOMXBaseDecNodeCommand&) = 0;
         void DoQueryInterface(PVMFOMXBaseDecNodeCommand&);
         virtual void DoRequestPort(PVMFOMXBaseDecNodeCommand&) = 0;
-        virtual void DoReleasePort(PVMFOMXBaseDecNodeCommand&) = 0;
+        void DoReleasePort(PVMFOMXBaseDecNodeCommand&);
         void DoInit(PVMFOMXBaseDecNodeCommand&);
         void DoPrepare(PVMFOMXBaseDecNodeCommand&);
         void DoStart(PVMFOMXBaseDecNodeCommand&);
@@ -575,6 +605,10 @@ class PVMFOMXBaseDecNode
 
         OSCL_IMPORT_REF PVMFCommandId QueueCommandL(PVMFOMXBaseDecNodeCommand& aCmd);
 
+        OSCL_IMPORT_REF virtual int32 GetNAL_OMXNode(uint8** bitstream, uint32* size);
+        OSCL_IMPORT_REF virtual bool ParseAndReWrapH264RAW(PVMFSharedMediaDataPtr& aMediaDataPtr);
+        OSCL_IMPORT_REF virtual bool CreateAACConfigDataFromASF(uint8 *inptr, uint32 inlen, uint8 *outptr, uint32 &outlen);
+
         friend class PVMFOMXBaseDecPort;
 
         // Ports pointers
@@ -592,8 +626,11 @@ class PVMFOMXBaseDecNode
         // Output buffer memory pool
         OsclMemPoolFixedChunkAllocator *iOutBufMemoryPool;
 
-        // Memory pool for simple media data
-        OsclMemPoolFixedChunkAllocator *iMediaDataMemPool;
+        // Memory pool for simple output media data
+        OsclMemPoolFixedChunkAllocator *iOutputMediaDataMemPool;
+
+        // Memory pool for multi frag input media data
+        OsclMemPoolFixedChunkAllocator *iInputMediaDataMemPool;
 
         // Fragment pool for format specific info
         PVMFBufferPoolAllocator iFsiFragmentAlloc;
@@ -609,6 +646,8 @@ class PVMFOMXBaseDecNode
 
         // Number of output buffers (negotiated with component)
         uint32 iNumOutputBuffers;
+
+        uint32 iOutputBufferAlignment;
 
         // Number of output buffers in possession of the component or downstream,
         // namely, number of unavailable buffers
@@ -629,6 +668,8 @@ class PVMFOMXBaseDecNode
         uint32 iInputAllocSize;     // size of input buffer to allocate (OMX_ALLOCATE_BUFFER =  size of buf header )
         // (OMX_USE_BUFFER = size of buf header + iOMXCoponentInputBufferSize)
         uint32 iNumInputBuffers; // total num of input buffers (negotiated with component)
+
+        uint32 iInputBufferAlignment;
 
         uint32 iNumOutstandingInputBuffers; // number of input buffers in use (i.e. unavailable)
 
@@ -690,6 +731,8 @@ class PVMFOMXBaseDecNode
         bool iOMXComponentUsesNALStartCodes;
         bool iOMXComponentUsesFullAVCFrames;
         bool iOMXComponentCanHandleIncompleteFrames;
+        bool iOMXComponentUsesInterleaved2BNALSizes;
+        bool iOMXComponentUsesInterleaved4BNALSizes;
 
         // State definitions for HandleProcessingState() state machine
         typedef enum
@@ -772,7 +815,12 @@ class PVMFOMXBaseDecNode
         // Time stamp to be used on output buffer
         uint32 iOutTimeStamp;
 
-
+        // Duration to be used on output buffer
+        // Maintain a vector to store the sample duration.
+        Oscl_Vector<uint32, OsclMemAllocator> iSampleDurationVec;
+        // Also store the timestamp in a vector. This will help us to
+        // validate if the input sample was properly decoded.
+        Oscl_Vector<uint32, OsclMemAllocator> iTimestampVec;
 
         // Node configuration update
         PVMFOMXBaseDecNodeConfig iNodeConfig;
@@ -807,10 +855,10 @@ class PVMFOMXBaseDecNode
         uint32 iNALCount;
         uint32 iNALSizeArray[MAX_NAL_PER_FRAME]; // NAL count shouldn't exceed 100
 
-        OsclAny **out_ctrl_struct_ptr ;
-        OsclAny **out_buff_hdr_ptr ;
-        OsclAny **in_ctrl_struct_ptr ;
-        OsclAny **in_buff_hdr_ptr ;
+        OutputBufCtrlStruct *out_ctrl_struct_ptr;
+
+        InputBufCtrlStruct *in_ctrl_struct_ptr;
+
 
         PVInterface* ipExternalOutputBufferAllocatorInterface;
         PVMFFixedSizeBufferAlloc* ipFixedSizeBufferAlloc;
@@ -822,8 +870,12 @@ class PVMFOMXBaseDecNode
         uint32 iTimeScale;
         MediaClockConverter iInputTimestampClock;
         OMX_TICKS iOMXTicksTimestamp;
-        OMX_TICKS ConvertTimestampIntoOMXTicks(const MediaClockConverter &src);
+        uint32 iTimestampDeltaForMemFragment;
+        OSCL_IMPORT_REF OMX_TICKS ConvertTimestampIntoOMXTicks(const MediaClockConverter &src);
         uint32 ConvertOMXTicksIntoTimestamp(const OMX_TICKS &src);
+
+        uint8 iAACConfigData[4];
+        uint32 iAACConfigDataLength;
 
 };
 

@@ -166,7 +166,7 @@ class PVMFFileOutputNode :  public OsclActiveObject, public PVMFNodeInterface,
         public PvmfFileOutputNodeConfigInterface,
         public PvmfComposerSizeAndDurationInterface,
         public PvmfNodesSyncControlInterface,
-        public PvmiCapabilityAndConfig
+        public PvmiCapabilityAndConfigBase
 {
     public:
         PVMFFileOutputNode(int32 aPriority);
@@ -247,15 +247,8 @@ class PVMFFileOutputNode :  public OsclActiveObject, public PVMFNodeInterface,
                                      PvmiKvp*& aParameters, int& num_parameter_elements,
                                      PvmiCapabilityContext aContext);
         PVMFStatus releaseParameters(PvmiMIOSession aSession, PvmiKvp* aParameters, int num_elements);
-        void createContext(PvmiMIOSession aSession, PvmiCapabilityContext& aContext);
-        void setContextParameters(PvmiMIOSession aSession, PvmiCapabilityContext& aContext,
-                                  PvmiKvp* aParameters, int num_parameter_elements);
-        void DeleteContext(PvmiMIOSession aSession, PvmiCapabilityContext& aContext);
         void setParametersSync(PvmiMIOSession aSession, PvmiKvp* aParameters,
                                int num_elements, PvmiKvp * & aRet_kvp);
-        PVMFCommandId setParametersAsync(PvmiMIOSession aSession, PvmiKvp* aParameters,
-                                         int num_elements, PvmiKvp*& aRet_kvp, OsclAny* context = NULL);
-        uint32 getCapabilityMetric(PvmiMIOSession aSession);
         PVMFStatus verifyParametersSync(PvmiMIOSession aSession, PvmiKvp* aParameters, int num_elements);
 
         // function used in VerifyParametersSync n SetParametersSync of capability class

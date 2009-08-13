@@ -1,0 +1,74 @@
+#Test Case Name - This should be at the start
+Name TestCase43 - User Input Indication
+
+# Terminal Setup
+# These setings configure how the terminal will be setup
+# There are seperate settings for terminal A and Terminal B
+# Settings set here do no require the full set
+# Default settings will be set on the terminal. The settings explictly set here
+# will override the default settings of the terminal
+# Terminal A 
+Terminal A
+H.223Muxlevel 2
+# AL Video, Audio- use defaults
+MSD undef
+#- This is not supported as of now
+BER bit error injection 
+# Audio OLC caps
+Caps
+Receive
+Audio 
+AMR
+# Video OLC caps
+Video 
+H.263BL
+# UserInputCapability
+UserInputCapability receiveAndTransmit
+
+#Terminal B
+Terminal B
+# AL Video, Audio- use defaults
+MSD undef
+# capabilties
+Caps
+# Receive Caps
+Receive
+# Audio OLC caps
+Audio 
+AMR
+G7321
+# Video OLC caps
+Video 
+H.263BL
+MP4SP
+# Send Caps
+Send
+# Audio
+Audio
+AMR
+G7321
+# Video
+H.263BL
+Mp4SP 
+
+# Specify the actions to be performed
+
+# 1. Configure terminal(s) according to Default Endpoint Settings (clause 1.3) and Terminal Setup.
+# 2. Establish call session.
+# 3. After video is displayed at Terminal A, Terminal A sends user input indication.
+# 4. Validate expected behaviour checkpoints 3b.
+# 5. Validate received video at Terminal B does not freeze.
+# 6. Terminate call session.
+
+# Specify the Expected behaviour
+
+# 1. Level setup on Muxlevel 2
+# 2. RespMsg_terminalCapabilitySetAck received
+# 3. RespMsg_masterSlaveDeterminationAck received
+# 4. RespMsg_openLogicalChannelAck for Audio received
+# 5. RespMsg_openLogicalChannelAck (Master, Slave unidir)||IndMsg_openLogicalChannelConfirm (Slave bidir) for Video received
+# 6. RespMsg_multiplexEntrySendAck for all mux table entries
+# 7. Encoding + Sending/Reception + Decoding of Video/Audio
+# 8. Send IndMsg_UserInputIndication.alphanumeric with user input characters 0-9, '*', and '#' in sequence (See H.324 6.5)
+# 9. CmdMsg_endSessionCommand sent
+# Order: 1, 2-3, 4-7, 8, 9

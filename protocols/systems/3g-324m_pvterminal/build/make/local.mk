@@ -8,9 +8,11 @@ TARGET := pv324m
 
 
 XCXXFLAGS += $(FLAG_COMPILE_WARNINGS_AS_ERRORS)
+XCPPFLAGS := $(LIP_SYNC_ENABLED)
 
 
-XINCDIRS +=  ../../h223/include  ../../h245/cmn/include  ../../h245/per/include  ../../h245/se/include  ../../h324/include  ../../h324/srp/include  ../../h324/tsc/include  ../../common/include  ../../../common/include  ../../../../../engines/common/include  ../../../tools/general/common/include  ../../../../../nodes/streaming/common/include
+
+XINCDIRS +=  ../../h223/include  ../../h245/cmn/include  ../../h245/per/include  ../../h245/se/include  ../../h324/include  ../../h324/srp/include  ../../h324/tsc/include  ../../common/include  ../../../common/include  ../../../../../engines/common/include  ../../../tools/general/common/include  ../../../../../nodes/streaming/common/include 
 
 
 
@@ -19,6 +21,7 @@ INCSRCDIR := ../../.
 
 
 SRCS += common/src/pvt_common.cpp \
+		common/src/lipsync_singleton_object.cpp \
 	common/src/h324utils.cpp \
 	h223/src/adaptationlayer.cpp \
 	h223/src/cpvh223multiplex.cpp \
@@ -77,7 +80,6 @@ HDRS := h324/tsc/include/tsc_h324m_config_interface.h \
 	common/include/pv_2way_h324m_interface.h \
 	common/include/pv_2way_h324m_types.h \
 	common/include/pvt_common.h \
-        common/include/pv_2way_codecspecifier_interface.h \
         h245/cmn/include/h245def.h \
         h245/per/include/per_common.h \
         h245/per/include/analyzeper.h \

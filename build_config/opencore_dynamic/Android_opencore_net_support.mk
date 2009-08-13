@@ -9,13 +9,15 @@ LOCAL_WHOLE_STATIC_LIBRARIES := \
  	libprotocolenginenode_download_common \
  	libprotocolenginenode_pdl \
  	libprotocolenginenode_ps \
- 	libprotocolenginenode_shoutcast
+ 	libprotocolenginenode_shoutcast \
+ 	libpvjitterbuffer \
+ 	libpvjitterbuffernode \
+ 	libpvsdpparser \
+ 	librtprtcp
 
 LOCAL_MODULE := libopencore_net_support
 
 LOCAL_PRELINK_MODULE := false
-
--include $(PV_TOP)/Android_platform_extras.mk
 
 -include $(PV_TOP)/Android_system_extras.mk
 
@@ -30,4 +32,9 @@ include   $(PV_TOP)/nodes/pvprotocolenginenode/download_protocols/common/Android
 include   $(PV_TOP)/nodes/pvprotocolenginenode/download_protocols/progressive_download/Android.mk
 include   $(PV_TOP)/nodes/pvprotocolenginenode/download_protocols/progressive_streaming/Android.mk
 include   $(PV_TOP)/nodes/pvprotocolenginenode/download_protocols/shoutcast/Android.mk
+include   $(PV_TOP)/nodes/streaming/jitterbuffernode/jitterbuffer/common/Android.mk
+include   $(PV_TOP)/nodes/streaming/jitterbuffernode/Android.mk
+include   $(PV_TOP)/protocols/sdp/parser/Android.mk
+include   $(PV_TOP)/protocols/sdp/common/Android.mk
+include   $(PV_TOP)/protocols/rtp/Android.mk
 

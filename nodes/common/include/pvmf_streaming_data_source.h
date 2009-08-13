@@ -39,10 +39,11 @@
 class OsclFileHandle;
 class PVMFCPMPluginAccessInterfaceFactory;
 
-#define BITMASK_PVMF_SOURCE_INTENT_PLAY          0x00000001
-#define BITMASK_PVMF_SOURCE_INTENT_GETMETADATA   0x00000002
-#define BITMASK_PVMF_SOURCE_INTENT_PREVIEW       0x00000004
-#define BITMASK_PVMF_SOURCE_INTENT_THUMBNAILS    0x00000008
+#define BITMASK_PVMF_SOURCE_INTENT_PLAY                             0x00000001
+#define BITMASK_PVMF_SOURCE_INTENT_GETMETADATA                      0x00000002
+#define BITMASK_PVMF_SOURCE_INTENT_PREVIEW                          0x00000004
+#define BITMASK_PVMF_SOURCE_INTENT_THUMBNAILS                       0x00000008
+#define BITMASK_PVMF_SOURCE_INTENT_SUPPRESS_REMOTE_NOTIFICATIONS    0x00000010
 
 //Source data for local file playback (format type PVMF_MPEG4FF & others)
 class PVMFStreamingDataSource : public PVInterface

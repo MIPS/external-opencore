@@ -27,7 +27,8 @@
 // Default port vector reserve size
 #define PVMF_MP4FFCN_PORT_VECTOR_RESERVE 1
 
-#define PVMF_MP4FFCN_MAX_INPUT_PORT 3
+#define PVMF_MP4FFCN_MAX_INPUT_PORT 10
+
 #define PVMF_MP4FFCN_MAX_OUTPUT_PORT 0
 
 // Port message queue settings

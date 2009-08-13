@@ -5,6 +5,7 @@ LINK ?= $(CXX)
 SHARED_LINK ?= $(CXX)
 AR ?= ar
 STRIP ?= strip
+ASM_INCLUDE_FLAG := -Wa,-I
 
 override SYSLIBS = -lc -lm -ldl -lstdc++ -lpthread
 
@@ -62,7 +63,7 @@ ifneq ($(strip $(BYPASS_COMBINED_COMPILE_AND_DEPEND)),1)
 #########################################################
 # $(call combined-cxx-compile-depend,source-file,object-file,depend-file,xpflags,xxflags)
 define combined-cxx-compile-depend
-  $(quiet) $(CXX) $4 $5 $(CPPFLAGS) $(INCDIRS) $(CXXFLAGS) -MMD $(CO)$2 $1
+  $(quiet) $(CXX) $4 $5 $(CPPFLAGS) $(PRE_INCDIRS) $(INCDIRS) $(CXXFLAGS) -MMD $(CO)$2 $1
   $(quiet) $(SED) -e '/^ *\\ *$$/ d' -e 's,$(BUILD_ROOT),$$(BUILD_ROOT),'  -e 's,$(SRC_ROOT),$$(SRC_ROOT),' $3 > $3.tmp
   $(quiet) $(CP) $3.tmp $3
   $(quiet) $(SED) -e 's/#.*//'  \
@@ -76,7 +77,7 @@ endef
 
 # $(call combined-cc-compile-depend,source-file,object-file,depend-file,xpflags, xxflags)
 define combined-cc-compile-depend
-  $(quiet) $(CC) $4 $5 $(CPPFLAGS) $(INCDIRS) $(CXXFLAGS) -MMD $(CO)$2 $1
+  $(quiet) $(CC) $4 $5 $(CPPFLAGS) $(PRE_INCDIRS) $(INCDIRS) $(CXXFLAGS) -MMD $(CO)$2 $1
   $(quiet) $(SED) -e '/^ *\\ *$$/ d' -e 's,$(BUILD_ROOT),$$(BUILD_ROOT),'  -e 's,$(SRC_ROOT),$$(SRC_ROOT),' $3 > $3.tmp
   $(quiet) $(CP) $3.tmp $3
   $(quiet) $(SED) -e 's/#.*//'  \

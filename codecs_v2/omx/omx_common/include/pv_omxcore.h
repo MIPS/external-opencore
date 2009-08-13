@@ -128,6 +128,7 @@ extern "C"
 #define PV_OMX_H263ENC_UUID OsclUuid(0x1d4769f0,0xca0c,0x11dc,0x95,0xff,0x08,0x00,0x20,0x0c,0x9a,0x74)
 #define PV_OMX_AMRENC_UUID OsclUuid(0x1d4769f0,0xca0c,0x11dc,0x95,0xff,0x08,0x00,0x20,0x0c,0x9a,0x75)
 #define PV_OMX_AACENC_UUID OsclUuid(0x1d4769f0,0xca0c,0x11dc,0x95,0xff,0x08,0x00,0x20,0x0c,0x9a,0x76)
+#define PV_OMX_RVDEC_UUID OsclUuid(0x1d4769f0,0xca0c,0x11dc,0x95,0xff,0x08,0x00,0x20,0x0c,0x9a,0x77)
 
 #define OMX_MAX_LIB_PATH 256
 
@@ -197,6 +198,8 @@ typedef struct PV_OMXComponentCapabilityFlagsType
     OMX_BOOL iOMXComponentUsesNALStartCodes;
     OMX_BOOL iOMXComponentCanHandleIncompleteFrames;
     OMX_BOOL iOMXComponentUsesFullAVCFrames;
+    OMX_BOOL iOMXComponentUsesInterleaved2BNALSizes;
+    OMX_BOOL iOMXComponentUsesInterleaved4BNALSizes;
 
 } PV_OMXComponentCapabilityFlagsType;
 
@@ -248,5 +251,43 @@ class OMXGlobalData
 
 };
 
+OSCL_IMPORT_REF OMX_ERRORTYPE OMX_MasterInit();
+OSCL_IMPORT_REF OMX_ERRORTYPE OMX_MasterDeinit();
+
+OSCL_IMPORT_REF OMX_ERRORTYPE OMX_MasterGetComponentsOfRole(
+    OMX_IN      OMX_STRING role,
+    OMX_INOUT   OMX_U32 *pNumComps,
+    OMX_INOUT   OMX_U8  **compNames);
+
+OSCL_IMPORT_REF OMX_ERRORTYPE OMX_APIENTRY OMX_MasterComponentNameEnum(
+    OMX_OUT OMX_STRING cComponentName,
+    OMX_IN  OMX_U32 nNameLength,
+    OMX_IN  OMX_U32 nIndex);
+
+OSCL_IMPORT_REF OMX_ERRORTYPE OMX_APIENTRY OMX_MasterFreeHandle(OMX_IN OMX_HANDLETYPE hComponent);
+
+OSCL_IMPORT_REF OMX_ERRORTYPE OMX_APIENTRY OMX_MasterGetHandle(OMX_OUT OMX_HANDLETYPE* pHandle,
+        OMX_IN  OMX_STRING cComponentName,
+        OMX_IN  OMX_PTR pAppData,
+        OMX_IN  OMX_CALLBACKTYPE* pCallBacks);
+
+OSCL_IMPORT_REF OMX_ERRORTYPE OMX_MasterGetRolesOfComponent(
+    OMX_IN      OMX_STRING compName,
+    OMX_INOUT   OMX_U32* pNumRoles,
+    OMX_OUT     OMX_U8** roles);
+
+OSCL_IMPORT_REF OMX_BOOL OMX_MasterConfigParser(
+    OMX_PTR aInputParameters,
+    OMX_PTR aOutputParameters);
+
+OSCL_IMPORT_REF OMX_ERRORTYPE OMX_SetupTunnel(
+    OMX_IN  OMX_HANDLETYPE hOutput,
+    OMX_IN  OMX_U32 nPortOutput,
+    OMX_IN  OMX_HANDLETYPE hInput,
+    OMX_IN  OMX_U32 nPortInput);
+
+OSCL_IMPORT_REF OMX_ERRORTYPE OMX_GetContentPipe(
+    OMX_OUT OMX_HANDLETYPE *hPipe,
+    OMX_IN OMX_STRING szURI);
 
 #endif

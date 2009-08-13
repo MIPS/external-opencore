@@ -150,10 +150,6 @@ PVMFStatus PVMFBufferDataSource::GetData(PVMFSharedMediaMsgPtr aMsg)
     return PVMFSuccess;
 }
 
-OSCL_EXPORT_REF void PVMFBufferDataSource::setObserver(PvmiConfigAndCapabilityCmdObserver* aObserver)
-{
-    OSCL_UNUSED_ARG(aObserver);
-}
 
 OSCL_EXPORT_REF PVMFStatus PVMFBufferDataSource::getParametersSync(PvmiMIOSession aSession, PvmiKeyType aIdentifier,
         PvmiKvp*& aParameters, int& num_parameter_elements,
@@ -177,66 +173,6 @@ OSCL_EXPORT_REF PVMFStatus PVMFBufferDataSource::releaseParameters(PvmiMIOSessio
     return PVMFSuccess;
 }
 
-OSCL_EXPORT_REF void PVMFBufferDataSource::createContext(PvmiMIOSession aSession, PvmiCapabilityContext& aContext)
-{
-    OSCL_UNUSED_ARG(aSession);
-    OSCL_UNUSED_ARG(aContext);
-}
-
-OSCL_EXPORT_REF void PVMFBufferDataSource::setContextParameters(PvmiMIOSession aSession, PvmiCapabilityContext& aContext,
-        PvmiKvp* aParameters, int num_parameter_elements)
-{
-    OSCL_UNUSED_ARG(aSession);
-    OSCL_UNUSED_ARG(aContext);
-    OSCL_UNUSED_ARG(aParameters);
-    OSCL_UNUSED_ARG(num_parameter_elements);
-}
-
-OSCL_EXPORT_REF void PVMFBufferDataSource::DeleteContext(PvmiMIOSession aSession, PvmiCapabilityContext& aContext)
-{
-    OSCL_UNUSED_ARG(aSession);
-    OSCL_UNUSED_ARG(aContext);
-}
-
-OSCL_EXPORT_REF void PVMFBufferDataSource::setParametersSync(PvmiMIOSession aSession, PvmiKvp* aParameters,
-        int num_elements, PvmiKvp * & aRet_kvp)
-{
-    OSCL_UNUSED_ARG(aSession);
-    OSCL_UNUSED_ARG(aParameters);
-    OSCL_UNUSED_ARG(num_elements);
-    OSCL_UNUSED_ARG(aRet_kvp);
-}
-
-
-OSCL_EXPORT_REF PVMFCommandId PVMFBufferDataSource::setParametersAsync(PvmiMIOSession aSession, PvmiKvp* aParameters,
-        int num_elements, PvmiKvp*& aRet_kvp, OsclAny* context)
-{
-    OSCL_UNUSED_ARG(aSession);
-    OSCL_UNUSED_ARG(aParameters);
-    OSCL_UNUSED_ARG(num_elements);
-    OSCL_UNUSED_ARG(aRet_kvp);
-    OSCL_UNUSED_ARG(context);
-
-    OSCL_LEAVE(OsclErrNotSupported);
-    return -1;
-}
-
-OSCL_EXPORT_REF uint32 PVMFBufferDataSource::getCapabilityMetric(PvmiMIOSession aSession)
-{
-    OSCL_UNUSED_ARG(aSession);
-
-    return 1;
-}
-
-OSCL_EXPORT_REF PVMFStatus PVMFBufferDataSource::verifyParametersSync(PvmiMIOSession aSession, PvmiKvp* aParameters, int num_elements)
-{
-    OSCL_UNUSED_ARG(aSession);
-    OSCL_UNUSED_ARG(aParameters);
-    OSCL_UNUSED_ARG(num_elements);
-
-    OSCL_LEAVE(OsclErrNotSupported);
-    return PVMFFailure;
-}
 
 OSCL_EXPORT_REF void PVMFBufferDataSource::QueryInterface(const PVUuid& aUuid, OsclAny*& aPtr)
 {

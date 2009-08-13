@@ -35,8 +35,8 @@ typedef struct
     uint16 Channels;
     uint16 BitsPerSample;
     uint32 SamplesPerSec;
+    uint32 SamplesPerFrame;
 } pvAudioConfigParserOutputs;
-
 
 OSCL_IMPORT_REF int32 pv_audio_config_parser(pvAudioConfigParserInputs *aInputs, pvAudioConfigParserOutputs *aOutputs);
 

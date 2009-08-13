@@ -42,8 +42,8 @@
 #include "pvmf_meta_data_extension.h"
 #endif
 
-#ifndef PVMI_CONFIG_AND_CAPABILITY_H_INCLUDED
-#include "pvmi_config_and_capability.h"
+#ifndef PVMI_CONFIG_AND_CAPABILITY_BASE_H_INCLUDED
+#include "pvmi_config_and_capability_base.h"
 #endif
 
 #ifndef PVMF_CPMPLUGIN_LICENSE_INTERFACE_H_INCLUDED
@@ -91,22 +91,25 @@ class JitterBufferFactory;
 #define PVMF_SM_ERRHANDLER_LOGERR(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG,iLogger,PVLOGMSG_ERR,m);
 #define PVMF_SM_ERRHANDLER_LOGCMDSEQ(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG,iLogger,PVLOGMSG_STACK_TRACE,m);
 
+#define UINT32_MAX  0xFFFFFFFF
+
 class PVMFSMSessionMetaDataInfo;
 class PVMFSMFSPChildNodeErrorHandler;
 #define PVMF_STREAMING_MANAGER_INTERNAL_CMDQ_SIZE 40
 
-class PVMFSMFSPBaseNode : public PVMFNodeInterface,
-        public OsclActiveObject,
-        public PvmiCapabilityAndConfig,
-        public PVMFDataSourceInitializationExtensionInterface,
-        public PVMFTrackSelectionExtensionInterface,
-        public PvmfDataSourcePlaybackControlInterface,
-        public PVMFMetadataExtensionInterface,
-        public PVMFCPMPluginLicenseInterface,
-        public PVMFNodeErrorEventObserver,
-        public PVMFNodeInfoEventObserver,
-        public PVMFNodeCmdStatusObserver,
-        public PVMFCPMStatusObserver
+class PVMFSMFSPBaseNode
+        : public PVMFNodeInterface
+        , public OsclActiveObject
+        , public PvmiCapabilityAndConfigBase
+        , public PVMFDataSourceInitializationExtensionInterface
+        , public PVMFTrackSelectionExtensionInterface
+        , public PvmfDataSourcePlaybackControlInterface
+        , public PVMFMetadataExtensionInterface
+        , public PVMFCPMPluginLicenseInterface
+        , public PVMFNodeErrorEventObserver
+        , public PVMFNodeInfoEventObserver
+        , public PVMFNodeCmdStatusObserver
+        , public PVMFCPMStatusObserver
 {
         friend class PVMFSMFSPChildNodeErrorHandler;
     public:

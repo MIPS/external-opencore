@@ -167,6 +167,7 @@ void PVPlayerRegistryPopulator::RegisterAllNodes(PVPlayerNodeRegistryInterface* 
     nodeinfo.iInputTypes.push_back(PVMF_MIME_ADIF);
     nodeinfo.iInputTypes.push_back(PVMF_MIME_ADTS);
     nodeinfo.iInputTypes.push_back(PVMF_MIME_LATM);
+    nodeinfo.iInputTypes.push_back(PVMF_MIME_ASF_MPEG4_AUDIO);
     nodeinfo.iInputTypes.push_back(PVMF_MIME_WMA);
     nodeinfo.iInputTypes.push_back(PVMF_MIME_MP3);
     nodeinfo.iNodeUUID = KPVMFOMXAudioDecNodeUuid;

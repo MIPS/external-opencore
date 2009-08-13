@@ -62,13 +62,13 @@ void CPV2WayEncDataChannelDatapath::SetSourceInputPort(PVMFPortInterface *aPort)
 
 void CPV2WayEncDataChannelDatapath::UseFilePlayPort(bool aUseFilePlayPort)
 {
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "CPV2WayEncDataChannelDatapath::CheckPathSpecificOpen state %d, format %s, use play port %d, file play port %x\n", iState, iFormat.getMIMEStrPtr(), aUseFilePlayPort, iFilePlayPort));
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "CPV2WayEncDataChannelDatapath::CheckPathSpecificOpen state %d, format %s, use play port %d, file play port %x\n", iState, iFormat.getMIMEStrPtr(), aUseFilePlayPort, iFilePlayPort));
     if ((iState != EOpened) || (iFilePlayPort == NULL)) return;
 
     //If audio use mixing port (audio source node input port)
     if (iFormat.isVideo())
     {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "CPV2WayEncDataChannelDatapath::CheckPathSpecificOpen audio source port status %d\n", iSourceInputPort.GetStatus()));
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "CPV2WayEncDataChannelDatapath::CheckPathSpecificOpen audio source port status %d\n", iSourceInputPort.GetStatus()));
         if (iSourceInputPort.GetStatus() == EHasPort)
         {
             if (aUseFilePlayPort)
@@ -109,7 +109,7 @@ void CPV2WayEncDataChannelDatapath::OpenComplete()
 
 bool CPV2WayEncDataChannelDatapath::CheckPathSpecificOpen()
 {
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "CPV2WayEncDataChannelDatapath::CheckPathSpecificOpen\n"));
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "CPV2WayEncDataChannelDatapath::CheckPathSpecificOpen\n"));
     {
         return true;
     }
@@ -117,7 +117,7 @@ bool CPV2WayEncDataChannelDatapath::CheckPathSpecificOpen()
 
 bool CPV2WayEncDataChannelDatapath::PathSpecificClose()
 {
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "CPV2WayEncDataChannelDatapath::PathSpecificClose file port %x, input src port %d\n", iFilePlayPort, iSourceInputPort.GetStatus()));
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "CPV2WayEncDataChannelDatapath::PathSpecificClose file port %x, input src port %d\n", iFilePlayPort, iSourceInputPort.GetStatus()));
 
     if (iFilePlayPort)
     {
@@ -144,11 +144,6 @@ bool CPV2WayEncDataChannelDatapath::PathSpecificClose()
 
 bool CPV2WayEncDataChannelDatapath::CheckPathSpecificStart()
 {
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "CPV2WayEncDataChannelDatapath::CheckPathSpecificStart engine state=%d\n", i2Way->iState));
-    if (i2Way->iState == EConnecting || i2Way->iState == EConnected)
-    {
-        return true;
-    }
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "CPV2WayEncDataChannelDatapath::CheckPathSpecificStart engine not connecting yet."));
-    return false;
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "CPV2WayEncDataChannelDatapath::CheckPathSpecificStart engine state=%d\n", i2Way->iState));
+    return true;
 }

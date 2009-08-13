@@ -60,7 +60,7 @@ class H324MConfig : public OsclActiveObject,
         PVMFCommandId SetMaxPduSize(int32 aMaxPduSize, OsclAny* aContextData = NULL);
         PVMFCommandId SetTerminalType(uint8 aTerminalType, OsclAny* aContextData = NULL);
         PVMFCommandId SetALConfiguration(TPVMediaType_t aMediaType, TPVAdaptationLayer aLayer,
-                                         bool aAllow, OsclAny* aContextData = NULL);
+                                         bool aAllow, bool aUse = true, OsclAny* aContextData = NULL);
         PVMFCommandId SendRme(OsclAny* aContextData = NULL);
         PVMFCommandId SetMaxMuxPduSize(int32 aRequestMaxMuxPduSize, OsclAny* aContextData = NULL);
         PVMFCommandId SetMaxMuxCcsrlSduSize(int32 aMaxCcsrlSduSize, OsclAny* aContextData = NULL);
@@ -149,7 +149,7 @@ class H324MConfigProxied :
         PVMFCommandId SetMaxPduSize(int32 aMaxPduSize, OsclAny* aContextData = NULL);
         PVMFCommandId SetTerminalType(uint8 aTerminalType, OsclAny* aContextData = NULL);
         PVMFCommandId SetALConfiguration(TPVMediaType_t aMediaType, TPVAdaptationLayer aLayer,
-                                         bool aAllow, OsclAny* aContextData = NULL);
+                                         bool aAllow, bool aUse = true, OsclAny* aContextData = NULL);
         PVMFCommandId SendRme(OsclAny* aContextData = NULL);
         PVMFCommandId SetMaxMuxPduSize(int32 aRequestMaxMuxPduSize, OsclAny* aContextData = NULL);
         PVMFCommandId SetMaxMuxCcsrlSduSize(int32 aMaxCcsrlSduSize, OsclAny* aContextData = NULL);

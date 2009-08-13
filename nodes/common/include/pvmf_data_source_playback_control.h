@@ -39,8 +39,9 @@
 #ifndef PVMF_RETURN_CODES_H_INCLUDED
 #include "pvmf_return_codes.h"
 #endif
-
-
+#ifndef PVMF_EVENT_HANDLING_H_INCLUDED
+#include "pvmf_event_handling.h"
+#endif
 #ifndef PVMF_MEDIA_CLOCK_H_INCLUDED
 #include "pvmf_media_clock.h"
 #endif

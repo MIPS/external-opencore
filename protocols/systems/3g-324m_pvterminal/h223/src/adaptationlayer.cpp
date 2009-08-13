@@ -96,7 +96,7 @@ PVMFStatus AdaptationLayer2::CompletePacket(OsclSharedPtr<PVMFMediaDataImpl>& pk
     uint8 Crc;
     uint8* pos = NULL;
     OsclRefCounterMemFrag hdr_frag;
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "AdaptationLayer2::CompletePacket packet, size(%d)", Size));
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "AdaptationLayer2::CompletePacket packet, size(%d), sn(%d)", Size, iSeqNum));
 
     OsclRefCounterMemFrag trlr_frag = iMemFragmentAlloc.get();
     if (trlr_frag.getMemFragPtr() == NULL)

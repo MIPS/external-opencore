@@ -10,7 +10,7 @@ LOCAL_SRC_FILES := \
 
 LOCAL_MODULE := libpv_rtsp_parcom
 
-LOCAL_CFLAGS :=  $(PV_CFLAGS)
+LOCAL_CFLAGS :=   $(PV_CFLAGS)
 
 
 

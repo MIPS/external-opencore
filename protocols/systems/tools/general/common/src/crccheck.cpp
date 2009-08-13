@@ -68,9 +68,7 @@ OSCL_EXPORT_REF CRC::CRC()
 
 OSCL_EXPORT_REF uint8 CRC::Crc8Check(uint8 *pAlPdu, int16 Size)
 {
-    uint8   crc;
-
-    crc = 0;
+    uint8   crc = 0;
     while (--Size >= 0)
     {
         crc = (uint8)((crc >> CHAR_BIT) ^ CrcTbl8[ crc ^ *pAlPdu++ ]);
@@ -80,15 +78,13 @@ OSCL_EXPORT_REF uint8 CRC::Crc8Check(uint8 *pAlPdu, int16 Size)
 
 OSCL_EXPORT_REF uint8 CRC::Crc8Check(Packet *pPkt)
 {
-    uint8   crc;
+    uint8   crc = 0;
     uint8   *pData = NULL;
-    int32   fragIdx, curSize, dataSize;
+    int32   fragIdx = 0;
+    int32   curSize = 0;
+    int32   dataSize = pPkt->GetMediaSize();
     BufferFragment* frag = NULL;
 
-    crc = 0;
-    fragIdx = 0;
-    dataSize = pPkt->GetMediaSize();
-    curSize = 0;
     while (--dataSize >= 0)
     {
 
@@ -106,13 +102,13 @@ OSCL_EXPORT_REF uint8 CRC::Crc8Check(Packet *pPkt)
 
 OSCL_EXPORT_REF uint8 CRC::Crc8Check(OsclSharedPtr<PVMFMediaDataImpl>& mediaData, bool hasCRC)
 {
-    uint8   crc;
-    uint8   *pData = NULL;
-    int32   fragIdx, curSize, dataSize;
+    uint8   crc = 0;
+    uint8*  pData = NULL;
+    int32   fragIdx = 0;
+    int32   curSize = 0;
+    int32   dataSize = 0;
     OsclRefCounterMemFrag frag;
 
-    crc = 0;
-    fragIdx = 0;
     //Don't include CRC field in calculation
     if (hasCRC)
     {
@@ -122,18 +118,30 @@ OSCL_EXPORT_REF uint8 CRC::Crc8Check(OsclSharedPtr<PVMFMediaDataImpl>& mediaData
     {
         dataSize = mediaData->getFilledSize();
     }
-    curSize = 0;
     while (--dataSize >= 0)
     {
 
         if ((--curSize) <= 0)
         {
-            mediaData->getMediaFragment(fragIdx, frag);
-            fragIdx++;
-            curSize = frag.getMemFragSize();
-            pData = (uint8 *) frag.getMemFragPtr();
+            if (mediaData->getMediaFragment(fragIdx, frag))
+            {
+                fragIdx++;
+                curSize = frag.getMemFragSize();
+                pData = (uint8 *) frag.getMemFragPtr();
+            }
+            else
+            {
+                return 0;
+            }
         }
-        crc = (uint8)((crc >> CHAR_BIT) ^ CrcTbl8[ crc ^ *pData++ ]);
+        if (pData)
+        {
+            crc = (uint8)((crc >> CHAR_BIT) ^ CrcTbl8[ crc ^ *pData++ ]);
+        }
+        else
+        {
+            return 0;
+        }
     }
     return (uint8)(crc & 0xffU);
 }

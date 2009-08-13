@@ -68,7 +68,7 @@ void TSC_324m::CETransferIndication(OsclSharedPtr<S_TerminalCapabilitySet> tcs)
 
     // Cancel timers for TCS receive
     iTimer->Cancel(PV_TSC_TCS_RECEIVE_TIMER_ID);
-    iH223->EnableStuffing(false);
+
 
     Tsc324mNodeCommand* cmd = iTSCcomponent->GetCommand();
     if (cmd)

@@ -27,6 +27,7 @@
 #include "oscl_string_containers.h"
 #include "oscl_stdstring.h"
 #include "oscl_error.h"
+#include "oscl_utf8conv.h"
 
 // **************************************************************
 //                   CHeapRep Implementation
@@ -489,6 +490,29 @@ OSCL_EXPORT_REF void OSCL_wHeapStringA::set(const chartype* cp, uint32 length)
     iRep->size = oscl_strlen(get_cstr());
 }
 
+// **************************************************************
+
+OSCL_EXPORT_REF void OSCL_HeapStringA::set(const other_chartype* buf, optype op)
+{
+    iRep->size = setrep_to_char(buf, oscl_strlen(buf), op, iAlloc);
+}
+
+OSCL_EXPORT_REF void OSCL_wHeapStringA::set(const other_chartype* buf, optype op)
+{
+    iRep->size = setrep_to_wide_char(buf, oscl_strlen(buf), op, iAlloc);
+}
+
+// **************************************************************
+
+OSCL_EXPORT_REF void OSCL_HeapStringA::set(const other_chartype* buf, uint32 length, optype op)
+{
+    iRep->size = setrep_to_char(buf, length, op, iAlloc);
+}
+
+OSCL_EXPORT_REF void OSCL_wHeapStringA::set(const other_chartype* buf, uint32 length, optype op)
+{
+    iRep->size = setrep_to_wide_char(buf, length, op, iAlloc);
+}
 
 // **************************************************************
 OSCL_EXPORT_REF OSCL_HeapStringA::OSCL_HeapStringA(const chartype* cp, uint32 length, Oscl_DefAlloc *alloc, OsclRefCounter *ref)
@@ -688,15 +712,33 @@ OSCL_EXPORT_REF void CFastRep::set_r(const oscl_wchar* cp, uint32 len)
 OSCL_EXPORT_REF void CFastRep::set_w(char* cp, uint32 len, uint32 maxlen)
 {
     size = len;
-    maxsize = maxlen;
-    buffer = (OsclAny*)cp;
+    if (overwrite)
+    {
+        oscl_strncpy((char*)buffer, cp, size);
+        ((char*) buffer)[size] = '\0';
+        overwrite = false;
+    }
+    else
+    {
+        maxsize = maxlen;
+        buffer = (OsclAny*)cp;
+    }
     writable = true;
 }
 OSCL_EXPORT_REF void CFastRep::set_w(oscl_wchar* cp, uint32 len, uint32 maxlen)
 {
     size = len;
-    maxsize = maxlen;
-    buffer = (OsclAny*)cp;
+    if (overwrite)
+    {
+        oscl_strncpy((oscl_wchar*)buffer, cp, size);
+        ((oscl_wchar*) buffer)[size] = '\0';
+        overwrite = false;
+    }
+    else
+    {
+        maxsize = maxlen;
+        buffer = (OsclAny*)cp;
+    }
     writable = true;
 }
 
@@ -735,13 +777,19 @@ OSCL_EXPORT_REF void CFastRep::append(const oscl_wchar* cp, uint32 len)
 void OSCL_FastString::set_rep(const chartype* cp)
 {
     uint32 len = (cp) ? oscl_strlen(cp) : 0;
-    rep.set_r(cp, len);
+    if (rep.overwrite)
+        rep.set_w((char*)cp, len, rep.maxsize);
+    else
+        rep.set_r(cp, len);
 }
 
 void OSCL_wFastString::set_rep(const chartype* cp)
 {
     uint32 len = (cp) ? oscl_strlen(cp) : 0;
-    rep.set_r(cp, len);
+    if (rep.overwrite)
+        rep.set_w((oscl_wchar*)cp, len, rep.maxsize);
+    else
+        rep.set_r(cp, len);
 }
 
 // **************************************************************
@@ -846,6 +894,57 @@ OSCL_EXPORT_REF void OSCL_wFastString::set(chartype* cp, uint32 maxlen)
         {
             rep.set_w(cp, i, maxlen);
             return;
+        }
+    }
+    OsclError::Leave(OsclErrGeneral);//not null-terminated
+}
+
+// **************************************************************
+OSCL_EXPORT_REF void OSCL_FastString::set(const other_chartype* buf, uint32 numofbyte, optype op)
+{
+    //copy string to new writable buffer.
+    //make sure buffer is null-terminated
+    //validate buf has enough space to continue
+    for (uint32 i = 0; i <= numofbyte; i++)
+    {
+        if (buf[i] == '\0')
+        {
+            uint32 byte_needed = i + 1; // i+1: actual chartype length includes '\0'
+            if (op == EOSCL_StringOp_UTF16ToUTF8)
+                byte_needed = i * MAX_NUMBER_OF_BYTE_PER_UTF8 + 1; // one byte for '\0'
+            if (numofbyte >= byte_needed)
+            {
+                rep.overwrite = true;
+                // actual byte space for conversion excludes '\0'
+                rep.maxsize = numofbyte - 1;
+                rep.buffer = (char*)buf;
+                setrep_to_char(buf, i, op, NULL);
+                return;
+            }
+            break;
+        }
+    }
+    OsclError::Leave(OsclErrGeneral);//not null-terminated
+}
+
+OSCL_EXPORT_REF void OSCL_wFastString::set(const other_chartype* buf, uint32 numofbyte, optype op)
+{
+    //copy string to new writable buffer.
+    //make sure buffer is null-terminated
+    //validate buf has enough space to continue
+    for (uint32 i = 0; i <= numofbyte / sizeof(oscl_wchar); i++)
+    {
+        if (buf[i] == '\0')
+        {
+            if (numofbyte >= (i + 1)*sizeof(oscl_wchar))
+            {
+                rep.overwrite = true;
+                rep.maxsize = numofbyte / sizeof(oscl_wchar) - 1;
+                rep.buffer = (oscl_wchar*)buf;
+                setrep_to_wide_char(buf, rep.maxsize, op, NULL);
+                return;
+            }
+            break;
         }
     }
     OsclError::Leave(OsclErrGeneral);//not null-terminated

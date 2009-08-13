@@ -6,9 +6,9 @@ include $(MK)/clear.mk
 
 TARGET := pvjitterbuffernode
 XCXXFLAGS := $(FLAG_COMPILE_WARNINGS_AS_ERRORS)
-XINCDIRS += ../../../common/include ../../../streamingmanager/plugins/mshttp/config ../../../streamingmanager/include ../../../../../protocols/rtp/src
-XINCDIRS += -I ../../../common/include
-XINCDIRS += -I ../../jitterbuffer/common/include
+XINCDIRS += ../../../common/include  ../../../streamingmanager/include ../../../../../protocols/rtp/src
+XINCDIRS += ../../jitterbuffer/common/include
+
 
 SRCDIR := ../../src
 INCSRCDIR := ../../include

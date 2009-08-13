@@ -33,8 +33,8 @@
 #ifndef PVMF_PORT_BASE_IMPL_H_INCLUDED
 #include "pvmf_port_base_impl.h"
 #endif
-#ifndef PVMI_CONFIG_AND_CAPABILITY_H_INCLUDED
-#include "pvmi_config_and_capability.h"
+#ifndef PVMI_CONFIG_AND_CAPABILITY_BASE_H_INCLUDED
+#include "pvmi_config_and_capability_base.h"
 #endif
 #ifndef __MEDIA_CLOCK_CONVERTER_H
 #include "media_clock_converter.h"
@@ -109,7 +109,7 @@ class PVMFJitterBufferPortParams
         bool                        iJitterBufferEmpty;
         bool                        iProcessIncomingMessages;
         bool                        iProcessOutgoingMessages;
-        bool                        iCanReceivePktFromJB;
+        bool                        iCanReceivePktFromJB;   //This will be true when JB node can retrieve the packet from the JB
         bool                        iMonitorForRemoteActivity;
         OSCL_HeapString<OsclMemAllocator> iMimeType;
 };
@@ -123,8 +123,9 @@ class PVMFJitterBufferPortParams
  * Output (source) ports assume the connected port uses the
  * same flow-control scheme.
  */
-class PVMFJitterBufferPort : public PvmfPortBaseImpl,
-        public PvmiCapabilityAndConfig
+class PVMFJitterBufferPort
+        : public PvmfPortBaseImpl
+        , public PvmiCapabilityAndConfigBase
 {
     public:
         /**
@@ -171,54 +172,9 @@ class PVMFJitterBufferPort : public PvmfPortBaseImpl,
                 aPtr = NULL;
         }
 
-        // Implement pure virtuals from PvmiCapabilityAndConfig interface
-        PVMFStatus getParametersSync(PvmiMIOSession aSession, PvmiKeyType aIdentifier,
-                                     PvmiKvp*& aParameters, int& num_parameter_elements,    PvmiCapabilityContext aContext);
+        // from PvmiCapabilityAndConfig interface
+        PVMFStatus getParametersSync(PvmiMIOSession aSession, PvmiKeyType aIdentifier, PvmiKvp*& aParameters, int& num_parameter_elements, PvmiCapabilityContext aContext);
         PVMFStatus releaseParameters(PvmiMIOSession aSession, PvmiKvp* aParameters, int num_elements);
-        void setParametersSync(PvmiMIOSession aSession, PvmiKvp* aParameters,
-                               int num_elements, PvmiKvp * & aRet_kvp);
-        PVMFStatus verifyParametersSync(PvmiMIOSession aSession, PvmiKvp* aParameters, int num_elements);
-
-        // Unsupported PvmiCapabilityAndConfig methods
-        void setObserver(PvmiConfigAndCapabilityCmdObserver* aObserver)
-        {
-            OSCL_UNUSED_ARG(aObserver);
-        };
-        void createContext(PvmiMIOSession aSession, PvmiCapabilityContext& aContext)
-        {
-            OSCL_UNUSED_ARG(aSession);
-            OSCL_UNUSED_ARG(aContext);
-        };
-        void setContextParameters(PvmiMIOSession aSession, PvmiCapabilityContext& aContext,
-                                  PvmiKvp* aParameters, int num_parameter_elements)
-        {
-            OSCL_UNUSED_ARG(aSession);
-            OSCL_UNUSED_ARG(aContext);
-            OSCL_UNUSED_ARG(aParameters);
-            OSCL_UNUSED_ARG(num_parameter_elements);
-        };
-        void DeleteContext(PvmiMIOSession aSession, PvmiCapabilityContext& aContext)
-        {
-            OSCL_UNUSED_ARG(aSession);
-            OSCL_UNUSED_ARG(aContext);
-        };
-        PVMFCommandId setParametersAsync(PvmiMIOSession aSession, PvmiKvp* aParameters,
-                                         int num_elements, PvmiKvp*& aRet_kvp, OsclAny* context = NULL)
-        {
-            OSCL_UNUSED_ARG(aSession);
-            OSCL_UNUSED_ARG(aParameters);
-            OSCL_UNUSED_ARG(num_elements);
-            OSCL_UNUSED_ARG(aRet_kvp);
-            OSCL_UNUSED_ARG(context);
-            return -1;
-        }
-        uint32 getCapabilityMetric(PvmiMIOSession aSession)
-        {
-            OSCL_UNUSED_ARG(aSession);
-            return 0;
-        }
-
-
 
         PVMFJitterBufferPortParams* GetPortParams()
         {
@@ -229,6 +185,14 @@ class PVMFJitterBufferPort : public PvmfPortBaseImpl,
         bool IsOutgoingQueueBusy();
     private:
         void Construct();
+    private:
+        bool pvmiSetPortFormatSpecificInfoSync(PvmiCapabilityAndConfig *aPort,
+                                               const char* aFormatValType);
+
+        bool pvmiGetPortFormatSpecificInfoSync(const char* aFormatValType,
+                                               PvmiKvp*& aKvp) const;
+
+        bool LocateInputPort(PVMFJitterBufferPortParams*& aInputPortParamsPtr, PVMFJitterBufferPortParams* aOutputPortParamsPtr) const;
 
         PVMFFormatType                      iFormat;
         PVMFJitterBufferNodePortTag         iPortType;

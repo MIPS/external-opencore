@@ -1,0 +1,42 @@
+#Test Case Name - This should be at the start
+Name TestCase1
+
+# Terminal Setup
+# These setings configure how the terminal will be setup
+# There are seperate settings for terminal A and Terminal B
+# Settings set here do no require the full set
+# Default settings will be set on the terminal. The settings explictly set here
+# will override the default settings of the terminal
+# Terminal A 
+Terminal A
+H.223Muxlevel 2
+# Any AL option specified here will override all the al options in the default 
+# setting
+AL Video
+# only want to use AL3 => turn AL2 off.
+AL2USE off
+# Audio - use defaults
+MSD undef
+#- This is not supported as of now
+BER bit error injection 
+
+#Terminal B
+Terminal B
+H.223Muxlevel 2
+# Any AL option specified here will override all the al options in the default 
+# setting
+AL Video
+# only want to use AL3 => turn AL2 off.
+AL2USE off
+# Audio - use defaults
+MSD undef
+#- This is not supported as of now
+BER bit error injection 
+
+# Specify the actions to be performed
+# Specify the Expected behaviour
+
+# 1. Selection of H.223 Annex B at both terminals
+# 2. NSRP + CCSRL is used
+# 3. RespMsg_terminalCapabilitySetAck received
+

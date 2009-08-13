@@ -24,7 +24,7 @@
 OMX_ERRORTYPE OmxDecTestCorruptNALTest::GetInputFrameAvc()
 {
     OMX_S32 Index;
-    OMX_S32 Size;
+    OMX_S32 Size = 0;
     OMX_ERRORTYPE Status;
     static OMX_S32 BitError;
     OMX_S32 TempValue;
@@ -273,14 +273,14 @@ void OmxDecTestCorruptNALTest::Run()
             CHECK_MEM(ipAVCBSO, "Bitstream_Buffer");
 
             //This should be the first call to the component to load it.
-            Err = OMX_Init();
-            CHECK_ERROR(Err, "OMX_Init");
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG, (0, "OmxDecTestCorruptNALTest::Run() - OMX_Init done"));
+            Err = OMX_MasterInit();
+            CHECK_ERROR(Err, "OMX_MasterInit");
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG, (0, "OmxDecTestCorruptNALTest::Run() - OMX_MasterInit done"));
 
 
             if (NULL != iName)
             {
-                Err = OMX_GetHandle(&ipAppPriv->Handle, iName, (OMX_PTR) this , iCallbacks->getCallbackStruct());
+                Err = OMX_MasterGetHandle(&ipAppPriv->Handle, iName, (OMX_PTR) this , iCallbacks->getCallbackStruct());
                 CHECK_ERROR(Err, "GetHandle");
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG, (0, "OmxDecTestCorruptNALTest::Run() - Got Handle for the component %s", iName));
             }
@@ -293,7 +293,7 @@ void OmxDecTestCorruptNALTest::Run()
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG, (0, "OmxDecTestCorruptNALTest::Run() - Finding out the role for the component %s", iRole));
 
                 // call once to find out the number of components that can fit the role
-                Err = OMX_GetComponentsOfRole(iRole, &NumComps, NULL);
+                Err = OMX_MasterGetComponentsOfRole(iRole, &NumComps, NULL);
 
                 if (OMX_ErrorNone != Err || NumComps < 1)
                 {
@@ -321,13 +321,13 @@ void OmxDecTestCorruptNALTest::Run()
                 }
 
                 // call 2nd time to get the component names
-                Err = OMX_GetComponentsOfRole(iRole, &NumComps, (OMX_U8**) pCompOfRole);
+                Err = OMX_MasterGetComponentsOfRole(iRole, &NumComps, (OMX_U8**) pCompOfRole);
                 CHECK_ERROR(Err, "GetComponentsOfRole");
 
                 for (ii = 0; ii < NumComps; ii++)
                 {
                     // try to create component
-                    Err = OMX_GetHandle(&ipAppPriv->Handle, (OMX_STRING) pCompOfRole[ii], (OMX_PTR) this, iCallbacks->getCallbackStruct());
+                    Err = OMX_MasterGetHandle(&ipAppPriv->Handle, (OMX_STRING) pCompOfRole[ii], (OMX_PTR) this, iCallbacks->getCallbackStruct());
                     // if successful, no need to continue
                     if ((OMX_ErrorNone == Err) && (NULL != ipAppPriv->Handle))
                     {
@@ -359,6 +359,15 @@ void OmxDecTestCorruptNALTest::Run()
 
             Err = OMX_GetParameter(ipAppPriv->Handle, OMX_IndexParamVideoInit, &iPortInit);
             CHECK_ERROR(Err, "GetParameter_VideoInit");
+
+            // Number of ports must be at least 2 of them (in&out)
+            if (iPortInit.nPorts < 2)
+            {
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                                (0, "OmxComponentDecTest::Run() There is insuffucient %d ports", iPortInit.nPorts));
+                StopOnError();
+                break;
+            }
 
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG, (0, "OmxDecTestCorruptNALTest::Run() - GetParameter called for OMX_IndexParamVideoInit"));
 
@@ -692,13 +701,13 @@ void OmxDecTestCorruptNALTest::Run()
             iPendingCommands = 1;
 
             if (0 == oscl_strcmp(iFormat, "H264") || 0 == oscl_strcmp(iFormat, "H263")
-                    || 0 == oscl_strcmp(iFormat, "M4V"))
+                    || 0 == oscl_strcmp(iFormat, "M4V") || 0 == oscl_strcmp(iFormat, "RV"))
             {
                 iOutBufferSize = ((iParamPort.format.video.nFrameWidth + 15) & ~15) * ((iParamPort.format.video.nFrameHeight + 15) & ~15) * 3 / 2;
             }
             else if (0 == oscl_strcmp(iFormat, "WMV"))
             {
-                iOutBufferSize = ((iParamPort.format.video.nFrameWidth + 3) & ~3) * ((iParamPort.format.video.nFrameHeight + 3) & ~3) * 3 / 2;
+                iOutBufferSize = iParamPort.nBufferSize;
             }
 
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
@@ -941,7 +950,7 @@ void OmxDecTestCorruptNALTest::Run()
                                     (0, "OmxDecTestCorruptNALTest::Run() - Free the Component Handle"));
 
 
-                    Err = OMX_FreeHandle(ipAppPriv->Handle);
+                    Err = OMX_MasterFreeHandle(ipAppPriv->Handle);
                     if (OMX_ErrorNone != Err)
                     {
                         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "OmxDecTestCorruptNALTest::Run() - FreeHandle Error"));
@@ -953,10 +962,10 @@ void OmxDecTestCorruptNALTest::Run()
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
                             (0, "OmxDecTestCorruptNALTest::Run() - De-initialize the omx component"));
 
-            Err = OMX_Deinit();
+            Err = OMX_MasterDeinit();
             if (OMX_ErrorNone != Err)
             {
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "OmxDecTestCorruptNALTest::Run() - OMX_Deinit Error"));
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "OmxDecTestCorruptNALTest::Run() - OMX_MasterDeinit Error"));
                 iTestStatus = OMX_FALSE;
             }
 

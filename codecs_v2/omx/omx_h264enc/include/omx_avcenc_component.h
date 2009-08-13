@@ -35,8 +35,14 @@
 
 #define INPUT_BUFFER_SIZE_AVCENC 38016          //(176 * 144 * 1.5) for YUV 420 format.
 
-#if (defined(TEST_FULL_AVC_FRAME_MODE) || defined(TEST_FULL_AVC_FRAME_MODE_SC))
+#if defined(TEST_FULL_AVC_FRAME_MODE)
+#if (defined(TEST_FULL_AVC_FRAME_MODE_SC) || defined(TEST_FULL_AVC_FRAME_MODE_I4BNS))
+#define OUTPUT_BUFFER_SIZE_AVCENC 38535 // MAX_NAL_PER_FRAME * 4 is size of extra data
+#elif defined(TEST_FULL_AVC_FRAME_MODE_I2BNS)
+#define OUTPUT_BUFFER_SIZE_AVCENC 38335 // MAX_NAL_PER_FRAME * 2 is size of extra data
+#else
 #define OUTPUT_BUFFER_SIZE_AVCENC 38581 // (20 + 4 * MAX_NAL_PER_FRAME + 20 + 6) is size of extra data
+#endif
 #else
 #define OUTPUT_BUFFER_SIZE_AVCENC 38135
 #endif
@@ -88,6 +94,7 @@ class OmxComponentAvcEncAO : public OmxComponentVideo
         OMX_U32           iNALSizeArray[MAX_NAL_PER_FRAME];
         OMX_U32           iNALSizeSum;
         OMX_U32           iNALCount;
+        OMX_U32           iSizeOfNALSize;
 };
 
 #endif // OMX_AVCENC_COMPONENT_H_INCLUDED

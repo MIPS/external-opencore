@@ -290,8 +290,8 @@
 #define KVP_KEY_YEAR_LEN 4
 #define KVP_KEY_COMMENT "comment"
 #define KVP_KEY_COMMENT_LEN 7
-#define KVP_KEY_TRACK_NUMBER "tracknumber"
-#define KVP_KEY_TRACK_NUMBER_LEN 11
+#define KVP_KEY_TRACKINFO_TRACK_NUMBER "track-info/track-number"
+#define KVP_KEY_TRACKINFO_TRACK_NUMBER_LEN 23
 #define KVP_KEY_GENRE "genre"
 #define KVP_KEY_GENRE_LEN 5
 #define KVP_KEY_COPYRIGHT "copyright"
@@ -339,6 +339,37 @@
 #define KVP_ID3V2_VALUE "id3v2"
 #define KVP_VALTYPE_LYRICS   "valtype=ksv"
 #define KVP_VALTYPE_REQSIZE  "reqsize="
+
+//id3v1 Genre Lookup table
+static const uint8 ID3V1_GENRE[150][64]   = {     "Blues", "Classic Rock", "Country", "Dance", "Disco",
+        "Funk", "Grunge", "Hip-Hop", "Jazz", "Metal", "New Age",
+        "Oldies", "Other", "Pop", "R&B", "Rap", "Reggae", "Rock",
+        "Techno", "Industrial", "Alternative", "Ska", "Death Metal",
+        "Pranks", "Soundtrack", "Euro-Techno", "Ambient", "Trip-Hop",
+        "Vocal", "Jazz+Funk", "Fusion", "Trance", "Classical",
+        "Instrumental", "Acid", "House", "Game", "Sound Clip",
+        "Gospel", "Noise", "AlternRock", "Bass", "Soul", "Punk",
+        "Space", "Meditative", "Instrumental Pop", "Instrumental Rock",
+        "Ethnic", "Gothic", "Darkwave", "Techno-Industrial",
+        "Electronic", "Pop-Folk", "Eurodance", "Dream", "Southern Rock",
+        "Comedy", "Cult", "Gangsta", "Top 40", "Christian Rap",
+        "Pop/Funk", "Jungle", "Native American", "Cabaret", "New Wave", "Psychadelic",
+        "Rave", "Showtunes", "Trailer", "Lo-Fi", "Tribal", "Acid Punk",
+        "Acid Jazz", "Polka", "Retro", "Musical", "Rock & Roll",
+        "Hard Rock", "Folk", "Folk-Rock", "National Folk", "Swing", "Fast Fusion",
+        "Bebob", "Latin", "Revival", "Celtic", "Bluegrass", "Avantgarde",
+        "Gothic Rock", "Progressive Rock", "Psychedelic Rock",
+        "Symphonic Rock", "Slow Rock", "Big Band", "Chorus", "Easy Listening",
+        "Acoustic", "Humour", "Speech", "Chanson", "Opera", "Chamber Music",
+        "Sonata", "Symphony", "Booty Bass", "Primus", "Porn Groove", "Satire",
+        "Slow Jam", "Club", "Tango", "Samba", "Folklore", "Ballad", "Power Ballad",
+        "Rhytmic Soul", "Freestyle", "Duet", "Punk Rock", "Drum Solo", "Acapella",
+        "Euro-House", "Dance Hall", "Goa", "Drum & Bass", "Club-House", "Hardcore",
+        "Terror", "Indie", "BritPop", "Negerpunk", "Polsk Punk", "Beat",
+        "Christian Gangsta", "Heavy Metal", "Black Metal", "Crossover", "Contemporary C",
+        "Christian Rock", "Merengue", "Salsa", "Thrash Metal", "Anime", "JPop", "SynthPop"
+
+                                            }; //ID3V1 Genre
 
 static const int  MAX_RANGE_INT_SIZE  = 10;
 

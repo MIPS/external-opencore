@@ -101,7 +101,7 @@ int MetadataDriver::retrieverThread()
         return -1;
     }
 
-    OMX_Init();
+    OMX_MasterInit();
     OsclScheduler::Init("PVAuthorEngineWrapper");
     mState = STATE_CREATE;
     AddToScheduler();
@@ -111,7 +111,7 @@ int MetadataDriver::retrieverThread()
 
     mSyncSem->Signal();  // Signal that doSetDataSource() is done.
     OsclScheduler::Cleanup();
-    OMX_Deinit();
+    OMX_MasterDeinit();
     UninitializeForThread();
     return 0;
 }
@@ -541,14 +541,20 @@ void MetadataDriver::handleAddDataSource()
     if (mDataSource) {
         mDataSource->SetDataSourceURL(wFileName);
         mDataSource->SetDataSourceFormatType((char*)PVMF_MIME_FORMAT_UNKNOWN);
+        mLocalDataSource = new PVMFLocalDataSource();
+        mLocalDataSource->iIntent = 0;
+        if (mMode & GET_METADATA_ONLY) {
+            mLocalDataSource->iIntent |= BITMASK_PVMF_SOURCE_INTENT_GETMETADATA;
+        }
         if (mMode & GET_FRAME_ONLY) {
 #if BEST_THUMBNAIL_MODE
             // Set the intent to thumbnails.
-            mLocalDataSource = new PVMFLocalDataSource();
-            mLocalDataSource->iIntent = BITMASK_PVMF_SOURCE_INTENT_THUMBNAILS;
-            mDataSource->SetDataSourceContextData((OsclAny*)mLocalDataSource);
+            mLocalDataSource->iIntent |= BITMASK_PVMF_SOURCE_INTENT_THUMBNAILS;
+#else
+            mLocalDataSource->iIntent = BITMASK_PVMF_SOURCE_INTENT_GETMETADATA;
 #endif
         }
+        mDataSource->SetDataSourceContextData((OsclAny*)mLocalDataSource);
         int fd;
         long long offset;
         long long len;

@@ -65,6 +65,11 @@ class OsclMemPoolResizableAllocatorCleanupDA : public OsclDestructDealloc
 
         virtual void destruct_and_dealloc(OsclAny* ptr)
         {
+            const uint8* const my_ptr = (uint8*)ptr;
+            const uint aligned_refcnt_size = oscl_mem_aligned_size(sizeof(OsclRefCounterDA));
+            const uint aligned_cleanup_size = oscl_mem_aligned_size(sizeof(OsclMemPoolResizableAllocatorCleanupDA));
+            PVMFMediaDataImpl* media_data_ptr = OSCL_REINTERPRET_CAST(PVMFMediaDataImpl*, (my_ptr + aligned_refcnt_size + aligned_cleanup_size));
+            media_data_ptr->~PVMFMediaDataImpl();
             gen_alloc->deallocate(ptr);
         }
     private:

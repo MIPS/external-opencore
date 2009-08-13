@@ -238,7 +238,7 @@ class TrackAtom : public Atom
             }
         }
 
-        int32  resetPlayBack(int32 time, bool oDependsOn = false)
+        int32  resetPlayBack(uint32 time, bool oDependsOn = false)
         {
             if (_pmediaAtom != NULL)
             {

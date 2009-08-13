@@ -39,6 +39,7 @@ PVA_FF_TrackHeaderAtom::PVA_FF_TrackHeaderAtom(int32 type, uint32 trackID, uint8
     _mediaType = type;
     _width = 176;
     _height = 144;
+    _currTrackDuration = 0;
     init(type);
 }
 
@@ -117,7 +118,7 @@ void PVA_FF_TrackHeaderAtom::setVideoWidthHeight(int16 width, int16 height)
 }
 
 void
-PVA_FF_TrackHeaderAtom::addSample(uint32 ts)
+PVA_FF_TrackHeaderAtom::addSample(uint32 ts, uint32 sampleDuration)
 {
     // Need to verify that this fp in the movie timescale
     // Currenly ts for the media samples fp in terms of milliseconds
@@ -129,6 +130,7 @@ PVA_FF_TrackHeaderAtom::addSample(uint32 ts)
     setDuration(duration);
 
     _prevTS = duration;
+    _currTrackDuration += sampleDuration;
 }
 
 // in movie fragment mode set the actual duration of
@@ -205,6 +207,12 @@ PVA_FF_TrackHeaderAtom::renderToFileStream(MP4_AUTHOR_FF_FILE_IO_WRAP *fp)
      */
 
     uint32 totalDuration = getDuration();
+
+    if (!totalDuration)
+    {
+        totalDuration = _currTrackDuration;
+    }
+
     if (!PVA_FF_AtomUtils::render32(fp, totalDuration))
     {
         return false;

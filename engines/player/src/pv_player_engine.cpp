@@ -773,28 +773,6 @@ void PVPlayerEngine::createContext(PvmiMIOSession aSession, PvmiCapabilityContex
 }
 
 
-void PVPlayerEngine::DeleteContext(PvmiMIOSession aSession, PvmiCapabilityContext& aContext)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVPlayerEngine::DeleteContext()"));
-    OSCL_UNUSED_ARG(aSession);
-    OSCL_UNUSED_ARG(aContext);
-    // Do nothing since the context is just the a member variable of the engine
-}
-
-
-void PVPlayerEngine::setContextParameters(PvmiMIOSession aSession, PvmiCapabilityContext& aContext, PvmiKvp* aParameters, int aNumParamElements)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVPlayerEngine::setContextParameters()"));
-    OSCL_UNUSED_ARG(aSession);
-    OSCL_UNUSED_ARG(aContext);
-    OSCL_UNUSED_ARG(aParameters);
-    OSCL_UNUSED_ARG(aNumParamElements);
-    // This method is not supported so leave
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::setContextParameters() is not supported!"));
-    OSCL_LEAVE(OsclErrNotSupported);
-}
-
-
 void PVPlayerEngine::setParametersSync(PvmiMIOSession aSession, PvmiKvp* aParameters, int aNumElements, PvmiKvp* &aRetKVP)
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVPlayerEngine::setParametersSync()"));
@@ -844,15 +822,6 @@ PVMFCommandId PVPlayerEngine::setParametersAsync(PvmiMIOSession aSession, PvmiKv
 
     // Push it to command queue to be processed asynchronously
     return AddCommandToQueue(PVP_ENGINE_COMMAND_CAPCONFIG_SET_PARAMETERS, (OsclAny*)aContext, &paramvec, NULL, false);
-}
-
-
-uint32 PVPlayerEngine::getCapabilityMetric(PvmiMIOSession aSession)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVPlayerEngine::getCapabilityMetric()"));
-    OSCL_UNUSED_ARG(aSession);
-    // Not supported so return 0
-    return 0;
 }
 
 
@@ -4257,7 +4226,8 @@ PVMFStatus PVPlayerEngine::DoQueryUUID(PVPlayerEngineCommand& aCmd)
              if (iSourceNodeTrackLevelInfoIF)
 {
     uuidvec->push_back(PVMF_TRACK_LEVEL_INFO_INTERFACE_UUID);
-    });
+    }
+            );
     OSCL_FIRST_CATCH_ANY(leavecode,
                          PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::DoQueryUUID() Leaved"));
                          EngineCommandCompleted(aCmd.GetCmdId(), aCmd.GetContext(), PVMFErrNoMemory);
@@ -4953,8 +4923,12 @@ PVMFStatus PVPlayerEngine::DoGetMetadataValue(PVPlayerEngineCommand& aCmd)
     // Check if the search succeeded
     if (i == iMetadataIFList.size() || iMetadataIFList.size() == 0)
     {
-        // Starting index is too large or there is no metadata interface available
-        return PVMFErrArgument;
+        // Starting index is too large or there is no metadata interface available.
+        // Return success and a list with nothing
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVPlayerEngine::DoGetMetadataValue()"
+                        "No MetadataValue to return, return success and a list with nothing"));
+        EngineCommandCompleted(aCmd.GetCmdId(), aCmd.GetContext(), PVMFSuccess);
+        return PVMFSuccess;
     }
 
     // Retrieve the metadata value from the first node
@@ -9775,6 +9749,13 @@ void PVPlayerEngine::DoSourceNodeCleanup(void)
             iSourceNodeCPMLicenseIF = NULL;
         }
 
+        if (iSourceNodeRegInitIF)
+        {
+            iSourceNodeRegInitIF->removeRef();
+            iSourceNodeRegInitIF = NULL;
+        }
+
+
         // Reset the Presentation Info list
         iSourcePresInfoList.Reset();
 
@@ -12080,11 +12061,12 @@ void PVPlayerEngine::HandleSourceNodeInit(PVPlayerEngineContext& aNodeContext, c
         break;
 
 
-        case PVMFErrLicenseRequired:
+        case PVMFErrDrmLicenseNotFound:
+        case PVMFErrDrmLicenseExpired:
         case PVMFErrHTTPAuthenticationRequired:
         case PVMFErrRedirect:
         {
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVPlayerEngine::HandleSourceNodeInit() PVMFErrLicenseRequired/PVMFErrHTTPAuthenticationRequired/PVMFErrRedirect"));
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVPlayerEngine::HandleSourceNodeInit() PVMFErrDrmLicenseNotFound/PVMFErrHTTPAuthenticationRequired/PVMFErrRedirect"));
 
             SetEngineState(PVP_ENGINE_STATE_IDLE);
             cmdstatus = aNodeResp.GetCmdStatus();
@@ -12101,6 +12083,27 @@ void PVPlayerEngine::HandleSourceNodeInit(PVPlayerEngineContext& aNodeContext, c
             EngineCommandCompleted(aNodeContext.iCmdId, aNodeContext.iCmdContext, cmdstatus, OSCL_STATIC_CAST(PVInterface*, errmsg), aNodeResp.GetEventData());
             errmsg->removeRef();
 
+        }
+        break;
+
+        case PVMFErrContentInvalidForProgressivePlayback:
+        {
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
+                            (0, "PVPlayerEngine::HandleSourceNodeInit() failed with PVMFErrContentInvalidForProgressivePlayback, Add EH Command"));
+
+            SetEngineState(PVP_ENGINE_STATE_IDLE);
+            cmdstatus = aNodeResp.GetCmdStatus();
+
+            PVMFErrorInfoMessageInterface* nextmsg = NULL;
+            if (aNodeResp.GetEventExtensionInterface())
+            {
+                nextmsg = GetErrorInfoMessageInterface(*(aNodeResp.GetEventExtensionInterface()));
+            }
+
+            PVUuid puuid = PVPlayerErrorInfoEventTypesUUID;
+            iCommandCompleteErrMsgInErrorHandling = OSCL_NEW(PVMFBasicErrorInfoMessage, (PVPlayerErrSourceInit, puuid, nextmsg));
+            iCommandCompleteStatusInErrorHandling = cmdstatus;
+            AddCommandToQueue(PVP_ENGINE_COMMAND_ERROR_HANDLING_INIT, NULL, NULL, NULL, false);
         }
         break;
 

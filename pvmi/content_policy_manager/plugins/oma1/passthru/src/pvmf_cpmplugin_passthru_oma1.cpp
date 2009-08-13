@@ -220,6 +220,21 @@ PVMFCPMPassThruPlugInOMA1::QueryUUID(PVMFSessionId s,
     return QueueCommandL(cmd);
 }
 
+OSCL_EXPORT_REF PVMFStatus PVMFCPMPassThruPlugInOMA1::QueryInterfaceSync(PVMFSessionId s,
+        const PVUuid& aUuid,
+        PVInterface*& aInterfacePtr)
+{
+    PVMF_CPMPLUGIN_PASSTHRUOMA1_LOGINFO((0, "PVMFCPMPassThruPlugInOMA1:QueryInterfaceSync"));
+    aInterfacePtr = NULL;
+
+    if (!queryInterface(aUuid, aInterfacePtr))
+    {
+        PVMF_CPMPLUGIN_PASSTHRUOMA1_LOGINFO((0, "PVMFCPMPassThruPlugInOMA1::QueryInterfaceSync returning PVMFErrNotSupported"));
+        return PVMFErrNotSupported;
+    }
+    return PVMFSuccess;
+}
+
 OSCL_EXPORT_REF PVMFCommandId
 PVMFCPMPassThruPlugInOMA1::QueryInterface(PVMFSessionId s,
         const PVUuid& aUuid,
@@ -315,7 +330,7 @@ PVMFCPMPassThruPlugInOMA1::SetSourceInitializationData(OSCL_wString& aSourceURL,
     //content or not.  This passthru plugin is not smart enough to do that, so it
     //generally accepts all formats.  However, it rejects ASF content to avoid conflicts
     //with the PV Janus plugin.
-    if (aSourceFormat == PVMF_MIME_ASFFF || PVMF_MIME_DATA_SOURCE_MS_HTTP_STREAMING_URL)
+    if (aSourceFormat == PVMF_MIME_ASFFF || aSourceFormat == PVMF_MIME_DATA_SOURCE_MS_HTTP_STREAMING_URL)
     {
         return PVMFErrNotSupported;
     }
@@ -689,7 +704,7 @@ void PVMFCPMPassThruPlugInOMA1::DoAuthorizeUsage(PVMFCPMPassThruPlugInOMA1Comman
     if (iFailAuthorizeUsage)
     {
         iFailAuthorizeUsage = false; //reset for next try
-        CommandComplete(iInputCommands, aCmd, PVMFErrLicenseRequired);
+        CommandComplete(iInputCommands, aCmd, PVMFErrDrmLicenseNotFound);
         return;
     }
     MakeMetadata();
@@ -720,6 +735,7 @@ void PVMFCPMPassThruPlugInOMA1::DoUsageComplete(PVMFCPMPassThruPlugInOMA1Command
 
 PVMFStatus PVMFCPMPassThruPlugInOMA1::DoGetLicense(PVMFCPMPassThruPlugInOMA1Command& aCmd)
 {
+    PVMF_CPMPLUGIN_PASSTHRUOMA1_LOGWARNING((0, "PVMFCPMPassThruPlugInOMA1:DoGetLicense"));
     if (!iCancelAcquireLicense)
     {
         CommandComplete(iInputCommands, aCmd, PVMFSuccess);
@@ -727,6 +743,7 @@ PVMFStatus PVMFCPMPassThruPlugInOMA1::DoGetLicense(PVMFCPMPassThruPlugInOMA1Comm
     }
     else
     {
+        PVMF_CPMPLUGIN_PASSTHRUOMA1_LOGWARNING((0, "PVMFCPMPassThruPlugInOMA1:DoGetLicense - Simulating CancelAcquireLicense"));
         iCancelAcquireLicense = false; //Reset for next time
         return PVMFPending;
     }
@@ -735,6 +752,7 @@ PVMFStatus PVMFCPMPassThruPlugInOMA1::DoGetLicense(PVMFCPMPassThruPlugInOMA1Comm
 void PVMFCPMPassThruPlugInOMA1::DoCancelGetLicense(PVMFCPMPassThruPlugInOMA1Command& aCmd)
 {
     //Complete all pending commands, basically "GetLicense"
+    PVMF_CPMPLUGIN_PASSTHRUOMA1_LOGWARNING((0, "PVMFCPMPassThruPlugInOMA1:DoCancelGetLicense"));
     while (iCurrentCommand.size() > 0)
     {
         CommandComplete(iCurrentCommand, iCurrentCommand.front(), PVMFErrCancelled);
@@ -1188,7 +1206,7 @@ PVMFCPMPassThruPlugInOMA1DataStreamSyncInterfaceImpl::QueryReadCapacity(PvmiData
     {
         if (!iFileObject)
             return PVDS_FAILURE;
-        int32 result = (TOsclFileOffsetInt32)iFileObject->Size();
+        int32 result = (TOsclFileOffsetInt32)(iFileObject->Size() - iFileObject->Tell());
         PVMF_CPMPLUGIN_PASSTHRUOMA1_LOGDEBUG((0, "PVMFCPMPassThruPlugInOMA1DataStreamSyncInterfaceImpl::QueryReadCapacity returning %d", result));
         if (result < 0)
         {

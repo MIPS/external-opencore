@@ -336,7 +336,7 @@ OSCL_EXPORT_REF PVMFStatus PVMFCreateKVPUtils::CreateKVPForWStringValue(PvmiKvp&
         uint32 aTruncateFlag)
 {
     // Check parameters
-    if (aKeyVal.key != NULL || aKeyTypeString == NULL || aValString.get_size() == 0)
+    if (aKeyVal.key != NULL || aKeyTypeString == NULL)
     {
         return PVMFErrArgument;
     }

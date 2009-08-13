@@ -136,14 +136,13 @@ const PVMFStatus PVMFErrPortProcessing = (-19);
  */
 const PVMFStatus PVMFErrAccessDenied = (-20);
 /*
- Error due to the lack of a valid license for the content
+ Unused error code.  Can be re-defined.
  */
-const PVMFStatus PVMFErrLicenseRequired = (-21);
+const PVMFStatus PVMFErrUnused_01 = (-21);
 /*
- Error due to the lack of a valid license for the content.  However
- a preview is available.
+ Unused error code.  Can be re-defined.
  */
-const PVMFStatus PVMFErrLicenseRequiredPreviewAvailable = (-22);
+const PVMFStatus PVMFErrUnused_02 = (-22);
 /*
  Error due to the download content length larger than the maximum request size
  */
@@ -180,6 +179,90 @@ const PVMFStatus PVMFErrRedirect = (-30);
  Error if a given method or API is not implemented. This is NOT the same as PVMFErrNotSupported.
 */
 const PVMFStatus PVMFErrNotImplemented = (-31);
+
+/*
+DRM license not found
+*/
+const PVMFStatus PVMFErrDrmLicenseNotFound = (-32);
+/*
+DRM license has expired due to end time or usage count restriction
+*/
+const PVMFStatus PVMFErrDrmLicenseExpired = (-33);
+/*
+DRM license has a start time restriction and current time is too early
+*/
+const PVMFStatus PVMFErrDrmLicenseNotYetValid = (-34);
+/*
+DRM rights are insufficient for the requested operation
+*/
+const PVMFStatus PVMFErrDrmInsufficientRights = (-35);
+/*
+DRM rights require higher output protection level than supported by the device
+*/
+const PVMFStatus PVMFErrDrmOutputProtectionLevel = (-36);
+/*
+DRM clock rollback detected.
+*/
+const PVMFStatus PVMFErrDrmClockRollback = (-37);
+/*
+DRM clock is not available or cannot be read
+*/
+const PVMFStatus PVMFErrDrmClockError = (-38);
+/*
+DRM license store is corrupted
+*/
+const PVMFStatus PVMFErrDrmLicenseStoreCorrupt = (-39);
+/*
+DRM license store is not valid for the device.
+*/
+const PVMFStatus PVMFErrDrmLicenseStoreInvalid = (-40);
+/*
+DRM license store access failed
+*/
+const PVMFStatus PVMFErrDrmLicenseStoreAccess = (-41);
+/*
+DRM Device data access failed
+*/
+const PVMFStatus PVMFErrDrmDeviceDataAccess = (-42);
+/*
+DRM network error occurred in server communication
+*/
+const PVMFStatus PVMFErrDrmNetworkError = (-43);
+/*
+DRM device ID cannot be determined
+*/
+const PVMFStatus PVMFErrDrmDeviceIDUnavailable = (-44);
+/*
+DRM data is not matched to device
+*/
+const PVMFStatus PVMFErrDrmDeviceDataMismatch = (-45);
+/*
+DRM cryptography operation failed
+*/
+const PVMFStatus PVMFErrDrmCryptoError = (-46);
+/*
+DRM license not found, but a preview of the content is available.
+*/
+const PVMFStatus PVMFErrDrmLicenseNotFoundPreviewAvailable = (-47);
+/*
+Error due to unable to communicate with server
+*/
+const PVMFStatus PVMFErrDrmServerError = (-48);
+
+/*
+... this range reserved for future DRM-related errors
+*/
+
+/*
+DRM Operational Error not otherwise specified
+*/
+const PVMFStatus PVMFErrDrmOperationFailed = (-81);
+
+/*
+Error returned when the video container is not valid for progressive playback.
+*/
+const PVMFStatus PVMFErrContentInvalidForProgressivePlayback = (-82);
+
 /*
  Placeholder for last event in range.
  */

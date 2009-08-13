@@ -3212,7 +3212,7 @@ void PVMFDownloadManagerSubNodeContainerBase::CommandDone(PVMFStatus aStatus, PV
     // Set "Init Failed License Required" flag with the results of parser Init.
     if (iType == EFormatParser && iCmd == EInit)
     {
-        iContainer->iInitFailedLicenseRequired = (status == PVMFErrLicenseRequired);
+        iContainer->iInitFailedLicenseRequired = (status == PVMFErrDrmLicenseNotFound || status == PVMFErrDrmLicenseExpired);
     }
 
     // Watch for the request port command completion from the protocol node, because we need to save the port pointer
@@ -3642,33 +3642,6 @@ PVMFStatus PVMFDownloadManagerNode::releaseParameters(PvmiMIOSession aSession,
 
 }
 
-void PVMFDownloadManagerNode::createContext(PvmiMIOSession aSession, PvmiCapabilityContext& aContext)
-{
-    OSCL_UNUSED_ARG(aSession);
-    OSCL_UNUSED_ARG(aContext);
-    // not supported
-    OSCL_LEAVE(PVMFErrNotSupported);
-}
-
-void PVMFDownloadManagerNode::setContextParameters(PvmiMIOSession aSession, PvmiCapabilityContext& aContext,
-        PvmiKvp* aParameters, int num_parameter_elements)
-{
-    OSCL_UNUSED_ARG(aSession);
-    OSCL_UNUSED_ARG(aContext);
-    OSCL_UNUSED_ARG(aParameters);
-    OSCL_UNUSED_ARG(num_parameter_elements);
-    // not supported
-    OSCL_LEAVE(PVMFErrNotSupported);
-}
-
-void PVMFDownloadManagerNode::DeleteContext(PvmiMIOSession aSession,
-        PvmiCapabilityContext& aContext)
-{
-    OSCL_UNUSED_ARG(aSession);
-    OSCL_UNUSED_ARG(aContext);
-    // not supported
-    OSCL_LEAVE(PVMFErrNotSupported);
-}
 
 void PVMFDownloadManagerNode::setParametersSync(PvmiMIOSession aSession, PvmiKvp* aParameters,
         int num_elements, PvmiKvp * & aRet_kvp)
@@ -3984,40 +3957,6 @@ uint32 PVMFDownloadManagerNode::getItemLen(char *ptrItemStart, char *ptrItemEnd)
     return itemLen;
 }
 
-
-PVMFCommandId PVMFDownloadManagerNode::setParametersAsync(PvmiMIOSession aSession,
-        PvmiKvp* aParameters,
-        int num_elements,
-        PvmiKvp*& aRet_kvp,
-        OsclAny* context)
-{
-    OSCL_UNUSED_ARG(aSession);
-    OSCL_UNUSED_ARG(aParameters);
-    OSCL_UNUSED_ARG(num_elements);
-    OSCL_UNUSED_ARG(aRet_kvp);
-    OSCL_UNUSED_ARG(context);
-    // not supported
-    OSCL_LEAVE(PVMFErrNotSupported);
-    return 0;
-}
-
-uint32 PVMFDownloadManagerNode::getCapabilityMetric(PvmiMIOSession aSession)
-{
-    OSCL_UNUSED_ARG(aSession);
-    return 0;
-}
-
-PVMFStatus PVMFDownloadManagerNode::verifyParametersSync(PvmiMIOSession aSession,
-        PvmiKvp* aParameters,
-        int num_elements)
-{
-    OSCL_UNUSED_ARG(aSession);
-    OSCL_UNUSED_ARG(aParameters);
-    OSCL_UNUSED_ARG(num_elements);
-    // not supported
-    OSCL_LEAVE(PVMFErrNotSupported);
-    return 0;
-}
 
 bool PVMFDownloadManagerNode::IsDownloadExtensionHeaderValid(PvmiKvp &aParameter)
 {

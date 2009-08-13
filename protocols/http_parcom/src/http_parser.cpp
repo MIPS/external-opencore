@@ -99,6 +99,12 @@ OSCL_EXPORT_REF uint32 HTTPParser::getHTTPStatusCode()
 }
 
 ////////////////////////////////////////////////////////////////////////////////////
+OSCL_EXPORT_REF uint32 HTTPParser::getHttpVersionNum()
+{
+    return iHeader->getHttpVersionNum();
+}
+
+////////////////////////////////////////////////////////////////////////////////////
 OSCL_EXPORT_REF void HTTPParser::getContentInfo(HTTPContentInfo &aContentInfo)
 {
     aContentInfo.clear();
@@ -636,6 +642,22 @@ void HTTPParserInput::skipCRLF()
     }
 }
 
+/////////////////////////////////////////////////////////////////////////////////////
+// pass ending CRLF
+void HTTPParserInput::skipCRLFChunkedCoding()
+{
+    if (iDataInQueue.empty()) return;
+    uint8* fragStartPtr = (uint8*)iDataInQueue[0].getMemFragPtr() + iDataInQueueMemFragOffset;
+    int32 availableFragSize = iDataInQueue[0].getMemFragSize() - iDataInQueueMemFragOffset;
+
+    while ((*fragStartPtr == HTTP_CHAR_CR && *(fragStartPtr + 1) == HTTP_CHAR_LF) && availableFragSize > 0)
+    {
+        fragStartPtr += 2;
+        availableFragSize -= 2;
+        iDataInQueueMemFragOffset += 2;
+    }
+}
+
 // return value: 0 => not available ; >0 means the offset of the next complete line from the current point
 // -1 error
 int32 HTTPParserInput::isNextLineAvailable(bool aHeaderParsed)
@@ -769,7 +791,12 @@ bool HTTPParserInput::empty()
     if (iDataInQueue.size() > 1) return false;
 
     // iDataInQueue.size() = 1
-    if (iDataInQueueMemFragOffset == iDataInQueue[0].getMemFragSize()) return true;
+    if (iDataInQueueMemFragOffset == iDataInQueue[0].getMemFragSize())
+    {
+        iDataInQueue.clear();
+        iDataInQueueMemFragOffset = 0;
+        return true;
+    }
     return false;
 }
 
@@ -1360,7 +1387,6 @@ int32 HTTPParserCTEContentObject::parse(HTTPParserInput &aParserInput, RefCountH
         if (chunkLength == -1) return HTTPParser::PARSE_NEED_MORE_DATA;
         if (chunkLength == 0)
         {
-            if (!aParserInput.empty()) return HTTPParser::PARSE_SUCCESS_END_OF_MESSAGE_WITH_EXTRA_DATA;
             return HTTPParser::PARSE_SUCCESS_END_OF_MESSAGE;
         }
 
@@ -1369,11 +1395,16 @@ int32 HTTPParserCTEContentObject::parse(HTTPParserInput &aParserInput, RefCountH
         aParserInput.clearOutputQueue();
     }
 
-    // get CTE chunk data
-    aParserInput.skipCRLF();
+    // get CTE chunk data, should use skipCRLFChunkedCoding, there is problem
+    // with skipCRLF() since the \r\n has to come toegether. Ling
+    aParserInput.skipCRLFChunkedCoding();
     int32 status = parseEnityBodyChunkData(aParserInput, aEntityUnit);
-    if (status == HTTPParser::PARSE_SUCCESS) reset(); // for next chunk parsing
-    return status;
+
+    if (status != HTTPParser::PARSE_SUCCESS) return status;
+
+    reset(); // for next chunk parsing
+    if (aParserInput.empty()) return HTTPParser::PARSE_SUCCESS_END_OF_INPUT;
+    return HTTPParser::PARSE_SUCCESS;
 }
 
 bool HTTPParserCTEContentObject::getCTEChunkLength(HTTPMemoryFragment &aInputLineData, int32 &aChunkSize)

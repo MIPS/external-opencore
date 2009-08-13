@@ -154,6 +154,21 @@ class PVMFCPMPluginInterface
                                              const OsclAny* aContext = NULL) = 0;
 
         /**
+         * Plugins can override these to support synchronous query interface call, which
+         * will improve performance.
+         */
+        virtual bool HasQueryInterfaceSync()
+        {
+            return false;
+        }
+        virtual PVMFStatus QueryInterfaceSync(PVMFSessionId aSession,
+                                              const PVUuid& aUuid,
+                                              PVInterface*& aInterfacePtr)
+        {
+            return PVMFFailure;
+        }
+
+        /**
          * Starts initialization of the plugin.
          * At the minimum, the plugin should be
          * ready to authenticate user after initialization is complete

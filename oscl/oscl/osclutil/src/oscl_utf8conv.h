@@ -56,6 +56,12 @@ NOTE:
 #include "oscl_base.h"
 #endif
 
+/*!
+** Define the maximum UTF8 representation in bytes.
+** @todo Handle 4-byte surrogate pair representation
+*/
+#define MAX_NUMBER_OF_BYTE_PER_UTF8 3
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Function prototypes
 /*!

@@ -113,61 +113,19 @@ PVA_FF_MediaInformationAtom::init(int32 mediaType)
 
 void
 PVA_FF_MediaInformationAtom::nextSample(int32 mediaType,
-                                        void *psample,
-                                        uint32 size,
-                                        uint32 ts,
-                                        uint8 flags,
-                                        uint32 baseOffset,
+                                        PVMP4FFComposerSampleParam *pSampleParam,
                                         bool oChunkStart)
 {
-    _psampleTableAtom->nextSample(mediaType, psample,
-                                  size, ts, flags,
-                                  baseOffset, oChunkStart);
-}
-
-void
-PVA_FF_MediaInformationAtom::nextTextSample(int32 mediaType,
-        void *psample,
-        uint32 size,
-        uint32 ts,
-        uint8 flags,
-        int32 index,
-        uint32 baseOffset,
-        bool oChunkStart)
-{
-    _psampleTableAtom->nextTextSample(mediaType, psample,
-                                      size, ts, flags, index,
-                                      baseOffset, oChunkStart);
-}
-
-void
-PVA_FF_MediaInformationAtom::nextSample(int32 mediaType,
-                                        Oscl_Vector <OsclMemoryFragment, OsclMemAllocator>& fragmentList,
-                                        uint32 size,
-                                        uint32 ts,
-                                        uint8 flags,
-                                        uint32 baseOffset,
-                                        bool oChunkStart)
-{
-    _psampleTableAtom->nextSample(mediaType, fragmentList,
-                                  size, ts, flags,
-                                  baseOffset, oChunkStart);
+    _psampleTableAtom->nextSample(mediaType, pSampleParam, oChunkStart);
 
 }
 
 void
 PVA_FF_MediaInformationAtom::nextTextSample(int32 mediaType,
-        Oscl_Vector <OsclMemoryFragment, OsclMemAllocator>& fragmentList,
-        uint32 size,
-        uint32 ts,
-        uint8 flags,
-        int32 index,
-        uint32 baseOffset,
+        PVMP4FFComposerSampleParam *pSampleParam,
         bool oChunkStart)
 {
-    _psampleTableAtom->nextTextSample(mediaType, fragmentList,
-                                      size, ts, flags, index,
-                                      baseOffset, oChunkStart);
+    _psampleTableAtom->nextTextSample(mediaType, pSampleParam, oChunkStart);
 
 }
 

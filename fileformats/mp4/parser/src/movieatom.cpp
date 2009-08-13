@@ -859,14 +859,12 @@ uint32 MovieAtom::resetPlayback(uint32 time, uint16 numTracks, uint32 *trackList
 
             if (trackAtom != NULL)
             {
-                MediaClockConverter mcc1(1000);
-                mcc1.update_clock(modifiedTimeStamp);
+                MediaClockConverter mcc1(1000, modifiedTimeStamp);
                 convertedTS = mcc1.get_converted_ts(getTrackMediaTimescale(*(trackList + i)));
 
                 returnedTS = trackAtom->resetPlayBack(convertedTS, true);
                 // convert returnedTS (which is in media time scale) to the ms
-                MediaClockConverter mcc(getTrackMediaTimescale(*(trackList + i)));
-                mcc.update_clock(returnedTS);
+                MediaClockConverter mcc(getTrackMediaTimescale(*(trackList + i)), returnedTS);
                 timestamp = mcc.get_converted_ts(1000);
 
                 if (timestamp <= modifiedTimeStamp)
@@ -900,15 +898,13 @@ uint32 MovieAtom::resetPlayback(uint32 time, uint16 numTracks, uint32 *trackList
                     {
                         // convert modifiedTimeStamp (which is in ms) to the appropriate
                         // media time scale
-                        MediaClockConverter mcc1(1000);
-                        mcc1.update_clock(modifiedTimeStamp);
+                        MediaClockConverter mcc1(1000, modifiedTimeStamp);
                         convertedTS = mcc1.get_converted_ts(getTrackMediaTimescale(*(trackList + i)));
 
                         returnedTS = IndependentTrackAtom->resetPlayBack(convertedTS);
 
                         // convert returnedTS (which is in media time scale) to the ms
-                        MediaClockConverter mcc(getTrackMediaTimescale(*(trackList + i)));
-                        mcc.update_clock(returnedTS);
+                        MediaClockConverter mcc(getTrackMediaTimescale(*(trackList + i)), returnedTS);
                         timestamp = mcc.get_converted_ts(1000);
 
                         if (timestamp <= modifiedTimeStamp)
@@ -928,15 +924,13 @@ uint32 MovieAtom::resetPlayback(uint32 time, uint16 numTracks, uint32 *trackList
 
                     // convert modifiedTimeStamp (which is in ms) to the appropriate
                     // media time scale
-                    MediaClockConverter mcc1(1000);
-                    mcc1.update_clock(modifiedTimeStamp);
+                    MediaClockConverter mcc1(1000, modifiedTimeStamp);
                     convertedTS = mcc1.get_converted_ts(getTrackMediaTimescale(*(trackList + i)));
 
                     returnedTS = trackAtom->resetPlayBack(convertedTS);
 
                     // convert returnedTS (which is in media time scale) to the ms
-                    MediaClockConverter mcc(getTrackMediaTimescale(*(trackList + i)));
-                    mcc.update_clock(returnedTS);
+                    MediaClockConverter mcc(getTrackMediaTimescale(*(trackList + i)), returnedTS);
                     timestamp = mcc.get_converted_ts(1000);
 
                     if (timestamp <= modifiedTimeStamp)
@@ -966,8 +960,7 @@ uint32 MovieAtom::resetPlayback(uint32 time, uint16 numTracks, uint32 *trackList
             {
                 // convert modifiedTimeStamp (which is in ms) to the appropriate
                 // media time scale
-                MediaClockConverter mcc1(1000);
-                mcc1.update_clock(modifiedTimeStamp);
+                MediaClockConverter mcc1(1000, modifiedTimeStamp);
                 convertedTS = mcc1.get_converted_ts(getTrackMediaTimescale(*(trackList + i)));
 
                 if (_oVideoTrackPresent)
@@ -980,8 +973,7 @@ uint32 MovieAtom::resetPlayback(uint32 time, uint16 numTracks, uint32 *trackList
                 }
 
                 // convert returnedTS (which is in media time scale) to the ms
-                MediaClockConverter mcc(getTrackMediaTimescale(*(trackList + i)));
-                mcc.update_clock(returnedTS);
+                MediaClockConverter mcc(getTrackMediaTimescale(*(trackList + i)), returnedTS);
                 timestamp = mcc.get_converted_ts(1000);
 
                 if (timestamp <= modifiedTimeStamp)

@@ -241,7 +241,7 @@ class MediaAtom : public Atom
             }
         }
 
-        int32 resetPlayBack(int32 time, bool oDependsOn)
+        int32 resetPlayBack(uint32 time, bool oDependsOn)
         {
             if (_pmediaInformation != NULL)
             {

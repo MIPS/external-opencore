@@ -1,0 +1,4 @@
+duration
+author
+artist
+date

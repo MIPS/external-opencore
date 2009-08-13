@@ -76,7 +76,14 @@ CPVH223Multiplex::CPVH223Multiplex(TPVLoopbackMode aLoopbackMode)
     {
         iALIndex[n] = 0;
     }
-
+    iAudioTS = 0;
+    iVideoTS = 0;
+    iTotalCountOut = 0;
+    iDiffVidAudTS = 0;
+    iVidlcn = 0;
+    iAudlcn = 0;
+    iSqrCalVidAudTS = 0;
+    iRtMnSqCalc = 0;
     Init();
 
     ResetStats();
@@ -238,8 +245,14 @@ int CPVH223Multiplex::Stop()
     iState = false;
     iLcnEnd = NULL;
 
-    iOutgoingChannels[0]->Flush();
-    iIncomingChannels[0]->Flush();
+    if (iOutgoingChannels.size())
+    {
+        iOutgoingChannels[0]->Flush();
+    }
+    if (iIncomingChannels.size())
+    {
+        iIncomingChannels[0]->Flush();
+    }
 
     iNonSegmentableSduDataList.clear();
     iSegmentableSduDataList.clear();
@@ -282,7 +295,15 @@ void CPVH223Multiplex::LevelSetupComplete(PVMFStatus status, TPVH223Level level)
 uint32 CPVH223Multiplex::MuxPduIndicate(uint8* pPdu, uint32 sz, int32 fClosing, int32 muxCode)
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "CPVH223Multiplex::MuxPduIndicate mux code=%d, closing=%d, size=%d", muxCode, fClosing, sz));
-    int ret = MuxToALDispatch(pPdu, sz, fClosing, muxCode);
+    int ret = false;
+    if (iLevelSetupComplete)
+    {
+        ret = MuxToALDispatch(pPdu, sz, fClosing, muxCode);
+    }
+    else
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "CPVH223Multiplex::MuxPduIndicate Level setup is not complete"));
+    }
     return (uint16)ret;
 }
 
@@ -293,11 +314,6 @@ void CPVH223Multiplex::MuxPduErrIndicate(EMuxPduError err)
     iObserver->MuxErrorOccurred(INCOMING, PV_MUX_COMPONENT_MUX, PVMFErrCorrupt);
 }
 
-void CPVH223Multiplex::MuxSetupComplete(PVMFStatus status, TPVH223Level level)
-{
-    OSCL_UNUSED_ARG(status);
-    OSCL_UNUSED_ARG(level);
-}
 
 unsigned CPVH223Multiplex::DispatchPduPacket(MuxPduPacketList& packets,
         MuxSduData& mux_sdu_data,
@@ -446,6 +462,11 @@ TPVStatusCode CPVH223Multiplex::SetMaxOutgoingPduSize(uint16 Size)
     return iLowerLayer->SetMaxOutgoingPduSize(Size);
 }
 
+void CPVH223Multiplex::SetLevelCheckCount(uint16 aCount)
+{
+    iLowerLayer->SetLevelCheckCount(aCount);
+}
+
 TPVStatusCode CPVH223Multiplex::SetSduSize(TPVDirection direction, uint16 size, ErrorProtectionLevel_t epl)
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "Mux: Set sdu size - direction(%d), size(%d), epl(%d)\n", direction, size, epl));
@@ -592,6 +613,7 @@ TPVStatusCode CPVH223Multiplex::GetAdaptationLayer(OsclSharedPtr<AdaptationLayer
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                         (0, "CPVH223Multiplex::GetAdaptationLayer - Memory allocation failure on StartAlPdu\n"));
         return EPVT_Failed;
+
     }
     return EPVT_Success;
 }
@@ -607,6 +629,7 @@ TPVStatusCode CPVH223Multiplex::OpenChannel(TPVDirection direction,
                     (0, "CPVH223Multiplex::OpenChannel direction(%d), id(%d)\n", direction, channel_id));
     PS_H223LogicalChannelParameters h223lcnParams = h223params->GetLcnParams();
     H223LogicalChannel* channel = NULL;
+
 
     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                     (0, "CPVH223Multiplex::OpenChannel -  AL index(%d)", h223lcnParams->adaptationLayerType.index));
@@ -635,6 +658,7 @@ TPVStatusCode CPVH223Multiplex::OpenChannel(TPVDirection direction,
             PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "CPVH223Multiplex::OpenChannel ERROR - Invalid AL Index.\n"));
             return EPVT_Failed;
     }
+
     /* Overwrite audio sdu size, otherwise audio memory allocation can become prohibitive*/
     if (!h223lcnParams->segmentableFlag)
     {
@@ -693,7 +717,9 @@ TPVStatusCode CPVH223Multiplex::OpenChannel(TPVDirection direction,
         iOutgoingChannels.push_back(channel_ptr);
         UpdateMuxInterval();
         if (channel_id)
+        {
             channel_ptr->BufferMedia(iMultiplexingDelayMs);
+        }
     }
     else
     {
@@ -708,7 +734,20 @@ TPVStatusCode CPVH223Multiplex::OpenChannel(TPVDirection direction,
         OsclSharedPtr<H223IncomingChannel> channel_ptr((H223IncomingChannel*)channel, channelRefCounter);
         iIncomingChannels.push_back(channel_ptr);
     }
+
     channel->Init();
+    for (unsigned lcnindex = 0; lcnindex < iOutgoingChannels.size(); lcnindex++)
+    {
+        TPVChannelId lcn = iOutgoingChannels[lcnindex]->GetLogicalChannelNumber();
+        if (iOutgoingChannels[lcnindex]->GetFormatType().isVideo())
+        {
+            iVidlcn = lcn;/*to store lcn of video*/
+        }
+        else if (iOutgoingChannels[lcnindex]->GetFormatType().isAudio())
+        {
+            iAudlcn = lcn;/*to store lcn value of audio*/
+        }
+    }
     channel->SetClock(iClock);
 
     uint8* fsi = NULL;
@@ -1171,6 +1210,7 @@ void CPVH223Multiplex::SetMuxSduData(MuxSduData& data)
     if (mux_sdu_data_ptr)
     {
         *mux_sdu_data_ptr = data;
+
     }
 }
 
@@ -1214,6 +1254,7 @@ void CPVH223Multiplex::ReleaseMuxSdu(MuxSduData& mux_sdu_data,
 unsigned CPVH223Multiplex::UpdateSduDataLists()
 {
     unsigned num_lcns = 0;
+
     for (unsigned lcnindex = 0; lcnindex < iOutgoingChannels.size(); lcnindex++)
     {
         MuxSduData* mux_sdu_data_ptr = NULL;
@@ -1227,6 +1268,7 @@ unsigned CPVH223Multiplex::UpdateSduDataLists()
             mux_sdu_data_ptr = FindMuxSduData(iOutgoingChannels[lcnindex]->GetLogicalChannelNumber(),
                                               iOutgoingChannels[lcnindex]->IsSegmentable());
         }
+
         if (mux_sdu_data_ptr)
         {
             num_lcns++;
@@ -1234,9 +1276,11 @@ unsigned CPVH223Multiplex::UpdateSduDataLists()
         else
         {
             // get the next packet and update the sdu size
+
             PVMFSharedMediaDataPtr sdu;
             if (iOutgoingChannels[lcnindex]->GetNextPacket(sdu, PVMFSuccess))
             {
+
                 MuxSduData mux_sdu_data;
                 mux_sdu_data.lcn = iOutgoingChannels[lcnindex];
                 mux_sdu_data.sdu = sdu;
@@ -1245,10 +1289,15 @@ unsigned CPVH223Multiplex::UpdateSduDataLists()
                 mux_sdu_data.cur_pos = 0;
                 AppendMuxSduData(mux_sdu_data);
                 num_lcns++;
+
             }
+
         }
     }
+
+
     return num_lcns;
+
 }
 
 OsclSharedPtr<PVMFMediaDataImpl> CPVH223Multiplex::InitPduPacket()
@@ -1276,6 +1325,7 @@ OsclSharedPtr<PVMFMediaDataImpl> CPVH223Multiplex::InitPduPacket()
 PVMFStatus CPVH223Multiplex::CompletePduPacket(OsclSharedPtr<PVMFMediaDataImpl>& packet, int mt, int pm)
 {
     return iLowerLayer->CompletePacket(packet, mt, pm);
+
 }
 
 void CPVH223Multiplex::UpdateMuxInterval(uint16 aInterval)
@@ -1431,3 +1481,39 @@ void CPVH223Multiplex::SetMioLatency(int32 aLatency, bool aAudio)
 }
 
 
+void CPVH223Multiplex::CalculateSkew(int alcn, bool aCheckAudVid, int aTimestamp, bool aCheckEot)
+{
+    if (aCheckEot)
+    {
+        if (iTotalCountOut == 0)
+        {
+
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                            (0, "Not be able to calculate RMS because Total count value is zero  TotalCount=%d", iTotalCountOut));
+        }
+        else
+        {
+            iRtMnSqCalc = (int32)sqrt(iSqrCalVidAudTS / iTotalCountOut);
+            iObserver->SkewDetected(iVidlcn, iAudlcn, iRtMnSqCalc);
+
+        }
+    }
+    else
+    {
+
+        if (aCheckAudVid)
+        {
+            iVideoTS = aTimestamp;
+            iTotalCountOut++;
+            iDiffVidAudTS = iVideoTS - iAudioTS;
+            iSqrCalVidAudTS += (iDiffVidAudTS * iDiffVidAudTS);
+
+        }
+        else
+        {
+            iAudioTS = aTimestamp;
+            iTotalCountOut++;
+        }
+
+    }
+}

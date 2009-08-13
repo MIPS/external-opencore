@@ -416,5 +416,6 @@ typedef enum
 // Max limit for number of tracks in a file
 
 #define MAX_LIMIT_FOR_NUMBER_OF_TRACKS 1024
+#define MAX_GENRE_ID_IN_ID3_TABLE 147
 
 #endif //ATOMDEFS_H_INCLUDED

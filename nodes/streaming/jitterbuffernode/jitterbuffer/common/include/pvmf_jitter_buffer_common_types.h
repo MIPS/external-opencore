@@ -32,7 +32,8 @@
 
 //Jitter buffer node specific leave codes
 #define JBPacketRegistrationConfigurationCorrupted  1000
-
+#define JB_MAX_MEDIA_MSGS_OUTSTANDING     10
+#define JB_MAX_CHUNKS_IN_OUTPUT_MEDIA_MSG   10
 
 enum PVMFJitterBufferDataState
 {
@@ -246,6 +247,7 @@ typedef enum
     PVMFJitterBufferNodeJitterBufferHighWaterMarkReached,
     PVMFJitterBufferNodeStreamThinningRecommended,
     PVMFJitterBufferNodeRTCPDataProcessed,
+    PVMFJitterBufferNodePayloadParserError,
     PVMFJitterBufferNodeInfoEventEnd
 } PVMFJitterBufferNodeInfoEventType;
 

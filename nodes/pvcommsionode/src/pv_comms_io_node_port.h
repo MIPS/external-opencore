@@ -70,11 +70,12 @@
 // Forward declaration
 class PVCommsIONode;
 
-class PVCommsIONodePort : public OsclTimerObject,
-        public PvmfPortBaseImpl,
-        public PvmiMediaTransfer,
-        public PVMFPortActivityHandler,
-        public PvmiCapabilityAndConfig
+class PVCommsIONodePort
+        : public OsclTimerObject
+        , public PvmfPortBaseImpl
+        , public PvmiMediaTransfer
+        , public PVMFPortActivityHandler
+        , public PvmiCapabilityAndConfigBase
 {
     public:
         PVCommsIONodePort(int32 aPortTag, PVCommsIONode* aNode);
@@ -130,15 +131,8 @@ class PVCommsIONodePort : public OsclTimerObject,
                 PvmiKvp*& aParameters, int& num_parameter_elements,
                 PvmiCapabilityContext aContext);
         OSCL_IMPORT_REF PVMFStatus releaseParameters(PvmiMIOSession aSession, PvmiKvp* aParameters, int num_elements);
-        OSCL_IMPORT_REF void createContext(PvmiMIOSession aSession, PvmiCapabilityContext& aContext);
-        OSCL_IMPORT_REF void setContextParameters(PvmiMIOSession aSession, PvmiCapabilityContext& aContext,
-                PvmiKvp* aParameters, int num_parameter_elements);
-        OSCL_IMPORT_REF void DeleteContext(PvmiMIOSession aSession, PvmiCapabilityContext& aContext);
         OSCL_IMPORT_REF void setParametersSync(PvmiMIOSession aSession, PvmiKvp* aParameters,
                                                int num_elements, PvmiKvp * & aRet_kvp);
-        OSCL_IMPORT_REF PVMFCommandId setParametersAsync(PvmiMIOSession aSession, PvmiKvp* aParameters,
-                int num_elements, PvmiKvp*& aRet_kvp, OsclAny* context = NULL);
-        OSCL_IMPORT_REF uint32 getCapabilityMetric(PvmiMIOSession aSession);
         OSCL_IMPORT_REF PVMFStatus verifyParametersSync(PvmiMIOSession aSession, PvmiKvp* aParameters, int num_elements);
 
         OSCL_IMPORT_REF bool isActiveCommsRead()

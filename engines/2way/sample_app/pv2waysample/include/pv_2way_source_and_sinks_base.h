@@ -39,11 +39,6 @@
 
 
 
-#ifdef PERF_TEST
-#include "pvmf_fileinput_settings.h"
-#include "pvmf_dummy_fileinput_node_factory.h"
-#include "pvmf_dummy_fileoutput_factory.h"
-#endif
 #include "oscl_mem.h"
 #include "oscl_mem_audit.h"
 
@@ -60,25 +55,30 @@
 
 #define OUTPUT_MIO_SIZE 300
 
-
-#ifdef PERF_TEST
-#define AUDIO_SOURCE_FILENAME_FOR_PERF _STRLIT("data/amr_ietf_one_frame.amr")
-#define VIDEO_SOURCE_FILENAME_FOR_PERF _STRLIT("data/hit040.h263")
-#endif
-
-
-class PV2WaySourceAndSinksObserver
+enum PV2WayTestCmdState
 {
-    public:
-        virtual void StartTimer() = 0;
+    EPVTestCmdIdle,
+    EPVTestCmdInited,
+    EPVTestCmdConnected,
+    EPVTestCmdAddAudioDataSink,
+    EPVTestCmdAddVideoDataSink,
+    EPVTestCmdAddAudioDataSource,
+    EPVTestCmdAddVideoDataSource,
+    EPVTestCmdSessionParams,
+    EPVTestCmdDisConnected,
+    EPVTestCmdReset,
+    EPVTestCmdRemoveAudioDataSink,
+    EPVTestCmdRemoveVideoDataSink,
+    EPVTestCmdRemoveAudioDataSource,
+    EPVTestCmdRemoveVideoDataSource,
+    EPVTestCmdQueryInterface
 };
 
-
-class PV2WaySourceAndSinksBase :   public PVCommandStatusObserver
+class PV2WaySourceAndSinksBase :   public PVCommandStatusObserver,
+        public PV2WayMIOObserver
 {
     public:
-        OSCL_IMPORT_REF PV2WaySourceAndSinksBase(PV2WaySourceAndSinksObserver* aSourceSinksObserver,
-                PV2Way324InitInfo& aSdkInitInfo);
+        OSCL_IMPORT_REF PV2WaySourceAndSinksBase(PV2Way324InitInfo& aSdkInitInfo);
         virtual OSCL_IMPORT_REF ~PV2WaySourceAndSinksBase();
 
         OSCL_IMPORT_REF void Init();
@@ -124,16 +124,6 @@ class PV2WaySourceAndSinksBase :   public PVCommandStatusObserver
         OSCL_IMPORT_REF int ResetPreferredCodec(TPVDirection aDir, PV2WayMediaType aMediaType);
 
 
-        OSCL_IMPORT_REF int AddPreferredCodec(TPVDirection aDir,
-                                              PV2WayMediaType aMediaType,
-                                              PvmiMIOFileInputSettings& aFileSettings);
-        OSCL_IMPORT_REF int AddPreferredCodec(TPVDirection aDir,
-                                              PV2WayMediaType aMediaType,
-                                              PVMFFormatType aFormat);
-        OSCL_IMPORT_REF int AddPreferredCodec(TPVDirection aDir,
-                                              PV2WayMediaType aMediaType,
-                                              PVMFFileInputSettings& aFileSettings);
-
         OSCL_IMPORT_REF void ParseResponse(const PVAsyncInformationalEvent& aEvent,
                                            OSCL_HeapString<OsclMemAllocator>& aMimeString,
                                            int& aMedia_type);
@@ -174,9 +164,23 @@ class PV2WaySourceAndSinksBase :   public PVCommandStatusObserver
             return iAudioSource->HandleEvent(aEvent);
         }
 
-#ifdef PERF_TEST
-        OSCL_IMPORT_REF int SetPerfFileSettings();
-#endif
+        virtual OSCL_IMPORT_REF PVMFNodeInterface* CreateMIONode(CodecSpecifier* aformat,
+                TPVDirection adir) = 0;
+        virtual OSCL_IMPORT_REF void DeleteMIONode(CodecSpecifier* aformat,
+                TPVDirection adir,
+                PVMFNodeInterface** aMioNode) = 0;
+        void CloseSourceAndSinks()
+        {
+            iAudioSource->Closed();
+            iVideoSource->Closed();
+            iAudioSink->Closed();
+            iVideoSink->Closed();
+        }
+
+        int GetEngineCmdState(PVCommandId aCmdId);
+
+        OSCL_IMPORT_REF bool FormatMatchesSelectedCodec(TPVDirection aDir,
+                PV2WayMediaType aMediaType, PVMFFormatType& aFormat);
 
     protected:
         OSCL_IMPORT_REF PV2WayMIO* GetMIO(TPVDirection aDir,
@@ -186,7 +190,7 @@ class PV2WaySourceAndSinksBase :   public PVCommandStatusObserver
 
 
 
-        PV2WaySourceAndSinksObserver* iObserver;
+        //PV2WaySourceAndSinksObserver* iObserver;
 
         /*! @var iAudioStartRecId The command id for start recording incoming audio */
         PVCommandId iAudioStartRecId;
@@ -204,7 +208,6 @@ class PV2WaySourceAndSinksBase :   public PVCommandStatusObserver
         PV2WayMIO* iVideoSource;
 
         CPV2WayInterface *iTerminal;
-
 };
 
 

@@ -36,24 +36,13 @@ class PVA_FF_MediaDataAtom : public PVA_FF_Atom, public PVA_FF_ISucceedFail
 {
 
     public:
-        // 03/21/01 Pass the postfixed string to the obejct
-        // PVA_FF_MediaDataAtom(int32 type = MEDIA_DATA_IN_MEMORY); // Constructor
-        // 03/21/01 Generate the temporary files into the output path
-        // PVA_FF_MediaDataAtom(OSCL_wString postfixString, int32 type = MEDIA_DATA_IN_MEMORY); // Constructor
-        PVA_FF_MediaDataAtom(PVA_FF_UNICODE_STRING_PARAM outputPathString,
-                             PVA_FF_UNICODE_STRING_PARAM postfixString,
-                             int32 tempFileIndex,
-                             int32 type = MEDIA_DATA_IN_MEMORY,
-                             void* osclFileServerSession = NULL,
-                             uint32 aCacheSize = 0); // Constructor
-
         PVA_FF_MediaDataAtom(PVA_FF_UNICODE_STRING_PARAM targetFileName,
+                             MP4_AUTHOR_FF_FILE_HANDLE targetFileHandle,
                              void* osclFileServerSession = NULL,
-                             uint32 aCacheSize = 0); // Constructor
-
-        PVA_FF_MediaDataAtom(MP4_AUTHOR_FF_FILE_HANDLE targetFileHandle,
-                             void* osclFileServerSession = NULL,
-                             uint32 aCacheSize = 0); // Constructor
+                             uint32 aCacheSize = 0,
+                             PVA_FF_UNICODE_STRING_PARAM outputPathString = PVA_FF_UNICODE_HEAP_STRING(_STRLIT_WCHAR("")),
+                             PVA_FF_UNICODE_STRING_PARAM postfixString = PVA_FF_UNICODE_HEAP_STRING(_STRLIT_WCHAR("")),
+                             int32 tempFileIndex = -1); // Constructor
 
         virtual ~PVA_FF_MediaDataAtom();
 
@@ -109,31 +98,19 @@ class PVA_FF_MediaDataAtom : public PVA_FF_Atom, public PVA_FF_ISucceedFail
         uint32 prepareTargetFileForFragments(uint32 mediaStartOffset);
         bool closeTargetFile();
 
-        bool IsTargetRender()
-        {
-            return _directRender;
-        }
-
-        uint32 getTotalDataRenderedToTargetFileInDirectRenderMode()
+        uint32 getTotalDataRenderedToTargetFile()
         {
             return _totalDataRenderedToTargetFile;
         }
 
         Oscl_File* getTargetFilePtr();
 
-        int32 getMediaStorageType()
-        {
-            return _type;
-        }
     private:
         virtual void recomputeSize();
         void prepareTempFile(uint32 aCache = 0);
 
-        int32 _type;  // Either MEDIA_DATA_IN_MEMORY or MEDIA_DATA_ON_DISK
-
         uint32 _fileSize; // Size (in bytes) of actual media data stored within the atom
         uint32 _fileOffsetForChunkStart;
-        uint32 _fileOffsetForAtomStart;
         PVA_FF_TrackAtom *_ptrackReferencePtr;
 
         Oscl_Vector<PVA_FF_TrackAtom*, OsclMemAllocator> *_ptrackReferencePtrVec;
@@ -148,8 +125,6 @@ class PVA_FF_MediaDataAtom : public PVA_FF_Atom, public PVA_FF_ISucceedFail
 
         Oscl_Vector<PVA_FF_Renderable*, OsclMemAllocator> *_prenderables;
         bool _fileWriteError;
-        bool _directRender;
-
 
         void*  _osclFileServerSession;
         uint32 _targetFileMediaStartOffset;

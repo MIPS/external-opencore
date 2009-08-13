@@ -323,10 +323,10 @@ void PVMFSMFSPBaseNode::CPMCommandCompleted(const PVMFCmdResp& aResponse)
         if (id == iCPMRequestUsageId)
         {
             /*
-             * Only when PVMFErrLicenseRequired is replied for license authentication,
+             * Only when PVMFErrDrmLicenseNotFound is replied for license authentication,
              * Set iCPMInitPending into true.
              */
-            if (aResponse.GetCmdStatus() == PVMFErrLicenseRequired)
+            if (aResponse.GetCmdStatus() == PVMFErrDrmLicenseNotFound || aResponse.GetCmdStatus() == PVMFErrDrmLicenseExpired)
                 iCPMInitPending = true;
         }
         CommandComplete(iCurrentCommand,

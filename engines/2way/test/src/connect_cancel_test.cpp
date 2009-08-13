@@ -38,6 +38,7 @@ void connect_cancel_test::test()
         }
     }
 
+    TestCompleted(this);
     this->RemoveFromScheduler();
 }
 

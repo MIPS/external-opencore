@@ -23,6 +23,10 @@ XCPPFLAGS += -DBUILD_WMAPRO \
 	     -DWMAPLUS_64KBPS_PROFILE_ONLY 
 endif
 
+ifeq ($(WMA_VOICE_ENABLED),1)
+XCPPFLAGS += -DBUILD_WMAVOICE
+endif
+
 SRCDIR := ../../src
 INCSRCDIR := ../../include
 

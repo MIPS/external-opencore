@@ -63,6 +63,8 @@
 #include "tsc_h324m_config_interface.h"
 #endif
 
+#define TCS_STUFFING_FLAGS_LEVEL_SETUP 6
+
 class TSC_statemanager;
 class TSC_capability;
 class TSC_mt;
@@ -83,9 +85,7 @@ class TSC_component : public OsclTimerObserver,
                       TSC_clc& aTSCclc,
                       TSC_mt& aTSCmt);
 
-        virtual ~TSC_component()
-        {
-        }
+        virtual ~TSC_component();
 
         void SetMembers(H245* aH245, H223* aH223, TSCObserver* aTSCObserver);
         bool queryInterface(const PVUuid& aUuid, PVInterface*& aInterfacePtr);
@@ -121,7 +121,8 @@ class TSC_component : public OsclTimerObserver,
         CPVMultiplexEntryDescriptor* GenerateSingleDescriptor(uint8 entry_num, TPVChannelId lcn1);
         void SetAlConfig(PV2WayMediaType media_type,
                          TPVAdaptationLayer layer,
-                         bool allow);
+                         bool allow,
+                         bool use);
 
         void SetAl2Al3VideoFlags(int32 userInput);
         int32 GetAl2Al3VideoFlags();
@@ -140,8 +141,6 @@ class TSC_component : public OsclTimerObserver,
         unsigned GetOutgoingBitrate(PVCodecType_t codecType);
         void GetChannelFormatAndCapabilities(TPVDirection dir,
                                              Oscl_Vector<FormatCapabilityInfo, OsclMemAllocator>& formats);
-
-
         bool HasOlc(TPVDirection direction, TPVChannelId id, unsigned state = 0);
         OlcParam* FindOlcGivenChannel(TPVDirection direction, TPVChannelId id);
         OlcParam* FindOlc(TPVDirection direction, PV2WayMediaType media_type, unsigned state = 0);
@@ -175,7 +174,7 @@ class TSC_component : public OsclTimerObserver,
         };
         virtual bool IsEnabled()
         {
-            return true;
+            return false;
         };
         uint32 Status08Event19(PS_ControlMsgHeader pReceiveInf);
         uint32 BlcEtbCfm(PS_ControlMsgHeader pReceiveInf);
@@ -191,6 +190,16 @@ class TSC_component : public OsclTimerObserver,
 #ifdef MEM_TRACK
         void MemStats();
 #endif
+        /**
+         * Get count of stuffing frames needed for successful level setup
+         *
+         * @return count
+         **/
+        virtual uint16 GetLevelCheckCount()
+        {
+            return TCS_STUFFING_FLAGS_LEVEL_SETUP;
+        }
+
     protected:
         virtual bool Pausable()
         {

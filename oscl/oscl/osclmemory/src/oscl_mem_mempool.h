@@ -70,11 +70,13 @@ class OsclMemPoolFixedChunkAllocator : public Oscl_DefAlloc
           * If numchunk and chunksize parameters are not set, memory pool of 1 chunk will be created in the first call to allocate.
           * The chunk size will be set to the n passed in for allocate().
           * If numchunk parameter is set to 0, the memory pool will use 1 for numchunk.
+          * If chunkalignment is set to 0, memory pool will use default allocator alignment (8-byte)
+          * If chunkalignment is > 0, memory pool will align all buffers in the mempool to the specified alignment. Alignment should be a power of 2
           *
           * @return void
           *
           */
-        OSCL_IMPORT_REF OsclMemPoolFixedChunkAllocator(const uint32 numchunk = 1, const uint32 chunksize = 0, Oscl_DefAlloc* gen_alloc = NULL);
+        OSCL_IMPORT_REF OsclMemPoolFixedChunkAllocator(const uint32 numchunk = 1, const uint32 chunksize = 0, Oscl_DefAlloc* gen_alloc = NULL, const uint32 chunkalignment = 0);
 
         /** This API will disable exceptions in case the memory pool runs out of memory
           * Instead of doing "OSCL_LEAVE(OsclErrNoResources)" allocate API will return
@@ -144,8 +146,10 @@ class OsclMemPoolFixedChunkAllocator : public Oscl_DefAlloc
         uint32 iNumChunk;
         uint32 iChunkSize;
         uint32 iChunkSizeMemAligned;
+        uint32 iChunkAlignment;
         Oscl_DefAlloc* iMemPoolAllocator;
         OsclAny* iMemPool;
+        OsclAny* iMemPoolAligned;
 
         Oscl_Vector<OsclAny*, OsclMemAllocator> iFreeMemChunkList;
 

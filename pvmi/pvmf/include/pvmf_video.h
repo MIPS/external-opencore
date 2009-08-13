@@ -37,35 +37,7 @@
 #define PVMF_VIDEO_INPUT_FRAME_RATE 15
 //#define VIDEO_INPUT_FORMAT PVMFVEN_INPUT_YUV420
 
-const PVUid32 PVMFYuvFormatSpecificInfo0_UID = 0x1;
 const PVUid32 PVMFEOSFormatSpecificInfo_UID = 0x2;
-class PVMFYuvFormatSpecificInfo0
-{
-    public:
-        PVMFYuvFormatSpecificInfo0()
-        {
-            uid = PVMFYuvFormatSpecificInfo0_UID;
-            video_format = PVMF_MIME_FORMAT_UNKNOWN;
-            display_width = 0;
-            display_height = 0;
-            width = 0;
-            height = 0;
-            num_buffers = 0;
-            buffer_size = 0;
-        };
-
-        virtual ~PVMFYuvFormatSpecificInfo0() {};
-
-        PVUid32 uid;
-        PVMFFormatType video_format;
-        uint32 display_width;
-        uint32 display_height;
-        uint32 width;
-        uint32 height;
-
-        uint32 num_buffers;
-        uint32 buffer_size;
-};
 
 class PVMFVideoResolution
 {

@@ -231,6 +231,12 @@ class PVMFJitterBufferNode : public PVInterface,
         virtual PVMFStatus NotifyOutOfBandEOS();
         virtual PVMFStatus SendBOSMessage(uint32 aStramID);
 
+        virtual bool setPortMediaParams(PVMFPortInterface* aPort,
+                                        mediaInfo* aMediaInfo = NULL);
+
+        virtual void setPayloadParserRegistry(PayloadParserRegistry*);
+        virtual PVMFStatus setPortDataLogging(bool logEnable, OSCL_String* logPath = NULL);
+
         virtual void SetJitterBufferChunkAllocator(OsclMemPoolResizableAllocator* aDataBufferAllocator, const PVMFPortInterface* aPort);
 
         virtual void SetJitterBufferMemPoolInfo(const PvmfPortBaseImpl* aPort, uint32 aSize, uint32 aResizeSize, uint32 aMaxNumResizes, uint32 aExpectedNumberOfBlocksPerBuffer);
@@ -244,7 +250,7 @@ class PVMFJitterBufferNode : public PVInterface,
         virtual void FlushJitterBuffer();
 
 
-        virtual PVMFStatus SetInputMediaHeaderPreParsed(PVMFPortInterface* aPort,
+        virtual void SetInputMediaHeaderPreParsed(PVMFPortInterface* aPort,
                 bool aHeaderPreParsed);
 
         virtual PVMFStatus HasSessionDurationExpired(bool& aExpired);
@@ -379,12 +385,11 @@ class PVMFJitterBufferNode : public PVInterface,
         PVMFStatus SendData(PVMFPortInterface*);
         PVMFStatus CheckJitterBufferEmpty(bool& oEmpty);
 
-
         void LogSessionDiagnostics();
         void LogPortDiagnostics();
 
         PVMFStatus CheckForEOS();
-        PVMFStatus GenerateAndSendEOSCommand(PVMFPortInterface* aPort);
+        void GenerateAndSendEOSCommand(PVMFPortInterface* aPort);
 
 
         bool QueueBOSCommand(PVMFPortInterface* aPort);
@@ -430,12 +435,8 @@ class PVMFJitterBufferNode : public PVInterface,
         PVMFStatus ComposeAndSendRateAdaptationFeedBackPacket(PVMFJitterBufferPortParams*&,
                 PVMFJitterBufferPortParams*&);
 
-
-
-
         void PVMFJBSessionDurationTimerEvent();
         void ComputeCurrentSessionDurationMonitoringInterval();
-
 
         PVMFStatus CreateFireWallPacketMemAllocators(PVMFJitterBufferPortParams*);
         PVMFStatus DestroyFireWallPacketMemAllocators(PVMFJitterBufferPortParams*);
@@ -519,6 +520,9 @@ class PVMFJitterBufferNode : public PVInterface,
         bool iDiagnosticsLogged;
         uint32 iNumRunL;
         ///////////////////////////////////////////////////////////////////////
+
+        PayloadParserRegistry* iPayloadParserRegistry;
+
 
         ///////////////////////////////////////////////////////////////////////
         //Loggers

@@ -38,7 +38,6 @@
 #endif
 
 // for Mp4 bitstream
-//#define BIT_BUFF_SIZE 200000
 #define BIT_BUFF_SIZE 8024000
 #define FRAME_SIZE_FIELD  4
 #define FRAME_TIME_STAMP_FIELD 4
@@ -74,8 +73,11 @@ enum DecTests
 
 class AVCBitstreamObject;
 
+#ifdef INSERT_NAL_START_CODE
 static unsigned char NAL_START_CODE[4] = {0, 0, 0, 1};
 #define NAL_START_CODE_SIZE 4
+#endif
+
 
 // this definition should be in pv_omxdefs.h
 //#define INSERT_NAL_START_CODE
@@ -125,13 +127,13 @@ class OmxComponentDecTest : public OmxDecTestBase
                             char aRefFileName[], OMX_STRING aName, OMX_STRING aRole,
                             char aFormat[], OMX_U32 aChannels) :
 
-                iConsOutFile(aConsOutFile)
+                OmxDecTestBase("OMX_Comp_DecTestApp")
+                , iConsOutFile(aConsOutFile)
                 , ipInputFile(aInputFile)
                 , ipOutputFile(aOutputFile)
                 , iName(aName)
                 , iRole(aRole)
                 , iNumberOfChannels(aChannels)
-                , OmxDecTestBase("OMX_Comp_DecTestApp")
         {
             oscl_strncpy(iOutFileName, aOutFileName, oscl_strlen(aOutFileName) + 1);
             oscl_strncpy(iRefFile, aRefFileName, oscl_strlen(aRefFileName) + 1);
@@ -185,6 +187,7 @@ class OmxComponentDecTest : public OmxDecTestBase
         OMX_ERRORTYPE GetInputFrameAac();
         OMX_ERRORTYPE GetInputFrameAmr();
         OMX_ERRORTYPE GetInputFrameWmv();
+        OMX_ERRORTYPE GetInputFrameRv();
         OMX_ERRORTYPE GetInputFrameMp3();
         OMX_ERRORTYPE GetInputFrameWma();
 

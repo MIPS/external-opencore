@@ -23,6 +23,14 @@
 #ifndef PVMI_KVP_H_INCLUDED
 #define PVMI_KVP_H_INCLUDED
 
+#ifndef PV_UUID_H_INCLUDED
+#include "pv_uuid.h"
+#endif
+
+#ifndef PVMF_FORMAT_TYPE_H_INCLUDED
+#include "pvmf_format_type.h"
+#endif
+
 typedef void* PvmiMIOSession;
 typedef char* PvmiKeyType; //Mime String
 
@@ -195,6 +203,45 @@ static const char PVMI_KVPVALTYPE_BITARRAY32_STRING_CONSTCHAR[] = PVMI_KVPVALTYP
 
 #define PVMI_KVPVALTYPE_BITARRAY64_STRING "bitarray64"
 static const char PVMI_KVPVALTYPE_BITARRAY64_STRING_CONSTCHAR[] = PVMI_KVPVALTYPE_BITARRAY64_STRING;
+
+
+const PVUid32 PVMFYuvFormatSpecificInfo0_UID = 0x1;
+class PVMFYuvFormatSpecificInfo0
+{
+    public:
+        PVMFYuvFormatSpecificInfo0()
+        {
+            uid = PVMFYuvFormatSpecificInfo0_UID;
+            video_format = PVMF_MIME_FORMAT_UNKNOWN;
+            viewable_width = 0;
+            viewable_height = 0;
+            buffer_width = 0;
+            buffer_height = 0;
+            num_buffers = 0;
+            buffer_size = 0;
+        };
+
+        virtual ~PVMFYuvFormatSpecificInfo0() {};
+
+        PVUid32 uid;
+        PVMFFormatType video_format;
+        uint32 viewable_width;
+        uint32 viewable_height;
+        uint32 buffer_width;
+        uint32 buffer_height;
+
+        uint32 num_buffers;
+        uint32 buffer_size;
+};
+
+struct channelSampleInfo
+{
+    uint32 desiredChannels;
+    uint32 samplingRate;
+    uint32 bitsPerSample;
+    uint32 num_buffers;
+    uint32 buffer_size;
+};
 
 typedef struct PvmiKvpRangeInt32
 {
@@ -430,6 +477,12 @@ class PvmfAssetInfo3GPPLocationStruct
 // Keys for format specific info for any type of media
 #define PVMF_FORMAT_SPECIFIC_INFO_KEY "x-pvmf/media/format_specific_info;valtype=key_specific_value"
 
+// Keys for extended format specific info for  audio media
+#define PVMF_ASF_AUDIO_TYPE_SPECIFIC_INFO_KEY  "x-pvmf/media/asf_audio_type_specific_info;valtype=key_specific_value"
+
+// Keys for extended format specific info for video media
+#define PVMF_ASF_VIDEO_TYPE_SPECIFIC_INFO_KEY  "x-pvmf/media/asf_video_type_specific_info;valtype=key_specific_value"
+
 // Keys for format specific info for video media type
 #define PVMF_FORMAT_SPECIFIC_INFO_KEY_YUV "x-pvmf/media/format_specific_info_yuv;valtype=key_specific_value"
 
@@ -438,6 +491,7 @@ class PvmfAssetInfo3GPPLocationStruct
 
 // Keys for buffer allocator
 #define PVMF_BUFFER_ALLOCATOR_KEY "x-pvmf/media/buffer_allocator;valtype=key_specific_value"
+#define PVMF_SUPPORT_FOR_BUFFER_ALLOCATOR_IN_MIO_KEY "x-pvmf/media/buffer_allocator_in_mio;valtype=key_specific_value"
 
 // Keys for format specific info plus first media sample for any type of media
 #define PVMF_FORMAT_SPECIFIC_INFO_PLUS_FIRST_SAMPLE_KEY "x-pvmf/media/format_specific_info_plus_first_sample;valtype=uint8*"

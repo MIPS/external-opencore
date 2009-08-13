@@ -103,26 +103,29 @@ $(info BUILD_ROOT = $(BUILD_ROOT))
 $(info INCDESTDIR = $(INCDESTDIR))
 endif
 
-# $(call delete_file,file_name)
+## usage: $(call delete_file,file_name)
 define delete_file
 	$(shell $(RM) $1)
 endef
 
-# $(call create_objdir,$(@D))
+## usage: $(call create_objdir,$(@D))
 define create_objdir
 	$(shell $(MKDIR) $1)
 endef
 
-$(INCDESTDIR)/ALL_HDRS_INSTALLED:
-	@echo [make] Making sure all headers are installed...
+## usage: $(call touch_dependency_file,$(@D))
+define touch_dependency_file
+	@echo "[make] Touching dependency file ==> $@"
 	$(call create_objdir,$(@D))
 	$(quiet) touch $@
+	test -f $@
+endef
+
+$(INCDESTDIR)/ALL_HDRS_INSTALLED:
+	$(call touch_dependency_file,$(@D))
 
 $(DESTDIR)/ALL_LIBS_INSTALLED:
-	@echo [make] Making sure all libs are installed...
-	$(call create_objdir,$(@D))
-	$(quiet) touch $@
-
+	$(call touch_dependency_file,$(@D))
 
 ifneq ($(strip $(BUILD_ROOT)),)
 clean::
@@ -134,7 +137,7 @@ define generate_dep
 	@echo "\$$(warning reading DEP)" > DEP
 endef
 
-IGNORE_HDRS_INSTALL_TARGETS := clean completion_targets android_make cml2-compile menu-config silent-config old-config
+IGNORE_HDRS_INSTALL_TARGETS = clean completion_targets android_make cml2-compile cml2-configure menu-config $(SDKINFO_HEADER)
 
 #$(call include_hdr_installed,target) 
 define include_hdr_installed 
@@ -142,13 +145,13 @@ define include_hdr_installed
         include $(INCDESTDIR)/ALL_HDRS_INSTALLED 
         include $(DESTDIR)/ALL_LIBS_INSTALLED 
 endef 
-  
+
 ifeq ($(MAKECMDGOALS),) 
    $(eval $(call include_hdr_installed)) #Install headers in case of default target 
 else 
    ifeq (clean,$(filter clean,$(MAKECMDGOALS))) 
       ifneq (,$(filter-out clean,$(MAKECMDGOALS))) #Report an error if clean is used with another target. 
-         $(error Multiple targets with clean not supported. Please use the targets separately.)) 
+         $(error Multiple targets with clean not supported. Please use the targets separately.)
       endif 
    else #Check if any target is not in IGNORE_HDRS_INSTALL_TARGETS 
        ifneq ($(strip $(filter-out $(IGNORE_HDRS_INSTALL_TARGETS), $(MAKECMDGOALS))),) 
@@ -166,7 +169,7 @@ ifndef combined-cxx-compile-depend
   $(info default definition of combined-cxx-compile-depend)
   define combined-cxx-compile-depend
     $(call make-depend,$1,$2,$3,$4)
-    $(quiet) $(CXX) $4 $5 $(CPPFLAGS) $(INCDIRS) $(CXXFLAGS) $(CO)$2 $1
+    $(quiet) $(CXX) $4 $5 $(CPPFLAGS) $(PRE_INCDIRS) $(INCDIRS) $(CXXFLAGS) $(CO)$2 $(CXXO)$1
   endef
 endif
 
@@ -192,7 +195,7 @@ ifndef combined-cc-compile-depend
   $(info default definition of combined-cc-compile-depend)
   define combined-cc-compile-depend
     $(call make-depend,$1,$2,$3,$4)
-    $(quiet) $(CC) $4 $5 $(CPPFLAGS) $(INCDIRS) $(CXXFLAGS) $(CO)$2 $1
+    $(quiet) $(CC) $4 $5 $(CPPFLAGS) $(PRE_INCDIRS) $(INCDIRS) $(CFLAGS) $(CO)$2 $(CXXO)$1
   endef
 endif
 
@@ -255,9 +258,7 @@ DOCDESTDIR := $(BUILD_ROOT)/doc
 docs: $(DOCDESTDIR)/ALL_DOCS_INSTALLED
 
 $(DOCDESTDIR)/ALL_DOCS_INSTALLED: 
-	@echo [make] Making sure all docs are installed...
-	$(call create_objdir,$(@D))
-	$(quiet) touch $@
+	$(call touch_dependency_file,$(@D))
 
 .PHONY:: docs
 

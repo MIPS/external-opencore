@@ -93,6 +93,9 @@ class OSCL_HeapString : public OSCL_String
     public:
         typedef OSCL_String::chartype chartype;
 
+        typedef TOSCL_StringOp optype;
+        typedef OSCL_wString::chartype other_chartype;
+
         /**
             The default constructor creates an empty string.
         */
@@ -144,6 +147,25 @@ class OSCL_HeapString : public OSCL_String
         */
         void set(const chartype* buf, uint32 length);
 
+        /**
+            Set the contents of this string to a new string,
+            with conversion operation.
+
+            @param buf: NULL-terminated wide string.
+            @param op: conversion operation to apply
+        */
+        void set(const other_chartype* buf, optype op);
+
+        /**
+            Set the contents of this string to a new string or
+            character array, with conversion operation.
+
+            @param buf: string or character array.
+            @param length: number of characters to copy.
+            @param op: conversion operation to apply
+        */
+        void set(const other_chartype* buf, uint32 length, optype op);
+
     private:
         CHeapRep *iRep;
         Alloc iAlloc;
@@ -171,6 +193,8 @@ class OSCL_wHeapString : public OSCL_wString
 {
     public:
         typedef OSCL_wString::chartype chartype;
+        typedef TOSCL_wStringOp optype;
+        typedef OSCL_String::chartype other_chartype;
 
         OSCL_wHeapString();
 
@@ -192,6 +216,9 @@ class OSCL_wHeapString : public OSCL_wString
         OSCL_wHeapString& operator=(const chartype* cstr);
 
         void set(const chartype* buf, uint32 length);
+
+        void set(const other_chartype* buf, optype op);
+        void set(const other_chartype* buf, uint32 length, optype op);
 
     private:
         CHeapRep *iRep;
@@ -235,7 +262,8 @@ class OSCL_HeapStringA : public OSCL_String
 {
     public:
         typedef OSCL_String::chartype chartype;
-
+        typedef TOSCL_StringOp optype;
+        typedef OSCL_wString::chartype other_chartype;
 
         /**
             The default constructor creates an empty string.
@@ -306,6 +334,25 @@ class OSCL_HeapStringA : public OSCL_String
         */
         OSCL_IMPORT_REF void set(const chartype* buf, uint32 length);
 
+        /**
+            Set the contents of this string to a new string,
+            with conversion operation.
+
+            @param buf: NULL-terminated wide string.
+            @param op: conversion operation to apply
+        */
+        OSCL_IMPORT_REF void set(const other_chartype* buf, optype op);
+
+        /**
+            Set the contents of this string to a new string or
+            character array, with conversion operation.
+
+            @param buf: string or character array.
+            @param length: number of characters to copy.
+            @param op: conversion operation to apply
+        */
+        OSCL_IMPORT_REF void set(const other_chartype* buf, uint32 length, optype op);
+
     private:
         CHeapRep *iRep;
         OsclRefCounter *iAllocRef;
@@ -334,6 +381,8 @@ class OSCL_wHeapStringA : public OSCL_wString
 {
     public:
         typedef OSCL_wString::chartype chartype;
+        typedef TOSCL_wStringOp optype;
+        typedef OSCL_String::chartype other_chartype;
 
         OSCL_IMPORT_REF OSCL_wHeapStringA();
         OSCL_IMPORT_REF OSCL_wHeapStringA(Oscl_DefAlloc *alloc, OsclRefCounter *ref = NULL);
@@ -358,6 +407,9 @@ class OSCL_wHeapStringA : public OSCL_wString
         OSCL_IMPORT_REF OSCL_wHeapStringA& operator=(const chartype* cstr);
 
         OSCL_IMPORT_REF void set(const chartype* buf, uint32 length);
+
+        OSCL_IMPORT_REF void set(const other_chartype* buf, optype op);
+        OSCL_IMPORT_REF void set(const other_chartype* buf, uint32 length, optype op);
 
     private:
         CHeapRep *iRep;
@@ -395,6 +447,8 @@ class OSCL_StackString : public OSCL_String
 {
     public:
         typedef OSCL_String::chartype chartype;
+        typedef TOSCL_StringOp optype;
+        typedef OSCL_wString::chartype other_chartype;
 
         /** Creates an OSCL_StackString initialized with an empty string.
         */
@@ -443,6 +497,25 @@ class OSCL_StackString : public OSCL_String
         */
         void set(const chartype* buf, uint32 length);
 
+        /**
+            Set the contents of this string to a new string,
+            with conversion operation.
+
+            @param buf: NULL-terminated wide string.
+            @param op: conversion operation to apply
+        */
+        void set(const other_chartype* buf, optype op);
+
+        /**
+            Set the contents of this string to a new string or
+            character array, with conversion operation.
+
+            @param buf: string or character array.
+            @param length: number of characters to copy.
+            @param op: conversion operation to apply
+        */
+        void set(const other_chartype* buf, uint32 length, optype op);
+
     private:
         CStackRep rep;
         char buffer[MaxBufSize+1];//fixed string buffer.
@@ -468,6 +541,8 @@ class OSCL_wStackString : public OSCL_wString
 {
     public:
         typedef OSCL_wString::chartype chartype;
+        typedef TOSCL_wStringOp optype;
+        typedef OSCL_String::chartype other_chartype;
 
         OSCL_wStackString();
 
@@ -489,6 +564,9 @@ class OSCL_wStackString : public OSCL_wString
         OSCL_wStackString& operator=(const chartype* cstr);
 
         void set(const chartype* buf, uint32 length);
+
+        void set(const other_chartype* buf, optype op);
+        void set(const other_chartype* buf, uint32 length, optype op);
 
     private:
         CStackRep rep;
@@ -521,6 +599,8 @@ class OSCL_FastString : public OSCL_String
 {
     public:
         typedef OSCL_String::chartype chartype;
+        typedef TOSCL_StringOp optype;
+        typedef OSCL_wString::chartype other_chartype;
 
         /**
             Default constructor.
@@ -573,6 +653,20 @@ class OSCL_FastString : public OSCL_String
         OSCL_IMPORT_REF void set(chartype* cstr, uint32 maxlen);
 
         /**
+            Set the contents of this string to a new string or
+            character array, with conversion operation.
+
+            @param buf: string or character array.
+            @param numofbyte: number of bytes available in the buffer.
+               There must be enough space available for the converted string including its NULL terminator.
+               The converted string may be smaller or larger than the original string.
+            @param op: conversion operation to apply
+            If numofbyte is not large enough for conversion, the function leaves.
+            If input string is not null-terminated, the function leaves.
+        */
+        OSCL_IMPORT_REF void set(const other_chartype* buf, uint32 numofbyte, optype op);
+
+        /**
             This function can be used to refresh the string size in case the
             contents of the string buffer have been modified since the
             container was created.
@@ -601,6 +695,8 @@ class OSCL_wFastString : public OSCL_wString
 {
     public:
         typedef OSCL_wString::chartype chartype;
+        typedef TOSCL_wStringOp optype;
+        typedef OSCL_String::chartype other_chartype;
 
         OSCL_IMPORT_REF OSCL_wFastString();
 
@@ -620,6 +716,8 @@ class OSCL_wFastString : public OSCL_wString
         OSCL_IMPORT_REF OSCL_wFastString& operator=(const chartype* cstr);
 
         OSCL_IMPORT_REF void set(chartype* cstr, uint32 maxlen);
+
+        OSCL_IMPORT_REF void set(const other_chartype* buf, uint32 numofbyte, optype op);
 
         OSCL_IMPORT_REF void set_length();
 
@@ -873,6 +971,32 @@ void OSCL_wHeapString<Alloc>::set(const chartype* cp, uint32 length)
     iRep->size = oscl_strlen(get_cstr());
 }
 
+
+// **************************************************************
+template<class Alloc>
+void OSCL_HeapString<Alloc>::set(const other_chartype* buf, optype op)
+{
+    iRep->size = setrep_to_char(buf, oscl_strlen(buf), op, &iAlloc);
+}
+
+template<class Alloc>
+void OSCL_wHeapString<Alloc>::set(const other_chartype* buf, optype op)
+{
+    iRep->size = setrep_to_wide_char(buf, oscl_strlen(buf), op, &iAlloc);
+}
+
+// **************************************************************
+template<class Alloc>
+void OSCL_HeapString<Alloc>::set(const other_chartype* buf, uint32 length, optype op)
+{
+    iRep->size = setrep_to_char(buf, length, op, &iAlloc);
+}
+
+template<class Alloc>
+void OSCL_wHeapString<Alloc>::set(const other_chartype* buf, uint32 length, optype op)
+{
+    iRep->size = setrep_to_wide_char(buf, length, op, &iAlloc);
+}
 
 // **************************************************************
 template<class Alloc>
@@ -1173,6 +1297,32 @@ void OSCL_wStackString<MaxBufSize>::set(const chartype* cp, uint32 length)
     rep.set(cp, length);
     //just in case input string is shorter than 'length';
     rep.size = oscl_strlen(get_cstr());
+}
+
+// **************************************************************
+template<uint32 MaxBufSize>
+void OSCL_StackString<MaxBufSize>::set(const other_chartype* buf, optype op)
+{
+    rep.size = setrep_to_char(buf, oscl_strlen(buf), op, NULL);
+}
+
+template<uint32 MaxBufSize>
+void OSCL_wStackString<MaxBufSize>::set(const other_chartype* buf, optype op)
+{
+    rep.size = setrep_to_wide_char(buf, oscl_strlen(buf), op, NULL);
+}
+
+// **************************************************************
+template<uint32 MaxBufSize>
+void OSCL_StackString<MaxBufSize>::set(const other_chartype* buf, uint32 length, optype op)
+{
+    rep.size = setrep_to_char(buf, length, op, NULL);
+}
+
+template<uint32 MaxBufSize>
+void OSCL_wStackString<MaxBufSize>::set(const other_chartype* buf, uint32 length, optype op)
+{
+    rep.size = setrep_to_wide_char(buf, length, op, NULL);
 }
 
 // **************************************************************

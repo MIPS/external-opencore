@@ -82,7 +82,7 @@ class MetaDataAtom: public Atom
         }
 
         // Gnre ** Starts **
-        uint16 getITunesGnreID() const
+        int16 getITunesGnreID() const
         {
             if (_pITunesILSTAtom)
             {
@@ -91,10 +91,10 @@ class MetaDataAtom: public Atom
                     return _pITunesILSTAtom->getGnreID();
                 }
                 else
-                    return 0;
+                    return 0xFF;
             }
             else
-                return 0;
+                return 0xFF;
         }
 
 

@@ -72,11 +72,10 @@
 #endif
 #endif
 
-#define OSCL_BEGIN_PACKED
+#define OSCL_HAS_PRAGMA_PACK 0
 #define OSCL_PACKED_VAR(x)  x __attribute__((packed))
 #define OSCL_PACKED_STRUCT_BEGIN
 #define OSCL_PACKED_STRUCT_END __attribute__((packed))
-#define OSCL_END_PACKED
 
 #if(OSCL_RELEASE_BUILD)
 //no logging

@@ -158,11 +158,13 @@ typedef PVMFNodeCommandQueue<PVMFDummyFileOutputNodeCommand, PVMFDummyFileOutput
 #define PVMF_BASEMIMETYPE "pvxxx"
 
 ////////////////////////////////////////////////////////////////////////////
-class PVMFDummyFileOutputNode : public OsclActiveObject, public PVMFNodeInterface,
-        public PVMFDummyFileOutputNodeConfigInterface,
-        public PvmfComposerSizeAndDurationInterface,
-        public PvmfNodesSyncControlInterface,
-        public PvmiCapabilityAndConfig
+class PVMFDummyFileOutputNode
+        : public OsclActiveObject
+        , public PVMFNodeInterface
+        , public PVMFDummyFileOutputNodeConfigInterface
+        , public PvmfComposerSizeAndDurationInterface
+        , public PvmfNodesSyncControlInterface
+        , public PvmiCapabilityAndConfigBase
 {
     public:
         PVMFDummyFileOutputNode(int32 aPriority);
@@ -264,15 +266,8 @@ class PVMFDummyFileOutputNode : public OsclActiveObject, public PVMFNodeInterfac
                                      PvmiKvp*& aParameters, int& num_parameter_elements,
                                      PvmiCapabilityContext aContext);
         PVMFStatus releaseParameters(PvmiMIOSession aSession, PvmiKvp* aParameters, int num_elements);
-        void createContext(PvmiMIOSession aSession, PvmiCapabilityContext& aContext);
-        void setContextParameters(PvmiMIOSession aSession, PvmiCapabilityContext& aContext,
-                                  PvmiKvp* aParameters, int num_parameter_elements);
-        void DeleteContext(PvmiMIOSession aSession, PvmiCapabilityContext& aContext);
         void setParametersSync(PvmiMIOSession aSession, PvmiKvp* aParameters,
                                int num_elements, PvmiKvp * & aRet_kvp);
-        PVMFCommandId setParametersAsync(PvmiMIOSession aSession, PvmiKvp* aParameters,
-                                         int num_elements, PvmiKvp*& aRet_kvp, OsclAny* context = NULL);
-        uint32 getCapabilityMetric(PvmiMIOSession aSession);
         PVMFStatus verifyParametersSync(PvmiMIOSession aSession, PvmiKvp* aParameters, int num_elements);
 
         // function used in VerifyParametersSync n SetParametersSync of capability class

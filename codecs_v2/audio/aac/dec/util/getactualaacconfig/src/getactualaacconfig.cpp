@@ -160,7 +160,8 @@ OSCL_EXPORT_REF int32 GetActualAacConfig(uint8* aConfigHeader,
         uint8* aAudioObjectType,
         int32* aConfigHeaderSize,
         uint8* SamplingRateIndex,
-        uint32* NumChannels)
+        uint32* NumChannels,
+        uint32* aSamplesPerFrame)
 {
 
     tPVMP4AudioDecoderExternal * iAACDecExt = NULL;
@@ -170,7 +171,6 @@ OSCL_EXPORT_REF int32 GetActualAacConfig(uint8* aConfigHeader,
 
 
     Int            status = ERROR_BUFFER_OVERRUN;
-
 
     /*
      *  Allocate memory to decode one AAC frame
@@ -274,6 +274,8 @@ OSCL_EXPORT_REF int32 GetActualAacConfig(uint8* aConfigHeader,
     {
         *aAudioObjectType = pVars->mc_info.audioObjectType;
     }
+
+    *aSamplesPerFrame = LONG_WINDOW << (pVars->mc_info.upsamplingFactor - 1);
 
     /*
      *  Set parameters  based on the explicit information from the

@@ -20,7 +20,7 @@
 #include "pvmf_amrffparser_defs.h"
 #include "pv_mime_string_utils.h"
 
-PVMFAMRFFParserOutPort::PVMFAMRFFParserOutPort(int32 aTag, PVMFNodeInterface* aNode)
+PVMFAMRFFParserOutPort::PVMFAMRFFParserOutPort(int32 aTag, PVMFNodeInterfaceImpl* aNode)
         : PvmfPortBaseImpl(aTag, aNode, "AmrFFParOut(Audio)")
 {
     iAMRParserNode = OSCL_STATIC_CAST(PVMFAMRFFParserNode*, aNode);
@@ -160,35 +160,6 @@ PVMFStatus PVMFAMRFFParserOutPort::releaseParameters(PvmiMIOSession aSession,
     return PVMFErrNotSupported;
 }
 
-void PVMFAMRFFParserOutPort::setParametersSync(PvmiMIOSession aSession,
-        PvmiKvp* aParameters,
-        int num_elements,
-        PvmiKvp * & aRet_kvp)
-{
-    OSCL_UNUSED_ARG(aSession);
-    OSCL_UNUSED_ARG(aParameters);
-    OSCL_UNUSED_ARG(aRet_kvp);
-    OSCL_UNUSED_ARG(num_elements);
-
-    PVMF_AMRPARSERNODE_LOGINFO((0, "PVMFAMRParserOutPort::getParametersSync: aSession=0x%x, aParameters=0x%x, num_elements=%d, aRet_kvp=0x%x",
-                                aSession, aParameters, num_elements, aRet_kvp));
-
-}
-
-PVMFStatus PVMFAMRFFParserOutPort::verifyParametersSync(PvmiMIOSession aSession,
-        PvmiKvp* aParameters,
-        int num_elements)
-{
-    OSCL_UNUSED_ARG(aSession);
-    OSCL_UNUSED_ARG(aParameters);
-    OSCL_UNUSED_ARG(num_elements);
-
-    PVMF_AMRPARSERNODE_LOGINFO((0, "PVMFAMRParserOutPort::verifyParametersSync: aSession=0x%x, aParameters=0x%x, num_elements=%d",
-                                aSession, aParameters, num_elements));
-
-    return PVMFErrNotSupported;
-}
-
 
 bool
 PVMFAMRFFParserOutPort::pvmiSetPortFormatSpecificInfoSync(PvmiCapabilityAndConfig *aPort,
@@ -197,11 +168,8 @@ PVMFAMRFFParserOutPort::pvmiSetPortFormatSpecificInfoSync(PvmiCapabilityAndConfi
     /*
      * Create PvmiKvp for capability settings
      */
-    PVAMRFFNodeTrackPortInfo* trackInfoPtr = NULL;
-    if (!(iAMRParserNode->GetTrackInfo((OSCL_STATIC_CAST(PVMFPortInterface*, this)), trackInfoPtr)))
-    {
-        return false;
-    }
+    PVAMRFFNodeTrackPortInfo* trackInfoPtr = &iAMRParserNode->iTrack;
+
     if (pv_mime_strcmp(aFormatValType, PVMF_FORMAT_SPECIFIC_INFO_KEY) == 0)
     {
         if (trackInfoPtr->iFormatSpecificConfig.getMemFragSize() > 0)
@@ -258,11 +226,8 @@ PVMFAMRFFParserOutPort::pvmiGetPortFormatSpecificInfoSync(const char* aFormatVal
     /*
      * Create PvmiKvp for capability settings
      */
-    PVAMRFFNodeTrackPortInfo* trackInfoPtr = NULL;
-    if (!(iAMRParserNode->GetTrackInfo((OSCL_STATIC_CAST(PVMFPortInterface*, this)), trackInfoPtr)))
-    {
-        return false;
-    }
+    PVAMRFFNodeTrackPortInfo* trackInfoPtr = &iAMRParserNode->iTrack;
+
     if (pv_mime_strcmp(aFormatValType, PVMF_FORMAT_SPECIFIC_INFO_KEY) == 0)
     {
         if (trackInfoPtr->iFormatSpecificConfig.getMemFragSize() > 0)

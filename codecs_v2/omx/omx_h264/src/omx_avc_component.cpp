@@ -146,6 +146,7 @@ OMX_ERRORTYPE OpenmaxAvcAO::ConstructComponent(OMX_PTR pAppData, OMX_PTR pProxy)
     iCurrNAL = 0;
     iNALOffset = 0;
     oscl_memset(iNALSizeArray, 0, MAX_NAL_PER_FRAME * sizeof(uint32));
+    oscl_memset(iNALStartCodeSizeArray, 0, MAX_NAL_PER_FRAME * sizeof(uint32));
 
 
 #if PROXY_INTERFACE
@@ -188,7 +189,7 @@ OMX_ERRORTYPE OpenmaxAvcAO::ConstructComponent(OMX_PTR pAppData, OMX_PTR pProxy)
     iOmxComponent.nVersion.s.nStep = SPECSTEP;
 
     // PV capability
-#ifdef TEST_FULL_AVC_FRAME_MODE
+#if defined(TEST_FULL_AVC_FRAME_MODE)
     iPVCapabilityFlags.iOMXComponentSupportsExternalInputBufferAlloc = OMX_TRUE;
     iPVCapabilityFlags.iOMXComponentSupportsExternalOutputBufferAlloc = OMX_TRUE;
     iPVCapabilityFlags.iOMXComponentSupportsMovableInputBuffers = OMX_FALSE; // since we need copying for frame assembly in streaming case
@@ -196,7 +197,9 @@ OMX_ERRORTYPE OpenmaxAvcAO::ConstructComponent(OMX_PTR pAppData, OMX_PTR pProxy)
     iPVCapabilityFlags.iOMXComponentUsesNALStartCodes = OMX_FALSE;
     iPVCapabilityFlags.iOMXComponentCanHandleIncompleteFrames = OMX_TRUE;
     iPVCapabilityFlags.iOMXComponentUsesFullAVCFrames = OMX_TRUE;
-#elif TEST_FULL_AVC_FRAME_MODE_SC
+    iPVCapabilityFlags.iOMXComponentUsesInterleaved2BNALSizes = OMX_FALSE;
+    iPVCapabilityFlags.iOMXComponentUsesInterleaved4BNALSizes = OMX_FALSE;
+#elif defined(TEST_FULL_AVC_FRAME_MODE_SC)
     iPVCapabilityFlags.iOMXComponentSupportsExternalInputBufferAlloc = OMX_TRUE;
     iPVCapabilityFlags.iOMXComponentSupportsExternalOutputBufferAlloc = OMX_TRUE;
     iPVCapabilityFlags.iOMXComponentSupportsMovableInputBuffers = OMX_FALSE; // since we need copying for frame assembly in streaming case
@@ -204,6 +207,38 @@ OMX_ERRORTYPE OpenmaxAvcAO::ConstructComponent(OMX_PTR pAppData, OMX_PTR pProxy)
     iPVCapabilityFlags.iOMXComponentUsesNALStartCodes = OMX_TRUE;
     iPVCapabilityFlags.iOMXComponentCanHandleIncompleteFrames = OMX_TRUE;
     iPVCapabilityFlags.iOMXComponentUsesFullAVCFrames = OMX_TRUE;
+    iPVCapabilityFlags.iOMXComponentUsesInterleaved2BNALSizes = OMX_FALSE;
+    iPVCapabilityFlags.iOMXComponentUsesInterleaved4BNALSizes = OMX_FALSE;
+#elif defined(TEST_FULL_AVC_FRAME_MODE_I2BNS)
+    iPVCapabilityFlags.iOMXComponentSupportsExternalInputBufferAlloc = OMX_TRUE;
+    iPVCapabilityFlags.iOMXComponentSupportsExternalOutputBufferAlloc = OMX_TRUE;
+    iPVCapabilityFlags.iOMXComponentSupportsMovableInputBuffers = OMX_FALSE; // since we need copying for frame assembly in streaming case
+    iPVCapabilityFlags.iOMXComponentSupportsPartialFrames = OMX_FALSE;
+    iPVCapabilityFlags.iOMXComponentUsesNALStartCodes = OMX_FALSE;
+    iPVCapabilityFlags.iOMXComponentCanHandleIncompleteFrames = OMX_TRUE;
+    iPVCapabilityFlags.iOMXComponentUsesFullAVCFrames = OMX_TRUE;
+    iPVCapabilityFlags.iOMXComponentUsesInterleaved2BNALSizes = OMX_TRUE;
+    iPVCapabilityFlags.iOMXComponentUsesInterleaved4BNALSizes = OMX_FALSE;
+#elif defined(TEST_FULL_AVC_FRAME_MODE_I4BNS)
+    iPVCapabilityFlags.iOMXComponentSupportsExternalInputBufferAlloc = OMX_TRUE;
+    iPVCapabilityFlags.iOMXComponentSupportsExternalOutputBufferAlloc = OMX_TRUE;
+    iPVCapabilityFlags.iOMXComponentSupportsMovableInputBuffers = OMX_FALSE; // since we need copying for frame assembly in streaming case
+    iPVCapabilityFlags.iOMXComponentSupportsPartialFrames = OMX_FALSE;
+    iPVCapabilityFlags.iOMXComponentUsesNALStartCodes = OMX_FALSE;
+    iPVCapabilityFlags.iOMXComponentCanHandleIncompleteFrames = OMX_TRUE;
+    iPVCapabilityFlags.iOMXComponentUsesFullAVCFrames = OMX_TRUE;
+    iPVCapabilityFlags.iOMXComponentUsesInterleaved2BNALSizes = OMX_FALSE;
+    iPVCapabilityFlags.iOMXComponentUsesInterleaved4BNALSizes = OMX_TRUE;
+#elif defined(TEST_AVC_NAL_MODE_SC)
+    iPVCapabilityFlags.iOMXComponentSupportsExternalInputBufferAlloc = OMX_TRUE;
+    iPVCapabilityFlags.iOMXComponentSupportsExternalOutputBufferAlloc = OMX_TRUE;
+    iPVCapabilityFlags.iOMXComponentSupportsMovableInputBuffers = OMX_TRUE;
+    iPVCapabilityFlags.iOMXComponentSupportsPartialFrames = OMX_TRUE;
+    iPVCapabilityFlags.iOMXComponentUsesNALStartCodes = OMX_TRUE;
+    iPVCapabilityFlags.iOMXComponentCanHandleIncompleteFrames = OMX_TRUE;
+    iPVCapabilityFlags.iOMXComponentUsesFullAVCFrames = OMX_FALSE;
+    iPVCapabilityFlags.iOMXComponentUsesInterleaved2BNALSizes = OMX_FALSE;
+    iPVCapabilityFlags.iOMXComponentUsesInterleaved4BNALSizes = OMX_FALSE;
 #else
     iPVCapabilityFlags.iOMXComponentSupportsExternalInputBufferAlloc = OMX_TRUE;
     iPVCapabilityFlags.iOMXComponentSupportsExternalOutputBufferAlloc = OMX_TRUE;
@@ -212,7 +247,23 @@ OMX_ERRORTYPE OpenmaxAvcAO::ConstructComponent(OMX_PTR pAppData, OMX_PTR pProxy)
     iPVCapabilityFlags.iOMXComponentUsesNALStartCodes = OMX_FALSE;
     iPVCapabilityFlags.iOMXComponentCanHandleIncompleteFrames = OMX_TRUE;
     iPVCapabilityFlags.iOMXComponentUsesFullAVCFrames = OMX_FALSE;
+    iPVCapabilityFlags.iOMXComponentUsesInterleaved2BNALSizes = OMX_FALSE;
+    iPVCapabilityFlags.iOMXComponentUsesInterleaved4BNALSizes = OMX_FALSE;
 #endif
+
+    if (iPVCapabilityFlags.iOMXComponentUsesInterleaved2BNALSizes)
+    {
+        iSizeOfNALSize = sizeof(OMX_U16);
+    }
+    else if (iPVCapabilityFlags.iOMXComponentUsesInterleaved4BNALSizes)
+    {
+        iSizeOfNALSize = sizeof(OMX_U32);
+    }
+    else
+    {
+        iSizeOfNALSize = 0;
+    }
+
 
     if (ipAppPriv)
     {
@@ -411,21 +462,23 @@ OMX_BOOL OpenmaxAvcAO::ParseFullAVCFramesIntoNALs(OMX_BUFFERHEADERTYPE* aInputBu
         OMX_U32 offset = ipInputBuffer->nOffset;
         OMX_U32 length = ipInputBuffer->nFilledLen;
         OMX_U8* pBuffer = ipInputBuffer->pBuffer + offset;
-        OMX_U8* pTemp;
+        OMX_U8* pNAL;
         int32 nalSize;
 
         iNumNALs = 0;
 
         while (length > 0)
         {
-            if (AVCDEC_SUCCESS != ipAvcDec->GetNextFullNAL_OMX(&pTemp, &nalSize, pBuffer, &length))
+            if (AVCDEC_SUCCESS != ipAvcDec->GetNextFullNAL_OMX(&pNAL, &nalSize, pBuffer, &length))
             {
                 break;
             }
 
-            pBuffer += nalSize + (int32)(pTemp - pBuffer);
-
             iNALSizeArray[iNumNALs] = nalSize;
+            iNALStartCodeSizeArray[iNumNALs] = (uint32)(pNAL - pBuffer);
+
+            // increment buffer to end of current NAL
+            pBuffer = pNAL + nalSize;
 
             iNumNALs++;
         }
@@ -433,10 +486,68 @@ OMX_BOOL OpenmaxAvcAO::ParseFullAVCFramesIntoNALs(OMX_BUFFERHEADERTYPE* aInputBu
         if (iNumNALs > 0)
         {
             iCurrNAL = 0;
-            iNALOffset = ipInputBuffer->nOffset + NAL_START_CODE_SIZE;
+            iNALOffset = ipInputBuffer->nOffset + iNALStartCodeSizeArray[iCurrNAL];
             ipFrameDecodeBuffer = ipInputBuffer->pBuffer + iNALOffset;
             iInputCurrLength = iNALSizeArray[iCurrNAL];
-            iNALOffset += (iInputCurrLength + NAL_START_CODE_SIZE); // offset for next NAL
+            if (iNumNALs > 1)
+            {
+                iNALOffset += (iInputCurrLength + iNALStartCodeSizeArray[iCurrNAL + 1]); // offset for next NAL
+            }
+
+            //capture the timestamp to be send to the corresponding output buffer
+            iFrameTimestamp = ipInputBuffer->nTimeStamp;
+        }
+        else
+        {
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE, (0, "OmxComponentBase : ParseFullAVCFramesIntoNALs ERROR"));
+            return OMX_FALSE;
+        }
+    }
+    else if ((iPVCapabilityFlags.iOMXComponentUsesInterleaved2BNALSizes || iPVCapabilityFlags.iOMXComponentUsesInterleaved4BNALSizes)
+             && !(ipInputBuffer->nFlags & OMX_BUFFERFLAG_EXTRADATA))
+    {
+        OMX_U32 offset = ipInputBuffer->nOffset;
+        OMX_S32 length = ipInputBuffer->nFilledLen;
+        OMX_U8* pBuffer = ipInputBuffer->pBuffer + offset;
+        int32 nalSize = 0;
+
+        iNumNALs = 0;
+
+        while (length > 0)
+        {
+            if (iSizeOfNALSize == sizeof(OMX_U16))
+            {
+                nalSize = (OMX_U32)(*((OMX_U16*)pBuffer));
+            }
+            else if (iSizeOfNALSize == sizeof(OMX_U32))
+            {
+                nalSize = *((OMX_U32*)pBuffer);
+            }
+
+            uint32 jmp = nalSize + iSizeOfNALSize;
+            length -= jmp;
+
+            // make sure that nalSize fits in this buffer (since buffer should be full frames and therefore no partial NALs)
+            if (length >= 0)
+            {
+                pBuffer += jmp;
+                iNALSizeArray[iNumNALs] = nalSize;
+                iNumNALs++;
+            }
+            else
+            {
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE, (0, "OmxComponentBase : ParseFullAVCFramesIntoNALs ERROR"));
+                return OMX_FALSE;
+            }
+        }
+
+        if (iNumNALs > 0)
+        {
+            iCurrNAL = 0;
+            iNALOffset = ipInputBuffer->nOffset + iSizeOfNALSize;
+            ipFrameDecodeBuffer = ipInputBuffer->pBuffer + iNALOffset;
+            iInputCurrLength = iNALSizeArray[iCurrNAL];
+            iNALOffset += (iInputCurrLength + iSizeOfNALSize); // offset for next NAL
             //capture the timestamp to be send to the corresponding output buffer
             iFrameTimestamp = ipInputBuffer->nTimeStamp;
         }
@@ -899,9 +1010,13 @@ void OpenmaxAvcAO::DecodeWithMarker()
                         ipFrameDecodeBuffer = ipInputBuffer->pBuffer + iNALOffset;
                         iInputCurrLength = iNALSizeArray[iCurrNAL];
 
-                        if (iPVCapabilityFlags.iOMXComponentUsesNALStartCodes)
+                        if (iPVCapabilityFlags.iOMXComponentUsesNALStartCodes && ((iNumNALs - iCurrNAL) > 1)) // how many NALs are left? make sure at least 1
                         {
-                            iNALOffset += (iInputCurrLength + NAL_START_CODE_SIZE); // offset for next NAL
+                            iNALOffset += (iInputCurrLength + iNALStartCodeSizeArray[iCurrNAL + 1]); // offset for next NAL
+                        }
+                        else if (iPVCapabilityFlags.iOMXComponentUsesInterleaved2BNALSizes || iPVCapabilityFlags.iOMXComponentUsesInterleaved4BNALSizes)
+                        {
+                            iNALOffset += (iInputCurrLength + iSizeOfNALSize); // offset for next NAL
                         }
                         else
                         {
@@ -1129,4 +1244,50 @@ void OpenmaxAvcAO::ResetComponent()
         ipAvcDec->ResetDecoder();
     }
 
+}
+
+/* This routine finds the size of the start code and points to the beginning of the NAL.
+ * The start code should be at the beginning of the buffer for this routine to function properly.
+ * If the buffer does not have a valid start code at the beginning of the buffer, the function
+ * will return false.
+ */
+OMX_BOOL OpenmaxAvcAO::DetectStartCodeLength(OMX_U8* aBitstream, OMX_U8** aNalUnit, OMX_U32 aBufSize, OMX_U32* aSCSize)
+{
+    int32 i = 0;
+
+    while (aBitstream[i] == 0 && i < aBufSize)
+    {
+        i++;
+    }
+    if (i >= aBufSize)
+    {
+        // buffer is entirely 0s - cannot find any start_code_prefix.
+        *aNalUnit = aBitstream;
+        *aSCSize = 0;
+        return OMX_FALSE;
+    }
+    else if (aBitstream[i] != 0x1)
+    {
+        // start_code_prefix is not at the beginning
+        *aNalUnit = aBitstream;
+        *aSCSize = 0;
+        return OMX_FALSE;
+    }
+    else
+    {
+        // start_code found
+        i++;
+        *aNalUnit = aBitstream + i; /* point to the beginning of the NAL unit */
+        *aSCSize = i;
+
+        if (i != 3 && i != 4)
+        {
+            // AVC start codes are either 3 or 4 bytes.  if it finds otherwise, then this frame is corrupt
+            return OMX_FALSE;
+        }
+        else
+        {
+            return OMX_TRUE;
+        }
+    }
 }

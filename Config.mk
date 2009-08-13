@@ -20,6 +20,9 @@ ifneq ($(strip $(EXTERNAL_OPENCORE_CONFIG_ONCE)),true)
 
   PV_INCLUDES := \
 	$(PV_TOP)/android \
+	$(PV_TOP)/../sqlite/dist \
+	$(PV_TOP)/../../frameworks/base/core/jni \
+	$(JNI_H_INCLUDE) \
 	$(PV_TOP)/extern_libs_v2/khronos/openmax/include \
 	$(PV_TOP)/engines/common/include \
 	$(PV_TOP)/engines/player/config/android \

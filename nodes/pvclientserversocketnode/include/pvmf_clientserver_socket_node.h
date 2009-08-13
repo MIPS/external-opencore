@@ -244,7 +244,6 @@ class SocketPortConfig : public OsclMemPoolFixedChunkAllocatorObserver
 /*
 ** Memory pool sizes.
 */
-#define SIMPLE_MEDIA_BUF_CLASS_SIZE 128 /*oscl_mem_aligned_size(sizeof(PVMFSimpleMediaBuffer) + oscl_mem_aligned_size(sizeof(OsclRefCounterSA<SimpleMediaBufferCombinedCleanupSA>)*/
 #define MEDIA_DATA_CLASS_SIZE 128 /*oscl_mem_aligned_size(sizeof(PVMFMediaData)) + oscl_mem_aligned_size(sizeof(OsclRefCounterDA)) + oscl_mem_aligned_size(sizeof(MediaDataCleanupDA)) + sizeof(PVMFMediaMsgHeader))*/
 
 /*

@@ -47,6 +47,8 @@ void user_input_test::test()
             OSCL_LEAVE(error);
         }
     }
+
+    TestCompleted(this);
     this->RemoveFromScheduler();
 }
 

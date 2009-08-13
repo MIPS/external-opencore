@@ -3,6 +3,7 @@ include $(CLEAR_VARS)
 
 LOCAL_SRC_FILES := \
 	./common/src/pvt_common.cpp \
+ 	./common/src/lipsync_singleton_object.cpp \
  	./common/src/h324utils.cpp \
  	./h223/src/adaptationlayer.cpp \
  	./h223/src/cpvh223multiplex.cpp \
@@ -60,7 +61,7 @@ LOCAL_SRC_FILES := \
 
 LOCAL_MODULE := libpv324m
 
-LOCAL_CFLAGS :=  $(PV_CFLAGS)
+LOCAL_CFLAGS :=   $(PV_CFLAGS)
 
 
 
@@ -92,7 +93,6 @@ LOCAL_COPY_HEADERS := \
  	./common/include/pv_2way_h324m_interface.h \
  	./common/include/pv_2way_h324m_types.h \
  	./common/include/pvt_common.h \
- 	./common/include/pv_2way_codecspecifier_interface.h \
  	./h245/cmn/include/h245def.h \
  	./h245/per/include/per_common.h \
  	./h245/per/include/analyzeper.h \

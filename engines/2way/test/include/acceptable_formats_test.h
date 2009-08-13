@@ -34,10 +34,7 @@ class acceptable_formats_test : public av_test
 {
     public:
         acceptable_formats_test(bool aUseProxy = false)
-                : av_test(aUseProxy),
-                iQueryTestInterfaceCmdId(0),
-                iTempTestConfigInterface(NULL),
-                iTestConfigInterface(NULL)
+                : av_test(aUseProxy)
         {
         }
 
@@ -45,18 +42,20 @@ class acceptable_formats_test : public av_test
         {
         }
 
+        // need to store the expected formats that we'll find
         void AddExpectedFormat(TPVDirection aDir, PV2WayMediaType aType, const char* const aFormat);
 
+        void RstCmdCompleted();
 
-        // need to store the expected formats that we'll find
+    protected:
+        void test();
 
     private:
+        void TimerCallback();
+
         void CommandCompleted(const PVCmdResponse& aResponse);
         void CreateParts();
-        virtual void InitSucceeded();
-        PVCommandId iQueryTestInterfaceCmdId;
-        PVInterface* iTempTestConfigInterface;
-        PV2WayTestExtensionInterface* iTestConfigInterface;
+        virtual void ConnectSucceeded();
 
         Oscl_Vector<FormatCapabilityInfo, OsclMemAllocator> iInAudFormatCapability;
         Oscl_Vector<FormatCapabilityInfo, OsclMemAllocator> iOutAudFormatCapability;

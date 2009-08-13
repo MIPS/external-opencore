@@ -43,6 +43,8 @@ extern "C"
 #define N  14
 
 #define ROUND_SYNFIL  (32768 + 4096)
+#define ROUND_SYNFIL1  (32768 + 4096)
+#define ROUND_SYNFIL2  (32768 - 4096)
 
     /*----------------------------------------------------------------------------
     ; EXTERNAL VARIABLES REFERENCES

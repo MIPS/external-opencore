@@ -23,20 +23,61 @@
 #include "pvmf_media_cmd.h"
 #endif
 
+#ifndef MEDIAINFO_H
+#include "media_info.h"
+#endif
+
+#ifndef PAYLOAD_PARSER_REGISTRY_H_INCLUDED
+#include "payload_parser_registry.h"
+#endif
+
+#ifndef PAYLOAD_PARSER_H_INCLUDED
+#include "payload_parser.h"
+#endif
+
+#ifndef PVLOGGER_FILE_APPENDER_H_INCLUDED
+#include "pvlogger_file_appender.h"
+#endif
+
 // Define entry point for this DLL
 OSCL_DLL_ENTRY_POINT_DEFAULT()
 
 #define PVMF_JITTER_BUFFER_ROLL_OVER_THRESHOLD_16BIT 2000
+
+
+class PVMFJBPayloadParserLoggerDestructDealloc : public OsclDestructDealloc
+{
+    public:
+        void destruct_and_dealloc(OsclAny* ptr)
+        {
+            PVLoggerAppender* p = OSCL_REINTERPRET_CAST(PVLoggerAppender*, ptr);
+            BinaryFileAppender* binPtr = OSCL_REINTERPRET_CAST(BinaryFileAppender*, p);
+            if (!binPtr)
+                return;
+            OSCL_DELETE(binPtr);
+        }
+};
+
 void PVMFJitterBufferImpl::ResetParams(bool aReleaseMemory)
 {
     if (aReleaseMemory)
     {
+        DestroyMediaMsgComposerAllocatorsForOutgoingMsgs();
         DestroyAllocators();
         OSCL_DELETE(iJitterBuffer);
         if (iBufferAlloc)
             iBufferAlloc->removeRef();
+
+        if (iParsedPayloadBinAppenderPtr.GetRep() != NULL)
+        {
+            ipParsedPayloadLogger->RemoveAppender(iParsedPayloadBinAppenderPtr);
+            iParsedPayloadBinAppenderPtr.Unbind();
+        }
     }
 
+    iTrackConfigLogged = false;
+    ipParsedPayloadLogger = NULL;
+    iLogParsedMediaMsgs = false;
     iStreamingState = STREAMINGSTATE_UNKNOWN;
     iSeqNum = 0;
     iReportCanRetrievePacket = false;
@@ -50,6 +91,9 @@ void PVMFJitterBufferImpl::ResetParams(bool aReleaseMemory)
     iMediaDataGroupAlloc = NULL;
     iMediaDataImplMemPool = NULL;
     iMediaMsgMemPool = NULL;
+
+    ipMediaDataGroupAllocOutputMediaMsg = NULL;
+    ipMediaDataImplMemPoolOutputMediaMsg = NULL;
 
     iStartTimeInMS = 0;
     iStopTimeInMS = 0;
@@ -107,6 +151,7 @@ void PVMFJitterBufferImpl::ResetParams(bool aReleaseMemory)
 
     ipMediaClockConverter = NULL;
     iTimeScale  = 0;
+    iPayLoadParser = NULL;
 }
 
 void PVMFJitterBufferImpl::DestroyAllocators()
@@ -150,6 +195,7 @@ OSCL_EXPORT_REF void PVMFJitterBufferImpl::StreamingSessionStopped()
     CancelEventCallBack(JB_NOTIFY_WAIT_FOR_OOO_PACKET_COMPLETE);
     CancelEventCallBack(JB_MONITOR_REBUFFERING);
     CancelEventCallBack(JB_BUFFERING_DURATION_COMPLETE);
+    ClearAvlAccessUnits();
     FlushJitterBuffer();
 }
 
@@ -224,7 +270,7 @@ OSCL_EXPORT_REF PVMFJitterBufferImpl::PVMFJitterBufferImpl(const PVMFJitterBuffe
     ipClockLoggerRebuff = NULL;
     ipDataPathLoggerFlowCtrl = NULL;
     ipJBEventsClockLogger = NULL;
-
+    iLogFileIndex = '0';
     ResetParams(false);
 }
 
@@ -446,22 +492,60 @@ OSCL_EXPORT_REF PVMFJitterBufferRegisterMediaMsgStatus PVMFJitterBufferImpl::Reg
 
 OSCL_EXPORT_REF PVMFStatus PVMFJitterBufferImpl::RetrievePacket(PVMFSharedMediaMsgPtr& aMediaMsgPtr, bool& aCmdPacket)
 {
+    PVMFStatus retval = PVMFErrNotReady;
     aCmdPacket = false;
-    PVMFSharedMediaMsgPtr mediaMsg;
-    if (CanRetrievePacket(aMediaMsgPtr, aCmdPacket))
+
+    //Check if parsed access units available with the JB
+    if (iPayLoadParser && PendingAccessUnitsAvlToSend())
     {
-        return PVMFSuccess;
+        uint32 clockDiff = 0;
+        if (IsDelayEstablished(clockDiff))
+        {
+            retval = GetParsedMediaMsg(aMediaMsgPtr);
+            if (iLogParsedMediaMsgs && iPayLoadParser && (PVMFSuccess == retval))
+            {
+                LogMediaMsg(aMediaMsgPtr);
+            }
+            return retval;
+        }
+        else
+        {
+            return retval;
+        }
     }
-    else
+
+    //Get packet from the JB and get its payload parsed
+    bool canGetPktFrmJB = CanRetrievePacket(aMediaMsgPtr, aCmdPacket);
+    bool continueToRetrievePacket = true;
+
+    retval = canGetPktFrmJB ? PVMFSuccess : PVMFErrNotReady;
+    if ((canGetPktFrmJB) && !aCmdPacket && iPayLoadParser)
+    { //Data Packet to be parsed
+        while (continueToRetrievePacket)
+        {
+            PayloadParserStatus parsingStatus = ParsePayload(aMediaMsgPtr);
+            continueToRetrievePacket = (PayloadParserStatus_Success == parsingStatus) ? false : true;
+            if (continueToRetrievePacket)
+            {
+                canGetPktFrmJB = CanRetrievePacket(aMediaMsgPtr, aCmdPacket);
+                continueToRetrievePacket  = (!aCmdPacket && canGetPktFrmJB) ;
+            }
+        }
+        //decide retval
+        retval = canGetPktFrmJB ? PVMFSuccess : PVMFErrNotReady;
+    }
+
+    if (iLogParsedMediaMsgs && iPayLoadParser && (PVMFSuccess == retval) && !aCmdPacket)
     {
-        return PVMFErrNotReady;
+        LogMediaMsg(aMediaMsgPtr);
     }
+
+    return retval;
 }
 
-OSCL_EXPORT_REF PVMFStatus PVMFJitterBufferImpl::SetInputPacketHeaderPreparsed(bool aPreParsed)
+OSCL_EXPORT_REF void PVMFJitterBufferImpl::SetInputPacketHeaderPreparsed(bool aPreParsed)
 {
     iHeaderPreParsed = aPreParsed;
-    return PVMFSuccess;
 }
 
 OSCL_EXPORT_REF PVMFJitterBufferStats& PVMFJitterBufferImpl::getJitterBufferStats()
@@ -821,7 +905,7 @@ void PVMFJitterBufferImpl::CreateAllocators()
                                 (DEFAULT_NUM_MEDIA_MSGS_IN_JITTER_BUFFER));
     iMediaDataImplMemPool = OSCL_NEW(OsclMemPoolFixedChunkAllocator,
                                      (DEFAULT_NUM_MEDIA_MSGS_IN_JITTER_BUFFER));
-    iMediaDataGroupAlloc = OSCL_NEW(PVMFMediaFragGroupCombinedAlloc<OsclMemPoolFixedChunkAllocator>,
+    iMediaDataGroupAlloc = OSCL_NEW(PVMFMediaFragGroupCombinedAlloc<OsclMemAllocator>,
                                     (DEFAULT_NUM_MEDIA_MSGS_IN_JITTER_BUFFER,
                                      DEFAULT_NUM_FRAGMENTS_IN_MEDIA_MSG,
                                      iMediaDataImplMemPool));
@@ -987,8 +1071,8 @@ void PVMFJitterBufferImpl::HandleEvent_MonitorReBuffering(const OsclAny* aContex
     irClientPlayBackClock.GetCurrentTime32(clientClock, overflowFlag, PVMF_MEDIA_CLOCK_MSEC, timebase32);
 
 
-    PVMF_JB_LOG_EVENTS_CLOCK((0, "PVMFJitterBufferNode::IsJitterBufferReady - Time Delay Check - EstServClock=%d", estServerClock));
-    PVMF_JB_LOG_EVENTS_CLOCK((0, "PVMFJitterBufferNode::IsJitterBufferReady - Time Delay Check - ClientClock=%d", clientClock));
+    PVMF_JB_LOG_EVENTS_CLOCK((0, "PVMFJitterBufferNode::HandleEvent_MonitorReBuffering - Time Delay Check - EstServClock=%d", estServerClock));
+    PVMF_JB_LOG_EVENTS_CLOCK((0, "PVMFJitterBufferNode::HandleEvent_MonitorReBuffering - Time Delay Check - ClientClock=%d", clientClock));
 
     uint32 clockDiff;
     IsDelayEstablished(clockDiff); //just to evaluate the rebuiffering condition.
@@ -1074,10 +1158,10 @@ OSCL_EXPORT_REF void PVMFJitterBufferImpl::SetInPlaceProcessingMode(bool aInPlac
     }
 }
 
-OSCL_EXPORT_REF PVMFStatus
+OSCL_EXPORT_REF void
 PVMFJitterBufferImpl::GenerateAndSendEOSCommand(PVMFSharedMediaMsgPtr& aMediaOutMsg, bool& aCmdPacket)
 {
-    PVMF_JB_LOGINFO((0, "PVMFJitterBufferNode::GenerateAndSendEOSCommand"));
+    PVMF_JB_LOGINFO((0, "PVMFJitterBufferNode::GenerateAndSendEOSCommand %s", irMimeType.get_cstr()));
     PVMF_JB_LOG_RTCPDATATRAFFIC_OUT((0, "PVMFJitterBufferImpl::GenerateAndSendEOSCommand In Mime[%s]-", irMimeType.get_cstr()));
 
     if (iEOSSent == false)
@@ -1117,14 +1201,11 @@ PVMFJitterBufferImpl::GenerateAndSendEOSCommand(PVMFSharedMediaMsgPtr& aMediaOut
         PVMF_JB_LOGCLOCK_SESSION_DURATION((0, "PVMFJitterBufferNode::GenerateAndSendEOSCommand: EstServClock=%d",
                                            estServClock32));
         iEOSSent = true;
-        return PVMFSuccess;
     }
     else
     {
         PVMF_JB_LOGINFO((0, "PVMFJitterBufferNode::GenerateAndSendEOSCommand - EOS already sent..."));
     }
-
-    return PVMFSuccess;
 }
 
 OSCL_EXPORT_REF void PVMFJitterBufferImpl::NotifyCanRetrievePacket()
@@ -1157,8 +1238,8 @@ OSCL_EXPORT_REF bool PVMFJitterBufferImpl::IsDelayEstablished(uint32& aClockDiff
     irEstimatedServerClock.GetCurrentTime32(estServerClock, overflowFlag, PVMF_MEDIA_CLOCK_MSEC, timebase32);
     irClientPlayBackClock.GetCurrentTime32(clientClock, overflowFlag, PVMF_MEDIA_CLOCK_MSEC, timebase32);
 
-    PVMF_JB_LOGCLOCK((0, "PVMFJitterBufferNode::IsJitterBufferReady - Time Delay Check - EstServClock=%d", estServerClock));
-    PVMF_JB_LOGCLOCK((0, "PVMFJitterBufferNode::IsJitterBufferReady - Time Delay Check - ClientClock=%d", clientClock));
+    PVMF_JB_LOGCLOCK((0, "PVMFJitterBufferNode::IsDelayEstablished - Time Delay Check - EstServClock=%d", estServerClock));
+    PVMF_JB_LOGCLOCK((0, "PVMFJitterBufferNode::IsDelayEstablished - Time Delay Check - ClientClock=%d", clientClock));
 
     if (iEOSSignalled)
     {
@@ -1192,16 +1273,16 @@ OSCL_EXPORT_REF bool PVMFJitterBufferImpl::IsDelayEstablished(uint32& aClockDiff
                 /* Start timer */
                 PVMFAsyncEvent jbEvent(PVMFInfoEvent, PVMFInfoUnderflow, NULL, NULL);
                 ReportJBInfoEvent(jbEvent);
-                PVMF_JB_LOGCLOCK((0, "PVMFJitterBufferNode::IsJitterBufferReady - Time Delay Check - EstServClock=%d",
+                PVMF_JB_LOGCLOCK((0, "PVMFJitterBufferNode::IsDelayEstablished - Time Delay Check - EstServClock=%d",
                                   Oscl_Int64_Utils::get_uint64_lower32(estServerClock)));
-                PVMF_JB_LOGCLOCK((0, "PVMFJitterBufferNode::IsJitterBufferReady - Time Delay Check - ClientClock=%d",
+                PVMF_JB_LOGCLOCK((0, "PVMFJitterBufferNode::IsDelayEstablished - Time Delay Check - ClientClock=%d",
                                   Oscl_Int64_Utils::get_uint64_lower32(clientClock)));
-                PVMF_JB_LOGCLOCK((0, "PVMFJitterBufferNode::IsJitterBufferReady - Estimated Serv Clock Less Than ClientClock!!!!"));
-                PVMF_JB_LOGCLOCK_REBUFF((0, "PVMFJitterBufferNode::IsJitterBufferReady - Time Delay Check - EstServClock=%d",
+                PVMF_JB_LOGCLOCK((0, "PVMFJitterBufferNode::IsDelayEstablished - Estimated Serv Clock Less Than ClientClock!!!!"));
+                PVMF_JB_LOGCLOCK_REBUFF((0, "PVMFJitterBufferNode::IsDelayEstablished - Time Delay Check - EstServClock=%d",
                                          Oscl_Int64_Utils::get_uint64_lower32(estServerClock)));
-                PVMF_JB_LOGCLOCK_REBUFF((0, "PVMFJitterBufferNode::IsJitterBufferReady - Time Delay Check - ClientClock=%d",
+                PVMF_JB_LOGCLOCK_REBUFF((0, "PVMFJitterBufferNode::IsDelayEstablished - Time Delay Check - ClientClock=%d",
                                          Oscl_Int64_Utils::get_uint64_lower32(clientClock)));
-                PVMF_JB_LOGCLOCK_REBUFF((0, "PVMFJitterBufferNode::IsJitterBufferReady - Estimated Serv Clock Less Than ClientClock!!!!"));
+                PVMF_JB_LOGCLOCK_REBUFF((0, "PVMFJitterBufferNode::IsDelayEstablished - Estimated Serv Clock Less Than ClientClock!!!!"));
             }
             return irDelayEstablished;
         }
@@ -1335,7 +1416,7 @@ OSCL_EXPORT_REF PVMFSharedMediaDataPtr PVMFJitterBufferImpl::RetrievePacketPaylo
     return elem;
 }
 
-OSCL_EXPORT_REF bool PVMFJitterBufferImpl::IsEmpty()
+OSCL_EXPORT_REF bool PVMFJitterBufferImpl::IsEmpty() const
 {
     uint32 elems = iJitterBuffer->getNumElements();
     if (elems == 0)
@@ -1357,7 +1438,7 @@ OSCL_EXPORT_REF void PVMFJitterBufferImpl::SetEOS(bool aVal)
         iObserver->EndOfStreamSignalled(iObserverContext);
     }
 
-    if (iReportCanRetrievePacket)
+    if (iReportCanRetrievePacket && (iStreamingState != STREAMINGSTATE_STOPPED))
     {
         if (CanRetrievePacket())
         {
@@ -1366,7 +1447,7 @@ OSCL_EXPORT_REF void PVMFJitterBufferImpl::SetEOS(bool aVal)
     }
 }
 
-OSCL_EXPORT_REF bool PVMFJitterBufferImpl::GetEOS()
+OSCL_EXPORT_REF bool PVMFJitterBufferImpl::GetEOS() const
 {
     return iEOSSignalled;
 }
@@ -1382,6 +1463,7 @@ OSCL_EXPORT_REF void PVMFJitterBufferImpl::SetPlayRange(int32 aStartTimeInMS, bo
 
     if (aPlayAfterSeek)
     {
+        ClearAvlAccessUnits();
         iEOSSignalled = false;
         iEOSSent = false;
     }
@@ -1513,7 +1595,7 @@ OSCL_EXPORT_REF PVMFRTPInfoParams& PVMFJitterBufferImpl::GetRTPInfoParams()
     return *iRTPInfoParamsVec.end();
 }
 
-OSCL_EXPORT_REF bool PVMFJitterBufferImpl::GetRTPTimeStampOffset(uint32& aTimeStampOffset)
+OSCL_EXPORT_REF bool PVMFJitterBufferImpl::GetRTPTimeStampOffset(uint32& aTimeStampOffset) const
 {
     if (seqNumLock)
         aTimeStampOffset = seqLockTimeStamp;
@@ -1589,9 +1671,29 @@ OSCL_EXPORT_REF void PVMFJitterBufferImpl::GetJitterBufferMemPoolInfo(uint32& aS
     aExpectedNumberOfBlocksPerBuffer = iJitterBufferMemPoolInfo.iExpectedNumberOfBlocksPerBuffer;
 }
 
-OSCL_EXPORT_REF void PVMFJitterBufferImpl::SetTrackConfig(OsclRefCounterMemFrag& aConfig)
+OSCL_EXPORT_REF void PVMFJitterBufferImpl::SetTrackConfig(const OsclRefCounterMemFrag& aConfig)
 {
     iTrackConfig = aConfig;
+
+    if (iLogParsedMediaMsgs && iPayLoadParser && (iTrackConfig.getMemFragPtr() != NULL) && !iTrackConfigLogged)
+    {
+        OSCL_StackString<8> h264("H264");
+        uint32 size = iTrackConfig.getMemFragSize();
+
+        if ((size > 0))
+        {
+            if (!oscl_strcmp(irMimeType.get_cstr(), h264.get_cstr()))
+            {
+                PVMF_JB_LOGBIN((0, 1, sizeof(uint32), &size));
+            }
+            PVMF_JB_LOGBIN((0, 1, size, iTrackConfig.getMemFragPtr()));
+        }
+    }
+}
+
+OSCL_EXPORT_REF void PVMFJitterBufferImpl::GetTrackConfig(OsclRefCounterMemFrag& aConfig) const
+{
+    aConfig = iTrackConfig;
 }
 
 OSCL_EXPORT_REF void PVMFJitterBufferImpl::SetTimeScale(uint32 aTimeScale)
@@ -1669,4 +1771,161 @@ void PVMFJitterBufferImpl::HandleEvent_JitterBufferBufferingDurationComplete()
     }
 
     PVMF_JB_LOG_EVENTS_CLOCK((0, "PVMFJitterBufferNode::HandleEvent_JitterBufferBufferingDurationComplete Out"));
+}
+
+OSCL_EXPORT_REF bool PVMFJitterBufferImpl::setPortMediaParams(mediaInfo* aMediaInfo)
+{
+    bool retval = false;
+    if (iPayLoadParser)
+    {
+        retval = iPayLoadParser->Init(aMediaInfo);
+    }
+    return retval;
+}
+
+OSCL_EXPORT_REF PVMFStatus PVMFJitterBufferImpl::setPayloadParser(IPayloadParser* aPayloadParser)
+{
+    iPayLoadParser = aPayloadParser;
+    if (oscl_strstr(irMimeType.get_cstr(), "video/H264"))
+    {
+        CreateMediaMsgComposerAllocatorsForOutgoingMsgs();
+    }
+    return PVMFSuccess;
+}
+
+OSCL_EXPORT_REF PVMFStatus PVMFJitterBufferImpl::getPayloadParser(IPayloadParser*& aPayloadParser) const
+{
+    aPayloadParser = iPayLoadParser;
+    return PVMFSuccess;
+}
+
+
+bool PVMFJitterBufferImpl::CreateMediaMsgComposerAllocatorsForOutgoingMsgs()
+{
+    if ((ipMediaDataImplMemPoolOutputMediaMsg == NULL) && (ipMediaDataGroupAllocOutputMediaMsg == NULL))
+    {
+        //we do not want to run out of mem , So number of chunks is decided to be
+        //No of messaged Decoder Input Q can recv + No of messages decoder can buffer (10 + 10) + 1
+
+        ipMediaDataImplMemPoolOutputMediaMsg = OSCL_NEW(OsclMemPoolFixedChunkAllocator,
+                                               (JB_MAX_MEDIA_MSGS_OUTSTANDING * 2 + 1));
+        ipMediaDataGroupAllocOutputMediaMsg = OSCL_NEW(PVMFMediaFragGroupCombinedAlloc<OsclMemPoolFixedChunkAllocator>,
+                                              ((JB_MAX_MEDIA_MSGS_OUTSTANDING * 2 + 1),
+                                               JB_MAX_CHUNKS_IN_OUTPUT_MEDIA_MSG,
+                                               ipMediaDataImplMemPoolOutputMediaMsg));
+        ipMediaDataGroupAllocOutputMediaMsg->create();
+    }
+
+    return true;
+}
+
+bool PVMFJitterBufferImpl::DestroyMediaMsgComposerAllocatorsForOutgoingMsgs()
+{
+    /* Destroy allocators if present */
+    if (ipMediaDataGroupAllocOutputMediaMsg)
+    {
+        ipMediaDataGroupAllocOutputMediaMsg->CancelFreeChunkAvailableCallback();
+        ipMediaDataGroupAllocOutputMediaMsg->removeRef();
+        ipMediaDataGroupAllocOutputMediaMsg = NULL;
+    }
+    if (ipMediaDataImplMemPoolOutputMediaMsg)
+    {
+        ipMediaDataImplMemPoolOutputMediaMsg->removeRef();
+        ipMediaDataImplMemPoolOutputMediaMsg = NULL;
+    }
+
+    return true;
+}
+
+OSCL_EXPORT_REF void PVMFJitterBufferImpl::SetDataLogging(bool aEnableLogging, OSCL_String* aLogFilePath)
+{
+    iLogParsedMediaMsgs = aEnableLogging;
+    if (iLogParsedMediaMsgs)
+    {
+        OSCL_StackString<32> loggerTag("PVMFJBPP");
+
+        if (oscl_strstr(irMimeType.get_cstr(), "video"))
+        {
+            loggerTag += "Video";
+        }
+        else
+        {
+            loggerTag += "Audio";
+        }
+
+        ipParsedPayloadLogger = PVLogger::GetLoggerObject(loggerTag.get_cstr());
+
+        loggerTag += "_";
+        loggerTag += iLogFileIndex;
+        loggerTag += ".txt";
+        iLogFileIndex += 1;
+
+        OSCL_StackString<255> logFileAbsPath;
+        if (aLogFilePath)
+        {
+            logFileAbsPath = aLogFilePath->get_cstr();
+            logFileAbsPath += "\\";
+        }
+        logFileAbsPath += loggerTag;
+
+        PVLoggerAppender *binAppender =
+            BinaryFileAppender::CreateAppender((char*)(logFileAbsPath.get_cstr()));
+
+        if (binAppender == NULL)
+        {
+            return;
+        }
+        OsclRefCounterSA<PVMFJBPayloadParserLoggerDestructDealloc>* binAppenderRefCounter =
+            new OsclRefCounterSA<PVMFJBPayloadParserLoggerDestructDealloc>(binAppender);
+
+        OsclSharedPtr<PVLoggerAppender> appenderSharedPtr(binAppender, binAppenderRefCounter);
+
+        iParsedPayloadBinAppenderPtr = appenderSharedPtr;
+        ipParsedPayloadLogger->AddAppender(iParsedPayloadBinAppenderPtr);
+
+        if (iLogParsedMediaMsgs && iPayLoadParser && (iTrackConfig.getMemFragPtr() != NULL))
+        {
+            OSCL_StackString<8> h264("H264");
+            uint32 size = iTrackConfig.getMemFragSize();
+
+            if ((size > 0))
+            {
+                if (!oscl_strcmp(irMimeType.get_cstr(), h264.get_cstr()))
+                {
+                    PVMF_JB_LOGBIN((0, 1, sizeof(uint32), &size));
+                }
+                PVMF_JB_LOGBIN((0, 1, size, iTrackConfig.getMemFragPtr()));
+                iTrackConfigLogged = true;
+            }
+        }
+    }
+}
+
+void PVMFJitterBufferImpl::LogMediaMsg(PVMFSharedMediaMsgPtr& aMediaMsgPtr)
+{
+#if (PVLOGGER_INST_LEVEL > PVLOGMSG_INST_LLDBG)
+    PVMFSharedMediaDataPtr mediaData;
+    convertToPVMFMediaData(mediaData, aMediaMsgPtr);
+    uint32 numFrags = mediaData->getNumFragments();
+
+    OsclRefCounterMemFrag memFrag;
+    OsclAny* ptr = NULL;
+    uint32 size = 0;
+
+    OSCL_StackString<8> h264("H264");
+
+    for (uint32 i = 0; i < numFrags; i++)
+    {
+        mediaData->getMediaFragment(i, memFrag);
+        ptr = memFrag.getMemFragPtr();
+        size = memFrag.getMemFragSize();
+        if (!oscl_strcmp(irMimeType.get_cstr(), h264.get_cstr()))
+        {
+            PVMF_JB_LOGBIN((0, 1, sizeof(uint32), &size));
+        }
+        PVMF_JB_LOGBIN((0, 1, size, ptr));
+    }
+#else
+    OSCL_UNUSED_ARG(aMediaMsgPtr);
+#endif
 }

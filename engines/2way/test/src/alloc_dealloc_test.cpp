@@ -87,6 +87,7 @@ void alloc_dealloc_test::test()
     if (error)
     {
         test_is_true(false);
+        TestCompleted(this);
         this->RemoveFromScheduler();
         return;
     }
@@ -102,6 +103,7 @@ void alloc_dealloc_test::test()
         CPV2WayEngineFactory::DeleteTerminal(temp);
     }
 
+    TestCompleted(this);
     this->RemoveFromScheduler();
     return;
 }

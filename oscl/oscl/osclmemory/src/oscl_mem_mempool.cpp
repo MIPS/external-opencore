@@ -22,9 +22,9 @@
  *  OsclMemPoolFixedChunkAllocator section
  **/
 
-OSCL_EXPORT_REF OsclMemPoolFixedChunkAllocator::OsclMemPoolFixedChunkAllocator(const uint32 numchunk, const uint32 chunksize, Oscl_DefAlloc* gen_alloc) :
-        iNumChunk(1), iChunkSize(0), iChunkSizeMemAligned(0),
-        iMemPoolAllocator(gen_alloc), iMemPool(NULL),
+OSCL_EXPORT_REF OsclMemPoolFixedChunkAllocator::OsclMemPoolFixedChunkAllocator(const uint32 numchunk, const uint32 chunksize, Oscl_DefAlloc* gen_alloc, const uint32 chunkalignment) :
+        iNumChunk(1), iChunkSize(0), iChunkSizeMemAligned(0), iChunkAlignment(chunkalignment),
+        iMemPoolAllocator(gen_alloc), iMemPool(NULL), iMemPoolAligned(NULL),
         iCheckNextAvailableFreeChunk(false), iObserver(NULL),
         iNextAvailableContextData(NULL),
         iRefCount(1),
@@ -32,10 +32,28 @@ OSCL_EXPORT_REF OsclMemPoolFixedChunkAllocator::OsclMemPoolFixedChunkAllocator(c
 {
     iNumChunk = numchunk;
     iChunkSize = chunksize;
+    iChunkAlignment = chunkalignment;
 
     if (iNumChunk == 0)
     {
         iNumChunk = 1;
+    }
+
+    // if alignment paramater is used - set it to the nearest larger power of 2
+    if ((iChunkAlignment > 0) && (iChunkAlignment < 0x80000000))
+    {
+        uint32 align = 1;
+        while (align < iChunkAlignment)
+        {
+            align <<= 1;
+        }
+        iChunkAlignment = align;
+    }
+
+    // 8 byte alignment is the default. It shouldn't be larger than 1k
+    if ((iChunkAlignment < 8) || (iChunkAlignment > 1024))
+    {
+        iChunkAlignment = 0;
     }
 
     if (iChunkSize > 0)
@@ -128,7 +146,7 @@ OSCL_EXPORT_REF void OsclMemPoolFixedChunkAllocator::deallocate(OsclAny* p)
     }
 
     uint8* ptmp = (uint8*)p;
-    uint8* mptmp = (uint8*)iMemPool;
+    uint8* mptmp = (uint8*)iMemPoolAligned;
 
     if ((ptmp < mptmp) || ptmp >= (mptmp + iNumChunk*iChunkSizeMemAligned))
     {
@@ -193,16 +211,25 @@ OSCL_EXPORT_REF void OsclMemPoolFixedChunkAllocator::createmempool()
         OSCL_LEAVE(OsclErrArgument);
     }
 
-    // Create one block of memory for the memory pool
-    iChunkSizeMemAligned = oscl_mem_aligned_size(iChunkSize);
-    int32 leavecode = 0;
-    if (iMemPoolAllocator)
+    if (iChunkAlignment > 0)
     {
-        OSCL_TRY(leavecode, iMemPool = iMemPoolAllocator->ALLOCATE(iNumChunk * iChunkSizeMemAligned));
+        uint32 temp = iChunkAlignment - 1;
+        iChunkSizeMemAligned = ((iChunkSize + temp) & (~temp));
     }
     else
     {
-        iMemPool = OSCL_MALLOC(iNumChunk * iChunkSizeMemAligned);
+        // Create one block of memory for the memory pool
+        iChunkSizeMemAligned = oscl_mem_aligned_size(iChunkSize);
+    }
+
+    int32 leavecode = 0;
+    if (iMemPoolAllocator)
+    {
+        OSCL_TRY(leavecode, iMemPool = iMemPoolAllocator->ALLOCATE((iNumChunk * iChunkSizeMemAligned) + iChunkAlignment));
+    }
+    else
+    {
+        iMemPool = OSCL_MALLOC((iNumChunk * iChunkSizeMemAligned) + iChunkAlignment);
     }
 
     if (leavecode || iMemPool == NULL)
@@ -211,12 +238,28 @@ OSCL_EXPORT_REF void OsclMemPoolFixedChunkAllocator::createmempool()
     }
 
 #if OSCL_MEM_FILL_WITH_PATTERN
-    oscl_memset(iMemPool, 0x55, iNumChunk*iChunkSizeMemAligned);
+    oscl_memset(iMemPool, 0x55, (iNumChunk*iChunkSizeMemAligned) + iChunkAlignment);
 #endif
 
     // Set up the free mem chunk list vector
     iFreeMemChunkList.reserve(iNumChunk);
     uint8* chunkptr = (uint8*)iMemPool;
+
+    // do the alignment if necessary
+    if (iChunkAlignment > 0)
+    {
+
+        uint32 chunkptrAddr = (uint32) chunkptr;
+        uint32 tempAlign = (iChunkAlignment - 1);
+        uint32 difference = ((chunkptrAddr + tempAlign) & (~tempAlign)) - chunkptrAddr;
+
+        chunkptr = chunkptr + difference;
+        iMemPoolAligned = (OsclAny*) chunkptr;
+    }
+    else
+    {
+        iMemPoolAligned = iMemPool;
+    }
 
     for (uint32 i = 0; i < iNumChunk; ++i)
     {
@@ -250,6 +293,7 @@ OSCL_EXPORT_REF void OsclMemPoolFixedChunkAllocator::destroymempool()
             }
 
             iMemPool = NULL;
+            iMemPoolAligned = NULL;
         }
     }
 }

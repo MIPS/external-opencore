@@ -151,6 +151,9 @@ author_command *AuthorDriver::dequeueCommand()
 
 status_t AuthorDriver::enqueueCommand(author_command *ac, media_completion_f comp, void *cookie)
 {
+    if (mAuthor == NULL) {
+        return NO_INIT;
+    }
     // If the user didn't specify a completion callback, we
     // are running in synchronous mode.
     if (comp == NULL) {
@@ -854,8 +857,8 @@ int AuthorDriver::authorThread()
         return -1;
     }
 
-    LOGV("OMX_Init");
-    OMX_Init();
+    LOGV("OMX_MasterInit");
+    OMX_MasterInit();
 
     OsclScheduler::Init("AndroidAuthorDriver");
     LOGV("Create author ...");
@@ -894,7 +897,7 @@ int AuthorDriver::authorThread()
    //moved below delete this, similar code on playerdriver.cpp caused a crash.
    //cleanup of oscl should happen at the end.
     OsclScheduler::Cleanup();
-    OMX_Deinit();
+    OMX_MasterDeinit();
     UninitializeForThread();
     return 0;
 }
@@ -918,30 +921,13 @@ void AuthorDriver::CommandCompleted(const PVCmdResponse& aResponse)
 
     if (ac->which == AUTHOR_SET_VIDEO_ENCODER) {
         switch(mVideoEncoder) {
-        case VIDEO_ENCODER_H263: {
+        case VIDEO_ENCODER_H263: 
+        case VIDEO_ENCODER_MPEG_4_SP:
+        case VIDEO_ENCODER_H264: {
             PVMp4H263EncExtensionInterface *config = OSCL_STATIC_CAST(PVMp4H263EncExtensionInterface*,
                                                                       mVideoEncoderConfig);
             // TODO:
             // fix the hardcoded bit rate settings.
-            if (config) {
-                int bitrate_setting = 192000;
-                if (mVideoWidth >= 480) {
-                    bitrate_setting = 420000; // unstable
-                } else if (mVideoWidth >= 352) {
-                    bitrate_setting = 360000;
-                } else if (mVideoWidth >= 320) {
-                    bitrate_setting = 320000;
-                }
-                config->SetNumLayers(1);
-                config->SetOutputBitRate(0, bitrate_setting);
-                config->SetOutputFrameSize(0, mVideoWidth, mVideoHeight);
-                config->SetOutputFrameRate(0, mVideoFrameRate);
-                config->SetIFrameInterval(ANDROID_DEFAULT_I_FRAME_INTERVAL);
-            }
-        } break;
-        case VIDEO_ENCODER_MPEG_4_SP: {
-            PVMp4H263EncExtensionInterface *config = OSCL_STATIC_CAST(PVMp4H263EncExtensionInterface*,
-                                                                      mVideoEncoderConfig);
             if (config) {
                 int bitrate_setting = 192000;
                 if (mVideoWidth >= 480) {

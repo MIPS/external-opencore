@@ -484,6 +484,11 @@ class ProtocolContainer
             return iOsclSharedLibrary;
         }
 
+        virtual void requiredSocketReconnect(const bool aForceSocketReconnect = true)
+        {
+            OSCL_UNUSED_ARG(aForceSocketReconnect);
+        }
+
     protected:
         OSCL_IMPORT_REF virtual PVMFStatus initImpl();
         virtual int32 initNodeOutput() = 0;
@@ -755,9 +760,9 @@ class PVProtocolEngineNodeInternalEventHandler
         inline bool isCurrEventMatchCurrPendingCommand(uint32 aCurrEventId);
         bool completePendingCommandWithError(PVProtocolEngineNodeInternalEvent &aEvent);
         int32 getBasePVMFErrorReturnCode(const int32 errorCode, const bool isForCommandComplete = true);
-        void handleErrResponse(int32 &aBaseCode, int32 &aErrCode, char* &aEventData, uint32 &aEventDataLen);
+        void handleErrResponse(int32 &aErrCode, char* &aEventData, uint32 &aEventDataLen, PVInterface* &extmsg);
         void handleAuthenErrResponse(int32 &aErrCode, char* &aEventData, uint32 &aEventDataLen);
-        void handleRedirectErrResponse(char* &aEventData, uint32 &aEventDataLen);
+        void handleRedirectErrResponse(int32 &aErrCode, PVInterface* &extmsg);
         inline bool isStopCmdPending(); // called by isBeingStopped
         inline bool isProtocolStateComplete(const int32 aStatus);
 

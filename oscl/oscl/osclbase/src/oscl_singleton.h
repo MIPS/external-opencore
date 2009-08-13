@@ -64,7 +64,8 @@ const uint32 OSCL_SINGLETON_ID_OSCLREGISTRY   =  9;
 const uint32 OSCL_SINGLETON_ID_OMX            = 10;
 const uint32 OSCL_SINGLETON_ID_OMXMASTERCORE  = 11;
 const uint32 OSCL_SINGLETON_ID_TICKCOUNT      = 12;
-const uint32 OSCL_SINGLETON_ID_LAST           = 13;
+const uint32 OSCL_SINGLETON_ID_WMDRMLOCK      = 13;
+const uint32 OSCL_SINGLETON_ID_LAST           = 14;
 
 
 class OsclSingletonRegistry

@@ -17,10 +17,116 @@
  */
 #include "acceptable_formats_test.h"
 
+void acceptable_formats_test::test()
+{
+    fprintf(fileoutput, "\n-------- Start acceptable formats test --------\n");
+    fprintf(fileoutput, "\n** Test Number: %d. ** \n", iTestNum);
+    fprintf(fileoutput, "\nSETTINGS:\nProxy %d", iUseProxy);
+    iSourceAndSinks->PrintFormatTypes();
+    fprintf(fileoutput, "\n----------------------------------\n");
+    int error = 0;
+
+    scheduler = OsclExecScheduler::Current();
+
+    this->AddToScheduler();
+
+    if (start_async_test())
+    {
+        OSCL_TRY(error, scheduler->StartScheduler());
+        if (error != 0)
+        {
+            OSCL_LEAVE(error);
+        }
+    }
+
+    TestCompleted(this);
+    this->RemoveFromScheduler();
+}
+
+
+void acceptable_formats_test::TimerCallback()
+{
+    if (inumCalled > 5)
+    {
+        fprintf(fileoutput, "\n Giving up waiting for process to finish \n");
+        iTestStatus = false;
+        DoCancel();
+        return;
+    }
+    inumCalled++;
+    bool match1 = false;
+    bool match2 = false;
+    bool match3 = false;
+    bool match4 = false;
+    if (!iAudioSourceAdded ||
+            !iAudioSinkAdded ||
+            !iVideoSourceAdded ||
+            !iVideoSinkAdded)
+    {
+        // wait longer
+        timer->RunIfNotReady(TEST_DURATION);
+        return;
+    }
+
+    fprintf(fileoutput, "\n Incoming Audio: ");
+    match1 = iSourceAndSinks->FormatMatchesSelectedCodec(INCOMING,
+             PV_AUDIO, iInAudFormatCapability[0].format);
+    fprintf(fileoutput, "\n Outgoing Audio: ");
+    match2 = iSourceAndSinks->FormatMatchesSelectedCodec(OUTGOING,
+             PV_AUDIO, iOutAudFormatCapability[0].format);
+    fprintf(fileoutput, "\n Incoming Video: ");
+    match3 = iSourceAndSinks->FormatMatchesSelectedCodec(INCOMING,
+             PV_VIDEO, iInVidFormatCapability[0].format);
+    fprintf(fileoutput, "\n Outgoing Video: ");
+    match4 = iSourceAndSinks->FormatMatchesSelectedCodec(OUTGOING,
+             PV_VIDEO, iOutVidFormatCapability[0].format);
+    test_is_true(match1 && match2 && match3 && match4);
+
+    int error = 0;
+    fprintf(fileoutput, "\nRemoving source and sinks \n");
+    OSCL_TRY(error, iVideoRemoveSourceId = iSourceAndSinks->RemoveVideoSource());
+    if (error)
+    {
+        iTestStatus &= false;
+        disconnect();
+    }
+    else
+    {
+        error = 1;
+        OSCL_TRY(error, iVideoRemoveSinkId = iSourceAndSinks->RemoveVideoSink());
+        if (error)
+        {
+            iTestStatus &= false;
+            disconnect();
+        }
+    }
+
+    OSCL_TRY(error, iAudioRemoveSourceId = iSourceAndSinks->RemoveAudioSource());
+    if (error)
+    {
+        iTestStatus &= false;
+        disconnect();
+    }
+    else
+    {
+        error = 1;
+        OSCL_TRY(error, iAudioRemoveSinkId = iSourceAndSinks->RemoveAudioSink());
+        if (error)
+        {
+            iTestStatus &= false;
+            disconnect();
+        }
+    }
+}
+
+void acceptable_formats_test::RstCmdCompleted()
+{
+    test_base::RstCmdCompleted();
+}
+
 //
 //
 //
-// NOTE: This file is a work-in-progress
 void acceptable_formats_test::AddExpectedFormat(TPVDirection aDir,
         PV2WayMediaType aType,
         const char* const aFormat)
@@ -62,42 +168,13 @@ void acceptable_formats_test::AddExpectedFormat(TPVDirection aDir,
     }
 }
 
-void acceptable_formats_test::InitSucceeded()
+void acceptable_formats_test::ConnectSucceeded()
 {
-    // compare values to what we are expecting
-    if (iTestConfigInterface)
-    {
 
-        bool match = iTestConfigInterface->AcceptableFormatsMatch(iInAudFormatCapability,
-                     iOutAudFormatCapability, iInVidFormatCapability, iOutVidFormatCapability);
-        if (match)
-        {
-            test_is_true(true);
-        }
-        else
-        {
-            test_is_true(false);
-        }
-    }
-    else
-    {
-        test_is_true(false);
-    }
-
-    test_base::InitSucceeded();
 }
 
 void acceptable_formats_test::CreateParts()
 {
-    // Get test extension interface handle
-    // get TSC node
-    iQueryTestInterfaceCmdId = terminal->QueryInterface(PV2WayTestEncExtensionUUID,
-                               iTempTestConfigInterface);
-    // ks the below would be the synchronous answer.  But if we want this
-    // asynchronous we need to get the answer in CommandCompleted
-    iTestConfigInterface = OSCL_STATIC_CAST(PV2WayTestExtensionInterface*,
-                                            iTempTestConfigInterface);
-    // set other values
     test_base::CreateParts();
 }
 
@@ -108,21 +185,5 @@ void acceptable_formats_test::CommandCompleted(const PVCmdResponse& aResponse)
         return;
     iTestStatus &= (aResponse.GetCmdStatus() == PVMFSuccess) ? true : false;
 
-    if (iQueryTestInterfaceCmdId == cmdId)
-    {
-        if (aResponse.GetCmdStatus() == PVMFSuccess)
-        {
-            if (iTempTestConfigInterface)
-            {
-                iTestConfigInterface = OSCL_STATIC_CAST(PV2WayTestExtensionInterface*,
-                                                        iTempTestConfigInterface);
-                iTempTestConfigInterface = NULL;
-            }
-
-        }
-    }
-    else
-    {
-        test_base::CommandCompleted(aResponse);
-    }
+    test_base::CommandCompleted(aResponse);
 }

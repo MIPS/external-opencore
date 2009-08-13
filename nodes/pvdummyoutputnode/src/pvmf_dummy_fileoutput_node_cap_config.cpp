@@ -205,54 +205,6 @@ PVMFStatus PVMFDummyFileOutputNode::VerifyAndSetConfigParameter(PvmiKvp& aParame
 //                  PvmiCapConfigInterface Virtual Functions
 ////////////////////////////////////////////////////////////////////////////
 
-void PVMFDummyFileOutputNode::createContext(PvmiMIOSession aSession,
-        PvmiCapabilityContext& aContext)
-{
-    OSCL_UNUSED_ARG(aSession);
-    OSCL_UNUSED_ARG(aContext);
-}
-
-void PVMFDummyFileOutputNode::setContextParameters(PvmiMIOSession aSession,
-        PvmiCapabilityContext& aContext,
-        PvmiKvp* aParameters,
-        int aNumElements)
-{
-    OSCL_UNUSED_ARG(aSession);
-    OSCL_UNUSED_ARG(aContext);
-    OSCL_UNUSED_ARG(aParameters);
-    OSCL_UNUSED_ARG(aNumElements);
-}
-
-void PVMFDummyFileOutputNode::DeleteContext(PvmiMIOSession aSession,
-        PvmiCapabilityContext& aContext)
-{
-    OSCL_UNUSED_ARG(aSession);
-    OSCL_UNUSED_ARG(aContext);
-}
-
-PVMFCommandId PVMFDummyFileOutputNode::setParametersAsync(PvmiMIOSession aSession,
-        PvmiKvp* aParameters,
-        int aNumElements,
-        PvmiKvp*& aRet_kvp,
-        OsclAny* aContext)
-{
-    OSCL_UNUSED_ARG(aSession);
-    OSCL_UNUSED_ARG(aContext);
-    OSCL_UNUSED_ARG(aParameters);
-    OSCL_UNUSED_ARG(aRet_kvp);
-    OSCL_UNUSED_ARG(aNumElements);
-//  PVMFDummyFileOutputNodeCommand cmd;
-//  cmd.PVMFMP4FFParserNodeCommand::Construct(NULL, PVMF_MP4_PARSER_NODE_CAPCONFIG_SETPARAMS,aSession, aParameters, aNumElements, aRet_kvp, aContext);
-//  return QueueCommandL(cmd);
-    return 0;
-}
-
-uint32 PVMFDummyFileOutputNode::getCapabilityMetric(PvmiMIOSession aSession)
-{
-    OSCL_UNUSED_ARG(aSession);
-    return 0;
-}
-
 PVMFStatus PVMFDummyFileOutputNode::verifyParametersSync(PvmiMIOSession aSession, PvmiKvp* aParameters, int aNumElements)
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFDummyFileOutputNode::verifyParametersSync()"));

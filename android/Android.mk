@@ -11,7 +11,9 @@ LOCAL_SRC_FILES := \
 	android_audio_output.cpp \
 	android_audio_stream.cpp \
 	android_audio_mio.cpp \
-	android_audio_output_threadsafe_callbacks.cpp
+	android_audio_output_threadsafe_callbacks.cpp \
+	extension_handler_registry.cpp \
+	PVPlayerExtHandler.cpp
 
 LOCAL_CFLAGS := $(PV_CFLAGS)
 

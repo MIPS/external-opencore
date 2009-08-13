@@ -396,6 +396,9 @@ PVMFCommandId PvmfMediaInputNodeOutPort::writeAsync(uint8 format_type, int32 for
             mediaData->setMediaFragFilledLen(0, data_len);
             mediaData->setStreamID(data_header_info.stream_id);
 
+            if (data_header_info.flags & PVMF_MEDIA_DATA_MARKER_INFO_DURATION_AVAILABLE_BIT)
+                mediaData->setDuration(data_header_info.duration);
+
             LOGDATATRAFFIC((0, "PvmfMediaInputNodeOutPort::writeAsync:"
                             "StreamID=%d, TS=%d, Len=%d, SN=%d, MimeType=%s",
                             data_header_info.stream_id,  data_header_info.timestamp, data_len,
@@ -448,6 +451,7 @@ PVMFCommandId PvmfMediaInputNodeOutPort::writeAsync(uint8 format_type, int32 for
 
             if (iState == PvmfMediaInputNodeOutPort::PORT_STATE_STARTED)
                 RunIfNotReady();
+
 
             return iCmdId++;
         }
@@ -567,30 +571,6 @@ OSCL_EXPORT_REF PVMFStatus PvmfMediaInputNodeOutPort::releaseParameters(PvmiMIOS
     return iNode->iMediaIOConfig->releaseParameters(session, parameters, num_elements);
 }
 
-////////////////////////////////////////////////////////////////////////////
-OSCL_EXPORT_REF void PvmfMediaInputNodeOutPort::createContext(PvmiMIOSession session, PvmiCapabilityContext& context)
-{
-    OSCL_UNUSED_ARG(session);
-    OSCL_UNUSED_ARG(context);
-}
-
-////////////////////////////////////////////////////////////////////////////
-OSCL_EXPORT_REF void PvmfMediaInputNodeOutPort::setContextParameters(PvmiMIOSession session,
-        PvmiCapabilityContext& context,
-        PvmiKvp* parameters, int num_parameter_elements)
-{
-    OSCL_UNUSED_ARG(session);
-    OSCL_UNUSED_ARG(context);
-    OSCL_UNUSED_ARG(parameters);
-    OSCL_UNUSED_ARG(num_parameter_elements);
-}
-
-////////////////////////////////////////////////////////////////////////////
-OSCL_EXPORT_REF void PvmfMediaInputNodeOutPort::DeleteContext(PvmiMIOSession session, PvmiCapabilityContext& context)
-{
-    OSCL_UNUSED_ARG(session);
-    OSCL_UNUSED_ARG(context);
-}
 
 ////////////////////////////////////////////////////////////////////////////
 OSCL_EXPORT_REF void PvmfMediaInputNodeOutPort::setParametersSync(PvmiMIOSession session, PvmiKvp* parameters,
@@ -608,28 +588,6 @@ OSCL_EXPORT_REF void PvmfMediaInputNodeOutPort::setParametersSync(PvmiMIOSession
     iNode->iMediaIOConfig->setParametersSync(session, parameters, num_elements, ret_kvp);
 }
 
-////////////////////////////////////////////////////////////////////////////
-OSCL_EXPORT_REF PVMFCommandId PvmfMediaInputNodeOutPort::setParametersAsync(PvmiMIOSession session,
-        PvmiKvp* parameters,
-        int num_elements,
-        PvmiKvp*& ret_kvp,
-        OsclAny* context)
-{
-    OSCL_UNUSED_ARG(session);
-    OSCL_UNUSED_ARG(parameters);
-    OSCL_UNUSED_ARG(num_elements);
-    OSCL_UNUSED_ARG(ret_kvp);
-    OSCL_UNUSED_ARG(context);
-    OsclError::Leave(OsclErrNotSupported);
-    return -1;
-}
-
-////////////////////////////////////////////////////////////////////////////
-OSCL_EXPORT_REF uint32 PvmfMediaInputNodeOutPort::getCapabilityMetric(PvmiMIOSession session)
-{
-    OSCL_UNUSED_ARG(session);
-    return 0;
-}
 
 ////////////////////////////////////////////////////////////////////////////
 OSCL_EXPORT_REF PVMFStatus PvmfMediaInputNodeOutPort::verifyParametersSync(PvmiMIOSession session,

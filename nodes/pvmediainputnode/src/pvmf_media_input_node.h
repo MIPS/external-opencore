@@ -53,8 +53,8 @@
 #ifndef PVMI_MEDIA_IO_OBSERVER_H_INCLUDED
 #include "pvmi_media_io_observer.h"
 #endif
-#ifndef PVMI_CONFIG_AND_CAPABILITY_H_INCLUDED
-#include "pvmi_config_and_capability.h"
+#ifndef PVMI_CONFIG_AND_CAPABILITY_BASE_H_INCLUDED
+#include "pvmi_config_and_capability_base.h"
 #endif
 #ifndef PVMF_NODES_SYNC_CONTROL_H_INCLUDED
 #include "pvmf_nodes_sync_control.h"
@@ -121,10 +121,11 @@ typedef PVMFNodeCommandQueue<PvmfMediaInputNodeCmd, OsclMemAllocator> PvmfMediaI
 /**
  * class PvmfMediaInputNode is a node wrapper around the io interface
  */
-class PvmfMediaInputNode : public OsclActiveObject,
-        public PVMFNodeInterface,
-        public PvmiMIOObserver,
-        public PvmiCapabilityAndConfig
+class PvmfMediaInputNode
+        : public OsclActiveObject
+        , public PVMFNodeInterface
+        , public PvmiMIOObserver
+        , public PvmiCapabilityAndConfigBase
 {
     public:
         static PVMFNodeInterface* Create(PvmiMIOControl* aIOInterfacePtr);
@@ -195,15 +196,8 @@ class PvmfMediaInputNode : public OsclActiveObject,
                                      PvmiKvp*& aParameters, int& num_parameter_elements,
                                      PvmiCapabilityContext aContext);
         PVMFStatus releaseParameters(PvmiMIOSession aSession, PvmiKvp* aParameters, int num_elements);
-        void createContext(PvmiMIOSession aSession, PvmiCapabilityContext& aContext);
-        void setContextParameters(PvmiMIOSession aSession, PvmiCapabilityContext& aContext,
-                                  PvmiKvp* aParameters, int num_parameter_elements);
-        void DeleteContext(PvmiMIOSession aSession, PvmiCapabilityContext& aContext);
         void setParametersSync(PvmiMIOSession aSession, PvmiKvp* aParameters,
                                int num_elements, PvmiKvp * & aRet_kvp);
-        PVMFCommandId setParametersAsync(PvmiMIOSession aSession, PvmiKvp* aParameters,
-                                         int num_elements, PvmiKvp*& aRet_kvp, OsclAny* context = NULL);
-        uint32 getCapabilityMetric(PvmiMIOSession aSession);
         PVMFStatus verifyParametersSync(PvmiMIOSession aSession, PvmiKvp* aParameters, int aNumElements);
 
         // function used in VerifyParametersSync n SetParametersSync of capability class

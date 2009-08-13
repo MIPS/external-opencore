@@ -543,7 +543,19 @@ void PVAuthorEngine::NodeUtilCommandCompleted(const PVMFCmdResp& aResponse)
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                     (0, "PVAuthorEngine::NodeUtilCommandCompleted"));
 
-    // Retrieve the first pending command from queue
+    if (iPendingCmds.empty())
+    {
+        // Prevent from out-of-boundary access to iPendingCmds queue
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
+                        (0, "PVAuthorEngine::NodeUtilCommandCompleted: empty pending command queue while receiving response for command: id(%d), status(%d) and context(%p)!", aResponse.GetCmdId(), aResponse.GetCmdStatus(), aResponse.GetContext()));
+        SetPVAEState(PVAE_STATE_ERROR);
+        PVAsyncErrorEvent event(PVMFFailure);
+        iErrorEventObserver->HandleErrorEvent(event);
+        OSCL_ASSERT(false);  // debugging build does abort; release build does nothing
+        return;
+    }
+
+    // Now it is safe to retrieve the first pending command from queue
     PVEngineCommand cmd(iPendingCmds[0]);
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                     (0, "PVAuthorEngine::NodeUtilCommandCompleted cmdType:%d", cmd.GetCmdType()));
@@ -1459,6 +1471,8 @@ PVMFStatus PVAuthorEngine::DoStop(PVEngineCommand& aCmd)
 
     switch (GetPVAEState())
     {
+        case PVAE_STATE_INITIALIZED:
+            return PVMFSuccess;
         case PVAE_STATE_RECORDING:
         case PVAE_STATE_PAUSED:
             iAuthorClock.Stop();
@@ -2000,15 +2014,6 @@ PVMFCommandId PVAuthorEngine::setParametersAsync(PvmiMIOSession aSession, PvmiKv
 }
 
 
-uint32 PVAuthorEngine::getCapabilityMetric(PvmiMIOSession aSession)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVAuthorEngine::getCapabilityMetric()"));
-    OSCL_UNUSED_ARG(aSession);
-    // Not supported so return 0
-    return 0;
-}
-
-
 PVMFStatus PVAuthorEngine::verifyParametersSync(PvmiMIOSession aSession, PvmiKvp* aParameters, int aNumElements)
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVAuthorEngine::verifyParametersSync()"));
@@ -2144,27 +2149,6 @@ void PVAuthorEngine::createContext(PvmiMIOSession aSession, PvmiCapabilityContex
     aContext = (PvmiCapabilityContext) & iCapConfigContext;
 }
 
-
-void PVAuthorEngine::setContextParameters(PvmiMIOSession aSession, PvmiCapabilityContext& aContext, PvmiKvp* aParameters, int aNumParamElements)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVAuthorEngine::setContextParameters()"));
-    OSCL_UNUSED_ARG(aSession);
-    OSCL_UNUSED_ARG(aContext);
-    OSCL_UNUSED_ARG(aParameters);
-    OSCL_UNUSED_ARG(aNumParamElements);
-    // This method is not supported so leave
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVAuthorEngine::setContextParameters() is not supported!"));
-    OSCL_LEAVE(PVMFErrNotSupported);
-}
-
-
-void PVAuthorEngine::DeleteContext(PvmiMIOSession aSession, PvmiCapabilityContext& aContext)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVAuthorEngine::DeleteContext()"));
-    OSCL_UNUSED_ARG(aSession);
-    OSCL_UNUSED_ARG(aContext);
-    // Do nothing since the context is just the a member variable of the engine
-}
 
 void PVAuthorEngine::addRef()
 {

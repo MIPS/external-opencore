@@ -64,37 +64,11 @@ class PVA_FF_MediaInformationAtom : public PVA_FF_Atom
 
         // Update members with next sample received
         void nextSample(int32 mediaType,
-                        void *psample,
-                        uint32 size,
-                        uint32 ts,
-                        uint8 flags = 0,
-                        uint32 baseOffset = 0,
+                        PVMP4FFComposerSampleParam *pSampleParam,
                         bool oChunkStart = false);
 
         void nextTextSample(int32 mediaType,
-                            void *psample,
-                            uint32 size,
-                            uint32 ts,
-                            uint8 flags = 0,
-                            int32 index = 0,
-                            uint32 baseOffset = 0,
-                            bool oChunkStart = false);
-
-        void nextSample(int32 mediaType,
-                        Oscl_Vector <OsclMemoryFragment, OsclMemAllocator>& fragmentList,
-                        uint32 size,
-                        uint32 ts,
-                        uint8 flags = 0,
-                        uint32 baseOffset = 0,
-                        bool oChunkStart = false);
-
-        void nextTextSample(int32 mediaType,
-                            Oscl_Vector <OsclMemoryFragment, OsclMemAllocator>& fragmentList,
-                            uint32 size,
-                            uint32 ts,
-                            uint8 flags = 0,
-                            int32 index = 0,
-                            uint32 baseOffset = 0,
+                            PVMP4FFComposerSampleParam *pSampleParam,
                             bool oChunkStart = false);
 
         bool reAuthorFirstSample(uint32 size,

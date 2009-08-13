@@ -59,8 +59,8 @@ class CPVH223MultiplexObserver
 };
 
 class CPVH223Multiplex :  public LowerLayerObserver,
-        public H223PduParcomObserver,
         public LogicalChannelObserver
+
 {
     public:
         CPVH223Multiplex(TPVLoopbackMode aLoopbackMode);
@@ -78,15 +78,8 @@ class CPVH223Multiplex :  public LowerLayerObserver,
         void LevelSetupComplete(PVMFStatus status, TPVH223Level level);
         PVMFStatus GetOutgoingMuxPdus(MuxPduPacketList& packets);
         void LowerLayerError(TPVDirection directions, PVMFStatus error);
-
-        /* PduParcomObserver virtuals */
         uint32 MuxPduIndicate(uint8* pPdu, uint32 pduSz, int32 fClosing, int32 muxCode);
         void MuxPduErrIndicate(EMuxPduError err);
-        void MuxSetupComplete(PVMFStatus status, TPVH223Level level);
-        H223PduParcomObserver* GetParcomObserver()
-        {
-            return this;
-        }
 
         /* LogicalChannelObserver virtuals */
         inline int32 GetTimestamp();
@@ -96,6 +89,15 @@ class CPVH223Multiplex :  public LowerLayerObserver,
 
         void Init();
 
+
+        uint32 iAudioTS; /*to store the audio TS*/
+        uint32 iVideoTS;/* to store the video TS*/
+        uint32 iTotalCountOut; /*to store the total number of Audio and video counts which arrived in given time duration in our case that is 1 min*/
+        uint32 iVidlcn; /* to store the audio lcn*/
+        uint32  iAudlcn; /*to store the video lcn*/
+        int iDiffVidAudTS;/*to know the difference between audio and video TS*/
+        int iSqrCalVidAudTS;/*to store the square calculation of audio and video TS difference*/
+        int iRtMnSqCalc;   /* to store the Root mean square value*/
         /* allocates resources  */
         TPVStatusCode Open();
 
@@ -153,6 +155,10 @@ class CPVH223Multiplex :  public LowerLayerObserver,
 
         /* Set muliplex level.  Can be called before the multiplex is started */
         void SetMultiplexLevel(TPVH223Level muxLevel);
+
+        /* set count of stuffing frames needed to detect a level */
+        void SetLevelCheckCount(uint16 aCount);
+
         void SetClock(PVMFMediaClock* aClock)
         {
             iClock = aClock;
@@ -210,7 +216,7 @@ class CPVH223Multiplex :  public LowerLayerObserver,
                            MuxSduDataList& list,
                            unsigned index);
         unsigned UpdateSduDataLists();
-
+        void CalculateSkew(int lcn, bool CheckAudVid, int Timestamp, bool CheckEot);
         OsclSharedPtr<PVMFMediaDataImpl> InitPduPacket();
         PVMFStatus CompletePduPacket(OsclSharedPtr<PVMFMediaDataImpl>& packet, int mt, int pm);
         unsigned DispatchPduPacket(MuxPduPacketList& packets,

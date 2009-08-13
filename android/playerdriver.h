@@ -18,10 +18,62 @@
 #ifndef _PLAYERDRIVER_H
 #define _PLAYERDRIVER_H
 
+#include <cstring>
 #include <ui/ISurface.h>
 #include <utils/Errors.h>  // for android::status_t
 #include <utils/RefBase.h>  // for android::sp
 #include <media/MediaPlayerInterface.h>
+
+#include <utils/List.h>
+#include <cutils/properties.h>
+#include <media/PVPlayer.h>
+
+#include "oscl_base.h"
+#include "oscl_exception.h"
+#include "oscl_scheduler.h"
+#include "oscl_scheduler_ao.h"
+#include "oscl_exception.h"
+#include "oscl_mem_basic_functions.h"  // oscl_memcpy
+#include "oscl_mem.h"
+#include "oscl_mem_audit.h"
+#include "oscl_error.h"
+#include "oscl_utf8conv.h"
+#include "oscl_string_utils.h"
+
+#include "media_clock_converter.h"
+
+#include "pv_player_factory.h"
+#include "pv_player_interface.h"
+#include "pv_engine_observer.h"
+#include "pvmi_media_io_fileoutput.h"
+#include "pv_player_datasourceurl.h"
+#include "pv_player_datasinkfilename.h"
+#include "pv_player_datasinkpvmfnode.h"
+#include "pvmf_errorinfomessage_extension.h"
+#include "pvmf_basic_errorinfomessage.h"
+#include "pvmf_fileformat_events.h"
+#include "pvmf_mp4ffparser_events.h"
+#include "pvmf_duration_infomessage.h"
+#include "android_surface_output.h"
+#include "android_audio_output.h"
+#include "android_audio_stream.h"
+#include "pv_media_output_node_factory.h"
+#include "pvmf_format_type.h"  // for PVMFFormatType
+#include "pvmf_node_interface.h"
+#include "pvmf_source_context_data.h"
+#include "pvmf_download_data_source.h"
+//#include "pvmf_return_codes.h"  // for PVMFStatus
+#include "OMX_Core.h"
+#include "pv_omxcore.h"
+
+// color converter
+#include "cczoomrotation16.h"
+
+//for KMJ DRM Plugin
+#include "pvmf_local_data_source.h"
+#include "pvmf_recognizer_registry.h"
+
+class  PVPlayerExtensionHandler;
 
 typedef void (*media_completion_f)(android::status_t status, void *cookie, bool cancelled);
 
@@ -70,6 +122,7 @@ class PlayerCommand
         // TODO: clarify the scope of PLAYER_CANCEL_ALL_COMMANDS, does it work
         // for asynchronous commands only or for synchronous as well?
         PLAYER_CANCEL_ALL_COMMANDS      = 18,
+        PLAYER_EXTENSION_COMMAND        = 19,
     };
 
     virtual             ~PlayerCommand() {}
@@ -277,5 +330,132 @@ class PlayerCancelAllCommands: public PlayerCommand
     PlayerCancelAllCommands();
 };
 
+class PlayerExtensionCommand: public PlayerCommand
+{
+  public:
+    PlayerExtensionCommand(const Parcel& aData, Parcel& aReply, media_completion_f cbf, void* cookie) :
+            PlayerCommand(PLAYER_EXTENSION_COMMAND, cbf, cookie),mData(aData),mReply(aReply),mCompletionHandle(NULL) {}
+    Parcel& getReplyParcel(){ return mReply;}
+    const Parcel& getDataParcel(){ return mData;}
+    void setCompletionHandle(int32 aHandle) {mCompletionHandle=aHandle;}
+    int32 getCompletionHandle() { return mCompletionHandle; }
+  private:
+    PlayerExtensionCommand();
+    const Parcel&       mData;
+    Parcel&             mReply;
+    int32               mCompletionHandle;
+};
+
+class PlayerDriver :
+        public OsclActiveObject,
+        public PVCommandStatusObserver,
+        public PVInformationalEventObserver,
+        public PVErrorEventObserver
+{
+  public:
+    PlayerDriver(PVPlayer* pvPlayer);
+    ~PlayerDriver();
+
+    PlayerCommand* dequeueCommand();
+    status_t enqueueCommand(PlayerCommand* code);
+
+    // Dequeues a code from MediaPlayer and gives it to PVPlayer.
+    void Run();
+
+    // Handlers for the various commands we can accept.
+    void commandFailed(PlayerCommand* command) ;
+    void handleSetup(PlayerSetup* command);
+    void handleSetDataSource(PlayerSetDataSource* command);
+    void handleSetVideoSurface(PlayerSetVideoSurface* command);
+    void handleSetAudioSink(PlayerSetAudioSink* command);
+    void handleInit(PlayerInit* command);
+    void handlePrepare(PlayerPrepare* command);
+    void handleStart(PlayerStart* command);
+    void handleStop(PlayerStop* command);
+    void handlePause(PlayerPause* command);
+    void handleSeek(PlayerSeek* command);
+    void handleCancelAllCommands(PlayerCancelAllCommands* command);
+    void handleRemoveDataSource(PlayerRemoveDataSource* command);
+    void handleReset(PlayerReset* command);
+    void handleQuit(PlayerQuit* command);
+    void handleGetPosition(PlayerGetPosition* command);
+    void handleGetDuration(PlayerGetDuration* command);
+    void handleGetStatus(PlayerGetStatus* command);
+    void handleExtensionCommand(PlayerExtensionCommand* command);
+
+    void endOfData();
+
+    void CommandCompleted(const PVCmdResponse& aResponse);
+    void HandleErrorEvent(const PVAsyncErrorEvent& aEvent);
+    void HandleInformationalEvent(const PVAsyncInformationalEvent& aEvent);
+
+  private:
+    // PVPlayerExtensionHandler needs  to access mPlayer and FinishSyncCommand()
+    // for calling PVPlayerEngine APIs and completing the commands.
+    friend class PVPlayerExtensionHandler;
+    // Finish up a non-async code in such a way that
+    // the event loop will keep running.
+    void FinishSyncCommand(PlayerCommand* command);
+
+    void handleGetDurationComplete(PlayerGetDuration* cmd);
+
+    int setupHttpStreamPre();
+    int setupHttpStreamPost();
+
+
+
+    // Starts the PV scheduler thread.
+    static int startPlayerThread(void *cookie);
+    int playerThread();
+
+    // Callback for synchronous commands.
+    static void syncCompletion(status_t s, void *cookie, bool cancelled);
+
+    PVPlayer                *mPvPlayer;
+    PVPlayerInterface       *mPlayer;
+    PVPlayerDataSourceURL   *mDataSource;
+
+    PVPlayerDataSink        *mAudioSink;
+    PVMFNodeInterface       *mAudioNode;
+    AndroidAudioMIO         *mAudioOutputMIO;
+
+    PVPlayerDataSink        *mVideoSink;
+    PVMFNodeInterface       *mVideoNode;
+    PvmiMIOControl          *mVideoOutputMIO;
+
+    PvmiCapabilityAndConfig *mPlayerCapConfig;
+
+    OSCL_wHeapString<OsclMemAllocator> mDownloadFilename;
+    OSCL_HeapString<OsclMemAllocator> mDownloadProxy;
+    OSCL_wHeapString<OsclMemAllocator> mDownloadConfigFilename;
+    PVMFSourceContextData   *mDownloadContextData;
+    PVMFSourceContextData   *mLocalContextData;
+
+    PVPMetadataList mMetaKeyList;
+    Oscl_Vector<PvmiKvp,OsclMemAllocator> mMetaValueList;
+    int mNumMetaValues;
+
+    // Semaphore used for synchronous commands.
+    OsclSemaphore           *mSyncSem;
+    // Status cached by syncCompletion for synchronous commands.
+    status_t                mSyncStatus;
+
+    // Command queue and its lock.
+    List<PlayerCommand*>    mCommandQueue;
+    Mutex                   mQueueLock;
+
+    bool                    mIsLooping;
+    bool                    mDoLoop;
+    bool                    mDataReadyReceived;
+    bool                    mPrepareDone;
+    bool                    mEndOfData;
+    int                     mRecentSeek;
+    bool                    mSeekComp;
+    bool                    mSeekPending;
+
+    bool                    mEmulation;
+    void*                   mLibHandle;
+    PVPlayerExtensionHandler* mExtensionHandler;
+};
 
 #endif // _PLAYERDRIVER_H

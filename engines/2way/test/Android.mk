@@ -10,20 +10,23 @@ LOCAL_SRC_FILES := \
  	src/init_cancel_test.cpp \
  	src/init_test.cpp \
  	src/test_base.cpp \
- 	src/pv_2way_unittest_source_and_sinks.cpp \
  	src/../../pvlogger/src/pv_logger_impl.cpp \
  	src/av_test.cpp \
  	src/acceptable_formats_test.cpp \
+ 	src/negotiated_formats_test.cpp \
  	src/connect_cancel_test.cpp \
  	src/connect_test.cpp \
  	src/audio_only_test.cpp \
  	src/video_only_test.cpp \
- 	src/user_input_test.cpp
+ 	src/user_input_test.cpp \
+ 	src/basic_lipsync_test.cpp \
+ 	src/lipsync_dummy_input_mio.cpp \
+ 	src/lipsync_dummy_output_mio.cpp
 
 
 LOCAL_MODULE := pv2way_omx_engine_test
 
-LOCAL_CFLAGS := -DPV_USE_AMR_CODECS $(PV_CFLAGS)
+LOCAL_CFLAGS := -DPV_USE_AMR_CODECS  $(PV_CFLAGS)
 
 
 
@@ -37,6 +40,7 @@ LOCAL_C_INCLUDES := \
  	$(PV_TOP)/engines/2way/pvlogger/src \
  	$(PV_TOP)/engines/2way/sample_app/pv2waysample/include \
  	$(PV_TOP)/nodes/pvdummyinputnode/include \
+ 	$(PV_TOP)/protocols/systems/common/include \
  	$(PV_TOP)/engines/2way/include \
  	$(PV_INCLUDES)
 

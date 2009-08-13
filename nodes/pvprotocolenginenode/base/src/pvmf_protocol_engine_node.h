@@ -102,6 +102,7 @@ class PVDlCfgFileContainer;
 class PVMFDownloadDataSourceContainer;
 class SDPInfoContainer;
 class AutoCleanup;
+class PVMFProtocolEngineNodeErrorRedirect;
 
 class PVMFProtocolEngineNode :  public PVMFNodeInterface,
         public OsclTimerObject,
@@ -312,7 +313,8 @@ class PVMFProtocolEngineNode :  public PVMFNodeInterface,
                              PVMFStatus, OsclAny* aData = NULL,
                              PVUuid* aEventUUID = NULL,
                              int32* aEventCode = NULL,
-                             int32 aEventDataLen = 0);
+                             int32 aEventDataLen = 0,
+                             PVInterface* extmsg = NULL);
         int32 HandleCommandComplete(PVMFProtocolEngineNodeCmdQ& aCmdQ,
                                     PVMFProtocolEngineNodeCommand& aCmd,
                                     int32 aStatus);
@@ -345,7 +347,7 @@ class PVMFProtocolEngineNode :  public PVMFNodeInterface,
 
         // Event reporting
         void ReportInfoEvent(PVMFEventType aEventType, OsclAny* aEventData = NULL, const int32 aEventCode = 0, OsclAny* aEventLocalBuffer = NULL, const uint32 aEventLocalBufferSize = 0);
-        void ReportErrorEvent(PVMFEventType aEventType, OsclAny* aEventData = NULL, const int32 aEventCode = 0, int32 aEventDataLen = 0);
+        void ReportErrorEvent(PVMFEventType aEventType, OsclAny* aEventData = NULL, const int32 aEventCode = 0, int32 aEventDataLen = 0, PVInterface* extmsg = NULL);
         void SetState(TPVMFNodeInterfaceState);
 
         // From OsclTimerObserver

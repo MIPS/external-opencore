@@ -69,8 +69,9 @@
 #define VIDEO_PARAMETERS_VALID (VIDEO_SUBFORMAT_VALID | DISPLAY_HEIGHT_VALID | \
         DISPLAY_WIDTH_VALID | VIDEO_HEIGHT_VALID | VIDEO_WIDTH_VALID)
 
-namespace android {
-    class PVPlayer;
+namespace android
+{
+class PVPlayer;
 }
 
 class PVLogger;
@@ -86,232 +87,237 @@ using namespace android;
 // This class constitutes the Media IO component
 
 class AndroidSurfaceOutput :    public OsclTimerObject
-                        ,public PvmiMIOControl
-                        ,public PvmiMediaTransfer
-                        ,public PvmiCapabilityAndConfig
+        , public PvmiMIOControl
+        , public PvmiMediaTransfer
+        , public PvmiCapabilityAndConfig
 {
-public:
-    AndroidSurfaceOutput();
-
-    // parameter initialization
-    virtual status_t set(android::PVPlayer* pvPlayer, const sp<ISurface>& surface, bool emulation);
-
-    // For frame buffer
-    virtual bool initCheck();
-    virtual PVMFStatus writeFrameBuf(uint8* aData, uint32 aDataLen, const PvmiMediaXferHeader& data_header_info);
-    virtual void postLastFrame();
-    virtual void closeFrameBuf();
-
-    virtual ~AndroidSurfaceOutput();
-
-    bool GetVideoSize(int *w, int *h);
-
-    // APIs from PvmiMIOControl
-
-    PVMFStatus connect(PvmiMIOSession& aSession, PvmiMIOObserver* aObserver);
-
-    PVMFStatus disconnect(PvmiMIOSession aSession);
-
-    PVMFCommandId QueryUUID(const PvmfMimeString& aMimeType, Oscl_Vector<PVUuid, OsclMemAllocator>& aUuids,
-                            bool aExactUuidsOnly=false, const OsclAny* aContext=NULL);
-
-    PVMFCommandId QueryInterface(const PVUuid& aUuid, PVInterface*& aInterfacePtr, const OsclAny* aContext=NULL);
-
-    PvmiMediaTransfer* createMediaTransfer(PvmiMIOSession& aSession, PvmiKvp* read_formats=NULL, int32 read_flags=0,
-                                            PvmiKvp* write_formats=NULL, int32 write_flags=0);
-
-    void deleteMediaTransfer(PvmiMIOSession& aSession, PvmiMediaTransfer* media_transfer);
-
-    void processWriteResponseQueue(int numFramesToHold);
-
-    PVMFCommandId Init(const OsclAny* aContext=NULL);
-
-    PVMFCommandId Reset(const OsclAny* aContext=NULL);
-
-    PVMFCommandId Start(const OsclAny* aContext=NULL);
-
-    PVMFCommandId Pause(const OsclAny* aContext=NULL);
-
-    PVMFCommandId Flush(const OsclAny* aContext=NULL);
-
-    PVMFCommandId DiscardData(const OsclAny* aContext=NULL);
-
-    PVMFCommandId DiscardData( PVMFTimestamp aTimestamp=0, const OsclAny* aContext=NULL);
-
-    PVMFCommandId Stop(const OsclAny* aContext=NULL);
-
-    PVMFCommandId CancelAllCommands(const OsclAny* aContext=NULL);
-
-    PVMFCommandId CancelCommand(PVMFCommandId aCmdId, const OsclAny* aContext=NULL);
-
-    void ThreadLogon();
-
-    void ThreadLogoff();
-
-    // APIs from PvmiMediaTransfer
-
-    void setPeer(PvmiMediaTransfer* aPeer);
-
-    void useMemoryAllocators(OsclMemAllocator* write_alloc=NULL);
-
-    PVMFCommandId writeAsync(uint8 format_type, int32 format_index,
-            uint8* data, uint32 data_len,
-            const PvmiMediaXferHeader& data_header_info,
-            OsclAny* aContext=NULL);
-
-    void writeComplete(PVMFStatus aStatus,
-            PVMFCommandId  write_cmd_id,
-            OsclAny* aContext);
-
-    PVMFCommandId readAsync(uint8* data, uint32 max_data_len,
-            OsclAny* aContext=NULL,
-            int32* formats=NULL, uint16 num_formats=0);
-
-    void readComplete(PVMFStatus aStatus, PVMFCommandId  read_cmd_id, int32 format_index,
-            const PvmiMediaXferHeader& data_header_info, OsclAny* aContext);
-
-    void statusUpdate(uint32 status_flags);
-
-    void cancelCommand(PVMFCommandId  command_id);
-
-    void cancelAllCommands();
-
-    // Pure virtuals from PvmiCapabilityAndConfig
-
-    void setObserver (PvmiConfigAndCapabilityCmdObserver* aObserver);
-
-    PVMFStatus getParametersSync(PvmiMIOSession aSession, PvmiKeyType aIdentifier,
-            PvmiKvp*& aParameters, int& num_parameter_elements, PvmiCapabilityContext aContext);
-
-    PVMFStatus releaseParameters(PvmiMIOSession aSession, PvmiKvp* aParameters, int num_elements);
-
-    void createContext(PvmiMIOSession aSession, PvmiCapabilityContext& aContext);
-
-    void setContextParameters(PvmiMIOSession aSession, PvmiCapabilityContext& aContext, 
-            PvmiKvp* aParameters, int num_parameter_elements);
-
-    void DeleteContext(PvmiMIOSession aSession, PvmiCapabilityContext& aContext);
-
-    void setParametersSync(PvmiMIOSession aSession, PvmiKvp* aParameters, 
-            int num_elements, PvmiKvp * & aRet_kvp);
-
-    PVMFCommandId setParametersAsync(PvmiMIOSession aSession, PvmiKvp* aParameters, 
-            int num_elements, PvmiKvp*& aRet_kvp, OsclAny* context=NULL);
-
-    uint32 getCapabilityMetric (PvmiMIOSession aSession);
-
-    PVMFStatus verifyParametersSync (PvmiMIOSession aSession, PvmiKvp* aParameters, int num_elements);
-
-
-protected:
-    void initData();
-    void resetVideoParameterFlags();
-    bool checkVideoParameterFlags();
-
-    // From OsclTimerObject
-    void Run();
-
-    void Reschedule();
-
-    void Cleanup();
-    void ResetData();
-
-    PvmiMediaTransfer* iPeer;
-
-    // The PvmiMIOControl class observer.
-    PvmiMIOObserver* iObserver;
-
-    //for generating command IDs
-    uint32 iCommandCounter;
-
-    //State
-    enum PVRefFOState
-    {
-        STATE_IDLE,
-        STATE_LOGGED_ON,
-        STATE_INITIALIZED,
-        STATE_STARTED,
-        STATE_PAUSED
-    };
-    PVRefFOState iState;
-
-    //Control command handling.
-    class CommandResponse
-    {
     public:
-        CommandResponse(PVMFStatus s,PVMFCommandId id,const OsclAny* ctx)
-            :iStatus(s),iCmdId(id),iContext(ctx)
-        {}
+        AndroidSurfaceOutput();
 
-        PVMFStatus iStatus;
-        PVMFCommandId iCmdId;
-        const OsclAny* iContext;
-    };
-    Oscl_Vector<CommandResponse,OsclMemAllocator> iCommandResponseQueue;
-    void QueueCommandResponse(CommandResponse&);
+        // parameter initialization
+        virtual status_t set(android::PVPlayer* pvPlayer, const sp<ISurface>& surface, bool emulation);
 
-    //Write command handling
-    class WriteResponse
-    {
-    public:
-        WriteResponse(PVMFStatus s,PVMFCommandId id,const OsclAny* ctx,const PVMFTimestamp& ts)
-            :iStatus(s),iCmdId(id),iContext(ctx),iTimestamp(ts)
-        {}
+        // For frame buffer
+        virtual bool initCheck();
+        virtual PVMFStatus writeFrameBuf(uint8* aData, uint32 aDataLen, const PvmiMediaXferHeader& data_header_info);
+        virtual void postLastFrame();
+        virtual void closeFrameBuf();
 
-        PVMFStatus iStatus;
-        PVMFCommandId iCmdId;
-        const OsclAny* iContext;
-        PVMFTimestamp iTimestamp;
-    };
-    Oscl_Vector<WriteResponse,OsclMemAllocator> iWriteResponseQueue;
+        virtual ~AndroidSurfaceOutput();
 
-    // Output file parameters
-    OSCL_wHeapString<OsclMemAllocator> iOutputFileName;
-    Oscl_FileServer iFs;
-    bool iFsConnected;
-    Oscl_File iOutputFile;
-    bool iFileOpened;
+        bool GetVideoSize(int *w, int *h);
 
-    bool iEosReceived;
+        // APIs from PvmiMIOControl
 
-    // Video parameters
-    uint32 iVideoParameterFlags;
-    OSCL_HeapString<OsclMemAllocator> iVideoFormatString;
-    PVMFFormatType iVideoFormat;
-    int32 iVideoHeight;
-    int32 iVideoWidth;
-    int32 iVideoDisplayHeight;
-    int32 iVideoDisplayWidth;
+        PVMFStatus connect(PvmiMIOSession& aSession, PvmiMIOObserver* aObserver);
 
-    // hardware specific
-    PVMFFormatType iVideoSubFormat;
-    bool iVideoSubFormatValid;
+        PVMFStatus disconnect(PvmiMIOSession aSession);
 
-    //For logging
-    PVLogger* iLogger;
+        PVMFCommandId QueryUUID(const PvmfMimeString& aMimeType, Oscl_Vector<PVUuid, OsclMemAllocator>& aUuids,
+                                bool aExactUuidsOnly = false, const OsclAny* aContext = NULL);
 
-    //For implementing the write flow control
-    bool CheckWriteBusy(uint32);
+        PVMFCommandId QueryInterface(const PVUuid& aUuid, PVInterface*& aInterfacePtr, const OsclAny* aContext = NULL);
 
-    unsigned long iFrameNumber;
+        PvmiMediaTransfer* createMediaTransfer(PvmiMIOSession& aSession, PvmiKvp* read_formats = NULL, int32 read_flags = 0,
+                                               PvmiKvp* write_formats = NULL, int32 write_flags = 0);
 
-    // software color conversion for software codecs
-    ColorConvertBase* iColorConverter;
+        void deleteMediaTransfer(PvmiMIOSession& aSession, PvmiMediaTransfer* media_transfer);
 
-    android::PVPlayer*          mPvPlayer;
-    bool                        mInitialized;
-    bool                        mEmulation;
-    sp<ISurface>                mSurface;
+        void processWriteResponseQueue(int numFramesToHold);
 
-    // frame buffer support
-    static const int kBufferCount = 2;
-    int                         mFrameBufferIndex;
-    sp<MemoryHeapBase>          mFrameHeap;
-    size_t                      mFrameBuffers[kBufferCount];
+        PVMFCommandId Init(const OsclAny* aContext = NULL);
 
-    void convertFrame(void* src, void* dst, size_t len);
-    //This bool is set true when all necassary parameters have been received.
-    bool iIsMIOConfigured;
+        PVMFCommandId Reset(const OsclAny* aContext = NULL);
+
+        PVMFCommandId Start(const OsclAny* aContext = NULL);
+
+        PVMFCommandId Pause(const OsclAny* aContext = NULL);
+
+        PVMFCommandId Flush(const OsclAny* aContext = NULL);
+
+        PVMFCommandId DiscardData(const OsclAny* aContext = NULL);
+
+        PVMFCommandId DiscardData(PVMFTimestamp aTimestamp = 0, const OsclAny* aContext = NULL);
+
+        PVMFCommandId Stop(const OsclAny* aContext = NULL);
+
+        PVMFCommandId CancelAllCommands(const OsclAny* aContext = NULL);
+
+        PVMFCommandId CancelCommand(PVMFCommandId aCmdId, const OsclAny* aContext = NULL);
+
+        void ThreadLogon();
+
+        void ThreadLogoff();
+
+        // APIs from PvmiMediaTransfer
+
+        void setPeer(PvmiMediaTransfer* aPeer);
+
+        void useMemoryAllocators(OsclMemAllocator* write_alloc = NULL);
+
+        PVMFCommandId writeAsync(uint8 format_type, int32 format_index,
+                                 uint8* data, uint32 data_len,
+                                 const PvmiMediaXferHeader& data_header_info,
+                                 OsclAny* aContext = NULL);
+
+        void writeComplete(PVMFStatus aStatus,
+                           PVMFCommandId  write_cmd_id,
+                           OsclAny* aContext);
+
+        PVMFCommandId readAsync(uint8* data, uint32 max_data_len,
+                                OsclAny* aContext = NULL,
+                                int32* formats = NULL, uint16 num_formats = 0);
+
+        void readComplete(PVMFStatus aStatus, PVMFCommandId  read_cmd_id, int32 format_index,
+                          const PvmiMediaXferHeader& data_header_info, OsclAny* aContext);
+
+        void statusUpdate(uint32 status_flags);
+
+        void cancelCommand(PVMFCommandId  command_id);
+
+        void cancelAllCommands();
+
+        // Pure virtuals from PvmiCapabilityAndConfig
+
+        void setObserver(PvmiConfigAndCapabilityCmdObserver* aObserver);
+
+        PVMFStatus getParametersSync(PvmiMIOSession aSession, PvmiKeyType aIdentifier,
+                                     PvmiKvp*& aParameters, int& num_parameter_elements, PvmiCapabilityContext aContext);
+
+        PVMFStatus releaseParameters(PvmiMIOSession aSession, PvmiKvp* aParameters, int num_elements);
+
+        void createContext(PvmiMIOSession aSession, PvmiCapabilityContext& aContext);
+
+        void setContextParameters(PvmiMIOSession aSession, PvmiCapabilityContext& aContext,
+                                  PvmiKvp* aParameters, int num_parameter_elements);
+
+        void DeleteContext(PvmiMIOSession aSession, PvmiCapabilityContext& aContext);
+
+        void setParametersSync(PvmiMIOSession aSession, PvmiKvp* aParameters,
+                               int num_elements, PvmiKvp * & aRet_kvp);
+
+        PVMFCommandId setParametersAsync(PvmiMIOSession aSession, PvmiKvp* aParameters,
+                                         int num_elements, PvmiKvp*& aRet_kvp, OsclAny* context = NULL);
+
+        uint32 getCapabilityMetric(PvmiMIOSession aSession);
+
+        PVMFStatus verifyParametersSync(PvmiMIOSession aSession, PvmiKvp* aParameters, int num_elements);
+
+
+    protected:
+        void initData();
+        void resetVideoParameterFlags();
+        bool checkVideoParameterFlags();
+
+        // From OsclTimerObject
+        void Run();
+
+        void Reschedule();
+
+        void Cleanup();
+        void ResetData();
+
+        PvmiMediaTransfer* iPeer;
+
+        // The PvmiMIOControl class observer.
+        PvmiMIOObserver* iObserver;
+
+        //for generating command IDs
+        uint32 iCommandCounter;
+
+        //State
+        enum PVRefFOState
+        {
+            STATE_IDLE,
+            STATE_LOGGED_ON,
+            STATE_INITIALIZED,
+            STATE_STARTED,
+            STATE_PAUSED
+        };
+        PVRefFOState iState;
+
+        //Control command handling.
+        class CommandResponse
+        {
+            public:
+                CommandResponse(PVMFStatus s, PVMFCommandId id, const OsclAny* ctx)
+                        : iStatus(s), iCmdId(id), iContext(ctx)
+                {}
+
+                PVMFStatus iStatus;
+                PVMFCommandId iCmdId;
+                const OsclAny* iContext;
+        };
+        Oscl_Vector<CommandResponse, OsclMemAllocator> iCommandResponseQueue;
+        void QueueCommandResponse(CommandResponse&);
+
+        //Write command handling
+        class WriteResponse
+        {
+            public:
+                WriteResponse(PVMFStatus s, PVMFCommandId id, const OsclAny* ctx, const PVMFTimestamp& ts)
+                        : iStatus(s), iCmdId(id), iContext(ctx), iTimestamp(ts)
+                {}
+
+                PVMFStatus iStatus;
+                PVMFCommandId iCmdId;
+                const OsclAny* iContext;
+                PVMFTimestamp iTimestamp;
+        };
+        Oscl_Vector<WriteResponse, OsclMemAllocator> iWriteResponseQueue;
+
+        // Output file parameters
+        OSCL_wHeapString<OsclMemAllocator> iOutputFileName;
+        Oscl_FileServer iFs;
+        bool iFsConnected;
+        Oscl_File iOutputFile;
+        bool iFileOpened;
+
+        bool iEosReceived;
+
+        // Video parameters
+        uint32 iVideoParameterFlags;
+        OSCL_HeapString<OsclMemAllocator> iVideoFormatString;
+        PVMFFormatType iVideoFormat;
+        int32 iVideoHeight;
+        int32 iVideoWidth;
+        int32 iVideoDisplayHeight;
+        int32 iVideoDisplayWidth;
+
+        int32 iNumberOfBuffers;
+        int32 iBufferSize;
+        bool iNumberOfBuffersValid;
+        bool iBufferSizeValid;
+
+        // hardware specific
+        PVMFFormatType iVideoSubFormat;
+        bool iVideoSubFormatValid;
+
+        //For logging
+        PVLogger* iLogger;
+
+        //For implementing the write flow control
+        bool CheckWriteBusy(uint32);
+
+        unsigned long iFrameNumber;
+
+        // software color conversion for software codecs
+        ColorConvertBase* iColorConverter;
+
+        android::PVPlayer*          mPvPlayer;
+        bool                        mInitialized;
+        bool                        mEmulation;
+        sp<ISurface>                mSurface;
+
+        // frame buffer support
+        static const int kBufferCount = 2;
+        int                         mFrameBufferIndex;
+        sp<MemoryHeapBase>          mFrameHeap;
+        size_t                      mFrameBuffers[kBufferCount];
+
+        void convertFrame(void* src, void* dst, size_t len);
+        //This bool is set true when all necassary parameters have been received.
+        bool iIsMIOConfigured;
 
 #ifdef PERFORMANCE_MEASUREMENTS_ENABLED
         PVProfile PVOmapVideoProfile;

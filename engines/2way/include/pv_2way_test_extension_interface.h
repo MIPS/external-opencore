@@ -59,7 +59,7 @@ class PV2WayTestExtensionInterface : public PVInterface
          */
         virtual bool queryInterface(const PVUuid& uuid, PVInterface*& iface) = 0;
 
-        virtual bool AcceptableFormatsMatch(
+        virtual bool NegotiatedFormatsMatch(
             Oscl_Vector<FormatCapabilityInfo, OsclMemAllocator>& iInAudFormatCapability,
             Oscl_Vector<FormatCapabilityInfo, OsclMemAllocator>& iOutAudFormatCapability,
             Oscl_Vector<FormatCapabilityInfo, OsclMemAllocator>& iInVidFormatCapability,
