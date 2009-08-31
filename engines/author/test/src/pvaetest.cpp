@@ -1778,7 +1778,7 @@ int local_main(FILE* filehandle, cmd_line* command_line)
     {
         PVSDKInfo aSdkInfo;
         PVAuthorEngineInterface::GetSDKInfo(aSdkInfo);
-        fprintf(filehandle, "SDK Labeled: %s built on %x\n\n",               // display SDK info
+        fprintf(filehandle, "Version: %s generated on %x\n\n",// display SDK info
                 aSdkInfo.iLabel.get_cstr(), aSdkInfo.iDate);
     }
 

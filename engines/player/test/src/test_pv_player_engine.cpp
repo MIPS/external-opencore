@@ -141,6 +141,7 @@
 #endif
 
 
+static bool bHelp = false;
 FILE *file;
 
 class PVLoggerConfigFile
@@ -609,6 +610,7 @@ void FindSourceType(cmd_line* command_line, OSCL_HeapString<OsclMemAllocator> &a
         // Do the string compare
         if (oscl_strcmp(argstr, "-help") == 0)
         {
+            bHelp = true;
             fprintf(aFile, "Format type specification option. Default is 'mp4':\n");
             fprintf(aFile, "Specify the format type name in upper case/lower case letter for test cases which\n");
             fprintf(aFile, "   allow user-specified format type.\n");
@@ -716,6 +718,7 @@ void FindSourceFile(cmd_line* command_line, OSCL_HeapString<OsclMemAllocator> &a
         // Do the string compare
         if (oscl_strcmp(argstr, "-help") == 0)
         {
+            bHelp = true;
             fprintf(aFile, "Source specification option. Default is 'test.mp4':\n");
             fprintf(aFile, "  -source sourcename\n");
             fprintf(aFile, "   Specify the source filename or URL to use for test cases which\n");
@@ -754,8 +757,6 @@ void FindSourceFile(cmd_line* command_line, OSCL_HeapString<OsclMemAllocator> &a
         if (oscl_strstr(aFileNameInfo.get_cstr(), ".aac") != NULL || oscl_strstr(aFileNameInfo.get_cstr(), ".AAC") != NULL)
         {
             aInputFileFormatType = PVMF_MIME_AACFF;
-
-
         }
         // AMR file (IETF and IF2)
         else  if (oscl_strstr(aFileNameInfo.get_cstr(), ".amr") != NULL || oscl_strstr(aFileNameInfo.get_cstr(), ".AMR") != NULL ||
@@ -886,6 +887,7 @@ void FindTestRange(cmd_line *command_line,  int32 &iFirstTest, int32 &iLastTest,
         // Do the string compare
         if (oscl_strcmp(iSourceFind, "-help") == 0)
         {
+            bHelp = true;
             fprintf(aFile, "Test cases to run option. Default is ALL:\n");
             fprintf(aFile, "  -test x y\n");
             fprintf(aFile, "   Specify a range of test cases to run. To run one test case, use the\n");
@@ -1173,6 +1175,7 @@ void FindCompressed(cmd_line* command_line, bool& aCompV, bool& aCompA, FILE* aF
         // Do the string compare
         if (oscl_strcmp(iSourceFind, "-help") == 0)
         {
+            bHelp = true;
             fprintf(aFile, "Compressed video and audio output option. Default is OFF for both:\n");
             fprintf(aFile, "  -compV AND/OR -compA\n");
             fprintf(aFile, "   For test cases and sinks that support compressed media output (media\n");
@@ -1231,6 +1234,7 @@ void FindPacketSource(cmd_line* command_line, bool& aFileInput, bool& aBCS, FILE
         // Do the string compare
         if (oscl_strcmp(iSourceFind, "-help") == 0)
         {
+            bHelp = true;
             fprintf(aFile, "Packet Source plug-in option. Default is OFF for both:\n");
             fprintf(aFile, "  -fi\n");
             fprintf(aFile, "  For file input\n");
@@ -1288,6 +1292,7 @@ void FindMemMgmtRelatedCmdLineParams(cmd_line* command_line, bool& aPrintDetaile
         // Do the string compare
         if (oscl_strcmp(iSourceFind, "-help") == 0)
         {
+            bHelp = true;
             fprintf(aFile, "Printing leak info option. Default is OFF:\n");
             fprintf(aFile, "  -leakinfo\n");
             fprintf(aFile, "   If there is a memory leak, prints out the memory leak information\n");
@@ -1341,6 +1346,7 @@ void FindLoggerNode(cmd_line* command_line, int32& lognode, FILE* aFile)
         // Do the string compare
         if (oscl_strcmp(iSourceFind, "-help") == 0)
         {
+            bHelp = true;
             fprintf(aFile, "Log node options. Default is player engine only:\n");
             fprintf(aFile, "  -logall\n");
             fprintf(aFile, "   Log everything (log appender at root node)\n");
@@ -1477,6 +1483,7 @@ void FindLogLevel(cmd_line* command_line, int32& loglevel, FILE* aFile)
         // Do the string compare
         if (oscl_strcmp(iSourceFind, "-help") == 0)
         {
+            bHelp = true;
             fprintf(aFile, "Log level options. Default is debug level:\n");
             fprintf(aFile, "  -logerr\n");
             fprintf(aFile, "   Log at error level\n");
@@ -1629,6 +1636,7 @@ void FindProxyEnabled(cmd_line* command_line, bool& aProxyEnabled, FILE *aFile, 
         // Do the string compare
         if (oscl_strcmp(iSourceFind, "-help") == 0)
         {
+            bHelp = true;
             fprintf(aFile, "   proxy enabled ON or OFF, default is OFF\n");
             fprintf(aFile, "  -proxy\n");
             fprintf(aFile, "   For test cases where proxy support is reqd\n");
@@ -1691,7 +1699,7 @@ int local_main(FILE *filehandle, cmd_line* command_line)
     {
         PVSDKInfo aSdkInfo;
         PVPlayerInterface::GetSDKInfo(aSdkInfo);
-        fprintf(filehandle, "SDK Labeled: %s built on %x\n\n",               // display SDK info
+        fprintf(filehandle, "Version: %s generated on %x\n\n",               // display SDK info
                 aSdkInfo.iLabel.get_cstr(), aSdkInfo.iDate);
         fprintf(filehandle, "Test Program for pvPlayer engine class.\n");
     }
@@ -1799,6 +1807,7 @@ int _local_main(FILE *filehandle, cmd_line *command_line, bool& aPrintDetailedMe
 
         if (command_line->get_count() == 0)
         {
+            bHelp = true;
             fprintf(file, "  Specify '-help' first to get help information on options\n\n");
         }
     }
@@ -1807,8 +1816,13 @@ int _local_main(FILE *filehandle, cmd_line *command_line, bool& aPrintDetailedMe
     PVMFFormatType inputformattype ;
     int32 iFileFormatType = -1; // unknown file format type
 
+    // use mp4 as default test file
+    filenameinfo = SOURCENAME_PREPEND_STRING;
+    filenameinfo += DEFAULTSOURCEFILENAME;
+    inputformattype = DEFAULTSOURCEFORMATTYPE;
+
     FindMemMgmtRelatedCmdLineParams(command_line, aPrintDetailedMemLeakInfo, filehandle);
-    FindSourceType(command_line, filenameinfo, inputformattype, iFileFormatType, file); //Added with an additional argument
+    //FindSourceType(command_line, filenameinfo, inputformattype, iFileFormatType, file); //Added with an additional argument
     FindSourceFile(command_line, filenameinfo, inputformattype, file);
 
     int32 firsttest, lasttest;
@@ -1837,25 +1851,12 @@ int _local_main(FILE *filehandle, cmd_line *command_line, bool& aPrintDetailedMe
     bool proxyenabled;
     uint32 downloadrateinkbps = 0;
     FindProxyEnabled(command_line, proxyenabled, file, downloadrateinkbps);
-    fprintf(file, "  Input file name '%s'\n", filenameinfo.get_cstr());
+
+    if (true == bHelp)
+        return 0;
+
     fprintf(file, "  Test case range %d to %d\n", firsttest, lasttest);
-    fprintf(file, "  Compressed output ");
-    if (compV)
-    {
-        fprintf(file, "Video(Yes) ");
-    }
-    else
-    {
-        fprintf(file, "Video(No) ");
-    }
-    if (compA)
-    {
-        fprintf(file, "Audio(Yes)\n");
-    }
-    else
-    {
-        fprintf(file, "Audio(No)\n");
-    }
+    fprintf(file, "  Compressed output Video(%s) Audio(%s)\n", (compV) ? "Yes" : "No", (compA) ? "Yes" : "No");
     fprintf(file, "  Log level %d; Log node %d Log Text %d Log Mem %d\n", loglevel, lognode, logtext, logmem);
 
     pvplayer_engine_test_suite *engine_tests = NULL;
@@ -1878,7 +1879,6 @@ int _local_main(FILE *filehandle, cmd_line *command_line, bool& aPrintDetailedMe
     {
 
         //Set the Initial timer
-
         uint32 starttick = OsclTickCount::TickCount();
         // Run the engine test
         engine_tests->run_test();
@@ -1886,7 +1886,7 @@ int _local_main(FILE *filehandle, cmd_line *command_line, bool& aPrintDetailedMe
 
         double t1 = OsclTickCount::TicksToMsec(starttick);
         double t2 = OsclTickCount::TicksToMsec(endtick);
-        fprintf(file, "Total Execution time for file %s is : %f seconds", filenameinfo.get_cstr(), (t2 - t1) / 1000);
+        fprintf(file, "Total Execution time for test suite is: %f seconds", (t2 - t1) / 1000);
 
         // Print out the results
         text_test_interpreter interp;
@@ -7422,6 +7422,7 @@ void pvplayer_engine_test::test()
             {
                 // Print out the test name
                 fprintf(file, "%s\n", iCurrentTest->iTestCaseName.get_cstr());
+                fprintf(file, "Input File: %s\n", iCurrentTest->iFileName);
                 // Start the test
                 iCurrentTest->StartTest();
                 // Start the scheduler so the test case would run
