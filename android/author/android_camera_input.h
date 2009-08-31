@@ -416,6 +416,9 @@ private:
 
     AndroidCameraInputState iState;
 
+    enum WriteState {EWriteBusy, EWriteOK};
+    WriteState iWriteState;
+
 };
 
 #endif // ANDROID_CAMERA_INPUT_H_INCLUDED

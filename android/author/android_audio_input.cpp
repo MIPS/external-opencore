@@ -464,14 +464,11 @@ OSCL_EXPORT_REF void AndroidAudioInput::readComplete(PVMFStatus aStatus, PVMFCom
 ////////////////////////////////////////////////////////////////////////////
 OSCL_EXPORT_REF void AndroidAudioInput::statusUpdate(uint32 status_flags)
 {
-    OSCL_UNUSED_ARG(status_flags);
-    // Ideally this routine should update the status of media input component.
-    // It should check then for the status. If media input buffer is consumed,
-    // media input object should be resheduled.
-    // Since the Media fileinput component is designed with single buffer, two
-    // asynchronous reads are not possible. So this function will not be required
-    // and hence not been implemented.
-    OSCL_LEAVE(OsclErrNotSupported);
+    LOGV("statusUpdate");
+    if (status_flags != PVMI_MEDIAXFER_STATUS_WRITE)
+    {
+        OSCL_LEAVE(OsclErrNotSupported);
+    }
 }
 
 
