@@ -18,6 +18,7 @@
 #include "oscl_types.h"
 #include "avc_dec.h"
 #include "avcdec_int.h"
+#include "omx_avc_component.h"
 
 #if PROFILING_ON
 #include "oscl_tickcount.h"
@@ -53,6 +54,56 @@ AVCDec_Status CBAVCDec_GetData_OMX(void* aUserData, uint8** aBuffer, uint* aSize
     return AVCDEC_FAIL;  /* nothing for now */
 }
 
+void UnbindBuffer_OMX(void* aUserData, int32 i)
+{
+
+    AvcDecoder_OMX* pAvcDecoder_OMX = (AvcDecoder_OMX*)aUserData;
+
+    if (NULL == pAvcDecoder_OMX)
+    {
+        return;
+    }
+
+    // check first if RefBuffer ptr exists
+    if (pAvcDecoder_OMX->ReferenceBufferHdrPtr[i] != NULL)
+    {
+        BufferCtrlStruct *pBCTRL = (BufferCtrlStruct *)(pAvcDecoder_OMX->ReferenceBufferHdrPtr[i]->pOutputPortPrivate);
+        // decrement the ref counter for the buffer
+        pBCTRL->iRefCount--;
+
+        if (0 == pBCTRL->iRefCount)
+        {
+            pAvcDecoder_OMX->ipOMXComponent->iNumAvailableOutputBuffers++;
+            // it is possible that by releasing the reference buffer - the buffer becomes available
+            // this is possible if the buffer was outstanding (downstream)- but it returned to the OMX component while it was
+            // still being used as reference. When we release it now - it may become available.
+
+            // if the ref count is 0 - the buffer is in the
+            // omx component for sure - there are 2 possibilities:
+            // a) this buffer may be in the output buffer queue in the component
+            //    - in this case no need to do anything else
+            // b) or it may have been dequeued earlier and never
+            //     left the component (i.e. it has been in the decoder all the time)
+            //     - if this is the case - we need to queue this buffer into the
+            //       output buffer queue
+            if (OMX_FALSE == pBCTRL->iIsBufferInComponentQueue)
+            {
+                QueueType* pOutputQueue = pAvcDecoder_OMX->ipOMXComponent->GetOutputQueue(); //ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->pBufferQueue;
+                Queue(pOutputQueue, (void*)(pAvcDecoder_OMX->ReferenceBufferHdrPtr[i]));
+                pBCTRL->iIsBufferInComponentQueue = OMX_TRUE; // just in case
+            }
+
+
+            // posssibly reschedule the component?
+
+        }
+
+        pAvcDecoder_OMX->ReferenceBufferHdrPtr[i] = NULL;
+    }
+
+    return;
+}
+
 int32 AvcDecoder_OMX::AllocateBuffer_OMX(void* aUserData, int32 i, uint8** aYuvBuffer)
 {
     AvcDecoder_OMX* pAvcDecoder_OMX = (AvcDecoder_OMX*)aUserData;
@@ -62,19 +113,38 @@ int32 AvcDecoder_OMX::AllocateBuffer_OMX(void* aUserData, int32 i, uint8** aYuvB
         return 0;
     }
 
-    *aYuvBuffer = pAvcDecoder_OMX->pDpbBuffer + i * pAvcDecoder_OMX->FrameSize;
-    //Store the input timestamp at the correct index
+    //*aYuvBuffer = pAvcDecoder_OMX->pDpbBuffer + i * pAvcDecoder_OMX->FrameSize;
+    //Store the input timestamp at and reference to the correct index
+
+    if (pAvcDecoder_OMX->ReferenceBufferHdrPtr[i] != NULL)
+    {
+        // if need be - i.e. if the buffer is still used -unbind it (this will take care of ref count as well)
+        UnbindBuffer_OMX(aUserData, i);
+    }
+
+    // store the current output buffer to the i-th position
+    pAvcDecoder_OMX->ReferenceBufferHdrPtr[i] = pAvcDecoder_OMX->pCurrentBufferHdr;
+
+    BufferCtrlStruct *pBCTRL = (BufferCtrlStruct *)(pAvcDecoder_OMX->ReferenceBufferHdrPtr[i]->pOutputPortPrivate);
+    // increment the ref counter for the buffer
+    pBCTRL->iRefCount++;
+
+    //store the timestamp
     pAvcDecoder_OMX->DisplayTimestampArray[i] = pAvcDecoder_OMX->CurrInputTimestamp;
+
+    // make sure to invalidate the "empty" output buffer in the component, i.e. make it appear consumed
+    // this will set ipOutputBuffer ptr to NULL, and set iNewOutBufRequired flag to TRUE
+    pAvcDecoder_OMX->ipOMXComponent->InvalidateOutputBuffer();
+
+
+    // get the yuv data ptr
+    *aYuvBuffer = pAvcDecoder_OMX->ReferenceBufferHdrPtr[i]->pBuffer;
+
     return 1;
 }
 
 
-void UnbindBuffer_OMX(void* aUserData, int32 i)
-{
-    OSCL_UNUSED_ARG(aUserData);
-    OSCL_UNUSED_ARG(i);
-    return;
-}
+
 
 int32 AvcDecoder_OMX::ActivateSPS_OMX(void* aUserData, uint aSizeInMbs, uint aNumBuffers)
 {
@@ -87,34 +157,9 @@ int32 AvcDecoder_OMX::ActivateSPS_OMX(void* aUserData, uint aSizeInMbs, uint aNu
 
     PVAVCDecGetSeqInfo(&(pAvcDecoder_OMX->AvcHandle), &(pAvcDecoder_OMX->SeqInfo));
 
-    if (pAvcDecoder_OMX->pDpbBuffer)
-    {
-        oscl_free(pAvcDecoder_OMX->pDpbBuffer);
-        pAvcDecoder_OMX->pDpbBuffer = NULL;
-    }
 
     pAvcDecoder_OMX->FrameSize = (aSizeInMbs << 7) * 3;
-    pAvcDecoder_OMX->pDpbBuffer = (uint8*) oscl_malloc(aNumBuffers * (pAvcDecoder_OMX->FrameSize));
-
-    if (NULL == pAvcDecoder_OMX->pDpbBuffer)
-    {
-        return 0;
-    }
-
-    // initialize planes to 0x10 (Y) and 0x80 (UV) which makes the initial image appear black
-    // in the absence of an I-frame
-    OMX_U32 UVplanesize = (OMX_U32)(pAvcDecoder_OMX->FrameSize) / 6;
-    uint8 *temp_ptrY  = (uint8 *) pAvcDecoder_OMX->pDpbBuffer;
-    uint8 *temp_ptrUV = temp_ptrY + 4 * UVplanesize;
-
-    for (uint32 ii = 0; ii < aNumBuffers; ii++)
-    {
-        oscl_memset(temp_ptrY, 0x10, 4*UVplanesize);
-        oscl_memset(temp_ptrUV, 0x80, 2*UVplanesize);
-
-        temp_ptrY  += pAvcDecoder_OMX->FrameSize;
-        temp_ptrUV += pAvcDecoder_OMX->FrameSize;
-    }
+    pAvcDecoder_OMX->MaxNumFs = aNumBuffers;
 
 
     return 1;
@@ -132,43 +177,70 @@ OMX_BOOL AvcDecoder_OMX::InitializeVideoDecode_OMX()
     AvcHandle.CBAVC_Malloc = CBAVC_Malloc_OMX;
     AvcHandle.CBAVC_Free = CBAVC_Free_OMX;
 
+    MaxWidth = 0;
+    MaxHeight = 0;
+    MaxNumFs = 0;
+
     return OMX_TRUE;
 }
 
-OMX_BOOL AvcDecoder_OMX::FlushOutput_OMX(OMX_U8* aOutBuffer, OMX_U32* aOutputLength, OMX_TICKS* aOutTimestamp, OMX_S32 OldWidth, OMX_S32 OldHeight)
+OMX_BOOL AvcDecoder_OMX::FlushOutput_OMX(OMX_BUFFERHEADERTYPE **aOutBufferForRendering)
 {
     AVCFrameIO Output;
     AVCDec_Status Status;
-    int32 Index, Release, FrameSize;
-    OMX_S32 OldFrameSize = ((OldWidth + 15) & (~15)) * ((OldHeight + 15) & (~15));
+    int32 Index, Release;
 
     Output.YCbCr[0] = Output.YCbCr[1] = Output.YCbCr[2] = NULL;
     Status = PVAVCDecGetOutput(&(AvcHandle), &Index, &Release, &Output);
 
+    *aOutBufferForRendering = NULL; // init to NULL (no output)
     if (Status == AVCDEC_FAIL)
     {
         return OMX_FALSE;
     }
 
-    *aOutTimestamp = DisplayTimestampArray[Index];
-    *aOutputLength = 0; // init to 0
+    // set the buffer hdr ptr based on the returned index
+    *aOutBufferForRendering = ReferenceBufferHdrPtr[Index];
+
+    if (*aOutBufferForRendering == NULL)
+    {
+        return OMX_FALSE;
+    }
+
+    // set the timestamp and output size
+    (*aOutBufferForRendering)->nTimeStamp = DisplayTimestampArray[Index];
+    (*aOutBufferForRendering)->nFilledLen = 0; // init to 0
+    (*aOutBufferForRendering)->nOffset = 0; // set to 0, not needed
 
     if (Output.YCbCr[0])
     {
-        FrameSize = Output.pitch * Output.height;
-        // it should not happen that the frame size is smaller than available buffer size, but check just in case
-        if (FrameSize <= OldFrameSize)
-        {
-            *aOutputLength = (Output.pitch * Output.height * 3) >> 1;
+        (*aOutBufferForRendering)->nFilledLen = (Output.pitch * Output.height * 3) >> 1;
 
-            oscl_memcpy(aOutBuffer, Output.YCbCr[0], FrameSize);
-            oscl_memcpy(aOutBuffer + FrameSize, Output.YCbCr[1], FrameSize >> 2);
-            oscl_memcpy(aOutBuffer + FrameSize + FrameSize / 4, Output.YCbCr[2], FrameSize >> 2);
-        }
-        // else, the frame length is reported as zero, and there is no copying
+        // else, the frame length will be reported as zero
     }
 
+    // this buffer is no longer needed as reference by the decoder and we can do unbind
+    if (Release)
+    {
+        // the problem is that we want to unbind the buffer,
+        // but this buffer is heading straight out downstream for rendering.
+        // we also need to update num of available buffers (to compensate for the update that will
+        // happen when we return the buffer to OMX client. But we don't want
+        // to call UnbindBuffer_OMX because it may return the buffer to the component queue
 
+
+        BufferCtrlStruct *pBCTRL = (BufferCtrlStruct *)(ReferenceBufferHdrPtr[Index]->pOutputPortPrivate);
+        // decrement the ref counter for the buffer
+        pBCTRL->iRefCount--;
+
+        if (0 == pBCTRL->iRefCount)
+        {
+            // update the count - since it will be decremented when the buffer leaves the component
+            ipOMXComponent->iNumAvailableOutputBuffers++;
+        }
+
+        ReferenceBufferHdrPtr[Index] = NULL;
+    }
     return OMX_TRUE;
 }
 
@@ -192,17 +264,19 @@ OMX_ERRORTYPE AvcDecoder_OMX::AvcDecInit_OMX()
 
 
 /*Decode routine */
-OMX_BOOL AvcDecoder_OMX::AvcDecodeVideo_OMX(OMX_U8* aOutBuffer, OMX_U32* aOutputLength,
+OMX_BOOL AvcDecoder_OMX::AvcDecodeVideo_OMX(OMX_BUFFERHEADERTYPE *aOutBuffer, // empty output buffer that the component provides to the decoder
+        OMX_BUFFERHEADERTYPE **aOutBufferForRendering, // output buffer for rendering. Initially NULL, but if there is output to be flushed out
+        // this ptr will be updated to point to buffer that needs to be rendered
         OMX_U8** aInputBuf, OMX_U32* aInBufSize,
         OMX_PARAM_PORTDEFINITIONTYPE* aPortParam,
-        OMX_S32* iFrameCount, OMX_BOOL aMarkerFlag, OMX_TICKS* aOutTimestamp, OMX_BOOL *aResizeFlag)
+        OMX_S32* iFrameCount, OMX_BOOL aMarkerFlag, OMX_BOOL *aResizeFlag)
 {
     AVCDec_Status Status;
     OMX_S32 Width, Height;
     OMX_S32 crop_top, crop_bottom, crop_right, crop_left;
     uint8* pNalBuffer;
     int32 NalSize, NalType, NalRefId;
-    //int32 PicType;
+
     AVCDecObject* pDecVid;
 
     *aResizeFlag = OMX_FALSE;
@@ -211,12 +285,15 @@ OMX_BOOL AvcDecoder_OMX::AvcDecodeVideo_OMX(OMX_U8* aOutBuffer, OMX_U32* aOutput
     OldWidth =  aPortParam->format.video.nFrameWidth;
     OldHeight = aPortParam->format.video.nFrameHeight;
 
+    *aOutBufferForRendering = NULL; // init this to NULL. If there is output to be flushed out - we'll update this value
+    pCurrentBufferHdr = aOutBuffer; // save the ptr to the empty output buffer we received from component
 
     if (!aMarkerFlag)
     {
+        // if no more NALs - try to flush the output
         if (AVCDEC_FAIL == GetNextFullNAL_OMX(&pNalBuffer, &NalSize, *aInputBuf, aInBufSize))
         {
-            Status = (AVCDec_Status) FlushOutput_OMX(aOutBuffer, aOutputLength, aOutTimestamp, OldWidth, OldHeight);
+            Status = (AVCDec_Status) FlushOutput_OMX(aOutBufferForRendering);
 
             if (AVCDEC_FAIL != Status)
             {
@@ -259,53 +336,52 @@ OMX_BOOL AvcDecoder_OMX::AvcDecodeVideo_OMX(OMX_U8* aOutBuffer, OMX_U32* aOutput
             return OMX_FALSE;
         }
 
-        pDecVid = (AVCDecObject*) AvcHandle.AVCObject;
+        AVCDecSPSInfo seqInfo;
 
-        Width = (pDecVid->seqParams[0]->pic_width_in_mbs_minus1 + 1) * 16;
-        Height = (pDecVid->seqParams[0]->pic_height_in_map_units_minus1 + 1) * 16;
+        PVAVCDecGetSeqInfo(&(AvcHandle), &(seqInfo));
 
-        if (pDecVid->seqParams[0]->frame_cropping_flag)
+        Width = seqInfo.frame_crop_right - seqInfo.frame_crop_left + 1;
+        Height = seqInfo.frame_crop_bottom - seqInfo.frame_crop_top + 1;
+
+        if (MaxWidth < Width)
         {
-            crop_left = 2 * pDecVid->seqParams[0]->frame_crop_left_offset;
-            crop_right = Width - (2 * pDecVid->seqParams[0]->frame_crop_right_offset + 1);
-
-            if (pDecVid->seqParams[0]->frame_mbs_only_flag)
-            {
-                crop_top = 2 * pDecVid->seqParams[0]->frame_crop_top_offset;
-                crop_bottom = Height - (2 * pDecVid->seqParams[0]->frame_crop_bottom_offset + 1);
-            }
-            else
-            {
-                crop_top = 4 * pDecVid->seqParams[0]->frame_crop_top_offset;
-                crop_bottom = Height - (4 * pDecVid->seqParams[0]->frame_crop_bottom_offset + 1);
-            }
+            MaxWidth = Width;
         }
-        else  /* no cropping flag, just give the first and last pixel */
+        if (MaxHeight < Height)
         {
-            crop_bottom = Height - 1;
-            crop_right = Width - 1;
-            crop_top = crop_left = 0;
+            MaxHeight = Height;
         }
 
-        aPortParam->format.video.nFrameWidth = crop_right - crop_left + 1;
-        aPortParam->format.video.nFrameHeight = crop_bottom - crop_top + 1;
+        // extract the max number of frames required
+        if (MaxNumFs < seqInfo.num_frames)
+        {
+            MaxNumFs = seqInfo.num_frames;
+        }
 
-        OMX_U32 min_stride = ((aPortParam->format.video.nFrameWidth + 15) & (~15));
-        OMX_U32 min_sliceheight = ((aPortParam->format.video.nFrameHeight + 15) & (~15));
-
-
-        aPortParam->format.video.nStride = min_stride;
-        aPortParam->format.video.nSliceHeight = min_sliceheight;
+        aPortParam->format.video.nFrameWidth = MaxWidth;
+        aPortParam->format.video.nFrameHeight = MaxHeight;
+        aPortParam->format.video.nStride = seqInfo.FrameWidth;
+        aPortParam->format.video.nSliceHeight = seqInfo.FrameHeight;
 
 
         // finally, compute the new minimum buffer size.
-
         // Decoder components always output YUV420 format
         aPortParam->nBufferSize = (aPortParam->format.video.nSliceHeight * aPortParam->format.video.nStride * 3) >> 1;
 
 
         if ((OldWidth != aPortParam->format.video.nFrameWidth) || (OldHeight !=  aPortParam->format.video.nFrameHeight))
             *aResizeFlag = OMX_TRUE;
+
+
+        // make sure that the number of buffers that the decoder requires is less than what we allocated
+        // we should have at least 2 more than the decoder (one for omx component and one for downstream)
+        if ((MaxNumFs + 2 > aPortParam->nBufferCountActual))
+        {
+            // even if buffers are the correct size - we must do port reconfig because of buffer count
+            *aResizeFlag = OMX_TRUE;
+            // adjust only buffer count min - nBufferCountActual still needs to be preserved until port becomes disabled
+            aPortParam->nBufferCountMin = MaxNumFs + 2;
+        }
 
         (*iFrameCount)++;
 
@@ -361,7 +437,7 @@ OMX_BOOL AvcDecoder_OMX::AvcDecodeVideo_OMX(OMX_U8* aOutBuffer, OMX_U32* aOutput
 
         if (Status == AVCDEC_PICTURE_OUTPUT_READY)
         {
-            FlushOutput_OMX(aOutBuffer, aOutputLength, aOutTimestamp, OldWidth, OldHeight);
+            FlushOutput_OMX(aOutBufferForRendering);
 
             //Input buffer not consumed yet, do not mark it free.
             if (aMarkerFlag)
@@ -380,10 +456,12 @@ OMX_BOOL AvcDecoder_OMX::AvcDecodeVideo_OMX(OMX_U8* aOutBuffer, OMX_U32* aOutput
             (*iFrameCount)++;
         }
 
+
+
         if (AVCDEC_NOT_SUPPORTED == Status)
         {
-            aOutputLength = 0;
-            aOutBuffer = NULL;
+
+
             return OMX_TRUE;
         }
         else if ((AVCDEC_NO_DATA == Status) || (AVCDEC_FAIL == Status) ||
@@ -436,11 +514,6 @@ OMX_ERRORTYPE AvcDecoder_OMX::AvcDecDeinit_OMX()
         pCleanObject = NULL;
     }
 
-    if (pDpbBuffer)
-    {
-        oscl_free(pDpbBuffer);
-        pDpbBuffer = NULL;
-    }
 
     return OMX_ErrorNone;
 }
@@ -477,5 +550,16 @@ AVCCleanupObject_OMX::~AVCCleanupObject_OMX()
 void AvcDecoder_OMX::ResetDecoder()
 {
     PVAVCDecReset(&(AvcHandle));
+    ReleaseReferenceBuffers();
+
 }
 
+void AvcDecoder_OMX::ReleaseReferenceBuffers()
+{
+    // we need to unbind all reference buffers as well
+    uint32 i = 0;
+    for (i = 0; i < MaxNumFs; i++)
+    {
+        UnbindBuffer_OMX((void*) this, (int32) i);
+    }
+}

@@ -209,8 +209,7 @@ PVMFStatus PVMFOMXVideoDecNode::HandlePortReEnable()
     // get new parameters of the port
     OMX_GetParameter(iOMXDecoder, OMX_IndexParamPortDefinition, &iParamPort);
 
-    // send command for port re-enabling (for this to happen, we must first recreate the buffers)
-    OMX_SendCommand(iOMXDecoder, OMX_CommandPortEnable, iPortIndexForDynamicReconfig, NULL);
+    // do not send port reenable command until all the parameters have been set
 
     // is this output port?
     if (iPortIndexForDynamicReconfig == iOutputPortIndex)
@@ -256,11 +255,27 @@ PVMFStatus PVMFOMXVideoDecNode::HandlePortReEnable()
         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                         (0, "PVMFOMXVideoDecNode::HandlePortReEnable() new output buffers %d, size %d", iNumOutputBuffers, iOMXComponentOutputBufferSize));
 
+        // make sure to set the actual number of buffers (in case the number has changed)
+        iParamPort.nBufferCountActual = iNumOutputBuffers;
+        CONFIG_SIZE_AND_VERSION(iParamPort);
+
+        OMX_ERRORTYPE Err = OMX_ErrorNone;
+        Err = OMX_SetParameter(iOMXDecoder, OMX_IndexParamPortDefinition, &iParamPort);
+        if (Err != OMX_ErrorNone)
+        {
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                            (0, "PVMFOMXVideoDecNode::HandlePortReEnable() Problem setting parameters in output port %d ", iOutputPortIndex));
+            SetState(EPVMFNodeError);
+            ReportErrorEvent(PVMFErrNoMemory);
+            return false;
+        }
+
         iLastYUVWidth = iYUVWidth ;
         iLastYUVHeight = iYUVHeight;
 
         // Before allocating new set of output buffers, re-send Video FSI to
         // media output node in case of dynamic port reconfiguration
+
 
         sendFsi = true;
         iCompactFSISettingSucceeded = false;
@@ -425,6 +440,10 @@ PVMFStatus PVMFOMXVideoDecNode::HandlePortReEnable()
             }
         }
 
+        // it is now safe to send command for port reenable
+        // send command for port re-enabling (for this to happen, we must first recreate the buffers)
+        OMX_SendCommand(iOMXDecoder, OMX_CommandPortEnable, iPortIndexForDynamicReconfig, NULL);
+
 
         /* Allocate output buffers */
         if (!CreateOutMemPool(iNumOutputBuffers))
@@ -478,6 +497,24 @@ PVMFStatus PVMFOMXVideoDecNode::HandlePortReEnable()
 
         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                         (0, "PVMFOMXVideoDecNode::HandlePortReEnable() new buffers %d, size %d", iNumInputBuffers, iOMXComponentInputBufferSize));
+
+        // make sure to set the actual number of buffers (in case the number has changed)
+        iParamPort.nBufferCountActual = iNumInputBuffers;
+        CONFIG_SIZE_AND_VERSION(iParamPort);
+
+        OMX_ERRORTYPE Err = OMX_ErrorNone;
+        Err = OMX_SetParameter(iOMXDecoder, OMX_IndexParamPortDefinition, &iParamPort);
+        if (Err != OMX_ErrorNone)
+        {
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                            (0, "PVMFOMXVideoDecNode::HandlePortReEnable() Problem setting parameters in input port %d ", iInputPortIndex));
+            SetState(EPVMFNodeError);
+            ReportErrorEvent(PVMFErrNoMemory);
+            return false;
+        }
+        // it is now safe to send command for port reenable
+        // send command for port re-enabling (for this to happen, we must first recreate the buffers)
+        OMX_SendCommand(iOMXDecoder, OMX_CommandPortEnable, iPortIndexForDynamicReconfig, NULL);
 
         /* Allocate input buffers */
         if (!CreateInputMemPool(iNumInputBuffers))

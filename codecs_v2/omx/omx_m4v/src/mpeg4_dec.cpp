@@ -34,11 +34,16 @@
 // from m4v_config_parser.h
 OSCL_IMPORT_REF int16 iGetM4VConfigInfo(uint8 *buffer, int32 length, int32 *width, int32 *height, int32 *, int32 *);
 
-Mpeg4Decoder_OMX::Mpeg4Decoder_OMX()
+Mpeg4Decoder_OMX::Mpeg4Decoder_OMX(OmxComponentBase *pComp)
 {
-    pFrame0 = NULL;
-    pFrame1 = NULL;
 
+    ipOMXComponent = pComp;
+    CodecMode = MPEG4_MODE; // this can change
+    iReferenceYUVWasSet = OMX_FALSE;
+    ipRefCtrPreviousReferenceBuffer = NULL;
+    Mpeg4InitCompleteFlag = OMX_FALSE;
+
+    iFrameSize = 0;
     iDisplay_Width = 0;
     iDisplay_Height = 0;
 
@@ -77,13 +82,13 @@ OMX_ERRORTYPE Mpeg4Decoder_OMX::Mp4DecInit()
 
 
 /*Decode routine */
-OMX_BOOL Mpeg4Decoder_OMX::Mp4DecodeVideo(OMX_U8* aOutBuffer, OMX_U32* aOutputLength,
+OMX_BOOL Mpeg4Decoder_OMX::Mp4DecodeVideo(OMX_BUFFERHEADERTYPE* aOutBuffer, OMX_U32* aOutputLength,
         OMX_U8** aInputBuf, OMX_U32* aInBufSize,
         OMX_PARAM_PORTDEFINITIONTYPE* aPortParam,
         OMX_S32* aFrameCount, OMX_BOOL aMarkerFlag, OMX_BOOL *aResizeFlag)
 {
     OMX_BOOL Status = OMX_TRUE;
-    OMX_S32 OldWidth, OldHeight, OldFrameSize;
+    OMX_S32 OldWidth, OldHeight;
 
     OldWidth = aPortParam->format.video.nFrameWidth;
     OldHeight = aPortParam->format.video.nFrameHeight;
@@ -94,9 +99,8 @@ OMX_BOOL Mpeg4Decoder_OMX::Mp4DecodeVideo(OMX_U8* aOutBuffer, OMX_U32* aOutputLe
 #endif
     uint32 UseExtTimestamp = 0;
     uint32 TimeStamp;
-    //OMX_S32 MaxSize = BIT_BUFF_SIZE;
-    OMX_S32 FrameSize, InputSize, InitSize;
-    OMX_U8* pTempFrame, *pSrc[3];
+    OMX_S32 InputSize, InitSize;
+
 
     if (Mpeg4InitCompleteFlag == OMX_FALSE)
     {
@@ -130,16 +134,31 @@ OMX_BOOL Mpeg4Decoder_OMX::Mp4DecodeVideo(OMX_U8* aOutBuffer, OMX_U32* aOutputLe
         // Decoder components always output YUV420 format
         aPortParam->nBufferSize = (aPortParam->format.video.nSliceHeight * aPortParam->format.video.nStride * 3) >> 1;
 
+        iFrameSize = (aPortParam->format.video.nSliceHeight * aPortParam->format.video.nStride);
 
+        // normally - in case of mp4 - the config parser will read the vol header ahead of time
+        // and set the port values - so there'll be no port reconfig - but just in case ...
         if ((iDisplay_Width != OldWidth) || (iDisplay_Height != OldHeight))
+        {
             *aResizeFlag = OMX_TRUE;
+        }
+        else
+        {
+            // if there'll be no port reconfig - the current output YUV buffer is good enough
+            PVSetReferenceYUV(&VideoCtrl, (uint8*)(aOutBuffer->pBuffer));
+            // take care of ref count for the buffer
+            BufferCtrlStruct *pBCTRL = (BufferCtrlStruct *)(aOutBuffer->pOutputPortPrivate);
+            pBCTRL->iRefCount++;
+            ipRefCtrPreviousReferenceBuffer = &(pBCTRL->iRefCount);
+            iReferenceYUVWasSet = OMX_TRUE;
+        }
 
         *aFrameCount = 1;
         *aInBufSize -= InitSize;
         return OMX_TRUE;
     }
 
-    //MaxSize = *aInBufSize;
+
 
     if ((*(OMX_S32*)aInBufSize) <= 0)
     {
@@ -177,33 +196,22 @@ OMX_BOOL Mpeg4Decoder_OMX::Mp4DecodeVideo(OMX_U8* aOutBuffer, OMX_U32* aOutputLe
         // Decoder components always output YUV420 format
         aPortParam->nBufferSize = (aPortParam->format.video.nSliceHeight * aPortParam->format.video.nStride * 3) >> 1;
 
-
+        iFrameSize = (aPortParam->format.video.nSliceHeight * aPortParam->format.video.nStride);
+        // in case of h263 - port reconfig is pretty common - we'll alos have to do SetReferenceYUV later
         if ((iDisplay_Width != OldWidth) || (iDisplay_Height != OldHeight))
         {
-            OMX_U32 VideoDecOutputSize;
-
             *aResizeFlag = OMX_TRUE;
+        }
+        else
+        {
+            // if there'll be no port reconfig - the current output YUV buffer is good enough
+            PVSetReferenceYUV(&VideoCtrl, (uint8*)(aOutBuffer->pBuffer));
+            // take care of ref count for the buffer
+            BufferCtrlStruct *pBCTRL = (BufferCtrlStruct *)(aOutBuffer->pOutputPortPrivate);
+            pBCTRL->iRefCount++;
+            ipRefCtrPreviousReferenceBuffer = &(pBCTRL->iRefCount);
 
-            VideoDecOutputSize = (((iDisplay_Width + 15) & - 16) * ((iDisplay_Height + 15) & - 16) * 3) / 2;
-            if (pFrame0)
-            {
-                oscl_free(pFrame0);
-                pFrame0 = NULL;
-            }
-            pFrame0 = (OMX_U8*) oscl_malloc(VideoDecOutputSize);
-            if (pFrame1)
-            {
-                oscl_free(pFrame1);
-                pFrame1 = NULL;
-            }
-            pFrame1 = (OMX_U8*) oscl_malloc(VideoDecOutputSize);
-
-            if (!pFrame0 || !pFrame1)
-            {
-                return OMX_FALSE;
-            }
-
-            PVSetReferenceYUV(&VideoCtrl, pFrame1);
+            iReferenceYUVWasSet = OMX_TRUE;
         }
 
         *aFrameCount = 1;
@@ -212,6 +220,20 @@ OMX_BOOL Mpeg4Decoder_OMX::Mp4DecodeVideo(OMX_U8* aOutBuffer, OMX_U32* aOutputLe
         return OMX_TRUE;
     }
 
+    // if reference yuv has not been set yet - set it now and keep the current input buffer for later processing
+    // this can happen in the case of port reconfig
+    if (iReferenceYUVWasSet == OMX_FALSE)
+    {
+
+        PVSetReferenceYUV(&VideoCtrl, (uint8*)(aOutBuffer->pBuffer));
+        // take care of ref count for the buffer that we want to use for reference
+        BufferCtrlStruct *pBCTRL = (BufferCtrlStruct *)(aOutBuffer->pOutputPortPrivate);
+        pBCTRL->iRefCount++;
+        ipRefCtrPreviousReferenceBuffer = &(pBCTRL->iRefCount);
+
+        iReferenceYUVWasSet = OMX_TRUE;
+        return OMX_TRUE;
+    }
 #if PROFILING_ON
     OMX_U32 StartTime = OsclTickCount::TickCount();
 #endif
@@ -220,8 +242,7 @@ OMX_BOOL Mpeg4Decoder_OMX::Mp4DecodeVideo(OMX_U8* aOutBuffer, OMX_U32* aOutputLe
                                            &TimeStamp,
                                            (int32*)aInBufSize,
                                            &UseExtTimestamp,
-                                           (OMX_U8*) pFrame0);
-
+                                           (OMX_U8*)(aOutBuffer->pBuffer));
 #if PROFILING_ON
     OMX_U32 EndTime = OsclTickCount::TickCount();
     iTotalTicks += (EndTime - StartTime);
@@ -235,57 +256,24 @@ OMX_BOOL Mpeg4Decoder_OMX::Mp4DecodeVideo(OMX_U8* aOutBuffer, OMX_U32* aOutputLe
         // advance input buffer ptr
         *aInputBuf += (InputSize - *aInBufSize);
 
-        pTempFrame = (OMX_U8*) pFrame0;
-        pFrame0 = (OMX_U8*) pFrame1;
-        pFrame1 = (OMX_U8*) pTempFrame;
-
-        int32 display_width, display_height;
-        PVGetVideoDimensions(&VideoCtrl, &display_width, &display_height);
-        iDisplay_Width = display_width;
-        iDisplay_Height = display_height;
-        if ((iDisplay_Width != OldWidth) || (iDisplay_Height != OldHeight))
+        // release the previous buffer (it is no longer needed for reference) - so decrement the ref.counter
+        (*ipRefCtrPreviousReferenceBuffer)--;
+        // it is possible that by releasing the reference buffer - the buffer becomes available
+        // this is possible if the buffer was outstanding (downstream)- but it returned to the OMX component while it was
+        // still being used as reference. When we release it now - it may become available.
+        if ((*ipRefCtrPreviousReferenceBuffer) == 0)
         {
-
-            aPortParam->format.video.nFrameWidth = iDisplay_Width;
-            aPortParam->format.video.nFrameHeight = iDisplay_Height;
-
-            OMX_U32 min_stride = ((aPortParam->format.video.nFrameWidth + 15) & (~15));
-            OMX_U32 min_sliceheight = ((aPortParam->format.video.nFrameHeight + 15) & (~15));
-
-
-            aPortParam->format.video.nStride = min_stride;
-            aPortParam->format.video.nSliceHeight = min_sliceheight;
-
-            // finally, compute the new minimum buffer size.
-
-            // Decoder components always output YUV420 format
-            aPortParam->nBufferSize = (aPortParam->format.video.nSliceHeight * aPortParam->format.video.nStride * 3) >> 1;
-
-            *aResizeFlag = OMX_TRUE;
+            ipOMXComponent->iNumAvailableOutputBuffers++;
+            // posssibly reschedule the component?
         }
-        FrameSize = (((iDisplay_Width + 15) >> 4) << 4) * (((iDisplay_Height + 15) >> 4) << 4);
-        OldFrameSize = (((OldWidth + 15) >> 4) << 4) * (((OldHeight + 15) >> 4) << 4);
 
-        // THIS SHOULD NEVER HAPPEN, but just in case
-        // check so to not write a larger output into a smaller buffer
-        if (FrameSize <= OldFrameSize)
-        {
-            *aOutputLength = (FrameSize * 3) >> 1;
 
-            pSrc[0] = VideoCtrl.outputFrame;
-            pSrc[1] = pSrc[0] + FrameSize;
-            pSrc[2] = pSrc[0] + FrameSize + FrameSize / 4;
+        // use the current buffer as reference for the next decode
+        BufferCtrlStruct *pBCTRL = (BufferCtrlStruct *)(aOutBuffer->pOutputPortPrivate);
+        pBCTRL->iRefCount++;
+        ipRefCtrPreviousReferenceBuffer = &(pBCTRL->iRefCount);
 
-            *aOutputLength = (FrameSize * 3) >> 1;
-
-            oscl_memcpy(aOutBuffer, pSrc[0], FrameSize);
-            oscl_memcpy(aOutBuffer + FrameSize, pSrc[1], FrameSize >> 2);
-            oscl_memcpy(aOutBuffer + FrameSize + FrameSize / 4, pSrc[2], FrameSize >> 2);
-        }
-        else
-        {
-            *aOutputLength = 0;
-        }
+        *aOutputLength = (iFrameSize * 3) >> 1;
 
         (*aFrameCount)++;
     }
@@ -301,7 +289,6 @@ OMX_BOOL Mpeg4Decoder_OMX::Mp4DecodeVideo(OMX_U8* aOutBuffer, OMX_U32* aOutputLe
 OMX_S32 Mpeg4Decoder_OMX::InitializeVideoDecode(
     OMX_S32* aWidth, OMX_S32* aHeight, OMX_U8** aBuffer, OMX_S32* aSize, OMX_S32 mode)
 {
-    OMX_U32 VideoDecOutputSize;
     OMX_S32 OK = PV_TRUE;
     CodecMode = MPEG4_MODE;
 
@@ -325,10 +312,7 @@ OMX_S32 Mpeg4Decoder_OMX::InitializeVideoDecode(
         }
 
         PVSetPostProcType(&VideoCtrl, 0);
-        VideoDecOutputSize = (((*aWidth + 15) & - 16) * ((*aHeight + 15) & - 16) * 3) / 2;
-        pFrame0 = (OMX_U8*) oscl_malloc(VideoDecOutputSize);
-        pFrame1 = (OMX_U8*) oscl_malloc(VideoDecOutputSize);
-        PVSetReferenceYUV(&VideoCtrl, pFrame1);
+
         return PV_TRUE;
     }
     else
@@ -343,16 +327,11 @@ OMX_ERRORTYPE Mpeg4Decoder_OMX::Mp4DecDeinit()
 {
     OMX_BOOL Status;
 
-    if (pFrame0)
-    {
-        oscl_free(pFrame0);
-        pFrame0 = NULL;
-    }
-    if (pFrame1)
-    {
-        oscl_free(pFrame1);
-        pFrame1 = NULL;
-    }
+
+    // at this point - the buffers have been freed already
+    ipRefCtrPreviousReferenceBuffer = NULL;
+    iReferenceYUVWasSet = OMX_FALSE;
+
 
     Status = (OMX_BOOL) PVCleanUpVideoDecoder(&VideoCtrl);
     if (Status != OMX_TRUE)

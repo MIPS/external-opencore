@@ -59,6 +59,7 @@ OmxComponentBase::OmxComponentBase() :
 
     iTempConsumedLength = 0;
     iOutBufferCount = 0;
+    iNumAvailableOutputBuffers = 0;
     iCodecReady = OMX_FALSE;
     ipInputCurrBuffer = NULL;
     iInputCurrLength = 0;
@@ -207,6 +208,7 @@ OSCL_EXPORT_REF OMX_ERRORTYPE OmxComponentBase::ConstructBaseComponent(OMX_PTR p
     SetHeader(&iPortTypesParam, sizeof(OMX_PORT_PARAM_TYPE));
 
     iOutBufferCount = 0;
+    iNumAvailableOutputBuffers = 0;
     iStateTransitionFlag = OMX_FALSE;
     iEndOfFrameFlag = OMX_FALSE;
     iFirstFragment = OMX_FALSE;
@@ -343,15 +345,20 @@ OMX_ERRORTYPE OmxComponentBase::ParameterSanityCheck(
     OMX_IN  size_t size)
 {
     OSCL_UNUSED_ARG(hComponent);
-    if (iState != OMX_StateLoaded &&
-            iState != OMX_StateWaitForResources)
-    {
-        return OMX_ErrorIncorrectStateOperation;
-    }
+
 
     if (nPortIndex >= iNumPorts)
     {
         return OMX_ErrorBadPortIndex;
+    }
+
+    if (iState != OMX_StateLoaded &&
+            iState != OMX_StateWaitForResources)
+    {
+        // this could still be ok if the port is disabled
+
+        if (PORT_IS_ENABLED(ipPorts[nPortIndex]))
+            return OMX_ErrorIncorrectStateOperation;
     }
 
     return CheckHeader(pStructure, size);
@@ -683,7 +690,18 @@ OSCL_EXPORT_REF void OmxComponentBase::ReturnOutputBuffer(OMX_BUFFERHEADERTYPE* 
 {
     OMX_COMPONENTTYPE* pHandle = &iOmxComponent;
 
-    //Callback for sending back the output buffer
+    // take care of ref count for the buffer being returned
+    BufferCtrlStruct *pBCTRL = (BufferCtrlStruct *)(pOutputBuffer->pOutputPortPrivate);
+
+    // if a buffer's ref count is 0 - it means that it was available
+    if (iNumAvailableOutputBuffers && (pBCTRL->iRefCount == 0))
+    {
+        iNumAvailableOutputBuffers--;
+    }
+
+    pBCTRL->iRefCount += 1;
+    pBCTRL->iIsBufferInComponentQueue = OMX_FALSE;
+
     (*(ipCallbacks->FillBufferDone))
     (pHandle, iCallbackData, pOutputBuffer);
 
@@ -691,6 +709,7 @@ OSCL_EXPORT_REF void OmxComponentBase::ReturnOutputBuffer(OMX_BUFFERHEADERTYPE* 
     {
         iOutBufferCount--;
     }
+
 
     pPort->NumBufferFlushed++;
     iNewOutBufRequired = OMX_TRUE;
@@ -752,6 +771,17 @@ OMX_ERRORTYPE OmxComponentBase::FlushPort(OMX_S32 PortIndex)
         {
             if (ipOutputBuffer)
             {
+                // take care of ref count for the buffer being returned
+                BufferCtrlStruct *pBCTRL = (BufferCtrlStruct *)(ipOutputBuffer->pOutputPortPrivate);
+                // if a buffer's ref count is 0 - it means that it was available
+                if (iNumAvailableOutputBuffers && (pBCTRL->iRefCount == 0))
+                {
+                    iNumAvailableOutputBuffers--;
+                }
+
+                pBCTRL->iRefCount += 1;
+                pBCTRL->iIsBufferInComponentQueue = OMX_FALSE;
+
                 (*(ipCallbacks->FillBufferDone))
                 (pHandle, iCallbackData, ipOutputBuffer);
                 iOutBufferCount--;
@@ -768,6 +798,17 @@ OMX_ERRORTYPE OmxComponentBase::FlushPort(OMX_S32 PortIndex)
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE, (0, "OmxComponentBase : FlushPort ERROR DeQueue() returned NULL"));
                 return OMX_ErrorUndefined;
             }
+
+            // take care of ref count for the buffer being returned
+            BufferCtrlStruct *pBCTRL = (BufferCtrlStruct *)(pOutputBuff->pOutputPortPrivate);
+            // if a buffer's ref count is 0 - it means that it was available
+            if (iNumAvailableOutputBuffers && (pBCTRL->iRefCount == 0))
+            {
+                iNumAvailableOutputBuffers--;
+            }
+            pBCTRL->iRefCount += 1;
+            pBCTRL->iIsBufferInComponentQueue = OMX_FALSE;
+
 
             pOutputBuff->nFilledLen = 0;
             (*(ipCallbacks->FillBufferDone))
@@ -1209,6 +1250,20 @@ OMX_ERRORTYPE OmxComponentBase::UseBuffer(
             {
                 pBaseComponentPort->pBuffer[ii]->nOutputPortIndex = nPortIndex;
                 pBaseComponentPort->pBuffer[ii]->nInputPortIndex = iNumPorts; // here is assigned a non-valid port index
+
+                // create BufferCtrlStruct and assign pointer to it through OutputPortPrivateData
+                pBaseComponentPort->pBuffer[ii]->pOutputPortPrivate = NULL;
+                pBaseComponentPort->pBuffer[ii]->pOutputPortPrivate = oscl_malloc(sizeof(BufferCtrlStruct));
+
+                if (NULL == pBaseComponentPort->pBuffer[ii]->pOutputPortPrivate)
+                {
+                    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE, (0, "OmxComponentBase : UseBuffer error insufficient resources"));
+                    return OMX_ErrorInsufficientResources;
+                }
+                BufferCtrlStruct *pBCTRL = (BufferCtrlStruct *) pBaseComponentPort->pBuffer[ii]->pOutputPortPrivate;
+                pBCTRL->iRefCount = 1; // initialize ref counter to 1 (since buffers are initially with the IL client)
+                pBCTRL->iIsBufferInComponentQueue = OMX_FALSE;
+
             }
             pBaseComponentPort->BufferState[ii] |= BUFFER_ASSIGNED;
             pBaseComponentPort->BufferState[ii] |= HEADER_ALLOCATED;
@@ -1339,12 +1394,28 @@ OMX_ERRORTYPE OmxComponentBase::AllocateBuffer(
                 pBaseComponentPort->pBuffer[ii]->nInputPortIndex = nPortIndex;
                 // here is assigned a non-valid port index
                 pBaseComponentPort->pBuffer[ii]->nOutputPortIndex = iNumPorts;
+
+
             }
             else
             {
                 // here is assigned a non-valid port index
                 pBaseComponentPort->pBuffer[ii]->nInputPortIndex = iNumPorts;
                 pBaseComponentPort->pBuffer[ii]->nOutputPortIndex = nPortIndex;
+
+                // create BufferCtrlStruct and assign pointer to it through OutputPortPrivateData
+                pBaseComponentPort->pBuffer[ii]->pOutputPortPrivate = NULL;
+                pBaseComponentPort->pBuffer[ii]->pOutputPortPrivate = oscl_malloc(sizeof(BufferCtrlStruct));
+
+                if (NULL == pBaseComponentPort->pBuffer[ii]->pOutputPortPrivate)
+                {
+                    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE, (0, "OmxComponentBase : UseBuffer error insufficient resources"));
+                    return OMX_ErrorInsufficientResources;
+                }
+                BufferCtrlStruct *pBCTRL = (BufferCtrlStruct *) pBaseComponentPort->pBuffer[ii]->pOutputPortPrivate;
+                pBCTRL->iRefCount = 1; // initialize ref counter to 1 (since buffers are initially with the IL client)
+                pBCTRL->iIsBufferInComponentQueue = OMX_FALSE;
+
             }
 
             pBaseComponentPort->NumAssignedBuffers++;
@@ -1432,8 +1503,21 @@ OMX_ERRORTYPE OmxComponentBase::FreeBuffer(
             oscl_free(pBuffer->pBuffer);
             pBuffer->pBuffer = NULL;
 
+
+
             if (pBaseComponentPort->BufferState[ii] & HEADER_ALLOCATED)
             {
+                // deallocate the BufferCtrlStruct from output port
+                if (OMX_DirOutput == pBaseComponentPort->PortParam.eDir)
+                {
+
+                    if (pBuffer->pOutputPortPrivate)
+                    {
+                        oscl_free(pBuffer->pOutputPortPrivate);
+                        pBuffer->pOutputPortPrivate = NULL;
+                    }
+                }
+
                 oscl_free(pBuffer);
                 pBuffer = NULL;
             }
@@ -1446,8 +1530,20 @@ OMX_ERRORTYPE OmxComponentBase::FreeBuffer(
 
             pBaseComponentPort->NumAssignedBuffers--;
 
+
+
             if (pBaseComponentPort->BufferState[ii] & HEADER_ALLOCATED)
             {
+                // deallocate the BufferCtrlStruct
+                if (OMX_DirOutput == pBaseComponentPort->PortParam.eDir)
+                {
+                    if (pBuffer->pOutputPortPrivate)
+                    {
+                        oscl_free(pBuffer->pOutputPortPrivate);
+                        pBuffer->pOutputPortPrivate = NULL;
+                    }
+                }
+
                 oscl_free(pBuffer);
                 pBuffer = NULL;
             }
@@ -2001,14 +2097,7 @@ OMX_ERRORTYPE OmxComponentBase::MessageHandler(CoreMessage* Message)
                     break;
                 }
 
-
-                /*Flush ports*/
-                ErrorType = FlushPort(Message->MessageParam2);
-
-                SetNumBufferFlush(iNumPorts, -1, 0);
-
-                ResetAfterFlush(Message->MessageParam2);
-
+                // first reset the component and decoder (to unbind any reference buffers)
                 //If Flush Command has come at the input port, reset the individual component as well
                 if (OMX_PORT_INPUTPORT_INDEX == Message->MessageParam2
                         || OMX_PORT_ALLPORT_INDEX == Message->MessageParam2)
@@ -2018,6 +2107,15 @@ OMX_ERRORTYPE OmxComponentBase::MessageHandler(CoreMessage* Message)
 
                     pOpenmaxAOType->ResetComponent();
                 }
+
+
+                /*Flush ports*/
+                ErrorType = FlushPort(Message->MessageParam2);
+
+                SetNumBufferFlush(iNumPorts, -1, 0);
+
+                ResetAfterFlush(Message->MessageParam2);
+
 
                 if (ErrorType != OMX_ErrorNone)
                 {
@@ -2234,6 +2332,7 @@ OMX_ERRORTYPE OmxComponentBase::DoStateSet(OMX_U32 aDestinationState)
 
                 iNumInputBuffer = 0;
                 iOutBufferCount = 0;
+                iNumAvailableOutputBuffers = 0;
                 iPartialFrameAssembly = OMX_FALSE;
                 iEndofStream = OMX_FALSE;
                 iIsInputBufferEnded = OMX_TRUE;
@@ -2359,6 +2458,9 @@ OMX_ERRORTYPE OmxComponentBase::DoStateSet(OMX_U32 aDestinationState)
             case OMX_StateExecuting:
             case OMX_StatePause:
             {
+                // if there are reference buffers in the codec - they will be
+                // released (and re-queued back into the component queue)
+                ReleaseReferenceBuffers();
                 SetNumBufferFlush(iNumPorts, -1, 0);
                 SetPortFlushFlag(iNumPorts, -1, OMX_TRUE);
 
@@ -2703,6 +2805,19 @@ OMX_ERRORTYPE OmxComponentBase::FillThisBuffer(
     }
 
     iOutBufferCount++;
+
+    // take care of ref count for the buffer that was just received
+    BufferCtrlStruct *pBCTRL = (BufferCtrlStruct *)(pBuffer->pOutputPortPrivate);
+    pBCTRL->iRefCount -= 1;
+
+    pBCTRL->iIsBufferInComponentQueue = OMX_TRUE;
+
+    // if a buffer's ref count is 0 - it means that it is available
+    if (pBCTRL->iRefCount == 0)
+    {
+        iNumAvailableOutputBuffers++;
+
+    }
 
     //Signal the AO about the incoming buffer
     RunIfNotReady();

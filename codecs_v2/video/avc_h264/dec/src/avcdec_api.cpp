@@ -314,7 +314,7 @@ OSCL_EXPORT_REF AVCDec_Status   PVAVCDecSeqParamSet(AVCHandle *avcHandle, uint8 
 /* ======================================================================== */
 /*  Function : PVAVCDecGetSeqInfo()                                         */
 /*  Date     : 11/4/2003                                                    */
-/*  Purpose  : Get sequence parameter info. after SPS NAL is decoded.       */
+/*  Purpose  : Get sequence parameter info of the last decoded SPS          */
 /*  In/out   :                                                              */
 /*  Return   : AVCDEC_SUCCESS if succeed, AVC_FAIL if fail.                 */
 /*  Modified :                                                              */
@@ -327,38 +327,38 @@ OSCL_EXPORT_REF AVCDec_Status PVAVCDecGetSeqInfo(AVCHandle *avcHandle, AVCDecSPS
     AVCCommonObj *video;
     int PicWidthInMbs, PicHeightInMapUnits, FrameHeightInMbs;
 
-    if (decvid == NULL || decvid->seqParams[0] == NULL)
+    if (decvid == NULL || decvid->lastSPS == NULL)
     {
         return AVCDEC_FAIL;
     }
 
     video = decvid->common;
 
-    PicWidthInMbs = decvid->seqParams[0]->pic_width_in_mbs_minus1 + 1;
-    PicHeightInMapUnits = decvid->seqParams[0]->pic_height_in_map_units_minus1 + 1 ;
-    FrameHeightInMbs = (2 - decvid->seqParams[0]->frame_mbs_only_flag) * PicHeightInMapUnits ;
+    PicWidthInMbs = decvid->lastSPS->pic_width_in_mbs_minus1 + 1;
+    PicHeightInMapUnits = decvid->lastSPS->pic_height_in_map_units_minus1 + 1 ;
+    FrameHeightInMbs = (2 - decvid->lastSPS->frame_mbs_only_flag) * PicHeightInMapUnits ;
 
     seqInfo->FrameWidth = PicWidthInMbs << 4;
     seqInfo->FrameHeight = FrameHeightInMbs << 4;
 
-    seqInfo->frame_only_flag = decvid->seqParams[0]->frame_mbs_only_flag;
+    seqInfo->frame_only_flag = decvid->lastSPS->frame_mbs_only_flag;
 
-    if (decvid->seqParams[0]->frame_cropping_flag)
+    if (decvid->lastSPS->frame_cropping_flag)
     {
-        seqInfo->frame_crop_left = 2 * decvid->seqParams[0]->frame_crop_left_offset;
-        seqInfo->frame_crop_right = seqInfo->FrameWidth - (2 * decvid->seqParams[0]->frame_crop_right_offset + 1);
+        seqInfo->frame_crop_left = 2 * decvid->lastSPS->frame_crop_left_offset;
+        seqInfo->frame_crop_right = seqInfo->FrameWidth - (2 * decvid->lastSPS->frame_crop_right_offset + 1);
 
         if (seqInfo->frame_only_flag)
         {
-            seqInfo->frame_crop_top = 2 * decvid->seqParams[0]->frame_crop_top_offset;
-            seqInfo->frame_crop_bottom = seqInfo->FrameHeight - (2 * decvid->seqParams[0]->frame_crop_bottom_offset + 1);
+            seqInfo->frame_crop_top = 2 * decvid->lastSPS->frame_crop_top_offset;
+            seqInfo->frame_crop_bottom = seqInfo->FrameHeight - (2 * decvid->lastSPS->frame_crop_bottom_offset + 1);
             /* Note in 7.4.2.1, there is a contraint on the value of frame_crop_left and frame_crop_top
             such that they have to be less than or equal to frame_crop_right/2 and frame_crop_bottom/2, respectively. */
         }
         else
         {
-            seqInfo->frame_crop_top = 4 * decvid->seqParams[0]->frame_crop_top_offset;
-            seqInfo->frame_crop_bottom = seqInfo->FrameHeight - (4 * decvid->seqParams[0]->frame_crop_bottom_offset + 1);
+            seqInfo->frame_crop_top = 4 * decvid->lastSPS->frame_crop_top_offset;
+            seqInfo->frame_crop_bottom = seqInfo->FrameHeight - (4 * decvid->lastSPS->frame_crop_bottom_offset + 1);
             /* Note in 7.4.2.1, there is a contraint on the value of frame_crop_left and frame_crop_top
             such that they have to be less than or equal to frame_crop_right/2 and frame_crop_bottom/4, respectively. */
         }
@@ -368,6 +368,13 @@ OSCL_EXPORT_REF AVCDec_Status PVAVCDecGetSeqInfo(AVCHandle *avcHandle, AVCDecSPS
         seqInfo->frame_crop_bottom = seqInfo->FrameHeight - 1;
         seqInfo->frame_crop_right = seqInfo->FrameWidth - 1;
         seqInfo->frame_crop_top = seqInfo->frame_crop_left = 0;
+    }
+
+    seqInfo->num_frames = (uint32)(MaxDPBX2[(uint32)mapLev2Idx[decvid->lastSPS->level_idc]] << 2) / (3 * PicWidthInMbs * PicHeightInMapUnits) + 1;
+
+    if (seqInfo->num_frames  >= MAX_FS)
+    {
+        seqInfo->num_frames  = MAX_FS;
     }
 
     return AVCDEC_SUCCESS;

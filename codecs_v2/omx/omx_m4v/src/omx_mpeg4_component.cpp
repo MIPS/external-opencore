@@ -350,7 +350,7 @@ OMX_ERRORTYPE OpenmaxMpeg4AO::ConstructComponent(OMX_PTR pAppData, OMX_PTR pProx
     ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->PortParam.eDir = OMX_DirOutput;
     //Set to a default value, will change later during setparameter call
     ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->PortParam.nBufferCountActual = NUMBER_OUTPUT_BUFFER_MP4;
-    ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->PortParam.nBufferCountMin = 1;
+    ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->PortParam.nBufferCountMin = 2;
     ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->PortParam.nBufferSize = OUTPUT_BUFFER_SIZE_MP4;
     ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->PortParam.bEnabled = OMX_TRUE;
     ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->PortParam.bPopulated = OMX_FALSE;
@@ -419,8 +419,9 @@ OMX_ERRORTYPE OpenmaxMpeg4AO::ConstructComponent(OMX_PTR pAppData, OMX_PTR pProx
         OSCL_DELETE(ipMpegDecoderObject);
         ipMpegDecoderObject = NULL;
     }
-    ipMpegDecoderObject = OSCL_NEW(Mpeg4Decoder_OMX, ());
-    oscl_memset(ipMpegDecoderObject, 0, sizeof(Mpeg4Decoder_OMX));
+    ipMpegDecoderObject = OSCL_NEW(Mpeg4Decoder_OMX, ((OmxComponentBase*)this));
+    oscl_memset(&(ipMpegDecoderObject->VideoCtrl), 0, sizeof(VideoDecControls));
+
 
 #if PROXY_INTERFACE
 
@@ -528,7 +529,8 @@ void OpenmaxMpeg4AO::DecodeWithoutMarker()
     if ((!iIsInputBufferEnded) || iEndofStream)
     {
         //Check whether a new output buffer is available or not
-        if (0 == (GetQueueNumElem(pOutputQueue)))
+
+        if (iNumAvailableOutputBuffers == 0)
         {
             PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE, (0, "OpenmaxMpeg4AO : DecodeWithoutMarker OUT output buffer unavailable"));
             //Store the mark data for output buffer, as it will be overwritten next time
@@ -541,12 +543,30 @@ void OpenmaxMpeg4AO::DecodeWithoutMarker()
             return;
         }
 
-        ipOutputBuffer = (OMX_BUFFERHEADERTYPE*) DeQueue(pOutputQueue);
-        if (NULL == ipOutputBuffer)
+        // Dequeue until getting a valid (available output buffer)
+        BufferCtrlStruct *pBCTRL = NULL;
+        do
         {
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE, (0, "OpenmaxMpeg4AO : DecodeWithoutMarker Error, output buffer dequeue returned NULL, OUT"));
-            return;
+            ipOutputBuffer = (OMX_BUFFERHEADERTYPE*) DeQueue(pOutputQueue);
+            if (NULL == ipOutputBuffer)
+            {
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE, (0, "OpenmaxMpeg4AO : DecodeWithoutMarker Error, output buffer dequeue returned NULL, OUT"));
+                return;
+            }
+
+            pBCTRL = (BufferCtrlStruct *)ipOutputBuffer->pOutputPortPrivate;
+            if (pBCTRL->iRefCount == 0)
+            {
+                //buffer is available
+                iNumAvailableOutputBuffers--;
+            }
+            else
+            {
+                Queue(pOutputQueue, (void*)ipOutputBuffer);
+            }
         }
+        while (pBCTRL->iRefCount > 0);
+
 
         //Do not proceed if the output buffer can't fit the YUV data
         if ((ipOutputBuffer->nAllocLen < (OMX_U32)((((CurrWidth + 15) >> 4) << 4) *(((CurrHeight + 15) >> 4) << 4) * 3 / 2)) && (OMX_TRUE == ipMpegDecoderObject->Mpeg4InitCompleteFlag))
@@ -594,7 +614,7 @@ void OpenmaxMpeg4AO::DecodeWithoutMarker()
         TempInLength = iTempInputBufferLength;
 
         //Output buffer is passed as a short pointer
-        DecodeReturn = ipMpegDecoderObject->Mp4DecodeVideo(pOutBuffer, (OMX_U32*) & OutputLength,
+        DecodeReturn = ipMpegDecoderObject->Mp4DecodeVideo(ipOutputBuffer, (OMX_U32*) & OutputLength,
                        &(pTempInBuffer),
                        &TempInLength,
                        &(ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->PortParam),
@@ -706,7 +726,7 @@ void OpenmaxMpeg4AO::DecodeWithoutMarker()
          * Do not go for more than one round of processing at a time.
          * This may block the AO longer than required.
          */
-        if ((TempInLength != 0 || GetQueueNumElem(pInputQueue) > 0) && (GetQueueNumElem(pOutputQueue) > 0) && (ResizeNeeded == OMX_FALSE))
+        if ((TempInLength != 0 || GetQueueNumElem(pInputQueue) > 0) && (iNumAvailableOutputBuffers > 0) && (ResizeNeeded == OMX_FALSE))
         {
             RunIfNotReady();
         }
@@ -740,14 +760,37 @@ void OpenmaxMpeg4AO::DecodeWithMarker()
     if ((!iIsInputBufferEnded) || (iEndofStream))
     {
         //Check whether a new output buffer is available or not
-        if (0 == (GetQueueNumElem(pOutputQueue)))
+        if (iNumAvailableOutputBuffers == 0)
         {
             PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE, (0, "OpenmaxMpeg4AO : DecodeWithMarker OUT output buffer unavailable"));
             iNewInBufferRequired = OMX_FALSE;
             return;
         }
 
-        ipOutputBuffer = (OMX_BUFFERHEADERTYPE*) DeQueue(pOutputQueue);
+        // Dequeue until getting a valid (available output buffer)
+        BufferCtrlStruct *pBCTRL = NULL;
+        do
+        {
+            ipOutputBuffer = (OMX_BUFFERHEADERTYPE*) DeQueue(pOutputQueue);
+            if (NULL == ipOutputBuffer)
+            {
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE, (0, "OpenmaxMpeg4AO : DecodeWithoutMarker Error, output buffer dequeue returned NULL, OUT"));
+                return;
+            }
+
+            pBCTRL = (BufferCtrlStruct *)ipOutputBuffer->pOutputPortPrivate;
+            if (pBCTRL->iRefCount == 0)
+            {
+                //buffer is available
+                iNumAvailableOutputBuffers--;
+            }
+            else
+            {
+                Queue(pOutputQueue, (void*)ipOutputBuffer);
+            }
+        }
+        while (pBCTRL->iRefCount > 0);
+
         if (NULL == ipOutputBuffer)
         {
             PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE, (0, "OpenmaxMpeg4AO : DecodeWithMarker Error, output buffer dequeue returned NULL, OUT"));
@@ -790,7 +833,7 @@ void OpenmaxMpeg4AO::DecodeWithMarker()
             OutputLength = 0;
 
             //Output buffer is passed as a short pointer
-            DecodeReturn = ipMpegDecoderObject->Mp4DecodeVideo(pOutBuffer, (OMX_U32*) & OutputLength,
+            DecodeReturn = ipMpegDecoderObject->Mp4DecodeVideo(ipOutputBuffer, (OMX_U32*) & OutputLength,
                            &(ipFrameDecodeBuffer),
                            &(iInputCurrLength),
                            &(ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->PortParam),
@@ -934,7 +977,7 @@ void OpenmaxMpeg4AO::DecodeWithMarker()
          * This may block the AO longer than required.
          */
         if ((iInputCurrLength != 0 || GetQueueNumElem(pInputQueue) > 0)
-                && (GetQueueNumElem(pOutputQueue) > 0) && (ResizeNeeded == OMX_FALSE))
+                && (iNumAvailableOutputBuffers > 0) && (ResizeNeeded == OMX_FALSE))
         {
             RunIfNotReady();
         }

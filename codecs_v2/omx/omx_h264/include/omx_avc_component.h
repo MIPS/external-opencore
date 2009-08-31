@@ -44,7 +44,9 @@
 #define OUTPUT_BUFFER_SIZE_AVC 38016
 
 #define NUMBER_INPUT_BUFFER_AVC  10
-#define NUMBER_OUTPUT_BUFFER_AVC  2
+#define NUMBER_OUTPUT_BUFFER_AVC 10
+// NOTE: The PV AVC decoder can hold maximum of 17 frames. We allocate 10 (it doesn't make sense e.g. to allocate all 17 QVGA
+// If there is need for more than 10 - there will be a port reconfiguration
 
 
 class OpenmaxAvcAO : public OmxComponentVideo
@@ -68,6 +70,9 @@ class OpenmaxAvcAO : public OmxComponentVideo
         void DecodeWithoutMarker();
         void DecodeWithMarker();
         void ResetComponent();
+        void ReleaseReferenceBuffers();
+
+
         OMX_ERRORTYPE GetConfig(
             OMX_IN  OMX_HANDLETYPE hComponent,
             OMX_IN  OMX_INDEXTYPE nIndex,
@@ -77,6 +82,10 @@ class OpenmaxAvcAO : public OmxComponentVideo
                                        OMX_U8** aNalUnit,
                                        OMX_U32 aBufSize,
                                        OMX_U32* aSCSize);
+
+        // ipOutputBuffer is fed to the decoder which may keep it as a reference
+        // The decoder "spits" out another output buffer for rendering
+        OMX_BUFFERHEADERTYPE *ipOutputBufferForRendering;
 
     private:
 

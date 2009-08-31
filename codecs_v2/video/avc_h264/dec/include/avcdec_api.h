@@ -74,6 +74,7 @@ typedef struct tagAVCDecSPSInfo
     int  frame_crop_right;
     int  frame_crop_top;
     int  frame_crop_bottom;
+    int  num_frames; // minimal number of YUV frame buffers required
 
 } AVCDecSPSInfo;
 
@@ -187,6 +188,12 @@ extern "C"
     */
     OSCL_IMPORT_REF void    PVAVCCleanUpDecoder(AVCHandle *avcHandle);
 //AVCDec_Status EBSPtoRBSP(uint8 *nal_unit,int *size);
+
+    /**
+    This function provides the maximum number of dpb frames based on the SPS
+    \param "avcSeqInfo"  "Ptr to the SPS info ."
+    */
+    OSCL_IMPORT_REF uint32 PVAVCDecGetNumFs(void *avcSeqInfo);
 
 
 

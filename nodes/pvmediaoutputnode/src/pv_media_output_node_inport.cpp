@@ -108,7 +108,7 @@ PVMediaOutputNodePort::PVMediaOutputNodePort(PVMediaOutputNode* aNode)
         , PvmfPortBaseImpl(PVMF_MEDIAIO_NODE_INPUT_PORT_TAG
                            //this port handles its own port activity
                            , this
-                           , 10, 10, 70
+                           , 20, 20, 90
                            //output queue isn't needed.
                            , 0, 0, 0, "MediaOut")
         , iNode(aNode)

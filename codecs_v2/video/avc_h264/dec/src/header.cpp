@@ -172,6 +172,8 @@ AVCDec_Status DecodeSPS(AVCDecObject *decvid, AVCDecBitstream *stream)
     /* now everything is good, copy it */
     oscl_memcpy(decvid->seqParams[seq_parameter_set_id], seqParam, sizeof(AVCSeqParamSet));
 
+    decvid->lastSPS = decvid->seqParams[seq_parameter_set_id]; /* for PVAVCDecGetSeqInfo */
+
     return status;
 }
 

@@ -38,14 +38,16 @@ class Mpeg4Decoder_OMX
 {
     public:
 
-        Mpeg4Decoder_OMX();
+        Mpeg4Decoder_OMX() {};
+        Mpeg4Decoder_OMX(class OmxComponentBase *pComp);
 
         OMX_S32 InitializeVideoDecode(OMX_S32* aWidth, OMX_S32* aHeight,
                                       OMX_U8** aBuffer, OMX_S32* aSize, OMX_S32 mode);
 
         OMX_ERRORTYPE Mp4DecInit();
 
-        OMX_BOOL Mp4DecodeVideo(OMX_U8* aOutBuffer, OMX_U32* aOutputLength,
+
+        OMX_BOOL Mp4DecodeVideo(OMX_BUFFERHEADERTYPE* aOutBuffer, OMX_U32* aOutputLength,
                                 OMX_U8** aInputBuf, OMX_U32* aInBufSize,
                                 OMX_PARAM_PORTDEFINITIONTYPE* aPortParam,
                                 OMX_S32* aFrameCount, OMX_BOOL aMarkerFlag, OMX_BOOL *aResizeFlag);
@@ -56,15 +58,20 @@ class Mpeg4Decoder_OMX
 
         OMX_BOOL Mpeg4InitCompleteFlag;
 
+
 #if PROFILING_ON
         OMX_U32 iTotalTicks;
 #endif
 
-    private:
-        MP4DecodingMode CodecMode;
         VideoDecControls VideoCtrl;
 
-        OMX_U8* pFrame0, *pFrame1;
+    private:
+
+        OmxComponentBase *ipOMXComponent;
+        MP4DecodingMode CodecMode;
+        OMX_BOOL iReferenceYUVWasSet;
+        OMX_U32  iFrameSize;
+        OMX_U32 *ipRefCtrPreviousReferenceBuffer;
         OMX_S32 iDisplay_Width, iDisplay_Height;
         OMX_S32 iShortVideoHeader;
 

@@ -161,7 +161,7 @@ OMX_ERRORTYPE CallbackFillBufferDone(OMX_OUT OMX_HANDLETYPE aComponent,
 //Default values for number of Input/Output buffers. If the component needs more than this, it will be
 // negotiated. If the component does not need more than this number, the default is used
 #define NUMBER_INPUT_BUFFER 5
-#define NUMBER_OUTPUT_BUFFER 17
+#define NUMBER_OUTPUT_BUFFER 19
 
 // nal start code is 0001
 #define NAL_START_CODE_SIZE 4

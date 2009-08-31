@@ -69,6 +69,64 @@ typedef struct ComponentPrivateType
 
 } ComponentPrivateType;
 
+/*
+ buffer ref. counter is attached to output buffers
+in case video components need to keep buffers as references
+
+NOTES about the refcounter and iNumAvailableOutputBuffers:
+
+0) The refcounter for each buffer is initially 1 (indicating that
+omx client owns the buffer). The max value of the refcounter is 2
+(sent to omx client (e.g. for rendering) and used for reference by codec).
+The min value of the refcounter is 0 (queued in omx component queue and available).
+If the value of the refcounter is 1 - the buffer is either outside
+the omx component but not used by the codec, or is used by the codec
+and is still owned by omx component.
+
+1) The refcounter is decremented when the buffer is
+ - received i.e. queued in the omx component
+ - codec releases (unbinds) it because it no longer needs it for reference
+
+2) The refcounter is incremented when the output buffer is
+ - sent back to the client (fill buffer done callback)
+ - codec binds it because it wants to use it as reference
+
+3) When the codec releases the buffer - the buffer can be either:
+
+ - in the omx component queue (in which case it becomes available)
+ - outside the omx component (i.e. sent for rendering). This buffer will
+ become available when it gets queued
+
+4) When the buffer is owned by the omx component - it can either be:
+ - in the omx component queue (iIsBufferInComponentQueue is false in this case)
+
+ - dequeued and used inside the codec as a reference (iIsBufferInComponentQueue is true in this case)
+
+5) There could be multiple buffers that are used as reference and
+are also outstanding (sent for rendering).
+When such buffers then come back to the omx component - they are in
+the omx component queue - but they are not available. The codec
+needs to release/unbind them in order for them to become available.
+
+6) When OMX_PortFlush is done - the omx component  returns all the
+buffers from teh omx queue. But the decoder also needs to release
+the buffers that it is holding. The flag "iIsBufferInComponentQueue"
+helps the omx component differentiate between buffers that are
+held by the decoder or simply queued in the omx queue.
+
+7) The Flag "iIsBufferInComponentQueue" is true
+only when the buffer is held in the omx component queue.
+If the buffer is held by the decoder or the buffer is sent to omx client
+iIsBufferInComponentQueue is false.
+
+*/
+
+typedef struct BufferCtrlStruct
+{
+    OMX_U32 iRefCount;
+    OMX_BOOL iIsBufferInComponentQueue;
+} BufferCtrlStruct;
+
 /**
  * This is the Component template from which all
  * other Component instances are factored by the core.
@@ -401,6 +459,21 @@ class OmxComponentBase : public OsclActiveObject
         */
         virtual void SyncWithInputTimestamp() {};
         virtual void ResetComponent() {};
+        virtual void ReleaseReferenceBuffers() {};
+        virtual QueueType *GetOutputQueue()
+        {
+            QueueType*              pOutputQueue = ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->pBufferQueue;
+            return pOutputQueue;
+        };
+
+        // helper function for avc
+        virtual void InvalidateOutputBuffer()
+        {
+            ipOutputBuffer = NULL;
+            iNewOutBufRequired = OMX_TRUE;
+        }
+
+
         virtual OMX_ERRORTYPE ReAllocatePartialAssemblyBuffers(OMX_BUFFERHEADERTYPE* aInputBufferHdr)
         {
             OSCL_UNUSED_ARG(aInputBufferHdr);
@@ -425,6 +498,7 @@ class OmxComponentBase : public OsclActiveObject
 
         OSCL_IMPORT_REF void ReturnInputBuffer(OMX_BUFFERHEADERTYPE* pInputBuffer, ComponentPortType* pPort);
         OSCL_IMPORT_REF void ReturnOutputBuffer(OMX_BUFFERHEADERTYPE* pOutputBuffer, ComponentPortType* pPort);
+
 
         virtual OMX_ERRORTYPE ComponentInit() = 0;
         virtual OMX_ERRORTYPE ComponentDeInit() = 0;
@@ -453,7 +527,8 @@ class OmxComponentBase : public OsclActiveObject
         //Flag to call BufferMgmtFunction in the RunL() when the component state is executing
         OMX_BOOL                iBufferExecuteFlag;
         ComponentPrivateType*   ipAppPriv;
-
+        OMX_U32             iNumAvailableOutputBuffers; // make it public to be able to modify it from
+        // codec apis without much hassle
 
     protected:
 
@@ -487,6 +562,7 @@ class OmxComponentBase : public OsclActiveObject
         OMX_BOOL            iNewOutBufRequired;
         OMX_U32             iTempConsumedLength;
         OMX_U32             iOutBufferCount;
+
         OMX_BOOL            iCodecReady;
         OMX_U8*             ipInputCurrBuffer;
         OMX_U32             iInputCurrBufferSize;
@@ -496,7 +572,9 @@ class OmxComponentBase : public OsclActiveObject
 
         OMX_BOOL                iEndOfFrameFlag;
         OMX_BUFFERHEADERTYPE*   ipInputBuffer;
+
         OMX_BUFFERHEADERTYPE*   ipOutputBuffer;
+
         OMX_U32                 iOutputFrameLength;
         OMX_COMPONENTTYPE       iOmxComponent;  // structure
         OMX_U32                 iNumPorts;

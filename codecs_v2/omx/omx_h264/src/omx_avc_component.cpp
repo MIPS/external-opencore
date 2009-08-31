@@ -143,6 +143,7 @@ OMX_ERRORTYPE OpenmaxAvcAO::ConstructComponent(OMX_PTR pAppData, OMX_PTR pProxy)
     ipComponentProxy = pProxy;
     iOmxComponent.pApplicationPrivate = pAppData; // init the App data
 
+    ipOutputBufferForRendering = NULL;
     iNumNALs = 0;
     iCurrNAL = 0;
     iNALOffset = 0;
@@ -321,9 +322,9 @@ OMX_ERRORTYPE OpenmaxAvcAO::ConstructComponent(OMX_PTR pAppData, OMX_PTR pProxy)
     ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->PortParam.format.video.xFramerate = (15 << 16);
     ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->PortParam.eDir = OMX_DirOutput;
     //Set to a default value, will change later during setparameter call
-    ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->PortParam.nBufferCountActual = NUMBER_OUTPUT_BUFFER_AVC
-            ;
-    ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->PortParam.nBufferCountMin = 1;
+    ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->PortParam.nBufferCountActual = NUMBER_OUTPUT_BUFFER_AVC;
+
+    ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->PortParam.nBufferCountMin = NUMBER_OUTPUT_BUFFER_AVC;
     ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->PortParam.nBufferSize = OUTPUT_BUFFER_SIZE_AVC; //just use QCIF (as default)
     ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->PortParam.bEnabled = OMX_TRUE;
     ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->PortParam.bPopulated = OMX_FALSE;
@@ -374,13 +375,12 @@ OMX_ERRORTYPE OpenmaxAvcAO::ConstructComponent(OMX_PTR pAppData, OMX_PTR pProxy)
         ipAvcDec = NULL;
     }
 
-    ipAvcDec = OSCL_NEW(AvcDecoder_OMX, ());
+    ipAvcDec = OSCL_NEW(AvcDecoder_OMX, (this));
     if (ipAvcDec == NULL)
     {
         return OMX_ErrorInsufficientResources;
     }
 
-    oscl_memset(ipAvcDec, 0, sizeof(AvcDecoder_OMX));
 
 #if PROXY_INTERFACE
 
@@ -649,12 +649,9 @@ void OpenmaxAvcAO::DecodeWithoutMarker()
     ComponentPortType*  pOutPort =     ipPorts[OMX_PORT_OUTPUTPORT_INDEX];
     OMX_COMPONENTTYPE *     pHandle =      &iOmxComponent;
 
-    OMX_U8*                 pOutBuffer;
-    OMX_U32                 OutputLength;
     OMX_U8*                 pTempInBuffer;
     OMX_U32                 TempInLength;
     OMX_BOOL                MarkerFlag = OMX_FALSE;
-    OMX_TICKS               TempTimestamp;
     OMX_BOOL                ResizeNeeded = OMX_FALSE;
 
     OMX_U32 TempInputBufferSize = (2 * sizeof(uint8) * (ipPorts[OMX_PORT_INPUTPORT_INDEX]->PortParam.nBufferSize));
@@ -668,7 +665,8 @@ void OpenmaxAvcAO::DecodeWithoutMarker()
         if (OMX_TRUE == iNewOutBufRequired)
         {
             //Check whether a new output buffer is available or not
-            if (0 == (GetQueueNumElem(pOutputQueue)))
+
+            if (0 == iNumAvailableOutputBuffers)
             {
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE, (0, "OpenmaxAvcAO : DecodeWithoutMarker OUT output buffer unavailable"));
                 //Store the mark data for output buffer, as it will be overwritten next time
@@ -681,12 +679,33 @@ void OpenmaxAvcAO::DecodeWithoutMarker()
                 return;
             }
 
-            ipOutputBuffer = (OMX_BUFFERHEADERTYPE*) DeQueue(pOutputQueue);
-            if (NULL == ipOutputBuffer)
+            // Dequeue until getting a valid (available output buffer)
+            BufferCtrlStruct *pBCTRL = NULL;
+            do
             {
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE, (0, "OpenmaxAvcAO : DecodeWithoutMarker Error, output buffer dequeue returned NULL, OUT"));
-                return;
+                ipOutputBuffer = (OMX_BUFFERHEADERTYPE*) DeQueue(pOutputQueue);
+                if (NULL == ipOutputBuffer)
+                {
+                    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE, (0, "OpenmaxAvcAO : DecodeWithoutMarker Error, output buffer dequeue returned NULL, OUT"));
+                    return;
+                }
+
+                pBCTRL = (BufferCtrlStruct *)ipOutputBuffer->pOutputPortPrivate;
+                if (pBCTRL->iRefCount == 0)
+                {
+                    //buffer is available
+                    iNumAvailableOutputBuffers--;
+                    pBCTRL->iIsBufferInComponentQueue = OMX_FALSE;
+                    break; // found buffer, EXIT
+                }
+                else
+                {
+                    Queue(pOutputQueue, (void*)ipOutputBuffer);
+                }
             }
+            while (1);
+
+
 
             //Do not proceed if the output buffer can't fit the YUV data
             if ((ipOutputBuffer->nAllocLen < (OMX_U32)(((CurrWidth + 15)&(~15)) *((CurrHeight + 15)&(~15)) * 3 / 2)) && (OMX_TRUE == ipAvcDec->iAvcActiveFlag))
@@ -696,6 +715,7 @@ void OpenmaxAvcAO::DecodeWithoutMarker()
                 ipOutputBuffer = NULL;
                 return;
             }
+
             ipOutputBuffer->nFilledLen = 0;
             iNewOutBufRequired = OMX_FALSE;
         }
@@ -727,27 +747,28 @@ void OpenmaxAvcAO::DecodeWithoutMarker()
         }
         //Mark buffer code ends here
 
-        pOutBuffer = ipOutputBuffer->pBuffer;
-        OutputLength = 0;
 
         pTempInBuffer = ipTempInputBuffer + iTempConsumedLength;
         TempInLength = iTempInputBufferLength;
 
-        //Output buffer is passed as a short pointer
-        iDecodeReturn = ipAvcDec->AvcDecodeVideo_OMX(pOutBuffer, (OMX_U32*) & OutputLength,
+        //Output buffer ipOutputBuffer is passed in - decoder may or may not use it as a reference
+        // if the decoder decides to use ipOutputBuffer it will set ipOutputBuffer to NULL
+        // Decoder may or may not produce a different output buffer in ipOutputBufferForRendering
+        // if decoder produces output buffer for rendering - ipOutputBufferForRendering will != NULL
+        ipOutputBufferForRendering = NULL;
+
+        iDecodeReturn = ipAvcDec->AvcDecodeVideo_OMX(ipOutputBuffer, &ipOutputBufferForRendering,
                         &(pTempInBuffer),
                         &TempInLength,
                         &(ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->PortParam),
                         &iFrameCount,
-                        MarkerFlag, &TempTimestamp, &ResizeNeeded);
+                        MarkerFlag, &ResizeNeeded);
 
-        ipOutputBuffer->nFilledLen = OutputLength;
-
-        //offset not required in our case, set it to zero
-        ipOutputBuffer->nOffset = 0;
-
-        //Set the timestamp equal to the input buffer timestamp
-        ipOutputBuffer->nTimeStamp = iFrameTimestamp;
+        if (ipOutputBufferForRendering)
+        {
+            //Set the timestamp equal to the input buffer timestamp
+            ipOutputBufferForRendering->nTimeStamp = iFrameTimestamp;
+        }
 
         iTempConsumedLength += (iTempInputBufferLength - TempInLength);
         iTempInputBufferLength = TempInLength;
@@ -792,6 +813,9 @@ void OpenmaxAvcAO::DecodeWithoutMarker()
         {
             OMX_COMPONENTTYPE* pHandle = (OMX_COMPONENTTYPE*) ipAppPriv->CompHandle;
 
+            // make sure to release buffers held by decoder
+            ReleaseReferenceBuffers();
+
             iResizePending = OMX_TRUE;
             (*(ipCallbacks->EventHandler))
             (pHandle,
@@ -822,22 +846,44 @@ void OpenmaxAvcAO::DecodeWithoutMarker()
                 iNewInBufferRequired = OMX_TRUE;
                 iEndofStream = OMX_FALSE;
 
-                ipOutputBuffer->nFlags |= OMX_BUFFERFLAG_EOS;
+                if (ipOutputBuffer)
+                {
+                    ipOutputBuffer->nFlags |= OMX_BUFFERFLAG_EOS;
 
-                ReturnOutputBuffer(ipOutputBuffer, pOutPort);
-                ipOutputBuffer = NULL;
+                    ReturnOutputBuffer(ipOutputBuffer, pOutPort);
+                    ipOutputBuffer = NULL;
+                }
 
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE, (0, "OpenmaxAvcAO : DecodeWithoutMarker OUT"));
+
+                // method ReturnOutputBuffer automatically sets flag iNewOutBufRequired to true
+                // it is possible that the decoder never used ipOutputBuffer for reference.
+                // in this case - keep the ipOutputBuffer and reset the flag back
+
+
+                if (OMX_TRUE == iNewOutBufRequired && ipOutputBuffer != NULL)
+                {
+                    iNewOutBufRequired = OMX_FALSE;
+                }
 
                 return;
             }
         }
 
         //Send the output buffer back when it has some data in it
-        if (ipOutputBuffer->nFilledLen > 0)
+        if (ipOutputBufferForRendering)
         {
-            ReturnOutputBuffer(ipOutputBuffer, pOutPort);
-            ipOutputBuffer = NULL;
+            ReturnOutputBuffer(ipOutputBufferForRendering, pOutPort);
+            ipOutputBufferForRendering = NULL;
+        }
+
+        // method ReturnOutputBuffer automatically sets flag iNewOutBufRequired to true
+        // it is possible that the decoder never used ipOutputBuffer for reference.
+        // in this case - keep the ipOutputBuffer and reset the flag back
+
+        if (OMX_TRUE == iNewOutBufRequired && ipOutputBuffer != NULL)
+        {
+            iNewOutBufRequired = OMX_FALSE;
         }
 
         /* If there is some more processing left with current buffers, re-schedule the AO
@@ -845,7 +891,7 @@ void OpenmaxAvcAO::DecodeWithoutMarker()
          * This may block the AO longer than required.
          */
         if ((ResizeNeeded == OMX_FALSE) && ((TempInLength != 0) || (GetQueueNumElem(pInputQueue) > 0))
-                && ((GetQueueNumElem(pOutputQueue) > 0) || (OMX_FALSE == iNewOutBufRequired)))
+                && ((iNumAvailableOutputBuffers > 0) || (OMX_FALSE == iNewOutBufRequired)))
         {
             RunIfNotReady();
         }
@@ -868,8 +914,6 @@ void OpenmaxAvcAO::DecodeWithMarker()
     ComponentPortType*  pInPort = ipPorts[OMX_PORT_INPUTPORT_INDEX];
     ComponentPortType*  pOutPort = ipPorts[OMX_PORT_OUTPUTPORT_INDEX];
 
-    OMX_U8*                 pOutBuffer;
-    OMX_U32                 OutputLength;
     OMX_BOOL                MarkerFlag = OMX_TRUE;
     OMX_BOOL                Status;
     OMX_BOOL                ResizeNeeded = OMX_FALSE;
@@ -883,20 +927,42 @@ void OpenmaxAvcAO::DecodeWithMarker()
         if (OMX_TRUE == iNewOutBufRequired)
         {
             //Check whether a new output buffer is available or not
-            if (0 == (GetQueueNumElem(pOutputQueue)))
+
+            if (0 == iNumAvailableOutputBuffers)
             {
                 iNewInBufferRequired = OMX_FALSE;
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE, (0, "OpenmaxAvcAO : DecodeWithMarker OUT output buffer unavailable"));
                 return;
             }
 
-            ipOutputBuffer = (OMX_BUFFERHEADERTYPE*) DeQueue(pOutputQueue);
-            if (NULL == ipOutputBuffer)
+            // Dequeue until getting a valid (available output buffer)
+            BufferCtrlStruct *pBCTRL = NULL;
+            do
             {
-                iNewInBufferRequired = OMX_FALSE;
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE, (0, "OpenmaxAvcAO : DecodeWithMarker Error, output buffer dequeue returned NULL, OUT"));
-                return;
+                ipOutputBuffer = (OMX_BUFFERHEADERTYPE*) DeQueue(pOutputQueue);
+                if (NULL == ipOutputBuffer)
+                {
+                    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE, (0, "OpenmaxAvcAO : DecodeWithMarker Error, output buffer dequeue returned NULL, OUT"));
+                    return;
+                }
+
+                pBCTRL = (BufferCtrlStruct *)ipOutputBuffer->pOutputPortPrivate;
+                if (pBCTRL->iRefCount == 0)
+                {
+                    //buffer is available
+                    iNumAvailableOutputBuffers--;
+                    pBCTRL->iIsBufferInComponentQueue = OMX_FALSE;
+                    break; // found buffer, EXIT
+                }
+                else
+                {
+                    // queue the buffer back
+                    Queue(pOutputQueue, (void*)ipOutputBuffer);
+                }
             }
+            while (1);
+
+
 
             //Do not proceed if the output buffer can't fit the YUV data
             if ((ipOutputBuffer->nAllocLen < (OMX_U32)(((CurrWidth + 15)&(~15)) *((CurrHeight + 15)&(~15)) * 3 / 2)) && (OMX_TRUE == ipAvcDec->iAvcActiveFlag))
@@ -929,26 +995,25 @@ void OpenmaxAvcAO::DecodeWithMarker()
         }
         //Mark buffer code ends here
 
-        pOutBuffer = ipOutputBuffer->pBuffer;
-        OutputLength = 0;
-
         if (iInputCurrLength > 0)
         {
             //Store the input timestamp into a temp variable
             ipAvcDec->CurrInputTimestamp = iFrameTimestamp;
 
-            //Output buffer is passed as a short pointer
-            iDecodeReturn = ipAvcDec->AvcDecodeVideo_OMX(pOutBuffer, (OMX_U32*) & OutputLength,
+            //Output buffer ipOutputBuffer is passed in - decoder may or may not use it as a reference
+            // if the decoder decides to use ipOutputBuffer it will set ipOutputBuffer to NULL
+            // Decoder may or may not produce a different output buffer in ipOutputBufferForRendering
+            // if there is output to be rendered - then ipOutputBufferForRendering will be != NULL
+            ipOutputBufferForRendering = NULL;
+
+            iDecodeReturn = ipAvcDec->AvcDecodeVideo_OMX(ipOutputBuffer, &ipOutputBufferForRendering,
                             &(ipFrameDecodeBuffer),
                             &(iInputCurrLength),
                             &(ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->PortParam),
                             &iFrameCount,
                             MarkerFlag,
-                            &(ipOutputBuffer->nTimeStamp), &ResizeNeeded);
+                            &ResizeNeeded);
 
-            ipOutputBuffer->nFilledLen = OutputLength;
-            //offset not required in our case, set it to zero
-            ipOutputBuffer->nOffset = 0;
 
             if (ResizeNeeded == OMX_TRUE)
             {
@@ -959,6 +1024,8 @@ void OpenmaxAvcAO::DecodeWithMarker()
                 // dynamic port reconfiguration)
                 iResizePending = OMX_TRUE;
 
+                // make sure to release buffers held by decoder
+                ReleaseReferenceBuffers();
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE, (0, "OpenmaxAvcAO : Sending the PortSettings Changed Callback"));
 
                 (*(ipCallbacks->EventHandler))
@@ -1069,6 +1136,8 @@ void OpenmaxAvcAO::DecodeWithMarker()
         {
             if (!iDecodeReturn)
             {
+                // this is the very last buffer to be sent out.
+                // it is empty - and has EOS flag attached to it
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE, (0, "OpenmaxAvcAO : DecodeWithMarker EOS callback send"));
 
                 (*(ipCallbacks->EventHandler))
@@ -1082,9 +1151,15 @@ void OpenmaxAvcAO::DecodeWithMarker()
                 iNewInBufferRequired = OMX_TRUE;
                 iEndofStream = OMX_FALSE;
 
-                ipOutputBuffer->nFlags |= OMX_BUFFERFLAG_EOS;
-                ReturnOutputBuffer(ipOutputBuffer, pOutPort);
-                ipOutputBuffer = NULL;
+                // in this case - simply return the available ipOutputBuffer
+                // there is no need for involving decoder and ipOutputBufferForRendering - since this
+                // is an empty buffer
+                if (ipOutputBuffer)
+                {
+                    ipOutputBuffer->nFlags |= OMX_BUFFERFLAG_EOS;
+                    ReturnOutputBuffer(ipOutputBuffer, pOutPort);
+                    ipOutputBuffer = NULL;
+                }
 
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE, (0, "OpenmaxAvcAO : DecodeWithMarker OUT"));
 
@@ -1092,22 +1167,39 @@ void OpenmaxAvcAO::DecodeWithMarker()
             }
             else if (iDecodeReturn)
             {
-                Status = ipAvcDec->FlushOutput_OMX(pOutBuffer, &OutputLength, &(ipOutputBuffer->nTimeStamp), pOutPort->PortParam.format.video.nFrameWidth, pOutPort->PortParam.format.video.nFrameHeight);
-                ipOutputBuffer->nFilledLen = OutputLength;
+                // flush output buffer
+                ipOutputBufferForRendering = NULL;
 
-                ipOutputBuffer->nOffset = 0;
+                Status = ipAvcDec->FlushOutput_OMX(&ipOutputBufferForRendering);
 
                 if (OMX_FALSE != Status)
                 {
-                    ReturnOutputBuffer(ipOutputBuffer, pOutPort);
-                    ipOutputBuffer = NULL;
+                    // this is the case where Flush succeeded (i.e. there is one output
+                    // buffer left)
+                    if (ipOutputBufferForRendering)
+                    {
+                        ReturnOutputBuffer(ipOutputBufferForRendering, pOutPort);
+                        ipOutputBufferForRendering = NULL;
+                    }
 
                     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE, (0, "OpenmaxAvcAO : DecodeWithMarker OUT"));
                     RunIfNotReady();
+
+                    // method ReturnOutputBuffer automatically sets flag iNewOutBufRequired to true
+                    // it is possible that the decoder never used ipOutputBuffer for reference.
+                    // in this case - keep the ipOutputBuffer and reset the flag back
+
+                    if (OMX_TRUE == iNewOutBufRequired && ipOutputBuffer != NULL)
+                    {
+                        iNewOutBufRequired = OMX_FALSE;
+                    }
+
                     return;
                 }
                 else
                 {
+                    // this is the case where no output buffers can be flushed.
+                    // spin the AO once again to send the empty output buffer with EOS attached to it
                     iDecodeReturn = OMX_FALSE;
                     RunIfNotReady();
                 }
@@ -1115,10 +1207,19 @@ void OpenmaxAvcAO::DecodeWithMarker()
         }
 
         //Send the output buffer back when it has some data in it
-        if (ipOutputBuffer->nFilledLen > 0)
+        if (ipOutputBufferForRendering)
         {
-            ReturnOutputBuffer(ipOutputBuffer, pOutPort);
-            ipOutputBuffer = NULL;
+            ReturnOutputBuffer(ipOutputBufferForRendering, pOutPort);
+            ipOutputBufferForRendering = NULL;
+        }
+
+        // method ReturnOutputBuffer automatically sets flag iNewOutBufRequired to true
+        // it is possible that the decoder never used ipOutputBuffer for reference.
+        // in this case - keep the ipOutputBuffer and reset the flag back
+
+        if (OMX_TRUE == iNewOutBufRequired && ipOutputBuffer != NULL)
+        {
+            iNewOutBufRequired = OMX_FALSE;
         }
 
 
@@ -1127,7 +1228,7 @@ void OpenmaxAvcAO::DecodeWithMarker()
          * This may block the AO longer than required.
          */
         if ((ResizeNeeded == OMX_FALSE) && ((iInputCurrLength != 0) || (GetQueueNumElem(pInputQueue) > 0))
-                && ((GetQueueNumElem(pOutputQueue) > 0) || (OMX_FALSE == iNewOutBufRequired)))
+                && ((iNumAvailableOutputBuffers > 0) || (OMX_FALSE == iNewOutBufRequired)))
         {
             RunIfNotReady();
         }
@@ -1255,6 +1356,14 @@ void OpenmaxAvcAO::ResetComponent()
         ipAvcDec->ResetDecoder();
     }
 
+}
+
+void OpenmaxAvcAO::ReleaseReferenceBuffers()
+{
+    if (ipAvcDec)
+    {
+        ipAvcDec->ReleaseReferenceBuffers();
+    }
 }
 
 /* This routine finds the size of the start code and points to the beginning of the NAL.
