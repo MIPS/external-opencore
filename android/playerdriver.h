@@ -403,7 +403,6 @@ class PlayerDriver :
     int setupHttpStreamPost();
 
 
-
     // Starts the PV scheduler thread.
     static int startPlayerThread(void *cookie);
     int playerThread();
