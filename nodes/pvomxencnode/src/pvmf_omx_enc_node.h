@@ -1423,7 +1423,8 @@ class PVMFOMXEncNode
         OMX_TICKS ConvertTimestampIntoOMXTicks(const MediaClockConverter &src);
         uint32 ConvertOMXTicksIntoTimestamp(const OMX_TICKS &src);
 
-
+        bool CheckComponentForMultRoles(OMX_STRING aCompName, OMX_STRING aRole);
+        bool CheckComponentCapabilities(PVMFFormatType* aOutFormat);
 
 
 #ifdef _TEST_AE_ERROR_HANDLING
