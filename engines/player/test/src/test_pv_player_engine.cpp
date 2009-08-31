@@ -7510,14 +7510,14 @@ static void PV_itoa(uint32 value, oscl_wchar* buffer)
 {
     oscl_wchar *ptr, *firstdigit, temp;
     uint32 digval;
-    int32 radix = 10;
+    uint32 radix = 10;
     char nullTerm = '\0';
 
     ptr = buffer;
     firstdigit = ptr;
     do
     {
-        digval = (unsigned)(value % radix);
+        digval = (uint32)(value % radix);
         value /= radix;
 
         if (digval > radix - 1)
@@ -7553,7 +7553,8 @@ void pvplayer_engine_test::SetupLoggerScheduler()
         oscl_wchar tmp[5];
         // convert testcase number to string
         PV_itoa(iCurrentTestNumber, tmp);
-        logfilename += _STRLIT_CHAR(tmp);
+        OSCL_wHeapString<OsclMemAllocator> str(tmp);
+        logfilename += str;
         logfilename += _STRLIT_WCHAR(".log");
     }
     else
