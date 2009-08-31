@@ -2137,6 +2137,7 @@ void PVMp4FFComposerNode::DoReset(PVMp4FFCNCmd& aCmd)
     {
         if (iSampleInTrack)
         {
+            WriteDecoderSpecificInfo();
             status = RenderToFile();
             iSampleInTrack = false;
         }
