@@ -298,7 +298,6 @@ class PVMFSMRTSPTUnicastNode: public PVMFSMFSPBaseNode
         bool GraphConnect();
         bool RequestRTSPNodePorts(int32, uint32&);
         bool RequestJitterBufferPorts(int32 portType, uint32 &numPortsRequested);
-        bool RequestMediaLayerPorts(int32 portType, uint32& numPortsRequested);
         bool SendSessionSourceInfoToSessionController();
         bool PopulateTrackInfoVec();
         PVMFStatus ConnectPortPairs(PVMFPortInterface* aPort1, PVMFPortInterface* aPort2);

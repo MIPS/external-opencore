@@ -295,7 +295,6 @@ class PVMFSMRTSPUnicastNode: public PVMFSMFSPBaseNode
         bool ReserveSockets();
         bool RequestNetworkNodePorts(int32 portTag, uint32& numPortsRequested);
         bool RequestJitterBufferPorts(int32 portType, uint32 &numPortsRequested);
-        bool RequestMediaLayerPorts(int32 portType, uint32& numPortsRequested);
         bool SendSessionSourceInfoToSessionController();
         bool PopulateTrackInfoVec();
         PVMFStatus ConnectPortPairs(PVMFPortInterface* aPort1, PVMFPortInterface* aPort2);

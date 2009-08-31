@@ -1412,71 +1412,6 @@ bool PVMFSMRTSPUnicastNode::RequestJitterBufferPorts(int32 portType,
     return false;
 }
 
-bool PVMFSMRTSPUnicastNode::RequestMediaLayerPorts(int32 portType,
-        uint32& numPortsRequested)
-{
-    PVMFSMFSPChildNodeContainer* nodeContainer =
-        getChildNodeContainer(PVMF_SM_FSP_MEDIA_LAYER_NODE);
-
-    if (nodeContainer == NULL)
-    {
-        PVMF_SM_RTSP_LOGERROR((0, "PVMFSMRTSPUnicastNode:RequestMediaLayerPorts - getChildNodeContainer Failed"));
-        return false;
-    }
-
-    numPortsRequested = 0;
-    /*
-     * Request port - all media layer input ports
-     * are even numbered and output are odd numbered
-     */
-    int32 portTagStart = portType;
-
-    if ((iSessionSourceInfo->_sessionType == PVMF_MIME_DATA_SOURCE_RTSP_URL)
-            || (iSessionSourceInfo->_sessionType == PVMF_MIME_DATA_SOURCE_SDP_FILE)
-       )
-    {
-        for (uint32 i = 0; i < iTrackInfoVec.size(); i++)
-        {
-            PVMFRTSPTrackInfo trackInfo = iTrackInfoVec[i];
-
-            PVMFSMFSPCommandContext* internalCmd = RequestNewInternalCmd();
-            if (internalCmd != NULL)
-            {
-                internalCmd->cmd =
-                    nodeContainer->commandStartOffset +
-                    PVMF_SM_FSP_NODE_INTERNAL_REQUEST_PORT_OFFSET;
-                internalCmd->parentCmd = PVMF_SMFSP_NODE_CONSTRUCT_SESSION;
-                internalCmd->portContext.trackID = trackInfo.trackID;
-                internalCmd->portContext.portTag = portType;
-
-                OsclAny *cmdContextData =
-                    OSCL_REINTERPRET_CAST(OsclAny*, internalCmd);
-
-                PVMFNodeInterface* iNode = nodeContainer->iNode;
-
-                iNode->RequestPort(nodeContainer->iSessionId,
-                                   portTagStart,
-                                   &(trackInfo.iMimeType),
-                                   cmdContextData);
-                numPortsRequested++;
-                nodeContainer->iNumRequestPortsPending++;
-                nodeContainer->iNodeCmdState = PVMFSMFSP_NODE_CMD_PENDING;
-            }
-            else
-            {
-                PVMF_SM_RTSP_LOGERROR((0, "StreamingManagerNode:RequestMediaLayerPorts - RequestNewInternalCmd Failed"));
-                return false;
-            }
-            portTagStart += 2;
-        }
-
-        return true;
-    }
-
-    //error
-    return false;
-}
-
 void PVMFSMRTSPUnicastNode::DoPrepare(PVMFSMFSPBaseNodeCommand& aCmd)
 {
     PVMF_SM_RTSP_LOGSTACKTRACE((0, "PVMFSMRTSPUnicastNode::DoPrepare - In"));
@@ -1557,7 +1492,6 @@ bool PVMFSMRTSPUnicastNode::GraphConnect()
         /*
          * Go over the track list and connect:
          * network_node_port -> jitter_buffer_node_input_port;
-         * jitter_buffer_node_output_port -> media_layer_input_port
          */
         PVMFStatus status;
         for (uint32 i = 0; i < iTrackInfoVec.size(); i++)
@@ -1640,8 +1574,8 @@ void PVMFSMRTSPUnicastNode::DoRequestPort(PVMFSMFSPBaseNodeCommand& aCmd)
         aCmd.PVMFSMFSPBaseNodeCommandBase::Parse(tag, mimetype);
         /*
          * Do not Allocate a new port. RTSP unicast node treats the output
-         * port from the media layer as its own output port. Find the media
-         * layer output port corresponding to the input mimetype and hand the
+         * port from the jitter buffer as its own output port. Find the jitter
+         * buffer output port corresponding to the input mimetype and hand the
          * same out
          */
         PVMFRTSPTrackInfo* trackInfo = FindTrackInfo(tag);
@@ -1687,13 +1621,13 @@ void PVMFSMRTSPUnicastNode::DoReleasePort(PVMFSMFSPBaseNodeCommand& aCmd)
     /*
      * Since the streaming manager does not have ports of its own,
      * a release port command typically translates to disconnecting
-     * the underlying media layer port.
+     * the underlying jitter buffer port.
      */
     PVMFPortInterface* port;
     aCmd.PVMFSMFSPBaseNodeCommandBase::Parse((PVMFPortInterface*&)port);
 
     /*
-     * Find TrackInfo that corresponds to the Media Layer Output port
+     * Find TrackInfo that corresponds to the Jitter Buffer Output port
      * on which the current relase is being called.
      */
     PVMFRTSPTrackInfoVector::iterator it;
@@ -5521,7 +5455,6 @@ bool PVMFSMRTSPUnicastNode::DoRepositioningPause3GPPStreaming()
         int32 nodeTag = it->iNodeTag;
         //if pv playlist rp, don't pause
         if ((nodeTag == PVMF_SM_FSP_RTSP_SESSION_CONTROLLER_NODE) ||
-                (nodeTag == PVMF_SM_FSP_MEDIA_LAYER_NODE) ||
                 (nodeTag == PVMF_SM_FSP_JITTER_BUFFER_NODE) ||
                 (nodeTag == PVMF_SM_FSP_SOCKET_NODE))
         {

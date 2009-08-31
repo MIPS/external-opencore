@@ -1362,7 +1362,6 @@ bool PVMFSMRTSPTUnicastNode::GraphConnect()
         /*
          * Go over the track list and connect:
          * network_node_port -> jitter_buffer_node_input_port;
-         * jitter_buffer_node_output_port -> media_layer_input_port
          */
         PVMFStatus status;
         for (uint32 i = 0; i < iTrackInfoVec.size(); i++)
@@ -1446,8 +1445,8 @@ void PVMFSMRTSPTUnicastNode::DoRequestPort(PVMFSMFSPBaseNodeCommand& aCmd)
         aCmd.PVMFSMFSPBaseNodeCommandBase::Parse(tag, mimetype);
         /*
          * Do not Allocate a new port. RTSP unicast node treats the output
-         * port from the media layer as its own output port. Find the media
-         * layer output port corresponding to the input mimetype and hand the
+         * port from the jitter buffer as its own output port. Find the jitter
+         * buffer output port corresponding to the input mimetype and hand the
          * same out
          */
         PVMFRTSPTTrackInfo* trackInfo = FindTrackInfo(tag);
@@ -1493,13 +1492,13 @@ void PVMFSMRTSPTUnicastNode::DoReleasePort(PVMFSMFSPBaseNodeCommand& aCmd)
     /*
      * Since the streaming manager does not have ports of its own,
      * a release port command typically translates to disconnecting
-     * the underlying media layer port.
+     * the underlying jitter buffer port.
      */
     PVMFPortInterface* port;
     aCmd.PVMFSMFSPBaseNodeCommandBase::Parse((PVMFPortInterface*&)port);
 
     /*
-     * Find TrackInfo that corresponds to the Media Layer Output port
+     * Find TrackInfo that corresponds to the Jitter Buffer Output port
      * on which the current relase is being called.
      */
     PVMFRTSPTTrackInfoVector::iterator it;
@@ -4888,7 +4887,6 @@ bool PVMFSMRTSPTUnicastNode::DoRepositioningPause3GPPStreaming()
 
         //if pv playlist rp, don't pause
         if ((nodeTag == PVMF_SM_FSP_RTSP_SESSION_CONTROLLER_NODE) ||
-                (nodeTag == PVMF_SM_FSP_MEDIA_LAYER_NODE) ||
                 (nodeTag == PVMF_SM_FSP_JITTER_BUFFER_NODE))
         {
             PVMFSMFSPCommandContext* internalCmd = RequestNewInternalCmd();
