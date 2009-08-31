@@ -642,6 +642,9 @@ class PVMFMP3FFParserNode : public OsclTimerObject,
         bool oWaitingOnLicense;
         PVMFCommandId iCPMGetMetaDataKeysCmdId;
         PVMFCommandId iCPMGetMetaDataValuesCmdId;
+        PVMFCommandId iCPMUsageCompleteCmdId;
+        PVMFCommandId iCPMCloseSessionCmdId;
+        PVMFCommandId iCPMResetCmdId;
         class SubNodeCmd
         {
             public:

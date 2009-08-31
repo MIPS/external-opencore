@@ -2304,10 +2304,52 @@ void PVMFAMRFFParserNode::GetCPMMetaDataKeys()
     }
 }
 
+PVMFStatus
+PVMFAMRFFParserNode::CheckCPMCommandCompleteStatus(PVMFCommandId aID,
+        PVMFStatus aStatus)
+{
+    PVMFStatus status = aStatus;
+
+    /*
+    * If UsageComplete fails, ignore that error and close CPM session
+    * If close CPM session fails ignore it as well
+    * Issue Reset to CPM
+    * If CPM Reset fails, assert in source node.
+    * Complete Reset of source node once CPM reset completes.
+    */
+    if (aID == iCPMUsageCompleteCmdId)
+    {
+        if (aStatus != PVMFSuccess)
+        {
+            status = PVMFSuccess;
+        }
+
+    }
+    else if (aID == iCPMCloseSessionCmdId)
+    {
+        if (aStatus != PVMFSuccess)
+        {
+            status = PVMFSuccess;
+        }
+
+    }
+    else if (aID == iCPMResetCmdId)
+    {
+        if (aStatus != PVMFSuccess)
+        {
+            PVMF_AMRPARSERNODE_LOGINFO((0, "PVMFAMRFFParserNode::CPMCommandCompleted -  CPM Reset Failed"));
+            OSCL_ASSERT(false);
+        }
+
+    }
+
+    return status;
+}
+
 void PVMFAMRFFParserNode::CPMCommandCompleted(const PVMFCmdResp& aResponse)
 {
     PVMFCommandId id = aResponse.GetCmdId();
-    PVMFStatus status = aResponse.GetCmdStatus();
+    PVMFStatus status = CheckCPMCommandCompleteStatus(id, aResponse.GetCmdStatus());
 
     //if CPM comes back as PVMFErrNotSupported then by pass rest of the CPM
     //sequence. Fake success here so that node doesnt treat this as an error

@@ -2515,6 +2515,19 @@ void pvplayer_engine_test::test()
                 ((pvplayer_async_test_cpmdlapassthru*)iCurrentTest)->setProtocolRollOverMode();
                 break;
 
+            case CPM_DLA_OMA1PASSTRHU_UsageCompleteFails:
+                iCurrentTest = new pvplayer_async_test_cpmdlapassthru(testparam,
+                        PVMF_MIME_YUV420,
+                        PVMF_MIME_PCM16,
+                        iCurrentTestNumber,
+                        false,
+                        false,
+                        true,
+                        OMA1_DLA_USAGECOMPLETE_FAILS,
+                        false);
+                ((pvplayer_async_test_cpmdlapassthru*)iCurrentTest)->setProtocolRollOverMode();
+                break;
+
 
             case MetaDataTest:
                 iCurrentTest = new pvplayer_async_test_metadata(testparam);

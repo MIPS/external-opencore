@@ -25,23 +25,25 @@
 #include "pvmf_cpmplugin_interface.h"
 #endif
 
+struct PVMFOma1PassthruPluginFactoryTestModeParams
+{
+    bool aAuthorizeUsage;
+    bool aCancelAcquireLicense;
+    bool aSourceInitDataNotSupported;
+    bool aFailUsageComplete;
+    PVMFCPMContentType aCPMContentType;
+};
+
 //Oma1 Passthru plugin factory.
 class PVMFOma1PassthruPluginFactory : public PVMFCPMPluginFactory
 {
     public:
         OSCL_IMPORT_REF PVMFOma1PassthruPluginFactory();
-        OSCL_IMPORT_REF PVMFOma1PassthruPluginFactory(bool aAuthorizeUsage, bool aCancelAcquireLicense,
-                bool aSourceInitDataNotSupported,
-                PVMFCPMContentType aCPMContentType);
+        OSCL_IMPORT_REF PVMFOma1PassthruPluginFactory(PVMFOma1PassthruPluginFactoryTestModeParams aPluginParams);
         //from PVMFCPMPluginFactory
         OSCL_IMPORT_REF PVMFCPMPluginInterface* CreateCPMPlugin();
         OSCL_IMPORT_REF void DestroyCPMPlugin(PVMFCPMPluginInterface* aPlugIn);
-        bool iFailAuthorizeUsage;
-        bool iCancelAcquireLicense;
-        bool iSourceInitDataNotSupported;
-        PVMFCPMContentType iCPMContentType;
-    private:
-
+        PVMFOma1PassthruPluginFactoryTestModeParams iPluginParams;
 };
 
 #endif //PVMF_CPMPLUGIN_PASSTHRU_OMA1_FACTORY_H_INCLUDED

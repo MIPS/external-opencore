@@ -108,6 +108,9 @@ PVMFMP3FFParserNode::PVMFMP3FFParserNode(int32 aPriority)
     iCPMContainer.iCPMMetaDataExtensionInterface   = NULL;
     iCPMGetMetaDataKeysCmdId = 0;
     iCPMGetMetaDataValuesCmdId = 0;
+    iCPMUsageCompleteCmdId = 0;
+    iCPMCloseSessionCmdId = 0;
+    iCPMResetCmdId = 0;
     oWaitingOnLicense  = false;
     iFileHandle = NULL;
     iAutoPaused = false;
@@ -3614,7 +3617,7 @@ PVMFStatus PVMFCPMContainerMp3::IssueCommand(int32 aCmd)
                                 (0, "PVMFCPMContainerMp3::IssueCommand Calling UsageComplete"));
 
                 iCmdState = EBusy;
-                iCmdId = iCPM->UsageComplete(iSessionId, iUsageID);
+                iContainer->iCPMUsageCompleteCmdId = iCPM->UsageComplete(iSessionId, iUsageID);
                 return PVMFPending;
             }
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iContainer->iLogger, PVLOGMSG_STACK_TRACE,
@@ -3626,14 +3629,14 @@ PVMFStatus PVMFCPMContainerMp3::IssueCommand(int32 aCmd)
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iContainer->iLogger, PVLOGMSG_STACK_TRACE,
                             (0, "PVMFCPMContainerMp3::IssueCommand Calling CloseSession"));
             iCmdState = EBusy;
-            iCmdId = iCPM->CloseSession(iSessionId);
+            iContainer->iCPMCloseSessionCmdId = iCPM->CloseSession(iSessionId);
             return PVMFPending;
         case ECPMReset:
             OSCL_ASSERT(iCPM != NULL);
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iContainer->iLogger, PVLOGMSG_STACK_TRACE,
                             (0, "PVMFCPMContainerMp3::IssueCommand Calling Reset"));
             iCmdState = EBusy;
-            iCmdId = iCPM->Reset();
+            iContainer->iCPMResetCmdId = iCPM->Reset();
             return PVMFPending;
         default:
             OSCL_ASSERT(false);
@@ -3740,6 +3743,27 @@ OSCL_EXPORT_REF void PVMFCPMContainerMp3::CPMCommandCompleted(const PVMFCmdResp&
                                     aResponse.GetCmdStatus(),
                                     NULL,
                                     NULL);
+    }
+    else if (aResponse.GetCmdId() == iContainer->iCPMUsageCompleteCmdId ||
+             aResponse.GetCmdId() == iContainer->iCPMCloseSessionCmdId)
+    {
+        //In case these commands fail, ignore them
+        CommandDone(PVMFSuccess,
+                    aResponse.GetEventExtensionInterface(),
+                    aResponse.GetEventData());
+    }
+    else if (aResponse.GetCmdId() == iContainer->iCPMResetCmdId)
+    {
+        if (aResponse.GetCmdStatus() != PVMFSuccess)
+        {
+            OSCL_ASSERT(false);
+        }
+        else
+        {
+            CommandDone(PVMFSuccess,
+                        aResponse.GetEventExtensionInterface(),
+                        aResponse.GetEventData());
+        }
     }
     else
     {

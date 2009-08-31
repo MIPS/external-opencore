@@ -57,6 +57,9 @@
 #ifndef PVMF_META_DATA_EXTENSION_H_INCLUDED
 #include "pvmf_meta_data_extension.h"
 #endif
+#ifndef PVMF_CPMPLUGIN_PASSTHRU_OMA1_FACTORY_H_INCLUDED
+#include "pvmf_cpmplugin_passthru_oma1_factory.h"
+#endif
 
 /**
  * Macros for calling PVLogger
@@ -175,9 +178,7 @@ class PVMFCPMPassThruPlugInOMA1 : public OsclActiveObject,
         public PVMFMetadataExtensionInterface
 {
     public:
-        static PVMFCPMPluginInterface* CreatePlugIn(bool aFailAuthorizeUsage = false, bool aCancelAcquireLicense = false,
-                bool aSourceInitDataNotSupported = false,
-                PVMFCPMContentType aCPMContentType = PVMF_CPM_FORMAT_AUTHORIZE_BEFORE_ACCESS);
+        static PVMFCPMPluginInterface* CreatePlugIn(PVMFOma1PassthruPluginFactoryTestModeParams aPluginParams);
         static void DestroyPlugIn(PVMFCPMPluginInterface*);
 
     public:
@@ -298,10 +299,7 @@ class PVMFCPMPassThruPlugInOMA1 : public OsclActiveObject,
         void ThreadLogon();
         void ThreadLogoff();
 
-        OSCL_IMPORT_REF PVMFCPMPassThruPlugInOMA1(bool aFailAuthorizeUsage = false,
-                bool aCancelAcquireLicense = false,
-                bool aSourceInitDataNotSupported = false,
-                PVMFCPMContentType aCPMContentType = PVMF_CPM_FORMAT_AUTHORIZE_BEFORE_ACCESS,
+        OSCL_IMPORT_REF PVMFCPMPassThruPlugInOMA1(PVMFOma1PassthruPluginFactoryTestModeParams iPluginParams,
                 int32 aPriority = OsclActiveObject::EPriorityNominal);
 
         virtual ~PVMFCPMPassThruPlugInOMA1();
@@ -340,10 +338,7 @@ class PVMFCPMPassThruPlugInOMA1 : public OsclActiveObject,
         bool oSourceSet;
         OsclFileHandle* iFileHandle;
         friend class PVMFCPMPassThruPlugInOMA1DataStreamSyncInterfaceImpl;
-        bool iFailAuthorizeUsage;
-        bool iCancelAcquireLicense;
-        bool iSourceInitDataNotSupported;
-        PVMFCPMContentType iCPMContentType;
+        PVMFOma1PassthruPluginFactoryTestModeParams iPluginParams;
         PVMFDataStreamReadCapacityObserver* iDataStreamReadCapacityObserver;
 
         //metadata related

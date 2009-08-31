@@ -2692,6 +2692,39 @@ PVMFAACFFParserNode::CheckCPMCommandCompleteStatus(PVMFCommandId aID,
         PVMFStatus aStatus)
 {
     PVMFStatus status = aStatus;
+
+    /*
+    * If UsageComplete fails, ignore that error and close CPM session
+    * If close CPM session fails ignore it as well
+    * Issue Reset to CPM
+    * If CPM Reset fails, assert in source node.
+    * Complete Reset of source node once CPM reset completes.
+    */
+    if (aID == iCPMUsageCompleteCmdId)
+    {
+        if (aStatus != PVMFSuccess)
+        {
+            status = PVMFSuccess;
+        }
+
+    }
+    else if (aID == iCPMCloseSessionCmdId)
+    {
+        if (aStatus != PVMFSuccess)
+        {
+            status = PVMFSuccess;
+        }
+    }
+    else if (aID == iCPMResetCmdId)
+    {
+        if (aStatus != PVMFSuccess)
+        {
+            PVMF_AACPARSERNODE_LOGINFOHI((0, "PVMFAACFFParserNode::CPMCommandCompleted -  CPM Reset Failed"));
+            OSCL_ASSERT(false);
+        }
+
+    }
+
     if (aID == iCPMGetLicenseInterfaceCmdId)
     {
         if (aStatus == PVMFErrNotSupported)

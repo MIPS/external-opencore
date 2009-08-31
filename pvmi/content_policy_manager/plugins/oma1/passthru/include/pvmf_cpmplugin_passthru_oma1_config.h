@@ -38,9 +38,17 @@ class PVMFCPMOma1PassthruUtils
             //Create registry
             CPMPluginRegistry* _pRegistry = CPMPluginRegistryFactory::CreateCPMPluginRegistry();
 
+            PVMFOma1PassthruPluginFactoryTestModeParams iPluginParams;
+
+            iPluginParams.aAuthorizeUsage = false;
+            iPluginParams.aCancelAcquireLicense = false;
+            iPluginParams.aCPMContentType = PVMF_CPM_FORMAT_AUTHORIZE_BEFORE_ACCESS;
+            iPluginParams.aSourceInitDataNotSupported = false;
+            iPluginParams.aFailUsageComplete = false;
+
             //Create a passthru OMA1 plugin.
             PVMFCPMPluginInterface* _pPVMFCPMPluginPassthruOMA1 =
-                PVMFCPMPassThruPlugInOMA1::CreatePlugIn();
+                PVMFCPMPassThruPlugInOMA1::CreatePlugIn(iPluginParams);
 
             //Package the plugin with its user authentication data.
             CPMPluginContainer container(*_pPVMFCPMPluginPassthruOMA1, NULL);

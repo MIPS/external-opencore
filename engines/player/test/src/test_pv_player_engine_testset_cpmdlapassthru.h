@@ -66,7 +66,8 @@ enum OMA1_DLA_TESTMODE
     OMA1_DLA_UNKNOWN_CPM_CONTENTTYPE, //Set the cpm to return UnknownCotentFormat instead of AUTH_BEFORE_ACCESS
     OMA1_DLA_CANCEL_ACQUIRE_LICENSE_FAILS, //CancelAcquireLic will fail, GetLicense already returned CommandCompleted
     OMA1_DLA_CANCEL_ACQUIRE_LICENSE_SUCCEEDS, //CancelAcquireLic will succeed, GetLicense should not return CommandCompleted
-    OMA1_DLA_CONTENT_NOTSUPPORTED //RegiserContent will handle "notsupported" case
+    OMA1_DLA_CONTENT_NOTSUPPORTED, //RegiserContent will handle "notsupported" case
+    OMA1_DLA_USAGECOMPLETE_FAILS   //UsageComplete will fail, Reset should complete normally
 };
 
 /*!

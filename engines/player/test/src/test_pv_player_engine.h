@@ -997,10 +997,11 @@ class pvplayer_engine_test : public test_case,
             CPM_DLA_OMA1PASSTRHU_ContentNotSupported, //891
 
             StreamingOpenPlayForwardPlayUntilEOSTest, //892
+            CPM_DLA_OMA1PASSTRHU_UsageCompleteFails,
 
             //Multiple CPM Plugins
-            OpenPlayStop_MultiCPMTest, //893
-            StreamingLongPauseSeekTest, //894
+            OpenPlayStop_MultiCPMTest, //894
+            StreamingLongPauseSeekTest, //895
 
             /**
             * @test (900) GenericReset_AddDataSource Test

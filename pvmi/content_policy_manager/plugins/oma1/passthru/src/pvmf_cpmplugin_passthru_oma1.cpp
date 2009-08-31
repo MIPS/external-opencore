@@ -48,28 +48,27 @@ static const char PVMF_OMA1_PASSTHRU_PLUGIN_ALL_METADATA_KEY[] = "all";
 
 OSCL_EXPORT_REF PVMFOma1PassthruPluginFactory::PVMFOma1PassthruPluginFactory()
 {
-    iFailAuthorizeUsage = false; // To simulate "authorizeusage" failure
-    iCancelAcquireLicense = false; //to simulate "cancelgetLicense"
-    iCPMContentType = PVMF_CPM_FORMAT_AUTHORIZE_BEFORE_ACCESS; //default value
-    iSourceInitDataNotSupported = false; //To simulate SourceInitializationData failure
+    iPluginParams.aAuthorizeUsage = false; // To simulate "authorizeusage" failure
+    iPluginParams.aCancelAcquireLicense = false; //to simulate "cancelgetLicense"
+    iPluginParams.aCPMContentType = PVMF_CPM_FORMAT_AUTHORIZE_BEFORE_ACCESS; //default value
+    iPluginParams.aSourceInitDataNotSupported = false; //To simulate SourceInitializationData failure
+    iPluginParams.aFailUsageComplete = false;   //To simulate UsageComplete failure
 }
 
 //This constructor has only been introduced for test case scenarios simulation
-OSCL_EXPORT_REF PVMFOma1PassthruPluginFactory::PVMFOma1PassthruPluginFactory(bool aAuthorizeUsage, bool aCancelAcquireLicense,
-        bool aSourceInitDataNotSupported,
-        PVMFCPMContentType aCPMContentType)
+OSCL_EXPORT_REF PVMFOma1PassthruPluginFactory::PVMFOma1PassthruPluginFactory(PVMFOma1PassthruPluginFactoryTestModeParams aPluginParams)
 {
-    iFailAuthorizeUsage = aAuthorizeUsage;// To simulate "authorizeusage" failure
-    iCancelAcquireLicense = aCancelAcquireLicense; //To simulate "cancelAcquire"
-    iCPMContentType = aCPMContentType; //what test case sets
-    iSourceInitDataNotSupported = aSourceInitDataNotSupported;
+    iPluginParams.aAuthorizeUsage = aPluginParams.aAuthorizeUsage;// To simulate "authorizeusage" failure
+    iPluginParams.aCancelAcquireLicense = aPluginParams.aCancelAcquireLicense; //To simulate "cancelAcquire"
+    iPluginParams.aCPMContentType = aPluginParams.aCPMContentType; //what test case sets
+    iPluginParams.aSourceInitDataNotSupported = aPluginParams.aSourceInitDataNotSupported;
+    iPluginParams.aFailUsageComplete = aPluginParams.aFailUsageComplete;
 }
 
 //Oma1 Passthru plugin factory.
 OSCL_EXPORT_REF PVMFCPMPluginInterface* PVMFOma1PassthruPluginFactory::CreateCPMPlugin()
 {
-    return PVMFCPMPassThruPlugInOMA1::CreatePlugIn(iFailAuthorizeUsage, iCancelAcquireLicense,
-            iSourceInitDataNotSupported, iCPMContentType);
+    return PVMFCPMPassThruPlugInOMA1::CreatePlugIn(iPluginParams);
 }
 
 OSCL_EXPORT_REF void PVMFOma1PassthruPluginFactory::DestroyCPMPlugin(PVMFCPMPluginInterface* aPlugIn)
@@ -77,7 +76,7 @@ OSCL_EXPORT_REF void PVMFOma1PassthruPluginFactory::DestroyCPMPlugin(PVMFCPMPlug
     PVMFCPMPassThruPlugInOMA1::DestroyPlugIn(aPlugIn);
 }
 
-PVMFCPMPluginInterface* PVMFCPMPassThruPlugInOMA1::CreatePlugIn(bool aFailAuthorizeUsage, bool aCancelAcquireLicense, bool aSourceInitDataNotSupported, PVMFCPMContentType aCPMContentType)
+PVMFCPMPluginInterface* PVMFCPMPassThruPlugInOMA1::CreatePlugIn(PVMFOma1PassthruPluginFactoryTestModeParams aPluginParams)
 {
     PVMFCPMPassThruPlugInOMA1* plugIn = NULL;
     int32 err;
@@ -85,7 +84,7 @@ PVMFCPMPluginInterface* PVMFCPMPassThruPlugInOMA1::CreatePlugIn(bool aFailAuthor
              /*
               * Create pass thru OMA1.0 Plugin
               */
-             plugIn = OSCL_NEW(PVMFCPMPassThruPlugInOMA1, (aFailAuthorizeUsage, aCancelAcquireLicense, aSourceInitDataNotSupported, aCPMContentType));
+             plugIn = OSCL_NEW(PVMFCPMPassThruPlugInOMA1, (aPluginParams));
             );
     if (err != OsclErrNone)
     {
@@ -103,8 +102,7 @@ void PVMFCPMPassThruPlugInOMA1::DestroyPlugIn(PVMFCPMPluginInterface* aPlugIn)
 /**
  * Plugin Constructor & Destructor
  */
-OSCL_EXPORT_REF PVMFCPMPassThruPlugInOMA1::PVMFCPMPassThruPlugInOMA1(bool aFailAuthorizeUsage, bool aCancelAcquireLicense,
-        bool aSourceInitDataNotSupported, PVMFCPMContentType aCPMContentType,
+OSCL_EXPORT_REF PVMFCPMPassThruPlugInOMA1::PVMFCPMPassThruPlugInOMA1(PVMFOma1PassthruPluginFactoryTestModeParams aPluginParams,
         int32 aPriority)
         : OsclActiveObject(aPriority, "PVMFCPMPassThruPlugInOMA1")
         , iExtensionRefCount(0)
@@ -116,13 +114,15 @@ OSCL_EXPORT_REF PVMFCPMPassThruPlugInOMA1::PVMFCPMPassThruPlugInOMA1(bool aFailA
     iFileHandle = NULL;
     iDataStreamReadCapacityObserver = NULL;
     // To simulate "authorizeusage" failure
-    iFailAuthorizeUsage = aFailAuthorizeUsage;
+    iPluginParams.aAuthorizeUsage = aPluginParams.aAuthorizeUsage;
     //to simualte cancelGetLic
-    iCancelAcquireLicense = aCancelAcquireLicense;
+    iPluginParams.aCancelAcquireLicense = aPluginParams.aCancelAcquireLicense;
     //to simulate "notsupported" content
-    iSourceInitDataNotSupported = aSourceInitDataNotSupported;
+    iPluginParams.aSourceInitDataNotSupported = aPluginParams.aSourceInitDataNotSupported;
 
-    iCPMContentType = aCPMContentType;
+    iPluginParams.aFailUsageComplete = aPluginParams.aFailUsageComplete;
+
+    iPluginParams.aCPMContentType = aPluginParams.aCPMContentType;
     int32 err;
     OSCL_TRY(err,
              /*
@@ -350,11 +350,12 @@ PVMFCPMPassThruPlugInOMA1::SetSourceInitializationData(OSCL_wString& aSourceURL,
             iFileHandle=NULL;
         }
         */
-        if (iSourceInitDataNotSupported)
+        if (iPluginParams.aSourceInitDataNotSupported)
         {
-            iSourceInitDataNotSupported = false; //reset for next time
+            iPluginParams.aSourceInitDataNotSupported = false; //reset for next time
             return PVMFErrNotSupported;
         }
+
         oSourceSet = true;
         return PVMFSuccess;
     }
@@ -363,7 +364,7 @@ PVMFCPMPassThruPlugInOMA1::SetSourceInitializationData(OSCL_wString& aSourceURL,
 PVMFCPMContentType
 PVMFCPMPassThruPlugInOMA1::GetCPMContentType()
 {
-    return iCPMContentType;
+    return iPluginParams.aCPMContentType;
 }
 
 PVMFStatus PVMFCPMPassThruPlugInOMA1::QueryAccessInterfaceUUIDs(Oscl_Vector<PVUuid, OsclMemAllocator>& aUuids)
@@ -711,9 +712,9 @@ void PVMFCPMPassThruPlugInOMA1::DoAuthenticate(PVMFCPMPassThruPlugInOMA1Command&
 
 void PVMFCPMPassThruPlugInOMA1::DoAuthorizeUsage(PVMFCPMPassThruPlugInOMA1Command& aCmd)
 {
-    if (iFailAuthorizeUsage)
+    if (iPluginParams.aAuthorizeUsage)
     {
-        iFailAuthorizeUsage = false; //reset for next try
+        iPluginParams.aAuthorizeUsage = false; //reset for next try
         CommandComplete(iInputCommands, aCmd, PVMFErrDrmLicenseNotFound);
         return;
     }
@@ -740,13 +741,21 @@ void PVMFCPMPassThruPlugInOMA1::DoAuthorizeUsage(PVMFCPMPassThruPlugInOMA1Comman
 
 void PVMFCPMPassThruPlugInOMA1::DoUsageComplete(PVMFCPMPassThruPlugInOMA1Command& aCmd)
 {
-    CommandComplete(iInputCommands, aCmd, PVMFSuccess);
+    if (iPluginParams.aFailUsageComplete)
+    {
+        iPluginParams.aAuthorizeUsage = false;
+        CommandComplete(iInputCommands, aCmd, PVMFFailure);
+    }
+    else
+    {
+        CommandComplete(iInputCommands, aCmd, PVMFSuccess);
+    }
 }
 
 PVMFStatus PVMFCPMPassThruPlugInOMA1::DoGetLicense(PVMFCPMPassThruPlugInOMA1Command& aCmd)
 {
     PVMF_CPMPLUGIN_PASSTHRUOMA1_LOGWARNING((0, "PVMFCPMPassThruPlugInOMA1:DoGetLicense"));
-    if (!iCancelAcquireLicense)
+    if (!iPluginParams.aCancelAcquireLicense)
     {
         CommandComplete(iInputCommands, aCmd, PVMFSuccess);
         return PVMFSuccess;
@@ -754,7 +763,7 @@ PVMFStatus PVMFCPMPassThruPlugInOMA1::DoGetLicense(PVMFCPMPassThruPlugInOMA1Comm
     else
     {
         PVMF_CPMPLUGIN_PASSTHRUOMA1_LOGWARNING((0, "PVMFCPMPassThruPlugInOMA1:DoGetLicense - Simulating CancelAcquireLicense"));
-        iCancelAcquireLicense = false; //Reset for next time
+        iPluginParams.aCancelAcquireLicense = false; //Reset for next time
         return PVMFPending;
     }
 }
@@ -1224,6 +1233,8 @@ PVMFCPMPassThruPlugInOMA1DataStreamSyncInterfaceImpl::QueryReadCapacity(PvmiData
     {
         if (!iFileObject)
             return PVDS_FAILURE;
+        //TODO: This cast needs to be removed when oma1 pass thru plugin
+        //datastream implementation is updated for large file support
         int32 result = (TOsclFileOffsetInt32)(iFileObject->Size() - iFileObject->Tell());
         PVMF_CPMPLUGIN_PASSTHRUOMA1_LOGDEBUG((0, "PVMFCPMPassThruPlugInOMA1DataStreamSyncInterfaceImpl::QueryReadCapacity returning %d", result));
         if (result < 0)
@@ -1357,6 +1368,8 @@ PVMFCPMPassThruPlugInOMA1DataStreamSyncInterfaceImpl::GetCurrentPointerPosition(
     OSCL_UNUSED_ARG(sessionID);
     if (!iFileObject)
         return PVDS_FAILURE;
+    //TODO: This cast needs to be removed when oma1 pass thru plugin
+    //datastream implementation is updated for large file support
     int32 result = (TOsclFileOffsetInt32)iFileObject->Tell();
     PVMF_CPMPLUGIN_PASSTHRUOMA1_LOGDEBUG((0, "PVMFCPMPassThruPlugInOMA1DataStreamSyncInterfaceImpl::GetCurrentContentPosition returning %d", result));
     return (uint32)(result);

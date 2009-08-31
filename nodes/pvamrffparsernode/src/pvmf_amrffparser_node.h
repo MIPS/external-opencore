@@ -261,6 +261,8 @@ class PVMFAMRFFParserNode :  public PVMFNodeInterfaceImpl
         void GetCPMMetaDataValues();
         void GetCPMLicenseInterface();
 
+        PVMFStatus CheckCPMCommandCompleteStatus(PVMFCommandId, PVMFStatus);
+
         /* From PVMFCPMStatusObserver */
         void CPMCommandCompleted(const PVMFCmdResp& aResponse);
         PVMFStatus ParseAMRFile();

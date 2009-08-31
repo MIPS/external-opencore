@@ -7156,7 +7156,41 @@ PVMFMP4FFParserNode::CheckCPMCommandCompleteStatus(PVMFCommandId aID,
         PVMFStatus aStatus)
 {
     PVMFStatus status = aStatus;
-    if (aID == iCPMGetLicenseInterfaceCmdId)
+
+    /*
+    * If UsageComplete fails, ignore that error and close CPM session
+    * If close CPM session fails ignore it as well
+    * Issue Reset to CPM
+    * If CPM Reset fails, assert in source node.
+    * Complete Reset of source node once CPM reset completes.
+    */
+    if (aID == iCPMUsageCompleteCmdId)
+    {
+        if (aStatus != PVMFSuccess)
+        {
+            status = PVMFSuccess;
+        }
+
+    }
+    else if (aID == iCPMCloseSessionCmdId)
+    {
+        if (aStatus != PVMFSuccess)
+        {
+            status = PVMFSuccess;
+        }
+
+    }
+    else if (aID == iCPMResetCmdId)
+    {
+        if (aStatus != PVMFSuccess)
+        {
+            PVMF_MP4FFPARSERNODE_LOGINFO((0, "PVMFMP4FFParserNode::CPMCommandCompleted -  CPM Reset Failed"));
+            OSCL_ASSERT(false);
+        }
+
+    }
+
+    else if (aID == iCPMGetLicenseInterfaceCmdId)
     {
         if (aStatus == PVMFErrNotSupported)
         {
@@ -7212,8 +7246,8 @@ void PVMFMP4FFParserNode::CPMCommandCompleted(const PVMFCmdResp& aResponse)
     if (status != PVMFSuccess)
     {
         /*
-         * If any command fails, the sequence fails.
-         */
+        * If any other command fails, the sequence fails.
+        */
         if (aResponse.GetEventData() == NULL)
         {
             // If any command fails, the sequence fails.
