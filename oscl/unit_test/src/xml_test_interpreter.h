@@ -15,35 +15,26 @@
  * and limitations under the License.
  * -------------------------------------------------------------------
  */
-#ifndef ALLOC_DEALLOC_TEST_H_INCLUDED
-#define ALLOC_DEALLOC_TEST_H_INCLUDED
+#ifndef XML_TEST_INTERPRETER_H_INCLUDED
+#define XML_TEST_INTERPRETER_H_INCLUDED
 
-#include "test_base.h"
-
-
-class alloc_dealloc_test : public test_base
-{
-    public:
-        alloc_dealloc_test(bool aUseProxy, bool isSIP = false) :
-                test_base(aUseProxy, isSIP) {  };
-
-        ~alloc_dealloc_test()
-        {
-            iTestName = _STRLIT_CHAR("alloc dealloc");
-        }
-
-        void test();
-
-        void Run();
-
-        void DoCancel();
-
-        void CommandCompleted(const PVCmdResponse& aResponse);
-
-    private:
-};
-
-
+#ifndef TEST_RESULT_H
+#include "test_result.h"
 #endif
 
+#ifndef UNIT_TEST_XML_WRITER_H_INCLUDED
+#include "unit_test_xml_writer.h"
+#endif
 
+//a simple interpreter which returns an xml report of testing
+class xml_test_interpreter
+{
+    protected:
+        void add_problems(UnitTest_XMLWriter & writer, _STRING type, const _VECTOR(test_problem, unit_test_allocator)& vect) const;
+        _STRING problem_string(const test_problem& problem) const;
+    public:
+        //returns the interpretation of a test result
+        _STRING interpretation(const test_result& result, _STRING executable_name) const;
+};
+
+#endif

@@ -133,7 +133,7 @@ void pvplayer_async_test_genericopenplaystop::Run()
             if (error)
             {
                 PVPATB_TEST_IS_TRUE(false);
-                iObserver->TestCompleted(*iTestCase);
+                TestCompleted();
             }
             else
             {
@@ -825,7 +825,7 @@ void pvplayer_async_test_genericopenplaystop::Run()
             iMioFactory->DestroyAudioOutput(iMIOFileOutAudio);
             iMIOFileOutAudio = NULL;
 
-            iObserver->TestCompleted(*iTestCase);
+            TestCompleted();
         }
         break;
 

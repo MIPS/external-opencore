@@ -18,13 +18,22 @@
 #ifndef TEST_ENGINE_UTILITY_H_HEADER
 #define TEST_ENGINE_UTILITY_H_HEADER
 
-#include "unit_test_args.h"
+#include "test_case.h"
+#include "xml_test_interpreter.h"
+#include "oscl_file_io.h"
 #define MAX_324_TEST 100000
 
 void FindTestRange(cmd_line* command_line,
-                   int32& iFirstTest,
+                   int32 &iFirstTest,
                    int32 &iLastTest,
                    FILE* aFile);
 
+void FindXmlResultsFile(cmd_line* command_line,
+                        OSCL_HeapString<OsclMemAllocator> &XmlTestResultsFilename,
+                        FILE *aFile);
+
+void XmlSummary(OSCL_HeapString<OsclMemAllocator> &xmlresultsfile,
+                const test_result& result,
+                FILE *aFile);
 
 #endif

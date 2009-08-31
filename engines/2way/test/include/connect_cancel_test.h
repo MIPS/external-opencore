@@ -29,6 +29,7 @@ class connect_cancel_test : public test_base
 
         ~connect_cancel_test()
         {
+            iTestName = _STRLIT_CHAR("connect cancel");
         }
 
         void test();

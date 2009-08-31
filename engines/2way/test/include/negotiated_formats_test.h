@@ -34,6 +34,7 @@ class negotiated_formats_test : public av_test
                 iTempTestConfigInterface(NULL),
                 iTestConfigInterface(NULL)
         {
+            iTestName = _STRLIT_CHAR("negotiated formats");
         }
 
         ~negotiated_formats_test()

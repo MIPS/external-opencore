@@ -463,7 +463,6 @@ void PVMediaInputAuthorEngineTest::test()
 
         PVAuthorAsyncTestParam testparam;
         testparam.iObserver = this;
-        testparam.iTestCase = this;
         testparam.iTestCaseNum = iNextTestCase;
         testparam.iStdOut = iFile;
         if (!Set_Default_Params(iNextTestCase, iMediaInputParam) && (Invalid_Test != iNextTestCase))

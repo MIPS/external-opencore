@@ -17,14 +17,6 @@
  */
 #include "text_test_interpreter.h"
 
-
-_STRING _yak_itoa(int input)
-{
-    char buffer[32];
-    sprintf(buffer, "%d", input);
-    return buffer;
-}
-
 //the header for the report
 _STRING
 text_test_interpreter::header(const test_result& result) const

@@ -22,7 +22,7 @@
 #include "test_pv_mediainput_author_engine.h"
 #endif
 
-#define PVPATB_TEST_IS_TRUE( condition ) (iTestCase->test_is_true_stub( (condition), (#condition), __FILE__, __LINE__ ))
+#define PVPATB_TEST_IS_TRUE( condition ) (test_is_true_stub( (condition), (#condition), __FILE__, __LINE__ ))
 
 class pv_mediainput_async_test_reset: public pvauthor_async_test_base
 {

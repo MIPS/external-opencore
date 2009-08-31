@@ -15,8 +15,8 @@
  * and limitations under the License.
  * -------------------------------------------------------------------
  */
-#ifndef TEXT_TEST_INTERPRETER_H
-#define TEXT_TEST_INTERPRETER_H
+#ifndef TEXT_TEST_INTERPRETER_H_INCLUDED
+#define TEXT_TEST_INTERPRETER_H_INCLUDED
 
 #ifndef TEST_RESULT_H
 #include "test_result.h"
@@ -41,4 +41,4 @@ class text_test_interpreter
         _STRING interpretation(const test_result& result_to_interpret) const;
 };
 
-#endif
+#endif //TEXT_TEST_INTERPRETER_H_INCLUDED

@@ -1727,6 +1727,102 @@ void FindProxyEnabled(cmd_line* command_line, bool& aProxyEnabled, FILE *aFile, 
         iSourceFind = NULL;
     }
 }
+// Find xml results filename from arguments
+void FindXmlResultsFile(cmd_line* command_line, OSCL_HeapString<OsclMemAllocator> &XmlTestResultsFilename, FILE *aFile)
+{
+    int iFileArgument = 0;
+    bool iFileFound = false;
+    bool cmdline_iswchar = command_line->is_wchar();
+
+    int count = command_line->get_count();
+
+    // Search for the argument
+    // Go through each argument
+    for (int iFileSearch = 0; iFileSearch < count; iFileSearch++)
+    {
+        char argstr[128];
+        // Convert to UTF8 if necessary
+        if (cmdline_iswchar)
+        {
+            oscl_wchar* argwstr = NULL;
+            command_line->get_arg(iFileSearch, argwstr);
+            oscl_UnicodeToUTF8(argwstr, oscl_strlen(argwstr), argstr, 128);
+            argstr[127] = '\0';
+        }
+        else
+        {
+            char* tmpstr = NULL;
+            command_line->get_arg(iFileSearch, tmpstr);
+            int32 tmpstrlen = oscl_strlen(tmpstr) + 1;
+            if (tmpstrlen > 128)
+            {
+                tmpstrlen = 128;
+            }
+            oscl_strncpy(argstr, tmpstr, tmpstrlen);
+            argstr[tmpstrlen-1] = '\0';
+        }
+
+        // Do the string compare
+        if (oscl_strcmp(argstr, "-help") == 0)
+        {
+            fprintf(aFile, "XML test results file option.  Default is to not write a summary.\n");
+            fprintf(aFile, "  -xmlOutput file\n");
+            fprintf(aFile, "   Specify a source filename to output a test results summary to.\n");
+        }
+        else if (oscl_strcmp(argstr, "-xmlOutput") == 0)
+        {
+            iFileFound = true;
+            iFileArgument = ++iFileSearch;
+            break;
+        }
+    }
+
+    if (iFileFound)
+    {
+        // Convert to UTF8 if necessary
+        if (cmdline_iswchar)
+        {
+            oscl_wchar* cmd;
+            command_line->get_arg(iFileArgument, cmd);
+            char tmpstr[256];
+            oscl_UnicodeToUTF8(cmd, oscl_strlen(cmd), tmpstr, 256);
+            tmpstr[255] = '\0';
+            XmlTestResultsFilename = tmpstr;
+        }
+        else
+        {
+            char* cmdlinefilename = NULL;
+            command_line->get_arg(iFileArgument, cmdlinefilename);
+            XmlTestResultsFilename = cmdlinefilename;
+        }
+    }
+}
+
+void XmlSummary(OSCL_HeapString<OsclMemAllocator> &xmlresultsfile, const test_result& result)
+{
+    // Print out xml summary if requested
+    if (xmlresultsfile.get_size() > 0)
+    {
+        Oscl_File xmlfile(0);
+        Oscl_FileServer iFileServer;
+        iFileServer.Connect();
+        if (0 == xmlfile.Open(xmlresultsfile.get_str(), Oscl_File::MODE_READWRITE | Oscl_File::MODE_TEXT, iFileServer))
+        {
+            xml_test_interpreter xml_interp;
+            _STRING xml_results = xml_interp.interpretation(result, "PVPlayerEngineUnitTest");
+            fprintf(file, "\nWrote XML test summary to: %s.\n", xmlresultsfile.get_cstr());
+            xmlfile.Write(xml_results.c_str(), sizeof(char), oscl_strlen(xml_results.c_str()));
+            xmlfile.Close();
+            iFileServer.Close();
+        }
+        else
+        {
+            fprintf(file, "ERROR: Failed to open XML test summary log file: %s!\n", xmlresultsfile.get_cstr());
+        }
+    }
+}
+
+
 int _local_main(FILE *filehandle, cmd_line* command_line, bool&);
 
 
@@ -1902,6 +1998,9 @@ int _local_main(FILE *filehandle, cmd_line *command_line, bool& aPrintDetailedMe
     if (true == bHelp)
         return 0;
 
+    OSCL_HeapString<OsclMemAllocator> xmlresultsfile;
+    FindXmlResultsFile(command_line, xmlresultsfile, file);
+
     fprintf(file, "  Test case range %d to %d\n", firsttest, lasttest);
     fprintf(file, "  Compressed output Video(%s) Audio(%s)\n", (compV) ? "Yes" : "No", (compA) ? "Yes" : "No");
     fprintf(file, "  Log level %d; Log node %d Log Text %d Log Mem %d\n", loglevel, lognode, logtext, logmem);
@@ -1936,7 +2035,7 @@ int _local_main(FILE *filehandle, cmd_line *command_line, bool& aPrintDetailedMe
         double t2 = OsclTickCount::TicksToMsec(endtick);
         fprintf(file, "Total Execution time for test suite is: %f seconds", (t2 - t1) / 1000);
 
-        // Print out the results
+        XmlSummary(xmlresultsfile, engine_tests->last_result());
         text_test_interpreter interp;
         _STRING rs = interp.interpretation(engine_tests->last_result());
         fprintf(file, rs.c_str());
@@ -2254,13 +2353,11 @@ void pvplayer_engine_test::TestCompleted(test_case &tc)
 {
     // Print out the result for this test case
     const test_result the_result = tc.last_result();
+    m_last_result.add_result(the_result);
     fprintf(file, "Results for Test Case %d:\n", iCurrentTestNumber);
     fprintf(file, "  Successes %d, Failures %d\n"
-            , the_result.success_count() - iTotalSuccess, the_result.failures().size() - iTotalFail);
+            , the_result.success_count(), the_result.failures().size());
     fflush(file);
-    iTotalSuccess = the_result.success_count();
-    iTotalFail = the_result.failures().size();
-    iTotalError = the_result.errors().size();
 
     // Go to next test
     ++iCurrentTestNumber;
@@ -2408,7 +2505,6 @@ void pvplayer_engine_test::test()
         // Setup the standard test case parameters based on current unit test settings
         PVPlayerAsyncTestParam testparam;
         testparam.iObserver = this;
-        testparam.iTestCase = this;
         testparam.iTestMsgOutputFile = file;
         testparam.iFileName = iFileName;
         testparam.iFileType = iFileType;

@@ -29,6 +29,7 @@ class init_test : public test_base
 
         ~init_test()
         {
+            iTestName = _STRLIT_CHAR("init");
         }
 
         void test();

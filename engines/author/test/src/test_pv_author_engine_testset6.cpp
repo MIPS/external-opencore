@@ -644,7 +644,7 @@ void pv_mediainput_async_test_errorhandling::Run()
         case PVAE_CMD_CLEANUPANDCOMPLETE:
         {
             Cleanup();
-            iObserver->CompleteTest(*iTestCase);
+            CompleteTest();
         }
         break;
 
@@ -960,7 +960,7 @@ void pv_mediainput_async_test_errorhandling::CommandCompleted(const PVCmdRespons
                     }
                     //Since there are no MIO Components/Nodes, we end here
                     //No need to call RemoveDataSource
-                    iObserver->CompleteTest(*iTestCase);
+                    CompleteTest();
                     break;
                 }
 
@@ -1011,7 +1011,7 @@ void pv_mediainput_async_test_errorhandling::CommandCompleted(const PVCmdRespons
                 // RemoveDataSource failed
                 PVPATB_TEST_IS_TRUE(false);
                 RemoveMIOComp();
-                iObserver->CompleteTest(*iTestCase);
+                CompleteTest();
             }
         }
         break;
@@ -1026,7 +1026,7 @@ void pv_mediainput_async_test_errorhandling::CommandCompleted(const PVCmdRespons
             {
                 PVPATB_TEST_IS_TRUE(false);
             }
-            iObserver->CompleteTest(*iTestCase);
+            CompleteTest();
         }
         break;
 
@@ -1034,7 +1034,7 @@ void pv_mediainput_async_test_errorhandling::CommandCompleted(const PVCmdRespons
         {
             // Testing error if this is reached
             PVPATB_TEST_IS_TRUE(false);
-            iObserver->CompleteTest(*iTestCase);
+            CompleteTest();
         }
         break;
     }  //end switch

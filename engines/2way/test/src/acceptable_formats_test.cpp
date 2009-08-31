@@ -19,7 +19,7 @@
 
 void acceptable_formats_test::test()
 {
-    fprintf(fileoutput, "\n-------- Start acceptable formats test --------\n");
+    fprintf(fileoutput, "\n-------- Start %s test --------\n", iTestName.get_cstr());
     fprintf(fileoutput, "\n** Test Number: %d. ** \n", iTestNum);
     fprintf(fileoutput, "\nSETTINGS:\nProxy %d", iUseProxy);
     iSourceAndSinks->PrintFormatTypes();
@@ -39,7 +39,7 @@ void acceptable_formats_test::test()
         }
     }
 
-    TestCompleted(this);
+    TestCompleted();
     this->RemoveFromScheduler();
 }
 

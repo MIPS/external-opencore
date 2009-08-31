@@ -37,7 +37,7 @@ class basic_lipsync_test : public av_test,
                 , iRenderStarted(false)
                 , iAudioPresent(false)
         {
-
+            iTestName = _STRLIT_CHAR("basic lipsync");
         }
 
         ~basic_lipsync_test()

@@ -31,6 +31,7 @@ class video_only_test : public test_base
 
         {
             iUsingVideo = true;
+            iTestName = _STRLIT_CHAR("video only");
         }
 
         ~video_only_test()

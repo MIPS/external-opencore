@@ -89,6 +89,13 @@ class UnitTest_HeapBase
 #define _APPEND(string,value) string+=(value)
 #define _VECTOR(var,allocator) UnitTest_Vector<var,allocator>
 
+inline _STRING _yak_itoa(int input)
+{
+    char buffer[32];
+    sprintf(buffer, "%d", input);
+    return buffer;
+}
+
 
 #endif //UNIT_TEST_COMMON_H
 

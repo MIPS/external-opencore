@@ -140,7 +140,7 @@ void pvplayer_async_test_cpmdlapassthru::Run()
             if (error)
             {
                 PVPATB_TEST_IS_TRUE(false);
-                iObserver->TestCompleted(*iTestCase);
+                TestCompleted();
             }
             else
             {
@@ -721,7 +721,7 @@ void pvplayer_async_test_cpmdlapassthru::Run()
 
             delete iLocalDataSource;
             iLocalDataSource = NULL;
-            iObserver->TestCompleted(*iTestCase);
+            TestCompleted();
         }
         break;
 

@@ -72,7 +72,7 @@ void pvauthor_async_test_miscellaneous::HandleInformationalEvent(const PVAsyncIn
                             (0, "pvauthor_async_test_miscellaneous::HandleNodeInformationalEvent: Max file size reached"));
             Cancel();
             PVPATB_TEST_IS_TRUE(true);
-            iObserver->CompleteTest(*iTestCase);
+            CompleteTest();
             break;
 
         case PVMF_COMPOSER_DURATION_PROGRESS:
@@ -393,7 +393,7 @@ void pvauthor_async_test_miscellaneous::SelectComposer()
             PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_ERR,
                             (0, "pvauthor_async_test_miscellaneous::SelectComposer: Error - No composer type for test case"));
             PVPATB_TEST_IS_TRUE(false);
-            iObserver->CompleteTest(*iTestCase);
+            CompleteTest();
             return;
     }
 
@@ -1227,7 +1227,7 @@ void pvauthor_async_test_miscellaneous::Run()
         case PVAE_CMD_CLEANUPANDCOMPLETE:
         {
             Cleanup();
-            iObserver->CompleteTest(*iTestCase);
+            CompleteTest();
         }
         break;
 
@@ -1392,7 +1392,7 @@ void pvauthor_async_test_miscellaneous::CommandCompleted(const PVCmdResponse& aR
                     PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_ERR,
                                     (0, "pvauthor_async_test_miscellaneous::CommandCompleted: Error - ConfigureVideoEncoder failed"));
                     PVPATB_TEST_IS_TRUE(false);
-                    iObserver->CompleteTest(*iTestCase);
+                    CompleteTest();
                 }
                 else
                 {
@@ -1417,7 +1417,7 @@ void pvauthor_async_test_miscellaneous::CommandCompleted(const PVCmdResponse& aR
                     PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_ERR,
                                     (0, "pvauthor_async_test_miscellaneous::CommandCompleted: Error - ConfigureTextEncoder failed"));
                     PVPATB_TEST_IS_TRUE(false);
-                    iObserver->CompleteTest(*iTestCase);
+                    CompleteTest();
                 }
                 else
                 {
@@ -1529,7 +1529,7 @@ void pvauthor_async_test_miscellaneous::CommandCompleted(const PVCmdResponse& aR
                     }
                     //Since there are no testInputs, we end here
                     //No need to call RemoveDataSource
-                    iObserver->CompleteTest(*iTestCase);
+                    CompleteTest();
                     break;
                 }
                 iState = PVAE_CMD_REMOVE_DATA_SOURCE;
@@ -1540,7 +1540,7 @@ void pvauthor_async_test_miscellaneous::CommandCompleted(const PVCmdResponse& aR
                 // Reset failed
                 PVPATB_TEST_IS_TRUE(false);
                 OSCL_ASSERT("ERROR -- Response failure for CMD_RESET");
-                iObserver->CompleteTest(*iTestCase);
+                CompleteTest();
             }
             break;
 
@@ -1557,7 +1557,7 @@ void pvauthor_async_test_miscellaneous::CommandCompleted(const PVCmdResponse& aR
                     PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_ERR,
                                     (0, "pvauthor_async_test_miscellaneous::CommandCompleted: Error - DeleteTestInputs failed"));
                     PVPATB_TEST_IS_TRUE(false);
-                    iObserver->CompleteTest(*iTestCase);
+                    CompleteTest();
                     return;
                 }
                 else
@@ -1570,7 +1570,7 @@ void pvauthor_async_test_miscellaneous::CommandCompleted(const PVCmdResponse& aR
             {
                 // RemoveDataSource failed
                 PVPATB_TEST_IS_TRUE(false);
-                iObserver->CompleteTest(*iTestCase);
+                CompleteTest();
             }
             break;
         case PVAE_CMD_CLOSE:
@@ -1583,14 +1583,14 @@ void pvauthor_async_test_miscellaneous::CommandCompleted(const PVCmdResponse& aR
             {
                 PVPATB_TEST_IS_TRUE(false);
             }
-            iObserver->CompleteTest(*iTestCase);
+            CompleteTest();
         }
         break;
         default:
         {
             // Testing error if this is reached
             PVPATB_TEST_IS_TRUE(false);
-            iObserver->CompleteTest(*iTestCase);
+            CompleteTest();
         }
     }
 }

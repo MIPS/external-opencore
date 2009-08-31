@@ -30,6 +30,7 @@ class av_test : public test_base
             iUsingAudio = true;
             iUsingVideo = true;
             inumCalled = 0;
+            iTestName = _STRLIT_CHAR("av");
         }
 
         ~av_test()

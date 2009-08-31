@@ -21,7 +21,7 @@
 
 void init_test::test()
 {
-    fprintf(fileoutput, "----- Start init test, num runs %d, proxy %d. ----- \n", iMaxRuns, iUseProxy);
+    fprintf(fileoutput, "----- Start %s test, num runs %d, proxy %d. ----- \n", iTestName.get_cstr(), iMaxRuns, iUseProxy);
     fprintf(fileoutput, "\n** Test Number: %d. ** \n", iTestNum);
     int error = 0;
 
@@ -38,7 +38,7 @@ void init_test::test()
         }
     }
 
-    TestCompleted(this);
+    TestCompleted();
     this->RemoveFromScheduler();
 }
 

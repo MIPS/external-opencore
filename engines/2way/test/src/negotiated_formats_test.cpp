@@ -19,7 +19,7 @@
 
 void negotiated_formats_test::test()
 {
-    fprintf(fileoutput, "\n-------- Start negotiated formats test --------\n");
+    fprintf(fileoutput, "\n-------- Start %s test --------\n", iTestName.get_cstr());
     fprintf(fileoutput, "\n** Test Number: %d. ** \n", iTestNum);
     fprintf(fileoutput, "\nSETTINGS:\nProxy %d", iUseProxy);
     iSourceAndSinks->PrintFormatTypes();
@@ -38,7 +38,7 @@ void negotiated_formats_test::test()
             OSCL_LEAVE(error);
         }
     }
-    TestCompleted(this);
+    TestCompleted();
     this->RemoveFromScheduler();
 }
 

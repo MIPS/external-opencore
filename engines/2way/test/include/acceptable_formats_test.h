@@ -36,6 +36,7 @@ class acceptable_formats_test : public av_test
         acceptable_formats_test(bool aUseProxy = false)
                 : av_test(aUseProxy)
         {
+            iTestName = _STRLIT_CHAR("acceptable formats");
         }
 
         ~acceptable_formats_test()

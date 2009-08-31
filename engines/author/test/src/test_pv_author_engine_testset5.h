@@ -25,7 +25,7 @@
 #include "pvmi_fileio_kvp.h"
 #endif
 
-#define PVPATB_TEST_IS_TRUE( condition ) (iTestCase->test_is_true_stub( (condition), (#condition), __FILE__, __LINE__ ))
+#define PVPATB_TEST_IS_TRUE( condition ) (test_is_true_stub( (condition), (#condition), __FILE__, __LINE__ ))
 
 #define TEST_TIMEOUT_FACTOR 8  //take into account AVC encoder and symbian emulator
 class pv_mediainput_async_test_opencomposestop: public pvauthor_async_test_base,

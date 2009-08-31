@@ -31,6 +31,7 @@ class user_input_test : public test_base
 
         ~user_input_test()
         {
+            iTestName = _STRLIT_CHAR("user input");
         }
 
         void test();

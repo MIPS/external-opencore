@@ -23,7 +23,15 @@
 
 void connect_test::test()
 {
-    fprintf(fileoutput, "----- Start %s test, num runs %d, proxy %d. ----- \n", iRunTimerTest ? "timer configuration and encoder extension IF" : "connect", iMaxRuns, iUseProxy);
+    if (iRunTimerTest)
+    {
+        iTestName = _STRLIT_CHAR("timer configuration and encoder extension IF");
+    }
+    else
+    {
+        iTestName = _STRLIT_CHAR("connect");
+    }
+    fprintf(fileoutput, "----- Start %s test, num runs %d, proxy %d. ----- \n", iTestName.get_cstr(), iMaxRuns, iUseProxy);
     fprintf(fileoutput, "\n** Test Number: %d. ** \n", iTestNum);
     int error = 0;
 
@@ -40,7 +48,7 @@ void connect_test::test()
         }
     }
 
-    TestCompleted(this);
+    TestCompleted();
     this->RemoveFromScheduler();
 }
 

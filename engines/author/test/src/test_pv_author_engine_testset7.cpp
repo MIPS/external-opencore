@@ -69,7 +69,7 @@ void pv_mediainput_async_test_reset::HandleInformationalEvent(const PVAsyncInfor
                             (0, "pv_mediainput_async_test_reset::HandleNodeInformationalEvent: Max file size reached"));
             Cancel();
             PVPATB_TEST_IS_TRUE(true);
-            iObserver->CompleteTest(*iTestCase);
+            CompleteTest();
             break;
 
         case PVMF_COMPOSER_DURATION_PROGRESS:
@@ -641,7 +641,7 @@ void pv_mediainput_async_test_reset::Run()
         case PVAE_CMD_CLEANUPANDCOMPLETE:
         {
             Cleanup();
-            iObserver->CompleteTest(*iTestCase);
+            CompleteTest();
         }
         break;
 
@@ -1000,7 +1000,7 @@ void pv_mediainput_async_test_reset::CommandCompleted(const PVCmdResponse& aResp
                     // Reset failed
                     PVPATB_TEST_IS_TRUE(false);
                     OSCL_ASSERT("ERROR -- Response failure for CMD_RESET");
-                    iObserver->CompleteTest(*iTestCase);
+                    CompleteTest();
                 }
             }
         }
@@ -1042,7 +1042,7 @@ void pv_mediainput_async_test_reset::CommandCompleted(const PVCmdResponse& aResp
             {
                 // RemoveDataSource failed
                 PVPATB_TEST_IS_TRUE(false);
-                iObserver->CompleteTest(*iTestCase);
+                CompleteTest();
             }
         }
         break;
@@ -1057,7 +1057,7 @@ void pv_mediainput_async_test_reset::CommandCompleted(const PVCmdResponse& aResp
             {
                 PVPATB_TEST_IS_TRUE(false);
             }
-            iObserver->CompleteTest(*iTestCase);
+            CompleteTest();
         }
         break;
 
@@ -1065,7 +1065,7 @@ void pv_mediainput_async_test_reset::CommandCompleted(const PVCmdResponse& aResp
         {
             // Testing error if this is reached
             PVPATB_TEST_IS_TRUE(false);
-            iObserver->CompleteTest(*iTestCase);
+            CompleteTest();
         }
         break;
     }  //end switch

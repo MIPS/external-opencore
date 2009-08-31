@@ -241,7 +241,7 @@ void pvplayer_async_test_downloadbase::Run()
             if (error)
             {
                 PVPATB_TEST_IS_TRUE(false);
-                iObserver->TestCompleted(*iTestCase);
+                TestCompleted();
             }
             else
             {
@@ -661,7 +661,7 @@ void pvplayer_async_test_downloadbase::Run()
             //call the test-case specific cleanup.
             CleanupData();
 
-            iObserver->TestCompleted(*iTestCase);
+            TestCompleted();
         }
         break;
         case STATE_CANCELALL:   //Added for the derived class pvplayer_async_test_cnclall_prtcl_rllovr
@@ -2017,7 +2017,7 @@ void pvplayer_async_test_3gppdlcancelduringinit::Run()
             if (error)
             {
                 PVPATB_TEST_IS_TRUE(false);
-                iObserver->TestCompleted(*iTestCase);
+                TestCompleted();
             }
             else
             {
@@ -2134,7 +2134,7 @@ void pvplayer_async_test_3gppdlcancelduringinit::Run()
             delete iDownloadHttpContextData;
             iDownloadHttpContextData = NULL;
 
-            iObserver->TestCompleted(*iTestCase);
+            TestCompleted();
         }
         break;
 
@@ -2463,7 +2463,7 @@ void pvplayer_async_test_3gppdlcancelduringinitdelay::Run()
             if (error)
             {
                 PVPATB_TEST_IS_TRUE(false);
-                iObserver->TestCompleted(*iTestCase);
+                TestCompleted();
             }
             else
             {
@@ -2584,7 +2584,7 @@ void pvplayer_async_test_3gppdlcancelduringinitdelay::Run()
             delete iDownloadHttpContextData;
             iDownloadHttpContextData = NULL;
 
-            iObserver->TestCompleted(*iTestCase);
+            TestCompleted();
         }
         break;
 
@@ -3138,7 +3138,7 @@ void pvplayer_async_test_ppb_base::Run()
             if (error)
             {
                 PVPATB_TEST_IS_TRUE(false);
-                iObserver->TestCompleted(*iTestCase);
+                TestCompleted();
             }
             else
             {
@@ -3629,7 +3629,7 @@ void pvplayer_async_test_ppb_base::Run()
             //call the test-case specific cleanup.
             CleanupData();
 
-            iObserver->TestCompleted(*iTestCase);
+            TestCompleted();
         }
         break;
 

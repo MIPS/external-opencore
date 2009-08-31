@@ -20,7 +20,7 @@
 
 void av_test::test()
 {
-    fprintf(fileoutput, "\n-------- Start avtest --------\n");
+    fprintf(fileoutput, "\n-------- Start %s test --------\n", iTestName.get_cstr());
     fprintf(fileoutput, "\n** Test Number: %d. ** \n", iTestNum);
     fprintf(fileoutput, "\nSETTINGS:\nProxy %d", iUseProxy);
     iSourceAndSinks->PrintFormatTypes();
@@ -40,7 +40,7 @@ void av_test::test()
         }
     }
 
-    TestCompleted(this);
+    TestCompleted();
     this->RemoveFromScheduler();
 }
 

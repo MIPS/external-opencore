@@ -84,6 +84,9 @@
 #ifndef TEXT_TEST_INTERPRETER_H_INCLUDED
 #include "text_test_interpreter.h"
 #endif
+#ifndef XML_TEST_INTERPRETER_H_INCLUDED
+#include "xml_test_interpreter.h"
+#endif
 #ifndef PV_MP4_H263_ENC_EXTENSION_H_INCLUDED
 #include "pvmp4h263encextension.h"
 #endif
@@ -1339,7 +1342,6 @@ class pvauthor_async_test_observer;
 typedef struct
 {
     pvauthor_async_test_observer* iObserver;
-    test_case* iTestCase;
     int32 iTestCaseNum;
     FILE* iStdOut;
 
@@ -1432,13 +1434,13 @@ class IMpeg4File;
 class pvauthor_async_test_base : public OsclTimerObject,
         public PVCommandStatusObserver,
         public PVErrorEventObserver,
-        public PVInformationalEventObserver
+        public PVInformationalEventObserver,
+        public test_case
 {
     public:
         pvauthor_async_test_base(PVAuthorAsyncTestParam aTestParam)
                 : OsclTimerObject(OsclActiveObject::EPriorityNominal, "PVAuthorEngineAsyncTestBase"),
                 iObserver(aTestParam.iObserver),
-                iTestCase(aTestParam.iTestCase),
                 iTestCaseNum(aTestParam.iTestCaseNum),
                 iStdOut(aTestParam.iStdOut)
         {};
@@ -1453,8 +1455,15 @@ class pvauthor_async_test_base : public OsclTimerObject,
         virtual PVMFStatus VerifySessionParameters(IMpeg4File* aMp4FF);
         virtual PVMFStatus VerifyTrackParameters(IMpeg4File* aMp4FF);
 
+        void CompleteTest()
+        {
+            char name[128];
+            oscl_snprintf(name, 128, "Test %.2d", iTestCaseNum);
+            m_last_result.set_name(name);
+            iObserver->CompleteTest(*this);
+        }
+
         pvauthor_async_test_observer* iObserver;
-        test_case* iTestCase;
         int32 iTestCaseNum;
         FILE* iStdOut;
         // Test output

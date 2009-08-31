@@ -52,12 +52,11 @@ class test_base : public engine_test,
                 iTempH324MConfigIterface(NULL),
                 iSourceAndSinks(NULL),
                 iUsingAudio(false),
-                iUsingVideo(false),
-                iTotalSuccess(0),
-                iTotalFail(0)
+                iUsingVideo(false)
         {
             iTestNum = iTestCounter;
             test_base::iTestCounter++;
+            iTestName = _STRLIT_CHAR("unnamed test");
         }
 
         virtual ~test_base()
@@ -115,7 +114,7 @@ class test_base : public engine_test,
         };
         void InitializeLogs();
         void HandleInformationalEvent(const PVAsyncInformationalEvent& aEvent);
-        void TestCompleted(test_case *tc);
+        void TestCompleted();
 
         virtual bool Init();
         virtual void CommandCompleted(const PVCmdResponse& aResponse);
@@ -190,8 +189,7 @@ class test_base : public engine_test,
         bool iUsingVideo;
         static uint32 iTestCounter;
         int iTestNum;
-        int iTotalSuccess;
-        int iTotalFail;
+        OSCL_HeapString<OsclMemAllocator> iTestName;
 };
 
 

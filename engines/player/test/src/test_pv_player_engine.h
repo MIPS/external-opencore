@@ -26,6 +26,10 @@
 #include "text_test_interpreter.h"
 #endif
 
+#ifndef XML_TEST_INTERPRETER_H_INCLUDED
+#include "xml_test_interpreter.h"
+#endif
+
 #ifndef OSCL_SCHEDULER_AO_H_INCLUDED
 #include "oscl_scheduler_ao.h"
 #endif
@@ -115,7 +119,6 @@ class PVPlayerAsyncTestParam
 {
     public:
         pvplayer_async_test_observer* iObserver;
-        test_case* iTestCase;
         FILE* iTestMsgOutputFile;
         const char* iFileName;
         PVMFFormatType iFileType;
@@ -129,7 +132,6 @@ class PVPlayerAsyncTestParam
         void Copy(const PVPlayerAsyncTestParam& aParam)
         {
             iObserver = aParam.iObserver;
-            iTestCase = aParam.iTestCase;
             iTestMsgOutputFile = aParam.iTestMsgOutputFile;
             iFileName = aParam.iFileName;
             iFileType = aParam.iFileType;
@@ -142,7 +144,7 @@ class PVPlayerAsyncTestParam
         }
 } ;
 
-#define PVPATB_TEST_IS_TRUE(condition) (iTestCase->test_is_true_stub( (condition), (#condition), __FILE__, __LINE__ ))
+#define PVPATB_TEST_IS_TRUE(condition) (test_is_true_stub( (condition), (#condition), __FILE__, __LINE__ ))
 
 typedef enum
 {
@@ -225,16 +227,15 @@ class PVPlayerTestMioFactory
 class pvplayer_async_test_base : public OsclTimerObject,
         public PVCommandStatusObserver,
         public PVInformationalEventObserver,
-        public PVErrorEventObserver
+        public PVErrorEventObserver,
+        virtual public test_case
 {
     public:
         pvplayer_async_test_base(PVPlayerAsyncTestParam aTestParam) :
                 OsclTimerObject(OsclActiveObject::EPriorityNominal, "PVPlayerEngineAsyncTestBase")
         {
             OSCL_ASSERT(aTestParam.iObserver != NULL);
-            OSCL_ASSERT(aTestParam.iTestCase != NULL);
             iObserver = aTestParam.iObserver;
-            iTestCase = aTestParam.iTestCase;
             iTestMsgOutputFile = aTestParam.iTestMsgOutputFile;
             iFileName = aTestParam.iFileName;
             iFileType = aTestParam.iFileType;
@@ -320,8 +321,15 @@ class pvplayer_async_test_base : public OsclTimerObject,
             }
         }
 
+        void TestCompleted()
+        {
+            char name[128];
+            oscl_snprintf(name, 128, "Test %.4d: %s", iTestNumber, iTestCaseName.get_cstr());
+            m_last_result.set_name(name);
+            iObserver->TestCompleted(*this);
+        }
+
         pvplayer_async_test_observer* iObserver;
-        test_case* iTestCase;
         FILE* iTestMsgOutputFile;
         const char *iFileName;
         PVMFFormatType iFileType;

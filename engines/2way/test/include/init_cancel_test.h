@@ -28,6 +28,7 @@ class init_cancel_test : public test_base
                 test_base(aUseProxy, isSIP)
         {
             iRstCmdId  = iInitCmdId = iCnclCmdId = 0;
+            iTestName = _STRLIT_CHAR("init cancel");
         }
 
         ~init_cancel_test()

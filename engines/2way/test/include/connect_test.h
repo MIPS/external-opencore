@@ -31,6 +31,7 @@ class connect_test : public test_base
 
         ~connect_test()
         {
+            iTestName = _STRLIT_CHAR("connect");
         }
 
         void test();

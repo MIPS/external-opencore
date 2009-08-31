@@ -17,6 +17,20 @@
  */
 #include "test_result.h"
 
+//set the name of the test
+void
+test_result::set_name(_STRING name)
+{
+    m_name = name;
+}
+
+//get the name of the test
+_STRING
+test_result::get_name(void) const
+{
+    return m_name;
+}
+
 //adds an error to the result
 void
 test_result::add_error(const test_problem& new_error)
@@ -52,8 +66,22 @@ test_result::add_result(const test_result& new_result)
     {
         m_failures.push_back(*iter1);
     }
-    //add successes
+    //add successes to accumulated success count
     m_success_count += new_result.m_success_count;
+
+    // If result being added has subtests, add each subtest.
+    if (new_result.subresults().size() > 0)
+    {
+        for (_VECTOR(test_result, unit_test_allocator)::iterator iter2 = new_result.m_subresults.begin(); iter2 != new_result.m_subresults.end(); ++iter2)
+        {
+            m_subresults.push_back(*iter2);
+        }
+    }
+    // If no subtests, add the test as a subtest.
+    else
+    {
+        m_subresults.push_back(new_result);
+    }
 }
 
 //deletes the contents of the test result
@@ -62,6 +90,7 @@ test_result::delete_contents(void)
 {
     m_errors.clear();
     m_failures.clear();
+    m_subresults.clear();
     m_success_count = 0;
 }
 
@@ -77,6 +106,12 @@ test_result::failures(void) const
     return m_failures;
 }
 
+const _VECTOR(test_result, unit_test_allocator)&
+test_result::subresults(void) const
+{
+    return m_subresults;
+}
+
 int
 test_result::success_count(void) const
 {
@@ -90,5 +125,4 @@ test_result::total_test_count(void) const
            + m_errors.size()
            + m_failures.size();
 }
-
 

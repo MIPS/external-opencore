@@ -1131,11 +1131,15 @@ int start_test()
             fprintf(fileoutput, "ERROR - unable to setup tests\n");
         }
 
+        OSCL_HeapString<OsclMemAllocator> xmlresultsfile;
+        FindXmlResultsFile(global_cmd_line, xmlresultsfile, fileoutput);
+
         OSCL_TRY(leave, engine_tests.run_test());
 
         if (leave != 0)
             fprintf(fileoutput, "Leave %d\n", leave);
 
+        XmlSummary(xmlresultsfile, engine_tests.last_result(), fileoutput);
         text_test_interpreter interp;
         _STRING rs = interp.interpretation(engine_tests.last_result());
         fprintf(fileoutput, rs.c_str());

@@ -252,3 +252,98 @@ void FindTestRange(cmd_line* command_line,
     }
 }
 
+// Find xml results filename from arguments
+void FindXmlResultsFile(cmd_line* command_line, OSCL_HeapString<OsclMemAllocator> &XmlTestResultsFilename, FILE *aFile)
+{
+    int iFileArgument = 0;
+    bool iFileFound = false;
+    bool cmdline_iswchar = command_line->is_wchar();
+
+    int count = command_line->get_count();
+
+    // Search for the argument
+    // Go through each argument
+    for (int iFileSearch = 0; iFileSearch < count; iFileSearch++)
+    {
+        char argstr[128];
+        // Convert to UTF8 if necessary
+        if (cmdline_iswchar)
+        {
+            oscl_wchar* argwstr = NULL;
+            command_line->get_arg(iFileSearch, argwstr);
+            oscl_UnicodeToUTF8(argwstr, oscl_strlen(argwstr), argstr, 128);
+            argstr[127] = '\0';
+        }
+        else
+        {
+            char* tmpstr = NULL;
+            command_line->get_arg(iFileSearch, tmpstr);
+            int32 tmpstrlen = oscl_strlen(tmpstr) + 1;
+            if (tmpstrlen > 128)
+            {
+                tmpstrlen = 128;
+            }
+            oscl_strncpy(argstr, tmpstr, tmpstrlen);
+            argstr[tmpstrlen-1] = '\0';
+        }
+
+        // Do the string compare
+        if (oscl_strcmp(argstr, "-help") == 0)
+        {
+            fprintf(aFile, "XML test results file option.  Default is to not write a summary.\n");
+            fprintf(aFile, "  -xmlOutput file\n");
+            fprintf(aFile, "   Specify a source filename to output a test results summary to.\n");
+        }
+        else if (oscl_strcmp(argstr, "-xmlOutput") == 0)
+        {
+            iFileFound = true;
+            iFileArgument = ++iFileSearch;
+            break;
+        }
+    }
+
+    if (iFileFound)
+    {
+        // Convert to UTF8 if necessary
+        if (cmdline_iswchar)
+        {
+            oscl_wchar* cmd;
+            command_line->get_arg(iFileArgument, cmd);
+            char tmpstr[256];
+            oscl_UnicodeToUTF8(cmd, oscl_strlen(cmd), tmpstr, 256);
+            tmpstr[255] = '\0';
+            XmlTestResultsFilename = tmpstr;
+        }
+        else
+        {
+            char* cmdlinefilename = NULL;
+            command_line->get_arg(iFileArgument, cmdlinefilename);
+            XmlTestResultsFilename = cmdlinefilename;
+        }
+    }
+
+}
+
+void XmlSummary(OSCL_HeapString<OsclMemAllocator> &xmlresultsfile, const test_result& result, FILE* aFile)
+{
+    // Print out xml summary if requested
+    if (xmlresultsfile.get_size() > 0)
+    {
+        Oscl_File xmlfile(0);
+        Oscl_FileServer iFileServer;
+        iFileServer.Connect();
+        if (0 == xmlfile.Open(xmlresultsfile.get_str(), Oscl_File::MODE_READWRITE | Oscl_File::MODE_TEXT, iFileServer))
+        {
+            xml_test_interpreter xml_interp;
+            _STRING xml_results = xml_interp.interpretation(result, "PV2WayEngineUnitTest");
+            fprintf(aFile, "\nWrote XML test summary to: %s.\n", xmlresultsfile.get_cstr());
+            xmlfile.Write(xml_results.c_str(), sizeof(char), oscl_strlen(xml_results.c_str()));
+            xmlfile.Close();
+            iFileServer.Close();
+        }
+        else
+        {
+            fprintf(aFile, "ERROR: Failed to open XML test summary log file: %s!\n", xmlresultsfile.get_cstr());
+        }
+    }
+}

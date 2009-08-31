@@ -27,17 +27,15 @@
 
 #include "unit_test_args.h"
 
-// $Id
 // A composite test case; its atomic test can be redefined by overriding
 // test(); it can also serve as a suite of tests by adding test_cases
-// to it via the add_test_case function.  It functions as a composite
+// to it via the adopt_test_case function.  It functions as a composite
 // object (see the composite pattern in Design Patterns, p 163) without
 // methods for getting individual children.
 
 class test_case
 {
     protected:
-        //private methods and data
         //the result of the last test
         test_result m_last_result;
 
@@ -45,13 +43,12 @@ class test_case
 
         //the collection of subtests
         _VECTOR(test_case*, unit_test_allocator) m_subtests;
+
         //runs the subtests
         void run_subtests(void);
 
     public:
-        //construction/destruction
         test_case(void);
-
         virtual ~test_case(void);
 
         void SetCommandLine(cmd_line* cmd_line)

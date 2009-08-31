@@ -110,7 +110,7 @@ void pvplayer_async_test_printmetadata::Run()
             if (error)
             {
                 PVPATB_TEST_IS_TRUE(false);
-                iObserver->TestCompleted(*iTestCase);
+                TestCompleted();
             }
             else
             {
@@ -419,7 +419,7 @@ void pvplayer_async_test_printmetadata::Run()
             iMioFactory->DestroyTextOutput(iMIOFileOutText);
             iMIOFileOutText = NULL;
 
-            iObserver->TestCompleted(*iTestCase);
+            TestCompleted();
         }
         break;
 
@@ -1326,7 +1326,7 @@ void pvplayer_async_test_printmemstats::Run()
             if (error)
             {
                 PVPATB_TEST_IS_TRUE(false);
-                iObserver->TestCompleted(*iTestCase);
+                TestCompleted();
             }
             else
             {
@@ -1577,7 +1577,7 @@ void pvplayer_async_test_printmemstats::Run()
             fprintf(iTestMsgOutputFile, "After cleanup: ");
             PrintMemStats();
 
-            iObserver->TestCompleted(*iTestCase);
+            TestCompleted();
         }
         break;
 
@@ -1974,7 +1974,7 @@ void pvplayer_async_test_playuntileos::Run()
             if (error)
             {
                 PVPATB_TEST_IS_TRUE(false);
-                iObserver->TestCompleted(*iTestCase);
+                TestCompleted();
             }
             else
             {
@@ -2390,7 +2390,7 @@ void pvplayer_async_test_playuntileos::Run()
             }
 #endif
 
-            iObserver->TestCompleted(*iTestCase);
+            TestCompleted();
         }
         break;
 
@@ -2820,7 +2820,7 @@ void pvplayer_async_test_playuntileos_using_external_file_handle::Run()
             if (error)
             {
                 PVPATB_TEST_IS_TRUE(false);
-                iObserver->TestCompleted(*iTestCase);
+                TestCompleted();
             }
             else
             {
@@ -3063,7 +3063,7 @@ void pvplayer_async_test_playuntileos_using_external_file_handle::Run()
             iMioFactory->DestroyTextOutput(iMIOFileOutText);
             iMIOFileOutText = NULL;
 
-            iObserver->TestCompleted(*iTestCase);
+            TestCompleted();
         }
         break;
 

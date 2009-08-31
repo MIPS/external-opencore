@@ -27,7 +27,7 @@
 
 void video_only_test::test()
 {
-    fprintf(fileoutput, "\n-------- Start video only test -------- ");
+    fprintf(fileoutput, "\n-------- Start %s test -------- ", iTestName.get_cstr());
     fprintf(fileoutput, "\n** Test Number: %d. ** \n", iTestNum);
     fprintf(fileoutput, "\nSETTINGS:\nProxy %d", iUseProxy);
     iSourceAndSinks->PrintFormatTypes();
@@ -48,7 +48,7 @@ void video_only_test::test()
         }
     }
 
-    TestCompleted(this);
+    TestCompleted();
     this->RemoveFromScheduler();
 }
 

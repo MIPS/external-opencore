@@ -879,7 +879,7 @@ void pv_mediainput_async_test_opencomposestop::Run()
         case PVAE_CMD_CLEANUPANDCOMPLETE:
         {
             Cleanup();
-            iObserver->CompleteTest(*iTestCase);
+            CompleteTest();
         }
         break;
 
@@ -1195,7 +1195,7 @@ void pv_mediainput_async_test_opencomposestop::CommandCompleted(const PVCmdRespo
                     }
                     //Since there are no MIO Components/Nodes, we end here
                     //No need to call RemoveDataSource
-                    iObserver->CompleteTest(*iTestCase);
+                    CompleteTest();
                     break;
                 }
 
@@ -1207,7 +1207,7 @@ void pv_mediainput_async_test_opencomposestop::CommandCompleted(const PVCmdRespo
                 // Reset failed
                 PVPATB_TEST_IS_TRUE(false);
                 OSCL_ASSERT("ERROR -- Response failure for CMD_RESET");
-                iObserver->CompleteTest(*iTestCase);
+                CompleteTest();
             }
         }
         break;
@@ -1248,7 +1248,7 @@ void pv_mediainput_async_test_opencomposestop::CommandCompleted(const PVCmdRespo
             {
                 // RemoveDataSource failed
                 PVPATB_TEST_IS_TRUE(false);
-                iObserver->CompleteTest(*iTestCase);
+                CompleteTest();
             }
         }
         break;
@@ -1263,7 +1263,7 @@ void pv_mediainput_async_test_opencomposestop::CommandCompleted(const PVCmdRespo
             {
                 PVPATB_TEST_IS_TRUE(false);
             }
-            iObserver->CompleteTest(*iTestCase);
+            CompleteTest();
         }
         break;
 
@@ -1271,7 +1271,7 @@ void pv_mediainput_async_test_opencomposestop::CommandCompleted(const PVCmdRespo
         {
             // Testing error if this is reached
             PVPATB_TEST_IS_TRUE(false);
-            iObserver->CompleteTest(*iTestCase);
+            CompleteTest();
         }
         break;
     }  //end switch
@@ -1594,7 +1594,7 @@ void pv_mediainput_async_test_opencomposestop::SignalEvent(int32 aReq_Id)
             PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_ERR,
                             (0, "pv_mediainput_async_test_opencomposestop::SignalEvent: setParametersAsync failed"));
             PVPATB_TEST_IS_TRUE(false);
-            iObserver->CompleteTest(*iTestCase);
+            CompleteTest();
         }
         else
         {

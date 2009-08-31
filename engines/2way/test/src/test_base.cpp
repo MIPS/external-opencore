@@ -587,14 +587,15 @@ void test_base::HandleInformationalEvent(const PVAsyncInformationalEvent& aEvent
     }
 }
 
-void test_base::TestCompleted(test_case *tc)
+void test_base::TestCompleted()
 {
+    char name[128];
+    oscl_snprintf(name, 128, "Test %.2d: %s", iTestNum, iTestName.get_cstr());
+    m_last_result.set_name(name);
+
     // Print out the result for this test case
-    const test_result the_result = tc->last_result();
     fprintf(fileoutput, "\nResults for Test Case %d:\n", iTestNum);
-    fprintf(fileoutput, "Successes %d, Failures %d\n"
-            , the_result.success_count() - iTotalSuccess, the_result.failures().size() - iTotalFail);
+    fprintf(fileoutput, "Successes %.2d, Failures %d\n"
+            , m_last_result.success_count(), m_last_result.failures().size());
     fflush(fileoutput);
-    iTotalSuccess = the_result.success_count();
-    iTotalFail = the_result.failures().size();
 }

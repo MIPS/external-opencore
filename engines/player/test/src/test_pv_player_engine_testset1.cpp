@@ -117,7 +117,7 @@ void pvplayer_async_test_newdelete::Run()
         PVPATB_TEST_IS_TRUE(true);
     }
 
-    iObserver->TestCompleted(*iTestCase);
+    TestCompleted();
 }
 
 
@@ -165,7 +165,7 @@ void pvplayer_async_test_openplaystopreset::Run()
             if (error)
             {
                 PVPATB_TEST_IS_TRUE(false);
-                iObserver->TestCompleted(*iTestCase);
+                TestCompleted();
             }
             else
             {
@@ -347,7 +347,7 @@ void pvplayer_async_test_openplaystopreset::Run()
             iMioFactory->DestroyTextOutput(iMIOFileOutText);
             iMIOFileOutText = NULL;
 
-            iObserver->TestCompleted(*iTestCase);
+            TestCompleted();
         }
         break;
 
@@ -715,7 +715,7 @@ void pvplayer_async_test_cpmopenplaystopreset::Run()
             if (error)
             {
                 PVPATB_TEST_IS_TRUE(false);
-                iObserver->TestCompleted(*iTestCase);
+                TestCompleted();
             }
             else
             {
@@ -940,7 +940,7 @@ void pvplayer_async_test_cpmopenplaystopreset::Run()
             delete iLocalDataSource;
             iLocalDataSource = NULL;
 
-            iObserver->TestCompleted(*iTestCase);
+            TestCompleted();
         }
         break;
 
@@ -1973,7 +1973,7 @@ void pvplayer_async_test_metadata::Run()
             if (error)
             {
                 PVPATB_TEST_IS_TRUE(false);
-                iObserver->TestCompleted(*iTestCase);
+                TestCompleted();
             }
             else
             {
@@ -2198,7 +2198,7 @@ void pvplayer_async_test_metadata::Run()
             iMioFactory->DestroyAudioOutput(iMIOFileOutAudio);
             iMIOFileOutAudio = NULL;
 
-            iObserver->TestCompleted(*iTestCase);
+            TestCompleted();
         }
         break;
 
@@ -2753,7 +2753,7 @@ void pvplayer_async_test_timing::Run()
             if (error)
             {
                 PVPATB_TEST_IS_TRUE(false);
-                iObserver->TestCompleted(*iTestCase);
+                TestCompleted();
             }
             else
             {
@@ -2925,7 +2925,7 @@ void pvplayer_async_test_timing::Run()
             iMioFactory->DestroyAudioOutput(iMIOFileOutAudio);
             iMIOFileOutAudio = NULL;
 
-            iObserver->TestCompleted(*iTestCase);
+            TestCompleted();
         }
         break;
 
@@ -3214,7 +3214,7 @@ void pvplayer_async_test_invalidstate::Run()
             if (error)
             {
                 PVPATB_TEST_IS_TRUE(false);
-                iObserver->TestCompleted(*iTestCase);
+                TestCompleted();
             }
             else
             {
@@ -3428,7 +3428,7 @@ void pvplayer_async_test_invalidstate::Run()
             iMioFactory->DestroyAudioOutput(iMIOFileOutAudio);
             iMIOFileOutAudio = NULL;
 
-            iObserver->TestCompleted(*iTestCase);
+            TestCompleted();
         }
         break;
 
@@ -3882,7 +3882,7 @@ void pvplayer_async_test_preparedstop::Run()
             if (error)
             {
                 PVPATB_TEST_IS_TRUE(false);
-                iObserver->TestCompleted(*iTestCase);
+                TestCompleted();
             }
             else
             {
@@ -4012,7 +4012,7 @@ void pvplayer_async_test_preparedstop::Run()
             iMioFactory->DestroyAudioOutput(iMIOFileOutAudio);
             iMIOFileOutAudio = NULL;
 
-            iObserver->TestCompleted(*iTestCase);
+            TestCompleted();
         }
         break;
 
@@ -4285,7 +4285,7 @@ void pvplayer_async_test_videoonlyplay7seconds::Run()
             if (error)
             {
                 PVPATB_TEST_IS_TRUE(false);
-                iObserver->TestCompleted(*iTestCase);
+                TestCompleted();
             }
             else
             {
@@ -4391,7 +4391,7 @@ void pvplayer_async_test_videoonlyplay7seconds::Run()
             iMioFactory->DestroyVideoOutput(iMIOFileOutVideo);
             iMIOFileOutVideo = NULL;
 
-            iObserver->TestCompleted(*iTestCase);
+            TestCompleted();
         }
         break;
 
@@ -4658,7 +4658,7 @@ void pvplayer_async_test_play5stopplay10stopreset::Run()
             if (error)
             {
                 PVPATB_TEST_IS_TRUE(false);
-                iObserver->TestCompleted(*iTestCase);
+                TestCompleted();
             }
             else
             {
@@ -4814,7 +4814,7 @@ void pvplayer_async_test_play5stopplay10stopreset::Run()
             iMioFactory->DestroyAudioOutput(iMIOFileOutAudio);
             iMIOFileOutAudio = NULL;
 
-            iObserver->TestCompleted(*iTestCase);
+            TestCompleted();
         }
         break;
 
@@ -5156,7 +5156,7 @@ void pvplayer_async_test_pauseresume::Run()
             if (error)
             {
                 PVPATB_TEST_IS_TRUE(false);
-                iObserver->TestCompleted(*iTestCase);
+                TestCompleted();
             }
             else
             {
@@ -5306,7 +5306,7 @@ void pvplayer_async_test_pauseresume::Run()
             iMioFactory->DestroyAudioOutput(iMIOFileOutAudio);
             iMIOFileOutAudio = NULL;
 
-            iObserver->TestCompleted(*iTestCase);
+            TestCompleted();
         }
         break;
 
@@ -5634,7 +5634,7 @@ void pvplayer_async_test_playpausestop::Run()
             if (error)
             {
                 PVPATB_TEST_IS_TRUE(false);
-                iObserver->TestCompleted(*iTestCase);
+                TestCompleted();
             }
             else
             {
@@ -5777,7 +5777,7 @@ void pvplayer_async_test_playpausestop::Run()
             iMioFactory->DestroyAudioOutput(iMIOFileOutAudio);
             iMIOFileOutAudio = NULL;
 
-            iObserver->TestCompleted(*iTestCase);
+            TestCompleted();
         }
         break;
 
@@ -6090,7 +6090,7 @@ void pvplayer_async_test_outsidenodeforvideosink::Run()
             if (error)
             {
                 PVPATB_TEST_IS_TRUE(false);
-                iObserver->TestCompleted(*iTestCase);
+                TestCompleted();
             }
             else
             {
@@ -6227,7 +6227,7 @@ void pvplayer_async_test_outsidenodeforvideosink::Run()
             iMioFactory->DestroyAudioOutput(iMOutAudio);
             iMOutAudio = NULL;
 
-            iObserver->TestCompleted(*iTestCase);
+            TestCompleted();
         }
         break;
 
@@ -6529,7 +6529,7 @@ void pvplayer_async_test_getplayerstate::Run()
             if (error)
             {
                 PVPATB_TEST_IS_TRUE(false);
-                iObserver->TestCompleted(*iTestCase);
+                TestCompleted();
             }
             else
             {
@@ -6694,7 +6694,7 @@ void pvplayer_async_test_getplayerstate::Run()
             iMioFactory->DestroyAudioOutput(iMIOFileOutAudio);
             iMIOFileOutAudio = NULL;
 
-            iObserver->TestCompleted(*iTestCase);
+            TestCompleted();
         }
         break;
 
@@ -7148,7 +7148,7 @@ void pvplayer_async_test_getcurrentposition::Run()
             if (error)
             {
                 PVPATB_TEST_IS_TRUE(false);
-                iObserver->TestCompleted(*iTestCase);
+                TestCompleted();
             }
             else
             {
@@ -7320,7 +7320,7 @@ void pvplayer_async_test_getcurrentposition::Run()
             iMioFactory->DestroyAudioOutput(iMIOFileOutAudio);
             iMIOFileOutAudio = NULL;
 
-            iObserver->TestCompleted(*iTestCase);
+            TestCompleted();
         }
         break;
 
@@ -7641,7 +7641,7 @@ void pvplayer_async_test_playsetstopposition::Run()
             if (error)
             {
                 PVPATB_TEST_IS_TRUE(false);
-                iObserver->TestCompleted(*iTestCase);
+                TestCompleted();
             }
             else
             {
@@ -7800,7 +7800,7 @@ void pvplayer_async_test_playsetstopposition::Run()
             iMioFactory->DestroyAudioOutput(iMIOFileOutAudio);
             iMIOFileOutAudio = NULL;
 
-            iObserver->TestCompleted(*iTestCase);
+            TestCompleted();
         }
         break;
 
@@ -8134,7 +8134,7 @@ void pvplayer_async_test_playsetstoppositionvidframenum::Run()
             if (error)
             {
                 PVPATB_TEST_IS_TRUE(false);
-                iObserver->TestCompleted(*iTestCase);
+                TestCompleted();
             }
             else
             {
@@ -8293,7 +8293,7 @@ void pvplayer_async_test_playsetstoppositionvidframenum::Run()
             iMioFactory->DestroyAudioOutput(iMIOFileOutAudio);
             iMIOFileOutAudio = NULL;
 
-            iObserver->TestCompleted(*iTestCase);
+            TestCompleted();
         }
         break;
 
@@ -8627,7 +8627,7 @@ void pvplayer_async_test_setstartpositionplaystop::Run()
             if (error)
             {
                 PVPATB_TEST_IS_TRUE(false);
-                iObserver->TestCompleted(*iTestCase);
+                TestCompleted();
             }
             else
             {
@@ -8841,7 +8841,7 @@ void pvplayer_async_test_setstartpositionplaystop::Run()
             iMioFactory->DestroyAudioOutput(iMIOFileOutAudio);
             iMIOFileOutAudio = NULL;
 
-            iObserver->TestCompleted(*iTestCase);
+            TestCompleted();
         }
         break;
 
@@ -9212,7 +9212,7 @@ void pvplayer_async_test_setplayrangeplay::Run()
             if (error)
             {
                 PVPATB_TEST_IS_TRUE(false);
-                iObserver->TestCompleted(*iTestCase);
+                TestCompleted();
             }
             else
             {
@@ -9372,7 +9372,7 @@ void pvplayer_async_test_setplayrangeplay::Run()
             iMioFactory->DestroyAudioOutput(iMIOFileOutAudio);
             iMIOFileOutAudio = NULL;
 
-            iObserver->TestCompleted(*iTestCase);
+            TestCompleted();
         }
         break;
 
@@ -9706,7 +9706,7 @@ void pvplayer_async_test_setplayrangevidframenumplay::Run()
             if (error)
             {
                 PVPATB_TEST_IS_TRUE(false);
-                iObserver->TestCompleted(*iTestCase);
+                TestCompleted();
             }
             else
             {
@@ -9866,7 +9866,7 @@ void pvplayer_async_test_setplayrangevidframenumplay::Run()
             iMioFactory->DestroyAudioOutput(iMIOFileOutAudio);
             iMIOFileOutAudio = NULL;
 
-            iObserver->TestCompleted(*iTestCase);
+            TestCompleted();
         }
         break;
 
@@ -10200,7 +10200,7 @@ void pvplayer_async_test_playsetplayrangestop::Run()
             if (error)
             {
                 PVPATB_TEST_IS_TRUE(false);
-                iObserver->TestCompleted(*iTestCase);
+                TestCompleted();
             }
             else
             {
@@ -10349,7 +10349,7 @@ void pvplayer_async_test_playsetplayrangestop::Run()
             iMioFactory->DestroyAudioOutput(iMIOFileOutAudio);
             iMIOFileOutAudio = NULL;
 
-            iObserver->TestCompleted(*iTestCase);
+            TestCompleted();
         }
         break;
 
@@ -10662,7 +10662,7 @@ void pvplayer_async_test_playsetplayrangevidframenumstop::Run()
             if (error)
             {
                 PVPATB_TEST_IS_TRUE(false);
-                iObserver->TestCompleted(*iTestCase);
+                TestCompleted();
             }
             else
             {
@@ -10811,7 +10811,7 @@ void pvplayer_async_test_playsetplayrangevidframenumstop::Run()
             iMioFactory->DestroyAudioOutput(iMIOFileOutAudio);
             iMIOFileOutAudio = NULL;
 
-            iObserver->TestCompleted(*iTestCase);
+            TestCompleted();
         }
         break;
 
@@ -11123,7 +11123,7 @@ void pvplayer_async_test_tracklevelinfo::Run()
             if (error)
             {
                 PVPATB_TEST_IS_TRUE(false);
-                iObserver->TestCompleted(*iTestCase);
+                TestCompleted();
             }
             else
             {
@@ -11515,7 +11515,7 @@ void pvplayer_async_test_tracklevelinfo::Run()
             iMioFactory->DestroyAudioOutput(iMIOFileOutAudio);
             iMIOFileOutAudio = NULL;
 
-            iObserver->TestCompleted(*iTestCase);
+            TestCompleted();
         }
         break;
 
@@ -11859,7 +11859,7 @@ void pvplayer_async_test_setplaybackrate2X::Run()
             if (error)
             {
                 PVPATB_TEST_IS_TRUE(false);
-                iObserver->TestCompleted(*iTestCase);
+                TestCompleted();
             }
             else
             {
@@ -12002,7 +12002,7 @@ void pvplayer_async_test_setplaybackrate2X::Run()
             iMioFactory->DestroyAudioOutput(iMIOFileOutAudio);
             iMIOFileOutAudio = NULL;
 
-            iObserver->TestCompleted(*iTestCase);
+            TestCompleted();
         }
         break;
 
@@ -12313,7 +12313,7 @@ void pvplayer_async_test_setplaybackratefifth::Run()
             if (error)
             {
                 PVPATB_TEST_IS_TRUE(false);
-                iObserver->TestCompleted(*iTestCase);
+                TestCompleted();
             }
             else
             {
@@ -12456,7 +12456,7 @@ void pvplayer_async_test_setplaybackratefifth::Run()
             iMioFactory->DestroyAudioOutput(iMIOFileOutAudio);
             iMIOFileOutAudio = NULL;
 
-            iObserver->TestCompleted(*iTestCase);
+            TestCompleted();
         }
         break;
 
@@ -12767,7 +12767,7 @@ void pvplayer_async_test_queuedcommands::Run()
             if (error)
             {
                 PVPATB_TEST_IS_TRUE(false);
-                iObserver->TestCompleted(*iTestCase);
+                TestCompleted();
             }
             else
             {
@@ -12898,7 +12898,7 @@ void pvplayer_async_test_queuedcommands::Run()
             iMioFactory->DestroyAudioOutput(iMIOFileOutAudio);
             iMIOFileOutAudio = NULL;
 
-            iObserver->TestCompleted(*iTestCase);
+            TestCompleted();
         }
         break;
 
@@ -13111,7 +13111,7 @@ void pvplayer_async_test_looping::Run()
             if (error)
             {
                 PVPATB_TEST_IS_TRUE(false);
-                iObserver->TestCompleted(*iTestCase);
+                TestCompleted();
             }
             else
             {
@@ -13318,7 +13318,7 @@ void pvplayer_async_test_looping::Run()
             iMioFactory->DestroyTextOutput(iMIOFileOutText);
             iMIOFileOutText = NULL;
 
-            iObserver->TestCompleted(*iTestCase);
+            TestCompleted();
         }
         break;
 
@@ -13586,7 +13586,7 @@ void pvplayer_async_test_waitforeos::Run()
             if (error)
             {
                 PVPATB_TEST_IS_TRUE(false);
-                iObserver->TestCompleted(*iTestCase);
+                TestCompleted();
             }
             else
             {
@@ -13777,7 +13777,7 @@ void pvplayer_async_test_waitforeos::Run()
             iMioFactory->DestroyTextOutput(iMIOFileOutText);
             iMIOFileOutText = NULL;
 
-            iObserver->TestCompleted(*iTestCase);
+            TestCompleted();
         }
         break;
 
@@ -14127,7 +14127,7 @@ void pvplayer_async_test_multipauseresume::Run()
             if (error)
             {
                 PVPATB_TEST_IS_TRUE(false);
-                iObserver->TestCompleted(*iTestCase);
+                TestCompleted();
             }
             else
             {
@@ -14370,7 +14370,7 @@ void pvplayer_async_test_multipauseresume::Run()
             iMioFactory->DestroyTextOutput(iMIOFileOutText);
             iMIOFileOutText = NULL;
 
-            iObserver->TestCompleted(*iTestCase);
+            TestCompleted();
         }
         break;
 
@@ -14625,7 +14625,7 @@ void pvplayer_async_test_multireposition::Run()
             if (error)
             {
                 PVPATB_TEST_IS_TRUE(false);
-                iObserver->TestCompleted(*iTestCase);
+                TestCompleted();
             }
             else
             {
@@ -14916,7 +14916,7 @@ void pvplayer_async_test_multireposition::Run()
             iMioFactory->DestroyTextOutput(iMIOFileOutText);
             iMIOFileOutText = NULL;
 
-            iObserver->TestCompleted(*iTestCase);
+            TestCompleted();
         }
         break;
 
@@ -15257,7 +15257,7 @@ void pvplayer_async_test_capconfigiftest::Run()
             if (error)
             {
                 PVPATB_TEST_IS_TRUE(false);
-                iObserver->TestCompleted(*iTestCase);
+                TestCompleted();
             }
             else
             {
@@ -15752,7 +15752,7 @@ void pvplayer_async_test_capconfigiftest::Run()
             iMioFactory->DestroyAudioOutput(iMIOFileOutAudio);
             iMIOFileOutAudio = NULL;
 
-            iObserver->TestCompleted(*iTestCase);
+            TestCompleted();
         }
         break;
 
@@ -16089,7 +16089,7 @@ void pvplayer_async_test_setplaybackafterprepare::Run()
             if (error)
             {
                 PVPATB_TEST_IS_TRUE(false);
-                iObserver->TestCompleted(*iTestCase);
+                TestCompleted();
             }
             else
             {
@@ -16352,7 +16352,7 @@ void pvplayer_async_test_setplaybackafterprepare::Run()
             iMioFactory->DestroyTextOutput(iMIOFileOutText);
             iMIOFileOutText = NULL;
 
-            iObserver->TestCompleted(*iTestCase);
+            TestCompleted();
         }
         break;
 
@@ -16742,7 +16742,7 @@ void pvplayer_async_test_multipauseseekresume::Run()
             if (error)
             {
                 PVPATB_TEST_IS_TRUE(false);
-                iObserver->TestCompleted(*iTestCase);
+                TestCompleted();
             }
             else
             {
@@ -16989,7 +16989,7 @@ void pvplayer_async_test_multipauseseekresume::Run()
             iMioFactory->DestroyAudioOutput(iMIOFileOutAudio);
             iMIOFileOutAudio = NULL;
 
-            iObserver->TestCompleted(*iTestCase);
+            TestCompleted();
         }
         break;
 
@@ -17541,7 +17541,7 @@ void pvplayer_async_test_multiple_instance::Run()
                 if (result != OsclProcStatus::SUCCESS_ERROR)
                 {
                     PVPATB_TEST_IS_TRUE(false);
-                    iObserver->TestCompleted(*iTestCase);
+                    TestCompleted();
                     break;
                 }
             }
@@ -17550,7 +17550,7 @@ void pvplayer_async_test_multiple_instance::Run()
             if (error)
             {
                 MULTI_TEST_IS_TRUE(false);
-                iObserver->TestCompleted(*iTestCase);
+                TestCompleted();
             }
             else
             {
@@ -17786,7 +17786,7 @@ void pvplayer_async_test_multiple_instance::Run()
                     PVPATB_TEST_IS_TRUE(false);
             }
 
-            iObserver->TestCompleted(*iTestCase);
+            TestCompleted();
         }
         break;
 
@@ -18277,7 +18277,7 @@ void pvplayer_async_test_multiple_thread::Run()
                 if (result != OsclProcStatus::SUCCESS_ERROR)
                 {
                     PVPATB_TEST_IS_TRUE(false);
-                    iObserver->TestCompleted(*iTestCase);
+                    TestCompleted();
                     break;
                 }
                 //wait on engine to be ready to use.
@@ -18288,7 +18288,7 @@ void pvplayer_async_test_multiple_thread::Run()
             if (!iPlayer)
             {
                 MULTI_TEST_IS_TRUE(false);
-                iObserver->TestCompleted(*iTestCase);
+                TestCompleted();
             }
             else
             {
@@ -18547,7 +18547,7 @@ void pvplayer_async_test_multiple_thread::Run()
             delete iLocalDataSource;
             iLocalDataSource = NULL;
 
-            iObserver->TestCompleted(*iTestCase);
+            TestCompleted();
         }
         break;
 

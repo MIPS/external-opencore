@@ -299,7 +299,6 @@ void PVAuthorEngineTest::RunTestCases()
     // Setup the standard test case parameters based on current unit test settings
     PVAuthorAsyncTestParam testparam;
     testparam.iObserver = this;
-    testparam.iTestCase = this;
     testparam.iTestCaseNum = iNextTestCase;
     testparam.iStdOut = iStdOut;
     switch (iNextTestCase)
@@ -530,18 +529,17 @@ void PVAuthorEngineTest::RunTestCases()
             break;
     }
 }
-void PVAuthorEngineTest::CompleteTest(test_case &aTC)
+void PVAuthorEngineTest::CompleteTest(test_case &tc)
 {
     //verify output file
     iCurrentTest->VerifyOutputFile();
 
     // Print out the result for this test case
-    const test_result the_result = aTC.last_result();
+    const test_result the_result = tc.last_result();
+    m_last_result.add_result(the_result);
     fprintf(file, "  Successes %d, Failures %d\n"
-            , the_result.success_count() - iTotalSuccess, the_result.failures().size() - iTotalFail);
-    iTotalSuccess = the_result.success_count();
-    iTotalFail = the_result.failures().size();
-    iTotalError = the_result.errors().size();
+            , the_result.success_count(), the_result.failures().size());
+    fflush(file);
 
     // Go to next test
     ++iNextTestCase;
@@ -2358,6 +2356,102 @@ bool FindAuthoringMode(cmd_line* command_line, FILE *aFile)
 
     return iAuthoringMode;
 }
+// Find xml results filename from arguments
+void FindXmlResultsFile(cmd_line* command_line, OSCL_HeapString<OsclMemAllocator> &XmlTestResultsFilename, FILE *aFile)
+{
+    int iFileArgument = 0;
+    bool iFileFound = false;
+    bool cmdline_iswchar = command_line->is_wchar();
+
+    int count = command_line->get_count();
+
+    // Search for the argument
+    for (int iFileSearch = 0; iFileSearch < count; iFileSearch++)
+    {
+        char argstr[128];
+        // Convert to UTF8 if necessary
+        if (cmdline_iswchar)
+        {
+            oscl_wchar* argwstr = NULL;
+            command_line->get_arg(iFileSearch, argwstr);
+            oscl_UnicodeToUTF8(argwstr, oscl_strlen(argwstr), argstr, 128);
+            argstr[127] = '\0';
+        }
+        else
+        {
+            char* tmpstr = NULL;
+            command_line->get_arg(iFileSearch, tmpstr);
+            int32 tmpstrlen = oscl_strlen(tmpstr) + 1;
+            if (tmpstrlen > 128)
+            {
+                tmpstrlen = 128;
+            }
+            oscl_strncpy(argstr, tmpstr, tmpstrlen);
+            argstr[tmpstrlen-1] = '\0';
+        }
+
+
+        // Do the string compare
+        if (oscl_strcmp(argstr, "-help") == 0)
+        {
+            fprintf(aFile, "\nXML test results file option.  Default is to not write a summary.\n");
+            fprintf(aFile, "  -xmlOutput file\n");
+            fprintf(aFile, "   Specify a source filename to output a test results summary to.\n\n");
+        }
+        else if (oscl_strcmp(argstr, "-xmlOutput") == 0)
+        {
+            iFileFound = true;
+            iFileArgument = ++iFileSearch;
+            break;
+        }
+    }
+
+    if (iFileFound)
+    {
+        // Convert to UTF8 if necessary
+        if (cmdline_iswchar)
+        {
+            oscl_wchar* cmd;
+            command_line->get_arg(iFileArgument, cmd);
+            char tmpstr[256];
+            oscl_UnicodeToUTF8(cmd, oscl_strlen(cmd), tmpstr, 256);
+            tmpstr[255] = '\0';
+            XmlTestResultsFilename = tmpstr;
+        }
+        else
+        {
+            char* cmdlinefilename = NULL;
+            command_line->get_arg(iFileArgument, cmdlinefilename);
+            XmlTestResultsFilename = cmdlinefilename;
+        }
+    }
+}
+
+void XmlSummary(OSCL_HeapString<OsclMemAllocator> &xmlresultsfile, const test_result& result)
+{
+    // Print out xml summary if requested
+    if (xmlresultsfile.get_size() > 0)
+    {
+        Oscl_File xmlfile(0);
+        Oscl_FileServer iFileServer;
+        iFileServer.Connect();
+        if (0 == xmlfile.Open(xmlresultsfile.get_str(), Oscl_File::MODE_READWRITE | Oscl_File::MODE_TEXT, iFileServer))
+        {
+            xml_test_interpreter xml_interp;
+            _STRING xml_results = xml_interp.interpretation(result, "PVAuthorEngineUnitTest");
+            fprintf(file, "\nWrote XML test summary to: %s.\n", xmlresultsfile.get_cstr());
+            xmlfile.Write(xml_results.c_str(), sizeof(char), oscl_strlen(xml_results.c_str()));
+            xmlfile.Close();
+            iFileServer.Close();
+        }
+        else
+        {
+            fprintf(file, "ERROR: Failed to open XML test summary log file: %s!\n", xmlresultsfile.get_cstr());
+        }
+    }
+}
+
+
 OSCL_HeapString<OsclMemAllocator> FindComposerType(OSCL_HeapString<OsclMemAllocator> aFileName, FILE* aFile)
 {
     OSCL_HeapString<OsclMemAllocator> compType;
@@ -2391,6 +2485,7 @@ int RunCompressedTest(cmd_line *aCommandLine, int32 &iFirstTest, int32 &iLastTes
 
     OSCL_HeapString<OsclMemAllocator> audioconfigfilename = NULL;
     OSCL_HeapString<OsclMemAllocator> videoconfigfilename = NULL;
+    OSCL_HeapString<OsclMemAllocator> xmlresultsfile = NULL;
     AVTConfig aAVTConfig;
 
     //Hard Coded Audio/Video values
@@ -2413,6 +2508,8 @@ int RunCompressedTest(cmd_line *aCommandLine, int32 &iFirstTest, int32 &iLastTes
 
         FindOutputFile(aCommandLine, outputfilenameinfo, file);
     }
+
+    FindXmlResultsFile(aCommandLine, xmlresultsfile, file);
 
     PVAETestInputType aAudioInputType = INVALID_INPUT_TYPE; // param1
     PVAETestInputType aVideoInputType = INVALID_INPUT_TYPE; // param2
@@ -2469,6 +2566,7 @@ int RunCompressedTest(cmd_line *aCommandLine, int32 &iFirstTest, int32 &iLastTes
              //if (runTestErr != OSCL_ERR_NONE)
              // fprintf(file, "ERROR: Leave Occurred! Reason %d \n", runTestErr);
 
+             XmlSummary(xmlresultsfile, testSuite->last_result());
              text_test_interpreter interp;
              _STRING rs = interp.interpretation(testSuite->last_result());
              fprintf(file, rs.c_str());
@@ -2509,6 +2607,9 @@ int RunUnCompressedTest(cmd_line *aCommandLine, int32 &aFirstTest, int32 &aLastT
     FindVideoEncoder(aCommandLine, videoencoderinfo, file);
     FindAudioEncoder(aCommandLine, audioencoderinfo, file);
     FindAacAudioType(aCommandLine, aacencoderprofileinfo, file);
+
+    OSCL_HeapString<OsclMemAllocator> xmlresultsfile;
+    FindXmlResultsFile(aCommandLine, xmlresultsfile, file);
 
     testparam.iFirstTest = aFirstTest;
     testparam.iLastTest = aLastTest;
@@ -2609,10 +2710,12 @@ int RunUnCompressedTest(cmd_line *aCommandLine, int32 &aFirstTest, int32 &aLastT
         }
     }
 
+
     OSCL_TRY(err,
              PVMediaInputAuthorEngineTestSuite* test_suite =
                  new PVMediaInputAuthorEngineTestSuite(testparam);
              test_suite->run_test();
+             XmlSummary(xmlresultsfile, test_suite->last_result());
              text_test_interpreter interp;
              _STRING rs = interp.interpretation(test_suite->last_result());
              fprintf(file, rs.c_str());
@@ -2676,6 +2779,7 @@ int _local_main(FILE *filehandle, cmd_line *command_line)
         FindAudioEncoder(command_line, filenameinfo, file);
         FindAacAudioType(command_line, filenameinfo, file);
         FindAuthoringTime(command_line, (uint32&)err, file);
+        FindXmlResultsFile(command_line, filenameinfo, file);
 
         fprintf(file, "NO CMD LINE ARGS WERE REQUIRED TO RUN COMPRESSED ERROR HANDLING TESTS [test range from:%d to %d]\n\n", KCompressed_Errorhandling_TestBegin, KCompressed_Errorhandling_TestEnd);
         fprintf(file, "NO CMD LINE ARGS WERE REQUIRED TO RUN UNCOMPRESSED ERROR HANDLING TESTS [test range from:%d to %d]\n\n", KUnCompressed_Errorhandling_TestBegin, KUnCompressed_Errorhandling_TestEnd);

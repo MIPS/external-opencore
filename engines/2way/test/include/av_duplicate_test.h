@@ -29,6 +29,7 @@ class av_duplicate_test : public test_base
 
         ~av_duplicate_test()
         {
+            iTestName = _STRLIT_CHAR("a/v duplicate");
         }
 
         void test();

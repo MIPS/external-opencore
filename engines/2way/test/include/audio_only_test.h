@@ -28,6 +28,7 @@ class audio_only_test : public test_base
 
         {
             iUsingAudio = true;
+            iTestName = _STRLIT_CHAR("audio only");
         };
 
         ~audio_only_test()

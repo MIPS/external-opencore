@@ -21,7 +21,7 @@
 
 void basic_lipsync_test::test()
 {
-    fprintf(fileoutput, "\n-------- Start Basic lipsync test --------\n");
+    fprintf(fileoutput, "\n-------- Start %s test --------\n", iTestName.get_cstr());
     fprintf(fileoutput, "\n** Test Number: %d. ** \n", iTestNum);
     fprintf(fileoutput, "\nSETTINGS:\nProxy %d", iUseProxy);
     iSourceAndSinks->PrintFormatTypes();

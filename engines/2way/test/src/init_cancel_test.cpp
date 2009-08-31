@@ -20,7 +20,7 @@
 
 void init_cancel_test::test()
 {
-    fprintf(fileoutput, "----- Start init cancel test, proxy %d. ----- \n", iUseProxy);
+    fprintf(fileoutput, "----- Start %s test, proxy %d. ----- \n", iTestName.get_cstr(), iUseProxy);
     fprintf(fileoutput, "\n** Test Number: %d. ** \n", iTestNum);
     int error = 0;
 
@@ -37,7 +37,7 @@ void init_cancel_test::test()
         }
     }
 
-    TestCompleted(this);
+    TestCompleted();
     this->RemoveFromScheduler();
 }
 

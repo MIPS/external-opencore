@@ -214,7 +214,7 @@ void pvauthor_async_compressed_test_errorhandling::SelectComposer()
             PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_ERR,
                             (0, "pvauthor_async_compressed_test_errorhandling::SelectComposer: Error - No composer type for test case"));
             PVPATB_TEST_IS_TRUE(false);
-            iObserver->CompleteTest(*iTestCase);
+            CompleteTest();
             return;
     }
 
@@ -862,7 +862,7 @@ void pvauthor_async_compressed_test_errorhandling::Run()
         case PVAE_CMD_CLEANUPANDCOMPLETE:
         {
             Cleanup();
-            iObserver->CompleteTest(*iTestCase);
+            CompleteTest();
         }
         break;
 
@@ -1040,7 +1040,7 @@ void pvauthor_async_compressed_test_errorhandling::CommandCompleted(const PVCmdR
                     PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_ERR,
                                     (0, "pvauthor_async_compressed_test_errorhandling::CommandCompleted: Error - ConfigureVideoEncoder failed"));
                     PVPATB_TEST_IS_TRUE(false);
-                    iObserver->CompleteTest(*iTestCase);
+                    CompleteTest();
                 }
                 else
                 {
@@ -1065,7 +1065,7 @@ void pvauthor_async_compressed_test_errorhandling::CommandCompleted(const PVCmdR
                     PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_ERR,
                                     (0, "pvauthor_async_compressed_test_errorhandling::CommandCompleted: Error - ConfigureTextEncoder failed"));
                     PVPATB_TEST_IS_TRUE(false);
-                    iObserver->CompleteTest(*iTestCase);
+                    CompleteTest();
                 }
                 else
                 {
@@ -1183,7 +1183,7 @@ void pvauthor_async_compressed_test_errorhandling::CommandCompleted(const PVCmdR
                     }
                     //Since there are no testInputs, we end here
                     //No need to call RemoveDataSource
-                    iObserver->CompleteTest(*iTestCase);
+                    CompleteTest();
                     break;
                 }
                 iState = PVAE_CMD_REMOVE_DATA_SOURCE;
@@ -1194,7 +1194,7 @@ void pvauthor_async_compressed_test_errorhandling::CommandCompleted(const PVCmdR
                 // Reset failed
                 PVPATB_TEST_IS_TRUE(false);
                 OSCL_ASSERT("ERROR -- Response failure for CMD_RESET");
-                iObserver->CompleteTest(*iTestCase);
+                CompleteTest();
             }
             break;
 
@@ -1211,7 +1211,7 @@ void pvauthor_async_compressed_test_errorhandling::CommandCompleted(const PVCmdR
                     PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_ERR,
                                     (0, "pvauthor_async_compressed_test_errorhandling::CommandCompleted: Error - DeleteTestInputs failed"));
                     PVPATB_TEST_IS_TRUE(false);
-                    iObserver->CompleteTest(*iTestCase);
+                    CompleteTest();
                     return;
                 }
                 else
@@ -1224,7 +1224,7 @@ void pvauthor_async_compressed_test_errorhandling::CommandCompleted(const PVCmdR
             {
                 // RemoveDataSource failed
                 PVPATB_TEST_IS_TRUE(false);
-                iObserver->CompleteTest(*iTestCase);
+                CompleteTest();
             }
             break;
         case PVAE_CMD_CLOSE:
@@ -1237,14 +1237,14 @@ void pvauthor_async_compressed_test_errorhandling::CommandCompleted(const PVCmdR
             {
                 PVPATB_TEST_IS_TRUE(false);
             }
-            iObserver->CompleteTest(*iTestCase);
+            CompleteTest();
         }
         break;
         default:
         {
             // Testing error if this is reached
             PVPATB_TEST_IS_TRUE(false);
-            iObserver->CompleteTest(*iTestCase);
+            CompleteTest();
         }
     }
 }

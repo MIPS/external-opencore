@@ -28,7 +28,7 @@
 #ifndef PVMI_CONFIG_AND_CAPABILITY_H_INCLUDED
 #include "pvmi_config_and_capability.h"
 #endif
-#define PVPATB_TEST_IS_TRUE( condition ) (iTestCase->test_is_true_stub( (condition), (#condition), __FILE__, __LINE__ ))
+#define PVPATB_TEST_IS_TRUE( condition ) (test_is_true_stub( (condition), (#condition), __FILE__, __LINE__ ))
 
 
 class pvauthor_async_compressed_test_errorhandling: public pvauthor_async_test_base

@@ -31,7 +31,7 @@ uint8 alphanumericTestString[ALPHANUMERIC_STRING_LENGTH] =
 
 void user_input_test::test()
 {
-    fprintf(fileoutput, "----- Start user input test, is dtmf %d, proxy %d. ----- \n", iIsDTMF, iUseProxy);
+    fprintf(fileoutput, "----- Start %s test, is dtmf %d, proxy %d. ----- \n", iTestName.get_cstr(), iIsDTMF, iUseProxy);
     fprintf(fileoutput, "\n** Test Number: %d. ** \n", iTestNum);
     int error = 0;
 
@@ -48,7 +48,7 @@ void user_input_test::test()
         }
     }
 
-    TestCompleted(this);
+    TestCompleted();
     this->RemoveFromScheduler();
 }
 

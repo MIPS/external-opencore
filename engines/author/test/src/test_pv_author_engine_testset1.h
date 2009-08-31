@@ -27,7 +27,7 @@
 #ifndef TEST_PV_AUTHOR_ENGINE_TYPEDEFS_H
 #include "test_pv_author_engine_typedefs.h"
 #endif
-#define PVPATB_TEST_IS_TRUE( condition ) (iTestCase->test_is_true_stub( (condition), (#condition), __FILE__, __LINE__ ))
+#define PVPATB_TEST_IS_TRUE( condition ) (test_is_true_stub( (condition), (#condition), __FILE__, __LINE__ ))
 
 class pvauthor_async_test_miscellaneous: public pvauthor_async_test_base
 {

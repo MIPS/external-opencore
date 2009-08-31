@@ -57,7 +57,7 @@
 
 void alloc_dealloc_test::test()
 {
-    fprintf(fileoutput, "----- Start alloc dealloc test, proxy %d. ----- \n", iUseProxy);
+    fprintf(fileoutput, "----- Start %s test, proxy %d. ----- \n", iTestName.get_cstr(), iUseProxy);
     fprintf(fileoutput, "\n** Test Number: %d. ** \n", iTestNum);
     int error = 0;
 
@@ -87,7 +87,7 @@ void alloc_dealloc_test::test()
     if (error)
     {
         test_is_true(false);
-        TestCompleted(this);
+        TestCompleted();
         this->RemoveFromScheduler();
         return;
     }
@@ -103,7 +103,7 @@ void alloc_dealloc_test::test()
         CPV2WayEngineFactory::DeleteTerminal(temp);
     }
 
-    TestCompleted(this);
+    TestCompleted();
     this->RemoveFromScheduler();
     return;
 }
