@@ -26,10 +26,12 @@ endif
 ifeq ($(strip $(AWK)),)
   ifeq ($(HOST_ARCH),win32)
     AWK := gawk
-    AWKCMD := "{print $$(NF-2)}"
+    WS_LAST_XID_AWKCMD := "{print $$(NF-2)}"
+    TIMED_STREAM_AWKCMD := "{print $$(NF-1),$$NF}"
   else
     AWK := awk
-    AWKCMD := '{print $$(NF-2)}'
+    WS_LAST_XID_AWKCMD := '{print $$(NF-2)}'
+    TIMED_STREAM_AWKCMD := '{print $$(NF-1),$$NF}'
   endif
 endif
 
@@ -120,10 +122,16 @@ header_time:= $(shell $(DATE) -u +"$(header_date_format)")
 basis_stream := $(strip $(shell $(ACCUREV) info 2>&1 | $(GREP) "Basis:" | $(CUT) -f2 -d":"))
 ifneq ($(strip $(basis_stream)),)
   basis_stream_type := $(shell $(ACCUREV) show -fx -s $(basis_stream) streams | $(GREP) "type=" | $(CUT) -f2 -d"\"")
+  basis_stream_time := $(shell $(ACCUREV) show -fx -s $(basis_stream) streams | $(GREP) "time=" | $(CUT) -f2 -d"\"")
+  ifneq ($(strip $(basis_stream_time)),)
+      basis_stream_type := timed
+  endif
+
+
   ws := $(shell $(ACCUREV) info | $(GREP) -i workspace | $(CUT) -f2)
-  xid_last_ws_update := $(shell $(ACCUREV) show wspaces | $(GREP) -i "^$(ws) " | $(AWK) $(AWKCMD))
+  xid_last_ws_update := $(shell $(ACCUREV) show wspaces | $(GREP) -i "^$(ws) " | $(AWK) $(WS_LAST_XID_AWKCMD))
   ifeq ($(strip $(xid_last_ws_update)),)
-    xid_last_ws_update := $(shell $(ACCUREV) show refs | $(GREP) -i "^$(ws) " | $(AWK) $(AWKCMD))
+    xid_last_ws_update := $(shell $(ACCUREV) show refs | $(GREP) -i "^$(ws) " | $(AWK) $(WS_LAST_XID_AWKCMD))
   endif
   ifeq ($(strip $(basis_stream_type)),passthrough)
     parent_basis_stream := $(shell $(ACCUREV) show -fx -s $(basis_stream) streams | $(GREP) "basis=" | $(CUT) -f2 -d"\"")
@@ -132,9 +140,16 @@ ifneq ($(strip $(basis_stream)),)
   else 
     ifeq ($(strip $(basis_stream_type)),snapshot)
       transaction_id := $(shell $(ACCUREV) show -fx -s $(basis_stream) streams | $(GREP) "name=" | $(CUT) -f2 -d"\"")
-    else ## basis is normal stream type
-      stream_name := $(basis_stream)
-      transaction_id := $(shell $(ACCUREV) hist -ft -t $(xid_last_ws_update).1 -s $(basis_stream) | $(GREP) "transaction" | $(CUT) -f1 -d";" | $(CUT) -f2 -d" " )
+    else 
+      ifeq ($(strip $(basis_stream_type)),timed)
+        timestamp := $(shell $(ACCUREV) show streams | $(GREP) -i "^$(basis_stream) " | $(AWK) $(TIMED_STREAM_AWKCMD))
+        parent_basis_stream := $(shell $(ACCUREV) show -fx -s $(basis_stream) streams | $(GREP) "basis=" | $(CUT) -f2 -d"\"")
+        transaction_id := $(shell $(ACCUREV) hist -ft -t "$(timestamp)" -s $(parent_basis_stream) | $(GREP) "transaction" | $(CUT) -f1 -d";" | $(CUT) -f2 -d" " )
+        stream_name := $(parent_basis_stream)
+      else ## basis is normal stream type
+        stream_name := $(basis_stream)
+        transaction_id := $(shell $(ACCUREV) hist -ft -t $(xid_last_ws_update).1 -s $(basis_stream) | $(GREP) "transaction" | $(CUT) -f1 -d";" | $(CUT) -f2 -d" " )
+      endif
     endif
   endif
 endif
