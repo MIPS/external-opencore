@@ -4,6 +4,11 @@ LOCAL_PATH := $(call get_makefile_dir)
 # Clear out the variables used in the local makefiles
 include $(MK)/clear.mk
 
+# DISABLE TREATING WARNINGS AS ERRORS
+# THIS SHOULD BE FIXED UP ASAP
+# see linux_arm warnings at a minimum
+LOCAL_DISABLE_COMPILE_WARNINGS_AS_ERRORS := 1
+
 TARGET := pv_frame_metadata_utility_test
 
 XCPPFLAGS := -DBUILD_OMX_DEC_NODE
