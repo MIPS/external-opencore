@@ -55,6 +55,9 @@ PVMP4FFCNFormatSpecificConfig::PVMP4FFCNFormatSpecificConfig()
     //no meaningful default possible, if peer does not provide
     //this info in PVMF_MIME_ISO_AVC_SAMPLE_FORMAT, composer node will error out
     iNALLenSize = 0;
+    iNumberOfChannels = PVMF_MP4FFCN_AUDIO_NUM_CHANNELS;
+    iBitsPerSample = PVMF_MP4FFCN_AUDIO_BITS_PER_SAMPLE;
+    iSamplingRate = 0;
 }
 
 ////////////////////////////////////////////////////////////////////////////
@@ -718,6 +721,52 @@ PVMFStatus PVMp4FFComposerPort::GetInputParametersFromPeer(PvmiCapabilityAndConf
         else
         {
             iFormatSpecificConfig.iTimescale = kvp[0].value.uint32_value;
+            aConfig->releaseParameters(NULL, kvp, numParams);
+        }
+        kvp = NULL;
+        numParams = 0;
+
+        // Get the sampling rate, number of channels and bits per sample for audio
+        // sampling rate
+        status = aConfig->getParametersSync(NULL, (PvmiKeyType)AUDIO_OUTPUT_SAMPLING_RATE_CUR_QUERY, kvp, numParams, NULL);
+        if (status != PVMFSuccess || !kvp || numParams != 1)
+        {
+            LOG_DEBUG((0, "PVMp4FFComposerPort::GetInputParametersFromPeer: Sampling rate info not available. Use default"));
+            iFormatSpecificConfig.iSamplingRate = PVMF_MP4FFCN_AUDIO_SAMPLING_RATE;
+        }
+        else
+        {
+            iFormatSpecificConfig.iSamplingRate = kvp[0].value.uint32_value;
+            aConfig->releaseParameters(NULL, kvp, numParams);
+        }
+        kvp = NULL;
+        numParams = 0;
+
+        // number of channels
+        status = aConfig->getParametersSync(NULL, (PvmiKeyType)AUDIO_OUTPUT_NUM_CHANNELS_CUR_QUERY, kvp, numParams, NULL);
+        if (status != PVMFSuccess || !kvp || numParams != 1)
+        {
+            LOG_DEBUG((0, "PVMp4FFComposerPort::GetInputParametersFromPeer: Number of channels info not available. Use default"));
+            iFormatSpecificConfig.iNumberOfChannels = PVMF_MP4FFCN_AUDIO_NUM_CHANNELS;
+        }
+        else
+        {
+            iFormatSpecificConfig.iNumberOfChannels = kvp[0].value.uint32_value;
+            aConfig->releaseParameters(NULL, kvp, numParams);
+        }
+        kvp = NULL;
+        numParams = 0;
+
+        // bits per sample
+        status = aConfig->getParametersSync(NULL, (PvmiKeyType)AUDIO_OUTPUT_BITS_PER_SAMPLE_CUR_QUERY, kvp, numParams, NULL);
+        if (status != PVMFSuccess || !kvp || numParams != 1)
+        {
+            LOG_DEBUG((0, "PVMp4FFComposerPort::GetInputParametersFromPeer: Bits per sample info not available. Use default"));
+            iFormatSpecificConfig.iBitsPerSample = PVMF_MP4FFCN_AUDIO_BITS_PER_SAMPLE;
+        }
+        else
+        {
+            iFormatSpecificConfig.iBitsPerSample = kvp[0].value.uint32_value;
             aConfig->releaseParameters(NULL, kvp, numParams);
         }
         kvp = NULL;

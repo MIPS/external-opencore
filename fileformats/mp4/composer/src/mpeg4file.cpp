@@ -3243,3 +3243,20 @@ PVA_FF_Mpeg4File::getInterLeaveBuffer(uint32 trackID)
     }
     return NULL;
 }
+
+void
+PVA_FF_Mpeg4File::setAudioEncodeParams(uint32 trackId,
+                                       PVMP4FFComposerAudioEncodeParams &audioParams)
+{
+    PVA_FF_TrackAtom *trackAtom;
+    trackAtom = _pmovieAtom->getMediaTrack(trackId);
+
+    if (trackAtom != NULL)
+        trackAtom->setAudioEncodeParams(audioParams);
+
+    return;
+}
+
+
+
+

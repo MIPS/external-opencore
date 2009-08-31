@@ -340,4 +340,19 @@ class PVMP4FFComposerSampleParam
         uint8* _ptextSampleModifier;
 };
 
+class PVMP4FFComposerAudioEncodeParams
+{
+    public:
+        PVMP4FFComposerAudioEncodeParams()
+        {
+            samplingRate = 0;
+            numberOfChannels = 2;
+            bitsPerSample = 16;
+        }
+
+        uint32 samplingRate;
+        uint32 numberOfChannels;
+        uint32 bitsPerSample;
+};
+
 #endif

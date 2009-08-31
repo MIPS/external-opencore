@@ -76,6 +76,11 @@ class PVMP4FFCNFormatSpecificConfig
 
         //Length of H264 NALSize field - applies only to PVMF_MIME_ISO_AVC_SAMPLE_FORMAT
         uint32 iNALLenSize;
+
+        // Audio Encode Params
+        uint32 iNumberOfChannels;
+        uint32 iBitsPerSample;
+        uint32 iSamplingRate;
 };
 
 class PVMp4FFComposerPort
