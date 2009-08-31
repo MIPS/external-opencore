@@ -836,6 +836,16 @@ OMX_ERRORTYPE OpenmaxAacAO::ComponentDeInit()
         iCodecReady = OMX_FALSE;
     }
 
+#if PROFILING_ON
+    if (0 != ipAacDec->iNumOutputSamples)
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_PROF, iDiagnosticsLogger, PVLOGMSG_INFO, (0, "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@"));
+
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_PROF, iDiagnosticsLogger, PVLOGMSG_INFO, (0, "OpenmaxAacAO - Total Decoding Time (ms) = %d", OsclTickCount::TicksToMsec(ipAacDec->iTotalTicks)));
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_PROF, iDiagnosticsLogger, PVLOGMSG_INFO, (0, "OpenmaxAacAO - Total Number of Output PCM Samples = %d", ipAacDec->iNumOutputSamples));
+    }
+#endif
+
     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE, (0, "OpenmaxAacAO : ComponentDeInit OUT"));
 
     return OMX_ErrorNone;

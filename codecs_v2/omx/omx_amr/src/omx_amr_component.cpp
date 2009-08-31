@@ -944,6 +944,16 @@ OMX_ERRORTYPE OpenmaxAmrAO::ComponentDeInit()
         iCodecReady = OMX_FALSE;
     }
 
+#if PROFILING_ON
+    if (0 != ipAmrDec->iNumOutputSamples)
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_PROF, iDiagnosticsLogger, PVLOGMSG_INFO, (0, "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@"));
+
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_PROF, iDiagnosticsLogger, PVLOGMSG_INFO, (0, "OpenmaxAmrAO - Total Decoding Time (ms) = %d", OsclTickCount::TicksToMsec(ipAmrDec->iTotalTicks)));
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_PROF, iDiagnosticsLogger, PVLOGMSG_INFO, (0, "OpenmaxAmrAO - Total Number of Output PCM Samples = %d", ipAmrDec->iNumOutputSamples));
+    }
+#endif
+
     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE, (0, "OpenmaxAmrAO : ComponentDeInit OUT"));
 
     return OMX_ErrorNone;
@@ -1089,7 +1099,17 @@ void OpenmaxAmrAO::DoSilenceInsertion()
         }
 
         pOutBuffer = &ipOutputBuffer->pBuffer[ipOutputBuffer->nFilledLen];
+
+#if PROFILING_ON
+        OMX_U32 StartTime = OsclTickCount::TickCount();
+#endif
         oscl_memset(pOutBuffer, 0, iOutputFrameLength);
+
+#if PROFILING_ON
+        OMX_U32 EndTime = OsclTickCount::TickCount();
+        ipAmrDec->iTotalTicks += (EndTime - StartTime);
+        ipAmrDec->iNumOutputSamples += (iOutputFrameLength >> 1);
+#endif
 
         ipOutputBuffer->nFilledLen += iOutputFrameLength;
         ipOutputBuffer->nOffset = 0;

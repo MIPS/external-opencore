@@ -24,6 +24,7 @@
 #include "omx_proxy_interface.h"
 #endif
 
+
 // Use default DLL entry point
 #ifndef OSCL_DLL_H_INCLUDED
 #include "oscl_dll.h"
@@ -1216,6 +1217,16 @@ OMX_ERRORTYPE OpenmaxAvcAO::ComponentDeInit()
         Status = ipAvcDec->AvcDecDeinit_OMX();
         iCodecReady = OMX_FALSE;
     }
+
+#if PROFILING_ON
+    if (0 != iFrameCount)
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_PROF, iDiagnosticsLogger, PVLOGMSG_INFO, (0, "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@"));
+
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_PROF, iDiagnosticsLogger, PVLOGMSG_INFO, (0, "OpenmaxAvcAO - Total Decoding Time (ms) = %d", OsclTickCount::TicksToMsec(ipAvcDec->iTotalTicks)));
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_PROF, iDiagnosticsLogger, PVLOGMSG_INFO, (0, "OpenmaxAvcAO - Total Number of Decoded Frames = %d", iFrameCount));
+    }
+#endif
 
     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE, (0, "OpenmaxAvcAO : ComponentDeInit OUT"));
 

@@ -30,6 +30,10 @@
 #include "mp4dec_lib.h"
 #endif
 
+#ifndef PV_OMXDEFS_H_INCLUDED
+#include "pv_omxdefs.h"
+#endif
+
 class Mpeg4Decoder_OMX
 {
     public:
@@ -51,6 +55,10 @@ class Mpeg4Decoder_OMX
         OMX_S32 GetVideoHeader(int32 aLayer, uint8 *aBuf, int32 aMaxSize);
 
         OMX_BOOL Mpeg4InitCompleteFlag;
+
+#if PROFILING_ON
+        OMX_U32 iTotalTicks;
+#endif
 
     private:
         MP4DecodingMode CodecMode;

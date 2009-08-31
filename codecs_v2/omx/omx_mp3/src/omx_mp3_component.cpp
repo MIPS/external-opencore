@@ -23,6 +23,7 @@
 #include "omx_proxy_interface.h"
 #endif
 
+
 // Use default DLL entry point
 #ifndef OSCL_DLL_H_INCLUDED
 #include "oscl_dll.h"
@@ -803,6 +804,16 @@ OMX_ERRORTYPE OpenmaxMp3AO::ComponentDeInit()
         iCodecReady = OMX_FALSE;
     }
 
+#if PROFILING_ON
+    if (0 != ipMp3Dec->iNumOutputSamples)
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_PROF, iDiagnosticsLogger, PVLOGMSG_INFO, (0, "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@"));
+
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_PROF, iDiagnosticsLogger, PVLOGMSG_INFO, (0, "OpenmaxMp3AO - Total Decoding Time (ms) = %d", OsclTickCount::TicksToMsec(ipMp3Dec->iTotalTicks)));
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_PROF, iDiagnosticsLogger, PVLOGMSG_INFO, (0, "OpenmaxMp3AO - Total Number of Output PCM Samples = %d", ipMp3Dec->iNumOutputSamples));
+    }
+#endif
+
     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE, (0, "OpenmaxMp3AO : ComponentDeInit OUT"));
 
     return OMX_ErrorNone;
@@ -882,7 +893,16 @@ void OpenmaxMp3AO::DoSilenceInsertion()
 
 
         pOutBuffer = &ipOutputBuffer->pBuffer[ipOutputBuffer->nFilledLen];
+#if PROFILING_ON
+        OMX_U32 StartTime = OsclTickCount::TickCount();
+#endif
         oscl_memset(pOutBuffer, 0, iOutputFrameLength);
+
+#if PROFILING_ON
+        OMX_U32 EndTime = OsclTickCount::TickCount();
+        ipMp3Dec->iTotalTicks += (EndTime - StartTime);
+        ipMp3Dec->iNumOutputSamples += (iOutputFrameLength >> 1);
+#endif
 
         ipOutputBuffer->nFilledLen += iOutputFrameLength;
         ipOutputBuffer->nOffset = 0;

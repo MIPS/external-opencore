@@ -22,12 +22,22 @@
 #include "mp3_dec.h"
 #include "pvmp3decoder_api.h"
 
+#if PROFILING_ON
+#include "oscl_tickcount.h"
+#endif
+
 Mp3Decoder::Mp3Decoder()
 {
     iMP3DecExt = NULL;
     iAudioMp3Decoder = NULL;
     iInputUsedLength = 0;
     iInitFlag = 0;
+
+#if PROFILING_ON
+    iTotalTicks = 0;
+    iNumOutputSamples = 0;
+#endif
+
 }
 
 OMX_BOOL Mp3Decoder::Mp3DecInit(OMX_AUDIO_CONFIG_EQUALIZERTYPE* aEqualizerType)
@@ -166,7 +176,20 @@ Int Mp3Decoder::Mp3DecodeAudio(OMX_S16* aOutBuff,
      */
     iMP3DecExt->outputFrameSize = (*aOutputLength);  /* in int16 samples */
 
+#if PROFILING_ON
+    OMX_U32 StartTime = OsclTickCount::TickCount();
+#endif
+
     Status = iAudioMp3Decoder->ExecuteL(iMP3DecExt);
+
+#if PROFILING_ON
+    OMX_U32 EndTime = OsclTickCount::TickCount();
+    iTotalTicks += (EndTime - StartTime);
+    if (MP3DEC_SUCCESS == Status)
+    {
+        iNumOutputSamples += iMP3DecExt->outputFrameSize;
+    }
+#endif
 
     if (MP3DEC_SUCCESS == Status)
     {

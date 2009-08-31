@@ -38,7 +38,9 @@
 #include "decoder_amr_wb.h"
 #endif
 
-
+#ifndef PV_OMXDEFS_H_INCLUDED
+#include "pv_omxdefs.h"
+#endif
 
 class OmxAmrDecoder
 {
@@ -60,6 +62,11 @@ class OmxAmrDecoder
         void ResetDecoder(); // for repositioning
 
         OMX_S32 iAmrInitFlag;
+
+#if PROFILING_ON
+        OMX_U32 iTotalTicks;
+        OMX_U32 iNumOutputSamples;
+#endif
 
     private:
 

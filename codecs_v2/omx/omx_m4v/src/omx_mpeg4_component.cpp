@@ -28,6 +28,7 @@
 #include "oscl_dll.h"
 #endif
 
+
 OSCL_DLL_ENTRY_POINT_DEFAULT()
 
 static const uint32 mask[33] =
@@ -1042,6 +1043,16 @@ OMX_ERRORTYPE OpenmaxMpeg4AO::ComponentDeInit()
         Status = ipMpegDecoderObject->Mp4DecDeinit();
         iCodecReady = OMX_FALSE;
     }
+
+#if PROFILING_ON
+    if (0 != iFrameCount)
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_PROF, iDiagnosticsLogger, PVLOGMSG_INFO, (0, "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@"));
+
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_PROF, iDiagnosticsLogger, PVLOGMSG_INFO, (0, "OpenmaxMpeg4AO - Total Decoding Time (ms) = %d", OsclTickCount::TicksToMsec(ipMpegDecoderObject->iTotalTicks)));
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_PROF, iDiagnosticsLogger, PVLOGMSG_INFO, (0, "OpenmaxMpeg4AO - Total Number of Decoded Frames = %d", iFrameCount));
+    }
+#endif
 
     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE, (0, "OpenmaxMpeg4AO : ComponentDeInit OUT"));
 

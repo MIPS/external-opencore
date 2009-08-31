@@ -48,6 +48,12 @@
 #include "pv_omxcore.h"
 #endif
 
+#if PROFILING_ON
+#ifndef OSCL_TICKCOUNT_H_INCLUDED
+#include "oscl_tickcount.h"
+#endif
+#endif
+
 
 #define OMX_PORT_INPUTPORT_INDEX OMX_DirInput
 #define OMX_PORT_OUTPUTPORT_INDEX OMX_DirOutput
@@ -451,6 +457,10 @@ class OmxComponentBase : public OsclActiveObject
     protected:
 
         PVLogger* iLogger;
+
+#if PROFILING_ON
+        PVLogger* iDiagnosticsLogger;
+#endif
 
         OSCL_IMPORT_REF void Run();
 

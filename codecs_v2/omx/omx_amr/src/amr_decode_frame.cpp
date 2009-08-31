@@ -25,6 +25,9 @@
 #include "cnst.h"
 #include "d_homing.h"
 
+#if PROFILING_ON
+#include "oscl_tickcount.h"
+#endif
 
 //Compressed audio formats
 #define PV_AMR_IETF                 0
@@ -120,6 +123,11 @@ OmxAmrDecoder::OmxAmrDecoder()
     /* Initialize decoder homing flags */
     iDecHomingFlag = 0;
     iDecHomingFlagOld = 1;
+
+#if PROFILING_ON
+    iTotalTicks = 0;
+    iNumOutputSamples = 0;
+#endif
 }
 
 /* Decoder Initialization function */
@@ -335,7 +343,20 @@ OMX_BOOL OmxAmrDecoder::AmrDecodeFrame(OMX_S16* aOutputBuffer,
             iCodecExternals->pInputBuffer = (uint8*) pSpeechBits;
             iCodecExternals->pOutputBuffer = (int16*) aOutputBuffer;
 
+#if PROFILING_ON
+            OMX_U32 StartTime = OsclTickCount::TickCount();
+#endif
+
             ByteOffset = iAudioAmrDecoder->ExecuteL(iCodecExternals);
+
+#if PROFILING_ON
+            OMX_U32 EndTime = OsclTickCount::TickCount();
+            iTotalTicks += (EndTime - StartTime);
+            if (PV_GSMAMR_DECODE_STATUS_ERR != ByteOffset)
+            {
+                iNumOutputSamples += (iOutputFrameSize >> 1);
+            }
+#endif
 
             if (PV_GSMAMR_DECODE_STATUS_ERR == ByteOffset)
             {
@@ -385,8 +406,16 @@ OMX_BOOL OmxAmrDecoder::AmrDecodeFrame(OMX_S16* aOutputBuffer,
             iCodecExternals->pInputBuffer = (uint8*) pSpeechBits;
             iCodecExternals->pOutputBuffer = (int16*) aOutputBuffer;
 
+#if PROFILING_ON
+            OMX_U32 StartTime = OsclTickCount::TickCount();
+#endif
+
             ByteOffset = iAudioAmrDecoder->ExecuteL(iCodecExternals);
 
+#if PROFILING_ON
+            OMX_U32 EndTime = OsclTickCount::TickCount();
+            iTotalTicks += (EndTime - StartTime);
+#endif
             if (PV_GSMAMR_DECODE_STATUS_ERR == ByteOffset)
             {
                 Status = OMX_FALSE;
@@ -394,6 +423,10 @@ OMX_BOOL OmxAmrDecoder::AmrDecodeFrame(OMX_S16* aOutputBuffer,
 
             if (ByteOffset <= (OMX_S32)*aInBufSize)
             {
+
+#if PROFILING_ON
+                iNumOutputSamples += (iOutputFrameSize >> 1);
+#endif
                 *aInBufSize -= ByteOffset;
                 *aInBuffer += ByteOffset;
                 *aOutputLength = iOutputFrameSize;
@@ -430,7 +463,20 @@ OMX_BOOL OmxAmrDecoder::AmrDecodeSilenceFrame(OMX_S16* aOutputBuffer,
     iCodecExternals->pInputBuffer = (uint8*) & FrameType;
     iCodecExternals->pOutputBuffer = (int16*) aOutputBuffer;
 
+#if PROFILING_ON
+    OMX_U32 StartTime = OsclTickCount::TickCount();
+#endif
+
     ByteOffset = iAudioAmrDecoder->ExecuteL(iCodecExternals);
+
+#if PROFILING_ON
+    OMX_U32 EndTime = OsclTickCount::TickCount();
+    iTotalTicks += (EndTime - StartTime);
+    if (PV_GSMAMR_DECODE_STATUS_ERR != ByteOffset)
+    {
+        iNumOutputSamples += (iOutputFrameSize >> 1);
+    }
+#endif
 
     if (PV_GSMAMR_DECODE_STATUS_ERR == ByteOffset)
     {

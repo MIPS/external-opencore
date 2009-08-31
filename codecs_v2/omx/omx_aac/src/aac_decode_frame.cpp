@@ -18,10 +18,19 @@
 
 #include "aac_dec.h"
 
+#if PROFILING_ON
+#include "oscl_tickcount.h"
+#endif
+
 OmxAacDecoder::OmxAacDecoder()
 {
     iAacInitFlag = 0;
     iInputUsedLength = 0;
+
+#if PROFILING_ON
+    iTotalTicks = 0;
+    iNumOutputSamples = 0;
+#endif
 }
 
 
@@ -121,7 +130,17 @@ Int OmxAacDecoder::AacDecodeFrames(OMX_S16* aOutputBuffer,
     //Decode the config buffer
     if (0 == iAacInitFlag)
     {
+
+#if PROFILING_ON
+        OMX_U32 StartTime = OsclTickCount::TickCount();
+#endif
         Status = PVMP4AudioDecoderConfig(&iExt, ipMem);
+
+#if PROFILING_ON
+        OMX_U32 EndTime = OsclTickCount::TickCount();
+        iTotalTicks += (EndTime - StartTime);
+#endif
+
         if (MP4AUDEC_SUCCESS == Status)
         {
             iAacInitFlag = 1;
@@ -152,11 +171,20 @@ Int OmxAacDecoder::AacDecodeFrames(OMX_S16* aOutputBuffer,
     }
 
     iExt.inputBufferUsedLength = 0;
+
+#if PROFILING_ON
+    OMX_U32 StartTime = OsclTickCount::TickCount();
+#endif
+
     Status = PVMP4AudioDecodeFrame(&iExt, ipMem);
+
+#if PROFILING_ON
+    OMX_U32 EndTime = OsclTickCount::TickCount();
+    iTotalTicks += (EndTime - StartTime);
+#endif
 
     if (MP4AUDEC_SUCCESS == Status || SUCCESS == Status)
     {
-
         *aInBufSize -= iExt.inputBufferUsedLength;
         if (0 == *aInBufSize)
         {
@@ -205,6 +233,10 @@ Int OmxAacDecoder::AacDecodeFrames(OMX_S16* aOutputBuffer,
             //Set the Resize flag to send the port settings changed callback
             *aResizeFlag = OMX_TRUE;
         }
+
+#if PROFILING_ON
+        iNumOutputSamples += *aSamplesPerFrame;
+#endif
 
         return Status;
 

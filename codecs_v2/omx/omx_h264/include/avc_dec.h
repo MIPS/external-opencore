@@ -30,6 +30,9 @@
 #include "oscl_mem.h"
 #endif
 
+#ifndef PV_OMXDEFS_H_INCLUDED
+#include "pv_omxdefs.h"
+#endif
 
 #define AVC_DEC_TIMESTAMP_ARRAY_SIZE 17
 
@@ -58,6 +61,10 @@ class AvcDecoder_OMX
             FrameSize = 0;
             iAvcActiveFlag = OMX_FALSE;
             oscl_memset(DisplayTimestampArray, 0, sizeof(OMX_TICKS)*AVC_DEC_TIMESTAMP_ARRAY_SIZE);
+
+#if PROFILING_ON
+            iTotalTicks = 0;
+#endif
         };
 
         ~AvcDecoder_OMX() { };
@@ -73,6 +80,9 @@ class AvcDecoder_OMX
         OMX_BOOL        iAvcActiveFlag;
         OMX_BOOL        iSkipToIDR;
 
+#if PROFILING_ON
+        OMX_U32 iTotalTicks;
+#endif
 
         OMX_ERRORTYPE AvcDecInit_OMX();
 

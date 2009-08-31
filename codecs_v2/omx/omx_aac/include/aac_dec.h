@@ -34,6 +34,11 @@
 #include "pvmp4audiodecoder_api.h"
 #endif
 
+#ifndef PV_OMXDEFS_H_INCLUDED
+#include "pv_omxdefs.h"
+#endif
+
+
 #define AACDEC_PCM_FRAME_SAMPLE_SIZE 1024 // 1024 samples 
 
 class OmxAacDecoder
@@ -58,6 +63,11 @@ class OmxAacDecoder
 
         OMX_S32 iAacInitFlag;
         OMX_S32 iInputUsedLength;
+
+#if PROFILING_ON
+        OMX_U32 iTotalTicks;
+        OMX_U32 iNumOutputSamples;
+#endif
 
     private:
 

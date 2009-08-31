@@ -41,6 +41,16 @@
 // 1 - Multithreaded, 0 - AO
 #define PROXY_INTERFACE 1
 
+#define PROFILING_ON 0
+
+#if PROFILING_ON
+
+#if PROXY_INTERFACE
+#undef PROXY_INTERFACE
+#endif
+
+#endif
+
 
 #if (PROXY_INTERFACE) && (PVLOGGER_INST_LEVEL>0)
 // Logging in pv omx components that run in separate threads can only be done by sending a log into

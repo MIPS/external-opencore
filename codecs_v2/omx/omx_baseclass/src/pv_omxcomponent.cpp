@@ -30,6 +30,10 @@ OmxComponentBase::OmxComponentBase() :
     iLogger = PVLogger::GetLoggerObject("OmxComponentBase");
     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE, (0, "OmxComponentBase : constructed"));
 
+#if PROFILING_ON
+    iDiagnosticsLogger = PVLogger::GetLoggerObject("pvplayerprofiling.omxcomponent");
+#endif
+
     //Flag to call BufferMgmtFunction in the Run() when the component state is executing
     iBufferExecuteFlag = OMX_FALSE;
     ipAppPriv = NULL;

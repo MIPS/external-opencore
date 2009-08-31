@@ -19,6 +19,9 @@
 #include "avc_dec.h"
 #include "avcdec_int.h"
 
+#if PROFILING_ON
+#include "oscl_tickcount.h"
+#endif
 
 /*************************************/
 /* functions needed for video engine */
@@ -240,7 +243,18 @@ OMX_BOOL AvcDecoder_OMX::AvcDecodeVideo_OMX(OMX_U8* aOutBuffer, OMX_U32* aOutput
 
     if (AVC_NALTYPE_SPS == (AVCNalUnitType)NalType)
     {
-        if (PVAVCDecSeqParamSet(&(AvcHandle), pNalBuffer, NalSize) != AVCDEC_SUCCESS)
+#if PROFILING_ON
+        OMX_U32 StartTime = OsclTickCount::TickCount();
+#endif
+
+        Status = PVAVCDecSeqParamSet(&(AvcHandle), pNalBuffer, NalSize);
+
+#if PROFILING_ON
+        OMX_U32 EndTime = OsclTickCount::TickCount();
+        iTotalTicks += (EndTime - StartTime);
+#endif
+
+        if (Status != AVCDEC_SUCCESS)
         {
             return OMX_FALSE;
         }
@@ -299,7 +313,18 @@ OMX_BOOL AvcDecoder_OMX::AvcDecodeVideo_OMX(OMX_U8* aOutBuffer, OMX_U32* aOutput
 
     else if (AVC_NALTYPE_PPS == (AVCNalUnitType) NalType)
     {
-        if (PVAVCDecPicParamSet(&(AvcHandle), pNalBuffer, NalSize) != AVCDEC_SUCCESS)
+#if PROFILING_ON
+        OMX_U32 StartTime = OsclTickCount::TickCount();
+#endif
+
+        Status = PVAVCDecPicParamSet(&(AvcHandle), pNalBuffer, NalSize);
+
+#if PROFILING_ON
+        OMX_U32 EndTime = OsclTickCount::TickCount();
+        iTotalTicks += (EndTime - StartTime);
+#endif
+
+        if (Status != AVCDEC_SUCCESS)
         {
             return OMX_FALSE;
         }
@@ -323,8 +348,18 @@ OMX_BOOL AvcDecoder_OMX::AvcDecodeVideo_OMX(OMX_U8* aOutBuffer, OMX_U32* aOutput
             }
         }
 
+#if PROFILING_ON
+        OMX_U32 StartTime = OsclTickCount::TickCount();
+#endif
 
-        if ((Status = PVAVCDecodeSlice(&(AvcHandle), pNalBuffer, NalSize)) == AVCDEC_PICTURE_OUTPUT_READY)
+        Status = PVAVCDecodeSlice(&(AvcHandle), pNalBuffer, NalSize);
+
+#if PROFILING_ON
+        OMX_U32 EndTime = OsclTickCount::TickCount();
+        iTotalTicks += (EndTime - StartTime);
+#endif
+
+        if (Status == AVCDEC_PICTURE_OUTPUT_READY)
         {
             FlushOutput_OMX(aOutBuffer, aOutputLength, aOutTimestamp, OldWidth, OldHeight);
 

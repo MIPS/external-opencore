@@ -23,6 +23,9 @@
 #include "oscl_mem.h"
 #include "omx_mpeg4_component.h"
 
+#if PROFILING_ON
+#include "oscl_tickcount.h"
+#endif
 
 #define MAX_LAYERS 1
 #define PVH263DEFAULTHEIGHT 288
@@ -57,6 +60,10 @@ Mpeg4Decoder_OMX::Mpeg4Decoder_OMX()
     H263_START_CODE1[0] = 0x00;
     H263_START_CODE1[1] = 0x00;
     H263_START_CODE1[2] = 0x80;
+
+#if PROFILING_ON
+    iTotalTicks = 0;
+#endif
 
 }
 
@@ -205,15 +212,23 @@ OMX_BOOL Mpeg4Decoder_OMX::Mp4DecodeVideo(OMX_U8* aOutBuffer, OMX_U32* aOutputLe
         return OMX_TRUE;
     }
 
+#if PROFILING_ON
+    OMX_U32 StartTime = OsclTickCount::TickCount();
+#endif
+
     Status = (OMX_BOOL) PVDecodeVideoFrame(&VideoCtrl, aInputBuf,
                                            &TimeStamp,
                                            (int32*)aInBufSize,
                                            &UseExtTimestamp,
                                            (OMX_U8*) pFrame0);
 
+#if PROFILING_ON
+    OMX_U32 EndTime = OsclTickCount::TickCount();
+    iTotalTicks += (EndTime - StartTime);
+#endif
+
     if (Status == PV_TRUE)
     {
-
 #ifdef _DEBUG
         //printf("Frame number %d\n", ++FrameCount);
 #endif

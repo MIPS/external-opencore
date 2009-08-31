@@ -27,6 +27,9 @@
 #include "pvmp3_decoder.h"
 #endif
 
+#ifndef PV_OMXDEFS_H_INCLUDED
+#include "pv_omxdefs.h"
+#endif
 
 class Mp3Decoder
 {
@@ -50,6 +53,11 @@ class Mp3Decoder
 
         OMX_S32 iInputUsedLength;
         OMX_S32 iInitFlag;
+
+#if PROFILING_ON
+        OMX_U32 iTotalTicks;
+        OMX_U32 iNumOutputSamples;
+#endif
 
     private:
 
