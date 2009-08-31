@@ -919,9 +919,16 @@ PVMFStatus PVMFAACFFParserNode::DoReset(PVMFNodeCommand& aCmd)
 
     MoveCmdToCurrentQueue(aCmd);
 
-    if (iCPM && (iAACParser != NULL))
+    if (iFileHandle != NULL)
     {
-        SendUsageComplete();
+        if ((iCPM))
+        {
+            SendUsageComplete();
+        }
+        else
+        {
+            CompleteReset();
+        }
     }
     else
     {
