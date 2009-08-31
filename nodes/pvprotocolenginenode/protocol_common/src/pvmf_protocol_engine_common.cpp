@@ -537,7 +537,8 @@ OSCL_EXPORT_REF bool HttpParsingBasicObject::isServerSendAuthenticationHeader()
 int32 HttpParsingBasicObject::isNewContentRangeInfoMatchingCurrentOne(const uint32 aPrevContentLength)
 {
     // First, consider content-length match
-    if (aPrevContentLength != iContentInfo.iContentLength) return PARSE_CONTENT_LENGTH_NOT_MATCH;
+    if (aPrevContentLength > 0 && iContentInfo.iContentLength > 0 && aPrevContentLength != iContentInfo.iContentLength)
+        return PARSE_CONTENT_LENGTH_NOT_MATCH;
 
     // if range doesn't support, return false
     if (iContentInfo.iContentRangeRight == 0) return PARSE_CONTENT_RANGE_INFO_NOT_MATCH;
