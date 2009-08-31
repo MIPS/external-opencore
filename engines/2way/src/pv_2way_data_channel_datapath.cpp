@@ -16,7 +16,6 @@
  * -------------------------------------------------------------------
  */
 #include "pv_2way_data_channel_datapath.h"
-#include "pv_2way_rec_datapath.h"
 
 
 bool CPV2WayDataChannelDatapath::SetCmd(TPV2WayCmdInfo *aCmdInfo)

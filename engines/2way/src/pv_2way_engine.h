@@ -145,19 +145,6 @@
 #define DEFAULT_PLAY_FROM_FILE_AUDIO PVMF_MIME_AMR_IETF
 #define DEFAULT_PLAY_FROM_FILE_VIDEO PVMF_MIME_YUV420
 
-//Gkl
-#if defined(PV_RECORD_TO_FILE_SUPPORT)
-#define RECORDED_FILESIZE_NOTIFICATION_TIMERID 2
-#define MIN_RECORDED_FILESIZE_NOTIFICATION_INTERVAL 500
-#endif
-
-#if defined(PV_PLAY_FROM_FILE_SUPPORT)
-//Play defaults
-#define DEFAULT_PLAY_FROM_FILE_TYPE PVMF_MIME_MPEG4FF
-#define DEFAULT_PLAY_FROM_FILE_AUDIO PVMF_MIME_AMR_IETF
-#define DEFAULT_PLAY_FROM_FILE_VIDEO PVMF_MIME_YUV420
-#endif
-
 
 class PvmfNodesSyncControlInterface;
 typedef enum
@@ -902,12 +889,6 @@ class CPV324m2Way : OsclActiveObject,
         void DoAddVideoEncNode(CPVDatapathNode& datapathnode,
                                CPV2WayEncDataChannelDatapath* datapath);
 
-#if defined(PV_PLAY_FROM_FILE_SUPPORT)
-        void DoAddAudioSrcSplitterNode(CPVDatapathNode& datapathnode,
-                                       CPV2WayEncDataChannelDatapath* datapath);
-        void DoAddVideoSrcSplitterNode(CPVDatapathNode& datapathnode,
-                                       CPV2WayEncDataChannelDatapath* datapath);
-#endif
         void DoAddDataSink(TPV2WayNode& aNode, const PVMFCmdResp& aResponse);
         void DoAddDataSinkTscNode(CPVDatapathNode& datapathnode,
                                   CPV2WayDecDataChannelDatapath* datapath,
@@ -1020,20 +1001,12 @@ class CPV324m2Way : OsclActiveObject,
         TPV2WayNode iAudioSinkNode;
         TPV2WayNode iAudioSrcNode;
 
-#if defined(PV_PLAY_FROM_FILE_SUPPORT)
-        TPV2WayNode iAudioSrcSplitterNode;
-        TPV2WayNode iVideoSrcSplitterNode;
-#endif
 
         TPV2WayNode iVideoEncNode;
         PV2WayNodeInterface iVideoEncNodeInterface;
 
         TPV2WayNode iVideoDecNode;
         TPV2WayNode iVideoParserNode;
-
-#if defined(PV_RECORD_TO_FILE_SUPPORT)
-        TPV2WayNode iVideoDecSplitterNode;
-#endif
 
         TPV2WayNode iAudioEncNode;
         TPV2WayNode iAudioDecNode;
@@ -1135,72 +1108,6 @@ class CPV324m2Way : OsclActiveObject,
         } File2WayState;
 
 
-#if defined(PV_RECORD_TO_FILE_SUPPORT)
-        void HandleFFComposerNodeCmd(PV2WayNodeCmdType aType, const PVMFCmdResp& aResponse);
-        void RemoveAudioRecPath();
-        void RemoveVideoRecPath();
-        void CheckRecordFileState();
-        void CheckRecordFileInit();
-        void CheckRecordFileReset();
-        void InitiateResetRecordFile();
-
-        OSCL_wHeapString<OsclMemAllocator> iRecFilename;
-        File2WayState iRecordFileState;
-
-        // Is a init record file pending ?
-        TPV2WayCmdInfo *iInitRecFileInfo;
-
-        // Is a reset record file pending ?
-        TPV2WayCmdInfo *iResetRecFileInfo;
-
-        TPV2WayNode iFFComposerNode;
-        PV2WayNodeInterface iFFClipConfig;
-        PV2WayNodeInterface iFFTrackConfig;
-        PV2WayNodeInterface iFFSizeAndDuration;
-
-        PVUuid iFFClipConfigPVUuid;
-        PVUuid iFFTrackConfigPVUuid;
-        PVUuid iFFSizeAndDurationPVUuid;
-        CPV2WayRecDatapath *iAudioRecDatapath;
-        CPV2WayRecDatapath *iVideoRecDatapath;
-
-        uint32 iRecFileSizeNotificationInterval; //Interval in msec
-        OsclTimer<OsclMemAllocator> iRecFileSizeNotificationTimer;
-        bool isRecFileSizeNotificationTimerActive;
-#endif
-
-#if defined(PV_PLAY_FROM_FILE_SUPPORT)
-        void RemoveAudioPreviewPath();
-        void RemoveVideoPreviewPath();
-
-        CPV2WayPreviewDatapath *iAudioPreviewDatapath;
-        CPV2WayPreviewDatapath *iVideoPreviewDatapath;
-
-        void HandlePFFNodeCmd(PV2WayNodeCmdType aType, const PVMFCmdResp& aResponse);
-        void CheckPlayFileState();
-        void CheckPlayFileInit();
-        void CheckPlayFileReset();
-        void InitiateResetPlayFile();
-        void CheckAudioSourceMixingPort();
-        void HandleAudioSrcNodeCmd(PV2WayNodeCmdType aType, const PVMFCmdResp& aResponse);
-
-        OSCL_wHeapString<OsclMemAllocator> iPlayFilename;
-        File2WayState iPlayFileState;
-        bool iUsePlayFileAsSource;
-
-        // Is a init play file pending ?
-        TPV2WayCmdInfo *iInitPlayFileInfo;
-
-        // Is a reset play file pending ?
-        TPV2WayCmdInfo *iResetPlayFileInfo;
-
-        // Play file cmd ?
-        TPV2WayCmdInfo *iPlayFileCmdInfo;
-
-        PlayFromFileNode *iPlayFromFileNode;
-        CPV2WayPort iAudioPlayPort;
-        CPV2WayPort iVideoPlayPort;
-#endif
 
         /* Common clock to be shared with nodes that support the PvmfNodesSyncControlInterface interface */
         PVMFMediaClock iClock;
@@ -1212,14 +1119,6 @@ class CPV324m2Way : OsclActiveObject,
         friend class CPV2WayDecDataChannelDatapath;
         friend class CPV2WayEncDataChannelDatapath;
         friend class CPV2WayMuxDatapath;
-
-#if defined(PV_PLAY_FROM_FILE_SUPPORT)
-        friend class CPV2WayPreviewDatapath;
-#endif
-
-#if defined(PV_RECORD_TO_FILE_SUPPORT)
-        friend class CPV2WayRecDatapath;
-#endif
 
         TSC *iTSCInterface;
         TSC_324m *iTSC324mInterface;

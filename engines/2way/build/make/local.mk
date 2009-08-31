@@ -57,8 +57,6 @@ SRCS := pv_2way_datapath.cpp \
 	pv_2way_dec_data_channel_datapath.cpp \
 	pv_2way_enc_data_channel_datapath.cpp \
 	pv_2way_mux_datapath.cpp \
-	pv_2way_preview_datapath.cpp \
-	pv_2way_rec_datapath.cpp \
 	pv_2way_engine_factory.cpp \
 	pv_2way_proxy_adapter.cpp \
 	pv_2way_proxy_factory.cpp

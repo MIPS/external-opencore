@@ -10,8 +10,6 @@ LOCAL_SRC_FILES := \
  	src/pv_2way_dec_data_channel_datapath.cpp \
  	src/pv_2way_enc_data_channel_datapath.cpp \
  	src/pv_2way_mux_datapath.cpp \
- 	src/pv_2way_preview_datapath.cpp \
- 	src/pv_2way_rec_datapath.cpp \
  	src/pv_2way_engine_factory.cpp \
  	src/pv_2way_proxy_adapter.cpp \
  	src/pv_2way_proxy_factory.cpp
