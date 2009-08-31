@@ -6,7 +6,6 @@ include $(MK)/clear.mk
 
 TARGET := pvjitterbufferrtp
 
-XCXXFLAGS += $(FLAG_COMPILE_WARNINGS_AS_ERRORS)
 
 # Added this to for osclconfig.h
 XINCDIRS += ../../../../../../common/include  ../../../../../streamingmanager/include ../../../../../../../protocols/rtp/src

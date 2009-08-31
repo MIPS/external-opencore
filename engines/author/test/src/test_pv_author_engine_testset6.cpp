@@ -571,7 +571,7 @@ void pv_mediainput_async_test_errorhandling::Run()
 
         case PVAE_CMD_QUERY_INTERFACE1:
             iAuthor->QueryInterface(PVMI_CAPABILITY_AND_CONFIG_PVUUID,
-                                    (PVInterface*&)iAuthorCapConfigIF,
+                                    iQueryPtr,
                                     (OsclAny*)iAuthor);
             break;
 
@@ -818,6 +818,7 @@ void pv_mediainput_async_test_errorhandling::CommandCompleted(const PVCmdRespons
         break;
         case PVAE_CMD_QUERY_INTERFACE1:
         {
+            iAuthorCapConfigIF = OSCL_CONST_CAST(PvmiCapabilityAndConfig*, iQueryPtr);
             if (aResponse.GetCmdStatus() == PVMFSuccess)
             {
                 iState = PVAE_CMD_CAPCONFIG_SYNC1;

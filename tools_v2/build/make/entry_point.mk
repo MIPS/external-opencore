@@ -268,3 +268,11 @@ completion_targets:
 
 .PHONY:: completion_targets
 
+ifndef DISABLE_COMPILE_WARNINGS_AS_ERRORS
+define cond_flag_warnings_as_errors
+$(if $(strip $1),,$(FLAG_COMPILE_WARNINGS_AS_ERRORS))
+endef
+else
+define cond_flag_warnings_as_errors
+endef
+endif

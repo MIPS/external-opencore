@@ -7,7 +7,6 @@ include $(MK)/clear.mk
 TARGET := pvlatmpayloadparser
 
 
-XCXXFLAGS += $(FLAG_COMPILE_WARNINGS_AS_ERRORS)
 
 
 XINCDIRS +=  ../../../../../../codecs_v2/audio/aac/dec/include  ../../../../../../codecs_v2/audio/aac/dec/src  ../../../../../../baselibs/gen_data_structures/src  ../../../../../sdp/common/include  ../../../../../../pvmi/pvmf/include

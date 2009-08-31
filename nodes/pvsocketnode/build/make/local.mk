@@ -9,7 +9,6 @@ TARGET := pvsocketnode
 
 XINCDIRS +=  ../../../streaming/common/include  ../../config/common
 
-XCXXFLAGS := $(FLAG_COMPILE_WARNINGS_AS_ERRORS)
 
 
 SRCDIR := ../../src

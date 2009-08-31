@@ -3047,7 +3047,10 @@ bool PVMFOMXAudioDecNode::CreateAACConfigDataFromASF(uint8 *inptr, uint32 inlen,
 
     uint32 OutSampRate = 0;
     uint32 SamplingRate = 0;
-    uint32 NumChannels = 0;
+    uint32 NumChannels = 0;  /* checks below assume unsigned type
+                              * (i.e., less than 0 not explicitly
+                              * checked, so don't change to signed.
+                              */
     uint32 SamplesPerFrame = 0;
 
     valPtr++; // this field represents frame length in bytes (we're not interested right now)
@@ -3123,8 +3126,9 @@ bool PVMFOMXAudioDecNode::CreateAACConfigDataFromASF(uint8 *inptr, uint32 inlen,
     aConfigHeader[1]  = (uint8)(i << 7);    /* SamplingRate  1 of 4 bits */
 
     /* Write Number of Channels */
-
-    if ((NumChannels < 0) || (NumChannels > 2))
+    // NumChannels is unsigned so can't be less than 0
+    // only need to check if the value is too large.
+    if ((NumChannels > 2))
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                         (0, "PVMFOMXAudioDecNode::CreateAACConfigDataFromASF() Error - unsupported number of channels\n"));

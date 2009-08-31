@@ -6,6 +6,9 @@ include $(MK)/clear.mk
 
 TARGET := pvstreamingmanagernode
 
+# DISABLE TREATING WARNINGS AS ERRORS
+# THIS SHOULD BE FIXED UP ASAP
+LOCAL_DISABLE_COMPILE_WARNINGS_AS_ERRORS := 1
 
 
 
@@ -25,7 +28,6 @@ HDRS := pvmf_sm_node_events.h \
 	pvmf_sm_node_factory.h
 
 
-# include $(call process_include_list,$(LOCAL_PATH),$(STREAMING_PLUGINS))
 
 include $(MK)/library.mk
 

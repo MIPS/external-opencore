@@ -6,7 +6,6 @@ include $(MK)/clear.mk
 
 TARGET := pvmetadata_engine
 
-XCXXFLAGS += $(FLAG_COMPILE_WARNINGS_AS_ERRORS)
 
 XINCDIRS += ../../../player/include ../../../player/src ../../../player/config/core
 

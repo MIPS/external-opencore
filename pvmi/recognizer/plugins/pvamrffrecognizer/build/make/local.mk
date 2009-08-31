@@ -7,7 +7,6 @@ include $(MK)/clear.mk
 TARGET := pvamrffrecognizer
 
 
-XCXXFLAGS += $(FLAG_COMPILE_WARNINGS_AS_ERRORS)
 
 SRCDIR := ../../src
 INCSRCDIR := ../../include

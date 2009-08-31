@@ -7,7 +7,6 @@ include $(MK)/clear.mk
 TARGET := pvcommsionode
 
 
-XCXXFLAGS += $(FLAG_COMPILE_WARNINGS_AS_ERRORS)
 
 
 XINCDIRS += ../../../../pvmi/pvmf/include ../../../../nodes/common/include ../../include 

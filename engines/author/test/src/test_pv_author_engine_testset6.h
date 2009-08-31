@@ -175,6 +175,7 @@ class pv_mediainput_async_test_errorhandling: public pvauthor_async_test_base
         FILE*                    iFile;
         PVInterface*             iOutputSizeAndDurationConfig;
         PVAECmdType              iCheckState;
+        PVInterface*             iQueryPtr;
 };
 
 #endif

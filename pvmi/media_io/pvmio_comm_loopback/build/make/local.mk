@@ -7,7 +7,6 @@ include $(MK)/clear.mk
 TARGET := pvmio_comm_loopback
 
 
-XCXXFLAGS += $(FLAG_COMPILE_WARNINGS_AS_ERRORS)
 
 
 XINCDIRS += ../../../../pvmf/include ../../../../pvmf_nodes/common/include ../../include 

@@ -7,7 +7,6 @@ include $(MK)/clear.mk
 TARGET := pvmioaviwavfileinput 
 
 
-XCXXFLAGS += $(FLAG_COMPILE_WARNINGS_AS_ERRORS)
 
 
 XINCDIRS += ../../../../pvmf/include ../../include

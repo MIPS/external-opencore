@@ -6,7 +6,6 @@ include $(MK)/clear.mk
 
 TARGET := scsp
 
-XCXXFLAGS += $(FLAG_COMPILE_WARNINGS_AS_ERRORS)
 
 SRCDIR := ../../src
 INCSRCDIR := ../../include

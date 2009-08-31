@@ -845,7 +845,7 @@ void pv_mediainput_async_test_opencomposestop::Run()
 
         case PVAE_CMD_QUERY_INTERFACE2:
             fprintf(iFile, "Query Interface2\n");
-            iAuthor->QueryInterface(PVMI_CAPABILITY_AND_CONFIG_PVUUID, (PVInterface*&)iAuthorCapConfigIF, (OsclAny*)iAuthor);
+            iAuthor->QueryInterface(PVMI_CAPABILITY_AND_CONFIG_PVUUID, iQueryPtr, (OsclAny*)iAuthor);
             break;
         case PVAE_CMD_CAPCONFIG_ASYNC:
         {
@@ -1041,6 +1041,7 @@ void pv_mediainput_async_test_opencomposestop::CommandCompleted(const PVCmdRespo
         }
         break;
         case PVAE_CMD_QUERY_INTERFACE2:
+            iAuthorCapConfigIF = OSCL_CONST_CAST(PvmiCapabilityAndConfig*, iQueryPtr);
             if (aResponse.GetCmdStatus() == PVMFSuccess)
             {
                 iState = PVAE_CMD_INIT;

@@ -8,7 +8,6 @@ include $(MK)/clear.mk
 
 TARGET := osclbase
 
-XCXXFLAGS := $(FLAG_COMPILE_WARNINGS_AS_ERRORS)
 
 SRCDIR := ../../src
 INCSRCDIR := ../../src

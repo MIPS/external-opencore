@@ -7,7 +7,6 @@ include $(MK)/clear.mk
 TARGET := pvloopbacknode
 
 
-XCXXFLAGS += $(FLAG_COMPILE_WARNINGS_AS_ERRORS)
 
 
 

@@ -7,7 +7,6 @@ include $(MK)/clear.mk
 TARGET := pvmiofileinput 
 
 
-XCXXFLAGS += $(FLAG_COMPILE_WARNINGS_AS_ERRORS)
 
 XCPPFLAGS += -DTEXT_TRACK_DESC_INFO
 

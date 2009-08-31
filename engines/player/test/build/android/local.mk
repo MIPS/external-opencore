@@ -8,7 +8,6 @@ TARGET := pvplayer_engine_test
 
 
 
-XCXXFLAGS += $(FLAG_COMPILE_WARNINGS_AS_ERRORS)
 # Temporarily ignore these warnings in the player test code until they can be
 # fixed
 CXXFLAGS += $(DISABLE_STRICT_ALIASING_WARNINGS)

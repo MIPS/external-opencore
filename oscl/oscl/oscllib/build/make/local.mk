@@ -12,7 +12,6 @@ XINCDIRS := ../../../osclio/src
 SRCDIR := ../../src
 INCSRCDIR := ../../src
 
-XCXXFLAGS := $(FLAG_COMPILE_WARNINGS_AS_ERRORS)
 
 # compose final src list for actual build
 SRCS :=	oscl_shared_library.cpp \

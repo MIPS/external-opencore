@@ -7,7 +7,6 @@ include $(MK)/clear.mk
 TARGET := pvrtsp_cli_eng_node
 
 
-XCXXFLAGS += $(FLAG_COMPILE_WARNINGS_AS_ERRORS)
 
 
 XINCDIRS +=  ../../../../nodes/streaming/streamingmanager/config/3gpp ../../../rtsp_parcom/src ../../../rtp/src ../../../../baselibs/gen_data_structures/src  ../../../sdp/common/include ../../../../nodes/streaming/streamingmanager/include ../../../../baselibs/pvcrypto/src ../../../rdt_parser/include ../../../../nodes/streaming/common/include

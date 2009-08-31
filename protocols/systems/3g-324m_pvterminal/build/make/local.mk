@@ -7,7 +7,6 @@ include $(MK)/clear.mk
 TARGET := pv324m
 
 
-XCXXFLAGS += $(FLAG_COMPILE_WARNINGS_AS_ERRORS)
 XCPPFLAGS := $(LIP_SYNC_ENABLED)
 
 

@@ -7,7 +7,6 @@ include $(MK)/clear.mk
 TARGET := pv_rtsp_parcom
 
 
-XCXXFLAGS += $(FLAG_COMPILE_WARNINGS_AS_ERRORS)
 
 
 XINCDIRS +=  ../../../rtp/src

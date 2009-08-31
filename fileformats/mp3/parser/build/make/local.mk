@@ -7,7 +7,6 @@ include $(MK)/clear.mk
 TARGET := pvmp3ff
 
 
-XCXXFLAGS += $(FLAG_COMPILE_WARNINGS_AS_ERRORS)
 
 XINCDIRS:= ../../../../../common/parser/include
 

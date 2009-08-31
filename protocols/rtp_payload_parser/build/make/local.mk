@@ -7,7 +7,6 @@ include $(MK)/clear.mk
 TARGET := rtppayloadparser
 
 
-XCXXFLAGS += $(FLAG_COMPILE_WARNINGS_AS_ERRORS)
 
 
 XINCDIRS +=  ../../rfc_3016/include  ../../rfc_3267/include  ../../rfc_3016/include  ../../rfc_2429/include  ../../rfc_3984/include  ../../asf/include  ../../rfc_3984/src  ../../realmedia/include  ../../rfc_3640/include

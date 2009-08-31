@@ -6,7 +6,6 @@ include $(MK)/clear.mk
 
 TARGET := pvmediadatastruct
 
-XCXXFLAGS := $(FLAG_COMPILE_WARNINGS_AS_ERRORS)
 
 XINCDIRS += ../../../../fileformats/mp4/parser/include
 XINCDIRS += ../../../../pvmi/pvmf/include

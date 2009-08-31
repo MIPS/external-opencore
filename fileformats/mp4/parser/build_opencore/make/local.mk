@@ -7,7 +7,6 @@ include $(MK)/clear.mk
 TARGET := pvmp4ff
 
 
-XCXXFLAGS += $(FLAG_COMPILE_WARNINGS_AS_ERRORS)
 
 
 XINCDIRS := ../../utils/mp4recognizer/include

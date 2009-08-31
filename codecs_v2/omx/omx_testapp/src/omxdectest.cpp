@@ -232,10 +232,13 @@ int local_main(FILE* filehandle, cmd_line* command_line)
                     {
                         ArgIndex++;
                         getCmdLineArg(cmdline_iswchar, command_line, argstr, ArgIndex, PV_ARGSTR_LENGTH);
-                        PV_atoi(argstr, 'd', (uint32&)FirstTest);
+                        uint32 tmp; // use tmp to avoid type-punned warning whe calling PV_atoi
+                        PV_atoi(argstr, 'd', tmp);
+                        FirstTest = tmp;
                         ArgIndex++;
                         getCmdLineArg(cmdline_iswchar, command_line, argstr, ArgIndex, PV_ARGSTR_LENGTH);
-                        PV_atoi(argstr, 'd', (uint32&)LastTest);
+                        PV_atoi(argstr, 'd', tmp);
+                        LastTest = tmp;
                         ArgIndex++;
                     }
                     break;

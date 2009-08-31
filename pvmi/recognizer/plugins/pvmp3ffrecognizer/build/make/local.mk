@@ -6,7 +6,6 @@ include $(MK)/clear.mk
 
 TARGET := pvmp3ffrecognizer
 
-XCXXFLAGS += $(FLAG_COMPILE_WARNINGS_AS_ERRORS)
 
 SRCDIR := ../../src
 INCSRCDIR := ../../include

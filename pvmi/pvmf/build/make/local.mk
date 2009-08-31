@@ -5,7 +5,6 @@ LOCAL_PATH := $(call get_makefile_dir)
 include $(MK)/clear.mk
 
 TARGET := pvmf
-XCXXFLAGS := $(FLAG_COMPILE_WARNINGS_AS_ERRORS)
 SRCDIR := ../../src
 INCSRCDIR := ../../include
 

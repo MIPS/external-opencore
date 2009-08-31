@@ -21,7 +21,6 @@ else
 XCPPFLAGS += -DPV_USE_AMR_CODECS $(SIPCPPFLAGS) $(OMX_FLAGS)
 endif
 
-XCXXFLAGS += $(FLAG_COMPILE_WARNINGS_AS_ERRORS)
 
 ifeq ($(USING_MONA),1)
 XINCDIRS +=  ../../h223/mona/include  ../../h324/tsc/mona/include 

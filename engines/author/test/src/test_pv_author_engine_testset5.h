@@ -197,6 +197,7 @@ class pv_mediainput_async_test_opencomposestop: public pvauthor_async_test_base,
         OsclFloat                iFrameRate;
         uint32                   iSamplingRate;
         bool                     iUseExtrnFileDesc;
+        PVInterface*             iQueryPtr;
 
 };
 

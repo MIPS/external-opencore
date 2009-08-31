@@ -1988,25 +1988,29 @@ OMX_BOOL OmxComponentEncTest::ParseM4vLine(const char* line_start,
             case ENCODE_IQUANT_M4V:
             {
                 Extract(line_start, line_end, temp1, len1);
-                PV_atoi(temp1, 'd', (uint32&)iIQuant);
+                PV_atoi(temp1, 'd', temp);
+                iIQuant = temp;
             }
             break;
             case ENCODE_PQUANT_M4V:
             {
                 Extract(line_start, line_end, temp1, len1);
-                PV_atoi(temp1, 'd', (uint32&)iPQuant);
+                PV_atoi(temp1, 'd', temp);
+                iPQuant = temp;
             }
             break;
             case ENCODE_SEARCHRANGE_M4V:
             {
                 Extract(line_start, line_end, temp1, len1);
-                PV_atoi(temp1, 'd', (uint32&)iSearchRange);
+                PV_atoi(temp1, 'd', temp);
+                iSearchRange = temp;
             }
             break;
             case ENCODE_MV8x8:
             {
                 Extract(line_start, line_end, temp1, len1);
-                PV_atoi(temp1, 'd', (uint32&)iFourMV);
+                PV_atoi(temp1, 'd', temp);
+                iFourMV = (temp != 0) ? OMX_TRUE : OMX_FALSE;
             }
             break;
             case ENCODE_INTRAREFRESHTYPE_M4V:
@@ -2028,13 +2032,15 @@ OMX_BOOL OmxComponentEncTest::ParseM4vLine(const char* line_start,
             case ENCODE_NUMINTRAMB_M4V:
             {
                 Extract(line_start, line_end, temp1, len1);
-                PV_atoi(temp1, 'd', (uint32&)iNumIntraMB);
+                PV_atoi(temp1, 'd', temp);
+                iNumIntraMB = temp;
             }
             break;
             case ENCODE_PACKETSIZE:
             {
                 Extract(line_start, line_end, temp1, len1);
-                PV_atoi(temp1, 'd', (uint32&)iMaxPacketSize);
+                PV_atoi(temp1, 'd', temp);
+                iMaxPacketSize = temp;
             }
             break;
             case ENCODE_PROFILE_M4V:
@@ -2091,44 +2097,51 @@ OMX_BOOL OmxComponentEncTest::ParseM4vLine(const char* line_start,
             case ENCODE_RESYNC:
             {
                 Extract(line_start, line_end, temp1, len1);
-                PV_atoi(temp1, 'd', (uint32&)iResyncFlag);
+                PV_atoi(temp1, 'd', temp);
+                iResyncFlag = (temp != 0) ? OMX_TRUE : OMX_FALSE;
             }
             break;
             case ENCODE_DATAPARTITION:
             {
                 Extract(line_start, line_end, temp1, len1);
-                PV_atoi(temp1, 'd', (uint32&)iDataPartitioningFlag);
+                PV_atoi(temp1, 'd', temp);
+                iDataPartitioningFlag = (temp != 0) ? OMX_TRUE : OMX_FALSE;
             }
             break;
             case ENCODE_SHORTHEADER:
             {
                 Extract(line_start, line_end, temp1, len1);
-                PV_atoi(temp1, 'd', (uint32&)iShortHeaderFlag);
+                PV_atoi(temp1, 'd', temp);
+                iShortHeaderFlag = (temp != 0) ? OMX_TRUE : OMX_FALSE;
             }
             break;
 
             case ENCODE_RESYNC_MARKER_SPACING:
             {
                 Extract(line_start, line_end, temp1, len1);
-                PV_atoi(temp1, 'd', (uint32&)iResynchMarkerSpacing);
+                PV_atoi(temp1, 'd', temp);
+                iResynchMarkerSpacing = temp;
             }
             case ENCODE_REVERSIBLE_VLC:
             {
                 Extract(line_start, line_end, temp1, len1);
-                PV_atoi(temp1, 'd', (uint32&)iReversibleVLCFlag);
+                PV_atoi(temp1, 'd', temp);
+                iReversibleVLCFlag = (temp != 0) ? OMX_TRUE : OMX_FALSE;
             }
             break;
             case ENCODE_TIME_INCREMENT_RESOLUTION:
             {
                 Extract(line_start, line_end, temp1, len1);
-                PV_atoi(temp1, 'd', (uint32&)iTimeIncRes);
+                PV_atoi(temp1, 'd', temp);
+                iTimeIncRes = temp;
             }
             break;
 
             case ENCODE_GOBHEADER_INTERVAL:
             {
                 Extract(line_start, line_end, temp1, len1);
-                PV_atoi(temp1, 'd', (uint32&)iGobHeaderInterval);
+                PV_atoi(temp1, 'd', temp);
+                iGobHeaderInterval = temp;
             }
 
             default:

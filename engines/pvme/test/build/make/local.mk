@@ -4,7 +4,6 @@ include $(MK)/clear.mk
 
 TARGET := pvme_test
 
-XCXXFLAGS += $(FLAG_COMPILE_WARNINGS_AS_ERRORS)
 
 XINCDIRS := ../../config/default ../../../../player/include
 

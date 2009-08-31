@@ -7,7 +7,6 @@ include $(MK)/clear.mk
 TARGET := pvamrffparsernode
 
 
-XCXXFLAGS += $(FLAG_COMPILE_WARNINGS_AS_ERRORS)
 
 
 

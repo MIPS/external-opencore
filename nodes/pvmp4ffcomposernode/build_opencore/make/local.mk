@@ -7,7 +7,6 @@ include $(MK)/clear.mk
 TARGET := pvmp4ffcomposernode
 
 
-XCXXFLAGS += $(FLAG_COMPILE_WARNINGS_AS_ERRORS)
 
 
 XINCDIRS += $(SDK_LOCAL)/installed_include ../../src ../../../../nodes/common/include ../../../../pvmi/pvmf/include  ../../include  ../../../../baselibs/pv_mime_utils/src  ../../../../engines/author/include  ../../../../baselibs/media_data_structures/src  ../../../../oscl/oscl/osclio/src  ../../../../fileformats/mp4/composer/config/opencore

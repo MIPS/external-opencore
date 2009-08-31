@@ -7,7 +7,6 @@ include $(MK)/clear.mk
 TARGET := m4v_config
 
 
-XCXXFLAGS += $(FLAG_COMPILE_WARNINGS_AS_ERRORS)
 
 OPTIMIZE_FOR_PERFORMANCE_OVER_SIZE := true
 
