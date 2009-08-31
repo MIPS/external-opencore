@@ -87,9 +87,11 @@
 #ifndef  PVMF_MEMORYBUFFERDATASTREAM_FACTORY_H_INCLUDED
 #include "pvmf_memorybufferdatastream_factory.h"
 #endif
+#if(PV_HAS_SHOUTCAST_SUPPORT_ENABLED)
 #ifndef PVPLSFILEPARSER_H_INCLUDED
 #include "pvplsfileparser.h"
 #endif
+#endif //PV_HAS_SHOUTCAST_SUPPORT_ENABLED
 #endif //PVMF_DOWNLOADMANAGER_SUPPORT_PPB
 
 #ifndef PVMF_CPMPLUGIN_LICENSE_INTERFACE_H_INCLUDED
@@ -843,14 +845,16 @@ class PVMFDownloadManagerNode
         // HTTP Content-Type header MIME string hint from the server
         OSCL_HeapString<OsclMemAllocator> iContentTypeMIMEString;
 
+#if(PVMF_DOWNLOADMANAGER_SUPPORT_PPB)
+#if(PV_HAS_SHOUTCAST_SUPPORT_ENABLED)
         PVMFStatus ParsePLSFile(OSCL_wString& aPLSFile);
 
-#if(PVMF_DOWNLOADMANAGER_SUPPORT_PPB)
         // Shoutcast playlist support
         PVPLSEntry iPLSEntry;
         PVPLSFileInfo iPLSFileInfo;
         PVMFSourceContextData* iPLSSessionContextData;
-#endif
+#endif //PV_HAS_SHOUTCAST_SUPPORT_ENABLED 
+#endif //PVMF_DOWNLOADMANAGER_SUPPORT_PPB
 };
 
 ///////////////////////////////////////////////////////////////////////////////

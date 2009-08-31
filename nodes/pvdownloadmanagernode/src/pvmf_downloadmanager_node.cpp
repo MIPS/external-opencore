@@ -165,7 +165,9 @@ void PVMFDownloadManagerNode::ConstructL()
     iFileBufferDatastreamFactory = NULL;
 #if(PVMF_DOWNLOADMANAGER_SUPPORT_PPB)
     iMemoryBufferDatastreamFactory = NULL;
+#if(PV_HAS_SHOUTCAST_SUPPORT_ENABLED)
     iPLSSessionContextData = NULL;
+#endif//PV_HAS_SHOUTCAST_SUPPORT_ENABLED
 #endif//PVMF_DOWNLOADMANAGER_SUPPORT_PPB
 
     iDownloadFileName = NULL;
@@ -250,12 +252,13 @@ PVMFDownloadManagerNode::~PVMFDownloadManagerNode()
         OSCL_DELETE(iMemoryBufferDatastreamFactory);
         iMemoryBufferDatastreamFactory = NULL;
     }
-
+#if(PV_HAS_SHOUTCAST_SUPPORT_ENABLED)
     if (iPLSSessionContextData != NULL)
     {
         OSCL_DELETE(iPLSSessionContextData);
         iPLSSessionContextData = NULL;
     }
+#endif//PV_HAS_SHOUTCAST_SUPPORT_ENABLED
 #endif//PVMF_DOWNLOADMANAGER_SUPPORT_PPB
 
     //The command queues are self-deleting, but we want to notify the observer of unprocessed commands.
@@ -564,25 +567,30 @@ PVMFStatus PVMFDownloadManagerNode::SetSourceInitializationData(OSCL_wString& aS
         return PVMFErrInvalidState;
 
 #if(PVMF_DOWNLOADMANAGER_SUPPORT_PPB)
-
+#if(PV_HAS_SHOUTCAST_SUPPORT_ENABLED)
     if (aSourceFormat == PVMF_MIME_PLSFF)
     {
         // parse the PLF file
         // fill in iSourceURL, iSourceFormat and iSourceData
         PVMFStatus status = ParsePLSFile(aSourceURL);
         if (status != PVMFSuccess)
+        {
             return status;
+        }
     }
     else
     {
-#endif
+#endif //PV_HAS_SHOUTCAST_SUPPORT_ENABLED
+#endif //PVMF_DOWNLOADMANAGER_SUPPORT_PPB
         iSourceURL = aSourceURL;
         iSourceFormat = aSourceFormat;
         iSourceData = aSourceData;
 
 #if(PVMF_DOWNLOADMANAGER_SUPPORT_PPB)
+#if(PV_HAS_SHOUTCAST_SUPPORT_ENABLED)
     }
-#endif
+#endif //PV_HAS_SHOUTCAST_SUPPORT_ENABLED
+#endif //PVMF_DOWNLOADMANAGER_SUPPORT_PPB
 
     // Pass the source info directly to the protocol engine node.
 
@@ -3842,6 +3850,8 @@ void PVMFDownloadManagerNode::ClockStateUpdated()
     }
 }
 
+#if(PVMF_DOWNLOADMANAGER_SUPPORT_PPB)
+#if(PV_HAS_SHOUTCAST_SUPPORT_ENABLED)
 
 // if the a URL is successfully retrieved from the PLS file,
 //   iSourceURL will contain the URL,
@@ -3927,3 +3937,7 @@ PVMFStatus PVMFDownloadManagerNode::ParsePLSFile(OSCL_wString& aPLSFile)
 
     return PVMFSuccess;
 }
+
+#endif//PV_HAS_SHOUTCAST_SUPPORT_ENABLED
+#endif//PVMF_DOWNLOADMANAGER_SUPPORT_PPB
+
