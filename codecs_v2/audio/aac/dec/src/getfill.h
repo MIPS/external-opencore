@@ -69,7 +69,18 @@
 ; GLOBAL FUNCTION DEFINITIONS
 ; Function Prototype declaration
 ----------------------------------------------------------------------------*/
-void getfill(BITS    *pInputStream);
+
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
+    void getfill(BITS    *pInputStream);
+
+#ifdef __cplusplus
+}
+#endif
+
 
 /*----------------------------------------------------------------------------
 ; END
