@@ -128,8 +128,19 @@ gsm_amr_headers_lib=m
 pvmp3_lib=m
 pvra8decoder_lib=n
 wmadecoder_lib=n
-wma_std_support=m
-wma_pro_support=m
+useoldwmadecoder=n
+wma_audio_support=m
+
+#
+# WMA Audio library build configurations (see build_configuration.doc)
+#
+wma_build_cfg_std=n
+wma_build_cfg_stdprostereolbrv1=n
+wma_build_cfg_stdprostereolbr=n
+wma_build_cfg_stdprolbr=n
+wma_build_cfg_lsl=n
+wma_build_cfg_all=y
+
 wmavoicedecoder_lib=n
 wma_voice_support=m
 wma_common_hdrs_lib=n

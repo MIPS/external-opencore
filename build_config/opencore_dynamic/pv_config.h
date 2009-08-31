@@ -145,8 +145,19 @@
 #define pvmp3_lib m
 #define pvra8decoder_lib 0
 #define wmadecoder_lib 0
-#define wma_std_support m
-#define wma_pro_support m
+#define useoldwmadecoder 0
+#define wma_audio_support m
+
+//
+// WMA Audio library build configurations (see build_configuration.doc)
+//
+#define wma_build_cfg_std 0
+#define wma_build_cfg_stdprostereolbrv1 0
+#define wma_build_cfg_stdprostereolbr 0
+#define wma_build_cfg_stdprolbr 0
+#define wma_build_cfg_lsl 0
+#define wma_build_cfg_all 1
+
 #define wmavoicedecoder_lib 0
 #define wma_voice_support m
 #define wma_common_hdrs_lib 0
@@ -498,7 +509,6 @@
 #define pvpvxparser_m_lib "-lpvpvxparser"
 #define pvprotocolenginenode_ftdl_plugin_in_registry_y_mk ""
 #define pvavcencnode_y_lib ""
-#define WMA_VOICE_ENABLED 1
 #define pvmedialayernode_m_mk ""
 #define pvpvr_y_mk ""
 #define LIBDIR_engines_shared "/engines/player/build/make /engines/author/build/make /engines/2way/build/make /engines/2way/sample_app/pv2waysample/build/make /engines/common/build/make /engines/adapters/player/framemetadatautility/build/make /engines/pvme/build/make"
@@ -538,13 +548,13 @@
 #define MODS_pvfasttrack_downloadreg "-lopencore_common"
 #define omx_amr_component_imp_m_lib ""
 #define pvframemetadatautility_y_mk ""
+#define WMA_BUILD_CFG_ALL_ENABLED 1
 #define pvavcdecoder_m_lib "-lpvavcdecoder"
 #define SOLIBDIRS_opencore_mp4localreg "/modules/linux_mp4/node_registry/build/make /pvmi/recognizer/plugins/pvmp4ffrecognizer/build/make"
 #define pviptransport_y_lib ""
 #define SOLIBS_opencore_rtsp "-lpvrtspinterface -lpvstreamingmanagernode -lpv_rtsp_parcom -lpvrtsp_cli_eng_node -lrtppayloadparser -lpvjitterbufferrtp"
 #define pvsdpparser_y_lib ""
 #define pvwmadecnode_y_mk ""
-#define pvprotocolenginenode_shoutcast_plugin_y_mk ""
 #define pvmp4ffcomposer_y_lib ""
 #define pvflvff_y_mk ""
 #define pvdecoder_gsmamr_m_mk "/codecs_v2/audio/gsm_amr/amr_nb/dec/build/make"
@@ -553,6 +563,7 @@
 #define pvmetadata_engine_m_lib "-lpvmetadata_engine"
 #define pvasfcommon_so_name ""
 #define pvmp3ffrecognizer_y_mk ""
+#define WMA_BUILD_CFG_STDPROLBR_ENABLED 0
 #define pvwmdrmoemsettingsinterface_m_mk ""
 #define LIBDIR_pvmi_shared "/pvmi/content_policy_manager/build/make /pvmi/content_policy_manager/plugins/oma1/passthru/build/make  /pvmi/content_policy_manager/plugins/common/build/make    /pvmi/media_io/pvmiofileoutput/build/make /pvmi/media_io/pvmi_mio_fileinput/build/make_pvauthor /pvmi/media_io/pvmi_mio_avi_wav_fileinput/build/make /pvmi/media_io/pvmio_comm_loopback/build/make /pvmi/recognizer/build/make /pvmi/recognizer/plugins/pvaacffrecognizer/build/make /pvmi/recognizer/plugins/pvamrffrecognizer/build/make   /pvmi/recognizer/plugins/pvmp3ffrecognizer/build/make /pvmi/recognizer/plugins/pvmp4ffrecognizer/build/make /pvmi/recognizer/plugins/pvwavffrecognizer/build/make   /pvmi/recognizer/plugins/pvplsffrecognizer/build/make   /pvmi/pvmf/build/make   "
 #define csprng_y_mk ""
@@ -566,6 +577,7 @@
 #define pvamrffparsernode_y_mk ""
 #define protocolenginenode_download_common_y_mk ""
 #define pvmtp_usb_transport_so_name ""
+#define USE_OLD_WMA_DECODER 0
 #define LIBS_omxenc_static "   "
 #define MODS_pvdb "-lopencore_player -lopencore_common -lpvsqlite -lpvasfcommon -lpvasflocalpbreg"
 #define config_3gpp_unicastpvr_filepvr_asf_mk ""
@@ -633,7 +645,6 @@
 #define pv_amr_nb_common_imp_lib_m_lib ""
 #define pvwmdrmoemsettings_so_name ""
 #define pvsocketnode_y_lib ""
-#define WMA_PRO_ENABLED 1
 #define SOLIBDIRS_opencore_downloadreg "/modules/linux_download/node_registry/build/make"
 #define pvmimeutils_m_lib "-lpvmimeutils"
 #define pvra8decnode_y_mk ""
@@ -650,13 +661,14 @@
 #define pvwmdrmmd_m_mk ""
 #define rtppayloadparser_plugins_opencore_rtsp "rfc_2429.mk rfc_3016.mk rfc_3267.mk rfc_3640.mk rfc_3984.mk"
 #define omx_common_y_lib ""
-#define pvprotocolenginewmhttpstreamingpluginreginterface_m_lib ""
+#define pvpvrff_m_mk ""
 #define pvpvrnode_m_mk ""
 #define gsm_amr_headers_y_mk ""
 #define pvmp3_imp_m_lib ""
 #define LIBDIR_cpm_shared "/pvmi/content_policy_manager/build/make /pvmi/content_policy_manager/plugins/oma1/passthru/build/make  /pvmi/content_policy_manager/plugins/common/build/make   "
 #define threadsafe_callback_ao_y_mk ""
 #define MODS_opencore_pvme "-lopencore_player -lopencore_common"
+#define WMA_BUILD_CFG_STDPROSTEREOLBR_ENABLED 0
 #define csprng_y_lib ""
 #define LIBS_oscl_shared "-losclbase -losclerror -losclmemory -losclproc -losclregcli -losclregserv -losclutil -losclio -lunit_test  -loscllib"
 #define pvframemetadatautility_m_lib "-lpvframemetadatautility"
@@ -796,6 +808,7 @@
 #define omx_common_y_mk ""
 #define pvgeneraltools_m_mk "/protocols/systems/tools/general/build/make"
 #define getactualaacconfig_imp_m_mk "/codecs_v2/audio/aac/dec/util/getactualaacconfig/build/make"
+#define pv2wayengine_m_mk "/engines/2way/build/make"
 #define rvdecoder_imp_m_lib "n"
 #define getactualaacconfig_for_static_m_mk ""
 #define sdp_parser_mksegment_default ""
@@ -821,6 +834,7 @@
 #define protocolenginenode_base_m_mk "/nodes/pvprotocolenginenode/base/build/make"
 #define pvencoder_gsmamr_y_lib ""
 #define omx_amrenc_component_m_mk "/codecs_v2/omx/omx_amrenc/build/make_multithreaded"
+#define pvprotocolenginewmhttpstreamingpluginreginterface_m_lib ""
 #define sdp_parser_mksegment_opencore "sdp_opencore.mk"
 #define scsp_m_lib "-lscsp"
 #define PV_DRM_CONFIG_PLAYREADY 0
@@ -836,7 +850,6 @@
 #define MODS_opencore_download "-lopencore_net_support -lopencore_player -lopencore_common"
 #define wmavoicedecoder_m_lib ""
 #define omx_avcenc_component_m_lib "-lomx_avcenc_component_lib"
-#define WMA_STD_ENABLED 1
 #define SOLIBDIRS_pvrmff_recognizer "  "
 #define omx_m4v_component_y_lib ""
 #define pvomxbasedecnode_m_lib "-lpvomxbasedecnode"
@@ -884,7 +897,6 @@
 #define pvencoder_gsmamr_imp_m_lib ""
 #define SOLIBS_pvjanus " "
 #define pvprotocolenginenode_ftdl_plugin_in_registry_y_lib ""
-#define wma_common_hdrs_m_mk ""
 #define pvmp4decoder_m_mk "/codecs_v2/video/m4v_h263/dec/build/make"
 #define pvomxvideodecnode_m_lib "-lpvomxvideodecnode"
 #define REGISTER_OMX_RV_COMPONENT 0
@@ -897,7 +909,6 @@
 #define pvavcdecoder_imp_m_mk ""
 #define pvdownloadinterface_m_lib "-lpvdownloadinterface"
 #define SOLIBS_pvdbconfigclass "n"
-#define omx_aacenc_component_y_lib ""
 #define pvwmdrmmd_m_lib ""
 #define omx_queue_m_lib "-lomx_queue_lib"
 #define pvmtpip_engine_m_mk ""
@@ -980,6 +991,7 @@
 #define pvplsffrecognizer_m_lib "-lpvplsffrecognizer"
 #define pvmioaviwavfileinput_y_lib ""
 #define pvmp4ffparsernode_m_lib ""
+#define WMA_BUILD_CFG_STD_ENABLED 0
 #define SOLIBS_pvasfcommon " "
 #define pvdb_recovery_utility_m_lib ""
 #define omx_avcenc_component_m_mk "/codecs_v2/omx/omx_h264enc/build/make_multithreaded"
@@ -997,7 +1009,6 @@
 #define scsp_y_lib ""
 #define pvstreamingmanagernode_segments_m_lib "-lpvstreamingmanagernode"
 #define LIBS_omxdec_shared "-lomx_avc_component_lib -lomx_m4v_component_lib   -lomx_aac_component_lib -lomx_amr_component_lib -lomx_mp3_component_lib "
-#define pvmp4decoder_y_mk ""
 #define pvmp4interface_m_mk "/modules/linux_mp4/core/build/make"
 #define REGISTER_OMX_AVC_COMPONENT 1
 #define pvaacffparsernode_y_lib ""
@@ -1038,6 +1049,7 @@
 #define rtprtcp_y_lib ""
 #define pvasfffparsernode_m_lib ""
 #define LIBDIR_shared "/oscl     /baselibs/gen_data_structures/build/make /baselibs/media_data_structures/build/make /baselibs/pv_mime_utils/build/make /baselibs/threadsafe_callback_ao/build/make /baselibs/thread_messaging/build/make /codecs_v2/omx/omx_h264/build/make_multithreaded /codecs_v2/omx/omx_m4v/build/make_multithreaded   /codecs_v2/omx/omx_aac/build/make_multithreaded /codecs_v2/omx/omx_amr/build/make_multithreaded /codecs_v2/omx/omx_mp3/build/make_multithreaded  /codecs_v2/omx/omx_amrenc/build/make_multithreaded /codecs_v2/omx/omx_m4venc/build/make_multithreaded /codecs_v2/omx/omx_h264enc/build/make_multithreaded  /codecs_v2/omx/omx_common/build/make_multithreaded /codecs_v2/omx/omx_queue/build/make /codecs_v2/omx/omx_proxy/build/make /codecs_v2/omx/omx_baseclass/build/make /codecs_v2/omx/omx_mastercore/build/make_multithreaded /codecs_v2/omx/omx_sharedlibrary/interface/build/make     /codecs_v2/audio/aac/dec/build/make  /codecs_v2/audio/gsm_amr/amr_nb/common/build/make /codecs_v2/audio/gsm_amr/amr_wb/dec/build/make /codecs_v2/audio/gsm_amr/amr_nb/dec/build/make /codecs_v2/audio/mp3/dec/build/make  /codecs_v2/audio/gsm_amr/common/dec/build/make /codecs_v2/audio/gsm_amr/amr_nb/enc/build/make  /codecs_v2/video/avc_h264/common/build/make /codecs_v2/video/avc_h264/dec/build/make  /codecs_v2/video/m4v_h263/dec/build/make  /codecs_v2/video/m4v_h263/enc/build/make /codecs_v2/video/avc_h264/enc/build/make /codecs_v2/utilities/m4v_config_parser/build/make /codecs_v2/utilities/pv_config_parser/build/make /codecs_v2/utilities/colorconvert/build/make /fileformats/common/parser/build/make /fileformats/id3parcom/build/make /fileformats/pvx/parser/build/make /fileformats/wav/parser/build/make  /fileformats/avi/parser/build/make  /fileformats/mp3/parser/build/make /fileformats/rawaac/parser/build/make /fileformats/rawgsmamr/parser/build/make    /fileformats/mp4/parser/utils/mp4recognizer/build/make /fileformats/mp4/parser/build_opencore/make  /fileformats/mp4/composer/build_opencore/make    /fileformats/scsp/build/make     /protocols/http_parcom/build/make  /protocols/rtp_payload_parser/util/build/latmparser/make /protocols/sdp/parser/build/make /protocols/sdp/common/build/make  /protocols/rtsp_parcom/build/make /protocols/rtsp_client_engine/build/make_segments /protocols/rtp_payload_parser/build/make /protocols/rtp/build/make /protocols/systems/3g-324m_pvterminal/build/make/ /protocols/systems/common/build/make/ /protocols/systems/tools/general/build/make /pvmi/content_policy_manager/build/make /pvmi/content_policy_manager/plugins/oma1/passthru/build/make  /pvmi/content_policy_manager/plugins/common/build/make    /pvmi/media_io/pvmiofileoutput/build/make /pvmi/media_io/pvmi_mio_fileinput/build/make_pvauthor /pvmi/media_io/pvmi_mio_avi_wav_fileinput/build/make /pvmi/media_io/pvmio_comm_loopback/build/make /pvmi/recognizer/build/make /pvmi/recognizer/plugins/pvaacffrecognizer/build/make /pvmi/recognizer/plugins/pvamrffrecognizer/build/make   /pvmi/recognizer/plugins/pvmp3ffrecognizer/build/make /pvmi/recognizer/plugins/pvmp4ffrecognizer/build/make /pvmi/recognizer/plugins/pvwavffrecognizer/build/make   /pvmi/recognizer/plugins/pvplsffrecognizer/build/make   /pvmi/pvmf/build/make          /nodes/pvfileoutputnode/build/make /nodes/pvmediaoutputnode/build/make /nodes/pvsocketnode/build/make  /nodes/pvprotocolenginenode/base/build/make /nodes/pvprotocolenginenode/protocol_common/build/make /nodes/pvprotocolenginenode/download_protocols/common/build/make /nodes/pvprotocolenginenode/download_protocols/progressive_download/build/make /nodes/pvprotocolenginenode/download_protocols/progressive_streaming/build/make   /nodes/pvprotocolenginenode/download_protocols/shoutcast/build/make   /nodes/pvwavffparsernode/build/make   /nodes/pvomxencnode/build/make /nodes/pvomxbasedecnode/build/make /nodes/pvomxaudiodecnode/build/make /nodes/pvomxvideodecnode/build/make  /nodes/pvaacffparsernode/build/make  /nodes/pvamrffparsernode/build/make   /nodes/pvmp3ffparsernode/build/make  /nodes/pvmp4ffparsernode/build_opencore/make     /nodes/common/build/make   /nodes/pvmediainputnode/build/make_pvauthor  /nodes/pvmp4ffcomposernode/build_opencore/make    /nodes/pvdownloadmanagernode/build/make /nodes/streaming/streamingmanager/build/make_segments   /modules/linux_rtsp/core/build/make /modules/linux_rtsp/node_registry/build/make  /nodes/streaming/jitterbuffernode/jitterbuffer/common/build/make /nodes/streaming/jitterbuffernode/jitterbuffer/rtp/build/make  /nodes/streaming/jitterbuffernode/build/make /nodes/pvcommsionode/build/make /nodes/pvclientserversocketnode/build/make /nodes/pvloopbacknode/build/make /nodes/pvvideoparsernode/build/make /nodes/pvdummyinputnode/build/make /nodes/pvdummyoutputnode/build/make     /engines/player/build/make /engines/author/build/make /engines/2way/build/make /engines/2way/sample_app/pv2waysample/build/make /engines/common/build/make /engines/adapters/player/framemetadatautility/build/make /engines/pvme/build/make /modules/linux_rtsp/core/build/make /modules/linux_rtsp/node_registry/build/make   /modules/linux_download/core/build/make /modules/linux_download/node_registry/build/make /modules/linux_mp4/core/build/make /modules/linux_mp4/node_registry/build/make     /modules/cpm_oma1_passthru/build/make         "
+#define omx_aac_component_imp_m_lib ""
 #define divxrecognizer_utility_y_lib ""
 #define SOLIBS_pvdivxparser_node "  "
 #define pvprotocolenginenode_wmhttpstreaming_plugin_in_registry_y_mk ""
@@ -1047,6 +1059,7 @@
 #define omx_wmadec_sharedlibrary_so_name ""
 #define SOLIBDIRS_opencore_net_support "/nodes/pvsocketnode/build/make /protocols/http_parcom/build/make /nodes/pvprotocolenginenode/base/build/make /nodes/pvprotocolenginenode/protocol_common/build/make /nodes/pvprotocolenginenode/download_protocols/common/build/make /nodes/pvprotocolenginenode/download_protocols/progressive_download/build/make /nodes/pvprotocolenginenode/download_protocols/progressive_streaming/build/make   /nodes/pvprotocolenginenode/download_protocols/shoutcast/build/make /nodes/streaming/jitterbuffernode/jitterbuffer/common/build/make /nodes/streaming/jitterbuffernode/build/make /protocols/sdp/parser/build/make /protocols/sdp/common/build/make /protocols/rtp/build/make"
 #define LIBDIR_omxencimp_static ""
+#define wmadecoderlibpath "/codecs_v2/audio/wma/dec/build/make"
 #define pvmtpip_engine_y_lib ""
 #define pvmp4decoder_m_lib "-lpvmp4decoder"
 #define pvrmffreginterface_m_mk ""
@@ -1174,6 +1187,7 @@
 #define pv2waysample_y_lib ""
 #define pvmp4ffcomposer_m_lib ""
 #define rdt_parser_m_mk ""
+#define WMA_BUILD_CFG_STDPROSTEREOLBRV1_ENABLED 0
 #define pvencoder_gsmamr_m_mk "/codecs_v2/audio/gsm_amr/amr_nb/enc/build/make"
 #define pv_rtsp_parcom_y_mk ""
 #define pvmio_comm_loopback_m_lib "-lpvmio_comm_loopback"
@@ -1311,7 +1325,7 @@
 #define pvvideoparsernode_y_lib ""
 #define pvoma1lockstream_m_lib ""
 #define pvprotocolenginenode_shoutcast_plugin_m_mk "/nodes/pvprotocolenginenode/download_protocols/shoutcast/build/make"
-#define omx_aac_component_imp_m_lib ""
+#define pvmf_y_lib ""
 #define pv_config_parser_y_lib ""
 #define m4v_config_m_lib "-lm4v_config"
 #define pvaacffrecognizer_m_lib "-lpvaacffrecognizer"
@@ -1385,9 +1399,9 @@
 #define SOLIBS_pvdivx_recognizer "  "
 #define pvg726decoder_m_lib ""
 #define LIBS_omxdecimp_static ""
-#define pv2wayengine_m_mk "/engines/2way/build/make"
 #define MODS_opencore_rtspreg "-lopencore_common"
 #define pvomx_proxy_m_lib "-lpvomx_proxy_lib"
+#define WMA_BUILD_CFG_LSL_ENABLED 0
 #define SOLIBS_opencore_download "-lpvdownloadmanagernode -lpvdownloadinterface"
 #define pv_aac_enc_imp_m_lib "n"
 #define LIBDIR_nodes_static "                                                           "
@@ -1401,7 +1415,7 @@
 #define pv_rtsp_parcom_y_lib ""
 #define LIBDIR_static " /oscl/unit_test/build/make                                                                                                                                                                                           "
 #define SOLIBDIRS_pvdivxparser_node "  "
-#define pvpvrff_m_mk ""
+#define pvmp4decoder_y_mk ""
 #define omx_mastercore_m_lib "-lomx_mastercore_lib"
 #define pv_config_parser_y_mk ""
 #define SOLIBS_pvoma1passthru "-lpvoma1passthruplugin -lpvoma1passthruplugininterface"
@@ -1443,6 +1457,7 @@
 #define LIBDIR_tools_v2_shared "/modules/linux_rtsp/core/build/make /modules/linux_rtsp/node_registry/build/make   /modules/linux_download/core/build/make /modules/linux_download/node_registry/build/make /modules/linux_mp4/core/build/make /modules/linux_mp4/node_registry/build/make     /modules/cpm_oma1_passthru/build/make         "
 #define pvamrencnode_y_lib ""
 #define wmadecoder_y_mk ""
+#define WMA_AUDIO_SUPPORT_ENABLED 1
 #define pvmtpip_engine_m_lib ""
 #define protocolenginenode_m_mk ""
 #define pvmedialayernode_y_lib ""
@@ -1583,7 +1598,6 @@
 #define rtppayloadparser_plugins_pvasfstreaming "asf_payload_parser.mk"
 #define SOLIBS_pvmtpip "n"
 #define pv_avc_common_lib_y_lib ""
-#define pvmf_y_lib ""
 #define pvomxaudiodecnode_y_lib ""
 #define SOLIBDIRS_pvfasttrack_downloadreg "n"
 #define pvflvffrecognizer_m_lib ""
@@ -1593,6 +1607,7 @@
 #define pvoma1ffrecognizer_y_mk ""
 #define pvoma1passthruplugin_m_lib "-lpvoma1passthruplugin"
 #define pvpvr_y_lib ""
+#define pvprotocolenginenode_shoutcast_plugin_y_mk ""
 #define pvwav_y_mk ""
 #define pvwav_y_lib ""
 #define pvra8decnode_y_lib ""
@@ -1631,6 +1646,7 @@
 #define pvprotocolenginefasttrackdownloadinterface_m_lib ""
 #define pvjitterbuffernode_m_lib "-lpvjitterbuffernode"
 #define LIBDIR_omxdec_shared "/codecs_v2/omx/omx_h264/build/make_multithreaded /codecs_v2/omx/omx_m4v/build/make_multithreaded   /codecs_v2/omx/omx_aac/build/make_multithreaded /codecs_v2/omx/omx_amr/build/make_multithreaded /codecs_v2/omx/omx_mp3/build/make_multithreaded "
+#define omx_aacenc_component_y_lib ""
 #define pvvideoparsernode_m_lib "-lpvvideoparsernode"
 #define pvfasttrack_download_so_name ""
 #define pvprotocolenginenode_ps_plugin_m_mk "/nodes/pvprotocolenginenode/download_protocols/progressive_streaming/build/make"
@@ -1646,6 +1662,7 @@
 #define SOLIBDIRS_opencore_common "/oscl  /codecs_v2/omx/omx_mastercore/build/make_multithreaded               /codecs_v2/audio/gsm_amr/common/dec/build/make /codecs_v2/video/avc_h264/common/build/make /codecs_v2/audio/gsm_amr/amr_nb/common/build/make /fileformats/rawgsmamr/parser/build/make /codecs_v2/audio/aac/dec/util/getactualaacconfig/build/make /codecs_v2/utilities/m4v_config_parser/build/make /codecs_v2/utilities/pv_config_parser/build/make /codecs_v2/utilities/colorconvert/build/make /baselibs/threadsafe_callback_ao/build/make /baselibs/media_data_structures/build/make /baselibs/pv_mime_utils/build/make /baselibs/gen_data_structures/build/make /pvmi/pvmf/build/make /nodes/pvfileoutputnode/build/make /nodes/pvmediainputnode/build/make_pvauthor /nodes/pvomxencnode/build/make /pvmi/media_io/pvmi_mio_fileinput/build/make_pvauthor /pvmi/media_io/pvmi_mio_avi_wav_fileinput/build/make /fileformats/avi/parser/build/make /baselibs/thread_messaging/build/make /pvmi/media_io/pvmiofileoutput/build/make /nodes/pvmediaoutputnode/build/make /nodes/pvomxvideodecnode/build/make /nodes/pvomxaudiodecnode/build/make /nodes/pvomxbasedecnode/build/make /protocols/rtp_payload_parser/util/build/latmparser/make /fileformats/wav/parser/build/make /fileformats/common/parser/build/make /fileformats/scsp/build/make /nodes/common/build/make /engines/common/build/make /pvmi/content_policy_manager/plugins/common/build/make"
 #define rtprtcp_m_lib "-lrtprtcp"
 #define pvdbmanager_m_lib ""
+#define WMA_VOICE_SUPPORT_ENABLED 1
 #define omx_mastercore_y_mk ""
 #define pvmp4ffcomposer_m_mk ""
 #define pvasflocalpbreginterface_m_mk ""

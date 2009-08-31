@@ -20,7 +20,6 @@
 #include "oscl_mem.h"
 #include "getactualaacconfig.h"
 
-
 #include "oscl_dll.h"
 
 //Macros for WMA
@@ -51,38 +50,25 @@
 
 #define WAVE_FORMAT_WMAVOICE9  10
 
+#define AAC_DEFAULT_SAMPLES_PER_FRAME 1024
+
+OSCL_DLL_ENTRY_POINT_DEFAULT()
+
+
+// This routine parses the wma config header and returns Sampling Rate, Number of Channels, and Bits Per Sample
+// The header info is checked for validation and support
+OSCL_EXPORT_REF int32 pv_audio_config_parser(pvAudioConfigParserInputs *aInputs, pvAudioConfigParserOutputs *aOutputs)
+{
+    bool bBitStreamValid = true;
+    bool bBitStreamSupported = true;
+
+#if defined(BUILD_OLDWMAAUDIOLIB)
 //AdvancedEncodeOpt
 #define ENCOPT4_PLUSVER   0xe000
 #define ENCOPT4_PLUSV1    0xc000
 #define ENCOPT4_PLUSV1ALT 0x8000
 #define ENCOPT4_PLUSV2    0x2000
 #define ENCOPT4_PLUSV3    0x4000
-
-#define AAC_DEFAULT_SAMPLES_PER_FRAME 1024
-
-//-------------------------------------------------------------------------------------
-// WMA Macros
-#if defined(BUILD_WMAPROPLUS) && !defined(BUILD_WMAPRO)
-#define BUILD_WMAPRO
-#endif
-
-#if defined(BUILD_WMAPRO) && !defined(BUILD_WMAPROPLUS)
-#define BUILD_WMAPROPLUS
-#endif
-
-#if defined(BUILD_WMAPROPLUS) && !defined(WMAPLUS_64KBPS_PROFILE_ONLY)
-#define WMAPLUS_64KBPS_PROFILE_ONLY
-#endif
-//-------------------------------------------------------------------------------------
-
-OSCL_DLL_ENTRY_POINT_DEFAULT()
-
-
-// This routine parses the wma config header and returns Sampling Rate, Number of Channels, and Bits Per Sample
-OSCL_EXPORT_REF int32 pv_audio_config_parser(pvAudioConfigParserInputs *aInputs, pvAudioConfigParserOutputs *aOutputs)
-{
-    bool bBitStreamValid = true;
-    bool bBitStreamSupported = true;
 
     if (aInputs->iMimeType == PVMF_MIME_WMA)
     {
@@ -131,9 +117,7 @@ OSCL_EXPORT_REF int32 pv_audio_config_parser(pvAudioConfigParserInputs *aInputs,
                 LoadWORD(wdata , tp);
                 AdvancedEncodeOpt = wdata;
 
-#if !defined(BUILD_WMALSL)
                 bBitStreamSupported = false;
-#endif  // BUILD_WMALSL
 
                 // more limits according to the current PV WMA implementation
                 // do not supoprt multi-channel
@@ -178,19 +162,6 @@ OSCL_EXPORT_REF int32 pv_audio_config_parser(pvAudioConfigParserInputs *aInputs,
                 LoadWORD(wdata , tp);
                 AdvancedEncodeOpt = wdata;
 
-#if !defined(BUILD_WMAPRO)
-                bBitStreamSupported = false;
-                break;
-#endif  // BUILD_WMAPRO
-
-#if !defined(BUILD_WMAPROPLUS)
-                if (0 != (AdvancedEncodeOpt & ENCOPT4_PLUSVER))
-                {
-                    bBitStreamSupported = false;
-                    break;
-                }
-#endif  // BUILD_WMAPROPLUS
-
                 // more limits according to the current PV WMA implementation
                 // do not supoprt multi-channel
                 if (aOutputs->Channels > 2)
@@ -206,7 +177,6 @@ OSCL_EXPORT_REF int32 pv_audio_config_parser(pvAudioConfigParserInputs *aInputs,
                     break;
                 }
 
-#if defined(WMAPLUS_64KBPS_PROFILE_ONLY)
                 // limit to M0-profile bitrate and sampling rate
                 if (AvgBytesPerSec > 192000 || aOutputs->SamplesPerSec > 48000)
                 {
@@ -220,7 +190,301 @@ OSCL_EXPORT_REF int32 pv_audio_config_parser(pvAudioConfigParserInputs *aInputs,
                     bBitStreamSupported = false;
                     break;
                 }
-#endif // WMAPLUS_64KBPS_PROFILE_ONLY
+            }
+            break;
+
+            //WMA Standard
+            case WAVE_FORMAT_WMAUDIO2:
+            {
+                if (aInputs->inBytes < 28)
+                {
+                    bBitStreamValid = false;
+                    break;
+                }
+
+                LoadWORD(wdata, tp);
+                aOutputs->Channels        = wdata;
+                LoadDWORD(dwdata, tp);
+                aOutputs->SamplesPerSec   = dwdata;
+
+                tp = aInputs->inPtr + 14;
+                LoadWORD(wdata , tp);
+                aOutputs->BitsPerSample = wdata;
+
+                if (aOutputs->SamplesPerSec > 48000)
+                {
+                    // not a valid sample rate for WMA Std spec
+                    bBitStreamValid = false;
+                    break;
+                }
+                if (aOutputs->Channels > 2)
+                {
+                    // not a valid number of channels for the WMA Std spec
+                    bBitStreamValid = false;
+                    break;
+                }
+
+                if (aOutputs->BitsPerSample != 16)
+                {
+                    // not a valid number of bits per sample for the WMA Std spec
+                    bBitStreamValid = false;
+                    break;
+                }
+            }
+            break;
+
+            //WMA Standard (bitstream v1)
+            case WAVE_FORMAT_MSAUDIO1:
+            {
+                if (aInputs->inBytes < 22)
+                {
+                    bBitStreamValid = false;
+                    break;
+                }
+
+                tp = aInputs->inPtr +  4;
+                LoadDWORD(dwdata, tp);
+                aOutputs->SamplesPerSec = dwdata;
+                tp = aInputs->inPtr +  2;
+                LoadWORD(wdata , tp);
+                aOutputs->Channels = wdata;
+
+                tp = aInputs->inPtr + 14;
+                LoadWORD(wdata , tp);
+                aOutputs->BitsPerSample = wdata;
+
+                if (aOutputs->SamplesPerSec > 48000)
+                {
+                    // not a valid sample rate for WMA Std spec
+                    bBitStreamValid = false;
+                    break;
+                }
+                if (aOutputs->Channels > 2)
+                {
+                    // not a valid number of channels for the WMA Std spec
+                    bBitStreamValid = false;
+                    break;
+                }
+
+                if (aOutputs->BitsPerSample != 16)
+                {
+                    // not a valid number of bits per sample for the WMA Std spec
+                    bBitStreamValid = false;
+                    break;
+                }
+            }
+            break;
+
+            // WMA Voice
+            case WAVE_FORMAT_WMAVOICE9:
+            {
+                if (aInputs->inBytes < 64) // sizeof(WMAVOICEWAVEFORMAT)
+                {
+                    bBitStreamValid = false;
+                    break;
+                }
+
+                LoadWORD(wdata, tp);
+                aOutputs->Channels = wdata;
+
+                LoadDWORD(dwdata, tp);
+                aOutputs->SamplesPerSec = dwdata;
+
+                LoadDWORD(dwdata, tp);
+                // wmavFormat.wfx.nAvgBytesPerSec
+
+                LoadWORD(wdata, tp);
+                // wmavFormat.wfx.nBlockAlign = wdata;
+
+                LoadWORD(wdata, tp);
+                aOutputs->BitsPerSample = wdata;
+
+                // WMAVoice is always mono, 16-bit
+                if (aOutputs->Channels != 1)
+                {
+                    bBitStreamValid = false;
+                }
+
+                if (aOutputs->BitsPerSample != 16)
+                {
+                    bBitStreamValid = false;
+                }
+
+                if ((aOutputs->SamplesPerSec != 8000)
+                        && (aOutputs->SamplesPerSec != 11025)
+                        && (aOutputs->SamplesPerSec != 16000)
+                        && (aOutputs->SamplesPerSec != 22050))
+                {
+                    bBitStreamValid = false;
+                }
+            }
+            break;
+
+
+            case WAVE_FORMAT_WMASPDIF:
+            case WAVE_FORMAT_WMAUDIO2_ES:
+            case WAVE_FORMAT_WMAUDIO3_ES:
+            case WAVE_FORMAT_WMAUDIO_LOSSLESS_ES:
+            {
+                // these formats aren't supported
+                bBitStreamSupported = false;
+            }
+            break;
+
+            default:
+            {
+                // invalid wma format
+                bBitStreamValid = false;
+            }
+        }
+    }
+#else // BUILD_OLDWMAAUDIOLIB
+    if (aInputs->iMimeType == PVMF_MIME_WMA)
+    {
+        uint16 wdata;
+        uint32 dwdata;
+        uint32 AvgBytesPerSec;
+        uint16 AdvancedEncodeOpt;
+
+        /**** decoder header *******/
+        uint8* tp = aInputs->inPtr;
+        LoadWORD(wdata , tp);
+
+        if (wdata == WAVE_FORMAT_PLAYREADY)
+        {
+            tp += aInputs->inBytes - 4; // skip ahead to check the last 2 bytes.
+            LoadWORD(wdata, tp);
+            tp = aInputs->inPtr + 2; //restart from this location.
+        }
+
+        switch (wdata)
+        {
+                // WMA Lossless
+            case WAVE_FORMAT_WMAUDIO_LOSSLESS:
+            {
+                if (aInputs->inBytes < 36)
+                {
+                    bBitStreamValid = false;
+                    break;
+                }
+
+                LoadWORD(wdata, tp);
+                aOutputs->Channels        = wdata;
+                LoadDWORD(dwdata, tp);
+                aOutputs->SamplesPerSec   = dwdata;
+                LoadDWORD(dwdata, tp);
+                AvgBytesPerSec  = dwdata;
+
+                tp = aInputs->inPtr + 14;
+                LoadWORD(wdata , tp);
+                // Round up to the byte to get the container size
+                aOutputs->BitsPerSample = 8 * ((wdata + 7) / 8);
+
+                // Has V3 specific info
+                tp = aInputs->inPtr + 34;
+                LoadWORD(wdata , tp);
+                AdvancedEncodeOpt = wdata;
+
+#if !defined(WMA_AUDIO_SUPPORTED)
+                bBitStreamSupported = false;
+                break;
+#endif  // WMA_AUDIO_SUPPORTED  
+
+                if (aOutputs->Channels > 8)
+                {
+                    bBitStreamSupported = false;
+                    break;
+                }
+
+#if !defined(PV_WMA_ENABLE_MULTICH)
+                // device does not support multichannel, therefore automatically downmix
+                if (aOutputs->Channels > 2)
+                {
+                    aOutputs->Channels = 2;
+                }
+#endif // PV_WMA_ENABLE_MULTICH
+
+#if !defined(PV_WMA_ENABLE_24BIT)
+                // do not support 24-bit, therefore automaticall requantize
+                if (aOutputs->BitsPerSample > 16)
+                {
+                    aOutputs->BitsPerSample = 16;
+                }
+#endif // PV_WMA_ENABLE_24BIT
+
+#if !defined(PV_WMA_ENABLE_HIGHFS)
+                // hardware does not support sampling rates greater than 48kHz,
+                //lossless does not have half-transform downsampling
+                if (aOutputs->SamplesPerSec > 48000)
+                {
+                    bBitStreamSupported = false;
+                    break;
+                }
+#endif // PV_WMA_ENABLE_HIGHFS
+            }
+            break;
+
+            // WMA Pro, LBRv1, LBRv2, LBRv3
+            case WAVE_FORMAT_WMAUDIO3:
+            {
+                if (aInputs->inBytes < 36)
+                {
+                    bBitStreamValid = false;
+                    break;
+                }
+
+                LoadWORD(wdata, tp);
+                aOutputs->Channels        = wdata;
+                LoadDWORD(dwdata, tp);
+                aOutputs->SamplesPerSec   = dwdata;
+                LoadDWORD(dwdata, tp);
+                AvgBytesPerSec  = dwdata;
+
+                tp = aInputs->inPtr + 14;
+                LoadWORD(wdata , tp);   //iValidBitsPerSample
+                // Round up to the byte to get the container size
+                aOutputs->BitsPerSample = 8 * ((wdata + 7) / 8);
+
+                // Has V3 specific info
+                tp = aInputs->inPtr + 34;
+                LoadWORD(wdata , tp);
+                AdvancedEncodeOpt = wdata;
+
+#if !defined(WMA_AUDIO_SUPPORTED)
+                bBitStreamSupported = false;
+                break;
+#endif
+                // this is the max of the format.  the codec will downmix to stereo
+                if (aOutputs->Channels > 8)
+                {
+                    bBitStreamSupported = false;
+                    break;
+                }
+
+#if !defined(PV_WMA_ENABLE_MULTICH)
+                // device does not support multichannel, therefore automatically downmix
+                if (aOutputs->Channels > 2)
+                {
+                    aOutputs->Channels = 2;
+                }
+#endif // PV_WMA_ENABLE_MULTICH
+
+#if !defined(PV_WMA_ENABLE_24BIT)
+                // do not support 24-bit, therefore automatically requantize
+                if (aOutputs->BitsPerSample == 24)
+                {
+                    aOutputs->BitsPerSample = 16;
+                }
+#endif // PV_WMA_ENABLE_24BIT
+
+#if !defined(PV_WMA_ENABLE_HIGHFS)
+                // hardware does not support sampling rates greater than 48kHz,
+                // however, WMA Pro has half-transform downsampling
+                if (aOutputs->SamplesPerSec > 48000)
+                {
+                    aOutputs->SamplesPerSec = aOutputs->SamplesPerSec / 2;
+                }
+#endif // PV_WMA_ENABLE_HIGHFS
             }
             break;
 
@@ -262,9 +526,10 @@ OSCL_EXPORT_REF int32 pv_audio_config_parser(pvAudioConfigParserInputs *aInputs,
                     break;
                 }
 
-#if !defined(BUILD_WMASTD)
+#if !defined(WMA_AUDIO_SUPPORTED)
                 bBitStreamSupported = false;
-#endif // BUILD_WMASTD
+#endif // WMA_AUDIO_SUPPORTED
+
             }
             break;
 
@@ -308,9 +573,9 @@ OSCL_EXPORT_REF int32 pv_audio_config_parser(pvAudioConfigParserInputs *aInputs,
                     break;
                 }
 
-#if !defined(BUILD_WMASTD)
+#if !defined(WMA_AUDIO_SUPPORTED)
                 bBitStreamSupported = false;
-#endif // BUILD_WMASTD
+#endif // WMA_AUDIO_SUPPORTED
             }
             break;
 
@@ -357,9 +622,9 @@ OSCL_EXPORT_REF int32 pv_audio_config_parser(pvAudioConfigParserInputs *aInputs,
                     bBitStreamValid = false;
                 }
 
-#if !defined(BUILD_WMAVOICE)
+#if !defined(WMA_VOICE_SUPPORTED)
                 bBitStreamSupported = false;
-#endif
+#endif // WMA_VOICE_SUPPORTED
             }
             break;
 
@@ -381,6 +646,7 @@ OSCL_EXPORT_REF int32 pv_audio_config_parser(pvAudioConfigParserInputs *aInputs,
             }
         }
     }
+#endif // BUILD_OLDWMAAUDIOLIB
     else if (aInputs->iMimeType == PVMF_MIME_MPEG4_AUDIO || // AAC
              aInputs->iMimeType == PVMF_MIME_3640 ||
              aInputs->iMimeType == PVMF_MIME_LATM ||

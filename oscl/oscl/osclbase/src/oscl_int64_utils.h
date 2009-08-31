@@ -33,13 +33,13 @@
 class Oscl_Int64_Utils
 {
     public:
-        OSCL_IMPORT_REF static void set_int64(int64& input_value, const int32 upper, const int32 lower);
+        OSCL_IMPORT_REF static void set_int64(int64& input_value, const int32 upper, const uint32 lower);
 
         OSCL_IMPORT_REF static int32 get_int64_upper32(const int64& input_value);
 
-        OSCL_IMPORT_REF static int32 get_int64_lower32(const int64& input_value);
+        OSCL_IMPORT_REF static uint32 get_int64_lower32(const int64& input_value);
 
-        OSCL_IMPORT_REF static int32 get_int64_middle32(const int64& input_value);
+        OSCL_IMPORT_REF static uint32 get_int64_middle32(const int64& input_value);
 
         OSCL_IMPORT_REF static void set_uint64(uint64& input_value, const uint32 upper, const uint32 lower);
 

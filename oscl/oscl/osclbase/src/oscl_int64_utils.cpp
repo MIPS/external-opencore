@@ -18,7 +18,7 @@
 #include "osclconfig.h"
 #include "oscl_int64_utils.h"
 
-OSCL_EXPORT_REF void Oscl_Int64_Utils::set_int64(int64& input_value, const int32 upper, const int32 lower)
+OSCL_EXPORT_REF void Oscl_Int64_Utils::set_int64(int64& input_value, const int32 upper, const uint32 lower)
 {
     input_value = (int64)((int64(upper) << 32) | lower);
 };
@@ -30,15 +30,15 @@ OSCL_EXPORT_REF int32 Oscl_Int64_Utils::get_int64_upper32(const int64& input_val
 };
 
 
-OSCL_EXPORT_REF int32 Oscl_Int64_Utils::get_int64_lower32(const int64& input_value)
+OSCL_EXPORT_REF uint32 Oscl_Int64_Utils::get_int64_lower32(const int64& input_value)
 {
-    return (int32)((input_value)  & 0xFFFFFFFF);
+    return (uint32)((input_value)  & 0xFFFFFFFF);
 };
 
 
-OSCL_EXPORT_REF int32 Oscl_Int64_Utils::get_int64_middle32(const int64& input_value)
+OSCL_EXPORT_REF uint32 Oscl_Int64_Utils::get_int64_middle32(const int64& input_value)
 {
-    return (int32)((input_value >> 16) & 0xFFFFFFFF);
+    return (uint32)((input_value >> 16) & 0xFFFFFFFF);
 };
 
 

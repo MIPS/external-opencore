@@ -11,21 +11,22 @@ XCXXFLAGS += $(FLAG_COMPILE_WARNINGS_AS_ERRORS)
 
 OPTIMIZE_FOR_PERFORMANCE_OVER_SIZE := true
 
+# WMA Audio build defines
+ifeq ($(WMA_AUDIO_SUPPORT_ENABLED),1)
+XCPPFLAGS += -DWMA_AUDIO_SUPPORTED
+endif
+
+# WMA Voice build defines
+ifeq ($(WMA_VOICE_SUPPORT_ENABLED),1)
+XCPPFLAGS += -DWMA_VOICE_SUPPORTED
+endif
+
+# Macro to enable old wma audio lib
+ifeq ($(USE_OLD_WMA_DECODER),1)
+XCPPFLAGS += -DBUILD_OLDWMAAUDIOLIB
+endif
+
 XINCDIRS = ../../../../../pvmi/pvmf/include
-
-## WMA Build configurations
-ifeq ($(WMA_STD_ENABLED),1)
-XCPPFLAGS += -DBUILD_WMASTD
-endif
-
-ifeq ($(WMA_PRO_ENABLED),1)
-XCPPFLAGS += -DBUILD_WMAPRO \
-	     -DWMAPLUS_64KBPS_PROFILE_ONLY 
-endif
-
-ifeq ($(WMA_VOICE_ENABLED),1)
-XCPPFLAGS += -DBUILD_WMAVOICE
-endif
 
 SRCDIR := ../../src
 INCSRCDIR := ../../include
