@@ -62,14 +62,15 @@ else
         osclbase \
         threadsafe_callback_ao \
         unit_test \
-	asfrecognizer_utility \
-	scsp \
+	    asfrecognizer_utility \
+	    scsp \
         pvdivxffrecognizer \
         pvdivxffparsernode \
         pv_divxfile_parser \
-	pvamrffrecognizer \
-	pvaacffrecognizer \
-	divxrecognizer_utility
+	    pvamrffrecognizer \
+	    pvaacffrecognizer \
+	    divxrecognizer_utility \
+        pvplsffrecognizer
 endif
 	
 SYSLIBS += $(SYS_THREAD_LIB)

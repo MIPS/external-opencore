@@ -152,6 +152,7 @@ derive SOLIBS_opencore_player from (pvra8decoder_m_lib.pv_aac_dec_imp_m_lib.
                        pvpvxparser_m_lib.pvid3parcom_m_lib.
                        pvamrffparsernode_m_lib.
                        pvamrffrecognizer_m_lib.
+                       pvplsffrecognizer_m_lib.
                        pvmp3ff_m_lib.mp3decnode_m_lib.pvmp3ffparsernode_m_lib.pvmp3ffrecognizer_m_lib.
                        pvmp4ff_m_lib.pvmp4ffopencore_m_lib.mp4recognizer_utility_m_lib.
                        pvaacparser_m_lib.pvaacffparsernode_m_lib.aacdecnode_m_lib.pvaacffrecognizer_m_lib.
@@ -168,6 +169,7 @@ derive SOLIBDIRS_opencore_player from (pvra8decoder_m_mk.pv_aac_dec_imp_m_mk.
                        pvpvxparser_m_mk.pvid3parcom_m_mk.
                        pvamrffparsernode_m_mk.
                        pvamrffrecognizer_m_mk.
+                       pvplsffrecognizer_m_mk.
                        pvmp3ff_m_mk.mp3decnode_m_mk.pvmp3ffparsernode_m_mk.pvmp3ffrecognizer_m_mk.
                        pvmp4ff_m_mk.pvmp4ffopencore_m_mk.mp4recognizer_utility_m_mk.
                        pvaacparser_m_mk.pvaacffparsernode_m_mk.aacdecnode_m_mk.pvaacffrecognizer_m_mk.

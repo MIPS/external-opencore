@@ -841,9 +841,9 @@ class pvplayer_engine_test : public test_case,
             LastProgressivePlaybackTest, //placeholder
 
             /**
-            * @test (180) Shoutcast Playback 5 minute Test
+            * @test (180) Shoutcast Playback 5 Minute Test
             * Input http url to a Shoutcast url
-            * Default url is a Shoutcast url to an MP3 file.
+            * Default url is a Shoutcast url to an MP3 station.
             * Output PCM data file from Playback.
             */
             ShoutcastPlayback5MinuteTest = 180,
@@ -861,6 +861,13 @@ class pvplayer_engine_test : public test_case,
             * Output PCM data file from Playback.
             */
             ShoutcastPlaybackPlayStopPlayTest = 182,
+            /**
+            * @test (183) Shoutcast Playback from PlayList 30 seconds Test
+            * Input local Shoutcast playlist file (.pls)
+            * Default playlist file contains a Shoutcast url to an MP3 station.
+            * Output PCM data file from Playback.
+            */
+            ShoutcastPlaybackFromPlaylistTest = 183,
 
             LastShoutcastPlaybackTest, // placeholder
 

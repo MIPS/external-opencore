@@ -14,7 +14,8 @@ XCXXFLAGS += $(FLAG_COMPILE_WARNINGS_AS_ERRORS)
 XINCDIRS += \
   ../../../common/include \
   ../../../../pvmi/pvmf/include \
-  ../../../streaming/common/include
+  ../../../streaming/common/include \
+  ../../../../fileformats/scsp/include
 
 
 

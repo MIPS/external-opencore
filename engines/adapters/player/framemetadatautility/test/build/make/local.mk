@@ -142,7 +142,8 @@ LIBS :=  pvframemetadatautility \
         pvdivxffparsernode \
         pv_divxfile_parser \
         pvamrffrecognizer \
-        divxrecognizer_utility
+        divxrecognizer_utility \
+        pvplsffrecognizer
 
 SYSLIBS += $(SYS_THREAD_LIB)
 

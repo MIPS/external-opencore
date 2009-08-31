@@ -339,6 +339,7 @@ pvmp4ffrecognizer_lib=m
 pvwavffrecognizer_lib=m
 pvrmffrecognizer_lib=n
 pvdivxffrecognizer_lib=n
+pvplsffrecognizer_lib=m
 
 
 #
@@ -433,6 +434,7 @@ BUILD_WAV_FF_REC=y
 BUILD_AMR_FF_REC=y
 BUILD_DIVX_FF_PARSER_NODE=n
 BUILD_DIVX_FF_REC=n
+BUILD_PLS_FF_REC=y
 
 
 

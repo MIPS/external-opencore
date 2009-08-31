@@ -7,6 +7,7 @@ LOCAL_WHOLE_STATIC_LIBRARIES := \
  	libpvid3parcom \
  	libpvamrffparsernode \
  	libpvamrffrecognizer \
+ 	libpvplsffrecognizer \
  	libpvmp3ff \
  	libpvmp3ffparsernode \
  	libpvmp3ffrecognizer \
@@ -37,6 +38,7 @@ include   $(PV_TOP)/fileformats/pvx/parser/Android.mk
 include   $(PV_TOP)/fileformats/id3parcom/Android.mk
 include   $(PV_TOP)/nodes/pvamrffparsernode/Android.mk
 include   $(PV_TOP)/pvmi/recognizer/plugins/pvamrffrecognizer/Android.mk
+include   $(PV_TOP)/pvmi/recognizer/plugins/pvplsffrecognizer/Android.mk
 include   $(PV_TOP)/fileformats/mp3/parser/Android.mk
 include   $(PV_TOP)/nodes/pvmp3ffparsernode/Android.mk
 include   $(PV_TOP)/pvmi/recognizer/plugins/pvmp3ffrecognizer/Android.mk

@@ -15,13 +15,28 @@
  * and limitations under the License.
  * -------------------------------------------------------------------
  */
-#ifndef PV_2WAY_SDKINFO_H_INCLUDED
-#define PV_2WAY_SDKINFO_H_INCLUDED
+#ifndef PVPLSFFREC_FACTORY_H_INCLUDED
+#define PVPLSFFREC_FACTORY_H_INCLUDED
 
-// This header file is automatically generated at build-time
-// *** OFFICIAL RELEASE INFO -- Will not auto update
+#ifndef PVMF_RECOGNIZER_PLUGIN_H_INCLUDED
+#include "pvmf_recognizer_plugin.h"
+#endif
 
-#define PV2WAY_ENGINE_SDKINFO_LABEL "903488"
-#define PV2WAY_ENGINE_SDKINFO_DATE 0x20090807
+class PVPLSFFRecognizerFactory : public PVMFRecognizerPluginFactory
+{
+    public:
+        PVPLSFFRecognizerFactory()
+        {
+        };
 
-#endif //PV_2WAY_SDKINFO_H_INCLUDED
+        ~PVPLSFFRecognizerFactory()
+        {
+        };
+
+        OSCL_IMPORT_REF PVMFRecognizerPluginInterface* CreateRecognizerPlugin();
+        OSCL_IMPORT_REF void DestroyRecognizerPlugin(PVMFRecognizerPluginInterface* aPlugIn);
+};
+
+#endif // PVPLSFFREC_FACTORY_H_INCLUDED
+
+

@@ -80,11 +80,15 @@
 #include "pvmi_config_and_capability_base.h"
 #endif
 
+
 // only include pvmf_downloadmanager_config.h if CML2 is NOT being used
 
 #if(PVMF_DOWNLOADMANAGER_SUPPORT_PPB)
 #ifndef  PVMF_MEMORYBUFFERDATASTREAM_FACTORY_H_INCLUDED
 #include "pvmf_memorybufferdatastream_factory.h"
+#endif
+#ifndef PVPLSFILEPARSER_H_INCLUDED
+#include "pvplsfileparser.h"
 #endif
 #endif //PVMF_DOWNLOADMANAGER_SUPPORT_PPB
 
@@ -952,6 +956,15 @@ class PVMFDownloadManagerNode
         void CompleteGetLicense();
 
         PVMFStatus DoCancelGetLicense(PVMFDownloadManagerNodeCommand& aCmd);
+
+        PVMFStatus ParsePLSFile(OSCL_wString& aPLSFile);
+
+#if(PVMF_DOWNLOADMANAGER_SUPPORT_PPB)
+        // Shoutcast playlist support
+        PVPLSEntry iPLSEntry;
+        PVPLSFileInfo iPLSFileInfo;
+        PVMFSourceContextData* iPLSSessionContextData;
+#endif
 };
 
 ///////////////////////////////////////////////////////////////////////////////

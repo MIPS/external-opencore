@@ -802,9 +802,9 @@ class pvplayer_async_test_ppb_base : public pvplayer_async_test_base
         }
         bool iEOSStopPlay;
 
-        void setShoutcastSessionDuration()
+        void setShoutcastSessionDuration(int32 aListenTimeInSec)
         {
-            iSCListenTime = 5 * 60 * 1000 * 1000;
+            iSCListenTime = aListenTimeInSec * 1000 * 1000;
         }
         bool iShoutcastSession;
         int32 iSCListenTime;
@@ -844,6 +844,7 @@ class pvplayer_async_test_ppb_base : public pvplayer_async_test_base
         PvmiKvp* iErrorKVP;
         PvmiKvp iKVPSetAsync;
         OSCL_StackString<256> iKeyStringSetAsync;
+
 };
 
 

@@ -2,11 +2,11 @@ LOCAL_PATH := $(call my-dir)
 include $(CLEAR_VARS)
 
 LOCAL_SRC_FILES := \
-	src/pvmf_shoutcast_stream_parser.cpp \
- 	src/pvplsfileparser.cpp
+	src/pvplsffrec_factory.cpp \
+ 	src/pvplsffrec_plugin.cpp
 
 
-LOCAL_MODULE := libscsp
+LOCAL_MODULE := libpvplsffrecognizer
 
 LOCAL_CFLAGS :=   $(PV_CFLAGS)
 
@@ -17,14 +17,13 @@ LOCAL_STATIC_LIBRARIES :=
 LOCAL_SHARED_LIBRARIES := 
 
 LOCAL_C_INCLUDES := \
-	$(PV_TOP)/fileformats/scsp/src \
- 	$(PV_TOP)/fileformats/scsp/include \
+	$(PV_TOP)/pvmi/recognizer/plugins/pvplsffrecognizer/src \
+ 	$(PV_TOP)/pvmi/recognizer/plugins/pvplsffrecognizer/include \
  	$(PV_INCLUDES)
 
 LOCAL_COPY_HEADERS_TO := $(PV_COPY_HEADERS_TO)
 
 LOCAL_COPY_HEADERS := \
-	include/pvmf_shoutcast_stream_parser.h \
- 	include/pvplsfileparser.h
+ 	include/pvplsffrec_factory.h
 
 include $(BUILD_STATIC_LIBRARY)

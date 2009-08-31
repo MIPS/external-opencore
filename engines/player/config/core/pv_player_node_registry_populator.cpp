@@ -112,6 +112,9 @@
 #if BUILD_AMR_FF_REC
 #include "pvamrffrec_factory.h"
 #endif
+#if BUILD_PLS_FF_REC
+#include "pvplsffrec_factory.h"
+#endif
 #ifdef USE_LOADABLE_MODULES
 #include "oscl_shared_library.h"
 
@@ -402,6 +405,7 @@ void PVPlayerRegistryPopulator::RegisterAllNodes(PVPlayerNodeRegistryInterface* 
     nodeinfo.iInputTypes.push_back(PVMF_MIME_DATA_SOURCE_HTTP_URL);
     nodeinfo.iInputTypes.push_back(PVMF_MIME_DATA_SOURCE_SHOUTCAST_URL);
     nodeinfo.iInputTypes.push_back(PVMF_MIME_DATA_SOURCE_PVX_FILE);
+    nodeinfo.iInputTypes.push_back(PVMF_MIME_PLSFF);
     nodeinfo.iNodeUUID = KPVMFDownloadManagerNodeUuid;
     nodeinfo.iOutputType.clear();
     nodeinfo.iOutputType.push_back(PVMF_MIME_FORMAT_UNKNOWN);
@@ -549,6 +553,20 @@ void PVPlayerRegistryPopulator::RegisterAllRecognizers(PVPlayerRecognizerRegistr
     else
     {
         OSCL_DELETE(((PVAMRFFRecognizerFactory*)tmpfac));
+        tmpfac = NULL;
+        return;
+    }
+#endif
+#if BUILD_PLS_FF_REC
+    tmpfac = OSCL_STATIC_CAST(PVMFRecognizerPluginFactory*, OSCL_NEW(PVPLSFFRecognizerFactory, ()));
+    if (PVMFRecognizerRegistry::RegisterPlugin(*tmpfac) == PVMFSuccess)
+    {
+        aRegistry->RegisterRecognizer(tmpfac);
+        nodeList->push_back(tmpfac);
+    }
+    else
+    {
+        OSCL_DELETE(((PVPLSFFRecognizerFactory*)tmpfac));
         tmpfac = NULL;
         return;
     }

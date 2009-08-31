@@ -163,6 +163,9 @@ typedef OSCL_String PvmfMimeString;
 #define PVMF_MIME_AVIFF          "x-pvmf/mux/avi"
 #define PVMF_MIME_DATA_PVRFF     "video/x-pvmf-pvr "
 
+// Shoutcast playlist PLS file format
+#define PVMF_MIME_PLSFF          "audio/x-scpls"
+
 // MIME strings for RAW data formats
 #define PVMF_MIME_8BIT_RAW   "X-RAW-8"
 

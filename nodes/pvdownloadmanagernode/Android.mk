@@ -24,6 +24,7 @@ LOCAL_C_INCLUDES := \
  	$(PV_TOP)/nodes/common/include \
  	$(PV_TOP)/pvmi/pvmf/include \
  	$(PV_TOP)/nodes/streaming/common/include \
+ 	$(PV_TOP)/fileformats/scsp/include \
  	$(PV_INCLUDES)
 
 LOCAL_COPY_HEADERS_TO := $(PV_COPY_HEADERS_TO)

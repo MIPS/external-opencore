@@ -165,6 +165,7 @@ void PVMFDownloadManagerNode::ConstructL()
     iFileBufferDatastreamFactory = NULL;
 #if(PVMF_DOWNLOADMANAGER_SUPPORT_PPB)
     iMemoryBufferDatastreamFactory = NULL;
+    iPLSSessionContextData = NULL;
 #endif//PVMF_DOWNLOADMANAGER_SUPPORT_PPB
 
     iDownloadFileName = NULL;
@@ -248,6 +249,12 @@ PVMFDownloadManagerNode::~PVMFDownloadManagerNode()
     {
         OSCL_DELETE(iMemoryBufferDatastreamFactory);
         iMemoryBufferDatastreamFactory = NULL;
+    }
+
+    if (iPLSSessionContextData != NULL)
+    {
+        OSCL_DELETE(iPLSSessionContextData);
+        iPLSSessionContextData = NULL;
     }
 #endif//PVMF_DOWNLOADMANAGER_SUPPORT_PPB
 
@@ -553,6 +560,26 @@ PVMFStatus PVMFDownloadManagerNode::SetSourceInitializationData(OSCL_wString& aS
     if (iInterfaceState != EPVMFNodeIdle && iInterfaceState != EPVMFNodeCreated)
         return PVMFErrInvalidState;
 
+#if(PVMF_DOWNLOADMANAGER_SUPPORT_PPB)
+
+    if (aSourceFormat == PVMF_MIME_PLSFF)
+    {
+        // parse the PLF file
+        // fill in iSourceURL, iSourceFormat and iSourceData
+        PVMFStatus status = ParsePLSFile(aSourceURL);
+        if (status != PVMFSuccess)
+            return status;
+    }
+    else
+    {
+#endif
+        iSourceURL = aSourceURL;
+        iSourceFormat = aSourceFormat;
+        iSourceData = aSourceData;
+
+#if(PVMF_DOWNLOADMANAGER_SUPPORT_PPB)
+    }
+#endif
 
     // Pass the source info directly to the protocol engine node.
 
@@ -562,8 +589,7 @@ PVMFStatus PVMFDownloadManagerNode::SetSourceInitializationData(OSCL_wString& aS
                         "PVMFDownloadManagerNode:SetSourceInitializationData() Can't find datasourceinit interface in protocol engine subnode container."));
         return PVMFFailure; //no source init interface.
     }
-
-    PVMFStatus status = (iProtocolEngineNode.DataSourceInit())->SetSourceInitializationData(aSourceURL, aSourceFormat, aSourceData);
+    PVMFStatus status = (iProtocolEngineNode.DataSourceInit())->SetSourceInitializationData(iSourceURL, iSourceFormat, iSourceData);
     if (status != PVMFSuccess)
         return status;
 
@@ -582,15 +608,15 @@ PVMFStatus PVMFDownloadManagerNode::SetSourceInitializationData(OSCL_wString& aS
         return PVMFErrProcessing;
     }
 
-    if (aSourceFormat == PVMF_MIME_DATA_SOURCE_HTTP_URL)
+    if (iSourceFormat == PVMF_MIME_DATA_SOURCE_HTTP_URL)
     {
-        if (!aSourceData)
+        if (!iSourceData)
         {
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR, (0,
                             "PVMFDownloadManagerNode:SetSourceInitializationData() Missing source data"));
             return PVMFErrArgument;
         }
-        PVInterface* pvinterface = (PVInterface*)aSourceData;
+        PVInterface* pvinterface = (PVInterface*)iSourceData;
         PVUuid uuid(PVMF_DOWNLOAD_DATASOURCE_HTTP_UUID);
         PVInterface* temp = NULL;
         if (pvinterface->queryInterface(uuid, temp))
@@ -671,15 +697,15 @@ PVMFStatus PVMFDownloadManagerNode::SetSourceInitializationData(OSCL_wString& aS
             }
         }
     }
-    else if (aSourceFormat == PVMF_MIME_DATA_SOURCE_PVX_FILE)
+    else if (iSourceFormat == PVMF_MIME_DATA_SOURCE_PVX_FILE)
     {
-        if (!aSourceData)
+        if (!iSourceData)
         {
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR, (0,
                             "PVMFDownloadManagerNode:SetSourceInitializationData() Missing source data"));
             return PVMFErrArgument;
         }
-        PVInterface* pvinterface = (PVInterface*)aSourceData;
+        PVInterface* pvinterface = (PVInterface*)iSourceData;
         PVUuid uuid(PVMF_DOWNLOAD_DATASOURCE_PVX_UUID);
         PVInterface* temp = NULL;
         if (pvinterface->queryInterface(uuid, temp))
@@ -738,15 +764,15 @@ PVMFStatus PVMFDownloadManagerNode::SetSourceInitializationData(OSCL_wString& aS
             }
         }
     }
-    else if (aSourceFormat == PVMF_MIME_DATA_SOURCE_SHOUTCAST_URL)
+    else if (iSourceFormat == PVMF_MIME_DATA_SOURCE_SHOUTCAST_URL)
     {
-        if (!aSourceData)
+        if (!iSourceData)
         {
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR, (0,
                             "PVMFDownloadManagerNode:SetSourceInitializationData() Missing source data"));
             return PVMFErrArgument;
         }
-        PVInterface* pvinterface = (PVInterface*)aSourceData;
+        PVInterface* pvinterface = (PVInterface*)iSourceData;
         PVUuid uuid(PVMF_DOWNLOAD_DATASOURCE_HTTP_UUID);
         PVInterface* temp = NULL;
         if (pvinterface->queryInterface(uuid, temp))
@@ -826,7 +852,7 @@ PVMFStatus PVMFDownloadManagerNode::SetSourceInitializationData(OSCL_wString& aS
     if (iPlaybackMode == EPlaybackOnly)
     {
         // make sure we have enough TCP buffers for PPB and shoutcast
-        if (aSourceFormat == PVMF_MIME_DATA_SOURCE_SHOUTCAST_URL)
+        if (iSourceFormat == PVMF_MIME_DATA_SOURCE_SHOUTCAST_URL)
         {
             // calculate MBDS cache size in bytes
             // max bitrate in bytes per second * cache size in secs
@@ -857,7 +883,7 @@ PVMFStatus PVMFDownloadManagerNode::SetSourceInitializationData(OSCL_wString& aS
             }
 
             // Use Memory Buffer Data Stream for progressive playback and Shoutcast
-            iMemoryBufferDatastreamFactory = OSCL_NEW(PVMFMemoryBufferDataStream, (aSourceFormat, cacheSize));
+            iMemoryBufferDatastreamFactory = OSCL_NEW(PVMFMemoryBufferDataStream, (iSourceFormat, cacheSize));
         }
         else
         {
@@ -886,7 +912,7 @@ PVMFStatus PVMFDownloadManagerNode::SetSourceInitializationData(OSCL_wString& aS
             uint32 maxDataMinusOverheadInPool = numPacketsToFitInPool * PVMF_DOWNLOADMANAGER_TCP_AVG_SMALL_PACKET_SIZE;
 
             // Use Memory Buffer Data Stream for progressive playback and Shoutcast
-            iMemoryBufferDatastreamFactory = OSCL_NEW(PVMFMemoryBufferDataStream, (aSourceFormat, maxDataMinusOverheadInPool));
+            iMemoryBufferDatastreamFactory = OSCL_NEW(PVMFMemoryBufferDataStream, (iSourceFormat, maxDataMinusOverheadInPool));
         }
 
         OSCL_ASSERT(iMemoryBufferDatastreamFactory != NULL);
@@ -904,11 +930,6 @@ PVMFStatus PVMFDownloadManagerNode::SetSourceInitializationData(OSCL_wString& aS
         iReadFactory  = iFileBufferDatastreamFactory->GetReadDataStreamFactoryPtr();
         iWriteFactory = iFileBufferDatastreamFactory->GetWriteDataStreamFactoryPtr();
     }
-
-//save the source info
-    iSourceFormat = aSourceFormat;
-    iSourceURL = aSourceURL;
-    iSourceData = aSourceData;
 
     return PVMFSuccess;
 }
@@ -3996,4 +4017,90 @@ void PVMFDownloadManagerNode::ClockStateUpdated()
             }
         }
     }
+}
+
+
+// if the a URL is successfully retrieved from the PLS file,
+//   iSourceURL will contain the URL,
+//   iSourceFormat will be set to PVMF_MIME_DATA_SOURCE_SHOUTCAST_URL,
+//   iSourceData will point to a new PVMFSourceContextData, created for the PE node
+PVMFStatus PVMFDownloadManagerNode::ParsePLSFile(OSCL_wString& aPLSFile)
+{
+    // have a Shoutcast playlist file
+    // need to parse it and extract the first station URL
+    PVPLSFFParser* plsParser = OSCL_NEW(PVPLSFFParser, ());
+    if (plsParser == NULL)
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR, (0,
+                        "PVMFDownloadManagerNode:ParsePLSFile() Can't instantiate PVPLSFFParser"));
+        return PVMFFailure;
+    }
+
+    PVPLSParserReturnCode retCode = plsParser->ParseFile(aPLSFile);
+    if (retCode != PVPLSFF_PARSER_OK)
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR, (0,
+                        "PVMFDownloadManagerNode:ParsePLSFile() PVPLSFFParser::ParseFile failed %d", retCode));
+        OSCL_DELETE(plsParser);
+        return PVMFFailure;
+    }
+
+    retCode = plsParser->GetFileInfo(iPLSFileInfo);
+    if (retCode != PVPLSFF_PARSER_OK)
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR, (0,
+                        "PVMFDownloadManagerNode:ParsePLSFile() PVPLSFFParser::GetFileInfo failed %d", retCode));
+
+        OSCL_DELETE(plsParser);
+        return PVMFFailure;
+    }
+    else
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR, (0,
+                        "PVMFDownloadManagerNode:ParsePLSFile() PVPLSFFParser::GetFileInfo  %d", iPLSFileInfo.numOfEntries, iPLSFileInfo.versionNum));
+
+        if ((iPLSFileInfo.numOfEntries <= 0) || (iPLSFileInfo.versionNum != 2))
+        {
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR, (0,
+                            "PVMFDownloadManagerNode:ParsePLSFile() PVPLSFFParser::GetFileInfo error"));
+            OSCL_DELETE(plsParser);
+            return PVMFFailure;
+        }
+    }
+
+    // get first entry
+    retCode = plsParser->GetEntry(iPLSEntry, 1);
+    OSCL_DELETE(plsParser);
+
+    if (retCode != PVPLSFF_PARSER_OK)
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR, (0,
+                        "PVMFDownloadManagerNode:SetSourceInitializationData() PVPLSFFParser::GetEntry %d failed %d", 1, retCode));
+        return PVMFFailure;
+    }
+
+    // set Shoutcast URL
+    iSourceURL = iPLSEntry.iUrl->get_str();
+    // set the source format to PVMF_MIME_DATA_SOURCE_SHOUTCAST_URL
+    iSourceFormat = PVMF_MIME_DATA_SOURCE_SHOUTCAST_URL;
+    // create aSourceData
+    if (iPLSSessionContextData != NULL)
+    {
+        OSCL_DELETE(iPLSSessionContextData);
+        iPLSSessionContextData = NULL;
+    }
+    iPLSSessionContextData = OSCL_NEW(PVMFSourceContextData, ());
+    iPLSSessionContextData->EnableCommonSourceContext();
+    iPLSSessionContextData->EnableDownloadHTTPSourceContext();
+    iPLSSessionContextData->DownloadHTTPData()->bIsNewSession = true;
+    iPLSSessionContextData->DownloadHTTPData()->iConfigFileName = NULL;
+    iPLSSessionContextData->DownloadHTTPData()->iDownloadFileName = NULL;
+    iPLSSessionContextData->DownloadHTTPData()->iMaxFileSize = 0xFFFFFFFF;
+    iPLSSessionContextData->DownloadHTTPData()->iProxyName = _STRLIT_CHAR("");
+    iPLSSessionContextData->DownloadHTTPData()->iProxyPort = 0;
+    iPLSSessionContextData->DownloadHTTPData()->iPlaybackControl = PVMFSourceContextDataDownloadHTTP::ENoSaveToFile;
+
+    iSourceData = iPLSSessionContextData;
+
+    return PVMFSuccess;
 }

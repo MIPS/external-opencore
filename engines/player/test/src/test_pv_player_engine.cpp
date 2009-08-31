@@ -3087,7 +3087,7 @@ void pvplayer_engine_test::test()
             case ShoutcastPlayback5MinuteTest:
                 testparam.iFileType = PVMF_MIME_DATA_SOURCE_SHOUTCAST_URL;
                 iCurrentTest = new pvplayer_async_test_ppb_normal(testparam);
-                ((pvplayer_async_test_ppb_normal*)iCurrentTest)->setShoutcastSessionDuration();
+                ((pvplayer_async_test_ppb_normal*)iCurrentTest)->setShoutcastSessionDuration(5 * 60);
                 ((pvplayer_async_test_ppb_normal*)iCurrentTest)->iTestCaseName = _STRLIT_CHAR("Shoutcast Playback For 5 Minutes");
                 break;
 
@@ -3103,6 +3103,13 @@ void pvplayer_engine_test::test()
                 iCurrentTest = new pvplayer_async_test_ppb_normal(testparam);
                 ((pvplayer_async_test_ppb_normal*)iCurrentTest)->enableShoutcastPlayStopPlay();
                 ((pvplayer_async_test_ppb_normal*)iCurrentTest)->iTestCaseName = _STRLIT_CHAR("Shoutcast Playback Play Stop Play");
+                break;
+
+            case ShoutcastPlaybackFromPlaylistTest:
+                testparam.iFileType = PVMF_MIME_PLSFF;
+                iCurrentTest = new pvplayer_async_test_ppb_normal(testparam);
+                ((pvplayer_async_test_ppb_normal*)iCurrentTest)->setShoutcastSessionDuration(30);
+                ((pvplayer_async_test_ppb_normal*)iCurrentTest)->iTestCaseName = _STRLIT_CHAR("Shoutcast Playback From Playlist For 30 Seconds");
                 break;
 
             case FTDownloadOpenPlayUntilEOSTest:
@@ -7901,6 +7908,7 @@ void pvplayer_engine_test::SetupLoggerScheduler()
             loggernode->AddAppender(appenderPtr);
             loggernode->SetLogLevel(PVLOGMSG_DEBUG);
         }
+        break;
         case 19://-logshout
         {
             // Log shoutcast playback node data path only.
@@ -7917,6 +7925,11 @@ void pvplayer_engine_test::SetupLoggerScheduler()
             loggernode = PVLogger::GetLoggerObject("PVMFMP3FFParserNode");
             loggernode->AddAppender(appenderPtr);
             loggernode->SetLogLevel(PVLOGMSG_INFO);
+
+            loggernode = PVLogger::GetLoggerObject("PVPLSFFParser");
+            loggernode->AddAppender(appenderPtr);
+            loggernode->SetLogLevel(PVLOGMSG_STACK_TRACE);
+
             /*
             loggernode = PVLogger::GetLoggerObject("pvdownloadmanagernode");
             loggernode->AddAppender(appenderPtr);

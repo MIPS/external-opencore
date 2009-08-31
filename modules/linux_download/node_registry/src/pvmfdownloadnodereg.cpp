@@ -167,6 +167,7 @@ class DownloadNodesRegistryInterface: public OsclSharedLibraryInterface,
             nodeinfo.iInputTypes.push_back(PVMF_MIME_DATA_SOURCE_HTTP_URL);
             nodeinfo.iInputTypes.push_back(PVMF_MIME_DATA_SOURCE_PVX_FILE);
             nodeinfo.iInputTypes.push_back(PVMF_MIME_DATA_SOURCE_SHOUTCAST_URL);
+            nodeinfo.iInputTypes.push_back(PVMF_MIME_PLSFF);
             nodeinfo.iNodeUUID = KPVMFDownloadManagerNodeUuid;
             nodeinfo.iOutputType.clear();
             nodeinfo.iOutputType.push_back(PVMF_MIME_FORMAT_UNKNOWN);

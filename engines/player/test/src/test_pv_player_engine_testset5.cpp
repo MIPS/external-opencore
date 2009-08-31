@@ -130,6 +130,8 @@
 
 #define DEFAULT_SHOUTCAST_URL "http://scfire-dtc-aa05.stream.aol.com/stream/1018"
 
+#define DEFAULT_SHOUTCAST_PLAYLIST_FILE "test_sc_mp3.pls"
+
 extern FILE* file;
 
 
@@ -4800,20 +4802,29 @@ void pvplayer_async_test_ppb_normal::CreateDataSource()
     OSCL_HeapString<OsclMemAllocator> default_source(SOURCENAME_PREPEND_STRING);
     default_source += DEFAULTSOURCEFILENAME;
 
-    if (iFileType == PVMF_MIME_DATA_SOURCE_SHOUTCAST_URL)
+    if ((iFileType == PVMF_MIME_DATA_SOURCE_SHOUTCAST_URL) ||
+            (iFileType == PVMF_MIME_PLSFF))
     {
         iShoutcastSession = true;
     }
 
     if (url == default_source)
     {
-        if (iFileType == PVMF_MIME_DATA_SOURCE_SHOUTCAST_URL)
+        if (iFileType == PVMF_MIME_PLSFF)
         {
+            // Shoutcast session with a local playlist file
+            fprintf(file, "Setting source to %s\n", DEFAULT_SHOUTCAST_PLAYLIST_FILE);
+            url = DEFAULT_SHOUTCAST_PLAYLIST_FILE;
+        }
+        else if (iFileType == PVMF_MIME_DATA_SOURCE_SHOUTCAST_URL)
+        {
+            // Shoutcast session with a station URL
             fprintf(file, "Setting source to %s\n", DEFAULT_SHOUTCAST_URL);
             url = DEFAULT_SHOUTCAST_URL;
         }
         else
         {
+            // progressive playback
             if (iUseLongClip)
             {
                 // for seek tests (154, 155, 156, 157, 159), clip needs to be long
@@ -4835,44 +4846,55 @@ void pvplayer_async_test_ppb_normal::CreateDataSource()
         wbuf[0] = (oscl_wchar)url.get_cstr()[i];
         iDownloadURL += wbuf;
     }
+
     iDataSource = new PVPlayerDataSourceURL;
     iDataSource->SetDataSourceURL(iDownloadURL);
 
-    if (iFileType == PVMF_MIME_DATA_SOURCE_SHOUTCAST_URL)
+    if (iFileType == PVMF_MIME_PLSFF)
     {
-        iDataSource->SetDataSourceFormatType(PVMF_MIME_DATA_SOURCE_SHOUTCAST_URL);
+        // Shoutcast session with a local playlist file
+        // force the use of PLS Ff recognizer
+        iDataSource->SetDataSourceFormatType(PVMF_MIME_FORMAT_UNKNOWN);
     }
     else
     {
-        iDataSource->SetDataSourceFormatType(PVMF_MIME_DATA_SOURCE_HTTP_URL);
+        // progressive playback or shoutcast with station URL
+        if (iFileType == PVMF_MIME_DATA_SOURCE_SHOUTCAST_URL)
+        {
+            iDataSource->SetDataSourceFormatType(PVMF_MIME_DATA_SOURCE_SHOUTCAST_URL);
+        }
+        else
+        {
+            iDataSource->SetDataSourceFormatType(PVMF_MIME_DATA_SOURCE_HTTP_URL);
+        }
+
+        iDownloadFilename = NULL;
+
+        iDownloadProxy = _STRLIT_CHAR("");
+        int32 iDownloadProxyPort = 0;
+
+        iDownloadConfigFilename = OUTPUTNAME_PREPEND_WSTRING;
+        iDownloadConfigFilename += _STRLIT_WCHAR("my3gp_ppb_normal.cfg");
+
+        iContentTooLarge = false;
+
+        uint32 iMaxFileSize = 0x7FFFFFFF;
+
+        bool aIsNewSession = true;
+
+        iDownloadContextData = new PVMFSourceContextData();
+        iDownloadContextData->EnableCommonSourceContext();
+        iDownloadContextData->EnableDownloadHTTPSourceContext();
+        iDownloadContextData->DownloadHTTPData()->bIsNewSession = aIsNewSession;
+        iDownloadContextData->DownloadHTTPData()->iConfigFileName = iDownloadConfigFilename;
+        iDownloadContextData->DownloadHTTPData()->iDownloadFileName = iDownloadFilename;
+        iDownloadContextData->DownloadHTTPData()->iMaxFileSize = iMaxFileSize;
+        iDownloadContextData->DownloadHTTPData()->iProxyName = iDownloadProxy;
+        iDownloadContextData->DownloadHTTPData()->iProxyPort = iDownloadProxyPort;
+        iDownloadContextData->DownloadHTTPData()->iPlaybackControl = PVMFSourceContextDataDownloadHTTP::ENoSaveToFile;
+
+        iDataSource->SetDataSourceContextData(iDownloadContextData);
     }
-
-    iDownloadFilename = NULL;
-
-    iDownloadProxy = _STRLIT_CHAR("");
-    int32 iDownloadProxyPort = 0;
-
-    iDownloadConfigFilename = OUTPUTNAME_PREPEND_WSTRING;
-    iDownloadConfigFilename += _STRLIT_WCHAR("my3gp_ppb_normal.cfg");
-
-    iContentTooLarge = false;
-
-    uint32 iMaxFileSize = 0x7FFFFFFF;
-
-    bool aIsNewSession = true;
-
-    iDownloadContextData = new PVMFSourceContextData();
-    iDownloadContextData->EnableCommonSourceContext();
-    iDownloadContextData->EnableDownloadHTTPSourceContext();
-    iDownloadContextData->DownloadHTTPData()->bIsNewSession = aIsNewSession;
-    iDownloadContextData->DownloadHTTPData()->iConfigFileName = iDownloadConfigFilename;
-    iDownloadContextData->DownloadHTTPData()->iDownloadFileName = iDownloadFilename;
-    iDownloadContextData->DownloadHTTPData()->iMaxFileSize = iMaxFileSize;
-    iDownloadContextData->DownloadHTTPData()->iProxyName = iDownloadProxy;
-    iDownloadContextData->DownloadHTTPData()->iProxyPort = iDownloadProxyPort;
-    iDownloadContextData->DownloadHTTPData()->iPlaybackControl = PVMFSourceContextDataDownloadHTTP::ENoSaveToFile;
-
-    iDataSource->SetDataSourceContextData(iDownloadContextData);
 }
 
 void pvplayer_async_test_ppb_normal::CreateDataSinkVideo()
