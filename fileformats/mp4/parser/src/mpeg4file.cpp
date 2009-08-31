@@ -138,7 +138,8 @@ Mpeg4File::Mpeg4File(MP4_FF_FILE *fp,
                 || (atomType == FREE_SPACE_ATOM)
                 || (atomType == UUID_ATOM)
                 || (atomType == UNKNOWN_ATOM)
-                || (atomType == MEDIA_DATA_ATOM))
+                || (atomType == MEDIA_DATA_ATOM)
+                || (atomType == META_DATA_ATOM))
         {
             if (atomSize == 1)
             {

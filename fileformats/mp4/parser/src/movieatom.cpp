@@ -84,7 +84,8 @@ OSCL_EXPORT_REF MovieAtom::MovieAtom(MP4_FF_FILE *fp,
                 (atomType == UUID_ATOM) ||
                 (atomType == OMADRM_KMS_BOX) ||
                 (atomType == MOVIE_EXTENDS_ATOM) ||
-                (atomType == UNKNOWN_ATOM)) &&
+                (atomType == UNKNOWN_ATOM) ||
+                (atomType == META_DATA_ATOM))  &&
                 (count > 0))
         {
             uint32 currPtr = AtomUtils::getCurrentFilePosition(fp);
@@ -132,7 +133,8 @@ OSCL_EXPORT_REF MovieAtom::MovieAtom(MP4_FF_FILE *fp,
             }
             else if ((atomType == FREE_SPACE_ATOM) ||
                      (atomType == UUID_ATOM) ||
-                     (atomType == UNKNOWN_ATOM))
+                     (atomType == UNKNOWN_ATOM) ||
+                     (atomType == META_DATA_ATOM))
             {
                 if (atomSize < DEFAULT_ATOM_SIZE)
                 {

@@ -247,7 +247,8 @@ IMpeg4File::IsXXXable(OSCL_wString& filename,
                     || (atomType == UUID_ATOM)
                     || (atomType == MOVIE_ATOM)
                     || (atomType == MEDIA_DATA_ATOM)
-                    || (atomType == UNKNOWN_ATOM))
+                    || (atomType == UNKNOWN_ATOM)
+                    || (atomType == META_DATA_ATOM))
             {
                 if (atomSize < DEFAULT_ATOM_SIZE)
                 {
@@ -423,7 +424,8 @@ IMpeg4File::IsXXXable(MP4_FF_FILE_REFERENCE fileRef,
                     || (atomType == UUID_ATOM)
                     || (atomType == MOVIE_ATOM)
                     || (atomType == MEDIA_DATA_ATOM)
-                    || (atomType == UNKNOWN_ATOM))
+                    || (atomType == UNKNOWN_ATOM)
+                    || (atomType == META_DATA_ATOM))
             {
                 if (atomSize < DEFAULT_ATOM_SIZE)
                 {
@@ -524,7 +526,8 @@ IMpeg4File::IsProgressiveDownloadable(MP4_FF_FILE_REFERENCE filePtr,
                 (atomType == SKIP_ATOM) ||
                 (atomType == USER_DATA_ATOM) ||
                 (atomType == UUID_ATOM) ||
-                (atomType == UNKNOWN_ATOM))
+                (atomType == UNKNOWN_ATOM) ||
+                (atomType == META_DATA_ATOM))
         {
             fpos += atomSize;
             if ((uint32)fpos > fileSize)
@@ -622,7 +625,8 @@ IMpeg4File::GetMetaDataSize(PVMFCPMPluginAccessInterfaceFactory* aCPMAccessFacto
                 (atomType == SKIP_ATOM) ||
                 (atomType == USER_DATA_ATOM) ||
                 (atomType == UUID_ATOM) ||
-                (atomType == UNKNOWN_ATOM))
+                (atomType == UNKNOWN_ATOM) ||
+                (atomType == META_DATA_ATOM))
         {
             fpos += atomSize;
             metaDataSize = fpos;
