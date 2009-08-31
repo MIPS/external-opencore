@@ -2473,11 +2473,7 @@ PVMFStatus PVMp4FFComposerNode::AddSampleToTrack(Oscl_Vector<OsclMemoryFragment,
         timeScale = config->iTimescale;
     }
 
-    MediaClockConverter mcc(timeScale);
-    mcc.update_clock(aTimestamp);
-    uint32 CurrDuration = mcc.get_converted_ts(1000);
-
-    status = CheckMaxDuration(CurrDuration);
+    status = CheckMaxDuration(aTimestamp);
     if (status == PVMFFailure)
     {
         LOGDATATRAFFIC((0, "PVMp4FFComposerNode::AddSampleToTrack: Error - CheckMaxDuration failed"));
@@ -2663,8 +2659,12 @@ PVMFStatus PVMp4FFComposerNode::AddSampleToTrack(Oscl_Vector<OsclMemoryFragment,
             aPort->SetLastTS(aTimestamp);
         }
 
+        iClockConverter.set_timescale(timeScale);
+        iClockConverter.set_clock_other_timescale(aTimestamp, 1000);
+        uint32 amrts = iClockConverter.get_current_timestamp();
+
         iSampleParam->_fragmentList = aFrame;
-        iSampleParam->_timeStamp = aTimestamp;
+        iSampleParam->_timeStamp = amrts;
         iSampleParam->_flags = flags;
 
         if (!iMpeg4File->addSampleToTrack(aTrackId, iSampleParam))
@@ -2696,7 +2696,7 @@ PVMFStatus PVMp4FFComposerNode::AddSampleToTrack(Oscl_Vector<OsclMemoryFragment,
 #endif
     iSampleInTrack = true;
     // Send progress report after sample is successfully added
-    SendProgressReport(CurrDuration);
+    SendProgressReport(aTimestamp);
     return PVMFSuccess;
 }
 
