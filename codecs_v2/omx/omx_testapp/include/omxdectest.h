@@ -189,7 +189,7 @@ class OmxComponentDecTest : public OmxDecTestBase
         OMX_ERRORTYPE GetInputFrameWmv();
         OMX_ERRORTYPE GetInputFrameRv();
         OMX_ERRORTYPE GetInputFrameMp3();
-        OMX_ERRORTYPE GetInputFrameWma();
+        OMX_ERRORTYPE GetInputFrameWmaRa();
 
         //Function pointer that will point to the correct component's function
         OMX_ERRORTYPE(OmxComponentDecTest::*pGetInputFrame)();

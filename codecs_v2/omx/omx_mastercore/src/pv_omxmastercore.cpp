@@ -887,6 +887,11 @@ OMX_BOOL PV_OMXConfigParser(
                 aInputs.iMimeType = PVMF_MIME_WMA;
 
             }
+            else if (0 == oscl_strcmp(pInputs->cComponentRole, (OMX_STRING)"audio_decoder.ra"))
+            {
+                aInputs.iMimeType = PVMF_MIME_REAL_AUDIO;
+
+            }
             else if (0 == oscl_strcmp(pInputs->cComponentRole, (OMX_STRING)"audio_decoder.aac"))
             {
                 aInputs.iMimeType = PVMF_MIME_AAC_SIZEHDR;

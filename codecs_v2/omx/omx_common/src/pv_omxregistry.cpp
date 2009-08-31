@@ -739,6 +739,83 @@ OMX_ERRORTYPE WmaRegister(OMXGlobalData *data)
 #endif
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
+#if REGISTER_OMX_RA_COMPONENT
+// external factory functions needed for creation of each component (or stubs for testing)
+#if (DYNAMIC_LOAD_OMX_RA_COMPONENT == 0)
+extern OMX_ERRORTYPE RaOmxComponentFactory(OMX_OUT OMX_HANDLETYPE* pHandle, OMX_IN  OMX_PTR pAppData, OMX_IN OMX_PTR pProxy, OMX_STRING aOmxLibName, OMX_PTR &aOmxLib, OMX_PTR aOsclUuid, OMX_U32 &aRefCount);
+extern OMX_ERRORTYPE RaOmxComponentDestructor(OMX_IN OMX_HANDLETYPE pHandle, OMX_PTR &aOmxLib, OMX_PTR aOsclUuid, OMX_U32 &aRefCount);
+#endif
+#endif
+#if (REGISTER_OMX_RA_COMPONENT) || (USE_DYNAMIC_LOAD_OMX_COMPONENTS)
+/////////////////////////////////////////////////////////////////////////////
+OMX_ERRORTYPE RaRegister(OMXGlobalData *data)
+{
+    OMX_S32 ii;
+    ComponentRegistrationType *pCRT = (ComponentRegistrationType *) oscl_malloc(sizeof(ComponentRegistrationType));
+
+    if (pCRT)
+    {
+        pCRT->ComponentName = (OMX_STRING)"OMX.PV.radec";
+        pCRT->RoleString[0] = (OMX_STRING)"audio_decoder.ra";
+        pCRT->NumberOfRolesSupported = 1;
+        pCRT->SharedLibraryOsclUuid = NULL;
+#if USE_DYNAMIC_LOAD_OMX_COMPONENTS
+        pCRT->FunctionPtrCreateComponent = &OmxComponentFactoryDynamicCreate;
+        pCRT->FunctionPtrDestroyComponent = &OmxComponentFactoryDynamicDestructor;
+        pCRT->SharedLibraryName = (OMX_STRING)"libomx_radec_sharedlibrary";
+        pCRT->SharedLibraryPtr = NULL;
+
+        OsclUuid *temp = (OsclUuid *) oscl_malloc(sizeof(OsclUuid));
+        if (temp == NULL)
+        {
+            oscl_free(pCRT); // free allocated memory
+            return OMX_ErrorInsufficientResources;
+        }
+        OSCL_PLACEMENT_NEW(temp, PV_OMX_RADEC_UUID);
+
+        pCRT->SharedLibraryOsclUuid = (OMX_PTR) temp;
+        pCRT->SharedLibraryRefCounter = 0;
+#endif
+#if REGISTER_OMX_RA_COMPONENT
+#if (DYNAMIC_LOAD_OMX_RA_COMPONENT == 0)
+
+        pCRT->FunctionPtrCreateComponent = &RaOmxComponentFactory;
+        pCRT->FunctionPtrDestroyComponent = &RaOmxComponentDestructor;
+        pCRT->SharedLibraryName = NULL;
+        pCRT->SharedLibraryPtr = NULL;
+
+        if (pCRT->SharedLibraryOsclUuid)
+            oscl_free(pCRT->SharedLibraryOsclUuid);
+
+        pCRT->SharedLibraryOsclUuid = NULL;
+        pCRT->SharedLibraryRefCounter = 0;
+#endif
+#endif
+    }
+    else
+    {
+        return OMX_ErrorInsufficientResources;
+    }
+
+    for (ii = 0; ii < MAX_SUPPORTED_COMPONENTS; ii++)
+    {
+        if (NULL == data->ipRegTemplateList[ii])
+        {
+            data->ipRegTemplateList[ii] = pCRT;
+            break;
+        }
+    }
+
+    if (MAX_SUPPORTED_COMPONENTS == ii)
+    {
+        return OMX_ErrorInsufficientResources;
+    }
+
+    return OMX_ErrorNone;
+}
+#endif
+
+///////////////////////////////////////////////////////////////////////////////////////////////
 #if REGISTER_OMX_AMRENC_COMPONENT
 // external factory functions needed for creation of each component (or stubs for testing)
 #if (DYNAMIC_LOAD_OMX_AMRENC_COMPONENT == 0)

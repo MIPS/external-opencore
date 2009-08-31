@@ -73,6 +73,7 @@ OMX_ERRORTYPE AacRegister(OMXGlobalData *data);
 OMX_ERRORTYPE AmrRegister(OMXGlobalData *data);
 OMX_ERRORTYPE Mp3Register(OMXGlobalData *data);
 OMX_ERRORTYPE WmaRegister(OMXGlobalData *data);
+OMX_ERRORTYPE RaRegister(OMXGlobalData *data);
 
 OMX_ERRORTYPE AmrEncRegister(OMXGlobalData *data);
 OMX_ERRORTYPE Mpeg4EncRegister(OMXGlobalData *data);
@@ -116,6 +117,10 @@ OMX_ERRORTYPE Mp3Register(OMXGlobalData *data);
 
 #if REGISTER_OMX_WMA_COMPONENT
 OMX_ERRORTYPE WmaRegister(OMXGlobalData *data);
+#endif
+
+#if REGISTER_OMX_RA_COMPONENT
+OMX_ERRORTYPE RaRegister(OMXGlobalData *data);
 #endif
 
 #if REGISTER_OMX_AMRENC_COMPONENT
@@ -212,6 +217,11 @@ static OMX_ERRORTYPE _OMX_Init(OMXGlobalData *data)
     if (Status != OMX_ErrorNone)
         return Status;
 
+    // RA
+    Status = RaRegister(data);
+    if (Status != OMX_ErrorNone)
+        return Status;
+
     //AMR ENCODER
     Status = AmrEncRegister(data);
     if (Status != OMX_ErrorNone)
@@ -299,6 +309,13 @@ static OMX_ERRORTYPE _OMX_Init(OMXGlobalData *data)
 #if REGISTER_OMX_WMA_COMPONENT
     // WMA
     Status = WmaRegister(data);
+    if (Status != OMX_ErrorNone)
+        return Status;
+#endif
+
+#if REGISTER_OMX_RA_COMPONENT
+    // RA
+    Status = RaRegister(data);
     if (Status != OMX_ErrorNone)
         return Status;
 #endif

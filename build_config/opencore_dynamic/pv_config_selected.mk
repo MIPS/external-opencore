@@ -107,6 +107,7 @@ omx_aac_component_lib=m
 omx_amr_component_lib=m
 omx_mp3_component_lib=m
 omx_wma_component_lib=n
+omx_ra_component_lib=n
 omx_amrenc_component_lib=m
 omx_m4venc_component_lib=m
 omx_avcenc_component_lib=m

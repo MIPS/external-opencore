@@ -3232,6 +3232,7 @@ OSCL_EXPORT_REF OMX_ERRORTYPE OmxComponentAudio::GetParameter(
     OMX_AUDIO_CONFIG_EQUALIZERTYPE* pAudioEqualizer;
     OMX_AUDIO_PARAM_AACPROFILETYPE* pAudioAac;
     OMX_AUDIO_PARAM_AMRTYPE* pAudioAmr;
+    OMX_AUDIO_PARAM_RATYPE* pAudioRa;
 
     ComponentPortType* pComponentPort;
 
@@ -3333,6 +3334,20 @@ OSCL_EXPORT_REF OMX_ERRORTYPE OmxComponentAudio::GetParameter(
             PortIndex = pAudioWma->nPortIndex;
             oscl_memcpy(pAudioWma, &ipPorts[PortIndex]->AudioWmaParam, sizeof(OMX_AUDIO_PARAM_WMATYPE));
             SetHeader(pAudioWma, sizeof(OMX_AUDIO_PARAM_WMATYPE));
+        }
+        break;
+
+        case OMX_IndexParamAudioRa:
+        {
+            pAudioRa = (OMX_AUDIO_PARAM_RATYPE*) ComponentParameterStructure;
+            if (pAudioRa->nPortIndex != iCompressedFormatPortNum)
+            {
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE, (0, "OmxComponentAudio : GetParameter error bad port index"));
+                return OMX_ErrorBadPortIndex;
+            }
+            PortIndex = pAudioRa->nPortIndex;
+            oscl_memcpy(pAudioRa, &ipPorts[PortIndex]->AudioRaParam, sizeof(OMX_AUDIO_PARAM_RATYPE));
+            SetHeader(pAudioRa, sizeof(OMX_AUDIO_PARAM_RATYPE));
         }
         break;
 
@@ -3468,6 +3483,7 @@ OSCL_EXPORT_REF OMX_ERRORTYPE OmxComponentAudio::SetParameter(
     OMX_AUDIO_CONFIG_EQUALIZERTYPE* pAudioEqualizer;
     OMX_AUDIO_PARAM_AACPROFILETYPE* pAudioAac;
     OMX_AUDIO_PARAM_AMRTYPE* pAudioAmr;
+    OMX_AUDIO_PARAM_RATYPE* pAudioRa;
 
     OMX_U32 PortIndex;
     OMX_ERRORTYPE ErrorType = OMX_ErrorNone;
@@ -3558,6 +3574,23 @@ OSCL_EXPORT_REF OMX_ERRORTYPE OmxComponentAudio::SetParameter(
                 return ErrorType;
             }
             oscl_memcpy(&ipPorts[PortIndex]->AudioWmaParam, pAudioWma, sizeof(OMX_AUDIO_PARAM_WMATYPE));
+        }
+        break;
+
+        case OMX_IndexParamAudioRa:
+        {
+
+
+            pAudioRa = (OMX_AUDIO_PARAM_RATYPE*) ComponentParameterStructure;
+            PortIndex = pAudioRa->nPortIndex;
+            /*Check Structure Header and verify component state*/
+            ErrorType = ParameterSanityCheck(hComponent, PortIndex, pAudioRa, sizeof(OMX_AUDIO_PARAM_RATYPE));
+            if (ErrorType != OMX_ErrorNone)
+            {
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE, (0, "OmxComponentAudio : SetParameter error parameter sanity check error"));
+                return ErrorType;
+            }
+            oscl_memcpy(&ipPorts[PortIndex]->AudioRaParam, pAudioRa, sizeof(OMX_AUDIO_PARAM_RATYPE));
         }
         break;
 

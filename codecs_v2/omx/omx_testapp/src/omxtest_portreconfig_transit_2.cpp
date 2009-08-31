@@ -336,7 +336,7 @@ void OmxDecTestPortReconfigTransitionTest_2::Run()
             INIT_GETPARAMETER_STRUCT(OMX_PORT_PARAM_TYPE, iPortInit);
 
             if (0 == oscl_strcmp(iFormat, "AAC") || 0 == oscl_strcmp(iFormat, "AMR")
-                    || 0 == oscl_strcmp(iFormat, "MP3") || 0 == oscl_strcmp(iFormat, "WMA"))
+                    || 0 == oscl_strcmp(iFormat, "MP3") || 0 == oscl_strcmp(iFormat, "WMA") || 0 == oscl_strcmp(iFormat, "RA"))
             {
                 Err = OMX_GetParameter(ipAppPriv->Handle, OMX_IndexParamAudioInit, &iPortInit);
             }
@@ -579,11 +579,10 @@ void OmxDecTestPortReconfigTransitionTest_2::Run()
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
                                 (0, "OmxDecTestPortReconfigTransitionTest_2::Run() - SetParameter called for OMX_IndexParamAudioPcm for MP3 on port %d", iOutputPortIndex));
             }
-            else if (0 == oscl_strcmp(iFormat, "WMA"))
+            else if ((0 == oscl_strcmp(iFormat, "WMA")) || (0 == oscl_strcmp(iFormat, "RA")))
             {
-                pGetInputFrame =  &OmxComponentDecTest::GetInputFrameWma;
+                pGetInputFrame =  &OmxComponentDecTest::GetInputFrameWmaRa;
             }
-
 
             if (StateError != iState)
             {

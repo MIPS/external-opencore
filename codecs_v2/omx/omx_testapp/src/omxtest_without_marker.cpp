@@ -147,7 +147,7 @@ void OmxDecTestWithoutMarker::Run()
             INIT_GETPARAMETER_STRUCT(OMX_PORT_PARAM_TYPE, iPortInit);
 
             if (0 == oscl_strcmp(iFormat, "AAC") || 0 == oscl_strcmp(iFormat, "AMR")
-                    || 0 == oscl_strcmp(iFormat, "MP3") || 0 == oscl_strcmp(iFormat, "WMA"))
+                    || 0 == oscl_strcmp(iFormat, "MP3") || 0 == oscl_strcmp(iFormat, "WMA") || 0 == oscl_strcmp(iFormat, "RA"))
             {
                 Err = OMX_GetParameter(ipAppPriv->Handle, OMX_IndexParamAudioInit, &iPortInit);
             }
@@ -326,13 +326,12 @@ void OmxDecTestWithoutMarker::Run()
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
                                 (0, "OmxDecTestWithoutMarker::Run() - SetParameter called for OMX_IndexParamAudioPcm for MP3 on port %d", iOutputPortIndex));
             }
-            else if (0 == oscl_strcmp(iFormat, "WMA"))
+            else if ((0 == oscl_strcmp(iFormat, "WMA")) || (0 == oscl_strcmp(iFormat, "RA")))
             {
                 /* WMA decoder can't handle chunk of data, so parse the frame boundaries
                 * & the send it to component*/
-                pGetInputFrame =  &OmxComponentDecTest::GetInputFrameWma;
+                pGetInputFrame =  &OmxComponentDecTest::GetInputFrameWmaRa;
             }
-
 
             if (StateError != iState)
             {
@@ -470,7 +469,7 @@ void OmxDecTestWithoutMarker::Run()
 
             if (!FlagTemp)
             {
-                if (0 == oscl_strcmp(iFormat, "WMV") || 0 == oscl_strcmp(iFormat, "WMA") || 0 == oscl_strcmp(iFormat, "RV"))
+                if (0 == oscl_strcmp(iFormat, "WMV") || 0 == oscl_strcmp(iFormat, "WMA") || 0 == oscl_strcmp(iFormat, "RV") || 0 == oscl_strcmp(iFormat, "RA"))
                 {
                     (*this.*pGetInputFrame)();
                 }
@@ -672,7 +671,7 @@ void OmxDecTestWithoutMarker::Run()
 
             if (!iStopProcessingInput || (OMX_ErrorInsufficientResources == Status))
             {
-                if (0 == oscl_strcmp(iFormat, "WMV") || 0 == oscl_strcmp(iFormat, "WMA") || 0 == oscl_strcmp(iFormat, "RV"))
+                if (0 == oscl_strcmp(iFormat, "WMV") || 0 == oscl_strcmp(iFormat, "WMA") || 0 == oscl_strcmp(iFormat, "RV") || 0 == oscl_strcmp(iFormat, "RA"))
                 {
                     (*this.*pGetInputFrame)();
                 }

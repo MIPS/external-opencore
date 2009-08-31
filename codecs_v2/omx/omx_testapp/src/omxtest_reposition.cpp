@@ -293,6 +293,13 @@ OMX_BOOL OmxDecTestReposition::ResetStream()
         fread(&Size, 1, FRAME_SIZE_FIELD, ipInputFile); // read in 1st 4 bytes
         fseek(ipInputFile, Size, SEEK_CUR);
     }
+    else if (0 == oscl_strcmp(iFormat, "RA"))
+    {
+        //Do not send the config buffer in case of repositioning,
+        //start sending data from the first buffer onwards
+        fread(&Size, 1, FRAME_SIZE_FIELD, ipInputFile); // read in 1st 4 bytes
+        fseek(ipInputFile, Size, SEEK_CUR);
+    }
     else if (0 == oscl_strcmp(iFormat, "AMR"))
     {
         //Skip the first four bytes that represents amr file format.
@@ -450,7 +457,7 @@ void OmxDecTestReposition::Run()
             INIT_GETPARAMETER_STRUCT(OMX_PORT_PARAM_TYPE, iPortInit);
 
             if (0 == oscl_strcmp(iFormat, "AAC") || 0 == oscl_strcmp(iFormat, "AMR")
-                    || 0 == oscl_strcmp(iFormat, "MP3") || 0 == oscl_strcmp(iFormat, "WMA"))
+                    || 0 == oscl_strcmp(iFormat, "MP3") || 0 == oscl_strcmp(iFormat, "WMA") || 0 == oscl_strcmp(iFormat, "RA"))
             {
                 Err = OMX_GetParameter(ipAppPriv->Handle, OMX_IndexParamAudioInit, &iPortInit);
             }
@@ -696,11 +703,10 @@ void OmxDecTestReposition::Run()
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
                                 (0, "OmxDecTestReposition::Run() - SetParameter called for OMX_IndexParamAudioPcm for MP3 on port %d", iOutputPortIndex));
             }
-            else if (0 == oscl_strcmp(iFormat, "WMA"))
+            else if ((0 == oscl_strcmp(iFormat, "WMA")) || (0 == oscl_strcmp(iFormat, "RA")))
             {
-                pGetInputFrame = &OmxComponentDecTest::GetInputFrameWma;
+                pGetInputFrame = &OmxComponentDecTest::GetInputFrameWmaRa;
             }
-
 
             if (StateError != iState)
             {

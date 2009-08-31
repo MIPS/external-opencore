@@ -450,11 +450,10 @@ void OmxDecTestPortReconfig::Run()
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
                                 (0, "OmxDecTestPortReconfig::Run() - SetParameter called for OMX_IndexParamAudioPcm for MP3 on port %d", iOutputPortIndex));
             }
-            else if (0 == oscl_strcmp(iFormat, "WMA"))
+            else if ((0 == oscl_strcmp(iFormat, "WMA")) || (0 == oscl_strcmp(iFormat, "RA")))
             {
-                pGetInputFrame = &OmxComponentDecTest::GetInputFrameWma;
+                pGetInputFrame = &OmxComponentDecTest::GetInputFrameWmaRa;
             }
-
 
             if (StateError != iState)
             {

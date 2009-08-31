@@ -46,6 +46,7 @@ List of libraries which would be linked with the module if they are selected as 
     * /codecs_v2/audio/mp3/dec/build/make
     * /codecs_v2/audio/wma/dec/build/make
     * /codecs_v2/audio/wma/voice_dec/build/make
+    * /codecs_v2/audio/real_audio/dec/build/make
     * /codecs_v2/video/m4v_h263/dec/build/make
     * /codecs_v2/video/wmv_vc1/dec/build/make
     * /codecs_v2/utilities/m4v_config_parser/build/make
@@ -61,6 +62,7 @@ List of libraries which would be linked with the module if they are selected as 
     * /codecs_v2/omx/omx_amr/build/make_multithreaded
     * /codecs_v2/omx/omx_mp3/build/make_multithreaded
     * /codecs_v2/omx/omx_wma/build/make_multithreaded
+    * /codecs_v2/omx/omx_ra/build/make_multithreaded
     * /codecs_v2/omx/omx_proxy/build/make
     * /baselibs/threadsafe_callback_ao/build/make
     * /baselibs/media_data_structures/build/make

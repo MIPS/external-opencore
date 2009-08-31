@@ -126,7 +126,7 @@ void usage(FILE* filehandle)
     fprintf(filehandle, "-i      {input_file2}: 2nd input file for dynamic reconfig, etc.\n");
     fprintf(filehandle, "-r      {ref_file}:   Reference file for output verification\n");
     fprintf(filehandle, "-c/-n   {CodecType/ComponentName}\n");
-    fprintf(filehandle, "        CodecType could be avc, aac, mpeg4, h263, wmv, rv, amr, mp3, wma\n");
+    fprintf(filehandle, "        CodecType could be avc, aac, mpeg4, h263, wmv, rv, amr, mp3, wma, ra\n");
     fprintf(filehandle, "-t x y  {A range of test cases to run}\n ");
     fprintf(filehandle, "        To run one test case use same index for x and y - Default is ALL\n");
     fprintf(filehandle, "-l      log to file\n");
@@ -361,6 +361,11 @@ int local_main(FILE* filehandle, cmd_line* command_line)
                         {
                             oscl_strncpy(Role, "audio_decoder.wma", oscl_strlen("audio_decoder.wma") + 1);
                             oscl_strncpy(ComponentFormat, "WMA", oscl_strlen("WMA") + 1);
+                        }
+                        else if (NULL != (Result = (OMX_STRING) oscl_strstr(argstr, "ra")))
+                        {
+                            oscl_strncpy(Role, "audio_decoder.ra", oscl_strlen("audio_decoder.ra") + 1);
+                            oscl_strncpy(ComponentFormat, "RA", oscl_strlen("RA") + 1);
                         }
                         else
                         {
@@ -3091,14 +3096,14 @@ OMX_ERRORTYPE OmxComponentDecTest::GetInputFrameMp3()
 
 
 
-OMX_ERRORTYPE OmxComponentDecTest::GetInputFrameWma()
+OMX_ERRORTYPE OmxComponentDecTest::GetInputFrameWmaRa()
 {
     OMX_S32 Index;
     OMX_S32 Size;
     OMX_ERRORTYPE Status;
     OMX_S32 ReadCount;
 
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "OmxComponentDecTest::GetInputFrameWma() - IN"));
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "OmxComponentDecTest::GetInputFrameWmaRa() - IN"));
 
     if (OMX_TRUE == iInputReady)
     {
@@ -3117,7 +3122,7 @@ OMX_ERRORTYPE OmxComponentDecTest::GetInputFrameWma()
 
             if (iInBufferCount == Index)
             {
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG, (0, "OmxComponentDecTest::GetInputFrameWma() - Input buffer not available, OUT"));
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG, (0, "OmxComponentDecTest::GetInputFrameWmaRa() - Input buffer not available, OUT"));
                 return OMX_ErrorNone;
             }
 
@@ -3135,11 +3140,11 @@ OMX_ERRORTYPE OmxComponentDecTest::GetInputFrameWma()
                         iInIndex = Index;
                         iLastInputFrame = iFrameNum;
 
-                        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "OmxComponentDecTest::GetInputFrameWma() - Input file has ended, OUT"));
+                        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "OmxComponentDecTest::GetInputFrameWmaRa() - Input file has ended, OUT"));
                         return OMX_ErrorNone;
                     }
 
-                    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG, (0, "OmxComponentDecTest::GetInputFrameWma() - Next frame size is %d", Size));
+                    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG, (0, "OmxComponentDecTest::GetInputFrameWmaRa() - Next frame size is %d", Size));
 
                     for (OMX_S32 kk = 0; kk < iNumSimFrags - 1; kk++)
                     {
@@ -3169,13 +3174,13 @@ OMX_ERRORTYPE OmxComponentDecTest::GetInputFrameWma()
                     iInIndex = Index;
                     iLastInputFrame = iFrameNum;
 
-                    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "OmxComponentDecTest::GetInputFrameWma() - Input file read error, OUT"));
+                    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "OmxComponentDecTest::GetInputFrameWmaRa() - Input file read error, OUT"));
 
                     return OMX_ErrorNone;   // corrupted file !!
                 }
 
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
-                                (0, "OmxComponentDecTest::GetInputFrameWma() - Bytes read from input file %d", Size));
+                                (0, "OmxComponentDecTest::GetInputFrameWmaRa() - Bytes read from input file %d", Size));
 
                 ipInBuffer[Index]->nFilledLen = Size;
                 ipInBuffer[Index]->nOffset = 0;  // for now all data starts at the beginning of the buffer
@@ -3190,11 +3195,11 @@ OMX_ERRORTYPE OmxComponentDecTest::GetInputFrameWma()
                     iInIndex = Index;
                     iLastInputFrame = iFrameNum;
 
-                    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "OmxComponentDecTest::GetInputFrameWma() - Input file has ended, OUT"));
+                    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "OmxComponentDecTest::GetInputFrameWmaRa() - Input file has ended, OUT"));
                     return OMX_ErrorNone;
                 }
 
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG, (0, "OmxComponentDecTest::GetInputFrameWma() - Next frame size is %d", Size));
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG, (0, "OmxComponentDecTest::GetInputFrameWmaRa() - Next frame size is %d", Size));
 
                 ReadCount = fread(ipInBuffer[Index]->pBuffer, 1, Size, ipInputFile);
                 if (ReadCount < Size)
@@ -3203,12 +3208,12 @@ OMX_ERRORTYPE OmxComponentDecTest::GetInputFrameWma()
                     iInIndex = Index;
                     iLastInputFrame = iFrameNum;
 
-                    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "OmxComponentDecTest::GetInputFrameWma() - Input file read error, OUT"));
+                    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "OmxComponentDecTest::GetInputFrameWmaRa() - Input file read error, OUT"));
                     return OMX_ErrorNone;   // corrupted file !!
                 }
 
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
-                                (0, "OmxComponentDecTest::GetInputFrameWma() - Bytes read from input file %d", Size));
+                                (0, "OmxComponentDecTest::GetInputFrameWmaRa() - Bytes read from input file %d", Size));
 
                 ipInBuffer[Index]->nFilledLen = Size;
                 ipInBuffer[Index]->nOffset = 0;
@@ -3224,7 +3229,7 @@ OMX_ERRORTYPE OmxComponentDecTest::GetInputFrameWma()
                 ipInBuffer[Index]->nFlags  = 0;
 
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
-                                (0, "OmxComponentDecTest::GetInputFrameWma() - Input buffer of index %d without any marker", Index));
+                                (0, "OmxComponentDecTest::GetInputFrameWmaRa() - Input buffer of index %d without any marker", Index));
             }
             else
             {
@@ -3232,13 +3237,13 @@ OMX_ERRORTYPE OmxComponentDecTest::GetInputFrameWma()
                 ipInBuffer[Index]->nFlags |= OMX_BUFFERFLAG_ENDOFFRAME;
 
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
-                                (0, "OmxComponentDecTest::GetInputFrameWma() - Input buffer of index %d with OMX_BUFFERFLAG_ENDOFFRAME flag marked", Index));
+                                (0, "OmxComponentDecTest::GetInputFrameWmaRa() - Input buffer of index %d with OMX_BUFFERFLAG_ENDOFFRAME flag marked", Index));
             }
         }
 
 
         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
-                        (0, "OmxComponentDecTest::GetInputFrameWma() - Calling EmptyThisBuffer with Alloc Len %d, Filled Len %d Offset %d TimeStamp %d",
+                        (0, "OmxComponentDecTest::GetInputFrameWmaRa() - Calling EmptyThisBuffer with Alloc Len %d, Filled Len %d Offset %d TimeStamp %d",
                          ipInBuffer[Index]->nAllocLen, ipInBuffer[Index]->nFilledLen, ipInBuffer[Index]->nOffset, ipInBuffer[Index]->nTimeStamp));
 
         ipInBuffer[Index]->nTimeStamp = 0;
@@ -3248,7 +3253,7 @@ OMX_ERRORTYPE OmxComponentDecTest::GetInputFrameWma()
             ipInputAvail[Index] = OMX_FALSE; // mark unavailable
 
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
-                            (0, "OmxComponentDecTest::GetInputFrameWma() - Sent the input buffer sucessfully, OUT"));
+                            (0, "OmxComponentDecTest::GetInputFrameWmaRa() - Sent the input buffer sucessfully, OUT"));
             return OMX_ErrorNone;
         }
         else if (OMX_ErrorInsufficientResources == Status)
@@ -3257,7 +3262,7 @@ OMX_ERRORTYPE OmxComponentDecTest::GetInputFrameWma()
             iInputReady = OMX_FALSE;
             iInputWasRefused = OMX_TRUE;
 
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "OmxComponentDecTest::GetInputFrameWma() - EmptyThisBuffer failed with Error OMX_ErrorInsufficientResources, OUT"));
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "OmxComponentDecTest::GetInputFrameWmaRa() - EmptyThisBuffer failed with Error OMX_ErrorInsufficientResources, OUT"));
             return OMX_ErrorInsufficientResources;
         }
         else
@@ -3265,21 +3270,19 @@ OMX_ERRORTYPE OmxComponentDecTest::GetInputFrameWma()
             iStopProcessingInput = OMX_TRUE;
             iLastInputFrame = iFrameNum;
 
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "OmxComponentDecTest::GetInputFrameWma() - ERROR, EmptyThisBuffer failed, OUT"));
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "OmxComponentDecTest::GetInputFrameWmaRa() - ERROR, EmptyThisBuffer failed, OUT"));
             return OMX_ErrorNone;
         }
     }
     else
     {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "OmxComponentDecTest::GetInputFrameWma() - ERROR, Input is not ready to be sent, OUT"));
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "OmxComponentDecTest::GetInputFrameWmaRa() - ERROR, Input is not ready to be sent, OUT"));
         return OMX_ErrorInsufficientResources;
     }
 
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "OmxComponentDecTest::GetInputFrameWma() - OUT"));
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "OmxComponentDecTest::GetInputFrameWmaRa() - OUT"));
     return OMX_ErrorNone;
 }
-
-
 
 bool OmxComponentDecTest::WriteOutput(OMX_U8* aOutBuff, OMX_U32 aSize)
 {
@@ -3427,7 +3430,7 @@ void OmxComponentDecTest::Run()
             INIT_GETPARAMETER_STRUCT(OMX_PORT_PARAM_TYPE, iPortInit);
 
             if (0 == oscl_strcmp(iFormat, "AAC") || 0 == oscl_strcmp(iFormat, "AMR")
-                    || 0 == oscl_strcmp(iFormat, "MP3") || 0 == oscl_strcmp(iFormat, "WMA"))
+                    || 0 == oscl_strcmp(iFormat, "MP3") || 0 == oscl_strcmp(iFormat, "WMA") || 0 == oscl_strcmp(iFormat, "RA"))
             {
                 Err = OMX_GetParameter(ipAppPriv->Handle, OMX_IndexParamAudioInit, &iPortInit);
             }
@@ -3669,9 +3672,9 @@ void OmxComponentDecTest::Run()
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
                                 (0, "OmxComponentDecTest::Run() - SetParameter called for OMX_IndexParamAudioPcm for MP3 on port %d", iOutputPortIndex));
             }
-            else if (0 == oscl_strcmp(iFormat, "WMA"))
+            else if ((0 == oscl_strcmp(iFormat, "WMA")) || (0 == oscl_strcmp(iFormat, "RA")))
             {
-                pGetInputFrame = &OmxComponentDecTest::GetInputFrameWma;
+                pGetInputFrame = &OmxComponentDecTest::GetInputFrameWmaRa;
             }
 
 

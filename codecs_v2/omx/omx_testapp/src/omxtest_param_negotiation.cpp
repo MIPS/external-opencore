@@ -635,6 +635,7 @@ OMX_BOOL OmxDecTestBufferNegotiation::ParamTestAudioPort()
     OMX_AUDIO_PARAM_MP3TYPE FormatMP3;
     OMX_AUDIO_PARAM_AACPROFILETYPE FormatAAC;
     OMX_AUDIO_PARAM_WMATYPE FormatWMA;
+    OMX_AUDIO_PARAM_RATYPE FormatRA;
 
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "OmxDecTestBufferNegotiation::ParamTestAudioPort() - IN"));
 
@@ -872,6 +873,33 @@ OMX_BOOL OmxDecTestBufferNegotiation::ParamTestAudioPort()
                         }
                         break;
 
+                        case OMX_AUDIO_CodingRA:
+                        {
+                            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
+                                            (0, "OmxDecTestBufferNegotiation::ParamTestAudioPort() - RA Encoding format found on port %d, Verifying the Get/Set Parameter combination", PortIndex));
+
+                            INIT_GETPARAMETER_STRUCT(OMX_AUDIO_PARAM_RATYPE, FormatRA);
+                            FormatRA.nPortIndex = PortIndex;
+
+                            //Check the Get and Set Parameter api's with the compressed format
+                            Err = OMX_GetParameter(ipAppPriv->Handle, OMX_IndexParamAudioRa, &FormatRA);
+                            if (OMX_ErrorNone != Err)
+                            {
+                                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
+                                                (0, "OmxDecTestBufferNegotiation::ParamTestAudioPort() - Port %i returned error for format OMX_AUDIO_CodingRA", PortIndex));
+                                return OMX_FALSE;
+                            }
+
+                            Err = OMX_SetParameter(ipAppPriv->Handle, OMX_IndexParamAudioRa, &FormatRA);
+                            if (OMX_ErrorNone != Err)
+                            {
+                                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
+                                                (0, "OmxDecTestBufferNegotiation::ParamTestAudioPort() - Port %i returned error while setting format OMX_AUDIO_CodingRA", PortIndex));
+                                return OMX_FALSE;
+                            }
+                        }
+                        break;
+
                         default:
                         {
                             PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
@@ -1019,7 +1047,7 @@ void OmxDecTestBufferNegotiation::Run()
             }
 
             if (0 == oscl_strcmp(iFormat, "AAC") || 0 == oscl_strcmp(iFormat, "AMR") ||
-                    0 == oscl_strcmp(iFormat, "MP3") || 0 == oscl_strcmp(iFormat, "WMA"))
+                    0 == oscl_strcmp(iFormat, "MP3") || 0 == oscl_strcmp(iFormat, "WMA") || 0 == oscl_strcmp(iFormat, "RA"))
             {
                 iIsAudioFormat = OMX_TRUE;
             }

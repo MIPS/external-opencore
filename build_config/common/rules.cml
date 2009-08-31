@@ -145,7 +145,7 @@ derive MODS_pv from ""
 derive opencore_player_so_name from pvsplit_so==y ? "opencore_player" : ""
 derive SOLIBS_opencore_player from (pvra8decoder_m_lib.pv_aac_dec_imp_m_lib.
                        pvamrwbdecoder_imp_m_lib.
-                       pvmp3_imp_m_lib.wmadecoder_imp_m_lib.wmavoicedecoder_imp_m_lib.
+                       pvmp3_imp_m_lib.wmadecoder_imp_m_lib.wmavoicedecoder_imp_m_lib.pvra8decoder_imp_m_lib.
                        rvdecoder_m_lib.pvmp4decoder_imp_m_lib.wmvdecoder_imp_m_lib.
                        cpm_m_lib.
                        pvpvxparser_m_lib.pvid3parcom_m_lib.
@@ -162,7 +162,7 @@ derive SOLIBS_opencore_player from (pvra8decoder_m_lib.pv_aac_dec_imp_m_lib.
                        pvframemetadatautility_m_lib.pvplayer_engine_m_lib)
 derive SOLIBDIRS_opencore_player from (pvra8decoder_m_mk.pv_aac_dec_imp_m_mk.
                        pvamrwbdecoder_imp_m_mk.
-                       pvmp3_imp_m_mk.wmadecoder_imp_m_mk.wmavoicedecoder_imp_m_mk.
+                       pvmp3_imp_m_mk.wmadecoder_imp_m_mk.wmavoicedecoder_imp_m_mk.pvra8decoder_imp_m_mk.
                        rvdecoder_m_mk.pvmp4decoder_imp_m_mk.wmvdecoder_imp_m_mk.
                        cpm_m_mk.
                        pvpvxparser_m_mk.pvid3parcom_m_mk.
@@ -219,7 +219,7 @@ derive SOLIBS_opencore_common from (LIBS_oscl_shared.
                        omx_wmv_component_imp_m_lib.omx_rv_component_imp_m_lib.
                        omx_aac_component_imp_m_lib.omx_amr_component_imp_m_lib.
                        omx_mp3_component_imp_m_lib.omx_wma_component_imp_m_lib.
-                       omx_amrenc_component_imp_m_lib.
+                       omx_amrenc_component_imp_m_lib.omx_ra_component_imp_m_lib.
                        omx_aacenc_component_imp_m_lib.
                        omx_m4venc_component_imp_m_lib.
                        omx_avcenc_component_imp_m_lib.
@@ -243,7 +243,7 @@ derive SOLIBDIRS_opencore_common from (LIBDIR_oscl_shared.
                        omx_wmv_component_imp_m_mk.omx_rv_component_imp_m_mk.
                        omx_aac_component_imp_m_mk.omx_amr_component_imp_m_mk.
                        omx_mp3_component_imp_m_mk.omx_wma_component_imp_m_mk.
-                       omx_amrenc_component_imp_m_mk.
+                       omx_amrenc_component_imp_m_mk.omx_ra_component_imp_m_mk.
                        omx_aacenc_component_imp_m_mk.
                        omx_m4venc_component_imp_m_mk.
                        omx_avcenc_component_imp_m_mk.
@@ -476,6 +476,11 @@ derive SOLIBS_omx_wmadec_sharedlibrary from omx_wma_component_m_lib.wmadecoder_m
 derive SOLIBDIRS_omx_wmadec_sharedlibrary from omx_wma_component_m_mk.wmadecoder_m_mk.wmavoicedecoder_m_mk
 derive MODS_omx_wmadec_sharedlibrary from "-lomx_sharedlibrary -lopencore_common"
 
+derive omx_radec_sharedlibrary_so_name from omx_ra_component_lib==m ? "omx_radec_sharedlibrary" : ""
+derive SOLIBS_omx_radec_sharedlibrary from omx_ra_component_m_lib.pvra8decoder_m_lib
+derive SOLIBDIRS_omx_radec_sharedlibrary from omx_ra_component_m_mk.pvra8decoder_m_mk
+derive MODS_omx_radec_sharedlibrary from "-lomx_sharedlibrary -lopencore_common"
+
 derive omx_avcenc_sharedlibrary_so_name from omx_avcenc_component_lib==m ? "omx_avcenc_sharedlibrary" : ""
 derive SOLIBS_omx_avcenc_sharedlibrary from omx_avcenc_component_m_lib.pvavch264enc_m_lib
 derive SOLIBDIRS_omx_avcenc_sharedlibrary from omx_avcenc_component_m_mk.pvavch264enc_m_mk
@@ -530,6 +535,7 @@ derive TARGET_shared from (pv_so_name.opencore_common_so_name.opencore_author_so
                            omx_amrdec_sharedlibrary_so_name.
                            omx_mp3dec_sharedlibrary_so_name.
                            omx_wmadec_sharedlibrary_so_name.
+                           omx_radec_sharedlibrary_so_name.
                            omx_avcenc_sharedlibrary_so_name.
                            omx_m4venc_sharedlibrary_so_name.
                            omx_amrenc_sharedlibrary_so_name.

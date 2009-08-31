@@ -62,6 +62,9 @@ LIBS :=  pv_video_config_parser \
         wmvdecoder \
         omx_rv_component_lib \
         rvdecoder \
+        omx_ra_component_lib \
+        pvra8decoder \
+        pvrmffparser \
 	omx_aac_component_lib \
         pv_aac_dec \
         pv_aac_enc \
