@@ -1093,17 +1093,9 @@ PVMFStatus PVMFAMRFFParserNode::DoReset(PVMFNodeCommand& aCmd)
         iDownloadProgressInterface->cancelResumeNotification();
     }
     MoveCmdToCurrentQueue(aCmd);
-    if (iFileHandle != NULL)
+    if (iCPM && (iAMRParser != NULL))
     {
-        /* Indicates that the init was successfull */
-        if ((iCPM))
-        {
-            SendUsageComplete();
-        }
-        else
-        {
-            CompleteReset();
-        }
+        SendUsageComplete();
     }
     else
     {
