@@ -2275,6 +2275,11 @@ OsclAny TSC_component::ChannelReleased(TPVDirection dir, TPVChannelId lcn, PVMFS
                                     ::GetCodecType(olc_param->GetForwardParams()->GetDataType()),
                                     status);
     }
+    else
+    {
+        iH223->CloseChannel(dir, lcn);
+    }
+
     if (olc_param->GetDirectionality() == EPVT_BI_DIRECTIONAL)
     {
         TPVChannelId rvs_lcn = olc_param->GetReverseParams()->GetChannelId();
