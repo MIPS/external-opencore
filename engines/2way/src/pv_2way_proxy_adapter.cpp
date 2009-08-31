@@ -651,7 +651,7 @@ void CPV2WayProxyAdapter::CommandCompleted(const PVCmdResponse& aResponse)
             tface->addRef();
         }
 
-        if (uuid == PV2WayTestEncExtensionUUID)
+        if ((uuid == PV2WayTestEncExtensionUUID) | (uuid == PVMp4H263EncExtensionUUID))
         {
             // for requests for non-proxied interface- such as the test interface.
             // don't need to proxy response.

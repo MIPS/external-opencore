@@ -107,10 +107,13 @@ void connect_test::EncoderIFSucceeded()
 {
     PVUuid mp4h263EncUuid = PVMp4H263EncExtensionUUID;
     PVMp4H263EncExtensionInterface *ptr = (PVMp4H263EncExtensionInterface *) iMP4H263EncoderInterface;
-    // Default frame rate is 5
-    ptr->SetOutputFrameRate(0, 4);
-    iMP4H263EncoderInterface->removeRef();
-    iEncoderIFSet = true;
+    if (ptr)
+    {
+        // Default frame rate is 5
+        ptr->SetOutputFrameRate(0, 4);
+        iMP4H263EncoderInterface->removeRef();
+        iEncoderIFSet = true;
+    }
     connect();
 }
 

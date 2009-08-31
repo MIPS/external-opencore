@@ -502,8 +502,6 @@ TPVStatusCode TSC_324m::ResetTsc()
         iTSCcomponent = NULL;
     }
 
-
-
     if (iH223)
     {
         iH223->Close();
@@ -2130,6 +2128,10 @@ PVMFCommandId TSC_324m::QueryInterface(PVMFSessionId aSession,
             {
                 backup->removeRef();
             }
+        }
+        else
+        {
+            iTSCcomponent = backup;
         }
     }
 
