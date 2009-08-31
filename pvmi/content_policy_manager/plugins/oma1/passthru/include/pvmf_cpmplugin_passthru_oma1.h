@@ -258,16 +258,19 @@ class PVMFCPMPassThruPlugInOMA1 : public OsclActiveObject,
                                           , uint32 aDataSize = 0
                                                                , int32 aTimeoutMsec = (-1)
                                                                                       , OsclAny* aContext = NULL);
+
         OSCL_IMPORT_REF PVMFCommandId GetLicense(PVMFSessionId aSessionId
                 , OSCL_String&  aContentName
                 , OsclAny* aLicenseData = NULL
                                           , uint32 aDataSize = 0
                                                                , int32 aTimeoutMsec = (-1)
                                                                                       , OsclAny* aContext = NULL);
+
         OSCL_IMPORT_REF PVMFCommandId CancelGetLicense(PVMFSessionId aSessionId
                 , PVMFCommandId aCmdId
                 , OsclAny* aContext = NULL);
 
+        void SetObserver(PVMFCPMStatusObserver& aObserver);
         //From PVMFMetadataExtensionInterface
         OSCL_IMPORT_REF uint32 GetNumMetadataKeys(char* aQueryKeyString = NULL) ;
         OSCL_IMPORT_REF uint32 GetNumMetadataValues(PVMFMetadataList& aKeyList) ;
@@ -365,6 +368,10 @@ class PVMFCPMPassThruPlugInOMA1 : public OsclActiveObject,
         TOMA1MetadataEntry iMetaData[ELicLastOMA1];
         OSCL_HeapString<OsclMemAllocator> iLicType;
         void MakeMetadata();
+
+        PVMFCPMStatusObserver* iLicenseInterfaceCommandObserver;
+        PVMFCommandId iGetLicenseCmdId;
+        PVMFCommandId iCancelGetLicenseCmdId;
 };
 
 

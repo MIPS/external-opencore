@@ -538,15 +538,18 @@ bool PVMFDownloadManagerNode::queryInterface(const PVUuid& uuid, PVInterface*& i
     }
     else if (uuid == PVMFCPMPluginLicenseInterfaceUuid)
     {
-        PVMFCPMPluginLicenseInterface* myInterface = OSCL_STATIC_CAST(PVMFCPMPluginLicenseInterface*, this);
-        iface = OSCL_STATIC_CAST(PVInterface*, myInterface);
+        iface = OSCL_STATIC_CAST(PVInterface*, iFormatParserNode.iLicenseInterface);
     }
     else
     {
         return false;
     }
 
-    ++iExtensionRefCount;
+    // PVMFCPMPluginLicenseInterface does not belong to this node
+    if (uuid != PVMFCPMPluginLicenseInterfaceUuid)
+    {
+        ++iExtensionRefCount;
+    }
     return true;
 }
 
@@ -1224,10 +1227,6 @@ void PVMFDownloadManagerNode::ProcessCommand()
                 cmdstatus = DoCancelCommand(aCmd);
                 break;
 
-            case PVDLM_NODE_CMD_CANCEL_GET_LICENSE:
-                cmdstatus = DoCancelGetLicense(aCmd);
-                break;
-
             default:
                 cmdstatus = PVMFErrNotSupported;
                 break;
@@ -1311,14 +1310,6 @@ void PVMFDownloadManagerNode::ProcessCommand()
             case PVDLM_NODE_CMD_SETDATASOURCERATE:
                 // Rate change not supported for download
                 cmdstatus = PVMFErrNotSupported;
-                break;
-
-            case PVDLM_NODE_CMD_GET_LICENSE_W:
-                cmdstatus = DoGetLicense(aCmd, true);
-                break;
-
-            case PVDLM_NODE_CMD_GET_LICENSE:
-                cmdstatus = DoGetLicense(aCmd);
                 break;
 
             default:
@@ -1853,7 +1844,6 @@ void PVMFDownloadManagerNode::ContinueFromDownloadTrackSelectionPoint()
         Push(iFormatParserNode, PVMFDownloadManagerSubNodeContainerBase::EQueryDataSourcePlayback);
         Push(iFormatParserNode, PVMFDownloadManagerSubNodeContainerBase::EQueryFFProgDownload);
         Push(iProtocolEngineNode, PVMFDownloadManagerSubNodeContainerBase::ESetFFProgDownloadSupport);
-        Push(iFormatParserNode, PVMFDownloadManagerSubNodeContainerBase::ECPMQueryLicenseInterface);
 
         //if this is PVX, we need to wait on movie atom before we can
         //init parser.
@@ -1975,6 +1965,7 @@ PVMFStatus PVMFDownloadManagerNode::ScheduleSubNodeCommands(PVMFDownloadManagerN
             {
                 iParserInit = true;
                 Push(iFormatParserNode, PVMFDownloadManagerSubNodeContainerBase::EInit);
+                iInitFailedLicenseRequired = false;
             }
             else
 
@@ -2178,107 +2169,6 @@ void PVMFDownloadManagerNode::Push(PVMFDownloadManagerSubNodeContainerBase& n, P
     iSubNodeCmdVec.push_back(elem);
 }
 
-PVMFCommandId
-PVMFDownloadManagerNode::GetLicense(PVMFSessionId aSessionId,
-                                    OSCL_wString& aContentName,
-                                    OsclAny* aData,
-                                    uint32 aDataSize,
-                                    int32 aTimeoutMsec,
-                                    OsclAny* aContextData)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFDownloadManagerNode::GetLicense - Wide called"));
-    PVMFDownloadManagerNodeCommand cmd;
-    cmd.PVMFDownloadManagerNodeCommand::Construct(aSessionId,
-            PVDLM_NODE_CMD_GET_LICENSE_W,
-            aContentName,
-            aData,
-            aDataSize,
-            aTimeoutMsec,
-            aContextData);
-    return QueueCommandL(cmd);
-}
-
-PVMFCommandId
-PVMFDownloadManagerNode::GetLicense(PVMFSessionId aSessionId,
-                                    OSCL_String&  aContentName,
-                                    OsclAny* aData,
-                                    uint32 aDataSize,
-                                    int32 aTimeoutMsec,
-                                    OsclAny* aContextData)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFDownloadManagerNode::GetLicense - Non-Wide called"));
-    PVMFDownloadManagerNodeCommand cmd;
-    cmd.PVMFDownloadManagerNodeCommand::Construct(aSessionId,
-            PVDLM_NODE_CMD_GET_LICENSE,
-            aContentName,
-            aData,
-            aDataSize,
-            aTimeoutMsec,
-            aContextData);
-    return QueueCommandL(cmd);
-}
-
-
-PVMFCommandId
-PVMFDownloadManagerNode::CancelGetLicense(PVMFSessionId aSessionId
-        , PVMFCommandId aCmdId
-        , OsclAny* aContextData)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFDownloadManagerNode::GetLicense - Non-Wide called"));
-    PVMFDownloadManagerNodeCommand cmd;
-    cmd.PVMFDownloadManagerNodeCommandBase::Construct(aSessionId,
-            PVDLM_NODE_CMD_CANCEL_GET_LICENSE,
-            aCmdId,
-            aContextData);
-    return QueueCommandL(cmd);
-}
-
-PVMFStatus PVMFDownloadManagerNode::DoGetLicense(PVMFDownloadManagerNodeCommand& aCmd,
-        bool aWideCharVersion)
-{
-    OSCL_UNUSED_ARG(aCmd);
-    if (iFormatParserNode.LicenseInterface() == NULL)
-    {
-        return PVMFErrNotSupported;
-    }
-
-    if (aWideCharVersion == true)
-    {
-        Push(iFormatParserNode, PVMFDownloadManagerSubNodeContainerBase::ECPMGetLicenseW);
-    }
-    else
-    {
-        Push(iFormatParserNode, PVMFDownloadManagerSubNodeContainerBase::ECPMGetLicense);
-    }
-    RunIfNotReady();
-    return PVMFPending;
-}
-
-void PVMFDownloadManagerNode::CompleteGetLicense()
-{
-    CommandComplete(iCurrentCommand,
-                    iCurrentCommand.front(),
-                    PVMFSuccess, NULL, NULL);
-}
-
-PVMFStatus PVMFDownloadManagerNode::DoCancelGetLicense(PVMFDownloadManagerNodeCommand& aCmd)
-{
-    OSCL_UNUSED_ARG(aCmd);
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFDownloadManagerNode::DoCancelGetLicense called"));
-    if (iFormatParserNode.LicenseInterface() == NULL)
-    {
-        return PVMFErrNotSupported;
-    }
-    else
-    {
-        iFormatParserNode.iCancelCmdState = PVMFDownloadManagerSubNodeContainerBase::EBusy;
-        iFormatParserNode.iCPMCancelGetLicenseCmdId =
-            iFormatParserNode.LicenseInterface()->CancelGetLicense(iFormatParserNode.iSessionId, iFormatParserNode.iCPMGetLicenseCmdId);
-        RunIfNotReady();
-    }
-    return PVMFPending;
-}
-
 //
 // PVMFDownloadManagerSubNodeContainer Implementation.
 //
@@ -2337,11 +2227,6 @@ void PVMFDownloadManagerSubNodeContainer::Cleanup()
     {
         iDownloadProgress->removeRef();
         iDownloadProgress = NULL;
-    }
-    if (iLicenseInterface)
-    {
-        iLicenseInterface->removeRef();
-        iLicenseInterface = NULL;
     }
     //the node instance is cleaned up elsewhere.
 }
@@ -2441,14 +2326,6 @@ PVMFStatus PVMFDownloadManagerSubNodeContainer::IssueCommand(int32 aCmd)
             LOGSUBCMD((0, "PVMFDownloadManagerSubNodeContainer::IssueCommand %s CmdId %d ", GETNODESTR, iCmdId));
             return PVMFPending;
 
-        case ECPMQueryLicenseInterface:
-            OSCL_ASSERT(iNode != NULL);
-            LOGSUBCMD((0, "PVMFDownloadManagerSubNodeContainer::IssueCommand %s Calling QueryInterface(License)", GETNODESTR));
-            iCmdState = EBusy;
-            iCmdId = iNode->QueryInterface(iSessionId, PVMFCPMPluginLicenseInterfaceUuid, iLicenseInterface);
-            LOGSUBCMD((0, "PVMFDownloadManagerSubNodeContainer::IssueCommand %s CmdId %d ", GETNODESTR, iCmdId));
-            return PVMFPending;
-
         case EQueryDataSourcePlayback:
             OSCL_ASSERT(iNode != NULL);
             LOGSUBCMD((0, "PVMFDownloadManagerSubNodeContainer::IssueCommand %s Calling QueryInterface(datasourcePB)", GETNODESTR));
@@ -2529,55 +2406,6 @@ PVMFStatus PVMFDownloadManagerSubNodeContainer::IssueCommand(int32 aCmd)
                 LOGSUBCMD((0, "PVMFDownloadManagerSubNodeContainer::IssueCommand %s CmdId %d ", GETNODESTR, iCmdId));
                 return PVMFPending;
             }
-
-        case ECPMGetLicenseW:
-        {
-            OSCL_ASSERT(iNode != NULL);
-            LOGSUBCMD((0, "PVMFDownloadManagerSubNodeContainer::IssueCommand %s Calling ECPMGetLicenseW", GETNODESTR));
-            iCmdState = EBusy;
-            OSCL_wString* contentName = NULL;
-            OsclAny* data = NULL;
-            uint32 dataSize = 0;
-            int32 timeoutMsec = 0;
-            nodeCmd->Parse(contentName,
-                           data,
-                           dataSize,
-                           timeoutMsec);
-            iCmdId =
-                LicenseInterface()->GetLicense(iSessionId,
-                                               *contentName,
-                                               data,
-                                               dataSize,
-                                               timeoutMsec);
-            iCPMGetLicenseCmdId = iCmdId;
-
-            LOGSUBCMD((0, "PVMFDownloadManagerSubNodeContainer::IssueCommand %s CmdId %d ", GETNODESTR, iCmdId));
-            return PVMFPending;
-        }
-        case ECPMGetLicense:
-        {
-            OSCL_ASSERT(iNode != NULL);
-            LOGSUBCMD((0, "PVMFDownloadManagerSubNodeContainer::IssueCommand %s Calling ECPMGetLicense", GETNODESTR));
-            iCmdState = EBusy;
-            OSCL_String* contentName = NULL;
-            OsclAny* data = NULL;
-            uint32 dataSize = 0;
-            int32 timeoutMsec = 0;
-            nodeCmd->Parse(contentName,
-                           data,
-                           dataSize,
-                           timeoutMsec);
-            iCmdId =
-                LicenseInterface()->GetLicense(iSessionId,
-                                               *contentName,
-                                               data,
-                                               dataSize,
-                                               timeoutMsec);
-            iCPMGetLicenseCmdId = iCmdId;
-
-            LOGSUBCMD((0, "PVMFDownloadManagerSubNodeContainer::IssueCommand %s CmdId %d ", GETNODESTR, iCmdId));
-            return PVMFPending;
-        }
 
         case ERequestPort:
             OSCL_ASSERT(iNode != NULL);
@@ -3231,9 +3059,11 @@ void PVMFDownloadManagerSubNodeContainerBase::CommandDone(PVMFStatus aStatus, PV
     PVMFStatus status = aStatus;
 
     // Set "Init Failed License Required" flag with the results of parser Init.
+    // Also, obtain the license interface synchronously
     if (iType == EFormatParser && iCmd == EInit)
     {
         iContainer->iInitFailedLicenseRequired = (status == PVMFErrDrmLicenseNotFound || status == PVMFErrDrmLicenseExpired);
+        iContainer->iFormatParserNode.iNode->QueryInterfaceSync(iContainer->iFormatParserNode.iSessionId, PVMFCPMPluginLicenseInterfaceUuid, iContainer->iFormatParserNode.iLicenseInterface);
     }
 
     // Watch for the request port command completion from the protocol node, because we need to save the port pointer
@@ -3384,12 +3214,6 @@ void PVMFDownloadManagerSubNodeContainer::NodeCommandCompleted(const PVMFCmdResp
              && iCancelCmdState == EBusy)
     {
         //Process node cancel command response
-        CancelCommandDone(aResponse.GetCmdStatus(), aResponse.GetEventExtensionInterface(), aResponse.GetEventData());
-    }
-    //Process Get License cancel command response.
-    else if (aResponse.GetCmdId() == iCPMCancelGetLicenseCmdId
-             && iCancelCmdState == EBusy)
-    {
         CancelCommandDone(aResponse.GetCmdStatus(), aResponse.GetEventExtensionInterface(), aResponse.GetEventData());
     }
     else

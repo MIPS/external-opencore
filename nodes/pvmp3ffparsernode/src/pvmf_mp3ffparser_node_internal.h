@@ -58,10 +58,7 @@ enum PVMFMP3FFParserNodeCommandType
     PVMP3FF_NODE_CMD_GETNODEMETADATAVALUE,
     PVMP3FF_NODE_CMD_SETDATASOURCEPOSITION,
     PVMP3FF_NODE_CMD_QUERYDATASOURCEPOSITION,
-    PVMP3FF_NODE_CMD_SETDATASOURCERATE,
-    PVMP3FF_NODE_CMD_GET_LICENSE_W,
-    PVMP3FF_NODE_CMD_GET_LICENSE,
-    PVMP3FF_NODE_CMD_CANCEL_GET_LICENSE
+    PVMP3FF_NODE_CMD_SETDATASOURCERATE
 };
 
 #define PVMFMP3FFParserNodeCommandBase PVMFGenericNodeCommand<PVMFMP3FFParserNodeAllocator>
@@ -171,61 +168,6 @@ class PVMFMP3FFParserNodeCommand : public PVMFMP3FFParserNodeCommandBase
             aStartingIndex = (uint32)iParam3;
             aMaxEntries = (int32)iParam4;
         }
-
-        /* Constructor and parser for GetLicenseW */
-        void Construct(PVMFSessionId s,
-                       int32 cmd,
-                       OSCL_wString& aContentName,
-                       OsclAny* aLicenseData,
-                       uint32 aDataSize,
-                       int32 aTimeoutMsec,
-                       OsclAny* aContext)
-        {
-            PVMFMP3FFParserNodeCommandBase::Construct(s, cmd, aContext);
-            iParam1 = (OsclAny*) & aContentName;
-            iParam2 = (OsclAny*)aLicenseData;
-            iParam3 = (OsclAny*)aDataSize;
-            iParam4 = (OsclAny*)aTimeoutMsec;
-            iParam5 = NULL;
-        }
-        void Parse(OSCL_wString*& aContentName,
-                   OsclAny*& aLicenseData,
-                   uint32& aDataSize,
-                   int32& aTimeoutMsec)
-        {
-            aContentName = (OSCL_wString*)iParam1;
-            aLicenseData = (PVMFTimestamp*)iParam2;
-            aDataSize = (uint32)iParam3;
-            aTimeoutMsec = (int32)iParam4;
-        }
-
-        /* Constructor and parser for GetLicense */
-        void Construct(PVMFSessionId s,
-                       int32 cmd,
-                       OSCL_String& aContentName,
-                       OsclAny* aLicenseData,
-                       uint32 aDataSize,
-                       int32 aTimeoutMsec,
-                       OsclAny* aContext)
-        {
-            PVMFMP3FFParserNodeCommandBase::Construct(s, cmd, aContext);
-            iParam1 = (OsclAny*) & aContentName;
-            iParam2 = (OsclAny*)aLicenseData;
-            iParam3 = (OsclAny*)aDataSize;
-            iParam4 = (OsclAny*)aTimeoutMsec;
-            iParam5 = NULL;
-        }
-        void Parse(OSCL_String*& aContentName,
-                   OsclAny*& aLicenseData,
-                   uint32& aDataSize,
-                   int32& aTimeoutMsec)
-        {
-            aContentName = (OSCL_String*)iParam1;
-            aLicenseData = (PVMFTimestamp*)iParam2;
-            aDataSize = (uint32)iParam3;
-            aTimeoutMsec = (int32)iParam4;
-        }
-
 
         //need to overlaod the base Destroy routine to cleanup metadata key.
         void Destroy()

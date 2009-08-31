@@ -155,14 +155,11 @@ class PVMFSubNodeContainerBaseMp3
             , ECPMOpenSession
             , ECPMRegisterContent
             , ECPMGetLicenseInterface
-            , ECPMGetLicense
-            , ECPMGetLicenseW
             , ECPMApproveUsage
             , ECPMCheckUsage
             , ECPMUsageComplete
             , ECPMCloseSession
             , ECPMReset
-            , ECPMCancelGetLicense
         };
 
         void Construct(NodeType n, PVMFMP3FFParserNode* c)
@@ -379,8 +376,7 @@ class PVMFMP3FFParserNode : public OsclTimerObject,
         public PvmiDataStreamObserver,
         public PVMIDatastreamuserInterface,
         public OsclMemPoolResizableAllocatorObserver,
-        public PvmfDataSourcePlaybackControlInterface,
-        public PVMFCPMPluginLicenseInterface
+        public PvmfDataSourcePlaybackControlInterface
 #if PV_HAS_SHOUTCAST_SUPPORT_ENABLED
         , public PVMFMetadataUpdatesObserver
 #endif
@@ -485,46 +481,6 @@ class PVMFMP3FFParserNode : public OsclTimerObject,
                                    const PvmfMimeString* aFactoryConfig = NULL);
 
         void PassDatastreamReadCapacityObserver(PVMFDataStreamReadCapacityObserver* aObserver);
-
-        /* From PVMFCPMPluginLicenseInterface */
-        PVMFStatus GetLicenseURL(PVMFSessionId aSessionId,
-                                 OSCL_wString& aContentName,
-                                 OSCL_wString& aLicenseURL)
-        {
-            OSCL_UNUSED_ARG(aSessionId);
-            OSCL_UNUSED_ARG(aContentName);
-            OSCL_UNUSED_ARG(aLicenseURL);
-            //must use Async method.
-            return PVMFErrNotSupported;
-        }
-        PVMFStatus GetLicenseURL(PVMFSessionId aSessionId,
-                                 OSCL_String&  aContentName,
-                                 OSCL_String&  aLicenseURL)
-        {
-            OSCL_UNUSED_ARG(aSessionId);
-            OSCL_UNUSED_ARG(aContentName);
-            OSCL_UNUSED_ARG(aLicenseURL);
-            //must use Async method.
-            return PVMFErrNotSupported;
-        }
-
-        PVMFCommandId GetLicense(PVMFSessionId aSessionId,
-                                 OSCL_wString& aContentName,
-                                 OsclAny* aData,
-                                 uint32 aDataSize,
-                                 int32 aTimeoutMsec,
-                                 OsclAny* aContextData) ;
-
-        PVMFCommandId GetLicense(PVMFSessionId aSessionId,
-                                 OSCL_String&  aContentName,
-                                 OsclAny* aData,
-                                 uint32 aDataSize,
-                                 int32 aTimeoutMsec,
-                                 OsclAny* aContextData);
-
-        PVMFCommandId CancelGetLicense(PVMFSessionId aSessionId
-                                       , PVMFCommandId aCmdId
-                                       , OsclAny* aContextData);
 
     private:
         PVMFStatus CheckForMP3HeaderAvailability();
@@ -694,10 +650,6 @@ class PVMFMP3FFParserNode : public OsclTimerObject,
         };
         Oscl_Vector<SubNodeCmd, OsclMemAllocator> iSubNodeCmdVec;
 
-        PVMFStatus DoGetLicense(PVMFMP3FFParserNodeCommand& aCmd,
-                                bool aWideCharVersion = false);
-        PVMFStatus DoCancelGetLicense(PVMFMP3FFParserNodeCommand& aCmd);
-        void CompleteGetLicense();
         void GetCPMMetaDataKeys();
 
         PVMp3DurationCalculator* iDurationCalcAO;

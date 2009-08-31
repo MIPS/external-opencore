@@ -301,60 +301,6 @@ class PVMFNodeCommand: public PVMFNodeCommandBase
             aTimebase = (PVMFTimebase*)iParam2;
         }
 
-        // Constructor and parser for GetLicenseW
-        void Construct(PVMFSessionId s,
-                       int32 cmd,
-                       OSCL_wString& aContentName,
-                       OsclAny* aLicenseData,
-                       uint32 aDataSize,
-                       int32 aTimeoutMsec,
-                       OsclAny* aContext)
-        {
-            PVMFNodeCommandBase::Construct(s, cmd, aContext);
-            iParam1 = (OsclAny*) & aContentName;
-            iParam2 = (OsclAny*)aLicenseData;
-            iParam3 = (OsclAny*)aDataSize;
-            iParam4 = (OsclAny*)aTimeoutMsec;
-            iParam5 = NULL;
-        }
-        void Parse(OSCL_wString*& aContentName,
-                   OsclAny*& aLicenseData,
-                   uint32& aDataSize,
-                   int32& aTimeoutMsec)
-        {
-            aContentName = (OSCL_wString*)iParam1;
-            aLicenseData = (PVMFTimestamp*)iParam2;
-            aDataSize = (uint32)iParam3;
-            aTimeoutMsec = (int32)iParam4;
-        }
-
-        // Constructor and parser for GetLicense
-        void Construct(PVMFSessionId s,
-                       int32 cmd,
-                       OSCL_String& aContentName,
-                       OsclAny* aLicenseData,
-                       uint32 aDataSize,
-                       int32 aTimeoutMsec,
-                       OsclAny* aContext)
-        {
-            PVMFNodeCommandBase::Construct(s, cmd, aContext);
-            iParam1 = (OsclAny*) & aContentName;
-            iParam2 = (OsclAny*)aLicenseData;
-            iParam3 = (OsclAny*)aDataSize;
-            iParam4 = (OsclAny*)aTimeoutMsec;
-            iParam5 = NULL;
-        }
-        void Parse(OSCL_String*& aContentName,
-                   OsclAny*& aLicenseData,
-                   uint32& aDataSize,
-                   int32& aTimeoutMsec)
-        {
-            aContentName = (OSCL_String*)iParam1;
-            aLicenseData = (PVMFTimestamp*)iParam2;
-            aDataSize = (uint32)iParam3;
-            aTimeoutMsec = (int32)iParam4;
-        }
-
         //need to overload the base Destroy routine to cleanup metadata key.
         void Destroy()
         {

@@ -72,7 +72,6 @@ PVMFAMRFFParserNode::PVMFAMRFFParserNode(int32 aPriority) :
     iCPMUsageCompleteCmdId     = 0;
     iCPMCloseSessionCmdId      = 0;
     iCPMResetCmdId             = 0;
-    iCPMCancelGetLicenseCmdId  = 0;
     iRequestedUsage.key        = NULL;
     iApprovedUsage.key         = NULL;
     iAuthorizationDataKvp.key  = NULL;
@@ -176,10 +175,6 @@ void PVMFAMRFFParserNode::Run()
     {
         if (ProcessCommand(iInputCommands.front()))
         {
-            /*
-             * base node takes care of rescheduling the node,
-             * if there are more commands pending for execution.
-             */
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFAMRFFParserNode::Run() - command processed"));
         }
     }
@@ -364,7 +359,7 @@ PVMFAMRFFParserNode::CompleteGetMetadataKeys(PVMFNodeCommand& aCmd)
 
 PVMFStatus PVMFAMRFFParserNode::DoGetNodeMetadataValues(PVMFNodeCommand& aCmd)
 {
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFAMRFFParserNode::DoGetMetadataValues() In"));
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFAMRFFParserNode::DoGetNodeMetadataValues() In"));
 
     // File must be parsed
     if (!iAMRParser)
@@ -839,15 +834,6 @@ PVMFStatus PVMFAMRFFParserNode::HandleExtensionAPICommands(PVMFNodeCommand& aCmd
         case PVMF_GENERIC_NODE_GETNODEMETADATAVALUES:
             status = DoGetNodeMetadataValues(aCmd);
             break;
-        case PVMF_GENERIC_NODE_GET_LICENSE_W:
-            status = DoGetLicense(aCmd, true);
-            break;
-        case PVMF_GENERIC_NODE_GET_LICENSE:
-            status = DoGetLicense(aCmd);
-            break;
-        case PVMF_GENERIC_NODE_CANCEL_GET_LICENSE:
-            status = DoCancelGetLicense(aCmd);
-            break;
         default:
             // unknown command type, assert false
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFAMRFFParserNode::HandleExtensionAPICommands() - Unknown Cmd type %d; Cmd Id %d", aCmd.iCmd, aCmd.iId));
@@ -942,8 +928,12 @@ PVMFStatus PVMFAMRFFParserNode::DoQueryInterface(PVMFNodeCommand&  aCmd)
 
     if (queryInterface(*uuid, *ptr))
     {
-        (*ptr)->addRef();
-        status = PVMFSuccess;
+        // PVMFCPMPluginLicenseInterface is not a part of this node
+        if (*uuid != PVMFCPMPluginLicenseInterfaceUuid)
+        {
+            (*ptr)->addRef();
+            status = PVMFSuccess;
+        }
     }
     return status;
 }
@@ -1493,7 +1483,11 @@ PVMFStatus PVMFAMRFFParserNode::QueryInterfaceSync(PVMFSessionId aSession,
     aInterfacePtr = NULL;
     if (queryInterface(aUuid, aInterfacePtr))
     {
-        aInterfacePtr->addRef();
+        // PVMFCPMPluginLicenseInterface is not a part of this node
+        if (aUuid != PVMFCPMPluginLicenseInterfaceUuid)
+        {
+            aInterfacePtr->addRef();
+        }
         return PVMFSuccess;
     }
     return PVMFErrNotSupported;
@@ -1533,8 +1527,7 @@ bool PVMFAMRFFParserNode::queryInterface(const PVUuid& uuid, PVInterface*& iface
     }
     else if (uuid == PVMFCPMPluginLicenseInterfaceUuid)
     {
-        PVMFCPMPluginLicenseInterface* myInterface = OSCL_STATIC_CAST(PVMFCPMPluginLicenseInterface*, this);
-        iface = OSCL_STATIC_CAST(PVInterface*, myInterface);
+        iface = OSCL_STATIC_CAST(PVInterface*, iCPMLicenseInterface);
     }
     else
     {
@@ -2340,21 +2333,10 @@ void PVMFAMRFFParserNode::CPMCommandCompleted(const PVMFCmdResp& aResponse)
 {
     PVMFCommandId id = aResponse.GetCmdId();
     PVMFStatus status = aResponse.GetCmdStatus();
-    if (id == iCPMCancelGetLicenseCmdId)
-    {
-        /*
-         * if this command is CancelGetLicense, we will return success or fail here.
-         */
-        PVMF_AMRPARSERNODE_LOGDATATRAFFIC((0, "PVMFAMRFFParserNode::CPMCommandCompleted -  CPM CancelGetLicense complete"));
-        OSCL_ASSERT(!iCancelCommand.empty());
-        CommandComplete(iCancelCommand,
-                        iCancelCommand.front(),
-                        status);
-        return;
-    }
+
     //if CPM comes back as PVMFErrNotSupported then by pass rest of the CPM
     //sequence. Fake success here so that node doesnt treat this as an error
-    else if (id == iCPMRegisterContentCmdId && status == PVMFErrNotSupported)
+    if (id == iCPMRegisterContentCmdId && status == PVMFErrNotSupported)
     {
         /* Unsupported format - Treat it like unprotected content */
         PVMF_AMRPARSERNODE_LOGINFO((0, "PVMFAMRParserNode::CPMCommandCompleted - Unknown CPM Format - Ignoring CPM"));
@@ -2500,10 +2482,6 @@ void PVMFAMRFFParserNode::CPMCommandCompleted(const PVMFCmdResp& aResponse)
             OSCL_ASSERT(iCurrentCommand.front().iCmd == PVMF_GENERIC_NODE_GETNODEMETADATAVALUES);
             CompleteGetMetaDataValues();
         }
-        else if (id == iCPMGetLicenseCmdId)
-        {
-            CompleteGetLicense();
-        }
         else
         {
             /* Unknown cmd - error */
@@ -2519,12 +2497,9 @@ void PVMFAMRFFParserNode::CPMCommandCompleted(const PVMFCmdResp& aResponse)
      */
     if (!iCancelCommand.empty())
     {
-        if (iCancelCommand.front().iCmd != PVMF_GENERIC_NODE_CANCEL_GET_LICENSE)
-        {
-            CommandComplete(iCancelCommand,
-                            iCancelCommand.front(),
-                            PVMFSuccess);
-        }
+        CommandComplete(iCancelCommand,
+                        iCancelCommand.front(),
+                        PVMFSuccess);
     }
 }
 
@@ -3118,162 +3093,6 @@ bool PVMFAMRFFParserNode::RetrieveTrackData(PVAMRFFNodeTrackPortInfo& aTrackPort
         //ReportErrorEvent(PVMFErrCorrupt);
         return false;
     }
-}
-
-PVMFCommandId
-PVMFAMRFFParserNode::GetLicense(PVMFSessionId aSessionId,
-                                OSCL_wString& aContentName,
-                                OsclAny* aData,
-                                uint32 aDataSize,
-                                int32 aTimeoutMsec,
-                                OsclAny* aContextData)
-{
-    PVMF_AMRPARSERNODE_LOGDATATRAFFIC((0, "PVMFAMRFFParserNode::GetLicense - Wide called"));
-    PVMFNodeCommand cmd;
-    cmd.PVMFNodeCommand::Construct(aSessionId,
-                                   PVMF_GENERIC_NODE_GET_LICENSE_W,
-                                   aContentName,
-                                   aData,
-                                   aDataSize,
-                                   aTimeoutMsec,
-                                   aContextData);
-    return QueueCommandL(cmd);
-}
-
-PVMFCommandId
-PVMFAMRFFParserNode::GetLicense(PVMFSessionId aSessionId,
-                                OSCL_String&  aContentName,
-                                OsclAny* aData,
-                                uint32 aDataSize,
-                                int32 aTimeoutMsec,
-                                OsclAny* aContextData)
-{
-    PVMF_AMRPARSERNODE_LOGDATATRAFFIC((0, "PVMFAMRFFParserNode::GetLicense called"));
-    PVMFNodeCommand cmd;
-    cmd.PVMFNodeCommand::Construct(aSessionId,
-                                   PVMF_GENERIC_NODE_GET_LICENSE,
-                                   aContentName,
-                                   aData,
-                                   aDataSize,
-                                   aTimeoutMsec,
-                                   aContextData);
-    return QueueCommandL(cmd);
-}
-
-PVMFStatus PVMFAMRFFParserNode::DoGetLicense(PVMFNodeCommand& aCmd,
-        bool aWideCharVersion)
-{
-    if (iCPMLicenseInterface == NULL)
-    {
-        return PVMFErrNotSupported;
-    }
-
-    if (aWideCharVersion == true)
-    {
-        OSCL_wString* contentName = NULL;
-        OsclAny* data = NULL;
-        uint32 dataSize = 0;
-        int32 timeoutMsec = 0;
-        aCmd.PVMFNodeCommand::Parse(contentName,
-                                    data,
-                                    dataSize,
-                                    timeoutMsec);
-        iCPMGetLicenseCmdId =
-            iCPMLicenseInterface->GetLicense(iCPMSessionID,
-                                             *contentName,
-                                             data,
-                                             dataSize,
-                                             timeoutMsec);
-    }
-    else
-    {
-        OSCL_String* contentName = NULL;
-        OsclAny* data = NULL;
-        uint32 dataSize = 0;
-        int32 timeoutMsec = 0;
-        aCmd.PVMFNodeCommand::Parse(contentName,
-                                    data,
-                                    dataSize,
-                                    timeoutMsec);
-        iCPMGetLicenseCmdId =
-            iCPMLicenseInterface->GetLicense(iCPMSessionID,
-                                             *contentName,
-                                             data,
-                                             dataSize,
-                                             timeoutMsec);
-    }
-    MoveCmdToCurrentQueue(aCmd);
-    return PVMFPending;
-}
-
-void PVMFAMRFFParserNode::CompleteGetLicense()
-{
-    CommandComplete(iCurrentCommand,
-                    iCurrentCommand.front(),
-                    PVMFSuccess);
-}
-
-PVMFCommandId
-PVMFAMRFFParserNode::CancelGetLicense(PVMFSessionId aSessionId, PVMFCommandId aCmdId, OsclAny* aContextData)
-{
-    PVMF_AMRPARSERNODE_LOGDATATRAFFIC((0, "PVMFAMRFFParserNode::CancelGetLicense - called"));
-    PVMFNodeCommand cmd;
-    cmd.PVMFNodeCommandBase::Construct(aSessionId, PVMF_GENERIC_NODE_CANCEL_GET_LICENSE, aCmdId, aContextData);
-    return QueueCommandL(cmd);
-}
-
-PVMFStatus PVMFAMRFFParserNode::DoCancelGetLicense(PVMFNodeCommand& aCmd)
-{
-    PVMF_AMRPARSERNODE_LOGDATATRAFFIC((0, "PVMFAMRFFParserNode::DoCancelGetLicense() Called"));
-    PVMFStatus status = PVMFFailure;
-
-    if (iCPMLicenseInterface == NULL)
-    {
-        status = PVMFErrNotSupported;
-    }
-    else
-    {
-        /* extract the command ID from the parameters.*/
-        PVMFCommandId id;
-        aCmd.PVMFNodeCommandBase::Parse(id);
-
-        /* first check "current" command if any */
-        PVMFNodeCommand* cmd = iCurrentCommand.FindById(id);
-        if (cmd)
-        {
-            if (cmd->iCmd == PVMF_GENERIC_NODE_GET_LICENSE_W || cmd->iCmd == PVMF_GENERIC_NODE_GET_LICENSE)
-            {
-                iCPMCancelGetLicenseCmdId =
-                    iCPMLicenseInterface->CancelGetLicense(iCPMSessionID, iCPMGetLicenseCmdId);
-
-                /*
-                 * the queued commands are all asynchronous commands to the
-                 * CPM module. CancelGetLicense can cancel only for GetLicense cmd.
-                 * We need to wait CPMCommandCompleted.
-                 */
-                MoveCmdToCancelQueue(aCmd);
-                return PVMFPending;
-            }
-        }
-
-        /*
-         * next check input queue.
-         * start at element 1 since this cancel command is element 0.
-         */
-        cmd = iInputCommands.FindById(id, 1);
-        if (cmd)
-        {
-            if (cmd->iCmd == PVMF_GENERIC_NODE_GET_LICENSE_W || cmd->iCmd == PVMF_GENERIC_NODE_GET_LICENSE)
-            {
-                /* cancel the queued command */
-                CommandComplete(iInputCommands, *cmd, PVMFErrCancelled);
-                /* report cancel success */
-                return PVMFSuccess;
-            }
-        }
-    }
-    /* if we get here the command isn't queued so the cancel fails */
-    return status;
 }
 
 int32 PVMFAMRFFParserNode::PushBackKeyVal(Oscl_Vector<PvmiKvp, OsclMemAllocator>*& aValueListPtr, PvmiKvp &aKeyVal)

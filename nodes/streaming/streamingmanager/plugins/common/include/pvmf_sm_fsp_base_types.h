@@ -250,61 +250,6 @@ class PVMFSMFSPBaseNodeCommand : public PVMFSMFSPBaseNodeCommandBase
             aMaxEntries = (int32)iParam4;
         }
 
-        /* Constructor and parser for GetLicenseW */
-        void Construct(PVMFSessionId s,
-                       int32 cmd,
-                       OSCL_wString& aContentName,
-                       OsclAny* aLicenseData,
-                       uint32 aDataSize,
-                       int32 aTimeoutMsec,
-                       const OsclAny* aContext)
-        {
-            PVMFSMFSPBaseNodeCommandBase::Construct(s, cmd, aContext);
-            iParam1 = (OsclAny*) & aContentName;
-            iParam2 = (OsclAny*)aLicenseData;
-            iParam3 = (OsclAny*)aDataSize;
-            iParam4 = (OsclAny*)aTimeoutMsec;
-            iParam5 = NULL;
-        }
-
-        void Parse(OSCL_wString*& aContentName,
-                   OsclAny*& aLicenseData,
-                   uint32& aDataSize,
-                   int32& aTimeoutMsec)
-        {
-            aContentName = (OSCL_wString*)iParam1;
-            aLicenseData = (PVMFTimestamp*)iParam2;
-            aDataSize = (uint32)iParam3;
-            aTimeoutMsec = (int32)iParam4;
-        }
-
-        /* Constructor and parser for GetLicense */
-        void Construct(PVMFSessionId s,
-                       int32 cmd,
-                       OSCL_String& aContentName,
-                       OsclAny* aLicenseData,
-                       uint32 aDataSize,
-                       int32 aTimeoutMsec,
-                       const OsclAny*aContext)
-        {
-            PVMFSMFSPBaseNodeCommandBase::Construct(s, cmd, aContext);
-            iParam1 = (OsclAny*) & aContentName;
-            iParam2 = (OsclAny*)aLicenseData;
-            iParam3 = (OsclAny*)aDataSize;
-            iParam4 = (OsclAny*)aTimeoutMsec;
-            iParam5 = NULL;
-        };
-        void Parse(OSCL_String*& aContentName,
-                   OsclAny*& aLicenseData,
-                   uint32& aDataSize,
-                   int32& aTimeoutMsec)
-        {
-            aContentName = (OSCL_String*)iParam1;
-            aLicenseData = (PVMFTimestamp*)iParam2;
-            aDataSize = (uint32)iParam3;
-            aTimeoutMsec = (int32)iParam4;
-        }
-
         /* Constructor and parser for setParametersAsync */
         void Construct(PVMFSessionId s, int32 cmd, PvmiMIOSession aSession,
                        PvmiKvp* aParameters, int num_elements,

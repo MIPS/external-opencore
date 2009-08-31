@@ -560,7 +560,7 @@ void PVMFMP3FFParserNode::ProcessCommand()
     }
 
     // If a command is in progress, only a hi-pri command can interrupt it.
-    if (!iCurrentCommand.empty() && !iInputCommands.front().hipri() && iInputCommands.front().iCmd != PVMP3FF_NODE_CMD_CANCEL_GET_LICENSE)
+    if (!iCurrentCommand.empty() && !iInputCommands.front().hipri())
     {
         return; //keep waiting
     }
@@ -574,7 +574,7 @@ void PVMFMP3FFParserNode::ProcessCommand()
     PVMFStatus cmdstatus;
     OsclAny* eventdata = NULL;
     PVInterface* extmsg = NULL;
-    if (aCmd.hipri() || iInputCommands.front().iCmd == PVMP3FF_NODE_CMD_CANCEL_GET_LICENSE)
+    if (aCmd.hipri())
     {
         //Process the Hi-Pri commands
         switch (aCmd.iCmd)
@@ -585,10 +585,6 @@ void PVMFMP3FFParserNode::ProcessCommand()
             case PVMF_GENERIC_NODE_CANCELCOMMAND:
                 cmdstatus = DoCancelCommand(aCmd);
                 break;
-            case PVMP3FF_NODE_CMD_CANCEL_GET_LICENSE:
-                cmdstatus = DoCancelGetLicense(aCmd);
-                break;
-
             default:
                 cmdstatus = PVMFErrNotSupported;
                 break;
@@ -659,13 +655,6 @@ void PVMFMP3FFParserNode::ProcessCommand()
                 break;
             case PVMP3FF_NODE_CMD_SETDATASOURCERATE:
                 cmdstatus = DoSetDataSourceRate(aCmd);
-                break;
-            case PVMP3FF_NODE_CMD_GET_LICENSE_W:
-                cmdstatus = DoGetLicense(aCmd, true);
-                break;
-
-            case PVMP3FF_NODE_CMD_GET_LICENSE:
-                cmdstatus = DoGetLicense(aCmd);
                 break;
             default:
                 // command not supported
@@ -910,7 +899,11 @@ PVMFStatus PVMFMP3FFParserNode::DoQueryInterface(PVMFMP3FFParserNodeCommand& aCm
 
     if (queryInterface(*uuid, *ptr))
     {
-        (*ptr)->addRef();
+        // PVMFCPMPluginLicenseInterface is not part of this node
+        if (*uuid != PVMFCPMPluginLicenseInterfaceUuid)
+        {
+            (*ptr)->addRef();
+        }
         status = PVMFSuccess;
     }
     else
@@ -2656,7 +2649,11 @@ PVMFStatus PVMFMP3FFParserNode::QueryInterfaceSync(PVMFSessionId aSession,
     aInterfacePtr = NULL;
     if (queryInterface(aUuid, aInterfacePtr))
     {
-        aInterfacePtr->addRef();
+        // PVMFCPMPluginLicenseInterface is not part of this node
+        if (aUuid != PVMFCPMPluginLicenseInterfaceUuid)
+        {
+            aInterfacePtr->addRef();
+        }
         return PVMFSuccess;
     }
     return PVMFErrNotSupported;
@@ -2688,8 +2685,7 @@ bool PVMFMP3FFParserNode::queryInterface(const PVUuid& uuid, PVInterface*& iface
     }
     else if (uuid == PVMFCPMPluginLicenseInterfaceUuid)
     {
-        PVMFCPMPluginLicenseInterface* myInterface = OSCL_STATIC_CAST(PVMFCPMPluginLicenseInterface*, this);
-        iface = OSCL_STATIC_CAST(PVInterface*, myInterface);
+        iface = OSCL_STATIC_CAST(PVInterface*, iCPMContainer.iCPMLicenseInterface);
     }
     else if (PVMF_FF_PROGDOWNLOAD_SUPPORT_INTERFACE_UUID == uuid)
     {
@@ -3275,136 +3271,6 @@ void PVMFMP3FFParserNode::Push(PVMFSubNodeContainerBaseMp3& c, PVMFSubNodeContai
     iSubNodeCmdVec.push_back(snc);
 }
 
-
-PVMFCommandId
-PVMFMP3FFParserNode::GetLicense(PVMFSessionId aSessionId,
-                                OSCL_wString& aContentName,
-                                OsclAny* aData,
-                                uint32 aDataSize,
-                                int32 aTimeoutMsec,
-                                OsclAny* aContextData)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFMP3FFParserNode::GetLicense - Wide called"));
-    PVMFMP3FFParserNodeCommand cmd;
-    cmd.PVMFMP3FFParserNodeCommand::Construct(aSessionId,
-            PVMP3FF_NODE_CMD_GET_LICENSE_W,
-            aContentName,
-            aData,
-            aDataSize,
-            aTimeoutMsec,
-            aContextData);
-    return QueueCommandL(cmd);
-}
-
-PVMFCommandId
-PVMFMP3FFParserNode::GetLicense(PVMFSessionId aSessionId,
-                                OSCL_String&  aContentName,
-                                OsclAny* aData,
-                                uint32 aDataSize,
-                                int32 aTimeoutMsec,
-                                OsclAny* aContextData)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFMP3FFParserNode::GetLicense - Non-Wide called"));
-    PVMFMP3FFParserNodeCommand cmd;
-    cmd.PVMFMP3FFParserNodeCommand::Construct(aSessionId,
-            PVMP3FF_NODE_CMD_GET_LICENSE,
-            aContentName,
-            aData,
-            aDataSize,
-            aTimeoutMsec,
-            aContextData);
-    return QueueCommandL(cmd);
-}
-
-
-
-PVMFStatus PVMFMP3FFParserNode::DoGetLicense(PVMFMP3FFParserNodeCommand& aCmd,
-        bool aWideCharVersion)
-{
-    OSCL_UNUSED_ARG(aCmd);
-    if (iCPMContainer.iCPMLicenseInterface == NULL)
-    {
-        return PVMFErrNotSupported;
-    }
-
-    if (aWideCharVersion == true)
-    {
-        Push(iCPMContainer, PVMFSubNodeContainerBaseMp3::ECPMGetLicenseW);
-    }
-    else
-    {
-        Push(iCPMContainer, PVMFSubNodeContainerBaseMp3::ECPMGetLicense);
-    }
-    RunIfNotReady();
-    return PVMFPending;
-}
-
-void PVMFMP3FFParserNode::CompleteGetLicense()
-{
-    CommandComplete(iCurrentCommand,
-                    iCurrentCommand.front(),
-                    PVMFSuccess, NULL, NULL);
-}
-
-PVMFCommandId
-PVMFMP3FFParserNode::CancelGetLicense(PVMFSessionId aSessionId, PVMFCommandId aCmdId, OsclAny* aContextData)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFMP3FFParserNode::CancelGetLicense - called"));
-    PVMFMP3FFParserNodeCommand cmd;
-    cmd.PVMFMP3FFParserNodeCommandBase::Construct(aSessionId, PVMP3FF_NODE_CMD_CANCEL_GET_LICENSE, aCmdId, aContextData);
-    return QueueCommandL(cmd);
-}
-
-PVMFStatus PVMFMP3FFParserNode::DoCancelGetLicense(PVMFMP3FFParserNodeCommand& aCmd)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFMP3FFParserNode::DoCancelGetLicense() Called"));
-    PVMFStatus status = PVMFErrArgument;
-
-    if (iCPMContainer.iCPMLicenseInterface == NULL)
-    {
-        status = PVMFErrNotSupported;
-    }
-    else
-    {
-        /* extract the command ID from the parameters.*/
-        PVMFCommandId id;
-        aCmd.PVMFMP3FFParserNodeCommandBase::Parse(id);
-
-        /* first check "current" command if any */
-        PVMFMP3FFParserNodeCommand* cmd = iCurrentCommand.FindById(id);
-        if (cmd)
-        {
-            if (cmd->iCmd == PVMP3FF_NODE_CMD_GET_LICENSE_W || cmd->iCmd == PVMP3FF_NODE_CMD_GET_LICENSE)
-            {
-                if (iCPMContainer.CancelPendingCommand())
-                {
-                    return PVMFPending;//wait on sub-node cancel to complete.
-                }
-                CommandComplete(iCurrentCommand, *cmd, PVMFErrCancelled, NULL, NULL);
-                return PVMFSuccess;
-            }
-        }
-
-        /*
-         * next check input queue.
-         * start at element 1 since this cancel command is element 0.
-         */
-        cmd = iInputCommands.FindById(id, 1);
-        if (cmd)
-        {
-            if (cmd->iCmd == PVMP3FF_NODE_CMD_GET_LICENSE_W || cmd->iCmd == PVMP3FF_NODE_CMD_GET_LICENSE)
-            {
-                /* cancel the queued command */
-                CommandComplete(iInputCommands, *cmd, PVMFErrCancelled, NULL, NULL);
-                /* report cancel success */
-                return PVMFSuccess;
-            }
-        }
-    }
-    /* if we get here the command isn't queued so the cancel fails */
-    return status;
-}
-
 PVMFCommandId PVMFCPMContainerMp3::GetCPMLicenseInterface()
 {
     iCPMLicenseInterfacePVI = NULL;
@@ -3585,7 +3451,6 @@ PVMFStatus PVMFCPMContainerMp3::IssueCommand(int32 aCmd)
     OSCL_ASSERT(iCmdState == EIdle && iCancelCmdState == EIdle);
     // Find the current node command since we may need its parameters.
     OSCL_ASSERT(!iContainer->iCurrentCommand.empty());
-    PVMFMP3FFParserNodeCommand* nodeCmd = &iContainer->iCurrentCommand.front();
 
     //save the sub-node command code
     iCmd = aCmd;
@@ -3599,6 +3464,8 @@ PVMFStatus PVMFCPMContainerMp3::IssueCommand(int32 aCmd)
             return PVMFSuccess;
 
         case ECPMInit:
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iContainer->iLogger, PVLOGMSG_STACK_TRACE,
+                            (0, "PVMFCPMContainerMp3::IssueCommand Calling Init"));
             //make sure any prior instance is cleaned up
             Cleanup();
             //Create a CPM instance.
@@ -3666,56 +3533,6 @@ PVMFStatus PVMFCPMContainerMp3::IssueCommand(int32 aCmd)
             iCmdId = GetCPMLicenseInterface();
             return PVMFPending;
 
-        case ECPMGetLicenseW:
-        {
-            OSCL_ASSERT(iCPM != NULL);
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iContainer->iLogger, PVLOGMSG_STACK_TRACE,
-                            (0, "PVMFCPMContainerMp3::IssueCommand Calling ECPMGetLicenseW"));
-            iCmdState = EBusy;
-            OSCL_wString* contentName = NULL;
-            OsclAny* data = NULL;
-            uint32 dataSize = 0;
-            int32 timeoutMsec = 0;
-            iCPMLicenseInterface = OSCL_STATIC_CAST(PVMFCPMPluginLicenseInterface*, iCPMLicenseInterfacePVI);
-            iCPMLicenseInterfacePVI = NULL;
-            nodeCmd->Parse(contentName,
-                           data,
-                           dataSize,
-                           timeoutMsec);
-            iCmdId =
-                iCPMLicenseInterface->GetLicense(iSessionId,
-                                                 *contentName,
-                                                 data,
-                                                 dataSize,
-                                                 timeoutMsec);
-            return PVMFPending;
-        }
-        case ECPMGetLicense:
-        {
-            OSCL_ASSERT(iCPM != NULL);
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iContainer->iLogger, PVLOGMSG_STACK_TRACE,
-                            (0, "PVMFCPMContainerMp3::IssueCommand Calling ECPMGetLicense"));
-
-            iCmdState = EBusy;
-            OSCL_String* contentName = NULL;
-            OsclAny* data = NULL;
-            uint32 dataSize = 0;
-            int32 timeoutMsec = 0;
-            iCPMLicenseInterface = OSCL_STATIC_CAST(PVMFCPMPluginLicenseInterface*, iCPMLicenseInterfacePVI);
-            iCPMLicenseInterfacePVI = NULL;
-            nodeCmd->Parse(contentName,
-                           data,
-                           dataSize,
-                           timeoutMsec);
-            iCmdId =
-                iCPMLicenseInterface->GetLicense(iSessionId,
-                                                 *contentName,
-                                                 data,
-                                                 dataSize,
-                                                 timeoutMsec);
-
-            return PVMFPending;
-        }
         case ECPMApproveUsage:
         {
             OSCL_ASSERT(iCPM != NULL);
@@ -3763,8 +3580,10 @@ PVMFStatus PVMFCPMContainerMp3::IssueCommand(int32 aCmd)
 
         case ECPMCheckUsage:
         {
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iContainer->iLogger, PVLOGMSG_STACK_TRACE,
+                            (0, "PVMFCPMContainerMp3::IssueCommand Calling ECPMCheckUsage"));
             iContainer->oWaitingOnLicense = false;
-            PVMFStatus status = PVMFFailure;
+            PVMFStatus status = PVMFSuccess;
             //Check for usage approval, and if approved, parse the file.
             if ((iCPMContentType == PVMF_CPM_FORMAT_OMA1) ||
                     (iCPMContentType == PVMF_CPM_FORMAT_AUTHORIZE_BEFORE_ACCESS))
@@ -3830,15 +3649,8 @@ bool PVMFCPMContainerMp3::CancelPendingCommand()
         return false;//nothing to cancel
     }
     iCancelCmdState = EBusy;
+
     //no cancel available, just wait on current command to complete.
-    //no cancel available except for GetLicense-- just wait on current command to complete.
-    if (iCmd == ECPMGetLicense || iCmd == ECPMGetLicenseW)
-    {
-        if (iCPM && iCPMLicenseInterface)
-        {
-            iCancelCmdId = iCPMLicenseInterface->CancelGetLicense(iSessionId, iCmdId);
-        }
-    }
     return true;//cancel initiated
 }
 
@@ -3886,6 +3698,11 @@ OSCL_EXPORT_REF void PVMFCPMContainerMp3::CPMCommandCompleted(const PVMFCmdResp&
         }
         else
         {
+            if (iCmd == ECPMGetLicenseInterface)
+            {
+                iCPMLicenseInterface = OSCL_STATIC_CAST(PVMFCPMPluginLicenseInterface*, iCPMLicenseInterfacePVI);
+                iCPMLicenseInterfacePVI = NULL;
+            }
             CommandDone(aResponse.GetCmdStatus(),
                         aResponse.GetEventExtensionInterface(),
                         aResponse.GetEventData());
@@ -3895,8 +3712,7 @@ OSCL_EXPORT_REF void PVMFCPMContainerMp3::CPMCommandCompleted(const PVMFCmdResp&
         //is done whenever the current CPM command is done.
         if (iCancelCmdState != EIdle)
         {
-            if (iCmd != ECPMGetLicense && iCmd != ECPMGetLicenseW)
-                CancelCommandDone(PVMFSuccess, NULL, NULL);
+            CancelCommandDone(PVMFSuccess, NULL, NULL);
         }
     }
     else if (aResponse.GetCmdId() == iCancelCmdId
@@ -3934,6 +3750,8 @@ OSCL_EXPORT_REF void PVMFCPMContainerMp3::CPMCommandCompleted(const PVMFCmdResp&
 void PVMFSubNodeContainerBaseMp3::CommandDone(PVMFStatus aStatus, PVInterface*aExtMsg,
         OsclAny*aEventData)
 {
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iContainer->iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "PVMFCPMContainerMp3::CommandDone "));
     // Sub-node command is completed, process the result.
     OSCL_ASSERT(aStatus != PVMFPending);
     // Pop the sub-node command vector.

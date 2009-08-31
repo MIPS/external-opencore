@@ -33,101 +33,6 @@
 
 #define PVMF_STREAMING_MANAGER_NODE_MAX_CPM_METADATA_KEYS 256
 
-///////////////////////////////////////////////////////////////////////////////
-//Implementation of PVMFCPMPluginLicenseInterface
-///////////////////////////////////////////////////////////////////////////////
-PVMFStatus PVMFSMFSPBaseNode::GetLicenseURL(PVMFSessionId aSessionId,
-        OSCL_wString& aContentName,
-        OSCL_wString& aLicenseURL)
-{
-    OSCL_UNUSED_ARG(aSessionId);
-    OSCL_UNUSED_ARG(aContentName);
-    OSCL_UNUSED_ARG(aLicenseURL);
-    //must use Async method.
-    PVMF_SM_FSP_BASE_LOGERR((0, "PVMFSMFSPBaseNode::GetLicenseURL - Error Not Supported"));
-    return PVMFErrNotSupported;
-}
-
-PVMFStatus PVMFSMFSPBaseNode::GetLicenseURL(PVMFSessionId aSessionId,
-        OSCL_String&  aContentName,
-        OSCL_String&  aLicenseURL)
-{
-    OSCL_UNUSED_ARG(aSessionId);
-    OSCL_UNUSED_ARG(aContentName);
-    OSCL_UNUSED_ARG(aLicenseURL);
-    //must use Async method.
-    PVMF_SM_FSP_BASE_LOGERR((0, "PVMFSMFSPBaseNode::GetLicenseURL - Error Not Supported"));
-    return PVMFErrNotSupported;
-}
-
-/**
- * Queue an asynchronous node command - GetLicense(Unicode)
- */
-PVMFCommandId PVMFSMFSPBaseNode::GetLicense(PVMFSessionId aSessionId
-        , OSCL_wString& aContentName
-        , OsclAny* aLicenseData
-        , uint32 aDataSize
-        , int32 aTimeoutMsec
-        , OsclAny* aContext)
-{
-    PVMF_SM_FSP_BASE_LOGSTACKTRACE((0, "PVMFSMFSPBaseNode::GetLicense - Unicode Variant Called"));
-    PVMFSMFSPBaseNodeCommand cmd;
-    cmd.PVMFSMFSPBaseNodeCommand::Construct(aSessionId,
-                                            PVMF_SMFSP_NODE_GET_LICENSE_W,
-                                            aContentName,
-                                            aLicenseData,
-                                            aDataSize,
-                                            aTimeoutMsec,
-                                            aContext);
-    return QueueCommandL(cmd);
-}
-
-/**
- * Queue an asynchronous node command - GetLicense(ASCII)
- */
-PVMFCommandId PVMFSMFSPBaseNode::GetLicense(PVMFSessionId aSessionId
-        , OSCL_String&  aContentName
-        , OsclAny* aLicenseData
-        , uint32 aDataSize
-        , int32 aTimeoutMsec
-        , OsclAny* aContext)
-{
-    PVMF_SM_FSP_BASE_LOGSTACKTRACE((0, "PVMFSMFSPBaseNode::GetLicense - called"));
-    PVMFSMFSPBaseNodeCommand cmd;
-    cmd.PVMFSMFSPBaseNodeCommand::Construct(aSessionId,
-                                            PVMF_SMFSP_NODE_GET_LICENSE,
-                                            aContentName,
-                                            aLicenseData,
-                                            aDataSize,
-                                            aTimeoutMsec,
-                                            aContext);
-    return QueueCommandL(cmd);
-
-}
-
-/**
- * Queue an asynchronous node command - CancelGetLicense
- */
-PVMFCommandId PVMFSMFSPBaseNode::CancelGetLicense(PVMFSessionId aSessionId
-        , PVMFCommandId aCmdId
-        , OsclAny* aContext)
-{
-    PVMF_SM_FSP_BASE_LOGSTACKTRACE((0, "PVMFSMFSPBaseNode::CancelGetLicense - called"));
-    PVMFSMFSPBaseNodeCommand cmd;
-    cmd.PVMFSMFSPBaseNodeCommandBase::Construct(aSessionId,
-            PVMF_SMFSP_NODE_CANCEL_GET_LICENSE,
-            aCmdId,
-            aContext);
-    return QueueCommandL(cmd);
-}
-
-PVMFStatus PVMFSMFSPBaseNode::GetLicenseStatus(PVMFCPMLicenseStatus& aStatus)
-{
-    if (iCPMLicenseInterface)
-        return iCPMLicenseInterface->GetLicenseStatus(aStatus);
-    return PVMFFailure;
-}
-
 void PVMFSMFSPBaseNode::InitCPM()
 {
     PVMF_SM_FSP_BASE_LOGSTACKTRACE((0, "PVMFSMFSPBaseNode::InitCPM() In"));
@@ -291,31 +196,16 @@ void PVMFSMFSPBaseNode::CPMCommandCompleted(const PVMFCmdResp& aResponse)
     PVMFStatus status =
         CheckCPMCommandCompleteStatus(id, aResponse.GetCmdStatus());
 
-    if (id == iCPMCancelGetLicenseCmdId)
+    /*
+     * if there was any pending cancel, we just ignore CPM process.
+     */
+    if (iCurrentCommand.empty() && iCurrErrHandlingCommand.empty())
     {
-        /*
-         * if this command is CancelGetLicense, we will return success or fail here.
-         */
-        OSCL_ASSERT(!iCancelCommand.empty());
-        CommandComplete(iCancelCommand,
-                        iCancelCommand.front(),
-                        status);
         return;
     }
-    else
+    if (!iCancelCommand.empty())
     {
-        /*
-         * if there was any pending cancel, we just ignore CPM process.
-         */
-        if (iCurrentCommand.empty() && iCurrErrHandlingCommand.empty())
-        {
-            return;
-        }
-        if (!iCancelCommand.empty())
-        {
-            if (iCancelCommand.front().iCmd != PVMF_SMFSP_NODE_CANCEL_GET_LICENSE)
-                return;
-        }
+        return;
     }
 
     if (status != PVMFSuccess)
@@ -434,10 +324,6 @@ void PVMFSMFSPBaseNode::CPMCommandCompleted(const PVMFCmdResp& aResponse)
             OSCL_ASSERT(iCurrentCommand.front().iCmd == PVMF_SMFSP_NODE_GETNODEMETADATAVALUES);
             CompleteGetMetaDataValues();
         }
-        else if (id == iCPMGetLicenseCmdId)
-        {
-            CompleteGetLicense();
-        }
         else
         {
             /* Unknown cmd ?? - error */
@@ -532,112 +418,3 @@ PVMFStatus PVMFSMFSPBaseNode::SetCPMKvp(PvmiKvp& aKVP)
     return status;
 }
 
-PVMFStatus PVMFSMFSPBaseNode::DoGetLicense(PVMFSMFSPBaseNodeCommand& aCmd,
-        bool aWideCharVersion)
-{
-    if (iCPMLicenseInterface == NULL)
-    {
-        return PVMFErrNotSupported;
-    }
-
-    if (aWideCharVersion == true)
-    {
-
-        OSCL_wString* contentName = NULL;
-        OsclAny* data = NULL;
-        uint32 dataSize = 0;
-        int32 timeoutMsec = 0;
-        aCmd.PVMFSMFSPBaseNodeCommand::Parse(contentName,
-                                             data,
-                                             dataSize,
-                                             timeoutMsec);
-        iCPMGetLicenseCmdId =
-            iCPMLicenseInterface->GetLicense(iCPMSessionID,
-                                             *contentName,
-                                             data,
-                                             dataSize,
-                                             timeoutMsec);
-    }
-    else
-    {
-        OSCL_String* contentName = NULL;
-        OsclAny* data = NULL;
-        uint32 dataSize = 0;
-        int32 timeoutMsec = 0;
-        aCmd.PVMFSMFSPBaseNodeCommand::Parse(contentName,
-                                             data,
-                                             dataSize,
-                                             timeoutMsec);
-        iCPMGetLicenseCmdId =
-            iCPMLicenseInterface->GetLicense(iCPMSessionID,
-                                             *contentName,
-                                             data,
-                                             dataSize,
-                                             timeoutMsec);
-    }
-    return PVMFPending;
-}
-
-void PVMFSMFSPBaseNode::CompleteGetLicense()
-{
-    PVMF_SM_FSP_BASE_LOGSTACKTRACE((0, "PVMFSMFSPBaseNode::CompleteGetLicense - called"));
-    CommandComplete(iCurrentCommand,
-                    iCurrentCommand.front(),
-                    PVMFSuccess);
-}
-
-void PVMFSMFSPBaseNode::DoCancelGetLicense(PVMFSMFSPBaseNodeCommand& aCmd)
-{
-    PVMF_SM_FSP_BASE_LOGSTACKTRACE((0, "PVMFSMFSPBaseNode::DoCancelGetLicense() Called"));
-    PVMFStatus status = PVMFErrArgument;
-
-    if (iCPMLicenseInterface == NULL)
-    {
-        status = PVMFErrNotSupported;
-    }
-    else
-    {
-        /* extract the command ID from the parameters.*/
-        PVMFCommandId id;
-        aCmd.PVMFSMFSPBaseNodeCommandBase::Parse(id);
-
-        /* first check "current" command if any */
-        PVMFSMFSPBaseNodeCommand* cmd = iCurrentCommand.FindById(id);
-        if (cmd)
-        {
-            if (cmd->iCmd == PVMF_SMFSP_NODE_GET_LICENSE_W || cmd->iCmd == PVMF_SMFSP_NODE_GET_LICENSE)
-            {
-                iCPMCancelGetLicenseCmdId =
-                    iCPMLicenseInterface->CancelGetLicense(iCPMSessionID, iCPMGetLicenseCmdId);
-
-                /*
-                 * the queued commands are all asynchronous commands to the
-                 * CPM module. CancelGetLicense can cancel only for GetLicense cmd.
-                 * We need to wait CPMCommandCompleted.
-                 */
-                MoveCmdToCancelQueue(aCmd);
-                return;
-            }
-        }
-
-        /*
-         * next check input queue.
-         * start at element 1 since this cancel command is element 0.
-         */
-        cmd = iInputCommands.FindById(id, 1);
-        if (cmd)
-        {
-            if (cmd->iCmd == PVMF_SMFSP_NODE_GET_LICENSE_W || cmd->iCmd == PVMF_SMFSP_NODE_GET_LICENSE)
-            {
-                /* cancel the queued command */
-                CommandComplete(iInputCommands, *cmd, PVMFErrCancelled, NULL, NULL);
-                // report cancel success
-                CommandComplete(iInputCommands, aCmd, PVMFSuccess);
-                return;
-            }
-        }
-    }
-    /* if we get here the command isn't queued so the cancel fails */
-    CommandComplete(iInputCommands, aCmd, status);
-    return;
-}

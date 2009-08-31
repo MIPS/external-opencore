@@ -103,9 +103,6 @@ enum TPVMFCPMCommand
     PVMF_CPM_RESET,
     PVMF_CPM_GET_METADATA_KEYS,
     PVMF_CPM_GET_METADATA_VALUES,
-    PVMF_CPM_GET_LICENSE_W,
-    PVMF_CPM_GET_LICENSE,
-    PVMF_CPM_CANCEL_GET_LICENSE,
     PVMF_CPM_COMMAND_LAST
 };
 
@@ -122,9 +119,7 @@ enum TPVMFCPMCommand
 #define PVMF_CPM_INTERNAL_GET_PLUGIN_META_DATA_KEYS_CMD          1010
 #define PVMF_CPM_INTERNAL_GET_PLUGIN_META_DATA_VALUES_CMD        1011
 #define PVMF_CPM_INTERNAL_QUERY_LICENSE_INTERFACE_CMD            1012
-#define PVMF_CPM_INTERNAL_GET_LICENSE_CMD                        1013
-#define PVMF_CPM_INTERNAL_QUERY_CAP_CONFIG_INTERFACE_CMD         1014
-#define PVMF_CPM_INTERNAL_CANCEL_GET_LICENSE                     1015
+#define PVMF_CPM_INTERNAL_QUERY_CAP_CONFIG_INTERFACE_CMD         1013
 
 #define PVMF_CPM_INTERNAL_CMDQ_SIZE 10
 
@@ -286,61 +281,6 @@ class PVMFCPMCommand : public PVMFCPMCommandBase
             aStartingIndex = (int32)iParam3;
             aMaxEntries = (int32)iParam4;
         }
-
-        /* Constructor and parser for GetLicenseW */
-        void Construct(PVMFSessionId s,
-                       int32 cmd,
-                       OSCL_wString& aContentName,
-                       OsclAny* aLicenseData,
-                       uint32 aDataSize,
-                       int32 aTimeoutMsec,
-                       OsclAny* aContext)
-        {
-            PVMFCPMCommandBase::Construct(s, cmd, aContext);
-            iParam1 = (OsclAny*) & aContentName;
-            iParam2 = (OsclAny*)aLicenseData;
-            iParam3 = (OsclAny*)aDataSize;
-            iParam4 = (OsclAny*)aTimeoutMsec;
-            iParam5 = NULL;
-        }
-        void Parse(OSCL_wString*& aContentName,
-                   OsclAny*& aLicenseData,
-                   uint32& aDataSize,
-                   int32& aTimeoutMsec)
-        {
-            aContentName = (OSCL_wString*)iParam1;
-            aLicenseData = (PVMFTimestamp*)iParam2;
-            aDataSize = (uint32)iParam3;
-            aTimeoutMsec = (int32)iParam4;
-        }
-
-        /* Constructor and parser for GetLicense */
-        void Construct(PVMFSessionId s,
-                       int32 cmd,
-                       OSCL_String& aContentName,
-                       OsclAny* aLicenseData,
-                       uint32 aDataSize,
-                       int32 aTimeoutMsec,
-                       OsclAny* aContext)
-        {
-            PVMFCPMCommandBase::Construct(s, cmd, aContext);
-            iParam1 = (OsclAny*) & aContentName;
-            iParam2 = (OsclAny*)aLicenseData;
-            iParam3 = (OsclAny*)aDataSize;
-            iParam4 = (OsclAny*)aTimeoutMsec;
-            iParam5 = NULL;
-        }
-        void Parse(OSCL_String*& aContentName,
-                   OsclAny*& aLicenseData,
-                   uint32& aDataSize,
-                   int32& aTimeoutMsec)
-        {
-            aContentName = (OSCL_String*)iParam1;
-            aLicenseData = (PVMFTimestamp*)iParam2;
-            aDataSize = (uint32)iParam3;
-            aTimeoutMsec = (int32)iParam4;
-        }
-
 };
 
 typedef PVMFNodeCommandQueue<PVMFCPMCommand, OsclMemAllocator> PVMFCPMCommandCmdQ;
@@ -497,7 +437,6 @@ class PVMFCPMImpl
         , public PVMFMetadataExtensionInterface
         , public PvmiCapabilityAndConfigBase
         , public PVMFCPMPluginCmdStatusObserver
-        , public PVMFCPMPluginLicenseInterface
 {
     public:
         OSCL_IMPORT_REF PVMFCPMImpl(PVMFCPMStatusObserver& aObserver,
@@ -581,49 +520,6 @@ class PVMFCPMImpl
                 uint32 aEndValueIndex);
 
         Oscl_Vector<OSCL_HeapString<OsclMemAllocator>, OsclMemAllocator> iAvailableMetadataKeys;
-
-        /* From PVMFCPMPluginLicenseInterface */
-        PVMFStatus GetLicenseURL(PVMFSessionId aSessionId,
-                                 OSCL_wString& aContentName,
-                                 OSCL_wString& aLicenseURL)
-        {
-            OSCL_UNUSED_ARG(aSessionId);
-            OSCL_UNUSED_ARG(aContentName);
-            OSCL_UNUSED_ARG(aLicenseURL);
-            //must use Async method.
-            return PVMFErrNotSupported;
-        }
-        PVMFStatus GetLicenseURL(PVMFSessionId aSessionId,
-                                 OSCL_String&  aContentName,
-                                 OSCL_String&  aLicenseURL)
-        {
-            OSCL_UNUSED_ARG(aSessionId);
-            OSCL_UNUSED_ARG(aContentName);
-            OSCL_UNUSED_ARG(aLicenseURL);
-            //must use Async method.
-            return PVMFErrNotSupported;
-        }
-
-        PVMFCommandId GetLicense(PVMFSessionId aSessionId,
-                                 OSCL_wString& aContentName,
-                                 OsclAny* aData,
-                                 uint32 aDataSize,
-                                 int32 aTimeoutMsec,
-                                 OsclAny* aContextData) ;
-
-        PVMFCommandId GetLicense(PVMFSessionId aSessionId,
-                                 OSCL_String&  aContentName,
-                                 OsclAny* aData,
-                                 uint32 aDataSize,
-                                 int32 aTimeoutMsec,
-                                 OsclAny* aContextData);
-
-        PVMFCommandId CancelGetLicense(PVMFSessionId aSessionId
-                                       , PVMFCommandId aCmdId
-                                       , OsclAny* aContextData);
-
-        PVMFStatus GetLicenseStatus(
-            PVMFCPMLicenseStatus& aStatus) ;
 
         /* Implement pure virtuals from PvmiCapabilityAndConfig interface */
         PVMFStatus getParametersSync(PvmiMIOSession aSession,
@@ -716,11 +612,6 @@ class PVMFCPMImpl
 
         void DoQueryInterface(PVMFCPMCommand&);
 
-        PVMFStatus DoGetLicense_P(PVMFCPMCommand& aCmd,
-                                  bool aWideCharVersion = false);
-        void CompleteGetLicense();
-        void DoCancelGetLicense(PVMFCPMCommand& aCmd);
-
         CPMSessionInfo* LookUpSessionInfo(PVMFSessionId);
         CPMContentUsageContext* LookUpContentUsageContext(PVMFCPMUsageID);
         CPMPlugInParams* LookUpPlugInParams(uint32);
@@ -755,11 +646,6 @@ class PVMFCPMImpl
         Oscl_Vector<PvmiKvp, OsclMemAllocator>* iValueListPtr;
         int32 iGetMetaDataValuesStartingIndex;
         int32 iGetMetaDataValuesMaxEntries;
-
-        /* License Acquire */
-        PVMFCPMPluginLicenseInterface* iLicenseInterface ;
-        PVMFCommandId iGetLicenseCmdId;
-        PVMFCommandId iCancelGetLicenseCmdId;
 };
 
 

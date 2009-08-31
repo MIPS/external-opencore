@@ -340,7 +340,6 @@ OSCL_EXPORT_REF PVMFCPMImpl::PVMFCPMImpl(PVMFCPMStatusObserver& aObserver,
     iNumRegisteredPlugInResetComplete = 0;
     iNumQueryMetaDataExtensionInterfacePending = 0;
     iNumQueryMetaDataExtensionInterfaceComplete = 0;
-    iLicenseInterface = NULL;
     iAccessPlugin = NULL;
     iNumQueryCapConfigExtensionInterfacePending = 0;
     iNumQueryCapConfigExtensionInterfaceComplete = 0;
@@ -349,7 +348,6 @@ OSCL_EXPORT_REF PVMFCPMImpl::PVMFCPMImpl(PVMFCPMStatusObserver& aObserver,
     iGetMetaDataValuesSessionId = 0;
 
     iExtensionRefCount = 0;
-    iGetLicenseCmdId = 0;
 
     int32 err = OsclErrNone;
     OSCL_TRY(err,
@@ -506,13 +504,6 @@ OSCL_EXPORT_REF bool PVMFCPMImpl::queryInterface(const PVUuid& uuid,
     {
         PVMFMetadataExtensionInterface* myInterface =
             OSCL_STATIC_CAST(PVMFMetadataExtensionInterface*, this);
-        iface = OSCL_STATIC_CAST(PVInterface*, myInterface);
-        return true;
-    }
-    else if (uuid == PVMFCPMPluginLicenseInterfaceUuid)
-    {
-        PVMFCPMPluginLicenseInterface* myInterface =
-            OSCL_STATIC_CAST(PVMFCPMPluginLicenseInterface*, this);
         iface = OSCL_STATIC_CAST(PVInterface*, myInterface);
         return true;
     }
@@ -965,7 +956,7 @@ bool PVMFCPMImpl::ProcessCommand(PVMFCPMCommand& aCmd)
      * command such as Cancel must be able to interrupt a command
      * in progress.
      */
-    if (!iCurrentCommand.empty() && !aCmd.hipri() && aCmd.iCmd != PVMF_CPM_CANCEL_GET_LICENSE)
+    if (!iCurrentCommand.empty() && !aCmd.hipri())
         return false;
 
     switch (aCmd.iCmd)
@@ -1020,38 +1011,6 @@ bool PVMFCPMImpl::ProcessCommand(PVMFCPMCommand& aCmd)
 
         case PVMF_CPM_QUERY_INTERFACE:
             DoQueryInterface(aCmd);
-            break;
-
-        case PVMF_CPM_GET_LICENSE_W:
-        {
-            PVMFStatus status = DoGetLicense_P(aCmd, true);
-            if (status == PVMFPending)
-            {
-                MoveCmdToCurrentQueue(aCmd);
-            }
-            else
-            {
-                CommandComplete(iInputCommands, aCmd, status);
-            }
-        }
-        break;
-
-        case PVMF_CPM_GET_LICENSE:
-        {
-            PVMFStatus status = DoGetLicense_P(aCmd);
-            if (status == PVMFPending)
-            {
-                MoveCmdToCurrentQueue(aCmd);
-            }
-            else
-            {
-                CommandComplete(iInputCommands, aCmd, status);
-            }
-        }
-        break;
-
-        case PVMF_CPM_CANCEL_GET_LICENSE:
-            DoCancelGetLicense(aCmd);
             break;
 
         default:
@@ -2091,7 +2050,19 @@ void PVMFCPMImpl::DoQueryInterface(PVMFCPMCommand& aCmd)
 
     PVMFStatus status = PVMFErrNotSupported;
     PVInterface* iFace = NULL;
-    if (queryInterface(*uuid, iFace))
+    if (*uuid == PVMFCPMPluginLicenseInterfaceUuid)
+    {
+        Oscl_Vector<CPMPlugInParams, OsclMemAllocator>::iterator it = LookUpAccessPlugIn(aCmd.iSession);
+        if (it)
+        {
+            *ptr = it->PlugInLicenseInterface();
+            if (*ptr)
+            {
+                status = PVMFSuccess;
+            }
+        }
+    }
+    else if (queryInterface(*uuid, iFace))
     {
         status = PVMFSuccess;
         *ptr = OSCL_STATIC_CAST(PVInterface*, iFace);
@@ -2118,14 +2089,6 @@ void PVMFCPMImpl::CPMPluginCommandCompleted(const PVMFCmdResp& aResponse)
 
     cmdContextData->oFree = true;
 
-    if (cmdContextData->cmd == PVMF_CPM_INTERNAL_CANCEL_GET_LICENSE)
-    {
-        PVMF_CPM_LOGINFO((0, "PVMFCPMImpl::CompleteCancelGetLicense - status=%d", aResponse.GetCmdStatus()));
-        CommandComplete(iCancelCommand,
-                        iCancelCommand.front(),
-                        aResponse.GetCmdStatus());
-        return;
-    }
     if (aResponse.GetCmdStatus() != PVMFSuccess)
     {
         if (((cmdContextData->cmd == PVMF_CPM_INTERNAL_QUERY_METADATA_EXTENSION_INTERFACE_CMD) ||
@@ -2306,12 +2269,6 @@ void PVMFCPMImpl::CPMPluginCommandCompleted(const PVMFCmdResp& aResponse)
         case PVMF_CPM_INTERNAL_GET_PLUGIN_META_DATA_VALUES_CMD:
         {
             CompleteGetMetaDataValues(cmdContextData);
-        }
-        break;
-
-        case PVMF_CPM_INTERNAL_GET_LICENSE_CMD:
-        {
-            CompleteGetLicense();
         }
         break;
 
@@ -2758,233 +2715,6 @@ PVMFStatus PVMFCPMImpl::verifyParametersSync(PvmiMIOSession aSession,
         }
     }
     return status;
-}
-
-PVMFCommandId
-PVMFCPMImpl::GetLicense(PVMFSessionId aSessionId,
-                        OSCL_wString& aContentName,
-                        OsclAny* aData,
-                        uint32 aDataSize,
-                        int32 aTimeoutMsec,
-                        OsclAny* aContextData)
-{
-    PVMF_CPM_LOGINFO((0, "PVMFCPMImpl:GetLicense - Wide"));
-    PVMFCPMCommand cmd;
-    cmd.Construct(aSessionId,
-                  PVMF_CPM_GET_LICENSE_W,
-                  aContentName,
-                  aData,
-                  aDataSize,
-                  aTimeoutMsec,
-                  aContextData);
-    return QueueCommandL(cmd);
-}
-
-PVMFCommandId
-PVMFCPMImpl::GetLicense(PVMFSessionId aSessionId,
-                        OSCL_String&  aContentName,
-                        OsclAny* aData,
-                        uint32 aDataSize,
-                        int32 aTimeoutMsec,
-                        OsclAny* aContextData)
-{
-    PVMF_CPM_LOGINFO((0, "PVMFCPMImpl:GetLicense"));
-    PVMFCPMCommand cmd;
-    cmd.Construct(aSessionId,
-                  PVMF_CPM_GET_LICENSE,
-                  aContentName,
-                  aData,
-                  aDataSize,
-                  aTimeoutMsec,
-                  aContextData);
-    return QueueCommandL(cmd);
-}
-
-PVMFCommandId
-PVMFCPMImpl::CancelGetLicense(PVMFSessionId aSessionId, PVMFCommandId aCmdId, OsclAny* aContextData)
-{
-    PVMF_CPM_LOGINFO((0, "PVMFCPMImpl:CancelGetLicense"));
-    PVMFCPMCommand cmd;
-    cmd.PVMFCPMCommandBase::Construct(aSessionId,
-                                      PVMF_CPM_CANCEL_GET_LICENSE,
-                                      aCmdId,
-                                      aContextData);
-    return QueueCommandL(cmd);
-}
-
-PVMFStatus PVMFCPMImpl::GetLicenseStatus(
-    PVMFCPMLicenseStatus& aStatus)
-{
-    if (iLicenseInterface)
-        return iLicenseInterface->GetLicenseStatus(aStatus);
-    return PVMFFailure;
-}
-
-PVMFStatus PVMFCPMImpl::DoGetLicense_P(PVMFCPMCommand& aCmd,
-                                       bool aWideCharVersion)
-{
-    iLicenseInterface = NULL;
-    CPMPlugInParams* pluginParamsPtr = NULL;
-    Oscl_Vector<CPMPlugInParams, OsclMemAllocator>::iterator it = LookUpAccessPlugIn(aCmd.iSession);
-    if (it)
-    {
-        iLicenseInterface = it->PlugInLicenseInterface();
-        pluginParamsPtr = it;
-    }
-
-    if (iLicenseInterface == NULL)
-    {
-        PVMF_CPM_LOGERROR((0, "PVMFCPMImpl::DoGetLicense - No License Interface"));
-        return PVMFErrNotSupported;
-    }
-
-    if (aWideCharVersion == true)
-    {
-        OSCL_wString* contentName = NULL;
-        OsclAny* data = NULL;
-        uint32 dataSize = 0;
-        int32 timeoutMsec = 0;
-        aCmd.Parse(contentName,
-                   data,
-                   dataSize,
-                   timeoutMsec);
-
-        PVMFCPMCommandContext* internalCmd = RequestNewInternalCmd();
-        if (internalCmd != NULL)
-        {
-            internalCmd->cmd = PVMF_CPM_INTERNAL_GET_LICENSE_CMD;
-            internalCmd->parentCmd = PVMF_CPM_GET_LICENSE_W;
-            internalCmd->plugInID = pluginParamsPtr->iPlugInID;
-            OsclAny *cmdContextData =
-                OSCL_REINTERPRET_CAST(OsclAny*, internalCmd);
-            iGetLicenseCmdId =
-                iLicenseInterface->GetLicense(pluginParamsPtr->iPlugInSessionID,
-                                              *contentName,
-                                              data,
-                                              dataSize,
-                                              timeoutMsec,
-                                              cmdContextData);
-            return PVMFPending;
-        }
-        else
-        {
-            PVMF_CPM_LOGERROR((0, "PVMFCPMImpl::DoGetLicense - RequestNewInternalCmd Failed"));
-            return PVMFErrNoMemory;
-        }
-    }
-    else
-    {
-        OSCL_String* contentName = NULL;
-        OsclAny* data = NULL;
-        uint32 dataSize = 0;
-        int32 timeoutMsec = 0;
-        aCmd.Parse(contentName,
-                   data,
-                   dataSize,
-                   timeoutMsec);
-        PVMFCPMCommandContext* internalCmd = RequestNewInternalCmd();
-        if (internalCmd != NULL)
-        {
-            internalCmd->cmd = PVMF_CPM_INTERNAL_GET_LICENSE_CMD;
-            internalCmd->parentCmd = PVMF_CPM_GET_LICENSE;
-            internalCmd->plugInID = pluginParamsPtr->iPlugInID;
-            OsclAny *cmdContextData =
-                OSCL_REINTERPRET_CAST(OsclAny*, internalCmd);
-            iGetLicenseCmdId =
-                iLicenseInterface->GetLicense(pluginParamsPtr->iPlugInSessionID,
-                                              *contentName,
-                                              data,
-                                              dataSize,
-                                              timeoutMsec,
-                                              cmdContextData);
-            return PVMFPending;
-        }
-        else
-        {
-            PVMF_CPM_LOGERROR((0, "PVMFCPMImpl::DoGetLicense - RequestNewInternalCmd Failed"));
-            return PVMFErrNoMemory;
-        }
-    }
-}
-
-void PVMFCPMImpl::CompleteGetLicense()
-{
-    PVMF_CPM_LOGINFO((0, "PVMFCPMImpl::CompleteGetLicense - Success"));
-    CommandComplete(iCurrentCommand,
-                    iCurrentCommand.front(),
-                    PVMFSuccess);
-}
-
-void PVMFCPMImpl::DoCancelGetLicense(PVMFCPMCommand& aCmd)
-{
-    PVMF_CPM_LOGINFO((0, "PVMFCPMImpl:DoCancelGetLicense is called"));
-    /* extract the command ID from the parameters.*/
-    PVMFCommandId id;
-    aCmd.PVMFCPMCommandBase::Parse(id);
-    PVMFStatus status = PVMFErrArgument;
-
-    iLicenseInterface = NULL;
-    CPMPlugInParams* pluginParamsPtr = NULL;
-    Oscl_Vector<CPMPlugInParams, OsclMemAllocator>::iterator it = LookUpAccessPlugIn(aCmd.iSession);
-    if (it)
-    {
-        iLicenseInterface = it->PlugInLicenseInterface();
-        pluginParamsPtr = it;
-    }
-
-    /* first check "current" command if any */
-    PVMFCPMCommand* cmd = iCurrentCommand.FindById(id);
-    if (cmd)
-    {
-        if (cmd->iCmd == PVMF_CPM_GET_LICENSE_W || cmd->iCmd == PVMF_CPM_GET_LICENSE)
-        {
-            PVMFCPMCommandContext* internalCmd = RequestNewInternalCmd();
-            if (internalCmd != NULL)
-            {
-                internalCmd->cmd = PVMF_CPM_INTERNAL_CANCEL_GET_LICENSE;
-                internalCmd->parentCmd = PVMF_CPM_CANCEL_GET_LICENSE;
-
-                OSCL_ASSERT(pluginParamsPtr);
-
-                if (!pluginParamsPtr)
-
-                {
-
-                    status = PVMFErrCorrupt;
-
-                    PVMF_CPM_LOGERROR((0, "PVMFCPMImpl::DoCancelGetLicense - data corrupted"));
-
-                    CommandComplete(iInputCommands, aCmd, status);
-
-                    return;
-
-                }
-
-                internalCmd->plugInID = pluginParamsPtr->iPlugInID;
-
-                OsclAny *cmdContextData =
-                    OSCL_REINTERPRET_CAST(OsclAny*, internalCmd);
-
-                iLicenseInterface->CancelGetLicense(pluginParamsPtr->iPlugInSessionID, iGetLicenseCmdId, cmdContextData);
-
-                /*
-                 * the queued commands are all asynchronous commands to the
-                 * CPM module. CancelGetLicense can cancel only for GetLicense cmd.
-                 * We need to wait CPMPluginCommandCompleted.
-                 */
-                MoveCmdToCancelQueue(aCmd);
-                return;
-            }
-            else
-            {
-                PVMF_CPM_LOGERROR((0, "PVMFCPMImpl::DoCancelGetLicense - RequestNewInternalCmd Failed"));
-                status = PVMFErrNoMemory;
-            }
-        }
-    }
-    PVMF_CPM_LOGERROR((0, "PVMFCPMImpl::DoCancelGetLicense - current cmd is not GetLicense"));
-    CommandComplete(iInputCommands, aCmd, status);
-    return;
 }
 
 OSCL_EXPORT_REF bool CPMPluginRegistryImpl::addPluginToRegistry(OSCL_String& aMimeType,

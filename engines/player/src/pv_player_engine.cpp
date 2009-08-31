@@ -913,9 +913,9 @@ PVMFStatus PVPlayerEngine::GetLicenseStatus(PVMFCPMLicenseStatus& aStatus)
 {
     if (iThreadSafeQueue.IsInThread())
     {
-        if (iSourceNodeCPMLicenseIF)
+        if (iCPMLicenseIF)
         {
-            return iSourceNodeCPMLicenseIF->GetLicenseStatus(aStatus);
+            return iCPMLicenseIF->GetLicenseStatus(aStatus);
         }
         return PVMFFailure;
     }
@@ -936,12 +936,12 @@ PVMFStatus PVPlayerEngine::DoGetLicenseStatusSync(PVPlayerEngineCommand& aCmd)
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVPlayerEngine::DoGetLicenseStatusSync() In"));
 
     PVMFStatus status = PVMFFailure;
-    if (iSourceNodeCPMLicenseIF)
+    if (iCPMLicenseIF)
     {
         PVMFCPMLicenseStatus* licstatus = (PVMFCPMLicenseStatus*)(aCmd.GetParam(0).pOsclAny_value);
         if (licstatus)
         {
-            status = iSourceNodeCPMLicenseIF->GetLicenseStatus(*licstatus);
+            status = iCPMLicenseIF->GetLicenseStatus(*licstatus);
         }
     }
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVPlayerEngine::DoGetLicenseStatusSync() Out - status = %d", status));
@@ -1022,7 +1022,7 @@ PVPlayerEngine::PVPlayerEngine() :
         iSourceNodeMetadataExtIF(NULL),
         iSourceNodeCapConfigIF(NULL),
         iSourceNodeRegInitIF(NULL),
-        iSourceNodeCPMLicenseIF(NULL),
+        iCPMLicenseIF(NULL),
         iSourceNodePVInterfaceInit(NULL),
         iSourceNodePVInterfaceTrackSel(NULL),
         iSourceNodePVInterfacePBCtrl(NULL),
@@ -1031,8 +1031,9 @@ PVPlayerEngine::PVPlayerEngine() :
         iSourceNodePVInterfaceMetadataExt(NULL),
         iSourceNodePVInterfaceCapConfig(NULL),
         iSourceNodePVInterfaceRegInit(NULL),
-        iSourceNodePVInterfaceCPMLicense(NULL),
+        iPVInterfaceCPMLicense(NULL),
         iCPMGetLicenseCmdId(0),
+        iCPMCancelGetLicenseCmdId(0),
         iMetadataValuesCopiedInCallBack(true),
         iReleaseMetadataValuesPending(false),
         iCurrentContextListMemPool(12),
@@ -1855,6 +1856,7 @@ void PVPlayerEngine::NodeCommandCompleted(const PVMFCmdResp& aResponse)
             // Clear the CancelCmd queue as the cmd has been cancelled.
             iCmdToCancel.clear();
 
+            DereferenceLicenseInterface();
             RemoveDatapathContextFromList(); // empty left over contexts from cancelled datapath commands
             // Now reset the source node
             PVPlayerEngineContext* context = AllocateEngineContext(NULL, iSourceNode, NULL, -1, NULL, -1);
@@ -2222,6 +2224,10 @@ void PVPlayerEngine::NodeCommandCompleted(const PVMFCmdResp& aResponse)
         {
             HandleSourceNodeSetDataSourceRate(*nodecontext, aResponse);
         }
+        else if (nodecontext->iCmdType == PVP_CMD_SourceNodeQueryCPMLicenseIF)
+        {
+            HandleSourceNodeQueryCPMLicenseInterface(*nodecontext, aResponse);
+        }
         else
         {
             switch (iState)
@@ -2242,33 +2248,10 @@ void PVPlayerEngine::NodeCommandCompleted(const PVMFCmdResp& aResponse)
                         case PVP_CMD_SourceNodeQueryDirCtrlIF:
                         case PVP_CMD_SourceNodeQueryMetadataIF:
                         case PVP_CMD_SourceNodeQueryCapConfigIF:
-                        case PVP_CMD_SourceNodeQueryCPMLicenseIF:
                         case PVP_CMD_SourceNodeQuerySrcNodeRegInitIF:
                             HandleSourceNodeQueryInterfaceOptional(*nodecontext, aResponse);
                             break;
 
-                        case PVP_CMD_SourceNodeGetLicense:
-                            HandleSourceNodeGetLicense(*nodecontext, aResponse);
-                            break;
-
-                        case PVP_CMD_SourceNodeCancelGetLicense:
-                            HandleSourceNodeCancelGetLicense(*nodecontext, aResponse);
-                            break;
-
-                        default:
-                            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                                            (0, "PVPlayerEngine::NodeCommandCompleted() Invalid source node command type in PVP_ENGINE_STATE_IDLE. Asserting"));
-                            OSCL_ASSERT(false);
-                            break;
-                    }
-                    break;
-
-                case PVP_ENGINE_STATE_INITIALIZED:
-                    switch (nodecontext->iCmdType)
-                    {
-                        case PVP_CMD_SourceNodeGetLicense:
-                            HandleSourceNodeGetLicense(*nodecontext, aResponse);
-                            break;
                         default:
                             PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
                                             (0, "PVPlayerEngine::NodeCommandCompleted() Invalid source node command type in PVP_ENGINE_STATE_IDLE. Asserting"));
@@ -2548,6 +2531,7 @@ void PVPlayerEngine::HandlePlayerDatapathEvent(int32 /*aDatapathEvent*/, PVMFSta
             // Clear the CancelCmd queue as the cmd has been cancelled.
             iCmdToCancel.clear();
 
+            DereferenceLicenseInterface();
             RemoveDatapathContextFromList(); // empty left over contexts from cancelled datapath commands
             // Now reset the source node
             PVPlayerEngineContext* context = AllocateEngineContext(NULL, iSourceNode, NULL, -1, NULL, -1);
@@ -2771,6 +2755,7 @@ void PVPlayerEngine::RecognizeCompleted(PVMFFormatType aSourceFormatType, OsclAn
             // Clear the CancelCmd queue as the cmd has been cancelled.
             iCmdToCancel.clear();
 
+            DereferenceLicenseInterface();
             RemoveDatapathContextFromList(); // empty left over contexts from cancelled datapath commands
             // Now reset the source node
             PVPlayerEngineContext* context = AllocateEngineContext(NULL, iSourceNode, NULL, -1, NULL, -1);
@@ -2830,6 +2815,71 @@ void PVPlayerEngine::RecognizeCompleted(PVMFFormatType aSourceFormatType, OsclAn
         }
         return;
     }
+}
+
+void PVPlayerEngine::CPMCommandCompleted(const PVMFCmdResp& aResponse)
+{
+    PVPlayerEngineContext* context = (PVPlayerEngineContext*)(aResponse.GetContext());
+
+    OSCL_ASSERT((aResponse.GetCmdId() == iCPMGetLicenseCmdId) || (aResponse.GetCmdId() == iCPMCancelGetLicenseCmdId));
+
+    switch (aResponse.GetCmdStatus())
+    {
+        case PVMFSuccess:
+            EngineCommandCompleted(context->iCmdId, context->iCmdContext, PVMFSuccess);
+            break;
+
+        default:
+        {
+            // Report command complete
+            PVMFStatus cmdstatus = aResponse.GetCmdStatus();
+            PVMFErrorInfoMessageInterface* nextmsg = NULL;
+            if (aResponse.GetEventExtensionInterface())
+            {
+                nextmsg = GetErrorInfoMessageInterface(*(aResponse.GetEventExtensionInterface()));
+            }
+
+            PVUuid uuid = PVPlayerErrorInfoEventTypesUUID;
+            PVMFBasicErrorInfoMessage* errmsg = OSCL_NEW(PVMFBasicErrorInfoMessage, (PVPlayerErrSource, uuid, nextmsg));
+
+            if (aResponse.GetCmdId() == iCPMGetLicenseCmdId)
+            {
+                EngineCommandCompleted(context->iCmdId, context->iCmdContext, cmdstatus, OSCL_STATIC_CAST(PVInterface*, errmsg));
+            }
+            else // if (aResponse.GetCmdId() == iCPMCancelGetLicenseCmdId)
+            {
+                if ((iCurrentCmd[0].GetCmdType() == PVP_ENGINE_COMMAND_ACQUIRE_LICENSE_CHAR) ||
+                        (iCurrentCmd[0].GetCmdType() == PVP_ENGINE_COMMAND_ACQUIRE_LICENSE_WCHAR))
+                {
+                    OSCL_ASSERT(!iCmdToDlaCancel.empty());
+                    if (!iCmdToDlaCancel.empty())
+                    {
+                        PVPlayerEngineCommand currentcmd(iCurrentCmd[0]);
+                        iCurrentCmd.erase(iCurrentCmd.begin());
+                        iCurrentCmd.push_front(iCmdToDlaCancel[0]);
+                        // If we get here, the command isn't queued so the cancel fails
+                        EngineCommandCompleted(context->iCmdId, context->iCmdContext, cmdstatus, OSCL_STATIC_CAST(PVInterface*, errmsg));
+                        iCurrentCmd.push_front(currentcmd);
+                        iCmdToDlaCancel.erase(iCmdToDlaCancel.begin());
+                    }
+                }
+                else if (iCurrentCmd[0].GetCmdType() == PVP_ENGINE_COMMAND_CANCEL_ACQUIRE_LICENSE)
+                {
+                    EngineCommandCompleted(context->iCmdId, context->iCmdContext, cmdstatus, OSCL_STATIC_CAST(PVInterface*, errmsg));
+                }
+            }
+            errmsg->removeRef();
+        }
+        break;
+    }
+
+    if ((aResponse.GetCmdId() == iCPMGetLicenseCmdId) && !iCmdToDlaCancel.empty())
+    {
+        // Set CancelAcquireLicense cmd in current cmd
+        iCurrentCmd.push_front(iCmdToDlaCancel[0]);
+        iCmdToDlaCancel.clear();
+    }
+    FreeEngineContext(context);
 }
 
 //A callback from the threadsafe queue
@@ -3759,6 +3809,8 @@ void PVPlayerEngine::DoCancelAllCommands(PVPlayerEngineCommand& aCmd)
                 // error handling code set engine state to resetting
                 SetEngineState(PVP_ENGINE_STATE_RESETTING);
 
+                DereferenceLicenseInterface();
+
                 PVPlayerEngineContext* context = AllocateEngineContext(NULL, iSourceNode, NULL, -1, NULL, -1);
 
                 PVMFCommandId cmdid = -1;
@@ -3854,6 +3906,8 @@ void PVPlayerEngine::DoCancelCommandBeingProcessed(void)
 
             // No pending command so reset the nodes now
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVPlayerEngine::DoCancelCommandBeingProcessed() No command to cancel, now reset all nodes"));
+
+            DereferenceLicenseInterface();
 
             // reset the source node
             PVPlayerEngineContext* context = AllocateEngineContext(NULL, iSourceNode, NULL, -1, NULL, -1);
@@ -4609,6 +4663,37 @@ PVMFStatus PVPlayerEngine::DoSourceNodeQueryTrackSelIF(PVCommandId aCmdId, OsclA
     return PVMFSuccess;
 }
 
+void PVPlayerEngine::DoSourceNodeQueryCPMLicenseInterface(PVCommandId aCmdId, OsclAny* aCmdContext)
+{
+    if (iCPMLicenseIF)
+    {
+        return;
+    }
+
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_PROF, iPerfLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "PVPlayerEngine::DoSourceNodeQueryCPMLicenseInterface() Tick=%d", OsclTickCount::TickCount()));
+
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVPlayerEngine::DoSourceNodeQueryCPMLicenseInterface() In"));
+
+    // Query for CPM License interface
+    PVPlayerEngineContext* context = NULL;
+    PVMFCommandId cmdid = -1;
+    int32 leavecode = 0;
+
+    context = AllocateEngineContext(NULL, iSourceNode, NULL, aCmdId, aCmdContext, PVP_CMD_SourceNodeQueryCPMLicenseIF);
+    PVUuid licUuid = PVMFCPMPluginLicenseInterfaceUuid;
+    iPVInterfaceCPMLicense = NULL;
+    OSCL_TRY(leavecode, cmdid = iSourceNode->QueryInterface(iSourceNodeSessionId, licUuid, iPVInterfaceCPMLicense, (OsclAny*)context));
+    if (leavecode)
+    {
+        iPVInterfaceCPMLicense = NULL;
+        FreeEngineContext(context);
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::DoSourceNodeQueryCPMLicenseInterface() QueryInterface on iSourceNode did a leave!"));
+        return;
+    }
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVPlayerEngine::DoSourceNodeQueryCPMLicenseInterface() Out"));
+    return;
+}
 
 PVMFStatus PVPlayerEngine::DoSourceNodeQueryInterfaceOptional(PVCommandId aCmdId, OsclAny* aCmdContext)
 {
@@ -4709,25 +4794,6 @@ PVMFStatus PVPlayerEngine::DoSourceNodeQueryInterfaceOptional(PVCommandId aCmdId
     if (leavecode)
     {
         iSourceNodePVInterfaceCapConfig = NULL;
-        FreeEngineContext(context);
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::DoSourceNodeQueryInterfaceOptional() QueryInterface on iSourceNode did a leave!"));
-    }
-    else
-    {
-        ++iNumPendingNodeCmd;
-    }
-
-    // Query for CPM License interface
-    context = NULL;
-    context = AllocateEngineContext(NULL, iSourceNode, NULL, aCmdId, aCmdContext, PVP_CMD_SourceNodeQueryCPMLicenseIF);
-    PVUuid licUuid = PVMFCPMPluginLicenseInterfaceUuid;
-    cmdid = -1;
-    leavecode = 0;
-    iSourceNodePVInterfaceCPMLicense = NULL;
-    OSCL_TRY(leavecode, cmdid = iSourceNode->QueryInterface(iSourceNodeSessionId, licUuid, iSourceNodePVInterfaceCPMLicense, (OsclAny*)context));
-    if (leavecode)
-    {
-        iSourceNodePVInterfaceCPMLicense = NULL;
         FreeEngineContext(context);
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::DoSourceNodeQueryInterfaceOptional() QueryInterface on iSourceNode did a leave!"));
     }
@@ -5211,19 +5277,19 @@ PVMFStatus PVPlayerEngine::DoAcquireLicense(PVPlayerEngineCommand& aCmd)
         return PVMFErrBadHandle;
     }
 
-    //If the license interface is available from the source node, use that.
-    if (iSourceNodeCPMLicenseIF != NULL)
+    //If a license interface is available, use that.
+    if (iCPMLicenseIF != NULL)
     {
-        PVMFStatus status = DoSourceNodeGetLicense(aCmd.GetCmdId(), aCmd.GetContext());
+        PVMFStatus status = DoGetLicense(aCmd.GetCmdId(), aCmd.GetContext());
         if (status != PVMFSuccess)
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::DoAcquireLicense() DoSourceNodeGetLicense failed."));
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::DoAcquireLicense() DoGetLicense failed."));
 
         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVPlayerEngine::DoAcquireLicense() Out"));
         return status;
     }
 
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVPlayerEngine::DoAcquireLicense() Out"));
-    // if the license interface is not available from the source node, fail the command
+    // if the license interface is not available, fail the command
     return PVMFFailure;
 }
 
@@ -5256,38 +5322,37 @@ void PVPlayerEngine::DoCancelAcquireLicense(PVPlayerEngineCommand& aCmd)
                 /* Make the CancelAll() command the current command */
                 iCmdToDlaCancel.push_front(aCmd);
                 /* Properly cancel a command being currently processed */
-                if (iSourceNodeCPMLicenseIF != NULL)
+                if (iCPMLicenseIF != NULL)
                 {
-                    /* Cancel the GetLicense */
-                    PVPlayerEngineContext* context = NULL;
-                    PVMFCommandId cmdid = -1;
                     int32 leavecode = 0;
-                    context = AllocateEngineContext(NULL, iSourceNode, NULL, aCmd.GetCmdId(), aCmd.GetContext(), PVP_CMD_SourceNodeCancelGetLicense);
-
-                    OSCL_TRY(leavecode, cmdid = iSourceNodeCPMLicenseIF->CancelGetLicense(iSourceNodeSessionId, iCPMGetLicenseCmdId, (OsclAny*)context));
+                    PVPlayerEngineContext* context = AllocateEngineContext(NULL, NULL, NULL, aCmd.GetCmdId(), aCmd.GetContext(), PVP_CMD_CancelGetLicense);
+                    OSCL_TRY(leavecode, iCPMCancelGetLicenseCmdId = iCPMLicenseIF->CancelGetLicense(iSourceNodeSessionId, iCPMGetLicenseCmdId, (OsclAny*)context));
                     if (leavecode)
                     {
                         FreeEngineContext(context);
+                        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
+                                        (0, "PVPlayerEngine::DoCancelAcquireLicense() CancelGetLicense on iCPMLicenseIF did a leave!"));
                         status = PVMFErrNotSupported;
-                        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::DoCancelAcquireLicense() CancelGetLicense on iSourceNode did a leave!"));
                     }
                 }
                 else
                 {
-                    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::DoCancelAcquireLicense() CPM plug-in registry in local data source not specified."));
-                    OSCL_ASSERT(false);
+                    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
+                                    (0, "PVPlayerEngine::DoCancelAcquireLicense() CPM plug-in registry in local data source not specified."));
                     status = PVMFErrBadHandle;
                 }
             }
             else
             {
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::DoCancelAcquireLicense() Current cmd is not AquireLicense."));
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
+                                (0, "PVPlayerEngine::DoCancelAcquireLicense() Current cmd is not AquireLicense."));
                 status = PVMFErrArgument;
             }
         }
         else
         {
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::DoCancelAcquireLicense() Current cmd ID is not equal with App specified cmd ID."));
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
+                            (0, "PVPlayerEngine::DoCancelAcquireLicense() Current cmd ID is not equal with App specified cmd ID."));
             status = PVMFErrArgument;
         }
         if (status != PVMFSuccess)
@@ -5312,52 +5377,51 @@ void PVPlayerEngine::DoCancelAcquireLicense(PVPlayerEngineCommand& aCmd)
     return;
 }
 
-PVMFStatus PVPlayerEngine::DoSourceNodeGetLicense(PVCommandId aCmdId, OsclAny* aCmdContext)
+PVMFStatus PVPlayerEngine::DoGetLicense(PVCommandId aCmdId, OsclAny* aCmdContext)
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_PROF, iPerfLogger, PVLOGMSG_INFO,
-                    (0, "PVPlayerEngine::DoSourceNodeGetLicense() Tick=%d", OsclTickCount::TickCount()));
+                    (0, "PVPlayerEngine::DoGetLicense() Tick=%d", OsclTickCount::TickCount()));
 
-    OSCL_UNUSED_ARG(aCmdId);
-    OSCL_UNUSED_ARG(aCmdContext);
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVPlayerEngine::DoGetLicense() In"));
 
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVPlayerEngine::DoSourceNodeGetLicense() In"));
-
-    if (iSourceNodeCPMLicenseIF == NULL)
+    if (iCPMLicenseIF == NULL)
     {
         OSCL_ASSERT(false);
         return PVMFErrBadHandle;
     }
 
     // Get the license
-    PVPlayerEngineContext* context = NULL;
     int32 leavecode = 0;
-    context = AllocateEngineContext(NULL, iSourceNode, NULL, aCmdId, aCmdContext, PVP_CMD_SourceNodeGetLicense);
+    PVPlayerEngineContext* context = AllocateEngineContext(NULL, NULL, NULL, aCmdId, aCmdContext, PVP_CMD_GetLicense);
     if (iCPMAcquireLicenseParam.iContentNameChar)
     {
         // Use the char version
         iCPMContentNameStr = iCPMAcquireLicenseParam.iContentNameChar;
-        OSCL_TRY(leavecode, iCPMGetLicenseCmdId = iSourceNodeCPMLicenseIF->GetLicense(iSourceNodeSessionId,
-                 iCPMContentNameStr,
-                 iCPMAcquireLicenseParam.iLicenseData,
-                 iCPMAcquireLicenseParam.iLicenseDataSize,
-                 iCPMAcquireLicenseParam.iTimeoutMsec,
-                 (OsclAny*)context));
+        // Using the source node session id.
+        OSCL_TRY(leavecode, iCPMGetLicenseCmdId =
+                     iCPMLicenseIF->GetLicense(iSourceNodeSessionId,
+                                               iCPMContentNameStr,
+                                               iCPMAcquireLicenseParam.iLicenseData,
+                                               iCPMAcquireLicenseParam.iLicenseDataSize,
+                                               iCPMAcquireLicenseParam.iTimeoutMsec,
+                                               (OsclAny*)context));
     }
     else if (iCPMAcquireLicenseParam.iContentNameWChar)
     {
         // Use the wchar version
         iCPMContentNameWStr = iCPMAcquireLicenseParam.iContentNameWChar;
-        OSCL_TRY(leavecode, iCPMGetLicenseCmdId = iSourceNodeCPMLicenseIF->GetLicense(iSourceNodeSessionId,
-                 iCPMContentNameWStr,
-                 iCPMAcquireLicenseParam.iLicenseData,
-                 iCPMAcquireLicenseParam.iLicenseDataSize,
-                 iCPMAcquireLicenseParam.iTimeoutMsec,
-                 (OsclAny*)context));
+        OSCL_TRY(leavecode, iCPMGetLicenseCmdId =
+                     iCPMLicenseIF->GetLicense(iSourceNodeSessionId,
+                                               iCPMContentNameWStr,
+                                               iCPMAcquireLicenseParam.iLicenseData,
+                                               iCPMAcquireLicenseParam.iLicenseDataSize,
+                                               iCPMAcquireLicenseParam.iTimeoutMsec,
+                                               (OsclAny*)context));
     }
     else
     {
         // This should not happen
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::DoSourceNodeGetLicense() Content name not specified. Asserting"));
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::DoGetLicense() Content name not specified. Asserting"));
         OSCL_ASSERT(false);
         return PVMFErrArgument;
     }
@@ -5365,20 +5429,11 @@ PVMFStatus PVPlayerEngine::DoSourceNodeGetLicense(PVCommandId aCmdId, OsclAny* a
     if (leavecode)
     {
         FreeEngineContext(context);
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::DoSourceNodeGetLicense() GetLicense on iSourceNode did a leave!"));
-    }
-    else
-    {
-        ++iNumPendingNodeCmd;
-    }
-
-    if (iNumPendingNodeCmd <= 0)
-    {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVPlayerEngine::DoSourceNodeGetLicense() Out No pending QueryInterface() on source node"));
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::DoGetLicense() GetLicense on iSourceNode did a leave!"));
         return PVMFFailure;
     }
 
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVPlayerEngine::DoSourceNodeGetLicense() Out"));
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVPlayerEngine::DoGetLicense() Out"));
     return PVMFSuccess;
 }
 
@@ -9077,6 +9132,8 @@ PVMFStatus PVPlayerEngine::DoReset(PVPlayerEngineCommand& aCmd)
     {
         if (iSourceNode->GetState() != EPVMFNodeCreated)
         {
+            DereferenceLicenseInterface();
+
             PVPlayerEngineContext* context = AllocateEngineContext(NULL, iSourceNode, NULL, -1, NULL, -1);
 
             PVMFCommandId cmdid = -1;
@@ -9741,12 +9798,6 @@ void PVPlayerEngine::DoSourceNodeCleanup(void)
             iSourceNodeCapConfigIF->removeRef();
             iSourceNodeCapConfigIF = NULL;
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_INFO, (0, "PVPlayerEngine::DoSourceNodeCleanup() - iSourceNodeCapConfigIF Released"));
-        }
-
-        if (iSourceNodeCPMLicenseIF)
-        {
-            iSourceNodeCPMLicenseIF->removeRef();
-            iSourceNodeCPMLicenseIF = NULL;
         }
 
         if (iSourceNodeRegInitIF)
@@ -11943,21 +11994,6 @@ void PVPlayerEngine::HandleSourceNodeQueryInterfaceOptional(PVPlayerEngineContex
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_NOTICE, (0, "PVPlayerEngine::HandleSourceNodeQueryInterfaceOptional() Cap-Config IF not available"));
         }
     }
-    else if (aNodeContext.iCmdType == PVP_CMD_SourceNodeQueryCPMLicenseIF)
-    {
-        if ((aNodeResp.GetCmdStatus() == PVMFSuccess) && iSourceNodePVInterfaceCPMLicense)
-        {
-            iSourceNodeCPMLicenseIF = (PVMFCPMPluginLicenseInterface*)iSourceNodePVInterfaceCPMLicense;
-            iSourceNodePVInterfaceCPMLicense = NULL;
-        }
-        else
-        {
-            //CPM License is not available in this data source
-            iSourceNodePVInterfaceCPMLicense = NULL;
-            iSourceNodeCPMLicenseIF = NULL;
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_NOTICE, (0, "PVPlayerEngine::HandleSourceNodeQueryInterfaceOptional() CPM License IF not available"));
-        }
-    }
     else if (aNodeContext.iCmdType == PVP_CMD_SourceNodeQuerySrcNodeRegInitIF)
     {
         if ((aNodeResp.GetCmdStatus() == PVMFSuccess) && iSourceNodePVInterfaceRegInit)
@@ -12033,6 +12069,9 @@ void PVPlayerEngine::HandleSourceNodeInit(PVPlayerEngineContext& aNodeContext, c
 
     iRollOverState = RollOverStateIdle;
     PVMFStatus cmdstatus;
+
+    // Querying for the CPM License Interface is delayed until the Source Node Init is complete
+    DoSourceNodeQueryCPMLicenseInterface(aNodeContext.iCmdId, aNodeContext.iCmdContext);
 
     switch (aNodeResp.GetCmdStatus())
     {
@@ -12153,6 +12192,27 @@ void PVPlayerEngine::HandleSourceNodeInit(PVPlayerEngineContext& aNodeContext, c
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVPlayerEngine::HandleSourceNodeInit() Out"));
 }
 
+void PVPlayerEngine::HandleSourceNodeQueryCPMLicenseInterface(PVPlayerEngineContext& aNodeContext, const PVMFCmdResp& aNodeResp)
+{
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_PROF, iPerfLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "PVPlayerEngine::HandleSourceNodeQueryCPMLicenseInterface() Tick=%d", OsclTickCount::TickCount()));
+
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVPlayerEngine::HandleSourceNodeQueryCPMLicenseInterface() In"));
+    if ((aNodeResp.GetCmdStatus() == PVMFSuccess) && iPVInterfaceCPMLicense)
+    {
+        iCPMLicenseIF = (PVMFCPMPluginLicenseInterface*)iPVInterfaceCPMLicense;
+        iCPMLicenseIF->SetObserver(*this);
+        iPVInterfaceCPMLicense = NULL;
+    }
+    else
+    {
+        //CPM License is not available in this data source
+        iPVInterfaceCPMLicense = NULL;
+        iCPMLicenseIF = NULL;
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_NOTICE, (0,
+                        "PVPlayerEngine::HandleSourceNodeQueryCPMLicenseInterface() CPM License IF not available"));
+    }
+}
 
 void PVPlayerEngine::HandleSourceNodeGetDurationValue(PVPlayerEngineContext& aNodeContext, const PVMFCmdResp& aNodeResp)
 {
@@ -15522,102 +15582,6 @@ void PVPlayerEngine::HandleDatapathReset(PVPlayerEngineContext& aDatapathContext
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVPlayerEngine::HandleDatapathReset() Out"));
 }
 
-void PVPlayerEngine::HandleSourceNodeGetLicense(PVPlayerEngineContext& aNodeContext, const PVMFCmdResp& aNodeResp)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVPlayerEngine::HandleSourceNodeGetLicense() In"));
-
-    switch (aNodeResp.GetCmdStatus())
-    {
-        case PVMFSuccess:
-            EngineCommandCompleted(aNodeContext.iCmdId, aNodeContext.iCmdContext, PVMFSuccess);
-            break;
-
-        case PVMFErrCancelled:
-        default:
-        {
-            // report command complete
-            PVMFStatus cmdstatus = aNodeResp.GetCmdStatus();
-
-            PVMFErrorInfoMessageInterface* nextmsg = NULL;
-            if (aNodeResp.GetEventExtensionInterface())
-            {
-                nextmsg = GetErrorInfoMessageInterface(*(aNodeResp.GetEventExtensionInterface()));
-            }
-
-            PVUuid puuid = PVPlayerErrorInfoEventTypesUUID;
-            PVMFBasicErrorInfoMessage* errmsg = OSCL_NEW(PVMFBasicErrorInfoMessage, (PVPlayerErrSource, puuid, nextmsg));
-            EngineCommandCompleted(aNodeContext.iCmdId, aNodeContext.iCmdContext, cmdstatus, OSCL_STATIC_CAST(PVInterface*, errmsg));
-            errmsg->removeRef();
-
-        }
-        break;
-    }
-    /* Set CancelAcquireLicense cmd in current cmd */
-    if (!iCmdToDlaCancel.empty())
-    {
-        iCurrentCmd.push_front(iCmdToDlaCancel[0]);
-        iCmdToDlaCancel.clear();
-    }
-}
-
-void PVPlayerEngine::HandleSourceNodeCancelGetLicense(PVPlayerEngineContext& aNodeContext, const PVMFCmdResp& aNodeResp)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVPlayerEngine::HandleSourceNodeCancelGetLicense() In"));
-
-    switch (aNodeResp.GetCmdStatus())
-    {
-        case PVMFSuccess:
-            EngineCommandCompleted(aNodeContext.iCmdId, aNodeContext.iCmdContext, PVMFSuccess);
-            break;
-
-        default:
-        {
-            /* report command complete */
-            PVMFStatus cmdstatus = aNodeResp.GetCmdStatus();
-
-            PVMFErrorInfoMessageInterface* nextmsg = NULL;
-            if (aNodeResp.GetEventExtensionInterface())
-            {
-                nextmsg = GetErrorInfoMessageInterface(*(aNodeResp.GetEventExtensionInterface()));
-            }
-
-            PVUuid puuid = PVPlayerErrorInfoEventTypesUUID;
-            PVMFBasicErrorInfoMessage* errmsg = OSCL_NEW(PVMFBasicErrorInfoMessage, (PVPlayerErrSource, puuid, nextmsg));
-
-            if (iCurrentCmd[0].GetCmdType() == PVP_ENGINE_COMMAND_ACQUIRE_LICENSE_CHAR
-                    || iCurrentCmd[0].GetCmdType() == PVP_ENGINE_COMMAND_ACQUIRE_LICENSE_WCHAR)
-            {
-                if (!iCmdToDlaCancel.empty())
-                {
-                    PVPlayerEngineCommand currentcmd(iCurrentCmd[0]);
-                    iCurrentCmd.erase(iCurrentCmd.begin());
-                    iCurrentCmd.push_front(iCmdToDlaCancel[0]);
-                    /* If we get here the command isn't queued so the cancel fails */
-                    EngineCommandCompleted(aNodeContext.iCmdId, aNodeContext.iCmdContext, cmdstatus, OSCL_STATIC_CAST(PVInterface*, errmsg));
-                    iCurrentCmd.push_front(currentcmd);
-                    iCmdToDlaCancel.erase(iCmdToDlaCancel.begin());
-                }
-                else
-                {
-                    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::HandleSourceNodeCancelGetLicense() ASSERT"));
-                    OSCL_ASSERT(false);
-                }
-            }
-            else if (iCurrentCmd[0].GetCmdType() == PVP_ENGINE_COMMAND_CANCEL_ACQUIRE_LICENSE)
-            {
-                EngineCommandCompleted(aNodeContext.iCmdId, aNodeContext.iCmdContext, cmdstatus, OSCL_STATIC_CAST(PVInterface*, errmsg));
-            }
-            else
-            {
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::HandleSourceNodeCancelGetLicense() ASSERT"));
-                OSCL_ASSERT(false);
-            }
-            errmsg->removeRef();
-        }
-        break;
-    }
-}
-
 void PVPlayerEngine::HandleSourceNodeErrorEvent(const PVMFAsyncEvent& aEvent)
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::HandleSourceNodeErrorEvent() In"));
@@ -17057,6 +17021,8 @@ PVMFStatus PVPlayerEngine::DoErrorHandling()
                             (0, "PVPlayerEngine::DoErrorHandling() Issue reset on Source Node"));
             // error handling code set engine state to resetting
             SetEngineState(PVP_ENGINE_STATE_RESETTING);
+            DereferenceLicenseInterface();
+
             iRollOverState = RollOverStateIdle; //reset roll over state to Idle, as engine is resetting itself
 
             PVPlayerEngineContext* context = AllocateEngineContext(NULL, iSourceNode, NULL, -1, NULL, -1);
@@ -17261,6 +17227,15 @@ PVPlayerInterface::GetSDKInfo
 {
     aSdkInfo.iLabel = PVPLAYER_ENGINE_SDKINFO_LABEL;
     aSdkInfo.iDate  = PVPLAYER_ENGINE_SDKINFO_DATE;
+}
+
+void PVPlayerEngine::DereferenceLicenseInterface()
+{
+    if (iCPMLicenseIF)
+    {
+        iCPMLicenseIF->removeRef();
+        iCPMLicenseIF = NULL;
+    }
 }
 
 // END FILE

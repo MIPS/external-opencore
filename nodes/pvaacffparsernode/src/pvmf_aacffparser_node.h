@@ -377,8 +377,7 @@ class PVMFAACFFParserNode
         public PVMFCPMStatusObserver,
         public PVMIDatastreamuserInterface,
         public PvmiDataStreamObserver,
-        public PVMFFormatProgDownloadSupportInterface,
-        public PVMFCPMPluginLicenseInterface
+        public PVMFFormatProgDownloadSupportInterface
 {
     public:
 
@@ -464,50 +463,6 @@ class PVMFAACFFParserNode
                                         , int32 aRate
                                         , PVMFTimebase* aTimebase = NULL
                                                                     , OsclAny* aContext = NULL);
-
-        // From PVMFCPMPluginLicenseInterface
-        PVMFStatus GetLicenseURL(PVMFSessionId aSessionId,
-                                 OSCL_wString& aContentName,
-                                 OSCL_wString& aLicenseURL)
-        {
-            //must use Async method.
-            OSCL_UNUSED_ARG(aSessionId);
-            OSCL_UNUSED_ARG(aContentName);
-            OSCL_UNUSED_ARG(aLicenseURL);
-            return PVMFErrNotSupported;
-        }
-
-        PVMFStatus GetLicenseURL(PVMFSessionId aSessionId,
-                                 OSCL_String&  aContentName,
-                                 OSCL_String&  aLicenseURL)
-        {
-            //must use Async method.
-            OSCL_UNUSED_ARG(aSessionId);
-            OSCL_UNUSED_ARG(aContentName);
-            OSCL_UNUSED_ARG(aLicenseURL);
-            return PVMFErrNotSupported;
-        }
-
-        PVMFCommandId GetLicense(PVMFSessionId aSessionId,
-                                 OSCL_wString& aContentName,
-                                 OsclAny* aData,
-                                 uint32 aDataSize,
-                                 int32 aTimeoutMsec,
-                                 OsclAny* aContextData) ;
-
-        PVMFCommandId GetLicense(PVMFSessionId aSessionId,
-                                 OSCL_String&  aContentName,
-                                 OsclAny* aData,
-                                 uint32 aDataSize,
-                                 int32 aTimeoutMsec,
-                                 OsclAny* aContextData);
-
-        PVMFCommandId CancelGetLicense(PVMFSessionId aSessionId
-                                       , PVMFCommandId aCmdId
-                                       , OsclAny* aContextData);
-
-        PVMFStatus GetLicenseStatus(PVMFCPMLicenseStatus& aStatus);
-
 
     private:
 
@@ -676,8 +631,7 @@ class PVMFAACFFParserNode
         PVMFCommandId iCPMGetMetaDataKeysCmdId;
         PVMFCommandId iCPMGetMetaDataValuesCmdId;
         PVMFCommandId iCPMGetLicenseInterfaceCmdId;
-        PVMFCommandId iCPMGetLicenseCmdId;
-        PVMFCommandId iCPMCancelGetLicenseCmdId;
+
         PVMFStatus iCPMRequestUsageCommandStatus;
 
         // Progressive download related

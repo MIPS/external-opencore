@@ -42,11 +42,13 @@
 
 #include "pvmf_return_codes.h"
 #include "pvmf_event_handling.h"
+#include "cpm.h"
 
 #define PVMF_CPMPLUGIN_LICENSE_INTERFACE_MIMETYPE "pvxxx/pvmf/cpm/plugin/license_interface"
 #define PVMFCPMPluginLicenseInterfaceUuid PVUuid(0xfc8fdd13,0x1c46,0x4c7a,0x9e,0xef,0xc8,0x7d,0x34,0x96,0xb2,0x18)
 
 class PVMFCPMLicenseStatus;
+class PVMFCPMStatusObserver;
 
 /**
  * License interface for all Content Policy Manager Plugins
@@ -90,16 +92,16 @@ class PVMFCPMPluginLicenseInterface : public PVInterface
          * @param [in] Optional opaque data associated with the request.
          * @param [in] Size of the optional opaque data.
          * @param [in] Timeout for the request in milliseconds, or (-1) for
-         *   infinite wait.
+         *             infinite wait.
          *
          * @returns A unique command id for asynchronous completion.
          */
-        virtual PVMFCommandId GetLicense(PVMFSessionId aSessionId
-                                         , OSCL_wString& aContentName
-                                         , OsclAny* aLicenseData = NULL
-                                                                   , uint32 aDataSize = 0
-                                                                                        , int32 aTimeoutMsec = (-1)
-                                                                                                               , OsclAny* aContext = NULL) = 0;
+        virtual PVMFCommandId GetLicense(PVMFSessionId aSessionId,
+                                         OSCL_wString& aContentName,
+                                         OsclAny* aLicenseData = NULL,
+                                         uint32 aDataSize = 0,
+                                         int32 aTimeoutMsec = (-1),
+                                         OsclAny* aContext = NULL) = 0;
 
         /**
          * Method to get license
@@ -109,29 +111,29 @@ class PVMFCPMPluginLicenseInterface : public PVInterface
          * @param [in] Optional opaque data associated with the request.
          * @param [in] Size of the optional opaque data.
          * @param [in] Timeout for the request in milliseconds, or (-1) for
-         *   infinite wait.
+         *             infinite wait.
          *
          * @returns A unique command id for asynchronous completion.
          */
-        virtual PVMFCommandId GetLicense(PVMFSessionId aSessionId
-                                         , OSCL_String&  aContentName
-                                         , OsclAny* aLicenseData = NULL
-                                                                   , uint32 aDataSize = 0
-                                                                                        , int32 aTimeoutMsec = (-1)
-                                                                                                               , OsclAny* aContext = NULL) = 0;
+        virtual PVMFCommandId GetLicense(PVMFSessionId aSessionId,
+                                         OSCL_String&  aContentName,
+                                         OsclAny* aLicenseData = NULL,
+                                         uint32 aDataSize = 0,
+                                         int32 aTimeoutMsec = (-1),
+                                         OsclAny* aContext = NULL) = 0;
 
         /**
          * Method to cancel GetLicense requests.
          *
          * @param [in] The assigned plugin session ID to use for this request
-         * @param aContext [in] Optional opaque data that will be passed back to
-         *                          the user with the command response
+         * @param aContext [in] Optional opaque data that will be passed back
+         *                      to the user with the command response
          *
          * @returns A unique command id for asynchronous completion.
          */
-        virtual PVMFCommandId CancelGetLicense(PVMFSessionId aSessionId
-                                               , PVMFCommandId aCmdId
-                                               , OsclAny* aContext = NULL) = 0;
+        virtual PVMFCommandId CancelGetLicense(PVMFSessionId aSessionId,
+                                               PVMFCommandId aCmdId,
+                                               OsclAny* aContext = NULL) = 0;
 
         /**
          * Method to get the status of an ongoing or recently completed
@@ -142,12 +144,23 @@ class PVMFCPMPluginLicenseInterface : public PVInterface
          * @returns: PVMFSuccess if license status is available, an error
          *   otherwise. Nodes should override if needed.
          */
-        virtual PVMFStatus GetLicenseStatus(
-            PVMFCPMLicenseStatus& aStatus)
+        virtual PVMFStatus GetLicenseStatus(PVMFCPMLicenseStatus& aStatus)
         {
             OSCL_UNUSED_ARG(&aStatus);
             return PVMFErrNotSupported;
         };
+
+        /**
+         *  Method to set the observer to notify the command completion.
+         *  The implementor of this interface is expected to use only this
+         *  observer to report the command completion.
+         *  @param [in] aObserver: Observer of CPM plugin implementing this
+         *                         interface.
+         */
+        virtual void SetObserver(PVMFCPMStatusObserver& aObserver)
+        {
+            OSCL_UNUSED_ARG(aObserver);
+        }
 };
 
 

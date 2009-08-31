@@ -211,9 +211,6 @@ enum PVMFMP4FFParserNodeCommandType
     , PVMP4FF_NODE_CMD_SETDATASOURCERATE
     , PVMP4FF_NODE_CMD_GETNODEMETADATAKEYS
     , PVMP4FF_NODE_CMD_GETNODEMETADATAVALUES
-    , PVMP4FF_NODE_CMD_GET_LICENSE_W
-    , PVMP4FF_NODE_CMD_GET_LICENSE
-    , PVMP4FF_NODE_CMD_CANCEL_GET_LICENSE
     , PVMF_MP4_PARSER_NODE_CAPCONFIG_SETPARAMS
     , PVMP4FF_NODE_CMD_SETDATASOURCEDIRECTION
 };
@@ -391,61 +388,6 @@ class PVMFMP4FFParserNodeCommand : public PVMFMP4FFParserNodeCommandBase
             aTimebase = (PVMFTimebase*)iParam2;
         }
 
-        /* Constructor and parser for GetLicenseW */
-        void Construct(PVMFSessionId s,
-                       int32 cmd,
-                       OSCL_wString& aContentName,
-                       OsclAny* aLicenseData,
-                       uint32 aDataSize,
-                       int32 aTimeoutMsec,
-                       OsclAny* aContext)
-        {
-            PVMFMP4FFParserNodeCommandBase::Construct(s, cmd, aContext);
-            iParam1 = (OsclAny*) & aContentName;
-            iParam2 = (OsclAny*)aLicenseData;
-            iParam3 = (OsclAny*)aDataSize;
-            iParam4 = (OsclAny*)aTimeoutMsec;
-            iParam5 = NULL;
-        }
-        void Parse(OSCL_wString*& aContentName,
-                   OsclAny*& aLicenseData,
-                   uint32& aDataSize,
-                   int32& aTimeoutMsec)
-        {
-            aContentName = (OSCL_wString*)iParam1;
-            aLicenseData = (PVMFTimestamp*)iParam2;
-            aDataSize = (uint32)iParam3;
-            aTimeoutMsec = (int32)iParam4;
-        }
-
-        /* Constructor and parser for GetLicense */
-        void Construct(PVMFSessionId s,
-                       int32 cmd,
-                       OSCL_String& aContentName,
-                       OsclAny* aLicenseData,
-                       uint32 aDataSize,
-                       int32 aTimeoutMsec,
-                       OsclAny* aContext)
-        {
-            PVMFMP4FFParserNodeCommandBase::Construct(s, cmd, aContext);
-            iParam1 = (OsclAny*) & aContentName;
-            iParam2 = (OsclAny*)aLicenseData;
-            iParam3 = (OsclAny*)aDataSize;
-            iParam4 = (OsclAny*)aTimeoutMsec;
-            iParam5 = NULL;
-        }
-        void Parse(OSCL_String*& aContentName,
-                   OsclAny*& aLicenseData,
-                   uint32& aDataSize,
-                   int32& aTimeoutMsec)
-        {
-            aContentName = (OSCL_String*)iParam1;
-            aLicenseData = (PVMFTimestamp*)iParam2;
-            aDataSize = (uint32)iParam3;
-            aTimeoutMsec = (int32)iParam4;
-        }
-
-
         // Need to overlaod the base Destroy routine to cleanup metadata key.
         void Destroy()
         {
@@ -523,7 +465,6 @@ class PVMFMP4FFParserNode
         , public PVMIDatastreamuserInterface
         , public PVMFFormatProgDownloadSupportInterface
         , public OsclTimerObserver
-        , public PVMFCPMPluginLicenseInterface
         , public PvmiCapabilityAndConfigBase
         , public PVMFMediaClockStateObserver // For observing the playback clock states
         , public PvmfDataSourceDirectionControlInterface
@@ -663,49 +604,6 @@ class PVMFMP4FFParserNode
 
         // From OsclTimer
         void TimeoutOccurred(int32 timerID, int32 timeoutInfo);
-
-        /* From PVMFCPMPluginLicenseInterface */
-        PVMFStatus GetLicenseURL(PVMFSessionId aSessionId,
-                                 OSCL_wString& aContentName,
-                                 OSCL_wString& aLicenseURL)
-        {
-            OSCL_UNUSED_ARG(aSessionId);
-            OSCL_UNUSED_ARG(aContentName);
-            OSCL_UNUSED_ARG(aLicenseURL);
-            //must use Async method.
-            return PVMFErrNotSupported;
-        }
-        PVMFStatus GetLicenseURL(PVMFSessionId aSessionId,
-                                 OSCL_String&  aContentName,
-                                 OSCL_String&  aLicenseURL)
-        {
-            OSCL_UNUSED_ARG(aSessionId);
-            OSCL_UNUSED_ARG(aContentName);
-            OSCL_UNUSED_ARG(aLicenseURL);
-            //must use Async method.
-            return PVMFErrNotSupported;
-        }
-
-        PVMFCommandId GetLicense(PVMFSessionId aSessionId,
-                                 OSCL_wString& aContentName,
-                                 OsclAny* aData,
-                                 uint32 aDataSize,
-                                 int32 aTimeoutMsec,
-                                 OsclAny* aContextData) ;
-
-        PVMFCommandId GetLicense(PVMFSessionId aSessionId,
-                                 OSCL_String&  aContentName,
-                                 OsclAny* aData,
-                                 uint32 aDataSize,
-                                 int32 aTimeoutMsec,
-                                 OsclAny* aContextData);
-
-        PVMFCommandId CancelGetLicense(PVMFSessionId aSessionId
-                                       , PVMFCommandId aCmdId
-                                       , OsclAny* aContextData);
-
-        PVMFStatus GetLicenseStatus(
-            PVMFCPMLicenseStatus& aStatus) ;
 
         //from PVMFMediaClockStateObserver
         void ClockStateUpdated();
@@ -911,8 +809,6 @@ class PVMFMP4FFParserNode
         PVMFCommandId iCPMGetMetaDataKeysCmdId;
         PVMFCommandId iCPMGetMetaDataValuesCmdId;
         PVMFCommandId iCPMGetLicenseInterfaceCmdId;
-        PVMFCommandId iCPMGetLicenseCmdId;
-        PVMFCommandId iCPMCancelGetLicenseCmdId;
         void InitCPM();
         void OpenCPMSession();
         void CPMRegisterContent();

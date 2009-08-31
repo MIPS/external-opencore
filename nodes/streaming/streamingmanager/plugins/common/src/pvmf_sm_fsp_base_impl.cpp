@@ -290,6 +290,10 @@ bool PVMFSMFSPBaseNode::queryInterface(const PVUuid& uuid, PVInterface*& iface)
     {
         iface = OSCL_STATIC_CAST(PVMFDataSourceInitializationExtensionInterface*, this);
     }
+    else if (uuid == PVMFCPMPluginLicenseInterfaceUuid)
+    {
+        iface = OSCL_STATIC_CAST(PVInterface*, iCPMLicenseInterface);
+    }
     else
     {
         PVMF_SM_FSP_BASE_LOGERR((0, "PVMFSMFSPBaseNode::queryInterface() please call async version for this UUID."));
@@ -2531,9 +2535,7 @@ void PVMFSMFSPBaseNode::ResetCPMParams(bool aReleaseMem)
     iCPMGetMetaDataKeysCmdId = 0;
     iCPMGetMetaDataValuesCmdId = 0;
     iCPMGetLicenseInterfaceCmdId = 0;
-    iCPMGetLicenseCmdId = 0;
     iCPMGetCapConfigCmdId = 0;
-    iCPMCancelGetLicenseCmdId = 0;
 }
 
 void PVMFSMFSPBaseNode::PopulateAvailableMetadataKeys()

@@ -428,8 +428,7 @@ bool PVMFSMRTSPTUnicastNode::ProcessCommand(PVMFSMFSPBaseNodeCommand& aCmd)
      * command such as Cancel must be able to interrupt a command
      * in progress.
      */
-    if ((iCurrentCommand.size() > 0 && !aCmd.hipri()
-            && aCmd.iCmd != PVMF_SMFSP_NODE_CANCEL_GET_LICENSE)
+    if ((iCurrentCommand.size() > 0 && !aCmd.hipri())
             || iCancelCommand.size() > 0)
         return false;
 
@@ -513,35 +512,6 @@ bool PVMFSMRTSPTUnicastNode::ProcessCommand(PVMFSMFSPBaseNodeCommand& aCmd)
             }
         }
         break;
-        case PVMF_SMFSP_NODE_GET_LICENSE_W:
-        {
-            PVMFStatus status = DoGetLicense(aCmd, true);
-            if (status == PVMFPending)
-            {
-                MoveCmdToCurrentQueue(aCmd);
-            }
-            else
-            {
-                CommandComplete(iInputCommands, aCmd, status);
-            }
-        }
-        break;
-        case PVMF_SMFSP_NODE_GET_LICENSE:
-        {
-            PVMFStatus status = DoGetLicense(aCmd);
-            if (status == PVMFPending)
-            {
-                MoveCmdToCurrentQueue(aCmd);
-            }
-            else
-            {
-                CommandComplete(iInputCommands, aCmd, status);
-            }
-        }
-        break;
-        case PVMF_SMFSP_NODE_CANCEL_GET_LICENSE:
-            DoCancelGetLicense(aCmd);
-            break;
         case PVMF_SMFSP_NODE_CAPCONFIG_SETPARAMS:
         {
             PvmiMIOSession session;
@@ -625,9 +595,7 @@ void PVMFSMRTSPTUnicastNode::DoQueryInterface(PVMFSMFSPBaseNodeCommand& aCmd)
     }
     else if (*uuid == PVMFCPMPluginLicenseInterfaceUuid)
     {
-        PVMFCPMPluginLicenseInterface* interimPtr =
-            OSCL_STATIC_CAST(PVMFCPMPluginLicenseInterface*, this);
-        *ptr = OSCL_STATIC_CAST(PVInterface*, interimPtr);
+        *ptr = OSCL_STATIC_CAST(PVInterface*, iCPMLicenseInterface);
     }
     else
     {

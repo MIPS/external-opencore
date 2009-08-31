@@ -62,6 +62,7 @@
 
 #define PVMF_AMR_PARSER_NODE_MAX_CPM_METADATA_KEYS 256
 
+
 /**
 * Track/Port information
 */
@@ -73,7 +74,7 @@ class MediaClockConverter;
 
 class PVLogger;
 
-class PVMFAMRFFParserNode : public PVMFNodeInterfaceImpl
+class PVMFAMRFFParserNode :  public PVMFNodeInterfaceImpl
         , public PVMFDataSourceInitializationExtensionInterface
         , public PVMFTrackSelectionExtensionInterface
         , public PvmfDataSourcePlaybackControlInterface
@@ -82,15 +83,12 @@ class PVMFAMRFFParserNode : public PVMFNodeInterfaceImpl
         , public PVMIDatastreamuserInterface
         , public PvmiDataStreamObserver
         , public PVMFFormatProgDownloadSupportInterface
-        , public PVMFCPMPluginLicenseInterface
 {
     public:
         PVMFAMRFFParserNode(int32 aPriority = OsclActiveObject::EPriorityNominal);
         ~PVMFAMRFFParserNode();
 
-
-        // From PVMFNodeInterface
-
+        // From PVMFNodeInterfaceImpl
         PVMFStatus QueryInterfaceSync(PVMFSessionId aSession,
                                       const PVUuid& aUuid,
                                       PVInterface*& aInterfacePtr);
@@ -170,46 +168,6 @@ class PVMFAMRFFParserNode : public PVMFNodeInterfaceImpl
         //from PVMFPortActivityHandler
         void HandlePortActivity(const PVMFPortActivity& aActivity);
 
-        /* From PVMFCPMPluginLicenseInterface */
-        PVMFStatus GetLicenseURL(PVMFSessionId aSessionId,
-                                 OSCL_wString& aContentName,
-                                 OSCL_wString& aLicenseURL)
-        {
-            OSCL_UNUSED_ARG(aSessionId);
-            OSCL_UNUSED_ARG(aContentName);
-            OSCL_UNUSED_ARG(aLicenseURL);
-            //must use Async method.
-            return PVMFErrNotSupported;
-        }
-        PVMFStatus GetLicenseURL(PVMFSessionId aSessionId,
-                                 OSCL_String&  aContentName,
-                                 OSCL_String&  aLicenseURL)
-        {
-            OSCL_UNUSED_ARG(aSessionId);
-            OSCL_UNUSED_ARG(aContentName);
-            OSCL_UNUSED_ARG(aLicenseURL);
-            //must use Async method.
-            return PVMFErrNotSupported;
-        }
-
-        PVMFCommandId GetLicense(PVMFSessionId aSessionId,
-                                 OSCL_wString& aContentName,
-                                 OsclAny* aData,
-                                 uint32 aDataSize,
-                                 int32 aTimeoutMsec,
-                                 OsclAny* aContextData) ;
-
-        PVMFCommandId GetLicense(PVMFSessionId aSessionId,
-                                 OSCL_String&  aContentName,
-                                 OsclAny* aData,
-                                 uint32 aDataSize,
-                                 int32 aTimeoutMsec,
-                                 OsclAny* aContextData);
-
-        PVMFCommandId CancelGetLicense(PVMFSessionId aSessionId
-                                       , PVMFCommandId aCmdId
-                                       , OsclAny* aContextData);
-
     private:
         void Construct();
         virtual void Run();
@@ -229,7 +187,7 @@ class PVMFAMRFFParserNode : public PVMFNodeInterfaceImpl
         PVMFStatus DoFlush(PVMFNodeCommand&);
         PVMFStatus DoCancelAllCommands(PVMFNodeCommand&);
         PVMFStatus DoCancelCommand(PVMFNodeCommand&);
-        PVMFStatus DoRequestPort(PVMFNodeCommand&, PVMFPortInterface*& aPort);
+        PVMFStatus DoRequestPort(PVMFNodeCommand&, PVMFPortInterface*&);
         PVMFStatus DoReleasePort(PVMFNodeCommand&);
 
         void CompleteReset();
@@ -307,15 +265,11 @@ class PVMFAMRFFParserNode : public PVMFNodeInterfaceImpl
 
         /* From PVMFCPMStatusObserver */
         void CPMCommandCompleted(const PVMFCmdResp& aResponse);
-        PVMFStatus DoGetLicense(PVMFNodeCommand& aCmd,
-                                bool aWideCharVersion = false);
-        PVMFStatus DoCancelGetLicense(PVMFNodeCommand& aCmd);
-        void CompleteGetLicense();
         PVMFStatus ParseAMRFile();
 
         /* Progressive download related */
         PVMFStatus CheckForAMRHeaderAvailability();
-        uint64  iAMRHeaderSize;
+        uint64 iAMRHeaderSize;
         bool iAutoPaused;
         bool iDownloadComplete;
         PVMFDownloadProgressInterface* iDownloadProgressInterface;
@@ -371,8 +325,7 @@ class PVMFAMRFFParserNode : public PVMFNodeInterfaceImpl
         PVMFCommandId iCPMGetMetaDataKeysCmdId;
         PVMFCommandId iCPMGetMetaDataValuesCmdId;
         PVMFCommandId iCPMGetLicenseInterfaceCmdId;
-        PVMFCommandId iCPMGetLicenseCmdId;
-        PVMFCommandId iCPMCancelGetLicenseCmdId;
+
         PVMFStatus iCPMRequestUsageCommandStatus;
         uint32 iCountToCalculateRDATimeInterval;
 };

@@ -109,9 +109,6 @@ enum PVMFDownloadManagerNodeCommandType
     , PVDLM_NODE_CMD_SETDATASOURCERATE
     , PVDLM_NODE_CMD_GETNODEMETADATAKEY
     , PVDLM_NODE_CMD_GETNODEMETADATAVALUE
-    , PVDLM_NODE_CMD_GET_LICENSE
-    , PVDLM_NODE_CMD_GET_LICENSE_W
-    , PVDLM_NODE_CMD_CANCEL_GET_LICENSE
 };
 
 class PVMFDownloadManagerNodeCommand : public PVMFDownloadManagerNodeCommandBase
@@ -121,8 +118,7 @@ class PVMFDownloadManagerNodeCommand : public PVMFDownloadManagerNodeCommandBase
         //command to the list of hi-priority commands.
         bool hipri()
         {
-            return PVMFDownloadManagerNodeCommandBase::hipri()
-                   || iCmd == PVDLM_NODE_CMD_CANCEL_GET_LICENSE;
+            return PVMFDownloadManagerNodeCommandBase::hipri();
         }
 
         // Constructor and parser for GetNodeMetadataKey
@@ -267,60 +263,6 @@ class PVMFDownloadManagerNodeCommand : public PVMFDownloadManagerNodeCommandBase
                     break;
             }
         }
-        /* Constructor and parser for GetLicenseW */
-        void Construct(PVMFSessionId s,
-                       int32 cmd,
-                       OSCL_wString& aContentName,
-                       OsclAny* aLicenseData,
-                       uint32 aDataSize,
-                       int32 aTimeoutMsec,
-                       OsclAny* aContext)
-        {
-            PVMFDownloadManagerNodeCommandBase::Construct(s, cmd, aContext);
-            iParam1 = (OsclAny*) & aContentName;
-            iParam2 = (OsclAny*)aLicenseData;
-            iParam3 = (OsclAny*)aDataSize;
-            iParam4 = (OsclAny*)aTimeoutMsec;
-            iParam5 = NULL;
-        }
-        void Parse(OSCL_wString*& aContentName,
-                   OsclAny*& aLicenseData,
-                   uint32& aDataSize,
-                   int32& aTimeoutMsec)
-        {
-            aContentName = (OSCL_wString*)iParam1;
-            aLicenseData = (PVMFTimestamp*)iParam2;
-            aDataSize = (uint32)iParam3;
-            aTimeoutMsec = (int32)iParam4;
-        }
-
-        /* Constructor and parser for GetLicense */
-        void Construct(PVMFSessionId s,
-                       int32 cmd,
-                       OSCL_String& aContentName,
-                       OsclAny* aLicenseData,
-                       uint32 aDataSize,
-                       int32 aTimeoutMsec,
-                       OsclAny* aContext)
-        {
-            PVMFDownloadManagerNodeCommandBase::Construct(s, cmd, aContext);
-            iParam1 = (OsclAny*) & aContentName;
-            iParam2 = (OsclAny*)aLicenseData;
-            iParam3 = (OsclAny*)aDataSize;
-            iParam4 = (OsclAny*)aTimeoutMsec;
-            iParam5 = NULL;
-        }
-        void Parse(OSCL_String*& aContentName,
-                   OsclAny*& aLicenseData,
-                   uint32& aDataSize,
-                   int32& aTimeoutMsec)
-        {
-            aContentName = (OSCL_String*)iParam1;
-            aLicenseData = (PVMFTimestamp*)iParam2;
-            aDataSize = (uint32)iParam3;
-            aTimeoutMsec = (int32)iParam4;
-        }
-
 };
 
 
@@ -356,10 +298,6 @@ class PVMFDownloadManagerSubNodeContainerBase
 
         //Node Command processing
         PVMFCommandId iCmdId;
-
-        //License Command Processing
-        PVMFCommandId iCPMGetLicenseCmdId;
-        PVMFCommandId iCPMCancelGetLicenseCmdId;
 
         enum CmdState
         {
@@ -400,11 +338,6 @@ class PVMFDownloadManagerSubNodeContainerBase
             //Recognizer module commands
             , ERecognizerStart = 24
             , ERecognizerClose = 25
-            //License commands.
-            , ECPMQueryLicenseInterface = 26
-            , ECPMGetLicense = 27
-            , ECPMGetLicenseW = 28
-            , ECPMCancelGetLicense = 29
         };
 
         int32 iCmd;
@@ -607,7 +540,6 @@ class PVMFDownloadManagerNode
         , public PvmfDataSourcePlaybackControlInterface
         , public PVMFMetadataExtensionInterface
         , public PVMFDataSourceNodeRegistryInitInterface
-        , public PVMFCPMPluginLicenseInterface
         // For observing the playback clock states
         , public PVMFMediaClockStateObserver
 {
@@ -718,46 +650,6 @@ class PVMFDownloadManagerNode
         //from PVMFMediaClockStateObserver
         void ClockStateUpdated();
         void NotificationsInterfaceDestroyed();
-
-        /* From PVMFCPMPluginLicenseInterface */
-        PVMFStatus GetLicenseURL(PVMFSessionId aSessionId,
-                                 OSCL_wString& aContentName,
-                                 OSCL_wString& aLicenseURL)
-        {
-            OSCL_UNUSED_ARG(aSessionId);
-            OSCL_UNUSED_ARG(aContentName);
-            OSCL_UNUSED_ARG(aLicenseURL);
-            //must use Async method.
-            return PVMFErrNotSupported;
-        }
-        PVMFStatus GetLicenseURL(PVMFSessionId aSessionId,
-                                 OSCL_String&  aContentName,
-                                 OSCL_String&  aLicenseURL)
-        {
-            OSCL_UNUSED_ARG(aSessionId);
-            OSCL_UNUSED_ARG(aContentName);
-            OSCL_UNUSED_ARG(aLicenseURL);
-            //must use Async method.
-            return PVMFErrNotSupported;
-        }
-
-        PVMFCommandId GetLicense(PVMFSessionId aSessionId,
-                                 OSCL_wString& aContentName,
-                                 OsclAny* aData,
-                                 uint32 aDataSize,
-                                 int32 aTimeoutMsec,
-                                 OsclAny* aContextData) ;
-
-        PVMFCommandId GetLicense(PVMFSessionId aSessionId,
-                                 OSCL_String&  aContentName,
-                                 OsclAny* aData,
-                                 uint32 aDataSize,
-                                 int32 aTimeoutMsec,
-                                 OsclAny* aContextData);
-
-        PVMFCommandId CancelGetLicense(PVMFSessionId aSessionId
-                                       , PVMFCommandId aCmdId
-                                       , OsclAny* aContextData);
 
     private:
         bool iDebugMode;
@@ -950,12 +842,6 @@ class PVMFDownloadManagerNode
 
         // HTTP Content-Type header MIME string hint from the server
         OSCL_HeapString<OsclMemAllocator> iContentTypeMIMEString;
-
-        PVMFStatus DoGetLicense(PVMFDownloadManagerNodeCommand& aCmd,
-                                bool aWideCharVersion = false);
-        void CompleteGetLicense();
-
-        PVMFStatus DoCancelGetLicense(PVMFDownloadManagerNodeCommand& aCmd);
 
         PVMFStatus ParsePLSFile(OSCL_wString& aPLSFile);
 

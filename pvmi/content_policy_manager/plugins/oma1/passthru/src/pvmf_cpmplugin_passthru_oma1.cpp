@@ -106,8 +106,10 @@ void PVMFCPMPassThruPlugInOMA1::DestroyPlugIn(PVMFCPMPluginInterface* aPlugIn)
 OSCL_EXPORT_REF PVMFCPMPassThruPlugInOMA1::PVMFCPMPassThruPlugInOMA1(bool aFailAuthorizeUsage, bool aCancelAcquireLicense,
         bool aSourceInitDataNotSupported, PVMFCPMContentType aCPMContentType,
         int32 aPriority)
-        : OsclActiveObject(aPriority, "PVMFCPMPassThruPlugInOMA1"),
-        iExtensionRefCount(0)
+        : OsclActiveObject(aPriority, "PVMFCPMPassThruPlugInOMA1")
+        , iExtensionRefCount(0)
+        , iLicenseInterfaceCommandObserver(NULL)
+        , iGetLicenseCmdId(-1), iCancelGetLicenseCmdId(-1)
 {
     iLogger = NULL;
     oSourceSet = false;
@@ -455,8 +457,16 @@ void PVMFCPMPassThruPlugInOMA1::CommandComplete(PVMFCPMPassThruPlugInOMA1CmdQ& a
     /* Erase the command from the queue */
     aCmdQ.Erase(&aCmd);
 
-    /* Report completion to the session observer */
-    ReportCmdCompleteEvent(session, resp);
+    if ((aCmd.iId == iGetLicenseCmdId) || (aCmd.iId == iCancelGetLicenseCmdId))
+    {
+        OSCL_ASSERT(iLicenseInterfaceCommandObserver);
+        iLicenseInterfaceCommandObserver->CPMCommandCompleted(resp);
+    }
+    else
+    {
+        /* Report completion to the session observer */
+        ReportCmdCompleteEvent(session, resp);
+    }
 
     if (errormsg)
     {
@@ -825,7 +835,8 @@ OSCL_EXPORT_REF PVMFCommandId PVMFCPMPassThruPlugInOMA1::GetLicense(PVMFSessionI
                   &aDataSize,
                   &aTimeoutMsec,
                   aContext);
-    return QueueCommandL(cmd);
+    iGetLicenseCmdId = QueueCommandL(cmd);
+    return iGetLicenseCmdId;
 }
 
 OSCL_EXPORT_REF PVMFCommandId PVMFCPMPassThruPlugInOMA1::GetLicense(PVMFSessionId aSessionId
@@ -844,7 +855,8 @@ OSCL_EXPORT_REF PVMFCommandId PVMFCPMPassThruPlugInOMA1::GetLicense(PVMFSessionI
                   &aDataSize,
                   &aTimeoutMsec,
                   aContext);
-    return QueueCommandL(cmd);
+    iGetLicenseCmdId = QueueCommandL(cmd);
+    return iGetLicenseCmdId;
 }
 
 OSCL_EXPORT_REF PVMFCommandId
@@ -853,7 +865,13 @@ PVMFCPMPassThruPlugInOMA1::CancelGetLicense(PVMFSessionId aSessionId, PVMFComman
     PVMF_CPMPLUGIN_PASSTHRUOMA1_LOGINFO((0, "PVMFCPMPassThruPlugInOMA1::CancelGetLicense - called"));
     PVMFCPMPassThruPlugInOMA1Command cmd;
     cmd.PVMFCPMPassThruPlugInOMA1CommandBase::Construct(aSessionId, PVMF_CPM_PASSTHRU_PLUGIN_OMA1_CANCEL_GET_LICENSE, aCmdId, aContext);
-    return QueueCommandL(cmd);
+    iCancelGetLicenseCmdId = QueueCommandL(cmd);
+    return iCancelGetLicenseCmdId;
+}
+
+OSCL_EXPORT_REF void PVMFCPMPassThruPlugInOMA1::SetObserver(PVMFCPMStatusObserver& aObserver)
+{
+    iLicenseInterfaceCommandObserver = &aObserver;
 }
 
 /**

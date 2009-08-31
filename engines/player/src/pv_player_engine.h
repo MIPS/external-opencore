@@ -119,6 +119,7 @@
 #endif
 
 #include "threadsafe_queue.h"
+#include "cpm.h"
 
 /**
  * PVPlayerEngineState enum
@@ -890,6 +891,7 @@ class PVPlayerEngine
         , public PVPlayerTrackSelectionInterface
         , public PVMFMediaClockNotificationsObs
         , public ThreadSafeQueueObserver
+        , public PVMFCPMStatusObserver
 {
     public:
         static PVPlayerEngine* New(PVCommandStatusObserver *aCmdObserver,
@@ -1011,6 +1013,9 @@ class PVPlayerEngine
         // From PVPlayerRecognizerRegistryObserver
         void RecognizeCompleted(PVMFFormatType aSourceFormatType, OsclAny* aContext);
 
+        // From PVMFCPMStatusObserver
+        void CPMCommandCompleted(const PVMFCmdResp& aResponse);
+
         // Command and event queueing related functions
         PVCommandId AddCommandToQueue(int32 aCmdType, OsclAny* aContextData = NULL,
                                       Oscl_Vector<PVPlayerEngineCommandParamUnion, OsclMemAllocator>* aParamVector = NULL,
@@ -1095,6 +1100,7 @@ class PVPlayerEngine
         PVMFStatus SetupDataSourceForUnknownURLAccess();
         PVMFStatus DoSourceNodeQueryTrackSelIF(PVCommandId aCmdId, OsclAny* aCmdContext);
         PVMFStatus DoSourceNodeQueryInterfaceOptional(PVCommandId aCmdId, OsclAny* aCmdContext);
+        void DoSourceNodeQueryCPMLicenseInterface(PVCommandId aCmdId, OsclAny* aCmdContext);
         PVMFStatus DoGetMetadataKey(PVPlayerEngineCommand& aCmd);
         PVMFStatus DoGetMetadataValue(PVPlayerEngineCommand& aCmd);
         PVMFStatus DoReleaseMetadataValues(PVPlayerEngineCommand& aCmd);
@@ -1104,7 +1110,7 @@ class PVPlayerEngine
         PVMFStatus DoSourceNodeInit(PVCommandId aCmdId, OsclAny* aCmdContext);
         PVMFStatus DoSourceNodeGetDurationValue(PVCommandId aCmdId, OsclAny* aCmdContext);
         PVMFStatus DoAcquireLicense(PVPlayerEngineCommand& aCmd);
-        PVMFStatus DoSourceNodeGetLicense(PVCommandId aCmdId, OsclAny* aCmdContext);
+        PVMFStatus DoGetLicense(PVCommandId aCmdId, OsclAny* aCmdContext);
         PVMFStatus DoAddDataSink(PVPlayerEngineCommand& aCmd);
         PVMFStatus DoSetPlaybackRange(PVPlayerEngineCommand& aCmd);
         PVMFStatus UpdateCurrentEndPosition(PVPPlaybackPosition& aEndPos);
@@ -1201,7 +1207,7 @@ class PVPlayerEngine
         PVMFMetadataExtensionInterface* iSourceNodeMetadataExtIF;
         PvmiCapabilityAndConfig* iSourceNodeCapConfigIF;
         PVMFDataSourceNodeRegistryInitInterface* iSourceNodeRegInitIF;
-        PVMFCPMPluginLicenseInterface* iSourceNodeCPMLicenseIF;
+        PVMFCPMPluginLicenseInterface* iCPMLicenseIF;
         PVInterface* iSourceNodePVInterfaceInit;
         PVInterface* iSourceNodePVInterfaceTrackSel;
         PVInterface* iSourceNodePVInterfacePBCtrl;
@@ -1210,7 +1216,7 @@ class PVPlayerEngine
         PVInterface* iSourceNodePVInterfaceMetadataExt;
         PVInterface* iSourceNodePVInterfaceCapConfig;
         PVInterface* iSourceNodePVInterfaceRegInit;
-        PVInterface* iSourceNodePVInterfaceCPMLicense;
+        PVInterface* iPVInterfaceCPMLicense;
 
         // For CPM license acquisition
         struct PVPlayerEngineCPMAcquireLicenseParam
@@ -1225,6 +1231,7 @@ class PVPlayerEngine
         OSCL_HeapString<OsclMemAllocator> iCPMContentNameStr;
         OSCL_wHeapString<OsclMemAllocator> iCPMContentNameWStr;
         PVMFCommandId iCPMGetLicenseCmdId;
+        PVMFCommandId iCPMCancelGetLicenseCmdId;
 
         // For metadata handling
         // Vector to hold a list of metadata interface available from the node
@@ -1308,8 +1315,6 @@ class PVPlayerEngine
             PVP_CMD_SourceNodeGetDurationValue,
             PVP_CMD_SourceNodeSetDataSourceRate,
             PVP_CMD_SourceNodePrepare,
-            PVP_CMD_SourceNodeGetLicense,
-            PVP_CMD_SourceNodeCancelGetLicense,
             PVP_CMD_SinkNodeQuerySyncCtrlIF,
             PVP_CMD_SinkNodeQueryMetadataIF,
             PVP_CMD_SinkNodeQueryCapConfigIF,
@@ -1344,17 +1349,19 @@ class PVPlayerEngine
             // Recognizer command
             PVP_CMD_QUERYSOURCEFORMATTYPE,
             // source roll over
-            PVP_CMD_SourceNodeRollOver
+            PVP_CMD_SourceNodeRollOver,
+            // CPM commands
+            PVP_CMD_GetLicense,
+            PVP_CMD_CancelGetLicense
         };
 
         // Node command handling functions
         void HandleSourceNodeQueryInitIF(PVPlayerEngineContext& aNodeContext, const PVMFCmdResp& aNodeResp);
         void HandleSourceNodeQueryTrackSelIF(PVPlayerEngineContext& aNodeContext, const PVMFCmdResp& aNodeResp);
         void HandleSourceNodeQueryInterfaceOptional(PVPlayerEngineContext& aNodeContext, const PVMFCmdResp& aNodeResp);
+        void HandleSourceNodeQueryCPMLicenseInterface(PVPlayerEngineContext& aNodeContext, const PVMFCmdResp& aNodeResp);
         void HandleSourceNodeInit(PVPlayerEngineContext& aNodeContext, const PVMFCmdResp& aNodeResp);
         void HandleSourceNodeGetDurationValue(PVPlayerEngineContext& aNodeContext, const PVMFCmdResp& aNodeResp);
-        void HandleSourceNodeGetLicense(PVPlayerEngineContext& aNodeContext, const PVMFCmdResp& aNodeResp);
-        void HandleSourceNodeCancelGetLicense(PVPlayerEngineContext& aNodeContext, const PVMFCmdResp& aNodeResp);
 
         void HandleSourceNodeSetDataSourceRate(PVPlayerEngineContext& aNodeContext, const PVMFCmdResp& aNodeResp);
         PVMFStatus DoSinkNodeChangeClockRate();
@@ -1447,6 +1454,7 @@ class PVPlayerEngine
         PVMFStatus IssueDecNodeReset(PVMFNodeInterface* aNode, PVMFSessionId aDecNodeSessionId, OsclAny* aCmdContext, PVMFCommandId &aCmdId);
         PVMFStatus IssueQueryInterface(PVMFNodeInterface* aNode, PVMFSessionId aSessionId, const PVUuid aUuid, PVInterface*& aInterfacePtr, OsclAny* aCmdContext, PVMFCommandId& aCmdId);
         PVMFStatus DoSourceURLQueryFormatType(PVPlayerEngineContext* context, OsclFileHandle* filehandle);
+        void       DereferenceLicenseInterface();
 
         // Handle to the logger node
         PVLogger* iLogger;

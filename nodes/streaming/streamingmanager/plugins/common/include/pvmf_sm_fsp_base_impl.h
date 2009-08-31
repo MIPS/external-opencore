@@ -105,7 +105,6 @@ class PVMFSMFSPBaseNode
         , public PVMFTrackSelectionExtensionInterface
         , public PvmfDataSourcePlaybackControlInterface
         , public PVMFMetadataExtensionInterface
-        , public PVMFCPMPluginLicenseInterface
         , public PVMFNodeErrorEventObserver
         , public PVMFNodeInfoEventObserver
         , public PVMFNodeCmdStatusObserver
@@ -237,30 +236,6 @@ class PVMFSMFSPBaseNode
                 uint32 aStartingValueIndex,
                 uint32 aEndValueIndex);
 
-        /* From PVMFCPMPluginLicenseInterface */
-        virtual PVMFStatus GetLicenseURL(PVMFSessionId aSessionId,
-                                         OSCL_wString& aContentName,
-                                         OSCL_wString& aLicenseURL);
-        virtual PVMFStatus GetLicenseURL(PVMFSessionId aSessionId,
-                                         OSCL_String&  aContentName,
-                                         OSCL_String&  aLicenseURL);
-        virtual PVMFCommandId GetLicense(PVMFSessionId aSessionId
-                                         , OSCL_wString& aContentName
-                                         , OsclAny* aLicenseData = NULL
-                                                                   , uint32 aDataSize = 0
-                                                                                        , int32 aTimeoutMsec = (-1)
-                                                                                                               , OsclAny* aContext = NULL);
-        virtual PVMFCommandId GetLicense(PVMFSessionId aSessionId
-                                         , OSCL_String&  aContentName
-                                         , OsclAny* aLicenseData = NULL
-                                                                   , uint32 aDataSize = 0
-                                                                                        , int32 aTimeoutMsec = (-1)
-                                                                                                               , OsclAny* aContext = NULL);
-        virtual PVMFCommandId CancelGetLicense(PVMFSessionId aSessionId
-                                               , PVMFCommandId aCmdId
-                                               , OsclAny* aContext = NULL);
-        virtual PVMFStatus GetLicenseStatus(PVMFCPMLicenseStatus& aStatus);
-
         /* From PVMFNodeErrorEventObserver */
         virtual void HandleNodeErrorEvent(const PVMFAsyncEvent& aEvent);
 
@@ -368,13 +343,6 @@ class PVMFSMFSPBaseNode
         PVMFStatus CompleteGetMetadataKeys(PVMFSMFSPBaseNodeCommand& aCmd);
         PVMFStatus DoGetMetadataValuesBase(PVMFSMFSPBaseNodeCommand& aCmd);
 
-
-        PVMFStatus DoGetLicense(PVMFSMFSPBaseNodeCommand& aCmd,
-                                bool aWideCharVersion = false);
-        void DoCancelGetLicense(PVMFSMFSPBaseNodeCommand& aCmd);
-
-        void CompleteGetLicense();
-
         //CPM related functions
         void InitCPM();
         void OpenCPMSession();
@@ -475,9 +443,7 @@ class PVMFSMFSPBaseNode
         PVMFCommandId iCPMGetMetaDataKeysCmdId;
         PVMFCommandId iCPMGetMetaDataValuesCmdId;
         PVMFCommandId iCPMGetLicenseInterfaceCmdId;
-        PVMFCommandId iCPMGetLicenseCmdId;
         PVMFCommandId iCPMGetCapConfigCmdId;
-        PVMFCommandId iCPMCancelGetLicenseCmdId;
         PVMFStatus iCPMRequestUsageCommandStatus;
 
         PVMFFSPNodeCmdQ iInputCommands;
