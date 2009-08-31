@@ -42,7 +42,7 @@ $(2)/%.$(OBJ_EXT): $(1)/%.cpp
 	$$(call make-cpp-obj-and-depend,$$<,$$@,$$(subst .$(OBJ_EXT),.d,$$@),$$(XPFLAGS),$$(XXFLAGS))
 
 $(2)/%.$(OBJ_EXT): $(1)/%.s
-	$$(call make-asm-obj,$$<,$$@,$$(subst .$(OBJ_EXT),.d,$$@),$$(XPFLAGS),$$(XXFLAGS))
+	$$(call make-asm-obj,$$<,$$@,$$(subst .$(OBJ_EXT),.d,$$@),$$(XPFLAGS),$$(XXFLAGS),$$(XADIRS))
 
 $(2)/%.$(OBJ_EXT): $(1)/%.c
 	$$(call make-c-obj-and-depend,$$<,$$@,$$(subst .$(OBJ_EXT),.d,$$@),$$(XPFLAGS),$$(XXFLAGS))
@@ -186,7 +186,7 @@ define make-asm-obj
 	@echo [make] Building $2
 	@echo [make] Using $1
 	$(call create_objdir,$(@D))
-	$(call assembly-compile,$1,$2,$3,$4,$5)
+	$(call assembly-compile,$1,$2,$3,$4,$5,$6)
 endef
 
 #########################################################
