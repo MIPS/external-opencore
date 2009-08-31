@@ -6021,36 +6021,24 @@ void PVMFOMXEncNode::DoPrepare(PVMFOMXEncNodeCommand& aCmd)
 
                         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
                                         (0, "PVMFOMXEncNode-%s::DoPrepare(): Got Component %s handle ", iNodeTypeId, CompOfRole[ii]));
-                    }
-                    else
-                    {
-                        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
-                                        (0, "PVMFOMXEncNode-%s::DoPrepare(): Cannot get component %s handle, try another component if available", iNodeTypeId, CompOfRole[ii]));
 
-                        continue;
+                        if ((CheckComponentForMultRoles((OMX_STRING)CompName, (OMX_STRING)CompOfRole[ii])) &&
+                                (CheckComponentCapabilities(&iOutFormat)))
+                        {
+                            // Found a component and it passed all tests.   Break out of the loop
+                            break;
+                        }
                     }
 
-                    if (!CheckComponentForMultRoles((OMX_STRING)CompName, (OMX_STRING)CompOfRole[ii]))
+                    // Component failed negotiations
+                    if (iOMXEncoder != NULL)
                     {
-                        // error, free handle and try to find a different component
                         OMX_MasterFreeHandle(iOMXEncoder);
                         iOMXEncoder = NULL;
-
-                        continue;
                     }
 
-                    if (!CheckComponentCapabilities(&iOutFormat))
-                    {
-                        // error, free handle and try to find a different component
-                        OMX_MasterFreeHandle(iOMXEncoder);
-                        iOMXEncoder = NULL;
-
-                        continue;
-                    }
-
-                    // found a component, and it passed all tests.   no need to continue.
-                    break;
                 }
+
                 // whether successful or not, need to free CompOfRoles
                 for (ii = 0; ii < num_comps; ii++)
                 {
@@ -10406,8 +10394,7 @@ bool PVMFOMXEncNode::CheckComponentCapabilities(PVMFFormatType* aOutFormat)
         return false;
     }
     // find out about parameters
-    if ((*aOutFormat == PVMF_MIME_AMR_IETF) || (*aOutFormat == PVMF_MIME_AMRWB_IETF) || (*aOutFormat == PVMF_MIME_AMR_IF2) ||
-            (*aOutFormat == PVMF_MIME_ADIF) || (*aOutFormat == PVMF_MIME_ADTS) || (*aOutFormat == PVMF_MIME_MPEG4_AUDIO))
+    if (aOutFormat->isAudio())
     {
         if (!NegotiateAudioComponentParameters())
         {
