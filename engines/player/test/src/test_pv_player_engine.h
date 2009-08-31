@@ -97,7 +97,8 @@ class pvplayer_engine_test_suite : public test_case
                                    int32 aLogMem,
                                    int32 aFileFormatType,
                                    bool  aProxyEnabled,
-                                   uint32 aDownloadRateInKbps);
+                                   uint32 aDownloadRateInKbps,
+                                   bool aSplitLogFile);
 };
 
 
@@ -361,7 +362,8 @@ class pvplayer_engine_test : public test_case,
                              int32 aLogMem,
                              int32 aFileFormatType,
                              bool aProxyEnabled,
-                             uint32 aDownloadRateInKbps);
+                             uint32 aDownloadRateInKbps,
+                             bool aSplitLogFile);
         ~pvplayer_engine_test();
 
         // Note: for command line options to work, the local tests need to be 0-99,
@@ -2516,6 +2518,7 @@ class pvplayer_engine_test : public test_case,
         int32 iLogNode;
         int32 iLogFile;
         int32 iLogMem;
+        bool iSplitLogFile;
 
         // For memory statistics
         uint32 iTotalAlloc;

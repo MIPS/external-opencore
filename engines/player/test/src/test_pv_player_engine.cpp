@@ -1311,6 +1311,50 @@ void FindMemMgmtRelatedCmdLineParams(cmd_line* command_line, bool& aPrintDetaile
     }
 }
 
+void FindSplitLogFile(cmd_line* command_line, bool& splitlogfile, FILE* aFile)
+{
+    OSCL_UNUSED_ARG(aFile);
+    splitlogfile = false;
+
+    bool cmdline_iswchar = command_line->is_wchar();
+    int count = command_line->get_count();
+
+    // Search for the "-splitlogfile" argument
+    char *stringFound = NULL;
+    if (cmdline_iswchar)
+    {
+        stringFound = new char[256];
+    }
+
+    // Go through each argument
+    for (int index = 0; index < count; index++)
+    {
+        // Convert to UTF8 if necessary
+        if (cmdline_iswchar)
+        {
+            OSCL_TCHAR* cmd = NULL;
+            command_line->get_arg(index, cmd);
+            oscl_UnicodeToUTF8(cmd, oscl_strlen(cmd), stringFound, 256);
+        }
+        else
+        {
+            stringFound = NULL;
+            command_line->get_arg(index, stringFound);
+        }
+
+        if (oscl_strcmp(stringFound, "-splitlogfile") == 0)
+        {
+            splitlogfile = true;        //create separate log files for all tests.
+        }
+    }
+
+    if (cmdline_iswchar)
+    {
+        delete[] stringFound;
+        stringFound = NULL;
+    }
+}
+
 void FindLoggerNode(cmd_line* command_line, int32& lognode, FILE* aFile)
 {
     //default is log player engine.
@@ -1848,6 +1892,9 @@ int _local_main(FILE *filehandle, cmd_line *command_line, bool& aPrintDetailedMe
     int32 logmem;
     FindLogMem(command_line, logmem, file);
 
+    bool splitlogfile;
+    FindSplitLogFile(command_line, splitlogfile, file);
+
     bool proxyenabled;
     uint32 downloadrateinkbps = 0;
     FindProxyEnabled(command_line, proxyenabled, file, downloadrateinkbps);
@@ -1874,7 +1921,8 @@ int _local_main(FILE *filehandle, cmd_line *command_line, bool& aPrintDetailedMe
             logmem,
             iFileFormatType,
             proxyenabled,
-            downloadrateinkbps);
+            downloadrateinkbps,
+            splitlogfile);
     if (engine_tests)
     {
 
@@ -1942,7 +1990,8 @@ pvplayer_engine_test_suite::pvplayer_engine_test_suite(char *aFileName,
         int32 aLogMem,
         int32 aFileFormatType,
         bool aProxyEnabled,
-        uint32 aDownloadRateInKbps): test_case()
+        uint32 aDownloadRateInKbps,
+        bool aSplitLogFile): test_case()
 {
     adopt_test_case(new pvplayer_engine_test(aFileName,
                     aFileType,
@@ -1958,7 +2007,8 @@ pvplayer_engine_test_suite::pvplayer_engine_test_suite(char *aFileName,
                     aLogMem,
                     aFileFormatType,
                     aProxyEnabled,
-                    aDownloadRateInKbps));
+                    aDownloadRateInKbps,
+                    aSplitLogFile));
 }
 
 
@@ -1977,7 +2027,8 @@ pvplayer_engine_test::pvplayer_engine_test(char *aFileName,
         int32 aLogMem,
         int32 aFileFormatType,
         bool aProxyEnabled,
-        uint32 aDownloadRateInKbps)
+        uint32 aDownloadRateInKbps,
+        bool aSplitLogFile)
 {
     iFileName = aFileName;
     iFileType = aFileType;
@@ -1993,6 +2044,7 @@ pvplayer_engine_test::pvplayer_engine_test(char *aFileName,
     iLogNode = aLogNode;
     iLogFile = aLogFile;
     iLogMem = aLogMem;
+    iSplitLogFile = aSplitLogFile;
     iTotalAlloc = 0;
     iTotalBytes = 0;
     iAllocFails = 0;
@@ -7454,13 +7506,61 @@ void pvplayer_engine_test::test()
     }
 }
 
+static void PV_itoa(uint32 value, oscl_wchar* buffer)
+{
+    oscl_wchar *ptr, *firstdigit, temp;
+    uint32 digval;
+    int32 radix = 10;
+    char nullTerm = '\0';
+
+    ptr = buffer;
+    firstdigit = ptr;
+    do
+    {
+        digval = (unsigned)(value % radix);
+        value /= radix;
+
+        if (digval > radix - 1)
+            *ptr++ = (oscl_wchar)(digval - radix + 'a');
+        else
+            *ptr++ = (oscl_wchar)(digval + '0');
+    }
+    while (value > 0);
+
+    *ptr-- = nullTerm;
+
+    do
+    {
+        temp = *ptr;
+        *ptr = *firstdigit;
+        *firstdigit = temp;
+        --ptr;
+        ++firstdigit;
+    }
+    while (firstdigit < ptr);
+}
+
 
 void pvplayer_engine_test::SetupLoggerScheduler()
 {
     // Enable the following code for logging using PV Logger
     PVLogger::Init();
     OSCL_wHeapString<OsclMemAllocator> logfilename(OUTPUTNAME_PREPEND_WSTRING);
-    logfilename += _STRLIT_WCHAR("player.log");
+
+    if (iSplitLogFile)
+    {
+        logfilename += _STRLIT_WCHAR("player_");
+        oscl_wchar tmp[5];
+        // convert testcase number to string
+        PV_itoa(iCurrentTestNumber, tmp);
+        logfilename += _STRLIT_CHAR(tmp);
+        logfilename += _STRLIT_WCHAR(".log");
+    }
+    else
+    {
+        logfilename += _STRLIT_WCHAR("player.log");
+    }
+
 
     PVLoggerAppender *appender = NULL;
     OsclRefCounter *refCounter = NULL;
