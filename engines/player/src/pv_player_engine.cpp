@@ -5124,6 +5124,9 @@ PVMFStatus PVPlayerEngine::DoSourceNodeInit(PVCommandId aCmdId, OsclAny* aCmdCon
 
     int32 leavecode = 0;
 
+    // Clean up any previous reference to license interface
+    DereferenceLicenseInterface();
+
     // Initialize the source node
     PVPlayerEngineContext* context = AllocateEngineContext(NULL, iSourceNode, NULL, aCmdId, aCmdContext, PVP_CMD_SourceNodeInit);
 

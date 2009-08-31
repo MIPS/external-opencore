@@ -1965,7 +1965,6 @@ PVMFStatus PVMFDownloadManagerNode::ScheduleSubNodeCommands(PVMFDownloadManagerN
             {
                 iParserInit = true;
                 Push(iFormatParserNode, PVMFDownloadManagerSubNodeContainerBase::EInit);
-                iInitFailedLicenseRequired = false;
             }
             else
 

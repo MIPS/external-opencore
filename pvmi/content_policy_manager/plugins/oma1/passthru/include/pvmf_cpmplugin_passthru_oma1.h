@@ -270,7 +270,7 @@ class PVMFCPMPassThruPlugInOMA1 : public OsclActiveObject,
                 , PVMFCommandId aCmdId
                 , OsclAny* aContext = NULL);
 
-        void SetObserver(PVMFCPMStatusObserver& aObserver);
+        OSCL_IMPORT_REF void SetObserver(PVMFCPMStatusObserver& aObserver);
         //From PVMFMetadataExtensionInterface
         OSCL_IMPORT_REF uint32 GetNumMetadataKeys(char* aQueryKeyString = NULL) ;
         OSCL_IMPORT_REF uint32 GetNumMetadataValues(PVMFMetadataList& aKeyList) ;
