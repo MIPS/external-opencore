@@ -102,9 +102,7 @@ typedef struct tagvideoDecControls
 typedef enum
 {
     H263_MODE = 0, MPEG4_MODE,
-#if M4VDEC_FLV_SUPPORT
     FLV_MODE,
-#endif
     UNKNOWN_MODE
 } MP4DecodingMode;
 

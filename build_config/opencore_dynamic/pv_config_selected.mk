@@ -35,7 +35,6 @@ flvlocal_support=n
 asflocal_support=n
 janus_support=n
 oma1_passthru_support=y
-wmdrminternalsettings_support=n
 wmdrmoemsettings_support=n
 mtp_db_support=n
 pvdb_config_support=n

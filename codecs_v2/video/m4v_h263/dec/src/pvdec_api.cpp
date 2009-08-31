@@ -235,13 +235,11 @@ OSCL_EXPORT_REF Bool PVInitVideoDecoder(VideoDecControls *decCtrl, uint8 *volbuf
 
                     if (video->shortVideoHeader)
                     {
-#if M4VDEC_FLV_SUPPORT
                         if (mode != FLV_MODE)
                         {
                             mode = H263_MODE;
                         }
                         else
-#endif
                         {
                             video->shortVideoHeader = PV_FLV1;
                         }
@@ -867,13 +865,11 @@ OSCL_EXPORT_REF MP4DecodingMode PVGetDecBitstreamMode(VideoDecControls *decCtrl)
     VideoDecData *video = (VideoDecData *)decCtrl->videoDecoderData;
     if (video->shortVideoHeader)
     {
-#if M4VDEC_FLV_SUPPORT
         if (video->shortVideoHeader & PV_FLV1)
         {
             return FLV_MODE;
         }
         else
-#endif
         {
             return H263_MODE;
         }
