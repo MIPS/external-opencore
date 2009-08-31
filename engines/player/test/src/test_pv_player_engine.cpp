@@ -3273,6 +3273,17 @@ void pvplayer_engine_test::test()
                 ((pvplayer_async_test_ppb_normal*)iCurrentTest)->iTestCaseName = _STRLIT_CHAR("Shoutcast Playback From Playlist For 30 Seconds");
                 break;
 
+            case RTMPStreamingPlayUntilEOSTest:
+#if RUN_RTMPSTREAMING_TESTCASES
+                testparam.iFileType = PVMF_MIME_DATA_SOURCE_RTMP_STREAMING_URL;
+                iCurrentTest = new pvplayer_async_test_ppb_normal(testparam);
+                ((pvplayer_async_test_ppb_normal*)iCurrentTest)->enablePlayUntilEOS();
+                ((pvplayer_async_test_ppb_normal*)iCurrentTest)->iTestCaseName = _STRLIT_CHAR("RTMP Streaming to EOS");
+#else
+                fprintf(file, "RTMP streaming tests not enabled\n");
+#endif
+                break;
+
             case FTDownloadOpenPlayUntilEOSTest:
                 fprintf(file, "Download tests not enabled\n");
                 break;

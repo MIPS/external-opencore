@@ -450,6 +450,12 @@ OSCL_EXPORT_REF bool ProtocolContainer::handleProtocolStateComplete(PVProtocolEn
     return aEventHandler->completePendingCommand(aEvent);
 }
 
+OSCL_EXPORT_REF void ProtocolContainer::setClipDuration(const uint32 aClipDurationMsec)
+{
+    if (iDownloadControl) iDownloadControl->setClipDuration(aClipDurationMsec);
+    if (iDownloadProgess) iDownloadProgess->setClipDuration(aClipDurationMsec);
+}
+
 
 ////////////////////////////////////////////////////////////////////////////////////
 //////  PVMFProtocolEngineNodeOutput implementation

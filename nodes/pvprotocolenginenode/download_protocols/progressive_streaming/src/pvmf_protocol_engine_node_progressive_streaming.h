@@ -78,7 +78,7 @@ class pvProgressiveStreamingOutput : public pvHttpDownloadOutput
         {
             iSourceRequestObserver = aObserver;
         }
-        OSCL_IMPORT_REF void flushDataStream();
+        OSCL_IMPORT_REF virtual void flushDataStream();
         OSCL_IMPORT_REF bool seekDataStream(const uint32 aSeekOffset);
 
         // constructor and destructor
@@ -88,13 +88,13 @@ class pvProgressiveStreamingOutput : public pvHttpDownloadOutput
             flushDataStream();
         }
 
-    private:
+    protected:
         OSCL_IMPORT_REF int32 openDataStream(OsclAny* aInitInfo);
         // write data to data stream object
         // return~0=0xffffffff for error.
         uint32 writeToDataStream(OUTPUT_DATA_QUEUE &aOutputQueue, PENDING_OUTPUT_DATA_QUEUE &aPendingOutputQueue);
 
-    private:
+    protected:
         PvmiDataStreamRequestObserver* iSourceRequestObserver;
 };
 
@@ -148,6 +148,14 @@ class progressiveStreamingEventReporter : public downloadEventReporter
 
         bool checkContentLengthOrTooLarge()
         {
+            // PVMFInfoContentLength
+            uint32 fileSize = iInterfacingObjectContainer->getFileSize();
+
+            if (!iSendContentLengthEvent && fileSize > 0)
+            {
+                iObserver->ReportEvent(PVMFInfoContentLength, (OsclAny*)fileSize);
+                iSendContentLengthEvent = true;
+            }
             return true;
         }
         bool checkContentTruncated(const uint32 downloadStatus)

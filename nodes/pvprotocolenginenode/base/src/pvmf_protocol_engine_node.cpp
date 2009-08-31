@@ -2017,24 +2017,27 @@ bool PVMFProtocolEngineNode::CreateRestObjects()
 
 bool PVMFProtocolEngineNode::CreateEventHandlers()
 {
-    iEventHandlers[0] = OSCL_NEW(HttpHeaderAvailableHandler, (this));
-    if (!iEventHandlers[0]) return false;
-    iEventHandlers[1] = OSCL_NEW(FirstPacketAvailableHandler, (this));
-    if (!iEventHandlers[1]) return false;
-    iEventHandlers[2] = OSCL_NEW(ProtocolEngineDataAvailableHandler, (this));
-    if (!iEventHandlers[2]) return false;
-    iEventHandlers[3] = OSCL_NEW(ProtocolStateCompleteHandler, (this));
-    if (!iEventHandlers[3]) return false;
-    iEventHandlers[4] = OSCL_NEW(EndOfDataProcessingHandler, (this));
-    if (!iEventHandlers[4]) return false;
-    iEventHandlers[5] = OSCL_NEW(ServerResponseErrorBypassingHandler, (this));
-    if (!iEventHandlers[5]) return false;
-    iEventHandlers[6] = OSCL_NEW(ProtocolStateErrorHandler, (this));
-    if (!iEventHandlers[6]) return false;
-    iEventHandlers[7] = OSCL_NEW(CheckResumeNotificationHandler, (this));
-    if (!iEventHandlers[7]) return false;
-    iEventHandlers[8] = OSCL_NEW(OutgoingMsgSentSuccessHandler, (this));
-    if (!iEventHandlers[8]) return false;
+    // use enum PVProtocolEngineNodeInternalEventType to replace hard-coded index
+    iEventHandlers[(uint32)PVProtocolEngineNodeInternalEventType_HttpHeaderAvailable] = OSCL_NEW(HttpHeaderAvailableHandler, (this));
+    if (!iEventHandlers[(uint32)PVProtocolEngineNodeInternalEventType_HttpHeaderAvailable]) return false;
+    iEventHandlers[(uint32)PVProtocolEngineNodeInternalEventType_FirstPacketAvailable] = OSCL_NEW(FirstPacketAvailableHandler, (this));
+    if (!iEventHandlers[(uint32)PVProtocolEngineNodeInternalEventType_FirstPacketAvailable]) return false;
+    iEventHandlers[(uint32)PVProtocolEngineNodeInternalEventType_MetaDataAvailable] = OSCL_NEW(MetaDataAvailableHandler, (this));
+    if (!iEventHandlers[(uint32)PVProtocolEngineNodeInternalEventType_MetaDataAvailable]) return false;
+    iEventHandlers[(uint32)PVProtocolEngineNodeInternalEventType_NormalDataAvailable] = OSCL_NEW(ProtocolEngineDataAvailableHandler, (this));
+    if (!iEventHandlers[(uint32)PVProtocolEngineNodeInternalEventType_NormalDataAvailable]) return false;
+    iEventHandlers[(uint32)PVProtocolEngineNodeInternalEventType_ProtocolStateComplete] = OSCL_NEW(ProtocolStateCompleteHandler, (this));
+    if (!iEventHandlers[(uint32)PVProtocolEngineNodeInternalEventType_ProtocolStateComplete]) return false;
+    iEventHandlers[(uint32)PVProtocolEngineNodeInternalEventType_EndOfProcessing] = OSCL_NEW(EndOfDataProcessingHandler, (this));
+    if (!iEventHandlers[(uint32)PVProtocolEngineNodeInternalEventType_EndOfProcessing]) return false;
+    iEventHandlers[(uint32)PVProtocolEngineNodeInternalEventType_ServerResponseError_Bypassing] = OSCL_NEW(ServerResponseErrorBypassingHandler, (this));
+    if (!iEventHandlers[(uint32)PVProtocolEngineNodeInternalEventType_ServerResponseError_Bypassing]) return false;
+    iEventHandlers[(uint32)PVProtocolEngineNodeInternalEventType_ProtocolStateError] = OSCL_NEW(ProtocolStateErrorHandler, (this));
+    if (!iEventHandlers[(uint32)PVProtocolEngineNodeInternalEventType_ProtocolStateError]) return false;
+    iEventHandlers[(uint32)PVProtocolEngineNodeInternalEventType_CheckResumeNotificationMaually] = OSCL_NEW(CheckResumeNotificationHandler, (this));
+    if (!iEventHandlers[(uint32)PVProtocolEngineNodeInternalEventType_CheckResumeNotificationMaually]) return false;
+    iEventHandlers[(uint32)PVProtocolEngineNodeInternalEventType_OutgoingMsgQueuedAndSentSuccessfully] = OSCL_NEW(OutgoingMsgSentSuccessHandler, (this));
+    if (!iEventHandlers[(uint32)PVProtocolEngineNodeInternalEventType_OutgoingMsgQueuedAndSentSuccessfully]) return false;
 
     iEventHandlers[EVENT_HANDLER_TOTAL-1] = OSCL_NEW(MainDataFlowHandler, (this));
     if (!iEventHandlers[EVENT_HANDLER_TOTAL-1]) return false;
@@ -2116,6 +2119,7 @@ void PVMFProtocolEngineNode::ResetClear(const bool aNeedDelete)
 void PVMFProtocolEngineNode::StopClear()
 {
     if (iProtocolContainer) iProtocolContainer->doStopClear();
+    for (uint32 i = 0; i < EVENT_HANDLER_TOTAL; i++) iEventHandlers[i]->clear();
 }
 
 void PVMFProtocolEngineNode::CancelClear()
@@ -2317,8 +2321,7 @@ void PVMFProtocolEngineNode::setClipDuration(const uint32 aClipDurationMsec)
 {
     LOGINFODATAPATH((0, "PVMFProtocolEngineNode::setClipDuration(), aClipDurationMsec = %dms", aClipDurationMsec));
 
-    if (iDownloadControl) iDownloadControl->setClipDuration(aClipDurationMsec);
-    if (iDownloadProgess) iDownloadProgess->setClipDuration(aClipDurationMsec);
+    iProtocolContainer->setClipDuration(aClipDurationMsec);
 }
 
 OsclSharedPtr<PVMFMediaClock> PVMFProtocolEngineNode::getDownloadProgressClock()
@@ -2759,7 +2762,8 @@ inline bool PVProtocolEngineNodeInternalEventHandler::isCurrEventMatchCurrPendin
 
     // start command
     if (aCmd.iCmd == PVMF_GENERIC_NODE_START &&
-            aCurrEventId == PVProtocolEngineNodeInternalEventType_HttpHeaderAvailable) return true;
+            (aCurrEventId == PVProtocolEngineNodeInternalEventType_HttpHeaderAvailable ||
+             aCurrEventId == PVProtocolEngineNodeInternalEventType_NormalDataAvailable)) return true;
 
     //  stop command
     if (aCmd.iCmd == PVMF_GENERIC_NODE_STOP &&
@@ -3015,7 +3019,8 @@ bool HttpHeaderAvailableHandler::handle(PVProtocolEngineNodeInternalEvent &aEven
     iNode->iEventReport->checkContentInfoEvent(PROCESS_SUCCESS);
 
     // complete start command if it is not completed
-    if (completePendingCommand(aEvent))
+    if (iNode->iProtocolContainer->canCompletePendingCmdForHttpHeaderAvailable() &&
+            completePendingCommand(aEvent))
     {
         iNode->iEventReport->startRealDataflow();
     }
@@ -3070,6 +3075,12 @@ bool FirstPacketAvailableHandler::handle(PVProtocolEngineNodeInternalEvent &aEve
     }
     return true;
 }
+
+bool MetaDataAvailableHandler::handle(PVProtocolEngineNodeInternalEvent &aEvent)
+{
+    return iNode->iProtocolContainer->handleMetaData(aEvent.iEventInfo);
+}
+
 bool ProtocolEngineDataAvailableHandler::handle(PVProtocolEngineNodeInternalEvent &aEvent)
 {
     OUTPUT_DATA_QUEUE aOutputData;
@@ -3081,6 +3092,24 @@ bool ProtocolEngineDataAvailableHandler::handle(PVProtocolEngineNodeInternalEven
         PVProtocolEngineNodeInternalEvent newEvent(PVProtocolEngineNodeInternalEventType_OutputDataReady);
         iNode->iInternalEventQueue.push_back(newEvent);
     }
+
+    if (iCheckPendingCmdComplete)
+    {
+        if (!iNode->iProtocolContainer->canCompletePendingCmdForHttpHeaderAvailable())
+        {
+            if (iNode->iNodeOutput->getCurrentOutputSize() >= PROTOCOLENGINENODE_MIN_STREAMING_SIZE)
+            {
+                completePendingCommand(aEvent);
+                iNode->iEventReport->startRealDataflow();
+                iCheckPendingCmdComplete = false;
+            }
+        }
+        else
+        {
+            iCheckPendingCmdComplete = false;
+        }
+    }
+
     iNode->RunIfNotReady();
     return true;
 }

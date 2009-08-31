@@ -881,6 +881,16 @@ class pvplayer_engine_test : public test_case,
 
             LastShoutcastPlaybackTest, // placeholder
 
+            /**
+             * @test (190) RTMP streaming Until EOS Test
+             * Input http url to a FLV file.
+             * Default url is an http url to an FLV file.
+             * Output YUV and PCM data files from Playback.
+             */
+            RTMPStreamingPlayUntilEOSTest = 190,
+
+            LastRTMPStreamingPlaybackTest, // placeholder
+
             FirstStreamingTest = 200, //placeholder
 
             /**

@@ -110,9 +110,6 @@ extern "C"
     PV_STATUS VlcDecTCOEFIntra(BitstreamDecVideo *stream, Tcoef *pTcoef);
     PV_STATUS VlcDecTCOEFInter(BitstreamDecVideo *stream, Tcoef *pTcoef);
     PV_STATUS VlcDecTCOEFShortHeader(BitstreamDecVideo *stream, Tcoef *pTcoef);
-#if M4VDEC_FLV_SUPPORT
-    PV_STATUS VlcDecTCOEF_FLV1(BitstreamDecVideo *stream, Tcoef *pTcoef);
-#endif
     PV_STATUS RvlcDecTCOEFIntra(BitstreamDecVideo *stream, Tcoef *pTcoef);
     PV_STATUS RvlcDecTCOEFInter(BitstreamDecVideo *stream, Tcoef *pTcoef);
     PV_STATUS PV_VlcDecIntraDCPredSize(BitstreamDecVideo *stream, int compnum, uint *DC_size);

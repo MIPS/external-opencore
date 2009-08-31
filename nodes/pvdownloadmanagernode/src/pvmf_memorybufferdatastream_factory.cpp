@@ -539,7 +539,8 @@ PVMFMemoryBufferReadDataStreamImpl::Read(PvmiDataStreamSession aSessionID, uint8
             // Find out if it is on route to the cache, if so, no need to send reposition request
             // But if the cache is full, we need to send reposition request
             // This code will not be executed for Shoutcast, SCSP always reads within cache, no need to check for offsets wrapping around 4GB mark
-            if (MBDS_STREAM_FORMAT_SHOUTCAST != iStreamFormat)
+            if (MBDS_STREAM_FORMAT_SHOUTCAST != iStreamFormat &&
+                    MBDS_STREAM_FORMAT_RTMPSTREAMING != iStreamFormat)
             {
                 if ((firstByteToRead < firstTempByteOffset) || ((firstByteToRead - lastTempByteOffset) > PV_MBDS_BYTES_TO_WAIT) ||
                         (((firstByteToRead - lastTempByteOffset) <= PV_MBDS_BYTES_TO_WAIT) && ((lastTempByteOffset - firstTempByteOffset + 1) >= iWriteDataStream->GetTempCacheCapacity())))
@@ -2936,6 +2937,10 @@ PVMFMemoryBufferDataStream::PVMFMemoryBufferDataStream(PVMFFormatType& aStreamFo
     if (aStreamFormat == PVMF_MIME_DATA_SOURCE_SHOUTCAST_URL)
     {
         streamFormat = MBDS_STREAM_FORMAT_SHOUTCAST;
+    }
+    else if (aStreamFormat == PVMF_MIME_DATA_SOURCE_RTMP_STREAMING_URL)
+    {
+        streamFormat = MBDS_STREAM_FORMAT_RTMPSTREAMING;
     }
 
     // Create the two factories

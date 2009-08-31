@@ -51,6 +51,7 @@ enum ProtocolEngineOutputDataType
 {
     ProtocolEngineOutputDataType_HttpHeader = 0,
     ProtocolEngineOutputDataType_FirstDataPacket,
+    ProtocolEngineOutputDataType_MetaData,
     ProtocolEngineOutputDataType_NormalData
 };
 
@@ -102,6 +103,8 @@ struct ProtocolStateCompleteInfo
     bool isEOSAchieved;              // true => EOS packet is received in streaming, or download reaches EOS (content-length, server discconnect or maximum file size)
     // for protocol engine side, isDownloadStreamingDone=true <=> isEOSAchieved=true, but node will use this structure for other
     // purposes, e.g. this flag can be used to differentiate stop case and true EOS case
+    bool isMajorState;  // true => major state, and normally node command needs to be completed
+
     // constructors
     ProtocolStateCompleteInfo()
     {
@@ -112,11 +115,13 @@ struct ProtocolStateCompleteInfo
         isDownloadStreamingDone = x.isDownloadStreamingDone;
         isWholeSessionDone      = x.isWholeSessionDone;
         isEOSAchieved           = x.isEOSAchieved;
+        isMajorState            = x.isMajorState;
     }
-    ProtocolStateCompleteInfo(const bool aDownloadStreamingDone, const bool aSessionDone, const bool aEOSAchieved) :
+    ProtocolStateCompleteInfo(const bool aDownloadStreamingDone, const bool aSessionDone, const bool aEOSAchieved, const bool aMajorState = true) :
             isDownloadStreamingDone(aDownloadStreamingDone),
             isWholeSessionDone(aSessionDone),
-            isEOSAchieved(aEOSAchieved)
+            isEOSAchieved(aEOSAchieved),
+            isMajorState(aMajorState)
     {
         ;
     }
@@ -127,6 +132,7 @@ struct ProtocolStateCompleteInfo
         isDownloadStreamingDone = x.isDownloadStreamingDone;
         isWholeSessionDone      = x.isWholeSessionDone;
         isEOSAchieved           = x.isEOSAchieved;
+        isMajorState            = x.isMajorState;
         return *this;
     }
 
@@ -136,6 +142,7 @@ struct ProtocolStateCompleteInfo
         isDownloadStreamingDone = false;
         isWholeSessionDone      = false;
         isEOSAchieved           = false;
+        isMajorState            = true;
     }
 };
 
@@ -279,6 +286,10 @@ class ProtocolState : public HttpParsingBasicObjectObserver,
         {
             return 0;
         }
+        virtual uint32 getClipDuration()
+        {
+            return 0;
+        }
 
         // user commands
         virtual void seek(const uint32 aSeekPosition)
@@ -318,7 +329,7 @@ class ProtocolState : public HttpParsingBasicObjectObserver,
                 iNeedGetResponsePreCheck(true),
                 iRedirect(NULL)
         {
-            iDataPathLogger = PVLogger::GetLoggerObject("datapath.sourcenode.protocolenginenode");
+            iDataPathLogger = PVLogger::GetLoggerObject(NODEDATAPATHLOGGER_TAG);
         }
 
         virtual ~ProtocolState()
@@ -396,6 +407,10 @@ class ProtocolState : public HttpParsingBasicObjectObserver,
         {
             int32 statusCode = iParser->getStatusCode();
             return (statusCode >= Response1xxStartStatusCode && statusCode < Response1xxEndStatusCode);
+        }
+        virtual bool isMajorProtocolStateComplete()
+        {
+            return true;
         }
 
     private:
@@ -661,6 +676,10 @@ class HttpBasedProtocol : public ProtocolStateObserver,
         {
             return iCurrState->getContenBitrate();    // only used in Shoutcast streaming
         }
+        uint32 getClipDuration()
+        {
+            return iCurrState->getClipDuration();    // only used in RTMP streaming
+        }
 
         void resetTotalHttpStreamingSize()
         {
@@ -679,7 +698,7 @@ class HttpBasedProtocol : public ProtocolStateObserver,
                 iComposer(NULL),
                 iParser(NULL)
         {
-            ;
+            iDataPathLogger = PVLogger::GetLoggerObject(NODEDATAPATHLOGGER_TAG);
         }
 
         virtual ~HttpBasedProtocol()
@@ -695,6 +714,7 @@ class HttpBasedProtocol : public ProtocolStateObserver,
         ProtocolObserver *iObserver;
         HTTPComposer *iComposer;
         HttpParsingBasicObject *iParser; // wrap http parser to do parsing for each input media data
+        PVLogger *iDataPathLogger;
 };
 
 class RedirectComposer

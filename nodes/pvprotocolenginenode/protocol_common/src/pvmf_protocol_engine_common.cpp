@@ -580,7 +580,7 @@ int32 ProtocolState::doProcessMicroStateSendRequestPreCheck()
     if (status < 0)
     {
         LOGINFODATAPATH((0, "ProtocolState::processMicroState() processMicroStateSendRequestPreCheck(), error status, errCode=%d", status));
-        iObserver->ProtocolStateError(status);
+        if (iObserver) iObserver->ProtocolStateError(status);
         return status;
     }
     return PROCESS_SUCCESS;
@@ -630,7 +630,8 @@ int32 ProtocolState::doProcessMicroStateGetResponse(INPUT_DATA_QUEUE &aDataQueue
         {
             ProtocolStateCompleteInfo aInfo(isDownloadStreamingDoneState(),
                                             isLastState(),
-                                            isDownloadStreamingDoneState());
+                                            isDownloadStreamingDoneState(),
+                                            isMajorProtocolStateComplete());
             iObserver->ProtocolStateComplete(aInfo);
         }
         iNeedGetResponsePreCheck = true;

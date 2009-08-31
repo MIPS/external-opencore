@@ -121,10 +121,8 @@ typedef int16 MOT;   /*  : "int" type runs faster on RISC machine */
 #define SHORT_VIDEO_START_MARKER_LENGTH  22
 #define SHORT_VIDEO_END_MARKER            0x3F
 
-#ifdef M4VDEC_FLV_SUPPORT
 #define FLV1_VIDEO_START_MARKER         0x10
 #define FLV1_VIDEO_START_MARKER_LENGTH  21
-#endif
 
 #define GOB_RESYNC_MARKER         0x01
 #define GOB_RESYNC_MARKER_LENGTH  17

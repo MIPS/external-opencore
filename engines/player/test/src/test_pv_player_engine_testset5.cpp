@@ -132,6 +132,9 @@
 
 #define DEFAULT_SHOUTCAST_PLAYLIST_FILE "test_sc_mp3.pls"
 
+//#define DEFAULT_RTMPSTREAMING_URL "rtmpt://172.16.2.228/vod/sample"
+#define DEFAULT_RTMPSTREAMING_URL "rtmpt://172.16.2.228/vod/YT005_nbc_TheOffice_mod_by_flvcheck"
+
 extern FILE* file;
 
 
@@ -4822,6 +4825,11 @@ void pvplayer_async_test_ppb_normal::CreateDataSource()
             fprintf(file, "Setting source to %s\n", DEFAULT_SHOUTCAST_URL);
             url = DEFAULT_SHOUTCAST_URL;
         }
+        else if (iFileType == PVMF_MIME_DATA_SOURCE_RTMP_STREAMING_URL)
+        {
+            fprintf(file, "Setting source to %s\n", DEFAULT_RTMPSTREAMING_URL);
+            url = DEFAULT_RTMPSTREAMING_URL;
+        }
         else
         {
             // progressive playback
@@ -4862,6 +4870,10 @@ void pvplayer_async_test_ppb_normal::CreateDataSource()
         if (iFileType == PVMF_MIME_DATA_SOURCE_SHOUTCAST_URL)
         {
             iDataSource->SetDataSourceFormatType(PVMF_MIME_DATA_SOURCE_SHOUTCAST_URL);
+        }
+        else if (iFileType == PVMF_MIME_DATA_SOURCE_RTMP_STREAMING_URL)
+        {
+            iDataSource->SetDataSourceFormatType(PVMF_MIME_DATA_SOURCE_RTMP_STREAMING_URL);
         }
         else
         {

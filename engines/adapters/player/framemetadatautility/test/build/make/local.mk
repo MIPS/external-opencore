@@ -61,6 +61,7 @@ LIBS :=  pvframemetadatautility \
         pvrtsp_cli_eng_node \
         protocolenginenode \
         pv_http_parcom \
+	pv_rtmp_parcom \
         pvsocketnode \
         pvrtppacketsourcenode \
         rtppayloadparser \

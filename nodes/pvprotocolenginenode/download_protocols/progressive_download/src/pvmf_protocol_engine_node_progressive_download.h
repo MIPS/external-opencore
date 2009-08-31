@@ -54,7 +54,7 @@ class ProgressiveDownloadContainer : public DownloadContainer
         OSCL_IMPORT_REF ProgressiveDownloadContainer(PVMFProtocolEngineNode *aNode = NULL);
 
     protected:
-        OSCL_IMPORT_REF PVMFStatus initImpl();
+        OSCL_IMPORT_REF virtual PVMFStatus initImpl();
         OSCL_IMPORT_REF bool initProtocol_SetConfigInfo();
 
     protected:
@@ -96,7 +96,7 @@ class progressiveDownloadControl : public pvDownloadControl
 
         // No constraint: for file size/clip duration/clip bitrate(i.e. playback rate), one of them must be unavailable, except
         // file size and clip duration are available, but clip bitrate is unavailable. This only applies on PDL
-        OSCL_IMPORT_REF bool checkAutoResumeAlgoNoConstraint(const uint32 aCurrDownloadSize,
+        OSCL_IMPORT_REF virtual bool checkAutoResumeAlgoNoConstraint(const uint32 aCurrDownloadSize,
                 const uint32 aFileSize,
                 uint32 &aDurationMsec);
 

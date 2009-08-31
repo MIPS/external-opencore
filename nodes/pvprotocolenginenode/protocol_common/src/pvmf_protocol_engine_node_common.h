@@ -217,7 +217,7 @@ typedef Oscl_Vector<OsclRefCounterMemFrag*, PVMFProtocolEngineNodeAllocator> PEN
 
 // two macros used in the array member and function parameter below
 #define PVHTTPDOWNLOADOUTPUT_CONTENTDATA_CHUNKSIZE 8000
-#define EVENT_HANDLER_TOTAL 10
+#define EVENT_HANDLER_TOTAL 11
 
 enum NetworkTimerType
 {
@@ -395,6 +395,11 @@ class ProtocolContainer
         {
             return true;
         }
+        virtual bool canCompletePendingCmdForHttpHeaderAvailable()
+        {
+            return true;
+        }
+
         virtual void setHttpExtensionHeaderField(OSCL_String &aFieldKey, OSCL_String &aFieldValue, const HttpMethod aMethod = HTTP_GET, const bool aPurgeOnRedirect = false)
         {
             OSCL_UNUSED_ARG(aFieldKey);
@@ -469,6 +474,14 @@ class ProtocolContainer
         }
 
         OSCL_IMPORT_REF virtual OsclAny* getObject(const NodeObjectType aObjectType);
+
+        virtual bool handleMetaData(OsclAny *aMetaDataInfo)
+        {
+            OSCL_UNUSED_ARG(aMetaDataInfo);
+            return true;
+        }
+
+        OSCL_IMPORT_REF virtual void setClipDuration(const uint32 aClipDurationMsec);
 
         virtual void SetSharedLibraryPtr(OsclSharedLibrary* aPtr)
         {
@@ -589,6 +602,7 @@ enum PVProtocolEngineNodeInternalEventType
     // This group of events comes from the callback/feedback from protocol engine
     PVProtocolEngineNodeInternalEventType_HttpHeaderAvailable = 0,
     PVProtocolEngineNodeInternalEventType_FirstPacketAvailable,
+    PVProtocolEngineNodeInternalEventType_MetaDataAvailable,
     PVProtocolEngineNodeInternalEventType_NormalDataAvailable,
     PVProtocolEngineNodeInternalEventType_ProtocolStateComplete,
 
@@ -600,7 +614,7 @@ enum PVProtocolEngineNodeInternalEventType
     PVProtocolEngineNodeInternalEventType_OutgoingMsgQueuedAndSentSuccessfully,
 
     // data flow event
-    PVProtocolEngineNodeInternalEventType_IncomingMessageReady = 9,
+    PVProtocolEngineNodeInternalEventType_IncomingMessageReady = 10,
     PVProtocolEngineNodeInternalEventType_HasExtraInputData,
     PVProtocolEngineNodeInternalEventType_OutputDataReady,
     PVProtocolEngineNodeInternalEventType_StartDataflowByCommand,
@@ -749,6 +763,10 @@ class PVProtocolEngineNodeInternalEventHandler
 
         virtual bool handle(PVProtocolEngineNodeInternalEvent &aEvent) = 0;
         virtual bool completePendingCommand(PVProtocolEngineNodeInternalEvent &aEvent);
+        virtual void clear()
+        {
+            ;
+        }
 
         // contructor
         PVProtocolEngineNodeInternalEventHandler(PVMFProtocolEngineNode *aNode);
@@ -791,6 +809,7 @@ class ProtocolStateErrorHandler : public PVProtocolEngineNodeInternalEventHandle
         {
             ;
         }
+
     private:
         int32 parseServerResponseCode(const int32 aErrorCode, bool &isInfoEvent);
         // return value: 0 means caller needs to return immediately, not 0 means error
@@ -834,18 +853,36 @@ class FirstPacketAvailableHandler : public PVProtocolEngineNodeInternalEventHand
         }
 };
 
-
-class ProtocolEngineDataAvailableHandler : public PVProtocolEngineNodeInternalEventHandler
+class MetaDataAvailableHandler : public PVProtocolEngineNodeInternalEventHandler
 {
     public:
         bool handle(PVProtocolEngineNodeInternalEvent &aEvent);
 
         // constructor
-        ProtocolEngineDataAvailableHandler(PVMFProtocolEngineNode *aNode) :
+        MetaDataAvailableHandler(PVMFProtocolEngineNode *aNode) :
                 PVProtocolEngineNodeInternalEventHandler(aNode)
         {
             ;
         }
+};
+
+class ProtocolEngineDataAvailableHandler : public PVProtocolEngineNodeInternalEventHandler
+{
+    public:
+        bool handle(PVProtocolEngineNodeInternalEvent &aEvent);
+        void clear()
+        {
+            iCheckPendingCmdComplete = true;
+        }
+
+        // constructor
+        ProtocolEngineDataAvailableHandler(PVMFProtocolEngineNode *aNode) :
+                PVProtocolEngineNodeInternalEventHandler(aNode), iCheckPendingCmdComplete(true)
+        {
+            ;
+        }
+    private:
+        bool iCheckPendingCmdComplete;
 };
 
 class ProtocolStateCompleteHandler : public PVProtocolEngineNodeInternalEventHandler
@@ -865,6 +902,10 @@ class MainDataFlowHandler : public PVProtocolEngineNodeInternalEventHandler
 {
     public:
         bool handle(PVProtocolEngineNodeInternalEvent &aEvent);
+        void clear()
+        {
+            iSendSocketReconnect = false;
+        }
 
         // constructor
         MainDataFlowHandler(PVMFProtocolEngineNode *aNode) : PVProtocolEngineNodeInternalEventHandler(aNode), iSendSocketReconnect(false)
@@ -989,7 +1030,7 @@ class PVMFProtocolEngineNodeOutput
         }
         OSCL_IMPORT_REF virtual bool passDownNewOutputData(OUTPUT_DATA_QUEUE &aOutputQueue, OsclAny* aSideInfo = NULL);
         OSCL_IMPORT_REF virtual int32 flushData(const uint32 aOutputType = NodeOutputType_InputPortForData) = 0;
-        virtual int32 initialize(OsclAny* aInitInfo = NULL) = 0;
+        virtual PVMFStatus initialize(OsclAny* aInitInfo = NULL) = 0;
         virtual int32 reCreateMemPool(uint32 aNumPool)
         {
             OSCL_UNUSED_ARG(aNumPool);
@@ -1113,7 +1154,8 @@ enum DownloadControlSupportObjectType
     DownloadControlSupportObjectType_ConfigFileContainer,
     DownloadControlSupportObjectType_SDPInfoContainer,
     DownloadControlSupportObjectType_DownloadProgress,
-    DownloadControlSupportObjectType_OutputObject
+    DownloadControlSupportObjectType_OutputObject,
+    DownloadControlSupportObjectType_MetaDataObject
 };
 
 // The intent of introducing this download ocntrol interface is to make streaming counterpart as a NULL object,
@@ -1540,15 +1582,17 @@ class InterfacingObjectContainer
         {
             if (!aForceSet)
             {
-                if (aInfo.isDownloadStreamingDone) iProtocolStateCompleteInfo.isDownloadStreamingDone = true;
-                if (aInfo.isWholeSessionDone)     iProtocolStateCompleteInfo.isWholeSessionDone = true;
-                if (aInfo.isEOSAchieved)              iProtocolStateCompleteInfo.isEOSAchieved = true;
+                if (aInfo.isDownloadStreamingDone)  iProtocolStateCompleteInfo.isDownloadStreamingDone = true;
+                if (aInfo.isWholeSessionDone)       iProtocolStateCompleteInfo.isWholeSessionDone = true;
+                if (aInfo.isEOSAchieved)            iProtocolStateCompleteInfo.isEOSAchieved = true;
+                iProtocolStateCompleteInfo.isMajorState           = aInfo.isMajorState;
             }
             else
             {
                 iProtocolStateCompleteInfo.isDownloadStreamingDone = aInfo.isDownloadStreamingDone;
                 iProtocolStateCompleteInfo.isWholeSessionDone      = aInfo.isWholeSessionDone;
                 iProtocolStateCompleteInfo.isEOSAchieved           = aInfo.isEOSAchieved;
+                iProtocolStateCompleteInfo.isMajorState           = aInfo.isMajorState;
             }
         }
         ProtocolStateCompleteInfo *getProtocolStateCompleteInfo()

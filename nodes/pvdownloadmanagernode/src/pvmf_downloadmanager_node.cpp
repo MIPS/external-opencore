@@ -619,7 +619,8 @@ PVMFStatus PVMFDownloadManagerNode::SetSourceInitializationData(OSCL_wString& aS
         return PVMFErrProcessing;
     }
 
-    if (iSourceFormat == PVMF_MIME_DATA_SOURCE_HTTP_URL)
+    if (aSourceFormat == PVMF_MIME_DATA_SOURCE_HTTP_URL ||
+            aSourceFormat == PVMF_MIME_DATA_SOURCE_RTMP_STREAMING_URL)
     {
         if (!iSourceData)
         {
@@ -899,14 +900,17 @@ PVMFStatus PVMFDownloadManagerNode::SetSourceInitializationData(OSCL_wString& aS
         else
         {
             uint32 bufSize = PVMF_DOWNLOADMANAGER_TCP_BUFFER_SIZE_FOR_PPB;
+            uint32 aNumBuf = PVMF_DOWNLOADMANAGER_MIN_TCP_BUFFERS_FOR_PPB;
+            if (iSourceFormat == PVMF_MIME_DATA_SOURCE_RTMP_STREAMING_URL) aNumBuf <<= 2; // for RTMP streaming, default 8 buffers has problem that needs to be fixed. For now, just use large number of buffers.
+
             if (iSocketNode.iNode)
             {
-                PVMFStatus status = ((PVMFSocketNode*)iSocketNode.iNode)->SetMaxTCPRecvBufferCount(PVMF_DOWNLOADMANAGER_MIN_TCP_BUFFERS_FOR_PPB);
+                PVMFStatus status = ((PVMFSocketNode*)iSocketNode.iNode)->SetMaxTCPRecvBufferCount(aNumBuf);
                 if (PVMFSuccess != status)
                 {
                     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR, (0,
                                     "PVMFDownloadManagerNode:SetSourceInitializationData() SetMaxTCPRecvBufferCount(%d) failed",
-                                    PVMF_DOWNLOADMANAGER_MIN_TCP_BUFFERS_FOR_PPB));
+                                    aNumBuf));
                     return status;
                 }
 
@@ -918,7 +922,7 @@ PVMFStatus PVMFDownloadManagerNode::SetSourceInitializationData(OSCL_wString& aS
             // TCP buffer size is 64000 (the default), assume worst case that the average packet size is 250 bytes
             // Packet overhead is 64 bytes per packet
             // 8 buffers will yield a cache of 305500, 13 buffers will yield a cache of 560500
-            uint32 totalPoolSizeMinusTwoBuffers = (PVMF_DOWNLOADMANAGER_MIN_TCP_BUFFERS_FOR_PPB - PVMF_DOWNLOADMANAGER_TCP_BUFFER_NOT_AVAILABLE) * bufSize;
+            uint32 totalPoolSizeMinusTwoBuffers = (aNumBuf - PVMF_DOWNLOADMANAGER_TCP_BUFFER_NOT_AVAILABLE) * bufSize;
             uint32 numPacketsToFitInPool = totalPoolSizeMinusTwoBuffers / (PVMF_DOWNLOADMANAGER_TCP_AVG_SMALL_PACKET_SIZE + PVMF_DOWNLOADMANAGER_TCP_BUFFER_OVERHEAD);
             uint32 maxDataMinusOverheadInPool = numPacketsToFitInPool * PVMF_DOWNLOADMANAGER_TCP_AVG_SMALL_PACKET_SIZE;
 
@@ -1833,6 +1837,13 @@ void PVMFDownloadManagerNode::ContinueFromDownloadTrackSelectionPoint()
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0,
                             "PVMFDownloadManagerNode::ContinueFromDownloadTrackSelectionPoint Setting format to MP4"));
             iMimeType = PVMF_MIME_MPEG4FF;
+        }
+        else if (iSourceFormat == PVMF_MIME_DATA_SOURCE_RTMP_STREAMING_URL)
+        {
+            //RTMP streaming is always assumed to be FLV parser node
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0,
+                            "PVMFDownloadManagerNode::ContinueFromDownloadTrackSelectionPoint Setting format to FLV"));
+            iMimeType = PVMF_MIME_FLVFF;
         }
         else
         {

@@ -40,6 +40,11 @@
 #include "pvmf_protocol_engine_node_wm_http_streaming_container_factory.h"
 #endif
 
+#if(BUILD_RTMPSTREAMING_PLUGIN)
+#include "pvmf_protocol_engine_node_rtmp_streaming_container_factory.h"
+#endif
+
+
 #ifdef USE_LOADABLE_MODULES
 #include "oscl_shared_library.h"
 #include "oscl_library_list.h"
@@ -100,6 +105,14 @@ PVMFProtocolEngineNodeRegistry::PVMFProtocolEngineNodeRegistry() : iTypeVecIndex
     aContainerInfo.iProtocolEngineContainerUUID = KPVMFProtocolEngineNodeWMHttpStreamingUuid;
     aContainerInfo.iProtocolEngineContainerCreateFunc = PVMFProtocolEngineNodeWMHttpStreamingContainerFactory::Create;
     aContainerInfo.iProtocolEngineContainerReleaseFunc = PVMFProtocolEngineNodeWMHttpStreamingContainerFactory::Delete;
+    iTypeVec.push_back(aContainerInfo);
+#endif
+
+#if(BUILD_RTMPSTREAMING_PLUGIN)
+    aContainerInfo.iSourceType = PVMF_MIME_DATA_SOURCE_RTMP_STREAMING_URL;
+    aContainerInfo.iProtocolEngineContainerUUID = KPVMFProtocolEngineNodeRTMPStreamingUuid;
+    aContainerInfo.iProtocolEngineContainerCreateFunc = PVMFProtocolEngineNodeRTMPStreamingContainerFactory::Create;
+    aContainerInfo.iProtocolEngineContainerReleaseFunc = PVMFProtocolEngineNodeRTMPStreamingContainerFactory::Delete;
     iTypeVec.push_back(aContainerInfo);
 #endif
 

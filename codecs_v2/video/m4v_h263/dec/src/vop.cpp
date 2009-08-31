@@ -708,15 +708,6 @@ decode_vol:
         }
         else
         {
-#if M4VDEC_FLV_SUPPORT
-            status = BitstreamShowBits32(stream, FLV1_VIDEO_START_MARKER_LENGTH, &tmpvar);
-
-            if (tmpvar ==  FLV1_VIDEO_START_MARKER)
-            {
-                video->shortVideoHeader = PV_FLV1;
-                return status;
-            }
-#endif
             do
             {
                 /* Search for VOL_HEADER */
@@ -1017,13 +1008,6 @@ return_point:
 PV_STATUS DecodeShortHeader(VideoDecData *video, Vop *currVop)
 {
     PV_STATUS status = PV_SUCCESS;
-#if M4VDEC_FLV_SUPPORT
-    if (video->shortVideoHeader & PV_FLV1)
-    {
-        status = DecodeFLV1Header(video, currVop);
-    }
-    else
-#endif
     {
         status = DecodeH263Header(video, currVop);
     }
@@ -1046,15 +1030,6 @@ PV_STATUS DecodeH263Header(VideoDecData *video, Vop *currVop)
 
     if (tmpvar !=  SHORT_VIDEO_START_MARKER)
     {
-#if M4VDEC_FLV_SUPPORT
-        if (tmpvar >> 1 == FLV1_VIDEO_START_MARKER) // in case of first frame of sequence
-        {
-            video->shortVideoHeader = PV_FLV1;
-
-            return DecodeFLV1Header(video, currVop);
-        }
-        else
-#endif
         {
             status = PV_FAIL;
             goto return_point;
@@ -1545,174 +1520,6 @@ return_point:
     return status;
 }
 
-#if M4VDEC_FLV_SUPPORT
-
-PV_STATUS DecodeFLV1Header(VideoDecData *video, Vop *currVop)
-{
-    PV_STATUS status = PV_SUCCESS;
-    Vol *currVol = video->vol[0];
-    BitstreamDecVideo *stream = currVol->bitstream;
-    uint32 tmpvar;
-    int32 size;
-
-    int UFEP = 0, custom_PFMT = 0;
-
-    status = BitstreamShowBits32(stream, FLV1_VIDEO_START_MARKER_LENGTH, &tmpvar);
-
-    if (tmpvar !=  FLV1_VIDEO_START_MARKER)
-    {
-        status = PV_FAIL;
-        goto return_point;
-    }
-
-
-    PV_BitstreamFlushBits(stream, FLV1_VIDEO_START_MARKER_LENGTH);
-
-    if (!BitstreamRead1Bits(stream))
-    {
-        video->vlcDecCoeffInter = video->vlcDecCoeffIntra = &VlcDecTCOEFShortHeader;
-    }
-    else
-    {
-        video->vlcDecCoeffInter = video->vlcDecCoeffIntra = &VlcDecTCOEF_FLV1;
-    }
-
-    /* Temporal reference. Using vop_time_increment_resolution = 30000 */
-    tmpvar = (uint32) BitstreamReadBits16(stream, 8);
-    currVop->temporalRef = (int) tmpvar;
-
-
-    currVop->timeInc = 0xff & (256 + currVop->temporalRef - video->prevVop->temporalRef);
-    currVol->moduloTimeBase += currVop->timeInc; /* mseconds  MC 11/12/01 */
-
-    tmpvar = (uint32) BitstreamReadBits16(stream, 3);
-
-    switch (tmpvar)
-    {
-        case 0:
-            video->displayWidth = (uint32) BitstreamReadBits16(stream, 8);
-            video->width = ((video->displayWidth + 15) >> 4) << 4;
-            video->displayHeight = (uint32) BitstreamReadBits16(stream, 8);
-            video->height = ((video->displayHeight + 15) >> 4) << 4;
-            break;
-        case 1:
-            video->displayWidth = (uint32) BitstreamReadBits16(stream, 16);
-            video->width = ((video->displayWidth + 15) >> 4) << 4;
-            video->displayHeight = (uint32) BitstreamReadBits16(stream, 16);
-            video->height = ((video->displayHeight + 15) >> 4) << 4;
-            break;
-        case 2:
-            video->displayWidth = video->width = 352;
-            video->displayHeight = video->height = 288;
-            break;
-        case 3:
-            video->displayWidth = video->width = 176;
-            video->displayHeight = video->height = 144;
-            break;
-        case 4:
-            video->displayWidth = video->width = 128;
-            video->displayHeight = video->height = 96;
-            break;
-        case 5:
-            video->displayWidth = video->width = 320;
-            video->displayHeight = video->height = 240;
-            break;
-        case 6:
-            video->displayWidth = video->width = 160;
-            video->displayHeight = video->height = 120;
-            break;
-        case 7:
-            status = PV_FAIL;
-            goto return_point;
-        default:
-            break;
-    }
-
-    if (video->initialized == PV_TRUE && video->size < video->height * video->width)
-    {
-        status = PV_FAIL;
-        goto return_point;
-    }
-    /* picture type */
-    tmpvar = (uint32) BitstreamReadBits16(stream, 2);
-
-    if (tmpvar != 0 && tmpvar != 1)
-    {
-        status = PV_FAIL;
-        goto return_point;
-    }
-
-    currVop->predictionType = tmpvar;
-
-    /* deblocking flag */
-    tmpvar = BitstreamRead1Bits(stream);
-
-    currVop->quantizer = (int16) BitstreamReadBits16(stream, 5);
-
-    if (currVop->quantizer == 0)
-    {
-        currVop->quantizer = video->prevVop->quantizer;
-        status = PV_FAIL;
-        goto return_point;
-    }
-    /* pei */
-    tmpvar = (uint32) BitstreamRead1Bits(stream);
-
-    while (tmpvar)
-    {
-        tmpvar = (uint32) BitstreamReadBits16(stream, 8); /* "PSPARE" */
-        tmpvar = (uint32) BitstreamRead1Bits(stream); /* "PEI" */
-    }
-
-
-
-    currVop->roundingType = 0;
-    /* Recalculate number of macroblocks per row & col since */
-    /*  the frame size can change.          */
-    video->nMBinGOB = video->nMBPerRow = video->width / MB_SIZE;
-    video->nGOBinVop = video->nMBPerCol = video->height / MB_SIZE;
-    video->nTotalMB = video->nMBPerRow * video->nMBPerCol;
-    if (custom_PFMT == 0  || UFEP == 0)
-    {
-        video->nBitsForMBID = CalcNumBits((uint)video->nTotalMB - 1); /* otherwise calculate above */
-    }
-    size = (int32)video->width * video->height;
-    if (video->currVop->predictionType == P_VOP && size > video->size)
-    {
-        status = PV_FAIL;
-        goto return_point;
-    }
-#ifdef PV_MEMORY_POOL
-    video->videoDecControls->size = size;
-#endif
-
-    video->size = size;
-    video->currVop->uChan = video->currVop->yChan + size;
-    video->currVop->vChan = video->currVop->uChan + (size >> 2);
-    video->prevVop->uChan = video->prevVop->yChan + size;
-    video->prevVop->vChan = video->prevVop->uChan + (size >> 2);
-
-
-
-    /* Setting of other VOP-header parameters */
-    currVop->gobNumber = 0;
-    currVop->vopCoded = 1;
-
-    currVop->intraDCVlcThr = 0;
-    currVop->gobFrameID = 0; /* initial value */
-    currVol->errorResDisable = 0;
-
-    if (currVop->predictionType != I_VOP)
-        currVop->fcodeForward = 1;
-    else
-        currVop->fcodeForward = 0;
-
-return_point:
-
-    return status;
-}
-
-#endif
 
 /***********************************************************CommentBegin******
 *

@@ -74,10 +74,11 @@ class DownloadContainer : public ProtocolContainer
         OSCL_IMPORT_REF virtual void updateDownloadControl(const bool isDownloadComplete = false);
         virtual bool isDownloadComplete(const uint32 downloadStatus) const
         {
-            return (downloadStatus == PROCESS_SUCCESS_END_OF_MESSAGE ||
-                    downloadStatus == PROCESS_SUCCESS_END_OF_MESSAGE_TRUNCATED ||
-                    downloadStatus == PROCESS_SUCCESS_END_OF_MESSAGE_WITH_EXTRA_DATA ||
-                    downloadStatus == PROCESS_SUCCESS_END_OF_MESSAGE_BY_SERVER_DISCONNECT);
+            return ((downloadStatus == PROCESS_SUCCESS_END_OF_MESSAGE ||
+                     downloadStatus == PROCESS_SUCCESS_END_OF_MESSAGE_TRUNCATED ||
+                     downloadStatus == PROCESS_SUCCESS_END_OF_MESSAGE_WITH_EXTRA_DATA ||
+                     downloadStatus == PROCESS_SUCCESS_END_OF_MESSAGE_BY_SERVER_DISCONNECT) &&
+                    iInterfacingObjectContainer->isWholeSessionDone());
         }
         OSCL_IMPORT_REF virtual bool ignoreThisTimeout(const int32 timerID);
         virtual bool needToCheckResumeNotificationMaually()
@@ -116,7 +117,7 @@ class pvHttpDownloadOutput : public PVMFProtocolEngineNodeOutput
 {
     public:
         OSCL_IMPORT_REF void setOutputObject(OsclAny* aOutputObject, const uint32 aObjectType = NodeOutputType_InputPortForData);
-        OSCL_IMPORT_REF int32 initialize(OsclAny* aInitInfo = NULL);
+        OSCL_IMPORT_REF virtual PVMFStatus initialize(OsclAny* aInitInfo = NULL);
         OSCL_IMPORT_REF virtual int32 flushData(const uint32 aOutputType = NodeOutputType_InputPortForData);
         OSCL_IMPORT_REF virtual void discardData(const bool aNeedReopen = false);
         OSCL_IMPORT_REF uint32 getAvailableOutputSize();
@@ -195,7 +196,7 @@ class pvDownloadControl : public DownloadControlInterface
             iPrevDownloadSize = aPrevDownloadSize;
         }
 
-        OSCL_IMPORT_REF void clear();
+        OSCL_IMPORT_REF virtual void clear();
 
         // clear several fields for progressive playback repositioning
         virtual void clearPerRequest()
@@ -298,7 +299,7 @@ class pvDownloadControl : public DownloadControlInterface
                 const uint32 aRemainingDownloadSize);
 
         // set file size to parser node for the new API, setFileSize()
-        OSCL_IMPORT_REF void setFileSize(const uint32 aFileSize);
+        OSCL_IMPORT_REF virtual void setFileSize(const uint32 aFileSize);
         OSCL_IMPORT_REF bool getPlaybackTimeFromEngineClock(uint32 &aPlaybackTime);
         virtual void setProtocolInfo()
         {

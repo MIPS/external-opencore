@@ -953,6 +953,7 @@ int32 HTTPParserBaseObject::parseNextValueItem(HTTPMemoryFragment &aInputDataStr
     char *end_ptr = ptr--;
     while (*ptr == HTTP_CHAR_SPACE || *ptr == HTTP_CHAR_TAB) ptr--; // eat space or tab characater
     valueItemLength = (ptr > valueItemPtr ? (ptr - valueItemPtr + 1) : 0); // ptr is the ending pointer for a value item
+    if (valueItemLength == 0 && (*valueItemPtr != dividerChar0 || *valueItemPtr != dividerChar1)) valueItemLength = 1;
 
     ptr = end_ptr;
     if (isKeyItem) ptr++;

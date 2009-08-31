@@ -428,6 +428,7 @@ class PVMFProtocolEngineNode :  public PVMFNodeInterface,
         friend class ProtocolStateErrorHandler;
         friend class HttpHeaderAvailableHandler;
         friend class FirstPacketAvailableHandler;
+        friend class MetaDataAvailableHandler;
         friend class ProtocolEngineDataAvailableHandler;
         friend class ProtocolStateCompleteHandler;
         friend class MainDataFlowHandler;

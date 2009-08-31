@@ -259,6 +259,9 @@ OSCL_EXPORT_REF bool DownloadContainer::doInfoUpdate(uint32 downloadStatus)
     }
 
     // centralize sending info events for download
+    // current state completion doesn't really means true download completion
+    bool aDownloadComplete = isDownloadComplete(downloadStatus);
+    if (!aDownloadComplete) downloadStatus = PROCESS_SUCCESS;
     return iEventReport->checkReportEvent(downloadStatus);
 }
 
@@ -408,7 +411,7 @@ OSCL_EXPORT_REF int32 pvHttpDownloadOutput::flushData(const uint32 aOutputType)
     return PROCESS_SUCCESS;
 }
 
-OSCL_EXPORT_REF int32 pvHttpDownloadOutput::initialize(OsclAny* aInitInfo)
+OSCL_EXPORT_REF PVMFStatus pvHttpDownloadOutput::initialize(OsclAny* aInitInfo)
 {
     // open data stream object
     if (!iDataStreamFactory || !iPortIn) return PVMFFailure;
@@ -734,7 +737,7 @@ OSCL_EXPORT_REF bool pvDownloadControl::isResumePlayback(const uint32 aDownloadR
     {
         if (!iDownloadComplete)
         {
-            LOGINFODATAPATH((0, "pvDownloadControl::isResumePlayback(), output buffer (MBDS is full) overflows!! Then auto-resume kicks off!!"));
+            LOGINFODATAPATH((0, "pvDownloadControl::isResumePlayback(), output buffer (MBDS is full) overflows!! Then auto-resume kicks off!! MBDS write capacity=%d", iNodeOutput->getAvailableOutputSize()));
         }
         return true;
     }

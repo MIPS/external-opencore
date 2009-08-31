@@ -5,10 +5,10 @@ LOCAL_PATH := $(call get_makefile_dir)
 include $(MK)/clear.mk
 
 TARGET := protocolenginenode
-XCPPFLAGS += -DBUILD_PROGRESSIVE_DOWNLOAD_PLUGIN -DBUILD_PROGRESSIVE_STREAMING_PLUGIN -DBUILD_FASTTRACK_DOWNLOAD_PLUGIN -DBUILD_WMHTTPSTREAMING_PLUGIN -DBUILD_SHOUTCAST_PLUGIN 
+XCPPFLAGS += -DBUILD_PROGRESSIVE_DOWNLOAD_PLUGIN -DBUILD_PROGRESSIVE_STREAMING_PLUGIN -DBUILD_FASTTRACK_DOWNLOAD_PLUGIN -DBUILD_WMHTTPSTREAMING_PLUGIN -DBUILD_SHOUTCAST_PLUGIN
 
 XINCDIRS +=  ../../config/$(BUILD_ARCH)  ../../config/linux
-XINCDIRS +=  ../../include ../../base/src ../../protocol_common/src ../../download_protocols/common/src ../../download_protocols/progressive_download/src ../../download_protocols/progressive_streaming/src ../../download_protocols/shoutcast/src ../../download_protocols/fasttrack_download/src ../../wm_http_streaming/src 
+XINCDIRS +=  ../../include ../../base/src ../../protocol_common/src ../../download_protocols/common/src ../../download_protocols/progressive_download/src ../../download_protocols/progressive_streaming/src ../../download_protocols/shoutcast/src ../../download_protocols/fasttrack_download/src ../../download_protocols/rtmp_streaming/src ../../wm_http_streaming/src ../../../../protocols/rtmp_parcom/include  ../../../../protocols/rtmp_parcom/src
 
 SRCDIR := ../../base/src 
 INCSRCDIR := ../../include

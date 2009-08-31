@@ -400,13 +400,6 @@ decode_vol:
         }
         else
         {
-#if M4VDEC_FLV_SUPPORT
-            if (codeword >> 1 == FLV1_VIDEO_START_MARKER) // in case of first frame of sequence
-            {
-                iDecodeFLV1Header(psBits, width, height, display_width, display_height);
-            }
-            else
-#endif
             {
                 int16 status = 0;
                 do
@@ -609,92 +602,6 @@ int16 iDecodeShortHeader(mp4StreamType *psBits,
 }
 
 
-#if M4VDEC_FLV_SUPPORT
-int16 iDecodeFLV1Header(mp4StreamType *psBits,
-                        int32 *width,
-                        int32 *height,
-                        int32 *display_width,
-                        int32 *display_height)
-{
-    uint32 codeword;
-    ShowBits(psBits, FLV1_VIDEO_START_MARKER_LENGTH, &codeword);
-
-    if (codeword !=  FLV1_VIDEO_START_MARKER)
-    {
-        return MP4_INVALID_VOL_PARAM;
-    }
-    FlushBits(psBits, FLV1_VIDEO_START_MARKER_LENGTH);
-
-    ReadBits(psBits, 1, &codeword);
-    ReadBits(psBits, 8, &codeword);
-
-    /* source format */
-    ReadBits(psBits, 3, &codeword);
-    switch (codeword)
-    {
-        case 0:
-            ReadBits(psBits, 8, &codeword);
-            *display_width  = codeword;
-            *width = ((codeword + 15) >> 4) << 4;
-            ReadBits(psBits, 8, &codeword);
-            *display_height = codeword;
-            *height = ((codeword + 15) >> 4) << 4;
-            break;
-
-        case 1:
-            ReadBits(psBits, 16, &codeword);
-            *display_width  = codeword;
-            *width = ((codeword + 15) >> 4) << 4;
-            ReadBits(psBits, 16, &codeword);
-            *display_height = codeword;
-            *height = ((codeword + 15) >> 4) << 4;;
-            break;
-
-        case 2:
-            *width = 352;
-            *height = 288;
-            *display_width = *width;
-            *display_height = *height;
-
-            break;
-
-        case 3:
-            *width = 176;
-            *height = 144;
-            *display_width = *width;
-            *display_height = *height;
-            break;
-
-        case 4:
-            *width = 128;
-            *height = 96;
-            *display_width = *width;
-            *display_height = *height;
-            break;
-
-        case 5:
-            *width = 320;
-            *height = 240;
-            *display_width = *width;
-            *display_height = *height;
-            break;
-
-        case 6:
-            *width = 160;
-            *height = 120;
-            *display_width = *width;
-            *display_height = *height;
-            break;
-
-        default:
-            /* Msg("H.263 source format not legal\n"); */
-            return MP4_INVALID_VOL_PARAM;
-    }
-
-    return 0;
-}
-
-#endif
 
 int16 ShowBits(
     mp4StreamType *pStream,           /* Input Stream */
