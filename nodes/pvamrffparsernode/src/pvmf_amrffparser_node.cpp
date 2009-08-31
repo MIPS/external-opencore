@@ -1116,31 +1116,6 @@ PVMFStatus PVMFAMRFFParserNode::DoReset(PVMFNodeCommand& aCmd)
     return PVMFPending;
 }
 
-void
-PVMFAMRFFParserNode::MoveCmdToCurrentQueue(PVMFNodeCommand& aCmd)
-{
-    int32 err;
-    OSCL_TRY(err, iCurrentCommand.StoreL(aCmd););
-    if (err != OsclErrNone)
-    {
-        CommandComplete(iInputCommands, aCmd, PVMFErrNoMemory);
-    }
-    else
-    {
-        iInputCommands.Erase(&aCmd);
-    }
-}
-
-void
-PVMFAMRFFParserNode::MoveCmdToCancelQueue(PVMFNodeCommand& aCmd)
-{
-    /*
-     * note: the StoreL cannot fail since the queue is never more than 1 deep
-     * and we reserved space.
-     */
-    iCancelCommand.StoreL(aCmd);
-    iInputCommands.Erase(&aCmd);
-}
 
 PVMFStatus PVMFAMRFFParserNode::DoCancelAllCommands(PVMFNodeCommand& aCmd)
 {

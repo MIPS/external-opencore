@@ -173,8 +173,6 @@ class PVMFAMRFFParserNode :  public PVMFNodeInterfaceImpl
         virtual void Run();
 
         //Command processing
-        void MoveCmdToCurrentQueue(PVMFNodeCommand& aCmd);
-        void MoveCmdToCancelQueue(PVMFNodeCommand& aCmd);
         bool FlushPending();
         PVMFStatus HandleExtensionAPICommands(PVMFNodeCommand& aCmd);
 

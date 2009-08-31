@@ -422,33 +422,6 @@ PVMFCommandId PVMFAACFFParserNode::SetDataSourceRate(PVMFSessionId aSessionId
     return QueueCommandL(cmd);
 }
 
-void PVMFAACFFParserNode::MoveCmdToCurrentQueue(PVMFNodeCommand& aCmd)
-{
-    int32 err;
-    OSCL_TRY(err, iCurrentCommand.StoreL(aCmd););
-    if (err != OsclErrNone)
-    {
-        CommandComplete(iInputCommands, aCmd, PVMFErrNoMemory);
-        return;
-    }
-    iInputCommands.Erase(&aCmd);
-}
-
-void PVMFAACFFParserNode::MoveCmdToCancelQueue(PVMFNodeCommand& aCmd)
-{
-    /*
-     * note: the StoreL cannot fail since the queue is never more than 1 deep
-     * and we reserved space.
-     */
-    int32 err;
-    OSCL_TRY(err, iCancelCommand.StoreL(aCmd););
-    if (err != OsclErrNone)
-    {
-        CommandComplete(iInputCommands, aCmd, PVMFErrNoMemory);
-        return;
-    }
-    iInputCommands.Erase(&aCmd);
-}
 
 void PVMFAACFFParserNode::Run()
 {

@@ -170,6 +170,9 @@ class PVMFNodeInterfaceImpl : public PVMFNodeInterface,
         OSCL_IMPORT_REF virtual PVMFStatus DoStart(PVMFNodeCommand&);
         OSCL_IMPORT_REF virtual PVMFStatus DoPause(PVMFNodeCommand&);
 
+        // Command processing
+        OSCL_IMPORT_REF void MoveCmdToCurrentQueue(PVMFNodeCommand& aCmd);
+        OSCL_IMPORT_REF void MoveCmdToCancelQueue(PVMFNodeCommand& aCmd);
     protected:
         // protected members
         // audit control block

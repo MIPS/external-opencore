@@ -483,9 +483,6 @@ class PVMFAACFFParserNode
         bool CheckForPortActivityQueues();
 
 
-        // Command processing
-        void MoveCmdToCurrentQueue(PVMFNodeCommand& aCmd);
-        void MoveCmdToCancelQueue(PVMFNodeCommand& aCmd);
 
         PVMFStatus HandleExtensionAPICommands(PVMFNodeCommand& aCmd);
 

@@ -757,3 +757,32 @@ OSCL_EXPORT_REF void PVMFNodeInterfaceImpl::DoCancel()
 {
     OsclActiveObject::DoCancel();
 };
+
+OSCL_EXPORT_REF void PVMFNodeInterfaceImpl::MoveCmdToCurrentQueue(PVMFNodeCommand& aCmd)
+{
+    int32 err;
+    OSCL_TRY(err, iCurrentCommand.StoreL(aCmd););
+    if (err != OsclErrNone)
+    {
+        CommandComplete(iInputCommands, aCmd, PVMFErrNoMemory);
+    }
+    else
+    {
+        iInputCommands.Erase(&aCmd);
+    }
+}
+
+OSCL_EXPORT_REF void PVMFNodeInterfaceImpl::MoveCmdToCancelQueue(PVMFNodeCommand& aCmd)
+{
+    int32 err;
+    OSCL_TRY(err, iCancelCommand.StoreL(aCmd););
+    if (err != OsclErrNone)
+    {
+        CommandComplete(iInputCommands, aCmd, PVMFErrNoMemory);
+    }
+    else
+    {
+        iInputCommands.Erase(&aCmd);
+    }
+}
+
