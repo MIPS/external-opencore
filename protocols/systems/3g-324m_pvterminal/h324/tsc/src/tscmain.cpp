@@ -698,8 +698,9 @@ void TSC_324m::MuxSetupComplete(PVMFStatus status, TPVH223Level level)
     OpenSession();
     iTimer->Request(PV_TSC_RTD_TIMER_ID, PV_TSC_RTD_TIMER_ID, DEFAULT_RTD_TIMER_SECONDS, this, false);
     /* Start timer for TCS countdown */
-    if (iTSCstatemanager.ReadState(TSC_CE_RECEIVE) != COMPLETE)
+    if (iTSCstatemanager.ReadState(TSC_CE_RECEIVE) < STARTED)
     {
+        iTSCstatemanager.WriteState(TSC_CE_RECEIVE, STARTED);
         iTimer->Request(PV_TSC_TCS_RECEIVE_TIMER_ID, PV_TSC_TCS_RECEIVE_TIMER_ID,
                         DEFAULT_TCS_RECEIVE_TIMEOUT_SECONDS, this);
     }
@@ -1281,9 +1282,13 @@ void TSC_324m::TimeoutOccurred(int32 timerID, int32 timeoutInfo)
         {
             /* We timed out waiting for TCS. */
             iTSCcomponent->Timeout();
-            /* Start timer to receive TCS */
-            iTimer->Request(PV_TSC_TCS_RECEIVE_TIMER_ID, PV_TSC_TCS_RECEIVE_TIMER_ID,
-                            DEFAULT_TCS_RECEIVE_TIMEOUT_SECONDS, this);
+            /* Start timer to receive TCS if not already started*/
+            if (iTSCstatemanager.ReadState(TSC_CE_RECEIVE) < STARTED)
+            {
+                iTSCstatemanager.WriteState(TSC_CE_RECEIVE, STARTED);
+                iTimer->Request(PV_TSC_TCS_RECEIVE_TIMER_ID, PV_TSC_TCS_RECEIVE_TIMER_ID,
+                                DEFAULT_TCS_RECEIVE_TIMEOUT_SECONDS, this);
+            }
             iH223->EnableStuffing(true);
             iH223->SetInterleavingMultiplexFlags(0, NULL);
             iH223->SetMuxLevel(TSC_H223_LEVEL_DEFAULT);
@@ -1297,6 +1302,7 @@ void TSC_324m::TimeoutOccurred(int32 timerID, int32 timeoutInfo)
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                         (0, "TSC_324m::TimeoutOccurred Timed out on TCS receive.  Connect failed."));
+        iTSCstatemanager.WriteState(TSC_CE_RECEIVE, NOT_STARTED);
         SignalCsupComplete(PVMFErrTimeout);
     }
     else
