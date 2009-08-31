@@ -392,6 +392,17 @@ void OpenmaxMp3AO::ResetComponent()
         //Set this length to zero for flushing the current input buffer
         ipMp3Dec->iInputUsedLength = 0;
         //ipMp3Dec->iInitFlag = 0;
+
+        // don't send out temporary port reconfig buffer
+        iSendOutBufferAfterPortReconfigFlag = OMX_FALSE;
+
+        //Free the temp output buffer
+        if (ipTempOutBufferForPortReconfig)
+        {
+            oscl_free(ipTempOutBufferForPortReconfig);
+            ipTempOutBufferForPortReconfig = NULL;
+            iSizeOutBufferForPortReconfig = 0;
+        }
     }
 }
 

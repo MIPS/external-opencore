@@ -741,6 +741,17 @@ void OpenmaxAacAO::ResetComponent()
     {
         ipAacDec->ResetDecoder();
         ipAacDec->iInputUsedLength = 0;
+
+        // don't send out temporary port reconfig buffer
+        iSendOutBufferAfterPortReconfigFlag = OMX_FALSE;
+
+        //Free the temp output buffer
+        if (ipTempOutBufferForPortReconfig)
+        {
+            oscl_free(ipTempOutBufferForPortReconfig);
+            ipTempOutBufferForPortReconfig = NULL;
+            iSizeOutBufferForPortReconfig = 0;
+        }
     }
 
 }
