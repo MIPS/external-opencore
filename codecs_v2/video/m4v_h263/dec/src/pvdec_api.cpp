@@ -230,12 +230,22 @@ OSCL_EXPORT_REF Bool PVInitVideoDecoder(VideoDecControls *decCtrl, uint8 *volbuf
                     }
                     else
                     {
-                        video->shortVideoHeader = PV_TRUE;
+                        video->shortVideoHeader = PV_H263;
                     }
 
-                    if (video->shortVideoHeader == PV_TRUE)
+                    if (video->shortVideoHeader)
                     {
-                        mode = H263_MODE;
+#if M4VDEC_FLV_SUPPORT
+                        if (mode != FLV_MODE)
+                        {
+                            mode = H263_MODE;
+                        }
+                        else
+#endif
+                        {
+                            video->shortVideoHeader = PV_FLV1;
+                        }
+
                         /* Set max width and height.  In H.263 mode, we use    */
                         /*  volbuf_size[0] to pass in width and volbuf_size[1] */
                         /*  to pass in height.                    04/23/2001 */
@@ -291,7 +301,7 @@ Bool PVAllocVideoData(VideoDecControls *decCtrl, int width, int height, int nLay
     int nMBPerRow;
     int32 size;
 
-    if (video->shortVideoHeader == PV_TRUE)
+    if (video->shortVideoHeader)
     {
         video->displayWidth = video->width = width;
         video->displayHeight = video->height = height;
@@ -857,7 +867,16 @@ OSCL_EXPORT_REF MP4DecodingMode PVGetDecBitstreamMode(VideoDecControls *decCtrl)
     VideoDecData *video = (VideoDecData *)decCtrl->videoDecoderData;
     if (video->shortVideoHeader)
     {
-        return H263_MODE;
+#if M4VDEC_FLV_SUPPORT
+        if (video->shortVideoHeader & PV_FLV1)
+        {
+            return FLV_MODE;
+        }
+        else
+#endif
+        {
+            return H263_MODE;
+        }
     }
     else
     {
@@ -983,6 +1002,43 @@ int32 PVLocateH263FrameHeader(uint8 *ptr, int32 size)
     }
     return (size - (i + 1));
 }
+
+
+#if M4VDEC_FLV_SUPPORT
+/* ======================================================================== */
+/*  Function : PVLocateFLV1FrameHeader()                                    */
+/*  Purpose  :                                                              */
+/*  In/out   :                                                              */
+/*  Return   : Return the offset to the first SC in the buffer              */
+/*  Note     :                                                              */
+/*  Modified :                                                              */
+/* ======================================================================== */
+int32 PVLocateFLV1FrameHeader(uint8 *ptr, int32 size)
+{
+    int count = 0;
+    int32 i = size;
+
+    if (size < 1)
+    {
+        return 0;
+    }
+
+    while (i--)
+    {
+        if ((count > 1) && ((*ptr & 0xF8) == 0x80)) /* support FLV1 */
+        {
+            i += 2;
+            break;
+        }
+
+        if (*ptr++)
+            count = 0;
+        else
+            count++;
+    }
+    return (size - (i + 1));
+}
+#endif
 
 
 /* ======================================================================== */

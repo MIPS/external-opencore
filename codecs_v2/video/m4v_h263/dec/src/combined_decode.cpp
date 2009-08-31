@@ -81,7 +81,7 @@ PV_STATUS DecodeFrameCombinedMode(VideoDecData *video)
             return PV_FAIL;
     }
 #ifdef PV_ANNEX_IJKT_SUPPORT
-    if (video->shortVideoHeader)
+    if (video->shortVideoHeader & PV_H263)
     {
         if (video->advanced_INTRA)
         {

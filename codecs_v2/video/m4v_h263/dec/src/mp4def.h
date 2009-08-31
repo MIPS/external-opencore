@@ -49,6 +49,11 @@ typedef int16 MOT;   /*  : "int" type runs faster on RISC machine */
 /*    not well-optimized.    04/19/2000.                        */
 #define CLIP_THE_RANGE(x,LB,UB) if (x<LB) x = LB; else if (x>UB) x = UB
 
+
+#define PV_MPEG4  0x0
+#define PV_H263   0x1
+#define PV_FLV1   0x2
+
 #define MODE_INTRA      0x08 //01000
 #define MODE_INTRA_Q    0x09 //01001
 #define MODE_SKIPPED    0x10 //10000
@@ -115,6 +120,12 @@ typedef int16 MOT;   /*  : "int" type runs faster on RISC machine */
 #define SHORT_VIDEO_START_MARKER         0x20
 #define SHORT_VIDEO_START_MARKER_LENGTH  22
 #define SHORT_VIDEO_END_MARKER            0x3F
+
+#ifdef M4VDEC_FLV_SUPPORT
+#define FLV1_VIDEO_START_MARKER         0x10
+#define FLV1_VIDEO_START_MARKER_LENGTH  21
+#endif
+
 #define GOB_RESYNC_MARKER         0x01
 #define GOB_RESYNC_MARKER_LENGTH  17
 

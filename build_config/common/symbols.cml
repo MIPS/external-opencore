@@ -11,6 +11,7 @@ download_support	'Enable Download Support'
 fasttrack_download_support	'Enable fasttrack download Support'
 mp4local_support	'Enable MP4 local playback Support'
 divxlocal_support	'Enable DivX local playback Support'
+flvlocal_support	'Enable FLV local playback Support'
 rmff_support            'Enable RMFF Support' 
 asflocal_support    'Enable ASF local playback Support'
 janus_support       'Enable Janus Support'
@@ -81,6 +82,7 @@ List of libraries which would be linked with the module if they are selected as 
     * /fileformats/wav/parser/build/make
     * /fileformats/asf/parser/build/make
     * /fileformats/divx/parser/build/make
+    * /fileformats/flv/parser/build/make
     * /nodes/pvaacffparsernode/build/make
     * /nodes/pvmp3ffparsernode/build/make
     * /nodes/pvasfffparsernode/build/make
@@ -92,6 +94,7 @@ List of libraries which would be linked with the module if they are selected as 
     * /nodes/pvomxaudiodecnode/build/make
     * /nodes/pvwavffparsernode/build/make
     * /nodes/pvdivxffparsernode/build/make
+    * /nodes/pvflvffparsernode/build/make
     * /pvmi/recognizer/build/make
     * /pvmi/recognizer/plugins/pvamrffrecognizer/build/make
     * /pvmi/recognizer/plugins/pvmp3ffrecognizer/build/make
@@ -99,6 +102,7 @@ List of libraries which would be linked with the module if they are selected as 
     * /pvmi/recognizer/plugins/pvmp4ffrecognizer/build/make
     * /pvmi/recognizer/plugins/pvwavffrecognizer/build/make
     * /pvmi/recognizer/plugins/pvdivxffrecognizer/build/make
+    * /pvmi/recognizer/plugins/pvflvffrecognizer/build/make
     * /pvmi/recognizer/build/make
     * /engines/common/build/make
     * /engines/adapters/player/framemetadatautility/build/make

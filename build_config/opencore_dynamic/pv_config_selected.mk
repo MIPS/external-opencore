@@ -31,6 +31,7 @@ fasttrack_download_support=n
 mp4local_support=y
 divxlocal_support=n
 rmff_support=n
+flvlocal_support=n
 asflocal_support=n
 janus_support=n
 oma1_passthru_support=y
@@ -143,6 +144,7 @@ pv_avc_common_lib=m
 pvavcdecoder_lib=m
 wmvdecoder_lib=n
 pvmp4decoder_lib=m
+M4VDEC_FLV_SUPPORT=n
 rvdecoder_lib=n
 pvm4vencoder_lib=m
 pvavch264enc_lib=m
@@ -340,6 +342,7 @@ pvwavffrecognizer_lib=m
 pvrmffrecognizer_lib=n
 pvdivxffrecognizer_lib=n
 pvplsffrecognizer_lib=m
+pvflvffrecognizer_lib=n
 
 
 #
@@ -435,6 +438,8 @@ BUILD_AMR_FF_REC=y
 BUILD_DIVX_FF_PARSER_NODE=n
 BUILD_DIVX_FF_REC=n
 BUILD_PLS_FF_REC=y
+BUILD_FLV_FF_PARSER_NODE=n
+BUILD_FLV_FF_REC=n
 
 
 

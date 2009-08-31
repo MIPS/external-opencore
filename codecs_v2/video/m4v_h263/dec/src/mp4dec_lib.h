@@ -275,6 +275,10 @@ extern "C"
     PV_STATUS DecodeVOLHeader(VideoDecData *video, int layer);
     PV_STATUS DecodeVOPHeader(VideoDecData *video, Vop *currVop, Bool use_ext_tiemstamp);
     PV_STATUS DecodeShortHeader(VideoDecData *video, Vop *currVop);
+    PV_STATUS DecodeH263Header(VideoDecData *video, Vop *currVop);
+#if M4VDEC_FLV_SUPPORT
+    PV_STATUS DecodeFLV1Header(VideoDecData *video, Vop *currVop);
+#endif
     PV_STATUS PV_DecodeVop(VideoDecData *video);
     uint32 CalcVopDisplayTime(Vol *currVol, Vop *currVop, int shortVideoHeader);
 

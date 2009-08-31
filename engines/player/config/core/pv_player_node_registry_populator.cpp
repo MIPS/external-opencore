@@ -86,7 +86,9 @@
 #if BUILD_STILL_IMAGE_NODE
 #include "pvmf_stillimage_factory.h"
 #endif
-
+#if BUILD_FLV_FF_PARSER_NODE
+#include "pvmf_flvffparser_factory.h"
+#endif
 // For recognizer registry
 #if BUILD_MP4_FF_REC
 #include "pvmp4ffrec_factory.h"
@@ -114,6 +116,9 @@
 #endif
 #if BUILD_PLS_FF_REC
 #include "pvplsffrec_factory.h"
+#endif
+#if BUILD_FLV_FF_REC
+#include "pvflvffrec_factory.h"
 #endif
 #ifdef USE_LOADABLE_MODULES
 #include "oscl_shared_library.h"
@@ -423,6 +428,17 @@ void PVPlayerRegistryPopulator::RegisterAllNodes(PVPlayerNodeRegistryInterface* 
     nodeinfo.iNodeCreateFunc = PVMFStillImageNodeFactory::CreateStillImageNode;
     aRegistry->RegisterNode(nodeinfo);
 #endif
+#if BUILD_FLV_FF_PARSER_NODE
+    //For PVMFFLVParserNode
+    nodeinfo.iInputTypes.clear();
+    nodeinfo.iInputTypes.push_back(PVMF_MIME_FLVFF);
+    nodeinfo.iNodeUUID = KPVMFFLVFFParserNodeUuid;
+    nodeinfo.iOutputType.clear();
+    nodeinfo.iOutputType.push_back(PVMF_MIME_FORMAT_UNKNOWN);
+    nodeinfo.iNodeCreateFunc = PVMFFLVParserNodeFactory::CreatePVMFFLVParserNode;
+    nodeinfo.iNodeReleaseFunc = PVMFFLVParserNodeFactory::DeletePVMFFLVParserNode;
+    aRegistry->RegisterNode(nodeinfo);
+#endif
 }
 
 void PVPlayerRegistryPopulator::UnregisterAllNodes(PVPlayerNodeRegistryInterface* aRegistry, OsclAny* aContext)
@@ -511,6 +527,20 @@ void PVPlayerRegistryPopulator::RegisterAllRecognizers(PVPlayerRecognizerRegistr
     else
     {
         OSCL_DELETE(((PVRMFFRecognizerFactory*)tmpfac));
+        tmpfac = NULL;
+        return;
+    }
+#endif
+#if BUILD_FLV_FF_REC
+    tmpfac = OSCL_STATIC_CAST(PVMFRecognizerPluginFactory*, OSCL_NEW(PVFLVFFRecognizerFactory, ()));
+    if (PVMFRecognizerRegistry::RegisterPlugin(*tmpfac) == PVMFSuccess)
+    {
+        aRegistry->RegisterRecognizer(tmpfac);
+        nodeList->push_back(tmpfac);
+    }
+    else
+    {
+        OSCL_DELETE(((PVFLVFFRecognizerFactory*)tmpfac));
         tmpfac = NULL;
         return;
     }
