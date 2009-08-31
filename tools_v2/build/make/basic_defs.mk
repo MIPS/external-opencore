@@ -2,8 +2,27 @@
 # For this to work reliably, it must be called within the local
 # makefile before any other include statements.
 define get_makefile_dir
-   $(patsubst %/,%,$(dir $(lastword $(MAKEFILE_LIST))))
+  $(strip $(call print_makefile_includes) $(patsubst %/,%,$(dir $(lastword $(MAKEFILE_LIST)))))
 endef
+
+# The purpose of OPT_INCL is to prefix any include statements that should 
+# tolerate missing makefiles in some cases (e.g., clean target) but fail in 
+# others.
+ifeq "$(MAKECMDGOALS)" "clean"
+OPT_INCL := -
+else
+OPT_INCL := 
+endif
+
+# Function that prints out the makefiles it is including
+ifdef SHOW_MK
+define print_makefile_includes
+$(info ** Including $(lastword $(MAKEFILE_LIST)))
+endef
+else
+define print_makefile_includes
+endef
+endif
 
 # The definitions below give the basic definition of a space 
 # which is useful in subst calls where it is desirable to remove spaces.

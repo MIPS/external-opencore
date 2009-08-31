@@ -16,13 +16,12 @@ SRCS := pv_metadata_engine.cpp \
 	pv_metadata_engine_factory.cpp \
 	pvme_node_registry.cpp \
         ../config/default/pvme_node_registry_populator.cpp 
-        
+
 HDRS := pv_metadata_engine.h \
 	pv_metadata_engine_factory.h \
         pv_metadata_engine_interface.h \
 	pv_metadata_engine_types.h \
 	pvme_node_registry.h
-	
+
 include $(MK)/library.mk
 
-include $(MK)/sdkinfo.mk

@@ -34,7 +34,7 @@ endif
 
 # $(info plugins to include $(TARGET) = $(MY_TARGET_PLUGINS))
 ifneq ($(strip $(MY_TARGET_PLUGINS)),)
-include $(call process_include_list,$(LOCAL_PATH),$(MY_TARGET_PLUGINS))
+$(eval $(OPT_INCL)include $(call process_include_list,$(LOCAL_PATH),$(MY_TARGET_PLUGINS)))
 endif
 
 #
