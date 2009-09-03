@@ -3946,36 +3946,6 @@ PVMFStatus PVMFOMXVideoDecNode::GetProfileAndLevel(PVMF_MPEGVideoProfileType& aP
 }
 
 
-// DEFINITIONS for parsing the config information & sequence header for WMV
-
-#define GetUnalignedDword( pb, dw ) \
-            (dw) = ((uint32) *(pb + 3) << 24) + \
-                   ((uint32) *(pb + 2) << 16) + \
-                   ((uint16) *(pb + 1) << 8) + *pb;
-
-#define GetUnalignedDwordEx( pb, dw )   GetUnalignedDword( pb, dw ); (pb) += sizeof(uint32);
-#define LoadDWORD( dw, p )  GetUnalignedDwordEx( p, dw )
-#ifndef MAKEFOURCC_WMC
-#define MAKEFOURCC_WMC(ch0, ch1, ch2, ch3) \
-        ((uint32)(uint8)(ch0) | ((uint32)(uint8)(ch1) << 8) |   \
-        ((uint32)(uint8)(ch2) << 16) | ((uint32)(uint8)(ch3) << 24 ))
-
-#define mmioFOURCC_WMC(ch0, ch1, ch2, ch3)  MAKEFOURCC_WMC(ch0, ch1, ch2, ch3)
-#endif
-
-#define FOURCC_WMV3     mmioFOURCC_WMC('W','M','V','3')
-#define FOURCC_WMV2     mmioFOURCC_WMC('W','M','V','2')
-#define FOURCC_WMVA     mmioFOURCC_WMC('W','M','V','A')
-
-//For WMV3
-enum { NOT_WMV3 = -1, WMV3_SIMPLE_PROFILE, WMV3_MAIN_PROFILE, WMV3_PC_PROFILE, WMV3_SCREEN };
-
-//For WMVA
-#define ASFBINDING_SIZE                   1   // size of ASFBINDING is 1 byte
-#define SC_SEQ          0x0F
-#define SC_ENTRY        0x0E
-
-
 bool PVMFOMXVideoDecNode::VerifyParametersSync(PvmiMIOSession aSession, PvmiKvp* aParameters, int num_elements)
 {
     // unused parameters
@@ -3985,7 +3955,6 @@ bool PVMFOMXVideoDecNode::VerifyParametersSync(PvmiMIOSession aSession, PvmiKvp*
     // call this in case of WMV format
     if (((PVMFOMXDecPort*)iInPort)->iFormat == PVMF_MIME_WMV)
     {
-
         //verify bitrate
         if (pv_mime_strcmp(aParameters->key, PVMF_BITRATE_VALUE_KEY) == 0)
         {
@@ -4009,26 +3978,27 @@ bool PVMFOMXVideoDecNode::VerifyParametersSync(PvmiMIOSession aSession, PvmiKvp*
             return true;
         }
 
-        // pConfig points to format specific info and sequence header.
-        uint8 *pConfig = (uint8*)(aParameters->value.key_specific_value);
-        uint8 *pData;
-        uint32 dwdat;
-        uint32 NewCompression;
-        uint32 NewSeqHeader;
-        uint32 NewProfile, NewFrameRate, NewBitRate;
+        pvVideoConfigParserInputs aInput;
+        pvVideoConfigParserOutputs aOutput;
 
-        // We are interested in the following (and will extract it)
-        //  1. Version (WMV9 or WMV8 etc.) (from format specific info)
-        //  2. picture dimensions // from format specific info
-        //  3. interlaced YUV411 /sprite content is not supported (from sequence header)
-        //  4. framerate / bitrate information (from sequence header)
+        aInput.inPtr = (uint8*)(aParameters->value.key_specific_value);
+        aInput.inBytes = (int32)aParameters->capacity;
+        aInput.iMimeType = PVMF_MIME_WMV;
+        if (aInput.inBytes == 0 || aInput.inPtr == NULL)
+        {
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVMFOMXVideoDecNode::VerifyParametersSync() - null config info"));
+            return false;
+        }
 
-        pData = pConfig + 15; // position ptr to Width & Height
+        if (pv_video_config_parser(&aInput, &aOutput)) // return 0 for success
+        {
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVMFOMXVideoDecNode::VerifyParametersSync() - invalid config info"));
+            return false;
+        }
 
-        LoadDWORD(dwdat, pData);
-        iNewWidth = dwdat;
-        LoadDWORD(dwdat, pData);
-        iNewHeight = dwdat;
+
+        iNewWidth = aOutput.width;
+        iNewHeight = aOutput.height;
 
         if (((iNewWidth != (uint32)iYUVWidth) || (iNewHeight != (uint32)iYUVHeight)) && iOutPort != NULL)
         {
@@ -4068,191 +4038,8 @@ bool PVMFOMXVideoDecNode::VerifyParametersSync(PvmiMIOSession aSession, PvmiKvp*
                 return false;
             }
         }
-
-        pData += 4; //position ptr to Compression type
-
-        LoadDWORD(dwdat, pData);
-        NewCompression = dwdat;
-
-        if (NewCompression != FOURCC_WMV2 &&
-                NewCompression != FOURCC_WMV3 &&
-                NewCompression != FOURCC_WMVA)
-            return false;
-
-
-        // Check sequence header
-        switch (NewCompression)
-        {
-            case FOURCC_WMV3:
-            {
-                pData = pConfig + 11 + 40; //sizeof(BITMAPINFOHEADER); // position to sequence header
-
-                LoadDWORD(dwdat, pData);
-                NewSeqHeader = dwdat; // this is little endian read sequence header
-
-                uint32 YUV411flag, Spriteflag;
-
-                // For FOURCC_WMV3
-                uint32 YUV411;
-                uint32 SpriteMode;
-                uint32 LoopFilter;
-                uint32 Xintra8Switch;
-                uint32 MultiresEnabled;
-                uint32 X16bitXform;
-                uint32 UVHpelBilinear;
-                uint32 ExtendedMvMode;
-                uint32 DQuantCodingOn;
-                uint32 XformSwitch;
-                uint32 DCTTable_MB_ENABLED;
-                uint32 SequenceOverlap;
-                uint32 StartCode;
-                uint32 PreProcRange;
-                uint32 NumBFrames;
-                uint32 ExplicitSeqQuantizer;
-                uint32 Use3QPDZQuantizer = 0;
-                uint32 ExplicitFrameQuantizer = 0;
-
-
-                bool bValidProfile = true;
-
-                NewProfile = (NewSeqHeader & 0xC0) >> 6; // 0 - simple , 1- main, 3 - complex, 2-forbidden
-
-                if (NewProfile == WMV3_PC_PROFILE)
-                    return false;
-
-                YUV411flag = (NewSeqHeader & 0x20) >> 5;
-                Spriteflag = (NewSeqHeader & 0x10) >> 4;
-                if ((YUV411flag != 0) || (Spriteflag != 0))
-                    return false;
-
-                YUV411              = (uint32)YUV411flag;
-                SpriteMode          = (uint32)Spriteflag;
-                LoopFilter          = (NewSeqHeader & 0x800) >> 11;
-                Xintra8Switch       = (NewSeqHeader & 0x400) >> 10;
-                MultiresEnabled     = (NewSeqHeader & 0x200) >> 9;
-                X16bitXform         = (NewSeqHeader & 0x100) >> 8;
-                UVHpelBilinear      = (NewSeqHeader & 0x800000) >> 23;
-                ExtendedMvMode      = (NewSeqHeader & 0x400000) >> 22;
-                DQuantCodingOn      = (NewSeqHeader & 0x300000) >> 20;
-                XformSwitch         = (NewSeqHeader & 0x80000) >> 19;
-                DCTTable_MB_ENABLED = (NewSeqHeader & 0x40000) >> 18;
-                SequenceOverlap     = (NewSeqHeader & 0x20000) >> 17;
-                StartCode           = (NewSeqHeader & 0x10000) >> 16;
-                PreProcRange            = (NewSeqHeader & 0x80000000) >> 31;
-                NumBFrames          = (NewSeqHeader & 0x70000000) >> 28;
-                ExplicitSeqQuantizer    = (NewSeqHeader & 0x8000000) >> 27;
-                if (ExplicitSeqQuantizer)
-                    Use3QPDZQuantizer = (NewSeqHeader & 0x4000000) >> 26;
-                else
-                    ExplicitFrameQuantizer = (NewSeqHeader & 0x4000000) >> 26;
-
-                NewFrameRate = (NewSeqHeader & 0x0E) >> 1 ; // from 2 to 30 fps (in steps of 4)
-                NewFrameRate = 4 * NewFrameRate + 2; // (in fps)
-
-                NewBitRate = (((NewSeqHeader & 0xF000) >> 24) | ((NewSeqHeader & 0x01) << 8));  // from 32 to 2016 kbps in steps of 64kbps
-                NewBitRate = 64 * NewBitRate + 32; // (in kbps)
-
-                // Verify Profile
-                if (!SpriteMode)
-                {
-                    if (NewProfile == WMV3_SIMPLE_PROFILE)
-                    {
-                        bValidProfile = (Xintra8Switch == 0) &&
-                                        (X16bitXform == 1) &&
-                                        (UVHpelBilinear == 1) &&
-                                        (StartCode == 0) &&
-                                        (LoopFilter == 0) &&
-                                        (YUV411 == 0) &&
-                                        (MultiresEnabled == 0) &&
-                                        (DQuantCodingOn == 0) &&
-                                        (NumBFrames == 0) &&
-                                        (PreProcRange == 0);
-
-                    }
-                    else if (NewProfile == WMV3_MAIN_PROFILE)
-                    {
-                        bValidProfile = (Xintra8Switch == 0) &&
-                                        (X16bitXform == 1);
-                    }
-                    else if (NewProfile == WMV3_PC_PROFILE)
-                    {
-                        // no feature restrictions for complex profile.
-                    }
-
-                    if (!bValidProfile)
-                    {
-                        return false;
-                    }
-                }
-                else
-                {
-                    if (!Xintra8Switch   &&
-                            !DCTTable_MB_ENABLED  &&
-                            !YUV411 &&
-                            !LoopFilter &&
-                            !ExtendedMvMode &&
-                            !MultiresEnabled &&
-                            !UVHpelBilinear &&
-                            !DQuantCodingOn &&
-                            !XformSwitch &&
-                            !StartCode &&
-                            !PreProcRange &&
-                            !ExplicitSeqQuantizer &&
-                            !Use3QPDZQuantizer &&
-                            !ExplicitFrameQuantizer)
-                        return true;
-                    else
-                        return false;
-                }
-            }
-            break;
-            case FOURCC_WMVA:
-            {
-                pData = pConfig + 11 + 40 + ASFBINDING_SIZE; //sizeof(BITMAPINFOHEADER); // position to sequence header
-
-                LoadDWORD(dwdat, pData);
-                NewSeqHeader = dwdat; // this is little endian read sequence header
-
-                int32 iPrefix;
-                //ignore start code prefix
-                iPrefix = NewSeqHeader & 0xFF;
-                if (iPrefix != 0) return false;
-                iPrefix = (NewSeqHeader & 0xFF00) >> 8;
-                if (iPrefix != 0) return false;
-                iPrefix = (NewSeqHeader & 0xFF0000) >> 16;
-                if (iPrefix != 1) return false;
-                iPrefix = (NewSeqHeader & 0xFF000000) >> 24;
-                if (iPrefix != SC_SEQ) return false;
-
-                LoadDWORD(dwdat, pData);
-                NewSeqHeader = dwdat;
-
-                NewProfile = (NewSeqHeader & 0xC0) >> 6;
-                if (NewProfile != 3)
-                    return false;
-                pData += 3;
-                LoadDWORD(dwdat, pData);
-                NewSeqHeader = dwdat;
-                //ignore start code prefix
-                iPrefix = NewSeqHeader & 0xFF;
-                if (iPrefix != 0) return false;
-                iPrefix = (NewSeqHeader & 0xFF00) >> 8;
-                if (iPrefix != 0) return false;
-                iPrefix = (NewSeqHeader & 0xFF0000) >> 16;
-                if (iPrefix != 1) return false;
-                iPrefix = (NewSeqHeader & 0xFF000000) >> 24;
-                if (iPrefix != SC_ENTRY) return false;
-            }
-            break;
-
-            case FOURCC_WMV2:
-                break;
-
-            default:
-                return false;
-        }
-
     } // end of if(format == PVMF_MIME_WMV)
+
     return true;
 }
 

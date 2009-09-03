@@ -62,6 +62,14 @@
 // For PlayReady
 #define FOURCC_PRDY     mmioFOURCC_WMC('P','R','D','Y')
 
+//For WMV3
+enum { NOT_WMV3 = -1, WMV3_SIMPLE_PROFILE, WMV3_MAIN_PROFILE, WMV3_PC_PROFILE, WMV3_SCREEN };
+
+//For WMVA
+#define ASFBINDING_SIZE                   1   // size of ASFBINDING is 1 byte
+#define SC_SEQ          0x0F
+#define SC_ENTRY        0x0E
+
 
 OSCL_DLL_ENTRY_POINT_DEFAULT()
 
@@ -164,6 +172,8 @@ OSCL_EXPORT_REF int16 pv_video_config_parser(pvVideoConfigParserInputs *aInputs,
         uint32 NewCompression = dwdat;
         uint32 NewSeqHeader = 0;
         uint32 NewProfile = 0;
+        uint32 NewFrameRate, NewBitRate;
+
         // in case of WMV store "Compression Type as Level"
         aOutputs->level = NewCompression;
 
@@ -191,20 +201,159 @@ OSCL_EXPORT_REF int16 pv_video_config_parser(pvVideoConfigParserInputs *aInputs,
                 LoadDWORD(dwdat, pData);
                 NewSeqHeader = dwdat; // this is little endian read sequence header
 
+                uint32 YUV411flag, Spriteflag;
+
+                // For FOURCC_WMV3
+                uint32 YUV411;
+                uint32 SpriteMode;
+                uint32 LoopFilter;
+                uint32 Xintra8Switch;
+                uint32 MultiresEnabled;
+                uint32 X16bitXform;
+                uint32 UVHpelBilinear;
+                uint32 ExtendedMvMode;
+                uint32 DQuantCodingOn;
+                uint32 XformSwitch;
+                uint32 DCTTable_MB_ENABLED;
+                uint32 SequenceOverlap;
+                uint32 StartCode;
+                uint32 PreProcRange;
+                uint32 NumBFrames;
+                uint32 ExplicitSeqQuantizer;
+                uint32 Use3QPDZQuantizer = 0;
+                uint32 ExplicitFrameQuantizer = 0;
+
+
+                bool bValidProfile = true;
+
                 NewProfile = (NewSeqHeader & 0xC0) >> 6; // 0 - simple , 1- main, 3 - complex, 2-forbidden
 
-                break;
+                if (NewProfile == WMV3_PC_PROFILE)
+                    return -1;
+
+                YUV411flag = (NewSeqHeader & 0x20) >> 5;
+                Spriteflag = (NewSeqHeader & 0x10) >> 4;
+                if ((YUV411flag != 0) || (Spriteflag != 0))
+                    return -1;
+
+                YUV411              = (uint32)YUV411flag;
+                SpriteMode          = (uint32)Spriteflag;
+                LoopFilter          = (NewSeqHeader & 0x800) >> 11;
+                Xintra8Switch       = (NewSeqHeader & 0x400) >> 10;
+                MultiresEnabled     = (NewSeqHeader & 0x200) >> 9;
+                X16bitXform         = (NewSeqHeader & 0x100) >> 8;
+                UVHpelBilinear      = (NewSeqHeader & 0x800000) >> 23;
+                ExtendedMvMode      = (NewSeqHeader & 0x400000) >> 22;
+                DQuantCodingOn      = (NewSeqHeader & 0x300000) >> 20;
+                XformSwitch         = (NewSeqHeader & 0x80000) >> 19;
+                DCTTable_MB_ENABLED = (NewSeqHeader & 0x40000) >> 18;
+                SequenceOverlap     = (NewSeqHeader & 0x20000) >> 17;
+                StartCode           = (NewSeqHeader & 0x10000) >> 16;
+                PreProcRange            = (NewSeqHeader & 0x80000000) >> 31;
+                NumBFrames          = (NewSeqHeader & 0x70000000) >> 28;
+                ExplicitSeqQuantizer    = (NewSeqHeader & 0x8000000) >> 27;
+                if (ExplicitSeqQuantizer)
+                    Use3QPDZQuantizer = (NewSeqHeader & 0x4000000) >> 26;
+                else
+                    ExplicitFrameQuantizer = (NewSeqHeader & 0x4000000) >> 26;
+
+                NewFrameRate = (NewSeqHeader & 0x0E) >> 1 ; // from 2 to 30 fps (in steps of 4)
+                NewFrameRate = 4 * NewFrameRate + 2; // (in fps)
+
+                NewBitRate = (((NewSeqHeader & 0xF000) >> 24) | ((NewSeqHeader & 0x01) << 8));  // from 32 to 2016 kbps in steps of 64kbps
+                NewBitRate = 64 * NewBitRate + 32; // (in kbps)
+
+                // Verify Profile
+                if (!SpriteMode)
+                {
+                    if (NewProfile == WMV3_SIMPLE_PROFILE)
+                    {
+                        bValidProfile = (Xintra8Switch == 0) &&
+                                        (X16bitXform == 1) &&
+                                        (UVHpelBilinear == 1) &&
+                                        (StartCode == 0) &&
+                                        (LoopFilter == 0) &&
+                                        (YUV411 == 0) &&
+                                        (MultiresEnabled == 0) &&
+                                        (DQuantCodingOn == 0) &&
+                                        (NumBFrames == 0) &&
+                                        (PreProcRange == 0);
+
+                    }
+                    else if (NewProfile == WMV3_MAIN_PROFILE)
+                    {
+                        bValidProfile = (Xintra8Switch == 0) &&
+                                        (X16bitXform == 1);
+                    }
+                    else if (NewProfile == WMV3_PC_PROFILE)
+                    {
+                        // no feature restrictions for complex profile.
+                    }
+
+                    if (!bValidProfile)
+                    {
+                        return -1;
+                    }
+                }
+                else
+                {
+                    if (Xintra8Switch   ||
+                            DCTTable_MB_ENABLED  ||
+                            YUV411 ||
+                            LoopFilter ||
+                            ExtendedMvMode ||
+                            MultiresEnabled ||
+                            UVHpelBilinear ||
+                            DQuantCodingOn ||
+                            XformSwitch ||
+                            StartCode ||
+                            PreProcRange ||
+                            ExplicitSeqQuantizer ||
+                            Use3QPDZQuantizer ||
+                            ExplicitFrameQuantizer)
+                        return -1;
+                }
             }
+            break;
+
             case FOURCC_WMVA:
+            case FOURCC_WVC1:
             {
                 pData = aInputs->inPtr;
                 pData += (11 + 40 + ASFBINDING_SIZE); //sizeof(BITMAPINFOHEADER); // position to sequence header
 
-                LoadDWORD(dwdat, pData); // prefix  // this is little endian read sequence header
+                LoadDWORD(dwdat, pData);
+                NewSeqHeader = dwdat; // this is little endian read sequence header
+
+                int32 iPrefix;
+                //ignore start code prefix
+                iPrefix = NewSeqHeader & 0xFF;
+                if (iPrefix != 0) return -1;
+                iPrefix = (NewSeqHeader & 0xFF00) >> 8;
+                if (iPrefix != 0) return -1;
+                iPrefix = (NewSeqHeader & 0xFF0000) >> 16;
+                if (iPrefix != 1) return -1;
+                iPrefix = (NewSeqHeader & 0xFF000000) >> 24;
+                if (iPrefix != SC_SEQ) return -1;
+
                 LoadDWORD(dwdat, pData);
                 NewSeqHeader = dwdat;
 
-                NewProfile = (NewSeqHeader & 0xC0) >> 6; // this must be 3
+                NewProfile = (NewSeqHeader & 0xC0) >> 6;
+                if (NewProfile != 3)
+                    return -1;
+                pData += 3;
+                LoadDWORD(dwdat, pData);
+                NewSeqHeader = dwdat;
+                //ignore start code prefix
+                iPrefix = NewSeqHeader & 0xFF;
+                if (iPrefix != 0) return -1;
+                iPrefix = (NewSeqHeader & 0xFF00) >> 8;
+                if (iPrefix != 0) return -1;
+                iPrefix = (NewSeqHeader & 0xFF0000) >> 16;
+                if (iPrefix != 1) return -1;
+                iPrefix = (NewSeqHeader & 0xFF000000) >> 24;
+                if (iPrefix != SC_ENTRY) return -1;
             }
             break;
 
