@@ -41,6 +41,13 @@ static const char* const RtspMethodStringPLSS[] =
     , "$" //METHOD_BINARY_DATA
     , "REDIRECT" // METHOD_REDIRECT
     , "SET_PARAMETER" //METHOD_SET_PARAMETER
+#ifdef SIMPLE_HTTP_SUPPORT
+    , "GET" //METHOD_GET
+    , "POST" //METHOD_POST
+#endif
+#ifdef RTSP_PLAYLIST_SUPPORT
+    , "PLAYLIST_PLAY" //METHOD_PLAYLIST_PLAY
+#endif
 };
 
 #define RtspReasonStringContinue "Continue"
@@ -102,6 +109,9 @@ static const char* const RtspMethodStringPLSS[] =
 #define RtspRequestMethodStringEndOfStream "END_OF_STREAM"
 #define RtspRequestMethodStringBinaryData "$"
 
+#ifdef RTSP_PLAYLIST_SUPPORT
+#define RtspRequestMethodStringPlaylistPlay "PLAYLIST_PLAY"
+#endif
 
 #define RTSPVersionString  "RTSP/1.0"
 #define RTSPVersionString_len  8
@@ -142,6 +152,11 @@ const char CHAR_GT   = '>';
 #define RtspRecognizedFieldBufferSize "Buffersize"
 #define RtspRecognizedFieldSupported "Supported"
 
+#ifdef RTSP_PLAYLIST_SUPPORT
+#define RtspRecognizedFieldPlaylistRange "playlist_range"
+#define RtspRecognizedFieldPlaylistError "playlist_error"
+//#define RtspPlaylistPlayTimeStr "playlist_play_time"
+#endif
 
 
 #endif // RTSP_PAR_COM_CONSTANTS_H_

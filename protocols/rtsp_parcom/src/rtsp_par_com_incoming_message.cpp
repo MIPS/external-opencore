@@ -25,6 +25,29 @@ RTSPIncomingMessage::reset()
 {
     RTSPGenericMessage::reset();
 
+#ifdef RTSP_PLAYLIST_SUPPORT
+    playlistRangeField.setPtrLen("", 0);
+    playlistRangeFieldIsSet = false;
+    // need to figure out how to store all the error fields.. we may not actually need to
+    playlistErrorFieldIsSet = false;
+    playlistErrorFieldCount = 0;
+    for (int ii = 0; ii < RTSP_MAX_NUMBER_OF_PLAYLIST_ERROR_ENTRIES; ++ii)
+    {
+        playlistErrorField[ii].setPtrLen("", 0);
+    }
+
+    supportedFieldIsSet = false;
+    numOfSupportedEntries = 0;
+    for (int jj = 0; jj < RTSP_MAX_NUMBER_OF_SUPPORTED_ENTRIES; ++jj)
+    {
+        supportedField[jj].setPtrLen("", 0);
+    }
+
+    playlistRangeUrl.setPtrLen("", 0);
+    playlistRangeClipIndex = 0;
+    playlistRangeClipOffset = 0;
+    playlistRangeNptTime = 0;
+#endif
 
     amMalformed = RTSPOk;
     rtspVersionString = "";
@@ -53,6 +76,28 @@ RTSPIncomingMessage::parseFirstFields()
         ++secondaryBufferSpace;
     }
 
+#ifdef SIMPLE_HTTP_SUPPORT
+    if (secondaryBufferSizeUsed >= 4)
+    {// Real http cloaking. H\02\00\00
+        if (('H' != secondaryBufferSpace[0])
+                || ('T' != secondaryBufferSpace[1])
+                || ('T' != secondaryBufferSpace[2])
+                || ('P' != secondaryBufferSpace[3])
+           )
+        {
+            if ('H' == secondaryBufferSpace[0])
+            {//HTTP_RESPONSE
+                uint32 nOptionLen = secondaryBufferSpace[1];
+                secondaryBufferSpace += (2 + nOptionLen);
+            }
+            /* TBD
+            else if('r' == secondaryBufferSpace[0])
+            {//HTTP_RV_RESPONSE
+            }
+            */
+        }
+    }
+#endif
 
     numPtrFields = 0;
 
@@ -227,6 +272,31 @@ RTSPIncomingMessage::parseFirstFields()
 
         secondaryBufferSpace = endOfLine;
     }
+#ifdef SIMPLE_HTTP_SUPPORT
+    else if (('H' == *(wordPtr[0]))
+             && ('T' == *(wordPtr[0] + 1))
+             && ('T' == *(wordPtr[0] + 2))
+             && ('P' == *(wordPtr[0] + 3))
+             && ('/' == *(wordPtr[0] + 4))
+            )
+    {
+        msgType = RTSPResponseMsg;
+        rtspVersionString = firstWordPLSS;
+
+        // if there is a mismatch, let the Engine know about it and stop parsing
+        if ((rtspVersionString != HTTPVersion_1_0_String)
+                && (rtspVersionString != HTTPVersion_1_1_String))
+        {
+            amMalformed = RTSPErrorVersion;
+            return;
+        }
+        uint32 atoi_tmp;
+        PV_atoi(wordPtr[1], 'd', atoi_tmp);
+        statusCode = (RTSPStatusCode)atoi_tmp;
+        reasonString = wordPtr[2];
+        secondaryBufferSpace = endOfLine;
+    }
+#endif
     else
     {   // okay, it could be a request
 
@@ -688,6 +758,14 @@ RTSPIncomingMessage::parseNextPortion()
             {
                 parseTransport(numPtrFields);
             }
+#ifdef RTSP_PLAYLIST_SUPPORT
+            if (fieldKeys[ numPtrFields ].isCIEquivalentTo(
+                        RtspRecognizedFieldSupported))
+            {
+                parseSupported(fieldVals[ numPtrFields].c_str(), fieldVals[ numPtrFields].length() + 1);
+                supportedFieldIsSet = true;
+            }
+#endif
         }
 
         ptr = endOfValue + 1;
@@ -700,6 +778,73 @@ RTSPIncomingMessage::parseNextPortion()
     return true;
 }
 
+#ifdef RTSP_PLAYLIST_SUPPORT
+
+void
+RTSPIncomingMessage::parseSupported(const char *supportedString, int length)
+{
+    const StrPtrLen methodEosString("method.eos");
+    const StrPtrLen comPvPlaylistString("com.pv.server_playlist");
+
+    const char *end = supportedString + length;
+
+    char *sptr;//, *eptr;
+
+    sptr = (char*)supportedString;
+
+    while ((sptr < end) && (numOfSupportedEntries < RTSP_MAX_NUMBER_OF_SUPPORTED_ENTRIES))
+    {
+        char * separator = sptr;
+
+        while ((CHAR_COMMA != *separator)
+                && (CHAR_NULL != *separator)
+                && (separator < end)
+              )
+        {
+            ++separator;
+        }
+
+        if (CHAR_COMMA == *separator)
+        {
+            // make sure there is a terminating char
+            // in the other case, there will already be one because its the end of the line
+            // and the field parsing that called this function put one there
+            *separator = CHAR_NULL;
+        }
+
+        // get name pointer
+        char * namePtr = sptr;
+        // eat through trailing whitespace
+        for (char * wPtr1 = separator - 1;
+                (wPtr1 >= namePtr)
+                && ((*wPtr1 >= 0x09 && *wPtr1 <= 0x0D) || *wPtr1 == 0x20);
+                --wPtr1)
+        {
+            *wPtr1 = CHAR_NULL;
+        }
+        // eat through leading whitespace
+        while ((*namePtr >= 0x09 && *namePtr <= 0x0D) || *namePtr == 0x20)
+        {
+            ++namePtr;
+        }
+
+        supportedField[numOfSupportedEntries++] = namePtr;
+
+        if (!oscl_strncmp(namePtr, methodEosString.c_str(), methodEosString.length()))
+        {
+            methodEosIsSet = true;
+        }
+        else if (!oscl_strncmp(namePtr, comPvPlaylistString.c_str(), comPvPlaylistString.length()))
+        {
+            comPvServerPlaylistIsSet = true;
+        }
+
+        sptr = separator + 1;
+
+    }  // end while
+}
+
+#endif /* RTSP_PLAYLIST_SUPPORT */
 
 
 // relevant constants
@@ -1489,4 +1634,259 @@ RTSPIncomingMessage::parseOneRTPInfoEntry(char * & cPtr, char * finishPtr)
     }
 }
 
+#if (defined(ASF_STREAMING) || defined(RTSP_PLAYLIST_SUPPORT))
+OSCL_EXPORT_REF bool
+RTSPIncomingMessage::parseEntityBody(RTSPEntityBody * entityBody)
+{
+    char * endOfMessage = (char *) entityBody->ptr + entityBody->len;
+    char * ptr;
+
+    for (ptr = (char *) entityBody->ptr;
+            ptr < endOfMessage ;
+            ++numPtrFields
+        )
+    {
+        char * endOfValue = ptr;
+        while (CHAR_LF != *(endOfValue)
+                &&  CHAR_CR != *(endOfValue)
+                &&  CHAR_NULL != *(endOfValue))
+        {
+            ++endOfValue;
+        }
+
+        if (CHAR_CR == *(endOfValue) && CHAR_LF == *(endOfValue + 1))
+        {
+            // need to increment endOfValue for CR-LF, because
+            // it is needed later to step into the next field by shifting by 1
+            *(endOfValue) = CHAR_NULL;
+            *(++endOfValue) = CHAR_NULL;
+        }
+        else
+        {
+            *endOfValue = CHAR_NULL;
+        }
+
+        char * separator = ptr;
+
+        while ((CHAR_COLON != *separator)
+                && (CHAR_NULL != *separator)
+              )
+        {
+            ++separator;
+        }
+
+        if (CHAR_COLON != *separator)
+        {
+            amMalformed = RTSPErrorSyntax;
+        }
+        else
+        {   // field is pretty much normal
+
+            *separator = CHAR_NULL;
+
+            // get name pointer
+            char * namePtr = ptr;
+            // eat through trailing whitespace
+            for (char * wPtr1 = separator - 1;
+                    (wPtr1 >= namePtr)
+                    && ((*wPtr1 >= 0x09 && *wPtr1 <= 0x0D) || *wPtr1 == 0x20);
+                    --wPtr1)
+            {
+                *wPtr1 = CHAR_NULL;
+            }
+            // eat through leading whitespace
+            while ((*namePtr >= 0x09 && *namePtr <= 0x0D) || *namePtr == 0x20)
+            {
+                ++namePtr;
+            }
+
+            // get value pointer
+            char * valuePtr = separator + 1;
+            // eat through trailing whitespace
+            for (char * wPtr2 = endOfValue - 1;
+                    (wPtr2 > separator)
+                    && ((*wPtr2 >= 0x09 && *wPtr2 <= 0x0D) || *wPtr2 == 0x20);
+                    --wPtr2)
+            {
+                *wPtr2 = CHAR_NULL;
+            }
+            //eat through leading whitespace
+            while ((*valuePtr >= 0x09 && *valuePtr <= 0x0D) || *valuePtr == 0x20)
+            {
+                ++valuePtr;
+            }
+
+            // set the pointers
+
+            fieldKeys[ numPtrFields ] = namePtr;
+            fieldVals[ numPtrFields ] = valuePtr;
+
+            // now, figure out if we are supposed to recognize this
+            if (fieldKeys[ numPtrFields ].isCIEquivalentTo(
+                        RtspRecognizedFieldSessionId))
+            {
+                sessionId = fieldVals[ numPtrFields ];
+                sessionIdIsSet = true;
+            }
+//RTSP_PAR_COM_CONSTANTS_H_
+#define RtspRecognizedFieldEOF "EOF"
+
+            if (fieldKeys[ numPtrFields ].isCIEquivalentTo(
+                        RtspRecognizedFieldEOF))
+            {
+                eofField = fieldVals[ numPtrFields ];
+                eofFieldIsSet = true;
+            }
+#ifdef RTSP_PLAYLIST_SUPPORT
+            if (fieldKeys[ numPtrFields ].isCIEquivalentTo(
+                        RtspRecognizedFieldPlaylistRange))
+            {
+                playlistRangeField = fieldVals[ numPtrFields ];  // not sure we really need to store this, but do it for now anyway
+                playlistRangeFieldIsSet = true;
+                // now parse the entry
+                /*playlistRangeField.setPtrLen("",0);
+                playlistRangeFieldIsSet = false;
+                playlistErrorFieldIsSet = false;
+                playlistErrorFieldCount = 0;
+                playlistRangeUrl.setPtrLen("",0);
+                playlistRangeClipIndex=0;
+                playlistRangeClipOffset=0;
+                playlistRangeNptTime=0;*/
+                char* curr = valuePtr; // set curr to the start of the entry after the colon, whitespace was already removed
+                StrPtrLen eStr;
+
+                eStr = curr;
+                // look for playlist_play_time
+                const StrPtrLen RtspPlaylistPlayTimeStr = "playlist_play_time";
+                if (0 && RtspPlaylistPlayTimeStr.isCIPrefixOf(eStr))
+                {
+                    curr += 18; // move past "playlist_play_time"
+                    // eat through leading whitespace
+                    while ((*curr >= 0x09 && *curr <= 0x0D) || *curr == 0x20)
+                    {
+                        ++curr;
+                    }
+                    if (*curr != CHAR_EQUAL)
+                    {
+                        // problem
+                    }
+                    // could be more whitespace
+                    while ((*curr >= 0x09 && *curr <= 0x0D) || *curr == 0x20)
+                    {
+                        ++curr;
+                    }
+                    if (*curr != CHAR_LT)
+                    {
+                        // problem
+                    }
+                    ++curr; // move past '<'
+                    // could be even more whitespace
+                    while ((*curr >= 0x09 && *curr <= 0x0D) || *curr == 0x20)
+                    {
+                        ++curr;
+                    }
+                    // now comes the url
+                    // find the end first
+                    char* end = curr;
+                    while (*end != CHAR_COMMA)
+                    {
+                        ++end;
+                    }
+                    char* endtmp = end;
+                    // may have trailing whitespace
+                    if (*(endtmp - 1) == 0x09 || *(endtmp - 1) == 0x0D || *(endtmp - 1) == 0x20)
+                    {
+                        --endtmp;
+                        while ((*endtmp >= 0x09 && *endtmp <= 0x0D) || *endtmp == 0x20)
+                        {
+                            --endtmp;
+                        }
+                        // will be on a non space char, move it over
+                        ++endtmp;
+                    }
+                    // to do - not sure if we need a '\0' here..
+                    playlistRangeUrl.setPtrLen(curr, endtmp - curr);
+
+                    curr = end + 1;
+                    // next should be the clip index
+                    // of course, could be more whitespace
+                    while ((*curr >= 0x09 && *curr <= 0x0D) || *curr == 0x20)
+                    {
+                        ++curr;
+                    }
+                    // find next comma
+                    end = curr;
+                    while (*end != CHAR_COMMA)
+                    {
+                        ++end;
+                    }
+                    // may have trailing whitespace
+                    // dont worry about it for now  atoi should be ok
+                    /*if(*(end-1) == 0x09 ||*(end-1) == 0x0D ||*(end-1) == 0x20)
+                    {
+                    --end;
+                    while( (*end >= 0x09 && *end <= 0x0D) || *end == 0x20 )
+                    {
+                    --end;
+                    }
+                    // will be on a non space char, move it over
+                    ++end;
+                    }*/
+                    // finally get the value
+                    uint32 atoi_tmp;
+                    PV_atoi(curr, 'd', atoi_tmp);
+                    playlistRangeClipIndex = atoi_tmp;
+
+                    curr = end + 1;
+                    // next should be the clip offset
+                    // of course, could be more whitespace
+                    while ((*curr >= 0x09 && *curr <= 0x0D) || *curr == 0x20)
+                    {
+                        ++curr;
+                    }
+                    // find next comma
+                    end = curr;
+                    while (*end != CHAR_GT)
+                    {
+                        ++end;
+                    }
+                    // may have trailing whitespace
+                    // dont worry about it for now  atoi should be ok
+                    /*if(*(end-1) == 0x09 ||*(end-1) == 0x0D ||*(end-1) == 0x20)
+                    {
+                    --end;
+                    while( (*end >= 0x09 && *end <= 0x0D) || *end == 0x20 )
+                    {
+                    --end;
+                    }
+                    // will be on a non space char, move it over
+                    ++end;
+                    }*/
+                    // finally get the value
+                    PV_atoi(curr, 'd', atoi_tmp);
+                    playlistRangeClipOffset = atoi_tmp;
+
+                }
+                else
+                {
+                    // problem
+                }
+            }
+            if (fieldKeys[ numPtrFields ].isCIEquivalentTo(
+                        RtspRecognizedFieldPlaylistError))
+            {
+                if (playlistErrorFieldCount < RTSP_MAX_NUMBER_OF_PLAYLIST_ERROR_ENTRIES)
+                {
+                    playlistErrorField[playlistErrorFieldCount++] = fieldVals[ numPtrFields ];  // this needs to be an array since the number can be unbounded
+                    playlistErrorFieldIsSet = true;
+                }
+            }
+#endif
+        }
+        ptr = endOfValue + 1;
+    }
+    return true;
+}
+
+#endif
 

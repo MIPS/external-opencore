@@ -26,6 +26,9 @@
 #include "oscl_str_ptr_len.h"
 #include "rtprtcp.h"
 
+#define SIMPLE_HTTP_SUPPORT
+#define RTSP_PLAYLIST_SUPPORT
+
 // for RTSP method id
 //
 typedef enum
@@ -43,6 +46,13 @@ typedef enum
     METHOD_BINARY_DATA,
     METHOD_REDIRECT,
     METHOD_SET_PARAMETER
+#ifdef SIMPLE_HTTP_SUPPORT
+    , METHOD_GET
+    , METHOD_POST
+#endif
+#ifdef RTSP_PLAYLIST_SUPPORT
+    , METHOD_PLAYLIST_PLAY
+#endif
     , METHOD_NUM_ENTRIES //placeholder
 
 } RTSPMethod;
