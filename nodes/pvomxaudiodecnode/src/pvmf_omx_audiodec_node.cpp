@@ -671,6 +671,11 @@ PVMFStatus PVMFOMXAudioDecNode::HandlePortReEnable()
         // read the alignment again - just in case
         iOutputBufferAlignment = iParamPort.nBufferAlignment;
 
+        iNumOutputBuffers = iParamPort.nBufferCountActual;
+
+        if (iNumOutputBuffers > NUMBER_OUTPUT_BUFFER)
+            iNumOutputBuffers = NUMBER_OUTPUT_BUFFER; // make sure number of output buffers is not larger than port queue size
+
         // do we need to increase the number of buffers?
         if (iNumOutputBuffers < iParamPort.nBufferCountMin)
             iNumOutputBuffers = iParamPort.nBufferCountMin;
@@ -868,6 +873,10 @@ PVMFStatus PVMFOMXAudioDecNode::HandlePortReEnable()
 
         // read the alignment again - just in case
         iInputBufferAlignment = iParamPort.nBufferAlignment;
+
+        iNumInputBuffers = iParamPort.nBufferCountActual;
+        if (iNumInputBuffers > NUMBER_INPUT_BUFFER)
+            iNumInputBuffers = NUMBER_INPUT_BUFFER; // make sure number of output buffers is not larger than port queue size
 
         iOMXComponentInputBufferSize = iParamPort.nBufferSize;
         // do we need to increase the number of buffers?

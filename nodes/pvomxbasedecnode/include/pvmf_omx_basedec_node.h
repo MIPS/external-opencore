@@ -877,6 +877,8 @@ class PVMFOMXBaseDecNode
         uint8 iAACConfigData[4];
         uint32 iAACConfigDataLength;
 
+        bool iIsVC1;
+        bool iIsVC1AdvancedProfile;
 };
 
 

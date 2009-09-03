@@ -944,6 +944,11 @@ OMX_BOOL PV_OMXConfigParser(
                 aInputs.iMimeType = PVMF_MIME_WMV;
 
             }
+            else if (0 == oscl_strcmp(pInputs->cComponentRole, (OMX_STRING)"video_decoder.vc1"))
+            {
+                aInputs.iMimeType = PVMF_MIME_WMV;
+
+            }
             else if (0 == oscl_strcmp(pInputs->cComponentRole, (OMX_STRING)"video_decoder.avc"))
             {
                 aInputs.iMimeType = PVMF_MIME_H264_VIDEO;

@@ -248,6 +248,11 @@ PVMFStatus PVMFOMXVideoDecNode::HandlePortReEnable()
         if (iOMXComponentOutputBufferSize < iParamPort.nBufferSize)
             iOMXComponentOutputBufferSize = iParamPort.nBufferSize;
 
+        iNumOutputBuffers = iParamPort.nBufferCountActual;
+
+        if (iNumOutputBuffers > NUMBER_OUTPUT_BUFFER)
+            iNumOutputBuffers = NUMBER_OUTPUT_BUFFER; // make sure number of output buffers is not larger than port queue size
+
         // do we need to increase the number of buffers?
         if (iNumOutputBuffers < iParamPort.nBufferCountMin)
             iNumOutputBuffers = iParamPort.nBufferCountMin;
@@ -489,6 +494,9 @@ PVMFStatus PVMFOMXVideoDecNode::HandlePortReEnable()
         iInputBufferAlignment = iParamPort.nBufferAlignment;
 
         // this is input port
+        iNumInputBuffers = iParamPort.nBufferCountActual;
+        if (iNumInputBuffers > NUMBER_INPUT_BUFFER)
+            iNumInputBuffers = NUMBER_INPUT_BUFFER; // make sure number of output buffers is not larger than port queue size
 
         iOMXComponentInputBufferSize = iParamPort.nBufferSize;
         // do we need to increase the number of buffers?
@@ -1310,15 +1318,32 @@ bool PVMFOMXVideoDecNode::InitDecoder(PVMFSharedMediaDataPtr& DataIn)
 
         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFOMXVideoDecNode::InitDecoder() for WMV Decoder. Initialization data Size %d.", initbufsize));
 
+        OMX_PARAM_COMPONENTROLETYPE RoleParam;
+
+        CONFIG_SIZE_AND_VERSION(RoleParam);
+
         if (initbufsize > 0)
         {
-
-            if (!SendConfigBufferToOMXComponent(initbuffer, initbufsize))
+            if (iIsVC1)
             {
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                                (0, "PVMFOMXVideoDecNode::InitDecoder() Error in processing config buffer"));
-                return false;
+                // VC1 component, need to convert from ASF CodecSpecificInfo to VC1 AnnexL2
+                if (!ConvertASFConfigInfoToVC1AndSend(initbuffer, initbufsize))
+                {
+                    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
+                                    (0, "PVMFOMXVideoDecNode::InitDecoder() Error in processing seq header"));
+                    return false;
+                }
             }
+            else
+            {
+                if (!SendConfigBufferToOMXComponent(initbuffer, initbufsize))
+                {
+                    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
+                                    (0, "PVMFOMXVideoDecNode::InitDecoder() Error in processing config buffer"));
+                    return false;
+                }
+            }
+
             // set the flag requiring config data processing by the component
             iIsConfigDataProcessingCompletionNeeded = true;
         }
@@ -1337,6 +1362,155 @@ bool PVMFOMXVideoDecNode::InitDecoder(PVMFSharedMediaDataPtr& DataIn)
     return true;
 }
 
+#define GetUnalignedDword( pb, dw ) \
+            (dw) = ((uint32) *(pb + 3) << 24) + \
+                   ((uint32) *(pb + 2) << 16) + \
+                   ((uint16) *(pb + 1) << 8) + *pb;
+
+#define GetUnalignedDwordEx( pb, dw )   GetUnalignedDword( pb, dw ); (pb) += sizeof(uint32);
+#define LoadDWORD( dw, p )  GetUnalignedDwordEx( p, dw )
+//For WMVA
+#define SC_SEQ          0x0F
+#define SC_ENTRY        0x0E
+
+#ifndef MAKEFOURCC_WMC
+#define MAKEFOURCC_WMC(ch0, ch1, ch2, ch3) \
+        ((uint32)(uint8)(ch0) | ((uint32)(uint8)(ch1) << 8) |   \
+        ((uint32)(uint8)(ch2) << 16) | ((uint32)(uint8)(ch3) << 24 ))
+
+#define mmioFOURCC_WMC(ch0, ch1, ch2, ch3)  MAKEFOURCC_WMC(ch0, ch1, ch2, ch3)
+#endif
+
+#define FOURCC_WMV3     mmioFOURCC_WMC('W','M','V','3')
+#define FOURCC_WMVA     mmioFOURCC_WMC('W','M','V','A')
+#define FOURCC_WVC1     mmioFOURCC_WMC('W','V','C','1')
+
+
+bool PVMFOMXVideoDecNode::ConvertASFConfigInfoToVC1AndSend(uint8* initbuffer, int32 initbufsize)
+{
+    uint8 *pData;
+    uint32 dwdat;
+    uint32 temp;
+    uint32 Compression;
+    uint32 hrd_buffer, hrd_rate, cbr, level;
+    int32 Width, Height;
+    uint32 vc1_buf[9]; // 36 bytes according to Table 265 of VC1 spec.
+
+    temp = 0xC5FFFFFF;/* 0xC5 |   NUM_FRAMES  | */
+
+    vc1_buf[0] = temp; /* write unsigned int in little-endian */
+
+    temp = 0x4;
+    vc1_buf[1] = temp; /* write unsigned int in little-endian */
+
+    pData = initbuffer + 15; // position ptr to Width & Height
+    LoadDWORD(dwdat, pData);
+    Width = dwdat;
+    LoadDWORD(dwdat, pData);
+    Height = dwdat;
+
+    pData += 4; //position ptr to Compression type
+
+    LoadDWORD(dwdat, pData);
+    Compression = dwdat;
+
+    switch (Compression)
+    {
+        case FOURCC_WMV3:
+        {
+            iIsVC1AdvancedProfile = false;
+            pData = initbuffer + 11 + 40; //sizeof(BITMAPINFOHEADER); // position to sequence header
+
+            LoadDWORD(dwdat, pData);
+            vc1_buf[2] = dwdat;  /* write STRUCT_C */
+
+            level = (dwdat & 0x38) >> 3;
+            hrd_rate = 128000; /* default value for peak bitrate */
+            hrd_buffer = 5000; /* default value in millisecond */
+
+            vc1_buf[3] = Height; /* write STRUCT_A VERT_SIZE */
+            vc1_buf[4] = Width; /* write STRUCT_A HORIZ_SIZE*/
+            vc1_buf[5] = 0xC;
+
+            cbr = 0; /* default to VBR */
+            temp = (level << 29) | (cbr << 28) | (hrd_buffer);
+            vc1_buf[6] = temp;   /* write  STRUCT_B (Level:3|CBR:1|RES1:4|HRD_BUFFER:24) */
+            vc1_buf[7] = hrd_rate; /* write STRUCT_B (HRD_RATE) */
+            vc1_buf[8] = 0xFFFFFFFF; /* write STRUCT_B (FRAME_RATE)  unknown*/
+
+            if (!SendConfigBufferToOMXComponent((uint8*)(&vc1_buf[0]), 36))
+            {
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
+                                (0, "PVMFOMXVideoDecNode::ConvertASFConfigInfoToVC1AndSend() Error in processing config buffer"));
+                return false;
+            }
+
+        }
+        break;
+        case FOURCC_WMVA:
+        case FOURCC_WVC1:
+        {
+            int size = 0;
+
+            iIsVC1AdvancedProfile = true;
+            pData = initbuffer + 52; // position to sequence header
+            // search for entry point SC
+            while (size < initbufsize - 52)
+            {
+                if (!pData[0] && !pData[1] && (pData[2] == 1) && (pData[3] == 0xE))
+                {
+                    break;
+                }
+                pData++;
+                size++;
+            }
+
+            if (size)
+            {
+                /* send sequence start code */
+                if (!SendConfigBufferToOMXComponent(initbuffer + 52, size))
+                {
+                    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
+                                    (0, "PVMFOMXVideoDecNode::ConvertASFConfigInfoToVC1AndSend() Error in processing seq header"));
+                    return false;
+                }
+            }
+            else
+            {
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
+                                (0, "PVMFOMXVideoDecNode::ConvertASFConfigInfoToVC1AndSend() no sequence start code"));
+                return false;
+            }
+
+            if (initbufsize - 52 - size) // size of entry point SC
+            {
+                /* send entry point start code */
+                if (!SendConfigBufferToOMXComponent(initbuffer + 52 + size, initbufsize - 52 - size))
+                {
+                    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
+                                    (0, "PVMFOMXVideoDecNode::ConvertASFConfigInfoToVC1AndSend() Error in processing seq header"));
+                    return false;
+                }
+            }
+            else  // if not present, shall we generate it ?
+            {
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
+                                (0, "PVMFOMXVideoDecNode::ConvertASFConfigInfoToVC1AndSend() no entry point start code"));
+                return false;
+            }
+
+        }
+        break;
+        default:
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
+                            (0, "PVMFOMXVideoDecNode::ConvertASFConfigInfoToVC1() unknown FOURCC."));
+            return false;
+    }
+
+
+    return true ;
+
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////// Put output buffer in outgoing queue //////////////////////////////
@@ -3008,6 +3182,8 @@ int32 PVMFOMXVideoDecNode::GetNAL_OMXNode(uint8** bitstream, uint32* size)
 
 PVMFStatus PVMFOMXVideoDecNode::DoCapConfigVerifyParameters(PvmiKvp* aParameters, int aNumElements)
 {
+    Oscl_Vector<OMX_STRING, OsclMemAllocator> roles;
+
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFOMXVideoDecNode::DoCapConfigVerifyParameters() In"));
 
     if (aParameters == NULL || aNumElements < 1)
@@ -3066,20 +3242,21 @@ PVMFStatus PVMFOMXVideoDecNode::DoCapConfigVerifyParameters(PvmiKvp* aParameters
                         aInputs.iMimeType == PVMF_MIME_H264_VIDEO_MP4 ||
                         aInputs.iMimeType == PVMF_MIME_H264_VIDEO_RAW)
                 {
-                    aInputParameters.cComponentRole = (OMX_STRING)"video_decoder.avc";
+                    roles.push_back((OMX_STRING)"video_decoder.avc");
                 }
                 else if (aInputs.iMimeType ==  PVMF_MIME_M4V)
                 {
-                    aInputParameters.cComponentRole = (OMX_STRING)"video_decoder.mpeg4";
+                    roles.push_back((OMX_STRING)"video_decoder.mpeg4");
                 }
                 else if (aInputs.iMimeType ==  PVMF_MIME_H2631998 ||
                          aInputs.iMimeType == PVMF_MIME_H2632000)
                 {
-                    aInputParameters.cComponentRole = (OMX_STRING)"video_decoder.h263";
+                    roles.push_back((OMX_STRING)"video_decoder.h263");
                 }
                 else if (aInputs.iMimeType ==  PVMF_MIME_WMV)
                 {
-                    aInputParameters.cComponentRole = (OMX_STRING)"video_decoder.wmv";
+                    roles.push_back((OMX_STRING)"video_decoder.vc1");
+                    roles.push_back((OMX_STRING)"video_decoder.wmv");
                 }
                 else
                 {
@@ -3093,45 +3270,46 @@ PVMFStatus PVMFOMXVideoDecNode::DoCapConfigVerifyParameters(PvmiKvp* aParameters
                 OMX_U32 num_comps = 0;
                 OMX_STRING *CompOfRole;
                 OMX_U32 ii;
+                Oscl_Vector<OMX_STRING, OsclMemAllocator>::iterator role;
 
-                // call once to find out the number of components that can fit the role
-
-                OMX_MasterGetComponentsOfRole(aInputParameters.cComponentRole, &num_comps, NULL);
-
-                if (num_comps > 0)
+                for (role = roles.begin(); role != roles.end(); role++)
                 {
-                    CompOfRole = (OMX_STRING *)oscl_malloc(num_comps * sizeof(OMX_STRING));
-                    for (ii = 0; ii < num_comps; ii++)
-                        CompOfRole[ii] = (OMX_STRING) oscl_malloc(PV_OMX_MAX_COMPONENT_NAME_LENGTH * sizeof(OMX_U8));
+                    // call once to find out the number of components that can fit the role
+                    OMX_MasterGetComponentsOfRole(*role, &num_comps, NULL);
 
-                    // call 2nd time to get the component names
-                    OMX_MasterGetComponentsOfRole(aInputParameters.cComponentRole, &num_comps, (OMX_U8 **)CompOfRole);
-                    for (ii = 0; ii < num_comps; ii++)
+                    if (num_comps > 0)
                     {
-                        aInputParameters.cComponentName = CompOfRole[ii];
-                        status = OMX_MasterConfigParser(&aInputParameters, &aOutputParameters);
-                        if (status == OMX_TRUE)
-                        {
-                            break;
-                        }
-                        else
-                        {
-                            status = OMX_FALSE;
-                        }
-                    }
+                        CompOfRole = (OMX_STRING *)oscl_malloc(num_comps * sizeof(OMX_STRING));
+                        for (ii = 0; ii < num_comps; ii++)
+                            CompOfRole[ii] = (OMX_STRING) oscl_malloc(PV_OMX_MAX_COMPONENT_NAME_LENGTH * sizeof(OMX_U8));
 
-                    // whether successful or not, need to free CompOfRoles
-                    for (ii = 0; ii < num_comps; ii++)
-                    {
-                        oscl_free(CompOfRole[ii]);
-                        CompOfRole[ii] = NULL;
+                        // call 2nd time to get the component names
+                        OMX_MasterGetComponentsOfRole(*role, &num_comps, (OMX_U8 **)CompOfRole);
+
+                        for (ii = 0; ii < num_comps; ii++)
+                        {
+                            aInputParameters.cComponentRole = *role;
+                            aInputParameters.cComponentName = CompOfRole[ii];
+                            status = OMX_MasterConfigParser(&aInputParameters, &aOutputParameters);
+                            if (status == OMX_TRUE)
+                            {
+                                break;
+                            }
+                            else
+                            {
+                                status = OMX_FALSE;
+                            }
+                        }
+
+                        // whether successful or not, need to free CompOfRoles
+                        for (ii = 0; ii < num_comps; ii++)
+                        {
+                            oscl_free(CompOfRole[ii]);
+                            CompOfRole[ii] = NULL;
+                        }
+                        oscl_free(CompOfRole);
                     }
-                    oscl_free(CompOfRole);
-                }
-                else
-                {
-                    // if no component supports the role, nothing else to do
-                    return PVMFErrNotSupported;
+                    if (status == OMX_TRUE) break; //component for role found.
                 }
 
                 if (status == OMX_FALSE)

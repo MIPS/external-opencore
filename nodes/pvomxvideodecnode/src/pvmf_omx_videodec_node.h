@@ -172,6 +172,9 @@ class PVMFOMXVideoDecNode
         int32 GetNAL_OMXNode(uint8** bitstream, uint32* size);
         bool ParseAndReWrapH264RAW(PVMFSharedMediaDataPtr& aMediaDataPtr);
 
+        bool ConvertASFConfigInfoToVC1AndSend(uint8* initbuffer, int32 initbufsize);
+
+
         OMX_COLOR_FORMATTYPE iOMXVideoColorFormat;
         OMX_VIDEO_CODINGTYPE iOMXVideoCompressionFormat;
         PVMFFormatType iYUVFormat;
