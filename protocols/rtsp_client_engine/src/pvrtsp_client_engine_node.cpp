@@ -3525,11 +3525,6 @@ PVMFStatus PVRTSPEngineNode::processIncomingMessage(RTSPIncomingMessage &iIncomi
         }
         iOutgoingMsgQueue.pop();
     }
-    else if (tmpOutgoingMsg->method == METHOD_GET)
-    {//TBD varify this is the http GET response
-        iOutgoingMsgQueue.pop();
-    }
-
     //check session ID as well
     if (200 == iIncomingMsg.statusCode)
     {

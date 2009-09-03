@@ -472,20 +472,10 @@ RTSPOutgoingMessage::compose()
             fullRequestBufferSizeUsed += originalURI.length() + 1;
 
             // do the RTSP version
-#ifdef SIMPLE_HTTP_SUPPORT
-            if ((method == METHOD_GET) || (method == METHOD_POST))
-            {
-                oscl_memcpy(fullRequestBufferSpace,
-                            HTTPVersion_1_0_String,
-                            HTTPVersionString_len
-                           );
-            }
-            else
-#endif
-                oscl_memcpy(fullRequestBufferSpace,
-                            RTSPVersionString,
-                            RTSPVersionString_len
-                           );
+            oscl_memcpy(fullRequestBufferSpace,
+                        RTSPVersionString,
+                        RTSPVersionString_len
+                       );
             fullRequestBufferSpace += RTSPVersionString_len;
             fullRequestBufferSizeUsed += RTSPVersionString_len;
 
@@ -507,29 +497,24 @@ RTSPOutgoingMessage::compose()
 
 
     // add the shortcut fields
-
-    if ((method != METHOD_GET) && (method != METHOD_POST))
+    if (cseqIsSet)
     {
-        if (cseqIsSet)
-        {
-            // The Symbian version of oscl_snprintf does not support %ld format, should use %d or %u instead.
-            // Since cseq is an uint32 it's ok to use %u.
-            oscl_snprintf(fullRequestBufferSpace, RTSP_MAX_FULL_REQUEST_SIZE - 1, "CSeq: %u%c%c",
-                          cseq, CHAR_CR, CHAR_LF);
-            int addSize = oscl_strlen(fullRequestBufferSpace);
-            fullRequestBufferSizeUsed += addSize;
-            fullRequestBufferSpace += addSize;
-        }
-        else
-        {
-            oscl_snprintf(fullRequestBufferSpace, RTSP_MAX_FULL_REQUEST_SIZE - 1, "CSeq: %c%c",
-                          CHAR_CR, CHAR_LF);
-            int addSize = 8;
-            fullRequestBufferSizeUsed += addSize;
-            fullRequestBufferSpace += addSize;
-        }
+        // The Symbian version of oscl_snprintf does not support %ld format, should use %d or %u instead.
+        // Since cseq is an uint32 it's ok to use %u.
+        oscl_snprintf(fullRequestBufferSpace, RTSP_MAX_FULL_REQUEST_SIZE - 1, "CSeq: %u%c%c",
+                      cseq, CHAR_CR, CHAR_LF);
+        int addSize = oscl_strlen(fullRequestBufferSpace);
+        fullRequestBufferSizeUsed += addSize;
+        fullRequestBufferSpace += addSize;
     }
-
+    else
+    {
+        oscl_snprintf(fullRequestBufferSpace, RTSP_MAX_FULL_REQUEST_SIZE - 1, "CSeq: %c%c",
+                      CHAR_CR, CHAR_LF);
+        int addSize = 8;
+        fullRequestBufferSizeUsed += addSize;
+        fullRequestBufferSpace += addSize;
+    }
     if (RTSPResponseMsg == msgType)
     {
         TimeValue current_time;
@@ -798,22 +783,6 @@ RTSPOutgoingMessage::compose()
         fullRequestBufferSpace += addSize;
     }
 
-#ifdef ASF_STREAMING
-    if (XMLIsSet)
-    {
-        // now, add a newline before the XML message
-        *(fullRequestBufferSpace++) = CHAR_CR;
-        *(fullRequestBufferSpace++) = CHAR_LF;
-        fullRequestBufferSizeUsed += 2;
-
-        int addSize = strlen(XMLBufferPtr);
-        oscl_memcpy(fullRequestBufferSpace, XMLBufferPtr, addSize);
-        fullRequestBufferSizeUsed += addSize;
-        fullRequestBufferSpace += addSize;
-    }
-
-#endif
-
     // now, add the final newline to the whole message
     *(fullRequestBufferSpace++) = CHAR_CR;
     *(fullRequestBufferSpace++) = CHAR_LF;
@@ -914,18 +883,10 @@ RTSPOutgoingMessage::composeTransport(char* trans, RtspTransport* rtspTrans)
     }
 
     if (rtspTrans->client_portIsSet)
-#ifdef ASF_STREAMING
-        if (rtspTrans->client_port2 == NULL)
-        {
-            oscl_snprintf(tmp, 63, ";client_port=%d", rtspTrans->client_port1);
-            oscl_strcat(trans, tmp);
-        }
-        else
-#endif
-        {
-            oscl_snprintf(tmp, 63, ";client_port=%d-%d", rtspTrans->client_port1, rtspTrans->client_port2);
-            oscl_strcat(trans, tmp);
-        }
+    {
+        oscl_snprintf(tmp, 63, ";client_port=%d-%d", rtspTrans->client_port1, rtspTrans->client_port2);
+        oscl_strcat(trans, tmp);
+    }
     if (rtspTrans->server_portIsSet)
     {
         oscl_snprintf(tmp, 63, ";server_port=%d-%d", rtspTrans->server_port1, rtspTrans->server_port2);
