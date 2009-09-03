@@ -42,6 +42,8 @@
 #define FRAME_SIZE_FIELD  4
 #define FRAME_TIME_STAMP_FIELD 4
 
+#define EXTRAPARTIALFRAME_INPUT_BUFFERS 3
+
 #define PRINT_RESULT
 
 
@@ -85,12 +87,11 @@ static unsigned char NAL_START_CODE[4] = {0, 0, 0, 1};
 
 /* Macro to reset the structure for GetParemeter call and also to set the size and version of it*/
 #define INIT_GETPARAMETER_STRUCT(name, str)\
-    memset(&(str), 0x0, sizeof(name));\
     (str).nSize = sizeof (name);\
-    (str).nVersion.s.nVersionMajor = 0x1;\
-    (str).nVersion.s.nVersionMinor = 0x0;\
-    (str).nVersion.s.nRevision = 0x0;\
-    (str).nVersion.s.nStep = 0x0
+    (str).nVersion.s.nVersionMajor = SPECVERSIONMAJOR;\
+    (str).nVersion.s.nVersionMinor = SPECVERSIONMINOR;\
+    (str).nVersion.s.nRevision = SPECREVISION;\
+    (str).nVersion.s.nStep = SPECSTEP;
 
 
 
@@ -149,6 +150,9 @@ class OmxComponentDecTest : public OmxDecTestBase
             iAmrFileType = OMX_AUDIO_AMRFrameFormatFSF;
             iAmrFileMode = OMX_AUDIO_AMRBandModeNB0;
             iFrameTimeStamp = 0;
+            iNoMarkerBitTest = OMX_FALSE;
+            iExtraPartialFrameTest = OMX_FALSE;
+            iDynamicPortReconfigTest = OMX_FALSE;
         }
 
         void VerifyOutput(OMX_U8 aTestName[]);
@@ -171,12 +175,20 @@ class OmxComponentDecTest : public OmxDecTestBase
         OMX_S32     iCallbackCounter;
         OMX_S32     iFrameTimeStamp;
 
-        //For AAC component
-        OMX_U32 iNumberOfChannels;
-
         //For AMR Component //Input File type information for AMR decoder
         OMX_AUDIO_AMRFRAMEFORMATTYPE iAmrFileType;
         OMX_AUDIO_AMRBANDMODETYPE iAmrFileMode;
+
+        // Audio parameters
+        // the output buffer size is calculated from the parameters below
+        uint32 iPCMSamplingRate;
+        uint32 iNumberOfChannels;
+        uint32 iSamplesPerFrame;
+        OMX_AUDIO_CODINGTYPE iAudioCompressionFormat;
+
+        OMX_BOOL iNoMarkerBitTest;
+        OMX_BOOL iExtraPartialFrameTest;
+        OMX_BOOL iDynamicPortReconfigTest;
 
         OMX_ERRORTYPE GetInput();
     public:
@@ -193,10 +205,16 @@ class OmxComponentDecTest : public OmxDecTestBase
 
         //Function pointer that will point to the correct component's function
         OMX_ERRORTYPE(OmxComponentDecTest::*pGetInputFrame)();
-        //OMX_ERRORTYPE (OmxComponentDecTest::*)() pGetInputFrame;
+
     protected:
         bool WriteOutput(OMX_U8* aOutBuff, OMX_U32 aSize);
         void StopOnError();
+
+        OMX_BOOL PrepareComponent();
+        OMX_BOOL NegotiateComponentParametersAudio();
+        OMX_BOOL NegotiateComponentParametersVideo();
+
+        OMX_BOOL GetSetCodecSpecificInfo();
 
     private:
         void Run();
@@ -424,6 +442,7 @@ class OmxDecTestCorruptNALTest : public OmxComponentDecTest
                                     aChannels)
         {
             iFramesCorrupt = 0;
+            iBitError = 0;
         };
 
     private:
@@ -431,6 +450,7 @@ class OmxDecTestCorruptNALTest : public OmxComponentDecTest
         OMX_ERRORTYPE GetInputFrameAvc();
         void Run();
         OMX_S32 iFramesCorrupt;
+        OMX_S32 iBitError;
 };
 
 class OmxDecTestIncompleteNALTest : public OmxComponentDecTest

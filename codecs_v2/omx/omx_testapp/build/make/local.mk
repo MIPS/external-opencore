@@ -38,6 +38,7 @@ SRCS := omx_threadsafe_callbacks.cpp \
 
 
 LIBS :=  pv_video_config_parser \
+	getactualaacconfig \
         omx_common_lib \
         omx_mp3_component_lib \
         pvmp3 \

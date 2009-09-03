@@ -91,12 +91,6 @@ class OmxDecTestPortReconfig : public OmxComponentDecTest
         {
             iTestCompleteFlag = OMX_FALSE;
             iIsVideoFormat = OMX_FALSE;
-
-            iFlagDecodeHeader = OMX_FALSE;
-            iFlagDisablePort = OMX_FALSE;
-            iEosFlagExecuting = OMX_FALSE;
-            iStatusExecuting = OMX_ErrorNone;
-            iFlagStopping = OMX_FALSE;
         };
 
     private:
@@ -105,16 +99,7 @@ class OmxDecTestPortReconfig : public OmxComponentDecTest
         void Run();
 
         OMX_BOOL iTestCompleteFlag;
-        OMX_S32  iDefaultWidth;
-        OMX_S32  iDefaultHeight;
         OMX_BOOL iIsVideoFormat;
-
-        //Temporary flags, can't be kept static now in the switch case, as it has to be executed twice
-        OMX_BOOL        iFlagDecodeHeader;
-        OMX_BOOL        iFlagDisablePort;
-        OMX_BOOL        iEosFlagExecuting;
-        OMX_ERRORTYPE   iStatusExecuting;
-        OMX_BOOL        iFlagStopping;
 };
 
 //TestApplication class for testing simultaneous port reconfiguraion and state transitions

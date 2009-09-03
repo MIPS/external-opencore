@@ -87,6 +87,7 @@ void OmxDecTestCompRole::Run()
 
             ipAppPriv = (AppPrivateType*) oscl_malloc(sizeof(AppPrivateType));
             CHECK_MEM_ROLE_TEST(ipAppPriv, "Component_Handle");
+            ipAppPriv->Handle = NULL;
 
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG, (0, "OmxDecTestCompRole::Run() - OMX_MasterInit pre"));
 
@@ -281,14 +282,23 @@ void OmxDecTestCompRole::Run()
             }
 
 #if PROXY_INTERFACE
-            OSCL_DELETE(ipThreadSafeHandlerEventHandler);
-            ipThreadSafeHandlerEventHandler = NULL;
+            if (ipThreadSafeHandlerEventHandler)
+            {
+                OSCL_DELETE(ipThreadSafeHandlerEventHandler);
+                ipThreadSafeHandlerEventHandler = NULL;
+            }
 
-            OSCL_DELETE(ipThreadSafeHandlerEmptyBufferDone);
-            ipThreadSafeHandlerEmptyBufferDone = NULL;
+            if (ipThreadSafeHandlerEmptyBufferDone)
+            {
+                OSCL_DELETE(ipThreadSafeHandlerEmptyBufferDone);
+                ipThreadSafeHandlerEmptyBufferDone = NULL;
+            }
 
-            OSCL_DELETE(ipThreadSafeHandlerFillBufferDone);
-            ipThreadSafeHandlerFillBufferDone = NULL;
+            if (ipThreadSafeHandlerFillBufferDone)
+            {
+                OSCL_DELETE(ipThreadSafeHandlerFillBufferDone);
+                ipThreadSafeHandlerFillBufferDone = NULL;
+            }
 #endif
 
             if (OMX_FALSE == iTestStatus)

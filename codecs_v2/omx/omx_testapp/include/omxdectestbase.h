@@ -45,6 +45,10 @@
 
 #endif
 
+#ifndef PV_OMX_CONFIG_PARSER_H_INCLUDED
+#include "pv_omx_config_parser.h"
+#endif
+
 
 //Three different default queue sizes for each callback.
 //Idea here is to add flexibility to the code so that these queue sizes can be changed as per requirement
@@ -57,6 +61,18 @@
 
 #define BIT_BUFF_SIZE_AVC 200000
 #define MIN_NAL_SIZE 20
+
+#define PVOMXAUDIO_MAX_SUPPORTED_FORMAT 31
+#define PVOMXAUDIODEC_MP3_DEFAULT_SAMPLES_PER_FRAME 1152
+#define PVOMXAUDIODEC_AMRNB_SAMPLES_PER_FRAME 160
+#define PVOMXAUDIODEC_AMRWB_SAMPLES_PER_FRAME 320
+#define PVOMXAUDIODEC_DEFAULT_SAMPLINGRATE 48000
+#define PVOMXAUDIODEC_DEFAULT_OUTPUTPCM_TIME 200
+
+#define PVOMXVIDEO_MAX_SUPPORTED_FORMAT 12
+#define PVOMXAVC_SPS_PPS_SIZE 256
+#define PVOMXMPEG4_HEADER_SIZE 32
+
 
 /* Active object's states */
 typedef enum STATE_TYPE
@@ -369,10 +385,13 @@ class OmxDecTestBase : public OsclTimerObject
         OMX_S32             iSimFragSize[50];
         OMX_S32             iInIndex;
         OMX_BOOL            iInputWasRefused;
+
         OMX_PARAM_PORTDEFINITIONTYPE iParamPort;
+        OMX_PORT_PARAM_TYPE iPortInit;
+
         OMX_AUDIO_PARAM_PCMMODETYPE  iPcmMode;
         OMX_AUDIO_PARAM_AMRTYPE      iAmrParam;
-        OMX_PORT_PARAM_TYPE iPortInit;
+
         OMX_BOOL            iStopOutput;
         OMX_BOOL            iStopInput;
 
@@ -396,12 +415,12 @@ class OmxDecTestBase : public OsclTimerObject
         STATE_TYPE  iState;
 
         //Input & output buffer sizes for the input & output buffers of component
-        OMX_S32 iInBufferSize;
-        OMX_S32 iOutBufferSize;
+        OMX_U32 iInBufferSize;
+        OMX_U32 iOutBufferSize;
 
         //Input & output buffer count
-        OMX_S32 iInBufferCount;
-        OMX_S32 iOutBufferCount;
+        OMX_U32 iInBufferCount;
+        OMX_U32 iOutBufferCount;
 
         //Count variables to stop & start sending input/output buffers
         OMX_S32 iCount;
@@ -416,12 +435,24 @@ class OmxDecTestBase : public OsclTimerObject
         AVCBitstreamObject* ipAVCBSO;
         Mp3BitstreamObject* ipMp3Bitstream;
 
+        OMXConfigParserInputs iInputParameters;
+        OMX_PTR iOutputParameters;
+
         OMX_U8* ipNalBuffer;
         OMX_S32 iNalSize;
         OMX_S32 iMaxSize;
-        OMX_S32 iRemainingFrameSize;
+        OMX_U32 iRemainingFrameSize;
         OMX_U8* ipBitstreamBuffer;
         OMX_U8* ipBitstreamBufferPointer;
+
+        //Temporary flags for each state
+        OMX_BOOL        iFlagDecodeHeader;
+        OMX_BOOL        iFlagDisablePort;
+        OMX_BOOL        iEosFlagExecuting;
+        OMX_ERRORTYPE   iStatusExecuting;
+        OMX_BOOL        iFlagStopping;
+        OMX_BOOL        iFlagCleanUp;
+        OMX_BOOL        iDisableRun;
 
         // Loggger variable for logging data
         PVLogger* iLogger;

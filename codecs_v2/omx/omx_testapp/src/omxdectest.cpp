@@ -1172,7 +1172,7 @@ int local_main(FILE* filehandle, cmd_line* command_line)
 
 OMX_ERRORTYPE OmxComponentDecTest::GetInput()
 {
-    OMX_S32 Index;
+    OMX_U32 Index;
     OMX_S32 ReadCount;
     OMX_S32 Size;
     OMX_ERRORTYPE Status;
@@ -1309,8 +1309,8 @@ OMX_ERRORTYPE OmxComponentDecTest::GetInput()
 // For AVC component
 OMX_ERRORTYPE OmxComponentDecTest::GetInputFrameAvc()
 {
-    OMX_S32 Index;
-    OMX_S32 Size;
+    OMX_U32 Index;
+    OMX_U32 Size;
     OMX_ERRORTYPE Status;
     OMX_S32 TempSize;
 
@@ -1339,7 +1339,7 @@ OMX_ERRORTYPE OmxComponentDecTest::GetInputFrameAvc()
 
             if (iHeaderSent)
             {
-                int inserted_size = 0;
+                OMX_U32 inserted_size = 0;
 
                 if (!iFragmentInProgress && !iDivideBuffer)
                 {
@@ -1661,7 +1661,8 @@ int32 omx_m4v_getNextVideoSample(int32 layer, uint8 **buf, int32 max_buffer_size
 //Read the data from input file & pass it to the MPEG4 component
 OMX_ERRORTYPE OmxComponentDecTest::GetInputFrameMpeg4()
 {
-    OMX_S32 Index, ReadCount, Size, BitstreamSize, TempSize;
+    OMX_U32 Index;
+    OMX_S32 ReadCount, Size, BitstreamSize, TempSize;
     OMX_ERRORTYPE Status;
     uint32 TimeStamp;
 
@@ -1734,7 +1735,7 @@ OMX_ERRORTYPE OmxComponentDecTest::GetInputFrameMpeg4()
                         iFragmentInProgress = OMX_TRUE;
                     }
 
-                    if (Size > iInBufferSize)
+                    if (Size > (OMX_S32) iInBufferSize)
                     {
                         iDivideBuffer = OMX_TRUE;
                         TempSize = iInBufferSize;
@@ -1745,7 +1746,7 @@ OMX_ERRORTYPE OmxComponentDecTest::GetInputFrameMpeg4()
                 }
                 else
                 {
-                    if ((Size = iRemainingFrameSize) < iInBufferSize)
+                    if ((Size = iRemainingFrameSize) < (OMX_S32) iInBufferSize)
                     {
                         iRemainingFrameSize = 0;
                         iDivideBuffer = OMX_FALSE;
@@ -1860,7 +1861,8 @@ OMX_ERRORTYPE OmxComponentDecTest::GetInputFrameMpeg4()
 //Read the data from input file & pass it to the H263 component
 OMX_ERRORTYPE OmxComponentDecTest::GetInputFrameH263()
 {
-    OMX_S32 Index, ReadCount, Size, BitstreamSize, TempSize;
+    OMX_U32 Index;
+    OMX_S32 ReadCount, Size, BitstreamSize, TempSize;
     OMX_ERRORTYPE Status;
     uint32 TimeStamp;
 
@@ -1934,7 +1936,7 @@ OMX_ERRORTYPE OmxComponentDecTest::GetInputFrameH263()
                         iFragmentInProgress = OMX_TRUE;
                     }
 
-                    if (Size > iInBufferSize)
+                    if (Size > (OMX_S32) iInBufferSize)
                     {
                         iDivideBuffer = OMX_TRUE;
 
@@ -1947,7 +1949,7 @@ OMX_ERRORTYPE OmxComponentDecTest::GetInputFrameH263()
                 }
                 else
                 {
-                    if ((Size = iRemainingFrameSize) < iInBufferSize)
+                    if ((Size = iRemainingFrameSize) < (OMX_S32) iInBufferSize)
                     {
                         // the last piece of a broken up frame
                         iRemainingFrameSize = 0;
@@ -2044,10 +2046,10 @@ OMX_ERRORTYPE OmxComponentDecTest::GetInputFrameH263()
 //Read the data from input file & pass it to the AAC component
 OMX_ERRORTYPE OmxComponentDecTest::GetInputFrameAac()
 {
-    OMX_S32 Index;
-    OMX_S32 Size;
+    OMX_U32 Index;
+    OMX_U32 Size;
     OMX_ERRORTYPE Status;
-    OMX_S32 ReadCount;
+    OMX_U32 ReadCount;
 
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "OmxComponentDecTest::GetInputFrameAac() - IN"));
 
@@ -2282,7 +2284,7 @@ OMX_ERRORTYPE OmxComponentDecTest::GetInputFrameAac()
 //Read the data from input file & pass it to the AMR component
 OMX_ERRORTYPE OmxComponentDecTest::GetInputFrameAmr()
 {
-    OMX_S32 Index;
+    OMX_U32 Index;
     OMX_S32 Size;
     OMX_ERRORTYPE Status;
     OMX_S32 ReadCount;
@@ -2471,11 +2473,11 @@ OMX_ERRORTYPE OmxComponentDecTest::GetInputFrameAmr()
 //Read the data from input file & pass it to the WMV component
 OMX_ERRORTYPE OmxComponentDecTest::GetInputFrameWmv()
 {
-    OMX_S32 Index;
-    OMX_S32 Size;
+    OMX_U32 Index;
+    OMX_U32 Size;
     OMX_ERRORTYPE Status;
-    OMX_S32 ReadCount;
-    OMX_S32 TempSize;
+    OMX_U32 ReadCount;
+    OMX_U32 TempSize;
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "OmxComponentDecTest::GetInputFrameWmv() - IN"));
 
     if (OMX_TRUE == iInputReady)
@@ -2683,11 +2685,11 @@ OMX_ERRORTYPE OmxComponentDecTest::GetInputFrameWmv()
 //Read the data from input file & pass it to the RV component
 OMX_ERRORTYPE OmxComponentDecTest::GetInputFrameRv()
 {
-    OMX_S32 Index;
-    OMX_S32 Size;
+    OMX_U32 Index;
+    OMX_U32 Size;
     OMX_ERRORTYPE Status;
-    OMX_S32 ReadCount;
-    OMX_S32 TempSize;
+    OMX_U32 ReadCount;
+    OMX_U32 TempSize;
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "OmxComponentDecTest::GetInputFrameRv() - IN"));
 
     if (OMX_TRUE == iInputReady)
@@ -2895,7 +2897,7 @@ OMX_ERRORTYPE OmxComponentDecTest::GetInputFrameRv()
 //Read the data from input file & pass it to the Mp3 component
 OMX_ERRORTYPE OmxComponentDecTest::GetInputFrameMp3()
 {
-    OMX_S32 Index;
+    OMX_U32 Index;
     OMX_S32 Size;
     OMX_ERRORTYPE Status;
     OMX_S32 FrameSize;
@@ -3098,10 +3100,10 @@ OMX_ERRORTYPE OmxComponentDecTest::GetInputFrameMp3()
 
 OMX_ERRORTYPE OmxComponentDecTest::GetInputFrameWmaRa()
 {
-    OMX_S32 Index;
-    OMX_S32 Size;
+    OMX_U32 Index;
+    OMX_U32 Size;
     OMX_ERRORTYPE Status;
-    OMX_S32 ReadCount;
+    OMX_U32 ReadCount;
 
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "OmxComponentDecTest::GetInputFrameWmaRa() - IN"));
 
@@ -3297,7 +3299,6 @@ bool OmxComponentDecTest::WriteOutput(OMX_U8* aOutBuff, OMX_U32 aSize)
  * Active Object class's Run () function
  * Control all the states of AO & sends openmax API's to the component
  */
-static OMX_BOOL DisableRun = OMX_FALSE;
 
 void OmxComponentDecTest::Run()
 {
@@ -3308,7 +3309,7 @@ void OmxComponentDecTest::Run()
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "OmxComponentDecTest::Run() - StateUnLoaded IN"));
 
             OMX_ERRORTYPE Err;
-            OMX_U32 PortIndex, ii;
+            OMX_BOOL Status;
 
             if (!iCallbacks->initCallbacks())
             {
@@ -3319,6 +3320,7 @@ void OmxComponentDecTest::Run()
 
             ipAppPriv = (AppPrivateType*) oscl_malloc(sizeof(AppPrivateType));
             CHECK_MEM(ipAppPriv, "Component_Handle");
+            ipAppPriv->Handle = NULL;
 
             //Allocate bitstream buffer for AVC component
             if (0 == oscl_strcmp(iFormat, "H264"))
@@ -3347,180 +3349,23 @@ void OmxComponentDecTest::Run()
             CHECK_ERROR(Err, "OMX_MasterInit");
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG, (0, "OmxComponentDecTest::Run() - OMX_MasterInit done"));
 
+            Status = PrepareComponent();
 
-            if (NULL != iName)
+            if (OMX_FALSE == Status)
             {
-                Err = OMX_MasterGetHandle(&ipAppPriv->Handle, iName, (OMX_PTR) this , iCallbacks->getCallbackStruct());
-                CHECK_ERROR(Err, "GetHandle");
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG, (0, "OmxComponentDecTest::Run() - Got Handle for the component %s", iName));
-            }
-            else if (NULL != iRole)
-            {
-                //Determine the component first & then get the handle
-                OMX_U32 NumComps = 0;
-                OMX_STRING* pCompOfRole;
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG, (0, "OmxComponentDecTest::Run() Error while loading component OUT"));
+                iState = StateError;
 
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG, (0, "OmxComponentDecTest::Run() - Finding out the components that can support the role %s", iRole));
-
-                // call once to find out the number of components that can fit the role
-                Err = OMX_MasterGetComponentsOfRole(iRole, &NumComps, NULL);
-
-                if (OMX_ErrorNone != Err || NumComps < 1)
+                if (iInputParameters.inPtr)
                 {
-                    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "OmxComponentDecTest::Run() - ERROR, No component can handle the specified role %s", iRole));
-                    StopOnError();
-                    ipAppPriv->Handle = NULL;
-                    break;
+                    oscl_free(iInputParameters.inPtr);
+                    iInputParameters.inPtr = NULL;
                 }
 
-                pCompOfRole = (OMX_STRING*) oscl_malloc(NumComps * sizeof(OMX_STRING));
-                CHECK_MEM(pCompOfRole, "ComponentRoleArray");
-
-                for (ii = 0; ii < NumComps; ii++)
-                {
-                    pCompOfRole[ii] = (OMX_STRING) oscl_malloc(PV_OMX_MAX_COMPONENT_NAME_LENGTH * sizeof(OMX_U8));
-                    CHECK_MEM(pCompOfRole[ii], "ComponentRoleArray");
-                }
-
-                if (StateError == iState)
-                {
-                    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                                    (0, "OmxComponentDecTest::Run() - Error occured in this state, StateUnLoaded OUT"));
-                    RunIfNotReady();
-                    break;
-                }
-
-                // call 2nd time to get the component names
-                Err = OMX_MasterGetComponentsOfRole(iRole, &NumComps, (OMX_U8**) pCompOfRole);
-                CHECK_ERROR(Err, "GetComponentsOfRole");
-
-                for (ii = 0; ii < NumComps; ii++)
-                {
-                    // try to create component
-                    Err = OMX_MasterGetHandle(&ipAppPriv->Handle, (OMX_STRING) pCompOfRole[ii], (OMX_PTR) this, iCallbacks->getCallbackStruct());
-                    // if successful, no need to continue
-                    if ((OMX_ErrorNone == Err) && (NULL != ipAppPriv->Handle))
-                    {
-                        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG, (0, "OmxComponentDecTest::Run() - Got Handle for the component %s", pCompOfRole[ii]));
-                        break;
-                    }
-                    else
-                    {
-                        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "OmxComponentDecTest::Run() - ERROR, Cannot get component %s handle, try another if possible", pCompOfRole[ii]));
-                    }
-
-                }
-
-                // whether successful or not, need to free CompOfRoles
-                for (ii = 0; ii < NumComps; ii++)
-                {
-                    oscl_free(pCompOfRole[ii]);
-                    pCompOfRole[ii] = NULL;
-                }
-                oscl_free(pCompOfRole);
-                pCompOfRole = NULL;
-
-                // check if there was a problem
-                CHECK_ERROR(Err, "GetHandle");
-                CHECK_MEM(ipAppPriv->Handle, "ComponentHandle");
-
-            }
-
-            //This will initialize the size and version of the iPortInit structure
-            INIT_GETPARAMETER_STRUCT(OMX_PORT_PARAM_TYPE, iPortInit);
-
-            if (0 == oscl_strcmp(iFormat, "AAC") || 0 == oscl_strcmp(iFormat, "AMR")
-                    || 0 == oscl_strcmp(iFormat, "MP3") || 0 == oscl_strcmp(iFormat, "WMA") || 0 == oscl_strcmp(iFormat, "RA"))
-            {
-                Err = OMX_GetParameter(ipAppPriv->Handle, OMX_IndexParamAudioInit, &iPortInit);
-            }
-            else
-            {
-                Err = OMX_GetParameter(ipAppPriv->Handle, OMX_IndexParamVideoInit, &iPortInit);
-            }
-
-            CHECK_ERROR(Err, "GetParameter_Audio/Video_Init");
-
-            // Number of ports must be at least 2 of them (in&out)
-            if (iPortInit.nPorts < 2)
-            {
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                                (0, "OmxComponentDecTest::Run() There is insuffucient %d ports", iPortInit.nPorts));
-                StopOnError();
-                break;
-            }
-
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG, (0, "OmxComponentDecTest::Run() - GetParameter called for OMX_IndexParamAudioInit/OMX_IndexParamVideoInit"));
-
-            for (ii = 0; ii < iPortInit.nPorts; ii++)
-            {
-                PortIndex = iPortInit.nStartPortNumber + ii;
-
-                //This will initialize the size and version of the iParamPort structure
-                INIT_GETPARAMETER_STRUCT(OMX_PARAM_PORTDEFINITIONTYPE, iParamPort);
-                iParamPort.nPortIndex = PortIndex;
-
-                Err = OMX_GetParameter(ipAppPriv->Handle, OMX_IndexParamPortDefinition, &iParamPort);
-                CHECK_ERROR(Err, "GetParameter_IndexParamPortDefinition");
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG, (0, "OmxComponentDecTest::Run() - GetParameter called for OMX_IndexParamPortDefinition on port %d", PortIndex));
-
-                if (0 == iParamPort.nBufferCountMin)
-                {
-                    /* a buffer count of 0 is not allowed */
-                    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "OmxComponentDecTest::Run() - Error, GetParameter for OMX_IndexParamPortDefinition returned 0 min buffer count"));
-                    StopOnError();
-                    break;
-                }
-
-                if (iParamPort.nBufferCountMin > iParamPort.nBufferCountActual)
-                {
-                    /* Min buff count can't be more than actual buff count */
-                    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                                    (0, "OmxComponentDecTest::Run() - ERROR, GetParameter for OMX_IndexParamPortDefinition returned actual buffer count %d less than min buffer count %d", iParamPort.nBufferCountActual, iParamPort.nBufferCountMin));
-                    StopOnError();
-                    break;
-                }
-
-                if (OMX_DirInput == iParamPort.eDir)
-                {
-                    iInputPortIndex = PortIndex;
-
-                    iInBufferSize = iParamPort.nBufferSize;
-                    iInBufferCount = iParamPort.nBufferCountActual;
-                    iParamPort.nBufferCountActual = iInBufferCount;
-
-                    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
-                                    (0, "OmxComponentDecTest::Run() - GetParameter returned Num of input buffers %d with Size %d", iInBufferCount, iInBufferSize));
-
-                }
-                else if (OMX_DirOutput == iParamPort.eDir)
-                {
-                    iOutputPortIndex = PortIndex;
-
-                    iOutBufferSize = iParamPort.nBufferSize;
-                    iOutBufferCount = iParamPort.nBufferCountActual;
-
-                    iParamPort.nBufferCountActual = iOutBufferCount;
-
-                    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
-                                    (0, "OmxComponentDecTest::Run() - GetParameter returned Num of output buffers %d with Size %d", iOutBufferCount, iOutBufferSize));
-                }
-
-                //Take the buffer parameters of what component has specified
-                iParamPort.nPortIndex = PortIndex;
-                Err = OMX_SetParameter(ipAppPriv->Handle, OMX_IndexParamPortDefinition, &iParamPort);
-                CHECK_ERROR(Err, "SetParameter_OMX_IndexParamPortDefinition");
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
-                                (0, "OmxComponentDecTest::Run() - SetParameter called for OMX_IndexParamPortDefinition on port %d", PortIndex));
-            }
-
-            if (StateError == iState)
-            {
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                                (0, "OmxComponentDecTest::Run() - Error, Exiting the test case, OUT"));
                 RunIfNotReady();
                 break;
             }
+
 
 #if PROXY_INTERFACE
             ipThreadSafeHandlerEventHandler = OSCL_NEW(EventHandlerThreadSafeCallbackAO, (this, EVENT_HANDLER_QUEUE_DEPTH, "EventHandlerAO"));
@@ -3539,144 +3384,6 @@ void OmxComponentDecTest::Run()
                 sched->StopScheduler();
             }
 #endif
-            //Decide about the getinput call for the correct compoent
-
-            if (0 == oscl_strcmp(iFormat, "H264"))
-            {
-                pGetInputFrame = &OmxComponentDecTest::GetInputFrameAvc;
-            }
-            else if (0 == oscl_strcmp(iFormat, "M4V"))
-            {
-                pGetInputFrame = &OmxComponentDecTest::GetInputFrameMpeg4;
-            }
-            else if (0 == oscl_strcmp(iFormat, "H263"))
-            {
-                pGetInputFrame = &OmxComponentDecTest::GetInputFrameH263;
-            }
-            else if (0 == oscl_strcmp(iFormat, "AAC"))
-            {
-                pGetInputFrame = &OmxComponentDecTest::GetInputFrameAac;
-
-                INIT_GETPARAMETER_STRUCT(OMX_AUDIO_PARAM_PCMMODETYPE, iPcmMode);
-                iPcmMode.nPortIndex = iOutputPortIndex;
-
-                Err = OMX_GetParameter(ipAppPriv->Handle, OMX_IndexParamAudioPcm, &iPcmMode);
-                CHECK_ERROR(Err, "GetParameter_AAC_IndexParamAudioPcm");
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
-                                (0, "OmxComponentDecTest::Run() - GetParameter called for OMX_IndexParamAudioPcm for AAC on port %d", iOutputPortIndex));
-
-                iPcmMode.nPortIndex = iOutputPortIndex;
-                /* Pass the number of channel information for AAC component
-                 * from input arguments to the component */
-                iPcmMode.nChannels = iNumberOfChannels;
-                Err = OMX_SetParameter(ipAppPriv->Handle, OMX_IndexParamAudioPcm, &iPcmMode);
-                CHECK_ERROR(Err, "SetParameter_AAC_IndexParamAudioPcm");
-
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
-                                (0, "OmxComponentDecTest::Run() - SetParameter called for OMX_IndexParamAudioPcm for AAC on port %d", iOutputPortIndex));
-            }
-            else if (0 == oscl_strcmp(iFormat, "WMV"))
-            {
-                pGetInputFrame = &OmxComponentDecTest::GetInputFrameWmv;
-            }
-            else if (0 == oscl_strcmp(iFormat, "RV"))
-            {
-                pGetInputFrame = &OmxComponentDecTest::GetInputFrameRv;
-            }
-            else if (0 == oscl_strcmp(iFormat, "AMR"))
-            {
-                /* Determine the file format type for AMR file */
-
-                OMX_S32 AmrFileByte = 0;
-
-                fread(&AmrFileByte, 1, 4, ipInputFile); // read in 1st 4 bytes
-
-                if (2 == AmrFileByte)
-                {
-                    iAmrFileType = OMX_AUDIO_AMRFrameFormatFSF;
-                }
-                else if (4 == AmrFileByte)
-                {
-                    iAmrFileType = OMX_AUDIO_AMRFrameFormatIF2;
-                }
-                else if (6 == AmrFileByte)
-                {
-                    iAmrFileType = OMX_AUDIO_AMRFrameFormatRTPPayload;
-                }
-                else if (0 == AmrFileByte)
-                {
-                    iAmrFileType = OMX_AUDIO_AMRFrameFormatConformance;
-                }
-                else if (7 == AmrFileByte)
-                {
-                    iAmrFileType = OMX_AUDIO_AMRFrameFormatRTPPayload;
-                    iAmrFileMode = OMX_AUDIO_AMRBandModeWB0;
-
-                }
-                else if (8 == AmrFileByte)
-                {
-                    iAmrFileType = OMX_AUDIO_AMRFrameFormatFSF;
-                    iAmrFileMode = OMX_AUDIO_AMRBandModeWB0;
-                }
-                else
-                {
-                    /* Invalid input format type */
-                    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                                    (0, "OmxComponentDecTest::Run() - Error, Invalid AMR input format %d, OUT", AmrFileByte));
-                    StopOnError();
-                }
-
-
-                pGetInputFrame = &OmxComponentDecTest::GetInputFrameAmr;
-
-                /* Pass the input format type information to the AMR component*/
-
-                //iAmrParam.nSize = sizeof (OMX_AUDIO_PARAM_AMRTYPE);
-                INIT_GETPARAMETER_STRUCT(OMX_AUDIO_PARAM_AMRTYPE, iAmrParam);
-                iAmrParam.nPortIndex = iInputPortIndex;
-
-                Err = OMX_GetParameter(ipAppPriv->Handle, OMX_IndexParamAudioAmr, &iAmrParam);
-                CHECK_ERROR(Err, "GetParameter_AMR_IndexParamAudioAmr");
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
-                                (0, "OmxComponentDecTest::Run() - GetParameter called for OMX_IndexParamAudioAmr for AMR on port %d", iInputPortIndex));
-
-                iAmrParam.nPortIndex = iInputPortIndex;
-                iAmrParam.eAMRFrameFormat = iAmrFileType;
-                iAmrParam.eAMRBandMode = iAmrFileMode;
-
-                Err = OMX_SetParameter(ipAppPriv->Handle, OMX_IndexParamAudioAmr, &iAmrParam);
-                CHECK_ERROR(Err, "SetParameter_AMR_IndexParamAudioAmr");
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
-                                (0, "OmxComponentDecTest::Run() - SetParameter called for OMX_IndexParamAudioAmr for AMR on port %d", iInputPortIndex));
-
-            }
-            else if (0 == oscl_strcmp(iFormat, "MP3"))
-            {
-                pGetInputFrame = &OmxComponentDecTest::GetInputFrameMp3;
-
-                INIT_GETPARAMETER_STRUCT(OMX_AUDIO_PARAM_PCMMODETYPE, iPcmMode);
-                iPcmMode.nPortIndex = iOutputPortIndex;
-
-                Err = OMX_GetParameter(ipAppPriv->Handle, OMX_IndexParamAudioPcm, &iPcmMode);
-                CHECK_ERROR(Err, "GetParameter_MP3_IndexParamAudioPcm");
-
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
-                                (0, "OmxComponentDecTest::Run() - GetParameter called for OMX_IndexParamAudioPcm for MP3 on port %d", iOutputPortIndex));
-
-                iPcmMode.nPortIndex = iOutputPortIndex;
-                /* Pass the number of channel information from input arguments to the component */
-                iPcmMode.nChannels = iNumberOfChannels;
-                Err = OMX_SetParameter(ipAppPriv->Handle, OMX_IndexParamAudioPcm, &iPcmMode);
-                CHECK_ERROR(Err, "SetParameter_MP3_IndexParamAudioPcm");
-
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
-                                (0, "OmxComponentDecTest::Run() - SetParameter called for OMX_IndexParamAudioPcm for MP3 on port %d", iOutputPortIndex));
-            }
-            else if ((0 == oscl_strcmp(iFormat, "WMA")) || (0 == oscl_strcmp(iFormat, "RA")))
-            {
-                pGetInputFrame = &OmxComponentDecTest::GetInputFrameWmaRa;
-            }
-
 
             if (StateError != iState)
             {
@@ -3691,7 +3398,7 @@ void OmxComponentDecTest::Run()
         case StateLoaded:
         {
             OMX_ERRORTYPE Err;
-            OMX_S32 ii;
+            OMX_U32 ii;
 
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "OmxComponentDecTest::Run() - StateLoaded IN"));
 
@@ -3809,11 +3516,11 @@ void OmxComponentDecTest::Run()
 
         case StateDecodeHeader:
         {
-            static OMX_BOOL FlagTemp = OMX_FALSE;
+
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                             (0, "OmxComponentDecTest::Run() - StateDecodeHeader IN, Sending configuration input buffers to the component to start dynamic port reconfiguration"));
 
-            if (!FlagTemp)
+            if (!iFlagDecodeHeader)
             {
                 (*this.*pGetInputFrame)();
                 //For AAC component , send one more frame apart from the config frame, so that we can receive the callback
@@ -3821,7 +3528,7 @@ void OmxComponentDecTest::Run()
                 {
                     (*this.*pGetInputFrame)();
                 }
-                FlagTemp = OMX_TRUE;
+                iFlagDecodeHeader = OMX_TRUE;
 
                 //Proceed to executing state and if Port settings changed callback comes,
                 //then do the dynamic port reconfiguration
@@ -3836,15 +3543,14 @@ void OmxComponentDecTest::Run()
 
         case StateDisablePort:
         {
-            static OMX_BOOL FlagTemp = OMX_FALSE;
             OMX_ERRORTYPE Err = OMX_ErrorNone;
-            OMX_S32 ii;
+            OMX_U32 ii;
 
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "OmxComponentDecTest::Run() - StateDisablePort IN"));
 
-            if (!DisableRun)
+            if (!iDisableRun)
             {
-                if (!FlagTemp)
+                if (!iFlagDisablePort)
                 {
                     Err = OMX_SendCommand(ipAppPriv->Handle, OMX_CommandPortDisable, iOutputPortIndex, NULL);
                     CHECK_ERROR(Err, "SendCommand_PortDisable");
@@ -3853,7 +3559,7 @@ void OmxComponentDecTest::Run()
                                     (0, "OmxComponentDecTest::Run() - Sent Command for OMX_CommandPortDisable on port %d as a part of dynamic port reconfiguration", iOutputPortIndex));
 
                     iPendingCommands = 1;
-                    FlagTemp = OMX_TRUE;
+                    iFlagDisablePort = OMX_TRUE;
                     RunIfNotReady();
                 }
                 else
@@ -3896,7 +3602,7 @@ void OmxComponentDecTest::Run()
                         RunIfNotReady();
                         break;
                     }
-                    DisableRun = OMX_TRUE;
+                    iDisableRun = OMX_TRUE;
                 }
             }
 
@@ -3930,7 +3636,7 @@ void OmxComponentDecTest::Run()
             {
                 iOutBufferSize = ((iParamPort.format.video.nFrameWidth + 15) & ~15) * ((iParamPort.format.video.nFrameHeight + 15) & ~15) * 3 / 2;
 
-                if (iOutBufferSize < (OMX_S32)iParamPort.nBufferSize)
+                if (iOutBufferSize < iParamPort.nBufferSize)
                 {
                     iOutBufferSize = iParamPort.nBufferSize;
                 }
@@ -3939,7 +3645,7 @@ void OmxComponentDecTest::Run()
             {
                 iOutBufferSize = ((iParamPort.format.video.nFrameWidth + 3) & ~3) * ((iParamPort.format.video.nFrameHeight + 3) & ~3) * 3 / 2;
 
-                if (iOutBufferSize < (OMX_S32)iParamPort.nBufferSize)
+                if (iOutBufferSize < iParamPort.nBufferSize)
                 {
                     iOutBufferSize = iParamPort.nBufferSize;
                 }
@@ -3954,7 +3660,7 @@ void OmxComponentDecTest::Run()
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
                             (0, "OmxComponentDecTest::Run() - Allocating buffer again after port reconfigutauion has been complete"));
 
-            for (OMX_S32 ii = 0; ii < iOutBufferCount; ii++)
+            for (OMX_U32 ii = 0; ii < iOutBufferCount; ii++)
             {
                 Err = OMX_AllocateBuffer(ipAppPriv->Handle, &ipOutBuffer[ii], iOutputPortIndex, NULL, iOutBufferSize);
                 CHECK_ERROR(Err, "AllocateBuffer_Output_DynamicReconfig");
@@ -3978,9 +3684,7 @@ void OmxComponentDecTest::Run()
 
         case StateExecuting:
         {
-            static OMX_BOOL EosFlag = OMX_FALSE;
-            static OMX_ERRORTYPE Status;
-            OMX_S32 Index;
+            OMX_U32 Index;
             OMX_BOOL MoreOutput;
             OMX_ERRORTYPE Err = OMX_ErrorNone;
 
@@ -4013,7 +3717,7 @@ void OmxComponentDecTest::Run()
             }
 
 
-            if (!iStopProcessingInput || (OMX_ErrorInsufficientResources == Status))
+            if (!iStopProcessingInput || (OMX_ErrorInsufficientResources == iStatusExecuting))
             {
                 // find available input buffer
                 Index = 0;
@@ -4024,10 +3728,10 @@ void OmxComponentDecTest::Run()
 
                 if (Index != iInBufferCount)
                 {
-                    Status = (*this.*pGetInputFrame)();
+                    iStatusExecuting = (*this.*pGetInputFrame)();
                 }
             }
-            else if (OMX_FALSE == EosFlag)
+            else if (OMX_FALSE == iEosFlagExecuting)
             {
                 //Only send one successful dummy buffer with flag set to signal EOS
                 Index = 0;
@@ -4045,7 +3749,7 @@ void OmxComponentDecTest::Run()
                     CHECK_ERROR(Err, "EmptyThisBuffer_EOS");
 
                     ipInputAvail[Index] = OMX_FALSE; // mark unavailable
-                    EosFlag = OMX_TRUE;
+                    iEosFlagExecuting = OMX_TRUE;
 
                     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
                                     (0, "OmxComponentDecTest::Run() - Input buffer sent to the component with OMX_BUFFERFLAG_EOS flag set"));
@@ -4063,13 +3767,12 @@ void OmxComponentDecTest::Run()
 
         case StateStopping:
         {
-            static OMX_BOOL FlagTemp = OMX_FALSE;
             OMX_ERRORTYPE Err = OMX_ErrorNone;
 
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "OmxComponentDecTest::Run() - StateStopping IN"));
 
             //stop execution by state transition to Idle state.
-            if (!FlagTemp)
+            if (!iFlagStopping)
             {
                 Err = OMX_SendCommand(ipAppPriv->Handle, OMX_CommandStateSet, OMX_StateIdle, NULL);
                 CHECK_ERROR(Err, "SendCommand Executing->Idle");
@@ -4078,7 +3781,7 @@ void OmxComponentDecTest::Run()
                                 (0, "OmxComponentDecTest::Run() - Sent State Transition Command from Executing->Idle"));
 
                 iPendingCommands = 1;
-                FlagTemp = OMX_TRUE;
+                iFlagStopping = OMX_TRUE;
             }
 
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "OmxComponentDecTest::Run() - StateStopping OUT"));
@@ -4087,14 +3790,13 @@ void OmxComponentDecTest::Run()
 
         case StateCleanUp:
         {
-            OMX_S32 ii;
+            OMX_U32 ii;
             OMX_ERRORTYPE Err = OMX_ErrorNone;
-            static OMX_BOOL FlagTemp = OMX_FALSE;
 
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "OmxComponentDecTest::Run() - StateCleanUp IN"));
 
 
-            if (!FlagTemp)
+            if (!iFlagCleanUp)
             {
                 if (OMX_FALSE == VerifyAllBuffersReturned())
                 {
@@ -4163,7 +3865,7 @@ void OmxComponentDecTest::Run()
                     ipOutReleased = NULL;
                 }
 
-                FlagTemp = OMX_TRUE;
+                iFlagCleanUp = OMX_TRUE;
             }
 
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "OmxComponentDecTest::Run() - StateCleanUp OUT"));
@@ -4234,6 +3936,12 @@ void OmxComponentDecTest::Run()
                 }
             }
 
+            if (iOutputParameters)
+            {
+                oscl_free(iOutputParameters);
+                iOutputParameters = NULL;
+            }
+
             if (ipAppPriv)
             {
                 oscl_free(ipAppPriv);
@@ -4241,14 +3949,23 @@ void OmxComponentDecTest::Run()
             }
 
 #if PROXY_INTERFACE
-            OSCL_DELETE(ipThreadSafeHandlerEventHandler);
-            ipThreadSafeHandlerEventHandler = NULL;
+            if (ipThreadSafeHandlerEventHandler)
+            {
+                OSCL_DELETE(ipThreadSafeHandlerEventHandler);
+                ipThreadSafeHandlerEventHandler = NULL;
+            }
 
-            OSCL_DELETE(ipThreadSafeHandlerEmptyBufferDone);
-            ipThreadSafeHandlerEmptyBufferDone = NULL;
+            if (ipThreadSafeHandlerEmptyBufferDone)
+            {
+                OSCL_DELETE(ipThreadSafeHandlerEmptyBufferDone);
+                ipThreadSafeHandlerEmptyBufferDone = NULL;
+            }
 
-            OSCL_DELETE(ipThreadSafeHandlerFillBufferDone);
-            ipThreadSafeHandlerFillBufferDone = NULL;
+            if (ipThreadSafeHandlerFillBufferDone)
+            {
+                OSCL_DELETE(ipThreadSafeHandlerFillBufferDone);
+                ipThreadSafeHandlerFillBufferDone = NULL;
+            }
 #endif
 
             VerifyOutput(TestName);
@@ -4264,7 +3981,7 @@ void OmxComponentDecTest::Run()
         case StateError:
         {
             //Do all the cleanup's and exit from here
-            OMX_S32 ii;
+            OMX_U32 ii;
 
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "OmxComponentDecTest::Run() - StateError IN"));
 
@@ -4478,6 +4195,1441 @@ void OmxComponentDecTest::StopOnError()
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "OmxComponentDecTest::StopOnError() called"));
     iState = StateError;
     RunIfNotReady();
+}
+
+
+
+OMX_BOOL OmxComponentDecTest::PrepareComponent()
+{
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "OmxComponentDecTest::PrepareComponent IN"));
+
+    OMX_ERRORTYPE Err;
+    iInputParameters.inPtr = NULL;
+    iInputParameters.cComponentRole = NULL;
+    iInputParameters.inBytes = 0;
+
+    OMX_U32 ii;
+    OMX_S32 ReadCount;
+    OMX_S32 Size;
+    OMX_S32 TempTimeStamp;
+    OMX_BOOL Status = OMX_TRUE;
+
+
+    if (0 == oscl_strcmp(iFormat, "AAC") || 0 == oscl_strcmp(iFormat, "AMR")
+            || 0 == oscl_strcmp(iFormat, "MP3") || 0 == oscl_strcmp(iFormat, "WMA") || 0 == oscl_strcmp(iFormat, "RA"))
+    {
+        iInputParameters.cComponentRole = iRole;
+        iOutputParameters = (AudioOMXConfigParserOutputs*) oscl_malloc(sizeof(AudioOMXConfigParserOutputs));
+    }
+    else
+    {
+        iInputParameters.cComponentRole = iRole;
+        iOutputParameters = (VideoOMXConfigParserOutputs*) oscl_malloc(sizeof(VideoOMXConfigParserOutputs));
+    }
+
+    if (NULL == iOutputParameters)
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
+                        (0, "OmxComponentDecTest::PrepareComponent() Can't allocate memory for OMXConfigParser output!"));
+        return OMX_FALSE;
+    }
+
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
+                    (0, "OmxComponentDecTest::PrepareComponent() Initializing OMX component and decoder for role %s", iInputParameters.cComponentRole));
+
+
+    //Do not parse the config header for dynamic port reconfig test cases, as here we want
+    //port reconfiguration to happen
+    if (OMX_FALSE == iDynamicPortReconfigTest)
+    {
+        if (0 == oscl_strcmp(iFormat, "AAC"))
+        {
+            ReadCount = fread(&Size, 1, FRAME_SIZE_FIELD, ipInputFile); // read in 1st 4 bytes
+            if (ReadCount < FRAME_SIZE_FIELD)
+            {
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "OmxComponentDecTest::PrepareComponent() - Input file error while reading config information OUT"));
+                return OMX_FALSE;
+            }
+
+            ReadCount = fread(&TempTimeStamp, 1, FRAME_TIME_STAMP_FIELD, ipInputFile); // read in 2nd 4 bytes
+            if (ReadCount < FRAME_TIME_STAMP_FIELD)
+            {
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "OmxComponentDecTest::PrepareComponent() - Input file error while reading config information OUT"));
+                return OMX_FALSE;
+            }
+
+            iInputParameters.inPtr = (uint8*) oscl_malloc(sizeof(uint8) * Size);
+            if (NULL == iInputParameters.inPtr)
+            {
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "OmxComponentDecTest::PrepareComponent() - Error allocating input config parser OUT"));
+                return OMX_FALSE;
+            }
+
+            iInputParameters.inBytes = Size;
+
+            ReadCount = fread(iInputParameters.inPtr, 1, Size, ipInputFile);
+            if (ReadCount < Size)
+            {
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "OmxComponentDecTest::PrepareComponent() - Input file error while reading config information OUT"));
+                return OMX_FALSE;
+            }
+
+
+            fseek(ipInputFile, 0, SEEK_SET);
+        }
+        else if (0 == oscl_strcmp(iFormat, "WMA"))
+        {
+            ReadCount = fread(&Size, 1, FRAME_SIZE_FIELD, ipInputFile); // read in 1st 4 bytes
+            if (ReadCount < FRAME_SIZE_FIELD)
+            {
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "OmxComponentDecTest::PrepareComponent() - Input file error while reading config information OUT"));
+                return OMX_FALSE;
+            }
+
+            iInputParameters.inPtr = (uint8*) oscl_malloc(sizeof(uint8) * Size);
+            if (NULL == iInputParameters.inPtr)
+            {
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "OmxComponentDecTest::PrepareComponent() - Error allocating input config parser OUT"));
+                return OMX_FALSE;
+            }
+
+            iInputParameters.inBytes = Size;
+
+            ReadCount = fread(iInputParameters.inPtr, 1, Size, ipInputFile);
+            if (ReadCount < Size)
+            {
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "OmxComponentDecTest::PrepareComponent() - Input file error while reading config information OUT"));
+                return OMX_FALSE;
+            }
+
+            fseek(ipInputFile, 0, SEEK_SET);
+        }
+        else if (0 == oscl_strcmp(iFormat, "H264"))
+        {
+            iInputParameters.inPtr = (uint8*) oscl_malloc(sizeof(uint8) * PVOMXAVC_SPS_PPS_SIZE);
+            if (NULL == iInputParameters.inPtr)
+            {
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "OmxComponentDecTest::PrepareComponent() - Error allocating input config parser OUT"));
+                return OMX_FALSE;
+            }
+
+            iInputParameters.inBytes = PVOMXAVC_SPS_PPS_SIZE;
+
+            ReadCount = fread(iInputParameters.inPtr, 1, PVOMXAVC_SPS_PPS_SIZE, ipInputFile);
+            if (ReadCount == 0)
+            {
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "OmxComponentDecTest::PrepareComponent() - Input file error while reading config information OUT"));
+                return OMX_FALSE;
+            }
+
+            fseek(ipInputFile, 0, SEEK_SET);
+        }
+        else if (0 == oscl_strcmp(iFormat, "M4V"))
+        {
+            OMX_S32 BitstreamSize;
+
+            //Allocate 32 bytes for the header
+            iInputParameters.inPtr = (uint8*) oscl_malloc(sizeof(uint8) * PVOMXMPEG4_HEADER_SIZE);
+            if (NULL == iInputParameters.inPtr)
+            {
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "OmxComponentDecTest::PrepareComponent() - Error allocating input config parser OUT"));
+                return OMX_FALSE;
+            }
+
+            ReadCount = fread(iInputParameters.inPtr, 1, PVOMXMPEG4_HEADER_SIZE,  ipInputFile);
+            if (ReadCount < PVOMXMPEG4_HEADER_SIZE)
+            {
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "OmxComponentDecTest::PrepareComponent() - Input file error while reading config information OUT"));
+                return OMX_FALSE;
+            }
+
+            BitstreamSize = ReadCount;
+
+            Size = omx_m4v_getVideoHeader(0, iInputParameters.inPtr, BitstreamSize);
+
+            if (0 == Size)
+            {
+                iInputParameters.inBytes = PVOMXMPEG4_HEADER_SIZE;
+            }
+            else
+            {
+                iInputParameters.inBytes = Size;
+            }
+
+            fseek(ipInputFile, 0, SEEK_SET);
+        }
+        else if (0 == oscl_strcmp(iFormat, "WMV"))
+        {
+            ReadCount = fread(&Size, 1, FRAME_SIZE_FIELD, ipInputFile); // read in 1st 4 bytes
+            if (ReadCount < FRAME_SIZE_FIELD)
+            {
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "OmxComponentDecTest::PrepareComponent() - Input file error while reading config information OUT"));
+                return OMX_FALSE;
+            }
+
+            iInputParameters.inPtr = (uint8*) oscl_malloc(sizeof(uint8) * Size);
+            if (NULL == iInputParameters.inPtr)
+            {
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "OmxComponentDecTest::PrepareComponent() - Error allocating input config parser OUT"));
+                return OMX_FALSE;
+            }
+
+            iInputParameters.inBytes = Size;
+
+            ReadCount = fread(iInputParameters.inPtr, 1, Size, ipInputFile);
+            if (ReadCount < Size)
+            {
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "OmxComponentDecTest::PrepareComponent() - Input file error while reading config information OUT"));
+                return OMX_FALSE;
+            }
+
+            fseek(ipInputFile, 0, SEEK_SET);
+        }
+        else if (0 == oscl_strcmp(iFormat, "RV"))
+        {
+            ReadCount = fread(&Size, 1, FRAME_SIZE_FIELD, ipInputFile); // read in 1st 4 bytes
+            if (ReadCount < FRAME_SIZE_FIELD)
+            {
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "OmxComponentDecTest::PrepareComponent() - Input file error while reading config information OUT"));
+                return OMX_FALSE;
+            }
+
+            iInputParameters.inPtr = (uint8*) oscl_malloc(sizeof(uint8) * Size);
+            if (NULL == iInputParameters.inPtr)
+            {
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "OmxComponentDecTest::PrepareComponent() - Error allocating input config parser OUT"));
+                return OMX_FALSE;
+            }
+            iInputParameters.inBytes = Size;
+
+            ReadCount = fread(iInputParameters.inPtr, 1, Size, ipInputFile);
+            if (ReadCount < Size)
+            {
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "OmxComponentDecTest::PrepareComponent() - Input file error while reading config information OUT"));
+                return OMX_FALSE;
+            }
+
+            fseek(ipInputFile, 0, SEEK_SET);
+        }
+
+
+        if (iInputParameters.inBytes == 0 || iInputParameters.inPtr == NULL)
+        {
+            // in case of following formats - config codec data is expected to
+            // be present in the query. If not, config parser cannot be called
+
+            if (0 == oscl_strcmp(iFormat, "AAC") ||
+                    0 == oscl_strcmp(iFormat, "WMA") ||
+                    0 == oscl_strcmp(iFormat, "M4V") ||
+                    0 == oscl_strcmp(iFormat, "H264") ||
+                    0 == oscl_strcmp(iFormat, "WMV")    ||
+                    0 == oscl_strcmp(iFormat, "RV"))
+            {
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
+                                (0, "OmxComponentDecTest::PrepareComponent() Codec Config data is not present"));
+
+                return OMX_FALSE;
+            }
+        }
+    }
+
+
+    if (NULL != iName)
+    {
+        iInputParameters.cComponentName = iName;
+        if (OMX_FALSE == iDynamicPortReconfigTest)
+        {
+            Status = OMX_MasterConfigParser(&iInputParameters, iOutputParameters);
+        }
+
+        if (OMX_TRUE == Status)
+        {
+            Err = OMX_MasterGetHandle(&ipAppPriv->Handle, iName, (OMX_PTR) this , iCallbacks->getCallbackStruct());
+            if ((Err != OMX_ErrorNone) || (NULL == ipAppPriv->Handle))
+            {
+                return OMX_FALSE;
+            }
+
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG, (0, "OmxComponentDecTest::PrepareComponent() - Got Handle for the component %s", iName));
+
+            OMX_BOOL Result;
+
+            if (0 == oscl_strcmp(iFormat, "AAC") || 0 == oscl_strcmp(iFormat, "AMR")
+                    || 0 == oscl_strcmp(iFormat, "MP3") || 0 == oscl_strcmp(iFormat, "WMA") || 0 == oscl_strcmp(iFormat, "RA"))
+            {
+                Result = NegotiateComponentParametersAudio();
+
+            }
+            else
+            {
+                Result = NegotiateComponentParametersVideo();
+            }
+
+            if (OMX_FALSE == Result)
+            {
+                // error, free handle and try to find a different component
+                OMX_MasterFreeHandle(ipAppPriv->Handle);
+                ipAppPriv->Handle = NULL;
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG, (0, "OmxComponentDecTest::PrepareComponent() - Error in NegotiateComponentParameters"));
+                return OMX_FALSE;
+            }
+        }
+        else
+        {
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG, (0, "OmxComponentDecTest::PrepareComponent() - Error returned by OMX_MasterConfigParser API"));
+            ipAppPriv->Handle = NULL;
+            return OMX_FALSE;
+        }
+
+        // free Input Parameters, Output parameters mare required for some test case later as well
+        if (iInputParameters.inPtr)
+        {
+            oscl_free(iInputParameters.inPtr);
+            iInputParameters.inPtr = NULL;
+        }
+    }
+    else if (NULL != iRole)
+    {
+        //Determine the component first & then get the handle
+        OMX_U32 NumComps = 0;
+        OMX_STRING* pCompOfRole;
+
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG, (0, "OmxComponentDecTest::PrepareComponent() - Finding out the components that can support the role %s", iRole));
+
+        // call once to find out the number of components that can fit the role
+        Err = OMX_MasterGetComponentsOfRole(iRole, &NumComps, NULL);
+
+        if (OMX_ErrorNone != Err || NumComps < 1)
+        {
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "OmxComponentDecTest::PrepareComponent() - ERROR, No component can handle the specified role %s", iRole));
+            ipAppPriv->Handle = NULL;
+
+            return OMX_FALSE;
+        }
+
+        pCompOfRole = (OMX_STRING*) oscl_malloc(NumComps * sizeof(OMX_STRING));
+        if (NULL == pCompOfRole)
+        {
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "OmxComponentDecTest::PrepareComponent() - ERROR allocating memoy to pCompOfRole"));
+            ipAppPriv->Handle = NULL;
+
+            return OMX_FALSE;
+        }
+
+        for (ii = 0; ii < NumComps; ii++)
+        {
+            pCompOfRole[ii] = (OMX_STRING) oscl_malloc(PV_OMX_MAX_COMPONENT_NAME_LENGTH * sizeof(OMX_U8));
+            if (NULL == pCompOfRole[ii])
+            {
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "OmxComponentDecTest::PrepareComponent() - ERROR allocating memoy to pCompOfRole for index %d", ii));
+                ipAppPriv->Handle = NULL;
+
+                oscl_free(pCompOfRole);
+                pCompOfRole = NULL;
+                return OMX_FALSE;
+            }
+        }
+
+        // call 2nd time to get the component names
+        Err = OMX_MasterGetComponentsOfRole(iRole, &NumComps, (OMX_U8**) pCompOfRole);
+        if (OMX_ErrorNone != Err)
+        {
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "OmxComponentDecTest::PrepareComponent() - ERROR returned by GetComponentsOfRole API"));
+            return OMX_FALSE;
+        }
+
+        for (ii = 0; ii < NumComps; ii++)
+        {
+            iInputParameters.cComponentName = pCompOfRole[ii];
+
+            if (OMX_FALSE == iDynamicPortReconfigTest)
+            {
+                Status = OMX_MasterConfigParser(&iInputParameters, iOutputParameters);
+            }
+
+            if (OMX_TRUE == Status)
+            {
+                // try to create component
+                Err = OMX_MasterGetHandle(&ipAppPriv->Handle, (OMX_STRING) pCompOfRole[ii], (OMX_PTR) this, iCallbacks->getCallbackStruct());
+                // if successful, no need to continue
+                if ((OMX_ErrorNone == Err) && (NULL != ipAppPriv->Handle))
+                {
+                    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG, (0, "OmxComponentDecTest::PrepareComponent() - Got Handle for the component %s", pCompOfRole[ii]));
+                }
+                else
+                {
+                    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "OmxComponentDecTest::PrepareComponent() - ERROR, Cannot get component %s handle, try another if possible", pCompOfRole[ii]));
+                    continue;
+                }
+
+                OMX_BOOL Result;
+
+                if (0 == oscl_strcmp(iFormat, "AAC") || 0 == oscl_strcmp(iFormat, "AMR")
+                        || 0 == oscl_strcmp(iFormat, "MP3") || 0 == oscl_strcmp(iFormat, "WMA") || 0 == oscl_strcmp(iFormat, "RA"))
+                {
+                    Result = NegotiateComponentParametersAudio();
+
+                }
+                else
+                {
+                    Result = NegotiateComponentParametersVideo();
+                }
+
+                if (OMX_FALSE == Result)
+                {
+                    // error, free handle and try to find a different component
+                    OMX_MasterFreeHandle(ipAppPriv->Handle);
+                    ipAppPriv->Handle = NULL;
+                    continue;
+                }
+
+                // found a component, and it passed all tests. no need to continue.
+                break;
+            }
+            else
+            {
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG, (0, "OmxComponentDecTest::PrepareComponent() - Error returned by OMX_MasterConfigParser API"));
+                ipAppPriv->Handle = NULL;
+            }
+        }
+
+        // whether successful or not, need to free CompOfRoles
+        for (ii = 0; ii < NumComps; ii++)
+        {
+            oscl_free(pCompOfRole[ii]);
+            pCompOfRole[ii] = NULL;
+        }
+        oscl_free(pCompOfRole);
+        pCompOfRole = NULL;
+
+        // whether successful or not, need to free InputParameters
+        if (iInputParameters.inPtr)
+        {
+            oscl_free(iInputParameters.inPtr);
+            iInputParameters.inPtr = NULL;
+        }
+
+        // check if there was a problem
+        if ((Err != OMX_ErrorNone) || (NULL == ipAppPriv->Handle))
+        {
+            return OMX_FALSE;
+        }
+    }
+
+
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "OmxComponentDecTest::PrepareComponent OUT"));
+
+    return OMX_TRUE;
+}
+
+
+OMX_BOOL OmxComponentDecTest::NegotiateComponentParametersAudio()
+{
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "OmxComponentDecTest::NegotiateComponentParametersAudio In"));
+
+    OMX_ERRORTYPE Err;
+    uint32 NumPorts;
+    uint32 ii;
+
+    AudioOMXConfigParserOutputs *pOutputParameters;
+    pOutputParameters = (AudioOMXConfigParserOutputs *)iOutputParameters;
+
+    if (OMX_FALSE == iDynamicPortReconfigTest)
+    {
+        if (0 == oscl_strcmp(iFormat, "WMA"))
+        {
+            iNumberOfChannels = pOutputParameters->Channels;
+            iPCMSamplingRate = pOutputParameters->SamplesPerSec;
+        }
+        else if (0 == oscl_strcmp(iFormat, "AAC"))
+        {
+            iNumberOfChannels = pOutputParameters->Channels;
+            iPCMSamplingRate = pOutputParameters->SamplesPerSec;
+        }
+    }
+
+    //This will initialize the size and version of the iPortInit structure
+    INIT_GETPARAMETER_STRUCT(OMX_PORT_PARAM_TYPE, iPortInit);
+
+    Err = OMX_GetParameter(ipAppPriv->Handle, OMX_IndexParamAudioInit, &iPortInit);
+    NumPorts = iPortInit.nPorts;
+
+    if (Err != OMX_ErrorNone || NumPorts < 2)
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                        (0, "OmxComponentDecTest::NegotiateComponentParametersAudio() There is insuffucient (%d) ports", NumPorts));
+        return OMX_FALSE;
+    }
+
+    // loop through ports starting from the starting index to find index of the first input port
+    for (ii = iPortInit.nStartPortNumber ; ii < iPortInit.nStartPortNumber + NumPorts; ii++)
+    {
+        // get port parameters, and determine if it is input or output
+        // if there are more than 2 ports, the first one we encounter that has input direction is picked
+        //This will initialize the size and version of the iParamPort structure
+        INIT_GETPARAMETER_STRUCT(OMX_PARAM_PORTDEFINITIONTYPE, iParamPort);
+
+        //port
+        iParamPort.nPortIndex = ii;
+
+        Err = OMX_GetParameter(ipAppPriv->Handle, OMX_IndexParamPortDefinition, &iParamPort);
+
+        if (Err != OMX_ErrorNone)
+        {
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                            (0, "OmxComponentDecTest::NegotiateComponentParametersAudio() Problem negotiating with port %d ", ii));
+
+            return OMX_FALSE;
+        }
+
+        if (0 == iParamPort.nBufferCountMin)
+        {
+            /* a buffer count of 0 is not allowed */
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
+                            (0, "OmxComponentDecTest::NegotiateComponentParametersAudio() - Error, GetParameter for OMX_IndexParamPortDefinition returned 0 min buffer count"));
+            return OMX_FALSE;
+        }
+
+        if (iParamPort.nBufferCountMin > iParamPort.nBufferCountActual)
+        {
+            /* Min buff count can't be more than actual buff count */
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
+                            (0, "OmxComponentDecTest::NegotiateComponentParametersAudio() - ERROR, GetParameter for OMX_IndexParamPortDefinition returned actual buffer count %d less than min buffer count %d", iParamPort.nBufferCountActual, iParamPort.nBufferCountMin));
+            return OMX_FALSE;
+        }
+
+        if (iParamPort.eDir == OMX_DirInput)
+        {
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                            (0, "OmxComponentDecTest::NegotiateComponentParametersAudio() Found Input port index %d ", ii));
+
+            iInputPortIndex = ii;
+            break;
+        }
+    }
+
+    if (ii == iPortInit.nStartPortNumber + NumPorts)
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                        (0, "OmxComponentDecTest::NegotiateComponentParametersAudio() Cannot find any input port "));
+        return OMX_FALSE;
+    }
+
+
+    // loop through ports starting from the starting index to find index of the first output port
+    for (ii = iPortInit.nStartPortNumber ; ii < iPortInit.nStartPortNumber + NumPorts; ii++)
+    {
+        // get port parameters, and determine if it is input or output
+        // if there are more than 2 ports, the first one we encounter that has output direction is picked
+
+        INIT_GETPARAMETER_STRUCT(OMX_PARAM_PORTDEFINITIONTYPE, iParamPort);
+        iParamPort.nPortIndex = ii;
+
+        Err = OMX_GetParameter(ipAppPriv->Handle, OMX_IndexParamPortDefinition, &iParamPort);
+
+        if (Err != OMX_ErrorNone)
+        {
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                            (0, "OmxComponentDecTest::NegotiateComponentParametersAudio() Problem negotiating with port %d ", ii));
+
+            return OMX_FALSE;
+        }
+
+        if (0 == iParamPort.nBufferCountMin)
+        {
+            /* a buffer count of 0 is not allowed */
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
+                            (0, "OmxComponentDecTest::NegotiateComponentParametersAudio() - Error, GetParameter for OMX_IndexParamPortDefinition returned 0 min buffer count"));
+            return OMX_FALSE;
+        }
+
+        if (iParamPort.nBufferCountMin > iParamPort.nBufferCountActual)
+        {
+            /* Min buff count can't be more than actual buff count */
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
+                            (0, "OmxComponentDecTest::NegotiateComponentParametersAudio() - ERROR, GetParameter for OMX_IndexParamPortDefinition returned actual buffer count %d less than min buffer count %d", iParamPort.nBufferCountActual, iParamPort.nBufferCountMin));
+            return OMX_FALSE;
+        }
+
+        if (iParamPort.eDir == OMX_DirOutput)
+        {
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                            (0, "OmxComponentDecTest::NegotiateComponentParametersAudio() Found Output port index %d ", ii));
+
+            iOutputPortIndex = ii;
+            break;
+        }
+    }
+    if (ii == iPortInit.nStartPortNumber + NumPorts)
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                        (0, "OmxComponentDecTest::NegotiateComponentParametersAudio() Cannot find any output port "));
+        return OMX_FALSE;
+    }
+
+
+    // now get input parameters
+
+    INIT_GETPARAMETER_STRUCT(OMX_PARAM_PORTDEFINITIONTYPE, iParamPort);
+
+    //Input port
+    iParamPort.nPortIndex = iInputPortIndex;
+    Err = OMX_GetParameter(ipAppPriv->Handle, OMX_IndexParamPortDefinition, &iParamPort);
+    if (Err != OMX_ErrorNone)
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                        (0, "PVMFOMXAudioDecNode::NegotiateComponentParametersAudio() Problem negotiating with input port %d ", iInputPortIndex));
+        return OMX_FALSE;
+    }
+
+    // preset the number of input buffers
+    iInBufferCount = iParamPort.nBufferCountActual;  // use the value provided by component
+    iInBufferSize = iParamPort.nBufferSize;
+
+    if (OMX_TRUE == iExtraPartialFrameTest)
+    {
+        iInBufferCount = EXTRAPARTIALFRAME_INPUT_BUFFERS;
+    }
+
+    iParamPort.nBufferCountActual = iInBufferCount;
+
+    // set the number of actual input buffers
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "PVMFOMXAudioDecNode::NegotiateComponentParametersAudio() Inport buffers %d,size %d", iInBufferCount, iInBufferSize));
+
+
+
+    INIT_GETPARAMETER_STRUCT(OMX_PARAM_PORTDEFINITIONTYPE, iParamPort);
+    iParamPort.nPortIndex = iInputPortIndex;
+    // finalize setting input port parameters
+    Err = OMX_SetParameter(ipAppPriv->Handle, OMX_IndexParamPortDefinition, &iParamPort);
+    if (Err != OMX_ErrorNone)
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                        (0, "PVMFOMXAudioDecNode::NegotiateComponentParametersAudio() Problem setting parameters in input port %d ", iInputPortIndex));
+        return OMX_FALSE;
+    }
+
+
+    // in case of WMA - config parser decodes config info and produces reliable numchannels and sampling rate
+    // set these values now to prevent unnecessary port reconfig
+    if (OMX_FALSE == iDynamicPortReconfigTest)
+    {
+        if (0 == oscl_strcmp(iFormat, "WMA"))
+        {
+            OMX_AUDIO_PARAM_PCMMODETYPE Audio_Pcm_Param;
+
+            // First get the structure
+            INIT_GETPARAMETER_STRUCT(OMX_AUDIO_PARAM_PCMMODETYPE, Audio_Pcm_Param);
+            Audio_Pcm_Param.nPortIndex = iOutputPortIndex; // we're looking for output port params
+
+            Err = OMX_GetParameter(ipAppPriv->Handle, OMX_IndexParamAudioPcm, &Audio_Pcm_Param);
+            if (Err != OMX_ErrorNone)
+            {
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                                (0, "PVMFOMXAudioDecNode::NegotiateComponentParametersAudio() Problem negotiating PCM parameters with output port %d ", iOutputPortIndex));
+                return OMX_FALSE;
+            }
+
+            // set the sampling rate obtained from config parser
+            Audio_Pcm_Param.nSamplingRate = iPCMSamplingRate; // can be set to 0 (if unknown)
+
+            // set number of channels obtained from config parser
+            Audio_Pcm_Param.nChannels = iNumberOfChannels;     // should be 1 or 2
+
+            // Now, set the parameters
+            INIT_GETPARAMETER_STRUCT(OMX_AUDIO_PARAM_PCMMODETYPE, Audio_Pcm_Param);
+            Audio_Pcm_Param.nPortIndex = iOutputPortIndex;
+
+            Err = OMX_SetParameter(ipAppPriv->Handle, OMX_IndexParamAudioPcm, &Audio_Pcm_Param);
+            if (Err != OMX_ErrorNone)
+            {
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                                (0, "PVMFOMXAudioDecNode::NegotiateComponentParametersAudio() Problem Setting PCM parameters with output port %d ", iOutputPortIndex));
+                return OMX_FALSE;
+            }
+        }
+    }
+
+    // Codec specific info set/get: SamplingRate, formats etc.
+    if (!GetSetCodecSpecificInfo())
+    {
+        return OMX_FALSE;
+    }
+
+    //Port 1 for output port
+    INIT_GETPARAMETER_STRUCT(OMX_PARAM_PORTDEFINITIONTYPE, iParamPort);
+    iParamPort.nPortIndex = iOutputPortIndex;
+
+    Err = OMX_GetParameter(ipAppPriv->Handle, OMX_IndexParamPortDefinition, &iParamPort);
+    if (Err != OMX_ErrorNone)
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                        (0, "PVMFOMXAudioDecNode::NegotiateComponentParametersAudio() Problem negotiating with output port %d ", iOutputPortIndex));
+        return OMX_FALSE;
+    }
+
+    // set number of output buffers and the size
+    iOutBufferCount = iParamPort.nBufferCountActual;
+    iParamPort.nBufferCountActual = iOutBufferCount;
+
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "PVMFOMXAudioDecNode::NegotiateComponentParametersAudio() Outport buffers %d,size %d", iOutBufferCount, iOutBufferSize));
+
+    INIT_GETPARAMETER_STRUCT(OMX_PARAM_PORTDEFINITIONTYPE, iParamPort);
+    iParamPort.nPortIndex = iOutputPortIndex;
+    // finalize setting output port parameters
+    Err = OMX_SetParameter(ipAppPriv->Handle, OMX_IndexParamPortDefinition, &iParamPort);
+    if (Err != OMX_ErrorNone)
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                        (0, "PVMFOMXAudioDecNode::NegotiateComponentParametersAudio() Problem setting parameters in output port %d ", iOutputPortIndex));
+        return OMX_FALSE;
+    }
+
+    //Set input audio format
+    //This is needed since a single component could handle differents roles
+
+    // Init to desire format
+    if (0 == oscl_strcmp(iFormat, "AAC"))
+    {
+        iAudioCompressionFormat = OMX_AUDIO_CodingAAC;
+    }
+    else if (0 == oscl_strcmp(iFormat, "AMR"))
+    {
+        iAudioCompressionFormat = OMX_AUDIO_CodingAMR;
+    }
+    else if (0 == oscl_strcmp(iFormat, "MP3"))
+    {
+        iAudioCompressionFormat = OMX_AUDIO_CodingMP3;
+    }
+    else if (0 == oscl_strcmp(iFormat, "WMA"))
+    {
+        iAudioCompressionFormat = OMX_AUDIO_CodingWMA;
+    }
+    else if (0 == oscl_strcmp(iFormat, "RA"))
+    {
+        iAudioCompressionFormat = OMX_AUDIO_CodingRA;
+    }
+    else
+    {
+        // Illegal codec specified.
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                        (0, "PVMFOMXAudioDecNode::NegotiateComponentParametersAudio() Problem setting audio compression format"));
+        return OMX_FALSE;
+    }
+
+
+    OMX_AUDIO_PARAM_PORTFORMATTYPE AudioPortFormat;
+    INIT_GETPARAMETER_STRUCT(OMX_AUDIO_PARAM_PORTFORMATTYPE, AudioPortFormat);
+    AudioPortFormat.nPortIndex = iInputPortIndex;
+
+    // Search the proper format index and set it.
+    // Since we already know that the component has the role we need, search until finding the proper nIndex
+    // if component does not find the format will return OMX_ErrorNoMore
+
+    for (ii = 0; ii < PVOMXAUDIO_MAX_SUPPORTED_FORMAT; ii++)
+    {
+        AudioPortFormat.nIndex = ii;
+        Err = OMX_GetParameter(ipAppPriv->Handle, OMX_IndexParamAudioPortFormat, &AudioPortFormat);
+        if (Err != OMX_ErrorNone)
+        {
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                            (0, "PVMFOMXAudioDecNode::NegotiateComponentParametersAudio() Problem setting audio compression format"));
+            return OMX_FALSE;
+        }
+        if (iAudioCompressionFormat == AudioPortFormat.eEncoding)
+        {
+            break;
+        }
+    }
+
+    if (ii == PVOMXAUDIO_MAX_SUPPORTED_FORMAT)
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                        (0, "PVMFOMXAudioDecNode::NegotiateComponentParametersAudio() No audio compression format found"));
+        return OMX_FALSE;
+
+    }
+    // Now set the format to confirm parameters
+    Err = OMX_SetParameter(ipAppPriv->Handle, OMX_IndexParamAudioPortFormat, &AudioPortFormat);
+    if (Err != OMX_ErrorNone)
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                        (0, "PVMFOMXAudioDecNode::NegotiateComponentParametersAudio() Problem setting audio compression format"));
+        return OMX_FALSE;
+    }
+
+
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "OmxComponentDecTest::NegotiateComponentParametersAudio Out"));
+
+    return OMX_TRUE;
+}
+
+
+
+OMX_BOOL OmxComponentDecTest::GetSetCodecSpecificInfo()
+{
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "OmxComponentDecTest::GetSetCodecSpecificInfo IN"));
+
+    OMX_PTR CodecProfilePtr = NULL;
+    OMX_INDEXTYPE CodecProfileIndx = OMX_IndexAudioStartUnused;
+
+    OMX_AUDIO_PARAM_AACPROFILETYPE Audio_Aac_Param;
+    OMX_AUDIO_PARAM_AMRTYPE Audio_Amr_Param;
+    OMX_AUDIO_PARAM_MP3TYPE Audio_Mp3_Param;
+    OMX_AUDIO_PARAM_WMATYPE Audio_Wma_Param;
+    OMX_AUDIO_PARAM_RATYPE Audio_Ra_Param;
+    OMX_ERRORTYPE Err = OMX_ErrorNone;
+
+
+    // determine the proper index and structure (based on codec type)
+    if (0 == oscl_strcmp(iFormat, "AAC"))
+    {
+        CodecProfilePtr = (OMX_PTR) & Audio_Aac_Param;
+        CodecProfileIndx = OMX_IndexParamAudioAac;
+        Audio_Aac_Param.nPortIndex = iInputPortIndex;
+
+        INIT_GETPARAMETER_STRUCT(OMX_AUDIO_PARAM_AACPROFILETYPE, Audio_Aac_Param);
+        pGetInputFrame = &OmxComponentDecTest::GetInputFrameAac;
+    }
+    else if (0 == oscl_strcmp(iFormat, "AMR"))
+    {
+        CodecProfilePtr = (OMX_PTR) & Audio_Amr_Param;
+        CodecProfileIndx = OMX_IndexParamAudioAmr;
+        Audio_Amr_Param.nPortIndex = iInputPortIndex;
+
+        INIT_GETPARAMETER_STRUCT(OMX_AUDIO_PARAM_AMRTYPE, Audio_Amr_Param);
+        pGetInputFrame = &OmxComponentDecTest::GetInputFrameAmr;
+    }
+    else if (0 == oscl_strcmp(iFormat, "MP3"))
+    {
+        CodecProfilePtr = (OMX_PTR) & Audio_Mp3_Param;
+        CodecProfileIndx = OMX_IndexParamAudioMp3;
+        Audio_Mp3_Param.nPortIndex = iInputPortIndex;
+
+        INIT_GETPARAMETER_STRUCT(OMX_AUDIO_PARAM_MP3TYPE, Audio_Mp3_Param);
+        pGetInputFrame = &OmxComponentDecTest::GetInputFrameMp3;
+    }
+    else if (0 == oscl_strcmp(iFormat, "WMA"))
+    {
+        CodecProfilePtr = (OMX_PTR) & Audio_Wma_Param;
+        CodecProfileIndx = OMX_IndexParamAudioWma;
+        Audio_Wma_Param.nPortIndex = iInputPortIndex;
+
+        INIT_GETPARAMETER_STRUCT(OMX_AUDIO_PARAM_WMATYPE, Audio_Wma_Param);
+        pGetInputFrame = &OmxComponentDecTest::GetInputFrameWmaRa;
+    }
+    else if (0 == oscl_strcmp(iFormat, "RA"))
+    {
+        CodecProfilePtr = (OMX_PTR) & Audio_Ra_Param;
+        CodecProfileIndx = OMX_IndexParamAudioRa;
+        Audio_Ra_Param.nPortIndex = iInputPortIndex;
+
+        INIT_GETPARAMETER_STRUCT(OMX_AUDIO_PARAM_RATYPE, Audio_Ra_Param);
+        pGetInputFrame = &OmxComponentDecTest::GetInputFrameWmaRa;
+    }
+
+
+    // first get parameters:
+    Err = OMX_GetParameter(ipAppPriv->Handle, CodecProfileIndx, CodecProfilePtr);
+    if (Err != OMX_ErrorNone)
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                        (0, "PVMFOMXAudioDecNode::GetSetCodecSpecificInfo() Problem getting codec profile parameter on input port %d ", iInputPortIndex));
+        return OMX_FALSE;
+    }
+
+
+    // Set the default stream format and output frame size except for AMR where we can determine from the clip
+    if (0 == oscl_strcmp(iFormat, "AAC"))
+    {
+        Audio_Aac_Param.eAACStreamFormat = OMX_AUDIO_AACStreamFormatMP4ADTS;
+        iSamplesPerFrame = Audio_Aac_Param.nFrameLength;
+    }
+    else if (0 == oscl_strcmp(iFormat, "AMR"))
+    {
+        if (OMX_FALSE == iNoMarkerBitTest)
+        {
+            /* Determine the file format type for AMR file */
+
+            OMX_S32 AmrFileByte = 0;
+            fread(&AmrFileByte, 1, 4, ipInputFile); // read in 1st 4 bytes
+
+            if (2 == AmrFileByte)
+            {
+                iAmrFileType = OMX_AUDIO_AMRFrameFormatFSF;
+                iSamplesPerFrame = PVOMXAUDIODEC_AMRNB_SAMPLES_PER_FRAME;
+            }
+            else if (4 == AmrFileByte)
+            {
+                iAmrFileType = OMX_AUDIO_AMRFrameFormatIF2;
+                iSamplesPerFrame = PVOMXAUDIODEC_AMRNB_SAMPLES_PER_FRAME;
+            }
+            else if (6 == AmrFileByte)
+            {
+                iAmrFileType = OMX_AUDIO_AMRFrameFormatRTPPayload;
+                iSamplesPerFrame = PVOMXAUDIODEC_AMRNB_SAMPLES_PER_FRAME;
+            }
+            else if (0 == AmrFileByte)
+            {
+                iAmrFileType = OMX_AUDIO_AMRFrameFormatConformance;
+                iSamplesPerFrame = PVOMXAUDIODEC_AMRNB_SAMPLES_PER_FRAME;
+            }
+            else if (7 == AmrFileByte)
+            {
+                iAmrFileType = OMX_AUDIO_AMRFrameFormatRTPPayload;
+                iAmrFileMode = OMX_AUDIO_AMRBandModeWB0;
+                iSamplesPerFrame = PVOMXAUDIODEC_AMRWB_SAMPLES_PER_FRAME;
+
+            }
+            else if (8 == AmrFileByte)
+            {
+                iAmrFileType = OMX_AUDIO_AMRFrameFormatFSF;
+                iAmrFileMode = OMX_AUDIO_AMRBandModeWB0;
+                iSamplesPerFrame = PVOMXAUDIODEC_AMRWB_SAMPLES_PER_FRAME;
+            }
+            else
+            {
+                /* Invalid input format type */
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
+                                (0, "OmxComponentDecTest::GetSetCodecSpecificInfo() - Error, Invalid AMR input format %d, OUT", AmrFileByte));
+                return OMX_FALSE;
+            }
+        }
+
+        Audio_Amr_Param.eAMRFrameFormat = iAmrFileType;
+        Audio_Amr_Param.eAMRBandMode = iAmrFileMode;
+    }
+    else if (0 == oscl_strcmp(iFormat, "MP3"))
+    {
+        iSamplesPerFrame = PVOMXAUDIODEC_MP3_DEFAULT_SAMPLES_PER_FRAME;
+    }
+    else if (0 == oscl_strcmp(iFormat, "WMA"))
+    {
+        Audio_Wma_Param.eFormat = OMX_AUDIO_WMAFormatUnused; // set this initially
+        iSamplesPerFrame = 0; // unknown
+    }
+    else if (0 == oscl_strcmp(iFormat, "RA"))
+    {
+        Audio_Ra_Param.eFormat = OMX_AUDIO_RA8; // set this initially
+        iSamplesPerFrame = 0; // unknown
+    }
+    else
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                        (0, "PVMFOMXAudioDecNode::GetSetCodecSpecificInfo() Unknown format in input port negotiation "));
+        return OMX_FALSE;
+    }
+
+    // set parameters to inform the component of the stream type
+    Err = OMX_SetParameter(ipAppPriv->Handle, CodecProfileIndx, CodecProfilePtr);
+    if (Err != OMX_ErrorNone)
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                        (0, "PVMFOMXAudioDecNode::GetSetCodecSpecificInfo() Problem setting codec profile parameter on input port %d ", iInputPortIndex));
+        return OMX_FALSE;
+    }
+
+
+    // GET the output buffer params and sizes
+    OMX_AUDIO_PARAM_PCMMODETYPE Audio_Pcm_Param;
+    Audio_Pcm_Param.nPortIndex = iOutputPortIndex; // we're looking for output port params
+
+    INIT_GETPARAMETER_STRUCT(OMX_AUDIO_PARAM_PCMMODETYPE, Audio_Pcm_Param);
+
+
+    Err = OMX_GetParameter(ipAppPriv->Handle, OMX_IndexParamAudioPcm, &Audio_Pcm_Param);
+    if (Err != OMX_ErrorNone)
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                        (0, "PVMFOMXAudioDecNode::GetSetCodecSpecificInfo() Problem negotiating PCM parameters with output port %d ", iOutputPortIndex));
+        return OMX_FALSE;
+    }
+
+
+    // these are some initial default values that may change
+    iPCMSamplingRate = Audio_Pcm_Param.nSamplingRate; // can be set to 0 (if unknown)
+
+    if (iPCMSamplingRate == 0) // use default sampling rate (i.e. 48000)
+    {
+        iPCMSamplingRate = PVOMXAUDIODEC_DEFAULT_SAMPLINGRATE;
+    }
+
+    iNumberOfChannels = Audio_Pcm_Param.nChannels;     // should be 1 or 2
+    if (iNumberOfChannels != 1 && iNumberOfChannels != 2)
+    {
+        return OMX_FALSE;
+    }
+
+
+    if ((iSamplesPerFrame != 0) && ((iSamplesPerFrame * 1000) > iPCMSamplingRate))
+        // if this iSamplesPerFrame is known and is large enough to ensure that the iMilliSecPerFrame calculation
+        // below won't be set to 0.
+    {
+        // CALCULATE NumBytes per frame, Msec per frame, etc.
+
+        uint32 NumBytesPerFrame = 2 * iSamplesPerFrame * iNumberOfChannels;
+        uint32 MilliSecPerFrame = (iSamplesPerFrame * 1000) / iPCMSamplingRate;
+        // Determine the size of each PCM output buffer. Size would be big enough to hold certain time amount of PCM data
+        uint32 Numframes = PVOMXAUDIODEC_DEFAULT_OUTPUTPCM_TIME / MilliSecPerFrame;
+
+        if (PVOMXAUDIODEC_DEFAULT_OUTPUTPCM_TIME % MilliSecPerFrame)
+        {
+            // If there is a remainder, include one more frame
+            ++Numframes;
+        }
+        // set the output buffer size accordingly:
+        iOutBufferSize = Numframes * NumBytesPerFrame;
+    }
+    else
+    {
+        iOutBufferSize = (2 * iNumberOfChannels * PVOMXAUDIODEC_DEFAULT_OUTPUTPCM_TIME * iPCMSamplingRate) / 1000; // assuming 16 bits per sample
+    }
+
+    //Port 1 for output port
+    INIT_GETPARAMETER_STRUCT(OMX_PARAM_PORTDEFINITIONTYPE, iParamPort);
+    iParamPort.nPortIndex = iOutputPortIndex;
+
+    Err = OMX_GetParameter(ipAppPriv->Handle, OMX_IndexParamPortDefinition, &iParamPort);
+    if (Err != OMX_ErrorNone)
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                        (0, "PVMFOMXAudioDecNode::GetSetCodecSpecificInfo() Problem negotiating with output port %d ", iOutputPortIndex));
+        return OMX_FALSE;
+    }
+
+    if (iOutBufferSize < iParamPort.nBufferSize)
+    {
+        // the OMX spec says that nBuffersize is a read only field, but the client is allowed to allocate
+        // a buffer size larger than nBufferSize.
+        iOutBufferSize = iParamPort.nBufferSize;
+    }
+
+
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "OmxComponentDecTest::GetSetCodecSpecificInfo OUT"));
+
+    return OMX_TRUE;
+}
+
+
+
+OMX_BOOL OmxComponentDecTest::NegotiateComponentParametersVideo()
+{
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "OmxComponentDecTest::NegotiateComponentParametersVideo In"));
+
+    OMX_ERRORTYPE Err;
+    uint32 NumPorts;
+    uint32 ii;
+
+    //This will initialize the size and version of the iPortInit structure
+    INIT_GETPARAMETER_STRUCT(OMX_PORT_PARAM_TYPE, iPortInit);
+
+    Err = OMX_GetParameter(ipAppPriv->Handle, OMX_IndexParamVideoInit, &iPortInit);
+    NumPorts = iPortInit.nPorts;
+
+    if (Err != OMX_ErrorNone || NumPorts < 2)
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                        (0, "OmxComponentDecTest::NegotiateComponentParametersVideo() There is insuffucient (%d) ports", NumPorts));
+        return OMX_FALSE;
+    }
+
+    // loop through ports starting from the starting index to find index of the first input port
+    for (ii = iPortInit.nStartPortNumber ; ii < iPortInit.nStartPortNumber + NumPorts; ii++)
+    {
+        // get port parameters, and determine if it is input or output
+        // if there are more than 2 ports, the first one we encounter that has input direction is picked
+        //This will initialize the size and version of the iParamPort structure
+        INIT_GETPARAMETER_STRUCT(OMX_PARAM_PORTDEFINITIONTYPE, iParamPort);
+
+        //port
+        iParamPort.nPortIndex = ii;
+
+        Err = OMX_GetParameter(ipAppPriv->Handle, OMX_IndexParamPortDefinition, &iParamPort);
+
+        if (Err != OMX_ErrorNone)
+        {
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                            (0, "OmxComponentDecTest::NegotiateComponentParametersVideo() Problem negotiating with port %d ", ii));
+
+            return OMX_FALSE;
+        }
+
+        if (0 == iParamPort.nBufferCountMin)
+        {
+            /* a buffer count of 0 is not allowed */
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
+                            (0, "OmxComponentDecTest::NegotiateComponentParametersVideo() - Error, GetParameter for OMX_IndexParamPortDefinition returned 0 min buffer count"));
+            return OMX_FALSE;
+        }
+
+        if (iParamPort.nBufferCountMin > iParamPort.nBufferCountActual)
+        {
+            /* Min buff count can't be more than actual buff count */
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
+                            (0, "OmxComponentDecTest::NegotiateComponentParametersVideo() - ERROR, GetParameter for OMX_IndexParamPortDefinition returned actual buffer count %d less than min buffer count %d", iParamPort.nBufferCountActual, iParamPort.nBufferCountMin));
+            return OMX_FALSE;
+        }
+
+        if (iParamPort.eDir == OMX_DirInput)
+        {
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                            (0, "OmxComponentDecTest::NegotiateComponentParametersVideo() Found Input port index %d ", ii));
+
+            iInputPortIndex = ii;
+            break;
+        }
+    }
+
+    if (ii == iPortInit.nStartPortNumber + NumPorts)
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                        (0, "OmxComponentDecTest::NegotiateComponentParametersVideo() Cannot find any input port "));
+        return OMX_FALSE;
+    }
+
+
+    // loop through ports starting from the starting index to find index of the first output port
+    for (ii = iPortInit.nStartPortNumber ; ii < iPortInit.nStartPortNumber + NumPorts; ii++)
+    {
+        // get port parameters, and determine if it is input or output
+        // if there are more than 2 ports, the first one we encounter that has output direction is picked
+
+        INIT_GETPARAMETER_STRUCT(OMX_PARAM_PORTDEFINITIONTYPE, iParamPort);
+        iParamPort.nPortIndex = ii;
+
+        Err = OMX_GetParameter(ipAppPriv->Handle, OMX_IndexParamPortDefinition, &iParamPort);
+
+        if (Err != OMX_ErrorNone)
+        {
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                            (0, "OmxComponentDecTest::NegotiateComponentParametersVideo() Problem negotiating with port %d ", ii));
+
+            return OMX_FALSE;
+        }
+
+        if (0 == iParamPort.nBufferCountMin)
+        {
+            /* a buffer count of 0 is not allowed */
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
+                            (0, "OmxComponentDecTest::NegotiateComponentParametersVideo() - Error, GetParameter for OMX_IndexParamPortDefinition returned 0 min buffer count"));
+            return OMX_FALSE;
+        }
+
+        if (iParamPort.nBufferCountMin > iParamPort.nBufferCountActual)
+        {
+            /* Min buff count can't be more than actual buff count */
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
+                            (0, "OmxComponentDecTest::NegotiateComponentParametersVideo() - ERROR, GetParameter for OMX_IndexParamPortDefinition returned actual buffer count %d less than min buffer count %d", iParamPort.nBufferCountActual, iParamPort.nBufferCountMin));
+            return OMX_FALSE;
+        }
+
+        if (iParamPort.eDir == OMX_DirOutput)
+        {
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                            (0, "OmxComponentDecTest::NegotiateComponentParametersVideo() Found Output port index %d ", ii));
+
+            iOutputPortIndex = ii;
+            break;
+        }
+    }
+    if (ii == iPortInit.nStartPortNumber + NumPorts)
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                        (0, "OmxComponentDecTest::NegotiateComponentParametersVideo() Cannot find any output port "));
+        return OMX_FALSE;
+    }
+
+    // now get input parameters
+    INIT_GETPARAMETER_STRUCT(OMX_PARAM_PORTDEFINITIONTYPE, iParamPort);
+
+    //Input port
+    iParamPort.nPortIndex = iInputPortIndex;
+    Err = OMX_GetParameter(ipAppPriv->Handle, OMX_IndexParamPortDefinition, &iParamPort);
+    if (Err != OMX_ErrorNone)
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                        (0, "PVMFOMXAudioDecNode::NegotiateComponentParametersVideo() Problem negotiating with input port %d ", iInputPortIndex));
+        return OMX_FALSE;
+    }
+
+
+    iInBufferCount = iParamPort.nBufferCountActual;  // use the value provided by component
+    iInBufferSize = iParamPort.nBufferSize;
+
+    if (OMX_TRUE == iExtraPartialFrameTest)
+    {
+        iInBufferCount = EXTRAPARTIALFRAME_INPUT_BUFFERS;
+    }
+
+    iParamPort.nBufferCountActual = iInBufferCount;
+
+    // set the number of actual input buffers
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "PVMFOMXVideoDecNode::NegotiateComponentParametersVideo() Inport buffers %d,size %d", iInBufferCount, iInBufferSize));
+
+
+    VideoOMXConfigParserOutputs *pOutputParameters;
+
+    pOutputParameters = (VideoOMXConfigParserOutputs*) iOutputParameters;
+
+    if (OMX_FALSE == iDynamicPortReconfigTest)
+    {
+        // set the width/height on INPUT port parameters (this may change during port reconfig)
+        if ((pOutputParameters->width != 0) && (pOutputParameters->height != 0))
+        {
+            iParamPort.format.video.nFrameWidth = pOutputParameters->width;
+            iParamPort.format.video.nFrameHeight = pOutputParameters->height;
+        }
+    }
+
+    INIT_GETPARAMETER_STRUCT(OMX_PARAM_PORTDEFINITIONTYPE, iParamPort);
+    iParamPort.nPortIndex = iInputPortIndex;
+
+    Err = OMX_SetParameter(ipAppPriv->Handle, OMX_IndexParamPortDefinition, &iParamPort);
+    if (Err != OMX_ErrorNone)
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                        (0, "PVMFOMXVideoDecNode::NegotiateComponentParametersVideo() Problem setting parameters in input port %d ", iInputPortIndex));
+        return OMX_FALSE;
+    }
+
+    //Port 1 for output port
+    iParamPort.nPortIndex = iOutputPortIndex;
+    INIT_GETPARAMETER_STRUCT(OMX_PARAM_PORTDEFINITIONTYPE, iParamPort);
+
+    Err = OMX_GetParameter(ipAppPriv->Handle, OMX_IndexParamPortDefinition, &iParamPort);
+    if (Err != OMX_ErrorNone)
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                        (0, "PVMFOMXVideoDecNode::NegotiateComponentParametersVideo() Problem negotiating with output port %d ", iOutputPortIndex));
+        return OMX_FALSE;
+    }
+
+    // check if params are OK. In case of H263, width/height cannot be obtained until
+    // 1st frame is decoded, so read them from the output port.
+    // otherwise, used Width/Height from the config parser utility
+    // set the width/height based on port parameters (this may change during port reconfig)
+    if (OMX_FALSE == iDynamicPortReconfigTest)
+    {
+        if ((pOutputParameters->width != 0) && (pOutputParameters->height != 0) && (0 != oscl_strcmp(iFormat, "H263")))
+        {
+            // set width and height obtained from config parser in the output port as well
+            iParamPort.format.video.nFrameWidth = pOutputParameters->width;
+            iParamPort.format.video.nFrameHeight = pOutputParameters->height;
+        }
+    }
+    else
+    {
+        //Set the default width and height provided by the component
+        pOutputParameters->width = iParamPort.format.video.nFrameWidth;
+        pOutputParameters->height = iParamPort.format.video.nFrameHeight;
+
+    }
+
+    // Send the parameters right away to allow the OMX component to re-calculate the buffer size
+    // based on the new width and height that was just provided
+    INIT_GETPARAMETER_STRUCT(OMX_PARAM_PORTDEFINITIONTYPE, iParamPort);
+    iParamPort.nPortIndex = iOutputPortIndex;
+
+    Err = OMX_SetParameter(ipAppPriv->Handle, OMX_IndexParamPortDefinition, &iParamPort);
+    if (Err != OMX_ErrorNone)
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                        (0, "PVMFOMXVideoDecNode::NegotiateComponentParametersVideo() Problem setting parameters in output port %d ", iOutputPortIndex));
+        return OMX_FALSE;
+    }
+
+    // Now - read the same parameters back again with potentially new buffer sizes
+    iParamPort.nPortIndex = iOutputPortIndex;
+    INIT_GETPARAMETER_STRUCT(OMX_PARAM_PORTDEFINITIONTYPE, iParamPort);
+
+    Err = OMX_GetParameter(ipAppPriv->Handle, OMX_IndexParamPortDefinition, &iParamPort);
+    if (Err != OMX_ErrorNone)
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                        (0, "PVMFOMXVideoDecNode::NegotiateComponentParametersVideo() Problem negotiating with output port %d ", iOutputPortIndex));
+        return OMX_FALSE;
+    }
+
+    // read the parameters
+    iOutBufferCount = iParamPort.nBufferCountActual;
+
+    iOutBufferSize = iParamPort.nBufferSize;
+    if (iOutBufferCount < iParamPort.nBufferCountMin)
+    {
+        iOutBufferCount = iParamPort.nBufferCountMin;
+    }
+
+    iParamPort.nBufferCountActual = iOutBufferCount;
+    INIT_GETPARAMETER_STRUCT(OMX_PARAM_PORTDEFINITIONTYPE, iParamPort);
+
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "PVMFOMXVideoDecNode::NegotiateComponentParametersVideo() Outport buffers %d,size %d", iOutBufferCount, iOutBufferSize));
+
+    Err = OMX_SetParameter(ipAppPriv->Handle, OMX_IndexParamPortDefinition, &iParamPort);
+    if (Err != OMX_ErrorNone)
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                        (0, "PVMFOMXVideoDecNode::NegotiateComponentParametersVideo() Problem setting parameters in output port %d ", iOutputPortIndex));
+        return OMX_FALSE;
+    }
+
+
+    // Get video color format
+    OMX_VIDEO_PARAM_PORTFORMATTYPE VideoPortFormat;
+    OMX_COLOR_FORMATTYPE OMXVideoColorFormat;
+    OMX_VIDEO_CODINGTYPE OMXVideoCompressionFormat;
+
+    // init to unknown
+    OMXVideoColorFormat = OMX_COLOR_FormatUnused;
+
+    INIT_GETPARAMETER_STRUCT(OMX_VIDEO_PARAM_PORTFORMATTYPE, VideoPortFormat);
+
+    VideoPortFormat.nPortIndex = iOutputPortIndex;
+
+    VideoPortFormat.nIndex = 0; // read the preferred format - first
+
+    // doing this in a while loop while incrementing nIndex will get all supported formats
+    // until component says OMX_ErrorNoMore
+    // For now, we just use the preferred one (with nIndex=0) assuming it is supported at MIO
+
+    Err = OMX_GetParameter(ipAppPriv->Handle, OMX_IndexParamVideoPortFormat, &VideoPortFormat);
+    if (Err != OMX_ErrorNone)
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                        (0, "PVMFOMXVideoDecNode::NegotiateComponentParametersVideo() Problem getting video port format"));
+        return OMX_FALSE;
+    }
+    // check if color format is valid and set DeBlocking
+    if (VideoPortFormat.eCompressionFormat == OMX_VIDEO_CodingUnused)
+    {
+        // color format is valid, so read it
+        OMXVideoColorFormat = VideoPortFormat.eColorFormat;
+
+        // Now set the format to confirm parameters
+        INIT_GETPARAMETER_STRUCT(OMX_VIDEO_PARAM_PORTFORMATTYPE, VideoPortFormat);
+
+        Err = OMX_SetParameter(ipAppPriv->Handle, OMX_IndexParamVideoPortFormat, &VideoPortFormat);
+        if (Err != OMX_ErrorNone)
+        {
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                            (0, "PVMFOMXVideoDecNode::NegotiateComponentParametersVideo() Problem setting video port format"));
+            return OMX_FALSE;
+        }
+    }
+
+
+    //Set input video format
+    //This is needed since a single component could handle differents roles
+
+    // Init to desired format
+    if (0 == oscl_strcmp(iFormat, "H264"))
+    {
+        OMXVideoCompressionFormat = OMX_VIDEO_CodingAVC;
+        pGetInputFrame = &OmxComponentDecTest::GetInputFrameAvc;
+    }
+    else if (0 == oscl_strcmp(iFormat, "M4V"))
+    {
+        OMXVideoCompressionFormat = OMX_VIDEO_CodingMPEG4;
+        pGetInputFrame = &OmxComponentDecTest::GetInputFrameMpeg4;
+    }
+    else if (0 == oscl_strcmp(iFormat, "H263"))
+    {
+        OMXVideoCompressionFormat = OMX_VIDEO_CodingH263;
+        pGetInputFrame = &OmxComponentDecTest::GetInputFrameH263;
+    }
+    else if (0 == oscl_strcmp(iFormat, "WMV"))
+    {
+        OMXVideoCompressionFormat = OMX_VIDEO_CodingWMV;
+        pGetInputFrame = &OmxComponentDecTest::GetInputFrameWmv;
+    }
+    else if (0 == oscl_strcmp(iFormat, "RV"))
+    {
+        OMXVideoCompressionFormat = OMX_VIDEO_CodingRV;
+        pGetInputFrame = &OmxComponentDecTest::GetInputFrameRv;
+    }
+    else
+    {
+        // Illegal codec specified.
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                        (0, "PVMFOMXVideoDecNode::NegotiateComponentParametersVideo() Problem setting video compression format"));
+        return OMX_FALSE;
+    }
+
+
+    if ((OMXVideoCompressionFormat == OMX_VIDEO_CodingMPEG4) ||
+            (OMXVideoCompressionFormat == OMX_VIDEO_CodingH263))
+    {
+        // Enable deblocking for these two video types
+        OMX_PARAM_DEBLOCKINGTYPE DeBlock;
+        INIT_GETPARAMETER_STRUCT(OMX_PARAM_DEBLOCKINGTYPE, DeBlock);
+
+        DeBlock.nPortIndex = iOutputPortIndex;
+        DeBlock.bDeblocking = OMX_TRUE;
+
+        Err = OMX_SetParameter(ipAppPriv->Handle, OMX_IndexParamCommonDeblocking, &DeBlock);
+        if (Err != OMX_ErrorNone)
+        {
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                            (0, "PVMFOMXVideoDecNode::NegotiateComponentParametersVideo() Problem setting deblocking flag"));
+            // Dont return OMX_FALSE in this case.  If enabling DeBlocking fails, just continue.
+        }
+    }
+
+    INIT_GETPARAMETER_STRUCT(OMX_VIDEO_PARAM_PORTFORMATTYPE, VideoPortFormat);
+    VideoPortFormat.nPortIndex = iInputPortIndex;
+
+    // Search the proper format index and set it.
+    // Since we already know that the component has the role we need, search until finding the proper nIndex
+    // if component does not find the format will return OMX_ErrorNoMore
+
+    for (ii = 0; ii < PVOMXVIDEO_MAX_SUPPORTED_FORMAT; ii++)
+    {
+        VideoPortFormat.nIndex = ii;
+        Err = OMX_GetParameter(ipAppPriv->Handle, OMX_IndexParamVideoPortFormat, &VideoPortFormat);
+        if (Err != OMX_ErrorNone)
+        {
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                            (0, "PVMFOMXVideoDecNode::NegotiateComponentParametersVideo() Problem setting video compression format"));
+            return OMX_FALSE;
+        }
+
+        if (OMXVideoCompressionFormat == VideoPortFormat.eCompressionFormat)
+        {
+            break;
+        }
+    }
+
+    if (ii == PVOMXVIDEO_MAX_SUPPORTED_FORMAT)
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                        (0, "PVMFOMXVideoDecNode::NegotiateComponentParametersVideo() No Video compression format found"));
+        return OMX_FALSE;
+    }
+
+    // Now set the format to confirm parameters
+    Err = OMX_SetParameter(ipAppPriv->Handle, OMX_IndexParamVideoPortFormat, &VideoPortFormat);
+    if (Err != OMX_ErrorNone)
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                        (0, "PVMFOMXVideoDecNode::NegotiateComponentParametersVideo() Problem setting video compression format"));
+        return OMX_FALSE;
+    }
+
+
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "OmxComponentDecTest::NegotiateComponentParametersVideo Out"));
+
+    return OMX_TRUE;
 }
 
 

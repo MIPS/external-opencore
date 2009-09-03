@@ -308,8 +308,8 @@ OMX_BOOL OmxDecTestBufferNegotiation::NegotiateParameters()
     iParamPort.nPortIndex = iOutputPortIndex;
 
     Err = OMX_GetParameter(ipAppPriv->Handle, OMX_IndexParamPortDefinition, &iParamPort);
-    if ((OMX_ErrorNone != Err) || (iParamPort.nBufferCountActual != (OMX_U32)iOutBufferCount)
-            || (iParamPort.nBufferSize != (OMX_U32)iOutBufferSize))
+    if ((OMX_ErrorNone != Err) || (iParamPort.nBufferCountActual != iOutBufferCount)
+            || (iParamPort.nBufferSize != iOutBufferSize))
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
                         (0, "OmxDecTestBufferNegotiation::NegotiateParameters() - Buffer parameter verificication failed with Get/Set Parameter combination on port %d, OUT", iOutputPortIndex));
@@ -960,6 +960,7 @@ void OmxDecTestBufferNegotiation::Run()
 
             ipAppPriv = (AppPrivateType*) oscl_malloc(sizeof(AppPrivateType));
             CHECK_MEM(ipAppPriv, "Component_Handle");
+            ipAppPriv->Handle = NULL;
 
             //This should be the first call to the component to load it.
             Err = OMX_MasterInit();
@@ -1108,7 +1109,7 @@ void OmxDecTestBufferNegotiation::Run()
         case StateLoaded:
         {
             OMX_ERRORTYPE Err;
-            OMX_S32 ii;
+            OMX_U32 ii;
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "OmxDecTestBufferNegotiation::Run() - StateLoaded IN"));
 
             // allocate memory for ipInBuffer
@@ -1186,7 +1187,7 @@ void OmxDecTestBufferNegotiation::Run()
 
         case StateCleanUp:
         {
-            OMX_S32 ii;
+            OMX_U32 ii;
             OMX_ERRORTYPE Err = OMX_ErrorNone;
 
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "OmxDecTestBufferNegotiation::Run() - StateCleanUp IN"));
@@ -1280,14 +1281,23 @@ void OmxDecTestBufferNegotiation::Run()
             }
 
 #if PROXY_INTERFACE
-            OSCL_DELETE(ipThreadSafeHandlerEventHandler);
-            ipThreadSafeHandlerEventHandler = NULL;
+            if (ipThreadSafeHandlerEventHandler)
+            {
+                OSCL_DELETE(ipThreadSafeHandlerEventHandler);
+                ipThreadSafeHandlerEventHandler = NULL;
+            }
 
-            OSCL_DELETE(ipThreadSafeHandlerEmptyBufferDone);
-            ipThreadSafeHandlerEmptyBufferDone = NULL;
+            if (ipThreadSafeHandlerEmptyBufferDone)
+            {
+                OSCL_DELETE(ipThreadSafeHandlerEmptyBufferDone);
+                ipThreadSafeHandlerEmptyBufferDone = NULL;
+            }
 
-            OSCL_DELETE(ipThreadSafeHandlerFillBufferDone);
-            ipThreadSafeHandlerFillBufferDone = NULL;
+            if (ipThreadSafeHandlerFillBufferDone)
+            {
+                OSCL_DELETE(ipThreadSafeHandlerFillBufferDone);
+                ipThreadSafeHandlerFillBufferDone = NULL;
+            }
 #endif
 
             if (OMX_FALSE == iTestStatus)
@@ -1320,7 +1330,7 @@ void OmxDecTestBufferNegotiation::Run()
         case StateError:
         {
             //Do all the cleanup's and exit from here
-            OMX_S32 ii;
+            OMX_U32 ii;
 
             iTestStatus = OMX_FALSE;
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "OmxDecTestBufferNegotiation::Run() - StateError IN"));

@@ -19,9 +19,6 @@
 #include "oscl_mem.h"
 
 
-/* Controls a particlular state of Run */
-static OMX_BOOL DisableRun = OMX_FALSE;
-
 /*
  * Active Object class's Run () function
  * Control all the states of AO & sends API's to the component
@@ -35,7 +32,7 @@ void OmxDecTestEosMissing::Run()
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "OmxDecTestEosMissing::Run() - StateUnLoaded IN"));
 
             OMX_ERRORTYPE Err;
-            OMX_U32 PortIndex, ii;
+            OMX_BOOL Status;
 
             if (!iCallbacks->initCallbacks())
             {
@@ -46,6 +43,7 @@ void OmxDecTestEosMissing::Run()
 
             ipAppPriv = (AppPrivateType*) oscl_malloc(sizeof(AppPrivateType));
             CHECK_MEM(ipAppPriv, "Component_Handle");
+            ipAppPriv->Handle = NULL;
 
             //Allocate bitstream buffer for AVC component
             if (0 == oscl_strcmp(iFormat, "H264"))
@@ -75,175 +73,19 @@ void OmxDecTestEosMissing::Run()
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG, (0, "OmxDecTestEosMissing::Run() - OMX_MasterInit done"));
 
 
-            if (NULL != iName)
+            Status = PrepareComponent();
+
+            if (OMX_FALSE == Status)
             {
-                Err = OMX_MasterGetHandle(&ipAppPriv->Handle, iName, (OMX_PTR) this , iCallbacks->getCallbackStruct());
-                CHECK_ERROR(Err, "GetHandle");
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG, (0, "OmxDecTestEosMissing::Run() - Got Handle for the component %s", iName));
-            }
-            else if (NULL != iRole)
-            {
-                //Determine the component first & then get the handle
-                OMX_U32 NumComps = 0;
-                OMX_STRING* pCompOfRole;
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG, (0, "OmxDecTestEosMissing::Run() Error while loading component OUT"));
+                iState = StateError;
 
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG, (0, "OmxDecTestEosMissing::Run() - Finding out the role for the component %s", iRole));
-
-                // call once to find out the number of components that can fit the role
-                Err = OMX_MasterGetComponentsOfRole(iRole, &NumComps, NULL);
-
-                if (OMX_ErrorNone != Err || NumComps < 1)
+                if (iInputParameters.inPtr)
                 {
-                    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "OmxDecTestEosMissing::Run() - ERROR, No component can handle the specified role %s", iRole));
-                    StopOnError();
-                    ipAppPriv->Handle = NULL;
-                    break;
+                    oscl_free(iInputParameters.inPtr);
+                    iInputParameters.inPtr = NULL;
                 }
 
-                pCompOfRole = (OMX_STRING*) oscl_malloc(NumComps * sizeof(OMX_STRING));
-                CHECK_MEM(pCompOfRole, "ComponentRoleArray");
-
-                for (ii = 0; ii < NumComps; ii++)
-                {
-                    pCompOfRole[ii] = (OMX_STRING) oscl_malloc(PV_OMX_MAX_COMPONENT_NAME_LENGTH * sizeof(OMX_U8));
-                    CHECK_MEM(pCompOfRole[ii], "ComponentRoleArray");
-                }
-
-                if (StateError == iState)
-                {
-                    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                                    (0, "OmxDecTestEosMissing::Run() - Error occured in this state, StateUnLoaded OUT"));
-                    RunIfNotReady();
-                    break;
-                }
-
-                // call 2nd time to get the component names
-                Err = OMX_MasterGetComponentsOfRole(iRole, &NumComps, (OMX_U8**) pCompOfRole);
-                CHECK_ERROR(Err, "GetComponentsOfRole");
-
-                for (ii = 0; ii < NumComps; ii++)
-                {
-                    // try to create component
-                    Err = OMX_MasterGetHandle(&ipAppPriv->Handle, (OMX_STRING) pCompOfRole[ii], (OMX_PTR) this, iCallbacks->getCallbackStruct());
-                    // if successful, no need to continue
-                    if ((OMX_ErrorNone == Err) && (NULL != ipAppPriv->Handle))
-                    {
-                        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG, (0, "OmxDecTestEosMissing::Run() - Got Handle for the component %s", pCompOfRole[ii]));
-                        break;
-                    }
-                    else
-                    {
-                        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "OmxDecTestEosMissing::Run() - ERROR, Cannot get component %s handle, try another if possible", pCompOfRole[ii]));
-                    }
-
-                }
-                // whether successful or not, need to free CompOfRoles
-                for (ii = 0; ii < NumComps; ii++)
-                {
-                    oscl_free(pCompOfRole[ii]);
-                    pCompOfRole[ii] = NULL;
-                }
-                oscl_free(pCompOfRole);
-                pCompOfRole = NULL;
-
-                // check if there was a problem
-                CHECK_ERROR(Err, "GetHandle");
-                CHECK_MEM(ipAppPriv->Handle, "ComponentHandle");
-
-            }
-
-            //This will initialize the size and version of the iPortInit structure
-            INIT_GETPARAMETER_STRUCT(OMX_PORT_PARAM_TYPE, iPortInit);
-
-            if (0 == oscl_strcmp(iFormat, "AAC") || 0 == oscl_strcmp(iFormat, "AMR")
-                    || 0 == oscl_strcmp(iFormat, "MP3") || 0 == oscl_strcmp(iFormat, "WMA") || 0 == oscl_strcmp(iFormat, "RA"))
-            {
-                Err = OMX_GetParameter(ipAppPriv->Handle, OMX_IndexParamAudioInit, &iPortInit);
-            }
-            else
-            {
-                Err = OMX_GetParameter(ipAppPriv->Handle, OMX_IndexParamVideoInit, &iPortInit);
-            }
-
-            CHECK_ERROR(Err, "GetParameter_Audio/Video_Init");
-
-            // Number of ports must be at least 2 of them (in&out)
-            if (iPortInit.nPorts < 2)
-            {
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                                (0, "OmxComponentDecTest::Run() There is insuffucient %d ports", iPortInit.nPorts));
-                StopOnError();
-                break;
-            }
-
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG, (0, "OmxDecTestEosMissing::Run() - GetParameter called for OMX_IndexParamAudioInit/OMX_IndexParamVideoInit"));
-
-            for (ii = 0; ii < iPortInit.nPorts; ii++)
-            {
-                PortIndex = iPortInit.nStartPortNumber + ii;
-
-                //This will initialize the size and version of the iParamPort structure
-                INIT_GETPARAMETER_STRUCT(OMX_PARAM_PORTDEFINITIONTYPE, iParamPort);
-                iParamPort.nPortIndex = PortIndex;
-
-                Err = OMX_GetParameter(ipAppPriv->Handle, OMX_IndexParamPortDefinition, &iParamPort);
-                CHECK_ERROR(Err, "GetParameter_IndexParamPortDefinition");
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG, (0, "OmxDecTestEosMissing::Run() - GetParameter called for OMX_IndexParamPortDefinition on port %d", PortIndex));
-
-                if (0 == iParamPort.nBufferCountMin)
-                {
-                    /* a buffer count of 0 is not allowed */
-                    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "OmxDecTestEosMissing::Run() - Error, GetParameter for OMX_IndexParamPortDefinition returned 0 min buffer count"));
-                    StopOnError();
-                    break;
-                }
-
-                if (iParamPort.nBufferCountMin > iParamPort.nBufferCountActual)
-                {
-                    /* Min buff count can't be more than actual buff count */
-                    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                                    (0, "OmxDecTestEosMissing::Run() - ERROR, GetParameter for OMX_IndexParamPortDefinition returned actual buffer count %d less than min buffer count %d", iParamPort.nBufferCountActual, iParamPort.nBufferCountMin));
-                    StopOnError();
-                    break;
-                }
-
-                if (OMX_DirInput == iParamPort.eDir)
-                {
-                    iInputPortIndex = PortIndex;
-
-                    iInBufferSize = iParamPort.nBufferSize;
-                    iInBufferCount = iParamPort.nBufferCountActual;
-                    iParamPort.nBufferCountActual = iInBufferCount;
-
-                    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
-                                    (0, "OmxDecTestEosMissing::Run() - GetParameter returned Num of input buffers %d with Size %d", iInBufferCount, iInBufferSize));
-
-                }
-                else if (OMX_DirOutput == iParamPort.eDir)
-                {
-                    iOutputPortIndex = PortIndex;
-
-                    iOutBufferSize = iParamPort.nBufferSize;
-                    iOutBufferCount = iParamPort.nBufferCountActual;
-
-                    iParamPort.nBufferCountActual = iOutBufferCount;
-
-                    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
-                                    (0, "OmxDecTestEosMissing::Run() - GetParameter returned Num of output buffers %d with Size %d", iOutBufferCount, iOutBufferSize));
-                }
-
-                //Take the buffer parameters of what component has specified
-                iParamPort.nPortIndex = PortIndex;
-                Err = OMX_SetParameter(ipAppPriv->Handle, OMX_IndexParamPortDefinition, &iParamPort);
-                CHECK_ERROR(Err, "SetParameter_OMX_IndexParamPortDefinition");
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
-                                (0, "OmxDecTestEosMissing::Run() - SetParameter called for OMX_IndexParamPortDefinition on port %d", PortIndex));
-            }
-
-            if (StateError == iState)
-            {
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                                (0, "OmxDecTestEosMissing::Run() - Error Exiting the test case, OUT"));
                 RunIfNotReady();
                 break;
             }
@@ -266,142 +108,6 @@ void OmxDecTestEosMissing::Run()
             }
 #endif
 
-            //Decide about the getinput call for the correct component
-
-            if (0 == oscl_strcmp(iFormat, "H264"))
-            {
-                pGetInputFrame = &OmxComponentDecTest::GetInputFrameAvc;
-            }
-            else if (0 == oscl_strcmp(iFormat, "M4V"))
-            {
-                pGetInputFrame = &OmxComponentDecTest::GetInputFrameMpeg4;
-            }
-            else if (0 == oscl_strcmp(iFormat, "H263"))
-            {
-                pGetInputFrame = &OmxComponentDecTest::GetInputFrameH263;
-            }
-            else if (0 == oscl_strcmp(iFormat, "AAC"))
-            {
-                pGetInputFrame = &OmxComponentDecTest::GetInputFrameAac;
-
-                INIT_GETPARAMETER_STRUCT(OMX_AUDIO_PARAM_PCMMODETYPE, iPcmMode);
-                iPcmMode.nPortIndex = iOutputPortIndex;
-
-                Err = OMX_GetParameter(ipAppPriv->Handle, OMX_IndexParamAudioPcm, &iPcmMode);
-                CHECK_ERROR(Err, "GetParameter_AAC_IndexParamAudioPcm");
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
-                                (0, "OmxDecTestEosMissing::Run() - GetParameter called for OMX_IndexParamAudioPcm for AAC on port %d", iOutputPortIndex));
-
-                iPcmMode.nPortIndex = iOutputPortIndex;
-                /* Pass the number of channel information for AAC component
-                 * from input arguments to the component */
-                iPcmMode.nChannels = iNumberOfChannels;
-                Err = OMX_SetParameter(ipAppPriv->Handle, OMX_IndexParamAudioPcm, &iPcmMode);
-                CHECK_ERROR(Err, "SetParameter_AAC_IndexParamAudioPcm");
-
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
-                                (0, "OmxDecTestEosMissing::Run() - SetParameter called for OMX_IndexParamAudioPcm for AAC on port %d", iOutputPortIndex));
-            }
-            else if (0 == oscl_strcmp(iFormat, "WMV"))
-            {
-                pGetInputFrame = &OmxComponentDecTest::GetInputFrameWmv;
-            }
-            else if (0 == oscl_strcmp(iFormat, "RV"))
-            {
-                pGetInputFrame = &OmxComponentDecTest::GetInputFrameRv;
-            }
-            else if (0 == oscl_strcmp(iFormat, "AMR"))
-            {
-                /* Determine the file format type for AMR file */
-
-                OMX_S32 AmrFileByte = 0;
-
-                fread(&AmrFileByte, 1, 4, ipInputFile); // read in 1st 4 bytes
-
-                if (2 == AmrFileByte)
-                {
-                    iAmrFileType = OMX_AUDIO_AMRFrameFormatFSF;
-                }
-                else if (4 == AmrFileByte)
-                {
-                    iAmrFileType = OMX_AUDIO_AMRFrameFormatIF2;
-                }
-                else if (6 == AmrFileByte)
-                {
-                    iAmrFileType = OMX_AUDIO_AMRFrameFormatRTPPayload;
-                }
-                else if (0 == AmrFileByte)
-                {
-                    iAmrFileType = OMX_AUDIO_AMRFrameFormatConformance;
-                }
-                else if (7 == AmrFileByte)
-                {
-                    iAmrFileType = OMX_AUDIO_AMRFrameFormatRTPPayload;
-                    iAmrFileMode = OMX_AUDIO_AMRBandModeWB0;
-
-                }
-                else if (8 == AmrFileByte)
-                {
-                    iAmrFileType = OMX_AUDIO_AMRFrameFormatFSF;
-                    iAmrFileMode = OMX_AUDIO_AMRBandModeWB0;
-                }
-                else
-                {
-                    /* Invalid input format type */
-                    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                                    (0, "OmxDecTestEosMissing::Run() - Error Invalid AMR input format %d, OUT", AmrFileByte));
-                    StopOnError();
-                }
-
-
-                pGetInputFrame = &OmxComponentDecTest::GetInputFrameAmr;
-
-                /* Pass the input format type information to the AMR component*/
-                INIT_GETPARAMETER_STRUCT(OMX_AUDIO_PARAM_AMRTYPE, iAmrParam);
-                iAmrParam.nPortIndex = iInputPortIndex;
-
-                Err = OMX_GetParameter(ipAppPriv->Handle, OMX_IndexParamAudioAmr, &iAmrParam);
-                CHECK_ERROR(Err, "GetParameter_AMR_IndexParamAudioAmr");
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
-                                (0, "OmxDecTestEosMissing::Run() - GetParameter called for OMX_IndexParamAudioAmr for AMR on port %d", iInputPortIndex));
-
-                iAmrParam.nPortIndex = iInputPortIndex;
-                iAmrParam.eAMRFrameFormat = iAmrFileType;
-                iAmrParam.eAMRBandMode = iAmrFileMode;
-
-                Err = OMX_SetParameter(ipAppPriv->Handle, OMX_IndexParamAudioAmr, &iAmrParam);
-                CHECK_ERROR(Err, "SetParameter_AMR_IndexParamAudioAmr");
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
-                                (0, "OmxDecTestEosMissing::Run() - SetParameter called for OMX_IndexParamAudioAmr for AMR on port %d", iInputPortIndex));
-
-            }
-            else if (0 == oscl_strcmp(iFormat, "MP3"))
-            {
-                pGetInputFrame = &OmxComponentDecTest::GetInputFrameMp3;
-
-                INIT_GETPARAMETER_STRUCT(OMX_AUDIO_PARAM_PCMMODETYPE, iPcmMode);
-                iPcmMode.nPortIndex = iOutputPortIndex;
-
-                Err = OMX_GetParameter(ipAppPriv->Handle, OMX_IndexParamAudioPcm, &iPcmMode);
-                CHECK_ERROR(Err, "GetParameter_MP3_IndexParamAudioPcm");
-
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
-                                (0, "OmxDecTestEosMissing::Run() - GetParameter called for OMX_IndexParamAudioPcm for MP3 on port %d", iOutputPortIndex));
-
-                iPcmMode.nPortIndex = iOutputPortIndex;
-                /* Pass the number of channel information from input arguments to the component */
-                iPcmMode.nChannels = iNumberOfChannels;
-                Err = OMX_SetParameter(ipAppPriv->Handle, OMX_IndexParamAudioPcm, &iPcmMode);
-                CHECK_ERROR(Err, "SetParameter_MP3_IndexParamAudioPcm");
-
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
-                                (0, "OmxDecTestEosMissing::Run() - SetParameter called for OMX_IndexParamAudioPcm for MP3 on port %d", iOutputPortIndex));
-            }
-            else if ((0 == oscl_strcmp(iFormat, "WMA")) || (0 == oscl_strcmp(iFormat, "RA")))
-            {
-                pGetInputFrame = &OmxComponentDecTest::GetInputFrameWmaRa;
-            }
-
             if (StateError != iState)
             {
                 iState = StateLoaded;
@@ -415,7 +121,7 @@ void OmxDecTestEosMissing::Run()
         case StateLoaded:
         {
             OMX_ERRORTYPE Err;
-            OMX_S32 ii;
+            OMX_U32 ii;
 
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "OmxDecTestEosMissing::Run() - StateLoaded IN"));
 
@@ -532,11 +238,10 @@ void OmxDecTestEosMissing::Run()
 
         case StateDecodeHeader:
         {
-            static OMX_BOOL FlagTemp = OMX_FALSE;
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                             (0, "OmxDecTestEosMissing::Run() - StateDecodeHeader IN, Sending configuration input buffers to the component to start dynamic port reconfiguration"));
 
-            if (!FlagTemp)
+            if (!iFlagDecodeHeader)
             {
                 (*this.*pGetInputFrame)();
                 //For AAC component , send one more frame apart from the config frame, so that we can receive the callback
@@ -544,7 +249,7 @@ void OmxDecTestEosMissing::Run()
                 {
                     (*this.*pGetInputFrame)();
                 }
-                FlagTemp = OMX_TRUE;
+                iFlagDecodeHeader = OMX_TRUE;
 
                 //Proceed to executing state and if Port settings changed callback comes,
                 //then do the dynamic port reconfiguration
@@ -559,15 +264,14 @@ void OmxDecTestEosMissing::Run()
 
         case StateDisablePort:
         {
-            static OMX_BOOL FlagTemp = OMX_FALSE;
             OMX_ERRORTYPE Err = OMX_ErrorNone;
-            OMX_S32 ii;
+            OMX_U32 ii;
 
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "OmxDecTestEosMissing::Run() - StateDisablePort IN"));
 
-            if (!DisableRun)
+            if (!iDisableRun)
             {
-                if (!FlagTemp)
+                if (!iFlagDisablePort)
                 {
                     Err = OMX_SendCommand(ipAppPriv->Handle, OMX_CommandPortDisable, iOutputPortIndex, NULL);
                     CHECK_ERROR(Err, "SendCommand_PortDisable");
@@ -576,7 +280,7 @@ void OmxDecTestEosMissing::Run()
                                     (0, "OmxDecTestEosMissing::Run() - Sent Command for OMX_CommandPortDisable on port %d as a part of dynamic port reconfiguration", iOutputPortIndex));
 
                     iPendingCommands = 1;
-                    FlagTemp = OMX_TRUE;
+                    iFlagDisablePort = OMX_TRUE;
                     RunIfNotReady();
                 }
                 else
@@ -619,7 +323,7 @@ void OmxDecTestEosMissing::Run()
                         RunIfNotReady();
                         break;
                     }
-                    DisableRun = OMX_TRUE;
+                    iDisableRun = OMX_TRUE;
                 }
             }
 
@@ -654,7 +358,7 @@ void OmxDecTestEosMissing::Run()
             {
                 iOutBufferSize = ((iParamPort.format.video.nFrameWidth + 15) & ~15) * ((iParamPort.format.video.nFrameHeight + 15) & ~15) * 3 / 2;
 
-                if (iOutBufferSize < (OMX_S32)iParamPort.nBufferSize)
+                if (iOutBufferSize < iParamPort.nBufferSize)
                 {
                     iOutBufferSize = iParamPort.nBufferSize;
                 }
@@ -663,7 +367,7 @@ void OmxDecTestEosMissing::Run()
             {
                 iOutBufferSize = ((iParamPort.format.video.nFrameWidth + 3) & ~3) * ((iParamPort.format.video.nFrameHeight + 3) & ~3) * 3 / 2;
 
-                if (iOutBufferSize < (OMX_S32)iParamPort.nBufferSize)
+                if (iOutBufferSize < iParamPort.nBufferSize)
                 {
                     iOutBufferSize = iParamPort.nBufferSize;
                 }
@@ -677,7 +381,7 @@ void OmxDecTestEosMissing::Run()
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
                             (0, "OmxDecTestEosMissing::Run() - Allocating buffer again after port reconfigutauion has been complete"));
 
-            for (OMX_S32 ii = 0; ii < iOutBufferCount; ii++)
+            for (OMX_U32 ii = 0; ii < iOutBufferCount; ii++)
             {
                 Err = OMX_AllocateBuffer(ipAppPriv->Handle, &ipOutBuffer[ii], iOutputPortIndex, NULL, iOutBufferSize);
                 CHECK_ERROR(Err, "AllocateBuffer_Output_DynamicReconfig");
@@ -701,8 +405,7 @@ void OmxDecTestEosMissing::Run()
 
         case StateExecuting:
         {
-            static OMX_ERRORTYPE Status;
-            OMX_S32 Index;
+            OMX_U32 Index;
             OMX_BOOL MoreOutput;
 
             OMX_ERRORTYPE Err = OMX_ErrorNone;
@@ -736,7 +439,7 @@ void OmxDecTestEosMissing::Run()
             }
 
 
-            if (!iStopProcessingInput || (OMX_ErrorInsufficientResources == Status))
+            if (!iStopProcessingInput || (OMX_ErrorInsufficientResources == iStatusExecuting))
             {
                 // find available input buffer
                 Index = 0;
@@ -747,7 +450,7 @@ void OmxDecTestEosMissing::Run()
 
                 if (Index != iInBufferCount)
                 {
-                    Status = (*this.*pGetInputFrame)();
+                    iStatusExecuting = (*this.*pGetInputFrame)();
                 }
             }
             else
@@ -767,13 +470,12 @@ void OmxDecTestEosMissing::Run()
 
         case StateStopping:
         {
-            static OMX_BOOL FlagTemp = OMX_FALSE;
             OMX_ERRORTYPE Err = OMX_ErrorNone;
 
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "OmxDecTestEosMissing::Run() - StateStopping IN"));
 
             //stop execution by state transition to Idle state.
-            if (!FlagTemp)
+            if (!iFlagStopping)
             {
                 Err = OMX_SendCommand(ipAppPriv->Handle, OMX_CommandStateSet, OMX_StateIdle, NULL);
                 CHECK_ERROR(Err, "SendCommand Executing->Idle");
@@ -782,7 +484,7 @@ void OmxDecTestEosMissing::Run()
                                 (0, "OmxDecTestEosMissing::Run() - Sent State Transition Command from Executing->Idle"));
 
                 iPendingCommands = 1;
-                FlagTemp = OMX_TRUE;
+                iFlagStopping = OMX_TRUE;
             }
 
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "OmxDecTestEosMissing::Run() - StateStopping OUT"));
@@ -791,13 +493,12 @@ void OmxDecTestEosMissing::Run()
 
         case StateCleanUp:
         {
-            OMX_S32 ii;
+            OMX_U32 ii;
             OMX_ERRORTYPE Err = OMX_ErrorNone;
-            static OMX_BOOL FlagTemp = OMX_FALSE;
 
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "OmxDecTestEosMissing::Run() - StateCleanUp IN"));
 
-            if (!FlagTemp)
+            if (!iFlagCleanUp)
             {
                 //Added a check here to verify whether all the ip/op buffers are returned back by the component
                 //in case of Executing->Idle state transition
@@ -867,7 +568,7 @@ void OmxDecTestEosMissing::Run()
                     oscl_free(ipOutReleased);
                     ipOutReleased = NULL;
                 }
-                FlagTemp = OMX_TRUE;
+                iFlagCleanUp = OMX_TRUE;
             }
 
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "OmxDecTestEosMissing::Run() - StateCleanUp OUT"));
@@ -938,6 +639,12 @@ void OmxDecTestEosMissing::Run()
                 }
             }
 
+            if (iOutputParameters)
+            {
+                oscl_free(iOutputParameters);
+                iOutputParameters = NULL;
+            }
+
             if (ipAppPriv)
             {
                 oscl_free(ipAppPriv);
@@ -945,14 +652,23 @@ void OmxDecTestEosMissing::Run()
             }
 
 #if PROXY_INTERFACE
-            OSCL_DELETE(ipThreadSafeHandlerEventHandler);
-            ipThreadSafeHandlerEventHandler = NULL;
+            if (ipThreadSafeHandlerEventHandler)
+            {
+                OSCL_DELETE(ipThreadSafeHandlerEventHandler);
+                ipThreadSafeHandlerEventHandler = NULL;
+            }
 
-            OSCL_DELETE(ipThreadSafeHandlerEmptyBufferDone);
-            ipThreadSafeHandlerEmptyBufferDone = NULL;
+            if (ipThreadSafeHandlerEmptyBufferDone)
+            {
+                OSCL_DELETE(ipThreadSafeHandlerEmptyBufferDone);
+                ipThreadSafeHandlerEmptyBufferDone = NULL;
+            }
 
-            OSCL_DELETE(ipThreadSafeHandlerFillBufferDone);
-            ipThreadSafeHandlerFillBufferDone = NULL;
+            if (ipThreadSafeHandlerFillBufferDone)
+            {
+                OSCL_DELETE(ipThreadSafeHandlerFillBufferDone);
+                ipThreadSafeHandlerFillBufferDone = NULL;
+            }
 #endif
 
             if (OMX_FALSE == iTestStatus)
@@ -986,7 +702,7 @@ void OmxDecTestEosMissing::Run()
         case StateError:
         {
             //Do all the cleanup's and exit from here
-            OMX_S32 ii;
+            OMX_U32 ii;
 
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "OmxDecTestEosMissing::Run() - StateError IN"));
 

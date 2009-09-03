@@ -64,6 +64,7 @@ OmxDecTestBase::OmxDecTestBase(const char AOName[]) :
     ipAVCBSO = NULL;
     ipMp3Bitstream = NULL;
     ipBitstreamBuffer = NULL;
+    iOutputParameters = NULL;
 
     iCount = 0;
     iCount1 = 0;
@@ -76,6 +77,14 @@ OmxDecTestBase::OmxDecTestBase(const char AOName[]) :
     {
         iSimFragSize[jj] = 0;
     }
+
+    iFlagDecodeHeader = OMX_FALSE;
+    iFlagDisablePort = OMX_FALSE;
+    iEosFlagExecuting = OMX_FALSE;
+    iStatusExecuting = OMX_ErrorNone;
+    iFlagStopping = OMX_FALSE;
+    iFlagCleanUp = OMX_FALSE;
+    iDisableRun = OMX_FALSE;
 
     //Get the logger object here in the base class
     iLogger = PVLogger::GetLoggerObject("OmxComponentTestApplication");
@@ -427,7 +436,7 @@ OMX_ERRORTYPE OmxDecTestBase::EmptyBufferDone(OMX_OUT OMX_HANDLETYPE aComponent,
     }
 
     //ACTUAL PROCESSING
-    OMX_S32 ii = 0;
+    OMX_U32 ii = 0;
 
     while ((OMX_U32)(ipInBuffer[ii]) != (OMX_U32) aBuffer && ii < iInBufferCount)
     {
@@ -533,7 +542,7 @@ OMX_ERRORTYPE OmxDecTestBase::FillBufferDone(OMX_OUT OMX_HANDLETYPE aComponent,
     }
 
     OMX_U8* pOutputBuffer;
-    OMX_S32 ii = 0;
+    OMX_U32 ii = 0;
 
     pOutputBuffer = (OMX_U8*)(aBuffer->pBuffer);
 
@@ -612,7 +621,7 @@ OMX_BOOL OmxDecTestBase::VerifyAllBuffersReturned()
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "OmxDecTestBase::VerifyAllBuffersReturned() - IN"));
 
-    OMX_S32 ii;
+    OMX_U32 ii;
     OMX_BOOL AllBuffersReturned = OMX_TRUE;
     //check here to verify whether all the ip/op buffers are returned back by the component or not
 
