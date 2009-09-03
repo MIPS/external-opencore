@@ -42,19 +42,6 @@
 #include "oscl_mem.h"
 #include "oscl_mem_audit.h"
 
-#define RUN_IF_NOT_READY_TIME 200000
-
-
-#define TITLE_LENGTH   300
-#define FILENAME_LEN   255
-#define OUTPUT_TXT_LEN   20
-#define EXTN_LEN       5
-#define PORT_LEN 1200
-#define LOOP_LEN 500
-#define TRANS_LEN 500
-
-#define OUTPUT_MIO_SIZE 300
-
 enum PV2WayTestCmdState
 {
     EPVTestCmdIdle,
