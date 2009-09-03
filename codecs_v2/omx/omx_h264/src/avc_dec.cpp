@@ -282,8 +282,8 @@ OMX_BOOL AvcDecoder_OMX::AvcDecodeVideo_OMX(OMX_BUFFERHEADERTYPE *aOutBuffer, //
     *aResizeFlag = OMX_FALSE;
     OMX_U32 OldWidth, OldHeight;
 
-    OldWidth =  aPortParam->format.video.nFrameWidth;
-    OldHeight = aPortParam->format.video.nFrameHeight;
+    OldWidth =  aPortParam->format.video.nStride; // actual buffer width
+    OldHeight = aPortParam->format.video.nSliceHeight; //actual buffer height
 
     *aOutBufferForRendering = NULL; // init this to NULL. If there is output to be flushed out - we'll update this value
     pCurrentBufferHdr = aOutBuffer; // save the ptr to the empty output buffer we received from component
@@ -343,13 +343,18 @@ OMX_BOOL AvcDecoder_OMX::AvcDecodeVideo_OMX(OMX_BUFFERHEADERTYPE *aOutBuffer, //
         Width = seqInfo.frame_crop_right - seqInfo.frame_crop_left + 1;
         Height = seqInfo.frame_crop_bottom - seqInfo.frame_crop_top + 1;
 
-        if (MaxWidth < Width)
+        aPortParam->format.video.nFrameWidth = Width;
+        aPortParam->format.video.nFrameHeight = Height;
+        aPortParam->format.video.nStride = seqInfo.FrameWidth;
+        aPortParam->format.video.nSliceHeight = seqInfo.FrameHeight;
+
+        if (MaxWidth < seqInfo.FrameWidth)
         {
-            MaxWidth = Width;
+            MaxWidth = seqInfo.FrameWidth;
         }
-        if (MaxHeight < Height)
+        if (MaxHeight < seqInfo.FrameHeight)
         {
-            MaxHeight = Height;
+            MaxHeight = seqInfo.FrameHeight;
         }
 
         // extract the max number of frames required
@@ -358,10 +363,6 @@ OMX_BOOL AvcDecoder_OMX::AvcDecodeVideo_OMX(OMX_BUFFERHEADERTYPE *aOutBuffer, //
             MaxNumFs = seqInfo.num_frames;
         }
 
-        aPortParam->format.video.nFrameWidth = MaxWidth;
-        aPortParam->format.video.nFrameHeight = MaxHeight;
-        aPortParam->format.video.nStride = seqInfo.FrameWidth;
-        aPortParam->format.video.nSliceHeight = seqInfo.FrameHeight;
 
 
         // finally, compute the new minimum buffer size.
@@ -369,7 +370,7 @@ OMX_BOOL AvcDecoder_OMX::AvcDecodeVideo_OMX(OMX_BUFFERHEADERTYPE *aOutBuffer, //
         aPortParam->nBufferSize = (aPortParam->format.video.nSliceHeight * aPortParam->format.video.nStride * 3) >> 1;
 
 
-        if ((OldWidth != aPortParam->format.video.nFrameWidth) || (OldHeight !=  aPortParam->format.video.nFrameHeight))
+        if ((OldWidth != aPortParam->format.video.nStride) || (OldHeight !=  aPortParam->format.video.nSliceHeight))
             *aResizeFlag = OMX_TRUE;
 
 
