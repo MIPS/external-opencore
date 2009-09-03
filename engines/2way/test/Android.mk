@@ -24,7 +24,7 @@ LOCAL_SRC_FILES := \
  	src/lipsync_dummy_output_mio.cpp
 
 
-LOCAL_MODULE := pv2way_omx_engine_test
+LOCAL_MODULE := pv2way_engine_test
 
 LOCAL_CFLAGS := -DPV_USE_AMR_CODECS  $(PV_CFLAGS)
 

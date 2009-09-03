@@ -4,27 +4,16 @@ LOCAL_PATH := $(call get_makefile_dir)
 # Clear out the variables used in the local makefiles
 include $(MK)/clear.mk
 
+TARGET := pv2way_engine_test
+TWOWAY_TARGET := pv2way_engine_test
 
-ifeq ($(USING_MONA),1)
-TARGET := pv2way_mona_engine_test
-TWOWAY_TARGET := pv2way_mona_engine_test
-else
-TARGET := pv2way_omx_engine_test
-TWOWAY_TARGET := pv2way_omx_engine_test
+ifdef twoway_config
+include $(call process_include_list,$(LOCAL_PATH),$(twoway_config)).mk
 endif
 
-
-ifeq ($(USING_MONA),1)
-MONA_FLAGS = -DUSING_MONA
-XCPPFLAGS += -DPV_USE_AMR_CODECS $(SIPCPPFLAGS) $(MONA_FLAGS) $(OMX_FLAGS)
-else
-XCPPFLAGS += -DPV_USE_AMR_CODECS $(SIPCPPFLAGS) $(OMX_FLAGS)
-endif
+include $(LOCAL_PATH)/2way_$(HOST_ARCH).mk
 
 
-ifeq ($(USING_MONA),1)
-XINCDIRS +=  ../../h223/mona/include  ../../h324/tsc/mona/include 
-endif
 
 SRCDIR := ../../src
 INCSRCDIR := ../../include 
@@ -145,38 +134,17 @@ endif
 LIBS := $(FULL_LIBS)
 
 
-ifneq ($(HOST_ARCH),win32)
-SYSLIBS += $(SYS_THREAD_LIB)
-endif
 
 include $(MK)/prog.mk
 
 
+#look in 2way_$(HOST_ARCH).mk for values
 
-
-
-ifeq ($(HOST_ARCH),win32)
-TWOWAY_TARGET := ${TARGET}.exe
-TWOWAYFULL_TARGET := ${TWOWAY_TARGET}
-TWOWAY_TEST_DIR := build\2way_test
-RUNPREF := 
-else
-TWOWAY_TEST_DIR := ${BUILD_ROOT}/2way_test
-TWOWAYFULL_TARGET := ./${TWOWAY_TARGET}
-endif
- 
-
-run_2way_test:: $(REALTARGET) default
+run_2way_test_common:: $(REALTARGET) default
 	$(quiet) ${RM} -r $(TWOWAY_TEST_DIR)
 	$(quiet) ${MKDIR} -p $(TWOWAY_TEST_DIR)
 	$(quiet) $(CP) $(SRC_ROOT)/tools_v2/build/package/opencore/elem/common/pvplayer.cfg $(TWOWAY_TEST_DIR)
 	$(quiet) $(CP) $(SRC_ROOT)/engines/2way/pvlogger/config/pvlogger.ini $(TWOWAY_TEST_DIR)
 	$(quiet) $(CP) ${BUILD_ROOT}/bin/${BUILD_ARCH}/$(TWOWAY_TARGET) $(TWOWAY_TEST_DIR)
 	$(quiet) $(CP) -r $(SRC_ROOT)/engines/2way/sample_app/data/* $(TWOWAY_TEST_DIR)
-ifeq ($(HOST_ARCH),win32)
-	$(quiet) $(CP) ${BUILD_ROOT}/installed_lib/${BUILD_ARCH}/* $(TWOWAY_TEST_DIR)
-	cd $(TWOWAY_TEST_DIR) && $(TWOWAYFULL_TARGET) $(TEST_ARGS) $(SOURCE_ARGS)
-else
-	$(quiet) export LD_LIBRARY_PATH=${BUILD_ROOT}/installed_lib/${BUILD_ARCH} && \
-	cd $(TWOWAY_TEST_DIR) && $(TWOWAYFULL_TARGET) $(TEST_ARGS) $(SOURCE_ARGS)
-endif
+#	$(quiet) run_2way_subtest

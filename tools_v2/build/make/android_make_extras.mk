@@ -243,7 +243,7 @@ $(strip $(foreach lib,$(ANDROID_AGGREGATE_LIB_LIST),$(eval $(call create_aggrega
 PVME_SHARED_LIB := opencore_pvme
 SHARED_LIB_TARGET_LIST_WO_2WAY := $(strip $(subst $(2WAY_SHARED_LIB),,$(ANDROID_AGGREGATE_LIB_LIST)))
 SHARED_LIB_TARGET_LIST_WO_2WAY_PVME := $(strip $(subst $(PVME_SHARED_LIB),,$(SHARED_LIB_TARGET_LIST_WO_2WAY)))
-2WAY_TESTAPP := pv2way_omx_engine_test
+2WAY_TESTAPP := pv2way_engine_test
 PVME_TESTAPP := pvme_test
 TESTAPPS_WO_2WAY := $(strip $(subst $(2WAY_TESTAPP),,$(TESTAPPS)))
 TESTAPPS_WO_2WAY_PVME := $(strip $(subst $(PVME_TESTAPP),,$(TESTAPPS_WO_2WAY)))

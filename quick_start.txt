@@ -35,7 +35,7 @@ To see a list of valid <test_args>:
 Q. How to run the pv2way engine unit tests?
 A. On Android emulator/device:
     adb push <opencore>/extlibs/opencore/engines/2way/sample_app\data/ /sdcard
-    adb shell "cd /sdcard; pv2way_omx_engine_test <test_args>"
+    adb shell "cd /sdcard; pv2way_engine_test <test_args>"
 
 On host PC:
     cd <opencore>/build_config/opencore_dynamic

@@ -4,6 +4,8 @@ LOCAL_PATH := $(call get_makefile_dir)
 # Clear out the variables used in the local makefiles
 include $(MK)/clear.mk
 
+include $(LOCAL_PATH)/2way_$(HOST_ARCH).mk
+
 TARGET := pv2waysample 
 
 
@@ -15,13 +17,6 @@ XINCDIRS +=  ../../src ../../include \
  ../../../../../../protocols/systems/common/include \
  ../../../../../../nodes/pvclientserversocketnode/include \
 ../../../../test/include
-
-
-ifeq ($(HOST_ARCH),win32)
-ifeq ($(GUI_APP),1)
-XINCDIRS += ../../../gui_based/src
-endif
-endif
 
 
 SRCDIR := ../../src
@@ -44,16 +39,7 @@ SRCS := ../../../test/src/lipsync_dummy_input_mio.cpp \
 	twowaysocket.cpp 
 	
 
-ifeq ($(HOST_ARCH),win32)
-ifeq ($(GUI_APP),1)
-SRCS += pv_2way_source_and_sinks.cpp \
-	pv_2way_win_audio_mio_node_factory.cpp \
-        pv_2way_win_video_mio_node_factory.cpp \
-        pv_2way_win_video_mio_node.cpp \
-        pv_2way_modem.cpp \
-        ../../gui_based/src/pv_com_3g_modem.cpp
-endif
-endif
+SRCS += $(EXTRASRCS)
  
 
 #ifeq (0,1)
