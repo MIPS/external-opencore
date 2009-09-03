@@ -214,10 +214,17 @@ OsclTimer<Alloc>::OsclTimer(const char *name, uint32 frequency, int32 priority) 
         , iTickCountPeriod(0)
         , iExpectedTimeout(0)
 {
-    //use the allocator with placement 'new'
-    Alloc alloc;
-    iTimer = OSCL_PLACEMENT_NEW(alloc.ALLOCATE(sizeof(CallbackTimer<Alloc>)), CallbackTimer<Alloc>(*this, name, priority));
-    SetFrequency(frequency);
+    if (frequency == 0)
+    {
+        OSCL_LEAVE(OsclErrArgument);
+    }
+    else
+    {
+        //use the allocator with placement 'new'
+        Alloc alloc;
+        iTimer = OSCL_PLACEMENT_NEW(alloc.ALLOCATE(sizeof(CallbackTimer<Alloc>)), CallbackTimer<Alloc>(*this, name, priority));
+        SetFrequency(frequency);
+    }
 }
 
 template<class Alloc>
