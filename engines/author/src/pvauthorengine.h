@@ -384,7 +384,7 @@ class PVAuthorEngine
         //authoring clock related
         PVMFTimebase_Tickcount iAuthorClockTimebase;
         PVMFMediaClock iAuthorClock;
-        PVMFStatus SendAuthoringClockToDataSources(uint aIndex, bool aReset = false);
+        PVMFStatus SendAuthoringClockToDataSources(bool aReset = false);
 };
 
 
