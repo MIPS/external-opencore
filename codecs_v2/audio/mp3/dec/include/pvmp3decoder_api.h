@@ -189,8 +189,9 @@ extern "C"
         int32       bitRate;
 
         /*
-         * INPUT:
-         * Size of the output frame in 16-bit words, This value depends on the mp3 version
+         * INPUT/OUTPUT:
+         * In: Inform decoder how much more room is available in the output buffer in int16 samples
+         * Out: Size of the output frame in 16-bit words, This value depends on the mp3 version
          */
         int32     outputFrameSize;
 
