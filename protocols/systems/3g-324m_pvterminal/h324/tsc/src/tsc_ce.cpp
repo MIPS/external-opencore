@@ -74,6 +74,7 @@ void TSC_324m::CETransferIndication(OsclSharedPtr<S_TerminalCapabilitySet> tcs)
     if (cmd)
     {
         iCmdQueue.AddL(*cmd);
+        OSCL_DELETE(cmd);
         RunIfNotReady();
     }
 
