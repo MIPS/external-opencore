@@ -55,6 +55,7 @@ static const char PVMP3METADATA_TRACKINFO_TRACKNUMBER_KEY[] = "track-info/track-
 static const char PVMP3METADATA_DURATION_KEY[] = "duration";
 static const char PVMP3METADATA_DURATION_FROM_METADATA_KEY[] = "duration-from-metadata";
 static const char PVMP3METADATA_NUMTRACKS_KEY[] = "num-tracks";
+static const char PVMP3METADATA_TRACKINFO_SELECTED_KEY[] = "track-info/selected";
 static const char PVMP3METADATA_TRACKINFO_BITRATE_KEY[] = "track-info/bit-rate";
 static const char PVMP3METADATA_TRACKINFO_SAMPLERATE_KEY[] = "track-info/sample-rate";
 static const char PVMP3METADATA_TRACKINFO_AUDIO_FORMAT_KEY[] = "track-info/audio/format";
@@ -1117,6 +1118,53 @@ OSCL_EXPORT_REF PVMFStatus IMpeg3File::GetMetadataValues(PVMFMetadataList& aKeyL
                         break;
                     }
                 }
+            }
+        }
+
+        else if (oscl_strcmp(aKeyList[lcv].get_cstr(), PVMP3METADATA_TRACKINFO_SELECTED_KEY) == 0)
+        {
+            // Number of tracks
+            if (pMP3Parser)
+            {
+                // Increment the counter for the number of values found so far
+                ++numvalentries;
+
+                // Create a value entry if past the starting index
+                if (numvalentries > aStartingValueIndex)
+                {
+
+                    KeyLen = oscl_strlen(PVMP3METADATA_TRACKINFO_SELECTED_KEY) + 1; // for "track-info/selected;"
+                    KeyLen += oscl_strlen(PVMI_KVPVALTYPE_STRING_CONSTCHAR); // for "valtype="
+                    KeyLen += oscl_strlen(PVMI_KVPVALTYPE_BOOL_STRING_CONSTCHAR) + 1; // for "bool" and NULL terminator
+
+                    // Allocate memory for the string
+                    leavecode = OsclErrNone;
+                    KeyVal.key = (char*) AllocateKVPKeyArray(leavecode, PVMI_KVPVALTYPE_CHARPTR, KeyLen);
+
+                    if (OsclErrNone == leavecode)
+                    {
+                        // Copy the key string
+                        oscl_strncpy(KeyVal.key, PVMP3METADATA_TRACKINFO_SELECTED_KEY, oscl_strlen(PVMP3METADATA_TRACKINFO_SELECTED_KEY) + 1);
+                        oscl_strncat(KeyVal.key, PVMP3METADATA_SEMICOLON, oscl_strlen(PVMP3METADATA_SEMICOLON));
+                        oscl_strncat(KeyVal.key, PVMI_KVPVALTYPE_STRING_CONSTCHAR, oscl_strlen(PVMI_KVPVALTYPE_STRING_CONSTCHAR));
+                        oscl_strncat(KeyVal.key, PVMI_KVPVALTYPE_BOOL_STRING_CONSTCHAR, oscl_strlen(PVMI_KVPVALTYPE_BOOL_STRING_CONSTCHAR));
+                        KeyVal.key[KeyLen-1] = NULL_TERM_CHAR;
+                        // Copy the value
+                        KeyVal.value.bool_value = 1; // Number of tracks supported in PV MP3 parser would always be 1
+                        // Set the length and capacity
+                        KeyVal.length = 1;
+                        KeyVal.capacity = 1;
+                    }
+                    else
+                    {
+                        // Memory allocation failed
+                        KeyVal.key = NULL;
+                        break;
+                    }
+
+                }
+
+
             }
         }
         else if (oscl_strcmp(aKeyList[lcv].get_cstr(), PVMP3METADATA_BITRATE_KEY) == 0 ||

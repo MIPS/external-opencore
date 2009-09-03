@@ -31,6 +31,7 @@ static const char PVAMR_ALL_METADATA_KEY[] = "all";
 static const char PVAMRMETADATA_DURATION_KEY[] = "duration";
 static const char PVAMRMETADATA_NUMTRACKS_KEY[] = "num-tracks";
 static const char PVAMRMETADATA_TRACKINFO_BITRATE_KEY[] = "track-info/bit-rate";
+static const char PVAMRMETADATA_TRACKINFO_SELECTED_KEY[] = "track-info/selected";
 static const char PVAMRMETADATA_TRACKINFO_AUDIO_FORMAT_KEY[] = "track-info/audio/format";
 static const char PVAMRMETADATA_CLIP_TYPE_KEY[] = "clip-type";
 static const char PVAMRMETADATA_LOCAL_CLIP_TYPE_KEY[] = "local";
@@ -471,6 +472,26 @@ PVMFStatus PVMFAMRFFParserNode::DoGetNodeMetadataValues(PVMFNodeCommand& aCmd)
             if (retval != PVMFSuccess && retval != PVMFErrArgument)
             {
                 break;
+            }
+
+        }
+        else if ((oscl_strcmp((*keylistptr)[lcv].get_cstr(), PVAMRMETADATA_TRACKINFO_SELECTED_KEY) == 0))
+        {
+            // Increment the counter for the number of values found so far
+            ++numvalentries;
+            // Create a value entry if past the starting index
+            if (numvalentries > starting_index)
+            {
+                bool trackselected = 1;
+
+                PVMFStatus retval = PVMFCreateKVPUtils::CreateKVPForBoolValue(KeyVal,
+                                    PVAMRMETADATA_TRACKINFO_SELECTED_KEY,
+                                    trackselected,
+                                    NULL);
+                if (retval != PVMFSuccess && retval != PVMFErrArgument)
+                {
+                    break;
+                }
             }
 
         }
@@ -1748,6 +1769,11 @@ uint32 PVMFAMRFFParserNode::GetNumMetadataValues(PVMFMetadataList& aKeyList)
             // Bitrate
             ++numvalentries;
         }
+        else if ((oscl_strcmp(aKeyList[lcv].get_cstr(), PVAMRMETADATA_TRACKINFO_SELECTED_KEY) == 0))
+        {
+            //Track Selected
+            ++numvalentries;
+        }
         else if ((oscl_strcmp(aKeyList[lcv].get_cstr(), PVAMRMETADATA_TRACKINFO_AUDIO_FORMAT_KEY) == 0) &&
                  iAMRFileInfo.iAmrFormat != EAMRUnrecognized)
         {
@@ -2077,6 +2103,7 @@ PVMFStatus PVMFAMRFFParserNode::InitMetaData()
         }
         PushToAvailableMetadataKeysList(PVAMRMETADATA_RANDOM_ACCESS_DENIED_KEY);
         PushToAvailableMetadataKeysList(PVAMRMETADATA_CLIP_TYPE_KEY);
+        PushToAvailableMetadataKeysList(PVAMRMETADATA_TRACKINFO_SELECTED_KEY);
 
         //set clip duration on download progress interface
         //applicable to PDL sessions

@@ -264,6 +264,13 @@ uint32 PVMFAACFFParserNode::GetNumMetadataValues(PVMFMetadataList& aKeyList)
             // Increment the counter for the number of values found so far
             ++numvalentries;
         }
+        else if (oscl_strcmp(aKeyList[lcv].get_cstr(), PVAACMETADATA_TRACKINFO_SELECTED_KEY) == 0)
+        {
+            // Format
+            // Increment the counter for the number of values found so far
+            ++numvalentries;
+        }
+
     }
     if ((iCPMMetaDataExtensionInterface != NULL))
     {
@@ -802,6 +809,7 @@ PVMFStatus PVMFAACFFParserNode::ParseAACFile()
     if (iAACFileInfoValid)
     {
         // Following keys are available when the AAC file has been parsed
+
         leavecode = 0;
         OSCL_TRY(leavecode, iAvailableMetadataKeys.push_back(PVAACMETADATA_DURATION_KEY));
 
@@ -810,6 +818,7 @@ PVMFStatus PVMFAACFFParserNode::ParseAACFile()
 
         leavecode = 0;
         OSCL_TRY(leavecode, iAvailableMetadataKeys.push_back(PVAACMETADATA_RANDOM_ACCESS_DENIED_KEY));
+
 
         if (iAACFileInfo.iBitrate > 0)
         {
@@ -831,6 +840,9 @@ PVMFStatus PVMFAACFFParserNode::ParseAACFile()
         {
             iDownloadProgressInterface->setClipDuration(OSCL_CONST_CAST(uint32, iAACFileInfo.iDuration));
         }
+
+        leavecode = 0;
+        OSCL_TRY(leavecode, iAvailableMetadataKeys.push_back(PVAACMETADATA_TRACKINFO_SELECTED_KEY));
     }
 
     if (iID3DataValid)
@@ -2078,6 +2090,26 @@ PVMFStatus PVMFAACFFParserNode::DoGetMetadataValues(PVMFNodeCommand& aCmd)
                 PVMFStatus retval = PVMFCreateKVPUtils::CreateKVPForUInt32Value(KeyVal,
                                     PVAACMETADATA_TRACKINFO_BITRATE_KEY,
                                     bitRate,
+                                    NULL);
+                if (retval != PVMFSuccess && retval != PVMFErrArgument)
+                {
+                    break;
+                }
+
+            }
+        }
+        else if ((oscl_strcmp((*keylistptr)[lcv].get_cstr(), PVAACMETADATA_TRACKINFO_SELECTED_KEY) == 0))
+        {
+            // Increment the counter for the number of values found so far
+            ++numvalentries;
+
+            // Create a value entry if past the starting index
+            if (numvalentries > starting_index)
+            {
+                bool trackselected = 1;
+                PVMFStatus retval = PVMFCreateKVPUtils::CreateKVPForBoolValue(KeyVal,
+                                    PVAACMETADATA_TRACKINFO_SELECTED_KEY,
+                                    trackselected,
                                     NULL);
                 if (retval != PVMFSuccess && retval != PVMFErrArgument)
                 {

@@ -61,6 +61,7 @@ static const char PVAACMETADATA_NUMTRACKS_KEY[] = "num-tracks";
 static const char PVAACMETADATA_TRACKINFO_BITRATE_KEY[] = "track-info/bit-rate";
 static const char PVAACMETADATA_TRACKINFO_SAMPLERATE_KEY[] = "track-info/sample-rate";
 static const char PVAACMETADATA_TRACKINFO_AUDIO_FORMAT_KEY[] = "track-info/audio/format";
+static const char PVAACMETADATA_TRACKINFO_SELECTED_KEY[] = "track-info/selected";
 static const char PVAACMETADATA_SEMICOLON[] = ";";
 static const char PVAACMETADATA_CHARENCUTF8[] = "char-encoding=UTF8";
 static const char PVAACMETADATA_CHARENCUTF16BE[] = "char-encoding=UTF16BE";
