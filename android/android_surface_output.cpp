@@ -1025,7 +1025,7 @@ OSCL_EXPORT_REF bool AndroidSurfaceOutput::initCheck()
     }
 
     ISurface::BufferHeap buffers(displayWidth, displayHeight,
-                                 frameWidth, frameHeight, PIXEL_FORMAT_RGB_565, mFrameHeap);
+                                 displayWidth, displayHeight, PIXEL_FORMAT_RGB_565, mFrameHeap);
     mSurface->registerBuffers(buffers);
 
     // create frame buffers
