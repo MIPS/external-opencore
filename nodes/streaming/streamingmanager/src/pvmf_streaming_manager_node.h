@@ -127,7 +127,8 @@ class PVMFStreamingManagerNode : public PVMFNodeInterface,
         /* From PVMFDataSourceInitializationExtensionInterface */
         virtual PVMFStatus SetSourceInitializationData(OSCL_wString& aSourceURL,
                 PVMFFormatType& aSourceFormat,
-                OsclAny* aSourceData);
+                OsclAny* aSourceData,
+                PVMFFormatTypeDRMInfo aType = PVMF_FORMAT_TYPE_CONNECT_DRM_INFO_UNKNOWN);
         virtual PVMFStatus SetClientPlayBackClock(PVMFMediaClock* aClientClock);
         virtual PVMFStatus SetEstimatedServerClock(PVMFMediaClock* aClientClock);
     private:

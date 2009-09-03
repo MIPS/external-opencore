@@ -124,6 +124,7 @@ PVMFMP3FFParserNode::PVMFMP3FFParserNode(int32 aPriority)
     iFileSize = 0;
     iCheckForMP3HeaderDuringInit = false;
     iDurationCalcAO = NULL;
+    iUseCPMPluginRegistry = false;
 
     int32 err;
 
@@ -1080,19 +1081,33 @@ PVMFStatus PVMFMP3FFParserNode::DoInit(PVMFMP3FFParserNodeCommand& aCmd)
     switch (iInterfaceState)
     {
         case EPVMFNodeIdle:
-            //we need to go through the CPM sequence to check access on the file.
-            if (oWaitingOnLicense == false)
+            if (iUseCPMPluginRegistry)
             {
-                Push(iCPMContainer, PVMFSubNodeContainerBaseMp3::ECPMInit);
+                //we need to go through the CPM sequence to check access on the file.
+                if (oWaitingOnLicense == false)
+                {
+                    Push(iCPMContainer, PVMFSubNodeContainerBaseMp3::ECPMInit);
+                }
+                else
+                {
+                    Push(iCPMContainer, PVMFSubNodeContainerBaseMp3::ECPMApproveUsage);
+                    Push(iCPMContainer, PVMFSubNodeContainerBaseMp3::ECPMCheckUsage);
+                }
+
+                RunIfNotReady();
+                status = PVMFPending;
             }
             else
             {
-                Push(iCPMContainer, PVMFSubNodeContainerBaseMp3::ECPMApproveUsage);
-                Push(iCPMContainer, PVMFSubNodeContainerBaseMp3::ECPMCheckUsage);
+                PVMFStatus cmdStatus = CheckForMP3HeaderAvailability();
+                if (PVMFSuccess == cmdStatus)
+                {
+                    LOGINFO((0, "PVMFMP3FFParserNode::Run() CheckForMP3HeaderAvailability() succeeded"));
+                    // complete init command
+                    CompleteInit(cmdStatus);
+                }
+                status = PVMFSuccess;
             }
-
-            RunIfNotReady();
-            status = PVMFPending;
             break;
 
         default:
@@ -2593,6 +2608,7 @@ void PVMFMP3FFParserNode::CleanupFileSource()
     iSourceURLSet = false;
     oWaitingOnLicense = false;
     iDownloadComplete = false;
+    iUseCPMPluginRegistry = false;
 }
 
 /**
@@ -2713,12 +2729,22 @@ bool PVMFMP3FFParserNode::queryInterface(const PVUuid& uuid, PVInterface*& iface
  */
 PVMFStatus PVMFMP3FFParserNode::SetSourceInitializationData(OSCL_wString& aSourceURL,
         PVMFFormatType& aSourceFormat,
-        OsclAny* aSourceData)
+        OsclAny* aSourceData,
+        PVMFFormatTypeDRMInfo aType)
 {
     // Initialize the Source data
     if (iSourceURLSet)
     {
         CleanupFileSource();
+    }
+
+    if (aType != PVMF_FORMAT_TYPE_CONNECT_UNPROTECTED)
+    {
+        iUseCPMPluginRegistry = true;
+    }
+    else
+    {
+        iUseCPMPluginRegistry = false;
     }
 
     if (aSourceFormat != PVMF_MIME_MP3FF &&

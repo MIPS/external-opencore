@@ -1239,7 +1239,7 @@ bool PVMFWAVFFParserNode::queryInterface(const PVUuid& uuid, PVInterface*& iface
     return true;
 }
 
-PVMFStatus PVMFWAVFFParserNode::SetSourceInitializationData(OSCL_wString& aSourceURL, PVMFFormatType& aSourceFormat, OsclAny* aSourceData)
+PVMFStatus PVMFWAVFFParserNode::SetSourceInitializationData(OSCL_wString& aSourceURL, PVMFFormatType& aSourceFormat, OsclAny* aSourceData, PVMFFormatTypeDRMInfo aType)
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFWAVFFParserNode::SetSourceInitializationData() called"));
 

@@ -63,7 +63,8 @@ class PVMFDataSourceInitializationExtensionInterface : public PVInterface
          */
         virtual PVMFStatus SetSourceInitializationData(OSCL_wString& aSourceURL,
                 PVMFFormatType& aSourceFormat,
-                OsclAny* aSourceData) = 0;
+                OsclAny* aSourceData,
+                PVMFFormatTypeDRMInfo aType = PVMF_FORMAT_TYPE_CONNECT_DRM_INFO_UNKNOWN) = 0;
         /**
          * Sets the client playback clock for the use of the data source.
          *

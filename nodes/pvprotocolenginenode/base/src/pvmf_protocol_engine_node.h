@@ -153,7 +153,8 @@ class PVMFProtocolEngineNode :  public PVMFNodeInterface,
         void removeRef();
         PVMFStatus SetSourceInitializationData(OSCL_wString& aSourceURL,
                                                PVMFFormatType& aSourceFormat,
-                                               OsclAny* aSourceData);
+                                               OsclAny* aSourceData,
+                                               PVMFFormatTypeDRMInfo aType = PVMF_FORMAT_TYPE_CONNECT_DRM_INFO_UNKNOWN);
         PVMFStatus SetClientPlayBackClock(PVMFMediaClock* aClientClock);
 
         // From PVMFProtocolEngineNodeExtensionInterface and

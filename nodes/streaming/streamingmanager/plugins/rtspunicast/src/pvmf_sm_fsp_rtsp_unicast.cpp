@@ -3063,7 +3063,7 @@ PVMFStatus PVMFSMRTSPUnicastNode::VerifyAndSetConfigParameter(int index, PvmiKvp
 // Implemenation of PVMFDataSourceInitializationExtensionInterface interface
 ///////////////////////////////////////////////////////////////////////////////
 
-PVMFStatus PVMFSMRTSPUnicastNode::SetSourceInitializationData(OSCL_wString& aSourceURL, PVMFFormatType& aSourceFormat, OsclAny* aSourceData)
+PVMFStatus PVMFSMRTSPUnicastNode::SetSourceInitializationData(OSCL_wString& aSourceURL, PVMFFormatType& aSourceFormat, OsclAny* aSourceData, PVMFFormatTypeDRMInfo aType)
 {
     //To set proxy server info with the session controller node
     if (aSourceData != NULL)
@@ -3156,13 +3156,16 @@ PVMFStatus PVMFSMRTSPUnicastNode::SetSourceInitializationData(OSCL_wString& aSou
             }
         }
     }
-    /*
-     * If a CPM flag is provided in the source data, then
-     * create a CPM object here...
-     */
-    if (iUseCPMPluginRegistry)
+
+    if ((iUseCPMPluginRegistry) && (aType != PVMF_FORMAT_TYPE_CONNECT_UNPROTECTED))
     {
+        /*
+         * If a CPM flag is provided in the source data, then
+         * create a CPM object here...
+         */
         //cleanup any prior instance
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                        (0, "PVMFSMRTSPUnicastNode::SetSourceInitializationData create CPM obj"));
         if (iCPM)
         {
             iCPM->ThreadLogoff();
@@ -3179,6 +3182,13 @@ PVMFStatus PVMFSMRTSPUnicastNode::SetSourceInitializationData(OSCL_wString& aSou
                              iCPM = NULL;
                              iUseCPMPluginRegistry = false;
                             );
+    }
+    else
+    {
+        //skip CPM if we for sure the content is unprotected
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                        (0, "PVMFSMRTSPUnicastNode::SetSourceInitializationData non-create CPM obj"));
+        iUseCPMPluginRegistry = false;
     }
 
     //to set the sessionsource info and configure session controller node [RTSP client], with the session type

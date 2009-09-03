@@ -2137,7 +2137,8 @@ void PVMFProtocolEngineNode::CancelClear()
 ////////// PVMFDataSourceInitializationExtensionInterface implementation ////////////////////////
 PVMFStatus PVMFProtocolEngineNode::SetSourceInitializationData(OSCL_wString& aSourceURL,
         PVMFFormatType& aSourceFormat,
-        OsclAny* aSourceData)
+        OsclAny* aSourceData,
+        PVMFFormatTypeDRMInfo aType)
 {
     // check supported protocol plugin
     if (!iRegistry.CheckPluginAvailability(aSourceFormat, aSourceData)) return PVMFErrNotSupported;

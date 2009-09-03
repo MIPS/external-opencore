@@ -1547,7 +1547,7 @@ bool PVMFAACFFParserNode::queryInterface(const PVUuid& uuid, PVInterface*& iface
     return true;
 }
 
-PVMFStatus PVMFAACFFParserNode::SetSourceInitializationData(OSCL_wString& aSourceURL, PVMFFormatType& aSourceFormat, OsclAny* aSourceData)
+PVMFStatus PVMFAACFFParserNode::SetSourceInitializationData(OSCL_wString& aSourceURL, PVMFFormatType& aSourceFormat, OsclAny* aSourceData, PVMFFormatTypeDRMInfo aType)
 {
     PVMF_AACPARSERNODE_LOGSTACKTRACE((0, "PVMFAACParserNode::SetSourceInitializationData called"));
 
@@ -1614,27 +1614,39 @@ PVMFStatus PVMFAACFFParserNode::SetSourceInitializationData(OSCL_wString& aSourc
                 iCPMSourceData.iIntent = context->iIntent;
             }
         }
-    }
-    //create a CPM object
-    iUseCPMPluginRegistry = true;
-    {
-        //cleanup any prior instance
-        if (iCPM)
+
+        if (aType != PVMF_FORMAT_TYPE_CONNECT_UNPROTECTED)
         {
-            iCPM->ThreadLogoff();
-            PVMFCPMFactory::DestroyContentPolicyManager(iCPM);
-            iCPM = NULL;
+            /*
+            * create a CPM object here...
+            */
+            PVMF_AACPARSERNODE_LOGSTACKTRACE((0, "PVMFAACParserNode::SetSourceInitializationData create CPM obj"));
+            iUseCPMPluginRegistry = true;
+            //cleanup any prior instance
+            if (iCPM)
+            {
+                iCPM->ThreadLogoff();
+                PVMFCPMFactory::DestroyContentPolicyManager(iCPM);
+                iCPM = NULL;
+            }
+            iCPM = PVMFCPMFactory::CreateContentPolicyManager(*this);
+            //thread logon may leave if there are no plugins
+            int32 err;
+            OSCL_TRY(err, iCPM->ThreadLogon(););
+            OSCL_FIRST_CATCH_ANY(err,
+                                 iCPM->ThreadLogoff();
+                                 PVMFCPMFactory::DestroyContentPolicyManager(iCPM);
+                                 iCPM = NULL;
+                                 iUseCPMPluginRegistry = false;
+                                );
         }
-        iCPM = PVMFCPMFactory::CreateContentPolicyManager(*this);
-        //thread logon may leave if there are no plugins
-        int32 err;
-        OSCL_TRY(err, iCPM->ThreadLogon(););
-        OSCL_FIRST_CATCH_ANY(err,
-                             iCPM->ThreadLogoff();
-                             PVMFCPMFactory::DestroyContentPolicyManager(iCPM);
-                             iCPM = NULL;
-                             iUseCPMPluginRegistry = false;
-                            );
+        else
+        {
+            //skip CPM if we for sure the content is unprotected
+            PVMF_AACPARSERNODE_LOGSTACKTRACE((0, "PVMFAACParserNode::SetSourceInitializationData non-create CPM obj"));
+            iUseCPMPluginRegistry = false;
+        }
+        return PVMFSuccess;
     }
     return PVMFSuccess;
 }

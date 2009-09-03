@@ -489,7 +489,8 @@ void PVMFStreamingManagerNode::HandlePortActivity(const PVMFPortActivity& aActiv
 /* PVMFDataSourceInitializationExtensionInterface's virtual functions implemenation */
 PVMFStatus PVMFStreamingManagerNode::SetSourceInitializationData(OSCL_wString& aSourceURL,
         PVMFFormatType& aSourceFormat,
-        OsclAny* aSourceData)
+        OsclAny* aSourceData,
+        PVMFFormatTypeDRMInfo aType)
 {
     PVMF_SM_LOGSTACKTRACE((0, "PVMFStreamingManagerNode::SetSourceInitializationData() In"));
     PVMFStatus status = PVMFFailure;

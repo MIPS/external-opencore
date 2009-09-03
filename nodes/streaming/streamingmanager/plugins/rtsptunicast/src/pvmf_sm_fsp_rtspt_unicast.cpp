@@ -2881,7 +2881,7 @@ PVMFStatus PVMFSMRTSPTUnicastNode::VerifyAndSetConfigParameter(int index, PvmiKv
 // Implemenation of PVMFDataSourceInitializationExtensionInterface interface
 ///////////////////////////////////////////////////////////////////////////////
 
-PVMFStatus PVMFSMRTSPTUnicastNode::SetSourceInitializationData(OSCL_wString& aSourceURL, PVMFFormatType& aSourceFormat, OsclAny* aSourceData)
+PVMFStatus PVMFSMRTSPTUnicastNode::SetSourceInitializationData(OSCL_wString& aSourceURL, PVMFFormatType& aSourceFormat, OsclAny* aSourceData, PVMFFormatTypeDRMInfo aType)
 {
     //Configure RTSP node for:
     // RTSP Proxy
@@ -2983,12 +2983,15 @@ PVMFStatus PVMFSMRTSPTUnicastNode::SetSourceInitializationData(OSCL_wString& aSo
             }
         }
     }
-    /*
-     * create a CPM object here...
-     */
 
-    iUseCPMPluginRegistry = true;
+    if (aType != PVMF_FORMAT_TYPE_CONNECT_UNPROTECTED)
     {
+        /*
+         * create a CPM object here...
+         */
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                        (0, "PVMFSMRTSPTUnicastNode::SetSourceInitializationData create CPM obj"));
+        iUseCPMPluginRegistry = true;
         //cleanup any prior instance
         if (iCPM)
         {
@@ -3006,6 +3009,13 @@ PVMFStatus PVMFSMRTSPTUnicastNode::SetSourceInitializationData(OSCL_wString& aSo
                              iCPM = NULL;
                              iUseCPMPluginRegistry = false;
                             );
+    }
+    else
+    {
+        //skip CPM if we for sure the content is unprotected
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                        (0, "PVMFSMRTSPTUnicastNode::SetSourceInitializationData create CPM obj"));
+        iUseCPMPluginRegistry = false;
     }
 
     PVMFSMFSPChildNodeContainer* iSessionControllerNodeContainer =

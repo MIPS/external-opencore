@@ -640,7 +640,8 @@ bool PVMFMP4FFParserNode::queryInterface(const PVUuid& uuid, PVInterface*& iface
 
 PVMFStatus PVMFMP4FFParserNode::SetSourceInitializationData(OSCL_wString& aSourceURL,
         PVMFFormatType& aSourceFormat,
-        OsclAny* aSourceData)
+        OsclAny* aSourceData,
+        PVMFFormatTypeDRMInfo aType)
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFMP4FFParserNode::SetSourceInitializationData() called"));
 
@@ -662,10 +663,12 @@ PVMFStatus PVMFMP4FFParserNode::SetSourceInitializationData(OSCL_wString& aSourc
     {
         iFilename = aSourceURL;
         iSourceFormat = inputFormatType;
-        iUseCPMPluginRegistry = true;
-        //create a CPM object here...
-        if (iUseCPMPluginRegistry)
+
+        if (aType != PVMF_FORMAT_TYPE_CONNECT_UNPROTECTED)
         {
+            //create a CPM object here...
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFMP4FFParserNode::SetSourceInitializationData() create CPM obj"));
+            iUseCPMPluginRegistry = true;
             iCPM = PVMFCPMFactory::CreateContentPolicyManager(*this);
             //thread logon may leave if there are no plugins
             int32 err;
@@ -677,6 +680,13 @@ PVMFStatus PVMFMP4FFParserNode::SetSourceInitializationData(OSCL_wString& aSourc
                                  iUseCPMPluginRegistry = false;
                                 );
         }
+        else
+        {
+            //skip CPM if we for sure the content is unprotected
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFMP4FFParserNode::SetSourceInitializationData() non-create CPM obj"));
+            iUseCPMPluginRegistry = false;
+        }
+
         if (aSourceData)
         {
             PVInterface* pvInterface =
@@ -7246,8 +7256,8 @@ void PVMFMP4FFParserNode::CPMCommandCompleted(const PVMFCmdResp& aResponse)
     if (status != PVMFSuccess)
     {
         /*
-        * If any other command fails, the sequence fails.
-        */
+         * If any command fails, the sequence fails.
+         */
         if (aResponse.GetEventData() == NULL)
         {
             // If any command fails, the sequence fails.

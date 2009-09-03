@@ -98,7 +98,7 @@ class PVMFAMRFFParserNode :  public PVMFNodeInterfaceImpl
         void removeRef();
         bool queryInterface(const PVUuid& uuid, PVInterface *& iface);
         //From PVMFDataSourceInitializationExtensionInterface
-        PVMFStatus SetSourceInitializationData(OSCL_wString& aSourceURL, PVMFFormatType& aSourceFormat, OsclAny* aSourceData);
+        PVMFStatus SetSourceInitializationData(OSCL_wString& aSourceURL, PVMFFormatType& aSourceFormat, OsclAny* aSourceData, PVMFFormatTypeDRMInfo aType = PVMF_FORMAT_TYPE_CONNECT_DRM_INFO_UNKNOWN);
         PVMFStatus SetClientPlayBackClock(PVMFMediaClock* aClientClock);
         PVMFStatus SetEstimatedServerClock(PVMFMediaClock* aClientClock);
 
