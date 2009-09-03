@@ -110,10 +110,7 @@ void PVMFWAVFFParserNode::Run()
     {
         if (ProcessCommand(iInputCommands.front()))
         {
-            // base node takes care of rescheduling the node
-            // if there are more commands pending for execution.
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFWAVFFParserNode::Run() Command Processed"));
-            return;
         }
     }
 

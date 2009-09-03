@@ -696,10 +696,12 @@ OSCL_EXPORT_REF bool PVMFNodeInterfaceImpl::ProcessCommand(PVMFNodeCommand& aCmd
     if (status != PVMFPending)
     {
         // this'd mean that command has been moved to
-        // current command queue, command would be
-        // completed later by node
+        // current command queue but it is not Pending
+        // Either its successful or has failed
+        // report command complete
         if (iCurrentCommand.size() > 0)
         {
+            CommandComplete(iCurrentCommand, aCmd, status);
             return true;
         }
 
@@ -710,9 +712,8 @@ OSCL_EXPORT_REF bool PVMFNodeInterfaceImpl::ProcessCommand(PVMFNodeCommand& aCmd
         }
 
         // node needs to be reschduled, if there's any command
-        // pending to be executed or node was
-        // interuppted by some extension api command
-        if (iInputCommands.size() > 0 || status == PVMFSuccess)
+        // pending to be executed
+        if (iInputCommands.size() > 0)
         {
             Reschedule();
         }
