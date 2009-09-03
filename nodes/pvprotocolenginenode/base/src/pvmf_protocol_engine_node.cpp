@@ -21,7 +21,14 @@
 #include "pvlogger.h"
 #include "oscl_utf8conv.h"
 
-
+#define Response300StatusCode     300
+#define Response301StatusCode     301
+#define Response302StatusCode     302
+#define Response303StatusCode     303
+#define Response304StatusCode     304
+#define Response305StatusCode     305
+#define Response306StatusCode     306
+#define Response307StatusCode     307
 /**
 //////////////////////////////////////////////////
 // Node Constructor & Destructor
@@ -2679,13 +2686,16 @@ int32 PVProtocolEngineNodeInternalEventHandler::getBasePVMFErrorReturnCode(const
             break;
 
         case PVProtocolEngineNodeErrorHTTPRedirect_TrialsExceedLimit:
-            if (iNode->iInterfacingObjectContainer->getNumRedirectTrials() == 0)
-            {
-                pvmfReturnCode = PVMFErrRedirect;
-            }
-            break;
-
+        case PVProtocolEngineNodeErrorHTTPRedirect_NotValidUrl:
         case PVProtocolEngineNodeErrorHTTPErrorCode305_Proxy:
+        case PVProtocolEngineNodeErrorHTTPRedirectCode300_InvalidUrl:
+        case PVProtocolEngineNodeErrorHTTPRedirectCode301_InvalidUrl:
+        case PVProtocolEngineNodeErrorHTTPRedirectCode302_InvalidUrl:
+        case PVProtocolEngineNodeErrorHTTPRedirectCode303_InvalidUrl:
+        case PVProtocolEngineNodeErrorHTTPRedirectCode304_InvalidUrl:
+        case PVProtocolEngineNodeErrorHTTPRedirectCode305_InvalidUrl:
+        case PVProtocolEngineNodeErrorHTTPRedirectCode306_InvalidUrl:
+        case PVProtocolEngineNodeErrorHTTPRedirectCode307_InvalidUrl:
             pvmfReturnCode = PVMFErrRedirect;
             break;
 
@@ -2700,9 +2710,10 @@ void PVProtocolEngineNodeInternalEventHandler::handleErrResponse(int32 &errCode,
 {
     handleAuthenErrResponse(errCode, aEventData, aEventDataLen);
 
-    if (((errCode == PVProtocolEngineNodeErrorHTTPRedirect_TrialsExceedLimit &&
-            iNode->iInterfacingObjectContainer->getNumRedirectTrials() == 0)) ||
-            (errCode == PVProtocolEngineNodeErrorHTTPErrorCode305_Proxy))
+    if ((errCode == PVProtocolEngineNodeErrorHTTPRedirect_TrialsExceedLimit) ||
+            (errCode == PVProtocolEngineNodeErrorHTTPErrorCode305_Proxy)
+            || ((PVProtocolEngineNodeErrorHTTPRedirectCode300_InvalidUrl <= errCode) && (errCode <= PVProtocolEngineNodeErrorHTTPRedirectCode307_InvalidUrl))
+            || (errCode == PVProtocolEngineNodeErrorHTTPRedirect_NotValidUrl))
     {
         handleRedirectErrResponse(errCode, extmsg);
     }
@@ -2927,15 +2938,23 @@ int32 ProtocolStateErrorHandler::checkRedirectHandling(const int32 aErrorCode)
             iNode->ReportInfoEvent(PVMFInfoRemoteSourceNotification, (OsclAny*)(url.get_cstr()), errCode);
             return 0;
         }
-
-        // treat it as error
-        errCode = aErrorCode + PVProtocolEngineNodeErrorEventStart;
+        if ((aErrorCode >= Response300StatusCode) && (aErrorCode <= Response307StatusCode))
+        {
+            errCode = aErrorCode + PVProtocolEngineNodeErrorEventStart;
+        }
+        else
+        {
+            errCode = PVProtocolEngineNodeErrorHTTPRedirect_NotValidUrl;
+        }
     }
 
     if (isInfoEvent && numCurrRedirectTrials > numRedirectTrials)
     {
-        // redirect trials out of limit
-        errCode = PVProtocolEngineNodeErrorHTTPRedirect_TrialsExceedLimit;
+        if (PVMFPROTOCOLENGINENODEInfo_HTTPRedirectCode300 <= errCode && errCode <= PVMFPROTOCOLENGINENODEInfo_HTTPRedirectCode307)
+            errCode = aErrorCode + PVProtocolEngineNodeErrorEventStart;
+        else
+            // redirect trials out of limit
+            errCode = PVProtocolEngineNodeErrorHTTPRedirect_TrialsExceedLimit;
     }
 
     return errCode;
