@@ -25,7 +25,6 @@
 #include "oscl_mem.h"
 #include "oscl_str_ptr_len.h"
 #include "rtprtcp.h"
-
 // for RTSP method id
 //
 typedef enum
@@ -42,8 +41,11 @@ typedef enum
     METHOD_END_OF_STREAM,
     METHOD_BINARY_DATA,
     METHOD_REDIRECT,
-    METHOD_SET_PARAMETER
-    , METHOD_NUM_ENTRIES //placeholder
+    METHOD_SET_PARAMETER,
+    METHOD_GET,
+    METHOD_POST,
+    METHOD_PLAYLIST_PLAY,
+    METHOD_NUM_ENTRIES //placeholder
 
 } RTSPMethod;
 

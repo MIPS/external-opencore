@@ -103,6 +103,8 @@ class RTSPGenericMessage
 
         // original requested URI
         StrPtrLen  originalURI;
+        bool methodEosIsSet;
+        bool comPvServerPlaylistIsSet;
 
         StrPtrLen               eofField;
         bool                  eofFieldIsSet;
@@ -129,6 +131,7 @@ class RTSPIncomingMessage
         uint32                  totalFieldsParsed;
         void                    parseRange(char *rangeString, RtspRangeType *range);
 
+        void          parseSupported(const char *supportedString, int length);
 
         void          parseTransport(uint16);
         void          parseOneTransportEntry(char * &, char *);
@@ -148,6 +151,20 @@ class RTSPIncomingMessage
         // for remapped URI
         StrPtrLen     remappedURI;
 
+        StrPtrLen playlistRangeField;
+        bool playlistRangeFieldIsSet;
+        // need to figure out how to store all the error fields.. we may not actually need to
+        StrPtrLen playlistErrorField[RTSP_MAX_NUMBER_OF_PLAYLIST_ERROR_ENTRIES];
+        bool playlistErrorFieldIsSet;
+        int32 playlistErrorFieldCount;
+        StrPtrLen     supportedField[ RTSP_MAX_NUMBER_OF_SUPPORTED_ENTRIES ];
+        uint32          numOfSupportedEntries;
+        bool supportedFieldIsSet;
+
+        StrPtrLen playlistRangeUrl;
+        int32 playlistRangeClipIndex;
+        int32 playlistRangeClipOffset;
+        int32 playlistRangeNptTime;
         // *************************************
         // general API
         //

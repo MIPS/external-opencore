@@ -92,6 +92,8 @@ RTSPGenericMessage::reset()
 
     originalURI = "";
 
+    methodEosIsSet = false;
+    comPvServerPlaylistIsSet = false;
 
     timeout = 60;
 }

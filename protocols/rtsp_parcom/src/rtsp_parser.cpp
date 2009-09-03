@@ -37,7 +37,6 @@ OSCL_DLL_ENTRY_POINT_DEFAULT()
 // however, these limitations are ok here because they contribute to the
 // overall performance by not doing extra steps.
 //
-// added the size argument to deal with Real cloaking "H\02\00\00" 02/22/06
 static inline char *
 ci_local_strstr(char * bigString, int32 bigStringSize,
                 const StrPtrLen & subString

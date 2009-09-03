@@ -472,10 +472,20 @@ RTSPOutgoingMessage::compose()
             fullRequestBufferSizeUsed += originalURI.length() + 1;
 
             // do the RTSP version
-            oscl_memcpy(fullRequestBufferSpace,
-                        RTSPVersionString,
-                        RTSPVersionString_len
-                       );
+            if ((method == METHOD_GET) || (method == METHOD_POST))
+            {
+                oscl_memcpy(fullRequestBufferSpace,
+                            HTTPVersion_1_0_String,
+                            HTTPVersionString_len
+                           );
+            }
+            else
+            {
+                oscl_memcpy(fullRequestBufferSpace,
+                            RTSPVersionString,
+                            RTSPVersionString_len
+                           );
+            }
             fullRequestBufferSpace += RTSPVersionString_len;
             fullRequestBufferSizeUsed += RTSPVersionString_len;
 
@@ -497,23 +507,26 @@ RTSPOutgoingMessage::compose()
 
 
     // add the shortcut fields
-    if (cseqIsSet)
+    if ((method != METHOD_GET) && (method != METHOD_POST))
     {
-        // The Symbian version of oscl_snprintf does not support %ld format, should use %d or %u instead.
-        // Since cseq is an uint32 it's ok to use %u.
-        oscl_snprintf(fullRequestBufferSpace, RTSP_MAX_FULL_REQUEST_SIZE - 1, "CSeq: %u%c%c",
-                      cseq, CHAR_CR, CHAR_LF);
-        int addSize = oscl_strlen(fullRequestBufferSpace);
-        fullRequestBufferSizeUsed += addSize;
-        fullRequestBufferSpace += addSize;
-    }
-    else
-    {
-        oscl_snprintf(fullRequestBufferSpace, RTSP_MAX_FULL_REQUEST_SIZE - 1, "CSeq: %c%c",
-                      CHAR_CR, CHAR_LF);
-        int addSize = 8;
-        fullRequestBufferSizeUsed += addSize;
-        fullRequestBufferSpace += addSize;
+        if (cseqIsSet)
+        {
+            // The Symbian version of oscl_snprintf does not support %ld format, should use %d or %u instead.
+            // Since cseq is an uint32 it's ok to use %u.
+            oscl_snprintf(fullRequestBufferSpace, RTSP_MAX_FULL_REQUEST_SIZE - 1, "CSeq: %u%c%c",
+                          cseq, CHAR_CR, CHAR_LF);
+            int addSize = oscl_strlen(fullRequestBufferSpace);
+            fullRequestBufferSizeUsed += addSize;
+            fullRequestBufferSpace += addSize;
+        }
+        else
+        {
+            oscl_snprintf(fullRequestBufferSpace, RTSP_MAX_FULL_REQUEST_SIZE - 1, "CSeq: %c%c",
+                          CHAR_CR, CHAR_LF);
+            int addSize = 8;
+            fullRequestBufferSizeUsed += addSize;
+            fullRequestBufferSpace += addSize;
+        }
     }
     if (RTSPResponseMsg == msgType)
     {
