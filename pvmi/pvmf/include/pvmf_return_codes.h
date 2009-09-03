@@ -248,6 +248,10 @@ const PVMFStatus PVMFErrDrmLicenseNotFoundPreviewAvailable = (-47);
 Error due to unable to communicate with server
 */
 const PVMFStatus PVMFErrDrmServerError = (-48);
+/*
+Error due to device currently not activated for drm-protected content playback.
+*/
+const PVMFStatus PVMFErrDrmDeviceNotActivated = (-49);
 
 /*
 ... this range reserved for future DRM-related errors

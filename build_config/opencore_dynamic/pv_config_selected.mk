@@ -372,6 +372,7 @@ cpm_headers_lib=m
 pvoma1lockstream_lib=n
 pvplayreadyplugin_lib=n
 pvplayreadyutility_lib=n
+pvdivxdrmplugin_lib=n
 
 
 #
@@ -487,6 +488,7 @@ pvsqlite_lib=n
 pvwmdrm_lib=n
 pvwmdrmmd_lib=n
 wmdrm_config=n
+pvdivxdrm_lib=n
 
 
 #
