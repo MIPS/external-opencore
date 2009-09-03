@@ -92,16 +92,7 @@ RTSPGenericMessage::reset()
 
     originalURI = "";
 
-#ifdef RTSP_PLAYLIST_SUPPORT
-    methodEosIsSet = false;
-    comPvServerPlaylistIsSet = false;
-#endif
 
-#ifdef ASF_STREAMING
-    eofField.setPtrLen("", 0);
-    eofFieldIsSet = false;
-    XMLIsSet = false;
-#endif
     timeout = 60;
 }
 
