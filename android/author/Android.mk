@@ -9,8 +9,6 @@ LOCAL_SRC_FILES := \
 	android_audio_input_threadsafe_callbacks.cpp \
 	../thread_init.cpp \
 
-LOCAL_CFLAGS := $(PV_CFLAGS)
-
 # board-specific configuration
 LOCAL_CFLAGS += $(BOARD_OPENCORE_FLAGS)
 

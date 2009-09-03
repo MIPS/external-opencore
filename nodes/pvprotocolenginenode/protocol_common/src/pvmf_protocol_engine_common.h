@@ -448,7 +448,7 @@ class ProtocolState : public HttpParsingBasicObjectObserver,
         // called by constructAuthenHeader()
         int32 base64enc(char *data, char *out);
 
-        void deleteRedirectComposer();
+        OSCL_IMPORT_REF void deleteRedirectComposer();
 
     protected:
         // http composer and parser should be life-time long, shouldn't be affected by state transition.

@@ -178,6 +178,9 @@ $1: FORCE
 	$$(quiet) echo "" >> $$@
 	$$(quiet) echo "  PV_COPY_HEADERS_TO := libpv" >> $$@
 	$$(quiet) echo "" >> $$@
+	$$(quiet) echo "  PV_CFLAGS_MINUS_VISIBILITY := $$(esc_dollar)(PV_CFLAGS)" >> $$@
+	$$(quiet) echo "  PV_CFLAGS += -fvisibility=hidden" >> $$@
+	$$(quiet) echo "" >> $$@
 	$$(quiet) echo "  PV_INCLUDES := \\" >> $$@
 	$$(quiet) $(PRINTF) "\t$$(esc_dollar)(PV_TOP)/android \\\\\n" >> $$@
 	$$(quiet) $(PRINTF) "\t$$(esc_dollar)(PV_TOP)/../sqlite/dist \\\\\n" >> $$@
@@ -202,6 +205,7 @@ $1: FORCE
 	$$(quiet) echo "  # Stash these values for the next include of this file" >> $$@
 	$$(quiet) echo "  OPENCORE.PV_TOP := $$(esc_dollar)(PV_TOP)" >> $$@
 	$$(quiet) echo "  OPENCORE.PV_CFLAGS := $$(esc_dollar)(PV_CFLAGS)" >> $$@
+	$$(quiet) echo "  OPENCORE.PV_CFLAGS_MINUS_VISIBILITY := $$(esc_dollar)(PV_CFLAGS_MINUS_VISIBILITY)" >> $$@
 	$$(quiet) echo "  OPENCORE.FORMAT := $$(esc_dollar)(FORMAT)" >> $$@
 	$$(quiet) echo "  OPENCORE.PV_COPY_HEADERS_TO := $$(esc_dollar)(PV_COPY_HEADERS_TO)" >> $$@
 	$$(quiet) echo "  OPENCORE.PV_INCLUDES := $$(esc_dollar)(PV_INCLUDES)" >> $$@
@@ -210,6 +214,7 @@ $1: FORCE
 	$$(quiet) echo "  # use the precomputed values." >> $$@
 	$$(quiet) echo "  PV_TOP := $$(esc_dollar)(OPENCORE.PV_TOP)" >> $$@
 	$$(quiet) echo "  PV_CFLAGS := $$(esc_dollar)(OPENCORE.PV_CFLAGS)" >> $$@
+	$$(quiet) echo "  PV_CFLAGS := $$(esc_dollar)(OPENCORE.PV_CFLAGS_MINUS_VISIBILITY)" >> $$@
 	$$(quiet) echo "  FORMAT := $$(esc_dollar)(OPENCORE.FORMAT)" >> $$@
 	$$(quiet) echo "  PV_COPY_HEADERS_TO := $$(esc_dollar)(OPENCORE.PV_COPY_HEADERS_TO)" >> $$@
 	$$(quiet) echo "  PV_INCLUDES := $$(esc_dollar)(OPENCORE.PV_INCLUDES)" >> $$@
@@ -273,6 +278,10 @@ endef
 
 define include_system_extras
   $(if $(strip $(filter $1,BUILD_EXECUTABLE)),$(PRINTF) "\n-include \$$(PV_TOP)/Android_system_extras.mk\n" >> $2,)
+endef
+
+define include_local_c_flags
+  $(if $(strip $(1)),$(PRINTF) "LOCAL_CFLAGS := $(ANDROID_C_FLAGS) \$$(PV_CFLAGS_MINUS_VISIBILITY)\n" >> $2, $(PRINTF) "LOCAL_CFLAGS := $(ANDROID_C_FLAGS) \$$(PV_CFLAGS)\n" >> $2)
 endef
 
 ifeq ($(LOCAL_ANDROID_MK_PATH),)
@@ -356,6 +365,7 @@ CUMULATIVE_MAKEFILES := $(CUMULATIVE_MAKEFILES) $(ANDROID_MAKE_NAMES)
 ANDROID_PATH_COMPONENTS := $(subst /, ,$(LOCAL_PATH))
 
 AND_LOCAL_ARM_MODE := $(if $(strip $(filter codecs_v2,$(ANDROID_PATH_COMPONENTS))),LOCAL_ARM_MODE := arm,)
+AND_LOCAL_EXPORT_ALL_SYMBOLS := $(LOCAL_EXPORT_ALL_SYMBOLS)
 
 $(ANDROID_MAKE_NAMES): ANDROID_CPP_SRCS := $(if $(strip $(SRCS)),$(patsubst %,$(call go_up_two_levels,$(ANDROID_TMP_SRCDIR))/%,$(filter %.cpp,$(SRCS))),)
 $(ANDROID_MAKE_NAMES): ANDROID_ASM_SRCS := $(if $(strip $(SRCS)),$(patsubst %,$(call go_up_two_levels,$(ANDROID_TMP_SRCDIR))/%,$(filter-out %.cpp,$(SRCS))),)
@@ -364,6 +374,7 @@ $(ANDROID_MAKE_NAMES): ANDROID_HDRS := $(patsubst %,$(call go_up_two_levels,$(IN
 $(ANDROID_MAKE_NAMES): ANDROID_C_FLAGS := $(filter-out %PV_ARM_GCC_V5,$(XCPPFLAGS)) $(ANDROID_TMP_ASMDIRS)
 $(ANDROID_MAKE_NAMES): ANDROID_C_INC := $(ANDROID_TMP_LOCAL_INC)
 $(ANDROID_MAKE_NAMES): ANDROID_ARM_MODE := $(AND_LOCAL_ARM_MODE)
+$(ANDROID_MAKE_NAMES): ANDROID_EXPORT_ALL_SYMBOLS := $(AND_LOCAL_EXPORT_ALL_SYMBOLS)
 $(ANDROID_MAKE_NAMES): ANDROID_MAKE_TYPE := $(if $(strip $(filter prog,$(TARGET_TYPE))),BUILD_EXECUTABLE,$(if $(strip $(SRCS)),BUILD_STATIC_LIBRARY,BUILD_COPY_HEADERS))
 $(ANDROID_MAKE_NAMES): ANDROID_STATIC_LIBS := $(foreach library,$(LIBS),$(if $(findstring $(strip $(BUILD_ROOT)/installed_lib/$(BUILD_ARCH)/lib$(library)$(TARGET_NAME_SUFFIX).a), $(ALL_LIBS)),lib$(library),))
 $(ANDROID_MAKE_NAMES): ANDROID_SHARED_LIBS := $(foreach library,$(LIBS),$(if $(findstring $(strip $(BUILD_ROOT)/installed_lib/$(BUILD_ARCH)/lib$(library)$(TARGET_NAME_SUFFIX).so), $(SHARED_LIB_FULLNAMES)),lib$(library),))
@@ -381,7 +392,7 @@ $(ANDROID_MAKE_NAMES): FORCE
 	$(quiet) echo "" >> $@
 	$(quiet) echo "$(ANDROID_TARGET)" >> $@
 	$(quiet) echo "" >> $@
-	$(quiet) echo "LOCAL_CFLAGS := $(ANDROID_C_FLAGS) \$$(PV_CFLAGS)" >> $@
+	$(quiet) $(call include_local_c_flags,$(ANDROID_EXPORT_ALL_SYMBOLS),$@)
 	$(quiet) echo "" >> $@
 	$(quiet) echo "$(ANDROID_ARM_MODE)" >> $@
 	$(quiet) echo "" >> $@

@@ -34,7 +34,9 @@ INCDIRS += \
 	-I $(ANDROID_BASE)/headers/skia/include
 
 # Compiler options
-CPPFLAGS += -fomit-frame-pointer -msoft-float -march=armv5te -fno-rtti -fno-exceptions -mtune=xscale -fpic -ffunction-sections -funwind-tables -finline-functions -fno-inline-functions-called-once -fgcse-after-reload -frerun-cse-after-loop -frename-registers -Wstrict-aliasing=2 -fstack-protector -D__ARM_ARCH_5__ -D__ARM_ARCH_5T__ -D__ARM_ARCH_5E__ -D__ARM_ARCH_5TE__ -MD -include $(ANDROID_BASE)/headers/system/core/include/arch/linux-arm/AndroidConfig.h -DANDROID -fmessage-length=0 -DSK_RELEASE -DNDEBUG -DUDEBUG -fvisibility-inlines-hidden -DENABLE_MEMORY_PLAYBACK -fno-short-enums 
+CPPFLAGS := -fomit-frame-pointer -msoft-float -march=armv5te -fno-rtti -fno-exceptions -mtune=xscale -fpic -ffunction-sections -funwind-tables -finline-functions -fno-inline-functions-called-once -fgcse-after-reload -frerun-cse-after-loop -frename-registers -Wstrict-aliasing=2 -fstack-protector -D__ARM_ARCH_5__ -D__ARM_ARCH_5T__ -D__ARM_ARCH_5E__ -D__ARM_ARCH_5TE__ -MD -include $(ANDROID_BASE)/headers/system/core/include/arch/linux-arm/AndroidConfig.h -DANDROID -fmessage-length=0 -DSK_RELEASE -DNDEBUG -DUDEBUG -fvisibility-inlines-hidden -fno-short-enums 
+
+HIDE_INTERNAL_SYMBOLS_FLAG := -fvisibility=hidden
 
 # Idea is to build only libraries in arm mode and the rest in thumb mode
 OPTIMIZE_FOR_SIZE := -Os -mthumb -mthumb-interwork -finline-limit=64 -fno-strict-aliasing 

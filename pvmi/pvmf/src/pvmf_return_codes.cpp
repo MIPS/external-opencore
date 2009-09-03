@@ -22,7 +22,7 @@
 #endif
 #define CONSIDER(val) case val: return #val
 
-const char *PVMFStatusToString(const PVMFStatus status)
+OSCL_EXPORT_REF const char *PVMFStatusToString(const PVMFStatus status)
 {
     switch (status)
     {

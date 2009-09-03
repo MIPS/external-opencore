@@ -972,7 +972,7 @@ bool ProtocolState::getAllRedirectURI(Oscl_Vector<OSCL_HeapString<OsclMemAllocat
 }
 
 
-void ProtocolState::deleteRedirectComposer()
+OSCL_EXPORT_REF void ProtocolState::deleteRedirectComposer()
 {
     if (iRedirect)
     {
