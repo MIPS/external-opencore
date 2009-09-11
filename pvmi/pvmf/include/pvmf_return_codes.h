@@ -263,6 +263,10 @@ const PVMFStatus PVMFErrDrmDomainNotAMember = (-51);
 /*
 ... this range reserved for future DRM-related errors
 */
+/*
+Error due to device currently not activated for drm-protected content playback
+*/
+const PVMFStatus PVMFErrDrmDeviceNotActivated = (-52);
 
 /*
 DRM Operational Error not otherwise specified

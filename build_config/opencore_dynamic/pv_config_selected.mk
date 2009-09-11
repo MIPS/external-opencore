@@ -10,7 +10,7 @@
 # Menu for selecting supported features
 #
 module_support=y
-shoutcast_support=y
+PV_HAS_SHOUTCAST_SUPPORT_ENABLED=y
 
 
 #
@@ -36,6 +36,7 @@ asflocal_support=n
 janus_support=n
 oma1_passthru_support=y
 wmdrmoemsettings_support=n
+pvdivxoemsettings_support=n
 mtp_db_support=n
 pvdb_config_support=n
 mtp_config_support=n
@@ -489,6 +490,7 @@ pvwmdrm_lib=n
 pvwmdrmmd_lib=n
 wmdrm_config=n
 pvdivxdrm_lib=n
+pvdivxdrm_oem_settings_lib=n
 
 
 #
