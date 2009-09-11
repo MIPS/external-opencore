@@ -591,7 +591,7 @@ OSCL_EXPORT_REF bool PVID3ParCom::IsID3V2Present(PVFile* aFile, int32& aTagSize)
     {
         iInputFile->GetRemainingBytes((uint32&)iFileSizeInBytes);
         // id3v2 header read failure
-        if (ReadHeaderID3V2(false) == true)
+        if (ReadHeaderID3V2(false))
         {
             aTagSize = iByteOffsetToStartOfAudioFrames;
         }
@@ -1069,7 +1069,7 @@ BEGIN_V2:
     // Header read is completed, now check whether we need to read the tags or not
     if (!aReadTags)
     {
-        return false;
+        return true;
     }
     else
     {
