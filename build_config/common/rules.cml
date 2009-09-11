@@ -353,7 +353,7 @@ derive MODS_pvdb from "-lopencore_player -lopencore_common -lpvsqlite -lpvasfcom
 derive pvdb_recovery_utility_so_name from mtp_db_support==y ? "pvdb_recovery_utility" : "" 
 derive SOLIBS_pvdb_recovery_utility from pvdb_recovery_utility_m_lib
 derive SOLIBDIRS_pvdb_recovery_utility from pvdb_recovery_utility_m_mk
-derive MODS_pvdb_recovery_utility from "-lopencore_player -lopencore_common -lpvsqlite -lpvasfcommon -lpvasflocalpbreg -lpvdb"
+derive MODS_pvdb_recovery_utility from "-lopencore_common -lpvdb"
 
 derive pvmtp_so_name from mtp_db_support==y ? "pvmtp" : ""
 derive SOLIBS_pvmtp from pvmtp_engine_m_lib

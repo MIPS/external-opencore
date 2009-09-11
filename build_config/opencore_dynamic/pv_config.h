@@ -1410,7 +1410,7 @@
 #define pvm4vencoder_m_lib "-lpvm4vencoder"
 #define LIBS_codecs_utilities_shared "-lm4v_config -lpv_config_parser -lcolorconvert"
 #define opencore_2way_so_name "opencore_2way"
-#define MODS_pvdb_recovery_utility "-lopencore_player -lopencore_common -lpvsqlite -lpvasfcommon -lpvasflocalpbreg -lpvdb"
+#define MODS_pvdb_recovery_utility "-lopencore_common -lpvdb"
 #define omx_wmvdec_sharedlibrary_so_name ""
 #define opencore_rtspreg_so_name "opencore_rtspreg"
 #define getactualaacconfig_m_lib "-lgetactualaacconfig"
