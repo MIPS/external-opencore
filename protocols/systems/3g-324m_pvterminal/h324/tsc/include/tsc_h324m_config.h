@@ -54,6 +54,11 @@ class H324MConfig : public OsclActiveObject,
         PVMFCommandId SetMultiplexLevel(TPVH223Level aLevel, OsclAny* aContextData = NULL);
         PVMFCommandId SetMaxSduSize(TPVAdaptationLayer aLayer, int32 aSize, OsclAny* aContextData = NULL);
         PVMFCommandId SetMaxSduSizeR(TPVAdaptationLayer aLayer, int32 aSize, OsclAny* aContextData = NULL);
+        PVMFCommandId SetCodecPreference(Oscl_Vector<PVMFFormatType, OsclMemAllocator>& aIncomingAudio,
+                                         Oscl_Vector<PVMFFormatType, OsclMemAllocator>& aIncomingVideo,
+                                         Oscl_Vector<PVMFFormatType, OsclMemAllocator>& aOutGoingAudio,
+                                         Oscl_Vector<PVMFFormatType, OsclMemAllocator>& aOutGoingVideo,
+                                         OsclAny* aContextData = NULL);
         PVMFCommandId SetAl2SequenceNumbers(int32 aSeqNumWidth, OsclAny* aContextData = NULL);
         PVMFCommandId SetAl3ControlFieldOctets(int32 aCfo, OsclAny* aContextData = NULL);
         PVMFCommandId SetOutoingPduType(TPVH223MuxPduType aOutgoingPduType, OsclAny* aContextData = NULL);
@@ -144,6 +149,11 @@ class H324MConfigProxied :
         PVMFCommandId SetMultiplexLevel(TPVH223Level aLevel, OsclAny* aContextData = NULL);
         PVMFCommandId SetMaxSduSize(TPVAdaptationLayer aLayer, int32 aSize, OsclAny* aContextData = NULL);
         PVMFCommandId SetMaxSduSizeR(TPVAdaptationLayer aLayer, int32 aSize, OsclAny* aContextData = NULL);
+        PVMFCommandId SetCodecPreference(Oscl_Vector<PVMFFormatType, OsclMemAllocator>& aIncomingAudio,
+                                         Oscl_Vector<PVMFFormatType, OsclMemAllocator>& aIncomingVideo,
+                                         Oscl_Vector<PVMFFormatType, OsclMemAllocator>& aOutGoingAudio,
+                                         Oscl_Vector<PVMFFormatType, OsclMemAllocator>& aOutGoingVideo,
+                                         OsclAny* aContextData = NULL);
         PVMFCommandId SetAl2SequenceNumbers(int32 aSeqNumWidth, OsclAny* aContextData = NULL);
         PVMFCommandId SetAl3ControlFieldOctets(int32 aCfo, OsclAny* aContextData = NULL);
         PVMFCommandId SetMaxPduSize(int32 aMaxPduSize, OsclAny* aContextData = NULL);

@@ -76,7 +76,6 @@ SRCS += common/src/pvt_common.cpp \
 
 
 HDRS := h324/tsc/include/tsc_h324m_config_interface.h \
-	common/include/pv_2way_h324m_interface.h \
 	common/include/pv_2way_h324m_types.h \
 	common/include/pvt_common.h \
         h245/cmn/include/h245def.h \

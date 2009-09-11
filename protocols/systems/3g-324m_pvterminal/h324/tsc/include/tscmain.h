@@ -96,6 +96,8 @@
 #include "tsc_capability.h"
 #include "tsc_componentregistry.h"
 
+
+
 class SimpleStackElement;
 
 #define PVUidH324Interface  PVUuid(0x2b0b54e2,0x7079,0x46c6,0xb2,0x3e,0x04,0xff,0xd3,0x0e,0x14,0x36)
@@ -383,6 +385,10 @@ class TSC_324m : public TSC,
         /* Set muliplex level.  Can be called when the node is in the Initialized state */
         OSCL_IMPORT_REF void SetMultiplexLevel(TPVH223Level muxLevel);
         OSCL_IMPORT_REF void SetSduSize(TPVDirection direction, uint16 size, TPVAdaptationLayer al);
+        OSCL_IMPORT_REF void SetCodecPreference(Oscl_Vector<PVMFFormatType, OsclMemAllocator>& aIncomingAudio,
+                                                Oscl_Vector<PVMFFormatType, OsclMemAllocator>& aIncomingVideo,
+                                                Oscl_Vector<PVMFFormatType, OsclMemAllocator>& aOutGoingAudio,
+                                                Oscl_Vector<PVMFFormatType, OsclMemAllocator>& aOutGoingVideo);
         OSCL_IMPORT_REF void SetAl2Sn(int width);
         OSCL_IMPORT_REF void SetAl3ControlFieldOctets(unsigned cfo);
         OSCL_IMPORT_REF void SetMaxOutgoingPduSize(uint16 size);

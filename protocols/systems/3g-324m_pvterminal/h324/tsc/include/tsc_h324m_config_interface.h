@@ -137,6 +137,28 @@ class H324MConfigInterface : public PVInterface
                                              int32 aSize, OsclAny* aContextData = NULL) = 0;
 
         /**
+         * This API allows the user to specify the preference order for supported media codecs. If input vector has elements,
+         * then only these elements are used in terminal capabilities exchange.
+         *
+         * @param aIncomingAudio
+         *          The incoming audio decoder preference order
+         * @param aIncomingVideo
+         *          The incoming video decoder preference order
+         * @param aOutgoingAudio
+         *          The outgoing audio encoder preference order
+         * @param aOutgoingVideo
+         *          The outgoing video decoder preference order
+         * @param aContextData
+         *         Optional opaque data that will be passed back to the user with the command response
+         * @returns A unique command id for asynchronous completion
+         **/
+        virtual PVMFCommandId SetCodecPreference(Oscl_Vector<PVMFFormatType, OsclMemAllocator>& aIncomingAudio,
+                Oscl_Vector<PVMFFormatType, OsclMemAllocator>& aIncomingVideo,
+                Oscl_Vector<PVMFFormatType, OsclMemAllocator>& aOutGoingAudio,
+                Oscl_Vector<PVMFFormatType, OsclMemAllocator>& aOutGoingVideo,
+                OsclAny* aContextData = NULL) = 0;
+
+        /**
         * This API allows the user to specify the sequence number field for AL2
         *
         * @param aSeqNumWidth

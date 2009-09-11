@@ -90,7 +90,6 @@ LOCAL_COPY_HEADERS_TO := $(PV_COPY_HEADERS_TO)
 
 LOCAL_COPY_HEADERS := \
 	./h324/tsc/include/tsc_h324m_config_interface.h \
- 	./common/include/pv_2way_h324m_interface.h \
  	./common/include/pv_2way_h324m_types.h \
  	./common/include/pvt_common.h \
  	./h245/cmn/include/h245def.h \

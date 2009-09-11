@@ -26,6 +26,7 @@ enum PVH234MessageType
     PVT_H324_COMMAND_SET_H223_LEVEL,
     PVT_H324_COMMAND_SET_MAX_SDU_SIZE,
     PVT_H324_COMMAND_SET_MAX_SDU_SIZE_R,
+    PVT_H324_COMMAND_SET_CODEC_PREFERENCE,
     PVT_H324_COMMAND_SEND_RME,
     PVT_H324_COMMAND_SET_AL2_SEQ_NUM,
     PVT_H324_COMMAND_SET_CONTROL_FIELD_OCTETS,
@@ -137,6 +138,28 @@ class PVH324MessageSetMaxSduSizeR : public CPVH324InterfaceCmdMessage
 
         TPVAdaptationLayer iAl;
         uint32 iSize;
+};
+
+class PVH324MessageSetCodecPreference : public CPVH324InterfaceCmdMessage
+{
+    public:
+        PVH324MessageSetCodecPreference(Oscl_Vector<PVMFFormatType, OsclMemAllocator>& aIncomingAudio,
+                                        Oscl_Vector<PVMFFormatType, OsclMemAllocator>& aIncomingVideo,
+                                        Oscl_Vector<PVMFFormatType, OsclMemAllocator>& aOutgoingAudio,
+                                        Oscl_Vector<PVMFFormatType, OsclMemAllocator>& aOutgoingVideo,
+                                        OsclAny* aContextData,
+                                        TPVCmnCommandId aId)
+                : CPVH324InterfaceCmdMessage(PVT_H324_COMMAND_SET_CODEC_PREFERENCE, aContextData, aId)
+                , iIncomingAudio(aIncomingAudio)
+                , iIncomingVideo(aIncomingVideo)
+                , iOutgoingAudio(aOutgoingAudio)
+                , iOutgoingVideo(aOutgoingVideo)
+        {}
+
+        Oscl_Vector<PVMFFormatType, OsclMemAllocator>iIncomingAudio;
+        Oscl_Vector<PVMFFormatType, OsclMemAllocator>iIncomingVideo;
+        Oscl_Vector<PVMFFormatType, OsclMemAllocator>iOutgoingAudio;
+        Oscl_Vector<PVMFFormatType, OsclMemAllocator>iOutgoingVideo;
 };
 
 class PVH324MessageSendRme : public CPVH324InterfaceCmdMessage
@@ -498,6 +521,9 @@ class PVH324MessageUtils
                 case PVT_H324_COMMAND_SET_MAX_SDU_SIZE_R:
                     OSCL_DELETE((PVH324MessageSetMaxSduSizeR*)aCmd);
                     break;
+                case PVT_H324_COMMAND_SET_CODEC_PREFERENCE:
+                    OSCL_DELETE((PVH324MessageSetCodecPreference*)aCmd);
+                    break;
                 case PVT_H324_COMMAND_SEND_RME:
                     OSCL_DELETE((PVH324MessageSendRme*)aCmd);
                     break;
@@ -636,6 +662,18 @@ PVMFCommandId H324MConfig::SetMaxSduSizeR(TPVAdaptationLayer aLayer, int32 aSize
 {
     OSCL_UNUSED_ARG(aContextData);
     iH324M->SetSduSize(INCOMING, (uint16)aSize, aLayer);
+    SendCmdResponse(iCommandId, aContextData, PVMFSuccess);
+    return iCommandId++;
+};
+
+PVMFCommandId H324MConfig::SetCodecPreference(Oscl_Vector<PVMFFormatType, OsclMemAllocator>& aIncomingAudio,
+        Oscl_Vector<PVMFFormatType, OsclMemAllocator>& aIncomingVideo,
+        Oscl_Vector<PVMFFormatType, OsclMemAllocator>& aOutgoingAudio,
+        Oscl_Vector<PVMFFormatType, OsclMemAllocator>& aOutgoingVideo,
+        OsclAny* aContextData)
+{
+    OSCL_UNUSED_ARG(aContextData);
+    iH324M->SetCodecPreference(aIncomingAudio, aIncomingVideo, aOutgoingAudio, aOutgoingVideo);
     SendCmdResponse(iCommandId, aContextData, PVMFSuccess);
     return iCommandId++;
 };
@@ -1115,6 +1153,20 @@ PVMFCommandId H324MConfigProxied::SetMaxSduSizeR(TPVAdaptationLayer aLayer, int3
     return iCommandId++;
 }
 
+PVMFCommandId H324MConfigProxied::SetCodecPreference(Oscl_Vector<PVMFFormatType, OsclMemAllocator>& aIncomingAudio,
+        Oscl_Vector<PVMFFormatType, OsclMemAllocator>& aIncomingVideo,
+        Oscl_Vector<PVMFFormatType, OsclMemAllocator>& aOutgoingAudio,
+        Oscl_Vector<PVMFFormatType, OsclMemAllocator>& aOutgoingVideo,
+        OsclAny* aContextData)
+{
+    PVH324MessageSetCodecPreference *cmd = NULL;
+    cmd = OSCL_NEW(PVH324MessageSetCodecPreference, (aIncomingAudio, aIncomingVideo, aOutgoingAudio, aOutgoingVideo, aContextData, iCommandId));
+    int32 error = 0;
+    OSCL_TRY(error, iMainProxy->SendCommand(iProxyId, cmd));
+    OSCL_FIRST_CATCH_ANY(error, PVH324MessageUtils::DestroyMessage(cmd););
+    return iCommandId++;
+}
+
 PVMFCommandId H324MConfigProxied::SetAl2SequenceNumbers(int32 aSeqNumWidth, OsclAny* aContextData)
 {
     PVH324MessageSetAl2SequenceNumbers *cmd = NULL;
@@ -1432,6 +1484,24 @@ void H324MConfigProxied::HandleCommand(TPVProxyMsgId aMsgId, OsclAny *aMsg)
                 if (msg)
                 {
                     commandId = iH324MConfigIF->SetMaxSduSizeR(msg->iAl, msg->iSize,
+                                (CPVCmnInterfaceCmdMessage*)aMsg);
+                }
+                else
+                {
+                    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLoggerServer, PVLOGMSG_STACK_TRACE,
+                                    (0, "H324MConfigProxied::HandleCommand - Failed to cast"));
+                }
+            }
+            break;
+        case PVT_H324_COMMAND_SET_CODEC_PREFERENCE:
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLoggerServer, PVLOGMSG_STACK_TRACE,
+                            (0, "H324MConfigProxied::HandleCommand - Set Codec Preference"));
+            {
+                PVH324MessageSetCodecPreference* msg = OSCL_STATIC_CAST(PVH324MessageSetCodecPreference*, aMsg);
+                if (msg)
+                {
+                    commandId = iH324MConfigIF->SetCodecPreference(msg->iIncomingAudio, msg->iIncomingVideo,
+                                msg->iOutgoingAudio, msg->iOutgoingVideo,
                                 (CPVCmnInterfaceCmdMessage*)aMsg);
                 }
                 else

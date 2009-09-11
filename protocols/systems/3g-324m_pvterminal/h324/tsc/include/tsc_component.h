@@ -137,6 +137,10 @@ class TSC_component : public OsclTimerObserver,
 
         virtual void SetOutgoingChannelConfig(Oscl_Vector<H324ChannelParameters, PVMFTscAlloc>& out_channel_config);
         virtual void SetIncomingChannelConfig(Oscl_Vector<H324ChannelParameters, PVMFTscAlloc>& in_channel_config);
+        void SetChannelConfigPreference(Oscl_Vector<PVMFFormatType, OsclMemAllocator>& aIncomingAudio,
+                                        Oscl_Vector<PVMFFormatType, OsclMemAllocator>& aIncomingVideo,
+                                        Oscl_Vector<PVMFFormatType, OsclMemAllocator>& aOutgoingAudio,
+                                        Oscl_Vector<PVMFFormatType, OsclMemAllocator>& aOutgoingVideo);
         virtual uint32 LcEtbCfm(PS_ControlMsgHeader pReceiveInf);
         unsigned GetOutgoingBitrate(PVCodecType_t codecType);
         void GetChannelFormatAndCapabilities(TPVDirection dir,

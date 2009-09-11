@@ -1368,6 +1368,126 @@ void TSC_component::SetIncomingChannelConfig(Oscl_Vector<H324ChannelParameters, 
     iIncomingChannelConfig = OSCL_NEW(channelConfigType, (in_channel_config));
 }
 
+void TSC_component::SetChannelConfigPreference(Oscl_Vector<PVMFFormatType, OsclMemAllocator>& aIncomingAudio,
+        Oscl_Vector<PVMFFormatType, OsclMemAllocator>& aIncomingVideo,
+        Oscl_Vector<PVMFFormatType, OsclMemAllocator>& aOutgoingAudio,
+        Oscl_Vector<PVMFFormatType, OsclMemAllocator>& aOutgoingVideo)
+{
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "TSC_component::SetIncomingChannelConfig\n"));
+    // loop through preference order to set wanted codec preference.
+    if (iIncomingChannelConfig)
+    {
+        for (unsigned n = 0; n < iIncomingChannelConfig->size(); n++)
+        {
+            Oscl_Vector<FormatCapabilityInfo, OsclMemAllocator> prefFCI;
+            Oscl_Vector<FormatCapabilityInfo, OsclMemAllocator>* codecs =
+                (*iIncomingChannelConfig)[n].GetCodecs();
+
+            if (!codecs)
+            {
+                continue;
+            }
+
+            if (((*iIncomingChannelConfig)[n].GetMediaType() == PV_AUDIO) && aIncomingAudio.size())
+            {
+                for (unsigned m = 0; m < aIncomingAudio.size(); m++)
+                {
+                    for (unsigned k = 0; k < codecs->size(); k++)
+                    {
+                        if ((*codecs)[k].format == aIncomingAudio[m])
+                        {
+                            prefFCI.push_back((*codecs)[k]);
+                            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_INFO, (0, "TSC_component::SetChannelConfig Incoming Audio format=%s", aIncomingAudio[m].getMIMEStrPtr()));
+                        }
+                    }
+                }
+                (*iIncomingChannelConfig)[n].SetCodecs(prefFCI);
+                PVLOGGER_LOG_USE_ONLY(if (!prefFCI.size())
+            {
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_WARNING, (0, "TSC_component::SetChannelConfig Incoming Audio formats missing"));
+                });
+
+            }
+            else if (((*iIncomingChannelConfig)[n].GetMediaType() == PV_VIDEO) && aIncomingVideo.size())
+            {
+                for (unsigned m = 0; m < aIncomingVideo.size(); m++)
+                {
+                    for (unsigned k = 0; k < codecs->size(); k++)
+                    {
+                        if ((*codecs)[k].format == aIncomingVideo[m])
+                        {
+                            prefFCI.push_back((*codecs)[k]);
+                            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_INFO, (0, "TSC_component::SetChannelConfig Incoming Video format=%s", aIncomingVideo[m].getMIMEStrPtr()));
+                        }
+                    }
+                }
+                (*iIncomingChannelConfig)[n].SetCodecs(prefFCI);
+                PVLOGGER_LOG_USE_ONLY(if (!prefFCI.size())
+            {
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_WARNING, (0, "TSC_component::SetChannelConfig Incoming Video formats missing"));
+                });
+            }
+        }
+    }
+
+    if (iOutgoingChannelConfig)
+    {
+        for (unsigned n = 0; n < iOutgoingChannelConfig->size(); n++)
+        {
+            Oscl_Vector<FormatCapabilityInfo, OsclMemAllocator> prefFCI;
+            Oscl_Vector<FormatCapabilityInfo, OsclMemAllocator>* codecs =
+                (*iOutgoingChannelConfig)[n].GetCodecs();
+
+            if (!codecs)
+            {
+                continue;
+            }
+
+
+            if (((*iOutgoingChannelConfig)[n].GetMediaType() == PV_AUDIO) && aOutgoingAudio.size())
+            {
+                for (unsigned m = 0; m < aOutgoingAudio.size(); m++)
+                {
+                    for (unsigned k = 0; k < codecs->size(); k++)
+                    {
+                        if ((*codecs)[k].format == aOutgoingAudio[m])
+                        {
+                            prefFCI.push_back((*codecs)[k]);
+                            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_INFO, (0, "TSC_component::SetChannelConfig Outgoing Audio format=%s", aOutgoingAudio[m].getMIMEStrPtr()));
+                        }
+                    }
+                }
+                (*iOutgoingChannelConfig)[n].SetCodecs(prefFCI);
+                PVLOGGER_LOG_USE_ONLY(if (!prefFCI.size())
+            {
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_WARNING, (0, "TSC_component::SetChannelConfig Outgoing Audio formats missing"));
+                });
+            }
+            else if (((*iOutgoingChannelConfig)[n].GetMediaType() == PV_VIDEO) && aOutgoingVideo.size())
+            {
+                for (unsigned m = 0; m < aOutgoingVideo.size(); m++)
+                {
+                    for (unsigned k = 0; k < codecs->size(); k++)
+                    {
+                        if ((*codecs)[k].format == aOutgoingVideo[m])
+                        {
+                            prefFCI.push_back((*codecs)[k]);
+                            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_INFO, (0, "TSC_component::SetChannelConfig Outgoing Video format=%s", aOutgoingVideo[m].getMIMEStrPtr()));
+                        }
+                    }
+                }
+                (*iOutgoingChannelConfig)[n].SetCodecs(prefFCI);
+                PVLOGGER_LOG_USE_ONLY(if (!prefFCI.size())
+            {
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_WARNING, (0, "TSC_component::SetChannelConfig Outgoing Video formats missing"));
+                });
+            }
+        }
+
+    }
+}
+
 /*****************************************************************************/
 /*  function name        : Status04Event10           E_PtvId_Lc_Etb_Cfm  */
 /*  function outline     : Status04/Event10 procedure                        */

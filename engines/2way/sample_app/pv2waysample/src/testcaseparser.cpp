@@ -330,8 +330,11 @@ bool TestCaseParser::ParseAudioCapSettings(MediaTypes& aMediaTypes)
     aMediaTypes.iMediaTypes.clear();
     while (GetNextLine())
     {
-
-        if (isLineType(AUDIO_AMR_INDICATOR_STRING, iLine))
+        if (isLineType(AUDIO_AMRWB_INDICATOR_STRING, iLine))
+        {
+            aMediaTypes.iMediaTypes.push_back(PVMF_MIME_AMRWB);
+        }
+        else if (isLineType(AUDIO_AMR_INDICATOR_STRING, iLine))
         {
             aMediaTypes.iMediaTypes.push_back(PVMF_MIME_AMR_IF2);
         }

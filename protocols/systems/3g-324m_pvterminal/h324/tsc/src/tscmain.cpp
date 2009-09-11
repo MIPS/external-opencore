@@ -1990,6 +1990,16 @@ OSCL_EXPORT_REF void TSC_324m::SetSduSize(TPVDirection direction,
     }
 }
 
+OSCL_EXPORT_REF void TSC_324m::SetCodecPreference(Oscl_Vector<PVMFFormatType, OsclMemAllocator>& aIncomingAudio,
+        Oscl_Vector<PVMFFormatType, OsclMemAllocator>& aIncomingVideo,
+        Oscl_Vector<PVMFFormatType, OsclMemAllocator>& aOutgoingAudio,
+        Oscl_Vector<PVMFFormatType, OsclMemAllocator>& aOutgoingVideo)
+{
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "TSC_324m::SetCodecPreference\n"));
+    iTSCcomponent->SetChannelConfigPreference(aIncomingAudio, aIncomingVideo, aOutgoingAudio, aOutgoingVideo);
+}
+
 OSCL_EXPORT_REF void TSC_324m::SetAl2Sn(int width)
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
