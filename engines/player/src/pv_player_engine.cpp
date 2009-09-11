@@ -909,6 +909,20 @@ PVMFCommandId PVPlayerEngine::CancelAcquireLicense(PVMFCommandId aCmdId, const O
     return AddCommandToQueue(PVP_ENGINE_COMMAND_CANCEL_ACQUIRE_LICENSE, (OsclAny*)aContextData, &paramvec);
 }
 
+PVMFCommandId PVPlayerEngine::JoinDomain(const PVMFCPMDomainJoinData& aJoinData, int32 aTimeoutMsec, const OsclAny* aContextData)
+{
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVPlayerEngine::JoinDomain()"));
+    Oscl_Vector<PVPlayerEngineCommandParamUnion, OsclMemAllocator> paramvec;
+    paramvec.reserve(2);
+    paramvec.clear();
+    PVPlayerEngineCommandParamUnion param;
+    param.pOsclAny_value = (OsclAny *) & aJoinData;
+    paramvec.push_back(param);
+    param.int32_value = aTimeoutMsec;
+    paramvec.push_back(param);
+    return AddCommandToQueue(PVP_ENGINE_COMMAND_JOIN_DOMAIN, (OsclAny*)aContextData, &paramvec);
+}
+
 PVMFStatus PVPlayerEngine::GetLicenseStatus(PVMFCPMLicenseStatus& aStatus)
 {
     if (iThreadSafeQueue.IsInThread())
@@ -1034,6 +1048,7 @@ PVPlayerEngine::PVPlayerEngine() :
         iPVInterfaceCPMLicense(NULL),
         iCPMGetLicenseCmdId(0),
         iCPMCancelGetLicenseCmdId(0),
+        iCPMJoinDomainCmdId(0),
         iMetadataValuesCopiedInCallBack(true),
         iReleaseMetadataValuesPending(false),
         iCurrentContextListMemPool(12),
@@ -1554,6 +1569,10 @@ void PVPlayerEngine::Run()
             case PVP_ENGINE_COMMAND_ACQUIRE_LICENSE_WCHAR:
             case PVP_ENGINE_COMMAND_ACQUIRE_LICENSE_CHAR:
                 cmdstatus = DoAcquireLicense(cmd);
+                break;
+
+            case PVP_ENGINE_COMMAND_JOIN_DOMAIN:
+                cmdstatus = DoJoinDomain(cmd);
                 break;
 
             case PVP_ENGINE_COMMAND_PAUSE_DUE_TO_BUFFER_UNDERFLOW:
@@ -2821,7 +2840,10 @@ void PVPlayerEngine::CPMCommandCompleted(const PVMFCmdResp& aResponse)
 {
     PVPlayerEngineContext* context = (PVPlayerEngineContext*)(aResponse.GetContext());
 
-    OSCL_ASSERT((aResponse.GetCmdId() == iCPMGetLicenseCmdId) || (aResponse.GetCmdId() == iCPMCancelGetLicenseCmdId));
+    OSCL_ASSERT((aResponse.GetCmdId() == iCPMGetLicenseCmdId)
+                || (aResponse.GetCmdId() == iCPMCancelGetLicenseCmdId)
+                || (aResponse.GetCmdId() == iCPMJoinDomainCmdId)
+               );
 
     switch (aResponse.GetCmdStatus())
     {
@@ -2842,14 +2864,18 @@ void PVPlayerEngine::CPMCommandCompleted(const PVMFCmdResp& aResponse)
             PVUuid uuid = PVPlayerErrorInfoEventTypesUUID;
             PVMFBasicErrorInfoMessage* errmsg = OSCL_NEW(PVMFBasicErrorInfoMessage, (PVPlayerErrSource, uuid, nextmsg));
 
-            if (aResponse.GetCmdId() == iCPMGetLicenseCmdId)
+            if ((aResponse.GetCmdId() == iCPMGetLicenseCmdId)
+                    || (aResponse.GetCmdId() == iCPMJoinDomainCmdId)
+               )
             {
                 EngineCommandCompleted(context->iCmdId, context->iCmdContext, cmdstatus, OSCL_STATIC_CAST(PVInterface*, errmsg));
             }
-            else // if (aResponse.GetCmdId() == iCPMCancelGetLicenseCmdId)
+            else if (aResponse.GetCmdId() == iCPMCancelGetLicenseCmdId)
             {
-                if ((iCurrentCmd[0].GetCmdType() == PVP_ENGINE_COMMAND_ACQUIRE_LICENSE_CHAR) ||
-                        (iCurrentCmd[0].GetCmdType() == PVP_ENGINE_COMMAND_ACQUIRE_LICENSE_WCHAR))
+                if ((iCurrentCmd[0].GetCmdType() == PVP_ENGINE_COMMAND_ACQUIRE_LICENSE_CHAR)
+                        || (iCurrentCmd[0].GetCmdType() == PVP_ENGINE_COMMAND_ACQUIRE_LICENSE_WCHAR)
+                        || (iCurrentCmd[0].GetCmdType() == PVP_ENGINE_COMMAND_JOIN_DOMAIN)
+                   )
                 {
                     OSCL_ASSERT(!iCmdToDlaCancel.empty());
                     if (!iCmdToDlaCancel.empty())
@@ -2873,7 +2899,11 @@ void PVPlayerEngine::CPMCommandCompleted(const PVMFCmdResp& aResponse)
         break;
     }
 
-    if ((aResponse.GetCmdId() == iCPMGetLicenseCmdId) && !iCmdToDlaCancel.empty())
+    if (((aResponse.GetCmdId() == iCPMGetLicenseCmdId)
+            || (aResponse.GetCmdId() == iCPMJoinDomainCmdId)
+        )
+            && !iCmdToDlaCancel.empty()
+       )
     {
         // Set CancelAcquireLicense cmd in current cmd
         iCurrentCmd.push_front(iCmdToDlaCancel[0]);
@@ -3733,6 +3763,7 @@ void PVPlayerEngine::DoCancelAllCommands(PVPlayerEngineCommand& aCmd)
     OSCL_ASSERT(iCmdToCancel.empty() == true);
 
     // While AcquireLicense and CancelAcquireLicense is processing, CancelAllCommands is prohibited.
+    // @TODO : Should CancelAllCommands be prohibited for JoinDomain?
     if (!iCmdToDlaCancel.empty() ||
             (!iCurrentCmd.empty() &&
              (iCurrentCmd[0].GetCmdType() == PVP_ENGINE_COMMAND_CANCEL_ACQUIRE_LICENSE ||
@@ -5319,24 +5350,26 @@ void PVPlayerEngine::DoCancelAcquireLicense(PVPlayerEngineCommand& aCmd)
         if (id == iCurrentCmd[0].GetCmdId())
         {
             /* Cancel the current command first */
-            if (iCurrentCmd[0].GetCmdType() == PVP_ENGINE_COMMAND_ACQUIRE_LICENSE_CHAR
-                    || iCurrentCmd[0].GetCmdType() == PVP_ENGINE_COMMAND_ACQUIRE_LICENSE_WCHAR)
+            if ((iCurrentCmd[0].GetCmdType() == PVP_ENGINE_COMMAND_ACQUIRE_LICENSE_CHAR)
+                    || (iCurrentCmd[0].GetCmdType() == PVP_ENGINE_COMMAND_ACQUIRE_LICENSE_WCHAR)
+                    || (iCurrentCmd[0].GetCmdType() == PVP_ENGINE_COMMAND_JOIN_DOMAIN)
+               )
             {
                 /* Make the CancelAll() command the current command */
                 iCmdToDlaCancel.push_front(aCmd);
                 /* Properly cancel a command being currently processed */
                 if (iCPMLicenseIF != NULL)
                 {
-                    int32 leavecode = 0;
-                    PVPlayerEngineContext* context = AllocateEngineContext(NULL, NULL, NULL, aCmd.GetCmdId(), aCmd.GetContext(), PVP_CMD_CancelGetLicense);
-                    OSCL_TRY(leavecode, iCPMCancelGetLicenseCmdId = iCPMLicenseIF->CancelGetLicense(iSourceNodeSessionId, iCPMGetLicenseCmdId, (OsclAny*)context));
-                    if (leavecode)
+                    PVPlayerEngineContext* context = AllocateEngineContext(NULL, NULL, NULL, aCmd.GetCmdId(), aCmd.GetContext(), -1);
+                    // Default cmd to be called will be that of the GetLicense cmd.
+                    PVMFCommandId aCmdIdToBeCancelled = iCPMGetLicenseCmdId;
+                    if (iCurrentCmd[0].GetCmdType() == PVP_ENGINE_COMMAND_JOIN_DOMAIN)
                     {
-                        FreeEngineContext(context);
-                        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                                        (0, "PVPlayerEngine::DoCancelAcquireLicense() CancelGetLicense on iCPMLicenseIF did a leave!"));
-                        status = PVMFErrNotSupported;
+                        // If the current issued command was a JoinDomain call, the command Id
+                        // needs to be updated.
+                        aCmdIdToBeCancelled = iCPMJoinDomainCmdId;
                     }
+                    status = DoCancelGetLicense(aCmdIdToBeCancelled, context);
                 }
                 else
                 {
@@ -5380,6 +5413,52 @@ void PVPlayerEngine::DoCancelAcquireLicense(PVPlayerEngineCommand& aCmd)
     return;
 }
 
+PVMFStatus PVPlayerEngine::DoJoinDomain(PVPlayerEngineCommand& aCmd)
+{
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_PROF, iPerfLogger, PVLOGMSG_NOTICE,
+                    (0, "PVPlayerEngine::DoJoinDomain() Tick=%d", OsclTickCount::TickCount()));
+
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVPlayerEngine::DoJoinDomain() In"));
+
+    // Retrieve the command parameters and validate
+    iCPMJoinDomainParam.iJoinData = NULL;
+    iCPMJoinDomainParam.iTimeoutMsec = (-1);
+    if (aCmd.GetParam(0).pOsclAny_value != NULL)
+    {
+        iCPMJoinDomainParam.iJoinData = (PVMFCPMDomainJoinData*)(aCmd.GetParam(0).pOsclAny_value);
+    }
+
+    iCPMJoinDomainParam.iTimeoutMsec = aCmd.GetParam(1).int32_value;
+
+    //If a license interface is available, use that.
+    if (iCPMLicenseIF != NULL)
+    {
+        PVMFStatus status = PVMFSuccess;
+        int32 leavecode = 0;
+        PVPlayerEngineContext* context = AllocateEngineContext(NULL, NULL, NULL, aCmd.GetCmdId(), aCmd.GetContext(), -1);
+        OSCL_TRY(leavecode, iCPMJoinDomainCmdId = iCPMLicenseIF->JoinDomain(iSourceNodeSessionId,
+                 *(iCPMJoinDomainParam.iJoinData),
+                 iCPMJoinDomainParam.iTimeoutMsec,
+                 (OsclAny*)context));
+        if (leavecode)
+        {
+            FreeEngineContext(context);
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
+                            (0, "PVPlayerEngine::DoJoinDomain() -- JoinDomain on iCPMLicenseIF did a leave!"));
+            status = PVMFFailure;
+        }
+        if (status != PVMFSuccess)
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::DoJoinDomain() failed."));
+
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVPlayerEngine::DoJoinDomain() Out"));
+        return status;
+    }
+
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVPlayerEngine::DoJoinDomain() Out"));
+    // if the license interface is not available, fail the command
+    return PVMFFailure;
+}
+
 PVMFStatus PVPlayerEngine::DoGetLicense(PVCommandId aCmdId, OsclAny* aCmdContext)
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_PROF, iPerfLogger, PVLOGMSG_INFO,
@@ -5395,7 +5474,7 @@ PVMFStatus PVPlayerEngine::DoGetLicense(PVCommandId aCmdId, OsclAny* aCmdContext
 
     // Get the license
     int32 leavecode = 0;
-    PVPlayerEngineContext* context = AllocateEngineContext(NULL, NULL, NULL, aCmdId, aCmdContext, PVP_CMD_GetLicense);
+    PVPlayerEngineContext* context = AllocateEngineContext(NULL, NULL, NULL, aCmdId, aCmdContext, -1);
     if (iCPMAcquireLicenseParam.iContentNameChar)
     {
         // Use the char version
@@ -17220,6 +17299,21 @@ PVMFStatus PVPlayerEngine::DoSourceURLQueryFormatType(PVPlayerEngineContext* con
     OSCL_TRY(leavecode, retval = iPlayerRecognizerRegistry.QueryFormatType(iDataSource->GetDataSourceURL(), *this, (OsclAny*) context, fileHandle));
     OSCL_FIRST_CATCH_ANY(leavecode,;);
     return retval;
+}
+
+PVMFStatus PVPlayerEngine::DoCancelGetLicense(PVMFCommandId aCmdId, PVPlayerEngineContext* context)
+{
+    PVMFStatus status = PVMFSuccess;
+    int32 leavecode = 0;
+    OSCL_TRY(leavecode, iCPMCancelGetLicenseCmdId = iCPMLicenseIF->CancelGetLicense(iSourceNodeSessionId, aCmdId, (OsclAny*)context));
+    if (leavecode)
+    {
+        FreeEngineContext(context);
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
+                        (0, "PVPlayerEngine::DoCancelGetLicense() - CancelGetLicense on iCPMLicenseIF did a leave!"));
+        status = PVMFErrNotSupported;
+    }
+    return status;
 }
 
 OSCL_EXPORT_REF void

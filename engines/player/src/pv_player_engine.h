@@ -120,6 +120,7 @@
 
 #include "threadsafe_queue.h"
 #include "cpm.h"
+#include "pvmf_cpmplugin_domain_interface_types.h"
 
 /**
  * PVPlayerEngineState enum
@@ -375,6 +376,7 @@ typedef enum
     PVP_ENGINE_COMMAND_CAPCONFIG_SET_PARAMETERS,
     PVP_ENGINE_COMMAND_ACQUIRE_LICENSE_WCHAR,
     PVP_ENGINE_COMMAND_ACQUIRE_LICENSE_CHAR,
+    PVP_ENGINE_COMMAND_JOIN_DOMAIN,
     PVP_ENGINE_COMMAND_CANCEL_ACQUIRE_LICENSE,
     PVP_ENGINE_COMMAND_GET_PVPLAYER_STATE_OOTSYNC,
     PVP_ENGINE_COMMAND_GET_CURRENT_POSITION_OOTSYNC,
@@ -513,6 +515,8 @@ class PVPlayerEngineCommandCompareLess
                     return 5;
                 case PVP_ENGINE_COMMAND_CANCEL_ACQUIRE_LICENSE:
                     return 3;
+                case PVP_ENGINE_COMMAND_JOIN_DOMAIN:
+                    return 5;
 
                 case PVP_ENGINE_COMMAND_PAUSE_DUE_TO_ENDTIME_REACHED:
                     return 4;
@@ -947,6 +951,7 @@ class PVPlayerEngine
         PVCommandId AcquireLicense(OsclAny* aLicenseData, uint32 aDataSize, oscl_wchar* aContentName, int32 aTimeoutMsec, const OsclAny* aContextData = NULL);
         PVCommandId AcquireLicense(OsclAny* aLicenseData, uint32 aDataSize, char* aContentName, int32 aTimeoutMsec, const OsclAny* aContextData = NULL);
         PVCommandId CancelAcquireLicense(PVMFCommandId aCmdId, const OsclAny* aContextData = NULL);
+        PVCommandId JoinDomain(const PVMFCPMDomainJoinData& aJoinData, int32 aTimeoutMsec, const OsclAny* aContextData);
         PVMFStatus GetLicenseStatus(PVMFCPMLicenseStatus& aStatus);
 
         //From PVPlayerTrackSelectionInterface
@@ -1111,6 +1116,7 @@ class PVPlayerEngine
         PVMFStatus DoSourceNodeGetDurationValue(PVCommandId aCmdId, OsclAny* aCmdContext);
         PVMFStatus DoAcquireLicense(PVPlayerEngineCommand& aCmd);
         PVMFStatus DoGetLicense(PVCommandId aCmdId, OsclAny* aCmdContext);
+        PVMFStatus DoJoinDomain(PVPlayerEngineCommand& aCmd);
         PVMFStatus DoAddDataSink(PVPlayerEngineCommand& aCmd);
         PVMFStatus DoSetPlaybackRange(PVPlayerEngineCommand& aCmd);
         PVMFStatus UpdateCurrentEndPosition(PVPPlaybackPosition& aEndPos);
@@ -1228,10 +1234,17 @@ class PVPlayerEngine
             int32 iTimeoutMsec;
         };
         PVPlayerEngineCPMAcquireLicenseParam iCPMAcquireLicenseParam;
+        struct PVPlayerEngineCPMJoinDataParam
+        {
+            PVMFCPMDomainJoinData* iJoinData;
+            int32 iTimeoutMsec;
+        };
+        PVPlayerEngineCPMJoinDataParam iCPMJoinDomainParam;
         OSCL_HeapString<OsclMemAllocator> iCPMContentNameStr;
         OSCL_wHeapString<OsclMemAllocator> iCPMContentNameWStr;
         PVMFCommandId iCPMGetLicenseCmdId;
         PVMFCommandId iCPMCancelGetLicenseCmdId;
+        PVMFCommandId iCPMJoinDomainCmdId;
 
         // For metadata handling
         // Vector to hold a list of metadata interface available from the node
@@ -1349,10 +1362,7 @@ class PVPlayerEngine
             // Recognizer command
             PVP_CMD_QUERYSOURCEFORMATTYPE,
             // source roll over
-            PVP_CMD_SourceNodeRollOver,
-            // CPM commands
-            PVP_CMD_GetLicense,
-            PVP_CMD_CancelGetLicense
+            PVP_CMD_SourceNodeRollOver
         };
 
         // Node command handling functions
@@ -1454,6 +1464,8 @@ class PVPlayerEngine
         PVMFStatus IssueDecNodeReset(PVMFNodeInterface* aNode, PVMFSessionId aDecNodeSessionId, OsclAny* aCmdContext, PVMFCommandId &aCmdId);
         PVMFStatus IssueQueryInterface(PVMFNodeInterface* aNode, PVMFSessionId aSessionId, const PVUuid aUuid, PVInterface*& aInterfacePtr, OsclAny* aCmdContext, PVMFCommandId& aCmdId);
         PVMFStatus DoSourceURLQueryFormatType(PVPlayerEngineContext* context, OsclFileHandle* filehandle);
+        PVMFStatus DoCancelGetLicense(PVMFCommandId aCmdId, PVPlayerEngineContext* context);
+
         void       DereferenceLicenseInterface();
 
         // Handle to the logger node

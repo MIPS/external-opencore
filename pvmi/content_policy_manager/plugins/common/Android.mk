@@ -30,6 +30,7 @@ LOCAL_COPY_HEADERS := \
  	include/pvmf_cpmplugin_contentmanagement_interface.h \
  	include/pvmf_cpmplugin_license_interface.h \
  	include/pvmf_cpmplugin_license_interface_types.h \
+ 	include/pvmf_cpmplugin_domain_interface_types.h \
  	include/pvmf_cpmplugin_interface.h \
  	include/pvmf_cpmplugin_decryption_context.h
 

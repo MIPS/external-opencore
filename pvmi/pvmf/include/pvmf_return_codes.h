@@ -249,10 +249,17 @@ Error due to unable to communicate with server
 */
 const PVMFStatus PVMFErrDrmServerError = (-48);
 /*
-Error due to device currently not activated for drm-protected content playback.
+Error when a license server requests registration to a domain.
 */
-const PVMFStatus PVMFErrDrmDeviceNotActivated = (-49);
-
+const PVMFStatus PVMFErrDrmDomainRequired = (-49);
+/*
+Error when a license server requests renewal of a domain registration.
+*/
+const PVMFStatus PVMFErrDrmDomainRenewRequired = (-50);
+/*
+Error when a license server reports that the device is not part of the domain.
+*/
+const PVMFStatus PVMFErrDrmDomainNotAMember = (-51);
 /*
 ... this range reserved for future DRM-related errors
 */

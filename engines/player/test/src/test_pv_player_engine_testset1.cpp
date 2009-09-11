@@ -936,7 +936,6 @@ void pvplayer_async_test_cpmopenplaystopreset::Run()
 
             //close and cleanup the CPM plugin registry.
             iPluginRegistryClient.Close();
-
             delete iLocalDataSource;
             iLocalDataSource = NULL;
 

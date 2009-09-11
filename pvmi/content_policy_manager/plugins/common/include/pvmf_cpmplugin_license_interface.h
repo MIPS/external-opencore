@@ -43,6 +43,7 @@
 #include "pvmf_return_codes.h"
 #include "pvmf_event_handling.h"
 #include "cpm.h"
+#include "pvmf_cpmplugin_domain_interface_types.h"
 
 #define PVMF_CPMPLUGIN_LICENSE_INTERFACE_MIMETYPE "pvxxx/pvmf/cpm/plugin/license_interface"
 #define PVMFCPMPluginLicenseInterfaceUuid PVUuid(0xfc8fdd13,0x1c46,0x4c7a,0x9e,0xef,0xc8,0x7d,0x34,0x96,0xb2,0x18)
@@ -59,9 +60,12 @@ class PVMFCPMPluginLicenseInterface : public PVInterface
         /**
          * Method to get the license URL
          *
-         * @param [in] The assigned plugin session ID to use for this request
-         * @param [in] Null terminated unicode string containing the content name
-         * @param [out] Null terminated unicode string containing the license URL
+         * @param aSessionId  [in]  The assigned plugin session ID to use
+         *                          for this request.
+         * @param aContentName[in]  Null terminated unicode string containing
+         *                          the content name.
+         * @param aLicenseURL [out] Null terminated unicode string containing
+         *                          the license URL.
          *
          * @returns PVMFSuccess
          *          PVMFFailure - In case of errors
@@ -73,9 +77,12 @@ class PVMFCPMPluginLicenseInterface : public PVInterface
         /**
          * Method to get the license URL
          *
-         * @param [in] The assigned plugin session ID to use for this request
-         * @param [in] Null terminated string containing the content name
-         * @param [out] Null terminated string containing the license URL
+         * @param aSessionId  [in]  The assigned plugin session ID to use
+         *                          for this request.
+         * @param aContentName[in]  Null terminated unicode string containing
+         *                          the content name.
+         * @param aLicenseURL [out] Null terminated unicode string containing
+         *                          the license URL.
          *
          * @returns PVMFSuccess
          *          PVMFFailure - In case of errors
@@ -87,12 +94,17 @@ class PVMFCPMPluginLicenseInterface : public PVInterface
         /**
          * Method to get license
          *
-         * @param [in] The assigned plugin session ID to use for this request
-         * @param [in] Null terminated unicode string containing the content name
-         * @param [in] Optional opaque data associated with the request.
-         * @param [in] Size of the optional opaque data.
-         * @param [in] Timeout for the request in milliseconds, or (-1) for
-         *             infinite wait.
+         * @param aSessionId   [in] The assigned plugin session ID to use for
+         *                          this request.
+         * @param aContentName [in] Null terminated unicode string containing
+         *                          the content name.
+         * @param aLicenseData [in] Optional opaque data associated with the
+         *                          request.
+         * @param aDataSize    [in] Size of the optional opaque data.
+         * @param aTimeoutMsec [in] Timeout for the request in milliseconds,
+         *                          or (-1) for infinite wait.
+         * @param aContext     [in] Optional opaque data that will be passed
+         *                          back to the user with the command response.
          *
          * @returns A unique command id for asynchronous completion.
          */
@@ -106,12 +118,18 @@ class PVMFCPMPluginLicenseInterface : public PVInterface
         /**
          * Method to get license
          *
-         * @param [in] The assigned plugin session ID to use for this request
-         * @param [in] Null terminated string containing the content name
-         * @param [in] Optional opaque data associated with the request.
-         * @param [in] Size of the optional opaque data.
-         * @param [in] Timeout for the request in milliseconds, or (-1) for
-         *             infinite wait.
+         * @param aSessionId   [in] The assigned plugin session ID to use for
+         *                          this request.
+         * @param aContentName [in] Null terminated unicode string containing
+         *                          the content name.
+         * @param aLicenseData [in] Optional opaque data associated with the
+         *                          request.
+         * @param aDataSize    [in] Size of the optional opaque data.
+         * @param aTimeoutMsec [in] Timeout for the request in milliseconds,
+         *                          or (-1) for infinite wait.
+         * @param aContext     [in] Optional opaque data that will be passed
+         *                          back to the user with the command response.
+         *
          *
          * @returns A unique command id for asynchronous completion.
          */
@@ -123,11 +141,45 @@ class PVMFCPMPluginLicenseInterface : public PVInterface
                                          OsclAny* aContext = NULL) = 0;
 
         /**
-         * Method to cancel GetLicense requests.
+         * Method to join a domain
          *
-         * @param [in] The assigned plugin session ID to use for this request
-         * @param aContext [in] Optional opaque data that will be passed back
-         *                      to the user with the command response
+         * @param aSessionId   [in] The assigned plugin session ID to use for this
+         *                          request.
+         * @param aJoinData    [in] A reference to PVMFCPMDomainJoinData. It is
+         *                          expected that the user of the API provides
+         *                          atleast the domain url to join, the service
+         *                          id, and the account id.
+         * @param aTimeoutMsec [in] Timeout for the request in milliseconds,
+         *                          or (-1) for infinite wait.
+         * @param aContext     [in] Optional opaque data that will be passed
+         *                          back to the user with the command response.
+         *
+         * @returns A unique command id for asynchronous completion.
+         */
+        virtual PVMFCommandId JoinDomain(PVMFSessionId aSessionId,
+                                         const PVMFCPMDomainJoinData& aJoinData,
+                                         int32 aTimeoutMsec = (-1),
+                                         OsclAny* aContextData = NULL)
+        {
+            OSCL_UNUSED_ARG(aSessionId);
+            OSCL_UNUSED_ARG(aJoinData);
+            OSCL_UNUSED_ARG(aTimeoutMsec);
+            OSCL_UNUSED_ARG(aContextData);
+
+            OSCL_LEAVE(OsclErrNotSupported);
+            return -1;
+        }
+
+        /**
+         * Method to cancel either the GetLicense or JoinDomain request.
+         * @TODO - The name needs to be changed, but to preserve backwards
+         *         compatibility, it is not being changed now.
+         * @param aSessionId [in] The assigned plugin session ID to use for this
+         *                        request.
+         * @param aCmdId     [in] CommandId of the request that needs to be
+         *                        cancelled.
+         * @param aContext   [in] Optional opaque data that will be passed back
+         *                        to the user with the command response.
          *
          * @returns A unique command id for asynchronous completion.
          */
@@ -139,10 +191,10 @@ class PVMFCPMPluginLicenseInterface : public PVInterface
          * Method to get the status of an ongoing or recently completed
          * license acquire sequence.
          *
-         * @param [out] aStatus: license status output
+         * @param aStatus [out] License status output.
          *
          * @returns: PVMFSuccess if license status is available, an error
-         *   otherwise. Nodes should override if needed.
+         *           otherwise. Nodes should override if needed.
          */
         virtual PVMFStatus GetLicenseStatus(PVMFCPMLicenseStatus& aStatus)
         {
@@ -154,8 +206,8 @@ class PVMFCPMPluginLicenseInterface : public PVInterface
          *  Method to set the observer to notify the command completion.
          *  The implementor of this interface is expected to use only this
          *  observer to report the command completion.
-         *  @param [in] aObserver: Observer of CPM plugin implementing this
-         *                         interface.
+         *  @param aObserver [in] Observer of CPM plugin implementing this
+         *                        interface.
          */
         virtual void SetObserver(PVMFCPMStatusObserver& aObserver)
         {

@@ -75,6 +75,9 @@ OSCL_EXPORT_REF const char *PVMFStatusToString(const PVMFStatus status)
             CONSIDER(PVMFErrDrmCryptoError);
             CONSIDER(PVMFErrDrmLicenseNotFoundPreviewAvailable);
             CONSIDER(PVMFErrDrmServerError);
+            CONSIDER(PVMFErrDrmDomainRequired);
+            CONSIDER(PVMFErrDrmDomainRenewRequired);
+            CONSIDER(PVMFErrDrmDomainNotAMember);
             CONSIDER(PVMFErrDrmOperationFailed);
             CONSIDER(PVMFErrContentInvalidForProgressivePlayback);
             CONSIDER(PVMFInfoPortCreated);

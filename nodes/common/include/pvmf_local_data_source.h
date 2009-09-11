@@ -94,8 +94,10 @@ class PVMFLocalDataSource : public PVInterface
         //passed in will be played back in a preview mode.
 
         uint32 iIntent;
-        //Optional field to indicate if the source that is being
-        //passed in will be used for play back or just for metadata retrieval
+        // The default intent is set to Playback + Metadata.
+        // However, the user needs to note that having a Playback
+        // intent will involve consuming rights when a "protected"
+        // content is used.
 
         PVMFCPMPluginAccessInterfaceFactory* iContentAccessFactory;
 };

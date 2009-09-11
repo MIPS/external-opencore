@@ -22,6 +22,7 @@ HDRS := pvmf_cpmplugin_access_interface.h \
 	pvmf_cpmplugin_contentmanagement_interface.h \
 	pvmf_cpmplugin_license_interface.h \
 	pvmf_cpmplugin_license_interface_types.h \
+	pvmf_cpmplugin_domain_interface_types.h \
 	pvmf_cpmplugin_interface.h \
 	pvmf_cpmplugin_decryption_context.h
  

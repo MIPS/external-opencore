@@ -30,15 +30,12 @@
 #ifndef OSCL_STRING_H_INCLUDED
 #include "oscl_string.h"
 #endif
-#ifndef PV_UUID_H_INCLUDED
-#include "pv_uuid.h"
-#endif
 #ifndef PV_INTERFACE_H_INCLUDED
 #include "pv_interface.h"
 #endif
 #include "pvmf_return_codes.h"
 #include "pvmf_event_handling.h"
-
+#include "pvmf_cpmplugin_domain_interface_types.h"
 
 //A class to hold detailed license status information
 class PVMFCPMLicenseStatus
@@ -60,34 +57,70 @@ class PVMFCPMLicenseStatus
                 , iNumLeaveChallengesSent(0)
                 , iNumLeaveResponsesReceived(0)
                 , iLastLeaveResponseResult(0)
+                , iAccountIdReceived(false)
+                , iAccountId(EMPTY_UUID)
+                , iServiceIdReceived(false)
+                , iServiceId(EMPTY_UUID)
                 , iLastErrorResult(0)
         {}
 
-
+        // The URL to which the license request was last sent.
         OSCL_HeapString<OsclMemAllocator> iLastLicenseURL;
+        // Number of license challenges sent.
         uint32 iNumLicenseChallengesSent;
+        // Number of license challenge responses received.
         uint32 iNumLicenseResponsesReceived;
+        // The result of the last license response received.
         uint32 iLastLicenseResponseResult;
 
+        // Number of license ack challenges sent.
         uint32 iNumLicenseAckChallengesSent;
+        // Number of license ack challenge response received.
         uint32 iNumLicenseAckResponsesReceived;
+        // The result of the last license ack response received.
         uint32 iLastLicenseAckResponseResult;
 
+        // The URL to which the V2 license acquisition was last sent.
         OSCL_HeapString<OsclMemAllocator> iLastFallbackLicenseURL;
+        // Number of V2 license acquisition requests sent.
         uint32 iNumFallbackLicenseChallengesSent;
+        // Number of V2 license acquisition responses received.
         uint32 iNumFallbackLicenseResponsesReceived;
+        // The result of the last V2 license acquistion response received.
         uint32 iLastFallbackLicenseResponseResult;
 
+        // The URL to which the JoinDomain request was last sent.
         OSCL_HeapString<OsclMemAllocator> iLastJoinURL;
+        // Number of JoinDomain challenges sent.
         uint32 iNumJoinChallengesSent;
+        // Number of JoinDomain responses received.
         uint32 iNumJoinResponsesReceived;
+        // The result of the last JoinDomain response received.
         uint32 iLastJoinResponseResult;
 
+        // The URL to which the LeaveDomain request was last sent.
         OSCL_HeapString<OsclMemAllocator> iLastLeaveURL;
+        // Number of LeaveDomain challenges sent.
         uint32 iNumLeaveChallengesSent;
+        // Number of LeaveDomain responses received.
         uint32 iNumLeaveResponsesReceived;
+        // The result of the last LeaveDomain response received.
         uint32 iLastLeaveResponseResult;
 
+        // The URL to which the registration call should be made.
+        OSCL_HeapString<OsclMemAllocator> iRedirectURL;
+
+        bool iAccountIdReceived;
+        // The account Id required for registration.
+        PVUuid iAccountId;
+
+        bool iServiceIdReceived;
+        // The service Id required for registration.
+        PVUuid iServiceId;
+
+        // @TODO - Is there a need for custom data here?
+        //         If so, what is the format, and where
+        //         will be this used?
         uint32 iLastErrorResult;
 
         void Clear()
@@ -104,6 +137,14 @@ class PVMFCPMLicenseStatus
 
             iLastLeaveURL = "";
             iNumLeaveChallengesSent = iNumLeaveResponsesReceived = iLastLeaveResponseResult = 0;
+
+            iRedirectURL = "";
+
+            iAccountIdReceived = false;
+            iAccountId = EMPTY_UUID;
+
+            iServiceIdReceived = false;
+            iServiceId = EMPTY_UUID;
 
             iLastErrorResult = 0;
         }
@@ -128,6 +169,11 @@ class PVMFCPMLicenseStatus
             iNumLeaveChallengesSent = aStatus.iNumLeaveChallengesSent;
             iNumLeaveResponsesReceived = aStatus.iNumLeaveResponsesReceived;
             iLastLeaveResponseResult = aStatus.iLastLeaveResponseResult;
+            iRedirectURL = aStatus.iRedirectURL;
+            iAccountIdReceived = aStatus.iAccountIdReceived;
+            iAccountId = aStatus.iAccountId;
+            iServiceIdReceived = aStatus.iServiceIdReceived;
+            iServiceId = aStatus.iServiceId;
             iLastErrorResult = aStatus.iLastErrorResult;
         }
 };

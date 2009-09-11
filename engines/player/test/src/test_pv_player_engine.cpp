@@ -3688,11 +3688,19 @@ void pvplayer_engine_test::test()
 
             case DLA_OpenPlayStop_PlayReadyCPMTest_v4_WMA_domain:
 #if RUN_CPMPLAYREADY_TESTCASES
-                //@TBD - disabling test for now
-                fprintf(file, "Test disabled\n");
-                //iCurrentTest = new pvplayer_async_test_playreadycpm_dla_openplaystop(testparam
-                //        , EPlayReadyContentType_v4_WMA
-                //        , EPlayReadyLicenseType_DLA_With_Domain);
+                iCurrentTest = new pvplayer_async_test_playreadycpm_dla_openplaystop(testparam
+                        , EPlayReadyContentType_v4_WMA
+                        , EPlayReadyLicenseType_DLA_With_Domain);
+#else
+                fprintf(file, "PlayReady CPM tests not enabled\n");
+#endif
+                break;
+
+            case DLA_OpenPlayStop_PlayReadyCPMTest_v4_WMA_domain_member:
+#if RUN_CPMPLAYREADY_TESTCASES
+                iCurrentTest = new pvplayer_async_test_playreadycpm_dla_openplaystop(testparam
+                        , EPlayReadyContentType_v4_WMA
+                        , EPlayReadyLicenseType_DLA_With_DomainMember);
 #else
                 fprintf(file, "PlayReady CPM tests not enabled\n");
 #endif
@@ -3867,6 +3875,45 @@ void pvplayer_engine_test::test()
 #endif
                 break;
 
+            case DLA_CancelJoinDomain_PlayReadyCPMTest:
+#if RUN_CPMPLAYREADY_TESTCASES
+                iCurrentTest = new pvplayer_async_test_playreadycpm_canceljoindomain(testparam
+                        , EPlayReadyContentType_v4_WMA
+                        , EPlayReadyLicenseType_DLA_With_Domain);
+#else
+                fprintf(file, "PlayReady CPM tests not enabled\n");
+#endif
+                break;
+
+            case ContentHeaderRetrieval_PlayReadyCPMTest:
+#if RUN_CPMPLAYREADY_TESTCASES
+                iCurrentTest = new pvplayer_async_test_playreadycpm_dla_metadata(testparam
+                        , EPlayReadyContentType_v4_WMA
+                        , EPlayReadyLicenseType_DLA_With_Domain
+                        , EPlayReadyMetadataTest_ContentHeader);
+#else
+                fprintf(file, "PlayReady CPM tests not enabled\n");
+#endif
+                break;
+
+            case LicenseCountVerification_PlayReadyCPMTest:
+#if RUN_CPMPLAYREADY_TESTCASES
+                iCurrentTest = new pvplayer_async_test_playreadycpm_query(testparam
+                        , EPlayReadyContentType_license_counted);
+#else
+                fprintf(file, "PlayReady CPM tests not enabled\n");
+#endif
+                break;
+
+            case DLA_OpenPlayStop_PlayReadyCPMTest_v4_WMA_MissingServiceIdInContentHeader:
+#if RUN_CPMPLAYREADY_TESTCASES
+                iCurrentTest = new pvplayer_async_test_playreadycpm_dla_openplaystop(testparam
+                        , EPlayReadyContentType_v4_WMA
+                        , EPlayReadyLicenseType_DLA_With_MissingServiceIdInContentHeader);
+#else
+                fprintf(file, "PlayReady CPM tests not enabled\n");
+#endif
+                break;
             case DLA_PDL_OpenPlayUntilEOS_JanusCPMTest:
                 fprintf(file, "Janus CPM + PDL tests not enabled\n");
                 break;

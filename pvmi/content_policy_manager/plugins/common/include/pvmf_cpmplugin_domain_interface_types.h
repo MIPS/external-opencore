@@ -34,8 +34,6 @@
 #include "pv_uuid.h"
 #endif
 
-#define PVMF_EMPTY_GUID PVUuid(0,0,0,0,0,0,0,0,0,0,0)
-
 class PVMFCPMDomainId
 {
     public:

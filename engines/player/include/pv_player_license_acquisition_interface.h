@@ -44,6 +44,7 @@
 #define PVPlayerLicenseAcquisitionInterfaceUuid PVUuid(0x501302d0,0xd041,0x4fb4,0xad,0x75,0xf0,0x3f,0x90,0x37,0xba,0x42)
 
 class PVMFCPMLicenseStatus;
+class PVMFCPMDomainJoinData;
 
 /**
  * License Acquisition interface for pvPlayer
@@ -58,7 +59,7 @@ class PVPlayerLicenseAcquisitionInterface : public PVInterface
          * @param aLicenseData [in] This is any additional data to be used
          *                          by the DRM agent for license acquisition.
          *                          It's format is DRM-agent specific.
-         * @param aDataSize [in] Amount of data (in bytes) in the license_data.
+         * @param aDataSize    [in] Amount of data (in bytes) in the license_data.
          * @param aTimeoutMsec [in] Timeout for the request, or (-1) to
          *                          indicate no timeout (infinite wait).
          * @param aContentName [in] Null terminated Unicode (UCS-2) string containing
@@ -79,7 +80,7 @@ class PVPlayerLicenseAcquisitionInterface : public PVInterface
          * @param aLicenseData [in] This is any additional data to be used
          *                          by the DRM agent for license acquisition.
          *                          It's format is DRM-agent specific.
-         * @param aDataSize [in] Amount of data (in bytes) in the license_data.
+         * @param aDataSize    [in] Amount of data (in bytes) in the license_data.
          * @param aContentName [in] Null terminated UTF-8 string containing
          *                          the content name
          * @param aTimeoutMsec [in] Timeout for the request, or (-1) to
@@ -95,15 +96,36 @@ class PVPlayerLicenseAcquisitionInterface : public PVInterface
                                            const OsclAny* aContextData = NULL) = 0;
 
         /**
-         * Method to cancel AcquireLicense requests.
+         * Method to join a domain required for license acquisition.
          *
+         * @param aJoinData    [in] A reference to PVMFCPMDomainJoinData. It is
+         *                          expected that the user of the API provides atleast
+         *                          the domain url to join, the service id, and the
+         *                          account id.
+         * @param aTimeoutMsec [in] Timeout for the request, or (-1) to
+         *                          indicate no timeout (infinite wait).
          * @param aContextData [in] Optional opaque data that will be passed back to
          *                          the user with the command response
          *
          * @returns A unique command ID for asynchronous completion.
          */
-        virtual PVCommandId CancelAcquireLicense(PVMFCommandId aCmdId, const OsclAny* aContextData = NULL) = 0;
+        virtual PVCommandId JoinDomain(const PVMFCPMDomainJoinData& aJoinData,
+                                       int32 aTimeoutMsec,
+                                       const OsclAny* aContextData = NULL) = 0;
 
+        /**
+         * Method to cancel either the AcquireLicense or JoinDomain request.
+         * @TODO - The name needs to be changed. But, to preserve backwards
+         *         compatibility, it is not being changed now.
+         * @param aCmdId       [in] CommandId of the request that needs to be
+         *                          cancelled.
+         * @param aContextData [in] Optional opaque data that will be passed back to
+         *                          the user with the command response
+         *
+         * @returns A unique command ID for asynchronous completion.
+         */
+        virtual PVCommandId CancelAcquireLicense(PVMFCommandId aCmdId,
+                const OsclAny* aContextData = NULL) = 0;
 
         /**
          * Method to get detailed status on an ongoing or recently completed

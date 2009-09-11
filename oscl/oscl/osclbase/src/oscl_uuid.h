@@ -41,6 +41,8 @@
 #endif
 // __cplusplus
 
+#define EMPTY_UUID PVUuid(0,0,0,0,0,0,0,0,0,0,0)
+
 typedef uint32 OsclUid32;
 const char PV_CHAR_CLOSE_BRACKET = ')';
 const char PV_CHAR_COMMA = ',';
@@ -86,6 +88,10 @@ struct OsclUuid
             data4[ii] = 0;
         }
 
+        if (!aUuidString)
+        {
+            return;
+        }
         int uuidStrLen = oscl_strlen(aUuidString);
 
         if (uuidStrLen != 0)
