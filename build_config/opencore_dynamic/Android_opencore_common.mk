@@ -1,6 +1,9 @@
 LOCAL_PATH := $(call my-dir)
 include $(CLEAR_VARS)
 
+$(call add-prebuilt-files, ETC,  pvplayer.cfg)
+include $(CLEAR_VARS)
+
 LOCAL_WHOLE_STATIC_LIBRARIES := \
 	libosclbase \
  	libosclerror \

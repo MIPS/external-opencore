@@ -1,6 +1,7 @@
 LOCAL_PATH := $(call my-dir)
 include $(CLEAR_VARS)
 
+
 LOCAL_WHOLE_STATIC_LIBRARIES := \
 	libomx_amr_component_lib \
  	libpvdecoder_gsmamr \

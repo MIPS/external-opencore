@@ -1,6 +1,7 @@
 LOCAL_PATH := $(call my-dir)
 include $(CLEAR_VARS)
 
+
 LOCAL_WHOLE_STATIC_LIBRARIES := \
 	libpv2waysample \
  	libpv2wayengine \

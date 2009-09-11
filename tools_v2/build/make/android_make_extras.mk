@@ -75,6 +75,10 @@ define is_prelinking_allowed
   $(if $(strip $1),,$(PRINTF) "\nLOCAL_PRELINK_MODULE := false\n" >> $2)
 endef
 
+define cfg_list
+  $(if $(strip $1),$(PRINTF) "\$$(call add-prebuilt-files, ETC, $1)\ninclude \$$(CLEAR_VARS)\n" >> $2)
+endef
+
 ############################################################################
 
 
@@ -90,6 +94,8 @@ define create_aggregate_lib_android_mk
 Android_$1.mk: FORCE
 	$$(quiet) echo "LOCAL_PATH := $$(esc_dollar)(call my-dir)" > $$@
 	$$(quiet) echo "include $$(esc_dollar)(CLEAR_VARS)" >> $$@
+	$$(quiet) echo "" >> $$@
+	$$(quiet) $$(call cfg_list, $$(CFG_$1),$$@)
 	$$(quiet) echo "" >> $$@
 	$$(quiet) echo "LOCAL_WHOLE_STATIC_LIBRARIES := \\" >> $$@
 	$$(quiet) $$(call output_lib_list,$$($1_CUMULATIVE_TARGET_LIST),$$@)
@@ -131,7 +137,6 @@ $1: FORCE
 	$$(quiet) echo "" >> $$@
 	$$(quiet) echo "# Set up the PV variables" >> $$@
 	$$(quiet) echo "include $$(esc_dollar)(LOCAL_PATH)/Config.mk" >> $$@
-	$$(quiet) echo "$$(esc_dollar)(call add-prebuilt-files, ETC, pvplayer.cfg)" >> $$@
 	$$(quiet) echo "" >> $$@
 	$$(quiet) $$(call include_module_mk_list,$2,$$@)
 	$$(quiet) echo "ifeq ($$(esc_dollar)(BUILD_PV_2WAY),1)" >> $$@

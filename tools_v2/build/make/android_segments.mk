@@ -7,11 +7,25 @@ EXTRA_LIBS_opencore_author := libandroidpvauthor
 EXTRA_MAKEFILES_PATHS_opencore_author := /android/author
 EXTRA_SHARED_LIBRARIES_opencore_author := libutils libcutils libui libandroid_runtime libmedia liblog libicuuc
 
+CFG_opencore_common := pvplayer.cfg
+
+CFG_pvasflocalpb := pvasflocal.cfg
+
+CFG_pvasfstreaming := pvasfstreaming.cfg
+
+CFG_pvdivxparser_node := pvdivx.cfg
+
+CFG_pvfasttrack_download := pvfasttrackdownload.cfg
+
+CFG_pvrmffparser_node := pvrmff.cfg
+
 EXTRA_SHARED_LIBRARIES_pvwmdrm := libutils libcutils libandroid_runtime
 EXTRA_SHARED_LIBRARIES_pvwmdrmservice := libutils libcutils libandroid_runtime
+CFG_pvwmdrm := pvwmdrm.cfg
 
 EXTRA_SHARED_LIBRARIES_pvmtpservice := libutils libcutils libandroid_runtime
 EXTRA_SHARED_LIBRARIES_pvmtp_jni := libutils libcutils libandroid_runtime
+CFG_pvmtp_jni := mtpdb.cfg
 
 EXTRA_SHARED_LIBRARIES_pvupnp := libutils libcutils
 

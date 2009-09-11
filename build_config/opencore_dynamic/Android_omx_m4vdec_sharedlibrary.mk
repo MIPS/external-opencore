@@ -1,6 +1,7 @@
 LOCAL_PATH := $(call my-dir)
 include $(CLEAR_VARS)
 
+
 LOCAL_WHOLE_STATIC_LIBRARIES := \
 	libomx_m4v_component_lib \
  	libpvmp4decoder

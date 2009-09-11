@@ -4,7 +4,6 @@ include $(CLEAR_VARS)
 
 # Set up the PV variables
 include $(LOCAL_PATH)/Config.mk
-$(call add-prebuilt-files, ETC, pvplayer.cfg)
 
 include $(PV_TOP)/build_config/opencore_dynamic/Android_opencore_common.mk
 include $(PV_TOP)/build_config/opencore_dynamic/Android_opencore_author.mk
