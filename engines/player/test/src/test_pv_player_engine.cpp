@@ -646,8 +646,8 @@ void FindListRange(cmd_line* command_line, Oscl_Vector<PVTest *, OsclMemAllocato
             //find any ":"
             char *col = oscl_strchr(strIterator, ':');
             char *com = oscl_strchr(strIterator, ',');
-            uint LowIndex = 0;
-            uint MaxIndex = 0;
+            uint32 LowIndex = 0;
+            uint32 MaxIndex = 0;
             //this is to verify that we have a range
             if ((com != NULL) && (col != NULL))
             {
@@ -2120,7 +2120,8 @@ int CreateTestSuiteAndRun(char *aFileName,
                           bool aSplitLogFile,
                           OSCL_HeapString<OsclMemAllocator> &afilenameinfo,
                           CmdLinePopulator<char> *aasciiCmdLinePopulator,
-                          CmdLinePopulator<oscl_wchar> *awcharCmdLinePopulator)
+                          CmdLinePopulator<oscl_wchar> *awcharCmdLinePopulator,
+                          OSCL_HeapString<OsclMemAllocator> &axmlresultsfile)
 {
     pvplayer_engine_test_suite *engine_tests = NULL;
     engine_tests = new pvplayer_engine_test_suite(aFileName,
@@ -2142,6 +2143,7 @@ int CreateTestSuiteAndRun(char *aFileName,
     if (engine_tests)
     {
 
+        WriteInitialXmlSummary(axmlresultsfile);
         //Set the Initial timer
 
         uint32 starttick = OsclTickCount::TickCount();
@@ -2154,6 +2156,7 @@ int CreateTestSuiteAndRun(char *aFileName,
         fprintf(file, "Total Execution time for file %s is : %f seconds", afilenameinfo.get_cstr(), (t2 - t1) / 1000);
 
         // Print out the results
+        WriteFinalXmlSummary(axmlresultsfile, engine_tests->last_result());
         text_test_interpreter interp;
         _STRING rs = interp.interpretation(engine_tests->last_result());
         fprintf(file, rs.c_str());
@@ -2311,36 +2314,43 @@ int _local_main(FILE *filehandle, cmd_line *command_line, bool& aPrintDetailedMe
                                        splitlogfile,
                                        filenameinfo,
                                        asciiCmdLinePopulator,
-                                       wcharCmdLinePopulator);
+                                       wcharCmdLinePopulator,
+                                       xmlresultsfile);
     }
     else
     {
         //if a list of ranges is provided then let's run each of the ranges
+        int tempResult = 0;
         Oscl_Vector<PVTest *, OsclMemAllocator>::iterator it;
         while (!List.empty())
         {
             it = List.begin();
             fprintf(file, "Remaining PVTests %s", (*it)->GetTestName().get_cstr());
-            result = CreateTestSuiteAndRun(filenameinfo.get_str(),
-                                           inputformattype,
-                                           (*it)->GetFirstTest(),
-                                           (*it)->GetLastTest(),
-                                           compV,
-                                           compA,
-                                           fileinput,
-                                           bcs,
-                                           loglevel,
-                                           lognode,
-                                           logtext,
-                                           logmem,
-                                           iFileFormatType,
-                                           proxyenabled,
-                                           downloadrateinkbps,
-                                           splitlogfile,
-                                           filenameinfo,
-                                           asciiCmdLinePopulator,
-                                           wcharCmdLinePopulator);
+            tempResult = CreateTestSuiteAndRun(filenameinfo.get_str(),
+                                               inputformattype,
+                                               (*it)->GetFirstTest(),
+                                               (*it)->GetLastTest(),
+                                               compV,
+                                               compA,
+                                               fileinput,
+                                               bcs,
+                                               loglevel,
+                                               lognode,
+                                               logtext,
+                                               logmem,
+                                               iFileFormatType,
+                                               proxyenabled,
+                                               downloadrateinkbps,
+                                               splitlogfile,
+                                               filenameinfo,
+                                               asciiCmdLinePopulator,
+                                               wcharCmdLinePopulator,
+                                               xmlresultsfile);
 
+            //if for some reason something fails, we need to store the value
+            //and send a notification
+            if (tempResult != 0)
+                result = tempResult;
             //delete test case from queue
             OSCL_DELETE(*it);
             List.erase(List.begin());
