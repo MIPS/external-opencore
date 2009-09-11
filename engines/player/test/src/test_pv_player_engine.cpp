@@ -6501,6 +6501,7 @@ void pvplayer_engine_test::test()
                             PVMF_MIME_YUV420,
                             PVMF_MIME_PCM16,
                             iCurrentTestNumber,
+                            EPlayReadyContentType_v4_WMA_HTTP_Streaming_URL,
                             false,
                             false,
                             true,
@@ -6522,6 +6523,7 @@ void pvplayer_engine_test::test()
                             PVMF_MIME_YUV420,
                             PVMF_MIME_PCM16,
                             iCurrentTestNumber,
+                            EPlayReadyContentType_v4_WMA_HTTP_Streaming_URL,
                             true,
                             false,
                             true,
@@ -6542,6 +6544,7 @@ void pvplayer_engine_test::test()
                         PVMF_MIME_YUV420,
                         PVMF_MIME_PCM16,
                         iCurrentTestNumber,
+                        EPlayReadyContentType_v4_WMA_HTTP_Streaming_URL,
                         false,
                         true,
                         true,
@@ -6563,6 +6566,7 @@ void pvplayer_engine_test::test()
                             PVMF_MIME_YUV420,
                             PVMF_MIME_PCM16,
                             iCurrentTestNumber,
+                            EPlayReadyContentType_v4_WMA_HTTP_Streaming_URL,
                             false,
                             false,
                             true,
@@ -6583,19 +6587,22 @@ void pvplayer_engine_test::test()
             case DLA_StreamingProtocolRollOverTest_PlayReadyCPMTest:
             {
 #if RUN_CPMPLAYREADY_TESTCASES
+                //@TBD - disabling test for now..Dependent on RIO-4490
                 fprintf(file, "DLA_StreamingProtocolRollOverTest_PlayReadyCPMTest");
-                iCurrentTest = new pvplayer_async_test_playreadycpm_DLAstreamingopenplaystop(testparam,
-                        PVMF_MIME_YUV420,
-                        PVMF_MIME_PCM16,
-                        iCurrentTestNumber,
-                        false,
-                        false,
-                        true,
-                        false,
-                        false,
-                        false);
+                fprintf(file, "Test disabled\n");
+                /*                iCurrentTest = new pvplayer_async_test_playreadycpm_DLAstreamingopenplaystop(testparam,
+                                      PVMF_MIME_YUV420,
+                                        PVMF_MIME_PCM16,
+                                        iCurrentTestNumber,
+                                        false,
+                                        false,
+                                        true,
+                                        false,
+                                        false,
+                                        false);
 
-                ((pvplayer_async_test_playreadycpm_DLAstreamingopenplaystop*)iCurrentTest)->setProtocolRollOverMode();
+                                ((pvplayer_async_test_playreadycpm_DLAstreamingopenplaystop*)iCurrentTest)->setProtocolRollOverMode();
+                                */
 #else
                 fprintf(file, "PlayReady Streaming tests not enabled\n");
 #endif
@@ -6606,18 +6613,150 @@ void pvplayer_engine_test::test()
             {
 #if RUN_CPMPLAYREADY_TESTCASES
                 fprintf(file, "DLA_StreamingProtocolRollOverTestWithUnknownURLType_PlayReadyCPMTest");
-                iCurrentTest = new pvplayer_async_test_playreadycpm_DLAstreamingopenplaystop(testparam,
-                        PVMF_MIME_YUV420,
-                        PVMF_MIME_PCM16,
-                        iCurrentTestNumber,
-                        false,
-                        false,
-                        true,
-                        false,
-                        false,
-                        false);
+                fprintf(file, "Test disabled\n");
+                /*                iCurrentTest = new pvplayer_async_test_playreadycpm_DLAstreamingopenplaystop(testparam,
+                                        PVMF_MIME_YUV420,
+                                        PVMF_MIME_PCM16,
+                                        iCurrentTestNumber,
+                                        false,
+                                        false,
+                                        true,
+                                        false,
+                                        false,
+                                        false);
 
-                ((pvplayer_async_test_playreadycpm_DLAstreamingopenplaystop*)iCurrentTest)->setProtocolRollOverModeWithUnknownURL();
+                                ((pvplayer_async_test_playreadycpm_DLAstreamingopenplaystop*)iCurrentTest)->setProtocolRollOverModeWithUnknownURL();
+                                */
+#else
+                fprintf(file, "PlayReady Streaming tests not enabled\n");
+#endif
+            }
+            break;
+
+            case DLA_PDL_OpenPlayUntilEOS_PlayreadyCPMTest_v4_WMA:
+            {
+#if RUN_CPMPLAYREADY_TESTCASES
+                iCurrentTest = new pvplayer_async_test_playreadycpm_pdl_openplaystop(testparam,
+                        EPlayReadyContentType_v4_WMA_Download_URL);
+                ((pvplayer_async_test_playreadycpm_pdl_openplaystop*)iCurrentTest)->enablePlayUntilEOS();
+#else
+                fprintf(file, "PlayReady Streaming tests not enabled\n");
+#endif
+            }
+            break;
+
+            case DLA_PDL_OpenPlayUntilEOS_PlayreadyCPMTest_v4_WMV:
+            {
+#if RUN_CPMPLAYREADY_TESTCASES
+                iCurrentTest = new pvplayer_async_test_playreadycpm_pdl_openplaystop(testparam,
+                        EPlayReadyContentType_v4_WMV_Download_URL);
+                ((pvplayer_async_test_playreadycpm_pdl_openplaystop*)iCurrentTest)->enablePlayUntilEOS();
+#else
+                fprintf(file, "PlayReady Streaming tests not enabled\n");
+#endif
+            }
+            break;
+
+            case DLA_PDL_OpenPlayUntilEOS_PlayreadyCPMTest_v4_AAC:
+            {
+#if RUN_CPMPLAYREADY_TESTCASES
+                iCurrentTest = new pvplayer_async_test_playreadycpm_pdl_openplaystop(testparam,
+                        EPlayReadyContentType_v4_AAC_Download_URL);
+                ((pvplayer_async_test_playreadycpm_pdl_openplaystop*)iCurrentTest)->enablePlayUntilEOS();
+#else
+                fprintf(file, "PlayReady Streaming tests not enabled\n");
+#endif
+            }
+            break;
+
+            case DLA_PDL_OpenPlayUntilEOS_PlayreadyCPMTest_v4_H264:
+            {
+#if RUN_CPMPLAYREADY_TESTCASES
+                iCurrentTest = new pvplayer_async_test_playreadycpm_pdl_openplaystop(testparam,
+                        EPlayReadyContentType_v4_H264_Download_URL);
+                ((pvplayer_async_test_playreadycpm_pdl_openplaystop*)iCurrentTest)->enablePlayUntilEOS();
+#else
+                fprintf(file, "PlayReady Streaming tests not enabled\n");
+#endif
+            }
+            break;
+
+            case DLA_PDL_OpenPlayUntilEOS_PlayreadyCPMTest_v4_H264_AAC:
+            {
+#if RUN_CPMPLAYREADY_TESTCASES
+                iCurrentTest = new pvplayer_async_test_playreadycpm_pdl_openplaystop(testparam,
+                        EPlayReadyContentType_v4_H264_AAC_Download_URL);
+                ((pvplayer_async_test_playreadycpm_pdl_openplaystop*)iCurrentTest)->enablePlayUntilEOS();
+#else
+                fprintf(file, "PlayReady Streaming tests not enabled\n");
+#endif
+            }
+            break;
+
+            case DLA_PPB_OpenPlayUntilEOS_PlayreadyCPMTest_v4_WMA:
+            {
+#if RUN_CPMPLAYREADY_TESTCASES
+                iCurrentTest = new pvplayer_async_test_playreadycpm_pdl_openplaystop(testparam,
+                        EPlayReadyContentType_v4_WMA_Download_URL);
+                ((pvplayer_async_test_playreadycpm_pdl_openplaystop*)iCurrentTest)->enablePlayUntilEOS();
+                ((pvplayer_async_test_playreadycpm_pdl_openplaystop*)iCurrentTest)->enablePPB();
+                ((pvplayer_async_test_playreadycpm_pdl_openplaystop*)iCurrentTest)->iTestCaseName = _STRLIT_CHAR("Playready CPM DLA 3GPP Download No Save To File (PPB)");
+#else
+                fprintf(file, "PlayReady Streaming tests not enabled\n");
+#endif
+            }
+            break;
+
+            case DLA_PPB_OpenPlayUntilEOS_PlayreadyCPMTest_v4_WMV:
+            {
+#if RUN_CPMPLAYREADY_TESTCASES
+                iCurrentTest = new pvplayer_async_test_playreadycpm_pdl_openplaystop(testparam,
+                        EPlayReadyContentType_v4_WMV_Download_URL);
+                ((pvplayer_async_test_playreadycpm_pdl_openplaystop*)iCurrentTest)->enablePlayUntilEOS();
+                ((pvplayer_async_test_playreadycpm_pdl_openplaystop*)iCurrentTest)->enablePPB();
+                ((pvplayer_async_test_playreadycpm_pdl_openplaystop*)iCurrentTest)->iTestCaseName = _STRLIT_CHAR("Playready CPM DLA 3GPP Download No Save To File (PPB)");
+#else
+                fprintf(file, "PlayReady Streaming tests not enabled\n");
+#endif
+            }
+            break;
+
+            case DLA_PPB_OpenPlayUntilEOS_PlayreadyCPMTest_v4_AAC:
+            {
+#if RUN_CPMPLAYREADY_TESTCASES
+                iCurrentTest = new pvplayer_async_test_playreadycpm_pdl_openplaystop(testparam,
+                        EPlayReadyContentType_v4_AAC_Download_URL);
+                ((pvplayer_async_test_playreadycpm_pdl_openplaystop*)iCurrentTest)->enablePlayUntilEOS();
+                ((pvplayer_async_test_playreadycpm_pdl_openplaystop*)iCurrentTest)->enablePPB();
+                ((pvplayer_async_test_playreadycpm_pdl_openplaystop*)iCurrentTest)->iTestCaseName = _STRLIT_CHAR("Playready CPM DLA 3GPP Download No Save To File (PPB)");
+#else
+                fprintf(file, "PlayReady Streaming tests not enabled\n");
+#endif
+            }
+            break;
+
+            case DLA_PPB_OpenPlayUntilEOS_PlayreadyCPMTest_v4_H264:
+            {
+#if RUN_CPMPLAYREADY_TESTCASES
+                iCurrentTest = new pvplayer_async_test_playreadycpm_pdl_openplaystop(testparam,
+                        EPlayReadyContentType_v4_H264_Download_URL);
+                ((pvplayer_async_test_playreadycpm_pdl_openplaystop*)iCurrentTest)->enablePlayUntilEOS();
+                ((pvplayer_async_test_playreadycpm_pdl_openplaystop*)iCurrentTest)->enablePPB();
+                ((pvplayer_async_test_playreadycpm_pdl_openplaystop*)iCurrentTest)->iTestCaseName = _STRLIT_CHAR("Playready CPM DLA 3GPP Download No Save To File (PPB)");
+#else
+                fprintf(file, "PlayReady Streaming tests not enabled\n");
+#endif
+            }
+            break;
+
+            case DLA_PPB_OpenPlayUntilEOS_PlayreadyCPMTest_v4_H264_AAC:
+            {
+#if RUN_CPMPLAYREADY_TESTCASES
+                iCurrentTest = new pvplayer_async_test_playreadycpm_pdl_openplaystop(testparam,
+                        EPlayReadyContentType_v4_H264_AAC_Download_URL);
+                ((pvplayer_async_test_playreadycpm_pdl_openplaystop*)iCurrentTest)->enablePlayUntilEOS();
+                ((pvplayer_async_test_playreadycpm_pdl_openplaystop*)iCurrentTest)->enablePPB();
+                ((pvplayer_async_test_playreadycpm_pdl_openplaystop*)iCurrentTest)->iTestCaseName = _STRLIT_CHAR("Playready CPM DLA 3GPP Download No Save To File (PPB)");
 #else
                 fprintf(file, "PlayReady Streaming tests not enabled\n");
 #endif
@@ -7194,6 +7333,7 @@ void pvplayer_engine_test::test()
                         PVMF_MIME_YUV420,
                         PVMF_MIME_PCM16,
                         iCurrentTestNumber,
+                        EPlayReadyContentType_v4_WMA_HTTP_Streaming_URL,
                         false,
                         false,
                         true,

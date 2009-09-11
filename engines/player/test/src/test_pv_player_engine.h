@@ -2182,10 +2182,21 @@ class pvplayer_engine_test : public test_case,
             DLA_StreamingCancelAcquireLicense_PlayReadyCPMTest,//1439
             DLA_StreamingProtocolRollOverTest_PlayReadyCPMTest,//1440
             DLA_StreamingProtocolRollOverTestWithUnknownURLType_PlayReadyCPMTest,//1441
+            DLA_PDL_OpenPlayUntilEOS_PlayreadyCPMTest_v4_WMA,//1442
+            DLA_PDL_OpenPlayUntilEOS_PlayreadyCPMTest_v4_WMV,//1443
+            DLA_PDL_OpenPlayUntilEOS_PlayreadyCPMTest_v4_AAC,//1444
+            DLA_PDL_OpenPlayUntilEOS_PlayreadyCPMTest_v4_H264,//1445
+            DLA_PDL_OpenPlayUntilEOS_PlayreadyCPMTest_v4_H264_AAC,//1446
+
+            DLA_PPB_OpenPlayUntilEOS_PlayreadyCPMTest_v4_WMA,//1447
+            DLA_PPB_OpenPlayUntilEOS_PlayreadyCPMTest_v4_WMV,//1448
+            DLA_PPB_OpenPlayUntilEOS_PlayreadyCPMTest_v4_AAC,//1449
+            DLA_PPB_OpenPlayUntilEOS_PlayreadyCPMTest_v4_H264,//1450
+            DLA_PPB_OpenPlayUntilEOS_PlayreadyCPMTest_v4_H264_AAC,//1451
 
             //Miscellaneous tests
-            ContentHeaderRetrieval_PlayReadyCPMTest, //1442
-            LicenseCountVerification_PlayReadyCPMTest, //1443
+            ContentHeaderRetrieval_PlayReadyCPMTest, //1452
+            LicenseCountVerification_PlayReadyCPMTest, //1453
 
             //RESERVED FOR FUTURE PLAYREADY CPM TESTS.
             LastPlayReadyCPMTest = 1599,//placeholder

@@ -80,9 +80,9 @@ class IPayloadParser
         class Payload
         {
             public:
-                Payload() : stream(0), timestamp(0), sequence(0),
+                Payload() : stream(0), timestamp(0), sequence(0), sampleID(0),
                         marker(false), randAccessPt(false), incompframe(false), consumed(false), endOfNAL(false) {}
-                Payload(uint32 stream, uint32 timestamp, uint32 sequence,
+                Payload(uint32 stream, uint32 timestamp, uint32 sequence, uint64 sampleID,
                         bool marker, bool randAccessPt, bool consumed, bool incompframe, bool endOfNAL)
                 {
                     this->stream = stream;
@@ -93,6 +93,7 @@ class IPayloadParser
                     this->consumed = consumed;
                     this->incompframe = incompframe;
                     this->endOfNAL = endOfNAL;
+                    this->sampleID = sampleID;
                 }
                 Payload(const Payload& aPayLoad)
                 {
@@ -109,6 +110,7 @@ class IPayloadParser
                 uint32 stream;
                 uint32 timestamp;
                 uint32 sequence;
+                uint64 sampleID;
                 //The marker bit signifies the last packet of an access unit or frame.
                 bool marker;
                 bool randAccessPt;
@@ -126,6 +128,7 @@ class IPayloadParser
                     stream = aPayLoad.stream;
                     timestamp = aPayLoad.timestamp;
                     sequence = aPayLoad.sequence;
+                    sampleID = aPayLoad.sampleID;
                     marker = aPayLoad.marker;
                     randAccessPt = aPayLoad.randAccessPt;
                     consumed = aPayLoad.consumed;

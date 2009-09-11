@@ -269,8 +269,32 @@ void pvplayer_async_test_genericcancelall::Run()
             {
                 if (fileType == PVMF_MIME_DATA_SOURCE_MS_HTTP_STREAMING_URL)
                 {
-                    fileType = PVMF_MIME_DATA_SOURCE_MS_HTTP_STREAMING_URL;
-                    iDataSource->SetAlternateSourceFormatType(PVMF_MIME_DATA_SOURCE_HTTP_URL);
+                    fileType = PVMF_MIME_DATA_SOURCE_HTTP_URL;
+                    iDataSource->SetAlternateSourceFormatType(PVMF_MIME_DATA_SOURCE_MS_HTTP_STREAMING_URL);
+#ifdef USE_NEW_PVMF_SOURCE_CONTEXT_DATA
+                    iSourceContextData->EnableDownloadHTTPSourceContext();
+                    PVInterface* sourceContext = NULL;
+                    PVUuid downloadContextUuid(PVMF_SOURCE_CONTEXT_DATA_DOWNLOAD_HTTP_UUID);
+                    if (iSourceContextData->queryInterface(downloadContextUuid, sourceContext))
+                    {
+                        PVMFSourceContextDataDownloadHTTP* downloadContext =
+                            OSCL_STATIC_CAST(PVMFSourceContextDataDownloadHTTP*, sourceContext);
+                        if (iProxyEnabled)
+                        {
+                            downloadContext->iProxyName = _STRLIT_CHAR("");
+                            downloadContext->iProxyPort = 7070;
+                        }
+                        downloadContext->iDownloadFileName = OUTPUTNAME_PREPEND_WSTRING;
+                        downloadContext->iDownloadFileName += _STRLIT_WCHAR("test_ftdownload.loc");
+                        downloadContext->iConfigFileName = OUTPUTNAME_PREPEND_WSTRING;
+                        downloadContext->iConfigFileName += _STRLIT_WCHAR("mydlconfig");
+                        downloadContext->iUserID = _STRLIT_CHAR("abc");
+                        downloadContext->iUserPasswd = _STRLIT_CHAR("xyz");
+                        downloadContext->bIsNewSession = true;
+                        downloadContext->iMaxFileSize = 0x7FFFFFFF;
+                        downloadContext->iPlaybackControl = PVMFSourceContextDataDownloadHTTP::EAsap;
+                    }
+#endif
                 }
                 else if (fileType == PVMF_MIME_DATA_SOURCE_REAL_HTTP_CLOAKING_URL)
                 {
