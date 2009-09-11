@@ -25,10 +25,10 @@
 class PV2WayMediaInputMIONodeFactory: public PV2WayMIONodeFactory
 {
     public:
-        PV2WayMediaInputMIONodeFactory() {};
-        virtual ~PV2WayMediaInputMIONodeFactory() {};
-        virtual PVMFNodeInterface* Create(PvmiMIOFileInputSettings& aFileSettings);
-        virtual void Delete(PVMFNodeInterface** mioNode);
+        OSCL_IMPORT_REF PV2WayMediaInputMIONodeFactory() {};
+        OSCL_IMPORT_REF virtual ~PV2WayMediaInputMIONodeFactory() {};
+        OSCL_IMPORT_REF virtual PVMFNodeInterface* Create(PvmiMIOFileInputSettings& aFileSettings);
+        OSCL_IMPORT_REF virtual void Delete(PVMFNodeInterface** mioNode);
     private:
         PvmiMIOControl* iMediaControl;
         int CreateMedia(PvmiMIOFileInputSettings& aFileSettings);

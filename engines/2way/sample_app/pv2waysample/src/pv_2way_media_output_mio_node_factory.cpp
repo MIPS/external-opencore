@@ -59,14 +59,14 @@ void PV2WayMediaOutputMIONodeFactory::DeleteMedia()
     iMediaControl = NULL;
 }
 
-void PV2WayMediaOutputMIONodeFactory::Delete(PVMFNodeInterface** aMioNode)
+OSCL_EXPORT_REF void PV2WayMediaOutputMIONodeFactory::Delete(PVMFNodeInterface** aMioNode)
 {
     PVMediaOutputNodeFactory::DeleteMediaOutputNode(*aMioNode);
     *aMioNode = NULL;
     DeleteMedia();
 }
 
-PVMFNodeInterface* PV2WayMediaOutputMIONodeFactory::Create(PvmiMIOFileInputSettings& aFileSettings)
+OSCL_EXPORT_REF PVMFNodeInterface* PV2WayMediaOutputMIONodeFactory::Create(PvmiMIOFileInputSettings& aFileSettings)
 {
     PVMFNodeInterface* mioNode = NULL;
     if (PVMFSuccess == CreateMedia(aFileSettings))
