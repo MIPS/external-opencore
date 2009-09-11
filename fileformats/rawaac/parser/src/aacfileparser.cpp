@@ -329,9 +329,9 @@ int32 AACBitstreamObject::isAACFile(PVFile* aFilePtr)
 
     AACUtils::SeektoOffset(fpUsed, 0, Oscl_File::SEEKSET);
 
-    uint32 tagSize = 0;
+    int32 tagSize = 0;
     // check for ID3v2 tag
-    if (true == iID3Parser->IsID3V2Present(fpUsed, tagSize))
+    if (true == iID3Parser->IsID3V2Present(fpUsed, tagSize) && tagSize > 0)
     {
         // store the metadata size
         iAudioStartOffset = tagSize;

@@ -94,9 +94,9 @@ class PVID3ParCom
          * to the caller.
          *
          * @returns True if Id3V2 tag present otherwise False
-         * @ aTagSize: size of the ID3 tag, if present, else 0
+         * @ aTagSize: size of the ID3 tag, if present, -1 if corrupted, else 0
          */
-        OSCL_IMPORT_REF bool IsID3V2Present(PVFile* aFile, uint32& aTagSize);
+        OSCL_IMPORT_REF bool IsID3V2Present(PVFile* aFile, int32& aTagSize);
 
         /**
          * Gets size of ID3 tag in the specified file without parsing the entire tag for its data.
@@ -263,7 +263,7 @@ class PVID3ParCom
          * @return byte offset to end of id3 tag.
          */
 
-        OSCL_IMPORT_REF uint32 GetByteOffsetToStartOfAudioFrames()
+        OSCL_IMPORT_REF int32 GetByteOffsetToStartOfAudioFrames()
         {
             return iByteOffsetToStartOfAudioFrames;
         }
@@ -894,7 +894,7 @@ class PVID3ParCom
         bool iTrackNumberFoundFlag;
         bool iGenereFoundFlag;
         int32 iFileSizeInBytes;
-        uint32 iByteOffsetToStartOfAudioFrames;
+        int32 iByteOffsetToStartOfAudioFrames;
 
         bool iID3V1Present;
         bool iID3V2Present;

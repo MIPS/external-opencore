@@ -576,8 +576,9 @@ bool PVID3ParCom::CheckForTagID3V2()
     return false;
 }
 
-OSCL_EXPORT_REF bool PVID3ParCom::IsID3V2Present(PVFile* aFile, uint32& aTagSize)
+OSCL_EXPORT_REF bool PVID3ParCom::IsID3V2Present(PVFile* aFile, int32& aTagSize)
 {
+    aTagSize = -1;
     iInputFile = aFile;
     if (iID3V2Present)
     {
@@ -588,10 +589,12 @@ OSCL_EXPORT_REF bool PVID3ParCom::IsID3V2Present(PVFile* aFile, uint32& aTagSize
 
     if (CheckForTagID3V2())
     {
-        // we dont want to parse the id3 frames, just read the id3 header
-
-        ReadHeaderID3V2(false);
-        aTagSize = iByteOffsetToStartOfAudioFrames;
+        iInputFile->GetRemainingBytes((uint32&)iFileSizeInBytes);
+        // id3v2 header read failure
+        if (ReadHeaderID3V2(false) == true)
+        {
+            aTagSize = iByteOffsetToStartOfAudioFrames;
+        }
         return true;
     }
     return false;
@@ -1040,6 +1043,13 @@ BEGIN_V2:
 
     // tagSize will store the file's Id3v2 tag size
     iID3TagInfo.iID3V2TagSize = SafeSynchIntToInt32(tagsize);
+    // verify tag size for local playback only
+    if (!iInputFile->GetCPM() && iFileSizeInBytes < (int32)iID3TagInfo.iID3V2TagSize)
+    {
+        // tagsize seems to be invalid, dont proceed further
+        iByteOffsetToStartOfAudioFrames = -1;
+        return false;
+    }
 
     //calculate start of audio frame.
     if (iTagAtBof)

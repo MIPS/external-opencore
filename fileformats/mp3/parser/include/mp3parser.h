@@ -486,7 +486,7 @@ class MP3Parser
         VBRIHeaderType iVbriHeader;
         bool iEnableCrcCalc;
         MP3FileType mp3Type;
-        uint32 iTagSize;
+        int32 iTagSize;
         PvmiKvpSharedPtrVector iId3Frames;
 };
 

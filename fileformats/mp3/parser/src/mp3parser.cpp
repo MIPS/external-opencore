@@ -1225,7 +1225,7 @@ int32 MP3Parser::ConvertSizeToTime(uint32 aFileSize, uint32& aNPTInMS)
 
     if (iId3TagParser.IsID3V2Present())
     {
-        if (iTagSize > fileSize)
+        if (iTagSize > 0 && iTagSize > (int32) fileSize)
         {
             return -1;
         }
@@ -1353,7 +1353,7 @@ MP3ErrorType MP3Parser::GetMetadataSize(uint32 &aMetadataSize)
     {
         if (iId3TagParser.IsID3V2Present(fp, iTagSize) && iTagSize > 0)
         {
-            aMetadataSize = iTagSize;
+            aMetadataSize = (uint32) iTagSize;
             return MP3_SUCCESS;
         }
     }
@@ -2559,12 +2559,10 @@ MP3ErrorType MP3Parser::IsMp3File(MP3_FF_FILE* aFile, uint32 aInitSearchFileSize
         }
     }
 
-    // seek to the begining position in the file
-
     // verify if the id3 tags are present in this clip
     PVID3ParCom tagParser;
     iTagSize = 0;
-    if (true == tagParser.IsID3V2Present(fp, iTagSize))
+    if (true == tagParser.IsID3V2Present(fp, iTagSize) && iTagSize > 0)
     {
         // move the file read pointer to begining of audio data
         StartOffset += iTagSize;
