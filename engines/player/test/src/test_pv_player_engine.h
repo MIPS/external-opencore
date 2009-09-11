@@ -889,6 +889,14 @@ class pvplayer_engine_test : public test_case,
              */
             RTMPStreamingPlayUntilEOSTest = 190,
 
+            /**
+            * @test (191) RTMP streaming until EOS Stop Play Again Test
+            * Input http url to a FLV file.
+            * Default url is an http url to an FLV file.
+            * Output YUV and PCM data files from Playback.
+            */
+            RTMPStreamingPlayUntilEOSStopPlayAgainTest,
+
             LastRTMPStreamingPlaybackTest, // placeholder
 
             FirstStreamingTest = 200, //placeholder

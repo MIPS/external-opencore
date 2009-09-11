@@ -3284,6 +3284,10 @@ void pvplayer_engine_test::test()
 #endif
                 break;
 
+            case RTMPStreamingPlayUntilEOSStopPlayAgainTest:
+                fprintf(file, "RTMP streaming tests not enabled\n");
+                break;
+
             case FTDownloadOpenPlayUntilEOSTest:
                 fprintf(file, "Download tests not enabled\n");
                 break;
