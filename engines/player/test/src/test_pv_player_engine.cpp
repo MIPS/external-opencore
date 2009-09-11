@@ -3805,10 +3805,12 @@ void pvplayer_engine_test::test()
 
             case ContentHeaderRetrieval_PlayReadyCPMTest:
 #if RUN_CPMPLAYREADY_TESTCASES
-                iCurrentTest = new pvplayer_async_test_playreadycpm_dla_metadata(testparam
-                        , EPlayReadyContentType_v4_WMA
-                        , EPlayReadyLicenseType_DLA_With_Domain
-                        , EPlayReadyMetadataTest_ContentHeader);
+                //@TBD - disabling test for now. This should be re-enabled in RIO-7315
+                fprintf(file, "Test disabled\n");
+//                iCurrentTest = new pvplayer_async_test_playreadycpm_dla_metadata(testparam
+//                        , EPlayReadyContentType_v4_WMA
+//                        , EPlayReadyLicenseType_DLA_With_Domain
+//                        , EPlayReadyMetadataTest_ContentHeader);
 #else
                 fprintf(file, "PlayReady CPM tests not enabled\n");
 #endif

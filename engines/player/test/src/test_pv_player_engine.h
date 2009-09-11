@@ -2144,16 +2144,16 @@ class pvplayer_engine_test : public test_case,
 
             //PlayReady streaming tests.
             DLA_StreamingOpenPlayUntilEOST_PlayReadyCPMTest,//1435
-            DLA_StreamingOpenPlayPausePlayUntilEOS_PlayReadyCPMTest,//1435
-            DLA_StreamingOpenPlaySeekPlayUntilEOS_PlayReadyCPMTest,//1436
-            DLA_StreamingMultiplePlayUntilEOS_PlayReadyCPMTest,//1437
-            DLA_StreamingCancelAcquireLicense_PlayReadyCPMTest,//1438
-            DLA_StreamingProtocolRollOverTest_PlayReadyCPMTest,//1439
-            DLA_StreamingProtocolRollOverTestWithUnknownURLType_PlayReadyCPMTest,//1440
+            DLA_StreamingOpenPlayPausePlayUntilEOS_PlayReadyCPMTest,//1436
+            DLA_StreamingOpenPlaySeekPlayUntilEOS_PlayReadyCPMTest,//1437
+            DLA_StreamingMultiplePlayUntilEOS_PlayReadyCPMTest,//1438
+            DLA_StreamingCancelAcquireLicense_PlayReadyCPMTest,//1439
+            DLA_StreamingProtocolRollOverTest_PlayReadyCPMTest,//1440
+            DLA_StreamingProtocolRollOverTestWithUnknownURLType_PlayReadyCPMTest,//1441
 
             //Miscellaneous tests
-            ContentHeaderRetrieval_PlayReadyCPMTest, //1441
-            LicenseCountVerification_PlayReadyCPMTest, //1442
+            ContentHeaderRetrieval_PlayReadyCPMTest, //1442
+            LicenseCountVerification_PlayReadyCPMTest, //1443
 
             //RESERVED FOR FUTURE PLAYREADY CPM TESTS.
             LastPlayReadyCPMTest = 1599,//placeholder
