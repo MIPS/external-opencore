@@ -199,7 +199,7 @@ class PVA_FF_Mpeg4File : public PVA_FF_IMpeg4File, public PVA_FF_Parentable
         bool addTextSampleToTrack(uint32 trackID, PVMP4FFComposerSampleParam *pSampleParam);
 
         void addTrackReference(uint32 currtrackID, int32 reftrackID);
-        void setTargetBitRate(uint32 trackID, uint32 bitrate);
+        void setTargetBitrate(uint32 trackID, uint32 avgBitRate, uint32 maxBitRate = 0, uint32 bufferSizeDB = 0);
         void setTimeScale(uint32 trackID, uint32 rate);
 
         // An access function to set the output path string for PVA_FF_MediaDataAtom objects

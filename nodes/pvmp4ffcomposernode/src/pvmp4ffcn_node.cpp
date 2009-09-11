@@ -1791,7 +1791,7 @@ PVMFStatus PVMp4FFComposerNode::AddTrack(PVMp4FFComposerPort *aPort)
     {
         case MEDIA_TYPE_AUDIO:
         {
-            iMpeg4File->setTargetBitRate(trackId, config->iBitrate);
+            iMpeg4File->setTargetBitrate(trackId, config->iBitrate);
             iMpeg4File->setTimeScale(trackId, config->iTimescale);
             PVMP4FFComposerAudioEncodeParams audioParams;
             audioParams.numberOfChannels = config->iNumberOfChannels;
@@ -1809,7 +1809,7 @@ PVMFStatus PVMp4FFComposerNode::AddTrack(PVMp4FFComposerPort *aPort)
                     // Don't break here. Continue to set other video properties
                 case CODEC_TYPE_AVC_VIDEO:
                 case CODEC_TYPE_MPEG4_VIDEO:
-                    iMpeg4File->setTargetBitRate(trackId, config->iBitrate);
+                    iMpeg4File->setTargetBitrate(trackId, config->iBitrate, config->iBitrate, 0);
                     iMpeg4File->setTimeScale(trackId, config->iTimescale);
                     iMpeg4File->setVideoParams(trackId, (float)config->iFrameRate,
                                                (uint16)config->iIFrameInterval, config->iWidth, config->iHeight);
@@ -1817,7 +1817,7 @@ PVMFStatus PVMp4FFComposerNode::AddTrack(PVMp4FFComposerPort *aPort)
             }
             break;
         case MEDIA_TYPE_TEXT:
-            iMpeg4File->setTargetBitRate(trackId, config->iBitrate);
+            iMpeg4File->setTargetBitrate(trackId, config->iBitrate);
             iMpeg4File->setTimeScale(trackId, config->iTimescale);
             break;
 

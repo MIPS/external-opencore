@@ -298,7 +298,7 @@ class PVA_FF_IMpeg4File : public PVA_FF_ISucceedFail
         virtual bool addSampleToTrack(uint32 trackID, PVMP4FFComposerSampleParam *pSampleParam) = 0;
         virtual bool addTextSampleToTrack(uint32 trackID, PVMP4FFComposerSampleParam *pSampleParam) = 0;
         virtual void addTrackReference(uint32 currtrackID, int32 reftrackID) = 0;
-        virtual void setTargetBitRate(uint32 trackID, uint32 bitrate) = 0;
+        virtual void setTargetBitrate(uint32 trackID, uint32 avgBitRate, uint32 maxBitRate = 0, uint32 bufferSizeDB = 0) = 0;
         virtual void setTimeScale(uint32 trackID, uint32 rate) = 0;
         virtual void setMaxBufferSizeDB(uint32 trackID, uint32 max) = 0;
 
