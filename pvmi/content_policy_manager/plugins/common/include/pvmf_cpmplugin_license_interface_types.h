@@ -48,9 +48,6 @@ class PVMFCPMLicenseStatus
                 , iNumLicenseAckChallengesSent(0)
                 , iNumLicenseAckResponsesReceived(0)
                 , iLastLicenseAckResponseResult(0)
-                , iNumFallbackLicenseChallengesSent(0)
-                , iNumFallbackLicenseResponsesReceived(0)
-                , iLastFallbackLicenseResponseResult(0)
                 , iNumJoinChallengesSent(0)
                 , iNumJoinResponsesReceived(0)
                 , iLastJoinResponseResult(0)
@@ -80,14 +77,6 @@ class PVMFCPMLicenseStatus
         // The result of the last license ack response received.
         uint32 iLastLicenseAckResponseResult;
 
-        // The URL to which the V2 license acquisition was last sent.
-        OSCL_HeapString<OsclMemAllocator> iLastFallbackLicenseURL;
-        // Number of V2 license acquisition requests sent.
-        uint32 iNumFallbackLicenseChallengesSent;
-        // Number of V2 license acquisition responses received.
-        uint32 iNumFallbackLicenseResponsesReceived;
-        // The result of the last V2 license acquistion response received.
-        uint32 iLastFallbackLicenseResponseResult;
 
         // The URL to which the JoinDomain request was last sent.
         OSCL_HeapString<OsclMemAllocator> iLastJoinURL;
@@ -129,9 +118,6 @@ class PVMFCPMLicenseStatus
             iNumLicenseChallengesSent = iNumLicenseResponsesReceived = iLastLicenseResponseResult = 0;
             iNumLicenseAckChallengesSent = iNumLicenseAckResponsesReceived = iLastLicenseAckResponseResult = 0;
 
-            iLastFallbackLicenseURL = "";
-            iNumFallbackLicenseChallengesSent = iNumFallbackLicenseResponsesReceived = iLastFallbackLicenseResponseResult = 0;
-
             iLastJoinURL = "";
             iNumJoinChallengesSent = iNumJoinResponsesReceived = iLastJoinResponseResult = 0;
 
@@ -157,10 +143,6 @@ class PVMFCPMLicenseStatus
             iNumLicenseAckChallengesSent = aStatus.iNumLicenseAckChallengesSent;
             iNumLicenseAckResponsesReceived = aStatus.iNumLicenseAckResponsesReceived;
             iLastLicenseAckResponseResult = aStatus.iLastLicenseAckResponseResult;
-            iLastFallbackLicenseURL = aStatus.iLastFallbackLicenseURL;
-            iNumFallbackLicenseChallengesSent = aStatus.iNumFallbackLicenseChallengesSent;
-            iNumFallbackLicenseResponsesReceived = aStatus.iNumFallbackLicenseResponsesReceived;
-            iLastFallbackLicenseResponseResult = aStatus.iLastFallbackLicenseResponseResult;
             iLastJoinURL = aStatus.iLastJoinURL;
             iNumJoinChallengesSent = aStatus.iNumJoinChallengesSent;
             iNumJoinResponsesReceived = aStatus.iNumJoinResponsesReceived;

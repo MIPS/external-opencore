@@ -984,11 +984,6 @@ void FindSourceFile(cmd_line* command_line, OSCL_HeapString<OsclMemAllocator> &a
         {
 //            aInputFileFormatType = PVMF_MIME_MIDIFF;
         }
-        // unrecognized eny (PlayReady envelope) files go to the still image node
-        else  if (oscl_strstr(aFileNameInfo.get_cstr(), ".eny") != NULL || oscl_strstr(aFileNameInfo.get_cstr(), ".ENY") != NULL)
-        {
-            aInputFileFormatType = PVMF_MIME_IMAGE_FORMAT;
-        }
         // Unknown so set to unknown try to have the player engine recognize
         else
         {
@@ -3946,18 +3941,6 @@ void pvplayer_engine_test::test()
                 //iCurrentTest = new pvplayer_async_test_playreadycpm_dla_openplaystop(testparam
                 //        , EPlayReadyContentType_v4_WMA
                 //        , EPlayReadyLicenseType_DLA_With_DomainOffline);
-#else
-                fprintf(file, "PlayReady CPM tests not enabled\n");
-#endif
-                break;
-
-            case DLA_OpenPlayStop_PlayReadyCPMTest_v4_WMA_domain_history:
-#if RUN_CPMPLAYREADY_TESTCASES
-                //@TBD - disabling test for now
-                fprintf(file, "Test disabled\n");
-                //iCurrentTest = new pvplayer_async_test_playreadycpm_dla_openplaystop(testparam
-                //        , EPlayReadyContentType_v4_WMA
-                //        , EPlayReadyLicenseType_DLA_With_DomainHistory);
 #else
                 fprintf(file, "PlayReady CPM tests not enabled\n");
 #endif
