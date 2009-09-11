@@ -3785,6 +3785,14 @@ void pvplayer_engine_test::test()
 #endif
                 break;
 
+            case DLA_DeleteLicense_PlayReadyCPMTest_v4_Content:
+#if RUN_CPMPLAYREADY_TESTCASES
+                iCurrentTest = new pvplayer_async_test_playreadycpm_deletelicense(testparam, EPlayReadyContentType_v4_WMA, EPlayReadyLicenseType_DLA);
+#else
+                fprintf(file, "PlayReady CPM tests not enabled\n");
+#endif
+                break;
+
             case DLA_CancelAcquireLicense_PlayReadyCPMTest_v2_Content:
 #if RUN_CPMPLAYREADY_TESTCASES
                 iCurrentTest = new pvplayer_async_test_playreadycpm_cancelacquirelicense(testparam, EPlayReadyContentType_v2_WMA, EPlayReadyLicenseType_DLA);
