@@ -1282,670 +1282,804 @@ void pvplayer_async_test_cpmopenplaystopreset::HandleInformationalEvent(const PV
     }
 }
 
+
 //
 // pvplayer_async_test_metadata section
 //
 
-// Expected number of keys and values
-#define METADATA_GETMETADATAKEYS1_NUMKEYS 21
-#define METADATA_GETMETADATAVALUES1_NUMVALUES 28
+
+// The metadata keys and values to compare unique to test_metadata.mp4
+#define METADATA_KEY_ARTIST                   _STRLIT_CHAR("artist;valtype=wchar*")
+#define METADATA_KEY_CLIPTYPE                 _STRLIT_CHAR("clip-type;valtype=char*")
+#define METADATA_KEY_CODECINFO_VIDEOFORMAT    _STRLIT_CHAR("codec-info/video/format;valtype=char*")
+#define METADATA_KEY_CODECINFO_VIDEOHEIGHT    _STRLIT_CHAR("codec-info/video/height;valtype=uint32")
+#define METADATA_KEY_CODECINFO_VIDEOWIDTH     _STRLIT_CHAR("codec-info/video/width;valtype=uint32")
+#define METADATA_KEY_COMMENT                  _STRLIT_CHAR("comment;valtype=wchar*")
+#define METADATA_KEY_DATE                     _STRLIT_CHAR("date;valtype=wchar*")
+#define METADATA_KEY_DURATION                 _STRLIT_CHAR("duration;valtype=uint32;timescale=600")
+#define METADATA_KEY_MOVIEFRAGMENTS           _STRLIT_CHAR("movie-fragments-present;valtype=bool")
+#define METADATA_KEY_MP4FF_COMPATIBLEBRAND    _STRLIT_CHAR("mp4ff/compatible-brand;valtype=char*")
+#define METADATA_KEY_MP4FF_MAJORBRAND         _STRLIT_CHAR("mp4ff/major-brand;valtype=char*")
+#define METADATA_KEY_NUMTRACKS                _STRLIT_CHAR("num-tracks;valtype=uint32")
+#define METADATA_KEY_RANDOMACCESSDENIED       _STRLIT_CHAR("random-access-denied;valtype=bool")
+#define METADATA_KEY_TITLE                    _STRLIT_CHAR("title;valtype=wchar*;orig-char-enc=UTF-16")
+#define METADATA_KEY_TOOL                     _STRLIT_CHAR("tool;valtype=wchar*")
+#define METADATA_KEY_TRACKINFO_AUDIOBPS1      _STRLIT_CHAR("track-info/audio/bits-per-sample;valtype=uint32;index=1")
+#define METADATA_KEY_TRACKINFO_AUDIOCHANNELS1 _STRLIT_CHAR("track-info/audio/channels;valtype=uint32;index=1")
+#define METADATA_KEY_TRACKINFO_AUDIOFORMAT1   _STRLIT_CHAR("track-info/audio/format;valtype=char*;index=1")
+#define METADATA_KEY_TRACKINFO_BITRATE0       _STRLIT_CHAR("track-info/bit-rate;valtype=uint32;index=0")
+#define METADATA_KEY_TRACKINFO_BITRATE1       _STRLIT_CHAR("track-info/bit-rate;valtype=uint32;index=1")
+#define METADATA_KEY_TRACKINFO_DURATION0      _STRLIT_CHAR("track-info/duration;valtype=uint32;index=0;timescale=2997")
+#define METADATA_KEY_TRACKINFO_DURATION1      _STRLIT_CHAR("track-info/duration;valtype=uint32;index=1;timescale=8000")
+#define METADATA_KEY_TRACKINFO_FRAMERATE0     _STRLIT_CHAR("track-info/frame-rate;valtype=uint32;index=0")
+#define METADATA_KEY_TRACKINFO_NUMKEYSAMPLES0 _STRLIT_CHAR("track-info/num-key-samples;valtype=uint32;index=0")
+#define METADATA_KEY_TRACKINFO_NUMKEYSAMPLES1 _STRLIT_CHAR("track-info/num-key-samples;valtype=uint32;index=1")
+#define METADATA_KEY_TRACKINFO_NUMSAMPLES0    _STRLIT_CHAR("track-info/num-samples;valtype=uint32;index=0")
+#define METADATA_KEY_TRACKINFO_NUMSAMPLES1    _STRLIT_CHAR("track-info/num-samples;valtype=uint32;index=1")
+#define METADATA_KEY_TRACKINFO_SAMPLERATE1    _STRLIT_CHAR("track-info/sample-rate;valtype=uint32;index=1")
+#define METADATA_KEY_TRACKINFO_SELECTED0      _STRLIT_CHAR("track-info/selected;valtype=bool;index=0")
+#define METADATA_KEY_TRACKINFO_SELECTED1      _STRLIT_CHAR("track-info/selected;valtype=bool;index=1")
+#define METADATA_KEY_TRACKINFO_TRACKID0       _STRLIT_CHAR("track-info/track-id;valtype=uint32;index=0")
+#define METADATA_KEY_TRACKINFO_TRACKID1       _STRLIT_CHAR("track-info/track-id;valtype=uint32;index=1")
+#define METADATA_KEY_TRACKINFO_TYPE0          _STRLIT_CHAR("track-info/type;valtype=char*;index=0")
+#define METADATA_KEY_TRACKINFO_TYPE1          _STRLIT_CHAR("track-info/type;valtype=char*;index=1")
+#define METADATA_KEY_TRACKINFO_VIDEOFORMAT0   _STRLIT_CHAR("track-info/video/format;valtype=char*;index=0")
+#define METADATA_KEY_TRACKINFO_VIDEOHEIGHT0   _STRLIT_CHAR("track-info/video/height;valtype=uint32;index=0")
+#define METADATA_KEY_TRACKINFO_VIDEOWIDTH0    _STRLIT_CHAR("track-info/video/width;valtype=uint32;index=0")
+
+#define METADATA_VAL_ARTIST_W                 _STRLIT_WCHAR("created with SUPER(C).v2009.bld.36")
+#define METADATA_VAL_CLIPTYPE                 _STRLIT_CHAR("local")
+#define METADATA_VAL_CODECINFO_VIDEOFORMAT    _STRLIT_CHAR("video/MP4V-ES")
+#define METADATA_VAL_CODECINFO_VIDEOHEIGHT    144
+#define METADATA_VAL_CODECINFO_VIDEOWIDTH     176
+#define METADATA_VAL_COMMENT_W                _STRLIT_WCHAR("11:07:41")
+#define METADATA_VAL_DATE_W                   _STRLIT_WCHAR("20090611T180730.000Z")
+#define METADATA_VAL_DURATION                 31231
+#define METADATA_VAL_MOVIEFRAGMENTS           false
+#define METADATA_VAL_NUMTRACKS                2
+#define METADATA_VAL_RANDOMACCESSDENIED       false
+#define METADATA_VAL_TITLE_W                  _STRLIT_WCHAR("Basketball_candidate.mp4.MP4")
+#define METADATA_VAL_TOOL_W                   _STRLIT_WCHAR("eRightSoft")
+#define METADATA_VAL_TRACKINFO_AUDIOBPS1      16
+#define METADATA_VAL_TRACKINFO_AUDIOFORMAT1   _STRLIT_CHAR("X-AMR-IETF-SEPARATE")
+#define METADATA_VAL_TRACKINFO_AUDIOCHANNELS1 1
+#define METADATA_VAL_TRACKINFO_BITRATE0       11568
+#define METADATA_VAL_TRACKINFO_BITRATE1       12200
+#define METADATA_VAL_TRACKINFO_DURATION0      156000
+#define METADATA_VAL_TRACKINFO_DURATION1      413920
+#define METADATA_VAL_TRACKINFO_FRAMERATE0     5
+#define METADATA_VAL_TRACKINFO_NUMKEYSAMPLES0 6
+#define METADATA_VAL_TRACKINFO_NUMKEYSAMPLES1 2587
+#define METADATA_VAL_TRACKINFO_NUMSAMPLES0    312
+#define METADATA_VAL_TRACKINFO_NUMSAMPLES1    2587
+#define METADATA_VAL_TRACKINFO_SAMPLERATE1    8000
+#define METADATA_VAL_TRACKINFO_SELECTED0      false
+#define METADATA_VAL_TRACKINFO_SELECTED1      false
+#define METADATA_VAL_TRACKINFO_TRACKID0       201
+#define METADATA_VAL_TRACKINFO_TRACKID1       101
+#define METADATA_VAL_TRACKINFO_TYPE0          _STRLIT_CHAR("video/MP4V-ES")
+#define METADATA_VAL_TRACKINFO_TYPE1          _STRLIT_CHAR("X-AMR-IETF-SEPARATE")
+#define METADATA_VAL_TRACKINFO_VIDEOFORMAT0   _STRLIT_CHAR("video/MP4V-ES")
+#define METADATA_VAL_TRACKINFO_VIDEOHEIGHT0   144
+#define METADATA_VAL_TRACKINFO_VIDEOWIDTH0    176
+
 #define METADATA_GETMETADATAKEYS2_QUERYSTRING "codec-info/video"
-#define METADATA_GETMETADATAKEYS2_NUMKEYS 3
-#define METADATA_GETMETADATAVALUES2_NUMVALUES 3
-#define METADATA_GETMETADATAKEYS3_NUMKEYS 21
-#define METADATA_GETMETADATAVALUES3_NUMVALUES 28
-#define METADATA_GETMETADATAKEYSSEG_NUMKEYS 24
-#define METADATA_GETMETADATAVALUESSEG_NUMVALUES 31
 
-// The metadata keys and values to compare
-// Modify the following #defines for different source files
-#define METADATA_TITLE_KEY "title;valtype=wchar*"
-#define METADATA_TITLE_VALUE "alien-14-x-1d66-x-128-10-g4.mp4"
-#define METADATA_TITLE_VALUE_W _STRLIT_WCHAR("alien-14-x-1d66-x-128-10-g4.mp4")
-#define METADATA_AUTHOR_KEY "author;valtype=wchar*"
-#define METADATA_AUTHOR_VALUE "PacketVideo Embedded Solutions Test Content"
-#define METADATA_AUTHOR_VALUE_W _STRLIT_WCHAR("PacketVideo Embedded Solutions Test Content")
-#define METADATA_DESCRIPTION_KEY "description;valtype=wchar*"
-#define METADATA_DESCRIPTION_VALUE "This test clip is in support of Embedded Solutions project testing."
-#define METADATA_DESCRIPTION_VALUE_W _STRLIT_WCHAR("This test clip is in support of Embedded Solutions project testing.")
-#define METADATA_RATING_KEY "rating;valtype=wchar*"
-#define METADATA_RATING_VALUE "Test Material Only; Not for general distribution"
-#define METADATA_RATING_VALUE_W _STRLIT_WCHAR("Test Material Only; Not for general distribution")
-#define METADATA_COPYRIGHT_KEY "copyright;valtype=wchar*"
-#define METADATA_COPYRIGHT_VALUE "PacketVideo, Corp, Test Suite 2003"
-#define METADATA_COPYRIGHT_VALUE_W _STRLIT_WCHAR("PacketVideo, Corp, Test Suite 2003")
-#define METADATA_VERSION_KEY "version;valtype=wchar*"
-#define METADATA_VERSION_VALUE "Content V3.3 PVAuthor V3.3 Build 005"
-#define METADATA_VERSION_VALUE_W _STRLIT_WCHAR("Content V3.3 PVAuthor V3.3 Build 005")
-#define METADATA_DATE_KEY "date;valtype=wchar*"
-#define METADATA_DATE_VALUE "20030210T193127.546Z"
-#define METADATA_DATE_VALUE_W _STRLIT_WCHAR("20030210T193127.546Z")
-#define METADATA_DURATION_KEY "duration;valtype=uint32;timescale=1000"
-#define METADATA_DURATION_VALUE 42749
-#define METADATA_NUMTRACKS_KEY "num-tracks;valtype=uint32"
-#define METADATA_NUMTRACKS_VALUE 2
-#define METADATA_TRACKINFOTYPE0_KEY "track-info/type;valtype=char*;index=0"
-#define METADATA_TRACKINFOTYPE0_VALUE "video/MP4V-ES"
-#define METADATA_TRACKINFOTYPE1_KEY "track-info/type;valtype=char*;index=1"
-#define METADATA_TRACKINFOTYPE1_VALUE "X-AMR-IETF-SEPARATE"
-#define METADATA_TRACKINFO_AUDIOFORMAT1_KEY "track-info/audio/format;valtype=char*;index=1"
-#define METADATA_TRACKINFO_AUDIOFORMAT1_VALUE "X-AMR-IETF-SEPARATE"
-#define METADATA_TRACKINFODURATION0_KEY "track-info/duration;valtype=uint32;index=0;timescale=1000"
-#define METADATA_TRACKINFODURATION0_VALUE 42749
-#define METADATA_TRACKINFODURATION1_KEY "track-info/duration;valtype=uint32;index=1;timescale=1000"
-#define METADATA_TRACKINFODURATION1_VALUE 42360
-#define METADATA_TRACKINFOBITRATE0_KEY "track-info/bit-rate;valtype=uint32;index=0"
-#define METADATA_TRACKINFOBITRATE0_VALUE 6770
-#define METADATA_TRACKINFOBITRATE1_KEY "track-info/bit-rate;valtype=uint32;index=1"
-#define METADATA_TRACKINFOBITRATE1_VALUE 4750
-#define METADATA_TRACKINFOVIDEOWIDTH0_KEY "track-info/video/width;valtype=uint32;index=0"
-#define METADATA_TRACKINFOVIDEOWIDTH0_VALUE 128
-#define METADATA_TRACKINFOVIDEOWIDTH1_KEY "track-info/video/width;valtype=uint32;index=1"
-#define METADATA_TRACKINFOVIDEOWIDTH1_VALUE 0
-#define METADATA_TRACKINFOVIDEOHEIGHT0_KEY "track-info/video/height;valtype=uint32;index=0"
-#define METADATA_TRACKINFOVIDEOHEIGHT0_VALUE 96
-#define METADATA_TRACKINFOVIDEOHEIGHT1_KEY "track-info/video/height;valtype=uint32;index=1"
-#define METADATA_TRACKINFOVIDEOHEIGHT1_VALUE 0
-#define METADATA_CODECINFOVIDEOWIDTH_KEY "codec-info/video/width;valtype=uint32"
-#define METADATA_CODECINFOVIDEOWIDTH_VALUE 128
-#define METADATA_CODECINFOVIDEOHEIGHT_KEY "codec-info/video/height;valtype=uint32"
-#define METADATA_CODECINFOVIDEOHEIGHT_VALUE 96
 
-int32 pvplayer_async_test_metadata::CheckMetadataValue(Oscl_Vector<PvmiKvp, OsclMemAllocator>& aValueList)
+//==============================================================================
+// CheckMetadataValue                                                  PRIVATE
+//==============================================================================
+//
+int32
+pvplayer_async_test_metadata::CheckMetadataValue
+(
+    Oscl_Vector < PvmiKvp,
+    OsclMemAllocator > & aValueList
+)
 {
     uint32 valcount = 0;
-    int32 errorbitarray = 0; // 0x1=> Error in returned value;
+    int32 errorbitarray = 0;
+    // 0x1=> Error in returned value;
     // 0x2=> Number of values entries do not match the known expected
     // 0x4=> Unknown value type
 
-    for (uint32 i = 0; i < aValueList.size(); i++)
+    for (uint32 i = 0; i < aValueList.size(); ++i)
     {
-        if (oscl_strcmp(aValueList[i].key, _STRLIT_CHAR(METADATA_TITLE_KEY)) == 0)
+        if (0 == oscl_strcmp(METADATA_KEY_ARTIST, aValueList[i].key))
         {
             valcount++;
-
             switch (GetValTypeFromKeyString(aValueList[i].key))
             {
                 case PVMI_KVPVALTYPE_WCHARPTR:
-                    if (oscl_strcmp(aValueList[i].value.pWChar_value, METADATA_TITLE_VALUE_W) != 0)
-                    {
+                    if (0 != oscl_strcmp(METADATA_VAL_ARTIST_W, aValueList[i].value.pWChar_value))
                         errorbitarray |= 0x1;
-                    }
                     break;
 
-                case PVMI_KVPVALTYPE_CHARPTR:
-                    if (oscl_strcmp(aValueList[i].value.pChar_value, _STRLIT_CHAR(METADATA_TITLE_VALUE)) != 0)
-                    {
-                        errorbitarray |= 0x1;
-                    }
-                    break;
-                default:
-                    // Unknown value type so can't compare
+                default:   // Unknown value type so can't compare
                     errorbitarray |= 0x4;
                     break;
             }
         }
-        else if (oscl_strcmp(aValueList[i].key, _STRLIT_CHAR(METADATA_AUTHOR_KEY)) == 0)
+        else if (0 == oscl_strcmp(METADATA_KEY_CLIPTYPE, aValueList[i].key))
         {
             valcount++;
+            switch (GetValTypeFromKeyString(aValueList[i].key))
+            {
+                case PVMI_KVPVALTYPE_CHARPTR:
+                    if (0 != oscl_strcmp(METADATA_VAL_CLIPTYPE, aValueList[i].value.pChar_value))
+                        errorbitarray |= 0x1;
+                    break;
 
+                default:   // Unknown value type so can't compare
+                    errorbitarray |= 0x4;
+                    break;
+            }
+        }
+        else if (0 == oscl_strcmp(METADATA_KEY_CODECINFO_VIDEOFORMAT, aValueList[i].key))
+        {
+            valcount++;
+            switch (GetValTypeFromKeyString(aValueList[i].key))
+            {
+                case PVMI_KVPVALTYPE_CHARPTR:
+                    if (0 != oscl_strcmp(METADATA_VAL_CODECINFO_VIDEOFORMAT, aValueList[i].value.pChar_value))
+                        errorbitarray |= 0x1;
+                    break;
+
+                default:   // Unknown value type so can't compare
+                    errorbitarray |= 0x4;
+                    break;
+            }
+        }
+        else if (0 == oscl_strcmp(METADATA_KEY_CODECINFO_VIDEOHEIGHT, aValueList[i].key))
+        {
+            valcount++;
+            switch (GetValTypeFromKeyString(aValueList[i].key))
+            {
+                case PVMI_KVPVALTYPE_UINT32:
+                    if (METADATA_VAL_CODECINFO_VIDEOHEIGHT != aValueList[i].value.uint32_value)
+                        errorbitarray |= 0x1;
+                    break;
+
+                case PVMI_KVPVALTYPE_INT32:
+                    if (METADATA_VAL_CODECINFO_VIDEOHEIGHT != aValueList[i].value.int32_value)
+                        errorbitarray |= 0x1;
+                    break;
+
+                case PVMI_KVPVALTYPE_UINT8:
+                    if (METADATA_VAL_CODECINFO_VIDEOHEIGHT != aValueList[i].value.uint8_value)
+                        errorbitarray |= 0x1;
+                    break;
+
+                default: // Unknown value type so can't compare
+                    errorbitarray |= 0x4;
+                    break;
+            }
+        }
+        else if (0 == oscl_strcmp(METADATA_KEY_CODECINFO_VIDEOWIDTH, aValueList[i].key))
+        {
+            valcount++;
+            switch (GetValTypeFromKeyString(aValueList[i].key))
+            {
+                case PVMI_KVPVALTYPE_UINT32:
+                    if (METADATA_VAL_CODECINFO_VIDEOWIDTH != aValueList[i].value.uint32_value)
+                        errorbitarray |= 0x1;
+                    break;
+
+                case PVMI_KVPVALTYPE_INT32:
+                    if (METADATA_VAL_CODECINFO_VIDEOWIDTH != aValueList[i].value.int32_value)
+                        errorbitarray |= 0x1;
+                    break;
+
+                case PVMI_KVPVALTYPE_UINT8:
+                    if (METADATA_VAL_CODECINFO_VIDEOWIDTH != aValueList[i].value.uint8_value)
+                        errorbitarray |= 0x1;
+                    break;
+
+                default: // Unknown value type so can't compare
+                    errorbitarray |= 0x4;
+                    break;
+            }
+        }
+        else if (0 == oscl_strcmp(METADATA_KEY_COMMENT, aValueList[i].key))
+        {
+            valcount++;
             switch (GetValTypeFromKeyString(aValueList[i].key))
             {
                 case PVMI_KVPVALTYPE_WCHARPTR:
-                    if (oscl_strcmp(aValueList[i].value.pWChar_value, METADATA_AUTHOR_VALUE_W) != 0)
-                    {
+                    if (0 != oscl_strcmp(METADATA_VAL_COMMENT_W, aValueList[i].value.pWChar_value))
                         errorbitarray |= 0x1;
-                    }
                     break;
 
-                case PVMI_KVPVALTYPE_CHARPTR:
-                    if (oscl_strcmp(aValueList[i].value.pChar_value, _STRLIT_CHAR(METADATA_AUTHOR_VALUE)) != 0)
-                    {
-                        errorbitarray |= 0x1;
-                    }
-                    break;
-
-                default:
-                    // Unknown value type so can't compare
+                default: // Unknown value type so can't compare
                     errorbitarray |= 0x4;
                     break;
             }
         }
-        else if (oscl_strcmp(aValueList[i].key, _STRLIT_CHAR(METADATA_DESCRIPTION_KEY)) == 0)
+        else if (0 == oscl_strcmp(METADATA_KEY_DATE, aValueList[i].key))
         {
             valcount++;
-
             switch (GetValTypeFromKeyString(aValueList[i].key))
             {
                 case PVMI_KVPVALTYPE_WCHARPTR:
-                    if (oscl_strcmp(aValueList[i].value.pWChar_value, METADATA_DESCRIPTION_VALUE_W) != 0)
-                    {
+                    if (0 != oscl_strcmp(METADATA_VAL_DATE_W, aValueList[i].value.pWChar_value))
                         errorbitarray |= 0x1;
-                    }
                     break;
 
-                case PVMI_KVPVALTYPE_CHARPTR:
-                    if (oscl_strcmp(aValueList[i].value.pChar_value, _STRLIT_CHAR(METADATA_DESCRIPTION_VALUE)) != 0)
-                    {
-                        errorbitarray |= 0x1;
-                    }
-                    break;
-
-                default:
-                    // Unknown value type so can't compare
+                default: // Unknown value type so can't compare
                     errorbitarray |= 0x4;
                     break;
             }
         }
-        else if (oscl_strcmp(aValueList[i].key, _STRLIT_CHAR(METADATA_RATING_KEY)) == 0)
+        else if (0 == oscl_strcmp(METADATA_KEY_DURATION, aValueList[i].key))
         {
             valcount++;
+            switch (GetValTypeFromKeyString(aValueList[i].key))
+            {
+                case PVMI_KVPVALTYPE_UINT32:
+                    if (METADATA_VAL_DURATION != aValueList[i].value.uint32_value)
+                        errorbitarray |= 0x1;
+                    break;
 
+                case PVMI_KVPVALTYPE_INT32:
+                    if (METADATA_VAL_DURATION != aValueList[i].value.int32_value)
+                        errorbitarray |= 0x1;
+                    break;
+
+                default: // Unknown value type so can't compare
+                    errorbitarray |= 0x4;
+                    break;
+            }
+        }
+        else if (0 == oscl_strcmp(METADATA_KEY_MOVIEFRAGMENTS, aValueList[i].key))
+        {
+            valcount++;
+            switch (GetValTypeFromKeyString(aValueList[i].key))
+            {
+                case PVMI_KVPVALTYPE_BOOL:
+                    if (METADATA_VAL_MOVIEFRAGMENTS != aValueList[i].value.bool_value)
+                        errorbitarray |= 0x1;
+                    break;
+
+                default: // Unknown value type so can't compare
+                    errorbitarray |= 0x4;
+                    break;
+            }
+        }
+        else if (0 == oscl_strcmp(METADATA_KEY_MP4FF_COMPATIBLEBRAND, aValueList[i].key))
+        {
+            valcount++;
+            switch (GetValTypeFromKeyString(aValueList[i].key))
+            {
+                case PVMI_KVPVALTYPE_CHARPTR:
+                    break;
+
+                default: // Unknown value type so can't compare
+                    errorbitarray |= 0x4;
+                    break;
+            }
+        }
+        else if (0 == oscl_strcmp(METADATA_KEY_MP4FF_MAJORBRAND, aValueList[i].key))
+        {
+            valcount++;
+            switch (GetValTypeFromKeyString(aValueList[i].key))
+            {
+                case PVMI_KVPVALTYPE_CHARPTR:
+                    break;
+
+                default: // Unknown value type so can't compare
+                    errorbitarray |= 0x4;
+                    break;
+            }
+        }
+        else if (0 == oscl_strcmp(METADATA_KEY_NUMTRACKS, aValueList[i].key))
+        {
+            valcount++;
+            switch (GetValTypeFromKeyString(aValueList[i].key))
+            {
+                case PVMI_KVPVALTYPE_UINT32:
+                    if (METADATA_VAL_NUMTRACKS != aValueList[i].value.uint32_value)
+                        errorbitarray |= 0x1;
+                    break;
+
+                case PVMI_KVPVALTYPE_INT32:
+                    if (METADATA_VAL_NUMTRACKS != aValueList[i].value.int32_value)
+                        errorbitarray |= 0x1;
+                    break;
+
+                case PVMI_KVPVALTYPE_UINT8:
+                    if (METADATA_VAL_NUMTRACKS != aValueList[i].value.uint8_value)
+                        errorbitarray |= 0x1;
+                    break;
+
+                default: // Unknown value type so can't compare
+                    errorbitarray |= 0x4;
+                    break;
+            }
+        }
+        else if (0 == oscl_strcmp(METADATA_KEY_RANDOMACCESSDENIED, aValueList[i].key))
+        {
+            valcount++;
+            switch (GetValTypeFromKeyString(aValueList[i].key))
+            {
+                case PVMI_KVPVALTYPE_BOOL:
+                    if (METADATA_VAL_RANDOMACCESSDENIED != aValueList[i].value.bool_value)
+                        errorbitarray |= 0x1;
+                    break;
+
+                default: // Unknown value type so can't compare
+                    errorbitarray |= 0x4;
+                    break;
+            }
+        }
+        else if (0 == oscl_strcmp(METADATA_KEY_TITLE, aValueList[i].key))
+        {
+            valcount++;
             switch (GetValTypeFromKeyString(aValueList[i].key))
             {
                 case PVMI_KVPVALTYPE_WCHARPTR:
-                    if (oscl_strcmp(aValueList[i].value.pWChar_value, METADATA_RATING_VALUE_W) != 0)
-                    {
+                    if (0 != oscl_strcmp(METADATA_VAL_TITLE_W, aValueList[i].value.pWChar_value))
                         errorbitarray |= 0x1;
-                    }
                     break;
 
-                case PVMI_KVPVALTYPE_CHARPTR:
-                    if (oscl_strcmp(aValueList[i].value.pChar_value, _STRLIT_CHAR(METADATA_RATING_VALUE)) != 0)
-                    {
-                        errorbitarray |= 0x1;
-                    }
-                    break;
-
-                default:
-                    // Unknown value type so can't compare
+                default:   // Unknown value type so can't compare
                     errorbitarray |= 0x4;
                     break;
             }
         }
-        else if (oscl_strcmp(aValueList[i].key, _STRLIT_CHAR(METADATA_COPYRIGHT_KEY)) == 0)
+        else if (0 == oscl_strcmp(METADATA_KEY_TOOL, aValueList[i].key))
         {
             valcount++;
-
             switch (GetValTypeFromKeyString(aValueList[i].key))
             {
                 case PVMI_KVPVALTYPE_WCHARPTR:
-                    if (oscl_strcmp(aValueList[i].value.pWChar_value, METADATA_COPYRIGHT_VALUE_W) != 0)
-                    {
+                    if (0 != oscl_strcmp(METADATA_VAL_TOOL_W, aValueList[i].value.pWChar_value))
                         errorbitarray |= 0x1;
-                    }
                     break;
 
-                case PVMI_KVPVALTYPE_CHARPTR:
-                    if (oscl_strcmp(aValueList[i].value.pChar_value, _STRLIT_CHAR(METADATA_COPYRIGHT_VALUE)) != 0)
-                    {
-                        errorbitarray |= 0x1;
-                    }
-                    break;
-
-                default:
-                    // Unknown value type so can't compare
+                default:   // Unknown value type so can't compare
                     errorbitarray |= 0x4;
                     break;
             }
         }
-        else if (oscl_strcmp(aValueList[i].key, _STRLIT_CHAR(METADATA_VERSION_KEY)) == 0)
+        else if (0 == oscl_strcmp(METADATA_KEY_TRACKINFO_AUDIOBPS1, aValueList[i].key))
         {
             valcount++;
-
-            switch (GetValTypeFromKeyString(aValueList[i].key))
-            {
-                case PVMI_KVPVALTYPE_WCHARPTR:
-                    if (oscl_strcmp(aValueList[i].value.pWChar_value, METADATA_VERSION_VALUE_W) != 0)
-                    {
-                        errorbitarray |= 0x1;
-                    }
-                    break;
-
-                case PVMI_KVPVALTYPE_CHARPTR:
-                    if (oscl_strcmp(aValueList[i].value.pChar_value, _STRLIT_CHAR(METADATA_VERSION_VALUE)) != 0)
-                    {
-                        errorbitarray |= 0x1;
-                    }
-                    break;
-
-                default:
-                    // Unknown value type so can't compare
-                    errorbitarray |= 0x4;
-                    break;
-            }
-        }
-        else if (oscl_strcmp(aValueList[i].key, _STRLIT_CHAR(METADATA_DATE_KEY)) == 0)
-        {
-            valcount++;
-
-            switch (GetValTypeFromKeyString(aValueList[i].key))
-            {
-                case PVMI_KVPVALTYPE_WCHARPTR:
-                    if (oscl_strcmp(aValueList[i].value.pWChar_value, METADATA_DATE_VALUE_W) != 0)
-                    {
-                        errorbitarray |= 0x1;
-                    }
-                    break;
-
-                case PVMI_KVPVALTYPE_CHARPTR:
-                    if (oscl_strcmp(aValueList[i].value.pChar_value, _STRLIT_CHAR(METADATA_DATE_VALUE)) != 0)
-                    {
-                        errorbitarray |= 0x1;
-                    }
-                    break;
-
-                default:
-                    // Unknown value type so can't compare
-                    errorbitarray |= 0x4;
-                    break;
-            }
-        }
-        else if (oscl_strcmp(aValueList[i].key, _STRLIT_CHAR(METADATA_DURATION_KEY)) == 0)
-        {
-            valcount++;
-
             switch (GetValTypeFromKeyString(aValueList[i].key))
             {
                 case PVMI_KVPVALTYPE_UINT32:
-                    if (aValueList[i].value.uint32_value != METADATA_DURATION_VALUE)
-                    {
+                    if (METADATA_VAL_TRACKINFO_AUDIOBPS1 != aValueList[i].value.uint32_value)
                         errorbitarray |= 0x1;
-                    }
                     break;
 
                 case PVMI_KVPVALTYPE_INT32:
-                    if (aValueList[i].value.int32_value != METADATA_DURATION_VALUE)
-                    {
+                    if (METADATA_VAL_TRACKINFO_AUDIOBPS1 != aValueList[i].value.int32_value)
                         errorbitarray |= 0x1;
-                    }
                     break;
 
-                default:
-                    // Unknown value type so can't compare
+                default: // Unknown value type so can't compare
                     errorbitarray |= 0x4;
                     break;
             }
         }
-        else if (oscl_strcmp(aValueList[i].key, _STRLIT_CHAR(METADATA_NUMTRACKS_KEY)) == 0)
+        else if (0 == oscl_strcmp(METADATA_KEY_TRACKINFO_AUDIOCHANNELS1, aValueList[i].key))
         {
             valcount++;
-
             switch (GetValTypeFromKeyString(aValueList[i].key))
             {
                 case PVMI_KVPVALTYPE_UINT32:
-                    if (aValueList[i].value.uint32_value != METADATA_NUMTRACKS_VALUE)
-                    {
+                    if (METADATA_VAL_TRACKINFO_AUDIOCHANNELS1 != aValueList[i].value.uint32_value)
                         errorbitarray |= 0x1;
-                    }
                     break;
 
                 case PVMI_KVPVALTYPE_INT32:
-                    if (aValueList[i].value.int32_value != METADATA_NUMTRACKS_VALUE)
-                    {
+                    if (METADATA_VAL_TRACKINFO_AUDIOCHANNELS1 != aValueList[i].value.int32_value)
                         errorbitarray |= 0x1;
-                    }
                     break;
 
-                case PVMI_KVPVALTYPE_UINT8:
-                    if (aValueList[i].value.uint8_value != METADATA_NUMTRACKS_VALUE)
-                    {
-                        errorbitarray |= 0x1;
-                    }
-                    break;
-
-                default:
-                    // Unknown value type so can't compare
+                default: // Unknown value type so can't compare
                     errorbitarray |= 0x4;
                     break;
             }
         }
-        else if (oscl_strcmp(aValueList[i].key, _STRLIT_CHAR(METADATA_TRACKINFOTYPE0_KEY)) == 0)
+        else if (0 == oscl_strcmp(METADATA_KEY_TRACKINFO_AUDIOFORMAT1, aValueList[i].key))
         {
             valcount++;
-
             switch (GetValTypeFromKeyString(aValueList[i].key))
             {
                 case PVMI_KVPVALTYPE_CHARPTR:
-                    if (oscl_strcmp(aValueList[i].value.pChar_value, _STRLIT_CHAR(METADATA_TRACKINFOTYPE0_VALUE)) != 0)
-                    {
+                    if (0 != oscl_strcmp(METADATA_VAL_TRACKINFO_AUDIOFORMAT1, aValueList[i].value.pChar_value))
                         errorbitarray |= 0x1;
-                    }
                     break;
 
-                default:
-                    // Unknown value type so can't compare
+                default: // Unknown value type so can't compare
                     errorbitarray |= 0x4;
                     break;
             }
         }
-        else if (oscl_strcmp(aValueList[i].key, _STRLIT_CHAR(METADATA_TRACKINFOTYPE1_KEY)) == 0)
+        else if (0 == oscl_strcmp(METADATA_KEY_TRACKINFO_BITRATE0, aValueList[i].key))
         {
             valcount++;
+            switch (GetValTypeFromKeyString(aValueList[i].key))
+            {
+                case PVMI_KVPVALTYPE_UINT32:
+                    if (METADATA_VAL_TRACKINFO_BITRATE0 != aValueList[i].value.uint32_value)
+                        errorbitarray |= 0x1;
+                    break;
 
+                case PVMI_KVPVALTYPE_INT32:
+                    if (METADATA_VAL_TRACKINFO_BITRATE0 != aValueList[i].value.int32_value)
+                        errorbitarray |= 0x1;
+                    break;
+
+                default: // Unknown value type so can't compare
+                    errorbitarray |= 0x4;
+                    break;
+            }
+        }
+        else if (0 == oscl_strcmp(METADATA_KEY_TRACKINFO_BITRATE1, aValueList[i].key))
+        {
+            valcount++;
+            switch (GetValTypeFromKeyString(aValueList[i].key))
+            {
+                case PVMI_KVPVALTYPE_UINT32:
+                    if (METADATA_VAL_TRACKINFO_BITRATE1 != aValueList[i].value.uint32_value)
+                        errorbitarray |= 0x1;
+                    break;
+
+                case PVMI_KVPVALTYPE_INT32:
+                    if (METADATA_VAL_TRACKINFO_BITRATE1 != aValueList[i].value.int32_value)
+                        errorbitarray |= 0x1;
+                    break;
+
+                default: // Unknown value type so can't compare
+                    errorbitarray |= 0x4;
+                    break;
+            }
+        }
+        else if (0 == oscl_strcmp(METADATA_KEY_TRACKINFO_DURATION0, aValueList[i].key))
+        {
+            valcount++;
+            switch (GetValTypeFromKeyString(aValueList[i].key))
+            {
+                case PVMI_KVPVALTYPE_UINT32:
+                    if (METADATA_VAL_TRACKINFO_DURATION0 != aValueList[i].value.uint32_value)
+                        errorbitarray |= 0x1;
+                    break;
+
+                case PVMI_KVPVALTYPE_INT32:
+                    if (METADATA_VAL_TRACKINFO_DURATION0 != aValueList[i].value.int32_value)
+                        errorbitarray |= 0x1;
+                    break;
+
+                default: // Unknown value type so can't compare
+                    errorbitarray |= 0x4;
+                    break;
+            }
+        }
+        else if (0 == oscl_strcmp(METADATA_KEY_TRACKINFO_DURATION1, aValueList[i].key))
+        {
+            valcount++;
+            switch (GetValTypeFromKeyString(aValueList[i].key))
+            {
+                case PVMI_KVPVALTYPE_UINT32:
+                    if (METADATA_VAL_TRACKINFO_DURATION1 != aValueList[i].value.uint32_value)
+                        errorbitarray |= 0x1;
+                    break;
+
+                case PVMI_KVPVALTYPE_INT32:
+                    if (METADATA_VAL_TRACKINFO_DURATION1 != aValueList[i].value.int32_value)
+                        errorbitarray |= 0x1;
+                    break;
+
+                default: // Unknown value type so can't compare
+                    errorbitarray |= 0x4;
+                    break;
+            }
+        }
+        else if (0 == oscl_strcmp(METADATA_KEY_TRACKINFO_FRAMERATE0, aValueList[i].key))
+        {
+            valcount++;
+            switch (GetValTypeFromKeyString(aValueList[i].key))
+            {
+                case PVMI_KVPVALTYPE_UINT32:
+                    if (METADATA_VAL_TRACKINFO_FRAMERATE0 != aValueList[i].value.uint32_value)
+                        errorbitarray |= 0x1;
+                    break;
+
+                case PVMI_KVPVALTYPE_INT32:
+                    if (METADATA_VAL_TRACKINFO_FRAMERATE0 != aValueList[i].value.int32_value)
+                        errorbitarray |= 0x1;
+                    break;
+
+                default: // Unknown value type so can't compare
+                    errorbitarray |= 0x4;
+                    break;
+            }
+        }
+        else if (0 == oscl_strcmp(METADATA_KEY_TRACKINFO_NUMKEYSAMPLES0, aValueList[i].key))
+        {
+            valcount++;
+            switch (GetValTypeFromKeyString(aValueList[i].key))
+            {
+                case PVMI_KVPVALTYPE_UINT32:
+                    if (METADATA_VAL_TRACKINFO_NUMKEYSAMPLES0 != aValueList[i].value.uint32_value)
+                        errorbitarray |= 0x1;
+                    break;
+
+                case PVMI_KVPVALTYPE_INT32:
+                    if (METADATA_VAL_TRACKINFO_NUMKEYSAMPLES0 != aValueList[i].value.int32_value)
+                        errorbitarray |= 0x1;
+                    break;
+
+                default: // Unknown value type so can't compare
+                    errorbitarray |= 0x4;
+                    break;
+            }
+        }
+        else if (0 == oscl_strcmp(METADATA_KEY_TRACKINFO_NUMKEYSAMPLES1, aValueList[i].key))
+        {
+            valcount++;
+            switch (GetValTypeFromKeyString(aValueList[i].key))
+            {
+                case PVMI_KVPVALTYPE_UINT32:
+                    if (METADATA_VAL_TRACKINFO_NUMKEYSAMPLES1 != aValueList[i].value.uint32_value)
+                        errorbitarray |= 0x1;
+                    break;
+
+                case PVMI_KVPVALTYPE_INT32:
+                    if (METADATA_VAL_TRACKINFO_NUMKEYSAMPLES1 != aValueList[i].value.int32_value)
+                        errorbitarray |= 0x1;
+                    break;
+
+                default: // Unknown value type so can't compare
+                    errorbitarray |= 0x4;
+                    break;
+            }
+        }
+        else if (0 == oscl_strcmp(METADATA_KEY_TRACKINFO_NUMSAMPLES0, aValueList[i].key))
+        {
+            valcount++;
+            switch (GetValTypeFromKeyString(aValueList[i].key))
+            {
+                case PVMI_KVPVALTYPE_UINT32:
+                    if (METADATA_VAL_TRACKINFO_NUMSAMPLES0 != aValueList[i].value.uint32_value)
+                        errorbitarray |= 0x1;
+                    break;
+
+                case PVMI_KVPVALTYPE_INT32:
+                    if (METADATA_VAL_TRACKINFO_NUMSAMPLES0 != aValueList[i].value.int32_value)
+                        errorbitarray |= 0x1;
+                    break;
+
+                default: // Unknown value type so can't compare
+                    errorbitarray |= 0x4;
+                    break;
+            }
+        }
+        else if (0 == oscl_strcmp(METADATA_KEY_TRACKINFO_NUMSAMPLES1, aValueList[i].key))
+        {
+            valcount++;
+            switch (GetValTypeFromKeyString(aValueList[i].key))
+            {
+                case PVMI_KVPVALTYPE_UINT32:
+                    if (METADATA_VAL_TRACKINFO_NUMSAMPLES1 != aValueList[i].value.uint32_value)
+                        errorbitarray |= 0x1;
+                    break;
+
+                case PVMI_KVPVALTYPE_INT32:
+                    if (METADATA_VAL_TRACKINFO_NUMSAMPLES1 != aValueList[i].value.int32_value)
+                        errorbitarray |= 0x1;
+                    break;
+
+                default: // Unknown value type so can't compare
+                    errorbitarray |= 0x4;
+                    break;
+            }
+        }
+        else if (0 == oscl_strcmp(METADATA_KEY_TRACKINFO_SAMPLERATE1, aValueList[i].key))
+        {
+            valcount++;
+            switch (GetValTypeFromKeyString(aValueList[i].key))
+            {
+                case PVMI_KVPVALTYPE_UINT32:
+                    if (METADATA_VAL_TRACKINFO_SAMPLERATE1 != aValueList[i].value.uint32_value)
+                        errorbitarray |= 0x1;
+                    break;
+
+                case PVMI_KVPVALTYPE_INT32:
+                    if (METADATA_VAL_TRACKINFO_SAMPLERATE1 != aValueList[i].value.int32_value)
+                        errorbitarray |= 0x1;
+                    break;
+
+                default: // Unknown value type so can't compare
+                    errorbitarray |= 0x4;
+                    break;
+            }
+        }
+        else if (0 == oscl_strcmp(METADATA_KEY_TRACKINFO_SELECTED0, aValueList[i].key))
+        {
+            valcount++;
+            switch (GetValTypeFromKeyString(aValueList[i].key))
+            {
+                case PVMI_KVPVALTYPE_BOOL:
+                    if (METADATA_VAL_TRACKINFO_SELECTED0 != aValueList[i].value.bool_value)
+                        errorbitarray |= 0x1;
+                    break;
+
+                default: // Unknown value type so can't compare
+                    errorbitarray |= 0x4;
+                    break;
+            }
+        }
+        else if (0 == oscl_strcmp(METADATA_KEY_TRACKINFO_SELECTED1, aValueList[i].key))
+        {
+            valcount++;
+            switch (GetValTypeFromKeyString(aValueList[i].key))
+            {
+                case PVMI_KVPVALTYPE_BOOL:
+                    if (METADATA_VAL_TRACKINFO_SELECTED1 != aValueList[i].value.bool_value)
+                        errorbitarray |= 0x1;
+                    break;
+
+                default: // Unknown value type so can't compare
+                    errorbitarray |= 0x4;
+                    break;
+            }
+        }
+        else if (0 == oscl_strcmp(METADATA_KEY_TRACKINFO_SELECTED0, aValueList[i].key))
+        {
+            valcount++;
+            switch (GetValTypeFromKeyString(aValueList[i].key))
+            {
+                case PVMI_KVPVALTYPE_BOOL:
+                    if (METADATA_VAL_TRACKINFO_SELECTED0 != aValueList[i].value.bool_value)
+                        errorbitarray |= 0x1;
+                    break;
+
+                default: // Unknown value type so can't compare
+                    errorbitarray |= 0x4;
+                    break;
+            }
+        }
+        else if (0 == oscl_strcmp(METADATA_KEY_TRACKINFO_TRACKID0, aValueList[i].key))
+        {
+            valcount++;
+            switch (GetValTypeFromKeyString(aValueList[i].key))
+            {
+                case PVMI_KVPVALTYPE_UINT32:
+                    if (METADATA_VAL_TRACKINFO_TRACKID0 != aValueList[i].value.uint32_value)
+                        errorbitarray |= 0x1;
+                    break;
+
+                case PVMI_KVPVALTYPE_INT32:
+                    if (METADATA_VAL_TRACKINFO_TRACKID0 != aValueList[i].value.int32_value)
+                        errorbitarray |= 0x1;
+                    break;
+
+                default: // Unknown value type so can't compare
+                    errorbitarray |= 0x4;
+                    break;
+            }
+        }
+        else if (0 == oscl_strcmp(METADATA_KEY_TRACKINFO_TRACKID1, aValueList[i].key))
+        {
+            valcount++;
+            switch (GetValTypeFromKeyString(aValueList[i].key))
+            {
+                case PVMI_KVPVALTYPE_UINT32:
+                    if (METADATA_VAL_TRACKINFO_TRACKID1 != aValueList[i].value.uint32_value)
+                        errorbitarray |= 0x1;
+                    break;
+
+                case PVMI_KVPVALTYPE_INT32:
+                    if (METADATA_VAL_TRACKINFO_TRACKID1 != aValueList[i].value.int32_value)
+                        errorbitarray |= 0x1;
+                    break;
+
+                default: // Unknown value type so can't compare
+                    errorbitarray |= 0x4;
+                    break;
+            }
+        }
+        else if (0 == oscl_strcmp(METADATA_KEY_TRACKINFO_TYPE0, aValueList[i].key))
+        {
+            valcount++;
             switch (GetValTypeFromKeyString(aValueList[i].key))
             {
                 case PVMI_KVPVALTYPE_CHARPTR:
-                    if (oscl_strcmp(aValueList[i].value.pChar_value, _STRLIT_CHAR(METADATA_TRACKINFOTYPE1_VALUE)) != 0)
-                    {
+                    if (0 != oscl_strcmp(METADATA_VAL_TRACKINFO_TYPE0, aValueList[i].value.pChar_value))
                         errorbitarray |= 0x1;
-                    }
                     break;
 
-                default:
-                    // Unknown value type so can't compare
+                default: // Unknown value type so can't compare
                     errorbitarray |= 0x4;
                     break;
             }
         }
-        else if (oscl_strcmp(aValueList[i].key, _STRLIT_CHAR(METADATA_TRACKINFODURATION0_KEY)) == 0)
+        else if (0 == oscl_strcmp(METADATA_KEY_TRACKINFO_TYPE1, aValueList[i].key))
         {
             valcount++;
-
             switch (GetValTypeFromKeyString(aValueList[i].key))
             {
-                case PVMI_KVPVALTYPE_UINT32:
-                    if (aValueList[i].value.uint32_value != METADATA_TRACKINFODURATION0_VALUE)
-                    {
+                case PVMI_KVPVALTYPE_CHARPTR:
+                    if (0 != oscl_strcmp(METADATA_VAL_TRACKINFO_TYPE1, aValueList[i].value.pChar_value))
                         errorbitarray |= 0x1;
-                    }
                     break;
 
-                case PVMI_KVPVALTYPE_INT32:
-                    if (aValueList[i].value.int32_value != METADATA_TRACKINFODURATION0_VALUE)
-                    {
-                        errorbitarray |= 0x1;
-                    }
-                    break;
-
-                default:
-                    // Unknown value type so can't compare
+                default: // Unknown value type so can't compare
                     errorbitarray |= 0x4;
                     break;
             }
         }
-        else if (oscl_strcmp(aValueList[i].key, _STRLIT_CHAR(METADATA_TRACKINFODURATION1_KEY)) == 0)
+        else if (0 == oscl_strcmp(METADATA_KEY_TRACKINFO_VIDEOFORMAT0, aValueList[i].key))
         {
             valcount++;
-
             switch (GetValTypeFromKeyString(aValueList[i].key))
             {
-                case PVMI_KVPVALTYPE_UINT32:
-                    if (aValueList[i].value.uint32_value != METADATA_TRACKINFODURATION1_VALUE)
-                    {
+                case PVMI_KVPVALTYPE_CHARPTR:
+                    if (0 != oscl_strcmp(METADATA_VAL_TRACKINFO_VIDEOFORMAT0, aValueList[i].value.pChar_value))
                         errorbitarray |= 0x1;
-                    }
                     break;
 
-                case PVMI_KVPVALTYPE_INT32:
-                    if (aValueList[i].value.int32_value != METADATA_TRACKINFODURATION1_VALUE)
-                    {
-                        errorbitarray |= 0x1;
-                    }
-                    break;
-
-                default:
-                    // Unknown value type so can't compare
+                default: // Unknown value type so can't compare
                     errorbitarray |= 0x4;
                     break;
             }
         }
-        else if (oscl_strcmp(aValueList[i].key, _STRLIT_CHAR(METADATA_TRACKINFOBITRATE0_KEY)) == 0)
+        else if (0 == oscl_strcmp(METADATA_KEY_TRACKINFO_VIDEOHEIGHT0, aValueList[i].key))
         {
             valcount++;
-
             switch (GetValTypeFromKeyString(aValueList[i].key))
             {
                 case PVMI_KVPVALTYPE_UINT32:
-                    if (aValueList[i].value.uint32_value != METADATA_TRACKINFOBITRATE0_VALUE)
-                    {
+                    if (METADATA_VAL_TRACKINFO_VIDEOHEIGHT0 != aValueList[i].value.uint32_value)
                         errorbitarray |= 0x1;
-                    }
                     break;
 
                 case PVMI_KVPVALTYPE_INT32:
-                    if (aValueList[i].value.int32_value != METADATA_TRACKINFOBITRATE0_VALUE)
-                    {
+                    if (METADATA_VAL_TRACKINFO_VIDEOHEIGHT0 != aValueList[i].value.int32_value)
                         errorbitarray |= 0x1;
-                    }
-                    break;
-
-                default:
-                    // Unknown value type so can't compare
-                    errorbitarray |= 0x4;
-                    break;
-            }
-        }
-        else if (oscl_strcmp(aValueList[i].key, _STRLIT_CHAR(METADATA_TRACKINFOBITRATE1_KEY)) == 0)
-        {
-            valcount++;
-
-            switch (GetValTypeFromKeyString(aValueList[i].key))
-            {
-                case PVMI_KVPVALTYPE_UINT32:
-                    if (aValueList[i].value.uint32_value != METADATA_TRACKINFOBITRATE1_VALUE)
-                    {
-                        errorbitarray |= 0x1;
-                    }
-                    break;
-
-                case PVMI_KVPVALTYPE_INT32:
-                    if (aValueList[i].value.int32_value != METADATA_TRACKINFOBITRATE1_VALUE)
-                    {
-                        errorbitarray |= 0x1;
-                    }
-                    break;
-
-                default:
-                    // Unknown value type so can't compare
-                    errorbitarray |= 0x4;
-                    break;
-            }
-        }
-        else if (oscl_strcmp(aValueList[i].key, _STRLIT_CHAR(METADATA_TRACKINFOVIDEOWIDTH0_KEY)) == 0)
-        {
-            valcount++;
-
-            switch (GetValTypeFromKeyString(aValueList[i].key))
-            {
-                case PVMI_KVPVALTYPE_UINT32:
-                    if (aValueList[i].value.uint32_value != METADATA_TRACKINFOVIDEOWIDTH0_VALUE)
-                    {
-                        errorbitarray |= 0x1;
-                    }
-                    break;
-
-                case PVMI_KVPVALTYPE_INT32:
-                    if (aValueList[i].value.int32_value != METADATA_TRACKINFOVIDEOWIDTH0_VALUE)
-                    {
-                        errorbitarray |= 0x1;
-                    }
                     break;
 
                 case PVMI_KVPVALTYPE_UINT8:
-                    if (aValueList[i].value.uint8_value != METADATA_TRACKINFOVIDEOWIDTH0_VALUE)
-                    {
+                    if (METADATA_VAL_TRACKINFO_VIDEOHEIGHT0 != aValueList[i].value.uint8_value)
                         errorbitarray |= 0x1;
-                    }
                     break;
 
-                default:
-                    // Unknown value type so can't compare
+                default: // Unknown value type so can't compare
                     errorbitarray |= 0x4;
                     break;
             }
         }
-        else if (oscl_strcmp(aValueList[i].key, _STRLIT_CHAR(METADATA_TRACKINFOVIDEOWIDTH1_KEY)) == 0)
+        else if (0 == oscl_strcmp(METADATA_KEY_TRACKINFO_VIDEOWIDTH0, aValueList[i].key))
         {
             valcount++;
-
             switch (GetValTypeFromKeyString(aValueList[i].key))
             {
                 case PVMI_KVPVALTYPE_UINT32:
-                    if (aValueList[i].value.uint32_value != METADATA_TRACKINFOVIDEOWIDTH1_VALUE)
-                    {
+                    if (METADATA_VAL_TRACKINFO_VIDEOWIDTH0 != aValueList[i].value.uint32_value)
                         errorbitarray |= 0x1;
-                    }
                     break;
 
                 case PVMI_KVPVALTYPE_INT32:
-                    if (aValueList[i].value.int32_value != METADATA_TRACKINFOVIDEOWIDTH1_VALUE)
-                    {
+                    if (METADATA_VAL_TRACKINFO_VIDEOWIDTH0 != aValueList[i].value.int32_value)
                         errorbitarray |= 0x1;
-                    }
                     break;
 
                 case PVMI_KVPVALTYPE_UINT8:
-                    if (aValueList[i].value.uint8_value != METADATA_TRACKINFOVIDEOWIDTH1_VALUE)
-                    {
+                    if (METADATA_VAL_TRACKINFO_VIDEOWIDTH0 != aValueList[i].value.uint8_value)
                         errorbitarray |= 0x1;
-                    }
                     break;
 
-                default:
-                    // Unknown value type so can't compare
-                    errorbitarray |= 0x4;
-                    break;
-            }
-        }
-        else if (oscl_strcmp(aValueList[i].key, _STRLIT_CHAR(METADATA_TRACKINFOVIDEOHEIGHT0_KEY)) == 0)
-        {
-            valcount++;
-
-            switch (GetValTypeFromKeyString(aValueList[i].key))
-            {
-                case PVMI_KVPVALTYPE_UINT32:
-                    if (aValueList[i].value.uint32_value != METADATA_TRACKINFOVIDEOHEIGHT0_VALUE)
-                    {
-                        errorbitarray |= 0x1;
-                    }
-                    break;
-
-                case PVMI_KVPVALTYPE_INT32:
-                    if (aValueList[i].value.int32_value != METADATA_TRACKINFOVIDEOHEIGHT0_VALUE)
-                    {
-                        errorbitarray |= 0x1;
-                    }
-                    break;
-
-                case PVMI_KVPVALTYPE_UINT8:
-                    if (aValueList[i].value.uint8_value != METADATA_TRACKINFOVIDEOHEIGHT0_VALUE)
-                    {
-                        errorbitarray |= 0x1;
-                    }
-                    break;
-
-                default:
-                    // Unknown value type so can't compare
-                    errorbitarray |= 0x4;
-                    break;
-            }
-        }
-        else if (oscl_strcmp(aValueList[i].key, _STRLIT_CHAR(METADATA_TRACKINFOVIDEOHEIGHT1_KEY)) == 0)
-        {
-            valcount++;
-
-            switch (GetValTypeFromKeyString(aValueList[i].key))
-            {
-                case PVMI_KVPVALTYPE_UINT32:
-                    if (aValueList[i].value.uint32_value != METADATA_TRACKINFOVIDEOHEIGHT1_VALUE)
-                    {
-                        errorbitarray |= 0x1;
-                    }
-                    break;
-
-                case PVMI_KVPVALTYPE_INT32:
-                    if (aValueList[i].value.int32_value != METADATA_TRACKINFOVIDEOHEIGHT1_VALUE)
-                    {
-                        errorbitarray |= 0x1;
-                    }
-                    break;
-
-                case PVMI_KVPVALTYPE_UINT8:
-                    if (aValueList[i].value.uint8_value != METADATA_TRACKINFOVIDEOHEIGHT1_VALUE)
-                    {
-                        errorbitarray |= 0x1;
-                    }
-                    break;
-
-                default:
-                    // Unknown value type so can't compare
-                    errorbitarray |= 0x4;
-                    break;
-            }
-        }
-        else if (oscl_strcmp(aValueList[i].key, _STRLIT_CHAR(METADATA_CODECINFOVIDEOWIDTH_KEY)) == 0)
-        {
-            valcount++;
-
-            switch (GetValTypeFromKeyString(aValueList[i].key))
-            {
-                case PVMI_KVPVALTYPE_UINT32:
-                    if (aValueList[i].value.uint32_value != METADATA_CODECINFOVIDEOWIDTH_VALUE)
-                    {
-                        errorbitarray |= 0x1;
-                    }
-                    break;
-
-                case PVMI_KVPVALTYPE_INT32:
-                    if (aValueList[i].value.int32_value != METADATA_CODECINFOVIDEOWIDTH_VALUE)
-                    {
-                        errorbitarray |= 0x1;
-                    }
-                    break;
-
-                case PVMI_KVPVALTYPE_UINT8:
-                    if (aValueList[i].value.uint8_value != METADATA_CODECINFOVIDEOWIDTH_VALUE)
-                    {
-                        errorbitarray |= 0x1;
-                    }
-                    break;
-
-                default:
-                    // Unknown value type so can't compare
-                    errorbitarray |= 0x4;
-                    break;
-            }
-        }
-        else if (oscl_strcmp(aValueList[i].key, _STRLIT_CHAR(METADATA_CODECINFOVIDEOHEIGHT_KEY)) == 0)
-        {
-            valcount++;
-
-            switch (GetValTypeFromKeyString(aValueList[i].key))
-            {
-                case PVMI_KVPVALTYPE_UINT32:
-                    if (aValueList[i].value.uint32_value != METADATA_CODECINFOVIDEOHEIGHT_VALUE)
-                    {
-                        errorbitarray |= 0x1;
-                    }
-                    break;
-
-                case PVMI_KVPVALTYPE_INT32:
-                    if (aValueList[i].value.int32_value != METADATA_CODECINFOVIDEOHEIGHT_VALUE)
-                    {
-                        errorbitarray |= 0x1;
-                    }
-                    break;
-
-                case PVMI_KVPVALTYPE_UINT8:
-                    if (aValueList[i].value.uint8_value != METADATA_CODECINFOVIDEOHEIGHT_VALUE)
-                    {
-                        errorbitarray |= 0x1;
-                    }
-                    break;
-
-                default:
-                    // Unknown value type so can't compare
+                default: // Unknown value type so can't compare
                     errorbitarray |= 0x4;
                     break;
             }
         }
     }
 
-    if (aValueList.size() != valcount)
-    {
+    if (valcount != aValueList.size())
         errorbitarray |= 0x2;
-    }
 
     return errorbitarray;
 }
