@@ -118,8 +118,13 @@
 #include "pv_player_registry_interface.h"
 #endif
 
+#ifndef THREADSAFE_QUEUE_H_INCLUDED
 #include "threadsafe_queue.h"
+#endif
+
+#ifndef CPM_H_INCLUDED
 #include "cpm.h"
+#endif
 #include "pvmf_cpmplugin_domain_interface_types.h"
 
 /**
@@ -1600,6 +1605,10 @@ class PVPlayerEngine
 
         PVPPlaybackPositionMode iPlaybackPositionMode;
         bool iOverflowFlag;
+
+        //CPM related - As of today we use this instance of CPM in QueryInterface calls only
+        //outside of this engine has no interactions with CPM.
+        PVMFCPM* iCPM;
 };
 
 /**

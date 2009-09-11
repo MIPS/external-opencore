@@ -112,6 +112,13 @@ PVPlayerEngine::~PVPlayerEngine()
 {
     Cancel();
 
+    if (iCPM)
+    {
+        iCPM->ThreadLogoff();
+        PVMFCPMFactory::DestroyContentPolicyManager(iCPM);
+        iCPM = NULL;
+    }
+
     // Clear the Track selection List
     iTrackSelectionList.clear();
 
@@ -999,10 +1006,45 @@ bool PVPlayerEngine::queryInterface(const PVUuid& uuid, PVInterface*& iface)
     }
     else
     {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::queryInterface() Unsupported interface UUID."));
-        status = false;
+        //check to see if we can query the interface from CPM
+        //we would still like to complete queryinterface in a single AO run
+        //therefore we will rely on sync queryinterface of CPM to query for the interface
+        //In future if we want to asynchronously query for interfaces from CPM, source node, datapath etc
+        //then in addition to holding back QueryInterface cmd complete till modules underneath have completed
+        //their async QueryInterface cmds, we also need to update the cancel command processing to make sure we handle
+        //cancel of async QueryInterface properly. These are not handled / untested as of today.
+        //Also please note that this CPM instance is different from the one that is used inside source nodes.
+        //Ability to interact with CPM plugins outside of source nodes is possible via such extension interfaces. That
+        //said, the users of these interfaces should be well aware of the usecase. These usecase typically involve
+        //drm maintenance related stuff, things like device activation, metering, cleaning up license stores etc etc.
+        if (iCPM == NULL)
+        {
+            //create CPM and do threadlogon
+            iCPM = PVMFCPMFactory::CreateContentPolicyManager(*this);
+            //thread logon may leave if there are no plugins
+            int32 err;
+            OSCL_TRY(err, iCPM->ThreadLogon(););
+            OSCL_FIRST_CATCH_ANY(err,
+                                 iCPM->ThreadLogoff();
+                                 PVMFCPMFactory::DestroyContentPolicyManager(iCPM);
+                                 iCPM = NULL;
+                                 status = false;
+                                );
+            //we will destroy CPM as part of engine destructor
+            //(not reset since technically init is not required to query for interfaces).
+            //in case we happen to provide an interface from CPM, CPM needs to
+            //persist till we are done with the interface
+        }
+        if (status)
+        {
+            //go ahead and query the CPM for interface
+            status = iCPM->queryInterface(uuid, iface);
+        }
+        if (!status)
+        {
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::queryInterface() Unsupported interface UUID."));
+        }
     }
-
     return status;
 }
 
@@ -1158,6 +1200,8 @@ void PVPlayerEngine::Construct(PVCommandStatusObserver* aCmdStatusObserver,
 
     iMetadataValueReleaseList.reserve(6);
     iMetadataValueReleaseList.clear();
+
+    iCPM = NULL;
 
     AddToScheduler();
 

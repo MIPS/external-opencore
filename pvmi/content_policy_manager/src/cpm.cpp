@@ -459,7 +459,37 @@ OSCL_EXPORT_REF void PVMFCPMImpl::ThreadLogon()
         iPluginRegistry = NULL;
         OSCL_LEAVE(OsclErrGeneral);
     }
+    else
+    {
+        //populate plugin params vector
+        for (uint32 i = 0; i < iPluginRegistry->GetNumPlugIns(); i++)
+        {
+            CPMPlugInParams plugInParams;
 
+            iPluginRegistry->GetPluginMimeType(i, plugInParams.iPlugInMimeType);
+            plugInParams.iPlugInID = i;
+
+            CPMPluginContainer* container =
+                iPluginRegistry->lookupPlugin(plugInParams.iPlugInMimeType);
+
+            if (container)
+            {
+                PVMFCPMPluginInterface& iface = container->PlugIn();
+                OsclAny* _pPlugInData = container->PlugInUserAuthenticationData();
+                plugInParams.iPlugInInterface = &iface;
+                plugInParams.iPlugInData = _pPlugInData;
+                iPlugInParamsVec.push_back(plugInParams);
+                iAccessPlugin = NULL;
+            }
+        }
+        /* Connect with all plugins */
+        Oscl_Vector<CPMPlugInParams, OsclMemAllocator>::iterator it;
+        for (it = iPlugInParamsVec.begin(); it != iPlugInParamsVec.end(); it++)
+        {
+            it->iPlugInSessionID = it->iPlugInInterface->Connect(*this);
+            it->iConnected = true;
+        }
+    }
 }
 
 OSCL_EXPORT_REF void PVMFCPMImpl::ThreadLogoff()
@@ -513,6 +543,30 @@ OSCL_EXPORT_REF bool PVMFCPMImpl::queryInterface(const PVUuid& uuid,
             OSCL_STATIC_CAST(PvmiCapabilityAndConfig*, this);
         iface = OSCL_STATIC_CAST(PVInterface*, myInterface);
         return true;
+    }
+    else
+    {
+        //check to see if we can synchronously get the interface
+        //from any of the underlying CPM plugins (it is possible
+        //that some CPM plugin might choose to support async queryinterface
+        //only, however we do not handle querying for such interfaces here)
+        //Or in other words if a CPM plugin wanted to hand out extension
+        //interfaces to layers above CPM it should implement QueryInterfaceSync
+        Oscl_Vector<CPMPlugInParams, OsclMemAllocator>::iterator it;
+        for (it = iPlugInParamsVec.begin(); it != iPlugInParamsVec.end(); it++)
+        {
+            if ((it->iPlugInInterface) &&
+                    (it->iPlugInInterface->HasQueryInterfaceSync()))
+            {
+                PVMFStatus status =
+                    it->iPlugInInterface->QueryInterfaceSync(it->iPlugInSessionID, uuid, iface);
+                if (status == PVMFSuccess)
+                {
+                    //found it
+                    return true;
+                }
+            }
+        }
     }
     return false;
 }
@@ -1031,34 +1085,6 @@ void PVMFCPMImpl::DoInit(PVMFCPMCommand& aCmd)
     {
         PVMF_CPM_LOGERROR((0, "PVMFCPMImpl::DoInit - No Plugin Registry"));
         CommandComplete(iInputCommands, aCmd, PVMFFailure);
-    }
-
-    for (uint32 i = 0; i < iPluginRegistry->GetNumPlugIns(); i++)
-    {
-        CPMPlugInParams plugInParams;
-
-        iPluginRegistry->GetPluginMimeType(i, plugInParams.iPlugInMimeType);
-        plugInParams.iPlugInID = i;
-
-        CPMPluginContainer* container =
-            iPluginRegistry->lookupPlugin(plugInParams.iPlugInMimeType);
-
-        if (container)
-        {
-            PVMFCPMPluginInterface& iface = container->PlugIn();
-            OsclAny* _pPlugInData = container->PlugInUserAuthenticationData();
-            plugInParams.iPlugInInterface = &iface;
-            plugInParams.iPlugInData = _pPlugInData;
-            iPlugInParamsVec.push_back(plugInParams);
-            iAccessPlugin = NULL; //clear the iterator corresponding to iPlugInParamsVec
-        }
-    }
-    /* Connect with all plugins */
-    Oscl_Vector<CPMPlugInParams, OsclMemAllocator>::iterator it;
-    for (it = iPlugInParamsVec.begin(); it != iPlugInParamsVec.end(); it++)
-    {
-        it->iPlugInSessionID = it->iPlugInInterface->Connect(*this);
-        it->iConnected = true;
     }
     PVMFStatus status = InitRegisteredPlugIns();
     if (status == PVMFSuccess)
