@@ -390,9 +390,10 @@ Int get_adts_header(
          */
         pVars->prog_config.profile = (lower_16 >> 10) & 0x3;
 
-        if (pVars->prog_config.profile == MP4AUDIO_AAC_SSR)
+        if (((pVars->prog_config.profile + 1) == MP4AUDIO_AAC_SSR) ||
+                ((pVars->prog_config.profile + 1) == MP4AUDIO_AAC_MAIN))
         {
-            status = 1;     /* Not supported */
+            status = 1;     /* Not supported, only LC and LTP */
         }
 
         /*
