@@ -73,7 +73,7 @@ include $(MK)/library.mk
 
 doc_target := pv2way_engine
 doc_title := "PV2Way Engine"
-doc_paths := "$(SRC_ROOT)/engines/2way/include $(SRC_ROOT)/protocols/systems/common/include/pv_2way_basic_types.h $(SRC_ROOT)/protocols/systems/3g-324m_pvterminal/common/include/pv_2way_h324m_types.h $(SRC_ROOT)/protocols/systems/3g-324m_pvterminal/h324/tsc/include/tsc_h324m_config_interface.h
+doc_paths := "$(SRC_ROOT)/engines/2way/include $(SRC_ROOT)/protocols/systems/common/include/pv_2way_basic_types.h $(SRC_ROOT)/protocols/systems/3g-324m_pvterminal/common/include/pv_2way_h324m_types.h $(SRC_ROOT)/protocols/systems/3g-324m_pvterminal/h324/tsc/include/tsc_h324m_config_interface.h"
 doc_version := $(PV2WAY_ENGINE_VERSION)
 
 include $(MK)/doc.mk 
