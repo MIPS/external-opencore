@@ -145,6 +145,84 @@ class engine_test : public test_case,
 
     protected:
 
+        /*!
+
+          Step 12: Cleanup
+          Step 12b: Disconnect
+          Disconnect the terminal.
+        */
+        virtual void disconnect()
+        {
+            int error = 0;
+            OSCL_TRY(error, iDisCmdId = terminal->Disconnect());
+            if (error)
+            {
+                reset();
+            }
+        }
+
+        virtual void cleanup()
+        {
+            destroy_comm();
+        }
+
+        virtual void reset()
+        {
+            int error = 0;
+            cleanup();
+            /*!
+
+              Step 12: Cleanup
+              Step 12c: Reset
+              Reset the terminal
+            */
+            OSCL_TRY(error, iRstCmdId = terminal->Reset());
+            if (error)
+            {
+                RunIfNotReady();
+            }
+        }
+
+        virtual void connect()
+        {
+            int error = 0;
+            /*!
+
+              Step 8: Connect terminal
+              @param connection options, communication node
+            */
+            OSCL_TRY(error, iConnectCmdId = terminal->Connect(iConnectOptions, iCommServer));
+            if (error)
+            {
+                reset();
+            }
+        }
+
+        virtual void printFormatString(PVMFFormatType aFormatType)
+        {
+            fprintf(fileoutput, "%s", aFormatType.getMIMEStrPtr());
+        }
+
+        bool check_audio_started()
+        {
+            return (iAudioSourceAdded && iAudioSinkAdded);
+        }
+        bool check_audio_stopped()
+        {
+            return (!iAudioSourceAdded && !iAudioSinkAdded);
+        }
+        bool check_video_started()
+        {
+            return (iVideoSourceAdded && iVideoSinkAdded);
+        }
+        bool check_video_stopped()
+        {
+            return (!iVideoSourceAdded && !iVideoSinkAdded);
+        }
+
+
+        void create_comm();
+        void destroy_comm();
 
         PVCommandId iRstCmdId, iDisCmdId, iConnectCmdId, iInitCmdId;
 
@@ -178,67 +256,6 @@ class engine_test : public test_case,
         PVCommandId iVideoPauseSinkId;
         PVCommandId iVideoResumeSinkId;
 
-        virtual void disconnect()
-        {
-            int error = 0;
-            OSCL_TRY(error, iDisCmdId = terminal->Disconnect());
-            if (error)
-            {
-                reset();
-            }
-        }
-
-        virtual void cleanup()
-        {
-            destroy_comm();
-        }
-
-        virtual void reset()
-        {
-            int error = 0;
-            cleanup();
-            OSCL_TRY(error, iRstCmdId = terminal->Reset());
-            if (error)
-            {
-                RunIfNotReady();
-            }
-        }
-
-        virtual void connect()
-        {
-            int error = 0;
-            OSCL_TRY(error, iConnectCmdId = terminal->Connect(iConnectOptions, iCommServer));
-            if (error)
-            {
-                reset();
-            }
-        }
-
-        virtual void printFormatString(PVMFFormatType aFormatType)
-        {
-            fprintf(fileoutput, "%s", aFormatType.getMIMEStrPtr());
-        }
-
-        bool check_audio_started()
-        {
-            return (iAudioSourceAdded && iAudioSinkAdded);
-        }
-        bool check_audio_stopped()
-        {
-            return (!iAudioSourceAdded && !iAudioSinkAdded);
-        }
-        bool check_video_started()
-        {
-            return (iVideoSourceAdded && iVideoSinkAdded);
-        }
-        bool check_video_stopped()
-        {
-            return (!iVideoSourceAdded && !iVideoSinkAdded);
-        }
-
-
-        void create_comm();
-        void destroy_comm();
 
         bool iUseProxy;
         int iMaxRuns;

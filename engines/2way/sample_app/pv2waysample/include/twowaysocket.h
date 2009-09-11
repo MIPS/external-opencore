@@ -53,13 +53,13 @@ class TwoWaySocket: public OsclSocketObserver
 {
     public:
 
-        TwoWaySocket(TwoWaySocketObserver *aObserver);
-        ~TwoWaySocket();
+        OSCL_IMPORT_REF TwoWaySocket(TwoWaySocketObserver *aObserver);
+        OSCL_IMPORT_REF virtual ~TwoWaySocket();
 
-        bool ConnectSocket(bool aIsServer, int aPort, char* aIpAddr = NULL);
-        void DeleteCommServer();
+        OSCL_IMPORT_REF bool ConnectSocket(bool aIsServer, int aPort, char* aIpAddr = NULL);
+        OSCL_IMPORT_REF void DeleteCommServer();
 
-        bool Connect();
+        OSCL_IMPORT_REF bool Connect();
 
 
     private:

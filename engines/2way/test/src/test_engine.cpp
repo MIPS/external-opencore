@@ -1026,11 +1026,21 @@ int test_wrapper()
 {
     int result;
 
+    /*!
+
+      Step 1b: Initialization
+      Includes initializing OsclErrorTrap, OsclScheduler
+    */
     OsclErrorTrap::Init();
     OsclScheduler::Init("PV2WayEngineFactory");
 
     result = start_test();
 
+    /*!
+
+      Step 12f: Cleanup
+      Includes cleanup OsclErrorTrap, OsclScheduler
+    */
     OsclScheduler::Cleanup();
     OsclErrorTrap::Cleanup();
 
@@ -1109,6 +1119,11 @@ int local_main(FILE* filehandle, cmd_line *command_line)
 #endif
 #endif
 #endif
+    /*!
+
+      Step 12: Cleanup
+      Step 12g: Cleanup PVLogger, etc
+    */
     CPV2WayEngineFactory::Cleanup();
 
     return (result);

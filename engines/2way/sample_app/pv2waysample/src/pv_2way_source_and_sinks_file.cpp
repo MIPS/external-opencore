@@ -52,6 +52,12 @@ OSCL_EXPORT_REF PVMFNodeInterface* PV2WaySourceAndSinksFile::CreateMIONode(Codec
     {
         MIOFileCodecSpecifier* temp = OSCL_REINTERPRET_CAST(MIOFileCodecSpecifier*, aformat);
         PvmiMIOFileInputSettings fileSettings = temp->GetSpecifierType();
+        /*!
+
+          Step 10: Create MIO Node
+          Create appropriate MIO Node (audio/video, incoming/outgoing)
+          Note: here were are creating file-based MIO nodes
+        */
         if (adir == INCOMING)
         {
             if (format.isAudio())

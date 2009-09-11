@@ -48,7 +48,11 @@ void test_base::CreateH324Component(bool aCreateH324)
 {
     OSCL_UNUSED_ARG(aCreateH324);
 
+    /*!
 
+      Step 4b: Create Component
+      First step in creating h324m ocmponent- querying for the TSC node using the PVH324MConfigUuid UUID.
+    */
     // get TSC node
     iQueryInterfaceCmdId = terminal->QueryInterface(PVH324MConfigUuid, iTempH324MConfigIterface);
 
@@ -56,6 +60,11 @@ void test_base::CreateH324Component(bool aCreateH324)
 
 void test_base::QueryInterfaceSucceeded()
 {
+    /*!
+
+      Step 6b: Query H324m component
+      Using the appropriate uuid, and the TSC node, query for the H324m component
+    */
     if (iH324MConfig)
     {
         iH324MConfig->SetObserver(this);
@@ -73,6 +82,13 @@ bool test_base::Init()
     int32 error = 0;
     OSCL_FastString aStr;
 
+    /*!
+
+      Step 7: Initialize terminal
+      @param PV2Way324InitInfo
+      Initialize the terminal using PV2Way324InitInfo structure to set
+      the formats that the application supports
+    */
     OSCL_TRY(error, iInitCmdId = terminal->Init(iSdkInitInfo));
     if (error)
     {
@@ -261,6 +277,14 @@ void test_base::CommandCompleted(const PVCmdResponse& aResponse)
         {
             if (iTempH324MConfigIterface)
             {
+                /*!
+
+                  Step 6: Finish Querying Component
+
+                  Step 6a: Receive notification that TSC node interface pointer has been set.
+                  At this point we are notified that the TSC node interface pointer is valid.
+                  Convert the pointer to H324MConfigInterface
+                */
                 iH324MConfig = OSCL_STATIC_CAST(H324MConfigInterface*, iTempH324MConfigIterface);
                 iH324MConfig->addRef();
                 iTempH324MConfigIterface->removeRef();
@@ -441,6 +465,12 @@ void test_base::InitializeLogs()
 bool test_base::start_async_test()
 {
     int error = 0;
+    /*!
+
+      Step 2: Create terminal
+      Create proxy/non-proxy terminal using CPV2WayProxyFactory or CPV2WayEngineFactory
+      @param PVCommandStatusObserver, PVInformationalEventObserver, PVErrorEventObserver to receive notifications from SDK
+    */
     if (iUseProxy)
     {
         OSCL_TRY(error, terminal = CPV2WayProxyFactory::CreateTerminal(PV_324M,
@@ -467,6 +497,11 @@ bool test_base::start_async_test()
     {
         iSourceAndSinks->SetTerminal(terminal);
     }
+    /*!
+
+      Step 3: Initialize logs
+      Initialize logs, send parameters to the terminal
+    */
     InitializeLogs();
 
     iInitCmdId = -1;
@@ -477,6 +512,12 @@ bool test_base::start_async_test()
 
 void test_base::CreateParts()
 {
+    /*!
+
+      Step 4: Create Communication, H324 component
+      Create communication node, query for the H324 component
+      In this case the communication node is a loopback node.
+    */
     create_comm();
     CreateH324Component();
 }
@@ -485,6 +526,12 @@ void test_base::HandleInformationalEvent(const PVAsyncInformationalEvent& aEvent
 {
     switch (aEvent.GetEventType())
     {
+            /*!
+
+              Step 9: Receive track indications
+              Receive either PVT_INDICATION_OUTGOING_TRACK or PVT_INDICATION_INCOMING_TRACK
+              through the PVInformationalEventObserver interface
+            */
         case PVT_INDICATION_OUTGOING_TRACK:
         {
             TPVChannelId *channel_id = (TPVChannelId *)(&aEvent.GetLocalBuffer()[4]);

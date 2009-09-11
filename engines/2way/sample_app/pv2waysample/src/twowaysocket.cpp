@@ -33,7 +33,7 @@
 #define LISTEN_QUEUE_SIZE 12
 
 
-TwoWaySocket::TwoWaySocket(TwoWaySocketObserver *aObserver) :
+OSCL_EXPORT_REF TwoWaySocket::TwoWaySocket(TwoWaySocketObserver *aObserver) :
         iServ(NULL),
         iTCPServerSocket(NULL),
         iTCPClientSocket(NULL),
@@ -49,17 +49,17 @@ TwoWaySocket::TwoWaySocket(TwoWaySocketObserver *aObserver) :
 
 }
 
-TwoWaySocket::~TwoWaySocket()
+OSCL_EXPORT_REF TwoWaySocket::~TwoWaySocket()
 {
 }
 
-void TwoWaySocket::DeleteCommServer()
+OSCL_EXPORT_REF void TwoWaySocket::DeleteCommServer()
 {
     PVMFClientServerSocketNodeFactory::DeleteClientServerSocketNode(iCommServer);
     iCommServer = NULL;
 }
 
-bool TwoWaySocket::ConnectSocket(bool aIsServer, int aPort, char* aIpAddr)
+OSCL_EXPORT_REF bool TwoWaySocket::ConnectSocket(bool aIsServer, int aPort, char* aIpAddr)
 {
     ServConnect();
     if (aIsServer)

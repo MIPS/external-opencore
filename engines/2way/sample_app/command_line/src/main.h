@@ -15,13 +15,13 @@
  * and limitations under the License.
  * -------------------------------------------------------------------
  */
-#ifndef PV_PLAYER_SDKINFO_H_INCLUDED
-#define PV_PLAYER_SDKINFO_H_INCLUDED
+#ifndef MAIN_H
+#define MAIN_H
 
-// This header file is automatically generated at build-time
-// *** OFFICIAL RELEASE INFO -- Will not auto update
+void ConnectSocket();
+void print_commands();
+void evaluate_command();
+void MemoryStats();
+void checkForLeaks();
 
-#define PVPLAYER_ENGINE_SDKINFO_LABEL "939646"
-#define PVPLAYER_ENGINE_SDKINFO_DATE 0x20090831
-
-#endif //PV_PLAYER_SDKINFO_H_INCLUDED
+#endif

@@ -20,6 +20,12 @@
 void engine_test::create_comm()
 {
 #ifndef NO_2WAY_324
+    /*!
+
+      Step 4a: Create Communication
+      Create communication node
+      In this case the communication node is a loopback node.
+    */
     iCommSettings.iMediaFormat = PVMF_MIME_H223;
     iCommSettings.iTestObserver = NULL;
     iCommServerIOControl = PvmiMIOCommLoopbackFactory::Create(iCommSettings);

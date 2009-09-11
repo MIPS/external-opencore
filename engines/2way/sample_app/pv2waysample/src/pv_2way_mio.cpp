@@ -114,6 +114,11 @@ OSCL_EXPORT_REF PVCommandId PV2WayMIO::Add()
     int32 error = 0;
     if (!iAdded)
     {
+        /*!
+
+          Step 11: Add MIO Node to terminal
+          Add appropriate MIO Node to terminal (audio/video, incoming/outgoing)
+        */
         if (iMyDir == INCOMING)
         {
             OSCL_TRY(error, iAddId = iTerminal->AddDataSink(iChannelId,
@@ -150,6 +155,11 @@ OSCL_EXPORT_REF PVCommandId PV2WayMIO::Remove()
 {
     int32 error = 0;
     iRemoving = true;
+    /*!
+
+      Step 12: Cleanup
+      Step 12a: Remove source and sinks
+    */
     if (iMioNode && iRemoveId == -1)
     {
         if (iMyDir == INCOMING)

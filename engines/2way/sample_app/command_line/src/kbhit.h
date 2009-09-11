@@ -15,13 +15,7 @@
  * and limitations under the License.
  * -------------------------------------------------------------------
  */
-#ifndef PV_PLAYER_SDKINFO_H_INCLUDED
-#define PV_PLAYER_SDKINFO_H_INCLUDED
-
-// This header file is automatically generated at build-time
-// *** OFFICIAL RELEASE INFO -- Will not auto update
-
-#define PVPLAYER_ENGINE_SDKINFO_LABEL "939646"
-#define PVPLAYER_ENGINE_SDKINFO_DATE 0x20090831
-
-#endif //PV_PLAYER_SDKINFO_H_INCLUDED
+#ifndef _INCLUDE_KBHIT_H_
+#define _INCLUDE_KBHIT_H_
+int _kbhit(void);
+#endif

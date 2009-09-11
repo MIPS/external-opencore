@@ -33,6 +33,11 @@ void av_test::test()
 
     if (start_async_test())
     {
+        /*!
+
+          Step 5: Start scheduler
+          Start scheduler- will start sending messages once initialized
+        */
         OSCL_TRY(error, scheduler->StartScheduler());
         if (error != 0)
         {
@@ -47,6 +52,11 @@ void av_test::test()
 
 void av_test::Run()
 {
+    /*!
+
+      Step 12: Cleanup
+      Step 12d: Delete terminal
+    */
     if (terminal)
     {
         if (iUseProxy)
@@ -66,6 +76,11 @@ void av_test::Run()
         timer = NULL;
     }
 
+    /*!
+
+      Step 12: Cleanup
+      Step 12e: Stop Scheduler
+    */
     scheduler->StopScheduler();
 }
 
@@ -211,6 +226,12 @@ void av_test::FinishTimerCallback()
 {
     int error = 0;
     fprintf(fileoutput, "\nRemoving source and sinks \n");
+    /*!
+
+      Step 12: Cleanup
+      Step 12a: Remove source and sinks
+    */
+
     OSCL_TRY(error, iVideoRemoveSourceId = iSourceAndSinks->RemoveVideoSource());
     if (error)
     {

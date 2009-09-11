@@ -36,6 +36,7 @@ include $(PV_TOP)/oscl/unit_test/Android.mk
 ifeq ($(BUILD_PV_TEST_APPS),1)
 include $(PV_TOP)/engines/player/test/Android.mk
 include $(PV_TOP)/engines/author/test/Android.mk
+include $(PV_TOP)/engines/2way/sample_app/command_line/Android.mk
 include $(PV_TOP)/codecs_v2/omx/omx_testapp/Android.mk
 include $(PV_TOP)/codecs_v2/omx/omx_testapp_enc/Android.mk
 ifeq ($(BUILD_PV_2WAY),1)
