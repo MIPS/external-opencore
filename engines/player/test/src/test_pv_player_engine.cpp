@@ -1766,16 +1766,17 @@ void FindXmlResultsFile(cmd_line* command_line, OSCL_HeapString<OsclMemAllocator
         if (oscl_strcmp(argstr, "-help") == 0)
         {
             fprintf(aFile, "XML test results file option.  Default is to not write a summary.\n");
-            fprintf(aFile, "  -xmlOutput file\n");
+            fprintf(aFile, "  -xmloutput file\n");
             fprintf(aFile, "   Specify a source filename to output a test results summary to.\n");
         }
-        else if (oscl_strcmp(argstr, "-xmlOutput") == 0)
+        else if (oscl_strcmp(argstr, "-xmloutput") == 0)
         {
             iFileFound = true;
             iFileArgument = ++iFileSearch;
             break;
         }
     }
+
 
     if (iFileFound)
     {
@@ -1798,9 +1799,32 @@ void FindXmlResultsFile(cmd_line* command_line, OSCL_HeapString<OsclMemAllocator
     }
 }
 
-void XmlSummary(OSCL_HeapString<OsclMemAllocator> &xmlresultsfile, const test_result& result)
+void WriteInitialXmlSummary(OSCL_HeapString<OsclMemAllocator> &xmlresultsfile)
 {
-    // Print out xml summary if requested
+    // Only print an xml summary if requested.
+    if (xmlresultsfile.get_size() > 0)
+    {
+        Oscl_File xmlfile(0);
+        Oscl_FileServer iFileServer;
+        iFileServer.Connect();
+        if (0 == xmlfile.Open(xmlresultsfile.get_str(), Oscl_File::MODE_READWRITE | Oscl_File::MODE_TEXT, iFileServer))
+        {
+            xml_test_interpreter xml_interp;
+            _STRING xml_results = xml_interp.unexpected_termination_interpretation("PVPlayerEngineUnitTest");
+            xmlfile.Write(xml_results.c_str(), sizeof(char), oscl_strlen(xml_results.c_str()));
+            xmlfile.Close();
+            iFileServer.Close();
+        }
+        else
+        {
+            fprintf(file, "ERROR: Failed to open XML test summary log file: %s!\n", xmlresultsfile.get_cstr());
+        }
+    }
+}
+
+void WriteFinalXmlSummary(OSCL_HeapString<OsclMemAllocator> &xmlresultsfile, const test_result& result)
+{
+    // Only print an xml summary if requested.
     if (xmlresultsfile.get_size() > 0)
     {
         Oscl_File xmlfile(0);
@@ -1995,11 +2019,11 @@ int _local_main(FILE *filehandle, cmd_line *command_line, bool& aPrintDetailedMe
     uint32 downloadrateinkbps = 0;
     FindProxyEnabled(command_line, proxyenabled, file, downloadrateinkbps);
 
-    if (true == bHelp)
-        return 0;
-
     OSCL_HeapString<OsclMemAllocator> xmlresultsfile;
     FindXmlResultsFile(command_line, xmlresultsfile, file);
+
+    if (true == bHelp)
+        return 0;
 
     fprintf(file, "  Test case range %d to %d\n", firsttest, lasttest);
     fprintf(file, "  Compressed output Video(%s) Audio(%s)\n", (compV) ? "Yes" : "No", (compA) ? "Yes" : "No");
@@ -2024,6 +2048,7 @@ int _local_main(FILE *filehandle, cmd_line *command_line, bool& aPrintDetailedMe
             splitlogfile);
     if (engine_tests)
     {
+        WriteInitialXmlSummary(xmlresultsfile);
 
         //Set the Initial timer
         uint32 starttick = OsclTickCount::TickCount();
@@ -2035,7 +2060,7 @@ int _local_main(FILE *filehandle, cmd_line *command_line, bool& aPrintDetailedMe
         double t2 = OsclTickCount::TicksToMsec(endtick);
         fprintf(file, "Total Execution time for test suite is: %f seconds", (t2 - t1) / 1000);
 
-        XmlSummary(xmlresultsfile, engine_tests->last_result());
+        WriteFinalXmlSummary(xmlresultsfile, engine_tests->last_result());
         text_test_interpreter interp;
         _STRING rs = interp.interpretation(engine_tests->last_result());
         fprintf(file, rs.c_str());

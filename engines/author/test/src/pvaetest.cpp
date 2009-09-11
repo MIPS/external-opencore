@@ -2395,10 +2395,10 @@ void FindXmlResultsFile(cmd_line* command_line, OSCL_HeapString<OsclMemAllocator
         if (oscl_strcmp(argstr, "-help") == 0)
         {
             fprintf(aFile, "\nXML test results file option.  Default is to not write a summary.\n");
-            fprintf(aFile, "  -xmlOutput file\n");
+            fprintf(aFile, "  -xmloutput file\n");
             fprintf(aFile, "   Specify a source filename to output a test results summary to.\n\n");
         }
-        else if (oscl_strcmp(argstr, "-xmlOutput") == 0)
+        else if (oscl_strcmp(argstr, "-xmloutput") == 0)
         {
             iFileFound = true;
             iFileArgument = ++iFileSearch;
@@ -2427,7 +2427,31 @@ void FindXmlResultsFile(cmd_line* command_line, OSCL_HeapString<OsclMemAllocator
     }
 }
 
-void XmlSummary(OSCL_HeapString<OsclMemAllocator> &xmlresultsfile, const test_result& result)
+void WriteInitialXmlSummary(OSCL_HeapString<OsclMemAllocator> &xmlresultsfile)
+{
+    // Only print an xml summary if requested.
+    if (xmlresultsfile.get_size() > 0)
+    {
+        Oscl_File xmlfile(0);
+        Oscl_FileServer iFileServer;
+        iFileServer.Connect();
+        if (0 == xmlfile.Open(xmlresultsfile.get_str(), Oscl_File::MODE_READWRITE | Oscl_File::MODE_TEXT, iFileServer))
+        {
+            xml_test_interpreter xml_interp;
+            _STRING xml_results = xml_interp.unexpected_termination_interpretation("PVAuthorEngineUnitTest");
+            xmlfile.Write(xml_results.c_str(), sizeof(char), oscl_strlen(xml_results.c_str()));
+            xmlfile.Close();
+            iFileServer.Close();
+        }
+        else
+        {
+            fprintf(file, "ERROR: Failed to open XML test summary log file: %s!\n", xmlresultsfile.get_cstr());
+        }
+    }
+}
+
+
+void WriteFinalXmlSummary(OSCL_HeapString<OsclMemAllocator> &xmlresultsfile, const test_result& result)
 {
     // Print out xml summary if requested
     if (xmlresultsfile.get_size() > 0)
@@ -2555,6 +2579,7 @@ int RunCompressedTest(cmd_line *aCommandLine, int32 &iFirstTest, int32 &iLastTes
     fprintf(file, "  Test case range %d to %d\n", iFirstTest, iLastTest);
 
     OSCL_TRY(err,
+             WriteInitialXmlSummary(xmlresultsfile);
 
              PVAuthorEngineTestSuite* testSuite     = new PVAuthorEngineTestSuite(file, iFirstTest, iLastTest,
                      audiofilenameinfo.get_cstr(), videofilenameinfo.get_cstr(), textfilenameinfo.get_cstr(),
@@ -2566,7 +2591,7 @@ int RunCompressedTest(cmd_line *aCommandLine, int32 &iFirstTest, int32 &iLastTes
              //if (runTestErr != OSCL_ERR_NONE)
              // fprintf(file, "ERROR: Leave Occurred! Reason %d \n", runTestErr);
 
-             XmlSummary(xmlresultsfile, testSuite->last_result());
+             WriteFinalXmlSummary(xmlresultsfile, testSuite->last_result());
              text_test_interpreter interp;
              _STRING rs = interp.interpretation(testSuite->last_result());
              fprintf(file, rs.c_str());
@@ -2712,10 +2737,11 @@ int RunUnCompressedTest(cmd_line *aCommandLine, int32 &aFirstTest, int32 &aLastT
 
 
     OSCL_TRY(err,
+             WriteInitialXmlSummary(xmlresultsfile);
              PVMediaInputAuthorEngineTestSuite* test_suite =
                  new PVMediaInputAuthorEngineTestSuite(testparam);
              test_suite->run_test();
-             XmlSummary(xmlresultsfile, test_suite->last_result());
+             WriteFinalXmlSummary(xmlresultsfile, test_suite->last_result());
              text_test_interpreter interp;
              _STRING rs = interp.interpretation(test_suite->last_result());
              fprintf(file, rs.c_str());

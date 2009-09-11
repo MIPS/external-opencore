@@ -32,8 +32,11 @@ void FindXmlResultsFile(cmd_line* command_line,
                         OSCL_HeapString<OsclMemAllocator> &XmlTestResultsFilename,
                         FILE *aFile);
 
-void XmlSummary(OSCL_HeapString<OsclMemAllocator> &xmlresultsfile,
-                const test_result& result,
-                FILE *aFile);
+void WriteInitialXmlSummary(OSCL_HeapString<OsclMemAllocator> &xmlresultsfile,
+                            FILE * aFile);
+
+void WriteFinalXmlSummary(OSCL_HeapString<OsclMemAllocator> &xmlresultsfile,
+                          const test_result& result,
+                          FILE *aFile);
 
 #endif

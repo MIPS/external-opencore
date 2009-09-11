@@ -291,10 +291,10 @@ void FindXmlResultsFile(cmd_line* command_line, OSCL_HeapString<OsclMemAllocator
         if (oscl_strcmp(argstr, "-help") == 0)
         {
             fprintf(aFile, "XML test results file option.  Default is to not write a summary.\n");
-            fprintf(aFile, "  -xmlOutput file\n");
+            fprintf(aFile, "  -xmloutput file\n");
             fprintf(aFile, "   Specify a source filename to output a test results summary to.\n");
         }
-        else if (oscl_strcmp(argstr, "-xmlOutput") == 0)
+        else if (oscl_strcmp(argstr, "-xmloutput") == 0)
         {
             iFileFound = true;
             iFileArgument = ++iFileSearch;
@@ -324,7 +324,30 @@ void FindXmlResultsFile(cmd_line* command_line, OSCL_HeapString<OsclMemAllocator
 
 }
 
-void XmlSummary(OSCL_HeapString<OsclMemAllocator> &xmlresultsfile, const test_result& result, FILE* aFile)
+void WriteInitialXmlSummary(OSCL_HeapString<OsclMemAllocator> &xmlresultsfile, FILE* aFile)
+{
+    // Only print an xml summary if requested.
+    if (xmlresultsfile.get_size() > 0)
+    {
+        Oscl_File xmlfile(0);
+        Oscl_FileServer iFileServer;
+        iFileServer.Connect();
+        if (0 == xmlfile.Open(xmlresultsfile.get_str(), Oscl_File::MODE_READWRITE | Oscl_File::MODE_TEXT, iFileServer))
+        {
+            xml_test_interpreter xml_interp;
+            _STRING xml_results = xml_interp.unexpected_termination_interpretation("PV2WayEngineUnitTest");
+            xmlfile.Write(xml_results.c_str(), sizeof(char), oscl_strlen(xml_results.c_str()));
+            xmlfile.Close();
+            iFileServer.Close();
+        }
+        else
+        {
+            fprintf(aFile, "ERROR: Failed to open XML test summary log file: %s!\n", xmlresultsfile.get_cstr());
+        }
+    }
+}
+
+void WriteFinalXmlSummary(OSCL_HeapString<OsclMemAllocator> &xmlresultsfile, const test_result& result, FILE* aFile)
 {
     // Print out xml summary if requested
     if (xmlresultsfile.get_size() > 0)

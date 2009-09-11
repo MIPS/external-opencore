@@ -37,9 +37,38 @@ xml_test_interpreter::add_problems(UnitTest_XMLWriter & doc, _STRING type, const
     {
         doc.addAttribute("type", type);
         doc.element("failure", problem_string(*iter));
-        doc.close();
     }
 }
+
+_STRING
+xml_test_interpreter::unexpected_termination_interpretation(_STRING executable_name) const
+{
+    UnitTest_XMLWriter doc;
+
+    doc.addAttribute("tests", 1);
+    doc.addAttribute("errors", 1);
+    doc.addAttribute("failures", 0);
+
+    _STRING suitename;
+    _APPEND(suitename, "PV.");
+    _APPEND(suitename, executable_name);
+    doc.addAttribute("name", suitename);
+
+    int root_id = doc.start("testsuite");
+
+    doc.addAttribute("name", "unknown");
+    doc.start("testcase");
+
+    doc.addAttribute("type", "error");
+    doc.element("failure", "Test application terminated unexpectedly.  See console logs");
+
+    doc.close();
+
+    doc.close(root_id);
+
+    return doc.to_str();
+}
+
 
 _STRING
 xml_test_interpreter::interpretation(const test_result& result, _STRING executable_name) const

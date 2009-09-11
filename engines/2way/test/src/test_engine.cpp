@@ -1148,13 +1148,14 @@ int start_test()
 
         OSCL_HeapString<OsclMemAllocator> xmlresultsfile;
         FindXmlResultsFile(global_cmd_line, xmlresultsfile, fileoutput);
+        WriteInitialXmlSummary(xmlresultsfile, fileoutput);
 
         OSCL_TRY(leave, engine_tests.run_test());
 
         if (leave != 0)
             fprintf(fileoutput, "Leave %d\n", leave);
 
-        XmlSummary(xmlresultsfile, engine_tests.last_result(), fileoutput);
+        WriteFinalXmlSummary(xmlresultsfile, engine_tests.last_result(), fileoutput);
         text_test_interpreter interp;
         _STRING rs = interp.interpretation(engine_tests.last_result());
         fprintf(fileoutput, rs.c_str());

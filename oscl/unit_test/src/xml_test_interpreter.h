@@ -35,6 +35,8 @@ class xml_test_interpreter
     public:
         //returns the interpretation of a test result
         _STRING interpretation(const test_result& result, _STRING executable_name) const;
+        //returns a summary that reports that the tests failed to run.
+        _STRING unexpected_termination_interpretation(_STRING executable_name) const;
 };
 
 #endif
