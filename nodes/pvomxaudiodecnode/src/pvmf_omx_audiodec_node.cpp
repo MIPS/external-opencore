@@ -16,23 +16,6 @@
  * -------------------------------------------------------------------
  */
 #include "pvmf_omx_audiodec_node.h"
-#include "pvlogger.h"
-#include "oscl_error_codes.h"
-#include "pvmf_omx_basedec_port.h"
-#include "pv_mime_string_utils.h"
-#include "oscl_snprintf.h"
-#include "pvmf_media_cmd.h"
-#include "pvmf_media_msg_format_ids.h"
-#include "pvmi_kvp_util.h"
-#include "latmpayloadparser.h"
-
-#include "OMX_Core.h"
-#include "pvmf_omx_basedec_callbacks.h"     //used for thin AO in Decoder's callbacks
-#include "pv_omxcore.h"
-
-// needed for capability and config
-#include "pv_omx_config_parser.h"
-
 
 #define CONFIG_SIZE_AND_VERSION(param) \
         param.nSize=sizeof(param); \
@@ -73,42 +56,7 @@ PVMFOMXAudioDecNode::~PVMFOMXAudioDecNode()
     ReleaseAllPorts();
 }
 
-/////////////////////////////////////////////////////////////////////////////
-// Add AO to the scheduler
-/////////////////////////////////////////////////////////////////////////////
-PVMFStatus PVMFOMXAudioDecNode::ThreadLogon()
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_MLDBG, iLogger, PVLOGMSG_INFO, (0, "PVMFOMXAudioDecNode:ThreadLogon"));
-
-    switch (iInterfaceState)
-    {
-        case EPVMFNodeCreated:
-            if (!IsAdded())
-            {
-                AddToScheduler();
-                iIsAdded = true;
-            }
-            iLogger = PVLogger::GetLoggerObject("PVMFOMXAudioDecNode");
-            iRunlLogger = PVLogger::GetLoggerObject("Run.PVMFOMXAudioDecNode");
-            iDataPathLogger = PVLogger::GetLoggerObject("datapath");
-            iClockLogger = PVLogger::GetLoggerObject("clock");
-            iDiagnosticsLogger = PVLogger::GetLoggerObject("pvplayerdiagnostics.decnode.OMXAudioDecnode");
-
-            SetState(EPVMFNodeIdle);
-            return PVMFSuccess;
-
-        default:
-            return PVMFErrInvalidState;
-    }
-}
-
-/////////////////////
-// Private Section //
-/////////////////////
-
-/////////////////////////////////////////////////////////////////////////////
 // Class Constructor
-/////////////////////////////////////////////////////////////////////////////
 PVMFOMXAudioDecNode::PVMFOMXAudioDecNode(int32 aPriority) :
         PVMFOMXBaseDecNode(aPriority, "PVMFOMXAudioDecNode")
 {
@@ -168,6 +116,12 @@ PVMFOMXAudioDecNode::PVMFOMXAudioDecNode(int32 aPriority) :
 
 
     OSCL_TRY(err, iPrivateDataFsiFragmentAlloc.size(PVOMXAUDIODEC_MEDIADATA_POOLNUM, sizeof(OsclAny *)));
+
+    iLogger = PVLogger::GetLoggerObject("PVMFOMXAudioDecNode");
+    iRunlLogger = PVLogger::GetLoggerObject("Run.PVMFOMXAudioDecNode");
+    iDataPathLogger = PVLogger::GetLoggerObject("datapath");
+    iClockLogger = PVLogger::GetLoggerObject("clock");
+    iDiagnosticsLogger = PVLogger::GetLoggerObject("pvplayerdiagnostics.decnode.OMXAudioDecnode");
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -1831,9 +1785,6 @@ bool PVMFOMXAudioDecNode::InitDecoder(PVMFSharedMediaDataPtr& DataIn)
         iIsConfigDataProcessingCompletionNeeded = true;
     }
 
-
-
-
     return true;
 }
 
@@ -2017,7 +1968,6 @@ bool PVMFOMXAudioDecNode::QueueOutputBuffer(OsclSharedPtr<PVMFMediaDataImpl> &me
             }
         }
 
-
     }//end of if (OsclErrNone == leavecode)
     else
     {
@@ -2027,11 +1977,10 @@ bool PVMFOMXAudioDecNode::QueueOutputBuffer(OsclSharedPtr<PVMFMediaDataImpl> &me
     }
 
     return status;
-
 }
 
 /////////////////////////////////////////////////////////////////////////////
-void PVMFOMXAudioDecNode::DoRequestPort(PVMFOMXBaseDecNodeCommand& aCmd)
+PVMFStatus PVMFOMXAudioDecNode::DoRequestPort(PVMFNodeCommand& aCmd, PVMFPortInterface*& aPort)
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                     (0, "PVMFOMXAudioDecNode::DoRequestPort() In"));
@@ -2041,7 +1990,7 @@ void PVMFOMXAudioDecNode::DoRequestPort(PVMFOMXBaseDecNodeCommand& aCmd)
     int32 tag;
     OSCL_String* portconfig;
 
-    aCmd.PVMFOMXBaseDecNodeCommandBase::Parse(tag, portconfig);
+    aCmd.PVMFNodeCommandBase::Parse(tag, portconfig);
 
     PVMFPortInterface* port = NULL;
     int32 leavecode = OsclErrNone;
@@ -2051,7 +2000,7 @@ void PVMFOMXAudioDecNode::DoRequestPort(PVMFOMXBaseDecNodeCommand& aCmd)
         case PVMF_OMX_DEC_NODE_PORT_TYPE_INPUT:
             if (iInPort)
             {
-                CommandComplete(iInputCommands, aCmd, PVMFFailure);
+                return PVMFFailure;
                 break;
             }
             OSCL_TRY(leavecode, iInPort = OSCL_NEW(PVMFOMXDecPort, ((int32)tag, this, (OMX_STRING)PVMF_OMX_AUDIO_DEC_INPUT_PORT_NAME)););
@@ -2059,16 +2008,15 @@ void PVMFOMXAudioDecNode::DoRequestPort(PVMFOMXBaseDecNodeCommand& aCmd)
             {
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
                                 (0, "PVMFOMXAudioDecNode::DoRequestPort: Error - Input port instantiation failed"));
-                CommandComplete(iInputCommands, aCmd, PVMFErrArgument);
-                return;
+                return PVMFErrArgument;
             }
-            port = iInPort;
+            aPort = iInPort;
             break;
 
         case PVMF_OMX_DEC_NODE_PORT_TYPE_OUTPUT:
             if (iOutPort)
             {
-                CommandComplete(iInputCommands, aCmd, PVMFFailure);
+                return PVMFFailure;
                 break;
             }
             OSCL_TRY(leavecode, iOutPort = OSCL_NEW(PVMFOMXDecPort, ((int32)tag, this, (OMX_STRING)PVMF_OMX_AUDIO_DEC_OUTPUT_PORT_NAME)));
@@ -2076,27 +2024,23 @@ void PVMFOMXAudioDecNode::DoRequestPort(PVMFOMXBaseDecNodeCommand& aCmd)
             {
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
                                 (0, "PVMFOMXAudioDecNode::DoRequestPort: Error - Output port instantiation failed"));
-                CommandComplete(iInputCommands, aCmd, PVMFErrArgument);
-                return;
+                return PVMFErrArgument;
             }
-            port = iOutPort;
+            aPort = iOutPort;
             break;
 
         default:
             //bad port tag
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
                             (0, "PVMFOMXAudioDecNode::DoRequestPort: Error - Invalid port tag"));
-            CommandComplete(iInputCommands, aCmd, PVMFErrArgument);
-            return;
+            return PVMFErrArgument;
     }
-
-    //Return the port pointer to the caller.
-    CommandComplete(iInputCommands, aCmd, PVMFSuccess, (OsclAny*)port);
+    return PVMFSuccess;
 }
 
 
 /////////////////////////////////////////////////////////////////////////////
-PVMFStatus PVMFOMXAudioDecNode::DoGetNodeMetadataKey(PVMFOMXBaseDecNodeCommand& aCmd)
+PVMFStatus PVMFOMXAudioDecNode::DoGetNodeMetadataKey(PVMFNodeCommand& aCmd)
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                     (0, "PVMFOMXAudioDecNode::DoGetNodeMetadataKey() In"));
@@ -2106,7 +2050,7 @@ PVMFStatus PVMFOMXAudioDecNode::DoGetNodeMetadataKey(PVMFOMXBaseDecNodeCommand& 
     int32 max_entries;
     char* query_key;
 
-    aCmd.PVMFOMXBaseDecNodeCommand::Parse(keylistptr, starting_index, max_entries, query_key);
+    aCmd.PVMFNodeCommand::Parse(keylistptr, starting_index, max_entries, query_key);
 
     // Check parameters
     if (keylistptr == NULL)
@@ -2177,14 +2121,14 @@ PVMFStatus PVMFOMXAudioDecNode::DoGetNodeMetadataKey(PVMFOMXBaseDecNodeCommand& 
 }
 
 /////////////////////////////////////////////////////////////////////////////
-PVMFStatus PVMFOMXAudioDecNode::DoGetNodeMetadataValue(PVMFOMXBaseDecNodeCommand& aCmd)
+PVMFStatus PVMFOMXAudioDecNode::DoGetNodeMetadataValue(PVMFNodeCommand& aCmd)
 {
     PVMFMetadataList* keylistptr = NULL;
     Oscl_Vector<PvmiKvp, OsclMemAllocator>* valuelistptr = NULL;
     uint32 starting_index;
     int32 max_entries;
 
-    aCmd.PVMFOMXBaseDecNodeCommand::Parse(keylistptr, valuelistptr, starting_index, max_entries);
+    aCmd.PVMFNodeCommand::Parse(keylistptr, valuelistptr, starting_index, max_entries);
 
     // Check the parameters
     if (keylistptr == NULL || valuelistptr == NULL)
@@ -2538,14 +2482,14 @@ bool PVMFOMXAudioDecNode::ReleaseAllPorts()
 }
 
 /////////////////////////////////////////////////////////////////////////////
-void PVMFOMXAudioDecNode::DoQueryUuid(PVMFOMXBaseDecNodeCommand& aCmd)
+PVMFStatus PVMFOMXAudioDecNode::DoQueryUuid(PVMFNodeCommand& aCmd)
 {
     //This node supports Query UUID from any state
 
     OSCL_String* mimetype;
     Oscl_Vector<PVUuid, OsclMemAllocator> *uuidvec;
     bool exactmatch;
-    aCmd.PVMFOMXBaseDecNodeCommandBase::Parse(mimetype, uuidvec, exactmatch);
+    aCmd.PVMFNodeCommandBase::Parse(mimetype, uuidvec, exactmatch);
 
     //Try to match the input mimetype against any of
     //the custom interfaces for this node
@@ -2561,7 +2505,7 @@ void PVMFOMXAudioDecNode::DoQueryUuid(PVMFOMXBaseDecNodeCommand& aCmd)
         PVUuid uuid(PVMF_OMX_BASE_DEC_NODE_CUSTOM1_UUID);
         uuidvec->push_back(uuid);
     }
-    CommandComplete(iInputCommands, aCmd, PVMFSuccess);
+    return PVMFSuccess;
 }
 
 PVMFStatus PVMFOMXAudioDecNode::CreateLATMParser()

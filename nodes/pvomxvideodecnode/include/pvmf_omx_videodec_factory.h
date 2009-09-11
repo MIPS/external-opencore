@@ -21,7 +21,15 @@
 #ifndef OSCL_BASE_H_INCLUDED
 #include "oscl_base.h"
 #endif
-
+#ifndef OSCL_ERROR_CODES_H_INCLUDED
+#include "oscl_error_codes.h"
+#endif
+#ifndef OSCL_EXCEPTION_H_INCLUDED
+#include "oscl_exception.h"
+#endif
+#ifndef OSCL_DLL_H_INCLUDED
+#include "oscl_dll.h"
+#endif
 #ifndef OSCL_SCHEDULER_AO_H_INCLUDED
 #include "oscl_scheduler_ao.h"
 #endif

@@ -15,17 +15,8 @@
  * and limitations under the License.
  * -------------------------------------------------------------------
  */
-
-#include "oscl_base.h"
-
 #include "pvmf_omx_audiodec_node.h"
 #include "pvmf_omx_audiodec_factory.h"
-
-#include "oscl_error_codes.h"
-#include "oscl_exception.h"
-
-// Use default DLL entry point
-#include "oscl_dll.h"
 
 OSCL_DLL_ENTRY_POINT_DEFAULT()
 

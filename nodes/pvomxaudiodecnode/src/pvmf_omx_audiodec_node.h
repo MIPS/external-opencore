@@ -26,6 +26,9 @@
 #include "pvmf_omx_basedec_port.h"
 #endif
 
+#ifndef _LATMPAYLOADPARSER_H_
+#include "latmpayloadparser.h"
+#endif
 
 #define PVMFOMXAUDIODECNODE_NUM_CMD_IN_POOL 8
 #define PVOMXAUDIODEC_DEFAULT_SAMPLINGRATE 48000
@@ -35,12 +38,6 @@
 #define PVOMXAUDIODEC_MP3_DEFAULT_SAMPLES_PER_FRAME 1152
 #define PVOMXAUDIO_MAX_SUPPORTED_FORMAT 31
 
-// fwd class declaration
-class PV_LATM_Parser;
-
-
-/// #########################################################
-/// #########################################################
 // Key string info at the base level ("x-pvmf/audio/decoder")
 #define PVOMXAUDIODECNODECONFIG_BASE_NUMKEYS 6
 const PVOMXBaseDecNodeKeyStringData PVOMXAudioDecNodeConfigBaseKeys[PVOMXAUDIODECNODECONFIG_BASE_NUMKEYS] =
@@ -59,43 +56,28 @@ const PVOMXBaseDecNodeKeyStringData PVOMXAudioDecNodeConfigRenderKeys[PVOMXAUDIO
     {"channels", PVMI_KVPTYPE_VALUE, PVMI_KVPVALTYPE_UINT32}
 };
 
-
-/////////////////////////////////////////////////////////////////////////////////////////
-//////////###############################################################
-//// ###################################################################
-
 //Mimetypes for the custom interface
 #define PVMF_OMX_AUDIO_DEC_NODE_MIMETYPE "pvxxx/OMXAudioDecNode"
 #define PVMF_BASEMIMETYPE "pvxxx"
 
-class PVMFOMXAudioDecNode
-        : public PVMFOMXBaseDecNode
-
+class PVMFOMXAudioDecNode: public PVMFOMXBaseDecNode
 {
     public:
         PVMFOMXAudioDecNode(int32 aPriority);
         ~PVMFOMXAudioDecNode();
 
-        // From PVMFNodeInterface
-        PVMFStatus ThreadLogon();
-
-        //**********begin PVMFMetadataExtensionInterface
+        //From PVMFMetadataExtensionInterface
         uint32 GetNumMetadataKeys(char* query_key = NULL);
         uint32 GetNumMetadataValues(PVMFMetadataList& aKeyList);
-        //**********End PVMFMetadataExtensionInterface
 
         // for WMA params
         bool VerifyParametersSync(PvmiMIOSession aSession, PvmiKvp* aParameters, int num_elements);
-
-        PVMFStatus DoCapConfigVerifyParameters(PvmiKvp* aParameters, int aNumElements);
-        void DoCapConfigSetParameters(PvmiKvp* aParameters, int aNumElements, PvmiKvp* &aRetKVP);
-
     private:
 
-        void DoQueryUuid(PVMFOMXBaseDecNodeCommand&);
-        void DoRequestPort(PVMFOMXBaseDecNodeCommand&);
-        PVMFStatus DoGetNodeMetadataKey(PVMFOMXBaseDecNodeCommand&);
-        PVMFStatus DoGetNodeMetadataValue(PVMFOMXBaseDecNodeCommand&);
+        PVMFStatus DoQueryUuid(PVMFNodeCommand&);
+        PVMFStatus DoRequestPort(PVMFNodeCommand&, PVMFPortInterface*&);
+        PVMFStatus DoGetNodeMetadataKey(PVMFNodeCommand&);
+        PVMFStatus DoGetNodeMetadataValue(PVMFNodeCommand&);
         bool ProcessIncomingMsg(PVMFPortInterface* aPort);
         PVMFStatus HandlePortReEnable();
 
@@ -104,6 +86,10 @@ class PVMFOMXAudioDecNode
         bool NegotiateComponentParameters(OMX_PTR aOutputParameters);
         bool GetSetCodecSpecificInfo();
         bool QueueOutputBuffer(OsclSharedPtr<PVMFMediaDataImpl> &mediadataimplout, uint32 aDataLen);
+
+        // Capability And Config
+        PVMFStatus DoCapConfigVerifyParameters(PvmiKvp* aParameters, int aNumElements);
+        void DoCapConfigSetParameters(PvmiKvp* aParameters, int aNumElements, PvmiKvp* &aRetKVP);
 
         // latm parser for AAC - LATM
         PVMFStatus CreateLATMParser(void);
@@ -128,9 +114,6 @@ class PVMFOMXAudioDecNode
         PV_LATM_Parser *iLATMParser;
         uint8 *iLATMConfigBuffer;
         uint32 iLATMConfigBufferSize;
-
 };
-
-
 #endif // PVMF_OMXAUDIODEC_NODE_H_INCLUDED
 

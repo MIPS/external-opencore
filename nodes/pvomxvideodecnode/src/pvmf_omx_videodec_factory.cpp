@@ -19,18 +19,10 @@
  * @file pvmf_AVCDec_factory.cpp
  * @brief Singleton factory for PVMFAVCDecNode
  */
-
-#include "oscl_base.h"
-
-#include "pvmf_omx_videodec_node.h"
 #include "pvmf_omx_videodec_factory.h"
-
-#include "oscl_error_codes.h"
-#include "oscl_exception.h"
+#include "pvmf_omx_videodec_node.h"
 
 // Use default DLL entry point
-#include "oscl_dll.h"
-
 OSCL_DLL_ENTRY_POINT_DEFAULT()
 
 

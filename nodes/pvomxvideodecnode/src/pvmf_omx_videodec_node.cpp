@@ -16,22 +16,6 @@
  * -------------------------------------------------------------------
  */
 #include "pvmf_omx_videodec_node.h"
-#include "pvlogger.h"
-#include "oscl_error_codes.h"
-#include "pvmf_omx_basedec_port.h"
-#include "pv_mime_string_utils.h"
-#include "oscl_snprintf.h"
-#include "pvmf_media_cmd.h"
-#include "pvmf_media_msg_format_ids.h"
-#include "pvmf_media_frag_group.h"
-#include "pvmi_kvp_util.h"
-// needed for capability and config
-#include "pv_omx_config_parser.h"
-
-#include "OMX_Core.h"
-#include "pvmf_omx_basedec_callbacks.h"     //used for thin AO in Decoder's callbacks
-#include "pv_omxcore.h"
-#include "OMX_Video.h"
 
 #define CONFIG_SIZE_AND_VERSION(param) \
         param.nSize=sizeof(param); \
@@ -65,7 +49,6 @@
 #define PVOMXVIDEODECNODE_CONFIG_M4VMAXHEIGHT_DEF 288
 #define PVOMXVIDEODECNODE_CONFIG_M4VMAXDIMENSION_MIN 4
 #define PVOMXVIDEODECNODE_CONFIG_M4VMAXDIMENSION_MAX 352
-
 // AVC default settings
 #define PVOMXVIDEODECNODE_CONFIG_AVCMAXBITSTREAMFRAMESIZE_DEF 20000
 #define PVOMXVIDEODECNODE_CONFIG_AVCMAXBITSTREAMFRAMESIZE_MIN 20000
@@ -74,7 +57,6 @@
 #define PVOMXVIDEODECNODE_CONFIG_AVCMAXHEIGHT_DEF 288
 #define PVOMXVIDEODECNODE_CONFIG_AVCMAXDIMENSION_MIN 4
 #define PVOMXVIDEODECNODE_CONFIG_AVCMAXDIMENSION_MAX 352
-
 /* WMV default settings */
 #define PVOMXVIDEODECNODE_CONFIG_WMVMAXWIDTH_DEF 352
 #define PVOMXVIDEODECNODE_CONFIG_WMVMAXHEIGHT_DEF 288
@@ -103,38 +85,6 @@ PVMFOMXVideoDecNode::~PVMFOMXVideoDecNode()
 }
 
 /////////////////////////////////////////////////////////////////////////////
-// Add AO to the scheduler
-/////////////////////////////////////////////////////////////////////////////
-PVMFStatus PVMFOMXVideoDecNode::ThreadLogon()
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_MLDBG, iLogger, PVLOGMSG_INFO, (0, "PVMFOMXVideoDecNode:ThreadLogon"));
-
-    switch (iInterfaceState)
-    {
-        case EPVMFNodeCreated:
-            if (!IsAdded())
-            {
-                AddToScheduler();
-                iIsAdded = true;
-            }
-            iLogger = PVLogger::GetLoggerObject("PVMFOMXVideoDecNode");
-            iRunlLogger = PVLogger::GetLoggerObject("Run.PVMFOMXVideoDecNode");
-            iDataPathLogger = PVLogger::GetLoggerObject("datapath");
-            iClockLogger = PVLogger::GetLoggerObject("clock");
-            iDiagnosticsLogger = PVLogger::GetLoggerObject("pvplayerdiagnostics.decnode.OMXVideoDecnode");
-
-            SetState(EPVMFNodeIdle);
-            return PVMFSuccess;
-        default:
-            return PVMFErrInvalidState;
-    }
-}
-
-/////////////////////
-// Private Section //
-/////////////////////
-
-/////////////////////////////////////////////////////////////////////////////
 // Class Constructor
 /////////////////////////////////////////////////////////////////////////////
 PVMFOMXVideoDecNode::PVMFOMXVideoDecNode(int32 aPriority) :
@@ -155,6 +105,12 @@ PVMFOMXVideoDecNode::PVMFOMXVideoDecNode(int32 aPriority) :
     iNodeConfig.iDropFrame = PVOMXVIDEODECNODE_CONFIG_DROPFRAMEENABLE_DEF;
     iNodeConfig.iMimeType = PVMF_MIME_FORMAT_UNKNOWN;
 
+    // Get logger objects
+    iLogger = PVLogger::GetLoggerObject("PVMFOMXVideoDecNode");
+    iRunlLogger = PVLogger::GetLoggerObject("Run.PVMFOMXVideoDecNode");
+    iDataPathLogger = PVLogger::GetLoggerObject("datapath");
+    iClockLogger = PVLogger::GetLoggerObject("clock");
+    iDiagnosticsLogger = PVLogger::GetLoggerObject("pvplayerdiagnostics.decnode.OMXVideoDecnode");
 
     int32 err;
     OSCL_TRY(err,
@@ -196,6 +152,9 @@ PVMFOMXVideoDecNode::PVMFOMXVideoDecNode(int32 aPriority) :
     iLastYUVHeight = 0;
 }
 
+/////////////////////
+// Private Section //
+/////////////////////
 /////////////////////////////////////////////////////////////////////////////
 // This routine will handle the PortReEnable state
 /////////////////////////////////////////////////////////////////////////////
@@ -1781,7 +1740,7 @@ bool PVMFOMXVideoDecNode::QueueOutputBuffer(OsclSharedPtr<PVMFMediaDataImpl> &me
 }
 
 /////////////////////////////////////////////////////////////////////////////
-void PVMFOMXVideoDecNode::DoRequestPort(PVMFOMXBaseDecNodeCommand& aCmd)
+PVMFStatus PVMFOMXVideoDecNode::DoRequestPort(PVMFNodeCommand& aCmd, PVMFPortInterface*& aPort)
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                     (0, "PVMFOMXVideoDecNode::DoRequestPort() In"));
@@ -1791,7 +1750,7 @@ void PVMFOMXVideoDecNode::DoRequestPort(PVMFOMXBaseDecNodeCommand& aCmd)
     int32 tag;
     OSCL_String* portconfig;
 
-    aCmd.PVMFOMXBaseDecNodeCommandBase::Parse(tag, portconfig);
+    aCmd.PVMFNodeCommandBase::Parse(tag, portconfig);
 
     PVMFPortInterface* port = NULL;
     int32 leavecode = OsclErrNone;
@@ -1801,7 +1760,7 @@ void PVMFOMXVideoDecNode::DoRequestPort(PVMFOMXBaseDecNodeCommand& aCmd)
         case PVMF_OMX_DEC_NODE_PORT_TYPE_INPUT:
             if (iInPort)
             {
-                CommandComplete(iInputCommands, aCmd, PVMFFailure);
+                return PVMFFailure;
                 break;
             }
             OSCL_TRY(leavecode, iInPort = OSCL_NEW(PVMFOMXDecPort, ((int32)tag, this, PVMF_OMX_VIDEO_DEC_INPUT_PORT_NAME)););
@@ -1809,16 +1768,15 @@ void PVMFOMXVideoDecNode::DoRequestPort(PVMFOMXBaseDecNodeCommand& aCmd)
             {
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
                                 (0, "PVMFOMXVideoDecNode::DoRequestPort: Error - Input port instantiation failed"));
-                CommandComplete(iInputCommands, aCmd, PVMFErrArgument);
-                return;
+                return PVMFErrArgument;
             }
-            port = iInPort;
+            aPort = iInPort;
             break;
 
         case PVMF_OMX_DEC_NODE_PORT_TYPE_OUTPUT:
             if (iOutPort)
             {
-                CommandComplete(iInputCommands, aCmd, PVMFFailure);
+                return PVMFFailure;
                 break;
             }
             OSCL_TRY(leavecode, iOutPort = OSCL_NEW(PVMFOMXDecPort, ((int32)tag, this, PVMF_OMX_VIDEO_DEC_OUTPUT_PORT_NAME)));
@@ -1826,27 +1784,23 @@ void PVMFOMXVideoDecNode::DoRequestPort(PVMFOMXBaseDecNodeCommand& aCmd)
             {
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
                                 (0, "PVMFOMXVideoDecNode::DoRequestPort: Error - Output port instantiation failed"));
-                CommandComplete(iInputCommands, aCmd, PVMFErrArgument);
-                return;
+                return PVMFErrArgument;
             }
-            port = iOutPort;
+            aPort = iOutPort;
             break;
 
         default:
             //bad port tag
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
                             (0, "PVMFOMXVideoDecNode::DoRequestPort: Error - Invalid port tag"));
-            CommandComplete(iInputCommands, aCmd, PVMFErrArgument);
-            return;
+            return PVMFErrArgument;
     }
-
-    //Return the port pointer to the caller.
-    CommandComplete(iInputCommands, aCmd, PVMFSuccess, (OsclAny*)port);
+    return PVMFSuccess;
 }
 
 
 /////////////////////////////////////////////////////////////////////////////
-PVMFStatus PVMFOMXVideoDecNode::DoGetNodeMetadataKey(PVMFOMXBaseDecNodeCommand& aCmd)
+PVMFStatus PVMFOMXVideoDecNode::DoGetNodeMetadataKey(PVMFNodeCommand& aCmd)
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                     (0, "PVMFOMXVideoDecNode::DoGetNodeMetadataKey() In"));
@@ -1856,7 +1810,7 @@ PVMFStatus PVMFOMXVideoDecNode::DoGetNodeMetadataKey(PVMFOMXBaseDecNodeCommand& 
     int32 max_entries;
     char* query_key;
 
-    aCmd.PVMFOMXBaseDecNodeCommand::Parse(keylistptr, starting_index, max_entries, query_key);
+    aCmd.PVMFNodeCommand::Parse(keylistptr, starting_index, max_entries, query_key);
 
     // Check parameters
     if (keylistptr == NULL)
@@ -1977,7 +1931,7 @@ PVMFStatus PVMFOMXVideoDecNode::DoGetNodeMetadataKey(PVMFOMXBaseDecNodeCommand& 
 }
 
 /////////////////////////////////////////////////////////////////////////////
-PVMFStatus PVMFOMXVideoDecNode::DoGetNodeMetadataValue(PVMFOMXBaseDecNodeCommand& aCmd)
+PVMFStatus PVMFOMXVideoDecNode::DoGetNodeMetadataValue(PVMFNodeCommand& aCmd)
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFOMXVideoDecNode::DoGetNodeMetadataValue() In"));
 
@@ -1986,7 +1940,7 @@ PVMFStatus PVMFOMXVideoDecNode::DoGetNodeMetadataValue(PVMFOMXBaseDecNodeCommand
     uint32 starting_index;
     int32 max_entries;
 
-    aCmd.PVMFOMXBaseDecNodeCommand::Parse(keylistptr, valuelistptr, starting_index, max_entries);
+    aCmd.PVMFNodeCommand::Parse(keylistptr, valuelistptr, starting_index, max_entries);
 
     // Check the parameters
     if (keylistptr == NULL || valuelistptr == NULL)
@@ -2423,14 +2377,14 @@ bool PVMFOMXVideoDecNode::ReleaseAllPorts()
 }
 
 /////////////////////////////////////////////////////////////////////////////
-void PVMFOMXVideoDecNode::DoQueryUuid(PVMFOMXBaseDecNodeCommand& aCmd)
+PVMFStatus PVMFOMXVideoDecNode::DoQueryUuid(PVMFNodeCommand& aCmd)
 {
     //This node supports Query UUID from any state
 
     OSCL_String* mimetype;
     Oscl_Vector<PVUuid, OsclMemAllocator> *uuidvec;
     bool exactmatch;
-    aCmd.PVMFOMXBaseDecNodeCommandBase::Parse(mimetype, uuidvec, exactmatch);
+    aCmd.PVMFNodeCommandBase::Parse(mimetype, uuidvec, exactmatch);
 
     //Try to match the input mimetype against any of
     //the custom interfaces for this node
@@ -2446,7 +2400,7 @@ void PVMFOMXVideoDecNode::DoQueryUuid(PVMFOMXBaseDecNodeCommand& aCmd)
         PVUuid uuid(PVMF_OMX_BASE_DEC_NODE_CUSTOM1_UUID);
         uuidvec->push_back(uuid);
     }
-    CommandComplete(iInputCommands, aCmd, PVMFSuccess);
+    return PVMFSuccess;
 }
 
 /////////////////////////////////////////////////////////////////////////////

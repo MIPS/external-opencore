@@ -18,16 +18,14 @@
 #ifndef PVMF_OMX_VIDEODEC_NODE_H_INCLUDED
 #define PVMF_OMX_VIDEODEC_NODE_H_INCLUDED
 
-#ifndef PVMF_VIDEO_H_INCLUDED
-#include "pvmf_video.h"
-#endif
-
 #ifndef PVMF_OMX_BASEDEC_NODE_H_INCLUDED
 #include "pvmf_omx_basedec_node.h"
 #endif
-
 #ifndef PVMF_OMX_VIDEODEC_PORT_H_INCLUDED
 #include "pvmf_omx_basedec_port.h"
+#endif
+#ifndef PVMF_MEDIA_FRAG_GROUP_H_INCLUDED
+#include "pvmf_media_frag_group.h"
 #endif
 
 #define PVMFOMXVIDEODECNODE_NUM_CMD_IN_POOL 8
@@ -117,36 +115,28 @@ typedef enum
 /////////////////////////////////////////////////////////////////////////////////////////
 
 
-
-
-
 //Mimetypes for the custom interface
 #define PVMF_OMX_VIDEO_DEC_NODE_MIMETYPE "pvxxx/OMXVideoDecNode"
 #define PVMF_BASEMIMETYPE "pvxxx"
 
-class PVMFOMXVideoDecNode
-        : public PVMFOMXBaseDecNode
+class PVMFOMXVideoDecNode: public PVMFOMXBaseDecNode
 {
     public:
         PVMFOMXVideoDecNode(int32 aPriority);
         ~PVMFOMXVideoDecNode();
 
-        // From PVMFNodeInterface
-        PVMFStatus ThreadLogon();
-
-        //**********begin PVMFMetadataExtensionInterface
+        // From PVMFMetadataExtensionInterface
         uint32 GetNumMetadataKeys(char* query_key = NULL);
         uint32 GetNumMetadataValues(PVMFMetadataList& aKeyList);
-        //**********End PVMFMetadataExtensionInterface
 
         // for WMV params
         bool VerifyParametersSync(PvmiMIOSession aSession, PvmiKvp* aParameters, int num_elements);
     private:
 
-        void DoQueryUuid(PVMFOMXBaseDecNodeCommand&);
-        void DoRequestPort(PVMFOMXBaseDecNodeCommand&);
-        PVMFStatus DoGetNodeMetadataKey(PVMFOMXBaseDecNodeCommand&);
-        PVMFStatus DoGetNodeMetadataValue(PVMFOMXBaseDecNodeCommand&);
+        PVMFStatus DoQueryUuid(PVMFNodeCommand&);
+        PVMFStatus DoRequestPort(PVMFNodeCommand&, PVMFPortInterface*&);
+        PVMFStatus DoGetNodeMetadataKey(PVMFNodeCommand&);
+        PVMFStatus DoGetNodeMetadataValue(PVMFNodeCommand&);
         PVMFStatus HandlePortReEnable();
 
         bool InitDecoder(PVMFSharedMediaDataPtr&);
@@ -195,7 +185,6 @@ class PVMFOMXVideoDecNode
         uint32 iM4VMaxHeight;
 
         uint32 iNewWidth , iNewHeight;
-
 };
 
 

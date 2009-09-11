@@ -18,100 +18,64 @@
 #ifndef PVMF_OMX_BASEDEC_NODE_H_INCLUDED
 #define PVMF_OMX_BASEDEC_NODE_H_INCLUDED
 
-#ifndef OSCL_BASE_H_INCLUDED
-#include "oscl_base.h"
+#ifndef PVMF_NODE_INTERFACE_IMPL_H_INCLUDED
+#include "pvmf_node_interface_impl.h"
 #endif
-
-#ifndef OSCL_SCHEDULER_AO_H_INCLUDED
-#include "oscl_scheduler_ao.h"
-#endif
-
-#ifndef PVMF_FORMAT_TYPE_H_INCLUDED
-#include "pvmf_format_type.h"
-#endif
-
-#ifndef PVMF_NODE_INTERFACE_H_INCLUDED
-#include "pvmf_node_interface.h"
-#endif
-
-#ifndef OSCL_PRIQUEUE_H_INCLUDED
-#include "oscl_priqueue.h"
-#endif
-
-#ifndef PVMF_MEDIA_DATA_H_INCLUDED
-#include "pvmf_media_data.h"
-#endif
-
 #ifndef OSCL_MEM_MEMPOOL_H_INCLUDED
 #include "oscl_mem_mempool.h"
 #endif
-#ifndef PVMF_MEMPOOL_H_INCLUDED
-#include "pvmf_mempool.h"
-#endif
-
 #ifndef PVMF_SIMPLE_MEDIA_BUFFER_H_INCLUDED
 #include "pvmf_simple_media_buffer.h"
 #endif
-
 #ifndef PVMF_POOL_BUFFER_ALLOCATOR_H_INCLUDED
 #include "pvmf_pool_buffer_allocator.h"
 #endif
-
-#ifndef PVMF_POOL_BUFFER_ALLOCATOR_H_INCLUDED
-#include "pvmf_pool_buffer_allocator.h"
-#endif
-
-#ifndef PVMF_NODE_UTILS_H_INCLUDED
-#include "pvmf_node_utils.h"
-#endif
-
 #ifndef PVMF_OMX_BASEDEC_PORT_H_INCLUDED
 #include "pvmf_omx_basedec_port.h"
 #endif
-
 #ifndef PVMF_OMX_BASEDEC_NODE_EXTENSION_INTERFACE_H_INCLUDED
 #include "pvmf_omx_basedec_node_extension_interface.h"
 #endif
-
 #ifndef PVMF_META_DATA_EXTENSION_H_INCLUDED
 #include "pvmf_meta_data_extension.h"
 #endif
-
 #ifndef PV_MIME_STRING_UTILS_H_INCLUDED
 #include "pv_mime_string_utils.h"
 #endif
-
 #ifndef OMX_Core_h
 #include "OMX_Core.h"
 #endif
-
 #ifndef OMX_Component_h
 #include "OMX_Component.h"
 #endif
-
 #ifndef PVMF_OMX_BASEDEC_CALLBACKS_H_INCLUDED
 #include "pvmf_omx_basedec_callbacks.h"
 #endif
-
-#ifndef OSCLCONFIG_IO_H_INCLUDED
-#include "osclconfig_io.h"
+#ifndef __MEDIA_CLOCK_CONVERTER_H
+#include "media_clock_converter.h"
 #endif
-#ifndef OSCL_MEM_H_INCLUDED
-#include "oscl_mem.h"
-#endif
-
 #if (PVLOGGER_INST_LEVEL >= PVLOGMSG_INST_REL)
 #ifndef PVMF_MEDIA_CLOCK_H_INCLUDED
 #include "pvmf_media_clock.h"
 #endif
 #endif
-
 #ifndef PVMF_FIXEDSIZE_BUFFER_ALLOC_H_INCLUDED
 #include "pvmf_fixedsize_buffer_alloc.h"
 #endif
-
-#ifndef __MEDIA_CLOCK_CONVERTER_H
-#include "media_clock_converter.h"
+#ifndef PVMF_MEDIA_CMD_H_INCLUDED
+#include "pvmf_media_cmd.h"
+#endif
+#ifndef PVMF_MEDIA_MSG_FORMAT_IDS_H_INCLUDED
+#include "pvmf_media_msg_format_ids.h"
+#endif
+#ifndef PVMI_KVP_UTIL_H_INCLUDED
+#include "pvmi_kvp_util.h"
+#endif
+#ifndef PV_OMXCORE_H_INCLUDED
+#include "pv_omxcore.h"
+#endif
+#ifndef PV_OMX_CONFIG_PARSER_H_INCLUDED
+#include "pv_omx_config_parser.h"
 #endif
 
 #define MAX_NAL_PER_FRAME 100
@@ -156,8 +120,6 @@ OMX_ERRORTYPE CallbackFillBufferDone(OMX_OUT OMX_HANDLETYPE aComponent,
                                      OMX_OUT OMX_PTR aAppData,
                                      OMX_OUT OMX_BUFFERHEADERTYPE* aBuffer);
 
-
-
 //Default values for number of Input/Output buffers. If the component needs more than this, it will be
 // negotiated. If the component does not need more than this number, the default is used
 #define NUMBER_INPUT_BUFFER 5
@@ -167,10 +129,6 @@ OMX_ERRORTYPE CallbackFillBufferDone(OMX_OUT OMX_HANDLETYPE aComponent,
 #define NAL_START_CODE_SIZE 4
 const unsigned char NAL_START_CODE[4] = {0, 0, 0, 1};
 
-////////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////////
-/////////////////////////
-/////////////////////////
 /////////////////////////
 // CUSTOM DEALLOCATOR FOR MEDIA DATA SHARED PTR WRAPPER:
 //                      1) Deallocates the underlying output buffer
@@ -230,140 +188,11 @@ class PVOMXDecInputBufferSharedPtrWrapperCombinedCleanupDA : public OsclDestruct
         void *ptr_to_data_to_dealloc;
 };
 
-
-#define PVMFOMXBaseDecNodeCommandBase PVMFGenericNodeCommand<PVMFOMXBaseDecNodeAllocator>
-
-class PVMFOMXBaseDecNodeCommand: public PVMFOMXBaseDecNodeCommandBase
-{
-    public:
-        //constructor for Custom2 command
-        void Construct(PVMFSessionId s, int32 cmd, int32 arg1, int32 arg2, int32& arg3, const OsclAny*aContext)
-        {
-            PVMFOMXBaseDecNodeCommandBase::Construct(s, cmd, aContext);
-            iParam1 = (OsclAny*)arg1;
-            iParam2 = (OsclAny*)arg2;
-            iParam3 = (OsclAny*) & arg3;
-        }
-        void Parse(int32&arg1, int32&arg2, int32*&arg3)
-        {
-            arg1 = (int32)iParam1;
-            arg2 = (int32)iParam2;
-            arg3 = (int32*)iParam3;
-        }
-
-        void Construct(PVMFSessionId s, int32 cmd, PVMFMetadataList* aKeyList, uint32 aStartIndex, int32 aMaxEntries, char* aQueryKey, const OsclAny* aContext)
-        {
-            PVMFOMXBaseDecNodeCommandBase::Construct(s, cmd, aContext);
-            iStartIndex = aStartIndex;
-            iMaxEntries = aMaxEntries;
-
-            if (aQueryKey == NULL)
-            {
-                query_key[0] = 0;
-            }
-            else
-            {
-                if (aQueryKey != NULL)
-                    oscl_strncpy(query_key, aQueryKey, oscl_strlen(aQueryKey) + 1);
-            }
-
-            iParam1 = (OsclAny*)aKeyList;
-            iParam2 = NULL;
-            iParam3 = NULL;
-            iParam4 = NULL;
-            iParam5 = NULL;
-        }
-
-        void Parse(PVMFMetadataList*& MetaDataListPtr, uint32 &aStartingIndex, int32 &aMaxEntries, char*&aQueryKey)
-        {
-            MetaDataListPtr = (PVMFMetadataList*)iParam1;
-            aStartingIndex = iStartIndex;
-            aMaxEntries = iMaxEntries;
-            if (query_key[0] == 0)
-            {
-                aQueryKey = NULL;
-            }
-            else
-            {
-                aQueryKey = query_key;
-            }
-        }
-
-        // Constructor and parser for GetNodeMetadataValue
-        void Construct(PVMFSessionId s, int32 cmd, PVMFMetadataList* aKeyList, Oscl_Vector<PvmiKvp, OsclMemAllocator>* aValueList, uint32 aStartIndex, int32 aMaxEntries, const OsclAny* aContext)
-        {
-            PVMFOMXBaseDecNodeCommandBase::Construct(s, cmd, aContext);
-            iParam1 = (OsclAny*)aKeyList;
-            iParam2 = (OsclAny*)aValueList;
-
-            iStartIndex = aStartIndex;
-            iMaxEntries = aMaxEntries;
-
-            iParam3 = NULL;
-            iParam4 = NULL;
-            iParam5 = NULL;
-        }
-        void Parse(PVMFMetadataList* &aKeyList, Oscl_Vector<PvmiKvp, OsclMemAllocator>* &aValueList, uint32 &aStartingIndex, int32 &aMaxEntries)
-        {
-            aKeyList = (PVMFMetadataList*)iParam1;
-            aValueList = (Oscl_Vector<PvmiKvp, OsclMemAllocator>*)iParam2;
-            aStartingIndex = iStartIndex;
-            aMaxEntries = iMaxEntries;
-        }
-
-        virtual bool hipri()
-        {
-            //this routine identifies commands that need to
-            //go at the front of the queue.  derived command
-            //classes can override it if needed.
-            return (iCmd == PVOMXBASEDEC_NODE_CMD_CANCELALL
-                    || iCmd == PVOMXBASEDEC_NODE_CMD_CANCELCMD);
-        }
-
-        enum PVOMXBaseDecNodeCmdType
-        {
-            PVOMXBASEDEC_NODE_CMD_QUERYUUID,
-            PVOMXBASEDEC_NODE_CMD_QUERYINTERFACE,
-            PVOMXBASEDEC_NODE_CMD_INIT,
-            PVOMXBASEDEC_NODE_CMD_PREPARE,
-            PVOMXBASEDEC_NODE_CMD_REQUESTPORT,
-            PVOMXBASEDEC_NODE_CMD_START,
-            PVOMXBASEDEC_NODE_CMD_PAUSE,
-            PVOMXBASEDEC_NODE_CMD_STOP,
-            PVOMXBASEDEC_NODE_CMD_FLUSH,
-            PVOMXBASEDEC_NODE_CMD_RELEASEPORT,
-            PVOMXBASEDEC_NODE_CMD_RESET,
-            PVOMXBASEDEC_NODE_CMD_CANCELCMD,
-            PVOMXBASEDEC_NODE_CMD_CANCELALL,
-            PVOMXBASEDEC_NODE_CMD_INVALID,
-            PVOMXBASEDEC_NODE_CMD_GETNODEMETADATAKEY,
-            PVOMXBASEDEC_NODE_CMD_GETNODEMETADATAVALUE
-        };
-
-    private:
-        uint32 iStartIndex;
-        uint32 iMaxEntries;
-        char query_key[256];
-
-};
-
 //Default vector reserve size
 #define PVMF_OMXBASEDEC_NODE_COMMAND_VECTOR_RESERVE 10
 
 //Starting value for command IDs
 #define PVMF_OMXBASEDEC_NODE_COMMAND_ID_START 6000
-
-///////////////////////////////////////////////////////////////////////////////////////////////////////
-//CAPABILITY AND CONFIG
-
-// Structure to hold the key string info for
-// capability-and-config
-struct PVOMXBaseDecNodeKeyStringData
-{
-    char iString[64];
-    PvmiKvpType iType;
-    PvmiKvpValueType iValueType;
-};
 
 // The number of characters to allocate for the key string
 #define PVOMXBASEDECNODECONFIG_KEYSTRING_SIZE 128
@@ -372,13 +201,15 @@ struct PVOMXBaseDecNodeKeyStringData
 #define PVMF_OMX_BASE_DEC_NODE_MIMETYPE "pvxxx/OMXBaseDecNode"
 #define PVMF_BASEMIMETYPE "pvxxx"
 
-//Command queue type
-typedef PVMFNodeCommandQueue<PVMFOMXBaseDecNodeCommand, PVMFOMXBaseDecNodeAllocator> PVMFOMXBaseDecNodeCmdQ;
+// Structure to hold the key string info for capability-and-config
+struct PVOMXBaseDecNodeKeyStringData
+{
+    char iString[64];
+    PvmiKvpType iType;
+    PvmiKvpValueType iValueType;
+};
 
-
-class PVMFOMXBaseDecNode
-        : public OsclActiveObject
-        , public PVMFNodeInterface
+class PVMFOMXBaseDecNode: public PVMFNodeInterfaceImpl
         , public OsclMemPoolFixedChunkAllocatorObserver
         , public PVMFOMXBaseDecNodeExtensionInterface
         , public PVMFMetadataExtensionInterface
@@ -387,31 +218,6 @@ class PVMFOMXBaseDecNode
     public:
         OSCL_IMPORT_REF PVMFOMXBaseDecNode(int32 aPriority, const char aAOName[]);
         OSCL_IMPORT_REF virtual ~PVMFOMXBaseDecNode();
-
-        // From PVMFNodeInterface
-        OSCL_IMPORT_REF virtual PVMFStatus ThreadLogon() = 0;
-        OSCL_IMPORT_REF PVMFStatus ThreadLogoff();
-        OSCL_IMPORT_REF PVMFStatus GetCapability(PVMFNodeCapability& aNodeCapability);
-        OSCL_IMPORT_REF PVMFPortIter* GetPorts(const PVMFPortFilter* aFilter = NULL);
-        OSCL_IMPORT_REF PVMFCommandId QueryUUID(PVMFSessionId, const PvmfMimeString& aMimeType,
-                                                Oscl_Vector<PVUuid, PVMFOMXBaseDecNodeAllocator>& aUuids,
-                                                bool aExactUuidsOnly = false,
-                                                const OsclAny* aContext = NULL);
-        OSCL_IMPORT_REF PVMFCommandId QueryInterface(PVMFSessionId, const PVUuid& aUuid,
-                PVInterface*& aInterfacePtr,
-                const OsclAny* aContext = NULL);
-        OSCL_IMPORT_REF PVMFCommandId RequestPort(PVMFSessionId
-                , int32 aPortTag, const PvmfMimeString* aPortConfig = NULL, const OsclAny* aContext = NULL);
-        OSCL_IMPORT_REF PVMFCommandId ReleasePort(PVMFSessionId, PVMFPortInterface& aPort, const OsclAny* aContext = NULL);
-        OSCL_IMPORT_REF PVMFCommandId Init(PVMFSessionId, const OsclAny* aContext = NULL);
-        OSCL_IMPORT_REF PVMFCommandId Prepare(PVMFSessionId, const OsclAny* aContext = NULL);
-        OSCL_IMPORT_REF PVMFCommandId Start(PVMFSessionId, const OsclAny* aContext = NULL);
-        OSCL_IMPORT_REF PVMFCommandId Stop(PVMFSessionId, const OsclAny* aContext = NULL);
-        OSCL_IMPORT_REF PVMFCommandId Flush(PVMFSessionId, const OsclAny* aContext = NULL);
-        OSCL_IMPORT_REF PVMFCommandId Pause(PVMFSessionId, const OsclAny* aContext = NULL);
-        OSCL_IMPORT_REF PVMFCommandId Reset(PVMFSessionId, const OsclAny* aContext = NULL);
-        OSCL_IMPORT_REF PVMFCommandId CancelAllCommands(PVMFSessionId, const OsclAny* aContextData = NULL);
-        OSCL_IMPORT_REF PVMFCommandId CancelCommand(PVMFSessionId, PVMFCommandId aCmdId, const OsclAny* aContextData = NULL);
 
         // From PVMFPortActivityHandler
         OSCL_IMPORT_REF void HandlePortActivity(const PVMFPortActivity& aActivity);
@@ -490,27 +296,26 @@ class PVMFOMXBaseDecNode
         OSCL_IMPORT_REF PVMFStatus verifyParametersSync(PvmiMIOSession aSession, PvmiKvp* aParameters, int aNumElements);
 
         OSCL_IMPORT_REF virtual bool ProcessIncomingMsg(PVMFPortInterface* aPort);
-        OSCL_IMPORT_REF void Run();
+        OSCL_IMPORT_REF virtual void Run();
+
     protected:
-        OSCL_IMPORT_REF void CommandComplete(PVMFOMXBaseDecNodeCmdQ& aCmdQ, PVMFOMXBaseDecNodeCommand& aCmd, PVMFStatus aStatus, OsclAny* aEventData = NULL);
+        virtual PVMFStatus DoQueryUuid(PVMFNodeCommand&) = 0;
+        PVMFStatus DoQueryInterface(PVMFNodeCommand&);
+        virtual PVMFStatus DoRequestPort(PVMFNodeCommand&, PVMFPortInterface*&) = 0;
+        PVMFStatus DoReleasePort(PVMFNodeCommand&);
+        PVMFStatus DoInit(PVMFNodeCommand&);
+        PVMFStatus DoPrepare(PVMFNodeCommand&);
+        PVMFStatus DoStart(PVMFNodeCommand&);
+        PVMFStatus DoStop(PVMFNodeCommand&);
+        PVMFStatus DoPause(PVMFNodeCommand&);
+        PVMFStatus DoReset(PVMFNodeCommand&);
+        PVMFStatus DoFlush(PVMFNodeCommand&);
+        virtual PVMFStatus DoGetNodeMetadataKey(PVMFNodeCommand&) = 0;
+        virtual PVMFStatus DoGetNodeMetadataValue(PVMFNodeCommand&) = 0;
+        PVMFStatus DoCancelAllCommands(PVMFNodeCommand&);
+        PVMFStatus DoCancelCommand(PVMFNodeCommand&);
 
-        virtual void DoQueryUuid(PVMFOMXBaseDecNodeCommand&) = 0;
-        void DoQueryInterface(PVMFOMXBaseDecNodeCommand&);
-        virtual void DoRequestPort(PVMFOMXBaseDecNodeCommand&) = 0;
-        void DoReleasePort(PVMFOMXBaseDecNodeCommand&);
-        void DoInit(PVMFOMXBaseDecNodeCommand&);
-        void DoPrepare(PVMFOMXBaseDecNodeCommand&);
-        void DoStart(PVMFOMXBaseDecNodeCommand&);
-        void DoStop(PVMFOMXBaseDecNodeCommand&);
-        void DoPause(PVMFOMXBaseDecNodeCommand&);
-        void DoReset(PVMFOMXBaseDecNodeCommand&);
-        void DoFlush(PVMFOMXBaseDecNodeCommand&);
-        virtual PVMFStatus DoGetNodeMetadataKey(PVMFOMXBaseDecNodeCommand&) = 0;
-        virtual PVMFStatus DoGetNodeMetadataValue(PVMFOMXBaseDecNodeCommand&) = 0;
-        void DoCancelAllCommands(PVMFOMXBaseDecNodeCommand&);
-        void DoCancelCommand(PVMFOMXBaseDecNodeCommand&);
-
-        bool ProcessCommand(PVMFOMXBaseDecNodeCommand& aCmd);
+        //bool ProcessCommand(PVMFOMXBaseDecNodeCommand& aCmd);
         bool ProcessOutgoingMsg(PVMFPortInterface* aPort);
         PVMFStatus HandleProcessingState();
         virtual PVMFStatus HandlePortReEnable() = 0;
@@ -603,7 +408,7 @@ class PVMFOMXBaseDecNode
         // From OsclMemPoolFixedChunkAllocatorObserver
         OSCL_IMPORT_REF void freechunkavailable(OsclAny*);
 
-        OSCL_IMPORT_REF PVMFCommandId QueueCommandL(PVMFOMXBaseDecNodeCommand& aCmd);
+        //OSCL_IMPORT_REF PVMFCommandId QueueCommandL(PVMFOMXBaseDecNodeCommand& aCmd);
 
         OSCL_IMPORT_REF virtual int32 GetNAL_OMXNode(uint8** bitstream, uint32* size);
         OSCL_IMPORT_REF virtual bool ParseAndReWrapH264RAW(PVMFSharedMediaDataPtr& aMediaDataPtr);
@@ -614,10 +419,6 @@ class PVMFOMXBaseDecNode
         // Ports pointers
         PVMFPortInterface* iInPort;
         PVMFPortInterface* iOutPort;
-
-        // Commands
-        PVMFOMXBaseDecNodeCmdQ iInputCommands;
-        PVMFOMXBaseDecNodeCmdQ iCurrentCommand;
 
         // Shared pointer for Media Msg.Input buffer
         PVMFSharedMediaDataPtr iDataIn;
@@ -879,6 +680,11 @@ class PVMFOMXBaseDecNode
 
         bool iIsVC1;
         bool iIsVC1AdvancedProfile;
+
+    private:
+        void MoveCmdToCurrentQueue(PVMFNodeCommand& aCmd);
+        PVMFStatus HandleExtensionAPICommands(PVMFNodeCommand& aCmd);
+
 };
 
 
