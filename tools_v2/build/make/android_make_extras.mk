@@ -176,7 +176,11 @@ $1: FORCE
 	$$(quiet) echo "  endif"  >> $$@
 	$$(quiet) echo "" >> $$@
 	$$(quiet) echo "  ifeq ($$(esc_dollar)(TARGET_ARCH),arm)" >> $$@
-	$$(quiet) echo "    PV_CFLAGS += -DPV_ARM_GCC_V5" >> $$@
+	$$(quiet) echo "    ifeq ($(TARGET_ARCH_VERSION),armv4t)" >> $$@
+	$$(quiet) echo "      PV_CFLAGS += -DPV_ARM_GCC_V4" >> $$@
+	$$(quiet) echo "    else" >> $$@
+	$$(quiet) echo "      PV_CFLAGS += -DPV_ARM_GCC_V5" >> $$@
+	$$(quiet) echo "    endif" >> $$@
 	$$(quiet) echo "  endif"  >> $$@
 	$$(quiet) echo "" >> $$@
 	$$(quiet) echo "  FORMAT := android" >> $$@
