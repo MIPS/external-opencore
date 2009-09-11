@@ -565,6 +565,166 @@ void ConvertToLowerCase(char *aString)
 
 /*Structs n funcs for parsing the logger config file completes*/
 
+// Parse List of test cases from arguments
+void FindListRange(cmd_line* command_line, Oscl_Vector<PVTest *, OsclMemAllocator> &aList, FILE *aFile, bool &aListFound)
+{
+    bool cmdline_iswchar = command_line->is_wchar();
+    int count = command_line->get_count();
+    int listArgument = 0;
+    bool listFound = false;
+    // Search for the "-list" argument
+    // Go through each argument
+    for (int listSearch = 0; listSearch < count; listSearch++)
+    {
+        char argstr[128];
+        // Convert to UTF8 if necessary
+        if (cmdline_iswchar)
+        {
+            oscl_wchar* argwstr = NULL;
+            command_line->get_arg(listSearch, argwstr);
+            oscl_UnicodeToUTF8(argwstr, oscl_strlen(argwstr), argstr, 128);
+            argstr[127] = '\0';
+        }
+        else
+        {
+            char* tmpstr = NULL;
+            command_line->get_arg(listSearch, tmpstr);
+            int32 tmpstrlen = oscl_strlen(tmpstr) + 1;
+            if (tmpstrlen > 128)
+            {
+                tmpstrlen = 128;
+            }
+            oscl_strncpy(argstr, tmpstr, tmpstrlen);
+            argstr[tmpstrlen-1] = '\0';
+        }
+
+        // Do the string compare
+        if (oscl_strcmp(argstr, "-help") == 0)
+        {
+            fprintf(aFile, "List specification option:\n");
+            fprintf(aFile, "  -list 100:104,108,110,115:117\n");
+            fprintf(aFile, "   Specify a range of test cases using from A to B like A:B\n");
+            fprintf(aFile, "   for a single test case C use coma ,C\n");
+            fprintf(aFile, "   -list A:B,C\n\n");
+        }
+        else if (oscl_strcmp(argstr, "-list") == 0)
+        {
+            listFound = aListFound = true;
+            listArgument = ++listSearch;
+            break;
+        }
+    }
+
+    //if "-list" was found then let's parse all ranges and fill the vector
+    if (listFound)
+    {
+        char listArgstr[128];
+        // Convert to UTF8 if necessary
+        if (cmdline_iswchar)
+        {
+            oscl_wchar* argwstr = NULL;
+            command_line->get_arg(listArgument, argwstr);
+            oscl_UnicodeToUTF8(argwstr, oscl_strlen(argwstr), listArgstr, 128);
+            listArgstr[127] = '\0';
+        }
+        else
+        {
+            char* tmpstr = NULL;
+            command_line->get_arg(listArgument, tmpstr);
+            int32 tmpstrlen = oscl_strlen(tmpstr) + 1;
+            if (tmpstrlen > 128)
+            {
+                tmpstrlen = 128;
+            }
+            oscl_strncpy(listArgstr, tmpstr, tmpstrlen);
+            listArgstr[tmpstrlen - 1] = '\0';
+        }
+        //now that we have the arguments
+        char *strIterator = listArgstr;
+        while (strIterator != NULL)
+        {
+            //find any ":"
+            char *col = oscl_strchr(strIterator, ':');
+            char *com = oscl_strchr(strIterator, ',');
+            uint LowIndex = 0;
+            uint MaxIndex = 0;
+            //this is to verify that we have a range
+            if ((com != NULL) && (col != NULL))
+            {
+                OSCL_StackString<128> strLowIndex(strIterator, col - strIterator);
+                PV_atoi(strLowIndex.get_cstr(), '0', LowIndex);
+                if (com > col)
+                {
+                    //get the max range
+                    OSCL_StackString<128> strMaxIndex(col + 1, com - col);
+                    PV_atoi(strMaxIndex.get_cstr(), '0', MaxIndex);
+
+                    //create the test name
+                    *col = '-';
+                    OSCL_StackString<128> TestName(strIterator, com - strIterator);
+
+                    //create and push the PVTest
+                    PVTest *aPVTest = OSCL_NEW(PVTest, (TestName.get_cstr(), LowIndex, MaxIndex));
+                    aList.push_back(aPVTest);
+                }
+                else
+                {
+                    //this condition happens when we have a single test case or we have a range
+                    //at the end of the arguments string
+                    //create and push the PVTest
+                    PVTest *aPVTest = OSCL_NEW(PVTest, (strLowIndex.get_cstr(), LowIndex, LowIndex));
+                    aList.push_back(aPVTest);
+                }
+                //increment the iterator pointer
+                strIterator = com + 1;
+            }
+            else if ((com == NULL) && (col != NULL))
+            {
+                //this condition will the true if we have a range at the end of the
+                //arguments string
+                //get the low range
+                OSCL_StackString<128> strLowIndex(strIterator, col - strIterator);
+                PV_atoi(strLowIndex.get_cstr(), '0', LowIndex);
+
+                //get the max range
+                OSCL_StackString<128> strMaxIndex(col + 1);
+                PV_atoi(strMaxIndex.get_cstr(), '0', MaxIndex);
+
+                //create the test name
+                *col = '-';
+                OSCL_StackString<128> TestName(strIterator);
+
+                //create and push the PVTest
+                PVTest *aPVTest = OSCL_NEW(PVTest, (TestName.get_cstr(), LowIndex, MaxIndex));
+                aList.push_back(aPVTest);
+
+                strIterator = NULL;
+
+            }
+            else if (col == NULL)
+            {
+                OSCL_StackString<128> strSingle(strIterator);
+                PV_atoi(strSingle.get_cstr(), '0', LowIndex);
+
+                //create and push the PVTest
+                PVTest *aPVTest = OSCL_NEW(PVTest, (strSingle.get_cstr(), LowIndex, LowIndex));
+                aList.push_back(aPVTest);
+
+                //increment the iterator pointer
+                if (com != NULL)
+                {
+                    strIterator = com + 1;
+                }
+                else
+                {
+                    strIterator = NULL;
+                }
+            }
+        }
+    }
+}
+
+
 // Parse source type from arguments
 void FindSourceType(cmd_line* command_line, OSCL_HeapString<OsclMemAllocator> &aFileNameInfo, PVMFFormatType &aInputFileFormatType, int32 &aTemp_Flag, FILE *aFile)
 {
@@ -1942,6 +2102,97 @@ int local_main(FILE *filehandle, cmd_line* command_line)
     return result;
 }
 
+int CreateTestSuiteAndRun(char *aFileName,
+                          PVMFFormatType aFileType,
+                          int32 aFirstTest,
+                          int32 aLastTest,
+                          bool aCompV,
+                          bool aCompA,
+                          bool aFileInput,
+                          bool aBCS,
+                          int32 aLogLevel,
+                          int32 aLogNode,
+                          int32 aLogText,
+                          int32 aLogMem,
+                          int32 aFileFormatType,
+                          bool aProxyEnabled,
+                          uint32 aDownloadRateInKbps,
+                          bool aSplitLogFile,
+                          OSCL_HeapString<OsclMemAllocator> &afilenameinfo,
+                          CmdLinePopulator<char> *aasciiCmdLinePopulator,
+                          CmdLinePopulator<oscl_wchar> *awcharCmdLinePopulator)
+{
+    pvplayer_engine_test_suite *engine_tests = NULL;
+    engine_tests = new pvplayer_engine_test_suite(aFileName,
+            aFileType,
+            aFirstTest,
+            aLastTest,
+            aCompV,
+            aCompA,
+            aFileInput,
+            aBCS,
+            aLogLevel,
+            aLogNode,
+            aLogText,
+            aLogMem,
+            aFileFormatType,
+            aProxyEnabled,
+            aDownloadRateInKbps,
+            aSplitLogFile);
+    if (engine_tests)
+    {
+
+        //Set the Initial timer
+
+        uint32 starttick = OsclTickCount::TickCount();
+        // Run the engine test
+        engine_tests->run_test();
+        uint32 endtick = OsclTickCount::TickCount();
+
+        double t1 = OsclTickCount::TicksToMsec(starttick);
+        double t2 = OsclTickCount::TicksToMsec(endtick);
+        fprintf(file, "Total Execution time for file %s is : %f seconds", afilenameinfo.get_cstr(), (t2 - t1) / 1000);
+
+        // Print out the results
+        text_test_interpreter interp;
+        _STRING rs = interp.interpretation(engine_tests->last_result());
+        fprintf(file, rs.c_str());
+
+        const test_result the_result = engine_tests->last_result();
+        delete engine_tests;
+        engine_tests = NULL;
+        if (aasciiCmdLinePopulator)
+        {
+            delete aasciiCmdLinePopulator;
+            aasciiCmdLinePopulator = NULL;
+        }
+
+        if (awcharCmdLinePopulator)
+        {
+            delete awcharCmdLinePopulator;
+            awcharCmdLinePopulator = NULL;
+        }
+        return (the_result.success_count() != the_result.total_test_count());
+    }
+    else
+    {
+        if (aasciiCmdLinePopulator)
+        {
+            delete aasciiCmdLinePopulator;
+            aasciiCmdLinePopulator = NULL;
+        }
+
+        if (awcharCmdLinePopulator)
+        {
+            delete awcharCmdLinePopulator;
+            awcharCmdLinePopulator = NULL;
+        }
+        fprintf(file, "ERROR! pvplayer_engine_test_suite could not be instantiated.\n");
+        return 1;
+    }
+}
+
+
 int _local_main(FILE *filehandle, cmd_line *command_line, bool& aPrintDetailedMemLeakInfo)
 {
     file = filehandle;
@@ -1989,8 +2240,17 @@ int _local_main(FILE *filehandle, cmd_line *command_line, bool& aPrintDetailedMe
     //FindSourceType(command_line, filenameinfo, inputformattype, iFileFormatType, file); //Added with an additional argument
     FindSourceFile(command_line, filenameinfo, inputformattype, file);
 
+
+    //The vector will be filled with PVTest objects
+    Oscl_Vector<PVTest *, OsclMemAllocator> List;
+    bool ListFound = false;
+    FindListRange(command_line, List, file, ListFound);
     int32 firsttest, lasttest;
-    FindTestRange(command_line, firsttest, lasttest, file);
+
+    if (!ListFound)
+    {
+        FindTestRange(command_line, firsttest, lasttest, file);
+    }
 
     bool compV;
     bool compA;
@@ -2029,74 +2289,64 @@ int _local_main(FILE *filehandle, cmd_line *command_line, bool& aPrintDetailedMe
     fprintf(file, "  Compressed output Video(%s) Audio(%s)\n", (compV) ? "Yes" : "No", (compA) ? "Yes" : "No");
     fprintf(file, "  Log level %d; Log node %d Log Text %d Log Mem %d\n", loglevel, lognode, logtext, logmem);
 
-    pvplayer_engine_test_suite *engine_tests = NULL;
-    engine_tests = new pvplayer_engine_test_suite(filenameinfo.get_str(),
-            inputformattype,
-            firsttest,
-            lasttest,
-            compV,
-            compA,
-            fileinput,
-            bcs,
-            loglevel,
-            lognode,
-            logtext,
-            logmem,
-            iFileFormatType,
-            proxyenabled,
-            downloadrateinkbps,
-            splitlogfile);
-    if (engine_tests)
+    int result = 0;
+    if (!ListFound)
     {
-        WriteInitialXmlSummary(xmlresultsfile);
-
-        //Set the Initial timer
-        uint32 starttick = OsclTickCount::TickCount();
-        // Run the engine test
-        engine_tests->run_test();
-        uint32 endtick = OsclTickCount::TickCount();
-
-        double t1 = OsclTickCount::TicksToMsec(starttick);
-        double t2 = OsclTickCount::TicksToMsec(endtick);
-        fprintf(file, "Total Execution time for test suite is: %f seconds", (t2 - t1) / 1000);
-
-        WriteFinalXmlSummary(xmlresultsfile, engine_tests->last_result());
-        text_test_interpreter interp;
-        _STRING rs = interp.interpretation(engine_tests->last_result());
-        fprintf(file, rs.c_str());
-
-        const test_result the_result = engine_tests->last_result();
-        delete engine_tests;
-        engine_tests = NULL;
-        if (asciiCmdLinePopulator)
-        {
-            delete asciiCmdLinePopulator;
-            asciiCmdLinePopulator = NULL;
-        }
-
-        if (wcharCmdLinePopulator)
-        {
-            delete wcharCmdLinePopulator;
-            wcharCmdLinePopulator = NULL;
-        }
-        return (the_result.success_count() != the_result.total_test_count());
+        //regular testing, when a range is being provided
+        result = CreateTestSuiteAndRun(filenameinfo.get_str(),
+                                       inputformattype,
+                                       firsttest,
+                                       lasttest,
+                                       compV,
+                                       compA,
+                                       fileinput,
+                                       bcs,
+                                       loglevel,
+                                       lognode,
+                                       logtext,
+                                       logmem,
+                                       iFileFormatType,
+                                       proxyenabled,
+                                       downloadrateinkbps,
+                                       splitlogfile,
+                                       filenameinfo,
+                                       asciiCmdLinePopulator,
+                                       wcharCmdLinePopulator);
     }
     else
     {
-        if (asciiCmdLinePopulator)
+        //if a list of ranges is provided then let's run each of the ranges
+        Oscl_Vector<PVTest *, OsclMemAllocator>::iterator it;
+        while (!List.empty())
         {
-            delete asciiCmdLinePopulator;
-            asciiCmdLinePopulator = NULL;
-        }
+            it = List.begin();
+            fprintf(file, "Remaining PVTests %s", (*it)->GetTestName().get_cstr());
+            result = CreateTestSuiteAndRun(filenameinfo.get_str(),
+                                           inputformattype,
+                                           (*it)->GetFirstTest(),
+                                           (*it)->GetLastTest(),
+                                           compV,
+                                           compA,
+                                           fileinput,
+                                           bcs,
+                                           loglevel,
+                                           lognode,
+                                           logtext,
+                                           logmem,
+                                           iFileFormatType,
+                                           proxyenabled,
+                                           downloadrateinkbps,
+                                           splitlogfile,
+                                           filenameinfo,
+                                           asciiCmdLinePopulator,
+                                           wcharCmdLinePopulator);
 
-        if (wcharCmdLinePopulator)
-        {
-            delete wcharCmdLinePopulator;
-            wcharCmdLinePopulator = NULL;
+            //delete test case from queue
+            OSCL_DELETE(*it);
+            List.erase(List.begin());
         }
-        fprintf(file, "ERROR! pvplayer_engine_test_suite could not be instantiated.\n");
-        return 1;
     }
+    return result;
 }
 
 

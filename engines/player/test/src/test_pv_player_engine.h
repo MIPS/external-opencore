@@ -74,6 +74,38 @@
 #include "media_clock_converter.h"
 #endif
 
+#ifndef OSCL_STRING_UTILS_H_INCLUDED
+#include "oscl_string_utils.h"
+#endif
+
+class PVTest
+{
+    public:
+        PVTest(const char *aTestName, int32 aFirstTest, int32 aLastTest) :
+                iTestName(aTestName)
+                , iFirstTest(aFirstTest)
+                , iLastTest(aLastTest)
+        {}
+        inline int32 GetFirstTest()
+        {
+            return this->iFirstTest;
+        }
+
+        inline int32 GetLastTest()
+        {
+            return this->iLastTest;
+        }
+
+        inline OSCL_HeapString<OsclMemAllocator> &GetTestName()
+        {
+            return iTestName;
+        }
+    private:
+        OSCL_HeapString<OsclMemAllocator> iTestName;
+        int32 iFirstTest;
+        int32 iLastTest;
+};
+
 template<class DestructClass>
 class LogAppenderDestructDealloc : public OsclDestructDealloc
 {
