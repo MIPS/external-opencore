@@ -323,7 +323,7 @@ void PVMFOMXBaseDecNode::MoveCmdToCurrentQueue(PVMFNodeCommand& aCmd)
     return;
 }
 
-PVMFStatus PVMFOMXBaseDecNode::HandleExtensionAPICommands(PVMFNodeCommand& aCmd)
+OSCL_EXPORT_REF PVMFStatus PVMFOMXBaseDecNode::HandleExtensionAPICommands(PVMFNodeCommand& aCmd)
 {
     OSCL_UNUSED_ARG(aCmd);
     return PVMFSuccess;
@@ -3829,14 +3829,14 @@ bool PVMFOMXBaseDecNode::SendEndOfTrackCommand(void)
 }
 
 /////////////////////////////////////////////////////////////////////////////
-PVMFStatus PVMFOMXBaseDecNode::DoInit(PVMFNodeCommand& aCmd)
+OSCL_EXPORT_REF PVMFStatus PVMFOMXBaseDecNode::DoInit(PVMFNodeCommand& aCmd)
 {
     OSCL_UNUSED_ARG(aCmd);
     return PVMFSuccess;
 }
 
 /////////////////////////////////////////////////////////////////////////////
-PVMFStatus PVMFOMXBaseDecNode::DoPrepare(PVMFNodeCommand& aCmd)
+OSCL_EXPORT_REF PVMFStatus PVMFOMXBaseDecNode::DoPrepare(PVMFNodeCommand& aCmd)
 {
     OMX_ERRORTYPE err = OMX_ErrorNone;
     Oscl_Vector<OMX_STRING, OsclMemAllocator> roles;
@@ -4226,7 +4226,7 @@ PVMFStatus PVMFOMXBaseDecNode::DoPrepare(PVMFNodeCommand& aCmd)
 }
 
 /////////////////////////////////////////////////////////////////////////////
-PVMFStatus PVMFOMXBaseDecNode::DoStart(PVMFNodeCommand& aCmd)
+OSCL_EXPORT_REF PVMFStatus PVMFOMXBaseDecNode::DoStart(PVMFNodeCommand& aCmd)
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "%s::DoStart() In", iName.Str()));
 
@@ -4291,7 +4291,7 @@ PVMFStatus PVMFOMXBaseDecNode::DoStart(PVMFNodeCommand& aCmd)
 }
 
 /////////////////////////////////////////////////////////////////////////////
-PVMFStatus PVMFOMXBaseDecNode::DoStop(PVMFNodeCommand& aCmd)
+OSCL_EXPORT_REF PVMFStatus PVMFOMXBaseDecNode::DoStop(PVMFNodeCommand& aCmd)
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "%s::DoStop() In", iName.Str()));
 
@@ -4398,7 +4398,7 @@ PVMFStatus PVMFOMXBaseDecNode::DoStop(PVMFNodeCommand& aCmd)
 }
 
 /////////////////////////////////////////////////////////////////////////////
-PVMFStatus PVMFOMXBaseDecNode::DoFlush(PVMFNodeCommand& aCmd)
+OSCL_EXPORT_REF PVMFStatus PVMFOMXBaseDecNode::DoFlush(PVMFNodeCommand& aCmd)
 {
 
     MoveCmdToCurrentQueue(aCmd);
@@ -4420,7 +4420,7 @@ PVMFStatus PVMFOMXBaseDecNode::DoFlush(PVMFNodeCommand& aCmd)
 }
 
 /////////////////////////////////////////////////////////////////////////////
-PVMFStatus PVMFOMXBaseDecNode::DoPause(PVMFNodeCommand& aCmd)
+OSCL_EXPORT_REF PVMFStatus PVMFOMXBaseDecNode::DoPause(PVMFNodeCommand& aCmd)
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "%s::DoPause() In", iName.Str()));
 
@@ -4483,7 +4483,7 @@ PVMFStatus PVMFOMXBaseDecNode::DoPause(PVMFNodeCommand& aCmd)
 }
 
 /////////////////////////////////////////////////////////////////////////////
-PVMFStatus PVMFOMXBaseDecNode::DoReset(PVMFNodeCommand& aCmd)
+OSCL_EXPORT_REF PVMFStatus PVMFOMXBaseDecNode::DoReset(PVMFNodeCommand& aCmd)
 {
 
     OMX_ERRORTYPE  err;
@@ -4997,7 +4997,7 @@ OSCL_EXPORT_REF void PVMFOMXBaseDecNode::HandlePortActivity(const PVMFPortActivi
 }
 
 /////////////////////////////////////////////////////////////////////////////
-PVMFStatus PVMFOMXBaseDecNode::DoCancelAllCommands(PVMFNodeCommand& aCmd)
+OSCL_EXPORT_REF PVMFStatus PVMFOMXBaseDecNode::DoCancelAllCommands(PVMFNodeCommand& aCmd)
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                     (0, "%s::DoCancelAllCommands", iName.Str()));
@@ -5031,7 +5031,7 @@ PVMFStatus PVMFOMXBaseDecNode::DoCancelAllCommands(PVMFNodeCommand& aCmd)
 }
 
 /////////////////////////////////////////////////////////////////////////////
-PVMFStatus PVMFOMXBaseDecNode::DoCancelCommand(PVMFNodeCommand& aCmd)
+OSCL_EXPORT_REF PVMFStatus PVMFOMXBaseDecNode::DoCancelCommand(PVMFNodeCommand& aCmd)
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                     (0, "%s::DoCancelCommand", iName.Str()));
@@ -5080,7 +5080,7 @@ PVMFStatus PVMFOMXBaseDecNode::DoCancelCommand(PVMFNodeCommand& aCmd)
 }
 
 /////////////////////////////////////////////////////////////////////////////
-PVMFStatus PVMFOMXBaseDecNode::DoQueryInterface(PVMFNodeCommand&  aCmd)
+OSCL_EXPORT_REF PVMFStatus PVMFOMXBaseDecNode::DoQueryInterface(PVMFNodeCommand&  aCmd)
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                     (0, "%s::DoQueryInterface", iName.Str()));
@@ -5686,7 +5686,7 @@ OMX_ERRORTYPE PVMFOMXBaseDecNode::EventHandlerProcessing(OMX_OUT OMX_HANDLETYPE 
 }
 
 /////////////////////////////////////////////////////////////////////////////
-PVMFStatus PVMFOMXBaseDecNode::DoReleasePort(PVMFNodeCommand& aCmd)
+OSCL_EXPORT_REF PVMFStatus PVMFOMXBaseDecNode::DoReleasePort(PVMFNodeCommand& aCmd)
 {
     PVMFPortInterface* p = NULL;
     aCmd.PVMFNodeCommandBase::Parse(p);

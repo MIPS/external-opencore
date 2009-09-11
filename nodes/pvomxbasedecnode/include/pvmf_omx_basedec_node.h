@@ -300,20 +300,20 @@ class PVMFOMXBaseDecNode: public PVMFNodeInterfaceImpl
 
     protected:
         virtual PVMFStatus DoQueryUuid(PVMFNodeCommand&) = 0;
-        PVMFStatus DoQueryInterface(PVMFNodeCommand&);
         virtual PVMFStatus DoRequestPort(PVMFNodeCommand&, PVMFPortInterface*&) = 0;
-        PVMFStatus DoReleasePort(PVMFNodeCommand&);
-        PVMFStatus DoInit(PVMFNodeCommand&);
-        PVMFStatus DoPrepare(PVMFNodeCommand&);
-        PVMFStatus DoStart(PVMFNodeCommand&);
-        PVMFStatus DoStop(PVMFNodeCommand&);
-        PVMFStatus DoPause(PVMFNodeCommand&);
-        PVMFStatus DoReset(PVMFNodeCommand&);
-        PVMFStatus DoFlush(PVMFNodeCommand&);
         virtual PVMFStatus DoGetNodeMetadataKey(PVMFNodeCommand&) = 0;
         virtual PVMFStatus DoGetNodeMetadataValue(PVMFNodeCommand&) = 0;
-        PVMFStatus DoCancelAllCommands(PVMFNodeCommand&);
-        PVMFStatus DoCancelCommand(PVMFNodeCommand&);
+        OSCL_IMPORT_REF PVMFStatus DoQueryInterface(PVMFNodeCommand&);
+        OSCL_IMPORT_REF PVMFStatus DoReleasePort(PVMFNodeCommand&);
+        OSCL_IMPORT_REF PVMFStatus DoInit(PVMFNodeCommand&);
+        OSCL_IMPORT_REF PVMFStatus DoPrepare(PVMFNodeCommand&);
+        OSCL_IMPORT_REF PVMFStatus DoStart(PVMFNodeCommand&);
+        OSCL_IMPORT_REF PVMFStatus DoStop(PVMFNodeCommand&);
+        OSCL_IMPORT_REF PVMFStatus DoPause(PVMFNodeCommand&);
+        OSCL_IMPORT_REF PVMFStatus DoReset(PVMFNodeCommand&);
+        OSCL_IMPORT_REF PVMFStatus DoFlush(PVMFNodeCommand&);
+        OSCL_IMPORT_REF PVMFStatus DoCancelAllCommands(PVMFNodeCommand&);
+        OSCL_IMPORT_REF PVMFStatus DoCancelCommand(PVMFNodeCommand&);
 
         //bool ProcessCommand(PVMFOMXBaseDecNodeCommand& aCmd);
         bool ProcessOutgoingMsg(PVMFPortInterface* aPort);
@@ -683,7 +683,7 @@ class PVMFOMXBaseDecNode: public PVMFNodeInterfaceImpl
 
     private:
         void MoveCmdToCurrentQueue(PVMFNodeCommand& aCmd);
-        PVMFStatus HandleExtensionAPICommands(PVMFNodeCommand& aCmd);
+        OSCL_IMPORT_REF PVMFStatus HandleExtensionAPICommands(PVMFNodeCommand& aCmd);
 
 };
 
