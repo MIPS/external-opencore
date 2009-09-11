@@ -2091,65 +2091,65 @@ class pvplayer_engine_test : public test_case,
 
             //Metadata Query tests
             DLA_QueryEngine_PlayReadyCPMTest_v2_WMA = 1400,
-            DLA_QueryEngine_PlayReadyCPMTest_v24_WMA,//1401
-            DLA_QueryEngine_PlayReadyCPMTest_v4_Enveloped_ASF,//1402
-            DLA_QueryEngine_PlayReadyCPMTest_v4_Enveloped_MP4,//1403
-            DLA_QueryEngine_PlayReadyCPMTest_v4_Enveloped_Image,//1404
-            //Enveloped image tests
-            DLA_EnvelopeRead_PlayReadyCPMTest_v4_Enveloped_Image,//1405
+            DLA_QueryEngine_PlayReadyCPMTest_v4_WMA,//1401
+
             //Multi-media format tests
-            DLA_OpenPlayStop_PlayReadyCPMTest_v2_WMA,//1406
-            DLA_OpenPlayStop_PlayReadyCPMTest_v2_WMV,//1407
-            DLA_OpenPlayStop_PlayReadyCPMTest_v24_WMA,//1408
-            DLA_OpenPlayStop_PlayReadyCPMTest_v24_WMV,//1409
-            DLA_OpenPlayStop_PlayReadyCPMTest_v4_WMA,//1410
-            DLA_OpenPlayStop_PlayReadyCPMTest_v4_WMV,//1411
-            DLA_OpenPlayStop_PlayReadyCPMTest_v4_AAC,//1412
-            DLA_OpenPlayStop_PlayReadyCPMTest_v4_H264,//1413
-            DLA_OpenPlayStop_PlayReadyCPMTest_v4_Enveloped_ASF,//1414
-            DLA_OpenPlayStop_PlayReadyCPMTest_v4_Enveloped_MP4,//1415
-            DLA_OpenPlayStop_PlayReadyCPMTest_unprotected_H264,//1416
-            DLA_OpenPlayStop_PlayReadyCPMTest_unprotected_AAC,//1417
-            DLA_OpenPlayStop_PlayReadyCPMTest_v4_AACP,//1418
+            DLA_OpenPlayStop_PlayReadyCPMTest_v2_WMA,//1402
+            DLA_OpenPlayStop_PlayReadyCPMTest_v2_WMV,//1403
+            DLA_OpenPlayStop_PlayReadyCPMTest_v4_WMA,//1404
+            DLA_OpenPlayStop_PlayReadyCPMTest_v4_WMV,//1405
+            DLA_OpenPlayStop_PlayReadyCPMTest_v4_AAC,//1406
+            DLA_OpenPlayStop_PlayReadyCPMTest_v4_AACP,//1407
+            DLA_OpenPlayStop_PlayReadyCPMTest_v4_eAACP,//1408
+            DLA_OpenPlayStop_PlayReadyCPMTest_v4_H264,//1409
+            DLA_OpenPlayStop_PlayReadyCPMTest_v4_H264_AAC,//1410
+            DLA_OpenPlayStop_PlayReadyCPMTest_unprotected_AAC,//1411
+            DLA_OpenPlayStop_PlayReadyCPMTest_unprotected_AACPlus,//1412
+            DLA_OpenPlayStop_PlayReadyCPMTest_unprotected_eAACPlus,//1413
+            DLA_OpenPlayStop_PlayReadyCPMTest_unprotected_H264,//1414
+            DLA_OpenPlayStop_PlayReadyCPMTest_unprotected_H264_AAC,//1415
+
             //Special license protocol sequence tests
-            DLA_OpenPlayStop_PlayReadyCPMTest_redirect,//1419
-            DLA_OpenPlayStop_PlayReadyCPMTest_v24_WMA_fallback,//1420
-            DLA_OpenPlayStop_PlayReadyCPMTest_v4_WMA_ringtone,//1421
-            DLA_OpenPlayStop_PlayReadyCPMTest_v4_WMA_domain,//1422
-            DLA_OpenPlayStop_PlayReadyCPMTest_v4_WMA_domain_member,//1423
-            DLA_OpenPlayStop_PlayReadyCPMTest_v4_WMA_domain_renew,//1424
-            DLA_OpenPlayStop_PlayReadyCPMTest_v4_WMA_domain_offline,//1425
-            DLA_OpenPlayStop_PlayReadyCPMTest_v4_WMA_domain_history,//1426
-            DLA_OpenPlayStop_PlayReadyCPMTest_v4_WMA_MissingServiceIdInContentHeader,//1427
+            DLA_OpenPlayStop_PlayReadyCPMTest_redirect,//1416
+            DLA_OpenPlayStop_PlayReadyCPMTest_v4_WMA_ringtone,//1417
+            DLA_OpenPlayStop_PlayReadyCPMTest_v4_WMA_domain,//1418
+            DLA_OpenPlayStop_PlayReadyCPMTest_v4_WMA_domain_member,//1419
+            DLA_OpenPlayStop_PlayReadyCPMTest_v4_WMA_domain_renew,//1420
+            DLA_OpenPlayStop_PlayReadyCPMTest_v4_WMA_domain_offline,//1421
+            DLA_OpenPlayStop_PlayReadyCPMTest_v4_WMA_domain_history,//1422
+            DLA_OpenPlayStop_PlayReadyCPMTest_v4_WMA_MissingServiceIdInContentHeader,//1423
+
             //PlayReady utility tests
-            DLA_JoinDomain_PlayReadyCPMTest,//1428
-            DLA_LeaveDomain_PlayReadyCPMTest,//1429
-            DLA_DeleteLicense_PlayReadyCPMTest_v2_Content,//1430
-            DLA_DeleteLicense_PlayReadyCPMTest_v24_Content,//1431
-            DLA_MeteringByCert_PlayReadyCPMTest,//1432
-            DLA_MeteringByMID_PlayReadyCPMTest,//1433
-            DLA_MeteringAll_PlayReadyCPMTest,//1434
-            DLA_LicenseUpdateAll_PlayReadyCPMTest,//1435
-            DLA_LicenseUpdateExpired_PlayReadyCPMTest,//1436
+            DLA_JoinDomain_PlayReadyCPMTest,//1424
+            DLA_LeaveDomain_PlayReadyCPMTest,//1425
+            DLA_DeleteLicense_PlayReadyCPMTest_v2_Content,//1426
+            DLA_DeleteLicense_PlayReadyCPMTest_v4_Content,//1427
+            DLA_MeteringByCert_PlayReadyCPMTest,//1428
+            DLA_MeteringByMID_PlayReadyCPMTest,//1429
+            DLA_MeteringAll_PlayReadyCPMTest,//1430
+            DLA_LicenseUpdateAll_PlayReadyCPMTest,//1431
+            DLA_LicenseUpdateExpired_PlayReadyCPMTest,//1432
+
             //PlayReady Cancel tests
-            DLA_CancelAcquireLicense_PlayReadyCPMTest_v4_Enveloped_Image,//1437
-            DLA_CancelAcquireLicense_PlayReadyCPMTest_v2_Content,//1438
-            DLA_CancelAcquireLicense_PlayReadyCPMTest_v24_Content,//1439
-            DLA_CancelAcquireLicense_PlayReadyCPMTest_v4_Enveloped_MP4,//1440
-            DLA_CancelJoinDomain_PlayReadyCPMTest, //1441
+            DLA_CancelAcquireLicense_PlayReadyCPMTest_v2_Content,//1433
+            DLA_CancelJoinDomain_PlayReadyCPMTest, //1434
+
             //PlayReady streaming tests.
-            DLA_StreamingOpenPlayUntilEOST_PlayReadyCPMTest,//1442
-            DLA_StreamingOpenPlayPausePlayUntilEOS_PlayReadyCPMTest,//1443
-            DLA_StreamingOpenPlaySeekPlayUntilEOS_PlayReadyCPMTest,//1444
-            DLA_StreamingMultiplePlayUntilEOS_PlayReadyCPMTest,//1445
-            DLA_StreamingCancelAcquireLicense_PlayReadyCPMTest,//1446
-            DLA_StreamingProtocolRollOverTest_PlayReadyCPMTest,//1447
-            DLA_StreamingProtocolRollOverTestWithUnknownURLType_PlayReadyCPMTest,//1448
+            DLA_StreamingOpenPlayUntilEOST_PlayReadyCPMTest,//1435
+            DLA_StreamingOpenPlayPausePlayUntilEOS_PlayReadyCPMTest,//1435
+            DLA_StreamingOpenPlaySeekPlayUntilEOS_PlayReadyCPMTest,//1436
+            DLA_StreamingMultiplePlayUntilEOS_PlayReadyCPMTest,//1437
+            DLA_StreamingCancelAcquireLicense_PlayReadyCPMTest,//1438
+            DLA_StreamingProtocolRollOverTest_PlayReadyCPMTest,//1439
+            DLA_StreamingProtocolRollOverTestWithUnknownURLType_PlayReadyCPMTest,//1440
+
             //Miscellaneous tests
-            ContentHeaderRetrieval_PlayReadyCPMTest, //1449
-            LicenseCountVerification_PlayReadyCPMTest, //1450
+            ContentHeaderRetrieval_PlayReadyCPMTest, //1441
+            LicenseCountVerification_PlayReadyCPMTest, //1442
+
             //RESERVED FOR FUTURE PLAYREADY CPM TESTS.
             LastPlayReadyCPMTest = 1599,//placeholder
+
             //End PLAYREADY CPM TESTS.
             /*
              * Note: Starting PVR tests from 1600 since the number of tests exceed the range

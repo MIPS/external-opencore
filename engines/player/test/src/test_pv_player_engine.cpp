@@ -3462,56 +3462,10 @@ void pvplayer_engine_test::test()
 #endif
                 break;
 
-            case DLA_QueryEngine_PlayReadyCPMTest_v24_WMA:
+            case DLA_QueryEngine_PlayReadyCPMTest_v4_WMA:
 #if RUN_CPMPLAYREADY_TESTCASES
-                //@TBD - disabling test for now
-                fprintf(file, "Test disabled\n");
-                //     iCurrentTest = new pvplayer_async_test_playreadycpm_query(testparam,
-                //     EPlayReadyContentType_v24_WMA);
-#else
-                fprintf(file, "PlayReady CPM tests not enabled\n");
-#endif
-                break;
-
-            case DLA_QueryEngine_PlayReadyCPMTest_v4_Enveloped_ASF:
-#if RUN_CPMPLAYREADY_TESTCASES
-                //@TBD - disabling test for now
-                fprintf(file, "Test disabled\n");
-                //iCurrentTest = new pvplayer_async_test_playreadycpm_query(testparam
-                //        , EPlayReadyContentType_v4_Enveloped_ASF);
-#else
-                fprintf(file, "PlayReady CPM tests not enabled\n");
-#endif
-                break;
-
-            case DLA_QueryEngine_PlayReadyCPMTest_v4_Enveloped_MP4:
-#if RUN_CPMPLAYREADY_TESTCASES
-                //@TBD - disabling test for now
-                fprintf(file, "Test disabled\n");
-                //iCurrentTest = new pvplayer_async_test_playreadycpm_query(testparam
-                //        , EPlayReadyContentType_v4_Enveloped_MP4);
-#else
-                fprintf(file, "PlayReady CPM tests not enabled\n");
-#endif
-                break;
-
-            case DLA_QueryEngine_PlayReadyCPMTest_v4_Enveloped_Image:
-#if RUN_CPMPLAYREADY_TESTCASES
-                //@TBD - disabling test for now
-                fprintf(file, "Test disabled\n");
-                //iCurrentTest = new pvplayer_async_test_playreadycpm_query(testparam
-                //        , EPlayReadyContentType_v4_Enveloped_Image);
-#else
-                fprintf(file, "PlayReady CPM tests not enabled\n");
-#endif
-                break;
-
-            case DLA_EnvelopeRead_PlayReadyCPMTest_v4_Enveloped_Image:
-#if RUN_CPMPLAYREADY_TESTCASES
-                //@TBD - disabling test for now
-                fprintf(file, "Test disabled\n");
-                //iCurrentTest = new pvplayer_async_test_playreadycpm_dla_envelopeimageread(testparam
-                //        , EPlayReadyContentType_v4_Enveloped_Image);
+                iCurrentTest = new pvplayer_async_test_playreadycpm_query(testparam
+                        , EPlayReadyContentType_v4_WMA);
 #else
                 fprintf(file, "PlayReady CPM tests not enabled\n");
 #endif
@@ -3535,24 +3489,10 @@ void pvplayer_engine_test::test()
 #endif
                 break;
 
-            case DLA_OpenPlayStop_PlayReadyCPMTest_v24_WMA:
-#if RUN_CPMPLAYREADY_TESTCASES
-                //@TBD - disabling test for now
-                fprintf(file, "Test disabled\n");
-                //iCurrentTest = new pvplayer_async_test_playreadycpm_dla_openplaystop(testparam
-                //        , EPlayReadyContentType_v24_WMA);
-#else
-                fprintf(file, "PlayReady CPM tests not enabled\n");
-#endif
-                break;
-
             case DLA_OpenPlayStop_PlayReadyCPMTest_redirect:
 #if RUN_CPMPLAYREADY_TESTCASES
-                //@TBD - disabling test for now
-                fprintf(file, "Test disabled\n");
-                //iCurrentTest = new pvplayer_async_test_playreadycpm_dla_envelopeimageread(testparam
-                //        , EPlayReadyContentType_v4_Enveloped_Image
-                //        , EPlayReadyLicenseType_DLA_With_Redirect);
+                iCurrentTest = new pvplayer_async_test_playreadycpm_dla_openplaystop(testparam
+                        , EPlayReadyContentType_v4_WMA_Redirect);
 #else
                 fprintf(file, "PlayReady CPM tests not enabled\n");
 #endif
@@ -3560,8 +3500,6 @@ void pvplayer_engine_test::test()
 
             case DLA_OpenPlayStop_PlayReadyCPMTest_v4_WMA:
 #if RUN_CPMPLAYREADY_TESTCASES
-                //@TBD - disabling test for now
-                //fprintf(file, "Test disabled\n");
                 iCurrentTest = new pvplayer_async_test_playreadycpm_dla_openplaystop(testparam
                         , EPlayReadyContentType_v4_WMA);
 #else
@@ -3580,10 +3518,8 @@ void pvplayer_engine_test::test()
 
             case DLA_OpenPlayStop_PlayReadyCPMTest_v4_AAC:
 #if RUN_CPMPLAYREADY_TESTCASES
-                //@TBD - disabling test for now
-                fprintf(file, "Test disabled\n");
-                //iCurrentTest = new pvplayer_async_test_playreadycpm_dla_openplaystop(testparam
-                //        , EPlayReadyContentType_v4_AAC);
+                iCurrentTest = new pvplayer_async_test_playreadycpm_dla_openplaystop(testparam
+                        , EPlayReadyContentType_v4_AAC);
 #else
                 fprintf(file, "PlayReady CPM tests not enabled\n");
 #endif
@@ -3591,10 +3527,17 @@ void pvplayer_engine_test::test()
 
             case DLA_OpenPlayStop_PlayReadyCPMTest_v4_AACP:
 #if RUN_CPMPLAYREADY_TESTCASES
-                //@TBD - disabling test for now
-                fprintf(file, "Test disabled\n");
-                //iCurrentTest = new pvplayer_async_test_playreadycpm_dla_openplaystop(testparam
-                //        , EPlayReadyContentType_v4_AACP);
+                iCurrentTest = new pvplayer_async_test_playreadycpm_dla_openplaystop(testparam
+                        , EPlayReadyContentType_v4_AACP);
+#else
+                fprintf(file, "PlayReady CPM tests not enabled\n");
+#endif
+                break;
+
+            case DLA_OpenPlayStop_PlayReadyCPMTest_v4_eAACP:
+#if RUN_CPMPLAYREADY_TESTCASES
+                iCurrentTest = new pvplayer_async_test_playreadycpm_dla_openplaystop(testparam
+                        , EPlayReadyContentType_v4_eAACP);
 #else
                 fprintf(file, "PlayReady CPM tests not enabled\n");
 #endif
@@ -3602,32 +3545,17 @@ void pvplayer_engine_test::test()
 
             case DLA_OpenPlayStop_PlayReadyCPMTest_v4_H264:
 #if RUN_CPMPLAYREADY_TESTCASES
-                //@TBD - disabling test for now
-                fprintf(file, "Test disabled\n");
-                //iCurrentTest = new pvplayer_async_test_playreadycpm_dla_openplaystop(testparam
-                //        , EPlayReadyContentType_v4_H264);
+                iCurrentTest = new pvplayer_async_test_playreadycpm_dla_openplaystop(testparam
+                        , EPlayReadyContentType_v4_H264);
 #else
                 fprintf(file, "PlayReady CPM tests not enabled\n");
 #endif
                 break;
 
-            case DLA_OpenPlayStop_PlayReadyCPMTest_v4_Enveloped_ASF:
+            case DLA_OpenPlayStop_PlayReadyCPMTest_v4_H264_AAC:
 #if RUN_CPMPLAYREADY_TESTCASES
-                //@TBD - disabling test for now
-                fprintf(file, "Test disabled\n");
-                //iCurrentTest = new pvplayer_async_test_playreadycpm_dla_openplaystop(testparam
-                //        , EPlayReadyContentType_v4_Enveloped_ASF);
-#else
-                fprintf(file, "PlayReady CPM tests not enabled\n");
-#endif
-                break;
-
-            case DLA_OpenPlayStop_PlayReadyCPMTest_v4_Enveloped_MP4:
-#if RUN_CPMPLAYREADY_TESTCASES
-                //@TBD - disabling test for now
-                fprintf(file, "Test disabled\n");
-                //iCurrentTest = new pvplayer_async_test_playreadycpm_dla_openplaystop(testparam
-                //        , EPlayReadyContentType_v4_Enveloped_MP4);
+                iCurrentTest = new pvplayer_async_test_playreadycpm_dla_openplaystop(testparam
+                        , EPlayReadyContentType_v4_H264_AAC);
 #else
                 fprintf(file, "PlayReady CPM tests not enabled\n");
 #endif
@@ -3642,6 +3570,15 @@ void pvplayer_engine_test::test()
 #endif
                 break;
 
+            case DLA_OpenPlayStop_PlayReadyCPMTest_unprotected_H264_AAC:
+#if RUN_CPMPLAYREADY_TESTCASES
+                iCurrentTest = new pvplayer_async_test_playreadycpm_dla_openplaystop(testparam
+                        , EPlayReadyContentType_unprotected_H264_AAC_in_ASF);
+#else
+                fprintf(file, "PlayReady CPM tests not enabled\n");
+#endif
+                break;
+
             case DLA_OpenPlayStop_PlayReadyCPMTest_unprotected_AAC:
 #if RUN_CPMPLAYREADY_TESTCASES
                 iCurrentTest = new pvplayer_async_test_playreadycpm_dla_openplaystop(testparam
@@ -3651,24 +3588,19 @@ void pvplayer_engine_test::test()
 #endif
                 break;
 
-            case DLA_OpenPlayStop_PlayReadyCPMTest_v24_WMA_fallback:
+            case DLA_OpenPlayStop_PlayReadyCPMTest_unprotected_AACPlus:
 #if RUN_CPMPLAYREADY_TESTCASES
-                //@TBD - disabling test for now
-                fprintf(file, "Test disabled\n");
-                //iCurrentTest = new pvplayer_async_test_playreadycpm_dla_openplaystop(testparam
-                //        , EPlayReadyContentType_v24_WMA
-                //        , EPlayReadyLicenseType_DLA_With_Fallback);
+                iCurrentTest = new pvplayer_async_test_playreadycpm_dla_openplaystop(testparam
+                        , EPlayReadyContentType_unprotected_AACPlus_in_ASF);
 #else
                 fprintf(file, "PlayReady CPM tests not enabled\n");
 #endif
                 break;
 
-            case DLA_OpenPlayStop_PlayReadyCPMTest_v24_WMV:
+            case DLA_OpenPlayStop_PlayReadyCPMTest_unprotected_eAACPlus:
 #if RUN_CPMPLAYREADY_TESTCASES
-                //@TBD - disabling test for now
-                fprintf(file, "Test disabled\n");
-                //iCurrentTest = new pvplayer_async_test_playreadycpm_dla_openplaystop(testparam
-                //        , EPlayReadyContentType_v24_WMV);
+                iCurrentTest = new pvplayer_async_test_playreadycpm_dla_openplaystop(testparam
+                        , EPlayReadyContentType_unprotected_eAACPlus_in_ASF);
 #else
                 fprintf(file, "PlayReady CPM tests not enabled\n");
 #endif
@@ -3678,9 +3610,9 @@ void pvplayer_engine_test::test()
 #if RUN_CPMPLAYREADY_TESTCASES
                 //@TBD - disabling test for now
                 fprintf(file, "Test disabled\n");
-                //iCurrentTest = new pvplayer_async_test_playreadycpm_dla_openplaystop(testparam
-                //        , EPlayReadyContentType_v4_WMA
-                //        , EPlayReadyLicenseType_DLA_With_Ringtone);
+//                iCurrentTest = new pvplayer_async_test_playreadycpm_dla_openplaystop(testparam
+//                        , EPlayReadyContentType_v4_WMA
+//                        , EPlayReadyLicenseType_DLA_With_Ringtone);
 #else
                 fprintf(file, "PlayReady CPM tests not enabled\n");
 #endif
@@ -3793,12 +3725,11 @@ void pvplayer_engine_test::test()
 
             case DLA_LicenseUpdateAll_PlayReadyCPMTest:
 #if RUN_CPMPLAYREADY_TESTCASES
-                //@TBD - disabling test for now
-                fprintf(file, "Test disabled\n");
-                //iCurrentTest = new pvplayer_async_test_playreadycpm_dla_metering_or_sync(testparam
-                //        , EPVMeterTestType_SyncAll
-                //        , EPlayReadyContentType_mixed
-                //        , EPlayReadyLicenseType_DLA_With_Sync);
+
+                iCurrentTest = new pvplayer_async_test_playreadycpm_dla_metering_or_sync(testparam
+                        , EPVMeterTestType_SyncAll
+                        , EPlayReadyContentType_mixed
+                        , EPlayReadyLicenseType_DLA_With_Sync);
 #else
                 fprintf(file, "PlayReady CPM tests not enabled\n");
 #endif
@@ -3806,12 +3737,11 @@ void pvplayer_engine_test::test()
 
             case DLA_LicenseUpdateExpired_PlayReadyCPMTest:
 #if RUN_CPMPLAYREADY_TESTCASES
-                //@TBD - disabling test for now
-                fprintf(file, "Test disabled\n");
-                //iCurrentTest = new pvplayer_async_test_playreadycpm_dla_metering_or_sync(testparam
-                //        , EPVMeterTestType_SyncExpiredOnly
-                //        , EPlayReadyContentType_mixed
-                //        , EPlayReadyLicenseType_DLA_With_Sync);
+
+                iCurrentTest = new pvplayer_async_test_playreadycpm_dla_metering_or_sync(testparam
+                        , EPVMeterTestType_SyncExpiredOnly
+                        , EPlayReadyContentType_mixed
+                        , EPlayReadyLicenseType_DLA_With_Sync);
 #else
                 fprintf(file, "PlayReady CPM tests not enabled\n");
 #endif
@@ -3826,50 +3756,9 @@ void pvplayer_engine_test::test()
 #endif
                 break;
 
-            case DLA_DeleteLicense_PlayReadyCPMTest_v24_Content:
-#if RUN_CPMPLAYREADY_TESTCASES
-                //@TBD - disabling test for now
-                fprintf(file, "Test disabled\n");
-                //iCurrentTest = new pvplayer_async_test_playreadycpm_deletelicense(testparam, EPlayReadyContentType_v24_WMA, EPlayReadyLicenseType_DLA);
-#else
-                fprintf(file, "PlayReady CPM tests not enabled\n");
-#endif
-                break;
-
-            case DLA_CancelAcquireLicense_PlayReadyCPMTest_v4_Enveloped_Image:
-#if RUN_CPMPLAYREADY_TESTCASES
-                //@TBD - disabling test for now
-                fprintf(file, "Test disabled\n");
-                //iCurrentTest = new pvplayer_async_test_playreadycpm_dla_cancelacquirelicense_envelopeimageread(testparam
-                //        , EPlayReadyContentType_v4_Enveloped_Image);
-#else
-                fprintf(file, "PlayReady CPM tests not enabled\n");
-#endif
-                break;
-
             case DLA_CancelAcquireLicense_PlayReadyCPMTest_v2_Content:
 #if RUN_CPMPLAYREADY_TESTCASES
                 iCurrentTest = new pvplayer_async_test_playreadycpm_cancelacquirelicense(testparam, EPlayReadyContentType_v2_WMA, EPlayReadyLicenseType_DLA);
-#else
-                fprintf(file, "PlayReady CPM tests not enabled\n");
-#endif
-                break;
-
-            case DLA_CancelAcquireLicense_PlayReadyCPMTest_v24_Content:
-#if RUN_CPMPLAYREADY_TESTCASES
-                //@TBD - disabling test for now
-                fprintf(file, "Test disabled\n");
-                //iCurrentTest = new pvplayer_async_test_playreadycpm_cancelacquirelicense(testparam, EPlayReadyContentType_v24_WMA, EPlayReadyLicenseType_DLA);
-#else
-                fprintf(file, "PlayReady CPM tests not enabled\n");
-#endif
-                break;
-
-            case DLA_CancelAcquireLicense_PlayReadyCPMTest_v4_Enveloped_MP4:
-#if RUN_CPMPLAYREADY_TESTCASES
-                //@TBD - disabling test for now
-                fprintf(file, "Test disabled\n");
-                //iCurrentTest = new pvplayer_async_test_playreadycpm_cancelacquirelicense(testparam, EPlayReadyContentType_v4_Enveloped_MP4, EPlayReadyLicenseType_DLA);
 #else
                 fprintf(file, "PlayReady CPM tests not enabled\n");
 #endif
