@@ -198,8 +198,8 @@ class OmxComponentBase : public OsclActiveObject
 {
     public:
 
-        OmxComponentBase();
-        virtual ~OmxComponentBase() {}
+        OSCL_IMPORT_REF OmxComponentBase();
+        OSCL_IMPORT_REF virtual ~OmxComponentBase();
 
         /** Component entry points declarations without proxy interface*/
         static OMX_ERRORTYPE BaseComponentGetComponentVersion(
@@ -628,7 +628,7 @@ class OmxComponentAudio : public OmxComponentBase
 {
     public:
         OSCL_IMPORT_REF OmxComponentAudio();
-        virtual ~OmxComponentAudio() {}
+        OSCL_IMPORT_REF virtual ~OmxComponentAudio();
 
         OSCL_IMPORT_REF OMX_ERRORTYPE GetParameter(
             OMX_IN  OMX_HANDLETYPE hComponent,
@@ -652,7 +652,7 @@ class OmxComponentVideo : public OmxComponentBase
 {
     public:
         OSCL_IMPORT_REF OmxComponentVideo();
-        virtual ~OmxComponentVideo() {}
+        OSCL_IMPORT_REF virtual ~OmxComponentVideo();
 
         OSCL_IMPORT_REF OMX_ERRORTYPE GetParameter(
             OMX_IN  OMX_HANDLETYPE hComponent,

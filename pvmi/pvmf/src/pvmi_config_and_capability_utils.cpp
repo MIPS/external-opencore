@@ -24,6 +24,15 @@
 
 
 ////////////////////////////////////////////////////////////////////////////
+OSCL_EXPORT_REF PvmiCapabilityAndConfigPortFormatImpl::PvmiCapabilityAndConfigPortFormatImpl()
+        : iFormat(PVMF_MIME_FORMAT_UNKNOWN)
+{
+}
+
+OSCL_EXPORT_REF PvmiCapabilityAndConfigPortFormatImpl::~PvmiCapabilityAndConfigPortFormatImpl()
+{
+}
+
 OSCL_EXPORT_REF PVMFStatus PvmiCapabilityAndConfigPortFormatImpl::getParametersSync(PvmiMIOSession aSession, PvmiKeyType aIdentifier,
         PvmiKvp*& aParameters, int& num_parameter_elements,
         PvmiCapabilityContext aContext)

@@ -24,7 +24,7 @@
 #endif
 
 
-OmxComponentBase::OmxComponentBase() :
+OSCL_EXPORT_REF OmxComponentBase::OmxComponentBase() :
         OsclActiveObject(OsclActiveObject::EPriorityNominal, "OMXComponent")
 {
     //Flag to call BufferMgmtFunction in the Run() when the component state is executing
@@ -107,6 +107,9 @@ OmxComponentBase::OmxComponentBase() :
     iOutputMicroSecPerFrame = (OMX_TICKS)0;
 }
 
+OSCL_EXPORT_REF OmxComponentBase::~OmxComponentBase()
+{
+}
 
 OSCL_EXPORT_REF OMX_ERRORTYPE OmxComponentBase::ConstructBaseComponent(OMX_PTR pAppData)
 {
@@ -3333,6 +3336,9 @@ OSCL_EXPORT_REF OmxComponentAudio::OmxComponentAudio()
 
 }
 
+OSCL_EXPORT_REF OmxComponentAudio::~OmxComponentAudio()
+{
+}
 
 OSCL_EXPORT_REF OMX_ERRORTYPE OmxComponentAudio::GetParameter(
     OMX_IN  OMX_HANDLETYPE hComponent,
@@ -3886,6 +3892,9 @@ OSCL_EXPORT_REF OmxComponentVideo::OmxComponentVideo()
 
 }
 
+OSCL_EXPORT_REF OmxComponentVideo::~OmxComponentVideo()
+{
+}
 
 OSCL_EXPORT_REF OMX_ERRORTYPE OmxComponentVideo::GetParameter(
     OMX_IN  OMX_HANDLETYPE hComponent,

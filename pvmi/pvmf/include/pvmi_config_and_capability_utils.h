@@ -64,11 +64,9 @@ class PvmiCapabilityAndConfigPortFormatImpl
         : public PvmiCapabilityAndConfigBase
 {
     public:
-        PvmiCapabilityAndConfigPortFormatImpl()
-                : iFormat(PVMF_MIME_FORMAT_UNKNOWN)
-        {}
+        OSCL_IMPORT_REF PvmiCapabilityAndConfigPortFormatImpl();
 
-        virtual ~PvmiCapabilityAndConfigPortFormatImpl() {};
+        OSCL_IMPORT_REF virtual ~PvmiCapabilityAndConfigPortFormatImpl();
 
         //Derived class must call this to set the format type strings
         //before the other methods can be used.

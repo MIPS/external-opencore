@@ -2145,6 +2145,16 @@ OSCL_EXPORT_REF void PVMFMediaClockNotificationsInterfaceImpl::GetLatencyAdjuste
     }
 }
 
+OSCL_EXPORT_REF PVMFTimebase_Tickcount::PVMFTimebase_Tickcount()
+{
+    iMicrosecPerTick = OsclTickCount::TickCountPeriod();
+    iPrevTickcount = 0;
+}
+
+OSCL_EXPORT_REF PVMFTimebase_Tickcount::~PVMFTimebase_Tickcount()
+{
+}
+
 OSCL_EXPORT_REF void PVMFTimebase_Tickcount::GetCurrentTick32(uint32& aTimebaseTickCount, bool& aOverflow)
 {
     uint32 currenttickcount = OsclTickCount::TickCount();

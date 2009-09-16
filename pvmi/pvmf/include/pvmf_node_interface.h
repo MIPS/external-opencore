@@ -232,10 +232,7 @@ class PVMFNodeInterface: public PVMFPortActivityHandler
 {
     public:
 
-        virtual ~PVMFNodeInterface()
-        {
-            iSessions.clear();
-        }
+        OSCL_IMPORT_REF virtual ~PVMFNodeInterface();
 
         virtual PVMFStatus ThreadLogon() = 0;
         virtual PVMFStatus ThreadLogoff() = 0;
@@ -457,12 +454,7 @@ class PVMFNodeInterface: public PVMFPortActivityHandler
         }
 
     protected:
-        PVMFNodeInterface(int32 aSessionReserve = PVMF_NODE_DEFAULT_SESSION_RESERVE) :
-                iInterfaceState(EPVMFNodeCreated)
-                , iOsclSharedLibrary(NULL)
-        {
-            iSessions.reserve(aSessionReserve);
-        }
+        OSCL_IMPORT_REF PVMFNodeInterface(int32 aSessionReserve = PVMF_NODE_DEFAULT_SESSION_RESERVE);
 
         Oscl_Vector<PVMFNodeSession, OsclMemAllocator> iSessions;
         TPVMFNodeInterfaceState iInterfaceState;

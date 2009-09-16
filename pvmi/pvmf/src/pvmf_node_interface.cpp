@@ -18,6 +18,17 @@
 
 #include "pvmf_node_interface.h"
 
+OSCL_EXPORT_REF PVMFNodeInterface::PVMFNodeInterface(int32 aSessionReserve)
+        : iInterfaceState(EPVMFNodeCreated)
+        , iOsclSharedLibrary(NULL)
+{
+    iSessions.reserve(aSessionReserve);
+}
+
+OSCL_EXPORT_REF PVMFNodeInterface::~PVMFNodeInterface()
+{
+    iSessions.clear();
+}
 
 OSCL_EXPORT_REF void PVMFNodeInterface::SetState(TPVMFNodeInterfaceState s)
 {

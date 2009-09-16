@@ -149,6 +149,8 @@ typedef struct _PVMFMediaClockCheckTimeWindowArgs
 class PVMFMediaClockNotificationsObsBase
 {
     public:
+        virtual ~PVMFMediaClockNotificationsObsBase() {}
+
         /**
          * This event happens when the clock has been Reset or destroyed and notification
          * interface object that observer is using has been destroyed. Observer should
@@ -164,6 +166,8 @@ class PVMFMediaClockNotificationsObsBase
 class PVMFMediaClockNotificationsObs : public virtual PVMFMediaClockNotificationsObsBase
 {
     public:
+        virtual ~PVMFMediaClockNotificationsObs() {}
+
         /**
          * This callback function is called when a callback expires or has become invalid.
          * @param callBackID Callback ID of the timer that has expired
@@ -1577,18 +1581,12 @@ class PVMFTimebase_Tickcount : public PVMFTimebase
         /**
             Constructor. Retrieves the constant to convert OSCL tickcount value to microseconds
         */
-        PVMFTimebase_Tickcount()
-        {
-            iMicrosecPerTick = OsclTickCount::TickCountPeriod();
-            iPrevTickcount = 0;
-        }
+        OSCL_IMPORT_REF PVMFTimebase_Tickcount();
 
         /**
             Destructor
         */
-        ~PVMFTimebase_Tickcount()
-        {
-        }
+        OSCL_IMPORT_REF ~PVMFTimebase_Tickcount();
 
         // From PVMFTimebase
         /**

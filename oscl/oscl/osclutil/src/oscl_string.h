@@ -77,7 +77,7 @@ enum TOSCL_wStringOp
     A common base class for string classes with
     "char" character format
 */
-class OSCL_String : public HeapBase
+class OSCL_IMPORT_REF OSCL_String : public HeapBase
 
 {
     public:
@@ -255,7 +255,7 @@ class OSCL_String : public HeapBase
     for the character format.
     For descriptions, see OSCL_String.
 */
-class OSCL_wString
+class OSCL_IMPORT_REF OSCL_wString
 {
     public:
         typedef oscl_wchar chartype;
