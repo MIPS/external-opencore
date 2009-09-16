@@ -33,6 +33,8 @@
 class H263PayloadParserFactory : public IPayloadParserFactory
 {
     public:
+        OSCL_IMPORT_REF H263PayloadParserFactory();
+        OSCL_IMPORT_REF virtual ~H263PayloadParserFactory();
         OSCL_IMPORT_REF virtual IPayloadParser* createPayloadParser();
         OSCL_IMPORT_REF virtual void destroyPayloadParser(IPayloadParser* parser);
 };

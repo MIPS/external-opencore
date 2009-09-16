@@ -26,6 +26,14 @@
 #include "h263_payload_parser_factory.h"
 #include "h263_payload_parser.h"
 
+OSCL_EXPORT_REF H263PayloadParserFactory::H263PayloadParserFactory()
+{
+}
+
+OSCL_EXPORT_REF H263PayloadParserFactory::~H263PayloadParserFactory()
+{
+}
+
 OSCL_EXPORT_REF IPayloadParser* H263PayloadParserFactory::createPayloadParser()
 {
     return OSCL_NEW(H263PayloadParser, ());

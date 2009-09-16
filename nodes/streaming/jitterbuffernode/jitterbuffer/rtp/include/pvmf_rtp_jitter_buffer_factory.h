@@ -25,6 +25,8 @@
 class RTPJitterBufferFactory: public JitterBufferFactory
 {
     public:
+        OSCL_IMPORT_REF RTPJitterBufferFactory();
+        OSCL_IMPORT_REF virtual ~RTPJitterBufferFactory();
         OSCL_IMPORT_REF virtual PVMFJitterBuffer* Create(const PVMFJitterBufferConstructParams& aJBCreationData);
         OSCL_IMPORT_REF virtual void Destroy(PVMFJitterBuffer*& aJitterBuffer);
 };

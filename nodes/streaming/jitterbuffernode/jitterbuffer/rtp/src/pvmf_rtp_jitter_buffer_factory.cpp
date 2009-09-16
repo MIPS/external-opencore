@@ -23,6 +23,14 @@
 #include "pvmf_rtp_jitter_buffer_impl.h"
 #endif
 
+OSCL_EXPORT_REF RTPJitterBufferFactory::RTPJitterBufferFactory()
+{
+}
+
+OSCL_EXPORT_REF RTPJitterBufferFactory::~RTPJitterBufferFactory()
+{
+}
+
 OSCL_EXPORT_REF PVMFJitterBuffer* RTPJitterBufferFactory::Create(const PVMFJitterBufferConstructParams& aJBCreationData)
 {
     return PVMFRTPJitterBufferImpl::New(aJBCreationData);

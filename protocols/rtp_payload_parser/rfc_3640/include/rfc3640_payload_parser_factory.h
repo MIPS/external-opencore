@@ -30,6 +30,9 @@
 
 class RFC3640PayloadParserFactory : public IPayloadParserFactory
 {
+    public:
+        OSCL_IMPORT_REF RFC3640PayloadParserFactory();
+        OSCL_IMPORT_REF virtual ~RFC3640PayloadParserFactory();
         OSCL_IMPORT_REF virtual IPayloadParser*  createPayloadParser(void);
         OSCL_IMPORT_REF virtual void            destroyPayloadParser(IPayloadParser* parser);
 };

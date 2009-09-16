@@ -30,12 +30,11 @@
 
 class M4VAudioPayloadParserFactory : public IPayloadParserFactory
 {
+    public:
+        OSCL_IMPORT_REF M4VAudioPayloadParserFactory();
+        OSCL_IMPORT_REF virtual ~M4VAudioPayloadParserFactory();
         OSCL_IMPORT_REF virtual IPayloadParser* createPayloadParser();
         OSCL_IMPORT_REF virtual void destroyPayloadParser(IPayloadParser* parser);
-        virtual ~M4VAudioPayloadParserFactory()
-        {
-            ;
-        }
 };
 
 #endif // M4V_AUDIO_PAYLOAD_PARSER_FACTORY_H_INCLUDED

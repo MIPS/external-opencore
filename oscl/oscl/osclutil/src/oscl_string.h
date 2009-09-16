@@ -104,7 +104,7 @@ class OSCL_IMPORT_REF OSCL_String : public HeapBase
         /**
             This function returns true if the string is writable.
         */
-        OSCL_IMPORT_REF virtual bool is_writable() const;
+        virtual bool is_writable() const;
 
         /**
             This function returns the C-style string for write access.
@@ -114,45 +114,45 @@ class OSCL_IMPORT_REF OSCL_String : public HeapBase
 
         /** Assignment operator
         */
-        OSCL_IMPORT_REF OSCL_String& operator=(const OSCL_String& src);
+        OSCL_String& operator=(const OSCL_String& src);
 
         /** Assignment operator
             @param: null-terminated string
         */
-        OSCL_IMPORT_REF OSCL_String& operator=(const chartype* cstr);
+        OSCL_String& operator=(const chartype* cstr);
 
         /** Append operator.
             This operator appends the input string to this object.
             The string may be truncated to fit available storage.
         */
-        OSCL_IMPORT_REF OSCL_String& operator+=(const OSCL_String& src);
+        OSCL_String& operator+=(const OSCL_String& src);
 
         /** Append operator.
             This operator appends the input string to this object.
             The string may be truncated to fit available storage.
             @param: null-terminated string
         */
-        OSCL_IMPORT_REF OSCL_String& operator+=(const chartype* cstr);
+        OSCL_String& operator+=(const chartype* cstr);
 
         /** Append operator.
             This operator appends the input character to this object.
             The string may be truncated to fit available storage.
         */
-        OSCL_IMPORT_REF OSCL_String& operator+=(const chartype c);
+        OSCL_String& operator+=(const chartype c);
 
         /** Comparison operators
         */
-        OSCL_IMPORT_REF bool operator== (const OSCL_String& src) const;
-        OSCL_IMPORT_REF bool operator!= (const OSCL_String& src) const;
-        OSCL_IMPORT_REF bool operator< (const OSCL_String& src) const;
-        OSCL_IMPORT_REF bool operator<= (const OSCL_String& src) const;
-        OSCL_IMPORT_REF bool operator> (const OSCL_String& src) const;
-        OSCL_IMPORT_REF bool operator>= (const OSCL_String& src) const;
+        bool operator== (const OSCL_String& src) const;
+        bool operator!= (const OSCL_String& src) const;
+        bool operator< (const OSCL_String& src) const;
+        bool operator<= (const OSCL_String& src) const;
+        bool operator> (const OSCL_String& src) const;
+        bool operator>= (const OSCL_String& src) const;
 
         /** Comparison operator
             @param: null-terminated string
         */
-        OSCL_IMPORT_REF bool operator== (const chartype* cstr) const;
+        bool operator== (const chartype* cstr) const;
 
         /**
             This is subscript notation to access a character
@@ -160,14 +160,14 @@ class OSCL_IMPORT_REF OSCL_String : public HeapBase
             If the index is outside the current size range then the
             function leaves.
         */
-        OSCL_IMPORT_REF chartype operator[](uint32 index) const;
+        chartype operator[](uint32 index) const;
 
         /**
             This function returns the character at the given position.
             If the index is outside the current size range then the
             function leaves.
         */
-        OSCL_IMPORT_REF virtual chartype read(uint32 index)const;
+        virtual chartype read(uint32 index)const;
 
         /**
             This function allocates a temp storage for performing one of
@@ -181,13 +181,13 @@ class OSCL_IMPORT_REF OSCL_String : public HeapBase
             @param aAlloc: optional, memory allocator if available
             @return length of compressed or converted string exclude terminated '\0'.
         */
-        OSCL_IMPORT_REF virtual uint32 setrep_to_char(const oscl_wchar* src, uint32 len,
-                TOSCL_StringOp op, Oscl_DefAlloc* aAlloc);
+        virtual uint32 setrep_to_char(const oscl_wchar* src, uint32 len,
+                                      TOSCL_StringOp op, Oscl_DefAlloc* aAlloc);
         /**
             This function performs a hash operation on the string.
             If the string is not writable, the function leaves.
         */
-        OSCL_IMPORT_REF virtual int8 hash() const;
+        virtual int8 hash() const;
 
         /**
             This function stores a character at the specified position.
@@ -195,7 +195,7 @@ class OSCL_IMPORT_REF OSCL_String : public HeapBase
             If the index is outside the current size range then the
             function leaves.
         */
-        OSCL_IMPORT_REF virtual void write(uint32 index, chartype c);
+        virtual void write(uint32 index, chartype c);
 
         /**
             This function replaces characters at the specified offset
@@ -206,7 +206,7 @@ class OSCL_IMPORT_REF OSCL_String : public HeapBase
             @param length: number of characters to copy.
             @param ptr: character buffer, not necessarily null-terminated.
         */
-        OSCL_IMPORT_REF virtual void write(uint32 offset, uint32 length, const chartype* buf);
+        virtual void write(uint32 offset, uint32 length, const chartype* buf);
 
 #ifdef T_ARM
 //ADS 1.2 compiler doesn't interpret "protected" correctly for templates.
@@ -215,8 +215,8 @@ class OSCL_IMPORT_REF OSCL_String : public HeapBase
 #else
     protected:
 #endif
-        OSCL_IMPORT_REF OSCL_String();
-        OSCL_IMPORT_REF virtual ~OSCL_String();
+        OSCL_String();
+        virtual ~OSCL_String();
 
     protected:
         /** Each representation class must implement these pure virtuals.
@@ -270,32 +270,32 @@ class OSCL_IMPORT_REF OSCL_wString
 
         virtual chartype* get_str() const = 0;
 
-        OSCL_IMPORT_REF OSCL_wString& operator=(const OSCL_wString& src);
-        OSCL_IMPORT_REF OSCL_wString& operator=(const chartype* cstr);
+        OSCL_wString& operator=(const OSCL_wString& src);
+        OSCL_wString& operator=(const chartype* cstr);
 
-        OSCL_IMPORT_REF OSCL_wString& operator+=(const OSCL_wString& src);
-        OSCL_IMPORT_REF OSCL_wString& operator+=(const chartype* cstr);
-        OSCL_IMPORT_REF OSCL_wString& operator+=(const chartype c);
+        OSCL_wString& operator+=(const OSCL_wString& src);
+        OSCL_wString& operator+=(const chartype* cstr);
+        OSCL_wString& operator+=(const chartype c);
 
-        OSCL_IMPORT_REF bool operator== (const OSCL_wString& src) const;
-        OSCL_IMPORT_REF bool operator!= (const OSCL_wString& src) const;
-        OSCL_IMPORT_REF bool operator< (const OSCL_wString& src) const;
-        OSCL_IMPORT_REF bool operator<= (const OSCL_wString& src) const;
-        OSCL_IMPORT_REF bool operator> (const OSCL_wString& src) const;
-        OSCL_IMPORT_REF bool operator>= (const OSCL_wString& src) const;
-        OSCL_IMPORT_REF bool operator== (const chartype* cstr) const;
+        bool operator== (const OSCL_wString& src) const;
+        bool operator!= (const OSCL_wString& src) const;
+        bool operator< (const OSCL_wString& src) const;
+        bool operator<= (const OSCL_wString& src) const;
+        bool operator> (const OSCL_wString& src) const;
+        bool operator>= (const OSCL_wString& src) const;
+        bool operator== (const chartype* cstr) const;
 
-        OSCL_IMPORT_REF chartype operator[](uint32 index) const;
+        chartype operator[](uint32 index) const;
 
-        OSCL_IMPORT_REF virtual chartype read(uint32 index)const;
+        virtual chartype read(uint32 index)const;
 
-        OSCL_IMPORT_REF virtual uint32 setrep_to_wide_char(const char* src, uint32 len,
-                TOSCL_wStringOp op, Oscl_DefAlloc* aAlloc);
+        virtual uint32 setrep_to_wide_char(const char* src, uint32 len,
+                                           TOSCL_wStringOp op, Oscl_DefAlloc* aAlloc);
 
-        OSCL_IMPORT_REF virtual int8 hash() const;
+        virtual int8 hash() const;
 
-        OSCL_IMPORT_REF virtual void write(uint32 index, chartype c);
-        OSCL_IMPORT_REF virtual void write(uint32 offset, uint32 length, const chartype* buf);
+        virtual void write(uint32 index, chartype c);
+        virtual void write(uint32 offset, uint32 length, const chartype* buf);
 
 #ifdef T_ARM
 //ADS 1.2 compiler doesn't interpret "protected" correctly for templates.
@@ -304,8 +304,8 @@ class OSCL_IMPORT_REF OSCL_wString
 #else
     protected:
 #endif
-        OSCL_IMPORT_REF OSCL_wString();
-        OSCL_IMPORT_REF virtual ~OSCL_wString();
+        OSCL_wString();
+        virtual ~OSCL_wString();
 
     protected:
         virtual void set_rep(const chartype* cstr) = 0;

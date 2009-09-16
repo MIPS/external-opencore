@@ -26,6 +26,14 @@
 #include "rfc3640_payload_parser_factory.h"
 #include "rfc3640_payload_parser.h"
 
+OSCL_EXPORT_REF RFC3640PayloadParserFactory::RFC3640PayloadParserFactory()
+{
+}
+
+OSCL_EXPORT_REF RFC3640PayloadParserFactory::~RFC3640PayloadParserFactory()
+{
+}
+
 OSCL_EXPORT_REF IPayloadParser* RFC3640PayloadParserFactory::createPayloadParser()
 {
     return OSCL_NEW(RFC3640PayloadParser, ());

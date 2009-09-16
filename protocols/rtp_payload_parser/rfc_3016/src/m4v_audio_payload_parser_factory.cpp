@@ -26,6 +26,14 @@
 #include "m4v_audio_payload_parser_factory.h"
 #include "m4v_audio_payload_parser.h"
 
+OSCL_EXPORT_REF M4VAudioPayloadParserFactory::M4VAudioPayloadParserFactory()
+{
+}
+
+OSCL_EXPORT_REF M4VAudioPayloadParserFactory::~M4VAudioPayloadParserFactory()
+{
+}
+
 OSCL_EXPORT_REF IPayloadParser* M4VAudioPayloadParserFactory::createPayloadParser()
 {
     return OSCL_NEW(M4VAudioPayloadParser, ());

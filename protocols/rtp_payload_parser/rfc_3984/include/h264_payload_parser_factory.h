@@ -33,6 +33,8 @@
 class H264PayloadParserFactory : public IPayloadParserFactory
 {
     public:
+        OSCL_IMPORT_REF H264PayloadParserFactory();
+        OSCL_IMPORT_REF virtual ~H264PayloadParserFactory();
         OSCL_IMPORT_REF virtual IPayloadParser* createPayloadParser();
         OSCL_IMPORT_REF virtual void destroyPayloadParser(IPayloadParser* parser);
 };

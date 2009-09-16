@@ -30,6 +30,9 @@
 
 class M4VPayloadParserFactory : public IPayloadParserFactory
 {
+    public:
+        OSCL_IMPORT_REF M4VPayloadParserFactory();
+        OSCL_IMPORT_REF virtual ~M4VPayloadParserFactory();
         OSCL_IMPORT_REF virtual IPayloadParser* createPayloadParser();
         OSCL_IMPORT_REF virtual void destroyPayloadParser(IPayloadParser* parser);
 };

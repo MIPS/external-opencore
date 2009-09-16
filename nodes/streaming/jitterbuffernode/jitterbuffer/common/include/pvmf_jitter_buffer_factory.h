@@ -28,6 +28,8 @@ class PVMFJitterBufferConstructParams;
 class JitterBufferFactory
 {
     public:
+        virtual ~JitterBufferFactory() {}
+
         virtual PVMFJitterBuffer* Create(const PVMFJitterBufferConstructParams& aJBCreationData) = 0;
 
         virtual void Destroy(PVMFJitterBuffer*& aJitterBuffer)  = 0;

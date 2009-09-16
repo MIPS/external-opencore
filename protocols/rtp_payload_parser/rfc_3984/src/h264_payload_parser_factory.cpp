@@ -26,6 +26,14 @@
 #include "h264_payload_parser_factory.h"
 #include "h264_payload_parser.h"
 
+OSCL_EXPORT_REF H264PayloadParserFactory::H264PayloadParserFactory()
+{
+}
+
+OSCL_EXPORT_REF H264PayloadParserFactory::~H264PayloadParserFactory()
+{
+}
+
 OSCL_EXPORT_REF IPayloadParser* H264PayloadParserFactory::createPayloadParser()
 {
     return OSCL_NEW(H264PayloadParser, ());

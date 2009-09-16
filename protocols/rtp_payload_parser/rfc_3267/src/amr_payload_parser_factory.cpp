@@ -26,6 +26,14 @@
 #include "amr_payload_parser_factory.h"
 #include "amr_payload_parser.h"
 
+OSCL_EXPORT_REF AmrPayloadParserFactory::AmrPayloadParserFactory()
+{
+}
+
+OSCL_EXPORT_REF AmrPayloadParserFactory::~AmrPayloadParserFactory()
+{
+}
+
 OSCL_EXPORT_REF IPayloadParser* AmrPayloadParserFactory::createPayloadParser()
 {
     return OSCL_NEW(AMRPayloadParser, ());
