@@ -2808,11 +2808,11 @@ void CPV324m2Way::Run()
                 case PVT_COMMAND_ADD_DATA_SINK:
                 {
                     CPV2WayDecDataChannelDatapath* datapath = NULL;
-                    if (cmd->iPvtCmdData == iAudioDecDatapath->GetChannelId())
+                    if (iAudioDecDatapath && (cmd->iPvtCmdData == iAudioDecDatapath->GetChannelId()))
                     {
                         datapath = iAudioDecDatapath;
                     }
-                    else if (cmd->iPvtCmdData == iVideoDecDatapath->GetChannelId())
+                    else if (iVideoDecDatapath && (cmd->iPvtCmdData == iVideoDecDatapath->GetChannelId()))
                     {
                         datapath = iVideoDecDatapath;
                     }
@@ -4785,7 +4785,7 @@ void CPV324m2Way::AddVideoEncoderNode()
                  &iVideoEncNode, this, &queryParam));
         OSCL_FIRST_CATCH_ANY(error,
                              PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                                             (0, "CPV324m2Way::CheckInit unable to query for video encoder interface!\n"));
+                                             (0, "CPV324m2Way::AddVideoEncoderNode unable to query for video encoder interface!\n"));
                              SetState(EResetting);
                              CheckState();
                              return;);
@@ -4810,7 +4810,7 @@ void CPV324m2Way::AddAudioEncoderNode()
 #endif
     OSCL_FIRST_CATCH_ANY(error, PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG,
                          iLogger, PVLOGMSG_ERR,
-                         (0, "CPV324m2Way::InitL unable to allocate audio encoder node\n")));
+                         (0, "CPV324m2Way::AddAudioEncoderNode unable to allocate audio encoder node\n")));
 
     InitiateSession(iAudioEncNode);
 
@@ -4827,7 +4827,7 @@ void CPV324m2Way::AddAudioEncoderNode()
         OSCL_FIRST_CATCH_ANY(error,
                              PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG,
                                              iLogger, PVLOGMSG_ERR,
-                                             (0, "CPV324m2Way::CheckInit unable to query for audio encoder interface!\n"));
+                                             (0, "CPV324m2Way::AddAudioEncoderNode unable to query for audio encoder interface!\n"));
                              SetState(EResetting);
                              CheckState();
                              return;);
@@ -4839,7 +4839,7 @@ void CPV324m2Way::AddAudioEncoderNode()
         OSCL_TRY(error, SendNodeCmdL(PV2WAY_NODE_CMD_RESET, &iAudioEncNode, this));
         OSCL_FIRST_CATCH_ANY(error,
                              PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                                             (0, "CPV324m2Way::CheckInit unable to reset audio encoder node after error!\n"));
+                                             (0, "CPV324m2Way::AddAudioEncoderNode unable to reset audio encoder node after error!\n"));
                              return;);
     }
 
@@ -4865,11 +4865,11 @@ void CPV324m2Way::AddVideoDecoderNode(uint8* aFormatSpecificInfo, uint32 aFormat
 
 
     OSCL_FIRST_CATCH_ANY(error, PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger,
-                         PVLOGMSG_ERR, (0, "CPV324m2Way::InitL unable to allocate video decoder node\n")));
+                         PVLOGMSG_ERR, (0, "CPV324m2Way::AddVideoDecoderNode unable to allocate video decoder node\n")));
 
     OSCL_TRY(error, iVideoParserNode = TPV2WayNode(PVMFVideoParserNode::Create(aFormatSpecificInfo, aFormatSpecificInfoLen)););
     OSCL_FIRST_CATCH_ANY(error, PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger,
-                         PVLOGMSG_ERR, (0, "CPV324m2Way::InitL unable to allocate video parser node\n")));
+                         PVLOGMSG_ERR, (0, "CPV324m2Way::AddVideoDecoderNode unable to allocate video parser node\n")));
 
     InitiateSession(iVideoDecNode);
     InitiateSession(iVideoParserNode);
@@ -4892,7 +4892,7 @@ void CPV324m2Way::AddAudioDecoderNode()
 #endif // PV2WAY_USE_OMX
 
     OSCL_FIRST_CATCH_ANY(error, PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger,
-                         PVLOGMSG_ERR, (0, "CPV324m2Way::InitL unable to allocate audio decoder node\n")));
+                         PVLOGMSG_ERR, (0, "CPV324m2Way::AddAudioDecoderNode unable to allocate audio decoder node\n")));
 
     InitiateSession(iAudioDecNode);
 }
