@@ -2979,7 +2979,7 @@ PVMFMemoryBufferWriteDataStreamImpl::IsWriteNotificationPending(PvmiDataStreamSe
     return false;
 }
 
-OSCL_EXPORT_REF PVMFMBDSTempCacheStatus
+PVMFMBDSTempCacheStatus
 PVMFMemoryBufferWriteDataStreamImpl::GetTempCacheWriteCapacity(uint32& aCapacity)
 {
     /* This function should update the  correct capacity of the temp cache if the memory of tempcache is finate.
