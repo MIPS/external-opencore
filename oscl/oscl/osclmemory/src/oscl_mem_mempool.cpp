@@ -376,27 +376,37 @@ OSCL_EXPORT_REF OsclAny* OsclMemPoolResizableAllocator::allocate(const uint32 aN
     freeblock = findfreeblock(alignednumbytes + iBlockInfoAlignedSize);
     if (freeblock == NULL)
     {
-        //We could not find the new buffer, the only way we can allocate the chunk is by allocating newmempool buffer
-        //Validate is size is less than the regrow size.
-        if (iMemPoolBufferNumLimit > 0 && iMaxNewMemPoolBufferSz > 0 && iMaxNewMemPoolBufferSz < alignednumbytes)
-        {
-            //cannot create the new buffer
-            if (iEnableNullPtrReturn)
-            {
-                return NULL;
-            }
-            else
-            {
-                // Leave with resource limitation
-                OSCL_LEAVE(OsclErrNoResources);
-            }
+        //We could not find a free buffer of requested size. This could be due to:
+        //1) We have not created even a single parent chunk (or in other words this is the first allocation)
+        //2) We are out of memory and might need to expand
 
-        }
+
         // Check if the requested size is bigger than the specified buffer size
+        // Some of the users of this allocator, count on the allocator to expand beyond the original size
+        // specified in the constructor. These users do NOT use setMaxSzForNewMemPoolBuffer to control expansion size.
+        // If they did then it is wrong usage and we fail the allocation.
+        // For example the allocator was intialized with 200KB size,
+        // and overtime a request is made for say 300KB. Users of the allocator expect the allocator to do one of the following:
+        // 1) If iMemPoolBufferNumLimit has been set and it has been reached then see
+        // if one of older blocks can be freed up and we allocate a new block of 300KB. If we cannot then alloc will fail.
+        // 2) If iMemPoolBufferNumLimit has not set then simply allocate a new block of 300 KB. Note that if iMemPoolBufferNumLimit
+        // is not set allocator expands indefinitely.
         if (alignednumbytes > iMemPoolBufferSize)
         {
+            if (iMaxNewMemPoolBufferSz != 0)
+            {
+                //wrong usage - fail allocation
+                if (iEnableNullPtrReturn)
+                {
+                    return NULL;
+                }
+                else
+                {
+                    // Leave with resource limitation
+                    OSCL_LEAVE(OsclErrNoResources);
+                }
+            }
             // Would need to create a new buffer to accomodate this request
-
             // Check if another buffer can be created
             if (iMemPoolBufferNumLimit > 0 && iMemPoolBufferList.size() >= iMemPoolBufferNumLimit)
             {
@@ -423,7 +433,6 @@ OSCL_EXPORT_REF OsclAny* OsclMemPoolResizableAllocator::allocate(const uint32 aN
                         break;
                     }
                 }
-
                 // Need to leave and return if empty buffer not found
                 if (!emptybufferfound)
                 {
@@ -437,11 +446,9 @@ OSCL_EXPORT_REF OsclAny* OsclMemPoolResizableAllocator::allocate(const uint32 aN
                         OSCL_LEAVE(OsclErrNoResources);
                     }
                 }
-
                 // Continue on to create a new buffer
                 OSCL_ASSERT(iMemPoolBufferList.size() < iMemPoolBufferNumLimit);
             }
-
             // Determine the size of memory pool buffer and create one
             uint32 buffersize = alignednumbytes + iBufferInfoAlignedSize;
             if (iExpectedNumBlocksPerBuffer > 0)
@@ -475,9 +482,29 @@ OSCL_EXPORT_REF OsclAny* OsclMemPoolResizableAllocator::allocate(const uint32 aN
                     OSCL_LEAVE(OsclErrNoResources);
                 }
             }
-
             // Determine the size of memory pool buffer and create one
-            uint32 buffersize = oscl_mem_aligned_size(iMemPoolBufferSize) + iBufferInfoAlignedSize;
+            // By default this allocator expands by iMemPoolBufferSize.
+            // iMaxNewMemPoolBufferSz could specify the amount by which this allocator expands.
+            // setMaxSzForNewMemPoolBuffer API can be used to control the expansion size.
+            uint32 expansion_size = iMemPoolBufferSize;
+            if (iMaxNewMemPoolBufferSz != 0)
+            {
+                expansion_size = iMaxNewMemPoolBufferSz;
+            }
+            //if alignednumbytes is larger than expansion_size, we cannot satisfy the request, so fail the allocation
+            if (alignednumbytes > expansion_size)
+            {
+                if (iEnableNullPtrReturn)
+                {
+                    return NULL;
+                }
+                else
+                {
+                    // Leave with resource limitation
+                    OSCL_LEAVE(OsclErrNoResources);
+                }
+            }
+            uint32 buffersize = oscl_mem_aligned_size(expansion_size) + iBufferInfoAlignedSize;
             if (iExpectedNumBlocksPerBuffer > 0)
             {
                 buffersize += (iExpectedNumBlocksPerBuffer * iBlockInfoAlignedSize);
