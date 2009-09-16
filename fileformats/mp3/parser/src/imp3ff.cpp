@@ -1135,7 +1135,8 @@ OSCL_EXPORT_REF PVMFStatus IMpeg3File::GetMetadataValues(PVMFMetadataList& aKeyL
 
                     KeyLen = oscl_strlen(PVMP3METADATA_TRACKINFO_SELECTED_KEY) + 1; // for "track-info/selected;"
                     KeyLen += oscl_strlen(PVMI_KVPVALTYPE_STRING_CONSTCHAR); // for "valtype="
-                    KeyLen += oscl_strlen(PVMI_KVPVALTYPE_BOOL_STRING_CONSTCHAR) + 1; // for "bool" and NULL terminator
+                    KeyLen += oscl_strlen(PVMI_KVPVALTYPE_BOOL_STRING_CONSTCHAR) + 1; // for "bool;"
+                    KeyLen += oscl_strlen(PVMP3METADATA_INDEX0) + 1; // for "index=0" and NULL terminator
 
                     // Allocate memory for the string
                     leavecode = OsclErrNone;
@@ -1148,6 +1149,8 @@ OSCL_EXPORT_REF PVMFStatus IMpeg3File::GetMetadataValues(PVMFMetadataList& aKeyL
                         oscl_strncat(KeyVal.key, PVMP3METADATA_SEMICOLON, oscl_strlen(PVMP3METADATA_SEMICOLON));
                         oscl_strncat(KeyVal.key, PVMI_KVPVALTYPE_STRING_CONSTCHAR, oscl_strlen(PVMI_KVPVALTYPE_STRING_CONSTCHAR));
                         oscl_strncat(KeyVal.key, PVMI_KVPVALTYPE_BOOL_STRING_CONSTCHAR, oscl_strlen(PVMI_KVPVALTYPE_BOOL_STRING_CONSTCHAR));
+                        oscl_strncat(KeyVal.key, PVMP3METADATA_SEMICOLON, oscl_strlen(PVMP3METADATA_SEMICOLON));
+                        oscl_strncat(KeyVal.key, PVMP3METADATA_INDEX0, oscl_strlen(PVMP3METADATA_INDEX0));
                         KeyVal.key[KeyLen-1] = NULL_TERM_CHAR;
                         // Copy the value
                         KeyVal.value.bool_value = 1; // Number of tracks supported in PV MP3 parser would always be 1

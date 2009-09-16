@@ -100,6 +100,9 @@
 #ifndef PVMF_FORMAT_PROGDOWNLOAD_SUPPORT_EXTENSION_H_INCLUDED
 #include "pvmf_format_progdownload_support_extension.h"
 #endif
+#ifndef OSCL_SNPRINTF_H
+#include "oscl_snprintf.h"
+#endif
 
 // Track info
 

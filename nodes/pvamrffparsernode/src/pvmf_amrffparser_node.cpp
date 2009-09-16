@@ -483,11 +483,14 @@ PVMFStatus PVMFAMRFFParserNode::DoGetNodeMetadataValues(PVMFNodeCommand& aCmd)
             if (numvalentries > starting_index)
             {
                 bool trackselected = 1;
+                char indexParam[16];
+                oscl_snprintf(indexParam, 16, ";%s", PVAMRMETADATA_INDEX0);
+                indexParam[15] = '\0';
 
                 PVMFStatus retval = PVMFCreateKVPUtils::CreateKVPForBoolValue(KeyVal,
                                     PVAMRMETADATA_TRACKINFO_SELECTED_KEY,
                                     trackselected,
-                                    NULL);
+                                    indexParam);
                 if (retval != PVMFSuccess && retval != PVMFErrArgument)
                 {
                     break;
