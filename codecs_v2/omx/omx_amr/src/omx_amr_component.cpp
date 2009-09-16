@@ -871,11 +871,12 @@ OMX_ERRORTYPE OpenmaxAmrAO::ComponentInit()
     iIsInit = OMX_TRUE;
 
 
-    // Added an extra check based on whether client has set nb or wb as Role in
+    // Added an extra check based on whether client has set amr, amrnb or amrwb as Role in
     // SetParameter() for index OMX_IndexParamStandardComponentRole
     OMX_AUDIO_AMRBANDMODETYPE AmrBandMode = ipPorts[OMX_PORT_INPUTPORT_INDEX]->AudioAmrParam.eAMRBandMode;
 
-    if (0 == oscl_strcmp((OMX_STRING)iComponentRole, (OMX_STRING)"audio_decoder.amrnb"))
+    if ((0 == oscl_strcmp((OMX_STRING)iComponentRole, (OMX_STRING)"audio_decoder.amrnb")) ||
+            (0 == oscl_strcmp((OMX_STRING)iComponentRole, (OMX_STRING)"audio_decoder.amr")))
     {
         if (OMX_TRUE == iComponentRoleFlag)
         {
