@@ -266,7 +266,7 @@ class OSCL_IMPORT_REF OSCL_wString
 
         virtual const chartype* get_cstr() const = 0;
 
-        OSCL_IMPORT_REF virtual bool is_writable() const;
+        virtual bool is_writable() const;
 
         virtual chartype* get_str() const = 0;
 
