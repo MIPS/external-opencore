@@ -115,7 +115,10 @@ PVMFAACFFParserNode::~PVMFAACFFParserNode()
     {
         PVInterface* iFace = OSCL_STATIC_CAST(PVInterface*, iDataStreamInterface);
         PVUuid uuid = PVMIDataStreamSyncInterfaceUuid;
-        iDataStreamFactory->DestroyPVMFCPMPluginAccessInterface(uuid, iFace);
+        if (iDataStreamFactory)
+        {
+            iDataStreamFactory->DestroyPVMFCPMPluginAccessInterface(uuid, iFace);
+        }
         iDataStreamInterface = NULL;
     }
 
