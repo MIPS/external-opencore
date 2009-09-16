@@ -141,230 +141,237 @@
 00197         , iTickCountPeriod(0)
 00198         , iExpectedTimeout(0)
 00199 {
-00200     <span class="comment">//use the allocator with placement 'new'</span>
-00201     Alloc alloc;
-00202     iTimer = <a class="code" href="group__osclmemory.html#a53">OSCL_PLACEMENT_NEW</a>(alloc.ALLOCATE(<span class="keyword">sizeof</span>(<a class="code" href="classCallbackTimer.html">CallbackTimer&lt;Alloc&gt;</a>)), <a class="code" href="classCallbackTimer.html">CallbackTimer&lt;Alloc&gt;</a>(*<span class="keyword">this</span>, name, priority));
-00203     <a class="code" href="classOsclTimer.html#a3">SetFrequency</a>(frequency);
-00204 }
-00205 
-00206 <span class="keyword">template</span>&lt;<span class="keyword">class</span> Alloc&gt;
-<a name="l00207"></a><a class="code" href="classOsclTimer.html#a1">00207</a> <a class="code" href="classOsclTimer.html#a1">OsclTimer&lt;Alloc&gt;::~OsclTimer</a>()
-00208 {
-00209     <span class="comment">// Make sure we're cancelled</span>
-00210     <span class="keywordflow">if</span> (iTimer)
-00211         iTimer-&gt;<a class="code" href="classOsclTimerObject.html#a8">Cancel</a>();
-00212     <span class="keywordflow">if</span> (iTimer)
-00213     {
-00214         iTimer-&gt;OSCL_TEMPLATED_DESTRUCTOR_CALL(<a class="code" href="classCallbackTimer.html">callback_timer_type</a>, <a class="code" href="classCallbackTimer.html">CallbackTimer</a>);
-00215         Alloc alloc;
-00216         alloc.deallocate(iTimer);
-00217     }
-00218     iTimer = <a class="code" href="group__osclbase.html#a81">NULL</a>;
-00219 
-00220     <span class="keywordflow">for</span> (entries_type_iterator it = iEntries.<a class="code" href="classOscl__Vector.html#a17">begin</a>(); it != iEntries.<a class="code" href="classOscl__Vector.html#a18">end</a>(); it++)
-00221     {
-00222         iEntryAllocator.<a class="code" href="classOscl__TAlloc.html#a5">deallocate</a>(*it);
-00223     }
-00224 }
-00225 
-00226 <span class="keyword">template</span>&lt;<span class="keyword">class</span> Alloc&gt;
-<a name="l00227"></a><a class="code" href="classOsclTimer.html#a3">00227</a> <span class="keywordtype">void</span> <a class="code" href="classOsclTimer.html#a3">OsclTimer&lt;Alloc&gt;::SetFrequency</a>(uint32 frequency)
-00228 {
-00229     <span class="comment">// timer takes microseconds</span>
-00230     iCyclePeriod = 1000000 / frequency;
-00231     <span class="comment">// get tick count period</span>
-00232     iTickCountPeriod = <a class="code" href="classOsclTickCount.html#d2">OsclTickCount::TickCountPeriod</a>();
-00233 }
-00234 
-00235 <span class="keyword">template</span>&lt;<span class="keyword">class</span> Alloc&gt;
-<a name="l00236"></a><a class="code" href="classOsclTimer.html#a4">00236</a> <span class="keywordtype">void</span> <a class="code" href="classOsclTimer.html#a4">OsclTimer&lt;Alloc&gt;::SetExactFrequency</a>(uint32 frequency)
-00237 {
-00238     <span class="comment">// timer takes microseconds</span>
-00239     iCyclePeriod = frequency;
-00240     <span class="comment">// get tick count period</span>
-00241     iTickCountPeriod = <a class="code" href="classOsclTickCount.html#d2">OsclTickCount::TickCountPeriod</a>();
-00242 }
-00243 
-00244 <span class="comment">// Request a timer</span>
-00245 <span class="keyword">template</span>&lt;<span class="keyword">class</span> Alloc&gt;
-<a name="l00246"></a><a class="code" href="classOsclTimer.html#a5">00246</a> <span class="keywordtype">void</span> <a class="code" href="classOsclTimer.html#a5">OsclTimer&lt;Alloc&gt;::Request</a>(int32 timerID, int32 param, int32 cycles, <a class="code" href="classOsclTimerObserver.html">OsclTimerObserver</a> *obs, <span class="keywordtype">bool</span> recurring)
-00247 {
-00248 
-00249     <span class="comment">// add to list of timers</span>
-00250     entry_type *entry = iEntryAllocator.ALLOCATE(1);
-00251     entry-&gt;iTimerID = timerID;
-00252     entry-&gt;iParam = param;
-00253     entry-&gt;iCounter = cycles;
-00254     entry-&gt;iObserver = obs;
-00255     entry-&gt;iRecurring = recurring;
-00256     entry-&gt;iOrigCounter = entry-&gt;iCounter;
-00257 
-00258     <span class="comment">// if the request is called inside of a callback, then we must add it later</span>
-00259     <span class="keywordflow">if</span> (iInCallback)
-00260     {
-00261         iEntriesWaitingToAdd.<a class="code" href="classOscl__Vector.html#a5">push_back</a>(entry);
-00262         <span class="keywordflow">return</span>;
-00263     }
+00200     <span class="keywordflow">if</span> (frequency == 0)
+00201     {
+00202         <a class="code" href="group__osclerror.html#a46">OSCL_LEAVE</a>(<a class="code" href="group__osclerror.html#a16">OsclErrArgument</a>);
+00203     }
+00204     <span class="keywordflow">else</span>
+00205     {
+00206         <span class="comment">//use the allocator with placement 'new'</span>
+00207         Alloc alloc;
+00208         iTimer = <a class="code" href="group__osclmemory.html#a53">OSCL_PLACEMENT_NEW</a>(alloc.ALLOCATE(<span class="keyword">sizeof</span>(<a class="code" href="classCallbackTimer.html">CallbackTimer&lt;Alloc&gt;</a>)), <a class="code" href="classCallbackTimer.html">CallbackTimer&lt;Alloc&gt;</a>(*<span class="keyword">this</span>, name, priority));
+00209         <a class="code" href="classOsclTimer.html#a3">SetFrequency</a>(frequency);
+00210     }
+00211 }
+00212 
+00213 <span class="keyword">template</span>&lt;<span class="keyword">class</span> Alloc&gt;
+<a name="l00214"></a><a class="code" href="classOsclTimer.html#a1">00214</a> <a class="code" href="classOsclTimer.html#a1">OsclTimer&lt;Alloc&gt;::~OsclTimer</a>()
+00215 {
+00216     <span class="comment">// Make sure we're cancelled</span>
+00217     <span class="keywordflow">if</span> (iTimer)
+00218         iTimer-&gt;<a class="code" href="classOsclTimerObject.html#a8">Cancel</a>();
+00219     <span class="keywordflow">if</span> (iTimer)
+00220     {
+00221         iTimer-&gt;OSCL_TEMPLATED_DESTRUCTOR_CALL(<a class="code" href="classCallbackTimer.html">callback_timer_type</a>, <a class="code" href="classCallbackTimer.html">CallbackTimer</a>);
+00222         Alloc alloc;
+00223         alloc.deallocate(iTimer);
+00224     }
+00225     iTimer = <a class="code" href="group__osclbase.html#a81">NULL</a>;
+00226 
+00227     <span class="keywordflow">for</span> (entries_type_iterator it = iEntries.<a class="code" href="classOscl__Vector.html#a17">begin</a>(); it != iEntries.<a class="code" href="classOscl__Vector.html#a18">end</a>(); it++)
+00228     {
+00229         iEntryAllocator.<a class="code" href="classOscl__TAlloc.html#a5">deallocate</a>(*it);
+00230     }
+00231 }
+00232 
+00233 <span class="keyword">template</span>&lt;<span class="keyword">class</span> Alloc&gt;
+<a name="l00234"></a><a class="code" href="classOsclTimer.html#a3">00234</a> <span class="keywordtype">void</span> <a class="code" href="classOsclTimer.html#a3">OsclTimer&lt;Alloc&gt;::SetFrequency</a>(uint32 frequency)
+00235 {
+00236     <span class="comment">// timer takes microseconds</span>
+00237     iCyclePeriod = 1000000 / frequency;
+00238     <span class="comment">// get tick count period</span>
+00239     iTickCountPeriod = <a class="code" href="classOsclTickCount.html#d2">OsclTickCount::TickCountPeriod</a>();
+00240 }
+00241 
+00242 <span class="keyword">template</span>&lt;<span class="keyword">class</span> Alloc&gt;
+<a name="l00243"></a><a class="code" href="classOsclTimer.html#a4">00243</a> <span class="keywordtype">void</span> <a class="code" href="classOsclTimer.html#a4">OsclTimer&lt;Alloc&gt;::SetExactFrequency</a>(uint32 frequency)
+00244 {
+00245     <span class="comment">// timer takes microseconds</span>
+00246     iCyclePeriod = frequency;
+00247     <span class="comment">// get tick count period</span>
+00248     iTickCountPeriod = <a class="code" href="classOsclTickCount.html#d2">OsclTickCount::TickCountPeriod</a>();
+00249 }
+00250 
+00251 <span class="comment">// Request a timer</span>
+00252 <span class="keyword">template</span>&lt;<span class="keyword">class</span> Alloc&gt;
+<a name="l00253"></a><a class="code" href="classOsclTimer.html#a5">00253</a> <span class="keywordtype">void</span> <a class="code" href="classOsclTimer.html#a5">OsclTimer&lt;Alloc&gt;::Request</a>(int32 timerID, int32 param, int32 cycles, <a class="code" href="classOsclTimerObserver.html">OsclTimerObserver</a> *obs, <span class="keywordtype">bool</span> recurring)
+00254 {
+00255 
+00256     <span class="comment">// add to list of timers</span>
+00257     entry_type *entry = iEntryAllocator.ALLOCATE(1);
+00258     entry-&gt;iTimerID = timerID;
+00259     entry-&gt;iParam = param;
+00260     entry-&gt;iCounter = cycles;
+00261     entry-&gt;iObserver = obs;
+00262     entry-&gt;iRecurring = recurring;
+00263     entry-&gt;iOrigCounter = entry-&gt;iCounter;
 00264 
-00265     iEntries.<a class="code" href="classOscl__Vector.html#a5">push_back</a>(entry);
-00266 
-00267     <span class="keywordflow">if</span> (iTimer)
-00268     {
-00269         iTimer-&gt;<a class="code" href="classOsclTimerObject.html#a5">RunIfNotReady</a>(iCyclePeriod);
+00265     <span class="comment">// if the request is called inside of a callback, then we must add it later</span>
+00266     <span class="keywordflow">if</span> (iInCallback)
+00267     {
+00268         iEntriesWaitingToAdd.<a class="code" href="classOscl__Vector.html#a5">push_back</a>(entry);
+00269         <span class="keywordflow">return</span>;
 00270     }
 00271 
-00272     <span class="keywordflow">if</span> (iExpectedTimeout == 0)
-00273     {
-00274         iExpectedTimeout = (<a class="code" href="classOsclTickCount.html#d0">OsclTickCount::TickCount</a>() * iTickCountPeriod) + iCyclePeriod;
-00275     }
-00276 }
-00277 
-00278 <span class="comment">// Cancel a timer</span>
-00279 <span class="keyword">template</span>&lt;<span class="keyword">class</span> Alloc&gt;
-<a name="l00280"></a><a class="code" href="classOsclTimer.html#a6">00280</a> <span class="keywordtype">void</span> <a class="code" href="classOsclTimer.html#a6">OsclTimer&lt;Alloc&gt;::Cancel</a>(int32 timerID, int32 param)
-00281 {
-00282 
-00283     <span class="keywordflow">if</span> (iInCallback)
-00284     {
-00285         <span class="comment">// add to list of timers</span>
-00286         entry_type *entry = iEntryAllocator.ALLOCATE(1);
-00287         entry-&gt;iTimerID = timerID;
-00288         entry-&gt;iParam = param;
+00272     iEntries.<a class="code" href="classOscl__Vector.html#a5">push_back</a>(entry);
+00273 
+00274     <span class="keywordflow">if</span> (iTimer)
+00275     {
+00276         iTimer-&gt;<a class="code" href="classOsclTimerObject.html#a5">RunIfNotReady</a>(iCyclePeriod);
+00277     }
+00278 
+00279     <span class="keywordflow">if</span> (iExpectedTimeout == 0)
+00280     {
+00281         iExpectedTimeout = (<a class="code" href="classOsclTickCount.html#d0">OsclTickCount::TickCount</a>() * iTickCountPeriod) + iCyclePeriod;
+00282     }
+00283 }
+00284 
+00285 <span class="comment">// Cancel a timer</span>
+00286 <span class="keyword">template</span>&lt;<span class="keyword">class</span> Alloc&gt;
+<a name="l00287"></a><a class="code" href="classOsclTimer.html#a6">00287</a> <span class="keywordtype">void</span> <a class="code" href="classOsclTimer.html#a6">OsclTimer&lt;Alloc&gt;::Cancel</a>(int32 timerID, int32 param)
+00288 {
 00289 
-00290         iEntriesWaitingToCancel.<a class="code" href="classOscl__Vector.html#a5">push_back</a>(entry);
-00291         <span class="keywordflow">return</span>;
-00292     }
-00293 
-00294     <span class="comment">// remove from list of timers</span>
-00295     <span class="keywordflow">for</span> (entries_type_iterator it = iEntries.<a class="code" href="classOscl__Vector.html#a17">begin</a>(); it != iEntries.<a class="code" href="classOscl__Vector.html#a18">end</a>(); it++)
-00296     {
-00297         <span class="keywordflow">if</span> ((*it)-&gt;iTimerID == timerID)
-00298         {
-00299             <span class="comment">// make sure the param matches unless it is not specified (-1)</span>
-00300             <span class="keywordflow">if</span> ((*it)-&gt;iParam == param || param == -1)
-00301             {
-00302                 iEntryAllocator.<a class="code" href="classOscl__TAlloc.html#a5">deallocate</a>(*it);
-00303                 iEntries.<a class="code" href="classOscl__Vector.html#a19">erase</a>(it);
-00304                 <span class="keywordflow">return</span>;
-00305             }
-00306         }
-00307     }
-00308 }
-00309 
-00310 <span class="comment">// Clear all waiting timers</span>
-00311 <span class="keyword">template</span>&lt;<span class="keyword">class</span> Alloc&gt;
-<a name="l00312"></a><a class="code" href="classOsclTimer.html#a7">00312</a> <span class="keywordtype">void</span> <a class="code" href="classOsclTimer.html#a7">OsclTimer&lt;Alloc&gt;::Clear</a>()
-00313 {
-00314     <span class="keywordflow">for</span> (entries_type_iterator it = iEntries.<a class="code" href="classOscl__Vector.html#a17">begin</a>(); it != iEntries.<a class="code" href="classOscl__Vector.html#a18">end</a>(); it++)
-00315     {
-00316         iEntryAllocator.<a class="code" href="classOscl__TAlloc.html#a5">deallocate</a>(*it);
-00317     }
-00318     iEntries.<a class="code" href="classOscl__Vector.html#a15">clear</a>();
-00319 }
-00320 
-00321 <span class="keyword">template</span>&lt;<span class="keyword">class</span> Alloc&gt;
-<a name="l00322"></a><a class="code" href="classOsclTimer.html#b0">00322</a> <span class="keywordtype">void</span> <a class="code" href="classOsclTimer.html#b0">OsclTimer&lt;Alloc&gt;::TimerBaseElapsed</a>()
-00323 {
-00324     uint8 expiredFound = 0;
-00325 
-00326     {
-00327         <span class="comment">// call all whose timers have expired</span>
-00328         <span class="keywordflow">for</span> (entries_type_iterator it = iEntries.<a class="code" href="classOscl__Vector.html#a17">begin</a>(); it != iEntries.<a class="code" href="classOscl__Vector.html#a18">end</a>(); it++)
-00329         {
-00330             entry_type *entry = (*it);
-00331             <span class="keywordflow">if</span> (--(entry-&gt;iCounter) &lt;= 0)
-00332             {
-00333                 <span class="keywordflow">if</span> (!entry-&gt;iRecurring) expiredFound = 1;
-00334                 <span class="keywordflow">if</span> (entry-&gt;iRecurring) entry-&gt;iCounter = entry-&gt;iOrigCounter;
-00335 
-00336                 <span class="comment">// use local observer if it exists, otherwise use global observer</span>
-00337                 <a class="code" href="classOsclTimerObserver.html">OsclTimerObserver</a> *obs = (entry-&gt;iObserver ? entry-&gt;iObserver : iObserver);
-00338                 <span class="keywordflow">if</span> (obs)
-00339                 {
-00340                     iInCallback = <span class="keyword">true</span>;
-00341                     obs-&gt;<a class="code" href="classOsclTimerObserver.html#a0">TimeoutOccurred</a>(entry-&gt;iTimerID, entry-&gt;iParam);
-00342                     iInCallback = <span class="keyword">false</span>;
-00343                 }
-00344             }
-00345         }
-00346     }
-00347 
-00348     <span class="comment">// remove from list all whose timers have expired</span>
-00349     <span class="keywordflow">while</span> (expiredFound)
-00350     {
-00351         expiredFound = 0;
-00352         <span class="keywordflow">for</span> (entries_type_iterator it = iEntries.<a class="code" href="classOscl__Vector.html#a17">begin</a>(); it != iEntries.<a class="code" href="classOscl__Vector.html#a18">end</a>(); it++)
-00353         {
-00354             entry_type *entry = (*it);
-00355             <span class="keywordflow">if</span> (entry-&gt;iCounter &lt;= 0)
-00356             {
-00357                 expiredFound = 1;
-00358                 iEntryAllocator.<a class="code" href="classOscl__TAlloc.html#a5">deallocate</a>(entry);
-00359                 iEntries.<a class="code" href="classOscl__Vector.html#a19">erase</a>(it);
-00360                 <span class="keywordflow">break</span>;
-00361             }
-00362         }
-00363     }
-00364 
-00365     {
-00366         <span class="comment">// if any timers were cancelled in the callback, process them now</span>
-00367         <span class="keywordflow">for</span> (entries_type_iterator it = iEntriesWaitingToCancel.<a class="code" href="classOscl__Vector.html#a17">begin</a>(); it != iEntriesWaitingToCancel.<a class="code" href="classOscl__Vector.html#a18">end</a>(); it++)
-00368         {
-00369             entry_type *entry = (*it);
-00370             <a class="code" href="classOsclTimer.html#a6">Cancel</a>(entry-&gt;iTimerID, entry-&gt;iParam);
-00371             iEntryAllocator.<a class="code" href="classOscl__TAlloc.html#a5">deallocate</a>(entry);
-00372         }
-00373         iEntriesWaitingToCancel.<a class="code" href="classOscl__Vector.html#a15">clear</a>();
-00374     }
-00375 
-00376     {
-00377         <span class="comment">// if any timers were requested in the callback, process them now</span>
-00378         <span class="keywordflow">for</span> (entries_type_iterator it = iEntriesWaitingToAdd.<a class="code" href="classOscl__Vector.html#a17">begin</a>(); it != iEntriesWaitingToAdd.<a class="code" href="classOscl__Vector.html#a18">end</a>(); it++)
-00379         {
-00380             entry_type *entry = (*it);
-00381             <a class="code" href="classOsclTimer.html#a5">Request</a>(entry-&gt;iTimerID, entry-&gt;iParam, entry-&gt;iCounter, entry-&gt;iObserver);
-00382             iEntryAllocator.<a class="code" href="classOscl__TAlloc.html#a5">deallocate</a>(entry);
-00383         }
-00384         iEntriesWaitingToAdd.<a class="code" href="classOscl__Vector.html#a15">clear</a>();
-00385     }
-00386 
-00387     <span class="keywordflow">if</span> (!iEntries.<a class="code" href="classOscl__Vector__Base.html#a2">empty</a>())
-00388     {
-00389         <span class="comment">// adjust for the jitter</span>
-00390         uint32 time = <a class="code" href="classOsclTickCount.html#d0">OsclTickCount::TickCount</a>() * iTickCountPeriod;
-00391         int32 jitter = time - iExpectedTimeout;
-00392         int32 waitperiod = iCyclePeriod - jitter;
+00290     <span class="keywordflow">if</span> (iInCallback)
+00291     {
+00292         <span class="comment">// add to list of timers</span>
+00293         entry_type *entry = iEntryAllocator.ALLOCATE(1);
+00294         entry-&gt;iTimerID = timerID;
+00295         entry-&gt;iParam = param;
+00296 
+00297         iEntriesWaitingToCancel.<a class="code" href="classOscl__Vector.html#a5">push_back</a>(entry);
+00298         <span class="keywordflow">return</span>;
+00299     }
+00300 
+00301     <span class="comment">// remove from list of timers</span>
+00302     <span class="keywordflow">for</span> (entries_type_iterator it = iEntries.<a class="code" href="classOscl__Vector.html#a17">begin</a>(); it != iEntries.<a class="code" href="classOscl__Vector.html#a18">end</a>(); it++)
+00303     {
+00304         <span class="keywordflow">if</span> ((*it)-&gt;iTimerID == timerID)
+00305         {
+00306             <span class="comment">// make sure the param matches unless it is not specified (-1)</span>
+00307             <span class="keywordflow">if</span> ((*it)-&gt;iParam == param || param == -1)
+00308             {
+00309                 iEntryAllocator.<a class="code" href="classOscl__TAlloc.html#a5">deallocate</a>(*it);
+00310                 iEntries.<a class="code" href="classOscl__Vector.html#a19">erase</a>(it);
+00311                 <span class="keywordflow">return</span>;
+00312             }
+00313         }
+00314     }
+00315 }
+00316 
+00317 <span class="comment">// Clear all waiting timers</span>
+00318 <span class="keyword">template</span>&lt;<span class="keyword">class</span> Alloc&gt;
+<a name="l00319"></a><a class="code" href="classOsclTimer.html#a7">00319</a> <span class="keywordtype">void</span> <a class="code" href="classOsclTimer.html#a7">OsclTimer&lt;Alloc&gt;::Clear</a>()
+00320 {
+00321     <span class="keywordflow">for</span> (entries_type_iterator it = iEntries.<a class="code" href="classOscl__Vector.html#a17">begin</a>(); it != iEntries.<a class="code" href="classOscl__Vector.html#a18">end</a>(); it++)
+00322     {
+00323         iEntryAllocator.<a class="code" href="classOscl__TAlloc.html#a5">deallocate</a>(*it);
+00324     }
+00325     iEntries.<a class="code" href="classOscl__Vector.html#a15">clear</a>();
+00326 }
+00327 
+00328 <span class="keyword">template</span>&lt;<span class="keyword">class</span> Alloc&gt;
+<a name="l00329"></a><a class="code" href="classOsclTimer.html#b0">00329</a> <span class="keywordtype">void</span> <a class="code" href="classOsclTimer.html#b0">OsclTimer&lt;Alloc&gt;::TimerBaseElapsed</a>()
+00330 {
+00331     uint8 expiredFound = 0;
+00332 
+00333     {
+00334         <span class="comment">// call all whose timers have expired</span>
+00335         <span class="keywordflow">for</span> (entries_type_iterator it = iEntries.<a class="code" href="classOscl__Vector.html#a17">begin</a>(); it != iEntries.<a class="code" href="classOscl__Vector.html#a18">end</a>(); it++)
+00336         {
+00337             entry_type *entry = (*it);
+00338             <span class="keywordflow">if</span> (--(entry-&gt;iCounter) &lt;= 0)
+00339             {
+00340                 <span class="keywordflow">if</span> (!entry-&gt;iRecurring) expiredFound = 1;
+00341                 <span class="keywordflow">if</span> (entry-&gt;iRecurring) entry-&gt;iCounter = entry-&gt;iOrigCounter;
+00342 
+00343                 <span class="comment">// use local observer if it exists, otherwise use global observer</span>
+00344                 <a class="code" href="classOsclTimerObserver.html">OsclTimerObserver</a> *obs = (entry-&gt;iObserver ? entry-&gt;iObserver : iObserver);
+00345                 <span class="keywordflow">if</span> (obs)
+00346                 {
+00347                     iInCallback = <span class="keyword">true</span>;
+00348                     obs-&gt;<a class="code" href="classOsclTimerObserver.html#a0">TimeoutOccurred</a>(entry-&gt;iTimerID, entry-&gt;iParam);
+00349                     iInCallback = <span class="keyword">false</span>;
+00350                 }
+00351             }
+00352         }
+00353     }
+00354 
+00355     <span class="comment">// remove from list all whose timers have expired</span>
+00356     <span class="keywordflow">while</span> (expiredFound)
+00357     {
+00358         expiredFound = 0;
+00359         <span class="keywordflow">for</span> (entries_type_iterator it = iEntries.<a class="code" href="classOscl__Vector.html#a17">begin</a>(); it != iEntries.<a class="code" href="classOscl__Vector.html#a18">end</a>(); it++)
+00360         {
+00361             entry_type *entry = (*it);
+00362             <span class="keywordflow">if</span> (entry-&gt;iCounter &lt;= 0)
+00363             {
+00364                 expiredFound = 1;
+00365                 iEntryAllocator.<a class="code" href="classOscl__TAlloc.html#a5">deallocate</a>(entry);
+00366                 iEntries.<a class="code" href="classOscl__Vector.html#a19">erase</a>(it);
+00367                 <span class="keywordflow">break</span>;
+00368             }
+00369         }
+00370     }
+00371 
+00372     {
+00373         <span class="comment">// if any timers were cancelled in the callback, process them now</span>
+00374         <span class="keywordflow">for</span> (entries_type_iterator it = iEntriesWaitingToCancel.<a class="code" href="classOscl__Vector.html#a17">begin</a>(); it != iEntriesWaitingToCancel.<a class="code" href="classOscl__Vector.html#a18">end</a>(); it++)
+00375         {
+00376             entry_type *entry = (*it);
+00377             <a class="code" href="classOsclTimer.html#a6">Cancel</a>(entry-&gt;iTimerID, entry-&gt;iParam);
+00378             iEntryAllocator.<a class="code" href="classOscl__TAlloc.html#a5">deallocate</a>(entry);
+00379         }
+00380         iEntriesWaitingToCancel.<a class="code" href="classOscl__Vector.html#a15">clear</a>();
+00381     }
+00382 
+00383     {
+00384         <span class="comment">// if any timers were requested in the callback, process them now</span>
+00385         <span class="keywordflow">for</span> (entries_type_iterator it = iEntriesWaitingToAdd.<a class="code" href="classOscl__Vector.html#a17">begin</a>(); it != iEntriesWaitingToAdd.<a class="code" href="classOscl__Vector.html#a18">end</a>(); it++)
+00386         {
+00387             entry_type *entry = (*it);
+00388             <a class="code" href="classOsclTimer.html#a5">Request</a>(entry-&gt;iTimerID, entry-&gt;iParam, entry-&gt;iCounter, entry-&gt;iObserver);
+00389             iEntryAllocator.<a class="code" href="classOscl__TAlloc.html#a5">deallocate</a>(entry);
+00390         }
+00391         iEntriesWaitingToAdd.<a class="code" href="classOscl__Vector.html#a15">clear</a>();
+00392     }
 00393 
-00394         <span class="comment">// currently there is some problem on the phone if we send</span>
-00395         <span class="comment">// in real-time rather than with a slower (growing delay) H.223 mux output</span>
-00396         <span class="comment">// if jitter is too large in either direction, start over</span>
-00397         <span class="keywordflow">if</span> ((uint)<a class="code" href="group__osclbase.html#a93">OSCL_ABS</a>(jitter) &gt; iCyclePeriod)
-00398         {
-00399             iExpectedTimeout = time;
-00400         }
-00401         <span class="keywordflow">else</span>
-00402         {
-00403             iExpectedTimeout += iCyclePeriod;
-00404         }
-00405 
-00406         waitperiod = <a class="code" href="group__osclbase.html#a92">OSCL_MAX</a>(waitperiod, 0);
-00407 
-00408         <span class="keywordflow">if</span> (iTimer)
+00394     <span class="keywordflow">if</span> (!iEntries.<a class="code" href="classOscl__Vector__Base.html#a2">empty</a>())
+00395     {
+00396         <span class="comment">// adjust for the jitter</span>
+00397         uint32 time = <a class="code" href="classOsclTickCount.html#d0">OsclTickCount::TickCount</a>() * iTickCountPeriod;
+00398         int32 jitter = time - iExpectedTimeout;
+00399         int32 waitperiod = iCyclePeriod - jitter;
+00400 
+00401         <span class="comment">// currently there is some problem on the phone if we send</span>
+00402         <span class="comment">// in real-time rather than with a slower (growing delay) H.223 mux output</span>
+00403         <span class="comment">// if jitter is too large in either direction, start over</span>
+00404         <span class="keywordflow">if</span> ((uint)<a class="code" href="group__osclbase.html#a93">OSCL_ABS</a>(jitter) &gt; iCyclePeriod)
+00405         {
+00406             iExpectedTimeout = time;
+00407         }
+00408         <span class="keywordflow">else</span>
 00409         {
-00410             iTimer-&gt;<a class="code" href="classOsclTimerObject.html#a5">RunIfNotReady</a>(waitperiod);
+00410             iExpectedTimeout += iCyclePeriod;
 00411         }
-00412     }
-00413     <span class="keywordflow">else</span>
-00414     {
-00415         iExpectedTimeout = 0;
-00416     }
-00417 }
-00418 
-00419 
-00420 
-00421 <span class="preprocessor">#endif</span>
+00412 
+00413         waitperiod = <a class="code" href="group__osclbase.html#a92">OSCL_MAX</a>(waitperiod, 0);
+00414 
+00415         <span class="keywordflow">if</span> (iTimer)
+00416         {
+00417             iTimer-&gt;<a class="code" href="classOsclTimerObject.html#a5">RunIfNotReady</a>(waitperiod);
+00418         }
+00419     }
+00420     <span class="keywordflow">else</span>
+00421     {
+00422         iExpectedTimeout = 0;
+00423     }
+00424 }
+00425 
+00426 
+00427 
+00428 <span class="preprocessor">#endif</span>
 </pre></div><hr size="1"><img src="pvlogo_small.jpg"><address style="align: right;"><small>OSCL API</small>
-<address style="align: left;"><small>Posting Version: CORE_7.501.1.1 </small>
+<address style="align: left;"><small>Posting Version: CORE_7.508.1.1 </small>
 </small></address>
 </body>
 </html>

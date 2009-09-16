@@ -53,26 +53,26 @@
 00075             <span class="keywordflow">return</span> <a class="code" href="classOscl__Queue__Base.html#n0">numelems</a> == 0;
 00076         }
 00077 
-00086         OSCL_IMPORT_REF <span class="keywordtype">void</span> <a class="code" href="classOscl__Queue__Base.html#a3">reserve</a>(uint32 n) ;
+00086         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keywordtype">void</span> <a class="code" href="classOscl__Queue__Base.html#a3">reserve</a>(uint32 n) ;
 00087 
 00088     <span class="keyword">protected</span>:
 00089 
 00090         <span class="comment">//for use in default constructor.  vtable is needed so this is a subroutine.</span>
-00091         OSCL_IMPORT_REF <span class="keywordtype">void</span> <a class="code" href="classOscl__Queue__Base.html#b0">construct</a>(<a class="code" href="classOscl__Opaque__Type__Alloc.html">Oscl_Opaque_Type_Alloc</a>* aType);
+00091         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keywordtype">void</span> <a class="code" href="classOscl__Queue__Base.html#b0">construct</a>(<a class="code" href="classOscl__Opaque__Type__Alloc.html">Oscl_Opaque_Type_Alloc</a>* aType);
 00092 
 00093         <span class="comment">//for use in constructor with pre-allocation for "n" elements.</span>
-00094         OSCL_IMPORT_REF <span class="keywordtype">void</span> <a class="code" href="classOscl__Queue__Base.html#b0">construct</a>(<a class="code" href="classOscl__Opaque__Type__Alloc.html">Oscl_Opaque_Type_Alloc</a>* aType, uint32 n) ;
+00094         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keywordtype">void</span> <a class="code" href="classOscl__Queue__Base.html#b0">construct</a>(<a class="code" href="classOscl__Opaque__Type__Alloc.html">Oscl_Opaque_Type_Alloc</a>* aType, uint32 n) ;
 00095 
 <a name="l00099"></a><a class="code" href="classOscl__Queue__Base.html#b2">00099</a>         <span class="keyword">virtual</span> <a class="code" href="classOscl__Queue__Base.html#b2">~Oscl_Queue_Base</a>()
 00100         {}
 00101 
-00105         OSCL_IMPORT_REF <span class="keywordtype">void</span> <a class="code" href="classOscl__Queue__Base.html#b3">destroy</a>();
+00105         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keywordtype">void</span> <a class="code" href="classOscl__Queue__Base.html#b3">destroy</a>();
 00106 
-00112         OSCL_IMPORT_REF <span class="keywordtype">void</span> <a class="code" href="classOscl__Queue__Base.html#b4">push</a>(<span class="keyword">const</span> <a class="code" href="group__osclbase.html#a25">OsclAny</a>* x) ;
+00112         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keywordtype">void</span> <a class="code" href="classOscl__Queue__Base.html#b4">push</a>(<span class="keyword">const</span> <a class="code" href="group__osclbase.html#a25">OsclAny</a>* x) ;
 00113 
-00117         OSCL_IMPORT_REF <span class="keywordtype">void</span> <a class="code" href="classOscl__Queue__Base.html#b5">pop</a>() ;
+00117         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keywordtype">void</span> <a class="code" href="classOscl__Queue__Base.html#b5">pop</a>() ;
 00118 
-00122         OSCL_IMPORT_REF <span class="keywordtype">void</span> <a class="code" href="classOscl__Queue__Base.html#b6">clear</a>() ;
+00122         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keywordtype">void</span> <a class="code" href="classOscl__Queue__Base.html#b6">clear</a>() ;
 00123 
 <a name="l00124"></a><a class="code" href="classOscl__Queue__Base.html#n0">00124</a>         uint32 <a class="code" href="classOscl__Queue__Base.html#n0">numelems</a>;  <span class="comment">// number of valid entries in queue</span>
 <a name="l00125"></a><a class="code" href="classOscl__Queue__Base.html#n1">00125</a>         uint32 <a class="code" href="classOscl__Queue__Base.html#n1">bufsize</a>;   <span class="comment">// size of elems</span>
@@ -227,7 +227,7 @@
 00353 <span class="preprocessor"></span>
 00354 
 </pre></div><hr size="1"><img src="pvlogo_small.jpg"><address style="align: right;"><small>OSCL API</small>
-<address style="align: left;"><small>Posting Version: CORE_7.501.1.1 </small>
+<address style="align: left;"><small>Posting Version: CORE_7.508.1.1 </small>
 </small></address>
 </body>
 </html>

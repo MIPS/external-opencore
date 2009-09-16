@@ -20,12 +20,13 @@
 <tr><td colspan=2><br><h2>Data Structures</h2></td></tr>
 <tr><td nowrap align=right valign=top>struct &nbsp;</td><td valign=bottom><a class="el" href="structOsclUuid.html">OsclUuid</a></td></tr>
 <tr><td colspan=2><br><h2>Defines</h2></td></tr>
-<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="oscl__uuid_8h.html#a0">BYTES_IN_UUID_ARRAY</a>&nbsp;&nbsp;&nbsp;8</td></tr>
+<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="oscl__uuid_8h.html#a0">EMPTY_UUID</a>&nbsp;&nbsp;&nbsp;PVUuid(0,0,0,0,0,0,0,0,0,0,0)</td></tr>
+<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="oscl__uuid_8h.html#a1">BYTES_IN_UUID_ARRAY</a>&nbsp;&nbsp;&nbsp;8</td></tr>
 <tr><td colspan=2><br><h2>Typedefs</h2></td></tr>
-<tr><td nowrap align=right valign=top>typedef uint32&nbsp;</td><td valign=bottom><a class="el" href="oscl__uuid_8h.html#a1">OsclUid32</a></td></tr>
+<tr><td nowrap align=right valign=top>typedef uint32&nbsp;</td><td valign=bottom><a class="el" href="oscl__uuid_8h.html#a2">OsclUid32</a></td></tr>
 <tr><td colspan=2><br><h2>Variables</h2></td></tr>
-<tr><td nowrap align=right valign=top>const char&nbsp;</td><td valign=bottom><a class="el" href="oscl__uuid_8h.html#a2">PV_CHAR_CLOSE_BRACKET</a> = ')'</td></tr>
-<tr><td nowrap align=right valign=top>const char&nbsp;</td><td valign=bottom><a class="el" href="oscl__uuid_8h.html#a3">PV_CHAR_COMMA</a> = ','</td></tr>
+<tr><td nowrap align=right valign=top>const char&nbsp;</td><td valign=bottom><a class="el" href="oscl__uuid_8h.html#a3">PV_CHAR_CLOSE_BRACKET</a> = ')'</td></tr>
+<tr><td nowrap align=right valign=top>const char&nbsp;</td><td valign=bottom><a class="el" href="oscl__uuid_8h.html#a4">PV_CHAR_COMMA</a> = ','</td></tr>
 </table>
 <hr><a name="_details"></a><h2>Detailed Description</h2>
 This file defines the OSCL UUID structure used for unique identifiers as well as the short (32-bit) identifiers OsclUid32.
@@ -33,7 +34,7 @@ This file defines the OSCL UUID structure used for unique identifiers as well as
 
 <p>
 <hr><h2>Define Documentation</h2>
-<a name="a0" doxytag="oscl_uuid.h::BYTES_IN_UUID_ARRAY"></a><p>
+<a name="a1" doxytag="oscl_uuid.h::BYTES_IN_UUID_ARRAY"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -55,8 +56,30 @@ This file defines the OSCL UUID structure used for unique identifiers as well as
     </td>
   </tr>
 </table>
+<a name="a0" doxytag="oscl_uuid.h::EMPTY_UUID"></a><p>
+<table width="100%" cellpadding="2" cellspacing="0" border="0">
+  <tr>
+    <td class="md">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> #define EMPTY_UUID&nbsp;&nbsp;&nbsp;PVUuid(0,0,0,0,0,0,0,0,0,0,0)
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+    </td>
+  </tr>
+</table>
 <hr><h2>Typedef Documentation</h2>
-<a name="a1" doxytag="oscl_uuid.h::OsclUid32"></a><p>
+<a name="a2" doxytag="oscl_uuid.h::OsclUid32"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -79,7 +102,7 @@ This file defines the OSCL UUID structure used for unique identifiers as well as
   </tr>
 </table>
 <hr><h2>Variable Documentation</h2>
-<a name="a2" doxytag="oscl_uuid.h::PV_CHAR_CLOSE_BRACKET"></a><p>
+<a name="a3" doxytag="oscl_uuid.h::PV_CHAR_CLOSE_BRACKET"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -101,7 +124,7 @@ This file defines the OSCL UUID structure used for unique identifiers as well as
     </td>
   </tr>
 </table>
-<a name="a3" doxytag="oscl_uuid.h::PV_CHAR_COMMA"></a><p>
+<a name="a4" doxytag="oscl_uuid.h::PV_CHAR_COMMA"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -124,7 +147,7 @@ This file defines the OSCL UUID structure used for unique identifiers as well as
   </tr>
 </table>
 <hr size="1"><img src="pvlogo_small.jpg"><address style="align: right;"><small>OSCL API</small>
-<address style="align: left;"><small>Posting Version: CORE_7.501.1.1 </small>
+<address style="align: left;"><small>Posting Version: CORE_7.508.1.1 </small>
 </small></address>
 </body>
 </html>

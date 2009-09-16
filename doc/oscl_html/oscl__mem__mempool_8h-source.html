@@ -40,27 +40,27 @@
 <a name="l00049"></a><a class="code" href="classOsclMemPoolFixedChunkAllocator.html">00049</a> <span class="keyword">class </span><a class="code" href="classOsclMemPoolFixedChunkAllocator.html">OsclMemPoolFixedChunkAllocator</a> : <span class="keyword">public</span> <a class="code" href="classOscl__DefAlloc.html">Oscl_DefAlloc</a>
 00050 {
 00051     <span class="keyword">public</span>:
-00062         OSCL_IMPORT_REF <a class="code" href="classOsclMemPoolFixedChunkAllocator.html#a0">OsclMemPoolFixedChunkAllocator</a>(<span class="keyword">const</span> uint32 numchunk = 1, <span class="keyword">const</span> uint32 chunksize = 0, <a class="code" href="classOscl__DefAlloc.html">Oscl_DefAlloc</a>* gen_alloc = <a class="code" href="group__osclbase.html#a81">NULL</a>, <span class="keyword">const</span> uint32 chunkalignment = 0);
+00062         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <a class="code" href="classOsclMemPoolFixedChunkAllocator.html#a0">OsclMemPoolFixedChunkAllocator</a>(<span class="keyword">const</span> uint32 numchunk = 1, <span class="keyword">const</span> uint32 chunksize = 0, <a class="code" href="classOscl__DefAlloc.html">Oscl_DefAlloc</a>* gen_alloc = <a class="code" href="group__osclbase.html#a81">NULL</a>, <span class="keyword">const</span> uint32 chunkalignment = 0);
 00063 
-00071         OSCL_IMPORT_REF <span class="keyword">virtual</span> <span class="keywordtype">void</span> <a class="code" href="classOsclMemPoolFixedChunkAllocator.html#a1">enablenullpointerreturn</a>();
+00071         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keyword">virtual</span> <span class="keywordtype">void</span> <a class="code" href="classOsclMemPoolFixedChunkAllocator.html#a1">enablenullpointerreturn</a>();
 00072 
-00075         OSCL_IMPORT_REF <span class="keyword">virtual</span> <a class="code" href="classOsclMemPoolFixedChunkAllocator.html#a2">~OsclMemPoolFixedChunkAllocator</a>();
+00075         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keyword">virtual</span> <a class="code" href="classOsclMemPoolFixedChunkAllocator.html#a2">~OsclMemPoolFixedChunkAllocator</a>();
 00076 
-00085         OSCL_IMPORT_REF <span class="keyword">virtual</span> <a class="code" href="group__osclbase.html#a25">OsclAny</a>* <a class="code" href="classOsclMemPoolFixedChunkAllocator.html#a3">allocate</a>(<span class="keyword">const</span> uint32 n);
+00085         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keyword">virtual</span> <a class="code" href="group__osclbase.html#a25">OsclAny</a>* <a class="code" href="classOsclMemPoolFixedChunkAllocator.html#a3">allocate</a>(<span class="keyword">const</span> uint32 n);
 00086 
-00093         OSCL_IMPORT_REF <span class="keyword">virtual</span> <span class="keywordtype">void</span> <a class="code" href="classOsclMemPoolFixedChunkAllocator.html#a4">deallocate</a>(<a class="code" href="group__osclbase.html#a25">OsclAny</a>* p);
+00093         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keyword">virtual</span> <span class="keywordtype">void</span> <a class="code" href="classOsclMemPoolFixedChunkAllocator.html#a4">deallocate</a>(<a class="code" href="group__osclbase.html#a25">OsclAny</a>* p);
 00094 
-00101         OSCL_IMPORT_REF <span class="keyword">virtual</span> <span class="keywordtype">void</span> <a class="code" href="classOsclMemPoolFixedChunkAllocator.html#a5">notifyfreechunkavailable</a>(<a class="code" href="classOsclMemPoolFixedChunkAllocatorObserver.html">OsclMemPoolFixedChunkAllocatorObserver</a>&amp; obs, <a class="code" href="group__osclbase.html#a25">OsclAny</a>* aContextData = <a class="code" href="group__osclbase.html#a81">NULL</a>);
+00101         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keyword">virtual</span> <span class="keywordtype">void</span> <a class="code" href="classOsclMemPoolFixedChunkAllocator.html#a5">notifyfreechunkavailable</a>(<a class="code" href="classOsclMemPoolFixedChunkAllocatorObserver.html">OsclMemPoolFixedChunkAllocatorObserver</a>&amp; obs, <a class="code" href="group__osclbase.html#a25">OsclAny</a>* aContextData = <a class="code" href="group__osclbase.html#a81">NULL</a>);
 00102 
-00108         OSCL_IMPORT_REF <span class="keyword">virtual</span> <span class="keywordtype">void</span> <a class="code" href="classOsclMemPoolFixedChunkAllocator.html#a6">CancelFreeChunkAvailableCallback</a>();
+00108         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keyword">virtual</span> <span class="keywordtype">void</span> <a class="code" href="classOsclMemPoolFixedChunkAllocator.html#a6">CancelFreeChunkAvailableCallback</a>();
 00109 
-00115         OSCL_IMPORT_REF <span class="keywordtype">void</span> <a class="code" href="classOsclMemPoolFixedChunkAllocator.html#a7">addRef</a>();
+00115         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keywordtype">void</span> <a class="code" href="classOsclMemPoolFixedChunkAllocator.html#a7">addRef</a>();
 00116 
-00123         OSCL_IMPORT_REF <span class="keywordtype">void</span> <a class="code" href="classOsclMemPoolFixedChunkAllocator.html#a8">removeRef</a>();
+00123         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keywordtype">void</span> <a class="code" href="classOsclMemPoolFixedChunkAllocator.html#a8">removeRef</a>();
 00124 
 00125     <span class="keyword">protected</span>:
-00126         OSCL_IMPORT_REF <span class="keyword">virtual</span> <span class="keywordtype">void</span> <a class="code" href="classOsclMemPoolFixedChunkAllocator.html#b0">createmempool</a>();
-00127         OSCL_IMPORT_REF <span class="keyword">virtual</span> <span class="keywordtype">void</span> <a class="code" href="classOsclMemPoolFixedChunkAllocator.html#b1">destroymempool</a>();
+00126         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keyword">virtual</span> <span class="keywordtype">void</span> <a class="code" href="classOsclMemPoolFixedChunkAllocator.html#b0">createmempool</a>();
+00127         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keyword">virtual</span> <span class="keywordtype">void</span> <a class="code" href="classOsclMemPoolFixedChunkAllocator.html#b1">destroymempool</a>();
 00128 
 <a name="l00129"></a><a class="code" href="classOsclMemPoolFixedChunkAllocator.html#n0">00129</a>         uint32 <a class="code" href="classOsclMemPoolFixedChunkAllocator.html#n0">iNumChunk</a>;
 <a name="l00130"></a><a class="code" href="classOsclMemPoolFixedChunkAllocator.html#n1">00130</a>         uint32 <a class="code" href="classOsclMemPoolFixedChunkAllocator.html#n1">iChunkSize</a>;
@@ -98,36 +98,36 @@
 <a name="l00171"></a><a class="code" href="classOsclMemPoolResizableAllocator.html">00171</a> <span class="keyword">class </span><a class="code" href="classOsclMemPoolResizableAllocator.html">OsclMemPoolResizableAllocator</a> : <span class="keyword">public</span> <a class="code" href="classOscl__DefAlloc.html">Oscl_DefAlloc</a>
 00172 {
 00173     <span class="keyword">public</span>:
-00186         OSCL_IMPORT_REF <a class="code" href="classOsclMemPoolResizableAllocator.html#a0">OsclMemPoolResizableAllocator</a>(uint32 aMemPoolBufferSize, uint32 aMemPoolBufferNumLimit = 0, uint32 aExpectedNumBlocksPerBuffer = 0, <a class="code" href="classOscl__DefAlloc.html">Oscl_DefAlloc</a>* gen_alloc = <a class="code" href="group__osclbase.html#a81">NULL</a>);
+00186         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <a class="code" href="classOsclMemPoolResizableAllocator.html#a0">OsclMemPoolResizableAllocator</a>(uint32 aMemPoolBufferSize, uint32 aMemPoolBufferNumLimit = 0, uint32 aExpectedNumBlocksPerBuffer = 0, <a class="code" href="classOscl__DefAlloc.html">Oscl_DefAlloc</a>* gen_alloc = <a class="code" href="group__osclbase.html#a81">NULL</a>);
 00187 
-00195         OSCL_IMPORT_REF <span class="keyword">virtual</span> <span class="keywordtype">void</span> <a class="code" href="classOsclMemPoolResizableAllocator.html#a1">enablenullpointerreturn</a>();
+00195         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keyword">virtual</span> <span class="keywordtype">void</span> <a class="code" href="classOsclMemPoolResizableAllocator.html#a1">enablenullpointerreturn</a>();
 00196 
-00204         OSCL_IMPORT_REF <span class="keyword">virtual</span> <a class="code" href="group__osclbase.html#a25">OsclAny</a>* <a class="code" href="classOsclMemPoolResizableAllocator.html#a2">allocate</a>(<span class="keyword">const</span> uint32 aNumBytes);
+00204         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keyword">virtual</span> <a class="code" href="group__osclbase.html#a25">OsclAny</a>* <a class="code" href="classOsclMemPoolResizableAllocator.html#a2">allocate</a>(<span class="keyword">const</span> uint32 aNumBytes);
 00205 
-00212         OSCL_IMPORT_REF <span class="keyword">virtual</span> <span class="keywordtype">void</span> <a class="code" href="classOsclMemPoolResizableAllocator.html#a3">deallocate</a>(<a class="code" href="group__osclbase.html#a25">OsclAny</a>* aPtr);
+00212         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keyword">virtual</span> <span class="keywordtype">void</span> <a class="code" href="classOsclMemPoolResizableAllocator.html#a3">deallocate</a>(<a class="code" href="group__osclbase.html#a25">OsclAny</a>* aPtr);
 00213 
-00226         OSCL_IMPORT_REF <span class="keyword">virtual</span> <span class="keywordtype">bool</span> <a class="code" href="classOsclMemPoolResizableAllocator.html#a4">trim</a>(<a class="code" href="group__osclbase.html#a25">OsclAny</a>* aPtr, uint32 aBytesToFree);
+00226         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keyword">virtual</span> <span class="keywordtype">bool</span> <a class="code" href="classOsclMemPoolResizableAllocator.html#a4">trim</a>(<a class="code" href="group__osclbase.html#a25">OsclAny</a>* aPtr, uint32 aBytesToFree);
 00227 
-00230         OSCL_IMPORT_REF uint32 <a class="code" href="classOsclMemPoolResizableAllocator.html#a5">getBufferSize</a>() <span class="keyword">const</span>;
+00230         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> uint32 <a class="code" href="classOsclMemPoolResizableAllocator.html#a5">getBufferSize</a>() <span class="keyword">const</span>;
 00231 
-00235         OSCL_IMPORT_REF <span class="keyword">virtual</span> uint32 <a class="code" href="classOsclMemPoolResizableAllocator.html#a6">getAllocatedSize</a>() <span class="keyword">const</span>;
+00235         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keyword">virtual</span> uint32 <a class="code" href="classOsclMemPoolResizableAllocator.html#a6">getAllocatedSize</a>() <span class="keyword">const</span>;
 00236 
-00239         OSCL_IMPORT_REF <span class="keyword">virtual</span> uint32 <a class="code" href="classOsclMemPoolResizableAllocator.html#a7">getAvailableSize</a>() <span class="keyword">const</span>;
+00239         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keyword">virtual</span> uint32 <a class="code" href="classOsclMemPoolResizableAllocator.html#a7">getAvailableSize</a>() <span class="keyword">const</span>;
 00240 
-00243         OSCL_IMPORT_REF <span class="keyword">virtual</span> uint32 <a class="code" href="classOsclMemPoolResizableAllocator.html#a8">getLargestContiguousFreeBlockSize</a>() <span class="keyword">const</span>;
+00243         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keyword">virtual</span> uint32 <a class="code" href="classOsclMemPoolResizableAllocator.html#a8">getLargestContiguousFreeBlockSize</a>() <span class="keyword">const</span>;
 00244 
-00245         OSCL_IMPORT_REF <span class="keyword">virtual</span> <span class="keywordtype">bool</span> <a class="code" href="classOsclMemPoolResizableAllocator.html#a9">setMaxSzForNewMemPoolBuffer</a>(uint32 aMaxNewMemPoolBufferSz);
+00245         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keyword">virtual</span> <span class="keywordtype">bool</span> <a class="code" href="classOsclMemPoolResizableAllocator.html#a9">setMaxSzForNewMemPoolBuffer</a>(uint32 aMaxNewMemPoolBufferSz);
 00246 
-00258         OSCL_IMPORT_REF <span class="keyword">virtual</span> <span class="keywordtype">void</span> <a class="code" href="classOsclMemPoolResizableAllocator.html#a10">notifyfreeblockavailable</a>(<a class="code" href="classOsclMemPoolResizableAllocatorObserver.html">OsclMemPoolResizableAllocatorObserver</a>&amp; aObserver, uint32 aRequestedSize = 0, <a class="code" href="group__osclbase.html#a25">OsclAny</a>* aContextData = <a class="code" href="group__osclbase.html#a81">NULL</a>);
+00258         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keyword">virtual</span> <span class="keywordtype">void</span> <a class="code" href="classOsclMemPoolResizableAllocator.html#a10">notifyfreeblockavailable</a>(<a class="code" href="classOsclMemPoolResizableAllocatorObserver.html">OsclMemPoolResizableAllocatorObserver</a>&amp; aObserver, uint32 aRequestedSize = 0, <a class="code" href="group__osclbase.html#a25">OsclAny</a>* aContextData = <a class="code" href="group__osclbase.html#a81">NULL</a>);
 00259 
-00265         OSCL_IMPORT_REF <span class="keyword">virtual</span> <span class="keywordtype">void</span> <a class="code" href="classOsclMemPoolResizableAllocator.html#a11">CancelFreeChunkAvailableCallback</a>();
+00265         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keyword">virtual</span> <span class="keywordtype">void</span> <a class="code" href="classOsclMemPoolResizableAllocator.html#a11">CancelFreeChunkAvailableCallback</a>();
 00266 
-00267         OSCL_IMPORT_REF <span class="keyword">virtual</span> <span class="keywordtype">void</span> <a class="code" href="classOsclMemPoolResizableAllocator.html#a12">notifyfreememoryavailable</a>(<a class="code" href="classOsclMemPoolResizableAllocatorMemoryObserver.html">OsclMemPoolResizableAllocatorMemoryObserver</a>&amp; aObserver, uint32 aRequestedSize = 0, <a class="code" href="group__osclbase.html#a25">OsclAny</a>* aContextData = <a class="code" href="group__osclbase.html#a81">NULL</a>);
-00268         OSCL_IMPORT_REF <span class="keywordtype">void</span> <a class="code" href="classOsclMemPoolResizableAllocator.html#a13">CancelFreeMemoryAvailableCallback</a>();
+00267         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keyword">virtual</span> <span class="keywordtype">void</span> <a class="code" href="classOsclMemPoolResizableAllocator.html#a12">notifyfreememoryavailable</a>(<a class="code" href="classOsclMemPoolResizableAllocatorMemoryObserver.html">OsclMemPoolResizableAllocatorMemoryObserver</a>&amp; aObserver, uint32 aRequestedSize = 0, <a class="code" href="group__osclbase.html#a25">OsclAny</a>* aContextData = <a class="code" href="group__osclbase.html#a81">NULL</a>);
+00268         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keywordtype">void</span> <a class="code" href="classOsclMemPoolResizableAllocator.html#a13">CancelFreeMemoryAvailableCallback</a>();
 00269 
-00275         OSCL_IMPORT_REF <span class="keywordtype">void</span> <a class="code" href="classOsclMemPoolResizableAllocator.html#a14">addRef</a>();
+00275         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keywordtype">void</span> <a class="code" href="classOsclMemPoolResizableAllocator.html#a14">addRef</a>();
 00276 
-00283         OSCL_IMPORT_REF <span class="keywordtype">void</span> <a class="code" href="classOsclMemPoolResizableAllocator.html#a15">removeRef</a>();
+00283         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keywordtype">void</span> <a class="code" href="classOsclMemPoolResizableAllocator.html#a15">removeRef</a>();
 00284 
 00285 
 00286         <span class="keyword">struct </span><a class="code" href="structOsclMemPoolResizableAllocator_1_1MemPoolBlockInfo.html">MemPoolBlockInfo</a>;
@@ -157,7 +157,7 @@
 00310 
 00311     <span class="keyword">protected</span>:
 00312 
-00315         OSCL_IMPORT_REF <span class="keyword">virtual</span> <a class="code" href="classOsclMemPoolResizableAllocator.html#b0">~OsclMemPoolResizableAllocator</a>();
+00315         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keyword">virtual</span> <a class="code" href="classOsclMemPoolResizableAllocator.html#b0">~OsclMemPoolResizableAllocator</a>();
 00316 
 00317         MemPoolBufferInfo* <a class="code" href="classOsclMemPoolResizableAllocator.html#b1">addnewmempoolbuffer</a>(uint32 aBufferSize);
 00318         <span class="keywordtype">void</span> <a class="code" href="classOsclMemPoolResizableAllocator.html#b2">destroyallmempoolbuffers</a>();
@@ -199,7 +199,7 @@
 00354 <span class="preprocessor">#endif</span>
 00355 <span class="preprocessor"></span>
 </pre></div><hr size="1"><img src="pvlogo_small.jpg"><address style="align: right;"><small>OSCL API</small>
-<address style="align: left;"><small>Posting Version: CORE_7.501.1.1 </small>
+<address style="align: left;"><small>Posting Version: CORE_7.508.1.1 </small>
 </small></address>
 </body>
 </html>

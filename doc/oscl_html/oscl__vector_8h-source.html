@@ -54,38 +54,38 @@
 00071             <span class="keywordflow">return</span> <a class="code" href="classOscl__Vector__Base.html#n0">numelems</a> == 0;
 00072         }
 00073 
-00082         OSCL_IMPORT_REF <span class="keywordtype">void</span> <a class="code" href="classOscl__Vector__Base.html#a3">reserve</a>(uint32 n) ;
+00082         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keywordtype">void</span> <a class="code" href="classOscl__Vector__Base.html#a3">reserve</a>(uint32 n) ;
 00083 
 00084     <span class="keyword">protected</span>:
 00085 
 00086         <span class="comment">//for use in default constructor.  vtable isn't available in c'tor so this is a subroutine.</span>
-00087         OSCL_IMPORT_REF <span class="keywordtype">void</span> <a class="code" href="classOscl__Vector__Base.html#b0">construct</a>(<a class="code" href="classOscl__Opaque__Type__Alloc.html">Oscl_Opaque_Type_Alloc</a>* aType);
+00087         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keywordtype">void</span> <a class="code" href="classOscl__Vector__Base.html#b0">construct</a>(<a class="code" href="classOscl__Opaque__Type__Alloc.html">Oscl_Opaque_Type_Alloc</a>* aType);
 00088 
 00089         <span class="comment">//for use in constructor with pre-allocation for "n" elements.</span>
-00090         OSCL_IMPORT_REF <span class="keywordtype">void</span> <a class="code" href="classOscl__Vector__Base.html#b0">construct</a>(<a class="code" href="classOscl__Opaque__Type__Alloc.html">Oscl_Opaque_Type_Alloc</a>* aType, uint32 n) ;
+00090         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keywordtype">void</span> <a class="code" href="classOscl__Vector__Base.html#b0">construct</a>(<a class="code" href="classOscl__Opaque__Type__Alloc.html">Oscl_Opaque_Type_Alloc</a>* aType, uint32 n) ;
 00091 
 00092         <span class="comment">//for use in copy constructor.</span>
-00093         OSCL_IMPORT_REF <span class="keywordtype">void</span> <a class="code" href="classOscl__Vector__Base.html#b0">construct</a>(<a class="code" href="classOscl__Opaque__Type__Alloc.html">Oscl_Opaque_Type_Alloc</a>* aType, <span class="keyword">const</span> <a class="code" href="classOscl__Vector__Base.html">Oscl_Vector_Base</a>&amp; x);
+00093         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keywordtype">void</span> <a class="code" href="classOscl__Vector__Base.html#b0">construct</a>(<a class="code" href="classOscl__Opaque__Type__Alloc.html">Oscl_Opaque_Type_Alloc</a>* aType, <span class="keyword">const</span> <a class="code" href="classOscl__Vector__Base.html">Oscl_Vector_Base</a>&amp; x);
 00094 
 <a name="l00098"></a><a class="code" href="classOscl__Vector__Base.html#b3">00098</a>         <span class="keyword">virtual</span> <a class="code" href="classOscl__Vector__Base.html#b3">~Oscl_Vector_Base</a>()
 00099         {}
 00100 
-00107         OSCL_IMPORT_REF <span class="keywordtype">void</span> <a class="code" href="classOscl__Vector__Base.html#b4">push_back</a>(<span class="keyword">const</span> <a class="code" href="group__osclbase.html#a25">OsclAny</a>* x) ;
+00107         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keywordtype">void</span> <a class="code" href="classOscl__Vector__Base.html#b4">push_back</a>(<span class="keyword">const</span> <a class="code" href="group__osclbase.html#a25">OsclAny</a>* x) ;
 00108 
-00112         OSCL_IMPORT_REF <span class="keywordtype">void</span> <a class="code" href="classOscl__Vector__Base.html#b5">pop_back</a>() ;
+00112         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keywordtype">void</span> <a class="code" href="classOscl__Vector__Base.html#b5">pop_back</a>() ;
 00113 
-00120         OSCL_IMPORT_REF <span class="keywordtype">void</span> <a class="code" href="classOscl__Vector__Base.html#b6">push_front</a>(<span class="keyword">const</span> <a class="code" href="group__osclbase.html#a25">OsclAny</a>* x) ;
+00120         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keywordtype">void</span> <a class="code" href="classOscl__Vector__Base.html#b6">push_front</a>(<span class="keyword">const</span> <a class="code" href="group__osclbase.html#a25">OsclAny</a>* x) ;
 00121 
-00127         OSCL_IMPORT_REF <a class="code" href="group__osclbase.html#a25">OsclAny</a>* <a class="code" href="classOscl__Vector__Base.html#b7">insert</a>(<a class="code" href="group__osclbase.html#a25">OsclAny</a>* pos, <span class="keyword">const</span> <a class="code" href="group__osclbase.html#a25">OsclAny</a>* x);
+00127         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <a class="code" href="group__osclbase.html#a25">OsclAny</a>* <a class="code" href="classOscl__Vector__Base.html#b7">insert</a>(<a class="code" href="group__osclbase.html#a25">OsclAny</a>* pos, <span class="keyword">const</span> <a class="code" href="group__osclbase.html#a25">OsclAny</a>* x);
 00128 
-00135         OSCL_IMPORT_REF <a class="code" href="group__osclbase.html#a25">OsclAny</a>* <a class="code" href="classOscl__Vector__Base.html#b8">erase</a>(<a class="code" href="group__osclbase.html#a25">OsclAny</a>* pos) ;
+00135         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <a class="code" href="group__osclbase.html#a25">OsclAny</a>* <a class="code" href="classOscl__Vector__Base.html#b8">erase</a>(<a class="code" href="group__osclbase.html#a25">OsclAny</a>* pos) ;
 00136 
-00144         OSCL_IMPORT_REF <a class="code" href="group__osclbase.html#a25">OsclAny</a>* <a class="code" href="classOscl__Vector__Base.html#b8">erase</a>(<a class="code" href="group__osclbase.html#a25">OsclAny</a>* first, <a class="code" href="group__osclbase.html#a25">OsclAny</a>* last) ;
+00144         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <a class="code" href="group__osclbase.html#a25">OsclAny</a>* <a class="code" href="classOscl__Vector__Base.html#b8">erase</a>(<a class="code" href="group__osclbase.html#a25">OsclAny</a>* first, <a class="code" href="group__osclbase.html#a25">OsclAny</a>* last) ;
 00145 
 00146         <span class="comment">//copy vector x into this vector</span>
-00147         OSCL_IMPORT_REF <span class="keywordtype">void</span> <a class="code" href="classOscl__Vector__Base.html#b10">assign_vector</a>(<span class="keyword">const</span> <a class="code" href="classOscl__Vector__Base.html">Oscl_Vector_Base</a>&amp; x);
+00147         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keywordtype">void</span> <a class="code" href="classOscl__Vector__Base.html#b10">assign_vector</a>(<span class="keyword">const</span> <a class="code" href="classOscl__Vector__Base.html">Oscl_Vector_Base</a>&amp; x);
 00148 
-00149         OSCL_IMPORT_REF <span class="keywordtype">void</span> <a class="code" href="classOscl__Vector__Base.html#b11">destroy</a>();
+00149         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keywordtype">void</span> <a class="code" href="classOscl__Vector__Base.html#b11">destroy</a>();
 00150 
 <a name="l00151"></a><a class="code" href="classOscl__Vector__Base.html#n0">00151</a>         uint32 <a class="code" href="classOscl__Vector__Base.html#n0">numelems</a>; <span class="comment">//number of T items in buffer.</span>
 <a name="l00152"></a><a class="code" href="classOscl__Vector__Base.html#n1">00152</a>         uint32 <a class="code" href="classOscl__Vector__Base.html#n1">bufsize</a>; <span class="comment">//available bufsize as number of T-sized items.</span>
@@ -292,7 +292,7 @@
 00459 
 00460 
 </pre></div><hr size="1"><img src="pvlogo_small.jpg"><address style="align: right;"><small>OSCL API</small>
-<address style="align: left;"><small>Posting Version: CORE_7.501.1.1 </small>
+<address style="align: left;"><small>Posting Version: CORE_7.508.1.1 </small>
 </small></address>
 </body>
 </html>

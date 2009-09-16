@@ -44,11 +44,11 @@
 00051 {
 00052     <span class="keyword">public</span>:
 00053 
-00064         OSCL_IMPORT_REF <span class="keyword">const</span> <span class="keywordtype">char</span> *<a class="code" href="classOscl__FileFind.html#a0">FindFirst</a>(<span class="keyword">const</span> <span class="keywordtype">char</span> *directory, <span class="keyword">const</span> <span class="keywordtype">char</span> *pattern, <span class="keywordtype">char</span> *buf, uint32 buflen);
-00075         OSCL_IMPORT_REF <span class="keyword">const</span> <a class="code" href="group__osclbase.html#a32">oscl_wchar</a> *<a class="code" href="classOscl__FileFind.html#a0">FindFirst</a>(<span class="keyword">const</span> <a class="code" href="group__osclbase.html#a32">oscl_wchar</a> *directory, <span class="keyword">const</span> <a class="code" href="group__osclbase.html#a32">oscl_wchar</a> *pattern, <a class="code" href="group__osclbase.html#a32">oscl_wchar</a> *buf, uint32 buflen);
-00084         OSCL_IMPORT_REF <span class="keywordtype">char</span> *<a class="code" href="classOscl__FileFind.html#a2">FindNext</a>(<span class="keywordtype">char</span> *buf, uint32 buflen);
-00093         OSCL_IMPORT_REF <a class="code" href="group__osclbase.html#a32">oscl_wchar</a> *<a class="code" href="classOscl__FileFind.html#a2">FindNext</a>(<a class="code" href="group__osclbase.html#a32">oscl_wchar</a> *buf, uint32 buflen);
-00098         OSCL_IMPORT_REF <span class="keywordtype">void</span> <a class="code" href="classOscl__FileFind.html#a4">Close</a>();
+00064         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keyword">const</span> <span class="keywordtype">char</span> *<a class="code" href="classOscl__FileFind.html#a0">FindFirst</a>(<span class="keyword">const</span> <span class="keywordtype">char</span> *directory, <span class="keyword">const</span> <span class="keywordtype">char</span> *pattern, <span class="keywordtype">char</span> *buf, uint32 buflen);
+00075         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keyword">const</span> <a class="code" href="group__osclbase.html#a32">oscl_wchar</a> *<a class="code" href="classOscl__FileFind.html#a0">FindFirst</a>(<span class="keyword">const</span> <a class="code" href="group__osclbase.html#a32">oscl_wchar</a> *directory, <span class="keyword">const</span> <a class="code" href="group__osclbase.html#a32">oscl_wchar</a> *pattern, <a class="code" href="group__osclbase.html#a32">oscl_wchar</a> *buf, uint32 buflen);
+00084         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keywordtype">char</span> *<a class="code" href="classOscl__FileFind.html#a2">FindNext</a>(<span class="keywordtype">char</span> *buf, uint32 buflen);
+00093         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <a class="code" href="group__osclbase.html#a32">oscl_wchar</a> *<a class="code" href="classOscl__FileFind.html#a2">FindNext</a>(<a class="code" href="group__osclbase.html#a32">oscl_wchar</a> *buf, uint32 buflen);
+00098         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keywordtype">void</span> <a class="code" href="classOscl__FileFind.html#a4">Close</a>();
 00099 
 <a name="l00100"></a><a class="code" href="classOscl__FileFind.html#s13">00100</a>         <span class="keyword">typedef</span> <span class="keyword">enum</span>
 00101         {
@@ -71,13 +71,13 @@
 00118             <a class="code" href="classOscl__FileFind.html#s14s12">INVALID_TYPE</a>   <span class="comment">/* no element available */</span>
 00119         } <a class="code" href="classOscl__FileFind.html#s14">element_type</a>;
 00120 
-00125         OSCL_IMPORT_REF <a class="code" href="classOscl__FileFind.html#s14">element_type</a> <a class="code" href="classOscl__FileFind.html#a5">GetElementType</a>();
+00125         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <a class="code" href="classOscl__FileFind.html#s14">element_type</a> <a class="code" href="classOscl__FileFind.html#a5">GetElementType</a>();
 00126 
 00127 
-00132         OSCL_IMPORT_REF <a class="code" href="classOscl__FileFind.html#s13">error_type</a> <a class="code" href="classOscl__FileFind.html#a6">GetLastError</a>();
+00132         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <a class="code" href="classOscl__FileFind.html#s13">error_type</a> <a class="code" href="classOscl__FileFind.html#a6">GetLastError</a>();
 00133 
-00138         OSCL_IMPORT_REF <a class="code" href="classOscl__FileFind.html#a7">Oscl_FileFind</a>();
-00144         OSCL_IMPORT_REF <a class="code" href="classOscl__FileFind.html#a8">~Oscl_FileFind</a>();
+00138         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <a class="code" href="classOscl__FileFind.html#a7">Oscl_FileFind</a>();
+00144         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <a class="code" href="classOscl__FileFind.html#a8">~Oscl_FileFind</a>();
 00145 
 00146     <span class="keyword">private</span>:
 00147 
@@ -103,7 +103,7 @@
 00167 <span class="preprocessor">#endif // OSCL_FILE_FIND_H_INCLUDED</span>
 00168 <span class="preprocessor"></span>
 </pre></div><hr size="1"><img src="pvlogo_small.jpg"><address style="align: right;"><small>OSCL API</small>
-<address style="align: left;"><small>Posting Version: CORE_7.501.1.1 </small>
+<address style="align: left;"><small>Posting Version: CORE_7.508.1.1 </small>
 </small></address>
 </body>
 </html>

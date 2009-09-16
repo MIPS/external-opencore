@@ -430,43 +430,43 @@
 00435 
 00439         <a class="code" href="classMM__Audit__Imp.html#a1">~MM_Audit_Imp</a>();
 00440 
-00447         OSCL_IMPORT_REF <span class="keywordtype">void</span> *<a class="code" href="classMM__Audit__Imp.html#a2">MM_allocate</a>(<span class="keyword">const</span> <a class="code" href="classOsclMemStatsNode.html">OsclMemStatsNode</a>*  statsNode,
+00447         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keywordtype">void</span> *<a class="code" href="classMM__Audit__Imp.html#a2">MM_allocate</a>(<span class="keyword">const</span> <a class="code" href="classOsclMemStatsNode.html">OsclMemStatsNode</a>*  statsNode,
 00448                                           uint32 sizeIn,
 00449                                           <span class="keyword">const</span> <span class="keywordtype">char</span> *pFileName,
 00450                                           uint32 lineNumber,
 00451                                           <span class="keywordtype">bool</span> allocNodeTracking = <span class="keyword">false</span>);
 00452 
-00456         OSCL_IMPORT_REF <span class="keywordtype">bool</span> <a class="code" href="classMM__Audit__Imp.html#a3">MM_deallocate</a>(<span class="keywordtype">void</span> *pMemBlockIn);
+00456         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keywordtype">bool</span> <a class="code" href="classMM__Audit__Imp.html#a3">MM_deallocate</a>(<span class="keywordtype">void</span> *pMemBlockIn);
 00457 
-00462         OSCL_IMPORT_REF <a class="code" href="structMM__Stats__t.html">MM_Stats_t</a> * <a class="code" href="classMM__Audit__Imp.html#a4">MM_GetStats</a>(<span class="keyword">const</span> <span class="keywordtype">char</span> * <span class="keyword">const</span>  tagIn);
+00462         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <a class="code" href="structMM__Stats__t.html">MM_Stats_t</a> * <a class="code" href="classMM__Audit__Imp.html#a4">MM_GetStats</a>(<span class="keyword">const</span> <span class="keywordtype">char</span> * <span class="keyword">const</span>  tagIn);
 00463 
-00468         OSCL_IMPORT_REF uint32 <a class="code" href="classMM__Audit__Imp.html#a5">MM_GetStatsInDepth</a>(<span class="keyword">const</span> <span class="keywordtype">char</span> *  tagIn, <a class="code" href="structMM__Stats__CB.html">MM_Stats_CB</a> *array_ptr, uint32 max_nodes);
+00468         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> uint32 <a class="code" href="classMM__Audit__Imp.html#a5">MM_GetStatsInDepth</a>(<span class="keyword">const</span> <span class="keywordtype">char</span> *  tagIn, <a class="code" href="structMM__Stats__CB.html">MM_Stats_CB</a> *array_ptr, uint32 max_nodes);
 00469 
-00475         OSCL_IMPORT_REF uint32 <a class="code" href="classMM__Audit__Imp.html#a6">MM_GetTreeNodes</a>(<span class="keyword">const</span> <span class="keywordtype">char</span> *  tagIn);
+00475         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> uint32 <a class="code" href="classMM__Audit__Imp.html#a6">MM_GetTreeNodes</a>(<span class="keyword">const</span> <span class="keywordtype">char</span> *  tagIn);
 00476 
-<a name="l00482"></a><a class="code" href="classMM__Audit__Imp.html#a7">00482</a>         OSCL_IMPORT_REF <span class="keywordtype">bool</span> <a class="code" href="classMM__Audit__Imp.html#a7">MM_AddTag</a>(<span class="keyword">const</span> <span class="keywordtype">char</span> * tagIn)
+<a name="l00482"></a><a class="code" href="classMM__Audit__Imp.html#a7">00482</a>         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keywordtype">bool</span> <a class="code" href="classMM__Audit__Imp.html#a7">MM_AddTag</a>(<span class="keyword">const</span> <span class="keywordtype">char</span> * tagIn)
 00483         {
 00484             <span class="keywordflow">return</span> (<a class="code" href="classMM__Audit__Imp.html#a8">MM_GetTagNode</a>(tagIn) != <a class="code" href="group__osclbase.html#a81">NULL</a>);
 00485         };
 00486 
-00493         OSCL_IMPORT_REF <span class="keyword">const</span> <a class="code" href="classOsclMemStatsNode.html">OsclMemStatsNode</a>* <a class="code" href="classMM__Audit__Imp.html#a8">MM_GetTagNode</a>(<span class="keyword">const</span> <span class="keywordtype">char</span> * tagIn);
+00493         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keyword">const</span> <a class="code" href="classOsclMemStatsNode.html">OsclMemStatsNode</a>* <a class="code" href="classMM__Audit__Imp.html#a8">MM_GetTagNode</a>(<span class="keyword">const</span> <span class="keywordtype">char</span> * tagIn);
 00494 
 00495 
-00502         OSCL_IMPORT_REF <span class="keyword">const</span> <a class="code" href="classOsclMemStatsNode.html">OsclMemStatsNode</a>* <a class="code" href="classMM__Audit__Imp.html#a9">MM_GetExistingTag</a>(<span class="keyword">const</span> <span class="keywordtype">char</span> * tagIn);
+00502         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keyword">const</span> <a class="code" href="classOsclMemStatsNode.html">OsclMemStatsNode</a>* <a class="code" href="classMM__Audit__Imp.html#a9">MM_GetExistingTag</a>(<span class="keyword">const</span> <span class="keywordtype">char</span> * tagIn);
 00503 
 00504 
-<a name="l00505"></a><a class="code" href="classMM__Audit__Imp.html#a10">00505</a>         OSCL_IMPORT_REF <span class="keyword">const</span> <a class="code" href="classOsclMemStatsNode.html">OsclMemStatsNode</a>* <a class="code" href="classMM__Audit__Imp.html#a10">MM_GetRootNode</a>()
+<a name="l00505"></a><a class="code" href="classMM__Audit__Imp.html#a10">00505</a>         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keyword">const</span> <a class="code" href="classOsclMemStatsNode.html">OsclMemStatsNode</a>* <a class="code" href="classMM__Audit__Imp.html#a10">MM_GetRootNode</a>()
 00506         {
 00507             <span class="keywordflow">return</span> mpStatsNode;
 00508         };
 00509 
-00514         OSCL_IMPORT_REF <a class="code" href="structMM__AllocQueryInfo.html">MM_AllocQueryInfo</a>* <a class="code" href="classMM__Audit__Imp.html#a11">MM_CreateAllocNodeInfo</a>(uint32 max_array_size);
-00515         OSCL_IMPORT_REF <span class="keywordtype">void</span> <a class="code" href="classMM__Audit__Imp.html#a12">MM_ReleaseAllocNodeInfo</a>(<a class="code" href="structMM__AllocQueryInfo.html">MM_AllocQueryInfo</a>* info);
+00514         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <a class="code" href="structMM__AllocQueryInfo.html">MM_AllocQueryInfo</a>* <a class="code" href="classMM__Audit__Imp.html#a11">MM_CreateAllocNodeInfo</a>(uint32 max_array_size);
+00515         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keywordtype">void</span> <a class="code" href="classMM__Audit__Imp.html#a12">MM_ReleaseAllocNodeInfo</a>(<a class="code" href="structMM__AllocQueryInfo.html">MM_AllocQueryInfo</a>* info);
 00516 
-00526         OSCL_IMPORT_REF uint32 <a class="code" href="classMM__Audit__Imp.html#a13">MM_GetAllocNodeInfo</a>(<a class="code" href="structMM__AllocQueryInfo.html">MM_AllocQueryInfo</a>* output_array,
+00526         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> uint32 <a class="code" href="classMM__Audit__Imp.html#a13">MM_GetAllocNodeInfo</a>(<a class="code" href="structMM__AllocQueryInfo.html">MM_AllocQueryInfo</a>* output_array,
 00527                 uint32 max_array_size, uint32 offset);
 00528 
-00534         OSCL_IMPORT_REF <span class="keywordtype">bool</span> <a class="code" href="classMM__Audit__Imp.html#a14">MM_Validate</a>(<span class="keyword">const</span> <span class="keywordtype">void</span> *ptrIn);
+00534         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keywordtype">bool</span> <a class="code" href="classMM__Audit__Imp.html#a14">MM_Validate</a>(<span class="keyword">const</span> <span class="keywordtype">void</span> *ptrIn);
 00535 
 <a name="l00540"></a><a class="code" href="classMM__Audit__Imp.html#a15">00540</a>         uint32 <a class="code" href="classMM__Audit__Imp.html#a15">MM_GetAllocNo</a>(<span class="keywordtype">void</span>)
 00541         {
@@ -499,17 +499,17 @@
 00587             <span class="keywordflow">return</span> postfill_pattern;
 00588         }
 00589 
-00593         OSCL_IMPORT_REF <span class="keywordtype">void</span> <a class="code" href="classMM__Audit__Imp.html#a21">MM_SetMode</a>(uint32 inMode);
+00593         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keywordtype">void</span> <a class="code" href="classMM__Audit__Imp.html#a21">MM_SetMode</a>(uint32 inMode);
 00594 
-00598         OSCL_IMPORT_REF <span class="keywordtype">void</span> <a class="code" href="classMM__Audit__Imp.html#a22">MM_SetPrefillPattern</a>(uint8 pattern);
+00598         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keywordtype">void</span> <a class="code" href="classMM__Audit__Imp.html#a22">MM_SetPrefillPattern</a>(uint8 pattern);
 00599 
-00603         OSCL_IMPORT_REF <span class="keywordtype">void</span> <a class="code" href="classMM__Audit__Imp.html#a23">MM_SetPostfillPattern</a>(uint8 pattern);
+00603         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keywordtype">void</span> <a class="code" href="classMM__Audit__Imp.html#a23">MM_SetPostfillPattern</a>(uint8 pattern);
 00604 
-00609         OSCL_IMPORT_REF <span class="keywordtype">void</span> <a class="code" href="classMM__Audit__Imp.html#a24">MM_SetTagLevel</a>(uint32 level);
+00609         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keywordtype">void</span> <a class="code" href="classMM__Audit__Imp.html#a24">MM_SetTagLevel</a>(uint32 level);
 00610 
-00617         OSCL_IMPORT_REF <span class="keywordtype">bool</span> <a class="code" href="classMM__Audit__Imp.html#a25">MM_SetFailurePoint</a>(<span class="keyword">const</span> <span class="keywordtype">char</span> * tagIn, uint32 alloc_number);
+00617         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keywordtype">bool</span> <a class="code" href="classMM__Audit__Imp.html#a25">MM_SetFailurePoint</a>(<span class="keyword">const</span> <span class="keywordtype">char</span> * tagIn, uint32 alloc_number);
 00618 
-00623         OSCL_IMPORT_REF <span class="keywordtype">void</span> <a class="code" href="classMM__Audit__Imp.html#a26">MM_UnsetFailurePoint</a>(<span class="keyword">const</span> <span class="keywordtype">char</span> * tagIn);
+00623         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keywordtype">void</span> <a class="code" href="classMM__Audit__Imp.html#a26">MM_UnsetFailurePoint</a>(<span class="keyword">const</span> <span class="keywordtype">char</span> * tagIn);
 00624 
 00625 
 00626         <span class="comment">/*</span>
@@ -944,7 +944,7 @@
 01267 <span class="preprocessor">#endif //OSCL_MEM_AUDIT_H_INCLUDED</span>
 01268 <span class="preprocessor"></span>
 </pre></div><hr size="1"><img src="pvlogo_small.jpg"><address style="align: right;"><small>OSCL API</small>
-<address style="align: left;"><small>Posting Version: CORE_7.501.1.1 </small>
+<address style="align: left;"><small>Posting Version: CORE_7.508.1.1 </small>
 </small></address>
 </body>
 </html>

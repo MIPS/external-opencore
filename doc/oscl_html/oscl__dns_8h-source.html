@@ -49,7 +49,7 @@
 <a name="l00055"></a><a class="code" href="classOsclDNSObserver.html">00055</a> <span class="keyword">class </span><a class="code" href="classOsclDNSObserver.html">OsclDNSObserver</a>
 00056 {
 00057     <span class="keyword">public</span>:
-00069         OSCL_IMPORT_REF <span class="keyword">virtual</span> <span class="keywordtype">void</span> <a class="code" href="classOsclDNSObserver.html#a0">HandleDNSEvent</a>(int32 aId, <a class="code" href="group__osclio.html#a24">TPVDNSFxn</a> aFxn, <a class="code" href="group__osclio.html#a25">TPVDNSEvent</a> aEvent, int32 aError) = 0;
+00069         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keyword">virtual</span> <span class="keywordtype">void</span> <a class="code" href="classOsclDNSObserver.html#a0">HandleDNSEvent</a>(int32 aId, <a class="code" href="group__osclio.html#a24">TPVDNSFxn</a> aFxn, <a class="code" href="group__osclio.html#a25">TPVDNSEvent</a> aEvent, int32 aError) = 0;
 00070 
 <a name="l00071"></a><a class="code" href="classOsclDNSObserver.html#a1">00071</a>         <span class="keyword">virtual</span> <a class="code" href="classOsclDNSObserver.html#a1">~OsclDNSObserver</a>() {}
 00072 };
@@ -60,18 +60,18 @@
 <a name="l00080"></a><a class="code" href="classOsclDNS.html">00080</a> <span class="keyword">class </span><a class="code" href="classOsclDNS.html">OsclDNS</a>: <span class="keyword">public</span> <a class="code" href="classHeapBase.html">HeapBase</a>
 00081 {
 00082     <span class="keyword">public</span>:
-00093         OSCL_IMPORT_REF <span class="keyword">static</span> <a class="code" href="classOsclDNS.html">OsclDNS</a>* <a class="code" href="classOsclDNS.html#d0">NewL</a>(
+00093         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keyword">static</span> <a class="code" href="classOsclDNS.html">OsclDNS</a>* <a class="code" href="classOsclDNS.html#d0">NewL</a>(
 00094             <a class="code" href="classOscl__DefAlloc.html">Oscl_DefAlloc</a> &amp;alloc,
 00095             <a class="code" href="classOsclSocketServ.html">OsclSocketServ</a>&amp; aServ,
 00096             <a class="code" href="classOsclDNSObserver.html">OsclDNSObserver</a> &amp; aObserver,
 00097             uint32 aId);
 00098 
-00106         OSCL_IMPORT_REF <a class="code" href="classOsclDNS.html#a0">~OsclDNS</a>();
+00106         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <a class="code" href="classOsclDNS.html#a0">~OsclDNS</a>();
 00107 
-00121         OSCL_IMPORT_REF <a class="code" href="group__osclio.html#a25">TPVDNSEvent</a> <a class="code" href="classOsclDNS.html#a1">GetHostByName</a>(<span class="keywordtype">char</span> *name, <a class="code" href="classOsclNetworkAddress.html">OsclNetworkAddress</a>&amp; addr,
+00121         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <a class="code" href="group__osclio.html#a25">TPVDNSEvent</a> <a class="code" href="classOsclDNS.html#a1">GetHostByName</a>(<span class="keywordtype">char</span> *name, <a class="code" href="classOsclNetworkAddress.html">OsclNetworkAddress</a>&amp; addr,
 00122                 int32 aTimeoutMsec = -1);
 00123 
-00132         OSCL_IMPORT_REF <span class="keywordtype">void</span> <a class="code" href="classOsclDNS.html#a2">CancelGetHostByName</a>();
+00132         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keywordtype">void</span> <a class="code" href="classOsclDNS.html#a2">CancelGetHostByName</a>();
 00133 
 00134     <span class="keyword">private</span>:
 00135         <a class="code" href="classOsclDNS.html">OsclDNS</a>(
@@ -94,7 +94,7 @@
 00152 <span class="preprocessor">#endif</span>
 00153 <span class="preprocessor"></span>
 </pre></div><hr size="1"><img src="pvlogo_small.jpg"><address style="align: right;"><small>OSCL API</small>
-<address style="align: left;"><small>Posting Version: CORE_7.501.1.1 </small>
+<address style="align: left;"><small>Posting Version: CORE_7.508.1.1 </small>
 </small></address>
 </body>
 </html>

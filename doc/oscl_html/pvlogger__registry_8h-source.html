@@ -24,19 +24,19 @@
 <a name="l00029"></a><a class="code" href="classPVLoggerRegistry.html#s0">00029</a>         <span class="keyword">typedef</span> <a class="code" href="classPVLogger.html#s0">PVLogger::log_level_type</a> <a class="code" href="classPVLoggerRegistry.html#s0">log_level_type</a>;
 <a name="l00030"></a><a class="code" href="classPVLoggerRegistry.html#s1">00030</a>         <span class="keyword">typedef</span> <a class="code" href="class__OsclBasicAllocator.html">PVLogger::alloc_type</a> <a class="code" href="class__OsclBasicAllocator.html">alloc_type</a>;
 00031 
-00036         OSCL_IMPORT_REF <span class="keyword">static</span> <a class="code" href="classPVLoggerRegistry.html">PVLoggerRegistry</a>* <a class="code" href="classPVLoggerRegistry.html#d0">GetPVLoggerRegistry</a>();
+00036         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keyword">static</span> <a class="code" href="classPVLoggerRegistry.html">PVLoggerRegistry</a>* <a class="code" href="classPVLoggerRegistry.html#d0">GetPVLoggerRegistry</a>();
 00037 
-00042         OSCL_IMPORT_REF <a class="code" href="classPVLoggerRegistry.html#a0">PVLoggerRegistry</a>();
+00042         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <a class="code" href="classPVLoggerRegistry.html#a0">PVLoggerRegistry</a>();
 00043 
-00048         OSCL_IMPORT_REF <span class="keyword">virtual</span> <a class="code" href="classPVLoggerRegistry.html#a1">~PVLoggerRegistry</a>();
+00048         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keyword">virtual</span> <a class="code" href="classPVLoggerRegistry.html#a1">~PVLoggerRegistry</a>();
 00049 
-00062         OSCL_IMPORT_REF <a class="code" href="classPVLogger.html">PVLogger</a> *<a class="code" href="classPVLoggerRegistry.html#a2">GetPVLoggerObject</a>(<span class="keyword">const</span> <span class="keywordtype">char</span>* tagIn);
+00062         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <a class="code" href="classPVLogger.html">PVLogger</a> *<a class="code" href="classPVLoggerRegistry.html#a2">GetPVLoggerObject</a>(<span class="keyword">const</span> <span class="keywordtype">char</span>* tagIn);
 00063 
-00074         OSCL_IMPORT_REF <a class="code" href="classPVLogger.html">PVLogger</a> *<a class="code" href="classPVLoggerRegistry.html#a3">CreatePVLogger</a>(<span class="keyword">const</span> <span class="keywordtype">char</span>* tagIn, <a class="code" href="classPVLoggerRegistry.html#s0">log_level_type</a> level, <span class="keywordtype">bool</span> oAppenderInheritance);
+00074         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <a class="code" href="classPVLogger.html">PVLogger</a> *<a class="code" href="classPVLoggerRegistry.html#a3">CreatePVLogger</a>(<span class="keyword">const</span> <span class="keywordtype">char</span>* tagIn, <a class="code" href="classPVLoggerRegistry.html#s0">log_level_type</a> level, <span class="keywordtype">bool</span> oAppenderInheritance);
 00075 
-00085         OSCL_IMPORT_REF <span class="keywordtype">bool</span> <a class="code" href="classPVLoggerRegistry.html#a4">SetNodeLogLevelExplicit</a>(<span class="keywordtype">char</span>* tagIn, <a class="code" href="classPVLoggerRegistry.html#s0">log_level_type</a> level);
+00085         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keywordtype">bool</span> <a class="code" href="classPVLoggerRegistry.html#a4">SetNodeLogLevelExplicit</a>(<span class="keywordtype">char</span>* tagIn, <a class="code" href="classPVLoggerRegistry.html#s0">log_level_type</a> level);
 00086 
-00096         OSCL_IMPORT_REF <span class="keywordtype">void</span> <a class="code" href="classPVLoggerRegistry.html#a4">SetNodeLogLevelExplicit</a>(<a class="code" href="classOscl__TagTree.html">Oscl_TagTree&lt;PVLogger*, alloc_type&gt;</a>::node_type* node, <a class="code" href="classPVLoggerRegistry.html#s0">log_level_type</a> level);
+00096         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keywordtype">void</span> <a class="code" href="classPVLoggerRegistry.html#a4">SetNodeLogLevelExplicit</a>(<a class="code" href="classOscl__TagTree.html">Oscl_TagTree&lt;PVLogger*, alloc_type&gt;</a>::node_type* node, <a class="code" href="classPVLoggerRegistry.html#s0">log_level_type</a> level);
 00097 
 00098     <span class="keyword">private</span>:
 00099 <span class="preprocessor">#if (PVLOGGER_ENABLE)</span>
@@ -48,7 +48,7 @@
 00105 <span class="preprocessor">#endif // PVLOGGER_REGISTRY_H_INCLUDED</span>
 00106 <span class="preprocessor"></span>
 </pre></div><hr size="1"><img src="pvlogo_small.jpg"><address style="align: right;"><small>OSCL API</small>
-<address style="align: left;"><small>Posting Version: CORE_7.501.1.1 </small>
+<address style="align: left;"><small>Posting Version: CORE_7.508.1.1 </small>
 </small></address>
 </body>
 </html>

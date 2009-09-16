@@ -66,9 +66,9 @@
 <a name="l00072"></a><a class="code" href="classOsclMem.html">00072</a> <span class="keyword">class </span><a class="code" href="classOsclMem.html">OsclMem</a>
 00073 {
 00074     <span class="keyword">public</span>:
-00084         OSCL_IMPORT_REF <span class="keyword">static</span> <span class="keywordtype">void</span> <a class="code" href="classOsclMem.html#d0">Init</a>();
+00084         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keyword">static</span> <span class="keywordtype">void</span> <a class="code" href="classOsclMem.html#d0">Init</a>();
 00085 
-00089         OSCL_IMPORT_REF <span class="keyword">static</span> <span class="keywordtype">void</span> <a class="code" href="classOsclMem.html#d1">Cleanup</a>();
+00089         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keyword">static</span> <span class="keywordtype">void</span> <a class="code" href="classOsclMem.html#d1">Cleanup</a>();
 00090 
 00091 };
 00092 
@@ -112,7 +112,7 @@
 00130 <span class="preprocessor"></span>
 00138 <a class="code" href="group__osclbase.html#a84">OSCL_COND_IMPORT_REF</a> <a class="code" href="group__osclbase.html#a27">uint</a> <a class="code" href="group__osclmemory.html#a16">oscl_mem_aligned_size</a>(<a class="code" href="group__osclbase.html#a27">uint</a> size);
 00139 
-00147 OSCL_IMPORT_REF <span class="keywordtype">void</span> <a class="code" href="group__osclmemory.html#a17">OsclMemInit</a>(<a class="code" href="classOsclAuditCB.html">OsclAuditCB</a> &amp; auditCB);
+00147 <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keywordtype">void</span> <a class="code" href="group__osclmemory.html#a17">OsclMemInit</a>(<a class="code" href="classOsclAuditCB.html">OsclAuditCB</a> &amp; auditCB);
 00148 
 <a name="l00156"></a><a class="code" href="group__osclmemory.html#a35">00156</a> <span class="preprocessor">#define OSCL_CLEANUP_BASE_CLASS(T) _OSCL_CLEANUP_BASE_CLASS(T)</span>
 00157 <span class="preprocessor"></span>
@@ -142,17 +142,17 @@
 00232 <span class="comment">//These are for internal use but need to be visible since they're used</span>
 00233 <span class="comment">//in macros.</span>
 00234 <span class="preprocessor">#if(!OSCL_BYPASS_MEMMGT)</span>
-00235 <span class="preprocessor"></span>OSCL_IMPORT_REF <span class="keywordtype">void</span>* <a class="code" href="group__osclmemory.html#a18">_oscl_audit_malloc</a>(size_t , <a class="code" href="classOsclAuditCB.html">OsclAuditCB</a> &amp; , <span class="keyword">const</span> <span class="keywordtype">char</span> * f = <a class="code" href="group__osclbase.html#a81">NULL</a>, <span class="keyword">const</span> <span class="keywordtype">int</span> l = 0);
-00236 OSCL_IMPORT_REF <span class="keywordtype">void</span>* <a class="code" href="group__osclmemory.html#a19">_oscl_audit_calloc</a>(size_t , size_t, <a class="code" href="classOsclAuditCB.html">OsclAuditCB</a> &amp; , <span class="keyword">const</span> <span class="keywordtype">char</span> * f = <a class="code" href="group__osclbase.html#a81">NULL</a>, <span class="keyword">const</span> <span class="keywordtype">int</span> l = 0);
-00237 OSCL_IMPORT_REF <span class="keywordtype">void</span>* <a class="code" href="group__osclmemory.html#a20">_oscl_audit_realloc</a>(<span class="keywordtype">void</span>*, size_t , <a class="code" href="classOsclAuditCB.html">OsclAuditCB</a> &amp; , <span class="keyword">const</span> <span class="keywordtype">char</span> * f = <a class="code" href="group__osclbase.html#a81">NULL</a>, <span class="keyword">const</span> <span class="keywordtype">int</span> l = 0);
-00238 OSCL_IMPORT_REF <span class="keywordtype">void</span>* <a class="code" href="group__osclmemory.html#a21">_oscl_audit_new</a>(size_t , <a class="code" href="classOsclAuditCB.html">OsclAuditCB</a> &amp; , <span class="keyword">const</span> <span class="keywordtype">char</span> * f = <a class="code" href="group__osclbase.html#a81">NULL</a>, <span class="keyword">const</span> <span class="keywordtype">int</span> l = 0) ;
-00239 OSCL_IMPORT_REF <span class="keywordtype">void</span>* <a class="code" href="group__osclmemory.html#a22">_oscl_default_audit_malloc</a>(size_t , <span class="keyword">const</span> <span class="keywordtype">char</span> * f = <a class="code" href="group__osclbase.html#a81">NULL</a>, <span class="keyword">const</span> <span class="keywordtype">int</span> l = 0);
-00240 OSCL_IMPORT_REF <span class="keywordtype">void</span>* <a class="code" href="group__osclmemory.html#a23">_oscl_default_audit_calloc</a>(size_t , size_t, <span class="keyword">const</span> <span class="keywordtype">char</span> * f = <a class="code" href="group__osclbase.html#a81">NULL</a>, <span class="keyword">const</span> <span class="keywordtype">int</span> l = 0);
-00241 OSCL_IMPORT_REF <span class="keywordtype">void</span>* <a class="code" href="group__osclmemory.html#a24">_oscl_default_audit_realloc</a>(<span class="keywordtype">void</span>*, size_t , <span class="keyword">const</span> <span class="keywordtype">char</span> * f = <a class="code" href="group__osclbase.html#a81">NULL</a>, <span class="keyword">const</span> <span class="keywordtype">int</span> l = 0);
-00242 OSCL_IMPORT_REF <span class="keywordtype">void</span>* <a class="code" href="group__osclmemory.html#a25">_oscl_default_audit_new</a>(size_t , <span class="keyword">const</span> <span class="keywordtype">char</span> * f = <a class="code" href="group__osclbase.html#a81">NULL</a>, <span class="keyword">const</span> <span class="keywordtype">int</span> l = 0) ;
-00243 OSCL_IMPORT_REF <span class="keywordtype">void</span> <a class="code" href="group__osclmemory.html#a26">_oscl_audit_free</a>(<span class="keywordtype">void</span> *);
+00235 <span class="preprocessor"></span><a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keywordtype">void</span>* <a class="code" href="group__osclmemory.html#a18">_oscl_audit_malloc</a>(size_t , <a class="code" href="classOsclAuditCB.html">OsclAuditCB</a> &amp; , <span class="keyword">const</span> <span class="keywordtype">char</span> * f = <a class="code" href="group__osclbase.html#a81">NULL</a>, <span class="keyword">const</span> <span class="keywordtype">int</span> l = 0);
+00236 <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keywordtype">void</span>* <a class="code" href="group__osclmemory.html#a19">_oscl_audit_calloc</a>(size_t , size_t, <a class="code" href="classOsclAuditCB.html">OsclAuditCB</a> &amp; , <span class="keyword">const</span> <span class="keywordtype">char</span> * f = <a class="code" href="group__osclbase.html#a81">NULL</a>, <span class="keyword">const</span> <span class="keywordtype">int</span> l = 0);
+00237 <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keywordtype">void</span>* <a class="code" href="group__osclmemory.html#a20">_oscl_audit_realloc</a>(<span class="keywordtype">void</span>*, size_t , <a class="code" href="classOsclAuditCB.html">OsclAuditCB</a> &amp; , <span class="keyword">const</span> <span class="keywordtype">char</span> * f = <a class="code" href="group__osclbase.html#a81">NULL</a>, <span class="keyword">const</span> <span class="keywordtype">int</span> l = 0);
+00238 <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keywordtype">void</span>* <a class="code" href="group__osclmemory.html#a21">_oscl_audit_new</a>(size_t , <a class="code" href="classOsclAuditCB.html">OsclAuditCB</a> &amp; , <span class="keyword">const</span> <span class="keywordtype">char</span> * f = <a class="code" href="group__osclbase.html#a81">NULL</a>, <span class="keyword">const</span> <span class="keywordtype">int</span> l = 0) ;
+00239 <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keywordtype">void</span>* <a class="code" href="group__osclmemory.html#a22">_oscl_default_audit_malloc</a>(size_t , <span class="keyword">const</span> <span class="keywordtype">char</span> * f = <a class="code" href="group__osclbase.html#a81">NULL</a>, <span class="keyword">const</span> <span class="keywordtype">int</span> l = 0);
+00240 <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keywordtype">void</span>* <a class="code" href="group__osclmemory.html#a23">_oscl_default_audit_calloc</a>(size_t , size_t, <span class="keyword">const</span> <span class="keywordtype">char</span> * f = <a class="code" href="group__osclbase.html#a81">NULL</a>, <span class="keyword">const</span> <span class="keywordtype">int</span> l = 0);
+00241 <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keywordtype">void</span>* <a class="code" href="group__osclmemory.html#a24">_oscl_default_audit_realloc</a>(<span class="keywordtype">void</span>*, size_t , <span class="keyword">const</span> <span class="keywordtype">char</span> * f = <a class="code" href="group__osclbase.html#a81">NULL</a>, <span class="keyword">const</span> <span class="keywordtype">int</span> l = 0);
+00242 <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keywordtype">void</span>* <a class="code" href="group__osclmemory.html#a25">_oscl_default_audit_new</a>(size_t , <span class="keyword">const</span> <span class="keywordtype">char</span> * f = <a class="code" href="group__osclbase.html#a81">NULL</a>, <span class="keyword">const</span> <span class="keywordtype">int</span> l = 0) ;
+00243 <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keywordtype">void</span> <a class="code" href="group__osclmemory.html#a26">_oscl_audit_free</a>(<span class="keywordtype">void</span> *);
 00244 <span class="preprocessor">#else</span>
-00245 <span class="preprocessor"></span>OSCL_IMPORT_REF <span class="keywordtype">void</span>* _oscl_default_new(size_t nBytes);
+00245 <span class="preprocessor"></span><a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keywordtype">void</span>* _oscl_default_new(size_t nBytes);
 00246 <span class="preprocessor">#endif//OSCL_BYPASS_MEMMGT</span>
 00247 <span class="preprocessor"></span>
 00248 <span class="preprocessor">#if (OSCL_HAS_GLOBAL_NEW_DELETE)</span>
@@ -558,7 +558,7 @@
 00889 {
 00890     <span class="keyword">public</span>:
 <a name="l00891"></a><a class="code" href="classOsclMemGlobalAuditObject.html#s0">00891</a>         <span class="keyword">typedef</span> <a class="code" href="classOsclMemAudit.html">OsclMemAudit</a> <a class="code" href="classOsclMemAudit.html">audit_type</a>;
-00896         OSCL_IMPORT_REF <span class="keyword">static</span> audit_type* <a class="code" href="classOsclMemGlobalAuditObject.html#d0">getGlobalMemAuditObject</a>();
+00896         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keyword">static</span> audit_type* <a class="code" href="classOsclMemGlobalAuditObject.html#d0">getGlobalMemAuditObject</a>();
 00897 
 00898     <span class="keyword">private</span>:
 00902         <span class="keyword">static</span> <span class="keywordtype">void</span> createGlobalMemAuditObject();
@@ -672,7 +672,7 @@
 01050 
 01051 
 </pre></div><hr size="1"><img src="pvlogo_small.jpg"><address style="align: right;"><small>OSCL API</small>
-<address style="align: left;"><small>Posting Version: CORE_7.501.1.1 </small>
+<address style="align: left;"><small>Posting Version: CORE_7.508.1.1 </small>
 </small></address>
 </body>
 </html>

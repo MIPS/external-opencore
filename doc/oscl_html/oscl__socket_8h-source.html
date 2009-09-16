@@ -45,13 +45,13 @@
 <a name="l00050"></a><a class="code" href="classOsclSocketServ.html">00050</a> <span class="keyword">class </span><a class="code" href="classOsclSocketServ.html">OsclSocketServ</a> : <span class="keyword">public</span> <a class="code" href="classHeapBase.html">HeapBase</a>
 00051 {
 00052     <span class="keyword">public</span>:
-00060         OSCL_IMPORT_REF <span class="keyword">static</span> <a class="code" href="classOsclSocketServ.html">OsclSocketServ</a> *<a class="code" href="classOsclSocketServ.html#d0">NewL</a>(<a class="code" href="classOscl__DefAlloc.html">Oscl_DefAlloc</a> &amp;alloc);
+00060         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keyword">static</span> <a class="code" href="classOsclSocketServ.html">OsclSocketServ</a> *<a class="code" href="classOsclSocketServ.html#d0">NewL</a>(<a class="code" href="classOscl__DefAlloc.html">Oscl_DefAlloc</a> &amp;alloc);
 00061 
-00066         OSCL_IMPORT_REF <a class="code" href="classOsclSocketServ.html#a0">~OsclSocketServ</a>();
+00066         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <a class="code" href="classOsclSocketServ.html#a0">~OsclSocketServ</a>();
 00067 
-00076         OSCL_IMPORT_REF int32 <a class="code" href="classOsclSocketServ.html#a1">Connect</a>(uint32 aMessageSlots = 8);
+00076         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> int32 <a class="code" href="classOsclSocketServ.html#a1">Connect</a>(uint32 aMessageSlots = 8);
 00077 
-00086         OSCL_IMPORT_REF <span class="keywordtype">void</span> <a class="code" href="classOsclSocketServ.html#a2">Close</a>(<span class="keywordtype">bool</span> aCleanup = <span class="keyword">true</span>);
+00086         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keywordtype">void</span> <a class="code" href="classOsclSocketServ.html#a2">Close</a>(<span class="keywordtype">bool</span> aCleanup = <span class="keyword">true</span>);
 00087 
 00088     <span class="keyword">private</span>:
 00089         <a class="code" href="classOsclSocketServ.html">OsclSocketServ</a>(<a class="code" href="classOscl__DefAlloc.html">Oscl_DefAlloc</a> &amp;alloc): iServ(<a class="code" href="group__osclbase.html#a81">NULL</a>), iAlloc(alloc) {}
@@ -71,42 +71,42 @@
 <a name="l00107"></a><a class="code" href="classOsclUDPSocket.html">00107</a> <span class="keyword">class </span><a class="code" href="classOsclUDPSocket.html">OsclUDPSocket</a> : <span class="keyword">public</span> <a class="code" href="classHeapBase.html">HeapBase</a>
 00108 {
 00109     <span class="keyword">public</span>:
-00122         OSCL_IMPORT_REF <span class="keyword">static</span> <a class="code" href="classOsclUDPSocket.html">OsclUDPSocket</a> *<a class="code" href="classOsclUDPSocket.html#d0">NewL</a>(<a class="code" href="classOscl__DefAlloc.html">Oscl_DefAlloc</a> &amp;alloc,
+00122         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keyword">static</span> <a class="code" href="classOsclUDPSocket.html">OsclUDPSocket</a> *<a class="code" href="classOsclUDPSocket.html#d0">NewL</a>(<a class="code" href="classOscl__DefAlloc.html">Oscl_DefAlloc</a> &amp;alloc,
 00123                 <a class="code" href="classOsclSocketServ.html">OsclSocketServ</a>&amp; aServ,
 00124                 <a class="code" href="classOsclSocketObserver.html">OsclSocketObserver</a> *aObserver,
 00125                 uint32 aId);
 00126 
-00131         OSCL_IMPORT_REF <a class="code" href="classOsclUDPSocket.html#a0">~OsclUDPSocket</a>();
+00131         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <a class="code" href="classOsclUDPSocket.html#a0">~OsclUDPSocket</a>();
 00132 
-00145         OSCL_IMPORT_REF int32 <a class="code" href="classOsclUDPSocket.html#a1">Close</a>();
+00145         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> int32 <a class="code" href="classOsclUDPSocket.html#a1">Close</a>();
 00146 
-00155         OSCL_IMPORT_REF int32 <a class="code" href="classOsclUDPSocket.html#a2">Bind</a>(<a class="code" href="classOsclNetworkAddress.html">OsclNetworkAddress</a>&amp; aAddress);
+00155         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> int32 <a class="code" href="classOsclUDPSocket.html#a2">Bind</a>(<a class="code" href="classOsclNetworkAddress.html">OsclNetworkAddress</a>&amp; aAddress);
 00156 
-00167         OSCL_IMPORT_REF int32 <a class="code" href="classOsclUDPSocket.html#a3">Join</a>(<a class="code" href="classOsclNetworkAddress.html">OsclNetworkAddress</a>&amp; aAddress);
+00167         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> int32 <a class="code" href="classOsclUDPSocket.html#a3">Join</a>(<a class="code" href="classOsclNetworkAddress.html">OsclNetworkAddress</a>&amp; aAddress);
 00168 
-00182         OSCL_IMPORT_REF <a class="code" href="oscl__socket__types_8h.html#a20">TPVSocketEvent</a> <a class="code" href="classOsclUDPSocket.html#a4">BindAsync</a>(<a class="code" href="classOsclNetworkAddress.html">OsclNetworkAddress</a>&amp; aAddress
+00182         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <a class="code" href="oscl__socket__types_8h.html#a20">TPVSocketEvent</a> <a class="code" href="classOsclUDPSocket.html#a4">BindAsync</a>(<a class="code" href="classOsclNetworkAddress.html">OsclNetworkAddress</a>&amp; aAddress
 00183                 , int32 aTimeoutMsec = (-1));
 00184 
-00193         OSCL_IMPORT_REF <span class="keywordtype">void</span> <a class="code" href="classOsclUDPSocket.html#a5">CancelBind</a>();
+00193         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keywordtype">void</span> <a class="code" href="classOsclUDPSocket.html#a5">CancelBind</a>();
 00194 
-00204         OSCL_IMPORT_REF uint8 *<a class="code" href="classOsclUDPSocket.html#a6">GetRecvData</a>(int32 *aLength);
+00204         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> uint8 *<a class="code" href="classOsclUDPSocket.html#a6">GetRecvData</a>(int32 *aLength);
 00205 
-00215         OSCL_IMPORT_REF uint8 *<a class="code" href="classOsclUDPSocket.html#a7">GetSendData</a>(int32 *aLength);
+00215         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> uint8 *<a class="code" href="classOsclUDPSocket.html#a7">GetSendData</a>(int32 *aLength);
 00216 
-00232         OSCL_IMPORT_REF <a class="code" href="oscl__socket__types_8h.html#a20">TPVSocketEvent</a> <a class="code" href="classOsclUDPSocket.html#a8">SendTo</a>(<span class="keyword">const</span> uint8* aPtr, uint32 aLen,
+00232         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <a class="code" href="oscl__socket__types_8h.html#a20">TPVSocketEvent</a> <a class="code" href="classOsclUDPSocket.html#a8">SendTo</a>(<span class="keyword">const</span> uint8* aPtr, uint32 aLen,
 00233                                               <a class="code" href="classOsclNetworkAddress.html">OsclNetworkAddress</a>&amp; aAddress,
 00234                                               int32 aTimeoutMsec = -1);
-00243         OSCL_IMPORT_REF <span class="keywordtype">void</span> <a class="code" href="classOsclUDPSocket.html#a9">CancelSendTo</a>();
+00243         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keywordtype">void</span> <a class="code" href="classOsclUDPSocket.html#a9">CancelSendTo</a>();
 00244 
-00274         OSCL_IMPORT_REF <a class="code" href="oscl__socket__types_8h.html#a20">TPVSocketEvent</a> <a class="code" href="classOsclUDPSocket.html#a10">RecvFrom</a>(uint8* aPtr, uint32 aMaxLen,
+00274         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <a class="code" href="oscl__socket__types_8h.html#a20">TPVSocketEvent</a> <a class="code" href="classOsclUDPSocket.html#a10">RecvFrom</a>(uint8* aPtr, uint32 aMaxLen,
 00275                                                 <a class="code" href="classOsclNetworkAddress.html">OsclNetworkAddress</a>&amp; aAddress,
 00276                                                 int32 aTimeoutMsec = -1,
 00277                                                 uint32 aMultiRecvLimit = 0,
 00278                                                 <a class="code" href="classOscl__Vector.html">Oscl_Vector&lt;uint32, OsclMemAllocator&gt;</a>* aPacketLen = <a class="code" href="group__osclbase.html#a81">NULL</a>,
 00279                                                 <a class="code" href="classOscl__Vector.html">Oscl_Vector&lt;OsclNetworkAddress, OsclMemAllocator&gt;</a>* aPacketSource = NULL);
-00288         OSCL_IMPORT_REF <span class="keywordtype">void</span> <a class="code" href="classOsclUDPSocket.html#a11">CancelRecvFrom</a>();
+00288         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keywordtype">void</span> <a class="code" href="classOsclUDPSocket.html#a11">CancelRecvFrom</a>();
 00289 
-00299         OSCL_IMPORT_REF int32 <a class="code" href="classOsclUDPSocket.html#a12">SetRecvBufferSize</a>(uint32 size);
+00299         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> int32 <a class="code" href="classOsclUDPSocket.html#a12">SetRecvBufferSize</a>(uint32 size);
 00300 
 00301     <span class="keyword">private</span>:
 00302         <a class="code" href="classOsclUDPSocket.html">OsclUDPSocket</a>(<a class="code" href="classOscl__DefAlloc.html">Oscl_DefAlloc</a> &amp;alloc): iUDPSocket(NULL), iAlloc(alloc) {}
@@ -119,58 +119,58 @@
 <a name="l00313"></a><a class="code" href="classOsclTCPSocket.html">00313</a> <span class="keyword">class </span><a class="code" href="classOsclTCPSocket.html">OsclTCPSocket</a> : <span class="keyword">public</span> <a class="code" href="classHeapBase.html">HeapBase</a>
 00314 {
 00315     <span class="keyword">public</span>:
-00328         OSCL_IMPORT_REF <span class="keyword">static</span> <a class="code" href="classOsclTCPSocket.html">OsclTCPSocket</a> *<a class="code" href="classOsclTCPSocket.html#d0">NewL</a>(<a class="code" href="classOscl__DefAlloc.html">Oscl_DefAlloc</a> &amp;alloc,
+00328         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keyword">static</span> <a class="code" href="classOsclTCPSocket.html">OsclTCPSocket</a> *<a class="code" href="classOsclTCPSocket.html#d0">NewL</a>(<a class="code" href="classOscl__DefAlloc.html">Oscl_DefAlloc</a> &amp;alloc,
 00329                 <a class="code" href="classOsclSocketServ.html">OsclSocketServ</a>&amp; aServ,
 00330                 <a class="code" href="classOsclSocketObserver.html">OsclSocketObserver</a> *aObserver,
 00331                 uint32 aId);
 00332 
-00337         OSCL_IMPORT_REF <a class="code" href="classOsclTCPSocket.html#a0">~OsclTCPSocket</a>();
+00337         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <a class="code" href="classOsclTCPSocket.html#a0">~OsclTCPSocket</a>();
 00338 
 00339 
-00352         OSCL_IMPORT_REF int32 <a class="code" href="classOsclTCPSocket.html#a1">Close</a>();
+00352         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> int32 <a class="code" href="classOsclTCPSocket.html#a1">Close</a>();
 00353 
-00362         OSCL_IMPORT_REF int32 <a class="code" href="classOsclTCPSocket.html#a2">Bind</a>(<a class="code" href="classOsclNetworkAddress.html">OsclNetworkAddress</a>&amp; aAddress);
+00362         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> int32 <a class="code" href="classOsclTCPSocket.html#a2">Bind</a>(<a class="code" href="classOsclNetworkAddress.html">OsclNetworkAddress</a>&amp; aAddress);
 00363 
-00377         OSCL_IMPORT_REF <a class="code" href="oscl__socket__types_8h.html#a20">TPVSocketEvent</a> <a class="code" href="classOsclTCPSocket.html#a3">BindAsync</a>(<a class="code" href="classOsclNetworkAddress.html">OsclNetworkAddress</a>&amp; aAddress
+00377         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <a class="code" href="oscl__socket__types_8h.html#a20">TPVSocketEvent</a> <a class="code" href="classOsclTCPSocket.html#a3">BindAsync</a>(<a class="code" href="classOsclNetworkAddress.html">OsclNetworkAddress</a>&amp; aAddress
 00378                 , int32 aTimeoutMsec = (-1));
 00379 
-00388         OSCL_IMPORT_REF <span class="keywordtype">void</span> <a class="code" href="classOsclTCPSocket.html#a4">CancelBind</a>();
+00388         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keywordtype">void</span> <a class="code" href="classOsclTCPSocket.html#a4">CancelBind</a>();
 00389 
-00398         OSCL_IMPORT_REF int32 <a class="code" href="classOsclTCPSocket.html#a5">Listen</a>(int32 aQueueSize);
+00398         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> int32 <a class="code" href="classOsclTCPSocket.html#a5">Listen</a>(int32 aQueueSize);
 00399 
-00413         OSCL_IMPORT_REF <a class="code" href="oscl__socket__types_8h.html#a20">TPVSocketEvent</a> <a class="code" href="classOsclTCPSocket.html#a6">ListenAsync</a>(int32 aQueueSize, int32 aTimeoutMsec = (-1));
+00413         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <a class="code" href="oscl__socket__types_8h.html#a20">TPVSocketEvent</a> <a class="code" href="classOsclTCPSocket.html#a6">ListenAsync</a>(int32 aQueueSize, int32 aTimeoutMsec = (-1));
 00414 
-00423         OSCL_IMPORT_REF <span class="keywordtype">void</span> <a class="code" href="classOsclTCPSocket.html#a7">CancelListen</a>();
+00423         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keywordtype">void</span> <a class="code" href="classOsclTCPSocket.html#a7">CancelListen</a>();
 00424 
-00437         OSCL_IMPORT_REF <a class="code" href="classOsclTCPSocket.html">OsclTCPSocket</a> *<a class="code" href="classOsclTCPSocket.html#a8">GetAcceptedSocketL</a>(uint32 aId);
+00437         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <a class="code" href="classOsclTCPSocket.html">OsclTCPSocket</a> *<a class="code" href="classOsclTCPSocket.html#a8">GetAcceptedSocketL</a>(uint32 aId);
 00438 
-00448         OSCL_IMPORT_REF uint8 *<a class="code" href="classOsclTCPSocket.html#a9">GetRecvData</a>(int32 *aLength);
+00448         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> uint8 *<a class="code" href="classOsclTCPSocket.html#a9">GetRecvData</a>(int32 *aLength);
 00449 
-00459         OSCL_IMPORT_REF uint8 *<a class="code" href="classOsclTCPSocket.html#a10">GetSendData</a>(int32 *aLength);
+00459         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> uint8 *<a class="code" href="classOsclTCPSocket.html#a10">GetSendData</a>(int32 *aLength);
 00460 
-00474         OSCL_IMPORT_REF <a class="code" href="oscl__socket__types_8h.html#a20">TPVSocketEvent</a> <a class="code" href="classOsclTCPSocket.html#a11">Connect</a>(<a class="code" href="classOsclNetworkAddress.html">OsclNetworkAddress</a>&amp; aAddress,
+00474         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <a class="code" href="oscl__socket__types_8h.html#a20">TPVSocketEvent</a> <a class="code" href="classOsclTCPSocket.html#a11">Connect</a>(<a class="code" href="classOsclNetworkAddress.html">OsclNetworkAddress</a>&amp; aAddress,
 00475                                                int32 aTimeoutMsec = -1);
 00476 
-00485         OSCL_IMPORT_REF <span class="keywordtype">void</span> <a class="code" href="classOsclTCPSocket.html#a12">CancelConnect</a>();
+00485         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keywordtype">void</span> <a class="code" href="classOsclTCPSocket.html#a12">CancelConnect</a>();
 00486 
-00500         OSCL_IMPORT_REF <a class="code" href="oscl__socket__types_8h.html#a20">TPVSocketEvent</a> <a class="code" href="classOsclTCPSocket.html#a13">Shutdown</a>(<a class="code" href="oscl__socket__types_8h.html#a21">TPVSocketShutdown</a> aHow,
+00500         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <a class="code" href="oscl__socket__types_8h.html#a20">TPVSocketEvent</a> <a class="code" href="classOsclTCPSocket.html#a13">Shutdown</a>(<a class="code" href="oscl__socket__types_8h.html#a21">TPVSocketShutdown</a> aHow,
 00501                                                 int32 aTimeoutMsec = -1);
 00502 
-00511         OSCL_IMPORT_REF <span class="keywordtype">void</span> <a class="code" href="classOsclTCPSocket.html#a14">CancelShutdown</a>();
+00511         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keywordtype">void</span> <a class="code" href="classOsclTCPSocket.html#a14">CancelShutdown</a>();
 00512 
-00525         OSCL_IMPORT_REF <a class="code" href="oscl__socket__types_8h.html#a20">TPVSocketEvent</a> <a class="code" href="classOsclTCPSocket.html#a15">Accept</a>(int32 aTimeout = -1);
+00525         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <a class="code" href="oscl__socket__types_8h.html#a20">TPVSocketEvent</a> <a class="code" href="classOsclTCPSocket.html#a15">Accept</a>(int32 aTimeout = -1);
 00526 
-00535         OSCL_IMPORT_REF <span class="keywordtype">void</span> <a class="code" href="classOsclTCPSocket.html#a16">CancelAccept</a>();
+00535         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keywordtype">void</span> <a class="code" href="classOsclTCPSocket.html#a16">CancelAccept</a>();
 00536 
-00551         OSCL_IMPORT_REF <a class="code" href="oscl__socket__types_8h.html#a20">TPVSocketEvent</a> <a class="code" href="classOsclTCPSocket.html#a17">Send</a>(<span class="keyword">const</span> uint8* aPtr, uint32 aLen,
+00551         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <a class="code" href="oscl__socket__types_8h.html#a20">TPVSocketEvent</a> <a class="code" href="classOsclTCPSocket.html#a17">Send</a>(<span class="keyword">const</span> uint8* aPtr, uint32 aLen,
 00552                                             int32 aTimeoutMsec = -1);
 00553 
-00562         OSCL_IMPORT_REF <span class="keywordtype">void</span> <a class="code" href="classOsclTCPSocket.html#a18">CancelSend</a>();
+00562         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keywordtype">void</span> <a class="code" href="classOsclTCPSocket.html#a18">CancelSend</a>();
 00563 
-00578         OSCL_IMPORT_REF <a class="code" href="oscl__socket__types_8h.html#a20">TPVSocketEvent</a> <a class="code" href="classOsclTCPSocket.html#a19">Recv</a>(uint8* aPtr, uint32 aMaxLen,
+00578         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <a class="code" href="oscl__socket__types_8h.html#a20">TPVSocketEvent</a> <a class="code" href="classOsclTCPSocket.html#a19">Recv</a>(uint8* aPtr, uint32 aMaxLen,
 00579                                             int32 aTimeoutMsec = -1);
 00580 
-00589         OSCL_IMPORT_REF <span class="keywordtype">void</span> <a class="code" href="classOsclTCPSocket.html#a20">CancelRecv</a>();
+00589         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keywordtype">void</span> <a class="code" href="classOsclTCPSocket.html#a20">CancelRecv</a>();
 00590 
 00591     <span class="keyword">private</span>:
 00592         <span class="keyword">static</span> <a class="code" href="classOsclTCPSocket.html">OsclTCPSocket</a> *<a class="code" href="classOsclTCPSocket.html#d0">NewL</a>(<a class="code" href="classOscl__DefAlloc.html">Oscl_DefAlloc</a> &amp;alloc, <a class="code" href="classOsclTCPSocketI.html">OsclTCPSocketI</a>* aSocket);
@@ -185,7 +185,7 @@
 00601 <span class="preprocessor"></span>
 00602 
 </pre></div><hr size="1"><img src="pvlogo_small.jpg"><address style="align: right;"><small>OSCL API</small>
-<address style="align: left;"><small>Posting Version: CORE_7.501.1.1 </small>
+<address style="align: left;"><small>Posting Version: CORE_7.508.1.1 </small>
 </small></address>
 </body>
 </html>

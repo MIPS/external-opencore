@@ -26,7 +26,7 @@
 00031 
 00033 
 00038 <span class="preprocessor">#if (!defined(NDEBUG) || (OSCL_ASSERT_ALWAYS))</span>
-00039 <span class="preprocessor"></span>OSCL_IMPORT_REF <span class="keywordtype">void</span> <a class="code" href="group__osclbase.html#a35">OSCL_Assert</a>(<span class="keyword">const</span> <span class="keywordtype">char</span> *expr, <span class="keyword">const</span> <span class="keywordtype">char</span> *filename, <span class="keywordtype">int</span> line_number);
+00039 <span class="preprocessor"></span><a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keywordtype">void</span> <a class="code" href="group__osclbase.html#a35">OSCL_Assert</a>(<span class="keyword">const</span> <span class="keywordtype">char</span> *expr, <span class="keyword">const</span> <span class="keywordtype">char</span> *filename, <span class="keywordtype">int</span> line_number);
 00040 
 <a name="l00041"></a><a class="code" href="group__osclbase.html#a78">00041</a> <span class="preprocessor">#define OSCL_ASSERT(_expr) \</span>
 00042 <span class="preprocessor">    ((_expr)?((void)0):OSCL_Assert(# _expr,__FILE__,__LINE__))</span>
@@ -41,7 +41,7 @@
 00051 <span class="preprocessor"></span>
 00054 <span class="preprocessor">#endif // OSCL_ASSERT_H_INCLUDED</span>
 </pre></div><hr size="1"><img src="pvlogo_small.jpg"><address style="align: right;"><small>OSCL API</small>
-<address style="align: left;"><small>Posting Version: CORE_7.501.1.1 </small>
+<address style="align: left;"><small>Posting Version: CORE_7.508.1.1 </small>
 </small></address>
 </body>
 </html>

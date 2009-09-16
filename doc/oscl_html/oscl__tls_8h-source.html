@@ -63,8 +63,8 @@
 <a name="l00069"></a><a class="code" href="classTLSStorageOps.html">00069</a> <span class="keyword">class </span><a class="code" href="classTLSStorageOps.html">TLSStorageOps</a>
 00070 {
 00071     <span class="keyword">public</span>:
-00072         OSCL_IMPORT_REF <span class="keyword">static</span> <span class="keywordtype">void</span> <a class="code" href="classTLSStorageOps.html#d0">save_registry</a>(<a class="code" href="group__osclbase.html#a10">TOsclTlsKey</a>* key, <a class="code" href="group__osclbase.html#a25">OsclAny</a>* ptr, int32&amp;);
-00073         OSCL_IMPORT_REF <span class="keyword">static</span> <a class="code" href="group__osclbase.html#a25">OsclAny</a>* <a class="code" href="classTLSStorageOps.html#d1">get_registry</a>(<a class="code" href="group__osclbase.html#a10">TOsclTlsKey</a>* key);
+00072         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keyword">static</span> <span class="keywordtype">void</span> <a class="code" href="classTLSStorageOps.html#d0">save_registry</a>(<a class="code" href="group__osclbase.html#a10">TOsclTlsKey</a>* key, <a class="code" href="group__osclbase.html#a25">OsclAny</a>* ptr, int32&amp;);
+00073         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keyword">static</span> <a class="code" href="group__osclbase.html#a25">OsclAny</a>* <a class="code" href="classTLSStorageOps.html#d1">get_registry</a>(<a class="code" href="group__osclbase.html#a10">TOsclTlsKey</a>* key);
 00074 };
 00075 
 <a name="l00076"></a><a class="code" href="classOsclTLSRegistry.html">00076</a> <span class="keyword">class </span><a class="code" href="classOsclTLSRegistry.html">OsclTLSRegistry</a>
@@ -76,14 +76,14 @@
 00082 <span class="comment">        ** @param error (output) 0 for success or an error from TPVBaseErrorEnum</span>
 00083 <span class="comment">        ** @returns: the entry value</span>
 00084 <span class="comment">        */</span>
-00085         OSCL_IMPORT_REF <span class="keyword">static</span> <a class="code" href="group__osclbase.html#a25">OsclAny</a>* <a class="code" href="classOsclTLSRegistry.html#d0">getInstance</a>(uint32 ID, int32 &amp;error);
+00085         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keyword">static</span> <a class="code" href="group__osclbase.html#a25">OsclAny</a>* <a class="code" href="classOsclTLSRegistry.html#d0">getInstance</a>(uint32 ID, int32 &amp;error);
 00086         <span class="comment">/*</span>
 00087 <span class="comment">        ** Set an entry</span>
 00088 <span class="comment">        ** @param ID: identifier</span>
 00089 <span class="comment">        ** @param error (output) 0 for success or an error from TPVBaseErrorEnum</span>
 00090 <span class="comment">        ** @returns: the entry value</span>
 00091 <span class="comment">        */</span>
-00092         OSCL_IMPORT_REF <span class="keyword">static</span> <span class="keywordtype">void</span> <a class="code" href="classOsclTLSRegistry.html#d1">registerInstance</a>(<a class="code" href="group__osclbase.html#a25">OsclAny</a>* ptr, uint32 ID, int32 &amp;error);
+00092         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keyword">static</span> <span class="keywordtype">void</span> <a class="code" href="classOsclTLSRegistry.html#d1">registerInstance</a>(<a class="code" href="group__osclbase.html#a25">OsclAny</a>* ptr, uint32 ID, int32 &amp;error);
 00093 
 00094     <span class="keyword">private</span>:
 00095         <a class="code" href="classOsclTLSRegistry.html">OsclTLSRegistry</a>()
@@ -107,8 +107,8 @@
 00113 <span class="preprocessor">#endif</span>
 00114 <span class="preprocessor"></span>
 00115     <span class="keyword">private</span>:
-00116         OSCL_IMPORT_REF <span class="keyword">static</span> <span class="keywordtype">void</span> initialize(<a class="code" href="classOscl__DefAlloc.html">Oscl_DefAlloc</a> &amp;alloc, int32 &amp;error);
-00117         OSCL_IMPORT_REF <span class="keyword">static</span> <span class="keywordtype">void</span> cleanup(<a class="code" href="classOscl__DefAlloc.html">Oscl_DefAlloc</a> &amp;alloc, int32 &amp;error);
+00116         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keyword">static</span> <span class="keywordtype">void</span> initialize(<a class="code" href="classOscl__DefAlloc.html">Oscl_DefAlloc</a> &amp;alloc, int32 &amp;error);
+00117         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keyword">static</span> <span class="keywordtype">void</span> cleanup(<a class="code" href="classOscl__DefAlloc.html">Oscl_DefAlloc</a> &amp;alloc, int32 &amp;error);
 <a name="l00118"></a><a class="code" href="classOsclTLSRegistry.html#l0">00118</a>         <span class="keyword">friend</span> <span class="keyword">class </span><a class="code" href="classOsclTLSRegistry.html#l0">OsclBase</a>;
 00119 
 00120 };
@@ -157,7 +157,7 @@
 00187 <span class="preprocessor">#endif</span>
 00188 <span class="preprocessor"></span>
 </pre></div><hr size="1"><img src="pvlogo_small.jpg"><address style="align: right;"><small>OSCL API</small>
-<address style="align: left;"><small>Posting Version: CORE_7.501.1.1 </small>
+<address style="align: left;"><small>Posting Version: CORE_7.508.1.1 </small>
 </small></address>
 </body>
 </html>

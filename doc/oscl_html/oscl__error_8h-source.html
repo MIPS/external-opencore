@@ -32,34 +32,34 @@
 <a name="l00037"></a><a class="code" href="classOsclErrorTrap.html">00037</a> <span class="keyword">class </span><a class="code" href="classOsclErrorTrap.html">OsclErrorTrap</a>
 00038 {
 00039     <span class="keyword">public</span>:
-00047         OSCL_IMPORT_REF <span class="keyword">static</span> int32 <a class="code" href="classOsclErrorTrap.html#d0">Init</a>(<a class="code" href="classOscl__DefAlloc.html">Oscl_DefAlloc</a> *aAlloc = <a class="code" href="group__osclbase.html#a81">NULL</a>);
-00053         OSCL_IMPORT_REF <span class="keyword">static</span> int32 <a class="code" href="classOsclErrorTrap.html#d1">Cleanup</a>();
-00058         OSCL_IMPORT_REF <span class="keyword">static</span> <a class="code" href="classOsclErrorTrapImp.html">OsclErrorTrapImp</a>* <a class="code" href="classOsclErrorTrap.html#d2">GetErrorTrapImp</a>();
+00047         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keyword">static</span> int32 <a class="code" href="classOsclErrorTrap.html#d0">Init</a>(<a class="code" href="classOscl__DefAlloc.html">Oscl_DefAlloc</a> *aAlloc = <a class="code" href="group__osclbase.html#a81">NULL</a>);
+00053         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keyword">static</span> int32 <a class="code" href="classOsclErrorTrap.html#d1">Cleanup</a>();
+00058         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keyword">static</span> <a class="code" href="classOsclErrorTrapImp.html">OsclErrorTrapImp</a>* <a class="code" href="classOsclErrorTrap.html#d2">GetErrorTrapImp</a>();
 00059 };
 00060 
 00061 
 <a name="l00065"></a><a class="code" href="classOsclError.html">00065</a> <span class="keyword">class </span><a class="code" href="classOsclError.html">OsclError</a>
 00066 {
 00067     <span class="keyword">public</span>:
-00074         OSCL_IMPORT_REF <span class="keyword">static</span> <span class="keywordtype">void</span> <a class="code" href="classOsclError.html#d0">PushL</a>(<a class="code" href="class__OsclHeapBase.html">_OsclHeapBase</a> * aPtr);
+00074         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keyword">static</span> <span class="keywordtype">void</span> <a class="code" href="classOsclError.html#d0">PushL</a>(<a class="code" href="class__OsclHeapBase.html">_OsclHeapBase</a> * aPtr);
 00075 
-00078         OSCL_IMPORT_REF <span class="keyword">static</span> <span class="keywordtype">void</span> <a class="code" href="classOsclError.html#d0">PushL</a>(<a class="code" href="group__osclbase.html#a25">OsclAny</a>* aPtr);
+00078         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keyword">static</span> <span class="keywordtype">void</span> <a class="code" href="classOsclError.html#d0">PushL</a>(<a class="code" href="group__osclbase.html#a25">OsclAny</a>* aPtr);
 00079 
-00082         OSCL_IMPORT_REF <span class="keyword">static</span> <span class="keywordtype">void</span> <a class="code" href="classOsclError.html#d0">PushL</a>(<a class="code" href="classOsclTrapItem.html">OsclTrapItem</a> anItem);
+00082         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keyword">static</span> <span class="keywordtype">void</span> <a class="code" href="classOsclError.html#d0">PushL</a>(<a class="code" href="classOsclTrapItem.html">OsclTrapItem</a> anItem);
 00083 
-00086         OSCL_IMPORT_REF <span class="keyword">static</span> <span class="keywordtype">void</span> <a class="code" href="classOsclError.html#d3">Pop</a>();
+00086         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keyword">static</span> <span class="keywordtype">void</span> <a class="code" href="classOsclError.html#d3">Pop</a>();
 00087 
-00090         OSCL_IMPORT_REF <span class="keyword">static</span> <span class="keywordtype">void</span> <a class="code" href="classOsclError.html#d3">Pop</a>(int32 aCount);
+00090         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keyword">static</span> <span class="keywordtype">void</span> <a class="code" href="classOsclError.html#d3">Pop</a>(int32 aCount);
 00091 
-00095         OSCL_IMPORT_REF <span class="keyword">static</span> <span class="keywordtype">void</span> <a class="code" href="classOsclError.html#d5">PopDealloc</a>();
+00095         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keyword">static</span> <span class="keywordtype">void</span> <a class="code" href="classOsclError.html#d5">PopDealloc</a>();
 00096 
-00099         OSCL_IMPORT_REF <span class="keyword">static</span> <span class="keywordtype">void</span> <a class="code" href="classOsclError.html#d5">PopDealloc</a>(int32 aCount);
+00099         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keyword">static</span> <span class="keywordtype">void</span> <a class="code" href="classOsclError.html#d5">PopDealloc</a>(int32 aCount);
 00100 
-00106         OSCL_IMPORT_REF <span class="keyword">static</span> <span class="keywordtype">void</span> <a class="code" href="classOsclError.html#d7">Leave</a>(int32 aReason);
+00106         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keyword">static</span> <span class="keywordtype">void</span> <a class="code" href="classOsclError.html#d7">Leave</a>(int32 aReason);
 00107 
-00111         OSCL_IMPORT_REF <span class="keyword">static</span> <span class="keywordtype">void</span> <a class="code" href="classOsclError.html#d8">LeaveIfNull</a>(<a class="code" href="group__osclbase.html#a25">OsclAny</a> *a);
+00111         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keyword">static</span> <span class="keywordtype">void</span> <a class="code" href="classOsclError.html#d8">LeaveIfNull</a>(<a class="code" href="group__osclbase.html#a25">OsclAny</a> *a);
 00112 
-00117         OSCL_IMPORT_REF <span class="keyword">static</span> <span class="keywordtype">void</span> <a class="code" href="classOsclError.html#d9">LeaveIfError</a>(int32 aReason);
+00117         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keyword">static</span> <span class="keywordtype">void</span> <a class="code" href="classOsclError.html#d9">LeaveIfError</a>(int32 aReason);
 00118 
 00119 };
 00120 
@@ -281,7 +281,7 @@
 00382 <span class="preprocessor">#endif</span>
 00383 <span class="preprocessor"></span>
 </pre></div><hr size="1"><img src="pvlogo_small.jpg"><address style="align: right;"><small>OSCL API</small>
-<address style="align: left;"><small>Posting Version: CORE_7.501.1.1 </small>
+<address style="align: left;"><small>Posting Version: CORE_7.508.1.1 </small>
 </small></address>
 </body>
 </html>

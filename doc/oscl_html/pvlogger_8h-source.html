@@ -256,12 +256,12 @@
 <a name="l00358"></a><a class="code" href="classPVLogger.html#s2">00358</a>         <span class="keyword">typedef</span> int32 <a class="code" href="classPVLogger.html#s2">filter_status_type</a>;
 <a name="l00359"></a><a class="code" href="classPVLogger.html#s3">00359</a>         <span class="keyword">typedef</span> <a class="code" href="class__OsclBasicAllocator.html">_OsclBasicAllocator</a> <a class="code" href="class__OsclBasicAllocator.html">alloc_type</a>;
 00360 
-00369         OSCL_IMPORT_REF <span class="keyword">static</span> <span class="keywordtype">void</span> <a class="code" href="classPVLogger.html#d0">Init</a>();
+00369         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keyword">static</span> <span class="keywordtype">void</span> <a class="code" href="classPVLogger.html#d0">Init</a>();
 00370 
 00371 
-00379         OSCL_IMPORT_REF <span class="keyword">static</span> <span class="keywordtype">void</span> <a class="code" href="classPVLogger.html#d1">Cleanup</a>();
+00379         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keyword">static</span> <span class="keywordtype">void</span> <a class="code" href="classPVLogger.html#d1">Cleanup</a>();
 00380 
-00401         OSCL_IMPORT_REF <span class="keyword">static</span> <a class="code" href="classPVLogger.html">PVLogger</a> *<a class="code" href="classPVLogger.html#d2">GetLoggerObject</a>(<span class="keyword">const</span> <span class="keywordtype">char</span>* inputTag);
+00401         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keyword">static</span> <a class="code" href="classPVLogger.html">PVLogger</a> *<a class="code" href="classPVLogger.html#d2">GetLoggerObject</a>(<span class="keyword">const</span> <span class="keywordtype">char</span>* inputTag);
 00402 
 <a name="l00410"></a><a class="code" href="classPVLogger.html#a0">00410</a>         <span class="keywordtype">void</span> <a class="code" href="classPVLogger.html#a0">SetLogLevel</a>(<a class="code" href="classPVLogger.html#s0">log_level_type</a> level)
 00411         {
@@ -272,7 +272,7 @@
 00416 <span class="preprocessor">#endif</span>
 00417 <span class="preprocessor"></span>        }
 00418 
-00427         OSCL_IMPORT_REF <span class="keywordtype">void</span> <a class="code" href="classPVLogger.html#a1">SetLogLevelAndPropagate</a>(<a class="code" href="classPVLogger.html#s0">log_level_type</a> level);
+00427         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keywordtype">void</span> <a class="code" href="classPVLogger.html#a1">SetLogLevelAndPropagate</a>(<a class="code" href="classPVLogger.html#s0">log_level_type</a> level);
 00428 
 <a name="l00436"></a><a class="code" href="classPVLogger.html#a2">00436</a>         <a class="code" href="classPVLogger.html#s0">log_level_type</a> <a class="code" href="classPVLogger.html#a2">GetLogLevel</a>()
 00437         {
@@ -335,17 +335,17 @@
 00532 <span class="preprocessor">#endif</span>
 00533 <span class="preprocessor"></span>        }
 00534 
-00546         OSCL_IMPORT_REF <span class="keywordtype">bool</span> <a class="code" href="classPVLogger.html#a8">IsActive</a>(<a class="code" href="classPVLogger.html#s0">log_level_type</a> level);
+00546         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keywordtype">bool</span> <a class="code" href="classPVLogger.html#a8">IsActive</a>(<a class="code" href="classPVLogger.html#s0">log_level_type</a> level);
 00547 
-00561         OSCL_IMPORT_REF <span class="keywordtype">void</span> <a class="code" href="classPVLogger.html#a9">LogMsgStringV</a>(<a class="code" href="classPVLogger.html#s1">message_id_type</a> msgID, <span class="keyword">const</span> <span class="keywordtype">char</span> * fmt, va_list arguments);
+00561         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keywordtype">void</span> <a class="code" href="classPVLogger.html#a9">LogMsgStringV</a>(<a class="code" href="classPVLogger.html#s1">message_id_type</a> msgID, <span class="keyword">const</span> <span class="keywordtype">char</span> * fmt, va_list arguments);
 00562 
-00576         OSCL_IMPORT_REF <span class="keywordtype">void</span> <a class="code" href="classPVLogger.html#a10">LogMsgBuffersV</a>(<a class="code" href="classPVLogger.html#s1">message_id_type</a> msgID, int32 numPairs, va_list arguments);
+00576         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keywordtype">void</span> <a class="code" href="classPVLogger.html#a10">LogMsgBuffersV</a>(<a class="code" href="classPVLogger.html#s1">message_id_type</a> msgID, int32 numPairs, va_list arguments);
 00577 
-00591         OSCL_IMPORT_REF <span class="keywordtype">void</span> <a class="code" href="classPVLogger.html#a11">LogMsgString</a>(<a class="code" href="classPVLogger.html#s1">message_id_type</a> msgID, <span class="keyword">const</span> <span class="keywordtype">char</span> * fmt, ...);
+00591         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keywordtype">void</span> <a class="code" href="classPVLogger.html#a11">LogMsgString</a>(<a class="code" href="classPVLogger.html#s1">message_id_type</a> msgID, <span class="keyword">const</span> <span class="keywordtype">char</span> * fmt, ...);
 00592 
-00606         OSCL_IMPORT_REF <span class="keywordtype">void</span> <a class="code" href="classPVLogger.html#a12">LogMsgBuffers</a>(<a class="code" href="classPVLogger.html#s1">message_id_type</a> msgID, int32 numPairs, ...);
+00606         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keywordtype">void</span> <a class="code" href="classPVLogger.html#a12">LogMsgBuffers</a>(<a class="code" href="classPVLogger.html#s1">message_id_type</a> msgID, int32 numPairs, ...);
 00607 
-00618         OSCL_IMPORT_REF <a class="code" href="classPVLogger.html#a13">PVLogger</a>(<span class="keyword">const</span> <span class="keywordtype">char</span>* inputTag, <a class="code" href="classPVLogger.html#s0">log_level_type</a> level, <span class="keywordtype">bool</span> oAppenderInheritance);
+00618         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <a class="code" href="classPVLogger.html#a13">PVLogger</a>(<span class="keyword">const</span> <span class="keywordtype">char</span>* inputTag, <a class="code" href="classPVLogger.html#s0">log_level_type</a> level, <span class="keywordtype">bool</span> oAppenderInheritance);
 00619 
 <a name="l00620"></a><a class="code" href="classPVLogger.html#a14">00620</a>         <span class="keyword">virtual</span> <a class="code" href="classPVLogger.html#a14">~PVLogger</a>()
 00621         {
@@ -405,7 +405,7 @@
 00706 
 00707 <span class="preprocessor">#endif // PVLOGGER_H_INCLUDED</span>
 </pre></div><hr size="1"><img src="pvlogo_small.jpg"><address style="align: right;"><small>OSCL API</small>
-<address style="align: left;"><small>Posting Version: CORE_7.501.1.1 </small>
+<address style="align: left;"><small>Posting Version: CORE_7.508.1.1 </small>
 </small></address>
 </body>
 </html>

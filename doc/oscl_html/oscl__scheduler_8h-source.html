@@ -49,10 +49,10 @@
 <a name="l00055"></a><a class="code" href="classOsclScheduler.html">00055</a> <span class="keyword">class </span><a class="code" href="classOsclScheduler.html">OsclScheduler</a>
 00056 {
 00057     <span class="keyword">public</span>:
-00067         OSCL_IMPORT_REF <span class="keyword">static</span> <span class="keywordtype">void</span> <a class="code" href="classOsclScheduler.html#d0">Init</a>(<span class="keyword">const</span> <span class="keywordtype">char</span> *name, <a class="code" href="classOscl__DefAlloc.html">Oscl_DefAlloc</a> *alloc = <a class="code" href="group__osclbase.html#a81">NULL</a>, <span class="keywordtype">int</span> nreserve = 20);
+00067         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keyword">static</span> <span class="keywordtype">void</span> <a class="code" href="classOsclScheduler.html#d0">Init</a>(<span class="keyword">const</span> <span class="keywordtype">char</span> *name, <a class="code" href="classOscl__DefAlloc.html">Oscl_DefAlloc</a> *alloc = <a class="code" href="group__osclbase.html#a81">NULL</a>, <span class="keywordtype">int</span> nreserve = 20);
 00068 
 00069 
-00074         OSCL_IMPORT_REF <span class="keyword">static</span> <span class="keywordtype">void</span> <a class="code" href="classOsclScheduler.html#d1">Cleanup</a>();
+00074         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keyword">static</span> <span class="keywordtype">void</span> <a class="code" href="classOsclScheduler.html#d1">Cleanup</a>();
 00075 };
 00076 
 00077 
@@ -80,19 +80,19 @@
 <a name="l00128"></a><a class="code" href="classOsclExecSchedulerCommonBase.html">00128</a> <span class="keyword">class </span><a class="code" href="classOsclExecSchedulerCommonBase.html">OsclExecSchedulerCommonBase</a>
 00129 {
 00130     <span class="keyword">public</span>:
-00140         OSCL_IMPORT_REF <span class="keywordtype">void</span> <a class="code" href="classOsclExecSchedulerCommonBase.html#a0">StartScheduler</a>(<a class="code" href="classOsclSemaphore.html">OsclSemaphore</a> *sem = <a class="code" href="group__osclbase.html#a81">NULL</a>);
+00140         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keywordtype">void</span> <a class="code" href="classOsclExecSchedulerCommonBase.html#a0">StartScheduler</a>(<a class="code" href="classOsclSemaphore.html">OsclSemaphore</a> *sem = <a class="code" href="group__osclbase.html#a81">NULL</a>);
 00141 
-00146         OSCL_IMPORT_REF <span class="keywordtype">void</span> <a class="code" href="classOsclExecSchedulerCommonBase.html#a1">StopScheduler</a>();
+00146         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keywordtype">void</span> <a class="code" href="classOsclExecSchedulerCommonBase.html#a1">StopScheduler</a>();
 00147 
-00152         OSCL_IMPORT_REF <span class="keywordtype">void</span> <a class="code" href="classOsclExecSchedulerCommonBase.html#a2">SuspendScheduler</a>();
+00152         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keywordtype">void</span> <a class="code" href="classOsclExecSchedulerCommonBase.html#a2">SuspendScheduler</a>();
 00153 
-00158         OSCL_IMPORT_REF <span class="keywordtype">void</span> <a class="code" href="classOsclExecSchedulerCommonBase.html#a3">ResumeScheduler</a>();
+00158         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keywordtype">void</span> <a class="code" href="classOsclExecSchedulerCommonBase.html#a3">ResumeScheduler</a>();
 00159 
-00165         OSCL_IMPORT_REF <span class="keywordtype">void</span> <a class="code" href="classOsclExecSchedulerCommonBase.html#a4">StartNativeScheduler</a>();
+00165         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keywordtype">void</span> <a class="code" href="classOsclExecSchedulerCommonBase.html#a4">StartNativeScheduler</a>();
 00166 
-00170         OSCL_IMPORT_REF <span class="keyword">static</span> <a class="code" href="classOsclNameString.html">OsclNameString&lt;PVSCHEDNAMELEN&gt;</a> *<a class="code" href="classOsclExecSchedulerCommonBase.html#d0">GetName</a>();
+00170         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keyword">static</span> <a class="code" href="classOsclNameString.html">OsclNameString&lt;PVSCHEDNAMELEN&gt;</a> *<a class="code" href="classOsclExecSchedulerCommonBase.html#d0">GetName</a>();
 00171 
-00175         OSCL_IMPORT_REF <span class="keyword">static</span> uint32 <a class="code" href="classOsclExecSchedulerCommonBase.html#d1">GetId</a>();
+00175         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keyword">static</span> uint32 <a class="code" href="classOsclExecSchedulerCommonBase.html#d1">GetId</a>();
 00176 
 00177 
 00178     <span class="keyword">protected</span>:
@@ -236,11 +236,11 @@
 00316         , <span class="keyword">public</span> <a class="code" href="classOsclExecSchedulerBase.html">OsclExecSchedulerBase</a>
 00317 {
 00318     <span class="keyword">public</span>:
-00323         OSCL_IMPORT_REF <span class="keyword">static</span> <a class="code" href="classOsclExecScheduler.html">OsclExecScheduler</a>* <a class="code" href="classOsclExecScheduler.html#d0">Current</a>();
+00323         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keyword">static</span> <a class="code" href="classOsclExecScheduler.html">OsclExecScheduler</a>* <a class="code" href="classOsclExecScheduler.html#d0">Current</a>();
 00324 
-00347         OSCL_IMPORT_REF <span class="keywordtype">void</span> <a class="code" href="classOsclExecScheduler.html#a0">RunSchedulerNonBlocking</a>(int32 aTargetCount, int32 &amp;aReady, uint32 &amp;aDelayMsec);
+00347         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keywordtype">void</span> <a class="code" href="classOsclExecScheduler.html#a0">RunSchedulerNonBlocking</a>(int32 aTargetCount, int32 &amp;aReady, uint32 &amp;aDelayMsec);
 00348 
-00356         OSCL_IMPORT_REF <span class="keywordtype">void</span> <a class="code" href="classOsclExecScheduler.html#a1">RegisterForCallback</a>(<a class="code" href="classOsclSchedulerObserver.html">OsclSchedulerObserver</a>* aCallback, <a class="code" href="group__osclbase.html#a25">OsclAny</a>* aCallbackContext);
+00356         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keywordtype">void</span> <a class="code" href="classOsclExecScheduler.html#a1">RegisterForCallback</a>(<a class="code" href="classOsclSchedulerObserver.html">OsclSchedulerObserver</a>* aCallback, <a class="code" href="group__osclbase.html#a25">OsclAny</a>* aCallbackContext);
 00357 
 00358 
 00359     <span class="keyword">private</span>:
@@ -269,7 +269,7 @@
 00386 <span class="preprocessor"></span>
 00387 
 </pre></div><hr size="1"><img src="pvlogo_small.jpg"><address style="align: right;"><small>OSCL API</small>
-<address style="align: left;"><small>Posting Version: CORE_7.501.1.1 </small>
+<address style="align: left;"><small>Posting Version: CORE_7.508.1.1 </small>
 </small></address>
 </body>
 </html>

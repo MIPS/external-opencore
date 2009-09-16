@@ -65,14 +65,14 @@
 00110 
 00111         } <a class="code" href="classOscl__File.html#s12">mode_type</a>;
 00112 
-00116         OSCL_IMPORT_REF <a class="code" href="classOscl__File.html#a0">Oscl_File</a>();
+00116         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <a class="code" href="classOscl__File.html#a0">Oscl_File</a>();
 00117 
-00123         OSCL_IMPORT_REF <a class="code" href="classOscl__File.html#a0">Oscl_File</a>(uint32 aCacheSize);
-00130         OSCL_IMPORT_REF <a class="code" href="classOscl__File.html#a0">Oscl_File</a>(uint32 aCacheSize, <a class="code" href="classOsclFileHandle.html">OsclFileHandle</a>* aFileHandle);
+00123         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <a class="code" href="classOscl__File.html#a0">Oscl_File</a>(uint32 aCacheSize);
+00130         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <a class="code" href="classOscl__File.html#a0">Oscl_File</a>(uint32 aCacheSize, <a class="code" href="classOsclFileHandle.html">OsclFileHandle</a>* aFileHandle);
 00131 
-00135         OSCL_IMPORT_REF <a class="code" href="classOscl__File.html#a3">~Oscl_File</a>();
+00135         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <a class="code" href="classOscl__File.html#a3">~Oscl_File</a>();
 00136 
-00146         OSCL_IMPORT_REF <span class="keywordtype">void</span> <a class="code" href="classOscl__File.html#a4">SetPVCacheSize</a>(uint32 aSize);
+00146         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keywordtype">void</span> <a class="code" href="classOscl__File.html#a4">SetPVCacheSize</a>(uint32 aSize);
 00147 
 <a name="l00151"></a><a class="code" href="classOscl__File_1_1OsclFixedCacheParam.html">00151</a>         <span class="keyword">class </span><a class="code" href="classOscl__File_1_1OsclFixedCacheParam.html">OsclFixedCacheParam</a>
 00152         {
@@ -112,7 +112,7 @@
 00203             iCacheObserver = aObs;
 00204         }
 00205 
-00216         OSCL_IMPORT_REF <span class="keywordtype">void</span> <a class="code" href="classOscl__File.html#a8">SetNativeAccessMode</a>(uint32 aMode);
+00216         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keywordtype">void</span> <a class="code" href="classOscl__File.html#a8">SetNativeAccessMode</a>(uint32 aMode);
 00217 
 <a name="l00221"></a><a class="code" href="classOscl__File.html#s13">00221</a>         <span class="keyword">enum</span> <a class="code" href="classOscl__File.html#s13">TSymbianAccessMode</a>
 00222         {
@@ -120,52 +120,52 @@
 00224             , <a class="code" href="classOscl__File.html#s13s10">ESymbianAccessMode_RfileBuf</a> = 1
 00225         };
 00226 
-00241         OSCL_IMPORT_REF <span class="keywordtype">void</span> <a class="code" href="classOscl__File.html#a9">SetNativeBufferSize</a>(int32 aSize);
+00241         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keywordtype">void</span> <a class="code" href="classOscl__File.html#a9">SetNativeBufferSize</a>(int32 aSize);
 00242 
-00256         OSCL_IMPORT_REF <span class="keywordtype">void</span> <a class="code" href="classOscl__File.html#a10">SetAsyncReadBufferSize</a>(uint32 aSize);
+00256         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keywordtype">void</span> <a class="code" href="classOscl__File.html#a10">SetAsyncReadBufferSize</a>(uint32 aSize);
 00257 
-00280         OSCL_IMPORT_REF int32 <a class="code" href="classOscl__File.html#a11">SetFileHandle</a>(<a class="code" href="classOsclFileHandle.html">OsclFileHandle</a>* aHandle);
+00280         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> int32 <a class="code" href="classOscl__File.html#a11">SetFileHandle</a>(<a class="code" href="classOsclFileHandle.html">OsclFileHandle</a>* aHandle);
 00281 
-00295         OSCL_IMPORT_REF int32 <a class="code" href="classOscl__File.html#a12">Open</a>(<span class="keyword">const</span> <span class="keywordtype">char</span> *filename, uint32 mode, <a class="code" href="classOscl__FileServer.html">Oscl_FileServer</a>&amp; fileserv);
+00295         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> int32 <a class="code" href="classOscl__File.html#a12">Open</a>(<span class="keyword">const</span> <span class="keywordtype">char</span> *filename, uint32 mode, <a class="code" href="classOscl__FileServer.html">Oscl_FileServer</a>&amp; fileserv);
 00296 
-00309         OSCL_IMPORT_REF int32 <a class="code" href="classOscl__File.html#a12">Open</a>(<span class="keyword">const</span> <a class="code" href="group__osclbase.html#a32">oscl_wchar</a> *filename, uint32 mode, <a class="code" href="classOscl__FileServer.html">Oscl_FileServer</a>&amp; fileserv);
+00309         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> int32 <a class="code" href="classOscl__File.html#a12">Open</a>(<span class="keyword">const</span> <a class="code" href="group__osclbase.html#a32">oscl_wchar</a> *filename, uint32 mode, <a class="code" href="classOscl__FileServer.html">Oscl_FileServer</a>&amp; fileserv);
 00310 
-00327         OSCL_IMPORT_REF uint32 <a class="code" href="classOscl__File.html#a14">Read</a>(<a class="code" href="group__osclbase.html#a25">OsclAny</a> *buffer,
+00327         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> uint32 <a class="code" href="classOscl__File.html#a14">Read</a>(<a class="code" href="group__osclbase.html#a25">OsclAny</a> *buffer,
 00328                                     uint32 size,
 00329                                     uint32 numelements);
 00330 
-00342         OSCL_IMPORT_REF uint32 <a class="code" href="classOscl__File.html#a15">Write</a>(<span class="keyword">const</span> <a class="code" href="group__osclbase.html#a25">OsclAny</a> *buffer,
+00342         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> uint32 <a class="code" href="classOscl__File.html#a15">Write</a>(<span class="keyword">const</span> <a class="code" href="group__osclbase.html#a25">OsclAny</a> *buffer,
 00343                                      uint32 size,
 00344                                      uint32 numelements);
 00345 
 00346 
-00356         OSCL_IMPORT_REF int32 <a class="code" href="classOscl__File.html#a16">Seek</a>(<a class="code" href="osclconfig__io_8h.html#a50">TOsclFileOffset</a> offset,
+00356         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> int32 <a class="code" href="classOscl__File.html#a16">Seek</a>(<a class="code" href="osclconfig__io_8h.html#a50">TOsclFileOffset</a> offset,
 00357                                    <a class="code" href="classOscl__File.html#s11">seek_type</a> origin);
 00358 
-00363         OSCL_IMPORT_REF <a class="code" href="osclconfig__io_8h.html#a50">TOsclFileOffset</a> <a class="code" href="classOscl__File.html#a17">Tell</a>();
+00363         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <a class="code" href="osclconfig__io_8h.html#a50">TOsclFileOffset</a> <a class="code" href="classOscl__File.html#a17">Tell</a>();
 00364 
 00365 
-00376         OSCL_IMPORT_REF int32 <a class="code" href="classOscl__File.html#a18">Close</a>();
+00376         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> int32 <a class="code" href="classOscl__File.html#a18">Close</a>();
 00377 
 00378 
-00386         OSCL_IMPORT_REF int32 <a class="code" href="classOscl__File.html#a19">Flush</a>();
+00386         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> int32 <a class="code" href="classOscl__File.html#a19">Flush</a>();
 00387 
 00388 
-00396         OSCL_IMPORT_REF int32 <a class="code" href="classOscl__File.html#a20">EndOfFile</a>();
+00396         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> int32 <a class="code" href="classOscl__File.html#a20">EndOfFile</a>();
 00397 
 00398 
-00406         OSCL_IMPORT_REF int32 <a class="code" href="classOscl__File.html#a21">GetError</a>();
+00406         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> int32 <a class="code" href="classOscl__File.html#a21">GetError</a>();
 00407 
 <a name="l00413"></a><a class="code" href="classOscl__File.html#a22">00413</a>         <a class="code" href="classOsclFileHandle.html">OsclFileHandle</a>* <a class="code" href="classOscl__File.html#a22">Handle</a>()
 00414         {
 00415             <span class="keywordflow">return</span> iOpenFileHandle;
 00416         }
 00417 
-00423         OSCL_IMPORT_REF <a class="code" href="osclconfig__io_8h.html#a50">TOsclFileOffset</a> <a class="code" href="classOscl__File.html#a23">Size</a>();
+00423         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <a class="code" href="osclconfig__io_8h.html#a50">TOsclFileOffset</a> <a class="code" href="classOscl__File.html#a23">Size</a>();
 00424 
-00433         OSCL_IMPORT_REF <span class="keywordtype">void</span> <a class="code" href="classOscl__File.html#a24">SetLoggingEnable</a>(<span class="keywordtype">bool</span> aEnable);
+00433         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keywordtype">void</span> <a class="code" href="classOscl__File.html#a24">SetLoggingEnable</a>(<span class="keywordtype">bool</span> aEnable);
 00434 
-00442         OSCL_IMPORT_REF <span class="keywordtype">void</span> <a class="code" href="classOscl__File.html#a25">SetSummaryStatsLoggingEnable</a>(<span class="keywordtype">bool</span> aEnable);
+00442         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keywordtype">void</span> <a class="code" href="classOscl__File.html#a25">SetSummaryStatsLoggingEnable</a>(<span class="keywordtype">bool</span> aEnable);
 00443 
 00444 
 00445     <span class="keyword">private</span>:
@@ -237,8 +237,8 @@
 00511         int32 CallNativeClose();
 00512         uint32 CallNativeMode();
 00513         int32 CallNativeGetError();
-00514         OSCL_IMPORT_REF uint32 GetAsyncFileNumOfRun();
-00515         OSCL_IMPORT_REF uint32 GetAsyncFileNumOfRunError();
+00514         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> uint32 GetAsyncFileNumOfRun();
+00515         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> uint32 GetAsyncFileNumOfRunError();
 00516 
 00517 };
 00518 
@@ -252,7 +252,7 @@
 00526 <span class="preprocessor">#endif // OSCL_FILE_IO_H_INCLUDED</span>
 00527 <span class="preprocessor"></span>
 </pre></div><hr size="1"><img src="pvlogo_small.jpg"><address style="align: right;"><small>OSCL API</small>
-<address style="align: left;"><small>Posting Version: CORE_7.501.1.1 </small>
+<address style="align: left;"><small>Posting Version: CORE_7.508.1.1 </small>
 </small></address>
 </body>
 </html>

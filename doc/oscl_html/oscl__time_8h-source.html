@@ -39,8 +39,8 @@
 00045 
 00046 <span class="keyword">class </span><a class="code" href="classTimeValue.html">TimeValue</a>;  <span class="comment">// Forward definition</span>
 00047 
-00048 OSCL_IMPORT_REF <span class="keywordtype">void</span> <a class="code" href="group__osclbase.html#a75">PV8601ToRFC822</a>(<a class="code" href="group__osclbase.html#a3">PV8601timeStrBuf</a> pv8601_buffer, <a class="code" href="group__osclbase.html#a2">CtimeStrBuf</a> ctime_buffer);
-00049 OSCL_IMPORT_REF <span class="keywordtype">void</span> <a class="code" href="group__osclbase.html#a76">RFC822ToPV8601</a>(<a class="code" href="group__osclbase.html#a2">CtimeStrBuf</a> ctime_buffer, <a class="code" href="group__osclbase.html#a3">PV8601timeStrBuf</a>);
+00048 <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keywordtype">void</span> <a class="code" href="group__osclbase.html#a75">PV8601ToRFC822</a>(<a class="code" href="group__osclbase.html#a3">PV8601timeStrBuf</a> pv8601_buffer, <a class="code" href="group__osclbase.html#a2">CtimeStrBuf</a> ctime_buffer);
+00049 <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keywordtype">void</span> <a class="code" href="group__osclbase.html#a76">RFC822ToPV8601</a>(<a class="code" href="group__osclbase.html#a2">CtimeStrBuf</a> ctime_buffer, <a class="code" href="group__osclbase.html#a3">PV8601timeStrBuf</a>);
 00050 
 00051 <span class="comment">// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -</span>
 <a name="l00053"></a><a class="code" href="group__osclbase.html#a107">00053</a> <span class="comment">typedef enum { SECONDS = 0, MILLISECONDS = 1, MICROSECONDS = 2 } TimeUnits;</span>
@@ -107,7 +107,7 @@
 00150 
 00152         <a class="code" href="group__osclbase.html#a84">OSCL_COND_IMPORT_REF</a> <a class="code" href="group__osclbase.html#a31">uint64</a> <a class="code" href="classNTPTime.html#a15">get_value</a>() <span class="keyword">const</span>;
 00153 
-00155         OSCL_IMPORT_REF <span class="keywordtype">int</span> <a class="code" href="classNTPTime.html#a16">set_to_current_time</a>();
+00155         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keywordtype">int</span> <a class="code" href="classNTPTime.html#a16">set_to_current_time</a>();
 00156 
 00157 };
 00158 
@@ -152,13 +152,13 @@
 00241         <a class="code" href="group__osclbase.html#a84">OSCL_COND_IMPORT_REF</a> uint32 <a class="code" href="classTimeValue.html#a11">get_usec</a>() <span class="keyword">const</span> ;
 00242 
 00244 
-00249         OSCL_IMPORT_REF <span class="keywordtype">char</span> *<a class="code" href="classTimeValue.html#a12">get_str_ctime</a>(<a class="code" href="group__osclbase.html#a2">CtimeStrBuf</a> ctime_strbuf);
+00249         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keywordtype">char</span> *<a class="code" href="classTimeValue.html#a12">get_str_ctime</a>(<a class="code" href="group__osclbase.html#a2">CtimeStrBuf</a> ctime_strbuf);
 00250 
 00252 
-00256         OSCL_IMPORT_REF <span class="keywordtype">int</span> <a class="code" href="classTimeValue.html#a13">get_pv8601_str_time</a>(<a class="code" href="group__osclbase.html#a3">PV8601timeStrBuf</a> time_strbuf);
+00256         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keywordtype">int</span> <a class="code" href="classTimeValue.html#a13">get_pv8601_str_time</a>(<a class="code" href="group__osclbase.html#a3">PV8601timeStrBuf</a> time_strbuf);
 00257 
 00259 
-00265         OSCL_IMPORT_REF <span class="keywordtype">char</span> *<a class="code" href="classTimeValue.html#a14">get_rfc822_gmtime_str</a>(<span class="keywordtype">int</span> max_time_strlen,
+00265         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keywordtype">char</span> *<a class="code" href="classTimeValue.html#a14">get_rfc822_gmtime_str</a>(<span class="keywordtype">int</span> max_time_strlen,
 00266                 <span class="keywordtype">char</span> *time_str);
 00267 
 00269         <a class="code" href="group__osclbase.html#a84">OSCL_COND_IMPORT_REF</a> <span class="keywordtype">bool</span> <a class="code" href="classTimeValue.html#a15">is_zero</a>();
@@ -202,7 +202,7 @@
 00311 
 00315 <span class="preprocessor">#endif // OSCL_TIME_H_INCLUDED</span>
 </pre></div><hr size="1"><img src="pvlogo_small.jpg"><address style="align: right;"><small>OSCL API</small>
-<address style="align: left;"><small>Posting Version: CORE_7.501.1.1 </small>
+<address style="align: left;"><small>Posting Version: CORE_7.508.1.1 </small>
 </small></address>
 </body>
 </html>
