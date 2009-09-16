@@ -236,8 +236,8 @@ OSCL_EXPORT_REF int32 pvProgressiveStreamingOutput::flushData(const uint32 aOutp
     LOGINFODATAPATH((0, "pvProgressiveStreamingOutput::flushData: iOutputFramesQueue size [%d]", iOutputFramesQueue.size()));
     while (!iOutputFramesQueue.empty())
     {
-        int32 res = writeToDataStream(iOutputFramesQueue[0], iPendingOutputDataQueue);
-        if (-1 == res) return PROCESS_OUTPUT_TO_DATA_STREAM_FAILURE; // This is the error case.
+        uint32 res = writeToDataStream(iOutputFramesQueue[0], iPendingOutputDataQueue);
+        if (0xFFFFFFFF == res) return PROCESS_OUTPUT_TO_DATA_STREAM_FAILURE; // This is the error case.
         else if (0 == res) break; //This is not the error case. Just we didn't have enough space to write. No need to error out. Just break.
         LOGINFODATAPATH((0, "pvProgressiveStreamingOutput::flushData: Erasing form iOutputFramesQueue"));
         iOutputFramesQueue.erase(iOutputFramesQueue.begin());
@@ -245,7 +245,7 @@ OSCL_EXPORT_REF int32 pvProgressiveStreamingOutput::flushData(const uint32 aOutp
     return PROCESS_SUCCESS;
 }
 
-int32 pvProgressiveStreamingOutput::writeToDataStream(OUTPUT_DATA_QUEUE &aOutputQueue, PENDING_OUTPUT_DATA_QUEUE &aPendingOutputQueue)
+uint32 pvProgressiveStreamingOutput::writeToDataStream(OUTPUT_DATA_QUEUE &aOutputQueue, PENDING_OUTPUT_DATA_QUEUE &aPendingOutputQueue)
 {
     uint32 totalFragSize = 0;
 
@@ -269,11 +269,11 @@ int32 pvProgressiveStreamingOutput::writeToDataStream(OUTPUT_DATA_QUEUE &aOutput
         }
         else if (PVDS_NO_MEMORY == status)
         {
-            break;
+            return 0;
         }
         else
         {
-            return -1;
+            return 0xFFFFFFFF;
         }
     }
     LOGINFODATAPATH((0, "pvProgressiveStreamingOutput::writeToDataStream() SIZE= %d , SEQNUM=%d", totalFragSize, iCounter++));

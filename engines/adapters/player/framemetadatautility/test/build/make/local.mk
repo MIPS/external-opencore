@@ -30,6 +30,7 @@ LIBS :=  pvframemetadatautility \
         pvmp3ffparsernode \
         mp3decnode \
         pvdownloadmanagernode \
+        pvdtcp_mbds_lib \
         pvmp4ffparsernode \
 	pvflvffparsernode \
         cpm \

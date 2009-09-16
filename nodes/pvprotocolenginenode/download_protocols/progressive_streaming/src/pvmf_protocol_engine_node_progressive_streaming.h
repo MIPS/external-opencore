@@ -110,7 +110,7 @@ class pvProgressiveStreamingOutput : public pvHttpDownloadOutput,
         OSCL_IMPORT_REF int32 openDataStream(OsclAny* aInitInfo);
         // write data to data stream object
         // return~0=0xffffffff for error.
-        int32 writeToDataStream(OUTPUT_DATA_QUEUE &aOutputQueue, PENDING_OUTPUT_DATA_QUEUE &aPendingOutputQueue);
+        uint32 writeToDataStream(OUTPUT_DATA_QUEUE &aOutputQueue, PENDING_OUTPUT_DATA_QUEUE &aPendingOutputQueue);
 
     protected:
         PvmiDataStreamRequestObserver* iSourceRequestObserver;
