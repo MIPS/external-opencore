@@ -26,10 +26,6 @@
 #include "sdp_info.h"
 #endif
 
-#ifndef PVMF_STREAMING_REAL_INTERFACES_INCLUDED
-#include "pvmf_streaming_real_interfaces.h"
-#endif
-
 #ifndef PAYLOAD_PARSER_H_INCLUDED
 #include "payload_parser.h"
 #endif
@@ -41,6 +37,7 @@
 #ifndef PVMF_JITTER_BUFFER_PORT_H_INCLUDED
 #include "pvmf_jitter_buffer_port.h"
 #endif
+
 /**
  * Macros for calling PVLogger
  */

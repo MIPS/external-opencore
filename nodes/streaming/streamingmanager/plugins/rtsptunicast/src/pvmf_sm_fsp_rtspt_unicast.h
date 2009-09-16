@@ -26,10 +26,6 @@
 #include "sdp_info.h"
 #endif
 
-#ifndef PVMF_STREAMING_REAL_INTERFACES_INCLUDED
-#include "pvmf_streaming_real_interfaces.h"
-#endif
-
 #ifndef PAYLOAD_PARSER_H_INCLUDED
 #include "payload_parser.h"
 #endif
@@ -42,9 +38,6 @@
 #include "rm_media_info.h"
 #endif
 
-#ifndef PVMF_SM_CONFIG_H_INCLUDED
-#include "pvmf_sm_config.h"
-#endif
 /**
  * Macros for calling PVLogger
  */
@@ -191,165 +184,164 @@ class PVMFSMRTSPTUnicastNode: public PVMFSMFSPBaseNode
 {
     public:
         static PVMFSMRTSPTUnicastNode* New(int32 aPriority);
-        virtual ~PVMFSMRTSPTUnicastNode();
+        OSCL_IMPORT_REF virtual ~PVMFSMRTSPTUnicastNode();
 
 
         //Function to handle command completion from child nodes
         /* From PVMFNodeCmdStatusObserver */
-        virtual void NodeCommandCompleted(const PVMFCmdResp& aResponse);
+        OSCL_IMPORT_REF virtual void NodeCommandCompleted(const PVMFCmdResp& aResponse);
 
         /* From PVMFDataSourceInitializationExtensionInterface */
-        virtual PVMFStatus SetSourceInitializationData(OSCL_wString& aSourceURL,
+        OSCL_IMPORT_REF virtual PVMFStatus SetSourceInitializationData(OSCL_wString& aSourceURL,
                 PVMFFormatType& aSourceFormat,
                 OsclAny* aSourceData,
                 PVMFFormatTypeDRMInfo aType = PVMF_FORMAT_TYPE_CONNECT_DRM_INFO_UNKNOWN);
-        virtual PVMFStatus SetClientPlayBackClock(PVMFMediaClock* aClientClock);
-        virtual PVMFStatus SetEstimatedServerClock(PVMFMediaClock* aClientClock);
+        OSCL_IMPORT_REF virtual PVMFStatus SetClientPlayBackClock(PVMFMediaClock* aClientClock);
+        OSCL_IMPORT_REF virtual PVMFStatus SetEstimatedServerClock(PVMFMediaClock* aClientClock);
 
         /* From PVMFTrackSelectionExtensionInterface */
-        virtual PVMFStatus GetMediaPresentationInfo(PVMFMediaPresentationInfo& aInfo);
-        virtual PVMFStatus SelectTracks(PVMFMediaPresentationInfo& aInfo);
+        OSCL_IMPORT_REF virtual PVMFStatus GetMediaPresentationInfo(PVMFMediaPresentationInfo& aInfo);
+        OSCL_IMPORT_REF virtual PVMFStatus SelectTracks(PVMFMediaPresentationInfo& aInfo);
 
         /* From PVMFMetadataExtensionInterface */
-        virtual uint32 GetNumMetadataKeys(char* aQueryKeyString = NULL);
-        virtual uint32 GetNumMetadataValues(PVMFMetadataList& aKeyList);
-        PVMFCommandId DoGetMetadataKeys(PVMFSMFSPBaseNodeCommand& aCmd);
-        PVMFCommandId DoGetMetadataValues(PVMFSMFSPBaseNodeCommand& aCmd);
-        virtual PVMFStatus ReleaseNodeMetadataKeys(PVMFMetadataList& aKeyList,
+        OSCL_IMPORT_REF virtual uint32 GetNumMetadataKeys(char* aQueryKeyString = NULL);
+        OSCL_IMPORT_REF virtual uint32 GetNumMetadataValues(PVMFMetadataList& aKeyList);
+        OSCL_IMPORT_REF PVMFCommandId DoGetMetadataKeys(PVMFSMFSPBaseNodeCommand& aCmd);
+        OSCL_IMPORT_REF PVMFCommandId DoGetMetadataValues(PVMFSMFSPBaseNodeCommand& aCmd);
+        OSCL_IMPORT_REF virtual PVMFStatus ReleaseNodeMetadataKeys(PVMFMetadataList& aKeyList,
                 uint32 aStartingKeyIndex,
                 uint32 aEndKeyIndex);
-        virtual PVMFStatus ReleaseNodeMetadataValues(Oscl_Vector<PvmiKvp, OsclMemAllocator>& aValueList,
+        OSCL_IMPORT_REF virtual PVMFStatus ReleaseNodeMetadataValues(Oscl_Vector<PvmiKvp, OsclMemAllocator>& aValueList,
                 uint32 aStartingValueIndex,
                 uint32 aEndValueIndex);
 
 
-        virtual void setObserver(PvmiConfigAndCapabilityCmdObserver* aObserver);
-        virtual PVMFStatus getParametersSync(PvmiMIOSession aSession,
-                                             PvmiKeyType aIdentifier,
-                                             PvmiKvp*& aParameters,
-                                             int& aNumParamElements,
-                                             PvmiCapabilityContext aContext);
-        virtual PVMFStatus releaseParameters(PvmiMIOSession aSession,
-                                             PvmiKvp* aParameters,
-                                             int num_elements);
+        OSCL_IMPORT_REF virtual void setObserver(PvmiConfigAndCapabilityCmdObserver* aObserver);
+        OSCL_IMPORT_REF virtual PVMFStatus getParametersSync(PvmiMIOSession aSession,
+                PvmiKeyType aIdentifier,
+                PvmiKvp*& aParameters,
+                int& aNumParamElements,
+                PvmiCapabilityContext aContext);
+        OSCL_IMPORT_REF virtual PVMFStatus releaseParameters(PvmiMIOSession aSession,
+                PvmiKvp* aParameters,
+                int num_elements);
 
-        virtual void setParametersSync(PvmiMIOSession aSession, PvmiKvp* aParameters,
-                                       int num_elements, PvmiKvp * & aRet_kvp);
-        virtual PVMFStatus verifyParametersSync(PvmiMIOSession aSession,
-                                                PvmiKvp* aParameters,
-                                                int num_elements);
+        OSCL_IMPORT_REF virtual void setParametersSync(PvmiMIOSession aSession, PvmiKvp* aParameters,
+                int num_elements, PvmiKvp * & aRet_kvp);
+        OSCL_IMPORT_REF virtual PVMFStatus verifyParametersSync(PvmiMIOSession aSession,
+                PvmiKvp* aParameters,
+                int num_elements);
         /**/
-        virtual void HandleNodeInformationalEvent(const PVMFAsyncEvent& aEvent);
-        PVMFStatus ComputeSkipTimeStamp(PVMFTimestamp aTargetNPT,
-                                        PVMFTimestamp aActualNPT,
-                                        PVMFTimestamp aActualMediaDataTS,
-                                        PVMFTimestamp& aSkipTimeStamp,
-                                        PVMFTimestamp& aStartNPT);
-    private:
-        PVMFSMRTSPTUnicastNode(int32 aPriority);
-        void Construct();
-        void CreateCommandQueues();
-        void CreateChildNodes();
-        void DestroyChildNodes();
-        void CleanUp();
+        OSCL_IMPORT_REF virtual void HandleNodeInformationalEvent(const PVMFAsyncEvent& aEvent);
+        OSCL_IMPORT_REF PVMFStatus ComputeSkipTimeStamp(PVMFTimestamp aTargetNPT,
+                PVMFTimestamp aActualNPT,
+                PVMFTimestamp aActualMediaDataTS,
+                PVMFTimestamp& aSkipTimeStamp,
+                PVMFTimestamp& aStartNPT);
+    protected:
+        OSCL_IMPORT_REF PVMFSMRTSPTUnicastNode(int32 aPriority);
+        OSCL_IMPORT_REF void Construct();
+        OSCL_IMPORT_REF void CreateCommandQueues();
+        OSCL_IMPORT_REF void CreateChildNodes();
+        OSCL_IMPORT_REF void DestroyChildNodes();
+        OSCL_IMPORT_REF void CleanUp();
 
-        virtual bool ProcessCommand(PVMFSMFSPBaseNodeCommand&);
+        OSCL_IMPORT_REF virtual bool ProcessCommand(PVMFSMFSPBaseNodeCommand&);
 
         //Functions to service commands queued up in input command Q by base class
         //node commands
-        void DoQueryInterface(PVMFSMFSPBaseNodeCommand&);
-        void DoRequestPort(PVMFSMFSPBaseNodeCommand&);
-        void DoReleasePort(PVMFSMFSPBaseNodeCommand&);
-        void DoInit(PVMFSMFSPBaseNodeCommand&);
-        void DoPrepare(PVMFSMFSPBaseNodeCommand&);
-        void DoStart(PVMFSMFSPBaseNodeCommand&);
-        void DoStop(PVMFSMFSPBaseNodeCommand&);
-        void DoPause(PVMFSMFSPBaseNodeCommand&);
+        OSCL_IMPORT_REF void DoQueryInterface(PVMFSMFSPBaseNodeCommand&);
+        OSCL_IMPORT_REF void DoRequestPort(PVMFSMFSPBaseNodeCommand&);
+        OSCL_IMPORT_REF void DoReleasePort(PVMFSMFSPBaseNodeCommand&);
+        OSCL_IMPORT_REF void DoInit(PVMFSMFSPBaseNodeCommand&);
+        OSCL_IMPORT_REF void DoPrepare(PVMFSMFSPBaseNodeCommand&);
+        OSCL_IMPORT_REF void DoStart(PVMFSMFSPBaseNodeCommand&);
+        OSCL_IMPORT_REF void DoStop(PVMFSMFSPBaseNodeCommand&);
+        OSCL_IMPORT_REF void DoPause(PVMFSMFSPBaseNodeCommand&);
 
 
-        void DoSetDataSourcePosition(PVMFSMFSPBaseNodeCommand&);
-        void DoSetDataSourcePositionPlayList(PVMFSMFSPBaseNodeCommand&);
-        void DoQueryDataSourcePosition(PVMFSMFSPBaseNodeCommand&);
+        OSCL_IMPORT_REF void DoSetDataSourcePosition(PVMFSMFSPBaseNodeCommand&);
+        OSCL_IMPORT_REF void DoSetDataSourcePositionPlayList(PVMFSMFSPBaseNodeCommand&);
+        OSCL_IMPORT_REF void DoQueryDataSourcePosition(PVMFSMFSPBaseNodeCommand&);
 
 
-        bool CompleteFeedBackPortsSetup();
-        bool SendSessionControlPrepareCompleteParams();
-        bool SendSessionControlStartCompleteParams();
+        OSCL_IMPORT_REF bool CompleteFeedBackPortsSetup();
+        OSCL_IMPORT_REF bool SendSessionControlPrepareCompleteParams();
+        OSCL_IMPORT_REF bool SendSessionControlStartCompleteParams();
 
-        void GetActualMediaTSAfterSeek();
+        OSCL_IMPORT_REF void GetActualMediaTSAfterSeek();
 
-        void ResetStopCompleteParams();
+        OSCL_IMPORT_REF void ResetStopCompleteParams();
 
-        void QueryChildNodesExtentionInterface();
+        OSCL_IMPORT_REF void QueryChildNodesExtentionInterface();
 
         //RequestPort
-        PVMFRTSPTTrackInfo* FindTrackInfo(uint32 tag);
+        OSCL_IMPORT_REF PVMFRTSPTTrackInfo* FindTrackInfo(uint32 tag);
 
         //Init
-        PVMFStatus DoPreInit(PVMFSMFSPBaseNodeCommand& aCmd);
-        PVMFStatus ProcessSDP();
-        PVMFStatus PopulateAvailableMetadataKeys();
+        OSCL_IMPORT_REF PVMFStatus DoPreInit(PVMFSMFSPBaseNodeCommand& aCmd);
+        OSCL_IMPORT_REF PVMFStatus ProcessSDP();
+        OSCL_IMPORT_REF PVMFStatus PopulateAvailableMetadataKeys();
         virtual bool RequestUsageComplete()
         {
             return true;
         }
 
         //Graph Construction
-        PVMFStatus DoGraphConstruct();
-        bool GraphConnect();
-        bool RequestRTSPNodePorts(int32, uint32&);
-        bool RequestJitterBufferPorts(int32 portType, uint32 &numPortsRequested);
-        bool SendSessionSourceInfoToSessionController();
-        bool PopulateTrackInfoVec();
-        PVMFStatus ConnectPortPairs(PVMFPortInterface* aPort1, PVMFPortInterface* aPort2);
-        bool ConstructGraphFor3GPPTCPStreaming();
-        void CompleteGraphConstruct();
-        PVMFStatus  InitMetaData();
-        virtual void PopulateDRMInfo();
+        OSCL_IMPORT_REF PVMFStatus DoGraphConstruct();
+        OSCL_IMPORT_REF bool GraphConnect();
+        OSCL_IMPORT_REF bool RequestRTSPNodePorts(int32, uint32&);
+        OSCL_IMPORT_REF bool RequestJitterBufferPorts(int32 portType, uint32 &numPortsRequested);
+        OSCL_IMPORT_REF bool SendSessionSourceInfoToSessionController();
+        OSCL_IMPORT_REF bool PopulateTrackInfoVec();
+        OSCL_IMPORT_REF PVMFStatus ConnectPortPairs(PVMFPortInterface* aPort1, PVMFPortInterface* aPort2);
+        OSCL_IMPORT_REF bool ConstructGraphFor3GPPTCPStreaming();
+        OSCL_IMPORT_REF void CompleteGraphConstruct();
+        OSCL_IMPORT_REF PVMFStatus  InitMetaData();
+        OSCL_IMPORT_REF virtual void PopulateDRMInfo();
 
-        void DoSetDataSourcePosition();
-        bool DoRepositioningPause3GPPStreaming();
-        PVMFStatus DoRepositioningStart3GPPStreaming();
-        bool DoRepositioningStart3GPPPlayListStreamingDuringPlay();
-        bool DoRepositioningStart3GPPPlayListStreaming();
+        OSCL_IMPORT_REF void DoSetDataSourcePosition();
+        OSCL_IMPORT_REF bool DoRepositioningPause3GPPStreaming();
+        OSCL_IMPORT_REF PVMFStatus DoRepositioningStart3GPPStreaming();
+        OSCL_IMPORT_REF bool DoRepositioningStart3GPPPlayListStreamingDuringPlay();
+        OSCL_IMPORT_REF bool DoRepositioningStart3GPPPlayListStreaming();
 
 
-        PVMFStatus SetRTSPPlaybackRange();
-        bool CanPerformRepositioning(bool aRandAccessDenied);
+        OSCL_IMPORT_REF PVMFStatus SetRTSPPlaybackRange();
+        OSCL_IMPORT_REF bool CanPerformRepositioning(bool aRandAccessDenied);
 
-        void HandleChildNodeCommandCompletion(const PVMFCmdResp& , bool&);
+        OSCL_IMPORT_REF void HandleChildNodeCommandCompletion(const PVMFCmdResp& , bool&);
 
-        void CompleteInit();
-        bool CheckChildrenNodesInit();
+        OSCL_IMPORT_REF void CompleteInit();
+        OSCL_IMPORT_REF bool CheckChildrenNodesInit();
 
-        void CompletePrepare();
-        bool CheckChildrenNodesPrepare();
+        OSCL_IMPORT_REF void CompletePrepare();
+        OSCL_IMPORT_REF bool CheckChildrenNodesPrepare();
 
-        void CompleteStart();
-        bool CheckChildrenNodesStart();
+        OSCL_IMPORT_REF void CompleteStart();
+        OSCL_IMPORT_REF bool CheckChildrenNodesStart();
 
-        void CompleteStop();
-        bool CheckChildrenNodesStop();
+        OSCL_IMPORT_REF void CompleteStop();
+        OSCL_IMPORT_REF bool CheckChildrenNodesStop();
 
-        void CompletePause();
-        bool CheckChildrenNodesPause();
+        OSCL_IMPORT_REF void CompletePause();
+        OSCL_IMPORT_REF bool CheckChildrenNodesPause();
 
         //For parsing the possible payloads received by streaming protocols
-        void PopulatePayloadParserRegistry();
-        void DestroyPayloadParserRegistry();
+        OSCL_IMPORT_REF void PopulatePayloadParserRegistry();
+        OSCL_IMPORT_REF void DestroyPayloadParserRegistry();
 
-        void CreateRealStreamingObjects();
-        void HandleSocketNodeCommandCompleted(const PVMFCmdResp&, bool& aPerformErrHandling);
-        void HandleRTSPSessionControllerCommandCompleted(const PVMFCmdResp&, bool& aPerformErrHandling);
-        void HandleJitterBufferCommandCompleted(const PVMFCmdResp&, bool& aPerformErrHandling);
-        PVMFStatus GetConfigParameter(PvmiKvp*& aParameters, int& aNumParamElements,
-                                      int32 aIndex, PvmiKvpAttr reqattr);
-        PVMFStatus VerifyAndSetConfigParameter(int index, PvmiKvp& aParameter, bool set);
-        void setJitterBufferDurationInMilliSeconds(uint32 duration);
-        bool IsFSPInternalCmd(PVMFCommandId aId);
-        void addRef();
-        void removeRef();
-        void ResetNodeParams(bool aReleaseMemmory = true);
+        OSCL_IMPORT_REF void HandleSocketNodeCommandCompleted(const PVMFCmdResp&, bool& aPerformErrHandling);
+        OSCL_IMPORT_REF void HandleRTSPSessionControllerCommandCompleted(const PVMFCmdResp&, bool& aPerformErrHandling);
+        OSCL_IMPORT_REF void HandleJitterBufferCommandCompleted(const PVMFCmdResp&, bool& aPerformErrHandling);
+        OSCL_IMPORT_REF PVMFStatus GetConfigParameter(PvmiKvp*& aParameters, int& aNumParamElements,
+                int32 aIndex, PvmiKvpAttr reqattr);
+        OSCL_IMPORT_REF PVMFStatus VerifyAndSetConfigParameter(int index, PvmiKvp& aParameter, bool set);
+        OSCL_IMPORT_REF void setJitterBufferDurationInMilliSeconds(uint32 duration);
+        OSCL_IMPORT_REF bool IsFSPInternalCmd(PVMFCommandId aId);
+        OSCL_IMPORT_REF void addRef();
+        OSCL_IMPORT_REF void removeRef();
+        OSCL_IMPORT_REF void ResetNodeParams(bool aReleaseMemmory = true);
         uint32 iJitterBufferDurationInMilliSeconds;
         bool ibRdtTransport;
         PVMFMediaPresentationInfo iCompleteMediaPresetationInfo;

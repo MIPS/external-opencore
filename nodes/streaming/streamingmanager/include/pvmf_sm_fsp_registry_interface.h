@@ -38,8 +38,8 @@
 #include "pvmf_format_type.h"
 #endif
 
-#ifndef PVMF_SM_FSP_BASE_IMPL_H
-#include "pvmf_sm_fsp_base_impl.h"
+#ifndef PVMF_RETURN_CODES_H_INCLUDED
+#include "pvmf_return_codes.h"
 #endif
 
 #ifndef PV_UUID_H_INCLUDED
@@ -51,11 +51,9 @@
 #endif
 
 
-#define PVMF_MIME_DATA_SOURCE_RTSP_TUNNELLING       "X-PVMF-DATA-SRC-RTSP-TUNNELLING"
-
 // FORWARD DECLARATION
 class OsclSharedLibrary;
-
+class PVMFSMFSPBaseNode;
 
 // CLASS DECLARATION
 /**
@@ -69,11 +67,8 @@ class PVMFSMFSPInfo
          **/
         PVMFSMFSPInfo()
         {
-#ifdef USE_LOADABLE_MODULES
-            iSharedLibrary    = NULL;
             iSMFSPCreateFunc  = NULL;
             iSMFSPReleaseFunc = NULL;
-#endif
         }
 
         /**
@@ -85,7 +80,6 @@ class PVMFSMFSPInfo
             iSMFSPCreateFunc = aInfo.iSMFSPCreateFunc;
             iSMFSPReleaseFunc = aInfo.iSMFSPReleaseFunc;
             iSourceFormatTypes = aInfo.iSourceFormatTypes;
-            iSharedLibrary = aInfo.iSharedLibrary;
         }
 
         /**
@@ -99,7 +93,6 @@ class PVMFSMFSPInfo
         PVMFSMFSPBaseNode*(*iSMFSPCreateFunc)(int32);
         bool (*iSMFSPReleaseFunc)(PVMFSMFSPBaseNode *);
         Oscl_Vector<PVMFFormatType, OsclMemAllocator> iSourceFormatTypes;
-        OsclSharedLibrary* iSharedLibrary;
 };
 
 
@@ -147,16 +140,6 @@ class PVMFFSPRegistryInterface
          *
          **/
         virtual void RegisterSMFSP(const PVMFSMFSPInfo& aSMFSPInfo) = 0;
-
-#ifdef USE_LOADABLE_MODULES
-        /**
-         * The UnregisterFSP for PVMFFSPRegistry. Used for unregistering nodes through the FSPInfo object.
-         *
-         * @param aSMFSPInfo SMFSPInfo object passed to the regisry class. This contains all fsps that need to be unregistered.
-         *
-         **/
-        virtual void UnregisterSMFSP(const PVMFSMFSPInfo& aSMFSPInfo) = 0;
-#endif
 };
 
 #endif // PVMF_SM_FSP_REGISTRY_INTERFACE_H_INCLUDED

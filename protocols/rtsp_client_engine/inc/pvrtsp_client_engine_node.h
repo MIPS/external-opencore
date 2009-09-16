@@ -119,10 +119,6 @@
 #include "payload_parser.h"
 #endif
 
-#ifndef PVMF_SM_CONFIG_H_INCLUDED
-#include "pvmf_sm_config.h"
-#endif
-
 //Default vector reserve size
 #define PVMF_RTSP_ENGINE_NODE_COMMAND_VECTOR_RESERVE 10
 

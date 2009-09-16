@@ -30,7 +30,6 @@ LOCAL_C_INCLUDES := \
  	$(PV_TOP)/baselibs/pvcrypto/src \
  	$(PV_TOP)/protocols/rdt_parser/include \
  	$(PV_TOP)/nodes/streaming/common/include \
- 	$(PV_TOP)/nodes/streaming/streamingmanager/config/3gpp \
  	$(PV_INCLUDES)
 
 LOCAL_COPY_HEADERS_TO := $(PV_COPY_HEADERS_TO)

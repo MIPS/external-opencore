@@ -2,10 +2,10 @@ LOCAL_PATH := $(call my-dir)
 include $(CLEAR_VARS)
 
 LOCAL_SRC_FILES := \
- 	src/pvmfrtspnodes.cpp
+ 	src/pvmfsmnodes.cpp
 
 
-LOCAL_MODULE := libpvrtspinterface
+LOCAL_MODULE := libpvsminterface
 
 LOCAL_CFLAGS :=   $(PV_CFLAGS)
 

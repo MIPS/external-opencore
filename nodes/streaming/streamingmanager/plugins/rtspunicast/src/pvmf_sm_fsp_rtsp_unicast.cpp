@@ -104,6 +104,11 @@
 
 #include "pvmf_rtp_jitter_buffer_factory.h"
 
+#ifndef OSCL_DLL_H_INCLUDED
+#include "oscl_dll.h"
+#endif
+
+OSCL_DLL_ENTRY_POINT_DEFAULT()
 /**
 ///////////////////////////////////////////////////////////////////////////////
 // Node Constructor & Destructor

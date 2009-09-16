@@ -19,9 +19,11 @@
    registry with the streaming manager node.
 */
 
-#ifndef PVMFRTSPNODEREG_H_INCLUDED
-#include "pvmfrtspnodereg.h"
+#ifndef PVMFSMNODEREG_H_INCLUDED
+#include "pvmfsmnodereg.h"
 #endif
+
+#include "pvmf_sm_node_factory.h"
 
 #ifndef PVMF_NODE_SHARED_LIB_INTERFACE_H_INCLUDED
 #include "pvmf_node_shared_lib_interface.h"
@@ -43,9 +45,13 @@
 #include "oscl_shared_library.h"
 #endif
 
+#ifndef PVMF_SM_NODE_FACTORY_H_INCLUDED
+#include "pvmf_sm_node_factory.h"
+#endif
+
 #define NODE_REGISTRY_LIB_NAME_MAX_LENGTH 64
 
-#define RTSP_LIB_NAME "libopencore_rtsp"
+#define STREAMING_MGR_LIB_NAME "libopencore_streaming"
 
 typedef PVMFNodeInterface*(* LPFN_NODE_CREATE_FUNC)(int32);
 
@@ -55,7 +61,7 @@ typedef bool (* LPFN_NODE_RELEASE_FUNC)(PVMFNodeInterface *);
 PVMFNodeInterface* StreamingNodesCoreLibraryLoader::CreateStreamingManagerNode(int32 aPriority)
 {
     OsclSharedLibrary* streamingSharedLibrary = NULL;
-    OSCL_StackString<NODE_REGISTRY_LIB_NAME_MAX_LENGTH> libname(RTSP_LIB_NAME);
+    OSCL_StackString<NODE_REGISTRY_LIB_NAME_MAX_LENGTH> libname(STREAMING_MGR_LIB_NAME);
 
     // Need to load the library for the node
     streamingSharedLibrary = OSCL_NEW(OsclSharedLibrary, (libname));
@@ -74,7 +80,7 @@ PVMFNodeInterface* StreamingNodesCoreLibraryLoader::CreateStreamingManagerNode(i
 
     NodeSharedLibraryInterface* nodeIntPtr = OSCL_DYNAMIC_CAST(NodeSharedLibraryInterface*, interfacePtr);
 
-    OsclAny* createFuncTemp = nodeIntPtr->QueryNodeInterface(KPVMFRTSPStreamingModuleUuid, PV_CREATE_NODE_INTERFACE);
+    OsclAny* createFuncTemp = nodeIntPtr->QueryNodeInterface(KPVMFStreamingManagerNodeUuid, PV_CREATE_NODE_INTERFACE);
 
     LPFN_NODE_CREATE_FUNC nodeCreateFunc = OSCL_DYNAMIC_CAST(PVMFNodeInterface * (*)(int32), createFuncTemp);
 
@@ -123,7 +129,7 @@ bool StreamingNodesCoreLibraryLoader::DeleteStreamingManagerNode(PVMFNodeInterfa
 
         NodeSharedLibraryInterface* nodeIntPtr = OSCL_DYNAMIC_CAST(NodeSharedLibraryInterface*, interfacePtr);
 
-        OsclAny* releaseFuncTemp = nodeIntPtr->QueryNodeInterface(KPVMFRTSPStreamingModuleUuid, PV_RELEASE_NODE_INTERFACE);
+        OsclAny* releaseFuncTemp = nodeIntPtr->QueryNodeInterface(KPVMFStreamingManagerNodeUuid, PV_RELEASE_NODE_INTERFACE);
 
         LPFN_NODE_RELEASE_FUNC nodeReleaseFunc = OSCL_DYNAMIC_CAST(bool (*)(PVMFNodeInterface*), releaseFuncTemp);
 
@@ -158,15 +164,23 @@ class StreamingNodesRegistryInterface: public OsclSharedLibraryInterface,
         {
             PVPlayerNodeInfo nodeinfo;
 
-            OSCL_StackString<NODE_REGISTRY_LIB_NAME_MAX_LENGTH> libname(RTSP_LIB_NAME);
+            OSCL_StackString<NODE_REGISTRY_LIB_NAME_MAX_LENGTH> libname(STREAMING_MGR_LIB_NAME);
 
             Oscl_Vector<PVPlayerNodeInfo, OsclMemAllocator>* nodeList = new Oscl_Vector<PVPlayerNodeInfo, OsclMemAllocator>;
 
             //For PVMFStreamingManagerNode
             nodeinfo.iInputTypes.clear();
+            nodeinfo.iInputTypes.push_back(PVMF_MIME_DATA_SOURCE_MS_HTTP_STREAMING_URL);
+            nodeinfo.iInputTypes.push_back(PVMF_MIME_DATA_SOURCE_RTSP_TUNNELLING);
+            nodeinfo.iInputTypes.push_back(PVMF_MIME_DATA_SOURCE_REAL_HTTP_CLOAKING_URL);
             nodeinfo.iInputTypes.push_back(PVMF_MIME_DATA_SOURCE_RTSP_URL);
             nodeinfo.iInputTypes.push_back(PVMF_MIME_DATA_SOURCE_SDP_FILE);
-            nodeinfo.iNodeUUID = KPVMFRTSPStreamingModuleUuid;
+            nodeinfo.iInputTypes.push_back(PVMF_MIME_DATA_SOURCE_RTSP_PVR_FCS_URL);
+            nodeinfo.iInputTypes.push_back(PVMF_MIME_DATA_SOURCE_SDP_PVR_FCS_FILE);
+            nodeinfo.iInputTypes.push_back(PVMF_MIME_DATA_SOURCE_SDP_BROADCAST);
+            nodeinfo.iInputTypes.push_back(PVMF_MIME_DATA_PVRFF);
+            nodeinfo.iInputTypes.push_back(PVMF_MIME_DATA_SOURCE_RTP_PACKET_SOURCE);
+            nodeinfo.iNodeUUID = KPVMFStreamingManagerNodeUuid;
             nodeinfo.iOutputType.clear();
             nodeinfo.iOutputType.push_back(PVMF_MIME_FORMAT_UNKNOWN);
             nodeinfo.iNodeCreateFunc = (StreamingNodesCoreLibraryLoader::CreateStreamingManagerNode);

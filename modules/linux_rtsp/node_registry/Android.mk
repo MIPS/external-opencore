@@ -2,10 +2,10 @@ LOCAL_PATH := $(call my-dir)
 include $(CLEAR_VARS)
 
 LOCAL_SRC_FILES := \
- 	src/pvmfrtspnodereg.cpp
+ 	src/pvmfsmnodereg.cpp
 
 
-LOCAL_MODULE := libpvrtspreginterface
+LOCAL_MODULE := libpvsmreginterface
 
 LOCAL_CFLAGS :=   $(PV_CFLAGS)
 
@@ -23,6 +23,6 @@ LOCAL_C_INCLUDES := \
 LOCAL_COPY_HEADERS_TO := $(PV_COPY_HEADERS_TO)
 
 LOCAL_COPY_HEADERS := \
- 	src/pvmfrtspnodereg.h
+ 	src/pvmfsmnodereg.h
 
 include $(BUILD_STATIC_LIBRARY)

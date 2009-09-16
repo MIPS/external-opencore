@@ -52,6 +52,14 @@ LIBS :=  pvframemetadatautility \
         gsmamrdecnode \
         aacdecnode \
         pvstreamingmanagernode \
+        pvrtspbroadcastwithpvrsm \
+        pvmshttpstreamingmanager \
+        pvfileplaybackwithpvrsm \
+        pvrtspunicaststreamingmanager \
+        pvrtsptunicaststreamingmanager \
+        pvrtsptunicastrmstreamingmanager \
+        pvrtspunicastwithpvrsm \
+        pvpvrcommonbase \
         pvjitterbuffernode \
         pvjitterbufferasf \
         pvjitterbufferrtp \
@@ -65,6 +73,8 @@ LIBS :=  pvframemetadatautility \
         pvsocketnode \
         pvrtppacketsourcenode \
         rtppayloadparser \
+        realpayloadparser \
+        asfpayloadparser \
         pvpvrnode \
         pvpvr \
         pvpvrff \

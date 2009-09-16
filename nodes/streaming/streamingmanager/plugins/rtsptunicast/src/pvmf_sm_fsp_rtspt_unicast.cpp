@@ -77,11 +77,6 @@
 #include "rfc3640_payload_parser_factory.h"
 #endif
 
-
-#ifndef PVMF_STREAMING_REAL_INTERFACES_INCLUDED
-#include "pvmf_streaming_real_interfaces.h"
-#endif
-
 #ifndef PAYLOAD_PARSER_H_INCLUDED
 #include "payload_parser.h"
 #endif
@@ -112,12 +107,20 @@
 #include "sdp_mediaparser_registry_populator.h"
 #endif
 
+
 #include "pvmf_rtp_jitter_buffer_factory.h"
+
+#ifndef OSCL_DLL_H_INCLUDED
+#include "oscl_dll.h"
+#endif
+
+OSCL_DLL_ENTRY_POINT_DEFAULT()
 /**
 ///////////////////////////////////////////////////////////////////////////////
 // Node Constructor & Destructor
 ///////////////////////////////////////////////////////////////////////////////
 */
+
 PVMFSMRTSPTUnicastNode * PVMFSMRTSPTUnicastNode::New(int32 aPriority)
 {
     PVMFSMRTSPTUnicastNode * rtsptUnicastNode = OSCL_NEW(PVMFSMRTSPTUnicastNode, (aPriority));
@@ -139,11 +142,13 @@ PVMFSMRTSPTUnicastNode::PVMFSMRTSPTUnicastNode(int32 aPriority): PVMFSMFSPBaseNo
 
 }
 
+OSCL_EXPORT_REF
 PVMFSMRTSPTUnicastNode::~PVMFSMRTSPTUnicastNode()
 {
     CleanUp();
 }
 
+OSCL_EXPORT_REF
 void PVMFSMRTSPTUnicastNode::Construct()
 {
     PVMFSMFSPBaseNode::Construct();
@@ -155,7 +160,6 @@ void PVMFSMRTSPTUnicastNode::Construct()
              // create the payload parser registry
              PopulatePayloadParserRegistry();
              CreateChildNodes();
-             CreateRealStreamingObjects();
              QueryChildNodesExtentionInterface();
              // pass the payload parser registry on to the jitter buffer node
              PVMFSMFSPChildNodeContainer* iJitterBufferNodeContainer =
@@ -175,11 +179,9 @@ void PVMFSMRTSPTUnicastNode::Construct()
 
 }
 
+OSCL_EXPORT_REF
 void PVMFSMRTSPTUnicastNode::CreateChildNodes()
 {
-    /*
-     * Create Session Controller Node
-     */
     OsclExclusivePtr<PVMFNodeInterface> sessionControllerAutoPtr;
 
     PVMFNodeInterface* iSessionControllerNode = PVMFRrtspEngineNodeFactory::CreatePVMFRtspEngineNode(OsclActiveObject::EPriorityNominal);
@@ -242,6 +244,7 @@ void PVMFSMRTSPTUnicastNode::CreateChildNodes()
     sessionControllerAutoPtr.release();
 }
 
+OSCL_EXPORT_REF
 void PVMFSMRTSPTUnicastNode::DestroyChildNodes()
 {
     uint32 i, j;
@@ -266,6 +269,7 @@ void PVMFSMRTSPTUnicastNode::DestroyChildNodes()
     iFSPChildNodeContainerVec.clear();
 }
 
+OSCL_EXPORT_REF
 void PVMFSMRTSPTUnicastNode::PopulatePayloadParserRegistry()
 {
     PayloadParserRegistry* registry =
@@ -304,6 +308,7 @@ void PVMFSMRTSPTUnicastNode::PopulatePayloadParserRegistry()
     registry->addPayloadParserFactoryToRegistry(rfc3640,  rfc3640P);
 }
 
+OSCL_EXPORT_REF
 void PVMFSMRTSPTUnicastNode::DestroyPayloadParserRegistry()
 {
     StrPtrLen aac_latm("audio/MP4A-LATM");
@@ -313,8 +318,6 @@ void PVMFSMRTSPTUnicastNode::DestroyPayloadParserRegistry()
     StrPtrLen m4v("video/MP4V-ES");
     StrPtrLen h264("video/H264");
     StrPtrLen rfc3640("audio/mpeg4-generic");
-    StrPtrLen rma(PVMF_MIME_REAL_AUDIO);
-    StrPtrLen rmv(PVMF_MIME_REAL_VIDEO);
 
     PayloadParserRegistry* registry =
         PayloadParserRegistry::GetPayloadParserRegistry();
@@ -350,17 +353,10 @@ void PVMFSMRTSPTUnicastNode::DestroyPayloadParserRegistry()
     memFrag.len = (uint32)rfc3640.size();
     OSCL_DELETE(registry->lookupPayloadParserFactory(memFrag));
 
-    memFrag.ptr = (OsclAny*)(rma.c_str());
-    memFrag.len = (uint32)rma.size();
-    OSCL_DELETE(registry->lookupPayloadParserFactory(memFrag));
-
-    memFrag.ptr = (OsclAny*)(rmv.c_str());
-    memFrag.len = (uint32)rmv.size();
-    OSCL_DELETE(registry->lookupPayloadParserFactory(memFrag));
-
     PayloadParserRegistry::Cleanup();
 }
 
+OSCL_EXPORT_REF
 void PVMFSMRTSPTUnicastNode::QueryChildNodesExtentionInterface()
 {
     PVMFSMFSPChildNodeContainerVector::iterator it;
@@ -402,6 +398,7 @@ void PVMFSMRTSPTUnicastNode::QueryChildNodesExtentionInterface()
  * Return true if a command was processed, false if the command
  * processor is busy and can't process another command now.
  */
+OSCL_EXPORT_REF
 bool PVMFSMRTSPTUnicastNode::ProcessCommand(PVMFSMFSPBaseNodeCommand& aCmd)
 {
     if (EPVMFNodeError == iInterfaceState)
@@ -553,6 +550,7 @@ bool PVMFSMRTSPTUnicastNode::ProcessCommand(PVMFSMFSPBaseNodeCommand& aCmd)
 ///////////////////////////////////////////////////////////////////////////////
 //Node command servicing functions queued in input command Q by base class
 ///////////////////////////////////////////////////////////////////////////////
+OSCL_EXPORT_REF
 void PVMFSMRTSPTUnicastNode::DoQueryInterface(PVMFSMFSPBaseNodeCommand& aCmd)
 {
     PVMF_SM_RTSPT_LOGSTACKTRACE((0, "PVMFSMRTSPTUnicastNode::DoQueryInterface - In"));
@@ -618,6 +616,7 @@ void PVMFSMRTSPTUnicastNode::DoQueryInterface(PVMFSMFSPBaseNodeCommand& aCmd)
     return;
 }
 
+OSCL_EXPORT_REF
 void PVMFSMRTSPTUnicastNode::DoInit(PVMFSMFSPBaseNodeCommand& aCmd)
 {
     PVMF_SM_RTSPT_LOGSTACKTRACE((0, "PVMFSMRTSPTUnicastNode::DoInit - In"));
@@ -714,6 +713,7 @@ void PVMFSMRTSPTUnicastNode::DoInit(PVMFSMFSPBaseNodeCommand& aCmd)
 /**
  * Call by DoInit as a prep step
  */
+OSCL_EXPORT_REF
 PVMFStatus PVMFSMRTSPTUnicastNode::DoPreInit(PVMFSMFSPBaseNodeCommand& aCmd)
 {
     OSCL_UNUSED_ARG(aCmd);
@@ -731,12 +731,6 @@ PVMFStatus PVMFSMRTSPTUnicastNode::DoPreInit(PVMFSMFSPBaseNodeCommand& aCmd)
         OSCL_LEAVE(OsclErrBadHandle);
         return PVMFFailure;
     }
-
-    PVRTSPEngineNodeExtensionInterface* rtspExtIntf =
-        (PVRTSPEngineNodeExtensionInterface*)(iSessionControllerNodeContainer->iExtensions[0]);
-
-    rtspExtIntf->SetRealChallengeCalculator(ipRealChallengeGen);
-    rtspExtIntf->SetRdtParser(ipRdtParser);
 
     if (iSessionSourceInfo->_sessionType == PVMF_MIME_DATA_SOURCE_SDP_FILE)
     {
@@ -791,9 +785,7 @@ PVMFStatus PVMFSMRTSPTUnicastNode::DoPreInit(PVMFSMFSPBaseNodeCommand& aCmd)
     return status;
 }
 
-void PVMFSMRTSPTUnicastNode::CreateRealStreamingObjects()
-{
-}
+OSCL_EXPORT_REF
 PVMFStatus PVMFSMRTSPTUnicastNode::ProcessSDP()
 {
     PVMFStatus status;
@@ -916,6 +908,7 @@ PVMFStatus PVMFSMRTSPTUnicastNode::ProcessSDP()
 /**
  * Called as a pre step for prepare
  */
+OSCL_EXPORT_REF
 PVMFStatus PVMFSMRTSPTUnicastNode::DoGraphConstruct()
 {
     /*
@@ -943,6 +936,7 @@ PVMFStatus PVMFSMRTSPTUnicastNode::DoGraphConstruct()
         return PVMFFailure;
 }
 
+OSCL_EXPORT_REF
 bool PVMFSMRTSPTUnicastNode::PopulateTrackInfoVec()
 {
     if (iSelectedMediaPresetationInfo.getNumTracks() == 0)
@@ -1101,7 +1095,7 @@ bool PVMFSMRTSPTUnicastNode::PopulateTrackInfoVec()
     return true;
 }
 
-
+OSCL_EXPORT_REF
 bool PVMFSMRTSPTUnicastNode::ConstructGraphFor3GPPTCPStreaming()
 {
     uint32 numPortsRequested = 0;
@@ -1154,6 +1148,7 @@ bool PVMFSMRTSPTUnicastNode::ConstructGraphFor3GPPTCPStreaming()
     return true;
 }
 
+OSCL_EXPORT_REF
 bool PVMFSMRTSPTUnicastNode::RequestRTSPNodePorts(int32 portTag,
         uint32& numPortsRequested)
 {
@@ -1218,6 +1213,7 @@ bool PVMFSMRTSPTUnicastNode::RequestRTSPNodePorts(int32 portTag,
     return true;
 }
 
+OSCL_EXPORT_REF
 bool PVMFSMRTSPTUnicastNode::RequestJitterBufferPorts(int32 portType,
         uint32 &numPortsRequested)
 {
@@ -1282,6 +1278,7 @@ bool PVMFSMRTSPTUnicastNode::RequestJitterBufferPorts(int32 portType,
     return false;
 }
 
+OSCL_EXPORT_REF
 void PVMFSMRTSPTUnicastNode::DoPrepare(PVMFSMFSPBaseNodeCommand& aCmd)
 {
     PVMF_SM_RTSPT_LOGSTACKTRACE((0, "PVMFSMRTSPTUnicastNode::DoPrepare - In"));
@@ -1355,6 +1352,7 @@ void PVMFSMRTSPTUnicastNode::DoPrepare(PVMFSMFSPBaseNodeCommand& aCmd)
     PVMF_SM_RTSPT_LOGSTACKTRACE((0, "PVMFSMRTSPTUnicastNode::DoPrepare - Out"));
 }
 
+OSCL_EXPORT_REF
 bool PVMFSMRTSPTUnicastNode::GraphConnect()
 {
     if (iGraphConnectComplete == false)
@@ -1412,6 +1410,7 @@ bool PVMFSMRTSPTUnicastNode::GraphConnect()
     return true;
 }
 
+OSCL_EXPORT_REF
 PVMFStatus PVMFSMRTSPTUnicastNode::ConnectPortPairs(PVMFPortInterface* aPort1,
         PVMFPortInterface* aPort2)
 {
@@ -1428,6 +1427,7 @@ PVMFStatus PVMFSMRTSPTUnicastNode::ConnectPortPairs(PVMFPortInterface* aPort1,
     return status;
 }
 
+OSCL_EXPORT_REF
 void PVMFSMRTSPTUnicastNode::DoRequestPort(PVMFSMFSPBaseNodeCommand& aCmd)
 {
     PVMF_SM_RTSPT_LOGSTACKTRACE((0, "PVMFSMRTSPTUnicastNode::DoRequestPort - In"));
@@ -1486,6 +1486,7 @@ void PVMFSMRTSPTUnicastNode::DoRequestPort(PVMFSMFSPBaseNodeCommand& aCmd)
     PVMF_SM_RTSPT_LOGSTACKTRACE((0, "PVMFSMRTSPTUnicastNode::DoRequestPort - Out"));
 }
 
+OSCL_EXPORT_REF
 void PVMFSMRTSPTUnicastNode::DoReleasePort(PVMFSMFSPBaseNodeCommand& aCmd)
 {
     PVMF_SM_RTSPT_LOGSTACKTRACE((0, "PVMFSMRTSPTUnicastNode::DoReleasePort - In"));
@@ -1540,6 +1541,7 @@ void PVMFSMRTSPTUnicastNode::DoReleasePort(PVMFSMFSPBaseNodeCommand& aCmd)
     PVMF_SM_RTSPT_LOGSTACKTRACE((0, "PVMFSMRTSPTUnicastNode::DoReleasePort - Out"));
 }
 
+OSCL_EXPORT_REF
 void PVMFSMRTSPTUnicastNode::DoStart(PVMFSMFSPBaseNodeCommand& aCmd)
 {
     PVMF_SM_RTSPT_LOGSTACKTRACE((0, "PVMFSMRTSPTUnicastNode::DoStart - In"));
@@ -1648,6 +1650,7 @@ void PVMFSMRTSPTUnicastNode::DoStart(PVMFSMFSPBaseNodeCommand& aCmd)
     PVMF_SM_RTSPT_LOGSTACKTRACE((0, "PVMFSMRTSPTUnicastNode::DoStart - Out"));
 }
 
+OSCL_EXPORT_REF
 void PVMFSMRTSPTUnicastNode::DoStop(PVMFSMFSPBaseNodeCommand& aCmd)
 {
     PVMF_SM_RTSPT_LOGSTACKTRACE((0, "PVMFSMRTSPTUnicastNode::DoStop - In"));
@@ -1698,6 +1701,7 @@ void PVMFSMRTSPTUnicastNode::DoStop(PVMFSMFSPBaseNodeCommand& aCmd)
     PVMF_SM_RTSPT_LOGSTACKTRACE((0, "PVMFSMRTSPTUnicastNode::DoStop - Out"));
 }
 
+OSCL_EXPORT_REF
 void PVMFSMRTSPTUnicastNode::DoPause(PVMFSMFSPBaseNodeCommand& aCmd)
 {
     PVMF_SM_RTSPT_LOGSTACKTRACE((0, "PVMFSMRTSPTUnicastNode::DoPause - In"));
@@ -1749,6 +1753,7 @@ void PVMFSMRTSPTUnicastNode::DoPause(PVMFSMFSPBaseNodeCommand& aCmd)
     return;
 }
 
+OSCL_EXPORT_REF
 PVMFRTSPTTrackInfo* PVMFSMRTSPTUnicastNode::FindTrackInfo(uint32 atrackID)
 {
     PVMFRTSPTTrackInfoVector::iterator it;
@@ -1769,12 +1774,13 @@ PVMFRTSPTTrackInfo* PVMFSMRTSPTUnicastNode::FindTrackInfo(uint32 atrackID)
 //Implemenation of pure virtuals from PvmiCapabilityAndConfig interface
 ///////////////////////////////////////////////////////////////////////////////
 
+OSCL_EXPORT_REF
 void PVMFSMRTSPTUnicastNode::setObserver(PvmiConfigAndCapabilityCmdObserver* aObserver)
 {
     ciObserver = aObserver;
 }
 
-
+OSCL_EXPORT_REF
 PVMFStatus PVMFSMRTSPTUnicastNode::getParametersSync(PvmiMIOSession aSession, PvmiKeyType aIdentifier,
         PvmiKvp*& aParameters, int& aNumParamElements,
         PvmiCapabilityContext aContext)
@@ -1935,6 +1941,7 @@ PVMFStatus PVMFSMRTSPTUnicastNode::getParametersSync(PvmiMIOSession aSession, Pv
     return PVMFSuccess;
 }
 
+OSCL_EXPORT_REF
 PVMFStatus PVMFSMRTSPTUnicastNode::GetConfigParameter(PvmiKvp*& aParameters,
         int& aNumParamElements,
         int32 aIndex, PvmiKvpAttr reqattr)
@@ -2360,6 +2367,7 @@ PVMFStatus PVMFSMRTSPTUnicastNode::GetConfigParameter(PvmiKvp*& aParameters,
     return PVMFSuccess;
 }
 
+OSCL_EXPORT_REF
 PVMFStatus PVMFSMRTSPTUnicastNode::releaseParameters(PvmiMIOSession aSession,
         PvmiKvp* aParameters,
         int num_elements)
@@ -2464,7 +2472,7 @@ PVMFStatus PVMFSMRTSPTUnicastNode::releaseParameters(PvmiMIOSession aSession,
     return PVMFSuccess;
 }
 
-
+OSCL_EXPORT_REF
 void PVMFSMRTSPTUnicastNode::setParametersSync(PvmiMIOSession aSession, PvmiKvp* aParameters,
         int num_elements, PvmiKvp* &aRet_kvp)
 {
@@ -2554,7 +2562,7 @@ void PVMFSMRTSPTUnicastNode::setParametersSync(PvmiMIOSession aSession, PvmiKvp*
                     (0, "PVMFSMRTSPTUnicastNode::setParametersSync() Out"));
 }
 
-
+OSCL_EXPORT_REF
 PVMFStatus PVMFSMRTSPTUnicastNode::verifyParametersSync(PvmiMIOSession aSession,
         PvmiKvp* aParameters,
         int num_elements)
@@ -2629,7 +2637,7 @@ PVMFStatus PVMFSMRTSPTUnicastNode::verifyParametersSync(PvmiMIOSession aSession,
 }
 
 
-
+OSCL_EXPORT_REF
 PVMFStatus PVMFSMRTSPTUnicastNode::VerifyAndSetConfigParameter(int index, PvmiKvp& aParameter, bool set)
 {
     PVMF_SM_RTSPT_LOGSTACKTRACE((0, "PVMFSMRTSPTUnicastNode::VerifyAndSetConfigParameter() In"));
@@ -2824,11 +2832,6 @@ PVMFStatus PVMFSMRTSPTUnicastNode::VerifyAndSetConfigParameter(int index, PvmiKv
         }
         break;
 
-        case BASEKEY_SESSION_CONTROLLER_XSTR_HTTP_HEADER:
-        {
-        }
-        break;
-
         case BASEKEY_SESSION_CONTROLLER_RTSP_TIMEOUT:
         {
 
@@ -2880,7 +2883,7 @@ PVMFStatus PVMFSMRTSPTUnicastNode::VerifyAndSetConfigParameter(int index, PvmiKv
 ///////////////////////////////////////////////////////////////////////////////
 // Implemenation of PVMFDataSourceInitializationExtensionInterface interface
 ///////////////////////////////////////////////////////////////////////////////
-
+OSCL_EXPORT_REF
 PVMFStatus PVMFSMRTSPTUnicastNode::SetSourceInitializationData(OSCL_wString& aSourceURL, PVMFFormatType& aSourceFormat, OsclAny* aSourceData, PVMFFormatTypeDRMInfo aType)
 {
     //Configure RTSP node for:
@@ -3076,6 +3079,7 @@ PVMFStatus PVMFSMRTSPTUnicastNode::SetSourceInitializationData(OSCL_wString& aSo
 
 }
 
+OSCL_EXPORT_REF
 PVMFStatus PVMFSMRTSPTUnicastNode::SetClientPlayBackClock(PVMFMediaClock* aClientClock)
 {
     PVMFSMFSPChildNodeContainer* iJitterBufferNodeContainer =
@@ -3096,6 +3100,7 @@ PVMFStatus PVMFSMRTSPTUnicastNode::SetClientPlayBackClock(PVMFMediaClock* aClien
     return PVMFSuccess;
 }
 
+OSCL_EXPORT_REF
 PVMFStatus PVMFSMRTSPTUnicastNode::SetEstimatedServerClock(PVMFMediaClock* aClientClock)
 {
     OSCL_UNUSED_ARG(aClientClock);
@@ -3105,6 +3110,7 @@ PVMFStatus PVMFSMRTSPTUnicastNode::SetEstimatedServerClock(PVMFMediaClock* aClie
 ///////////////////////////////////////////////////////////////////////////////
 //Implementation of PVMFTrackSelectionExtensionInterface
 ///////////////////////////////////////////////////////////////////////////////
+OSCL_EXPORT_REF
 PVMFStatus PVMFSMRTSPTUnicastNode::GetMediaPresentationInfo(PVMFMediaPresentationInfo& aInfo)
 {
     SDPInfo* sdpInfo = iSdpInfo.GetRep();
@@ -3317,6 +3323,7 @@ PVMFStatus PVMFSMRTSPTUnicastNode::GetMediaPresentationInfo(PVMFMediaPresentatio
     return PVMFSuccess;
 }
 
+OSCL_EXPORT_REF
 PVMFStatus PVMFSMRTSPTUnicastNode::SelectTracks(PVMFMediaPresentationInfo& aInfo)
 {
     SDPInfo* sdpInfo = iSdpInfo.GetRep();
@@ -3362,6 +3369,7 @@ PVMFStatus PVMFSMRTSPTUnicastNode::SelectTracks(PVMFMediaPresentationInfo& aInfo
 ///////////////////////////////////////////////////////////////////////////////
 //Implementation of PVMFMetadataExtensionInterface
 ///////////////////////////////////////////////////////////////////////////////
+OSCL_EXPORT_REF
 uint32 PVMFSMRTSPTUnicastNode::GetNumMetadataKeys(char* aQueryKeyString)
 {
     //Metadata is avaialable in three forms
@@ -3374,6 +3382,7 @@ uint32 PVMFSMRTSPTUnicastNode::GetNumMetadataKeys(char* aQueryKeyString)
     return PVMFSMFSPBaseNode::GetNumMetadataKeysBase(aQueryKeyString);
 }
 
+OSCL_EXPORT_REF
 uint32 PVMFSMRTSPTUnicastNode::GetNumMetadataValues(PVMFMetadataList& aKeyList)
 {
     //Metadata is avaialable in three forms
@@ -3386,11 +3395,13 @@ uint32 PVMFSMRTSPTUnicastNode::GetNumMetadataValues(PVMFMetadataList& aKeyList)
     return PVMFSMFSPBaseNode::GetNumMetadataValuesBase(aKeyList);
 }
 
+OSCL_EXPORT_REF
 PVMFCommandId PVMFSMRTSPTUnicastNode::DoGetMetadataKeys(PVMFSMFSPBaseNodeCommand& aCmd)
 {
     return DoGetMetadataKeysBase(aCmd);
 }
 
+OSCL_EXPORT_REF
 PVMFCommandId PVMFSMRTSPTUnicastNode::DoGetMetadataValues(PVMFSMFSPBaseNodeCommand& aCmd)
 {
     iNoOfValuesIteratedForValueVect = 0;
@@ -3398,6 +3409,7 @@ PVMFCommandId PVMFSMRTSPTUnicastNode::DoGetMetadataValues(PVMFSMFSPBaseNodeComma
     return DoGetMetadataValuesBase(aCmd);
 }
 
+OSCL_EXPORT_REF
 PVMFStatus PVMFSMRTSPTUnicastNode::ReleaseNodeMetadataKeys(PVMFMetadataList& aKeyList,
         uint32 aStartingKeyIndex,
         uint32 aEndKeyIndex)
@@ -3406,6 +3418,7 @@ PVMFStatus PVMFSMRTSPTUnicastNode::ReleaseNodeMetadataKeys(PVMFMetadataList& aKe
     return ReleaseNodeMetadataKeysBase(aKeyList, aStartingKeyIndex, aEndKeyIndex);
 }
 
+OSCL_EXPORT_REF
 PVMFStatus PVMFSMRTSPTUnicastNode::ReleaseNodeMetadataValues(Oscl_Vector<PvmiKvp, OsclMemAllocator>& aValueList,
         uint32 aStartingValueIndex,
         uint32 aEndValueIndex)
@@ -3417,6 +3430,7 @@ PVMFStatus PVMFSMRTSPTUnicastNode::ReleaseNodeMetadataValues(Oscl_Vector<PvmiKvp
 ///////////////////////////////////////////////////////////////////////////////
 //Implementation of PvmfDataSourcePlaybackControlInterface
 ///////////////////////////////////////////////////////////////////////////////
+OSCL_EXPORT_REF
 void PVMFSMRTSPTUnicastNode::DoSetDataSourcePosition(PVMFSMFSPBaseNodeCommand& aCmd)
 {
     PVMF_SM_RTSPT_LOGSTACKTRACE((0, "PVMFSMFSPBaseNodeCommand::DoSetDataSourcePosition - In"));
@@ -3580,7 +3594,7 @@ void PVMFSMRTSPTUnicastNode::DoSetDataSourcePosition(PVMFSMFSPBaseNodeCommand& a
 }
 
 
-
+OSCL_EXPORT_REF
 void PVMFSMRTSPTUnicastNode::DoQueryDataSourcePosition(PVMFSMFSPBaseNodeCommand& aCmd)
 {
     PVMF_SM_RTSPT_LOGSTACKTRACE((0, "PVMFSMRTSPTUnicastNode::DoQueryDataSourcePosition - In"));
@@ -3606,6 +3620,7 @@ void PVMFSMRTSPTUnicastNode::DoQueryDataSourcePosition(PVMFSMFSPBaseNodeCommand&
     return;
 }
 
+OSCL_EXPORT_REF
 PVMFStatus PVMFSMRTSPTUnicastNode::ComputeSkipTimeStamp(PVMFTimestamp aTargetNPT,
         PVMFTimestamp aActualNPT,
         PVMFTimestamp aActualMediaDataTS,
@@ -3626,6 +3641,7 @@ PVMFStatus PVMFSMRTSPTUnicastNode::ComputeSkipTimeStamp(PVMFTimestamp aTargetNPT
 ///////////////////////////////////////////////////////////////////////////////
 //Implementation of the virtual function declared in PVMFNodeCmdStatusObserver
 ///////////////////////////////////////////////////////////////////////////////
+OSCL_EXPORT_REF
 void PVMFSMRTSPTUnicastNode::NodeCommandCompleted(const PVMFCmdResp& aResponse)
 {
     PVMF_SM_RTSPT_LOGINFO((0, "PVMFSMRTSPTUnicastNode::NodeCommandCompleted"));
@@ -3645,6 +3661,7 @@ void PVMFSMRTSPTUnicastNode::NodeCommandCompleted(const PVMFCmdResp& aResponse)
 retval: true - perform error handling based on response (if needed)
 retval: false - do not perform error handling.Concrete implemenbtation of the FSP will take care of error handling
 */
+OSCL_EXPORT_REF
 void PVMFSMRTSPTUnicastNode::HandleChildNodeCommandCompletion(const PVMFCmdResp& aResponse, bool& aPerformErrHandling)
 {
     aPerformErrHandling = true;
@@ -3677,6 +3694,7 @@ void PVMFSMRTSPTUnicastNode::HandleChildNodeCommandCompletion(const PVMFCmdResp&
 
 }
 
+OSCL_EXPORT_REF
 void PVMFSMRTSPTUnicastNode::HandleRTSPSessionControllerCommandCompleted(const PVMFCmdResp& aResponse,
         bool& aPerformErrHandling)
 {
@@ -3898,6 +3916,7 @@ void PVMFSMRTSPTUnicastNode::HandleRTSPSessionControllerCommandCompleted(const P
     return;
 }
 
+OSCL_EXPORT_REF
 void PVMFSMRTSPTUnicastNode::HandleJitterBufferCommandCompleted(const PVMFCmdResp& aResponse, bool& aPerformErrHandling)
 {
     aPerformErrHandling = false;
@@ -4128,6 +4147,7 @@ void PVMFSMRTSPTUnicastNode::HandleJitterBufferCommandCompleted(const PVMFCmdRes
     return;
 }
 
+OSCL_EXPORT_REF
 void PVMFSMRTSPTUnicastNode::CompleteInit()
 {
     PVMF_SM_RTSPT_LOGSTACKTRACE((0, "PVMFSMRTSPTUnicastNode::CompleteInit - In"));
@@ -4207,6 +4227,7 @@ void PVMFSMRTSPTUnicastNode::CompleteInit()
     return;
 }
 
+OSCL_EXPORT_REF
 bool PVMFSMRTSPTUnicastNode::CheckChildrenNodesInit()
 {
     for (uint32 i = 0; i < iFSPChildNodeContainerVec.size(); i++)
@@ -4219,6 +4240,7 @@ bool PVMFSMRTSPTUnicastNode::CheckChildrenNodesInit()
     return true;
 }
 
+OSCL_EXPORT_REF
 PVMFStatus PVMFSMRTSPTUnicastNode::InitMetaData()
 {
     // Clear out the existing key list
@@ -4382,6 +4404,7 @@ PVMFStatus PVMFSMRTSPTUnicastNode::InitMetaData()
                         OsclMemoryFragment aacConfig;
                         aacConfig.len = 0;
                         aacConfig.ptr = NULL;
+
                         mimeString = mime;
 
                         if (oscl_strstr(mimeString.get_cstr(), PVMF_MIME_MPEG4_AUDIO) != NULL)
@@ -4465,6 +4488,7 @@ PVMFStatus PVMFSMRTSPTUnicastNode::InitMetaData()
     return PVMFSuccess;
 }
 
+OSCL_EXPORT_REF
 PVMFStatus PVMFSMRTSPTUnicastNode::PopulateAvailableMetadataKeys()
 {
     int32 leavecode = OsclErrNone;
@@ -4489,6 +4513,7 @@ PVMFStatus PVMFSMRTSPTUnicastNode::PopulateAvailableMetadataKeys()
         return PVMFSuccess;
 }
 
+OSCL_EXPORT_REF
 void PVMFSMRTSPTUnicastNode::CompletePrepare()
 {
     PVMF_SM_RTSPT_LOGSTACKTRACE((0, "PVMFSMRTSPTUnicastNode::CompletePrepare - In"));
@@ -4509,6 +4534,7 @@ void PVMFSMRTSPTUnicastNode::CompletePrepare()
     return;
 }
 
+OSCL_EXPORT_REF
 bool PVMFSMRTSPTUnicastNode::CheckChildrenNodesPrepare()
 {
     for (uint32 i = 0; i < iFSPChildNodeContainerVec.size(); i++)
@@ -4521,6 +4547,7 @@ bool PVMFSMRTSPTUnicastNode::CheckChildrenNodesPrepare()
     return true;
 }
 
+OSCL_EXPORT_REF
 void PVMFSMRTSPTUnicastNode::CompleteStart()
 {
     int32 localMode = 0;
@@ -4564,6 +4591,7 @@ void PVMFSMRTSPTUnicastNode::CompleteStart()
     return;
 }
 
+OSCL_EXPORT_REF
 bool PVMFSMRTSPTUnicastNode::CheckChildrenNodesStart()
 {
     for (uint32 i = 0; i < iFSPChildNodeContainerVec.size(); i++)
@@ -4576,6 +4604,7 @@ bool PVMFSMRTSPTUnicastNode::CheckChildrenNodesStart()
     return true;
 }
 
+OSCL_EXPORT_REF
 void PVMFSMRTSPTUnicastNode::GetActualMediaTSAfterSeek()
 {
     PVMFSMFSPChildNodeContainer* iJitterBufferNodeContainer =
@@ -4598,6 +4627,7 @@ void PVMFSMRTSPTUnicastNode::GetActualMediaTSAfterSeek()
     }
 }
 
+OSCL_EXPORT_REF
 void PVMFSMRTSPTUnicastNode::CompleteStop()
 {
     PVMF_SM_RTSPT_LOGSTACKTRACE((0, "PVMFSMRTSPTUnicastNode::CompleteStop - In"));
@@ -4620,12 +4650,14 @@ void PVMFSMRTSPTUnicastNode::CompleteStop()
     return;
 }
 
+OSCL_EXPORT_REF
 void PVMFSMRTSPTUnicastNode::ResetStopCompleteParams()
 {
     iPlaylistPlayInProgress = false;
     iRepositionRequestedStartNPTInMS = 0;
 }
 
+OSCL_EXPORT_REF
 void PVMFSMRTSPTUnicastNode::CompletePause()
 {
     PVMF_SM_RTSPT_LOGSTACKTRACE((0, "PVMFPVMFSMRTSPTUnicastNode::CompletePause - In"));
@@ -4660,6 +4692,7 @@ void PVMFSMRTSPTUnicastNode::CompletePause()
     return;
 }
 
+OSCL_EXPORT_REF
 bool PVMFSMRTSPTUnicastNode::CheckChildrenNodesPause()
 {
     for (uint32 i = 0; i < iFSPChildNodeContainerVec.size(); i++)
@@ -4677,6 +4710,7 @@ bool PVMFSMRTSPTUnicastNode::CheckChildrenNodesPause()
  * Called by the call back routine whenever a "RequestPort" call
  * completes successfully.
  */
+OSCL_EXPORT_REF
 void PVMFSMRTSPTUnicastNode::CompleteGraphConstruct()
 {
     iTotalNumRequestPortsComplete++;
@@ -4703,6 +4737,7 @@ void PVMFSMRTSPTUnicastNode::CompleteGraphConstruct()
  * Called when all port requests are complete, in order to send the
  * UDP port information to RTSP
  */
+OSCL_EXPORT_REF
 bool PVMFSMRTSPTUnicastNode::SendSessionSourceInfoToSessionController()
 {
     if (((iSessionSourceInfo->_sessionType == PVMF_MIME_DATA_SOURCE_RTSP_URL) ||
@@ -4794,25 +4829,30 @@ bool PVMFSMRTSPTUnicastNode::SendSessionSourceInfoToSessionController()
 ///////////////////////////////////////////////////////////////////////////////
 //Implemenation of pure virtuals from PVMFSMFSPBaseNode
 ///////////////////////////////////////////////////////////////////////////////
+OSCL_EXPORT_REF
 bool PVMFSMRTSPTUnicastNode::IsFSPInternalCmd(PVMFCommandId aId)
 {
     OSCL_UNUSED_ARG(aId);
     return false;
 }
 
+OSCL_EXPORT_REF
 void PVMFSMRTSPTUnicastNode::addRef()
 {
 }
 
+OSCL_EXPORT_REF
 void PVMFSMRTSPTUnicastNode::removeRef()
 {
 }
 
+OSCL_EXPORT_REF
 void PVMFSMRTSPTUnicastNode::setJitterBufferDurationInMilliSeconds(uint32 duration)
 {
     iJitterBufferDurationInMilliSeconds = duration;
 }
 
+OSCL_EXPORT_REF
 PVMFStatus PVMFSMRTSPTUnicastNode::DoRepositioningStart3GPPStreaming()
 {
     PVMFStatus status = SetRTSPPlaybackRange();
@@ -4848,6 +4888,7 @@ PVMFStatus PVMFSMRTSPTUnicastNode::DoRepositioningStart3GPPStreaming()
     return status;
 }
 
+OSCL_EXPORT_REF
 PVMFStatus PVMFSMRTSPTUnicastNode::SetRTSPPlaybackRange()
 {
     PVMFStatus status = PVMFSuccess;
@@ -4888,6 +4929,7 @@ PVMFStatus PVMFSMRTSPTUnicastNode::SetRTSPPlaybackRange()
     return status;
 }
 
+OSCL_EXPORT_REF
 bool PVMFSMRTSPTUnicastNode::DoRepositioningPause3GPPStreaming()
 {
     PVMFSMFSPChildNodeContainerVector::iterator it;
@@ -4924,6 +4966,7 @@ bool PVMFSMRTSPTUnicastNode::DoRepositioningPause3GPPStreaming()
     return true;
 }
 
+OSCL_EXPORT_REF
 bool PVMFSMRTSPTUnicastNode::SendSessionControlPrepareCompleteParams()
 {
     if ((iSessionSourceInfo->_sessionType == PVMF_MIME_DATA_SOURCE_RTSP_URL) ||
@@ -5004,71 +5047,10 @@ bool PVMFSMRTSPTUnicastNode::SendSessionControlPrepareCompleteParams()
 
         jbExtIntf->setServerInfo(fireWallPktInfo);
     }
-    /*
-    * In case of helix server, we do not know if the transport type is
-    * RTP or RDT until RTSP Node Prepare complete (all SETUP requests are complete)
-    * Check for RDT transport here
-    */
-    if ((iSessionSourceInfo->_sessionType == PVMF_MIME_DATA_SOURCE_RTSP_URL) ||
-            (iSessionSourceInfo->_sessionType == PVMF_MIME_DATA_SOURCE_REAL_HTTP_CLOAKING_URL))
-    {
-        PVMFSMFSPChildNodeContainer* iSessionControllerNodeContainer =
-            getChildNodeContainer(PVMF_SM_FSP_RTSP_SESSION_CONTROLLER_NODE);
-        if (iSessionControllerNodeContainer == NULL)
-        {
-            OSCL_LEAVE(OsclErrBadHandle);
-            return false;
-        }
-        PVRTSPEngineNodeExtensionInterface* rtspExtIntf =
-            (PVRTSPEngineNodeExtensionInterface*)
-            (iSessionControllerNodeContainer->iExtensions[0]);
-
-        PVMFSMFSPChildNodeContainer* iJitterBufferNodeContainer =
-            getChildNodeContainer(PVMF_SM_FSP_JITTER_BUFFER_NODE);
-        if (iJitterBufferNodeContainer == NULL)
-        {
-            OSCL_LEAVE(OsclErrBadHandle);
-            return false;
-        }
-        PVMFJitterBufferExtensionInterface* jbExtIntf =
-            (PVMFJitterBufferExtensionInterface*)
-            (iJitterBufferNodeContainer->iExtensions[0]);
-
-        ibRdtTransport = rtspExtIntf->IsRdtTransport();
-
-        if (ibRdtTransport)
-        {
-            /* Populate the correct transport in PVMFSMTrackInfo */
-            PVMFRTSPTTrackInfoVector::iterator it;
-            for (it = iTrackInfoVec.begin(); it != iTrackInfoVec.end(); it++)
-            {
-                mediaInfo* mInfo = iSdpInfo->getMediaInfoBasedOnID(it->trackID);
-                if (mInfo != NULL)
-                {
-                    it->iTransportType = _STRLIT_CHAR("RDT");
-                    rm_mediaInfo* rmMediaInfo = OSCL_STATIC_CAST(rm_mediaInfo*, mInfo);
-                    it->rdtStreamID = rmMediaInfo->getRealStreamId();
-
-                    // for RDT streaming, the RTSP engine also needs to know the
-                    // RDT stream id we'd like to assign to the output port
-                    rtspExtIntf->SetPortRdtStreamId(it->iSessionControllerOutputPort,
-                                                    it->rdtStreamID);
-
-                    ////////////////////////RTP header pre-parsed///////////////////////
-                    jbExtIntf->SetInputMediaHeaderPreParsed(it->iJitterBufferInputPort, true);
-
-                }
-                else
-                {
-                    PVMF_SM_RTSPT_LOGERROR((0, "StreamingManagerNode:SendSessionControlPrepareCompleteParams - Invalid TrackID"));
-                    return false;
-                }
-            }
-        }
-    }
     return true;
 }
 
+OSCL_EXPORT_REF
 bool PVMFSMRTSPTUnicastNode::SendSessionControlStartCompleteParams()
 {
     PVMFSMFSPChildNodeContainer* iJitterBufferNodeContainer =
@@ -5185,6 +5167,7 @@ bool PVMFSMRTSPTUnicastNode::SendSessionControlStartCompleteParams()
     return true;
 }
 
+OSCL_EXPORT_REF
 void PVMFSMRTSPTUnicastNode::HandleNodeInformationalEvent(const PVMFAsyncEvent& aEvent)
 {
     if (SupressInfoEvent())
@@ -5265,6 +5248,8 @@ void PVMFSMRTSPTUnicastNode::HandleNodeInformationalEvent(const PVMFAsyncEvent& 
         PVMFNodeInterface::ReportInfoEvent(event);
     }
 }
+
+OSCL_EXPORT_REF
 bool PVMFSMRTSPTUnicastNode::CanPerformRepositioning(bool aRandAccessDenied)
 {
 
@@ -5273,10 +5258,7 @@ bool PVMFSMRTSPTUnicastNode::CanPerformRepositioning(bool aRandAccessDenied)
             (((int32)iRepositionRequestedStartNPTInMS < (int32)iSessionStartTime) ||
              ((int32)iRepositionRequestedStartNPTInMS > (int32)iSessionStopTime)))
     {
-        /*
-         * Implies an open ended session or invalid request time
-         * - no pause or reposition
-         */
+
         return false;
 
     }
@@ -5300,20 +5282,24 @@ PVMFSMRTSPTUnicastNode::CheckChildrenNodesStop()
     return true;
 }
 
+OSCL_EXPORT_REF
 void PVMFSMRTSPTUnicastNode::CleanUp()
 {
+
     DestroyChildNodes();
     DestroyPayloadParserRegistry();
     ResetNodeParams();
     iLogger = NULL;
 }
 
+OSCL_EXPORT_REF
 void PVMFSMRTSPTUnicastNode::PopulateDRMInfo()
 {
     PVMF_SM_RTSPT_LOGSTACKTRACE((0, "PVMFSMRTSPTUnicastNode::PopulateDRMInfo() In"));
     PVMF_SM_RTSPT_LOGSTACKTRACE((0, "PVMFSMRTSPTUnicastNode::PopulateDRMInfo() - CPM not supported yet"));
 }
 
+OSCL_EXPORT_REF
 void PVMFSMRTSPTUnicastNode::ResetNodeParams(bool aReleaseMemmory)
 {
     ibRdtTransport = false;

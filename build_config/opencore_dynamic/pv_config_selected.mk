@@ -18,14 +18,6 @@ PV_HAS_SHOUTCAST_SUPPORT_ENABLED=y
 #
 pv_so=n
 pvsplit_so=y
-streaming_support=y
-
-#
-# Menu for selecting streaming features
-#
-rtsp_support=y
-asf_streaming_support=n
-
 download_support=y
 fasttrack_download_support=n
 mp4local_support=y
@@ -176,28 +168,15 @@ colorconvert_lib=m
 #
 
 #
-# Menu for configuring Streaming
-#
-pvstreamingmanagernode_segments_lib=m
-
-#
-# Menu for configuring Streaming Features
+# Menu for configuring Streaming Plugins
 #
 mshttp_support=n
-rtspunicast_support=y
-unicastpvr_support=n
+rtspunicast_support=m
+rtsptunicast_support=m
+rtsptunicastwithreal_support=n
 broadcastpvr_support=n
-pvrfileplayback_support=n
-
-pvmedialayernode_lib=n
-pvjitterbuffernode_lib=m
-
-#
-# Menu for configuring Jitter Buffer Node
-#
-rtpjitterbuffer_support=m
-asfjitterbuffer_support=n
-
+rtspunicastpvr_support=n
+fileplaybackpvr_support=n
 
 
 #
@@ -312,14 +291,6 @@ PV_2WAY_VALUE_ADD_NONE=y
 pv_http_parcom_lib=m
 pv_http_retriever_lib=n
 pvlatmpayloadparser_lib=m
-sdp_common=m
-
-#
-# Menu for configuring SDPParser
-#
-sdp_default=n
-sdp_opencore=m
-
 rdt_parser_lib=n
 pv_rtsp_parcom_lib=m
 rtppayloadparser_lib=m
@@ -332,9 +303,9 @@ rfc_3016=y
 rfc_3267=y
 rfc_3640=y
 rfc_3984=y
-asf_payload=n
-realmedia_payload=n
 
+asf_payload_lib=n
+realmedia_payload_lib=n
 rtprtcp_lib=m
 pv324m_lib=m
 pv_rtmp_parcom_lib=n

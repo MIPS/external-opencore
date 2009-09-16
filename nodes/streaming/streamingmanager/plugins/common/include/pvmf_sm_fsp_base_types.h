@@ -276,10 +276,10 @@ class PVMFSMFSPBaseNodeCommand : public PVMFSMFSPBaseNodeCommandBase
                     || (PVMF_GENERIC_NODE_CANCELCOMMAND == iCmd));
         }
         /* need to overlaod the base Copy routine to copy metadata key */
-        void Copy(const PVMFGenericNodeCommand<OsclMemAllocator>& aCmd);
+        OSCL_IMPORT_REF void Copy(const PVMFGenericNodeCommand<OsclMemAllocator>& aCmd);
 
         /* need to overlaod the base Destroy routine to cleanup metadata key */
-        void Destroy();
+        OSCL_IMPORT_REF void Destroy();
 };
 
 class PVMFSMFSPChildNodeContainer
@@ -434,11 +434,11 @@ class PVMFSMNodeKVPStore
 {
     public:
         // add kvp string with W-string value
-        PVMFStatus addKVPString(const char* aKeyTypeString, OSCL_wString& aValString);
+        OSCL_IMPORT_REF PVMFStatus addKVPString(const char* aKeyTypeString, OSCL_wString& aValString);
         // add kvp string with normal string value
-        PVMFStatus addKVPString(const char* aKeyTypeString, const char* aValString);
+        OSCL_IMPORT_REF PVMFStatus addKVPString(const char* aKeyTypeString, const char* aValString);
         // add kvp string with normal uint32 value
-        PVMFStatus addKVPuint32Value(const char* aKeyTypeString, uint32 aValue);
+        OSCL_IMPORT_REF PVMFStatus addKVPuint32Value(const char* aKeyTypeString, uint32 aValue);
 
         // get the vector for the all constructed KVPs
         PVMFKvpVector* getKVPStore()

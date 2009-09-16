@@ -15,17 +15,23 @@
  * and limitations under the License.
  * -------------------------------------------------------------------
  */
-// = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+#ifndef PVMFSMNODEREG_H_INCLUDED
+#define PVMFSMNODEREG_H_INCLUDED
 
-//     SM C O N F I G   ( O P E N  C O R E  C O N F I G   I N F O )
+#ifndef OSCL_SHARED_LIBRARY_H_INCLUDED
+#include "oscl_shared_library.h"
+#endif
 
-// = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+#ifndef PVMF_NODE_INTERFACE_H_INCLUDED
+#include "pvmf_node_interface.h"
+#endif
 
-#ifndef PVMF_SM_CONFIG_H_INCLUDED
-#define PVMF_SM_CONFIG_H_INCLUDED
+class StreamingNodesCoreLibraryLoader
+{
+    public:
+        static PVMFNodeInterface* CreateStreamingManagerNode(int32 aPriority);
+        static bool DeleteStreamingManagerNode(PVMFNodeInterface* aNode);
+};
 
-#define PVMF_SM_HAS_WINDOWS_MEDIA_SUPPORT       0
-#define PVMF_SM_HAS_REAL_MEDIA_SUPPORT          0
-#define PVMF_SM_HAS_PV_PLAYLIST_SUPPORT         0
+#endif // PVMFSMNODEREG_H_INCLUDED
 
-#endif // PVMF_SM_CONFIG_H_INCLUDED

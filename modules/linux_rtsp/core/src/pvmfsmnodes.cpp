@@ -17,12 +17,18 @@
  */
 #include "pvmf_node_shared_lib_interface.h"
 
-#include "pvmfrtspnodereg.h"
+#ifndef PVMFSMNODEREG_H_INCLUDED
+#include "pvmfsmnodereg.h"
+#endif
 
 #include "pvmf_sm_node_factory.h"
 
 // Need osclconfig.h for the HAS_OSCL_LIB_SUPPORT macro for now
 #include "osclconfig.h"
+
+#ifndef PVMF_SM_NODE_FACTORY_H_INCLUDED
+#include "pvmf_sm_node_factory.h"
+#endif
 
 class StreamingNodesInterface: public OsclSharedLibraryInterface,
         public NodeSharedLibraryInterface
@@ -33,7 +39,7 @@ class StreamingNodesInterface: public OsclSharedLibraryInterface,
         // From NodeSharedLibraryInterface
         OsclAny* QueryNodeInterface(const PVUuid& aNodeUuid, const OsclUuid& aInterfaceId)
         {
-            if (KPVMFRTSPStreamingModuleUuid == aNodeUuid)
+            if (KPVMFStreamingManagerNodeUuid == aNodeUuid)
             {
                 if (PV_CREATE_NODE_INTERFACE == aInterfaceId)
                 {

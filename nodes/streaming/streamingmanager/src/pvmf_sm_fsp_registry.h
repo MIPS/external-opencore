@@ -17,9 +17,14 @@
  */
 #ifndef PVMF_SM_FSP_REGISTRY_H
 #define PVMF_SM_FSP_REGISTRY_H
+
 #ifndef PVMF_SM_FSP_REGISTRY_INTERFACE_H_INCLUDED
 #include "pvmf_sm_fsp_registry_interface.h"
 #endif
+
+class PVMFSMFSPRegistryPopulatorInterface;
+class OsclSharedLibrary;
+
 // CLASS DECLARATION
 /**
  * PVMFSMFSPRegistry maintains a list of fsps available which is queryable.
@@ -67,7 +72,6 @@ class PVMFSMFSPRegistry : public PVMFFSPRegistryInterface
          **/
         virtual bool ReleaseSMFSP(PVUuid& aUuid, PVMFSMFSPBaseNode *aSMFSP);
 
-#ifdef USE_LOADABLE_MODULES
         /**
          * The RegisterSMFSP for PVMFSMFSPRegistry. Used for registering SMFSPs through the SMFSPInfo object.
          *
@@ -80,41 +84,24 @@ class PVMFSMFSPRegistry : public PVMFFSPRegistryInterface
         };
 
         /**
-         * UnregisterSMFSP for PVMFSMFSPRegistry. Used to remove SMFSPs from dynamic registry.
-         *
-         * @param aSMFSPInfo SMFSPInfo object passed to the regisry class. This contains all SMFSPs that need to be unregistered.
-          *
-         **/
-        virtual void UnregisterSMFSP(const PVMFSMFSPInfo& aSMFSPInfo)
-        {
-            OSCL_UNUSED_ARG(aSMFSPInfo);
-            // do nothing
-        };
-#else
-        /**
-         * The RegisterSMFSP for PVMFSMFSPRegistry. Used for registering SMFSPs through the SMFSPInfo object.
-         *
-         * @param aSMFSPInfo SMFSPInfo object passed to the regisry class. This contains all SMFSPs that need to be registered.
-         *
-         **/
-        virtual void RegisterSMFSP(const PVMFSMFSPInfo& aSMFSPInfo) {};
-
-        /**
-         * The PopulateRegistry for PVMFSMFSPRegistry. Populates the registry by retrieving all the information for SMFSP.
-         * @param aConfigFilePath File path for the Configuration file which stores the mapping
-         *  between OsclUuids and SharedLibrary path names
-         *
-         **/
-        virtual void PopulateRegistry(const OSCL_String& aConfigFilePath) {};
-#endif
-
-        /**
          * Object destructor function
          **/
         virtual ~PVMFSMFSPRegistry();
 
     private:
-        Oscl_Vector<PVMFSMFSPInfo, OsclMemAllocator> iType;
+        void AddLoadableModules();
+        void RemoveLoadableModules();
+        bool CheckPluginAvailability(PVMFFormatType& aInputType, Oscl_Vector<PVUuid, OsclMemAllocator>& aUuids, uint32 aIndex = 0);
 
+        struct PVSMFSPSharedLibInfo
+        {
+            OsclSharedLibrary* iLib;
+            PVMFSMFSPRegistryPopulatorInterface* iFSPLibIfacePtr;
+            OsclAny* iContext;
+        };
+
+        Oscl_Vector<struct PVSMFSPSharedLibInfo*, OsclMemAllocator> iFSPLibInfoList;
+        bool    iMayLoadPluginsDynamically;
+        Oscl_Vector<PVMFSMFSPInfo, OsclMemAllocator> iType;
 };
 #endif

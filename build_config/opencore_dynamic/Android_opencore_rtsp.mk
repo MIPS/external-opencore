@@ -3,9 +3,7 @@ include $(CLEAR_VARS)
 
 
 LOCAL_WHOLE_STATIC_LIBRARIES := \
-	libpvrtspinterface \
- 	libpvstreamingmanagernode \
- 	libpv_rtsp_parcom \
+	libpv_rtsp_parcom \
  	libpvrtsp_cli_eng_node \
  	librtppayloadparser \
  	libpvjitterbufferrtp
@@ -19,8 +17,6 @@ LOCAL_PRELINK_MODULE := false
 LOCAL_SHARED_LIBRARIES +=   libopencore_net_support libopencore_player libopencore_common
 
 include $(BUILD_SHARED_LIBRARY)
-include   $(PV_TOP)/modules/linux_rtsp/core/Android.mk
-include   $(PV_TOP)/nodes/streaming/streamingmanager/Android.mk
 include   $(PV_TOP)/protocols/rtsp_parcom/Android.mk
 include   $(PV_TOP)/protocols/rtsp_client_engine/Android.mk
 include   $(PV_TOP)/protocols/rtp_payload_parser/Android.mk

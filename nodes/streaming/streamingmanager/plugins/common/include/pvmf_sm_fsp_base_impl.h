@@ -134,7 +134,7 @@ class PVMFSMFSPBaseNode
                                                 const OsclAny* aContext = NULL);
 
         //Synchronous add-ons only for quering PVMFDataSourceInitializationExtensionInterface
-        virtual bool queryInterface(const PVUuid& uuid, PVInterface*& iface);
+        OSCL_IMPORT_REF virtual bool queryInterface(const PVUuid& uuid, PVInterface*& iface);
         OSCL_IMPORT_REF PVMFCommandId QueryInterface(PVMFSessionId, const PVUuid& aUuid,
                 PVInterface*& aInterfacePtr,
                 const OsclAny* aContext = NULL);
@@ -168,10 +168,10 @@ class PVMFSMFSPBaseNode
                 const OsclAny* aContextData = NULL);
 
         /* From PVMFPortActivityHandler */
-        void HandlePortActivity(const PVMFPortActivity& aActivity);
+        OSCL_IMPORT_REF void HandlePortActivity(const PVMFPortActivity& aActivity);
 
         /* From PvmiCapabilityAndConfig */
-        virtual PVMFCommandId setParametersAsync(PvmiMIOSession aSession,
+        OSCL_IMPORT_REF virtual PVMFCommandId setParametersAsync(PvmiMIOSession aSession,
                 PvmiKvp* aParameters,
                 int num_elements,
                 PvmiKvp*& aRet_kvp,
@@ -182,7 +182,7 @@ class PVMFSMFSPBaseNode
         //(ii)   PVMFTrackSelectionExtensionInterface
 
         /* From PvmfDataSourcePlaybackControlInterface */
-        virtual PVMFCommandId SetDataSourcePosition(PVMFSessionId aSessionId,
+        OSCL_IMPORT_REF virtual PVMFCommandId SetDataSourcePosition(PVMFSessionId aSessionId,
                 PVMFTimestamp aTargetNPT,
                 PVMFTimestamp& aActualNPT,
                 PVMFTimestamp& aActualMediaDataTS,
@@ -190,54 +190,54 @@ class PVMFSMFSPBaseNode
                 uint32 aStreamID = 0,
                 OsclAny* aContext = NULL);
 
-        virtual PVMFCommandId SetDataSourcePosition(PVMFSessionId aSessionId,
+        OSCL_IMPORT_REF virtual PVMFCommandId SetDataSourcePosition(PVMFSessionId aSessionId,
                 PVMFDataSourcePositionParams& aPVMFDataSourcePositionParams,
                 OsclAny* aContext = NULL);
 
-        virtual PVMFCommandId QueryDataSourcePosition(PVMFSessionId aSessionId,
+        OSCL_IMPORT_REF virtual PVMFCommandId QueryDataSourcePosition(PVMFSessionId aSessionId,
                 PVMFTimestamp aTargetNPT,
                 PVMFTimestamp& aActualNPT,
                 bool aSeekToSyncPoint = true,
                 OsclAny* aContext = NULL);
-        virtual PVMFCommandId QueryDataSourcePosition(PVMFSessionId aSessionId,
+        OSCL_IMPORT_REF virtual PVMFCommandId QueryDataSourcePosition(PVMFSessionId aSessionId,
                 PVMFTimestamp aTargetNPT,
                 PVMFTimestamp& aSyncBeforeTargetNPT,
                 PVMFTimestamp& aSyncAfterTargetNPT,
                 OsclAny* aContext = NULL,
                 bool aSeekToSyncPoint = true);
-        virtual PVMFCommandId SetDataSourceRate(PVMFSessionId aSessionId,
-                                                int32 aRate,
-                                                PVMFTimebase* aTimebase = NULL,
-                                                OsclAny* aContext = NULL);
+        OSCL_IMPORT_REF virtual PVMFCommandId SetDataSourceRate(PVMFSessionId aSessionId,
+                int32 aRate,
+                PVMFTimebase* aTimebase = NULL,
+                OsclAny* aContext = NULL);
         //PvmfDataSourcePlaybackControlInterface::ComputeSkipTimeStamp is not supported
         //in all streaming formats. So not overriding
         //the base implementataion of returning PVMFErrNotSupported. FSP plugins can override
         //if they so choose.
 
         /* From PVMFMetadataExtensionInterface */
-        virtual uint32 GetNumMetadataKeysBase(char* aQueryKeyString = NULL);
-        virtual uint32 GetNumMetadataValuesBase(PVMFMetadataList& aKeyList);
-        virtual PVMFCommandId GetNodeMetadataKeys(PVMFSessionId aSessionId,
+        OSCL_IMPORT_REF virtual uint32 GetNumMetadataKeysBase(char* aQueryKeyString = NULL);
+        OSCL_IMPORT_REF virtual uint32 GetNumMetadataValuesBase(PVMFMetadataList& aKeyList);
+        OSCL_IMPORT_REF virtual PVMFCommandId GetNodeMetadataKeys(PVMFSessionId aSessionId,
                 PVMFMetadataList& aKeyList,
                 uint32 aStartingKeyIndex,
                 int32 aMaxKeyEntries = -1,
                 char* aQueryKeyString = NULL,
                 const OsclAny* aContextData = NULL);
-        virtual PVMFCommandId GetNodeMetadataValues(PVMFSessionId aSessionId,
+        OSCL_IMPORT_REF virtual PVMFCommandId GetNodeMetadataValues(PVMFSessionId aSessionId,
                 PVMFMetadataList& aKeyList,
                 Oscl_Vector<PvmiKvp, OsclMemAllocator>& aValueList,
                 uint32 aStartingValueIndex,
                 int32 aMaxValueEntries = -1,
                 const OsclAny* aContextData = NULL);
-        PVMFStatus ReleaseNodeMetadataKeysBase(PVMFMetadataList& aKeyList,
-                                               uint32 aStartingKeyIndex,
-                                               uint32 aEndKeyIndex);
-        PVMFStatus ReleaseNodeMetadataValuesBase(Oscl_Vector<PvmiKvp, OsclMemAllocator>& aValueList,
+        OSCL_IMPORT_REF PVMFStatus ReleaseNodeMetadataKeysBase(PVMFMetadataList& aKeyList,
+                uint32 aStartingKeyIndex,
+                uint32 aEndKeyIndex);
+        OSCL_IMPORT_REF PVMFStatus ReleaseNodeMetadataValuesBase(Oscl_Vector<PvmiKvp, OsclMemAllocator>& aValueList,
                 uint32 aStartingValueIndex,
                 uint32 aEndValueIndex);
 
         /* From PVMFNodeErrorEventObserver */
-        virtual void HandleNodeErrorEvent(const PVMFAsyncEvent& aEvent);
+        OSCL_IMPORT_REF virtual void HandleNodeErrorEvent(const PVMFAsyncEvent& aEvent);
 
         //Pure virtual(s) from following classes should be implemented in feature specific derived classes
         //(i)    PVMFNodeInfoEventObserver
@@ -245,11 +245,30 @@ class PVMFSMFSPBaseNode
 
         //For streaming of protected content PVMFCPM plugin is required.
         //Response of async commands executed on PVMFCPM will be notified by callback to func CPMCommandCompleted
-        virtual void CPMCommandCompleted(const PVMFCmdResp& aResponse);
+        OSCL_IMPORT_REF virtual void CPMCommandCompleted(const PVMFCmdResp& aResponse);
+
+        /**
+         * Sets shared library pointer
+         * @aPtr: Pointer to the shared library.
+         **/
+        virtual void SetSharedLibraryPtr(OsclSharedLibrary* aPtr)
+        {
+            iOsclSharedLibrary = aPtr;
+        }
+
+        /**
+         * Retrieves shared library pointer
+         * @returns Pointer to the shared library.
+         **/
+        virtual OsclSharedLibrary* GetSharedLibraryPtr()
+        {
+            return iOsclSharedLibrary;
+        }
+
     protected:
-        PVMFSMFSPBaseNode(int32 aPriority);
+        OSCL_IMPORT_REF PVMFSMFSPBaseNode(int32 aPriority);
         //Second Phase ctor for allocating mem on heap
-        void Construct();
+        OSCL_IMPORT_REF void Construct();
 
         //Pure virtuals to be implemented in the derived classes
         virtual bool ProcessCommand(PVMFSMFSPBaseNodeCommand&) = 0; //FSP concrete implementation need to implement it.
@@ -258,45 +277,40 @@ class PVMFSMFSPBaseNode
         virtual bool RequestUsageComplete() = 0;
 
         //For processing command Queues
-        void MoveCmdToCurrentQueue(PVMFSMFSPBaseNodeCommand& aCmd);
-        void MoveCmdToCancelQueue(PVMFSMFSPBaseNodeCommand& aCmd);
-        void MoveErrHandlingCmdToCurErrHandlingQ(PVMFSMFSPBaseNodeCommand& aCmd);
+        OSCL_IMPORT_REF void MoveCmdToCurrentQueue(PVMFSMFSPBaseNodeCommand& aCmd);
+        OSCL_IMPORT_REF void MoveCmdToCancelQueue(PVMFSMFSPBaseNodeCommand& aCmd);
+        OSCL_IMPORT_REF void MoveErrHandlingCmdToCurErrHandlingQ(PVMFSMFSPBaseNodeCommand& aCmd);
 
-        virtual PVMFCommandId QueueCommandL(PVMFSMFSPBaseNodeCommand& aCmd);
-        PVMFCommandId QueueErrHandlingCommandL(PVMFSMFSPBaseNodeCommand& aCmd);
+        OSCL_IMPORT_REF virtual PVMFCommandId QueueCommandL(PVMFSMFSPBaseNodeCommand& aCmd);
+        OSCL_IMPORT_REF PVMFCommandId QueueErrHandlingCommandL(PVMFSMFSPBaseNodeCommand& aCmd);
 
         //Functions for reporting error event, info event and command completion
-        virtual void CommandComplete(PVMFFSPNodeCmdQ&,
-                                     PVMFSMFSPBaseNodeCommand&,
-                                     PVMFStatus,
-                                     OsclAny* aData = NULL,
-                                     PVUuid* aEventUUID = NULL,
-                                     int32* aEventCode = NULL,
-                                     PVInterface* aExtMsg = NULL,
-                                     uint32 aEventDataLen = 0);
-
-        void ReportErrorEvent(PVMFEventType aEventType,
-                              OsclAny* aEventData = NULL,
-                              PVUuid* aEventUUID = NULL,
-                              int32* aEventCode = NULL);
-        void ReportInfoEvent(PVMFEventType aEventType,
-                             OsclAny* aEventData = NULL,
-                             PVUuid* aEventUUID = NULL,
-                             int32* aEventCode = NULL);
+        OSCL_IMPORT_REF void ReportInfoEvent(PVMFEventType aEventType,
+                                             OsclAny* aEventData = NULL,
+                                             PVUuid* aEventUUID = NULL,
+                                             int32* aEventCode = NULL);
+        OSCL_IMPORT_REF virtual void CommandComplete(PVMFFSPNodeCmdQ&,
+                PVMFSMFSPBaseNodeCommand&,
+                PVMFStatus,
+                OsclAny* aData = NULL,
+                PVUuid* aEventUUID = NULL,
+                int32* aEventCode = NULL,
+                PVInterface* aExtMsg = NULL,
+                uint32 aEventDataLen = 0);
 
         //Utiliy funcions for internal commands handling
-        PVMFSMFSPCommandContext* RequestNewInternalCmd();
-        virtual void InternalCommandComplete(PVMFFSPNodeCmdQ&,
-                                             PVMFSMFSPBaseNodeCommand&,
-                                             PVMFStatus,
-                                             OsclAny* aData = NULL,
-                                             PVUuid* aEventUUID = NULL,
-                                             int32* aEventCode = NULL,
-                                             PVInterface* aExtMsg = NULL);
-        void ResetNodeContainerCmdState();
+        OSCL_IMPORT_REF PVMFSMFSPCommandContext* RequestNewInternalCmd();
+        OSCL_IMPORT_REF virtual void InternalCommandComplete(PVMFFSPNodeCmdQ&,
+                PVMFSMFSPBaseNodeCommand&,
+                PVMFStatus,
+                OsclAny* aData = NULL,
+                PVUuid* aEventUUID = NULL,
+                int32* aEventCode = NULL,
+                PVInterface* aExtMsg = NULL);
+        OSCL_IMPORT_REF void ResetNodeContainerCmdState();
 
         //Utility funct that can be called by derived class to populate available keys based on iMetaDataInfo
-        void PopulateAvailableMetadataKeys();
+        OSCL_IMPORT_REF void PopulateAvailableMetadataKeys();
 
         //PVMFNodeInterface
         //To process Cancel command & CancelAll command
@@ -308,9 +322,9 @@ class PVMFSMFSPBaseNode
         * Command completion status values:
         *             PVMFErrNoMemory, PVMFSuccess, PVMFFailure
         */
-        virtual void DoCancelAllCommands(PVMFSMFSPBaseNodeCommand&);
-        void DoCancelAllPendingCommands(PVMFSMFSPBaseNodeCommand& aCmd);
-        void DoResetDueToErr(PVMFSMFSPBaseNodeCommand& aCmd);
+        OSCL_IMPORT_REF virtual void DoCancelAllCommands(PVMFSMFSPBaseNodeCommand&);
+        OSCL_IMPORT_REF void DoCancelAllPendingCommands(PVMFSMFSPBaseNodeCommand& aCmd);
+        OSCL_IMPORT_REF void DoResetDueToErr(PVMFSMFSPBaseNodeCommand& aCmd);
 
         /**
         * Assumption: When this function is called, cancel all command is present in the input Q.
@@ -320,53 +334,52 @@ class PVMFSMFSPBaseNode
         * Command completion status values:
         *             PVMFErrNoMemory, PVMFSuccess, PVMFFailure
         */
-        virtual void DoCancelCommand(PVMFSMFSPBaseNodeCommand&);
+        OSCL_IMPORT_REF virtual void DoCancelCommand(PVMFSMFSPBaseNodeCommand&);
 
         //Functions used to check if cancelcommand/cancelallcommand is complete
-        virtual void CompleteChildNodesCmdCancellation();
-        virtual bool CheckChildrenNodesCancelAll();
+        OSCL_IMPORT_REF virtual void CompleteChildNodesCmdCancellation();
+        OSCL_IMPORT_REF virtual bool CheckChildrenNodesCancelAll();
 
         //To process Reset command
-        virtual void DoReset(PVMFSMFSPBaseNodeCommand&);
-        virtual void CompleteReset();
-        virtual bool CheckChildrenNodesReset();
-        void CompleteResetDueToErr();
+        OSCL_IMPORT_REF virtual void DoReset(PVMFSMFSPBaseNodeCommand&);
+        OSCL_IMPORT_REF virtual void CompleteReset();
+        OSCL_IMPORT_REF virtual bool CheckChildrenNodesReset();
+        OSCL_IMPORT_REF void CompleteResetDueToErr();
 
         //To process Flush command
-        virtual void DoFlush(PVMFSMFSPBaseNodeCommand&);
-        virtual void CompleteFlush();
-        virtual bool CheckChildrenNodesFlush();
-        virtual bool FlushPending();
+        OSCL_IMPORT_REF virtual void DoFlush(PVMFSMFSPBaseNodeCommand&);
+        OSCL_IMPORT_REF virtual void CompleteFlush();
+        OSCL_IMPORT_REF virtual bool CheckChildrenNodesFlush();
+        OSCL_IMPORT_REF virtual bool FlushPending();
 
         //PVMFMetadataExtensionInterface
-        PVMFStatus DoGetMetadataKeysBase(PVMFSMFSPBaseNodeCommand& aCmd);
-        PVMFStatus CompleteGetMetadataKeys(PVMFSMFSPBaseNodeCommand& aCmd);
-        PVMFStatus DoGetMetadataValuesBase(PVMFSMFSPBaseNodeCommand& aCmd);
+        OSCL_IMPORT_REF PVMFStatus DoGetMetadataKeysBase(PVMFSMFSPBaseNodeCommand& aCmd);
+        OSCL_IMPORT_REF PVMFStatus CompleteGetMetadataKeys(PVMFSMFSPBaseNodeCommand& aCmd);
+        OSCL_IMPORT_REF PVMFStatus DoGetMetadataValuesBase(PVMFSMFSPBaseNodeCommand& aCmd);
 
         //CPM related functions
-        void InitCPM();
-        void OpenCPMSession();
-        void CPMRegisterContent();
-        bool GetCPMContentAccessFactory();
-        bool GetCPMMetaDataExtensionInterface();
-        void GetCPMLicenseInterface();
-        void GetCPMCapConfigInterface();
-        bool SetCPMKvps();
-        void RequestUsage();
-        void SendUsageComplete();
-        void CloseCPMSession();
-        void ResetCPM();
-        void GetCPMMetaDataKeys();
-        void GetCPMMetaDataValues();
-        void CompleteGetMetaDataValues();
-        void CompleteDRMInit();
+        OSCL_IMPORT_REF void InitCPM();
+        OSCL_IMPORT_REF void OpenCPMSession();
+        OSCL_IMPORT_REF void CPMRegisterContent();
+        OSCL_IMPORT_REF bool GetCPMContentAccessFactory();
+        OSCL_IMPORT_REF bool GetCPMMetaDataExtensionInterface();
+        OSCL_IMPORT_REF void GetCPMLicenseInterface();
+        OSCL_IMPORT_REF void GetCPMCapConfigInterface();
+        OSCL_IMPORT_REF bool SetCPMKvps();
+        OSCL_IMPORT_REF void RequestUsage();
+        OSCL_IMPORT_REF void SendUsageComplete();
+        OSCL_IMPORT_REF void CloseCPMSession();
+        OSCL_IMPORT_REF void ResetCPM();
+        OSCL_IMPORT_REF void GetCPMMetaDataKeys();
+        OSCL_IMPORT_REF void CompleteGetMetaDataValues();
+        OSCL_IMPORT_REF void CompleteDRMInit();
 
-        PVMFStatus CheckCPMCommandCompleteStatus(PVMFCommandId aID, PVMFStatus aStatus);
+        OSCL_IMPORT_REF PVMFStatus CheckCPMCommandCompleteStatus(PVMFCommandId aID, PVMFStatus aStatus);
 
-        void GetActualMediaTSAfterSeek();
-        virtual bool IsFatalErrorEvent(const PVMFEventType& event);
-        PVMFSMFSPChildNodeContainer* getChildNodeContainer(int32 tag);
-        virtual void ResetNodeParams(bool aReleaseMemmory = true);
+        virtual void GetActualMediaTSAfterSeek() {}
+        OSCL_IMPORT_REF virtual bool IsFatalErrorEvent(const PVMFEventType& event);
+        OSCL_IMPORT_REF PVMFSMFSPChildNodeContainer* getChildNodeContainer(int32 tag);
+        OSCL_IMPORT_REF virtual void ResetNodeParams(bool aReleaseMemmory = true);
 
         uint32  iNoOfValuesIteratedForValueVect;
         uint32  iNoOfValuesPushedInValueVect;
@@ -403,9 +416,9 @@ class PVMFSMFSPBaseNode
         Oscl_Vector<OSCL_HeapString<OsclMemAllocator>, OsclMemAllocator> iCPMMetadataKeys;
         PVMFSMSessionMetaDataInfo* iMetaDataInfo;
 
-        PVMFStatus GetIndexParamValues(char* aString, uint32& aStartIndex, uint32& aEndIndex);
-        PVMFStatus GetMaxSizeValue(char* aString, uint32& aMaxSize);
-        PVMFStatus GetTruncateFlagValue(char* aString, uint32& aTruncateFlag);
+        OSCL_IMPORT_REF PVMFStatus GetIndexParamValues(char* aString, uint32& aStartIndex, uint32& aEndIndex);
+        OSCL_IMPORT_REF PVMFStatus GetMaxSizeValue(char* aString, uint32& aMaxSize);
+        OSCL_IMPORT_REF PVMFStatus GetTruncateFlagValue(char* aString, uint32& aTruncateFlag);
 
         JitterBufferFactory* iJBFactory;
 
@@ -462,14 +475,14 @@ class PVMFSMFSPBaseNode
         PVLogger * iSMBaseLogger;
 
         //For Error handling
-        void HandleError(const PVMFCmdResp& aResponse);
+        OSCL_IMPORT_REF void HandleError(const PVMFCmdResp& aResponse);
         void ErrHandlingComplete(const PVMFSMFSPBaseNodeCommand* aErroneousCmd = NULL);
 
         //For pushing data to vect
-        PVMFStatus PushKeyToMetadataList(PVMFMetadataList* aMetaDataListPtr, const OSCL_HeapString<OsclMemAllocator> & aKey)const;
-        PVMFStatus PushKVPToMetadataValueList(Oscl_Vector<PvmiKvp, OsclMemAllocator>* aValueList, const PvmiKvp& aKVP)const;
+        OSCL_IMPORT_REF PVMFStatus PushKeyToMetadataList(PVMFMetadataList* aMetaDataListPtr, const OSCL_HeapString<OsclMemAllocator> & aKey)const;
+        OSCL_IMPORT_REF PVMFStatus PushKVPToMetadataValueList(Oscl_Vector<PvmiKvp, OsclMemAllocator>* aValueList, const PvmiKvp& aKVP)const;
         PVMFStatus SetCPMKvp(PvmiKvp& aKVP);
-        void CleanUp();
+        OSCL_IMPORT_REF void CleanUp();
         uint8* GetMemoryChunk(OsclMemAllocDestructDealloc<uint8>& aAllocator, const uint32 aChunkSize)
         {
             int32 leaveCode = 0;
@@ -483,23 +496,24 @@ class PVMFSMFSPBaseNode
             return memChunk;
         }
 
-        bool SupressInfoEvent();
+        OSCL_IMPORT_REF bool SupressInfoEvent();
 
 
     private:
         PVMFSMFSPChildNodeErrorHandler* iChildNodeErrHandler;
         OSCL_IMPORT_REF PVMFSessionId Connect(const PVMFNodeSessionInfo &aSessionInfo);
         /* From OsclActiveObject */
-        void Run();
-        void DoCancel();
+        OSCL_IMPORT_REF void Run();
+        OSCL_IMPORT_REF void DoCancel();
 
         void CleanupCPMdata();
         void CreateCommandQueues();
-        virtual bool IsInternalCmd(PVMFCommandId aId);
+        OSCL_IMPORT_REF virtual bool IsInternalCmd(PVMFCommandId aId);
 
         void ResetCPMParams(bool aReleaseMem = true);
         bool ErrorHandlingRequired(PVMFStatus aStatus);
 
+        OsclSharedLibrary* iOsclSharedLibrary;
         //CPM related
         PVMFMetadataExtensionInterface* iCPMMetaDataExtensionInterface;
 };

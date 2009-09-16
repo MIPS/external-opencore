@@ -51,7 +51,7 @@
 // Node Constructor & Destructor
 //////////////////////////////////////////////////
 
-PVMFSMFSPBaseNode::PVMFSMFSPBaseNode(int32 aPriority): OsclActiveObject(aPriority, "PVMFSMFSPBaseNode")
+OSCL_EXPORT_REF PVMFSMFSPBaseNode::PVMFSMFSPBaseNode(int32 aPriority): OsclActiveObject(aPriority, "PVMFSMFSPBaseNode")
         , iPlayListRepositioningSupported(false)
         , iMetaDataInfo(NULL)
         , iUseCPMPluginRegistry(false)
@@ -62,7 +62,7 @@ PVMFSMFSPBaseNode::PVMFSMFSPBaseNode(int32 aPriority): OsclActiveObject(aPriorit
     iCPM = NULL;
 }
 
-void PVMFSMFSPBaseNode::Construct()
+OSCL_EXPORT_REF void PVMFSMFSPBaseNode::Construct()
 {
     CreateCommandQueues();
     iSessionSourceInfo = OSCL_NEW(PVMFSMFSPSessionSourceInfo, ());
@@ -102,6 +102,7 @@ void PVMFSMFSPBaseNode::CreateCommandQueues()
     }
 }
 
+OSCL_EXPORT_REF
 PVMFSMFSPBaseNode::~PVMFSMFSPBaseNode()
 {
     if (IsAdded())
@@ -112,7 +113,7 @@ PVMFSMFSPBaseNode::~PVMFSMFSPBaseNode()
     CleanUp();
 }
 
-void PVMFSMFSPBaseNode::CleanUp()
+OSCL_EXPORT_REF void PVMFSMFSPBaseNode::CleanUp()
 {
     PVMF_SM_FSP_BASE_LOGSTACKTRACE((0, "PVMFSMFSPBaseNode::CleanUp - In"));
     ResetNodeParams();
@@ -140,7 +141,7 @@ void PVMFSMFSPBaseNode::CleanUp()
 /**
  * Do thread-specific node creation and go to "Idle" state.
  */
-PVMFStatus PVMFSMFSPBaseNode::ThreadLogon()
+OSCL_EXPORT_REF PVMFStatus PVMFSMFSPBaseNode::ThreadLogon()
 {
     PVMFStatus status = PVMFSuccess;
     switch (iInterfaceState)
@@ -182,7 +183,7 @@ PVMFStatus PVMFSMFSPBaseNode::ThreadLogon()
 /**
  * Do thread-specific node cleanup and go to "Created" state.
  */
-PVMFStatus PVMFSMFSPBaseNode::ThreadLogoff()
+OSCL_EXPORT_REF PVMFStatus PVMFSMFSPBaseNode::ThreadLogoff()
 {
     PVMF_SM_FSP_BASE_LOGSTACKTRACE((0, "PVMFSMFSPBaseNode::ThreadLogoff - In"));
 
@@ -241,7 +242,7 @@ PVMFStatus PVMFSMFSPBaseNode::ThreadLogoff()
  * observer and the session id of the session for both the SM Node
  * and the FSP should be same.
  */
-PVMFSessionId PVMFSMFSPBaseNode::Connect(const PVMFNodeSessionInfo &aSessionInfo)
+OSCL_EXPORT_REF PVMFSessionId PVMFSMFSPBaseNode::Connect(const PVMFNodeSessionInfo &aSessionInfo)
 {
     OSCL_UNUSED_ARG(aSessionInfo);
     OSCL_ASSERT(false);
@@ -260,7 +261,7 @@ OSCL_EXPORT_REF PVMFSessionId PVMFSMFSPBaseNode::Connect(const PVMFNodeSession &
 /**
  * retrieve node capabilities.
  */
-PVMFStatus PVMFSMFSPBaseNode::GetCapability(PVMFNodeCapability& aNodeCapability)
+OSCL_EXPORT_REF PVMFStatus PVMFSMFSPBaseNode::GetCapability(PVMFNodeCapability& aNodeCapability)
 {
     PVMF_SM_FSP_BASE_LOGSTACKTRACE((0, "PVMFSMFSPBaseNode:GetCapability"));
     aNodeCapability = iCapability;
@@ -270,7 +271,7 @@ PVMFStatus PVMFSMFSPBaseNode::GetCapability(PVMFNodeCapability& aNodeCapability)
 /**
  * retrive a port iterator.
  */
-PVMFPortIter* PVMFSMFSPBaseNode::GetPorts(const PVMFPortFilter* aFilter)
+OSCL_EXPORT_REF PVMFPortIter* PVMFSMFSPBaseNode::GetPorts(const PVMFPortFilter* aFilter)
 {
     PVMF_SM_FSP_BASE_LOGSTACKTRACE((0, "PVMFSMFSPBaseNode:GetPorts"));
     OSCL_UNUSED_ARG(aFilter);//port filter is not implemented.
@@ -282,7 +283,7 @@ PVMFPortIter* PVMFSMFSPBaseNode::GetPorts(const PVMFPortFilter* aFilter)
 /**
  * Provides interface with uuid PVMF_DATA_SOURCE_INIT_INTERFACE_UUID to the caller
 */
-bool PVMFSMFSPBaseNode::queryInterface(const PVUuid& uuid, PVInterface*& iface)
+OSCL_EXPORT_REF bool PVMFSMFSPBaseNode::queryInterface(const PVUuid& uuid, PVInterface*& iface)
 {
     PVMF_SM_FSP_BASE_LOGSTACKTRACE((0, "PVMFSMRTSPUnicastNode::queryInterface - In"));
 
@@ -311,7 +312,7 @@ bool PVMFSMFSPBaseNode::queryInterface(const PVUuid& uuid, PVInterface*& iface)
  * are complete for all the children node (viz. session controller, jitter buffer
  * controller etc)
  */
-PVMFCommandId PVMFSMFSPBaseNode::QueryUUID(PVMFSessionId aSession
+OSCL_EXPORT_REF PVMFCommandId PVMFSMFSPBaseNode::QueryUUID(PVMFSessionId aSession
         , const PvmfMimeString& aMimeType
         , Oscl_Vector<PVUuid, OsclMemAllocator>& aUuids
         , bool aExactUuidsOnly
@@ -330,7 +331,7 @@ PVMFCommandId PVMFSMFSPBaseNode::QueryUUID(PVMFSessionId aSession
 /**
  * Queue an asynchronous node command QueryInterface
  */
-PVMFCommandId PVMFSMFSPBaseNode::QueryInterface(PVMFSessionId aSession
+OSCL_EXPORT_REF PVMFCommandId PVMFSMFSPBaseNode::QueryInterface(PVMFSessionId aSession
         , const PVUuid& aUuid
         , PVInterface*& aInterfacePtr
         , const OsclAny* aContext)
@@ -345,7 +346,7 @@ PVMFCommandId PVMFSMFSPBaseNode::QueryInterface(PVMFSessionId aSession
 /**
  * Queue an asynchronous node command - RequestPort
  */
-PVMFCommandId PVMFSMFSPBaseNode::RequestPort(PVMFSessionId aSession
+OSCL_EXPORT_REF PVMFCommandId PVMFSMFSPBaseNode::RequestPort(PVMFSessionId aSession
         , int32 aPortTag
         , const PvmfMimeString* aPortConfig
         , const OsclAny* aContext)
@@ -364,7 +365,7 @@ PVMFCommandId PVMFSMFSPBaseNode::RequestPort(PVMFSessionId aSession
 /**
  * Queue an asynchronous node command - ReleasePort
  */
-PVMFCommandId PVMFSMFSPBaseNode::ReleasePort(PVMFSessionId aSession
+OSCL_EXPORT_REF PVMFCommandId PVMFSMFSPBaseNode::ReleasePort(PVMFSessionId aSession
         , PVMFPortInterface& aPort
         , const OsclAny* aContext)
 {
@@ -378,7 +379,7 @@ PVMFCommandId PVMFSMFSPBaseNode::ReleasePort(PVMFSessionId aSession
 /**
  * Queue an asynchronous node command - Init
  */
-PVMFCommandId PVMFSMFSPBaseNode::Init(PVMFSessionId aSession, const OsclAny* aContext)
+OSCL_EXPORT_REF PVMFCommandId PVMFSMFSPBaseNode::Init(PVMFSessionId aSession, const OsclAny* aContext)
 {
     PVMF_SM_FSP_BASE_LOGSTACKTRACE((0, "PVMFSMFSPBaseNode::Init - In"));
     PVMFSMFSPBaseNodeCommand cmd;
@@ -390,7 +391,7 @@ PVMFCommandId PVMFSMFSPBaseNode::Init(PVMFSessionId aSession, const OsclAny* aCo
 /**
  * Queue an asynchronous node command - Prepare
  */
-PVMFCommandId PVMFSMFSPBaseNode::Prepare(PVMFSessionId aSession
+OSCL_EXPORT_REF PVMFCommandId PVMFSMFSPBaseNode::Prepare(PVMFSessionId aSession
         , const OsclAny* aContext)
 {
     PVMF_SM_FSP_BASE_LOGSTACKTRACE((0, "PVMFSMFSPBaseNode::Prepare - In"));
@@ -414,8 +415,8 @@ PVMFCommandId PVMFSMFSPBaseNode::Prepare(PVMFSessionId aSession
 /**
  * Queue an asynchronous node command - Start
  */
-PVMFCommandId PVMFSMFSPBaseNode::Start(PVMFSessionId aSession
-                                       , const OsclAny* aContext)
+OSCL_EXPORT_REF PVMFCommandId PVMFSMFSPBaseNode::Start(PVMFSessionId aSession
+        , const OsclAny* aContext)
 {
     PVMF_SM_FSP_BASE_LOGSTACKTRACE((0, "PVMFSMFSPBaseNode::Start - In"));
     PVMFSMFSPBaseNodeCommand cmd;
@@ -427,8 +428,8 @@ PVMFCommandId PVMFSMFSPBaseNode::Start(PVMFSessionId aSession
 /**
  * Queue an asynchronous node command - Stop
  */
-PVMFCommandId PVMFSMFSPBaseNode::Stop(PVMFSessionId aSession
-                                      , const OsclAny* aContext)
+OSCL_EXPORT_REF PVMFCommandId PVMFSMFSPBaseNode::Stop(PVMFSessionId aSession
+        , const OsclAny* aContext)
 {
     PVMF_SM_FSP_BASE_LOGSTACKTRACE((0, "PVMFSMFSPBaseNode::Stop - In"));
     PVMFSMFSPBaseNodeCommand cmd;
@@ -440,8 +441,8 @@ PVMFCommandId PVMFSMFSPBaseNode::Stop(PVMFSessionId aSession
 /**
  * Queue an asynchronous node command - Flush
  */
-PVMFCommandId PVMFSMFSPBaseNode::Flush(PVMFSessionId aSession
-                                       , const OsclAny* aContext)
+OSCL_EXPORT_REF PVMFCommandId PVMFSMFSPBaseNode::Flush(PVMFSessionId aSession
+        , const OsclAny* aContext)
 {
     PVMF_SM_FSP_BASE_LOGSTACKTRACE((0, "PVMFSMFSPBaseNode::Flush - In"));
     PVMFSMFSPBaseNodeCommand cmd;
@@ -453,8 +454,8 @@ PVMFCommandId PVMFSMFSPBaseNode::Flush(PVMFSessionId aSession
 /**
  * Queue an asynchronous node command - Pause
  */
-PVMFCommandId PVMFSMFSPBaseNode::Pause(PVMFSessionId aSession
-                                       , const OsclAny* aContext)
+OSCL_EXPORT_REF PVMFCommandId PVMFSMFSPBaseNode::Pause(PVMFSessionId aSession
+        , const OsclAny* aContext)
 {
     PVMF_SM_FSP_BASE_LOGSTACKTRACE((0, "PVMFSMFSPBaseNode::Pause - In"));
     PVMFSMFSPBaseNodeCommand cmd;
@@ -466,8 +467,8 @@ PVMFCommandId PVMFSMFSPBaseNode::Pause(PVMFSessionId aSession
 /**
  * Queue an asynchronous node command - Reset
  */
-PVMFCommandId PVMFSMFSPBaseNode::Reset(PVMFSessionId aSession
-                                       , const OsclAny* aContext)
+OSCL_EXPORT_REF PVMFCommandId PVMFSMFSPBaseNode::Reset(PVMFSessionId aSession
+        , const OsclAny* aContext)
 {
     PVMF_SM_FSP_BASE_LOGSTACKTRACE((0, "PVMFSMFSPBaseNode::Reset - In"));
     PVMFSMFSPBaseNodeCommand cmd;
@@ -479,7 +480,7 @@ PVMFCommandId PVMFSMFSPBaseNode::Reset(PVMFSessionId aSession
 /**
  * Queue an asynchronous node command - CancelAllCommands
  */
-PVMFCommandId PVMFSMFSPBaseNode::CancelAllCommands(PVMFSessionId aSession
+OSCL_EXPORT_REF PVMFCommandId PVMFSMFSPBaseNode::CancelAllCommands(PVMFSessionId aSession
         , const OsclAny* aContextData)
 {
     PVMF_SM_FSP_BASE_LOGSTACKTRACE((0, "PVMFSMFSPBaseNode:CancelAllCommands"));
@@ -492,7 +493,7 @@ PVMFCommandId PVMFSMFSPBaseNode::CancelAllCommands(PVMFSessionId aSession
 /**
  * Queue an asynchronous node command - CancelCommand
  */
-PVMFCommandId PVMFSMFSPBaseNode::CancelCommand(PVMFSessionId aSession
+OSCL_EXPORT_REF PVMFCommandId PVMFSMFSPBaseNode::CancelCommand(PVMFSessionId aSession
         , PVMFCommandId aCmdId
         , const OsclAny* aContextData)
 {
@@ -506,7 +507,7 @@ PVMFCommandId PVMFSMFSPBaseNode::CancelCommand(PVMFSessionId aSession
 /**
  *Implementation of HandlePortActivity
  */
-void PVMFSMFSPBaseNode::HandlePortActivity(const PVMFPortActivity& aActivity)
+OSCL_EXPORT_REF void PVMFSMFSPBaseNode::HandlePortActivity(const PVMFPortActivity& aActivity)
 {
     OSCL_UNUSED_ARG(aActivity);
     PVMF_SM_FSP_BASE_LOGSTACKTRACE((0, "PVMFSMFSPBaseNode:HandlePortActivity - Not Implemented"));
@@ -515,7 +516,7 @@ void PVMFSMFSPBaseNode::HandlePortActivity(const PVMFPortActivity& aActivity)
 ///////////////////////////////////////////////////////////////////////////////
 // Implementation of virtuals from OsclActiveObject
 ///////////////////////////////////////////////////////////////////////////////
-void PVMFSMFSPBaseNode::Run()
+OSCL_EXPORT_REF void PVMFSMFSPBaseNode::Run()
 {
     if (EPVMFNodeError == iInterfaceState)
     {
@@ -577,7 +578,7 @@ void PVMFSMFSPBaseNode::Run()
     }
 }
 
-void PVMFSMFSPBaseNode::DoCancel()
+OSCL_EXPORT_REF void PVMFSMFSPBaseNode::DoCancel()
 {
     /* the base class cancel operation is sufficient */
     OsclActiveObject::DoCancel();
@@ -586,7 +587,7 @@ void PVMFSMFSPBaseNode::DoCancel()
 ///////////////////////////////////////////////////////////////////////////////
 //Implemenataion fo pure virtual asyn calls from PvmiCapabilityAndConfig
 ///////////////////////////////////////////////////////////////////////////////
-PVMFCommandId PVMFSMFSPBaseNode::setParametersAsync(PvmiMIOSession aSession,
+OSCL_EXPORT_REF PVMFCommandId PVMFSMFSPBaseNode::setParametersAsync(PvmiMIOSession aSession,
         PvmiKvp* aParameters,
         int num_elements,
         PvmiKvp*& aRet_kvp,
@@ -607,7 +608,7 @@ PVMFCommandId PVMFSMFSPBaseNode::setParametersAsync(PvmiMIOSession aSession,
 /**
  * Queue an asynchronous node command - SetDataSourcePosition
  */
-PVMFCommandId PVMFSMFSPBaseNode::SetDataSourcePosition(PVMFSessionId aSessionId,
+OSCL_EXPORT_REF PVMFCommandId PVMFSMFSPBaseNode::SetDataSourcePosition(PVMFSessionId aSessionId,
         PVMFTimestamp aTargetNPT,
         PVMFTimestamp& aActualNPT,
         PVMFTimestamp& aActualMediaDataTS,
@@ -633,7 +634,7 @@ PVMFCommandId PVMFSMFSPBaseNode::SetDataSourcePosition(PVMFSessionId aSessionId,
 /**
  * Queue an asynchronous node command - SetDataSourcePosition (if supported)
  */
-PVMFCommandId PVMFSMFSPBaseNode::SetDataSourcePosition(PVMFSessionId aSessionId,
+OSCL_EXPORT_REF PVMFCommandId PVMFSMFSPBaseNode::SetDataSourcePosition(PVMFSessionId aSessionId,
         PVMFDataSourcePositionParams& aPVMFDataSourcePositionParams,
         OsclAny* aContext)
 {
@@ -659,12 +660,12 @@ PVMFCommandId PVMFSMFSPBaseNode::SetDataSourcePosition(PVMFSessionId aSessionId,
 /**
  * Queue an asynchronous node command - QueryDataSourcePosition
  */
-PVMFCommandId PVMFSMFSPBaseNode::QueryDataSourcePosition(PVMFSessionId aSessionId,
+OSCL_EXPORT_REF PVMFCommandId PVMFSMFSPBaseNode::QueryDataSourcePosition(PVMFSessionId aSessionId,
         PVMFTimestamp aTargetNPT,
         PVMFTimestamp& aActualNPT,
         bool aSeekToSyncPoint,
         OsclAny* aContext
-                                                        )
+                                                                        )
 {
     PVMF_SM_FSP_BASE_LOGSTACKTRACE((0, "PVMFSMFSPBaseNode::QueryDataSourcePosition - In"));
     PVMFSMFSPBaseNodeCommand cmd;
@@ -682,13 +683,13 @@ PVMFCommandId PVMFSMFSPBaseNode::QueryDataSourcePosition(PVMFSessionId aSessionI
 /**
  * Queue an asynchronous node command - QueryDataSourcePosition
  */
-PVMFCommandId PVMFSMFSPBaseNode::QueryDataSourcePosition(PVMFSessionId aSessionId,
+OSCL_EXPORT_REF PVMFCommandId PVMFSMFSPBaseNode::QueryDataSourcePosition(PVMFSessionId aSessionId,
         PVMFTimestamp aTargetNPT,
         PVMFTimestamp& aSyncBeforeTargetNPT,
         PVMFTimestamp& aSyncAfterTargetNPT,
         OsclAny* aContext,
         bool aSeekToSyncPoint
-                                                        )
+                                                                        )
 {
     // This is only to comply the interface file change due to Mp4 parser node.
     // Actual testing/supportfs will be done here if required.
@@ -708,7 +709,7 @@ PVMFCommandId PVMFSMFSPBaseNode::QueryDataSourcePosition(PVMFSessionId aSessionI
 /**
  * Queue an asynchronous node command - SetDataSourceRate (if supported)
  */
-PVMFCommandId PVMFSMFSPBaseNode::SetDataSourceRate(PVMFSessionId aSessionId,
+OSCL_EXPORT_REF PVMFCommandId PVMFSMFSPBaseNode::SetDataSourceRate(PVMFSessionId aSessionId,
         int32 aRate,
         PVMFTimebase* aTimebase,
         OsclAny* aContext)
@@ -726,7 +727,7 @@ PVMFCommandId PVMFSMFSPBaseNode::SetDataSourceRate(PVMFSessionId aSessionId,
 ///////////////////////////////////////////////////////////////////////////////
 //Implementation of virtuals declared in PVMFMetadataExtensionInterface
 ///////////////////////////////////////////////////////////////////////////////
-uint32 PVMFSMFSPBaseNode::GetNumMetadataKeysBase(char* aQueryKeyString)
+OSCL_EXPORT_REF uint32 PVMFSMFSPBaseNode::GetNumMetadataKeysBase(char* aQueryKeyString)
 {
     uint32 num_entries = 0;
 
@@ -758,7 +759,7 @@ uint32 PVMFSMFSPBaseNode::GetNumMetadataKeysBase(char* aQueryKeyString)
     return num_entries;
 }
 
-uint32 PVMFSMFSPBaseNode::GetNumMetadataValuesBase(PVMFMetadataList& aKeyList)
+OSCL_EXPORT_REF uint32 PVMFSMFSPBaseNode::GetNumMetadataValuesBase(PVMFMetadataList& aKeyList)
 {
 
     uint32 numkeys = aKeyList.size();
@@ -1357,7 +1358,7 @@ uint32 PVMFSMFSPBaseNode::GetNumMetadataValuesBase(PVMFMetadataList& aKeyList)
     return numvalentries; // Number of elements
 }
 
-PVMFCommandId PVMFSMFSPBaseNode::GetNodeMetadataKeys(PVMFSessionId aSessionId,
+OSCL_EXPORT_REF PVMFCommandId PVMFSMFSPBaseNode::GetNodeMetadataKeys(PVMFSessionId aSessionId,
         PVMFMetadataList& aKeyList,
         uint32 aStartingKeyIndex,
         int32 aMaxKeyEntries,
@@ -1377,7 +1378,7 @@ PVMFCommandId PVMFSMFSPBaseNode::GetNodeMetadataKeys(PVMFSessionId aSessionId,
     return QueueCommandL(cmd);
 }
 
-PVMFCommandId PVMFSMFSPBaseNode::GetNodeMetadataValues(PVMFSessionId aSessionId,
+OSCL_EXPORT_REF PVMFCommandId PVMFSMFSPBaseNode::GetNodeMetadataValues(PVMFSessionId aSessionId,
         PVMFMetadataList& aKeyList,
         Oscl_Vector<PvmiKvp, OsclMemAllocator>& aValueList,
         uint32 aStartingValueIndex,
@@ -1397,7 +1398,7 @@ PVMFCommandId PVMFSMFSPBaseNode::GetNodeMetadataValues(PVMFSessionId aSessionId,
     return QueueCommandL(cmd);
 }
 
-PVMFStatus PVMFSMFSPBaseNode::ReleaseNodeMetadataKeysBase(PVMFMetadataList& aKeyList,
+OSCL_EXPORT_REF PVMFStatus PVMFSMFSPBaseNode::ReleaseNodeMetadataKeysBase(PVMFMetadataList& aKeyList,
         uint32 aStartingKeyIndex,
         uint32 aEndKeyIndex)
 {
@@ -1409,7 +1410,7 @@ PVMFStatus PVMFSMFSPBaseNode::ReleaseNodeMetadataKeysBase(PVMFMetadataList& aKey
     return PVMFSuccess;
 }
 
-PVMFStatus PVMFSMFSPBaseNode::ReleaseNodeMetadataValuesBase(Oscl_Vector<PvmiKvp, OsclMemAllocator>& aValueList,
+OSCL_EXPORT_REF PVMFStatus PVMFSMFSPBaseNode::ReleaseNodeMetadataValuesBase(Oscl_Vector<PvmiKvp, OsclMemAllocator>& aValueList,
         uint32 aStartingValueIndex,
         uint32 aEndValueIndex)
 {
@@ -1490,7 +1491,7 @@ PVMFStatus PVMFSMFSPBaseNode::ReleaseNodeMetadataValuesBase(Oscl_Vector<PvmiKvp,
 ///////////////////////////////////////////////////////////////////////////////
 //Implementation of virtuals declared in PVMFNodeErrorEventObserver
 ///////////////////////////////////////////////////////////////////////////////
-void PVMFSMFSPBaseNode::HandleNodeErrorEvent(const PVMFAsyncEvent& aEvent)
+OSCL_EXPORT_REF void PVMFSMFSPBaseNode::HandleNodeErrorEvent(const PVMFAsyncEvent& aEvent)
 {
     PVMF_SM_FSP_BASE_LOGSTACKTRACE((0, "PVMFSMFSPBaseNode::HandleNodeErrorEvent - In iInterfaceState[%d]", iInterfaceState));
     //If node is already in error state, then dont propagate the err event up and ignore it
@@ -1518,7 +1519,7 @@ void PVMFSMFSPBaseNode::HandleNodeErrorEvent(const PVMFAsyncEvent& aEvent)
 //Implementation of some asyn functions of PVMFNodeInterface serviced in the
 //base class
 ///////////////////////////////////////////////////////////////////////////////
-void PVMFSMFSPBaseNode::DoCancelAllCommands(PVMFSMFSPBaseNodeCommand& aCmd)
+OSCL_EXPORT_REF void PVMFSMFSPBaseNode::DoCancelAllCommands(PVMFSMFSPBaseNodeCommand& aCmd)
 {
     PVMF_SM_FSP_BASE_LOGSTACKTRACE((0, "PVMFSMFSPBaseNode::DoCancelAllCommands In"));
 
@@ -1583,7 +1584,7 @@ void PVMFSMFSPBaseNode::DoCancelAllCommands(PVMFSMFSPBaseNodeCommand& aCmd)
     PVMF_SM_FSP_BASE_LOGSTACKTRACE((0, "PVMFSMFSPBaseNode::DoCancelAllCommands Out"));
 }
 
-void PVMFSMFSPBaseNode::DoCancelAllPendingCommands(PVMFSMFSPBaseNodeCommand& aCmd)
+OSCL_EXPORT_REF void PVMFSMFSPBaseNode::DoCancelAllPendingCommands(PVMFSMFSPBaseNodeCommand& aCmd)
 {
     PVMF_SM_FSP_BASE_LOGSTACKTRACE((0, "PVMFSMFSPBaseNode::DoCancelAllPendingCommands In"));
     //First cancel the current command if any...
@@ -1625,7 +1626,7 @@ void PVMFSMFSPBaseNode::DoCancelAllPendingCommands(PVMFSMFSPBaseNodeCommand& aCm
     PVMF_SM_FSP_BASE_LOGSTACKTRACE((0, "PVMFSMFSPBaseNode::DoCancelAllPendingCommands Out"));
 }
 
-void PVMFSMFSPBaseNode::DoResetDueToErr(PVMFSMFSPBaseNodeCommand& aCmd)
+OSCL_EXPORT_REF void PVMFSMFSPBaseNode::DoResetDueToErr(PVMFSMFSPBaseNodeCommand& aCmd)
 {
     PVMF_SM_FSP_BASE_LOGSTACKTRACE((0, "PVMFSMFSPBaseNode::DoResetDueToErr - In"));
     /* this node allows a reset from any state, as long as the AO is in scheduler queue */
@@ -1668,7 +1669,7 @@ void PVMFSMFSPBaseNode::DoResetDueToErr(PVMFSMFSPBaseNodeCommand& aCmd)
     PVMF_SM_FSP_BASE_LOGSTACKTRACE((0, "PVMFSMFSPBaseNode::DoResetDueToErr - Out"));
 }
 
-void PVMFSMFSPBaseNode::CompleteChildNodesCmdCancellation()
+OSCL_EXPORT_REF void PVMFSMFSPBaseNode::CompleteChildNodesCmdCancellation()
 {
     PVMF_SM_FSP_BASE_LOGSTACKTRACE((0, "PVMFSMFSPBaseNode::CompleteCancelAll - In"));
     if (CheckChildrenNodesCancelAll())
@@ -1743,7 +1744,7 @@ void PVMFSMFSPBaseNode::CompleteChildNodesCmdCancellation()
     return;
 }
 
-bool PVMFSMFSPBaseNode::CheckChildrenNodesCancelAll()
+OSCL_EXPORT_REF bool PVMFSMFSPBaseNode::CheckChildrenNodesCancelAll()
 {
     for (uint32 i = 0; i < iFSPChildNodeContainerVec.size(); i++)
     {
@@ -1755,7 +1756,7 @@ bool PVMFSMFSPBaseNode::CheckChildrenNodesCancelAll()
     return true;
 }
 
-void PVMFSMFSPBaseNode::DoCancelCommand(PVMFSMFSPBaseNodeCommand& aCmd)
+OSCL_EXPORT_REF void PVMFSMFSPBaseNode::DoCancelCommand(PVMFSMFSPBaseNodeCommand& aCmd)
 {
     //todo:need to implement
     OSCL_UNUSED_ARG(aCmd);
@@ -1765,7 +1766,7 @@ void PVMFSMFSPBaseNode::DoCancelCommand(PVMFSMFSPBaseNodeCommand& aCmd)
 /**
  * Called by the command handler AO to do the node Reset.
  */
-void PVMFSMFSPBaseNode::DoReset(PVMFSMFSPBaseNodeCommand& aCmd)
+OSCL_EXPORT_REF void PVMFSMFSPBaseNode::DoReset(PVMFSMFSPBaseNodeCommand& aCmd)
 {
     PVMF_SM_FSP_BASE_LOGSTACKTRACE((0, "PVMFSMFSPBaseNode::DoReset - In"));
     /* this node allows a reset from any state, as long as the AO is in scheduler queue */
@@ -1821,7 +1822,7 @@ void PVMFSMFSPBaseNode::DoReset(PVMFSMFSPBaseNodeCommand& aCmd)
 
 
 
-void PVMFSMFSPBaseNode::CompleteReset()
+OSCL_EXPORT_REF void PVMFSMFSPBaseNode::CompleteReset()
 {
     PVMF_SM_FSP_BASE_LOGSTACKTRACE((0, "PVMFSMFSPBaseNode::CompleteReset - In"));
     if (CheckChildrenNodesReset() && iDRMResetPending == false)
@@ -1846,7 +1847,7 @@ void PVMFSMFSPBaseNode::CompleteReset()
     return;
 }
 
-void PVMFSMFSPBaseNode::CompleteResetDueToErr()
+OSCL_EXPORT_REF void PVMFSMFSPBaseNode::CompleteResetDueToErr()
 {
     ResetNodeContainerCmdState();
     //check the state of the child nodes
@@ -1874,7 +1875,7 @@ void PVMFSMFSPBaseNode::CompleteResetDueToErr()
     }
 }
 
-bool PVMFSMFSPBaseNode::CheckChildrenNodesReset()
+OSCL_EXPORT_REF bool PVMFSMFSPBaseNode::CheckChildrenNodesReset()
 {
     for (uint32 i = 0; i < iFSPChildNodeContainerVec.size(); i++)
     {
@@ -1886,7 +1887,7 @@ bool PVMFSMFSPBaseNode::CheckChildrenNodesReset()
     return true;
 }
 
-void PVMFSMFSPBaseNode::DoFlush(PVMFSMFSPBaseNodeCommand& aCmd)
+OSCL_EXPORT_REF void PVMFSMFSPBaseNode::DoFlush(PVMFSMFSPBaseNodeCommand& aCmd)
 {
     PVMF_SM_FSP_BASE_LOGSTACKTRACE((0, "PVMFSMFSPBaseNode::DoFlush - In"));
     switch (iInterfaceState)
@@ -1946,7 +1947,7 @@ void PVMFSMFSPBaseNode::DoFlush(PVMFSMFSPBaseNodeCommand& aCmd)
     PVMF_SM_FSP_BASE_LOGSTACKTRACE((0, "PVMFSMFSPBaseNode::DoFlush - Out"));
 }
 
-void PVMFSMFSPBaseNode::CompleteFlush()
+OSCL_EXPORT_REF void PVMFSMFSPBaseNode::CompleteFlush()
 {
     /*
     * If the node is not running we need to wakeup the
@@ -1963,7 +1964,7 @@ void PVMFSMFSPBaseNode::CompleteFlush()
     return;
 }
 
-bool PVMFSMFSPBaseNode::CheckChildrenNodesFlush()
+OSCL_EXPORT_REF bool PVMFSMFSPBaseNode::CheckChildrenNodesFlush()
 {
     for (uint32 i = 0; i < iFSPChildNodeContainerVec.size(); i++)
     {
@@ -1980,10 +1981,10 @@ bool PVMFSMFSPBaseNode::CheckChildrenNodesFlush()
 ///////////////////////////////////////////////////////////////////////////////
 */
 
-void PVMFSMFSPBaseNode::ReportInfoEvent(PVMFEventType aEventType,
-                                        OsclAny* aEventData,
-                                        PVUuid* aEventUUID,
-                                        int32* aEventCode)
+OSCL_EXPORT_REF void PVMFSMFSPBaseNode::ReportInfoEvent(PVMFEventType aEventType,
+        OsclAny* aEventData,
+        PVUuid* aEventUUID,
+        int32* aEventCode)
 
 {
     PVMF_SM_FSP_BASE_LOGSTACKTRACE((0, "PVMFSMFSPBaseNode::NodeInfoEvent Type %d Data %d"
@@ -2010,14 +2011,14 @@ void PVMFSMFSPBaseNode::ReportInfoEvent(PVMFEventType aEventType,
 }
 
 
-void PVMFSMFSPBaseNode::CommandComplete(PVMFFSPNodeCmdQ& aCmdQ,
-                                        PVMFSMFSPBaseNodeCommand& aCmd,
-                                        PVMFStatus aStatus,
-                                        OsclAny* aEventData,
-                                        PVUuid* aEventUUID,
-                                        int32* aEventCode,
-                                        PVInterface* aExtMsg,
-                                        uint32 aEventDataLen)
+OSCL_EXPORT_REF void PVMFSMFSPBaseNode::CommandComplete(PVMFFSPNodeCmdQ& aCmdQ,
+        PVMFSMFSPBaseNodeCommand& aCmd,
+        PVMFStatus aStatus,
+        OsclAny* aEventData,
+        PVUuid* aEventUUID,
+        int32* aEventCode,
+        PVInterface* aExtMsg,
+        uint32 aEventDataLen)
 {
     PVMF_SM_FSP_BASE_LOGSTACKTRACE((0, "StreamingManagerNode:CommandComplete Id %d Cmd %d Status %d Context %d Data %d"
                                     , aCmd.iId, aCmd.iCmd, aStatus, aCmd.iContext, aEventData));
@@ -2074,7 +2075,7 @@ void PVMFSMFSPBaseNode::CommandComplete(PVMFFSPNodeCmdQ& aCmdQ,
     }
 }
 
-void PVMFSMFSPBaseNode::InternalCommandComplete(PVMFFSPNodeCmdQ& aCmdQ,
+OSCL_EXPORT_REF void PVMFSMFSPBaseNode::InternalCommandComplete(PVMFFSPNodeCmdQ& aCmdQ,
         PVMFSMFSPBaseNodeCommand& aCmd,
         PVMFStatus aStatus,
         OsclAny* aEventData,
@@ -2134,7 +2135,7 @@ void PVMFSMFSPBaseNode::InternalCommandComplete(PVMFFSPNodeCmdQ& aCmdQ,
 //////////////////////////////////////////////////
 */
 
-bool PVMFSMFSPBaseNode::IsInternalCmd(PVMFCommandId aId)
+OSCL_EXPORT_REF bool PVMFSMFSPBaseNode::IsInternalCmd(PVMFCommandId aId)
 {
     if ((PVMF_SMFSP_NODE_CONSTRUCT_SESSION == aId) || (PVMF_SMFSP_NODE_CANCEL_DUE_TO_ERROR == aId) ||
             IsFSPInternalCmd(aId))
@@ -2144,7 +2145,7 @@ bool PVMFSMFSPBaseNode::IsInternalCmd(PVMFCommandId aId)
     return false;
 }
 
-bool PVMFSMFSPBaseNode::IsFatalErrorEvent(const PVMFEventType& event)
+OSCL_EXPORT_REF bool PVMFSMFSPBaseNode::IsFatalErrorEvent(const PVMFEventType& event)
 {
     bool retval = false;
     switch (event)
@@ -2176,7 +2177,7 @@ bool PVMFSMFSPBaseNode::ErrorHandlingRequired(PVMFStatus aStatus)
     return false;
 }
 
-PVMFStatus PVMFSMFSPBaseNode::GetIndexParamValues(char* aString, uint32& aStartIndex, uint32& aEndIndex)
+OSCL_EXPORT_REF PVMFStatus PVMFSMFSPBaseNode::GetIndexParamValues(char* aString, uint32& aStartIndex, uint32& aEndIndex)
 {
     // This parses a string of the form "index=N1...N2" and extracts the integers N1 and N2.
     // If string is of the format "index=N1" then N2=N1
@@ -2211,7 +2212,7 @@ PVMFStatus PVMFSMFSPBaseNode::GetIndexParamValues(char* aString, uint32& aStartI
 /**
 //A routine to tell if a flush operation is in progress.
 */
-bool PVMFSMFSPBaseNode::FlushPending()
+OSCL_EXPORT_REF bool PVMFSMFSPBaseNode::FlushPending()
 {
     if ((iCurrentCommand.size() > 0) &&
             (iCurrentCommand.front().iCmd == PVMF_SMFSP_NODE_FLUSH) &&
@@ -2224,7 +2225,7 @@ bool PVMFSMFSPBaseNode::FlushPending()
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
-PVMFSMFSPCommandContext* PVMFSMFSPBaseNode::RequestNewInternalCmd()
+OSCL_EXPORT_REF PVMFSMFSPCommandContext* PVMFSMFSPBaseNode::RequestNewInternalCmd()
 {
     int32 i = 0;
     /* Search for the next free node command in the pool */
@@ -2241,7 +2242,7 @@ PVMFSMFSPCommandContext* PVMFSMFSPBaseNode::RequestNewInternalCmd()
     return NULL;
 }
 
-void PVMFSMFSPBaseNode::ResetNodeContainerCmdState()
+OSCL_EXPORT_REF void PVMFSMFSPBaseNode::ResetNodeContainerCmdState()
 {
     for (uint32 i = 0; i < iFSPChildNodeContainerVec.size(); i++)
     {
@@ -2249,7 +2250,7 @@ void PVMFSMFSPBaseNode::ResetNodeContainerCmdState()
     }
 }
 
-PVMFSMFSPChildNodeContainer* PVMFSMFSPBaseNode::getChildNodeContainer(int32 tag)
+OSCL_EXPORT_REF PVMFSMFSPChildNodeContainer* PVMFSMFSPBaseNode::getChildNodeContainer(int32 tag)
 {
     for (uint32 i = 0; i < iFSPChildNodeContainerVec.size(); i++)
     {
@@ -2265,7 +2266,7 @@ PVMFSMFSPChildNodeContainer* PVMFSMFSPBaseNode::getChildNodeContainer(int32 tag)
 //Command Q processing functions
 ///////////////////////////////////////////////////////////////////////////////
 //For processing command Queues
-void PVMFSMFSPBaseNode::MoveCmdToCurrentQueue(PVMFSMFSPBaseNodeCommand& aCmd)
+OSCL_EXPORT_REF void PVMFSMFSPBaseNode::MoveCmdToCurrentQueue(PVMFSMFSPBaseNodeCommand& aCmd)
 {
     int32 err;
     OSCL_TRY(err, iCurrentCommand.StoreL(aCmd););
@@ -2278,7 +2279,7 @@ void PVMFSMFSPBaseNode::MoveCmdToCurrentQueue(PVMFSMFSPBaseNodeCommand& aCmd)
     return;
 }
 
-void PVMFSMFSPBaseNode::MoveCmdToCancelQueue(PVMFSMFSPBaseNodeCommand& aCmd)
+OSCL_EXPORT_REF void PVMFSMFSPBaseNode::MoveCmdToCancelQueue(PVMFSMFSPBaseNodeCommand& aCmd)
 {
     /*
      * note: the StoreL cannot fail since the queue is never more than 1 deep
@@ -2289,7 +2290,7 @@ void PVMFSMFSPBaseNode::MoveCmdToCancelQueue(PVMFSMFSPBaseNodeCommand& aCmd)
     return;
 }
 
-void PVMFSMFSPBaseNode::MoveErrHandlingCmdToCurErrHandlingQ(PVMFSMFSPBaseNodeCommand& aCmd)
+OSCL_EXPORT_REF void PVMFSMFSPBaseNode::MoveErrHandlingCmdToCurErrHandlingQ(PVMFSMFSPBaseNodeCommand& aCmd)
 {
     iCurrErrHandlingCommand.StoreL(aCmd);
     iErrHandlingCommandQ.Erase(&aCmd);
@@ -2302,7 +2303,7 @@ void PVMFSMFSPBaseNode::MoveErrHandlingCmdToCurErrHandlingQ(PVMFSMFSPBaseNodeCom
  * This function may leave if the command can't be queued due to
  * memory allocation failure.
  */
-PVMFCommandId PVMFSMFSPBaseNode::QueueCommandL(PVMFSMFSPBaseNodeCommand& aCmd)
+OSCL_EXPORT_REF PVMFCommandId PVMFSMFSPBaseNode::QueueCommandL(PVMFSMFSPBaseNodeCommand& aCmd)
 {
     PVMFCommandId id = -1;
     id = iInputCommands.AddL(aCmd);
@@ -2325,7 +2326,7 @@ PVMFCommandId PVMFSMFSPBaseNode::QueueCommandL(PVMFSMFSPBaseNodeCommand& aCmd)
  * This function may leave if the command can't be queued due to
  * memory allocation failure.
  */
-PVMFCommandId PVMFSMFSPBaseNode::QueueErrHandlingCommandL(PVMFSMFSPBaseNodeCommand& aCmd)
+OSCL_EXPORT_REF PVMFCommandId PVMFSMFSPBaseNode::QueueErrHandlingCommandL(PVMFSMFSPBaseNodeCommand& aCmd)
 {
     PVMFCommandId id = -1;
     id = iErrHandlingCommandQ.AddL(aCmd);
@@ -2345,7 +2346,7 @@ PVMFCommandId PVMFSMFSPBaseNode::QueueErrHandlingCommandL(PVMFSMFSPBaseNodeComma
 ///////////////////////////////////////////////////////////////////////////////
 //Command Completion/Error event notification/Info event notification functions
 ///////////////////////////////////////////////////////////////////////////////
-void PVMFSMFSPBaseNodeCommand::Copy(const PVMFGenericNodeCommand<OsclMemAllocator>& aCmd)
+OSCL_EXPORT_REF void PVMFSMFSPBaseNodeCommand::Copy(const PVMFGenericNodeCommand<OsclMemAllocator>& aCmd)
 {
     PVMFGenericNodeCommand<OsclMemAllocator>::Copy(aCmd);
     switch (aCmd.iCmd)
@@ -2366,7 +2367,7 @@ void PVMFSMFSPBaseNodeCommand::Copy(const PVMFGenericNodeCommand<OsclMemAllocato
 }
 
 /* need to overlaod the base Destroy routine to cleanup metadata key */
-void PVMFSMFSPBaseNodeCommand::Destroy()
+OSCL_EXPORT_REF void PVMFSMFSPBaseNodeCommand::Destroy()
 {
     PVMFGenericNodeCommand<OsclMemAllocator>::Destroy();
     switch (iCmd)
@@ -2385,7 +2386,7 @@ void PVMFSMFSPBaseNodeCommand::Destroy()
 }
 
 /* Called during a Reset */
-void PVMFSMFSPBaseNode::ResetNodeParams(bool aReleaseMem)
+OSCL_EXPORT_REF void PVMFSMFSPBaseNode::ResetNodeParams(bool aReleaseMem)
 {
     //This function will reset the member variables to their initial values.
     //except command queues
@@ -2538,7 +2539,7 @@ void PVMFSMFSPBaseNode::ResetCPMParams(bool aReleaseMem)
     iCPMGetCapConfigCmdId = 0;
 }
 
-void PVMFSMFSPBaseNode::PopulateAvailableMetadataKeys()
+OSCL_EXPORT_REF void PVMFSMFSPBaseNode::PopulateAvailableMetadataKeys()
 {
     iAvailableMetadataKeys.clear();
 
@@ -2768,7 +2769,7 @@ void PVMFSMFSPBaseNode::PopulateAvailableMetadataKeys()
     }
 }
 
-PVMFStatus PVMFSMFSPBaseNode::DoGetMetadataKeysBase(PVMFSMFSPBaseNodeCommand& aCmd)
+OSCL_EXPORT_REF PVMFStatus PVMFSMFSPBaseNode::DoGetMetadataKeysBase(PVMFSMFSPBaseNodeCommand& aCmd)
 {
     if (!iMetaDataInfo->iMetadataAvailable)
     {
@@ -2787,7 +2788,7 @@ PVMFStatus PVMFSMFSPBaseNode::DoGetMetadataKeysBase(PVMFSMFSPBaseNodeCommand& aC
     return (CompleteGetMetadataKeys(aCmd));
 }
 
-PVMFStatus PVMFSMFSPBaseNode::CompleteGetMetadataKeys(PVMFSMFSPBaseNodeCommand& aCmd)
+OSCL_EXPORT_REF PVMFStatus PVMFSMFSPBaseNode::CompleteGetMetadataKeys(PVMFSMFSPBaseNodeCommand& aCmd)
 {
     PVMFMetadataList* keylistptr = NULL;
     uint32 starting_index;
@@ -2888,7 +2889,7 @@ PVMFStatus PVMFSMFSPBaseNode::CompleteGetMetadataKeys(PVMFSMFSPBaseNodeCommand& 
     return PVMFSuccess;
 }
 
-PVMFStatus PVMFSMFSPBaseNode::PushKeyToMetadataList(PVMFMetadataList* aMetaDataListPtr, const OSCL_HeapString<OsclMemAllocator> & aKey)const
+OSCL_EXPORT_REF PVMFStatus PVMFSMFSPBaseNode::PushKeyToMetadataList(PVMFMetadataList* aMetaDataListPtr, const OSCL_HeapString<OsclMemAllocator> & aKey)const
 {
     PVMFStatus status = PVMFSuccess;
     if (aMetaDataListPtr)
@@ -2905,7 +2906,7 @@ PVMFStatus PVMFSMFSPBaseNode::PushKeyToMetadataList(PVMFMetadataList* aMetaDataL
 
 }
 
-PVMFStatus PVMFSMFSPBaseNode::DoGetMetadataValuesBase(PVMFSMFSPBaseNodeCommand& aCmd)
+OSCL_EXPORT_REF PVMFStatus PVMFSMFSPBaseNode::DoGetMetadataValuesBase(PVMFSMFSPBaseNodeCommand& aCmd)
 {
 
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFStreamingManagerNode::DoGetMetadataValues() In"));
@@ -4774,7 +4775,7 @@ PVMFStatus PVMFSMFSPBaseNode::DoGetMetadataValuesBase(PVMFSMFSPBaseNodeCommand& 
     return PVMFSuccess;
 }
 
-PVMFStatus PVMFSMFSPBaseNode::PushKVPToMetadataValueList(Oscl_Vector<PvmiKvp, OsclMemAllocator>* aValueList, const PvmiKvp& aKVP)const
+OSCL_EXPORT_REF PVMFStatus PVMFSMFSPBaseNode::PushKVPToMetadataValueList(Oscl_Vector<PvmiKvp, OsclMemAllocator>* aValueList, const PvmiKvp& aKVP)const
 {
     PVMFStatus status = PVMFSuccess;
     if (aValueList)
@@ -4790,7 +4791,7 @@ PVMFStatus PVMFSMFSPBaseNode::PushKVPToMetadataValueList(Oscl_Vector<PvmiKvp, Os
     return status;
 }
 
-PVMFStatus PVMFSMFSPBaseNode::GetMaxSizeValue(char* aString, uint32& aMaxSize)
+OSCL_EXPORT_REF PVMFStatus PVMFSMFSPBaseNode::GetMaxSizeValue(char* aString, uint32& aMaxSize)
 {
     aMaxSize = 0xFFFFFFFF;
     /*
@@ -4820,7 +4821,7 @@ PVMFStatus PVMFSMFSPBaseNode::GetMaxSizeValue(char* aString, uint32& aMaxSize)
     return PVMFFailure;
 }
 
-PVMFStatus PVMFSMFSPBaseNode::GetTruncateFlagValue(char* aString, uint32& aTruncateFlag)
+OSCL_EXPORT_REF PVMFStatus PVMFSMFSPBaseNode::GetTruncateFlagValue(char* aString, uint32& aTruncateFlag)
 {
     aTruncateFlag = 0;
     /*
@@ -4850,7 +4851,7 @@ PVMFStatus PVMFSMFSPBaseNode::GetTruncateFlagValue(char* aString, uint32& aTrunc
 
 }
 
-void PVMFSMFSPBaseNode::HandleError(const PVMFCmdResp& aResponse)
+OSCL_EXPORT_REF void PVMFSMFSPBaseNode::HandleError(const PVMFCmdResp& aResponse)
 {
     PVMFSMFSPCommandContext *cmdContextData =
         OSCL_REINTERPRET_CAST(PVMFSMFSPCommandContext*, aResponse.GetContext());
@@ -5068,7 +5069,7 @@ void PVMFSMFSPBaseNode::ErrHandlingComplete(const PVMFSMFSPBaseNodeCommand* aErr
 
 }
 
-bool PVMFSMFSPBaseNode::SupressInfoEvent()
+OSCL_EXPORT_REF bool PVMFSMFSPBaseNode::SupressInfoEvent()
 {
     if ((iInterfaceState == EPVMFNodeError) ||
             (!iCancelCommand.empty() || (iCurrentCommand.front().iCmd == PVMF_SMFSP_NODE_RESET)))
@@ -5480,7 +5481,7 @@ void PVMFSMFSPChildNodeErrorHandler::ErrHandlingCommandComplete(PVMFFSPNodeCmdQ&
 ///////////////////////////////////////////////////////////////////////////////
 //PVMFSMNodeKVPStore
 ///////////////////////////////////////////////////////////////////////////////
-PVMFStatus PVMFSMNodeKVPStore::addKVPString(const char* aKeyTypeString, OSCL_wString& aValString)
+OSCL_EXPORT_REF PVMFStatus PVMFSMNodeKVPStore::addKVPString(const char* aKeyTypeString, OSCL_wString& aValString)
 {
     PvmiKvp aKeyVal;
     aKeyVal.key = NULL;
@@ -5491,7 +5492,7 @@ PVMFStatus PVMFSMNodeKVPStore::addKVPString(const char* aKeyTypeString, OSCL_wSt
 }
 
 // add kvp string with normal string value
-PVMFStatus PVMFSMNodeKVPStore::addKVPString(const char* aKeyTypeString, const char* aValString)
+OSCL_EXPORT_REF PVMFStatus PVMFSMNodeKVPStore::addKVPString(const char* aKeyTypeString, const char* aValString)
 {
     PvmiKvp aKeyVal;
     aKeyVal.key = NULL;
@@ -5517,7 +5518,7 @@ void PVMFSMNodeKVPStore::releaseMemory()
     }
 }
 
-PVMFStatus PVMFSMNodeKVPStore::addKVPuint32Value(const char* aKeyTypeString, uint32 aValue)
+OSCL_EXPORT_REF PVMFStatus PVMFSMNodeKVPStore::addKVPuint32Value(const char* aKeyTypeString, uint32 aValue)
 {
     PvmiKvp aKeyVal;
     aKeyVal.key = NULL;

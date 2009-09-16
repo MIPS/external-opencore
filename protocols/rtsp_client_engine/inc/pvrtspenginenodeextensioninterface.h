@@ -46,10 +46,6 @@
 #include "pvmf_event_handling.h"
 #endif
 
-#ifndef PVMF_SM_CONFIG_H_INCLUDED
-#include "pvmf_sm_config.h"
-#endif
-
 // UUID for the extension interface
 #define KPVRTSPEngineNodeExtensionUuid  PVUuid(0x00000000,0x0000,0x4887,0xB1,0x0B,0x7E,0xE6,0x48,0x47,0xB2,0x05)
 

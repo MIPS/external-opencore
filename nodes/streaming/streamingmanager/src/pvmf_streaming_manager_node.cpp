@@ -520,27 +520,34 @@ PVMFStatus PVMFStreamingManagerNode::SetSourceInitializationData(OSCL_wString& a
     {
         iFSPUuid = srcNodeUuidVec.front();
         iSMFSPlugin = iSMFSPRegistry->CreateSMFSP(iFSPUuid);
-        //(ii)threadlogon to FSP
-        iSMFSPlugin->ThreadLogon();
-        //(iii)connect to it, make sure datasource initialization interface is present
-        PVMFSessionId sessID = iSMFSPlugin->Connect(iUpstreamSession);
-        PVInterface* temp = NULL;
-        PVMFStatus statusQ = PVMFFailure;
-
-        statusQ = iSMFSPlugin->queryInterface(PVMF_DATA_SOURCE_INIT_INTERFACE_UUID, temp);
-        iFSPDataSourceInitializationIntf = OSCL_STATIC_CAST(PVMFDataSourceInitializationExtensionInterface*, temp);
-
-        if ((statusQ == PVMFSuccess) && (iFSPDataSourceInitializationIntf != NULL))
+        if (iSMFSPlugin)
         {
-            status = iFSPDataSourceInitializationIntf->SetSourceInitializationData(aSourceURL, aSourceFormat, aSourceData);
+            //(ii)threadlogon to FSP
+            iSMFSPlugin->ThreadLogon();
+            //(iii)connect to it, make sure datasource initialization interface is present
+            PVMFSessionId sessID = iSMFSPlugin->Connect(iUpstreamSession);
+            PVInterface* temp = NULL;
+            PVMFStatus statusQ = PVMFFailure;
+
+            statusQ = iSMFSPlugin->queryInterface(PVMF_DATA_SOURCE_INIT_INTERFACE_UUID, temp);
+            iFSPDataSourceInitializationIntf = OSCL_STATIC_CAST(PVMFDataSourceInitializationExtensionInterface*, temp);
+
+            if ((statusQ == PVMFSuccess) && (iFSPDataSourceInitializationIntf != NULL))
+            {
+                status = iFSPDataSourceInitializationIntf->SetSourceInitializationData(aSourceURL, aSourceFormat, aSourceData);
+            }
+            else
+            {
+                iSMFSPlugin->Disconnect(sessID);
+                iSMFSPlugin->ThreadLogoff();
+                iSMFSPRegistry->ReleaseSMFSP(iFSPUuid, iSMFSPlugin);
+                iSMFSPlugin = NULL;
+                PVMF_SM_LOGSTACKTRACE((0, "PVMFStreamingManagerNode::SetSourceInitializationData() - Destructed FSP "));
+            }
         }
         else
         {
-            iSMFSPlugin->Disconnect(sessID);
-            iSMFSPlugin->ThreadLogoff();
-            iSMFSPRegistry->ReleaseSMFSP(iFSPUuid, iSMFSPlugin);
-            iSMFSPlugin = NULL;
-            PVMF_SM_LOGSTACKTRACE((0, "PVMFStreamingManagerNode::SetSourceInitializationData() - Destructed FSP "));
+            status = PVMFFailure;
         }
     }
 
@@ -845,10 +852,11 @@ bool PVMFStreamingManagerNode::CheckForRTSPTunnelling(OSCL_wString& aSourceURL,
          * To acct for null char, as SDP buffer is treated akin to a string by the
          * SDP parser lib.
          */
-        uint allocsize = oscl_mem_aligned_size(aligned_refcnt_size + fileSize + 2);
+        uint allocsize;
         uint8* my_ptr = NULL;
         int32 leaveCode = 0;
         OSCL_TRY(leaveCode,
+                 allocsize = oscl_mem_aligned_size(aligned_refcnt_size + fileSize + 2);
                  my_ptr = OSCL_STATIC_CAST(uint8*, my_alloc.ALLOCATE(allocsize)));
         if (leaveCode != OsclErrNone)
         {
@@ -882,3 +890,4 @@ bool PVMFStreamingManagerNode::CheckForRTSPTunnelling(OSCL_wString& aSourceURL,
 
     return retval;
 }
+

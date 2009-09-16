@@ -33,21 +33,21 @@
 
 #define PVMF_STREAMING_MANAGER_NODE_MAX_CPM_METADATA_KEYS 256
 
-void PVMFSMFSPBaseNode::InitCPM()
+OSCL_EXPORT_REF void PVMFSMFSPBaseNode::InitCPM()
 {
     PVMF_SM_FSP_BASE_LOGSTACKTRACE((0, "PVMFSMFSPBaseNode::InitCPM() In"));
 
     iCPMInitCmdId = iCPM->Init();
 }
 
-void PVMFSMFSPBaseNode::OpenCPMSession()
+OSCL_EXPORT_REF void PVMFSMFSPBaseNode::OpenCPMSession()
 {
     PVMF_SM_FSP_BASE_LOGSTACKTRACE((0, "PVMFSMFSPBaseNode::OpenCPMSession() In"));
 
     iCPMOpenSessionCmdId = iCPM->OpenSession(iCPMSessionID);
 }
 
-void PVMFSMFSPBaseNode::CPMRegisterContent()
+OSCL_EXPORT_REF void PVMFSMFSPBaseNode::CPMRegisterContent()
 {
     PVMF_SM_FSP_BASE_LOGSTACKTRACE((0, "PVMFSMFSPBaseNode::CPMRegisterContent() In"));
 
@@ -67,7 +67,7 @@ void PVMFSMFSPBaseNode::CPMRegisterContent()
     }
 }
 
-void PVMFSMFSPBaseNode::GetCPMLicenseInterface()
+OSCL_EXPORT_REF void PVMFSMFSPBaseNode::GetCPMLicenseInterface()
 {
     PVMF_SM_FSP_BASE_LOGSTACKTRACE((0, "PVMFSMFSPBaseNode::GetCPMLicenseInterface() In"));
 
@@ -78,7 +78,7 @@ void PVMFSMFSPBaseNode::GetCPMLicenseInterface()
                              iCPMLicenseInterfacePVI);
 }
 
-void PVMFSMFSPBaseNode::GetCPMCapConfigInterface()
+OSCL_EXPORT_REF void PVMFSMFSPBaseNode::GetCPMCapConfigInterface()
 {
     iCPMCapConfigInterfacePVI = NULL;
     iCPMGetCapConfigCmdId =
@@ -88,7 +88,7 @@ void PVMFSMFSPBaseNode::GetCPMCapConfigInterface()
 }
 
 
-bool PVMFSMFSPBaseNode::GetCPMContentAccessFactory()
+OSCL_EXPORT_REF bool PVMFSMFSPBaseNode::GetCPMContentAccessFactory()
 {
     PVMF_SM_FSP_BASE_LOGSTACKTRACE((0, "PVMFSMFSPBaseNode::GetCPMContentAccessFactory() In"));
 
@@ -101,7 +101,7 @@ bool PVMFSMFSPBaseNode::GetCPMContentAccessFactory()
     return true;
 }
 
-bool PVMFSMFSPBaseNode::GetCPMMetaDataExtensionInterface()
+OSCL_EXPORT_REF bool PVMFSMFSPBaseNode::GetCPMMetaDataExtensionInterface()
 {
     PVInterface* temp = NULL;
     PVMF_SM_FSP_BASE_LOGSTACKTRACE((0, "PVMFSMFSPBaseNode::GetCPMMetaDataExtensionInterface() In"));
@@ -113,7 +113,7 @@ bool PVMFSMFSPBaseNode::GetCPMMetaDataExtensionInterface()
     return retVal;
 }
 
-void PVMFSMFSPBaseNode::RequestUsage()
+OSCL_EXPORT_REF void PVMFSMFSPBaseNode::RequestUsage()
 {
     PVMF_SM_FSP_BASE_LOGSTACKTRACE((0, "PVMFSMFSPBaseNode::RequestUsage() In"));
     iCPMRequestUsageId = iCPM->ApproveUsage(iCPMSessionID,
@@ -124,26 +124,26 @@ void PVMFSMFSPBaseNode::RequestUsage()
                                             iCPMContentAccessFactory);
 }
 
-void PVMFSMFSPBaseNode::SendUsageComplete()
+OSCL_EXPORT_REF void PVMFSMFSPBaseNode::SendUsageComplete()
 {
     PVMF_SM_FSP_BASE_LOGSTACKTRACE((0, "PVMFSMFSPBaseNode::SendUsageComplete() In"));
 
     iCPMUsageCompleteCmdId = iCPM->UsageComplete(iCPMSessionID, iUsageID);
 }
 
-void PVMFSMFSPBaseNode::CloseCPMSession()
+OSCL_EXPORT_REF void PVMFSMFSPBaseNode::CloseCPMSession()
 {
     PVMF_SM_FSP_BASE_LOGSTACKTRACE((0, "PVMFSMFSPBaseNode::CloseCPMSession() In"));
 
     iCPMCloseSessionCmdId = iCPM->CloseSession(iCPMSessionID);
 }
 
-void PVMFSMFSPBaseNode::ResetCPM()
+OSCL_EXPORT_REF void PVMFSMFSPBaseNode::ResetCPM()
 {
     iCPMResetCmdId = iCPM->Reset();
 }
 
-void PVMFSMFSPBaseNode::GetCPMMetaDataKeys()
+OSCL_EXPORT_REF void PVMFSMFSPBaseNode::GetCPMMetaDataKeys()
 {
     if (iCPMMetaDataExtensionInterface != NULL)
     {
@@ -156,7 +156,7 @@ void PVMFSMFSPBaseNode::GetCPMMetaDataKeys()
     }
 }
 
-PVMFStatus
+OSCL_EXPORT_REF PVMFStatus
 PVMFSMFSPBaseNode::CheckCPMCommandCompleteStatus(PVMFCommandId aID,
         PVMFStatus aStatus)
 {
@@ -188,7 +188,7 @@ PVMFSMFSPBaseNode::CheckCPMCommandCompleteStatus(PVMFCommandId aID,
     return status;
 }
 
-void PVMFSMFSPBaseNode::CPMCommandCompleted(const PVMFCmdResp& aResponse)
+OSCL_EXPORT_REF void PVMFSMFSPBaseNode::CPMCommandCompleted(const PVMFCmdResp& aResponse)
 {
     PVMF_SM_FSP_BASE_LOGSTACKTRACE((0, "PVMFSMFSPBaseNode::CPMCommandCompleted() In"));
 
@@ -334,14 +334,14 @@ void PVMFSMFSPBaseNode::CPMCommandCompleted(const PVMFCmdResp& aResponse)
     }
 }
 
-void PVMFSMFSPBaseNode::CompleteGetMetaDataValues()
+OSCL_EXPORT_REF void PVMFSMFSPBaseNode::CompleteGetMetaDataValues()
 {
     CommandComplete(iCurrentCommand,
                     iCurrentCommand.front(),
                     PVMFSuccess);
 }
 
-void PVMFSMFSPBaseNode::CompleteDRMInit()
+OSCL_EXPORT_REF void PVMFSMFSPBaseNode::CompleteDRMInit()
 {
     PVMF_SM_FSP_BASE_LOGSTACKTRACE((0, "PVMFSMFSPBaseNode::CompleteDRMInit - In"));
     if (iApprovedUsage.value.uint32_value !=
@@ -385,7 +385,7 @@ void PVMFSMFSPBaseNode::CompleteDRMInit()
     return;
 }
 
-bool PVMFSMFSPBaseNode::SetCPMKvps()
+OSCL_EXPORT_REF bool PVMFSMFSPBaseNode::SetCPMKvps()
 {
     if (iCPMCapConfigInterface && !iCPMKvpStore.isEmpty())
     {

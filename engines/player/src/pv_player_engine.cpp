@@ -16681,14 +16681,23 @@ PVMFStatus PVPlayerEngine::SetupDataSourceForUnknownURLAccess()
          *  2) Primary source format would be set to PVMF_DATA_SOURCE_HTTP_URL,
          *  implying that we would attempt a progressive download first.
          *
-         *  3) Second Alternate source format would be PVMF_DATA_SOURCE_REAL_HTTP_CLOAKING_URL,
+         *  3) Second Alternate source format would be PVMF_MIME_DATA_SOURCE_RTSP_TUNNELLING,
+         *  implying that we would attempt cloaking session(RTP packets retrievd in tcp
+         *  connection.
+         *
+         *  4) Third Alternate source format would be PVMF_DATA_SOURCE_REAL_HTTP_CLOAKING_URL,
          *  implying that we would attempt a real media cloaking session
          *
-         *  4) Third alternate source format would be PVMF_DATA_SOURCE_MS_HTTP_STREAMING_URL,
+         *  5) Fourth alternate source format would be PVMF_DATA_SOURCE_MS_HTTP_STREAMING_URL,
          *  implying that we would attempt a MS HTTP streaming session
          */
         iSourceFormatType = PVMF_MIME_DATA_SOURCE_RTSP_URL; ;
         if (iDataSource->SetAlternateSourceFormatType(PVMF_MIME_DATA_SOURCE_HTTP_URL) != true)
+        {
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::SetupDataSourceForUnknownURLAccess() - SetAlternateSourceFormatType Failed"));
+            return PVMFFailure;
+        }
+        if (iDataSource->SetAlternateSourceFormatType(PVMF_MIME_DATA_SOURCE_RTSP_TUNNELLING) != true)
         {
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::SetupDataSourceForUnknownURLAccess() - SetAlternateSourceFormatType Failed"));
             return PVMFFailure;

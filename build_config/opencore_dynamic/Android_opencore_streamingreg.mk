@@ -3,9 +3,9 @@ include $(CLEAR_VARS)
 
 
 LOCAL_WHOLE_STATIC_LIBRARIES := \
- 	libpvrtspreginterface
+ 	libpvsmreginterface
 
-LOCAL_MODULE := libopencore_rtspreg
+LOCAL_MODULE := libopencore_streamingreg
 
 LOCAL_PRELINK_MODULE := false
 
