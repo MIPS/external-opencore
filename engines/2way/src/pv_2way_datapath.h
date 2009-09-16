@@ -175,7 +175,7 @@ class CPVDatapathPort
  *
  * Describes how a node is used in a datatpath.
  **/
-class CPVDatapathNode
+class CPVDatapathNode : public HeapBase
 {
     public:
         CPVDatapathNode() : iConfigure(NULL),
@@ -187,7 +187,8 @@ class CPVDatapathNode
                 iCommandIssued(false)
         {};
 
-        CPVDatapathNode(const CPVDatapathNode &aNode) : iNode(aNode.iNode),
+        CPVDatapathNode(const CPVDatapathNode &aNode) : HeapBase(aNode),
+                iNode(aNode.iNode),
                 iConfigure(aNode.iConfigure),
                 iConfigTime(aNode.iConfigTime),
                 iCanNodePause(aNode.iCanNodePause),
@@ -199,7 +200,6 @@ class CPVDatapathNode
                 iOutputPort(aNode.iOutputPort),
                 iCommandIssued(aNode.iCommandIssued)
         {};
-
 
         ~CPVDatapathNode() {};
 
@@ -218,7 +218,7 @@ class CPVDatapathNode
         }
 
         TPV2WayNode iNode; // Actual node
-        CPV2WayNodeConfigurationObserver *iConfigure; // Node configuration observer, called when config time is reached
+        MPV2WayNodeConfigurationObserver *iConfigure; // Node configuration observer, called when config time is reached
         TPVNodeConfigTimeType iConfigTime; // When to configure node
         bool iCanNodePause; // Is the node capable of pausing
         bool iLoggoffOnReset; // Does node need to logoff after datapath is reset
@@ -232,7 +232,7 @@ class CPVDatapathNode
 };
 
 
-class CPV2WayDatapath : public HeapBase, public CPV2WayNodeCommandObserver
+class CPV2WayDatapath : public HeapBase, public MPV2WayNodeCommandObserver
 {
     private:
         TPV2WayNode* iNode;

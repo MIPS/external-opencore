@@ -145,21 +145,23 @@ bool CPV2WayDatapath::AddNode(const CPVDatapathNode &aNode)
     if ((iState == EClosed) &&
             (iNodeList.size() < MAX_DATAPATH_NODES))
     {
-        CPVDatapathNode node(aNode);
+        CPVDatapathNode* node = OSCL_NEW(CPVDatapathNode, (aNode));
+        OsclError::PushL(node);
 
-        node.iOriginalState = ((PVMFNodeInterface *)(node.iNode))->GetState();
-        node.iInputPort.iPortPair = NULL;
-        node.iOutputPort.iPortPair = NULL;
+        node->iOriginalState = ((PVMFNodeInterface *)(node->iNode))->GetState();
+        node->iInputPort.iPortPair = NULL;
+        node->iOutputPort.iPortPair = NULL;
 
         if (!iNodeList.empty())
         {
             CPV2WayPortPair portPair;
             iPortPairList.push_back(portPair);
             iNodeList.back().iOutputPort.iPortPair = &(iPortPairList.back());
-            node.iInputPort.iPortPair = &(iPortPairList.back());
+            node->iInputPort.iPortPair = &(iPortPairList.back());
         }
 
-        iNodeList.push_back(node);
+        iNodeList.push_back(*node);
+        OsclError::PopDealloc();
         return true;
     }
     return false;

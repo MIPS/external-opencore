@@ -1428,7 +1428,10 @@ PVCommandId CPV324m2Way::Connect(const PV2WayConnectOptions& aOptions,
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                     (0, "CPV324m2Way::ConnectL()"));
-    CPVDatapathNode node;
+
+
+    CPVDatapathNode* node = OSCL_NEW(CPVDatapathNode, ());
+    OsclError::PushL(node);
 
     // validate aCommServer
     if (aCommServer == NULL)
@@ -1470,32 +1473,32 @@ PVCommandId CPV324m2Way::Connect(const PV2WayConnectOptions& aOptions,
             InitiateSession(iCommNode);
 
             //Add tsc node to datapath
-            node.iNode = iTscNode;
-            node.iConfigure = this;
-            node.iIgnoreNodeState = false;
-            node.iConfigTime = EConfigBeforeStart;
-            node.iOutputPort.iRequestPortState = EPVMFNodeInitialized;
-            node.iOutputPort.iPortSetType = EUserDefined;
-            node.iOutputPort.iFormatType = PVMF_MIME_H223;
-            //node.iOutputPort.iPortType = EPVIOPort;
-            node.iOutputPort.iPortTag = PV_MULTIPLEXED;
-            iMuxDatapath->AddNode(node);
+            node->iNode = iTscNode;
+            node->iConfigure = this;
+            node->iIgnoreNodeState = false;
+            node->iConfigTime = EConfigBeforeStart;
+            node->iOutputPort.iRequestPortState = EPVMFNodeInitialized;
+            node->iOutputPort.iPortSetType = EUserDefined;
+            node->iOutputPort.iFormatType = PVMF_MIME_H223;
+            //node->iOutputPort.iPortType = EPVIOPort;
+            node->iOutputPort.iPortTag = PV_MULTIPLEXED;
+            iMuxDatapath->AddNode(*node);
 
             //Add rcomm node to datapath
-            node.iNode = iCommNode;
-            node.iLoggoffOnReset = true;
-            node.iConfigure = NULL;
-            node.iIgnoreNodeState = false;
-            node.iLoggoffOnReset = false;
-            node.iInputPort.iRequestPortState = EPVMFNodeInitialized;
-            node.iInputPort.iPortSetType = EUserDefined;
-            node.iInputPort.iFormatType = PVMF_MIME_H223;
-            node.iInputPort.iPortTag = PV2WAY_IO_PORT;
-            //node.iInputPort.iProperty.iPortType = EPVIOPort;
-            node.iOutputPort.iFormatType = PVMF_MIME_FORMAT_UNKNOWN;
+            node->iNode = iCommNode;
+            node->iLoggoffOnReset = true;
+            node->iConfigure = NULL;
+            node->iIgnoreNodeState = false;
+            node->iLoggoffOnReset = false;
+            node->iInputPort.iRequestPortState = EPVMFNodeInitialized;
+            node->iInputPort.iPortSetType = EUserDefined;
+            node->iInputPort.iFormatType = PVMF_MIME_H223;
+            node->iInputPort.iPortTag = PV2WAY_IO_PORT;
+            //node->iInputPort.iProperty.iPortType = EPVIOPort;
+            node->iOutputPort.iFormatType = PVMF_MIME_FORMAT_UNKNOWN;
             //node.iOutputPort.iPortType = EPVInvalidPortType;
-            node.iOutputPort.iPortTag = PV2WAY_UNKNOWN_PORT;
-            iMuxDatapath->AddNode(node);
+            node->iOutputPort.iPortTag = PV2WAY_UNKNOWN_PORT;
+            iMuxDatapath->AddNode(*node);
 
             iConnectInfo->type = PVT_COMMAND_CONNECT;
             iConnectInfo->id = iCommandId;
@@ -1533,6 +1536,7 @@ PVCommandId CPV324m2Way::Connect(const PV2WayConnectOptions& aOptions,
             iVideoEncDatapath->CheckOpen();
         }
         */
+    OsclError::PopDealloc();
     return iCommandId++;
 }
 
@@ -4169,7 +4173,7 @@ void CPV324m2Way::FreeEventInfo(TPV2WayEventInfo *info)
 
 PVMFCommandId CPV324m2Way::SendNodeCmdL(PV2WayNodeCmdType aCmd,
                                         TPV2WayNode *aNode,
-                                        CPV2WayNodeCommandObserver *aObserver,
+                                        MPV2WayNodeCommandObserver *aObserver,
                                         void *aParam,
                                         TPV2WayCmdInfo *a2WayCmdInfo)
 {

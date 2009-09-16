@@ -536,7 +536,7 @@ class PV2WayNodeInterface
         PVMFCommandId iId;
 };
 
-class CPV2WayNodeCommandObserver
+class MPV2WayNodeCommandObserver
 {
     public:
         virtual void CommandHandler(PV2WayNodeCmdType aType, const PVMFCmdResp& aResponse) = 0;
@@ -558,7 +558,7 @@ class CPV2WayNodeContextData
             iContextData = NULL;
         }
 
-        CPV2WayNodeCommandObserver *iObserver;
+        MPV2WayNodeCommandObserver *iObserver;
         PVMFNodeInterface   *iNode;
         void *iContextData;
 };
@@ -680,7 +680,7 @@ class PVCommandStatusObserver;
 class PVInformationalEventObserver;
 class PVErrorEventObserver;
 
-class CPV2WayNodeConfigurationObserver
+class MPV2WayNodeConfigurationObserver
 {
     public:
         virtual PVMFStatus ConfigureNode(CPVDatapathNode *aNode) = 0;
@@ -691,8 +691,8 @@ class CPV324m2Way : OsclActiveObject,
         public PVMFNodeCmdStatusObserver,
         public PVMFNodeInfoEventObserver,
         public PVMFNodeErrorEventObserver,
-        public CPV2WayNodeCommandObserver,
-        public CPV2WayNodeConfigurationObserver,
+        public MPV2WayNodeCommandObserver,
+        public MPV2WayNodeConfigurationObserver,
 #ifndef NO_2WAY_324
         public TSCObserver,
 #endif
@@ -836,7 +836,7 @@ class CPV324m2Way : OsclActiveObject,
         void FreeEventInfo(TPV2WayEventInfo *info);
 
         PVMFCommandId SendNodeCmdL(PV2WayNodeCmdType aCmd, TPV2WayNode *aNode,
-                                   CPV2WayNodeCommandObserver *aObserver,
+                                   MPV2WayNodeCommandObserver *aObserver,
                                    void *aParam = NULL, TPV2WayCmdInfo *a2WayCmdInfo = NULL);
 
         TPV2WayNodeCmdInfo *FindPendingNodeCmd(PVMFNodeInterface *aNode, PVMFCommandId aId);
