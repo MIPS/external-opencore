@@ -134,7 +134,7 @@ OSCL_EXPORT_REF bool ProgressiveStreamingContainer::completeRepositionRequest()
     // Form a command response
     PVMFCmdResp resp(aDataStreamCmdId, pCmd->iContext, PVMFSuccess, NULL, NULL);
     // Make the Command Complete notification
-    iNodeOutput->dataStreamCommandCompleted(resp);
+    iNodeOutput->DataStreamCommandCompleted(resp);
     iObserver->ErasePendingCmd(pCmd);
 
     moveToStartedState();
@@ -207,20 +207,45 @@ OSCL_EXPORT_REF int32 pvProgressiveStreamingOutput::openDataStream(OsclAny* aIni
     return status;
 }
 
+/* This function is the call back function from Write data stream. After the successful registration for
+   the callback to write data stream, it will be called by write data stream whenever it has enough space
+   to store the data. */
+void pvProgressiveStreamingOutput::DataStreamCommandCompleted(const PVMFCmdResp& aCmdResp)
+{
+    if (PVMFSuccess == aCmdResp.GetCmdStatus())
+    {
+        /* here we checkfor conext data with this pointer. If it is equal to this pointer then this callback
+            is corresponding to the QueryWriteCapacity. Hence handle it accordingly by sending the remaining
+            data. */
+        if (this == aCmdResp.GetContext())
+        {
+            LOGINFODATAPATH((0, "pvProgressiveStreamingOutput::DataStreamCommandCompleted got notification of empy space. Flush the remaing data"));
+            flushData();
+        }
+        else
+        {
+            if (iDataStream) iDataStream->SourceRequestCompleted(aCmdResp);
+        }
+    }
+}
+
 OSCL_EXPORT_REF int32 pvProgressiveStreamingOutput::flushData(const uint32 aOutputType)
 {
     int32 status = PVMFProtocolEngineNodeOutput::flushData(aOutputType);
     if (status != PROCESS_SUCCESS) return status;
-
+    LOGINFODATAPATH((0, "pvProgressiveStreamingOutput::flushData: iOutputFramesQueue size [%d]", iOutputFramesQueue.size()));
     while (!iOutputFramesQueue.empty())
     {
-        if (writeToDataStream(iOutputFramesQueue[0], iPendingOutputDataQueue) == 0xffffffff) return PROCESS_OUTPUT_TO_DATA_STREAM_FAILURE;
+        int32 res = writeToDataStream(iOutputFramesQueue[0], iPendingOutputDataQueue);
+        if (-1 == res) return PROCESS_OUTPUT_TO_DATA_STREAM_FAILURE; // This is the error case.
+        else if (0 == res) break; //This is not the error case. Just we didn't have enough space to write. No need to error out. Just break.
+        LOGINFODATAPATH((0, "pvProgressiveStreamingOutput::flushData: Erasing form iOutputFramesQueue"));
         iOutputFramesQueue.erase(iOutputFramesQueue.begin());
     }
     return PROCESS_SUCCESS;
 }
 
-uint32 pvProgressiveStreamingOutput::writeToDataStream(OUTPUT_DATA_QUEUE &aOutputQueue, PENDING_OUTPUT_DATA_QUEUE &aPendingOutputQueue)
+int32 pvProgressiveStreamingOutput::writeToDataStream(OUTPUT_DATA_QUEUE &aOutputQueue, PENDING_OUTPUT_DATA_QUEUE &aPendingOutputQueue)
 {
     uint32 totalFragSize = 0;
 
@@ -232,40 +257,74 @@ uint32 pvProgressiveStreamingOutput::writeToDataStream(OUTPUT_DATA_QUEUE &aOutpu
     {
         OsclRefCounterMemFrag frag = aOutputQueue.front();
         // make a copy otherwise erase will destroy it
-
         OsclRefCounterMemFrag* copyFrag = OSCL_NEW(OsclRefCounterMemFrag, (frag));
-
-        uint32 fragSize = 0;
-        PvmiDataStreamStatus status = iDataStream->Write(iSessionID, copyFrag, fragSize);
-        if (PVDS_PENDING == status)
+        uint32 fragSize = copyFrag->getMemFragSize();
+        PvmiDataStreamStatus status = PassToDataStream(copyFrag, fragSize);
+        if (PVDS_PENDING == status || PVDS_SUCCESS == status)
         {
-            // This buffer is now part of the data stream cache
-            // and cannot be freed until it is returned later on
-            // Move the mem frag to the pending queue
-            aPendingOutputQueue.push_back(copyFrag);
+            // Remove from output queue
+            aOutputQueue.erase(aOutputQueue.begin());
+            totalFragSize += fragSize;
+            iCurrTotalOutputSize += totalFragSize;
+        }
+        else if (PVDS_NO_MEMORY == status)
+        {
+            break;
         }
         else
         {
-            // Done with this frag
-            // free the reference
-            OSCL_DELETE(copyFrag);
+            return -1;
         }
-
-        // Remove from output queue
-        aOutputQueue.erase(aOutputQueue.begin());
-
-        if ((PVDS_SUCCESS != status) && (PVDS_PENDING != status))
-        {
-            // An error has occurred
-            return ~0;
-        }
-
-        totalFragSize += fragSize;
     }
-
     LOGINFODATAPATH((0, "pvProgressiveStreamingOutput::writeToDataStream() SIZE= %d , SEQNUM=%d", totalFragSize, iCounter++));
-    iCurrTotalOutputSize += totalFragSize;
     return totalFragSize;
+}
+
+PvmiDataStreamStatus pvProgressiveStreamingOutput::PassToDataStream(OsclRefCounterMemFrag* aFrag, uint32 fragSize)
+{
+
+    PvmiDataStreamStatus status = iDataStream->Write(iSessionID, aFrag, fragSize);
+    if (PVDS_PENDING == status)
+    {
+        // This buffer is now part of the data stream cache
+        // and cannot be freed until it is returned later on
+        // Move the mem frag to the pending queue
+        iPendingOutputDataQueue.push_back(aFrag);
+    }
+    else if (PVDS_NO_MEMORY == status)
+    {
+        OSCL_DELETE(aFrag); // Delete the frag. Otherwise memory leak will happen.
+        RegisterForWriteNotification(fragSize);
+    }
+    else
+    {
+        // Done with this frag
+        // free the reference
+        LOGINFODATAPATH((0, "pvProgressiveStreamingOutput::writeToDataStream: Releaseing the copyFrag!"));
+        OSCL_DELETE(aFrag);
+    }
+    return status;
+}
+void pvProgressiveStreamingOutput::RegisterForWriteNotification(uint32 afragSize)
+{
+    if (iDataStream)
+    {
+        if (!iDataStream->IsWriteNotificationPending(iSessionID)) // Check whether notification is already pending with data stream or not.
+        {
+            PvmiDataStreamObserver *observer = OSCL_STATIC_CAST(PvmiDataStreamObserver*, this);
+            /* Here we are passing context data as this pointer inorder to differentiate the
+                callback DataStreamCommandCompleted is because of this request or something else like reposition e.t.c. */
+            iDataStream->RequestWriteCapacityNotification(iSessionID,
+                    *observer, afragSize, (OsclAny*)this);
+            LOGINFODATAPATH((0, "pvProgressiveStreamingOutput::RegisterForWriteNotification() register for the WriteNotification \
+								as there is no enough memory in write data stream"));
+        }
+        else
+        {
+            LOGINFODATAPATH((0, "pvProgressiveStreamingOutput::RegisterForWriteNotification() WriteNotification is already \
+								pending with Write Data Stream."));
+        }
+    }
 }
 
 OSCL_EXPORT_REF bool pvProgressiveStreamingOutput::releaseMemFrag(OsclRefCounterMemFrag* aFrag)
@@ -292,12 +351,6 @@ OSCL_EXPORT_REF bool pvProgressiveStreamingOutput::releaseMemFrag(OsclRefCounter
 OSCL_EXPORT_REF void pvProgressiveStreamingOutput::setContentLength(uint32 aLength)
 {
     if (iDataStream) iDataStream->SetContentLength(aLength);
-}
-
-OSCL_EXPORT_REF void pvProgressiveStreamingOutput::dataStreamCommandCompleted(const PVMFCmdResp& aResponse)
-{
-    // propagate the command complete
-    if (iDataStream) iDataStream->SourceRequestCompleted(aResponse);
 }
 
 OSCL_EXPORT_REF void pvProgressiveStreamingOutput::flushDataStream()

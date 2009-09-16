@@ -71,7 +71,8 @@ typedef enum
     PVDS_INVALID_REQUEST,
     PVDS_UNSUPPORTED_RANDOM_ACCESS,
     PVDS_END_OF_STREAM,
-    PVDS_PENDING
+    PVDS_PENDING,
+    PVDS_NO_MEMORY
 } PvmiDataStreamStatus;
 
 typedef enum
@@ -546,6 +547,18 @@ class PVMIDataStreamSyncInterface : public PVInterface
         {
             aCurrentFirstByteOffset = 0;
             aCurrentLastByteOffset = 0;
+        }
+
+        /**
+        * For reader to find out the whether any write notifications is pending or not.
+        *
+        * @return true if any write notification is pending.
+        * @return false if no write notification is pending.
+        */
+        virtual bool IsWriteNotificationPending(PvmiDataStreamSession aSessionID)
+        {
+            OSCL_UNUSED_ARG(aSessionID);
+            return false;
         }
 };
 

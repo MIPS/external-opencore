@@ -61,7 +61,8 @@ class ProgressiveStreamingContainer : public ProgressiveDownloadContainer
 ////////////////////////////////////////////////////////////////////////////////////
 //////  pvProgressiveStreamingOutput
 ////////////////////////////////////////////////////////////////////////////////////
-class pvProgressiveStreamingOutput : public pvHttpDownloadOutput
+class pvProgressiveStreamingOutput : public pvHttpDownloadOutput,
+        public PvmiDataStreamObserver
 {
     public:
         OSCL_IMPORT_REF int32 flushData(const uint32 aOutputType = NodeOutputType_InputPortForData);
@@ -73,7 +74,24 @@ class pvProgressiveStreamingOutput : public pvHttpDownloadOutput
         OSCL_IMPORT_REF bool releaseMemFrag(OsclRefCounterMemFrag* aFrag);
         // for new data stream APIs
         OSCL_IMPORT_REF void setContentLength(uint32 aLength);
-        OSCL_IMPORT_REF void dataStreamCommandCompleted(const PVMFCmdResp& aResponse);
+
+        /* pure virtual functions of PvmiDataStreamObserver */
+        /* This function is the call back function from Write data stream. After the successful registration for
+           the callback to write data stream, it will be called by write data stream whenever it has enough space
+           to store the data. */
+        OSCL_IMPORT_REF void DataStreamCommandCompleted(const PVMFCmdResp& aResponse);
+        void DataStreamInformationalEvent(const PVMFAsyncEvent& aEvent)
+        {
+            ;
+        }
+        void DataStreamErrorEvent(const PVMFAsyncEvent& aEvent)
+        {
+            ;
+        }
+
+        void RegisterForWriteNotification(uint32 afragSize);
+        PvmiDataStreamStatus PassToDataStream(OsclRefCounterMemFrag* aFrag, uint32 fragSize);
+
         void setDataStreamSourceRequestObserver(PvmiDataStreamRequestObserver* aObserver)
         {
             iSourceRequestObserver = aObserver;
@@ -92,7 +110,7 @@ class pvProgressiveStreamingOutput : public pvHttpDownloadOutput
         OSCL_IMPORT_REF int32 openDataStream(OsclAny* aInitInfo);
         // write data to data stream object
         // return~0=0xffffffff for error.
-        uint32 writeToDataStream(OUTPUT_DATA_QUEUE &aOutputQueue, PENDING_OUTPUT_DATA_QUEUE &aPendingOutputQueue);
+        int32 writeToDataStream(OUTPUT_DATA_QUEUE &aOutputQueue, PENDING_OUTPUT_DATA_QUEUE &aPendingOutputQueue);
 
     protected:
         PvmiDataStreamRequestObserver* iSourceRequestObserver;

@@ -19,6 +19,7 @@ PV_HAS_SHOUTCAST_SUPPORT_ENABLED	'Enable Shoutcast Support'
 pvdb_config_support	'Enable pvdb Config Class Support'
 mtp_config_support	'Enable MTP Config Class Support'
 usb_transport_support  'Enable USB transport support'
+dtcp_support  'Enable support for DTCP Streaming'
 pv_so			'Module for libpv' text
 List of libraries which would be linked with the module if they are selected as "m".
     * /oscl/oscl/osclbase/build/make

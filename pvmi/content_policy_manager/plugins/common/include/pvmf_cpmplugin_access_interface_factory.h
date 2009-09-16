@@ -45,7 +45,7 @@
 
 class PVMFCPMPluginAccessInterface;
 class PVMFDataStreamReadCapacityObserver;
-
+class PVMFCPMPluginAccessUnitDecryptionInterface;
 /**
  * Base Content Access Interface for all Content Policy Manager Plugins
  */
@@ -66,6 +66,10 @@ class PVMFCPMPluginAccessInterfaceFactory : public PVInterface
         {
             OSCL_UNUSED_ARG(aObs);
             OSCL_LEAVE(OsclErrNotSupported);
+        }
+        virtual void SetDecryptionInterface(PVMFCPMPluginAccessUnitDecryptionInterface*& aDecryptionInterface)
+        {
+            OSCL_UNUSED_ARG(aDecryptionInterface);
         }
 };
 

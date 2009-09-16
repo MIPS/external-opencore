@@ -1054,7 +1054,7 @@ class PVMFProtocolEngineNodeOutput
         {
             OSCL_UNUSED_ARG(aLength);
         };
-        virtual void dataStreamCommandCompleted(const PVMFCmdResp& aResponse)
+        virtual void DataStreamCommandCompleted(const PVMFCmdResp& aResponse)
         {
             OSCL_UNUSED_ARG(aResponse);
         };

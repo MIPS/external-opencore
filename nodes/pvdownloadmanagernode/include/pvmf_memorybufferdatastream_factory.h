@@ -109,8 +109,39 @@ typedef enum
     MBDS_STREAM_FORMAT_UNKNOWN,
     MBDS_STREAM_FORMAT_PROGRESSIVE_PLAYBACK,
     MBDS_STREAM_FORMAT_SHOUTCAST,
-    MBDS_STREAM_FORMAT_RTMPSTREAMING
+    MBDS_STREAM_FORMAT_RTMPSTREAMING,
+    MBDS_STREAM_FORMAT_DTCP
 } MBDSStreamFormat;
+
+typedef enum
+{
+    PVMF_MBDS_TEMPCACHE_INFINITE,
+    PVMF_MBDS_TEMPCACHE_FINITE
+} PVMFMBDSTempCacheStatus;
+
+// For Shoutcast, the content length is infinite
+// the offsets will wrap around to 0 after 0xFFFFFFFF
+#define WRAP_THRESHOLD  0x8000000
+
+#define IS_OFFSET_IN_RANGE(firstRangeOffset, lastRangeOffset, thisOffset, inRange)      \
+    {                                                                                   \
+        inRange = true;                                                                 \
+        if ((firstRangeOffset >= WRAP_THRESHOLD) && (lastRangeOffset < WRAP_THRESHOLD)) \
+        {                                                                               \
+            if ((thisOffset >= WRAP_THRESHOLD) && (thisOffset < firstRangeOffset))      \
+            {                                                                           \
+                inRange = false;                                                        \
+            }                                                                           \
+            else if ((thisOffset < WRAP_THRESHOLD) && (thisOffset > lastRangeOffset))   \
+            {                                                                           \
+                inRange = false;                                                        \
+            }                                                                           \
+        }                                                                               \
+        else if ((thisOffset < firstRangeOffset) || (thisOffset > lastRangeOffset))     \
+        {                                                                               \
+            inRange = false;                                                            \
+        }                                                                               \
+    }
 
 class PVMFMemoryBufferWriteDataStreamImpl;
 
@@ -122,17 +153,20 @@ class PVMFMemoryBufferDataStreamTempCache
         PVMFMemoryBufferDataStreamTempCache();
         ~PVMFMemoryBufferDataStreamTempCache();
 
+        virtual bool RemoveFirstEntry(OsclRefCounterMemFrag*& aFrag, uint8*& aFragPtr);
+        virtual bool RemoveLastEntry(OsclRefCounterMemFrag*& aFrag, uint8*& aFragPtr);
+        virtual uint32 GetRemainSize()
+        {
+            return 0xFFFFFFFF;
+        };
+        virtual void SetDecryptionInterface(PVMFCPMPluginAccessUnitDecryptionInterface*& aDecryptionInterface) {};
+        virtual PvmiDataStreamStatus AddEntry(OsclRefCounterMemFrag* aFrag, uint8* aFragPtr, uint32 aFragSize, uint32& dataWritten, uint32 aFileOffset);
+
         uint32 GetTotalBytes();
 
         void GetFileOffsets(uint32& aFirstByte, uint32& aLastByte);
 
-        PvmiDataStreamStatus AddEntry(OsclRefCounterMemFrag* aFrag, uint8* aFragPtr, uint32 aFragSize, uint32 aFileOffset);
-
         uint32 ReadBytes(uint8* aBuffer, uint32 aFirstByte, uint32 aLastByte, uint32& firstEntry);
-
-        bool RemoveFirstEntry(OsclRefCounterMemFrag*& aFrag, uint8*& aFragPtr);
-
-        bool RemoveLastEntry(OsclRefCounterMemFrag*& aFrag, uint8*& aFragPtr);
 
         void GetFirstEntryInfo(uint32& entryOffset, uint32& entrySize);
 
@@ -140,7 +174,7 @@ class PVMFMemoryBufferDataStreamTempCache
 
         uint32 GetNumEntries();
 
-    private:
+    protected:
 
         struct MBDSTempCacheEntry
         {
@@ -172,7 +206,9 @@ class PVMFMemoryBufferDataStreamPermCache
         PVMFMemoryBufferDataStreamPermCache();
         ~PVMFMemoryBufferDataStreamPermCache();
 
-        uint32 GetTotalBytes();
+        virtual void SetDecryptionInterface(PVMFCPMPluginAccessUnitDecryptionInterface*& aDecryptionInterface) {};
+        virtual uint32 GetTotalBytes();
+        virtual PvmiDataStreamStatus WriteBytes(uint8* aFragPtr, uint32 aFragSize, uint32& dataWritten, uint32 aFileOffset);
 
         // these are the offsets of bytes already in the cache
         void GetFileOffsets(uint32& aFirstByte, uint32& aLastByte);
@@ -182,8 +218,6 @@ class PVMFMemoryBufferDataStreamPermCache
         void GetPermOffsets(uint32& aFirstByte, uint32& aLastByte);
 
         PvmiDataStreamStatus AddEntry(uint8* aBufPtr, uint32 aBufSize, uint8* aFillPtr, uint32 aFirstOffset, uint32 aLastOffset, uint32 aFillOffset, uint32 aFillSize);
-
-        PvmiDataStreamStatus WriteBytes(uint8* aFragPtr, uint32 aFragSize, uint32 aFileOffset);
 
         uint32 ReadBytes(uint8* aBuffer, uint32 aFirstByte, uint32 aLastByte);
 
@@ -213,18 +247,21 @@ class PVMFMemoryBufferDataStreamPermCache
             uint32 fillSize;
         };
 
-        // total number of bytes of data in this cache
-        uint32 iTotalBytes;
         // total number of bytes allocated in this cache
         uint32 iTotalBufferAlloc;
-        // file offset of first readable byte in cache
-        uint32 iFirstByteFileOffset;
-        // file offset of last readable byte in cache
-        uint32 iLastByteFileOffset;
+
         // file offset of first byte to be made persistent
         uint32 iFirstPermByteOffset;
         // file offset of last byte to be made persistent
         uint32 iLastPermByteOffset;
+
+    protected:
+        // total number of bytes of data in this cache
+        uint32 iTotalBytes;
+        // file offset of first readable byte in cache
+        uint32 iFirstByteFileOffset;
+        // file offset of last readable byte in cache
+        uint32 iLastByteFileOffset;
         // list of perm cache entries
         Oscl_Vector<MBDSPermCacheEntry*, OsclMemAllocator> iEntries;
 
@@ -237,18 +274,19 @@ class PVMFMemoryBufferDataStreamPermCache
 class PVMFMemoryBufferReadDataStreamFactoryImpl : public PVMFDataStreamFactory
 {
     public:
+        PVMFMemoryBufferReadDataStreamFactoryImpl() {};
         OSCL_IMPORT_REF PVMFMemoryBufferReadDataStreamFactoryImpl(PVMFMemoryBufferDataStreamTempCache* aTempCache,
                 PVMFMemoryBufferDataStreamPermCache* aPermCache);
 
-        OSCL_IMPORT_REF void SetWriteDataStreamPtr(PVInterface* aWriteDataStream);
+        virtual OSCL_IMPORT_REF void SetWriteDataStreamPtr(PVInterface* aWriteDataStream);
 
-        OSCL_IMPORT_REF PVMFStatus QueryAccessInterfaceUUIDs(Oscl_Vector<PVUuid, OsclMemAllocator>& aUuids);
+        virtual OSCL_IMPORT_REF PVMFStatus QueryAccessInterfaceUUIDs(Oscl_Vector<PVUuid, OsclMemAllocator>& aUuids);
 
-        OSCL_IMPORT_REF PVInterface* CreatePVMFCPMPluginAccessInterface(PVUuid& aUuid);
+        virtual OSCL_IMPORT_REF PVInterface* CreatePVMFCPMPluginAccessInterface(PVUuid& aUuid);
 
-        OSCL_IMPORT_REF void DestroyPVMFCPMPluginAccessInterface(PVUuid& aUuid, PVInterface* aPtr);
+        virtual OSCL_IMPORT_REF void DestroyPVMFCPMPluginAccessInterface(PVUuid& aUuid, PVInterface* aPtr);
 
-        OSCL_IMPORT_REF void NotifyDownloadComplete();
+        virtual OSCL_IMPORT_REF void NotifyDownloadComplete();
 
     private:
         void addRef() {};
@@ -278,18 +316,22 @@ class PVMFMemoryBufferReadDataStreamFactoryImpl : public PVMFDataStreamFactory
 class PVMFMemoryBufferWriteDataStreamFactoryImpl : public PVMFDataStreamFactory
 {
     public:
+        PVMFMemoryBufferWriteDataStreamFactoryImpl()
+        {
+            iWriteDataStream = NULL;
+        };
         OSCL_IMPORT_REF PVMFMemoryBufferWriteDataStreamFactoryImpl(PVMFMemoryBufferDataStreamTempCache* aTempCache,
                 PVMFMemoryBufferDataStreamPermCache* aPermCache, MBDSStreamFormat aStreamFormat, uint32 aTempCacheCapacity);
 
-        OSCL_IMPORT_REF ~PVMFMemoryBufferWriteDataStreamFactoryImpl();
+        virtual OSCL_IMPORT_REF ~PVMFMemoryBufferWriteDataStreamFactoryImpl();
 
-        OSCL_IMPORT_REF PVMFStatus QueryAccessInterfaceUUIDs(Oscl_Vector<PVUuid, OsclMemAllocator>& aUuids);
+        virtual OSCL_IMPORT_REF PVMFStatus QueryAccessInterfaceUUIDs(Oscl_Vector<PVUuid, OsclMemAllocator>& aUuids);
 
-        OSCL_IMPORT_REF PVInterface* CreatePVMFCPMPluginAccessInterface(PVUuid& aUuid);
+        virtual OSCL_IMPORT_REF PVInterface* CreatePVMFCPMPluginAccessInterface(PVUuid& aUuid);
 
-        OSCL_IMPORT_REF void DestroyPVMFCPMPluginAccessInterface(PVUuid& aUuid, PVInterface* aPtr);
+        virtual OSCL_IMPORT_REF void DestroyPVMFCPMPluginAccessInterface(PVUuid& aUuid, PVInterface* aPtr);
 
-        OSCL_IMPORT_REF void NotifyDownloadComplete();
+        virtual OSCL_IMPORT_REF void NotifyDownloadComplete();
 
     private:
         void addRef() {};
@@ -449,7 +491,22 @@ class PVMFMemoryBufferWriteDataStreamImpl : public PVMIDataStreamSyncInterface
 
         void removeRef() {};
 
-        OSCL_IMPORT_REF bool queryInterface(const PVUuid& uuid, PVInterface*& iface);
+        /* These functions is defined as virtual,just incase if any class is derived from this,
+           then to make functions of the derive class to be called. */
+        virtual OSCL_IMPORT_REF bool queryInterface(const PVUuid& uuid, PVInterface*& iface);
+
+        virtual OSCL_IMPORT_REF void NotifyObserverToDeleteMemFrag(OsclRefCounterMemFrag* frag);
+
+        virtual OSCL_IMPORT_REF void SetDecryptionInterface(PVMFCPMPluginAccessUnitDecryptionInterface*& aDecryptionInterface);
+
+        virtual OSCL_IMPORT_REF void SendWriteCapacityNotification();
+
+        virtual OSCL_IMPORT_REF bool IsWriteNotificationPending(PvmiDataStreamSession aSessionID);
+
+        virtual OSCL_IMPORT_REF PvmiDataStreamStatus QueryWriteCapacity(PvmiDataStreamSession aSessionID,
+                uint32& aCapacity);
+
+        virtual PVMFMBDSTempCacheStatus GetTempCacheWriteCapacity(uint32& aCapacity);
 
         OSCL_IMPORT_REF PvmiDataStreamStatus OpenSession(PvmiDataStreamSession& aSessionID,
                 PvmiDataStreamMode aMode,
@@ -471,9 +528,6 @@ class PVMFMemoryBufferWriteDataStreamImpl : public PVMIDataStreamSyncInterface
                 PvmiDataStreamObserver& aobserver,
                 uint32 aCapacity,
                 OsclAny* aContextData = NULL);
-
-        OSCL_IMPORT_REF PvmiDataStreamStatus QueryWriteCapacity(PvmiDataStreamSession aSessionID,
-                uint32& aCapacity);
 
         OSCL_IMPORT_REF PvmiDataStreamCommandId RequestWriteCapacityNotification(PvmiDataStreamSession aSessionID,
                 PvmiDataStreamObserver& aObserver,
@@ -547,8 +601,7 @@ class PVMFMemoryBufferWriteDataStreamImpl : public PVMIDataStreamSyncInterface
 
     public:
         bool iDownloadComplete;
-
-    private:
+    protected:
 
         OSCL_IMPORT_REF void ManageReadCapacityNotifications();
 
@@ -621,7 +674,7 @@ class PVMFMemoryBufferWriteDataStreamImpl : public PVMIDataStreamSyncInterface
 
             PVMFMemoryBufferReadDataStreamImpl* iReadDataStream;
         };
-
+    protected:
         PVMFMemoryBufferDataStreamTempCache* iTempCache;
 
         PVMFMemoryBufferDataStreamPermCache* iPermCache;

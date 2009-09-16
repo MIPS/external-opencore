@@ -33,6 +33,7 @@ mtp_db_support=n
 pvdb_config_support=n
 mtp_config_support=n
 usb_transport_support=n
+dtcp_support=n
 
 
 #
@@ -183,11 +184,13 @@ fileplaybackpvr_support=n
 # Menu for configuring Download
 #
 pvdownloadmanagernode_lib=m
+pvdtcp_mbds_lib=n
 
 #
 # Menu for configuring downloadmanager features
 #
 PVMF_DOWNLOADMANAGER_SUPPORT_PPB=y
+PVMF_MEMORYBUFFERDATASTREAM_DTCP_PPB=n
 PVMF_DOWNLOADMANAGER_MIN_TCP_BUFFERS_FOR_PPB=39
 PVMF_DOWNLOADMANAGER_CACHE_SIZE_FOR_SC_IN_SECONDS=6
 PVMF_DOWNLOADMANAGER_MAX_BITRATE_FOR_SC=128

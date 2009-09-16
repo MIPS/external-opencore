@@ -34,6 +34,7 @@ menu modules_menu
     pvdb_config_support
     mtp_config_support
     usb_transport_support
+    dtcp_support
 
 condition trits on module_support
 
@@ -66,7 +67,8 @@ default mtp_db_support from n
 default pvdb_config_support from n
 default mtp_config_support from n
 default usb_transport_support from n
-require module_support==n implies download_support==n and fasttrack_download_support==n and janus_support==n and wmdrmoemsettings_support==n and pvdivxoemsettings_support==n and mtp_db_support==n and pvdb_config_support==n and mtp_config_support==n and usb_transport_support==n
+default dtcp_support from n
+require module_support==n implies download_support==n and fasttrack_download_support==n and janus_support==n and wmdrmoemsettings_support==n and pvdivxoemsettings_support==n and mtp_db_support==n and pvdb_config_support==n and mtp_config_support==n and usb_transport_support==n and dtcp_support==n
 
 menu pv_menu    # The main menu
     features_menu
@@ -610,7 +612,10 @@ derive SOLIBS_pvmtp_usb_transport from pvmtp_usb_transport_m_lib
 derive SOLIBDIRS_pvmtp_usb_transport from pvmtp_usb_transport_m_mk
 derive MODS_pvmtp_usb_transport from "-lopencore_common"
 
-
+derive pvdtcp_mbds_so_name from dtcp_support==y ? "pvdtcp_mbds" : ""
+derive SOLIBS_pvdtcp_mbds from pvdtcp_mbds_m_lib.pvdtcp_mbds_so_m_lib
+derive SOLIBDIRS_pvdtcp_mbds from pvdtcp_mbds_m_mk.pvdtcp_mbds_so_m_mk
+derive MODS_pvdtcp_mbds from "-lopencore_download -lopencore_common"
 
 derive TARGET_shared from (pv_so_name.opencore_common_so_name.opencore_author_so_name.opencore_player_so_name.opencore_2way_so_name.
 			   opencore_pvme_so_name.	
@@ -645,7 +650,7 @@ derive TARGET_shared from (pv_so_name.opencore_common_so_name.opencore_author_so
                            pvrtsptunicastforrm_streaming_so_name.pvrtsptunicastforrm_streamingreg_so_name.
                            pvmshttp_streaming_so_name.pvmshttp_streamingreg_so_name.
 			   opencore_rtsp_so_name.pvpvrcommonimpl_streaming_so_name.pvrtspunicastwithpvr_streaming_so_name.pvrtspunicastwithpvr_streamingreg_so_name.pvrtspbroadcastwithpvr_streaming_so_name.
-                           pvrtspbroadcastwithpvr_streamingreg_so_name.pvfileplaybackwithpvr_streaming_so_name.pvfileplaybackwithpvr_streamingreg_so_name)
+                           pvrtspbroadcastwithpvr_streamingreg_so_name.pvfileplaybackwithpvr_streaming_so_name.pvfileplaybackwithpvr_streamingreg_so_name.pvdtcp_mbds_so_name)
 
 # Derive compile directives
 derive USE_LOADABLE_MODULES from module_support==y 

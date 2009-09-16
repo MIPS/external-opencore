@@ -860,6 +860,7 @@ PVMFStatus PVMFDownloadManagerNode::SetSourceInitializationData(OSCL_wString& aS
     }
 
 #if(PVMF_DOWNLOADMANAGER_SUPPORT_PPB)
+    int32 leavecode;
     //Configure the MBDS
     if (iPlaybackMode == EPlaybackOnly)
     {
@@ -895,7 +896,8 @@ PVMFStatus PVMFDownloadManagerNode::SetSourceInitializationData(OSCL_wString& aS
             }
 
             // Use Memory Buffer Data Stream for progressive playback and Shoutcast
-            iMemoryBufferDatastreamFactory = OSCL_NEW(PVMFMemoryBufferDataStream, (iSourceFormat, cacheSize));
+            OSCL_TRY(leavecode, iMemoryBufferDatastreamFactory = OSCL_NEW(PVMFMemoryBufferDataStream, (iSourceFormat, cacheSize)));
+            OSCL_FIRST_CATCH_ANY(leavecode, return PVMFFailure);
         }
         else
         {
@@ -927,7 +929,8 @@ PVMFStatus PVMFDownloadManagerNode::SetSourceInitializationData(OSCL_wString& aS
             uint32 maxDataMinusOverheadInPool = numPacketsToFitInPool * PVMF_DOWNLOADMANAGER_TCP_AVG_SMALL_PACKET_SIZE;
 
             // Use Memory Buffer Data Stream for progressive playback and Shoutcast
-            iMemoryBufferDatastreamFactory = OSCL_NEW(PVMFMemoryBufferDataStream, (iSourceFormat, maxDataMinusOverheadInPool));
+            OSCL_TRY(leavecode, iMemoryBufferDatastreamFactory = OSCL_NEW(PVMFMemoryBufferDataStream, (iSourceFormat, maxDataMinusOverheadInPool)));
+            OSCL_FIRST_CATCH_ANY(leavecode, return PVMFFailure);
         }
 
         OSCL_ASSERT(iMemoryBufferDatastreamFactory != NULL);

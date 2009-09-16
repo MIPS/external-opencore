@@ -1291,8 +1291,7 @@ PVMFMemoryBufferWriteDataStreamImpl::~PVMFMemoryBufferWriteDataStreamImpl()
             // cache should be empty now
             break;
         }
-        // return mem frag to stream writer (e.g. protocol engine)
-        iRequestObserver->DataStreamRequestSync(0, PVDS_REQUEST_MEM_FRAG_RELEASED, (OsclAny*)frag);
+        NotifyObserverToDeleteMemFrag(frag);
     }
     while (1)
     {
@@ -1763,6 +1762,7 @@ PVMFMemoryBufferWriteDataStreamImpl::Write(PvmiDataStreamSession aSessionID, Osc
             iRepositionRequest.iOutstanding = false;
         }
         bool written = false;
+        uint32 dataWritten = 0, totalDataWritten = 0;
 
         // check if this data is supposed to written to the perm cache if perm cache is not empty
         uint32 firstPermOffset = 0;
@@ -1777,6 +1777,12 @@ PVMFMemoryBufferWriteDataStreamImpl::Write(PvmiDataStreamSession aSessionID, Osc
 
         uint32 fragSize = aFrag->getMemFragSize();
         uint8* fragPtr = (uint8*)aFrag->getMemFragPtr();
+
+        uint32 tempCacheCapacity = 0;
+        if (PVMF_MBDS_TEMPCACHE_INFINITE == GetTempCacheWriteCapacity(tempCacheCapacity))
+        {
+            tempCacheCapacity = 0xFFFFFFFF;
+        }
 
         // perm cache should be empty for Shoutcast
         // for non-Shoutcast, no need to worry about the 4GB wrap around right now
@@ -1796,7 +1802,8 @@ PVMFMemoryBufferWriteDataStreamImpl::Write(PvmiDataStreamSession aSessionID, Osc
                 // part of frag has been made persistent
                 uint32 firstEntrySize = lastPermOffset - iFilePtrPos + 1;
                 // copy the first part
-                status = iPermCache->WriteBytes(fragPtr, firstEntrySize, iFilePtrPos);
+                status = iPermCache->WriteBytes(fragPtr, firstEntrySize, dataWritten, iFilePtrPos);
+                totalDataWritten = dataWritten;
                 if (PVDS_SUCCESS != status)
                 {
                     LOGERROR((0, "PVMFMemoryBufferWriteDataStreamImpl::Write WriteBytes FAILED"));
@@ -1813,12 +1820,19 @@ PVMFMemoryBufferWriteDataStreamImpl::Write(PvmiDataStreamSession aSessionID, Osc
                     }
                     else
                     {
-                        status = iTempCache->AddEntry(aFrag, fragPtr, fragSize, iFilePtrPos);
-                        if (PVDS_SUCCESS == status)
+                        if (tempCacheCapacity >= fragSize)
                         {
-                            // notify the writer that the buffer should not be freed
-                            // as it has become a part of the cache
-                            status = PVDS_PENDING;
+                            status = iTempCache->AddEntry(aFrag, fragPtr, fragSize, dataWritten, iFilePtrPos);
+                            if (PVDS_SUCCESS == status || PVDS_PENDING == status)
+                            {
+                                totalDataWritten = dataWritten;
+                            }
+
+                        }
+                        else
+                        {
+                            status = PVDS_NO_MEMORY;
+                            LOGERROR((0, "PVMFMemoryBufferWriteDataStreamImpl::Write WriteBytes FAILED as fragSize > tempCacheCapacity"));
                         }
                     }
                 }
@@ -1828,7 +1842,8 @@ PVMFMemoryBufferWriteDataStreamImpl::Write(PvmiDataStreamSession aSessionID, Osc
                 LOGDEBUG((0, "PVMFMemoryBufferWriteDataStreamImpl::Write entirely to perm cache"));
 
                 // all of the frag has been made persistent
-                status = iPermCache->WriteBytes(fragPtr, fragSize, iFilePtrPos);
+                status = iPermCache->WriteBytes(fragPtr, fragSize, dataWritten, iFilePtrPos);
+                totalDataWritten = dataWritten;
             }
             if ((PVDS_SUCCESS == status) || (PVDS_PENDING == status))
             {
@@ -1857,25 +1872,31 @@ PVMFMemoryBufferWriteDataStreamImpl::Write(PvmiDataStreamSession aSessionID, Osc
                         break;
                     }
                     // return mem frag to stream writer (e.g. protocol engine)
-                    iRequestObserver->DataStreamRequestSync(0, PVDS_REQUEST_MEM_FRAG_RELEASED, (OsclAny*)frag);
+                    NotifyObserverToDeleteMemFrag(frag);
                 }
             }
-            status = iTempCache->AddEntry(aFrag, fragPtr, fragSize, iFilePtrPos);
-            if (PVDS_SUCCESS == status)
+            if (tempCacheCapacity >= fragSize)
             {
-                written = true;
-                // notify the writer that the buffer should not be freed
-                // as it has become a part of the cache
-                status = PVDS_PENDING;
+                status = iTempCache->AddEntry(aFrag, fragPtr, fragSize, dataWritten, iFilePtrPos);
+                if (PVDS_SUCCESS == status || PVDS_PENDING == status)
+                {
+                    written = true;
+                    totalDataWritten = dataWritten;
+                }
+                // Check if there are frags that are not being read from
+                // at the beginning of the cache that can be returned to the writer (protocol engine)
+                ManageCache();
             }
-            // Check if there are frags that are not being read from
-            // at the beginning of the cache that can be returned to the writer (protocol engine)
-            ManageCache();
+            else
+            {
+                status = PVDS_NO_MEMORY;
+                LOGERROR((0, "PVMFMemoryBufferWriteDataStreamImpl::Write WriteBytes FAILED as fragSize > tempCacheCapacity"));
+            }
         }
         if (written)
         {
             // advance the write pointer
-            iFilePtrPos += fragSize;
+            iFilePtrPos += totalDataWritten;
             aNumElements = fragSize;
 
             // Send notification if requested read capacity is available
@@ -2710,8 +2731,7 @@ PVMFMemoryBufferWriteDataStreamImpl::ManageCache()
                 uint8* fragPtr = NULL;
                 if (iTempCache->RemoveFirstEntry(frag, fragPtr))
                 {
-                    // return mem frag to stream writer (e.g. protocol engine)
-                    iRequestObserver->DataStreamRequestSync(0, PVDS_REQUEST_MEM_FRAG_RELEASED, (OsclAny*)frag);
+                    NotifyObserverToDeleteMemFrag(frag);
                 }
             }
             else
@@ -2726,6 +2746,7 @@ PVMFMemoryBufferWriteDataStreamImpl::ManageCache()
             break;
         }
     }
+    SendWriteCapacityNotification();
     LOGTRACE((0, "PVMFMemoryBufferWriteDataStreamImpl::ManageCache exit"));
 }
 
@@ -2746,8 +2767,7 @@ PVMFMemoryBufferWriteDataStreamImpl::TrimTempCache(MBDSCacheTrimMode aTrimMode)
             found = iTempCache->RemoveFirstEntry(frag, fragPtr);
             if (found)
             {
-                // return mem frag to stream writer (e.g. protocol engine)
-                iRequestObserver->DataStreamRequestSync(0, PVDS_REQUEST_MEM_FRAG_RELEASED, (OsclAny*)frag);
+                NotifyObserverToDeleteMemFrag(frag);
             }
             else
             {
@@ -2794,8 +2814,7 @@ PVMFMemoryBufferWriteDataStreamImpl::TrimTempCache(MBDSCacheTrimMode aTrimMode)
                 bool found = iTempCache->RemoveFirstEntry(frag, fragPtr);
                 if (found)
                 {
-                    // return mem frag to stream writer (e.g. protocol engine)
-                    iRequestObserver->DataStreamRequestSync(0, PVDS_REQUEST_MEM_FRAG_RELEASED, (OsclAny*)frag);
+                    NotifyObserverToDeleteMemFrag(frag);
                 }
             }
             else
@@ -2839,8 +2858,7 @@ PVMFMemoryBufferWriteDataStreamImpl::TrimTempCache(MBDSCacheTrimMode aTrimMode)
                 bool found = iTempCache->RemoveLastEntry(frag, fragPtr);
                 if (found)
                 {
-                    // return mem frag to stream writer (e.g. protocol engine)
-                    iRequestObserver->DataStreamRequestSync(0, PVDS_REQUEST_MEM_FRAG_RELEASED, (OsclAny*)frag);
+                    NotifyObserverToDeleteMemFrag(frag);
                 }
             }
             else
@@ -2850,7 +2868,7 @@ PVMFMemoryBufferWriteDataStreamImpl::TrimTempCache(MBDSCacheTrimMode aTrimMode)
             }
         }
     }
-
+    SendWriteCapacityNotification();
     LOGTRACE((0, "PVMFMemoryBufferWriteDataStreamImpl::TrimTempCache exit"));
 }
 
@@ -2922,17 +2940,61 @@ PVMFMemoryBufferWriteDataStreamImpl::GetTempCacheCapacity()
     return iTempCacheCapacity;
 }
 
+OSCL_EXPORT_REF void
+PVMFMemoryBufferWriteDataStreamImpl::NotifyObserverToDeleteMemFrag(OsclRefCounterMemFrag* frag)
+{
+    // return mem frag to stream writer (e.g. protocol engine)
+    iRequestObserver->DataStreamRequestSync(0, PVDS_REQUEST_MEM_FRAG_RELEASED, (OsclAny*)frag);
+}
+
+OSCL_EXPORT_REF void
+PVMFMemoryBufferWriteDataStreamImpl::SetDecryptionInterface(PVMFCPMPluginAccessUnitDecryptionInterface*& aDecryptionInterface)
+{
+    /* Noting to do here in this function for Basic MBDS functionality. This function was introduced because,
+       DTCP MBDS class will be derived from this class and in this function we store the decryption interface
+       and use it to decrypt the data. */
+    OSCL_UNUSED_ARG(aDecryptionInterface);
+}
+
+OSCL_EXPORT_REF void
+PVMFMemoryBufferWriteDataStreamImpl::SendWriteCapacityNotification()
+{
+    /* Noting to do here in this function for Basic MBDS functionality. This function was introduced because,
+       DTCP MBDS class will be derived from this class and in this function we intimate the observer i.e. PE
+       Node about the availabily of the free space inside tempcache so that PE node can continue to write the
+       data to data stream. Actually when PE node finds short of space in data stream for writing the data it
+       will register for write capacity notification and will wait for the callback. Now that callback will be
+       sent inside this function and this is useful only in case of DTCP Streaming.*/
+}
+
+OSCL_EXPORT_REF bool
+PVMFMemoryBufferWriteDataStreamImpl::IsWriteNotificationPending(PvmiDataStreamSession aSessionID)
+{
+    /* Before registering for the write notification, observer should check for whether any write notification
+       is pending or not. In case if observer registers for write notification twice then leave will happen.
+       Hence to avoid this sitution observer should check for the pending notification before registering for
+       write notification. Again this is not needed for normal MBDS functionality and is only needed for DTCP
+       Streaming.*/
+    OSCL_UNUSED_ARG(aSessionID);
+    return false;
+}
+
+OSCL_EXPORT_REF PVMFMBDSTempCacheStatus
+PVMFMemoryBufferWriteDataStreamImpl::GetTempCacheWriteCapacity(uint32& aCapacity)
+{
+    /* This function should update the  correct capacity of the temp cache if the memory of tempcache is finate.
+       In case if the memory of tempcache is infinate as in the case of nomal MBDS which sotes only the pointers
+       no need to update capacity variable. Just return PVMF_MBDS_TEMPCACHE_INFINITE. Caller should take care
+       if this*/
+    OSCL_UNUSED_ARG(aCapacity);
+    return PVMF_MBDS_TEMPCACHE_INFINITE;
+}
 //////////////////////////////////////////////////////////////////////
 // PVMFMemoryBufferDataStream
 //////////////////////////////////////////////////////////////////////
 OSCL_EXPORT_REF
 PVMFMemoryBufferDataStream::PVMFMemoryBufferDataStream(PVMFFormatType& aStreamFormat, uint32 aTempCacheCapacity)
 {
-    // Create a temporary cache and a permanent cache
-    iTemporaryCache = OSCL_NEW(PVMFMemoryBufferDataStreamTempCache, ());
-    iPermanentCache = OSCL_NEW(PVMFMemoryBufferDataStreamPermCache, ());
-
-    // set the stream format and the temp cache size
     MBDSStreamFormat streamFormat = MBDS_STREAM_FORMAT_PROGRESSIVE_PLAYBACK;
     if (aStreamFormat == PVMF_MIME_DATA_SOURCE_SHOUTCAST_URL)
     {
@@ -2943,8 +3005,12 @@ PVMFMemoryBufferDataStream::PVMFMemoryBufferDataStream(PVMFFormatType& aStreamFo
         streamFormat = MBDS_STREAM_FORMAT_RTMPSTREAMING;
     }
 
-    // Create the two factories
+    // Create a temporary cache and a permanent cache
+    iTemporaryCache = OSCL_NEW(PVMFMemoryBufferDataStreamTempCache, ());
+    iPermanentCache = OSCL_NEW(PVMFMemoryBufferDataStreamPermCache, ());
+    // Create the write factory seperately for DTCP & Normal case...
     iWriteDataStreamFactory = OSCL_NEW(PVMFMemoryBufferWriteDataStreamFactoryImpl, (iTemporaryCache, iPermanentCache, streamFormat, aTempCacheCapacity));
+    /* Read Factory is going to be common for both DTCP & Normal case... */
     iReadDataStreamFactory = OSCL_NEW(PVMFMemoryBufferReadDataStreamFactoryImpl, (iTemporaryCache, iPermanentCache));
 
     // Now create a iWriteDataStream
@@ -3056,11 +3122,11 @@ PVMFMemoryBufferDataStreamTempCache::GetFileOffsets(uint32& aFirstByte, uint32& 
 
 
 PvmiDataStreamStatus
-PVMFMemoryBufferDataStreamTempCache::AddEntry(OsclRefCounterMemFrag* aFrag, uint8* aFragPtr, uint32 aFragSize, uint32 aFileOffset)
+PVMFMemoryBufferDataStreamTempCache::AddEntry(OsclRefCounterMemFrag* aFrag, uint8* aFragPtr, uint32 aFragSize, uint32& dataWritten, uint32 aFileOffset)
 {
     LOGTRACE((0, "PVMFMemoryBufferDataStreamTempCache::AddEntry ptr %x size %d offset %d", aFragPtr, aFragSize, aFileOffset));
 
-    PvmiDataStreamStatus status = PVDS_SUCCESS;
+    PvmiDataStreamStatus status = PVDS_PENDING;
     // Create an entry for the cache
     // Caller is write data stream,
     // it has checked for contiguous write
@@ -3079,6 +3145,7 @@ PVMFMemoryBufferDataStreamTempCache::AddEntry(OsclRefCounterMemFrag* aFrag, uint
             entry->fragPtr = aFragPtr;
             entry->fragSize = aFragSize;
             entry->fileOffset = aFileOffset;
+            dataWritten = aFragSize;
 
             iEntries.push_back(entry);
 
@@ -3223,7 +3290,6 @@ PVMFMemoryBufferDataStreamTempCache::RemoveLastEntry(OsclRefCounterMemFrag*& aFr
     LOGTRACE((0, "PVMFMemoryBufferDataStreamTempCache::RemoveLastEntry returning %d", (int)found));
     return found;
 }
-
 
 uint32
 PVMFMemoryBufferDataStreamTempCache::ReadBytes(uint8* aBuffer, uint32 aFirstByte, uint32 aLastByte, uint32& firstEntry)
@@ -3517,7 +3583,7 @@ PVMFMemoryBufferDataStreamPermCache::AddEntry(uint8* aBufPtr, uint32 aBufSize, u
 
 
 PvmiDataStreamStatus
-PVMFMemoryBufferDataStreamPermCache::WriteBytes(uint8* aFragPtr, uint32 aFragSize, uint32 aFileOffset)
+PVMFMemoryBufferDataStreamPermCache::WriteBytes(uint8* aFragPtr, uint32 aFragSize, uint32& dataWritten, uint32 aFileOffset)
 {
     LOGTRACE((0, "PVMFMemoryBufferDataStreamPermCache::WriteBytes aFragPtr %x aFragSize %d aFileOffset %d", aFragPtr, aFragSize, aFileOffset));
 
@@ -3590,6 +3656,7 @@ PVMFMemoryBufferDataStreamPermCache::WriteBytes(uint8* aFragPtr, uint32 aFragSiz
         iLastByteFileOffset = aFileOffset + aFragSize - 1;
     }
     iTotalBytes += aFragSize;
+    dataWritten = aFragSize;
 
     LOGTRACE((0, "PVMFMemoryBufferDataStreamPermCache::WriteBytes success iLastByteFileOffset % d", iLastByteFileOffset));
     return PVDS_SUCCESS;
@@ -3724,7 +3791,7 @@ PVMFMemoryBufferDataStreamPermCache::RemoveFirstEntry(uint8*& aFragPtr)
             iTotalBytes = 0;
         }
 #if (PVLOGGER_INST_LEVEL > PVLOGMSG_INST_LLDBG)
-        LOGDEBUG((0, "PVMFMemoryBufferDataStreamTempCache::RemoveFirstEntry %x offset %d size %d first %d last %d total %d",
+        LOGDEBUG((0, "PVMFMemoryBufferDataStreamPermCache::RemoveFirstEntry %x offset %d size %d first %d last %d total %d",
                   entry, offset, size, iFirstByteFileOffset, iLastByteFileOffset, iTotalBytes));
 #endif
 
