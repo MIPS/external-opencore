@@ -461,9 +461,10 @@ class MP3Parser
         /* toc related */
         int32* iTOC;
         uint32 iTOCFilledCount;
-        uint32 iTimestampPrev;
         uint32 iScanTimestamp;
         uint32 iBinWidth;
+        uint32 iMaxTOCFillStepsPerBin;
+        uint32 iBinFillCounter;
 
         uint32 iSamplingRate;
         uint32 iSamplesPerFrame;

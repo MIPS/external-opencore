@@ -341,9 +341,18 @@ MP3Parser::MP3Parser(PVFile* aFileHandle)
 
     iTOC = NULL;
     iTOCFilledCount = 0;
-    iTimestampPrev = 0;
     iScanTimestamp = 0;
     iBinWidth = 0;
+    iMaxTOCFillStepsPerBin = 1; // This is factor which doubles after every compcation algorithm
+    // since during compaction the binWidth doubles. This factor will tell
+    // the parser when to fill the bin, which means after how many scans.
+    // This starts with 1, meaning that before first compaction, for
+    // every scan fill the bin.
+    // After each TOC compaction this doubles, which means that next time
+    // for each double the scans than the previous time, the bin will be filled.
+
+    iBinFillCounter = 1; // This maintains the count that when the bin needs to be filled.
+    // The bin will be filled when the BinFillCounter matches the MaxTOCFillStepsPerBin.
 
     iVbriHeader.TOC = NULL;
     oscl_memset(&iMP3ConfigInfo, 0, sizeof(iMP3ConfigInfo));
@@ -662,8 +671,16 @@ MP3ErrorType MP3Parser::ParseMP3File(PVFile * fpUsed, bool aEnableCRC)
     if ((mp3Type != EXINGType || !(iXingHeader.flags & TOC_FLAG)) &&
             mp3Type != EVBRIType)
     {
+        // Allocate an extra space for TOC table for use-cases
+        // where after Duration Scan Complete 2 File Offset positions
+        // (1. Corresponding to actual mutliple of Bin width,
+        // 2. Corresponding to partial scanned samples in last run)
+        // needs to be pushed in the TOC table.
+        // Since the 2nd entry may not be a exact multiple of bin width
+        // we do not want to run compaction algorithm and increase bin size,
+        // therefore allocating an extra +1 space for this last entry.
         iTOC = OSCL_ARRAY_NEW(int32, MAX_TOC_ENTRY_COUNT + 1);
-        oscl_memset(iTOC, 0, sizeof(iTOC));
+        oscl_memset(iTOC, 0, sizeof(int32)*(MAX_TOC_ENTRY_COUNT + 1));
     }
 
     iAvgBitrateInbps = iMP3ConfigInfo.BitRate;
@@ -714,12 +731,6 @@ MP3ErrorType MP3Parser::ScanMP3File(PVFile * fpUsed, uint32 aFramesToScan)
         return MP3_DURATION_PRESENT;
     }
 
-    if (iTOCFilledCount == MAX_TOC_ENTRY_COUNT)
-    {
-        FillTOCTable(0, 0);
-        return MP3_SUCCESS;
-    }
-
     if (iFirstScan)
     {
         if (iTagSize > 0)
@@ -730,6 +741,7 @@ MP3ErrorType MP3Parser::ScanMP3File(PVFile * fpUsed, uint32 aFramesToScan)
             {
                 return err;
             }
+            audioOffset = fpUsed->Tell() - StartOffset;
         }
         iFirstScan = false;
     }
@@ -756,7 +768,16 @@ MP3ErrorType MP3Parser::ScanMP3File(PVFile * fpUsed, uint32 aFramesToScan)
             {
                 iDurationScanComplete = true;
             }
-            FillTOCTable(audioOffset, 0);
+            // update the LastScanPosition
+            iLastScanPosition = fpUsed->Tell() - StartOffset;
+            FillTOCTable(audioOffset, iScanTimestamp);
+            iScanTimestamp = iScanTimestamp + frameDur;
+            // if BinWidth is zero even after Duration Scan complete then assign it to Total Scanned Timestamp (~ClipDuration)
+            // This will happen for small clips in which all frames are scanned in first DurationCalculator AO scan.
+            if (0 == iBinWidth)
+            {
+                iBinWidth = iScanTimestamp;
+            }
             return MP3_INSUFFICIENT_DATA;
         }
         firstHeader = SwapFileToHostByteOrderInt32(pFrameHeader);
@@ -771,7 +792,16 @@ MP3ErrorType MP3Parser::ScanMP3File(PVFile * fpUsed, uint32 aFramesToScan)
                 if (!MP3FileIO::readByteData(fpUsed, MP3_FRAME_HEADER_SIZE, pFrameHeader))
                 {
                     iDurationScanComplete = true;
-                    FillTOCTable(offset, iScanTimestamp);
+                    // update the LastScanPosition
+                    iLastScanPosition = fpUsed->Tell() - StartOffset;
+                    FillTOCTable(audioOffset, iScanTimestamp);
+                    iScanTimestamp = iScanTimestamp + frameDur;
+                    // if BinWidth is zero even after Duration Scan complete then assign it to Total Scanned Timestamp (~ClipDuration)
+                    // This will happen for small clips in which all frames are scanned in first DurationCalculator AO scan.
+                    if (0 == iBinWidth)
+                    {
+                        iBinWidth = iScanTimestamp;
+                    }
                     return MP3_INSUFFICIENT_DATA;
                 }
 
@@ -779,14 +809,32 @@ MP3ErrorType MP3Parser::ScanMP3File(PVFile * fpUsed, uint32 aFramesToScan)
                 if (! GetMP3Header(firstHeader, mp3HeaderInfo))
                 {
                     iDurationScanComplete = true;
-                    FillTOCTable(offset, iScanTimestamp);
+                    // update the LastScanPosition
+                    iLastScanPosition = fpUsed->Tell() - StartOffset;
+                    FillTOCTable(audioOffset, iScanTimestamp);
+                    iScanTimestamp = iScanTimestamp + frameDur;
+                    // if BinWidth is zero even after Duration Scan complete then assign it to Total Scanned Timestamp (~ClipDuration)
+                    // This will happen for small clips in which all frames are scanned in first DurationCalculator AO scan.
+                    if (0 == iBinWidth)
+                    {
+                        iBinWidth = iScanTimestamp;
+                    }
                     return MP3_FILE_HDR_READ_ERR;
                 }
             }
             else
             {
                 iDurationScanComplete = true;
-                FillTOCTable(offset, iScanTimestamp);
+                // update the LastScanPosition
+                iLastScanPosition = fpUsed->Tell() - StartOffset;
+                FillTOCTable(audioOffset, iScanTimestamp);
+                iScanTimestamp = iScanTimestamp + frameDur;
+                // if BinWidth is zero even after Duration Scan complete then assign it to Total Scanned Timestamp (~ClipDuration)
+                // This will happen for small clips in which all frames are scanned in first DurationCalculator AO scan.
+                if (0 == iBinWidth)
+                {
+                    iBinWidth = iScanTimestamp;
+                }
                 return err;
             }
         }
@@ -794,14 +842,23 @@ MP3ErrorType MP3Parser::ScanMP3File(PVFile * fpUsed, uint32 aFramesToScan)
         if (!DecodeMP3Header(mp3HeaderInfo, mp3ConfigInfo, false))
         {
             iDurationScanComplete = true;
-            FillTOCTable(offset, iScanTimestamp);
+            // update the LastScanPosition
+            iLastScanPosition = fpUsed->Tell() - StartOffset;
+            FillTOCTable(audioOffset, iScanTimestamp);
+            iScanTimestamp = iScanTimestamp + frameDur;
+            // if BinWidth is zero even after Duration Scan complete then assign it to Total Scanned Timestamp (~ClipDuration)
+            // This will happen for small clips in which all frames are scanned in first DurationCalculator AO scan.
+            if (0 == iBinWidth)
+            {
+                iBinWidth = iScanTimestamp;
+            }
             return MP3_FILE_HDR_DECODE_ERR;
         }
 
         MP3Utils::SeektoOffset(fpUsed, mp3ConfigInfo.FrameLengthInBytes - MP3_FRAME_HEADER_SIZE, Oscl_File::SEEKCUR);
         bitrate = mp3ConfigInfo.BitRate;
         frameDur = frameDur + (uint32)((OsclFloat) mp3ConfigInfo.FrameLengthInBytes * 8000.00f / mp3ConfigInfo.BitRate);
-        iLastScanPosition = fpUsed->Tell();
+        iLastScanPosition = fpUsed->Tell() - StartOffset;
         numFrames++;
         iScannedFrameCount++;
 
@@ -1808,9 +1865,9 @@ uint32 MP3Parser::SeekPointFromTimestamp(uint32 &timestamp)
             TScurr = binNo * iBinWidth;
         }
 
-        uint32 offsetDiff = iTOC[binNo+1] - iTOC[binNo];
-        uint32 tsDiff = timestamp - TScurr;
-        seekPoint = iTOC[binNo] + tsDiff * (offsetDiff / iBinWidth);
+        OsclFloat offsetDiff = iTOC[binNo+1] - iTOC[binNo];
+        OsclFloat tsDiff = timestamp - TScurr;
+        seekPoint = (uint32)(iTOC[binNo] + offsetDiff * (OsclFloat)(tsDiff / iBinWidth));
     }
     else
     {
@@ -1854,8 +1911,8 @@ uint32 MP3Parser::SeekPointFromTimestamp(uint32 &timestamp)
             seekPoint += seekOffset;
             if (iDurationScanComplete)
             {
-                uint32 offsetDiff = iTOC[binNo+1] - iTOC[binNo];
-                timestamp = (binNo * iBinWidth) + (iBinWidth * (seekPoint - iTOC[binNo]) / offsetDiff);
+                OsclFloat offsetDiff = iTOC[binNo+1] - iTOC[binNo];
+                timestamp = (uint32)((binNo * iBinWidth) + iBinWidth * ((OsclFloat)(seekPoint - iTOC[binNo]) / offsetDiff));
             }
         }
         else if (retVal == MP3_INSUFFICIENT_DATA || retVal == MP3_END_OF_FILE)
@@ -2897,11 +2954,10 @@ void MP3Parser::GetDurationFromCompleteScan(uint32 &aClipDuration)
         aClipDuration = iClipDurationComputed;
         return;
     }
-    uint32 samplesPerFrame = spfIndexTable[iMP3HeaderInfo.frameVer][iMP3HeaderInfo.layerID];
-    uint32 samplingRate = srIndexTable[((iMP3HeaderInfo.frameVer)*4) + iMP3HeaderInfo.srIndex];
-    OsclFloat samplingRateinKHz = (OsclFloat)samplingRate / 1000;
 
-    iClipDurationComputed = (uint32)(iScannedFrameCount * (OsclFloat)(samplesPerFrame / samplingRateinKHz));
+    // Just assign the iScanTimestamp to the ClipDuration. iScanTimestamp is made up after adding all
+    // frameDurations of the frames which are scanned as a part of DurationCalculator AO.
+    iClipDurationComputed = iScanTimestamp;
     aClipDuration = iClipDurationComputed;
 }
 
@@ -2909,41 +2965,105 @@ void MP3Parser::FillTOCTable(uint32 aFilePos, uint32 aTimeStampToFrame)
 {
     if (iDurationScanComplete)
     {
-        iTOC[iTOCFilledCount] = aFilePos;
-        iTOCFilledCount++;
-        if (0 == iTimestampPrev)
+        // The file scan is complete so add the final entries to the TOC even if the final bin isn't completely full.
+        if (iBinFillCounter == 1)
         {
-            GetDurationFromCompleteScan(iBinWidth);
+            // This means that audio offset passed here has to be filled in the
+            // last bin.
+            // Check the TOC Filled count, if it has reached maximum, run compaction
+            // and then push the FilePos.
+            if (iTOCFilledCount == MAX_TOC_ENTRY_COUNT)
+            {
+                // run the compaction algorithm to compress the TOC table
+                for (uint32 i = 0; i < (MAX_TOC_ENTRY_COUNT / 2); i++)
+                {
+                    iTOC[i] = iTOC[2*i];
+                }
+                iBinWidth = 2 * iBinWidth;
+                iTOCFilledCount = MAX_TOC_ENTRY_COUNT / 2;
+            }
+
+            // Push the FilePos now. This position will correspond to
+            // multiple of BinWidth.
+            iTOC[iTOCFilledCount] = aFilePos;
+            iTOCFilledCount++;
+
+            // check if FilePos passed is different from LastScanPosition
+            // if yes fill the LastScanPosition. The LastScanPosition will
+            // not correspond to exact BinWidth but we cannot lose this
+            // info.
+            if (aFilePos != iLastScanPosition)
+            {
+                // Push the last scan position here.
+                iTOC[iTOCFilledCount] = iLastScanPosition;
+                iTOCFilledCount++;
+            }
         }
+        else
+        {
+            // Push the last scan position here, this bin will not exactly be equal to binwidth.
+            iTOC[iTOCFilledCount] = iLastScanPosition;
+            iTOCFilledCount++;
+        }
+
         return;
     }
 
-    if ((iTOCFilledCount < MAX_TOC_ENTRY_COUNT) && ((aTimeStampToFrame - iTimestampPrev) >= iBinWidth))
+    if ((iTOCFilledCount < MAX_TOC_ENTRY_COUNT) && (iBinFillCounter == 1))
     {
-        if (iTimestampPrev != aTimeStampToFrame)
+        if (iBinWidth == 0)
         {
-            if ((aTimeStampToFrame - iTimestampPrev) > iBinWidth)
-            {
-                iBinWidth = aTimeStampToFrame - iTimestampPrev;
-            }
+            iBinWidth = aTimeStampToFrame;
         }
+
         // push the file offset into TOC table
-        iTOC[iTOCFilledCount] = aFilePos - StartOffset;
+        iTOC[iTOCFilledCount] = aFilePos;
         iTOCFilledCount++;
-        iTimestampPrev = aTimeStampToFrame;
+
+        if (iMaxTOCFillStepsPerBin != 1)
+        {
+            // increment iBinFilledCounter unless this entry already filled the bin
+            iBinFillCounter++;
+        }
     }
-    else if (iTOCFilledCount == MAX_TOC_ENTRY_COUNT)
+    else if ((iTOCFilledCount == MAX_TOC_ENTRY_COUNT) && (iBinFillCounter == 1))
     {
         // run the compaction algorithm to compress the TOC table
         for (uint32 i = 0; i < (MAX_TOC_ENTRY_COUNT / 2); i++)
         {
             iTOC[i] = iTOC[2*i];
         }
-        iTimestampPrev = iTimestampPrev - iBinWidth;
-        iBinWidth = 2 * iBinWidth;
         iTOCFilledCount = MAX_TOC_ENTRY_COUNT / 2;
+
+        // Double the bin width and Bin Filling Factor after compaction
+        iBinWidth = 2 * iBinWidth;
+        iMaxTOCFillStepsPerBin = 2 * iMaxTOCFillStepsPerBin;
+
+        // push the file offset into TOC table
+        iTOC[iTOCFilledCount] = aFilePos;
+        iTOCFilledCount++;
+
+        // Increment the Fill Counter to account for already scanned samples done
+        // before compaction.
+        iBinFillCounter++;
+    }
+    else
+    {
+        iBinFillCounter++;
+        if (iBinFillCounter > iMaxTOCFillStepsPerBin)
+        {
+            iBinFillCounter = 1; // reset to 1
+        }
     }
 }
+
+
+
+
+
+
+
+
 
 
 

@@ -3200,7 +3200,8 @@ PVMFStatus PVMFMP3FFParserNode::DoSetDataSourcePosition(PVMFMP3FFParserNodeComma
         iTrack.iState = PVMP3FFNodeTrackPortInfo::TRACKSTATE_SEND_ENDOFTRACK;
         iMP3File->SeekToTimestamp(0);
         *actualNPT = duration;
-        iTrack.iClockConverter->set_clock_other_timescale(*actualMediaDataTS, COMMON_PLAYBACK_CLOCK_TIMESCALE);
+        iTrack.iClockConverter->set_clock_other_timescale(*actualNPT, COMMON_PLAYBACK_CLOCK_TIMESCALE);
+        iTrack.timestamp_offset -= *actualNPT;
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
                         (0, "PVMFMP3FFParserNode::DoSetDataSourcePosition: targetNPT=%d, actualNPT=%d, actualMediaTS=%d",
                          targetNPT, *actualNPT, *actualMediaDataTS));
@@ -3222,7 +3223,8 @@ PVMFStatus PVMFMP3FFParserNode::DoSetDataSourcePosition(PVMFMP3FFParserNodeComma
     if (duration > 0 && *actualNPT == duration)
     {
         // this means there was no data to render after the seek so just send End of Track
-        iTrack.iClockConverter->set_clock_other_timescale(*actualMediaDataTS, COMMON_PLAYBACK_CLOCK_TIMESCALE);
+        iTrack.iClockConverter->set_clock_other_timescale(*actualNPT, COMMON_PLAYBACK_CLOCK_TIMESCALE);
+        iTrack.timestamp_offset -= *actualNPT;
         iTrack.iState = PVMP3FFNodeTrackPortInfo::TRACKSTATE_SEND_ENDOFTRACK;
         return PVMFSuccess;
     }
