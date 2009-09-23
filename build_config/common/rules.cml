@@ -149,7 +149,7 @@ derive opencore_player_so_name from pvsplit_so==y ? "opencore_player" : ""
 derive SOLIBS_opencore_player from (pvra8decoder_m_lib.pv_aac_dec_imp_m_lib.
                        pvamrwbdecoder_imp_m_lib.
                        pvmp3_imp_m_lib.wmadecoder_imp_m_lib.wmavoicedecoder_imp_m_lib.pvra8decoder_imp_m_lib.
-                       rvdecoder_m_lib.pvmp4decoder_imp_m_lib.wmvdecoder_imp_m_lib.
+                       rvdecoder_imp_m_lib.pvmp4decoder_imp_m_lib.wmvdecoder_imp_m_lib.
                        cpm_m_lib.
                        pvpvxparser_m_lib.pvid3parcom_m_lib.
                        pvamrffparsernode_m_lib.
@@ -166,7 +166,7 @@ derive SOLIBS_opencore_player from (pvra8decoder_m_lib.pv_aac_dec_imp_m_lib.
 derive SOLIBDIRS_opencore_player from (pvra8decoder_m_mk.pv_aac_dec_imp_m_mk.
                        pvamrwbdecoder_imp_m_mk.
                        pvmp3_imp_m_mk.wmadecoder_imp_m_mk.wmavoicedecoder_imp_m_mk.pvra8decoder_imp_m_mk.
-                       rvdecoder_m_mk.pvmp4decoder_imp_m_mk.wmvdecoder_imp_m_mk.
+                       rvdecoder_imp_m_mk.pvmp4decoder_imp_m_mk.wmvdecoder_imp_m_mk.
                        cpm_m_mk.
                        pvpvxparser_m_mk.pvid3parcom_m_mk.
                        pvamrffparsernode_m_mk.

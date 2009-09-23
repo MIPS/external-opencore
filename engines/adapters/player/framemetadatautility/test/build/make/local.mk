@@ -128,6 +128,7 @@ LIBS :=  pvframemetadatautility \
         pvoma1ffrecognizer \
         pvaacffrecognizer \
         pvfileparserutils \
+        omx_rv_component_lib \
         pvrvdecnode \
         rvdecoder \
         pvra8decnode \
