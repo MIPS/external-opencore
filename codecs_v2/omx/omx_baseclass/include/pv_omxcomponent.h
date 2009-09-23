@@ -61,6 +61,14 @@
 
 #define OMX_PORT_NUMBER_FORMATS_SUPPORTED 4
 
+#define OMX_RV_MAX_INPUT_SEGMENTS 32
+
+typedef struct RvSegmentInfoType
+{
+    OMX_S32 IsValid;
+    OMX_U32 PartialFragmentOffset;
+} RvSegmentInfoType;
+
 
 /* Application's private data */
 typedef struct ComponentPrivateType
@@ -617,8 +625,8 @@ class OmxComponentBase : public OsclActiveObject
 
 
         OMX_BOOL                iIsAudioComponent;
-
-
+        OMX_U32                 iNumOfPartialFragmentsReceived;
+        RvSegmentInfoType       iPartialFragmentInfo[OMX_RV_MAX_INPUT_SEGMENTS];
 
 
 };

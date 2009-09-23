@@ -224,6 +224,7 @@
 #define pvwmvdecnode_lib 0
 #define gsmamrdecnode_lib 0
 #define pvvideodecnode_lib 0
+#define pvrvdecnode_lib 0
 #define pvvideoencnode_lib 0
 #define pvamrencnode_lib 0
 #define pvavcencnode_lib 0
@@ -269,7 +270,6 @@
 #define pvmp3ffparsernode_lib m
 #define pvmp4ffparsernode_lib 0
 #define pvmp4ffparsernodeopencore_lib m
-#define pvrvdecnode_lib 0
 #define pvra8decnode_lib 0
 #define pvrmffparsernode_lib 0
 #define pvrtppacketsourcenode_lib 0

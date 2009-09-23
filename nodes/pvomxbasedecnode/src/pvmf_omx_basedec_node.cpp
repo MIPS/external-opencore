@@ -3899,6 +3899,10 @@ OSCL_EXPORT_REF PVMFStatus PVMFOMXBaseDecNode::DoPrepare(PVMFNodeCommand& aCmd)
         roles.push_back((OMX_STRING)"video_decoder.vc1");
         roles.push_back((OMX_STRING)"video_decoder.wmv");
     }
+    else if (format ==  PVMF_MIME_REAL_VIDEO)
+    {
+        roles.push_back((OMX_STRING)"video_decoder.rv");
+    }
     else
     {
         // Illegal codec specified.
@@ -3956,7 +3960,8 @@ OSCL_EXPORT_REF PVMFStatus PVMFOMXBaseDecNode::DoPrepare(PVMFNodeCommand& aCmd)
                     format == PVMF_MIME_H264_VIDEO_MP4 ||
                     format == PVMF_MIME_H264_VIDEO_RAW ||
                     format == PVMF_MIME_M4V ||
-                    format == PVMF_MIME_WMV)
+                    format == PVMF_MIME_WMV ||
+                    format == PVMF_MIME_REAL_VIDEO)
             {
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
                                 (0, "%s::DoPrepare() Codec Config data is not present", iName.Str()));

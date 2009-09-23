@@ -89,6 +89,7 @@ OSCL_EXPORT_REF OmxComponentBase::OmxComponentBase() :
 
     iComponentRoleFlag = OMX_FALSE;
     ipMark = NULL;
+    iNumOfPartialFragmentsReceived = 0;
 
     iEosProcessing = OMX_FALSE;
     iFirstFragment = OMX_FALSE;
@@ -185,6 +186,13 @@ OSCL_EXPORT_REF OMX_ERRORTYPE OmxComponentBase::ConstructBaseComponent(OMX_PTR p
     iSendOutBufferAfterPortReconfigFlag = OMX_FALSE;
     iSizeOutBufferForPortReconfig = 0;
     iComponentRoleFlag = OMX_FALSE;
+    iNumOfPartialFragmentsReceived = 0;
+
+    for (ii = 0; ii < OMX_RV_MAX_INPUT_SEGMENTS; ii++)
+    {
+        iPartialFragmentInfo[ii].IsValid = 0;
+        iPartialFragmentInfo[ii].PartialFragmentOffset = 0;
+    }
 
 
     /* Initialize the asynchronous command Queue */
@@ -501,6 +509,11 @@ OMX_BOOL OmxComponentBase::AssemblePartialFrames(OMX_BUFFERHEADERTYPE* aInputBuf
                 ipFrameDecodeBuffer = ipInputCurrBuffer;
             }
 
+            //partial fragment information required for decoding RV Frame
+            iNumOfPartialFragmentsReceived = 1;
+            iPartialFragmentInfo[0].IsValid = OMX_TRUE;
+            iPartialFragmentInfo[0].PartialFragmentOffset = 0;
+
         }
         else
         {
@@ -527,6 +540,11 @@ OMX_BOOL OmxComponentBase::AssemblePartialFrames(OMX_BUFFERHEADERTYPE* aInputBuf
                     iFirstFragment = OMX_TRUE;
                     iFrameTimestamp = ipInputBuffer->nTimeStamp;
                     ipFrameDecodeBuffer = ipInputCurrBuffer;
+
+                    //partial fragment information required for decoding RV Frame
+                    iNumOfPartialFragmentsReceived = 1;
+                    iPartialFragmentInfo[0].IsValid = OMX_TRUE;
+                    iPartialFragmentInfo[0].PartialFragmentOffset = 0;
 
                     //Send a stream corrupt callback
                     OMX_COMPONENTTYPE  *pHandle = &iOmxComponent;
@@ -596,6 +614,15 @@ OMX_BOOL OmxComponentBase::AssemblePartialFrames(OMX_BUFFERHEADERTYPE* aInputBuf
                 }
             }
 
+            //partial fragment information required for decoding RV Frame
+            if (iNumOfPartialFragmentsReceived < OMX_RV_MAX_INPUT_SEGMENTS)
+            {
+                //An extra check to ensure that we don't exceed the max limit
+                iPartialFragmentInfo[iNumOfPartialFragmentsReceived].IsValid = OMX_TRUE;
+                iPartialFragmentInfo[iNumOfPartialFragmentsReceived].PartialFragmentOffset = iInputCurrLength;
+                iNumOfPartialFragmentsReceived++;
+            }
+
             iInputCurrLength += BytesToCopy;
             oscl_memcpy(ipFrameDecodeBuffer, (ipInputBuffer->pBuffer + ipInputBuffer->nOffset), BytesToCopy); // copy buffer data
             ipFrameDecodeBuffer += BytesToCopy; // move the ptr
@@ -663,6 +690,15 @@ OMX_BOOL OmxComponentBase::AssemblePartialFrames(OMX_BUFFERHEADERTYPE* aInputBuf
                     iInputCurrBufferSize = (iInputCurrLength + BytesToCopy);
                     ipFrameDecodeBuffer = ipInputCurrBuffer + iInputCurrLength;
                 }
+            }
+
+            //partial fragment information required for decoding RV Frame
+            if (iNumOfPartialFragmentsReceived < OMX_RV_MAX_INPUT_SEGMENTS)
+            {
+                //An extra check to ensure that we don't exceed the max limit
+                iPartialFragmentInfo[iNumOfPartialFragmentsReceived].IsValid = OMX_TRUE;
+                iPartialFragmentInfo[iNumOfPartialFragmentsReceived].PartialFragmentOffset = iInputCurrLength;
+                iNumOfPartialFragmentsReceived++;
             }
 
             iInputCurrLength += BytesToCopy;
@@ -1994,6 +2030,7 @@ void OmxComponentBase::ResetAfterFlush(OMX_S32 PortIndex)
         iTempConsumedLength = 0;
         iInputBufferRemainingBytes = 0;
         iInputCurrLength = 0;
+        iNumOfPartialFragmentsReceived = 0;
 
         //Assume for this state transition that reposition command has come
         iRepositionFlag = OMX_TRUE;
@@ -2352,6 +2389,7 @@ OMX_ERRORTYPE OmxComponentBase::DoStateSet(OMX_U32 aDestinationState)
                 iNewOutBufRequired = OMX_TRUE;
                 iNewInBufferRequired = OMX_TRUE;
                 iFirstFragment = OMX_FALSE;
+                iNumOfPartialFragmentsReceived = 0;
 
                 pOpenmaxAOType->ComponentDeInit();
             }

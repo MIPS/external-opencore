@@ -136,6 +136,7 @@ PVMFOMXVideoDecNode::PVMFOMXVideoDecNode(int32 aPriority) :
              iCapability.iInputFormatCapability.push_back(PVMF_MIME_H2631998);
              iCapability.iInputFormatCapability.push_back(PVMF_MIME_H2632000);
              iCapability.iInputFormatCapability.push_back(PVMF_MIME_WMV);
+             iCapability.iInputFormatCapability.push_back(PVMF_MIME_REAL_VIDEO);
              iCapability.iOutputFormatCapability.push_back(PVMF_MIME_YUV420);
 
              iAvailableMetadataKeys.reserve(PVMF_OMXVIDEODEC_NUM_METADATA_VALUES);
@@ -194,6 +195,10 @@ PVMFStatus PVMFOMXVideoDecNode::HandlePortReEnable()
             else if (((PVMFOMXDecPort*)iInPort)->iFormat == PVMF_MIME_WMV) // This is a requirement for the WMV decoder that we have currently
             {
                 iOMXComponentOutputBufferSize = ((iParamPort.format.video.nFrameWidth + 3) & (~3)) * (iParamPort.format.video.nFrameHeight) * 3 / 2;
+            }
+            else if (((PVMFOMXDecPort*)iInPort)->iFormat == PVMF_MIME_REAL_VIDEO)
+            {
+                iOMXComponentOutputBufferSize = (iParamPort.format.video.nFrameWidth * iParamPort.format.video.nFrameHeight * 3) / 2;
             }
             else
             {
@@ -292,6 +297,7 @@ PVMFStatus PVMFOMXVideoDecNode::HandlePortReEnable()
                         fsiInfo->buffer_width = (iYUVWidth + 3) & -4;
                         fsiInfo->buffer_height = iYUVHeight;
                     }
+                    //For PVMF_MIME_REAL_VIDEO format, this else case would be applicable
                     else
                     {
                         fsiInfo->buffer_width = iYUVWidth;
@@ -815,6 +821,7 @@ bool PVMFOMXVideoDecNode::NegotiateComponentParameters(OMX_PTR aOutputParameters
                         fsiInfo->buffer_width = (iYUVWidth + 3) & -4;
                         fsiInfo->buffer_height = iYUVHeight;
                     }
+                    //For PVMF_MIME_REAL_VIDEO format, this else case would be applicable
                     else
                     {
                         fsiInfo->buffer_width = iYUVWidth;
@@ -1078,6 +1085,10 @@ bool PVMFOMXVideoDecNode::NegotiateComponentParameters(OMX_PTR aOutputParameters
     {
         iOMXVideoCompressionFormat = OMX_VIDEO_CodingWMV;
     }
+    else if (Format == PVMF_MIME_REAL_VIDEO)
+    {
+        iOMXVideoCompressionFormat = OMX_VIDEO_CodingRV;
+    }
     else
     {
         // Illegal codec specified.
@@ -1248,7 +1259,8 @@ bool PVMFOMXVideoDecNode::InitDecoder(PVMFSharedMediaDataPtr& DataIn)
     }
     else if (Format == PVMF_MIME_M4V ||
              Format == PVMF_MIME_H2631998 ||
-             Format == PVMF_MIME_H2632000)
+             Format == PVMF_MIME_H2632000 ||
+             Format == PVMF_MIME_REAL_VIDEO)
     {
         uint8* initbuffer = ((PVMFOMXDecPort*)iInPort)->getTrackConfig();
         int32 initbufsize = (int32)((PVMFOMXDecPort*)iInPort)->getTrackConfigSize();
@@ -1579,6 +1591,7 @@ bool PVMFOMXVideoDecNode::QueueOutputBuffer(OsclSharedPtr<PVMFMediaDataImpl> &me
                             ((PVMFOMXDecPort*)iInPort)->iFormat == PVMF_MIME_M4V ||
                             ((PVMFOMXDecPort*)iInPort)->iFormat == PVMF_MIME_H2631998 ||
                             ((PVMFOMXDecPort*)iInPort)->iFormat == PVMF_MIME_H2632000)
+
                     {
                         fsiInfo->buffer_width = (iYUVWidth + 15) & (~15);
                         fsiInfo->buffer_height = (iYUVHeight + 15) & (~15);
@@ -1588,6 +1601,7 @@ bool PVMFOMXVideoDecNode::QueueOutputBuffer(OsclSharedPtr<PVMFMediaDataImpl> &me
                         fsiInfo->buffer_width = (iYUVWidth + 3) & -4;
                         fsiInfo->buffer_height = iYUVHeight;
                     }
+                    //For PVMF_MIME_REAL_VIDEO format, this else case would be applicable
                     else
                     {
                         fsiInfo->buffer_width = iYUVWidth;
@@ -2190,7 +2204,7 @@ PVMFStatus PVMFOMXVideoDecNode::DoGetNodeMetadataValue(PVMFNodeCommand& aCmd)
                  (((PVMFOMXDecPort*)iInPort)->iFormat == PVMF_MIME_H2631998 || ((PVMFOMXDecPort*)iInPort)->iFormat == PVMF_MIME_H2632000 ||
                   ((PVMFOMXDecPort*)iInPort)->iFormat == PVMF_MIME_M4V ||
                   ((PVMFOMXDecPort*)iInPort)->iFormat == PVMF_MIME_H264_VIDEO || ((PVMFOMXDecPort*)iInPort)->iFormat == PVMF_MIME_H264_VIDEO_MP4 ||
-                  ((PVMFOMXDecPort*)iInPort)->iFormat == PVMF_MIME_H264_VIDEO_RAW  || ((PVMFOMXDecPort*)iInPort)->iFormat == PVMF_MIME_WMV))
+                  ((PVMFOMXDecPort*)iInPort)->iFormat == PVMF_MIME_H264_VIDEO_RAW  || ((PVMFOMXDecPort*)iInPort)->iFormat == PVMF_MIME_WMV || ((PVMFOMXDecPort*)iInPort)->iFormat == PVMF_MIME_REAL_VIDEO))
         {
             // Format
             // Increment the counter for the number of values found so far
@@ -2232,6 +2246,10 @@ PVMFStatus PVMFOMXVideoDecNode::DoGetNodeMetadataValue(PVMFNodeCommand& aCmd)
                 else if (((PVMFOMXDecPort*)iInPort)->iFormat == PVMF_MIME_WMV)
                 {
                     valuelen = oscl_strlen(_STRLIT_CHAR(PVMF_MIME_WMV)) + 1; // Value string plus one for NULL terminator
+                }
+                else if (((PVMFOMXDecPort*)iInPort)->iFormat == PVMF_MIME_REAL_VIDEO)
+                {
+                    valuelen = oscl_strlen(_STRLIT_CHAR(PVMF_MIME_REAL_VIDEO)) + 1; // Value string plus one for NULL terminator
                 }
                 else
                 {
@@ -2284,6 +2302,10 @@ PVMFStatus PVMFOMXVideoDecNode::DoGetNodeMetadataValue(PVMFNodeCommand& aCmd)
                     else if (((PVMFOMXDecPort*)iInPort)->iFormat == PVMF_MIME_WMV)
                     {
                         oscl_strncpy(KeyVal.value.pChar_value, _STRLIT_CHAR(PVMF_MIME_WMV), valuelen);
+                    }
+                    else if (((PVMFOMXDecPort*)iInPort)->iFormat == PVMF_MIME_REAL_VIDEO)
+                    {
+                        oscl_strncpy(KeyVal.value.pChar_value, _STRLIT_CHAR(PVMF_MIME_REAL_VIDEO), valuelen);
                     }
                     else
                     {
@@ -2509,7 +2531,7 @@ uint32 PVMFOMXVideoDecNode::GetNumMetadataValues(PVMFMetadataList& aKeyList)
                 ++numvalentries;
         }
         else if ((oscl_strcmp(aKeyList[lcv].get_cstr(), PVOMXVIDEODECMETADATA_CODECINFO_VIDEO_FORMAT_KEY) == 0) &&
-                 (((PVMFOMXDecPort*)iInPort)->iFormat == PVMF_MIME_WMV || ((PVMFOMXDecPort*)iInPort)->iFormat == PVMF_MIME_M4V || ((PVMFOMXDecPort*)iInPort)->iFormat == PVMF_MIME_H2631998 || ((PVMFOMXDecPort*)iInPort)->iFormat == PVMF_MIME_H2632000 || ((PVMFOMXDecPort*)iInPort)->iFormat == PVMF_MIME_H264_VIDEO || ((PVMFOMXDecPort*)iInPort)->iFormat == PVMF_MIME_H264_VIDEO_MP4 || ((PVMFOMXDecPort*)iInPort)->iFormat == PVMF_MIME_H264_VIDEO_RAW))
+                 (((PVMFOMXDecPort*)iInPort)->iFormat == PVMF_MIME_WMV || ((PVMFOMXDecPort*)iInPort)->iFormat == PVMF_MIME_M4V || ((PVMFOMXDecPort*)iInPort)->iFormat == PVMF_MIME_H2631998 || ((PVMFOMXDecPort*)iInPort)->iFormat == PVMF_MIME_H2632000 || ((PVMFOMXDecPort*)iInPort)->iFormat == PVMF_MIME_H264_VIDEO || ((PVMFOMXDecPort*)iInPort)->iFormat == PVMF_MIME_H264_VIDEO_MP4 || ((PVMFOMXDecPort*)iInPort)->iFormat == PVMF_MIME_REAL_VIDEO || ((PVMFOMXDecPort*)iInPort)->iFormat == PVMF_MIME_H264_VIDEO_RAW))
         {
             // Format
             ++numvalentries;
@@ -3186,7 +3208,8 @@ PVMFStatus PVMFOMXVideoDecNode::DoCapConfigVerifyParameters(PvmiKvp* aParameters
                             aInputs.iMimeType == PVMF_MIME_H264_VIDEO_MP4 ||
                             aInputs.iMimeType == PVMF_MIME_H264_VIDEO_RAW ||
                             aInputs.iMimeType == PVMF_MIME_M4V ||
-                            aInputs.iMimeType == PVMF_MIME_WMV)
+                            aInputs.iMimeType == PVMF_MIME_WMV ||
+                            aInputs.iMimeType == PVMF_MIME_REAL_VIDEO)
                     {
                         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVMFOMXVideoDecNode::DoCapConfigVerifyParameters() Codec Config data is not present"));
                         return PVMFErrNotSupported;
@@ -3212,6 +3235,10 @@ PVMFStatus PVMFOMXVideoDecNode::DoCapConfigVerifyParameters(PvmiKvp* aParameters
                 {
                     roles.push_back((OMX_STRING)"video_decoder.vc1");
                     roles.push_back((OMX_STRING)"video_decoder.wmv");
+                }
+                else if (aInputs.iMimeType ==  PVMF_MIME_REAL_VIDEO)
+                {
+                    roles.push_back((OMX_STRING)"video_decoder.rv");
                 }
                 else
                 {

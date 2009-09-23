@@ -70,6 +70,21 @@ enum { NOT_WMV3 = -1, WMV3_SIMPLE_PROFILE, WMV3_MAIN_PROFILE, WMV3_PC_PROFILE, W
 #define SC_SEQ          0x0F
 #define SC_ENTRY        0x0E
 
+//For Real Video Decoder
+
+#define GetUnalignedWordRv( pb, w ) \
+            (w) = ((uint16) *(pb) << 8) + *(pb+1);
+
+#define GetUnalignedDwordRv( pb, dw ) \
+            (dw) = ((uint32) *(pb + 3)) + \
+                   ((uint32) *(pb + 2) << 8) + \
+                   ((uint32) *(pb + 1) << 16) + ((uint32) (*pb) << 24);
+
+#define GetUnalignedWordExRv( pb, w )     GetUnalignedWordRv( pb, w ); (pb) += sizeof(uint16);
+#define GetUnalignedDwordExRv( pb, dw )   GetUnalignedDwordRv( pb, dw ); (pb) += sizeof(uint32);
+
+#define LoadWORDRv( w, p )    GetUnalignedWordExRv( p, w )
+#define LoadDWORDRv( dw, p )  GetUnalignedDwordExRv( p, dw )
 
 OSCL_DLL_ENTRY_POINT_DEFAULT()
 
@@ -353,6 +368,28 @@ OSCL_EXPORT_REF int16 pv_video_config_parser(pvVideoConfigParserInputs *aInputs,
 
         aOutputs->profile = NewProfile;
 
+    }
+    else if (aInputs->iMimeType == PVMF_MIME_REAL_VIDEO) //rv
+    {
+        uint32 dwdat;
+        uint16 wdat;
+
+        uint8 *pData = aInputs->inPtr;
+
+        // Init frame contains: HX_FORMAT_VIDEO + extra_data= 26  bytes + 4(SPO) + 4(stream_version) + RPRsizeinfo (variable)
+
+        // HX_FORMAT_VIDEO
+        LoadDWORDRv(dwdat, pData);
+        LoadDWORDRv(dwdat, pData);
+        LoadDWORDRv(dwdat, pData);
+        LoadWORDRv(wdat, pData);
+        aOutputs->width = (int32) wdat; // size of data below
+
+        LoadWORDRv(wdat, pData);
+        aOutputs->height = (int32) wdat;
+
+        aOutputs->profile = 0;
+        aOutputs->level = 0;
     }
     else
     {

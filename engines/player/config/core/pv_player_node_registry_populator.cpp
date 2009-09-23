@@ -155,6 +155,7 @@ void PVPlayerRegistryPopulator::RegisterAllNodes(PVPlayerNodeRegistryInterface* 
     nodeinfo.iInputTypes.push_back(PVMF_MIME_H264_VIDEO_RAW);
     nodeinfo.iInputTypes.push_back(PVMF_MIME_H264_VIDEO_MP4);
     nodeinfo.iInputTypes.push_back(PVMF_MIME_WMV);
+    nodeinfo.iInputTypes.push_back(PVMF_MIME_REAL_VIDEO);
     nodeinfo.iNodeUUID = KPVMFOMXVideoDecNodeUuid;
     nodeinfo.iOutputType.clear();
     nodeinfo.iOutputType.push_back(PVMF_MIME_YUV420);

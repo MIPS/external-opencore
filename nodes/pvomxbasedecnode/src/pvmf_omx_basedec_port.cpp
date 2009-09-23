@@ -76,7 +76,8 @@ OSCL_EXPORT_REF bool PVMFOMXDecPort::IsFormatSupported(PVMFFormatType aFmt)
                        (aFmt == PVMF_MIME_M4V) ||
                        (aFmt == PVMF_MIME_H2631998) ||
                        (aFmt == PVMF_MIME_H2632000) ||
-                       (aFmt == PVMF_MIME_WMV)
+                       (aFmt == PVMF_MIME_WMV) ||
+                       (aFmt == PVMF_MIME_REAL_VIDEO)
                       );
     }
     else if ((oscl_strcmp(PortName(), PVMF_OMX_AUDIO_DEC_INPUT_PORT_NAME) == 0) || (oscl_strcmp(PortName(), PVMF_OMX_AUDIO_DEC_OUTPUT_PORT_NAME) == 0))
