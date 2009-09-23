@@ -51,7 +51,7 @@ class PVMFCPMPluginMeteringInterface : public PVInterface
 {
     public:
         /**
-         * Method to save a meter certificate in the store.
+         * Method to save a V2 (XML) meter certificate in the store.
          * This method is intended to be used in scenarios where
          * it is not possible to obtain the metering certificate
          * directly from the server.

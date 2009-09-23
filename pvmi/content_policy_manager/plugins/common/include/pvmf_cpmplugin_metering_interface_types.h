@@ -84,7 +84,7 @@ class PVMFCPMMeterCertInfo
         //The URL of the metering service.
         OSCL_wHeapString<OsclMemAllocator> iURL;
 
-        //Tells if the server is V2 (Janus).
+        //Tells if the cert is V2 (Janus).
         bool iIsV2;
 
         void Clear()
