@@ -21,9 +21,6 @@
 #ifndef PVLOGGER_H_INCLUDED
 #include "pvlogger.h"
 #endif
-#ifndef PVMF_STREAMING_MANAGER_NODE_H_INCLUDED
-#include "pvmf_streaming_manager_node.h"
-#endif
 #ifndef PVMF_MEDIA_PRESENTATION_INFO_H_INCLUDED
 #include "pvmf_media_presentation_info.h"
 #endif

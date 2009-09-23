@@ -284,8 +284,8 @@ derive SOLIBDIRS_opencore_downloadreg from pvdownloadreginterface_m_mk
 derive MODS_opencore_downloadreg from "-lopencore_common"
 
 derive opencore_streaming_so_name from rtspbasedpluginselected_m_config==y ? "opencore_streaming" : ""
-derive SOLIBS_opencore_streaming from pvstreamingmanagernode_m_lib.pvsminterface_m_lib
-derive SOLIBDIRS_opencore_streaming from pvstreamingmanagernode_m_mk.pvsminterface_m_mk 
+derive SOLIBS_opencore_streaming from pvstreamingmanagernode_m_lib.pvsmfspcommonimp_m_lib.pvsminterface_m_lib
+derive SOLIBDIRS_opencore_streaming from pvstreamingmanagernode_m_mk.pvsmfspcommonimp_m_mk.pvsminterface_m_mk 
 derive MODS_opencore_streaming from "-lopencore_net_support -lopencore_player -lopencore_common"
 
 

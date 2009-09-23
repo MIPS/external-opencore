@@ -60,7 +60,8 @@ LIBS :=  pvframemetadatautility \
         pvrtsptunicaststreamingmanager \
         pvrtsptunicastrmstreamingmanager \
         pvrtspunicastwithpvrsm \
-        pvpvrcommonbase \
+	pvsmpvrfspcommon \
+        pvsmfspcommon \
         pvjitterbuffernode \
         pvjitterbufferasf \
         pvjitterbufferrtp \

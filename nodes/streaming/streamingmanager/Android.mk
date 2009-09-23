@@ -4,9 +4,7 @@ include $(CLEAR_VARS)
 LOCAL_SRC_FILES := \
 	src/pvmf_sm_node_factory.cpp \
  	src/pvmf_streaming_manager_node.cpp \
- 	src/pvmf_sm_fsp_registry.cpp \
- 	src/../plugins/common/src/pvmf_sm_fsp_base_cpm_support.cpp \
- 	src/../plugins/common/src/pvmf_sm_fsp_base_impl.cpp
+ 	src/pvmf_sm_fsp_registry.cpp
 
 
 LOCAL_MODULE := libpvstreamingmanagernode

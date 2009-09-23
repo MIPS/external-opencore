@@ -14,8 +14,6 @@ INCSRCDIR := ../../include
 SRCS := pvmf_sm_node_factory.cpp 
 SRCS +=	pvmf_streaming_manager_node.cpp
 SRCS +=	pvmf_sm_fsp_registry.cpp
-SRCS +=	../plugins/common/src/pvmf_sm_fsp_base_cpm_support.cpp
-SRCS +=	../plugins/common/src/pvmf_sm_fsp_base_impl.cpp
 
 HDRS := pvmf_sm_node_events.h \
 	    pvmf_sm_node_factory.h \
