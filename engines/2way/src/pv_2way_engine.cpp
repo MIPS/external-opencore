@@ -386,6 +386,8 @@ CPV324m2Way::~CPV324m2Way()
 
 void CPV324m2Way::ClearVideoEncNode()
 {
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "CPV324m2Way::ClearVideoEncNode\n"));
     PVMFNodeInterface * nodeIFace = (PVMFNodeInterface *)iVideoEncNode;
     if (nodeIFace)
     {
@@ -404,6 +406,8 @@ void CPV324m2Way::ClearVideoEncNode()
         iVideoEncNode.Clear() ;
         iVideoEncNodeInterface.Reset();
     }
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "CPV324m2Way::ClearVideoEncNode -done\n"));
 }
 
 PVCommandId CPV324m2Way::GetSDKInfo(PVSDKInfo &aSDKInfo, OsclAny* aContextData)
@@ -420,6 +424,8 @@ PVCommandId CPV324m2Way::GetSDKInfo(PVSDKInfo &aSDKInfo, OsclAny* aContextData)
     cmd->contextData = aContextData;
     cmd->status = PVMFSuccess;
     Dispatch(cmd);
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "CPV324m2Way::GetSDKInfo - done\n"));
     return iCommandId++;
 }
 
@@ -438,6 +444,8 @@ PVCommandId CPV324m2Way::GetSDKModuleInfo(PVSDKModuleInfo &aSDKModuleInfo,
     cmd->contextData = aContextData;
     cmd->status = PVMFSuccess;
     Dispatch(cmd);
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "CPV324m2Way::GetSDKModuleInfo - done\n"));
     return iCommandId++;
 }
 
@@ -482,10 +490,14 @@ void CPV324m2Way::PreInit()
             OSCL_LEAVE(PVMFErrInvalidState);
             break;
     }
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "CPV324m2Way::PreInit - done\n"));
 }
 
 bool CPV324m2Way::AllocNodes()
 {
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "CPV324m2Way::AllocNodes\n"));
     bool allocSuccessful = true;
     int error = 0;
 
@@ -498,6 +510,8 @@ bool CPV324m2Way::AllocNodes()
     {
         allocSuccessful = false;
     }
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "CPV324m2Way::AllocNodes - done\n"));
     return allocSuccessful;
 }
 
@@ -505,7 +519,7 @@ PVCommandId CPV324m2Way::Init(PV2WayInitInfo& aInitInfo,
                               OsclAny* aContextData)
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                    (0, "CPV324m2Way::InitL\n"));
+                    (0, "CPV324m2Way::Init\n"));
 
     switch (iState)
     {
@@ -514,7 +528,7 @@ PVCommandId CPV324m2Way::Init(PV2WayInitInfo& aInitInfo,
             if (iInitInfo)
             {
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_INFO,
-                                (0, "CPV324m2Way::PreInit cmd already sent out"));
+                                (0, "CPV324m2Way::PreInit cmd already sent out\n"));
                 OSCL_LEAVE(PVMFErrBusy);
             }
 
@@ -560,6 +574,8 @@ PVCommandId CPV324m2Way::Init(PV2WayInitInfo& aInitInfo,
             OSCL_LEAVE(PVMFErrInvalidState);
             break;
     }
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "CPV324m2Way::Init - done\n"));
 
     return iCommandId++;
 }
@@ -567,6 +583,8 @@ PVCommandId CPV324m2Way::Init(PV2WayInitInfo& aInitInfo,
 
 PVCommandId CPV324m2Way::Reset(OsclAny* aContextData)
 {
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "CPV324m2Way::Reset\n"));
     uint32 ii = 0;
     //checking if any sources or sinks still added.
     for (ii = 0; ii < iSinkNodes.size(); ii++)
@@ -574,7 +592,7 @@ PVCommandId CPV324m2Way::Reset(OsclAny* aContextData)
         if (iSinkNodes[ii])
         {
             PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                            (0, "CPV324m2Way::ResetL SinkNodes not removed before Reset"));
+                            (0, "CPV324m2Way::Reset SinkNodes not removed before Reset\n"));
             OSCL_LEAVE(PVMFFailure);
         }
     }
@@ -584,18 +602,18 @@ PVCommandId CPV324m2Way::Reset(OsclAny* aContextData)
         if (iSourceNodes[ii])
         {
             PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                            (0, "CPV324m2Way::ResetL SourceNodes not removed before Reset"));
+                            (0, "CPV324m2Way::Reset SourceNodes not removed before Reset\n"));
             OSCL_LEAVE(PVMFFailure);
         }
     }
 
     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                    (0, "CPV324m2Way::ResetL %d\n", iState));
+                    (0, "CPV324m2Way::Reset state: %d\n", iState));
 
     if (iResetInfo)
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_INFO,
-                        (0, "CPV324m2Way::ResetL cmd already sent out\n"));
+                        (0, "CPV324m2Way::Reset cmd already sent out\n"));
         OSCL_LEAVE(PVMFErrBusy);
     }
 
@@ -629,7 +647,7 @@ PVCommandId CPV324m2Way::Reset(OsclAny* aContextData)
 
         default:
             PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                            (0, "CPV324m2Way::ResetL - invalid state %d\n", iState));
+                            (0, "CPV324m2Way::Reset - invalid state %d\n", iState));
             OSCL_LEAVE(PVMFErrInvalidState);
             break;
     }
@@ -637,6 +655,8 @@ PVCommandId CPV324m2Way::Reset(OsclAny* aContextData)
     printf("\nMemStats After Engine Reset\n");
     MemStats();
 #endif
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "CPV324m2Way::Reset - done\n"));
     return iCommandId++;
 }
 
@@ -645,13 +665,13 @@ PVCommandId CPV324m2Way::AddDataSource(PVTrackId aChannelId,
                                        OsclAny* aContextData)
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                    (0, "CPV324m2Way::AddDataSourceL aChannelId=%d, (%x, %x, %x)",
+                    (0, "CPV324m2Way::AddDataSource aChannelId=%d, (%x, %x, %x)",
                      aChannelId, &aDataSource, 0, aContextData));
     if (!((TSC_324m *)(PVMFNodeInterface *)iTscNode.iNode)->IsEstablishedLogicalChannel(OUTGOING,
             aChannelId))
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                        (0, "CPV324m2Way::AddDataSourceL Not an established logical channel in the stack"));
+                        (0, "CPV324m2Way::AddDataSourceL Not an established logical channel in the stack\n"));
         OSCL_LEAVE(PVMFErrArgument);
     }
     TPV2WayNode* srcNode;
@@ -688,6 +708,8 @@ PVCommandId CPV324m2Way::AddDataSource(PVTrackId aChannelId,
     cmd->iPvtCmdData = aChannelId;
 
     SendNodeCmdL(PV2WAY_NODE_CMD_INIT, srcNode, this, cmd);
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "CPV324m2Way::AddDataSource - done\n"));
     return iCommandId++;
 }
 
@@ -695,6 +717,8 @@ void CPV324m2Way::DoAddDataSourceTscNode(CPVDatapathNode& datapathnode,
         CPV2WayEncDataChannelDatapath* datapath,
         TPV2WayCmdInfo *cmd)
 {
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "CPV324m2Way::DoAddDataSourceTscNode\n"));
     //Add tsc node to datapath
     datapathnode.iNode = iTscNode;
     datapathnode.iConfigure = NULL;
@@ -709,6 +733,8 @@ void CPV324m2Way::DoAddDataSourceTscNode(CPVDatapathNode& datapathnode,
     datapathnode.iOutputPort.iFormatType = PVMF_MIME_FORMAT_UNKNOWN;
     datapathnode.iOutputPort.iPortTag = PV2WAY_UNKNOWN_PORT;
     datapath->AddNode(datapathnode);
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "CPV324m2Way::DoAddDataSourceTscNode - done\n"));
 }
 
 
@@ -716,6 +742,8 @@ void CPV324m2Way::DoAddDataSourceNode(TPV2WayNode& aNode,
                                       CPVDatapathNode& datapathnode,
                                       CPV2WayEncDataChannelDatapath* datapath)
 {
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "CPV324m2Way::DoAddDataSourceNode\n"));
     //Add source node to datapath
     TPV2WayNode* srcNode = &aNode;
     datapathnode.iNode = *srcNode;
@@ -726,12 +754,16 @@ void CPV324m2Way::DoAddDataSourceNode(TPV2WayNode& aNode,
     datapathnode.iOutputPort.iFormatType = PVMF_MIME_FORMAT_UNKNOWN;
     datapathnode.iOutputPort.iPortTag = PV2WAY_OUT_PORT;
     datapath->AddNode(datapathnode);
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "CPV324m2Way::DoAddDataSourceNode - done\n"));
 }
 
 
 void CPV324m2Way::DoAddVideoEncNode(CPVDatapathNode& datapathnode,
                                     CPV2WayEncDataChannelDatapath* datapath)
 {
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "CPV324m2Way::DoAddVideoEncNode\n"));
     //Add video enc node to datapath
     datapathnode.iNode = iVideoEncNode;
     datapathnode.iConfigure = this;
@@ -748,11 +780,15 @@ void CPV324m2Way::DoAddVideoEncNode(CPVDatapathNode& datapathnode,
     datapathnode.iOutputPort.iFormatType = PVMF_MIME_FORMAT_UNKNOWN;
     datapathnode.iOutputPort.iPortTag = PV2WAY_OUT_PORT;
     datapath->AddNode(datapathnode);
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "CPV324m2Way::DoAddVideoEncNode - done\n"));
 }
 
 void CPV324m2Way::DoAddAudioEncNode(CPVDatapathNode& datapathnode,
                                     CPV2WayEncDataChannelDatapath* datapath)
 {
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "CPV324m2Way::DoAddAudioEncNode\n"));
     //Add audio enc node to datapath
     datapathnode.iNode = iAudioEncNode;
     datapathnode.iConfigure = this;
@@ -769,11 +805,15 @@ void CPV324m2Way::DoAddAudioEncNode(CPVDatapathNode& datapathnode,
     datapathnode.iOutputPort.iFormatType = PVMF_MIME_FORMAT_UNKNOWN;
     datapathnode.iOutputPort.iPortTag = PV2WAY_OUT_PORT;
     datapath->AddNode(datapathnode);
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "CPV324m2Way::DoAddAudioEncNode - done\n"));
 }
 
 void CPV324m2Way::DoAddDataSource(TPV2WayNode& aNode,
                                   const PVMFCmdResp& aResponse)
 {
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "CPV324m2Way::DoAddDataSource\n"));
     TPV2WayNode* srcNode = &aNode;
     PVMFNodeInterface *node = srcNode->iNode;
     PVMFNodeCapability capability;
@@ -787,7 +827,7 @@ void CPV324m2Way::DoAddDataSource(TPV2WayNode& aNode,
     {
         OSCL_DELETE(srcNode);
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                        (0, "CPV324m2Way::DoAddDataSource - unable to get capability"));
+                        (0, "CPV324m2Way::DoAddDataSource - unable to get capability\n"));
         OSCL_LEAVE(PVMFFailure);
     }
 
@@ -804,7 +844,7 @@ void CPV324m2Way::DoAddDataSource(TPV2WayNode& aNode,
     else
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                        (0, "CPV324m2Way::DoAddDataSource media_type is neither Audio nor Video"));
+                        (0, "CPV324m2Way::DoAddDataSource media_type is neither Audio nor Video\n"));
         OSCL_LEAVE(PVMFErrArgument);
     }
 
@@ -823,7 +863,7 @@ void CPV324m2Way::DoAddDataSource(TPV2WayNode& aNode,
     if (!formatSupported)
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                        (0, "CPV324m2Way::DoAddDataSource capability is not supported"));
+                        (0, "CPV324m2Way::DoAddDataSource capability is not supported\n"));
         OSCL_LEAVE(PVMFErrNotSupported);
     }
 
@@ -862,7 +902,7 @@ void CPV324m2Way::DoAddDataSource(TPV2WayNode& aNode,
         else
         {
             PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                            (0, "CPV324m2Way::DoAddDataSource invalid state (not closed)"));
+                            (0, "CPV324m2Way::DoAddDataSource invalid state (not closed)\n"));
             OSCL_LEAVE(PVMFErrInvalidState);
         }
     }
@@ -890,7 +930,7 @@ void CPV324m2Way::DoAddDataSource(TPV2WayNode& aNode,
         else
         {
             PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                            (0, "CPV324m2Way::DoAddDataSource invalid state (not closed)"));
+                            (0, "CPV324m2Way::DoAddDataSource invalid state (not closed)\n"));
             OSCL_LEAVE(PVMFErrInvalidState);
         }
     }
@@ -929,13 +969,13 @@ void CPV324m2Way::DoAddDataSource(TPV2WayNode& aNode,
         else
         {
             PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                            (0, "CPV324m2Way::DoAddDataSource invalid state (not closed)"));
+                            (0, "CPV324m2Way::DoAddDataSource invalid state (not closed)\n"));
             OSCL_LEAVE(PVMFErrInvalidState);
         }
     }
 
     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE,
-                    (0, "CPV324m2Way::DoAddDataSource ----- finished call"));
+                    (0, "CPV324m2Way::DoAddDataSource -- done\n"));
 
     return;
 }
@@ -943,6 +983,8 @@ void CPV324m2Way::DoAddDataSource(TPV2WayNode& aNode,
 PVCommandId CPV324m2Way::DoRemoveDataSourceSink(PVMFNodeInterface& aEndPt,
         OsclAny* aContextData)
 {
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "CPV324m2Way::DoRemoveDataSourceSink\n"));
     CPV2WayDataChannelDatapath *datapath = NULL;
     TPV2WayCmdInfo *cmd = GetCmdInfoL();
 
@@ -1010,7 +1052,7 @@ PVCommandId CPV324m2Way::DoRemoveDataSourceSink(PVMFNodeInterface& aEndPt,
             if (datapath->GetCmdInfo())
             {
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_INFO,
-                                (0, "CPV324m2Way::RemoveDataSourceL cmd already sent out"));
+                                (0, "CPV324m2Way::RemoveDataSourceL cmd already sent out\n"));
                 OSCL_LEAVE(PVMFErrBusy);
             }
             //Already closing because of error or remote close
@@ -1057,7 +1099,7 @@ PVCommandId CPV324m2Way::DoRemoveDataSourceSink(PVMFNodeInterface& aEndPt,
     }
     OSCL_DELETE(node);
     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                    (0, "CPV324m2Way::DoRemoveDataSourceSink finished function"
+                    (0, "CPV324m2Way::DoRemoveDataSourceSink -- done"
                     ));
     return iCommandId++;
 }
@@ -1066,7 +1108,7 @@ PVCommandId CPV324m2Way::RemoveDataSource(PVMFNodeInterface& aDataSource,
         OsclAny* aContextData)
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                    (0, "CPV324m2Way::RemoveDataSourceL(%x, %x, %x)",
+                    (0, "CPV324m2Way::RemoveDataSource(%x, %x, %x)",
                      &aDataSource, 0, aContextData));
 
     switch (iState)
@@ -1084,6 +1126,8 @@ PVCommandId CPV324m2Way::RemoveDataSource(PVMFNodeInterface& aDataSource,
             //State check okay.
             break;
     }
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "CPV324m2Way::RemoveDataSource - done\n"));
     return DoRemoveDataSourceSink(aDataSource, aContextData);
 }
 
@@ -1128,6 +1172,8 @@ PVCommandId CPV324m2Way::AddDataSink(PVTrackId aChannelId,
     cmd->contextData = aContextData;
     cmd->iPvtCmdData = aChannelId;
     SendNodeCmdL(PV2WAY_NODE_CMD_INIT, sinkNode, this, cmd);
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "CPV324m2Way::AddDataSink - done\n"));
     return iCommandId++;
 }
 
@@ -1135,6 +1181,8 @@ void CPV324m2Way::DoAddDataSinkTscNode(CPVDatapathNode& datapathnode,
                                        CPV2WayDecDataChannelDatapath* datapath,
                                        TPV2WayCmdInfo *cmd)
 {
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "CPV324m2Way::DoAddDataSinkTscNode\n"));
     //Add tsc node to datapath
     datapathnode.iNode = iTscNode;
     datapathnode.iConfigure = NULL;
@@ -1148,32 +1196,48 @@ void CPV324m2Way::DoAddDataSinkTscNode(CPVDatapathNode& datapathnode,
     // Need to put in the LC number here
     //datapathnode.iOutputPort.iPortTag = GetStackNodePortTag(EPV2WayAudioOut);
     datapath->AddNode(datapathnode);
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "CPV324m2Way::DoAddDataSinkTscNode - done\n"));
 }
 
 void CPV324m2Way::DoAddVideoParserNode(CPVDatapathNode& datapathnode,
                                        CPV2WayDecDataChannelDatapath* datapath)
 {
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "CPV324m2Way::DoAddVideoParserNode\n"));
     //Add video parser node to datapath
-    datapathnode.iNode = iVideoParserNode;
-    datapathnode.iConfigure = NULL;
-    datapathnode.iCanNodePause = false;
-    datapathnode.iIgnoreNodeState = false;
-    datapathnode.iInputPort.iRequestPortState = EPVMFNodeInitialized;
-    datapathnode.iInputPort.iPortSetType = EConnectedPortFormat;
-    datapathnode.iInputPort.iFormatType = PVMF_MIME_FORMAT_UNKNOWN;
-    datapathnode.iInputPort.iPortTag = PV2WAY_IN_PORT;
-    datapathnode.iOutputPort.iRequestPortState = EPVMFNodeInitialized;
-    datapathnode.iOutputPort.iCanCancelPort = false;
-    datapathnode.iOutputPort.iPortSetType = EUseOtherNodePortFormat;
-    datapathnode.iOutputPort.iFormatType = PVMF_MIME_FORMAT_UNKNOWN;
-    datapathnode.iOutputPort.iPortTag = PV2WAY_OUT_PORT;
-    datapath->AddNode(datapathnode);
+    if (iVideoParserNode)
+    {
+        datapathnode.iNode = iVideoParserNode;
+        datapathnode.iConfigure = NULL;
+        datapathnode.iCanNodePause = false;
+        datapathnode.iIgnoreNodeState = false;
+        datapathnode.iInputPort.iRequestPortState = EPVMFNodeInitialized;
+        datapathnode.iInputPort.iPortSetType = EConnectedPortFormat;
+        datapathnode.iInputPort.iFormatType = PVMF_MIME_FORMAT_UNKNOWN;
+        datapathnode.iInputPort.iPortTag = PV2WAY_IN_PORT;
+        datapathnode.iOutputPort.iRequestPortState = EPVMFNodeInitialized;
+        datapathnode.iOutputPort.iCanCancelPort = false;
+        datapathnode.iOutputPort.iPortSetType = EUseOtherNodePortFormat;
+        datapathnode.iOutputPort.iFormatType = PVMF_MIME_FORMAT_UNKNOWN;
+        datapathnode.iOutputPort.iPortTag = PV2WAY_OUT_PORT;
+        datapath->AddNode(datapathnode);
+    }
+    else
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_WARNING,
+                        (0, "CPV324m2Way::DoAddVideoParserNode No video parser node to add.\n"));
+    }
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "CPV324m2Way::DoAddVideoParserNode - done\n"));
 }
 
 void CPV324m2Way::DoAddDataSinkNodeForH263_M4V(TPV2WayNode& aNode,
         CPVDatapathNode& datapathnode,
         CPV2WayDecDataChannelDatapath* datapath)
 {
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "CPV324m2Way::DoAddDataSinkNodeForH263_M4V\n"));
     //Add sink node to datapath
     TPV2WayNode* sinkNode = &aNode;
     datapathnode.iNode.iNode = sinkNode->iNode;
@@ -1189,6 +1253,8 @@ void CPV324m2Way::DoAddDataSinkNodeForH263_M4V(TPV2WayNode& aNode,
     datapathnode.iOutputPort.iFormatType = PVMF_MIME_FORMAT_UNKNOWN;
     datapathnode.iOutputPort.iPortTag = PV2WAY_UNKNOWN_PORT;
     datapath->AddNode(datapathnode);
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "CPV324m2Way::DoAddDataSinkNodeForH263_M4V - done\n"));
 }
 
 
@@ -1196,6 +1262,8 @@ void CPV324m2Way::DoAddDataSinkGeneric(TPV2WayNode& aNode,
                                        CPVDatapathNode& datapathnode,
                                        CPV2WayDecDataChannelDatapath* datapath)
 {
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "CPV324m2Way::DoAddDataSinkGeneric\n"));
     //Add sink node to datapath
     TPV2WayNode* sinkNode = &aNode;
     datapathnode.iNode = *sinkNode;
@@ -1210,49 +1278,77 @@ void CPV324m2Way::DoAddDataSinkGeneric(TPV2WayNode& aNode,
     datapathnode.iOutputPort.iFormatType = PVMF_MIME_FORMAT_UNKNOWN;
     datapathnode.iOutputPort.iPortTag = PV2WAY_UNKNOWN_PORT;
     datapath->AddNode(datapathnode);
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "CPV324m2Way::DoAddDataSinkGeneric - done\n"));
 }
 
 void CPV324m2Way::DoAddVideoDecNode(CPVDatapathNode& datapathnode,
                                     CPV2WayDecDataChannelDatapath* datapath)
 {
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "CPV324m2Way::DoAddVideoDecNode\n"));
     //Add video dec node to datapath
-    datapathnode.iNode = iVideoDecNode;
-    datapathnode.iConfigure = NULL;
-    datapathnode.iCanNodePause = true;
-    datapathnode.iIgnoreNodeState = false;
-    datapathnode.iInputPort.iRequestPortState = EPVMFNodeInitialized;
-    datapathnode.iInputPort.iPortSetType = EConnectedPortFormat;
-    datapathnode.iInputPort.iFormatType = PVMF_MIME_FORMAT_UNKNOWN;
-    datapathnode.iInputPort.iPortTag = PV2WAY_IN_PORT;
-    datapathnode.iOutputPort.iRequestPortState = EPVMFNodeInitialized;
-    datapathnode.iOutputPort.iPortSetType = EUserDefined;
-    datapathnode.iOutputPort.iFormatType = PVMF_MIME_YUV420;
-    datapathnode.iOutputPort.iPortTag = PV2WAY_OUT_PORT;
-    datapath->AddNode(datapathnode);
+    if (iVideoDecNode)
+    {
+        datapathnode.iNode = iVideoDecNode;
+        datapathnode.iConfigure = NULL;
+        datapathnode.iCanNodePause = true;
+        datapathnode.iIgnoreNodeState = false;
+        datapathnode.iInputPort.iRequestPortState = EPVMFNodeInitialized;
+        datapathnode.iInputPort.iPortSetType = EConnectedPortFormat;
+        datapathnode.iInputPort.iFormatType = PVMF_MIME_FORMAT_UNKNOWN;
+        datapathnode.iInputPort.iPortTag = PV2WAY_IN_PORT;
+        datapathnode.iOutputPort.iRequestPortState = EPVMFNodeInitialized;
+        datapathnode.iOutputPort.iPortSetType = EUserDefined;
+        datapathnode.iOutputPort.iFormatType = PVMF_MIME_YUV420;
+        datapathnode.iOutputPort.iPortTag = PV2WAY_OUT_PORT;
+        datapath->AddNode(datapathnode);
+    }
+    else
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_WARNING,
+                        (0, "CPV324m2Way::DoAddVideoDecNode No video dec node to add.\n"));
+    }
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "CPV324m2Way::DoAddVideoDecNode - done\n"));
 }
 
 void CPV324m2Way::DoAddAudioDecNode(CPVDatapathNode& datapathnode,
                                     CPV2WayDecDataChannelDatapath* datapath)
 {
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "CPV324m2Way::DoAddAudioDecNode\n"));
     //Add audio dec node to datapath
-    datapathnode.iNode = iAudioDecNode;
-    datapathnode.iConfigure = NULL;
-    datapathnode.iCanNodePause = true;
-    datapathnode.iIgnoreNodeState = false;
-    datapathnode.iInputPort.iRequestPortState = EPVMFNodeInitialized;
-    datapathnode.iInputPort.iPortSetType = EConnectedPortFormat;
-    datapathnode.iInputPort.iFormatType = PVMF_MIME_FORMAT_UNKNOWN;
-    datapathnode.iInputPort.iPortTag = PV2WAY_IN_PORT;
-    datapathnode.iOutputPort.iRequestPortState = EPVMFNodeInitialized;
-    datapathnode.iOutputPort.iPortSetType = EUserDefined;
-    datapathnode.iOutputPort.iFormatType = PVMF_MIME_PCM16;
-    datapathnode.iOutputPort.iPortTag = PV2WAY_OUT_PORT;
-    datapath->AddNode(datapathnode);
+    if (iAudioDecNode)
+    {
+        datapathnode.iNode = iAudioDecNode;
+        datapathnode.iConfigure = NULL;
+        datapathnode.iCanNodePause = true;
+        datapathnode.iIgnoreNodeState = false;
+        datapathnode.iInputPort.iRequestPortState = EPVMFNodeInitialized;
+        datapathnode.iInputPort.iPortSetType = EConnectedPortFormat;
+        datapathnode.iInputPort.iFormatType = PVMF_MIME_FORMAT_UNKNOWN;
+        datapathnode.iInputPort.iPortTag = PV2WAY_IN_PORT;
+        datapathnode.iOutputPort.iRequestPortState = EPVMFNodeInitialized;
+        datapathnode.iOutputPort.iPortSetType = EUserDefined;
+        datapathnode.iOutputPort.iFormatType = PVMF_MIME_PCM16;
+        datapathnode.iOutputPort.iPortTag = PV2WAY_OUT_PORT;
+        datapath->AddNode(datapathnode);
+    }
+    else
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_WARNING,
+                        (0, "CPV324m2Way::DoAddAudioDecNode No audio dec node to add.\n"));
+    }
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "CPV324m2Way::DoAddAudioDecNode - done\n"));
 }
 
 void CPV324m2Way::DoAddDataSink(TPV2WayNode& aNode,
                                 const PVMFCmdResp& aResponse)
 {
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "CPV324m2Way::DoAddDataSink\n"));
     TPV2WayNode* sinkNode = &aNode;
     PVMFNodeCapability capability;
     PVMFNodeInterface *node = sinkNode->iNode;
@@ -1398,6 +1494,8 @@ void CPV324m2Way::DoAddDataSink(TPV2WayNode& aNode,
             OSCL_ASSERT(datapath);
         }
     }
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "CPV324m2Way::DoAddDataSink - done\n"));
 
 }
 
@@ -1405,7 +1503,7 @@ PVCommandId CPV324m2Way::RemoveDataSink(PVMFNodeInterface& aDataSink,
                                         OsclAny* aContextData)
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                    (0, "CPV324m2Way::RemoveDataSinkL(%x, %x, %x)", 0, 0,
+                    (0, "CPV324m2Way::RemoveDataSink(%x, %x, %x)", 0, 0,
                      aContextData));
 
 
@@ -1424,6 +1522,8 @@ PVCommandId CPV324m2Way::RemoveDataSink(PVMFNodeInterface& aDataSink,
             //State check okay.
             break;
     }
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "CPV324m2Way::RemoveDataSink - done\n"));
 
     return DoRemoveDataSourceSink(aDataSink, aContextData);
 }
@@ -1433,7 +1533,7 @@ PVCommandId CPV324m2Way::Connect(const PV2WayConnectOptions& aOptions,
                                  OsclAny* aContextData)
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                    (0, "CPV324m2Way::ConnectL()"));
+                    (0, "CPV324m2Way::Connect()"));
 
 
     CPVDatapathNode* node = OSCL_NEW(CPVDatapathNode, ());
@@ -1443,14 +1543,14 @@ PVCommandId CPV324m2Way::Connect(const PV2WayConnectOptions& aOptions,
     if (aCommServer == NULL)
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                        (0, "CPV324m2Way::ConnectL comm server is null"));
+                        (0, "CPV324m2Way::ConnectL comm server is null\n"));
         OSCL_LEAVE(PVMFErrArgument);
     }
 
     if (iConnectInfo)
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_INFO,
-                        (0, "CPV324m2Way::ConnectL cmd already sent out"));
+                        (0, "CPV324m2Way::ConnectL cmd already sent out\n"));
         OSCL_LEAVE(PVMFErrBusy);
     }
 
@@ -1461,7 +1561,7 @@ PVCommandId CPV324m2Way::Connect(const PV2WayConnectOptions& aOptions,
     if (!iClock.SetStartTime32(startTime, PVMF_MEDIA_CLOCK_MSEC, overflowFlag))
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_ERR,
-                        (0, "CPV324m2Way::Connect: unable to set clock time"));
+                        (0, "CPV324m2Way::Connect: unable to set clock time\n"));
         OSCL_LEAVE(PVMFFailure);
     }
 
@@ -1543,6 +1643,9 @@ PVCommandId CPV324m2Way::Connect(const PV2WayConnectOptions& aOptions,
         }
         */
     OsclError::PopDealloc();
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "CPV324m2Way::Connect - done\n"));
+
     return iCommandId++;
 }
 
@@ -1550,12 +1653,12 @@ PVCommandId CPV324m2Way::Disconnect(OsclAny* aContextData)
 {
 
     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                    (0, "CPV324m2Way::Disconnect()"));
+                    (0, "CPV324m2Way::Disconnect()\n"));
 
     if (iDisconnectInfo)
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_INFO,
-                        (0, "CPV324m2Way::Disconnect cmd already sent out"));
+                        (0, "CPV324m2Way::Disconnect cmd already sent out\n"));
         OSCL_LEAVE(PVMFErrBusy);
     }
 
@@ -1600,18 +1703,26 @@ PVCommandId CPV324m2Way::Disconnect(OsclAny* aContextData)
             OSCL_LEAVE(PVMFErrInvalidState);
             break;
     }
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "CPV324m2Way::Disconnect - done\n"));
 
     return iCommandId++;
 }
 
 void CPV324m2Way::InitiateDisconnect()
 {
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "CPV324m2Way::InitiateDisconnect\n"));
     SetState(EDisconnecting);
     CheckState();
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "CPV324m2Way::InitiateDisconnect - done\n"));
 }
 
 void CPV324m2Way::InitiateReset()
 {
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "CPV324m2Way::InitiateReset\n"));
     SetState(EResetting);
 
     if (isIFrameReqTimerActive)
@@ -1641,6 +1752,8 @@ void CPV324m2Way::InitiateReset()
     }
 
     CheckState();
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "CPV324m2Way::InitiateReset - done\n"));
 }
 
 void CPV324m2Way::CheckState()
@@ -1667,13 +1780,17 @@ void CPV324m2Way::CheckState()
 
         default:
             PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_WARNING,
-                            (0, "CPV324m2Way::CheckState warning: static state!"));
+                            (0, "CPV324m2Way::CheckState warning: static state!\n"));
             break;
     }
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "CPV324m2Way::CheckState - done\n"));
 }
 
 void CPV324m2Way::CheckInit()
 {
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "CPV324m2Way::CheckInit\n"));
 //  PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE, (0,"CPV324m2Way::CheckInit state %d, video enc node state %d, interface state %d\n", iState, ((PVMFNodeInterface *)iVideoEncNode)->GetState(), iVideoEncNodeInterface.iState));
     int32 error;
 
@@ -1696,11 +1813,13 @@ void CPV324m2Way::CheckInit()
         Dispatch(iInitInfo);
         iInitInfo = NULL;
     }
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "CPV324m2Way::CheckInit - done\n"));
 }
 
 void CPV324m2Way::CheckConnect()
 {
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE,
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                     (0, "CPV324m2Way::CheckConnect state %d, comm state %d, tsc state %d\n",
                      iState, ((PVMFNodeInterface *)iCommNode)->GetState(),
                      ((PVMFNodeInterface *)iTscNode)->GetState()));
@@ -1716,12 +1835,14 @@ void CPV324m2Way::CheckConnect()
         Dispatch(iConnectInfo);
         iConnectInfo = NULL;
     }
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "CPV324m2Way::CheckConnect - done\n"));
 }
 
 
 void CPV324m2Way::CheckDisconnect()
 {
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE,
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                     (0, "CPV324m2Way::CheckDisconnect state %d, mux datapath state %d, stack connected %d\n",
                      iState, iMuxDatapath->GetState(), iIsStackConnected));
     if ((iMuxDatapath->GetState() == EClosed) &&
@@ -1768,11 +1889,13 @@ void CPV324m2Way::CheckDisconnect()
     {
         iMuxDatapath->Close();
     }
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "CPV324m2Way::CheckDisconnect - done"));
 }
 
 void CPV324m2Way::CheckReset()
 {
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE,
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                     (0, "CPV324m2Way::CheckReset state %d \n", iState));
     int32 error = 0;
 
@@ -1871,11 +1994,15 @@ void CPV324m2Way::CheckReset()
         }
     }
 
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "CPV324m2Way::CheckReset - done\n"));
 }
 
 
 void CPV324m2Way::RemoveAudioDecPath()
 {
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "CPV324m2Way::RemoveAudioDecPath\n"));
     iReadDataLock.Lock();
     if (iAudioDecDatapath)
     {
@@ -1890,11 +2017,15 @@ void CPV324m2Way::RemoveAudioDecPath()
         iAudioDecDatapath->ResetDatapath();
         iAudioSinkNode.Clear();
     }
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "CPV324m2Way::RemoveAudioDecPath - done\n"));
     iReadDataLock.Unlock();
 }
 
 void CPV324m2Way::RemoveAudioEncPath()
 {
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "CPV324m2Way::RemoveAudioEncPath\n"));
     iReadDataLock.Lock();
     if (iAudioEncDatapath)
     {
@@ -1911,10 +2042,15 @@ void CPV324m2Way::RemoveAudioEncPath()
         iAudioSrcNode.Clear();
     }
     iReadDataLock.Unlock();
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "CPV324m2Way::RemoveAudioEncPath - done\n"));
+
 }
 
 void CPV324m2Way::RemoveVideoDecPath()
 {
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "CPV324m2Way::RemoveVideoDecPath\n"));
     iReadDataLock.Lock();
     if (iVideoDecDatapath)
     {
@@ -1929,11 +2065,17 @@ void CPV324m2Way::RemoveVideoDecPath()
         iVideoDecDatapath->ResetDatapath();
     }
     iReadDataLock.Unlock();
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "CPV324m2Way::RemoveVideoDecPath - done\n"));
+
 }
 
 void CPV324m2Way::RemoveVideoEncPath()
 {
     iReadDataLock.Lock();
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "CPV324m2Way::RemoveVideoEncPath\n"));
+
     if (iVideoEncDatapath)
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
@@ -1949,12 +2091,15 @@ void CPV324m2Way::RemoveVideoEncPath()
         iVideoEncDatapath->ResetDatapath();
     }
     iReadDataLock.Unlock();
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "CPV324m2Way::RemoveVideoEncPath - done\n"));
+
 }
 
 void CPV324m2Way::HandleCommNodeCmd(PV2WayNodeCmdType aType,
                                     const PVMFCmdResp& aResponse)
 {
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE,
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                     (0, "CPV324m2Way::HandleCommNodeCmd type %d\n", aType));
 
     switch (aType)
@@ -1975,12 +2120,14 @@ void CPV324m2Way::HandleCommNodeCmd(PV2WayNodeCmdType aType,
         default:
             break;
     }
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "CPV324m2Way::HandleCommNodeCmd - done\n"));
 }
 
 void CPV324m2Way::HandleTscNodeCmd(PV2WayNodeCmdType aType,
                                    const PVMFCmdResp& aResponse)
 {
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE,
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                     (0, "CPV324m2Way::HandleTscNodeCmd type %d\n", aType));
 
     switch (aType)
@@ -2006,6 +2153,8 @@ void CPV324m2Way::HandleTscNodeCmd(PV2WayNodeCmdType aType,
         default:
             break;
     }
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "CPV324m2Way::HandleTscNodeCmd - done\n"));
 }
 
 
@@ -2019,6 +2168,8 @@ void CPV324m2Way::HandleVideoDecNodeCmd(PV2WayNodeCmdType aType,
 void CPV324m2Way::HandleVideoEncNodeCmd(PV2WayNodeCmdType aType,
                                         const PVMFCmdResp& aResponse)
 {
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "CPV324m2Way::HandleVideoEncNodeCmd\n"));
     if (iVideoEncDatapath)
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE,
@@ -2039,7 +2190,7 @@ void CPV324m2Way::HandleVideoEncNodeCmd(PV2WayNodeCmdType aType,
                     // Set the FormatSpecificInfo if available
                     uint32 fsi_len = 0;
                     uint8* fsi = iVideoEncDatapath->GetFormatSpecificInfo(&fsi_len);
-                    if (fsi && fsi_len)
+                    if (fsi && fsi_len && iVideoEncNodeInterface.iInterface)
                     {
                         OSCL_STATIC_CAST(PVMp4H263EncExtensionInterface *,
                                          iVideoEncNodeInterface.iInterface)->SetFSIParam(fsi, fsi_len);
@@ -2072,13 +2223,15 @@ void CPV324m2Way::HandleVideoEncNodeCmd(PV2WayNodeCmdType aType,
         default:
             break;
     }
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "CPV324m2Way::HandleVideoEncNodeCmd - done\n"));
 }
 
 void CPV324m2Way::HandleSinkNodeCmd(PV2WayNodeCmdType aType,
                                     const PVMFCmdResp& aResponse,
                                     TPV2WayNode* aNode)
 {
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE,
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                     (0, "CPV324m2Way::HandleSinkNodeCmd type %d\n", aType));
     switch (aType)
     {
@@ -2134,10 +2287,14 @@ void CPV324m2Way::HandleSinkNodeCmd(PV2WayNodeCmdType aType,
         default:
             break;
     }
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "CPV324m2Way::HandleSinkNodeCmd - done\n"));
 }
 
 void CPV324m2Way::SupportedSinkNodeInterfaces(TPV2WayNode* aNode)
 {
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "CPV324m2Way::SupportedSinkNodeInterfaces\n"));
 
     int32 error;
 
@@ -2159,12 +2316,16 @@ void CPV324m2Way::SupportedSinkNodeInterfaces(TPV2WayNode* aNode)
                          SetState(EResetting);
                          CheckState();
                          return;);
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "CPV324m2Way::SupportedSinkNodeInterfaces - done\n"));
 }
 
 
 void CPV324m2Way::HandleAudioEncNodeCmd(PV2WayNodeCmdType aType,
                                         const PVMFCmdResp& aResponse)
 {
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "CPV324m2Way::HandleAudioEncNodeCmd\n"));
     if (iAudioEncDatapath)
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE,
@@ -2203,26 +2364,38 @@ void CPV324m2Way::HandleAudioEncNodeCmd(PV2WayNodeCmdType aType,
         default:
             break;
     }
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "CPV324m2Way::HandleAudioEncNodeCmd - done\n"));
 }
 
 void CPV324m2Way::GenerateIFrame(PVMFPortInterface *aPort)
 {
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "CPV324m2Way::GenerateIFrame\n"));
     if (iVideoEncDatapath)
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE,
                         (0, "CPV324m2Way::GenerateIFrame, vid enc path state %d\n",
                          iVideoEncDatapath->GetState()));
 
-        if ((iVideoEncDatapath->IsPortInDatapath(aPort)) &&
+        if (iVideoEncNodeInterface.iInterface &&
+                (iVideoEncDatapath->IsPortInDatapath(aPort)) &&
                 (iVideoEncDatapath->GetState() == EOpened))
         {
             if (!((PVMp4H263EncExtensionInterface *) iVideoEncNodeInterface.iInterface)->RequestIFrame())
             {
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                                (0, "CPV324m2Way::GenerateIFrame - unable to generate iframe"));
+                                (0, "CPV324m2Way::GenerateIFrame - unable to generate iframe\n"));
             }
         }
+        if (!iVideoEncNodeInterface.iInterface)
+        {
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_WARNING,
+                            (0, "CPV324m2Way::GenerateIFrame - iVideoEncNodeInterface.iInterface is NULL\n"));
+        }
     }
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "CPV324m2Way::GenerateIFrame - done\n"));
 }
 
 void CPV324m2Way::RequestRemoteIFrame(PVMFPortInterface *aPort)
@@ -2239,6 +2412,8 @@ void CPV324m2Way::RequestRemoteIFrame(PVMFPortInterface *aPort)
                                 iMinIFrameRequestInterval, this);
         isIFrameReqTimerActive = true;
     }
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "CPV324m2Way::RequestRemoteIFrame - done\n"));
 }
 
 PVCommandId CPV324m2Way::GetState(PV2WayState& aState,
@@ -2258,6 +2433,8 @@ PVCommandId CPV324m2Way::GetState(PV2WayState& aState,
 
     Dispatch(cmd);
 
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "CPV324m2Way::GetState - done\n"));
     return iCommandId++;
 }
 
@@ -2266,9 +2443,13 @@ PVCommandId CPV324m2Way::SetLatencyQualityTradeoff(PVMFNodeInterface& aTrack,
         int32 aTradeoff,
         OsclAny* aContextData)
 {
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "CPV324m2Way::SetLatencyQualityTradeoff\n"));
     OSCL_UNUSED_ARG(aTrack);
     OSCL_UNUSED_ARG(aTradeoff);
     OSCL_UNUSED_ARG(aContextData);
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "CPV324m2Way::SetLatencyQualityTradeoff - done\n"));
     return iCommandId++;
 }
 
@@ -2277,12 +2458,15 @@ PVCommandId CPV324m2Way::Pause(PV2WayDirection aDirection,
                                PVTrackId aTrackId,
                                OsclAny* aContextData)
 {
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "CPV324m2Way::Pause\n"));
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "CPV324m2Way::Pause\n"));
     OSCL_UNUSED_ARG(aDirection);
     OSCL_UNUSED_ARG(aTrackId);
     OSCL_UNUSED_ARG(aContextData);
 
     OSCL_LEAVE(PVMFErrNotSupported);
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "CPV324m2Way::Pause - done\n"));
     return iCommandId++;
 }
 
@@ -2298,6 +2482,8 @@ PVCommandId CPV324m2Way::Resume(PV2WayDirection aDirection,
     OSCL_UNUSED_ARG(aContextData);
     OSCL_LEAVE(PVMFErrNotSupported);
 
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "CPV324m2Way::Resume - done\n"));
     return iCommandId++;
 }
 
@@ -2307,7 +2493,7 @@ PVCommandId CPV324m2Way::SetLogAppender(const char * aTag,
                                         OsclAny* aContextData)
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                    (0, "CPV324m2Way::SetLogAppenderL\n"));
+                    (0, "CPV324m2Way::SetLogAppender\n"));
 
     TPV2WayCmdInfo *cmd = GetCmdInfoL();
 
@@ -2326,6 +2512,8 @@ PVCommandId CPV324m2Way::SetLogAppender(const char * aTag,
     cmd->status = PVMFSuccess;
 
     Dispatch(cmd);
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "CPV324m2Way::SetLogAppender - done\n"));
     return iCommandId++;
 }
 
@@ -2334,7 +2522,7 @@ PVCommandId CPV324m2Way::RemoveLogAppender(const char * aTag,
         OsclAny* aContextData)
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                    (0, "CPV324m2Way::RemoveLogAppenderL\n"));
+                    (0, "CPV324m2Way::RemoveLogAppender\n"));
 
     TPV2WayCmdInfo *cmd = GetCmdInfoL();
 
@@ -2347,6 +2535,8 @@ PVCommandId CPV324m2Way::RemoveLogAppender(const char * aTag,
     logger->RemoveAppender(aAppender);
 
     Dispatch(cmd);
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "CPV324m2Way::RemoveLogAppender - done\n"));
     return iCommandId++;
 }
 
@@ -2356,7 +2546,7 @@ PVCommandId CPV324m2Way::SetLogLevel(const char * aTag,
                                      OsclAny* aContextData)
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                    (0, "CPV324m2Way::SetLogLevelL\n"));
+                    (0, "CPV324m2Way::SetLogLevel\n"));
     OSCL_UNUSED_ARG(aSetSubtree);
 
     TPV2WayCmdInfo *cmd = GetCmdInfoL();
@@ -2370,6 +2560,8 @@ PVCommandId CPV324m2Way::SetLogLevel(const char * aTag,
     logger->SetLogLevel(aLevel);
 
     Dispatch(cmd);
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "CPV324m2Way::SetLogLevel - done\n"));
     return iCommandId++;
 }
 
@@ -2378,7 +2570,7 @@ PVCommandId CPV324m2Way::GetLogLevel(const char * aTag,
                                      OsclAny* aContextData)
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                    (0, "CPV324m2Way::GetLogLevelL\n"));
+                    (0, "CPV324m2Way::GetLogLevel\n"));
 
     TPV2WayCmdInfo *cmd = GetCmdInfoL();
 
@@ -2391,6 +2583,8 @@ PVCommandId CPV324m2Way::GetLogLevel(const char * aTag,
     aLogInfo = logger->GetLogLevel();
 
     Dispatch(cmd);
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "CPV324m2Way::GetLogLevel - done\n"));
     return iCommandId++;
 }
 
@@ -2458,6 +2652,8 @@ PVCommandId CPV324m2Way::QueryInterface(const PVUuid& aUuid,
     }
     if (cmd->status != PVMFPending)
         Dispatch(cmd);
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "CPV324m2Way::QueryInterface - done\n"));
 
     return iCommandId++;
 }
@@ -2542,6 +2738,8 @@ PVCommandId CPV324m2Way::CancelAllCommands(OsclAny* aContextData)
             OSCL_LEAVE(PVMFErrInvalidState);
             break;
     }
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "CPV324m2Way::CancelAllCommands - done\n"));
 
     return iCommandId++;
 }
@@ -2554,6 +2752,8 @@ void CPV324m2Way::ConstructL(PVMFNodeInterface* aTsc,
                              PVErrorEventObserver *aErrorEventObserver)
 {
     OSCL_UNUSED_ARG(aTsc);
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "CPV324m2Way::ConstructL\n"));
 
     iTerminalType = aType;
 
@@ -2561,7 +2761,7 @@ void CPV324m2Way::ConstructL(PVMFNodeInterface* aTsc,
     if (!iClock.SetClockTimebase(iTickCountTimeBase))
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_ERR,
-                        (0, "CPV324m2Way::ConstructL: unable to initialize clock"));
+                        (0, "CPV324m2Way::ConstructL: unable to initialize clock\n"));
         OSCL_LEAVE(PVMFFailure);
     }
 
@@ -2633,13 +2833,17 @@ void CPV324m2Way::ConstructL(PVMFNodeInterface* aTsc,
     AddToScheduler();
 
     PreInit();
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "CPV324m2Way::ConstructL - done\n"));
 
     return;
 }
 
 void CPV324m2Way::SetDefaults()
 {
-    uint32 i;
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "CPV324m2Way::SetDefaults\n"));
+    uint32 i = 0;
     SetState(EIdle);
 
 
@@ -2730,6 +2934,8 @@ void CPV324m2Way::SetDefaults()
     iSinkNodes.clear();
     iSinkNodes.destroy();
     iAddDataSourceVideoCmd = NULL;
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "CPV324m2Way::SetDefaults - done\n"));
     return;
 }
 
@@ -2740,7 +2946,9 @@ void CPV324m2Way::DoCancel()
 
 void CPV324m2Way::Run()
 {
-    int32 error;
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "CPV324m2Way::Run\n"));
+    int32 error = 0;
     TPV2WayCmdInfo* cmd = NULL;
     TPV2WayEventInfo* event = NULL;
 
@@ -2960,6 +3168,8 @@ void CPV324m2Way::Run()
             FreeEventInfo(event);
         }
     }
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "CPV324m2Way::Run - done\n"));
 }
 
 void CPV324m2Way::Dispatch(TPV2WayCmdInfo* aCmdInfo)
@@ -2974,6 +3184,8 @@ void CPV324m2Way::Dispatch(TPV2WayCmdInfo* aCmdInfo)
     }
     iPendingNotifications.push_back(aCmdInfo);
     RunIfNotReady();
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "CPV324m2Way::Dispatch - done\n"));
 }
 
 void CPV324m2Way::Dispatch(TPV2WayEventInfo* aEventInfo)
@@ -2984,18 +3196,28 @@ void CPV324m2Way::Dispatch(TPV2WayEventInfo* aEventInfo)
 
     iPendingNotifications.push_back(aEventInfo);
     RunIfNotReady();
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "CPV324m2Way::Dispatch - done\n"));
 }
 
 
 bool CPV324m2Way::IsNodeInList(Oscl_Vector<TPV2WayNode*, OsclMemAllocator>& aList,
                                PVMFNodeInterface* aNode)
 {
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "CPV324m2Way::IsNodeInList\n"));
     for (uint32 i = 0; i < aList.size(); i++)
     {
         TPV2WayNode* lNode = aList[i];
         if (lNode && lNode->iNode == aNode)
+        {
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                            (0, "CPV324m2Way::IsNodeInList - done\n"));
             return true;
+        }
     }
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "CPV324m2Way::IsNodeInList - done\n"));
     return false;
 }
 
@@ -3012,41 +3234,55 @@ bool CPV324m2Way::IsSinkNode(PVMFNodeInterface* aNode)
 TPV2WayNode* CPV324m2Way::GetTPV2WayNode(Oscl_Vector<TPV2WayNode*, OsclMemAllocator>& aList,
         PVMFNodeInterface* aNode)
 {
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "CPV324m2Way::GetTPV2WayNode\n"));
     for (uint32 i = 0; i < aList.size(); i++)
     {
         TPV2WayNode* lNode = aList[i];
         if (lNode && lNode->iNode == aNode)
+        {
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                            (0, "CPV324m2Way::GetTPV2WayNode - done\n"));
             return lNode;
+        }
     }
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "CPV324m2Way::GetTPV2WayNode - done\n"));
     return NULL;
 }
 
 TPV2WayNode* CPV324m2Way::RemoveTPV2WayNode(Oscl_Vector<TPV2WayNode*, OsclMemAllocator>& aList,
         PVMFNodeInterface* aNode)
 {
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "CPV324m2Way::RemoveTPV2WayNode\n"));
     for (uint32 i = 0; i < aList.size(); i++)
     {
         TPV2WayNode* lNode = aList[i];
         if (lNode && lNode->iNode == aNode)
         {
             aList[i] = 0;
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                            (0, "CPV324m2Way::RemoveTPV2WayNode - done\n"));
             return lNode;
         }
     }
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "CPV324m2Way::RemoveTPV2WayNode - done\n"));
     return NULL;
 }
 
 // from PVMFNodeCmdEventObserver
 void CPV324m2Way::NodeCommandCompleted(const PVMFCmdResp& aResponse)
 {
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE,
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                     (0, "CPV324m2Way::NodeCommandCompleted status %d, context %x\n",
                      aResponse.GetCmdStatus(), aResponse.GetContext()));
 
     if (aResponse.GetCmdStatus() != PVMFSuccess)
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE,
-                        (0, "CPV324m2Way::NodeCommandCompleted Command failed"));
+                        (0, "CPV324m2Way::NodeCommandCompleted Command failed\n"));
     }
     CPV2WayNodeContextData *data = (CPV2WayNodeContextData *) aResponse.GetContext();
     TPV2WayNodeCmdInfo *info = FindPendingNodeCmd(data->iNode, aResponse.GetCmdId());
@@ -3062,12 +3298,14 @@ void CPV324m2Way::NodeCommandCompleted(const PVMFCmdResp& aResponse)
 
     //Remove the command from the pending list.
     RemovePendingNodeCmd(data->iNode, aResponse.GetCmdId());
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "CPV324m2Way::NodeCommandCompleted - done\n"));
 }
 
 // from PVMFNodeInfoEventObserver
 void CPV324m2Way::HandleNodeInformationalEvent(const PVMFAsyncEvent& aEvent)
 {
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE,
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                     (0, "CPV324m2Way::HandleNodeInformationalEvent type %d\n",
                      aEvent.GetEventType()));
 
@@ -3170,12 +3408,14 @@ void CPV324m2Way::HandleNodeInformationalEvent(const PVMFAsyncEvent& aEvent)
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
                         (0, "CPV324m2Way::HandleNodeInformationalEvent unknown node!"));
     }
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "CPV324m2Way::HandleNodeInformationalEvent - done\n"));
 }
 
 // from PVMFNodeErrorEventObserver
 void CPV324m2Way::HandleNodeErrorEvent(const PVMFAsyncEvent& aEvent)
 {
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE,
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                     (0, "CPV324m2Way::HandleNodeErrorEvent type %d\n", aEvent.GetEventType()));
 
     if (aEvent.GetContext() == iTscNode)
@@ -3294,14 +3534,16 @@ void CPV324m2Way::HandleNodeErrorEvent(const PVMFAsyncEvent& aEvent)
     else
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                        (0, "CPV324m2Way::HandleNodeErrorEvent unknown node!"));
+                        (0, "CPV324m2Way::HandleNodeErrorEvent unknown node!\n"));
     }
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "CPV324m2Way::HandleNodeErrorEvent - done\n"));
 }
 
 void CPV324m2Way::CommandHandler(PV2WayNodeCmdType aType,
                                  const PVMFCmdResp& aResponse)
 {
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_INFO,
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                     (0, "CPV324m2Way::CommandHandler, state %d, type %d\n", iState, aType));
 
     CPV2WayNodeContextData *data = (CPV2WayNodeContextData *) aResponse.GetContext();
@@ -3354,11 +3596,13 @@ void CPV324m2Way::CommandHandler(PV2WayNodeCmdType aType,
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
                         (0, "CPV324m2Way::CommandHandler unknown node!"));
     }
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "CPV324m2Way::CommandHandler - done\n"));
 }
 
 PVMFStatus CPV324m2Way::ConfigureNode(CPVDatapathNode *aNode)
 {
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_INFO,
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                     (0, "CPV324m2Way::ConfigureNode, state %d\n", iState));
 
     PVMFNodeInterface *node = aNode->iNode.iNode;
@@ -3367,12 +3611,16 @@ PVMFStatus CPV324m2Way::ConfigureNode(CPVDatapathNode *aNode)
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_INFO,
                         (0, "CPV324m2Way::ConfigureNode configuring tsc node\n"));
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                        (0, "CPV324m2Way::ConfigureNode - done\n"));
         return PVMFSuccess;
     }
     else if (node == iCommNode.iNode)
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_INFO,
                         (0, "CPV324m2Way::ConfigureNode configuring comm node\n"));
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                        (0, "CPV324m2Way::ConfigureNode - done\n"));
         return PVMFSuccess;
     }
     else if (node == iVideoEncNode.iNode)
@@ -3395,6 +3643,8 @@ PVMFStatus CPV324m2Way::ConfigureNode(CPVDatapathNode *aNode)
         {
             PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_INFO,
                             (0, "CPV324m2Way::ConfigureNode waiting for tsc port to determine video codec type.\n"));
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                            (0, "CPV324m2Way::ConfigureNode - done\n"));
             return PVMFPending;
         }
 #ifndef NO_2WAY_324
@@ -3406,6 +3656,8 @@ PVMFStatus CPV324m2Way::ConfigureNode(CPVDatapathNode *aNode)
             lcn_info = OSCL_STATIC_CAST(LogicalChannelInfo*, tempInterface);
             if (lcn_info == NULL)
             {
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                                (0, "CPV324m2Way::ConfigureNode - done\n"));
                 return PVMFFailure;
             }
             PVMFFormatType aFormatType = lcn_info->GetFormatType();
@@ -3450,16 +3702,21 @@ PVMFStatus CPV324m2Way::ConfigureNode(CPVDatapathNode *aNode)
             }
         }
 #endif
-        ptr->SetNumLayers(1);
-        ptr->SetOutputBitRate(0, bitrate_bps_100*100);
-        ptr->SetOutputFrameSize(0, aVideoResolution.width, aVideoResolution.height);
-        ptr->SetOutputFrameRate(0, (float)aFrameRate);
+        if (ptr)
+        {
+            ptr->SetNumLayers(1);
+            ptr->SetOutputBitRate(0, bitrate_bps_100*100);
+            ptr->SetOutputFrameSize(0, aVideoResolution.width, aVideoResolution.height);
+            ptr->SetOutputFrameRate(0, (float)aFrameRate);
 
-        ptr->SetSegmentTargetSize(0, VIDEO_ENCODER_SEGMENT_SIZE);
-        ptr->SetRateControlType(0, VIDEO_ENCODER_RATE_CONTROL);
-        ptr->SetDataPartitioning(VIDEO_ENCODER_DATA_PARTITIONING);
-        ptr->SetRVLC(VIDEO_ENCODER_RVLC);
-        ptr->SetIFrameInterval(VIDEO_ENCODER_I_FRAME_INTERVAL);
+            ptr->SetSegmentTargetSize(0, VIDEO_ENCODER_SEGMENT_SIZE);
+            ptr->SetRateControlType(0, VIDEO_ENCODER_RATE_CONTROL);
+            ptr->SetDataPartitioning(VIDEO_ENCODER_DATA_PARTITIONING);
+            ptr->SetRVLC(VIDEO_ENCODER_RVLC);
+            ptr->SetIFrameInterval(VIDEO_ENCODER_I_FRAME_INTERVAL);
+        }
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                        (0, "CPV324m2Way::ConfigureNode - done\n"));
         return PVMFSuccess;
 
     }
@@ -3467,6 +3724,8 @@ PVMFStatus CPV324m2Way::ConfigureNode(CPVDatapathNode *aNode)
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_INFO,
                         (0, "CPV324m2Way::ConfigureNode configuring video dec node\n"));
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                        (0, "CPV324m2Way::ConfigureNode - done\n"));
         return PVMFSuccess;
     }
 #ifndef PV_DISABLE_DEVSOUNDNODES
@@ -3479,6 +3738,8 @@ PVMFStatus CPV324m2Way::ConfigureNode(CPVDatapathNode *aNode)
         {
             PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_INFO,
                             (0, "CPV324m2Way::ConfigureNode waiting for tsc port to determine audio codec type.\n"));
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                            (0, "CPV324m2Way::ConfigureNode - done\n"));
             return PVMFPending;
         }
 
@@ -3555,6 +3816,8 @@ PVMFStatus CPV324m2Way::ConfigureNode(CPVDatapathNode *aNode)
 
         ((PVDevSoundNodeBase *) iAudioSrcNode)->UpdateOptions(options);
 
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                        (0, "CPV324m2Way::ConfigureNode - done\n"));
         return PVMFSuccess;
     }
 #endif
@@ -3574,6 +3837,8 @@ PVMFStatus CPV324m2Way::ConfigureNode(CPVDatapathNode *aNode)
         {
             PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_INFO,
                             (0, "CPV324m2Way::ConfigureNode waiting for tsc port to determine audio codec type.\n"));
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                            (0, "CPV324m2Way::ConfigureNode - done\n"));
             return PVMFPending;
         }
 
@@ -3586,6 +3851,8 @@ PVMFStatus CPV324m2Way::ConfigureNode(CPVDatapathNode *aNode)
         ptr->SetOutputBitRate(GSM_AMR_12_2);
         ptr->SetMaxNumOutputFramesPerBuffer(KNumPCMFrames);
 
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                        (0, "CPV324m2Way::ConfigureNode - done\n"));
         return PVMFSuccess;
 
     }
@@ -3593,28 +3860,37 @@ PVMFStatus CPV324m2Way::ConfigureNode(CPVDatapathNode *aNode)
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_INFO,
                         (0, "CPV324m2Way::ConfigureNode configuring audio dec node\n"));
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                        (0, "CPV324m2Way::ConfigureNode - done\n"));
         return PVMFSuccess;
     }
     else if (node == iVideoParserNode.iNode)
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_INFO,
                         (0, "CPV324m2Way::ConfigureNode configuring video parser node\n"));
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                        (0, "CPV324m2Way::ConfigureNode - done\n"));
         return PVMFSuccess;
     }
     else
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
                         (0, "CPV324m2Way::ConfigureNode unknown node\n"));
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                        (0, "CPV324m2Way::ConfigureNode - done\n"));
         return PVMFFailure;
     }
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "CPV324m2Way::ConfigureNode - done\n"));
     return PVMFFailure;
 }
 
 // Implementations of TSC Observer virtuals
 void CPV324m2Way::ConnectComplete(PVMFStatus status)
 {
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                    (0, "CPV324m2Way::ConnectComplete, state %d, status %d\n", iState, status));
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "CPV324m2Way::ConnectComplete, state %d, status %d\n",
+                     iState, status));
     if (status == PVMFSuccess)
     {
         iIsStackConnected = true;
@@ -3626,10 +3902,14 @@ void CPV324m2Way::ConnectComplete(PVMFStatus status)
     }
 
     CheckState();
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "CPV324m2Way::ConnectComplete - done\n"));
 }
 
 void CPV324m2Way::InternalError()
 {
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "CPV324m2Way::InternalError\n"));
     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
                     (0, "CPV324m2Way::InternalError, state %d\n", iState));
 
@@ -3659,18 +3939,20 @@ void CPV324m2Way::InternalError()
                             (0, "CPV324m2Way::InternalError invalid state\n"));
             break;
     }
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "CPV324m2Way::InternalError - done\n"));
 }
 
 void CPV324m2Way::DisconnectRequestReceived()
 {
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE,
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                     (0, "CPV324m2Way::DisconnectRequestReceived state %d\n", iState));
 
     iIsStackConnected = false;
     if (iDisconnectInfo)
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_INFO,
-                        (0, "CPV324m2Way::DisconnectRequestReceived Doing nothing as  disconnect is in progress"));
+                        (0, "CPV324m2Way::DisconnectRequestReceived Doing nothing as  disconnect is in progress\n"));
     }
     else
     {
@@ -3708,6 +3990,8 @@ void CPV324m2Way::DisconnectRequestReceived()
                 break;
         }
     }
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "CPV324m2Way::DisconnectRequestReceived - done\n"));
 }
 
 PVMFStatus CPV324m2Way::EstablishChannel(TPVDirection aDir,
@@ -3715,7 +3999,7 @@ PVMFStatus CPV324m2Way::EstablishChannel(TPVDirection aDir,
         PVCodecType_t aCodec,
         uint8* aFormatSpecificInfo, uint32 aFormatSpecificInfoLen)
 {
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE,
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                     (0, "CPV324m2Way::EstablishChannel aDir=%d, channel id=%d, codec %d\n",
                      aDir, aId, aCodec));
 
@@ -3754,10 +4038,9 @@ PVMFStatus CPV324m2Way::EstablishChannel(TPVDirection aDir,
                                     aFormatType, this);
 
             }
-
-            AddAudioDecoderNode();
             uint32 audioLatency = LookupMioLatency(PVCodecTypeToPVMFFormatType(aCodec), true);
             ((TSC_324m*)(iTscNode.iNode))->SetMioLatency((audioLatency + iAudioDatapathLatency), true);
+
 
             datapath = iAudioDecDatapath;
             codec_list = &iIncomingAudioCodecs;
@@ -3770,9 +4053,9 @@ PVMFStatus CPV324m2Way::EstablishChannel(TPVDirection aDir,
             }
             iVideoDecDatapath->SetFormatSpecificInfo(aFormatSpecificInfo, (uint16)aFormatSpecificInfoLen);
 
-            AddVideoDecoderNode(aFormatSpecificInfo, aFormatSpecificInfoLen);
             uint32 videoLatency = LookupMioLatency(PVCodecTypeToPVMFFormatType(aCodec), false);
             ((TSC_324m*)(iTscNode.iNode))->SetMioLatency((videoLatency + iVideoDatapathLatency), false);
+
 
             datapath = iVideoDecDatapath;
             codec_list = &iIncomingVideoCodecs;
@@ -3791,8 +4074,6 @@ PVMFStatus CPV324m2Way::EstablishChannel(TPVDirection aDir,
                                     aFormatType, this);
             }
 
-            AddAudioEncoderNode();
-
             datapath = iAudioEncDatapath;
             codec_list = &iOutgoingAudioCodecs;
         }
@@ -3804,7 +4085,6 @@ PVMFStatus CPV324m2Way::EstablishChannel(TPVDirection aDir,
             }
             iVideoEncDatapath->SetFormatSpecificInfo(aFormatSpecificInfo, (uint16)aFormatSpecificInfoLen);
 
-            AddVideoEncoderNode();
             datapath = iVideoEncDatapath;
             codec_list = &iOutgoingVideoCodecs;
         }
@@ -3826,6 +4106,32 @@ PVMFStatus CPV324m2Way::EstablishChannel(TPVDirection aDir,
     {
         // Set the app format to the stored raw format type
         aAppFormatType = (*app_format_for_engine_format)[aFormatType];
+
+        if (aDir == INCOMING)
+        {
+            // since the app will use raw format we need a decoder.
+            if (media_type == PV_AUDIO)
+            {
+                AddAudioDecoderNode();
+            }
+            else if (media_type == PV_VIDEO)
+            {
+                AddVideoDecoderNode(aFormatSpecificInfo, aFormatSpecificInfoLen);
+            }
+        }
+        else
+        {
+            if (media_type == PV_AUDIO)
+            {
+                AddAudioEncoderNode();
+            }
+            else if (media_type == PV_VIDEO)
+            {
+                AddVideoEncoderNode();
+            }
+        }
+
+
     }
     else
     {
@@ -3861,6 +4167,8 @@ PVMFStatus CPV324m2Way::EstablishChannel(TPVDirection aDir,
     pTrackInfo->removeRef();
     iReadDataLock.Unlock();
 
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "CPV324m2Way::EstablishChannel - done\n"));
     return EPVT_Success;
 }
 
@@ -3869,10 +4177,12 @@ void CPV324m2Way::OutgoingChannelEstablished(TPVChannelId aId,
         uint8* aFormatSpecificInfo,
         uint32 aFormatSpecificInfoLen)
 {
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE,
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                     (0, "CPV324m2Way::OutgoingChannelEstablished id=%d, codec=%d, fsi=%x, fsi_len=%d",
                      aId, aCodec, aFormatSpecificInfo, aFormatSpecificInfoLen));
     EstablishChannel(OUTGOING, aId, aCodec, aFormatSpecificInfo, aFormatSpecificInfoLen);
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "CPV324m2Way::OutgoingChannelEstablished - done\n"));
 }
 
 TPVStatusCode CPV324m2Way::IncomingChannel(TPVChannelId aId,
@@ -3880,7 +4190,7 @@ TPVStatusCode CPV324m2Way::IncomingChannel(TPVChannelId aId,
         uint8* aFormatSpecificInfo,
         uint32 aFormatSpecificInfoLen)
 {
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE,
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                     (0, "CPV324m2Way::IncomingChannel channel id=%d, codec %d\n",
                      aId, aCodec));
     return EstablishChannel(INCOMING, aId, aCodec, aFormatSpecificInfo, aFormatSpecificInfoLen);
@@ -3888,10 +4198,14 @@ TPVStatusCode CPV324m2Way::IncomingChannel(TPVChannelId aId,
 
 bool CPV324m2Way::GetEventInfo(TPV2WayEventInfo*& event)
 {
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "CPV324m2Way::GetEventInfo\n"));
     int32 error = 0;
     OSCL_TRY(error, event = GetEventInfoL());
     OSCL_FIRST_CATCH_ANY(error,
                          return false);
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "CPV324m2Way::GetEventInfo - done\n"));
     return true;
 }
 
@@ -3901,8 +4215,9 @@ void CPV324m2Way::ChannelClosed(TPVDirection direction,
                                 PVMFStatus status)
 {
     OSCL_UNUSED_ARG(status);
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE,
-                    (0, "CPV324m2Way::ChannelClosed id %d, codec %d, direction %d\n", id, codec, direction));
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "CPV324m2Way::ChannelClosed id %d, codec %d, direction %d\n",
+                     id, codec, direction));
     PV2WayMediaType media_type = ::GetMediaType(codec);
     TPV2WayEventInfo* event = NULL;
     bool track_closed = false;
@@ -3910,7 +4225,7 @@ void CPV324m2Way::ChannelClosed(TPVDirection direction,
     if (!GetEventInfo(event))
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                        (0, "CPV324m2Way::ChannelClosed unable to allocate memory"));
+                        (0, "CPV324m2Way::ChannelClosed unable to allocate memory\n"));
         return;
     }
 
@@ -4090,7 +4405,7 @@ void CPV324m2Way::ChannelClosed(TPVDirection direction,
     if (!GetEventInfo(event))
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                        (0, "CPV324m2Way::ChannelClosed unable to allocate memory"));
+                        (0, "CPV324m2Way::ChannelClosed unable to allocate memory\n"));
         return;
     }
     event->type = PVT_INDICATION_CLOSE_TRACK;
@@ -4099,6 +4414,8 @@ void CPV324m2Way::ChannelClosed(TPVDirection direction,
     // bytes 1,2,3 are unused
     *((TPVChannelId*)(event->localBuffer + 4)) = id;
     Dispatch(event);
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "CPV324m2Way::ChannelClosed - done\n"));
 }
 
 void CPV324m2Way::RequestFrameUpdate(PVMFPortInterface* aPort)
@@ -4109,6 +4426,8 @@ void CPV324m2Way::RequestFrameUpdate(PVMFPortInterface* aPort)
     {
         GenerateIFrame(aPort);
     }
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "CPV324m2Way::RequestFrameUpdate - done\n"));
 }
 
 
@@ -4138,55 +4457,77 @@ void  CPV324m2Way::TimeoutOccurred(int32 timerID,
 
         InitiateDisconnect();
     }
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "CPV324m2Way::TimeoutOccurred - done\n"));
 
 }
 
 TPV2WayCmdInfo *CPV324m2Way::GetCmdInfoL()
 {
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "CPV324m2Way::GetCmdInfoL\n"));
     if (iFreeCmdInfo.empty())
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                        (0, "CPV324m2Way::GetFreeCmdInfo unable to allocate cmd info!"));
+                        (0, "CPV324m2Way::GetFreeCmdInfo unable to allocate cmd info!\n"));
         OSCL_LEAVE(PVMFErrNoMemory);
     }
     else
     {
         TPV2WayCmdInfo *cmd = (TPV2WayCmdInfo *)iFreeCmdInfo[0];
         iFreeCmdInfo.erase(iFreeCmdInfo.begin());
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                        (0, "CPV324m2Way::GetCmdInfoL - done\n"));
         return cmd;
     }
 
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "CPV324m2Way::GetCmdInfoL - done\n"));
     return NULL;
 }
 
 void CPV324m2Way::FreeCmdInfo(TPV2WayCmdInfo *info)
 {
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "CPV324m2Way::FreeCmdInfo\n"));
     info->Clear();
     iFreeCmdInfo.push_back(info);
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "CPV324m2Way::FreeCmdInfo - done\n"));
 }
 
 TPV2WayEventInfo *CPV324m2Way::GetEventInfoL()
 {
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "CPV324m2Way::GetEventInfoL\n"));
     if (iFreeEventInfo.empty())
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                        (0, "CPV324m2Way::GetFreeEventInfo unable to allocate event info!"));
+                        (0, "CPV324m2Way::GetFreeEventInfo unable to allocate event info!\n"));
         OSCL_LEAVE(PVMFErrNoMemory);
     }
     else
     {
         TPV2WayEventInfo *cmd = (TPV2WayEventInfo *)iFreeEventInfo[0];
         iFreeEventInfo.erase(iFreeEventInfo.begin());
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                        (0, "CPV324m2Way::GetEventInfoL - done\n"));
         return cmd;
     }
 
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "CPV324m2Way::GetEventInfoL - done\n"));
     return NULL;
 }
 
 void CPV324m2Way::FreeEventInfo(TPV2WayEventInfo *info)
 {
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "CPV324m2Way::FreeEventInfo\n"));
     info->Clear();
     iFreeEventInfo.push_back(info);
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "CPV324m2Way::FreeEventInfo - done\n"));
 }
 
 PVMFCommandId CPV324m2Way::SendNodeCmdL(PV2WayNodeCmdType aCmd,
@@ -4195,6 +4536,8 @@ PVMFCommandId CPV324m2Way::SendNodeCmdL(PV2WayNodeCmdType aCmd,
                                         void *aParam,
                                         TPV2WayCmdInfo *a2WayCmdInfo)
 {
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "CPV324m2Way::SendNodeCmdL\n"));
     int32 error = 0;
     PVMFCommandId id = 0;
     TPV2WayNodeCmdInfo *info;
@@ -4413,17 +4756,23 @@ PVMFCommandId CPV324m2Way::SendNodeCmdL(PV2WayNodeCmdType aCmd,
     info->id = id;
 
     iPendingNodeCmdInfo.push_back(info);
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "CPV324m2Way::SendNodeCmdL - done\n"));
     return id;
 }
 
 TPV2WayNodeCmdInfo *CPV324m2Way::FindPendingNodeCmd(PVMFNodeInterface *aNode,
         PVMFCommandId aId)
 {
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "CPV324m2Way::FindPendingNodeCmd\n"));
     for (uint32 i = 0; i < iPendingNodeCmdInfo.size(); i++)
     {
         if ((iPendingNodeCmdInfo[i]->context.iNode == aNode) &&
                 (iPendingNodeCmdInfo[i]->id == aId))
         {
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                            (0, "CPV324m2Way::FindPendingNodeCmd - done\n"));
             return iPendingNodeCmdInfo[i];
         }
     }
@@ -4437,6 +4786,8 @@ void CPV324m2Way::RemovePendingNodeCmd(PVMFNodeInterface *aNode,
                                        PVMFCommandId aId,
                                        bool aAllCmds)
 {
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "CPV324m2Way::RemovePendingNodeCmd\n"));
     TPV2WayNodeCmdInfo **info = NULL;
 
     info = iPendingNodeCmdInfo.begin();
@@ -4455,14 +4806,15 @@ void CPV324m2Way::RemovePendingNodeCmd(PVMFNodeInterface *aNode,
         info++;
     }
 
-    return;
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "CPV324m2Way::RemovePendingNodeCmd - done\n"));
 }
 
 
 void CPV324m2Way::FillSDKInfo(PVSDKInfo &aSDKInfo)
 {
     //PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_INFO,
-    //              (0, "CPV324m2Way::FillSDKInfo"));
+    //              (0, "CPV324m2Way::FillSDKInfo\n"));
     aSDKInfo.iLabel = PV2WAY_ENGINE_SDKINFO_LABEL;
     aSDKInfo.iDate = PV2WAY_ENGINE_SDKINFO_DATE;
 }
@@ -4472,14 +4824,14 @@ bool CPV324m2Way::CheckMandatoryCodecs(const PVMFFormatType *aMandatoryList,
                                        Oscl_Vector<PVMFFormatType, OsclMemAllocator> &aCodecList)
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                    (0, "CPV324m2Way::CheckMandatoryCodecs"));
+                    (0, "CPV324m2Way::CheckMandatoryCodecs\n"));
     uint32 i, j;
     bool found;
 
     if (aCodecList.empty())
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_INFO,
-                        (0, "CPV324m2Way::CheckMandatoryCodecs empty codecs list, use default"));
+                        (0, "CPV324m2Way::CheckMandatoryCodecs empty codecs list, use default\n"));
         return true;
     }
 
@@ -4505,16 +4857,22 @@ bool CPV324m2Way::CheckMandatoryCodecs(const PVMFFormatType *aMandatoryList,
     }
 
     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_INFO,
-                    (0, "CPV324m2Way::CheckMandatoryCodecs all codecs found"));
+                    (0, "CPV324m2Way::CheckMandatoryCodecs all codecs found\n"));
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "CPV324m2Way::CheckMandatoryCodecs - done\n"));
     return true;
 }
 
 void CPV324m2Way::InitiateSession(TPV2WayNode& aNode)
 {
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "CPV324m2Way::InitiateSession\n"));
     PVMFNodeInterface * nodeIFace = (PVMFNodeInterface *)aNode ;
     PVMFNodeSessionInfo session(this, this, aNode, this, aNode);
     aNode.iSessionId =  nodeIFace->Connect(session);
     nodeIFace->ThreadLogon();
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "CPV324m2Way::InitiateSession - done\n"));
 }
 
 bool CPV324m2Way::IsNodeReset(PVMFNodeInterface& aNode)
@@ -4538,6 +4896,8 @@ void CPV324m2Way::SelectPreferredCodecs(TPVDirection aDir,
                                         Oscl_Vector<PVMFFormatType, OsclMemAllocator>& aAppAudioFormats,
                                         Oscl_Vector<PVMFFormatType, OsclMemAllocator>& aAppVideoFormats)
 {
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "CPV324m2Way::SelectPreferredCodecs\n"));
     // Iterate over formats supported by the stack
     Oscl_Map < PVMFFormatType, CPvtMediaCapability*, OsclMemAllocator,
     pvmf_format_type_key_compare_class >::iterator it = iStackSupportedFormats.begin();
@@ -4597,6 +4957,8 @@ void CPV324m2Way::SelectPreferredCodecs(TPVDirection aDir,
             }
         }
     }
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "CPV324m2Way::SelectPreferredCodecs - done\n"));
 }
 
 ///////////////////////////////////////////////////////////////////
@@ -4609,14 +4971,14 @@ void CPV324m2Way::SelectPreferredCodecs(TPVDirection aDir,
 void CPV324m2Way::SetPreferredCodecs(PV2WayInitInfo& aInitInfo)
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                    (0, "CPV324m2Way::SetPreferredCodecs: Outgoing"));
+                    (0, "CPV324m2Way::SetPreferredCodecs: Outgoing\n"));
     ////////////////////////////////////////////////////////////////
 
     // given aInitInfo from app, match up with the stack preferred codecs and engine codecs
     // side effect is that iIncomingVideoCodecs, etc are set.
     SelectPreferredCodecs(OUTGOING, aInitInfo.iOutgoingAudioFormats, aInitInfo.iOutgoingVideoFormats);
     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                    (0, "CPV324m2Way::SetPreferredCodecs: Incoming"));
+                    (0, "CPV324m2Way::SetPreferredCodecs: Incoming\n"));
     SelectPreferredCodecs(INCOMING, aInitInfo.iIncomingAudioFormats, aInitInfo.iIncomingVideoFormats);
 
     // now that iIncomingVideoCodecs, etc are selected (codecs the stack, engine and app want)
@@ -4653,6 +5015,8 @@ void CPV324m2Way::SetPreferredCodecs(PV2WayInitInfo& aInitInfo)
     iOutgoingChannelParams.push_back(outAudioChannelParams);
     iOutgoingChannelParams.push_back(outVideoChannelParams);
     ////////////////////////////////////////////////////////////////
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "CPV324m2Way::SetPreferredCodecs - done\n"));
 
 }
 
@@ -4764,6 +5128,8 @@ void CPV324m2Way::ConvertMapToVector(Oscl_Map < PVMFFormatType,
                                      Oscl_Vector < FormatCapabilityInfo,
                                      OsclMemAllocator > & aFormatCapability)
 {
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "CPV324m2Way::ConvertMapToVector\n"));
     // add aCodecs members into aFormatCapability
     aFormatCapability.clear();
     Oscl_Map < PVMFFormatType, FormatCapabilityInfo, OsclMemAllocator,
@@ -4773,15 +5139,23 @@ void CPV324m2Way::ConvertMapToVector(Oscl_Map < PVMFFormatType,
     {
         aFormatCapability.push_back(aCodecs[(*it).first]);
     }
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "CPV324m2Way::ConvertMapToVector - done\n"));
 }
 
 
 void CPV324m2Way::AddVideoEncoderNode()
 {
-    int32 error;
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "CPV324m2Way::AddVideoEncoderNode\n"));
 
     if (iVideoEncNode != NULL)
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                        (0, "CPV324m2Way::AddVideoEncoderNode - done (not adding)\n"));
         return;
+    }
+    int32 error = 0;
 #ifdef PV2WAY_USE_OMX
     iVideoEncNode = TPV2WayNode(CREATE_OMX_ENC_NODE());
 #else
@@ -4811,14 +5185,23 @@ void CPV324m2Way::AddVideoEncoderNode()
         iVideoEncNodeInterface.iState = PV2WayNodeInterface::QueryInterface;
     }
 
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "CPV324m2Way::AddVideoEncoderNode - done\n"));
 
 }
 void CPV324m2Way::AddAudioEncoderNode()
 {
-    int32 error;
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "CPV324m2Way::AddAudioEncoderNode\n"));
+
 
     if (iAudioEncNode != NULL)
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                        (0, "CPV324m2Way::AddAudioEncoderNode - done (not adding)\n"));
         return;
+    }
+    int32 error = 0;
 
 #ifdef PV2WAY_USE_OMX
     OSCL_TRY(error, iAudioEncNode = TPV2WayNode(CREATE_OMX_ENC_NODE()));
@@ -4867,13 +5250,21 @@ void CPV324m2Way::AddAudioEncoderNode()
     {
         iAudioEncDatapath->CheckOpen();
     }
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "CPV324m2Way::AddAudioEncoderNode - done\n"));
 
 }
 void CPV324m2Way::AddVideoDecoderNode(uint8* aFormatSpecificInfo, uint32 aFormatSpecificInfoLen)
 {
-    int32 error = 0;
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "CPV324m2Way::AddVideoDecoderNode\n"));
     if (iVideoDecNode != NULL)
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                        (0, "CPV324m2Way::AddVideoDecoderNode - done (not adding)\n"));
         return;
+    }
+    int32 error = 0;
 
 #ifdef PV2WAY_USE_OMX
     OSCL_TRY(error, iVideoDecNode = TPV2WayNode(CREATE_OMX_VIDEO_DEC_NODE()););
@@ -4891,14 +5282,22 @@ void CPV324m2Way::AddVideoDecoderNode(uint8* aFormatSpecificInfo, uint32 aFormat
 
     InitiateSession(iVideoDecNode);
     InitiateSession(iVideoParserNode);
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "CPV324m2Way::AddVideoDecoderNode - done\n"));
 }
 
 void CPV324m2Way::AddAudioDecoderNode()
 {
-    int32 error;
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "CPV324m2Way::AddAudioDecoderNode\n"));
 
     if (iAudioDecNode != NULL)
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                        (0, "CPV324m2Way::AddAudioDecoderNode - done (not adding)\n"));
         return;
+    }
+    int32 error = 0;
 
 #ifdef PV2WAY_USE_OMX
     OSCL_TRY(error, iAudioDecNode =
@@ -4913,12 +5312,16 @@ void CPV324m2Way::AddAudioDecoderNode()
                          PVLOGMSG_ERR, (0, "CPV324m2Way::AddAudioDecoderNode unable to allocate audio decoder node\n")));
 
     InitiateSession(iAudioDecNode);
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "CPV324m2Way::AddAudioDecoderNode - done\n"));
 }
 
 void CPV324m2Way::RegisterMioLatency(const char* aMimeStr,
                                      bool aAudio,
                                      PVMFFormatType aFmtType)
 {
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "CPV324m2Way::RegisterMioLatency\n"));
     uint32 latencyVal = 0;
     if (aMimeStr != NULL)
     {
@@ -4941,6 +5344,8 @@ void CPV324m2Way::RegisterMioLatency(const char* aMimeStr,
     {
         iVideoLatency[(char*)aFmtType.getMIMEStrPtr()] = latencyVal;
     }
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "CPV324m2Way::RegisterMioLatency - done\n"));
 }
 
 uint32 CPV324m2Way::LookupMioLatency(PVMFFormatType aFmtType,
@@ -5046,9 +5451,13 @@ bool CPV324m2Way::IsSupported(const PVMFFormatType& aInputFmtType, const PVMFFor
 /* This should be changed to query the formats from the stack */
 void CPV324m2Way::GetStackSupportedFormats()
 {
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "CPV324m2Way::GetStackSupportedFormats\n"));
     iStackSupportedFormats[PVMF_MIME_AMR_IF2] = OSCL_NEW(CPvtAudioCapability, (PVMF_MIME_AMR_IF2, MAX_AMR_BITRATE));
     iStackSupportedFormats[PVMF_MIME_M4V] = OSCL_NEW(CPvtMpeg4Capability, (MAX_VIDEO_BITRATE));
     iStackSupportedFormats[PVMF_MIME_H2632000] = OSCL_NEW(CPvtH263Capability, (MAX_VIDEO_BITRATE));
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "CPV324m2Way::GetStackSupportedFormats - done\n"));
 }
 
 
@@ -5056,6 +5465,8 @@ PVMFFormatType CPV324m2Way::FindFormatType(PVMFFormatType aFormatType,
         Oscl_Vector<PVMFFormatType, OsclMemAllocator>& aAudioFormats,
         Oscl_Vector<PVMFFormatType, OsclMemAllocator>& aVideoFormats)
 {
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "CPV324m2Way::FindFormatType\n"));
     uint32 i = 0;
 
     for (i = 0; i < aAudioFormats.size(); i++)
@@ -5066,6 +5477,8 @@ PVMFFormatType CPV324m2Way::FindFormatType(PVMFFormatType aFormatType,
                          aFormatType.getMIMEStrPtr(), aAudioFormats[i].getMIMEStrPtr()));
         if (aAudioFormats[i] == aFormatType)
         {
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                            (0, "CPV324m2Way::FindFormatType - done (found audio)\n"));
             return aAudioFormats[i];
         }
     }
@@ -5077,9 +5490,13 @@ PVMFFormatType CPV324m2Way::FindFormatType(PVMFFormatType aFormatType,
                          aFormatType.getMIMEStrPtr(), aVideoFormats[i].getMIMEStrPtr()));
         if (aVideoFormats[i] == aFormatType)
         {
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                            (0, "CPV324m2Way::FindFormatType - done (found video)\n"));
             return aVideoFormats[i];
         }
     }
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "CPV324m2Way::FindFormatType - done (not found)\n"));
     return PVMF_MIME_FORMAT_UNKNOWN;
 }
 
@@ -5087,6 +5504,8 @@ const char* CPV324m2Way::CanConvertFormat(TPVDirection aDir,
         PVMFFormatType aThisFmtType,
         Oscl_Vector<PVMFFormatType, OsclMemAllocator>& aThatFormatList)
 {
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "CPV324m2Way::CanConvertFormat\n"));
     PVMFFormatType aInputFmtType = PVMF_MIME_FORMAT_UNKNOWN;
     PVMFFormatType aOutputFmtType = PVMF_MIME_FORMAT_UNKNOWN;
 
@@ -5099,9 +5518,13 @@ const char* CPV324m2Way::CanConvertFormat(TPVDirection aDir,
         aOutputFmtType = (aDir == INCOMING) ? thatFmtType : aThisFmtType;
         if (IsSupported(aInputFmtType, aOutputFmtType))
         {
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                            (0, "CPV324m2Way::CanConvertFormat - done (can)\n"));
             return thatFmtType.getMIMEStrPtr();
         }
     }
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "CPV324m2Way::CanConvertFormat - done (can't)\n"));
     return NULL;
 }
 
@@ -5160,6 +5583,8 @@ void CPV324m2Way::DoSelectFormat(TPVDirection aDir,
     (*the_app_map)[aFormatType] = aFormatTypeApp;
 
     RegisterMioLatency(aFormatStr, true, aFormatType);
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "CPV324m2Way::DoSelectFormat - done\n"));
 
 }
 

@@ -109,7 +109,7 @@ class engine_test : public test_case,
                 early_close(false),
                 iTestStatus(true)
         {
-            iConnectOptions.iLoopbackMode = PV_LOOPBACK_MUX;
+            iConnectOptions.iLoopbackMode = PV_LOOPBACK_COMM; //PV_LOOPBACK_MUX;
             iRstCmdId = 0;
             iDisCmdId = 0;
             iConnectCmdId = 0;
