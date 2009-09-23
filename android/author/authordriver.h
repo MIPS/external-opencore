@@ -64,11 +64,45 @@
 // FIXME:
 // Platform-specic and temporal workaround to prevent video size
 // from being set too large
+
 #define ANDROID_MAX_ENCODED_FRAME_WIDTH            352
 #define ANDROID_MAX_ENCODED_FRAME_HEIGHT           288
+#define ANDROID_MIN_ENCODED_FRAME_WIDTH            176
+#define ANDROID_MIN_ENCODED_FRAME_HEIGHT           144
 
 #define ANDROID_MIN_FRAME_RATE_FPS                 5
 #define ANDROID_MAX_FRAME_RATE_FPS                 20
+
+static const int32 DEFAULT_VIDEO_FRAME_RATE  = 20;
+static const int32 DEFAULT_VIDEO_WIDTH       = 176;
+static const int32 DEFAULT_VIDEO_HEIGHT      = 144;
+
+static const int32 MIN_VIDEO_BITRATE_SETTING = 192000;
+static const int32 MAX_VIDEO_BITRATE_SETTING = 420000;
+static const int32 MAX_AUDIO_BITRATE_SETTING = 320000; // Max bitrate??
+static const int32 MIN_AUDIO_BITRATE_SETTING = 1;      // Min bitrate??
+static const int32 DEFAULT_AUDIO_BITRATE_SETTING = 64000; // Default for all the other audio
+static const PVMF_GSMAMR_Rate DEFAULT_AMR_NARROW_BAND_BITRATE_SETTING = GSM_AMR_12_2;
+static const PVMF_GSMAMR_Rate DEFAULT_AMR_WIDE_BAND_BITRATE_SETTING = GSM_AMR_23_85;
+
+typedef struct AMR_BITRATE_MAPPING
+{
+   int32 bitrate;
+   PVMF_GSMAMR_Rate actual;
+} AMR_BITRATE_MAPPING;
+
+static const uint32 AMR_BITRATE_MAX_NUMBER_OF_ROWS = 10;
+static const AMR_BITRATE_MAPPING AMR_BITRATE_MAPPING_ARRAY[AMR_BITRATE_MAX_NUMBER_OF_ROWS][2] = {
+    {{1,DEFAULT_AMR_NARROW_BAND_BITRATE_SETTING}, {1,    DEFAULT_AMR_WIDE_BAND_BITRATE_SETTING}},  // default values
+    {{4950,                        GSM_AMR_4_75}, {7725,                          GSM_AMR_6_60}},
+    {{5525,                        GSM_AMR_5_15}, {10750,                         GSM_AMR_8_85}},
+    {{6300,                        GSM_AMR_5_90}, {13450,                        GSM_AMR_12_65}},
+    {{7050,                        GSM_AMR_6_70}, {15050,                        GSM_AMR_14_25}},
+    {{7625,                        GSM_AMR_7_40}, {17050,                        GSM_AMR_15_85}},
+    {{9075,                        GSM_AMR_7_95}, {19050,                        GSM_AMR_18_25}},
+    {{11200,                       GSM_AMR_10_2}, {21450,                        GSM_AMR_19_85}},
+   {{(MAX_AUDIO_BITRATE_SETTING+1),GSM_AMR_12_2}, {23450,                        GSM_AMR_23_05}},
+   {{(MAX_AUDIO_BITRATE_SETTING+1),GSM_AMR_12_2},{(MAX_AUDIO_BITRATE_SETTING+1), GSM_AMR_23_85}}};
 
 namespace android {
 
@@ -276,7 +310,33 @@ private:
     // milliseconds, otherwise "limit" holds the maximum filesize in bytes.
     PVMFStatus setMaxDurationOrFileSize(int64_t limit, bool limit_is_duration);
 
+    // Used to set the sampling rate of the audio source
+    PVMFStatus setParamAudioSamplingRate(int64_t aSamplingRate);
+
+    // Used to set the number of channels of the audio source
+    PVMFStatus setParamAudioNumberOfChannels(int64_t aNumberOfChannels);
+
+    // Used for setting the audio encoding bitrate
+    PVMFStatus setParamAudioEncodingBitrate(int64_t aAudioBitrate);
+
     PVMFStatus setParameter(const String8 &key, const String8 &value);
+
+    // Has no effect if called after video encoder is set
+    PVMFStatus setParamVideoEncodingBitrate(int64_t aVideoBitrate);
+
+    // Clips the intended video encoding bit rate, frame rate, frame size
+    // (width and height) so that it is within the supported range.
+    void clipVideoBitrate();
+    void clipVideoFrameRate();
+    void clipVideoFrameSize();
+    void clipVideoFrameWidth();
+    void clipVideoFrameHeight();
+
+    // Clips the intended AAC audio bitrate so that it is in the supported range
+    void clipAACAudioBitrate();
+
+    // Used to map the incoming bitrate to the closest AMR bitrate
+    bool MapAMRBitrate(int32 aAudioBitrate, PVMF_GSMAMR_Rate &anAMRBitrate);
 
     PVAuthorEngineInterface    *mAuthor;
 
@@ -311,6 +371,11 @@ private:
 
     sp<ICamera>             mCamera;
     sp<IMediaPlayerClient>  mListener;
+
+    int32            mSamplingRate;
+    int32            mNumberOfChannels;
+    int32            mAudio_bitrate_setting;
+    int32            mVideo_bitrate_setting;
 
     FILE*       ifpOutput;
 };

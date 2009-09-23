@@ -926,6 +926,7 @@ PVMFStatus AndroidCameraInput::DoInit()
     }
     CameraParameters p(s);
     p.setPreviewSize(mFrameWidth, mFrameHeight);
+    p.setPreviewFrameRate(mFrameRate);
     s = p.flatten();
     if (mCamera->setParameters(s) != NO_ERROR) {
         LOGE("Failed to set camera(%p) parameters", mCamera.get());

@@ -44,12 +44,14 @@ static const int32 AUTO_RAMP_START_MS = 300;
 static const int32 AUTO_RAMP_DURATION_MS = 300;
 
 ////////////////////////////////////////////////////////////////////////////
-AndroidAudioInput::AndroidAudioInput()
+AndroidAudioInput::AndroidAudioInput(uint32 audioSource)
     : OsclTimerObject(OsclActiveObject::EPriorityNominal, "AndroidAudioInput"),
     iCmdIdCounter(0),
     iPeer(NULL),
     iThreadLoggedOn(false),
-    iAudioSamplingRate(8000),
+    iAudioNumChannels(DEFAULT_AUDIO_NUMBER_OF_CHANNELS),
+    iAudioSamplingRate(DEFAULT_AUDIO_SAMPLING_RATE),
+    iAudioSource(audioSource),
     iDataEventCounter(0),
     iWriteCompleteAO(NULL),
     iTimeStamp(0),
@@ -76,8 +78,6 @@ AndroidAudioInput::AndroidAudioInput()
 
     {
         iAudioFormat=PVMF_MIME_FORMAT_UNKNOWN;
-        iAudioNumChannelsValid=false;
-        iAudioSamplingRateValid=false;
         iExitAudioThread=false;
 
         iCommandCounter=0;
@@ -512,28 +512,51 @@ OSCL_EXPORT_REF PVMFStatus AndroidAudioInput::getParametersSync(PvmiMIOSession s
             pv_mime_strcmp(identifier, OUTPUT_FORMATS_CUR_QUERY) == 0)
     {
         num_parameter_elements = 1;
-        status = AllocateKvp(parameters, OUTPUT_FORMATS_VALTYPE, num_parameter_elements);
+        status = AllocateKvp(parameters, (PvmiKeyType)OUTPUT_FORMATS_VALTYPE, num_parameter_elements);
         if(status != PVMFSuccess)
         {
-            LOGV("AllocateKvp failed");
+            LOGE("AndroidAudioInput::getParametersSync() OUTPUT_FORMATS_VALTYPE AllocateKvp failed");
+            return status;
         }
-        else
-        {
-            parameters[0].value.pChar_value = (char*)PVMF_MIME_PCM16;
-        }
+
+        parameters[0].value.pChar_value = (char*)PVMF_MIME_PCM16;
     }
     else if(pv_mime_strcmp(identifier, OUTPUT_TIMESCALE_CUR_QUERY) == 0)
     {
         num_parameter_elements = 1;
-        status = AllocateKvp(parameters, OUTPUT_TIMESCALE_CUR_VALUE, num_parameter_elements);
+        status = AllocateKvp(parameters, (PvmiKeyType)OUTPUT_TIMESCALE_CUR_VALUE, num_parameter_elements);
         if(status != PVMFSuccess)
         {
-            LOGV("AllocateKvp failed");
+            LOGE("AndroidAudioInput::getParametersSync() OUTPUT_TIMESCALE_CUR_VALUE AllocateKvp failed");
             return status;
         }
 
         // XXX is it okay to hardcode this as the timescale?
         parameters[0].value.uint32_value = 1000;
+    }
+    else if (pv_mime_strcmp(identifier, AUDIO_OUTPUT_SAMPLING_RATE_CUR_QUERY) == 0)
+    {
+        num_parameter_elements = 1;
+        status = AllocateKvp(parameters, (PvmiKeyType)AUDIO_OUTPUT_SAMPLING_RATE_CUR_QUERY, num_parameter_elements);
+        if (status != PVMFSuccess)
+        {
+            LOGE("AndroidAudioInput::getParametersSync() AUDIO_OUTPUT_SAMPLING_RATE_CUR_QUERY AllocateKvp failed");
+            return status;
+        }
+
+        parameters[0].value.uint32_value = iAudioSamplingRate;
+    }
+    else if (pv_mime_strcmp(identifier, AUDIO_OUTPUT_NUM_CHANNELS_CUR_QUERY) == 0)
+    {
+        num_parameter_elements = 1;
+        status = AllocateKvp(parameters, (PvmiKeyType)AUDIO_OUTPUT_NUM_CHANNELS_CUR_QUERY, num_parameter_elements);
+        if (status != PVMFSuccess)
+        {
+            LOGE("AndroidAudioInput::getParametersSync() AUDIO_OUTPUT_NUM_CHANNELS_CUR_QUERY AllocateKvp failed");
+            return status;
+        }
+
+        parameters[0].value.uint32_value = iAudioNumChannels;
     }
 
     return status;
@@ -635,6 +658,32 @@ OSCL_EXPORT_REF PVMFStatus AndroidAudioInput::verifyParametersSync(PvmiMIOSessio
     OSCL_UNUSED_ARG(parameters);
     OSCL_UNUSED_ARG(num_elements);
     return PVMFErrNotSupported;
+}
+
+////////////////////////////////////////////////////////////////////////////
+bool AndroidAudioInput::setAudioSamplingRate(int32 iSamplingRate)
+{
+    LOGV("AndroidAudioInput::setAudioSamplingRate( %d )", iSamplingRate);
+
+    if (iSamplingRate == 0)
+    {
+        // Setting sampling rate to zero will cause a crash
+        LOGV("AndroidAudioInput::setAudioSamplingRate() invalid sampling rate.  Return false.");
+        return false;
+    }
+
+    iAudioSamplingRate = iSamplingRate;
+    LOGV("AndroidAudioInput::setAudioSamplingRate() iAudioSamplingRate %d set", iAudioSamplingRate);
+    return true;
+}
+////////////////////////////////////////////////////////////////////////////
+bool AndroidAudioInput::setAudioNumChannels(int32 iNumChannels)
+{
+    LOGV("AndroidAudioInput::setAudioNumChannels( %d )", iNumChannels);
+
+    iAudioNumChannels = iNumChannels;
+    LOGV("AndroidAudioInput::setAudioNumChannels() iAudioNumChannels %d set", iAudioNumChannels);
+    return true;
 }
 
 ////////////////////////////////////////////////////////////////////////////
@@ -750,8 +799,8 @@ PVMFStatus AndroidAudioInput::DoInit()
     LOGV("DoInit");
 
     //calculate time for a buffer to fill
-    iAudioNumChannels = 1;
-    iMicroSecondsPerDataEvent = (int32)(1000000/iAudioSamplingRate);
+    iMicroSecondsPerDataEvent = (int32)((1000000/iAudioSamplingRate) / iAudioNumChannels);
+    LOGV("AndroidAudioInput::DoInit() iMicroSecondsPerDataEvent %d", iMicroSecondsPerDataEvent);
 
     iDataEventCounter = 0;
 
@@ -764,8 +813,10 @@ PVMFStatus AndroidAudioInput::DoInit()
             iMediaBufferMemPool = NULL;
         }
         iMediaBufferMemPool = OSCL_NEW(OsclMemPoolFixedChunkAllocator, (4));
-        if(!iMediaBufferMemPool)
+        if(!iMediaBufferMemPool) {
+            LOGV("AndroidAudioInput::DoInit() unable to create memory pool.  Return PVMFErrNoMemory.");
             OSCL_LEAVE(OsclErrNoMemory);
+        }
     );
     OSCL_FIRST_CATCH_ANY(err, return PVMFErrNoMemory);
 
@@ -809,6 +860,7 @@ PVMFStatus AndroidAudioInput::DoStart()
     return PVMFSuccess;
 }
 
+////////////////////////////////////////////////////////////////////////////
 int AndroidAudioInput::start_audin_thread_func(TOsclThreadFuncArg arg)
 {
     prctl(PR_SET_NAME, (unsigned long) "audio in", 0, 0, 0);
@@ -825,6 +877,7 @@ PVMFStatus AndroidAudioInput::DoPause()
     return PVMFSuccess;
 }
 
+////////////////////////////////////////////////////////////////////////////
 PVMFStatus AndroidAudioInput::DoReset()
 {
     LOGV("DoReset");
@@ -997,10 +1050,12 @@ int AndroidAudioInput::audin_thread_func() {
     iAudioThreadStartLock->lock();
 
     LOGV("create AudioRecord %p", this);
-    android::AudioRecord
-            * record = new android::AudioRecord(
-                    android::AudioRecord::DEFAULT_INPUT, iAudioSamplingRate,
-                    android::AudioSystem::PCM_16_BIT, iAudioNumChannels, 4*kBufferSize/iAudioNumChannels/sizeof(int16));
+    AudioRecord
+            * record = new AudioRecord(
+                    iAudioSource, iAudioSamplingRate,
+                    android::AudioSystem::PCM_16_BIT,
+                    iAudioNumChannels,
+                    4*kBufferSize/iAudioNumChannels/sizeof(int16));
     LOGV("AudioRecord created %p, this %p", record, this);
 
     status_t res = record->initCheck();
