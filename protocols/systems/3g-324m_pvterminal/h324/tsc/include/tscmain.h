@@ -175,8 +175,8 @@ class TSC_324m : public OsclActiveObject,
     public:
         OSCL_IMPORT_REF TSC_324m(TPVLoopbackMode aLoopbackMode);
         virtual ~TSC_324m();
-        void SetTSC_324mObserver(TSC_324mObserver* aObserver);
-        void SetInitialValues();
+        OSCL_IMPORT_REF void SetTSC_324mObserver(TSC_324mObserver* aObserver);
+        OSCL_IMPORT_REF void SetInitialValues();
         void InitComponent();
         bool ProcessCommand(Tsc324mNodeCommand& aCmd);
         void ReceivedFormatSpecificInfo(TPVChannelId lcn, uint8* fsi, uint32 fsi_len);

@@ -28,9 +28,11 @@
 
 
 #include "pv_mime_string_utils.h"
-#ifndef TEST_ENGINE_UTILITY_H_HEADER
-#include "test_engine_utility.h"
+
+#ifndef TEST_UTILITY_H_HEADER
+#include "test_utility.h"
 #endif
+
 #include "pv_2way_codecspecifier.h"
 
 
@@ -429,7 +431,6 @@ void test_base::InitializeLogs()
         if (true == PVLoggerCfgFileParser::Parse(cfgfilename.get_str(), logfilename.get_str()))
             return;
     }
-
 }
 
 

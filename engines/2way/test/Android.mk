@@ -5,11 +5,11 @@ LOCAL_SRC_FILES := \
 	src/alloc_dealloc_test.cpp \
  	src/av_duplicate_test.cpp \
  	src/test_engine.cpp \
- 	src/test_engine_utility.cpp \
  	src/engine_test.cpp \
  	src/init_cancel_test.cpp \
  	src/init_test.cpp \
  	src/test_base.cpp \
+ 	src/../../../../protocols/systems/tools/general/common/src/test_utility.cpp \
  	src/av_test.cpp \
  	src/acceptable_formats_test.cpp \
  	src/negotiated_formats_test.cpp \
@@ -40,6 +40,7 @@ LOCAL_C_INCLUDES := \
  	$(PV_TOP)/nodes/pvdummyinputnode/include \
  	$(PV_TOP)/protocols/systems/common/include \
  	$(PV_TOP)/engines/2way/include \
+ 	$(PV_TOP)/protocols/systems/tools/general/common/include \
  	$(PV_INCLUDES)
 
 LOCAL_COPY_HEADERS_TO := $(PV_COPY_HEADERS_TO)

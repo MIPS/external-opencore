@@ -132,7 +132,7 @@ TSC_324m::~TSC_324m()
     ResetTsc();
 }
 
-void TSC_324m::SetInitialValues()
+OSCL_EXPORT_REF void TSC_324m::SetInitialValues()
 {
     initVarsLocal();
     initVarsSession();
@@ -2506,7 +2506,7 @@ void TSC_324m::UseWNSRP(bool aUse)
 }
 
 
-void TSC_324m::SetTSC_324mObserver(TSC_324mObserver* aObserver)
+OSCL_EXPORT_REF void TSC_324m::SetTSC_324mObserver(TSC_324mObserver* aObserver)
 {
     if (aObserver == NULL)
         return;

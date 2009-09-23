@@ -39,8 +39,8 @@
 
 
 #include "tsc_h324m_config_interface.h"
-#ifndef TEST_ENGINE_UTILITY_H_HEADER
-#include "test_engine_utility.h"
+#ifndef TEST_UTILITY_H_HEADER
+#include "test_utility.h"
 #endif
 #include "test_codecs.h"
 
@@ -956,12 +956,12 @@ void engine_test_suite::AddLipSyncTests(const bool aProxy, int32 firstTest, int3
 bool engine_test_suite::proxy_tests1(const bool aProxy)
 {
 
-    int32 firstTest = 0;
-    int32 lastTest = MAX_324_TEST;
+    uint32 firstTest = 0;
+    uint32 lastTest = MAX_324_TEST;
     bool alltests = false;
 
 
-    FindTestRange(global_cmd_line, firstTest, lastTest, PV2WayUtil::GetFileHandle());
+    PV2WayUtil::FindTestRange(global_cmd_line, firstTest, lastTest);
 
     //Basic 2way tests
     PV2WayUtil::OutputInfo("Setup and Audio engine tests.  First: %d Last: %d\n", firstTest, lastTest);
@@ -982,12 +982,12 @@ bool engine_test_suite::proxy_tests1(const bool aProxy)
 bool engine_test_suite::proxy_tests2(const bool aProxy)
 {
 
-    int32 firstTest = 0;
-    int32 lastTest = MAX_324_TEST;
+    uint32 firstTest = 0;
+    uint32 lastTest = MAX_324_TEST;
     bool alltests = false;
 
 
-    FindTestRange(global_cmd_line, firstTest, lastTest, PV2WayUtil::GetFileHandle());
+    PV2WayUtil::FindTestRange(global_cmd_line, firstTest, lastTest);
 
     //Basic 2way tests
     PV2WayUtil::OutputInfo("Video and BasicAV engine tests.  First: %d Last: %d\n", firstTest, lastTest);
@@ -1015,11 +1015,11 @@ bool engine_test_suite::proxy_tests2(const bool aProxy)
 bool engine_test_suite::proxy_tests3(const bool aProxy)
 {
 
-    int32 firstTest = 0;
-    int32 lastTest = MAX_324_TEST;
+    uint32 firstTest = 0;
+    uint32 lastTest = MAX_324_TEST;
     bool alltests = false;
 
-    FindTestRange(global_cmd_line, firstTest, lastTest, PV2WayUtil::GetFileHandle());
+    PV2WayUtil::FindTestRange(global_cmd_line, firstTest, lastTest);
 
     //Basic 2way tests
     PV2WayUtil::OutputInfo("AcceptableFormats and NegotiatedFormats engine tests.  First: %d Last: %d\n", firstTest, lastTest);
@@ -1055,11 +1055,11 @@ bool engine_test_suite::proxy_tests(const bool aProxy)
 bool engine_test_suite::proxy_tests4(const bool aProxy)
 {
 
-    int32 firstTest = 0;
-    int32 lastTest = MAX_324_TEST;
+    uint32 firstTest = 0;
+    uint32 lastTest = MAX_324_TEST;
     bool alltests = false;
 
-    FindTestRange(global_cmd_line, firstTest, lastTest, PV2WayUtil::GetFileHandle());
+    PV2WayUtil::FindTestRange(global_cmd_line, firstTest, lastTest);
 
     //Basic 2way tests
     PV2WayUtil::OutputInfo("LipSync engine tests.  First: %d Last: %d\n", firstTest, lastTest);
@@ -1302,13 +1302,13 @@ int start_test()
     //this will clear all the private members of test_result
     TestResult->delete_contents();
 #ifndef LIP_SYNC_TESTING
-    temp = start_test3(TestResult);
-    if (temp != 0)
-        result = temp;
     temp = start_test1(TestResult);
     if (temp != 0)
         result = temp;
     temp = start_test2(TestResult);
+    if (temp != 0)
+        result = temp;
+    temp = start_test3(TestResult);
     if (temp != 0)
         result = temp;
 #else

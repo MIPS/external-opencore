@@ -15,8 +15,8 @@
  * and limitations under the License.
  * -------------------------------------------------------------------
  */
-#ifndef TEST_ENGINE_UTILITY_H_HEADER
-#define TEST_ENGINE_UTILITY_H_HEADER
+#ifndef TEST_UTILITY_H_HEADER
+#define TEST_UTILITY_H_HEADER
 
 #include "test_case.h"
 #include "xml_test_interpreter.h"
@@ -30,15 +30,19 @@ class PV2WayUtil
         OSCL_IMPORT_REF static void OutputInfo(const char * str, ...);
         OSCL_IMPORT_REF static void SetFileHandle(const FILE *aFileHandle);
         OSCL_IMPORT_REF static FILE *GetFileHandle();
+        static void FindTestRange(cmd_line* command_line,
+                                  uint32 &aFirstTest,
+                                  uint32 &aLastTest,
+                                  int32 aTestLimit = 0);
+        static char* FindConfigGfc(cmd_line* command_line,
+                                   OSCL_HeapString<OsclMemAllocator> &aCommand);
+        static bool FindCmdArg(cmd_line* command_line,
+                               OSCL_HeapString<OsclMemAllocator> &aArgument,
+                               int &ArgCount);
     private:
         static FILE* iFileHandle;
         static int test;
 };
-
-void FindTestRange(cmd_line* command_line,
-                   int32 &iFirstTest,
-                   int32 &iLastTest,
-                   FILE* aFile);
 
 void FindXmlResultsFile(cmd_line* command_line,
                         OSCL_HeapString<OsclMemAllocator> &XmlTestResultsFilename,

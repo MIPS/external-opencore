@@ -21,8 +21,8 @@
 #include "pvmp4h263encextension.h"
 #endif
 
-#ifndef TEST_ENGINE_UTILITY_H_HEADER
-#include "test_engine_utility.h"
+#ifndef TEST_UTILITY_H_HEADER
+#include "test_utility.h"
 #endif
 
 #define TRADEOFF_VALUE 5

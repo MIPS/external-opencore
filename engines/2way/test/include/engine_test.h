@@ -54,7 +54,7 @@
 #endif
 
 #ifndef TEST_ENGINE_UTILITY_H_HEADER
-#include "test_engine_utility.h"
+#include "test_utility.h"
 #endif
 
 class engine_timer;

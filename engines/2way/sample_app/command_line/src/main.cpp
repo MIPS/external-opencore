@@ -20,6 +20,7 @@
 #include "oscl_utf8conv.h"
 #include "oscl_string.h"
 #include "oscl_stdstring.h"
+#include "test_utility.h"
 
 #if defined(__linux__) || defined(linux)
 #include "kbhit.h"
@@ -69,27 +70,27 @@ void evaluate_command()
             case 'a':
                 if (main_engine->ChangeAutomatedCallSetting())
                 {
-                    printf("\nAutomated Call On\n");
+                    PV2WayUtil::OutputInfo("\nAutomated Call On\n");
                 }
                 else
                 {
-                    printf("\nAutomated Call Off\n");
+                    PV2WayUtil::OutputInfo("\nAutomated Call Off\n");
                 }
                 break;
             case 'l':
                 if (main_engine->ChangeLoopbackCallSetting())
                 {
-                    printf("\nLoopback Call On\n");
+                    PV2WayUtil::OutputInfo("\nLoopback Call On\n");
                     main_engine->CreateComponent();
                     //main_engine->Init();
                 }
                 else
                 {
-                    printf("\nLoopback Call Off\n");
+                    PV2WayUtil::OutputInfo("\nLoopback Call Off\n");
                 }
                 break;
             case 'd':
-                printf("\nDisabling MPC Rx and Tx modes ...\n");
+                PV2WayUtil::OutputInfo("\nDisabling MPC Rx and Tx modes ...\n");
                 //iOptions.iDisableMpcRxModes=0xFF;
                 //iOptions.iDisableMpcTxModes=0xFF;
                 break;
@@ -97,17 +98,17 @@ void evaluate_command()
             case 'i':
                 if (main_engine->SetCommServer(true))
                 {
-                    printf("\nUsing ISDN\n");
+                    PV2WayUtil::OutputInfo("\nUsing ISDN\n");
                 }
                 else
                 {
-                    printf("\nToo late to change to ISDN\n");
+                    PV2WayUtil::OutputInfo("\nToo late to change to ISDN\n");
                 }
                 break;
 #endif
             case 's':
             {
-                printf("\nUsing Sockets\n");
+                PV2WayUtil::OutputInfo("\nUsing Sockets\n");
                 ConnectSocket();
             }
             break;
@@ -147,64 +148,64 @@ void evaluate_command()
 
 void ConnectSocket()
 {
-    printf("\n Please Enter Terminal Type Client(c)/Server(s):");
+    PV2WayUtil::OutputInfo("\n Please Enter Terminal Type Client(c)/Server(s):");
     int t = getchar();
     int port = 0;
 
     if (tolower(t) == 's')
     {
-        printf("\n Please Enter IP Address of this machine: ");
+        PV2WayUtil::OutputInfo("\n Please Enter IP Address of this machine: ");
         char ipAddr[IP_ADDRESS_LENGTH];
         scanf("%s", ipAddr);
-        printf("\n Please enter server port:");
+        PV2WayUtil::OutputInfo("\n Please enter server port:");
         scanf("%d", &port);
 
         if (!main_engine->ConnectSocket(true, port, ipAddr))
         {
-            printf("\n Error connecting server socket!\n");
+            PV2WayUtil::OutputInfo("\n Error connecting server socket!\n");
         }
     }
     if (tolower(t) == 'c')
     {
-        printf("\n Please Enter IP Address: ");
+        PV2WayUtil::OutputInfo("\n Please Enter IP Address: ");
         char ipAddr[IP_ADDRESS_LENGTH];
         scanf("%s", ipAddr);
-        printf("\n Please enter peer port:");
+        PV2WayUtil::OutputInfo("\n Please enter peer port:");
         scanf("%d", &port);
 
         if (!main_engine->ConnectSocket(false, port, ipAddr))
         {
-            printf("\n Error connecting client socket!\n");
+            PV2WayUtil::OutputInfo("\n Error connecting client socket!\n");
         }
     }
 }
 
 void print_commands()
 {
-    printf("\n1 - Query H324M Config Interface");
-    printf("\n2 - Initialize 2way");
-    printf("\n3 - Connect 2way");
-    printf("\n4 - Remove Audio sink");
-    printf("\n5 - Remove Audio Source");
-    printf("\n6 - Remove Video Sink");
-    printf("\n7 - Remove Video Source");
-    printf("\n8 - Disconnect 2way");
-    printf("\n9 - Reset 2way");
-    printf("\na - Automate Call");
-    printf("\nl - Loopback Call");
+    PV2WayUtil::OutputInfo("\n1 - Query H324M Config Interface");
+    PV2WayUtil::OutputInfo("\n2 - Initialize 2way");
+    PV2WayUtil::OutputInfo("\n3 - Connect 2way");
+    PV2WayUtil::OutputInfo("\n4 - Remove Audio sink");
+    PV2WayUtil::OutputInfo("\n5 - Remove Audio Source");
+    PV2WayUtil::OutputInfo("\n6 - Remove Video Sink");
+    PV2WayUtil::OutputInfo("\n7 - Remove Video Source");
+    PV2WayUtil::OutputInfo("\n8 - Disconnect 2way");
+    PV2WayUtil::OutputInfo("\n9 - Reset 2way");
+    PV2WayUtil::OutputInfo("\na - Automate Call");
+    PV2WayUtil::OutputInfo("\nl - Loopback Call");
 #ifdef SUPPORT_ISDN
-    printf("\ni - Use Isdn");
+    PV2WayUtil::OutputInfo("\ni - Use Isdn");
 #endif
-    printf("\ns - Use Sockets");
-    printf("\nu - Send user input alphanumeric");
-    printf("\ne - Send EndSession");
-    printf("\nv - disable use video over AL2");
-    printf("\nw - disable use video over AL3");
-    printf("\ny - disallow video over AL2");
-    printf("\nz - disallow video over AL3");
-    printf("\nh - Help");
-    printf("\nx - Exit");
-    printf("\nEnter Command: ");
+    PV2WayUtil::OutputInfo("\ns - Use Sockets");
+    PV2WayUtil::OutputInfo("\nu - Send user input alphanumeric");
+    PV2WayUtil::OutputInfo("\ne - Send EndSession");
+    PV2WayUtil::OutputInfo("\nv - disable use video over AL2");
+    PV2WayUtil::OutputInfo("\nw - disable use video over AL3");
+    PV2WayUtil::OutputInfo("\ny - disallow video over AL2");
+    PV2WayUtil::OutputInfo("\nz - disallow video over AL3");
+    PV2WayUtil::OutputInfo("\nh - Help");
+    PV2WayUtil::OutputInfo("\nx - Exit");
+    PV2WayUtil::OutputInfo("\nEnter Command: ");
 }
 
 
@@ -219,15 +220,15 @@ void MemoryStats()
         MM_Stats_t* stats = auditCB.pAudit->MM_GetStats("");
         if (stats)
         {
-            printf("\n###################Memory Stats Start#################\n");
-            printf("  numBytes %d\n", stats->numBytes);
-            printf("  peakNumBytes %d\n", stats->peakNumBytes);
-            printf("  numAllocs %d\n", stats->numAllocs);
-            printf("  peakNumAllocs %d\n", stats->peakNumAllocs);
-            printf("  numAllocFails %d\n", stats->numAllocFails);
-            printf("  totalNumAllocs %d\n", stats->totalNumAllocs);
-            printf("  totalNumBytes %d\n", stats->totalNumBytes);
-            printf("\n###################Memory Stats End###################\n");
+            PV2WayUtil::OutputInfo("\n###################Memory Stats Start#################\n");
+            PV2WayUtil::OutputInfo("  numBytes %d\n", stats->numBytes);
+            PV2WayUtil::OutputInfo("  peakNumBytes %d\n", stats->peakNumBytes);
+            PV2WayUtil::OutputInfo("  numAllocs %d\n", stats->numAllocs);
+            PV2WayUtil::OutputInfo("  peakNumAllocs %d\n", stats->peakNumAllocs);
+            PV2WayUtil::OutputInfo("  numAllocFails %d\n", stats->numAllocFails);
+            PV2WayUtil::OutputInfo("  totalNumAllocs %d\n", stats->totalNumAllocs);
+            PV2WayUtil::OutputInfo("  totalNumBytes %d\n", stats->totalNumBytes);
+            PV2WayUtil::OutputInfo("\n###################Memory Stats End###################\n");
         }
 
     }
@@ -244,154 +245,27 @@ void checkForLeaks()
     uint32 leaks = auditCB.pAudit->MM_GetNumAllocNodes();
     if (leaks != 0)
     {
-        printf("ERROR: %d Memory leaks detected!\n", leaks);
+        PV2WayUtil::OutputInfo("ERROR: %d Memory leaks detected!\n", leaks);
         MM_AllocQueryInfo*info = auditCB.pAudit->MM_CreateAllocNodeInfo(leaks);
         uint32 leakinfo = auditCB.pAudit->MM_GetAllocNodeInfo(info, leaks, 0);
         if (leakinfo != leaks)
         {
-            printf("ERROR: Leak info is incomplete.\n");
+            PV2WayUtil::OutputInfo("ERROR: Leak info is incomplete.\n");
         }
         for (uint32 i = 0; i < leakinfo; i++)
         {
-            printf("Leak Info:\n");
-            printf("  allocNum %d\n", info[i].allocNum);
-            printf("  fileName %s\n", info[i].fileName);
-            printf("  lineNo %d\n", info[i].lineNo);
-            printf("  size %d\n", info[i].size);
+            PV2WayUtil::OutputInfo("Leak Info:\n");
+            PV2WayUtil::OutputInfo("  allocNum %d\n", info[i].allocNum);
+            PV2WayUtil::OutputInfo("  fileName %s\n", info[i].fileName);
+            PV2WayUtil::OutputInfo("  lineNo %d\n", info[i].lineNo);
+            PV2WayUtil::OutputInfo("  size %d\n", info[i].size);
             uint32 ptrAddr = (uint32)info[i].pMemBlock;
-            printf("  pMemBlock 0x%x\n", ptrAddr);
-            printf("  tag %s\n", info[i].tag);
+            PV2WayUtil::OutputInfo("  pMemBlock 0x%x\n", ptrAddr);
+            PV2WayUtil::OutputInfo("  tag %s\n", info[i].tag);
         }
         auditCB.pAudit->MM_ReleaseAllocNodeInfo(info);
     }
 #endif
-}
-void FindTestRange(cmd_line* command_line,
-                   FILE* aFile)
-{
-
-    int iTestArgument = 0;
-    char *iTestArgStr1 = NULL;
-    char *iTestArgStr2 = NULL;
-    bool cmdline_iswchar = command_line->is_wchar();
-
-    int count = command_line->get_count();
-    if (count == 0)
-    {
-        // there were no command line options
-        printf("Start 2Way, h for help\n");
-    }
-    // Search for the "-gcftest" argument
-    char *iSourceFind = NULL;
-    if (cmdline_iswchar)
-    {
-        iSourceFind = OSCL_ARRAY_NEW(char, 256);
-    }
-
-    int iTestSearch = 0;
-    while (iTestSearch < count)
-    {
-        bool iTestFound = false;
-        bool iTestFound1 = false;
-        // Go through each argument
-        for (; iTestSearch < count; iTestSearch++)
-        {
-            // Convert to UTF8 if necessary
-            if (cmdline_iswchar)
-            {
-                OSCL_TCHAR* cmd = NULL;
-                command_line->get_arg(iTestSearch, cmd);
-                oscl_UnicodeToUTF8(cmd, oscl_strlen(cmd), iSourceFind, 256);
-            }
-            else
-            {
-                iSourceFind = NULL;
-                command_line->get_arg(iTestSearch, iSourceFind);
-            }
-
-            // Do the string compare
-            if (oscl_strcmp(iSourceFind, "-help") == 0)
-            {
-                fprintf(aFile, "Test cases to run option. Default is ALL:\n");
-                fprintf(aFile, "  -gcftest <gcf testfile name>\n");
-                fprintf(aFile, "   Specify file name of gcf test cases to run. \n");
-
-                fprintf(aFile, "  -test \n");
-                fprintf(aFile, "   Run  menu based 324M test cases only.\n");
-
-                return;
-            }
-            else if (oscl_strcmp(iSourceFind, "-gcftest") == 0)
-            {
-                iTestFound1 = true;
-                iTestArgument = ++iTestSearch;
-                break;
-            }
-            else if (oscl_strcmp(iSourceFind, "-config") == 0)
-            {
-                iTestFound = true;
-                iTestArgument = ++iTestSearch;
-                break;
-            }
-        }
-
-        if (cmdline_iswchar)
-        {
-            OSCL_ARRAY_DELETE(iSourceFind);
-            iSourceFind = NULL;
-        }
-
-        if (iTestFound)
-        {
-            // Convert to UTF8 if necessary
-            if (cmdline_iswchar)
-            {
-                iTestArgStr1 = OSCL_ARRAY_NEW(char, 256);
-                OSCL_TCHAR* cmd;
-                command_line->get_arg(iTestArgument, cmd);
-                if (cmd)
-                {
-                    oscl_UnicodeToUTF8(cmd, oscl_strlen(cmd), iTestArgStr1, 256);
-                }
-
-            }
-            else
-            {
-                command_line->get_arg(iTestArgument, iTestArgStr1);
-
-            }
-
-            if (!iTestArgStr1 || !main_engine->ReadConfigFile(iTestArgStr1))
-            {
-                printf("file: %s not found", iTestArgStr1);
-            }
-        }
-        if (iTestFound1)
-        {
-            // Convert to UTF8 if necessary
-            if (cmdline_iswchar)
-            {
-                iTestArgStr2 = OSCL_ARRAY_NEW(char, 256);
-                OSCL_TCHAR* cmd;
-                command_line->get_arg(iTestArgument + 1, cmd);
-                if (cmd)
-                {
-                    oscl_UnicodeToUTF8(cmd, oscl_strlen(cmd), iTestArgStr2, 256);
-                }
-            }
-            else
-            {
-                command_line->get_arg(iTestArgument, iTestArgStr2);
-            }
-
-            if (!iTestArgStr2 || main_engine->ReadGCFTestFile(iTestArgStr2))
-            {
-                printf("file: %s not found", iTestArgStr2);
-            }
-
-        }
-    }
-
 }
 
 int local_main(FILE* filehandle, cmd_line *command_line)
@@ -400,7 +274,7 @@ int local_main(FILE* filehandle, cmd_line *command_line)
 //   int result;
     global_cmd_line = command_line;
 
-    fileoutput = filehandle;
+    PV2WayUtil::SetFileHandle(filehandle);
 
     CPV2WayEngineFactory::Init();
     OsclErrorTrap::Init();
@@ -408,7 +282,37 @@ int local_main(FILE* filehandle, cmd_line *command_line)
 
     main_engine = OSCL_NEW(engine_handler, ());
 
-    FindTestRange(global_cmd_line, fileoutput);
+    //filename will be pointing to a valid string if -config or -gfctest are present
+    char *filename = NULL;
+
+    OSCL_HeapString<OsclMemAllocator> argument = "-config";
+    filename = PV2WayUtil::FindConfigGfc(global_cmd_line, argument);
+    //check if config file was found
+    if ((filename == NULL) || (main_engine->ReadConfigFile(filename)))
+    {
+        PV2WayUtil::OutputInfo("config file: %s not found", filename);
+    }
+    //free memory if allocated
+    if (filename != NULL)
+    {
+        OSCL_ARRAY_DELETE(filename);
+        filename = NULL;
+    }
+
+
+    argument = "-gfctest";
+    filename = PV2WayUtil::FindConfigGfc(global_cmd_line, argument);
+    //check if gfc file was found
+    if ((filename == NULL) || (main_engine->ReadGCFTestFile(filename)))
+    {
+        PV2WayUtil::OutputInfo("gfc file: %s not found", filename);
+    }
+    //free memory if allocated
+    if (filename != NULL)
+    {
+        OSCL_ARRAY_DELETE(filename);
+        filename = NULL;
+    }
 
     // printf("Start 2Way, h for help\n");
 
@@ -416,14 +320,14 @@ int local_main(FILE* filehandle, cmd_line *command_line)
 
     OSCL_TRY(leave, main_engine->start());
 
-    printf("\nEngine handler exiting. Leave = %d\n", leave);
+    PV2WayUtil::OutputInfo("\nEngine handler exiting. Leave = %d\n", leave);
 
     OSCL_TRY(leave, OSCL_DELETE(main_engine););
     OsclScheduler::Cleanup();
     OsclErrorTrap::Cleanup();
     PVLogger::Cleanup();
 #if !(OSCL_BYPASS_MEMMGT)
-    printf("\nMemory Stats after engine deletion\n");
+    PV2WayUtil::OutputInfo("\nMemory Stats after engine deletion\n");
     MemoryStats();
     checkForLeaks();
 #endif

@@ -27,8 +27,8 @@
 #include "pv_2way_proxy_factory.h"
 #endif
 
-#ifndef TEST_ENGINE_UTILITY_H_INCLUDED
-#include "test_engine_utility.h"
+#ifndef TEST_UTILITY_H_INCLUDED
+#include "test_utility.h"
 #endif
 
 #define TEST_DURATION 800

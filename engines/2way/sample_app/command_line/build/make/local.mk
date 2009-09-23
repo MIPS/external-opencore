@@ -23,7 +23,8 @@ XINCDIRS +=  ../../../src \
   ../../../../../../engines/2way/sample_app/pv2waysample/include \
   ../../../../../../engines/common/include \
   ../../../../../../protocols/systems/common/include \
-  ../../../../test/include
+  ../../../../test/include \
+  ../../../../../../protocols/systems/tools/general/common/include 
 
 SRCDIR := ../../src
 INCSRCDIR := ../../include 
@@ -33,7 +34,8 @@ SRCS := main.cpp \
         console_engine_handler.cpp \
 	../../pv2waysample/src/testcaseparser.cpp \
 	../../../test/src/lipsync_dummy_input_mio.cpp \
-	../../../test/src/lipsync_dummy_output_mio.cpp 
+	../../../test/src/lipsync_dummy_output_mio.cpp \
+	../../../../../protocols/systems/tools/general/common/src/test_utility.cpp  
 
 SRCS += $(EXTRA_SRCS)
 

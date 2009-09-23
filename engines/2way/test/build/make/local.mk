@@ -22,17 +22,17 @@ XINCDIRS +=  \
     ../../../sample_app/pv2waysample/include \
     ../../../../../nodes/pvdummyinputnode/include \
     ../../../../../protocols/systems/common/include \
-    ../../../include 
-
+    ../../../include \
+    ../../../../../protocols/systems/tools/general/common/include 
+    
 SRCS := alloc_dealloc_test.cpp \
 	av_duplicate_test.cpp \
 	test_engine.cpp \
-	test_engine_utility.cpp \
 	engine_test.cpp \
 	init_cancel_test.cpp \
 	init_test.cpp \
-	test_base.cpp
-
+	test_base.cpp \
+	../../../../protocols/systems/tools/general/common/src/test_utility.cpp  
 SRCS_324 = av_test.cpp \
 	acceptable_formats_test.cpp \
 	negotiated_formats_test.cpp \

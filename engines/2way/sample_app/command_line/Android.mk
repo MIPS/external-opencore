@@ -8,6 +8,7 @@ LOCAL_SRC_FILES := \
  	src/../../pv2waysample/src/testcaseparser.cpp \
  	src/../../../test/src/lipsync_dummy_input_mio.cpp \
  	src/../../../test/src/lipsync_dummy_output_mio.cpp \
+ 	src/../../../../../protocols/systems/tools/general/common/src/test_utility.cpp \
  	src/kbhit.cpp
 
 
@@ -30,6 +31,7 @@ LOCAL_C_INCLUDES := \
  	$(PV_TOP)/engines/common/include \
  	$(PV_TOP)/protocols/systems/common/include \
  	$(PV_TOP)/engines/2way/test/include \
+ 	$(PV_TOP)/protocols/systems/tools/general/common/include \
  	$(PV_INCLUDES)
 
 LOCAL_COPY_HEADERS_TO := $(PV_COPY_HEADERS_TO)

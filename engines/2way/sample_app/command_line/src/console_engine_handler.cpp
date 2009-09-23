@@ -47,6 +47,9 @@
 #include "pvlogger_cfg_file_parser.h"
 #endif
 
+#ifndef TEST_UTILITY_H_HEADER
+#include "test_utility.h"
+#endif
 #include "main.h"
 
 
@@ -199,7 +202,7 @@ void engine_handler::CreateComponent()
                                        iH324ConfigInterface));
     if (error != 0)
     {
-        printf("Error in CreateComponent\n");
+        PV2WayUtil::OutputInfo("Error in CreateComponent\n");
     }
 }
 
@@ -219,7 +222,7 @@ void engine_handler::InitTerminal()
     OSCL_TRY(error, iInitCmdId = terminal->Init(iSdkInitInfo));
     if (error != 0)
     {
-        printf("Error in Init for terminal\n");
+        PV2WayUtil::OutputInfo("Error in Init for terminal\n");
     }
 }
 
@@ -234,7 +237,7 @@ void engine_handler::start()
 
     if (error != 0)
     {
-        printf("Error in CreateTerminal\n");
+        PV2WayUtil::OutputInfo("Error in CreateTerminal\n");
         OSCL_LEAVE(error);
     }
 
@@ -249,7 +252,7 @@ void engine_handler::start()
     OSCL_TRY(error, scheduler->StartScheduler());
     if (error != 0)
     {
-        printf("Error Starting Scheduler\n");
+        PV2WayUtil::OutputInfo("Error Starting Scheduler\n");
         OSCL_LEAVE(error);
     }
 
@@ -333,7 +336,7 @@ void engine_handler::Connect()
     OSCL_TRY(error, iConnectCmdId = terminal->Connect(iConnectOptions, iCommServer));
     if (error != 0)
     {
-        printf("Error in Connect!\n");
+        PV2WayUtil::OutputInfo("Error in Connect!\n");
     }
 }
 
@@ -352,7 +355,7 @@ void engine_handler::SocketConnected(PVMFNodeInterface* aCommServer)
 
 void engine_handler::SocketDisconnected()
 {
-    printf("SocketDisconnected\n");
+    PV2WayUtil::OutputInfo("SocketDisconnected\n");
     Disconnect();
 }
 
@@ -365,7 +368,7 @@ void engine_handler::Disconnect()
     }
     if (error != 0)
     {
-        printf("Error in Disconnect!\n");
+        PV2WayUtil::OutputInfo("Error in Disconnect!\n");
     }
     else
     {
@@ -399,7 +402,7 @@ bool engine_handler::Reset()
     int32 error = 0;
     if (false == iDisconnected)
     {
-        printf("\nError:Reset can not ne done before disconnect complete!\n");
+        PV2WayUtil::OutputInfo("\nError:Reset can not ne done before disconnect complete!\n");
         return true;
     }
     if (iH324ConfigInterface)
@@ -410,7 +413,7 @@ bool engine_handler::Reset()
     OSCL_TRY(error, iRstCmdId = terminal->Reset());
     if (error)
     {
-        printf("\n Error in reset()\n");
+        PV2WayUtil::OutputInfo("\n Error in reset()\n");
         OSCL_ASSERT(0);
     }
     return true;
@@ -465,7 +468,7 @@ void engine_handler::HandleInformationalEvent(const PVAsyncInformationalEvent& a
             }
             break;
         case PVT_INDICATION_DISCONNECT:
-            printf("\nRemote Disconnect\n");
+            PV2WayUtil::OutputInfo("\nRemote Disconnect\n");
             break;
 
         case PVT_INDICATION_CLOSING_TRACK:
@@ -478,12 +481,12 @@ void engine_handler::HandleInformationalEvent(const PVAsyncInformationalEvent& a
 
         case PVT_INDICATION_INTERNAL_ERROR:
         {
-            printf("\nInternal error detected\n");
+            PV2WayUtil::OutputInfo("\nInternal error detected\n");
         }
         break;
 
         default:
-            printf("\nOther event %d\n", aEvent.GetEventType());
+            PV2WayUtil::OutputInfo("\nOther event %d\n", aEvent.GetEventType());
             break;
     }
 
@@ -491,7 +494,7 @@ void engine_handler::HandleInformationalEvent(const PVAsyncInformationalEvent& a
 
 void engine_handler::InitCompleted(const PVCmdResponse& aResponse)
 {
-    printf("\nInit complete status %d\n", aResponse.GetCmdStatus());
+    PV2WayUtil::OutputInfo("\nInit complete status %d\n", aResponse.GetCmdStatus());
     ConfigureH324Interface();
 
     if (aResponse.GetCmdStatus() == PVMFSuccess)
@@ -521,7 +524,7 @@ void engine_handler::ResetCompleted(const PVCmdResponse& aResponse)
 #endif
         DeleteCommServer();
     }
-    printf("\nReset complete status %d\n", aResponse.GetCmdStatus());
+    PV2WayUtil::OutputInfo("\nReset complete status %d\n", aResponse.GetCmdStatus());
 
     Cleanup();
     StopScheduler();
@@ -531,7 +534,7 @@ void engine_handler::ResetCompleted(const PVCmdResponse& aResponse)
 
 void engine_handler::ConnectCompleted(const PVCmdResponse& aResponse)
 {
-    printf("\nConnect complete status %d\n", aResponse.GetCmdStatus());
+    PV2WayUtil::OutputInfo("\nConnect complete status %d\n", aResponse.GetCmdStatus());
     if (iLoopbackCall)
     {
         MemoryStats();
@@ -540,7 +543,7 @@ void engine_handler::ConnectCompleted(const PVCmdResponse& aResponse)
 
 void engine_handler::DisconnectCompleted(const PVCmdResponse& aResponse)
 {
-    printf("\nDisconnect complete status %d\n", aResponse.GetCmdStatus());
+    PV2WayUtil::OutputInfo("\nDisconnect complete status %d\n", aResponse.GetCmdStatus());
     if (PVMFSuccess == aResponse.GetCmdStatus())
     {
         iDisconnected = true;
@@ -551,11 +554,11 @@ void engine_handler::DisconnectCompleted(const PVCmdResponse& aResponse)
 
 void engine_handler::IFCommandCompleted(const PVCmdResponse& aResponse)
 {
-    printf("\nQuery Interface complete.  Response status(%d), iH324ConfigInterface(0x%p)\n", aResponse.GetCmdStatus(), iH324ConfigInterface);
+    PV2WayUtil::OutputInfo("\nQuery Interface complete.  Response status(%d), iH324ConfigInterface(0x%p)\n", aResponse.GetCmdStatus(), iH324ConfigInterface);
 
     if (aResponse.GetCmdStatus() != PVMFSuccess || (iH324ConfigInterface == NULL))
     {
-        printf("\nQuery Interface failed.\n");
+        PV2WayUtil::OutputInfo("\nQuery Interface failed.\n");
         return;
     }
 
@@ -564,7 +567,7 @@ void engine_handler::IFCommandCompleted(const PVCmdResponse& aResponse)
     iH324ConfigInterface->queryInterface(uuid, iComponentInterface);
     if (!iComponentInterface)
     {
-        printf("\n  Query Interface status failed.\n");
+        PV2WayUtil::OutputInfo("\n  Query Interface status failed.\n");
         return;
     }
 
@@ -640,19 +643,19 @@ void engine_handler::CommandCompleted(const PVCmdResponse& aResponse)
     }
     else if (iRemoveAudioSinkID == cmdId)
     {
-        printf("\nRemoved Audio Sink.\n");
+        PV2WayUtil::OutputInfo("\nRemoved Audio Sink.\n");
     }
     else if (iRemoveAudioSourceID == cmdId)
     {
-        printf("\nRemoved Audio Source.\n");
+        PV2WayUtil::OutputInfo("\nRemoved Audio Source.\n");
     }
     else if (iRemoveVideoSinkID == cmdId)
     {
-        printf("\nRemoved Video Sink.\n");
+        PV2WayUtil::OutputInfo("\nRemoved Video Sink.\n");
     }
     else if (iRemoveVideoSourceID == cmdId)
     {
-        printf("\nRemoved Video Source.\n");
+        PV2WayUtil::OutputInfo("\nRemoved Video Source.\n");
     }
     else
     {
@@ -669,7 +672,7 @@ void engine_handler::HandleNodeInformationalEvent(const PVMFAsyncEvent& aEvent)
     // only used to get Capi connect event from Capi node
     if (event.IsA() == PVCapiEvent &&  event.GetEventType() == PVCapiConnected)
     {
-        printf("\nISDN Bearer is up!\n");
+        PV2WayUtil::OutputInfo("\nISDN Bearer is up!\n");
 
         if (iAutomatedCall)
         {
@@ -723,15 +726,15 @@ void engine_handler::MemoryStats()
         MM_Stats_t* stats = auditCB.pAudit->MM_GetStats("");
         if (stats)
         {
-            printf("\n###################Memory Stats Start#################\n");
-            printf("  numBytes %d\n", stats->numBytes);
-            printf("  peakNumBytes %d\n", stats->peakNumBytes);
-            printf("  numAllocs %d\n", stats->numAllocs);
-            printf("  peakNumAllocs %d\n", stats->peakNumAllocs);
-            printf("  numAllocFails %d\n", stats->numAllocFails);
-            printf("  totalNumAllocs %d\n", stats->totalNumAllocs);
-            printf("  totalNumBytes %d\n", stats->totalNumBytes);
-            printf("\n###################Memory Stats End###################\n");
+            PV2WayUtil::OutputInfo("\n###################Memory Stats Start#################\n");
+            PV2WayUtil::OutputInfo("  numBytes %d\n", stats->numBytes);
+            PV2WayUtil::OutputInfo("  peakNumBytes %d\n", stats->peakNumBytes);
+            PV2WayUtil::OutputInfo("  numAllocs %d\n", stats->numAllocs);
+            PV2WayUtil::OutputInfo("  peakNumAllocs %d\n", stats->peakNumAllocs);
+            PV2WayUtil::OutputInfo("  numAllocFails %d\n", stats->numAllocFails);
+            PV2WayUtil::OutputInfo("  totalNumAllocs %d\n", stats->totalNumAllocs);
+            PV2WayUtil::OutputInfo("  totalNumBytes %d\n", stats->totalNumBytes);
+            PV2WayUtil::OutputInfo("\n###################Memory Stats End###################\n");
         }
 
     }
@@ -909,7 +912,7 @@ void engine_handler::ConfigureTest()
         }
         else if (!(iDisconnected) && (iSourceAndSinks->AllMIOsRemoved()) && (iRemoveSourceAndSinks))
         {
-            printf("Disconnecting from ConfigureTest.\n");
+            PV2WayUtil::OutputInfo("Disconnecting from ConfigureTest.\n");
             Disconnect();
         }
 

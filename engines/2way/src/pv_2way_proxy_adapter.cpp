@@ -640,6 +640,8 @@ void CPV2WayProxyAdapter::CommandCompleted(const PVCmdResponse& aResponse)
     CPVCmnInterfaceCmdMessage *iface_msg = (CPVCmnInterfaceCmdMessage *)aResponse.GetContext();
     PVMFStatus status = aResponse.GetCmdStatus();
 
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "CPV2WayProxyAdapter::CommandCompleted command type = %d, status = %d", iface_msg->GetType(), status));
     if (iface_msg && iface_msg->GetType() == PVT_COMMAND_QUERY_INTERFACE)
     {
         status = PVMFFailure;
@@ -719,6 +721,8 @@ void CPV2WayProxyAdapter::CommandCompleted(const PVCmdResponse& aResponse)
 void CPV2WayProxyAdapter::ProcessMessageL(CPVCmnInterfaceCmdMessage *aMsg)
 //called in the PV thread to field a command.
 {
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "CPV2WayProxyAdapter::ProcessMessageL command type = %d", aMsg->GetType()));
     int32 error = 0;
     //Call the engine, passing the command message pointer as the context data.
     //We will need the command message later in the response processing,

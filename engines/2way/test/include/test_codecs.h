@@ -18,8 +18,8 @@
 #ifndef TESTCODECS_H_INCLUDE
 #define TESTCODECS_H_INCLUDE
 
-#ifndef TEST_ENGINE_UTILITY_H_HEADER
-#include "test_engine_utility.h"
+#ifndef TEST_UTILITY_H_HEADER
+#include "test_utility.h"
 #endif
 
 class TestCodecs
