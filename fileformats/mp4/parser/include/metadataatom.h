@@ -22,10 +22,41 @@
 #include "atomutils.h"
 #endif
 
+#ifndef PV_ID3_PARCOM_H_INCLUDED
+#include "pv_id3_parcom.h"
+#endif
+
+
 #include "handleratom.h"
 #include "atom.h"
 #include "itunesilstatom.h"
 #include"atomdefs.h"
+
+class ID3V2Atom : public FullAtom
+{
+
+    public:
+        ID3V2Atom(MP4_FF_FILE *fp, uint32 size, uint32 type);
+        virtual ~ID3V2Atom();
+
+        void GetID3MetaData(PvmiKvpSharedPtrVector &id3Frames)
+        {
+            _pID3Parser->GetID3Frames(id3Frames);
+
+        }
+
+        // Language gets and sets (actually only 15 bits of the WORD)
+        uint16 getLanguageCode() const
+        {
+            return _language;
+        }
+
+    private:
+        uint16      _language;
+        PVID3ParCom* _pID3Parser;
+
+};
+
 
 class MetaDataAtom: public Atom
 {
@@ -328,14 +359,38 @@ class MetaDataAtom: public Atom
                 return temp;
         }
 
+        uint16 getID3V2LanguageCode()
+        {
+            if (_pid3v2Atom)
+                return _pid3v2Atom->getLanguageCode();
+            else
+                return 0;
+        }
+
+        bool IsID3V2Present()
+        {
+            if (_pid3v2Atom)
+                return true;
+            else
+                return false;
+        }
+
+        void GetID3MetaData(PvmiKvpSharedPtrVector &id3Frames)
+        {
+            if (_pid3v2Atom)
+                _pid3v2Atom->GetID3MetaData(id3Frames);
+        }
 
     private:
 
         HandlerAtom *_pHdlrAtom;
+        ID3V2Atom *_pid3v2Atom;
         // User ilst Data
         ITunesILSTAtom* _pITunesILSTAtom;
         PVLogger *iLogger;
 };
+
+
 
 
 #endif // METADATAATOM_H_INCLUDED

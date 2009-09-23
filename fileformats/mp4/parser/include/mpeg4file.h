@@ -92,8 +92,6 @@
 #include "pv_id3_parcom.h"
 #endif
 
-#define ID3V1_STR_MAX_SIZE 64
-
 class AVCSampleEntry;
 
 struct TrackIndex
@@ -239,13 +237,13 @@ class Mpeg4File : public IMpeg4File, public Parentable
         }
 
         // pvmm
-        virtual OSCL_wString& getPVTitle(MP4FFParserOriginalCharEnc &charType) ;
-        virtual OSCL_wString& getPVAuthor(MP4FFParserOriginalCharEnc &charType) ;
-        virtual OSCL_wString& getPVDescription(MP4FFParserOriginalCharEnc &charType) ;
-        virtual OSCL_wString& getPVRating(MP4FFParserOriginalCharEnc &charType) ;
-        virtual OSCL_wString& getPVCopyright(MP4FFParserOriginalCharEnc &charType) ;
-        virtual OSCL_wString& getPVVersion(MP4FFParserOriginalCharEnc &charType) ;
-        virtual OSCL_wHeapString<OsclMemAllocator> getCreationDate(MP4FFParserOriginalCharEnc &charType) ;
+        OSCL_wString& getPVTitle(MP4FFParserOriginalCharEnc &charType) ;
+        OSCL_wString& getPVAuthor(MP4FFParserOriginalCharEnc &charType) ;
+        OSCL_wString& getPVDescription(MP4FFParserOriginalCharEnc &charType) ;
+        OSCL_wString& getPVRating(MP4FFParserOriginalCharEnc &charType) ;
+        OSCL_wString& getPVCopyright(MP4FFParserOriginalCharEnc &charType) ;
+        OSCL_wString& getPVVersion(MP4FFParserOriginalCharEnc &charType) ;
+        OSCL_wHeapString<OsclMemAllocator> getCreationDate(MP4FFParserOriginalCharEnc &charType) ;
 
         // from 'ftyp' atom
         uint32 getCompatibiltyMajorBrand()
@@ -434,58 +432,76 @@ class Mpeg4File : public IMpeg4File, public Parentable
 
 //Metadata Retrieval Functions
 
-        virtual PVMFStatus populateMetadataVectors();
+        PVMFStatus populateMetadataVectors();
+
+        PVMFStatus InitMetaData(PVMFMetadataList* aAvailableMetadataKeys);
+        uint32 GetNumMetadataValues(PVMFMetadataList& aKeyList);
+        PVMFStatus GetMetadataValues(PVMFMetadataList& aKeyList, Oscl_Vector<PvmiKvp, OsclMemAllocator>& aValueList,
+                                     uint32 aStartingValueIndex, int32 aMaxValueEntries,
+                                     int32 &aNumentriesadded, uint32 &aID3ValueCount);
+        PVMFStatus ReleaseMetadataValue(PvmiKvp& aValueKVP);
+
 
         //Title Retrieval Functions
         virtual uint32 getNumTitle();
         virtual PVMFStatus getTitle(uint32 index, OSCL_wString& aVal, uint16& aLangCode, MP4FFParserOriginalCharEnc& aCharEncType);
-        virtual PVMFStatus populateTitleVector();
+        PVMFStatus populateTitleVector();
 
         //Author Retrieval Functions
-        virtual uint32 getNumAuthor();
-        virtual PVMFStatus getAuthor(uint32 index, OSCL_wString& aVal, uint16& aLangCode, MP4FFParserOriginalCharEnc& aCharEncType);
-        virtual PVMFStatus populateAuthorVector();
+        PVMFStatus getAuthor(uint32 index, OSCL_wString& aVal, uint16& aLangCode, MP4FFParserOriginalCharEnc& aCharEncType);
+        PVMFStatus populateAuthorVector();
 
         //Album Retrieval Functions
         virtual uint32 getNumAlbum();
         virtual PVMFStatus getAlbum(uint32 index, OSCL_wString& aVal, uint16& aLangCode, MP4FFParserOriginalCharEnc& aCharEncType);
-        virtual PVMFStatus populateAlbumVector();
+        PVMFStatus populateAlbumVector();
 
         //Artist Retrieval Functions
         virtual uint32 getNumArtist();
         virtual PVMFStatus getArtist(uint32 index, OSCL_wString& aVal, uint16& aLangCode, MP4FFParserOriginalCharEnc& aCharEncType);
-        virtual PVMFStatus populateArtistVector();
+        PVMFStatus populateArtistVector();
 
         //Genre Retrieval Functions
         virtual uint32 getNumGenre();
         virtual PVMFStatus getGenre(uint32 index, OSCL_wString& aVal, uint16& aLangCode, MP4FFParserOriginalCharEnc& aCharEncType);
-        virtual PVMFStatus populateGenreVector();
+        PVMFStatus populateGenreVector();
 
         //Year Retrieval Functions
         virtual uint32 getNumYear();
         virtual PVMFStatus getYear(uint32 index, uint32& aVal);
-        virtual PVMFStatus populateYearVector();
+        PVMFStatus populateYearVector();
 
         //Copyright Retrieval Functions
-        virtual uint32 getNumCopyright();
-        virtual PVMFStatus getCopyright(uint32 index, OSCL_wString& aVal, uint16& aLangCode, MP4FFParserOriginalCharEnc& aCharEncType);
-        virtual PVMFStatus populateCopyrightVector();
+        PVMFStatus getCopyright(uint32 index, OSCL_wString& aVal, uint16& aLangCode, MP4FFParserOriginalCharEnc& aCharEncType);
+        PVMFStatus populateCopyrightVector();
 
         //Comment Retrieval Functions
-        virtual uint32 getNumComment();
-        virtual PVMFStatus getComment(uint32 index, OSCL_wString& aVal, uint16& aLangCode, MP4FFParserOriginalCharEnc& aCharEncType);
-        virtual PVMFStatus populateCommentVector();
+        PVMFStatus getComment(uint32 index, OSCL_wString& aVal, uint16& aLangCode, MP4FFParserOriginalCharEnc& aCharEncType);
+        PVMFStatus populateCommentVector();
 
         //Description Retrieval Functions
-        virtual uint32 getNumDescription();
-        virtual PVMFStatus getDescription(uint32 index, OSCL_wString& aVal, uint16& aLangCode, MP4FFParserOriginalCharEnc& aCharEncType);
-        virtual PVMFStatus populateDescriptionVector();
+        PVMFStatus getDescription(uint32 index, OSCL_wString& aVal, uint16& aLangCode, MP4FFParserOriginalCharEnc& aCharEncType);
+        PVMFStatus populateDescriptionVector();
 
         //Rating Retrieval Functions
-        virtual uint32 getNumRating();
-        virtual PVMFStatus getRating(uint32 index, OSCL_wString& aVal, uint16& aLangCode, MP4FFParserOriginalCharEnc& aCharEncType);
-        virtual PVMFStatus populateRatingVector();
+        PVMFStatus getRating(uint32 index, OSCL_wString& aVal, uint16& aLangCode, MP4FFParserOriginalCharEnc& aCharEncType);
+        PVMFStatus populateRatingVector();
 
+        //Date Retrieval Functions
+        PVMFStatus getDate(uint32 index, OSCL_wString& aVal, MP4FFParserOriginalCharEnc& aCharEncType);
+        PVMFStatus populateDateVector();
+
+        //Lyricist Retrieval Functions
+        PVMFStatus getLyricist(uint32 index, OSCL_wString& aVal, uint16& aLangCode, MP4FFParserOriginalCharEnc& aCharEncType);
+        PVMFStatus populateLyricistVector();
+
+        //Composer Retrieval Functions
+        PVMFStatus getComposer(uint32 index, OSCL_wString& aVal, uint16& aLangCode, MP4FFParserOriginalCharEnc& aCharEncType);
+        PVMFStatus populateComposerVector();
+
+        //Version Retrieval Functions
+        PVMFStatus getVersion(uint32 index, OSCL_wString& aVal, MP4FFParserOriginalCharEnc& aCharEncType);
+        PVMFStatus populateVersionVector();
 
         uint16 getAssetInfoTitleLangCode(int32 index) const
         {
@@ -1262,6 +1278,15 @@ class Mpeg4File : public IMpeg4File, public Parentable
                 return temp;
         }
 
+        //ID3V2 Metadata
+        uint16 getID3V2LangCode() const
+        {
+            if (_pmovieAtom != NULL)
+            {
+                return (_pmovieAtom->getID3V2LangCode());
+            }
+        }
+
         // For DRM Atom.
         bool IsTFRAPresentForTrack(uint32 TrackId, bool oVideoAudioTextTrack);
 
@@ -1276,12 +1301,17 @@ class Mpeg4File : public IMpeg4File, public Parentable
         {
             return  _isMovieFragmentsPresent;
         }
-        uint32 GetByteOffsetToStartOfAudioFrames();
         void GetID3MetaData(PvmiKvpSharedPtrVector &id3Frames);
-        bool IsID3Frame(const OSCL_String& frameType);
-        void GetID3Frame(const OSCL_String& aFrameType, PvmiKvpSharedPtrVector& aFrame);
-        PVID3Version GetID3Version() const;
         void parseID3Header(MP4_FF_FILE * aFile);
+
+        bool IsID3V2Present()
+        {
+            if (_pmovieAtom)
+                return _pmovieAtom->IsID3V2Present();
+            else
+                return false;
+
+        }
 
         uint32 getContentType();
         bool CreateDataStreamSessionForExternalDownload(OSCL_wString& aFilename,
@@ -1303,8 +1333,24 @@ class Mpeg4File : public IMpeg4File, public Parentable
             }
             return 0;
         }
-        void ReserveMemoryForLangCodeVector(Oscl_Vector<uint16, OsclMemAllocator> &iLangCode, int32 capacity, int32 &leavecode);
-        void ReserveMemoryForValuesVector(Oscl_Vector<OSCL_wHeapString<OsclMemAllocator>, OsclMemAllocator> &iValues, int32 capacity, int32 &leavecode);
+
+        //Metadata Retrieval Functions
+        PVMFStatus InitImotionMetaData(PVMFMetadataList* aAvailableMetadataKeys);
+        uint32 GetNumImotionMetadataValues(PVMFMetadataList& aKeyList);
+        PVMFStatus DoGetImotionMetadataValues(PVMFMetadataList& aKeyList, Oscl_Vector<PvmiKvp, OsclMemAllocator>& aValueList, uint32 aStartingValueIndex, int32 aMaxValueEntries, int32 &numentriesadded);
+        void PushToAvailableMetadataKeysList(PVMFMetadataList* aAvailableMetadataKeys, const char* aKeystr, char* aOptionalParam = NULL);
+        int32 AddToValueList(Oscl_Vector<PvmiKvp, OsclMemAllocator>& aValueList, PvmiKvp& aNewValue);
+        PVMFStatus CreateNewArray(uint32** aTrackidList, uint32 aNumTracks);
+        PVMFStatus PushValueToList(Oscl_Vector<OSCL_HeapString<OsclMemAllocator>, OsclMemAllocator> &aRefMetadataKeys,
+                                   PVMFMetadataList *&aKeyListPtr,
+                                   uint32 aLcv);
+        PVMFStatus PushKVPToMetadataValueList(Oscl_Vector<PvmiKvp, OsclMemAllocator>* aVecPtr, PvmiKvp& aKvpVal);
+        void getLanguageCode(uint16 langcode, int8 *LangCode);
+        void getBrand(uint32 langcode, char *LangCode);
+        PVMFStatus GetIndexParamValues(const char* aString, uint32& aStartIndex, uint32& aEndIndex);
+        void DeleteAPICStruct(PvmfApicStruct*& aAPICStruct);
+        PVMFStatus populateID3Metadata(int aVersionFlag);
+
         OSCL_wHeapString<OsclMemAllocator> _emptyString;
         UserDataAtom *_puserDataAtom;
         FileTypeAtom *_pFileTypeAtom;
@@ -1405,12 +1451,41 @@ class Mpeg4File : public IMpeg4File, public Parentable
         Oscl_Vector<uint16, OsclMemAllocator> iRatingLangCode;
         Oscl_Vector<MP4FFParserOriginalCharEnc, OsclMemAllocator> iRatingCharType;
 
-        oscl_wchar _id3v1Title[ID3V1_STR_MAX_SIZE];
-        oscl_wchar _id3v1Album[ID3V1_STR_MAX_SIZE];
-        oscl_wchar _id3v1Artist[ID3V1_STR_MAX_SIZE];
-        oscl_wchar _id3v1Comment[ID3V1_STR_MAX_SIZE];
-        uint32 _id3v1Year;
+        //Master Date List
+        Oscl_Vector<OSCL_wHeapString<OsclMemAllocator>, OsclMemAllocator> dateValues;
+        Oscl_Vector<MP4FFParserOriginalCharEnc, OsclMemAllocator> iDateCharType;
+
+        //Master Lyricist List
+        Oscl_Vector<OSCL_wHeapString<OsclMemAllocator>, OsclMemAllocator> lyricistValues;
+        Oscl_Vector<uint16, OsclMemAllocator> iLyricistLangCode;
+        Oscl_Vector<MP4FFParserOriginalCharEnc, OsclMemAllocator> iLyricistCharType;
+
+        //Master Composer List
+        Oscl_Vector<OSCL_wHeapString<OsclMemAllocator>, OsclMemAllocator> composerValues;
+        Oscl_Vector<uint16, OsclMemAllocator> iComposerLangCode;
+        Oscl_Vector<MP4FFParserOriginalCharEnc, OsclMemAllocator> iComposerCharType;
+
+        //Master Version List
+        Oscl_Vector<OSCL_wHeapString<OsclMemAllocator>, OsclMemAllocator> versionValues;
+        Oscl_Vector<MP4FFParserOriginalCharEnc, OsclMemAllocator> iVersionCharType;
+
         uint32 _fileSize;
+
+        //To maintain the number of these metadata values found
+        uint32 numAlbum;
+        uint32 numArtist;
+        uint32 numYear;
+        uint32 numTitle;
+        uint32 numComment;
+        uint32 numAuthor;
+        uint32 numGenre;
+        uint32 numCopyright;
+        uint32 numRating;
+        uint32 numDescription;
+        uint32 numDate;
+        uint32 numLyricist;
+        uint32 numComposer;
+        uint32 numVersion;
 
 };
 

@@ -71,8 +71,6 @@
 
 #include "m4v_config_parser.h"
 
-#include "getactualaacconfig.h"
-
 #include "oscl_exclusive_ptr.h"
 
 #define PVMF_MP4_MIME_FORMAT_AUDIO_UNKNOWN  "x-pvmf/audio/unknown"
@@ -163,6 +161,7 @@ PVMFMP4FFParserNode::PVMFMP4FFParserNode(int32 aPriority) :
     iCPMGetMetaDataValuesCmdId     = 0;
     iMP4ParserNodeMetadataValueCount = 0;
     iCPMGetLicenseInterfaceCmdId     = 0;
+    iTotalID3MetaDataTagInValueList = 0;
 
     minTime = 0;
     avgTime = 0;
@@ -5940,6 +5939,7 @@ void PVMFMP4FFParserNode::CleanupFileSource()
 {
     iAvailableMetadataKeys.clear();
     iMP4ParserNodeMetadataValueCount = 0;
+    iTotalID3MetaDataTagInValueList = 0;
     iCPMMetadataKeys.clear();
     iVideoDimensionInfoVec.clear();
 
@@ -7698,13 +7698,6 @@ void PVMFMP4FFParserNode::DataStreamErrorEvent(const PVMFAsyncEvent& aEvent)
     OSCL_ASSERT(false);
 }
 
-void PVMFMP4FFParserNode::getBrand(uint32 aBrandVal, char *BrandVal)
-{
-    BrandVal[0] = (aBrandVal >> 24);
-    BrandVal[1] = (aBrandVal >> 16);
-    BrandVal[2] = (aBrandVal >> 8);
-    BrandVal[3] =  aBrandVal;
-}
 
 bool PVMFMP4FFParserNode::GetTrackPortInfoForTrackID(PVMP4FFNodeTrackPortInfo*& aInfo,
         uint32 aTrackID)
@@ -8694,105 +8687,7 @@ int32 PVMFMP4FFParserNode::FindVideoDisplayHeight(uint32 aId)
     return display_height;
 }
 
-uint32 PVMFMP4FFParserNode::GetNumAudioChannels(uint32 aId)
-{
-    uint32 num_channels = 0;
-    uint8 audioObjectType;
-    uint8 sampleRateIndex;
-    uint32 samplesPerFrame;
 
-    OSCL_HeapString<OsclMemAllocator> trackMIMEType;
-    iMP4FileHandle->getTrackMIMEType(aId, trackMIMEType);
-
-    if ((oscl_strncmp(trackMIMEType.get_str(), PVMF_MIME_AMR, oscl_strlen(PVMF_MIME_AMR)) == 0) ||
-            (oscl_strncmp(trackMIMEType.get_str(), PVMF_MIME_AMR_IETF, oscl_strlen(PVMF_MIME_AMR_IETF)) == 0) ||
-            (oscl_strncmp(trackMIMEType.get_str(), PVMF_MIME_AMRWB_IETF, oscl_strlen(PVMF_MIME_AMRWB_IETF)) == 0))
-    {
-        //always mono
-        num_channels = 1;
-    }
-    else if (oscl_strncmp(trackMIMEType.get_str(), PVMF_MIME_MPEG4_AUDIO, oscl_strlen(PVMF_MIME_MPEG4_AUDIO)) == 0)
-    {
-        int32 specinfosize =
-            (int32)(iMP4FileHandle->getTrackDecoderSpecificInfoSize(aId));
-        if (specinfosize != 0)
-        {
-            // Retrieve the decoder specific info from file parser
-            uint8* specinfoptr =
-                iMP4FileHandle->getTrackDecoderSpecificInfoContent(aId);
-
-            GetActualAacConfig(specinfoptr,
-                               &audioObjectType,
-                               &specinfosize,
-                               &sampleRateIndex,
-                               &num_channels,
-                               &samplesPerFrame);
-        }
-    }
-
-    return num_channels;
-}
-
-uint32 PVMFMP4FFParserNode::GetAudioSampleRate(uint32 aId)
-{
-    uint32 sample_rate = 0;
-    uint32 num_channels;
-    uint8 audioObjectType;
-    uint8 sampleRateIndex;
-    uint32 samplesPerFrame;
-
-    const uint32 sample_freq_table[13] =
-        {96000, 88200, 64000, 48000,
-         44100, 32000, 24000, 22050,
-         16000, 12000, 11025, 8000,
-         7350
-        };
-
-    OSCL_HeapString<OsclMemAllocator> trackMIMEType;
-    iMP4FileHandle->getTrackMIMEType(aId, trackMIMEType);
-
-    if ((oscl_strncmp(trackMIMEType.get_str(), PVMF_MIME_AMR, oscl_strlen(PVMF_MIME_AMR)) == 0) ||
-            (oscl_strncmp(trackMIMEType.get_str(), PVMF_MIME_AMR_IETF, oscl_strlen(PVMF_MIME_AMR_IETF)) == 0))
-    {
-        //always 8KHz
-        sample_rate = 8000;
-    }
-    else if (oscl_strncmp(trackMIMEType.get_str(), PVMF_MIME_AMRWB_IETF, oscl_strlen(PVMF_MIME_AMRWB_IETF)) == 0)
-    {
-        //always 16KHz
-        sample_rate = 16000;
-    }
-    else if (oscl_strncmp(trackMIMEType.get_str(), PVMF_MIME_MPEG4_AUDIO, oscl_strlen(PVMF_MIME_MPEG4_AUDIO)) == 0)
-    {
-        int32 specinfosize =
-            (int32)(iMP4FileHandle->getTrackDecoderSpecificInfoSize(aId));
-        if (specinfosize != 0)
-        {
-            // Retrieve the decoder specific info from file parser
-            uint8* specinfoptr =
-                iMP4FileHandle->getTrackDecoderSpecificInfoContent(aId);
-
-            GetActualAacConfig(specinfoptr,
-                               &audioObjectType,
-                               &specinfosize,
-                               &sampleRateIndex,
-                               &num_channels,
-                               &samplesPerFrame);
-            if (sampleRateIndex < 13)
-            {
-                sample_rate = sample_freq_table[(uint32)sampleRateIndex];
-            }
-        }
-    }
-    return sample_rate;
-}
-
-uint32 PVMFMP4FFParserNode::GetAudioBitsPerSample(uint32 aId)
-{
-    OSCL_UNUSED_ARG(aId);
-    //always 16 bits per samples
-    return 16;
-}
 
 PVMFStatus PVMFMP4FFParserNode::FindBestThumbnailKeyFrame(uint32 aId, uint32& aKeyFrameNum)
 {

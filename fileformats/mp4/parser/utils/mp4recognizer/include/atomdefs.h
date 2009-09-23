@@ -278,6 +278,7 @@ const uint32    ITUNES_LYRICS_ATOM = FourCharConstToUint32('©', 'l', 'y', 'r');
 const uint32    ITUNES_DESCRIPTION_ATOM = FourCharConstToUint32('d', 'e', 's', 'c');
 const uint32    ITUNES_COPYRIGHT_ATOM = FourCharConstToUint32('c', 'p', 'r', 't');
 const uint32    META_DATA_ATOM = FourCharConstToUint32('m', 'e', 't', 'a');
+const uint32    ID3V2_ATOM = FourCharConstToUint32('I', 'D', '3', '2');
 const uint32    ITUNES_FREE_FORM_DATA_NAME_ATOM = FourCharConstToUint32('n', 'a', 'm', 'e');
 const uint32    ITUNES_MDIRAPPL_HDLR_PART1 = FourCharConstToUint32('m', 'd', 'i', 'r');
 const uint32    ITUNES_MDIRAPPL_HDLR_PART2 = FourCharConstToUint32('a', 'p', 'p', 'l');
@@ -306,6 +307,86 @@ const uint32    SMV_SAMPLE_ENTRY = FourCharConstToUint32('s', 's', 'm', 'v');
 const uint32    SMV_SPECIFIC_BOX = FourCharConstToUint32('d', 's', 'm', 'v');
 const uint32    VMR_SAMPLE_ENTRY = FourCharConstToUint32('s', 'v', 'm', 'r');
 const uint32    VMR_SPECIFIC_BOX = FourCharConstToUint32('d', 'v', 'm', 'r');
+
+
+// Constant character strings for metadata keys
+static const char PVMP4METADATA_CLIP_TYPE_KEY[] = "clip-type";
+static const char PVMP4METADATA_ALBUM_KEY[] = "album";
+static const char PVMP4METADATA_COMMENT_KEY[] = "comment";
+static const char PVMP4METADATA_NUM_GRAPHICS_KEY[] = "graphic/num-frames;format=APIC";
+
+
+static const char PVMP4METADATA_LOCATION_KEY[] = "location;format=3GPP_LOCATION";
+static const char PVMP4METADATA_YEAR_KEY[] = "year";
+static const char PVMP4METADATA_AUTHOR_KEY[] = "author";
+static const char PVMP4METADATA_ARTIST_KEY[] = "artist";
+static const char PVMP4METADATA_GENRE_KEY[] = "genre";
+static const char PVMP4METADATA_KEYWORD_KEY[] = "keyword";
+static const char PVMP4METADATA_CLASSIFICATION_KEY[] = "classification";
+static const char PVMP4METADATA_TITLE_KEY[] = "title";
+static const char PVMP4METADATA_DESCRIPTION_KEY[] = "description";
+static const char PVMP4METADATA_RATING_KEY[] = "rating";
+static const char PVMP4METADATA_COPYRIGHT_KEY[] = "copyright";
+static const char PVMP4METADATA_VERSION_KEY[] = "version";
+static const char PVMP4METADATA_DATE_KEY[] = "date";
+static const char PVMP4METADATA_DURATION_KEY[] = "duration";
+static const char PVMP4METADATA_NUMTRACKS_KEY[] = "num-tracks";
+static const char PVMP4METADATA_IS_MOOF_KEY[] = "movie-fragments-present";
+
+static const char PVMP4METADATA_TOOL_KEY[] = "tool";
+static const char PVMP4METADATA_WRITER_KEY[] = "writer";
+static const char PVMP4METADATA_GROUPING_KEY[] = "grouping";
+static const char PVMP4METADATA_TRACKDATA_KEY[] = "track data";
+static const char PVMP4METADATA_COMPILATION_KEY[] = "compilation";
+static const char PVMP4METADATA_TEMPO_KEY[] = "tempo";
+static const char PVMP4METADATA_DISKDATA_KEY[] = "disk";
+static const char PVMP4METADATA_FREEFORMDATA_KEY[] = "free form data";
+static const char PVMP4METADATA_CDDBID_KEY[] = "CD identifier";
+static const char PVMP4METADATA_LYRICS_KEY[] = "lyrics";
+static const char PVMP4METADATA_RANDOM_ACCESS_DENIED_KEY[] = "random-access-denied";
+//////////////////////////////////////////////////////////
+
+static const char PVMP4METADATA_TRACKINFO_TYPE_KEY[] = "track-info/type";
+static const char PVMP4METADATA_TRACKINFO_TRACKID_KEY[] = "track-info/track-id";
+static const char PVMP4METADATA_TRACKINFO_DURATION_KEY[] = "track-info/duration";
+static const char PVMP4METADATA_TRACKINFO_BITRATE_KEY[] = "track-info/bit-rate";
+static const char PVMP4METADATA_TRACKINFO_SAMPLECOUNT_KEY[] = "track-info/num-samples";
+static const char PVMP4METADATA_TRACKINFO_SELECTED_KEY[] = "track-info/selected";
+static const char PVMP4METADATA_TRACKINFO_VIDEO_WIDTH_KEY[] = "track-info/video/width";
+static const char PVMP4METADATA_TRACKINFO_VIDEO_HEIGHT_KEY[] = "track-info/video/height";
+static const char PVMP4METADATA_GRAPHICS_KEY[] = "graphic;format=APIC";
+
+static const char PVMP4METADATA_TRACKINFO_AUDIO_FORMAT_KEY[] = "track-info/audio/format";
+static const char PVMP4METADATA_TRACKINFO_AUDIO_NUMCHANNELS_KEY[] = "track-info/audio/channels";
+static const char PVMP4METADATA_TRACKINFO_SAMPLERATE_KEY[] = "track-info/sample-rate";
+static const char PVMP4METADATA_TRACKINFO_AUDIO_BITS_PER_SAMPLE_KEY[] = "track-info/audio/bits-per-sample";
+
+static const char PVMP4METADATA_TRACKINFO_VIDEO_FORMAT_KEY[] = "track-info/video/format";
+static const char PVMP4METADATA_TRACKINFO_VIDEO_PROFILE_KEY[] = "track-info/video/profile";
+static const char PVMP4METADATA_TRACKINFO_VIDEO_LEVEL_KEY[] = "track-info/video/level";
+static const char PVMP4METADATA_TRACKINFO_FRAME_RATE_KEY[] = "track-info/frame-rate";
+static const char PVMP4METADATA_TRACKINFO_TRACK_NUMBER_KEY[] = "track-info/track-number";
+static const char PVMP4METADATA_TRACKINFO_NUM_KEY_SAMPLES_KEY[] = "track-info/num-key-samples";
+
+static const char PVMP4METADATA_MAJORBRAND_KEY[] = "mp4ff/major-brand";
+static const char PVMP4METADATA_COMPATIBLEBRAND_KEY[] = "mp4ff/compatible-brand";
+
+static const char PVMP4METADATA_SEMICOLON[] = ";";
+static const char PVMP4METADATA_TIMESCALE[] = "timescale=";
+static const char PVMP4METADATA_INDEX[] = "index=";
+static const char PVMP4METADATA_LANG_CODE[] = "iso-639-2-lang=";
+static const char PVMP4METADATA_NOT_SOTRABLE[] = "not-storable";
+static const char PVMP4METADATA_MAXSIZE[] = "maxsize=";
+static const char PVMP4METADATA_REQ_SIZE[] = "reqsize=";
+static const char PVMP4METADATA_ORIG_CHAR_ENC[] = "orig-char-enc=";
+
+static const char PVMP4_ALL_METADATA_KEY[] = "all";
+
+#define PVMF_MP4_MIME_FORMAT_AUDIO_UNKNOWN  "x-pvmf/audio/unknown"
+#define PVMF_MP4_MIME_FORMAT_VIDEO_UNKNOWN  "x-pvmf/video/unknown"
+#define PVMF_MP4_MIME_FORMAT_UNKNOWN        "x-pvmf/unknown-media/unknown"
+
+
 
 // VARIOUS DESCRIPTOR TAGS CURRENTLY IN USE
 #define ES_DESCRIPTOR_TAG             0x03

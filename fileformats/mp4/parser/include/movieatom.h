@@ -445,6 +445,24 @@ class MovieAtom : public Atom
 
         uint16 getAssetInfoRecordingYear(int32 index);
 
+        uint16 getID3V2LangCode() ;
+
+        bool IsID3V2Present()
+        {
+            if (_pMetaDataAtom)
+                return _pMetaDataAtom->IsID3V2Present();
+            else
+                return false;
+
+        }
+
+        void GetID3MetaData(PvmiKvpSharedPtrVector &id3Frames)
+        {
+            if (_pMetaDataAtom)
+                _pMetaDataAtom->GetID3MetaData(id3Frames);
+        }
+
+
         int16 getLayer(uint32 id);
         uint16 getAlternateGroup(uint32 id);
         int32 getTextTrackWidth(uint32 id);
@@ -784,6 +802,7 @@ class MovieAtom : public Atom
         MovieHeaderAtom       *_pmovieHeaderAtom;
         ObjectDescriptorAtom  *_pobjectDescriptorAtom;
         UserDataAtom          *_pUserDataAtom;
+        MetaDataAtom    *_pMetaDataAtom;
 
 
         MovieExtendsAtom      *_pMovieExtendsAtom;

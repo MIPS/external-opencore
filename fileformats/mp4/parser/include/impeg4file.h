@@ -64,6 +64,10 @@
 #include "pv_mp4ffparser_config.h"
 #endif
 
+#ifndef PVMF_META_DATA_TYPES_H_INCLUDED
+#include "pvmf_meta_data_types.h"
+#endif
+
 /* CPM Related Header Files */
 #ifndef CPM_H_INCLUDED
 #include "cpm.h"
@@ -118,15 +122,6 @@ class IMpeg4File : public ISucceedFail
 
 
         // META DATA APIS
-
-        // From PVUserDataAtom 'pvmm'
-        virtual OSCL_wString& getPVVersion(MP4FFParserOriginalCharEnc &charType) = 0;       // return _version string
-        virtual OSCL_wHeapString<OsclMemAllocator> getCreationDate(MP4FFParserOriginalCharEnc &charType) = 0;   // return _creationDate string
-
-        // from 'ftyp' atom
-        virtual uint32 getCompatibiltyMajorBrand() = 0;
-        virtual uint32 getCompatibiltyMajorBrandVersion() = 0;
-        virtual Oscl_Vector<uint32, OsclMemAllocator> *getCompatibiltyList() = 0;
 
         // From Movie
         virtual int32 getNumTracks() = 0;
@@ -222,24 +217,6 @@ class IMpeg4File : public ISucceedFail
                 MediaMetaInfo *mInfo) = 0;
 
         virtual uint32 getSampleCountInTrack(uint32 id) = 0;
-
-        virtual uint32 getAssetInfoClassificationEntity(int32 index = 0) const = 0;
-        virtual uint16 getAssetInfoClassificationTable(int32 index = 0) const = 0;
-        virtual uint16 getAssetInfoClassificationLangCode(int32 index = 0) const = 0;
-        virtual OSCL_wString& getAssetInfoClassificationNotice(MP4FFParserOriginalCharEnc &charType, int32 index = 0) const = 0;
-        virtual uint16 getAssetInfoNumKeyWords(int32 index = 0) const = 0;
-        virtual uint16 getAssetInfoKeyWordLangCode(int32 index = 0) const = 0;
-        virtual OSCL_wString& getAssetInfoKeyWord(int32 atomIndex, int32 keyWordIndex) const = 0;
-        virtual int32 getNumAssetInfoClassificationAtoms() = 0;
-        virtual int32 getNumAssetInfoKeyWordAtoms() = 0;
-        virtual int32 getNumAssetInfoLocationAtoms() = 0;
-
-        virtual PvmfAssetInfo3GPPLocationStruct *getAssetInfoLocationStruct(int32 index = 0) const = 0;
-        virtual uint8 getAssetInfoAlbumTrackNumber(int32 index = 0) = 0;
-
-        //id3
-        virtual PVID3Version GetID3Version() const = 0;
-        virtual void GetID3MetaData(PvmiKvpSharedPtrVector &id3Frames) = 0;
 
         virtual bool IsTFRAPresentForAllTrack(uint32 numTracks, uint32 *trackList) = 0;
         virtual uint32 getNumKeyFrames(uint32 trackid) = 0;
@@ -421,28 +398,12 @@ class IMpeg4File : public ISucceedFail
         virtual int32 getTrackTSStartOffset(uint32& aTSOffset, uint32 aTrackID) = 0;
 
         // ITunes Specific functions
-
-        virtual OSCL_wHeapString<OsclMemAllocator> getITunesTool() const = 0;
-        virtual OSCL_wHeapString<OsclMemAllocator> getITunesEncodedBy() const = 0;
-        virtual OSCL_wHeapString<OsclMemAllocator> getITunesWriter() const = 0;
-        virtual OSCL_wHeapString<OsclMemAllocator> getITunesGroupData() const = 0;
         virtual uint16 getITunesThisTrackNo() const = 0;
-        virtual PvmfApicStruct* getITunesImageData() const = 0;
+        virtual OSCL_wHeapString<OsclMemAllocator> getITunesWriter() const = 0;
         virtual uint16 getITunesTotalTracks() const = 0;
-        virtual bool IsITunesCompilationPart() const = 0;
-        virtual bool IsITunesContentRating() const = 0;
-        virtual uint16 getITunesBeatsPerMinute() const = 0;
-        virtual uint16 getITunesThisDiskNo() const = 0;
-        virtual uint16 getITunesTotalDisks() const = 0;
-        virtual OSCL_wHeapString<OsclMemAllocator> getITunesNormalizationData() const = 0;
-        virtual OSCL_wHeapString<OsclMemAllocator> getITunesCDIdentifierData(uint8 aCDdatanumIndex) = 0;
-        virtual OSCL_wHeapString<OsclMemAllocator> getITunesCDTrackNumberData() const = 0;
-        virtual OSCL_wHeapString<OsclMemAllocator> getITunesCDDB1Data() const = 0;
-        virtual OSCL_wHeapString<OsclMemAllocator> getITunesLyrics() const = 0;
-        virtual uint8 getITunesTotalCDIdentifierData() const = 0;
+        virtual PvmfApicStruct* getITunesImageData() const = 0;
+
         virtual bool IsMovieFragmentsPresent() const = 0;
-        //Returns the Subtitle of individual track
-        virtual OSCL_wHeapString<OsclMemAllocator> getITunesTrackSubTitle() const = 0;
 
         // Reposition Related Video Track present API
         virtual void ResetVideoTrackPresentFlag() = 0;
@@ -450,10 +411,6 @@ class IMpeg4File : public ISucceedFail
         //APIs to return the no. of titles and their metadata values respectively.
         virtual uint32 getNumTitle() = 0;
         virtual PVMFStatus getTitle(uint32 index, OSCL_wString& aVal, uint16& aLangCode, MP4FFParserOriginalCharEnc& aCharEncType) = 0;
-
-        //APIs to return the no. of authors and their metadata values respectively.
-        virtual uint32 getNumAuthor() = 0;
-        virtual PVMFStatus getAuthor(uint32 index, OSCL_wString& aVal, uint16& aLangCode, MP4FFParserOriginalCharEnc& aCharEncType) = 0;
 
         //APIs to return the no. of albums and their metadata values respectively.
         virtual uint32 getNumAlbum() = 0;
@@ -472,21 +429,14 @@ class IMpeg4File : public ISucceedFail
         virtual uint32 getNumYear() = 0;
         virtual PVMFStatus getYear(uint32 index, uint32& aVal) = 0;
 
-        //APIs to return the no. of copyright and their metadata values respectively.
-        virtual uint32 getNumCopyright() = 0;
-        virtual PVMFStatus getCopyright(uint32 index, OSCL_wString& aVal, uint16& aLangCode, MP4FFParserOriginalCharEnc& aCharEncType) = 0;
-
-        //APIs to return the no. of comment and their metadata values respectively.
-        virtual uint32 getNumComment() = 0;
-        virtual PVMFStatus getComment(uint32 index, OSCL_wString& aVal, uint16& aLangCode, MP4FFParserOriginalCharEnc& aCharEncType) = 0;
-
-        //APIs to return the no. of description and their metadata values respectively.
-        virtual uint32 getNumDescription() = 0;
-        virtual PVMFStatus getDescription(uint32 index, OSCL_wString& aVal, uint16& aLangCode, MP4FFParserOriginalCharEnc& aCharEncType) = 0;
-
-        //APIs to return the no. of rating and their metadata values respectively.
-        virtual uint32 getNumRating() = 0;
-        virtual PVMFStatus getRating(uint32 index, OSCL_wString& aVal, uint16& aLangCode, MP4FFParserOriginalCharEnc& aCharEncType) = 0;
+        //Metadata related APIs
+        virtual uint32 GetNumMetadataValues(PVMFMetadataList& aKeyList) = 0;
+        virtual PVMFStatus GetMetadataValues(PVMFMetadataList& aKeyList,
+                                             Oscl_Vector<PvmiKvp, OsclMemAllocator>& aValueList,
+                                             uint32 aStartingValueIndex, int32 aMaxValueEntries,
+                                             int32 &aNumentriesadded, uint32 &aID3ValueCount) = 0;
+        virtual PVMFStatus ReleaseMetadataValue(PvmiKvp& aValueKVP) = 0;
+        virtual PVMFStatus InitMetaData(PVMFMetadataList* aAvailableMetadataKeys) = 0;
 
 
 };

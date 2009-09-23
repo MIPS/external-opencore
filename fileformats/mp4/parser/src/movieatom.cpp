@@ -55,6 +55,7 @@ OSCL_EXPORT_REF MovieAtom::MovieAtom(MP4_FF_FILE *fp,
     _pmovieHeaderAtom = NULL;
     _pobjectDescriptorAtom = NULL;
     _pUserDataAtom = NULL;
+    _pMetaDataAtom = NULL;
     _pMovieExtendsAtom = NULL;
     _isMovieFragmentPresent = false;
     _oVideoTrackPresent = false;
@@ -133,8 +134,7 @@ OSCL_EXPORT_REF MovieAtom::MovieAtom(MP4_FF_FILE *fp,
             }
             else if ((atomType == FREE_SPACE_ATOM) ||
                      (atomType == UUID_ATOM) ||
-                     (atomType == UNKNOWN_ATOM) ||
-                     (atomType == META_DATA_ATOM))
+                     (atomType == UNKNOWN_ATOM))
             {
                 if (atomSize < DEFAULT_ATOM_SIZE)
                 {
@@ -152,6 +152,34 @@ OSCL_EXPORT_REF MovieAtom::MovieAtom(MP4_FF_FILE *fp,
                 atomSize -= DEFAULT_ATOM_SIZE;
                 AtomUtils::seekFromCurrPos(fp, atomSize);
             }
+            else if (atomType == META_DATA_ATOM)
+            {
+                if (_pMetaDataAtom == NULL)
+                {
+                    PV_MP4_FF_NEW(fp->auditCB, MetaDataAtom, (fp, atomSize, atomType), _pMetaDataAtom);
+                    if (!_pMetaDataAtom->MP4Success())
+                    {
+                        //If Metadata parsing fails for some reason, continue parsing the remaining file
+                        AtomUtils::seekFromStart(fp, currPtr);
+                        AtomUtils::seekFromCurrPos(fp, atomSize);
+                        PV_MP4_FF_DELETE(NULL, MetaDataAtom, _pMetaDataAtom);
+                        _pMetaDataAtom = NULL;
+                        count -= atomSize;
+                    }
+                    else
+                    {
+                        count -= _pMetaDataAtom->getSize();
+                    }
+                }
+                else
+                {
+                    //duplicate atom
+                    count -= atomSize;
+                    atomSize -= DEFAULT_ATOM_SIZE;
+                    AtomUtils::seekFromCurrPos(fp, atomSize);
+                }
+            }
+
             else if (atomType == MOVIE_HEADER_ATOM)
             {
                 // mvhd
@@ -348,6 +376,10 @@ OSCL_EXPORT_REF MovieAtom::~MovieAtom()
         PV_MP4_FF_DELETE(NULL, TrackAtom, (*_ptrackArray)[i]);
     }
     PV_MP4_FF_TEMPLATED_DELETE(NULL, trackAtomVecType, Oscl_Vector, _ptrackArray);
+    if (_pMetaDataAtom != NULL)
+    {
+        PV_MP4_FF_DELETE(NULL, MetaDataAtom, _pMetaDataAtom);
+    }
     if (_pMovieExtendsAtom != NULL)
     {
         PV_MP4_FF_DELETE(NULL, MovieExtendsAtom , _pMovieExtendsAtom);
@@ -1324,6 +1356,18 @@ uint16 MovieAtom::getAssetInfoTitleLangCode(int32 index)
     else
     {
         return (0xFFFF);
+    }
+}
+
+uint16 MovieAtom::getID3V2LangCode()
+{
+    if (_pMetaDataAtom != NULL)
+    {
+        return _pMetaDataAtom->getID3V2LanguageCode();
+    }
+    else
+    {
+        return 0;
     }
 }
 

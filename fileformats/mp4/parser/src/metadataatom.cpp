@@ -26,6 +26,8 @@ MetaDataAtom::MetaDataAtom(MP4_FF_FILE *fp, uint32 size, uint32 type): Atom(fp, 
     // User ilst Data
     _pITunesILSTAtom = NULL;
     _pHdlrAtom = NULL;
+    _pid3v2Atom = NULL;
+
     uint32 _count = _size - getDefaultSize();
 
     uint32 data_32_hdlr = 0;
@@ -82,16 +84,26 @@ MetaDataAtom::MetaDataAtom(MP4_FF_FILE *fp, uint32 size, uint32 type): Atom(fp, 
                 _pHdlrAtom = NULL;
                 _count -= atomSize;
             }
-
-            if (_pHdlrAtom != NULL)
-            {
-                if (_pHdlrAtom->getHandlerType() != ITUNES_MDIRAPPL_HDLR_PART1)
-                {
-                    // Skip the parsing...
-                    fp->_pvfile.Seek(atomSize, Oscl_File::SEEKCUR);
-                    return;
-                }
+            else
                 _count -= _pHdlrAtom->getSize();
+
+        }
+        else if (atomType == ID3V2_ATOM)
+        {
+            PV_MP4_FF_NEW(fp->auditCB, ID3V2Atom, (fp, atomSize, atomType), _pid3v2Atom);//id32
+
+            // Error checking
+            if (!_pid3v2Atom->MP4Success())
+            {
+                AtomUtils::seekFromStart(fp, currPtr);
+                AtomUtils::seekFromCurrPos(fp, atomSize);
+                PV_MP4_FF_DELETE(NULL, ID3V2Atom, _pid3v2Atom);
+                _pid3v2Atom = NULL;
+                _count -= atomSize;
+            }
+            else
+            {
+                _count -= _pid3v2Atom->getSize();
             }
         }
         // Read the ilst Atom
@@ -123,4 +135,57 @@ MetaDataAtom::~MetaDataAtom()
     {
         PV_MP4_FF_DELETE(NULL, ITunesILSTAtom, _pITunesILSTAtom);
     }
+    if (_pid3v2Atom != NULL)
+    {
+        PV_MP4_FF_DELETE(NULL, ID3V2Atom, _pid3v2Atom);
+    }
+
 }
+
+
+ID3V2Atom::ID3V2Atom(MP4_FF_FILE *fp, uint32 size, uint32 type)
+        : FullAtom(fp, size, type)
+{
+
+    if (_success)
+    {
+        if (!AtomUtils::read16(fp, _language))
+        {
+            _success = false;
+            _mp4ErrorCode = READ_ID3V2_ATOM_FAILED;
+            return;
+        }
+        else
+        {
+            PV_MP4_FF_NEW(fp->auditCB, PVID3ParCom, (), _pID3Parser);
+
+            if (_pID3Parser)
+            {
+                if (_pID3Parser->ParseID3Tag(&fp->_pvfile) != PVMFSuccess)
+                {
+                    _success = false;
+                    _mp4ErrorCode = READ_ID3V2_ATOM_FAILED;
+                    return;
+                }
+            }
+        }
+    }
+    else
+    {
+        if (_mp4ErrorCode != ATOM_VERSION_NOT_SUPPORTED)
+            _mp4ErrorCode = READ_ID3V2_ATOM_FAILED;
+    }
+
+}
+
+
+ID3V2Atom::~ID3V2Atom()
+{
+    if (_pID3Parser)
+    {
+        PV_MP4_FF_DELETE(null, PVID3ParCom, _pID3Parser);
+        _pID3Parser = NULL;
+    }
+}
+
+

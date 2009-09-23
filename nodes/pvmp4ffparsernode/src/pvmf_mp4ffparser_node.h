@@ -551,7 +551,7 @@ class PVMFMP4FFParserNode
         // From PVMFMetadataExtensionInterface
         uint32 GetNumMetadataKeys(char* aQueryKeyString = NULL);
         uint32 GetNumMetadataValues(PVMFMetadataList& aKeyList);
-        uint32 GetNumImotionMetadataValues(PVMFMetadataList& aKeyList);
+
         PVMFCommandId GetNodeMetadataKeys(PVMFSessionId aSessionId, PVMFMetadataList& aKeyList, uint32 aStartingKeyIndex, int32 aMaxKeyEntries,
                                           char* aQueryKeyString = NULL, const OsclAny* aContextData = NULL);
         PVMFCommandId GetNodeMetadataValues(PVMFSessionId aSessionId, PVMFMetadataList& aKeyList,
@@ -639,11 +639,8 @@ class PVMFMP4FFParserNode
         PVMFStatus DoInit(PVMFMP4FFParserNodeCommand& aCmd);
         bool ParseMP4File(PVMFMP4FFParserNodeCmdQueue& aCmdQ,
                           PVMFMP4FFParserNodeCommand& aCmd);
-        void PushToAvailableMetadataKeysList(const char* aKeystr, char* aOptionalParam = NULL);
-        PVMFStatus InitMetaData();
-        PVMFStatus InitImotionMetaData();
-        uint32 CountImotionMetaDataKeys();
-        int32 CountMetaDataKeys();
+
+
         void CompleteInit(PVMFMP4FFParserNodeCmdQueue& aCmdQ,
                           PVMFMP4FFParserNodeCommand& aCmd);
         void CompleteCancelAfterInit();
@@ -666,12 +663,16 @@ class PVMFMP4FFParserNode
         // For metadata extention interface
         PVMFStatus DoGetMetadataKeys(PVMFMP4FFParserNodeCommand& aCmd);
         PVMFStatus CompleteGetMetadataKeys(PVMFMP4FFParserNodeCommand& aCmd);
-        PVMFStatus DoGetImotionMetadataValues(PVMFMP4FFParserNodeCommand& aCmd, int32 &numentriesadded);
+
+        void PushToAvailableMetadataKeysList(const char* aKeystr, char* aOptionalParam = NULL);
+        PVMFStatus GetIndexParamValues(const char* aString, uint32& aStartIndex, uint32& aEndIndex);
+        PVMFStatus CreateNewArray(uint32** aTrackidList, uint32 aNumTracks);
+
         PVMFStatus DoGetMetadataValues(PVMFMP4FFParserNodeCommand& aCmd);
         void CompleteGetMetaDataValues();
         int32 AddToValueList(Oscl_Vector<PvmiKvp, OsclMemAllocator>& aValueList, PvmiKvp& aNewValue);
-        PVMFStatus GetIndexParamValues(const char* aString, uint32& aStartIndex, uint32& aEndIndex);
-        void DeleteAPICStruct(PvmfApicStruct*& aAPICStruct);
+        PVMFStatus InitMetaData();
+
         PVMFStatus GetVideoFrameWidth(uint32 aId, int32& aWidth, int32& aDisplayWidth);
         PVMFStatus GetVideoFrameHeight(uint32 aId, int32& aHeight, int32& aDisplayHeight);
         int32 FindVideoWidth(uint32 aId);
@@ -679,9 +680,6 @@ class PVMFMP4FFParserNode
         int32 FindVideoDisplayWidth(uint32 aId);
         int32 FindVideoDisplayHeight(uint32 aId);
         PVMFStatus PopulateVideoDimensions(uint32 aId);
-        uint32 GetNumAudioChannels(uint32 aId);
-        uint32 GetAudioSampleRate(uint32 aId);
-        uint32 GetAudioBitsPerSample(uint32 aId);
         PVMFStatus FindBestThumbnailKeyFrame(uint32 aId, uint32& aKeyFrameNum);
 
         // For data source position extension interface
@@ -732,6 +730,11 @@ class PVMFMP4FFParserNode
         bool GetTrackPortInfoForPort(PVMP4FFNodeTrackPortInfo*& aInfo,
                                      PVMFPortInterface* aPort);
 
+        uint32 GetNumAudioChannels(uint32 aId);
+        uint32 GetAudioSampleRate(uint32 aId);
+        uint32 GetAudioBitsPerSample(uint32 aId);
+
+
         OSCL_wHeapString<OsclMemAllocator> iFilename;
         PVMFFormatType iSourceFormat;
         PVMFMediaClock* iClientPlayBackClock;
@@ -744,7 +747,6 @@ class PVMFMP4FFParserNode
         uint32 iParsingMode;
         bool iProtectedFile;
         IMpeg4File* iMP4FileHandle;
-        Oscl_Vector<OSCL_HeapString<OsclMemAllocator>, OsclMemAllocator> iAvailableMetadataKeys;
         uint32 iMP4ParserNodeMetadataValueCount;
         Oscl_Vector<OSCL_HeapString<OsclMemAllocator>, OsclMemAllocator> iCPMMetadataKeys;
         Oscl_Vector<PVMP4FFNodeTrackPortInfo, OsclMemAllocator> iNodeTrackPortList;
@@ -848,14 +850,9 @@ class PVMFMP4FFParserNode
 
         PVMFStatus CheckForUnderFlow(PVMP4FFNodeTrackPortInfo* aInfo);
 
-        void getLanguageCode(uint16 langcode, int8 *LangCode);
-        void getBrand(uint32 langcode, char *LangCode);
-
         PVMFStatus CheckForMP4HeaderAvailability();
         int32 CreateErrorInfoMsg(PVMFBasicErrorInfoMessage** aErrorMsg, PVUuid aEventUUID, int32 aEventCode);
         void CreateDurationInfoMsg(uint32 adurationms);
-        PVMFStatus PushKVPToMetadataValueList(Oscl_Vector<PvmiKvp, OsclMemAllocator>* aVecPtr, PvmiKvp& aKvpVal);
-        PVMFStatus CreateNewArray(uint32** aTrackidList, uint32 aNumTracks);
         PVMFStatus PushValueToList(Oscl_Vector<OSCL_HeapString<OsclMemAllocator>, OsclMemAllocator> &aRefMetadataKeys,
                                    PVMFMetadataList *&aKeyListPtr,
                                    uint32 aLcv);
@@ -924,8 +921,11 @@ class PVMFMP4FFParserNode
         bool iParseVideoOnly;
         bool iOpenFileOncePerTrack;
         int32 iDataRate;
-
         int32 minFileOffsetTrackID;
+        PVMFMetadataList iAvailableMetadataKeys;
+        //This will hold the total number of ID3 specific values present in the value list
+        uint32 iTotalID3MetaDataTagInValueList;
+
 };
 
 

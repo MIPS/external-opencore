@@ -676,7 +676,8 @@ AtomUtils::getNextAtomType(MP4_FF_FILE *fp, uint32 &size, uint32 &type)
             type == EVRCWB_SAMPLE_ENTRY ||
             type == QCELP_SAMPLE_ENTRY ||
             type == SMV_SAMPLE_ENTRY ||
-            type == VMR_SAMPLE_ENTRY)
+            type == VMR_SAMPLE_ENTRY ||
+            type == ID3V2_ATOM)
     {
         return;
     }
