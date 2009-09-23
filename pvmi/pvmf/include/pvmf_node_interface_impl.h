@@ -67,6 +67,8 @@
 #define PVMF_BASE_NODE_DELETE(ptr) OSCL_DELETE(ptr)
 #define PVMF_BASE_NODE_ARRAY_DELETE(ptr) OSCL_ARRAY_DELETE(ptr)
 
+// Default value of media sample Duration
+#define PVMF_DEFAULT_TRACK_DURATION 0xFFFFFFFF
 
 /************************************** PVMFNODEINTERFACEIMPL ***********************************/
 
@@ -146,7 +148,7 @@ class PVMFNodeInterfaceImpl : public PVMFNodeInterface,
 
     protected:
         // protected routines
-        OSCL_IMPORT_REF bool SendEndOfTrackCommand(PVMFPortInterface* aPort, int32 aStreamID, PVMFTimestamp aTimestamp, int32 aSeqNum);
+        OSCL_IMPORT_REF bool SendEndOfTrackCommand(PVMFPortInterface* aPort, int32 aStreamID, PVMFTimestamp aTimestamp, int32 aSeqNum, uint32 aDuration = PVMF_DEFAULT_TRACK_DURATION);
         OSCL_IMPORT_REF bool SendBeginOfMediaStreamCommand(PVMFPortInterface* aPort, int32 aStreamID, PVMFTimestamp aTimestamp);
         OSCL_IMPORT_REF void CommandComplete(PVMFNodeCmdQ& aCmdQ, PVMFNodeCommand& aCmd, PVMFStatus aStatus,
                                              PVInterface* aExtMsg = NULL, OsclAny* aEventData = NULL, PVUuid* aEventUUID = NULL, int32* aEventCode = NULL);

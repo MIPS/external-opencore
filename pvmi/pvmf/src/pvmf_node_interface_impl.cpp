@@ -455,7 +455,7 @@ OSCL_EXPORT_REF void PVMFNodeInterfaceImpl::ReportInfoEvent(PVMFAsyncEvent &aEve
     }
 }
 
-OSCL_EXPORT_REF bool PVMFNodeInterfaceImpl::SendEndOfTrackCommand(PVMFPortInterface* aPort, int32 aStreamID, PVMFTimestamp aTimestamp, int32 aSeqNum)
+OSCL_EXPORT_REF bool PVMFNodeInterfaceImpl::SendEndOfTrackCommand(PVMFPortInterface* aPort, int32 aStreamID, PVMFTimestamp aTimestamp, int32 aSeqNum, uint32 aDuration)
 {
     PVMF_NODEINTERFACE_IMPL_LOGSTACKTRACE((0, "%s::SendEndOfTrackCommand StreamID %d In", iNodeName.Str(), iStreamID));
 
@@ -468,6 +468,14 @@ OSCL_EXPORT_REF bool PVMFNodeInterfaceImpl::SendEndOfTrackCommand(PVMFPortInterf
     sharedMediaCmdPtr->setTimestamp(aTimestamp);
     // set sequence number
     sharedMediaCmdPtr->setSeqNum(aSeqNum);
+
+    //EOS timestamp(aTrackPortInfo.iTimestamp)is considered while deciding the iResumeTimeStamp in the mediaoutput node
+    //therefore its length should also be considered while making decision to forward or drop the packet
+    //at the mediaoutput node.
+    if (PVMF_DEFAULT_TRACK_DURATION != aDuration)
+    {
+        sharedMediaCmdPtr->setDuration(aDuration);
+    }
 
     PVMFSharedMediaMsgPtr mediaMsgOut;
     convertToPVMFMediaCmdMsg(mediaMsgOut, sharedMediaCmdPtr);
