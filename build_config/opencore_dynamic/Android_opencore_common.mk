@@ -13,6 +13,7 @@ LOCAL_WHOLE_STATIC_LIBRARIES := \
  	libosclio \
  	libosclregserv \
  	libosclregcli \
+ 	libpvlogger \
  	liboscllib \
  	libomx_mastercore_lib \
  	libpv_avc_common_lib \

@@ -16,7 +16,8 @@ SRCS :=	test_pvme.cpp \
 ifeq ($(pvmetadata_engine_lib),m)
     LIBS := unit_test opencore_player opencore_common opencore_pvme
 else
-    LIBS := pvmetadata_engine \
+    LIBS := \
+        pvmetadata_engine \
 	pvmp3ffparsernode \
         pvmp4ffparsernode \
         cpm \
@@ -51,6 +52,7 @@ else
         pvrmffrecognizer_utility \
         pvid3parcom \
         pvgendatastruct \
+        pvlogger \
         osclregcli \
         osclregserv \
         osclio \
@@ -61,14 +63,14 @@ else
         osclbase \
         threadsafe_callback_ao \
         unit_test \
-	    asfrecognizer_utility \
-	    scsp \
+        asfrecognizer_utility \
+        scsp \
         pvdivxffrecognizer \
         pvdivxffparsernode \
         pv_divxfile_parser \
-	    pvamrffrecognizer \
-	    pvaacffrecognizer \
-	    divxrecognizer_utility \
+        pvamrffrecognizer \
+        pvaacffrecognizer \
+        divxrecognizer_utility \
         pvplsffrecognizer
 endif
 	

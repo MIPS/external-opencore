@@ -44,10 +44,6 @@
 #include "oscl_file_io.h"
 #endif
 
-#ifndef PVMI_CONFIG_AND_CAPABILITY_H_INCLUDED
-#include "pvmi_config_and_capability.h"
-#endif
-
 #ifndef OSCL_ERROR_CODES_H_INCLUDED
 #include "oscl_error_codes.h"
 #endif
@@ -79,7 +75,6 @@
 
 
 class pvmetadataengine_test_observer;
-class PVLoggerConfigFile;
 
 extern FILE* file;
 #define MAX_LEN 100
@@ -107,9 +102,9 @@ class pv_metadata_engine_test : public OsclTimerObject,
         public ThreadSafeQueueObserver
 {
     public:
-        pv_metadata_engine_test(PVMetadataEngineTestParam aTestParam, PVMetadataEngineThreadMode aMode, PVLoggerConfigFile& aLoggerInfo):
+        pv_metadata_engine_test(PVMetadataEngineTestParam aTestParam, PVMetadataEngineThreadMode aMode):
                 OsclTimerObject(OsclActiveObject::EPriorityNominal, "PVMetadataEngineTest")
-                , iCurrentCmdId(0), iLoggerInfo(aLoggerInfo)
+                , iCurrentCmdId(0)
 
         {
             OSCL_ASSERT(aTestParam.iObserver != NULL);
@@ -244,9 +239,6 @@ class pv_metadata_engine_test : public OsclTimerObject,
         bool metadataForFirstClip;
         //Threaded or Non-Threaded Mode
         PVMetadataEngineThreadMode iMode;
-
-        //To pass logging information to PVME
-        PVLoggerConfigFile& iLoggerInfo;
 
         //To store the clips
         Oscl_Vector<char*, OsclMemAllocator> iClips;

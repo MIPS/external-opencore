@@ -19,6 +19,10 @@
 #include "test_pvme.h"
 #endif
 
+#ifndef PVLOGGER_CFG_FILE_PARSER_H_INCLUDED
+#include "pvlogger_cfg_file_parser.h"
+#endif
+
 #include "test_pvme_testset1.h"
 
 FILE* file;
@@ -52,172 +56,6 @@ int fgetline(Oscl_File* aFp, char aLine[], int aMax)
     return nch;
 }
 
-bool PVLoggerConfigFile::get_next_line(const char *start_ptr, const char * end_ptr,
-                                       const char *& line_start,
-                                       const char *& line_end)
-{
-    // Finds the boundaries of the next non-empty line within start
-    // and end ptrs
-
-    // This initializes line_start to the first non-whitespace character
-    line_start = skip_whitespace_and_line_term(start_ptr, end_ptr);
-
-    line_end = skip_to_line_term(line_start, end_ptr);
-
-    return (line_start < end_ptr);
-
-}
-
-
-bool PVLoggerConfigFile::IsLoggerConfigFilePresent()
-{
-    if (-1 != ReadAndParseLoggerConfigFile())
-        return true;
-    return false;
-}
-
-//Read and parse the config file
-//retval = -1 if the config file doesnt exist
-int8 PVLoggerConfigFile::ReadAndParseLoggerConfigFile()
-{
-    int8 retval = 1;
-
-    if (0 != iLogFile.Open(iLogFileName, Oscl_File::MODE_READ, iFileServer))
-    {
-        retval = -1;
-    }
-    else
-    {
-        if (!iLogFileRead)
-        {
-            iLogFile.Read(ibuffer, 1, sizeof(ibuffer));
-            //Parse the buffer for \n chars
-            Oscl_Vector<char*, OsclMemAllocator> LogConfigStrings;
-
-            const char *end_ptr = ibuffer + oscl_strlen(ibuffer) ; // Point just beyond the end
-            const char *section_start_ptr;
-            const char *line_start_ptr, *line_end_ptr;
-            char* end_temp_ptr;
-
-            section_start_ptr = skip_whitespace_and_line_term(ibuffer, end_ptr);
-
-            while (section_start_ptr < end_ptr)
-            {
-                if (!get_next_line(section_start_ptr, end_ptr,
-                                   line_start_ptr, line_end_ptr))
-                {
-                    break;
-                }
-
-
-                section_start_ptr = line_end_ptr + 1;
-
-                end_temp_ptr = (char*)line_end_ptr;
-                *end_temp_ptr = '\0';
-
-                LogConfigStrings.push_back((char*)line_start_ptr);
-
-            }
-
-            //Populate the  LoggerConfigElements vector
-            {
-                if (!LogConfigStrings.empty())
-                {
-                    Oscl_Vector<char*, OsclMemAllocator>::iterator it;
-                    it = LogConfigStrings.begin();
-                    uint32 appenderType;
-                    PV_atoi(*it, 'd', oscl_strlen(*it), appenderType);
-                    iAppenderType = appenderType;
-
-                    if (LogConfigStrings.size() > 1)
-                    {
-                        for (it = LogConfigStrings.begin() + 1; it != LogConfigStrings.end(); it++)
-                        {
-                            char* CommaIndex = (char*)oscl_strstr(*it, ",");
-                            if (CommaIndex != NULL)
-                            {
-                                *CommaIndex = '\0';
-                                LoggerConfigElement obj;
-                                uint32 logLevel;
-                                PV_atoi(*it, 'd', oscl_strlen(*it), logLevel);
-                                obj.iLogLevel = logLevel;
-                                obj.iLoggerString = CommaIndex + 1;
-                                iLoggerConfigElements.push_back(obj);
-                            }
-                        }
-                    }
-                    else
-                    {
-                        //Add the config element for complete logging fo all the modules
-                        LoggerConfigElement obj;
-                        obj.iLoggerString = (char*)"";
-                        obj.iLogLevel = 8;
-                        iLoggerConfigElements.push_back(obj);
-                    }
-                }
-            }
-            iLogFile.Close();
-            iLogFileRead = true;
-        }
-    }
-    return retval;
-}
-
-void PVLoggerConfigFile::SetLoggerSettings()
-{
-    Oscl_Vector<LoggerConfigElement, OsclMemAllocator>::iterator it;
-
-    PVLoggerAppender *appender = NULL;
-    OsclRefCounter *refCounter = NULL;
-    if (iLoggerConfigElements.empty())
-    {
-        return;
-    }
-
-    if (iAppenderType == 0)
-    {
-        appender = new StdErrAppender<TimeAndIdLayout, 1024>();
-        OsclRefCounterSA<LogAppenderDestructDealloc<StdErrAppender<TimeAndIdLayout, 1024> > > *appenderRefCounter =
-            new OsclRefCounterSA<LogAppenderDestructDealloc<StdErrAppender<TimeAndIdLayout, 1024> > >(appender);
-        refCounter = appenderRefCounter;
-    }
-    else if (iAppenderType == 1)
-    {
-        OSCL_wHeapString<OsclMemAllocator> testlogfilename;
-        //File to be sent to pvme for logging in threaded mode
-        logfilename += OUTPUTNAME_PREPEND_WSTRING;
-        logfilename += _STRLIT_WCHAR("pvme.log");
-        //File for logging PVME test log statements in threaded mode, all logs in non-threaded mode
-        testlogfilename += OUTPUTNAME_PREPEND_WSTRING;
-        testlogfilename += _STRLIT_WCHAR("pvme_test.log");
-        appender = (PVLoggerAppender*)TextFileAppender<TimeAndIdLayout, 1024>::CreateAppender(testlogfilename.get_str());
-        OsclRefCounterSA<LogAppenderDestructDealloc<TextFileAppender<TimeAndIdLayout, 1024> > > *appenderRefCounter =
-            new OsclRefCounterSA<LogAppenderDestructDealloc<TextFileAppender<TimeAndIdLayout, 1024> > >(appender);
-        refCounter = appenderRefCounter;
-    }
-    else
-    {
-        OSCL_wHeapString<OsclMemAllocator> testlogfilename;
-        logfilename += OUTPUTNAME_PREPEND_WSTRING;
-        logfilename += _STRLIT_WCHAR("pvme.log");
-        testlogfilename += OUTPUTNAME_PREPEND_WSTRING;
-        testlogfilename += _STRLIT_WCHAR("pvme_test.log");
-        appender = (PVLoggerAppender*)MemAppender<TimeAndIdLayout, 1024>::CreateAppender(testlogfilename.get_str());
-        OsclRefCounterSA<LogAppenderDestructDealloc<MemAppender<TimeAndIdLayout, 1024> > > *appenderRefCounter =
-            new OsclRefCounterSA<LogAppenderDestructDealloc<MemAppender<TimeAndIdLayout, 1024> > >(appender);
-        refCounter = appenderRefCounter;
-    }
-
-    OsclSharedPtr<PVLoggerAppender> appenderPtr(appender, refCounter);
-
-    for (it = iLoggerConfigElements.begin(); it != iLoggerConfigElements.end(); it++)
-    {
-        PVLogger *node = NULL;
-        node = PVLogger::GetLoggerObject(it->iLoggerString);
-        node->AddAppender(appenderPtr);
-        node->SetLogLevel(it->iLogLevel);
-    }
-}
 
 //Find test range args:
 //To run a range of tests by enum ID:
@@ -863,7 +701,13 @@ void pvmetadataengine_test::test()
         else
         {
             fprintf(file, "\nStarting Test %d: ", iCurrentTestNumber);
-            SetupLoggerScheduler();
+            PVLogger::Init();
+            OSCL_HeapString<OsclMemAllocator> cfgfilename(PVLOG_PREPEND_CFG_FILENAME);
+            cfgfilename += PVLOG_CFG_FILENAME;
+            OSCL_HeapString<OsclMemAllocator> logfilename(PVLOG_PREPEND_OUT_FILENAME);
+            logfilename += PVLOG_OUT_FILENAME;
+            PVLoggerCfgFileParser::Parse(cfgfilename.get_str(), logfilename.get_str());
+            OsclScheduler::Init("PVMetadataEngineTestScheduler"); // construct and install active scheduler
         }
 
         // Setup the standard test case parameters based on current unit test settings
@@ -875,11 +719,11 @@ void pvmetadataengine_test::test()
         switch (iCurrentTestNumber)
         {
             case GetSourceMetadataNonThreadedModeTest:
-                iCurrentTest = new pv_metadata_engine_test(testparam, PV_METADATA_ENGINE_NON_THREADED_MODE, obj);
+                iCurrentTest = new pv_metadata_engine_test(testparam, PV_METADATA_ENGINE_NON_THREADED_MODE);
                 break;
 
             case GetSourceMetadataThreadedModeTest:
-                iCurrentTest = new pv_metadata_engine_test(testparam, PV_METADATA_ENGINE_THREADED_MODE, obj);
+                iCurrentTest = new pv_metadata_engine_test(testparam, PV_METADATA_ENGINE_THREADED_MODE);
                 break;
 
             case BeyondLastTest:
@@ -924,18 +768,4 @@ void pvmetadataengine_test::test()
         }
     }
 }
-
-void pvmetadataengine_test::SetupLoggerScheduler()
-{
-    // Enable the following code for logging (on Symbian, RDebug)
-    PVLogger::Init();
-    if (obj.IsLoggerConfigFilePresent())
-    {
-        obj.SetLoggerSettings();
-    }
-    // Construct and install the active scheduler
-    OsclScheduler::Init("PVMetadataEngineTestScheduler");
-}
-
-
 

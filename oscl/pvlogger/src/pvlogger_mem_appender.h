@@ -36,7 +36,8 @@ class MemAppender : public PVLoggerAppender
     public:
         typedef PVLoggerAppender::message_id_type message_id_type;
 
-        static MemAppender<Layout, LayoutBufferSize, Lock>* CreateAppender(OSCL_TCHAR * filename, uint32 cacheSize = 0)
+        template <class T>
+        static MemAppender<Layout, LayoutBufferSize, Lock>* CreateAppender(const T* filename, uint32 cacheSize = 0)
         {
 
             MemAppender<Layout, LayoutBufferSize, Lock> * appender = new MemAppender<Layout, LayoutBufferSize, Lock>();

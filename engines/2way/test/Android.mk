@@ -10,7 +10,6 @@ LOCAL_SRC_FILES := \
  	src/init_cancel_test.cpp \
  	src/init_test.cpp \
  	src/test_base.cpp \
- 	src/../../pvlogger/src/pv_logger_impl.cpp \
  	src/av_test.cpp \
  	src/acceptable_formats_test.cpp \
  	src/negotiated_formats_test.cpp \
@@ -37,7 +36,6 @@ LOCAL_SHARED_LIBRARIES := libopencore_2way            libopencore_common
 LOCAL_C_INCLUDES := \
 	$(PV_TOP)/engines/2way/test/src \
  	$(PV_TOP)/engines/2way/test/include \
- 	$(PV_TOP)/engines/2way/pvlogger/src \
  	$(PV_TOP)/engines/2way/sample_app/pv2waysample/include \
  	$(PV_TOP)/nodes/pvdummyinputnode/include \
  	$(PV_TOP)/protocols/systems/common/include \

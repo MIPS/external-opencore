@@ -106,35 +106,30 @@ class PVTest
         int32 iLastTest;
 };
 
-template<class DestructClass>
-class LogAppenderDestructDealloc : public OsclDestructDealloc
-{
-    public:
-        virtual void destruct_and_dealloc(OsclAny *ptr)
-        {
-            delete((DestructClass*)ptr);
-        }
-};
-
 class pvplayer_engine_test_suite : public test_case
 {
+
     public:
-        pvplayer_engine_test_suite(char *aFilename,
-                                   PVMFFormatType aFiletype,
-                                   int32 aFirstTest,
-                                   int32 aLastTest,
-                                   bool aCompV,
-                                   bool aCompA,
-                                   bool aFInput,
-                                   bool aBCS,
-                                   int32 aLogLevel,
-                                   int32 aLogNode,
-                                   int32 aLogText,
-                                   int32 aLogMem,
-                                   int32 aFileFormatType,
-                                   bool  aProxyEnabled,
-                                   uint32 aDownloadRateInKbps,
-                                   bool aSplitLogFile);
+        pvplayer_engine_test_suite
+        (
+            char *aFilename,
+            PVMFFormatType aFiletype,
+            int32 aFirstTest,
+            int32 aLastTest,
+            bool aCompV,
+            bool aCompA,
+            bool aFInput,
+            bool aBCS,
+            bool aLogCfgFile,
+            int32 aLogLevel,
+            int32 aLogNode,
+            int32 aLogText,
+            int32 aLogMem,
+            int32 aFileFormatType,
+            bool  aProxyEnabled,
+            uint32 aDownloadRateInKbps,
+            bool aSplitLogFile
+        );
 };
 
 
@@ -396,6 +391,7 @@ class pvplayer_engine_test : public test_case,
                              bool aCompA,
                              bool aFInput,
                              bool aBCS,
+                             bool aLogCfgFile,
                              int32 aLogLevel,
                              int32 aLogNode,
                              int32 aLogText,
@@ -2588,6 +2584,7 @@ class pvplayer_engine_test : public test_case,
         int iTotalFail;
 
         // For logging
+        bool iLogCfgFile;
         int32 iLogLevel;
         int32 iLogNode;
         int32 iLogFile;

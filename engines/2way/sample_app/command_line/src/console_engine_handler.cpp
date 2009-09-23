@@ -29,9 +29,7 @@
 
 #include "tsc_h324m_config_interface.h"
 #include "pvlogger.h"
-#include "pvlogger_stderr_appender.h"
 #include "pvlogger_time_and_id_layout.h"
-#include "pvlogger_file_appender.h"
 #include "pv_engine_observer.h"
 #include "pv_engine_observer_message.h"
 #include "pv2way_file_names.h"
@@ -45,8 +43,8 @@
 #include "pvmi_mio_fileinput_factory.h"
 #endif
 
-#ifndef PV_LOGGER_IMPL_H_INCLUDED
-#include "pv_logger_impl.h"
+#ifndef PVLOGGER_CFG_FILE_PARSER_H_INCLUDED
+#include "pvlogger_cfg_file_parser.h"
 #endif
 
 #include "main.h"
@@ -303,38 +301,19 @@ void engine_handler::DeleteCommServer()
 
 void engine_handler::InitializeLogs()
 {
-    uint32 error = 0;
-    PVLoggerConfigFile obj;
-    obj.SetConfigFilePath(CONFIG_FILE_PATH);
-    if (obj.IsLoggerConfigFilePresent())
-    {
-        error = obj.SetLoggerSettings(terminal, _STRLIT("pvlog.txt"));
-        if (0 != error)
-        {
-            printf("Error Occured in PVLoggerConfigFile::SetLoggerSettings() \n");
-        }
-        else
-        {
-            //sucess able to set logger settings
-            return;
-        }
-    }
+    OSCL_HeapString<OsclMemAllocator> cfgfilename(PVLOG_PREPEND_CFG_FILENAME);
+    cfgfilename += PVLOG_CFG_FILENAME;
+    OSCL_HeapString<OsclMemAllocator> logfilename(PVLOG_PREPEND_OUT_FILENAME);
+    logfilename += PVLOG_OUT_FILENAME;
+    if (true == PVLoggerCfgFileParser::Parse(cfgfilename.get_str(), logfilename.get_str()))
+        return;
 
+    PVLoggerCfgFileParser::SetupLogAppender(PVLoggerCfgFileParser::ePVLOG_APPENDER_FILE, logfilename.get_str());
 
-    {
-        iFileAppender = TextFileAppender<TimeAndIdLayout, LAYOUT_BUFFER_SIZE>::CreateAppender(TEST_LOG_FILENAME,
-                        TEXT_FILE_APPENDER_CACHE_SIZE);
-
-        OsclRefCounter *appenderRefCounter =
-            OSCL_NEW((OsclRefCounterSA<AppenderDestructDealloc<TextFileAppender<TimeAndIdLayout, LAYOUT_BUFFER_SIZE> > >),
-                     (iFileAppender));
-        OsclSharedPtr<PVLoggerAppender> appenderPtr(iFileAppender, appenderRefCounter);
-        terminal->SetLogAppender("", appenderPtr);
-        //terminal->SetLogAppender("2wayEngine", appenderPtr);
-        //terminal->SetLogAppender("OsclSchedulerPerfStats", appenderPtr);
-    }
-
-    terminal->SetLogLevel("", PVLOGMSG_DEBUG, true);
+    // disable most logging from the rcomm server, it is too much
+    terminal->SetLogLevel("mpvrcommserver", PVLOGMSG_EMERG, false);
+    terminal->SetLogLevel("PvmfSyncUtil", PVLOGMSG_EMERG, false);
+    terminal->SetLogLevel("PvmfSyncUtilDataQueue", PVLOGMSG_EMERG, false);
 }
 
 
@@ -593,6 +572,10 @@ void engine_handler::IFCommandCompleted(const PVCmdResponse& aResponse)
     if (iConfigFilePresent)
     {
         ReadProperties();
+    }
+    else
+    {
+        ConfigureH324Interface();
     }
 
     iReadyToConnectCommunication = true;

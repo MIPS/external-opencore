@@ -144,6 +144,7 @@ LIBS :=  pvframemetadatautility \
         csprng\
         pvcrypto \
         pventropysrc\
+        pvlogger \
         osclregcli \
         osclregserv \
         osclio \

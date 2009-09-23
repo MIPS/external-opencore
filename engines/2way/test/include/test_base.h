@@ -22,8 +22,6 @@
 #include "test_engine.h"
 #endif
 
-#include "pvlogger_stderr_appender.h"
-#include "pvlogger_file_appender.h"
 
 #ifndef PV_2WAY_PROXY_FACTORY_H_INCLUDED
 #include "pv_2way_proxy_factory.h"
@@ -107,15 +105,6 @@ class test_base : public engine_test,
         }
 
     protected:
-        template<class DestructClass>
-        class AppenderDestructDealloc : public OsclDestructDealloc
-        {
-            public:
-                virtual void destruct_and_dealloc(OsclAny *ptr)
-                {
-                    OSCL_DELETE((DestructClass*)ptr);
-                }
-        };
 
         void InitializeLogs();
         void HandleInformationalEvent(const PVAsyncInformationalEvent& aEvent);

@@ -25,6 +25,7 @@
 #include "oscl_error.h"
 #include "oscl_scheduler.h"
 #include "pvlogger.h"
+#include "pvlogger_cfg_file_parser.h"
 #include "pvlogger_file_appender.h"
 #include "pvlogger_mem_appender.h"
 #include "unit_test_args.h"
@@ -45,223 +46,6 @@
 FILE* file;
 
 #define MAX_LEN 100
-
-class PVLoggerConfigFile
-{
-        /*  To change the logging settings without the need to compile the test application
-            Let us read the logging settings from the file instead of hard coding them over here
-            The name of the config file is pvlogger.ini
-            The format of entries in it is like
-            First entry will decide if the file appender has to be used or error appender will be used.
-            0 -> ErrAppender will be used
-            1 -> File Appender will be used
-            2 -> Mem Appender will be used
-            Entries after this will decide the module whose logging has to be taken.For example, contents of one sample config file could be
-            1
-            1,PVPlayerEngine
-            8,PVSocketNode
-            (pls note that no space is allowed between loglevel and logger tag)
-            This means, we intend to have logging of level 1 for the module PVPlayerEngine
-            and of level 8 for the PVSocketNode on file.
-        */
-    public:
-
-        PVLoggerConfigFile(): iLogFileRead(false)
-        {
-            iFileServer.Connect();
-            // Full path of pvlogger.ini is: SOURCENAME_PREPEND_STRING + pvlogger.ini
-            oscl_strncpy(iLogFileName, SOURCENAME_PREPEND_STRING,
-                         oscl_strlen(SOURCENAME_PREPEND_STRING) + 1);
-            oscl_strcat(iLogFileName, "pvlogger.ini");
-            oscl_memset(ibuffer, 0, sizeof(ibuffer));
-            iAppenderType = 0;
-
-        }
-
-        ~PVLoggerConfigFile()
-        {
-            iFileServer.Close();
-        }
-
-        bool get_next_line(const char *start_ptr, const char * end_ptr,
-                           const char *& line_start,
-                           const char *& line_end)
-        {
-            // Finds the boundaries of the next non-empty line within start
-            // and end ptrs
-
-            // This initializes line_start to the first non-whitespace character
-            line_start = skip_whitespace_and_line_term(start_ptr, end_ptr);
-
-            line_end = skip_to_line_term(line_start, end_ptr);
-
-            return (line_start < end_ptr);
-
-        }
-
-
-        bool IsLoggerConfigFilePresent()
-        {
-            if (-1 != ReadAndParseLoggerConfigFile())
-                return true;
-            return false;
-        }
-
-        //Read and parse the config file
-        //retval = -1 if the config file doesnt exist
-        int8 ReadAndParseLoggerConfigFile()
-        {
-            int8 retval = 1;
-
-            if (0 != iLogFile.Open(iLogFileName, Oscl_File::MODE_READ, iFileServer))
-            {
-                retval = -1;
-            }
-            else
-            {
-                if (!iLogFileRead)
-                {
-                    int32 nCharRead = iLogFile.Read(ibuffer, 1, sizeof(ibuffer));
-                    //Parse the buffer for \n chars
-                    Oscl_Vector<char*, OsclMemAllocator> LogConfigStrings;
-
-                    const char *end_ptr = ibuffer + oscl_strlen(ibuffer) ; // Point just beyond the end
-                    const char *section_start_ptr;
-                    const char *line_start_ptr, *line_end_ptr;
-                    char* end_temp_ptr;
-                    int16 offset = 0;
-
-                    section_start_ptr = skip_whitespace_and_line_term(ibuffer, end_ptr);
-
-                    while (section_start_ptr < end_ptr)
-                    {
-                        if (!get_next_line(section_start_ptr, end_ptr,
-                                           line_start_ptr, line_end_ptr))
-                        {
-                            break;
-                        }
-
-
-                        section_start_ptr = line_end_ptr + 1;
-
-                        end_temp_ptr = (char*)line_end_ptr;
-                        *end_temp_ptr = '\0';
-
-                        LogConfigStrings.push_back((char*)line_start_ptr);
-
-                    }
-
-                    //Populate the  LoggerConfigElements vector
-                    {
-                        if (!LogConfigStrings.empty())
-                        {
-                            Oscl_Vector<char*, OsclMemAllocator>::iterator it;
-                            it = LogConfigStrings.begin();
-                            uint32 appenderType;
-                            PV_atoi(*it, 'd', oscl_strlen(*it), appenderType);
-                            iAppenderType = appenderType;
-                            if (LogConfigStrings.size() > 1)
-                            {
-                                for (it = LogConfigStrings.begin() + 1; it != LogConfigStrings.end(); it++)
-                                {
-                                    char* CommaIndex = (char*)oscl_strstr(*it, ",");
-                                    if (CommaIndex != NULL)
-                                    {
-                                        *CommaIndex = '\0';
-                                        LoggerConfigElement obj;
-                                        uint32 logLevel;
-                                        PV_atoi(*it, 'd', oscl_strlen(*it), logLevel);
-                                        obj.iLogLevel = logLevel;
-                                        obj.iLoggerString = CommaIndex + 1;
-                                        iLoggerConfigElements.push_back(obj);
-                                    }
-                                }
-                            }
-                            else
-                            {
-                                //Add the config element for complete logging fo all the modules
-                                LoggerConfigElement obj;
-                                obj.iLoggerString = "";
-                                obj.iLogLevel = 8;
-                                iLoggerConfigElements.push_back(obj);
-                            }
-                        }
-                    }
-                    iLogFile.Close();
-                    iLogFileRead = true;
-                }
-            }
-            return retval;
-        }
-
-        void SetLoggerSettings()
-        {
-            Oscl_Vector<LoggerConfigElement, OsclMemAllocator>::iterator it;
-
-            PVLoggerAppender *appender = NULL;
-            OsclRefCounter *refCounter = NULL;
-            if (iLoggerConfigElements.empty())
-            {
-                return;
-            }
-
-            if (iAppenderType == 0)
-            {
-                appender = new StdErrAppender<TimeAndIdLayout, 1024>();
-                OsclRefCounterSA<LogAppenderDestructDealloc<StdErrAppender<TimeAndIdLayout, 1024> > > *appenderRefCounter =
-                    new OsclRefCounterSA<LogAppenderDestructDealloc<StdErrAppender<TimeAndIdLayout, 1024> > >(appender);
-                refCounter = appenderRefCounter;
-            }
-            else if (iAppenderType == 1)
-            {
-                OSCL_wHeapString<OsclMemAllocator> logfilename(OUTPUTNAME_PREPEND_WSTRING);
-                logfilename += _STRLIT_WCHAR("player.log");
-                appender = (PVLoggerAppender*)TextFileAppender<TimeAndIdLayout, 1024>::CreateAppender(logfilename.get_str());
-                OsclRefCounterSA<LogAppenderDestructDealloc<TextFileAppender<TimeAndIdLayout, 1024> > > *appenderRefCounter =
-                    new OsclRefCounterSA<LogAppenderDestructDealloc<TextFileAppender<TimeAndIdLayout, 1024> > >(appender);
-                refCounter = appenderRefCounter;
-            }
-            else
-            {
-                OSCL_wHeapString<OsclMemAllocator> logfilename(OUTPUTNAME_PREPEND_WSTRING);
-                logfilename += _STRLIT_WCHAR("player.log");
-                appender = (PVLoggerAppender*)MemAppender<TimeAndIdLayout, 1024>::CreateAppender(logfilename.get_str());
-                OsclRefCounterSA<LogAppenderDestructDealloc<MemAppender<TimeAndIdLayout, 1024> > > *appenderRefCounter =
-                    new OsclRefCounterSA<LogAppenderDestructDealloc<MemAppender<TimeAndIdLayout, 1024> > >(appender);
-                refCounter = appenderRefCounter;
-            }
-
-            OsclSharedPtr<PVLoggerAppender> appenderPtr(appender, refCounter);
-
-            for (it = iLoggerConfigElements.begin(); it != iLoggerConfigElements.end(); it++)
-            {
-                PVLogger *node = NULL;
-                node = PVLogger::GetLoggerObject(it->iLoggerString);
-                node->AddAppender(appenderPtr);
-                node->SetLogLevel(it->iLogLevel);
-            }
-        }
-
-    private:
-        class LoggerConfigElement
-        {
-            public:
-                LoggerConfigElement()
-                {
-                    iLoggerString = NULL;
-                    iLogLevel = 8;
-                }
-                char *iLoggerString;
-                int8 iLogLevel;
-        };
-        int8 iAppenderType; //Type of appender to be used for the logging 0-> Err Appender, 1-> File Appender
-        bool iLogFileRead;
-        Oscl_File iLogFile;
-        Oscl_FileServer iFileServer;
-        char iLogFileName[255];
-        char ibuffer[1024];
-        Oscl_Vector<LoggerConfigElement, OsclMemAllocator> iLoggerConfigElements;
-};
 
 
 // Pull out source file name from arguments
@@ -291,7 +75,7 @@ void FindSourceFile(cmd_line* command_line, OSCL_HeapString<OsclMemAllocator>& a
             oscl_wchar* argwstr = NULL;
             command_line->get_arg(iFileSearch, argwstr);
             oscl_UnicodeToUTF8(argwstr, oscl_strlen(argwstr), argstr, 128);
-            argstr[127] = NULL;
+            argstr[127] = 0;
         }
         else
         {
@@ -303,11 +87,11 @@ void FindSourceFile(cmd_line* command_line, OSCL_HeapString<OsclMemAllocator>& a
                 tmpstrlen = 128;
             }
             oscl_strncpy(argstr, tmpstr, tmpstrlen);
-            argstr[tmpstrlen-1] = NULL;
+            argstr[tmpstrlen-1] = 0;
         }
 
         // Do the string compare
-        if (oscl_strcmp(argstr, "-help") == NULL)
+        if (oscl_strcmp(argstr, "-help") == 0)
         {
             fprintf(aFile, "Source specification option. Default is 'test.mp4':\n");
             fprintf(aFile, "  -source sourcename\n");
@@ -315,7 +99,7 @@ void FindSourceFile(cmd_line* command_line, OSCL_HeapString<OsclMemAllocator>& a
             fprintf(aFile, "   allow user-specified source name. The unit test determines the\n");
             fprintf(aFile, "   source format type using extension or URL header.\n\n");
         }
-        else if (oscl_strcmp(argstr, "-source") == NULL)
+        else if (oscl_strcmp(argstr, "-source") == 0)
         {
             iFileFound = true;
             iFileArgument = ++iFileSearch;
@@ -332,7 +116,7 @@ void FindSourceFile(cmd_line* command_line, OSCL_HeapString<OsclMemAllocator>& a
             command_line->get_arg(iFileArgument, cmd);
             char tmpstr[256];
             oscl_UnicodeToUTF8(cmd, oscl_strlen(cmd), tmpstr, 256);
-            tmpstr[255] = NULL;
+            tmpstr[255] = 0;
             aFileNameInfo = tmpstr;
         }
         else
@@ -448,14 +232,14 @@ void FindTestRange(cmd_line* command_line,  int32& iFirstTest, int32 &iLastTest,
         }
 
         // Do the string compare
-        if (oscl_strcmp(iSourceFind, "-help") == NULL)
+        if (oscl_strcmp(iSourceFind, "-help") == 0)
         {
             fprintf(aFile, "Test cases to run option. Default is ALL:\n");
             fprintf(aFile, "  -test x y\n");
             fprintf(aFile, "   Specify a range of test cases to run. To run one test case, use the\n");
             fprintf(aFile, "   same index for x and y.\n\n");
         }
-        else if (oscl_strcmp(iSourceFind, "-test") == NULL)
+        else if (oscl_strcmp(iSourceFind, "-test") == 0)
         {
             iTestFound = true;
             iTestArgument = ++iTestSearch;
@@ -650,14 +434,14 @@ void FindMemMgmtRelatedCmdLineParams(cmd_line* command_line, bool& aPrintDetaile
         }
 
         // Do the string compare
-        if (oscl_strcmp(iSourceFind, "-help") == NULL)
+        if (oscl_strcmp(iSourceFind, "-help") == 0)
         {
             fprintf(aFile, "Printing leak info option. Default is OFF:\n");
             fprintf(aFile, "  -leakinfo\n");
             fprintf(aFile, "   If there is a memory leak, prints out the memory leak information\n");
             fprintf(aFile, "   after all specified test cases have finished running.\n\n");
         }
-        else if (oscl_strcmp(iSourceFind, "-leakinfo") == NULL)
+        else if (oscl_strcmp(iSourceFind, "-leakinfo") == 0)
         {
             aPrintDetailedMemLeakInfo = true;
         }
@@ -704,7 +488,7 @@ void FindLogLevel(cmd_line* command_line, int32& loglevel, FILE* aFile)
         }
 
         // Do the string compare
-        if (oscl_strcmp(iSourceFind, "-help") == NULL)
+        if (oscl_strcmp(iSourceFind, "-help") == 0)
         {
             fprintf(aFile, "Log level options. Default is debug level:\n");
             fprintf(aFile, "  -logerr\n");
@@ -712,11 +496,11 @@ void FindLogLevel(cmd_line* command_line, int32& loglevel, FILE* aFile)
             fprintf(aFile, "  -logwarn\n");
             fprintf(aFile, "   Log at warning level\n\n");
         }
-        else if (oscl_strcmp(iSourceFind, "-logerr") == NULL)
+        else if (oscl_strcmp(iSourceFind, "-logerr") == 0)
         {
             loglevel = PVLOGMSG_ERR;
         }
-        else if (oscl_strcmp(iSourceFind, "-logwarn") == NULL)
+        else if (oscl_strcmp(iSourceFind, "-logwarn") == 0)
         {
             loglevel = PVLOGMSG_WARNING;
         }
@@ -838,7 +622,7 @@ int local_main(FILE* filehandle, cmd_line* command_line)
                     fprintf(file, "  fileName %s\n", info[i].fileName);
                     fprintf(file, "  lineNo %d\n", info[i].lineNo);
                     fprintf(file, "  size %d\n", info[i].size);
-                    fprintf(file, "  pMemBlock 0x%x\n", info[i].pMemBlock);
+                    fprintf(file, "  pMemBlock 0x%p\n", info[i].pMemBlock);
                     fprintf(file, "  tag %s\n", info[i].tag);
                 }
                 auditCB.pAudit->MM_ReleaseAllocNodeInfo(info);
@@ -878,7 +662,7 @@ int _local_main(FILE* filehandle, cmd_line* command_line)
     fprintf(file, "  Log level %d\n", loglevel);
 
     pvframemetadata_utility_test_suite* util_tests = NULL;
-    util_tests = new pvframemetadata_utility_test_suite(filenameinfo.get_str(), inputformattype, firsttest, lasttest, loglevel);
+    util_tests = new pvframemetadata_utility_test_suite(filenameinfo.get_str(), inputformattype, firsttest, lasttest);
     if (util_tests)
     {
         // Run the utility test
@@ -903,15 +687,15 @@ int _local_main(FILE* filehandle, cmd_line* command_line)
 }
 
 
-pvframemetadata_utility_test_suite::pvframemetadata_utility_test_suite(char *aFileName, PVMFFormatType aFileType, int32 aFirstTest, int32 aLastTest, int32 aLogLevel)
+pvframemetadata_utility_test_suite::pvframemetadata_utility_test_suite(char *aFileName, PVMFFormatType aFileType, int32 aFirstTest, int32 aLastTest)
         : test_case()
 {
-    adopt_test_case(new pvframemetadata_utility_test(aFileName, aFileType, aFirstTest, aLastTest, aLogLevel));
+    adopt_test_case(new pvframemetadata_utility_test(aFileName, aFileType, aFirstTest, aLastTest));
 }
 
 
 
-pvframemetadata_utility_test::pvframemetadata_utility_test(char *aFileName, PVMFFormatType aFileType, int32 aFirstTest, int32 aLastTest, int32 aLogLevel)
+pvframemetadata_utility_test::pvframemetadata_utility_test(char *aFileName, PVMFFormatType aFileType, int32 aFirstTest, int32 aLastTest)
 {
     iFileName = aFileName;
     iFileType = aFileType;
@@ -919,7 +703,6 @@ pvframemetadata_utility_test::pvframemetadata_utility_test(char *aFileName, PVMF
     iCurrentTest = NULL;
     iFirstTest = aFirstTest;
     iLastTest = aLastTest;
-    iLogLevel = aLogLevel;
     iTotalAlloc = 0;
     iTotalBytes = 0;
     iAllocFails = 0;
@@ -1244,19 +1027,15 @@ void pvframemetadata_utility_test::test()
     }
 }
 
+
 void pvframemetadata_utility_test::SetupLoggerScheduler()
 {
-    // Enable the following code for logging (on Symbian, RDebug)
     PVLogger::Init();
-    PVLoggerConfigFile obj;
-    if (obj.IsLoggerConfigFilePresent())
-    {
-        obj.SetLoggerSettings();
-    }
-    // Construct and install the active scheduler
+    OSCL_HeapString<OsclMemAllocator> cfgfilename(PVLOG_PREPEND_CFG_FILENAME);
+    cfgfilename += PVLOG_CFG_FILENAME;
+    OSCL_HeapString<OsclMemAllocator> logfilename(PVLOG_PREPEND_OUT_FILENAME);
+    logfilename += PVLOG_OUT_FILENAME;
+    PVLoggerCfgFileParser::Parse(cfgfilename.get_str(), logfilename.get_str());
     OsclScheduler::Init("PVFrameMetadataUtilityTestScheduler");
 }
-
-
-
 

@@ -96,6 +96,10 @@
 #include "pvlogger.h"
 #endif
 
+#ifndef PVLOGGER_CFG_FILE_PARSER_H_INCLUDED
+#include "pvlogger_cfg_file_parser.h"
+#endif
+
 #ifndef PVLOGGER_FILE_APPENDER_H_INCLUDED
 #include "pvlogger_file_appender.h"
 #endif
@@ -135,212 +139,8 @@
 #include "oscl_string_utils.h"
 #endif
 
-
 static bool bHelp = false;
 FILE *file;
-
-class PVLoggerConfigFile
-{
-        /*  To change the logging settings without the need to compile the test application
-            Let us read the logging settings from the file instead of hard coding them over here
-            The name of the config file is pvlogger.ini
-            The format of entries in it is like
-            First entry will decide if the file appender has to be used or error appender will be used.
-            0 -> ErrAppender will be used
-            1 -> File Appender will be used
-            2 -> Mem Appender will be used
-            Entries after this will decide the module whose logging has to be taken.For example, contents of one sample config file could be
-            1
-            1,PVPlayerEngine
-            8,PVSocketNode
-            (pls note that no space is allowed between loglevel and logger tag)
-            This means, we intend to have logging of level 1 for the module PVPlayerEngine
-            and of level 8 for the PVSocketNode on file.
-        */
-    public:
-
-        PVLoggerConfigFile(): iLogFileRead(false)
-        {
-            iFileServer.Connect();
-            // Full path of pvlogger.ini is: SOURCENAME_PREPEND_STRING + pvlogger.ini
-            oscl_strncpy(iLogFileName, SOURCENAME_PREPEND_STRING,
-                         oscl_strlen(SOURCENAME_PREPEND_STRING) + 1);
-            oscl_strcat(iLogFileName, "pvlogger.ini");
-            oscl_memset(ibuffer, 0, sizeof(ibuffer));
-            iAppenderType = 0;
-
-        }
-
-        ~PVLoggerConfigFile()
-        {
-            iFileServer.Close();
-        }
-
-        bool IsLoggerConfigFilePresent()
-        {
-            if (-1 != ReadAndParseLoggerConfigFile())
-                return true;
-            return false;
-        }
-
-        //Read and parse the config file
-        //retval = -1 if the config file doesnt exist
-        int8 ReadAndParseLoggerConfigFile()
-        {
-            int8 retval = 1;
-
-            if (0 != iLogFile.Open(iLogFileName, Oscl_File::MODE_READ, iFileServer))
-            {
-                retval = -1;
-            }
-            else
-            {
-                if (!iLogFileRead)
-                {
-                    iLogFile.Read(ibuffer, 1, sizeof(ibuffer));
-                    //Parse the buffer for \n chars
-                    Oscl_Vector<char*, OsclMemAllocator> LogConfigStrings;
-
-                    //Get the logger strings
-                    const char* const lnFd = "\n";
-                    const int8 lnFdLen = oscl_strlen(lnFd);
-                    int16 offset = 0;
-                    char* lastValidBffrAddr = ibuffer + oscl_strlen(ibuffer);
-                    const char* lnFdIndx = oscl_strstr(ibuffer, lnFd);
-                    while (lnFdIndx != NULL && lnFdIndx < lastValidBffrAddr)
-                    {
-
-                        // Remove the "\r" to avoid any windows formatting issues
-                        if (*(lnFdIndx - 1) == '\r')
-                        {
-                            oscl_memset((char*)(lnFdIndx - 1), '\0', lnFdLen);
-                        }
-                        else
-                        {
-                            oscl_memset((char*)lnFdIndx, '\0', lnFdLen);
-                        }
-
-                        LogConfigStrings.push_back(ibuffer + offset);
-                        offset = (lnFdIndx + lnFdLen) - ibuffer;
-                        lnFdIndx = OSCL_CONST_CAST(char*, oscl_strstr(ibuffer + offset, lnFd));
-                    }
-                    if (NULL == lnFdIndx && ((ibuffer + offset) < lastValidBffrAddr)) //If \r\n is skipped after the last logging str in ini file
-                    {
-                        LogConfigStrings.push_back(ibuffer + offset);
-                    }
-
-
-                    //Populate the  LoggerConfigElements vector
-                    {
-                        if (!LogConfigStrings.empty())
-                        {
-                            Oscl_Vector<char*, OsclMemAllocator>::iterator it;
-                            it = LogConfigStrings.begin();
-                            uint32 appenderType;
-                            PV_atoi(*it, 'd', oscl_strlen(*it), appenderType);
-                            iAppenderType = appenderType;
-                            if (LogConfigStrings.size() > 1)
-                            {
-                                for (it = LogConfigStrings.begin() + 1; it != LogConfigStrings.end(); it++)
-                                {
-                                    char* CommaIndex = OSCL_CONST_CAST(char*, oscl_strstr(*it, ","));
-                                    if (CommaIndex != NULL)
-                                    {
-                                        *CommaIndex = '\0';
-                                        LoggerConfigElement obj;
-                                        uint32 logLevel;
-                                        PV_atoi(*it, 'd', oscl_strlen(*it), logLevel);
-                                        obj.iLogLevel = logLevel;
-                                        obj.iLoggerString = CommaIndex + 1;
-                                        iLoggerConfigElements.push_back(obj);
-                                    }
-                                }
-                            }
-                            else
-                            {
-                                //Add the config element for complete logging fo all the modules
-                                LoggerConfigElement obj;
-                                obj.iLoggerString = NULL;
-                                obj.iLogLevel = 8;
-                                iLoggerConfigElements.push_back(obj);
-                            }
-                        }
-                    }
-                    iLogFile.Close();
-                    iLogFileRead = true;
-                }
-            }
-            return retval;
-        }
-
-        void SetLoggerSettings()
-        {
-            Oscl_Vector<LoggerConfigElement, OsclMemAllocator>::iterator it;
-
-            PVLoggerAppender *appender = NULL;
-            OsclRefCounter *refCounter = NULL;
-            if (iLoggerConfigElements.empty())
-            {
-                return;
-            }
-
-            if (iAppenderType == 0)
-            {
-                appender = new StdErrAppender<TimeAndIdLayout, 1024>();
-                OsclRefCounterSA<LogAppenderDestructDealloc<StdErrAppender<TimeAndIdLayout, 1024> > > *appenderRefCounter =
-                    new OsclRefCounterSA<LogAppenderDestructDealloc<StdErrAppender<TimeAndIdLayout, 1024> > >(appender);
-                refCounter = appenderRefCounter;
-            }
-            else if (iAppenderType == 1)
-            {
-                OSCL_wHeapString<OsclMemAllocator> logfilename(OUTPUTNAME_PREPEND_WSTRING);
-                logfilename += _STRLIT_WCHAR("player.log");
-                appender = (PVLoggerAppender*)TextFileAppender<TimeAndIdLayout, 1024>::CreateAppender(logfilename.get_str());
-                OsclRefCounterSA<LogAppenderDestructDealloc<TextFileAppender<TimeAndIdLayout, 1024> > > *appenderRefCounter =
-                    new OsclRefCounterSA<LogAppenderDestructDealloc<TextFileAppender<TimeAndIdLayout, 1024> > >(appender);
-                refCounter = appenderRefCounter;
-            }
-            else
-            {
-                OSCL_wHeapString<OsclMemAllocator> logfilename(OUTPUTNAME_PREPEND_WSTRING);
-                logfilename += _STRLIT_WCHAR("player.log");
-                appender = (PVLoggerAppender*)MemAppender<TimeAndIdLayout, 1024>::CreateAppender(logfilename.get_str());
-                OsclRefCounterSA<LogAppenderDestructDealloc<MemAppender<TimeAndIdLayout, 1024> > > *appenderRefCounter =
-                    new OsclRefCounterSA<LogAppenderDestructDealloc<MemAppender<TimeAndIdLayout, 1024> > >(appender);
-                refCounter = appenderRefCounter;
-            }
-
-            OsclSharedPtr<PVLoggerAppender> appenderPtr(appender, refCounter);
-
-            for (it = iLoggerConfigElements.begin(); it != iLoggerConfigElements.end(); it++)
-            {
-                PVLogger *node = NULL;
-                node = PVLogger::GetLoggerObject(it->iLoggerString);
-                node->AddAppender(appenderPtr);
-                node->SetLogLevel(it->iLogLevel);
-            }
-        }
-
-    private:
-        class LoggerConfigElement
-        {
-            public:
-                LoggerConfigElement()
-                {
-                    iLoggerString = NULL;
-                    iLogLevel = 8;
-                }
-                char *iLoggerString;
-                int8 iLogLevel;
-        };
-        int8 iAppenderType; //Type of appender to be used for the logging 0-> Err Appender, 1-> File Appender
-        bool iLogFileRead;
-        Oscl_File iLogFile;
-        Oscl_FileServer iFileServer;
-        char iLogFileName[255];
-        char ibuffer[1024];
-        Oscl_Vector<LoggerConfigElement, OsclMemAllocator> iLoggerConfigElements;
-};
 
 template <typename T>
 class CmdLinePopulator
@@ -1461,6 +1261,7 @@ void FindMemMgmtRelatedCmdLineParams(cmd_line* command_line, bool& aPrintDetaile
     }
 }
 
+
 void FindSplitLogFile(cmd_line* command_line, bool& splitlogfile, FILE* aFile)
 {
     OSCL_UNUSED_ARG(aFile);
@@ -1505,17 +1306,66 @@ void FindSplitLogFile(cmd_line* command_line, bool& splitlogfile, FILE* aFile)
     }
 }
 
+void
+FindLogCfgFile
+(
+    cmd_line* command_line,
+    bool& logcfgfile,
+    FILE* aFile
+)
+{
+    const bool bIsWchar = command_line->is_wchar();
+
+    char* pszCurArg = 0;           // maintain a pointer to the current argument
+
+    if (true == bIsWchar)      // if Unicode, need to create a buffer to work in
+        pszCurArg = new char[256];
+
+    const int count = command_line->get_count();
+    for (int i = 0; i < count; i++)                 // iterate each CLI argument
+    {
+        if (true == bIsWchar)                        // need to convert to UTF8?
+        {
+            OSCL_TCHAR* pArg = 0;
+            command_line->get_arg(i, pArg);
+            oscl_UnicodeToUTF8(pArg, oscl_strlen(pArg), pszCurArg, 256);
+        }
+        else
+        {
+            pszCurArg = 0;
+            command_line->get_arg(i, pszCurArg);
+        }
+
+        if (0 == oscl_strcmp(pszCurArg, "-help"))
+        {
+            bHelp = true;
+            fprintf(aFile, "Log configuration file options:\n"
+                    "  -logconfigfile ==> Use cfg file to configure logger. Ignores all other log options.\n\n");
+            break;
+        }
+        else if (0 == oscl_strcmp(pszCurArg, "-logconfigfile"))
+        {
+            logcfgfile = true;;
+            break;
+        }
+    }
+
+    if (true == bIsWchar)
+    {
+        delete[] pszCurArg;
+        pszCurArg = 0;
+    }
+}
 void FindLoggerNode(cmd_line* command_line, int32& lognode, FILE* aFile)
 {
     //default is log player engine.
     lognode = 0;
 
     bool cmdline_iswchar = command_line->is_wchar();
-
     int count = command_line->get_count();
 
     // Search for the "-logerr"/"-logwarn" argument
-    char *iSourceFind = NULL;
+    char* iSourceFind = NULL;
     if (cmdline_iswchar)
     {
         iSourceFind = new char[256];
@@ -1541,23 +1391,15 @@ void FindLoggerNode(cmd_line* command_line, int32& lognode, FILE* aFile)
         if (oscl_strcmp(iSourceFind, "-help") == 0)
         {
             bHelp = true;
-            fprintf(aFile, "Log node options. Default is player engine only:\n");
-            fprintf(aFile, "  -logall\n");
-            fprintf(aFile, "   Log everything (log appender at root node)\n");
-            fprintf(aFile, "  -logdatapath\n");
-            fprintf(aFile, "   Log datapath only\n");
-            fprintf(aFile, "  -logclock\n");
-            fprintf(aFile, "   Log clock only\n");
-            fprintf(aFile, "  -logoscl\n");
-            fprintf(aFile, "   Log OSCL only\n");
-            fprintf(aFile, "  -logperf\n");
-            fprintf(aFile, "   Log scheduler performance\n");
-            fprintf(aFile, "  -logperfmin\n");
-            fprintf(aFile, "   Log scheduler performance (minimal)\n");
-            fprintf(aFile, "  -logdatapathsrc\n");
-            fprintf(aFile, "   Log source node datapath only\n\n");
-            fprintf(aFile, "  -logdatapathdec\n");
-            fprintf(aFile, "   Log decoder node datapath only\n\n");
+            fprintf(aFile, "Log node options. Default is player engine only:\n"
+                    "  -logall                   ==> Log everything (log appender at root node)\n"
+                    "  -logdatapath              ==> Log datapath only\n"
+                    "  -logclock                 ==> Log clock only\n"
+                    "  -logoscl                  ==> Log OSCL only\n"
+                    "  -logperf                  ==> Log scheduler performance\n"
+                    "  -logperfmin               ==> Log scheduler performance (minimal)\n"
+                    "  -logdatapathsrc           ==> Log source node datapath only\n"
+                    "  -logdatapathdec           ==> Log decoder node datapath only\n\n");
         }
         else if (oscl_strcmp(iSourceFind, "-logall") == 0)
         {
@@ -1642,7 +1484,6 @@ void FindLogLevel(cmd_line* command_line, int32& loglevel, FILE* aFile)
     loglevel = PVLOGMSG_DEBUG;
 
     bool cmdline_iswchar = command_line->is_wchar();
-
     int count = command_line->get_count();
 
     // Search for the "-logerr"/"-logwarn" argument
@@ -1730,6 +1571,11 @@ void FindLogText(cmd_line* command_line, int32& logtext, FILE* aFile)
         if (oscl_strcmp(iSourceFind, "-logfile") == 0)
         {
             logtext = 1;
+        }
+        else if (oscl_strcmp(iSourceFind, "-help") == 0)
+        {
+            fprintf(aFile, "Log to file options.\n"
+                    "  -logfile                  ==> Send log output to file\n\n");
         }
     }
 
@@ -2094,6 +1940,7 @@ int CreateTestSuiteAndRun(char *aFileName,
                           bool aCompA,
                           bool aFileInput,
                           bool aBCS,
+                          bool aLogCfgFile,
                           int32 aLogLevel,
                           int32 aLogNode,
                           int32 aLogText,
@@ -2116,6 +1963,7 @@ int CreateTestSuiteAndRun(char *aFileName,
             aCompA,
             aFileInput,
             aBCS,
+            aLogCfgFile,
             aLogLevel,
             aLogNode,
             aLogText,
@@ -2247,6 +2095,9 @@ int _local_main(FILE *filehandle, cmd_line *command_line, bool& aPrintDetailedMe
     bool bcs;
     FindPacketSource(command_line, fileinput, bcs, file);
 
+    bool logcfgfile = false;
+    FindLogCfgFile(command_line, logcfgfile, file);
+
     int32 loglevel;
     FindLogLevel(command_line, loglevel, file);
 
@@ -2288,6 +2139,7 @@ int _local_main(FILE *filehandle, cmd_line *command_line, bool& aPrintDetailedMe
                                        compA,
                                        fileinput,
                                        bcs,
+                                       logcfgfile,
                                        loglevel,
                                        lognode,
                                        logtext,
@@ -2318,6 +2170,7 @@ int _local_main(FILE *filehandle, cmd_line *command_line, bool& aPrintDetailedMe
                                                compA,
                                                fileinput,
                                                bcs,
+                                               logcfgfile,
                                                loglevel,
                                                lognode,
                                                logtext,
@@ -2352,6 +2205,7 @@ pvplayer_engine_test_suite::pvplayer_engine_test_suite(char *aFileName,
         bool aCompA,
         bool aFileInput,
         bool aBCS,
+        bool aLogCfgFile,
         int32 aLogLevel,
         int32 aLogNode,
         int32 aLogText,
@@ -2369,6 +2223,7 @@ pvplayer_engine_test_suite::pvplayer_engine_test_suite(char *aFileName,
                     aCompA,
                     aFileInput,
                     aBCS,
+                    aLogCfgFile,
                     aLogLevel,
                     aLogNode,
                     aLogText,
@@ -2389,6 +2244,7 @@ pvplayer_engine_test::pvplayer_engine_test(char *aFileName,
         bool aCompA,
         bool aFileInput,
         bool aBCS,
+        bool aLogCfgFile,
         int32 aLogLevel,
         int32 aLogNode,
         int32 aLogFile,
@@ -2408,6 +2264,7 @@ pvplayer_engine_test::pvplayer_engine_test(char *aFileName,
     iCompressedAudioOutput = aCompA;
     iFileInput = aFileInput;
     iBCS = aBCS;
+    iLogCfgFile = aLogCfgFile;
     iLogLevel = aLogLevel;
     iLogNode = aLogNode;
     iLogFile = aLogFile;
@@ -2651,19 +2508,16 @@ void pvplayer_engine_test::TestCompleted(test_case &tc)
 void pvplayer_engine_test::test()
 {
     bool AtleastOneExecuted = false;
-    // Specify the starting test case
-    iCurrentTestNumber = iFirstTest;
+
     iTotalSuccess = iTotalFail = iTotalError = 0;
-    if (!ValidateTestCase(iCurrentTestNumber))
-    {                                           //Dealing with when -test a b ,a is invalid test case and a==b
-        if (iLastTest <= iCurrentTestNumber)
-        {
-            iCurrentTestNumber = BeyondLastTest;
-        }
-    }
-    else //Atleast one test case is executed
+    iCurrentTestNumber = iFirstTest;           // specify the starting test case
+    if (true == ValidateTestCase(iCurrentTestNumber))
     {
-        AtleastOneExecuted = true;
+        AtleastOneExecuted = true;        // indicate at least one test executed
+    }
+    else if (iLastTest <= iCurrentTestNumber)
+    {            // dealing with when -test a b ,a is invalid test case and a==b
+        iCurrentTestNumber = BeyondLastTest;
     }
 
     while (iCurrentTestNumber <= iLastTest || iCurrentTestNumber < BeyondLastTest || AtleastOneExecuted)
@@ -2725,7 +2579,7 @@ void pvplayer_engine_test::test()
         }
 #endif
 
-        bool setupLoggerScheduler = false;
+        bool bLoggerSetup = false;
 
         // skip IF2 tests which are no longer supported
         if (iCurrentTestNumber == AMRIF2FileOpenPlayStopTest)
@@ -2768,7 +2622,7 @@ void pvplayer_engine_test::test()
             fprintf(file, "\nStarting Test %d: ", iCurrentTestNumber);
             fflush(file);
             SetupLoggerScheduler();
-            setupLoggerScheduler = true;
+            bLoggerSetup = true;
         }
 
         // Setup the standard test case parameters based on current unit test settings
@@ -7556,73 +7410,46 @@ void pvplayer_engine_test::test()
         else //no test to run, skip to next test.
         {
             ++iCurrentTestNumber;
-            if (setupLoggerScheduler)
+            if (true == bLoggerSetup)
             {
                 // Shutdown PVLogger and scheduler before continuing on
                 OsclScheduler::Cleanup();
                 PVLogger::Cleanup();
-                setupLoggerScheduler = false;
+                bLoggerSetup = false;
             }
         }
     }
 }
 
-static void PV_itoa(uint32 value, oscl_wchar* buffer)
-{
-    oscl_wchar *ptr, *firstdigit, temp;
-    uint32 digval;
-    uint32 radix = 10;
-    char nullTerm = '\0';
-
-    ptr = buffer;
-    firstdigit = ptr;
-    do
-    {
-        digval = (uint32)(value % radix);
-        value /= radix;
-
-        if (digval > radix - 1)
-            *ptr++ = (oscl_wchar)(digval - radix + 'a');
-        else
-            *ptr++ = (oscl_wchar)(digval + '0');
-    }
-    while (value > 0);
-
-    *ptr-- = nullTerm;
-
-    do
-    {
-        temp = *ptr;
-        *ptr = *firstdigit;
-        *firstdigit = temp;
-        --ptr;
-        ++firstdigit;
-    }
-    while (firstdigit < ptr);
-}
-
 
 void pvplayer_engine_test::SetupLoggerScheduler()
 {
-    // Enable the following code for logging using PV Logger
     PVLogger::Init();
-    OSCL_wHeapString<OsclMemAllocator> logfilename(OUTPUTNAME_PREPEND_WSTRING);
 
-    if (iSplitLogFile)
+    OSCL_HeapString<OsclMemAllocator> logfilename(PVLOG_PREPEND_OUT_FILENAME);
+    if (true == iSplitLogFile)
     {
-        logfilename += _STRLIT_WCHAR("player_");
-        oscl_wchar tmp[5];
-        // convert testcase number to string
-        PV_itoa(iCurrentTestNumber, tmp);
-        OSCL_wHeapString<OsclMemAllocator> str(tmp);
-        logfilename += str;
-        logfilename += _STRLIT_WCHAR(".log");
+        logfilename += _STRLIT_CHAR("pvlogger_");
+        char tmp[5];
+        oscl_snprintf(tmp, sizeof(tmp), "%d", iCurrentTestNumber);
+        logfilename += tmp;
+        logfilename += _STRLIT_CHAR(".out");
     }
     else
     {
-        logfilename += _STRLIT_WCHAR("player.log");
+        logfilename += PVLOG_OUT_FILENAME;
     }
 
+    if (true == iLogCfgFile)
+    {
+        OSCL_HeapString<OsclMemAllocator> cfgfilename(PVLOG_PREPEND_CFG_FILENAME);
+        cfgfilename += PVLOG_CFG_FILENAME;
+        if (true == PVLoggerCfgFileParser::Parse(cfgfilename.get_str(), logfilename.get_str()))
+        {
+            OsclScheduler::Init("PVPlayerEngineTestScheduler");
+            return;
+        }
+    }
 
     PVLoggerAppender *appender = NULL;
     OsclRefCounter *refCounter = NULL;
@@ -7650,16 +7477,6 @@ void pvplayer_engine_test::SetupLoggerScheduler()
     }
 
     OsclSharedPtr<PVLoggerAppender> appenderPtr(appender, refCounter);
-
-
-    PVLoggerConfigFile obj;
-    if (obj.IsLoggerConfigFilePresent())
-    {
-        obj.SetLoggerSettings();
-        // Construct and install the active scheduler
-        OsclScheduler::Init("PVPlayerEngineTestScheduler");
-        return;
-    }
 
     switch (iLogNode)
     {

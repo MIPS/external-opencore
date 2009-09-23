@@ -82,9 +82,6 @@ class PVMetadataEngineInterfaceContainer
         OsclThreadPriority iPriority;
         OsclSemaphore iSem;
 
-        uint32 iAppenderType; //Type of appender to be used for the logging 0-> Err Appender, 1-> File Appender
-        Oscl_Vector<LoggerConfigElement, OsclMemAllocator> iLoggerConfigElements;
-        OSCL_wHeapString<OsclMemAllocator> iLogfilename;
 };
 
 /**

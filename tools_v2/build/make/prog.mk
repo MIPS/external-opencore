@@ -94,10 +94,10 @@ $(eval $(TARGET)_LIBDEPS := $(TMPDEPS))
 $(TARGET)_LDFLAGS := $(LOCAL_LIBDIRS) $($(TARGET)_LIBDEPS) $(LDFLAGS) $(XLDFLAGS)
 
 $(REALTARGET): $(COMPILED_OBJS) $($(TARGET)_LIBDEPS)
-	@echo Building $@
+	@echo [make] Building $@
 	$(call create_objdir,$(@D))
 	$(call generate_prog,$@,$(notdir $@))
-	@echo DONE building $@.
+	@echo [make] DONE building $@.
 
 ALL_BIN_INSTALLED: $(REALTARGET)
 

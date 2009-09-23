@@ -23,7 +23,6 @@ XINCDIRS +=  ../../../src \
   ../../../../../../engines/2way/sample_app/pv2waysample/include \
   ../../../../../../engines/common/include \
   ../../../../../../protocols/systems/common/include \
-  ../../../../pvlogger/src \
   ../../../../test/include
 
 SRCDIR := ../../src
@@ -32,7 +31,6 @@ INCSRCDIR := ../../include
 SRCS := main.cpp \
         pv_2way_console_source_and_sinks.cpp \
         console_engine_handler.cpp \
-   	../../../pvlogger/src/pv_logger_impl.cpp \
 	../../pv2waysample/src/testcaseparser.cpp \
 	../../../test/src/lipsync_dummy_input_mio.cpp \
 	../../../test/src/lipsync_dummy_output_mio.cpp 
@@ -65,6 +63,8 @@ END_LIBS = pvdummyinputnode pvdummyoutputnode \
 	pvgeneraltools \
 	pvthreadmessaging \
 	pvmimeutils \
+        pvlogger \
+        osclio \
         unit_test \
         osclio \
 	osclproc \
@@ -132,7 +132,7 @@ include $(MK)/prog.mk
 run_2way_console: $(REALTARGET) default
 	$(quiet) ${RM} -rf $(TWOWAY_TEST_DIR_CON)
 	$(quiet) ${MKDIR} -p $(TWOWAY_TEST_DIR_CON)
-	$(quiet) $(CP) $(SRC_ROOT)/engines/2way/pvlogger/config/pvlogger.ini $(TWOWAY_TEST_DIR_CON)
+	$(quiet) $(CP) $(SRC_ROOT)/engines/2way/src/pvlogcfg.txt $(TWOWAY_TEST_DIR_CON)
 	$(quiet) $(CP) ${BUILD_ROOT}/bin/${BUILD_ARCH}/$(TWOWAY_TARGET_CON) $(TWOWAY_TEST_DIR_CON)
 	$(quiet) $(CP) -r $(SRC_ROOT)/engines/2way/sample_app/data/* $(TWOWAY_TEST_DIR_CON)
 	$(quiet) cd $(TWOWAY_TEST_DIR_CON) && $(TWOWAYFULL_TARGET_CON) 

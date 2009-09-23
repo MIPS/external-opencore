@@ -2,10 +2,10 @@ LOCAL_PATH := $(call my-dir)
 include $(CLEAR_VARS)
 
 LOCAL_SRC_FILES := \
- 	
+ 	src/pvlogger_cfg_file_parser.cpp
 
 
-
+LOCAL_MODULE := libpvlogger
 
 LOCAL_CFLAGS :=   $(PV_CFLAGS)
 
@@ -23,9 +23,10 @@ LOCAL_C_INCLUDES := \
 LOCAL_COPY_HEADERS_TO := $(PV_COPY_HEADERS_TO)
 
 LOCAL_COPY_HEADERS := \
-	src/pvlogger_stderr_appender.h \
+	src/pvlogger_cfg_file_parser.h \
  	src/pvlogger_file_appender.h \
  	src/pvlogger_mem_appender.h \
+ 	src/pvlogger_stderr_appender.h \
  	src/pvlogger_time_and_id_layout.h
 
-include $(BUILD_COPY_HEADERS)
+include $(BUILD_STATIC_LIBRARY)

@@ -80,54 +80,6 @@ void PVMetadataEngine::Construct(PVMetadataEngineInterfaceContainer& aPVMEContai
     iErrorEventObserver = aContainer->iErrorEventObserver;
     iInfoEventObserver = aContainer->iInfoEventObserver;
 
-    if (aContainer->iMode == PV_METADATA_ENGINE_THREADED_MODE)
-    {
-        Oscl_Vector<LoggerConfigElement, OsclMemAllocator>::iterator it;
-        PVLoggerAppender *appender = NULL;
-        OsclRefCounter *refCounter = NULL;
-
-        iAppenderType = aContainer->iAppenderType;
-        iLoggerConfigElements = aContainer->iLoggerConfigElements;
-
-        if (iAppenderType == 1)
-        {
-            logfilename = aContainer->iLogfilename;
-        }
-
-        if (iAppenderType == 0)
-        {
-            appender = new StdErrAppender<TimeAndIdLayout, 1024>();
-            OsclRefCounterSA<AppenderDestructDealloc<StdErrAppender<TimeAndIdLayout, 1024> > > *appenderRefCounter =
-                new OsclRefCounterSA<AppenderDestructDealloc<StdErrAppender<TimeAndIdLayout, 1024> > >(appender);
-            refCounter = appenderRefCounter;
-        }
-        else if (iAppenderType == 1)
-        {
-            appender = (PVLoggerAppender*)TextFileAppender<TimeAndIdLayout, 1024>::CreateAppender(logfilename.get_str());
-            OsclRefCounterSA<AppenderDestructDealloc<TextFileAppender<TimeAndIdLayout, 1024> > > *appenderRefCounter =
-                new OsclRefCounterSA<AppenderDestructDealloc<TextFileAppender<TimeAndIdLayout, 1024> > >(appender);
-            refCounter = appenderRefCounter;
-        }
-        else
-        {
-            appender = (PVLoggerAppender*)MemAppender<TimeAndIdLayout, 1024>::CreateAppender(logfilename.get_str());
-            OsclRefCounterSA<AppenderDestructDealloc<MemAppender<TimeAndIdLayout, 1024> > > *appenderRefCounter =
-                new OsclRefCounterSA<AppenderDestructDealloc<MemAppender<TimeAndIdLayout, 1024> > >(appender);
-            refCounter = appenderRefCounter;
-        }
-
-        OsclSharedPtr<PVLoggerAppender> appenderPtr(appender, refCounter);
-
-
-        for (it = iLoggerConfigElements.begin(); it != iLoggerConfigElements.end(); it++)
-        {
-            PVLogger *node = NULL;
-            node = PVLogger::GetLoggerObject(it->iLoggerString);
-            node->AddAppender(appenderPtr);
-            node->SetLogLevel(it->iLogLevel);
-        }
-    }
-
     iCommandIdMut.Create();
     iOOTSyncCommandSem.Create();
     iThreadSafeQueue.Configure(this);

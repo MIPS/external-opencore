@@ -21,10 +21,10 @@ define shared_lib_template
 lib$(1): $(DESTDIR)/lib$(1)$(TARGET_NAME_SUFFIX).$(SHARED_LIB_EXT)
 $(DESTDIR)/lib$(1)$(TARGET_NAME_SUFFIX).$(SHARED_LIB_EXT): $(foreach lib,$($(1)_CUMULATIVE_TARGET_LIST),$($(lib)_$(1)_fullname)) $(foreach shlib,$(strip $(call remove_quotes,$(MODS_$(1)))),$(patsubst -l%,$(DESTDIR)/lib%$(TARGET_NAME_SUFFIX).$(SHARED_LIB_EXT),$(shlib)))
 	$(eval $(1)_fullname:=$(DESTDIR)/lib$1$(TARGET_NAME_SUFFIX).$(SHARED_LIB_EXT))
-	@echo "Building $$@..."
+	@echo "[make] Building $$@..."
 	$$(call create_objdir,$$(@D))
 	$$(call generate_shared_lib,$$@,$$^,$(strip $($(1)$(TARGET_NAME_SUFFIX)_PRELINK)))
-	@echo "DONE building $$@."
+	@echo "[make] DONE building $$@."
 endef
 endif
 

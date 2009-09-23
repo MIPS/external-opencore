@@ -34,7 +34,8 @@ class TextFileAppender : public PVLoggerAppender
     public:
         typedef PVLoggerAppender::message_id_type message_id_type;
 
-        static TextFileAppender<Layout, LayoutBufferSize, Lock>* CreateAppender(const OSCL_TCHAR * filename, uint32 cacheSize = 0)
+        template<class T>
+        static TextFileAppender<Layout, LayoutBufferSize, Lock>* CreateAppender(const T* filename, uint32 cacheSize = 0)
         {
 
             TextFileAppender<Layout, LayoutBufferSize, Lock> * appender = new TextFileAppender<Layout, LayoutBufferSize, Lock>();
@@ -200,50 +201,8 @@ class BinaryFileAppender : public PVLoggerAppender
     public:
         typedef PVLoggerAppender::message_id_type message_id_type;
 
-        static BinaryFileAppender* CreateAppender(const char* filename, uint32 cacheSize = 0)
-        {
-
-            BinaryFileAppender * appender = OSCL_NEW(BinaryFileAppender, ());
-            if (NULL == appender) return NULL;
-
-#ifdef T_ARM
-            //ADS 1.2 can't compile the auto ptr-- so don't use it.
-#else
-            OSCLMemAutoPtr<BinaryFileAppender> holdAppender(appender);
-#endif
-
-            if (0 != appender->_fs.Connect()) return NULL;
-
-            //set log file object options
-            //this has its own cache so there's no reason to use pv cache.
-            appender->_logFile.SetPVCacheSize(0);
-            //make sure there's no logging on this file or we get infinite loop!
-            appender->_logFile.SetLoggingEnable(false);
-            appender->_logFile.SetSummaryStatsLoggingEnable(false);
-            //end of log file object options.
-
-            if (0 != appender->_logFile.Open(filename,
-                                             Oscl_File::MODE_READWRITE | Oscl_File::MODE_BINARY,
-                                             appender->_fs))
-            {
-                return NULL;
-            }
-
-            if (cacheSize)
-            {
-                appender->_cache.ptr = OSCL_MALLOC(cacheSize);
-                appender->_cache.len = 0;
-            }
-            appender->_cacheSize = cacheSize;
-
-#ifdef T_ARM
-            return appender;
-#else
-            return holdAppender.release();
-#endif
-        }
-
-        static BinaryFileAppender* CreateAppender(const OSCL_TCHAR * filename, uint32 cacheSize = 0)
+        template<class T>
+        static BinaryFileAppender* CreateAppender(const T* filename, uint32 cacheSize = 0)
         {
 
             BinaryFileAppender * appender = OSCL_NEW(BinaryFileAppender, ());

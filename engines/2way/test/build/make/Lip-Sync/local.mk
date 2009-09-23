@@ -15,12 +15,11 @@ XCXXFLAGS += $(FLAG_COMPILE_WARNINGS_AS_ERRORS)
 SRCDIR := ../../../src
 INCSRCDIR := ../../../include 
 			
-XINCDIRS +=  ../../../../pvlogger/src \
-             ../../../sample_app/pv2waysample/include \
-             ../../../../../nodes/pvdummyinputnode/include \
-			 ../../../../../../protocols/systems/common/include \
-			 ../../../include 
-			 
+XINCDIRS +=  \
+    ../../../sample_app/pv2waysample/include \
+    ../../../../../nodes/pvdummyinputnode/include \
+    ../../../../../../protocols/systems/common/include \
+    ../../../include 
 
 SRCS := alloc_dealloc_test.cpp \
 	av_duplicate_test.cpp \
@@ -29,8 +28,7 @@ SRCS := alloc_dealloc_test.cpp \
 	engine_test.cpp \
 	init_cancel_test.cpp \
 	init_test.cpp \
-	test_base.cpp \
-	../../pvlogger/src/pv_logger_impl.cpp
+	test_base.cpp
 
 SRCS_324 = av_test.cpp \
 	acceptable_formats_test.cpp \
@@ -78,6 +76,7 @@ END_LIBS = pvdummyinputnode pvdummyoutputnode \
    pvlatmpayloadparser \
    pvmio_comm_loopback \
    unit_test \
+   pvlogger \
    osclio \
    osclproc \
    osclutil \
@@ -157,7 +156,7 @@ run_2way_test:: $(REALTARGET) default
 	$(quiet) ${RM} -r $(TWOWAY_TEST_DIR)
 	$(quiet) ${MKDIR} -p $(TWOWAY_TEST_DIR)
 	$(quiet) $(CP) $(SRC_ROOT)/tools_v2/build/package/opencore/elem/common/pvplayer.cfg $(TWOWAY_TEST_DIR)
-	$(quiet) $(CP) $(SRC_ROOT)/engines/2way/pvlogger/config/pvlogger.ini $(TWOWAY_TEST_DIR)
+	$(quiet) $(CP) $(SRC_ROOT)/engines/2way/src/pvlogcfg.txt $(TWOWAY_TEST_DIR)
 	$(quiet) $(CP) ${BUILD_ROOT}/bin/${BUILD_ARCH}/$(TWOWAY_TARGET) $(TWOWAY_TEST_DIR)
 	$(quiet) $(CP) -r $(SRC_ROOT)/engines/2way/test/test_data/* $(TWOWAY_TEST_DIR)
 ifeq ($(HOST_ARCH),win32)

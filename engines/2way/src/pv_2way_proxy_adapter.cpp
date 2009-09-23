@@ -18,10 +18,10 @@
 
 #include "pv_2way_proxy_adapter.h"
 #include "pvlogger.h"
+#include "pvlogger_cfg_file_parser.h"
 #include "pvt_common.h"
 #include "pv_2way_engine_factory.h"
 #include "oscl_error_trapcleanup.h"
-#include "pv_logger_impl.h"
 
 #define DEFAULT_2WAY_STACK_SIZE 8192
 
@@ -998,29 +998,8 @@ PVCmnAsyncErrorEvent* CPV2WayProxyAdapter::GetErrorMsgL()
 
 OSCL_EXPORT_REF void PV2WayLogger::CreateLogger()
 {
-    PVLoggerAppender *lLoggerAppender = 0;
-    OsclRefCounter *refCounter = NULL;
-    bool logfile = true;
-    if (logfile)
-    {
-        //File Log
-        typedef TextFileAppender<TimeAndIdLayout, 1024> textAppender;
-        lLoggerAppender = (PVLoggerAppender*)textAppender::CreateAppender(TEST_LOG_FILENAME);
-        OsclRefCounter *appenderRefCounter = OSCL_NEW((OsclRefCounterSA<AppenderDestructDealloc<textAppender> >), (lLoggerAppender));
-        refCounter = appenderRefCounter;
-    }
-    else
-    {
-        //Console Log
-        typedef StdErrAppender<TimeAndIdLayout, 1024> ErrAppender;
-        lLoggerAppender = OSCL_NEW(ErrAppender, ());
-        OsclRefCounter *appenderRefCounter = OSCL_NEW((OsclRefCounterSA<AppenderDestructDealloc<StdErrAppender<TimeAndIdLayout, 1024> > >), (lLoggerAppender));
-        refCounter = appenderRefCounter;
-    }
-    OsclSharedPtr<PVLoggerAppender> appenderPtr;
-    appenderPtr.Bind(lLoggerAppender, refCounter);
-    PVLogger *Logger = NULL;
-    Logger = PVLogger::GetLoggerObject("");
-    Logger->AddAppender(appenderPtr);
-    Logger->SetLogLevel(PVLOGMSG_DEBUG);
+    OSCL_HeapString<OsclMemAllocator> logfilename(PVLOG_PREPEND_OUT_FILENAME);
+    logfilename += PVLOG_OUT_FILENAME;
+    PVLoggerCfgFileParser::SetupLogAppender(PVLoggerCfgFileParser::ePVLOG_APPENDER_FILE,
+                                            logfilename.get_str(), _STRLIT_CHAR(""), PVLOGMSG_VERBOSE);
 }

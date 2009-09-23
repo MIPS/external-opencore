@@ -44,8 +44,6 @@
 #endif
 #include "test_codecs.h"
 
-#include "pv_logger_impl.h"
-
 #define AUDIO_FIRST 0
 #define VIDEO_FIRST 1
 

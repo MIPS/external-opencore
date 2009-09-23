@@ -50,10 +50,6 @@
 #include "pvlogger.h"
 #endif
 
-#ifndef PVLOGGER_STDERR_APPENDER_H_INCLUDED
-#include "pvlogger_stderr_appender.h"
-#endif
-
 #ifndef PVLOGGER_TIME_AND_ID_LAYOUT_H_INCLUDED
 #include "pvlogger_time_and_id_layout.h"
 #endif
@@ -66,21 +62,11 @@
 #include "test_pv_frame_metadata_utility_config.h"
 #endif
 
-template<class DestructClass>
-class LogAppenderDestructDealloc : public OsclDestructDealloc
-{
-    public:
-        virtual void destruct_and_dealloc(OsclAny *ptr)
-        {
-            delete((DestructClass*)ptr);
-        }
-};
-
 
 class pvframemetadata_utility_test_suite : public test_case
 {
     public:
-        pvframemetadata_utility_test_suite(char *aFilename, PVMFFormatType aFiletype, int32 aFirstTest, int32 aLastTest, int32 aLogLevel);
+        pvframemetadata_utility_test_suite(char *aFilename, PVMFFormatType aFiletype, int32 aFirstTest, int32 aLastTest);
 };
 
 
@@ -215,7 +201,7 @@ class pvframemetadata_utility_test : public test_case,
         public pvframemetadata_async_test_observer
 {
     public:
-        pvframemetadata_utility_test(char *aFileName, PVMFFormatType aFileType, int32 aFirstTest, int32 aLastTest, int32 aLogLevel);
+        pvframemetadata_utility_test(char *aFileName, PVMFFormatType aFileType, int32 aFirstTest, int32 aLastTest);
         ~pvframemetadata_utility_test();
 
         enum PVFrameMetadataUtilityAsyncTests
@@ -278,9 +264,6 @@ class pvframemetadata_utility_test : public test_case,
         int iTotalSuccess;
         int iTotalError;
         int iTotalFail;
-
-        // For logging
-        int32 iLogLevel;
 
         // For memory statistics
         uint32 iTotalAlloc;

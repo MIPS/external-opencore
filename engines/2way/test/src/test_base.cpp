@@ -19,25 +19,20 @@
 #include "test_base.h"
 #endif
 
-#ifndef PV_LOGGER_IMPL_H_INCLUDED
-#include "pv_logger_impl.h"
+#ifndef PVLOGGER_CFG_FILE_PARSER_H_INCLUDED
+#include "pvlogger_cfg_file_parser.h"
 #endif
+
+#include "pvlogger_file_appender.h"
+#include "pvlogger_mem_appender.h"
 
 
 #include "pv_mime_string_utils.h"
-
 #ifndef TEST_ENGINE_UTILITY_H_HEADER
 #include "test_engine_utility.h"
 #endif
-
-#if defined(__linux__) || defined(linux)
-#define CONFIG_FILE_PATH _STRLIT("")
-#endif
-#ifdef  _SYMBIAN
-#define CONFIG_FILE_PATH _STRLIT("c:\\Data\\")
-#endif
-
 #include "pv_2way_codecspecifier.h"
+
 
 uint32 test_base::iTestCounter = 0;
 
@@ -425,49 +420,18 @@ void test_base::CommandCompleted(const PVCmdResponse& aResponse)
 
 void test_base::InitializeLogs()
 {
-    if (!iUseProxy)
+    if (false == iUseProxy)
     {
-        uint32 error = 0;
-        PVLoggerConfigFile obj;
-        obj.SetConfigFilePath(CONFIG_FILE_PATH);
-        error = 0;
-        if (obj.IsLoggerConfigFilePresent())
-        {
-            error = obj.SetLoggerSettings(terminal, TEST_LOG_FILENAME);
-            if (0 != error)
-            {
-                PV2WayUtil::OutputInfo("Error Occured in PVLoggerConfigFile::SetLoggerSettings() \n");
-            }
-            else
-            {
-                //sucess able to set logger settings
-                return;
-            }
-        }
-
-        PVLoggerAppender *lLoggerAppender = 0;
-        OsclRefCounter *refCounter = NULL;
-        bool logfile = true;
-        if (logfile)
-        {
-            //File Log
-            const uint32 TEXT_FILE_APPENDER_CACHE_SIZE = 0;
-            lLoggerAppender = TextFileAppender<TimeAndIdLayout, 1024>::CreateAppender(TEST_LOG_FILENAME, TEXT_FILE_APPENDER_CACHE_SIZE);
-            OsclRefCounter *appenderRefCounter = new OsclRefCounterSA<AppenderDestructDealloc<TextFileAppender<TimeAndIdLayout, 1024> > >(lLoggerAppender);
-            refCounter = appenderRefCounter;
-        }
-        else
-        {
-            //Console Log
-            lLoggerAppender = new StdErrAppender<TimeAndIdLayout, 1024>();
-            OsclRefCounter *appenderRefCounter = new OsclRefCounterSA<AppenderDestructDealloc<StdErrAppender<TimeAndIdLayout, 1024> > >(lLoggerAppender);
-            refCounter = appenderRefCounter;
-        }
-        OsclSharedPtr<PVLoggerAppender> appenderPtr(lLoggerAppender, refCounter);
-        terminal->SetLogLevel("", PVLOGMSG_DEBUG, true);
-        terminal->SetLogAppender("", appenderPtr);
+        OSCL_HeapString<OsclMemAllocator> cfgfilename(PVLOG_PREPEND_CFG_FILENAME);
+        cfgfilename += PVLOG_CFG_FILENAME;
+        OSCL_HeapString<OsclMemAllocator> logfilename(PVLOG_PREPEND_OUT_FILENAME);
+        logfilename += PVLOG_OUT_FILENAME;
+        if (true == PVLoggerCfgFileParser::Parse(cfgfilename.get_str(), logfilename.get_str()))
+            return;
     }
+
 }
+
 
 bool test_base::start_async_test()
 {

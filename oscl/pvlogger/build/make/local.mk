@@ -4,19 +4,21 @@ LOCAL_PATH := $(call get_makefile_dir)
 # Clear out the variables used in the local makefiles
 include $(MK)/clear.mk
 
-TARGET := 
+TARGET := pvlogger
 
 
 SRCDIR := ../../src
 INCSRCDIR := ../../src
 
-# compose final src list for actual build
-SRCS :=	
+SRCS :=	\
+    pvlogger_cfg_file_parser.cpp 
 
-HDRS := pvlogger_stderr_appender.h \
-	pvlogger_file_appender.h \
-	pvlogger_mem_appender.h \
-	pvlogger_time_and_id_layout.h
+HDRS := \
+    pvlogger_cfg_file_parser.h \
+    pvlogger_file_appender.h \
+    pvlogger_mem_appender.h \
+    pvlogger_stderr_appender.h \
+    pvlogger_time_and_id_layout.h
 
 
 include $(MK)/library.mk

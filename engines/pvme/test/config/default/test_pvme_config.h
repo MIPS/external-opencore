@@ -26,11 +26,11 @@
 #define USE_NATIVE_SCHEDULER 0
 
 // The string to prepend to source filenames
-#define SOURCENAME_PREPEND_STRING ""
+#define SOURCENAME_PREPEND_STRING _STRLIT_CHAR("")
 #define SOURCENAME_PREPEND_WSTRING _STRLIT_WCHAR("")
 
 // The string to prepend to output filenames
-#define OUTPUTNAME_PREPEND_STRING ""
+#define OUTPUTNAME_PREPEND_STRING _STRLIT_CHAR("")
 #define OUTPUTNAME_PREPEND_WSTRING _STRLIT_WCHAR("")
 
 #endif // TEST_PVME_CONFIG_H_INCLUDED

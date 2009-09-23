@@ -61,7 +61,6 @@
 
 
 #define AUDIO_SINK_FILENAME _STRLIT("audio_out.if2")
-#define TEST_LOG_FILENAME _STRLIT("test2way.log")
 #define TEST_RX_LOG_FILENAME _STRLIT("commrx.bin")
 #define TEST_TX_LOG_FILENAME _STRLIT("commtx.bin")
 #define AUDIO_SOURCE3_FILENAME _STRLIT("audio_in.amr")
@@ -89,13 +88,5 @@
 #define SQCIF_PLAY_FILENAME _STRLIT("sqcif1.3gp")
 #define QVGA_PLAY_FILENAME _STRLIT("qvga.3gp")
 
-
-#define LOG_FILE_NAME _STRLIT("pvlog.txt")
-
-
-
-
-
 #endif
-
 

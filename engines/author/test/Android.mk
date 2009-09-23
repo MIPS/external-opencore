@@ -10,7 +10,6 @@ LOCAL_SRC_FILES := \
  	src/test_pv_author_engine_testset6.cpp \
  	src/test_pv_author_engine_testset7.cpp \
  	src/test_pv_mediainput_author_engine.cpp \
- 	src/test_pv_author_engine_logger.cpp \
  	src/test_pv_author_engine_testset8.cpp
 
 

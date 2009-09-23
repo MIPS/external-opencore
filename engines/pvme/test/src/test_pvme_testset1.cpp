@@ -59,10 +59,6 @@ void pv_metadata_engine_test::Run()
                 iThreadSafeInfoQueue.Configure(this);
 
                 iPVMEContainer.iSem.Create();
-
-                iPVMEContainer.iAppenderType = iLoggerInfo.iAppenderType;
-                iPVMEContainer.iLogfilename = iLoggerInfo.logfilename;
-                iPVMEContainer.iLoggerConfigElements = iLoggerInfo.iLoggerConfigElements;
             }
 
             OSCL_TRY(error, PVMetadataEngineFactory::CreatePVMetadataEngine(iPVMEContainer));
@@ -394,7 +390,6 @@ void pv_metadata_engine_test::ReadMetadataFile()
     Oscl_FileServer fileServer;
     err = fileServer.Connect();
 
-    // Full path of MetadataFile is: SOURCENAME_PREPEND_STRING + pvlogger.ini
     oscl_strncpy(KeysFileName, SOURCENAME_PREPEND_STRING,
                  oscl_strlen(SOURCENAME_PREPEND_STRING) + 1);
     oscl_strcat(KeysFileName, "MetadataKeys.txt");
@@ -472,7 +467,6 @@ void pv_metadata_engine_test::ReadClipsFile()
     if (0 == err)
     {
         Oscl_File *ClipsFile = new Oscl_File;
-        // Full path of ClipsFile is: SOURCENAME_PREPEND_STRING + pvlogger.ini
         oscl_strncpy(ClipsFileName, SOURCENAME_PREPEND_STRING,
                      oscl_strlen(SOURCENAME_PREPEND_STRING) + 1);
         oscl_strcat(ClipsFileName, "Clips.txt");

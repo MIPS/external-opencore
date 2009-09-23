@@ -138,8 +138,8 @@
 #include "oscl_utf8conv.h"
 #endif
 
-#ifndef PVAELOGGER_H_INCLUDED
-#include "test_pv_author_engine_logger.h"
+#ifndef PVLOGGER_CFG_FILE_PARSER_H_INCLUDED
+#include "pvlogger_cfg_file_parser.h"
 #endif
 
 //#define _W(x) _STRLIT_WCHAR(x)
@@ -1398,16 +1398,17 @@ typedef enum
 ////////////////////////////////////////////////////////////////////////////
 class PVLoggerSchedulerSetup
 {
-    public:
-        PVLoggerSchedulerSetup() {};
-        ~PVLoggerSchedulerSetup() {};
 
+    public:
         void InitLoggerScheduler()
         {
             // Logging by PV Logger
             PVLogger::Init();
-            //PVAELogger::ParseConfigFile(_W("uilogger.txt"));
-            PVAELogger::ParseConfigFile(KPVAELoggerFile);
+            OSCL_HeapString<OsclMemAllocator> cfgfilename(PVLOG_PREPEND_CFG_FILENAME);
+            cfgfilename += PVLOG_CFG_FILENAME;
+            OSCL_HeapString<OsclMemAllocator> logfilename(PVLOG_PREPEND_OUT_FILENAME);
+            logfilename += PVLOG_OUT_FILENAME;
+            PVLoggerCfgFileParser::Parse(cfgfilename.get_str(), logfilename.get_str());
 
             // Construct and install the active scheduler
             OsclScheduler::Init("PVAuthorEngineTestScheduler");
@@ -1418,8 +1419,8 @@ class PVLoggerSchedulerSetup
             OsclScheduler::Cleanup();
             PVLogger::Cleanup();
         }
-
 };
+
 // Observer class for pvPlayer async test to notify completion of test
 class pvauthor_async_test_observer
 {

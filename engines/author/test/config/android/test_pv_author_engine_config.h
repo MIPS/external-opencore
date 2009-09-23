@@ -28,10 +28,6 @@
 // Set to 1 to use the scheduler native to the system instead of PV scheduler
 #define USE_NATIVE_SCHEDULER 0
 
-#define KLogFile _STRLIT("pvauthor.log")
-#define KPVAELoggerFile _STRLIT("pvaelogger.txt")
-
-
 // Input files
 #define KYUVTestInput _STRLIT("yuvtestinput.yuv")
 #define KH263TestInput _STRLIT("h263testinput.h263")

@@ -19,7 +19,7 @@ XINCDIRS +=  ../../../../common/include ../../src/single_core ../../config/andro
 SRCDIR := ../../src
 INCSRCDIR := ../../src
 
-SRCS := pvaetest.cpp test_pv_author_engine_testset1.cpp test_pv_author_engine_testset4.cpp ./single_core/pvaetestinput.cpp test_pv_author_engine_testset5.cpp test_pv_author_engine_testset6.cpp test_pv_author_engine_testset7.cpp test_pv_mediainput_author_engine.cpp test_pv_author_engine_logger.cpp test_pv_author_engine_testset8.cpp
+SRCS := pvaetest.cpp test_pv_author_engine_testset1.cpp test_pv_author_engine_testset4.cpp ./single_core/pvaetestinput.cpp test_pv_author_engine_testset5.cpp test_pv_author_engine_testset6.cpp test_pv_author_engine_testset7.cpp test_pv_mediainput_author_engine.cpp test_pv_author_engine_testset8.cpp
 
 
 LIBS := unit_test opencore_author opencore_common opencore_player

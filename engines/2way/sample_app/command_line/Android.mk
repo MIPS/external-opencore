@@ -5,7 +5,6 @@ LOCAL_SRC_FILES := \
 	src/main.cpp \
  	src/pv_2way_console_source_and_sinks.cpp \
  	src/console_engine_handler.cpp \
- 	src/../../../pvlogger/src/pv_logger_impl.cpp \
  	src/../../pv2waysample/src/testcaseparser.cpp \
  	src/../../../test/src/lipsync_dummy_input_mio.cpp \
  	src/../../../test/src/lipsync_dummy_output_mio.cpp \
@@ -30,7 +29,6 @@ LOCAL_C_INCLUDES := \
  	$(PV_TOP)/engines/2way/sample_app/pv2waysample/include \
  	$(PV_TOP)/engines/common/include \
  	$(PV_TOP)/protocols/systems/common/include \
- 	$(PV_TOP)/engines/2way/pvlogger/src \
  	$(PV_TOP)/engines/2way/test/include \
  	$(PV_INCLUDES)
 

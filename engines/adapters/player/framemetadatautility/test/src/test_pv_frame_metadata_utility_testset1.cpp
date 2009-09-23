@@ -501,7 +501,7 @@ void pvframemetadata_async_test_getmetadata::SaveMetadataInfo()
                 char tmpstr[65];
                 oscl_UnicodeToUTF8(iMetadataValueList[i].value.pWChar_value,
                                    oscl_strlen(iMetadataValueList[i].value.pWChar_value), tmpstr, 65);
-                tmpstr[64] = NULL;
+                tmpstr[64] = 0;
                 oscl_snprintf(iTextOutputBuf, 512, "   Value(in UTF-8, first 64 chars):%s\n", tmpstr);
                 iMetadataFile.Write(iTextOutputBuf, sizeof(char), oscl_strlen(iTextOutputBuf));
             }
@@ -946,7 +946,7 @@ void pvframemetadata_async_test_getfirstframemetadata::SaveMetadataInfo()
                 char tmpstr[65];
                 oscl_UnicodeToUTF8(iMetadataValueList[i].value.pWChar_value,
                                    oscl_strlen(iMetadataValueList[i].value.pWChar_value), tmpstr, 65);
-                tmpstr[64] = NULL;
+                tmpstr[64] = 0;
                 oscl_snprintf(iTextOutputBuf, 512, "   Value(in UTF-8, first 64 chars):%s\n", tmpstr);
                 iMetadataFile.Write(iTextOutputBuf, sizeof(char), oscl_strlen(iTextOutputBuf));
             }
@@ -2522,7 +2522,7 @@ void pvframemetadata_async_test_multigetfirstframemetadata::SaveMetadataInfo()
                 char tmpstr[65];
                 oscl_UnicodeToUTF8(iMetadataValueList[i].value.pWChar_value,
                                    oscl_strlen(iMetadataValueList[i].value.pWChar_value), tmpstr, 65);
-                tmpstr[64] = NULL;
+                tmpstr[64] = 0;
                 oscl_snprintf(iTextOutputBuf, 512, "   Value(in UTF-8, first 64 chars):%s\n", tmpstr);
                 iMetadataFile.Write(iTextOutputBuf, sizeof(char), oscl_strlen(iTextOutputBuf));
             }
@@ -3349,7 +3349,7 @@ void pvframemetadata_async_test_nogetframe::SaveMetadataInfo()
                 char tmpstr[65];
                 oscl_UnicodeToUTF8(iMetadataValueList[i].value.pWChar_value,
                                    oscl_strlen(iMetadataValueList[i].value.pWChar_value), tmpstr, 65);
-                tmpstr[64] = NULL;
+                tmpstr[64] = 0;
                 oscl_snprintf(iTextOutputBuf, 512, "   Value(in UTF-8, first 64 chars):%s\n", tmpstr);
                 iMetadataFile.Write(iTextOutputBuf, sizeof(char), oscl_strlen(iTextOutputBuf));
             }
@@ -3766,7 +3766,7 @@ void pvframemetadata_async_test_novideotrack::SaveMetadataInfo()
                 char tmpstr[65];
                 oscl_UnicodeToUTF8(iMetadataValueList[i].value.pWChar_value,
                                    oscl_strlen(iMetadataValueList[i].value.pWChar_value), tmpstr, 65);
-                tmpstr[64] = NULL;
+                tmpstr[64] = 0;
                 oscl_snprintf(iTextOutputBuf, 512, "   Value(in UTF-8, first 64 chars):%s\n", tmpstr);
                 iMetadataFile.Write(iTextOutputBuf, sizeof(char), oscl_strlen(iTextOutputBuf));
             }
