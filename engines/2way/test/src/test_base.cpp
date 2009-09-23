@@ -26,8 +26,15 @@
 
 #include "pv_mime_string_utils.h"
 
+#ifndef TEST_ENGINE_UTILITY_H_HEADER
+#include "test_engine_utility.h"
+#endif
+
 #if defined(__linux__) || defined(linux)
 #define CONFIG_FILE_PATH _STRLIT("")
+#endif
+#ifdef  _SYMBIAN
+#define CONFIG_FILE_PATH _STRLIT("c:\\Data\\")
 #endif
 
 #include "pv_2way_codecspecifier.h"
@@ -92,7 +99,7 @@ bool test_base::Init()
     OSCL_TRY(error, iInitCmdId = terminal->Init(iSdkInitInfo));
     if (error)
     {
-        printf("\n*************** Test FAILED: could not initialize terminal *************** \n");
+        PV2WayUtil::OutputInfo("\n*************** Test FAILED: could not initialize terminal *************** \n");
         test_is_true(false);
 
         if (iUseProxy)
@@ -118,7 +125,7 @@ void test_base::InitSucceeded()
 
 void test_base::InitFailed()
 {
-    printf("\n*************** Test FAILED: InitFailed *************** \n");
+    PV2WayUtil::OutputInfo("\n*************** Test FAILED: InitFailed *************** \n");
     if (timer)
     {
         timer->Cancel();
@@ -135,7 +142,7 @@ void test_base::EncoderIFSucceeded()
 
 void test_base::EncoderIFFailed()
 {
-    printf("\n*************** Test FAILED: EncoderIF Failed *************** \n");
+    PV2WayUtil::OutputInfo("\n*************** Test FAILED: EncoderIF Failed *************** \n");
 }
 
 void test_base::ConnectSucceeded()
@@ -145,7 +152,7 @@ void test_base::ConnectSucceeded()
 
 void test_base::ConnectFailed()
 {
-    printf("\n*************** Test FAILED: connect failed *************** \n");
+    PV2WayUtil::OutputInfo("\n*************** Test FAILED: connect failed *************** \n");
     test_is_true(false);
     reset();
 }
@@ -175,7 +182,7 @@ void test_base::DisCmdSucceeded()
 void test_base::DisCmdFailed()
 {
     reset();
-    printf("test_base::DisCmdFailed() \n");
+    PV2WayUtil::OutputInfo("test_base::DisCmdFailed() \n");
 }
 
 void test_base::AudioAddSinkSucceeded()
@@ -194,14 +201,14 @@ void test_base::AudioAddSourceSucceeded()
 
 void test_base::AudioAddSinkFailed()
 {
-    printf("\n****** Test FAILED: add audio sink failed \n");
+    PV2WayUtil::OutputInfo("\n****** Test FAILED: add audio sink failed \n");
     test_is_true(false);
     disconnect();
 }
 
 void test_base::AudioAddSourceFailed()
 {
-    printf("\n****** Test FAILED: add audio source failed \n");
+    PV2WayUtil::OutputInfo("\n****** Test FAILED: add audio source failed \n");
     test_is_true(false);
     disconnect();
 }
@@ -213,7 +220,7 @@ void test_base::VideoAddSinkSucceeded()
 
 void test_base::VideoAddSinkFailed()
 {
-    printf("\n***** Test FAILED: add video sink failed  \n");
+    PV2WayUtil::OutputInfo("\n***** Test FAILED: add video sink failed  \n");
     test_is_true(false);
     disconnect();
 }
@@ -225,7 +232,7 @@ void test_base::VideoAddSourceSucceeded()
 
 void test_base::VideoAddSourceFailed()
 {
-    printf("\n***** Test FAILED: add video source failed \n");
+    PV2WayUtil::OutputInfo("\n***** Test FAILED: add video source failed \n");
     iVideoSourceAdded = false;
 }
 
@@ -251,7 +258,7 @@ void test_base::VideoRemoveSourceCompleted()
     OSCL_TRY(error, iVideoRemoveSinkId = iSourceAndSinks->RemoveVideoSink());
     if (error)
     {
-        printf("\n*************** Test FAILED: error removing video sink *************** \n");
+        PV2WayUtil::OutputInfo("\n*************** Test FAILED: error removing video sink *************** \n");
         test_is_true(false);
         disconnect();
     }
@@ -416,50 +423,50 @@ void test_base::CommandCompleted(const PVCmdResponse& aResponse)
     }
 }
 
-
 void test_base::InitializeLogs()
 {
-    uint32 error = 0;
-    PVLoggerConfigFile obj;
-    obj.SetConfigFilePath(CONFIG_FILE_PATH);
-    error = 0;
-    if (obj.IsLoggerConfigFilePresent())
+    if (!iUseProxy)
     {
-        error = obj.SetLoggerSettings(terminal, TEST_LOG_FILENAME);
-        if (0 != error)
+        uint32 error = 0;
+        PVLoggerConfigFile obj;
+        obj.SetConfigFilePath(CONFIG_FILE_PATH);
+        error = 0;
+        if (obj.IsLoggerConfigFilePresent())
         {
-            printf("Error Occured in PVLoggerConfigFile::SetLoggerSettings() \n");
+            error = obj.SetLoggerSettings(terminal, TEST_LOG_FILENAME);
+            if (0 != error)
+            {
+                PV2WayUtil::OutputInfo("Error Occured in PVLoggerConfigFile::SetLoggerSettings() \n");
+            }
+            else
+            {
+                //sucess able to set logger settings
+                return;
+            }
+        }
+
+        PVLoggerAppender *lLoggerAppender = 0;
+        OsclRefCounter *refCounter = NULL;
+        bool logfile = true;
+        if (logfile)
+        {
+            //File Log
+            const uint32 TEXT_FILE_APPENDER_CACHE_SIZE = 0;
+            lLoggerAppender = TextFileAppender<TimeAndIdLayout, 1024>::CreateAppender(TEST_LOG_FILENAME, TEXT_FILE_APPENDER_CACHE_SIZE);
+            OsclRefCounter *appenderRefCounter = new OsclRefCounterSA<AppenderDestructDealloc<TextFileAppender<TimeAndIdLayout, 1024> > >(lLoggerAppender);
+            refCounter = appenderRefCounter;
         }
         else
         {
-            //sucess able to set logger settings
-            return;
+            //Console Log
+            lLoggerAppender = new StdErrAppender<TimeAndIdLayout, 1024>();
+            OsclRefCounter *appenderRefCounter = new OsclRefCounterSA<AppenderDestructDealloc<StdErrAppender<TimeAndIdLayout, 1024> > >(lLoggerAppender);
+            refCounter = appenderRefCounter;
         }
+        OsclSharedPtr<PVLoggerAppender> appenderPtr(lLoggerAppender, refCounter);
+        terminal->SetLogLevel("", PVLOGMSG_DEBUG, true);
+        terminal->SetLogAppender("", appenderPtr);
     }
-
-    PVLoggerAppender *lLoggerAppender = 0;
-    OsclRefCounter *refCounter = NULL;
-    bool logfile = true;
-    if (logfile)
-    {
-        //File Log
-        const uint32 TEXT_FILE_APPENDER_CACHE_SIZE = 1024;
-        lLoggerAppender = TextFileAppender<TimeAndIdLayout, 1024>::CreateAppender(TEST_LOG_FILENAME,
-                          TEXT_FILE_APPENDER_CACHE_SIZE);
-        OsclRefCounter *appenderRefCounter = new OsclRefCounterSA<AppenderDestructDealloc<TextFileAppender<TimeAndIdLayout, 1024> > >(lLoggerAppender);
-        refCounter = appenderRefCounter;
-    }
-    else
-    {
-        //Console Log
-        lLoggerAppender = new StdErrAppender<TimeAndIdLayout, 1024>();
-        OsclRefCounter *appenderRefCounter = new OsclRefCounterSA<AppenderDestructDealloc<StdErrAppender<TimeAndIdLayout, 1024> > >(lLoggerAppender);
-        refCounter = appenderRefCounter;
-    }
-    OsclSharedPtr<PVLoggerAppender> appenderPtr(lLoggerAppender, refCounter);
-    terminal->SetLogLevel("", PVLOGMSG_DEBUG, true);
-    terminal->SetLogAppender("", appenderPtr);
-
 }
 
 bool test_base::start_async_test()
@@ -488,7 +495,7 @@ bool test_base::start_async_test()
 
     if (error)
     {
-        printf("\n*************** Test FAILED: error creating terminal *************** \n");
+        PV2WayUtil::OutputInfo("\n*************** Test FAILED: error creating terminal *************** \n");
         test_is_true(false);
         return false;
     }
@@ -503,7 +510,6 @@ bool test_base::start_async_test()
       Initialize logs, send parameters to the terminal
     */
     InitializeLogs();
-
     iInitCmdId = -1;
     iQueryInterfaceCmdId = -1;
     CreateParts();
@@ -535,7 +541,7 @@ void test_base::HandleInformationalEvent(const PVAsyncInformationalEvent& aEvent
         case PVT_INDICATION_OUTGOING_TRACK:
         {
             TPVChannelId *channel_id = (TPVChannelId *)(&aEvent.GetLocalBuffer()[4]);
-            printf("\n\nIndication with logical channel #%d \n", *channel_id);
+            PV2WayUtil::OutputInfo("\n\nIndication with logical channel #%d \n", *channel_id);
             if (aEvent.GetLocalBuffer()[0] == PV_AUDIO)
             {
                 if (iUsingAudio)
@@ -543,11 +549,11 @@ void test_base::HandleInformationalEvent(const PVAsyncInformationalEvent& aEvent
                     iAudioAddSourceId = iSourceAndSinks->HandleOutgoingAudio(aEvent);
                     if (iAudioAddSourceId)
                     {
-                        printf("Audio");
+                        PV2WayUtil::OutputInfo("Audio\n");
                     }
                     else
                     {
-                        printf("\nError adding handling outgoing audio track\n");
+                        PV2WayUtil::OutputInfo("\nError adding handling outgoing audio track\n");
                     }
                 }
             }
@@ -558,26 +564,26 @@ void test_base::HandleInformationalEvent(const PVAsyncInformationalEvent& aEvent
                     iVideoAddSourceId = iSourceAndSinks->HandleOutgoingVideo(aEvent);
                     if (iVideoAddSourceId)
                     {
-                        printf("Video");
+                        PV2WayUtil::OutputInfo("Video\n");
                     }
                     else
                     {
-                        printf("\nError adding handling outgoing video track\n");
+                        PV2WayUtil::OutputInfo("\nError adding handling outgoing video track\n");
                     }
                 }
             }
             else
             {
-                printf("unknown");
+                PV2WayUtil::OutputInfo("unknown\n");
             }
-            printf(" outgoing Track\n");
+            PV2WayUtil::OutputInfo(" outgoing Track\n");
             break;
         }
 
         case PVT_INDICATION_INCOMING_TRACK:
         {
             TPVChannelId *channel_id = (TPVChannelId *)(&aEvent.GetLocalBuffer()[4]);
-            printf("\n\nIndication with logical channel #%d \n", *channel_id);
+            PV2WayUtil::OutputInfo("\n\nIndication with logical channel #%d \n", *channel_id);
             if (aEvent.GetLocalBuffer()[0] == PV_AUDIO)
             {
                 if (iUsingAudio)
@@ -585,11 +591,11 @@ void test_base::HandleInformationalEvent(const PVAsyncInformationalEvent& aEvent
                     iAudioAddSinkId = iSourceAndSinks->HandleIncomingAudio(aEvent);
                     if (iAudioAddSinkId)
                     {
-                        printf("Audio");
+                        PV2WayUtil::OutputInfo("Audio\n");
                     }
                     else
                     {
-                        printf("\nError adding handling incoming audio track \n");
+                        PV2WayUtil::OutputInfo("\nError adding handling incoming audio track \n");
                     }
                 }
             }
@@ -600,19 +606,19 @@ void test_base::HandleInformationalEvent(const PVAsyncInformationalEvent& aEvent
                     iVideoAddSinkId = iSourceAndSinks->HandleIncomingVideo(aEvent);
                     if (iVideoAddSinkId)
                     {
-                        printf("Video");
+                        PV2WayUtil::OutputInfo("Video\n");
                     }
                     else
                     {
-                        printf("\nError adding handling incoming video track\n");
+                        PV2WayUtil::OutputInfo("\nError adding handling incoming video track\n");
                     }
                 }
             }
             else
             {
-                printf("unknown");
+                PV2WayUtil::OutputInfo("unknown\n");
             }
-            printf(" incoming Track\n");
+            PV2WayUtil::OutputInfo(" incoming Track\n");
             break;
         }
 
@@ -641,8 +647,7 @@ void test_base::TestCompleted()
     m_last_result.set_name(name);
 
     // Print out the result for this test case
-    fprintf(fileoutput, "\nResults for Test Case %d:\n", iTestNum);
-    fprintf(fileoutput, "Successes %.2d, Failures %d\n"
-            , m_last_result.success_count(), m_last_result.failures().size());
-    fflush(fileoutput);
+    PV2WayUtil::OutputInfo("\nResults for Test Case %d:\n", iTestNum);
+    PV2WayUtil::OutputInfo("Successes %.2d, Failures %d\n"
+                           , m_last_result.success_count(), m_last_result.failures().size());
 }

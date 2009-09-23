@@ -59,8 +59,8 @@ class PvmiMIOCommDataBufferCleanup : public OsclDestructDealloc
 class PvmiMIOCommDataBufferAlloc
 {
     public:
-        PvmiMIOCommDataBufferAlloc(Oscl_DefAlloc* opt_gen_alloc = 0);
-        virtual OsclSharedPtr<PVMFMediaDataImpl> allocate(PvmiMediaTransfer* aMediaInput, uint8* aData,
+        OSCL_IMPORT_REF  PvmiMIOCommDataBufferAlloc(Oscl_DefAlloc* opt_gen_alloc = 0);
+        OSCL_IMPORT_REF virtual OsclSharedPtr<PVMFMediaDataImpl> allocate(PvmiMediaTransfer* aMediaInput, uint8* aData,
                 uint32 aDataLength, PVMFCommandId aCmdId, OsclAny* aContext = NULL);
 
     private:

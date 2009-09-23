@@ -20,11 +20,11 @@
 
 void av_test::test()
 {
-    fprintf(fileoutput, "\n-------- Start %s test --------\n", iTestName.get_cstr());
-    fprintf(fileoutput, "\n** Test Number: %d. ** \n", iTestNum);
-    fprintf(fileoutput, "\nSETTINGS:\nProxy %d", iUseProxy);
+    PV2WayUtil::OutputInfo("\n-------- Start %s test --------\n", iTestName.get_cstr());
+    PV2WayUtil::OutputInfo("\n** Test Number: %d. ** \n", iTestNum);
+    PV2WayUtil::OutputInfo("\nSETTINGS:\nProxy %d", iUseProxy);
     iSourceAndSinks->PrintFormatTypes();
-    fprintf(fileoutput, "\n----------------------------------\n");
+    PV2WayUtil::OutputInfo("\n----------------------------------\n");
     int error = 0;
 
     scheduler = OsclExecScheduler::Current();
@@ -99,14 +99,14 @@ void av_test::ConnectSucceeded()
 
 void av_test::InitFailed()
 {
-    fprintf(fileoutput, "\n*************** Test FAILED: Init Failed *************** \n");
+    PV2WayUtil::OutputInfo("\n*************** Test FAILED: Init Failed *************** \n");
     test_is_true(false);
     test_base::InitFailed();
 }
 
 void av_test::ConnectFailed()
 {
-    fprintf(fileoutput, "\n*** Connect Failed \n");
+    PV2WayUtil::OutputInfo("\n*** Connect Failed \n");
 }
 
 void av_test::AudioAddSinkSucceeded()
@@ -167,35 +167,35 @@ void av_test::CheckForTimeToDisconnect()
             !iVideoSourceAdded &&
             !iVideoSinkAdded)
     {
-        fprintf(fileoutput, "\nTime to disconnect \n");
+        PV2WayUtil::OutputInfo("\nTime to disconnect \n");
         disconnect();
     }
 }
 
 void av_test::AudioRemoveSourceCompleted()
 {
-    fprintf(fileoutput, "\nAudio source removed \n");
+    PV2WayUtil::OutputInfo("\nAudio source removed \n");
     iAudioSourceAdded = false;
     CheckForTimeToDisconnect();
 }
 
 void av_test::AudioRemoveSinkCompleted()
 {
-    fprintf(fileoutput, "\nAudio sink removed \n");
+    PV2WayUtil::OutputInfo("\nAudio sink removed \n");
     iAudioSinkAdded = false;
     CheckForTimeToDisconnect();
 }
 
 void av_test::VideoRemoveSourceCompleted()
 {
-    fprintf(fileoutput, "\nVideo source removed \n");
+    PV2WayUtil::OutputInfo("\nVideo source removed \n");
     iVideoSourceAdded = false;
     CheckForTimeToDisconnect();
 }
 
 void av_test::VideoRemoveSinkCompleted()
 {
-    fprintf(fileoutput, "\nVideo sink removed \n");
+    PV2WayUtil::OutputInfo("\nVideo sink removed \n");
     iVideoSinkAdded = false;
     CheckForTimeToDisconnect();
 }
@@ -204,7 +204,7 @@ void av_test::TimerCallback()
 {
     if (inumCalled > 5)
     {
-        fprintf(fileoutput, "\n Giving up waiting for process to finish \n");
+        PV2WayUtil::OutputInfo("\n Giving up waiting for process to finish \n");
         iTestStatus = false;
         DoCancel();
         return;
@@ -225,13 +225,12 @@ void av_test::TimerCallback()
 void av_test::FinishTimerCallback()
 {
     int error = 0;
-    fprintf(fileoutput, "\nRemoving source and sinks \n");
+    PV2WayUtil::OutputInfo("\nRemoving source and sinks \n");
     /*!
 
       Step 12: Cleanup
       Step 12a: Remove source and sinks
     */
-
     OSCL_TRY(error, iVideoRemoveSourceId = iSourceAndSinks->RemoveVideoSource());
     if (error)
     {
@@ -272,7 +271,7 @@ bool av_test::start_async_test()
     timer = OSCL_NEW(engine_timer, (this));
     if (timer == NULL)
     {
-        fprintf(fileoutput, "\n*************** Test FAILED: no timer *************** \n");
+        PV2WayUtil::OutputInfo("\n*************** Test FAILED: no timer *************** \n");
         test_is_true(false);
         return false;
     }

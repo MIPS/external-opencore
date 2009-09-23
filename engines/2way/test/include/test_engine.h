@@ -72,20 +72,28 @@ class engine_test_suite : public test_case
                 const char* const aAudSinkFormatType,
                 const char* const aVidSrcFormatType,
                 const char* const aVidSinkFormatType);
+#ifndef LIP_SYNC_TESTING
         bool proxy_tests(const bool aProxy);
-
+        bool proxy_tests1(const bool aProxy);
+        bool proxy_tests2(const bool aProxy);
+        bool proxy_tests3(const bool aProxy);
+#else
+        bool proxy_tests4(const bool aProxy);
+#endif
         ~engine_test_suite();
 
     private:
         TestCodecs codecs;
+#ifdef LIP_SYNC_TESTING
+        void AddLipSyncTests(const bool aProxy, int32 firstTest, int32 lastTest);
+#else
         void AddSetupTests(const bool aProxy, int32 firstTest, int32 lastTest);
         void AddAudioTests(const bool aProxy, int32 firstTest, int32 lastTest);
         void AddVideoTests(const bool aProxy, int32 firstTest, int32 lastTest);
         void AddBasicAVTests(const bool aProxy, int32 firstTest, int32 lastTest);
-        void AddLipSyncTests(const bool aProxy, int32 firstTest, int32 lastTest);
         void AddAcceptableFormatsTests(const bool aProxy, int32 firstTest, int32 lastTest);
         void AddNegotiatedFormatsTests(const bool aProxy, int32 firstTest, int32 lastTest);
-
+#endif
         void play_from_file_tests(const bool aProxy,
                                   const OSCL_wString& aFilename,
                                   const bool aHasAudio,

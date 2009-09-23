@@ -23,6 +23,18 @@
 #include "oscl_file_io.h"
 #define MAX_324_TEST 100000
 
+
+class PV2WayUtil
+{
+    public:
+        OSCL_IMPORT_REF static void OutputInfo(const char * str, ...);
+        OSCL_IMPORT_REF static void SetFileHandle(const FILE *aFileHandle);
+        OSCL_IMPORT_REF static FILE *GetFileHandle();
+    private:
+        static FILE* iFileHandle;
+        static int test;
+};
+
 void FindTestRange(cmd_line* command_line,
                    int32 &iFirstTest,
                    int32 &iLastTest,

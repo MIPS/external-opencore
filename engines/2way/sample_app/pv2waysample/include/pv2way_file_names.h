@@ -36,10 +36,6 @@
 #define VIDEO_FRAMERATE 5
 
 
-#define AUDIO_SOURCE_FILENAME _STRLIT("audio_in.if2")
-#define AUDIO_SINK_FILENAME _STRLIT("audio_out.if2")
-#define VIDEO_SOURCE_FILENAME _STRLIT("holmes.h263")
-#define VIDEO_SINK_FILENAME _STRLIT("holmes_out.h263")
 #else
 #define LAYOUT_BUFFER_SIZE 1024
 #define AUDIO_SAMPLING_FREQUENCY 8000
@@ -63,19 +59,26 @@
 #define PVSIP_DEFAULT_REALM _STRLIT_CHAR("pvrealm")
 
 
+
+#define AUDIO_SINK_FILENAME _STRLIT("audio_out.if2")
+#define TEST_LOG_FILENAME _STRLIT("test2way.log")
 #define TEST_RX_LOG_FILENAME _STRLIT("commrx.bin")
 #define TEST_TX_LOG_FILENAME _STRLIT("commtx.bin")
-#define TEST_LOG_FILENAME _STRLIT("test2way.log")
 #define AUDIO_SOURCE3_FILENAME _STRLIT("audio_in.amr")
 #define AUDIO_SOURCE_RAW_FILENAME _STRLIT("pcm16testinput.pcm")
-#define AUDIO_SINK_RAW_FILENAME _STRLIT("audio_pcm16_out.dat")
-#define AUDIO_SINK2_FILENAME _STRLIT("audio_ietf_out.dat")
 #define VIDEO_SOURCE_YUV_FILENAME _STRLIT("yuv420video.yuv")
 #define VIDEO_SOURCE_H263_FILENAME _STRLIT("h263video.h263")
 #define VIDEO_SOURCE_M4V_FILENAME _STRLIT("m4vvideo.m4v")
+#define AUDIO_SOURCE_FILENAME _STRLIT("audio_in.if2")
+#define AUDIO_SINK_RAW_FILENAME _STRLIT("audio_pcm16_out.dat")
 #define VIDEO_SINK_YUV_FILENAME _STRLIT("video_yuv_out.dat")
 #define VIDEO_SINK_H263_FILENAME _STRLIT("video_h263_out.dat")
 #define VIDEO_SINK_M4V_FILENAME _STRLIT("video_m4v_out.dat")
+#define VIDEO_SOURCE_FILENAME _STRLIT("holmes.h263")
+#define VIDEO_SINK_FILENAME _STRLIT("holmes_out.h263")
+
+
+#define AUDIO_SINK2_FILENAME _STRLIT("audio_ietf_out.dat")
 #define VIDEO_PREVIEW_FILENAME _STRLIT("video_preview_out.dat")
 #define RECORDED_CALL_FILENAME _STRLIT("recorded_call.mp4")
 #define AUDIO_ONLY_PLAY_FILENAME _STRLIT("pv-amr-122_novisual.3gp")

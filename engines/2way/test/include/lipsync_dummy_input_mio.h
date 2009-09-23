@@ -254,7 +254,7 @@ class LipSyncDummyInputMIO : public OsclTimerObject
         void ProcessAudioFrame(uint32 aCurrentTime, uint32 aInterval);
         void ProcessVideoFrame(uint32 aCurrentTime, uint32 aInterval);
         void ProcessVideoFrame();
-        uint32 WriteAsyncCall(int32 &error, uint8* data, uint32 &BytesToRead, PvmiMediaXferHeader& data_hdr, uint32 &writeAsyncID);
+        int32 WriteAsyncCall(int32 &error, uint8* data, uint32 &BytesToRead, PvmiMediaXferHeader& data_hdr, uint32 &writeAsyncID);
         PvmiMediaTransfer* iPeer;
 
         PvmiMIOObserver* iObserver;
@@ -344,5 +344,12 @@ class LipSyncDummyInputMIO : public OsclTimerObject
         PVMFTimebase_Tickcount timebase;
         ShareParams* iParams;
         PVMFMediaClock iClock;
+
+        uint32 iAudioTimeStamp;
+        uint32 iVideoTimeStamp;
+        uint32 iCount;
+        int32  iDiffVidAudTS;
+        int32  iSqrVidAudTS;
+        int32  iRtMnSq;
 };
 #endif

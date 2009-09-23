@@ -31,8 +31,8 @@ void connect_test::test()
     {
         iTestName = _STRLIT_CHAR("connect");
     }
-    fprintf(fileoutput, "----- Start %s test, num runs %d, proxy %d. ----- \n", iTestName.get_cstr(), iMaxRuns, iUseProxy);
-    fprintf(fileoutput, "\n** Test Number: %d. ** \n", iTestNum);
+    PV2WayUtil::OutputInfo("----- Start %s test, num runs %d, proxy %d. ----- \n", iTestName.get_cstr(), iMaxRuns, iUseProxy);
+    PV2WayUtil::OutputInfo("\n** Test Number: %d. ** \n", iTestNum);
     int error = 0;
 
     scheduler = OsclExecScheduler::Current();
@@ -84,7 +84,6 @@ void connect_test::InitSucceeded()
         test_is_true(false);
         reset();
         return;
-
     }
     // set some timers via the interface
     H324MConfigInterface * t324Interface = (H324MConfigInterface *)iH324MConfig;

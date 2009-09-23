@@ -288,6 +288,7 @@ CPV324m2Way::CPV324m2Way() :
     //creating timers
     iEndSessionTimer = OSCL_NEW(OsclTimer<OsclMemAllocator>, (END_SESSION_TIMER, END_SESSION_TIMER_FREQUENCY));
     iRemoteDisconnectTimer = OSCL_NEW(OsclTimer<OsclMemAllocator>, (REMOTE_DISCONNECT_TIMER, REMOTE_DISCONNECT_TIMER_FREQUENCY));
+    iReadDataLock.Create();
 
 }
 
@@ -320,6 +321,7 @@ CPV324m2Way::~CPV324m2Way()
     ClearVideoEncNode();
 
 
+    iReadDataLock.Lock();
     if (iVideoEncDatapath)
     {
         OSCL_DELETE(iVideoEncDatapath);
@@ -343,6 +345,8 @@ CPV324m2Way::~CPV324m2Way()
         OSCL_DELETE(iAudioDecDatapath);
         iAudioDecDatapath = NULL;
     }
+
+    iReadDataLock.Unlock();
 
     if (iMuxDatapath)
     {
@@ -374,6 +378,7 @@ CPV324m2Way::~CPV324m2Way()
         OSCL_DELETE(iRemoteDisconnectTimer);
         iRemoteDisconnectTimer = NULL;
     }
+    iReadDataLock.Close();
 
     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                     (0, "CPV324m2Way::~CPV324m2Way - done\n"));
@@ -928,6 +933,7 @@ void CPV324m2Way::DoAddDataSource(TPV2WayNode& aNode,
             OSCL_LEAVE(PVMFErrInvalidState);
         }
     }
+
     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE,
                     (0, "CPV324m2Way::DoAddDataSource ----- finished call"));
 
@@ -1870,6 +1876,7 @@ void CPV324m2Way::CheckReset()
 
 void CPV324m2Way::RemoveAudioDecPath()
 {
+    iReadDataLock.Lock();
     if (iAudioDecDatapath)
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
@@ -1883,10 +1890,12 @@ void CPV324m2Way::RemoveAudioDecPath()
         iAudioDecDatapath->ResetDatapath();
         iAudioSinkNode.Clear();
     }
+    iReadDataLock.Unlock();
 }
 
 void CPV324m2Way::RemoveAudioEncPath()
 {
+    iReadDataLock.Lock();
     if (iAudioEncDatapath)
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
@@ -1901,10 +1910,12 @@ void CPV324m2Way::RemoveAudioEncPath()
         iAudioEncDatapath->ResetDatapath();
         iAudioSrcNode.Clear();
     }
+    iReadDataLock.Unlock();
 }
 
 void CPV324m2Way::RemoveVideoDecPath()
 {
+    iReadDataLock.Lock();
     if (iVideoDecDatapath)
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
@@ -1917,10 +1928,12 @@ void CPV324m2Way::RemoveVideoDecPath()
     {
         iVideoDecDatapath->ResetDatapath();
     }
+    iReadDataLock.Unlock();
 }
 
 void CPV324m2Way::RemoveVideoEncPath()
 {
+    iReadDataLock.Lock();
     if (iVideoEncDatapath)
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
@@ -1935,6 +1948,7 @@ void CPV324m2Way::RemoveVideoEncPath()
 
         iVideoEncDatapath->ResetDatapath();
     }
+    iReadDataLock.Unlock();
 }
 
 void CPV324m2Way::HandleCommNodeCmd(PV2WayNodeCmdType aType,
@@ -3726,6 +3740,8 @@ PVMFStatus CPV324m2Way::EstablishChannel(TPVDirection aDir,
     Oscl_Map < PVMFFormatType, PVMFFormatType, OsclMemAllocator,
     pvmf_format_type_key_compare_class > * app_format_for_engine_format = NULL;
 
+    iReadDataLock.Lock();
+
     CPV2WayDataChannelDatapath* datapath = NULL;
 
     if (aDir == INCOMING)
@@ -3799,6 +3815,7 @@ PVMFStatus CPV324m2Way::EstablishChannel(TPVDirection aDir,
 
     if (it == codec_list->end())
     {
+        iReadDataLock.Unlock();
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
                         (0, "CPV324m2Way::EstablishChannel Failed to lookup codec=%d\n", aCodec));
         return PVMFFailure;
@@ -3842,6 +3859,7 @@ PVMFStatus CPV324m2Way::EstablishChannel(TPVDirection aDir,
         iInfoEventObserver->HandleInformationalEvent(infoEvent);
     }
     pTrackInfo->removeRef();
+    iReadDataLock.Unlock();
 
     return EPVT_Success;
 }

@@ -24,15 +24,21 @@ OSCL_EXPORT_REF PVMFFileDataSource::PVMFFileDataSource(int32 aPortTag,
         unsigned max_sample_sz):
         PVMFBufferDataSource(aPortTag, bitrate, min_sample_sz, max_sample_sz)
 {
+    iFileServ = OSCL_NEW(Oscl_FileServer, ());
+    OSCL_ASSERT(iFileServ == NULL);
+    iReadFile = OSCL_NEW(Oscl_File, ());
+    OSCL_ASSERT(iReadFile == NULL);
 }
 
 OSCL_EXPORT_REF PVMFFileDataSource::~PVMFFileDataSource()
 {
     Stop();
-    fclose(iReadFile);
+    iReadFile->Close();
+    OSCL_DELETE(iReadFile);
+    iFileServ->Close();
+    OSCL_DELETE(iFileServ);
 }
 
-uint32 total_bytes_read = 0;
 void PVMFFileDataSource::TimeoutOccurred(int32 timerID, int32 timeoutInfo)
 {
     OSCL_UNUSED_ARG(timerID);
@@ -59,8 +65,8 @@ void PVMFFileDataSource::TimeoutOccurred(int32 timerID, int32 timeoutInfo)
     if (refCtrMemFrag.getCapacity() < bytesToSend)
         return;
 
-    if (!feof(iReadFile))
-        bytes_read = fread((uint8*)refCtrMemFrag.getMemFragPtr(), 1, bytesToSend, iReadFile);
+    if (!iReadFile->EndOfFile())
+        bytes_read = iReadFile->Read((uint8*)refCtrMemFrag.getMemFragPtr(),  1, bytesToSend);
     //if(bytes_read)
     {
         mediaDataImpl->setMediaFragFilledLen(0, bytes_read);
@@ -71,7 +77,6 @@ void PVMFFileDataSource::TimeoutOccurred(int32 timerID, int32 timeoutInfo)
         PVMFSharedMediaMsgPtr mediaMsg;
         convertToPVMFMediaMsg(mediaMsg, mediaData);
         QueueOutgoingMsg(mediaMsg);
-        total_bytes_read += bytes_read;
     }
     if (!bytes_read)
     {

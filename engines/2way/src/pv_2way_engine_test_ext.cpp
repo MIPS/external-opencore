@@ -38,14 +38,15 @@ bool CPV324m2Way::NegotiatedFormatsMatch(
     Oscl_Vector<FormatCapabilityInfo, OsclMemAllocator>& aInVidFormatCapability,
     Oscl_Vector<FormatCapabilityInfo, OsclMemAllocator>& aOutVidFormatCapability)
 {
+    // note NO logger messages can appear in this function.
+    // it will cause problems with Symbian- can't access file from two threads
     bool result1 = true;
     bool result2 = true;
     bool result3 = true;
     bool result4 = true;
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                    (0, "CPV324m2Way::NegotiatedFormatsMatch"));
 
 
+    iReadDataLock.Lock();
     PVMFFormatType formatEncAudio = iAudioEncDatapath->GetSourceSinkFormat();
     PVMFFormatType formatEncVideo = iVideoEncDatapath->GetSourceSinkFormat();
     PVMFFormatType formatDecAudio = iAudioEncDatapath->GetSourceSinkFormat();
@@ -62,8 +63,6 @@ bool CPV324m2Way::NegotiatedFormatsMatch(
     {
         result1 = true;
     }
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                    (0, "CPV324m2Way::NegotiatedFormatsMatch match on audio %d", result1));
 
     ////////////////////////////////////////////////
     totalSize = aOutVidFormatCapability.size();
@@ -77,8 +76,6 @@ bool CPV324m2Way::NegotiatedFormatsMatch(
     {
         result2 = true;
     }
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                    (0, "CPV324m2Way::NegotiatedFormatsMatch match on video %d", result2));
 
     ////////////////////////////////////////////////
     totalSize = aInAudFormatCapability.size();
@@ -92,9 +89,6 @@ bool CPV324m2Way::NegotiatedFormatsMatch(
     {
         result3 = true;
     }
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                    (0, "CPV324m2Way::NegotiatedFormatsMatch match on video %d", result3));
-
     ////////////////////////////////////////////////
     totalSize = aInVidFormatCapability.size();
     if (totalSize == 0)
@@ -107,10 +101,9 @@ bool CPV324m2Way::NegotiatedFormatsMatch(
     {
         result4 = true;
     }
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                    (0, "CPV324m2Way::NegotiatedFormatsMatch match on video %d", result4));
     ///////////////////////////////////////////////
 
+    iReadDataLock.Unlock();
 
     return result1 && result2 && result3 && result4;
 }

@@ -18,6 +18,10 @@
 #ifndef TESTCODECS_H_INCLUDE
 #define TESTCODECS_H_INCLUDE
 
+#ifndef TEST_ENGINE_UTILITY_H_HEADER
+#include "test_engine_utility.h"
+#endif
+
 class TestCodecs
 {
     public:
@@ -42,10 +46,10 @@ class TestCodecs
             if (0 == oscl_UnicodeToUTF8(afileName, oscl_strlen(afileName),
                                         filename, FILENAME_LEN))
             {
-                fprintf(fileoutput, "ERROR!!!! Could not locate input file!\n");
+                PV2WayUtil::OutputInfo("ERROR!!!! Could not locate input file!\n");
                 return false;
             }
-            fprintf(fileoutput, "\nERROR!!!! Could not locate file %s!!!!\n\n", filename);
+            PV2WayUtil::OutputInfo("\nERROR!!!! Could not locate file %s!!!!\n\n", filename);
             return false;
         }
         bool setvalues()

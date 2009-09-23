@@ -22,6 +22,30 @@
 #include "oscl_utf8conv.h"
 #include "test_engine_utility.h"
 
+FILE * PV2WayUtil::iFileHandle = NULL;
+
+OSCL_EXPORT_REF void PV2WayUtil::OutputInfo(const char * str, ...)
+{
+    va_list vargs;          //create the variable list of arguments that could be passed to this function
+    va_start(vargs, str);   //make the list to point to the argument that follows str
+    if (iFileHandle != NULL)
+    {
+        vfprintf(iFileHandle, str, vargs);
+        fflush(iFileHandle);
+    }
+}
+
+OSCL_EXPORT_REF void PV2WayUtil::SetFileHandle(const FILE *aFileHandle)
+{
+    if (aFileHandle != NULL)
+        iFileHandle = OSCL_STATIC_CAST(FILE *, aFileHandle);
+}
+
+OSCL_EXPORT_REF FILE* PV2WayUtil::GetFileHandle()
+{
+    return iFileHandle;
+}
+
 void FindTestRange(cmd_line* command_line,
                    int32& iFirstTest,
                    int32 &iLastTest,
@@ -76,7 +100,7 @@ void FindTestRange(cmd_line* command_line,
                 fprintf(aFile, "  -test G\n");
                 fprintf(aFile, "   Run 324M test cases only.\n");
 
-                exit(0);
+                return;
             }
             else if (oscl_strcmp(iSourceFind, "-test") == 0)
             {

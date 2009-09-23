@@ -21,11 +21,18 @@
 OSCL_EXPORT_REF PVMFFileDataSink::PVMFFileDataSink(int32 aPortTag)
         : PVMFBufferDataSink(aPortTag)
 {
+    iFileServ = OSCL_NEW(Oscl_FileServer, ());
+    OSCL_ASSERT(iFileServ == NULL);
+    iWriteFile = OSCL_NEW(Oscl_File, ());
+    OSCL_ASSERT(iWriteFile == NULL);
 }
 
 OSCL_EXPORT_REF PVMFFileDataSink::~PVMFFileDataSink()
 {
-    fclose(iWriteFile);
+    iWriteFile->Close();
+    OSCL_DELETE(iWriteFile);
+    iFileServ->Close();
+    OSCL_DELETE(iFileServ);
 }
 
 // PVMFPortInterface virtuals
@@ -50,7 +57,7 @@ PVMFStatus PVMFFileDataSink::PutData(PVMFSharedMediaMsgPtr aMsg)
         {
             OsclRefCounterMemFrag copy_frag;
             mediaDataImpl->getMediaFragment(i, copy_frag);
-            fwrite(copy_frag.getMemFragPtr(), 1, copy_frag.getMemFragSize(), iWriteFile);
+            iWriteFile->Write(copy_frag.getMemFragPtr(), 1, copy_frag.getMemFragSize());
         }
     }
     return PVMFSuccess;

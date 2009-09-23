@@ -9816,7 +9816,7 @@ int32 PVMFOMXEncNode::CreateNewArray(char*& aPtr, int32 aLen)
 
 int32 PVMFOMXEncNode::MemAllocate(OsclAny *&aPtr, OsclMemPoolFixedChunkAllocator *aMemPool, uint32 aAllocSize)
 {
-    uint32 errcode = 0;
+    int32 errcode = 0;
     OSCL_TRY(errcode, aPtr = (OsclAny *) aMemPool->allocate(aAllocSize));
     return errcode;
 }

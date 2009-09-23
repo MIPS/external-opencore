@@ -17,15 +17,16 @@
  */
 #include "basic_lipsync_test.h"
 
+
 #define RENDER_DURATION 60000000
 
 void basic_lipsync_test::test()
 {
-    fprintf(fileoutput, "\n-------- Start %s test --------\n", iTestName.get_cstr());
-    fprintf(fileoutput, "\n** Test Number: %d. ** \n", iTestNum);
-    fprintf(fileoutput, "\nSETTINGS:\nProxy %d", iUseProxy);
+    PV2WayUtil::OutputInfo("\n-------- Start %s test --------\n", iTestName.get_cstr());
+    PV2WayUtil::OutputInfo("\n** Test Number: %d. ** \n", iTestNum);
+    PV2WayUtil::OutputInfo("\nSETTINGS:\nProxy %d", iUseProxy);
     iSourceAndSinks->PrintFormatTypes();
-    fprintf(fileoutput, "\n----------------------------------\n");
+    PV2WayUtil::OutputInfo("\n----------------------------------\n");
     int error = 0;
 
     scheduler = OsclExecScheduler::Current();
@@ -65,12 +66,12 @@ void basic_lipsync_test::Run()
     {
         if (icount == 0)
         {
-            fprintf(fileoutput, "\n Not able to calculate the RMS value as count value is zero %d\n", icount);
+            PV2WayUtil::OutputInfo("\n Not able to calculate the RMS value as count value is zero %d\n", icount);
         }
         else
         {
             iRtMnSq = (float)sqrt(iSqrVidAudTS / icount);
-            fprintf(fileoutput, "\n Root Mean Square value of lipsync delta on application side is %fsec\n", iRtMnSq);
+            PV2WayUtil::OutputInfo("\n Root Mean Square value of lipsync delta on application side is %fsec\n", iRtMnSq);
             delete timer;
             timer = NULL;
         }
@@ -85,8 +86,8 @@ void basic_lipsync_test::TimerCallback()
 
     if (!iRenderStarted)
     {
-        fprintf(fileoutput, "\n-------- Basic lipsync test stats--------\n");
-        fprintf(fileoutput, "\n------------------------------------------\n");
+        PV2WayUtil::OutputInfo("\n-------- Basic lipsync test stats--------\n");
+        PV2WayUtil::OutputInfo("\n------------------------------------------\n");
         timer->RunIfNotReady(RENDER_DURATION);
         iRenderStarted = true;
         return;

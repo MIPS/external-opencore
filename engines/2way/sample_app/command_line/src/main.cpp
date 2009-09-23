@@ -24,7 +24,6 @@
 #if defined(__linux__) || defined(linux)
 #include "kbhit.h"
 #endif
-
 #define IP_ADDRESS_LENGTH   16
 
 engine_handler *main_engine;
@@ -320,9 +319,7 @@ void FindTestRange(cmd_line* command_line,
                 fprintf(aFile, "  -test \n");
                 fprintf(aFile, "   Run  menu based 324M test cases only.\n");
 
-
-
-                exit(0);
+                return;
             }
             else if (oscl_strcmp(iSourceFind, "-gcftest") == 0)
             {

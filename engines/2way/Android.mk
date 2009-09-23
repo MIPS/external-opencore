@@ -32,6 +32,7 @@ LOCAL_C_INCLUDES := \
  	$(PV_TOP)/engines/2way/include \
  	$(PV_TOP)/engines/common/include \
  	$(PV_TOP)/common/pvdebug/src \
+ 	$(PV_TOP)/engines/2way/pvlogger/src \
  	$(PV_TOP)/protocols/systems/3g-324m_pvterminal/h324/tsc/include \
  	$(PV_TOP)/protocols/systems/3g-324m_pvterminal/common/include \
  	$(PV_TOP)/protocols/systems/3g-324m_pvterminal/h245/cmn/include \

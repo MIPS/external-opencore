@@ -183,9 +183,7 @@ OSCL_EXPORT_REF void SRP::SrpInitL(void)
 
 OSCL_EXPORT_REF void SRP::SrpReset(void)
 {
-    //Temporary for now, should be called when tsc does a disconnect.
-    SrpStop();
-
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0x40000020, "SRP::SrpReset"));
     OsclRefCounterMemFrag temp;
     iSrpNsrpEntryNumFrag = temp;
     iWnsrpEntryNumFrag = temp;
@@ -314,6 +312,7 @@ OSCL_EXPORT_REF void SRP::SrpReset(void)
 
     WnsrpStatusSet(WNSRP_TX_SUPPORT);
     iHandleWNSRP = true;
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0x40000020, "SRP::SrpReset exit"));
 }
 
 

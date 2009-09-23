@@ -19,11 +19,12 @@
 
 void acceptable_formats_test::test()
 {
-    fprintf(fileoutput, "\n-------- Start %s test --------\n", iTestName.get_cstr());
-    fprintf(fileoutput, "\n** Test Number: %d. ** \n", iTestNum);
-    fprintf(fileoutput, "\nSETTINGS:\nProxy %d", iUseProxy);
+    PV2WayUtil::OutputInfo("\n-------- Start %s test --------\n", iTestName.get_cstr());
+    PV2WayUtil::OutputInfo("\n** Test Number: %d. ** \n", iTestNum);
+    PV2WayUtil::OutputInfo("\nSETTINGS:\nProxy %d", iUseProxy);
+
     iSourceAndSinks->PrintFormatTypes();
-    fprintf(fileoutput, "\n----------------------------------\n");
+    PV2WayUtil::OutputInfo("\n----------------------------------\n");
     int error = 0;
 
     scheduler = OsclExecScheduler::Current();
@@ -48,7 +49,7 @@ void acceptable_formats_test::TimerCallback()
 {
     if (inumCalled > 5)
     {
-        fprintf(fileoutput, "\n Giving up waiting for process to finish \n");
+        PV2WayUtil::OutputInfo("\n Giving up waiting for process to finish \n");
         iTestStatus = false;
         DoCancel();
         return;
@@ -68,22 +69,22 @@ void acceptable_formats_test::TimerCallback()
         return;
     }
 
-    fprintf(fileoutput, "\n Incoming Audio: ");
+    PV2WayUtil::OutputInfo("\n Incoming Audio: ");
     match1 = iSourceAndSinks->FormatMatchesSelectedCodec(INCOMING,
              PV_AUDIO, iInAudFormatCapability[0].format);
-    fprintf(fileoutput, "\n Outgoing Audio: ");
+    PV2WayUtil::OutputInfo("\n Outgoing Audio: ");
     match2 = iSourceAndSinks->FormatMatchesSelectedCodec(OUTGOING,
              PV_AUDIO, iOutAudFormatCapability[0].format);
-    fprintf(fileoutput, "\n Incoming Video: ");
+    PV2WayUtil::OutputInfo("\n Incoming Video: ");
     match3 = iSourceAndSinks->FormatMatchesSelectedCodec(INCOMING,
              PV_VIDEO, iInVidFormatCapability[0].format);
-    fprintf(fileoutput, "\n Outgoing Video: ");
+    PV2WayUtil::OutputInfo("\n Outgoing Video: ");
     match4 = iSourceAndSinks->FormatMatchesSelectedCodec(OUTGOING,
              PV_VIDEO, iOutVidFormatCapability[0].format);
     test_is_true(match1 && match2 && match3 && match4);
 
     int error = 0;
-    fprintf(fileoutput, "\nRemoving source and sinks \n");
+    PV2WayUtil::OutputInfo("\nRemoving source and sinks \n");
     OSCL_TRY(error, iVideoRemoveSourceId = iSourceAndSinks->RemoveVideoSource());
     if (error)
     {

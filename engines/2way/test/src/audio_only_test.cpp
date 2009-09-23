@@ -20,11 +20,11 @@
 
 void audio_only_test::test()
 {
-    fprintf(fileoutput, "\n-------- Start %s test --------\n", iTestName.get_cstr());
-    fprintf(fileoutput, "\n** Test Number: %d. ** \n", iTestNum);
-    fprintf(fileoutput, "\nSETTINGS:\nProxy %d", iUseProxy);
+    PV2WayUtil::OutputInfo("\n-------- Start %s test --------\n", iTestName.get_cstr());
+    PV2WayUtil::OutputInfo("\n** Test Number: %d. ** \n", iTestNum);
+    PV2WayUtil::OutputInfo("\nSETTINGS:\nProxy %d", iUseProxy);
     iSourceAndSinks->PrintFormatTypes();
-    fprintf(fileoutput, "\n-------------------------------------\n");
+    PV2WayUtil::OutputInfo("\n-------------------------------------\n");
 
     int error = 0;
 
@@ -37,7 +37,7 @@ void audio_only_test::test()
         OSCL_TRY(error, scheduler->StartScheduler());
         if (error != 0)
         {
-            printf("\n*************** Test FAILED: error starting scheduler *************** \n");
+            PV2WayUtil::OutputInfo("\n*************** Test FAILED: error starting scheduler *************** \n");
             test_is_true(false);
             OSCL_LEAVE(error);
         }
@@ -101,7 +101,7 @@ void audio_only_test::TimerCallback()
     OSCL_TRY(error, iAudioRemoveSourceId = iSourceAndSinks->RemoveAudioSource());
     if (error)
     {
-        printf("\n*************** Test FAILED: error removing audio source *************** \n");
+        PV2WayUtil::OutputInfo("\n*************** Test FAILED: error removing audio source *************** \n");
         iTestStatus &= false;
         disconnect();
     }
@@ -111,7 +111,7 @@ void audio_only_test::TimerCallback()
         OSCL_TRY(error, iAudioRemoveSinkId = iSourceAndSinks->RemoveAudioSink());
         if (error)
         {
-            printf("\n*************** Test FAILED: error removing audio sink *************** \n");
+            PV2WayUtil::OutputInfo("\n*************** Test FAILED: error removing audio sink *************** \n");
             iTestStatus &= false;
             disconnect();
         }
@@ -125,7 +125,7 @@ bool audio_only_test::start_async_test()
     timer = OSCL_NEW(engine_timer, (this));
     if (timer == NULL)
     {
-        printf("\n*************** Test FAILED: could not create timer *************** \n");
+        PV2WayUtil::OutputInfo("\n*************** Test FAILED: could not create timer *************** \n");
         iTestStatus &= false;
         return false;
     }

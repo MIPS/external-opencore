@@ -48,6 +48,7 @@
 #include "oscl_map.h"
 #endif
 
+
 class LipSyncDummyMIOSettings;
 
 #define TITLE_LENGTH   300
@@ -99,12 +100,7 @@ class PV2WayMIO
         OSCL_IMPORT_REF void PrintFormatTypes();
 
 
-        OSCL_IMPORT_REF void Init()
-        {
-            iNextChannelId = 0;
-            iChannelId = 0;
-        }
-
+        OSCL_IMPORT_REF void Init();
         OSCL_IMPORT_REF void SetTerminal(CPV2WayInterface *aTerminal)
         {
             iTerminal = aTerminal;
@@ -179,23 +175,7 @@ class PV2WayMIO
         virtual OSCL_IMPORT_REF int AddCodec(PVMFFileInputSettings& aFileSettings) = 0;
         virtual OSCL_IMPORT_REF int AddCodec(LipSyncDummyMIOSettings& aSettings) = 0;
 
-        OSCL_IMPORT_REF void ClearCodecs()
-        {
-            Oscl_Map < PVMFFormatType, CodecSpecifier*,
-            OsclMemAllocator, pvmf_format_type_key_compare_class >::iterator it =
-                iFormatsMap.begin();
-            // loop through each, delete
-            while (it != iFormatsMap.end())
-            {
-                CodecSpecifier* codec = (*it++).second;
-                OSCL_DELETE(codec);
-            }
-            iFormatsMap.clear();
-            iFormats->clear();
-            iSelectedCodec = NULL;
-            iMySelectedFormat = PVMF_MIME_FORMAT_UNKNOWN;
-        }
-
+        OSCL_IMPORT_REF void ClearCodecs();
         OSCL_IMPORT_REF int AddFormat(PVMFFormatType aFormat);
         OSCL_IMPORT_REF int AddFormat(PvmiMIOFileInputSettings& format);
         OSCL_IMPORT_REF int AddFormat(PVMFFileInputSettings& format);

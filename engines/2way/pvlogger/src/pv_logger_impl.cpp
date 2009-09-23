@@ -81,6 +81,9 @@ int8  PVLoggerConfigFile::ReadAndParseLoggerConfigFile()
 #if defined(__linux__) || defined(linux)
             const char* const lnFd = "\n";
 #endif
+#ifdef _SYMBIAN
+            const char* const lnFd = "\n";
+#endif
 
             const int8 lnFdLen = oscl_strlen(lnFd);
             int16 offset = 0;

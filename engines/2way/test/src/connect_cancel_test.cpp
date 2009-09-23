@@ -21,8 +21,8 @@
 
 void connect_cancel_test::test()
 {
-    fprintf(fileoutput, "----- Start %s test, proxy %d. ----- \n", iTestName.get_cstr(), iUseProxy);
-    fprintf(fileoutput, "\n** Test Number: %d. ** \n", iTestNum);
+    PV2WayUtil::OutputInfo("----- Start %s test, proxy %d. ----- \n", iTestName.get_cstr(), iUseProxy);
+    PV2WayUtil::OutputInfo("\n** Test Number: %d. ** \n", iTestNum);
     int error = 0;
 
     scheduler = OsclExecScheduler::Current();

@@ -27,6 +27,7 @@
 #include "pvmf_video.h"
 #include "pvmf_common_audio_decnode.h"
 
+
 #define LOG_OUTPUT_TO_FILE  1
 
 // Define entry point for this DLL.
@@ -40,9 +41,7 @@ OSCL_DLL_ENTRY_POINT_DEFAULT()
 
 OSCL_EXPORT_REF PvmiMIOControl* PVMFMediaFileOutputRegistryFactory::CreateMediaIO(OsclAny* aParam)
 {
-    PVRefFileOutput* ptr = OSCL_NEW
-
-                           (PVRefFileOutput, ((oscl_wchar*)aParam));
+    PVRefFileOutput* ptr = OSCL_NEW(PVRefFileOutput, ((oscl_wchar*)aParam));
     return ptr;
 }
 
@@ -207,18 +206,6 @@ void PVRefFileOutput::initData()
     iVideoCount = 0;
     iIsMIOConfigured = false;
     iClock = NULL;
-    //Connect with file server.
-    if (!iFsConnected)
-    {
-        if (iFs.Connect() == 0)
-        {
-            iFsConnected = true;
-        }
-        else
-        {
-            OSCL_ASSERT(false);
-        }
-    }
 }
 
 OSCL_EXPORT_REF void PVRefFileOutput::setUserClockExtnInterface(bool aEnable)
@@ -308,12 +295,6 @@ PVRefFileOutput::~PVRefFileOutput()
         alloc.deallocate(iActiveTiming);
         iActiveTiming = NULL;
     }
-
-    if (iFsConnected)
-    {
-        iFs.Close();
-    }
-    iFsConnected = false;
 }
 
 
@@ -735,6 +716,17 @@ void PVRefFileOutput::ThreadLogon()
         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVRefFileOutput::ThreadLogon() called"));
         AddToScheduler();
         iState = STATE_LOGGED_ON;
+        if (!iFsConnected)
+        {
+            if (iFs.Connect() == 0)
+            {
+                iFsConnected = true;
+            }
+            else
+            {
+                OSCL_ASSERT(false);
+            }
+        }
     }
 }
 
@@ -744,6 +736,11 @@ void PVRefFileOutput::ThreadLogoff()
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVRefFileOutput::ThreadLogoff() called"));
     if (iState != STATE_IDLE)
     {
+        if (iFsConnected)
+        {
+            iFs.Close();
+        }
+        iFsConnected = false;
         RemoveFromScheduler();
         iLogger = NULL;
         iState = STATE_IDLE;

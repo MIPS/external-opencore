@@ -26,6 +26,7 @@ const uint32 KVideoMicroSecsPerDataEvent = 100000;
 const uint32  TOTAL_BYTES_READ           = 50;
 const uint32 One_Yuv_Frame_Size          = 38016;
 #define InputFileName       "test.yuv"
+
 #define DUMMY_MEDIADATA_POOLNUM 11
 
 #define VOP_START_BYTE_1 0x00
@@ -52,13 +53,6 @@ const uint32 One_Yuv_Frame_Size          = 38016;
 #define LOG_DEBUG(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG, m)
 #define LOG_ERR(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_REL,iLogger,PVLOGMSG_ERR,m)
 
-uint32 g_iAudioTimeStamp = 0;
-uint32 g_iVideoTimeStamp = 0;
-uint32 g_count = 0;
-int32  g_DiffVidAudTS = 0;
-int32  g_SqrVidAudTS = 0;
-int32  g_RtMnSq = 0;
-
 LipSyncDummyInputMIO::LipSyncDummyInputMIO(const LipSyncDummyMIOSettings& aSettings)
         : OsclTimerObject(OsclActiveObject::EPriorityNominal, (aSettings.iMediaFormat.isAudio() ? "DummyAudioInputMIO" : "DummyVideoInputMIO"))
         , iCmdIdCounter(0)
@@ -79,6 +73,13 @@ LipSyncDummyInputMIO::LipSyncDummyInputMIO(const LipSyncDummyMIOSettings& aSetti
     iParams = NULL;
     iAudioOnlyOnce = false;
     iVideoOnlyOnce = false;
+
+    iAudioTimeStamp = 0;
+    iVideoTimeStamp = 0;
+    iCount = 0;
+    iDiffVidAudTS = 0;
+    iSqrVidAudTS = 0;
+    iRtMnSq = 0;
 
 }
 
@@ -440,16 +441,16 @@ PVMFStatus LipSyncDummyInputMIO::DoFlush()
 PVMFStatus LipSyncDummyInputMIO::DoStop()
 {
     iState = STATE_STOPPED;
-    if (g_count == 0)
+    if (iCount == 0)
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
-                        (0, "Can't calculate the value of RMS because the count value is zero. g_count=%d", g_count));
+                        (0, "Can't calculate the value of RMS because the count value is zero. g_count=%d", iCount));
     }
     else
     {
-        g_RtMnSq = (int32)sqrt(g_SqrVidAudTS / g_count);
+        iRtMnSq = (int32)sqrt(iSqrVidAudTS / iCount);
         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
-                        (0, "RMS value at input side . g_RtMnSq=%d", g_RtMnSq));
+                        (0, "RMS value at input side . g_RtMnSq=%d", iRtMnSq));
     }
 
     return PVMFSuccess;
@@ -613,10 +614,10 @@ PVMFStatus LipSyncDummyInputMIO::DoRead()
 
             bytesToRead = TOTAL_BYTES_READ;
             iTimestamp += (uint32)(iSeqNumCounter * 1000 / iSettings.iVideoFrameRate);
-            g_iVideoTimeStamp = iTimestamp;
+            iVideoTimeStamp = iTimestamp;
             ++iSeqNumCounter;
             iParams->iCompressed = true;
-            CalculateRMSInfo(g_iVideoTimeStamp, g_iAudioTimeStamp);
+            CalculateRMSInfo(iVideoTimeStamp, iAudioTimeStamp);
 
         }
 
@@ -647,10 +648,10 @@ PVMFStatus LipSyncDummyInputMIO::DoRead()
             fs.Close();
             bytesToRead = One_Yuv_Frame_Size;
             iTimestamp = (int32)(iSeqNumCounter * 1000 / iSettings.iVideoFrameRate);
-            g_iVideoTimeStamp = iTimestamp;
+            iVideoTimeStamp = iTimestamp;
             ++iSeqNumCounter;
             iParams->iUncompressed = true;
-            CalculateRMSInfo(g_iVideoTimeStamp, g_iAudioTimeStamp);
+            CalculateRMSInfo(iVideoTimeStamp, iAudioTimeStamp);
 
         }
         else
@@ -1146,9 +1147,9 @@ void LipSyncDummyInputMIO::AddMarkerInfo(uint8* aData)
 
 void LipSyncDummyInputMIO::CalculateRMSInfo(uint32 aVideoData, uint32 aAudioData)
 {
-    g_DiffVidAudTS = aVideoData - aAudioData;
-    g_SqrVidAudTS += (g_DiffVidAudTS * g_DiffVidAudTS);
-    ++g_count;
+    iDiffVidAudTS = aVideoData - aAudioData;
+    iSqrVidAudTS += (iDiffVidAudTS * iDiffVidAudTS);
+    ++iCount;
 
 }
 
@@ -1164,7 +1165,7 @@ void LipSyncDummyInputMIO::GenerateAudioFrame(uint8* aData)
         bytesToRead = Num_Audio_Bytes;
 
         iTimestamp += (uint32)(iSeqNumCounter * 1000 / iSettings.iAudioFrameRate);
-        g_iAudioTimeStamp = iTimestamp;
+        iAudioTimeStamp = iTimestamp;
 
         ++iSeqNumCounter;
         aData = (uint8*)iMediaBufferMemPool->allocate(BYTES_FOR_MEMPOOL_STORAGE);
@@ -1212,10 +1213,9 @@ void LipSyncDummyInputMIO::GenerateAudioFrame(uint8* aData)
     }
 
 }
-uint32 LipSyncDummyInputMIO::WriteAsyncCall(int32 &aError, uint8 *aData, uint32 &aBytesToRead, PvmiMediaXferHeader& aData_hdr, uint32 &aWriteAsyncID)
+int32 LipSyncDummyInputMIO::WriteAsyncCall(int32 &aError, uint8 *aData, uint32 &aBytesToRead, PvmiMediaXferHeader& aData_hdr, uint32 &aWriteAsyncID)
 {
-    uint32 err = OsclErrNone;
-
+    int32 err = OsclErrNone;
     OSCL_TRY(err, aWriteAsyncID = iPeer->writeAsync(PVMI_MEDIAXFER_FMT_TYPE_DATA, 0, aData, aBytesToRead, aData_hdr););
     return err;
 }

@@ -73,13 +73,13 @@ void PvmiMIOCommDataBufferCleanup::destruct_and_dealloc(OsclAny* ptr)
     }
 }
 
-PvmiMIOCommDataBufferAlloc::PvmiMIOCommDataBufferAlloc(Oscl_DefAlloc* opt_gen_alloc)
+OSCL_EXPORT_REF PvmiMIOCommDataBufferAlloc::PvmiMIOCommDataBufferAlloc(Oscl_DefAlloc* opt_gen_alloc)
         : gen_alloc(opt_gen_alloc)
 {
     iLogger = PVLogger::GetLoggerObject("PvmiMIOCommDataBufferAlloc");
 }
 
-OsclSharedPtr<PVMFMediaDataImpl> PvmiMIOCommDataBufferAlloc::allocate(PvmiMediaTransfer* aMediaInput,
+OSCL_EXPORT_REF OsclSharedPtr<PVMFMediaDataImpl> PvmiMIOCommDataBufferAlloc::allocate(PvmiMediaTransfer* aMediaInput,
         uint8* aData,
         uint32 aDataLength,
         PVMFCommandId aCmdId,

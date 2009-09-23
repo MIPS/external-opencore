@@ -22,6 +22,10 @@
 #include "oscl_mem.h"
 #endif
 
+#ifndef OSCL_FILE_IO_H_INCLUDED
+#include "oscl_file_io.h"
+#endif
+
 #ifndef PVMF_NODE_INTERFACE_H_INCLUDED
 #include "pvmf_node_interface.h"
 #endif
@@ -68,24 +72,25 @@ class PVMFFileDataSource : public PVMFBufferDataSource
         // timer observer
         void TimeoutOccurred(int32 timerID, int32 timeoutInfo);
 
-        bool OpenFile(char *aFileName)
+        inline bool OpenFile(char *aFileName)
         {
-            iReadFile = fopen(aFileName, "rb");
-            if (iReadFile)
-            {
-                iIsFileDone = false;
+            int8 retVal = 0;
+            iFileServ->Connect();
+            retVal = iReadFile->Open(aFileName, Oscl_File::MODE_READ | Oscl_File::MODE_BINARY , *iFileServ);
+            if (retVal != 0)
+                return false;
+            else
                 return true;
-            }
-            return false;
         }
 
-        void SetObserver(PVMFFileDataSourceObserver *aObserver)
+        inline void SetObserver(PVMFFileDataSourceObserver *aObserver)
         {
             iObserver = aObserver;
         }
 
     private:
-        FILE *iReadFile;
+        Oscl_File *iReadFile;
+        Oscl_FileServer *iFileServ;
         PVMFFileDataSourceObserver *iObserver;
         bool iIsFileDone;
 };

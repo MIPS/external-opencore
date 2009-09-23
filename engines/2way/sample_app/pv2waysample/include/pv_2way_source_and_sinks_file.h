@@ -48,10 +48,7 @@ class PV2WaySourceAndSinksFile : public PV2WaySourceAndSinksBase
 {
     public:
         OSCL_IMPORT_REF PV2WaySourceAndSinksFile(PV2Way324InitInfo& aSdkInitInfo);
-        virtual OSCL_IMPORT_REF ~PV2WaySourceAndSinksFile()
-        {
-            Cleanup();
-        };
+        OSCL_IMPORT_REF virtual ~PV2WaySourceAndSinksFile();
 
         OSCL_IMPORT_REF int AddPreferredCodec(TPVDirection aDir,
                                               PV2WayMediaType aMediaType,

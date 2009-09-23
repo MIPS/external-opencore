@@ -166,7 +166,7 @@ OSCL_EXPORT_REF PVMFDummyFileInputNode::PVMFDummyFileInputNode(PVMFFileInputSett
     }
 }
 
-OSCL_EXPORT_REF PVMFDummyFileInputNode::~PVMFDummyFileInputNode()
+PVMFDummyFileInputNode::~PVMFDummyFileInputNode()
 {
     //thread logoff
     if (IsAdded())

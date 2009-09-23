@@ -83,7 +83,7 @@ class PVMFDummyFileInputNode : public PVMFNodeInterface,
 {
     public:
         OSCL_IMPORT_REF PVMFDummyFileInputNode(PVMFFileInputSettings* aSettings, int32 aPriority);
-        OSCL_IMPORT_REF ~PVMFDummyFileInputNode();
+        ~PVMFDummyFileInputNode();
 
         //from PVMFNodeInterface
         OSCL_IMPORT_REF PVMFStatus ThreadLogon();

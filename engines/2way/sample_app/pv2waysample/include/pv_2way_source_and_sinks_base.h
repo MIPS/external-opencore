@@ -66,7 +66,7 @@ class PV2WaySourceAndSinksBase :   public PVCommandStatusObserver,
 {
     public:
         OSCL_IMPORT_REF PV2WaySourceAndSinksBase(PV2Way324InitInfo& aSdkInitInfo);
-        virtual OSCL_IMPORT_REF ~PV2WaySourceAndSinksBase();
+        OSCL_IMPORT_REF virtual ~PV2WaySourceAndSinksBase();
 
         OSCL_IMPORT_REF void Init();
 
@@ -98,15 +98,7 @@ class PV2WaySourceAndSinksBase :   public PVCommandStatusObserver,
             return false;
 
         }
-        OSCL_IMPORT_REF bool AllMIOsRemoved()
-        {
-            if (iAudioSource->IsRemoved() &&
-                    iAudioSink->IsRemoved() &&
-                    iVideoSource->IsRemoved() &&
-                    iVideoSink->IsRemoved())
-                return true;
-            return false;
-        }
+        OSCL_IMPORT_REF bool AllMIOsRemoved();
 
         OSCL_IMPORT_REF int ResetPreferredCodec(TPVDirection aDir, PV2WayMediaType aMediaType);
 

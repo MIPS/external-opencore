@@ -44,6 +44,7 @@
 #define OSCL_DISABLE_WARNING_FUNCTION_CALL_MISSING_ARGUMRNT_LIST
 #include "osclconfig_compiler_warnings.h"
 
+
 #define PV_2WAY_TSC_TIMER_ID "PV_2WAY_TSC_TIMER"
 #define PV_2WAY_TSC_TIMER_INTERVAL 1 /* 1 second */
 
@@ -68,8 +69,8 @@
 #define PV2WAY_TSC_MIN_T401_INCOMING 100
 
 OSCL_EXPORT_REF TSC_324m::TSC_324m(TPVLoopbackMode aLoopbackMode)
-        :   TSC(),
-        OsclActiveObject(OsclActiveObject::EPriorityHigh, "TSC"),
+        : OsclActiveObject(OsclActiveObject::EPriorityHigh, "TSC"),
+        TSC(),
         Msd(NULL),
         Ce(NULL),
         iSrp(NULL),
@@ -274,8 +275,8 @@ void TSC_324m::InitComponent()
         QueryInterface(0, PVUuidH324ComponentInterface, (PVInterface*&)componentInterface);
         if (!iTSCcomponent)
         {
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_WARNING,
-                            (0, "TSC_324m::InitComponent- unable to create component"));
+            //PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_WARNING,
+            //                (0, "TSC_324m::InitComponent- unable to create component"));
             OSCL_LEAVE(PVMFFailure);
         }
         componentInterface->removeRef();
@@ -646,7 +647,7 @@ TSC_324m::Connect(uint16 info_len, uint8* info_buf)
     return ret;
 }
 
-void TSC_324m::SetClock(PVMFMediaClock* aClock)
+OSCL_EXPORT_REF void TSC_324m::SetClock(PVMFMediaClock* aClock)
 {
     iClock = aClock;
 }
@@ -2108,9 +2109,6 @@ PVMFCommandId TSC_324m::QueryInterface(PVMFSessionId aSession,
                                        PVInterface*& aInterfacePtr,
                                        const OsclAny* aContext)
 {
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                    (0, "TSC_324m::QueryInterface()"));
-
     if (aUuid == PVH324MConfigUuid)
     {
         aInterfacePtr = OSCL_NEW(H324MConfig, (this, true));
@@ -2247,7 +2245,7 @@ LogicalChannelInfo* TSC_324m::GetLogicalChannelInfo(PVMFPortInterface& port)
     return iTSCcomponent->GetLogicalChannelInfo(port);
 }
 
-bool TSC_324m::IsEstablishedLogicalChannel(TPVDirection aDir,
+OSCL_EXPORT_REF bool TSC_324m::IsEstablishedLogicalChannel(TPVDirection aDir,
         TPVChannelId aChannelId)
 {
     return iTSCcomponent->IsEstablishedLogicalChannel(aDir, aChannelId);
@@ -2583,7 +2581,7 @@ PVMFCommandId TSC_324m::Flush(PVMFSessionId aSession,
     return 0;
 }
 
-void TSC_324m::SetMioLatency(int32 aLatency, bool aAudio)
+OSCL_EXPORT_REF void TSC_324m::SetMioLatency(int32 aLatency, bool aAudio)
 {
     iH223->SetMioLatency(aLatency, aAudio);
 }

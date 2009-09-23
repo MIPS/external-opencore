@@ -381,4 +381,25 @@ OSCL_EXPORT_REF int PV2WayMIO::AddCodec(PVMFFormatType aFormat)
     return AddFormat(aFormat);
 }
 
+OSCL_EXPORT_REF void PV2WayMIO::ClearCodecs()
+{
+    Oscl_Map < PVMFFormatType, CodecSpecifier*,
+    OsclMemAllocator, pvmf_format_type_key_compare_class >::iterator it =
+        iFormatsMap.begin();
+    // loop through each, delete
+    while (it != iFormatsMap.end())
+    {
+        CodecSpecifier* codec = (*it++).second;
+        OSCL_DELETE(codec);
+    }
+    iFormatsMap.clear();
+    iFormats->clear();
+    iSelectedCodec = NULL;
+    iMySelectedFormat = PVMF_MIME_FORMAT_UNKNOWN;
+}
 
+OSCL_EXPORT_REF void PV2WayMIO::Init()
+{
+    iNextChannelId = 0;
+    iChannelId = 0;
+}

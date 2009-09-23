@@ -139,13 +139,14 @@ class PVLoggerConfigFile
         oscl_wchar iLogFileName[FILENAME_LEN]; // logger config file name
         char ibuffer[MAX_BUFFER_SIZE];
         Oscl_Vector<LoggerConfigElement, OsclMemAllocator> iLoggerConfigElements;
-        template<class DestructClass>
-        class AppenderDestructDealloc : public OsclDestructDealloc
+};
+
+template<class DestructClass>
+class AppenderDestructDealloc : public OsclDestructDealloc
+{
+    public:
+        virtual void destruct_and_dealloc(OsclAny *ptr)
         {
-            public:
-                virtual void destruct_and_dealloc(OsclAny *ptr)
-                {
-                    OSCL_DELETE((DestructClass*)ptr);
-                }
-        };
+            OSCL_DELETE((DestructClass*)ptr);
+        }
 };

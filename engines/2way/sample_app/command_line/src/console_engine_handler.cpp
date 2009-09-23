@@ -34,6 +34,7 @@
 #include "pvlogger_file_appender.h"
 #include "pv_engine_observer.h"
 #include "pv_engine_observer_message.h"
+#include "pv2way_file_names.h"
 
 
 #ifndef PVMF_MEDIA_INPUT_NODE_FACTORY_H_INCLUDED
@@ -79,7 +80,7 @@
 #define TEXT_FILE_APPENDER_CACHE_SIZE LAYOUT_BUFFER_SIZE * 512
 
 #define DISCONNECT_TIME_FOR_LOOPBACK_CALL 9000000
-#define RUN_IF_NOT_READY_TIME 200000
+#define RUN_IF_NOT_READY_TIME 800000
 
 #define CONFIG_FILE_PATH _STRLIT("")
 
@@ -321,7 +322,7 @@ void engine_handler::InitializeLogs()
 
 
     {
-        iFileAppender = TextFileAppender<TimeAndIdLayout, LAYOUT_BUFFER_SIZE>::CreateAppender(_STRLIT("pvlog.txt"),
+        iFileAppender = TextFileAppender<TimeAndIdLayout, LAYOUT_BUFFER_SIZE>::CreateAppender(TEST_LOG_FILENAME,
                         TEXT_FILE_APPENDER_CACHE_SIZE);
 
         OsclRefCounter *appenderRefCounter =

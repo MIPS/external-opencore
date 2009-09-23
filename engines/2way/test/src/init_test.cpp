@@ -21,8 +21,8 @@
 
 void init_test::test()
 {
-    fprintf(fileoutput, "----- Start %s test, num runs %d, proxy %d. ----- \n", iTestName.get_cstr(), iMaxRuns, iUseProxy);
-    fprintf(fileoutput, "\n** Test Number: %d. ** \n", iTestNum);
+    PV2WayUtil::OutputInfo("----- Start %s test, num runs %d, proxy %d. ----- \n", iTestName.get_cstr(), iMaxRuns, iUseProxy);
+    PV2WayUtil::OutputInfo("\n** Test Number: %d. ** \n", iTestNum);
     int error = 0;
 
     scheduler = OsclExecScheduler::Current();

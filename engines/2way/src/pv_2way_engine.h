@@ -1137,6 +1137,11 @@ class CPV324m2Way : OsclActiveObject,
 
         int32 iReferenceCount;
 
+        // this mutex is used to lock all of the data when writing to it
+        // and also locked when attempting to read the data through the
+        // test interface (which will be another thread)
+        OsclMutex iReadDataLock;
+
 };
 
 #endif

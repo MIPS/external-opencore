@@ -43,12 +43,32 @@
 #include "oscl_vector.h"
 #endif
 
+#ifndef PVLOGGER_STDERR_APPENDER_H_INCLUDED
+#include "pvlogger_stderr_appender.h"
+#endif
+
+#ifndef PVLOGGER_FILE_APPENDER_H_INCLUDED
+#include "pvlogger_file_appender.h"
+#endif
+
+#ifndef PVLOGGER_TIME_AND_ID_LAYOUT_H_INCLUDED
+#include "pvlogger_time_and_id_layout.h"
+#endif
+
+#ifndef PV2WAY_FILE_NAMES_H_INCLUDED
+#include "pv2way_file_names.h"
+#endif
+
 #include "pv_engine_observer.h"
 #include "pv_engine_observer_message.h"
 
+class PV2WayLogger
+{
+    public:
+        OSCL_IMPORT_REF static void CreateLogger();
+};
 class PVLogger;
 class PVMFNodeInterface;
-
 
 class PVCmnCmdRespMsg : public CPVCmnInterfaceObserverMessage,
         public PVCmdResponse

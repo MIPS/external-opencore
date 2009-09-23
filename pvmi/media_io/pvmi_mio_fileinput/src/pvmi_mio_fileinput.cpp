@@ -1677,6 +1677,7 @@ PVMFStatus PvmiMIOFileInput::DoStop()
 {
     iDataEventCounter = 0;
     iState = STATE_STOPPED;
+    CloseInputFile();
     return PVMFSuccess;
 }
 
@@ -1785,6 +1786,7 @@ PVMFStatus PvmiMIOFileInput::DoRead()
         AddDataEventToQueue(iMicroSecondsPerDataEvent);
         return PVMFPending;
     }
+
 
     // Read the frame from file
     uint32 len = 0;

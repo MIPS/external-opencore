@@ -19,11 +19,11 @@
 
 void negotiated_formats_test::test()
 {
-    fprintf(fileoutput, "\n-------- Start %s test --------\n", iTestName.get_cstr());
-    fprintf(fileoutput, "\n** Test Number: %d. ** \n", iTestNum);
-    fprintf(fileoutput, "\nSETTINGS:\nProxy %d", iUseProxy);
+    PV2WayUtil::OutputInfo("\n-------- Start %s test --------\n", iTestName.get_cstr());
+    PV2WayUtil::OutputInfo("\n** Test Number: %d. ** \n", iTestNum);
+    PV2WayUtil::OutputInfo("\nSETTINGS:\nProxy %d", iUseProxy);
     iSourceAndSinks->PrintFormatTypes();
-    fprintf(fileoutput, "\n----------------------------------\n");
+    PV2WayUtil::OutputInfo("\n----------------------------------\n");
     int error = 0;
 
     scheduler = OsclExecScheduler::Current();
@@ -47,7 +47,7 @@ void negotiated_formats_test::TimerCallback()
 {
     if (inumCalled > 5)
     {
-        fprintf(fileoutput, "\n Giving up waiting for process to finish \n");
+        PV2WayUtil::OutputInfo("\n Giving up waiting for process to finish \n");
         iTestStatus = false;
         DoCancel();
         return;
@@ -81,7 +81,7 @@ void negotiated_formats_test::TimerCallback()
 
 
     int error = 0;
-    fprintf(fileoutput, "\nRemoving source and sinks \n");
+    PV2WayUtil::OutputInfo("\nRemoving source and sinks \n");
     OSCL_TRY(error, iVideoRemoveSourceId = iSourceAndSinks->RemoveVideoSource());
     if (error)
     {

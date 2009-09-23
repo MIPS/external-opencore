@@ -42,7 +42,6 @@ OSCL_EXPORT_REF PV2WaySourceAndSinksBase::PV2WaySourceAndSinksBase(PV2Way324Init
                             (&iSdkInitInfo.iOutgoingVideoFormats, this));
 }
 
-
 OSCL_EXPORT_REF PV2WaySourceAndSinksBase::~PV2WaySourceAndSinksBase()
 {
 }
@@ -309,5 +308,13 @@ OSCL_EXPORT_REF bool PV2WaySourceAndSinksBase::FormatMatchesSelectedCodec(TPVDir
     return (form == aFormat) ? true : false;
 }
 
-
+OSCL_EXPORT_REF bool PV2WaySourceAndSinksBase::AllMIOsRemoved()
+{
+    if (iAudioSource->IsRemoved() &&
+            iAudioSink->IsRemoved() &&
+            iVideoSource->IsRemoved() &&
+            iVideoSink->IsRemoved())
+        return true;
+    return false;
+}
 

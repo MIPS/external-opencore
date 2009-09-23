@@ -26,6 +26,10 @@ OSCL_EXPORT_REF PV2WaySourceAndSinksFile::PV2WaySourceAndSinksFile(PV2Way324Init
 {
 }
 
+OSCL_EXPORT_REF PV2WaySourceAndSinksFile::~PV2WaySourceAndSinksFile()
+{
+    Cleanup();
+}
 
 OSCL_EXPORT_REF int PV2WaySourceAndSinksFile::AddPreferredCodec(TPVDirection aDir,
         PV2WayMediaType aMediaType,

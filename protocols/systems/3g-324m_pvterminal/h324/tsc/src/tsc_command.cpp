@@ -50,7 +50,7 @@
 /*                                                                           */
 /*              Copyright (C) 1996 NTT DoCoMo                                */
 /*****************************************************************************/
-void TSC_324m::EndSessionCommand()
+OSCL_EXPORT_REF void TSC_324m::EndSessionCommand()
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                     (0, "TSC_324m::EndSessionCommand"));

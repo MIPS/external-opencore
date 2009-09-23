@@ -53,9 +53,12 @@
 #include "pv2way_file_names.h"
 #endif
 
+#ifndef TEST_ENGINE_UTILITY_H_HEADER
+#include "test_engine_utility.h"
+#endif
+
 class engine_timer;
 
-extern FILE *fileoutput;
 
 class engine_test : public test_case,
         public OsclActiveObject,
@@ -200,7 +203,7 @@ class engine_test : public test_case,
 
         virtual void printFormatString(PVMFFormatType aFormatType)
         {
-            fprintf(fileoutput, "%s", aFormatType.getMIMEStrPtr());
+            PV2WayUtil::OutputInfo("%s", aFormatType.getMIMEStrPtr());
         }
 
         bool check_audio_started()

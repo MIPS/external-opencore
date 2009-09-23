@@ -25,6 +25,7 @@ XCPPFLAGS += -DPV2WAY_USE_OMX
 
 XINCDIRS +=  ../../src  ../../include  ../../../common/include  \
 ../../../../common/pvdebug/src \
+ ../../../../engines/2way/pvlogger/src \
  ../../../../protocols/systems/3g-324m_pvterminal/h324/tsc/include \
  ../../../../protocols/systems/3g-324m_pvterminal/common/include \
  ../../../../protocols/systems/3g-324m_pvterminal/h245/cmn/include \

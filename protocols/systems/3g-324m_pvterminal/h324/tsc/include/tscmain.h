@@ -162,9 +162,9 @@ class TSC_324mObserver
 class TSC_component;
 
 
-class TSC_324m : public TSC,
+class TSC_324m : public OsclActiveObject,
+        public TSC,
         public PVMFNodeInterface,
-        public OsclActiveObject,
         public CPVH223MultiplexObserver,
         public H245Observer,
         public MSDObserver,
@@ -174,14 +174,13 @@ class TSC_324m : public TSC,
 {
     public:
         OSCL_IMPORT_REF TSC_324m(TPVLoopbackMode aLoopbackMode);
-        ~TSC_324m();
+        virtual ~TSC_324m();
         void SetTSC_324mObserver(TSC_324mObserver* aObserver);
-
         void SetInitialValues();
         void InitComponent();
         bool ProcessCommand(Tsc324mNodeCommand& aCmd);
         void ReceivedFormatSpecificInfo(TPVChannelId lcn, uint8* fsi, uint32 fsi_len);
-        bool IsEstablishedLogicalChannel(TPVDirection aDir, TPVChannelId aChannelId);
+        OSCL_IMPORT_REF bool IsEstablishedLogicalChannel(TPVDirection aDir, TPVChannelId aChannelId);
 
         /********************************/
         /** node virtuals              **/
@@ -410,7 +409,7 @@ class TSC_324m : public TSC,
                                              uint8 aSeries, uint32 aSeriesOffset, uint32 aValue);
         OSCL_IMPORT_REF void SetVideoResolutions(TPVDirection dir, Oscl_Vector<PVMFVideoResolutionRange, OsclMemAllocator>& resolutions);
         OSCL_IMPORT_REF void RmeSendReq(void);
-        void EndSessionCommand(void);          /* Change or End Session         */
+        OSCL_IMPORT_REF void EndSessionCommand(void);          /* Change or End Session         */
         void Tsc_IdcVi(void);
         void SendVideoTemporalSpatialTradeoffCommand(TPVChannelId aLogicalChannel, uint8 aTradeoff);
         void SendVideoTemporalSpatialTradeoffIndication(TPVChannelId aLogicalChannel, uint8 aTradeoff);
@@ -426,8 +425,8 @@ class TSC_324m : public TSC,
         void CmdMisc(TCmdMisc type, TPVChannelId channelId, uint32 param = 0);
 
         CPvtTerminalCapability* GetRemoteCapability();
-        void SetClock(PVMFMediaClock* aClock);
-        void SetMioLatency(int32 aLatency, bool aAudio);
+        OSCL_IMPORT_REF void SetClock(PVMFMediaClock* aClock);
+        OSCL_IMPORT_REF void SetMioLatency(int32 aLatency, bool aAudio);
 
     private:
         void Cleanup();

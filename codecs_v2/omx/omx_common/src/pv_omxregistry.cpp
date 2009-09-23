@@ -819,8 +819,8 @@ OMX_ERRORTYPE RaRegister(OMXGlobalData *data)
 #if REGISTER_OMX_AMRENC_COMPONENT
 // external factory functions needed for creation of each component (or stubs for testing)
 #if (DYNAMIC_LOAD_OMX_AMRENC_COMPONENT == 0)
-extern OMX_ERRORTYPE AmrEncOmxComponentFactory(OMX_OUT OMX_HANDLETYPE* pHandle, OMX_IN  OMX_PTR pAppData, OMX_IN OMX_PTR pProxy, OMX_STRING aOmxLibName, OMX_PTR &aOmxLib, OMX_PTR aOsclUuid, OMX_U32 &aRefCount);
-extern OMX_ERRORTYPE AmrEncOmxComponentDestructor(OMX_IN OMX_HANDLETYPE pHandle, OMX_PTR &aOmxLib, OMX_PTR aOsclUuid, OMX_U32 &aRefCount);
+OSCL_IMPORT_REF OMX_ERRORTYPE AmrEncOmxComponentFactory(OMX_OUT OMX_HANDLETYPE* pHandle, OMX_IN  OMX_PTR pAppData, OMX_IN OMX_PTR pProxy, OMX_STRING aOmxLibName, OMX_PTR &aOmxLib, OMX_PTR aOsclUuid, OMX_U32 &aRefCount);
+OSCL_IMPORT_REF OMX_ERRORTYPE AmrEncOmxComponentDestructor(OMX_IN OMX_HANDLETYPE pHandle, OMX_PTR &aOmxLib, OMX_PTR aOsclUuid, OMX_U32 &aRefCount);
 #endif
 #endif
 #if (REGISTER_OMX_AMRENC_COMPONENT) || (USE_DYNAMIC_LOAD_OMX_COMPONENTS)
@@ -897,8 +897,8 @@ OMX_ERRORTYPE AmrEncRegister(OMXGlobalData *data)
 #if REGISTER_OMX_M4VENC_COMPONENT
 // external factory functions needed for creation of each component (or stubs for testing)
 #if (DYNAMIC_LOAD_OMX_M4VENC_COMPONENT == 0)
-extern OMX_ERRORTYPE Mpeg4EncOmxComponentFactory(OMX_OUT OMX_HANDLETYPE* pHandle, OMX_IN  OMX_PTR pAppData, OMX_IN OMX_PTR pProxy, OMX_STRING aOmxLibName, OMX_PTR &aOmxLib, OMX_PTR aOsclUuid, OMX_U32 &aRefCount);
-extern OMX_ERRORTYPE Mpeg4EncOmxComponentDestructor(OMX_IN OMX_HANDLETYPE pHandle, OMX_PTR &aOmxLib, OMX_PTR aOsclUuid, OMX_U32 &aRefCount);
+OSCL_IMPORT_REF OMX_ERRORTYPE Mpeg4EncOmxComponentFactory(OMX_OUT OMX_HANDLETYPE* pHandle, OMX_IN  OMX_PTR pAppData, OMX_IN OMX_PTR pProxy, OMX_STRING aOmxLibName, OMX_PTR &aOmxLib, OMX_PTR aOsclUuid, OMX_U32 &aRefCount);
+OSCL_IMPORT_REF OMX_ERRORTYPE Mpeg4EncOmxComponentDestructor(OMX_IN OMX_HANDLETYPE pHandle, OMX_PTR &aOmxLib, OMX_PTR aOsclUuid, OMX_U32 &aRefCount);
 #endif
 #endif
 #if (REGISTER_OMX_M4VENC_COMPONENT) || (USE_DYNAMIC_LOAD_OMX_COMPONENTS)
@@ -974,8 +974,8 @@ OMX_ERRORTYPE Mpeg4EncRegister(OMXGlobalData *data)
 #if REGISTER_OMX_H263ENC_COMPONENT
 // external factory functions needed for creation of each component (or stubs for testing)
 #if (DYNAMIC_LOAD_OMX_H263ENC_COMPONENT == 0)
-extern OMX_ERRORTYPE H263EncOmxComponentFactory(OMX_OUT OMX_HANDLETYPE* pHandle, OMX_IN  OMX_PTR pAppData, OMX_IN OMX_PTR pProxy, OMX_STRING aOmxLibName, OMX_PTR &aOmxLib, OMX_PTR aOsclUuid, OMX_U32 &aRefCount);
-extern OMX_ERRORTYPE H263EncOmxComponentDestructor(OMX_IN OMX_HANDLETYPE pHandle, OMX_PTR &aOmxLib, OMX_PTR aOsclUuid, OMX_U32 &aRefCount);
+OSCL_IMPORT_REF OMX_ERRORTYPE H263EncOmxComponentFactory(OMX_OUT OMX_HANDLETYPE* pHandle, OMX_IN  OMX_PTR pAppData, OMX_IN OMX_PTR pProxy, OMX_STRING aOmxLibName, OMX_PTR &aOmxLib, OMX_PTR aOsclUuid, OMX_U32 &aRefCount);
+OSCL_IMPORT_REF OMX_ERRORTYPE H263EncOmxComponentDestructor(OMX_IN OMX_HANDLETYPE pHandle, OMX_PTR &aOmxLib, OMX_PTR aOsclUuid, OMX_U32 &aRefCount);
 #endif
 #endif
 #if (REGISTER_OMX_H263ENC_COMPONENT) || (USE_DYNAMIC_LOAD_OMX_COMPONENTS)

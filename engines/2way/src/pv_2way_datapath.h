@@ -288,7 +288,7 @@ class CPV2WayDatapath : public HeapBase, public MPV2WayNodeCommandObserver
         PVMFFormatType GetFormat()
         {
             PVMFFormatType retval;
-            iReadSourceSinkFormatLock.TryLock();
+            iReadSourceSinkFormatLock.Lock();
             retval = iFormat;
             iReadSourceSinkFormatLock.Unlock();
             return retval;

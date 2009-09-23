@@ -21,6 +21,7 @@
 #include "pvt_common.h"
 #include "pv_2way_engine_factory.h"
 #include "oscl_error_trapcleanup.h"
+#include "pv_logger_impl.h"
 
 #define DEFAULT_2WAY_STACK_SIZE 8192
 
@@ -163,13 +164,12 @@ OsclAny CPV2WayProxyAdapter::ConstructL(TPVTerminalType aTerminalType,
 CPV2WayProxyAdapter::~CPV2WayProxyAdapter()
 //called by the factory to delete 2way interface.
 {
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "CPV2WayProxyAdapter::~CPV2WayProxyAdapter iterminalEngine(%x)", iterminalEngine));
     if (iPVProxy)
     {
         iPVProxy->StopPVThread();
         iPVProxy->Delete();
     }
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "CPV2WayProxyAdapter::~CPV2WayProxyAdapter - done"));
+    iLogger = NULL;
 }
 
 //
@@ -179,11 +179,10 @@ CPV2WayProxyAdapter::~CPV2WayProxyAdapter()
 OSCL_EXPORT_REF void CPV2WayProxyAdapter::DeleteTerminal(PVLogger *aLogger)
 //called by proxy base class to delete terminal under the PV thread.
 {
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, aLogger, PVLOGMSG_STACK_TRACE, (0, "CPV2WayProxyAdapter::DeleteTerminal-in"));
+    OSCL_UNUSED_ARG(aLogger);
     if (iterminalEngine)
         CPV2WayEngineFactory::DeleteTerminal(iterminalEngine);
     iterminalEngine = NULL;
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, aLogger, PVLOGMSG_STACK_TRACE, (0, "CPV2WayProxyAdapter::DeleteTerminal-out"));
 }
 
 OSCL_EXPORT_REF void CPV2WayProxyAdapter::CreateTerminal(PVLogger *aLogger)
@@ -198,6 +197,8 @@ OSCL_EXPORT_REF void CPV2WayProxyAdapter::CreateTerminal(PVLogger *aLogger)
 
 OSCL_EXPORT_REF void CPV2WayProxyAdapter::CreateLoggerAppenders()
 {
+    iLogger = PVLogger::GetLoggerObject("PV2WayProxyAdapter");
+    PV2WayLogger::CreateLogger();
 }
 
 OSCL_EXPORT_REF void CPV2WayProxyAdapter::PVThreadLogon(PVMainProxy &proxy)
@@ -208,8 +209,6 @@ OSCL_EXPORT_REF void CPV2WayProxyAdapter::PVThreadLogon(PVMainProxy &proxy)
 
 OSCL_EXPORT_REF void CPV2WayProxyAdapter::PVThreadLogoff(PVMainProxy &proxy)
 {
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                    (0, "CPV2WayProxyAdapter::PVThreadLogoff"));
     OSCL_UNUSED_ARG(proxy);
     DeleteTerminal();
 }
@@ -283,11 +282,12 @@ OSCL_EXPORT_REF void CPV2WayProxyAdapter::ProcessNotification(CPVCmnInterfaceObs
 //called in the app thread to notify observer.
 {
     int32 err = 0;
+    OSCL_UNUSED_ARG(aLogger);
     OSCL_TRY(err, ProcessNotificationL(aMsg););
     if (err)
     {
         //not really sure what to do with this...
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, aLogger, PVLOGMSG_NONFATAL_ERROR, (0, "PV2WAYPROXY:Error! ProcessNotificationL %d", err));
+        //PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NONFATAL_ERROR, (0, "PV2WAYPROXY:Error! ProcessNotificationL %d", err));
     }
 }
 
@@ -941,7 +941,6 @@ void CPV2WayProxyAdapter::ProcessNotificationL(CPVCmnInterfaceObserverMessage *a
         break;
 
         default:
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "CPV2WayProxyAdapter::ProcessNotificationL unknown response (%d)", aMsg->GetResponseType()));
             //Assume command message.
             FreeCmdMsg((PVCmnCmdRespMsg *) aMsg);
             break;
@@ -997,3 +996,31 @@ PVCmnAsyncErrorEvent* CPV2WayProxyAdapter::GetErrorMsgL()
     return NULL;
 }
 
+OSCL_EXPORT_REF void PV2WayLogger::CreateLogger()
+{
+    PVLoggerAppender *lLoggerAppender = 0;
+    OsclRefCounter *refCounter = NULL;
+    bool logfile = true;
+    if (logfile)
+    {
+        //File Log
+        typedef TextFileAppender<TimeAndIdLayout, 1024> textAppender;
+        lLoggerAppender = (PVLoggerAppender*)textAppender::CreateAppender(TEST_LOG_FILENAME);
+        OsclRefCounter *appenderRefCounter = OSCL_NEW((OsclRefCounterSA<AppenderDestructDealloc<textAppender> >), (lLoggerAppender));
+        refCounter = appenderRefCounter;
+    }
+    else
+    {
+        //Console Log
+        typedef StdErrAppender<TimeAndIdLayout, 1024> ErrAppender;
+        lLoggerAppender = OSCL_NEW(ErrAppender, ());
+        OsclRefCounter *appenderRefCounter = OSCL_NEW((OsclRefCounterSA<AppenderDestructDealloc<StdErrAppender<TimeAndIdLayout, 1024> > >), (lLoggerAppender));
+        refCounter = appenderRefCounter;
+    }
+    OsclSharedPtr<PVLoggerAppender> appenderPtr;
+    appenderPtr.Bind(lLoggerAppender, refCounter);
+    PVLogger *Logger = NULL;
+    Logger = PVLogger::GetLoggerObject("");
+    Logger->AddAppender(appenderPtr);
+    Logger->SetLogLevel(PVLOGMSG_DEBUG);
+}

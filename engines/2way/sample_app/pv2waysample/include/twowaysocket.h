@@ -117,11 +117,11 @@ class TwoWaySocket: public OsclSocketObserver
             public:
                 OsclAny* allocate(const uint32 s)
                 {
-                    return malloc(s);
+                    return oscl_malloc(s);
                 }
                 void deallocate(OsclAny* p)
                 {
-                    free(p);
+                    oscl_free(p);
                 }
         } iSockAlloc;
 

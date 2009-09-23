@@ -29,8 +29,8 @@ class PV2WayDummyInputMIONodeFactory: public PV2WayMIONodeFactory
     public:
         PV2WayDummyInputMIONodeFactory() {};
         virtual ~PV2WayDummyInputMIONodeFactory() {};
-        virtual PVMFNodeInterface* Create(LipSyncDummyMIOSettings& aSettings);
-        virtual void Delete(PVMFNodeInterface** mioNode);
+        OSCL_IMPORT_REF virtual PVMFNodeInterface* Create(LipSyncDummyMIOSettings& aSettings);
+        OSCL_IMPORT_REF virtual void Delete(PVMFNodeInterface** mioNode);
     private:
         PvmiMIOControl* iMediaControl;
         int CreateMedia(LipSyncDummyMIOSettings& aSettings);

@@ -1881,15 +1881,15 @@ void H324MConfigProxied::HandleNotification(TPVProxyMsgId aId, OsclAny *aMsg)
 {
     OSCL_UNUSED_ARG(aId);
     PVMFEventBase* event = OSCL_STATIC_CAST(PVMFEventBase*, aMsg);
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLoggerServer, PVLOGMSG_STACK_TRACE,
-                    (0, "H324MConfigProxied::HandleNotification Event type=%d", event->IsA()));
+    // PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLoggerServer, PVLOGMSG_STACK_TRACE,
+    //                 (0, "H324MConfigProxied::HandleNotification Event type=%d", event->IsA()));
 
     if (event->IsA() == PVMFCmdRespEvent)
     {
         PVMFCmdResp* cmdResp = OSCL_STATIC_CAST(PVMFCmdResp*, event);
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLoggerServer, PVLOGMSG_STACK_TRACE,
-                        (0, "H324MConfigProxied::HandleNotification Event Command completioin received for command id=%d",
-                         cmdResp->GetCmdId()));
+        // PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLoggerServer, PVLOGMSG_STACK_TRACE,
+        //               (0, "H324MConfigProxied::HandleNotification Event Command completioin received for command id=%d",
+        //              cmdResp->GetCmdId()));
         CPVCmnInterfaceCmdMessage* cmdMsg = iPendingCmds[cmdResp->GetCmdId()];
         if (cmdMsg)
         {

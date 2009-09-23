@@ -19,8 +19,6 @@
 #include "testcaseparser.h"
 #include "oscl_utf8conv.h"
 
-
-
 #define COMMENT_INDICATOR_CHAR '#'
 #define COMMENT_INDICATOR_STRING "#"
 #define WHITESPACE_STRING " \t\r\n"

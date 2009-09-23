@@ -22,6 +22,10 @@
 #include "oscl_mem.h"
 #endif
 
+#ifndef OSCL_FILE_IO_H_INCLUDED
+#include "oscl_file_io.h"
+#endif
+
 #ifndef PVMF_NODE_INTERFACE_H_INCLUDED
 #include "pvmf_node_interface.h"
 #endif
@@ -57,15 +61,17 @@ class PVMFFileDataSink : public PVMFBufferDataSink
 
         bool OpenFile(char *aFileName)
         {
-            iWriteFile = fopen(aFileName, "wb");
-            if (iWriteFile)
-            {
+            int8 retVal = 0;
+            iFileServ->Connect();
+            retVal = iWriteFile->Open(aFileName, Oscl_File::MODE_READWRITE | Oscl_File::MODE_BINARY , *iFileServ);
+            if (retVal != 0)
+                return false;
+            else
                 return true;
-            }
-            return false;
         }
 
     private:
-        FILE *iWriteFile;
+        Oscl_File* iWriteFile;
+        Oscl_FileServer* iFileServ;
 };
 #endif

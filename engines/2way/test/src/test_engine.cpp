@@ -39,7 +39,9 @@
 
 
 #include "tsc_h324m_config_interface.h"
+#ifndef TEST_ENGINE_UTILITY_H_HEADER
 #include "test_engine_utility.h"
+#endif
 #include "test_codecs.h"
 
 #include "pv_logger_impl.h"
@@ -59,7 +61,6 @@
 
 int start_test();
 
-FILE* fileoutput;
 cmd_line *global_cmd_line;
 
 //Find test range args:
@@ -69,8 +70,6 @@ cmd_line *global_cmd_line;
 char engine_test::iProfileName[32] = "";
 uint32 engine_test::iMediaPorts[2] = { 0, 0 };
 char engine_test::iPeerAddress[64] = "";
-
-
 
 engine_test_suite::engine_test_suite() : test_case()
 {
@@ -955,7 +954,8 @@ void engine_test_suite::AddLipSyncTests(const bool aProxy, int32 firstTest, int3
 }
 
 #endif
-bool engine_test_suite::proxy_tests(const bool aProxy)
+#ifndef LIP_SYNC_TESTING
+bool engine_test_suite::proxy_tests1(const bool aProxy)
 {
 
     int32 firstTest = 0;
@@ -963,65 +963,127 @@ bool engine_test_suite::proxy_tests(const bool aProxy)
     bool alltests = false;
 
 
-    FindTestRange(global_cmd_line, firstTest, lastTest, fileoutput);
+    FindTestRange(global_cmd_line, firstTest, lastTest, PV2WayUtil::GetFileHandle());
 
     //Basic 2way tests
-    fprintf(fileoutput, "Basic engine tests.  First: %d Last: %d\n", firstTest, lastTest);
+    PV2WayUtil::OutputInfo("Setup and Audio engine tests.  First: %d Last: %d\n", firstTest, lastTest);
     if (firstTest == 0 && lastTest == MAX_324_TEST)
         alltests = true;
 
     if (!codecs.setvalues())
     {
-        fprintf(fileoutput, "ERROR! Could not locate all input files.\n");
+        PV2WayUtil::OutputInfo("ERROR! Could not locate all input files.\n");
         return false;
     }
+    AddSetupTests(aProxy, firstTest, lastTest);
+    AddAudioTests(aProxy, firstTest, lastTest);
 
-    // if we loop here we'll run out of memory
-    {
-#ifndef LIP_SYNC_TESTING
-        fprintf(fileoutput, "Add Setup tests\n");
-        AddSetupTests(aProxy, firstTest, lastTest);
-        fprintf(fileoutput, "Add Audio tests\n");
-
-        AddAudioTests(aProxy, firstTest, lastTest);
-
-        ///////////////////////////////////////////////////////////////////////////////
-        //          VIDEO TESTS
-        fprintf(fileoutput, "Add Video tests\n");
-        AddVideoTests(aProxy, firstTest, lastTest);
-
-        ///////////////////////////////////////////////////////////////////////////////
-        //          AUDIO-VIDEO TESTS
-        fprintf(fileoutput, "Add AV tests\n");
-        AddBasicAVTests(aProxy, firstTest, lastTest);
-
-        //          AUDIO-VIDEO TESTS: MULTIPLE INPUTS
-
-
-        // 33 to 40
-        // these check for what is selected within the engine datapath
-
-        // temporarily comment out while fixing
-        AddNegotiatedFormatsTests(aProxy, firstTest, lastTest);
-        // these check for what is selected at app
-        AddAcceptableFormatsTests(aProxy, firstTest, lastTest);
-
-#endif
-        ///////////////////////////////////////////////////////////////////////////////
-        ///////     LIP-SYNC TESTS                    ///////////////////////////////
-
-        fprintf(fileoutput, "Add LIP-SYNC tests\n");
-#ifdef LIP_SYNC_TESTING
-        AddLipSyncTests(aProxy, firstTest, lastTest);
-#endif
-
-        ///////////////////////////////////////////////////////////////////////////
-
-    }
     return true;
 }
 
+bool engine_test_suite::proxy_tests2(const bool aProxy)
+{
 
+    int32 firstTest = 0;
+    int32 lastTest = MAX_324_TEST;
+    bool alltests = false;
+
+
+    FindTestRange(global_cmd_line, firstTest, lastTest, PV2WayUtil::GetFileHandle());
+
+    //Basic 2way tests
+    PV2WayUtil::OutputInfo("Video and BasicAV engine tests.  First: %d Last: %d\n", firstTest, lastTest);
+    if (firstTest == 0 && lastTest == MAX_324_TEST)
+        alltests = true;
+
+    if (!codecs.setvalues())
+    {
+        PV2WayUtil::OutputInfo("ERROR! Could not locate all input files.\n");
+        return false;
+    }
+
+    ///////////////////////////////////////////////////////////////////////////////
+    //          VIDEO TESTS
+    AddVideoTests(aProxy, firstTest, lastTest);
+
+    ///////////////////////////////////////////////////////////////////////////////
+    //          AUDIO-VIDEO TESTS
+
+    //          AUDIO-VIDEO TESTS: MULTIPLE INPUTS
+    // these check for what is selected at app
+    AddBasicAVTests(aProxy, firstTest, lastTest);
+    return true;
+}
+bool engine_test_suite::proxy_tests3(const bool aProxy)
+{
+
+    int32 firstTest = 0;
+    int32 lastTest = MAX_324_TEST;
+    bool alltests = false;
+
+    FindTestRange(global_cmd_line, firstTest, lastTest, PV2WayUtil::GetFileHandle());
+
+    //Basic 2way tests
+    PV2WayUtil::OutputInfo("AcceptableFormats and NegotiatedFormats engine tests.  First: %d Last: %d\n", firstTest, lastTest);
+    if (firstTest == 0 && lastTest == MAX_324_TEST)
+        alltests = true;
+
+    if (!codecs.setvalues())
+    {
+        PV2WayUtil::OutputInfo("ERROR! Could not locate all input files.\n");
+        return false;
+    }
+
+    AddAcceptableFormatsTests(aProxy, firstTest, lastTest);
+
+
+    // 33 to 40
+    // these check for what is selected within the engine datapath
+
+    // temporarily comment out while fixing
+    AddNegotiatedFormatsTests(aProxy, firstTest, lastTest);
+
+    return true;
+}
+
+bool engine_test_suite::proxy_tests(const bool aProxy)
+{
+    proxy_tests1(aProxy);
+    proxy_tests2(aProxy);
+    proxy_tests3(aProxy);
+    return true;
+}
+#else
+bool engine_test_suite::proxy_tests4(const bool aProxy)
+{
+
+    int32 firstTest = 0;
+    int32 lastTest = MAX_324_TEST;
+    bool alltests = false;
+
+    FindTestRange(global_cmd_line, firstTest, lastTest, PV2WayUtil::GetFileHandle());
+
+    //Basic 2way tests
+    PV2WayUtil::OutputInfo("LipSync engine tests.  First: %d Last: %d\n", firstTest, lastTest);
+    if (firstTest == 0 && lastTest == MAX_324_TEST)
+        alltests = true;
+
+    if (!codecs.setvalues())
+    {
+        PV2WayUtil::OutputInfo("ERROR! Could not locate all input files.\n");
+        return false;
+    }
+
+    ///////////////////////////////////////////////////////////////////////////////
+    ///////     LIP-SYNC TESTS                    ///////////////////////////////
+
+    PV2WayUtil::OutputInfo("Add LIP-SYNC tests\n");
+    AddLipSyncTests(aProxy, firstTest, lastTest);
+
+    ///////////////////////////////////////////////////////////////////////////
+    return true;
+}
+#endif
 int test_wrapper()
 {
     int result;
@@ -1054,8 +1116,8 @@ int local_main(FILE* filehandle, cmd_line *command_line)
     int result;
     global_cmd_line = command_line;
 
-    fileoutput = filehandle;
-    fprintf(fileoutput, "Test Program for PV Engine class.\n");
+    PV2WayUtil::SetFileHandle(filehandle);
+    PV2WayUtil::OutputInfo("Test Program for PV Engine class.\n");
 
     CPV2WayEngineFactory::Init();
 #ifndef OSCL_BYPASS_MEMMGT
@@ -1083,35 +1145,35 @@ int local_main(FILE* filehandle, cmd_line *command_line)
         MM_Stats_t* stats = auditCB.pAudit->MM_GetStats("");
         if (stats)
         {
-            fprintf(fileoutput, "Memory Stats:\n");
-            fprintf(fileoutput, "  peakNumAllocs %d\n", stats->peakNumAllocs);
-            fprintf(fileoutput, "  peakNumBytes %d\n", stats->peakNumBytes);
-            fprintf(fileoutput, "  numAllocFails %d\n", stats->numAllocFails);
+            PV2WayUtil::OutputInfo("Memory Stats:\n");
+            PV2WayUtil::OutputInfo("  peakNumAllocs %d\n", stats->peakNumAllocs);
+            PV2WayUtil::OutputInfo("  peakNumBytes %d\n", stats->peakNumBytes);
+            PV2WayUtil::OutputInfo("  numAllocFails %d\n", stats->numAllocFails);
             if (stats->numAllocs)
             {
-                fprintf(fileoutput, "  ERROR: Memory Leaks! numAllocs %d, numBytes %d\n", stats->numAllocs, stats->numBytes);
+                PV2WayUtil::OutputInfo("  ERROR: Memory Leaks! numAllocs %d, numBytes %d\n", stats->numAllocs, stats->numBytes);
             }
         }
         leaks = auditCB.pAudit->MM_GetNumAllocNodes();
         if (leaks != 0)
         {
             result = 1;
-            fprintf(fileoutput, "ERROR: %d Memory leaks detected!\n", leaks);
+            PV2WayUtil::OutputInfo("ERROR: %d Memory leaks detected!\n", leaks);
             MM_AllocQueryInfo*info = auditCB.pAudit->MM_CreateAllocNodeInfo(leaks);
             uint32 leakinfo = auditCB.pAudit->MM_GetAllocNodeInfo(info, leaks, 0);
             if (leakinfo != leaks)
             {
-                fprintf(fileoutput, "ERROR: Leak info is incomplete.\n");
+                PV2WayUtil::OutputInfo("ERROR: Leak info is incomplete.\n");
             }
             for (uint32 i = 0; i < leakinfo; i++)
             {
-                fprintf(fileoutput, "Leak Info:\n");
-                fprintf(fileoutput, "  allocNum %d\n", info[i].allocNum);
-                fprintf(fileoutput, "  fileName %s\n", info[i].fileName);
-                fprintf(fileoutput, "  lineNo %d\n", info[i].lineNo);
-                fprintf(fileoutput, "  size %d\n", info[i].size);
-                fprintf(fileoutput, "  pMemBlock 0x%x\n", info[i].pMemBlock);
-                fprintf(fileoutput, "  tag %s\n", info[i].tag);
+                PV2WayUtil::OutputInfo("Leak Info:\n");
+                PV2WayUtil::OutputInfo("  allocNum %d\n", info[i].allocNum);
+                PV2WayUtil::OutputInfo("  fileName %s\n", info[i].fileName);
+                PV2WayUtil::OutputInfo("  lineNo %d\n", info[i].lineNo);
+                PV2WayUtil::OutputInfo("  size %d\n", info[i].size);
+                PV2WayUtil::OutputInfo("  pMemBlock 0x%x\n", info[i].pMemBlock);
+                PV2WayUtil::OutputInfo("  tag %s\n", info[i].tag);
             }
             auditCB.pAudit->MM_ReleaseAllocNodeInfo(info);
         }
@@ -1128,40 +1190,139 @@ int local_main(FILE* filehandle, cmd_line *command_line)
 
     return (result);
 }
-
-
-int start_test()
+#ifndef LIP_SYNC_TESTING
+int start_test1(test_result *aTestResult)
 {
     int32 leave = 0;
     bool result = 0;
-    // looping for testing
-    uint32 ii = 0;
-    //for (ii = 0; ii < 1000; ++ii)
+    engine_test_suite* engine_tests = NULL;
+    engine_tests = OSCL_NEW(engine_test_suite, ());
+    if (engine_tests)
     {
-        engine_test_suite engine_tests;
-        fprintf(fileoutput, "####  TEST ROUND NUMBER: %d ### \n", ii);
         // setting iProxy
-        if (!engine_tests.proxy_tests(true))
+        if (!engine_tests->proxy_tests1(true))
         {
-            fprintf(fileoutput, "ERROR - unable to setup tests\n");
+            PV2WayUtil::OutputInfo("ERROR - unable to setup tests\n");
         }
-
-        OSCL_HeapString<OsclMemAllocator> xmlresultsfile;
-        FindXmlResultsFile(global_cmd_line, xmlresultsfile, fileoutput);
-        WriteInitialXmlSummary(xmlresultsfile, fileoutput);
-
-        OSCL_TRY(leave, engine_tests.run_test());
+        OSCL_TRY(leave, engine_tests->run_test());
 
         if (leave != 0)
-            fprintf(fileoutput, "Leave %d\n", leave);
+            PV2WayUtil::OutputInfo("Leave %d\n", leave);
 
-        WriteFinalXmlSummary(xmlresultsfile, engine_tests.last_result(), fileoutput);
-        text_test_interpreter interp;
-        _STRING rs = interp.interpretation(engine_tests.last_result());
-        fprintf(fileoutput, rs.c_str());
-        const test_result the_result = engine_tests.last_result();
+        const test_result the_result = engine_tests->last_result();
         result = (the_result.success_count() != the_result.total_test_count());
+        aTestResult->add_result(engine_tests->last_result());
     }
+    OSCL_DELETE(engine_tests);
+    return result;
+}
+int start_test2(test_result *aTestResult)
+{
+    int32 leave = 0;
+    int result = 0;
+    engine_test_suite* engine_tests = NULL;
+    engine_tests = OSCL_NEW(engine_test_suite, ());
+    if (engine_tests)
+    {
+        // setting iProxy
+        if (!engine_tests->proxy_tests2(true))
+        {
+            PV2WayUtil::OutputInfo("ERROR - unable to setup tests\n");
+        }
+        OSCL_TRY(leave, engine_tests->run_test());
+        if (leave != 0)
+            PV2WayUtil::OutputInfo("Leave %d\n", leave);
+
+        const test_result the_result = engine_tests->last_result();
+        result = (the_result.success_count() != the_result.total_test_count());
+        aTestResult->add_result(engine_tests->last_result());
+    }
+    OSCL_DELETE(engine_tests);
+    return result;
+}
+int start_test3(test_result *aTestResult)
+{
+    int32 leave = 0;
+    int result = 0;
+    engine_test_suite* engine_tests = NULL;
+    engine_tests = OSCL_NEW(engine_test_suite, ());
+    if (engine_tests)
+    {
+        if (!engine_tests->proxy_tests3(true))
+        {
+            PV2WayUtil::OutputInfo("ERROR - unable to setup tests\n");
+        }
+        OSCL_TRY(leave, engine_tests->run_test());
+        if (leave != 0)
+            PV2WayUtil::OutputInfo("Leave %d\n", leave);
+
+        const test_result the_result = engine_tests->last_result();
+        result = (the_result.success_count() != the_result.total_test_count());
+        aTestResult->add_result(engine_tests->last_result());
+    }
+    OSCL_DELETE(engine_tests);
+    return result;
+}
+#else
+int start_test4(test_result *aTestResult)
+{
+    int32 leave = 0;
+    int result = 0;
+    engine_test_suite* engine_tests = NULL;
+    engine_tests = OSCL_NEW(engine_test_suite, ());
+    if (engine_tests)
+    {
+        // setting iProxy
+        if (!engine_tests->proxy_tests4(true))
+        {
+            PV2WayUtil::OutputInfo("ERROR - unable to setup tests\n");
+        }
+        OSCL_TRY(leave, engine_tests->run_test());
+        if (leave != 0)
+            PV2WayUtil::OutputInfo("Leave %d\n", leave);
+
+        const test_result the_result = engine_tests->last_result();
+        result = (the_result.success_count() != the_result.total_test_count());
+        aTestResult->add_result(engine_tests->last_result());
+    }
+    OSCL_DELETE(engine_tests);
+    return result;
+}
+#endif
+int start_test()
+{
+    int result = 0;
+    int temp = 0;
+
+    OSCL_HeapString<OsclMemAllocator> xmlresultsfile;
+    FindXmlResultsFile(global_cmd_line, xmlresultsfile, PV2WayUtil::GetFileHandle());
+    WriteInitialXmlSummary(xmlresultsfile, PV2WayUtil::GetFileHandle());
+
+    //This result pointer will be passed to all test suites
+    //and it will be use to append all the results
+    test_result *TestResult = OSCL_NEW(test_result, ());
+    //this will clear all the private members of test_result
+    TestResult->delete_contents();
+#ifndef LIP_SYNC_TESTING
+    temp = start_test3(TestResult);
+    if (temp != 0)
+        result = temp;
+    temp = start_test1(TestResult);
+    if (temp != 0)
+        result = temp;
+    temp = start_test2(TestResult);
+    if (temp != 0)
+        result = temp;
+#else
+    temp = start_test4(TestResult);
+    if (temp != 0)
+        result = temp;
+#endif
+    WriteFinalXmlSummary(xmlresultsfile, *TestResult, PV2WayUtil::GetFileHandle());
+    text_test_interpreter interp;
+    _STRING rs = interp.interpretation(*TestResult);
+    PV2WayUtil::OutputInfo(rs.c_str());
+    OSCL_DELETE(TestResult);
     return result;
 }
 

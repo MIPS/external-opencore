@@ -21,17 +21,21 @@
 #include "pvmp4h263encextension.h"
 #endif
 
+#ifndef TEST_ENGINE_UTILITY_H_HEADER
+#include "test_engine_utility.h"
+#endif
+
 #define TRADEOFF_VALUE 5
 #define TRADEOFF_VALUE_2 10
 
 
 void video_only_test::test()
 {
-    fprintf(fileoutput, "\n-------- Start %s test -------- ", iTestName.get_cstr());
-    fprintf(fileoutput, "\n** Test Number: %d. ** \n", iTestNum);
-    fprintf(fileoutput, "\nSETTINGS:\nProxy %d", iUseProxy);
+    PV2WayUtil::OutputInfo("\n-------- Start %s test -------- ", iTestName.get_cstr());
+    PV2WayUtil::OutputInfo("\n** Test Number: %d. ** \n", iTestNum);
+    PV2WayUtil::OutputInfo("\nSETTINGS:\nProxy %d", iUseProxy);
     iSourceAndSinks->PrintFormatTypes();
-    fprintf(fileoutput, "\n----------------------------------\n");
+    PV2WayUtil::OutputInfo("\n----------------------------------\n");
 
     int error = 0;
 
