@@ -26,7 +26,7 @@ public:
      * @return
      *        Completion status
  */
-	virtual status_t invoke(const Parcel& data, Parcel& reply, PlayerExtensionCommand* cmd)=0;
+    virtual status_t invoke(const Parcel& data, Parcel& reply, PlayerExtensionCommand* cmd)=0;
 /**
      * If any engine commands were scheduled by this extension, this function will be
      * called upon completion.
@@ -39,9 +39,13 @@ public:
      *        false= let playerdriver handle standard command completion
      *        true = command was handled (e.g. FinishSyncCommand, commandFailed) and aCmd deleted
 */
-	virtual bool commandCompleted(PlayerExtensionCommand* cmd, const PVCmdResponse &resp) {
-		return false;
-	}
+    virtual bool commandCompleted(PlayerExtensionCommand* cmd, const PVCmdResponse &resp) {
+        return false;
+    }
+/**
+     * Destructor
+*/    
+    virtual ~IDispatch() {}
 };
 
 
