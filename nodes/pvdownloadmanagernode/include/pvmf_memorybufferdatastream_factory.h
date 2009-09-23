@@ -751,6 +751,9 @@ class PVMFMemoryBufferDataStream
         PVMFMemoryBufferDataStreamPermCache* iPermanentCache;
 
         PVLogger* iLogger;
+
+        PVMFFormatType iFormatType;
+
 };
 
 #endif // PVMF_MEMORYBUFFERDATASTREAM_FACTORY_H_INCLUDED

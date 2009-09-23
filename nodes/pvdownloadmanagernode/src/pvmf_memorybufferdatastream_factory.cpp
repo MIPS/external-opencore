@@ -2995,6 +2995,7 @@ PVMFMemoryBufferWriteDataStreamImpl::GetTempCacheWriteCapacity(uint32& aCapacity
 OSCL_EXPORT_REF
 PVMFMemoryBufferDataStream::PVMFMemoryBufferDataStream(PVMFFormatType& aStreamFormat, uint32 aTempCacheCapacity)
 {
+    iFormatType = aStreamFormat;
     MBDSStreamFormat streamFormat = MBDS_STREAM_FORMAT_PROGRESSIVE_PLAYBACK;
     if (aStreamFormat == PVMF_MIME_DATA_SOURCE_SHOUTCAST_URL)
     {
@@ -3010,9 +3011,9 @@ PVMFMemoryBufferDataStream::PVMFMemoryBufferDataStream(PVMFFormatType& aStreamFo
     iPermanentCache = OSCL_NEW(PVMFMemoryBufferDataStreamPermCache, ());
     // Create the write factory seperately for DTCP & Normal case...
     iWriteDataStreamFactory = OSCL_NEW(PVMFMemoryBufferWriteDataStreamFactoryImpl, (iTemporaryCache, iPermanentCache, streamFormat, aTempCacheCapacity));
+
     /* Read Factory is going to be common for both DTCP & Normal case... */
     iReadDataStreamFactory = OSCL_NEW(PVMFMemoryBufferReadDataStreamFactoryImpl, (iTemporaryCache, iPermanentCache));
-
     // Now create a iWriteDataStream
     PVUuid uuid = PVMIDataStreamSyncInterfaceUuid;
     iWriteDataStream = iWriteDataStreamFactory->CreatePVMFCPMPluginAccessInterface(uuid);
@@ -3022,21 +3023,21 @@ PVMFMemoryBufferDataStream::PVMFMemoryBufferDataStream(PVMFFormatType& aStreamFo
 
     iLogger = PVLogger::GetLoggerObject("PVMFMemoryBufferDataStream");
     LOGTRACE((0, "PVMFMemoryBufferDataStream::PVMFMemoryBufferDataStream"));
+
 }
 
 OSCL_EXPORT_REF
 PVMFMemoryBufferDataStream::~PVMFMemoryBufferDataStream()
 {
     LOGTRACE((0, "PVMFMemoryBufferDataStream::~PVMFMemoryBufferDataStream"));
-
-    // Delete the two DataStreamFactories
+    // Deleting write factory..
     OSCL_DELETE(iWriteDataStreamFactory);
-    OSCL_DELETE(iReadDataStreamFactory);
 
     // Delete the caches
     OSCL_DELETE(iTemporaryCache);
     OSCL_DELETE(iPermanentCache);
-
+    /* Delete read factory commonly for both DTCP & Normal cases.. */
+    OSCL_DELETE(iReadDataStreamFactory);
     iLogger = NULL;
 }
 
