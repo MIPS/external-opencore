@@ -342,18 +342,6 @@ OSCL_EXPORT_REF int16 pv_video_config_parser(pvVideoConfigParserInputs *aInputs,
                 NewProfile = (NewSeqHeader & 0xC0) >> 6;
                 if (NewProfile != 3)
                     return -1;
-                pData += 3;
-                LoadDWORD(dwdat, pData);
-                NewSeqHeader = dwdat;
-                //ignore start code prefix
-                iPrefix = NewSeqHeader & 0xFF;
-                if (iPrefix != 0) return -1;
-                iPrefix = (NewSeqHeader & 0xFF00) >> 8;
-                if (iPrefix != 0) return -1;
-                iPrefix = (NewSeqHeader & 0xFF0000) >> 16;
-                if (iPrefix != 1) return -1;
-                iPrefix = (NewSeqHeader & 0xFF000000) >> 24;
-                if (iPrefix != SC_ENTRY) return -1;
             }
             break;
 
