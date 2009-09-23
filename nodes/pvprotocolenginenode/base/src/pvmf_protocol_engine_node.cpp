@@ -1471,9 +1471,6 @@ PVMFStatus PVMFProtocolEngineNode::ProcessIncomingMsg(PVMFPortInterface* aPort)
             return status;
         }
 
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                        (0, "PVMFProtocolEngineNode::ProcessIncomingMsg() FmtId=%d", msg->getFormatID()));
-
         bool isEOS = (msg->getFormatID() == PVMF_MEDIA_CMD_EOS_FORMAT_ID);
         if (aPort->GetPortTag() == PVMF_PROTOCOLENGINENODE_PORT_TYPE_INPUT)
         {

@@ -168,7 +168,6 @@ OSCL_EXPORT_REF int32 HttpParsingBasicObject::parseResponse(INPUT_DATA_QUEUE &aD
         }
         else
         {
-
             // save output data if there is
             iOutputQueue->clear();
             uint32 size = 0;
