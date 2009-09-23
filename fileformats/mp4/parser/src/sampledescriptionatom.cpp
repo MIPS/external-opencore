@@ -872,8 +872,9 @@ void SampleDescriptionAtom::getMIMEType(OSCL_String& aMimeType)
     OSCL_HeapString<OsclMemAllocator> mimeType;
     mimeType.set(PVMF_MIME_FORMAT_UNKNOWN, oscl_strlen(PVMF_MIME_FORMAT_UNKNOWN));
     if (objectType == AMR_AUDIO)
-    {
-        mimeType.set(PVMF_MIME_AMR, oscl_strlen(PVMF_MIME_AMR));
+    {   //The OTI type 0xd0(AMR_AUDIO) is unique to WMF standard, which is a defunct spec.
+        //Complete cleanup will be done later. Disable the WMF AMR track for now.
+        //mimeType.set(PVMF_MIME_AMR, oscl_strlen(PVMF_MIME_AMR));
     }
     else if (objectType == AMR_AUDIO_3GPP)
     {
