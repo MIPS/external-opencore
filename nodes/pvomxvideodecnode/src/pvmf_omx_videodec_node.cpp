@@ -1187,7 +1187,7 @@ bool PVMFOMXVideoDecNode::InitDecoder(PVMFSharedMediaDataPtr& DataIn)
             {
                 length = (uint32)(((uint16)tmp_ptr[1] << 8) | tmp_ptr[0]);
                 size += (length + 2);
-                if (size > (int8)initbufsize)
+                if (size > (uint8)initbufsize)
                     break;
                 tmp_ptr += 2;
 
@@ -1203,7 +1203,7 @@ bool PVMFOMXVideoDecNode::InitDecoder(PVMFSharedMediaDataPtr& DataIn)
                 tmp_ptr += length;
 
             }
-            while (size < (int8)initbufsize);
+            while (size < (uint8)initbufsize);
 
             // set the flag requiring config data processing by the component
             iIsConfigDataProcessingCompletionNeeded = true;
@@ -1598,7 +1598,9 @@ bool PVMFOMXVideoDecNode::QueueOutputBuffer(OsclSharedPtr<PVMFMediaDataImpl> &me
                     // if MIO can't take it - for bw compatibility - we'll send the ordinary FSI key
                     OsclMemAllocator alloc;
                     int32 KeyLength = oscl_strlen(PVMF_FORMAT_SPECIFIC_INFO_KEY_YUV) + 1;
-                    PvmiKeyType KvpKey = (PvmiKeyType)alloc.ALLOCATE(KeyLength);
+                    PvmiKeyType KvpKey = NULL;
+
+                    AllocatePvmiKey(&KvpKey, &alloc, KeyLength);
 
                     if (NULL == KvpKey)
                     {
@@ -1752,7 +1754,6 @@ PVMFStatus PVMFOMXVideoDecNode::DoRequestPort(PVMFNodeCommand& aCmd, PVMFPortInt
 
     aCmd.PVMFNodeCommandBase::Parse(tag, portconfig);
 
-    PVMFPortInterface* port = NULL;
     int32 leavecode = OsclErrNone;
     //validate the tag...
     switch (tag)

@@ -414,6 +414,8 @@ class PVMFOMXBaseDecNode: public PVMFNodeInterfaceImpl
         OSCL_IMPORT_REF virtual bool ParseAndReWrapH264RAW(PVMFSharedMediaDataPtr& aMediaDataPtr);
         OSCL_IMPORT_REF virtual bool CreateAACConfigDataFromASF(uint8 *inptr, uint32 inlen, uint8 *outptr, uint32 &outlen);
 
+        OSCL_IMPORT_REF void AllocatePvmiKey(PvmiKeyType* KvpKey, OsclMemAllocator* alloc, int32 KeyLength);
+
         friend class PVMFOMXBaseDecPort;
 
         // Ports pointers

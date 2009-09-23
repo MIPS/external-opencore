@@ -273,14 +273,12 @@ OMX_BOOL AvcDecoder_OMX::AvcDecodeVideo_OMX(OMX_BUFFERHEADERTYPE *aOutBuffer, //
 {
     AVCDec_Status Status;
     OMX_S32 Width, Height;
-    OMX_S32 crop_top, crop_bottom, crop_right, crop_left;
     uint8* pNalBuffer;
     int32 NalSize, NalType, NalRefId;
 
-    AVCDecObject* pDecVid;
-
     *aResizeFlag = OMX_FALSE;
-    OMX_U32 OldWidth, OldHeight;
+    OMX_S32 OldWidth;
+    OMX_U32 OldHeight;
 
     OldWidth =  aPortParam->format.video.nStride; // actual buffer width
     OldHeight = aPortParam->format.video.nSliceHeight; //actual buffer height
@@ -358,7 +356,7 @@ OMX_BOOL AvcDecoder_OMX::AvcDecodeVideo_OMX(OMX_BUFFERHEADERTYPE *aOutBuffer, //
         }
 
         // extract the max number of frames required
-        if (MaxNumFs < seqInfo.num_frames)
+        if (MaxNumFs < (OMX_U32) seqInfo.num_frames)
         {
             MaxNumFs = seqInfo.num_frames;
         }

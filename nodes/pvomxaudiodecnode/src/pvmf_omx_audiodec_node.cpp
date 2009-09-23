@@ -1877,7 +1877,9 @@ bool PVMFOMXAudioDecNode::QueueOutputBuffer(OsclSharedPtr<PVMFMediaDataImpl> &me
 
                     OsclMemAllocator alloc;
                     int32 KeyLength = oscl_strlen(PVMF_FORMAT_SPECIFIC_INFO_KEY_PCM) + 1;
-                    PvmiKeyType KvpKey = (PvmiKeyType)alloc.ALLOCATE(KeyLength);
+
+                    PvmiKeyType KvpKey = NULL;
+                    AllocatePvmiKey(&KvpKey, &alloc, KeyLength);
 
                     if (NULL == KvpKey)
                     {
@@ -1992,7 +1994,6 @@ PVMFStatus PVMFOMXAudioDecNode::DoRequestPort(PVMFNodeCommand& aCmd, PVMFPortInt
 
     aCmd.PVMFNodeCommandBase::Parse(tag, portconfig);
 
-    PVMFPortInterface* port = NULL;
     int32 leavecode = OsclErrNone;
     //validate the tag...
     switch (tag)

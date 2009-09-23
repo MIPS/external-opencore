@@ -4,12 +4,7 @@ LOCAL_PATH := $(call get_makefile_dir)
 # Clear out the variables used in the local makefiles
 include $(MK)/clear.mk
 
-# DISABLE TREATING WARNINGS AS ERRORS
-# THIS SHOULD BE FIXED UP ASAP
-LOCAL_DISABLE_COMPILE_WARNINGS_AS_ERRORS := 1
-
 TARGET := pvomxvideodecnode
-
 
 XINCDIRS += ../../../../extern_libs_v2/khronos/openmax/include \
             ../../../../codecs_v2/video/wmv_vc1/dec/src \

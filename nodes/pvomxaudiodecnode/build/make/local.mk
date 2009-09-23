@@ -6,11 +6,6 @@ include $(MK)/clear.mk
 
 TARGET := pvomxaudiodecnode
 
-# DISABLE TREATING WARNINGS AS ERRORS
-# THIS SHOULD BE FIXED UP ASAP
-LOCAL_DISABLE_COMPILE_WARNINGS_AS_ERRORS := 1
-
-
 XINCDIRS += \
   ../../../../extern_libs_v2/khronos/openmax/include \
 

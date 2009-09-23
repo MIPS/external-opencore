@@ -5827,3 +5827,8 @@ OSCL_EXPORT_REF bool PVMFOMXBaseDecNode::CreateAACConfigDataFromASF(uint8 *inptr
 
     return false;
 }
+
+OSCL_EXPORT_REF void PVMFOMXBaseDecNode::AllocatePvmiKey(PvmiKeyType* KvpKey, OsclMemAllocator* alloc, int32 KeyLength)
+{
+    *KvpKey = (PvmiKeyType)(*alloc).ALLOCATE(KeyLength);
+}

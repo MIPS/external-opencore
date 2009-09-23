@@ -3945,7 +3945,6 @@ bool PVMFOMXEncNode::SendInputBufferToOMXComponent()
 
     // first of all , get an input buffer. Without a buffer, no point in proceeding
     InputBufCtrlStruct *input_buf = NULL;
-    OsclAny *pB = NULL;
     int32 errcode = 0;
     uint32 ii;
 
@@ -3955,6 +3954,7 @@ bool PVMFOMXEncNode::SendInputBufferToOMXComponent()
 
         // try to get input buffer header
 
+        OsclAny *pB = NULL;
         OSCL_TRY(errcode, pB = (OsclAny *) iInBufMemoryPool->allocate(iInputAllocSize));
 
         if (errcode != 0)

@@ -1373,7 +1373,7 @@ void OpenmaxAvcAO::ReleaseReferenceBuffers()
  */
 OMX_BOOL OpenmaxAvcAO::DetectStartCodeLength(OMX_U8* aBitstream, OMX_U8** aNalUnit, OMX_U32 aBufSize, OMX_U32* aSCSize)
 {
-    int32 i = 0;
+    uint32 i = 0;
 
     while (aBitstream[i] == 0 && i < aBufSize)
     {
