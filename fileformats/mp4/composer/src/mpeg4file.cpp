@@ -1159,10 +1159,13 @@ PVA_FF_Mpeg4File::renderToFileStream(MP4_AUTHOR_FF_FILE_IO_WRAP *fp)
         addCompatibleBrand(BRAND_3G2C);
     }
 
-    uint32 time = convertCreationTime(_creationDate);
+    if (_creationDate.get_size() > 0)
+    {
+        uint32 time = convertCreationTime(_creationDate);
 
-    _pmovieAtom->getMutableMovieHeaderAtom().setCreationTime(time);
-    _pmovieAtom->getMutableMovieHeaderAtom().setModificationTime(time);
+        _pmovieAtom->getMutableMovieHeaderAtom().setCreationTime(time);
+        _pmovieAtom->getMutableMovieHeaderAtom().setModificationTime(time);
+    }
 
     if ((_o3GPPTrack == true) || (_oMPEGTrack == true))
     {
