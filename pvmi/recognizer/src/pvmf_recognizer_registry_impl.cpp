@@ -385,11 +385,18 @@ void PVMFRecognizerRegistryImpl::CompleteCurrentRecRegCommand(PVMFStatus aStatus
     PVMFRecRegImplCommand cmdtocomplete(iRecognizerCurrentCmd[aCurrCmdIndex]);
     iRecognizerCurrentCmd.clear();
 
-    //if it is recognize command make sure to delete iDataStream. This datastream was created using the factory
+    //If it is recognize command make sure to delete iDataStream. This datastream was created using the factory
     //provided in recognize command and we need to make sure we delete this before the command completes.
+    //Also reset fields in PVMFRecognizerPluginParams across all plugins that are specific to each recognize command.
     if (cmdtocomplete.GetCmdType() == PVMFRECREG_COMMAND_RECOGNIZE)
     {
         DestroyDataStream();
+        PVMFStatus status = ResetPluginParamsPerRecognizeCmd();
+        if (status != PVMFSuccess)
+        {
+            //fail recognize cmd
+            aStatus = status;
+        }
     }
     // Make callback if API command
     if (cmdtocomplete.IsAPICommand())
@@ -474,6 +481,21 @@ void PVMFRecognizerRegistryImpl::DestroyDataStream()
         iDataStreamFactory = NULL;
     }
     return;
+}
+
+PVMFStatus PVMFRecognizerRegistryImpl::ResetPluginParamsPerRecognizeCmd()
+{
+    PVMFStatus status = PVMFFailure;
+    Oscl_Vector<PVMFRecognizerPluginParams*, OsclMemAllocator>::iterator it;
+    for (it = iPlugInParamsVec.begin(); it != iPlugInParamsVec.end(); ++it)
+    {
+        status = (*it)->ResetParamsPerRecognizeCmd();
+        if (status != PVMFSuccess)
+        {
+            return status;
+        }
+    }
+    return status;
 }
 
 

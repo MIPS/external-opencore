@@ -330,6 +330,20 @@ class PVMFRecognizerPluginParams
             iPluginFactory = NULL;
         };
 
+        PVMFStatus ResetParamsPerRecognizeCmd()
+        {
+            PVMFStatus status = PVMFFailure;
+            iMinSizeRequiredForRecognition = 0;
+            iInUse = true;
+            if (iRecPlugin)
+            {
+                //reset iMinSizeRequiredForRecognition to its original value
+                status =
+                    iRecPlugin->GetRequiredMinBytesForRecognition(iMinSizeRequiredForRecognition);
+            }
+            return status;
+        };
+
         PVMFRecognizerPluginFactory* iPluginFactory;
         PVMFRecognizerPluginInterface* iRecPlugin;
         PVMFRecognizerMIMEStringList iSupportedFormatList;
@@ -401,6 +415,7 @@ class PVMFRecognizerRegistryImpl : public OsclTimerObject,
         PVMFStatus CheckForDataAvailability();
         PVMFStatus CreateDataStream();
         void DestroyDataStream();
+        PVMFStatus ResetPluginParamsPerRecognizeCmd();
 
         //logger
         PVLogger* iLogger;
