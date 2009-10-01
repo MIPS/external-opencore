@@ -534,8 +534,10 @@ void test_base::InitializeLogs()
         cfgfilename += PVLOG_CFG_FILENAME;
         OSCL_HeapString<OsclMemAllocator> logfilename(PVLOG_PREPEND_OUT_FILENAME);
         logfilename += PVLOG_OUT_FILENAME;
-        if (true == PVLoggerCfgFileParser::Parse(cfgfilename.get_str(), logfilename.get_str()))
-            return;
+        if (false == PVLoggerCfgFileParser::Parse(cfgfilename.get_str(), logfilename.get_str()))
+        {
+            PVLoggerCfgFileParser::SetupLogAppender(PVLoggerCfgFileParser::ePVLOG_APPENDER_FILE, logfilename.get_str());
+        }
     }
 
 }
