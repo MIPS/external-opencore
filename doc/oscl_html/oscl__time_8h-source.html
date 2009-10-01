@@ -127,82 +127,88 @@
 00192 
 00194         <a class="code" href="group__osclbase.html#a84">OSCL_COND_IMPORT_REF</a> <a class="code" href="classTimeValue.html#a0">TimeValue</a>(<span class="keyword">const</span> <a class="code" href="osclconfig__time_8h.html#a1">OsclBasicTimeStruct</a>&amp; in_tv);
 00195 
-00197 
-00201         <a class="code" href="group__osclbase.html#a84">OSCL_COND_IMPORT_REF</a> <a class="code" href="classTimeValue.html#a0">TimeValue</a>(<a class="code" href="osclconfig__time_8h.html#a2">OsclBasicDateTimeStruct</a> in_ts);
-00202 
-00204 
-00207         <a class="code" href="group__osclbase.html#a84">OSCL_COND_IMPORT_REF</a> int32 <a class="code" href="classTimeValue.html#a5">get_local_time</a>();
-00208 
-00209 
-<a name="l00210"></a><a class="code" href="classTimeValue.html#l0">00210</a>         <span class="keyword">friend</span> <span class="keyword">class </span><a class="code" href="classNTPTime.html">NTPTime</a>;
-00211 
-00213         <a class="code" href="group__osclbase.html#a84">OSCL_COND_IMPORT_REF</a> <span class="keywordtype">void</span> <a class="code" href="classTimeValue.html#a6">set_to_zero</a>();
+00198 
+00210         <a class="code" href="group__osclbase.html#a84">OSCL_COND_IMPORT_REF</a> <a class="code" href="classTimeValue.html#a0">TimeValue</a>(uint16 aYear, uint16 aMonth, uint16 aDay, uint16 aHour,
+00211                                        uint16 aMinute, uint16 aSecond,  uint16 aMilliseconds);
+00212 
 00214 
-00216         <a class="code" href="group__osclbase.html#a84">OSCL_COND_IMPORT_REF</a> <span class="keywordtype">void</span> <a class="code" href="classTimeValue.html#a7">set_to_current_time</a>();
-00217 
+00218         <a class="code" href="group__osclbase.html#a84">OSCL_COND_IMPORT_REF</a> <a class="code" href="classTimeValue.html#a0">TimeValue</a>(<a class="code" href="osclconfig__time_8h.html#a2">OsclBasicDateTimeStruct</a> in_ts);
 00219 
-00223         <a class="code" href="group__osclbase.html#a84">OSCL_COND_IMPORT_REF</a> <span class="keywordtype">void</span> <a class="code" href="classTimeValue.html#a8">set_from_ntp_time</a>(<span class="keyword">const</span> uint32 ntp_offset);
-00224 
+00221 
+00224         <a class="code" href="group__osclbase.html#a84">OSCL_COND_IMPORT_REF</a> int32 <a class="code" href="classTimeValue.html#a6">get_local_time</a>();
+00225 
 00226 
-00233         <a class="code" href="group__osclbase.html#a84">OSCL_COND_IMPORT_REF</a> uint32 <a class="code" href="classTimeValue.html#a9">get_sec</a>() <span class="keyword">const</span> ;
+<a name="l00227"></a><a class="code" href="classTimeValue.html#l0">00227</a>         <span class="keyword">friend</span> <span class="keyword">class </span><a class="code" href="classNTPTime.html">NTPTime</a>;
+00228 
+00230         <a class="code" href="group__osclbase.html#a84">OSCL_COND_IMPORT_REF</a> <span class="keywordtype">void</span> <a class="code" href="classTimeValue.html#a7">set_to_zero</a>();
+00231 
+00233         <a class="code" href="group__osclbase.html#a84">OSCL_COND_IMPORT_REF</a> <span class="keywordtype">void</span> <a class="code" href="classTimeValue.html#a8">set_to_current_time</a>();
 00234 
-00235         <a class="code" href="group__osclbase.html#a84">OSCL_COND_IMPORT_REF</a> int32 <a class="code" href="classTimeValue.html#a10">to_msec</a>() <span class="keyword">const</span>;
 00236 
-00238 
-00241         <a class="code" href="group__osclbase.html#a84">OSCL_COND_IMPORT_REF</a> uint32 <a class="code" href="classTimeValue.html#a11">get_usec</a>() <span class="keyword">const</span> ;
-00242 
-00244 
-00249         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keywordtype">char</span> *<a class="code" href="classTimeValue.html#a12">get_str_ctime</a>(<a class="code" href="group__osclbase.html#a2">CtimeStrBuf</a> ctime_strbuf);
-00250 
-00252 
-00256         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keywordtype">int</span> <a class="code" href="classTimeValue.html#a13">get_pv8601_str_time</a>(<a class="code" href="group__osclbase.html#a3">PV8601timeStrBuf</a> time_strbuf);
-00257 
-00259 
-00265         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keywordtype">char</span> *<a class="code" href="classTimeValue.html#a14">get_rfc822_gmtime_str</a>(<span class="keywordtype">int</span> max_time_strlen,
-00266                 <span class="keywordtype">char</span> *time_str);
+00240         <a class="code" href="group__osclbase.html#a84">OSCL_COND_IMPORT_REF</a> <span class="keywordtype">void</span> <a class="code" href="classTimeValue.html#a9">set_from_ntp_time</a>(<span class="keyword">const</span> uint32 ntp_offset);
+00241 
+00243 
+00250         <a class="code" href="group__osclbase.html#a84">OSCL_COND_IMPORT_REF</a> uint32 <a class="code" href="classTimeValue.html#a10">get_sec</a>() <span class="keyword">const</span> ;
+00251 
+00252         <a class="code" href="group__osclbase.html#a84">OSCL_COND_IMPORT_REF</a> int32 <a class="code" href="classTimeValue.html#a11">to_msec</a>() <span class="keyword">const</span>;
+00253 
+00255 
+00258         <a class="code" href="group__osclbase.html#a84">OSCL_COND_IMPORT_REF</a> uint32 <a class="code" href="classTimeValue.html#a12">get_usec</a>() <span class="keyword">const</span> ;
+00260 
+00266         <a class="code" href="group__osclbase.html#a84">OSCL_COND_IMPORT_REF</a> <a class="code" href="group__osclbase.html#a31">uint64</a> <a class="code" href="classTimeValue.html#a13">get_timevalue_in_usec</a>() <span class="keyword">const</span> ;
 00267 
-00269         <a class="code" href="group__osclbase.html#a84">OSCL_COND_IMPORT_REF</a> <span class="keywordtype">bool</span> <a class="code" href="classTimeValue.html#a15">is_zero</a>();
-00270 
-00271 
-00272         <span class="comment">// comparison operators</span>
-00273         <a class="code" href="group__osclbase.html#a84">OSCL_COND_IMPORT_REF</a> <span class="keyword">friend</span> <span class="keywordtype">bool</span> <a class="code" href="classTimeValue.html#l1">operator ==</a>(<span class="keyword">const</span> <a class="code" href="classTimeValue.html">TimeValue</a>&amp; a, <span class="keyword">const</span> <a class="code" href="classTimeValue.html">TimeValue</a>&amp; b);
-00274         <a class="code" href="group__osclbase.html#a84">OSCL_COND_IMPORT_REF</a> <span class="keyword">friend</span> <span class="keywordtype">bool</span> <a class="code" href="classTimeValue.html#l2">operator !=</a>(<span class="keyword">const</span> <a class="code" href="classTimeValue.html">TimeValue</a>&amp; a, <span class="keyword">const</span> <a class="code" href="classTimeValue.html">TimeValue</a>&amp; b);
-00275         <a class="code" href="group__osclbase.html#a84">OSCL_COND_IMPORT_REF</a> <span class="keyword">friend</span> <span class="keywordtype">bool</span> <a class="code" href="classTimeValue.html#l3">operator &lt;=</a>(<span class="keyword">const</span> <a class="code" href="classTimeValue.html">TimeValue</a>&amp; a, <span class="keyword">const</span> <a class="code" href="classTimeValue.html">TimeValue</a>&amp; b);
-00276         <a class="code" href="group__osclbase.html#a84">OSCL_COND_IMPORT_REF</a> <span class="keyword">friend</span> <span class="keywordtype">bool</span> <a class="code" href="classTimeValue.html#l4">operator &gt;=</a>(<span class="keyword">const</span> <a class="code" href="classTimeValue.html">TimeValue</a>&amp; a, <span class="keyword">const</span> <a class="code" href="classTimeValue.html">TimeValue</a>&amp; b);
-00277         <a class="code" href="group__osclbase.html#a84">OSCL_COND_IMPORT_REF</a> <span class="keyword">friend</span> <span class="keywordtype">bool</span> <a class="code" href="classTimeValue.html#l5">operator &lt;</a>(<span class="keyword">const</span> <a class="code" href="classTimeValue.html">TimeValue</a>&amp; a, <span class="keyword">const</span> <a class="code" href="classTimeValue.html">TimeValue</a>&amp; b);
-00278         <a class="code" href="group__osclbase.html#a84">OSCL_COND_IMPORT_REF</a> <span class="keyword">friend</span> <span class="keywordtype">bool</span> <a class="code" href="classTimeValue.html#l6">operator &gt;</a>(<span class="keyword">const</span> <a class="code" href="classTimeValue.html">TimeValue</a>&amp; a, <span class="keyword">const</span> <a class="code" href="classTimeValue.html">TimeValue</a>&amp; b);
-00279 
-00281         <a class="code" href="group__osclbase.html#a84">OSCL_COND_IMPORT_REF</a> <a class="code" href="classTimeValue.html">TimeValue</a>&amp; <a class="code" href="classTimeValue.html#a16">operator =</a>(<span class="keyword">const</span> <a class="code" href="classTimeValue.html">TimeValue</a>&amp; a);
+00269 
+00274         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keywordtype">char</span> *<a class="code" href="classTimeValue.html#a14">get_str_ctime</a>(<a class="code" href="group__osclbase.html#a2">CtimeStrBuf</a> ctime_strbuf);
+00275 
+00277 
+00281         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keywordtype">int</span> <a class="code" href="classTimeValue.html#a15">get_pv8601_str_time</a>(<a class="code" href="group__osclbase.html#a3">PV8601timeStrBuf</a> time_strbuf);
 00282 
-00283         <span class="comment">// arithmetic operators</span>
-00285 <span class="comment">        OSCL_COND_IMPORT_REF TimeValue&amp; operator +=(const TimeValue&amp; a);</span>
-00287 <span class="comment">        OSCL_COND_IMPORT_REF TimeValue&amp; operator -=(const TimeValue&amp; a);</span>
-00289 <span class="comment">        OSCL_COND_IMPORT_REF TimeValue&amp; operator *=(const int scale);</span>
-00290 
-00291         <a class="code" href="group__osclbase.html#a84">OSCL_COND_IMPORT_REF</a> <a class="code" href="osclconfig__time_8h.html#a1">OsclBasicTimeStruct</a> * <a class="code" href="classTimeValue.html#a20">get_timeval_ptr</a>();
+00284 
+00290         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keywordtype">char</span> *<a class="code" href="classTimeValue.html#a16">get_rfc822_gmtime_str</a>(<span class="keywordtype">int</span> max_time_strlen,
+00291                 <span class="keywordtype">char</span> *time_str);
 00292 
-00293     <span class="keyword">private</span>:
-00294 
-00295         <a class="code" href="osclconfig__time_8h.html#a1">OsclBasicTimeStruct</a> ts;
-00296         <span class="keyword">const</span> <a class="code" href="osclconfig__time_8h.html#a1">OsclBasicTimeStruct</a> *getBasicTimeStruct()<span class="keyword"> const</span>
-00297 <span class="keyword">        </span>{
-00298             <span class="keywordflow">return</span> &amp;ts;
-00299         };
-00300 
-00301 };
-00302 
-00303 <a class="code" href="group__osclbase.html#a84">OSCL_COND_IMPORT_REF</a> <a class="code" href="classTimeValue.html">TimeValue</a> <a class="code" href="group__osclbase.html#a77">operator -</a>(<span class="keyword">const</span> <a class="code" href="classTimeValue.html">TimeValue</a>&amp; a, <span class="keyword">const</span> <a class="code" href="classTimeValue.html">TimeValue</a>&amp; b);
+00294         <a class="code" href="group__osclbase.html#a84">OSCL_COND_IMPORT_REF</a> <span class="keywordtype">bool</span> <a class="code" href="classTimeValue.html#a17">is_zero</a>();
+00295 
+00296 
+00297         <span class="comment">// comparison operators</span>
+00298         <a class="code" href="group__osclbase.html#a84">OSCL_COND_IMPORT_REF</a> <span class="keyword">friend</span> <span class="keywordtype">bool</span> <a class="code" href="classTimeValue.html#l1">operator ==</a>(<span class="keyword">const</span> <a class="code" href="classTimeValue.html">TimeValue</a>&amp; a, <span class="keyword">const</span> <a class="code" href="classTimeValue.html">TimeValue</a>&amp; b);
+00299         <a class="code" href="group__osclbase.html#a84">OSCL_COND_IMPORT_REF</a> <span class="keyword">friend</span> <span class="keywordtype">bool</span> <a class="code" href="classTimeValue.html#l2">operator !=</a>(<span class="keyword">const</span> <a class="code" href="classTimeValue.html">TimeValue</a>&amp; a, <span class="keyword">const</span> <a class="code" href="classTimeValue.html">TimeValue</a>&amp; b);
+00300         <a class="code" href="group__osclbase.html#a84">OSCL_COND_IMPORT_REF</a> <span class="keyword">friend</span> <span class="keywordtype">bool</span> <a class="code" href="classTimeValue.html#l3">operator &lt;=</a>(<span class="keyword">const</span> <a class="code" href="classTimeValue.html">TimeValue</a>&amp; a, <span class="keyword">const</span> <a class="code" href="classTimeValue.html">TimeValue</a>&amp; b);
+00301         <a class="code" href="group__osclbase.html#a84">OSCL_COND_IMPORT_REF</a> <span class="keyword">friend</span> <span class="keywordtype">bool</span> <a class="code" href="classTimeValue.html#l4">operator &gt;=</a>(<span class="keyword">const</span> <a class="code" href="classTimeValue.html">TimeValue</a>&amp; a, <span class="keyword">const</span> <a class="code" href="classTimeValue.html">TimeValue</a>&amp; b);
+00302         <a class="code" href="group__osclbase.html#a84">OSCL_COND_IMPORT_REF</a> <span class="keyword">friend</span> <span class="keywordtype">bool</span> <a class="code" href="classTimeValue.html#l5">operator &lt;</a>(<span class="keyword">const</span> <a class="code" href="classTimeValue.html">TimeValue</a>&amp; a, <span class="keyword">const</span> <a class="code" href="classTimeValue.html">TimeValue</a>&amp; b);
+00303         <a class="code" href="group__osclbase.html#a84">OSCL_COND_IMPORT_REF</a> <span class="keyword">friend</span> <span class="keywordtype">bool</span> <a class="code" href="classTimeValue.html#l6">operator &gt;</a>(<span class="keyword">const</span> <a class="code" href="classTimeValue.html">TimeValue</a>&amp; a, <span class="keyword">const</span> <a class="code" href="classTimeValue.html">TimeValue</a>&amp; b);
 00304 
-00305 <span class="preprocessor">#if (!OSCL_DISABLE_INLINES)</span>
-00306 <span class="preprocessor"></span><span class="preprocessor">#include "oscl_time.inl"</span>
-00307 <span class="preprocessor">#endif</span>
-00308 <span class="preprocessor"></span>
-00309 
-00310 <span class="comment">// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -</span>
-00311 
-00315 <span class="preprocessor">#endif // OSCL_TIME_H_INCLUDED</span>
+00306         <a class="code" href="group__osclbase.html#a84">OSCL_COND_IMPORT_REF</a> <a class="code" href="classTimeValue.html">TimeValue</a>&amp; <a class="code" href="classTimeValue.html#a18">operator =</a>(<span class="keyword">const</span> <a class="code" href="classTimeValue.html">TimeValue</a>&amp; a);
+00307 
+00308         <span class="comment">// arithmetic operators</span>
+00310 <span class="comment">        OSCL_COND_IMPORT_REF TimeValue&amp; operator +=(const TimeValue&amp; a);</span>
+00312 <span class="comment">        OSCL_COND_IMPORT_REF TimeValue&amp; operator -=(const TimeValue&amp; a);</span>
+00314 <span class="comment">        OSCL_COND_IMPORT_REF TimeValue&amp; operator *=(const int scale);</span>
+00315 
+00316         <a class="code" href="group__osclbase.html#a84">OSCL_COND_IMPORT_REF</a> <a class="code" href="osclconfig__time_8h.html#a1">OsclBasicTimeStruct</a> * <a class="code" href="classTimeValue.html#a22">get_timeval_ptr</a>();
+00317 
+00318     <span class="keyword">private</span>:
+00319 
+00320         <a class="code" href="osclconfig__time_8h.html#a1">OsclBasicTimeStruct</a> ts;
+00321         <span class="keyword">const</span> <a class="code" href="osclconfig__time_8h.html#a1">OsclBasicTimeStruct</a> *getBasicTimeStruct()<span class="keyword"> const</span>
+00322 <span class="keyword">        </span>{
+00323             <span class="keywordflow">return</span> &amp;ts;
+00324         };
+00325 
+00326 };
+00327 
+00328 <a class="code" href="group__osclbase.html#a84">OSCL_COND_IMPORT_REF</a> <a class="code" href="classTimeValue.html">TimeValue</a> <a class="code" href="group__osclbase.html#a77">operator -</a>(<span class="keyword">const</span> <a class="code" href="classTimeValue.html">TimeValue</a>&amp; a, <span class="keyword">const</span> <a class="code" href="classTimeValue.html">TimeValue</a>&amp; b);
+00329 
+00330 <span class="preprocessor">#if (!OSCL_DISABLE_INLINES)</span>
+00331 <span class="preprocessor"></span><span class="preprocessor">#include "oscl_time.inl"</span>
+00332 <span class="preprocessor">#endif</span>
+00333 <span class="preprocessor"></span>
+00334 
+00335 <span class="comment">// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -</span>
+00336 
+00340 <span class="preprocessor">#endif // OSCL_TIME_H_INCLUDED</span>
 </pre></div><hr size="1"><img src="pvlogo_small.jpg"><address style="align: right;"><small>OSCL API</small>
-<address style="align: left;"><small>Posting Version: CORE_7.509.1.1 </small>
+<address style="align: left;"><small>Posting Version: CORE_7.511.1.1 </small>
 </small></address>
 </body>
 </html>

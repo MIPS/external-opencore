@@ -25,38 +25,41 @@
 <tr><td>&nbsp;</td><td><font size=-1><em>Create a TimeValue representing an interval of tv units.</em> <a href="#a2"></a><em></em></font><br><br></td></tr>
 <tr><td nowrap align=right valign=top>OSCL_COND_IMPORT_REF&nbsp;</td><td valign=bottom><a class="el" href="classTimeValue.html#a3">TimeValue</a> (const <a class="el" href="osclconfig__time_8h.html#a1">OsclBasicTimeStruct</a> &amp;in_tv)</td></tr>
 <tr><td>&nbsp;</td><td><font size=-1><em>Create a TimeValue representing the absolute time specified by the BasicTimeStruct.</em> <a href="#a3"></a><em></em></font><br><br></td></tr>
-<tr><td nowrap align=right valign=top>OSCL_COND_IMPORT_REF&nbsp;</td><td valign=bottom><a class="el" href="classTimeValue.html#a4">TimeValue</a> (<a class="el" href="osclconfig__time_8h.html#a2">OsclBasicDateTimeStruct</a> in_ts)</td></tr>
-<tr><td>&nbsp;</td><td><font size=-1><em>Create a TimeValue representing the absolute time specified by the BasicDateTimeStruct.</em> <a href="#a4"></a><em></em></font><br><br></td></tr>
-<tr><td nowrap align=right valign=top>OSCL_COND_IMPORT_REF int32&nbsp;</td><td valign=bottom><a class="el" href="classTimeValue.html#a5">get_local_time</a> ()</td></tr>
-<tr><td>&nbsp;</td><td><font size=-1><em>Get the local time after having adjusted for daylight saving.</em> <a href="#a5"></a><em></em></font><br><br></td></tr>
-<tr><td nowrap align=right valign=top>OSCL_COND_IMPORT_REF void&nbsp;</td><td valign=bottom><a class="el" href="classTimeValue.html#a6">set_to_zero</a> ()</td></tr>
-<tr><td>&nbsp;</td><td><font size=-1><em>Set the time value to zero (represents a zero interval).</em> <a href="#a6"></a><em></em></font><br><br></td></tr>
-<tr><td nowrap align=right valign=top>OSCL_COND_IMPORT_REF void&nbsp;</td><td valign=bottom><a class="el" href="classTimeValue.html#a7">set_to_current_time</a> ()</td></tr>
-<tr><td>&nbsp;</td><td><font size=-1><em>Set the time value to the current system time.</em> <a href="#a7"></a><em></em></font><br><br></td></tr>
-<tr><td nowrap align=right valign=top>OSCL_COND_IMPORT_REF void&nbsp;</td><td valign=bottom><a class="el" href="classTimeValue.html#a8">set_from_ntp_time</a> (const uint32 ntp_offset)</td></tr>
-<tr><td>&nbsp;</td><td><font size=-1><em>This method coverts a 32-bit NTP offset to system time.</em> <a href="#a8"></a><em></em></font><br><br></td></tr>
-<tr><td nowrap align=right valign=top>OSCL_COND_IMPORT_REF uint32&nbsp;</td><td valign=bottom><a class="el" href="classTimeValue.html#a9">get_sec</a> () const</td></tr>
-<tr><td>&nbsp;</td><td><font size=-1><em>Get a 32 bit value representing the seconds since the (system dependent) epoch.</em> <a href="#a9"></a><em></em></font><br><br></td></tr>
-<tr><td nowrap align=right valign=top>OSCL_COND_IMPORT_REF int32&nbsp;</td><td valign=bottom><a class="el" href="classTimeValue.html#a10">to_msec</a> () const</td></tr>
-<tr><td nowrap align=right valign=top>OSCL_COND_IMPORT_REF uint32&nbsp;</td><td valign=bottom><a class="el" href="classTimeValue.html#a11">get_usec</a> () const</td></tr>
-<tr><td>&nbsp;</td><td><font size=-1><em>Get a 32 bit value representing the number of microseconds in the time value.</em> <a href="#a11"></a><em></em></font><br><br></td></tr>
-<tr><td nowrap align=right valign=top>OSCL_IMPORT_REF char *&nbsp;</td><td valign=bottom><a class="el" href="classTimeValue.html#a12">get_str_ctime</a> (<a class="el" href="group__osclbase.html#a2">CtimeStrBuf</a> ctime_strbuf)</td></tr>
-<tr><td>&nbsp;</td><td><font size=-1><em>Get a string containing a text representation of this TimeValue object.</em> <a href="#a12"></a><em></em></font><br><br></td></tr>
-<tr><td nowrap align=right valign=top>OSCL_IMPORT_REF int&nbsp;</td><td valign=bottom><a class="el" href="classTimeValue.html#a13">get_pv8601_str_time</a> (<a class="el" href="group__osclbase.html#a3">PV8601timeStrBuf</a> time_strbuf)</td></tr>
-<tr><td>&nbsp;</td><td><font size=-1><em>Get a PV extended text representation of the Time based on the ISO 8601 format.</em> <a href="#a13"></a><em></em></font><br><br></td></tr>
-<tr><td nowrap align=right valign=top>OSCL_IMPORT_REF char *&nbsp;</td><td valign=bottom><a class="el" href="classTimeValue.html#a14">get_rfc822_gmtime_str</a> (int max_time_strlen, char *time_str)</td></tr>
-<tr><td>&nbsp;</td><td><font size=-1><em>Get a text representation of the time in the GMT timezone based on the RFC 822 / RFC 1123 (also described in the HTTP spec RFC 2068 and RFC 2616.</em> <a href="#a14"></a><em></em></font><br><br></td></tr>
-<tr><td nowrap align=right valign=top>OSCL_COND_IMPORT_REF bool&nbsp;</td><td valign=bottom><a class="el" href="classTimeValue.html#a15">is_zero</a> ()</td></tr>
-<tr><td>&nbsp;</td><td><font size=-1><em>Determine if the time value is zero.</em> <a href="#a15"></a><em></em></font><br><br></td></tr>
-<tr><td nowrap align=right valign=top>OSCL_COND_IMPORT_REF TimeValue &amp;&nbsp;</td><td valign=bottom><a class="el" href="classTimeValue.html#a16">operator=</a> (const TimeValue &amp;a)</td></tr>
-<tr><td>&nbsp;</td><td><font size=-1><em>Assignment operator.</em> <a href="#a16"></a><em></em></font><br><br></td></tr>
-<tr><td nowrap align=right valign=top>OSCL_COND_IMPORT_REF TimeValue &amp;&nbsp;</td><td valign=bottom><a class="el" href="classTimeValue.html#a17">operator+=</a> (const TimeValue &amp;a)</td></tr>
-<tr><td>&nbsp;</td><td><font size=-1><em>+= operator</em> <a href="#a17"></a><em></em></font><br><br></td></tr>
-<tr><td nowrap align=right valign=top>OSCL_COND_IMPORT_REF TimeValue &amp;&nbsp;</td><td valign=bottom><a class="el" href="classTimeValue.html#a18">operator-=</a> (const TimeValue &amp;a)</td></tr>
-<tr><td>&nbsp;</td><td><font size=-1><em>-= operator</em> <a href="#a18"></a><em></em></font><br><br></td></tr>
-<tr><td nowrap align=right valign=top>OSCL_COND_IMPORT_REF TimeValue &amp;&nbsp;</td><td valign=bottom><a class="el" href="classTimeValue.html#a19">operator *=</a> (const int scale)</td></tr>
-<tr><td>&nbsp;</td><td><font size=-1><em>This operator scales the time value by a constant.</em> <a href="#a19"></a><em></em></font><br><br></td></tr>
-<tr><td nowrap align=right valign=top>OSCL_COND_IMPORT_REF <a class="el" href="osclconfig__time_8h.html#a1">OsclBasicTimeStruct</a> *&nbsp;</td><td valign=bottom><a class="el" href="classTimeValue.html#a20">get_timeval_ptr</a> ()</td></tr>
+<tr><td nowrap align=right valign=top>OSCL_COND_IMPORT_REF&nbsp;</td><td valign=bottom><a class="el" href="classTimeValue.html#a4">TimeValue</a> (uint16 aYear, uint16 aMonth, uint16 aDay, uint16 aHour, uint16 aMinute, uint16 aSecond, uint16 aMilliseconds)</td></tr>
+<tr><td nowrap align=right valign=top>OSCL_COND_IMPORT_REF&nbsp;</td><td valign=bottom><a class="el" href="classTimeValue.html#a5">TimeValue</a> (<a class="el" href="osclconfig__time_8h.html#a2">OsclBasicDateTimeStruct</a> in_ts)</td></tr>
+<tr><td>&nbsp;</td><td><font size=-1><em>Create a TimeValue representing the absolute time specified by the BasicDateTimeStruct.</em> <a href="#a5"></a><em></em></font><br><br></td></tr>
+<tr><td nowrap align=right valign=top>OSCL_COND_IMPORT_REF int32&nbsp;</td><td valign=bottom><a class="el" href="classTimeValue.html#a6">get_local_time</a> ()</td></tr>
+<tr><td>&nbsp;</td><td><font size=-1><em>Get the local time after having adjusted for daylight saving.</em> <a href="#a6"></a><em></em></font><br><br></td></tr>
+<tr><td nowrap align=right valign=top>OSCL_COND_IMPORT_REF void&nbsp;</td><td valign=bottom><a class="el" href="classTimeValue.html#a7">set_to_zero</a> ()</td></tr>
+<tr><td>&nbsp;</td><td><font size=-1><em>Set the time value to zero (represents a zero interval).</em> <a href="#a7"></a><em></em></font><br><br></td></tr>
+<tr><td nowrap align=right valign=top>OSCL_COND_IMPORT_REF void&nbsp;</td><td valign=bottom><a class="el" href="classTimeValue.html#a8">set_to_current_time</a> ()</td></tr>
+<tr><td>&nbsp;</td><td><font size=-1><em>Set the time value to the current system time.</em> <a href="#a8"></a><em></em></font><br><br></td></tr>
+<tr><td nowrap align=right valign=top>OSCL_COND_IMPORT_REF void&nbsp;</td><td valign=bottom><a class="el" href="classTimeValue.html#a9">set_from_ntp_time</a> (const uint32 ntp_offset)</td></tr>
+<tr><td>&nbsp;</td><td><font size=-1><em>This method coverts a 32-bit NTP offset to system time.</em> <a href="#a9"></a><em></em></font><br><br></td></tr>
+<tr><td nowrap align=right valign=top>OSCL_COND_IMPORT_REF uint32&nbsp;</td><td valign=bottom><a class="el" href="classTimeValue.html#a10">get_sec</a> () const</td></tr>
+<tr><td>&nbsp;</td><td><font size=-1><em>Get a 32 bit value representing the seconds since the (system dependent) epoch.</em> <a href="#a10"></a><em></em></font><br><br></td></tr>
+<tr><td nowrap align=right valign=top>OSCL_COND_IMPORT_REF int32&nbsp;</td><td valign=bottom><a class="el" href="classTimeValue.html#a11">to_msec</a> () const</td></tr>
+<tr><td nowrap align=right valign=top>OSCL_COND_IMPORT_REF uint32&nbsp;</td><td valign=bottom><a class="el" href="classTimeValue.html#a12">get_usec</a> () const</td></tr>
+<tr><td>&nbsp;</td><td><font size=-1><em>Get a 32 bit value representing the number of microseconds in the time value.</em> <a href="#a12"></a><em></em></font><br><br></td></tr>
+<tr><td nowrap align=right valign=top>OSCL_COND_IMPORT_REF <a class="el" href="group__osclbase.html#a31">uint64</a>&nbsp;</td><td valign=bottom><a class="el" href="classTimeValue.html#a13">get_timevalue_in_usec</a> () const</td></tr>
+<tr><td>&nbsp;</td><td><font size=-1><em>Get a 64 bit value representing the time value converted to microseconds.</em> <a href="#a13"></a><em></em></font><br><br></td></tr>
+<tr><td nowrap align=right valign=top>OSCL_IMPORT_REF char *&nbsp;</td><td valign=bottom><a class="el" href="classTimeValue.html#a14">get_str_ctime</a> (<a class="el" href="group__osclbase.html#a2">CtimeStrBuf</a> ctime_strbuf)</td></tr>
+<tr><td>&nbsp;</td><td><font size=-1><em>Get a string containing a text representation of this TimeValue object.</em> <a href="#a14"></a><em></em></font><br><br></td></tr>
+<tr><td nowrap align=right valign=top>OSCL_IMPORT_REF int&nbsp;</td><td valign=bottom><a class="el" href="classTimeValue.html#a15">get_pv8601_str_time</a> (<a class="el" href="group__osclbase.html#a3">PV8601timeStrBuf</a> time_strbuf)</td></tr>
+<tr><td>&nbsp;</td><td><font size=-1><em>Get a PV extended text representation of the Time based on the ISO 8601 format.</em> <a href="#a15"></a><em></em></font><br><br></td></tr>
+<tr><td nowrap align=right valign=top>OSCL_IMPORT_REF char *&nbsp;</td><td valign=bottom><a class="el" href="classTimeValue.html#a16">get_rfc822_gmtime_str</a> (int max_time_strlen, char *time_str)</td></tr>
+<tr><td>&nbsp;</td><td><font size=-1><em>Get a text representation of the time in the GMT timezone based on the RFC 822 / RFC 1123 (also described in the HTTP spec RFC 2068 and RFC 2616.</em> <a href="#a16"></a><em></em></font><br><br></td></tr>
+<tr><td nowrap align=right valign=top>OSCL_COND_IMPORT_REF bool&nbsp;</td><td valign=bottom><a class="el" href="classTimeValue.html#a17">is_zero</a> ()</td></tr>
+<tr><td>&nbsp;</td><td><font size=-1><em>Determine if the time value is zero.</em> <a href="#a17"></a><em></em></font><br><br></td></tr>
+<tr><td nowrap align=right valign=top>OSCL_COND_IMPORT_REF TimeValue &amp;&nbsp;</td><td valign=bottom><a class="el" href="classTimeValue.html#a18">operator=</a> (const TimeValue &amp;a)</td></tr>
+<tr><td>&nbsp;</td><td><font size=-1><em>Assignment operator.</em> <a href="#a18"></a><em></em></font><br><br></td></tr>
+<tr><td nowrap align=right valign=top>OSCL_COND_IMPORT_REF TimeValue &amp;&nbsp;</td><td valign=bottom><a class="el" href="classTimeValue.html#a19">operator+=</a> (const TimeValue &amp;a)</td></tr>
+<tr><td>&nbsp;</td><td><font size=-1><em>+= operator</em> <a href="#a19"></a><em></em></font><br><br></td></tr>
+<tr><td nowrap align=right valign=top>OSCL_COND_IMPORT_REF TimeValue &amp;&nbsp;</td><td valign=bottom><a class="el" href="classTimeValue.html#a20">operator-=</a> (const TimeValue &amp;a)</td></tr>
+<tr><td>&nbsp;</td><td><font size=-1><em>-= operator</em> <a href="#a20"></a><em></em></font><br><br></td></tr>
+<tr><td nowrap align=right valign=top>OSCL_COND_IMPORT_REF TimeValue &amp;&nbsp;</td><td valign=bottom><a class="el" href="classTimeValue.html#a21">operator *=</a> (const int scale)</td></tr>
+<tr><td>&nbsp;</td><td><font size=-1><em>This operator scales the time value by a constant.</em> <a href="#a21"></a><em></em></font><br><br></td></tr>
+<tr><td nowrap align=right valign=top>OSCL_COND_IMPORT_REF <a class="el" href="osclconfig__time_8h.html#a1">OsclBasicTimeStruct</a> *&nbsp;</td><td valign=bottom><a class="el" href="classTimeValue.html#a22">get_timeval_ptr</a> ()</td></tr>
 <tr><td colspan=2><br><h2>Friends</h2></td></tr>
 <tr><td nowrap align=right valign=top>class&nbsp;</td><td valign=bottom><a class="el" href="classTimeValue.html#l0">NTPTime</a></td></tr>
 <tr><td nowrap align=right valign=top>OSCL_COND_IMPORT_REF friend <br>
@@ -234,6 +237,91 @@ OsclBasicTimeStruct as defined for each platform. </td></tr>
         <tr>
           <td class="md" nowrap valign="top"> OSCL_COND_IMPORT_REF TimeValue::TimeValue </td>
           <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top">uint16&nbsp;</td>
+          <td class="mdname" nowrap>&nbsp; <em>aYear</em>, </td>
+        </tr>
+        <tr>
+          <td></td>
+          <td></td>
+          <td class="md" nowrap>uint16&nbsp;</td>
+          <td class="mdname" nowrap>&nbsp; <em>aMonth</em>, </td>
+        </tr>
+        <tr>
+          <td></td>
+          <td></td>
+          <td class="md" nowrap>uint16&nbsp;</td>
+          <td class="mdname" nowrap>&nbsp; <em>aDay</em>, </td>
+        </tr>
+        <tr>
+          <td></td>
+          <td></td>
+          <td class="md" nowrap>uint16&nbsp;</td>
+          <td class="mdname" nowrap>&nbsp; <em>aHour</em>, </td>
+        </tr>
+        <tr>
+          <td></td>
+          <td></td>
+          <td class="md" nowrap>uint16&nbsp;</td>
+          <td class="mdname" nowrap>&nbsp; <em>aMinute</em>, </td>
+        </tr>
+        <tr>
+          <td></td>
+          <td></td>
+          <td class="md" nowrap>uint16&nbsp;</td>
+          <td class="mdname" nowrap>&nbsp; <em>aSecond</em>, </td>
+        </tr>
+        <tr>
+          <td></td>
+          <td></td>
+          <td class="md" nowrap>uint16&nbsp;</td>
+          <td class="mdname" nowrap>&nbsp; <em>aMilliseconds</em></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="md">)&nbsp;</td>
+          <td class="md" colspan="2"></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+TimeValue constructor that sets time according to following input parameter for a specific date time. Please note that no argument is check for its validity (range etc) It might assert incase wrong argument are passed by user of this api. <dl compact><dt><b>Parameters: </b></dt><dd>
+<table border=0 cellspacing=2 cellpadding=0>
+<tr><td valign=top><em>in</em>&nbsp;</td><td>
+] uint16 wYear; </td></tr>
+<tr><td valign=top><em>in</em>&nbsp;</td><td>
+] uint16 wMonth; Jan = 1 to Dec = 12 </td></tr>
+<tr><td valign=top><em>in</em>&nbsp;</td><td>
+] uint16 wDay; 1-28/29/30/31 </td></tr>
+<tr><td valign=top><em>in</em>&nbsp;</td><td>
+] uint16 wHour; 0 to 23 </td></tr>
+<tr><td valign=top><em>in</em>&nbsp;</td><td>
+] uint16 wMinute; 0 to 59 </td></tr>
+<tr><td valign=top><em>in</em>&nbsp;</td><td>
+] uint16 wSecond; 0 to 59 </td></tr>
+<tr><td valign=top><em>in</em>&nbsp;</td><td>
+] uint16 wMilliseconds; 0 to 999 </td></tr>
+</table>
+</dl>    </td>
+  </tr>
+</table>
+<a name="a5" doxytag="TimeValue::TimeValue"></a><p>
+<table width="100%" cellpadding="2" cellspacing="0" border="0">
+  <tr>
+    <td class="md">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> OSCL_COND_IMPORT_REF TimeValue::TimeValue </td>
+          <td class="md" valign="top">(&nbsp;</td>
           <td class="md" nowrap valign="top"><a class="el" href="osclconfig__time_8h.html#a2">OsclBasicDateTimeStruct</a>&nbsp;</td>
           <td class="mdname1" valign="top" nowrap>&nbsp; <em>in_ts</em>          </td>
           <td class="md" valign="top">)&nbsp;</td>
@@ -263,7 +351,7 @@ OsclBasicDateTimeStruct as defined for each platform provides the date in a read
   </tr>
 </table>
 <hr><h2>Member Function Documentation</h2>
-<a name="a5" doxytag="TimeValue::get_local_time"></a><p>
+<a name="a6" doxytag="TimeValue::get_local_time"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -293,7 +381,7 @@ Get the local time after having adjusted for daylight saving.
 Notes: Implementation incomplete (= not done) on Win32, Wince, Symbian     </td>
   </tr>
 </table>
-<a name="a13" doxytag="TimeValue::get_pv8601_str_time"></a><p>
+<a name="a15" doxytag="TimeValue::get_pv8601_str_time"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -330,7 +418,7 @@ A PV8601timeStrBuf object to which the text representation will be written, </td
 The number of characters copied to the buffer, not including the terminating null. The returned string is of the form "19850412T101530.047Z". </dl>    </td>
   </tr>
 </table>
-<a name="a14" doxytag="TimeValue::get_rfc822_gmtime_str"></a><p>
+<a name="a16" doxytag="TimeValue::get_rfc822_gmtime_str"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -378,7 +466,7 @@ A pointer to the buffer to which the characters will be written. </td></tr>
 Returns a pointer to the buffer (same as time_str) containing a null terminated (c-style) string of the form "Wed, 30 Jun 1993 21:49:08 GMT". </dl>    </td>
   </tr>
 </table>
-<a name="a9" doxytag="TimeValue::get_sec"></a><p>
+<a name="a10" doxytag="TimeValue::get_sec"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -409,7 +497,7 @@ Get a 32 bit value representing the seconds since the (system dependent) epoch.
 This call returns a 32 bit value representing the nubmer of seconds since the epoch. On unix systems this represents the number of seconds since the unix epoch Jan 1 1970. On Win32 this represents the number of seconds since Jan 1, 1601. This is intended to be used for intervals rather than for absolute time. (On Win32 for example, a 32 bit value would be too small to represent the number of seconds from the epoch until the current time.) </dl>    </td>
   </tr>
 </table>
-<a name="a12" doxytag="TimeValue::get_str_ctime"></a><p>
+<a name="a14" doxytag="TimeValue::get_str_ctime"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -446,7 +534,7 @@ A CtimeStrBuf object to which the text representation will be written, </td></tr
 A pointer to the input CtimeStrBuf is returned. This string is null terminated of the form "Wed Jun 30 21:49:08 1993". </dl>    </td>
   </tr>
 </table>
-<a name="a20" doxytag="TimeValue::get_timeval_ptr"></a><p>
+<a name="a22" doxytag="TimeValue::get_timeval_ptr"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -474,7 +562,38 @@ A pointer to the input CtimeStrBuf is returned. This string is null terminated o
     </td>
   </tr>
 </table>
-<a name="a11" doxytag="TimeValue::get_usec"></a><p>
+<a name="a13" doxytag="TimeValue::get_timevalue_in_usec"></a><p>
+<table width="100%" cellpadding="2" cellspacing="0" border="0">
+  <tr>
+    <td class="md">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> OSCL_COND_IMPORT_REF <a class="el" href="group__osclbase.html#a31">uint64</a> TimeValue::get_timevalue_in_usec </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="mdname1" valign="top" nowrap>&nbsp;          </td>
+          <td class="md" valign="top">)&nbsp;</td>
+          <td class="md" nowrap></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+Get a 64 bit value representing the time value converted to microseconds.
+<p>
+<dl compact><dt><b>Returns: </b></dt><dd>
+Returns a uint64 value representing the time value in terms of microseconds.The The time origin is dependent on platform for which OSCL is compiled. For example for symbian it is midnight, January 1st, 0 AD for windows it is January 1, 1601 (UTC) </dl>    </td>
+  </tr>
+</table>
+<a name="a12" doxytag="TimeValue::get_usec"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -505,7 +624,7 @@ Get a 32 bit value representing the number of microseconds in the time value.
 Returns a uint32 value representing the number of microseconds in the time value after subtracting off the whole seconds. </dl>    </td>
   </tr>
 </table>
-<a name="a15" doxytag="TimeValue::is_zero"></a><p>
+<a name="a17" doxytag="TimeValue::is_zero"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -535,7 +654,7 @@ Determine if the time value is zero.
     </td>
   </tr>
 </table>
-<a name="a19" doxytag="TimeValue::operator *="></a><p>
+<a name="a21" doxytag="TimeValue::operator *="></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -566,7 +685,7 @@ This operator scales the time value by a constant.
     </td>
   </tr>
 </table>
-<a name="a17" doxytag="TimeValue::operator+="></a><p>
+<a name="a19" doxytag="TimeValue::operator+="></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -597,7 +716,7 @@ This operator scales the time value by a constant.
     </td>
   </tr>
 </table>
-<a name="a18" doxytag="TimeValue::operator-="></a><p>
+<a name="a20" doxytag="TimeValue::operator-="></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -628,7 +747,7 @@ This operator scales the time value by a constant.
     </td>
   </tr>
 </table>
-<a name="a16" doxytag="TimeValue::operator="></a><p>
+<a name="a18" doxytag="TimeValue::operator="></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -659,7 +778,7 @@ Assignment operator.
     </td>
   </tr>
 </table>
-<a name="a8" doxytag="TimeValue::set_from_ntp_time"></a><p>
+<a name="a9" doxytag="TimeValue::set_from_ntp_time"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -690,7 +809,7 @@ This method coverts a 32-bit NTP offset to system time.
 This method takes a 32-bit ntp offset which is the number of seconds from 0 h Jan 1, 1900 and converts it to the system time     </td>
   </tr>
 </table>
-<a name="a7" doxytag="TimeValue::set_to_current_time"></a><p>
+<a name="a8" doxytag="TimeValue::set_to_current_time"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -720,7 +839,7 @@ Set the time value to the current system time.
     </td>
   </tr>
 </table>
-<a name="a6" doxytag="TimeValue::set_to_zero"></a><p>
+<a name="a7" doxytag="TimeValue::set_to_zero"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -750,7 +869,7 @@ Set the time value to zero (represents a zero interval).
     </td>
   </tr>
 </table>
-<a name="a10" doxytag="TimeValue::to_msec"></a><p>
+<a name="a11" doxytag="TimeValue::to_msec"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -1032,7 +1151,7 @@ Set the time value to zero (represents a zero interval).
 <hr>The documentation for this class was generated from the following file:<ul>
 <li><a class="el" href="oscl__time_8h-source.html">oscl_time.h</a></ul>
 <hr size="1"><img src="pvlogo_small.jpg"><address style="align: right;"><small>OSCL API</small>
-<address style="align: left;"><small>Posting Version: CORE_7.509.1.1 </small>
+<address style="align: left;"><small>Posting Version: CORE_7.511.1.1 </small>
 </small></address>
 </body>
 </html>

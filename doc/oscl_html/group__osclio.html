@@ -33,6 +33,10 @@
 <tr><td>&nbsp;</td><td><font size=-1><em>The file <a class="el" href="oscl__file__io_8h.html">oscl_file_io.h</a> defines the class <a class="el" href="classOscl__File.html">Oscl_File</a>. This is the public API to the basic file I/O operations.</em></font><br><br></td></tr>
 
 <p>
+<tr><td nowrap align=right valign=top>file &nbsp;</td><td valign=bottom><a class="el" href="oscl__file__manager_8h.html">oscl_file_manager.h</a></td></tr>
+<tr><td>&nbsp;</td><td><font size=-1><em>File management class.</em></font><br><br></td></tr>
+
+<p>
 <tr><td nowrap align=right valign=top>file &nbsp;</td><td valign=bottom><a class="el" href="oscl__file__native_8h.html">oscl_file_native.h</a></td></tr>
 <tr><td>&nbsp;</td><td><font size=-1><em>The file <a class="el" href="oscl__file__native_8h.html">oscl_file_native.h</a> defines the class <a class="el" href="classOsclNativeFile.html">OsclNativeFile</a>. This is the porting layer for basic file I/O operations.</em></font><br><br></td></tr>
 
@@ -64,6 +68,7 @@
 <tr><td nowrap align=right valign=top>class &nbsp;</td><td valign=bottom><a class="el" href="classOsclFileCache.html">OsclFileCache</a></td></tr>
 <tr><td nowrap align=right valign=top>class &nbsp;</td><td valign=bottom><a class="el" href="classOsclFileCacheBuffer.html">OsclFileCacheBuffer</a></td></tr>
 <tr><td nowrap align=right valign=top>class &nbsp;</td><td valign=bottom><a class="el" href="classOsclFileHandle.html">OsclFileHandle</a></td></tr>
+<tr><td nowrap align=right valign=top>class &nbsp;</td><td valign=bottom><a class="el" href="classOsclFileManager.html">OsclFileManager</a></td></tr>
 <tr><td nowrap align=right valign=top>class &nbsp;</td><td valign=bottom><a class="el" href="classOsclFileStats.html">OsclFileStats</a></td></tr>
 <tr><td nowrap align=right valign=top>class &nbsp;</td><td valign=bottom><a class="el" href="classOsclFileStatsItem.html">OsclFileStatsItem</a></td></tr>
 <tr><td nowrap align=right valign=top>class &nbsp;</td><td valign=bottom><a class="el" href="classOsclNativeFile.html">OsclNativeFile</a></td></tr>
@@ -1020,7 +1025,7 @@ OSCL_FILEMGMT_ERR_TYPE, see enumeration for this type. </dl>    </td>
     <td>
 
 <p>
-oscl_stat function can be used to determine the size of a file in addition to whether the file exists or not <dl compact><dt><b>Parameters: </b></dt><dd>
+oscl_stat function can be used to determine the attributes of a file in addition to whether the file exists or not <dl compact><dt><b>Parameters: </b></dt><dd>
 <table border=0 cellspacing=2 cellpadding=0>
 <tr><td valign=top><em>character</em>&nbsp;</td><td>
 path the full path of the file to stat. </td></tr>
@@ -1064,7 +1069,7 @@ OSCL_FILEMGMT_ERR_TYPE, see enumeration for this type. </dl>    </td>
     <td>
 
 <p>
-oscl_stat function can be used to determine the size of a file in addition to whether the file exists or not <dl compact><dt><b>Parameters: </b></dt><dd>
+oscl_stat function can be used to determine the attributes of a file in addition to whether the file exists or not <dl compact><dt><b>Parameters: </b></dt><dd>
 <table border=0 cellspacing=2 cellpadding=0>
 <tr><td valign=top><em>wide</em>&nbsp;</td><td>
 character path the full path of the file to stat. </td></tr>
@@ -1166,7 +1171,7 @@ OSCL_FILEMGMT_ERR_TYPE, see enumeration for this type. </dl>    </td>
   </tr>
 </table>
 <hr size="1"><img src="pvlogo_small.jpg"><address style="align: right;"><small>OSCL API</small>
-<address style="align: left;"><small>Posting Version: CORE_7.509.1.1 </small>
+<address style="align: left;"><small>Posting Version: CORE_7.511.1.1 </small>
 </small></address>
 </body>
 </html>
