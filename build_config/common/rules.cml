@@ -307,7 +307,7 @@ derive MODS_pvprotocolengine_asfstreaming from "-lopencore_net_support -lopencor
 derive pvprotocolengine_asfstreamingreg_so_name from mshttp_support==m ? "pvprotocolengine_asfstreamingreg" : ""
 derive SOLIBS_pvprotocolengine_asfstreamingreg from pvprotocolenginewmhttpstreamingpluginreginterface_m_lib
 derive SOLIBDIRS_pvprotocolengine_asfstreamingreg from pvprotocolenginewmhttpstreamingpluginreginterface_m_mk
-derive MODS_pvprotocolengine_asfstreamingreg from "-lopencore_common"
+derive MODS_pvprotocolengine_asfstreamingreg from "-lopencore_common -lopencore_net_support"
 
 derive pvfasttrack_download_so_name from fasttrack_download_support==y ? "pvfasttrack_download" : ""
 derive SOLIBS_pvfasttrack_download from pvprotocolenginenode_ftdl_plugin_m_lib.pvprotocolenginefasttrackdownloadinterface_m_lib
@@ -317,7 +317,7 @@ derive MODS_pvfasttrack_download from "-lopencore_net_support -lopencore_common"
 derive pvfasttrack_downloadreg_so_name from fasttrack_download_support==y ? "pvfasttrack_downloadreg" : ""
 derive SOLIBS_pvfasttrack_downloadreg from pvprotocolenginefasttrackdownloadpluginreginterface_m_lib
 derive SOLIBDIRS_pvfasttrack_downloadreg from pvprotocolenginefasttrackdownloadpluginreginterface_m_mk
-derive MODS_pvfasttrack_downloadreg from "-lopencore_common"
+derive MODS_pvfasttrack_downloadreg from "-lopencore_common -lopencore_net_support"
 
 #########################################################################################################################
 # Streaming manager node plugins
@@ -607,10 +607,6 @@ derive SOLIBS_pvmtpconfigclass from mtpconfiginterface_m_lib
 derive SOLIBDIRS_pvmtpconfigclass from mtpconfiginterface_m_mk
 derive MODS_pvmtpconfigclass from "-lopencore_common"
 
-derive pvmtp_usb_transport_so_name from mtp_db_support==y ? "pvmtp_usb_transport" : ""
-derive SOLIBS_pvmtp_usb_transport from pvmtp_usb_transport_m_lib
-derive SOLIBDIRS_pvmtp_usb_transport from pvmtp_usb_transport_m_mk
-derive MODS_pvmtp_usb_transport from "-lopencore_common"
 
 derive pvdtcp_mbds_so_name from dtcp_support==y ? "pvdtcp_mbds" : ""
 derive SOLIBS_pvdtcp_mbds from pvdtcp_mbds_m_lib.pvdtcp_mbds_so_m_lib
@@ -643,7 +639,7 @@ derive TARGET_shared from (pv_so_name.opencore_common_so_name.opencore_author_so
                            opencore_mp4localreg_so_name.opencore_mp4local_so_name.
 			   pvdivx_recognizer_so_name.pvdivxparser_node_so_name.
                            pvrmff_recognizer_so_name.pvrmffparser_node_so_name.
-                           pvwmdrm_so_name.pvwmdrmoemsettings_so_name.pvdivxoemsettings_so_name.pvsqlite_so_name.pvdb_so_name.pvmtp_so_name.pvmtpip_so_name.pvjanus_so_name.pvoma1passthru_so_name.pvdbconfigclass_so_name.pvmtpconfigclass_so_name.pvdb_recovery_utility_so_name.pviptransport_so_name.pvmtp_usb_transport_so_name.
+                           pvwmdrm_so_name.pvwmdrmoemsettings_so_name.pvdivxoemsettings_so_name.pvsqlite_so_name.pvdb_so_name.pvmtp_so_name.pvmtpip_so_name.pvjanus_so_name.pvoma1passthru_so_name.pvdbconfigclass_so_name.pvmtpconfigclass_so_name.pvdb_recovery_utility_so_name.pviptransport_so_name.
    			   pvflv_recognizer_so_name.pvflvparser_node_so_name.
                            pvrtspunicast_streaming_so_name.pvrtspunicast_streamingreg_so_name.
                            pvrtsptunicast_streaming_so_name.pvrtsptunicast_streamingregreg_so_name.

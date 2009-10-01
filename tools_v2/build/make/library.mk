@@ -138,9 +138,8 @@ $(eval $(call set-src-and-obj-names,$(SRCS),$(LOCAL_SRCDIR)))
 TMPOBJS := $(patsubst %,$$(%_compiled_objs),$(COMPONENT_LIBS))
 $(eval COMPILED_OBJS += $(TMPOBJS))
 
-
 # save compiled objects in a macro
-$(TARGET)_compiled_objs := $(COMPILED_OBJS)
+$(TARGET)$(SOLIB_TARGET_COMP)_compiled_objs := $(COMPILED_OBJS)
 
 ifneq ($(strip $(FORCED_OBJS)),)
  # The point of this dependency is to force object rebuilds when the 
