@@ -351,7 +351,11 @@ int32 AACBitstreamObject::isAACFile(PVFile* aFilePtr)
     // ADIF - 4 bytes to confirm ADIF files
     if (fpUsed->GetRemainingBytes(remainingBytes))
     {
-        retVal = reset(iAudioStartOffset);
+        int32 reset_ret = reset(iAudioStartOffset);
+        if (reset_ret != AACBitstreamObject::EVERYTHING_OK)
+        {
+            return reset_ret;
+        }
         uint8 *pBuffer = &iBuffer[iPos];
 
         //check for ADIF first since we only need 4 bytes to know for sure
