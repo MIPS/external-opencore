@@ -187,7 +187,8 @@ class PVMFPortVector: public PVMFPortIter
 /**
 // Node Command queue utilities.
 */
-
+/* pre-defined invalid command id */
+#define PVMF_INVALID_COMMAND_ID -1
 //IDs for all of the asynchronous node commands.
 enum TPVMFGenericNodeCommand
 {

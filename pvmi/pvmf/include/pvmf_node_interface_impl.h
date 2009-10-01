@@ -58,8 +58,6 @@
 #define PVMF_NODE_VECTOR_RESERVE 10
 /* Starting value for command IDs  */
 #define PVMF_NODE_COMMAND_ID_START 0
-/* pre-defined invalid command id */
-#define PVMF_INVALID_COMMAND_ID -1
 
 // Allocation/Deallocation macros
 #define PVMF_BASE_NODE_NEW(T,params) OSCL_AUDIT_NEW(iAuditCB, T, params)

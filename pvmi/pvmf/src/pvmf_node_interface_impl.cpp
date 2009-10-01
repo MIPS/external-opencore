@@ -595,6 +595,7 @@ OSCL_EXPORT_REF bool PVMFNodeInterfaceImpl::ProcessCommand(PVMFNodeCommand& aCmd
     //until the prior one is finished.  However, a hi priority
     //command such as Cancel must be able to interrupt a command
     //in progress.
+    OsclAny* eventData = NULL;
     if (!iCurrentCommand.empty() && !aCmd.hipri() && aCmd.iCmd != PVMF_GENERIC_NODE_CANCEL_GET_LICENSE)
         return false;
 
@@ -616,8 +617,7 @@ OSCL_EXPORT_REF bool PVMFNodeInterfaceImpl::ProcessCommand(PVMFNodeCommand& aCmd
             status = DoRequestPort(aCmd, port);
             if (status == PVMFSuccess)
             {
-                CommandComplete(iInputCommands, aCmd, status, NULL, (OsclAny*)port);
-                return true;
+                eventData = (OsclAny*)port;
             }
         }
         break;
@@ -716,7 +716,7 @@ OSCL_EXPORT_REF bool PVMFNodeInterfaceImpl::ProcessCommand(PVMFNodeCommand& aCmd
         // if the control gets here, report command complete
         if (iInputCommands.size() > 0)
         {
-            CommandComplete(iInputCommands, aCmd, status);
+            CommandComplete(iInputCommands, aCmd, status, NULL, eventData);
         }
 
         // node needs to be reschduled, if there's any command
