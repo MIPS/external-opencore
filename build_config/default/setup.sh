@@ -9,9 +9,8 @@ function print_menu()
     echo_stdout "Build selection menu... choose from the following:"
     echo_stdout
     echo_stdout "1. Build for host platform"
-    echo_stdout "2. Arm device build using OpenCORE (Android) cross-compiler"
+    echo_stdout "2. Generate Android.mk files"
     echo_stdout "3. Build using default linux-arm cross-compiler"
-    echo_stdout "4. Arm device build using OpenCORE (Android) cross-compiler inside AccuRev workspace"
     echo_stdout
 
 }
@@ -21,10 +20,10 @@ function clean_env()
   echo_stdout "=================================="
   echo_stdout "Cleaning ARCHITECTURE"
   unset ARCHITECTURE
-  echo_stdout "Cleaning ANDROID_BASE"
-  unset ANDROID_BASE
   echo_stdout "Setting PATH back to the original"
   export PATH=$BASE_PATH
+  echo_stdout "Cleaning PROCESSOR"
+  unset PROCESSOR
   echo_stdout "=================================="
 }
 
@@ -43,16 +42,14 @@ function menu()
         clean_env
         ;;
     2)
-        echo_stdout "Choice is to build for target with OpenCORE (Android) cross-compiler"
+        echo_stdout "Choice is to do Android.mk generation."
         ## clean the environment
         clean_env
         ## set path up for linux OpenCore build
         android_gcc_arm_path=/opt/environments/android/toolchain-eabi-4.2.1/bin
         export ARCHITECTURE=android
+        export PROCESSOR=arm
         echo_stdout "ARCHITECTURE set to ==> $ARCHITECTURE"
-        export PATH=$android_gcc_arm_path:$BASE_PATH
-        export ANDROID_BASE=/opt/environments/android
-        echo_stdout "ANDROID_BASE set to ==> $ANDROID_BASE"
         ;;
     3)
         echo_stdout "Choice is to build for target with the default linux-arm cross-compiler"
@@ -62,18 +59,6 @@ function menu()
         linux_arm_path=/opt/environments/linux_arm/data/omapts/linux/arm-tc/gcc-3.4.0-1/bin
         export ARCHITECTURE=linux_arm
         export PATH=$linux_arm_path:$BASE_PATH
-        ;;
-    4)  
-        echo_stdout "Choice is to build for target with workspace's OpenCORE (Android) cross-compiler"
-        ## clean the environment
-        clean_env
-        ## set path up for linux OpenCore build
-        android_gcc_arm_path=$BASE_DIR/toolchains/android/toolchain-eabi-4.2.1/bin
-        export ARCHITECTURE=android
-        echo_stdout "ARCHITECTURE set to ==> $ARCHITECTURE"
-        export PATH=$android_gcc_arm_path:$BASE_PATH
-        export ANDROID_BASE=$BASE_DIR/toolchains/android
-        echo_stdout "ANDROID_BASE set to ==> $ANDROID_BASE"
         ;;
     *)
         echo_stdout "Invalid selection.  Please enter your selection again."
