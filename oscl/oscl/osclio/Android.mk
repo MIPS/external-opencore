@@ -17,6 +17,7 @@ LOCAL_SRC_FILES := \
  	src/oscl_file_native.cpp \
  	src/oscl_file_server.cpp \
  	src/oscl_file_stats.cpp \
+ 	src/oscl_file_manager.cpp \
  	src/oscl_ip_socket.cpp \
  	src/oscl_socket.cpp \
  	src/oscl_socket_accept.cpp \
@@ -62,6 +63,7 @@ LOCAL_COPY_HEADERS := \
  	src/oscl_file_find.h \
  	src/oscl_file_handle.h \
  	src/oscl_file_io.h \
+ 	src/oscl_file_manager.h \
  	src/oscl_file_cache.h \
  	src/oscl_file_server.h \
  	src/oscl_socket.h \

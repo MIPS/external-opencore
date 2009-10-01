@@ -106,7 +106,7 @@ OSCL_IMPORT_REF OSCL_FILEMGMT_ERR_TYPE oscl_getcwd(char *path, uint32 size);
 
 
 /**
- * oscl_stat function can be used to determine the size of a file
+ * oscl_stat function can be used to determine the attributes of a file
  * in addition to whether the file exists or not
  * @param wide character path the full path of the file to stat.
  * @return OSCL_FILEMGMT_ERR_TYPE, see enumeration for this type.
@@ -115,7 +115,7 @@ OSCL_IMPORT_REF OSCL_FILEMGMT_ERR_TYPE oscl_stat(const oscl_wchar *path, OSCL_ST
 
 
 /**
- * oscl_stat function can be used to determine the size of a file
+ * oscl_stat function can be used to determine the attributes of a file
  * in addition to whether the file exists or not
  * @param character path the full path of the file to stat.
  * @return OSCL_FILEMGMT_ERR_TYPE, see enumeration for this type.

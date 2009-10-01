@@ -26,6 +26,7 @@ SRCS :=	oscl_dns.cpp \
 	oscl_file_native.cpp \
 	oscl_file_server.cpp \
 	oscl_file_stats.cpp \
+	oscl_file_manager.cpp \
 	oscl_ip_socket.cpp \
 	oscl_socket.cpp \
 	oscl_socket_accept.cpp \
@@ -53,6 +54,7 @@ HDRS := oscl_file_dir_utils.h \
 	oscl_file_find.h \
 	oscl_file_handle.h \
 	oscl_file_io.h \
+	oscl_file_manager.h \
         oscl_file_cache.h \
 	oscl_file_server.h \
 	oscl_socket.h \

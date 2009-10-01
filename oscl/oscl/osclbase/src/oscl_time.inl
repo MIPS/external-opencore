@@ -24,6 +24,9 @@
 // = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 
 #include "oscl_int64_utils.h"
+#include "oscl_assert.h"
+#include "oscl_stdstring.h"
+#include "oscl_string_utils.h"
 
 //------ NTPTime ------------
 OSCL_COND_EXPORT_REF OSCL_INLINE NTPTime::NTPTime()
@@ -127,6 +130,19 @@ OSCL_COND_EXPORT_REF OSCL_INLINE int32 TimeValue::to_msec() const
 OSCL_COND_EXPORT_REF OSCL_INLINE uint32 TimeValue::get_usec() const
 {
     return ts.tv_usec;
+}
+
+OSCL_COND_EXPORT_REF OSCL_INLINE uint64 TimeValue::get_timevalue_in_usec() const
+{
+
+    uint64 aTempSec = 0;
+    uint64 aTempUsec = 0;
+
+    Oscl_Int64_Utils::set_uint64(aTempSec, 0, ts.tv_sec);
+    Oscl_Int64_Utils::set_uint64(aTempUsec, 0, ts.tv_usec);
+
+    return ((aTempSec * 1000000) + (aTempUsec));
+
 }
 
 OSCL_COND_EXPORT_REF OSCL_INLINE TimeValue operator -(const TimeValue& a, const TimeValue& b)
@@ -274,6 +290,40 @@ OSCL_COND_EXPORT_REF OSCL_INLINE TimeValue::TimeValue(const OsclBasicTimeStruct&
     ts.tv_sec = in_tv.tv_sec;
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+OSCL_COND_EXPORT_REF OSCL_INLINE TimeValue::TimeValue(uint16 aYear, uint16 aMonth, uint16 aDay, uint16 aHour,
+        uint16 aMinute, uint16 aSecond,  uint16 aMilliseconds)
+{
+
+    /*struct tm aTmBuffer;*/
+
+    OsclBasicDateTimeStruct aTmBuffer;
+    memset(&aTmBuffer, 0, sizeof(aTmBuffer));
+
+    aTmBuffer.tm_sec   = aSecond;       /* seconds afterthe minute - [0, 61] */
+    /* for sleap seconds */
+    aTmBuffer.tm_min   = aMinute;       /* minutes after the hour - [0, 59] */
+    aTmBuffer.tm_hour  = aHour;         /* hour since midnight - [0, 23] */
+    aTmBuffer.tm_mday  = aDay;          /* day of the month- [1, 31] */
+    aTmBuffer.tm_mon   = aMonth - 1 ;     /* months since January - [0, 11] */
+    aTmBuffer.tm_year  = (aYear - 1900);/* years since 1900*/
+
+    time_t AbsoluteTime = mktime(&aTmBuffer);
+
+    if (AbsoluteTime == (time_t) - 1)
+    {
+        OSCL_ASSERT(false); // wrong input to this api
+    }
+    else
+    {
+        /*Filling the TimeVal ts Structure for further Use */
+        memset(&ts, 0 , sizeof(ts));
+        ts.tv_sec = AbsoluteTime ;
+        ts.tv_usec = ((aMilliseconds) * (1000));
+    }
+
+
+}
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 OSCL_COND_EXPORT_REF OSCL_INLINE TimeValue::TimeValue(long num_units, TimeUnits units)
 {

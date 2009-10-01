@@ -210,6 +210,23 @@ class TimeValue
         */
         OSCL_COND_IMPORT_REF TimeValue(const OsclBasicTimeStruct& in_tv);
 
+        //! Create a TimeValue representing the absolute time specified by the
+        //! year/month/day/hours/minutes/seconds/microseconds values passed as argument.
+        /*!
+         * TimeValue constructor that sets time according to following input parameter for a specific date time.
+         * Please note that no argument is check for its validity (range etc)
+         * It might assert incase wrong argument are passed by user of this api.
+         * @param [in]    uint16 wYear;
+         * @param [in]    uint16 wMonth; Jan = 1 to Dec = 12
+         * @param [in]    uint16 wDay;  1-28/29/30/31
+         * @param [in]    uint16 wHour;  0 to 23
+         * @param [in]    uint16 wMinute;  0 to 59
+         * @param [in]    uint16 wSecond;  0 to 59
+         * @param [in]    uint16 wMilliseconds; 0 to 999
+         */
+        OSCL_COND_IMPORT_REF TimeValue(uint16 aYear, uint16 aMonth, uint16 aDay, uint16 aHour,
+                                       uint16 aMinute, uint16 aSecond,  uint16 aMilliseconds);
+
         //! Create a TimeValue representing the absolute time specified by the BasicDateTimeStruct.
         /*! \param in_ts OsclBasicDateTimeStruct as defined for each platform provides the date in a
             readable format (i.e. day, date , week etc.)
@@ -256,6 +273,14 @@ class TimeValue
             \return Returns a uint32 value representing the number of microseconds in the time value after subtracting off the whole seconds.
         */
         OSCL_COND_IMPORT_REF uint32 get_usec() const ;
+        //! Get a 64 bit value representing the time value converted to microseconds
+        /*!
+            \return Returns a uint64 value representing the time value in terms of microseconds.The
+          The time origin is dependent on platform for which OSCL is compiled. For example
+          for symbian it is midnight, January 1st, 0 AD
+          for windows it is January 1, 1601 (UTC)
+        */
+        OSCL_COND_IMPORT_REF uint64 get_timevalue_in_usec() const ;
 
         //! Get a string containing a text representation of this TimeValue object.
         /*!
