@@ -17,57 +17,18 @@
  */
 #include "acceptable_formats_test.h"
 
-void acceptable_formats_test::test()
+
+void acceptable_formats_test::AllNodesAdded()
 {
-    PV2WayUtil::OutputInfo("\n-------- Start %s test --------\n", iTestName.get_cstr());
-    PV2WayUtil::OutputInfo("\n** Test Number: %d. ** \n", iTestNum);
-    PV2WayUtil::OutputInfo("\nSETTINGS:\nProxy %d", iUseProxy);
-
-    iSourceAndSinks->PrintFormatTypes();
-    PV2WayUtil::OutputInfo("\n----------------------------------\n");
-    int error = 0;
-
-    scheduler = OsclExecScheduler::Current();
-
-    this->AddToScheduler();
-
-    if (start_async_test())
-    {
-        OSCL_TRY(error, scheduler->StartScheduler());
-        if (error != 0)
-        {
-            OSCL_LEAVE(error);
-        }
-    }
-
-    TestCompleted();
-    this->RemoveFromScheduler();
+    LetConnectionRun();
 }
 
-
-void acceptable_formats_test::TimerCallback()
+void acceptable_formats_test::FinishTimerCallback()
 {
-    if (inumCalled > 5)
-    {
-        PV2WayUtil::OutputInfo("\n Giving up waiting for process to finish \n");
-        iTestStatus = false;
-        DoCancel();
-        return;
-    }
-    inumCalled++;
     bool match1 = false;
     bool match2 = false;
     bool match3 = false;
     bool match4 = false;
-    if (!iAudioSourceAdded ||
-            !iAudioSinkAdded ||
-            !iVideoSourceAdded ||
-            !iVideoSinkAdded)
-    {
-        // wait longer
-        timer->RunIfNotReady(TEST_DURATION);
-        return;
-    }
 
     PV2WayUtil::OutputInfo("\n Incoming Audio: ");
     match1 = iSourceAndSinks->FormatMatchesSelectedCodec(INCOMING,
@@ -82,48 +43,9 @@ void acceptable_formats_test::TimerCallback()
     match4 = iSourceAndSinks->FormatMatchesSelectedCodec(OUTGOING,
              PV_VIDEO, iOutVidFormatCapability[0].format);
     test_is_true(match1 && match2 && match3 && match4);
-
-    int error = 0;
-    PV2WayUtil::OutputInfo("\nRemoving source and sinks \n");
-    OSCL_TRY(error, iVideoRemoveSourceId = iSourceAndSinks->RemoveVideoSource());
-    if (error)
-    {
-        iTestStatus &= false;
-        disconnect();
-    }
-    else
-    {
-        error = 1;
-        OSCL_TRY(error, iVideoRemoveSinkId = iSourceAndSinks->RemoveVideoSink());
-        if (error)
-        {
-            iTestStatus &= false;
-            disconnect();
-        }
-    }
-
-    OSCL_TRY(error, iAudioRemoveSourceId = iSourceAndSinks->RemoveAudioSource());
-    if (error)
-    {
-        iTestStatus &= false;
-        disconnect();
-    }
-    else
-    {
-        error = 1;
-        OSCL_TRY(error, iAudioRemoveSinkId = iSourceAndSinks->RemoveAudioSink());
-        if (error)
-        {
-            iTestStatus &= false;
-            disconnect();
-        }
-    }
+    DisconnectSourceSinks();
 }
 
-void acceptable_formats_test::RstCmdCompleted()
-{
-    test_base::RstCmdCompleted();
-}
 
 //
 //
@@ -169,10 +91,6 @@ void acceptable_formats_test::AddExpectedFormat(TPVDirection aDir,
     }
 }
 
-void acceptable_formats_test::ConnectSucceeded()
-{
-
-}
 
 void acceptable_formats_test::CreateParts()
 {
@@ -184,7 +102,6 @@ void acceptable_formats_test::CommandCompleted(const PVCmdResponse& aResponse)
     PVCommandId cmdId = aResponse.GetCmdId();
     if (cmdId < 0)
         return;
-    iTestStatus &= (aResponse.GetCmdStatus() == PVMFSuccess) ? true : false;
 
     test_base::CommandCompleted(aResponse);
 }

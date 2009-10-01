@@ -32,11 +32,74 @@
 #ifndef TEST_UTILITY_H_HEADER
 #include "test_utility.h"
 #endif
-
 #include "pv_2way_codecspecifier.h"
 
 
 uint32 test_base::iTestCounter = 0;
+
+void test_base::test()
+{
+    PV2WayUtil::OutputInfo("\n-------- Start %s test --------\n", iTestName.get_cstr());
+    PV2WayUtil::OutputInfo("\n** Test Number: %d. ** \n", iTestNum);
+    PV2WayUtil::OutputInfo("\nSETTINGS:\nProxy %d", iUseProxy);
+    iSourceAndSinks->PrintFormatTypes();
+    PV2WayUtil::OutputInfo("\n----------------------------------\n");
+    int error = 0;
+    scheduler = OsclExecScheduler::Current();
+
+    this->AddToScheduler();
+
+    if (start_async_test())
+    {
+        /*!
+
+          Step 5: Start scheduler
+          Start scheduler- will start sending messages once initialized
+        */
+        OSCL_TRY(error, scheduler->StartScheduler());
+        if (error != 0)
+        {
+            OSCL_LEAVE(error);
+        }
+    }
+
+    TestCompleted();
+    this->RemoveFromScheduler();
+}
+
+void test_base::Run()
+{
+    /*!
+
+      Step 12: Cleanup
+      Step 12d: Delete terminal
+    */
+    if (terminal)
+    {
+        if (iUseProxy)
+        {
+            CPV2WayProxyFactory::DeleteTerminal(terminal);
+        }
+        else
+        {
+            CPV2WayEngineFactory::DeleteTerminal(terminal);
+        }
+        terminal = NULL;
+    }
+
+    if (timer)
+    {
+        OSCL_DELETE(timer);
+        timer = NULL;
+    }
+
+    /*!
+
+      Step 12: Cleanup
+      Step 12e: Stop Scheduler
+    */
+    scheduler->StopScheduler();
+}
 
 void test_base::H324MConfigCommandCompletedL(PVMFCmdResp& aResponse)
 {
@@ -120,19 +183,27 @@ void test_base::InitSucceeded()
     connect();
 }
 
+void test_base::CancelTimers()
+{
+    if (timer)
+    {
+        timer->Cancel(iTimerConnectionID);
+        timer->Cancel(iTimerTestTimeoutID);
+    }
+}
+
 void test_base::InitFailed()
 {
     PV2WayUtil::OutputInfo("\n*************** Test FAILED: InitFailed *************** \n");
-    if (timer)
-    {
-        timer->Cancel();
-    }
+    CancelTimers();
     RunIfNotReady();
 }
+
 void test_base::InitCancelled()
 {
     InitFailed();
 }
+
 void test_base::EncoderIFSucceeded()
 {
 }
@@ -144,7 +215,6 @@ void test_base::EncoderIFFailed()
 
 void test_base::ConnectSucceeded()
 {
-    disconnect();
 }
 
 void test_base::ConnectFailed()
@@ -161,13 +231,17 @@ void test_base::ConnectCancelled()
 
 void test_base::CancelCmdCompleted()
 {
+    PV2WayUtil::OutputInfo("\nCancel Completed \n");
     test_is_true(true);
     RunIfNotReady();
 }
 
 void test_base::RstCmdCompleted()
 {
+    PV2WayUtil::OutputInfo("\nRst Completed \n");
     cleanup();
+    CancelTimers();
+
     RunIfNotReady();
 }
 
@@ -185,15 +259,13 @@ void test_base::DisCmdFailed()
 void test_base::AudioAddSinkSucceeded()
 {
     iAudioSinkAdded = true;
-    if (iAudioSourceAdded && timer)
-        timer->RunIfNotReady(TEST_DURATION);
+    CheckForSucceeded();
 }
 
 void test_base::AudioAddSourceSucceeded()
 {
     iAudioSourceAdded = true;
-    if (iAudioSinkAdded && timer)
-        timer->RunIfNotReady(TEST_DURATION);
+    CheckForSucceeded();
 }
 
 void test_base::AudioAddSinkFailed()
@@ -213,6 +285,7 @@ void test_base::AudioAddSourceFailed()
 void test_base::VideoAddSinkSucceeded()
 {
     iVideoSinkAdded = true;
+    CheckForSucceeded();
 }
 
 void test_base::VideoAddSinkFailed()
@@ -225,6 +298,7 @@ void test_base::VideoAddSinkFailed()
 void test_base::VideoAddSourceSucceeded()
 {
     iVideoSourceAdded = true;
+    CheckForSucceeded();
 }
 
 void test_base::VideoAddSourceFailed()
@@ -236,35 +310,68 @@ void test_base::VideoAddSourceFailed()
 void test_base::AudioRemoveSourceCompleted()
 {
     iAudioSourceAdded = false;
-    if (!iAudioSinkAdded)
-        disconnect();
+    PV2WayUtil::OutputInfo("Audio source removed \n");
+    CheckForRemoved();
 }
 
 void test_base::AudioRemoveSinkCompleted()
 {
     iAudioSinkAdded = false;
-    if (!iAudioSourceAdded)
-        disconnect();
+    PV2WayUtil::OutputInfo("Audio sink removed \n");
+    CheckForRemoved();
+}
+
+void test_base::CheckForSucceeded()
+{
+    if (iAudioSourceAdded && iAudioSinkAdded &&
+            iVideoSourceAdded && iVideoSinkAdded)
+    {
+        AllNodesAdded();
+        AllAudioNodesAdded();
+        AllVideoNodesAdded();
+    }
+    else if (iAudioSourceAdded && iAudioSinkAdded)
+    {
+        AllAudioNodesAdded();
+    }
+    else if (iVideoSourceAdded && iVideoSinkAdded)
+    {
+        AllVideoNodesAdded();
+    }
+}
+
+void test_base::CheckForRemoved()
+{
+    if (!iAudioSourceAdded && !iAudioSinkAdded &&
+            !iVideoSourceAdded && !iVideoSinkAdded)
+    {
+        AllNodesRemoved();
+        AllAudioNodesRemoved();
+        AllVideoNodesRemoved();
+    }
+    else if (!iAudioSourceAdded && !iAudioSinkAdded)
+    {
+        AllAudioNodesRemoved();
+    }
+    else if (!iVideoSourceAdded && !iVideoSinkAdded)
+    {
+        AllVideoNodesRemoved();
+    }
 }
 
 
 void test_base::VideoRemoveSourceCompleted()
 {
-    int error = 0;
     iVideoSourceAdded = false;
-    OSCL_TRY(error, iVideoRemoveSinkId = iSourceAndSinks->RemoveVideoSink());
-    if (error)
-    {
-        PV2WayUtil::OutputInfo("\n*************** Test FAILED: error removing video sink *************** \n");
-        test_is_true(false);
-        disconnect();
-    }
+    PV2WayUtil::OutputInfo("Video source removed \n");
+    CheckForRemoved();
 }
+
 void test_base::VideoRemoveSinkCompleted()
 {
     iVideoSinkAdded = false;
-    if (!iVideoSourceAdded)
-        disconnect();
+    PV2WayUtil::OutputInfo("Video sink removed \n");
+    CheckForRemoved();
 }
 
 
@@ -273,7 +380,6 @@ void test_base::CommandCompleted(const PVCmdResponse& aResponse)
     PVCommandId cmdId = aResponse.GetCmdId();
     if (cmdId < 0)
         return;
-    iTestStatus &= (aResponse.GetCmdStatus() == PVMFSuccess) ? true : false;
 
     if (iQueryInterfaceCmdId == cmdId)
     {
@@ -431,18 +537,38 @@ void test_base::InitializeLogs()
         if (true == PVLoggerCfgFileParser::Parse(cfgfilename.get_str(), logfilename.get_str()))
             return;
     }
+
 }
 
+void test_base::LetConnectionRun()
+{
+    timer->Request(iTimerConnectionID, iTimeoutConnectionInfo, iTimeConnection);
+}
 
 bool test_base::start_async_test()
 {
-    int error = 0;
+    timer = OSCL_NEW(OsclTimer<OsclMemAllocator>, ("EngineUnitTests"));
+    if (timer == NULL)
+    {
+        PV2WayUtil::OutputInfo("\n*************** Test FAILED: no timer *************** \n");
+        test_is_true(false);
+        return false;
+    }
+
+    timer->SetObserver(this);
+    //timer->AddToScheduler();
+
+    // request the test to run up to
+    timer->Request(iTimerTestTimeoutID, iTimeoutTestInfo, iMaxTestDuration);
+
+
     /*!
 
       Step 2: Create terminal
       Create proxy/non-proxy terminal using CPV2WayProxyFactory or CPV2WayEngineFactory
       @param PVCommandStatusObserver, PVInformationalEventObserver, PVErrorEventObserver to receive notifications from SDK
     */
+    int error = 0;
     if (iUseProxy)
     {
         OSCL_TRY(error, terminal = CPV2WayProxyFactory::CreateTerminal(PV_324M,
@@ -514,7 +640,7 @@ void test_base::HandleInformationalEvent(const PVAsyncInformationalEvent& aEvent
                     iAudioAddSourceId = iSourceAndSinks->HandleOutgoingAudio(aEvent);
                     if (iAudioAddSourceId)
                     {
-                        PV2WayUtil::OutputInfo("Audio\n");
+                        PV2WayUtil::OutputInfo("Audio");
                     }
                     else
                     {
@@ -529,7 +655,7 @@ void test_base::HandleInformationalEvent(const PVAsyncInformationalEvent& aEvent
                     iVideoAddSourceId = iSourceAndSinks->HandleOutgoingVideo(aEvent);
                     if (iVideoAddSourceId)
                     {
-                        PV2WayUtil::OutputInfo("Video\n");
+                        PV2WayUtil::OutputInfo("Video");
                     }
                     else
                     {
@@ -556,7 +682,7 @@ void test_base::HandleInformationalEvent(const PVAsyncInformationalEvent& aEvent
                     iAudioAddSinkId = iSourceAndSinks->HandleIncomingAudio(aEvent);
                     if (iAudioAddSinkId)
                     {
-                        PV2WayUtil::OutputInfo("Audio\n");
+                        PV2WayUtil::OutputInfo("Audio");
                     }
                     else
                     {
@@ -571,7 +697,7 @@ void test_base::HandleInformationalEvent(const PVAsyncInformationalEvent& aEvent
                     iVideoAddSinkId = iSourceAndSinks->HandleIncomingVideo(aEvent);
                     if (iVideoAddSinkId)
                     {
-                        PV2WayUtil::OutputInfo("Video\n");
+                        PV2WayUtil::OutputInfo("Video");
                     }
                     else
                     {
@@ -616,3 +742,34 @@ void test_base::TestCompleted()
     PV2WayUtil::OutputInfo("Successes %.2d, Failures %d\n"
                            , m_last_result.success_count(), m_last_result.failures().size());
 }
+
+void test_base::TimeoutOccurred(int32 timerID, int32 timeoutInfo)
+{
+    if (timerID == iTimerConnectionID)
+    {
+        // if the timerConnection status has gone off
+        // cancel other timer
+        timer->Cancel(iTimerTestTimeoutID);
+        // derived classes may have complicated
+        // FinishTimerCallbacks.  This one just happens to be the same
+        // as when we fail- to just cleanup.
+        FinishTimerCallback();
+    }
+    else if (timerID == iTimerTestTimeoutID)
+    {
+        timer->Cancel(iTimerConnectionID);
+        PV2WayUtil::OutputInfo("\n Test ran out of time.  Max time: %d \n", iMaxTestDuration);
+        test_is_true(false);
+        // cleanup because we are unsuccessful
+        FinishTimerCallback();
+    }
+    else
+    {
+        // some other failure
+        PV2WayUtil::OutputInfo("\n Failure.  Cleaning up \n");
+        test_is_true(false);
+        // cleanup because we are unsuccessful
+        FinishTimerCallback();
+    }
+}
+

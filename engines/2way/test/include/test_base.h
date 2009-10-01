@@ -31,7 +31,8 @@
 #include "test_utility.h"
 #endif
 
-#define TEST_DURATION 800
+#define MAX_TEST_DURATION 60    // in seconds
+#define TEST_DURATION 3         // in seconds
 
 class test_base : public engine_test,
         public H324MConfigObserver
@@ -39,13 +40,14 @@ class test_base : public engine_test,
     public:
 
         test_base(bool aUseProxy = false,
+                  uint32 aTimeConnection = TEST_DURATION,
+                  uint32 aMaxTestDuration = MAX_TEST_DURATION,
                   int aMaxRuns = 1,
                   bool isSIP = false) :
                 engine_test(aUseProxy, aMaxRuns),
                 iH324MConfig(NULL),
                 iComponentInterface(NULL),
                 iEncoderIFCommandId(-1),
-                i324mIFCommandId(-1),
                 iCancelCmdId(-1),
                 iQueryInterfaceCmdId(-1),
                 iStackIFSet(false),
@@ -54,8 +56,15 @@ class test_base : public engine_test,
                 iTempH324MConfigIterface(NULL),
                 iSourceAndSinks(NULL),
                 iUsingAudio(false),
-                iUsingVideo(false)
+                iUsingVideo(false),
+                iMaxTestDuration(aMaxTestDuration),
+                iTimeConnection(aTimeConnection),
+                iTimerConnectionID(1),
+                iTimerTestTimeoutID(2),
+                iTimeoutConnectionInfo(0),
+                iTimeoutTestInfo(0)
         {
+            iMaxTestDuration += aTimeConnection;
             iTestNum = iTestCounter;
             test_base::iTestCounter++;
             iTestName = _STRLIT_CHAR("unnamed test");
@@ -103,8 +112,20 @@ class test_base : public engine_test,
             }
             engine_test::cleanup();
         }
+        void LetConnectionRun();
 
+        void test();
+
+        virtual void Run();
+
+        virtual void AllAudioNodesAdded() {};
+        virtual void AllNodesAdded() {};
+        virtual void AllVideoNodesAdded() {};
+        virtual void AllAudioNodesRemoved() {};
+        virtual void AllNodesRemoved() {};
+        virtual void AllVideoNodesRemoved() {};
     protected:
+        void CancelTimers();
 
         void InitializeLogs();
         void HandleInformationalEvent(const PVAsyncInformationalEvent& aEvent);
@@ -141,7 +162,12 @@ class test_base : public engine_test,
         virtual void EncoderIFSucceeded();
         virtual void EncoderIFFailed();
 
+        virtual void TimeoutOccurred(int32 timerID, int32 timeoutInfo);
+        virtual void FinishTimerCallback() {};
 
+
+        void CheckForSucceeded();
+        void CheckForRemoved();
         // audio
         virtual void AudioAddSinkSucceeded();
         virtual void AudioAddSinkFailed();
@@ -165,7 +191,6 @@ class test_base : public engine_test,
         H324MConfigInterface* iH324MConfig;
         PVInterface *iComponentInterface;
         PVCommandId iEncoderIFCommandId;
-        PVCommandId i324mIFCommandId;
         PVCommandId iCancelCmdId;
         PVCommandId iQueryInterfaceCmdId;
 
@@ -184,6 +209,12 @@ class test_base : public engine_test,
         static uint32 iTestCounter;
         int iTestNum;
         OSCL_HeapString<OsclMemAllocator> iTestName;
+        uint32 iMaxTestDuration;
+        uint32 iTimeConnection;
+        int32 iTimerConnectionID;
+        int32 iTimerTestTimeoutID;
+        int32 iTimeoutConnectionInfo;
+        int32 iTimeoutTestInfo;
 };
 
 

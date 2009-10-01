@@ -42,24 +42,6 @@ void init_cancel_test::test()
 }
 
 
-void init_cancel_test::Run()
-{
-    if (terminal)
-    {
-        if (iUseProxy)
-        {
-            CPV2WayProxyFactory::DeleteTerminal(terminal);
-        }
-        else
-        {
-            CPV2WayEngineFactory::DeleteTerminal(terminal);
-        }
-        terminal = NULL;
-    }
-
-    scheduler->StopScheduler();
-}
-
 void init_cancel_test::DoCancel()
 {
 }

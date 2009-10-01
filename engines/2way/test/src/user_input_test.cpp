@@ -29,47 +29,6 @@ uint8 alphanumericTestString[ALPHANUMERIC_STRING_LENGTH] =
     '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'
 };
 
-void user_input_test::test()
-{
-    PV2WayUtil::OutputInfo("----- Start %s test, is dtmf %d, proxy %d. ----- \n", iTestName.get_cstr(), iIsDTMF, iUseProxy);
-    PV2WayUtil::OutputInfo("\n** Test Number: %d. ** \n", iTestNum);
-    int error = 0;
-
-    scheduler = OsclExecScheduler::Current();
-
-    this->AddToScheduler();
-
-    if (start_async_test())
-    {
-        OSCL_TRY(error, scheduler->StartScheduler());
-        if (error != 0)
-        {
-            OSCL_LEAVE(error);
-        }
-    }
-
-    TestCompleted();
-    this->RemoveFromScheduler();
-}
-
-
-void user_input_test::Run()
-{
-    if (terminal)
-    {
-        if (iUseProxy)
-        {
-            CPV2WayProxyFactory::DeleteTerminal(terminal);
-        }
-        else
-        {
-            CPV2WayEngineFactory::DeleteTerminal(terminal);
-        }
-        terminal = NULL;
-    }
-
-    scheduler->StopScheduler();
-}
 
 void user_input_test::DoCancel()
 {

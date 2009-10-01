@@ -24,51 +24,34 @@
 class av_test : public test_base
 {
     public:
-        av_test(bool aUseProxy = false)
-                : test_base(aUseProxy, 1)
+        av_test(bool aUseProxy = false,
+                uint32 aTimeConnection = TEST_DURATION,
+                uint32 aMaxTestDuration = MAX_TEST_DURATION)
+                : test_base(aUseProxy, aTimeConnection, aMaxTestDuration, 1)
         {
             iUsingAudio = true;
             iUsingVideo = true;
-            inumCalled = 0;
             iTestName = _STRLIT_CHAR("av");
+            iAudioSourceAdded = false;
+            iAudioSinkAdded = false;
         }
 
         ~av_test()
         {
         }
 
-        void test();
-
-        void Run();
-
         void DoCancel();
+        void DisconnectSourceSinks();
 
+        virtual void TimeoutOccurred(int32 timerID, int32 timeoutInfo);
+        virtual void FinishTimerCallback();
 
-        virtual void TimerCallback();
-        void FinishTimerCallback();
     protected:
-        bool start_async_test();
-        bool CheckAllSourceAndSinkAdded();
-
-        int inumCalled;
+        virtual void AllNodesAdded();
+        virtual void AllNodesRemoved();
 
     private:
-        virtual void ConnectSucceeded();
-        virtual void InitFailed();
-        virtual void ConnectFailed();
-        virtual void AudioAddSinkSucceeded();
-        virtual void AudioAddSourceSucceeded();
-        virtual void VideoAddSinkSucceeded();
-        virtual void VideoAddSourceSucceeded();
-        virtual void RstCmdCompleted();
 
-        virtual void AudioRemoveSourceCompleted();
-        virtual void AudioRemoveSinkCompleted();
-
-        virtual void VideoRemoveSourceCompleted();
-        virtual void VideoRemoveSinkCompleted();
-
-        void CheckForTimeToDisconnect();
 };
 
 

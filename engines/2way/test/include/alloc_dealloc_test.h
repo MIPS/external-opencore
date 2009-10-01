@@ -24,12 +24,17 @@
 class alloc_dealloc_test : public test_base
 {
     public:
-        alloc_dealloc_test(bool aUseProxy, bool isSIP = false) :
-                test_base(aUseProxy, isSIP) {  };
+        alloc_dealloc_test(bool aUseProxy,
+                           uint32 aTimeConnection = TEST_DURATION,
+                           uint32 aMaxTestDuration = MAX_TEST_DURATION,
+                           bool isSIP = false) :
+                test_base(aUseProxy, aTimeConnection, aMaxTestDuration, isSIP)
+        {
+            iTestName = _STRLIT_CHAR("alloc dealloc");
+        };
 
         ~alloc_dealloc_test()
         {
-            iTestName = _STRLIT_CHAR("alloc dealloc");
         }
 
         void test();

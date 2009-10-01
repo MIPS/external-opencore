@@ -19,53 +19,16 @@
 #include "connect_cancel_test.h"
 
 
-void connect_cancel_test::test()
-{
-    PV2WayUtil::OutputInfo("----- Start %s test, proxy %d. ----- \n", iTestName.get_cstr(), iUseProxy);
-    PV2WayUtil::OutputInfo("\n** Test Number: %d. ** \n", iTestNum);
-    int error = 0;
-
-    scheduler = OsclExecScheduler::Current();
-
-    this->AddToScheduler();
-
-    if (start_async_test())
-    {
-        OSCL_TRY(error, scheduler->StartScheduler());
-        if (error != 0)
-        {
-            OSCL_LEAVE(error);
-        }
-    }
-
-    TestCompleted();
-    this->RemoveFromScheduler();
-}
-
-
-void connect_cancel_test::Run()
-{
-    if (terminal)
-    {
-        if (iUseProxy)
-        {
-            CPV2WayProxyFactory::DeleteTerminal(terminal);
-        }
-        else
-        {
-            CPV2WayEngineFactory::DeleteTerminal(terminal);
-        }
-        terminal = NULL;
-    }
-
-    scheduler->StopScheduler();
-}
 
 void connect_cancel_test::DoCancel()
 {
 }
 
-
+void connect_cancel_test::ConnectSucceeded()
+{
+    CancelTimers();
+    disconnect();
+}
 
 void connect_cancel_test::InitSucceeded()
 {
@@ -79,9 +42,6 @@ void connect_cancel_test::InitSucceeded()
     }
 }
 
-void connect_cancel_test::InitFailed()
-{
-}
 
 void connect_cancel_test::ConnectCancelled()
 {

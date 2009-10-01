@@ -239,7 +239,7 @@ void engine_test_suite::AddAcceptableFormatsTests(const bool aProxy,
         temp->AddExpectedFormat(OUTGOING, PV_VIDEO, PVMF_MIME_YUV420);
         adopt_test_case(temp);
     }
-    /*
+
     if (inRange(firstTest, lastTest))
     {
         // in   PCM
@@ -296,7 +296,7 @@ void engine_test_suite::AddAcceptableFormatsTests(const bool aProxy,
         temp->AddExpectedFormat(INCOMING, PV_VIDEO, PVMF_MIME_YUV420);
         temp->AddExpectedFormat(OUTGOING, PV_VIDEO, PVMF_MIME_YUV420);
         adopt_test_case(temp);
-    }*/
+    }
 
     /////////////////////// video configurations //////////////////////////////////
     if (inRange(firstTest, lastTest))
@@ -417,6 +417,7 @@ void engine_test_suite::AddNegotiatedFormatsTests(const bool aProxy,
         int32 firstTest,
         int32 lastTest)
 {
+
     if (inRange(firstTest, lastTest))
     {
         // in AMR_IF2, PCM
@@ -475,7 +476,7 @@ void engine_test_suite::AddNegotiatedFormatsTests(const bool aProxy,
         temp->AddExpectedFormat(OUTGOING, PV_VIDEO, PVMF_MIME_YUV420);
         adopt_test_case(temp);
     }
-    /*
+
     if (inRange(firstTest, lastTest))
     {
         // in   PCM
@@ -534,7 +535,6 @@ void engine_test_suite::AddNegotiatedFormatsTests(const bool aProxy,
         temp->AddExpectedFormat(OUTGOING, PV_VIDEO, PVMF_MIME_YUV420);
         adopt_test_case(temp);
     }
-    */
 
     /////////////////////// video configurations //////////////////////////////////
     if (inRange(firstTest, lastTest))
@@ -1115,8 +1115,16 @@ int local_main(FILE* filehandle, cmd_line *command_line)
     global_cmd_line = command_line;
 
     PV2WayUtil::SetFileHandle(filehandle);
-    PV2WayUtil::OutputInfo("Test Program for PV Engine class.\n");
 
+    PV2WayUtil::OutputInfo("Test Program for PV Engine class.\n");
+    /*!
+       Step 1: Initialization
+       Call all necessary PV SDK Initialization functions
+
+       Step 1a: Initialization
+       Includes initializing OsclBase, OsclMem and PVLogger
+       File: engines\2way\src\pv_2way_engine_factory.cpp
+    */
     CPV2WayEngineFactory::Init();
 #ifndef OSCL_BYPASS_MEMMGT
 #ifndef NDEBUG
@@ -1302,15 +1310,18 @@ int start_test()
     //this will clear all the private members of test_result
     TestResult->delete_contents();
 #ifndef LIP_SYNC_TESTING
-    temp = start_test1(TestResult);
-    if (temp != 0)
-        result = temp;
-    temp = start_test2(TestResult);
-    if (temp != 0)
-        result = temp;
-    temp = start_test3(TestResult);
-    if (temp != 0)
-        result = temp;
+    //for (uint i = 0; i < 1000; ++i)
+    {
+        temp = start_test1(TestResult);
+        if (temp != 0)
+            result = temp;
+        temp = start_test2(TestResult);
+        if (temp != 0)
+            result = temp;
+        temp = start_test3(TestResult);
+        if (temp != 0)
+            result = temp;
+    }
 #else
     temp = start_test4(TestResult);
     if (temp != 0)

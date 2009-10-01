@@ -17,6 +17,25 @@
  */
 #include "engine_test.h"
 
+
+void engine_test::reset()
+{
+    int error = 0;
+    cleanup();
+    /*!
+
+      Step 12: Cleanup
+      Step 12c: Reset
+      Reset the terminal
+    */
+    OSCL_TRY(error, iRstCmdId = terminal->Reset());
+    if (error)
+    {
+        // print out that there was an error resetting.
+        PV2WayUtil::OutputInfo("\n** Error in Reset **** \n");
+    }
+}
+
 void engine_test::create_comm()
 {
 #ifndef NO_2WAY_324

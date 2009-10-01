@@ -18,30 +18,11 @@
 #include "basic_lipsync_test.h"
 
 
-#define RENDER_DURATION 60000000
+#define RENDER_DURATION 60  // in seconds
 
 void basic_lipsync_test::test()
 {
-    PV2WayUtil::OutputInfo("\n-------- Start %s test --------\n", iTestName.get_cstr());
-    PV2WayUtil::OutputInfo("\n** Test Number: %d. ** \n", iTestNum);
-    PV2WayUtil::OutputInfo("\nSETTINGS:\nProxy %d", iUseProxy);
-    iSourceAndSinks->PrintFormatTypes();
-    PV2WayUtil::OutputInfo("\n----------------------------------\n");
-    int error = 0;
-
-    scheduler = OsclExecScheduler::Current();
-
-    this->AddToScheduler();
-
-    if (start_async_test())
-    {
-        OSCL_TRY(error, scheduler->StartScheduler());
-        if (error != 0)
-        {
-            OSCL_LEAVE(error);
-        }
-    }
-    this->RemoveFromScheduler();
+    test_base::test();
     iShareParams->Destroy();
 }
 
@@ -62,39 +43,42 @@ void basic_lipsync_test::Run()
         terminal = NULL;
     }
 
-    if (timer)
+    if (icount == 0)
     {
-        if (icount == 0)
-        {
-            PV2WayUtil::OutputInfo("\n Not able to calculate the RMS value as count value is zero %d\n", icount);
-        }
-        else
-        {
-            iRtMnSq = (float)sqrt(iSqrVidAudTS / icount);
-            PV2WayUtil::OutputInfo("\n Root Mean Square value of lipsync delta on application side is %fsec\n", iRtMnSq);
-            delete timer;
-            timer = NULL;
-        }
+        PV2WayUtil::OutputInfo("\n Not able to calculate the RMS value as count value is zero %d\n", icount);
+    }
+    else
+    {
+        iRtMnSq = (float)sqrt(iSqrVidAudTS / icount);
+        PV2WayUtil::OutputInfo("\n Root Mean Square value of lipsync delta on application side is %fsec\n", iRtMnSq);
     }
 
     scheduler->StopScheduler();
 
 }
 
-void basic_lipsync_test::TimerCallback()
+void basic_lipsync_test::TimeoutOccurred(int32 timerID, int32 timeoutInfo)
 {
-
-    if (!iRenderStarted)
+    if (timerID == iTimerConnectionID)
     {
         PV2WayUtil::OutputInfo("\n-------- Basic lipsync test stats--------\n");
         PV2WayUtil::OutputInfo("\n------------------------------------------\n");
-        timer->RunIfNotReady(RENDER_DURATION);
-        iRenderStarted = true;
-        return;
+        timer->Request(iTimerRender, iTimeoutInfoRender, RENDER_DURATION);
     }
-
-
-    av_test::TimerCallback();
+    else if (timerID == iTimerTestTimeoutID)
+    {
+        timer->Cancel(iTimerConnectionID);
+        timer->Cancel(iTimerRender);
+        PV2WayUtil::OutputInfo("\n Test ran out of time.  Max time: %d \n", iMaxTestDuration);
+        test_is_true(false);
+        // cleanup because we are unsuccessful
+        DisconnectSourceSinks();
+    }
+    else if (timerID == iTimerRender)
+    {
+        timer->Cancel(iTimerTestTimeoutID);
+        DisconnectSourceSinks();
+    }
 }
 
 void basic_lipsync_test::MIOFramesTSUpdate(bool aIsAudio, uint32 aRenderTS)

@@ -29,109 +29,23 @@
 #define TRADEOFF_VALUE_2 10
 
 
-void video_only_test::test()
-{
-    PV2WayUtil::OutputInfo("\n-------- Start %s test -------- ", iTestName.get_cstr());
-    PV2WayUtil::OutputInfo("\n** Test Number: %d. ** \n", iTestNum);
-    PV2WayUtil::OutputInfo("\nSETTINGS:\nProxy %d", iUseProxy);
-    iSourceAndSinks->PrintFormatTypes();
-    PV2WayUtil::OutputInfo("\n----------------------------------\n");
 
-    int error = 0;
-
-    scheduler = OsclExecScheduler::Current();
-
-    this->AddToScheduler();
-
-    if (start_async_test())
-    {
-        OSCL_TRY(error, scheduler->StartScheduler());
-        if (error != 0)
-        {
-            OSCL_LEAVE(error);
-        }
-    }
-
-    TestCompleted();
-    this->RemoveFromScheduler();
-}
-
-
-void video_only_test::Run()
-{
-    if (terminal)
-    {
-        if (iUseProxy)
-        {
-            CPV2WayProxyFactory::DeleteTerminal(terminal);
-        }
-        else
-        {
-            CPV2WayEngineFactory::DeleteTerminal(terminal);
-        }
-        terminal = NULL;
-    }
-
-    if (timer)
-    {
-        OSCL_DELETE(timer);
-        timer = NULL;
-    }
-
-    scheduler->StopScheduler();
-}
 
 void video_only_test::DoCancel()
 {
 }
 
 
-void video_only_test::H324MConfigCommandCompletedL(PVMFCmdResp& aResponse)
+void video_only_test::AllVideoNodesAdded()
 {
-    OSCL_UNUSED_ARG(aResponse);
-}
-
-void video_only_test::H324MConfigHandleInformationalEventL(PVMFAsyncEvent& aEvent)
-{
-    OSCL_UNUSED_ARG(aEvent);
-}
-
-void video_only_test::DoStuffWithH324MConfig()
-{
-    H324MConfigInterface * t324Interface = (H324MConfigInterface *)iH324MConfig;
-    t324Interface->SetObserver(this);
-    iEncIFCommandId = terminal->QueryInterface(PVMp4H263EncExtensionUUID, iVidEncIFace);
-}
-
-void video_only_test::VideoAddSinkSucceeded()
-{
-    iVideoSinkAdded = true;
-    if (iVideoSourceAdded)
-    {
-        VideoNodesAdded();
-    }
-}
-
-void video_only_test::VideoNodesAdded()
-{
-    if (iH324MConfig == NULL)
-    {
-        printf("\n*************** Test FAILED: could not set stack config (after video add sink) *************** \n");
-        test_is_true(false);
-        disconnect();
-    }
-    DoStuffWithH324MConfig();
-    timer->RunIfNotReady(TEST_DURATION);
     test_is_true(true);
+    LetConnectionRun();
 }
 
-void video_only_test::VideoAddSourceSucceeded()
+void video_only_test::AllVideoNodesRemoved()
 {
-    iVideoSourceAdded = true;
-    if (iVideoSinkAdded)
-    {
-        VideoNodesAdded();
-    }
+    PV2WayUtil::OutputInfo("\nTime to disconnect \n");
+    disconnect();
 }
 
 void video_only_test::VideoAddSourceFailed()
@@ -148,17 +62,6 @@ void video_only_test::VideoAddSourceFailed()
     disconnect();
 }
 
-void video_only_test::EncoderIFSucceeded()
-{
-    PVMp4H263EncExtensionInterface *iface = (PVMp4H263EncExtensionInterface *)iVidEncIFace;
-    iface->RequestIFrame();
-}
-
-void video_only_test::EncoderIFFailed()
-{
-    EncoderIFSucceeded();
-}
-
 void video_only_test::DisCmdFailed()
 {
     DisCmdSucceeded();
@@ -167,38 +70,12 @@ void video_only_test::DisCmdFailed()
 void video_only_test::DisCmdSucceeded()
 {
     printf("Finished disconnecting \n");
-    if (iH324MConfig)
-        iH324MConfig->removeRef();
-    iH324MConfig = NULL;
     reset();
 }
 
-void video_only_test::InitFailed()
-{
-    printf("\n*************** Test FAILED: Init Failed *************** \n");
-    test_is_true(false);
-    test_base::InitFailed();
-}
-
-void video_only_test::ConnectSucceeded()
-{
-}
-
-void video_only_test::ConnectFailed()
-{
-}
-
-void video_only_test::TimerCallback()
+void video_only_test::FinishTimerCallback()
 {
     int error = 1;
-
-    if (!iVideoSourceAdded || !iVideoSinkAdded)
-    {
-        // not finished yet
-        // wait longer
-        timer->RunIfNotReady(TEST_DURATION);
-        return;
-    }
 
     OSCL_TRY(error, iVideoRemoveSourceId = iSourceAndSinks->RemoveVideoSource());
     if (error)
@@ -207,22 +84,14 @@ void video_only_test::TimerCallback()
         test_is_true(false);
         disconnect();
     }
-
-}
-
-bool video_only_test::start_async_test()
-{
-    timer = OSCL_NEW(engine_timer, (this));
-    if (timer == NULL)
+    OSCL_TRY(error, iVideoRemoveSinkId = iSourceAndSinks->RemoveVideoSink());
+    if (error)
     {
-        printf("\n*************** Test FAILED: timer could not be created *************** \n");
+        PV2WayUtil::OutputInfo("\n*************** Test FAILED: error removing video sink *************** \n");
         test_is_true(false);
-        return false;
+        disconnect();
     }
-    timer->AddToScheduler();
 
-
-    return test_base::start_async_test();
 }
 
 

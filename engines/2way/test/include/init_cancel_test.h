@@ -24,8 +24,11 @@
 class init_cancel_test : public test_base
 {
     public:
-        init_cancel_test(bool aUseProxy, bool isSIP = false) :
-                test_base(aUseProxy, isSIP)
+        init_cancel_test(bool aUseProxy,
+                         uint32 aTimeConnection = TEST_DURATION,
+                         uint32 aMaxTestDuration = MAX_TEST_DURATION,
+                         bool isSIP = false) :
+                test_base(aUseProxy, aTimeConnection, aMaxTestDuration, isSIP)
         {
             iRstCmdId  = iInitCmdId = iCnclCmdId = 0;
             iTestName = _STRLIT_CHAR("init cancel");
@@ -37,7 +40,6 @@ class init_cancel_test : public test_base
 
         void test();
 
-        void Run();
 
         void DoCancel();
 

@@ -21,61 +21,18 @@
 #include "pvmp4h263encextension.h"
 
 
-void connect_test::test()
-{
-    if (iRunTimerTest)
-    {
-        iTestName = _STRLIT_CHAR("timer configuration and encoder extension IF");
-    }
-    else
-    {
-        iTestName = _STRLIT_CHAR("connect");
-    }
-    PV2WayUtil::OutputInfo("----- Start %s test, num runs %d, proxy %d. ----- \n", iTestName.get_cstr(), iMaxRuns, iUseProxy);
-    PV2WayUtil::OutputInfo("\n** Test Number: %d. ** \n", iTestNum);
-    int error = 0;
 
-    scheduler = OsclExecScheduler::Current();
-
-    this->AddToScheduler();
-
-    if (start_async_test())
-    {
-        OSCL_TRY(error, scheduler->StartScheduler());
-        if (error != 0)
-        {
-            OSCL_LEAVE(error);
-        }
-    }
-
-    TestCompleted();
-    this->RemoveFromScheduler();
-}
-
-
-void connect_test::Run()
-{
-    if (terminal)
-    {
-        if (iUseProxy)
-        {
-            CPV2WayProxyFactory::DeleteTerminal(terminal);
-        }
-        else
-        {
-            CPV2WayEngineFactory::DeleteTerminal(terminal);
-        }
-        terminal = NULL;
-    }
-
-    scheduler->StopScheduler();
-}
 
 void connect_test::DoCancel()
 {
 }
 
-
+void connect_test::ConnectSucceeded()
+{
+    CancelTimers();
+    test_is_true(true);
+    disconnect();
+}
 
 void connect_test::InitSucceeded()
 {
@@ -102,12 +59,6 @@ void connect_test::InitSucceeded()
         test_is_true(false);
         reset();
     }
-}
-
-void connect_test::InitFailed()
-{
-    test_is_true(false);
-    test_base::InitFailed();
 }
 
 void connect_test::EncoderIFSucceeded()

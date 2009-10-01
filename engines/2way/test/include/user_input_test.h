@@ -24,19 +24,19 @@
 class user_input_test : public test_base
 {
     public:
-        user_input_test(bool aUseProxy, bool aIsDTMF) :
-                test_base(aUseProxy),
+        user_input_test(bool aUseProxy, bool aIsDTMF,
+                        uint32 aTimeConnection = TEST_DURATION,
+                        uint32 aMaxTestDuration = MAX_TEST_DURATION) :
+                test_base(aUseProxy, aTimeConnection, aMaxTestDuration),
                 iIsDTMF(aIsDTMF)
-        {};
+        {
+            iTestName = _STRLIT_CHAR("user input");
+        };
 
         ~user_input_test()
         {
-            iTestName = _STRLIT_CHAR("user input");
         }
 
-        void test();
-
-        void Run();
 
         void DoCancel();
 

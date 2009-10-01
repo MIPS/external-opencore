@@ -100,34 +100,6 @@ class engine_test_suite : public test_case
                                   const bool aHasVideo);
 };
 
-class engine_timer;
-
-
-class engine_timer : public OsclTimerObject
-{
-    public:
-        engine_timer(engine_test *aObserver) : OsclTimerObject(OsclActiveObject::EPriorityNominal, "Test Engine Timer"),
-                iObserver(aObserver)
-        {};
-
-        ~engine_timer()
-        {
-            Cancel();
-        }
-
-    protected:
-        void Run()
-        {
-            iObserver->TimerCallback();
-        }
-        void DoCancel()
-        {
-            OsclTimerObject::DoCancel();
-        };
-
-        engine_test *iObserver;
-
-};
 
 
 

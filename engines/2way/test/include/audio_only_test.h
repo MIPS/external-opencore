@@ -23,12 +23,16 @@
 class audio_only_test : public test_base
 {
     public:
-        audio_only_test(bool aUseProxy)
-                : test_base(aUseProxy)
+        audio_only_test(bool aUseProxy,
+                        uint32 aTimeConnection = TEST_DURATION,
+                        uint32 aMaxTestDuration = MAX_TEST_DURATION)
+                : test_base(aUseProxy, aTimeConnection, aMaxTestDuration)
 
         {
             iUsingAudio = true;
             iTestName = _STRLIT_CHAR("audio only");
+            iAudioSourceAdded = false;
+            iAudioSinkAdded = false;
         };
 
         ~audio_only_test()
@@ -36,21 +40,15 @@ class audio_only_test : public test_base
         }
 
 
-        void test();
-
-        void Run();
-
         void DoCancel();
 
-
-        void TimerCallback();
+    protected:
+        virtual void FinishTimerCallback();
+        virtual void AllAudioNodesAdded();
+        virtual void AllAudioNodesRemoved();
 
 
     private:
-        virtual void ConnectSucceeded();
-        virtual void ConnectFailed();
-        bool start_async_test();
-        bool isFirstSink, isFirstSrc;
 };
 
 

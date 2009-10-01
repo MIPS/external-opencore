@@ -24,17 +24,19 @@
 class init_test : public test_base
 {
     public:
-        init_test(bool aUseProxy, int aMaxRuns, bool isSIP = false) :
-                test_base(aUseProxy, aMaxRuns, isSIP) {  };
+        init_test(bool aUseProxy, int aMaxRuns,
+                  uint32 aTimeConnection = TEST_DURATION,
+                  uint32 aMaxTestDuration = MAX_TEST_DURATION,
+                  bool isSIP = false) :
+                test_base(aUseProxy, aTimeConnection, aMaxTestDuration, aMaxRuns, isSIP)
+        {
+            iTestName = _STRLIT_CHAR("init");
+        };
 
         ~init_test()
         {
-            iTestName = _STRLIT_CHAR("init");
         }
 
-        void test();
-
-        void Run();
 
         void DoCancel();
 

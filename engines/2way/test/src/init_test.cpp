@@ -18,49 +18,6 @@
 #include "init_test.h"
 
 
-
-void init_test::test()
-{
-    PV2WayUtil::OutputInfo("----- Start %s test, num runs %d, proxy %d. ----- \n", iTestName.get_cstr(), iMaxRuns, iUseProxy);
-    PV2WayUtil::OutputInfo("\n** Test Number: %d. ** \n", iTestNum);
-    int error = 0;
-
-    scheduler = OsclExecScheduler::Current();
-
-    this->AddToScheduler();
-
-    if (start_async_test())
-    {
-        OSCL_TRY(error, scheduler->StartScheduler());
-        if (error != 0)
-        {
-            OSCL_LEAVE(error);
-        }
-    }
-
-    TestCompleted();
-    this->RemoveFromScheduler();
-}
-
-
-void init_test::Run()
-{
-    if (terminal)
-    {
-        if (iUseProxy)
-        {
-            CPV2WayProxyFactory::DeleteTerminal(terminal);
-        }
-        else
-        {
-            CPV2WayEngineFactory::DeleteTerminal(terminal);
-        }
-        terminal = NULL;
-    }
-
-    scheduler->StopScheduler();
-}
-
 void init_test::DoCancel()
 {
 }
@@ -75,6 +32,7 @@ void init_test::InitSucceeded()
     if (error)
     {
         test_is_true(false);
+        CancelTimers();
         RunIfNotReady();
     }
     else
@@ -89,6 +47,7 @@ void init_test::InitSucceeded()
 void init_test::InitFailed()
 {
     test_is_true(false);
+    CancelTimers();
     RunIfNotReady();
 }
 

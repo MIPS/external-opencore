@@ -24,24 +24,24 @@
 class connect_cancel_test : public test_base
 {
     public:
-        connect_cancel_test(bool aUseProxy) :
-                test_base(aUseProxy) {};
+        connect_cancel_test(bool aUseProxy,
+                            uint32 aTimeConnection = TEST_DURATION,
+                            uint32 aMaxTestDuration = MAX_TEST_DURATION) :
+                test_base(aUseProxy, aTimeConnection, aMaxTestDuration)
+        {
+            iTestName = _STRLIT_CHAR("connect cancel");
+        };
 
         ~connect_cancel_test()
         {
-            iTestName = _STRLIT_CHAR("connect cancel");
         }
-
-        void test();
-
-        void Run();
 
         void DoCancel();
 
 
     private:
+        virtual void ConnectSucceeded();
         virtual void InitSucceeded();
-        virtual void InitFailed();
         virtual void ConnectCancelled();
         virtual void DisCmdSucceeded();
         virtual void DisCmdFailed();

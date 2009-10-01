@@ -33,8 +33,10 @@
 class acceptable_formats_test : public av_test
 {
     public:
-        acceptable_formats_test(bool aUseProxy = false)
-                : av_test(aUseProxy)
+        acceptable_formats_test(bool aUseProxy = false,
+                                uint32 aTimeConnection = TEST_DURATION,
+                                uint32 aMaxTestDuration = MAX_TEST_DURATION)
+                : av_test(aUseProxy, aTimeConnection, aMaxTestDuration)
         {
             iTestName = _STRLIT_CHAR("acceptable formats");
         }
@@ -46,17 +48,15 @@ class acceptable_formats_test : public av_test
         // need to store the expected formats that we'll find
         void AddExpectedFormat(TPVDirection aDir, PV2WayMediaType aType, const char* const aFormat);
 
-        void RstCmdCompleted();
 
     protected:
-        void test();
+        void AllNodesAdded();
 
     private:
-        void TimerCallback();
+        virtual void FinishTimerCallback();
 
         void CommandCompleted(const PVCmdResponse& aResponse);
         void CreateParts();
-        virtual void ConnectSucceeded();
 
         Oscl_Vector<FormatCapabilityInfo, OsclMemAllocator> iInAudFormatCapability;
         Oscl_Vector<FormatCapabilityInfo, OsclMemAllocator> iOutAudFormatCapability;

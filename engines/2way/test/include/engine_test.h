@@ -57,11 +57,10 @@
 #include "test_utility.h"
 #endif
 
-class engine_timer;
-
 
 class engine_test : public test_case,
         public OsclActiveObject,
+        public OsclTimerObserver,
         public PVCommandStatusObserver,
         public PVInformationalEventObserver,
         public PVErrorEventObserver
@@ -104,10 +103,7 @@ class engine_test : public test_case,
                 iDuplicatesStarted(false),
                 terminal(NULL),
                 scheduler(NULL),
-                timer(NULL),
-                timer_elapsed(false),
-                early_close(false),
-                iTestStatus(true)
+                timer(NULL)
         {
             iConnectOptions.iLoopbackMode = PV_LOOPBACK_COMM; //PV_LOOPBACK_MUX;
             iRstCmdId = 0;
@@ -135,7 +131,7 @@ class engine_test : public test_case,
 
         virtual void CommandCompleted(const PVCmdResponse& aResponse) = 0;
 
-        virtual void TimerCallback() {};
+        virtual void TimeoutOccurred(int32 timerID, int32 timeoutInfo) = 0;
 
         PV2Way324InitInfo& GetSdkInfo()
         {
@@ -169,22 +165,8 @@ class engine_test : public test_case,
             destroy_comm();
         }
 
-        virtual void reset()
-        {
-            int error = 0;
-            cleanup();
-            /*!
+        virtual void reset();
 
-              Step 12: Cleanup
-              Step 12c: Reset
-              Reset the terminal
-            */
-            OSCL_TRY(error, iRstCmdId = terminal->Reset());
-            if (error)
-            {
-                RunIfNotReady();
-            }
-        }
 
         virtual void connect()
         {
@@ -275,12 +257,7 @@ class engine_test : public test_case,
         bool iDuplicatesStarted;
         CPV2WayInterface *terminal;
         OsclExecScheduler *scheduler;
-        engine_timer *timer;
-        bool timer_elapsed;
-        bool early_close;
-
-
-        bool iTestStatus;
+        OsclTimer<OsclMemAllocator> *timer;
 };
 
 

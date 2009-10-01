@@ -17,53 +17,15 @@
  */
 #include "negotiated_formats_test.h"
 
-void negotiated_formats_test::test()
+void negotiated_formats_test::AllNodesAdded()
 {
-    PV2WayUtil::OutputInfo("\n-------- Start %s test --------\n", iTestName.get_cstr());
-    PV2WayUtil::OutputInfo("\n** Test Number: %d. ** \n", iTestNum);
-    PV2WayUtil::OutputInfo("\nSETTINGS:\nProxy %d", iUseProxy);
-    iSourceAndSinks->PrintFormatTypes();
-    PV2WayUtil::OutputInfo("\n----------------------------------\n");
-    int error = 0;
-
-    scheduler = OsclExecScheduler::Current();
-
-    this->AddToScheduler();
-
-    if (start_async_test())
-    {
-        OSCL_TRY(error, scheduler->StartScheduler());
-        if (error != 0)
-        {
-            OSCL_LEAVE(error);
-        }
-    }
-    TestCompleted();
-    this->RemoveFromScheduler();
+    LetConnectionRun();
 }
 
 
-void negotiated_formats_test::TimerCallback()
+void negotiated_formats_test::FinishTimerCallback()
 {
-    if (inumCalled > 5)
-    {
-        PV2WayUtil::OutputInfo("\n Giving up waiting for process to finish \n");
-        iTestStatus = false;
-        DoCancel();
-        return;
-    }
-    inumCalled++;
-
     bool pass = false;
-    if (!iAudioSourceAdded ||
-            !iAudioSinkAdded ||
-            !iVideoSourceAdded ||
-            !iVideoSinkAdded)
-    {
-        // wait longer
-        timer->RunIfNotReady(TEST_DURATION);
-        return;
-    }
 
     // compare values to what we are expecting
     if (iTestConfigInterface)
@@ -80,48 +42,10 @@ void negotiated_formats_test::TimerCallback()
     test_is_true(pass);
 
 
-    int error = 0;
-    PV2WayUtil::OutputInfo("\nRemoving source and sinks \n");
-    OSCL_TRY(error, iVideoRemoveSourceId = iSourceAndSinks->RemoveVideoSource());
-    if (error)
-    {
-        iTestStatus &= false;
-        disconnect();
-    }
-    else
-    {
-        error = 1;
-        OSCL_TRY(error, iVideoRemoveSinkId = iSourceAndSinks->RemoveVideoSink());
-        if (error)
-        {
-            iTestStatus &= false;
-            disconnect();
-        }
-    }
-
-    OSCL_TRY(error, iAudioRemoveSourceId = iSourceAndSinks->RemoveAudioSource());
-    if (error)
-    {
-        iTestStatus &= false;
-        disconnect();
-    }
-    else
-    {
-        error = 1;
-        OSCL_TRY(error, iAudioRemoveSinkId = iSourceAndSinks->RemoveAudioSink());
-        if (error)
-        {
-            iTestStatus &= false;
-            disconnect();
-        }
-    }
+    DisconnectSourceSinks();
 
 }
 
-void negotiated_formats_test::RstCmdCompleted()
-{
-    test_base::RstCmdCompleted();
-}
 
 //
 //
@@ -167,11 +91,6 @@ void negotiated_formats_test::AddExpectedFormat(TPVDirection aDir,
     }
 }
 
-void negotiated_formats_test::ConnectSucceeded()
-{
-
-}
-
 void negotiated_formats_test::CreateParts()
 {
     // Get test extension interface handle
@@ -185,7 +104,6 @@ void negotiated_formats_test::CommandCompleted(const PVCmdResponse& aResponse)
     PVCommandId cmdId = aResponse.GetCmdId();
     if (cmdId < 0)
         return;
-    iTestStatus &= (aResponse.GetCmdStatus() == PVMFSuccess) ? true : false;
 
     if (iQueryTestInterfaceCmdId == cmdId)
     {

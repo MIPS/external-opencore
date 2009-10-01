@@ -18,91 +18,31 @@
 #include "audio_only_test.h"
 
 
-void audio_only_test::test()
-{
-    PV2WayUtil::OutputInfo("\n-------- Start %s test --------\n", iTestName.get_cstr());
-    PV2WayUtil::OutputInfo("\n** Test Number: %d. ** \n", iTestNum);
-    PV2WayUtil::OutputInfo("\nSETTINGS:\nProxy %d", iUseProxy);
-    iSourceAndSinks->PrintFormatTypes();
-    PV2WayUtil::OutputInfo("\n-------------------------------------\n");
-
-    int error = 0;
-
-    scheduler = OsclExecScheduler::Current();
-
-    this->AddToScheduler();
-
-    if (start_async_test())
-    {
-        OSCL_TRY(error, scheduler->StartScheduler());
-        if (error != 0)
-        {
-            PV2WayUtil::OutputInfo("\n*************** Test FAILED: error starting scheduler *************** \n");
-            test_is_true(false);
-            OSCL_LEAVE(error);
-        }
-    }
-
-    test_is_true(iTestStatus);
-    TestCompleted();
-    this->RemoveFromScheduler();
-}
-
-
-void audio_only_test::Run()
-{
-    if (terminal)
-    {
-        if (iUseProxy)
-        {
-            CPV2WayProxyFactory::DeleteTerminal(terminal);
-        }
-        else
-        {
-            CPV2WayEngineFactory::DeleteTerminal(terminal);
-        }
-        terminal = NULL;
-    }
-
-    if (timer)
-    {
-        OSCL_DELETE(timer);
-        timer = NULL;
-    }
-
-    scheduler->StopScheduler();
-}
 
 void audio_only_test::DoCancel()
 {
 }
 
-void audio_only_test::ConnectSucceeded()
+void audio_only_test::AllAudioNodesAdded()
 {
+    test_is_true(true);
+    LetConnectionRun();
 }
 
-void audio_only_test::ConnectFailed()
+void audio_only_test::AllAudioNodesRemoved()
 {
-    reset();
+    PV2WayUtil::OutputInfo("\nTime to disconnect \n");
+    disconnect();
 }
 
 
-void audio_only_test::TimerCallback()
+void audio_only_test::FinishTimerCallback()
 {
     int error = 1;
-    if (!iAudioSourceAdded || !iAudioSinkAdded)
-    {
-        // not finished yet
-        // wait longer
-        timer->RunIfNotReady(TEST_DURATION);
-        return;
-    }
-    timer_elapsed = true;
     OSCL_TRY(error, iAudioRemoveSourceId = iSourceAndSinks->RemoveAudioSource());
     if (error)
     {
         PV2WayUtil::OutputInfo("\n*************** Test FAILED: error removing audio source *************** \n");
-        iTestStatus &= false;
         disconnect();
     }
     else
@@ -112,33 +52,9 @@ void audio_only_test::TimerCallback()
         if (error)
         {
             PV2WayUtil::OutputInfo("\n*************** Test FAILED: error removing audio sink *************** \n");
-            iTestStatus &= false;
             disconnect();
         }
     }
 
 }
-
-
-bool audio_only_test::start_async_test()
-{
-    timer = OSCL_NEW(engine_timer, (this));
-    if (timer == NULL)
-    {
-        PV2WayUtil::OutputInfo("\n*************** Test FAILED: could not create timer *************** \n");
-        iTestStatus &= false;
-        return false;
-    }
-
-    iAudioSourceAdded = false;
-    iAudioSinkAdded = false;
-    isFirstSink = true;
-    isFirstSrc = true;
-
-    timer->AddToScheduler();
-
-
-    return test_base::start_async_test();
-}
-
 

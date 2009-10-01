@@ -26,16 +26,19 @@ class basic_lipsync_test : public av_test,
         public LipSyncDummyMIOObserver
 {
     public:
-        basic_lipsync_test(bool aUseProxy = false)
-                : av_test(aUseProxy)
+        basic_lipsync_test(bool aUseProxy = false,
+                           uint32 aTimeConnection = TEST_DURATION,
+                           uint32 aMaxTestDuration = MAX_TEST_DURATION*2)
+                : av_test(aUseProxy, aTimeConnection, aMaxTestDuration)
                 , iCurrentVideoTS(0)
                 , iCurrentAudioTS(0)
                 , iDiffVidAudTS(0)
-                ,  iSqrVidAudTS(0)
-                ,  icount(0)
-                ,  iRtMnSq(0)
-                , iRenderStarted(false)
+                , iSqrVidAudTS(0)
+                , icount(0)
+                , iRtMnSq(0)
                 , iAudioPresent(false)
+                , iTimerRender(3)
+                , iTimeoutInfoRender(0)
         {
             iTestName = _STRLIT_CHAR("basic lipsync");
         }
@@ -49,7 +52,8 @@ class basic_lipsync_test : public av_test,
 
         void Run();
 
-        void TimerCallback();
+    protected:
+        virtual void TimeoutOccurred(int32 timerID, int32 timeoutInfo);
 
     private:
         void MIOFramesTSUpdate(bool aIsAudio, uint32 aTS);
@@ -59,9 +63,10 @@ class basic_lipsync_test : public av_test,
         float iSqrVidAudTS;
         int32 icount;
         float iRtMnSq;
-        bool iRenderStarted;
         bool  iAudioPresent;
         ShareParams* iShareParams;
+        int32 iTimerRender;
+        int32 iTimeoutInfoRender;
 };
 
 

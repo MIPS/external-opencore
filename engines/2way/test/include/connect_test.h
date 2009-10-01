@@ -24,25 +24,34 @@
 class connect_test : public test_base
 {
     public:
-        connect_test(bool aUseProxy, int aMaxRuns, bool runTimerTest = false) :
-                test_base(aUseProxy, aMaxRuns) ,
+        connect_test(bool aUseProxy, int aMaxRuns,
+                     uint32 aTimeConnection = TEST_DURATION,
+                     uint32 aMaxTestDuration = MAX_TEST_DURATION,
+                     bool runTimerTest = false) :
+                test_base(aUseProxy, aTimeConnection, aMaxTestDuration, aMaxRuns),
                 iRunTimerTest(runTimerTest),
-                iMP4H263EncoderInterface(NULL) {};
+                iMP4H263EncoderInterface(NULL)
+        {
+            if (iRunTimerTest)
+            {
+                iTestName = _STRLIT_CHAR("timer configuration and encoder extension IF");
+            }
+            else
+            {
+                iTestName = _STRLIT_CHAR("connect");
+            }
+        };
 
         ~connect_test()
         {
-            iTestName = _STRLIT_CHAR("connect");
         }
 
-        void test();
-
-        void Run();
 
         void DoCancel();
 
     private:
+        virtual void ConnectSucceeded();
         virtual void InitSucceeded();
-        virtual void InitFailed();
         virtual void EncoderIFSucceeded();
         virtual void EncoderIFFailed();
         virtual void ConnectFailed();

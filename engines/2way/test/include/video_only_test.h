@@ -24,8 +24,10 @@
 class video_only_test : public test_base
 {
     public:
-        video_only_test(bool aUseProxy = false)
-                : test_base(aUseProxy),
+        video_only_test(bool aUseProxy = false,
+                        uint32 aTimeConnection = TEST_DURATION,
+                        uint32 aMaxTestDuration = MAX_TEST_DURATION)
+                : test_base(aUseProxy, aTimeConnection, aMaxTestDuration),
                 iTradeOffCmd(0),
                 iIncomingVideo(0)
 
@@ -38,34 +40,19 @@ class video_only_test : public test_base
         {
         }
 
-        void test();
-
-        void Run();
-
         void DoCancel();
 
 
-        void TimerCallback();
-
-        void H324MConfigCommandCompletedL(PVMFCmdResp& aResponse);
-
-        void H324MConfigHandleInformationalEventL(PVMFAsyncEvent& aNotification);
+        void FinishTimerCallback();
 
     private:
-        void VideoNodesAdded();
-        void DoStuffWithH324MConfig();
-        virtual void VideoAddSinkSucceeded();
-        virtual void VideoAddSourceSucceeded();
+        virtual void AllVideoNodesAdded();
+        virtual void AllVideoNodesRemoved();
+
         virtual void VideoAddSourceFailed();
-        virtual void EncoderIFSucceeded();
-        virtual void EncoderIFFailed();
         virtual void DisCmdFailed();
         virtual void DisCmdSucceeded();
-        virtual void InitFailed();
-        virtual void ConnectSucceeded();
-        virtual void ConnectFailed();
-        bool start_async_test();
-        PVInterface *iVidEncIFace;
+
         PVCommandId i324mIFCommandId, iTradeOffCmd, iTradeOffInd, iEncIFCommandId;
         PVTrackId iIncomingVideo, iOutgoingVideo;
 };

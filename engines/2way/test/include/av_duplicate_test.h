@@ -24,17 +24,19 @@
 class av_duplicate_test : public test_base
 {
     public:
-        av_duplicate_test(bool aUseProxy, int aMaxRuns) :
-                test_base(aUseProxy, aMaxRuns) {};
+        av_duplicate_test(bool aUseProxy,
+                          int aMaxRuns,
+                          uint32 aTimeConnection = TEST_DURATION,
+                          uint32 aMaxTestDuration = MAX_TEST_DURATION) :
+                test_base(aUseProxy, aTimeConnection, aMaxTestDuration, aMaxRuns)
+        {
+            iTestName = _STRLIT_CHAR("a/v duplicate");
+        };
 
         ~av_duplicate_test()
         {
-            iTestName = _STRLIT_CHAR("a/v duplicate");
         }
 
-        void test();
-
-        void Run();
 
         void DoCancel();
 
@@ -42,7 +44,7 @@ class av_duplicate_test : public test_base
 
         void CommandCompletedL(const CPVCmnCmdResp& aResponse);
 
-        void TimerCallback();
+        virtual void TimeoutOccurred(int32 timerID, int32 timeoutInfo);
 
     private:
         void start_duplicates_if_ready();
