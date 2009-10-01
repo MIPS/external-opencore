@@ -152,7 +152,8 @@ typedef OSCL_String PvmfMimeString;
 #define PVMF_MIME_H223           "X-H223"
 #define PVMF_MIME_RTP            "X-RTP"
 #define PVMF_MIME_AMRFF          "X-AMR-FF"
-#define PVMF_MIME_AACFF          "X-AAC-FF"
+#define PVMF_MIME_AACFF          "X-AAC-FF"  //this only applies to ADIF and ADTS files
+#define PVMF_MIME_RAWAAC         "X-AAC-RAW" //this applies to "raw aac" files - config + bitstream
 #define PVMF_MIME_MP3FF          "X-MP3-FF"
 #define PVMF_MIME_WAVFF          "X-WAV-FF"
 #define PVMF_MIME_FLVFF          "x-pvmf/mux/flv"

@@ -99,7 +99,7 @@ class PVMFRecognizerPluginInterface
          **/
         virtual PVMFStatus Recognize(PVMFDataStreamFactory& aSourceDataStreamFactory,
                                      PVMFRecognizerMIMEStringList* aFormatHint,
-                                     Oscl_Vector<PVMFRecognizerResult, OsclMemAllocator>& aRecognizerResult) = 0;
+                                     PVMFRecognizerResult& aRecognizerResult) = 0;
 
         /**
          * This method returns the mininum required bytes in datastream for this plug-in

@@ -3115,14 +3115,14 @@ void pvplayer_engine_test::test()
 
             case AACRawFileOpenPlayStopTest:
                 testparam.iFileName = LOCAL_TEST_FILE_AAC_RAW;
-                testparam.iFileType = LOCAL_TEST_FILE_AAC_FORMAT_TYPE;
+                testparam.iFileType = PVMF_MIME_RAWAAC;
                 iCurrentTest = new pvplayer_async_test_mediaionode_openplaystop(testparam);
                 fprintf(file, "AAC Raw ");
                 break;
 
             case AACRawFilePlayStopPlayStopTest:
                 testparam.iFileName = LOCAL_TEST_FILE_AAC_RAW;
-                testparam.iFileType = LOCAL_TEST_FILE_AAC_FORMAT_TYPE;
+                testparam.iFileType = PVMF_MIME_RAWAAC;
                 iCurrentTest = new pvplayer_async_test_mediaionode_playstopplay(testparam);
                 fprintf(file, "AAC Raw ");
                 break;

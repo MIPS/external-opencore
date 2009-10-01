@@ -28,10 +28,16 @@ PVMFStatus PVWAVFFRecognizerPlugin::SupportedFormats(PVMFRecognizerMIMEStringLis
 }
 
 
-PVMFStatus PVWAVFFRecognizerPlugin::Recognize(PVMFDataStreamFactory& aSourceDataStreamFactory, PVMFRecognizerMIMEStringList* aFormatHint,
-        Oscl_Vector<PVMFRecognizerResult, OsclMemAllocator>& aRecognizerResult)
+PVMFStatus PVWAVFFRecognizerPlugin::Recognize(PVMFDataStreamFactory& aSourceDataStreamFactory,
+        PVMFRecognizerMIMEStringList* aFormatHint,
+        PVMFRecognizerResult& aRecognizerResult)
 {
     OSCL_UNUSED_ARG(aFormatHint);
+
+    //set it up for a definite no - in case of errors we can still say format unknown
+    aRecognizerResult.iRecognizedFormat = PVMF_MIME_FORMAT_UNKNOWN;
+    aRecognizerResult.iRecognitionConfidence = PVMFRecognizerConfidenceCertain;
+
     OSCL_wHeapString<OsclMemAllocator> tmpfilename;
     Oscl_FileServer fileServ;
     PVFile pvfile;
@@ -56,10 +62,8 @@ PVMFStatus PVWAVFFRecognizerPlugin::Recognize(PVMFDataStreamFactory& aSourceData
             {
                 if (readData[8] == 'W' && readData[9] == 'A' && readData[10] == 'V' && readData[11] == 'E')
                 {
-                    PVMFRecognizerResult result;
-                    result.iRecognizedFormat = PVMF_MIME_WAVFF;
-                    result.iRecognitionConfidence = PVMFRecognizerConfidenceCertain;
-                    aRecognizerResult.push_back(result);
+                    aRecognizerResult.iRecognizedFormat = PVMF_MIME_WAVFF;
+                    aRecognizerResult.iRecognitionConfidence = PVMFRecognizerConfidenceCertain;
                 }
             }
             pvfile.Close();

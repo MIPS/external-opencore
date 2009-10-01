@@ -65,6 +65,9 @@ PVMFAMRFFParserNode::PVMFAMRFFParserNode(int32 aPriority) :
     iCPMSessionID              = 0xFFFFFFFF;
     iCPMContentType            = PVMF_CPM_CONTENT_FORMAT_UNKNOWN;
     iCPMContentAccessFactory   = NULL;
+    iCPMMetaDataExtensionInterface = NULL;
+    iCPMLicenseInterface = NULL;
+    iCPMLicenseInterfacePVI = NULL;
     iCPMInitCmdId              = 0;
     iCPMOpenSessionCmdId       = 0;
     iCPMRegisterContentCmdId   = 0;

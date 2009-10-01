@@ -35,8 +35,9 @@ class PVMP3FFRecognizerPlugin : public PVMFRecognizerPluginInterface
 
         PVMFStatus SupportedFormats(PVMFRecognizerMIMEStringList& aSupportedFormatsList);
 
-        PVMFStatus Recognize(PVMFDataStreamFactory& aSourceDataStreamFactory, PVMFRecognizerMIMEStringList* aFormatHint,
-                             Oscl_Vector<PVMFRecognizerResult, OsclMemAllocator>& aRecognizerResult);
+        PVMFStatus Recognize(PVMFDataStreamFactory& aSourceDataStreamFactory,
+                             PVMFRecognizerMIMEStringList* aFormatHint,
+                             PVMFRecognizerResult& aRecognizerResult);
 
         PVMFStatus GetRequiredMinBytesForRecognition(uint32& aBytes);
 };

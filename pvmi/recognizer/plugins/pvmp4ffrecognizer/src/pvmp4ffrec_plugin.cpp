@@ -29,10 +29,15 @@ PVMFStatus PVMP4FFRecognizerPlugin::SupportedFormats(PVMFRecognizerMIMEStringLis
 }
 
 
-PVMFStatus PVMP4FFRecognizerPlugin::Recognize(PVMFDataStreamFactory& aSourceDataStreamFactory, PVMFRecognizerMIMEStringList* aFormatHint,
-        Oscl_Vector<PVMFRecognizerResult, OsclMemAllocator>& aRecognizerResult)
+PVMFStatus PVMP4FFRecognizerPlugin::Recognize(PVMFDataStreamFactory& aSourceDataStreamFactory,
+        PVMFRecognizerMIMEStringList* aFormatHint,
+        PVMFRecognizerResult& aRecognizerResult)
 {
     OSCL_UNUSED_ARG(aFormatHint);
+
+    //set it up for a definite no - in case of errors we can still say format unknown
+    aRecognizerResult.iRecognizedFormat = PVMF_MIME_FORMAT_UNKNOWN;
+    aRecognizerResult.iRecognitionConfidence = PVMFRecognizerConfidenceCertain;
 
     // Check if the specified file is MP4 file by using MP4 parser lib's static function
     bool ismp4file = false;
@@ -46,10 +51,8 @@ PVMFStatus PVMP4FFRecognizerPlugin::Recognize(PVMFDataStreamFactory& aSourceData
     if (ismp4file == true)
     {
         // It is an MP4 file so add positive result
-        PVMFRecognizerResult result;
-        result.iRecognizedFormat = PVMF_MIME_MPEG4FF;
-        result.iRecognitionConfidence = PVMFRecognizerConfidenceCertain;
-        aRecognizerResult.push_back(result);
+        aRecognizerResult.iRecognizedFormat = PVMF_MIME_MPEG4FF;
+        aRecognizerResult.iRecognitionConfidence = PVMFRecognizerConfidenceCertain;
     }
 
     return PVMFSuccess;

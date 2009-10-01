@@ -33,10 +33,16 @@ PVMFStatus PVMP3FFRecognizerPlugin::SupportedFormats(PVMFRecognizerMIMEStringLis
 }
 
 
-PVMFStatus PVMP3FFRecognizerPlugin::Recognize(PVMFDataStreamFactory& aSourceDataStreamFactory, PVMFRecognizerMIMEStringList* aFormatHint,
-        Oscl_Vector<PVMFRecognizerResult, OsclMemAllocator>& aRecognizerResult)
+PVMFStatus PVMP3FFRecognizerPlugin::Recognize(PVMFDataStreamFactory& aSourceDataStreamFactory,
+        PVMFRecognizerMIMEStringList* aFormatHint,
+        PVMFRecognizerResult& aRecognizerResult)
 {
     OSCL_UNUSED_ARG(aFormatHint);
+
+    //set it up for a definite no - in case of errors we can still say format unknown
+    aRecognizerResult.iRecognizedFormat = PVMF_MIME_FORMAT_UNKNOWN;
+    aRecognizerResult.iRecognitionConfidence = PVMFRecognizerConfidenceCertain;
+
     // Instantiate the IMpeg3File object, which is the class representing the mp3 ff parser library.
     OSCL_wStackString<1> tmpfilename;
     MP3ErrorType eSuccess = MP3_SUCCESS;
@@ -54,16 +60,16 @@ PVMFStatus PVMP3FFRecognizerPlugin::Recognize(PVMFDataStreamFactory& aSourceData
     if (eSuccess == MP3_SUCCESS)
     {
         // It is an MP3 file so add positive result
-        result.iRecognizedFormat = PVMF_MIME_MP3FF;
-        result.iRecognitionConfidence = PVMFRecognizerConfidenceCertain;
-        aRecognizerResult.push_back(result);
+        aRecognizerResult.iRecognizedFormat = PVMF_MIME_MP3FF;
+        aRecognizerResult.iRecognitionConfidence = PVMFRecognizerConfidenceCertain;
     }
     else if (eSuccess == MP3_INSUFFICIENT_DATA)
     {
         // It could be an MP3 file, but not sure
-        result.iRecognizedFormat = PVMF_MIME_MP3FF;
-        result.iRecognitionConfidence = PVMFRecognizerConfidencePossible;
-        aRecognizerResult.push_back(result);
+        aRecognizerResult.iRecognizedFormat = PVMF_MIME_MP3FF;
+        aRecognizerResult.iRecognitionConfidence = PVMFRecognizerConfidencePossible;
+        //FIXME: We need to return a more meaningful value here. FF should provide it.
+        aRecognizerResult.iAdditionalBytesRequired = 1024;
     }
     if (mp3File)
     {

@@ -96,6 +96,7 @@ void PVMFAACFFParserNode::ConstructL()
     iNodeCapability.iHasMaxNumberOfPorts = true;
     iNodeCapability.iMaxNumberOfPorts = 2;//no maximum
     iNodeCapability.iInputFormatCapability.push_back(PVMFFormatType(PVMF_MIME_AACFF));
+    iNodeCapability.iInputFormatCapability.push_back(PVMFFormatType(PVMF_MIME_RAWAAC));
     iNodeCapability.iOutputFormatCapability.push_back(PVMFFormatType(PVMF_MIME_MPEG4_AUDIO));
 
     iAvailableMetadataKeys.reserve(PVMF_AAC_NUM_METADATA_VALUES);
@@ -732,8 +733,17 @@ PVMFStatus PVMFAACFFParserNode::CheckForAACHeaderAvailability()
             return PVMFPending;
         }
 
-        if (AAC_SUCCESS == iAACParser->getAACHeaderLen(iSourceURL, false, &iFileServer ,
-                iDataStreamFactory, iFileHandle, &headerSize32))
+        CAACFileParams params;
+        params.iClip = iSourceURL;
+        params.iFileSession = &iFileServer;
+        params.iCPMAccess = iDataStreamFactory;
+        params.iHandle = iFileHandle;
+        if (iSourceFormat == PVMF_MIME_RAWAAC)
+        {
+            params.iRawAACFile = true;
+        }
+        if (AAC_SUCCESS == iAACParser->getAACHeaderLen(params, false, &headerSize32))
+        {
             if (currCapacity < headerSize32)
             {
                 iRequestReadCapacityNotificationID =
@@ -742,6 +752,7 @@ PVMFStatus PVMFAACFFParserNode::CheckForAACHeaderAvailability()
                             headerSize32);
                 return PVMFPending;
             }
+        }
     }
     PVMFStatus status = ParseAACFile();
     return status;
@@ -766,7 +777,16 @@ PVMFStatus PVMFAACFFParserNode::ParseAACFile()
         dsFactory = iDataStreamFactory;
     }
 
-    if (!(iAACParser->InitAACFile(iSourceURL, oParseCompleteFile, &iFileServer , dsFactory, iFileHandle)))
+    CAACFileParams params;
+    params.iClip = iSourceURL;
+    params.iFileSession = &iFileServer;
+    params.iCPMAccess = dsFactory;
+    params.iHandle = iFileHandle;
+    if (iSourceFormat == PVMF_MIME_RAWAAC)
+    {
+        params.iRawAACFile = true;
+    }
+    if (!(iAACParser->InitAACFile(params, oParseCompleteFile)))
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVMFAACFFParserNode::ParseFile() Parsing of AAC file parser failed"));
         OSCL_DELETE(iAACParser);
@@ -1554,7 +1574,7 @@ PVMFStatus PVMFAACFFParserNode::SetSourceInitializationData(OSCL_wString& aSourc
 {
     PVMF_AACPARSERNODE_LOGSTACKTRACE((0, "PVMFAACParserNode::SetSourceInitializationData called"));
 
-    if (aSourceFormat != PVMF_MIME_AACFF)
+    if ((aSourceFormat != PVMF_MIME_AACFF) && (aSourceFormat != PVMF_MIME_RAWAAC))
     {
         PVMF_AACPARSERNODE_LOGERROR((0, "PVMFAACParserNode::SetSourceInitializationData - Unsupported Format"));
         return PVMFFailure;

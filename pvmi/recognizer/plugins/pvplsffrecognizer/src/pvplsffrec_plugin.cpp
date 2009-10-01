@@ -31,17 +31,20 @@ PVMFStatus PVPLSFFRecognizerPlugin::SupportedFormats(PVMFRecognizerMIMEStringLis
 PVMFStatus
 PVPLSFFRecognizerPlugin::Recognize(PVMFDataStreamFactory& aSourceDataStreamFactory,
                                    PVMFRecognizerMIMEStringList* aFormatHint,
-                                   Oscl_Vector < PVMFRecognizerResult,
-                                   OsclMemAllocator > & aRecognizerResult)
+                                   PVMFRecognizerResult& aRecognizerResult)
 {
+    OSCL_UNUSED_ARG(aFormatHint);
+
+    //set it up for a definite no - in case of errors we can still say format unknown
+    aRecognizerResult.iRecognizedFormat = PVMF_MIME_FORMAT_UNKNOWN;
+    aRecognizerResult.iRecognitionConfidence = PVMFRecognizerConfidenceCertain;
+
     PVPLSFFParser plsParser;
     if (plsParser.IsPLSFile(aSourceDataStreamFactory) == PVPLSFF_PARSER_OK)
     {
         // It is an PLS file so add positive result
-        PVMFRecognizerResult result;
-        result.iRecognizedFormat = PVMF_MIME_PLSFF;
-        result.iRecognitionConfidence = PVMFRecognizerConfidenceCertain;
-        aRecognizerResult.push_back(result);
+        aRecognizerResult.iRecognizedFormat = PVMF_MIME_PLSFF;
+        aRecognizerResult.iRecognitionConfidence = PVMFRecognizerConfidenceCertain;
     }
 
     return PVMFSuccess;

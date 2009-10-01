@@ -43,11 +43,16 @@ typedef Oscl_Vector<OSCL_HeapString<OsclMemAllocator>, OsclMemAllocator> PVMFRec
 
 typedef enum _PVMFRecognizerConfidence
 {
-    PVMFRecognizerConfidenceNotCertain,     // 100% sure not the format
-    PVMFRecognizerConfidenceNotPossible,    // Maybe not the format
-    PVMFRecognizerConfidenceUnknown,        // Not sure one way or the other
-    PVMFRecognizerConfidencePossible,       // Maybe the format
-    PVMFRecognizerConfidenceCertain         // 100% sure of the format
+    // The recognzier is not certain of its result. For example, if it is a MP3 recognizer then it thinks that it could
+    // be a MP3 file, but is not sure. If a recognizer returns this confidence level, then we assume that it
+    // needs additional data to know for sure. In this case the recognizer is expected to set iRecognizedFormat
+    // to a known type. In the example listed above it should be PVMF_MIME_MP3.
+    PVMFRecognizerConfidencePossible,
+    // The recognzier is certain of its result. It knows for sure that it is say a MP4 file or it knows for sure that it is not.
+    // In either case it is certain of its result. If it is certain that it is not a format that it is meant to recognize then
+    // it sets iRecognizedFormat to "PVMF_MIME_FORMAT_UNKNOWN". Or in other words it is unknown format as far as that recognizer
+    // is concerned.
+    PVMFRecognizerConfidenceCertain
 } PVMFRecognizerConfidence;
 
 
@@ -56,6 +61,9 @@ class PVMFRecognizerResult
     public:
         PVMFRecognizerResult()
         {
+            iRecognizedFormat = PVMF_MIME_FORMAT_UNKNOWN;
+            iRecognitionConfidence = PVMFRecognizerConfidenceCertain;
+            iAdditionalBytesRequired = 0;
         };
 
         // Copy constructor for use in Oscl_Vector
@@ -63,19 +71,26 @@ class PVMFRecognizerResult
         {
             iRecognizedFormat = aSrc.iRecognizedFormat;
             iRecognitionConfidence = aSrc.iRecognitionConfidence;
-            //  iRecognizerSubFormatList=aSrc.iRecognizerSubFormatList;
+            iAdditionalBytesRequired = aSrc.iAdditionalBytesRequired;
         };
 
         ~PVMFRecognizerResult()
         {
         };
 
+        void Reset()
+        {
+            iRecognizedFormat = PVMF_MIME_FORMAT_UNKNOWN;
+            iRecognitionConfidence = PVMFRecognizerConfidenceCertain;
+            iAdditionalBytesRequired = 0;
+        };
+
         // The format of interest as a MIME string
         OSCL_HeapString<OsclMemAllocator> iRecognizedFormat;
         // The confidence level of recognition
         PVMFRecognizerConfidence iRecognitionConfidence;
-        // If the format is a container format, the format of content within
-//  Oscl_Vector<PVMFRecognizerResult, OsclMemAllocator> iRecognizerSubFormatList;
+        //additional bytes required in case recognizer is not sure
+        uint32 iAdditionalBytesRequired;
 };
 
 

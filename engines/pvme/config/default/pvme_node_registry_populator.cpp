@@ -104,6 +104,7 @@ void PVMERegistryPopulator::RegisterAllNodes(PVPlayerNodeRegistryInterface* aReg
     //For PVMFAACFFParserNode
     nodeinfo.iInputTypes.clear();
     nodeinfo.iInputTypes.push_back(PVMFFormatType(PVMF_MIME_AACFF));
+    nodeinfo.iInputTypes.push_back(PVMFFormatType(PVMF_MIME_RAWAAC));
     nodeinfo.iNodeUUID = KPVMFAacFFParserNodeUuid;
     nodeinfo.iOutputType.clear();
     nodeinfo.iOutputType.push_back(PVMFFormatType(PVMF_MIME_FORMAT_UNKNOWN));

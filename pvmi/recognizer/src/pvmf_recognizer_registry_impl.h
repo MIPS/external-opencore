@@ -244,6 +244,7 @@ class PVMFRecRegImplCommand
  **/
 typedef enum
 {
+    PVMFRECREG_COMMAND_UNDEFINED = 0,
     PVMFRECREG_COMMAND_RECOGNIZE = 1,
     PVMFRECREG_COMMAND_CANCELCOMMAND,
 } PVMFRecRegImplCommandType;
@@ -302,6 +303,41 @@ class PVMFRecRegImplCommandCompareLess
         }
 };
 
+class PVMFRecognizerPluginParams
+{
+    public:
+        PVMFRecognizerPluginParams()
+        {
+            iPluginFactory = NULL;
+            iRecPlugin = NULL;
+            iMinSizeRequiredForRecognition = 0;
+            iInUse = true;
+        };
+
+        virtual ~PVMFRecognizerPluginParams()
+        {
+            iSupportedFormatList.clear();
+            if (iRecPlugin != NULL)
+            {
+                if (iPluginFactory != NULL)
+                {
+                    iPluginFactory->DestroyRecognizerPlugin(iRecPlugin);
+                    iRecPlugin = NULL;
+                }
+                //if factory has been removed without cleaning up the plugin
+                //there will be memleaks.
+            }
+            iPluginFactory = NULL;
+        };
+
+        PVMFRecognizerPluginFactory* iPluginFactory;
+        PVMFRecognizerPluginInterface* iRecPlugin;
+        PVMFRecognizerMIMEStringList iSupportedFormatList;
+        //This starts off with min size required in file/stream to start recognition.
+        //However this value keeps evolving in case a recognizer needs additional data
+        uint32 iMinSizeRequiredForRecognition;
+        bool iInUse;
+};
 
 /**
  * Implementation of the recognizer registry. The recognizer interface class should only
@@ -335,12 +371,12 @@ class PVMFRecognizerRegistryImpl : public OsclTimerObject,
         // Vector to hold the active sessions
         Oscl_Vector<PVMFRecRegSessionInfo, OsclMemAllocator> iRecognizerSessionList;
 
-        // Vector to hold the available recognizer plug-in
-        Oscl_Vector<PVMFRecognizerPluginFactory*, OsclMemAllocator> iRecognizerPluginFactoryList;
+        // Vector to hold plug-in parameters
+        Oscl_Vector<PVMFRecognizerPluginParams*, OsclMemAllocator> iPlugInParamsVec;
 
-        int32 FindPluginFactory(PVMFRecognizerPluginFactory& aFactory);
-        PVMFRecognizerPluginInterface* CreateRecognizerPlugin(PVMFRecognizerPluginFactory& aFactory);
-        void DestroyRecognizerPlugin(PVMFRecognizerPluginFactory& aFactory, PVMFRecognizerPluginInterface* aPlugin);
+        PVMFStatus FindPluginParams(PVMFRecognizerPluginFactory* aFactory,
+                                    PVMFRecognizerPluginParams*& aParams);
+
 
         // Vector to hold pending, current, and to-cancel commands
         OsclPriorityQueue<PVMFRecRegImplCommand, OsclMemAllocator, Oscl_Vector<PVMFRecRegImplCommand, OsclMemAllocator>, PVMFRecRegImplCommandCompareLess> iRecognizerPendingCmdList;
@@ -353,7 +389,7 @@ class PVMFRecognizerRegistryImpl : public OsclTimerObject,
 
         // Command handling functions
         void DoRecognize();
-        void CompleteRecognize(PVMFStatus aStatus);
+        PVMFStatus RunRecognitionPass(PVMFRecognizerResult& aResult);
         void DoCancelCommand(PVMFRecRegImplCommand& aCmd);
 
         PVMFDataStreamFactory* iDataStreamFactory;
@@ -362,8 +398,9 @@ class PVMFRecognizerRegistryImpl : public OsclTimerObject,
         PvmiDataStreamCommandId iRequestReadCapacityNotificationID;
 
         PVMFStatus GetMaxRequiredSizeForRecognition(uint32& aMaxSize);
-        PVMFStatus GetMinRequiredSizeForRecognition(uint32& aMinSize);
         PVMFStatus CheckForDataAvailability();
+        PVMFStatus CreateDataStream();
+        void DestroyDataStream();
 
         //logger
         PVLogger* iLogger;

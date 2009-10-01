@@ -28,10 +28,17 @@ PVMFStatus PVAMRFFRecognizerPlugin::SupportedFormats(PVMFRecognizerMIMEStringLis
 }
 
 
-PVMFStatus PVAMRFFRecognizerPlugin::Recognize(PVMFDataStreamFactory& aSourceDataStreamFactory, PVMFRecognizerMIMEStringList* aFormatHint,
-        Oscl_Vector<PVMFRecognizerResult, OsclMemAllocator>& aRecognizerResult)
+PVMFStatus PVAMRFFRecognizerPlugin::Recognize(PVMFDataStreamFactory& aSourceDataStreamFactory,
+        PVMFRecognizerMIMEStringList* aFormatHint,
+        PVMFRecognizerResult& aRecognizerResult)
 {
     OSCL_UNUSED_ARG(aFormatHint);
+
+    //set it up for a definite no - in case of errors we can still say format unknown
+    PVMFStatus status = PVMFFailure;
+    aRecognizerResult.iRecognizedFormat = PVMF_MIME_FORMAT_UNKNOWN;
+    aRecognizerResult.iRecognitionConfidence = PVMFRecognizerConfidenceCertain;
+
     OSCL_wHeapString<OsclMemAllocator> tmpfilename;
     Oscl_FileServer fileServ;
     PVFile pvfile;
@@ -40,7 +47,6 @@ PVMFStatus PVAMRFFRecognizerPlugin::Recognize(PVMFDataStreamFactory& aSourceData
     if (!(pvfile.Open(tmpfilename.get_cstr(), Oscl_File::MODE_READ | Oscl_File::MODE_BINARY, fileServ)))
     {
         char* readData = NULL;
-
         readData = (char*)(oscl_malloc(sizeof(char) * AMRFF_MIN_DATA_SIZE_FOR_RECOGNITION));
         if (readData != NULL)
         {
@@ -54,21 +60,17 @@ PVMFStatus PVAMRFFRecognizerPlugin::Recognize(PVMFDataStreamFactory& aSourceData
             }
             if (readData[0] == '#' && readData[1] == '!' && readData[2] == 'A' && readData[3] == 'M' && readData[4] == 'R')
             {
-                PVMFRecognizerResult result;
-                result.iRecognizedFormat = PVMF_MIME_AMRFF;
-                result.iRecognitionConfidence = PVMFRecognizerConfidenceCertain;
-                aRecognizerResult.push_back(result);
+                aRecognizerResult.iRecognizedFormat = PVMF_MIME_AMRFF;
+                aRecognizerResult.iRecognitionConfidence = PVMFRecognizerConfidenceCertain;
             }
+            //set status to success since we were able to successfully read the required amt of data
+            //to make a decision one way or another.
+            status = PVMFSuccess;
         }
         pvfile.Close();
         oscl_free(readData);
-        return PVMFFailure;
     }
-    else
-    {
-        return PVMFFailure;
-    }
-    return PVMFSuccess;
+    return status;
 }
 
 

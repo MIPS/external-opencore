@@ -344,7 +344,7 @@ int32 AACBitstreamObject::isAACFile(PVFile* aFilePtr)
 
     uint32 remainingBytes = 0;
     iAACFormat = EAACUnrecognized;
-    int32 retVal = AACBitstreamObject::INSUFFICIENT_DATA;
+    int32 retVal = GENERIC_ERROR;
 
     // File pointer should be at the audio data
     // ADTS - Takes 8192 bytes to confirm its a AAC Files (max AAC frame size)
@@ -354,6 +354,22 @@ int32 AACBitstreamObject::isAACFile(PVFile* aFilePtr)
         retVal = reset(iAudioStartOffset);
         uint8 *pBuffer = &iBuffer[iPos];
 
+        //check for ADIF first since we only need 4 bytes to know for sure
+        if (remainingBytes >= AAC_ADIF_IDENTIFIER_LEN)
+        {
+            if (oscl_memcmp(AAC_ADIF_IDENTIFIER, pBuffer, AAC_ADIF_IDENTIFIER_LEN) == 0)
+            {
+                // definitely ADIF
+                iAACFormat = EAACADIF;
+                return AACBitstreamObject::EVERYTHING_OK;
+            }
+        }
+        else
+        {
+            //we do not even have 4 bytes in the file - so no point checking for ADTS
+            return AACBitstreamObject::INSUFFICIENT_DATA;
+        }
+        //Not ADIF - So check for ADTS
         if (remainingBytes >= MAX_ADTS_PACKET_LENGTH)
         {
             // check for possible ADTS sync word
@@ -362,34 +378,12 @@ int32 AACBitstreamObject::isAACFile(PVFile* aFilePtr)
             {
                 // definitely ADTS
                 iAACFormat = EAACADTS;
-                retVal = AACBitstreamObject::EVERYTHING_OK;
-            }
-            else
-            {
-                retVal = GENERIC_ERROR;
+                return AACBitstreamObject::EVERYTHING_OK;
             }
         }
         else
         {
-            retVal = AACBitstreamObject::INSUFFICIENT_DATA;
-        }
-
-        // Format wasn't recognized to be AAC-ADTS
-        if (iAACFormat == EAACUnrecognized)
-        {
-            if (remainingBytes >= AAC_ADIF_IDENTIFIER_LEN)
-            {
-                if (oscl_memcmp(AAC_ADIF_IDENTIFIER, pBuffer, AAC_ADIF_IDENTIFIER_LEN) == 0)
-                {
-                    // definitely ADIF
-                    iAACFormat = EAACADIF;
-                    retVal = AACBitstreamObject::EVERYTHING_OK;
-                }
-            }
-            else
-            {
-                retVal = AACBitstreamObject::INSUFFICIENT_DATA;
-            }
+            return AACBitstreamObject::INSUFFICIENT_DATA;
         }
     }
     return retVal;
@@ -502,7 +496,11 @@ int32 AACBitstreamObject::getFileInfo(int32& fileSize, TAACFormat& format, uint8
     HeaderLen = 0;
     iChannelConfig = 0;
 
-    format = EAACUnrecognized;
+    //we do not attempt to recognize the file as ADIF or ADTS, if the caller specified the clip is raw aac
+    if (format != EAACRaw)
+    {
+        format = EAACUnrecognized;
+    }
     fileSize = sampleFreqIndex = 0;
     int32 ret_value = AACBitstreamObject::EVERYTHING_OK;
 
@@ -542,21 +540,33 @@ int32 AACBitstreamObject::getFileInfo(int32& fileSize, TAACFormat& format, uint8
 
             uint8 *pBuffer = &iBuffer[iPos];
 
-            // Check for possible adts sync word
-            int32 index = find_adts_syncword(pBuffer);
-            if (index != -1)
+            if (format == EAACRaw)
             {
-                //ADTS format
-                iAACFormat = format = EAACADTS;
-                // get sample frequency index
-                iSampleFreqIndex = sampleFreqIndex = (uint8)((pBuffer[2 + index] & 0x3c) >> 2);
+                // Treat it as Raw AAC format, since caller specified it as such
+                int32 config_header_size = iActual_size;
+                uint32 samplesPerFrame;
 
-                // check the crc_check field
-                ibCRC_Check = ((pBuffer[1 + index] & 0x01) ? false : true);
+                int32 status = GetActualAacConfig(pBuffer,
+                                                  &iAudioObjectType, &config_header_size, &sampleFreqIndex, &iChannelConfig, &samplesPerFrame);
+                if (status != SUCCESS) return AACBitstreamObject::MISC_ERROR;
 
-                // get ADTS fixed header part to iAACHeaderBuffer
-                oscl_memcpy(iAACHeaderBuffer, &pBuffer[index], PACKET_INDICATOR_LENGTH);
+                // Retrieve the audio object type
+                if (iAudioObjectType != 2 &&
+                        iAudioObjectType != 4 &&
+                        iAudioObjectType != 5 &&
+                        iAudioObjectType != 29)
+                {
+                    // Unsupported object type
+                    PVMF_AACPARSER_LOGERROR((0, "AACBitstreamObject::getFileInfo- Misc Error"));
+                    return AACBitstreamObject::MISC_ERROR;
+                }
 
+                iSampleFreqIndex = sampleFreqIndex;
+                oscl_memcpy(iAACHeaderBuffer, pBuffer, config_header_size);
+                iRawAACHeaderLen = (uint32)config_header_size;
+                HeaderLen = (uint32)config_header_size << 3;
+
+                iAACFormat = format = EAACRaw;
             }
             else if (iFileSize >= 4     &&
                      pBuffer[0] == 0x41 &&  // 'A'
@@ -1286,34 +1296,24 @@ int32 AACBitstreamObject::getFileInfo(int32& fileSize, TAACFormat& format, uint8
                 // get ADIF id header part to iAACHeaderBuffer (4 bytes)
                 oscl_memcpy(iAACHeaderBuffer, pBuffer, PACKET_INDICATOR_LENGTH);
             }
-            else // Check if it is AAC raw bitstream file
+            else
             {
-
-                int32 config_header_size = iActual_size;
-                uint32 samplesPerFrame;
-
-                int32 status = GetActualAacConfig(pBuffer,
-                                                  &iAudioObjectType, &config_header_size, &sampleFreqIndex, &iChannelConfig, &samplesPerFrame);
-                if (status != SUCCESS) return AACBitstreamObject::MISC_ERROR;
-
-                // Retrieve the audio object type
-                if (iAudioObjectType != 2 &&
-                        iAudioObjectType != 4 &&
-                        iAudioObjectType != 5 &&
-                        iAudioObjectType != 29)
+                // Check for possible adts sync word
+                int32 index = find_adts_syncword(pBuffer);
+                if (index != -1)
                 {
-                    // Unsupported object type
-                    PVMF_AACPARSER_LOGERROR((0, "AACBitstreamObject::getFileInfo- Misc Error"));
-                    return AACBitstreamObject::MISC_ERROR;
+                    //ADTS format
+                    iAACFormat = format = EAACADTS;
+                    // get sample frequency index
+                    iSampleFreqIndex = sampleFreqIndex = (uint8)((pBuffer[2 + index] & 0x3c) >> 2);
+
+                    // check the crc_check field
+                    ibCRC_Check = ((pBuffer[1 + index] & 0x01) ? false : true);
+
+                    // get ADTS fixed header part to iAACHeaderBuffer
+                    oscl_memcpy(iAACHeaderBuffer, &pBuffer[index], PACKET_INDICATOR_LENGTH);
+
                 }
-
-                iSampleFreqIndex = sampleFreqIndex;
-                oscl_memcpy(iAACHeaderBuffer, pBuffer, config_header_size);
-                iRawAACHeaderLen = (uint32)config_header_size;
-                HeaderLen = (uint32)config_header_size << 3;
-
-                // Raw AAC format
-                iAACFormat = format = EAACRaw;
             }
         }
     }
@@ -1379,7 +1379,7 @@ int32 AACBitstreamObject::getDecoderConfigHeader(uint8* headerBuffer)
                 !(iAACHeaderBuffer[0] == 0xff &&
                   (iAACHeaderBuffer[1] & 0xf0) == 0xf0))
         {
-            PVMF_AACPARSER_LOGERROR((0, "AACBitstreamObject::getFileInfo- Misc Error"));
+            PVMF_AACPARSER_LOGERROR((0, "AACBitstreamObject::getDecoderConfigHeader- Misc Error"));
             return AACBitstreamObject::MISC_ERROR;
         }
 
@@ -1408,7 +1408,7 @@ int32 AACBitstreamObject::getDecoderConfigHeader(uint8* headerBuffer)
                   (iAACHeaderBuffer[2] == 0x49) &&  // 'I'
                   (iAACHeaderBuffer[3] == 0x46)))   // 'F'
         {
-            PVMF_AACPARSER_LOGERROR((0, "AACBitstreamObject::getFileInfo- Misc Error"));
+            PVMF_AACPARSER_LOGERROR((0, "AACBitstreamObject::getDecoderConfigHeader- Misc Error"));
             return AACBitstreamObject::MISC_ERROR;
         }
 
@@ -1587,10 +1587,11 @@ OSCL_EXPORT_REF CAACFileParser::~CAACFileParser(void)
 // CAUTION
 //
 //------------------------------------------------------------------------------
-OSCL_EXPORT_REF bool CAACFileParser::InitAACFile(OSCL_wString& aClip,  bool aInitParsingEnable, Oscl_FileServer* iFileSession, PVMFCPMPluginAccessInterfaceFactory* aCPMAccess, OsclFileHandle*aHandle)
+OSCL_EXPORT_REF bool CAACFileParser::InitAACFile(CAACFileParams& aParams,
+        bool aInitParsingEnable)
 {
-    iAACFile.SetCPM(aCPMAccess);
-    iAACFile.SetFileHandle(aHandle);
+    iAACFile.SetCPM(aParams.iCPMAccess);
+    iAACFile.SetFileHandle(aParams.iHandle);
 
     //For aac overwritte pvfile default settings in order to prevent
     //audio artifacts when playing files from MMC
@@ -1602,14 +1603,23 @@ OSCL_EXPORT_REF bool CAACFileParser::InitAACFile(OSCL_wString& aClip,  bool aIni
     iAACFile.SetFileCacheParams(cacheParams);
 
     // Open the file (aClip)
-    if (iAACFile.Open(aClip.get_cstr(), (Oscl_File::MODE_READ | Oscl_File::MODE_BINARY), *iFileSession) != 0)
+    if (iAACFile.Open(aParams.iClip.get_cstr(), (Oscl_File::MODE_READ | Oscl_File::MODE_BINARY), *(aParams.iFileSession)) != 0)
     {
         return false;
     }
 
+    if (aParams.iRawAACFile)
+    {
+        iAACFormat = EAACRaw;
+    }
+    else
+    {
+        iAACFormat = EAACUnrecognized;
+    }
+
     ParserErrorCode errCode = AAC_SUCCESS;
     PV_AAC_FF_NEW(NULL, AACBitstreamObject, (&iAACFile, errCode), ipBSO);
-    if (ipBSO->getFileInfo(iAACFileSize, iAACFormat, iSampleFreqTableIndex, iAACBitRate, iAACHeaderLen, aClip))
+    if (ipBSO->getFileInfo(iAACFileSize, iAACFormat, iSampleFreqTableIndex, iAACBitRate, iAACHeaderLen, aParams.iClip))
     {
         return false;
     }
@@ -2462,21 +2472,18 @@ OSCL_EXPORT_REF  PVID3Version CAACFileParser::GetID3Version() const
     return ipBSO->GetID3Version();
 }
 
-OSCL_EXPORT_REF ParserErrorCode CAACFileParser::getAACHeaderLen(OSCL_wString& aClip,
+OSCL_EXPORT_REF ParserErrorCode CAACFileParser::getAACHeaderLen(CAACFileParams& aParams,
         bool aInitParsingEnable,
-        Oscl_FileServer* iFileSession,
-        PVMFCPMPluginAccessInterfaceFactory* aCPMAccess,
-        OsclFileHandle* aHandle,
         uint32* HeaderLenValue)
 {
     PVFile iAACFileTemp;
     OSCL_UNUSED_ARG(aInitParsingEnable);
 
-    iAACFileTemp.SetCPM(aCPMAccess);
-    iAACFileTemp.SetFileHandle(aHandle);
+    iAACFileTemp.SetCPM(aParams.iCPMAccess);
+    iAACFileTemp.SetFileHandle(aParams.iHandle);
 
     // Open the file (aClip)
-    if (iAACFileTemp.Open(aClip.get_cstr(), (Oscl_File::MODE_READ | Oscl_File::MODE_BINARY), *iFileSession) != 0)
+    if (iAACFileTemp.Open(aParams.iClip.get_cstr(), (Oscl_File::MODE_READ | Oscl_File::MODE_BINARY), *(aParams.iFileSession)) != 0)
     {
         PVMF_AACPARSER_LOGERROR((0, "CAACFileParser::getAACHeaderLen- File open error-"));
         return FILE_OPEN_ERROR;
@@ -2500,8 +2507,12 @@ OSCL_EXPORT_REF ParserErrorCode CAACFileParser::getAACHeaderLen(OSCL_wString& aC
 
     int32 iAACFileSizeTemp;
     uint8 sampleFreqTableValueTemp;
-    TAACFormat formatTemp;
-    if (ipBSOTemp->getFileInfo(iAACFileSizeTemp, formatTemp, sampleFreqTableValueTemp, bitRateValueTemp, tempHeaderLenValue, aClip))
+    TAACFormat formatTemp = EAACUnrecognized;
+    if (aParams.iRawAACFile)
+    {
+        formatTemp = EAACRaw;
+    }
+    if (ipBSOTemp->getFileInfo(iAACFileSizeTemp, formatTemp, sampleFreqTableValueTemp, bitRateValueTemp, tempHeaderLenValue, aParams.iClip))
     {
         iAACFileTemp.Close();
         PV_AAC_FF_DELETE(NULL, AACBitstreamObject, ipBSOTemp);
@@ -2518,14 +2529,16 @@ OSCL_EXPORT_REF ParserErrorCode CAACFileParser::getAACHeaderLen(OSCL_wString& aC
     return AAC_SUCCESS;
 }
 
-OSCL_EXPORT_REF ParserErrorCode CAACFileParser::IsAACFile(OSCL_wString& aClip, Oscl_FileServer* aFileSession, PVMFCPMPluginAccessInterfaceFactory* aCPMAccess, OsclFileHandle* aHandle)
+OSCL_EXPORT_REF ParserErrorCode CAACFileParser::IsAACFile(CAACFileParams& aParams)
 {
     PVFile iAACFileTemp;
-    iAACFileTemp.SetCPM(aCPMAccess);
-    iAACFileTemp.SetFileHandle(aHandle);
+    iAACFileTemp.SetCPM(aParams.iCPMAccess);
+    iAACFileTemp.SetFileHandle(aParams.iHandle);
 
     // Open the file (aClip)
-    if (iAACFileTemp.Open(aClip.get_cstr(), (Oscl_File::MODE_READ | Oscl_File::MODE_BINARY), *aFileSession) != 0)
+    if (iAACFileTemp.Open(aParams.iClip.get_cstr(),
+                          (Oscl_File::MODE_READ | Oscl_File::MODE_BINARY),
+                          *(aParams.iFileSession)) != 0)
     {
         PVMF_AACPARSER_LOGERROR((0, "CAACFileParser::IsAACFile- File open error-"));
         return FILE_OPEN_ERROR;

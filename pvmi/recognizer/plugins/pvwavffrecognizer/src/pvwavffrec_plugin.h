@@ -39,7 +39,7 @@ class PVWAVFFRecognizerPlugin : public PVMFRecognizerPluginInterface
 
         PVMFStatus Recognize(PVMFDataStreamFactory& aSourceDataStreamFactory,
                              PVMFRecognizerMIMEStringList* aFormatHint,
-                             Oscl_Vector<PVMFRecognizerResult, OsclMemAllocator>& aRecognizerResult);
+                             PVMFRecognizerResult& aRecognizerResult);
 
         PVMFStatus GetRequiredMinBytesForRecognition(uint32& aBytes);
 };

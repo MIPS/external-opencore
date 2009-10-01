@@ -505,6 +505,25 @@ class AACBitstreamObject
 
 };
 
+class CAACFileParams
+{
+    public:
+        CAACFileParams()
+        {
+            iFileSession = NULL;
+            iCPMAccess = NULL;
+            iHandle = NULL;
+            iRawAACFile = false;
+        };
+
+        virtual ~CAACFileParams() {};
+
+        OSCL_wHeapString<OsclMemAllocator> iClip;
+        Oscl_FileServer* iFileSession;
+        PVMFCPMPluginAccessInterfaceFactory* iCPMAccess;
+        OsclFileHandle* iHandle;
+        bool iRawAACFile;
+};
 
 /**
  *  @brief The CAACFileParser Class is the class that will construct and maintain all the
@@ -513,7 +532,8 @@ class AACBitstreamObject
  *  This class supports the following AAC file format specs:
  *     1) ADIF
  *     2) ADTS
- *     3) Raw bitstream with audio specific config
+ *     3) Raw bitstream with audio specific config (provided caller specified that it is raw AAC).
+ *     There is no way to recognize a raw AAC file. So we expect the caller to specify it.
  */
 class CAACFileParser
 {
@@ -546,7 +566,8 @@ class CAACFileParser
         * and reading the file on certain operating systems.
         * @returns true if the init succeeds, else false.
         */
-        OSCL_IMPORT_REF bool InitAACFile(OSCL_wString& aClip,  bool aInitParsingEnable = true, Oscl_FileServer* aFileSession = NULL, PVMFCPMPluginAccessInterfaceFactory* aCPMAccess = NULL, OsclFileHandle* aHandle = NULL);
+        OSCL_IMPORT_REF bool InitAACFile(CAACFileParams& aParams,
+                                         bool aInitParsingEnable = true);
 
         /**
         * @brief Resets the parser variables so playback can be restarted at the
@@ -643,7 +664,9 @@ class CAACFileParser
         */
         OSCL_IMPORT_REF TAACFormat GetAACFormat(void);
 
-        OSCL_IMPORT_REF  ParserErrorCode getAACHeaderLen(OSCL_wString& aClip,  bool aInitParsingEnable, Oscl_FileServer* iFileSession, PVMFCPMPluginAccessInterfaceFactory* aCPMAccess, OsclFileHandle*aHandle, uint32* HeaderLen);
+        OSCL_IMPORT_REF  ParserErrorCode getAACHeaderLen(CAACFileParams& aParams,
+                bool aInitParsingEnable,
+                uint32* HeaderLen);
 
         OSCL_IMPORT_REF  PVID3Version GetID3Version() const;
 
@@ -657,7 +680,7 @@ class CAACFileParser
         * @param
         * @returns status
         */
-        OSCL_IMPORT_REF ParserErrorCode IsAACFile(OSCL_wString& aClip, Oscl_FileServer* aFileSession, PVMFCPMPluginAccessInterfaceFactory* aCPMAccess, OsclFileHandle* aHandle = NULL);
+        OSCL_IMPORT_REF ParserErrorCode IsAACFile(CAACFileParams& aParams);
 
     private:
         uint32     iMetadataSize;

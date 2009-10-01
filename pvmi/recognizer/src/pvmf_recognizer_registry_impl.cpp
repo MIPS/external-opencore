@@ -49,7 +49,6 @@ PVMFRecognizerRegistryImpl::PVMFRecognizerRegistryImpl() :
     iDataStreamFactory = NULL;
     iDataStream = NULL;
     oRecognizePending = false;
-    iDataStreamCallBackStatus = PVMFSuccess;
 
     iLogger = PVLogger::GetLoggerObject("PVMFRecognizer");
 }
@@ -57,34 +56,71 @@ PVMFRecognizerRegistryImpl::PVMFRecognizerRegistryImpl() :
 
 PVMFRecognizerRegistryImpl::~PVMFRecognizerRegistryImpl()
 {
+    iDataStream = NULL;
     iDataStreamFactory = NULL;
-
-    while (iRecognizerPluginFactoryList.empty() == false)
+    if (iPlugInParamsVec.empty() == false)
     {
-        // The plug-in factories were not removed before shutting down the
-        // registry. This could lead to memory leaks since the registry
-        // cannot call the destructor for the derived factory class. So assert.
-        OSCL_ASSERT(false);
-
-        // Destroy factory using the base class
-        PVMFRecognizerPluginFactory* pluginfactory = iRecognizerPluginFactoryList[0];
-        iRecognizerPluginFactoryList.erase(iRecognizerPluginFactoryList.begin());
-        OSCL_DELETE(pluginfactory);
+        LOGERROR((0, "PVMFRecognizerRegistryImpl::~PVMFRecognizerRegistryImpl - Not all plugin factories were deregistered"));
+        // The plug-in factories were not removed before shutting down the registry.
+        Oscl_Vector<PVMFRecognizerPluginParams*, OsclMemAllocator>::iterator it;
+        for (it = iPlugInParamsVec.begin(); it != iPlugInParamsVec.end(); ++it)
+        {
+            // Save factory pointer. We need the factory pointer around till we
+            // destory *it, since PVMFRecognizerPluginParams destructor destroys
+            // the recognizer plugin, if present.
+            PVMFRecognizerPluginFactory* fac = (*it)->iPluginFactory;
+            // Destroy PVMFRecognizerPluginParams
+            OSCL_DELETE(*it);
+            // Destroy factory
+            OSCL_DELETE(fac);
+        }
+        iPlugInParamsVec.clear();
     }
-
     iLogger = NULL;
 }
 
 
 PVMFStatus PVMFRecognizerRegistryImpl::RegisterPlugin(PVMFRecognizerPluginFactory& aPluginFactory)
 {
-    // Check that plug-in factory is not already registered
-    if (FindPluginFactory(aPluginFactory) == -1)
+    PVMFRecognizerPluginParams* pluginParams = NULL;
+    PVMFStatus retVal = FindPluginParams(&aPluginFactory, pluginParams);
+    if (retVal == PVMFSuccess)
     {
-        // Add the plug-in factory to the list
-        iRecognizerPluginFactoryList.push_back(&aPluginFactory);
+        //this plugin factory has already been registered
+        LOGERROR((0, "PVMFRecognizerRegistryImpl::RegisterPlugin - Plugin Already Exists!"));
+        return PVMFErrAlreadyExists;
     }
-
+    //create a new plugin params
+    pluginParams = OSCL_NEW(PVMFRecognizerPluginParams, ());
+    if (pluginParams == NULL)
+    {
+        LOGERROR((0, "PVMFRecognizerRegistryImpl::RegisterPlugin - PVMFRecognizerPluginParams Creation Failed!"));
+        return PVMFErrNoMemory;
+    }
+    pluginParams->iPluginFactory = &aPluginFactory;
+    pluginParams->iRecPlugin = pluginParams->iPluginFactory->CreateRecognizerPlugin();
+    if (pluginParams->iRecPlugin == NULL)
+    {
+        LOGERROR((0, "PVMFRecognizerRegistryImpl::RegisterPlugin - CreateRecognizerPlugin Failed!"));
+        OSCL_DELETE(pluginParams);
+        return PVMFErrNoMemory;
+    }
+    retVal = pluginParams->iRecPlugin->SupportedFormats(pluginParams->iSupportedFormatList);
+    if ((retVal != PVMFSuccess) || (pluginParams->iSupportedFormatList.size() == 0))
+    {
+        LOGERROR((0, "PVMFRecognizerRegistryImpl::RegisterPlugin - SupportedFormats Failed!"));
+        OSCL_DELETE(pluginParams);
+        return retVal;
+    }
+    retVal = pluginParams->iRecPlugin->GetRequiredMinBytesForRecognition(pluginParams->iMinSizeRequiredForRecognition);
+    if (retVal != PVMFSuccess)
+    {
+        LOGERROR((0, "PVMFRecognizerRegistryImpl::RegisterPlugin - GetRequiredMinBytesForRecognition Failed!"));
+        OSCL_DELETE(pluginParams);
+        return retVal;
+    }
+    // Add the plug-in params to the list
+    iPlugInParamsVec.push_back(pluginParams);
     return PVMFSuccess;
 }
 
@@ -92,15 +128,20 @@ PVMFStatus PVMFRecognizerRegistryImpl::RegisterPlugin(PVMFRecognizerPluginFactor
 PVMFStatus PVMFRecognizerRegistryImpl::RemovePlugin(PVMFRecognizerPluginFactory& aPluginFactory)
 {
     // Find the specified plug-in factory and remove from list
-    int32 factoryindex = FindPluginFactory(aPluginFactory);
-    if (factoryindex == -1)
+    Oscl_Vector<PVMFRecognizerPluginParams*, OsclMemAllocator>::iterator it;
+    for (it = iPlugInParamsVec.begin(); it != iPlugInParamsVec.end(); ++it)
     {
-        LOGERROR((0, "PVMFRecognizerRegistryImpl::RemovePlugin Failed!"));
-        return PVMFErrArgument;
+        if ((*it)->iPluginFactory == &aPluginFactory)
+        {
+            PVMFRecognizerPluginParams* pluginParams = *it;
+            iPlugInParamsVec.erase(it);
+            //next delete plugin params
+            OSCL_DELETE(pluginParams);
+            return PVMFSuccess;
+        }
     }
-
-    iRecognizerPluginFactoryList.erase(iRecognizerPluginFactoryList.begin() + factoryindex);
-    return PVMFSuccess;
+    LOGERROR((0, "PVMFRecognizerRegistryImpl::RemovePlugin Failed!"));
+    return PVMFErrArgument;
 }
 
 
@@ -120,6 +161,7 @@ PVMFStatus PVMFRecognizerRegistryImpl::OpenSession(PVMFSessionId& aSessionId, PV
     int32 leavecode = 0;
     OSCL_TRY(leavecode, iRecognizerSessionList.push_back(recsessioninfo));
     OSCL_FIRST_CATCH_ANY(leavecode,
+                         LOGERROR((0, "PVMFRecognizerRegistryImpl::OpenSession - No Memory"));
                          return PVMFErrNoMemory;
                         );
 
@@ -153,6 +195,7 @@ PVMFStatus PVMFRecognizerRegistryImpl::CloseSession(PVMFSessionId aSessionId)
     // Check if the session was not found
     if (i >= iRecognizerSessionList.size())
     {
+        LOGERROR((0, "PVMFRecognizerRegistryImpl::CloseSession - Session Not Found"));
         return PVMFErrArgument;
     }
 
@@ -162,8 +205,12 @@ PVMFStatus PVMFRecognizerRegistryImpl::CloseSession(PVMFSessionId aSessionId)
 }
 
 
-PVMFCommandId PVMFRecognizerRegistryImpl::Recognize(PVMFSessionId aSessionId, PVMFDataStreamFactory& aSourceDataStreamFactory, PVMFRecognizerMIMEStringList* aFormatHint,
-        Oscl_Vector<PVMFRecognizerResult, OsclMemAllocator>& aRecognizerResult, OsclAny* aCmdContext, uint32 aTimeout)
+PVMFCommandId PVMFRecognizerRegistryImpl::Recognize(PVMFSessionId aSessionId,
+        PVMFDataStreamFactory& aSourceDataStreamFactory,
+        PVMFRecognizerMIMEStringList* aFormatHint,
+        Oscl_Vector<PVMFRecognizerResult, OsclMemAllocator>& aRecognizerResult,
+        OsclAny* aCmdContext,
+        uint32 aTimeout)
 {
     if ((iRecognizerSessionList.empty() == true) || (oRecognizePending == true))
     {
@@ -210,13 +257,13 @@ PVMFCommandId PVMFRecognizerRegistryImpl::CancelCommand(PVMFSessionId aSessionId
 {
     if (iRecognizerSessionList.empty() == true)
     {
+        LOGERROR((0, "PVMFRecognizerRegistryImpl::CancelCommand - Session List Empty - Leaving"));
         OSCL_LEAVE(OsclErrInvalidState);
-        return 0;
     }
     if (aSessionId != iRecognizerSessionList[0].iRecRegSessionId)
     {
+        LOGERROR((0, "PVMFRecognizerRegistryImpl::CancelCommand - Session Invalid - Leaving"));
         OSCL_LEAVE(OsclErrArgument);
-        return 0;
     }
 
     // Save the passed-in parameters in a vector
@@ -233,8 +280,6 @@ PVMFCommandId PVMFRecognizerRegistryImpl::CancelCommand(PVMFSessionId aSessionId
 
 void PVMFRecognizerRegistryImpl::Run()
 {
-    int32 leavecode = 0;
-
     // Check if CancelCommand() request was made
     if (!iRecognizerPendingCmdList.empty())
     {
@@ -248,81 +293,68 @@ void PVMFRecognizerRegistryImpl::Run()
         }
     }
 
+    int32 cmdType = PVMFRECREG_COMMAND_UNDEFINED;
     // Handle other requests normally
-    if (!iRecognizerPendingCmdList.empty() && iRecognizerCurrentCmd.empty())
+    if (iRecognizerCurrentCmd.empty())
     {
-        // Retrieve the first pending command from queue
-        PVMFRecRegImplCommand cmd(iRecognizerPendingCmdList.top());
-        iRecognizerPendingCmdList.pop();
+        if (!iRecognizerPendingCmdList.empty())
+        {
+            // Retrieve the first pending command from queue
+            PVMFRecRegImplCommand cmd(iRecognizerPendingCmdList.top());
+            iRecognizerPendingCmdList.pop();
+            cmdType = cmd.GetCmdType();
+            // Put in on the current command queue - A leave means system is out of memory
+            // let it propagate up the call stack
+            iRecognizerCurrentCmd.push_front(cmd);
+        }
+    }
+    else
+    {
+        cmdType = iRecognizerCurrentCmd[0].GetCmdType();
+    }
 
-        // Put in on the current command queue
-        leavecode = 0;
-        OSCL_TRY(leavecode, iRecognizerCurrentCmd.push_front(cmd));
-        OSCL_FIRST_CATCH_ANY(leavecode,
-                             OSCL_ASSERT(false);
-                             // Can't complete the commmand since it cannot be added to the current command queue
-                             return;);
-
+    if (cmdType != PVMFRECREG_COMMAND_UNDEFINED)
+    {
         // Process the command according to the cmd type
         PVMFStatus cmdstatus = PVMFSuccess;
-        switch (cmd.GetCmdType())
+        switch (cmdType)
         {
             case PVMFRECREG_COMMAND_RECOGNIZE:
+                //Recognize command always completes from inside of DoRecognize or DataStreamCommandCompleted
                 DoRecognize();
                 break;
 
-            case PVMFRECREG_COMMAND_CANCELCOMMAND:
-                // CancelCommand() should not be handled here
-                OSCL_ASSERT(false);
-                // Just handle as "not supported"
-                cmdstatus = PVMFErrNotSupported;
-                break;
-
             default:
+                LOGERROR((0, "PVMFRecognizerRegistryImpl::Run - Unrecognized Command"));
                 cmdstatus = PVMFErrNotSupported;
                 break;
         }
-
         if (cmdstatus != PVMFSuccess)
         {
             CompleteCurrentRecRegCommand(cmdstatus);
         }
     }
-    else if (oRecognizePending == true)
-    {
-        CompleteRecognize(iDataStreamCallBackStatus);
-    }
 }
 
 
-int32 PVMFRecognizerRegistryImpl::FindPluginFactory(PVMFRecognizerPluginFactory& aFactory)
+PVMFStatus PVMFRecognizerRegistryImpl::FindPluginParams(PVMFRecognizerPluginFactory* aFactory,
+        PVMFRecognizerPluginParams*& aParams)
 {
+    PVMFStatus retval = PVMFErrArgument;
+    aParams = NULL;
     // Check if the specified factory exists in the list
-    for (uint32 i = 0; i < iRecognizerPluginFactoryList.size(); ++i)
+    Oscl_Vector<PVMFRecognizerPluginParams*, OsclMemAllocator>::iterator it;
+    for (it = iPlugInParamsVec.begin(); it != iPlugInParamsVec.end(); ++it)
     {
-        if (iRecognizerPluginFactoryList[i] == &aFactory)
+        if ((*it)->iPluginFactory == aFactory)
         {
-            // Yes so return the index
-            return ((int32)i);
+            aParams = *it;
+            retval = PVMFSuccess;
+            break;
         }
     }
-
-    // No so return -1 meaning not found
-    return -1;
+    return retval;
 }
-
-
-PVMFRecognizerPluginInterface* PVMFRecognizerRegistryImpl::CreateRecognizerPlugin(PVMFRecognizerPluginFactory& aFactory)
-{
-    return aFactory.CreateRecognizerPlugin();
-}
-
-
-void PVMFRecognizerRegistryImpl::DestroyRecognizerPlugin(PVMFRecognizerPluginFactory& aFactory, PVMFRecognizerPluginInterface* aPlugin)
-{
-    aFactory.DestroyRecognizerPlugin(aPlugin);
-}
-
 
 PVMFCommandId PVMFRecognizerRegistryImpl::AddRecRegCommand(PVMFSessionId aSessionId, int32 aCmdType, OsclAny* aContextData, Oscl_Vector<PVMFRecRegImplCommandParamUnion, OsclMemAllocator>* aParamVector, bool aAPICommand)
 {
@@ -343,8 +375,9 @@ void PVMFRecognizerRegistryImpl::CompleteCurrentRecRegCommand(PVMFStatus aStatus
 {
     if (iRecognizerCurrentCmd.empty() == true)
     {
-        // No command to complete. Assert
-        OSCL_ASSERT(false);
+        LOGERROR((0, "PVMFRecognizerRegistryImpl::CompleteCurrentRecRegCommand Current Cmd Q empty - Leaving"));
+        // No command to complete. Leave
+        OSCL_LEAVE(OsclErrInvalidState);
         return;
     }
 
@@ -352,6 +385,12 @@ void PVMFRecognizerRegistryImpl::CompleteCurrentRecRegCommand(PVMFStatus aStatus
     PVMFRecRegImplCommand cmdtocomplete(iRecognizerCurrentCmd[aCurrCmdIndex]);
     iRecognizerCurrentCmd.clear();
 
+    //if it is recognize command make sure to delete iDataStream. This datastream was created using the factory
+    //provided in recognize command and we need to make sure we delete this before the command completes.
+    if (cmdtocomplete.GetCmdType() == PVMFRECREG_COMMAND_RECOGNIZE)
+    {
+        DestroyDataStream();
+    }
     // Make callback if API command
     if (cmdtocomplete.IsAPICommand())
     {
@@ -372,104 +411,98 @@ void PVMFRecognizerRegistryImpl::CompleteCurrentRecRegCommand(PVMFStatus aStatus
 
 PVMFStatus PVMFRecognizerRegistryImpl::GetMaxRequiredSizeForRecognition(uint32& aMaxSize)
 {
+    if (iPlugInParamsVec.size() == 0) return PVMFFailure;
     aMaxSize = 0;
-    for (uint32 i = 0; i < iRecognizerPluginFactoryList.size(); ++i)
+    Oscl_Vector<PVMFRecognizerPluginParams*, OsclMemAllocator>::iterator it;
+    for (it = iPlugInParamsVec.begin(); it != iPlugInParamsVec.end(); ++it)
     {
-        uint32 bytes = 0;
-        // Create the recognizer plugin
-        PVMFRecognizerPluginInterface* recplugin =
-            CreateRecognizerPlugin(*(iRecognizerPluginFactoryList[i]));
-        if (recplugin)
+        if ((*it)->iInUse == true)
         {
-            // Perform recognition with this recognizer plug-ing
-            PVMFStatus status =
-                recplugin->GetRequiredMinBytesForRecognition(bytes);
-            // Done with this recognizer so release it
-            DestroyRecognizerPlugin(*(iRecognizerPluginFactoryList[i]), recplugin);
-
-            if (status == PVMFSuccess)
+            if ((*it)->iMinSizeRequiredForRecognition > aMaxSize)
             {
-                if (bytes > aMaxSize)
-                {
-                    aMaxSize = bytes;
-                }
-            }
-            else
-            {
-                return status;
+                aMaxSize = (*it)->iMinSizeRequiredForRecognition;
             }
         }
     }
-    return PVMFSuccess;
-}
-
-PVMFStatus PVMFRecognizerRegistryImpl::GetMinRequiredSizeForRecognition(uint32& aMinSize)
-{
-    aMinSize = 0x7FFFFFF;
-    for (uint32 i = 0; i < iRecognizerPluginFactoryList.size(); ++i)
+    if (aMaxSize != 0)
     {
-        uint32 bytes = 0;
-        // Create the recognizer plugin
-        PVMFRecognizerPluginInterface* recplugin =
-            CreateRecognizerPlugin(*(iRecognizerPluginFactoryList[i]));
-        if (recplugin)
-        {
-            // Perform recognition with this recognizer plug-ing
-            PVMFStatus status =
-                recplugin->GetRequiredMinBytesForRecognition(bytes);
-            // Done with this recognizer so release it
-            DestroyRecognizerPlugin(*(iRecognizerPluginFactoryList[i]), recplugin);
-
-            if (status == PVMFSuccess)
-            {
-                if (bytes < aMinSize)
-                {
-                    aMinSize = bytes;
-                }
-            }
-            else
-            {
-                return status;
-            }
-        }
+        return PVMFSuccess;
     }
-    return PVMFSuccess;
+    //no active plugins or all plugins say they need 0 bytes - in either case fail
+    return PVMFFailure;
 }
 
-PVMFStatus PVMFRecognizerRegistryImpl::CheckForDataAvailability()
+PVMFStatus PVMFRecognizerRegistryImpl::CreateDataStream()
 {
+    PVMFStatus status = PVMFFailure;
+    iDataStream = NULL;
     if (iDataStreamFactory != NULL)
     {
-        iDataStream = NULL;
-
         PVUuid uuid = PVMIDataStreamSyncInterfaceUuid;
         PVInterface* intf =
             iDataStreamFactory->CreatePVMFCPMPluginAccessInterface(uuid);
-
-        iDataStream = OSCL_STATIC_CAST(PVMIDataStreamSyncInterface*, intf);
-
-        uint32 maxSize = 0;
-        if (GetMaxRequiredSizeForRecognition(maxSize) == PVMFSuccess)
+        if (intf != NULL)
         {
+            iDataStream = OSCL_STATIC_CAST(PVMIDataStreamSyncInterface*, intf);
             if (iDataStream->OpenSession(iDataStreamSessionID, PVDS_READ_ONLY) == PVDS_SUCCESS)
             {
-                uint32 capacity = 0;
-                PvmiDataStreamStatus status =
-                    iDataStream->QueryReadCapacity(iDataStreamSessionID, capacity);
+                status = PVMFSuccess;
+            }
+            else
+            {
+                LOGERROR((0, "PVMFRecognizerRegistryImpl::CreateDataStream - OpenSession Failed"));
+            }
+        }
+        else
+        {
+            LOGERROR((0, "PVMFRecognizerRegistryImpl::CreateDataStream - No Memory"));
+            status = PVMFErrNoMemory;
+        }
+    }
+    return status;
+}
 
-                if (capacity < maxSize)
+void PVMFRecognizerRegistryImpl::DestroyDataStream()
+{
+    if ((iDataStreamFactory != NULL) && (iDataStream != NULL))
+    {
+        iDataStream->CloseSession(iDataStreamSessionID);
+        PVUuid uuid = PVMIDataStreamSyncInterfaceUuid;
+        iDataStreamFactory->DestroyPVMFCPMPluginAccessInterface(uuid,
+                OSCL_STATIC_CAST(PVInterface*, iDataStream));
+        iDataStream = NULL;
+        iDataStreamFactory = NULL;
+    }
+    return;
+}
+
+
+PVMFStatus PVMFRecognizerRegistryImpl::CheckForDataAvailability()
+{
+    PVMFStatus retval = PVMFFailure;
+    if (iDataStream != NULL)
+    {
+        PVUuid uuid = PVMIDataStreamSyncInterfaceUuid;
+        uint32 maxSize = 0;
+        retval = GetMaxRequiredSizeForRecognition(maxSize);
+        if (retval == PVMFSuccess)
+        {
+            uint32 capacity = 0;
+            PvmiDataStreamStatus status =
+                iDataStream->QueryReadCapacity(iDataStreamSessionID, capacity);
+
+            if (capacity < maxSize)
+            {
+                // Get total content size to deal with cases where file being recognized is less than maxSize
+                uint32 totalSize = iDataStream->GetContentLength();
+                if ((status == PVDS_END_OF_STREAM) || (capacity == totalSize))
                 {
-                    // Get total content size to deal with cases where file being recognized is less than maxSize
-                    uint32 totalSize = iDataStream->GetContentLength();
-                    if ((status == PVDS_END_OF_STREAM) || (capacity == totalSize))
-                    {
-                        uuid = PVMIDataStreamSyncInterfaceUuid;
-                        iDataStreamFactory->DestroyPVMFCPMPluginAccessInterface(uuid,
-                                OSCL_STATIC_CAST(PVInterface*, iDataStream));
-                        iDataStream = NULL;
-                        return PVMFSuccess;
-                    }
-
+                    LOGINFO((0, "PVMFRecognizerRegistryImpl::CheckForDataAvailability - EOS - TotalSize=%d, Capacity=%d",
+                             totalSize, capacity));
+                    retval = PVMFSuccess;
+                }
+                else
+                {
                     int32 errcode = 0;
                     OSCL_TRY(errcode,
                              iRequestReadCapacityNotificationID =
@@ -478,174 +511,250 @@ PVMFStatus PVMFRecognizerRegistryImpl::CheckForDataAvailability()
                                          maxSize);
                             );
                     OSCL_FIRST_CATCH_ANY(errcode,
-                                         uuid = PVMIDataStreamSyncInterfaceUuid;
-                                         iDataStreamFactory->DestroyPVMFCPMPluginAccessInterface(uuid,
-                                                 OSCL_STATIC_CAST(PVInterface*, iDataStream));
-                                         iDataStream = NULL;
+                                         LOGERROR((0, "PVMFRecognizerRegistryImpl::CheckForDataAvailability - RequestReadCapacityNotification Failed"));
                                          return PVMFFailure);
 
-                    return PVMFPending;
+                    LOGINFO((0, "PVMFRecognizerRegistryImpl::CheckForDataAvailability - DSRequest - MaxSize=%d, Capacity=%d",
+                             maxSize, capacity));
+                    retval = PVMFPending;
                 }
-
-                uuid = PVMIDataStreamSyncInterfaceUuid;
-                iDataStreamFactory->DestroyPVMFCPMPluginAccessInterface(uuid,
-                        OSCL_STATIC_CAST(PVInterface*, iDataStream));
-                iDataStream = NULL;
-                return PVMFSuccess;
             }
             else
             {
-                uuid = PVMIDataStreamSyncInterfaceUuid;
-                iDataStreamFactory->DestroyPVMFCPMPluginAccessInterface(uuid,
-                        OSCL_STATIC_CAST(PVInterface*, iDataStream));
-                iDataStream = NULL;
-                return PVMFFailure;
+                LOGINFO((0, "PVMFRecognizerRegistryImpl::CheckForDataAvailability - MaxSize=%d, Capacity=%d",
+                         maxSize, capacity));
+                retval = PVMFSuccess;
             }
         }
     }
-    return PVMFFailure;
+    if ((retval != PVMFSuccess) && (retval != PVMFPending))
+    {
+        LOGERROR((0, "PVMFRecognizerRegistryImpl::CheckForDataAvailability Failed"));
+    }
+    return retval;
 }
 
-void PVMFRecognizerRegistryImpl::CompleteRecognize(PVMFStatus aStatus)
+PVMFStatus PVMFRecognizerRegistryImpl::RunRecognitionPass(PVMFRecognizerResult& aResult)
 {
-    oRecognizePending = false;
-    PVUuid uuid = PVMIDataStreamSyncInterfaceUuid;
-    iDataStreamFactory->DestroyPVMFCPMPluginAccessInterface(uuid,
-            OSCL_STATIC_CAST(PVInterface*, iDataStream));
-    iDataStream = NULL;
-    if (aStatus == PVMFSuccess)
+    if ((iRecognizerCurrentCmd.empty() == true) ||
+            (iRecognizerCurrentCmd[0].GetCmdType() != PVMFRECREG_COMMAND_RECOGNIZE) ||
+            (iDataStream == NULL))
     {
-        iDataStreamFactory =
-            (PVMFDataStreamFactory*) iRecognizerCurrentCmd[0].GetParam(0).pOsclAny_value;
-        PVMFRecognizerMIMEStringList* hintlist = (PVMFRecognizerMIMEStringList*) iRecognizerCurrentCmd[0].GetParam(1).pOsclAny_value;
-        Oscl_Vector<PVMFRecognizerResult, OsclMemAllocator>* recresult = (Oscl_Vector<PVMFRecognizerResult, OsclMemAllocator>*) iRecognizerCurrentCmd[0].GetParam(2).pOsclAny_value;
+        LOGERROR((0, "PVMFRecognizerRegistryImpl::RunRecognitionPass - Invalid State"));
+        return PVMFErrInvalidState;
+    }
 
-        // Validate the parameters
-        if (iDataStreamFactory == NULL || recresult == NULL)
+    OSCL_HeapString<OsclMemAllocator> unknown_fmt = PVMF_MIME_FORMAT_UNKNOWN;
+    bool oRunOneMorePass = false;
+    bool oMultipleFormatsPossible = false;
+    OSCL_HeapString<OsclMemAllocator> possibleFormat = PVMF_MIME_FORMAT_UNKNOWN; //this is used in case just one plugin reports possible
+    uint32 i = 0;
+    PVMFRecognizerMIMEStringList* hintlist =
+        (PVMFRecognizerMIMEStringList*) iRecognizerCurrentCmd[0].GetParam(1).pOsclAny_value;
+    Oscl_Vector<PVMFRecognizerPluginParams*, OsclMemAllocator>::iterator it;
+    for (it = iPlugInParamsVec.begin(); it != iPlugInParamsVec.end(); ++it)
+    {
+        i++;
+        if ((*it)->iInUse == true)
         {
-            CompleteCurrentRecRegCommand(PVMFErrArgument);
-            return;
-        }
+            //Reset result structure
+            aResult.Reset();
 
-        // TEMP: Perform the recognition operation by checking with each registered recognizer once
-        for (uint32 i = 0; i < iRecognizerPluginFactoryList.size(); ++i)
-        {
-            // Create the recognizer plugin
-            PVMFRecognizerPluginInterface* recplugin =
-                CreateRecognizerPlugin(*(iRecognizerPluginFactoryList[i]));
-            if (recplugin)
+            LOGINFO((0, "PVMFRecognizerRegistryImpl::RunRecognitionPass Recognize plug-in Start i=%d", i));
+            uint32 currticks = OsclTickCount::TickCount();
+            uint32 starttime = OsclTickCount::TicksToMsec(currticks);
+            OSCL_UNUSED_ARG(starttime);
+
+            // Perform recognition with this recognizer plug-ing
+            PVMFStatus recstatus =
+                (*it)->iRecPlugin->Recognize(*iDataStreamFactory, hintlist, aResult);
+
+            currticks = OsclTickCount::TickCount();
+            uint32 endtime = OsclTickCount::TicksToMsec(currticks);
+            OSCL_UNUSED_ARG(endtime);
+
+            LOGINFO((0, "PVMFRecognizerRegistryImpl::RunRecognitionPass Recognize plug-in End i=%d  confidence=%d, time=%d, mime=%s, AddnlBytesReqd=%d",
+                     i, aResult.iRecognitionConfidence, (endtime - starttime), aResult.iRecognizedFormat.get_cstr(), aResult.iAdditionalBytesRequired));
+
+            if (recstatus != PVMFSuccess)
             {
-                LOGINFO((0, "PVMFRecognizerRegistryImpl::CompleteRecognize Calling recognizer i=%d", i));
-                uint32 currticks = OsclTickCount::TickCount();
-                uint32 starttime = OsclTickCount::TicksToMsec(currticks);
-                OSCL_UNUSED_ARG(starttime);
-
-                // Perform recognition with this recognizer plug-ing
-                recplugin->Recognize(*iDataStreamFactory, hintlist, *recresult);
-                // Done with this recognizer so release it
-
-                currticks = OsclTickCount::TickCount();
-                uint32 endtime = OsclTickCount::TicksToMsec(currticks);
-                OSCL_UNUSED_ARG(endtime);
-                DestroyRecognizerPlugin(*(iRecognizerPluginFactoryList[i]), recplugin);
-
-                if (!recresult->empty())
+                LOGERROR((0, "PVMFRecognizerRegistryImpl::RunRecognitionPass Recognize plug-in Failed i=%d", i));
+                //something went wrong in this recognizer - stop using it
+                (*it)->iInUse = false;
+            }
+            else
+            {
+                if (aResult.iRecognitionConfidence == PVMFRecognizerConfidenceCertain)
                 {
-                    // Get the result of the recognizer operation from the vector
-                    LOGINFO((0, "PVMFRecognizerRegistryImpl::CompleteRecognize Out of recognizer i=%d  result=%d, time=%d",
-                             i, (recresult->back()).iRecognitionConfidence, (endtime - starttime)));
-                    //LOGINFO((0,"PVMFRecognizerRegistryImpl::CompleteRecognize out of recognizer i=%d  result=%d, time=%d, mime=%s",
-                    //i,(recresult->back()).iRecognitionConfidence, (endtime-starttime), (recresult->back()).iRecognizedFormat.get_cstr()));
-                    if ((recresult->back()).iRecognitionConfidence == PVMFRecognizerConfidenceCertain)
+                    //we are done with this recognizer, one way or other, do not use it anymore
+                    (*it)->iInUse = false;
+                    if (aResult.iRecognizedFormat != unknown_fmt)
                     {
-                        CompleteCurrentRecRegCommand(PVMFSuccess);
-                        return;
+                        //we have a definite positive result - we can stop now
+                        return PVMFSuccess;
+                    }
+                }
+                else if (aResult.iRecognitionConfidence == PVMFRecognizerConfidencePossible)
+                {
+                    //We need to keep using this recognizer till we get a certain result,
+                    //provided recognizer is asking for more data. If it is not then
+                    //it is not correct behaviour to say possible and not ask for more data.
+                    //Recognizer must also provide a valid format type.
+                    //So stop using the recognizer if it does not do either of these things.
+                    if ((aResult.iAdditionalBytesRequired != 0) &&
+                            (aResult.iRecognizedFormat != unknown_fmt))
+                    {
+                        (*it)->iMinSizeRequiredForRecognition += aResult.iAdditionalBytesRequired;
+                        //just make sure that recognizer does not need more data than content length
+                        uint32 capacity = 0;
+                        PvmiDataStreamStatus status =
+                            iDataStream->QueryReadCapacity(iDataStreamSessionID, capacity);
+                        uint32 totalSize = iDataStream->GetContentLength();
+                        if ((status == PVDS_END_OF_STREAM) || (capacity == totalSize))
+                        {
+                            //we pretty much have the complete file and if a recognizer still
+                            //cannot make up its mind, then stop using it.
+                            LOGERROR((0, "PVMFRecognizerRegistryImpl::RunRecognitionPass - Plugin returns PVMFRecognizerConfidencePossible with a complete file/stream"));
+                            (*it)->iInUse = false;
+                        }
+                    }
+                    else
+                    {
+                        LOGERROR((0, "PVMFRecognizerRegistryImpl::RunRecognitionPass - Plugin returns PVMFRecognizerConfidencePossible with invalid formattype/addnlbytes"));
+                        (*it)->iInUse = false;
+                    }
+                    //if this recognizer has not been disabled it means that we need to run one more pass
+                    if ((*it)->iInUse == true)
+                    {
+                        if (oRunOneMorePass == true)
+                        {
+                            //this means that previously another plugin returned possible, asking for more data
+                            oMultipleFormatsPossible = true;
+                        }
+                        //save the result
+                        possibleFormat = aResult.iRecognizedFormat;
+                        oRunOneMorePass = true;
                     }
                 }
             }
-
         }
-        // Complete the recognizer command
-        CompleteCurrentRecRegCommand(PVMFSuccess);
     }
-    else
+    //if we get here it means one of two things:
+    //(1) All recognizers have rejected the file for certain or we have deactivated all recognizers (due to incorrect behaviour)
+    //(2) Atleast one recgonizer needs additional data to make up its mind, in which case oRunOneMorePass would be true.
+    if (oRunOneMorePass == true)
     {
-        // Complete the recognizer command
-        CompleteCurrentRecRegCommand(aStatus);
+        //Additional recognition passes required if there is more than one plugin that reports possible.
+        //If just one plugin reports possible, then we assume that it is the format. There is not much point in
+        //running additional passes.
+        if (oMultipleFormatsPossible == true)
+        {
+            return PVMFPending;
+        }
     }
+    //we are done - we could not recognize the format in which case possibleFormat would be PVMF_MIME_FORMAT_UNKNOWN
+    //or just one plugin returned possible and we assume that the clip is of that format.
+    aResult.iRecognitionConfidence = PVMFRecognizerConfidenceCertain;
+    aResult.iRecognizedFormat = possibleFormat;
+    aResult.iAdditionalBytesRequired = 0;
+    return PVMFSuccess;
 }
 
 void PVMFRecognizerRegistryImpl::DoRecognize()
 {
-    // Retrieve the command parameters
-    iDataStreamFactory =
-        (PVMFDataStreamFactory*) iRecognizerCurrentCmd[0].GetParam(0).pOsclAny_value;
-    PVMFRecognizerMIMEStringList* hintlist = (PVMFRecognizerMIMEStringList*) iRecognizerCurrentCmd[0].GetParam(1).pOsclAny_value;
-    Oscl_Vector<PVMFRecognizerResult, OsclMemAllocator>* recresult = (Oscl_Vector<PVMFRecognizerResult, OsclMemAllocator>*) iRecognizerCurrentCmd[0].GetParam(2).pOsclAny_value;
-
-    // Validate the parameters
-    if (iDataStreamFactory == NULL || recresult == NULL)
+    if (iRecognizerCurrentCmd.empty() == true)
     {
-        CompleteCurrentRecRegCommand(PVMFErrArgument);
-        return;
+        //error - this method should not have been called - do a leave
+        LOGERROR((0, "PVMFRecognizerRegistryImpl::DoRecognize - Invalid State"));
+        OSCL_LEAVE(OsclErrInvalidState);
     }
 
-    PVMFStatus status = CheckForDataAvailability();
-    if (status == PVMFFailure)
+    Oscl_Vector<PVMFRecognizerResult, OsclMemAllocator>* recresult =
+        (Oscl_Vector<PVMFRecognizerResult, OsclMemAllocator>*) iRecognizerCurrentCmd[0].GetParam(2).pOsclAny_value;
+
+    //Perform additional setup steps in case we enter this function for the first time
+    if (oRecognizePending == false)
     {
-        CompleteCurrentRecRegCommand(PVMFFailure);
-        return;
-    }
-    else if (status == PVMFSuccess)
-    {
-        // TEMP: Perform the recognition operation by checking with each registered recognizer once
-        for (uint32 i = 0; i < iRecognizerPluginFactoryList.size(); ++i)
+        // Retrieve the command parameters
+        iDataStreamFactory =
+            (PVMFDataStreamFactory*) iRecognizerCurrentCmd[0].GetParam(0).pOsclAny_value;
+
+        // Validate the parameters
+        if (iDataStreamFactory == NULL || recresult == NULL)
         {
-            // Create the recognizer plugin
-            PVMFRecognizerPluginInterface* recplugin =
-                CreateRecognizerPlugin(*(iRecognizerPluginFactoryList[i]));
-            if (recplugin)
-            {
-                LOGINFO((0, "PVMFRecognizerRegistryImpl::DoRecognize Calling recognizer i=%d", i));
-                uint32 currticks = OsclTickCount::TickCount();
-                uint32 starttime = OsclTickCount::TicksToMsec(currticks);
-                OSCL_UNUSED_ARG(starttime);
-
-                // Perform recognition with this recognizer plug-ing
-                recplugin->Recognize(*iDataStreamFactory, hintlist, *recresult);
-                // Done with this recognizer so release it
-
-                currticks = OsclTickCount::TickCount();
-                uint32 endtime = OsclTickCount::TicksToMsec(currticks);
-                OSCL_UNUSED_ARG(endtime);
-
-                DestroyRecognizerPlugin(*(iRecognizerPluginFactoryList[i]), recplugin);
-
-                if (!recresult->empty())
-                {
-                    LOGINFO((0, "PVMFRecognizerRegistryImpl::DoRecognize Out of recognizer i=%d  result=%d, time=%d",
-                             i, (recresult->back()).iRecognitionConfidence, (endtime - starttime)));
-                    //LOGINFO((0,"PVMFRecognizerRegistryImpl::DoRecognize out of recognizer i=%d  result=%d, time=%d, mime=%s",
-                    //i,(recresult->back()).iRecognitionConfidence, (endtime-starttime), (recresult->back()).iRecognizedFormat.get_cstr()));
-                    if ((recresult->back()).iRecognitionConfidence == PVMFRecognizerConfidenceCertain)
-                    {
-                        CompleteCurrentRecRegCommand(PVMFSuccess);
-                        return;
-                    }
-                }
-            }
+            LOGERROR((0, "PVMFRecognizerRegistryImpl::DoRecognize - Invalid Cmd Arguments"));
+            CompleteCurrentRecRegCommand(PVMFErrArgument);
+            return;
         }
 
-        // Complete the recognizer command
-        CompleteCurrentRecRegCommand(PVMFSuccess);
+        if (iDataStream == NULL)
+        {
+            // Create datastream
+            PVMFStatus status = CreateDataStream();
+            if (status != PVMFSuccess)
+            {
+                LOGERROR((0, "PVMFRecognizerRegistryImpl::DoRecognize - CreateDataStream Failed"));
+                CompleteCurrentRecRegCommand(status);
+                return;
+            }
+        }
     }
     else
     {
-        //pending
-        //wait for datastream call back
+        //set it to false - in case we need additional passes this will be set to true below
+        oRecognizePending = false;
+    }
+
+    //Here is how recognize works. First we check to see if we have enough data to run a pass.
+    //If we do, then we would, and in this pass some recognizers could: a) get a postive result
+    //b) get a negative result c) or determine that we need additional data to know for sure.
+    //In case of (a) or (b), we complete the recognize command. In case of (c) we run additional
+    //pass(es). While running a pass, we could also eliminate some of the plugins.
+
+    bool oRunRecognition = true;
+    PVMFStatus status = PVMFFailure;
+    while (oRunRecognition)
+    {
+        status = CheckForDataAvailability();
+        if (status == PVMFSuccess)
+        {
+            // This implies that all plugins have the required minimum number of bytes to start the recognition
+            // This does NOT mean that we will get a definite result in first pass.
+            PVMFRecognizerResult result;
+            status = RunRecognitionPass(result);
+            if (status != PVMFPending)
+            {
+                //means success or failure - in either case we are done with recognition
+                recresult->push_back(result);
+                break;
+            }
+            //We intentionally do nothing here. RunRecognitionPass has returned PVMFPending
+            //and we need additional passes to finish recognizing the file/stream. Therefore we just go back into the while loop.
+            //RunRecognitionPass would have updated iMinSizeRequiredForRecognition in PVMFRecognizerPluginParams that corresponds
+            //to the plugin that needs more data to make up its mind. CheckForDataAvailability will check to see if datastream
+            //has enough data to run a pass right away. If it does not we would break out of the while loop and wait on datastream
+            //callback.
+        }
+        else
+        {
+            //we either have a failure or need more data
+            break;
+        }
+    }
+    //intentional fall thru
+    if (status == PVMFPending)
+    {
+        // wait for datastream call back
         oRecognizePending = true;
     }
+    else
+    {
+        //success or failure
+        CompleteCurrentRecRegCommand(status);
+        return;
+    }
 }
+
 
 
 void PVMFRecognizerRegistryImpl::DoCancelCommand(PVMFRecRegImplCommand& aCmd)
@@ -666,16 +775,6 @@ void PVMFRecognizerRegistryImpl::DoCancelCommand(PVMFRecRegImplCommand& aCmd)
         PVMFCommandId commandToCancelId = paramval.int32_value;
         if (FindCommandByID(iRecognizerCurrentCmd, commandToCancelId) == false) return;
         CompleteCurrentRecRegCommand(PVMFErrCancelled, commandToCancelId);
-
-        // close data stream object to avoid any memory leak in case of cancel command
-        if (iDataStream) iDataStream->CloseSession(iDataStreamSessionID);
-        if (iDataStreamFactory)
-        {
-            PVUuid uuid = PVMIDataStreamSyncInterfaceUuid;
-            iDataStreamFactory->DestroyPVMFCPMPluginAccessInterface(uuid,
-                    OSCL_STATIC_CAST(PVInterface*, iDataStream));
-            iDataStream = NULL;
-        }
     }
 
 }
@@ -694,13 +793,30 @@ void PVMFRecognizerRegistryImpl::DataStreamCommandCompleted(const PVMFCmdResp& a
 {
     if (aResponse.GetCmdId() == iRequestReadCapacityNotificationID)
     {
-        iDataStreamCallBackStatus = aResponse.GetCmdStatus();
-        RunIfNotReady();
+        if (aResponse.GetCmdStatus() == PVMFSuccess)
+        {
+            LOGINFO((0, "PVMFRecognizerRegistryImpl::DataStreamCommandCompleted Success"));
+            //reschedule AO to complete recongnize command
+            RunIfNotReady();
+        }
+        else
+        {
+            LOGERROR((0, "PVMFRecognizerRegistryImpl::DataStreamCommandCompleted failed - status=%d", aResponse.GetCmdStatus()));
+            if (iRecognizerCurrentCmd.empty() == false)
+            {
+                //fail ongoing command
+                CompleteCurrentRecRegCommand(aResponse.GetCmdStatus());
+            }
+        }
     }
     else
     {
-        LOGERROR((0, "PVMFRecognizerRegistryImpl::DataStreamCommandCompleted failed"));
-        OSCL_ASSERT(false);
+        LOGERROR((0, "PVMFRecognizerRegistryImpl::DataStreamCommandCompleted failed - Unknown cmd id"));
+        if (iRecognizerCurrentCmd.empty() == false)
+        {
+            //fail ongoing command
+            CompleteCurrentRecRegCommand(aResponse.GetCmdStatus());
+        }
     }
 }
 
