@@ -72,7 +72,7 @@ class OmxAmrDecoder
 
         Frame_Type_3GPP GetFrameTypeLength(OMX_U8* &ptr, OMX_S32 *pLength);
         void GetStartPointsForIETFCombinedMode(OMX_U8* aPtrIn, OMX_U32 aLength,
-                                               OMX_U8* &aTocPtr, OMX_S32* aNumOfBytes);
+                                               OMX_U8* &aTocPtr);
 
         OMX_S16 iOmxInputFormat;
         OMX_U8  *iTocTablePtr;

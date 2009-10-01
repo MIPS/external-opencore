@@ -256,7 +256,7 @@ void OmxAmrDecoder::ResetDecoder()
 
 /* Find the start point & size of TOC table in case of IETF_Combined format */
 void OmxAmrDecoder::GetStartPointsForIETFCombinedMode
-(OMX_U8* aPtrIn, OMX_U32 aLength, OMX_U8* &aTocPtr, OMX_S32* aNumOfBytes)
+(OMX_U8* aPtrIn, OMX_U32 aLength, OMX_U8* &aTocPtr)
 {
     OMX_U8 Fbit     = 0x80;
     OMX_U32 FrameCnt = 0;
@@ -269,7 +269,7 @@ void OmxAmrDecoder::GetStartPointsForIETFCombinedMode
     }
 
     FrameCnt++;
-    *aNumOfBytes = FrameCnt;
+    iAMRFramesinTOC = FrameCnt;
 }
 
 
@@ -290,7 +290,7 @@ OMX_BOOL OmxAmrDecoder::AmrDecodeFrame(OMX_S16* aOutputBuffer,
      * e.g. toc length for ietf_combined, frame header length &
      * one frame type byte for ietf format.
      */
-    OMX_S32 FrameBytesProcessed = 0, FrameLength;
+    OMX_S32 FrameBytesProcessed = 0, FrameLength = 0;
 
     /* Reset speech_bits buffer pointer */
     OMX_U8* pSpeechBits = *aInBuffer;
@@ -305,7 +305,7 @@ OMX_BOOL OmxAmrDecoder::AmrDecodeFrame(OMX_S16* aOutputBuffer,
             {
                 pTocPtr = NULL;
                 GetStartPointsForIETFCombinedMode(pSpeechBits, *aInBufSize,
-                                                  pTocPtr, &iAMRFramesinTOC);
+                                                  pTocPtr);
                 pSpeechBits += iAMRFramesinTOC;
                 FrameBytesProcessed = iAMRFramesinTOC;
 
