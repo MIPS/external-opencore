@@ -91,6 +91,7 @@ class engine_test_suite : public test_case
         void AddAudioTests(const bool aProxy, int32 firstTest, int32 lastTest);
         void AddVideoTests(const bool aProxy, int32 firstTest, int32 lastTest);
         void AddBasicAVTests(const bool aProxy, int32 firstTest, int32 lastTest);
+        void AddPauseResumeTests(const bool aproxy, int32 firstTest, int32 lastTest);
         void AddAcceptableFormatsTests(const bool aProxy, int32 firstTest, int32 lastTest);
         void AddNegotiatedFormatsTests(const bool aProxy, int32 firstTest, int32 lastTest);
 #endif

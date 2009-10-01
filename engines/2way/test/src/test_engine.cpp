@@ -36,6 +36,7 @@
 #include "oscl_string_utils.h"
 #include "oscl_mem_audit.h"
 #include "pv_2way_mio.h"
+#include "pause_resume_test.h"
 
 
 #include "tsc_h324m_config_interface.h"
@@ -46,6 +47,15 @@
 
 #define AUDIO_FIRST 0
 #define VIDEO_FIRST 1
+
+#define AUD_SRC_PAUSE_DURATION  1
+#define AUD_SRC_RESUME_DURATION 5
+#define AUD_SNK_PAUSE_DURATION   10
+#define AUD_SNK_RESUME_DURATION 4
+#define VID_SRC_PAUSE_DURATION   15
+#define VID_SRC_RESUME_DURATION  3
+#define VID_SNK_PAUSE_DURATION  20
+#define VID_SNK_RESUME_DURATION 5
 
 #define MAX_SIP_TEST 27
 #define SIP_TEST_OFFSET 200
@@ -650,6 +660,61 @@ void engine_test_suite::AddNegotiatedFormatsTests(const bool aProxy,
 
 }
 
+void engine_test_suite::AddPauseResumeTests(const bool aProxy, int32 firstTest, int32 lastTest)
+{
+
+    if (inRange(firstTest, lastTest))
+    {
+        test_base* temp = OSCL_NEW(pause_resume_test, (true, AUD_SRC_PAUSE_DURATION, AUD_SRC_RESUME_DURATION,
+                                   true, AUD_SNK_PAUSE_DURATION, AUD_SNK_RESUME_DURATION,
+                                   true, VID_SRC_PAUSE_DURATION, VID_SRC_RESUME_DURATION,
+                                   true, VID_SNK_PAUSE_DURATION, VID_SNK_RESUME_DURATION,
+                                   aProxy));
+        PV2WaySourceAndSinksFile* iSourceAndSinks = CreateSourceAndSinks(temp, PVMF_MIME_AMR_IF2,
+                PVMF_MIME_AMR_IF2, PVMF_MIME_YUV420, PVMF_MIME_YUV420);
+        temp->AddSourceAndSinks(iSourceAndSinks);
+        adopt_test_case(temp);
+    }
+
+    if (inRange(firstTest, lastTest))
+    {
+        test_base* temp = OSCL_NEW(pause_resume_test, (false, AUD_SRC_PAUSE_DURATION, AUD_SRC_RESUME_DURATION,
+                                   true, AUD_SNK_PAUSE_DURATION, AUD_SNK_RESUME_DURATION,
+                                   false, VID_SRC_PAUSE_DURATION, VID_SRC_RESUME_DURATION,
+                                   false, VID_SNK_PAUSE_DURATION, VID_SNK_RESUME_DURATION,
+                                   aProxy));
+        PV2WaySourceAndSinksFile* iSourceAndSinks = CreateSourceAndSinks(temp, PVMF_MIME_AMR_IF2,
+                PVMF_MIME_AMR_IF2, PVMF_MIME_YUV420, PVMF_MIME_YUV420);
+        temp->AddSourceAndSinks(iSourceAndSinks);
+        adopt_test_case(temp);
+    }
+
+    if (inRange(firstTest, lastTest))
+    {
+        test_base* temp = OSCL_NEW(pause_resume_test, (false, AUD_SRC_PAUSE_DURATION, AUD_SRC_RESUME_DURATION,
+                                   false, AUD_SNK_PAUSE_DURATION, AUD_SNK_RESUME_DURATION,
+                                   true, VID_SRC_PAUSE_DURATION, VID_SRC_RESUME_DURATION,
+                                   false, VID_SNK_PAUSE_DURATION, VID_SNK_RESUME_DURATION,
+                                   aProxy));
+        PV2WaySourceAndSinksFile* iSourceAndSinks = CreateSourceAndSinks(temp, PVMF_MIME_AMR_IF2,
+                PVMF_MIME_AMR_IF2, PVMF_MIME_YUV420, PVMF_MIME_YUV420);
+        temp->AddSourceAndSinks(iSourceAndSinks);
+        adopt_test_case(temp);
+    }
+    if (inRange(firstTest, lastTest))
+    {
+        test_base* temp = OSCL_NEW(pause_resume_test, (false, AUD_SRC_PAUSE_DURATION, AUD_SRC_RESUME_DURATION,
+                                   false, AUD_SNK_PAUSE_DURATION, AUD_SNK_RESUME_DURATION,
+                                   false, VID_SRC_PAUSE_DURATION, VID_SRC_RESUME_DURATION,
+                                   true, VID_SNK_PAUSE_DURATION, VID_SNK_RESUME_DURATION,
+                                   aProxy));
+        PV2WaySourceAndSinksFile* iSourceAndSinks = CreateSourceAndSinks(temp, PVMF_MIME_AMR_IF2,
+                PVMF_MIME_AMR_IF2, PVMF_MIME_YUV420, PVMF_MIME_YUV420);
+        temp->AddSourceAndSinks(iSourceAndSinks);
+        adopt_test_case(temp);
+    }
+}
+
 void engine_test_suite::AddAudioTests(const bool aProxy,
                                       int32 firstTest,
                                       int32 lastTest)
@@ -1040,6 +1105,10 @@ bool engine_test_suite::proxy_tests3(const bool aProxy)
 
     // temporarily comment out while fixing
     AddNegotiatedFormatsTests(aProxy, firstTest, lastTest);
+
+    //pause resume test case.
+    AddPauseResumeTests(aProxy, firstTest, lastTest);
+
 
     return true;
 }

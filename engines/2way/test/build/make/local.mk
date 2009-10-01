@@ -43,8 +43,8 @@ SRCS_324 = av_test.cpp \
 	user_input_test.cpp \
 	basic_lipsync_test.cpp \
 	lipsync_dummy_input_mio.cpp \
-	lipsync_dummy_output_mio.cpp 
-	 
+	lipsync_dummy_output_mio.cpp \
+	pause_resume_test.cpp
 
 SRCS += $(SRCS_324)
 

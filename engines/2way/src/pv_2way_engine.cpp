@@ -748,6 +748,7 @@ void CPV324m2Way::DoAddDataSourceNode(TPV2WayNode& aNode,
     TPV2WayNode* srcNode = &aNode;
     datapathnode.iNode = *srcNode;
     datapathnode.iLoggoffOnReset = true;
+    datapathnode.iCanNodePause = true;
     datapathnode.iIgnoreNodeState = false;
     datapathnode.iOutputPort.iRequestPortState = EPVMFNodeInitialized;
     datapathnode.iOutputPort.iPortSetType = EConnectedPortFormat;
@@ -1243,7 +1244,7 @@ void CPV324m2Way::DoAddDataSinkNodeForH263_M4V(TPV2WayNode& aNode,
     datapathnode.iNode.iNode = sinkNode->iNode;
     datapathnode.iNode.iSessionId = sinkNode->iSessionId;
     datapathnode.iConfigure = NULL;
-    datapathnode.iCanNodePause = false;
+    datapathnode.iCanNodePause = true;
     datapathnode.iLoggoffOnReset = true;
     datapathnode.iIgnoreNodeState = false;
     datapathnode.iInputPort.iRequestPortState = EPVMFNodeInitialized;
@@ -2453,23 +2454,96 @@ PVCommandId CPV324m2Way::SetLatencyQualityTradeoff(PVMFNodeInterface& aTrack,
     return iCommandId++;
 }
 
+CPV2WayDataChannelDatapath *CPV324m2Way::GetDataPath(PV2WayDirection aDirection, PVTrackId aTrackId)
+{
+    CPV2WayDataChannelDatapath *datapath = NULL;
+    if (aDirection == OUTGOING)
+    {
+        if (iAudioEncDatapath && (aTrackId == iAudioEncDatapath->GetChannelId()))
+        {
+            datapath = iAudioEncDatapath;
+        }
+        else if (iVideoEncDatapath && (aTrackId == iVideoEncDatapath->GetChannelId()))
+        {
+            datapath = iVideoEncDatapath;
+        }
+    }
+    else if (aDirection == INCOMING)
+    {
 
+        if (iAudioDecDatapath && (aTrackId == iAudioDecDatapath->GetChannelId()))
+        {
+            datapath = iAudioDecDatapath;
+        }
+        else if (iVideoDecDatapath && (aTrackId == iVideoDecDatapath->GetChannelId()))
+        {
+            datapath = iVideoDecDatapath;
+        }
+    }
+    else
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
+                        (0, "CPV324m2Way::PauseL or Resume - unknown node!"));
+        OSCL_LEAVE(PVMFErrArgument);
+    }
+    return datapath;
+}
 PVCommandId CPV324m2Way::Pause(PV2WayDirection aDirection,
                                PVTrackId aTrackId,
                                OsclAny* aContextData)
 {
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                    (0, "CPV324m2Way::Pause\n"));
-    OSCL_UNUSED_ARG(aDirection);
-    OSCL_UNUSED_ARG(aTrackId);
-    OSCL_UNUSED_ARG(aContextData);
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "CPV324m2Way::Pause\n"));
 
-    OSCL_LEAVE(PVMFErrNotSupported);
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                    (0, "CPV324m2Way::Pause - done\n"));
+    CPV2WayDataChannelDatapath *datapath = NULL;
+    TPV2WayCmdInfo *cmd;
+
+    switch (iState)
+    {
+        case EIdle:
+        case EInitializing:
+        case EResetting:
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
+                            (0, "CPV324m2Way::Pause - invalid state(%d)", iState));
+            OSCL_LEAVE(PVMFErrInvalidState);
+            break;
+
+        default:
+            //State check okay.
+            break;
+    }
+    datapath = GetDataPath(aDirection, aTrackId);
+
+    switch (datapath->GetState())
+    {
+        case EOpened:
+            cmd = GetCmdInfoL();
+            cmd->type = PVT_COMMAND_PAUSE;
+            cmd->id = iCommandId;
+            cmd->contextData = aContextData;
+            datapath->SetCmd(cmd);
+            break;
+
+        case EPaused:
+            cmd = GetCmdInfoL();
+            cmd->type = PVT_COMMAND_PAUSE;
+            cmd->id = iCommandId;
+            cmd->contextData = aContextData;
+            cmd->status = PVMFSuccess;
+            Dispatch(cmd);
+            break;
+
+        case EPausing:
+            return datapath->GetCmdInfo()->id;
+
+        default:
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
+                            (0, "CPV324m2Way::PauseL - invalid path state\n"));
+            OSCL_LEAVE(PVMFErrInvalidState);
+            break;
+    }
+
     return iCommandId++;
 }
-
 
 PVCommandId CPV324m2Way::Resume(PV2WayDirection aDirection,
                                 PVTrackId aTrackId,
@@ -2477,13 +2551,57 @@ PVCommandId CPV324m2Way::Resume(PV2WayDirection aDirection,
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                     (0, "CPV324m2Way::Resume\n"));
-    OSCL_UNUSED_ARG(aDirection);
-    OSCL_UNUSED_ARG(aTrackId);
-    OSCL_UNUSED_ARG(aContextData);
-    OSCL_LEAVE(PVMFErrNotSupported);
 
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                    (0, "CPV324m2Way::Resume - done\n"));
+    CPV2WayDataChannelDatapath *datapath = NULL;
+    TPV2WayCmdInfo *cmd;
+
+    switch (iState)
+    {
+        case EIdle:
+        case EInitializing:
+        case EResetting:
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
+                            (0, "CPV324m2Way::Resume - invalid state(%d)", iState));
+            OSCL_LEAVE(PVMFErrInvalidState);
+            break;
+
+        default:
+            //State check okay.
+            break;
+    }
+
+    datapath = GetDataPath(aDirection, aTrackId);
+
+    switch (datapath->GetState())
+    {
+        case EPaused:
+            cmd = GetCmdInfoL();
+            cmd->type = PVT_COMMAND_RESUME;
+            cmd->id = iCommandId;
+            cmd->contextData = aContextData;
+            datapath->SetCmd(cmd);
+            break;
+
+        case EOpened:
+            cmd = GetCmdInfoL();
+            cmd->type = PVT_COMMAND_RESUME;
+            cmd->id = iCommandId;
+            cmd->contextData = aContextData;
+            cmd->status = PVMFSuccess;
+            Dispatch(cmd);
+            break;
+
+        case EUnpausing:
+            return datapath->GetCmdInfo()->id;
+
+        default:
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
+                            (0, "CPV324m2Way::ResumeL - invalid path state\n"));
+            OSCL_LEAVE(PVMFErrInvalidState);
+            break;
+    }
+
+
     return iCommandId++;
 }
 

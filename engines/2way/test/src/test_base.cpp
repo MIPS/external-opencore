@@ -482,6 +482,7 @@ void test_base::CommandCompleted(const PVCmdResponse& aResponse)
             AudioAddSourceFailed();
         }
     }
+
     else if (iAudioRemoveSourceId == cmdId)
     {
         AudioRemoveSourceCompleted();
@@ -524,6 +525,7 @@ void test_base::CommandCompleted(const PVCmdResponse& aResponse)
     {
         CancelCmdCompleted();
     }
+
 }
 
 void test_base::InitializeLogs()
@@ -642,7 +644,8 @@ void test_base::HandleInformationalEvent(const PVAsyncInformationalEvent& aEvent
                     iAudioAddSourceId = iSourceAndSinks->HandleOutgoingAudio(aEvent);
                     if (iAudioAddSourceId)
                     {
-                        PV2WayUtil::OutputInfo("Audio");
+                        iAudioSrcChannelId = channel_id;
+                        PV2WayUtil::OutputInfo("Audio\n");
                     }
                     else
                     {
@@ -650,6 +653,7 @@ void test_base::HandleInformationalEvent(const PVAsyncInformationalEvent& aEvent
                     }
                 }
             }
+
             else if (aEvent.GetLocalBuffer()[0] == PV_VIDEO)
             {
                 if (iUsingVideo)
@@ -657,7 +661,8 @@ void test_base::HandleInformationalEvent(const PVAsyncInformationalEvent& aEvent
                     iVideoAddSourceId = iSourceAndSinks->HandleOutgoingVideo(aEvent);
                     if (iVideoAddSourceId)
                     {
-                        PV2WayUtil::OutputInfo("Video");
+                        iVideoSrcChannelId = channel_id;
+                        PV2WayUtil::OutputInfo("Video\n");
                     }
                     else
                     {
@@ -684,7 +689,8 @@ void test_base::HandleInformationalEvent(const PVAsyncInformationalEvent& aEvent
                     iAudioAddSinkId = iSourceAndSinks->HandleIncomingAudio(aEvent);
                     if (iAudioAddSinkId)
                     {
-                        PV2WayUtil::OutputInfo("Audio");
+                        iAudioSnkChannelId = channel_id;
+                        printf("Audio");
                     }
                     else
                     {
@@ -699,7 +705,8 @@ void test_base::HandleInformationalEvent(const PVAsyncInformationalEvent& aEvent
                     iVideoAddSinkId = iSourceAndSinks->HandleIncomingVideo(aEvent);
                     if (iVideoAddSinkId)
                     {
-                        PV2WayUtil::OutputInfo("Video");
+                        iVideoSnkChannelId = channel_id;
+                        printf("Video");
                     }
                     else
                     {

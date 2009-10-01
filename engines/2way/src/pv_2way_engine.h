@@ -70,6 +70,9 @@
 #include "pv_2way_codecspecifier_interface.h"
 #endif
 
+
+
+
 // COMM and Stack related
 #ifndef NO_2WAY_324
 #ifndef TSCMAIN_H_INCLUDED // Gkl
@@ -145,7 +148,7 @@
 #define DEFAULT_PLAY_FROM_FILE_AUDIO PVMF_MIME_AMR_IETF
 #define DEFAULT_PLAY_FROM_FILE_VIDEO PVMF_MIME_YUV420
 
-
+class CPV2WayDataChannelDatapath;
 class PvmfNodesSyncControlInterface;
 typedef enum
 {
@@ -764,6 +767,7 @@ class CPV324m2Way : OsclActiveObject,
 
         // OsclTimerObserver virtuals
         void TimeoutOccurred(int32 timerID, int32 timeoutInfo);
+        CPV2WayDataChannelDatapath *GetDataPath(PV2WayDirection Direction, PVTrackId TrackId);
 
 #ifndef NO_2WAY_324
         bool AllChannelsOpened();

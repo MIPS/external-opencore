@@ -72,21 +72,25 @@ class engine_test : public test_case,
                 OsclActiveObject(OsclActiveObject::EPriorityNominal, "Test Engine"),
                 iAudioSourceAdded(false),
                 iAudioAddSourceId(0),
+                iAudioSrcChannelId(NULL),
                 iAudioRemoveSourceId(0),
                 iAudioPauseSourceId(0),
                 iAudioResumeSourceId(0),
                 iAudioSinkAdded(false),
                 iAudioAddSinkId(0),
+                iAudioSnkChannelId(NULL),
                 iAudioAddSink2Id(0),
                 iAudioRemoveSinkId(0),
                 iAudioPauseSinkId(0),
                 iAudioResumeSinkId(0),
                 iVideoSourceAdded(false),
+                iVideoSrcChannelId(NULL),
                 iVideoAddSourceId(0),
                 iVideoRemoveSourceId(0),
                 iVideoPauseSourceId(0),
                 iVideoResumeSourceId(0),
                 iVideoSinkAdded(false),
+                iVideoSnkChannelId(NULL),
                 iVideoAddSinkId(0),
                 iVideoAddSink2Id(0),
                 iVideoRemoveSinkId(0),
@@ -215,6 +219,7 @@ class engine_test : public test_case,
 
         bool iAudioSourceAdded;
         PVCommandId iAudioAddSourceId;
+        TPVChannelId* iAudioSrcChannelId;
         PVCommandId iAudioAddSource2Id;
         PVCommandId iAudioRemoveSourceId;
         PVCommandId iAudioPauseSourceId;
@@ -222,12 +227,14 @@ class engine_test : public test_case,
 
         bool iAudioSinkAdded;
         PVCommandId iAudioAddSinkId;
+        TPVChannelId* iAudioSnkChannelId;
         PVCommandId iAudioAddSink2Id;
         PVCommandId iAudioRemoveSinkId;
         PVCommandId iAudioPauseSinkId;
         PVCommandId iAudioResumeSinkId;
 
         bool iVideoSourceAdded;
+        TPVChannelId* iVideoSrcChannelId;
         PVCommandId iVideoAddSourceId;
         PVCommandId iVideoAddSource2Id;
         PVCommandId iVideoRemoveSourceId;
@@ -235,6 +242,7 @@ class engine_test : public test_case,
         PVCommandId iVideoResumeSourceId;
 
         bool iVideoSinkAdded;
+        TPVChannelId* iVideoSnkChannelId;
         PVCommandId iVideoAddSinkId;
         PVCommandId iVideoAddSink2Id;
         PVCommandId iVideoRemoveSinkId;

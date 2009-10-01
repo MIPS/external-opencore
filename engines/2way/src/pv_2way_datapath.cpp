@@ -1305,7 +1305,33 @@ void CPV2WayDatapath::CommandHandler(PV2WayNodeCmdType aType, const PVMFCmdResp&
                     TPV2WayNode* sink_node = i2Way->GetTPV2WayNode(i2Way->iSinkNodes, data->iNode);
                     OSCL_ASSERT(sink_node);
 
-                    i2Way->SendNodeCmdL(PV2WAY_NODE_CMD_SKIP_MEDIA_DATA, sink_node, i2Way);
+
+                    /*the motive of iEnginePauseonce is that if we are calling resume,after pause done
+                     * no need to send node command "PV2WAY_NODE_CMD_SKIP_MEDIA_DATA".The role of PV2WAY_NODE_CMD_SKIP_MEDIA_DATA is
+                     * to skip the media data and here we are pausing and starting our master clock also.
+                     * This functionality needded only at the time of initalization.In our resume case there is no need to skip any media data,
+                     * because skip media data is only useful when we go for seeking functionality.*/
+                    if (iEnginePausedOnce == false)
+                    {
+                        i2Way->SendNodeCmdL(PV2WAY_NODE_CMD_SKIP_MEDIA_DATA, sink_node, i2Way);
+                    }
+                }
+            }
+            else
+            {
+                DatapathError();
+            }
+            break;
+        case PV2WAY_NODE_CMD_PAUSE:
+            if (aResponse.GetCmdStatus() == PVMFSuccess)
+            {
+                if (i2Way->IsSinkNode(data->iNode))
+                {
+                    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE,
+                                    (0, "CPV324m2Way::CommandHandler, Pause successful for Node %x ",
+                                     aType, data->iNode))
+
+                    iEnginePausedOnce = true;
                 }
             }
             else

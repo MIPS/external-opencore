@@ -247,7 +247,8 @@ class CPV2WayDatapath : public HeapBase, public MPV2WayNodeCommandObserver
                 iSourceSinkFormat(PVMF_MIME_FORMAT_UNKNOWN),
                 i2Way(a2Way),
                 iLogger(aLogger),
-                iAllPortsConnected(false)
+                iAllPortsConnected(false),
+                iEnginePausedOnce(false)
         {
             iReadSourceSinkFormatLock.Create();
         };
@@ -394,6 +395,7 @@ class CPV2WayDatapath : public HeapBase, public MPV2WayNodeCommandObserver
         // Format specific info associated with this datapath
         uint8* iFsi;
         uint32 iFsiLen;
+        bool iEnginePausedOnce;
 };
 
 #endif //PV_2WAY_DATAPATH_H_INCLUDED
