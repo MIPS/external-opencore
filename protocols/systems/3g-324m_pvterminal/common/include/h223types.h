@@ -175,7 +175,7 @@ enum MtState
     MT_STATE_UNKNOWN = 0x1F
 };
 
-class OlcParam
+class OlcParam: public HeapBase
 {
     public:
         static OlcParam* NewL(TPVDirection dir, TPVChannelId iId, H223ChannelParam* forward_params, H223ChannelParam* reverse_params = NULL);

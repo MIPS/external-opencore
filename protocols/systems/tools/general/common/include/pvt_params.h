@@ -24,7 +24,7 @@
 #include "pvt_common.h"
 #include "oscl_mem.h"
 
-class CPVChannelParam : public CPVTrackInfo
+class CPVChannelParam : public HeapBase, public CPVTrackInfo
 {
     public:
         CPVChannelParam(TPVDirection dir, TPVChannelId id, TPVDirectionality directionality, ErrorProtectionLevel_t epl):
@@ -32,7 +32,7 @@ class CPVChannelParam : public CPVTrackInfo
                 iNumSduSizes(0), iSduSizes(NULL), iMediaParam(NULL)
         {
         }
-        CPVChannelParam(CPVChannelParam& that) : CPVTrackInfo(that),
+        CPVChannelParam(CPVChannelParam& that) : HeapBase(that), CPVTrackInfo(that),
                 iDirection(that.iDirection), iChannelId(that.iChannelId), iDirectionality(that.iDirectionality), iEpl(that.iEpl),
                 iNumSduSizes(that.iNumSduSizes), iSduSizes(NULL), iMediaParam(NULL)
         {

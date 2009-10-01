@@ -130,6 +130,11 @@ TSC_324m::~TSC_324m()
     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                     (0, "TSC_324m::~TSC_324m"));
     ResetTsc();
+    while (!iCmdQueue.empty())
+    {
+        CommandComplete(iCmdQueue, iCmdQueue.front(), PVMFErrCancelled);
+        iCmdQueue.Erase(&iCmdQueue.front());
+    }
 }
 
 OSCL_EXPORT_REF void TSC_324m::SetInitialValues()

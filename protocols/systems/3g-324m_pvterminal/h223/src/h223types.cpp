@@ -222,17 +222,22 @@ void OlcParam::InitOlc(TPVDirection dir,
                        PS_H223LogicalChannelParameters lcpRvs)
 {
     H223ChannelParam* forward_params = OSCL_NEW(H223ChannelParam, (id, lcp, dt));
+    OsclError::PushL(forward_params);
     H223ChannelParam* reverse_params = NULL;
     if (lcpRvs)
     {
         reverse_params = OSCL_NEW(H223ChannelParam, (idRvs, lcpRvs, dtRvs));
+        OsclError::PushL(reverse_params);
     }
+
     // insert into the list of olcs
     Set(dir, id, forward_params, reverse_params);
     SetState(OLC_PENDING);
-    OSCL_DELETE(forward_params);
     if (reverse_params)
-        OSCL_DELETE(reverse_params);
+    {
+        OsclError::PopDealloc(); // reverse_params
+    }
+    OsclError::PopDealloc(); // forward_params
 }
 
 OlcParam::~OlcParam()
@@ -471,9 +476,10 @@ OlcParam* OlcList::AppendOlc(TPVDirection dir,
                              PS_H223LogicalChannelParameters lcpRvs)
 {
     OlcParam* olc = OSCL_NEW(OlcParam, ());
+    OsclError::PushL(olc);
     olc->InitOlc(dir, id, dt, lcp, idRvs, dtRvs, lcpRvs);
     AppendOlc(olc, dir, id);
-
+    OsclError::Pop(); // olc
     return olc;
 }
 
