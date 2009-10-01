@@ -1270,7 +1270,8 @@ OsclAny TSC_component::TcsMsdComplete()
     }
 
     //Oscl_Vector<OlcParam*, OsclMemAllocator> olc_list;
-    CPVMultiplexEntryDescriptorVector descriptors;
+    CPVMultiplexEntryDescriptorVector* pDescriptors = OSCL_NEW(CPVMultiplexEntryDescriptorVector, ());
+    OsclError::PushL(pDescriptors);
 
     // start OLCs
     for (unsigned olcnum = 0; olcnum < iOutgoingChannelConfig->size(); olcnum++)
@@ -1327,9 +1328,9 @@ OsclAny TSC_component::TcsMsdComplete()
         }
         Delete_AdaptationLayerType(al_type);
         OSCL_DEFAULT_FREE(al_type);
-        StartOlc(olc_param, media_type, descriptors);
+        StartOlc(olc_param, media_type, pDescriptors);
     }
-    if (FinishTcsMsdComplete(descriptors))
+    if (FinishTcsMsdComplete(pDescriptors))
     {
         iTSCmt.MtTrfReq(iOlcs);
     }
@@ -1337,10 +1338,12 @@ OsclAny TSC_component::TcsMsdComplete()
     iUseAl1Video = true;
     iUseAl2Video = true;
     iUseAl3Video = true;
+    OsclError::PopDealloc(); // pDescriptors
 #ifdef MEM_TRACK
     printf("\n Memory Stats After TcsMsdComplete");
     MemStats();
 #endif
+
 }
 
 void TSC_component::SetOutgoingChannelConfig(Oscl_Vector<H324ChannelParameters, PVMFTscAlloc>& out_channel_config)

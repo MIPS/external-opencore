@@ -540,14 +540,14 @@ TPVStatusCode CPVH223Multiplex::SetIncomingMuxTableEntries(CPVMultiplexDescripto
     return EPVT_Success;
 }
 
-void CPVH223Multiplex::SetIncomingMuxDescriptors(CPVMultiplexEntryDescriptorVector& descriptors, bool replace)
+void CPVH223Multiplex::SetIncomingMuxDescriptors(CPVMultiplexEntryDescriptorVector* apDescriptors, bool aReplace)
 {
-    iMuxTblMgr->SetIncomingMuxDescriptors(descriptors, replace);
+    iMuxTblMgr->SetIncomingMuxDescriptors(apDescriptors, aReplace);
 }
 
-void CPVH223Multiplex::SetOutgoingMuxDescriptors(CPVMultiplexEntryDescriptorVector& descriptors)
+void CPVH223Multiplex::SetOutgoingMuxDescriptors(CPVMultiplexEntryDescriptorVector* apDescriptors)
 {
-    iMuxTblMgr->SetOutgoingMuxDescriptors(descriptors);
+    iMuxTblMgr->SetOutgoingMuxDescriptors(apDescriptors);
 }
 
 void CPVH223Multiplex::RemoveOutgoingMuxDescriptor(uint8 muxTblNum)

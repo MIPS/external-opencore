@@ -45,7 +45,7 @@ MuxTableMgr::MuxTableMgr(): iOutgoingDescriptors(NULL)
 
     AddIncomingControlDescriptor();
     iOutgoingDescriptors = OSCL_NEW(CPVMultiplexEntryDescriptorVector, ());
-    AddControlDescriptor(*iOutgoingDescriptors);
+    AddControlDescriptor(iOutgoingDescriptors);
 
     ResetStats();
 }
@@ -64,6 +64,13 @@ MuxTableMgr::~MuxTableMgr()
 
     if (iOutgoingDescriptors)
     {
+        CPVMultiplexEntryDescriptorVector::iterator iter = iOutgoingDescriptors->begin();
+        while (iter != iOutgoingDescriptors->end())
+        {
+            OSCL_DELETE(*iter);
+            iter++;
+        }
+        iOutgoingDescriptors->clear();
         OSCL_DELETE(iOutgoingDescriptors);
         iOutgoingDescriptors = NULL;
     }
@@ -97,12 +104,12 @@ OsclAny MuxTableMgr::AddIncomingControlDescriptor()
     iMuxDescriptorFlagR[WNSRP_MUX_ENTRY_NUMBER] = ACTIVATE;
 }
 
-void MuxTableMgr::AddControlDescriptor(CPVMultiplexEntryDescriptorVector& descriptors)
+void MuxTableMgr::AddControlDescriptor(CPVMultiplexEntryDescriptorVector* apDescriptors)
 {
 //  PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0,"MuxTableMgr::AddControlDescriptor\n"));
     PS_MultiplexEntryDescriptor h245_desc = GetControlDescriptor(SRP_MUX_ENTRY_NUMBER);
     CPVMultiplexEntryDescriptor* descriptor = CPVMultiplexEntryDescriptor::NewL(h245_desc, 128);
-    descriptors.push_back(descriptor);
+    apDescriptors->push_back(descriptor);
     Delete_MultiplexEntryDescriptor(h245_desc);
     OSCL_DEFAULT_FREE(h245_desc);
 }
@@ -135,14 +142,14 @@ OsclAny MuxTableMgr::SetIncomingDescriptors(PS_MuxDescriptor mux_desc)
     }
 }
 
-OsclAny MuxTableMgr::SetIncomingMuxDescriptors(CPVMultiplexEntryDescriptorVector& descriptors, bool replace)
+OsclAny MuxTableMgr::SetIncomingMuxDescriptors(CPVMultiplexEntryDescriptorVector* apDescriptors, bool aReplace)
 {
-    for (unsigned n = 0; n < descriptors.size(); n++)
+    for (unsigned n = 0; n < apDescriptors->size(); n++)
     {
-        uint8 entry_num = descriptors[n]->GetH245descriptor()->multiplexTableEntryNumber;
+        uint8 entry_num = (*apDescriptors)[n]->GetH245descriptor()->multiplexTableEntryNumber;
         if (iMuxDescriptorR[entry_num])
         {
-            if (!replace)
+            if (!aReplace)
             {
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_INFO, (0, "MuxTableMgr::SetIncomingDescriptors descriptor already exists for mux entry=%d and we are not to replace it!", entry_num));
                 continue;
@@ -150,10 +157,10 @@ OsclAny MuxTableMgr::SetIncomingMuxDescriptors(CPVMultiplexEntryDescriptorVector
             RemoveDescriptorR(entry_num);
             iMuxDescriptorFlagR[entry_num] = DEACTIVATE;
         }
-        if (descriptors[n]->GetH245descriptor()->option_of_elementList == true)
+        if ((*apDescriptors)[n]->GetH245descriptor()->option_of_elementList == true)
         {
             PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "MuxTableMgr::SetIncomingDescriptors Adding mux entry=%d", entry_num));
-            iMuxDescriptorR[entry_num] = Copy_MultiplexEntryDescriptor(descriptors[n]->GetH245descriptor());
+            iMuxDescriptorR[entry_num] = Copy_MultiplexEntryDescriptor((*apDescriptors)[n]->GetH245descriptor());
             iMuxDescriptorFlagR[entry_num] = ACTIVATE;
         }
         else
@@ -163,15 +170,15 @@ OsclAny MuxTableMgr::SetIncomingMuxDescriptors(CPVMultiplexEntryDescriptorVector
     }
 }
 
-void MuxTableMgr::SetOutgoingMuxDescriptors(CPVMultiplexEntryDescriptorVector& descriptors)
+void MuxTableMgr::SetOutgoingMuxDescriptors(CPVMultiplexEntryDescriptorVector* apDescriptors)
 {
     if (!iOutgoingDescriptors)
     {
         iOutgoingDescriptors = OSCL_NEW(CPVMultiplexEntryDescriptorVector, ());
     }
-    for (unsigned n = 0; n < descriptors.size(); n++)
+    for (unsigned n = 0; n < apDescriptors->size(); n++)
     {
-        iOutgoingDescriptors->push_back(OSCL_NEW(CPVMultiplexEntryDescriptor, (*descriptors[n])));
+        iOutgoingDescriptors->push_back(OSCL_NEW(CPVMultiplexEntryDescriptor, (*(*apDescriptors)[n])));
     }
 }
 

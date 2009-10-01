@@ -646,7 +646,7 @@ CPVMultiplexEntryDescriptor::CPVMultiplexEntryDescriptor():
 {
 }
 
-OSCL_EXPORT_REF CPVMultiplexEntryDescriptor::CPVMultiplexEntryDescriptor(const CPVMultiplexEntryDescriptor& that)
+OSCL_EXPORT_REF CPVMultiplexEntryDescriptor::CPVMultiplexEntryDescriptor(const CPVMultiplexEntryDescriptor& that): HeapBase(that)
 {
     ConstructL(that.iDescriptor, that.iMaxPduSize);
 }
@@ -806,7 +806,7 @@ OSCL_EXPORT_REF CPVMultiplexEntryDescriptorVector::CPVMultiplexEntryDescriptorVe
 
 }
 
-OSCL_EXPORT_REF CPVMultiplexEntryDescriptorVector::CPVMultiplexEntryDescriptorVector(const CPVMultiplexEntryDescriptorVector& that) :  Oscl_Vector<CPVMultiplexEntryDescriptor*, OsclMemAllocator>(that)
+OSCL_EXPORT_REF CPVMultiplexEntryDescriptorVector::CPVMultiplexEntryDescriptorVector(const CPVMultiplexEntryDescriptorVector& that) :  HeapBase(that), Oscl_Vector<CPVMultiplexEntryDescriptor*, OsclMemAllocator>(that)
 
 {
     CPVMultiplexEntryDescriptor* desc = NULL;

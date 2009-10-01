@@ -143,8 +143,8 @@ class CPVH223Multiplex :  public LowerLayerObserver,
         unsigned GetMaxPduSize(TPVDirection direction);
 
         TPVStatusCode SetIncomingMuxTableEntries(CPVMultiplexDescriptor* descriptor);
-        void SetIncomingMuxDescriptors(CPVMultiplexEntryDescriptorVector& descriptors, bool replace = true);
-        void SetOutgoingMuxDescriptors(CPVMultiplexEntryDescriptorVector& descriptors);
+        void SetIncomingMuxDescriptors(CPVMultiplexEntryDescriptorVector* apDescriptors, bool aReplace = true);
+        void SetOutgoingMuxDescriptors(CPVMultiplexEntryDescriptorVector* apDescriptors);
         void RemoveOutgoingMuxDescriptor(uint8 muxTblNum);
         void RemoveIncomingMuxDescriptor(uint8 muxTblNum);
         void SetLoopbackMode(TPVLoopbackMode aLoopbackMode);

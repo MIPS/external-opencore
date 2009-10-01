@@ -195,10 +195,10 @@ class TSC_component : public OsclTimerObserver,
         void MemStats();
 #endif
         /**
-         * Get count of stuffing frames needed for successful level setup
-         *
-         * @return count
-         **/
+        * Get count of stuffing frames needed for successful level setup
+        *
+        * @return count
+        **/
         virtual uint16 GetLevelCheckCount()
         {
             return TCS_STUFFING_FLAGS_LEVEL_SETUP;
@@ -250,15 +250,15 @@ class TSC_component : public OsclTimerObserver,
         };
         virtual void StartOlc(OlcParam* olc_param,
                               PV2WayMediaType media_type,
-                              CPVMultiplexEntryDescriptorVector descriptors)
+                              CPVMultiplexEntryDescriptorVector* apDescriptors)
         {
             OSCL_UNUSED_ARG(olc_param);
             OSCL_UNUSED_ARG(media_type);
-            OSCL_UNUSED_ARG(descriptors);
+            OSCL_UNUSED_ARG(apDescriptors);
         };
-        virtual bool FinishTcsMsdComplete(CPVMultiplexEntryDescriptorVector descriptors)
+        virtual bool FinishTcsMsdComplete(CPVMultiplexEntryDescriptorVector* apDescriptors)
         {
-            OSCL_UNUSED_ARG(descriptors);
+            OSCL_UNUSED_ARG(apDescriptors);
             return true;
         };
         virtual void CustomGenerateTcs(PS_TerminalCapabilitySet& ret)

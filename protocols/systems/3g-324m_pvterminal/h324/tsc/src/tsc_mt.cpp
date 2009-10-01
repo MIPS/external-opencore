@@ -234,7 +234,8 @@ uint32 TSC_mt::SendMuxTableForLcn(TPVChannelId lcn)
     S_ControlMsgHeader infHeader;
     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                     (0, "TSC_mt::SendMuxTableForLcn lcn(%d)", lcn));
-    CPVMultiplexEntryDescriptorVector descriptors;
+    CPVMultiplexEntryDescriptorVector* pDescriptors = OSCL_NEW(CPVMultiplexEntryDescriptorVector, ());
+    OsclError::PushL(pDescriptors);
     if (iAvailableMuxEntryNumbers.size() == 0)
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_WARNING,
@@ -245,8 +246,8 @@ uint32 TSC_mt::SendMuxTableForLcn(TPVChannelId lcn)
     iAvailableMuxEntryNumbers.erase(iAvailableMuxEntryNumbers.begin());
     CPVMultiplexEntryDescriptor* desc =
         iTSCcomponent->GenerateSingleDescriptor((uint8)entry_num, lcn);
-    descriptors.push_back(desc);
-    iH223->SetOutgoingMuxDescriptors(descriptors);
+    pDescriptors->push_back(desc);
+    iH223->SetOutgoingMuxDescriptors(pDescriptors);
 
     PS_MuxDescriptor mux_descriptor =
         (PS_MuxDescriptor)OSCL_DEFAULT_MALLOC(sizeof(S_MuxDescriptor));
@@ -269,6 +270,7 @@ uint32 TSC_mt::SendMuxTableForLcn(TPVChannelId lcn)
                     (0,
                      "TSC_mt::SendMuxTableForLcn lcn(%d), mt sn(%d), mt num(%d)",
                      lcn, iOutMtSn, entry_num));
+    OsclError::PopDealloc(); // pDescriptors
     return entry_num;
 }
 
@@ -335,7 +337,8 @@ void TSC_mt::MtTrfReq(OlcList& aOlcs)
     S_ControlMsgHeader infHeader;
     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                     (0, "TSC_mt::MtTrfReq"));
-    CPVMultiplexEntryDescriptorVector descriptors;
+    CPVMultiplexEntryDescriptorVector* pDescriptors = OSCL_NEW(CPVMultiplexEntryDescriptorVector, ());
+    OsclError::PushL(pDescriptors);
     CPVMultiplexEntryDescriptor* desc = NULL;
     Oscl_Vector<OlcParam*, OsclMemAllocator> olc_list;
     unsigned num_pending = aOlcs.FindOutgoingOlcsByMtState(MT_IDLE | MT_PENDING,
@@ -368,18 +371,18 @@ void TSC_mt::MtTrfReq(OlcList& aOlcs)
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                         (0, "TSC_mt::MtTrfReq Descriptor for lcn(%d)=%d", channel_id, entry_num));
         desc = iTSCcomponent->GenerateSingleDescriptor((uint8)entry_num, channel_id);
-        descriptors.push_back(desc);
+        pDescriptors->push_back(desc);
         olc_list[lcn]->SetMtState(MT_PENDING);
         olc_list[lcn]->SetMtSn(iOutMtSn);
         olc_list[lcn]->SetMtNum(entry_num);
     }
-    iH223->SetOutgoingMuxDescriptors(descriptors);
+    iH223->SetOutgoingMuxDescriptors(pDescriptors);
 
     PS_MultiplexEntryDescriptor temp = NULL;
     PS_MuxDescriptor mux_descriptor =
         (PS_MuxDescriptor)OSCL_DEFAULT_MALLOC(sizeof(S_MuxDescriptor));
     oscl_memset(mux_descriptor, 0, sizeof(S_MuxDescriptor));
-    mux_descriptor->size_of_multiplexEntryDescriptors = descriptors.size();
+    mux_descriptor->size_of_multiplexEntryDescriptors = pDescriptors->size();
     mux_descriptor->multiplexEntryDescriptors =
         (PS_MultiplexEntryDescriptor)OSCL_DEFAULT_MALLOC(
             sizeof(S_MultiplexEntryDescriptor) *
@@ -392,10 +395,10 @@ void TSC_mt::MtTrfReq(OlcList& aOlcs)
         mux_descriptor->multiplexEntryDescriptors;
     Oscl_Vector<PS_MultiplexEntryDescriptor, PVMFTscAlloc> to_be_deleted;
 
-    for (unsigned num = 0; num < descriptors.size(); ++num)
+    for (unsigned num = 0; num < pDescriptors->size(); ++num)
     {
         temp = Copy_MultiplexEntryDescriptor(
-                   descriptors[num]->GetH245descriptor());
+                   (*pDescriptors)[num]->GetH245descriptor());
         oscl_memcpy(cur_desc, temp, sizeof(S_MultiplexEntryDescriptor));
         cur_desc++;
         to_be_deleted.push_back(temp);
@@ -420,6 +423,7 @@ void TSC_mt::MtTrfReq(OlcList& aOlcs)
     }
     OSCL_DEFAULT_FREE(mux_descriptor->multiplexEntryDescriptors);
     OSCL_DEFAULT_FREE(mux_descriptor);
+    OsclError::PopDealloc(); // pDescriptors
 
     iPendingMtSn = iOutMtSn++;
     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,

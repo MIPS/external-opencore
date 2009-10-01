@@ -318,7 +318,7 @@ class TPVMuxDescriptorSlot
 
 typedef Oscl_Map<unsigned , TPVMuxDescriptorSlot, PoolMemAlloc_OsclMemAllocator_10> TPVMuxDescriptorSlotList;
 
-class CPVMultiplexEntryDescriptor
+class CPVMultiplexEntryDescriptor : public HeapBase
 {
     public:
         OSCL_IMPORT_REF static CPVMultiplexEntryDescriptor* NewL(PS_MultiplexEntryDescriptor descriptor, unsigned max_pdu_size);
@@ -343,7 +343,7 @@ class CPVMultiplexEntryDescriptor
         TPVMuxDescriptorSlotList iLcns;
 };
 
-class CPVMultiplexEntryDescriptorVector : public Oscl_Vector<CPVMultiplexEntryDescriptor*, OsclMemAllocator>
+class CPVMultiplexEntryDescriptorVector : public HeapBase, public Oscl_Vector<CPVMultiplexEntryDescriptor*, OsclMemAllocator>
 {
     public:
         OSCL_IMPORT_REF CPVMultiplexEntryDescriptorVector();

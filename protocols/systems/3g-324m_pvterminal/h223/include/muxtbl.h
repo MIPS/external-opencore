@@ -40,8 +40,8 @@ class MuxTableMgr
         ~MuxTableMgr();
 
         OsclAny SetIncomingDescriptors(PS_MuxDescriptor mux_desc);
-        OsclAny SetIncomingMuxDescriptors(CPVMultiplexEntryDescriptorVector& descriptors, bool replace = true);
-        void SetOutgoingMuxDescriptors(CPVMultiplexEntryDescriptorVector& descriptors);
+        OsclAny SetIncomingMuxDescriptors(CPVMultiplexEntryDescriptorVector* apDescriptors, bool aReplace = true);
+        void SetOutgoingMuxDescriptors(CPVMultiplexEntryDescriptorVector* apDescriptors);
         void RemoveOutgoingMuxDescriptor(uint8 muxTblNum);
         void RemoveIncomingMuxDescriptor(uint8 muxTblNum);
         PS_MultiplexEntryDescriptor GetIncomingDescriptor(uint8 tblNum);
@@ -55,7 +55,7 @@ class MuxTableMgr
         /* function prototypes */
         bool RemoveDescriptorR(uint8 tblNum);
         OsclAny AddIncomingControlDescriptor();
-        void AddControlDescriptor(CPVMultiplexEntryDescriptorVector& descriptors);
+        void AddControlDescriptor(CPVMultiplexEntryDescriptorVector* apDescriptors);
         PS_MultiplexEntryDescriptor GetControlDescriptor(uint16 mux_entry_num);
 
         /* multiplex table information */
