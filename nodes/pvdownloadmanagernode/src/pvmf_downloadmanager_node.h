@@ -79,7 +79,9 @@
 #ifndef PVMI_CONFIG_AND_CAPABILITY_BASE_H_INCLUDED
 #include "pvmi_config_and_capability_base.h"
 #endif
-
+#ifndef CPM_H_INCLUDED
+#include "cpm.h"
+#endif
 
 // only include pvmf_downloadmanager_config.h if CML2 is NOT being used
 
@@ -340,6 +342,14 @@ class PVMFDownloadManagerSubNodeContainerBase
             //Recognizer module commands
             , ERecognizerStart = 24
             , ERecognizerClose = 25
+            //CPM commands.
+            , ECPMInit = 26
+            , ECPMOpenSession = 27
+            , ECPMRegisterContent = 28
+            , ECPMApproveUsage = 29
+            , ECPMSetDecryptInterface = 30
+            , ECPMUsageComplete = 31
+            , ECPMReset = 32
         };
 
         int32 iCmd;
@@ -460,6 +470,52 @@ class PVMFDownloadManagerSubNodeContainer
 };
 
 
+/**
+* Container for the CPM object
+*/
+class PVMFDownloadManagerCPMContainer
+        : public PVMFDownloadManagerSubNodeContainerBase
+        , public PVMFCPMStatusObserver
+{
+    public:
+        PVMFDownloadManagerCPMContainer()
+        {
+            iCPM = NULL;
+            iCPMContentAccessFactory = NULL;
+            iDecryptionInterface = NULL;
+            iRequestedUsage.key = NULL;
+            iApprovedUsage.key = NULL;
+            iAuthorizationDataKvp.key = NULL;
+        }
+        ~PVMFDownloadManagerCPMContainer()
+        {
+            Cleanup();
+        }
+
+        void Cleanup();
+
+        //pure virtuals from PVMFDownloadManagerSubNodeContainerBase
+        bool GetCPMContentAccessFactory();
+        PVMFStatus IssueCommand(int32);
+        bool CancelPendingCommand();
+
+        //CPM object
+        PVMFCPM* iCPM;
+
+        //CPM data
+        PVMFCPMPluginAccessInterfaceFactory* iCPMContentAccessFactory;
+        PVMFCPMPluginAccessUnitDecryptionInterface* iDecryptionInterface;
+        PvmiKvp iRequestedUsage;
+        PvmiKvp iApprovedUsage;
+        PvmiKvp iAuthorizationDataKvp;
+        PVMFCPMUsageID iUsageID;
+
+        //CPM event observer
+        //From PVMFCPMStatusObserver
+        OSCL_IMPORT_REF void CPMCommandCompleted(const PVMFCmdResp& aResponse) ;
+};
+
+
 /* Container for the recognizer
  */
 class PVMFDownloadManagerRecognizerContainer
@@ -544,6 +600,7 @@ class PVMFDownloadManagerNode
         , public PVMFDataSourceNodeRegistryInitInterface
         // For observing the playback clock states
         , public PVMFMediaClockStateObserver
+        , public PVMFCPMStatusObserver
 {
     public:
         PVMFDownloadManagerNode(int32 aPriority = OsclActiveObject::EPriorityNominal);
@@ -652,6 +709,9 @@ class PVMFDownloadManagerNode
         //from PVMFMediaClockStateObserver
         void ClockStateUpdated();
         void NotificationsInterfaceDestroyed();
+
+        /* From PVMFCPMStatusObserver */
+        void CPMCommandCompleted(const PVMFCmdResp& aResponse);
 
     private:
         bool iDebugMode;
@@ -855,6 +915,9 @@ class PVMFDownloadManagerNode
         PVMFSourceContextData* iPLSSessionContextData;
 #endif //PV_HAS_SHOUTCAST_SUPPORT_ENABLED 
 #endif //PVMF_DOWNLOADMANAGER_SUPPORT_PPB
+
+        friend class PVMFDownloadManagerCPMContainer;
+        PVMFDownloadManagerCPMContainer iCPMNode;
 };
 
 ///////////////////////////////////////////////////////////////////////////////

@@ -144,6 +144,7 @@ void PVMFDownloadManagerNode::ConstructL()
     iProtocolEngineNode.Construct(PVMFDownloadManagerSubNodeContainerBase::EProtocolEngine, this);
     iSocketNode.Construct(PVMFDownloadManagerSubNodeContainerBase::ESocket, this);
     iRecognizerNode.Construct(PVMFDownloadManagerSubNodeContainerBase::ERecognizer, this);
+    iCPMNode.Construct(PVMFDownloadManagerSubNodeContainerBase::ECPM, this);
 
     //Set the node capability data.
     iCapability.iCanSupportMultipleInputPorts = false;
@@ -204,6 +205,7 @@ PVMFDownloadManagerNode::~PVMFDownloadManagerNode()
             || iProtocolEngineNode.CmdPending()
             || iSocketNode.CmdPending()
             || iRecognizerNode.CmdPending()
+            || iCPMNode.CmdPending()
        )
     {
         OSCL_ASSERT(0);
@@ -221,6 +223,7 @@ PVMFDownloadManagerNode::~PVMFDownloadManagerNode()
     iProtocolEngineNode.Cleanup();
     iSocketNode.Cleanup();
     iRecognizerNode.Cleanup();
+    iCPMNode.Cleanup();
 
     //delete the subnodes
     if (iFormatParserNode.iNode)
@@ -620,7 +623,8 @@ PVMFStatus PVMFDownloadManagerNode::SetSourceInitializationData(OSCL_wString& aS
     }
 
     if (aSourceFormat == PVMF_MIME_DATA_SOURCE_HTTP_URL ||
-            aSourceFormat == PVMF_MIME_DATA_SOURCE_RTMP_STREAMING_URL)
+            aSourceFormat == PVMF_MIME_DATA_SOURCE_RTMP_STREAMING_URL ||
+            aSourceFormat == PVMF_MIME_DATA_SOURCE_DTCP_URL)
     {
         if (!iSourceData)
         {
@@ -931,6 +935,27 @@ PVMFStatus PVMFDownloadManagerNode::SetSourceInitializationData(OSCL_wString& aS
             // Use Memory Buffer Data Stream for progressive playback and Shoutcast
             OSCL_TRY(leavecode, iMemoryBufferDatastreamFactory = OSCL_NEW(PVMFMemoryBufferDataStream, (iSourceFormat, maxDataMinusOverheadInPool)));
             OSCL_FIRST_CATCH_ANY(leavecode, return PVMFFailure);
+
+            //Check URL for DTCP-IP
+            if (iSourceFormat == PVMF_MIME_DATA_SOURCE_DTCP_URL)
+            {
+                iCPMNode.Cleanup();
+                //Create CPM instance.
+                OSCL_ASSERT(iCPMNode.iCPM == NULL);
+                iCPMNode.iCPM = PVMFCPMFactory::CreateContentPolicyManager(*this);
+                if (!iCPMNode.iCPM)
+                    return PVMFErrNoMemory;
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR, (0,
+                                "PVMFDownloadManagerNode:SetSourceInitializationData() Create CPM for DTCP"));
+                //thread logon may leave if there are no plugins - we cannot DTCP sessions without DTCP CPM plugin
+                int32 err;
+                OSCL_TRY(err, iCPMNode.iCPM->ThreadLogon(););
+                OSCL_FIRST_CATCH_ANY(err,
+                                     iCPMNode.iCPM->ThreadLogoff();
+                                     iCPMNode.Cleanup();
+                                     return PVMFErrNotSupported;
+                                    );
+            }
         }
 
         OSCL_ASSERT(iMemoryBufferDatastreamFactory != NULL);
@@ -1185,6 +1210,7 @@ void PVMFDownloadManagerNode::Run()
             && !iFormatParserNode.CmdPending()
             && !iSocketNode.CmdPending()
             && !iRecognizerNode.CmdPending()
+            && !iCPMNode.CmdPending()
             && !iSubNodeCmdVec.empty())
     {
         PVMFStatus status = iSubNodeCmdVec.front().iNC->IssueCommand(iSubNodeCmdVec.front().iCmd);
@@ -1431,6 +1457,13 @@ void PVMFDownloadManagerNode::CommandComplete(PVMFDownloadManagerNodeCmdQueue& a
         RunIfNotReady();
 }
 
+void PVMFDownloadManagerNode::CPMCommandCompleted(const PVMFCmdResp& aResponse)
+{
+    if (iCPMNode.iCPM)
+    {
+        iCPMNode.CPMCommandCompleted(aResponse);
+    }
+}
 
 void PVMFDownloadManagerNode::ReportErrorEvent(PVMFEventType aEventType, PVInterface*aExtMsg, OsclAny* aEventData)
 {
@@ -1701,6 +1734,7 @@ PVMFStatus PVMFDownloadManagerNode::DoCancelAllCommands(PVMFDownloadManagerNodeC
                 || iProtocolEngineNode.CancelPendingCommand()
                 || iSocketNode.CancelPendingCommand()
                 || iRecognizerNode.CancelPendingCommand()
+                || iCPMNode.CancelPendingCommand()
            )
         {
             return PVMFPending;//wait on sub-node cancel to complete.
@@ -1735,6 +1769,7 @@ PVMFStatus PVMFDownloadManagerNode::DoCancelCommand(PVMFDownloadManagerNodeComma
         if (iFormatParserNode.CancelPendingCommand()
                 || iProtocolEngineNode.CancelPendingCommand()
                 || iRecognizerNode.CancelPendingCommand()
+                || iCPMNode.CancelPendingCommand()
            )
         {
             return PVMFPending;//wait on sub-node cancel to complete.
@@ -2009,6 +2044,17 @@ PVMFStatus PVMFDownloadManagerNode::ScheduleSubNodeCommands(PVMFDownloadManagerN
                 //reset any prior recognizer decisions.
                 iMimeType = PVMF_MIME_FORMAT_UNKNOWN;
 
+
+                // This is for DTCP Mode
+                if (iCPMNode.iCPM)
+                {
+                    Push(iCPMNode, PVMFDownloadManagerSubNodeContainerBase::ECPMInit);
+                    Push(iCPMNode, PVMFDownloadManagerSubNodeContainerBase::ECPMOpenSession);
+                    Push(iCPMNode, PVMFDownloadManagerSubNodeContainerBase::ECPMRegisterContent);
+                    Push(iCPMNode, PVMFDownloadManagerSubNodeContainerBase::ECPMApproveUsage);
+                    Push(iCPMNode, PVMFDownloadManagerSubNodeContainerBase::ECPMSetDecryptInterface);
+                }
+
                 // Send the INIT command to the protocol engine node, followed by the Socket Node.
                 Push(iProtocolEngineNode, PVMFDownloadManagerSubNodeContainerBase::EInit);
                 Push(iSocketNode, PVMFDownloadManagerSubNodeContainerBase::EInit);
@@ -2127,9 +2173,15 @@ PVMFStatus PVMFDownloadManagerNode::ScheduleSubNodeCommands(PVMFDownloadManagerN
                 Push(iFormatParserNode, PVMFDownloadManagerSubNodeContainerBase::EReset);
             Push(iSocketNode, PVMFDownloadManagerSubNodeContainerBase::EReset);
             Push(iProtocolEngineNode, PVMFDownloadManagerSubNodeContainerBase::EReset);
+            if (iCPMNode.iCPM)
+            {
+                Push(iCPMNode, PVMFDownloadManagerSubNodeContainerBase::ECPMUsageComplete);
+                Push(iCPMNode, PVMFDownloadManagerSubNodeContainerBase::ECPMReset);
+            }
             Push(iFormatParserNode, PVMFDownloadManagerSubNodeContainerBase::ECleanup);
             Push(iProtocolEngineNode, PVMFDownloadManagerSubNodeContainerBase::ECleanup);
             Push(iSocketNode, PVMFDownloadManagerSubNodeContainerBase::ECleanup);
+            Push(iCPMNode, PVMFDownloadManagerSubNodeContainerBase::ECleanup);
             break;
 
         case PVDLM_NODE_CMD_SETDATASOURCEPOSITION:
@@ -2270,6 +2322,17 @@ void PVMFDownloadManagerSubNodeContainer::Connect()
         iSessionId = iNode->Connect(info);
 }
 
+void PVMFDownloadManagerCPMContainer::Cleanup()
+{
+    //cleanup CPM object.
+    if (iCPM)
+    {
+        iCPM->ThreadLogoff();
+        PVMFCPMFactory::DestroyContentPolicyManager(iCPM);
+        iCPM = NULL;
+    }
+}
+
 #define LOGSUBCMD(x) PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iContainer->iLogger, SUB_CMD_LOG_LEVEL, x)
 #define GETNODESTR (iType==EFormatParser)?"Parser":((iType==EProtocolEngine)?"ProtEngine":"SockNode")
 
@@ -2390,6 +2453,14 @@ PVMFStatus PVMFDownloadManagerSubNodeContainer::IssueCommand(int32 aCmd)
                         (DataSourceInit())->SetSourceInitializationData(iContainer->iDownloadFileName
                                 , iContainer->iSourceFormat
                                 , (OsclAny*)iContainer->iSourceData);
+                    }
+                    else if (iContainer->iSourceFormat == PVMF_MIME_DATA_SOURCE_DTCP_URL)
+                    {
+                        // let the parser know this is DTCP format.
+                        (DataSourceInit())->SetSourceInitializationData(iContainer->iDownloadFileName
+                                , iContainer->iFmt
+                                , (OsclAny*)iContainer->iSourceData
+                                , PVMF_FORMAT_TYPE_CONNECT_UNPROTECTED);
                     }
                     else
                     {
@@ -2660,6 +2731,120 @@ PVMFStatus PVMFDownloadManagerSubNodeContainer::IssueCommand(int32 aCmd)
     }
 }
 
+bool PVMFDownloadManagerCPMContainer::GetCPMContentAccessFactory()
+{
+    LOGSUBCMD((0, "PVMFDownloadManagerCPMContainer::GetCPMContentAccessFactory() In"));
+
+    PVMFStatus status = iCPM->GetContentAccessFactory(iSessionId,
+                        iCPMContentAccessFactory);
+    if (status != PVMFSuccess)
+    {
+        return false;
+    }
+    return true;
+}
+
+PVMFStatus PVMFDownloadManagerCPMContainer::IssueCommand(int32 aCmd)
+{
+    LOGSUBCMD((0, "PVMFDownloadManagerCPMContainer::IssueCommand In"));
+
+    OSCL_ASSERT(!CmdPending());
+
+    //find the current node command since we may need its parameters.
+    OSCL_ASSERT(!iContainer->iCurrentCommand.empty());
+
+    //save the sub-node command code
+    iCmd = aCmd;
+
+    LOGSUBCMD((0, "PVMFDownloadManagerCPMContainer::IssueCommand iCmd = %d", iCmd));
+
+    switch (aCmd)
+    {
+        case ECleanup:
+        {
+            LOGSUBCMD((0, "PVMFDownloadManagerCPMContainer::IssueCommand Calling Cleanup"));
+            Cleanup();
+            return PVMFSuccess;
+        }
+        case ECPMInit:
+        {
+            OSCL_ASSERT(iCPM != NULL);
+            iCmdState = EBusy;
+            iCmdId = iCPM->Init();
+            return PVMFPending;
+        }
+        case ECPMOpenSession:
+        {
+            OSCL_ASSERT(iCPM != NULL);
+            iCmdState = EBusy;
+            iCmdId = iCPM->OpenSession(iSessionId);
+            return PVMFPending;
+        }
+        case ECPMRegisterContent:
+        {
+            OSCL_ASSERT(iCPM != NULL);
+            LOGSUBCMD((0, "PVMFDownloadManagerCPMContainer::IssueCommand Calling RegisterContent"));
+            iCmdState = EBusy;
+            iCmdId = iCPM->RegisterContent(iSessionId, iContainer->iSourceURL, iContainer->iSourceFormat, iContainer->iSourceData);
+            return PVMFPending;//wait on CPMCommandCompleted
+        }
+        case ECPMApproveUsage:
+        {
+            OSCL_ASSERT(iCPM != NULL);
+            iCmdState = EBusy;
+            iCmdId = iCPM->ApproveUsage(iSessionId,
+                                        iRequestedUsage,
+                                        iApprovedUsage,
+                                        iAuthorizationDataKvp,
+                                        iUsageID);
+            return PVMFPending;
+        }
+        case ECPMSetDecryptInterface:
+        {
+            OSCL_ASSERT(iCPM != NULL);
+            if (GetCPMContentAccessFactory())
+            {
+                PVUuid uuid = PVMFCPMPluginDecryptionInterfaceUuid;
+                PVInterface* intf =
+                    iCPMContentAccessFactory->CreatePVMFCPMPluginAccessInterface(uuid);
+                PVMFCPMPluginAccessInterface* interimPtr =
+                    OSCL_STATIC_CAST(PVMFCPMPluginAccessInterface*, intf);
+                iDecryptionInterface = OSCL_STATIC_CAST(PVMFCPMPluginAccessUnitDecryptionInterface*, interimPtr);
+
+                // SetDecryptionInterface for DTCP-IP Lib
+                iContainer->iWriteFactory->SetDecryptionInterface(iDecryptionInterface);
+                return PVMFSuccess;
+            }
+            return PVMFFailure;
+        }
+        case ECPMUsageComplete:
+        {
+            OSCL_ASSERT(iCPM != NULL);
+            LOGSUBCMD((0, "PVMFDownloadManagerCPMContainer::IssueCommand Calling UsageComplete"));
+            iCmdState = EBusy;
+            iCmdId = iCPM->UsageComplete(iSessionId, iUsageID);
+            return PVMFPending;//wait on CPMCommandCompleted
+        }
+        case ECPMReset:
+        {
+            OSCL_ASSERT(iCPM != NULL);
+            if (iDecryptionInterface != NULL)
+            {
+                iDecryptionInterface->Reset();
+                /* Remove the decrpytion interface */
+                PVUuid uuid = PVMFCPMPluginDecryptionInterfaceUuid;
+                iCPMContentAccessFactory->DestroyPVMFCPMPluginAccessInterface(uuid, iDecryptionInterface);
+                iDecryptionInterface = NULL;
+            }
+            iCmdState = EBusy;
+            iCmdId = iCPM->Reset();
+            return PVMFPending;
+        }
+        default:
+            OSCL_ASSERT(false);
+            return PVMFFailure;
+    }
+}
 
 PVMFStatus PVMFDownloadManagerRecognizerContainer::IssueCommand(int32 aCmd)
 {
@@ -3048,6 +3233,18 @@ bool PVMFDownloadManagerSubNodeContainer::CancelPendingCommand()
     return true;//cancel initiated
 }
 
+bool PVMFDownloadManagerCPMContainer::CancelPendingCommand()
+{
+    //initiate sub-node command cancel, return True if cancel initiated.
+    if (iCmdState != EBusy)
+        return false;//nothing to cancel
+
+    iCancelCmdState = EBusy;
+
+    //no cancel available-- just wait on current command to complete.
+    return true;//cancel initiated
+}
+
 bool PVMFDownloadManagerRecognizerContainer::CancelPendingCommand()
 {
     //initiate sub-node command cancel, return True if cancel initiated.
@@ -3212,6 +3409,33 @@ void PVMFDownloadManagerSubNodeContainerBase::CancelCommandDone(PVMFStatus aStat
     //Node cancel command is now done.
     OSCL_ASSERT(!iContainer->iCancelCommand.empty());
     iContainer->CommandComplete(iContainer->iCancelCommand, iContainer->iCancelCommand.front(), aStatus, NULL, NULL);
+}
+
+// From PVMFCPMStatusObserver  -- this is the callback from the CPM object.
+OSCL_EXPORT_REF void PVMFDownloadManagerCPMContainer::CPMCommandCompleted(const PVMFCmdResp& aResponse)
+{
+    //A command to the CPM node is complete
+
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iContainer->iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "PVMFDownloadManagerSubNodeContainer::CPMCommandCompleted "));
+
+    if (aResponse.GetCmdId() == iCmdId
+            && iCmdState == EBusy)
+    {
+        CommandDone(aResponse.GetCmdStatus(), aResponse.GetEventExtensionInterface(), aResponse.GetEventData());
+
+        //catch completion of cancel for CPM commands
+        //since there's no cancel to the CPM module, the cancel
+        //is done whenever the current CPM command is done.
+        if (iCancelCmdState != EIdle)
+        {
+            CancelCommandDone(PVMFSuccess, NULL, NULL);
+        }
+    }
+    else
+    {
+        OSCL_ASSERT(false);//unexpected response.
+    }
 }
 
 //from PVMFNodeCmdStatusObserver

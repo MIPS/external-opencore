@@ -131,6 +131,12 @@ bool PVMFProtocolEngineNodeRegistry::CheckPluginAvailability(PVMFFormatType& aSo
     LOGINFO((0, "PVMFProtocolEngineNodeRegistry::CheckPluginAvailability() IN"));
 
     PVMFFormatType aSourceType = aSourceFormat;
+    if (aSourceFormat == PVMF_MIME_DATA_SOURCE_DTCP_URL)
+    {
+        // convert to normal-PPB Source type(Normal-PPB and DTCP-PPB are same)
+        aSourceType = PVMF_MIME_DATA_SOURCE_HTTP_URL;
+    }
+
     if (aSourceFormat == PVMF_MIME_DATA_SOURCE_HTTP_URL && aSourceData == NULL) aSourceType = PVMF_MIME_DATA_SOURCE_MS_HTTP_STREAMING_URL;
 
     for (uint32 i = 0; i < iTypeVec.size(); i++)
