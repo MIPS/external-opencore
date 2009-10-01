@@ -348,6 +348,7 @@ pvoma1lockstream_lib=n
 pvplayreadyplugin_lib=n
 pvplayreadyutility_lib=n
 pvdivxdrmplugin_lib=n
+pvdtcpplugin_lib=n
 
 
 #

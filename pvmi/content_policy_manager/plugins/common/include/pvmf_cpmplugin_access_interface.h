@@ -81,7 +81,7 @@ class PVMFCPMPluginAccessUnitDecryptionInterface : public PVMFCPMPluginAccessInt
          * @return returns true on successful decryption, false otherwise
          */
         virtual bool DecryptAccessUnit(uint8*& aInputBuffer,
-                                       uint32  aInputBufferSizeInBytes,
+                                       uint32&  aInputBufferSizeInBytes,
                                        uint8*& aOutputBuffer,
                                        uint32& aOutputBufferSizeInBytes,
                                        uint32  aTrackID = 0,
