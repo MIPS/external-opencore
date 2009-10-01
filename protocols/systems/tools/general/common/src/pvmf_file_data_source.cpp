@@ -25,9 +25,10 @@ OSCL_EXPORT_REF PVMFFileDataSource::PVMFFileDataSource(int32 aPortTag,
         PVMFBufferDataSource(aPortTag, bitrate, min_sample_sz, max_sample_sz)
 {
     iFileServ = OSCL_NEW(Oscl_FileServer, ());
-    OSCL_ASSERT(iFileServ == NULL);
+    OSCL_ASSERT(iFileServ);
+
     iReadFile = OSCL_NEW(Oscl_File, ());
-    OSCL_ASSERT(iReadFile == NULL);
+    OSCL_ASSERT(iReadFile);
 }
 
 OSCL_EXPORT_REF PVMFFileDataSource::~PVMFFileDataSource()

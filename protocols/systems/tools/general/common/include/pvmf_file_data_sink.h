@@ -62,7 +62,10 @@ class PVMFFileDataSink : public PVMFBufferDataSink
         bool OpenFile(char *aFileName)
         {
             int8 retVal = 0;
-            iFileServ->Connect();
+            int32 connectRetVal = 0;
+            connectRetVal = iFileServ->Connect();
+            if (connectRetVal != 0)
+                return false;
             retVal = iWriteFile->Open(aFileName, Oscl_File::MODE_READWRITE | Oscl_File::MODE_BINARY , *iFileServ);
             if (retVal != 0)
                 return false;
@@ -72,6 +75,6 @@ class PVMFFileDataSink : public PVMFBufferDataSink
 
     private:
         Oscl_File* iWriteFile;
-        Oscl_FileServer* iFileServ;
+        Oscl_FileServer *iFileServ;
 };
 #endif

@@ -22,9 +22,10 @@ OSCL_EXPORT_REF PVMFFileDataSink::PVMFFileDataSink(int32 aPortTag)
         : PVMFBufferDataSink(aPortTag)
 {
     iFileServ = OSCL_NEW(Oscl_FileServer, ());
-    OSCL_ASSERT(iFileServ == NULL);
+    OSCL_ASSERT(iFileServ);
+
     iWriteFile = OSCL_NEW(Oscl_File, ());
-    OSCL_ASSERT(iWriteFile == NULL);
+    OSCL_ASSERT(iWriteFile);
 }
 
 OSCL_EXPORT_REF PVMFFileDataSink::~PVMFFileDataSink()

@@ -75,12 +75,18 @@ class PVMFFileDataSource : public PVMFBufferDataSource
         inline bool OpenFile(char *aFileName)
         {
             int8 retVal = 0;
-            iFileServ->Connect();
+            int32 connectRetVal = 0;
+            connectRetVal = iFileServ->Connect();
+            if (connectRetVal != 0)
+                return false;
             retVal = iReadFile->Open(aFileName, Oscl_File::MODE_READ | Oscl_File::MODE_BINARY , *iFileServ);
             if (retVal != 0)
                 return false;
             else
+            {
+                iIsFileDone = false;
                 return true;
+            }
         }
 
         inline void SetObserver(PVMFFileDataSourceObserver *aObserver)
