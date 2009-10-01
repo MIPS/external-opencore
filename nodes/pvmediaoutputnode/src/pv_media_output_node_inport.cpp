@@ -1203,6 +1203,12 @@ void PVMediaOutputNodePort::SendMediaData()
         {
             flags |= PVMI_MEDIAXFER_MEDIA_DATA_FLAG_NO_RENDER_BIT;
         }
+
+        if (mediaData->getMarkerInfo() & PVMF_MEDIA_DATA_MARKER_INFO_END_OF_NAL_BIT)
+        {
+            flags |= PVMI_MEDIAXFER_MEDIA_DATA_FLAG_END_OF_NAL_BIT;
+        }
+
         PvmiMediaXferHeader mediaxferhdr;
         mediaxferhdr.seq_num = mediaData->getSeqNum();
         mediaxferhdr.timestamp = mediaData->getTimestamp();
@@ -2450,7 +2456,9 @@ OSCL_EXPORT_REF void PVMediaOutputNodePort::setParametersSync(PvmiMIOSession aSe
                  (pv_mime_strcmp(aParameters[i].key, MOUT_VIDEO_WIDTH_KEY) == 0) ||
                  (pv_mime_strcmp(aParameters[i].key, MOUT_VIDEO_HEIGHT_KEY) == 0) ||
                  (pv_mime_strcmp(aParameters[i].key, MOUT_VIDEO_DISPLAY_WIDTH_KEY) == 0) ||
-                 (pv_mime_strcmp(aParameters[i].key, MOUT_VIDEO_DISPLAY_HEIGHT_KEY) == 0))
+                 (pv_mime_strcmp(aParameters[i].key, MOUT_VIDEO_DISPLAY_HEIGHT_KEY) == 0) ||
+                 (pv_mime_strcmp(aParameters[i].key, PVMF_DATAPATH_PORT_MAX_NUM_MEDIA_MSGS_KEY) == 0))
+
         {
             PVMF_MOPORT_LOGDATAPATH((0, "PVMediaOutputNodePort::setParametersSync - FSI - Fmt=%s",
                                      iSinkFormatString.get_str()));

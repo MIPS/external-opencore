@@ -585,7 +585,15 @@ class PvmfAssetInfo3GPPLocationStruct
 #define INPUT_TIMESCALE_CUR_QUERY ".../input/timescale;attr=cur"
 #define INPUT_TIMESCALE_CUR_VALUE ".../input/timescale;valtype=uint32"
 
-
+// DShow MIO
+#define MOUT_VIDEO_POSITION_X_KEY "x-pvmf/video/render/position_x;valtype=uint32_value"
+#define MOUT_VIDEO_POSITION_Y_KEY "x-pvmf/video/render/position_y;valtype=uint32_value"
+#define MOUT_VIDEO_FULLSCREEN_KEY "x-pvmf/video/render/fullscreen;valtype=uint32_value"
+#define MOUT_VIDEO_WINDOW_VISIBLE_KEY    "x-pvmf/video/render/visible;valtype=uint32_value"
+#define MOUT_VIDEO_PARENT_WINDOW_HANDLE_KEY "x-pvmf/video/render/window_handle;valtype=uint32_value"
+#define MOUT_VIDEO_MESSAGE_DRAIN_KEY "x-pvmf/video/render/message_drain;valtype=uint32_value"
+#define MOUT_UPDATE_VIDEO_WINDOW_KEY "x-pvmf/video/render/update_video_window;valtype=uint32_value"
+#define MOUT_CLIP_TYPE_STREAMING_KEY "x-pvmf/video/render/clip_type_streaming;valtype=uint32_value"
 
 #endif // PVMI_KVP_H_INCLUDED
 
