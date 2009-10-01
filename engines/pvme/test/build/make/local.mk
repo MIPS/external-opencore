@@ -45,6 +45,8 @@ else
         pvmp3ffrecognizer \
         pvrmffrecognizer \
         pvoma1ffrecognizer \
+		pvaacffrecognizer \
+		pvwavffrecognizer \
         pvfileparserutils \
         pvrmffparsernode \
         pvrmffparser \
