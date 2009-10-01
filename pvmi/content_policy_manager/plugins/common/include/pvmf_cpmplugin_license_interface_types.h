@@ -107,9 +107,9 @@ class PVMFCPMLicenseStatus
         // The service Id required for registration.
         PVUuid iServiceId;
 
-        // @TODO - Is there a need for custom data here?
-        //         If so, what is the format, and where
-        //         will be this used?
+        // Custom data sent by the server
+        OSCL_HeapString<OsclMemAllocator> iCustomData;
+
         uint32 iLastErrorResult;
 
         void Clear()
@@ -131,6 +131,8 @@ class PVMFCPMLicenseStatus
 
             iServiceIdReceived = false;
             iServiceId = EMPTY_UUID;
+
+            iCustomData = "";
 
             iLastErrorResult = 0;
         }
@@ -156,6 +158,7 @@ class PVMFCPMLicenseStatus
             iAccountId = aStatus.iAccountId;
             iServiceIdReceived = aStatus.iServiceIdReceived;
             iServiceId = aStatus.iServiceId;
+            iCustomData = aStatus.iCustomData;
             iLastErrorResult = aStatus.iLastErrorResult;
         }
 };

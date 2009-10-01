@@ -111,6 +111,20 @@ class PVMFCPMDomainJoinData
                 , iCustomDataLen(0)
         {}
 
+        PVMFCPMDomainJoinData & operator=(const PVMFCPMDomainJoinData& aSrc)
+        {
+            if (&aSrc != this)
+            {
+                iDomainUrl     = aSrc.iDomainUrl;
+                iFlags         = aSrc.iFlags;
+                iDomainId      = aSrc.iDomainId;
+                iFriendlyName  = aSrc.iFriendlyName;
+                iCustomData    = aSrc.iCustomData;
+                iCustomDataLen = aSrc.iCustomDataLen;
+            }
+            return *this;
+        };
+
         OSCL_String* iDomainUrl;    //the domain server URL
 
         uint32 iFlags;              //Flag that indicates the type of custom data.

@@ -33,9 +33,12 @@
 #ifndef PV_INTERFACE_H_INCLUDED
 #include "pv_interface.h"
 #endif
-
+#ifndef PVMF_CPMPLUGIN_DOMAIN_INTERFACE_TYPES_H_INCLUDED
+#include "pvmf_cpmplugin_domain_interface_types.h"
+#endif
 #define PVMF_LICENSE_CONTEXT_DATA_UUID PVUuid(0x13f2d930,0x8f58,0x11de,0x8a,0x39,0x08,0x00,0x20,0x0c,0x9a,0x66)
 #define PVMF_DOMAIN_LICENSE_CONTEXT_DATA_UUID PVUuid(0x574a8890,0x8f58,0x11de,0x8a,0x39,0x08,0x00,0x20,0x0c,0x9a,0x66)
+
 
 class PVMFDomainLicenseDataSource : public PVInterface
 {
@@ -82,38 +85,16 @@ class PVMFDomainLicenseDataSource : public PVInterface
                 return false;
             }
         }
-        void setDomainServiceId(uint8 b0, uint8 b1, uint8 b2, uint8 b3
-                                , uint8 b4, uint8 b5, uint8 b6, uint8 b7, uint8 b8
-                                , uint8 b9, uint8 b10, uint8 b11, uint8 b12
-                                , uint8 b13, uint8 b14, uint8 b15)
-        {
-            uint8* pos = (uint8*) & iServiceId;
-            *pos++ = b0;
-            *pos++ = b1;
-            *pos++ = b2;
-            *pos++ = b3;
-            *pos++ = b4;
-            *pos++ = b5;
-            *pos++ = b6;
-            *pos++ = b7;
-            *pos++ = b8;
-            *pos++ = b9;
-            *pos++ = b10;
-            *pos++ = b11;
-            *pos++ = b12;
-            *pos++ = b13;
-            *pos++ = b14;
-            *pos++ = b15;
-        }
 
-        PVUuid iServiceId;
+        PVMFCPMDomainJoinData iDomainJoinData;
     private:
         void MyCopy(const PVMFDomainLicenseDataSource& aSrc)
         {
-            iServiceId = aSrc.iServiceId;
+            iDomainJoinData = aSrc.iDomainJoinData;
         };
 
         int32 iRefCounter;
+
 };
 
 class PVMFLicenseContextData : public PVInterface
