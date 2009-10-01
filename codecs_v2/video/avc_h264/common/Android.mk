@@ -12,7 +12,6 @@ LOCAL_SRC_FILES := \
 LOCAL_MODULE := libpv_avc_common_lib
 
 LOCAL_CFLAGS :=   $(PV_CFLAGS)
-
 LOCAL_ARM_MODE := arm
 
 LOCAL_STATIC_LIBRARIES := 

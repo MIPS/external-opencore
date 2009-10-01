@@ -12,7 +12,6 @@ LOCAL_MODULE := libprotocolenginenode_download_common
 LOCAL_CFLAGS :=   $(PV_CFLAGS)
 
 
-
 LOCAL_STATIC_LIBRARIES := 
 
 LOCAL_SHARED_LIBRARIES := 

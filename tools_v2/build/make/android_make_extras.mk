@@ -171,8 +171,11 @@ $1: FORCE
 	$$(quiet) echo "" >> $$@
 	$$(quiet) echo "  PV_CFLAGS := -Wno-non-virtual-dtor -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64 -DUSE_CML2_CONFIG" >> $$@
 	$$(quiet) echo "" >> $$@
+	$$(quiet) echo "  ifeq ($$(esc_dollar)(PV_WERROR),1)" >> $$@
+	$$(quiet) echo "    PV_CFLAGS += -Werror" >> $$@
+	$$(quiet) echo "  endif" >> $$@
 	$$(quiet) echo "  ifeq ($$(esc_dollar)(ENABLE_PV_LOGGING),1)" >> $$@
-	$$(quiet) echo "      PV_CFLAGS += -DPVLOGGER_INST_LEVEL=5" >> $$@
+	$$(quiet) echo "    PV_CFLAGS += -DPVLOGGER_INST_LEVEL=5" >> $$@
 	$$(quiet) echo "  endif"  >> $$@
 	$$(quiet) echo "" >> $$@
 	$$(quiet) echo "  ifeq ($$(esc_dollar)(TARGET_ARCH),arm)" >> $$@
@@ -290,12 +293,21 @@ define include_system_extras
 endef
 
 define include_local_c_flags
-  $(if $(strip $(1)),$(PRINTF) "LOCAL_CFLAGS := $(ANDROID_C_FLAGS) \$$(PV_CFLAGS_MINUS_VISIBILITY)\n" >> $2, $(PRINTF) "LOCAL_CFLAGS := $(ANDROID_C_FLAGS) \$$(PV_CFLAGS)\n" >> $2)
+  $(if $(strip $(1)),$(PRINTF) "LOCAL_CFLAGS := $(ANDROID_C_FLAGS) \$$(PV_CFLAGS_MINUS_VISIBILITY)" >> $2, $(PRINTF) "LOCAL_CFLAGS := $(ANDROID_C_FLAGS) \$$(PV_CFLAGS)" >> $2)
 endef
+
+define undo_warnings_as_errors
+  $(if $(ANDROID_C_FLAGS_X), $(PRINTF) "\nLOCAL_CFLAGS += $(ANDROID_C_FLAGS_X)" >> $1)
+endef
+
+ifeq ($(LOCAL_DISABLE_COMPILE_WARNINGS_AS_ERRORS),1)
+  $(TARGET)_DISABLE_COMPILE_WARNINGS_AS_ERRORS = -Wno-error
+endif
 
 ifeq ($(LOCAL_ANDROID_MK_PATH),)
   LOCAL_ANDROID_MK_PATH := $(strip $(call strip_two_levels_up,$(strip $(LOCAL_PATH)/local.mk)))
 endif
+
 
 # $(warning ***** LOCAL_ANDROID_MK_PATH = $(LOCAL_ANDROID_MK_PATH))
 
@@ -382,6 +394,7 @@ $(ANDROID_MAKE_NAMES): ANDROID_ASM_SRCS := $(if $(strip $(SRCS)),$(patsubst %,$(
 $(ANDROID_MAKE_NAMES): ANDROID_TARGET := $(if $(strip $(filter prog,$(TARGET_TYPE))),"LOCAL_MODULE :=" $(TARGET),$(if $(strip $(TARGET)),"LOCAL_MODULE :=" lib$(ANDROID_TMP_TARGET),))
 $(ANDROID_MAKE_NAMES): ANDROID_HDRS := $(patsubst %,$(call go_up_two_levels,$(INCSRCDIR))/%,$(HDRS))
 $(ANDROID_MAKE_NAMES): ANDROID_C_FLAGS := $(filter-out %PV_ARM_GCC_V5,$(ANDROID_TMP_C_FLAGS)) $(ANDROID_TMP_ASMDIRS)
+$(ANDROID_MAKE_NAMES): ANDROID_C_FLAGS_X := $($(TARGET)_DISABLE_COMPILE_WARNINGS_AS_ERRORS)
 $(ANDROID_MAKE_NAMES): ANDROID_C_INC := $(ANDROID_TMP_LOCAL_INC)
 $(ANDROID_MAKE_NAMES): ANDROID_ARM_MODE := $(AND_LOCAL_ARM_MODE)
 $(ANDROID_MAKE_NAMES): ANDROID_EXPORT_ALL_SYMBOLS := $(AND_LOCAL_EXPORT_ALL_SYMBOLS)
@@ -403,6 +416,7 @@ $(ANDROID_MAKE_NAMES): FORCE
 	$(quiet) echo "$(ANDROID_TARGET)" >> $@
 	$(quiet) echo "" >> $@
 	$(quiet) $(call include_local_c_flags,$(ANDROID_EXPORT_ALL_SYMBOLS),$@)
+	$(quiet) $(call undo_warnings_as_errors,$@)
 	$(quiet) echo "" >> $@
 	$(quiet) echo "$(ANDROID_ARM_MODE)" >> $@
 	$(quiet) echo "" >> $@

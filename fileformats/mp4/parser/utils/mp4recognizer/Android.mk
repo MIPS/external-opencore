@@ -11,7 +11,6 @@ LOCAL_MODULE := libmp4recognizer_utility
 LOCAL_CFLAGS :=   $(PV_CFLAGS)
 
 
-
 LOCAL_STATIC_LIBRARIES := 
 
 LOCAL_SHARED_LIBRARIES := 

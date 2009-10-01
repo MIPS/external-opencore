@@ -6,8 +6,11 @@ ifneq ($(strip $(EXTERNAL_OPENCORE_CONFIG_ONCE)),true)
 
   PV_CFLAGS := -Wno-non-virtual-dtor -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64 -DUSE_CML2_CONFIG
 
+  ifeq ($(PV_WERROR),1)
+    PV_CFLAGS += -Werror
+  endif
   ifeq ($(ENABLE_PV_LOGGING),1)
-      PV_CFLAGS += -DPVLOGGER_INST_LEVEL=5
+    PV_CFLAGS += -DPVLOGGER_INST_LEVEL=5
   endif
 
   ifeq ($(TARGET_ARCH),arm)

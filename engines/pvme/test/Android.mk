@@ -11,7 +11,6 @@ LOCAL_MODULE := pvme_test
 LOCAL_CFLAGS :=   $(PV_CFLAGS)
 
 
-
 LOCAL_STATIC_LIBRARIES := libunit_test   
 
 LOCAL_SHARED_LIBRARIES :=  libopencore_player libopencore_common libopencore_pvme

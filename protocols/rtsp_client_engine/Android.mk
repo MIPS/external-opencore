@@ -14,7 +14,6 @@ LOCAL_MODULE := libpvrtsp_cli_eng_node
 LOCAL_CFLAGS :=   $(PV_CFLAGS)
 
 
-
 LOCAL_STATIC_LIBRARIES := 
 
 LOCAL_SHARED_LIBRARIES := 

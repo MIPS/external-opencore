@@ -18,7 +18,6 @@ LOCAL_MODULE := test_pvauthorengine
 LOCAL_CFLAGS := -D_IMOTION_SPECIFIC_UT_DISABLE -D_UNICODE -DUNICODE  $(PV_CFLAGS)
 
 
-
 LOCAL_STATIC_LIBRARIES := libunit_test   
 
 LOCAL_SHARED_LIBRARIES :=  libopencore_author libopencore_common libopencore_player

@@ -22,7 +22,6 @@ LOCAL_MODULE := pvplayer_engine_test
 LOCAL_CFLAGS := -DBUILD_OMX_DEC_NODE  $(PV_CFLAGS)
 
 
-
 LOCAL_STATIC_LIBRARIES := libunit_test   
 
 LOCAL_SHARED_LIBRARIES :=  libopencore_player libopencore_common libopencore_net_support

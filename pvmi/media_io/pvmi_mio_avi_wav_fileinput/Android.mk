@@ -10,7 +10,6 @@ LOCAL_MODULE := libpvmioaviwavfileinput
 LOCAL_CFLAGS :=   $(PV_CFLAGS)
 
 
-
 LOCAL_STATIC_LIBRARIES := 
 
 LOCAL_SHARED_LIBRARIES := 

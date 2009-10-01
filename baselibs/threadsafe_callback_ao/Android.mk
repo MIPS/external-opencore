@@ -12,7 +12,6 @@ LOCAL_MODULE := libthreadsafe_callback_ao
 LOCAL_CFLAGS :=   $(PV_CFLAGS)
 
 
-
 LOCAL_STATIC_LIBRARIES := 
 
 LOCAL_SHARED_LIBRARIES := 

@@ -14,7 +14,6 @@ LOCAL_MODULE := libpvframemetadatautility
 LOCAL_CFLAGS :=   $(PV_CFLAGS)
 
 
-
 LOCAL_STATIC_LIBRARIES := 
 
 LOCAL_SHARED_LIBRARIES := 

@@ -9,7 +9,7 @@ LOCAL_SRC_FILES := \
 LOCAL_MODULE := libpvmfrecognizer
 
 LOCAL_CFLAGS :=   $(PV_CFLAGS)
-
+LOCAL_CFLAGS += -Wno-error
 
 
 LOCAL_STATIC_LIBRARIES := 

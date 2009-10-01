@@ -17,7 +17,6 @@ LOCAL_MODULE := pv2way_console_app
 LOCAL_CFLAGS := -DPV_USE_AMR_CODECS  $(PV_CFLAGS)
 
 
-
 LOCAL_STATIC_LIBRARIES :=             libunit_test 
 
 LOCAL_SHARED_LIBRARIES := libopencore_2way             libopencore_common
