@@ -21,7 +21,8 @@ SRCS :=	ccrgb16toyuv420.cpp \
 	ccrgb24toyuv420.cpp \
 	ccrgb12toyuv420.cpp \
 	ccyuv420semiplnrtoyuv420plnr.cpp \
-	ccyuv420toyuv420semi.cpp
+	ccyuv420toyuv420semi.cpp \
+        ccyuv420toyuv422.cpp
 
 ifneq ($(ARCHITECTURE),android)
 SRCS += cczoomrotation12.cpp \
@@ -39,7 +40,8 @@ HDRS :=  cczoomrotationbase.h \
 	ccrgb24toyuv420.h \
 	ccrgb12toyuv420.h \
 	ccyuv420semitoyuv420.h \
-	ccyuv420toyuv420semi.h
+	ccyuv420toyuv420semi.h \
+        ccyuv420toyuv422.h
 
 ifneq ($(ARCHITECTURE),android)
 HDRS += cczoomrotation12.h \

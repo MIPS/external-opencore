@@ -9,7 +9,8 @@ LOCAL_SRC_FILES := \
  	src/ccrgb24toyuv420.cpp \
  	src/ccrgb12toyuv420.cpp \
  	src/ccyuv420semiplnrtoyuv420plnr.cpp \
- 	src/ccyuv420toyuv420semi.cpp
+ 	src/ccyuv420toyuv420semi.cpp \
+ 	src/ccyuv420toyuv422.cpp
 
 
 LOCAL_MODULE := libcolorconvert
@@ -38,6 +39,7 @@ LOCAL_COPY_HEADERS := \
  	include/ccrgb24toyuv420.h \
  	include/ccrgb12toyuv420.h \
  	include/ccyuv420semitoyuv420.h \
- 	include/ccyuv420toyuv420semi.h
+ 	include/ccyuv420toyuv420semi.h \
+ 	include/ccyuv420toyuv422.h
 
 include $(BUILD_STATIC_LIBRARY)
