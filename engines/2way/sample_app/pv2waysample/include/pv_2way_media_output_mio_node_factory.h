@@ -23,11 +23,15 @@
 #include "pvmi_mio_fileinput_factory.h"
 
 
-class PV2WayMediaOutputMIONodeFactory : public PV2WayMIONodeFactory
+class PV2WayMediaOutputMIONodeFactory : public HeapBase, public PV2WayMIONodeFactory
 {
     public:
-        PV2WayMediaOutputMIONodeFactory() {};
-        virtual ~PV2WayMediaOutputMIONodeFactory() {};
+        OSCL_IMPORT_REF void Release()
+        {
+            delete this;
+        }
+        OSCL_IMPORT_REF PV2WayMediaOutputMIONodeFactory() {};
+        OSCL_IMPORT_REF virtual ~PV2WayMediaOutputMIONodeFactory() {};
         OSCL_IMPORT_REF virtual PVMFNodeInterface* Create(PvmiMIOFileInputSettings& aFileSettings);
         OSCL_IMPORT_REF virtual void Delete(PVMFNodeInterface** mioNode);
     private:

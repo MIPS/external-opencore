@@ -99,7 +99,7 @@ OSCL_EXPORT_REF void PV2WayMIO::AddCompleted(const PVCmdResponse& aResponse)
     }
     else
     {
-        OutputInfo("PV2WayMIO::AddCompleted:: Failed to add MIO");
+        OutputInfo(PVLOGMSG_ERR, "PV2WayMIO::AddCompleted:: Failed to add MIO");
         Closed();
     }
 
@@ -125,7 +125,7 @@ OSCL_EXPORT_REF PVCommandId PV2WayMIO::Add()
                                      *iMioNode));
             if (error)
             {
-                OutputInfo("PV2WayMIO::Add():: Error Adding Data Sink!");
+                OutputInfo(PVLOGMSG_ERR, "PV2WayMIO::Add():: Error Adding Data Sink!");
             }
             return iAddId;
         }
@@ -135,18 +135,18 @@ OSCL_EXPORT_REF PVCommandId PV2WayMIO::Add()
                                      *iMioNode));
             if (error)
             {
-                OutputInfo("PV2WayMIO::Add():: Error Adding Data Source!");
+                OutputInfo(PVLOGMSG_ERR, "PV2WayMIO::Add():: Error Adding Data Source!");
             }
             return iAddId;
         }
     }
     else if (!iRemoving)
     {
-        OutputInfo("\nError: MIO already added!\n");
+        OutputInfo(PVLOGMSG_ERR, "\nError: MIO already added!\n");
     }
     else if (iRemoving)
     {
-        OutputInfo("\nCannot add because attempting to remove MIO!\n");
+        OutputInfo(PVLOGMSG_ERR, "\nCannot add because attempting to remove MIO!\n");
     }
     return -1;
 }
@@ -167,7 +167,7 @@ OSCL_EXPORT_REF PVCommandId PV2WayMIO::Remove()
             OSCL_TRY(error, iRemoveId = iTerminal->RemoveDataSink(*iMioNode));
             if (error)
             {
-                OutputInfo("\n Error in RemoveDataSink!\n");
+                OutputInfo(PVLOGMSG_ERR, "\n Error in RemoveDataSink!\n");
             }
             return iRemoveId;
         }
@@ -176,14 +176,14 @@ OSCL_EXPORT_REF PVCommandId PV2WayMIO::Remove()
             OSCL_TRY(error, iRemoveId = iTerminal->RemoveDataSource(*iMioNode));
             if (error)
             {
-                OutputInfo("\n Error in RemoveDataSource!\n");
+                OutputInfo(PVLOGMSG_ERR, "\n Error in RemoveDataSource!\n");
             }
             return iRemoveId;
         }
     }
     else if (!iAdded)
     {
-        OutputInfo("\nError: MIO cannot be removed because has not been added!\n");
+        OutputInfo(PVLOGMSG_ERR, "\nError: MIO cannot be removed because has not been added!\n");
     }
     return -1;
 }
@@ -230,33 +230,33 @@ OSCL_EXPORT_REF PVCommandId PV2WayMIO::HandleEvent(const PVAsyncInformationalEve
     {
         if (((PVAsyncInformationalEvent&)aEvent).GetLocalBuffer()[0] == PV_VIDEO)
         {
-            OutputInfo("PVT_INDICATION_INCOMING_TRACK video, id %d\n", id);
+            OutputInfo(PVLOGMSG_INFO, "PVT_INDICATION_INCOMING_TRACK video, id %d\n", id);
         }
         else if (((PVAsyncInformationalEvent&)aEvent).GetLocalBuffer()[0] == PV_AUDIO)
         {
-            OutputInfo("PVT_INDICATION_INCOMING_TRACK audio, id %d\n", id);
+            OutputInfo(PVLOGMSG_INFO, "PVT_INDICATION_INCOMING_TRACK audio, id %d\n", id);
         }
     }
     else if (PVT_INDICATION_OUTGOING_TRACK == aEvent.GetEventType())
     {
         if (((PVAsyncInformationalEvent&)aEvent).GetLocalBuffer()[0] == PV_VIDEO)
         {
-            OutputInfo("PVT_INDICATION_OUTGOING_TRACK video, id %d\n", id);
+            OutputInfo(PVLOGMSG_INFO, "PVT_INDICATION_OUTGOING_TRACK video, id %d\n", id);
         }
         else if (((PVAsyncInformationalEvent&)aEvent).GetLocalBuffer()[0] == PV_AUDIO)
         {
-            OutputInfo("PVT_INDICATION_OUTGOING_TRACK audio, id %d\n", id);
+            OutputInfo(PVLOGMSG_INFO, "PVT_INDICATION_OUTGOING_TRACK audio, id %d\n", id);
         }
     }
     if (iChannelId == id)
     {
-        OutputInfo("\nDuplicate callback for  id %d\n", id);
+        OutputInfo(PVLOGMSG_WARNING, "\nDuplicate callback for  id %d\n", id);
         return -1;
     }
 
     if (iChannelId)
     {
-        OutputInfo("\nBusy ... MIO id=%d being closed\n", iChannelId);
+        OutputInfo(PVLOGMSG_WARNING, "\nBusy ... MIO id=%d being closed\n", iChannelId);
         iNextChannelId = id;
         return -1;
     }
@@ -274,7 +274,7 @@ OSCL_EXPORT_REF PVCommandId PV2WayMIO::HandleEvent(const PVAsyncInformationalEve
         }
         else
         {
-            OutputInfo("\nDid not find a codec!!! \n");
+            OutputInfo(PVLOGMSG_WARNING, "\nDid not find a codec!!! \n");
         }
     }
     return retvalue;
@@ -332,7 +332,7 @@ OSCL_EXPORT_REF void PV2WayMIO::PrintFormatTypes()
         iFormatsMap.begin();
     if (it == iFormatsMap.end())
     {
-        OutputInfo("No formats added.");
+        OutputInfo(PVLOGMSG_NOTICE, "No formats added.");
         return;
     }
     // loop through each, output values
@@ -340,8 +340,8 @@ OSCL_EXPORT_REF void PV2WayMIO::PrintFormatTypes()
     {
         CodecSpecifier* codec = (*it++).second;
         PVMFFormatType format = codec->GetFormat();
-        OutputInfo("%s", format.getMIMEStrPtr());
-        OutputInfo(" ");
+        OutputInfo(PVLOGMSG_INFO, "%s", format.getMIMEStrPtr());
+        OutputInfo(PVLOGMSG_INFO, " ");
     }
 }
 
@@ -366,11 +366,11 @@ CodecSpecifier* PV2WayMIO::FormatMatchesCapabilities(const PVAsyncInformationalE
     CodecSpecifier* formatInList = FormatInList(aMimeString);
     if (!formatInList)
     {
-        OutputInfo("Format %s does not match application capability\n", aMimeString.getMIMEStrPtr());
+        OutputInfo(PVLOGMSG_INFO, "Format %s does not match application capability\n", aMimeString.getMIMEStrPtr());
     }
     else
     {
-        OutputInfo("Format %s matches application capabilities\n", aMimeString.getMIMEStrPtr());
+        OutputInfo(PVLOGMSG_INFO, "Format %s matches application capabilities\n", aMimeString.getMIMEStrPtr());
     }
 
     return formatInList;

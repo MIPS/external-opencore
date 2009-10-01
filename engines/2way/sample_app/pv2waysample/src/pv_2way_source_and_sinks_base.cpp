@@ -126,7 +126,7 @@ OSCL_EXPORT_REF int PV2WaySourceAndSinksBase::ResetPreferredCodec(TPVDirection a
         mio->ClearCodecs();
         return 0;
     }
-    OutputInfo("PV2WaySourceAndSinksBase::ResetPreferredCodec: Error!  No MIO of given dir, type");
+    OutputInfo(PVLOGMSG_ERR, "PV2WaySourceAndSinksBase::ResetPreferredCodec: Error!  No MIO of given dir, type");
     return -1;
 }
 
@@ -227,7 +227,7 @@ OSCL_EXPORT_REF void PV2WaySourceAndSinksBase::HandleClosingTrack(const PVAsyncI
 {
     TPVDirection dir = (TPVDirection)((PVAsyncInformationalEvent&)aEvent).GetLocalBuffer()[0];
     TPVChannelId id = GetIdFromLocalBuffer((PVAsyncInformationalEvent &) aEvent);
-    OutputInfo("PVT_INDICATION_CLOSING_TRACK dir=%d, id %u\n", dir, id);
+    OutputInfo(PVLOGMSG_INFO, "PVT_INDICATION_CLOSING_TRACK dir=%d, id %u\n", dir, id);
     if (dir == INCOMING)
     {
         if (iAudioSink->IsChannelId(id))
@@ -258,17 +258,17 @@ OSCL_EXPORT_REF void PV2WaySourceAndSinksBase::HandleCloseTrack(const PVAsyncInf
 
     TPVDirection dir = (TPVDirection)((PVAsyncInformationalEvent&)aEvent).GetLocalBuffer()[0];
     TPVChannelId id = GetIdFromLocalBuffer((PVAsyncInformationalEvent &) aEvent);
-    OutputInfo("PVT_INDICATION_CLOSE_TRACK dir=%d, id=%u", dir, id);
+    OutputInfo(PVLOGMSG_STACK_TRACE, "PV2WaySourceAndSinksBase::HandleCloseTrack() - PVT_INDICATION_CLOSE_TRACK dir=%d, id=%u", dir, id);
     if (dir == INCOMING)
     {
         if (iVideoSink->IsChannelId(id))
         {
-            OutputInfo("\nIncoming video track closed\n");
+            OutputInfo(PVLOGMSG_INFO, "\nIncoming video track closed\n");
             iVideoSink->HandleCloseTrack();
         }
         else if (iAudioSink->IsChannelId(id))
         {
-            OutputInfo("\nIncoming audio track closed\n");
+            OutputInfo(PVLOGMSG_INFO, "\nIncoming audio track closed\n");
             iAudioSink->HandleCloseTrack();
         }
     }
@@ -276,12 +276,12 @@ OSCL_EXPORT_REF void PV2WaySourceAndSinksBase::HandleCloseTrack(const PVAsyncInf
     {
         if (iVideoSource->IsChannelId(id))
         {
-            OutputInfo("\nOutgoing video track closed\n");
+            OutputInfo(PVLOGMSG_INFO, "\nOutgoing video track closed\n");
             iVideoSource->HandleCloseTrack();
         }
         else if (iAudioSource->IsChannelId(id))
         {
-            OutputInfo("\nOutgoing audio track closed\n");
+            OutputInfo(PVLOGMSG_INFO, "\nOutgoing audio track closed\n");
             iAudioSource->HandleCloseTrack();
         }
     }
@@ -289,13 +289,13 @@ OSCL_EXPORT_REF void PV2WaySourceAndSinksBase::HandleCloseTrack(const PVAsyncInf
 
 OSCL_EXPORT_REF void PV2WaySourceAndSinksBase::PrintFormatTypes()
 {
-    OutputInfo("\nAudio Sink Format Types: ");
+    OutputInfo(PVLOGMSG_INFO, "\nAudio Sink Format Types: ");
     iAudioSink->PrintFormatTypes();
-    OutputInfo("\nAudio Source Format Types: ");
+    OutputInfo(PVLOGMSG_INFO, "\nAudio Source Format Types: ");
     iAudioSource->PrintFormatTypes();
-    OutputInfo("\nVideo Sink Format Types: ");
+    OutputInfo(PVLOGMSG_INFO, "\nVideo Sink Format Types: ");
     iVideoSink->PrintFormatTypes();
-    OutputInfo("\nVideo Source Format Types: ");
+    OutputInfo(PVLOGMSG_INFO, "\nVideo Source Format Types: ");
     iVideoSource->PrintFormatTypes();
 }
 
@@ -303,7 +303,7 @@ OSCL_EXPORT_REF bool PV2WaySourceAndSinksBase::FormatMatchesSelectedCodec(TPVDir
         PV2WayMediaType aMediaType, PVMFFormatType& aFormat)
 {
     PVMFFormatType& form = GetMIO(aDir, aMediaType)->GetSelectedFormat();
-    OutputInfo(" Expected: %s and Found: %s match? %d --------\n",
+    OutputInfo(PVLOGMSG_INFO, " Expected: %s and Found: %s match? %d --------\n",
                aFormat.getMIMEStrPtr(), form.getMIMEStrPtr(), (form == aFormat));
     return (form == aFormat) ? true : false;
 }

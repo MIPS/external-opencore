@@ -42,7 +42,7 @@ OSCL_EXPORT_REF int PV2WayDummySourceAndSinks::AddPreferredCodec(TPVDirection aD
         mio->AddCodec(aSettings);
         return 0;
     }
-    OutputInfo("PV2WaySourceAndSinksBase::AddPreferredCodec: Error!  No MIO of given dir, type");
+    OutputInfo(PVLOGMSG_ERR, "PV2WaySourceAndSinksBase::AddPreferredCodec: Error!  No MIO of given dir, type");
     return -1;
 }
 

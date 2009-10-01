@@ -24,9 +24,13 @@
 
 class PvmiMIOControl;
 
-class PV2WayDummyInputMIONodeFactory: public PV2WayMIONodeFactory
+class PV2WayDummyInputMIONodeFactory: public HeapBase, public PV2WayMIONodeFactory
 {
     public:
+        void Release()
+        {
+            delete this;
+        }
         PV2WayDummyInputMIONodeFactory() {};
         virtual ~PV2WayDummyInputMIONodeFactory() {};
         OSCL_IMPORT_REF virtual PVMFNodeInterface* Create(LipSyncDummyMIOSettings& aSettings);

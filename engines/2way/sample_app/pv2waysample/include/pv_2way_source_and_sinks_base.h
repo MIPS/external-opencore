@@ -165,7 +165,7 @@ class PV2WaySourceAndSinksBase :   public PVCommandStatusObserver,
         OSCL_IMPORT_REF PV2WayMIO* GetMIO(TPVDirection aDir,
                                           PV2WayMediaType aMediaType);
 
-        virtual void OutputInfo(const char * str, ...) = 0;
+        virtual void OutputInfo(PVLogger::log_level_type aLogLevel, const char * str, ...) = 0;
 
 
 

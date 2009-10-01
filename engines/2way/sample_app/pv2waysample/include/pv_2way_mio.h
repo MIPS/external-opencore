@@ -194,7 +194,7 @@ class PV2WayMIO
                            PVMFFormatType& aMimeString,
                            int& aMedia_type);
 
-        void OutputInfo(const char * str, ...)
+        void OutputInfo(PVLogger::log_level_type aLogLevel, const char * str, ...)
         {
             va_list args;
             va_start(args, str);
@@ -208,7 +208,7 @@ class PV2WayMIO
             {
                 iLogger = PVLogger::GetLoggerObject("PV2WaySourceAndSinks.PV2WayMIO");
             }
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_DEBUG,
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, aLogLevel,
                             (0, "---PV2WayMIO:: %s", buffer));
             va_end(args);
         }

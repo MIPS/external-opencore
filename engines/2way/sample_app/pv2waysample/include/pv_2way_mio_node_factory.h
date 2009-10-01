@@ -34,10 +34,11 @@
 class PV2WayMIONodeFactory
 {
     public:
-        PV2WayMIONodeFactory() {};
-        virtual ~PV2WayMIONodeFactory() {};
-        //virtual PVMFNodeInterface* Create() = 0;
+        virtual void Release() = 0;
         virtual void Delete(PVMFNodeInterface** mioNode) = 0;
+
+    protected:
+        virtual ~PV2WayMIONodeFactory() {};
 };
 
 

@@ -23,9 +23,13 @@
 #include "lipsync_dummy_settings.h"
 class PvmiMIOControl;
 
-class PV2WayDummyOutputMIONodeFactory : public PV2WayMIONodeFactory
+class PV2WayDummyOutputMIONodeFactory : public HeapBase, public PV2WayMIONodeFactory
 {
     public:
+        void Release()
+        {
+            delete this;
+        }
         PV2WayDummyOutputMIONodeFactory() {};
         virtual ~PV2WayDummyOutputMIONodeFactory() {};
         OSCL_IMPORT_REF virtual PVMFNodeInterface* Create(LipSyncDummyMIOSettings& aSettings);

@@ -59,8 +59,9 @@ class PV2WayDummySourceAndSinks : public PV2WaySourceAndSinksBase
                                            TPVDirection adir,
                                            PVMFNodeInterface** aMioNode);
     protected:
-        void OutputInfo(const char * str, ...)
+        void OutputInfo(PVLogger::log_level_type aLogLevel, const char * str, ...)
         {
+            OSCL_UNUSED_ARG(aLogLevel);
             // output to screen everything in formatted string
             va_list ap;
             va_start(ap, str);
