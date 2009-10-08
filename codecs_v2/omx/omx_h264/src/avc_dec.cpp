@@ -277,11 +277,11 @@ OMX_BOOL AvcDecoder_OMX::AvcDecodeVideo_OMX(OMX_BUFFERHEADERTYPE *aOutBuffer, //
     int32 NalSize, NalType, NalRefId;
 
     *aResizeFlag = OMX_FALSE;
-    OMX_S32 OldWidth;
-    OMX_U32 OldHeight;
+    OMX_S32 OldStride;
+    OMX_U32 OldSliceHeight;
 
-    OldWidth =  aPortParam->format.video.nStride; // actual buffer width
-    OldHeight = aPortParam->format.video.nSliceHeight; //actual buffer height
+    OldStride =  aPortParam->format.video.nStride; // actual buffer width
+    OldSliceHeight = aPortParam->format.video.nSliceHeight; //actual buffer height
 
     *aOutBufferForRendering = NULL; // init this to NULL. If there is output to be flushed out - we'll update this value
     pCurrentBufferHdr = aOutBuffer; // save the ptr to the empty output buffer we received from component
@@ -368,7 +368,7 @@ OMX_BOOL AvcDecoder_OMX::AvcDecodeVideo_OMX(OMX_BUFFERHEADERTYPE *aOutBuffer, //
         aPortParam->nBufferSize = (aPortParam->format.video.nSliceHeight * aPortParam->format.video.nStride * 3) >> 1;
 
 
-        if ((OldWidth != aPortParam->format.video.nStride) || (OldHeight !=  aPortParam->format.video.nSliceHeight))
+        if ((OldStride != aPortParam->format.video.nStride) || (OldSliceHeight !=  aPortParam->format.video.nSliceHeight))
             *aResizeFlag = OMX_TRUE;
 
 
