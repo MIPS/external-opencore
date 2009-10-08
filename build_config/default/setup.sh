@@ -87,19 +87,22 @@ fi
 if [[ -z $BASE_DIR ]]; then
   echo_stdout "ERROR: BASE_DIR is not set!"
 fi
-echo_stdout "BASE_DIR   ==> $BASE_DIR"
+echo_stdout "BASE_DIR               ==> $BASE_DIR"
 
 export SRC_ROOT=$BASE_DIR
-echo_stdout "SRC_ROOT   ==> $SRC_ROOT"
+echo_stdout "SRC_ROOT               ==> $SRC_ROOT"
 
 export BUILD_ROOT=$PROJECT_DIR/build
-echo_stdout "BUILD_ROOT ==> $BUILD_ROOT"
+echo_stdout "BUILD_ROOT             ==> $BUILD_ROOT"
 
 export CFG_DIR=$PWD
-echo_stdout "CFG_DIR    ==> $CFG_DIR"
+echo_stdout "CFG_DIR                ==> $CFG_DIR"
 
 export MK=$BASE_DIR/tools_v2/build/make
-echo_stdout "MK         ==> $MK"
+echo_stdout "MK                     ==> $MK"
+
+export ARTISTIC_STYLE_OPTIONS=$BASE_DIR/tools_v2/editor_settings/astylerc
+echo_stdout "ARTISTIC_STYLE_OPTIONS ==> $ARTISTIC_STYLE_OPTIONS"
 
 extern_tools_path=$BASE_DIR/extern_tools_v2/bin/linux
 export PATH=$extern_tools_path:$PATH
