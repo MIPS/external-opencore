@@ -132,6 +132,12 @@ class OsclNativeFile : public HeapBase
         //native file object.
         FILE* iFile;
 
+        //These are used for accessing individual assets that are bundled together
+        //into a single file, where each asset is treated as an independent file.
+        bool            iIsAsset;
+        bool            iIsAssetReadOnly;
+        TOsclFileOffset iAssetOffset;
+        TOsclFileOffset iAssetSize;
 };
 
 #endif // OSCL_FILE_NATIVE_H_INCLUDED

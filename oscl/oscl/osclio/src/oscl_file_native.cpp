@@ -36,7 +36,10 @@ OsclNativeFile::OsclNativeFile()
     iMode = 0;
 
     iFile = 0;
-
+    iIsAsset = false;
+    iIsAssetReadOnly = false;
+    iAssetOffset = 0;
+    iAssetSize = 0;
 }
 
 OsclNativeFile::~OsclNativeFile()
@@ -63,12 +66,31 @@ int32  OsclNativeFile::Open(const OsclFileHandle& aHandle, uint32 mode
     return 0;
 }
 
-int32 OsclNativeFile::Open(const oscl_wchar *filename, uint32 mode
+int32 OsclNativeFile::Open(const oscl_wchar* filename, uint32 mode
                            , const OsclNativeFileParams& params
                            , Oscl_FileServer& fileserv)
 {
     iMode = mode;
     iOpenFileHandle = false;
+
+#ifdef ANDROID
+    //This feature requires standard C file handles and is currently only
+    //available on Android.
+    //Do not combine this block of code with the general HAS_ANSI case below
+    //since we like to debug this on Windows.
+    //Test for "assethandle://" URI's first before the standard file handling.
+    if (filename != NULL)
+    {
+        //Convert the unicode URI to ASCII.
+        char uri[100];
+        oscl_UnicodeToUTF8(filename, oscl_strlen(filename), uri, sizeof(uri));
+        if (oscl_strncmp(uri, "assethandle://", 14) == 0)
+        {
+            //Call the narrow string Open method.
+            return Open(uri, mode, params, fileserv);
+        }
+    }
+#endif
 
     {
         OSCL_UNUSED_ARG(fileserv);
@@ -156,6 +178,42 @@ int32 OsclNativeFile::Open(const char *filename, uint32 mode
     iMode = mode;
     iOpenFileHandle = false;
 
+#ifdef ANDROID
+    //This feature requires standard C file handles and is currently only
+    //available on Android.
+    //Do not combine this block of code with the general HAS_ANSI case below
+    //since we like to debug this on Windows.
+    //Test for "assethandle://" URI's first before the standard file handling.
+    //Parse the URI for an asset file handle, offset, and size.
+    const char* format = "assethandle://%ld:%ld:%ld";
+    if (sizeof(TOsclFileOffset) > sizeof(long))
+    {
+        format = "assethandle://%ld:%lld:%lld";
+    }
+    //If the filename begins with "assethandle://", try to parse it.
+    if ((filename != NULL) && (strncmp(filename, format, 14) == 0))
+    {
+        if (sscanf(filename, format, &iFile, &iAssetOffset, &iAssetSize) == 3)
+        {
+            if (iFile == NULL) return -1; //Bad handle.
+            //For this case, the file must already be open.
+            iIsAsset = true;
+            iIsAssetReadOnly = true;
+            //Seek to logical 0 to apply the offset.
+            if (0 != Seek(0, Oscl_File::SEEKSET))
+            {
+                return -1; //Seek failed.
+            }
+            return 0;
+        }
+        else
+        {
+            //Parsing error, could not open.
+            return -1;
+        }
+    }
+#endif
+
     {
         OSCL_UNUSED_ARG(fileserv);
         OSCL_UNUSED_ARG(params);
@@ -239,6 +297,9 @@ int32 OsclNativeFile::Close()
 {
     int32 closeret = 0;
 
+    //Do not close asset file's shared file handle - the owner must close it.
+    if (iIsAsset) return 0;
+
     {
         if (iOpenFileHandle)
             closeret = Flush();
@@ -292,6 +353,12 @@ uint32 OsclNativeFile::GetReadAsyncNumElements()
 
 uint32 OsclNativeFile::Write(const OsclAny *buffer, uint32 size, uint32 numelements)
 {
+    //Abort the write operation if the file is a read-only asset.
+    if (iIsAsset && iIsAssetReadOnly)
+    {
+        return 0;
+    }
+
     if (iFile)
     {
         return fwrite(buffer, OSCL_STATIC_CAST(int32, size), OSCL_STATIC_CAST(int32, numelements), iFile);
@@ -301,6 +368,27 @@ uint32 OsclNativeFile::Write(const OsclAny *buffer, uint32 size, uint32 numeleme
 
 int32 OsclNativeFile::Seek(TOsclFileOffset offset, Oscl_File::seek_type origin)
 {
+    //If the file represents an individual asset from a file,
+    //normalize the offset.
+    if (iIsAsset)
+    {
+        switch (origin)
+        {
+            case Oscl_File::SEEKCUR:
+                break;
+            case Oscl_File::SEEKEND:
+            {
+                TOsclFileOffset assetEnd = iAssetOffset + iAssetSize;
+                offset = assetEnd + offset;
+                origin = Oscl_File::SEEKSET;
+            }
+            break;
+            case Oscl_File::SEEKSET:
+            default:
+                offset += iAssetOffset;
+                break;
+        }
+    }
 
     {
         if (iFile)
@@ -335,6 +423,13 @@ TOsclFileOffset OsclNativeFile::Tell()
 #else
         result = ftell(iFile);
 #endif
+    }
+
+    //If the file represents an individual asset from a file,
+    //normalize the offset.
+    if (iIsAsset && (result != -1))
+    {
+        result -= iAssetOffset;
     }
     return result;
 }

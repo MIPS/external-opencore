@@ -561,26 +561,12 @@ void PlayerDriver::handleSetDataSource(PlayerSetDataSource* command)
         delete mLocalContextData;
         mLocalContextData = NULL;
 
-        int fd;
-        long long offset;
-        long long len;
-        if (sscanf(url, "sharedfd://%d:%lld:%lld", &fd, &offset, &len) == 3) {
-            mLocalContextData = new PVMFSourceContextData();
-            mLocalContextData->EnableCommonSourceContext();
-            PVMFSourceContextDataCommon* commonContext = mLocalContextData->CommonData();
-            lseek64(fd, offset, SEEK_CUR);
-            TOsclFileHandle fh = fdopen(fd,"rb");
-            OsclFileHandle* sourcehandle = new OsclFileHandle(fh);
-            commonContext->iFileHandle = sourcehandle;
-            mDataSource->SetDataSourceContextData((OsclAny*)mLocalContextData);
-        } else {
-            LOGV("handleSetDataSource - called with a filepath - %s",url);
-            const char* ext = strrchr(url, '.');
-            if (ext && ( strcasecmp(ext, ".sdp") == 0) ) {
-                // For SDP files, currently there is no recognizer. So, to play from such files,
-                // there is a need to set the format type.
-                mDataSource->SetDataSourceFormatType((const char*)PVMF_MIME_DATA_SOURCE_SDP_FILE);
-            }
+        LOGV("handleSetDataSource - called with a filepath - %s",url);
+        const char* ext = strrchr(url, '.');
+        if (ext && ( strcasecmp(ext, ".sdp") == 0) ) {
+            // For SDP files, currently there is no recognizer. So, to play from such files,
+            // there is a need to set the format type.
+            mDataSource->SetDataSourceFormatType((const char*)PVMF_MIME_DATA_SOURCE_SDP_FILE);
         }
     }
 
@@ -1394,7 +1380,7 @@ status_t PVPlayer::setDataSource(const char *url)
     mDataSourcePath = NULL;
 
     // Don't let somebody trick us in to reading some random block of memory
-    if (strncmp("sharedfd://", url, 11) == 0)
+    if (strncmp("assethandle://", url, 14) == 0)
         return android::UNKNOWN_ERROR;
     mDataSourcePath = strdup(url);
     return OK;
@@ -1415,7 +1401,8 @@ status_t PVPlayer::setDataSource(int fd, int64_t offset, int64_t length) {
 
     char buf[80];
     mSharedFd = dup(fd);
-    sprintf(buf, "sharedfd://%d:%lld:%lld", mSharedFd, offset, length);
+    TOsclFileHandle handle = fdopen(fd,"rb");
+    sprintf(buf, "assethandle://%d:%lld:%lld", handle, offset, length);
     mDataSourcePath = strdup(buf);
     return OK;
 }
