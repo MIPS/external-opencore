@@ -15,7 +15,10 @@
  * and limitations under the License.
  * -------------------------------------------------------------------
  */
-#ifndef _INCLUDE_KBHIT_H_
-#define _INCLUDE_KBHIT_H_
-int _kbhit(void);
+#ifndef KBHIT_H_INCLUDED
+#define KBHIT_H_INCLUDED
+
+int _kbhit();
+
 #endif
+
