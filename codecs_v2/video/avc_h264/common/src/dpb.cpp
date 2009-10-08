@@ -479,10 +479,13 @@ AVCStatus sliding_window_process(AVCHandle *avcHandle, AVCCommonObj *video, AVCD
         }
     }
 
-    if (numShortTerm <= 0)
-    {
-        return AVC_FAIL;
-    }
+    /* Remove this check to allow certain corrupted content to pass. Can re-enable it if
+       it turns out to cause undesirable effect.
+
+      if (numShortTerm <= 0)
+      {
+          return AVC_FAIL;
+      } */
 
     while (numShortTerm + numLongTerm >= (int)video->currSeqParams->num_ref_frames)
     {
