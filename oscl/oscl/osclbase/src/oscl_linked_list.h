@@ -122,7 +122,7 @@ class Oscl_Linked_List_Base
          * @param new_element the element to be add in the list.
          * @return 32-bit integer on the success returns 1.
          */
-        OSCL_IMPORT_REF int32 add_element(OsclAny* new_element);
+        OSCL_IMPORT_REF int32 add_element(const OsclAny* new_element);
 
         /**
          * Adds new element at the start of the list.if list is already
@@ -132,6 +132,15 @@ class Oscl_Linked_List_Base
          * @return 32-bit integer on the success returns 1.
          */
         OSCL_IMPORT_REF int32 add_to_front(const OsclAny* new_element);
+
+        /**
+        * Inserts new element in the list.  If the index is past the end of
+        * the list
+        * it creates the list and add the element as first element of list.
+        * @param new_element the element to be add in the list.
+        * @return 32-bit integer on the success returns 1.
+        */
+        OSCL_IMPORT_REF int32 insert_element(const OsclAny* new_element, int index);
 
         /**
          * Search and returs the element in the list for passed index.
@@ -212,6 +221,11 @@ template <class LLClass, class Alloc> class Oscl_Linked_List
             Oscl_Linked_List_Base::destroy();
         }
 
+        void clear()
+        {
+            Oscl_Linked_List_Base::destroy();
+        }
+
         int32 dequeue_element(LLClass & element)
         {
             get_element(0, element);
@@ -281,6 +295,17 @@ template <class LLClass, class Alloc> class Oscl_Linked_List
         int32 add_to_front(const LLClass& new_element)
         {
             return Oscl_Linked_List_Base::add_to_front(&new_element);
+        }
+        /**
+         * Inserts new element in the list.  If the index is past the end of
+         * the list
+         * it creates the list and add the element as first element of list.
+         * @param new_element the element to be add in the list.
+         * @return 32-bit integer on the success returns 1.
+         */
+        int32 insert_element(const LLClass& new_element, int index)
+        {
+            return Oscl_Linked_List_Base::insert_element(&new_element, index);
         }
 
         /**

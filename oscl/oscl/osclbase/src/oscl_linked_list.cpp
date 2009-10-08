@@ -98,7 +98,7 @@ OSCL_EXPORT_REF int32 Oscl_Linked_List_Base::check_list()
  * @param new_element the element to be add in the list.
  * @return 32-bit integer on the success returns 1.
  */
-OSCL_EXPORT_REF int32 Oscl_Linked_List_Base::add_element(OsclAny* new_element)
+OSCL_EXPORT_REF int32 Oscl_Linked_List_Base::add_element(const OsclAny* new_element)
 {
     if (!tail)
     {
@@ -383,3 +383,41 @@ OSCL_EXPORT_REF int32 Oscl_Linked_List_Base::move_to_front(const OsclAny* data_t
 
 
 
+/**
+ * Inserts new element in the list.  If the index is past the end of
+ * the list
+ * it creates the list and add the element as first element of list.
+ * @param new_element the element to be add in the list.
+ * @return 32-bit integer on the success returns 1.
+ */
+OSCL_EXPORT_REF int32 Oscl_Linked_List_Base::insert_element(const OsclAny* new_element, int index)
+{
+    if (index >= num_elements)
+    {
+        return add_element(new_element);
+    }
+    else if (index == 0)
+    {
+        return add_to_front(new_element);
+    }
+    else
+    {
+        OsclAny *tmp, *next, *newelem;
+        int32 ii;
+        if (index < 0)
+            return 0;
+        for (tmp = head, ii = 0; ii < index - 1; ++ii, tmp = pOpaqueType->get_next(tmp))
+            { }
+
+        next = pOpaqueType->get_next(tmp);
+        newelem = pOpaqueType->allocate(sizeof_T);
+        if (newelem == NULL)
+            return 0;
+        pOpaqueType->construct(newelem, new_element);
+        pOpaqueType->set_next(tmp, newelem);
+        pOpaqueType->set_next(newelem, next);
+        ++num_elements;
+        return 1;
+    }
+    return 0;
+}
