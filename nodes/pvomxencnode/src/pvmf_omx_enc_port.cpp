@@ -544,7 +544,7 @@ PVMFStatus PVMFOMXEncPort::GetOutputParametersSync(PvmiKeyType identifier, PvmiK
             if ((iFormat == PVMF_MIME_AMR_IETF) || (iFormat == PVMF_MIME_AMRWB_IETF) || (iFormat == PVMF_MIME_AMR_IF2) ||
                     (iFormat == PVMF_MIME_ADTS) || (iFormat == PVMF_MIME_ADIF) || (iFormat == PVMF_MIME_MPEG4_AUDIO))
             {
-                parameters[0].value.uint32_value = iOMXNode->GetOutputBitRate(); // use audio version - void arg
+                parameters[0].value.uint32_value = iOMXNode->GetAudioOutputBitRate(); // use audio version - void arg
             }
             else if (iFormat == PVMF_MIME_H2631998 ||
                      iFormat == PVMF_MIME_H2632000 ||
@@ -555,7 +555,7 @@ PVMFStatus PVMFOMXEncPort::GetOutputParametersSync(PvmiKeyType identifier, PvmiK
 
             {
                 // use the video version
-                parameters[0].value.uint32_value = iOMXNode->GetOutputBitRate(0);
+                parameters[0].value.uint32_value = iOMXNode->GetVideoOutputBitRate(0);
             }
             else
             {
@@ -564,6 +564,58 @@ PVMFStatus PVMFOMXEncPort::GetOutputParametersSync(PvmiKeyType identifier, PvmiK
                 return status;
             }
 
+        }
+    }
+    else if (pv_mime_strcmp(identifier, OUTPUT_MAX_BITRATE_CUR_QUERY) == 0)
+    {
+        num_parameter_elements = 1;
+        status = AllocateKvp(parameters, (OMX_STRING)OUTPUT_MAX_BITRATE_CUR_VALUE, num_parameter_elements);
+        if (status != PVMFSuccess)
+        {
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR, (0, "PVMFOMXEncPort::GetOutputParametersSync: Error - AllocateKvp failed. status=%d", status));
+            return status;
+        }
+        else
+        {
+
+            // NOTE: we assume that port format will be set before this call
+            if ((iFormat == PVMF_MIME_AMR_IETF) || (iFormat == PVMF_MIME_AMRWB_IETF) || (iFormat == PVMF_MIME_AMR_IF2) ||
+                    (iFormat == PVMF_MIME_ADTS) || (iFormat == PVMF_MIME_ADIF) || (iFormat == PVMF_MIME_MPEG4_AUDIO))
+            {
+                parameters[0].value.uint32_value = iOMXNode->GetAudioOutputBitRate(); // use audio version - void arg
+            }
+            else if (iFormat == PVMF_MIME_H2631998 ||
+                     iFormat == PVMF_MIME_H2632000 ||
+                     iFormat == PVMF_MIME_M4V ||
+                     iFormat == PVMF_MIME_H264_VIDEO_RAW ||
+                     iFormat == PVMF_MIME_H264_VIDEO_MP4
+                    )
+
+            {
+                // use the video version
+                parameters[0].value.uint32_value = iOMXNode->GetVideoMaxOutputBitRate(0);
+            }
+            else
+            {
+                status = PVMFFailure;
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR, (0, "PVMFOMXEncPort::GetOutputParametersSync: Error - status=%d", status));
+                return status;
+            }
+
+        }
+    }
+    else if (pv_mime_strcmp(identifier, OUTPUT_DEC_BUFFER_SIZE_CUR_QUERY) == 0)
+    {
+        num_parameter_elements = 1;
+        status = AllocateKvp(parameters, (OMX_STRING)OUTPUT_DEC_BUFFER_SIZE_CUR_VALUE, num_parameter_elements);
+        if (status != PVMFSuccess)
+        {
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR, (0, "PVMFOMXEncPort::GetOutputParametersSync: Error - AllocateKvp failed. status=%d", status));
+            return status;
+        }
+        else
+        {
+            parameters[0].value.uint32_value = iOMXNode->GetDecBufferSize();
         }
     }
     else if (pv_mime_strcmp(identifier, VIDEO_OUTPUT_IFRAME_INTERVAL_CUR_QUERY) == 0)

@@ -184,6 +184,7 @@ typedef struct ComponentPortType
     OMX_CONFIG_ROTATIONTYPE             VideoOrientationType;
     OMX_VIDEO_PARAM_ERRORCORRECTIONTYPE VideoErrorCorrection;
     OMX_VIDEO_PARAM_BITRATETYPE         VideoRateType;      //Only for rate control type in mpeg4
+    OMX_VIDEO_PARAM_BITRATETYPE         VideoMaxRate;       //to store max bit rate
     OMX_VIDEO_PARAM_QUANTIZATIONTYPE    VideoQuantType;
     OMX_VIDEO_PARAM_VBSMCTYPE           VideoBlockMotionSize;
     OMX_VIDEO_PARAM_MOTIONVECTORTYPE    VideoMotionVector;

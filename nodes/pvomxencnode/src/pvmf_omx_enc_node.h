@@ -372,21 +372,6 @@ enum EncVideoInputFormat
     EI_UYVY
 };
 
-/** Type of contents for optimal encoding mode. */
-enum EncContentType
-{
-    /** Content is to be streamed in real-time. */
-    EI_M4V_STREAMING,
-
-    /** Content is to be downloaded and playbacked later.*/
-    EI_M4V_DOWNLOAD,
-
-    /** Content is to be 3gpp baseline compliant. */
-    EI_H263,
-
-    EI_H264
-};
-
 /** Targeted profile and level to encode. */
 enum EncM4VProfileLevel
 {
@@ -505,6 +490,11 @@ typedef struct PV_VideoEncodeParam
     layer and iBitRate[1] is for base+enhanced layer.*/
     int                 iBitRate[MAX_LAYER];
 
+    /** Specifies maximum instantanious bit rate in bit per second. Only applicable
+    in VBR rate control mode. This parameter deprecates iBufferDelay. IBitRate[0] is
+    for base layer and iBitRate[1] is for base+enhanced layer.*/
+    int                 iMaxBitRate[MAX_LAYER];
+
     /** Specifies the cumulative frame rate in frame per second. IFrameRate[0] is for
     base layer and iFrameRate[1] is for base+enhanced layer. */
     float               iFrameRate[MAX_LAYER];
@@ -550,14 +540,6 @@ typedef struct PV_VideoEncodeParam
     the packet size in bytes which represents the desired number of bytes per NAL.
     If this number is set to 0, the AVC encoder will encode the entire slice group as one NAL. */
     uint32              iPacketSize;
-
-    /** Specifies the VBV buffer size which determines the end-to-end delay between the
-    encoder and the decoder.  The size is in unit of seconds. For download application,
-    the buffer size can be larger than the streaming application. For 2-way application,
-    this buffer shall be kept minimal. For a special case, in VBR mode, iBufferDelay will
-    be set to -1 to allow buffer underflow. */
-    float               iBufferDelay;
-
 
     /** Specifies the duration of the clip in millisecond.*/
     int32               iClipDuration;
@@ -984,8 +966,6 @@ class PVMFOMXEncNode
                                                OMX_OUT OMX_PTR aAppData,
                                                OMX_OUT OMX_BUFFERHEADERTYPE* aBuffer);
 
-
-
         bool IsComponentMultiThreaded()
         {
             return iIsOMXComponentMultiThreaded;
@@ -1004,10 +984,12 @@ class PVMFOMXEncNode
 //  OSCL_IMPORT_REF bool queryInterface(const PVUuid& uuid, PVInterface*& iface);
         OSCL_IMPORT_REF bool SetNumLayers(uint32 aNumLayers);
         OSCL_IMPORT_REF bool SetOutputBitRate(uint32 aLayer, uint32 aBitRate);
+        OSCL_IMPORT_REF bool SetMaxOutputBitRate(uint32 aLayer, uint32 aMaxBitRate);
         OSCL_IMPORT_REF bool SetOutputFrameSize(uint32 aLayer, uint32 aWidth, uint32 aHeight);
         OSCL_IMPORT_REF bool SetOutputFrameRate(uint32 aLayer, OsclFloat aFrameRate);
         OSCL_IMPORT_REF bool SetSegmentTargetSize(uint32 aLayer, uint32 aSizeBytes);
         OSCL_IMPORT_REF bool SetRateControlType(uint32 aLayer, PVMFVENRateControlType aRateControl);
+        OSCL_IMPORT_REF bool SetInitialQP(uint32 aLayer, uint32 aQpI, uint32 aQpP, uint32 aQpB);
         OSCL_IMPORT_REF bool SetDataPartitioning(bool aDataPartitioning);
         OSCL_IMPORT_REF bool SetRVLC(bool aRVLC);
         OSCL_IMPORT_REF bool SetIFrameInterval(uint32 aIFrameInterval);
@@ -1034,7 +1016,7 @@ class PVMFOMXEncNode
         PVMFStatus SetInputSamplingRate(uint32 aSamplingRate);
         PVMFStatus SetInputBitsPerSample(uint32 aBitsPerSample);
         PVMFStatus SetInputNumChannels(uint32 aNumChannels);
-        uint32 GetOutputBitRate(); // for audio - void
+        uint32 GetAudioOutputBitRate(); // for audio - void
         // encoder input format setting
         /////////////////////////////////////////////////////
         //      Encoder settings routine
@@ -1045,7 +1027,9 @@ class PVMFOMXEncNode
 
 
         PVMFFormatType GetCodecType();
-        uint32 GetOutputBitRate(uint32 aLayer);
+        uint32 GetVideoOutputBitRate(uint32 aLayer);
+        uint32 GetVideoMaxOutputBitRate(uint32 aLayer);
+        uint32 GetDecBufferSize();
         OsclFloat GetOutputFrameRate(uint32 aLayer);
         PVMFStatus GetOutputFrameSize(uint32 aLayer, uint32& aWidth, uint32& aHeight);
         uint32 GetIFrameInterval();

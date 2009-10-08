@@ -445,6 +445,12 @@ class PvmfAssetInfo3GPPLocationStruct
 #define OUTPUT_BITRATE_CUR_QUERY ".../output/bitrate;attr=cur"
 #define OUTPUT_BITRATE_CUR_VALUE ".../output/bitrate;valtype=uint32"
 
+#define OUTPUT_MAX_BITRATE_CUR_QUERY ".../output/max_bitrate;attr=cur"
+#define OUTPUT_MAX_BITRATE_CUR_VALUE ".../output/max_bitrate;valtype=uint32"
+
+#define OUTPUT_DEC_BUFFER_SIZE_CUR_QUERY ".../output/dec_buffer_size;attr=cur"
+#define OUTPUT_DEC_BUFFER_SIZE_CUR_VALUE ".../output/dec_buffer_size;valtype=uint32"
+
 #define OUTPUT_TIMESCALE_CUR_QUERY ".../output/timescale;attr=cur"
 #define OUTPUT_TIMESCALE_CUR_VALUE ".../output/timescale;valtype=uint32"
 

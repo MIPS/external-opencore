@@ -707,6 +707,39 @@ PVMFStatus PVMp4FFComposerPort::GetInputParametersFromPeer(PvmiCapabilityAndConf
     kvp = NULL;
     numParams = 0;
 
+    // Get max bitrate from peer
+    status = aConfig->getParametersSync(NULL, (PvmiKeyType)OUTPUT_MAX_BITRATE_CUR_QUERY, kvp, numParams, NULL);
+    if (status != PVMFSuccess || !kvp || numParams != 1)
+    {
+        LOG_DEBUG((0, "PVMp4FFComposerPort::GetInputParametersFromPeer: MaxBitrate info not available. Use default"));
+
+        iFormatSpecificConfig.iMaxBitrate = iFormatSpecificConfig.iBitrate;
+    }
+    else
+    {
+        iFormatSpecificConfig.iMaxBitrate = kvp[0].value.uint32_value;
+        aConfig->releaseParameters(NULL, kvp, numParams);
+    }
+    kvp = NULL;
+    numParams = 0;
+
+    // Get BufferSizeDB from peer
+    status = aConfig->getParametersSync(NULL, (PvmiKeyType)OUTPUT_DEC_BUFFER_SIZE_CUR_QUERY, kvp, numParams, NULL);
+    if (status != PVMFSuccess || !kvp || numParams != 1)
+    {
+        LOG_DEBUG((0, "PVMp4FFComposerPort::GetInputParametersFromPeer: BufferSizeDB info not available. Use default"));
+
+        iFormatSpecificConfig.iBufferSizeDB = 0;
+    }
+    else
+    {
+        iFormatSpecificConfig.iBufferSizeDB = kvp[0].value.uint32_value;
+        aConfig->releaseParameters(NULL, kvp, numParams);
+    }
+    kvp = NULL;
+    numParams = 0;
+
+
     // Get timescale from peer
     if (iFormat == PVMF_MIME_AMR_IETF ||
             iFormat == PVMF_MIME_AMRWB_IETF ||

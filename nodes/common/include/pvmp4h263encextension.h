@@ -97,6 +97,16 @@ class PVMp4H263EncExtensionInterface : public PVInterface
         virtual bool SetOutputBitRate(uint32 aLayer, uint32 aBitRate) = 0;
 
         /**
+         * Sets the maximum instantanious bitrate of encoded output for the specified layer.
+         * Only applicable when the rate control is set to VBR.
+         * @param aLayer Layer ID
+         * @param aBitRate Bitrate for the specified layer in bits per second.
+         * @return True if successful, else false.
+         */
+        virtual bool SetMaxOutputBitRate(uint32 aLayer, uint32 aMaxBitRate) = 0;
+
+
+        /**
          * Sets the frame size of encoded output for the specified layer.
          * @param aLayer Layer ID
          * @param aWidth Width for the specified layer in pixels.
@@ -128,6 +138,18 @@ class PVMp4H263EncExtensionInterface : public PVInterface
          * @return True if successful, else false.
          */
         virtual bool SetRateControlType(uint32 aLayer, PVMFVENRateControlType aRateControl) = 0;
+
+
+        /**
+         * Sets initial QPs for the specified layer, for I, P and B frames respectively.
+         * When rate control is constant QP, these QPs are used throughout the entire sequence.
+         * @param aLayer Layer ID
+         * @param aQpI  QP for the first I frame.
+         * @param aQpP  QP for the first P frame.
+         * @param aQpB  QP for the first B frame.
+         * @return True if successful, else false.
+         */
+        virtual bool SetInitialQP(uint32 aLayer, uint32 aQpI, uint32 aQpP, uint32 aQpB) = 0;
 
         /**
          * Enable or disable data partitioning in the encoded MPEG4 output.

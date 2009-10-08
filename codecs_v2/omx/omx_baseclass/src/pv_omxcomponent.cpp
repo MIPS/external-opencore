@@ -4216,7 +4216,14 @@ OSCL_EXPORT_REF OMX_ERRORTYPE OmxComponentVideo::GetParameter(
                 return OMX_ErrorBadPortIndex;
             }
             PortIndex = pVideoRateControl->nPortIndex;
-            oscl_memcpy(pVideoRateControl, &ipPorts[PortIndex]->VideoRateType, sizeof(OMX_VIDEO_PARAM_BITRATETYPE));
+            if (pVideoRateControl->eControlRate == OMX_Video_ControlRateMax)
+            {
+                oscl_memcpy(pVideoRateControl, &ipPorts[PortIndex]->VideoMaxRate, sizeof(OMX_VIDEO_PARAM_BITRATETYPE));
+            }
+            else
+            {
+                oscl_memcpy(pVideoRateControl, &ipPorts[PortIndex]->VideoRateType, sizeof(OMX_VIDEO_PARAM_BITRATETYPE));
+            }
             SetHeader(pVideoRateControl, sizeof(OMX_VIDEO_PARAM_BITRATETYPE));
         }
         break;
@@ -4645,7 +4652,15 @@ OSCL_EXPORT_REF OMX_ERRORTYPE OmxComponentVideo::SetParameter(
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE, (0, "OmxComponentVideo : SetParameter error param check failed"));
                 return ErrorType;
             }
-            oscl_memcpy(&ipPorts[PortIndex]->VideoRateType, pVideoRateControl, sizeof(OMX_VIDEO_PARAM_BITRATETYPE));
+
+            if (pVideoRateControl->eControlRate == OMX_Video_ControlRateMax)
+            {
+                oscl_memcpy(&ipPorts[PortIndex]->VideoMaxRate, pVideoRateControl, sizeof(OMX_VIDEO_PARAM_BITRATETYPE));
+            }
+            else
+            {
+                oscl_memcpy(&ipPorts[PortIndex]->VideoRateType, pVideoRateControl, sizeof(OMX_VIDEO_PARAM_BITRATETYPE));
+            }
         }
         break;
 

@@ -48,6 +48,7 @@
         }
 
 
+#define DEFAULT_MAXBITRATE_AVGBITRATE_RATIO 5  // max bit rate is 5x avg bit rate
 #define PVOMXENC_EXTRA_YUVBUFFER_POOLNUM 3
 #define PVOMXENC_MEDIADATA_POOLNUM (PVOMXENCMAXNUMDPBFRAMESPLUS1 + PVOMXENC_EXTRA_YUVBUFFER_POOLNUM)
 #define PVOMXENC_MEDIADATA_CHUNKSIZE 128
@@ -864,12 +865,12 @@ PVMFOMXEncNode::PVMFOMXEncNode(int32 aPriority) :
     iVideoEncodeParam.iFrameWidth[0] = DEFAULT_FRAME_WIDTH;
     iVideoEncodeParam.iFrameHeight[0] = DEFAULT_FRAME_HEIGHT;
     iVideoEncodeParam.iBitRate[0] = DEFAULT_BITRATE;
+    iVideoEncodeParam.iMaxBitRate[0] = 0; //default off
     iVideoEncodeParam.iFrameRate[0] = (float)DEFAULT_FRAME_RATE;
     iVideoEncodeParam.iFrameQuality = 10;
     iVideoEncodeParam.iSceneDetection = false;
     iVideoEncodeParam.iRVLCEnable = false;
     iVideoEncodeParam.iIFrameInterval = DEFAULT_INTRA_PERIOD;
-    iVideoEncodeParam.iBufferDelay = (float)0.2;
     iVideoEncodeParam.iShortHeader = false;
     iVideoEncodeParam.iDataPartitioning = false;
     iVideoEncodeParam.iResyncMarker = true;
@@ -877,9 +878,9 @@ PVMFOMXEncNode::PVMFOMXEncNode(int32 aPriority) :
     // set the default rate control type to variable bit rate control
     // since it has better performance
     iVideoEncodeParam.iRateControlType = PVMFVEN_RATE_CONTROL_VBR;
-    iVideoEncodeParam.iIquant[0] = 15;
-    iVideoEncodeParam.iPquant[0] = 12;
-    iVideoEncodeParam.iBquant[0] = 12;
+    iVideoEncodeParam.iIquant[0] = 0; // default to unset
+    iVideoEncodeParam.iPquant[0] = 0;
+    iVideoEncodeParam.iBquant[0] = 0;
     iVideoEncodeParam.iSearchRange = 16;
     iVideoEncodeParam.iMV8x8 = false;
     iVideoEncodeParam.iMVHalfPel = true;
@@ -1958,6 +1959,9 @@ bool PVMFOMXEncNode::NegotiateVideoComponentParameters()
 
     OMX_ERRORTYPE Err;
     OMX_CONFIG_ROTATIONTYPE InputRotationType;
+    OMX_VIDEO_PARAM_BITRATETYPE BitRateType;
+    OMX_VIDEO_PARAM_QUANTIZATIONTYPE QuantParam;
+    bool  setMaxBitrate = false;
 
     // first get the number of ports and port indices
     OMX_PORT_PARAM_TYPE VideoPortParameters;
@@ -2416,6 +2420,121 @@ bool PVMFOMXEncNode::NegotiateVideoComponentParameters()
         return false;
     }
 
+    //OMX_VIDEO_PARAM_BITRATETYPE Settings
+    CONFIG_SIZE_AND_VERSION(BitRateType);
+
+    BitRateType.nPortIndex = iOutputPortIndex;
+    Err = OMX_GetParameter(iOMXEncoder, OMX_IndexParamVideoBitrate, &BitRateType);
+
+    if (OMX_ErrorNone != Err)
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                        (0, "PVMFOMXEncNode-%s::SetMP4EncoderParameters Parameter Invalid OMX_IndexParamVideoBitrate", iNodeTypeId));
+    }
+
+    //Set the parameters now
+    BitRateType.nPortIndex = iOutputPortIndex;
+    switch (iVideoEncodeParam.iRateControlType)
+    {
+        case PVMFVEN_RATE_CONTROL_CONSTANT_Q:
+            BitRateType.eControlRate = OMX_Video_ControlRateDisable;
+            break;
+        case PVMFVEN_RATE_CONTROL_VBR:
+            BitRateType.eControlRate = OMX_Video_ControlRateVariable;
+            setMaxBitrate = true;
+            break;
+        case PVMFVEN_RATE_CONTROL_CBR:
+            BitRateType.eControlRate = OMX_Video_ControlRateConstant;
+            break;
+        case PVMFVEN_RATE_CONTROL_VBR_FRAME_SKIPPING:
+            BitRateType.eControlRate = OMX_Video_ControlRateVariableSkipFrames;
+            setMaxBitrate = true;
+            break;
+        case PVMFVEN_RATE_CONTROL_CBR_FRAME_SKIPPING:
+            BitRateType.eControlRate = OMX_Video_ControlRateConstantSkipFrames;
+            break;
+        default:
+            // Default to VBR
+            BitRateType.eControlRate = OMX_Video_ControlRateVariable;
+            setMaxBitrate = true;
+            break;
+    }
+
+    BitRateType.nTargetBitrate = iVideoEncodeParam.iBitRate[0];
+    Err = OMX_SetParameter(iOMXEncoder, OMX_IndexParamVideoBitrate, &BitRateType);
+
+    if (OMX_ErrorNone != Err)
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                        (0, "PVMFOMXEncNode-%s::SetMP4EncoderParameters Parameter Invalid OMX_IndexParamVideoBitrate", iNodeTypeId));
+    }
+
+    // set Max Bit rate for VBR
+    if (setMaxBitrate == true)
+    {
+        if (iVideoEncodeParam.iMaxBitRate[0] == 0) // set to default for now.
+        {
+            iVideoEncodeParam.iMaxBitRate[0] = DEFAULT_MAXBITRATE_AVGBITRATE_RATIO * iVideoEncodeParam.iBitRate[0];
+        }
+
+        CONFIG_SIZE_AND_VERSION(BitRateType);
+
+        BitRateType.nPortIndex = iOutputPortIndex;
+        BitRateType.eControlRate = OMX_Video_ControlRateMax;
+        BitRateType.nTargetBitrate = iVideoEncodeParam.iMaxBitRate[0];
+
+        Err = OMX_SetParameter(iOMXEncoder, OMX_IndexParamVideoBitrate, &BitRateType);
+
+        if (OMX_ErrorNone != Err)
+        {
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                            (0, "PVMFOMXEncNode-%s::SetMP4EncoderParameters Parameter Invalid OMX_IndexParamVideoBitrate", iNodeTypeId));
+        }
+    }
+
+    if (iVideoEncodeParam.iMaxBitRate[0] < iVideoEncodeParam.iBitRate[0]) // check validity
+    {
+        iVideoEncodeParam.iMaxBitRate[0] = iVideoEncodeParam.iBitRate[0];
+    }
+
+    //OMX_VIDEO_PARAM_QUANTIZATIONTYPE Settings
+    CONFIG_SIZE_AND_VERSION(QuantParam);
+    QuantParam.nPortIndex = iOutputPortIndex;
+
+    Err = OMX_GetParameter(iOMXEncoder, OMX_IndexParamVideoQuantization, &QuantParam);
+    if (OMX_ErrorNone != Err)
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                        (0, "PVMFOMXEncNode-%s::SetMP4EncoderParameters Parameter Invalid OMX_IndexParamVideoQuantization", iNodeTypeId));
+    }
+
+    //Set the parameters now
+    QuantParam.nPortIndex = iOutputPortIndex;
+
+    if (iOutFormat == PVMF_MIME_M4V || iOutFormat == PVMF_MIME_H2631998 || iOutFormat == PVMF_MIME_H2632000)
+    {
+        // if not set, set to default, no range check, done by OMX component
+        QuantParam.nQpI = (iVideoEncodeParam.iIquant[0] == 0) ? DEFAULT_OMX_MP4ENC_QPI : iVideoEncodeParam.iIquant[0];
+        QuantParam.nQpP = (iVideoEncodeParam.iIquant[0] == 0) ? DEFAULT_OMX_MP4ENC_QPP : iVideoEncodeParam.iPquant[0];
+        QuantParam.nQpB = (iVideoEncodeParam.iIquant[0] == 0) ? DEFAULT_OMX_MP4ENC_QPB : iVideoEncodeParam.iBquant[0];
+    }
+    else if (iOutFormat == PVMF_MIME_H264_VIDEO_RAW || iOutFormat == PVMF_MIME_H264_VIDEO_MP4)
+    {
+        // if not set, set to default, no range check, done by OMX component
+        QuantParam.nQpI = (iVideoEncodeParam.iIquant[0] == 0) ? DEFAULT_OMX_AVCENC_QPI : iVideoEncodeParam.iIquant[0];
+        QuantParam.nQpP = (iVideoEncodeParam.iIquant[0] == 0) ? DEFAULT_OMX_AVCENC_QPP : iVideoEncodeParam.iPquant[0];
+        QuantParam.nQpB = (iVideoEncodeParam.iIquant[0] == 0) ? DEFAULT_OMX_AVCENC_QPB : iVideoEncodeParam.iBquant[0];
+    }
+
+
+    Err = OMX_SetParameter(iOMXEncoder, OMX_IndexParamVideoQuantization, &QuantParam);
+    if (OMX_ErrorNone != Err)
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                        (0, "PVMFOMXEncNode-%s::SetMP4EncoderParameters Parameter Invalid OMX_IndexParamVideoQuantization", iNodeTypeId));
+    }
+
+
 
     // now call codec specific parameter setting
     bool status = true;
@@ -2436,19 +2555,18 @@ bool PVMFOMXEncNode::NegotiateVideoComponentParameters()
 
     return status;
 }
+
+////////////////////////////////////////////////////////////////////////////////
 bool PVMFOMXEncNode::SetMP4EncoderParameters()
 {
     OMX_ERRORTYPE Err = OMX_ErrorNone;
 
     OMX_VIDEO_PARAM_MPEG4TYPE Mpeg4Type;
-    OMX_VIDEO_PARAM_BITRATETYPE BitRateType;
-    OMX_VIDEO_PARAM_QUANTIZATIONTYPE QuantParam;
     OMX_VIDEO_PARAM_ERRORCORRECTIONTYPE ErrCorrType;
 
     // DV: VALUES HERE ARE FOR THE MOST PART HARDCODED BASED ON PV DEFAULTS
     OMX_VIDEO_PARAM_MOTIONVECTORTYPE MotionVector;
     OMX_VIDEO_PARAM_INTRAREFRESHTYPE RefreshParam;
-
 
     CONFIG_SIZE_AND_VERSION(Mpeg4Type);
     Mpeg4Type.nPortIndex = iOutputPortIndex;
@@ -2457,7 +2575,7 @@ bool PVMFOMXEncNode::SetMP4EncoderParameters()
     if (OMX_ErrorNone != Err)
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                        (0, "PVMFOMXEncNode-%s::SetMP4EncoderParameters Parameter Invalid", iNodeTypeId));
+                        (0, "PVMFOMXEncNode-%s::SetMP4EncoderParameters Parameter Invalid OMX_IndexParamVideoMpeg4", iNodeTypeId));
     }
 
 
@@ -2565,82 +2683,8 @@ bool PVMFOMXEncNode::SetMP4EncoderParameters()
     if (OMX_ErrorNone != Err)
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                        (0, "PVMFOMXEncNode-%s::SetMP4EncoderParameters Parameter Invalid", iNodeTypeId));
+                        (0, "PVMFOMXEncNode-%s::SetMP4EncoderParameters Parameter Invalid OMX_IndexParamVideoMpeg4", iNodeTypeId));
     }
-
-    //OMX_VIDEO_PARAM_BITRATETYPE Settings
-    CONFIG_SIZE_AND_VERSION(BitRateType);
-
-    BitRateType.nPortIndex = iOutputPortIndex;
-    Err = OMX_GetParameter(iOMXEncoder, OMX_IndexParamVideoBitrate, &BitRateType);
-
-    if (OMX_ErrorNone != Err)
-    {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                        (0, "PVMFOMXEncNode-%s::SetMP4EncoderParameters Parameter Invalid", iNodeTypeId));
-    }
-
-    //Set the parameters now
-    BitRateType.nPortIndex = iOutputPortIndex;
-    switch (iVideoEncodeParam.iRateControlType)
-    {
-        case PVMFVEN_RATE_CONTROL_CONSTANT_Q:
-            BitRateType.eControlRate = OMX_Video_ControlRateDisable;
-            break;
-        case PVMFVEN_RATE_CONTROL_VBR:
-            BitRateType.eControlRate = OMX_Video_ControlRateVariable;
-            break;
-        case PVMFVEN_RATE_CONTROL_CBR:
-            BitRateType.eControlRate = OMX_Video_ControlRateConstant;
-            break;
-        case PVMFVEN_RATE_CONTROL_VBR_FRAME_SKIPPING:
-            BitRateType.eControlRate = OMX_Video_ControlRateVariableSkipFrames;
-            break;
-        case PVMFVEN_RATE_CONTROL_CBR_FRAME_SKIPPING:
-            BitRateType.eControlRate = OMX_Video_ControlRateConstantSkipFrames;
-            break;
-        default:
-            // Default to VBR
-            BitRateType.eControlRate = OMX_Video_ControlRateVariable;
-            break;
-    }
-
-    BitRateType.nTargetBitrate = iVideoEncodeParam.iBitRate[0];
-    Err = OMX_SetParameter(iOMXEncoder, OMX_IndexParamVideoBitrate, &BitRateType);
-
-    if (OMX_ErrorNone != Err)
-    {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                        (0, "PVMFOMXEncNode-%s::SetMP4EncoderParameters Parameter Invalid", iNodeTypeId));
-    }
-
-    //OMX_VIDEO_PARAM_QUANTIZATIONTYPE Settings
-    if (BitRateType.eControlRate == OMX_Video_ControlRateDisable)
-    {
-        CONFIG_SIZE_AND_VERSION(QuantParam);
-        QuantParam.nPortIndex = iOutputPortIndex;
-
-        Err = OMX_GetParameter(iOMXEncoder, OMX_IndexParamVideoQuantization, &QuantParam);
-        if (OMX_ErrorNone != Err)
-        {
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                            (0, "PVMFOMXEncNode-%s::SetMP4EncoderParameters Parameter Invalid", iNodeTypeId));
-        }
-
-        //Set the parameters now
-        QuantParam.nPortIndex = iOutputPortIndex;
-        QuantParam.nQpI = DEFAULT_OMX_MP4ENC_QPI;
-        QuantParam.nQpP = DEFAULT_OMX_MP4ENC_QPP;
-        QuantParam.nQpB = DEFAULT_OMX_MP4ENC_QPB;
-        Err = OMX_SetParameter(iOMXEncoder, OMX_IndexParamVideoQuantization, &QuantParam);
-        if (OMX_ErrorNone != Err)
-        {
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                            (0, "PVMFOMXEncNode-%s::SetMP4EncoderParameters Parameter Invalid", iNodeTypeId));
-        }
-    }
-
-
 
     //OMX_VIDEO_PARAM_ERRORCORRECTIONTYPE Settings (For streaming/2-way)
 
@@ -2650,7 +2694,7 @@ bool PVMFOMXEncNode::SetMP4EncoderParameters()
     if (OMX_ErrorNone != Err)
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                        (0, "PVMFOMXEncNode-%s::SetMP4EncoderParameters Parameter Invalid", iNodeTypeId));
+                        (0, "PVMFOMXEncNode-%s::SetMP4EncoderParameters Parameter Invalid OMX_IndexParamVideoErrorCorrection", iNodeTypeId));
     }
 
     //Set the parameters now
@@ -2667,7 +2711,7 @@ bool PVMFOMXEncNode::SetMP4EncoderParameters()
     if (OMX_ErrorNone != Err)
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                        (0, "PVMFOMXEncNode-%s::SetMP4EncoderParameters Parameter Invalid", iNodeTypeId));
+                        (0, "PVMFOMXEncNode-%s::SetMP4EncoderParameters Parameter Invalid OMX_IndexParamVideoErrorCorrection", iNodeTypeId));
     }
 
 
@@ -2679,7 +2723,7 @@ bool PVMFOMXEncNode::SetMP4EncoderParameters()
     if (OMX_ErrorNone != Err)
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                        (0, "PVMFOMXEncNode-%s::SetMP4EncoderParameters Parameter Invalid", iNodeTypeId));
+                        (0, "PVMFOMXEncNode-%s::SetMP4EncoderParameters Parameter Invalid OMX_IndexParamVideoMotionVector", iNodeTypeId));
     }
 
     MotionVector.nPortIndex = iOutputPortIndex;
@@ -2695,7 +2739,7 @@ bool PVMFOMXEncNode::SetMP4EncoderParameters()
     if (OMX_ErrorNone != Err)
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                        (0, "PVMFOMXEncNode-%s::SetMP4EncoderParameters Parameter Invalid", iNodeTypeId));
+                        (0, "PVMFOMXEncNode-%s::SetMP4EncoderParameters Parameter Invalid OMX_IndexParamVideoMotionVector", iNodeTypeId));
     }
 
 
@@ -2707,7 +2751,7 @@ bool PVMFOMXEncNode::SetMP4EncoderParameters()
     if (OMX_ErrorNone != Err)
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                        (0, "PVMFOMXEncNode-%s::SetMP4EncoderParameters Parameter Invalid", iNodeTypeId));
+                        (0, "PVMFOMXEncNode-%s::SetMP4EncoderParameters Parameter Invalid OMX_IndexParamVideoIntraRefresh", iNodeTypeId));
     }
 
     // extra parameters - hardcoded based on PV defaults
@@ -2719,7 +2763,7 @@ bool PVMFOMXEncNode::SetMP4EncoderParameters()
     if (OMX_ErrorNone != Err)
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                        (0, "PVMFOMXEncNode-%s::SetMP4EncoderParameters Parameter Invalid", iNodeTypeId));
+                        (0, "PVMFOMXEncNode-%s::SetMP4EncoderParameters Parameter Invalid OMX_IndexParamVideoIntraRefresh", iNodeTypeId));
     }
 
     return true;
@@ -2731,8 +2775,6 @@ bool PVMFOMXEncNode::SetH263EncoderParameters()
     OMX_ERRORTYPE Err = OMX_ErrorNone;
 
     OMX_VIDEO_PARAM_H263TYPE H263Type;
-    OMX_VIDEO_PARAM_BITRATETYPE BitRateType;
-    OMX_VIDEO_PARAM_QUANTIZATIONTYPE QuantParam;
     OMX_VIDEO_PARAM_ERRORCORRECTIONTYPE ErrCorrType;
 
     // DV: VALUES HERE ARE FOR THE MOST PART HARDCODED BASED ON PV DEFAULTS
@@ -2747,7 +2789,7 @@ bool PVMFOMXEncNode::SetH263EncoderParameters()
     if (OMX_ErrorNone != Err)
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                        (0, "PVMFOMXEncNode-%s::SetH263EncoderParameters Parameter Invalid", iNodeTypeId));
+                        (0, "PVMFOMXEncNode-%s::SetH263EncoderParameters Parameter Invalid OMX_IndexParamVideoH263", iNodeTypeId));
     }
 
 
@@ -2785,80 +2827,8 @@ bool PVMFOMXEncNode::SetH263EncoderParameters()
     if (OMX_ErrorNone != Err)
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                        (0, "PVMFOMXEncNode-%s::SetH263EncoderParameters Parameter Invalid", iNodeTypeId));
+                        (0, "PVMFOMXEncNode-%s::SetH263EncoderParameters Parameter Invalid OMX_IndexParamVideoH263", iNodeTypeId));
     }
-
-    //OMX_VIDEO_PARAM_BITRATETYPE Settings
-    CONFIG_SIZE_AND_VERSION(BitRateType);
-
-    BitRateType.nPortIndex = iOutputPortIndex;
-    Err = OMX_GetParameter(iOMXEncoder, OMX_IndexParamVideoBitrate, &BitRateType);
-    if (OMX_ErrorNone != Err)
-    {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                        (0, "PVMFOMXEncNode-%s::SetH263EncoderParameters Parameter Invalid", iNodeTypeId));
-    }
-
-    //Set the parameters now
-    BitRateType.nPortIndex = iOutputPortIndex;
-    switch (iVideoEncodeParam.iRateControlType)
-    {
-        case PVMFVEN_RATE_CONTROL_CONSTANT_Q:
-            BitRateType.eControlRate = OMX_Video_ControlRateDisable;
-            break;
-        case PVMFVEN_RATE_CONTROL_VBR:
-            BitRateType.eControlRate = OMX_Video_ControlRateVariable;
-            break;
-        case PVMFVEN_RATE_CONTROL_CBR:
-            BitRateType.eControlRate = OMX_Video_ControlRateConstant;
-            break;
-        case PVMFVEN_RATE_CONTROL_VBR_FRAME_SKIPPING:
-            BitRateType.eControlRate = OMX_Video_ControlRateVariableSkipFrames;
-            break;
-        case PVMFVEN_RATE_CONTROL_CBR_FRAME_SKIPPING:
-            BitRateType.eControlRate = OMX_Video_ControlRateConstantSkipFrames;
-            break;
-        default:
-            // Default to VBR
-            BitRateType.eControlRate = OMX_Video_ControlRateVariable;
-            break;
-    }
-
-    BitRateType.nTargetBitrate = iVideoEncodeParam.iBitRate[0];
-    Err = OMX_SetParameter(iOMXEncoder, OMX_IndexParamVideoBitrate, &BitRateType);
-    if (OMX_ErrorNone != Err)
-    {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                        (0, "PVMFOMXEncNode-%s::SetH263EncoderParameters Parameter Invalid", iNodeTypeId));
-    }
-
-
-    //OMX_VIDEO_PARAM_QUANTIZATIONTYPE Settings
-    if (BitRateType.eControlRate == OMX_Video_ControlRateDisable)
-    {
-        CONFIG_SIZE_AND_VERSION(QuantParam);
-        QuantParam.nPortIndex = iOutputPortIndex;
-
-        Err = OMX_GetParameter(iOMXEncoder, OMX_IndexParamVideoQuantization, &QuantParam);
-        if (OMX_ErrorNone != Err)
-        {
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                            (0, "PVMFOMXEncNode-%s::SetH263EncoderParameters Parameter Invalid", iNodeTypeId));
-        }
-
-        //Set the parameters now
-        QuantParam.nPortIndex = iOutputPortIndex;
-        QuantParam.nQpI = DEFAULT_OMX_MP4ENC_QPI;
-        QuantParam.nQpP = DEFAULT_OMX_MP4ENC_QPP;
-        QuantParam.nQpB = DEFAULT_OMX_MP4ENC_QPB;
-        Err = OMX_SetParameter(iOMXEncoder, OMX_IndexParamVideoQuantization, &QuantParam);
-        if (OMX_ErrorNone != Err)
-        {
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                            (0, "PVMFOMXEncNode-%s::SetH263EncoderParameters Parameter Invalid", iNodeTypeId));
-        }
-    }
-
 
     //OMX_VIDEO_PARAM_ERRORCORRECTIONTYPE Settings (For streaming/2-way)
 
@@ -2868,19 +2838,12 @@ bool PVMFOMXEncNode::SetH263EncoderParameters()
     if (OMX_ErrorNone != Err)
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                        (0, "PVMFOMXEncNode-%s::SetH263EncoderParameters Parameter Invalid", iNodeTypeId));
+                        (0, "PVMFOMXEncNode-%s::SetH263EncoderParameters Parameter Invalid OMX_IndexParamVideoErrorCorrection", iNodeTypeId));
     }
 
     //Set the parameters now
     ErrCorrType.nPortIndex = iOutputPortIndex;
-    //if (iVideoEncodeParam.iContentType == EI_M4V_STREAMING)
-    //{
-    //    ErrCorrType.bEnableDataPartitioning = OMX_TRUE;
-    //}
-    //else
-    //{
-    //    ErrCorrType.bEnableDataPartitioning = OMX_FALSE;
-    //}
+    ErrCorrType.bEnableDataPartitioning = OMX_FALSE;
     ErrCorrType.bEnableHEC = OMX_FALSE;
     ErrCorrType.bEnableResync = OMX_FALSE;
     ErrCorrType.nResynchMarkerSpacing = 0;
@@ -2889,7 +2852,7 @@ bool PVMFOMXEncNode::SetH263EncoderParameters()
     if (OMX_ErrorNone != Err)
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                        (0, "PVMFOMXEncNode-%s::SetH263EncoderParameters Parameter Invalid", iNodeTypeId));
+                        (0, "PVMFOMXEncNode-%s::SetH263EncoderParameters Parameter Invalid OMX_IndexParamVideoErrorCorrection", iNodeTypeId));
     }
 
 
@@ -2902,7 +2865,7 @@ bool PVMFOMXEncNode::SetH263EncoderParameters()
     if (OMX_ErrorNone != Err)
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                        (0, "PVMFOMXEncNode-%s::SetH263EncoderParameters Parameter Invalid", iNodeTypeId));
+                        (0, "PVMFOMXEncNode-%s::SetH263EncoderParameters Parameter Invalid OMX_IndexParamVideoMotionVector", iNodeTypeId));
     }
 
     // extra parameters - hardcoded
@@ -2917,7 +2880,7 @@ bool PVMFOMXEncNode::SetH263EncoderParameters()
     if (OMX_ErrorNone != Err)
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                        (0, "PVMFOMXEncNode-%s::SetH263EncoderParameters Parameter Invalid", iNodeTypeId));
+                        (0, "PVMFOMXEncNode-%s::SetH263EncoderParameters Parameter Invalid OMX_IndexParamVideoMotionVector", iNodeTypeId));
     }
 
 
@@ -2930,7 +2893,7 @@ bool PVMFOMXEncNode::SetH263EncoderParameters()
     if (OMX_ErrorNone != Err)
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                        (0, "PVMFOMXEncNode-%s::SetH263EncoderParameters Parameter Invalid", iNodeTypeId));
+                        (0, "PVMFOMXEncNode-%s::SetH263EncoderParameters Parameter Invalid OMX_IndexParamVideoIntraRefresh", iNodeTypeId));
     }
 
     // extra parameters - hardcoded based on PV defaults
@@ -2943,7 +2906,7 @@ bool PVMFOMXEncNode::SetH263EncoderParameters()
     if (OMX_ErrorNone != Err)
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                        (0, "PVMFOMXEncNode-%s::SetH263EncoderParameters Parameter Invalid", iNodeTypeId));
+                        (0, "PVMFOMXEncNode-%s::SetH263EncoderParameters Parameter Invalid OMX_IndexParamVideoIntraRefresh", iNodeTypeId));
     }
 
     return true;
@@ -2954,9 +2917,6 @@ bool PVMFOMXEncNode::SetH264EncoderParameters()
     OMX_ERRORTYPE Err = OMX_ErrorNone;
 
     OMX_VIDEO_PARAM_AVCTYPE H264Type;
-    OMX_VIDEO_PARAM_BITRATETYPE BitRateType;
-    OMX_VIDEO_PARAM_QUANTIZATIONTYPE QuantParam;
-
     // to be refined
     OMX_VIDEO_PARAM_MOTIONVECTORTYPE MotionVector;
     OMX_VIDEO_PARAM_INTRAREFRESHTYPE RefreshParam;
@@ -2970,7 +2930,7 @@ bool PVMFOMXEncNode::SetH264EncoderParameters()
     if (OMX_ErrorNone != Err)
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                        (0, "PVMFOMXEncNode-%s::SetH264EncoderParameters Parameter Invalid", iNodeTypeId));
+                        (0, "PVMFOMXEncNode-%s::SetH264EncoderParameters Parameter Invalid OMX_IndexParamVideoAvc", iNodeTypeId));
     }
 
 
@@ -3019,83 +2979,8 @@ bool PVMFOMXEncNode::SetH264EncoderParameters()
     if (OMX_ErrorNone != Err)
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                        (0, "PVMFOMXEncNode-%s::SetH264EncoderParameters Parameter Invalid", iNodeTypeId));
+                        (0, "PVMFOMXEncNode-%s::SetH264EncoderParameters Parameter Invalid OMX_IndexParamVideoAvc", iNodeTypeId));
     }
-
-
-    //OMX_VIDEO_PARAM_BITRATETYPE Settings
-    CONFIG_SIZE_AND_VERSION(BitRateType);
-
-    BitRateType.nPortIndex = iOutputPortIndex;
-    Err = OMX_GetParameter(iOMXEncoder, OMX_IndexParamVideoBitrate, &BitRateType);
-    if (OMX_ErrorNone != Err)
-    {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                        (0, "PVMFOMXEncNode-%s::SetH264EncoderParameters Parameter Invalid", iNodeTypeId));
-    }
-
-    //Set the parameters now
-    BitRateType.nPortIndex = iOutputPortIndex;
-    switch (iVideoEncodeParam.iRateControlType)
-    {
-        case PVMFVEN_RATE_CONTROL_CONSTANT_Q:
-            BitRateType.eControlRate = OMX_Video_ControlRateDisable;
-            break;
-        case PVMFVEN_RATE_CONTROL_VBR:
-            BitRateType.eControlRate = OMX_Video_ControlRateVariable;
-            break;
-        case PVMFVEN_RATE_CONTROL_CBR:
-            BitRateType.eControlRate = OMX_Video_ControlRateConstant;
-            break;
-        case PVMFVEN_RATE_CONTROL_VBR_FRAME_SKIPPING:
-            BitRateType.eControlRate = OMX_Video_ControlRateVariableSkipFrames;
-            break;
-        case PVMFVEN_RATE_CONTROL_CBR_FRAME_SKIPPING:
-            BitRateType.eControlRate = OMX_Video_ControlRateConstantSkipFrames;
-            break;
-        default:
-            // Default to VBR
-            BitRateType.eControlRate = OMX_Video_ControlRateVariable;
-            break;
-    }
-
-    BitRateType.nTargetBitrate = iVideoEncodeParam.iBitRate[0];
-    Err = OMX_SetParameter(iOMXEncoder, OMX_IndexParamVideoBitrate, &BitRateType);
-    if (OMX_ErrorNone != Err)
-    {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                        (0, "PVMFOMXEncNode-%s::SetH264EncoderParameters Parameter Invalid", iNodeTypeId));
-    }
-
-
-    //OMX_VIDEO_PARAM_QUANTIZATIONTYPE Settings
-    if (BitRateType.eControlRate == OMX_Video_ControlRateDisable)
-    {
-        CONFIG_SIZE_AND_VERSION(QuantParam);
-        QuantParam.nPortIndex = iOutputPortIndex;
-
-        Err = OMX_GetParameter(iOMXEncoder, OMX_IndexParamVideoQuantization, &QuantParam);
-        if (OMX_ErrorNone != Err)
-        {
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                            (0, "PVMFOMXEncNode-%s::SetH264EncoderParameters Parameter Invalid", iNodeTypeId));
-        }
-
-        //Set the parameters now
-        QuantParam.nPortIndex = iOutputPortIndex;
-        QuantParam.nQpI = DEFAULT_OMX_AVCENC_QPI;
-        QuantParam.nQpP = DEFAULT_OMX_AVCENC_QPP;
-        QuantParam.nQpB = DEFAULT_OMX_AVCENC_QPB;
-        Err = OMX_SetParameter(iOMXEncoder, OMX_IndexParamVideoQuantization, &QuantParam);
-        if (OMX_ErrorNone != Err)
-        {
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                            (0, "PVMFOMXEncNode-%s::SetH264EncoderParameters Parameter Invalid", iNodeTypeId));
-        }
-    }
-
-
-
 
     //OMX_VIDEO_PARAM_MOTIONVECTORTYPE Settings
     CONFIG_SIZE_AND_VERSION(MotionVector);
@@ -3105,7 +2990,7 @@ bool PVMFOMXEncNode::SetH264EncoderParameters()
     if (OMX_ErrorNone != Err)
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                        (0, "PVMFOMXEncNode-%s::SetH264EncoderParameters Parameter Invalid", iNodeTypeId));
+                        (0, "PVMFOMXEncNode-%s::SetH264EncoderParameters Parameter Invalid OMX_IndexParamVideoMotionVector", iNodeTypeId));
     }
 
     // extra parameters - hardcoded
@@ -3120,7 +3005,7 @@ bool PVMFOMXEncNode::SetH264EncoderParameters()
     if (OMX_ErrorNone != Err)
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                        (0, "PVMFOMXEncNode-%s::SetH264EncoderParameters Parameter Invalid", iNodeTypeId));
+                        (0, "PVMFOMXEncNode-%s::SetH264EncoderParameters Parameter Invalid OMX_IndexParamVideoMotionVector", iNodeTypeId));
     }
 
 
@@ -3133,7 +3018,7 @@ bool PVMFOMXEncNode::SetH264EncoderParameters()
     if (OMX_ErrorNone != Err)
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                        (0, "PVMFOMXEncNode-%s::SetH264EncoderParameters Parameter Invalid", iNodeTypeId));
+                        (0, "PVMFOMXEncNode-%s::SetH264EncoderParameters Parameter Invalid OMX_IndexParamVideoIntraRefresh", iNodeTypeId));
     }
 
     // extra parameters - hardcoded based on PV defaults
@@ -3146,7 +3031,7 @@ bool PVMFOMXEncNode::SetH264EncoderParameters()
     if (OMX_ErrorNone != Err)
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                        (0, "PVMFOMXEncNode-%s::SetH264EncoderParameters Parameter Invalid", iNodeTypeId));
+                        (0, "PVMFOMXEncNode-%s::SetH264EncoderParameters Parameter Invalid OMX_IndexParamVideoIntraRefresh", iNodeTypeId));
     }
 
     CONFIG_SIZE_AND_VERSION(VbsmcType);
@@ -3156,7 +3041,7 @@ bool PVMFOMXEncNode::SetH264EncoderParameters()
     if (OMX_ErrorNone != Err)
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                        (0, "PVMFOMXEncNode-%s::SetH264EncoderParameters Parameter Invalid", iNodeTypeId));
+                        (0, "PVMFOMXEncNode-%s::SetH264EncoderParameters Parameter Invalid OMX_IndexParamVideoVBSMC", iNodeTypeId));
     }
 
     VbsmcType.b16x16 = OMX_TRUE;
@@ -3166,7 +3051,7 @@ bool PVMFOMXEncNode::SetH264EncoderParameters()
     if (OMX_ErrorNone != Err)
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                        (0, "PVMFOMXEncNode-%s::SetH264EncoderParameters Parameter Invalid", iNodeTypeId));
+                        (0, "PVMFOMXEncNode-%s::SetH264EncoderParameters Parameter Invalid OMX_IndexParamVideoVBSMC", iNodeTypeId));
     }
 
     return true;
@@ -8332,8 +8217,36 @@ OSCL_EXPORT_REF bool PVMFOMXEncNode::SetOutputBitRate(uint32 aLayer, uint32 aBit
     }
 
     iVideoEncodeParam.iBitRate[aLayer] = aBitRate;
+
     return true;
 }
+
+////////////////////////////////////////////////////////////////////////////
+OSCL_EXPORT_REF bool PVMFOMXEncNode::SetMaxOutputBitRate(uint32 aLayer, uint32 aMaxBitRate)
+{
+    switch (iInterfaceState)
+    {
+        case EPVMFNodeStarted:
+        case EPVMFNodePaused:
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR, (0, "PVMFOMXEncNode-%s::SetOutputBitRate: Error iInterfaceState=%d", iInterfaceState));
+            return false;
+
+        default:
+            break;
+    }
+
+    if ((int32)aLayer >= iVideoEncodeParam.iNumLayer)
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
+                        (0, "PVMFOMXEncNode-%s::SetOutputBitRate: Error Invalid layer number", iNodeTypeId));
+        return false;
+    }
+
+    iVideoEncodeParam.iMaxBitRate[aLayer] = aMaxBitRate;
+
+    return true;
+}
+
 
 ////////////////////////////////////////////////////////////////////////////
 OSCL_EXPORT_REF bool PVMFOMXEncNode::SetOutputFrameSize(uint32 aLayer, uint32 aWidth, uint32 aHeight)
@@ -8430,6 +8343,33 @@ OSCL_EXPORT_REF bool PVMFOMXEncNode::SetRateControlType(uint32 aLayer, PVMFVENRa
 
     return true;
 }
+
+
+////////////////////////////////////////////////////////////////////////////
+OSCL_EXPORT_REF bool PVMFOMXEncNode::SetInitialQP(uint32 aLayer, uint32 aQpI, uint32 aQpP, uint32 aQpB)
+{
+    OSCL_UNUSED_ARG(aLayer);
+
+    switch (iInterfaceState)
+    {
+        case EPVMFNodeStarted:
+        case EPVMFNodePaused:
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
+                            (0, "PVMFOMXEncNode-%s::SetInitialQP: Error iInterfaceState=%d", iNodeTypeId, iInterfaceState));
+            return false;
+
+        default:
+            break;
+    }
+
+    // no check for range or codecs type at this point
+    iVideoEncodeParam.iIquant[aLayer] = aQpI;
+    iVideoEncodeParam.iPquant[aLayer] = aQpP;
+    iVideoEncodeParam.iBquant[aLayer] = aQpB;
+
+    return true;
+}
+
 
 ////////////////////////////////////////////////////////////////////////////
 OSCL_EXPORT_REF bool PVMFOMXEncNode::SetDataPartitioning(bool aDataPartitioning)
@@ -8783,7 +8723,7 @@ PVMFFormatType PVMFOMXEncNode::GetCodecType()
 
 ////////////////////////////////////////////////////////////////////////////
 // DV: Note - for video - there is an uint32 arg
-uint32 PVMFOMXEncNode::GetOutputBitRate(uint32 aLayer)
+uint32 PVMFOMXEncNode::GetVideoOutputBitRate(uint32 aLayer)
 {
     if ((int32)aLayer >= iVideoEncodeParam.iNumLayer)
     {
@@ -8797,6 +8737,45 @@ uint32 PVMFOMXEncNode::GetOutputBitRate(uint32 aLayer)
 
     return iVideoEncodeParam.iBitRate[aLayer];
 }
+
+////////////////////////////////////////////////////////////////////////////
+uint32 PVMFOMXEncNode::GetVideoMaxOutputBitRate(uint32 aLayer)
+{
+    if ((int32)aLayer >= iVideoEncodeParam.iNumLayer)
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
+                        (0, "PVMFOMXEncNode-%s::GetVideoMaxOutputBitRate: Error - Invalid layer number", iNodeTypeId));
+        return 0;
+    }
+
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "PVMFOMXEncNode-%s::GetVideoMaxOutputBitRate: =%d", iNodeTypeId, iVideoEncodeParam.iMaxBitRate[aLayer]));
+
+
+    if (iVideoEncodeParam.iMaxBitRate[aLayer] == 0) // not set
+    {
+        return iVideoEncodeParam.iBitRate[aLayer];
+    }
+    else
+    {
+        return iVideoEncodeParam.iMaxBitRate[aLayer]; // this could be invalid if it is less than iMaxBitRate.
+        // up to the caller to determine this.
+    }
+}
+
+
+////////////////////////////////////////////////////////////////////////////
+uint32 PVMFOMXEncNode::GetDecBufferSize()
+{
+
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "PVMFOMXEncNode-%s::GetDecBufSize", iNodeTypeId));
+
+
+    return iOMXComponentOutputBufferSize;
+
+}
+
 
 ////////////////////////////////////////////////////////////////////////////
 OsclFloat PVMFOMXEncNode::GetOutputFrameRate(uint32 aLayer)
@@ -9102,7 +9081,7 @@ PVMFStatus PVMFOMXEncNode::SetInputNumChannels(uint32 aNumChannels)
 }
 
 ////////////////////////////////////////////////////////////////////////////
-uint32 PVMFOMXEncNode::GetOutputBitRate()
+uint32 PVMFOMXEncNode::GetAudioOutputBitRate()
 {
     if ((iOutFormat == PVMF_MIME_AMR_IF2) ||
             (iOutFormat == PVMF_MIME_AMR_IETF) ||

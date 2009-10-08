@@ -463,6 +463,14 @@ OMX_ERRORTYPE OmxComponentMpeg4EncAO::ConstructComponent(OMX_PTR pAppData, OMX_P
     pOutPort->VideoRateType.nTargetBitrate = 64000;
 
 
+    //OMX_VIDEO_PARAM_BITRATETYPE settings of max bit rate,
+    // NOTE, we are not using this in encoder setting.
+    SetHeader(&pOutPort->VideoMaxRate, sizeof(OMX_VIDEO_PARAM_BITRATETYPE));
+    pOutPort->VideoMaxRate.nPortIndex = OMX_PORT_OUTPUTPORT_INDEX;
+    pOutPort->VideoMaxRate.eControlRate = OMX_Video_ControlRateMax;
+    pOutPort->VideoMaxRate.nTargetBitrate = 64000;
+
+
     //OMX_CONFIG_FRAMERATETYPE default seetings (specified in khronos conformance test)
     SetHeader(&pOutPort->VideoConfigFrameRateType, sizeof(OMX_CONFIG_FRAMERATETYPE));
     pOutPort->VideoConfigFrameRateType.nPortIndex = OMX_PORT_OUTPUTPORT_INDEX;

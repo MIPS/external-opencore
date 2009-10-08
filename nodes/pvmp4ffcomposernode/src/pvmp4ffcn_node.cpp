@@ -1812,7 +1812,7 @@ PVMFStatus PVMp4FFComposerNode::AddTrack(PVMp4FFComposerPort *aPort)
                     // Don't break here. Continue to set other video properties
                 case CODEC_TYPE_AVC_VIDEO:
                 case CODEC_TYPE_MPEG4_VIDEO:
-                    iMpeg4File->setTargetBitrate(trackId, config->iBitrate, config->iBitrate, 0);
+                    iMpeg4File->setTargetBitrate(trackId, config->iBitrate, config->iMaxBitrate, config->iBufferSizeDB);
                     iMpeg4File->setTimeScale(trackId, config->iTimescale);
                     iMpeg4File->setVideoParams(trackId, (float)config->iFrameRate,
                                                (uint16)config->iIFrameInterval, config->iWidth, config->iHeight);

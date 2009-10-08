@@ -81,6 +81,10 @@ class PVMP4FFCNFormatSpecificConfig
         uint32 iNumberOfChannels;
         uint32 iBitsPerSample;
         uint32 iSamplingRate;
+
+        /* new for btrt box */
+        uint32 iMaxBitrate;
+        uint32 iBufferSizeDB;
 };
 
 class PVMp4FFComposerPort
