@@ -1952,7 +1952,7 @@ int CreateTestSuiteAndRun(char *aFileName,
                           OSCL_HeapString<OsclMemAllocator> &afilenameinfo,
                           CmdLinePopulator<char> *aasciiCmdLinePopulator,
                           CmdLinePopulator<oscl_wchar> *awcharCmdLinePopulator,
-                          OSCL_HeapString<OsclMemAllocator> &axmlresultsfile)
+                          test_result *atestResult)
 {
     pvplayer_engine_test_suite *engine_tests = NULL;
     engine_tests = new pvplayer_engine_test_suite(aFileName,
@@ -1974,8 +1974,6 @@ int CreateTestSuiteAndRun(char *aFileName,
             aSplitLogFile);
     if (engine_tests)
     {
-
-        WriteInitialXmlSummary(axmlresultsfile);
         //Set the Initial timer
 
         uint32 starttick = OsclTickCount::TickCount();
@@ -1987,15 +1985,13 @@ int CreateTestSuiteAndRun(char *aFileName,
         double t2 = OsclTickCount::TicksToMsec(endtick);
         fprintf(file, "Total Execution time for file %s is : %f seconds", afilenameinfo.get_cstr(), (t2 - t1) / 1000);
 
-        // Print out the results
-        WriteFinalXmlSummary(axmlresultsfile, engine_tests->last_result());
-        text_test_interpreter interp;
-        _STRING rs = interp.interpretation(engine_tests->last_result());
-        fprintf(file, rs.c_str());
-
+        //append results
+        atestResult->add_result(engine_tests->last_result());
         const test_result the_result = engine_tests->last_result();
+
         delete engine_tests;
         engine_tests = NULL;
+
         if (aasciiCmdLinePopulator)
         {
             delete aasciiCmdLinePopulator;
@@ -2119,6 +2115,7 @@ int _local_main(FILE *filehandle, cmd_line *command_line, bool& aPrintDetailedMe
 
     OSCL_HeapString<OsclMemAllocator> xmlresultsfile;
     FindXmlResultsFile(command_line, xmlresultsfile, file);
+    WriteInitialXmlSummary(xmlresultsfile);
 
     if (true == bHelp)
         return 0;
@@ -2127,6 +2124,8 @@ int _local_main(FILE *filehandle, cmd_line *command_line, bool& aPrintDetailedMe
     fprintf(file, "  Compressed output Video(%s) Audio(%s)\n", (compV) ? "Yes" : "No", (compA) ? "Yes" : "No");
     fprintf(file, "  Log level %d; Log node %d Log Text %d Log Mem %d\n", loglevel, lognode, logtext, logmem);
 
+    test_result *testResult = OSCL_NEW(test_result, ());
+    testResult->delete_contents();
     int result = 0;
     if (!ListFound)
     {
@@ -2151,7 +2150,7 @@ int _local_main(FILE *filehandle, cmd_line *command_line, bool& aPrintDetailedMe
                                        filenameinfo,
                                        asciiCmdLinePopulator,
                                        wcharCmdLinePopulator,
-                                       xmlresultsfile);
+                                       testResult);
     }
     else
     {
@@ -2182,7 +2181,7 @@ int _local_main(FILE *filehandle, cmd_line *command_line, bool& aPrintDetailedMe
                                                filenameinfo,
                                                asciiCmdLinePopulator,
                                                wcharCmdLinePopulator,
-                                               xmlresultsfile);
+                                               testResult);
 
             //if for some reason something fails, we need to store the value
             //and send a notification
@@ -2193,6 +2192,13 @@ int _local_main(FILE *filehandle, cmd_line *command_line, bool& aPrintDetailedMe
             List.erase(List.begin());
         }
     }
+    //display results summary
+    WriteFinalXmlSummary(xmlresultsfile, *testResult);
+    text_test_interpreter interp;
+    _STRING rs = interp.interpretation(*testResult);
+    fprintf(file, rs.c_str());
+    OSCL_DELETE(testResult);
+    testResult = NULL;
     return result;
 }
 
