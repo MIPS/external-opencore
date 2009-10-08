@@ -984,10 +984,19 @@ OSCL_EXPORT_REF  void PVRTSPEngineNode::HandleSocketEvent(int32 aId, TPVSocketFx
                 OSCL_DELETE(iSrvResponse);
                 iSrvResponse = NULL;
             }
-            if (iState == PVRTSP_ENGINE_NODE_STATE_DESCRIBE_DONE)
+            RTSPOutgoingMessage* tmpOutgoingMsg = NULL;
+            if (!iOutgoingMsgQueue.empty())
+            {
+                tmpOutgoingMsg = iOutgoingMsgQueue.top();
+            }
+            if ((iState == PVRTSP_ENGINE_NODE_STATE_DESCRIBE_DONE) && (tmpOutgoingMsg))
             {//wait first SETUP response before sending the remaining SETUPs
-                bNoSendPending = false;
-                return;//handling of this socketevent is done.
+                if (tmpOutgoingMsg->method == METHOD_SETUP)
+                {
+                    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR, (0, "PVRTSPEngineNode::HandleSocketEvent() Wait for first SETUP request to complete !!!!!"));
+                    bNoSendPending = false;
+                    return;//handling of this socketevent is done.
+                }
             }
         }
     }
@@ -2249,16 +2258,24 @@ PVMFStatus PVRTSPEngineNode::SendRtspSetup(PVRTSPEngineCommand &aCmd)
                     iRet =  PVMFFailure;
                     break;
                 }
-
+                RTSPOutgoingMessage* tmpOutgoingMsg = NULL;
+                if (!iOutgoingMsgQueue.empty())
+                {
+                    tmpOutgoingMsg = iOutgoingMsgQueue.top();
+                }
                 if ((iState == PVRTSP_ENGINE_NODE_STATE_DESCRIBE_DONE)
-                        && (tmpSockEvent.iSockFxn == EPVSocketSend))
+                        && (tmpSockEvent.iSockFxn == EPVSocketSend)
+                        && (tmpOutgoingMsg))
                 {//pretend there is a send pending so it waits for the first
                     //SETUP resp to come back and then sends the rest SETUPs
-                    bNoSendPending = false;
-                    break;
+                    if (tmpOutgoingMsg->method == METHOD_SETUP)
+                    {
+                        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR, (0, "PVRTSPEngineNode::SendRtspSetup() Wait for first SETUP request to complete !!!!!"));
+                        bNoSendPending = false;
+                        break;
+                    }
                 }
             }
-
             //The trackID is the index to the SDP media info array.
             //Get the first track's index
             //int trackID = iSessionInfo.trackSelectionList->getTrackIndex(setupIndex);
