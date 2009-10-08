@@ -45,8 +45,6 @@ function menu()
         echo_stdout "Choice is to do Android.mk generation."
         ## clean the environment
         clean_env
-        ## set path up for linux OpenCore build
-        android_gcc_arm_path=/opt/environments/android/toolchain-eabi-4.2.1/bin
         export ARCHITECTURE=android
         export PROCESSOR=arm
         echo_stdout "ARCHITECTURE set to ==> $ARCHITECTURE"
