@@ -88,12 +88,18 @@
 00115         <span class="comment">//native file object.</span>
 00116         FILE* iFile;
 00117 
-00118 };
-00119 
-00120 <span class="preprocessor">#endif // OSCL_FILE_NATIVE_H_INCLUDED</span>
-00121 <span class="preprocessor"></span>
+00118         <span class="comment">//These are used for accessing individual assets that are bundled together</span>
+00119         <span class="comment">//into a single file, where each asset is treated as an independent file.</span>
+00120         <span class="keywordtype">bool</span>            iIsAsset;
+00121         <span class="keywordtype">bool</span>            iIsAssetReadOnly;
+00122         <a class="code" href="osclconfig__io_8h.html#a50">TOsclFileOffset</a> iAssetOffset;
+00123         <a class="code" href="osclconfig__io_8h.html#a50">TOsclFileOffset</a> iAssetSize;
+00124 };
+00125 
+00126 <span class="preprocessor">#endif // OSCL_FILE_NATIVE_H_INCLUDED</span>
+00127 <span class="preprocessor"></span>
 </pre></div><hr size="1"><img src="pvlogo_small.jpg"><address style="align: right;"><small>OSCL API</small>
-<address style="align: left;"><small>Posting Version: CORE_7.511.1.1 </small>
+<address style="align: left;"><small>Posting Version: CORE_7.512.1.1 </small>
 </small></address>
 </body>
 </html>

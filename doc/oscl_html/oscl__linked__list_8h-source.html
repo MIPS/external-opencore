@@ -65,292 +65,303 @@
 00094 
 00100         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> int32 <a class="code" href="classOscl__Linked__List__Base.html#b5">check_list</a>();
 00101 
-00108         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> int32 <a class="code" href="classOscl__Linked__List__Base.html#b6">add_element</a>(<a class="code" href="group__osclbase.html#a25">OsclAny</a>* new_element);
+00108         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> int32 <a class="code" href="classOscl__Linked__List__Base.html#b6">add_element</a>(<span class="keyword">const</span> <a class="code" href="group__osclbase.html#a25">OsclAny</a>* new_element);
 00109 
 00117         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> int32 <a class="code" href="classOscl__Linked__List__Base.html#b7">add_to_front</a>(<span class="keyword">const</span> <a class="code" href="group__osclbase.html#a25">OsclAny</a>* new_element);
 00118 
-00124         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> int32 <a class="code" href="classOscl__Linked__List__Base.html#b8">get_element</a>(int32 index, <a class="code" href="group__osclbase.html#a25">OsclAny</a>* element);
-00125 
-00131         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> int32 <a class="code" href="classOscl__Linked__List__Base.html#b9">remove_element</a>(<span class="keyword">const</span> <a class="code" href="group__osclbase.html#a25">OsclAny</a>* data_to_remove);
-00132 
-00139         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> int32 <a class="code" href="classOscl__Linked__List__Base.html#b10">get_index</a>(<span class="keyword">const</span> <a class="code" href="group__osclbase.html#a25">OsclAny</a>* data);
-00140 
-00146         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> int32 <a class="code" href="classOscl__Linked__List__Base.html#b9">remove_element</a>(<span class="keyword">const</span> int32 index_to_remove);
-00147 
-00153         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> int32 <a class="code" href="classOscl__Linked__List__Base.html#b12">move_to_end</a>(<span class="keyword">const</span> <a class="code" href="group__osclbase.html#a25">OsclAny</a>* data_to_move);
-00154 
-00160         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> int32 <a class="code" href="classOscl__Linked__List__Base.html#b13">move_to_front</a>(<span class="keyword">const</span> <a class="code" href="group__osclbase.html#a25">OsclAny</a>* data_to_move);
-00161 
-<a name="l00162"></a><a class="code" href="classOscl__Linked__List__Base.html#n0">00162</a>         <a class="code" href="group__osclbase.html#a25">OsclAny</a> *<a class="code" href="classOscl__Linked__List__Base.html#n0">head</a>;
-<a name="l00163"></a><a class="code" href="classOscl__Linked__List__Base.html#n1">00163</a>         <a class="code" href="group__osclbase.html#a25">OsclAny</a> *<a class="code" href="classOscl__Linked__List__Base.html#n1">tail</a>;
-<a name="l00164"></a><a class="code" href="classOscl__Linked__List__Base.html#n2">00164</a>         <a class="code" href="group__osclbase.html#a25">OsclAny</a> *<a class="code" href="classOscl__Linked__List__Base.html#n2">iterator</a>;
-<a name="l00165"></a><a class="code" href="classOscl__Linked__List__Base.html#n3">00165</a>         int32 <a class="code" href="classOscl__Linked__List__Base.html#n3">num_elements</a>;
-<a name="l00166"></a><a class="code" href="classOscl__Linked__List__Base.html#n4">00166</a>         uint32 <a class="code" href="classOscl__Linked__List__Base.html#n4">sizeof_T</a>;
-00167 
-00168     <span class="keyword">private</span>:
-00169         <a class="code" href="classOscl__Opaque__Type__Alloc__LL.html">Oscl_Opaque_Type_Alloc_LL</a>* pOpaqueType;
-00170 };
-00171 
-<a name="l00175"></a><a class="code" href="classOscl__Linked__List.html">00175</a> <span class="keyword">template</span> &lt;<span class="keyword">class</span> LLClass, <span class="keyword">class</span> Alloc&gt; <span class="keyword">class </span><a class="code" href="classOscl__Linked__List.html">Oscl_Linked_List</a>
-00176         : <span class="keyword">public</span> <a class="code" href="classOscl__Linked__List__Base.html">Oscl_Linked_List_Base</a>
-00177         , <span class="keyword">public</span> <a class="code" href="classOscl__Opaque__Type__Alloc__LL.html">Oscl_Opaque_Type_Alloc_LL</a>
-00178 {
-00179 
-00180     <span class="keyword">public</span>:
-<a name="l00184"></a><a class="code" href="classOscl__Linked__List.html#a0">00184</a>         <a class="code" href="classOscl__Linked__List.html#a0">Oscl_Linked_List</a>(): <a class="code" href="classOscl__Linked__List__Base.html">Oscl_Linked_List_Base</a>(), <a class="code" href="classOscl__Opaque__Type__Alloc__LL.html">Oscl_Opaque_Type_Alloc_LL</a>()
-00185         {
-00186             <a class="code" href="classOscl__Linked__List__Base.html#n4">sizeof_T</a> = <span class="keyword">sizeof</span>(<a class="code" href="classLinkedListElement.html">LinkedListElement&lt;LLClass&gt;</a>);
-00187             <a class="code" href="classOscl__Linked__List__Base.html#b1">Oscl_Linked_List_Base::construct</a>(<span class="keyword">this</span>);
-00188         }
-00189 
-<a name="l00193"></a><a class="code" href="classOscl__Linked__List.html#a1">00193</a>         <a class="code" href="classOscl__Linked__List.html#a1">~Oscl_Linked_List</a>()
+00126         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> int32 <a class="code" href="classOscl__Linked__List__Base.html#b8">insert_element</a>(<span class="keyword">const</span> <a class="code" href="group__osclbase.html#a25">OsclAny</a>* new_element, <span class="keywordtype">int</span> index);
+00127 
+00133         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> int32 <a class="code" href="classOscl__Linked__List__Base.html#b9">get_element</a>(int32 index, <a class="code" href="group__osclbase.html#a25">OsclAny</a>* element);
+00134 
+00140         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> int32 <a class="code" href="classOscl__Linked__List__Base.html#b10">remove_element</a>(<span class="keyword">const</span> <a class="code" href="group__osclbase.html#a25">OsclAny</a>* data_to_remove);
+00141 
+00148         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> int32 <a class="code" href="classOscl__Linked__List__Base.html#b11">get_index</a>(<span class="keyword">const</span> <a class="code" href="group__osclbase.html#a25">OsclAny</a>* data);
+00149 
+00155         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> int32 <a class="code" href="classOscl__Linked__List__Base.html#b10">remove_element</a>(<span class="keyword">const</span> int32 index_to_remove);
+00156 
+00162         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> int32 <a class="code" href="classOscl__Linked__List__Base.html#b13">move_to_end</a>(<span class="keyword">const</span> <a class="code" href="group__osclbase.html#a25">OsclAny</a>* data_to_move);
+00163 
+00169         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> int32 <a class="code" href="classOscl__Linked__List__Base.html#b14">move_to_front</a>(<span class="keyword">const</span> <a class="code" href="group__osclbase.html#a25">OsclAny</a>* data_to_move);
+00170 
+<a name="l00171"></a><a class="code" href="classOscl__Linked__List__Base.html#n0">00171</a>         <a class="code" href="group__osclbase.html#a25">OsclAny</a> *<a class="code" href="classOscl__Linked__List__Base.html#n0">head</a>;
+<a name="l00172"></a><a class="code" href="classOscl__Linked__List__Base.html#n1">00172</a>         <a class="code" href="group__osclbase.html#a25">OsclAny</a> *<a class="code" href="classOscl__Linked__List__Base.html#n1">tail</a>;
+<a name="l00173"></a><a class="code" href="classOscl__Linked__List__Base.html#n2">00173</a>         <a class="code" href="group__osclbase.html#a25">OsclAny</a> *<a class="code" href="classOscl__Linked__List__Base.html#n2">iterator</a>;
+<a name="l00174"></a><a class="code" href="classOscl__Linked__List__Base.html#n3">00174</a>         int32 <a class="code" href="classOscl__Linked__List__Base.html#n3">num_elements</a>;
+<a name="l00175"></a><a class="code" href="classOscl__Linked__List__Base.html#n4">00175</a>         uint32 <a class="code" href="classOscl__Linked__List__Base.html#n4">sizeof_T</a>;
+00176 
+00177     <span class="keyword">private</span>:
+00178         <a class="code" href="classOscl__Opaque__Type__Alloc__LL.html">Oscl_Opaque_Type_Alloc_LL</a>* pOpaqueType;
+00179 };
+00180 
+<a name="l00184"></a><a class="code" href="classOscl__Linked__List.html">00184</a> <span class="keyword">template</span> &lt;<span class="keyword">class</span> LLClass, <span class="keyword">class</span> Alloc&gt; <span class="keyword">class </span><a class="code" href="classOscl__Linked__List.html">Oscl_Linked_List</a>
+00185         : <span class="keyword">public</span> <a class="code" href="classOscl__Linked__List__Base.html">Oscl_Linked_List_Base</a>
+00186         , <span class="keyword">public</span> <a class="code" href="classOscl__Opaque__Type__Alloc__LL.html">Oscl_Opaque_Type_Alloc_LL</a>
+00187 {
+00188 
+00189     <span class="keyword">public</span>:
+<a name="l00193"></a><a class="code" href="classOscl__Linked__List.html#a0">00193</a>         <a class="code" href="classOscl__Linked__List.html#a0">Oscl_Linked_List</a>(): <a class="code" href="classOscl__Linked__List__Base.html">Oscl_Linked_List_Base</a>(), <a class="code" href="classOscl__Opaque__Type__Alloc__LL.html">Oscl_Opaque_Type_Alloc_LL</a>()
 00194         {
-00195             <a class="code" href="classOscl__Linked__List__Base.html#b2">Oscl_Linked_List_Base::destroy</a>();
-00196         }
-00197 
-<a name="l00198"></a><a class="code" href="classOscl__Linked__List.html#a2">00198</a>         int32 <a class="code" href="classOscl__Linked__List.html#a2">dequeue_element</a>(LLClass &amp; element)
-00199         {
-00200             <a class="code" href="classOscl__Linked__List.html#a9">get_element</a>(0, element);
-00201             <span class="keywordflow">return</span> <a class="code" href="classOscl__Linked__List.html#a10">remove_element</a>((int32) 0);
-00202         }
-00203         <span class="comment">// get_first() and get_next() together provide iterator function</span>
-00204 
-<a name="l00211"></a><a class="code" href="classOscl__Linked__List.html#a3">00211</a>         int32 <a class="code" href="classOscl__Linked__List.html#a3">get_first</a>(LLClass &amp; ele)
-00212         {
-00213             <span class="keywordflow">return</span> <a class="code" href="classOscl__Linked__List__Base.html#b3">Oscl_Linked_List_Base::get_first</a>(&amp;ele);
-00214         }
-00215 
-<a name="l00222"></a><a class="code" href="classOscl__Linked__List.html#a4">00222</a>         int32 <a class="code" href="classOscl__Linked__List.html#a4">get_next</a>(LLClass &amp; ele)
-00223         {
-00224             <span class="keywordflow">return</span> <a class="code" href="classOscl__Linked__List__Base.html#b4">Oscl_Linked_List_Base::get_next</a>(&amp;ele);
-00225         }
-00226 
-<a name="l00232"></a><a class="code" href="classOscl__Linked__List.html#a5">00232</a>         int32 <a class="code" href="classOscl__Linked__List.html#a5">check_list</a>()
-00233         {
-00234             <span class="keywordflow">return</span> <a class="code" href="classOscl__Linked__List__Base.html#b5">Oscl_Linked_List_Base::check_list</a>();
-00235         }
-00236 
-<a name="l00241"></a><a class="code" href="classOscl__Linked__List.html#a6">00241</a>         int32 <a class="code" href="classOscl__Linked__List.html#a6">get_num_elements</a>()
-00242         {
-00243             <span class="keywordflow">return</span> <a class="code" href="classOscl__Linked__List__Base.html#n3">num_elements</a>;
-00244         }
-00245 
-<a name="l00252"></a><a class="code" href="classOscl__Linked__List.html#a7">00252</a>         int32 <a class="code" href="classOscl__Linked__List.html#a7">add_element</a>(LLClass&amp; new_element)
-00253         {
-00254             <span class="keywordflow">return</span> <a class="code" href="classOscl__Linked__List__Base.html#b6">Oscl_Linked_List_Base::add_element</a>(&amp;new_element);
-00255         }
-00256 
-<a name="l00264"></a><a class="code" href="classOscl__Linked__List.html#a8">00264</a>         int32 <a class="code" href="classOscl__Linked__List.html#a8">add_to_front</a>(<span class="keyword">const</span> LLClass&amp; new_element)
-00265         {
-00266             <span class="keywordflow">return</span> <a class="code" href="classOscl__Linked__List__Base.html#b7">Oscl_Linked_List_Base::add_to_front</a>(&amp;new_element);
-00267         }
-00268 
-<a name="l00274"></a><a class="code" href="classOscl__Linked__List.html#a9">00274</a>         int32 <a class="code" href="classOscl__Linked__List.html#a9">get_element</a>(int32 index, LLClass&amp; element)
-00275         {
-00276             <span class="keywordflow">return</span> <a class="code" href="classOscl__Linked__List__Base.html#b8">Oscl_Linked_List_Base::get_element</a>(index, &amp;element);
-00277         }
-00278 
-<a name="l00284"></a><a class="code" href="classOscl__Linked__List.html#a10">00284</a>         int32 <a class="code" href="classOscl__Linked__List.html#a10">remove_element</a>(<span class="keyword">const</span> LLClass&amp; data_to_remove)
-00285         {
-00286             <span class="keywordflow">return</span> <a class="code" href="classOscl__Linked__List__Base.html#b9">Oscl_Linked_List_Base::remove_element</a>(&amp;data_to_remove);
-00287         }
-00288 
-<a name="l00295"></a><a class="code" href="classOscl__Linked__List.html#a11">00295</a>         int32 <a class="code" href="classOscl__Linked__List.html#a11">get_index</a>(<span class="keyword">const</span> LLClass&amp; data)
-00296         {
-00297             <span class="keywordflow">return</span> <a class="code" href="classOscl__Linked__List__Base.html#b10">Oscl_Linked_List_Base::get_index</a>(&amp;data);
-00298         }
-00299 
-<a name="l00305"></a><a class="code" href="classOscl__Linked__List.html#a12">00305</a>         int32 <a class="code" href="classOscl__Linked__List.html#a10">remove_element</a>(<span class="keyword">const</span> int32 index_to_remove)
-00306         {
-00307             <span class="keywordflow">return</span> <a class="code" href="classOscl__Linked__List__Base.html#b9">Oscl_Linked_List_Base::remove_element</a>(index_to_remove);
-00308         }
-00309 
-<a name="l00315"></a><a class="code" href="classOscl__Linked__List.html#a13">00315</a>         int32 <a class="code" href="classOscl__Linked__List.html#a13">move_to_end</a>(<span class="keyword">const</span> LLClass&amp; data_to_move)
-00316         {
-00317             <span class="keywordflow">return</span> <a class="code" href="classOscl__Linked__List__Base.html#b12">Oscl_Linked_List_Base::move_to_end</a>(&amp;data_to_move);
-00318         }
-00319 
-<a name="l00325"></a><a class="code" href="classOscl__Linked__List.html#a14">00325</a>         int32 <a class="code" href="classOscl__Linked__List.html#a14">move_to_front</a>(<span class="keyword">const</span> LLClass&amp; data_to_move)
-00326         {
-00327             <span class="keywordflow">return</span> <a class="code" href="classOscl__Linked__List__Base.html#b13">Oscl_Linked_List_Base::move_to_front</a>(&amp;data_to_move);
-00328         }
-00329 
-00330 
-00331     <span class="keyword">private</span>:
-00332 
-00333         <span class="comment">//from Oscl_Opaque_Type_Alloc_LL</span>
-00334         <span class="keywordtype">void</span> <a class="code" href="classOscl__Linked__List__Base.html#b1">construct</a>(<a class="code" href="group__osclbase.html#a25">OsclAny</a>* p, <span class="keyword">const</span> <a class="code" href="group__osclbase.html#a25">OsclAny</a>* init_val)
-00335         {
-00336             <a class="code" href="group__osclbase.html#a78">OSCL_ASSERT</a>(init_val);
-00337             <a class="code" href="group__osclbase.html#a78">OSCL_ASSERT</a>(p);
-00338             <span class="keyword">new</span>(p) <a class="code" href="classLinkedListElement.html">LinkedListElement&lt;LLClass&gt;</a>(*(LLClass*)init_val);
-00339         }
-00340 
-00341         <span class="comment">//this typedef is needed to avoid compile errors ADS 1.2 compiler.</span>
-00342         <span class="keyword">typedef</span> <a class="code" href="classLinkedListElement.html">LinkedListElement&lt;LLClass&gt;</a>* p_elem_type;
-00343 
-00344         <span class="comment">//from Oscl_Opaque_Type_Alloc_LL</span>
-00345         <span class="keywordtype">void</span> <a class="code" href="classOscl__Linked__List__Base.html#b2">destroy</a>(<a class="code" href="group__osclbase.html#a25">OsclAny</a>* p)
-00346         {
-00347             <a class="code" href="group__osclbase.html#a78">OSCL_ASSERT</a>(p);
-00348             ((p_elem_type)p)-&gt;~LinkedListElement&lt;LLClass&gt;();
-00349         }
-00350 
-00351         <span class="comment">//from Oscl_Opaque_Type_Alloc_LL</span>
-00352         <a class="code" href="group__osclbase.html#a25">OsclAny</a>* <a class="code" href="classOscl__Opaque__Type__Alloc__LL.html#a2">allocate</a>(<span class="keyword">const</span> uint32 size)
-00353         {
-00354             <span class="keywordflow">return</span> alloc.ALLOCATE(size);
-00355         }
-00356 
-00357         <span class="comment">//from Oscl_Opaque_Type_Alloc_LL</span>
-00358         <span class="keywordtype">void</span> <a class="code" href="classOscl__Opaque__Type__Alloc__LL.html#a3">deallocate</a>(<a class="code" href="group__osclbase.html#a25">OsclAny</a>* p)
-00359         {
-00360             alloc.deallocate(p);
-00361         }
-00362 
-00363         <span class="comment">//from Oscl_Opaque_Type_Alloc_LL</span>
-00364         <a class="code" href="group__osclbase.html#a25">OsclAny</a>* <a class="code" href="classOscl__Linked__List.html#a4">get_next</a>(<span class="keyword">const</span> <a class="code" href="group__osclbase.html#a25">OsclAny</a>* elem)<span class="keyword">const</span>
-00365         {
-00366             <span class="keywordflow">return</span> ((<a class="code" href="classLinkedListElement.html">LinkedListElement&lt;LLClass&gt;</a>*)elem)-&gt;next;
-00367         }
+00195             <a class="code" href="classOscl__Linked__List__Base.html#n4">sizeof_T</a> = <span class="keyword">sizeof</span>(<a class="code" href="classLinkedListElement.html">LinkedListElement&lt;LLClass&gt;</a>);
+00196             <a class="code" href="classOscl__Linked__List__Base.html#b1">Oscl_Linked_List_Base::construct</a>(<span class="keyword">this</span>);
+00197         }
+00198 
+<a name="l00202"></a><a class="code" href="classOscl__Linked__List.html#a1">00202</a>         <a class="code" href="classOscl__Linked__List.html#a1">~Oscl_Linked_List</a>()
+00203         {
+00204             <a class="code" href="classOscl__Linked__List__Base.html#b2">Oscl_Linked_List_Base::destroy</a>();
+00205         }
+00206 
+<a name="l00207"></a><a class="code" href="classOscl__Linked__List.html#a2">00207</a>         <span class="keywordtype">void</span> <a class="code" href="classOscl__Linked__List.html#a2">clear</a>()
+00208         {
+00209             <a class="code" href="classOscl__Linked__List__Base.html#b2">Oscl_Linked_List_Base::destroy</a>();
+00210         }
+00211 
+<a name="l00212"></a><a class="code" href="classOscl__Linked__List.html#a3">00212</a>         int32 <a class="code" href="classOscl__Linked__List.html#a3">dequeue_element</a>(LLClass &amp; element)
+00213         {
+00214             <a class="code" href="classOscl__Linked__List.html#a11">get_element</a>(0, element);
+00215             <span class="keywordflow">return</span> <a class="code" href="classOscl__Linked__List.html#a12">remove_element</a>((int32) 0);
+00216         }
+00217         <span class="comment">// get_first() and get_next() together provide iterator function</span>
+00218 
+<a name="l00225"></a><a class="code" href="classOscl__Linked__List.html#a4">00225</a>         int32 <a class="code" href="classOscl__Linked__List.html#a4">get_first</a>(LLClass &amp; ele)
+00226         {
+00227             <span class="keywordflow">return</span> <a class="code" href="classOscl__Linked__List__Base.html#b3">Oscl_Linked_List_Base::get_first</a>(&amp;ele);
+00228         }
+00229 
+<a name="l00236"></a><a class="code" href="classOscl__Linked__List.html#a5">00236</a>         int32 <a class="code" href="classOscl__Linked__List.html#a5">get_next</a>(LLClass &amp; ele)
+00237         {
+00238             <span class="keywordflow">return</span> <a class="code" href="classOscl__Linked__List__Base.html#b4">Oscl_Linked_List_Base::get_next</a>(&amp;ele);
+00239         }
+00240 
+<a name="l00246"></a><a class="code" href="classOscl__Linked__List.html#a6">00246</a>         int32 <a class="code" href="classOscl__Linked__List.html#a6">check_list</a>()
+00247         {
+00248             <span class="keywordflow">return</span> <a class="code" href="classOscl__Linked__List__Base.html#b5">Oscl_Linked_List_Base::check_list</a>();
+00249         }
+00250 
+<a name="l00255"></a><a class="code" href="classOscl__Linked__List.html#a7">00255</a>         int32 <a class="code" href="classOscl__Linked__List.html#a7">get_num_elements</a>()
+00256         {
+00257             <span class="keywordflow">return</span> <a class="code" href="classOscl__Linked__List__Base.html#n3">num_elements</a>;
+00258         }
+00259 
+<a name="l00266"></a><a class="code" href="classOscl__Linked__List.html#a8">00266</a>         int32 <a class="code" href="classOscl__Linked__List.html#a8">add_element</a>(LLClass&amp; new_element)
+00267         {
+00268             <span class="keywordflow">return</span> <a class="code" href="classOscl__Linked__List__Base.html#b6">Oscl_Linked_List_Base::add_element</a>(&amp;new_element);
+00269         }
+00270 
+<a name="l00278"></a><a class="code" href="classOscl__Linked__List.html#a9">00278</a>         int32 <a class="code" href="classOscl__Linked__List.html#a9">add_to_front</a>(<span class="keyword">const</span> LLClass&amp; new_element)
+00279         {
+00280             <span class="keywordflow">return</span> <a class="code" href="classOscl__Linked__List__Base.html#b7">Oscl_Linked_List_Base::add_to_front</a>(&amp;new_element);
+00281         }
+<a name="l00289"></a><a class="code" href="classOscl__Linked__List.html#a10">00289</a>         int32 <a class="code" href="classOscl__Linked__List.html#a10">insert_element</a>(<span class="keyword">const</span> LLClass&amp; new_element, <span class="keywordtype">int</span> index)
+00290         {
+00291             <span class="keywordflow">return</span> <a class="code" href="classOscl__Linked__List__Base.html#b8">Oscl_Linked_List_Base::insert_element</a>(&amp;new_element, index);
+00292         }
+00293 
+<a name="l00299"></a><a class="code" href="classOscl__Linked__List.html#a11">00299</a>         int32 <a class="code" href="classOscl__Linked__List.html#a11">get_element</a>(int32 index, LLClass&amp; element)
+00300         {
+00301             <span class="keywordflow">return</span> <a class="code" href="classOscl__Linked__List__Base.html#b9">Oscl_Linked_List_Base::get_element</a>(index, &amp;element);
+00302         }
+00303 
+<a name="l00309"></a><a class="code" href="classOscl__Linked__List.html#a12">00309</a>         int32 <a class="code" href="classOscl__Linked__List.html#a12">remove_element</a>(<span class="keyword">const</span> LLClass&amp; data_to_remove)
+00310         {
+00311             <span class="keywordflow">return</span> <a class="code" href="classOscl__Linked__List__Base.html#b10">Oscl_Linked_List_Base::remove_element</a>(&amp;data_to_remove);
+00312         }
+00313 
+<a name="l00320"></a><a class="code" href="classOscl__Linked__List.html#a13">00320</a>         int32 <a class="code" href="classOscl__Linked__List.html#a13">get_index</a>(<span class="keyword">const</span> LLClass&amp; data)
+00321         {
+00322             <span class="keywordflow">return</span> <a class="code" href="classOscl__Linked__List__Base.html#b11">Oscl_Linked_List_Base::get_index</a>(&amp;data);
+00323         }
+00324 
+<a name="l00330"></a><a class="code" href="classOscl__Linked__List.html#a14">00330</a>         int32 <a class="code" href="classOscl__Linked__List.html#a12">remove_element</a>(<span class="keyword">const</span> int32 index_to_remove)
+00331         {
+00332             <span class="keywordflow">return</span> <a class="code" href="classOscl__Linked__List__Base.html#b10">Oscl_Linked_List_Base::remove_element</a>(index_to_remove);
+00333         }
+00334 
+<a name="l00340"></a><a class="code" href="classOscl__Linked__List.html#a15">00340</a>         int32 <a class="code" href="classOscl__Linked__List.html#a15">move_to_end</a>(<span class="keyword">const</span> LLClass&amp; data_to_move)
+00341         {
+00342             <span class="keywordflow">return</span> <a class="code" href="classOscl__Linked__List__Base.html#b13">Oscl_Linked_List_Base::move_to_end</a>(&amp;data_to_move);
+00343         }
+00344 
+<a name="l00350"></a><a class="code" href="classOscl__Linked__List.html#a16">00350</a>         int32 <a class="code" href="classOscl__Linked__List.html#a16">move_to_front</a>(<span class="keyword">const</span> LLClass&amp; data_to_move)
+00351         {
+00352             <span class="keywordflow">return</span> <a class="code" href="classOscl__Linked__List__Base.html#b14">Oscl_Linked_List_Base::move_to_front</a>(&amp;data_to_move);
+00353         }
+00354 
+00355 
+00356     <span class="keyword">private</span>:
+00357 
+00358         <span class="comment">//from Oscl_Opaque_Type_Alloc_LL</span>
+00359         <span class="keywordtype">void</span> <a class="code" href="classOscl__Linked__List__Base.html#b1">construct</a>(<a class="code" href="group__osclbase.html#a25">OsclAny</a>* p, <span class="keyword">const</span> <a class="code" href="group__osclbase.html#a25">OsclAny</a>* init_val)
+00360         {
+00361             <a class="code" href="group__osclbase.html#a78">OSCL_ASSERT</a>(init_val);
+00362             <a class="code" href="group__osclbase.html#a78">OSCL_ASSERT</a>(p);
+00363             <span class="keyword">new</span>(p) <a class="code" href="classLinkedListElement.html">LinkedListElement&lt;LLClass&gt;</a>(*(LLClass*)init_val);
+00364         }
+00365 
+00366         <span class="comment">//this typedef is needed to avoid compile errors ADS 1.2 compiler.</span>
+00367         <span class="keyword">typedef</span> <a class="code" href="classLinkedListElement.html">LinkedListElement&lt;LLClass&gt;</a>* p_elem_type;
 00368 
 00369         <span class="comment">//from Oscl_Opaque_Type_Alloc_LL</span>
-00370         <span class="keywordtype">void</span> <a class="code" href="classOscl__Opaque__Type__Alloc__LL.html#a5">set_next</a>(<a class="code" href="group__osclbase.html#a25">OsclAny</a>* elem, <span class="keyword">const</span> <a class="code" href="group__osclbase.html#a25">OsclAny</a>* nextelem)
+00370         <span class="keywordtype">void</span> <a class="code" href="classOscl__Linked__List__Base.html#b2">destroy</a>(<a class="code" href="group__osclbase.html#a25">OsclAny</a>* p)
 00371         {
-00372             <a class="code" href="group__osclbase.html#a78">OSCL_ASSERT</a>(elem);
-00373             ((<a class="code" href="classLinkedListElement.html">LinkedListElement&lt;LLClass&gt;</a>*)elem)-&gt;next = (<a class="code" href="classLinkedListElement.html">LinkedListElement&lt;LLClass&gt;</a>*)nextelem;
+00372             <a class="code" href="group__osclbase.html#a78">OSCL_ASSERT</a>(p);
+00373             ((p_elem_type)p)-&gt;~LinkedListElement&lt;LLClass&gt;();
 00374         }
 00375 
 00376         <span class="comment">//from Oscl_Opaque_Type_Alloc_LL</span>
-00377         <span class="keywordtype">void</span> <a class="code" href="classOscl__Opaque__Type__Alloc__LL.html#a6">get_data</a>(<a class="code" href="group__osclbase.html#a25">OsclAny</a>*elem, <a class="code" href="group__osclbase.html#a25">OsclAny</a>*data_val)
+00377         <a class="code" href="group__osclbase.html#a25">OsclAny</a>* <a class="code" href="classOscl__Opaque__Type__Alloc__LL.html#a2">allocate</a>(<span class="keyword">const</span> uint32 size)
 00378         {
-00379             <a class="code" href="group__osclbase.html#a78">OSCL_ASSERT</a>(elem);
-00380             <a class="code" href="group__osclbase.html#a78">OSCL_ASSERT</a>(data_val);
-00381             *((LLClass*)data_val) = ((<a class="code" href="classLinkedListElement.html">LinkedListElement&lt;LLClass&gt;</a>*)elem)-&gt;data ;
-00382         }
-00383 
-00384         <span class="comment">//from Oscl_Opaque_Type_Alloc_LL</span>
-00385         <span class="keywordtype">bool</span> <a class="code" href="classOscl__Opaque__Type__Alloc__LL.html#a7">compare_data</a>(<span class="keyword">const</span> <a class="code" href="group__osclbase.html#a25">OsclAny</a>*elem, <span class="keyword">const</span> <a class="code" href="group__osclbase.html#a25">OsclAny</a>*data_val)<span class="keyword">const</span>
-00386         {
-00387             <a class="code" href="group__osclbase.html#a78">OSCL_ASSERT</a>(elem);
-00388             <a class="code" href="group__osclbase.html#a78">OSCL_ASSERT</a>(data_val);
-00389             <span class="keywordflow">return</span> ((<a class="code" href="classLinkedListElement.html">LinkedListElement&lt;LLClass&gt;</a>*)elem)-&gt;data == *((LLClass*)data_val);
-00390         }
-00391 
-00392         Alloc alloc;
+00379             <span class="keywordflow">return</span> alloc.ALLOCATE(size);
+00380         }
+00381 
+00382         <span class="comment">//from Oscl_Opaque_Type_Alloc_LL</span>
+00383         <span class="keywordtype">void</span> <a class="code" href="classOscl__Opaque__Type__Alloc__LL.html#a3">deallocate</a>(<a class="code" href="group__osclbase.html#a25">OsclAny</a>* p)
+00384         {
+00385             alloc.deallocate(p);
+00386         }
+00387 
+00388         <span class="comment">//from Oscl_Opaque_Type_Alloc_LL</span>
+00389         <a class="code" href="group__osclbase.html#a25">OsclAny</a>* <a class="code" href="classOscl__Linked__List.html#a5">get_next</a>(<span class="keyword">const</span> <a class="code" href="group__osclbase.html#a25">OsclAny</a>* elem)<span class="keyword">const</span>
+00390         {
+00391             <span class="keywordflow">return</span> ((<a class="code" href="classLinkedListElement.html">LinkedListElement&lt;LLClass&gt;</a>*)elem)-&gt;next;
+00392         }
 00393 
-00394 };
-00395 
-<a name="l00401"></a><a class="code" href="classOscl__MTLinked__List.html">00401</a> <span class="keyword">template</span> &lt;<span class="keyword">class</span> LLClass, <span class="keyword">class</span> Alloc, <span class="keyword">class</span> TheLock&gt; <span class="keyword">class </span><a class="code" href="classOscl__MTLinked__List.html">Oscl_MTLinked_List</a>
-00402 {
-00403 
-00404     <span class="keyword">public</span>:
-<a name="l00408"></a><a class="code" href="classOscl__MTLinked__List.html#a0">00408</a>         <a class="code" href="classOscl__MTLinked__List.html#a0">Oscl_MTLinked_List</a>() {};
-00409 
-<a name="l00413"></a><a class="code" href="classOscl__MTLinked__List.html#a1">00413</a>         <a class="code" href="classOscl__MTLinked__List.html#a1">~Oscl_MTLinked_List</a>() {};
-00414 
-<a name="l00415"></a><a class="code" href="classOscl__MTLinked__List.html#a2">00415</a>         int32 <a class="code" href="classOscl__MTLinked__List.html#a2">dequeue_element</a>(LLClass &amp; element)
-00416         {
-00417             int32 status;
-00418             TheLock Mylock;
-00419             Mylock.Lock();
-00420             status = <a class="code" href="classOscl__MTLinked__List.html#n0">the_list</a>.dequeue_element(element);
-00421             Mylock.Unlock();
-00422             <span class="keywordflow">return</span> status;
-00423         }
-00424 
-<a name="l00432"></a><a class="code" href="classOscl__MTLinked__List.html#a3">00432</a>         int32 <a class="code" href="classOscl__MTLinked__List.html#a3">add_element</a>(LLClass&amp; new_element)
-00433         {
-00434             int32 status;
-00435             TheLock Mylock;
-00436             Mylock.Lock();
-00437             status = <a class="code" href="classOscl__MTLinked__List.html#n0">the_list</a>.add_element(new_element);
-00438             Mylock.Unlock();
-00439             <span class="keywordflow">return</span> status;
-00440         }
-00441 
-<a name="l00449"></a><a class="code" href="classOscl__MTLinked__List.html#a4">00449</a>         int32 <a class="code" href="classOscl__MTLinked__List.html#a4">add_to_front</a>(LLClass&amp; new_element)
-00450         {
-00451             int32 status;
-00452             TheLock Mylock;
-00453             Mylock.Lock();
-00454             status = <a class="code" href="classOscl__MTLinked__List.html#n0">the_list</a>.add_to_front(new_element);
-00455             Mylock.Unlock();
-00456             <span class="keywordflow">return</span> status;
-00457         }
-00458 
-<a name="l00465"></a><a class="code" href="classOscl__MTLinked__List.html#a5">00465</a>         uint32 <a class="code" href="classOscl__MTLinked__List.html#a5">get_element</a>(int32 index, LLClass&amp; element)
-00466         {
-00467 
-00468             int32 status;
-00469             TheLock Mylock;
-00470             Mylock.Lock();
-00471             status = <a class="code" href="classOscl__MTLinked__List.html#n0">the_list</a>.get_element(index, element);
-00472             Mylock.Unlock();
-00473             <span class="keywordflow">return</span> status;
-00474         }
-00475 
-<a name="l00481"></a><a class="code" href="classOscl__MTLinked__List.html#a6">00481</a>         int32 <a class="code" href="classOscl__MTLinked__List.html#a6">remove_element</a>(<span class="keyword">const</span> LLClass&amp; data_to_remove)
-00482         {
-00483             int32 status;
-00484             TheLock Mylock;
-00485             Mylock.Lock();
-00486             status = <a class="code" href="classOscl__MTLinked__List.html#n0">the_list</a>.remove_element(data_to_remove);
-00487             Mylock.Unlock();
-00488             <span class="keywordflow">return</span> status;
-00489         }
-00490 
-<a name="l00497"></a><a class="code" href="classOscl__MTLinked__List.html#a7">00497</a>         int32 <a class="code" href="classOscl__MTLinked__List.html#a7">get_index</a>(<span class="keyword">const</span> LLClass&amp; data)
-00498         {
-00499             int32 status;
-00500             TheLock Mylock;
-00501             Mylock.Lock();
-00502             status = <a class="code" href="classOscl__MTLinked__List.html#n0">the_list</a>.get_index(data);
-00503             Mylock.Unlock();
-00504             <span class="keywordflow">return</span> status;
-00505         }
-00506 
-<a name="l00512"></a><a class="code" href="classOscl__MTLinked__List.html#a8">00512</a>         int32 <a class="code" href="classOscl__MTLinked__List.html#a6">remove_element</a>(<span class="keyword">const</span> int32 index_to_remove)
-00513         {
-00514             int32 status;
-00515             TheLock Mylock;
-00516             Mylock.Lock();
-00517             status = <a class="code" href="classOscl__MTLinked__List.html#n0">the_list</a>.remove_element(index_to_remove);
-00518             Mylock.Unlock();
-00519             <span class="keywordflow">return</span> status;
-00520         }
-00521 
-<a name="l00527"></a><a class="code" href="classOscl__MTLinked__List.html#a9">00527</a>         int32 <a class="code" href="classOscl__MTLinked__List.html#a9">move_to_end</a>(<span class="keyword">const</span> LLClass&amp; data_to_move)
-00528         {
-00529             int32 status;
-00530             TheLock Mylock;
-00531             Mylock.Lock();
-00532             status = <a class="code" href="classOscl__MTLinked__List.html#n0">the_list</a>.move_to_end(data_to_move);
-00533             Mylock.Unlock();
-00534             <span class="keywordflow">return</span> status;
-00535         }
-00536 
-<a name="l00542"></a><a class="code" href="classOscl__MTLinked__List.html#a10">00542</a>         int32 <a class="code" href="classOscl__MTLinked__List.html#a10">move_to_front</a>(<span class="keyword">const</span> LLClass&amp; data_to_move)
-00543         {
-00544             int32 status;
-00545             TheLock Mylock;
-00546             Mylock.Lock();
-00547             status = <a class="code" href="classOscl__MTLinked__List.html#n0">the_list</a>.move_to_front(data_to_move);
-00548             Mylock.Unlock();
-00549             <span class="keywordflow">return</span> status;
-00550         }
-00551 
-00552     <span class="keyword">protected</span>:
-<a name="l00553"></a><a class="code" href="classOscl__MTLinked__List.html#n0">00553</a>         <a class="code" href="classOscl__Linked__List.html">Oscl_Linked_List&lt;LLClass, Alloc&gt;</a> <a class="code" href="classOscl__MTLinked__List.html#n0">the_list</a>;
-00554 <span class="comment">//    PVMutex mutex;</span>
-00555 
-00556 };
-00557 
-00558 
-00562 <span class="preprocessor">#endif  // __LINKED_LIST_H</span>
-00563 <span class="preprocessor"></span>
+00394         <span class="comment">//from Oscl_Opaque_Type_Alloc_LL</span>
+00395         <span class="keywordtype">void</span> <a class="code" href="classOscl__Opaque__Type__Alloc__LL.html#a5">set_next</a>(<a class="code" href="group__osclbase.html#a25">OsclAny</a>* elem, <span class="keyword">const</span> <a class="code" href="group__osclbase.html#a25">OsclAny</a>* nextelem)
+00396         {
+00397             <a class="code" href="group__osclbase.html#a78">OSCL_ASSERT</a>(elem);
+00398             ((<a class="code" href="classLinkedListElement.html">LinkedListElement&lt;LLClass&gt;</a>*)elem)-&gt;next = (<a class="code" href="classLinkedListElement.html">LinkedListElement&lt;LLClass&gt;</a>*)nextelem;
+00399         }
+00400 
+00401         <span class="comment">//from Oscl_Opaque_Type_Alloc_LL</span>
+00402         <span class="keywordtype">void</span> <a class="code" href="classOscl__Opaque__Type__Alloc__LL.html#a6">get_data</a>(<a class="code" href="group__osclbase.html#a25">OsclAny</a>*elem, <a class="code" href="group__osclbase.html#a25">OsclAny</a>*data_val)
+00403         {
+00404             <a class="code" href="group__osclbase.html#a78">OSCL_ASSERT</a>(elem);
+00405             <a class="code" href="group__osclbase.html#a78">OSCL_ASSERT</a>(data_val);
+00406             *((LLClass*)data_val) = ((<a class="code" href="classLinkedListElement.html">LinkedListElement&lt;LLClass&gt;</a>*)elem)-&gt;data ;
+00407         }
+00408 
+00409         <span class="comment">//from Oscl_Opaque_Type_Alloc_LL</span>
+00410         <span class="keywordtype">bool</span> <a class="code" href="classOscl__Opaque__Type__Alloc__LL.html#a7">compare_data</a>(<span class="keyword">const</span> <a class="code" href="group__osclbase.html#a25">OsclAny</a>*elem, <span class="keyword">const</span> <a class="code" href="group__osclbase.html#a25">OsclAny</a>*data_val)<span class="keyword">const</span>
+00411         {
+00412             <a class="code" href="group__osclbase.html#a78">OSCL_ASSERT</a>(elem);
+00413             <a class="code" href="group__osclbase.html#a78">OSCL_ASSERT</a>(data_val);
+00414             <span class="keywordflow">return</span> ((<a class="code" href="classLinkedListElement.html">LinkedListElement&lt;LLClass&gt;</a>*)elem)-&gt;data == *((LLClass*)data_val);
+00415         }
+00416 
+00417         Alloc alloc;
+00418 
+00419 };
+00420 
+<a name="l00426"></a><a class="code" href="classOscl__MTLinked__List.html">00426</a> <span class="keyword">template</span> &lt;<span class="keyword">class</span> LLClass, <span class="keyword">class</span> Alloc, <span class="keyword">class</span> TheLock&gt; <span class="keyword">class </span><a class="code" href="classOscl__MTLinked__List.html">Oscl_MTLinked_List</a>
+00427 {
+00428 
+00429     <span class="keyword">public</span>:
+<a name="l00433"></a><a class="code" href="classOscl__MTLinked__List.html#a0">00433</a>         <a class="code" href="classOscl__MTLinked__List.html#a0">Oscl_MTLinked_List</a>() {};
+00434 
+<a name="l00438"></a><a class="code" href="classOscl__MTLinked__List.html#a1">00438</a>         <a class="code" href="classOscl__MTLinked__List.html#a1">~Oscl_MTLinked_List</a>() {};
+00439 
+<a name="l00440"></a><a class="code" href="classOscl__MTLinked__List.html#a2">00440</a>         int32 <a class="code" href="classOscl__MTLinked__List.html#a2">dequeue_element</a>(LLClass &amp; element)
+00441         {
+00442             int32 status;
+00443             TheLock Mylock;
+00444             Mylock.Lock();
+00445             status = <a class="code" href="classOscl__MTLinked__List.html#n0">the_list</a>.dequeue_element(element);
+00446             Mylock.Unlock();
+00447             <span class="keywordflow">return</span> status;
+00448         }
+00449 
+<a name="l00457"></a><a class="code" href="classOscl__MTLinked__List.html#a3">00457</a>         int32 <a class="code" href="classOscl__MTLinked__List.html#a3">add_element</a>(LLClass&amp; new_element)
+00458         {
+00459             int32 status;
+00460             TheLock Mylock;
+00461             Mylock.Lock();
+00462             status = <a class="code" href="classOscl__MTLinked__List.html#n0">the_list</a>.add_element(new_element);
+00463             Mylock.Unlock();
+00464             <span class="keywordflow">return</span> status;
+00465         }
+00466 
+<a name="l00474"></a><a class="code" href="classOscl__MTLinked__List.html#a4">00474</a>         int32 <a class="code" href="classOscl__MTLinked__List.html#a4">add_to_front</a>(LLClass&amp; new_element)
+00475         {
+00476             int32 status;
+00477             TheLock Mylock;
+00478             Mylock.Lock();
+00479             status = <a class="code" href="classOscl__MTLinked__List.html#n0">the_list</a>.add_to_front(new_element);
+00480             Mylock.Unlock();
+00481             <span class="keywordflow">return</span> status;
+00482         }
+00483 
+<a name="l00490"></a><a class="code" href="classOscl__MTLinked__List.html#a5">00490</a>         uint32 <a class="code" href="classOscl__MTLinked__List.html#a5">get_element</a>(int32 index, LLClass&amp; element)
+00491         {
+00492 
+00493             int32 status;
+00494             TheLock Mylock;
+00495             Mylock.Lock();
+00496             status = <a class="code" href="classOscl__MTLinked__List.html#n0">the_list</a>.get_element(index, element);
+00497             Mylock.Unlock();
+00498             <span class="keywordflow">return</span> status;
+00499         }
+00500 
+<a name="l00506"></a><a class="code" href="classOscl__MTLinked__List.html#a6">00506</a>         int32 <a class="code" href="classOscl__MTLinked__List.html#a6">remove_element</a>(<span class="keyword">const</span> LLClass&amp; data_to_remove)
+00507         {
+00508             int32 status;
+00509             TheLock Mylock;
+00510             Mylock.Lock();
+00511             status = <a class="code" href="classOscl__MTLinked__List.html#n0">the_list</a>.remove_element(data_to_remove);
+00512             Mylock.Unlock();
+00513             <span class="keywordflow">return</span> status;
+00514         }
+00515 
+<a name="l00522"></a><a class="code" href="classOscl__MTLinked__List.html#a7">00522</a>         int32 <a class="code" href="classOscl__MTLinked__List.html#a7">get_index</a>(<span class="keyword">const</span> LLClass&amp; data)
+00523         {
+00524             int32 status;
+00525             TheLock Mylock;
+00526             Mylock.Lock();
+00527             status = <a class="code" href="classOscl__MTLinked__List.html#n0">the_list</a>.get_index(data);
+00528             Mylock.Unlock();
+00529             <span class="keywordflow">return</span> status;
+00530         }
+00531 
+<a name="l00537"></a><a class="code" href="classOscl__MTLinked__List.html#a8">00537</a>         int32 <a class="code" href="classOscl__MTLinked__List.html#a6">remove_element</a>(<span class="keyword">const</span> int32 index_to_remove)
+00538         {
+00539             int32 status;
+00540             TheLock Mylock;
+00541             Mylock.Lock();
+00542             status = <a class="code" href="classOscl__MTLinked__List.html#n0">the_list</a>.remove_element(index_to_remove);
+00543             Mylock.Unlock();
+00544             <span class="keywordflow">return</span> status;
+00545         }
+00546 
+<a name="l00552"></a><a class="code" href="classOscl__MTLinked__List.html#a9">00552</a>         int32 <a class="code" href="classOscl__MTLinked__List.html#a9">move_to_end</a>(<span class="keyword">const</span> LLClass&amp; data_to_move)
+00553         {
+00554             int32 status;
+00555             TheLock Mylock;
+00556             Mylock.Lock();
+00557             status = <a class="code" href="classOscl__MTLinked__List.html#n0">the_list</a>.move_to_end(data_to_move);
+00558             Mylock.Unlock();
+00559             <span class="keywordflow">return</span> status;
+00560         }
+00561 
+<a name="l00567"></a><a class="code" href="classOscl__MTLinked__List.html#a10">00567</a>         int32 <a class="code" href="classOscl__MTLinked__List.html#a10">move_to_front</a>(<span class="keyword">const</span> LLClass&amp; data_to_move)
+00568         {
+00569             int32 status;
+00570             TheLock Mylock;
+00571             Mylock.Lock();
+00572             status = <a class="code" href="classOscl__MTLinked__List.html#n0">the_list</a>.move_to_front(data_to_move);
+00573             Mylock.Unlock();
+00574             <span class="keywordflow">return</span> status;
+00575         }
+00576 
+00577     <span class="keyword">protected</span>:
+<a name="l00578"></a><a class="code" href="classOscl__MTLinked__List.html#n0">00578</a>         <a class="code" href="classOscl__Linked__List.html">Oscl_Linked_List&lt;LLClass, Alloc&gt;</a> <a class="code" href="classOscl__MTLinked__List.html#n0">the_list</a>;
+00579 <span class="comment">//    PVMutex mutex;</span>
+00580 
+00581 };
+00582 
+00583 
+00587 <span class="preprocessor">#endif  // __LINKED_LIST_H</span>
+00588 <span class="preprocessor"></span>
 </pre></div><hr size="1"><img src="pvlogo_small.jpg"><address style="align: right;"><small>OSCL API</small>
-<address style="align: left;"><small>Posting Version: CORE_7.511.1.1 </small>
+<address style="align: left;"><small>Posting Version: CORE_7.512.1.1 </small>
 </small></address>
 </body>
 </html>
