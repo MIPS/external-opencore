@@ -138,12 +138,12 @@ OSCL_EXPORT_REF int16 pv_video_config_parser(pvVideoConfigParserInputs *aInputs,
         int16 retval;
         retval = iGetAVCConfigInfo(aInputs->inPtr,
                                    aInputs->inBytes,
-                                   (int*) & width,
-                                   (int*) & height,
-                                   (int*) & display_width,
-                                   (int*) & display_height,
-                                   (int*) & profile_idc,
-                                   (int*) & level_idc);
+                                   & width,
+                                   & height,
+                                   & display_width,
+                                   & display_height,
+                                   & profile_idc,
+                                   & level_idc);
         if (retval != 0)
         {
             return retval;

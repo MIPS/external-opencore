@@ -279,7 +279,7 @@ PVCommandId PVFrameAndMetadataUtility::GetMetadataValues(PVPMetadataList& aKeyLi
     return AddCommandToQueue(PVFM_UTILITY_COMMAND_GET_METADATA_VALUES, (OsclAny*)aContextData, &paramvec);
 }
 
-void PVFrameAndMetadataUtility::setParametersSync(PvmiMIOSession aSession, PvmiKvp* aParameters, int32 aNumElements, PvmiKvp* &aRetKVP)
+void PVFrameAndMetadataUtility::setParametersSync(PvmiMIOSession aSession, PvmiKvp* aParameters, int aNumElements, PvmiKvp* &aRetKVP)
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFrameAndMetadataUtility::SetParametersSync()"));
     OSCL_UNUSED_ARG(aSession);
@@ -2054,7 +2054,7 @@ bool PVFrameAndMetadataUtility::HasVideo()
     if (iVideoMIO)
     {
         PvmiKvp* kvp = NULL;
-        int32 count = 0;
+        int count = 0;
         OSCL_HeapString<OsclMemAllocator> str;
         str = MOUT_VIDEO_FORMAT_KEY;
         if (iVideoMIO->getParametersSync(0, (char*)str.get_cstr(), kvp, count, NULL) == PVMFSuccess)

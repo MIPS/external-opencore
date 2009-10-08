@@ -114,11 +114,11 @@ class AvcDecoder_OMX
 
         OMX_BOOL FlushOutput_OMX(OMX_BUFFERHEADERTYPE **aOutBuffer);
 
-        AVCDec_Status GetNextFullNAL_OMX(uint8** aNalBuffer, int32* aNalSize, OMX_U8* aInputBuf, OMX_U32* aInBufSize);
+        AVCDec_Status GetNextFullNAL_OMX(uint8** aNalBuffer, int* aNalSize, OMX_U8* aInputBuf, OMX_U32* aInBufSize);
 
-        static int32 AllocateBuffer_OMX(void* aUserData, int32 i, uint8** aYuvBuffer);
+        static int AllocateBuffer_OMX(void* aUserData, int i, uint8** aYuvBuffer);
 
-        static int32 ActivateSPS_OMX(void* aUserData, uint aSizeInMbs, uint aNumBuffers);
+        static int ActivateSPS_OMX(void* aUserData, uint aSizeInMbs, uint aNumBuffers);
 
         int32 NSAllocateBuffer_OMX(void* aUserData, int32 i, uint8** aYuvBuffer);
 

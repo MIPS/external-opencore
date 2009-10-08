@@ -97,7 +97,7 @@ OMX_BOOL Mpeg4Decoder_OMX::Mp4DecodeVideo(OMX_BUFFERHEADERTYPE* aOutBuffer, OMX_
 #ifdef _DEBUG
     static OMX_U32 FrameCount = 0;
 #endif
-    uint32 UseExtTimestamp = 0;
+    uint UseExtTimestamp = 0;
     uint32 TimeStamp;
     OMX_S32 InputSize, InitSize;
 

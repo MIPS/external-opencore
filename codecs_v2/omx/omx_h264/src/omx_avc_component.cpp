@@ -464,7 +464,7 @@ OMX_BOOL OpenmaxAvcAO::ParseFullAVCFramesIntoNALs(OMX_BUFFERHEADERTYPE* aInputBu
         OMX_U32 length = ipInputBuffer->nFilledLen;
         OMX_U8* pBuffer = ipInputBuffer->pBuffer + offset;
         OMX_U8* pNAL;
-        int32 nalSize;
+        int nalSize;
 
         iNumNALs = 0;
 

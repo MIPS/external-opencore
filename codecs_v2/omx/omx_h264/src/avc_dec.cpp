@@ -29,7 +29,7 @@
 /*************************************/
 
 /* These two functions are for callback functions of AvcHandle */
-int32 CBAVC_Malloc_OMX(void* aUserData, int32 aSize, int32 aAttribute)
+int CBAVC_Malloc_OMX(void* aUserData, int32 aSize, int aAttribute)
 {
     OSCL_UNUSED_ARG(aUserData);
     OSCL_UNUSED_ARG(aAttribute);
@@ -39,7 +39,7 @@ int32 CBAVC_Malloc_OMX(void* aUserData, int32 aSize, int32 aAttribute)
     return (int32) pPtr;
 }
 
-void CBAVC_Free_OMX(void* aUserData, int32 aMem)
+void CBAVC_Free_OMX(void* aUserData, int aMem)
 {
     OSCL_UNUSED_ARG(aUserData);
     oscl_free((uint8*) aMem);
@@ -54,7 +54,7 @@ AVCDec_Status CBAVCDec_GetData_OMX(void* aUserData, uint8** aBuffer, uint* aSize
     return AVCDEC_FAIL;  /* nothing for now */
 }
 
-void UnbindBuffer_OMX(void* aUserData, int32 i)
+void UnbindBuffer_OMX(void* aUserData, int i)
 {
 
     AvcDecoder_OMX* pAvcDecoder_OMX = (AvcDecoder_OMX*)aUserData;
@@ -104,7 +104,7 @@ void UnbindBuffer_OMX(void* aUserData, int32 i)
     return;
 }
 
-int32 AvcDecoder_OMX::AllocateBuffer_OMX(void* aUserData, int32 i, uint8** aYuvBuffer)
+int AvcDecoder_OMX::AllocateBuffer_OMX(void* aUserData, int i, uint8** aYuvBuffer)
 {
     AvcDecoder_OMX* pAvcDecoder_OMX = (AvcDecoder_OMX*)aUserData;
 
@@ -146,7 +146,7 @@ int32 AvcDecoder_OMX::AllocateBuffer_OMX(void* aUserData, int32 i, uint8** aYuvB
 
 
 
-int32 AvcDecoder_OMX::ActivateSPS_OMX(void* aUserData, uint aSizeInMbs, uint aNumBuffers)
+int AvcDecoder_OMX::ActivateSPS_OMX(void* aUserData, uint aSizeInMbs, uint aNumBuffers)
 {
     AvcDecoder_OMX* pAvcDecoder_OMX = (AvcDecoder_OMX*)aUserData;
 
@@ -188,7 +188,7 @@ OMX_BOOL AvcDecoder_OMX::FlushOutput_OMX(OMX_BUFFERHEADERTYPE **aOutBufferForRen
 {
     AVCFrameIO Output;
     AVCDec_Status Status;
-    int32 Index, Release;
+    int Index, Release;
 
     Output.YCbCr[0] = Output.YCbCr[1] = Output.YCbCr[2] = NULL;
     Status = PVAVCDecGetOutput(&(AvcHandle), &Index, &Release, &Output);
@@ -274,7 +274,7 @@ OMX_BOOL AvcDecoder_OMX::AvcDecodeVideo_OMX(OMX_BUFFERHEADERTYPE *aOutBuffer, //
     AVCDec_Status Status;
     OMX_S32 Width, Height;
     uint8* pNalBuffer;
-    int32 NalSize, NalType, NalRefId;
+    int NalSize, NalType, NalRefId;
 
     *aResizeFlag = OMX_FALSE;
     OMX_S32 OldStride;
@@ -518,7 +518,7 @@ OMX_ERRORTYPE AvcDecoder_OMX::AvcDecDeinit_OMX()
 }
 
 
-AVCDec_Status AvcDecoder_OMX::GetNextFullNAL_OMX(uint8** aNalBuffer, int32* aNalSize, OMX_U8* aInputBuf, OMX_U32* aInBufSize)
+AVCDec_Status AvcDecoder_OMX::GetNextFullNAL_OMX(uint8** aNalBuffer, int* aNalSize, OMX_U8* aInputBuf, OMX_U32* aInBufSize)
 {
     uint8* pBuff = aInputBuf;
     OMX_U32 InputSize;

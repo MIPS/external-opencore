@@ -1148,7 +1148,7 @@ int32 cc32scaleup(uint8 **src, uint8 *dst, int *disp,
 
 
 // platform specfic function in C
-int32 cc32sc_rotate(uint8 **src, uint8 *dst, int *disp,
+int32 cc32sc_rotate(uint8 **src, uint8 *dst, int32 *disp,
                     uint8 *clip, uint8 *_mRowPix,
                     uint8 *_mColPix, bool _mIsRotateClkwise);
 
@@ -1174,7 +1174,7 @@ int32 ColorConvert32::cc32ZoomRotate(uint8 **src, uint8 *dst,
 }
 
 
-int32 cc32sc_rotate(uint8 **src, uint8 *dst, int *disp,
+int32 cc32sc_rotate(uint8 **src, uint8 *dst, int32 *disp,
                     uint8 *clip, uint8 *_mRowPix,
                     uint8 *_mColPix, bool _mIsRotateClkwise)
 {

@@ -681,7 +681,7 @@ int32 ColorConvert24::cc24Rotate(uint8 **src, uint8 *dst, DisplayProperties *dis
 
 
 // platform specific C function
-int32 cc24scaling(uint8 **src, uint8 *dst, int *disp,
+int32 cc24scaling(uint8 **src, uint8 *dst, int32 *disp,
                   uint8 *clip,
                   uint8 *_mRowPix, uint8 *_mColPix);
 
@@ -704,7 +704,7 @@ int32 ColorConvert24::cc24ZoomIn(uint8 **src, uint8 *dst,
 }
 
 
-int32 cc24scaling(uint8 **src, uint8 *dst, int *disp,
+int32 cc24scaling(uint8 **src, uint8 *dst, int32 *disp,
                   uint8 *clip,
                   uint8 *_mRowPix, uint8 *_mColPix)
 {
@@ -1000,7 +1000,7 @@ int32 cc24scaling(uint8 **src, uint8 *dst, int *disp,
 
 
 // platform specfic function in C
-int32 cc24sc_rotate(uint8 **src, uint8 *dst, int *disp,
+int32 cc24sc_rotate(uint8 **src, uint8 *dst, int32 *disp,
                     uint8 *clip, uint8 *_mRowPix,
                     uint8 *_mColPix, bool _mIsRotateClkwise);
 
@@ -1023,7 +1023,7 @@ int32 ColorConvert24::cc24ZoomRotate(uint8 **src, uint8 *dst,
 }
 
 
-int32 cc24sc_rotate(uint8 **src, uint8 *dst, int *disp,
+int32 cc24sc_rotate(uint8 **src, uint8 *dst, int32 *disp,
                     uint8 *clip, uint8 *_mRowPix,
                     uint8 *_mColPix, bool _mIsRotateClkwise)
 {

@@ -1421,7 +1421,7 @@ return 0;
 
 
 // platform specific C function
-int32 cc12scaling(uint8 **src, uint8 *dst, int *disp,
+int32 cc12scaling(uint8 **src, uint8 *dst, int32 *disp,
                   uint8 *clip, uint8 *pErr_horz,
                   uint8 *_mRowPix, uint8 *_mColPix);
 
@@ -1445,7 +1445,7 @@ int32 ColorConvert12::cc12ZoomIn(uint8 **src, uint8 *dst,
 }
 
 #if USE_ARM_ASM_FOR_COLORCONVERT
-int32 cc12scaling(uint8 **src, uint8 *dst, int *disp,
+int32 cc12scaling(uint8 **src, uint8 *dst, int32 *disp,
                   uint8 *clip, uint8 *pErr_horz,
                   uint8 *_mRowPix, uint8 *_mColPix)
 {
@@ -1936,7 +1936,7 @@ int32 cc12scaling(uint8 **src, uint8 *dst, int *disp,
 
 #else // straight C version
 
-int32 cc12scaling(uint8 **src, uint8 *dst, int *disp,
+int32 cc12scaling(uint8 **src, uint8 *dst, int32 *disp,
                   uint8 *clip, uint8 *pErr_horz,
                   uint8 *_mRowPix, uint8 *_mColPix)
 {
