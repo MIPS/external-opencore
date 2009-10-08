@@ -549,6 +549,7 @@ class OmxComponentBase : public OsclActiveObject
 
         OSCL_IMPORT_REF void Run();
 
+
         OMX_CALLBACKTYPE*   ipCallbacks;
         OMX_PTR             iCallbackData;
         OMX_STATETYPE       iState;
@@ -673,7 +674,7 @@ class OmxComponentVideo : public OmxComponentBase
             OMX_IN  OMX_INDEXTYPE nParamIndex,
             OMX_IN  OMX_PTR ComponentParameterStructure);
 
-
+        OSCL_IMPORT_REF virtual void CalculateBufferParameters(OMX_U32 PortIndex);
 };
 
 
