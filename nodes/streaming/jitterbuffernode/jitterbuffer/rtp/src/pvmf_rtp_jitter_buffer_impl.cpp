@@ -1653,7 +1653,6 @@ PVMFStatus PVMFRTPJitterBufferImpl::GetParsedMediaMsg(PVMFSharedMediaMsgPtr& aMe
         }
 
         PVMFSharedMediaDataPtr mediaData;
-        convertToPVMFMediaData(mediaData, aMediaMsgPtr);
 
         OsclSharedPtr<PVMFMediaDataImpl> media_data_impl_ptr;
         PVMFSharedMediaDataPtr mediaDataOut;
@@ -1664,6 +1663,7 @@ PVMFStatus PVMFRTPJitterBufferImpl::GetParsedMediaMsg(PVMFSharedMediaMsgPtr& aMe
         }
         else
         {
+            convertToPVMFMediaData(mediaData, aMediaMsgPtr);
             mediaData->getMediaDataImpl(media_data_impl_ptr);
             media_data_impl_ptr->clearMediaFragments();
         }
