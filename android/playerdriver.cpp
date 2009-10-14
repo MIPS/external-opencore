@@ -1401,8 +1401,8 @@ status_t PVPlayer::setDataSource(int fd, int64_t offset, int64_t length) {
 
     char buf[80];
     mSharedFd = dup(fd);
-    TOsclFileHandle handle = fdopen(fd,"rb");
-    sprintf(buf, "assethandle://%d:%lld:%lld", handle, offset, length);
+    TOsclFileHandle handle = fdopen(mSharedFd,"rb");
+    sprintf(buf, "assethandle://%ld:%lld:%lld", (long)handle, offset, length);
     mDataSourcePath = strdup(buf);
     return OK;
 }

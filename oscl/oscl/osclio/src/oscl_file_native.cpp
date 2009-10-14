@@ -40,6 +40,7 @@ OsclNativeFile::OsclNativeFile()
     iIsAssetReadOnly = false;
     iAssetOffset = 0;
     iAssetSize = 0;
+    iAssetLogicalFilePos = 0;
 }
 
 OsclNativeFile::~OsclNativeFile()
@@ -319,6 +320,28 @@ int32 OsclNativeFile::Close()
 
 uint32 OsclNativeFile::Read(OsclAny *buffer, uint32 size, uint32 numelements)
 {
+    if (iIsAsset)
+    {
+        //Asset file are opened multiple times by the source nodes, so always seek before reading.
+        Seek(iAssetLogicalFilePos, Oscl_File::SEEKSET);
+
+        //If the file is an asset file, don't allow reading past the end.
+        //Calculate the new logical file position.
+        uint32 bytes = size * numelements;
+        iAssetLogicalFilePos += bytes;
+
+        //If we read past the end of the asset...
+        if (iAssetLogicalFilePos >= iAssetSize)
+        {
+            //Calculate the number of bytes read past the end.
+            uint32 over = OSCL_STATIC_CAST(uint32, (iAssetLogicalFilePos - iAssetSize));
+            //Calculate the number of elements that can be read.
+            if (!size) return 0; //avoid divide-by-zero
+            if (bytes < over) return 0; //avoid negative count
+            numelements = (bytes - over) / size;
+        }
+    }
+
     if (iFile)
     {
         return fread(buffer, OSCL_STATIC_CAST(int32, size), OSCL_STATIC_CAST(int32, numelements), iFile);
@@ -375,19 +398,18 @@ int32 OsclNativeFile::Seek(TOsclFileOffset offset, Oscl_File::seek_type origin)
         switch (origin)
         {
             case Oscl_File::SEEKCUR:
+                iAssetLogicalFilePos += offset;
                 break;
             case Oscl_File::SEEKEND:
-            {
-                TOsclFileOffset assetEnd = iAssetOffset + iAssetSize;
-                offset = assetEnd + offset;
-                origin = Oscl_File::SEEKSET;
-            }
-            break;
+                iAssetLogicalFilePos = iAssetSize + offset;
+                break;
             case Oscl_File::SEEKSET:
             default:
-                offset += iAssetOffset;
+                iAssetLogicalFilePos = offset;
                 break;
         }
+        offset = iAssetLogicalFilePos + iAssetOffset;
+        origin = Oscl_File::SEEKSET;
     }
 
     {
@@ -415,6 +437,8 @@ int32 OsclNativeFile::Seek(TOsclFileOffset offset, Oscl_File::seek_type origin)
 
 TOsclFileOffset OsclNativeFile::Tell()
 {
+    if (iIsAsset) return iAssetLogicalFilePos;
+
     TOsclFileOffset result = -1;
     if (iFile)
     {
@@ -423,13 +447,6 @@ TOsclFileOffset OsclNativeFile::Tell()
 #else
         result = ftell(iFile);
 #endif
-    }
-
-    //If the file represents an individual asset from a file,
-    //normalize the offset.
-    if (iIsAsset && (result != -1))
-    {
-        result -= iAssetOffset;
     }
     return result;
 }
@@ -448,6 +465,11 @@ int32 OsclNativeFile::Flush()
 
 int32 OsclNativeFile::EndOfFile()
 {
+    if (iIsAsset)
+    {
+        if (Tell() >= iAssetSize) return 1;
+        return 0;
+    }
 
     if (iFile)
         return feof(iFile);

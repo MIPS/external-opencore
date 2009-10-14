@@ -138,6 +138,7 @@ class OsclNativeFile : public HeapBase
         bool            iIsAssetReadOnly;
         TOsclFileOffset iAssetOffset;
         TOsclFileOffset iAssetSize;
+        TOsclFileOffset iAssetLogicalFilePos;
 };
 
 #endif // OSCL_FILE_NATIVE_H_INCLUDED
