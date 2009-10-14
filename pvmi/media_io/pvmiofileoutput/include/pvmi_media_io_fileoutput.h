@@ -374,6 +374,7 @@ class PVRefFileOutput
         // Video parameters
         OSCL_HeapString<OsclMemAllocator> iVideoFormatString;
         PVMFFormatType iVideoFormat;
+        PVMFFormatType iVideoSubFormat;
         int32 iVideoHeight;
         bool iVideoHeightValid;
         int32 iVideoWidth;

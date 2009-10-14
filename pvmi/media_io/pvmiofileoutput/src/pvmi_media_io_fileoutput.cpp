@@ -152,6 +152,7 @@ void PVRefFileOutput::initData()
     iAudioSamplingRateValid = false;
 
     iVideoFormat = PVMF_MIME_FORMAT_UNKNOWN;
+    iVideoSubFormat = PVMF_MIME_FORMAT_UNKNOWN;
     iVideoHeight = 0;
     iVideoHeightValid = false;
     iVideoWidth = 0;
@@ -199,7 +200,6 @@ void PVRefFileOutput::initData()
 
     iHeaderWritten = false;
     iAudioFormat = 0;
-    iVideoFormat = 0;
     iInitializeAVIDone = false;
     iAVIChunkSize = 0;
     iVideoLastTimeStamp = 0;
@@ -244,6 +244,7 @@ void PVRefFileOutput::ResetData()
 
     iVideoFormatString = "";
     iVideoFormat = PVMF_MIME_FORMAT_UNKNOWN;
+    iVideoSubFormat = PVMF_MIME_FORMAT_UNKNOWN;
     iVideoHeightValid = false;
     iVideoWidthValid = false;
     iVideoDisplayHeightValid = false;
@@ -1146,7 +1147,15 @@ PVMFCommandId PVRefFileOutput::writeAsync(uint8 aFormatType, int32 aFormatIndex,
                                     iAVIChunkSize += bsize + 4 + 4;
                                     status = PVMFSuccess;
 #else
-                                    uint32 size = iVideoWidth * iVideoHeight * 3 / 2;
+                                    uint32 size;
+                                    if (iVideoSubFormat == PVMF_MIME_YUV422_INTERLEAVED_UYVY)
+                                    {
+                                        size = iVideoWidth * iVideoHeight * 2;
+                                    }
+                                    else
+                                    {
+                                        size = iVideoWidth * iVideoHeight * 3 / 2;
+                                    }
                                     if (iLogOutputToFile && iOutputFile.Write(aData, sizeof(uint8), size) != size)
                                     {
                                         PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_ERR,
@@ -1639,6 +1648,12 @@ void PVRefFileOutput::setParametersSync(PvmiMIOSession aSession,
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                             (0, "PVRefFileOutput::setParametersSync() Video Format Key, Value %s", iVideoFormatString.get_str()));
         }
+        else if (pv_mime_strcmp(aParameters[i].key, MOUT_VIDEO_SUBFORMAT_KEY) == 0)
+        {
+            iVideoSubFormat = aParameters[i].value.pChar_value;
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                            (0, "PVRefFileOutput::setParametersSync() Video SubFormat Key, Value %s", iVideoSubFormat.getMIMEStrPtr()));
+        }
         else if (pv_mime_strcmp(aParameters[i].key, MOUT_VIDEO_WIDTH_KEY) == 0)
         {
             iVideoWidth = (int32)aParameters[i].value.uint32_value;
@@ -1763,6 +1778,9 @@ void PVRefFileOutput::setParametersSync(PvmiMIOSession aSession,
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                             (0, "PVRefFileOutput::setParametersSync() Buffer Size, Value %d", iBufferSize));
 
+            iVideoSubFormat = yuvInfo->video_format.getMIMEStrPtr();
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                            (0, "PVRefFileOutput::setParametersSync() Video Sub Format, Value %s", iVideoSubFormat.getMIMEStrPtr()));
         }
         //All FSI for audio will be set here in one go
         else if (pv_mime_strcmp(aParameters[i].key, PVMF_FORMAT_SPECIFIC_INFO_KEY_PCM) == 0)
