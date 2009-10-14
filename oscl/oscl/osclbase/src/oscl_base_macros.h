@@ -82,6 +82,7 @@
 #define OSCL_STATIC_CAST(type,exp)          ((type)(exp))
 #define OSCL_REINTERPRET_CAST(type,exp)     ((type)(exp))
 #define OSCL_DYNAMIC_CAST(type, exp)        ((type)(exp))
+#define OSCL_VIRTUAL_BASE(type)               type
 
 
 /**

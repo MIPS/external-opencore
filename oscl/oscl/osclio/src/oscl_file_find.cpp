@@ -53,6 +53,7 @@ OSCL_EXPORT_REF Oscl_FileFind::Oscl_FileFind()
 
 OSCL_EXPORT_REF Oscl_FileFind::~Oscl_FileFind()
 {
+
     Close();
 }
 
