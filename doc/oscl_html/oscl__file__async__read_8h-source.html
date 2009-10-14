@@ -47,7 +47,7 @@
 00039         }
 <a name="l00040"></a><a class="code" href="classOsclPtrC.html#a3">00040</a>         <span class="keywordtype">void</span> <a class="code" href="classOsclPtrC.html#a3">SetLength</a>(int32 l)
 00041         {
-00042             <a class="code" href="group__osclbase.html#a78">OSCL_ASSERT</a>(l &lt;= iMaxLength);
+00042             <a class="code" href="group__osclbase.html#a85">OSCL_ASSERT</a>(l &lt;= iMaxLength);
 00043             iLength = l;
 00044         }
 <a name="l00045"></a><a class="code" href="classOsclPtrC.html#a4">00045</a>         int32 <a class="code" href="classOsclPtrC.html#a4">Length</a>()
@@ -73,14 +73,14 @@
 00065         <span class="comment">//extract the right-most data</span>
 <a name="l00066"></a><a class="code" href="classOsclPtrC.html#a8">00066</a>         <a class="code" href="classOsclPtrC.html">OsclPtrC</a> <a class="code" href="classOsclPtrC.html#a8">Right</a>(int32 size)
 00067         {
-00068             <a class="code" href="group__osclbase.html#a78">OSCL_ASSERT</a>(iLength &gt;= size);
+00068             <a class="code" href="group__osclbase.html#a85">OSCL_ASSERT</a>(iLength &gt;= size);
 00069             <a class="code" href="classOsclPtrC.html">OsclPtrC</a> des(iPtr + iLength - size, size, size);
 00070             <span class="keywordflow">return</span> des;
 00071         }
 00072         <span class="comment">//extract the left-most data</span>
 <a name="l00073"></a><a class="code" href="classOsclPtrC.html#a9">00073</a>         <a class="code" href="classOsclPtrC.html">OsclPtrC</a> <a class="code" href="classOsclPtrC.html#a9">Left</a>(int32 size)
 00074         {
-00075             <a class="code" href="group__osclbase.html#a78">OSCL_ASSERT</a>(iLength &gt;= size);
+00075             <a class="code" href="group__osclbase.html#a85">OSCL_ASSERT</a>(iLength &gt;= size);
 00076             <a class="code" href="classOsclPtrC.html">OsclPtrC</a> des(iPtr, size, size);
 00077             <span class="keywordflow">return</span> des;
 00078         }
@@ -104,7 +104,7 @@
 00096         }
 <a name="l00097"></a><a class="code" href="classOsclPtr.html#a3">00097</a>         <span class="keywordtype">void</span> <a class="code" href="classOsclPtr.html#a3">SetLength</a>(int32 l)
 00098         {
-00099             <a class="code" href="group__osclbase.html#a78">OSCL_ASSERT</a>(l &lt;= iMaxLength);
+00099             <a class="code" href="group__osclbase.html#a85">OSCL_ASSERT</a>(l &lt;= iMaxLength);
 00100             iLength = l;
 00101         }
 <a name="l00102"></a><a class="code" href="classOsclPtr.html#a4">00102</a>         int32 <a class="code" href="classOsclPtr.html#a4">Length</a>()
@@ -129,7 +129,7 @@
 00121         }
 <a name="l00122"></a><a class="code" href="classOsclPtr.html#a8">00122</a>         <span class="keywordtype">void</span> <a class="code" href="classOsclPtr.html#a8">Append</a>(<a class="code" href="classOsclPtrC.html">OsclPtrC</a> &amp;v)
 00123         {
-00124             <a class="code" href="group__osclbase.html#a78">OSCL_ASSERT</a>(iLength + v.<a class="code" href="classOsclPtrC.html#a4">Length</a>() &lt;= iMaxLength);
+00124             <a class="code" href="group__osclbase.html#a85">OSCL_ASSERT</a>(iLength + v.<a class="code" href="classOsclPtrC.html#a4">Length</a>() &lt;= iMaxLength);
 00125             <a class="code" href="group__osclmemory.html#a12">oscl_memmove</a>(iPtr + iLength, v.<a class="code" href="classOsclPtrC.html#a2">Ptr</a>(), v.<a class="code" href="classOsclPtrC.html#a4">Length</a>());
 00126             iLength += v.<a class="code" href="classOsclPtrC.html#a4">Length</a>();
 00127         }
@@ -165,7 +165,7 @@
 00157             }
 00158         }
 00159 
-<a name="l00160"></a><a class="code" href="classOsclBuf.html#a0">00160</a>         <a class="code" href="classOsclBuf.html#a0">OsclBuf</a>(int32 size): <a class="code" href="classOsclBuf.html#m0">iBuffer</a>(<a class="code" href="group__osclbase.html#a81">NULL</a>), <a class="code" href="classOsclBuf.html#m1">iMaxLength</a>(size), <a class="code" href="classOsclBuf.html#m2">iLength</a>(0)
+<a name="l00160"></a><a class="code" href="classOsclBuf.html#a0">00160</a>         <a class="code" href="classOsclBuf.html#a0">OsclBuf</a>(int32 size): <a class="code" href="classOsclBuf.html#m0">iBuffer</a>(<a class="code" href="group__osclbase.html#a88">NULL</a>), <a class="code" href="classOsclBuf.html#m1">iMaxLength</a>(size), <a class="code" href="classOsclBuf.html#m2">iLength</a>(0)
 00161         {}
 00162 
 <a name="l00163"></a><a class="code" href="classOsclBuf.html#a1">00163</a>         int32 <a class="code" href="classOsclBuf.html#a1">Length</a>()
@@ -265,7 +265,7 @@
 00285     <span class="keyword">public</span>:
 00287         <span class="comment">// File IO methods.</span>
 00289 <span class="comment"></span>
-00290         int32  <a class="code" href="classOsclAsyncFile.html#a1">Open</a>(<span class="keyword">const</span> <a class="code" href="group__osclbase.html#a32">oscl_wchar</a> *filename, uint32 mode
+00290         int32  <a class="code" href="classOsclAsyncFile.html#a1">Open</a>(<span class="keyword">const</span> <a class="code" href="group__osclbase.html#a34">oscl_wchar</a> *filename, uint32 mode
 00291                     , <span class="keyword">const</span> <a class="code" href="classOsclNativeFileParams.html">OsclNativeFileParams</a>&amp; params
 00292                     , <a class="code" href="classOscl__FileServer.html">Oscl_FileServer</a>&amp; fileserv);
 00293         int32  <a class="code" href="classOsclAsyncFile.html#a1">Open</a>(<span class="keyword">const</span> <span class="keywordtype">char</span> *filename, uint32 mode
@@ -274,16 +274,16 @@
 00296 
 00297         int32 <a class="code" href="classOsclAsyncFile.html#a3">Seek</a>(<a class="code" href="osclconfig__io_8h.html#a50">TOsclFileOffset</a> offset, <a class="code" href="classOscl__File.html#s11">Oscl_File::seek_type</a> origin);
 00298         <a class="code" href="osclconfig__io_8h.html#a50">TOsclFileOffset</a> <a class="code" href="classOsclAsyncFile.html#a4">Tell</a>();
-00299         uint32 <a class="code" href="classOsclAsyncFile.html#a5">Read</a>(<a class="code" href="group__osclbase.html#a25">OsclAny</a>* aBuffer1, uint32 aDataSize, uint32 aNumElements);
+00299         uint32 <a class="code" href="classOsclAsyncFile.html#a5">Read</a>(<a class="code" href="group__osclbase.html#a27">OsclAny</a>* aBuffer1, uint32 aDataSize, uint32 aNumElements);
 00300         int32 <a class="code" href="classOsclAsyncFile.html#a6">EndOfFile</a>();
 00301         <a class="code" href="osclconfig__io_8h.html#a50">TOsclFileOffset</a> <a class="code" href="classOsclAsyncFile.html#a7">Size</a>();
 00302         int32 <a class="code" href="classOsclAsyncFile.html#a8">Close</a>();
 00303 
-<a name="l00304"></a><a class="code" href="classOsclAsyncFile.html#a9">00304</a>         uint32 <a class="code" href="classOsclAsyncFile.html#a9">Write</a>(<span class="keyword">const</span> <a class="code" href="group__osclbase.html#a25">OsclAny</a>* aBuffer1, uint32 aDataSize, uint32 aNumElements)
+<a name="l00304"></a><a class="code" href="classOsclAsyncFile.html#a9">00304</a>         uint32 <a class="code" href="classOsclAsyncFile.html#a9">Write</a>(<span class="keyword">const</span> <a class="code" href="group__osclbase.html#a27">OsclAny</a>* aBuffer1, uint32 aDataSize, uint32 aNumElements)
 00305         {
-00306             <a class="code" href="group__osclbase.html#a89">OSCL_UNUSED_ARG</a>(aBuffer1);
-00307             <a class="code" href="group__osclbase.html#a89">OSCL_UNUSED_ARG</a>(aDataSize);
-00308             <a class="code" href="group__osclbase.html#a89">OSCL_UNUSED_ARG</a>(aNumElements);
+00306             <a class="code" href="group__osclbase.html#a97">OSCL_UNUSED_ARG</a>(aBuffer1);
+00307             <a class="code" href="group__osclbase.html#a97">OSCL_UNUSED_ARG</a>(aDataSize);
+00308             <a class="code" href="group__osclbase.html#a97">OSCL_UNUSED_ARG</a>(aNumElements);
 00309             <span class="keywordflow">return</span> 0;<span class="comment">//not supported</span>
 00310         }
 <a name="l00311"></a><a class="code" href="classOsclAsyncFile.html#a10">00311</a>         uint32 <a class="code" href="classOsclAsyncFile.html#a10">Flush</a>()
@@ -412,7 +412,7 @@
 00441 <span class="preprocessor">#endif</span>
 00442 <span class="preprocessor"></span>
 </pre></div><hr size="1"><img src="pvlogo_small.jpg"><address style="align: right;"><small>OSCL API</small>
-<address style="align: left;"><small>Posting Version: CORE_7.512.1.1 </small>
+<address style="align: left;"><small>Posting Version: CORE_8.000.1.1_RC1 </small>
 </small></address>
 </body>
 </html>

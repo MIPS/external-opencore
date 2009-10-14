@@ -31,11 +31,11 @@
 00033 <span class="preprocessor"></span>
 00035 <span class="comment">//static const char NULL_TERM_CHAR = '\0';</span>
 00036 <span class="preprocessor">#ifndef NULL_TERM_CHAR</span>
-<a name="l00037"></a><a class="code" href="group__osclbase.html#a80">00037</a> <span class="preprocessor"></span><span class="preprocessor">#define NULL_TERM_CHAR '\0'</span>
+<a name="l00037"></a><a class="code" href="group__osclbase.html#a87">00037</a> <span class="preprocessor"></span><span class="preprocessor">#define NULL_TERM_CHAR '\0'</span>
 00038 <span class="preprocessor"></span><span class="preprocessor">#endif</span>
 00039 <span class="preprocessor"></span>
 00041 <span class="preprocessor">#ifndef NULL</span>
-<a name="l00042"></a><a class="code" href="group__osclbase.html#a81">00042</a> <span class="preprocessor"></span><span class="preprocessor">#define NULL (0)</span>
+<a name="l00042"></a><a class="code" href="group__osclbase.html#a88">00042</a> <span class="preprocessor"></span><span class="preprocessor">#define NULL (0)</span>
 00043 <span class="preprocessor"></span><span class="preprocessor">#endif</span>
 00044 <span class="preprocessor"></span>
 00045 <span class="preprocessor">#if (OSCL_DISABLE_INLINES)</span>
@@ -43,68 +43,69 @@
 00047 <span class="preprocessor"></span><span class="preprocessor">#define OSCL_COND_EXPORT_REF OSCL_EXPORT_REF</span>
 00048 <span class="preprocessor"></span><span class="preprocessor">#define OSCL_COND_IMPORT_REF OSCL_IMPORT_REF</span>
 00049 <span class="preprocessor"></span><span class="preprocessor">#else</span>
-<a name="l00050"></a><a class="code" href="group__osclbase.html#a82">00050</a> <span class="preprocessor"></span><span class="preprocessor">#define OSCL_INLINE inline</span>
-<a name="l00051"></a><a class="code" href="group__osclbase.html#a83">00051</a> <span class="preprocessor"></span><span class="preprocessor">#define OSCL_COND_EXPORT_REF</span>
-<a name="l00052"></a><a class="code" href="group__osclbase.html#a84">00052</a> <span class="preprocessor"></span><span class="preprocessor">#define OSCL_COND_IMPORT_REF</span>
+<a name="l00050"></a><a class="code" href="group__osclbase.html#a89">00050</a> <span class="preprocessor"></span><span class="preprocessor">#define OSCL_INLINE inline</span>
+<a name="l00051"></a><a class="code" href="group__osclbase.html#a90">00051</a> <span class="preprocessor"></span><span class="preprocessor">#define OSCL_COND_EXPORT_REF</span>
+<a name="l00052"></a><a class="code" href="group__osclbase.html#a91">00052</a> <span class="preprocessor"></span><span class="preprocessor">#define OSCL_COND_IMPORT_REF</span>
 00053 <span class="preprocessor"></span><span class="preprocessor">#endif</span>
 00054 <span class="preprocessor"></span>
 00055 <span class="comment">//this macro may not be defined in all configurations</span>
 00056 <span class="comment">//so a default is defined here.</span>
 00057 
 00059 
-<a name="l00064"></a><a class="code" href="group__osclbase.html#a85">00064</a> <span class="preprocessor">#define OSCL_CONST_CAST(type,exp)           ((type)(exp))</span>
-<a name="l00065"></a><a class="code" href="group__osclbase.html#a86">00065</a> <span class="preprocessor"></span><span class="preprocessor">#define OSCL_STATIC_CAST(type,exp)          ((type)(exp))</span>
-<a name="l00066"></a><a class="code" href="group__osclbase.html#a87">00066</a> <span class="preprocessor"></span><span class="preprocessor">#define OSCL_REINTERPRET_CAST(type,exp)     ((type)(exp))</span>
-<a name="l00067"></a><a class="code" href="group__osclbase.html#a88">00067</a> <span class="preprocessor"></span><span class="preprocessor">#define OSCL_DYNAMIC_CAST(type, exp)        ((type)(exp))</span>
-00068 <span class="preprocessor"></span>
-00069 
-<a name="l00084"></a><a class="code" href="group__osclbase.html#a89">00084</a> <span class="preprocessor">#define OSCL_UNUSED_ARG(vbl) (void)(vbl)</span>
-<a name="l00085"></a><a class="code" href="group__osclbase.html#a90">00085</a> <span class="preprocessor"></span><span class="preprocessor">#define OSCL_UNUSED_RETURN(value) return value</span>
-00086 <span class="preprocessor"></span>
-00087 <span class="comment">/* The __TFS__ macro is used to optionally expand to "&lt;&gt;" depending on the</span>
-00088 <span class="comment"> * compiler.  Some compilers require it to indicate that the friend function</span>
-00089 <span class="comment"> * is a template function as specified in the standard, but others don't</span>
-00090 <span class="comment"> * like it so it will handled with a macro expansion that depends on the</span>
-00091 <span class="comment"> * compiler.</span>
-00092 <span class="comment"> */</span>
-00093 <span class="preprocessor">#ifndef __TFS__</span>
-00094 <span class="preprocessor"></span><span class="preprocessor">#define __TFS__</span>
-00095 <span class="preprocessor"></span><span class="preprocessor">#endif</span>
-00096 <span class="preprocessor"></span>
-<a name="l00097"></a><a class="code" href="group__osclbase.html#a91">00097</a> <span class="preprocessor">#define OSCL_MIN(a,b) ((a) &lt; (b) ? (a) : (b))</span>
-<a name="l00098"></a><a class="code" href="group__osclbase.html#a92">00098</a> <span class="preprocessor"></span><span class="preprocessor">#define OSCL_MAX(a,b) ((a) &gt; (b) ? (a) : (b))</span>
-<a name="l00099"></a><a class="code" href="group__osclbase.html#a93">00099</a> <span class="preprocessor"></span><span class="preprocessor">#define OSCL_ABS(a) ((a) &gt; (0) ? (a) : -(a))</span>
-00100 <span class="preprocessor"></span>
-00101 <span class="comment">// the syntax for explicitly calling the destructor varies on some platforms</span>
-00102 <span class="comment">// below is the default syntax as defined in the C++ standard</span>
-00103 <span class="preprocessor">#ifndef OSCL_TEMPLATED_DESTRUCTOR_CALL</span>
-<a name="l00104"></a><a class="code" href="group__osclbase.html#a94">00104</a> <span class="preprocessor"></span><span class="preprocessor">#define OSCL_TEMPLATED_DESTRUCTOR_CALL(type,simple_type) type :: ~simple_type ()</span>
-00105 <span class="preprocessor"></span><span class="preprocessor">#endif</span>
-00106 <span class="preprocessor"></span>
-00107 
-00108 <span class="comment">/*</span>
-00109 <span class="comment"> * The OSCL_UNSIGNED_CONST macro is used to optionally add a suffix to the</span>
-00110 <span class="comment"> * end of integer constants to identify them as unsigned constants.  It is</span>
-00111 <span class="comment"> * usually only necessary to do that for very large constants that are too</span>
-00112 <span class="comment"> * big to fit within the range of a signed integer. Some compilers will issue</span>
-00113 <span class="comment"> * warnings for that.  The default behavior will be to add no suffix.</span>
-00114 <span class="comment"> */</span>
-00115 
-00116 <span class="preprocessor">#ifndef OSCL_UNSIGNED_CONST</span>
-<a name="l00117"></a><a class="code" href="group__osclbase.html#a95">00117</a> <span class="preprocessor"></span><span class="preprocessor">#define OSCL_UNSIGNED_CONST(x) x</span>
-00118 <span class="preprocessor"></span><span class="preprocessor">#endif</span>
-00119 <span class="preprocessor"></span>
-00120 <span class="comment">/*</span>
-00121 <span class="comment"> * These macros are used by MTP to avoid byte aligning structures.</span>
-00122 <span class="comment"> */</span>
-00123 <span class="preprocessor">#ifndef OSCL_PACKED_VAR</span>
-<a name="l00124"></a><a class="code" href="group__osclbase.html#a96">00124</a> <span class="preprocessor"></span><span class="preprocessor">#define OSCL_PACKED_VAR     "error"</span>
-00125 <span class="preprocessor"></span><span class="preprocessor">#endif</span>
-00126 <span class="preprocessor"></span>
-00127 
-00130 <span class="preprocessor">#endif  // OSCL_BASE_MACROS_H_INCLUDED</span>
+<a name="l00064"></a><a class="code" href="group__osclbase.html#a92">00064</a> <span class="preprocessor">#define OSCL_CONST_CAST(type,exp)           ((type)(exp))</span>
+<a name="l00065"></a><a class="code" href="group__osclbase.html#a93">00065</a> <span class="preprocessor"></span><span class="preprocessor">#define OSCL_STATIC_CAST(type,exp)          ((type)(exp))</span>
+<a name="l00066"></a><a class="code" href="group__osclbase.html#a94">00066</a> <span class="preprocessor"></span><span class="preprocessor">#define OSCL_REINTERPRET_CAST(type,exp)     ((type)(exp))</span>
+<a name="l00067"></a><a class="code" href="group__osclbase.html#a95">00067</a> <span class="preprocessor"></span><span class="preprocessor">#define OSCL_DYNAMIC_CAST(type, exp)        ((type)(exp))</span>
+<a name="l00068"></a><a class="code" href="group__osclbase.html#a96">00068</a> <span class="preprocessor"></span><span class="preprocessor">#define OSCL_VIRTUAL_BASE(type)               type</span>
+00069 <span class="preprocessor"></span>
+00070 
+<a name="l00085"></a><a class="code" href="group__osclbase.html#a97">00085</a> <span class="preprocessor">#define OSCL_UNUSED_ARG(vbl) (void)(vbl)</span>
+<a name="l00086"></a><a class="code" href="group__osclbase.html#a98">00086</a> <span class="preprocessor"></span><span class="preprocessor">#define OSCL_UNUSED_RETURN(value) return value</span>
+00087 <span class="preprocessor"></span>
+00088 <span class="comment">/* The __TFS__ macro is used to optionally expand to "&lt;&gt;" depending on the</span>
+00089 <span class="comment"> * compiler.  Some compilers require it to indicate that the friend function</span>
+00090 <span class="comment"> * is a template function as specified in the standard, but others don't</span>
+00091 <span class="comment"> * like it so it will handled with a macro expansion that depends on the</span>
+00092 <span class="comment"> * compiler.</span>
+00093 <span class="comment"> */</span>
+00094 <span class="preprocessor">#ifndef __TFS__</span>
+00095 <span class="preprocessor"></span><span class="preprocessor">#define __TFS__</span>
+00096 <span class="preprocessor"></span><span class="preprocessor">#endif</span>
+00097 <span class="preprocessor"></span>
+<a name="l00098"></a><a class="code" href="group__osclbase.html#a99">00098</a> <span class="preprocessor">#define OSCL_MIN(a,b) ((a) &lt; (b) ? (a) : (b))</span>
+<a name="l00099"></a><a class="code" href="group__osclbase.html#a100">00099</a> <span class="preprocessor"></span><span class="preprocessor">#define OSCL_MAX(a,b) ((a) &gt; (b) ? (a) : (b))</span>
+<a name="l00100"></a><a class="code" href="group__osclbase.html#a101">00100</a> <span class="preprocessor"></span><span class="preprocessor">#define OSCL_ABS(a) ((a) &gt; (0) ? (a) : -(a))</span>
+00101 <span class="preprocessor"></span>
+00102 <span class="comment">// the syntax for explicitly calling the destructor varies on some platforms</span>
+00103 <span class="comment">// below is the default syntax as defined in the C++ standard</span>
+00104 <span class="preprocessor">#ifndef OSCL_TEMPLATED_DESTRUCTOR_CALL</span>
+<a name="l00105"></a><a class="code" href="group__osclbase.html#a102">00105</a> <span class="preprocessor"></span><span class="preprocessor">#define OSCL_TEMPLATED_DESTRUCTOR_CALL(type,simple_type) type :: ~simple_type ()</span>
+00106 <span class="preprocessor"></span><span class="preprocessor">#endif</span>
+00107 <span class="preprocessor"></span>
+00108 
+00109 <span class="comment">/*</span>
+00110 <span class="comment"> * The OSCL_UNSIGNED_CONST macro is used to optionally add a suffix to the</span>
+00111 <span class="comment"> * end of integer constants to identify them as unsigned constants.  It is</span>
+00112 <span class="comment"> * usually only necessary to do that for very large constants that are too</span>
+00113 <span class="comment"> * big to fit within the range of a signed integer. Some compilers will issue</span>
+00114 <span class="comment"> * warnings for that.  The default behavior will be to add no suffix.</span>
+00115 <span class="comment"> */</span>
+00116 
+00117 <span class="preprocessor">#ifndef OSCL_UNSIGNED_CONST</span>
+<a name="l00118"></a><a class="code" href="group__osclbase.html#a103">00118</a> <span class="preprocessor"></span><span class="preprocessor">#define OSCL_UNSIGNED_CONST(x) x</span>
+00119 <span class="preprocessor"></span><span class="preprocessor">#endif</span>
+00120 <span class="preprocessor"></span>
+00121 <span class="comment">/*</span>
+00122 <span class="comment"> * These macros are used by MTP to avoid byte aligning structures.</span>
+00123 <span class="comment"> */</span>
+00124 <span class="preprocessor">#ifndef OSCL_PACKED_VAR</span>
+<a name="l00125"></a><a class="code" href="group__osclbase.html#a104">00125</a> <span class="preprocessor"></span><span class="preprocessor">#define OSCL_PACKED_VAR     "error"</span>
+00126 <span class="preprocessor"></span><span class="preprocessor">#endif</span>
+00127 <span class="preprocessor"></span>
+00128 
+00131 <span class="preprocessor">#endif  // OSCL_BASE_MACROS_H_INCLUDED</span>
 </pre></div><hr size="1"><img src="pvlogo_small.jpg"><address style="align: right;"><small>OSCL API</small>
-<address style="align: left;"><small>Posting Version: CORE_7.512.1.1 </small>
+<address style="align: left;"><small>Posting Version: CORE_8.000.1.1_RC1 </small>
 </small></address>
 </body>
 </html>

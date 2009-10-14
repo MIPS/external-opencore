@@ -20,7 +20,7 @@
 00022 <span class="preprocessor"></span><span class="preprocessor">#include "<a class="code" href="oscl__base_8h.html">oscl_base.h</a>"</span>
 00023 <span class="preprocessor">#endif</span>
 00024 <span class="preprocessor"></span>
-<a name="l00025"></a><a class="code" href="group__osclbase.html#a97">00025</a> <span class="preprocessor">#define OSCL_DISABLE_WARNING_TRUNCATE_DEBUG_MESSAGE</span>
+<a name="l00025"></a><a class="code" href="group__osclbase.html#a105">00025</a> <span class="preprocessor">#define OSCL_DISABLE_WARNING_TRUNCATE_DEBUG_MESSAGE</span>
 00026 <span class="preprocessor"></span><span class="preprocessor">#include "<a class="code" href="osclconfig__compiler__warnings_8h.html">osclconfig_compiler_warnings.h</a>"</span>
 00027 
 00028 <span class="preprocessor">#ifndef OSCL_MEM_INST_H_INCLUDED</span>
@@ -30,7 +30,7 @@
 00032 <span class="comment">//A macro for using the Oscl_Alloc or Oscl_DefAlloc call with file name and</span>
 00033 <span class="comment">//line number inputs to aid memory auditing.</span>
 00034 <span class="preprocessor">#if(PVMEM_INST_LEVEL&gt;0)</span>
-<a name="l00035"></a><a class="code" href="group__osclbase.html#a98">00035</a> <span class="preprocessor"></span><span class="preprocessor">#define ALLOCATE(n) allocate_fl(n,__FILE__,__LINE__)</span>
+<a name="l00035"></a><a class="code" href="group__osclbase.html#a106">00035</a> <span class="preprocessor"></span><span class="preprocessor">#define ALLOCATE(n) allocate_fl(n,__FILE__,__LINE__)</span>
 00036 <span class="preprocessor"></span><span class="preprocessor">#else</span>
 00037 <span class="preprocessor"></span><span class="preprocessor">#define ALLOCATE(n) allocate(n)</span>
 00038 <span class="preprocessor"></span><span class="preprocessor">#endif</span>
@@ -38,7 +38,7 @@
 00040 <span class="comment">//A macro for using the Oscl_TAlloc call with file name and line number inputs</span>
 00041 <span class="comment">//to aid memory auditing.</span>
 00042 <span class="preprocessor">#if(PVMEM_INST_LEVEL&gt;0)</span>
-<a name="l00043"></a><a class="code" href="group__osclbase.html#a99">00043</a> <span class="preprocessor"></span><span class="preprocessor">#define ALLOC_AND_CONSTRUCT(n) alloc_and_construct_fl(n,__FILE__,__LINE__)</span>
+<a name="l00043"></a><a class="code" href="group__osclbase.html#a107">00043</a> <span class="preprocessor"></span><span class="preprocessor">#define ALLOC_AND_CONSTRUCT(n) alloc_and_construct_fl(n,__FILE__,__LINE__)</span>
 00044 <span class="preprocessor"></span><span class="preprocessor">#else</span>
 00045 <span class="preprocessor"></span><span class="preprocessor">#define ALLOC_AND_CONSTRUCT(n) alloc_and_construct(n)</span>
 00046 <span class="preprocessor"></span><span class="preprocessor">#endif</span>
@@ -59,17 +59,17 @@
 <a name="l00061"></a><a class="code" href="classOscl__Alloc.html">00061</a> <span class="keyword">class </span><a class="code" href="classOscl__Alloc.html">Oscl_Alloc</a>
 00062 {
 00063     <span class="keyword">public</span>:
-00064         <span class="keyword">virtual</span> <a class="code" href="group__osclbase.html#a25">OsclAny</a>* <a class="code" href="classOscl__Alloc.html#a0">allocate</a>(<span class="keyword">const</span> uint32 size) = 0;
+00064         <span class="keyword">virtual</span> <a class="code" href="group__osclbase.html#a27">OsclAny</a>* <a class="code" href="classOscl__Alloc.html#a0">allocate</a>(<span class="keyword">const</span> uint32 size) = 0;
 00065 
 00066         <span class="comment">//Allocator with file name and line number inputs to aid memory auditing.</span>
 00067         <span class="comment">//This call should be used in cases where the allocation will invoke</span>
 00068         <span class="comment">//the Oscl memory manager.</span>
 00069         <span class="comment">//A default implementation is provided for use with allocators that don't</span>
 00070         <span class="comment">//invoke Oscl memory manager.</span>
-<a name="l00071"></a><a class="code" href="classOscl__Alloc.html#a1">00071</a>         <span class="keyword">virtual</span> <a class="code" href="group__osclbase.html#a25">OsclAny</a>* <a class="code" href="classOscl__Alloc.html#a1">allocate_fl</a>(<span class="keyword">const</span> uint32 size, <span class="keyword">const</span> <span class="keywordtype">char</span> * file_name, <span class="keyword">const</span> <span class="keywordtype">int</span> line_num)
+<a name="l00071"></a><a class="code" href="classOscl__Alloc.html#a1">00071</a>         <span class="keyword">virtual</span> <a class="code" href="group__osclbase.html#a27">OsclAny</a>* <a class="code" href="classOscl__Alloc.html#a1">allocate_fl</a>(<span class="keyword">const</span> uint32 size, <span class="keyword">const</span> <span class="keywordtype">char</span> * file_name, <span class="keyword">const</span> <span class="keywordtype">int</span> line_num)
 00072         {
-00073             <a class="code" href="group__osclbase.html#a89">OSCL_UNUSED_ARG</a>(file_name);
-00074             <a class="code" href="group__osclbase.html#a89">OSCL_UNUSED_ARG</a>(line_num);
+00073             <a class="code" href="group__osclbase.html#a97">OSCL_UNUSED_ARG</a>(file_name);
+00074             <a class="code" href="group__osclbase.html#a97">OSCL_UNUSED_ARG</a>(line_num);
 00075             <span class="keywordflow">return</span> <a class="code" href="classOscl__Alloc.html#a0">allocate</a>(size);
 00076         }
 00077 };
@@ -77,34 +77,34 @@
 <a name="l00079"></a><a class="code" href="classOscl__Dealloc.html">00079</a> <span class="keyword">class </span><a class="code" href="classOscl__Dealloc.html">Oscl_Dealloc</a>
 00080 {
 00081     <span class="keyword">public</span>:
-00082         <span class="keyword">virtual</span> <span class="keywordtype">void</span> <a class="code" href="classOscl__Dealloc.html#a0">deallocate</a>(<a class="code" href="group__osclbase.html#a25">OsclAny</a>* p) = 0;
+00082         <span class="keyword">virtual</span> <span class="keywordtype">void</span> <a class="code" href="classOscl__Dealloc.html#a0">deallocate</a>(<a class="code" href="group__osclbase.html#a27">OsclAny</a>* p) = 0;
 00083 };
 00084 
 00085 
 <a name="l00086"></a><a class="code" href="classOscl__DefAlloc.html">00086</a> <span class="keyword">class </span><a class="code" href="classOscl__DefAlloc.html">Oscl_DefAlloc</a> : <span class="keyword">public</span> <a class="code" href="classOscl__Alloc.html">Oscl_Alloc</a>, <span class="keyword">public</span> <a class="code" href="classOscl__Dealloc.html">Oscl_Dealloc</a>
 00087 {
 00088     <span class="keyword">public</span>:
-00089         <span class="keyword">virtual</span> <a class="code" href="group__osclbase.html#a25">OsclAny</a>* <a class="code" href="classOscl__DefAlloc.html#a0">allocate</a>(<span class="keyword">const</span> uint32 size) = 0;
+00089         <span class="keyword">virtual</span> <a class="code" href="group__osclbase.html#a27">OsclAny</a>* <a class="code" href="classOscl__DefAlloc.html#a0">allocate</a>(<span class="keyword">const</span> uint32 size) = 0;
 00090 
 00091         <span class="comment">//Allocator with file name and line number inputs to aid memory auditing.</span>
 00092         <span class="comment">//This call should be used in cases where the allocation will invoke</span>
 00093         <span class="comment">//the Oscl memory manager.</span>
 00094         <span class="comment">//A default implementation is provided for use with allocators that don't</span>
 00095         <span class="comment">//invoke Oscl memory manager.</span>
-<a name="l00096"></a><a class="code" href="classOscl__DefAlloc.html#a1">00096</a>         <span class="keyword">virtual</span> <a class="code" href="group__osclbase.html#a25">OsclAny</a>* <a class="code" href="classOscl__DefAlloc.html#a1">allocate_fl</a>(<span class="keyword">const</span> uint32 size, <span class="keyword">const</span> <span class="keywordtype">char</span> * file_name, <span class="keyword">const</span> <span class="keywordtype">int</span> line_num)
+<a name="l00096"></a><a class="code" href="classOscl__DefAlloc.html#a1">00096</a>         <span class="keyword">virtual</span> <a class="code" href="group__osclbase.html#a27">OsclAny</a>* <a class="code" href="classOscl__DefAlloc.html#a1">allocate_fl</a>(<span class="keyword">const</span> uint32 size, <span class="keyword">const</span> <span class="keywordtype">char</span> * file_name, <span class="keyword">const</span> <span class="keywordtype">int</span> line_num)
 00097         {
-00098             <a class="code" href="group__osclbase.html#a89">OSCL_UNUSED_ARG</a>(file_name);
-00099             <a class="code" href="group__osclbase.html#a89">OSCL_UNUSED_ARG</a>(line_num);
+00098             <a class="code" href="group__osclbase.html#a97">OSCL_UNUSED_ARG</a>(file_name);
+00099             <a class="code" href="group__osclbase.html#a97">OSCL_UNUSED_ARG</a>(line_num);
 00100             <span class="keywordflow">return</span> <a class="code" href="classOscl__DefAlloc.html#a0">allocate</a>(size);
 00101         }
-00102         <span class="keyword">virtual</span> <span class="keywordtype">void</span> <a class="code" href="classOscl__DefAlloc.html#a2">deallocate</a>(<a class="code" href="group__osclbase.html#a25">OsclAny</a>* p) = 0;
+00102         <span class="keyword">virtual</span> <span class="keywordtype">void</span> <a class="code" href="classOscl__DefAlloc.html#a2">deallocate</a>(<a class="code" href="group__osclbase.html#a27">OsclAny</a>* p) = 0;
 00103 };
 00104 
 00105 
 <a name="l00106"></a><a class="code" href="classOsclDestructDealloc.html">00106</a> <span class="keyword">class </span><a class="code" href="classOsclDestructDealloc.html">OsclDestructDealloc</a>
 00107 {
 00108     <span class="keyword">public</span>:
-00109         <span class="keyword">virtual</span> <span class="keywordtype">void</span> <a class="code" href="classOsclDestructDealloc.html#a0">destruct_and_dealloc</a>(<a class="code" href="group__osclbase.html#a25">OsclAny</a>* ptr) = 0;
+00109         <span class="keyword">virtual</span> <span class="keywordtype">void</span> <a class="code" href="classOsclDestructDealloc.html#a0">destruct_and_dealloc</a>(<a class="code" href="group__osclbase.html#a27">OsclAny</a>* ptr) = 0;
 00110 };
 00111 
 <a name="l00112"></a><a class="code" href="classOsclAllocDestructDealloc.html">00112</a> <span class="keyword">class </span><a class="code" href="classOsclAllocDestructDealloc.html">OsclAllocDestructDealloc</a>
@@ -132,48 +132,48 @@
 00134         <span class="comment">//the caller.  It can be invoked with the ALLOCATE macro.</span>
 <a name="l00135"></a><a class="code" href="classOscl__TAlloc.html#a1">00135</a>         <a class="code" href="classOscl__TAlloc.html#s1">pointer</a> <a class="code" href="classOscl__TAlloc.html#a1">allocate_fl</a>(uint32 size , <span class="keyword">const</span> <span class="keywordtype">char</span> * file_name, <span class="keyword">const</span> <span class="keywordtype">int</span> line_num)
 00136         {
-00137             <a class="code" href="group__osclbase.html#a25">OsclAny</a>* tmp = alloc.allocate_fl(size * <span class="keyword">sizeof</span>(<a class="code" href="classOscl__TAlloc.html#s0">value_type</a>), file_name, line_num);
-00138             <span class="keywordflow">return</span> <a class="code" href="group__osclbase.html#a86">OSCL_STATIC_CAST</a>(<a class="code" href="classOscl__TAlloc.html#s1">pointer</a>, tmp);
+00137             <a class="code" href="group__osclbase.html#a27">OsclAny</a>* tmp = alloc.allocate_fl(size * <span class="keyword">sizeof</span>(<a class="code" href="classOscl__TAlloc.html#s0">value_type</a>), file_name, line_num);
+00138             <span class="keywordflow">return</span> <a class="code" href="group__osclbase.html#a93">OSCL_STATIC_CAST</a>(<a class="code" href="classOscl__TAlloc.html#s1">pointer</a>, tmp);
 00139         }
 00140 
 <a name="l00141"></a><a class="code" href="classOscl__TAlloc.html#a2">00141</a>         <a class="code" href="classOscl__TAlloc.html#s1">pointer</a> <a class="code" href="classOscl__TAlloc.html#a2">allocate</a>(uint32 size)
 00142         {
-00143             <a class="code" href="group__osclbase.html#a25">OsclAny</a>* tmp = alloc.allocate_fl(size * <span class="keyword">sizeof</span>(<a class="code" href="classOscl__TAlloc.html#s0">value_type</a>), <a class="code" href="group__osclbase.html#a81">NULL</a>, 0);
-00144             <span class="keywordflow">return</span> <a class="code" href="group__osclbase.html#a86">OSCL_STATIC_CAST</a>(<a class="code" href="classOscl__TAlloc.html#s1">pointer</a>, tmp);
+00143             <a class="code" href="group__osclbase.html#a27">OsclAny</a>* tmp = alloc.allocate_fl(size * <span class="keyword">sizeof</span>(<a class="code" href="classOscl__TAlloc.html#s0">value_type</a>), <a class="code" href="group__osclbase.html#a88">NULL</a>, 0);
+00144             <span class="keywordflow">return</span> <a class="code" href="group__osclbase.html#a93">OSCL_STATIC_CAST</a>(<a class="code" href="classOscl__TAlloc.html#s1">pointer</a>, tmp);
 00145         }
 00146 
 00147         <span class="comment">//this is the preferred call-- with file and line number recorded by</span>
 00148         <span class="comment">//the caller.  It can be invoked by the ALLOC_AND_CONSTRUCT macro.</span>
 <a name="l00149"></a><a class="code" href="classOscl__TAlloc.html#a3">00149</a>         <a class="code" href="classOscl__TAlloc.html#s1">pointer</a> <a class="code" href="classOscl__TAlloc.html#a3">alloc_and_construct_fl</a>(<a class="code" href="classOscl__TAlloc.html#s5">const_reference</a> val, <span class="keyword">const</span> <span class="keywordtype">char</span> * file_name, <span class="keyword">const</span> <span class="keywordtype">int</span> line_num)
 00150         {
-00151             <a class="code" href="group__osclbase.html#a25">OsclAny</a>* tmp = alloc.allocate_fl(<span class="keyword">sizeof</span>(<a class="code" href="classOscl__TAlloc.html#s0">value_type</a>), file_name, line_num);
-00152             <a class="code" href="classOscl__TAlloc.html#a10">construct</a>(<a class="code" href="group__osclbase.html#a86">OSCL_STATIC_CAST</a>(<a class="code" href="classOscl__TAlloc.html#s1">pointer</a>, tmp), val);
-00153             <span class="keywordflow">return</span> <a class="code" href="group__osclbase.html#a86">OSCL_STATIC_CAST</a>(<a class="code" href="classOscl__TAlloc.html#s1">pointer</a>, tmp);
+00151             <a class="code" href="group__osclbase.html#a27">OsclAny</a>* tmp = alloc.allocate_fl(<span class="keyword">sizeof</span>(<a class="code" href="classOscl__TAlloc.html#s0">value_type</a>), file_name, line_num);
+00152             <a class="code" href="classOscl__TAlloc.html#a10">construct</a>(<a class="code" href="group__osclbase.html#a93">OSCL_STATIC_CAST</a>(<a class="code" href="classOscl__TAlloc.html#s1">pointer</a>, tmp), val);
+00153             <span class="keywordflow">return</span> <a class="code" href="group__osclbase.html#a93">OSCL_STATIC_CAST</a>(<a class="code" href="classOscl__TAlloc.html#s1">pointer</a>, tmp);
 00154         }
 00155 
 <a name="l00156"></a><a class="code" href="classOscl__TAlloc.html#a4">00156</a>         <a class="code" href="classOscl__TAlloc.html#s1">pointer</a> <a class="code" href="classOscl__TAlloc.html#a4">alloc_and_construct</a>(<a class="code" href="classOscl__TAlloc.html#s5">const_reference</a> val)
 00157         {
 00158             <span class="comment">//note: recording file &amp; line # here is not useful-- the caller</span>
 00159             <span class="comment">//should provide them.  Just pass zero to aid debugging.</span>
-00160             <a class="code" href="group__osclbase.html#a25">OsclAny</a>* tmp = alloc.allocate_fl(<span class="keyword">sizeof</span>(<a class="code" href="classOscl__TAlloc.html#s0">value_type</a>), <a class="code" href="group__osclbase.html#a81">NULL</a>, 0);
-00161             <a class="code" href="classOscl__TAlloc.html#a10">construct</a>(<a class="code" href="group__osclbase.html#a86">OSCL_STATIC_CAST</a>(<a class="code" href="classOscl__TAlloc.html#s1">pointer</a>, tmp), val);
-00162             <span class="keywordflow">return</span> <a class="code" href="group__osclbase.html#a86">OSCL_STATIC_CAST</a>(<a class="code" href="classOscl__TAlloc.html#s1">pointer</a>, tmp);
+00160             <a class="code" href="group__osclbase.html#a27">OsclAny</a>* tmp = alloc.allocate_fl(<span class="keyword">sizeof</span>(<a class="code" href="classOscl__TAlloc.html#s0">value_type</a>), <a class="code" href="group__osclbase.html#a88">NULL</a>, 0);
+00161             <a class="code" href="classOscl__TAlloc.html#a10">construct</a>(<a class="code" href="group__osclbase.html#a93">OSCL_STATIC_CAST</a>(<a class="code" href="classOscl__TAlloc.html#s1">pointer</a>, tmp), val);
+00162             <span class="keywordflow">return</span> <a class="code" href="group__osclbase.html#a93">OSCL_STATIC_CAST</a>(<a class="code" href="classOscl__TAlloc.html#s1">pointer</a>, tmp);
 00163         }
 00164 
-<a name="l00165"></a><a class="code" href="classOscl__TAlloc.html#a5">00165</a>         <span class="keywordtype">void</span> <a class="code" href="classOscl__TAlloc.html#a5">deallocate</a>(<a class="code" href="group__osclbase.html#a25">OsclAny</a>* p)
+<a name="l00165"></a><a class="code" href="classOscl__TAlloc.html#a5">00165</a>         <span class="keywordtype">void</span> <a class="code" href="classOscl__TAlloc.html#a5">deallocate</a>(<a class="code" href="group__osclbase.html#a27">OsclAny</a>* p)
 00166         {
 00167             alloc.deallocate(p);
 00168         }
 00169 
-<a name="l00170"></a><a class="code" href="classOscl__TAlloc.html#a6">00170</a>         <span class="keywordtype">void</span> <a class="code" href="classOscl__TAlloc.html#a5">deallocate</a>(<a class="code" href="group__osclbase.html#a25">OsclAny</a>* p, <a class="code" href="classOscl__TAlloc.html#s3">size_type</a> n)
+<a name="l00170"></a><a class="code" href="classOscl__TAlloc.html#a6">00170</a>         <span class="keywordtype">void</span> <a class="code" href="classOscl__TAlloc.html#a5">deallocate</a>(<a class="code" href="group__osclbase.html#a27">OsclAny</a>* p, <a class="code" href="classOscl__TAlloc.html#s3">size_type</a> n)
 00171         {
-00172             <a class="code" href="group__osclbase.html#a89">OSCL_UNUSED_ARG</a>(n);
+00172             <a class="code" href="group__osclbase.html#a97">OSCL_UNUSED_ARG</a>(n);
 00173             alloc.deallocate(p);
 00174         }
 00175 
-<a name="l00176"></a><a class="code" href="classOscl__TAlloc.html#a7">00176</a>         <span class="keywordtype">void</span> <a class="code" href="classOscl__TAlloc.html#a7">destruct_and_dealloc</a>(<a class="code" href="group__osclbase.html#a25">OsclAny</a>* p)
+<a name="l00176"></a><a class="code" href="classOscl__TAlloc.html#a7">00176</a>         <span class="keywordtype">void</span> <a class="code" href="classOscl__TAlloc.html#a7">destruct_and_dealloc</a>(<a class="code" href="group__osclbase.html#a27">OsclAny</a>* p)
 00177         {
-00178             <a class="code" href="classOscl__TAlloc.html#a11">destroy</a>(<a class="code" href="group__osclbase.html#a86">OSCL_STATIC_CAST</a>(<a class="code" href="classOscl__TAlloc.html#s1">pointer</a>, p));
+00178             <a class="code" href="classOscl__TAlloc.html#a11">destroy</a>(<a class="code" href="group__osclbase.html#a93">OSCL_STATIC_CAST</a>(<a class="code" href="classOscl__TAlloc.html#s1">pointer</a>, p));
 00179             <a class="code" href="classOscl__TAlloc.html#a5">deallocate</a>(p);
 00180         }
 00181 
@@ -192,7 +192,7 @@
 00194         }
 <a name="l00195"></a><a class="code" href="classOscl__TAlloc.html#a11">00195</a>         <span class="keywordtype">void</span> <a class="code" href="classOscl__TAlloc.html#a11">destroy</a>(<a class="code" href="classOscl__TAlloc.html#s1">pointer</a> p)
 00196         {
-00197             <a class="code" href="group__osclbase.html#a89">OSCL_UNUSED_ARG</a>(p);
+00197             <a class="code" href="group__osclbase.html#a97">OSCL_UNUSED_ARG</a>(p);
 00198             p-&gt;~T();
 00199         }
 00200 
@@ -209,7 +209,7 @@
 00211 
 00214 <span class="preprocessor">#endif</span>
 </pre></div><hr size="1"><img src="pvlogo_small.jpg"><address style="align: right;"><small>OSCL API</small>
-<address style="align: left;"><small>Posting Version: CORE_7.512.1.1 </small>
+<address style="align: left;"><small>Posting Version: CORE_8.000.1.1_RC1 </small>
 </small></address>
 </body>
 </html>

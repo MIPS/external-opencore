@@ -32,7 +32,7 @@
 <a name="l00037"></a><a class="code" href="classOsclErrorTrap.html">00037</a> <span class="keyword">class </span><a class="code" href="classOsclErrorTrap.html">OsclErrorTrap</a>
 00038 {
 00039     <span class="keyword">public</span>:
-00047         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keyword">static</span> int32 <a class="code" href="classOsclErrorTrap.html#d0">Init</a>(<a class="code" href="classOscl__DefAlloc.html">Oscl_DefAlloc</a> *aAlloc = <a class="code" href="group__osclbase.html#a81">NULL</a>);
+00047         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keyword">static</span> int32 <a class="code" href="classOsclErrorTrap.html#d0">Init</a>(<a class="code" href="classOscl__DefAlloc.html">Oscl_DefAlloc</a> *aAlloc = <a class="code" href="group__osclbase.html#a88">NULL</a>);
 00053         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keyword">static</span> int32 <a class="code" href="classOsclErrorTrap.html#d1">Cleanup</a>();
 00058         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keyword">static</span> <a class="code" href="classOsclErrorTrapImp.html">OsclErrorTrapImp</a>* <a class="code" href="classOsclErrorTrap.html#d2">GetErrorTrapImp</a>();
 00059 };
@@ -43,7 +43,7 @@
 00067     <span class="keyword">public</span>:
 00074         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keyword">static</span> <span class="keywordtype">void</span> <a class="code" href="classOsclError.html#d0">PushL</a>(<a class="code" href="class__OsclHeapBase.html">_OsclHeapBase</a> * aPtr);
 00075 
-00078         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keyword">static</span> <span class="keywordtype">void</span> <a class="code" href="classOsclError.html#d0">PushL</a>(<a class="code" href="group__osclbase.html#a25">OsclAny</a>* aPtr);
+00078         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keyword">static</span> <span class="keywordtype">void</span> <a class="code" href="classOsclError.html#d0">PushL</a>(<a class="code" href="group__osclbase.html#a27">OsclAny</a>* aPtr);
 00079 
 00082         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keyword">static</span> <span class="keywordtype">void</span> <a class="code" href="classOsclError.html#d0">PushL</a>(<a class="code" href="classOsclTrapItem.html">OsclTrapItem</a> anItem);
 00083 
@@ -57,7 +57,7 @@
 00100 
 00106         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keyword">static</span> <span class="keywordtype">void</span> <a class="code" href="classOsclError.html#d7">Leave</a>(int32 aReason);
 00107 
-00111         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keyword">static</span> <span class="keywordtype">void</span> <a class="code" href="classOsclError.html#d8">LeaveIfNull</a>(<a class="code" href="group__osclbase.html#a25">OsclAny</a> *a);
+00111         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keyword">static</span> <span class="keywordtype">void</span> <a class="code" href="classOsclError.html#d8">LeaveIfNull</a>(<a class="code" href="group__osclbase.html#a27">OsclAny</a> *a);
 00112 
 00117         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keyword">static</span> <span class="keywordtype">void</span> <a class="code" href="classOsclError.html#d9">LeaveIfError</a>(int32 aReason);
 00118 
@@ -94,13 +94,13 @@
 00155 <span class="comment">        ** @returns: the entry value</span>
 00156 <span class="comment">        ** @exception: leaves on error.</span>
 00157 <span class="comment">        */</span>
-00158         <span class="keyword">static</span> <a class="code" href="group__osclbase.html#a25">OsclAny</a>* getInstance(uint32 ID)
+00158         <span class="keyword">static</span> <a class="code" href="group__osclbase.html#a27">OsclAny</a>* getInstance(uint32 ID)
 00159         {
 00160             int32 error;
-00161             <a class="code" href="group__osclbase.html#a25">OsclAny</a>* val = <a class="code" href="classOsclSingletonRegistry.html#d0">OsclSingletonRegistry::getInstance</a>(ID, error);
+00161             <a class="code" href="group__osclbase.html#a27">OsclAny</a>* val = <a class="code" href="classOsclSingletonRegistry.html#d0">OsclSingletonRegistry::getInstance</a>(ID, error);
 00162             <span class="keywordflow">if</span> (error)
 00163             {
-00164                 <a class="code" href="group__osclbase.html#a78">OSCL_ASSERT</a>(_OsclBaseToErrorMap[error]);
+00164                 <a class="code" href="group__osclbase.html#a85">OSCL_ASSERT</a>(_OsclBaseToErrorMap[error]);
 00165                 <a class="code" href="classOsclError.html#d7">OsclError::Leave</a>(_OsclBaseToErrorMap[error]);
 00166             }
 00167             <span class="keywordflow">return</span> val;
@@ -112,13 +112,13 @@
 00173 <span class="comment">        ** @returns: the entry value</span>
 00174 <span class="comment">        ** @exception: leaves on error.</span>
 00175 <span class="comment">        */</span>
-00176         <span class="keyword">static</span> <span class="keywordtype">void</span> registerInstance(<a class="code" href="group__osclbase.html#a25">OsclAny</a>* ptr, uint32 ID)
+00176         <span class="keyword">static</span> <span class="keywordtype">void</span> registerInstance(<a class="code" href="group__osclbase.html#a27">OsclAny</a>* ptr, uint32 ID)
 00177         {
 00178             int32 error;
 00179             <a class="code" href="classOsclSingletonRegistry.html#d1">OsclSingletonRegistry::registerInstance</a>(ptr, ID, error);
 00180             <span class="keywordflow">if</span> (error)
 00181             {
-00182                 <a class="code" href="group__osclbase.html#a78">OSCL_ASSERT</a>(_OsclBaseToErrorMap[error]);
+00182                 <a class="code" href="group__osclbase.html#a85">OSCL_ASSERT</a>(_OsclBaseToErrorMap[error]);
 00183                 <a class="code" href="classOsclError.html#d7">OsclError::Leave</a>(_OsclBaseToErrorMap[error]);
 00184             }
 00185         }
@@ -135,13 +135,13 @@
 00196 <span class="comment">        * @returns the singleton value.</span>
 00197 <span class="comment">        ** @exception: leaves on error.</span>
 00198 <span class="comment">        */</span>
-00199         <span class="keyword">static</span> <a class="code" href="group__osclbase.html#a25">OsclAny</a>* lockAndGetInstance(uint32 ID)
+00199         <span class="keyword">static</span> <a class="code" href="group__osclbase.html#a27">OsclAny</a>* lockAndGetInstance(uint32 ID)
 00200         {
 00201             int32 error;
-00202             <a class="code" href="group__osclbase.html#a25">OsclAny</a>* val = <a class="code" href="classOsclSingletonRegistry.html#d2">OsclSingletonRegistry::lockAndGetInstance</a>(ID, error);
+00202             <a class="code" href="group__osclbase.html#a27">OsclAny</a>* val = <a class="code" href="classOsclSingletonRegistry.html#d2">OsclSingletonRegistry::lockAndGetInstance</a>(ID, error);
 00203             <span class="keywordflow">if</span> (error)
 00204             {
-00205                 <a class="code" href="group__osclbase.html#a78">OSCL_ASSERT</a>(_OsclBaseToErrorMap[error]);
+00205                 <a class="code" href="group__osclbase.html#a85">OSCL_ASSERT</a>(_OsclBaseToErrorMap[error]);
 00206                 <a class="code" href="classOsclError.html#d7">OsclError::Leave</a>(_OsclBaseToErrorMap[error]);
 00207             }
 00208             <span class="keywordflow">return</span> val;
@@ -153,13 +153,13 @@
 00214 <span class="comment">        * @param ID the singleton ID</span>
 00215 <span class="comment">        ** @exception: leaves on error.</span>
 00216 <span class="comment">        */</span>
-00217         <span class="keyword">static</span> <span class="keywordtype">void</span> registerInstanceAndUnlock(<a class="code" href="group__osclbase.html#a25">OsclAny</a>* ptr, uint32 ID)
+00217         <span class="keyword">static</span> <span class="keywordtype">void</span> registerInstanceAndUnlock(<a class="code" href="group__osclbase.html#a27">OsclAny</a>* ptr, uint32 ID)
 00218         {
 00219             int32 error;
 00220             <a class="code" href="classOsclSingletonRegistry.html#d3">OsclSingletonRegistry::registerInstanceAndUnlock</a>(ptr, ID, error);
 00221             <span class="keywordflow">if</span> (error)
 00222             {
-00223                 <a class="code" href="group__osclbase.html#a78">OSCL_ASSERT</a>(_OsclBaseToErrorMap[error]);
+00223                 <a class="code" href="group__osclbase.html#a85">OSCL_ASSERT</a>(_OsclBaseToErrorMap[error]);
 00224                 <a class="code" href="classOsclError.html#d7">OsclError::Leave</a>(_OsclBaseToErrorMap[error]);
 00225             }
 00226         }
@@ -178,7 +178,7 @@
 00239         T* _Ptr;
 00240 
 00241     <span class="keyword">public</span>:
-00242         OsclSingletonEx(): _Ptr(<a class="code" href="group__osclbase.html#a86">OSCL_STATIC_CAST</a>(T*, Registry::getInstance(ID))) {};
+00242         OsclSingletonEx(): _Ptr(<a class="code" href="group__osclbase.html#a93">OSCL_STATIC_CAST</a>(T*, Registry::getInstance(ID))) {};
 00243 
 00244         ~OsclSingletonEx() {};
 00245 
@@ -195,7 +195,7 @@
 00270 
 00277         <span class="keywordtype">bool</span> set()
 00278         {
-00279             _Ptr = <a class="code" href="group__osclbase.html#a86">OSCL_STATIC_CAST</a>(T*, Registry::getInstance(ID));
+00279             _Ptr = <a class="code" href="group__osclbase.html#a93">OSCL_STATIC_CAST</a>(T*, Registry::getInstance(ID));
 00280             <span class="keywordflow">return</span> (_Ptr ? <span class="keyword">true</span> : <span class="keyword">false</span>);
 00281         }
 00282 
@@ -213,13 +213,13 @@
 00294 <span class="comment">        ** @returns: the entry value</span>
 00295 <span class="comment">        ** @exception: leaves on error.</span>
 00296 <span class="comment">        */</span>
-<a name="l00297"></a><a class="code" href="classOsclTLSRegistryEx.html#d0">00297</a>         <span class="keyword">static</span> <a class="code" href="group__osclbase.html#a25">OsclAny</a>* <a class="code" href="classOsclTLSRegistryEx.html#d0">getInstance</a>(uint32 ID)
+<a name="l00297"></a><a class="code" href="classOsclTLSRegistryEx.html#d0">00297</a>         <span class="keyword">static</span> <a class="code" href="group__osclbase.html#a27">OsclAny</a>* <a class="code" href="classOsclTLSRegistryEx.html#d0">getInstance</a>(uint32 ID)
 00298         {
 00299             int32 error;
-00300             <a class="code" href="group__osclbase.html#a25">OsclAny</a>* val = <a class="code" href="classOsclTLSRegistry.html#d0">OsclTLSRegistry::getInstance</a>(ID, error);
+00300             <a class="code" href="group__osclbase.html#a27">OsclAny</a>* val = <a class="code" href="classOsclTLSRegistry.html#d0">OsclTLSRegistry::getInstance</a>(ID, error);
 00301             <span class="keywordflow">if</span> (error)
 00302             {
-00303                 <a class="code" href="group__osclbase.html#a78">OSCL_ASSERT</a>(_OsclBaseToErrorMap[error]);
+00303                 <a class="code" href="group__osclbase.html#a85">OSCL_ASSERT</a>(_OsclBaseToErrorMap[error]);
 00304                 <a class="code" href="classOsclError.html#d7">OsclError::Leave</a>(_OsclBaseToErrorMap[error]);
 00305             }
 00306             <span class="keywordflow">return</span> val;
@@ -230,13 +230,13 @@
 00311 <span class="comment">        ** @returns: the entry value</span>
 00312 <span class="comment">        ** @exception: leaves on error.</span>
 00313 <span class="comment">        */</span>
-<a name="l00314"></a><a class="code" href="classOsclTLSRegistryEx.html#d1">00314</a>         <span class="keyword">static</span> <span class="keywordtype">void</span> <a class="code" href="classOsclTLSRegistryEx.html#d1">registerInstance</a>(<a class="code" href="group__osclbase.html#a25">OsclAny</a>* ptr, uint32 ID)
+<a name="l00314"></a><a class="code" href="classOsclTLSRegistryEx.html#d1">00314</a>         <span class="keyword">static</span> <span class="keywordtype">void</span> <a class="code" href="classOsclTLSRegistryEx.html#d1">registerInstance</a>(<a class="code" href="group__osclbase.html#a27">OsclAny</a>* ptr, uint32 ID)
 00315         {
 00316             int32 error;
 00317             <a class="code" href="classOsclTLSRegistry.html#d1">OsclTLSRegistry::registerInstance</a>(ptr, ID, error);
 00318             <span class="keywordflow">if</span> (error)
 00319             {
-00320                 <a class="code" href="group__osclbase.html#a78">OSCL_ASSERT</a>(_OsclBaseToErrorMap[error]);
+00320                 <a class="code" href="group__osclbase.html#a85">OSCL_ASSERT</a>(_OsclBaseToErrorMap[error]);
 00321                 <a class="code" href="classOsclError.html#d7">OsclError::Leave</a>(_OsclBaseToErrorMap[error]);
 00322             }
 00323         }
@@ -255,7 +255,7 @@
 <a name="l00336"></a><a class="code" href="classOsclTLSEx.html#n0">00336</a>         T* <a class="code" href="classOsclTLSEx.html#n0">_Ptr</a>;
 00337 
 00338     <span class="keyword">public</span>:
-<a name="l00339"></a><a class="code" href="classOsclTLSEx.html#a0">00339</a>         <a class="code" href="classOsclTLSEx.html#a0">OsclTLSEx</a>(): <a class="code" href="classOsclTLSEx.html#n0">_Ptr</a>(<a class="code" href="group__osclbase.html#a86">OSCL_STATIC_CAST</a>(T*, Registry::getInstance(ID))) {};
+<a name="l00339"></a><a class="code" href="classOsclTLSEx.html#a0">00339</a>         <a class="code" href="classOsclTLSEx.html#a0">OsclTLSEx</a>(): <a class="code" href="classOsclTLSEx.html#n0">_Ptr</a>(<a class="code" href="group__osclbase.html#a93">OSCL_STATIC_CAST</a>(T*, Registry::getInstance(ID))) {};
 00340 
 <a name="l00341"></a><a class="code" href="classOsclTLSEx.html#a1">00341</a>         <a class="code" href="classOsclTLSEx.html#a1">~OsclTLSEx</a>() {};
 00342 
@@ -272,7 +272,7 @@
 00367 
 <a name="l00374"></a><a class="code" href="classOsclTLSEx.html#a4">00374</a>         <span class="keywordtype">bool</span> <a class="code" href="classOsclTLSEx.html#a4">set</a>()
 00375         {
-00376             <a class="code" href="classOsclTLSEx.html#n0">_Ptr</a> = <a class="code" href="group__osclbase.html#a86">OSCL_STATIC_CAST</a>(T*, Registry::getInstance(ID));
+00376             <a class="code" href="classOsclTLSEx.html#n0">_Ptr</a> = <a class="code" href="group__osclbase.html#a93">OSCL_STATIC_CAST</a>(T*, Registry::getInstance(ID));
 00377             <span class="keywordflow">return</span> (<a class="code" href="classOsclTLSEx.html#n0">_Ptr</a> ? <span class="keyword">true</span> : <span class="keyword">false</span>);
 00378         }
 00379 
@@ -281,7 +281,7 @@
 00382 <span class="preprocessor">#endif</span>
 00383 <span class="preprocessor"></span>
 </pre></div><hr size="1"><img src="pvlogo_small.jpg"><address style="align: right;"><small>OSCL API</small>
-<address style="align: left;"><small>Posting Version: CORE_7.512.1.1 </small>
+<address style="align: left;"><small>Posting Version: CORE_8.000.1.1_RC1 </small>
 </small></address>
 </body>
 </html>

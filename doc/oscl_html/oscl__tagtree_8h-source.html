@@ -48,15 +48,15 @@
 00050     }
 <a name="l00051"></a><a class="code" href="structOscl__Tag__Base.html#a1">00051</a>     <a class="code" href="structOscl__Tag__Base.html#s2">size_type</a> <a class="code" href="structOscl__Tag__Base.html#a1">tag_len</a>(<span class="keyword">const</span> <a class="code" href="structOscl__Tag__Base.html#s1">tag_base_type</a>&amp; t)<span class="keyword"> const</span>
 00052 <span class="keyword">    </span>{
-00053         <span class="keywordflow">return</span> (size_type)<a class="code" href="group__osclbase.html#a43">oscl_strlen</a>(t);
+00053         <span class="keywordflow">return</span> (size_type)<a class="code" href="group__osclbase.html#a45">oscl_strlen</a>(t);
 00054     }
 <a name="l00055"></a><a class="code" href="structOscl__Tag__Base.html#a2">00055</a>     <a class="code" href="structOscl__Tag__Base.html#s1">tag_base_type</a> <a class="code" href="structOscl__Tag__Base.html#a2">tag_copy</a>(<a class="code" href="structOscl__Tag__Base.html#s1">tag_base_type</a>&amp; dest, <span class="keyword">const</span> <a class="code" href="structOscl__Tag__Base.html#s1">tag_base_type</a>&amp; src)<span class="keyword"> const</span>
 00056 <span class="keyword">    </span>{
-00057         <span class="keywordflow">return</span> <a class="code" href="group__osclbase.html#a45">oscl_strncpy</a>(dest, src, <a class="code" href="group__osclbase.html#a43">oscl_strlen</a>(src) + 1);
+00057         <span class="keywordflow">return</span> <a class="code" href="group__osclbase.html#a47">oscl_strncpy</a>(dest, src, <a class="code" href="group__osclbase.html#a45">oscl_strlen</a>(src) + 1);
 00058     }
 <a name="l00059"></a><a class="code" href="structOscl__Tag__Base.html#a3">00059</a>     int32 <a class="code" href="structOscl__Tag__Base.html#a3">tag_cmp</a>(<span class="keyword">const</span> <a class="code" href="structOscl__Tag__Base.html#s1">tag_base_type</a>&amp; x, <span class="keyword">const</span> <a class="code" href="structOscl__Tag__Base.html#s1">tag_base_type</a>&amp; y)<span class="keyword"> const</span>
 00060 <span class="keyword">    </span>{
-00061         <span class="keywordflow">return</span> <a class="code" href="group__osclbase.html#a49">oscl_strncmp</a>(x, y, <a class="code" href="group__osclbase.html#a43">oscl_strlen</a>(x) + 1);
+00061         <span class="keywordflow">return</span> <a class="code" href="group__osclbase.html#a51">oscl_strncmp</a>(x, y, <a class="code" href="group__osclbase.html#a45">oscl_strlen</a>(x) + 1);
 00062     }
 00063     <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <a class="code" href="structOscl__Tag__Base.html#s1">tag_base_type</a> <a class="code" href="structOscl__Tag__Base.html#a4">tag_ancestor</a>(<a class="code" href="structOscl__Tag__Base.html#s1">tag_base_type</a>&amp; dest, <span class="keyword">const</span> <a class="code" href="structOscl__Tag__Base.html#s1">tag_base_type</a>&amp; src) <span class="keyword">const</span>;
 00064     <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <a class="code" href="structOscl__Tag__Base.html#s2">size_type</a> <a class="code" href="structOscl__Tag__Base.html#a5">tag_depth</a>(<span class="keyword">const</span> <a class="code" href="structOscl__Tag__Base.html#s1">tag_base_type</a>&amp; t) <span class="keyword">const</span>;
@@ -284,7 +284,7 @@
 00292         {
 00293             <span class="comment">// insert the root node</span>
 00294             <a class="code" href="classOscl__TagTree.html#s4">node_ptr</a> node = create_node((<span class="keywordtype">char</span>*)<span class="stringliteral">""</span>, T());
-00295             node-&gt;parent = <a class="code" href="group__osclbase.html#a81">NULL</a>;
+00295             node-&gt;parent = <a class="code" href="group__osclbase.html#a88">NULL</a>;
 00296             <span class="keyword">typename</span> map_type::value_type pair(node-&gt;tag.tag, node);
 00297             nodeMap.<a class="code" href="classOscl__Map.html#a13">insert</a>(pair);
 00298         }
@@ -350,7 +350,7 @@
 00404 
 00405             tag_type currenttag(t);
 00406             pair_iterator_bool result(<a class="code" href="classOscl__TagTree.html#a6">end</a>(), <span class="keyword">false</span>);
-00407             <a class="code" href="classOscl__TagTree.html#s4">node_ptr</a> child = <a class="code" href="group__osclbase.html#a81">NULL</a>;
+00407             <a class="code" href="classOscl__TagTree.html#s4">node_ptr</a> child = <a class="code" href="group__osclbase.html#a88">NULL</a>;
 00408             <a class="code" href="classOscl__TagTree.html#s6">size_type</a> ii;
 00409             <a class="code" href="classOscl__TagTree.html#s6">size_type</a> maxloops;
 00410 
@@ -489,7 +489,7 @@
 00578 <span class="preprocessor">#endif</span>
 00579 <span class="preprocessor"></span>
 </pre></div><hr size="1"><img src="pvlogo_small.jpg"><address style="align: right;"><small>OSCL API</small>
-<address style="align: left;"><small>Posting Version: CORE_7.512.1.1 </small>
+<address style="align: left;"><small>Posting Version: CORE_8.000.1.1_RC1 </small>
 </small></address>
 </body>
 </html>

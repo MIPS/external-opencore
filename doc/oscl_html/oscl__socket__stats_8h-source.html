@@ -113,7 +113,7 @@
 00108         <span class="keywordtype">void</span> Log(<a class="code" href="oscl__socket__types_8h.html#a19">TPVSocketFxn</a>);
 00109         <span class="keywordtype">void</span> Log();
 00110         <span class="keywordtype">void</span> Clear(<a class="code" href="oscl__socket__types_8h.html#a19">TPVSocketFxn</a>);
-00111         <span class="keywordtype">void</span> Construct(<a class="code" href="group__osclbase.html#a25">OsclAny</a>* aContainer, <a class="code" href="group__osclbase.html#a25">OsclAny</a>*aServ);
+00111         <span class="keywordtype">void</span> Construct(<a class="code" href="group__osclbase.html#a27">OsclAny</a>* aContainer, <a class="code" href="group__osclbase.html#a27">OsclAny</a>*aServ);
 00112         <span class="keywordtype">void</span> LogAndDump();
 00113     <span class="keyword">private</span>:
 00114         <a class="code" href="classOscl__Vector.html">Oscl_Vector&lt;OsclSocketStatEventEntry, OsclMemAllocator&gt;</a> iEvents[OsclSocketStats_NUM_ACTIVE_REQUESTS];
@@ -123,8 +123,8 @@
 00118         <a class="code" href="classOsclThreadLock.html">OsclThreadLock</a> iLock;
 00119         <span class="keywordtype">char</span>* iLogStr;
 00120         <a class="code" href="classPVLogger.html">PVLogger</a>* iLogger;
-00121         <a class="code" href="group__osclbase.html#a25">OsclAny</a>* iSock;
-00122         <a class="code" href="group__osclbase.html#a25">OsclAny</a>* iServ;
+00121         <a class="code" href="group__osclbase.html#a27">OsclAny</a>* iSock;
+00122         <a class="code" href="group__osclbase.html#a27">OsclAny</a>* iServ;
 00123 };
 00124 
 00125 <span class="keyword">class </span>OsclSocketServStats
@@ -133,7 +133,7 @@
 00128         OsclSocketServStats();
 00129         ~OsclSocketServStats();
 00130         <span class="keywordtype">void</span> Add(<a class="code" href="oscl__socket__stats_8h.html#a24">TOsclSocketServStatEvent</a>);
-00131         <span class="keywordtype">void</span> Construct(<a class="code" href="group__osclbase.html#a25">OsclAny</a>*aServ);
+00131         <span class="keywordtype">void</span> Construct(<a class="code" href="group__osclbase.html#a27">OsclAny</a>*aServ);
 00132         <span class="keywordtype">void</span> LogAndDump();
 00133     <span class="keyword">private</span>:
 00134         <span class="keywordtype">void</span> Log(<a class="code" href="oscl__socket__stats_8h.html#a24">TOsclSocketServStatEvent</a>);
@@ -141,7 +141,7 @@
 00136         <span class="keywordtype">void</span> ShowTuneables();
 00137         uint32 iEvents[<a class="code" href="oscl__socket__stats_8h.html#a24a22">EOsclSocketServ_LastEvent</a>];
 00138         <a class="code" href="classPVLogger.html">PVLogger</a>* iLogger;
-00139         <a class="code" href="group__osclbase.html#a25">OsclAny</a>* iServ;
+00139         <a class="code" href="group__osclbase.html#a27">OsclAny</a>* iServ;
 00140 };
 00141 
 00142 <span class="preprocessor">#endif</span>
@@ -150,7 +150,7 @@
 00145 
 00146 
 </pre></div><hr size="1"><img src="pvlogo_small.jpg"><address style="align: right;"><small>OSCL API</small>
-<address style="align: left;"><small>Posting Version: CORE_7.512.1.1 </small>
+<address style="align: left;"><small>Posting Version: CORE_8.000.1.1_RC1 </small>
 </small></address>
 </body>
 </html>

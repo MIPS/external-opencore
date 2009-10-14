@@ -54,7 +54,7 @@
 <a name="l00060"></a><a class="code" href="structStrPtrLen.html#a0">00060</a>     <a class="code" href="structStrPtrLen.html#a2">StrPtrLen</a>(<span class="keyword">const</span> <span class="keywordtype">char</span>* newPtr)
 00061             : <a class="code" href="structStrPtrLen.html#n0">ptr</a>(newPtr)
 00062     {
-00063         <a class="code" href="structStrPtrLen.html#n1">len</a> = <a class="code" href="group__osclbase.html#a43">oscl_strlen</a>(newPtr);
+00063         <a class="code" href="structStrPtrLen.html#n1">len</a> = <a class="code" href="group__osclbase.html#a45">oscl_strlen</a>(newPtr);
 00064     }
 00065 
 <a name="l00066"></a><a class="code" href="structStrPtrLen.html#a1">00066</a>     <a class="code" href="structStrPtrLen.html#a2">StrPtrLen</a>(<span class="keyword">const</span> <span class="keywordtype">char</span>* newPtr, uint32 newLen)
@@ -90,7 +90,7 @@
 00096         <a class="code" href="structStrPtrLen.html#n1">len</a> = newLen;
 00097     }
 00098 
-<a name="l00099"></a><a class="code" href="structStrPtrLen.html#a8">00099</a>     <a class="code" href="group__osclbase.html#a24">c_bool</a> <a class="code" href="structStrPtrLen.html#a8">isCIEquivalentTo</a>(<span class="keyword">const</span> <a class="code" href="structStrPtrLen.html">StrPtrLen</a>&amp; rhs)<span class="keyword"> const</span>
+<a name="l00099"></a><a class="code" href="structStrPtrLen.html#a8">00099</a>     <a class="code" href="group__osclbase.html#a26">c_bool</a> <a class="code" href="structStrPtrLen.html#a8">isCIEquivalentTo</a>(<span class="keyword">const</span> <a class="code" href="structStrPtrLen.html">StrPtrLen</a>&amp; rhs)<span class="keyword"> const</span>
 00100 <span class="keyword">    </span>{
 00101         <span class="keywordflow">if</span> (<a class="code" href="structStrPtrLen.html#n1">len</a> != rhs.<a class="code" href="structStrPtrLen.html#n1">len</a>)
 00102         {
@@ -100,7 +100,7 @@
 00106         <span class="keywordflow">return</span> <a class="code" href="structStrPtrLen.html#a9">isCIPrefixOf</a>(rhs);
 00107     }
 00108 
-<a name="l00109"></a><a class="code" href="structStrPtrLen.html#a9">00109</a>     <a class="code" href="group__osclbase.html#a24">c_bool</a> <a class="code" href="structStrPtrLen.html#a9">isCIPrefixOf</a>(<span class="keyword">const</span> <a class="code" href="structStrPtrLen.html">StrPtrLen</a>&amp; rhs)<span class="keyword"> const</span>
+<a name="l00109"></a><a class="code" href="structStrPtrLen.html#a9">00109</a>     <a class="code" href="group__osclbase.html#a26">c_bool</a> <a class="code" href="structStrPtrLen.html#a9">isCIPrefixOf</a>(<span class="keyword">const</span> <a class="code" href="structStrPtrLen.html">StrPtrLen</a>&amp; rhs)<span class="keyword"> const</span>
 00110 <span class="keyword">    </span>{
 00111         <span class="keywordflow">if</span> (<a class="code" href="structStrPtrLen.html#n1">len</a> &gt; rhs.<a class="code" href="structStrPtrLen.html#n1">len</a>)
 00112         {
@@ -129,7 +129,7 @@
 00135             <span class="keywordflow">return</span> <span class="keyword">false</span>;
 00136         }
 00137 
-00138         <span class="keywordflow">return</span>(!<a class="code" href="group__osclbase.html#a49">oscl_strncmp</a>(<a class="code" href="structStrPtrLen.html#n0">ptr</a>, rhs.<a class="code" href="structStrPtrLen.html#n0">ptr</a>, rhs.<a class="code" href="structStrPtrLen.html#n1">len</a>));
+00138         <span class="keywordflow">return</span>(!<a class="code" href="group__osclbase.html#a51">oscl_strncmp</a>(<a class="code" href="structStrPtrLen.html#n0">ptr</a>, rhs.<a class="code" href="structStrPtrLen.html#n0">ptr</a>, rhs.<a class="code" href="structStrPtrLen.html#n1">len</a>));
 00139     }
 00140 
 <a name="l00141"></a><a class="code" href="structStrPtrLen.html#a11">00141</a>     int32 <a class="code" href="structStrPtrLen.html#a11">operator!=</a>(<span class="keyword">const</span> <a class="code" href="structStrPtrLen.html">StrPtrLen</a>&amp; rhs)<span class="keyword"> const</span>
@@ -147,7 +147,7 @@
 <a name="l00153"></a><a class="code" href="structStrPtrLen.html#a13">00153</a>     <a class="code" href="structStrPtrLen.html">StrPtrLen</a> &amp;<a class="code" href="structStrPtrLen.html#a12">operator=</a>(<span class="keyword">const</span> <span class="keywordtype">char</span>* rhs)
 00154     {
 00155         this-&gt;<a class="code" href="structStrPtrLen.html#n0">ptr</a> = rhs;
-00156         this-&gt;<a class="code" href="structStrPtrLen.html#n1">len</a> = <a class="code" href="group__osclbase.html#a43">oscl_strlen</a>(rhs);
+00156         this-&gt;<a class="code" href="structStrPtrLen.html#n1">len</a> = <a class="code" href="group__osclbase.html#a45">oscl_strlen</a>(rhs);
 00157         <span class="keywordflow">return</span> *<span class="keyword">this</span>;
 00158     }
 00159 
@@ -157,30 +157,30 @@
 <a name="l00166"></a><a class="code" href="structWStrPtrLen.html">00166</a> <span class="keyword">typedef</span> <span class="keyword">struct </span><a class="code" href="structWStrPtrLen.html">WStrPtrLen</a>
 00167 {
 00168 <span class="keyword">protected</span>:
-<a name="l00169"></a><a class="code" href="structWStrPtrLen.html#n0">00169</a>     <span class="keyword">const</span> <a class="code" href="group__osclbase.html#a32">oscl_wchar</a>* <a class="code" href="structWStrPtrLen.html#n0">ptr</a>;
+<a name="l00169"></a><a class="code" href="structWStrPtrLen.html#n0">00169</a>     <span class="keyword">const</span> <a class="code" href="group__osclbase.html#a34">oscl_wchar</a>* <a class="code" href="structWStrPtrLen.html#n0">ptr</a>;
 <a name="l00170"></a><a class="code" href="structWStrPtrLen.html#n1">00170</a>     int32 <a class="code" href="structWStrPtrLen.html#n1">len</a>;
 00171 
 00172 <span class="keyword">public</span>:
 00173 
-<a name="l00174"></a><a class="code" href="structWStrPtrLen.html#a0">00174</a>     <a class="code" href="structWStrPtrLen.html#a2">WStrPtrLen</a>(<span class="keyword">const</span> <a class="code" href="group__osclbase.html#a32">oscl_wchar</a>* newPtr)
+<a name="l00174"></a><a class="code" href="structWStrPtrLen.html#a0">00174</a>     <a class="code" href="structWStrPtrLen.html#a2">WStrPtrLen</a>(<span class="keyword">const</span> <a class="code" href="group__osclbase.html#a34">oscl_wchar</a>* newPtr)
 00175             : <a class="code" href="structWStrPtrLen.html#n0">ptr</a>(newPtr)
 00176     {
-00177         <a class="code" href="structWStrPtrLen.html#n1">len</a> = <a class="code" href="group__osclbase.html#a43">oscl_strlen</a>(newPtr);
+00177         <a class="code" href="structWStrPtrLen.html#n1">len</a> = <a class="code" href="group__osclbase.html#a45">oscl_strlen</a>(newPtr);
 00178     }
 00179 
-<a name="l00180"></a><a class="code" href="structWStrPtrLen.html#a1">00180</a>     <a class="code" href="structWStrPtrLen.html#a2">WStrPtrLen</a>(<span class="keyword">const</span> <a class="code" href="group__osclbase.html#a32">oscl_wchar</a>* newPtr, uint32 newLen)
+<a name="l00180"></a><a class="code" href="structWStrPtrLen.html#a1">00180</a>     <a class="code" href="structWStrPtrLen.html#a2">WStrPtrLen</a>(<span class="keyword">const</span> <a class="code" href="group__osclbase.html#a34">oscl_wchar</a>* newPtr, uint32 newLen)
 00181             : <a class="code" href="structWStrPtrLen.html#n0">ptr</a>(newPtr), <a class="code" href="structWStrPtrLen.html#n1">len</a>(newLen)
 00182     {}
 00183 
 <a name="l00184"></a><a class="code" href="structWStrPtrLen.html#a2">00184</a>     <a class="code" href="structWStrPtrLen.html#a2">WStrPtrLen</a>()
-00185             : <a class="code" href="structWStrPtrLen.html#n0">ptr</a>(<a class="code" href="group__osclbase.html#a81">NULL</a>), <a class="code" href="structWStrPtrLen.html#n1">len</a>(0)
+00185             : <a class="code" href="structWStrPtrLen.html#n0">ptr</a>(<a class="code" href="group__osclbase.html#a88">NULL</a>), <a class="code" href="structWStrPtrLen.html#n1">len</a>(0)
 00186     {}
 00187 
 <a name="l00188"></a><a class="code" href="structWStrPtrLen.html#a3">00188</a>     <a class="code" href="structWStrPtrLen.html#a2">WStrPtrLen</a>(<span class="keyword">const</span> <a class="code" href="structWStrPtrLen.html">WStrPtrLen</a>&amp; rhs)
 00189             : <a class="code" href="structWStrPtrLen.html#n0">ptr</a>(rhs.<a class="code" href="structWStrPtrLen.html#n0">ptr</a>), <a class="code" href="structWStrPtrLen.html#n1">len</a>(rhs.<a class="code" href="structWStrPtrLen.html#n1">len</a>)
 00190     {}
 00191 
-<a name="l00192"></a><a class="code" href="structWStrPtrLen.html#a4">00192</a>     <span class="keyword">const</span> <a class="code" href="group__osclbase.html#a32">oscl_wchar</a>* <a class="code" href="structWStrPtrLen.html#a4">c_str</a>()<span class="keyword"> const</span>
+<a name="l00192"></a><a class="code" href="structWStrPtrLen.html#a4">00192</a>     <span class="keyword">const</span> <a class="code" href="group__osclbase.html#a34">oscl_wchar</a>* <a class="code" href="structWStrPtrLen.html#a4">c_str</a>()<span class="keyword"> const</span>
 00193 <span class="keyword">    </span>{
 00194         <span class="keywordflow">return</span> <a class="code" href="structWStrPtrLen.html#n0">ptr</a>;
 00195     }
@@ -195,13 +195,13 @@
 00204         <span class="keywordflow">return</span> <a class="code" href="structWStrPtrLen.html#n1">len</a>;
 00205     }
 00206 
-<a name="l00207"></a><a class="code" href="structWStrPtrLen.html#a7">00207</a>     <span class="keywordtype">void</span> <a class="code" href="structWStrPtrLen.html#a7">setPtrLen</a>(<span class="keyword">const</span> <a class="code" href="group__osclbase.html#a32">oscl_wchar</a>* newPtr, uint32 newLen)
+<a name="l00207"></a><a class="code" href="structWStrPtrLen.html#a7">00207</a>     <span class="keywordtype">void</span> <a class="code" href="structWStrPtrLen.html#a7">setPtrLen</a>(<span class="keyword">const</span> <a class="code" href="group__osclbase.html#a34">oscl_wchar</a>* newPtr, uint32 newLen)
 00208     {
 00209         <a class="code" href="structWStrPtrLen.html#n0">ptr</a> = newPtr;
 00210         <a class="code" href="structWStrPtrLen.html#n1">len</a> = newLen;
 00211     }
 00212 
-<a name="l00213"></a><a class="code" href="structWStrPtrLen.html#a8">00213</a>     <a class="code" href="group__osclbase.html#a24">c_bool</a> <a class="code" href="structWStrPtrLen.html#a8">isCIEquivalentTo</a>(<span class="keyword">const</span> <a class="code" href="structWStrPtrLen.html">WStrPtrLen</a>&amp; rhs)<span class="keyword"> const</span>
+<a name="l00213"></a><a class="code" href="structWStrPtrLen.html#a8">00213</a>     <a class="code" href="group__osclbase.html#a26">c_bool</a> <a class="code" href="structWStrPtrLen.html#a8">isCIEquivalentTo</a>(<span class="keyword">const</span> <a class="code" href="structWStrPtrLen.html">WStrPtrLen</a>&amp; rhs)<span class="keyword"> const</span>
 00214 <span class="keyword">    </span>{
 00215         <span class="keywordflow">if</span> (<a class="code" href="structWStrPtrLen.html#n1">len</a> != rhs.<a class="code" href="structWStrPtrLen.html#n1">len</a>)
 00216         {
@@ -225,7 +225,7 @@
 00234         {
 00235             <span class="keywordflow">return</span> (<a class="code" href="structWStrPtrLen.html#n1">len</a> - rhs.<a class="code" href="structWStrPtrLen.html#n1">len</a>);
 00236         }
-00237         <span class="keywordflow">return</span>(!<a class="code" href="group__osclbase.html#a49">oscl_strncmp</a>(<a class="code" href="structWStrPtrLen.html#n0">ptr</a>, rhs.<a class="code" href="structWStrPtrLen.html#n0">ptr</a>, rhs.<a class="code" href="structWStrPtrLen.html#n1">len</a>));
+00237         <span class="keywordflow">return</span>(!<a class="code" href="group__osclbase.html#a51">oscl_strncmp</a>(<a class="code" href="structWStrPtrLen.html#n0">ptr</a>, rhs.<a class="code" href="structWStrPtrLen.html#n0">ptr</a>, rhs.<a class="code" href="structWStrPtrLen.html#n1">len</a>));
 00238     }
 00239 
 <a name="l00240"></a><a class="code" href="structWStrPtrLen.html#a10">00240</a>     int32 <a class="code" href="structWStrPtrLen.html#a10">operator!=</a>(<span class="keyword">const</span> <a class="code" href="structWStrPtrLen.html">WStrPtrLen</a>&amp; rhs)<span class="keyword"> const</span>
@@ -240,10 +240,10 @@
 00249         <span class="keywordflow">return</span> *<span class="keyword">this</span>;
 00250     }
 00251 
-<a name="l00252"></a><a class="code" href="structWStrPtrLen.html#a12">00252</a>     <a class="code" href="structWStrPtrLen.html">WStrPtrLen</a>&amp; <a class="code" href="structWStrPtrLen.html#a11">operator=</a>(<span class="keyword">const</span> <a class="code" href="group__osclbase.html#a32">oscl_wchar</a>* rhs)
+<a name="l00252"></a><a class="code" href="structWStrPtrLen.html#a12">00252</a>     <a class="code" href="structWStrPtrLen.html">WStrPtrLen</a>&amp; <a class="code" href="structWStrPtrLen.html#a11">operator=</a>(<span class="keyword">const</span> <a class="code" href="group__osclbase.html#a34">oscl_wchar</a>* rhs)
 00253     {
 00254         this-&gt;<a class="code" href="structWStrPtrLen.html#n0">ptr</a> = rhs;
-00255         this-&gt;<a class="code" href="structWStrPtrLen.html#n1">len</a> = <a class="code" href="group__osclbase.html#a43">oscl_strlen</a>(rhs);
+00255         this-&gt;<a class="code" href="structWStrPtrLen.html#n1">len</a> = <a class="code" href="group__osclbase.html#a45">oscl_strlen</a>(rhs);
 00256         <span class="keywordflow">return</span> *<span class="keyword">this</span>;
 00257     }
 00258 
@@ -299,7 +299,7 @@
 00309     }
 00310 
 00311 
-<a name="l00312"></a><a class="code" href="structStrCSumPtrLen.html#a8">00312</a>     <a class="code" href="group__osclbase.html#a24">c_bool</a> <a class="code" href="structStrCSumPtrLen.html#a8">isCIEquivalentTo</a>(<span class="keyword">const</span> <a class="code" href="structStrCSumPtrLen.html">StrCSumPtrLen</a>&amp; rhs)<span class="keyword"> const</span>
+<a name="l00312"></a><a class="code" href="structStrCSumPtrLen.html#a8">00312</a>     <a class="code" href="group__osclbase.html#a26">c_bool</a> <a class="code" href="structStrCSumPtrLen.html#a8">isCIEquivalentTo</a>(<span class="keyword">const</span> <a class="code" href="structStrCSumPtrLen.html">StrCSumPtrLen</a>&amp; rhs)<span class="keyword"> const</span>
 00313 <span class="keyword">    </span>{
 00314         <span class="keywordflow">if</span> (<a class="code" href="structStrCSumPtrLen.html#a1">getCheckSum</a>() != rhs.<a class="code" href="structStrCSumPtrLen.html#a1">getCheckSum</a>())
 00315         {
@@ -310,7 +310,7 @@
 00320                    static_cast&lt;const StrPtrLen&amp;&gt;(rhs));
 00321     }
 00322 
-<a name="l00323"></a><a class="code" href="structStrCSumPtrLen.html#a9">00323</a>     <a class="code" href="group__osclbase.html#a24">c_bool</a> <a class="code" href="structStrCSumPtrLen.html#a9">operator==</a>(<span class="keyword">const</span> <a class="code" href="structStrCSumPtrLen.html">StrCSumPtrLen</a>&amp; rhs)<span class="keyword"> const</span>
+<a name="l00323"></a><a class="code" href="structStrCSumPtrLen.html#a9">00323</a>     <a class="code" href="group__osclbase.html#a26">c_bool</a> <a class="code" href="structStrCSumPtrLen.html#a9">operator==</a>(<span class="keyword">const</span> <a class="code" href="structStrCSumPtrLen.html">StrCSumPtrLen</a>&amp; rhs)<span class="keyword"> const</span>
 00324 <span class="keyword">    </span>{
 00325         <span class="keywordflow">if</span> (<a class="code" href="structStrCSumPtrLen.html#a1">getCheckSum</a>() != rhs.<a class="code" href="structStrCSumPtrLen.html#a1">getCheckSum</a>())
 00326         {
@@ -321,7 +321,7 @@
 00331                 ==  static_cast&lt;const StrPtrLen&amp;&gt;(rhs));
 00332     }
 00333 
-<a name="l00334"></a><a class="code" href="structStrCSumPtrLen.html#a10">00334</a>     <a class="code" href="group__osclbase.html#a24">c_bool</a> <a class="code" href="structStrCSumPtrLen.html#a10">operator!=</a>(<span class="keyword">const</span> <a class="code" href="structStrCSumPtrLen.html">StrCSumPtrLen</a>&amp; rhs)<span class="keyword"> const</span>
+<a name="l00334"></a><a class="code" href="structStrCSumPtrLen.html#a10">00334</a>     <a class="code" href="group__osclbase.html#a26">c_bool</a> <a class="code" href="structStrCSumPtrLen.html#a10">operator!=</a>(<span class="keyword">const</span> <a class="code" href="structStrCSumPtrLen.html">StrCSumPtrLen</a>&amp; rhs)<span class="keyword"> const</span>
 00335 <span class="keyword">    </span>{
 00336         <span class="keywordflow">return</span> !(*<span class="keyword">this</span> == rhs);
 00337     }
@@ -355,7 +355,7 @@
 00365 <span class="preprocessor">#endif // OSCL_STR_PTR_LEN_H_INCLUDED</span>
 00366 <span class="preprocessor"></span>
 </pre></div><hr size="1"><img src="pvlogo_small.jpg"><address style="align: right;"><small>OSCL API</small>
-<address style="align: left;"><small>Posting Version: CORE_7.512.1.1 </small>
+<address style="align: left;"><small>Posting Version: CORE_8.000.1.1_RC1 </small>
 </small></address>
 </body>
 </html>

@@ -23,17 +23,17 @@
 <tr><td colspan=2><br><h2>Public Methods</h2></td></tr>
 <tr><td nowrap align=right valign=top>OSCL_IMPORT_REF&nbsp;</td><td valign=bottom><a class="el" href="classOsclMemPoolResizableAllocator.html#a0">OsclMemPoolResizableAllocator</a> (uint32 aMemPoolBufferSize, uint32 aMemPoolBufferNumLimit=0, uint32 aExpectedNumBlocksPerBuffer=0, <a class="el" href="classOscl__DefAlloc.html">Oscl_DefAlloc</a> *gen_alloc=NULL)</td></tr>
 <tr><td nowrap align=right valign=top>virtual OSCL_IMPORT_REF void&nbsp;</td><td valign=bottom><a class="el" href="classOsclMemPoolResizableAllocator.html#a1">enablenullpointerreturn</a> ()</td></tr>
-<tr><td nowrap align=right valign=top>virtual OSCL_IMPORT_REF <a class="el" href="group__osclbase.html#a25">OsclAny</a> *&nbsp;</td><td valign=bottom><a class="el" href="classOsclMemPoolResizableAllocator.html#a2">allocate</a> (const uint32 aNumBytes)</td></tr>
-<tr><td nowrap align=right valign=top>virtual OSCL_IMPORT_REF void&nbsp;</td><td valign=bottom><a class="el" href="classOsclMemPoolResizableAllocator.html#a3">deallocate</a> (<a class="el" href="group__osclbase.html#a25">OsclAny</a> *aPtr)</td></tr>
-<tr><td nowrap align=right valign=top>virtual OSCL_IMPORT_REF bool&nbsp;</td><td valign=bottom><a class="el" href="classOsclMemPoolResizableAllocator.html#a4">trim</a> (<a class="el" href="group__osclbase.html#a25">OsclAny</a> *aPtr, uint32 aBytesToFree)</td></tr>
+<tr><td nowrap align=right valign=top>virtual OSCL_IMPORT_REF <a class="el" href="group__osclbase.html#a27">OsclAny</a> *&nbsp;</td><td valign=bottom><a class="el" href="classOsclMemPoolResizableAllocator.html#a2">allocate</a> (const uint32 aNumBytes)</td></tr>
+<tr><td nowrap align=right valign=top>virtual OSCL_IMPORT_REF void&nbsp;</td><td valign=bottom><a class="el" href="classOsclMemPoolResizableAllocator.html#a3">deallocate</a> (<a class="el" href="group__osclbase.html#a27">OsclAny</a> *aPtr)</td></tr>
+<tr><td nowrap align=right valign=top>virtual OSCL_IMPORT_REF bool&nbsp;</td><td valign=bottom><a class="el" href="classOsclMemPoolResizableAllocator.html#a4">trim</a> (<a class="el" href="group__osclbase.html#a27">OsclAny</a> *aPtr, uint32 aBytesToFree)</td></tr>
 <tr><td nowrap align=right valign=top>OSCL_IMPORT_REF uint32&nbsp;</td><td valign=bottom><a class="el" href="classOsclMemPoolResizableAllocator.html#a5">getBufferSize</a> () const</td></tr>
 <tr><td nowrap align=right valign=top>virtual OSCL_IMPORT_REF uint32&nbsp;</td><td valign=bottom><a class="el" href="classOsclMemPoolResizableAllocator.html#a6">getAllocatedSize</a> () const</td></tr>
 <tr><td nowrap align=right valign=top>virtual OSCL_IMPORT_REF uint32&nbsp;</td><td valign=bottom><a class="el" href="classOsclMemPoolResizableAllocator.html#a7">getAvailableSize</a> () const</td></tr>
 <tr><td nowrap align=right valign=top>virtual OSCL_IMPORT_REF uint32&nbsp;</td><td valign=bottom><a class="el" href="classOsclMemPoolResizableAllocator.html#a8">getLargestContiguousFreeBlockSize</a> () const</td></tr>
 <tr><td nowrap align=right valign=top>virtual OSCL_IMPORT_REF bool&nbsp;</td><td valign=bottom><a class="el" href="classOsclMemPoolResizableAllocator.html#a9">setMaxSzForNewMemPoolBuffer</a> (uint32 aMaxNewMemPoolBufferSz)</td></tr>
-<tr><td nowrap align=right valign=top>virtual OSCL_IMPORT_REF void&nbsp;</td><td valign=bottom><a class="el" href="classOsclMemPoolResizableAllocator.html#a10">notifyfreeblockavailable</a> (<a class="el" href="classOsclMemPoolResizableAllocatorObserver.html">OsclMemPoolResizableAllocatorObserver</a> &amp;aObserver, uint32 aRequestedSize=0, <a class="el" href="group__osclbase.html#a25">OsclAny</a> *aContextData=NULL)</td></tr>
+<tr><td nowrap align=right valign=top>virtual OSCL_IMPORT_REF void&nbsp;</td><td valign=bottom><a class="el" href="classOsclMemPoolResizableAllocator.html#a10">notifyfreeblockavailable</a> (<a class="el" href="classOsclMemPoolResizableAllocatorObserver.html">OsclMemPoolResizableAllocatorObserver</a> &amp;aObserver, uint32 aRequestedSize=0, <a class="el" href="group__osclbase.html#a27">OsclAny</a> *aContextData=NULL)</td></tr>
 <tr><td nowrap align=right valign=top>virtual OSCL_IMPORT_REF void&nbsp;</td><td valign=bottom><a class="el" href="classOsclMemPoolResizableAllocator.html#a11">CancelFreeChunkAvailableCallback</a> ()</td></tr>
-<tr><td nowrap align=right valign=top>virtual OSCL_IMPORT_REF void&nbsp;</td><td valign=bottom><a class="el" href="classOsclMemPoolResizableAllocator.html#a12">notifyfreememoryavailable</a> (<a class="el" href="classOsclMemPoolResizableAllocatorMemoryObserver.html">OsclMemPoolResizableAllocatorMemoryObserver</a> &amp;aObserver, uint32 aRequestedSize=0, <a class="el" href="group__osclbase.html#a25">OsclAny</a> *aContextData=NULL)</td></tr>
+<tr><td nowrap align=right valign=top>virtual OSCL_IMPORT_REF void&nbsp;</td><td valign=bottom><a class="el" href="classOsclMemPoolResizableAllocator.html#a12">notifyfreememoryavailable</a> (<a class="el" href="classOsclMemPoolResizableAllocatorMemoryObserver.html">OsclMemPoolResizableAllocatorMemoryObserver</a> &amp;aObserver, uint32 aRequestedSize=0, <a class="el" href="group__osclbase.html#a27">OsclAny</a> *aContextData=NULL)</td></tr>
 <tr><td nowrap align=right valign=top>OSCL_IMPORT_REF void&nbsp;</td><td valign=bottom><a class="el" href="classOsclMemPoolResizableAllocator.html#a13">CancelFreeMemoryAvailableCallback</a> ()</td></tr>
 <tr><td nowrap align=right valign=top>OSCL_IMPORT_REF void&nbsp;</td><td valign=bottom><a class="el" href="classOsclMemPoolResizableAllocator.html#a14">addRef</a> ()</td></tr>
 <tr><td nowrap align=right valign=top>OSCL_IMPORT_REF void&nbsp;</td><td valign=bottom><a class="el" href="classOsclMemPoolResizableAllocator.html#a15">removeRef</a> ()</td></tr>
@@ -42,9 +42,9 @@
 <tr><td nowrap align=right valign=top><a class="el" href="structOsclMemPoolResizableAllocator_1_1MemPoolBufferInfo.html">MemPoolBufferInfo</a> *&nbsp;</td><td valign=bottom><a class="el" href="classOsclMemPoolResizableAllocator.html#b1">addnewmempoolbuffer</a> (uint32 aBufferSize)</td></tr>
 <tr><td nowrap align=right valign=top>void&nbsp;</td><td valign=bottom><a class="el" href="classOsclMemPoolResizableAllocator.html#b2">destroyallmempoolbuffers</a> ()</td></tr>
 <tr><td nowrap align=right valign=top><a class="el" href="structOsclMemPoolResizableAllocator_1_1MemPoolBlockInfo.html">MemPoolBlockInfo</a> *&nbsp;</td><td valign=bottom><a class="el" href="classOsclMemPoolResizableAllocator.html#b3">findfreeblock</a> (uint32 aBlockSize)</td></tr>
-<tr><td nowrap align=right valign=top><a class="el" href="group__osclbase.html#a25">OsclAny</a> *&nbsp;</td><td valign=bottom><a class="el" href="classOsclMemPoolResizableAllocator.html#b4">allocateblock</a> (<a class="el" href="structOsclMemPoolResizableAllocator_1_1MemPoolBlockInfo.html">MemPoolBlockInfo</a> &amp;aBlockPtr, uint32 aNumBytes)</td></tr>
+<tr><td nowrap align=right valign=top><a class="el" href="group__osclbase.html#a27">OsclAny</a> *&nbsp;</td><td valign=bottom><a class="el" href="classOsclMemPoolResizableAllocator.html#b4">allocateblock</a> (<a class="el" href="structOsclMemPoolResizableAllocator_1_1MemPoolBlockInfo.html">MemPoolBlockInfo</a> &amp;aBlockPtr, uint32 aNumBytes)</td></tr>
 <tr><td nowrap align=right valign=top>void&nbsp;</td><td valign=bottom><a class="el" href="classOsclMemPoolResizableAllocator.html#b5">deallocateblock</a> (<a class="el" href="structOsclMemPoolResizableAllocator_1_1MemPoolBlockInfo.html">MemPoolBlockInfo</a> &amp;aBlockPtr)</td></tr>
-<tr><td nowrap align=right valign=top>bool&nbsp;</td><td valign=bottom><a class="el" href="classOsclMemPoolResizableAllocator.html#b6">validateblock</a> (<a class="el" href="group__osclbase.html#a25">OsclAny</a> *aBlockBufPtr)</td></tr>
+<tr><td nowrap align=right valign=top>bool&nbsp;</td><td valign=bottom><a class="el" href="classOsclMemPoolResizableAllocator.html#b6">validateblock</a> (<a class="el" href="group__osclbase.html#a27">OsclAny</a> *aBlockBufPtr)</td></tr>
 <tr><td nowrap align=right valign=top>uint32&nbsp;</td><td valign=bottom><a class="el" href="classOsclMemPoolResizableAllocator.html#b7">getMemPoolBufferSize</a> (<a class="el" href="structOsclMemPoolResizableAllocator_1_1MemPoolBufferInfo.html">MemPoolBufferInfo</a> *aBufferInfo) const</td></tr>
 <tr><td nowrap align=right valign=top>uint32&nbsp;</td><td valign=bottom><a class="el" href="classOsclMemPoolResizableAllocator.html#b8">getMemPoolBufferAllocatedSize</a> (<a class="el" href="structOsclMemPoolResizableAllocator_1_1MemPoolBufferInfo.html">MemPoolBufferInfo</a> *aBufferInfo) const</td></tr>
 <tr><td nowrap align=right valign=top>uint32&nbsp;</td><td valign=bottom><a class="el" href="classOsclMemPoolResizableAllocator.html#b9">memoryPoolBufferMgmtOverhead</a> () const</td></tr>
@@ -60,11 +60,11 @@
 <tr><td nowrap align=right valign=top>uint32&nbsp;</td><td valign=bottom><a class="el" href="classOsclMemPoolResizableAllocator.html#n7">iBlockInfoAlignedSize</a></td></tr>
 <tr><td nowrap align=right valign=top>bool&nbsp;</td><td valign=bottom><a class="el" href="classOsclMemPoolResizableAllocator.html#n8">iCheckNextAvailable</a></td></tr>
 <tr><td nowrap align=right valign=top>uint32&nbsp;</td><td valign=bottom><a class="el" href="classOsclMemPoolResizableAllocator.html#n9">iRequestedNextAvailableSize</a></td></tr>
-<tr><td nowrap align=right valign=top><a class="el" href="group__osclbase.html#a25">OsclAny</a> *&nbsp;</td><td valign=bottom><a class="el" href="classOsclMemPoolResizableAllocator.html#n10">iNextAvailableContextData</a></td></tr>
+<tr><td nowrap align=right valign=top><a class="el" href="group__osclbase.html#a27">OsclAny</a> *&nbsp;</td><td valign=bottom><a class="el" href="classOsclMemPoolResizableAllocator.html#n10">iNextAvailableContextData</a></td></tr>
 <tr><td nowrap align=right valign=top><a class="el" href="classOsclMemPoolResizableAllocatorObserver.html">OsclMemPoolResizableAllocatorObserver</a> *&nbsp;</td><td valign=bottom><a class="el" href="classOsclMemPoolResizableAllocator.html#n11">iObserver</a></td></tr>
 <tr><td nowrap align=right valign=top>bool&nbsp;</td><td valign=bottom><a class="el" href="classOsclMemPoolResizableAllocator.html#n12">iCheckFreeMemoryAvailable</a></td></tr>
 <tr><td nowrap align=right valign=top>uint32&nbsp;</td><td valign=bottom><a class="el" href="classOsclMemPoolResizableAllocator.html#n13">iRequestedAvailableFreeMemSize</a></td></tr>
-<tr><td nowrap align=right valign=top><a class="el" href="group__osclbase.html#a25">OsclAny</a> *&nbsp;</td><td valign=bottom><a class="el" href="classOsclMemPoolResizableAllocator.html#n14">iFreeMemContextData</a></td></tr>
+<tr><td nowrap align=right valign=top><a class="el" href="group__osclbase.html#a27">OsclAny</a> *&nbsp;</td><td valign=bottom><a class="el" href="classOsclMemPoolResizableAllocator.html#n14">iFreeMemContextData</a></td></tr>
 <tr><td nowrap align=right valign=top><a class="el" href="classOsclMemPoolResizableAllocatorMemoryObserver.html">OsclMemPoolResizableAllocatorMemoryObserver</a> *&nbsp;</td><td valign=bottom><a class="el" href="classOsclMemPoolResizableAllocator.html#n15">iFreeMemPoolObserver</a></td></tr>
 <tr><td nowrap align=right valign=top>int32&nbsp;</td><td valign=bottom><a class="el" href="classOsclMemPoolResizableAllocator.html#n16">iRefCount</a></td></tr>
 <tr><td nowrap align=right valign=top>bool&nbsp;</td><td valign=bottom><a class="el" href="classOsclMemPoolResizableAllocator.html#n17">iEnableNullPtrReturn</a></td></tr>
@@ -218,7 +218,7 @@ void </dl>    </td>
     <td class="md">
       <table cellpadding="0" cellspacing="0" border="0">
         <tr>
-          <td class="md" nowrap valign="top"> virtual OSCL_IMPORT_REF <a class="el" href="group__osclbase.html#a25">OsclAny</a>* OsclMemPoolResizableAllocator::allocate </td>
+          <td class="md" nowrap valign="top"> virtual OSCL_IMPORT_REF <a class="el" href="group__osclbase.html#a27">OsclAny</a>* OsclMemPoolResizableAllocator::allocate </td>
           <td class="md" valign="top">(&nbsp;</td>
           <td class="md" nowrap valign="top">const uint32&nbsp;</td>
           <td class="mdname1" valign="top" nowrap>&nbsp; <em>aNumBytes</em>          </td>
@@ -252,7 +252,7 @@ Implements <a class="el" href="classOscl__DefAlloc.html#a0">Oscl_DefAlloc</a>.  
     <td class="md">
       <table cellpadding="0" cellspacing="0" border="0">
         <tr>
-          <td class="md" nowrap valign="top"> <a class="el" href="group__osclbase.html#a25">OsclAny</a>* OsclMemPoolResizableAllocator::allocateblock </td>
+          <td class="md" nowrap valign="top"> <a class="el" href="group__osclbase.html#a27">OsclAny</a>* OsclMemPoolResizableAllocator::allocateblock </td>
           <td class="md" valign="top">(&nbsp;</td>
           <td class="md" nowrap valign="top"><a class="el" href="structOsclMemPoolResizableAllocator_1_1MemPoolBlockInfo.html">MemPoolBlockInfo</a> &amp;&nbsp;</td>
           <td class="mdname" nowrap>&nbsp; <em>aBlockPtr</em>, </td>
@@ -351,7 +351,7 @@ void </dl>    </td>
         <tr>
           <td class="md" nowrap valign="top"> virtual OSCL_IMPORT_REF void OsclMemPoolResizableAllocator::deallocate </td>
           <td class="md" valign="top">(&nbsp;</td>
-          <td class="md" nowrap valign="top"><a class="el" href="group__osclbase.html#a25">OsclAny</a> *&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="group__osclbase.html#a27">OsclAny</a> *&nbsp;</td>
           <td class="mdname1" valign="top" nowrap>&nbsp; <em>aPtr</em>          </td>
           <td class="md" valign="top">)&nbsp;</td>
           <td class="md" nowrap><code> [virtual]</code></td>
@@ -712,7 +712,7 @@ Returns the size of the largest available chunk in the memory.     </td>
         <tr>
           <td></td>
           <td></td>
-          <td class="md" nowrap><a class="el" href="group__osclbase.html#a25">OsclAny</a> *&nbsp;</td>
+          <td class="md" nowrap><a class="el" href="group__osclbase.html#a27">OsclAny</a> *&nbsp;</td>
           <td class="mdname" nowrap>&nbsp; <em>aContextData</em> = NULL</td>
         </tr>
         <tr>
@@ -759,7 +759,7 @@ void </dl>    </td>
         <tr>
           <td></td>
           <td></td>
-          <td class="md" nowrap><a class="el" href="group__osclbase.html#a25">OsclAny</a> *&nbsp;</td>
+          <td class="md" nowrap><a class="el" href="group__osclbase.html#a27">OsclAny</a> *&nbsp;</td>
           <td class="mdname" nowrap>&nbsp; <em>aContextData</em> = NULL</td>
         </tr>
         <tr>
@@ -851,7 +851,7 @@ void </dl>    </td>
         <tr>
           <td class="md" nowrap valign="top"> virtual OSCL_IMPORT_REF bool OsclMemPoolResizableAllocator::trim </td>
           <td class="md" valign="top">(&nbsp;</td>
-          <td class="md" nowrap valign="top"><a class="el" href="group__osclbase.html#a25">OsclAny</a> *&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="group__osclbase.html#a27">OsclAny</a> *&nbsp;</td>
           <td class="mdname" nowrap>&nbsp; <em>aPtr</em>, </td>
         </tr>
         <tr>
@@ -892,7 +892,7 @@ bool True if trim operation successful. False if the block wasn't trimmed </dl> 
         <tr>
           <td class="md" nowrap valign="top"> bool OsclMemPoolResizableAllocator::validateblock </td>
           <td class="md" valign="top">(&nbsp;</td>
-          <td class="md" nowrap valign="top"><a class="el" href="group__osclbase.html#a25">OsclAny</a> *&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="group__osclbase.html#a27">OsclAny</a> *&nbsp;</td>
           <td class="mdname1" valign="top" nowrap>&nbsp; <em>aBlockBufPtr</em>          </td>
           <td class="md" valign="top">)&nbsp;</td>
           <td class="md" nowrap><code> [protected]</code></td>
@@ -1052,7 +1052,7 @@ bool True if trim operation successful. False if the block wasn't trimmed </dl> 
     <td class="md">
       <table cellpadding="0" cellspacing="0" border="0">
         <tr>
-          <td class="md" nowrap valign="top"> <a class="el" href="group__osclbase.html#a25">OsclAny</a>* OsclMemPoolResizableAllocator::iFreeMemContextData<code> [protected]</code>
+          <td class="md" nowrap valign="top"> <a class="el" href="group__osclbase.html#a27">OsclAny</a>* OsclMemPoolResizableAllocator::iFreeMemContextData<code> [protected]</code>
       </table>
     </td>
   </tr>
@@ -1206,7 +1206,7 @@ bool True if trim operation successful. False if the block wasn't trimmed </dl> 
     <td class="md">
       <table cellpadding="0" cellspacing="0" border="0">
         <tr>
-          <td class="md" nowrap valign="top"> <a class="el" href="group__osclbase.html#a25">OsclAny</a>* OsclMemPoolResizableAllocator::iNextAvailableContextData<code> [protected]</code>
+          <td class="md" nowrap valign="top"> <a class="el" href="group__osclbase.html#a27">OsclAny</a>* OsclMemPoolResizableAllocator::iNextAvailableContextData<code> [protected]</code>
       </table>
     </td>
   </tr>
@@ -1313,7 +1313,7 @@ bool True if trim operation successful. False if the block wasn't trimmed </dl> 
 <hr>The documentation for this class was generated from the following file:<ul>
 <li><a class="el" href="oscl__mem__mempool_8h-source.html">oscl_mem_mempool.h</a></ul>
 <hr size="1"><img src="pvlogo_small.jpg"><address style="align: right;"><small>OSCL API</small>
-<address style="align: left;"><small>Posting Version: CORE_7.512.1.1 </small>
+<address style="align: left;"><small>Posting Version: CORE_8.000.1.1_RC1 </small>
 </small></address>
 </body>
 </html>

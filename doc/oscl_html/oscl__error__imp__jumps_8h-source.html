@@ -64,22 +64,22 @@
 00066                 <span class="comment">//invoke this routine again.  It is not safe to return</span>
 00067                 <span class="comment">//either, because calling code is expecting an execution</span>
 00068                 <span class="comment">//end.</span>
-00069                 <a class="code" href="group__osclbase.html#a78">OSCL_ASSERT</a>(<span class="keyword">false</span>);
-00070                 <a class="code" href="group__osclbase.html#a34">_OSCL_Abort</a>();
+00069                 <a class="code" href="group__osclbase.html#a85">OSCL_ASSERT</a>(<span class="keyword">false</span>);
+00070                 <a class="code" href="group__osclbase.html#a36">_OSCL_Abort</a>();
 00071             }
 00072             longjmp(*<a class="code" href="classOsclJump.html#a1">Top</a>(), a);
 00073         }
 00074 
 <a name="l00075"></a><a class="code" href="classOsclJump.html#a1">00075</a>         jmp_buf *<a class="code" href="classOsclJump.html#a1">Top</a>()
 00076         {
-00077             <a class="code" href="group__osclbase.html#a78">OSCL_ASSERT</a>(iJumpIndex &gt;= 0);
+00077             <a class="code" href="group__osclbase.html#a85">OSCL_ASSERT</a>(iJumpIndex &gt;= 0);
 00078             <span class="keywordflow">return</span> &amp;iJumpArray[iJumpIndex];
 00079         }
 00080 
 <a name="l00081"></a><a class="code" href="classOsclJump.html#a2">00081</a>         <a class="code" href="classOsclJump.html#a2">~OsclJump</a>()
 00082         {
 00083             <span class="comment">//jump mark stack should be empty at this point.</span>
-00084             <a class="code" href="group__osclbase.html#a78">OSCL_ASSERT</a>(iJumpIndex == (-1));
+00084             <a class="code" href="group__osclbase.html#a85">OSCL_ASSERT</a>(iJumpIndex == (-1));
 00085         }
 00086 
 00087     <span class="keyword">private</span>:
@@ -87,13 +87,13 @@
 00089 
 00090         <span class="keywordtype">void</span> PushMark()
 00091         {
-00092             <a class="code" href="group__osclbase.html#a78">OSCL_ASSERT</a>(iJumpIndex &lt; (<a class="code" href="group__osclerror.html#a41">OSCL_JUMP_MAX_JUMP_MARKS</a> - 1));<span class="comment">//jump stack is full!</span>
+00092             <a class="code" href="group__osclbase.html#a85">OSCL_ASSERT</a>(iJumpIndex &lt; (<a class="code" href="group__osclerror.html#a41">OSCL_JUMP_MAX_JUMP_MARKS</a> - 1));<span class="comment">//jump stack is full!</span>
 00093             iJumpIndex++;
 00094         }
 00095 
 00096         <span class="keywordtype">void</span> PopMark()
 00097         {
-00098             <a class="code" href="group__osclbase.html#a78">OSCL_ASSERT</a>(iJumpIndex &gt;= 0);<span class="comment">//jump stack is empty!</span>
+00098             <a class="code" href="group__osclbase.html#a85">OSCL_ASSERT</a>(iJumpIndex &gt;= 0);<span class="comment">//jump stack is empty!</span>
 00099             iJumpIndex--;
 00100         }
 00101 
@@ -146,7 +146,7 @@
 00148 <span class="preprocessor">#endif // OSCL_ERROR_IMP_JUMPS_H_INCLUDED</span>
 00149 <span class="preprocessor"></span>
 </pre></div><hr size="1"><img src="pvlogo_small.jpg"><address style="align: right;"><small>OSCL API</small>
-<address style="align: left;"><small>Posting Version: CORE_7.512.1.1 </small>
+<address style="align: left;"><small>Posting Version: CORE_8.000.1.1_RC1 </small>
 </small></address>
 </body>
 </html>

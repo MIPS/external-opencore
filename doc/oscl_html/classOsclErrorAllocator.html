@@ -19,14 +19,14 @@
 <tr><td colspan=2><br><h2>Public Methods</h2></td></tr>
 <tr><td nowrap align=right valign=top>&nbsp;</td><td valign=bottom><a class="el" href="classOsclErrorAllocator.html#a0">OsclErrorAllocator</a> (<a class="el" href="classOscl__DefAlloc.html">Oscl_DefAlloc</a> *<a class="el" href="classallocator.html">allocator</a>)</td></tr>
 <tr><td>&nbsp;</td><td><font size=-1><em>constructor method</em> <a href="#a0"></a><em></em></font><br><br></td></tr>
-<tr><td nowrap align=right valign=top>void *&nbsp;</td><td valign=bottom><a class="el" href="classOsclErrorAllocator.html#a1">operator new</a> (uint32 size, <a class="el" href="group__osclbase.html#a25">OsclAny</a> *aPtr)</td></tr>
+<tr><td nowrap align=right valign=top>void *&nbsp;</td><td valign=bottom><a class="el" href="classOsclErrorAllocator.html#a1">operator new</a> (uint32 size, <a class="el" href="group__osclbase.html#a27">OsclAny</a> *aPtr)</td></tr>
 <tr><td>&nbsp;</td><td><font size=-1><em>placement new operator that allocates memory using the user defined methods</em> <a href="#a1"></a><em></em></font><br><br></td></tr>
-<tr><td nowrap align=right valign=top>void&nbsp;</td><td valign=bottom><a class="el" href="classOsclErrorAllocator.html#a2">operator delete</a> (<a class="el" href="group__osclbase.html#a25">OsclAny</a> *aPtr, <a class="el" href="group__osclbase.html#a25">OsclAny</a> *aPtr2)</td></tr>
+<tr><td nowrap align=right valign=top>void&nbsp;</td><td valign=bottom><a class="el" href="classOsclErrorAllocator.html#a2">operator delete</a> (<a class="el" href="group__osclbase.html#a27">OsclAny</a> *aPtr, <a class="el" href="group__osclbase.html#a27">OsclAny</a> *aPtr2)</td></tr>
 <tr><td>&nbsp;</td><td><font size=-1><em>delete operator that doesn't do anything, user has to deallocate manually</em> <a href="#a2"></a><em></em></font><br><br></td></tr>
 <tr><td colspan=2><br><h2>Static Public Methods</h2></td></tr>
-<tr><td nowrap align=right valign=top><a class="el" href="group__osclbase.html#a25">OsclAny</a> *&nbsp;</td><td valign=bottom><a class="el" href="classOsclErrorAllocator.html#d0">allocate</a> (uint32 aSize)</td></tr>
+<tr><td nowrap align=right valign=top><a class="el" href="group__osclbase.html#a27">OsclAny</a> *&nbsp;</td><td valign=bottom><a class="el" href="classOsclErrorAllocator.html#d0">allocate</a> (uint32 aSize)</td></tr>
 <tr><td>&nbsp;</td><td><font size=-1><em>static method to allocate a block of memory on heap</em> <a href="#d0"></a><em></em></font><br><br></td></tr>
-<tr><td nowrap align=right valign=top><a class="el" href="group__osclbase.html#a25">OsclAny</a>&nbsp;</td><td valign=bottom><a class="el" href="classOsclErrorAllocator.html#d1">deallocate</a> (<a class="el" href="group__osclbase.html#a25">OsclAny</a> *aPointer)</td></tr>
+<tr><td nowrap align=right valign=top><a class="el" href="group__osclbase.html#a27">OsclAny</a>&nbsp;</td><td valign=bottom><a class="el" href="classOsclErrorAllocator.html#d1">deallocate</a> (<a class="el" href="group__osclbase.html#a27">OsclAny</a> *aPointer)</td></tr>
 <tr><td>&nbsp;</td><td><font size=-1><em>static method to deallocate a block of memory on heap</em> <a href="#d1"></a><em></em></font><br><br></td></tr>
 </table>
 <hr><a name="_details"></a><h2>Detailed Description</h2>
@@ -78,7 +78,7 @@ constructor method
     <td class="md">
       <table cellpadding="0" cellspacing="0" border="0">
         <tr>
-          <td class="md" nowrap valign="top"> <a class="el" href="group__osclbase.html#a25">OsclAny</a>* OsclErrorAllocator::allocate </td>
+          <td class="md" nowrap valign="top"> <a class="el" href="group__osclbase.html#a27">OsclAny</a>* OsclErrorAllocator::allocate </td>
           <td class="md" valign="top">(&nbsp;</td>
           <td class="md" nowrap valign="top">uint32&nbsp;</td>
           <td class="mdname1" valign="top" nowrap>&nbsp; <em>aSize</em>          </td>
@@ -114,9 +114,9 @@ static method to allocate a block of memory on heap
     <td class="md">
       <table cellpadding="0" cellspacing="0" border="0">
         <tr>
-          <td class="md" nowrap valign="top"> <a class="el" href="group__osclbase.html#a25">OsclAny</a> OsclErrorAllocator::deallocate </td>
+          <td class="md" nowrap valign="top"> <a class="el" href="group__osclbase.html#a27">OsclAny</a> OsclErrorAllocator::deallocate </td>
           <td class="md" valign="top">(&nbsp;</td>
-          <td class="md" nowrap valign="top"><a class="el" href="group__osclbase.html#a25">OsclAny</a> *&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="group__osclbase.html#a27">OsclAny</a> *&nbsp;</td>
           <td class="mdname1" valign="top" nowrap>&nbsp; <em>aPointer</em>          </td>
           <td class="md" valign="top">)&nbsp;</td>
           <td class="md" nowrap><code> [inline, static]</code></td>
@@ -152,13 +152,13 @@ static method to deallocate a block of memory on heap
         <tr>
           <td class="md" nowrap valign="top"> void OsclErrorAllocator::operator delete </td>
           <td class="md" valign="top">(&nbsp;</td>
-          <td class="md" nowrap valign="top"><a class="el" href="group__osclbase.html#a25">OsclAny</a> *&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="group__osclbase.html#a27">OsclAny</a> *&nbsp;</td>
           <td class="mdname" nowrap>&nbsp; <em>aPtr</em>, </td>
         </tr>
         <tr>
           <td></td>
           <td></td>
-          <td class="md" nowrap><a class="el" href="group__osclbase.html#a25">OsclAny</a> *&nbsp;</td>
+          <td class="md" nowrap><a class="el" href="group__osclbase.html#a27">OsclAny</a> *&nbsp;</td>
           <td class="mdname" nowrap>&nbsp; <em>aPtr2</em></td>
         </tr>
         <tr>
@@ -198,7 +198,7 @@ delete operator that doesn't do anything, user has to deallocate manually
         <tr>
           <td></td>
           <td></td>
-          <td class="md" nowrap><a class="el" href="group__osclbase.html#a25">OsclAny</a> *&nbsp;</td>
+          <td class="md" nowrap><a class="el" href="group__osclbase.html#a27">OsclAny</a> *&nbsp;</td>
           <td class="mdname" nowrap>&nbsp; <em>aPtr</em></td>
         </tr>
         <tr>
@@ -227,7 +227,7 @@ placement new operator that allocates memory using the user defined methods
 <hr>The documentation for this class was generated from the following file:<ul>
 <li><a class="el" href="oscl__error__allocator_8h-source.html">oscl_error_allocator.h</a></ul>
 <hr size="1"><img src="pvlogo_small.jpg"><address style="align: right;"><small>OSCL API</small>
-<address style="align: left;"><small>Posting Version: CORE_7.512.1.1 </small>
+<address style="align: left;"><small>Posting Version: CORE_8.000.1.1_RC1 </small>
 </small></address>
 </body>
 </html>

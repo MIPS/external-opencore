@@ -43,7 +43,7 @@
 <a name="l00043"></a><a class="code" href="classOsclDoubleLink.html">00043</a> <span class="keyword">class </span><a class="code" href="classOsclDoubleLink.html">OsclDoubleLink</a>
 00044 {
 00045     <span class="keyword">public</span>:
-<a name="l00046"></a><a class="code" href="classOsclDoubleLink.html#a0">00046</a>         <a class="code" href="classOsclDoubleLink.html#a0">OsclDoubleLink</a>() : <a class="code" href="classOsclDoubleLink.html#m0">iNext</a>(<a class="code" href="group__osclbase.html#a81">NULL</a>) {}
+<a name="l00046"></a><a class="code" href="classOsclDoubleLink.html#a0">00046</a>         <a class="code" href="classOsclDoubleLink.html#a0">OsclDoubleLink</a>() : <a class="code" href="classOsclDoubleLink.html#m0">iNext</a>(<a class="code" href="group__osclbase.html#a88">NULL</a>) {}
 00047         <span class="keywordtype">void</span> <a class="code" href="classOsclDoubleLink.html#a1">Remove</a>();
 00048         <span class="keywordtype">void</span> <a class="code" href="classOsclDoubleLink.html#a2">InsertAfter</a>(<a class="code" href="classOsclDoubleLink.html">OsclDoubleLink</a>* aLink);
 00049         <span class="keywordtype">void</span> <a class="code" href="classOsclDoubleLink.html#a3">InsertBefore</a>(<a class="code" href="classOsclDoubleLink.html">OsclDoubleLink</a>* aLink);
@@ -77,9 +77,9 @@
 00077     <span class="keyword">protected</span>:
 00078         <a class="code" href="classOsclDoubleListBase.html#b0">OsclDoubleListBase</a>();
 00079         <a class="code" href="classOsclDoubleListBase.html#b0">OsclDoubleListBase</a>(int32 anOffset);
-00080         <span class="keywordtype">void</span> <a class="code" href="classOsclDoubleListBase.html#b2">InsertHead</a>(<a class="code" href="group__osclbase.html#a25">OsclAny</a>* aPtr);
-00081         <span class="keywordtype">void</span> <a class="code" href="classOsclDoubleListBase.html#b3">InsertTail</a>(<a class="code" href="group__osclbase.html#a25">OsclAny</a>* aPtr);
-00082         <span class="keywordtype">void</span> <a class="code" href="classOsclDoubleListBase.html#b4">Insert</a>(<a class="code" href="group__osclbase.html#a25">OsclAny</a>* aPtr);
+00080         <span class="keywordtype">void</span> <a class="code" href="classOsclDoubleListBase.html#b2">InsertHead</a>(<a class="code" href="group__osclbase.html#a27">OsclAny</a>* aPtr);
+00081         <span class="keywordtype">void</span> <a class="code" href="classOsclDoubleListBase.html#b3">InsertTail</a>(<a class="code" href="group__osclbase.html#a27">OsclAny</a>* aPtr);
+00082         <span class="keywordtype">void</span> <a class="code" href="classOsclDoubleListBase.html#b4">Insert</a>(<a class="code" href="group__osclbase.html#a27">OsclAny</a>* aPtr);
 00083     <span class="keyword">protected</span>:
 <a name="l00084"></a><a class="code" href="classOsclDoubleListBase.html#n0">00084</a>         <a class="code" href="classOsclDoubleLink.html">OsclDoubleLink</a> <a class="code" href="classOsclDoubleListBase.html#n0">iHead</a>;
 <a name="l00085"></a><a class="code" href="classOsclDoubleListBase.html#n1">00085</a>         int32 <a class="code" href="classOsclDoubleListBase.html#n1">iOffset</a>;
@@ -94,27 +94,27 @@
 <a name="l00094"></a><a class="code" href="classOsclDoubleList.html">00094</a> <span class="keyword">class </span><a class="code" href="classOsclDoubleList.html">OsclDoubleList</a> : <span class="keyword">public</span> <a class="code" href="classOsclDoubleListBase.html">OsclDoubleListBase</a>
 00095 {
 00096     <span class="keyword">public</span>:
-00097         <a class="code" href="group__osclbase.html#a82">OSCL_INLINE</a> <a class="code" href="classOsclDoubleList.html#a0">OsclDoubleList</a>();
-00098         <a class="code" href="group__osclbase.html#a82">OSCL_INLINE</a> <a class="code" href="classOsclDoubleList.html#a0">OsclDoubleList</a>(int32 anOffset);
-00099         <a class="code" href="group__osclbase.html#a82">OSCL_INLINE</a> <span class="keywordtype">void</span> <a class="code" href="classOsclDoubleList.html#a2">InsertHead</a>(T&amp; aRef);
-00100         <a class="code" href="group__osclbase.html#a82">OSCL_INLINE</a> <span class="keywordtype">void</span> <a class="code" href="classOsclDoubleList.html#a3">InsertTail</a>(T&amp; aRef);
-00101         <a class="code" href="group__osclbase.html#a82">OSCL_INLINE</a> <span class="keywordtype">bool</span> <a class="code" href="classOsclDoubleList.html#a4">IsHead</a>(<span class="keyword">const</span> T* aPtr) <span class="keyword">const</span>;
-00102         <a class="code" href="group__osclbase.html#a82">OSCL_INLINE</a> <span class="keywordtype">bool</span> <a class="code" href="classOsclDoubleList.html#a5">IsTail</a>(<span class="keyword">const</span> T* aPtr) <span class="keyword">const</span>;
-00103         <a class="code" href="group__osclbase.html#a82">OSCL_INLINE</a> T* <a class="code" href="classOsclDoubleList.html#a6">Head</a>() <span class="keyword">const</span>;
-00104         <a class="code" href="group__osclbase.html#a82">OSCL_INLINE</a> T* <a class="code" href="classOsclDoubleList.html#a7">Tail</a>() <span class="keyword">const</span>;
+00097         <a class="code" href="group__osclbase.html#a89">OSCL_INLINE</a> <a class="code" href="classOsclDoubleList.html#a0">OsclDoubleList</a>();
+00098         <a class="code" href="group__osclbase.html#a89">OSCL_INLINE</a> <a class="code" href="classOsclDoubleList.html#a0">OsclDoubleList</a>(int32 anOffset);
+00099         <a class="code" href="group__osclbase.html#a89">OSCL_INLINE</a> <span class="keywordtype">void</span> <a class="code" href="classOsclDoubleList.html#a2">InsertHead</a>(T&amp; aRef);
+00100         <a class="code" href="group__osclbase.html#a89">OSCL_INLINE</a> <span class="keywordtype">void</span> <a class="code" href="classOsclDoubleList.html#a3">InsertTail</a>(T&amp; aRef);
+00101         <a class="code" href="group__osclbase.html#a89">OSCL_INLINE</a> <span class="keywordtype">bool</span> <a class="code" href="classOsclDoubleList.html#a4">IsHead</a>(<span class="keyword">const</span> T* aPtr) <span class="keyword">const</span>;
+00102         <a class="code" href="group__osclbase.html#a89">OSCL_INLINE</a> <span class="keywordtype">bool</span> <a class="code" href="classOsclDoubleList.html#a5">IsTail</a>(<span class="keyword">const</span> T* aPtr) <span class="keyword">const</span>;
+00103         <a class="code" href="group__osclbase.html#a89">OSCL_INLINE</a> T* <a class="code" href="classOsclDoubleList.html#a6">Head</a>() <span class="keyword">const</span>;
+00104         <a class="code" href="group__osclbase.html#a89">OSCL_INLINE</a> T* <a class="code" href="classOsclDoubleList.html#a7">Tail</a>() <span class="keyword">const</span>;
 00105 };
 00106 
 00107 <span class="keyword">template</span> &lt;<span class="keyword">class</span> T&gt;
 <a name="l00108"></a><a class="code" href="classOsclPriorityList.html">00108</a> <span class="keyword">class </span><a class="code" href="classOsclPriorityList.html">OsclPriorityList</a> : <span class="keyword">public</span> <a class="code" href="classOsclDoubleListBase.html">OsclDoubleListBase</a>
 00109 {
 00110     <span class="keyword">public</span>:
-00111         <a class="code" href="group__osclbase.html#a82">OSCL_INLINE</a> <a class="code" href="classOsclPriorityList.html#a0">OsclPriorityList</a>();
-00112         <a class="code" href="group__osclbase.html#a82">OSCL_INLINE</a> <a class="code" href="classOsclPriorityList.html#a0">OsclPriorityList</a>(int32 anOffset);
-00113         <a class="code" href="group__osclbase.html#a82">OSCL_INLINE</a> <span class="keywordtype">void</span> <a class="code" href="classOsclPriorityList.html#a2">Insert</a>(T&amp; aRef);
-00114         <a class="code" href="group__osclbase.html#a82">OSCL_INLINE</a> <span class="keywordtype">bool</span> <a class="code" href="classOsclPriorityList.html#a3">IsHead</a>(<span class="keyword">const</span> T* aPtr) <span class="keyword">const</span>;
-00115         <a class="code" href="group__osclbase.html#a82">OSCL_INLINE</a> <span class="keywordtype">bool</span> <a class="code" href="classOsclPriorityList.html#a4">IsTail</a>(<span class="keyword">const</span> T* aPtr) <span class="keyword">const</span>;
-00116         <a class="code" href="group__osclbase.html#a82">OSCL_INLINE</a> T* <a class="code" href="classOsclPriorityList.html#a5">Head</a>() <span class="keyword">const</span>;
-00117         <a class="code" href="group__osclbase.html#a82">OSCL_INLINE</a> T* <a class="code" href="classOsclPriorityList.html#a6">Tail</a>() <span class="keyword">const</span>;
+00111         <a class="code" href="group__osclbase.html#a89">OSCL_INLINE</a> <a class="code" href="classOsclPriorityList.html#a0">OsclPriorityList</a>();
+00112         <a class="code" href="group__osclbase.html#a89">OSCL_INLINE</a> <a class="code" href="classOsclPriorityList.html#a0">OsclPriorityList</a>(int32 anOffset);
+00113         <a class="code" href="group__osclbase.html#a89">OSCL_INLINE</a> <span class="keywordtype">void</span> <a class="code" href="classOsclPriorityList.html#a2">Insert</a>(T&amp; aRef);
+00114         <a class="code" href="group__osclbase.html#a89">OSCL_INLINE</a> <span class="keywordtype">bool</span> <a class="code" href="classOsclPriorityList.html#a3">IsHead</a>(<span class="keyword">const</span> T* aPtr) <span class="keyword">const</span>;
+00115         <a class="code" href="group__osclbase.html#a89">OSCL_INLINE</a> <span class="keywordtype">bool</span> <a class="code" href="classOsclPriorityList.html#a4">IsTail</a>(<span class="keyword">const</span> T* aPtr) <span class="keyword">const</span>;
+00116         <a class="code" href="group__osclbase.html#a89">OSCL_INLINE</a> T* <a class="code" href="classOsclPriorityList.html#a5">Head</a>() <span class="keyword">const</span>;
+00117         <a class="code" href="group__osclbase.html#a89">OSCL_INLINE</a> T* <a class="code" href="classOsclPriorityList.html#a6">Tail</a>() <span class="keyword">const</span>;
 00118 };
 00119 
 00120 <span class="comment">//</span>
@@ -129,7 +129,7 @@
 00129             <span class="comment">//save the queue information.</span>
 00130             <a class="code" href="classOsclDoubleRunner.html#n0">iOffset</a> = aQue.<a class="code" href="classOsclDoubleListBase.html#a4">getOffset</a>();
 00131             <a class="code" href="classOsclDoubleRunner.html#n1">iHead</a> = aQue.<a class="code" href="classOsclDoubleListBase.html#a3">getHead</a>();
-00132             <a class="code" href="classOsclDoubleRunner.html#n2">iNext</a> = <a class="code" href="group__osclbase.html#a81">NULL</a>;
+00132             <a class="code" href="classOsclDoubleRunner.html#n2">iNext</a> = <a class="code" href="group__osclbase.html#a88">NULL</a>;
 00133         }
 00134 
 <a name="l00135"></a><a class="code" href="classOsclDoubleRunner.html#a1">00135</a>         <span class="keywordtype">void</span> <a class="code" href="classOsclDoubleRunner.html#a1">Set</a>(T&amp; aLink)
@@ -142,15 +142,15 @@
 00142         {
 00143             <span class="keywordflow">if</span> (iNext)
 00144                 <span class="keywordflow">return</span> ((T *)<a class="code" href="group__osclproc.html#a6">OsclPtrSub</a>(<a class="code" href="classOsclDoubleRunner.html#n2">iNext</a>, <a class="code" href="classOsclDoubleRunner.html#n0">iOffset</a>));
-00145             <span class="keywordflow">return</span> <a class="code" href="group__osclbase.html#a81">NULL</a>;
+00145             <span class="keywordflow">return</span> <a class="code" href="group__osclbase.html#a88">NULL</a>;
 00146         }
 00147 
 <a name="l00148"></a><a class="code" href="classOsclDoubleRunner.html#a3">00148</a>         T* <a class="code" href="classOsclDoubleRunner.html#a3">operator++</a>(<span class="keywordtype">int</span>)
 00149         {
 00150             <span class="comment">//get current.</span>
-00151             <a class="code" href="group__osclbase.html#a25">OsclAny</a>* p = <a class="code" href="group__osclbase.html#a81">NULL</a>;
+00151             <a class="code" href="group__osclbase.html#a27">OsclAny</a>* p = <a class="code" href="group__osclbase.html#a88">NULL</a>;
 00152             <span class="keywordflow">if</span> (iNext)
-00153                 p = ((<a class="code" href="group__osclbase.html#a25">OsclAny</a> *)<a class="code" href="group__osclproc.html#a6">OsclPtrSub</a>(<a class="code" href="classOsclDoubleRunner.html#n2">iNext</a>, <a class="code" href="classOsclDoubleRunner.html#n0">iOffset</a>));
+00153                 p = ((<a class="code" href="group__osclbase.html#a27">OsclAny</a> *)<a class="code" href="group__osclproc.html#a6">OsclPtrSub</a>(<a class="code" href="classOsclDoubleRunner.html#n2">iNext</a>, <a class="code" href="classOsclDoubleRunner.html#n0">iOffset</a>));
 00154 
 00155             <span class="comment">//advance.</span>
 00156             <span class="keywordflow">if</span> (iNext)
@@ -204,7 +204,7 @@
 00204 <span class="preprocessor">#endif</span>
 00205 <span class="preprocessor"></span>
 </pre></div><hr size="1"><img src="pvlogo_small.jpg"><address style="align: right;"><small>OSCL API</small>
-<address style="align: left;"><small>Posting Version: CORE_7.512.1.1 </small>
+<address style="align: left;"><small>Posting Version: CORE_8.000.1.1_RC1 </small>
 </small></address>
 </body>
 </html>

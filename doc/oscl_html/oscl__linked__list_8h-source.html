@@ -38,7 +38,7 @@
 <a name="l00051"></a><a class="code" href="classLinkedListElement.html#a0">00051</a>         <a class="code" href="classLinkedListElement.html#a0">LinkedListElement</a>(LLClass in_data)
 00052         {
 00053             <a class="code" href="classLinkedListElement.html#m1">data</a> = in_data;
-00054             <a class="code" href="classLinkedListElement.html#m0">next</a> = <a class="code" href="group__osclbase.html#a81">NULL</a>;
+00054             <a class="code" href="classLinkedListElement.html#m0">next</a> = <a class="code" href="group__osclbase.html#a88">NULL</a>;
 00055         };
 00056         <span class="comment">//  ~LinkedListElement() {};</span>
 00057 
@@ -59,33 +59,33 @@
 00076 
 00077         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keywordtype">void</span> <a class="code" href="classOscl__Linked__List__Base.html#b2">destroy</a>();
 00078 
-00085         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> int32 <a class="code" href="classOscl__Linked__List__Base.html#b3">get_first</a>(<a class="code" href="group__osclbase.html#a25">OsclAny</a>* ele);
+00085         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> int32 <a class="code" href="classOscl__Linked__List__Base.html#b3">get_first</a>(<a class="code" href="group__osclbase.html#a27">OsclAny</a>* ele);
 00086 
-00093         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> int32 <a class="code" href="classOscl__Linked__List__Base.html#b4">get_next</a>(<a class="code" href="group__osclbase.html#a25">OsclAny</a>* ele);
+00093         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> int32 <a class="code" href="classOscl__Linked__List__Base.html#b4">get_next</a>(<a class="code" href="group__osclbase.html#a27">OsclAny</a>* ele);
 00094 
 00100         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> int32 <a class="code" href="classOscl__Linked__List__Base.html#b5">check_list</a>();
 00101 
-00108         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> int32 <a class="code" href="classOscl__Linked__List__Base.html#b6">add_element</a>(<span class="keyword">const</span> <a class="code" href="group__osclbase.html#a25">OsclAny</a>* new_element);
+00108         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> int32 <a class="code" href="classOscl__Linked__List__Base.html#b6">add_element</a>(<span class="keyword">const</span> <a class="code" href="group__osclbase.html#a27">OsclAny</a>* new_element);
 00109 
-00117         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> int32 <a class="code" href="classOscl__Linked__List__Base.html#b7">add_to_front</a>(<span class="keyword">const</span> <a class="code" href="group__osclbase.html#a25">OsclAny</a>* new_element);
+00117         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> int32 <a class="code" href="classOscl__Linked__List__Base.html#b7">add_to_front</a>(<span class="keyword">const</span> <a class="code" href="group__osclbase.html#a27">OsclAny</a>* new_element);
 00118 
-00126         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> int32 <a class="code" href="classOscl__Linked__List__Base.html#b8">insert_element</a>(<span class="keyword">const</span> <a class="code" href="group__osclbase.html#a25">OsclAny</a>* new_element, <span class="keywordtype">int</span> index);
+00126         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> int32 <a class="code" href="classOscl__Linked__List__Base.html#b8">insert_element</a>(<span class="keyword">const</span> <a class="code" href="group__osclbase.html#a27">OsclAny</a>* new_element, <span class="keywordtype">int</span> index);
 00127 
-00133         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> int32 <a class="code" href="classOscl__Linked__List__Base.html#b9">get_element</a>(int32 index, <a class="code" href="group__osclbase.html#a25">OsclAny</a>* element);
+00133         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> int32 <a class="code" href="classOscl__Linked__List__Base.html#b9">get_element</a>(int32 index, <a class="code" href="group__osclbase.html#a27">OsclAny</a>* element);
 00134 
-00140         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> int32 <a class="code" href="classOscl__Linked__List__Base.html#b10">remove_element</a>(<span class="keyword">const</span> <a class="code" href="group__osclbase.html#a25">OsclAny</a>* data_to_remove);
+00140         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> int32 <a class="code" href="classOscl__Linked__List__Base.html#b10">remove_element</a>(<span class="keyword">const</span> <a class="code" href="group__osclbase.html#a27">OsclAny</a>* data_to_remove);
 00141 
-00148         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> int32 <a class="code" href="classOscl__Linked__List__Base.html#b11">get_index</a>(<span class="keyword">const</span> <a class="code" href="group__osclbase.html#a25">OsclAny</a>* data);
+00148         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> int32 <a class="code" href="classOscl__Linked__List__Base.html#b11">get_index</a>(<span class="keyword">const</span> <a class="code" href="group__osclbase.html#a27">OsclAny</a>* data);
 00149 
 00155         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> int32 <a class="code" href="classOscl__Linked__List__Base.html#b10">remove_element</a>(<span class="keyword">const</span> int32 index_to_remove);
 00156 
-00162         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> int32 <a class="code" href="classOscl__Linked__List__Base.html#b13">move_to_end</a>(<span class="keyword">const</span> <a class="code" href="group__osclbase.html#a25">OsclAny</a>* data_to_move);
+00162         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> int32 <a class="code" href="classOscl__Linked__List__Base.html#b13">move_to_end</a>(<span class="keyword">const</span> <a class="code" href="group__osclbase.html#a27">OsclAny</a>* data_to_move);
 00163 
-00169         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> int32 <a class="code" href="classOscl__Linked__List__Base.html#b14">move_to_front</a>(<span class="keyword">const</span> <a class="code" href="group__osclbase.html#a25">OsclAny</a>* data_to_move);
+00169         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> int32 <a class="code" href="classOscl__Linked__List__Base.html#b14">move_to_front</a>(<span class="keyword">const</span> <a class="code" href="group__osclbase.html#a27">OsclAny</a>* data_to_move);
 00170 
-<a name="l00171"></a><a class="code" href="classOscl__Linked__List__Base.html#n0">00171</a>         <a class="code" href="group__osclbase.html#a25">OsclAny</a> *<a class="code" href="classOscl__Linked__List__Base.html#n0">head</a>;
-<a name="l00172"></a><a class="code" href="classOscl__Linked__List__Base.html#n1">00172</a>         <a class="code" href="group__osclbase.html#a25">OsclAny</a> *<a class="code" href="classOscl__Linked__List__Base.html#n1">tail</a>;
-<a name="l00173"></a><a class="code" href="classOscl__Linked__List__Base.html#n2">00173</a>         <a class="code" href="group__osclbase.html#a25">OsclAny</a> *<a class="code" href="classOscl__Linked__List__Base.html#n2">iterator</a>;
+<a name="l00171"></a><a class="code" href="classOscl__Linked__List__Base.html#n0">00171</a>         <a class="code" href="group__osclbase.html#a27">OsclAny</a> *<a class="code" href="classOscl__Linked__List__Base.html#n0">head</a>;
+<a name="l00172"></a><a class="code" href="classOscl__Linked__List__Base.html#n1">00172</a>         <a class="code" href="group__osclbase.html#a27">OsclAny</a> *<a class="code" href="classOscl__Linked__List__Base.html#n1">tail</a>;
+<a name="l00173"></a><a class="code" href="classOscl__Linked__List__Base.html#n2">00173</a>         <a class="code" href="group__osclbase.html#a27">OsclAny</a> *<a class="code" href="classOscl__Linked__List__Base.html#n2">iterator</a>;
 <a name="l00174"></a><a class="code" href="classOscl__Linked__List__Base.html#n3">00174</a>         int32 <a class="code" href="classOscl__Linked__List__Base.html#n3">num_elements</a>;
 <a name="l00175"></a><a class="code" href="classOscl__Linked__List__Base.html#n4">00175</a>         uint32 <a class="code" href="classOscl__Linked__List__Base.html#n4">sizeof_T</a>;
 00176 
@@ -190,10 +190,10 @@
 00356     <span class="keyword">private</span>:
 00357 
 00358         <span class="comment">//from Oscl_Opaque_Type_Alloc_LL</span>
-00359         <span class="keywordtype">void</span> <a class="code" href="classOscl__Linked__List__Base.html#b1">construct</a>(<a class="code" href="group__osclbase.html#a25">OsclAny</a>* p, <span class="keyword">const</span> <a class="code" href="group__osclbase.html#a25">OsclAny</a>* init_val)
+00359         <span class="keywordtype">void</span> <a class="code" href="classOscl__Linked__List__Base.html#b1">construct</a>(<a class="code" href="group__osclbase.html#a27">OsclAny</a>* p, <span class="keyword">const</span> <a class="code" href="group__osclbase.html#a27">OsclAny</a>* init_val)
 00360         {
-00361             <a class="code" href="group__osclbase.html#a78">OSCL_ASSERT</a>(init_val);
-00362             <a class="code" href="group__osclbase.html#a78">OSCL_ASSERT</a>(p);
+00361             <a class="code" href="group__osclbase.html#a85">OSCL_ASSERT</a>(init_val);
+00362             <a class="code" href="group__osclbase.html#a85">OSCL_ASSERT</a>(p);
 00363             <span class="keyword">new</span>(p) <a class="code" href="classLinkedListElement.html">LinkedListElement&lt;LLClass&gt;</a>(*(LLClass*)init_val);
 00364         }
 00365 
@@ -201,50 +201,50 @@
 00367         <span class="keyword">typedef</span> <a class="code" href="classLinkedListElement.html">LinkedListElement&lt;LLClass&gt;</a>* p_elem_type;
 00368 
 00369         <span class="comment">//from Oscl_Opaque_Type_Alloc_LL</span>
-00370         <span class="keywordtype">void</span> <a class="code" href="classOscl__Linked__List__Base.html#b2">destroy</a>(<a class="code" href="group__osclbase.html#a25">OsclAny</a>* p)
+00370         <span class="keywordtype">void</span> <a class="code" href="classOscl__Linked__List__Base.html#b2">destroy</a>(<a class="code" href="group__osclbase.html#a27">OsclAny</a>* p)
 00371         {
-00372             <a class="code" href="group__osclbase.html#a78">OSCL_ASSERT</a>(p);
+00372             <a class="code" href="group__osclbase.html#a85">OSCL_ASSERT</a>(p);
 00373             ((p_elem_type)p)-&gt;~LinkedListElement&lt;LLClass&gt;();
 00374         }
 00375 
 00376         <span class="comment">//from Oscl_Opaque_Type_Alloc_LL</span>
-00377         <a class="code" href="group__osclbase.html#a25">OsclAny</a>* <a class="code" href="classOscl__Opaque__Type__Alloc__LL.html#a2">allocate</a>(<span class="keyword">const</span> uint32 size)
+00377         <a class="code" href="group__osclbase.html#a27">OsclAny</a>* <a class="code" href="classOscl__Opaque__Type__Alloc__LL.html#a2">allocate</a>(<span class="keyword">const</span> uint32 size)
 00378         {
 00379             <span class="keywordflow">return</span> alloc.ALLOCATE(size);
 00380         }
 00381 
 00382         <span class="comment">//from Oscl_Opaque_Type_Alloc_LL</span>
-00383         <span class="keywordtype">void</span> <a class="code" href="classOscl__Opaque__Type__Alloc__LL.html#a3">deallocate</a>(<a class="code" href="group__osclbase.html#a25">OsclAny</a>* p)
+00383         <span class="keywordtype">void</span> <a class="code" href="classOscl__Opaque__Type__Alloc__LL.html#a3">deallocate</a>(<a class="code" href="group__osclbase.html#a27">OsclAny</a>* p)
 00384         {
 00385             alloc.deallocate(p);
 00386         }
 00387 
 00388         <span class="comment">//from Oscl_Opaque_Type_Alloc_LL</span>
-00389         <a class="code" href="group__osclbase.html#a25">OsclAny</a>* <a class="code" href="classOscl__Linked__List.html#a5">get_next</a>(<span class="keyword">const</span> <a class="code" href="group__osclbase.html#a25">OsclAny</a>* elem)<span class="keyword">const</span>
+00389         <a class="code" href="group__osclbase.html#a27">OsclAny</a>* <a class="code" href="classOscl__Linked__List.html#a5">get_next</a>(<span class="keyword">const</span> <a class="code" href="group__osclbase.html#a27">OsclAny</a>* elem)<span class="keyword">const</span>
 00390         {
 00391             <span class="keywordflow">return</span> ((<a class="code" href="classLinkedListElement.html">LinkedListElement&lt;LLClass&gt;</a>*)elem)-&gt;next;
 00392         }
 00393 
 00394         <span class="comment">//from Oscl_Opaque_Type_Alloc_LL</span>
-00395         <span class="keywordtype">void</span> <a class="code" href="classOscl__Opaque__Type__Alloc__LL.html#a5">set_next</a>(<a class="code" href="group__osclbase.html#a25">OsclAny</a>* elem, <span class="keyword">const</span> <a class="code" href="group__osclbase.html#a25">OsclAny</a>* nextelem)
+00395         <span class="keywordtype">void</span> <a class="code" href="classOscl__Opaque__Type__Alloc__LL.html#a5">set_next</a>(<a class="code" href="group__osclbase.html#a27">OsclAny</a>* elem, <span class="keyword">const</span> <a class="code" href="group__osclbase.html#a27">OsclAny</a>* nextelem)
 00396         {
-00397             <a class="code" href="group__osclbase.html#a78">OSCL_ASSERT</a>(elem);
+00397             <a class="code" href="group__osclbase.html#a85">OSCL_ASSERT</a>(elem);
 00398             ((<a class="code" href="classLinkedListElement.html">LinkedListElement&lt;LLClass&gt;</a>*)elem)-&gt;next = (<a class="code" href="classLinkedListElement.html">LinkedListElement&lt;LLClass&gt;</a>*)nextelem;
 00399         }
 00400 
 00401         <span class="comment">//from Oscl_Opaque_Type_Alloc_LL</span>
-00402         <span class="keywordtype">void</span> <a class="code" href="classOscl__Opaque__Type__Alloc__LL.html#a6">get_data</a>(<a class="code" href="group__osclbase.html#a25">OsclAny</a>*elem, <a class="code" href="group__osclbase.html#a25">OsclAny</a>*data_val)
+00402         <span class="keywordtype">void</span> <a class="code" href="classOscl__Opaque__Type__Alloc__LL.html#a6">get_data</a>(<a class="code" href="group__osclbase.html#a27">OsclAny</a>*elem, <a class="code" href="group__osclbase.html#a27">OsclAny</a>*data_val)
 00403         {
-00404             <a class="code" href="group__osclbase.html#a78">OSCL_ASSERT</a>(elem);
-00405             <a class="code" href="group__osclbase.html#a78">OSCL_ASSERT</a>(data_val);
+00404             <a class="code" href="group__osclbase.html#a85">OSCL_ASSERT</a>(elem);
+00405             <a class="code" href="group__osclbase.html#a85">OSCL_ASSERT</a>(data_val);
 00406             *((LLClass*)data_val) = ((<a class="code" href="classLinkedListElement.html">LinkedListElement&lt;LLClass&gt;</a>*)elem)-&gt;data ;
 00407         }
 00408 
 00409         <span class="comment">//from Oscl_Opaque_Type_Alloc_LL</span>
-00410         <span class="keywordtype">bool</span> <a class="code" href="classOscl__Opaque__Type__Alloc__LL.html#a7">compare_data</a>(<span class="keyword">const</span> <a class="code" href="group__osclbase.html#a25">OsclAny</a>*elem, <span class="keyword">const</span> <a class="code" href="group__osclbase.html#a25">OsclAny</a>*data_val)<span class="keyword">const</span>
+00410         <span class="keywordtype">bool</span> <a class="code" href="classOscl__Opaque__Type__Alloc__LL.html#a7">compare_data</a>(<span class="keyword">const</span> <a class="code" href="group__osclbase.html#a27">OsclAny</a>*elem, <span class="keyword">const</span> <a class="code" href="group__osclbase.html#a27">OsclAny</a>*data_val)<span class="keyword">const</span>
 00411         {
-00412             <a class="code" href="group__osclbase.html#a78">OSCL_ASSERT</a>(elem);
-00413             <a class="code" href="group__osclbase.html#a78">OSCL_ASSERT</a>(data_val);
+00412             <a class="code" href="group__osclbase.html#a85">OSCL_ASSERT</a>(elem);
+00413             <a class="code" href="group__osclbase.html#a85">OSCL_ASSERT</a>(data_val);
 00414             <span class="keywordflow">return</span> ((<a class="code" href="classLinkedListElement.html">LinkedListElement&lt;LLClass&gt;</a>*)elem)-&gt;data == *((LLClass*)data_val);
 00415         }
 00416 
@@ -361,7 +361,7 @@
 00587 <span class="preprocessor">#endif  // __LINKED_LIST_H</span>
 00588 <span class="preprocessor"></span>
 </pre></div><hr size="1"><img src="pvlogo_small.jpg"><address style="align: right;"><small>OSCL API</small>
-<address style="align: left;"><small>Posting Version: CORE_7.512.1.1 </small>
+<address style="align: left;"><small>Posting Version: CORE_8.000.1.1_RC1 </small>
 </small></address>
 </body>
 </html>

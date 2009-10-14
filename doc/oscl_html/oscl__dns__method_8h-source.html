@@ -27,11 +27,11 @@
 00022     <span class="keyword">public</span>:
 <a name="l00023"></a><a class="code" href="classOsclDNSMethod.html#a0">00023</a>         <a class="code" href="classOsclDNSMethod.html#a0">OsclDNSMethod</a>(<a class="code" href="classOscl__DefAlloc.html">Oscl_DefAlloc</a> &amp;a, <span class="keyword">const</span> <span class="keywordtype">char</span> *name, <a class="code" href="group__osclio.html#a24">TPVDNSFxn</a> fxn)
 00024                 : <a class="code" href="classOsclTimerObject.html">OsclTimerObject</a>(<a class="code" href="classOsclActiveObject.html">OsclActiveObject</a>::EPriorityNominal, name)
-00025                 , <a class="code" href="classOsclDNSMethod.html#m0">iDNSObserver</a>(<a class="code" href="group__osclbase.html#a81">NULL</a>)
+00025                 , <a class="code" href="classOsclDNSMethod.html#m0">iDNSObserver</a>(<a class="code" href="group__osclbase.html#a88">NULL</a>)
 00026                 , <a class="code" href="classOsclDNSMethod.html#m1">iId</a>(0)
 00027                 , <a class="code" href="classOsclDNSMethod.html#m2">iAlloc</a>(a)
 00028                 , <a class="code" href="classOsclDNSMethod.html#m3">iDNSFxn</a>(fxn)
-00029                 , <a class="code" href="classOsclDNSMethod.html#n0">iDNSRequestAO</a>(<a class="code" href="group__osclbase.html#a81">NULL</a>)
+00029                 , <a class="code" href="classOsclDNSMethod.html#n0">iDNSRequestAO</a>(<a class="code" href="group__osclbase.html#a88">NULL</a>)
 00030         {
 00031             <a class="code" href="classOsclDNSMethod.html#m4">iLogger</a> = <a class="code" href="classPVLogger.html#d2">PVLogger::GetLoggerObject</a>(<span class="stringliteral">"oscldns"</span>);
 00032         }
@@ -66,8 +66,8 @@
 00064 
 <a name="l00065"></a><a class="code" href="classOsclDNSRequestAO.html#b0">00065</a>         <a class="code" href="classOsclDNSRequestAO.html#b0">OsclDNSRequestAO</a>(<span class="keyword">const</span> <span class="keywordtype">char</span> *name)
 00066                 : <a class="code" href="classOsclActiveObject.html">OsclActiveObject</a>(<a class="code" href="classOsclActiveObject.html">OsclActiveObject</a>::<a class="code" href="classOsclActiveObject.html#s5s2">EPriorityNominal</a>, name)
-00067                 , <a class="code" href="classOsclDNSRequestAO.html#n0">iDNSI</a>(<a class="code" href="group__osclbase.html#a81">NULL</a>)
-00068                 , <a class="code" href="classOsclDNSRequestAO.html#n1">iDNSMethod</a>(<a class="code" href="group__osclbase.html#a81">NULL</a>)
+00067                 , <a class="code" href="classOsclDNSRequestAO.html#n0">iDNSI</a>(<a class="code" href="group__osclbase.html#a88">NULL</a>)
+00068                 , <a class="code" href="classOsclDNSRequestAO.html#n1">iDNSMethod</a>(<a class="code" href="group__osclbase.html#a88">NULL</a>)
 00069                 , <a class="code" href="classOsclDNSRequestAO.html#n2">iSocketError</a>(0)
 00070         {
 00071         }
@@ -113,7 +113,7 @@
 00111 <span class="preprocessor">#endif</span>
 00112 <span class="preprocessor"></span>
 </pre></div><hr size="1"><img src="pvlogo_small.jpg"><address style="align: right;"><small>OSCL API</small>
-<address style="align: left;"><small>Posting Version: CORE_7.512.1.1 </small>
+<address style="align: left;"><small>Posting Version: CORE_8.000.1.1_RC1 </small>
 </small></address>
 </body>
 </html>

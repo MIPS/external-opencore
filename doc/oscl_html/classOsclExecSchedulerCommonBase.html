@@ -70,7 +70,7 @@
 <tr><td nowrap align=right valign=top>OsclExecSchedulerCommonBase *&nbsp;</td><td valign=bottom><a class="el" href="classOsclExecSchedulerCommonBase.html#e0">GetScheduler</a> ()</td></tr>
 <tr><td nowrap align=right valign=top>OsclExecSchedulerCommonBase *&nbsp;</td><td valign=bottom><a class="el" href="classOsclExecSchedulerCommonBase.html#e1">SetScheduler</a> (OsclExecSchedulerCommonBase *)</td></tr>
 <tr><td nowrap align=right valign=top>void&nbsp;</td><td valign=bottom><a class="el" href="classOsclExecSchedulerCommonBase.html#e2">ShowStats</a> (<a class="el" href="classPVActiveStats.html">PVActiveStats</a> *active)</td></tr>
-<tr><td nowrap align=right valign=top>void&nbsp;</td><td valign=bottom><a class="el" href="classOsclExecSchedulerCommonBase.html#e3">ShowSummaryStats</a> (<a class="el" href="classPVActiveStats.html">PVActiveStats</a> *active, <a class="el" href="classPVLogger.html">PVLogger</a> *, <a class="el" href="group__osclbase.html#a30">int64</a>, <a class="el" href="group__osclbase.html#a30">int64</a> &amp;, float &amp;)</td></tr>
+<tr><td nowrap align=right valign=top>void&nbsp;</td><td valign=bottom><a class="el" href="classOsclExecSchedulerCommonBase.html#e3">ShowSummaryStats</a> (<a class="el" href="classPVActiveStats.html">PVActiveStats</a> *active, <a class="el" href="classPVLogger.html">PVLogger</a> *, <a class="el" href="group__osclbase.html#a32">int64</a>, <a class="el" href="group__osclbase.html#a32">int64</a> &amp;, float &amp;)</td></tr>
 <tr><td colspan=2><br><h2>Protected Attributes</h2></td></tr>
 <tr><td nowrap align=right valign=top>bool&nbsp;</td><td valign=bottom><a class="el" href="classOsclExecSchedulerCommonBase.html#n0">iBlockingMode</a></td></tr>
 <tr><td nowrap align=right valign=top>bool&nbsp;</td><td valign=bottom><a class="el" href="classOsclExecSchedulerCommonBase.html#n1">iNativeMode</a></td></tr>
@@ -89,7 +89,7 @@
 <tr><td nowrap align=right valign=top><a class="el" href="classOsclDoubleList.html">OsclDoubleList</a>&lt; <a class="el" href="classPVActiveStats.html">PVActiveStats</a> &gt;&nbsp;</td><td valign=bottom><a class="el" href="classOsclExecSchedulerCommonBase.html#n14">iPVStatQ</a></td></tr>
 <tr><td nowrap align=right valign=top><a class="el" href="classPVActiveStats.html">PVActiveStats</a> *&nbsp;</td><td valign=bottom><a class="el" href="classOsclExecSchedulerCommonBase.html#n15">iOtherExecStats</a> [EOtherExecStats_Last]</td></tr>
 <tr><td nowrap align=right valign=top>uint8 *&nbsp;</td><td valign=bottom><a class="el" href="classOsclExecSchedulerCommonBase.html#n16">iTotalTicksTemp</a></td></tr>
-<tr><td nowrap align=right valign=top><a class="el" href="group__osclbase.html#a30">int64</a>&nbsp;</td><td valign=bottom><a class="el" href="classOsclExecSchedulerCommonBase.html#n17">iGrandTotalTicks</a></td></tr>
+<tr><td nowrap align=right valign=top><a class="el" href="group__osclbase.html#a32">int64</a>&nbsp;</td><td valign=bottom><a class="el" href="classOsclExecSchedulerCommonBase.html#n17">iGrandTotalTicks</a></td></tr>
 <tr><td nowrap align=right valign=top>float&nbsp;</td><td valign=bottom><a class="el" href="classOsclExecSchedulerCommonBase.html#n18">iTotalPercent</a></td></tr>
 <tr><td nowrap align=right valign=top>uint32&nbsp;</td><td valign=bottom><a class="el" href="classOsclExecSchedulerCommonBase.html#n19">iTime</a></td></tr>
 <tr><td nowrap align=right valign=top>int32&nbsp;</td><td valign=bottom><a class="el" href="classOsclExecSchedulerCommonBase.html#n20">iDelta</a></td></tr>
@@ -1052,13 +1052,13 @@ Resume scheduling immediately. This API only applies to a blocking loop schedule
         <tr>
           <td></td>
           <td></td>
-          <td class="md" nowrap><a class="el" href="group__osclbase.html#a30">int64</a>&nbsp;</td>
+          <td class="md" nowrap><a class="el" href="group__osclbase.html#a32">int64</a>&nbsp;</td>
           <td class="mdname" nowrap>&nbsp;, </td>
         </tr>
         <tr>
           <td></td>
           <td></td>
-          <td class="md" nowrap><a class="el" href="group__osclbase.html#a30">int64</a> &amp;&nbsp;</td>
+          <td class="md" nowrap><a class="el" href="group__osclbase.html#a32">int64</a> &amp;&nbsp;</td>
           <td class="mdname" nowrap>&nbsp;, </td>
         </tr>
         <tr>
@@ -1792,7 +1792,7 @@ Reimplemented in <a class="el" href="classOsclExecScheduler.html#l0">OsclExecSch
     <td class="md">
       <table cellpadding="0" cellspacing="0" border="0">
         <tr>
-          <td class="md" nowrap valign="top"> <a class="el" href="group__osclbase.html#a30">int64</a> OsclExecSchedulerCommonBase::iGrandTotalTicks<code> [protected]</code>
+          <td class="md" nowrap valign="top"> <a class="el" href="group__osclbase.html#a32">int64</a> OsclExecSchedulerCommonBase::iGrandTotalTicks<code> [protected]</code>
       </table>
     </td>
   </tr>
@@ -2251,7 +2251,7 @@ Reimplemented in <a class="el" href="classOsclExecScheduler.html#l0">OsclExecSch
 <hr>The documentation for this class was generated from the following file:<ul>
 <li><a class="el" href="oscl__scheduler_8h-source.html">oscl_scheduler.h</a></ul>
 <hr size="1"><img src="pvlogo_small.jpg"><address style="align: right;"><small>OSCL API</small>
-<address style="align: left;"><small>Posting Version: CORE_7.512.1.1 </small>
+<address style="align: left;"><small>Posting Version: CORE_8.000.1.1_RC1 </small>
 </small></address>
 </body>
 </html>

@@ -42,9 +42,9 @@
 <a name="l00045"></a><a class="code" href="classOsclReadyAlloc.html">00045</a> <span class="keyword">class </span><a class="code" href="classOsclReadyAlloc.html">OsclReadyAlloc</a>: <span class="keyword">public</span> <a class="code" href="classOscl__DefAlloc.html">Oscl_DefAlloc</a>
 00046 {
 00047     <span class="keyword">public</span>:
-00048         <a class="code" href="group__osclbase.html#a25">OsclAny</a>* <a class="code" href="classOsclReadyAlloc.html#a0">allocate</a>(<span class="keyword">const</span> uint32 size) ;
-00049         <a class="code" href="group__osclbase.html#a25">OsclAny</a>* <a class="code" href="classOsclReadyAlloc.html#a1">allocate_fl</a>(<span class="keyword">const</span> uint32 size, <span class="keyword">const</span> <span class="keywordtype">char</span> * file_name, <span class="keyword">const</span> <span class="keywordtype">int</span> line_num);
-00050         <span class="keywordtype">void</span> <a class="code" href="classOsclReadyAlloc.html#a2">deallocate</a>(<a class="code" href="group__osclbase.html#a25">OsclAny</a>* p) ;
+00048         <a class="code" href="group__osclbase.html#a27">OsclAny</a>* <a class="code" href="classOsclReadyAlloc.html#a0">allocate</a>(<span class="keyword">const</span> uint32 size) ;
+00049         <a class="code" href="group__osclbase.html#a27">OsclAny</a>* <a class="code" href="classOsclReadyAlloc.html#a1">allocate_fl</a>(<span class="keyword">const</span> uint32 size, <span class="keyword">const</span> <span class="keywordtype">char</span> * file_name, <span class="keyword">const</span> <span class="keywordtype">int</span> line_num);
+00050         <span class="keywordtype">void</span> <a class="code" href="classOsclReadyAlloc.html#a2">deallocate</a>(<a class="code" href="group__osclbase.html#a27">OsclAny</a>* p) ;
 00051     <span class="keyword">private</span>:
 00052         <a class="code" href="classOsclMemAllocator.html">OsclMemAllocator</a> iBasicAlloc;
 00053 };
@@ -91,7 +91,7 @@
 00099         int32 <a class="code" href="classOsclReadyQ.html#a11">WaitForRequestComplete</a>(<a class="code" href="classPVActiveBase.html">PVActiveBase</a>*);
 00100 
 00101         <span class="comment">//For non-blocking scheduler observer support</span>
-00102         <span class="keywordtype">void</span> <a class="code" href="classOsclReadyQ.html#a12">RegisterForCallback</a>(<a class="code" href="classOsclSchedulerObserver.html">OsclSchedulerObserver</a>* aCallback, <a class="code" href="group__osclbase.html#a25">OsclAny</a>* aCallbackContext);
+00102         <span class="keywordtype">void</span> <a class="code" href="classOsclReadyQ.html#a12">RegisterForCallback</a>(<a class="code" href="classOsclSchedulerObserver.html">OsclSchedulerObserver</a>* aCallback, <a class="code" href="group__osclbase.html#a27">OsclAny</a>* aCallbackContext);
 00103         <span class="keywordtype">void</span> <a class="code" href="classOsclReadyQ.html#a13">TimerCallback</a>(uint32 aDelayMicrosec);
 <a name="l00104"></a><a class="code" href="classOsclReadyQ.html#a14">00104</a>         <a class="code" href="classOsclSchedulerObserver.html">OsclSchedulerObserver</a>* <a class="code" href="classOsclReadyQ.html#a14">Callback</a>()
 00105         {
@@ -113,7 +113,7 @@
 00121 
 00122         <span class="comment">//For non-blocking scheduler observer support</span>
 00123         <a class="code" href="classOsclSchedulerObserver.html">OsclSchedulerObserver</a>* iCallback;
-00124         <a class="code" href="group__osclbase.html#a25">OsclAny</a>* iCallbackContext;
+00124         <a class="code" href="group__osclbase.html#a27">OsclAny</a>* iCallbackContext;
 00125 };
 00126 
 00127 <span class="comment">/*</span>
@@ -143,14 +143,14 @@
 00154             <a class="code" href="classTReadyQueLink.html#m0">iAOPriority</a> = 0;
 00155             <a class="code" href="classTReadyQueLink.html#m1">iTimeToRunTicks</a> = 0;
 00156             <a class="code" href="classTReadyQueLink.html#m3">iSeqNum</a> = 0;
-00157             <a class="code" href="classTReadyQueLink.html#m4">iIsIn</a> = <a class="code" href="group__osclbase.html#a81">NULL</a>;
+00157             <a class="code" href="classTReadyQueLink.html#m4">iIsIn</a> = <a class="code" href="group__osclbase.html#a88">NULL</a>;
 00158         }
 00159 
 <a name="l00160"></a><a class="code" href="classTReadyQueLink.html#m0">00160</a>         int32 <a class="code" href="classTReadyQueLink.html#m0">iAOPriority</a>;<span class="comment">//scheduling priority</span>
 <a name="l00161"></a><a class="code" href="classTReadyQueLink.html#m1">00161</a>         uint32 <a class="code" href="classTReadyQueLink.html#m1">iTimeToRunTicks</a>;<span class="comment">//for timers, this is the time to run in ticks.</span>
 <a name="l00162"></a><a class="code" href="classTReadyQueLink.html#m2">00162</a>         uint32 <a class="code" href="classTReadyQueLink.html#m2">iTimeQueuedTicks</a>;<span class="comment">//the time when the AO was queued, in ticks.</span>
 <a name="l00163"></a><a class="code" href="classTReadyQueLink.html#m3">00163</a>         uint32 <a class="code" href="classTReadyQueLink.html#m3">iSeqNum</a>;<span class="comment">//sequence number for oscl pri queue.</span>
-<a name="l00164"></a><a class="code" href="classTReadyQueLink.html#m4">00164</a>         <a class="code" href="group__osclbase.html#a25">OsclAny</a>* <a class="code" href="classTReadyQueLink.html#m4">iIsIn</a>;<span class="comment">//pointer to the queue we're in, cast as a void*</span>
+<a name="l00164"></a><a class="code" href="classTReadyQueLink.html#m4">00164</a>         <a class="code" href="group__osclbase.html#a27">OsclAny</a>* <a class="code" href="classTReadyQueLink.html#m4">iIsIn</a>;<span class="comment">//pointer to the queue we're in, cast as a void*</span>
 00165 
 00166 };
 00167 
@@ -158,7 +158,7 @@
 00169 <span class="preprocessor"></span>
 00170 
 </pre></div><hr size="1"><img src="pvlogo_small.jpg"><address style="align: right;"><small>OSCL API</small>
-<address style="align: left;"><small>Posting Version: CORE_7.512.1.1 </small>
+<address style="align: left;"><small>Posting Version: CORE_8.000.1.1_RC1 </small>
 </small></address>
 </body>
 </html>

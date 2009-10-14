@@ -32,7 +32,7 @@
 00034 <span class="comment"> * @return a void pointer to the allocated space, or NULL if there is insufficient</span>
 00035 <span class="comment"> *         memory available.</span>
 00036 <span class="comment"> */</span>
-00037 <a class="code" href="group__osclbase.html#a84">OSCL_COND_IMPORT_REF</a> <span class="keywordtype">void</span>* <a class="code" href="group__osclmemory.html#a7">_oscl_malloc</a>(int32 count);
+00037 <a class="code" href="group__osclbase.html#a91">OSCL_COND_IMPORT_REF</a> <span class="keywordtype">void</span>* <a class="code" href="group__osclmemory.html#a7">_oscl_malloc</a>(int32 count);
 00038 
 00039 <span class="comment">/*</span>
 00040 <span class="comment"> * Note: the public oscl_calloc call has been deprecated.  This</span>
@@ -51,7 +51,7 @@
 00053 <span class="comment"> * @return a void pointer to the allocated space, or NULL if there is insufficient</span>
 00054 <span class="comment"> *         memory available.</span>
 00055 <span class="comment"> */</span>
-00056 <a class="code" href="group__osclbase.html#a84">OSCL_COND_IMPORT_REF</a> <span class="keywordtype">void</span>* <a class="code" href="group__osclmemory.html#a8">_oscl_calloc</a>(int32 nelems, int32 size);
+00056 <a class="code" href="group__osclbase.html#a91">OSCL_COND_IMPORT_REF</a> <span class="keywordtype">void</span>* <a class="code" href="group__osclmemory.html#a8">_oscl_calloc</a>(int32 nelems, int32 size);
 00057 
 00058 
 00059 <span class="comment">/*</span>
@@ -72,7 +72,7 @@
 00074 <span class="comment"> *         or if there is not enough available memory to expand the block to the given</span>
 00075 <span class="comment"> *         size.</span>
 00076 <span class="comment"> */</span>
-00077 <a class="code" href="group__osclbase.html#a84">OSCL_COND_IMPORT_REF</a> <span class="keywordtype">void</span>* <a class="code" href="group__osclmemory.html#a9">_oscl_realloc</a>(<span class="keywordtype">void</span>* src, int32 count);
+00077 <a class="code" href="group__osclbase.html#a91">OSCL_COND_IMPORT_REF</a> <span class="keywordtype">void</span>* <a class="code" href="group__osclmemory.html#a9">_oscl_realloc</a>(<span class="keywordtype">void</span>* src, int32 count);
 00078 
 00079 <span class="comment">/*</span>
 00080 <span class="comment"> * Note: the public oscl_free call has been deprecated.  This</span>
@@ -86,17 +86,17 @@
 00088 <span class="comment"> *</span>
 00089 <span class="comment"> * @return</span>
 00090 <span class="comment"> */</span>
-00091 <a class="code" href="group__osclbase.html#a84">OSCL_COND_IMPORT_REF</a> <span class="keywordtype">void</span>  <a class="code" href="group__osclmemory.html#a10">_oscl_free</a>(<span class="keywordtype">void</span>* src);
+00091 <a class="code" href="group__osclbase.html#a91">OSCL_COND_IMPORT_REF</a> <span class="keywordtype">void</span>  <a class="code" href="group__osclmemory.html#a10">_oscl_free</a>(<span class="keywordtype">void</span>* src);
 00092 
-00106 <a class="code" href="group__osclbase.html#a84">OSCL_COND_IMPORT_REF</a> <span class="keywordtype">void</span>* <a class="code" href="group__osclmemory.html#a11">oscl_memcpy</a>(<span class="keywordtype">void</span>* dest, <span class="keyword">const</span> <span class="keywordtype">void</span>* src, uint32 count);
+00106 <a class="code" href="group__osclbase.html#a91">OSCL_COND_IMPORT_REF</a> <span class="keywordtype">void</span>* <a class="code" href="group__osclmemory.html#a11">oscl_memcpy</a>(<span class="keywordtype">void</span>* dest, <span class="keyword">const</span> <span class="keywordtype">void</span>* src, uint32 count);
 00107 
-00121 <a class="code" href="group__osclbase.html#a84">OSCL_COND_IMPORT_REF</a> <span class="keywordtype">void</span>* <a class="code" href="group__osclmemory.html#a12">oscl_memmove</a>(<span class="keywordtype">void</span>* dest, <span class="keyword">const</span> <span class="keywordtype">void</span>* src, uint32 count);
+00121 <a class="code" href="group__osclbase.html#a91">OSCL_COND_IMPORT_REF</a> <span class="keywordtype">void</span>* <a class="code" href="group__osclmemory.html#a12">oscl_memmove</a>(<span class="keywordtype">void</span>* dest, <span class="keyword">const</span> <span class="keywordtype">void</span>* src, uint32 count);
 00122 
-00133 <a class="code" href="group__osclbase.html#a84">OSCL_COND_IMPORT_REF</a> <span class="keywordtype">void</span>* <a class="code" href="group__osclmemory.html#a13">oscl_memmove32</a>(<span class="keywordtype">void</span>* dest, <span class="keyword">const</span> <span class="keywordtype">void</span>* src, uint32 count);
+00133 <a class="code" href="group__osclbase.html#a91">OSCL_COND_IMPORT_REF</a> <span class="keywordtype">void</span>* <a class="code" href="group__osclmemory.html#a13">oscl_memmove32</a>(<span class="keywordtype">void</span>* dest, <span class="keyword">const</span> <span class="keywordtype">void</span>* src, uint32 count);
 00134 
-00144 <a class="code" href="group__osclbase.html#a84">OSCL_COND_IMPORT_REF</a> <span class="keywordtype">void</span>* <a class="code" href="group__osclmemory.html#a14">oscl_memset</a>(<span class="keywordtype">void</span>* dest, uint8 val, uint32 count);
+00144 <a class="code" href="group__osclbase.html#a91">OSCL_COND_IMPORT_REF</a> <span class="keywordtype">void</span>* <a class="code" href="group__osclmemory.html#a14">oscl_memset</a>(<span class="keywordtype">void</span>* dest, uint8 val, uint32 count);
 00145 
-00157 <a class="code" href="group__osclbase.html#a84">OSCL_COND_IMPORT_REF</a> <span class="keywordtype">int</span> <a class="code" href="group__osclmemory.html#a15">oscl_memcmp</a>(<span class="keyword">const</span> <span class="keywordtype">void</span>* buf1, <span class="keyword">const</span> <span class="keywordtype">void</span>* buf2, uint32 count);
+00157 <a class="code" href="group__osclbase.html#a91">OSCL_COND_IMPORT_REF</a> <span class="keywordtype">int</span> <a class="code" href="group__osclmemory.html#a15">oscl_memcmp</a>(<span class="keyword">const</span> <span class="keywordtype">void</span>* buf1, <span class="keyword">const</span> <span class="keywordtype">void</span>* buf2, uint32 count);
 00158 
 00159 
 00160 <span class="preprocessor">#if (!OSCL_DISABLE_INLINES)</span>
@@ -106,7 +106,7 @@
 00164 <span class="preprocessor">#endif</span>
 00165 <span class="preprocessor"></span>
 </pre></div><hr size="1"><img src="pvlogo_small.jpg"><address style="align: right;"><small>OSCL API</small>
-<address style="align: left;"><small>Posting Version: CORE_7.512.1.1 </small>
+<address style="align: left;"><small>Posting Version: CORE_8.000.1.1_RC1 </small>
 </small></address>
 </body>
 </html>

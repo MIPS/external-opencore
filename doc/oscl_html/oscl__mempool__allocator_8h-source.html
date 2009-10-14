@@ -32,32 +32,32 @@
 00034 {
 00035     <span class="keyword">public</span>:
 00036         <span class="comment">// Constructor</span>
-00037         <a class="code" href="classOsclMemPoolAllocator.html#a0">OsclMemPoolAllocator</a>(<a class="code" href="classOscl__DefAlloc.html">Oscl_DefAlloc</a>* gen_alloc = <a class="code" href="group__osclbase.html#a81">NULL</a>);
+00037         <a class="code" href="classOsclMemPoolAllocator.html#a0">OsclMemPoolAllocator</a>(<a class="code" href="classOscl__DefAlloc.html">Oscl_DefAlloc</a>* gen_alloc = <a class="code" href="group__osclbase.html#a88">NULL</a>);
 00038 
 00039         <span class="comment">// Virtual destructor</span>
 00040         <span class="keyword">virtual</span> <a class="code" href="classOsclMemPoolAllocator.html#a1">~OsclMemPoolAllocator</a>();
 00041 
 00042         <span class="comment">// Create memory pool</span>
-00043         <a class="code" href="group__osclbase.html#a25">OsclAny</a>* <a class="code" href="classOsclMemPoolAllocator.html#a2">CreateMemPool</a>(<span class="keyword">const</span> uint32 aNumChunk = 2, <span class="keyword">const</span> uint32 aChunkSize = 4);
+00043         <a class="code" href="group__osclbase.html#a27">OsclAny</a>* <a class="code" href="classOsclMemPoolAllocator.html#a2">CreateMemPool</a>(<span class="keyword">const</span> uint32 aNumChunk = 2, <span class="keyword">const</span> uint32 aChunkSize = 4);
 00044 
 00045         <span class="comment">// Delete memory pool</span>
 00046         <span class="keywordtype">void</span> <a class="code" href="classOsclMemPoolAllocator.html#a3">DestroyMemPool</a>();
 00047 
 00048         <span class="comment">// Memory alignment</span>
-00049         <a class="code" href="group__osclbase.html#a27">uint</a> <a class="code" href="classOsclMemPoolAllocator.html#a4">oscl_mem_aligned_size</a>(<a class="code" href="group__osclbase.html#a27">uint</a> size);
+00049         <a class="code" href="group__osclbase.html#a29">uint</a> <a class="code" href="classOsclMemPoolAllocator.html#a4">oscl_mem_aligned_size</a>(<a class="code" href="group__osclbase.html#a29">uint</a> size);
 00050 
 00051     <span class="keyword">private</span>:
 00052         <span class="comment">// Custom allocator for memory</span>
 00053         <a class="code" href="classOscl__DefAlloc.html">Oscl_DefAlloc</a>* iCustomAllocator;
 00054 
 00055         <span class="comment">// Base address for memory pool</span>
-00056         <a class="code" href="group__osclbase.html#a25">OsclAny</a>* iBaseAddress;
+00056         <a class="code" href="group__osclbase.html#a27">OsclAny</a>* iBaseAddress;
 00057 
 00058 };
 00059 
 00060 <span class="preprocessor">#endif</span>
 </pre></div><hr size="1"><img src="pvlogo_small.jpg"><address style="align: right;"><small>OSCL API</small>
-<address style="align: left;"><small>Posting Version: CORE_7.512.1.1 </small>
+<address style="align: left;"><small>Posting Version: CORE_8.000.1.1_RC1 </small>
 </small></address>
 </body>
 </html>

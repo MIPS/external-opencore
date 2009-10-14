@@ -156,7 +156,7 @@
 <tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="group__osclutil.html#a47">OSCLTICKCOUNT_MAX_TICKS</a>&nbsp;&nbsp;&nbsp;0xffffffff</td></tr>
 <tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="group__osclutil.html#a48">MAX_NUMBER_OF_BYTE_PER_UTF8</a>&nbsp;&nbsp;&nbsp;3</td></tr>
 <tr><td colspan=2><br><h2>Typedefs</h2></td></tr>
-<tr><td nowrap align=right valign=top>typedef <a class="el" href="group__osclbase.html#a25">OsclAny</a> *&nbsp;</td><td valign=bottom><a class="el" href="group__osclutil.html#a0">OsclComponentFactory</a></td></tr>
+<tr><td nowrap align=right valign=top>typedef <a class="el" href="group__osclbase.html#a27">OsclAny</a> *&nbsp;</td><td valign=bottom><a class="el" href="group__osclutil.html#a0">OsclComponentFactory</a></td></tr>
 <tr><td nowrap align=right valign=top>typedef void(*&nbsp;</td><td valign=bottom><a class="el" href="group__osclutil.html#a1">BufferFreeFuncPtr</a> )(void *)</td></tr>
 <tr><td nowrap align=right valign=top>typedef uint32&nbsp;</td><td valign=bottom><a class="el" href="group__osclutil.html#a2">MediaTimestamp</a></td></tr>
 <tr><td nowrap align=right valign=top>typedef StrPtrLen&nbsp;</td><td valign=bottom><a class="el" href="group__osclutil.html#a5">StrPtrLen</a></td></tr>
@@ -184,9 +184,9 @@
 <tr><td nowrap align=right valign=top>OSCL_IMPORT_REF int&nbsp;</td><td valign=bottom><a class="el" href="group__osclutil.html#a16">extract_string</a> (const char *start, const char *end, char *outstring, int maxsize)</td></tr>
 <tr><td nowrap align=right valign=top>OSCL_IMPORT_REF bool&nbsp;</td><td valign=bottom><a class="el" href="group__osclutil.html#a17">PV_atoi</a> (const char *buf, const char new_format, uint32 &amp;value)</td></tr>
 <tr><td nowrap align=right valign=top>OSCL_IMPORT_REF bool&nbsp;</td><td valign=bottom><a class="el" href="group__osclutil.html#a18">PV_atoi</a> (const char *buf, const char new_format, int length, uint32 &amp;value)</td></tr>
-<tr><td nowrap align=right valign=top>OSCL_IMPORT_REF bool&nbsp;</td><td valign=bottom><a class="el" href="group__osclutil.html#a19">PV_atoi</a> (const char *buf, const char new_format, int length, <a class="el" href="group__osclbase.html#a31">uint64</a> &amp;value)</td></tr>
-<tr><td nowrap align=right valign=top>OSCL_IMPORT_REF bool&nbsp;</td><td valign=bottom><a class="el" href="group__osclutil.html#a20">PV_atof</a> (const char *buf, <a class="el" href="group__osclbase.html#a29">OsclFloat</a> &amp;value)</td></tr>
-<tr><td nowrap align=right valign=top>OSCL_IMPORT_REF bool&nbsp;</td><td valign=bottom><a class="el" href="group__osclutil.html#a21">PV_atof</a> (const char *buf, int length, <a class="el" href="group__osclbase.html#a29">OsclFloat</a> &amp;value)</td></tr>
+<tr><td nowrap align=right valign=top>OSCL_IMPORT_REF bool&nbsp;</td><td valign=bottom><a class="el" href="group__osclutil.html#a19">PV_atoi</a> (const char *buf, const char new_format, int length, <a class="el" href="group__osclbase.html#a33">uint64</a> &amp;value)</td></tr>
+<tr><td nowrap align=right valign=top>OSCL_IMPORT_REF bool&nbsp;</td><td valign=bottom><a class="el" href="group__osclutil.html#a20">PV_atof</a> (const char *buf, <a class="el" href="group__osclbase.html#a31">OsclFloat</a> &amp;value)</td></tr>
+<tr><td nowrap align=right valign=top>OSCL_IMPORT_REF bool&nbsp;</td><td valign=bottom><a class="el" href="group__osclutil.html#a21">PV_atof</a> (const char *buf, int length, <a class="el" href="group__osclbase.html#a31">OsclFloat</a> &amp;value)</td></tr>
 <tr><td nowrap align=right valign=top>OSCL_IMPORT_REF int&nbsp;</td><td valign=bottom><a class="el" href="group__osclutil.html#a22">oscl_abs</a> (int aVal)</td></tr>
 <tr><td nowrap align=right valign=top>OSCL_COND_IMPORT_REF double&nbsp;</td><td valign=bottom><a class="el" href="group__osclutil.html#a23">oscl_log</a> (double value)</td></tr>
 <tr><td nowrap align=right valign=top>OSCL_COND_IMPORT_REF double&nbsp;</td><td valign=bottom><a class="el" href="group__osclutil.html#a24">oscl_log10</a> (double value)</td></tr>
@@ -200,9 +200,9 @@
 <tr><td nowrap align=right valign=top>OSCL_COND_IMPORT_REF double&nbsp;</td><td valign=bottom><a class="el" href="group__osclutil.html#a32">oscl_atan</a> (double value)</td></tr>
 <tr><td nowrap align=right valign=top>OSCL_COND_IMPORT_REF double&nbsp;</td><td valign=bottom><a class="el" href="group__osclutil.html#a33">oscl_floor</a> (double value)</td></tr>
 <tr><td nowrap align=right valign=top>OSCL_IMPORT_REF int32&nbsp;</td><td valign=bottom><a class="el" href="group__osclutil.html#a34">oscl_snprintf</a> (char *str, uint32 count, const char *fmt,...)</td></tr>
-<tr><td nowrap align=right valign=top>OSCL_IMPORT_REF int32&nbsp;</td><td valign=bottom><a class="el" href="group__osclutil.html#a35">oscl_snprintf</a> (<a class="el" href="group__osclbase.html#a32">oscl_wchar</a> *str, uint32 count, const <a class="el" href="group__osclbase.html#a32">oscl_wchar</a> *fmt,...)</td></tr>
+<tr><td nowrap align=right valign=top>OSCL_IMPORT_REF int32&nbsp;</td><td valign=bottom><a class="el" href="group__osclutil.html#a35">oscl_snprintf</a> (<a class="el" href="group__osclbase.html#a34">oscl_wchar</a> *str, uint32 count, const <a class="el" href="group__osclbase.html#a34">oscl_wchar</a> *fmt,...)</td></tr>
 <tr><td nowrap align=right valign=top>OSCL_IMPORT_REF int32&nbsp;</td><td valign=bottom><a class="el" href="group__osclutil.html#a36">oscl_vsnprintf</a> (char *str, uint32 count, const char *fmt, va_list args)</td></tr>
-<tr><td nowrap align=right valign=top>OSCL_IMPORT_REF int32&nbsp;</td><td valign=bottom><a class="el" href="group__osclutil.html#a37">oscl_vsnprintf</a> (<a class="el" href="group__osclbase.html#a32">oscl_wchar</a> *str, uint32 count, const <a class="el" href="group__osclbase.html#a32">oscl_wchar</a> *fmt, va_list args)</td></tr>
+<tr><td nowrap align=right valign=top>OSCL_IMPORT_REF int32&nbsp;</td><td valign=bottom><a class="el" href="group__osclutil.html#a37">oscl_vsnprintf</a> (<a class="el" href="group__osclbase.html#a34">oscl_wchar</a> *str, uint32 count, const <a class="el" href="group__osclbase.html#a34">oscl_wchar</a> *fmt, va_list args)</td></tr>
 <tr><td nowrap align=right valign=top>OSCL_IMPORT_REF bool&nbsp;</td><td valign=bottom><a class="el" href="group__osclutil.html#a38">oscl_str_unescape_uri</a> (const char *str_buf_in, char *str_buf_out, uint32 max_out_buf_bytes, uint32 max_bytes, uint32 &amp;out_buf_len)</td></tr>
 <tr><td>&nbsp;</td><td><font size=-1><em>unescape any of the special escape sequence in the uri string</em> <a href="#a38"></a><em></em></font><br><br></td></tr>
 <tr><td nowrap align=right valign=top>OSCL_IMPORT_REF bool&nbsp;</td><td valign=bottom><a class="el" href="group__osclutil.html#a39">oscl_str_unescape_uri</a> (const <a class="el" href="classOSCL__String.html">OSCL_String</a> &amp;oscl_str_in, <a class="el" href="classOSCL__String.html">OSCL_String</a> &amp;oscl_str_out, uint32 &amp;out_buf_len)</td></tr>
@@ -215,9 +215,9 @@
 <tr><td>&nbsp;</td><td><font size=-1><em>Check if the input string contains any special ASCII character like &amp;, &lt;, &gt;, ', ". The function scans the string and check if each character is a special character. It stops at the first NULL character (if max_bytes = 0), or the max_byte value.</em> <a href="#a42"></a><em></em></font><br><br></td></tr>
 <tr><td nowrap align=right valign=top>OSCL_IMPORT_REF int32&nbsp;</td><td valign=bottom><a class="el" href="group__osclutil.html#a43">oscl_str_escape_xml</a> (const char *str_buf_in, char *str_buf_out, uint32 max_out_buf_bytes, uint32 max_bytes=0, uint32 *num_bytes_written=NULL)</td></tr>
 <tr><td>&nbsp;</td><td><font size=-1><em>Escape any of the following special characters in the string Special ASCII characters: &amp;, &lt;, &gt;, ', ".</em> <a href="#a43"></a><em></em></font><br><br></td></tr>
-<tr><td nowrap align=right valign=top>OSCL_IMPORT_REF int32&nbsp;</td><td valign=bottom><a class="el" href="group__osclutil.html#a44">oscl_UTF8ToUnicode</a> (const char *input, int32 inLength, <a class="el" href="group__osclbase.html#a32">oscl_wchar</a> *output, int32 outLength)</td></tr>
+<tr><td nowrap align=right valign=top>OSCL_IMPORT_REF int32&nbsp;</td><td valign=bottom><a class="el" href="group__osclutil.html#a44">oscl_UTF8ToUnicode</a> (const char *input, int32 inLength, <a class="el" href="group__osclbase.html#a34">oscl_wchar</a> *output, int32 outLength)</td></tr>
 <tr><td>&nbsp;</td><td><font size=-1><em>Convert UTF8 byte sequence to Unicode string.</em> <a href="#a44"></a><em></em></font><br><br></td></tr>
-<tr><td nowrap align=right valign=top>OSCL_IMPORT_REF int32&nbsp;</td><td valign=bottom><a class="el" href="group__osclutil.html#a45">oscl_UnicodeToUTF8</a> (const <a class="el" href="group__osclbase.html#a32">oscl_wchar</a> *input, int32 inLength, char *output, int32 outLength)</td></tr>
+<tr><td nowrap align=right valign=top>OSCL_IMPORT_REF int32&nbsp;</td><td valign=bottom><a class="el" href="group__osclutil.html#a45">oscl_UnicodeToUTF8</a> (const <a class="el" href="group__osclbase.html#a34">oscl_wchar</a> *input, int32 inLength, char *output, int32 outLength)</td></tr>
 <tr><td>&nbsp;</td><td><font size=-1><em>Convert Unicode string to UTF8 byte sequence.</em> <a href="#a45"></a><em></em></font><br><br></td></tr>
 <tr><td nowrap align=right valign=top><a class="el" href="classBufferFragment.html">BufferFragment</a> *&nbsp;</td><td valign=bottom><a class="el" href="group__osclutil.html#a51">GetFragment</a> (const int32 idx)</td></tr>
 <tr><td nowrap align=right valign=top><a class="el" href="classBufferState.html">BufferState</a> *&nbsp;</td><td valign=bottom><a class="el" href="group__osclutil.html#a52">GetBufferState</a> (const int32 idx)</td></tr>
@@ -435,7 +435,7 @@ Define the maximum UTF8 representation in bytes. <dl compact><dt><b><a class="el
     <td class="md">
       <table cellpadding="0" cellspacing="0" border="0">
         <tr>
-          <td class="md" nowrap valign="top"> typedef <a class="el" href="group__osclbase.html#a25">OsclAny</a>* OsclComponentFactory
+          <td class="md" nowrap valign="top"> typedef <a class="el" href="group__osclbase.html#a27">OsclAny</a>* OsclComponentFactory
       </table>
     </td>
   </tr>
@@ -2247,7 +2247,7 @@ source value </td></tr>
         <tr>
           <td class="md" nowrap valign="top"> OSCL_IMPORT_REF int32 oscl_snprintf </td>
           <td class="md" valign="top">(&nbsp;</td>
-          <td class="md" nowrap valign="top"><a class="el" href="group__osclbase.html#a32">oscl_wchar</a> *&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="group__osclbase.html#a34">oscl_wchar</a> *&nbsp;</td>
           <td class="mdname" nowrap>&nbsp; <em>str</em>, </td>
         </tr>
         <tr>
@@ -2259,7 +2259,7 @@ source value </td></tr>
         <tr>
           <td></td>
           <td></td>
-          <td class="md" nowrap>const <a class="el" href="group__osclbase.html#a32">oscl_wchar</a> *&nbsp;</td>
+          <td class="md" nowrap>const <a class="el" href="group__osclbase.html#a34">oscl_wchar</a> *&nbsp;</td>
           <td class="mdname" nowrap>&nbsp; <em>fmt</em>, </td>
         </tr>
         <tr>
@@ -2989,7 +2989,7 @@ source value </td></tr>
         <tr>
           <td class="md" nowrap valign="top"> OSCL_IMPORT_REF int32 oscl_UnicodeToUTF8 </td>
           <td class="md" valign="top">(&nbsp;</td>
-          <td class="md" nowrap valign="top">const <a class="el" href="group__osclbase.html#a32">oscl_wchar</a> *&nbsp;</td>
+          <td class="md" nowrap valign="top">const <a class="el" href="group__osclbase.html#a34">oscl_wchar</a> *&nbsp;</td>
           <td class="mdname" nowrap>&nbsp; <em>input</em>, </td>
         </tr>
         <tr>
@@ -3065,7 +3065,7 @@ length of output (excludes '\0') : completely converts all input string and appe
         <tr>
           <td></td>
           <td></td>
-          <td class="md" nowrap><a class="el" href="group__osclbase.html#a32">oscl_wchar</a> *&nbsp;</td>
+          <td class="md" nowrap><a class="el" href="group__osclbase.html#a34">oscl_wchar</a> *&nbsp;</td>
           <td class="mdname" nowrap>&nbsp; <em>output</em>, </td>
         </tr>
         <tr>
@@ -3117,7 +3117,7 @@ Length of output (excludes '\0') : completely converts all input string and appe
         <tr>
           <td class="md" nowrap valign="top"> OSCL_IMPORT_REF int32 oscl_vsnprintf </td>
           <td class="md" valign="top">(&nbsp;</td>
-          <td class="md" nowrap valign="top"><a class="el" href="group__osclbase.html#a32">oscl_wchar</a> *&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="group__osclbase.html#a34">oscl_wchar</a> *&nbsp;</td>
           <td class="mdname" nowrap>&nbsp; <em>str</em>, </td>
         </tr>
         <tr>
@@ -3129,7 +3129,7 @@ Length of output (excludes '\0') : completely converts all input string and appe
         <tr>
           <td></td>
           <td></td>
-          <td class="md" nowrap>const <a class="el" href="group__osclbase.html#a32">oscl_wchar</a> *&nbsp;</td>
+          <td class="md" nowrap>const <a class="el" href="group__osclbase.html#a34">oscl_wchar</a> *&nbsp;</td>
           <td class="mdname" nowrap>&nbsp; <em>fmt</em>, </td>
         </tr>
         <tr>
@@ -3575,7 +3575,7 @@ template&lt;uint32 MaxBufSize&gt; </td>
         <tr>
           <td></td>
           <td></td>
-          <td class="md" nowrap><a class="el" href="group__osclbase.html#a29">OsclFloat</a> &amp;&nbsp;</td>
+          <td class="md" nowrap><a class="el" href="group__osclbase.html#a31">OsclFloat</a> &amp;&nbsp;</td>
           <td class="mdname" nowrap>&nbsp; <em>value</em></td>
         </tr>
         <tr>
@@ -3613,7 +3613,7 @@ template&lt;uint32 MaxBufSize&gt; </td>
         <tr>
           <td></td>
           <td></td>
-          <td class="md" nowrap><a class="el" href="group__osclbase.html#a29">OsclFloat</a> &amp;&nbsp;</td>
+          <td class="md" nowrap><a class="el" href="group__osclbase.html#a31">OsclFloat</a> &amp;&nbsp;</td>
           <td class="mdname" nowrap>&nbsp; <em>value</em></td>
         </tr>
         <tr>
@@ -3663,7 +3663,7 @@ template&lt;uint32 MaxBufSize&gt; </td>
         <tr>
           <td></td>
           <td></td>
-          <td class="md" nowrap><a class="el" href="group__osclbase.html#a31">uint64</a> &amp;&nbsp;</td>
+          <td class="md" nowrap><a class="el" href="group__osclbase.html#a33">uint64</a> &amp;&nbsp;</td>
           <td class="mdname" nowrap>&nbsp; <em>value</em></td>
         </tr>
         <tr>
@@ -4739,7 +4739,7 @@ template&lt;uint32 MaxBufSize&gt; </td>
   </tr>
 </table>
 <hr size="1"><img src="pvlogo_small.jpg"><address style="align: right;"><small>OSCL API</small>
-<address style="align: left;"><small>Posting Version: CORE_7.512.1.1 </small>
+<address style="align: left;"><small>Posting Version: CORE_8.000.1.1_RC1 </small>
 </small></address>
 </body>
 </html>

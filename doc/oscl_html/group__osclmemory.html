@@ -148,7 +148,7 @@
 <tr><td nowrap align=right valign=top>OSCL_COND_IMPORT_REF void *&nbsp;</td><td valign=bottom><a class="el" href="group__osclmemory.html#a13">oscl_memmove32</a> (void *dest, const void *src, uint32 count)</td></tr>
 <tr><td nowrap align=right valign=top>OSCL_COND_IMPORT_REF void *&nbsp;</td><td valign=bottom><a class="el" href="group__osclmemory.html#a14">oscl_memset</a> (void *dest, uint8 val, uint32 count)</td></tr>
 <tr><td nowrap align=right valign=top>OSCL_COND_IMPORT_REF int&nbsp;</td><td valign=bottom><a class="el" href="group__osclmemory.html#a15">oscl_memcmp</a> (const void *buf1, const void *buf2, uint32 count)</td></tr>
-<tr><td nowrap align=right valign=top>OSCL_COND_IMPORT_REF <a class="el" href="group__osclbase.html#a27">uint</a>&nbsp;</td><td valign=bottom><a class="el" href="group__osclmemory.html#a16">oscl_mem_aligned_size</a> (<a class="el" href="group__osclbase.html#a27">uint</a> size)</td></tr>
+<tr><td nowrap align=right valign=top>OSCL_COND_IMPORT_REF <a class="el" href="group__osclbase.html#a29">uint</a>&nbsp;</td><td valign=bottom><a class="el" href="group__osclmemory.html#a16">oscl_mem_aligned_size</a> (<a class="el" href="group__osclbase.html#a29">uint</a> size)</td></tr>
 <tr><td nowrap align=right valign=top>OSCL_IMPORT_REF void&nbsp;</td><td valign=bottom><a class="el" href="group__osclmemory.html#a17">OsclMemInit</a> (<a class="el" href="classOsclAuditCB.html">OsclAuditCB</a> &amp;auditCB)</td></tr>
 <tr><td nowrap align=right valign=top>OSCL_IMPORT_REF void *&nbsp;</td><td valign=bottom><a class="el" href="group__osclmemory.html#a18">_oscl_audit_malloc</a> (size_t, <a class="el" href="classOsclAuditCB.html">OsclAuditCB</a> &amp;, const char *f=NULL, const int l=0)</td></tr>
 <tr><td nowrap align=right valign=top>OSCL_IMPORT_REF void *&nbsp;</td><td valign=bottom><a class="el" href="group__osclmemory.html#a19">_oscl_audit_calloc</a> (size_t, size_t, <a class="el" href="classOsclAuditCB.html">OsclAuditCB</a> &amp;, const char *f=NULL, const int l=0)</td></tr>
@@ -239,11 +239,11 @@ base class name. </td></tr>
 <p>
 <b>Value:</b><div class="fragment"><pre>{\
     int32 __err;\
-    <a class="code" href="group__osclbase.html#a25">OsclAny</a>*__ptr=exp;\
+    <a class="code" href="group__osclbase.html#a27">OsclAny</a>*__ptr=exp;\
     <a class="code" href="group__osclerror.html#a47">OSCL_TRY</a>(__err,T_ptr=<span class="keyword">new</span>(__ptr) T params;);\
     <span class="keywordflow">if</span>(__err){\
         freeFunc(__ptr);\
-        T_ptr=<a class="code" href="group__osclbase.html#a81">NULL</a>;\
+        T_ptr=<a class="code" href="group__osclbase.html#a88">NULL</a>;\
         <a class="code" href="classOsclError.html#d7">OsclError::Leave</a>(__err);\
     }\
 }</pre></div>Internal-use macro to catch leaves in constructors. If the constructor leaves, this will free the memory before allowing the leave to propagate to the next level. It is the constructor's responsibility to cleanup any memory in the partially constructed object before leaving. This cleanup may include cleaning up the base class using the OSCL_CLEANUP_BASE_CLASS macro.<dl compact><dt><b>Parameters: </b></dt><dd>
@@ -2757,9 +2757,9 @@ pointer to the newly created object of type T</dl><dl compact><dt><b>Exceptions:
     <td class="md">
       <table cellpadding="0" cellspacing="0" border="0">
         <tr>
-          <td class="md" nowrap valign="top"> OSCL_COND_IMPORT_REF <a class="el" href="group__osclbase.html#a27">uint</a> oscl_mem_aligned_size </td>
+          <td class="md" nowrap valign="top"> OSCL_COND_IMPORT_REF <a class="el" href="group__osclbase.html#a29">uint</a> oscl_mem_aligned_size </td>
           <td class="md" valign="top">(&nbsp;</td>
-          <td class="md" nowrap valign="top"><a class="el" href="group__osclbase.html#a27">uint</a>&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="group__osclbase.html#a29">uint</a>&nbsp;</td>
           <td class="mdname1" valign="top" nowrap>&nbsp; <em>size</em>          </td>
           <td class="md" valign="top">)&nbsp;</td>
           <td class="md" nowrap></td>
@@ -3114,7 +3114,7 @@ memory management audit object </td></tr>
   </tr>
 </table>
 <hr size="1"><img src="pvlogo_small.jpg"><address style="align: right;"><small>OSCL API</small>
-<address style="align: left;"><small>Posting Version: CORE_7.512.1.1 </small>
+<address style="align: left;"><small>Posting Version: CORE_8.000.1.1_RC1 </small>
 </small></address>
 </body>
 </html>

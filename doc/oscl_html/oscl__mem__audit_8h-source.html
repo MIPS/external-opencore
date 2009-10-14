@@ -99,7 +99,7 @@
 00101 
 <a name="l00102"></a><a class="code" href="structMM__Stats__t.html#a4">00102</a>     <span class="keywordtype">void</span> *<a class="code" href="structMM__Stats__t.html#a4">operator new</a>(<a class="code" href="osclconfig__ansi__memory_8h.html#a1">oscl_memsize_t</a> size)
 00103     {
-00104         <a class="code" href="group__osclbase.html#a89">OSCL_UNUSED_ARG</a>(size);
+00104         <a class="code" href="group__osclbase.html#a97">OSCL_UNUSED_ARG</a>(size);
 00105         <a class="code" href="classOscl__TAlloc.html">Oscl_TAlloc&lt;MM_Stats_t, OsclMemBasicAllocator&gt;</a> statsAlloc;
 00106         <a class="code" href="structMM__Stats__t.html">MM_Stats_t</a> *ptr = statsAlloc.<a class="code" href="classOscl__TAlloc.html#a2">allocate</a>(1);
 00107         <span class="keywordflow">return</span> ptr;
@@ -107,7 +107,7 @@
 00109 
 <a name="l00110"></a><a class="code" href="structMM__Stats__t.html#a5">00110</a>     <span class="keywordtype">void</span> *<a class="code" href="structMM__Stats__t.html#a4">operator new</a>(<a class="code" href="osclconfig__ansi__memory_8h.html#a1">oscl_memsize_t</a> size, <a class="code" href="structMM__Stats__t.html">MM_Stats_t</a>* ptr)
 00111     {
-00112         <a class="code" href="group__osclbase.html#a89">OSCL_UNUSED_ARG</a>(size);
+00112         <a class="code" href="group__osclbase.html#a97">OSCL_UNUSED_ARG</a>(size);
 00113         <span class="keywordflow">return</span> ptr;
 00114     };
 00115 
@@ -143,7 +143,7 @@
 00145 
 <a name="l00146"></a><a class="code" href="structMM__FailInsertParam.html#a2">00146</a>     <span class="keywordtype">void</span> *<a class="code" href="structMM__FailInsertParam.html#a2">operator new</a>(<a class="code" href="osclconfig__ansi__memory_8h.html#a1">oscl_memsize_t</a> size)
 00147     {
-00148         <a class="code" href="group__osclbase.html#a89">OSCL_UNUSED_ARG</a>(size);
+00148         <a class="code" href="group__osclbase.html#a97">OSCL_UNUSED_ARG</a>(size);
 00149         <a class="code" href="classOscl__TAlloc.html">Oscl_TAlloc&lt;MM_FailInsertParam, OsclMemBasicAllocator&gt;</a> failAlloc;
 00150         <a class="code" href="structMM__FailInsertParam.html">MM_FailInsertParam</a> *ptr = failAlloc.<a class="code" href="classOscl__TAlloc.html#a2">allocate</a>(1);
 00151         <span class="keywordflow">return</span> ptr;
@@ -151,7 +151,7 @@
 00153 
 <a name="l00154"></a><a class="code" href="structMM__FailInsertParam.html#a3">00154</a>     <span class="keywordtype">void</span> *<a class="code" href="structMM__FailInsertParam.html#a2">operator new</a>(<a class="code" href="osclconfig__ansi__memory_8h.html#a1">oscl_memsize_t</a> size, <a class="code" href="structMM__FailInsertParam.html">MM_FailInsertParam</a>* ptr)
 00155     {
-00156         <a class="code" href="group__osclbase.html#a89">OSCL_UNUSED_ARG</a>(size);
+00156         <a class="code" href="group__osclbase.html#a97">OSCL_UNUSED_ARG</a>(size);
 00157         <span class="keywordflow">return</span> ptr;
 00158     };
 00159 
@@ -181,9 +181,9 @@
 00183 
 <a name="l00184"></a><a class="code" href="classOsclMemStatsNode.html#a0">00184</a>         <a class="code" href="classOsclMemStatsNode.html#a0">OsclMemStatsNode</a>()
 00185         {
-00186             pMMStats = <a class="code" href="group__osclbase.html#a81">NULL</a>;
-00187             pMMFIParam = <a class="code" href="group__osclbase.html#a81">NULL</a>;
-00188             <a class="code" href="classOsclMemStatsNode.html#m2">tag</a> = <a class="code" href="group__osclbase.html#a81">NULL</a>;
+00186             pMMStats = <a class="code" href="group__osclbase.html#a88">NULL</a>;
+00187             pMMFIParam = <a class="code" href="group__osclbase.html#a88">NULL</a>;
+00188             <a class="code" href="classOsclMemStatsNode.html#m2">tag</a> = <a class="code" href="group__osclbase.html#a88">NULL</a>;
 00189         }
 00190 
 <a name="l00191"></a><a class="code" href="classOsclMemStatsNode.html#a1">00191</a>         <span class="keywordtype">void</span> <a class="code" href="classOsclMemStatsNode.html#a1">reset</a>()
@@ -202,7 +202,7 @@
 00204 
 <a name="l00205"></a><a class="code" href="classOsclMemStatsNode.html#a3">00205</a>         <span class="keywordtype">void</span> *<a class="code" href="classOsclMemStatsNode.html#a3">operator new</a>(<a class="code" href="osclconfig__ansi__memory_8h.html#a1">oscl_memsize_t</a> size)
 00206         {
-00207             <a class="code" href="group__osclbase.html#a89">OSCL_UNUSED_ARG</a>(size);
+00207             <a class="code" href="group__osclbase.html#a97">OSCL_UNUSED_ARG</a>(size);
 00208             <a class="code" href="classOscl__TAlloc.html">Oscl_TAlloc&lt;OsclMemStatsNode, OsclMemBasicAllocator&gt;</a> statsNodeAlloc;
 00209             <a class="code" href="classOsclMemStatsNode.html">OsclMemStatsNode</a> *ptr = statsNodeAlloc.<a class="code" href="classOscl__TAlloc.html#a2">allocate</a>(1);
 00210             <span class="keywordflow">return</span> ptr;
@@ -210,7 +210,7 @@
 00212 
 <a name="l00213"></a><a class="code" href="classOsclMemStatsNode.html#a4">00213</a>         <span class="keywordtype">void</span> *<a class="code" href="classOsclMemStatsNode.html#a3">operator new</a>(<a class="code" href="osclconfig__ansi__memory_8h.html#a1">oscl_memsize_t</a> size, <a class="code" href="classOsclMemStatsNode.html">OsclMemStatsNode</a>* ptr)
 00214         {
-00215             <a class="code" href="group__osclbase.html#a89">OSCL_UNUSED_ARG</a>(size);
+00215             <a class="code" href="group__osclbase.html#a97">OSCL_UNUSED_ARG</a>(size);
 00216             <span class="keywordflow">return</span> ptr;
 00217         };
 00218 
@@ -241,7 +241,7 @@
 00243 
 <a name="l00244"></a><a class="code" href="structMM__Stats__CB.html#a1">00244</a>     <span class="keywordtype">void</span> *<a class="code" href="structMM__Stats__CB.html#a1">operator new</a>(<a class="code" href="osclconfig__ansi__memory_8h.html#a1">oscl_memsize_t</a> size)
 00245     {
-00246         <a class="code" href="group__osclbase.html#a89">OSCL_UNUSED_ARG</a>(size);
+00246         <a class="code" href="group__osclbase.html#a97">OSCL_UNUSED_ARG</a>(size);
 00247         <a class="code" href="classOscl__TAlloc.html">Oscl_TAlloc&lt;MM_Stats_CB, OsclMemBasicAllocator&gt;</a> statsCBAlloc;
 00248         <a class="code" href="structMM__Stats__CB.html">MM_Stats_CB</a> *ptr = statsCBAlloc.<a class="code" href="classOscl__TAlloc.html#a2">allocate</a>(1);
 00249         <span class="keywordflow">return</span> ptr;
@@ -249,7 +249,7 @@
 00251 
 <a name="l00252"></a><a class="code" href="structMM__Stats__CB.html#a2">00252</a>     <span class="keywordtype">void</span> *<a class="code" href="structMM__Stats__CB.html#a1">operator new</a>(<a class="code" href="osclconfig__ansi__memory_8h.html#a1">oscl_memsize_t</a> size, <a class="code" href="structMM__Stats__CB.html">MM_Stats_CB</a>* ptr)
 00253     {
-00254         <a class="code" href="group__osclbase.html#a89">OSCL_UNUSED_ARG</a>(size);
+00254         <a class="code" href="group__osclbase.html#a97">OSCL_UNUSED_ARG</a>(size);
 00255         <span class="keywordflow">return</span> ptr;
 00256     };
 00257 
@@ -305,7 +305,7 @@
 00307 
 <a name="l00308"></a><a class="code" href="structMM__AllocInfo.html#a2">00308</a>     <span class="keywordtype">void</span> *<a class="code" href="structMM__AllocInfo.html#a2">operator new</a>(<a class="code" href="osclconfig__ansi__memory_8h.html#a1">oscl_memsize_t</a> <a class="code" href="structMM__AllocInfo.html#m3">size</a>)
 00309     {
-00310         <a class="code" href="group__osclbase.html#a89">OSCL_UNUSED_ARG</a>(<a class="code" href="structMM__AllocInfo.html#m3">size</a>);
+00310         <a class="code" href="group__osclbase.html#a97">OSCL_UNUSED_ARG</a>(<a class="code" href="structMM__AllocInfo.html#m3">size</a>);
 00311         <a class="code" href="classOscl__TAlloc.html">Oscl_TAlloc&lt;MM_AllocInfo, OsclMemBasicAllocator&gt;</a> allocInfoAlloc;
 00312         <a class="code" href="structMM__AllocInfo.html">MM_AllocInfo</a> *ptr = allocInfoAlloc.<a class="code" href="classOscl__TAlloc.html#a2">allocate</a>(1);
 00313         <span class="keywordflow">return</span> ptr;
@@ -313,7 +313,7 @@
 00315 
 <a name="l00316"></a><a class="code" href="structMM__AllocInfo.html#a3">00316</a>     <span class="keywordtype">void</span> *<a class="code" href="structMM__AllocInfo.html#a2">operator new</a>(<a class="code" href="osclconfig__ansi__memory_8h.html#a1">oscl_memsize_t</a> <a class="code" href="structMM__AllocInfo.html#m3">size</a>, <a class="code" href="structMM__AllocInfo.html">MM_AllocInfo</a>* ptr)
 00317     {
-00318         <a class="code" href="group__osclbase.html#a89">OSCL_UNUSED_ARG</a>(<a class="code" href="structMM__AllocInfo.html#m3">size</a>);
+00318         <a class="code" href="group__osclbase.html#a97">OSCL_UNUSED_ARG</a>(<a class="code" href="structMM__AllocInfo.html#m3">size</a>);
 00319         <span class="keywordflow">return</span> ptr;
 00320     };
 00321 
@@ -350,7 +350,7 @@
 00352 
 <a name="l00353"></a><a class="code" href="structMM__AllocNode.html#a2">00353</a>     <span class="keywordtype">void</span> *<a class="code" href="structMM__AllocNode.html#a2">operator new</a>(<a class="code" href="osclconfig__ansi__memory_8h.html#a1">oscl_memsize_t</a> size)
 00354     {
-00355         <a class="code" href="group__osclbase.html#a89">OSCL_UNUSED_ARG</a>(size);
+00355         <a class="code" href="group__osclbase.html#a97">OSCL_UNUSED_ARG</a>(size);
 00356         <a class="code" href="classOscl__TAlloc.html">Oscl_TAlloc&lt;MM_AllocNode, OsclMemBasicAllocator&gt;</a> allocNodeAlloc;
 00357         <a class="code" href="structMM__AllocNode.html">MM_AllocNode</a> *ptr = allocNodeAlloc.<a class="code" href="classOscl__TAlloc.html#a2">allocate</a>(1);
 00358         <span class="keywordflow">return</span> ptr;
@@ -358,7 +358,7 @@
 00360 
 <a name="l00361"></a><a class="code" href="structMM__AllocNode.html#a3">00361</a>     <span class="keywordtype">void</span> *<a class="code" href="structMM__AllocNode.html#a2">operator new</a>(<a class="code" href="osclconfig__ansi__memory_8h.html#a1">oscl_memsize_t</a> size, <a class="code" href="structMM__AllocNode.html">MM_AllocNode</a>* ptr)
 00362     {
-00363         <a class="code" href="group__osclbase.html#a89">OSCL_UNUSED_ARG</a>(size);
+00363         <a class="code" href="group__osclbase.html#a97">OSCL_UNUSED_ARG</a>(size);
 00364         <span class="keywordflow">return</span> ptr;
 00365     };
 00366 
@@ -446,7 +446,7 @@
 00476 
 <a name="l00482"></a><a class="code" href="classMM__Audit__Imp.html#a7">00482</a>         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keywordtype">bool</span> <a class="code" href="classMM__Audit__Imp.html#a7">MM_AddTag</a>(<span class="keyword">const</span> <span class="keywordtype">char</span> * tagIn)
 00483         {
-00484             <span class="keywordflow">return</span> (<a class="code" href="classMM__Audit__Imp.html#a8">MM_GetTagNode</a>(tagIn) != <a class="code" href="group__osclbase.html#a81">NULL</a>);
+00484             <span class="keywordflow">return</span> (<a class="code" href="classMM__Audit__Imp.html#a8">MM_GetTagNode</a>(tagIn) != <a class="code" href="group__osclbase.html#a88">NULL</a>);
 00485         };
 00486 
 00493         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keyword">const</span> <a class="code" href="classOsclMemStatsNode.html">OsclMemStatsNode</a>* <a class="code" href="classMM__Audit__Imp.html#a8">MM_GetTagNode</a>(<span class="keyword">const</span> <span class="keywordtype">char</span> * tagIn);
@@ -662,7 +662,7 @@
 00864 
 <a name="l00870"></a><a class="code" href="classOsclMemAudit.html#a7">00870</a>         <span class="keywordtype">bool</span> <a class="code" href="classOsclMemAudit.html#a7">MM_AddTag</a>(<span class="keyword">const</span> <span class="keywordtype">char</span> * tagIn)
 00871         {
-00872             <span class="keywordflow">return</span> (<a class="code" href="classOsclMemAudit.html#a8">MM_GetTagNode</a>(tagIn) != <a class="code" href="group__osclbase.html#a81">NULL</a>);
+00872             <span class="keywordflow">return</span> (<a class="code" href="classOsclMemAudit.html#a8">MM_GetTagNode</a>(tagIn) != <a class="code" href="group__osclbase.html#a88">NULL</a>);
 00873         };
 00874 
 <a name="l00881"></a><a class="code" href="classOsclMemAudit.html#a8">00881</a>         <span class="keyword">const</span> <a class="code" href="classOsclMemStatsNode.html">OsclMemStatsNode</a>* <a class="code" href="classOsclMemAudit.html#a8">MM_GetTagNode</a>(<span class="keyword">const</span> <span class="keywordtype">char</span> * tagIn)
@@ -944,7 +944,7 @@
 01267 <span class="preprocessor">#endif //OSCL_MEM_AUDIT_H_INCLUDED</span>
 01268 <span class="preprocessor"></span>
 </pre></div><hr size="1"><img src="pvlogo_small.jpg"><address style="align: right;"><small>OSCL API</small>
-<address style="align: left;"><small>Posting Version: CORE_7.512.1.1 </small>
+<address style="align: left;"><small>Posting Version: CORE_8.000.1.1_RC1 </small>
 </small></address>
 </body>
 </html>

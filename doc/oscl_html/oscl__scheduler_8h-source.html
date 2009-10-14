@@ -49,7 +49,7 @@
 <a name="l00055"></a><a class="code" href="classOsclScheduler.html">00055</a> <span class="keyword">class </span><a class="code" href="classOsclScheduler.html">OsclScheduler</a>
 00056 {
 00057     <span class="keyword">public</span>:
-00067         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keyword">static</span> <span class="keywordtype">void</span> <a class="code" href="classOsclScheduler.html#d0">Init</a>(<span class="keyword">const</span> <span class="keywordtype">char</span> *name, <a class="code" href="classOscl__DefAlloc.html">Oscl_DefAlloc</a> *alloc = <a class="code" href="group__osclbase.html#a81">NULL</a>, <span class="keywordtype">int</span> nreserve = 20);
+00067         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keyword">static</span> <span class="keywordtype">void</span> <a class="code" href="classOsclScheduler.html#d0">Init</a>(<span class="keyword">const</span> <span class="keywordtype">char</span> *name, <a class="code" href="classOscl__DefAlloc.html">Oscl_DefAlloc</a> *alloc = <a class="code" href="group__osclbase.html#a88">NULL</a>, <span class="keywordtype">int</span> nreserve = 20);
 00068 
 00069 
 00074         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keyword">static</span> <span class="keywordtype">void</span> <a class="code" href="classOsclScheduler.html#d1">Cleanup</a>();
@@ -65,9 +65,9 @@
 <a name="l00095"></a><a class="code" href="classOsclSchedulerObserver.html">00095</a> <span class="keyword">class </span><a class="code" href="classOsclSchedulerObserver.html">OsclSchedulerObserver</a>
 00096 {
 00097     <span class="keyword">public</span>:
-00107         <span class="keyword">virtual</span> <span class="keywordtype">void</span> <a class="code" href="classOsclSchedulerObserver.html#a0">OsclSchedulerTimerCallback</a>(<a class="code" href="group__osclbase.html#a25">OsclAny</a>* aContext, uint32 aDelayMsec) = 0;
+00107         <span class="keyword">virtual</span> <span class="keywordtype">void</span> <a class="code" href="classOsclSchedulerObserver.html#a0">OsclSchedulerTimerCallback</a>(<a class="code" href="group__osclbase.html#a27">OsclAny</a>* aContext, uint32 aDelayMsec) = 0;
 00108 
-00118         <span class="keyword">virtual</span> <span class="keywordtype">void</span> <a class="code" href="classOsclSchedulerObserver.html#a1">OsclSchedulerReadyCallback</a>(<a class="code" href="group__osclbase.html#a25">OsclAny</a>* aContext) = 0;
+00118         <span class="keyword">virtual</span> <span class="keywordtype">void</span> <a class="code" href="classOsclSchedulerObserver.html#a1">OsclSchedulerReadyCallback</a>(<a class="code" href="group__osclbase.html#a27">OsclAny</a>* aContext) = 0;
 00119 
 <a name="l00120"></a><a class="code" href="classOsclSchedulerObserver.html#a2">00120</a>         <span class="keyword">virtual</span> <a class="code" href="classOsclSchedulerObserver.html#a2">~OsclSchedulerObserver</a>() {}
 00121 };
@@ -80,7 +80,7 @@
 <a name="l00128"></a><a class="code" href="classOsclExecSchedulerCommonBase.html">00128</a> <span class="keyword">class </span><a class="code" href="classOsclExecSchedulerCommonBase.html">OsclExecSchedulerCommonBase</a>
 00129 {
 00130     <span class="keyword">public</span>:
-00140         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keywordtype">void</span> <a class="code" href="classOsclExecSchedulerCommonBase.html#a0">StartScheduler</a>(<a class="code" href="classOsclSemaphore.html">OsclSemaphore</a> *sem = <a class="code" href="group__osclbase.html#a81">NULL</a>);
+00140         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keywordtype">void</span> <a class="code" href="classOsclExecSchedulerCommonBase.html#a0">StartScheduler</a>(<a class="code" href="classOsclSemaphore.html">OsclSemaphore</a> *sem = <a class="code" href="group__osclbase.html#a88">NULL</a>);
 00141 
 00146         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keywordtype">void</span> <a class="code" href="classOsclExecSchedulerCommonBase.html#a1">StopScheduler</a>();
 00147 
@@ -190,10 +190,10 @@
 00270         <span class="keywordtype">void</span> <a class="code" href="classOsclExecSchedulerCommonBase.html#b19">BeginStats</a>();
 00271         <span class="keywordtype">void</span> <a class="code" href="classOsclExecSchedulerCommonBase.html#b20">EndStats</a>();
 00272         <span class="keyword">static</span> <span class="keywordtype">void</span> <a class="code" href="classOsclExecSchedulerCommonBase.html#e2">ShowStats</a>(<a class="code" href="classPVActiveStats.html">PVActiveStats</a> *active);
-00273         <span class="keyword">static</span> <span class="keywordtype">void</span> <a class="code" href="classOsclExecSchedulerCommonBase.html#e3">ShowSummaryStats</a>(<a class="code" href="classPVActiveStats.html">PVActiveStats</a> *active, <a class="code" href="classPVLogger.html">PVLogger</a>*, <a class="code" href="group__osclbase.html#a30">int64</a>, <a class="code" href="group__osclbase.html#a30">int64</a>&amp;, <span class="keywordtype">float</span>&amp;);
+00273         <span class="keyword">static</span> <span class="keywordtype">void</span> <a class="code" href="classOsclExecSchedulerCommonBase.html#e3">ShowSummaryStats</a>(<a class="code" href="classPVActiveStats.html">PVActiveStats</a> *active, <a class="code" href="classPVLogger.html">PVLogger</a>*, <a class="code" href="group__osclbase.html#a32">int64</a>, <a class="code" href="group__osclbase.html#a32">int64</a>&amp;, <span class="keywordtype">float</span>&amp;);
 00274         <span class="keywordtype">void</span> <a class="code" href="classOsclExecSchedulerCommonBase.html#b21">CleanupStatQ</a>();
 <a name="l00275"></a><a class="code" href="classOsclExecSchedulerCommonBase.html#n16">00275</a>         uint8* <a class="code" href="classOsclExecSchedulerCommonBase.html#n16">iTotalTicksTemp</a>;
-<a name="l00276"></a><a class="code" href="classOsclExecSchedulerCommonBase.html#n17">00276</a>         <a class="code" href="group__osclbase.html#a30">int64</a> <a class="code" href="classOsclExecSchedulerCommonBase.html#n17">iGrandTotalTicks</a>;
+<a name="l00276"></a><a class="code" href="classOsclExecSchedulerCommonBase.html#n17">00276</a>         <a class="code" href="group__osclbase.html#a32">int64</a> <a class="code" href="classOsclExecSchedulerCommonBase.html#n17">iGrandTotalTicks</a>;
 <a name="l00277"></a><a class="code" href="classOsclExecSchedulerCommonBase.html#n18">00277</a>         <span class="keywordtype">float</span> <a class="code" href="classOsclExecSchedulerCommonBase.html#n18">iTotalPercent</a>;
 <a name="l00278"></a><a class="code" href="classOsclExecSchedulerCommonBase.html#l6">00278</a>         <span class="keyword">friend</span> <span class="keyword">class </span><a class="code" href="classPVActiveStats.html">PVActiveStats</a>;
 <a name="l00279"></a><a class="code" href="classOsclExecSchedulerCommonBase.html#n19">00279</a>         uint32 <a class="code" href="classOsclExecSchedulerCommonBase.html#n19">iTime</a>;
@@ -240,7 +240,7 @@
 00324 
 00347         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keywordtype">void</span> <a class="code" href="classOsclExecScheduler.html#a0">RunSchedulerNonBlocking</a>(int32 aTargetCount, int32 &amp;aReady, uint32 &amp;aDelayMsec);
 00348 
-00356         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keywordtype">void</span> <a class="code" href="classOsclExecScheduler.html#a1">RegisterForCallback</a>(<a class="code" href="classOsclSchedulerObserver.html">OsclSchedulerObserver</a>* aCallback, <a class="code" href="group__osclbase.html#a25">OsclAny</a>* aCallbackContext);
+00356         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keywordtype">void</span> <a class="code" href="classOsclExecScheduler.html#a1">RegisterForCallback</a>(<a class="code" href="classOsclSchedulerObserver.html">OsclSchedulerObserver</a>* aCallback, <a class="code" href="group__osclbase.html#a27">OsclAny</a>* aCallbackContext);
 00357 
 00358 
 00359     <span class="keyword">private</span>:
@@ -269,7 +269,7 @@
 00386 <span class="preprocessor"></span>
 00387 
 </pre></div><hr size="1"><img src="pvlogo_small.jpg"><address style="align: right;"><small>OSCL API</small>
-<address style="align: left;"><small>Posting Version: CORE_7.512.1.1 </small>
+<address style="align: left;"><small>Posting Version: CORE_8.000.1.1_RC1 </small>
 </small></address>
 </body>
 </html>

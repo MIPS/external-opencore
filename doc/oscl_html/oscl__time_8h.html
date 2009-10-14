@@ -23,24 +23,31 @@
 <tr><td nowrap align=right valign=top>class &nbsp;</td><td valign=bottom><a class="el" href="classTimeValue.html">TimeValue</a></td></tr>
 <tr><td>&nbsp;</td><td><font size=-1><em>The TimeValue class represents a time value in a format native to the system.</em> <a href="classTimeValue.html#_details">More...</a><em></em></font><br><br></td></tr>
 <tr><td colspan=2><br><h2>Typedefs</h2></td></tr>
-<tr><td nowrap align=right valign=top>typedef char&nbsp;</td><td valign=bottom><a class="el" href="group__osclbase.html#a2">CtimeStrBuf</a> [<a class="el" href="group__osclbase.html#a0">CTIME_BUFFER_SIZE</a>]</td></tr>
-<tr><td nowrap align=right valign=top>typedef char&nbsp;</td><td valign=bottom><a class="el" href="group__osclbase.html#a3">PV8601timeStrBuf</a> [<a class="el" href="group__osclbase.html#a1">PV8601TIME_BUFFER_SIZE</a>]</td></tr>
+<tr><td nowrap align=right valign=top>typedef char&nbsp;</td><td valign=bottom><a class="el" href="group__osclbase.html#a3">CtimeStrBuf</a> [<a class="el" href="group__osclbase.html#a0">CTIME_BUFFER_SIZE</a>]</td></tr>
+<tr><td nowrap align=right valign=top>typedef char&nbsp;</td><td valign=bottom><a class="el" href="group__osclbase.html#a4">PV8601timeStrBuf</a> [<a class="el" href="group__osclbase.html#a1">PV8601TIME_BUFFER_SIZE</a>]</td></tr>
+<tr><td nowrap align=right valign=top>typedef char&nbsp;</td><td valign=bottom><a class="el" href="group__osclbase.html#a5">ISO8601timeStrBuf</a> [<a class="el" href="group__osclbase.html#a2">ISO8601TIME_BUFFER_SIZE</a>]</td></tr>
 <tr><td colspan=2><br><h2>Enumerations</h2></td></tr>
-<tr><td nowrap align=right valign=top>enum &nbsp;</td><td valign=bottom><a class="el" href="group__osclbase.html#a107">TimeUnits</a> { <a class="el" href="group__osclbase.html#a107a10">SECONDS</a> =  0, 
-<a class="el" href="group__osclbase.html#a107a11">MILLISECONDS</a> =  1, 
-<a class="el" href="group__osclbase.html#a107a12">MICROSECONDS</a> =  2
+<tr><td nowrap align=right valign=top>enum &nbsp;</td><td valign=bottom><a class="el" href="group__osclbase.html#a115">TimeUnits</a> { <a class="el" href="group__osclbase.html#a115a12">SECONDS</a> =  0, 
+<a class="el" href="group__osclbase.html#a115a13">MILLISECONDS</a> =  1, 
+<a class="el" href="group__osclbase.html#a115a14">MICROSECONDS</a> =  2
  }</td></tr>
-<tr><td>&nbsp;</td><td><font size=-1><em>The TimeUnits enum can be used when constructing a <a class="el" href="classTimeValue.html">TimeValue</a> class.</em> <a href="group__osclbase.html#a107">More...</a><em></em></font><br><br></td></tr>
+<tr><td>&nbsp;</td><td><font size=-1><em>The TimeUnits enum can be used when constructing a <a class="el" href="classTimeValue.html">TimeValue</a> class.</em> <a href="group__osclbase.html#a115">More...</a><em></em></font><br><br></td></tr>
 <tr><td colspan=2><br><h2>Functions</h2></td></tr>
-<tr><td nowrap align=right valign=top>OSCL_IMPORT_REF void&nbsp;</td><td valign=bottom><a class="el" href="group__osclbase.html#a75">PV8601ToRFC822</a> (<a class="el" href="group__osclbase.html#a3">PV8601timeStrBuf</a> pv8601_buffer, <a class="el" href="group__osclbase.html#a2">CtimeStrBuf</a> ctime_buffer)</td></tr>
-<tr><td nowrap align=right valign=top>OSCL_IMPORT_REF void&nbsp;</td><td valign=bottom><a class="el" href="group__osclbase.html#a76">RFC822ToPV8601</a> (<a class="el" href="group__osclbase.html#a2">CtimeStrBuf</a> ctime_buffer, <a class="el" href="group__osclbase.html#a3">PV8601timeStrBuf</a>)</td></tr>
-<tr><td nowrap align=right valign=top>OSCL_COND_IMPORT_REF <a class="el" href="classTimeValue.html">TimeValue</a>&nbsp;</td><td valign=bottom><a class="el" href="group__osclbase.html#a77">operator-</a> (const <a class="el" href="classTimeValue.html">TimeValue</a> &amp;a, const <a class="el" href="classTimeValue.html">TimeValue</a> &amp;b)</td></tr>
+<tr><td nowrap align=right valign=top>OSCL_IMPORT_REF void&nbsp;</td><td valign=bottom><a class="el" href="group__osclbase.html#a77">PV8601ToRFC822</a> (<a class="el" href="group__osclbase.html#a4">PV8601timeStrBuf</a> pv8601_buffer, <a class="el" href="group__osclbase.html#a3">CtimeStrBuf</a> ctime_buffer)</td></tr>
+<tr><td nowrap align=right valign=top>OSCL_IMPORT_REF void&nbsp;</td><td valign=bottom><a class="el" href="group__osclbase.html#a78">ISO8601ToRFC822</a> (<a class="el" href="group__osclbase.html#a5">ISO8601timeStrBuf</a> iso8601_buffer, <a class="el" href="group__osclbase.html#a3">CtimeStrBuf</a> ctime_buffer)</td></tr>
+<tr><td nowrap align=right valign=top>OSCL_IMPORT_REF void&nbsp;</td><td valign=bottom><a class="el" href="group__osclbase.html#a79">RFC822ToPV8601</a> (<a class="el" href="group__osclbase.html#a3">CtimeStrBuf</a> ctime_buffer, <a class="el" href="group__osclbase.html#a4">PV8601timeStrBuf</a>)</td></tr>
+<tr><td nowrap align=right valign=top>OSCL_COND_IMPORT_REF <a class="el" href="classTimeValue.html">TimeValue</a>&nbsp;</td><td valign=bottom><a class="el" href="group__osclbase.html#a80">operator-</a> (const <a class="el" href="classTimeValue.html">TimeValue</a> &amp;a, const <a class="el" href="classTimeValue.html">TimeValue</a> &amp;b)</td></tr>
+<tr><td nowrap align=right valign=top>OSCL_COND_IMPORT_REF <a class="el" href="classTimeValue.html">TimeValue</a>&nbsp;</td><td valign=bottom><a class="el" href="group__osclbase.html#a81">operator+</a> (const <a class="el" href="classTimeValue.html">TimeValue</a> &amp;a, const int32 bSeconds)</td></tr>
+<tr><td nowrap align=right valign=top>OSCL_COND_IMPORT_REF <a class="el" href="classTimeValue.html">TimeValue</a>&nbsp;</td><td valign=bottom><a class="el" href="group__osclbase.html#a82">operator+</a> (const int32 aSeconds, const <a class="el" href="classTimeValue.html">TimeValue</a> &amp;b)</td></tr>
+<tr><td nowrap align=right valign=top>OSCL_COND_IMPORT_REF <a class="el" href="classTimeValue.html">TimeValue</a>&nbsp;</td><td valign=bottom><a class="el" href="group__osclbase.html#a83">operator-</a> (const <a class="el" href="classTimeValue.html">TimeValue</a> &amp;a, const int32 bSeconds)</td></tr>
+<tr><td nowrap align=right valign=top>OSCL_COND_IMPORT_REF <a class="el" href="classTimeValue.html">TimeValue</a>&nbsp;</td><td valign=bottom><a class="el" href="group__osclbase.html#a84">operator-</a> (const int32 aSeconds, const <a class="el" href="classTimeValue.html">TimeValue</a> &amp;b)</td></tr>
 <tr><td colspan=2><br><h2>Variables</h2></td></tr>
 <tr><td nowrap align=right valign=top>const int&nbsp;</td><td valign=bottom><a class="el" href="group__osclbase.html#a0">CTIME_BUFFER_SIZE</a> = 26</td></tr>
 <tr><td nowrap align=right valign=top>const int&nbsp;</td><td valign=bottom><a class="el" href="group__osclbase.html#a1">PV8601TIME_BUFFER_SIZE</a> = 21</td></tr>
-<tr><td nowrap align=right valign=top>const long&nbsp;</td><td valign=bottom><a class="el" href="group__osclbase.html#a4">USEC_PER_SEC</a> = 1000000</td></tr>
-<tr><td nowrap align=right valign=top>const long&nbsp;</td><td valign=bottom><a class="el" href="group__osclbase.html#a5">MSEC_PER_SEC</a> = 1000</td></tr>
-<tr><td nowrap align=right valign=top>const uint32&nbsp;</td><td valign=bottom><a class="el" href="group__osclbase.html#a9">unix_ntp_offset</a> = 2208988800U</td></tr>
+<tr><td nowrap align=right valign=top>const int&nbsp;</td><td valign=bottom><a class="el" href="group__osclbase.html#a2">ISO8601TIME_BUFFER_SIZE</a> = 21</td></tr>
+<tr><td nowrap align=right valign=top>const long&nbsp;</td><td valign=bottom><a class="el" href="group__osclbase.html#a6">USEC_PER_SEC</a> = 1000000</td></tr>
+<tr><td nowrap align=right valign=top>const long&nbsp;</td><td valign=bottom><a class="el" href="group__osclbase.html#a7">MSEC_PER_SEC</a> = 1000</td></tr>
+<tr><td nowrap align=right valign=top>const uint32&nbsp;</td><td valign=bottom><a class="el" href="group__osclbase.html#a11">unix_ntp_offset</a> = 2208988800U</td></tr>
 </table>
 <hr><a name="_details"></a><h2>Detailed Description</h2>
 The file <a class="el" href="oscl__time_8h.html">oscl_time.h</a> defines to classes <a class="el" href="classNTPTime.html">NTPTime</a> and <a class="el" href="classTimeValue.html">TimeValue</a> for getting, manipulating, and formatting time values. The <a class="el" href="classTimeValue.html">TimeValue</a> class is based on the native system time format while <a class="el" href="classNTPTime.html">NTPTime</a> is used for the standard Network Time Protocol format.
@@ -48,7 +55,7 @@ The file <a class="el" href="oscl__time_8h.html">oscl_time.h</a> defines to clas
 
 <p>
 <hr size="1"><img src="pvlogo_small.jpg"><address style="align: right;"><small>OSCL API</small>
-<address style="align: left;"><small>Posting Version: CORE_7.512.1.1 </small>
+<address style="align: left;"><small>Posting Version: CORE_8.000.1.1_RC1 </small>
 </small></address>
 </body>
 </html>

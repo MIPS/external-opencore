@@ -41,10 +41,10 @@
 00062 {
 00063     <span class="keyword">public</span>:
 00064 
-<a name="l00085"></a><a class="code" href="classOsclRefCounterDA.html#a0">00085</a>         <a class="code" href="classOsclRefCounterDA.html#a0">OsclRefCounterDA</a>(<a class="code" href="group__osclbase.html#a25">OsclAny</a> *p, <a class="code" href="classOsclDestructDealloc.html">OsclDestructDealloc</a> *dealloc):
+<a name="l00085"></a><a class="code" href="classOsclRefCounterDA.html#a0">00085</a>         <a class="code" href="classOsclRefCounterDA.html#a0">OsclRefCounterDA</a>(<a class="code" href="group__osclbase.html#a27">OsclAny</a> *p, <a class="code" href="classOsclDestructDealloc.html">OsclDestructDealloc</a> *dealloc):
 00086                 ptr(p), deallocator(dealloc), refcnt(1)
 00087         {
-00088             <a class="code" href="group__osclbase.html#a78">OSCL_ASSERT</a>(ptr != <a class="code" href="group__osclbase.html#a81">NULL</a> &amp;&amp; deallocator != <a class="code" href="group__osclbase.html#a81">NULL</a>);
+00088             <a class="code" href="group__osclbase.html#a85">OSCL_ASSERT</a>(ptr != <a class="code" href="group__osclbase.html#a88">NULL</a> &amp;&amp; deallocator != <a class="code" href="group__osclbase.html#a88">NULL</a>);
 00089         }
 00090 
 <a name="l00095"></a><a class="code" href="classOsclRefCounterDA.html#a1">00095</a>         <span class="keyword">virtual</span> <a class="code" href="classOsclRefCounterDA.html#a1">~OsclRefCounterDA</a>() {}
@@ -82,7 +82,7 @@
 00136         <a class="code" href="classOsclRefCounterDA.html#a0">OsclRefCounterDA</a>(<span class="keyword">const</span> <a class="code" href="classOsclRefCounterDA.html">OsclRefCounterDA</a>&amp; x);
 00137         <a class="code" href="classOsclRefCounterDA.html">OsclRefCounterDA</a>&amp; operator=(<span class="keyword">const</span> <a class="code" href="classOsclRefCounterDA.html">OsclRefCounterDA</a>&amp; x);
 00138 
-00139         <a class="code" href="group__osclbase.html#a25">OsclAny</a> *ptr;
+00139         <a class="code" href="group__osclbase.html#a27">OsclAny</a> *ptr;
 00140         <a class="code" href="classOsclDestructDealloc.html">OsclDestructDealloc</a> *deallocator;
 00141         uint32 refcnt;
 00142 };
@@ -92,10 +92,10 @@
 <a name="l00150"></a><a class="code" href="classOsclRefCounterSA.html">00150</a> <span class="keyword">class </span><a class="code" href="classOsclRefCounterSA.html">OsclRefCounterSA</a> : <span class="keyword">public</span> <a class="code" href="classOsclRefCounter.html">OsclRefCounter</a>
 00151 {
 00152     <span class="keyword">public</span>:
-<a name="l00169"></a><a class="code" href="classOsclRefCounterSA.html#a0">00169</a>         <a class="code" href="classOsclRefCounterSA.html#a0">OsclRefCounterSA</a>(<a class="code" href="group__osclbase.html#a25">OsclAny</a> *p) :
+<a name="l00169"></a><a class="code" href="classOsclRefCounterSA.html#a0">00169</a>         <a class="code" href="classOsclRefCounterSA.html#a0">OsclRefCounterSA</a>(<a class="code" href="group__osclbase.html#a27">OsclAny</a> *p) :
 00170                 ptr(p), refcnt(1)
 00171         {
-00172             <a class="code" href="group__osclbase.html#a78">OSCL_ASSERT</a>(ptr != <a class="code" href="group__osclbase.html#a81">NULL</a>);
+00172             <a class="code" href="group__osclbase.html#a85">OSCL_ASSERT</a>(ptr != <a class="code" href="group__osclbase.html#a88">NULL</a>);
 00173         }
 00174 
 <a name="l00179"></a><a class="code" href="classOsclRefCounterSA.html#a1">00179</a>         <span class="keyword">virtual</span> <a class="code" href="classOsclRefCounterSA.html#a1">~OsclRefCounterSA</a>() {}
@@ -137,7 +137,7 @@
 00224         <a class="code" href="classOsclRefCounterSA.html#a0">OsclRefCounterSA</a>(<span class="keyword">const</span> <a class="code" href="classOsclRefCounterSA.html">OsclRefCounterSA&lt;DeallocType&gt;</a>&amp; x);
 00225         <a class="code" href="classOsclRefCounterSA.html">OsclRefCounterSA&lt;DeallocType&gt;</a>&amp; operator=(<span class="keyword">const</span> <a class="code" href="classOsclRefCounterSA.html">OsclRefCounterSA&lt;DeallocType&gt;</a>&amp; x);
 00226 
-00227         <a class="code" href="group__osclbase.html#a25">OsclAny</a> *ptr;
+00227         <a class="code" href="group__osclbase.html#a27">OsclAny</a> *ptr;
 00228         uint32 refcnt;
 00229 };
 00230 
@@ -146,10 +146,10 @@
 00237 {
 00238     <span class="keyword">public</span>:
 00239 
-<a name="l00260"></a><a class="code" href="classOsclRefCounterMTDA.html#a0">00260</a>         <a class="code" href="classOsclRefCounterMTDA.html#a0">OsclRefCounterMTDA</a>(<a class="code" href="group__osclbase.html#a25">OsclAny</a> *p, <a class="code" href="classOsclDestructDealloc.html">OsclDestructDealloc</a> *dealloc) :
+<a name="l00260"></a><a class="code" href="classOsclRefCounterMTDA.html#a0">00260</a>         <a class="code" href="classOsclRefCounterMTDA.html#a0">OsclRefCounterMTDA</a>(<a class="code" href="group__osclbase.html#a27">OsclAny</a> *p, <a class="code" href="classOsclDestructDealloc.html">OsclDestructDealloc</a> *dealloc) :
 00261                 ptr(p), deallocator(dealloc), refcnt(1)
 00262         {
-00263             <a class="code" href="group__osclbase.html#a78">OSCL_ASSERT</a>(ptr != <a class="code" href="group__osclbase.html#a81">NULL</a> &amp;&amp; deallocator != <a class="code" href="group__osclbase.html#a81">NULL</a>);
+00263             <a class="code" href="group__osclbase.html#a85">OSCL_ASSERT</a>(ptr != <a class="code" href="group__osclbase.html#a88">NULL</a> &amp;&amp; deallocator != <a class="code" href="group__osclbase.html#a88">NULL</a>);
 00264         }
 00265 
 <a name="l00270"></a><a class="code" href="classOsclRefCounterMTDA.html#a1">00270</a>         <span class="keyword">virtual</span> <a class="code" href="classOsclRefCounterMTDA.html#a1">~OsclRefCounterMTDA</a>() {}
@@ -195,7 +195,7 @@
 00319         <a class="code" href="classOsclRefCounterMTDA.html#a0">OsclRefCounterMTDA</a>(<span class="keyword">const</span> <a class="code" href="classOsclRefCounterMTDA.html">OsclRefCounterMTDA&lt;LockType&gt;</a>&amp; x);
 00320         <a class="code" href="classOsclRefCounterMTDA.html">OsclRefCounterMTDA&lt;LockType&gt;</a>&amp; operator=(<span class="keyword">const</span> <a class="code" href="classOsclRefCounterMTDA.html">OsclRefCounterMTDA&lt;LockType&gt;</a>&amp; x);
 00321 
-00322         <a class="code" href="group__osclbase.html#a25">OsclAny</a> *ptr;
+00322         <a class="code" href="group__osclbase.html#a27">OsclAny</a> *ptr;
 00323         <a class="code" href="classOsclDestructDealloc.html">OsclDestructDealloc</a> *deallocator;
 00324         LockType lock;
 00325         uint32 refcnt;
@@ -206,10 +206,10 @@
 <a name="l00334"></a><a class="code" href="classOsclRefCounterMTSA.html">00334</a> <span class="keyword">class </span><a class="code" href="classOsclRefCounterMTSA.html">OsclRefCounterMTSA</a> : <span class="keyword">public</span> <a class="code" href="classOsclRefCounter.html">OsclRefCounter</a>
 00335 {
 00336     <span class="keyword">public</span>:
-<a name="l00353"></a><a class="code" href="classOsclRefCounterMTSA.html#a0">00353</a>         <a class="code" href="classOsclRefCounterMTSA.html#a0">OsclRefCounterMTSA</a>(<a class="code" href="group__osclbase.html#a25">OsclAny</a> *p) :
+<a name="l00353"></a><a class="code" href="classOsclRefCounterMTSA.html#a0">00353</a>         <a class="code" href="classOsclRefCounterMTSA.html#a0">OsclRefCounterMTSA</a>(<a class="code" href="group__osclbase.html#a27">OsclAny</a> *p) :
 00354                 ptr(p), refcnt(1)
 00355         {
-00356             <a class="code" href="group__osclbase.html#a78">OSCL_ASSERT</a>(ptr != <a class="code" href="group__osclbase.html#a81">NULL</a>);
+00356             <a class="code" href="group__osclbase.html#a85">OSCL_ASSERT</a>(ptr != <a class="code" href="group__osclbase.html#a88">NULL</a>);
 00357         }
 00358 
 <a name="l00363"></a><a class="code" href="classOsclRefCounterMTSA.html#a1">00363</a>         <span class="keyword">virtual</span> <a class="code" href="classOsclRefCounterMTSA.html#a1">~OsclRefCounterMTSA</a>() {}
@@ -257,7 +257,7 @@
 00414         <a class="code" href="classOsclRefCounterMTSA.html#a0">OsclRefCounterMTSA</a>(<span class="keyword">const</span> <a class="code" href="classOsclRefCounterMTSA.html">OsclRefCounterMTSA&lt;DeallocType, LockType&gt;</a>&amp; x);
 00415         <a class="code" href="classOsclRefCounterMTSA.html">OsclRefCounterMTSA&lt;DeallocType, LockType&gt;</a>&amp; operator=(<span class="keyword">const</span> <a class="code" href="classOsclRefCounterMTSA.html">OsclRefCounterMTSA&lt;DeallocType, LockType&gt;</a>&amp; x);
 00416 
-00417         <a class="code" href="group__osclbase.html#a25">OsclAny</a> *ptr;
+00417         <a class="code" href="group__osclbase.html#a27">OsclAny</a> *ptr;
 00418         LockType lock;
 00419         uint32 refcnt;
 00420 };
@@ -269,7 +269,7 @@
 <a name="l00432"></a><a class="code" href="classOscl__DefAllocWithRefCounter.html#d0">00432</a>         <span class="keyword">static</span> <a class="code" href="classOscl__DefAllocWithRefCounter.html">Oscl_DefAllocWithRefCounter</a>* <a class="code" href="classOscl__DefAllocWithRefCounter.html#d0">New</a>()
 00433         {
 00434             DefAlloc alloc;
-00435             <a class="code" href="group__osclbase.html#a25">OsclAny</a>* p = alloc.ALLOCATE(<span class="keyword">sizeof</span>(<a class="code" href="classOscl__DefAllocWithRefCounter.html">Oscl_DefAllocWithRefCounter</a>));
+00435             <a class="code" href="group__osclbase.html#a27">OsclAny</a>* p = alloc.ALLOCATE(<span class="keyword">sizeof</span>(<a class="code" href="classOscl__DefAllocWithRefCounter.html">Oscl_DefAllocWithRefCounter</a>));
 00436             <span class="keywordflow">return</span> <span class="keyword">new</span>(p) <a class="code" href="classOscl__DefAllocWithRefCounter.html">Oscl_DefAllocWithRefCounter</a>();
 00437         }
 00438 
@@ -303,7 +303,7 @@
 00468 
 00472 <span class="preprocessor">#endif</span>
 </pre></div><hr size="1"><img src="pvlogo_small.jpg"><address style="align: right;"><small>OSCL API</small>
-<address style="align: left;"><small>Posting Version: CORE_7.512.1.1 </small>
+<address style="align: left;"><small>Posting Version: CORE_8.000.1.1_RC1 </small>
 </small></address>
 </body>
 </html>

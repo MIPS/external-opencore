@@ -49,29 +49,29 @@
 00058             iAllocator = allocator;
 00059         }
 00061 
-<a name="l00064"></a><a class="code" href="classOsclErrorAllocator.html#d0">00064</a>         <span class="keyword">static</span> <a class="code" href="group__osclbase.html#a25">OsclAny</a>* <a class="code" href="classOsclErrorAllocator.html#d0">allocate</a>(uint32 aSize)
+<a name="l00064"></a><a class="code" href="classOsclErrorAllocator.html#d0">00064</a>         <span class="keyword">static</span> <a class="code" href="group__osclbase.html#a27">OsclAny</a>* <a class="code" href="classOsclErrorAllocator.html#d0">allocate</a>(uint32 aSize)
 00065         {
-00066             <a class="code" href="group__osclbase.html#a78">OSCL_ASSERT</a>(iAllocator != <a class="code" href="group__osclbase.html#a81">NULL</a>);
+00066             <a class="code" href="group__osclbase.html#a85">OSCL_ASSERT</a>(iAllocator != <a class="code" href="group__osclbase.html#a88">NULL</a>);
 00067             <span class="keywordflow">return</span> iAllocator-&gt;ALLOCATE(aSize);
 00068         }
 00069 
 00071 
-<a name="l00074"></a><a class="code" href="classOsclErrorAllocator.html#d1">00074</a>         <span class="keyword">static</span> <a class="code" href="group__osclbase.html#a25">OsclAny</a> <a class="code" href="classOsclErrorAllocator.html#d1">deallocate</a>(<a class="code" href="group__osclbase.html#a25">OsclAny</a>* aPointer)
+<a name="l00074"></a><a class="code" href="classOsclErrorAllocator.html#d1">00074</a>         <span class="keyword">static</span> <a class="code" href="group__osclbase.html#a27">OsclAny</a> <a class="code" href="classOsclErrorAllocator.html#d1">deallocate</a>(<a class="code" href="group__osclbase.html#a27">OsclAny</a>* aPointer)
 00075         {
-00076             <a class="code" href="group__osclbase.html#a78">OSCL_ASSERT</a>(iAllocator != <a class="code" href="group__osclbase.html#a81">NULL</a>);
+00076             <a class="code" href="group__osclbase.html#a85">OSCL_ASSERT</a>(iAllocator != <a class="code" href="group__osclbase.html#a88">NULL</a>);
 00077             iAllocator-&gt;<a class="code" href="classOscl__DefAlloc.html#a2">deallocate</a>(aPointer);
 00078         }
 00079 
-<a name="l00081"></a><a class="code" href="classOsclErrorAllocator.html#a1">00081</a>         <span class="keywordtype">void</span>* <a class="code" href="classOsclErrorAllocator.html#a1">operator new</a>(uint32 size, <a class="code" href="group__osclbase.html#a25">OsclAny</a>* aPtr)
+<a name="l00081"></a><a class="code" href="classOsclErrorAllocator.html#a1">00081</a>         <span class="keywordtype">void</span>* <a class="code" href="classOsclErrorAllocator.html#a1">operator new</a>(uint32 size, <a class="code" href="group__osclbase.html#a27">OsclAny</a>* aPtr)
 00082         {
-00083             <a class="code" href="group__osclbase.html#a89">OSCL_UNUSED_ARG</a>(size);
+00083             <a class="code" href="group__osclbase.html#a97">OSCL_UNUSED_ARG</a>(size);
 00084             <span class="keywordflow">return</span> aPtr;
 00085         }
 00086 
-<a name="l00088"></a><a class="code" href="classOsclErrorAllocator.html#a2">00088</a>         <span class="keywordtype">void</span> <a class="code" href="classOsclErrorAllocator.html#a2">operator delete</a>(<a class="code" href="group__osclbase.html#a25">OsclAny</a>* aPtr, <a class="code" href="group__osclbase.html#a25">OsclAny</a>* aPtr2)
+<a name="l00088"></a><a class="code" href="classOsclErrorAllocator.html#a2">00088</a>         <span class="keywordtype">void</span> <a class="code" href="classOsclErrorAllocator.html#a2">operator delete</a>(<a class="code" href="group__osclbase.html#a27">OsclAny</a>* aPtr, <a class="code" href="group__osclbase.html#a27">OsclAny</a>* aPtr2)
 00089         {
-00090             <a class="code" href="group__osclbase.html#a89">OSCL_UNUSED_ARG</a>(aPtr);
-00091             <a class="code" href="group__osclbase.html#a89">OSCL_UNUSED_ARG</a>(aPtr2);
+00090             <a class="code" href="group__osclbase.html#a97">OSCL_UNUSED_ARG</a>(aPtr);
+00091             <a class="code" href="group__osclbase.html#a97">OSCL_UNUSED_ARG</a>(aPtr2);
 00092         }
 00093 
 00094     <span class="keyword">private</span>:
@@ -83,7 +83,7 @@
 00100 <span class="preprocessor">#endif  //OSCL_ERROR_ALLOCATOR_H_INCLUDED</span>
 00101 <span class="preprocessor"></span>
 </pre></div><hr size="1"><img src="pvlogo_small.jpg"><address style="align: right;"><small>OSCL API</small>
-<address style="align: left;"><small>Posting Version: CORE_7.512.1.1 </small>
+<address style="align: left;"><small>Posting Version: CORE_8.000.1.1_RC1 </small>
 </small></address>
 </body>
 </html>

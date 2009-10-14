@@ -116,7 +116,7 @@
 <tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="group__osclerror.html#a41">OSCL_JUMP_MAX_JUMP_MARKS</a>&nbsp;&nbsp;&nbsp;OSCL_MAX_TRAP_LEVELS</td></tr>
 <tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="group__osclerror.html#a42">internalLeave</a>&nbsp;&nbsp;&nbsp;(-1)</td></tr>
 <tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="group__osclerror.html#a43">OSCL_MAX_TRAP_LEVELS</a>&nbsp;&nbsp;&nbsp;20</td></tr>
-<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="group__osclerror.html#a44">PVERRORTRAP_REGISTRY_ID</a>&nbsp;&nbsp;&nbsp;<a class="el" href="group__osclbase.html#a16">OSCL_TLS_ID_PVERRORTRAP</a></td></tr>
+<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="group__osclerror.html#a44">PVERRORTRAP_REGISTRY_ID</a>&nbsp;&nbsp;&nbsp;<a class="el" href="group__osclbase.html#a18">OSCL_TLS_ID_PVERRORTRAP</a></td></tr>
 <tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="group__osclerror.html#a45">PVERRORTRAP_REGISTRY</a>&nbsp;&nbsp;&nbsp;<a class="el" href="classOsclTLSRegistry.html">OsclTLSRegistry</a></td></tr>
 <tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="group__osclerror.html#a46">OSCL_LEAVE</a>(_leave_status)&nbsp;&nbsp;&nbsp;OsclError::Leave(_leave_status)</td></tr>
 <tr><td>&nbsp;</td><td><font size=-1><em>Use this macro to cause a Leave. It terminates the execution of the current active function.</em> <a href="#a46"></a><em></em></font><br><br></td></tr>
@@ -136,7 +136,7 @@
 <tr><td colspan=2><br><h2>Typedefs</h2></td></tr>
 <tr><td nowrap align=right valign=top>typedef int32&nbsp;</td><td valign=bottom><a class="el" href="group__osclerror.html#a1">OsclLeaveCode</a></td></tr>
 <tr><td nowrap align=right valign=top>typedef int32&nbsp;</td><td valign=bottom><a class="el" href="group__osclerror.html#a2">OsclReturnCode</a></td></tr>
-<tr><td nowrap align=right valign=top>typedef void(*&nbsp;</td><td valign=bottom><a class="el" href="group__osclerror.html#a3">OsclTrapOperation</a> )(<a class="el" href="group__osclbase.html#a25">OsclAny</a> *)</td></tr>
+<tr><td nowrap align=right valign=top>typedef void(*&nbsp;</td><td valign=bottom><a class="el" href="group__osclerror.html#a3">OsclTrapOperation</a> )(<a class="el" href="group__osclbase.html#a27">OsclAny</a> *)</td></tr>
 <tr><td colspan=2><br><h2>Functions</h2></td></tr>
 <tr><td nowrap align=right valign=top>OSCL_IMPORT_REF bool&nbsp;</td><td valign=bottom><a class="el" href="group__osclerror.html#a4">OSCL_IsErrnoSupported</a> ()</td></tr>
 <tr><td>&nbsp;</td><td><font size=-1><em>This function determines if a particular system saves the error number that occurs on a system call.</em> <a href="#a4"></a><em></em></font><br><br></td></tr>
@@ -1325,7 +1325,7 @@ Internal leave/trap implementation.     </td>
     <td class="md">
       <table cellpadding="0" cellspacing="0" border="0">
         <tr>
-          <td class="md" nowrap valign="top"> #define PVERRORTRAP_REGISTRY_ID&nbsp;&nbsp;&nbsp;<a class="el" href="group__osclbase.html#a16">OSCL_TLS_ID_PVERRORTRAP</a>
+          <td class="md" nowrap valign="top"> #define PVERRORTRAP_REGISTRY_ID&nbsp;&nbsp;&nbsp;<a class="el" href="group__osclbase.html#a18">OSCL_TLS_ID_PVERRORTRAP</a>
       </table>
     </td>
   </tr>
@@ -1392,7 +1392,7 @@ Return Codes     </td>
     <td class="md">
       <table cellpadding="0" cellspacing="0" border="0">
         <tr>
-          <td class="md" nowrap valign="top"> typedef void(* OsclTrapOperation)(<a class="el" href="group__osclbase.html#a25">OsclAny</a>*)
+          <td class="md" nowrap valign="top"> typedef void(* OsclTrapOperation)(<a class="el" href="group__osclbase.html#a27">OsclAny</a>*)
       </table>
     </td>
   </tr>
@@ -1545,7 +1545,7 @@ This method returns a pointer to a string containing the system error-message. I
   </tr>
 </table>
 <hr size="1"><img src="pvlogo_small.jpg"><address style="align: right;"><small>OSCL API</small>
-<address style="align: left;"><small>Posting Version: CORE_7.512.1.1 </small>
+<address style="align: left;"><small>Posting Version: CORE_8.000.1.1_RC1 </small>
 </small></address>
 </body>
 </html>

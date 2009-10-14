@@ -51,9 +51,9 @@
 <tr><td nowrap align=right valign=top>OSCL_IMPORT_REF void&nbsp;</td><td valign=bottom><a class="el" href="classOscl__File.html#a10">SetAsyncReadBufferSize</a> (uint32 aSize)</td></tr>
 <tr><td nowrap align=right valign=top>OSCL_IMPORT_REF int32&nbsp;</td><td valign=bottom><a class="el" href="classOscl__File.html#a11">SetFileHandle</a> (<a class="el" href="classOsclFileHandle.html">OsclFileHandle</a> *aHandle)</td></tr>
 <tr><td nowrap align=right valign=top>OSCL_IMPORT_REF int32&nbsp;</td><td valign=bottom><a class="el" href="classOscl__File.html#a12">Open</a> (const char *filename, uint32 mode, <a class="el" href="classOscl__FileServer.html">Oscl_FileServer</a> &amp;fileserv)</td></tr>
-<tr><td nowrap align=right valign=top>OSCL_IMPORT_REF int32&nbsp;</td><td valign=bottom><a class="el" href="classOscl__File.html#a13">Open</a> (const <a class="el" href="group__osclbase.html#a32">oscl_wchar</a> *filename, uint32 mode, <a class="el" href="classOscl__FileServer.html">Oscl_FileServer</a> &amp;fileserv)</td></tr>
-<tr><td nowrap align=right valign=top>OSCL_IMPORT_REF uint32&nbsp;</td><td valign=bottom><a class="el" href="classOscl__File.html#a14">Read</a> (<a class="el" href="group__osclbase.html#a25">OsclAny</a> *buffer, uint32 size, uint32 numelements)</td></tr>
-<tr><td nowrap align=right valign=top>OSCL_IMPORT_REF uint32&nbsp;</td><td valign=bottom><a class="el" href="classOscl__File.html#a15">Write</a> (const <a class="el" href="group__osclbase.html#a25">OsclAny</a> *buffer, uint32 size, uint32 numelements)</td></tr>
+<tr><td nowrap align=right valign=top>OSCL_IMPORT_REF int32&nbsp;</td><td valign=bottom><a class="el" href="classOscl__File.html#a13">Open</a> (const <a class="el" href="group__osclbase.html#a34">oscl_wchar</a> *filename, uint32 mode, <a class="el" href="classOscl__FileServer.html">Oscl_FileServer</a> &amp;fileserv)</td></tr>
+<tr><td nowrap align=right valign=top>OSCL_IMPORT_REF uint32&nbsp;</td><td valign=bottom><a class="el" href="classOscl__File.html#a14">Read</a> (<a class="el" href="group__osclbase.html#a27">OsclAny</a> *buffer, uint32 size, uint32 numelements)</td></tr>
+<tr><td nowrap align=right valign=top>OSCL_IMPORT_REF uint32&nbsp;</td><td valign=bottom><a class="el" href="classOscl__File.html#a15">Write</a> (const <a class="el" href="group__osclbase.html#a27">OsclAny</a> *buffer, uint32 size, uint32 numelements)</td></tr>
 <tr><td nowrap align=right valign=top>OSCL_IMPORT_REF int32&nbsp;</td><td valign=bottom><a class="el" href="classOscl__File.html#a16">Seek</a> (<a class="el" href="osclconfig__io_8h.html#a50">TOsclFileOffset</a> offset, <a class="el" href="classOscl__File.html#s11">seek_type</a> origin)</td></tr>
 <tr><td nowrap align=right valign=top>OSCL_IMPORT_REF <a class="el" href="osclconfig__io_8h.html#a50">TOsclFileOffset</a>&nbsp;</td><td valign=bottom><a class="el" href="classOscl__File.html#a17">Tell</a> ()</td></tr>
 <tr><td nowrap align=right valign=top>OSCL_IMPORT_REF int32&nbsp;</td><td valign=bottom><a class="el" href="classOscl__File.html#a18">Close</a> ()</td></tr>
@@ -508,7 +508,7 @@ file handle </dl>    </td>
         <tr>
           <td class="md" nowrap valign="top"> OSCL_IMPORT_REF int32 Oscl_File::Open </td>
           <td class="md" valign="top">(&nbsp;</td>
-          <td class="md" nowrap valign="top">const <a class="el" href="group__osclbase.html#a32">oscl_wchar</a> *&nbsp;</td>
+          <td class="md" nowrap valign="top">const <a class="el" href="group__osclbase.html#a34">oscl_wchar</a> *&nbsp;</td>
           <td class="mdname" nowrap>&nbsp; <em>filename</em>, </td>
         </tr>
         <tr>
@@ -620,7 +620,7 @@ returns 0 if successful and a non-zero value otherwise </dl>    </td>
         <tr>
           <td class="md" nowrap valign="top"> OSCL_IMPORT_REF uint32 Oscl_File::Read </td>
           <td class="md" valign="top">(&nbsp;</td>
-          <td class="md" nowrap valign="top"><a class="el" href="group__osclbase.html#a25">OsclAny</a> *&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="group__osclbase.html#a27">OsclAny</a> *&nbsp;</td>
           <td class="mdname" nowrap>&nbsp; <em>buffer</em>, </td>
         </tr>
         <tr>
@@ -1099,7 +1099,7 @@ The File Tell operation Returns the current file position for file specified by 
         <tr>
           <td class="md" nowrap valign="top"> OSCL_IMPORT_REF uint32 Oscl_File::Write </td>
           <td class="md" valign="top">(&nbsp;</td>
-          <td class="md" nowrap valign="top">const <a class="el" href="group__osclbase.html#a25">OsclAny</a> *&nbsp;</td>
+          <td class="md" nowrap valign="top">const <a class="el" href="group__osclbase.html#a27">OsclAny</a> *&nbsp;</td>
           <td class="mdname" nowrap>&nbsp; <em>buffer</em>, </td>
         </tr>
         <tr>
@@ -1259,7 +1259,7 @@ The number of elements written </dl>    </td>
 <hr>The documentation for this class was generated from the following file:<ul>
 <li><a class="el" href="oscl__file__io_8h-source.html">oscl_file_io.h</a></ul>
 <hr size="1"><img src="pvlogo_small.jpg"><address style="align: right;"><small>OSCL API</small>
-<address style="align: left;"><small>Posting Version: CORE_7.512.1.1 </small>
+<address style="align: left;"><small>Posting Version: CORE_8.000.1.1_RC1 </small>
 </small></address>
 </body>
 </html>

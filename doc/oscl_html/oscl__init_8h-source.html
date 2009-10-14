@@ -28,12 +28,12 @@
 00034                 , <a class="code" href="classOsclSelect.html#m2">iOsclErrorTrap</a>(true)
 00035                 , <a class="code" href="classOsclSelect.html#m3">iOsclLogger</a>(true)
 00036                 , <a class="code" href="classOsclSelect.html#m4">iOsclScheduler</a>(true)
-00037                 , <a class="code" href="classOsclSelect.html#m5">iErrAlloc</a>(<a class="code" href="group__osclbase.html#a81">NULL</a>)
-00038                 , <a class="code" href="classOsclSelect.html#m6">iSchedulerAlloc</a>(<a class="code" href="group__osclbase.html#a81">NULL</a>)
-00039                 , <a class="code" href="classOsclSelect.html#m7">iSchedulerName</a>(<a class="code" href="group__osclbase.html#a81">NULL</a>)
+00037                 , <a class="code" href="classOsclSelect.html#m5">iErrAlloc</a>(<a class="code" href="group__osclbase.html#a88">NULL</a>)
+00038                 , <a class="code" href="classOsclSelect.html#m6">iSchedulerAlloc</a>(<a class="code" href="group__osclbase.html#a88">NULL</a>)
+00039                 , <a class="code" href="classOsclSelect.html#m7">iSchedulerName</a>(<a class="code" href="group__osclbase.html#a88">NULL</a>)
 00040                 , <a class="code" href="classOsclSelect.html#m8">iSchedulerReserve</a>(10)
 00041                 , <a class="code" href="classOsclSelect.html#m9">iHeapCheck</a>(false)
-00042                 , <a class="code" href="classOsclSelect.html#m10">iOutputFile</a>(<a class="code" href="group__osclbase.html#a81">NULL</a>)
+00042                 , <a class="code" href="classOsclSelect.html#m10">iOutputFile</a>(<a class="code" href="group__osclbase.html#a88">NULL</a>)
 00043         {}
 00044 
 00045         <span class="comment">//this constructor is mainly for back-compatibility with the old OsclInit argument list.</span>
@@ -42,7 +42,7 @@
 00048                    , <span class="keyword">const</span> <span class="keywordtype">char</span>*name
 00049                    , int32 reserve = 10
 00050                                      , <span class="keywordtype">bool</span> heapcheck = <span class="keyword">false</span>
-00051                                                         , FILE* output = <a class="code" href="group__osclbase.html#a81">NULL</a>)
+00051                                                         , FILE* output = <a class="code" href="group__osclbase.html#a88">NULL</a>)
 00052                 : <a class="code" href="classOsclSelect.html#m0">iOsclBase</a>(true)
 00053                 , <a class="code" href="classOsclSelect.html#m1">iOsclMemory</a>(true)
 00054                 , <a class="code" href="classOsclSelect.html#m2">iOsclErrorTrap</a>(true)
@@ -77,12 +77,12 @@
 00086     <span class="keyword">public</span>:
 00097         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keyword">static</span> <span class="keywordtype">void</span> <a class="code" href="classOsclInit.html#d0">Init</a>(
 00098             int32&amp; aError
-00099             , <span class="keyword">const</span> <a class="code" href="classOsclSelect.html">OsclSelect</a> *aSelect = <a class="code" href="group__osclbase.html#a81">NULL</a>
+00099             , <span class="keyword">const</span> <a class="code" href="classOsclSelect.html">OsclSelect</a> *aSelect = <a class="code" href="group__osclbase.html#a88">NULL</a>
 00100         );
 00101 
 00113         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keyword">static</span> <span class="keywordtype">void</span> <a class="code" href="classOsclInit.html#d1">Cleanup</a>(
 00114             int32&amp; aError
-00115             , <span class="keyword">const</span> <a class="code" href="classOsclSelect.html">OsclSelect</a> *aSelect = <a class="code" href="group__osclbase.html#a81">NULL</a>
+00115             , <span class="keyword">const</span> <a class="code" href="classOsclSelect.html">OsclSelect</a> *aSelect = <a class="code" href="group__osclbase.html#a88">NULL</a>
 00116         );
 00117 };
 00118 
@@ -91,7 +91,7 @@
 00121 <span class="preprocessor"></span>
 00122 
 </pre></div><hr size="1"><img src="pvlogo_small.jpg"><address style="align: right;"><small>OSCL API</small>
-<address style="align: left;"><small>Posting Version: CORE_7.512.1.1 </small>
+<address style="align: left;"><small>Posting Version: CORE_8.000.1.1_RC1 </small>
 </small></address>
 </body>
 </html>

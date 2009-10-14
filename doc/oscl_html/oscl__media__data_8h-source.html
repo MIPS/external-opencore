@@ -47,7 +47,7 @@
 <a name="l00049"></a><a class="code" href="classBufferMgr.html">00049</a> <span class="keyword">class </span><a class="code" href="classBufferMgr.html">BufferMgr</a>
 00050 {
 00051     <span class="keyword">public</span>:
-00052         <span class="keyword">virtual</span> <span class="keywordtype">void</span> <a class="code" href="classBufferMgr.html#a0">BufferReleased</a>(<span class="keywordtype">void</span>* ptr, <a class="code" href="classBufferState.html">BufferState</a>* state = <a class="code" href="group__osclbase.html#a81">NULL</a>) = 0;
+00052         <span class="keyword">virtual</span> <span class="keywordtype">void</span> <a class="code" href="classBufferMgr.html#a0">BufferReleased</a>(<span class="keywordtype">void</span>* ptr, <a class="code" href="classBufferState.html">BufferState</a>* state = <a class="code" href="group__osclbase.html#a88">NULL</a>) = 0;
 <a name="l00053"></a><a class="code" href="classBufferMgr.html#a1">00053</a>         <span class="keyword">virtual</span> <a class="code" href="classBufferMgr.html#a1">~BufferMgr</a>() {}
 00054 };
 00055 
@@ -179,7 +179,7 @@
 00181 
 <a name="l00182"></a><a class="code" href="classBufFragGroup.html#b0">00182</a>         <span class="keyword">virtual</span> <span class="keywordtype">void</span> <a class="code" href="classBufFragGroup.html#b0">Clear</a>()
 00183         {
-00184             <span class="keywordflow">for</span> (<a class="code" href="group__osclbase.html#a27">uint</a> ii = 0 ; ii &lt; <a class="code" href="classBufFragGroup.html#n3">num_fragments</a>; ++ii)
+00184             <span class="keywordflow">for</span> (<a class="code" href="group__osclbase.html#a29">uint</a> ii = 0 ; ii &lt; <a class="code" href="classBufFragGroup.html#n3">num_fragments</a>; ++ii)
 00185             {
 00186                 <span class="keywordflow">if</span> (<a class="code" href="classBufFragGroup.html#n1">buffer_states</a>[ii])
 00187                 {
@@ -198,7 +198,7 @@
 00200             {
 00201                 <span class="keywordflow">return</span> <a class="code" href="classBufFragStatusClass.html#s8s1">BufFragStatusClass::TOO_MANY_FRAGS</a>;
 00202             }
-00203             <span class="keywordflow">if</span> (frag.<a class="code" href="structOsclMemoryFragment.html#m1">ptr</a> == <a class="code" href="group__osclbase.html#a81">NULL</a>)
+00203             <span class="keywordflow">if</span> (frag.<a class="code" href="structOsclMemoryFragment.html#m1">ptr</a> == <a class="code" href="group__osclbase.html#a88">NULL</a>)
 00204             {
 00205                 <span class="keywordflow">return</span> <a class="code" href="classBufFragStatusClass.html#s8s3">BufFragStatusClass::EMPTY_FRAGMENT</a>;
 00206             }
@@ -247,7 +247,7 @@
 00249     }
 00250     <span class="keywordflow">else</span>
 00251     {
-00252         <span class="keywordflow">return</span> <a class="code" href="group__osclbase.html#a81">NULL</a>;
+00252         <span class="keywordflow">return</span> <a class="code" href="group__osclbase.html#a88">NULL</a>;
 00253     }
 00254 }
 00255 
@@ -259,7 +259,7 @@
 00261     }
 00262     <span class="keywordflow">else</span>
 00263     {
-00264         <span class="keywordflow">return</span> <a class="code" href="group__osclbase.html#a81">NULL</a>;
+00264         <span class="keywordflow">return</span> <a class="code" href="group__osclbase.html#a88">NULL</a>;
 00265     }
 00266 }
 00267 
@@ -299,7 +299,7 @@
 00301         {
 00302             <span class="keywordflow">if</span> (fragment.<a class="code" href="structOsclMemoryFragment.html#m0">len</a> &gt; <a class="code" href="classMediaData.html#n2">available_localbuf</a>)
 00303             {
-00304                 fragment.<a class="code" href="structOsclMemoryFragment.html#m1">ptr</a> = <a class="code" href="group__osclbase.html#a81">NULL</a>;
+00304                 fragment.<a class="code" href="structOsclMemoryFragment.html#m1">ptr</a> = <a class="code" href="group__osclbase.html#a88">NULL</a>;
 00305                 fragment.<a class="code" href="structOsclMemoryFragment.html#m0">len</a> = <a class="code" href="classMediaData.html#n2">available_localbuf</a>;
 00306                 <span class="keywordflow">return</span> <a class="code" href="classBufFragStatusClass.html#s8s2">MediaStatusClass::NOT_ENOUGH_SPACE</a>;
 00307             }
@@ -311,7 +311,7 @@
 00313 
 <a name="l00314"></a><a class="code" href="classMediaData.html#a7">00314</a>         <span class="keyword">virtual</span> <span class="keywordtype">void</span> <a class="code" href="classMediaData.html#a7">Clear</a>()
 00315         {
-00316             <span class="keywordflow">for</span> (<a class="code" href="group__osclbase.html#a27">uint</a> ii = 0 ; ii &lt; this-&gt;<a class="code" href="classBufFragGroup.html#n3">num_fragments</a>; ++ii)
+00316             <span class="keywordflow">for</span> (<a class="code" href="group__osclbase.html#a29">uint</a> ii = 0 ; ii &lt; this-&gt;<a class="code" href="classBufFragGroup.html#n3">num_fragments</a>; ++ii)
 00317             {
 00318                 <span class="keywordflow">if</span> (this-&gt;<a class="code" href="classBufFragGroup.html#n1">buffer_states</a>[ii])
 00319                 {
@@ -328,7 +328,7 @@
 00330 
 <a name="l00331"></a><a class="code" href="classMediaData.html#a8">00331</a>         <span class="keywordtype">bool</span> <a class="code" href="classMediaData.html#a8">IsLocalData</a>(<span class="keyword">const</span> <a class="code" href="structOsclMemoryFragment.html">OsclMemoryFragment</a>&amp; frag)<span class="keyword"> const</span>
 00332 <span class="keyword">        </span>{
-00333             <span class="keywordflow">if</span> (frag.<a class="code" href="structOsclMemoryFragment.html#m1">ptr</a> == <a class="code" href="group__osclbase.html#a81">NULL</a>)
+00333             <span class="keywordflow">if</span> (frag.<a class="code" href="structOsclMemoryFragment.html#m1">ptr</a> == <a class="code" href="group__osclbase.html#a88">NULL</a>)
 00334                 <span class="keywordflow">return</span> <span class="keyword">true</span>;
 00335             <span class="keywordflow">if</span> ((uint8 *)frag.<a class="code" href="structOsclMemoryFragment.html#m1">ptr</a> &gt;= <a class="code" href="classMediaData.html#n1">localbuf</a>)
 00336             {
@@ -355,7 +355,7 @@
 00357             uint32 tmp = idx + this-&gt;<a class="code" href="classMediaData.html#n3">num_reserved_fragments</a>;
 00358             <span class="keywordflow">if</span> (tmp &gt; this-&gt;<a class="code" href="classBufFragGroup.html#n3">num_fragments</a>)
 00359             {
-00360                 <span class="keywordflow">return</span> <a class="code" href="group__osclbase.html#a81">NULL</a>;
+00360                 <span class="keywordflow">return</span> <a class="code" href="group__osclbase.html#a88">NULL</a>;
 00361             }
 00362             <span class="keywordflow">else</span>
 00363             {
@@ -381,7 +381,7 @@
 00383                 <span class="keywordflow">return</span> <a class="code" href="classBufFragStatusClass.html#s8s1">MediaStatusClass::TOO_MANY_FRAGS</a>;
 00384             }
 00385 
-00386             <span class="keywordflow">if</span> (frag.<a class="code" href="structOsclMemoryFragment.html#m1">ptr</a> == <a class="code" href="group__osclbase.html#a81">NULL</a> || frag.<a class="code" href="structOsclMemoryFragment.html#m0">len</a> == 0)
+00386             <span class="keywordflow">if</span> (frag.<a class="code" href="structOsclMemoryFragment.html#m1">ptr</a> == <a class="code" href="group__osclbase.html#a88">NULL</a> || frag.<a class="code" href="structOsclMemoryFragment.html#m0">len</a> == 0)
 00387             {
 00388                 <span class="keywordflow">return</span> <a class="code" href="classBufFragStatusClass.html#s8s3">MediaStatusClass::EMPTY_FRAGMENT</a>;
 00389             }
@@ -416,13 +416,13 @@
 00418 <span class="comment">                                */</span>
 00419                 }
 00420                 this-&gt;<a class="code" href="classBufFragGroup.html#n0">fragments</a>[location_offset] = local_fragment;
-00421                 this-&gt;<a class="code" href="classBufFragGroup.html#n1">buffer_states</a>[location_offset] = <a class="code" href="group__osclbase.html#a81">NULL</a>;
+00421                 this-&gt;<a class="code" href="classBufFragGroup.html#n1">buffer_states</a>[location_offset] = <a class="code" href="group__osclbase.html#a88">NULL</a>;
 00422                 <span class="keywordflow">return</span> <a class="code" href="classBufFragStatusClass.html#s8s0">MediaStatusClass::BFG_SUCCESS</a>;
 00423             }
 00424 
 00425             <span class="comment">// append the new fragment to the end</span>
 00426             this-&gt;<a class="code" href="classBufFragGroup.html#n0">fragments</a>[this-&gt;<a class="code" href="classBufFragGroup.html#n3">num_fragments</a>] = local_fragment;
-00427             this-&gt;<a class="code" href="classBufFragGroup.html#n1">buffer_states</a>[this-&gt;<a class="code" href="classBufFragGroup.html#n3">num_fragments</a>++] = <a class="code" href="group__osclbase.html#a81">NULL</a>;
+00427             this-&gt;<a class="code" href="classBufFragGroup.html#n1">buffer_states</a>[this-&gt;<a class="code" href="classBufFragGroup.html#n3">num_fragments</a>++] = <a class="code" href="group__osclbase.html#a88">NULL</a>;
 00428             <span class="keywordflow">return</span> <a class="code" href="classBufFragStatusClass.html#s8s0">MediaStatusClass::BFG_SUCCESS</a>;
 00429         };
 00430 
@@ -436,7 +436,7 @@
 00438 <span class="preprocessor">#endif</span>
 00439 <span class="preprocessor"></span>
 </pre></div><hr size="1"><img src="pvlogo_small.jpg"><address style="align: right;"><small>OSCL API</small>
-<address style="align: left;"><small>Posting Version: CORE_7.512.1.1 </small>
+<address style="align: left;"><small>Posting Version: CORE_8.000.1.1_RC1 </small>
 </small></address>
 </body>
 </html>

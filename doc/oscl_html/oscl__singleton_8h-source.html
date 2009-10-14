@@ -56,14 +56,14 @@
 00060 <span class="comment">        ** @param error (output) 0 for success or an error from TPVBaseErrorEnum</span>
 00061 <span class="comment">        ** @returns: the entry value</span>
 00062 <span class="comment">        */</span>
-00063         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keyword">static</span> <a class="code" href="group__osclbase.html#a25">OsclAny</a>* <a class="code" href="classOsclSingletonRegistry.html#d0">getInstance</a>(uint32 ID, int32 &amp;error);
+00063         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keyword">static</span> <a class="code" href="group__osclbase.html#a27">OsclAny</a>* <a class="code" href="classOsclSingletonRegistry.html#d0">getInstance</a>(uint32 ID, int32 &amp;error);
 00064         <span class="comment">/*</span>
 00065 <span class="comment">        ** Set an entry</span>
 00066 <span class="comment">        ** @param ID: identifier</span>
 00067 <span class="comment">        ** @param error (output) 0 for success or an error from TPVBaseErrorEnum</span>
 00068 <span class="comment">        ** @returns: the entry value</span>
 00069 <span class="comment">        */</span>
-00070         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keyword">static</span> <span class="keywordtype">void</span> <a class="code" href="classOsclSingletonRegistry.html#d1">registerInstance</a>(<a class="code" href="group__osclbase.html#a25">OsclAny</a>* ptr, uint32 ID, int32 &amp;error);
+00070         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keyword">static</span> <span class="keywordtype">void</span> <a class="code" href="classOsclSingletonRegistry.html#d1">registerInstance</a>(<a class="code" href="group__osclbase.html#a27">OsclAny</a>* ptr, uint32 ID, int32 &amp;error);
 00071 
 00072         <span class="comment">/*</span>
 00073 <span class="comment">        //These two APIs can be used to do "test and set" operations on a singleton.</span>
@@ -77,19 +77,19 @@
 00081 <span class="comment">        ** @param error (output) 0 for success or an error from TPVBaseErrorEnum</span>
 00082 <span class="comment">        * @returns the singleton value.</span>
 00083 <span class="comment">        */</span>
-00084         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keyword">static</span> <a class="code" href="group__osclbase.html#a25">OsclAny</a>* <a class="code" href="classOsclSingletonRegistry.html#d2">lockAndGetInstance</a>(uint32 ID, int32&amp; error);
+00084         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keyword">static</span> <a class="code" href="group__osclbase.html#a27">OsclAny</a>* <a class="code" href="classOsclSingletonRegistry.html#d2">lockAndGetInstance</a>(uint32 ID, int32&amp; error);
 00085         <span class="comment">/*</span>
 00086 <span class="comment">        * Set the value of the singleton.  Assume the singleton table is locked on entry.</span>
 00087 <span class="comment">        * @param ptr the singleton value</span>
 00088 <span class="comment">        * @param ID the singleton ID</span>
 00089 <span class="comment">        ** @param error (output) 0 for success or an error from TPVBaseErrorEnum</span>
 00090 <span class="comment">        */</span>
-00091         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keyword">static</span> <span class="keywordtype">void</span> <a class="code" href="classOsclSingletonRegistry.html#d3">registerInstanceAndUnlock</a>(<a class="code" href="group__osclbase.html#a25">OsclAny</a>* ptr, uint32 ID, int32&amp; error);
+00091         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keyword">static</span> <span class="keywordtype">void</span> <a class="code" href="classOsclSingletonRegistry.html#d3">registerInstanceAndUnlock</a>(<a class="code" href="group__osclbase.html#a27">OsclAny</a>* ptr, uint32 ID, int32&amp; error);
 00092 
 00093     <span class="keyword">private</span>:
 00094         <a class="code" href="classOsclSingletonRegistry.html">OsclSingletonRegistry</a>()
 00095         {}
-00096         <span class="keyword">typedef</span> <a class="code" href="group__osclbase.html#a25">OsclAny</a>* registry_type;
+00096         <span class="keyword">typedef</span> <a class="code" href="group__osclbase.html#a27">OsclAny</a>* registry_type;
 00097         <span class="keyword">typedef</span> registry_type* registry_pointer_type;
 00098 
 00099     <span class="keyword">private</span>:
@@ -104,11 +104,11 @@
 00108                 SingletonTable(): iRefCount(0)
 00109                 {
 00110                     <span class="keywordflow">for</span> (uint32 i = 0; i &lt; <a class="code" href="oscl__singleton_8h.html#a14">OSCL_SINGLETON_ID_LAST</a>; i++)
-00111                         iSingletons[i] = <a class="code" href="group__osclbase.html#a81">NULL</a>;
+00111                         iSingletons[i] = <a class="code" href="group__osclbase.html#a88">NULL</a>;
 00112                 }
 00113                 _OsclBasicLock iTableLock;
 00114                 uint32 iRefCount;
-00115                 <a class="code" href="group__osclbase.html#a25">OsclAny</a>* iSingletons[<a class="code" href="oscl__singleton_8h.html#a14">OSCL_SINGLETON_ID_LAST</a>];
+00115                 <a class="code" href="group__osclbase.html#a27">OsclAny</a>* iSingletons[<a class="code" href="oscl__singleton_8h.html#a14">OSCL_SINGLETON_ID_LAST</a>];
 00116                 _OsclBasicLock iSingletonLocks[<a class="code" href="oscl__singleton_8h.html#a14">OSCL_SINGLETON_ID_LAST</a>];
 00117         };
 00118         <span class="comment">//The singleton table is a global variable.</span>
@@ -131,7 +131,7 @@
 00135         <a class="code" href="classOsclSingleton.html#a0">OsclSingleton</a>()
 00136         {
 00137             int32 err;
-00138             <a class="code" href="classOsclSingleton.html#n0">_Ptr</a> = <a class="code" href="group__osclbase.html#a86">OSCL_STATIC_CAST</a>(T*, Registry::getInstance(ID, err));
+00138             <a class="code" href="classOsclSingleton.html#n0">_Ptr</a> = <a class="code" href="group__osclbase.html#a93">OSCL_STATIC_CAST</a>(T*, Registry::getInstance(ID, err));
 00139         }
 <a name="l00140"></a><a class="code" href="classOsclSingleton.html#a1">00140</a> 
 00141         <a class="code" href="classOsclSingleton.html#a1">~OsclSingleton</a>() {};
@@ -150,7 +150,7 @@
 00174         <span class="keywordtype">bool</span> <a class="code" href="classOsclSingleton.html#a4">set</a>()
 00175         {
 00176             int32 err;
-00177             <a class="code" href="classOsclSingleton.html#n0">_Ptr</a> = <a class="code" href="group__osclbase.html#a86">OSCL_STATIC_CAST</a>(T*, Registry::getInstance(ID, err));
+00177             <a class="code" href="classOsclSingleton.html#n0">_Ptr</a> = <a class="code" href="group__osclbase.html#a93">OSCL_STATIC_CAST</a>(T*, Registry::getInstance(ID, err));
 00178             <span class="keywordflow">return</span> (<a class="code" href="classOsclSingleton.html#n0">_Ptr</a> ? <span class="keyword">true</span> : <span class="keyword">false</span>);
 00179         }
 00180 
@@ -162,7 +162,7 @@
 00186 <span class="preprocessor">#endif</span>
 00187 <span class="preprocessor"></span>
 </pre></div><hr size="1"><img src="pvlogo_small.jpg"><address style="align: right;"><small>OSCL API</small>
-<address style="align: left;"><small>Posting Version: CORE_7.512.1.1 </small>
+<address style="align: left;"><small>Posting Version: CORE_8.000.1.1_RC1 </small>
 </small></address>
 </body>
 </html>

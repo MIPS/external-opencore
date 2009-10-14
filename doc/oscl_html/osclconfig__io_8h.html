@@ -610,7 +610,7 @@ This file contains common typedefs based on the ANSI C limits.h header.
     <td>
 
 <p>
-<b>Value:</b><div class="fragment"><pre>accept_s=accept(s,<a class="code" href="group__osclbase.html#a81">NULL</a>,<a class="code" href="group__osclbase.html#a81">NULL</a>);\
+<b>Value:</b><div class="fragment"><pre>accept_s=accept(s,<a class="code" href="group__osclbase.html#a88">NULL</a>,<a class="code" href="group__osclbase.html#a88">NULL</a>);\
     ok=(accept_s!=(-1));\
     <span class="keywordflow">if</span> (!ok){err=errno;wouldblock=(err==EAGAIN||err==EWOULDBLOCK);}</pre></div>    </td>
   </tr>
@@ -649,7 +649,7 @@ This file contains common typedefs based on the ANSI C limits.h header.
 
 <p>
 <b>Value:</b><div class="fragment"><pre><a class="code" href="osclconfig__io_8h.html#a47">TOsclSockAddr</a>* tmpadr = &amp;addr;\
-    sockaddr* sadr = <a class="code" href="group__osclbase.html#a86">OSCL_STATIC_CAST</a>(sockaddr*, tmpadr);\
+    sockaddr* sadr = <a class="code" href="group__osclbase.html#a93">OSCL_STATIC_CAST</a>(sockaddr*, tmpadr);\
     ok=(bind(s,sadr,<span class="keyword">sizeof</span>(addr))!=(-1));\
     <span class="keywordflow">if</span> (!ok)err=errno</pre></div>    </td>
   </tr>
@@ -725,7 +725,7 @@ This file contains common typedefs based on the ANSI C limits.h header.
 
 <p>
 <b>Value:</b><div class="fragment"><pre><a class="code" href="osclconfig__io_8h.html#a47">TOsclSockAddr</a>* tmpadr = &amp;addr;\
-    sockaddr* sadr = <a class="code" href="group__osclbase.html#a86">OSCL_STATIC_CAST</a>(sockaddr*, tmpadr);\
+    sockaddr* sadr = <a class="code" href="group__osclbase.html#a93">OSCL_STATIC_CAST</a>(sockaddr*, tmpadr);\
     ok=(connect(s,sadr,<span class="keyword">sizeof</span>(addr))!=(-1));\
     <span class="keywordflow">if</span> (!ok){err=errno;wouldblock=(err==EINPROGRESS);}</pre></div>    </td>
   </tr>
@@ -848,7 +848,7 @@ This file contains common typedefs based on the ANSI C limits.h header.
     <span class="keyword">struct </span>in_addr _inaddr;\
     _inaddr.s_addr=*_hostaddr;\
     dottedaddr=inet_ntoa(_inaddr);\
-    ok=(dottedaddr!=<a class="code" href="group__osclbase.html#a81">NULL</a>);</pre></div>    </td>
+    ok=(dottedaddr!=<a class="code" href="group__osclbase.html#a88">NULL</a>);</pre></div>    </td>
   </tr>
 </table>
 <a name="a35" doxytag="osclconfig_io.h::OsclGethostbyname"></a><p>
@@ -885,7 +885,7 @@ This file contains common typedefs based on the ANSI C limits.h header.
 
 <p>
 <b>Value:</b><div class="fragment"><pre>hostent=gethostbyname((<span class="keyword">const</span> <span class="keywordtype">char</span>*)name);\
-    ok=(hostent!=<a class="code" href="group__osclbase.html#a81">NULL</a>);\
+    ok=(hostent!=<a class="code" href="group__osclbase.html#a88">NULL</a>);\
     <span class="keywordflow">if</span> (!ok)err=errno;</pre></div>    </td>
   </tr>
 </table>
@@ -1205,7 +1205,7 @@ nbytes=recvfrom(s,(<span class="keywordtype">void</span>*)(buf),(size_t)(len),0,
 
 <p>
 <b>Value:</b><div class="fragment"><pre><a class="code" href="osclconfig__io_8h.html#a47">TOsclSockAddr</a>* tmpadr = &amp;addr;\
-    sockaddr* sadr = <a class="code" href="group__osclbase.html#a86">OSCL_STATIC_CAST</a>(sockaddr*, tmpadr);\
+    sockaddr* sadr = <a class="code" href="group__osclbase.html#a93">OSCL_STATIC_CAST</a>(sockaddr*, tmpadr);\
     nbytes=sendto(s,(<span class="keyword">const</span> <span class="keywordtype">void</span>*)(buf),(size_t)(len),0,sadr,(socklen_t)<span class="keyword">sizeof</span>(addr));\
     ok=(nbytes!=(-1));\
     <span class="keywordflow">if</span> (!ok){err=errno;wouldblock=(err==EAGAIN||err==EWOULDBLOCK);}</pre></div>    </td>
@@ -1638,7 +1638,7 @@ nbytes=recvfrom(s,(<span class="keywordtype">void</span>*)(buf),(size_t)(len),0,
   </tr>
 </table>
 <hr size="1"><img src="pvlogo_small.jpg"><address style="align: right;"><small>OSCL API</small>
-<address style="align: left;"><small>Posting Version: CORE_7.512.1.1 </small>
+<address style="align: left;"><small>Posting Version: CORE_8.000.1.1_RC1 </small>
 </small></address>
 </body>
 </html>
