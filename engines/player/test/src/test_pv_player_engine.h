@@ -2546,6 +2546,23 @@ class pvplayer_engine_test : public test_case,
 
             PVR_Recorder_MultipleRecord,
 
+
+            /************* DivX DRM Tests BEGIN****************/
+            /**
+             * @test (1700) GetDivXDRMDeviceActivationCode Test
+             */
+            DivXDRMGetDeviceActivationCodeTest = 1700,
+            /**
+             * @test (1701) DivXDRMOpenPlayStopTest Test
+             */
+            DivXDRMOpenPlayStopTest, //1701
+            /**
+             * @test (1701) DivXDRMDeActivateDeviceTest Test
+             */
+            DivXDRMDeActivateDeviceTest, //1702
+
+            DivXDRMLastTest = 1725, //1702 - 1725 reserved for future divx drm tests
+
             LastInteractiveTest = 2000, // placeholder
 
 

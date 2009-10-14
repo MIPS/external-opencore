@@ -29,3 +29,5 @@ CFG_pvmtp_jni := mtpdb.cfg
 
 EXTRA_SHARED_LIBRARIES_pvupnp := libutils libcutils
 
+CFG_pvdivxdrm := pvdivxdrm.cfg
+

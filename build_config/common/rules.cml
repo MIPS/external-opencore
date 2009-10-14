@@ -30,6 +30,7 @@ menu modules_menu
     oma1_passthru_support
     wmdrmoemsettings_support
 	pvdivxoemsettings_support
+    divxdrm_support
     mtp_db_support
     pvdb_config_support
     mtp_config_support
@@ -63,12 +64,13 @@ default janus_support from n
 default oma1_passthru_support from n
 default wmdrmoemsettings_support from n
 default pvdivxoemsettings_support from n
+default divxdrm_support from n
 default mtp_db_support from n
 default pvdb_config_support from n
 default mtp_config_support from n
 default usb_transport_support from n
 default dtcp_support from n
-require module_support==n implies download_support==n and fasttrack_download_support==n and janus_support==n and wmdrmoemsettings_support==n and pvdivxoemsettings_support==n and mtp_db_support==n and pvdb_config_support==n and mtp_config_support==n and usb_transport_support==n and dtcp_support==n
+require module_support==n implies download_support==n and fasttrack_download_support==n and janus_support==n and wmdrmoemsettings_support==n and pvdivxoemsettings_support==n and divxdrm_support==n and mtp_db_support==n and pvdb_config_support==n and mtp_config_support==n and usb_transport_support==n and dtcp_support==n
 
 menu pv_menu    # The main menu
     features_menu
@@ -427,6 +429,11 @@ derive SOLIBS_pvdivxoemsettings from pvdivxoemsettings_m_lib
 derive SOLIBDIRS_pvdivxoemsettings from pvdivxoemsettings_m_mk
 derive MODS_pvdivxoemsettings from "-lopencore_common"
 
+derive pvdivxdrm_so_name from divxdrm_support==y ? "pvdivxdrm" : ""
+derive SOLIBS_pvdivxdrm from pvdivxdrm_m_lib.pvdivxdrmplugin_m_lib.pvdivxdrmplugininterface_m_lib
+derive SOLIBDIRS_pvdivxdrm from pvdivxdrm_m_mk.pvdivxdrmplugin_m_mk.pvdivxdrmplugininterface_m_mk
+derive MODS_pvdivxdrm from "-lopencore_common"
+
 derive pvjanus_so_name from janus_support==y ? "pvjanus" : ""
 derive SOLIBS_pvjanus from pvjanusplugin_m_lib.pvjanusplugininterface_m_lib
 derive SOLIBDIRS_pvjanus from pvjanusplugin_m_mk.pvjanusplugininterface_m_mk
@@ -639,7 +646,7 @@ derive TARGET_shared from (pv_so_name.opencore_common_so_name.opencore_author_so
                            opencore_mp4localreg_so_name.opencore_mp4local_so_name.
 			   pvdivx_recognizer_so_name.pvdivxparser_node_so_name.
                            pvrmff_recognizer_so_name.pvrmffparser_node_so_name.
-                           pvwmdrm_so_name.pvwmdrmoemsettings_so_name.pvdivxoemsettings_so_name.pvsqlite_so_name.pvdb_so_name.pvmtp_so_name.pvmtpip_so_name.pvjanus_so_name.pvoma1passthru_so_name.pvdbconfigclass_so_name.pvmtpconfigclass_so_name.pvdb_recovery_utility_so_name.pviptransport_so_name.
+                           pvwmdrm_so_name.pvwmdrmoemsettings_so_name.pvdivxoemsettings_so_name.pvdivxdrm_so_name.pvsqlite_so_name.pvdb_so_name.pvmtp_so_name.pvmtpip_so_name.pvjanus_so_name.pvoma1passthru_so_name.pvdbconfigclass_so_name.pvmtpconfigclass_so_name.pvdb_recovery_utility_so_name.pviptransport_so_name.
    			   pvflv_recognizer_so_name.pvflvparser_node_so_name.
                            pvrtspunicast_streaming_so_name.pvrtspunicast_streamingreg_so_name.
                            pvrtsptunicast_streaming_so_name.pvrtsptunicast_streamingregreg_so_name.

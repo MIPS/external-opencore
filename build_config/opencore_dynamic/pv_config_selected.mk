@@ -29,6 +29,7 @@ janus_support=n
 oma1_passthru_support=y
 wmdrmoemsettings_support=n
 pvdivxoemsettings_support=n
+divxdrm_support=n
 mtp_db_support=n
 pvdb_config_support=n
 mtp_config_support=n

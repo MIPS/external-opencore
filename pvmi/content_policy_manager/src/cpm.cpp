@@ -1484,9 +1484,9 @@ PVMFStatus PVMFCPMImpl::PopulateListOfActivePlugIns(CPMSessionInfo* aInfo)
 PVMFStatus PVMFCPMImpl::QueryForAuthorizationInterface(CPMSessionInfo* aInfo)
 {
     Oscl_Vector<CPMPlugInParams, OsclMemAllocator>::iterator it;
-    for (it = iPlugInParamsVec.begin(); it != iPlugInParamsVec.end() && it->iActive; it++)
+    for (it = iPlugInParamsVec.begin(); it != iPlugInParamsVec.end(); it++)
     {
-        if (!it->iPlugInInterface->HasQueryInterfaceSync())
+        if (!it->iPlugInInterface->HasQueryInterfaceSync() && it->iActive)
         {
             PVMFCPMCommandContext* internalCmd = RequestNewInternalCmd();
             if (internalCmd != NULL)
@@ -1521,9 +1521,9 @@ PVMFStatus PVMFCPMImpl::QueryForAuthorizationInterface(CPMSessionInfo* aInfo)
 PVMFStatus PVMFCPMImpl::QueryForAccessInterfaceFactory(CPMSessionInfo* aInfo)
 {
     Oscl_Vector<CPMPlugInParams, OsclMemAllocator>::iterator it;
-    for (it = iPlugInParamsVec.begin(); it != iPlugInParamsVec.end() && it->iActive; it++)
+    for (it = iPlugInParamsVec.begin(); it != iPlugInParamsVec.end(); it++)
     {
-        if (!it->iPlugInInterface->HasQueryInterfaceSync())
+        if (!it->iPlugInInterface->HasQueryInterfaceSync() && it->iActive)
         {
             PVMFCPMCommandContext* internalCmd = RequestNewInternalCmd();
             if (internalCmd != NULL)
@@ -1558,12 +1558,15 @@ PVMFStatus PVMFCPMImpl::QueryForAccessInterfaceFactory(CPMSessionInfo* aInfo)
 PVMFStatus PVMFCPMImpl::DetermineAccessPlugIn(CPMSessionInfo* aInfo)
 {
     Oscl_Vector<CPMPlugInParams, OsclMemAllocator>::iterator it;
-    for (it = iPlugInParamsVec.begin(); it != iPlugInParamsVec.end() && it->iActive; it++)
+    for (it = iPlugInParamsVec.begin(); it != iPlugInParamsVec.end(); it++)
     {
-        if (it->PlugInAccessInterfaceFactory() != NULL)
+        if (it->iActive)
         {
-            aInfo->iAccessPlugInID = it->iPlugInID;
-            return PVMFSuccess;
+            if (it->PlugInAccessInterfaceFactory() != NULL)
+            {
+                aInfo->iAccessPlugInID = it->iPlugInID;
+                return PVMFSuccess;
+            }
         }
     }
     PVMF_CPM_LOGERROR((0, "PVMFCPMImpl::DetermineAccessPlugIn Failed"));
@@ -1573,9 +1576,9 @@ PVMFStatus PVMFCPMImpl::DetermineAccessPlugIn(CPMSessionInfo* aInfo)
 PVMFStatus PVMFCPMImpl::QueryForLicenseInterface(CPMSessionInfo* aInfo)
 {
     Oscl_Vector<CPMPlugInParams, OsclMemAllocator>::iterator it;
-    for (it = iPlugInParamsVec.begin(); it != iPlugInParamsVec.end() && it->iActive; it++)
+    for (it = iPlugInParamsVec.begin(); it != iPlugInParamsVec.end(); it++)
     {
-        if (!it->iPlugInInterface->HasQueryInterfaceSync())
+        if (!it->iPlugInInterface->HasQueryInterfaceSync() && it->iActive)
         {
             PVMFCPMCommandContext* internalCmd = RequestNewInternalCmd();
             if (internalCmd != NULL)
@@ -1913,25 +1916,28 @@ PVMFStatus PVMFCPMImpl::SendUsageCompleteToRegisteredPlugIns_P(PVMFCPMUsageID aI
     if (usageContext != NULL)
     {
         Oscl_Vector<CPMPlugInParams, OsclMemAllocator>::iterator it;
-        for (it = iPlugInParamsVec.begin(); it != iPlugInParamsVec.end() && it->iActive; it++)
+        for (it = iPlugInParamsVec.begin(); it != iPlugInParamsVec.end(); it++)
         {
-            PVMFCPMCommandContext* internalCmd = RequestNewInternalCmd();
-            if (internalCmd != NULL)
+            if (it->iActive)
             {
-                internalCmd->cmd = PVMF_CPM_INTERNAL_USAGE_COMPLETE_CMD;
-                internalCmd->parentCmd = PVMF_CPM_USAGE_COMPLETE;
-                internalCmd->plugInID = it->iPlugInID;
-                internalCmd->usageid = aID;
-                OsclAny *cmdContextData =
-                    OSCL_REINTERPRET_CAST(OsclAny*, internalCmd);
+                PVMFCPMCommandContext* internalCmd = RequestNewInternalCmd();
+                if (internalCmd != NULL)
+                {
+                    internalCmd->cmd = PVMF_CPM_INTERNAL_USAGE_COMPLETE_CMD;
+                    internalCmd->parentCmd = PVMF_CPM_USAGE_COMPLETE;
+                    internalCmd->plugInID = it->iPlugInID;
+                    internalCmd->usageid = aID;
+                    OsclAny *cmdContextData =
+                        OSCL_REINTERPRET_CAST(OsclAny*, internalCmd);
 
-                it->PlugInAuthorizationInterface()->UsageComplete(it->iPlugInSessionID,
-                        cmdContextData);
-                usageContext->iNumUsageCompleteRequestsPending++;
-            }
-            else
-            {
-                return PVMFErrNoMemory;
+                    it->PlugInAuthorizationInterface()->UsageComplete(it->iPlugInSessionID,
+                            cmdContextData);
+                    usageContext->iNumUsageCompleteRequestsPending++;
+                }
+                else
+                {
+                    return PVMFErrNoMemory;
+                }
             }
         }
         if (usageContext->iNumUsageCompleteRequestsPending > 0)
@@ -2343,9 +2349,9 @@ Oscl_Vector<CPMPlugInParams, OsclMemAllocator>::iterator PVMFCPMImpl::LookUpAcce
         if (sInfo)
         {
             Oscl_Vector<CPMPlugInParams, OsclMemAllocator>::iterator it;
-            for (it = iPlugInParamsVec.begin(); it != iPlugInParamsVec.end() && it->iActive; it++)
+            for (it = iPlugInParamsVec.begin(); it != iPlugInParamsVec.end(); it++)
             {
-                if (it->iPlugInID == sInfo->iAccessPlugInID)
+                if ((it->iPlugInID == sInfo->iAccessPlugInID) && (it->iActive))
                 {
                     iAccessPlugin = it;
                     break;
@@ -2389,9 +2395,9 @@ CPMPlugInParams* PVMFCPMImpl::LookUpPlugInParams(uint32 aID)
 CPMPlugInParams* PVMFCPMImpl::LookUpPlugInParamsFromActiveList(uint32 aID)
 {
     Oscl_Vector<CPMPlugInParams, OsclMemAllocator>::iterator it;
-    for (it = iPlugInParamsVec.begin(); it != iPlugInParamsVec.end() && it->iActive; it++)
+    for (it = iPlugInParamsVec.begin(); it != iPlugInParamsVec.end(); it++)
     {
-        if (it->iPlugInID == aID)
+        if ((it->iPlugInID == aID) && it->iActive)
         {
             return (it);
         }
