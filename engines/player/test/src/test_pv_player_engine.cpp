@@ -723,7 +723,9 @@ void FindSourceFile(cmd_line* command_line, OSCL_HeapString<OsclMemAllocator> &a
         }
         // RTSP URL
         else  if ((!oscl_strncmp("rtsp:", aFileNameInfo.get_cstr(), 5)) ||
-                  (!oscl_strncmp("RTSP:", aFileNameInfo.get_cstr(), 5)))
+                  (!oscl_strncmp("RTSP:", aFileNameInfo.get_cstr(), 5)) ||
+                  (!oscl_strncmp("rtspt:", aFileNameInfo.get_cstr(), 6)) ||
+                  (!oscl_strncmp("RTSPT:", aFileNameInfo.get_cstr(), 6)))
         {
             aInputFileFormatType = PVMF_MIME_DATA_SOURCE_RTSP_URL;
         }

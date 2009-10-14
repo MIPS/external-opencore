@@ -79,68 +79,58 @@
 #include "pvrtspenginenodeextensioninterface_impl.h"
 #endif
 
-/*
-#ifndef PV_PLAYER_SDKINFO_H_INCLUDED    //\engines\player\src\pv_player_sdkinfo.h
-#include "pv_player_sdkinfo.h"
-#endif
-*/
-////////////////////////////////////////////////////////////////////////////////
-
 const int PVRTSPEngineNode::REQ_SEND_SOCKET_ID = 1;
 const int PVRTSPEngineNode::REQ_RECV_SOCKET_ID = 2;
 
+////////////////////////////////////////////////////////////////////////////////
 
 OSCL_EXPORT_REF PVRTSPEngineNode::PVRTSPEngineNode(int32 aPriority) :
         OsclTimerObject(aPriority, "PVRTSPEngineNode"),
+        iCurrentErrorCode(PVMFRTSPClientEngineNodeErrorEventStart),
+        iLogger(NULL),
+        iNumHostCallback(0),
+        iNumConnectCallback(0),
+        iNumSendCallback(0),
+        iNumRecvCallback(0),
+        TIMEOUT_CONNECT_AND_DNS_LOOKUP(30000),
+        TIMEOUT_SEND(3000),
+        TIMEOUT_RECV(-1),
+        REQ_TIMER_WATCHDOG_ID(0),
+        REQ_TIMER_KEEPALIVE_ID(0),
+        REQ_DNS_LOOKUP_ID(0),
+        iWatchdogTimer(NULL),
+        iRTSPParserState(RTSPParser::WAITING_FOR_DATA),
+        TIMEOUT_WATCHDOG(20),
+        ipFragGroupAllocator(NULL),
+        ipFragGroupMemPool(NULL),
+        ibBlockedOnFragGroups(false),
+        iTheBusyPort(NULL),
+        setupTrackIndex(0),
+        bNoSendPending(false),
         iState(PVRTSP_ENGINE_NODE_STATE_IDLE),
         iCurrentCmdId(0),
         iSockServ(NULL),
         iSocketCleanupState(ESocketCleanup_Idle),
         iRTSPParser(NULL),
-        iRTSPParserState(RTSPParser::WAITING_FOR_DATA),
         iOutgoingSeq(0),
         bNoRecvPending(false),
-        bNoSendPending(false),
-        iTheBusyPort(NULL),
-        iLogger(NULL),
         iExtensionRefCount(0),
         iNumRedirectTrials(PVRTSPENGINENODE_DEFAULT_NUMBER_OF_REDIRECT_TRIALS),
-        iNumHostCallback(0),
-        iNumConnectCallback(0),
-        iNumSendCallback(0),
-        iNumRecvCallback(0),
         BASE_REQUEST_ID(0),
-        REQ_TIMER_WATCHDOG_ID(0),
-        REQ_TIMER_KEEPALIVE_ID(0),
-        REQ_DNS_LOOKUP_ID(0),
         DEFAULT_RTSP_PORT(554),
         DEFAULT_HTTP_PORT(80),
-        TIMEOUT_CONNECT_AND_DNS_LOOKUP(30000),
-        TIMEOUT_SEND(3000),
-        TIMEOUT_RECV(-1),
         TIMEOUT_SHUTDOWN(30000),
-        TIMEOUT_WATCHDOG(20),
         TIMEOUT_WATCHDOG_TEARDOWN(2),
         TIMEOUT_KEEPALIVE(PVRTSPENGINENODE_DEFAULT_KEEP_ALIVE_INTERVAL),
         RECOMMENDED_RTP_BLOCK_SIZE(1400),
-        setupTrackIndex(0),
         bRepositioning(false),// \todo reset the reqplayrange to invalid after get the PLAY resp
         iSrvResponse(NULL),
         bSrvRespPending(false),
-        iWatchdogTimer(NULL),
-        iCurrentErrorCode(PVMFRTSPClientEngineNodeErrorEventStart),
         iEventUUID(PVMFRTSPClientEngineNodeEventTypeUUID),
         bKeepAliveInPlay(false),
         iKeepAliveMethod(METHOD_OPTIONS),
         bAddXStrHeader(false),
         iErrorRecoveryAttempt(0),
-        iGetPostCorrelationObject(NULL),
-        ibIsRealRDT(false),
-        ipRealChallengeGen(NULL),
-        ipRdtParser(NULL),
-        ipFragGroupAllocator(NULL),
-        ipFragGroupMemPool(NULL),
-        ibBlockedOnFragGroups(false),
         iExtensionInterface(NULL)
 {
     int32 err;
@@ -176,7 +166,6 @@ OSCL_EXPORT_REF PVRTSPEngineNode::PVRTSPEngineNode(int32 aPriority) :
              OsclError::LeaveIfNull(iWatchdogTimer);
 
              //TBD
-             //iMediaDataResizableAlloc =OSCL_NEW(OsclMemPoolResizableAllocator, (RECOMMENDED_RTP_BLOCK_SIZE, 0, 0, &iAlloc));;
              iMediaDataResizableAlloc = OSCL_NEW(OsclMemPoolResizableAllocator, (RECOMMENDED_RTP_BLOCK_SIZE));
              OsclError::LeaveIfNull(iMediaDataResizableAlloc);
 
@@ -201,6 +190,7 @@ OSCL_EXPORT_REF PVRTSPEngineNode::PVRTSPEngineNode(int32 aPriority) :
     iWatchdogTimer->SetObserver(this);
     iWatchdogTimer->SetFrequency(1);
     iInterfaceState = EPVMFNodeCreated;
+
 }
 
 OSCL_EXPORT_REF PVRTSPEngineNode::~PVRTSPEngineNode()
@@ -274,14 +264,14 @@ OSCL_EXPORT_REF PVRTSPEngineNode::~PVRTSPEngineNode()
     }
 
     if (ipFragGroupAllocator != NULL)
-        OSCL_DELETE(ipFragGroupAllocator);
-    if (ipFragGroupMemPool != NULL)
-        OSCL_DELETE(ipFragGroupMemPool);
-
-    if (iGetPostCorrelationObject != NULL)
     {
-        OSCL_DELETE(iGetPostCorrelationObject);
-        iGetPostCorrelationObject = NULL;
+        ipFragGroupAllocator->CancelFreeChunkAvailableCallback();
+        ipFragGroupAllocator->removeRef();
+    }
+
+    if (ipFragGroupMemPool != NULL)
+    {
+        ipFragGroupMemPool->removeRef();
     }
 
 }
@@ -501,7 +491,6 @@ OSCL_EXPORT_REF   PVMFCommandId PVRTSPEngineNode::CancelCommand(PVMFSessionId aS
         , const OsclAny* aContextData)
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVRTSPEngineNode::CancelCommand() called"));
-    //OSCL_LEAVE(OsclErrNotSupported);
     PVRTSPEngineCommand cmd;
     cmd.PVRTSPEngineCommandBase::Construct(aSession, PVMF_GENERIC_NODE_CANCELCOMMAND, aCmdId, aContextData);
     return AddCmdToQueue(cmd);
@@ -512,7 +501,6 @@ OSCL_EXPORT_REF   PVMFCommandId PVRTSPEngineNode::CancelAllCommands(PVMFSessionI
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVRTSPEngineNode::CancelAllCommands() called"));
 
-    //OSCL_LEAVE(OsclErrNotSupported);
     PVRTSPEngineCommand cmd;
     cmd.PVRTSPEngineCommandBase::Construct(aSession, PVMF_GENERIC_NODE_CANCELALLCOMMANDS, aContextData);
     return AddCmdToQueue(cmd);
@@ -690,11 +678,7 @@ OSCL_EXPORT_REF  PVMFStatus PVRTSPEngineNode::SetClientParameters(OSCL_wString& 
             OSCL_ARRAY_DELETE(tmpBuf);
             return PVMFFailure;
         }
-        //\engines\player\src\pv_player_sdkinfo.h
-        //#define PVPLAYER_ENGINE_SDKINFO_LABEL "PVPLAYER 04.07.00.01"
-        //iSessionInfo.iUserAgent = PVPLAYER_ENGINE_SDKINFO_LABEL;
         iSessionInfo.iUserAgent += (char*)tmpBuf;
-        //iSessionInfo.iUserAgent = (char*)tmpBuf;
     }
 
     if (aUserNetwork.get_size() > 0)
@@ -721,27 +705,6 @@ OSCL_EXPORT_REF  PVMFStatus PVRTSPEngineNode::SetClientParameters(OSCL_wString& 
     return PVMFSuccess;
 }
 
-OSCL_EXPORT_REF bool PVRTSPEngineNode::IsRdtTransport()
-{
-    return ibIsRealRDT;
-}
-
-
-OSCL_EXPORT_REF void PVRTSPEngineNode::SetPortRdtStreamId(PVMFPortInterface* pPort,
-        int iRdtStreamId)
-{
-    ((PVMFRTSPPort*)pPort)->iRdtStreamId = iRdtStreamId;
-}
-
-OSCL_EXPORT_REF void PVRTSPEngineNode::SetRealChallengeCalculator(IRealChallengeGen* pChallengeCalc)
-{
-    ipRealChallengeGen = pChallengeCalc;
-}
-
-OSCL_EXPORT_REF void PVRTSPEngineNode::SetRdtParser(IPayloadParser* pRdtParser)
-{
-    ipRdtParser = pRdtParser;
-}
 
 OSCL_EXPORT_REF  PVMFStatus PVRTSPEngineNode::SetAuthenticationParameters(OSCL_wString& aUserID,
         OSCL_wString& aAuthentication,
@@ -1067,7 +1030,7 @@ OSCL_EXPORT_REF void PVRTSPEngineNode::HandleDNSEvent(int32 aId, TPVDNSFxn aFxn,
 }
 //************ end OsclDNSObserver
 
-void PVRTSPEngineNode::Run()
+OSCL_EXPORT_REF void PVRTSPEngineNode::Run()
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVRTSPEngineNode::Run() In"));
 
@@ -1105,7 +1068,6 @@ void PVRTSPEngineNode::Run()
             if ((iRet != PVMFPending) && (iRet != PVMFSuccess))
             {//TBD error handling.
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_INFO, (0, "PVRTSPEngineNode::Run() ERROR processIncomingMessage(). Ln %d", __LINE__));
-                //ChangeInternalState(PVRTSP_ENGINE_NODE_STATE_INVALID);
             }
         }
         else if (RTSPParser::ENTITY_BODY_IS_READY == iRTSPParserState)
@@ -1114,7 +1076,6 @@ void PVRTSPEngineNode::Run()
             if ((iRet != PVMFPending) && (iRet != PVMFSuccess))
             {//TBD error handling.
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_INFO, (0, "PVRTSPEngineNode::Run() ERROR processIncomingMessage(). Ln %d", __LINE__));
-                //ChangeInternalState(PVRTSP_ENGINE_NODE_STATE_INVALID);
             }
         }
         else if (!clearEventQueue())
@@ -1147,8 +1108,6 @@ void PVRTSPEngineNode::Run()
                     PVMFStatus status = resetSocket();
 
                     PVRTSPEngineCommand cmd;
-                    //const OsclAny* aContext = OSCL_STATIC_CAST(OsclAny*, errorContext);
-                    //cmd.PVRTSPEngineCommandBase::Construct(aCmd.iSession,PVMF_RTSP_NODE_ERROR_RECOVERY,aContext);
                     cmd.PVRTSPEngineCommandBase::Construct(0, PVMF_RTSP_NODE_ERROR_RECOVERY, NULL);
                     cmd.iParam1 = OSCL_STATIC_CAST(OsclAny*, errorContext);
 
@@ -1262,7 +1221,6 @@ PVMFStatus PVRTSPEngineNode::ProcessOutgoingMsg(PVMFPortInterface* aPort)
     PVMFStatus status = aPort->Send();
     if (status == PVMFErrBusy)
     {
-        //iTheBusyPort = true;
         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG, (0, "0x%x PVRTSPEngineNode::ProcessOutgoingMsg: Connected port busy", this));
     }
 
@@ -1462,7 +1420,6 @@ PVMFStatus PVRTSPEngineNode::DispatchCommand(PVRTSPEngineCommand& aCmd)
 
                 if (iRunningCmdQueue.size() > 0)
                 {//error happened while servicing an reqeust, resume service
-                    //RunIfNotReady();
                     aCmd = iRunningCmdQueue.front();
                     if (iRet == PVMFSuccess)
                     {
@@ -1532,8 +1489,6 @@ PVMFStatus PVRTSPEngineNode::DispatchCommand(PVRTSPEngineCommand& aCmd)
                         iState = PVRTSP_ENGINE_NODE_STATE_IDLE;
 
                         PVRTSPEngineCommand cmd;
-                        //const OsclAny* aContext = OSCL_STATIC_CAST(OsclAny*, errorContext);
-                        //cmd.PVRTSPEngineCommandBase::Construct(aCmd.iSession,PVMF_RTSP_NODE_ERROR_RECOVERY,aContext);
                         cmd.PVRTSPEngineCommandBase::Construct(aCmd.iSession, PVMF_RTSP_NODE_ERROR_RECOVERY, NULL);
                         cmd.iParam1 = OSCL_STATIC_CAST(OsclAny*, errorContext);
 
@@ -1653,13 +1608,13 @@ void PVRTSPEngineNode::ChangeExternalState(TPVMFNodeInterfaceState aNewState)
     iInterfaceState = aNewState;
 }
 
-void PVRTSPEngineNode::ChangeInternalState(PVRTSPEngineState aNewState)
+OSCL_EXPORT_REF void PVRTSPEngineNode::ChangeInternalState(PVRTSPEngineState aNewState)
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVRTSPEngineNode::ChangeInternalState() Old %d New %d", iState, aNewState));
     iState = aNewState;
 }
 
-PVMFStatus PVRTSPEngineNode::DoInitNode(PVRTSPEngineCommand &aCmd)
+OSCL_EXPORT_REF PVMFStatus PVRTSPEngineNode::DoInitNode(PVRTSPEngineCommand &aCmd)
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVRTSPEngineNode::DoInitNode() In"));
     OSCL_UNUSED_ARG(aCmd);
@@ -1668,20 +1623,10 @@ PVMFStatus PVRTSPEngineNode::DoInitNode(PVRTSPEngineCommand &aCmd)
     {
         return PVMFErrInvalidState;
     }
-
-    if (bAddXStrHeader)
-    {
-        // create iGetPostCorrelationObject
-        if (!iGetPostCorrelationObject)
-        {
-            if ((iGetPostCorrelationObject = GetPostCorrelationObject::create()) == NULL) return PVMFFailure;
-        }
-    }
-
     return SendRtspDescribe(aCmd);
 }
 
-PVMFStatus PVRTSPEngineNode::SendRtspDescribe(PVRTSPEngineCommand &aCmd)
+OSCL_EXPORT_REF PVMFStatus PVRTSPEngineNode::SendRtspDescribe(PVRTSPEngineCommand &aCmd)
 {
     OSCL_UNUSED_ARG(aCmd);
 
@@ -1779,146 +1724,50 @@ PVMFStatus PVRTSPEngineNode::SendRtspDescribe(PVRTSPEngineCommand &aCmd)
                 iRet =  PVMFFailure;
                 break;
             }
+            //Allocate 1 TCP socket and set both iSendSocket and iRecvSocket to that socket.
+            //Note: in this case we only track the status in the "send" container since
+            //it's really only one socket.
+            int32 err;
+            OsclTCPSocket *sock = NULL;
+            OSCL_TRY(err, sock = OsclTCPSocket::NewL(iAlloc, *iSockServ, this, REQ_SEND_SOCKET_ID););
+            if (err || (sock ==  NULL))
             {
-                //Allocate 1 TCP socket and set both iSendSocket and iRecvSocket to that socket.
-                //Note: in this case we only track the status in the "send" container since
-                //it's really only one socket.
-                int32 err;
-                OsclTCPSocket *sock = NULL;
-                OSCL_TRY(err, sock = OsclTCPSocket::NewL(iAlloc, *iSockServ, this, REQ_SEND_SOCKET_ID););
-                if (err || (sock ==  NULL))
-                {
-                    iCurrentErrorCode = PVMFRTSPClientEngineNodeErrorRTSPSocketCreateError;
-                    iRet =  PVMFFailure;
-                    break;
-                }
-                iRecvSocket.Reset(sock);
-                iSendSocket.Reset(sock);
-
-                //proxy support
-                //OSCL_StackString<64> tmpServerName = _STRLIT_CHAR("172.16.2.145");
-                //iSessionInfo.iSrvAdd.ipAddr.Set( tmpServerName.get_cstr() );
-
-                TPVSocketEvent sendConnect = iSendSocket.iSocket->Connect(iSessionInfo.iSrvAdd, TIMEOUT_CONNECT_AND_DNS_LOOKUP);
-                if (sendConnect == EPVSocketPending)
-                    iSendSocket.iConnectState.iPending = true;
-                if (sendConnect != EPVSocketPending)
-                {
-                    iCurrentErrorCode = PVMFRTSPClientEngineNodeErrorRTSPSocketConnectError;
-                    iRet =  PVMFFailure;
-                    break;
-                }
-                iNumConnectCallback++;
+                iCurrentErrorCode = PVMFRTSPClientEngineNodeErrorRTSPSocketCreateError;
+                iRet =  PVMFFailure;
+                break;
             }
+            iRecvSocket.Reset(sock);
+            iSendSocket.Reset(sock);
+
+            TPVSocketEvent sendConnect = iSendSocket.iSocket->Connect(iSessionInfo.iSrvAdd, TIMEOUT_CONNECT_AND_DNS_LOOKUP);
+            if (sendConnect == EPVSocketPending)
+                iSendSocket.iConnectState.iPending = true;
+            if (sendConnect != EPVSocketPending)
+            {
+                iCurrentErrorCode = PVMFRTSPClientEngineNodeErrorRTSPSocketConnectError;
+                iRet =  PVMFFailure;
+                break;
+            }
+            iNumConnectCallback++;
 
             ChangeInternalState(PVRTSP_ENGINE_NODE_STATE_CONNECTING);
             break;
         }
         case PVRTSP_ENGINE_NODE_STATE_CONNECTING:
         {
-            uint32 numSockEvents = (PVRTSP_RM_HTTP == iSessionInfo.iStreamingType) ? 2 : 1;
-            if (iSocketEventQueue.size() < numSockEvents)
+            iRet = waitForConnectComplete();
+            if (iRet != PVMFSuccess)
             {
                 break;
             }
-
-            do
-            {
-                SocketEvent tmpSockEvent(iSocketEventQueue.front());
-                iSocketEventQueue.erase(&iSocketEventQueue.front());
-
-                if (tmpSockEvent.iSockEvent != EPVSocketSuccess)
-                {
-                    iCurrentErrorCode = PVMFRTSPClientEngineNodeErrorRTSPSocketConnectError;
-                    iRet =  PVMFFailure;
-                    break;
-                }
-                if (tmpSockEvent.iSockFxn != EPVSocketConnect)
-                {   //unsolicited socket event
-                    //break;
-                    continue;
-                }
-                if (tmpSockEvent.iSockId == REQ_RECV_SOCKET_ID)
-                {
-                    bNoRecvPending = true;
-                }
-                else if (tmpSockEvent.iSockId == REQ_SEND_SOCKET_ID)
-                {
-                    bNoSendPending = true;
-                }
-
-                if (PVRTSP_RM_HTTP != iSessionInfo.iStreamingType)
-                {
-                    bNoSendPending = bNoRecvPending = true;
-                }
-            }
-            while (!iSocketEventQueue.empty());
-
-            if (!(bNoSendPending && bNoRecvPending))
+            iRet = checkForSDPAvailability();
+            if (iRet == PVMFSuccess)
             {
                 break;
-            }
-
-            REQ_TIMER_WATCHDOG_ID =  ++BASE_REQUEST_ID;
-            REQ_TIMER_KEEPALIVE_ID =  ++BASE_REQUEST_ID;
-            if (iSessionInfo.iSDPinfo.GetRep() != NULL)
-            {//if sdp is available
-                ChangeInternalState(PVRTSP_ENGINE_NODE_STATE_DESCRIBE_DONE);
-                iRet =  PVMFSuccess;
-                break;
-            }
-            else
-            {//if sdp is not available
-                ChangeInternalState(PVRTSP_ENGINE_NODE_STATE_SEND_OPTIONS);
             }
             //DO NOT break, continue to send DESCRIBE
             RunIfNotReady();
             break;
-        }
-        case PVRTSP_ENGINE_NODE_STATE_HTTP_CLOAKING_SETUP:
-        {//send the GET and POST requests.
-            if (!clearEventQueue())
-            {
-                //cancell the watchdog
-                iWatchdogTimer->Cancel(REQ_TIMER_WATCHDOG_ID);
-
-                iCurrentErrorCode = PVMFRTSPClientEngineNodeErrorRTSPSocketConnectError;
-                iRet =  PVMFFailure;
-                break;
-            }
-
-            if (RTSPParser::REQUEST_IS_READY != iRTSPParserState)
-                break;
-
-            {
-                iRet = processIncomingMessage(iIncomingMsg);
-                if (iRet != PVMFPending)
-                {
-                    //cancell the watchdog
-                    iWatchdogTimer->Cancel(REQ_TIMER_WATCHDOG_ID);
-                }
-                if (iRet == PVMFSuccess)
-                {
-                    iRet = PVMFPending;
-                }
-                else
-                {//either pending or error
-                    break;
-                }
-            }
-
-            if (iSessionInfo.iSDPinfo.GetRep() != NULL)
-            {//if sdp is available
-                ChangeInternalState(PVRTSP_ENGINE_NODE_STATE_DESCRIBE_DONE);
-                iRet =  PVMFSuccess;
-                break;
-            }
-            else
-            {//if sdp is not available
-                ChangeInternalState(PVRTSP_ENGINE_NODE_STATE_SEND_OPTIONS);
-                //go to next case directly
-                //RunIfNotReady(); break;
-            }
         }
 
         case PVRTSP_ENGINE_NODE_STATE_SEND_OPTIONS:
@@ -1965,106 +1814,24 @@ PVMFStatus PVRTSPEngineNode::SendRtspDescribe(PVRTSPEngineCommand &aCmd)
         {
             if (RTSPParser::REQUEST_IS_READY == iRTSPParserState)
             {
-                iRet = processIncomingMessage(iIncomingMsg);
-                if (iRet == PVMFSuccess)
+                iRet = processOptionsResponse();
+                if ((RTSPResponseMsg != iIncomingMsg.msgType) || (iRet != PVMFPending))
                 {
-                    iRet = PVMFPending;
+                    break;
                 }
-                else
-                {//either pending or error
-                    if (iRet != PVMFPending)
-                    {
-                        //cancell the watchdog
-                        iWatchdogTimer->Cancel(REQ_TIMER_WATCHDOG_ID);
-                    }
-                    if ((RTSPResponseMsg != iIncomingMsg.msgType) || (iRet != PVMFPending))
-                    {//processIncomingMessage() returns pending if there are unacknowledged
-                        //rtsp msgs
-                        break;
-                    }
-                }
-
-                iRealChallenge1 = "";
-                const StrPtrLen *tmpRealChallenge = iIncomingMsg.queryField("RealChallenge1");
-                if (tmpRealChallenge)
-                {
-                    iRealChallenge1 = OSCL_HeapString<OsclMemAllocator>(tmpRealChallenge->c_str());
-                }
-
-                //ChangeInternalState(PVRTSP_ENGINE_NODE_STATE_DESCRIBE_WAITING);
             }
-
-            if (bNoSendPending)
-            {
-                // send describe
-                RTSPOutgoingMessage *tmpOutgoingMsg =  OSCL_NEW(RTSPOutgoingMessage, ());
-                if (tmpOutgoingMsg == NULL)
-                {
-                    iCurrentErrorCode = PVMFRTSPClientEngineNodeErrorOutOfMemory;
-                    iRet =  PVMFFailure;
-                    break;
-                }
-                if (PVMFSuccess != composeDescribeRequest(*tmpOutgoingMsg))
-                {
-                    iCurrentErrorCode =
-                        PVMFRTSPClientEngineNodeErrorRTSPComposeDescribeRequestError;
-                    OSCL_DELETE(tmpOutgoingMsg);
-                    iRet =  PVMFFailure;
-
-                    //cancell the watchdog
-                    iWatchdogTimer->Cancel(REQ_TIMER_WATCHDOG_ID);
-                    break;
-                }
-
-                if (PVMFSuccess != sendSocketOutgoingMsg(iSendSocket, *tmpOutgoingMsg))
-                {
-                    iCurrentErrorCode = PVMFRTSPClientEngineNodeErrorSocketSendError;
-                    OSCL_DELETE(tmpOutgoingMsg);
-                    iRet =  PVMFFailure;
-                    //cancell the watchdog
-                    iWatchdogTimer->Cancel(REQ_TIMER_WATCHDOG_ID);
-                    break;
-                }
-
-                bNoSendPending = false;
-                iOutgoingMsgQueue.push(tmpOutgoingMsg);
-
-                ChangeInternalState(PVRTSP_ENGINE_NODE_STATE_OPTIONS_WAITING);
-                //RunIfNotReady();
-            }
+            iRet = composeAndSendDescribeRequest();
             break;
         }
         case PVRTSP_ENGINE_NODE_STATE_OPTIONS_WAITING:
         {
             if (RTSPParser::REQUEST_IS_READY == iRTSPParserState)
             {
-                iRet = processIncomingMessage(iIncomingMsg);
-                if (iRet == PVMFSuccess)
+                iRet = processOptionsResponse();
+                if ((RTSPResponseMsg != iIncomingMsg.msgType) || (iRet != PVMFPending))
                 {
-                    iRet = PVMFPending;
+                    break;
                 }
-                else
-                {//either pending or error
-                    if (iRet != PVMFPending)
-                    {
-                        //cancell the watchdog
-                        iWatchdogTimer->Cancel(REQ_TIMER_WATCHDOG_ID);
-                    }
-
-                    if ((RTSPResponseMsg != iIncomingMsg.msgType) || (iRet != PVMFPending))
-                    {//processIncomingMessage() returns pending if there are unacknowledged
-                        //rtsp msgs
-                        break;
-                    }
-                }
-
-                iRealChallenge1 = "";
-                const StrPtrLen *tmpRealChallenge = iIncomingMsg.queryField("RealChallenge1");
-                if (tmpRealChallenge)
-                {
-                    iRealChallenge1 = OSCL_HeapString<OsclMemAllocator>(tmpRealChallenge->c_str());
-                }
-
                 ChangeInternalState(PVRTSP_ENGINE_NODE_STATE_DESCRIBE_WAITING);
             }
             else if (!clearEventQueue())
@@ -2116,7 +1883,6 @@ PVMFStatus PVRTSPEngineNode::SendRtspDescribe(PVRTSPEngineCommand &aCmd)
 
                 //cancell the watchdog
                 iWatchdogTimer->Cancel(REQ_TIMER_WATCHDOG_ID);
-                //iWatchdogTimer->Clear();
 
                 iRet =  PVMFSuccess;
             }
@@ -2156,7 +1922,7 @@ PVMFStatus PVRTSPEngineNode::DoPrepareNode(PVRTSPEngineCommand &aCmd)
     return SendRtspSetup(aCmd);
 }
 
-PVMFStatus PVRTSPEngineNode::SendRtspSetup(PVRTSPEngineCommand &aCmd)
+OSCL_EXPORT_REF PVMFStatus PVRTSPEngineNode::SendRtspSetup(PVRTSPEngineCommand &aCmd)
 {
     OSCL_UNUSED_ARG(aCmd);
 
@@ -2177,28 +1943,12 @@ PVMFStatus PVRTSPEngineNode::SendRtspSetup(PVRTSPEngineCommand &aCmd)
 
             if (RTSPParser::REQUEST_IS_READY == iRTSPParserState)
             {
-                iRet = processIncomingMessage(iIncomingMsg);
-                if (iRet == PVMFSuccess)
-                {//The Prepare() not done until all the SETUPs are sent
-                    iRet = PVMFPending;
-                }
-                else
-                {//either pending or error
-                    if (iRet != PVMFPending)
-                    {
-                        //cancell the watchdog
-                        iWatchdogTimer->Cancel(REQ_TIMER_WATCHDOG_ID);
-                    }
+                iRet = processSetupResponse();
+                if (iRet != PVMFPending)
+                {
                     break;
                 }
 
-                if (iState == PVRTSP_ENGINE_NODE_STATE_DESCRIBE_DONE)
-                {//ok, got the resp of 1st SETUP, send the reset SETUPs
-                    bNoSendPending = true;
-                    ChangeInternalState(PVRTSP_ENGINE_NODE_STATE_PROCESS_REST_SETUP);
-                }
-
-                //idx = iSessionInfo.trackSelectionList->getNumTracks();
                 //if(all SETUPs resp are back)
                 if ((uint32)setupTrackIndex  == iSessionInfo.iSelectedStream.size())
                 {
@@ -2213,67 +1963,17 @@ PVMFStatus PVRTSPEngineNode::SendRtspSetup(PVRTSPEngineCommand &aCmd)
 
                     //cancell the watchdog
                     iWatchdogTimer->Cancel(REQ_TIMER_WATCHDOG_ID);
-                    //iWatchdogTimer->Clear();
-
-                    if (ibIsRealRDT)
-                    {
-                        // create frag group allocator
-                        ipFragGroupMemPool = OSCL_NEW(OsclMemPoolFixedChunkAllocator, (DEFAULT_NUM_MEDIA_MSGS_IN_JITTER_BUFFER));
-                        if (ipFragGroupMemPool == NULL)
-                        {
-                            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR, (0, "PVRTSPEngineNode::DoInitNode() Error - Unable to allocate mempool"));
-                            return PVMFErrNoMemory;
-                        }
-                        ipFragGroupAllocator = OSCL_NEW(PVMFMediaFragGroupCombinedAlloc<OsclMemAllocator>, (
-                                                            DEFAULT_NUM_MEDIA_MSGS_IN_JITTER_BUFFER,
-                                                            1, ipFragGroupMemPool));
-                        if (ipFragGroupAllocator == NULL)
-                        {
-                            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR, (0, "PVRTSPEngineNode::DoInitNode() Error - Unable to create frag group allocator"));
-                            return PVMFErrNoMemory;
-                        }
-                        ipFragGroupAllocator->create();
-                    }
-
                     ChangeInternalState(PVRTSP_ENGINE_NODE_STATE_SETUP_DONE);
                     iRet =  PVMFSuccess;
                     break;
-                    //break;    //send PLAY back-to-back
                 }
             }
-            else if (RTSPParser::ENTITY_BODY_IS_READY == iRTSPParserState)
-            {//got still image
-                ChangeInternalState(PVRTSP_ENGINE_NODE_STATE_SETUP_DONE);
-                iRet =  PVMFSuccess;
-                break;
-            }
-            else if (!iSocketEventQueue.empty())
-            {//TBD          if(!clearEventQueue())
-                SocketEvent tmpSockEvent(iSocketEventQueue.front());
-                iSocketEventQueue.erase(&iSocketEventQueue.front());
-
-                if (tmpSockEvent.iSockEvent != EPVSocketSuccess)
-                {//sth failed, could be Send, Recv, or server closes
-                    iCurrentErrorCode = PVMFRTSPClientEngineNodeErrorSocketError;
-                    iRet =  PVMFFailure;
-                    break;
-                }
-                RTSPOutgoingMessage* tmpOutgoingMsg = NULL;
-                if (!iOutgoingMsgQueue.empty())
+            else
+            {
+                iRet = processOtherPossibleSetupStates();
+                if (iRet != PVMFPending)
                 {
-                    tmpOutgoingMsg = iOutgoingMsgQueue.top();
-                }
-                if ((iState == PVRTSP_ENGINE_NODE_STATE_DESCRIBE_DONE)
-                        && (tmpSockEvent.iSockFxn == EPVSocketSend)
-                        && (tmpOutgoingMsg))
-                {//pretend there is a send pending so it waits for the first
-                    //SETUP resp to come back and then sends the rest SETUPs
-                    if (tmpOutgoingMsg->method == METHOD_SETUP)
-                    {
-                        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR, (0, "PVRTSPEngineNode::SendRtspSetup() Wait for first SETUP request to complete !!!!!"));
-                        bNoSendPending = false;
-                        break;
-                    }
+                    break;
                 }
             }
             //The trackID is the index to the SDP media info array.
@@ -2281,53 +1981,10 @@ PVMFStatus PVRTSPEngineNode::SendRtspSetup(PVRTSPEngineCommand &aCmd)
             //int trackID = iSessionInfo.trackSelectionList->getTrackIndex(setupIndex);
 
             //compose and send SETUP
-            //if( (bNoSendPending) && (NOT all the SETUPs are sent out ) )
-            if ((bNoSendPending) && ((uint32)setupTrackIndex  < iSessionInfo.iSelectedStream.size()))
+            iRet = composeAndSendSetupRequest();
+            if (iRet == PVMFFailure)
             {
-                RTSPOutgoingMessage *tmpOutgoingMsg =  OSCL_NEW(RTSPOutgoingMessage, ());
-                if (tmpOutgoingMsg == NULL)
-                {
-                    iCurrentErrorCode = PVMFRTSPClientEngineNodeErrorOutOfMemory;
-                    return  PVMFFailure;
-                }
-                //optimize here: use copy/modify instead of build from scratch
-                //idx = iSessionInfo.iSDPinfo.getNumMediaObjects();
-                //idx = iSessionInfo.trackSelectionList->getNumTracks();
-                //if( PVMFSuccess != composeSetupRequest(*tmpOutgoingMsg, idx))
-                if (PVMFSuccess != composeSetupRequest(*tmpOutgoingMsg, iSessionInfo.iSelectedStream[setupTrackIndex ]))
-                {
-                    iCurrentErrorCode =
-                        PVMFRTSPClientEngineNodeErrorRTSPComposeSetupRequestError;
-                    OSCL_DELETE(tmpOutgoingMsg);
-                    return  PVMFFailure;
-                }
-                setupTrackIndex ++;
-
-                if (PVMFSuccess != sendSocketOutgoingMsg(iSendSocket, *tmpOutgoingMsg))
-                {
-                    /* need to pop the msg based on cseq, NOT necessarily the early ones,
-                    although YES in this case.
-                    //for(int idx=0; idx < iSessionInfo.trackSelectionList->getNumTracks(); idx++ )
-                    for(int idx=0; idx < iSessionInfo.iSDPinfo->getNumMediaObjects(); idx++ )
-                    {
-                    //iOutgoingMsgQueue.pop();
-                    }
-                        */
-                    iCurrentErrorCode = PVMFRTSPClientEngineNodeErrorSocketSendError;
-                    OSCL_DELETE(tmpOutgoingMsg);
-                    iRet =  PVMFFailure;
-                    break;
-                }
-
-                bNoSendPending = false;
-                iOutgoingMsgQueue.push(tmpOutgoingMsg);
-                //ChangeInternalState(PVRTSP_ENGINE_NODE_STATE_WAIT_FIRST_SETUP);
-
-                //setup the watch dog for server response
-                if (setupTrackIndex == 1)
-                {//only setup watchdog for the first SETUP, but it monitors all
-                    iWatchdogTimer->Request(REQ_TIMER_WATCHDOG_ID, 0, TIMEOUT_WATCHDOG);
-                }
+                return iRet;
             }
             break;
             //RunIfNotReady();
@@ -2345,8 +2002,7 @@ PVMFStatus PVRTSPEngineNode::SendRtspSetup(PVRTSPEngineCommand &aCmd)
     return iRet;
 }
 
-
-bool PVRTSPEngineNode::parseURL(const OSCL_wString& aURL)
+OSCL_EXPORT_REF bool PVRTSPEngineNode::parseURL(const OSCL_wString& aURL)
 //(wchar_t *url)
 {
     if (0 == oscl_UnicodeToUTF8(aURL.get_cstr(), aURL.get_size(), ((mbchar*)iRTSPEngTmpBuf.ptr), iRTSPEngTmpBuf.len))
@@ -2357,7 +2013,7 @@ bool PVRTSPEngineNode::parseURL(const OSCL_wString& aURL)
     return parseURL((mbchar*)iRTSPEngTmpBuf.ptr);
 }
 
-bool PVRTSPEngineNode::parseURL(const char *aUrl)
+OSCL_EXPORT_REF bool PVRTSPEngineNode::parseURL(const char *aUrl)
 {
     /* Input: absolute URI
      * Output: iSessionInfo.iSessionURL, iSessionInfo.iServerName, and iSessionInfo.iSrvAdd.port
@@ -2408,9 +2064,6 @@ bool PVRTSPEngineNode::parseURL(const char *aUrl)
 
     OSCL_HeapString<PVRTSPEngineNodeAllocator> tmpServerName(server_ip_ptr, oscl_strlen(server_ip_ptr));
     iSessionInfo.iServerName = tmpServerName;
-
-//iSessionInfo.iSrvAdd.port = 20080;
-//iSessionInfo.iServerName = "172.16.2.42";
 
     return true;
 }
@@ -2542,7 +2195,6 @@ PVRTSPEngineNode::composeDescribeRequest(RTSPOutgoingMessage &iMsg)
     iRoundTripClockTimeBase.GetCurrentTime32(clock, overflowFlag, PVMF_MEDIA_CLOCK_MSEC);
     iSessionInfo.clientServerDelay = clock;
 
-    //iSessionInfo.composedMessage = iMsg.retrieveComposedBuffer();
     return PVMFSuccess;
 }
 
@@ -2582,8 +2234,6 @@ PVMFStatus PVRTSPEngineNode::processServerRequest(RTSPIncomingMessage &aMsg)
         iSrvResponse->statusCode =  CodeNotImplemented;
         iSrvResponse->reasonString = "Not Implemented";
     }
-    //iSrvResponse->statusCode = CodeParameterNotUnderstood;
-    //iSrvResponse->reasonString = "Parameter Not Understood";
     iSrvResponse->cseq = aMsg.cseq;
     iSrvResponse->cseqIsSet = true;
 
@@ -2606,12 +2256,7 @@ PVMFStatus PVRTSPEngineNode::processServerRequest(RTSPIncomingMessage &aMsg)
         {
             /* need to pop the msg based on cseq, NOT necessarily the early ones,
             although YES in this case.
-            //for(int idx=0; idx < iSessionInfo.trackSelectionList->getNumTracks(); idx++ )
-            for(int idx=0; idx < iSessionInfo.iSDPinfo->getNumMediaObjects(); idx++ )
-            {
-            //iOutgoingMsgQueue.pop();
-            }
-                */
+            */
             iCurrentErrorCode = PVMFRTSPClientEngineNodeErrorSocketSendError;
             OSCL_DELETE(iSrvResponse);
             iSrvResponse = NULL;
@@ -2635,13 +2280,12 @@ PVMFStatus PVRTSPEngineNode::processServerRequest(RTSPIncomingMessage &aMsg)
 * @param aEntityMemFrag The oscl memory fragment which holds the entity body.
 * @returns PVMF status.
 */
-PVMFStatus PVRTSPEngineNode::processEntityBody(RTSPIncomingMessage &aMsg, OsclMemoryFragment &aEntityMemFrag)
+OSCL_EXPORT_REF PVMFStatus PVRTSPEngineNode::processEntityBody(RTSPIncomingMessage &aMsg, OsclMemoryFragment &aEntityMemFrag)
 {   //all S->C are optional, including ANNOUNCE, GET_PARAMETER, SET_PARAMETER, OPTIONS
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVRTSPEngineNode::processEntityBody() In"));
 
     if (iEntityMemFrag.ptr == NULL)
     {//the entity body hasn't come yet.
-        //return PVMFFailure;
         return PVMFPending;
     }
 
@@ -2669,8 +2313,6 @@ PVMFStatus PVRTSPEngineNode::processEntityBody(RTSPIncomingMessage &aMsg, OsclMe
         iSrvResponse->statusCode =  CodeNotImplemented;
         iSrvResponse->reasonString = "Not Implemented";
     }
-    //iSrvResponse->statusCode = CodeParameterNotUnderstood;
-    //iSrvResponse->reasonString = "Parameter Not Understood";
     iSrvResponse->cseq = aMsg.cseq;
     iSrvResponse->cseqIsSet = true;
 
@@ -2693,12 +2335,7 @@ PVMFStatus PVRTSPEngineNode::processEntityBody(RTSPIncomingMessage &aMsg, OsclMe
         {
             /* need to pop the msg based on cseq, NOT necessarily the early ones,
             although YES in this case.
-            //for(int idx=0; idx < iSessionInfo.trackSelectionList->getNumTracks(); idx++ )
-            for(int idx=0; idx < iSessionInfo.iSDPinfo->getNumMediaObjects(); idx++ )
-            {
-            //iOutgoingMsgQueue.pop();
-            }
-                */
+            */
             iCurrentErrorCode = PVMFRTSPClientEngineNodeErrorSocketSendError;
             OSCL_DELETE(iSrvResponse);
             iSrvResponse = NULL;
@@ -2805,9 +2442,6 @@ PVMFStatus PVRTSPEngineNode::SendRtspPlay(PVRTSPEngineCommand &aCmd)
             }
             else if (RTSPParser::ENTITY_BODY_IS_READY == iRTSPParserState)
             {//got MS TCP RTP packets
-                //processSDP(REINTERPRET_CAST(mbchar*, pSDPBuf.ptr), pSDPBuf.len-1);
-                //processSDP((mbchar*)pSDPBuf.ptr, pSDPBuf.len-1);
-                //ChangeInternalState(PVRTSP_ENGINE_NODE_STATE_WAIT_DESCRIBE_DONE);
                 iRet = processIncomingMessage(iIncomingMsg);
                 if (iRet != PVMFPending)
                 {
@@ -2842,210 +2476,14 @@ PVMFStatus PVRTSPEngineNode::SendRtspPlay(PVRTSPEngineCommand &aCmd)
     return iRet;
 }
 
-PVMFStatus PVRTSPEngineNode::composeSetupRequest(RTSPOutgoingMessage &iMsg, StreamInfo &aSelected)
+OSCL_EXPORT_REF PVMFStatus PVRTSPEngineNode::composeSetupRequest(RTSPOutgoingMessage &iMsg, StreamInfo &aSelected)
 {
-    //Reset the data structure
-    iMsg.reset();
-
-    if (iSessionInfo.iSDPinfo.GetRep() == NULL) return PVMFFailure;
-
-    //Here we decide if the selected track is a still image or not
-    mediaInfo *tmpMediaInfo = iSessionInfo.iSDPinfo->getMediaInfoBasedOnID(aSelected.iSDPStreamId);
-    if (NULL == tmpMediaInfo)
-    {
-        return PVMFFailure;
-    }
-    StrCSumPtrLen still_image = "X-MP4V-IMAGE";
-    if (!oscl_strncmp(tmpMediaInfo->getMIMEType(), still_image.c_str(), still_image.length()))
-    {
-        StrPtrLen contentType = "text/parameters";
-        StrCSumPtrLen image = "Image\r\n";
-
-        iMsg.contentType = contentType;
-        iMsg.contentTypeIsSet = true;
-        iMsg.contentLength = image.length();
-        iMsg.contentLengthIsSet = true;
-        iMsg.accept = "X-MP4V-IMAGE";
-        iMsg.acceptIsSet = true;
-        iMsg.method = METHOD_GET_PARAMETER;
-        iMsg.numOfTransportEntries = 0;
-
-        /*
-        mbchar mediaURL[RTSP_MAX_FULL_REQUEST_SIZE];
-        mediaURL[0] = '\0';
-
-          oscl_strncpy( mediaURL,
-          ( iSessionInfo.contentBaseFlag )? iSessionInfo.contentBaseURL:requestURL,
-          oscl_strlen(( iSessionInfo.contentBaseFlag )? iSessionInfo.contentBaseURL:requestURL) );
-          mediaURL[oscl_strlen(( iSessionInfo.contentBaseFlag )? iSessionInfo.contentBaseURL:requestURL)] = '\0';
-          iMsg.originalURI = mediaURL;
-        */
-    }
-    else
-    {
-        //Set standard fields
-        iMsg.method = METHOD_SETUP;
-        iMsg.userAgent = iSessionInfo.iUserAgent.get_cstr();
-        iMsg.userAgentIsSet = true;
-
-        {
-            iMsg.numOfTransportEntries = 1;
-            iMsg.transport[0].protocol = RtspTransport::RTP_PROTOCOL;
-            iMsg.transport[0].protocolIsSet = true;
-            iMsg.transport[0].profile = RtspTransport::AVP_PROFILE;
-            iMsg.transport[0].profileIsSet = true;
-            iMsg.transport[0].delivery = RtspTransport::UNICAST_DELIVERY;
-            iMsg.transport[0].deliveryIsSet = true;
-            if ((iSessionInfo.iStreamingType == PVRTSP_3GPP_UDP)
-                    || (iSessionInfo.iStreamingType == PVRTSP_MS_UDP))
-            {
-                iMsg.transport[0].transportType = RtspTransport::UDP_TRANSPORT;
-                iMsg.transport[0].transportTypeIsSet = true;
-
-                iMsg.transport[0].channelIsSet = false;
-
-                iMsg.transport[0].client_portIsSet = true;
-                iMsg.transport[0].client_port1 = OSCL_STATIC_CAST(uint16, aSelected.iCliRTPPort);   //dataPort;
-                iMsg.transport[0].client_port2 = OSCL_STATIC_CAST(uint16, aSelected.iCliRTCPPort);  //feedbackPort;
-
-                if (iSessionInfo.iStreamingType == PVRTSP_MS_UDP)
-                {//check here!
-                    iMsg.transport[0].client_port2 = 0;
-                }
-
-                /* Send recommended block size of RTP packet to the server.  CJ 09/10/2001 */
-                StrCSumPtrLen blockSize = "Blocksize";
-                oscl_snprintf(((mbchar*)iRTSPEngTmpBuf.ptr), iRTSPEngTmpBuf.len, "%d", RECOMMENDED_RTP_BLOCK_SIZE);
-                iMsg.addField(&blockSize, ((mbchar*)iRTSPEngTmpBuf.ptr));
-            }
-            else
-            {
-                iMsg.transport[0].transportType = RtspTransport::TCP_TRANSPORT;
-                iMsg.transport[0].transportTypeIsSet = true;
-
-                iMsg.transport[0].client_portIsSet = false;
-
-                iMsg.transport[0].channelIsSet = false;
-                //iMsg.transport[0].channel1 = 8888;//aSelected.iSerRTPPort;
-                //iMsg.transport[0].channel2 = 9999;//aSelected.iSerRTCPPort;
-            }
-
-            iMsg.transport[0].appendIsSet = false;
-            iMsg.transport[0].layersIsSet = false;
-            iMsg.transport[0].modeIsSet = false;
-            iMsg.transport[0].portIsSet = false;
-            iMsg.transport[0].server_portIsSet = false;
-            iMsg.transport[0].ttlIsSet = false;
-            iMsg.transport[0].ssrcIsSet = false;
-        }
-
-        {/*
-            StrCSumPtrLen mytransport = "Transport";
-            iMsg.addField(&mytransport, "x-real-rdt/udp;client_port=6970");
-            iMsg.numOfTransportEntries = 0;
-            */
-        }
-        //Compose etag
-        if (oscl_strlen((iSessionInfo.iSDPinfo->getSessionInfo())->getETag()) != 0)
-        {
-            if (oscl_snprintf(((mbchar*)iRTSPEngTmpBuf.ptr), iRTSPEngTmpBuf.len, "\"%s\"", (iSessionInfo.iSDPinfo->getSessionInfo())->getETag()) != 1)
-            {
-                StrCSumPtrLen etag = "If-Match";
-                iMsg.addField(&etag, ((mbchar*)iRTSPEngTmpBuf.ptr));
-            }
-        }
-
-        if (oscl_strlen(iSessionInfo.iUserNetwork.get_cstr()))
-        {
-            StrCSumPtrLen UserNetwork = _STRLIT_CHAR("User-Network");
-            iMsg.addField(&UserNetwork, iSessionInfo.iUserNetwork.get_cstr());
-        }
-        if (oscl_strlen(iSessionInfo.iDeviceInfo.get_cstr()))
-        {
-            StrCSumPtrLen DeviceInfo = _STRLIT_CHAR("DeviceInfo");
-            iMsg.addField(&DeviceInfo, iSessionInfo.iDeviceInfo.get_cstr());
-        }
-        if (oscl_strlen(iSessionInfo.iUserID.get_cstr()) && oscl_strlen(iSessionInfo.iAuthentication.get_cstr()))
-        {
-            OSCL_HeapString<PVRTSPEngineNodeAllocator> myBuf("user=");
-            myBuf += iSessionInfo.iUserID.get_cstr();
-            myBuf += ";authentication=";
-            myBuf += iSessionInfo.iAuthentication.get_cstr();
-
-            StrCSumPtrLen User_id = _STRLIT_CHAR("ID");
-            iMsg.addField(&User_id, myBuf.get_cstr());
-        }
-        if (oscl_strlen(iSessionInfo.iExpiration.get_cstr()))
-        {
-            StrCSumPtrLen Expiration = _STRLIT_CHAR("Expiration");
-            iMsg.addField(&Expiration, iSessionInfo.iExpiration.get_cstr());
-        }
-        if (oscl_strlen(iSessionInfo.iApplicationSpecificString.get_cstr()))
-        {
-            StrCSumPtrLen Application_specific_string = _STRLIT_CHAR("Application-Specific-String");
-            iMsg.addField(&Application_specific_string, iSessionInfo.iApplicationSpecificString.get_cstr());
-        }
-        if (iSessionInfo.iVerification.get_size() && iSessionInfo.iSignature.get_size())
-        {
-            OSCL_HeapString<PVRTSPEngineNodeAllocator> myBuf("filler=");
-            myBuf += iSessionInfo.iVerification.get_cstr();
-            myBuf += ";signature=";
-            myBuf += iSessionInfo.iSignature.get_cstr();
-
-            StrCSumPtrLen Verification = _STRLIT_CHAR("Verification");
-            iMsg.addField(&Verification, myBuf.get_cstr());
-        }
-
-        //Compose the media level URL for use in a RTSP request message.
-        if (composeMediaURL(aSelected.iSDPStreamId, iMsg.originalURI) != PVMFSuccess)
-        {
-            return PVMFFailure;
-        }
-        aSelected.iMediaURI = iMsg.originalURI.c_str();
-
-        if (aSelected.b3gppAdaptationIsSet)
-        {// 3GPP release-6 rate adaptation
-            mbchar buffer[256];
-
-            OSCL_HeapString<PVRTSPEngineNodeAllocator> myBuf("url=\"");
-            myBuf += iMsg.originalURI.c_str();
-            myBuf += "\";size=";
-            oscl_snprintf(buffer, 256, "%d", aSelected.iBufSize);
-            myBuf += buffer;
-            myBuf += ";target-time=";
-            oscl_snprintf(buffer, 256, "%d", aSelected.iTargetTime);
-            myBuf += buffer;
-
-            StrCSumPtrLen _3GPPadaptation = "3GPP-Adaptation";
-            iMsg.addField(&_3GPPadaptation, myBuf.get_str());
-        }
-    }
-
-    iMsg.msgType = RTSPRequestMsg;
-    iMsg.cseq = iOutgoingSeq++;
-    iMsg.cseqIsSet = true;
-
-    //OSCL_StackString<32> tmpSID = _STRLIT_CHAR("d5ac74e39ac8d75f");
-    //iSessionInfo.iSID.set(tmpSID.get_cstr(), tmpSID.get_size());
-
-    if (iSessionInfo.iSID.get_size())
-    {
-        iMsg.sessionId.setPtrLen(iSessionInfo.iSID.get_cstr(), iSessionInfo.iSID.get_size());
-        iMsg.sessionIdIsSet = true;
-    }
-
-    if (iMsg.compose() == false)
+    if (populateCommonSetupFields(iMsg, aSelected) == PVMFFailure)
     {
         return PVMFFailure;
     }
 
-    iSessionInfo.clientServerDelay = 0;
-    uint32 clock = 0;
-    bool overflowFlag = false;
-    iRoundTripClockTimeBase.GetCurrentTime32(clock, overflowFlag, PVMF_MEDIA_CLOCK_MSEC);
-    iSessionInfo.clientServerDelay = clock;
-
-    return PVMFSuccess;
+    return composeSetupMessage(iMsg);
 }
 
 PVMFStatus PVRTSPEngineNode::composePlayRequest(RTSPOutgoingMessage &aMsg)
@@ -3064,11 +2502,9 @@ PVMFStatus PVRTSPEngineNode::composePlayRequest(RTSPOutgoingMessage &aMsg)
     }
 
     //Add range field only if it is a PLAY request
-    //if( (iState != EResumeSession) && (!upstreamClient) )
     if ((iState != PVRTSP_ENGINE_NODE_STATE_PAUSE_DONE)
             || (bRepositioning)
             || (iInterfaceState == EPVMFNodePrepared))
-        //if( iState == PVRTSP_ENGINE_NODE_STATE_SETUP_DONE )
     {
         bRepositioning = false;
         OSCL_StackString<8> npt = _STRLIT_CHAR("npt=");
@@ -3133,8 +2569,6 @@ PVMFStatus PVRTSPEngineNode::composePlayRequest(RTSPOutgoingMessage &aMsg)
     {
         return PVMFFailure;
     }
-
-    //iSessionInfo.composedMessage = aMsg.retrieveComposedBuffer();
 
     iSessionInfo.clientServerDelay = 0;
     uint32 clock = 0;
@@ -3435,7 +2869,6 @@ PVMFStatus PVRTSPEngineNode::processCommonResponse(RTSPIncomingMessage &aMsg)
 
     if (tmpBufSize != NULL)
     {
-        //        pSessionInfo->prerollDuration = atoi( aMsg.queryField(buffer)->getPtr() );
         uint32 atoi_tmp;
         PV_atoi(tmpBufSize->c_str(), 'd', atoi_tmp);
         iSessionInfo.prerollDuration = atoi_tmp;
@@ -3481,7 +2914,7 @@ PVMFStatus PVRTSPEngineNode::processCommonResponse(RTSPIncomingMessage &aMsg)
     return PVMFSuccess;
 }
 
-PVMFStatus PVRTSPEngineNode::processIncomingMessage(RTSPIncomingMessage &iIncomingMsg)
+OSCL_EXPORT_REF PVMFStatus PVRTSPEngineNode::processIncomingMessage(RTSPIncomingMessage &iIncomingMsg)
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVRTSPEngineNode::processIncomingMessage() in"));
 
@@ -3494,16 +2927,8 @@ PVMFStatus PVRTSPEngineNode::processIncomingMessage(RTSPIncomingMessage &iIncomi
     {
         if (METHOD_BINARY_DATA == iIncomingMsg.method)
         {//need to check the rtsp parcom
-            /*
-            iIncomingMsg.bufferSize;
-            iIncomingMsg.contentLength;
-            iIncomingMsg.fullRequestBuffer;
-            iIncomingMsg.fullRequestBufferSizeUsed;
-            */
-            //iIncomingMsg.reset();
             return PVMFPending;
         }
-        //PVMFStatus tmpRet = ( (iIncomingMsg.contentLengthIsSet) && (iIncomingMsg.contentLength > 0) )
         PVMFStatus tmpRet = ((iIncomingMsg.contentLengthIsSet))
                             ? processEntityBody(iIncomingMsg, iEntityMemFrag)
                             : processServerRequest(iIncomingMsg);
@@ -3542,13 +2967,13 @@ PVMFStatus PVRTSPEngineNode::processIncomingMessage(RTSPIncomingMessage &iIncomi
         }
         iOutgoingMsgQueue.pop();
     }
+
+
     //check session ID as well
     if (200 == iIncomingMsg.statusCode)
     {
         //OK
         processCommonResponse(iIncomingMsg);
-        //ChangeInternalState(PVRTSP_ENGINE_NODE_STATE_SETUP_DONE);
-        //break;
 
         if (tmpOutgoingMsg->method == METHOD_SETUP)
         {
@@ -3558,16 +2983,9 @@ PVMFStatus PVRTSPEngineNode::processIncomingMessage(RTSPIncomingMessage &iIncomi
                 {
                     if (iIncomingMsg.numOfTransportEntries)
                     {
-                        {//For transport options, we only let server choose
-                            //between "RTP/AVP/UDP" or "x-pn-tng/tcp"; and for "x-pn-tng/tcp",
-                            //we only do http cloaking. 06/03/21
-                            ibIsRealRDT = false;
-                            if ((iIncomingMsg.transport[0].protocol != RtspTransport::RTP_PROTOCOL)
-                                    || (iIncomingMsg.transport[0].profile != RtspTransport::AVP_PROFILE))
-                            {//PVMFRTSPClientEngineNodeErrorUnsupportedTransport
-                                iCurrentErrorCode = PVMFRTSPClientEngineNodeErrorMalformedRTSPMessage;
-                                return PVMFFailure;
-                            }
+                        if (supportedProtocolAndProfileCheck() == false)
+                        {
+                            return PVMFFailure;
                         }
 
                         iSessionInfo.iSelectedStream[i].ssrcIsSet = iIncomingMsg.transport[0].ssrcIsSet;
@@ -3666,7 +3084,6 @@ PVMFStatus PVRTSPEngineNode::processIncomingMessage(RTSPIncomingMessage &iIncomi
                     //break;
                 }
                 char *url_temp = (char *) rtpinfo->url.c_str();
-                //int url_len = rtpinfo->url.length() + 1;//Added to prevent erroneous track selection.
 
                 for (uint32 i = 0; i < iSessionInfo.iSelectedStream.size(); i++)
                 {
@@ -3716,7 +3133,6 @@ PVMFStatus PVRTSPEngineNode::processIncomingMessage(RTSPIncomingMessage &iIncomi
         OSCL_DELETE(tmpOutgoingMsg);
 
         const StrPtrLen *tmpBaseURLLoc = iIncomingMsg.queryField("Location");
-        //const StrPtrLen *tmpBaseURLLoc = iIncomingMsg.queryField("Content-Location");
         if (tmpBaseURLLoc)
         {
             if (!parseURL(tmpBaseURLLoc->c_str()))
@@ -3755,7 +3171,6 @@ PVMFStatus PVRTSPEngineNode::processIncomingMessage(RTSPIncomingMessage &iIncomi
     }
 
     return iOutgoingMsgQueue.empty() ? PVMFSuccess : PVMFPending;
-    //return PVMFSuccess;
 }
 
 void PVRTSPEngineNode::MapRTSPCodeToEventCode(RTSPStatusCode aStatusCode,
@@ -3998,12 +3413,7 @@ PVMFStatus PVRTSPEngineNode::SendRtspPause(PVRTSPEngineCommand &aCmd)
                 {
                     /* need to pop the msg based on cseq, NOT necessarily the early ones,
                     although YES in this case.
-                    //for(int idx=0; idx < iSessionInfo.trackSelectionList->getNumTracks(); idx++ )
-                    for(int idx=0; idx < iSessionInfo.iSDPinfo->getNumMediaObjects(); idx++ )
-                    {
-                    //iOutgoingMsgQueue.pop();
-                    }
-                        */
+                    */
                     iCurrentErrorCode = PVMFRTSPClientEngineNodeErrorSocketSendError;
                     OSCL_DELETE(tmpOutgoingMsg);
                     iRet =  PVMFFailure;
@@ -4046,9 +3456,6 @@ PVMFStatus PVRTSPEngineNode::SendRtspPause(PVRTSPEngineCommand &aCmd)
             }
             else if (RTSPParser::ENTITY_BODY_IS_READY == iRTSPParserState)
             {//got MS TCP RTP packets
-                //processSDP(REINTERPRET_CAST(mbchar*, pSDPBuf.ptr), pSDPBuf.len-1);
-                //processSDP((mbchar*)pSDPBuf.ptr, pSDPBuf.len-1);
-                //ChangeInternalState(PVRTSP_ENGINE_NODE_STATE_WAIT_DESCRIBE_DONE);
                 iRet =  PVMFSuccess;
             }
             else if (!clearEventQueue())
@@ -4072,19 +3479,14 @@ PVMFStatus PVRTSPEngineNode::SendRtspPause(PVRTSPEngineCommand &aCmd)
     return iRet;
 }
 
-PVMFStatus PVRTSPEngineNode::DoResetNode(PVRTSPEngineCommand &aCmd)
+OSCL_EXPORT_REF PVMFStatus PVRTSPEngineNode::DoResetNode(PVRTSPEngineCommand &aCmd)
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVRTSPEngineNode::DoResetNode() In"));
-    if (iGetPostCorrelationObject != NULL)
-    {
-        OSCL_DELETE(iGetPostCorrelationObject);
-        iGetPostCorrelationObject = NULL;
-    }
     return SendRtspTeardown(aCmd);
 }
 
 
-PVMFStatus PVRTSPEngineNode::SendRtspTeardown(PVRTSPEngineCommand &aCmd)
+OSCL_EXPORT_REF PVMFStatus PVRTSPEngineNode::SendRtspTeardown(PVRTSPEngineCommand &aCmd)
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVRTSPEngineNode::SendRtspTeardown() In"));
     OSCL_UNUSED_ARG(aCmd);
@@ -4204,7 +3606,7 @@ PVMFStatus PVRTSPEngineNode::DoQueryUuid(PVRTSPEngineCommand &aCmd)
     return PVMFSuccess;
 }
 
-PVMFStatus PVRTSPEngineNode::DoQueryInterface(PVRTSPEngineCommand &aCmd)
+OSCL_EXPORT_REF PVMFStatus PVRTSPEngineNode::DoQueryInterface(PVRTSPEngineCommand &aCmd)
 {
     //This node supports Query Interface from any state
 
@@ -4244,10 +3646,10 @@ PVMFStatus PVRTSPEngineNode::DoQueryInterface(PVRTSPEngineCommand &aCmd)
     }
 }
 
-void PVRTSPEngineNode::ReportErrorEvent(PVMFEventType aEventType,
-                                        OsclAny* aEventData,
-                                        PVUuid* aEventUUID,
-                                        int32* aEventCode)
+OSCL_EXPORT_REF void PVRTSPEngineNode::ReportErrorEvent(PVMFEventType aEventType,
+        OsclAny* aEventData,
+        PVUuid* aEventUUID,
+        int32* aEventCode)
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
                     (0, "PVRTSPEngineNode:NodeErrorEvent Type %d Data %d"
@@ -4327,7 +3729,6 @@ void PVRTSPEngineNode::HandlePortActivity(const PVMFPortActivity &aActivity)
 
         case PVMF_PORT_ACTIVITY_OUTGOING_QUEUE_BUSY:
         case PVMF_PORT_ACTIVITY_OUTGOING_QUEUE_READY:
-            //iTheBusyPort = iTheBusyPort;
             break;
 
         case PVMF_PORT_ACTIVITY_CONNECTED_PORT_READY:
@@ -4418,7 +3819,6 @@ void PVRTSPEngineNode::TimeoutOccurred(int32 timerID, int32 timeoutInfo)
             if (tmpOutgoingMsg == NULL)
             {
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR, (0, "PVRTSPEngineNode::TimeoutOccurred ERROR out-of-memory. Ln %d", __LINE__));
-                //iCurrentErrorCode = PVMFRTSPClientEngineNodeErrorOutOfMemory;
                 return;
             }
 
@@ -4426,7 +3826,6 @@ void PVRTSPEngineNode::TimeoutOccurred(int32 timerID, int32 timeoutInfo)
             {
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR, (0, "PVRTSPEngineNode::TimeoutOccurred ERROR composeKeepAliveRequest fail. Ln %d", __LINE__));
                 OSCL_DELETE(tmpOutgoingMsg);
-                //iCurrentErrorCode = PVMFRTSPClientEngineNodeErrorRTSPComposeStopRequestError;
                 return;
             }
             if (PVMFSuccess != sendSocketOutgoingMsg(iSendSocket, *tmpOutgoingMsg))
@@ -4434,7 +3833,6 @@ void PVRTSPEngineNode::TimeoutOccurred(int32 timerID, int32 timeoutInfo)
                 iCurrentErrorCode = PVMFRTSPClientEngineNodeErrorSocketSendError;
                 OSCL_DELETE(tmpOutgoingMsg);
                 return;
-                //iRet =  PVMFFailure;
                 //break;
             }
 
@@ -4483,7 +3881,7 @@ OSCL_EXPORT_REF PVMFStatus  PVRTSPEngineNode::SetKeepAliveMethod_timeout(int32 a
     aTimeout = aTimeout / 1000; //sec
     if (aTimeout)
     {
-        if (aTimeout > 0)//if(aTimeout > 3000)
+        if (aTimeout > 0)
         {
             TIMEOUT_KEEPALIVE = aTimeout;
         }
@@ -4659,8 +4057,6 @@ bool PVRTSPEngineNode::PrepareEmbeddedDataMemory(uint32 aReqBufSize, OsclMemoryF
         return false;
     }
 
-    //OsclSharedPtr<PVMFMediaDataImpl> media_data_imp = myAllocate(aReqBufSize);
-
     // create a media data buffer
     iEmbeddedDataPtr = PVMFMediaData::createMediaData(media_data_imp,   &iAlloc);
 
@@ -4677,18 +4073,12 @@ bool PVRTSPEngineNode::PrepareEmbeddedDataMemory(uint32 aReqBufSize, OsclMemoryF
 /* dispatch the embedded data in iEmbeddedData to different ports according to channel id
 return true if send success
 */
-bool PVRTSPEngineNode::DispatchEmbeddedData(uint32 aChannelID)
+OSCL_EXPORT_REF bool PVRTSPEngineNode::DispatchEmbeddedData(uint32 aChannelID)
 {
     if (iTheBusyPort)
     {
         return false;
     }
-
-    if (ibIsRealRDT)
-    {
-        return DispatchEmbeddedRdtData();
-    }
-
     PVMFRTSPPort* pvPort = NULL;
     for (int32 i = iPortVector.size() - 1; i >= 0; i--)
     {
@@ -4725,101 +4115,6 @@ bool PVRTSPEngineNode::DispatchEmbeddedData(uint32 aChannelID)
     return true;
 }
 
-bool PVRTSPEngineNode::DispatchEmbeddedRdtData()
-{
-    IPayloadParser::Payload incomingFrag;
-    Oscl_Vector<IPayloadParser::Payload, OsclMemAllocator> vRdtPackets;
-
-    // retrieve the incoming RDT packet mem fragment
-    OsclRefCounterMemFrag frag;
-    iEmbeddedDataPtr->getMediaFragment(0, frag);
-    incomingFrag.vfragments.push_back(frag);
-
-    // parse the RDT headers and retrieve the payloads
-    if (ipRdtParser->Parse(incomingFrag, vRdtPackets) != PayloadParserStatus_Success)
-    {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR, (0, "PVRTSPEngineNode::DispatchEmbeddedRdtData() Unable to parse RDT packet!"));
-        iEmbeddedDataPtr.Unbind();
-        return true;
-    }
-
-    uint32 i = 0;
-    for (i = 0; i < vRdtPackets.size(); i++)
-    {
-        if (!ipFragGroupAllocator->IsMsgAvailable())
-        {
-            // drop this packet
-            iEmbeddedDataPtr.Unbind();
-            vRdtPackets.clear();
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
-                            (0, "PVRTSPEngineNode::DispatchEmbeddedRdtData() Out of memory! Stopping processing and dropping packet"));
-
-            // block processing until we get a callback
-            ibBlockedOnFragGroups = true;
-            ipFragGroupAllocator->notifyfreechunkavailable(*this, NULL);
-        }
-
-        OsclSharedPtr<PVMFMediaDataImpl> mediaDataImplOut;
-        int32 err;
-        mediaDataImplOut = AllocateMediaData(err);
-        OSCL_ASSERT(err == OsclErrNone); // we just checked that a message is available
-        if (err != OsclErrNone)
-        {
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR, (0, "PVRTSPEngineNode::DispatchEmbeddedRdtData() Unable to allocate media data impl!"));
-            return true;
-        }
-
-        IPayloadParser::Payload rdtOut = vRdtPackets[i];
-        mediaDataImplOut->setMarkerInfo(rdtOut.marker);
-        mediaDataImplOut->appendMediaFragment(rdtOut.vfragments[0]);
-
-        PVMFSharedMediaDataPtr mediaDataOut = PVMFMediaData::createMediaData(mediaDataImplOut);
-        mediaDataOut->setSeqNum(rdtOut.sequence);
-        mediaDataOut->setStreamID(rdtOut.stream);
-        mediaDataOut->setTimestamp(rdtOut.timestamp);
-
-        // which port?
-        PVMFRTSPPort* pvPort = NULL;
-        for (int p = iPortVector.size() - 1; p >= 0; p--)
-        {
-            if ((uint)((PVMFRTSPPort*)(iPortVector[p]))->iRdtStreamId == rdtOut.stream)
-            {
-
-                pvPort = (PVMFRTSPPort*)(iPortVector[p]);
-                break;
-            }
-        }
-
-        if (pvPort == NULL)
-        {//no pvMF port is setup to get this channel, discard the data
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR, (0, "PVRTSPEngineNode::DispatchEmbeddedRdtData() channel:%d data discarded.", rdtOut.stream));
-            iEmbeddedDataPtr.Unbind();
-            return true;
-        }
-
-        PVMFSharedMediaMsgPtr mediaMsgPtr;
-        convertToPVMFMediaMsg(mediaMsgPtr, mediaDataOut);
-
-        PVMFStatus status = pvPort->QueueOutgoingMsg(mediaMsgPtr);
-        if (status != PVMFSuccess)
-        {
-            if (status == PVMFErrBusy)
-            {
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG, (0, "PVRTSPEngineNode::DispatchEmbeddedRdtData() BUSY:%d, Outgoing queue size=%d.", status, pvPort->OutgoingMsgQueueSize()));
-            }
-            else
-            {
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR, (0, "PVRTSPEngineNode::DispatchEmbeddedRdtData() ERROR:%d, Outgoing queue size=%d. Data discarded!", status, pvPort->OutgoingMsgQueueSize()));
-                ReportErrorEvent(PVMFErrPortProcessing);
-            }
-
-            return false;
-        }
-    }
-
-    return true;
-}
-
 PVMFStatus PVRTSPEngineNode::DoFlush(PVRTSPEngineCommand& aCmd)
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVRTSPEngineNode::DoFlush() In"));
@@ -4842,7 +4137,7 @@ PVMFStatus PVRTSPEngineNode::DoFlush(PVRTSPEngineCommand& aCmd)
     return PVMFPending;
 }
 
-PVMFStatus PVRTSPEngineNode::sendSocketOutgoingMsg(SocketContainer &aSock, RTSPOutgoingMessage &aMsg)
+OSCL_EXPORT_REF PVMFStatus PVRTSPEngineNode::sendSocketOutgoingMsg(SocketContainer &aSock, RTSPOutgoingMessage &aMsg)
 {
     StrPtrLen *tmpStrPtrLen = aMsg.retrieveComposedBuffer();
     if (NULL == tmpStrPtrLen)
@@ -4851,7 +4146,6 @@ PVMFStatus PVRTSPEngineNode::sendSocketOutgoingMsg(SocketContainer &aSock, RTSPO
         iCurrentErrorCode = PVMFRTSPClientEngineNodeErrorRTSPCompose501ResponseError;
         return  PVMFFailure;
     }
-    //PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0,"C ---> S\n%s", tmpStrPtrLen->c_str()));
     if (aSock.iSocket->Send((const uint8*)tmpStrPtrLen->c_str(), tmpStrPtrLen->length(), TIMEOUT_SEND) != EPVSocketPending)
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVRTSPEngineNode::sendSocketOutgoingMsg() Send() ERROR, line %d", __LINE__));
@@ -4863,7 +4157,7 @@ PVMFStatus PVRTSPEngineNode::sendSocketOutgoingMsg(SocketContainer &aSock, RTSPO
     return PVMFSuccess;
 }
 
-PVMFStatus PVRTSPEngineNode::sendSocketOutgoingMsg(SocketContainer &aSock, const uint8* aSendBuf, uint32 aSendLen)
+OSCL_EXPORT_REF PVMFStatus PVRTSPEngineNode::sendSocketOutgoingMsg(SocketContainer &aSock, const uint8* aSendBuf, uint32 aSendLen)
 {
     if (aSock.iSocket->Send(aSendBuf, aSendLen, TIMEOUT_SEND) != EPVSocketPending)
     {
@@ -4940,27 +4234,7 @@ bool PVRTSPEngineNode::rtspParserLoop(void)
                 break;
             }
             case RTSPParser::WAITING_FOR_ENTITY_BODY_MEMORY:
-            {/*
-OsclSharedPtr<PVMFMediaDataImpl> media_data_imp;
-int32 errcode;
-OSCL_TRY(errcode, media_data_imp = iMediaDataImplAlloc->allocate(iIncomingMsg.contentLength+1));
-if (errcode != OsclErrNone)
-{
-PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0,"PVRTSPEngineNode::rtspParserLoop() registerEntityBody failed"));
-
-OSCL_ASSERT(false);//there is no limit for the allocator num of buffers for now
-ChangeExternalState(EPVMFNodeError);
-iCurrentErrorCode = PVMFRTSPClientEngineNodeErrorOutOfMemory;
-ReportErrorEvent(PVMFErrProcessing, NULL, &iEventUUID, &iCurrentErrorCode);
-
-bLoop = false;
-ret = true;
-break;
-}
-
-media_data_imp->getMediaFragment(0, iEntityMemFrag);
-(iEntityMemFrag.getMemFrag()).len = iEntityMemFrag.getCapacity();
-*/
+            {
                 if ((iEntityMemFrag.len > 0) || (iEntityMemFrag.ptr != NULL))
                 {
                     OSCL_FREE(iEntityMemFrag.ptr);
@@ -4970,7 +4244,6 @@ media_data_imp->getMediaFragment(0, iEntityMemFrag);
 
                 iEntityMemFrag.len = 0;
                 iEntityMemFrag.ptr = OSCL_MALLOC(iIncomingMsg.contentLength + 1);
-                //PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0,"PVRTSPEngineNode::rtspParserLoop() registerEntityBody failed"));
 
                 OsclError::LeaveIfNull(iEntityMemFrag.ptr);
                 iEntityMemFrag.len = (iIncomingMsg.contentLength + 1);
@@ -4978,8 +4251,6 @@ media_data_imp->getMediaFragment(0, iEntityMemFrag);
                 if (!iRTSPParser->registerEntityBody(&iEntityMemFrag))
                 {
                     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVRTSPEngineNode::rtspParserLoop() registerEntityBody failed"));
-
-                    //iCurrentErrorCode = PVMFRTSPClientEngineNodeErrorOutOfMemory;
                     ChangeExternalState(EPVMFNodeError);
                     iCurrentErrorCode = PVMFRTSPClientEngineNodeErrorRTSPParserError;
                     ReportErrorEvent(PVMFErrProcessing, NULL, &iEventUUID, &iCurrentErrorCode);
@@ -5007,7 +4278,7 @@ media_data_imp->getMediaFragment(0, iEntityMemFrag);
             {//process the data
                 if (!ibBlockedOnFragGroups)
                 {
-                    if (! DispatchEmbeddedData(iIncomingMsg.channelID)) //, iEmbeddedData))
+                    if (!DispatchEmbeddedData(iIncomingMsg.channelID))
                     {//send busy or fails
                         bLoop = false;
                     }
@@ -5039,8 +4310,7 @@ media_data_imp->getMediaFragment(0, iEntityMemFrag);
 }
 
 
-
-void PVRTSPEngineNode::freechunkavailable(OsclAny*)
+OSCL_EXPORT_REF void PVRTSPEngineNode::freechunkavailable(OsclAny*)
 {
     ibBlockedOnFragGroups = false;
 }
@@ -5108,7 +4378,7 @@ PVMFStatus PVRTSPEngineNode::DoErrorRecovery(PVRTSPEngineCommand &aCmd)
 // Step 3: Delete sockets
 //
 // If "Immediate" is set we just delete sockets without shutdown sequence.
-PVMFStatus PVRTSPEngineNode::resetSocket(bool aImmediate)
+OSCL_EXPORT_REF PVMFStatus PVRTSPEngineNode::resetSocket(bool aImmediate)
 {
     //Make sure things aren't already cleaned up.
     if (!iDNS.IsBusy()
@@ -5324,7 +4594,7 @@ PVMFStatus PVRTSPEngineNode::resetSocket(bool aImmediate)
     return (waitOnAsyncOp) ? PVMFPending : PVMFSuccess;
 }
 
-void PVRTSPEngineNode::SetSendPending(SocketContainer& aSock)
+OSCL_EXPORT_REF void PVRTSPEngineNode::SetSendPending(SocketContainer& aSock)
 {
     //Set "send pending" condition on a socket container.
     //update recv socket container only when we have a unique recv socket,
@@ -5339,7 +4609,7 @@ void PVRTSPEngineNode::SetSendPending(SocketContainer& aSock)
     }
 }
 
-void PVRTSPEngineNode::SetRecvPending(SocketContainer& aSock)
+OSCL_EXPORT_REF void PVRTSPEngineNode::SetRecvPending(SocketContainer& aSock)
 {
     //Set "recv pending" condition on a socket container.
     //update recv socket container only when we have a unique recv socket,
@@ -5354,12 +4624,9 @@ void PVRTSPEngineNode::SetRecvPending(SocketContainer& aSock)
     }
 }
 
-OsclLeaveCode PVRTSPEngineNode::RunError(OsclLeaveCode aError)
+OSCL_EXPORT_REF OsclLeaveCode PVRTSPEngineNode::RunError(OsclLeaveCode aError)
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVRTSPEngineNode::RunError() aError=%d", aError));
-
-
-    //return OsclErrNone;
     return aError;
 }
 
@@ -5403,7 +4670,7 @@ void PVRTSPEngineNode::ResetSessionInfo()
 
 //clear the internal event queue "iSocketEventQueue"
 //return false if any of the event indicate failure
-bool PVRTSPEngineNode::clearEventQueue(void)
+OSCL_EXPORT_REF bool PVRTSPEngineNode::clearEventQueue(void)
 {
     bool myRet = true;
     while (!iSocketEventQueue.empty())
@@ -5422,88 +4689,6 @@ bool PVRTSPEngineNode::clearEventQueue(void)
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_INFO, (0, "PVRTSPEngineNode::clearEventQueue() Out myRet=%d ", myRet));
     return myRet;
 }
-
-////////////////////////////////////////////////////////////////////////////////
-/// GetPostCorrelationObject Implementation
-////////////////////////////////////////////////////////////////////////////////
-#define KGetPostCorrelationFile _STRLIT("get_post_correlation_number.dat")
-
-GetPostCorrelationObject* GetPostCorrelationObject::create(OSCL_TCHAR* aFileName)
-{
-    GetPostCorrelationObject *object = OSCL_NEW(GetPostCorrelationObject, ());
-    if (!object) return NULL;
-    if (!object->construct(aFileName))
-    {
-        OSCL_DELETE(object);
-        return NULL;
-    }
-    return object;
-}
-
-bool GetPostCorrelationObject::construct(OSCL_TCHAR* aFileName)
-{
-    iGetPostCorrelation = 1;
-    iFileCreated = false;
-    iFs.Connect();
-
-    OSCL_TCHAR* aLocalFileName = aFileName;
-    if (!aLocalFileName) aLocalFileName = (OSCL_TCHAR*)KGetPostCorrelationFile;
-    if (iGetPostCorrelationFile.Open(aLocalFileName, Oscl_File::MODE_READ | Oscl_File::MODE_BINARY, iFs) == 0)
-    {
-        // get the current iGetPostCorrelation
-        iGetPostCorrelationFile.Read(&iGetPostCorrelation, sizeof(iGetPostCorrelation), 1);
-        iGetPostCorrelationFile.Close();
-    }
-
-    if (iGetPostCorrelationFile.Open(aLocalFileName, Oscl_File::MODE_READWRITE | Oscl_File::MODE_BINARY, iFs))
-    {
-        iFs.Close();
-        return false;
-    }
-
-    iFileCreated = true;
-    return true;
-}
-
-GetPostCorrelationObject::~GetPostCorrelationObject()
-{
-    if (iFileCreated) closeFile();
-    iFileCreated = false;
-}
-
-void GetPostCorrelationObject::closeFile()
-{
-    writeToFile();
-    iGetPostCorrelationFile.Close();
-    iFs.Close();
-}
-
-
-bool GetPostCorrelationObject::writeToFile()
-{
-    // always write at the beginning
-    if (iGetPostCorrelationFile.Seek(0, Oscl_File::SEEKSET)) return false;
-    if (iGetPostCorrelationFile.Write(&iGetPostCorrelation, sizeof(iGetPostCorrelation), 1) != 1)
-    {
-        return false;
-    }
-
-    // Flush the data to file
-    iGetPostCorrelationFile.Flush();
-    return true;
-}
-
-bool GetPostCorrelationObject::update()
-{
-    if (!iFileCreated) return false;
-
-    // increase iGetPostCorrelation by 1 within [1, 255]
-    if (iGetPostCorrelation == 255) iGetPostCorrelation = 1;
-    else ++iGetPostCorrelation;
-
-    return writeToFile();
-}
-
 
 
 
@@ -5564,11 +4749,446 @@ PVMFStatus PVRTSPEngineNode::DoCancelAllCommands(PVRTSPEngineCommand& aCmd)
     return iRet;
 }
 
-OsclSharedPtr<PVMFMediaDataImpl> PVRTSPEngineNode::AllocateMediaData(int32& errCode)
+void PVRTSPEngineNode::MoveCmdToCancelQueue(PVRTSPEngineCommand& aCmd)
+{
+    /*
+     * note: the StoreL cannot fail since the queue is never more than 1 deep
+     * and we reserved space.
+     */
+    iCancelCmdQueue.StoreL(aCmd);
+    iRunningCmdQueue.Erase(&aCmd);
+}
+
+
+OSCL_EXPORT_REF OsclSharedPtr<PVMFMediaDataImpl> PVRTSPEngineNode::AllocateMediaData(int32& errCode)
 {
     OsclSharedPtr<PVMFMediaDataImpl> mediaDataImplOut;
     OSCL_TRY(errCode, mediaDataImplOut = ipFragGroupAllocator->allocate());
     return mediaDataImplOut;
+}
+
+OSCL_EXPORT_REF PVMFStatus PVRTSPEngineNode::waitForConnectComplete()
+{
+    uint32 numSockEvents = (PVRTSP_RM_HTTP == iSessionInfo.iStreamingType) ? 2 : 1;
+    if (iSocketEventQueue.size() < numSockEvents)
+    {
+        return PVMFPending;
+    }
+
+    do
+    {
+        SocketEvent tmpSockEvent(iSocketEventQueue.front());
+        iSocketEventQueue.erase(&iSocketEventQueue.front());
+
+        if (tmpSockEvent.iSockEvent != EPVSocketSuccess)
+        {
+            iCurrentErrorCode = PVMFRTSPClientEngineNodeErrorRTSPSocketConnectError;
+            return PVMFFailure;
+        }
+        if (tmpSockEvent.iSockFxn != EPVSocketConnect)
+        {   //unsolicited socket event
+            continue;
+        }
+        if (tmpSockEvent.iSockId == REQ_RECV_SOCKET_ID)
+        {
+            bNoRecvPending = true;
+        }
+        else if (tmpSockEvent.iSockId == REQ_SEND_SOCKET_ID)
+        {
+            bNoSendPending = true;
+        }
+
+        if (PVRTSP_RM_HTTP != iSessionInfo.iStreamingType)
+        {
+            bNoSendPending = bNoRecvPending = true;
+        }
+    }
+    while (!iSocketEventQueue.empty());
+
+    if (!(bNoSendPending && bNoRecvPending))
+    {
+        return PVMFPending;
+    }
+
+    REQ_TIMER_WATCHDOG_ID =  ++BASE_REQUEST_ID;
+    REQ_TIMER_KEEPALIVE_ID =  ++BASE_REQUEST_ID;
+    return PVMFSuccess;
+}
+
+OSCL_EXPORT_REF PVMFStatus PVRTSPEngineNode::checkForSDPAvailability()
+{
+    if (iSessionInfo.iSDPinfo.GetRep() != NULL)
+    {//if sdp is available
+        ChangeInternalState(PVRTSP_ENGINE_NODE_STATE_DESCRIBE_DONE);
+        return PVMFSuccess;
+    }
+    else
+    {//if sdp is not available
+        ChangeInternalState(PVRTSP_ENGINE_NODE_STATE_SEND_OPTIONS);
+        return PVMFPending;
+    }
+}
+
+OSCL_EXPORT_REF PVMFStatus PVRTSPEngineNode::processOptionsResponse()
+{
+    PVMFStatus retVal = processIncomingMessage(iIncomingMsg);
+    if (retVal == PVMFSuccess)
+    {
+        retVal = PVMFPending;
+    }
+    else
+    {//either pending or error
+        if (retVal != PVMFPending)
+        {
+            //cancell the watchdog
+            iWatchdogTimer->Cancel(REQ_TIMER_WATCHDOG_ID);
+        }
+    }
+    return retVal;
+}
+
+OSCL_EXPORT_REF PVMFStatus PVRTSPEngineNode::composeAndSendDescribeRequest()
+{
+    if (bNoSendPending)
+    {
+        // send describe
+        RTSPOutgoingMessage *tmpOutgoingMsg =  OSCL_NEW(RTSPOutgoingMessage, ());
+        if (tmpOutgoingMsg == NULL)
+        {
+            iCurrentErrorCode = PVMFRTSPClientEngineNodeErrorOutOfMemory;
+            return PVMFFailure;
+        }
+        if (PVMFSuccess != composeDescribeRequest(*tmpOutgoingMsg))
+        {
+            iCurrentErrorCode =
+                PVMFRTSPClientEngineNodeErrorRTSPComposeDescribeRequestError;
+            OSCL_DELETE(tmpOutgoingMsg);
+
+            //cancell the watchdog
+            iWatchdogTimer->Cancel(REQ_TIMER_WATCHDOG_ID);
+            return PVMFFailure;
+        }
+
+        if (PVMFSuccess != sendSocketOutgoingMsg(iSendSocket, *tmpOutgoingMsg))
+        {
+            iCurrentErrorCode = PVMFRTSPClientEngineNodeErrorSocketSendError;
+            OSCL_DELETE(tmpOutgoingMsg);
+            //cancell the watchdog
+            iWatchdogTimer->Cancel(REQ_TIMER_WATCHDOG_ID);
+            return PVMFFailure;
+        }
+
+        bNoSendPending = false;
+        iOutgoingMsgQueue.push(tmpOutgoingMsg);
+
+        ChangeInternalState(PVRTSP_ENGINE_NODE_STATE_OPTIONS_WAITING);
+    }
+    return PVMFPending;
+}
+
+OSCL_EXPORT_REF PVMFStatus PVRTSPEngineNode::populateCommonSetupFields(RTSPOutgoingMessage &iMsg, StreamInfo &aSelected)
+{
+    //Reset the data structure
+    iMsg.reset();
+
+    if (iSessionInfo.iSDPinfo.GetRep() == NULL) return PVMFFailure;
+
+    //Here we decide if the selected track is a still image or not
+    mediaInfo *tmpMediaInfo = iSessionInfo.iSDPinfo->getMediaInfoBasedOnID(aSelected.iSDPStreamId);
+    if (NULL == tmpMediaInfo)
+    {
+        return PVMFFailure;
+    }
+    StrCSumPtrLen still_image = "X-MP4V-IMAGE";
+    if (!oscl_strncmp(tmpMediaInfo->getMIMEType(), still_image.c_str(), still_image.length()))
+    {
+        StrPtrLen contentType = "text/parameters";
+        StrCSumPtrLen image = "Image\r\n";
+
+        iMsg.contentType = contentType;
+        iMsg.contentTypeIsSet = true;
+        iMsg.contentLength = image.length();
+        iMsg.contentLengthIsSet = true;
+        iMsg.accept = "X-MP4V-IMAGE";
+        iMsg.acceptIsSet = true;
+        iMsg.method = METHOD_GET_PARAMETER;
+        iMsg.numOfTransportEntries = 0;
+    }
+    else
+    {
+        //Set standard fields
+        iMsg.method = METHOD_SETUP;
+        iMsg.userAgent = iSessionInfo.iUserAgent.get_cstr();
+        iMsg.userAgentIsSet = true;
+
+        {
+            iMsg.numOfTransportEntries = 1;
+            iMsg.transport[0].protocol = RtspTransport::RTP_PROTOCOL;
+            iMsg.transport[0].protocolIsSet = true;
+            iMsg.transport[0].profile = RtspTransport::AVP_PROFILE;
+            iMsg.transport[0].profileIsSet = true;
+            iMsg.transport[0].delivery = RtspTransport::UNICAST_DELIVERY;
+            iMsg.transport[0].deliveryIsSet = true;
+            if ((iSessionInfo.iStreamingType == PVRTSP_3GPP_UDP)
+                    || (iSessionInfo.iStreamingType == PVRTSP_MS_UDP))
+            {
+                iMsg.transport[0].transportType = RtspTransport::UDP_TRANSPORT;
+                iMsg.transport[0].transportTypeIsSet = true;
+
+                iMsg.transport[0].channelIsSet = false;
+
+                iMsg.transport[0].client_portIsSet = true;
+                iMsg.transport[0].client_port1 = OSCL_STATIC_CAST(uint16, aSelected.iCliRTPPort);   //dataPort;
+                iMsg.transport[0].client_port2 = OSCL_STATIC_CAST(uint16, aSelected.iCliRTCPPort);  //feedbackPort;
+
+                if (iSessionInfo.iStreamingType == PVRTSP_MS_UDP)
+                {//check here!
+                    iMsg.transport[0].client_port2 = 0;
+                }
+
+                /* Send recommended block size of RTP packet to the server.  CJ 09/10/2001 */
+                StrCSumPtrLen blockSize = "Blocksize";
+                oscl_snprintf(((mbchar*)iRTSPEngTmpBuf.ptr), iRTSPEngTmpBuf.len, "%d", RECOMMENDED_RTP_BLOCK_SIZE);
+                iMsg.addField(&blockSize, ((mbchar*)iRTSPEngTmpBuf.ptr));
+            }
+            else
+            {
+                iMsg.transport[0].transportType = RtspTransport::TCP_TRANSPORT;
+                iMsg.transport[0].transportTypeIsSet = true;
+
+                iMsg.transport[0].client_portIsSet = false;
+
+                iMsg.transport[0].channelIsSet = false;
+            }
+
+            iMsg.transport[0].appendIsSet = false;
+            iMsg.transport[0].layersIsSet = false;
+            iMsg.transport[0].modeIsSet = false;
+            iMsg.transport[0].portIsSet = false;
+            iMsg.transport[0].server_portIsSet = false;
+            iMsg.transport[0].ttlIsSet = false;
+            iMsg.transport[0].ssrcIsSet = false;
+        }
+
+        //Compose etag
+        if (oscl_strlen((iSessionInfo.iSDPinfo->getSessionInfo())->getETag()) != 0)
+        {
+            if (oscl_snprintf(((mbchar*)iRTSPEngTmpBuf.ptr), iRTSPEngTmpBuf.len, "\"%s\"", (iSessionInfo.iSDPinfo->getSessionInfo())->getETag()) != 1)
+            {
+                StrCSumPtrLen etag = "If-Match";
+                iMsg.addField(&etag, ((mbchar*)iRTSPEngTmpBuf.ptr));
+            }
+        }
+
+        if (oscl_strlen(iSessionInfo.iUserNetwork.get_cstr()))
+        {
+            StrCSumPtrLen UserNetwork = _STRLIT_CHAR("User-Network");
+            iMsg.addField(&UserNetwork, iSessionInfo.iUserNetwork.get_cstr());
+        }
+        if (oscl_strlen(iSessionInfo.iDeviceInfo.get_cstr()))
+        {
+            StrCSumPtrLen DeviceInfo = _STRLIT_CHAR("DeviceInfo");
+            iMsg.addField(&DeviceInfo, iSessionInfo.iDeviceInfo.get_cstr());
+        }
+        if (oscl_strlen(iSessionInfo.iUserID.get_cstr()) && oscl_strlen(iSessionInfo.iAuthentication.get_cstr()))
+        {
+            OSCL_HeapString<PVRTSPEngineNodeAllocator> myBuf("user=");
+            myBuf += iSessionInfo.iUserID.get_cstr();
+            myBuf += ";authentication=";
+            myBuf += iSessionInfo.iAuthentication.get_cstr();
+
+            StrCSumPtrLen User_id = _STRLIT_CHAR("ID");
+            iMsg.addField(&User_id, myBuf.get_cstr());
+        }
+        if (oscl_strlen(iSessionInfo.iExpiration.get_cstr()))
+        {
+            StrCSumPtrLen Expiration = _STRLIT_CHAR("Expiration");
+            iMsg.addField(&Expiration, iSessionInfo.iExpiration.get_cstr());
+        }
+        if (oscl_strlen(iSessionInfo.iApplicationSpecificString.get_cstr()))
+        {
+            StrCSumPtrLen Application_specific_string = _STRLIT_CHAR("Application-Specific-String");
+            iMsg.addField(&Application_specific_string, iSessionInfo.iApplicationSpecificString.get_cstr());
+        }
+        if (iSessionInfo.iVerification.get_size() && iSessionInfo.iSignature.get_size())
+        {
+            OSCL_HeapString<PVRTSPEngineNodeAllocator> myBuf("filler=");
+            myBuf += iSessionInfo.iVerification.get_cstr();
+            myBuf += ";signature=";
+            myBuf += iSessionInfo.iSignature.get_cstr();
+
+            StrCSumPtrLen Verification = _STRLIT_CHAR("Verification");
+            iMsg.addField(&Verification, myBuf.get_cstr());
+        }
+
+        //Compose the media level URL for use in a RTSP request message.
+        if (composeMediaURL(aSelected.iSDPStreamId, iMsg.originalURI) != PVMFSuccess)
+        {
+            return PVMFFailure;
+        }
+        aSelected.iMediaURI = iMsg.originalURI.c_str();
+
+        if (aSelected.b3gppAdaptationIsSet)
+        {// 3GPP release-6 rate adaptation
+            mbchar buffer[256];
+
+            OSCL_HeapString<PVRTSPEngineNodeAllocator> myBuf("url=\"");
+            myBuf += iMsg.originalURI.c_str();
+            myBuf += "\";size=";
+            oscl_snprintf(buffer, 256, "%d", aSelected.iBufSize);
+            myBuf += buffer;
+            myBuf += ";target-time=";
+            oscl_snprintf(buffer, 256, "%d", aSelected.iTargetTime);
+            myBuf += buffer;
+
+            StrCSumPtrLen _3GPPadaptation = "3GPP-Adaptation";
+            iMsg.addField(&_3GPPadaptation, myBuf.get_str());
+        }
+    }
+    return PVMFSuccess;
+}
+
+OSCL_EXPORT_REF PVMFStatus PVRTSPEngineNode::composeSetupMessage(RTSPOutgoingMessage &iMsg)
+{
+    iMsg.msgType = RTSPRequestMsg;
+    iMsg.cseq = iOutgoingSeq++;
+    iMsg.cseqIsSet = true;
+
+    if (iSessionInfo.iSID.get_size())
+    {
+        iMsg.sessionId.setPtrLen(iSessionInfo.iSID.get_cstr(), iSessionInfo.iSID.get_size());
+        iMsg.sessionIdIsSet = true;
+    }
+
+    if (iMsg.compose() == false)
+    {
+        return PVMFFailure;
+    }
+
+    iSessionInfo.clientServerDelay = 0;
+    uint32 clock = 0;
+    bool overflowFlag = false;
+    iRoundTripClockTimeBase.GetCurrentTime32(clock, overflowFlag, PVMF_MEDIA_CLOCK_MSEC);
+    iSessionInfo.clientServerDelay = clock;
+
+    return PVMFSuccess;
+}
+
+OSCL_EXPORT_REF PVMFStatus PVRTSPEngineNode::composeAndSendSetupRequest()
+{
+    //if( (bNoSendPending) && (NOT all the SETUPs are sent out ) )
+    if ((bNoSendPending) && ((uint32)setupTrackIndex  < iSessionInfo.iSelectedStream.size()))
+    {
+        RTSPOutgoingMessage *tmpOutgoingMsg =  OSCL_NEW(RTSPOutgoingMessage, ());
+        if (tmpOutgoingMsg == NULL)
+        {
+            iCurrentErrorCode = PVMFRTSPClientEngineNodeErrorOutOfMemory;
+            return  PVMFFailure;
+        }
+        if (PVMFSuccess != composeSetupRequest(*tmpOutgoingMsg, iSessionInfo.iSelectedStream[setupTrackIndex ]))
+        {
+            iCurrentErrorCode =
+                PVMFRTSPClientEngineNodeErrorRTSPComposeSetupRequestError;
+            OSCL_DELETE(tmpOutgoingMsg);
+            return  PVMFFailure;
+        }
+        setupTrackIndex ++;
+
+        if (PVMFSuccess != sendSocketOutgoingMsg(iSendSocket, *tmpOutgoingMsg))
+        {
+            /* need to pop the msg based on cseq, NOT necessarily the early ones,
+            although YES in this case.*/
+            iCurrentErrorCode = PVMFRTSPClientEngineNodeErrorSocketSendError;
+            OSCL_DELETE(tmpOutgoingMsg);
+            return PVMFFailure;
+        }
+
+        bNoSendPending = false;
+        iOutgoingMsgQueue.push(tmpOutgoingMsg);
+
+        //setup the watch dog for server response
+        if (setupTrackIndex == 1)
+        {//only setup watchdog for the first SETUP, but it monitors all
+            iWatchdogTimer->Request(REQ_TIMER_WATCHDOG_ID, 0, TIMEOUT_WATCHDOG);
+        }
+    }
+    return PVMFPending;
+}
+
+OSCL_EXPORT_REF PVMFStatus PVRTSPEngineNode::processSetupResponse()
+{
+    PVMFStatus retVal = processIncomingMessage(iIncomingMsg);
+    if (retVal == PVMFSuccess)
+    {//The Prepare() not done until all the SETUPs are sent
+        retVal = PVMFPending;
+    }
+    else
+    {//either pending or error
+        if (retVal != PVMFPending)
+        {
+            //cancell the watchdog
+            iWatchdogTimer->Cancel(REQ_TIMER_WATCHDOG_ID);
+        }
+        return retVal;
+    }
+
+    if (iState == PVRTSP_ENGINE_NODE_STATE_DESCRIBE_DONE)
+    {//ok, got the resp of 1st SETUP, send the reset SETUPs
+        bNoSendPending = true;
+        ChangeInternalState(PVRTSP_ENGINE_NODE_STATE_PROCESS_REST_SETUP);
+    }
+    return retVal;
+}
+
+OSCL_EXPORT_REF PVMFStatus PVRTSPEngineNode::processOtherPossibleSetupStates()
+{
+    if (RTSPParser::ENTITY_BODY_IS_READY == iRTSPParserState)
+    {//got still image
+        ChangeInternalState(PVRTSP_ENGINE_NODE_STATE_SETUP_DONE);
+        return PVMFSuccess;
+    }
+    else if (!iSocketEventQueue.empty())
+    {//TBD          if(!clearEventQueue())
+        SocketEvent tmpSockEvent(iSocketEventQueue.front());
+        iSocketEventQueue.erase(&iSocketEventQueue.front());
+
+        if (tmpSockEvent.iSockEvent != EPVSocketSuccess)
+        {//sth failed, could be Send, Recv, or server closes
+            iCurrentErrorCode = PVMFRTSPClientEngineNodeErrorSocketError;
+            return PVMFFailure;
+        }
+
+        RTSPOutgoingMessage* tmpOutgoingMsg = NULL;
+        if (!iOutgoingMsgQueue.empty())
+        {
+            tmpOutgoingMsg = iOutgoingMsgQueue.top();
+        }
+        if ((iState == PVRTSP_ENGINE_NODE_STATE_DESCRIBE_DONE)
+                && (tmpSockEvent.iSockFxn == EPVSocketSend)
+                && (tmpOutgoingMsg))
+        {//pretend there is a send pending so it waits for the first
+            //SETUP resp to come back and then sends the rest SETUPs
+            if (tmpOutgoingMsg->method == METHOD_SETUP)
+            {
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR, (0, "PVRTSPEngineNode::SendRtspSetup() Wait for first SETUP request to complete !!!!!"));
+                bNoSendPending = false;
+            }
+        }
+    }
+    return PVMFPending;
+}
+
+//For transport options, we only let server choose
+//between "RTP/AVP/UDP"
+OSCL_EXPORT_REF bool PVRTSPEngineNode::supportedProtocolAndProfileCheck()
+{
+    if ((iIncomingMsg.transport[0].protocol != RtspTransport::RTP_PROTOCOL)
+            || (iIncomingMsg.transport[0].profile != RtspTransport::AVP_PROFILE))
+    {//PVMFRTSPClientEngineNodeErrorUnsupportedTransport
+        iCurrentErrorCode = PVMFRTSPClientEngineNodeErrorMalformedRTSPMessage;
+        return false;
+    }
+    return true;
 }
 
 PVMFStatus PVRTSPEngineNode::CancelCurrentOps()

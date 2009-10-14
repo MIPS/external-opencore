@@ -19,6 +19,8 @@ CFG_pvfasttrack_download := pvfasttrackdownload.cfg
 
 CFG_pvrmffparser_node := pvrmff.cfg
 
+CFG_pvrtsptunicastforrm_streaming := pvrealstreaming.cfg
+
 EXTRA_SHARED_LIBRARIES_pvwmdrm := libutils libcutils libandroid_runtime
 EXTRA_SHARED_LIBRARIES_pvwmdrmservice := libutils libcutils libandroid_runtime
 CFG_pvwmdrm := pvwmdrm.cfg

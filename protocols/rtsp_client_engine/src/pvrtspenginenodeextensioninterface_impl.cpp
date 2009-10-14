@@ -88,16 +88,6 @@ OSCL_EXPORT_REF PVMFStatus PVRTSPEngineNodeExtensionInterfaceImpl::GetRtspProxy(
     return iContainer->GetRtspProxy(aRtspProxyName, aRtspProxyPort);
 }
 
-OSCL_EXPORT_REF bool PVRTSPEngineNodeExtensionInterfaceImpl::IsRdtTransport()
-{
-    return iContainer->IsRdtTransport();
-}
-
-OSCL_EXPORT_REF void PVRTSPEngineNodeExtensionInterfaceImpl::SetPortRdtStreamId(PVMFPortInterface* pPort, int iRdtStreamId)
-{
-    iContainer->SetPortRdtStreamId(pPort, iRdtStreamId);
-}
-
 OSCL_EXPORT_REF PVMFStatus PVRTSPEngineNodeExtensionInterfaceImpl::SetSDPInfo(OsclSharedPtr<SDPInfo>& aSDPinfo, Oscl_Vector<StreamInfo, OsclMemAllocator> &aSelectedStream)
 {
     return iContainer->SetSDPInfo(aSDPinfo, aSelectedStream);
@@ -111,16 +101,6 @@ OSCL_EXPORT_REF PVMFStatus PVRTSPEngineNodeExtensionInterfaceImpl::GetServerInfo
 OSCL_EXPORT_REF PVMFStatus PVRTSPEngineNodeExtensionInterfaceImpl::GetStreamInfo(Oscl_Vector<StreamInfo, OsclMemAllocator> &aSelectedStream)
 {
     return iContainer->GetStreamInfo(aSelectedStream);
-}
-
-OSCL_EXPORT_REF void PVRTSPEngineNodeExtensionInterfaceImpl::SetRealChallengeCalculator(IRealChallengeGen* pChallengeCalc)
-{
-    iContainer->SetRealChallengeCalculator(pChallengeCalc);
-}
-
-OSCL_EXPORT_REF void PVRTSPEngineNodeExtensionInterfaceImpl::SetRdtParser(IPayloadParser* pRdtParser)
-{
-    iContainer->SetRdtParser(pRdtParser);
 }
 
 OSCL_EXPORT_REF PVMFStatus PVRTSPEngineNodeExtensionInterfaceImpl::SetRequestPlayRange(const RtspRangeType& aRange)
@@ -174,7 +154,6 @@ OSCL_EXPORT_REF PVMFStatus PVRTSPEngineNodeExtensionInterfaceImpl::GetKeepAliveM
 {
     return iContainer->GetKeepAliveMethod(aTimeout, aUseSetParameter, aKeepAliveInPlay);
 }
-
 
 
 OSCL_EXPORT_REF PVMFStatus PVRTSPEngineNodeExtensionInterfaceImpl::GetRTSPTimeOut(int32 &aTimeout)

@@ -1787,7 +1787,8 @@ OSCL_EXPORT_REF bool PVMFJitterBufferImpl::setPortMediaParams(mediaInfo* aMediaI
 OSCL_EXPORT_REF PVMFStatus PVMFJitterBufferImpl::setPayloadParser(IPayloadParser* aPayloadParser)
 {
     iPayLoadParser = aPayloadParser;
-    if (oscl_strstr(irMimeType.get_cstr(), "video/H264"))
+    if (oscl_strstr(irMimeType.get_cstr(), "video/H264") ||
+            oscl_strstr(irMimeType.get_cstr(), "video/vnd.rn-realvideo"))
     {
         CreateMediaMsgComposerAllocatorsForOutgoingMsgs();
     }

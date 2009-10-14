@@ -188,20 +188,3 @@ void dropTextAfterFirstSlash(char *copyOfBaseURL)
     return;
 }
 
-#ifndef OSCL_TIME_H_INCLUDED
-#include "oscl_time.h"
-#endif
-
-#ifndef OSCL_SNPRINTF_H_INCLUDED
-#include "oscl_snprintf.h"
-#endif
-#ifndef OSCL_STRING_CONTAINERS_H_INCLUDED
-#include "oscl_string_containers.h"
-#endif
-
-bool generatePseudoUUID(OSCL_String& aUUID)
-{
-    aUUID = NULL;
-    return true;
-}
-

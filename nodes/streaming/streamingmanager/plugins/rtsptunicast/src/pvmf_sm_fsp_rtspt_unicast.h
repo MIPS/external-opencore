@@ -243,7 +243,9 @@ class PVMFSMRTSPTUnicastNode: public PVMFSMFSPBaseNode
         OSCL_IMPORT_REF void Construct();
         OSCL_IMPORT_REF void CreateCommandQueues();
         OSCL_IMPORT_REF void CreateChildNodes();
-        OSCL_IMPORT_REF void DestroyChildNodes();
+        OSCL_IMPORT_REF virtual void DestroyChildNodes();
+        OSCL_IMPORT_REF virtual void CreateSessionControllerNode();
+        OSCL_IMPORT_REF void CreateJitterBufferNode();
         OSCL_IMPORT_REF void CleanUp();
 
         OSCL_IMPORT_REF virtual bool ProcessCommand(PVMFSMFSPBaseNodeCommand&);
@@ -266,7 +268,7 @@ class PVMFSMRTSPTUnicastNode: public PVMFSMFSPBaseNode
 
 
         OSCL_IMPORT_REF bool CompleteFeedBackPortsSetup();
-        OSCL_IMPORT_REF bool SendSessionControlPrepareCompleteParams();
+        OSCL_IMPORT_REF virtual bool SendSessionControlPrepareCompleteParams();
         OSCL_IMPORT_REF bool SendSessionControlStartCompleteParams();
 
         OSCL_IMPORT_REF void GetActualMediaTSAfterSeek();
@@ -279,7 +281,7 @@ class PVMFSMRTSPTUnicastNode: public PVMFSMFSPBaseNode
         OSCL_IMPORT_REF PVMFRTSPTTrackInfo* FindTrackInfo(uint32 tag);
 
         //Init
-        OSCL_IMPORT_REF PVMFStatus DoPreInit(PVMFSMFSPBaseNodeCommand& aCmd);
+        OSCL_IMPORT_REF virtual PVMFStatus DoPreInit(PVMFSMFSPBaseNodeCommand& aCmd);
         OSCL_IMPORT_REF PVMFStatus ProcessSDP();
         OSCL_IMPORT_REF PVMFStatus PopulateAvailableMetadataKeys();
         virtual bool RequestUsageComplete()
@@ -342,6 +344,8 @@ class PVMFSMRTSPTUnicastNode: public PVMFSMFSPBaseNode
         OSCL_IMPORT_REF void addRef();
         OSCL_IMPORT_REF void removeRef();
         OSCL_IMPORT_REF void ResetNodeParams(bool aReleaseMemmory = true);
+        OSCL_IMPORT_REF virtual void DeleteSessionControllerNode(uint32 aIndex);
+
         uint32 iJitterBufferDurationInMilliSeconds;
         bool ibRdtTransport;
         PVMFMediaPresentationInfo iCompleteMediaPresetationInfo;

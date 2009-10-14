@@ -133,7 +133,6 @@ typedef enum
     STATE_INIT,
     STATE_READY,
     STATE_PLAYING,
-    //STATE_RECORDING
 } SessionState;
 
 typedef struct _DataChannelInfo
@@ -160,15 +159,15 @@ typedef OsclMemAllocator PVRTSPEngineNodeAllocator;
 class SessionInfo
 {
     public:
-        //bool sdpFlag;             //Used to make sure that we read into the mediainfo array after it has been assigned
-        //SDP_ERROR_CODE sdpErrorCode;            //Saves the value returned from the sdp parser
 
         OSCL_HeapString<PVRTSPEngineNodeAllocator> iSessionURL;
         OSCL_HeapString<PVRTSPEngineNodeAllocator> iContentBaseURL;//Per session control URL from content base field
 
-        OSCL_HeapString<PVRTSPEngineNodeAllocator> iServerName; //could be either DNS or ip address
+        OSCL_HeapString<PVRTSPEngineNodeAllocator> iServerName;    //could be either DNS or ip address
 
-        OSCL_HeapString<PVRTSPEngineNodeAllocator> iProxyName;  //could be either DNS or ip address
+        OSCL_HeapString<PVRTSPEngineNodeAllocator> iProxyName;     //could be either DNS or ip address
+        OSCL_HeapString<PVRTSPEngineNodeAllocator> iUuid;          //for Real http cloaking
+
         uint32  iProxyPort;
 
         OsclNetworkAddress iSrvAdd;
@@ -181,30 +180,12 @@ class SessionInfo
         OsclRefCounterMemFrag   pSDPBuf;
 
         OsclSharedPtr<SDPInfo>  iSDPinfo;
-        //SDP_Parser *iSDPparser;       //Pointer to the SDP_Parser class object
         Oscl_Vector<StreamInfo, PVRTSPEngineNodeAllocator> iSelectedStream;
 
-        //Form the track to channel association table. This table is used while
-        //interacting with the media buffer. This table is needed to convert from an index
-        //based on the number of tracks in the SDP to an index into the number of tracks
-        //actually selected. For eg, the SDP might have 5 media tracks, but the number of tracks
-        //that get selected could be 2. If the first track that gets selected corresponds to the third
-        //track in the SDP list, then the mapping would be 2 -> 0. Similarly, if the second track that
-        //gets selected is the fifth in the SDP list, the mapping would be 4 -> 1.
-        //All indices begin from 0.
-        /*
-        for(int ii = 0; ii < numberOfChannels; ii++)
-        {
-            int sdp_track_id = pSessionInfo->trackSelectionList->getTrackIndex(ii);
-            pSessionInfo->channel_tbl[sdp_track_id] = ii;
-        }
-        */
         int number_of_channels;                 //Used for interaction with the media buffer class
         int channel_tbl[MAX_TOTAL_TRACKS];      //Index from SDP track IDs to tracks actually selected
 
         OSCL_HeapString<PVRTSPEngineNodeAllocator> iSID;    //alphanumeric session ID
-
-        //OsclMemoryFragment pImgBuf;
 
         bool serverReplyFlag;           //Used for communication between the PVStream modules (network module and the task scheduler)
         bool getStateFlag;              //Used to ensure that the PE's main loop has been called
@@ -295,19 +276,6 @@ class PVRTSPEngineCommand: public PVRTSPEngineCommandBase
 
             return PVRTSPEngineCommandBase::hipri();
         }
-
-        /*
-        PVMFSessionId iCmdSid;
-        int32 iCmdId;
-        TPVMFGenericNodeCommand iCmdType;
-        OsclAny* iContext;
-        PVMFPortInterface* iPort;
-        OsclAny* iData1;
-        OsclAny* iData2;
-        OsclAny* iData3;
-        */
-    private:
-        //PVRTSPEngineCommand(const PVRTSPEngineCommand& aCmd);
 };
 
 //Command queue type
@@ -336,40 +304,6 @@ class PVRTSPGenericMessageCompareLess
         }
 };
 
-class GetPostCorrelationObject
-{
-    public:
-        // factory method
-        static GetPostCorrelationObject *create(OSCL_TCHAR* aFileName = NULL);
-        // destructor
-        ~GetPostCorrelationObject();
-
-        // get post correlation value
-        uint8 get() const
-        {
-            return iGetPostCorrelation;
-        }
-        // increase get post correlation value by 1 within [1, 255]
-        bool update();
-
-    private:
-        // constructor
-        GetPostCorrelationObject()
-        {
-            ;
-        }
-        bool construct(OSCL_TCHAR* aFileName);
-        void closeFile();
-        bool writeToFile();
-
-    private:
-        uint8 iGetPostCorrelation;
-        bool iFileCreated; // check for the file creation
-
-        // File IO stuff
-        Oscl_FileServer iFs;
-        Oscl_File iGetPostCorrelationFile;
-};
 
 class PVRTSPEngineNode
         : public PVInterface,
@@ -379,7 +313,113 @@ class PVRTSPEngineNode
         public OsclDNSObserver,
         public OsclTimerObserver,
         public OsclMemPoolFixedChunkAllocatorObserver
-{
+{//note: this class is for internal use only, but must be public to avoid ADS v1.2 compile error.
+    public:
+        //To keep track of current socket op
+        class SocketState
+        {
+            public:
+                SocketState()
+                        : iPending(false)
+                        , iCanceled(false)
+                {}
+                bool iPending;
+                bool iCanceled;
+                void Reset()
+                {
+                    iPending = iCanceled = false;
+                }
+        };
+
+
+    protected:
+        class SocketContainer
+        {
+            public:
+                SocketContainer(): iSocket(NULL)
+                {}
+                OsclTCPSocket* iSocket;
+                SocketState iConnectState;
+                SocketState iSendState;
+                SocketState iRecvState;
+                SocketState iShutdownState;
+                void Reset(OsclTCPSocket* aSock)
+                {
+                    iSocket = aSock;
+                    iConnectState.Reset();
+                    iSendState.Reset();
+                    iRecvState.Reset();
+                    iShutdownState.Reset();
+                }
+                bool IsBusy()
+                {
+                    return iSocket
+                           && (iConnectState.iPending
+                               || iSendState.iPending
+                               || iRecvState.iPending
+                               || iShutdownState.iPending);
+                }
+        };
+        OSCL_IMPORT_REF virtual PVMFStatus DoInitNode(PVRTSPEngineCommand &aCmd);
+        OSCL_IMPORT_REF virtual PVMFStatus SendRtspDescribe(PVRTSPEngineCommand &aCmd);
+        OSCL_IMPORT_REF virtual PVMFStatus SendRtspSetup(PVRTSPEngineCommand &aCmd);
+        OSCL_IMPORT_REF PVMFStatus composeAndSendSetupRequest();
+        OSCL_IMPORT_REF PVMFStatus processSetupResponse();
+        OSCL_IMPORT_REF PVMFStatus processOtherPossibleSetupStates();
+        OSCL_IMPORT_REF virtual PVMFStatus DoResetNode(PVRTSPEngineCommand &aCmd);
+        OSCL_IMPORT_REF PVMFStatus SendRtspTeardown(PVRTSPEngineCommand &aCmd);
+        OSCL_IMPORT_REF virtual bool parseURL(const char* aURL);
+        OSCL_IMPORT_REF PVMFStatus processIncomingMessage(RTSPIncomingMessage &iIncomingMsg);
+        OSCL_IMPORT_REF virtual PVMFStatus composeSetupRequest(RTSPOutgoingMessage &iMsg, StreamInfo &aSelected);
+        OSCL_IMPORT_REF PVMFStatus populateCommonSetupFields(RTSPOutgoingMessage &iMsg, StreamInfo &aSelected);
+        OSCL_IMPORT_REF PVMFStatus composeSetupMessage(RTSPOutgoingMessage &iMsg);
+        OSCL_IMPORT_REF virtual PVMFStatus sendSocketOutgoingMsg(SocketContainer &aSock, RTSPOutgoingMessage &aMsg);
+        OSCL_IMPORT_REF virtual PVMFStatus DoQueryInterface(PVRTSPEngineCommand &aCmd);
+        OSCL_IMPORT_REF PVMFStatus waitForConnectComplete();
+        OSCL_IMPORT_REF PVMFStatus checkForSDPAvailability();
+        OSCL_IMPORT_REF PVMFStatus processOptionsResponse();
+        OSCL_IMPORT_REF PVMFStatus composeAndSendDescribeRequest();
+        OSCL_IMPORT_REF void SetSendPending(SocketContainer&);
+        OSCL_IMPORT_REF void SetRecvPending(SocketContainer&);
+        OSCL_IMPORT_REF bool clearEventQueue(void);
+        OSCL_IMPORT_REF virtual PVMFStatus sendSocketOutgoingMsg(SocketContainer &aSock, const uint8* aSendBuf, uint32 aSendLen);
+        OSCL_IMPORT_REF void ReportErrorEvent(PVMFEventType aEventType,
+                                              OsclAny* aEventData = NULL,
+                                              PVUuid* aEventUUID = NULL,
+                                              int32* aEventCode = NULL);
+        OSCL_IMPORT_REF virtual bool DispatchEmbeddedData(uint32 aChannelID);
+        OSCL_IMPORT_REF PVMFStatus resetSocket(bool aImmediate = false);
+        OSCL_IMPORT_REF virtual PVMFStatus processEntityBody(RTSPIncomingMessage &aMsg, OsclMemoryFragment &aEntityMemFrag);
+        OSCL_IMPORT_REF virtual bool supportedProtocolAndProfileCheck();
+        SessionInfo iSessionInfo;
+        /* Round trip delay calculation */
+        PVMFTimebase_Tickcount iRoundTripClockTimeBase;
+        int32 iCurrentErrorCode;
+        //only for http cloaking, string to store the text to send until send completes
+        OSCL_HeapString<PVRTSPEngineNodeAllocator> iRecvChannelMsg, iSendChannelMsg;
+        PVLogger* iLogger;
+        uint32  iNumHostCallback, iNumConnectCallback, iNumSendCallback, iNumRecvCallback;
+        const int TIMEOUT_CONNECT_AND_DNS_LOOKUP, TIMEOUT_SEND, TIMEOUT_RECV;
+        int REQ_TIMER_WATCHDOG_ID, REQ_TIMER_KEEPALIVE_ID;
+        int REQ_DNS_LOOKUP_ID;
+        OsclTimer<PVRTSPEngineNodeAllocator>    *iWatchdogTimer;
+        OsclPriorityQueue<RTSPOutgoingMessage*, PVRTSPEngineNodeAllocator, Oscl_Vector<RTSPOutgoingMessage*, PVRTSPEngineNodeAllocator>, PVRTSPGenericMessageCompareLess> iOutgoingMsgQueue;
+        RTSPIncomingMessage iIncomingMsg;
+        SocketContainer iSendSocket, iRecvSocket;
+        RTSPParser::ParserState iRTSPParserState;
+        OSCL_EXPORT_REF static const int REQ_SEND_SOCKET_ID;
+        OSCL_EXPORT_REF static const int REQ_RECV_SOCKET_ID;
+    protected:
+        int TIMEOUT_WATCHDOG;
+        PVMFSharedMediaDataPtr iEmbeddedDataPtr;
+        PVMFMediaFragGroupCombinedAlloc<OsclMemAllocator>* ipFragGroupAllocator;
+        // allocator for outgoing media frag groups
+        OsclMemPoolFixedChunkAllocator* ipFragGroupMemPool;
+        bool ibBlockedOnFragGroups;
+        PVMFPortVector<PVMFRTSPPort, PVRTSPEngineNodeAllocator> iPortVector;
+        PVMFPortInterface* iTheBusyPort;
+        int setupTrackIndex;
+        bool bNoSendPending;//a Send() is pending on RTSP socket
     public:
         OSCL_IMPORT_REF PVRTSPEngineNode(int32 aPriority);
         OSCL_IMPORT_REF virtual ~PVRTSPEngineNode();
@@ -555,12 +595,6 @@ class PVRTSPEngineNode
                 OSCL_wString&  aUserNetwork,
                 OSCL_wString&  aDeviceInfo);
 
-        OSCL_IMPORT_REF virtual bool IsRdtTransport();
-        OSCL_IMPORT_REF virtual void SetPortRdtStreamId(PVMFPortInterface* pPort,
-                int iRdtStreamId);
-
-        OSCL_IMPORT_REF virtual void SetRealChallengeCalculator(IRealChallengeGen* pChallengeCalc);
-        OSCL_IMPORT_REF virtual void SetRdtParser(IPayloadParser* pRdtParser);
 
         OSCL_IMPORT_REF virtual PVMFStatus SetAuthenticationParameters(OSCL_wString& aUserID,
                 OSCL_wString& aAuthentication,
@@ -596,7 +630,7 @@ class PVRTSPEngineNode
         //************ end OsclDNSObserver
 
         //************ begin OsclMemPoolFixedChunkAllocatorObserver
-        void freechunkavailable(OsclAny*);
+        OSCL_IMPORT_REF void freechunkavailable(OsclAny*);
         //************ end OsclMemPoolFixedChunkAllocatorObserver
 
         void UpdateSessionCompletionStatus(bool aSessionCompleted)
@@ -626,6 +660,7 @@ class PVRTSPEngineNode
             PVRTSP_ENGINE_NODE_STATE_CONNECT,
             PVRTSP_ENGINE_NODE_STATE_CONNECTING,
 
+            PVRTSP_ENGINE_NODE_STATE_HTTP_CLOAKING_GET_URL,
             PVRTSP_ENGINE_NODE_STATE_HTTP_CLOAKING_SETUP,
 
             PVRTSP_ENGINE_NODE_STATE_SEND_OPTIONS,
@@ -649,65 +684,17 @@ class PVRTSPEngineNode
 
             PVRTSP_ENGINE_NODE_STATE_INVALID
         } iState;
-
     private:
-        OsclSharedPtr<PVMFMediaDataImpl> AllocateMediaData(int32& errCode);
         Oscl_Vector<SocketEvent, PVRTSPEngineNodeAllocator> iSocketEventQueue;
-
-        PVRTSPEngineNodeAllocator iAlloc;
-
         PVMFCommandId iCurrentCmdId;
-
+    protected:
+        OSCL_IMPORT_REF OsclSharedPtr<PVMFMediaDataImpl> AllocateMediaData(int32& errCode);
+        OSCL_IMPORT_REF void ChangeInternalState(PVRTSPEngineState aNewState);
+        PVRTSPEngineNodeAllocator iAlloc;
         OsclSocketServ  *iSockServ;
-
-//note: this class is for internal use only, but must be public to avoid ADS v1.2 compile error.
-    public:
-        //To keep track of current socket op
-        class SocketState
-        {
-            public:
-                SocketState()
-                        : iPending(false)
-                        , iCanceled(false)
-                {}
-                bool iPending;
-                bool iCanceled;
-                void Reset()
-                {
-                    iPending = iCanceled = false;
-                }
-        };
-
     private:
 
         //Container for a TCP socket that can connect, send, & recv.
-        class SocketContainer
-        {
-            public:
-                SocketContainer(): iSocket(NULL)
-                {}
-                OsclTCPSocket* iSocket;
-                SocketState iConnectState;
-                SocketState iSendState;
-                SocketState iRecvState;
-                SocketState iShutdownState;
-                void Reset(OsclTCPSocket* aSock)
-                {
-                    iSocket = aSock;
-                    iConnectState.Reset();
-                    iSendState.Reset();
-                    iRecvState.Reset();
-                    iShutdownState.Reset();
-                }
-                bool IsBusy()
-                {
-                    return iSocket
-                           && (iConnectState.iPending
-                               || iSendState.iPending
-                               || iRecvState.iPending
-                               || iShutdownState.iPending);
-                }
-        };
         class DnsContainer
         {
             public:
@@ -721,10 +708,7 @@ class PVRTSPEngineNode
                             && iState.iPending);
                 }
         };
-        void SetSendPending(SocketContainer&);
-        void SetRecvPending(SocketContainer&);
 
-        SocketContainer iSendSocket, iRecvSocket;
         DnsContainer iDNS;
 
         //To keep track of socket reset sequence.
@@ -739,28 +723,12 @@ class PVRTSPEngineNode
         };
         TSocketCleanupState iSocketCleanupState;
 
-        //only for http cloaking, string to store the text to send until send completes
-        OSCL_HeapString<PVRTSPEngineNodeAllocator> iRecvChannelMsg, iSendChannelMsg;
 
         RTSPParser *iRTSPParser;
-        RTSPParser::ParserState iRTSPParserState;
-        RTSPIncomingMessage iIncomingMsg;
         uint32 iOutgoingSeq;
 
         bool bNoRecvPending;//an Recv() is pending on RTSP socket
-        bool bNoSendPending;//a Send() is pending on RTSP socket
 
-        PVMFPortInterface* iTheBusyPort;
-        //OsclMemoryFragment entityBody;            //Used to register with RTSP parser
-        //OsclMemoryFragment embeddedDataMemory;    //Used to save embedded binary data
-
-        SessionInfo iSessionInfo;
-
-        PVLogger* iLogger;
-
-        //uint8 iBufEmbedded[2048];
-        //RTSPEntityBody iEmbeddedData;
-        PVMFSharedMediaDataPtr  iEmbeddedDataPtr;
         // Reference counter for extension
         uint32 iExtensionRefCount;
         uint32 iNumRedirectTrials;
@@ -768,27 +736,19 @@ class PVRTSPEngineNode
         //socket server will callback even if Cancel() is called
         //most likely this is the case for OsclDNS as well
         //But this is NOT the case for OsclTimer
-        uint32  iNumHostCallback, iNumConnectCallback, iNumSendCallback, iNumRecvCallback;
         int BASE_REQUEST_ID;
-        static const int REQ_SEND_SOCKET_ID;
-        static const int REQ_RECV_SOCKET_ID;
-        int REQ_TIMER_WATCHDOG_ID, REQ_TIMER_KEEPALIVE_ID;
-        int REQ_DNS_LOOKUP_ID;
-
-
+    protected:
         const int DEFAULT_RTSP_PORT, DEFAULT_HTTP_PORT;
+    private:
 
         //these three are in milliseconds
-        const int TIMEOUT_CONNECT_AND_DNS_LOOKUP, TIMEOUT_SEND, TIMEOUT_RECV;
         const int TIMEOUT_SHUTDOWN;
 
         //these two are in seconds
-        int TIMEOUT_WATCHDOG;
         const int TIMEOUT_WATCHDOG_TEARDOWN;
         int TIMEOUT_KEEPALIVE;
         const int RECOMMENDED_RTP_BLOCK_SIZE;
 
-        int setupTrackIndex;
         bool bRepositioning;
 
         class PVRTSPErrorContext
@@ -801,9 +761,9 @@ class PVRTSPEngineNode
 
         //temp string compose buffer for internal use RTSP_MAX_FULL_REQUEST_SIZE
         OsclMemoryFragment  iRTSPEngTmpBuf;
+    protected:
         OsclMemoryFragment  iEntityMemFrag;
-        //OsclRefCounterMemFrag iEntityMemFrag;
-
+    private:
         // Queue of commands for cancel
         PVRTSPEngineNodeCmdQ iCancelCmdQueue;
         // Queue of commands user requested
@@ -815,7 +775,6 @@ class PVRTSPEngineNode
         //command such as Cancel must be able to interrupt a command
         //in progress.
         PVRTSPEngineNodeCmdQ iRunningCmdQueue;
-        PVMFPortVector<PVMFRTSPPort, PVRTSPEngineNodeAllocator> iPortVector;
         /**
          * Queue holding port activity. Only incoming and outgoing msg activity are
          * put on the queue.  For each port, there should only be at most one activity
@@ -824,17 +783,10 @@ class PVRTSPEngineNode
         Oscl_Vector<PVMFPortActivity, PVRTSPEngineNodeAllocator> iPortActivityQueue;
         PVMFNodeCapability iCapability;
 
-        //OsclPriorityQueue<PVRTSPEngineCommand,PVRTSPEngineNodeAllocator,Oscl_Vector<PVRTSPEngineCommand,PVRTSPEngineNodeAllocator>,PVRTSPEngineCommandCompareLess> iPendingCmdQueue;
-//  Oscl_Vector<PVRTSPEngineAsyncEvent, PVRTSPEngineNodeAllocator> iPendingEvents;
-
-//  OsclPriorityQueue<RTSPIncomingMessage,PVRTSPEngineNodeAllocator,Oscl_Vector<RTSPIncomingMessage,PVRTSPEngineNodeAllocator>,PVRTSPGenericMessageCompareLess> iIncomingMsgQueue;
-        OsclPriorityQueue<RTSPOutgoingMessage*, PVRTSPEngineNodeAllocator, Oscl_Vector<RTSPOutgoingMessage*, PVRTSPEngineNodeAllocator>, PVRTSPGenericMessageCompareLess> iOutgoingMsgQueue;
         RTSPOutgoingMessage* iSrvResponse;
         bool    bSrvRespPending;
 
-        OsclTimer<PVRTSPEngineNodeAllocator>    *iWatchdogTimer;
 
-        int32 iCurrentErrorCode;
         PVUuid iEventUUID;
 
         bool    bKeepAliveInPlay;
@@ -845,43 +797,34 @@ class PVRTSPEngineNode
         OsclMemPoolResizableAllocator *iMediaDataResizableAlloc;
         PVMFSimpleMediaBufferCombinedAlloc *iMediaDataImplAlloc;
 
-        /* Round trip delay calculation */
-        PVMFTimebase_Tickcount iRoundTripClockTimeBase;
 
         int32   iErrorRecoveryAttempt;
 
-        //uint8 iGetPostCorrelation;
-        GetPostCorrelationObject *iGetPostCorrelationObject;
     private:
         PVRTSPEngineNode();
         PVRTSPEngineNode&  operator = (const PVRTSPEngineNode&);
         PVRTSPEngineNode(const PVRTSPEngineNode&);
 
         //OsclActiveObject
-        virtual void Run();
-        virtual OsclLeaveCode RunError(OsclLeaveCode aError);
+        OSCL_IMPORT_REF virtual void Run();
+        OSCL_IMPORT_REF virtual OsclLeaveCode RunError(OsclLeaveCode aError);
 
-        PVMFStatus sendSocketOutgoingMsg(SocketContainer &aSock, RTSPOutgoingMessage &aMsg);
-        PVMFStatus sendSocketOutgoingMsg(SocketContainer &aSock, const uint8* aSendBuf, uint32 aSendLen);
 
         void ChangeExternalState(TPVMFNodeInterfaceState aNewState);
 
         // Handle command and data events
         PVMFCommandId AddCmdToQueue(PVRTSPEngineCommand& aCmd);
+        PVMFStatus DispatchCommand(PVRTSPEngineCommand& aCmd);
 
         bool ProcessCommand(PVRTSPEngineCommand& aCmd);
         bool rtspParserLoop(void);
+        bool parseURL(const OSCL_wString& aURL);
 
-        PVMFStatus DispatchCommand(PVRTSPEngineCommand& aCmd);
-
-        PVMFStatus DoInitNode(PVRTSPEngineCommand &aCmd);
         PVMFStatus DoPrepareNode(PVRTSPEngineCommand &aCmd);
         PVMFStatus DoStartNode(PVRTSPEngineCommand &aCmd);
         PVMFStatus DoPauseNode(PVRTSPEngineCommand &aCmd);
         PVMFStatus DoStopNode(PVRTSPEngineCommand &aCmd);
-        PVMFStatus DoResetNode(PVRTSPEngineCommand &aCmd);
         PVMFStatus DoQueryUuid(PVRTSPEngineCommand &aCmd);
-        PVMFStatus DoQueryInterface(PVRTSPEngineCommand &aCmd);
         PVMFStatus DoCancelCommand(PVRTSPEngineCommand &aCmd);
         PVMFStatus DoCancelAllCommands(PVRTSPEngineCommand &aCmd);
         PVMFStatus DoFlush(PVRTSPEngineCommand &aCmd);
@@ -896,38 +839,25 @@ class PVRTSPEngineNode
         bool ProcessPortActivity();
         void QueuePortActivity(const PVMFPortActivity &aActivity);
         PVMFStatus ProcessOutgoingMsg(PVMFPortInterface* aPort);
-
-        PVMFStatus SendRtspDescribe(PVRTSPEngineCommand &aCmd);
-        PVMFStatus SendRtspSetup(PVRTSPEngineCommand &aCmd);
         PVMFStatus SendRtspPlay(PVRTSPEngineCommand &aCmd);
         PVMFStatus SendRtspPause(PVRTSPEngineCommand &aCmd);
-        PVMFStatus SendRtspTeardown(PVRTSPEngineCommand &aCmd);
 
+        void MoveCmdToCancelQueue(PVRTSPEngineCommand& aCmd);
         void CommandComplete(PVRTSPEngineNodeCmdQ&,
                              PVRTSPEngineCommand&,
                              PVMFStatus, OsclAny* aData = NULL,
                              PVUuid* aEventUUID = NULL,
                              int32* aEventCode = NULL);
 
-        bool parseURL(const OSCL_wString& aURL);
-        bool parseURL(const char* aURL);
 
-
-        void ChangeInternalState(PVRTSPEngineState aNewTask);
         PVMFStatus composeOptionsRequest(RTSPOutgoingMessage&);
         PVMFStatus composeDescribeRequest(RTSPOutgoingMessage&);
-        PVMFStatus composeSetupRequest(RTSPOutgoingMessage &iMsg, StreamInfo &aSelected);
         PVMFStatus composePlayRequest(RTSPOutgoingMessage &iMsg);
         PVMFStatus composeStopRequest(RTSPOutgoingMessage &iMsg);
         PVMFStatus composePauseRequest(RTSPOutgoingMessage &iMsg);
         PVMFStatus composeKeepAliveRequest(RTSPOutgoingMessage &aMsg);
 
-        PVMFStatus composeGetRequest(RTSPOutgoingMessage &iMsg);
-        PVMFStatus composePostRequest(RTSPOutgoingMessage &iMsg);
-
-        PVMFStatus processIncomingMessage(RTSPIncomingMessage &iIncomingMsg);
         PVMFStatus processServerRequest(RTSPIncomingMessage &aMsg);
-        PVMFStatus processEntityBody(RTSPIncomingMessage &aMsg, OsclMemoryFragment &aEntityMemFrag);
 
         PVMFStatus processCommonResponse(RTSPIncomingMessage &aMsg);
 
@@ -935,12 +865,6 @@ class PVRTSPEngineNode
         PVMFStatus composeSessionURL(RTSPOutgoingMessage &aMsg);
         PVMFStatus composeMediaURL(int aTrackID, StrPtrLen &aMediaURI);
 
-        //PVMFStatus processSDP(OsclMemoryFragment &aSDPBuf, SDPInfo &aSDPinfo);
-
-        void ReportErrorEvent(PVMFEventType aEventType,
-                              OsclAny* aEventData = NULL,
-                              PVUuid* aEventUUID = NULL,
-                              int32* aEventCode = NULL);
         void ReportInfoEvent(PVMFEventType aEventType,
                              OsclAny* aEventData = NULL,
                              PVUuid* aEventUUID = NULL,
@@ -952,35 +876,10 @@ class PVRTSPEngineNode
         void CheckCancelAllSuccess();
         //allocate aReqBufSize memory for iEmbeddedData
         bool PrepareEmbeddedDataMemory(uint32 aReqBufSize, OsclMemoryFragment &);
-        bool DispatchEmbeddedData(uint32 aChannelID);
-        // private members added for real support
-        bool ibIsRealRDT;
 
-        // realchallenge1 string returned by OPTIONS request
-        OSCL_HeapString<OsclMemAllocator> iRealChallenge1;
-
-        // realchallenge2 string to be sent in SETUP request
-        OSCL_HeapString<OsclMemAllocator> iRealChallenge2;
-
-        IRealChallengeGen* ipRealChallengeGen;
-        IPayloadParser* ipRdtParser;
-
-        // allocator for outgoing media frag groups
-        PVMFMediaFragGroupCombinedAlloc<OsclMemAllocator>* ipFragGroupAllocator;
-        OsclMemPoolFixedChunkAllocator* ipFragGroupMemPool;
-
-        /////
-
-
-        bool DispatchEmbeddedRdtData();
-        bool ibBlockedOnFragGroups;
-        //bool simpleHttpParser(const uint8 *aBuf, int32 &aLen, bool &aIsStatus200);
-
-        PVMFStatus resetSocket(bool aImmediate = false);
         void clearOutgoingMsgQueue(void);
         void partialResetSessionInfo(void);
 
-        bool clearEventQueue(void);
 
         void ResetSessionInfo(void);
         PVRTSPEngineNodeExtensionInterface* iExtensionInterface;

@@ -1348,7 +1348,8 @@ OSCL_EXPORT_REF PVMFStatus PVMFJitterBufferMisc::DestroyPayloadParser(PayloadPar
 #endif
             status = PVMFFailure;
         }
-        factory->destroyPayloadParser(aPayloadParser);
+        if (aPayloadParser)
+            factory->destroyPayloadParser(aPayloadParser);
     }
     OSCL_ARRAY_DELETE(mimeStrToCompare);
     return status;

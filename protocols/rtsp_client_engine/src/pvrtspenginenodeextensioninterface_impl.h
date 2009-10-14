@@ -52,20 +52,10 @@ class PVRTSPEngineNodeExtensionInterfaceImpl : public PVInterfaceImpl<PVRTSPEngi
         OSCL_IMPORT_REF virtual PVMFStatus SetRtspProxy(OSCL_String& aRtspProxyName, uint32 aRtspProxyPort) ;
         OSCL_IMPORT_REF virtual PVMFStatus GetRtspProxy(OSCL_String& aRtspProxyName, uint32& aRtspProxyPort) ;
 
-        // to be called before init
-        OSCL_IMPORT_REF virtual bool IsRdtTransport() ;
-
-        OSCL_IMPORT_REF virtual void SetPortRdtStreamId(PVMFPortInterface* pPort,
-                int iRdtStreamId) ;
-
         OSCL_IMPORT_REF virtual PVMFStatus SetSDPInfo(OsclSharedPtr<SDPInfo>& aSDPinfo, Oscl_Vector<StreamInfo, OsclMemAllocator> &aSelectedStream);
         OSCL_IMPORT_REF virtual PVMFStatus GetServerInfo(PVRTSPEngineNodeServerInfo& aServerInfo);
         OSCL_IMPORT_REF virtual PVMFStatus GetStreamInfo(Oscl_Vector<StreamInfo, OsclMemAllocator> &aSelectedStream);
 
-
-        // API to pass in Real related parameters
-        OSCL_IMPORT_REF virtual void SetRealChallengeCalculator(IRealChallengeGen* pChallengeCalc);
-        OSCL_IMPORT_REF virtual void SetRdtParser(IPayloadParser* pRdtParser);
 
         //One of these must be called before Start()
         OSCL_IMPORT_REF virtual PVMFStatus SetRequestPlayRange(const RtspRangeType& aRange);
@@ -102,7 +92,6 @@ class PVRTSPEngineNodeExtensionInterfaceImpl : public PVInterfaceImpl<PVRTSPEngi
         OSCL_IMPORT_REF virtual PVMFStatus SetKeepAliveMethod_keep_alive_in_play(bool aKeepAliveInPlay = false);
 
         OSCL_IMPORT_REF virtual PVMFStatus GetKeepAliveMethod(int32 &aTimeout, bool &aUseSetParameter, bool &aKeepAliveInPlay);
-
 
 
         OSCL_IMPORT_REF virtual PVMFStatus GetRTSPTimeOut(int32 &aTimeout);

@@ -69,6 +69,8 @@ LIBS :=  pvframemetadatautility \
         pvmedialayernode \
         rtprtcp \
         pvrtsp_cli_eng_node \
+        pvrtsp_cli_eng_real_cloaking_node \
+        pvrtsp_cli_eng_playlist_node \
         protocolenginenode \
         pv_http_parcom \
 		pv_rtmp_parcom \

@@ -159,7 +159,7 @@ void PVMFSMRTSPTUnicastNode::Construct()
              iAvailableMetadataKeys.clear();
              // create the payload parser registry
              PopulatePayloadParserRegistry();
-             CreateChildNodes();
+             PVMFSMRTSPTUnicastNode::CreateChildNodes();
              QueryChildNodesExtentionInterface();
              // pass the payload parser registry on to the jitter buffer node
              PVMFSMFSPChildNodeContainer* iJitterBufferNodeContainer =
@@ -181,6 +181,12 @@ void PVMFSMRTSPTUnicastNode::Construct()
 
 OSCL_EXPORT_REF
 void PVMFSMRTSPTUnicastNode::CreateChildNodes()
+{
+    CreateSessionControllerNode();
+    CreateJitterBufferNode();
+}
+
+void PVMFSMRTSPTUnicastNode::CreateSessionControllerNode()
 {
     OsclExclusivePtr<PVMFNodeInterface> sessionControllerAutoPtr;
 
@@ -207,8 +213,12 @@ void PVMFSMRTSPTUnicastNode::CreateChildNodes()
     /* Push back the known UUID in case there are no queries */
     sSessionControllerNodeContainer.iExtensionUuids.push_back(KPVRTSPEngineNodeExtensionUuid);
     iFSPChildNodeContainerVec.push_back(sSessionControllerNodeContainer);
+    sessionControllerAutoPtr.release();
 
+}
 
+void PVMFSMRTSPTUnicastNode::CreateJitterBufferNode()
+{
     /*
      * Create jitter buffer node
      */
@@ -241,7 +251,6 @@ void PVMFSMRTSPTUnicastNode::CreateChildNodes()
     iFSPChildNodeContainerVec.push_back(sJitterBufferNodeContainer);
 
     jitterBufferNodeAutoPtr.release();
-    sessionControllerAutoPtr.release();
 }
 
 OSCL_EXPORT_REF
@@ -255,11 +264,10 @@ void PVMFSMRTSPTUnicastNode::DestroyChildNodes()
             PVInterface* extIntf = iFSPChildNodeContainerVec[i].iExtensions[j];
             extIntf->removeRef();
         }
-        if (iFSPChildNodeContainerVec[i].iNodeTag == PVMF_SM_FSP_RTSP_SESSION_CONTROLLER_NODE)
-        {
-            PVMFRrtspEngineNodeFactory::DeletePVMFRtspEngineNode(iFSPChildNodeContainerVec[i].iNode);
-        }
-        else if (iFSPChildNodeContainerVec[i].iNodeTag == PVMF_SM_FSP_JITTER_BUFFER_NODE)
+
+        DeleteSessionControllerNode(i);
+
+        if (iFSPChildNodeContainerVec[i].iNodeTag == PVMF_SM_FSP_JITTER_BUFFER_NODE)
         {
             OSCL_DELETE(OSCL_STATIC_CAST(PVMFJitterBufferNode*, iFSPChildNodeContainerVec[i].iNode));
         }
@@ -267,6 +275,15 @@ void PVMFSMRTSPTUnicastNode::DestroyChildNodes()
     }
 
     iFSPChildNodeContainerVec.clear();
+}
+
+OSCL_EXPORT_REF
+void PVMFSMRTSPTUnicastNode::DeleteSessionControllerNode(uint32 aIndex)
+{
+    if (iFSPChildNodeContainerVec[aIndex].iNodeTag == PVMF_SM_FSP_RTSP_SESSION_CONTROLLER_NODE)
+    {
+        PVMFRrtspEngineNodeFactory::DeletePVMFRtspEngineNode(iFSPChildNodeContainerVec[aIndex].iNode);
+    }
 }
 
 OSCL_EXPORT_REF
@@ -384,10 +401,13 @@ void PVMFSMRTSPTUnicastNode::QueryChildNodesExtentionInterface()
         }
 
         PVInterface* extensionIntfPtr = NULL;
-        bool retval = interfacePtr->queryInterface(it->iExtensionUuids.front(), extensionIntfPtr);
-        if (retval && extensionIntfPtr)
+        if (interfacePtr != NULL)
         {
-            it->iExtensions.push_back(extensionIntfPtr);
+            bool retval = interfacePtr->queryInterface(it->iExtensionUuids.front(), extensionIntfPtr);
+            if (retval && extensionIntfPtr)
+            {
+                it->iExtensions.push_back(extensionIntfPtr);
+            }
         }
     }
 }
@@ -1235,7 +1255,7 @@ bool PVMFSMRTSPTUnicastNode::RequestJitterBufferPorts(int32 portType,
 
     if ((iSessionSourceInfo->_sessionType == PVMF_MIME_DATA_SOURCE_RTSP_URL)
             || (iSessionSourceInfo->_sessionType == PVMF_MIME_DATA_SOURCE_SDP_FILE)
-       )
+            || (iSessionSourceInfo->_sessionType == PVMF_MIME_DATA_SOURCE_REAL_HTTP_CLOAKING_URL))
     {
         for (uint32 i = 0; i < iTrackInfoVec.size(); i++)
         {
@@ -2964,6 +2984,7 @@ PVMFStatus PVMFSMRTSPTUnicastNode::SetSourceInitializationData(OSCL_wString& aSo
             iPreviewMode = opaqueData->iPreviewMode;
             iCPMSourceData.iPreviewMode = iPreviewMode;
             iCPMSourceData.iIntent = opaqueData->iIntent;
+            iUseCPMPluginRegistry = true;
         }
         else
         {
@@ -2982,6 +3003,7 @@ PVMFStatus PVMFSMRTSPTUnicastNode::SetSourceInitializationData(OSCL_wString& aSo
                         OSCL_STATIC_CAST(PVMFSourceContextData*, sourceDataContext);
                     iSourceContextData = *sContext;
                     iSourceContextDataValid = true;
+                    iUseCPMPluginRegistry = true;
                 }
             }
         }
@@ -3071,6 +3093,8 @@ PVMFStatus PVMFSMRTSPTUnicastNode::SetSourceInitializationData(OSCL_wString& aSo
          * to true, even if some one passed a regular rtsp url and
          * specified it as a cloaking url
          */
+        iSessionSourceInfo->_sessionType = aSourceFormat;
+        iSessionSourceInfo->_sessionURL += aSourceURL;
         rtspExtIntf->SetStreamingType(PVRTSP_RM_HTTP);
         return (rtspExtIntf->SetSessionURL(iSessionSourceInfo->_sessionURL));
     }
@@ -3464,8 +3488,9 @@ void PVMFSMRTSPTUnicastNode::DoSetDataSourcePosition(PVMFSMFSPBaseNodeCommand& a
     *iActualMediaDataTSPtr = 0;
 
 
-    if ((iSessionSourceInfo->_sessionType == PVMF_MIME_DATA_SOURCE_RTSP_URL) ||
-            (iSessionSourceInfo->_sessionType == PVMF_MIME_DATA_SOURCE_SDP_FILE))
+    if ((iSessionSourceInfo->_sessionType == PVMF_MIME_DATA_SOURCE_RTSP_URL)
+            || (iSessionSourceInfo->_sessionType == PVMF_MIME_DATA_SOURCE_SDP_FILE)
+            || (iSessionSourceInfo->_sessionType == PVMF_MIME_DATA_SOURCE_REAL_HTTP_CLOAKING_URL))
     {
         if (iInterfaceState == EPVMFNodePrepared)
         {
@@ -4167,7 +4192,8 @@ void PVMFSMRTSPTUnicastNode::CompleteInit()
             {
                 PVMFStatus status = PVMFSuccess;
 
-                if ((iSessionSourceInfo->_sessionType == PVMF_MIME_DATA_SOURCE_RTSP_URL))
+                if ((iSessionSourceInfo->_sessionType == PVMF_MIME_DATA_SOURCE_RTSP_URL)
+                        || (iSessionSourceInfo->_sessionType == PVMF_MIME_DATA_SOURCE_REAL_HTTP_CLOAKING_URL))
                 {
                     status = ProcessSDP();
                 }
@@ -4682,7 +4708,8 @@ void PVMFSMRTSPTUnicastNode::CompletePause()
         if (iRepositioning)
         {
             OSCL_ASSERT((iSessionSourceInfo->_sessionType == PVMF_MIME_DATA_SOURCE_RTSP_URL) ||
-                        (iSessionSourceInfo->_sessionType == PVMF_MIME_DATA_SOURCE_SDP_FILE));
+                        (iSessionSourceInfo->_sessionType == PVMF_MIME_DATA_SOURCE_SDP_FILE) ||
+                        (iSessionSourceInfo->_sessionType == PVMF_MIME_DATA_SOURCE_REAL_HTTP_CLOAKING_URL));
             /*
              * Pause request generated by a reposition command
              * complete. Issue a start.
@@ -4755,8 +4782,9 @@ void PVMFSMRTSPTUnicastNode::CompleteGraphConstruct()
 OSCL_EXPORT_REF
 bool PVMFSMRTSPTUnicastNode::SendSessionSourceInfoToSessionController()
 {
-    if (((iSessionSourceInfo->_sessionType == PVMF_MIME_DATA_SOURCE_RTSP_URL) ||
-            (iSessionSourceInfo->_sessionType == PVMF_MIME_DATA_SOURCE_SDP_FILE)))
+    if ((iSessionSourceInfo->_sessionType == PVMF_MIME_DATA_SOURCE_RTSP_URL) ||
+            (iSessionSourceInfo->_sessionType == PVMF_MIME_DATA_SOURCE_SDP_FILE) ||
+            (iSessionSourceInfo->_sessionType == PVMF_MIME_DATA_SOURCE_REAL_HTTP_CLOAKING_URL))
     {
 
         PVMFSMFSPChildNodeContainer* iSessionControllerNodeContainer =
@@ -4985,7 +5013,8 @@ OSCL_EXPORT_REF
 bool PVMFSMRTSPTUnicastNode::SendSessionControlPrepareCompleteParams()
 {
     if ((iSessionSourceInfo->_sessionType == PVMF_MIME_DATA_SOURCE_RTSP_URL) ||
-            (iSessionSourceInfo->_sessionType == PVMF_MIME_DATA_SOURCE_SDP_FILE))
+            (iSessionSourceInfo->_sessionType == PVMF_MIME_DATA_SOURCE_SDP_FILE) ||
+            (iSessionSourceInfo->_sessionType == PVMF_MIME_DATA_SOURCE_REAL_HTTP_CLOAKING_URL))
     {
         PVMFSMFSPChildNodeContainer* iSessionControllerNodeContainer =
             getChildNodeContainer(PVMF_SM_FSP_RTSP_SESSION_CONTROLLER_NODE);
@@ -5084,7 +5113,8 @@ bool PVMFSMRTSPTUnicastNode::SendSessionControlStartCompleteParams()
     int32 stopTime  = 0;
 
     if ((iSessionSourceInfo->_sessionType == PVMF_MIME_DATA_SOURCE_RTSP_URL) ||
-            (iSessionSourceInfo->_sessionType == PVMF_MIME_DATA_SOURCE_SDP_FILE))
+            (iSessionSourceInfo->_sessionType == PVMF_MIME_DATA_SOURCE_SDP_FILE) ||
+            (iSessionSourceInfo->_sessionType == PVMF_MIME_DATA_SOURCE_REAL_HTTP_CLOAKING_URL))
     {
         PVMFSMFSPChildNodeContainer* iSessionControllerNodeContainer =
             getChildNodeContainer(PVMF_SM_FSP_RTSP_SESSION_CONTROLLER_NODE);

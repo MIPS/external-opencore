@@ -87,7 +87,6 @@
 #endif
 #endif
 
-#define USE_NEW_PVMF_SOURCE_CONTEXT_DATA
 #define DVBH_TEST_DURATION 45 // DVBH tests are run for 45 seconds
 //
 // pvplayer_async_test_streamingopenplaystop section
