@@ -113,7 +113,7 @@ OSCL_EXPORT_REF uint32 HTTPParser::getHttpVersionNum()
 
 ////////////////////////////////////////////////////////////////////////////////////
 //Set maximum line size for multiline response
-OSCL_IMPORT_REF void HTTPParser::setMaxLineSizeForMultiLineResponse(int32 &aSizeLimit)
+OSCL_EXPORT_REF void HTTPParser::setMaxLineSizeForMultiLineResponse(int32 &aSizeLimit)
 {
     iHeader->setMaxLineSizeForMultiLineResponse(aSizeLimit);
 }
