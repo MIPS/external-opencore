@@ -2,16 +2,16 @@
  * Copyright (C) 2008, The Android Open Source Project
  * Copyright (C) 2008 HTC Inc.
  *
- * Licensed under the Apache License, Version 2.0 (the "License"); 
- * you may not use this file except in compliance with the License. 
- * You may obtain a copy of the License at 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0 
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software 
- * distributed under the License is distributed on an "AS IS" BASIS, 
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. 
- * See the License for the specific language governing permissions and 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
  * limitations under the License.
  */
 
@@ -332,7 +332,7 @@ void AuthorDriver::handleSetVideoSource(set_video_source_command *ac)
             mVideoNode = PvmfMediaInputNodeFactory::Create(cameraInput);
             if (mVideoNode) {
                 // pass in the application supplied camera object
-                if (mCamera == 0 || 
+                if (mCamera == 0 ||
                     (mCamera != 0 && cameraInput->SetCamera(mCamera) == PVMFSuccess)) {
                     mVideoInputMIO = cameraInput;
                     break;
@@ -965,7 +965,7 @@ void AuthorDriver::handleRemoveVideoSource(author_command *ac)
         OSCL_TRY(error, mAuthor->RemoveDataSource(*mVideoNode, ac));
         OSCL_FIRST_CATCH_ANY(error, commandFailed(ac));
     } else {
-       FinishNonAsyncCommand(ac); 
+       FinishNonAsyncCommand(ac);
     }
 }
 
@@ -991,7 +991,7 @@ void AuthorDriver::removeConfigRefs(author_command *ac)
     }
     if (mVideoEncoderConfig) {
         mVideoEncoderConfig->removeRef();
-        mVideoEncoderConfig = NULL; 
+        mVideoEncoderConfig = NULL;
     }
     if (mAudioEncoderConfig) {
         mAudioEncoderConfig->removeRef();
@@ -1419,7 +1419,12 @@ void AuthorDriver::CommandCompleted(const PVCmdResponse& aResponse)
     switch(s) {
         case PVMFSuccess: s = android::OK; break;
         case PVMFPending: *(char *)0 = 0; break; /* XXX assert */
-        default: s = android::UNKNOWN_ERROR;
+        default:
+            LOGE("Command %d completed with error %d",ac->which, s);
+            // s = android::UNKNOWN_ERROR;
+            // FIXME: Similar to mediaplayer, set the return status to
+            //        something android specific. For now, use PVMF
+            //        return codes as is.
     }
 
     // Call the user's requested completion function

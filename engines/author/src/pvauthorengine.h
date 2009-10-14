@@ -385,6 +385,8 @@ class PVAuthorEngine
         PVMFTimebase_Tickcount iAuthorClockTimebase;
         PVMFMediaClock iAuthorClock;
         PVMFStatus SendAuthoringClockToDataSources(bool aReset = false);
+
+        PVMFStatus lastNodeCommandError;
 };
 
 
