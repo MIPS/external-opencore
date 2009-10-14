@@ -27,7 +27,8 @@ SRCS := \
     pvmf_sync_util.cpp \
     pvmf_timestamp.cpp \
     pvmi_config_and_capability_utils.cpp \
-    pvmi_kvp_util.cpp
+    pvmi_kvp_util.cpp \
+    pvmf_event_handling.cpp
 
 HDRS :=  \
     pv_interface.h \

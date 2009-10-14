@@ -79,7 +79,7 @@ class PVMFEventBase
         /**
         What type of event is this ?
         **/
-        virtual PVMFEventCategory IsA() = 0;
+        OSCL_IMPORT_REF virtual PVMFEventCategory IsA() const = 0;
 };
 
 /**
@@ -88,7 +88,7 @@ class PVMFEventBase
  * PVMFCmdResp class is used to pass completion status on previously issued
  * commands
  **/
-class PVMFCmdResp : public PVMFEventBase
+class OSCL_IMPORT_REF PVMFCmdResp : public PVMFEventBase
 {
     public:
         /**
@@ -145,10 +145,7 @@ class PVMFCmdResp : public PVMFEventBase
 
         virtual ~PVMFCmdResp() {}
 
-        PVMFEventCategory IsA()
-        {
-            return PVMFCmdRespEvent;
-        }
+        OSCL_IMPORT_REF virtual PVMFEventCategory IsA() const;
 
         /**
          * @return Returns the unique ID associated with a command of this type.
@@ -264,7 +261,7 @@ class PVMFCmdResp : public PVMFEventBase
  * event
  **/
 #define PVMF_ASYNC_EVENT_LOCAL_BUF_SIZE 16
-class PVMFAsyncEvent : public PVMFEventBase
+class OSCL_IMPORT_REF PVMFAsyncEvent : public PVMFEventBase
 {
     public:
         PVMFAsyncEvent(PVMFEventCategory aEventCategory,
@@ -357,10 +354,7 @@ class PVMFAsyncEvent : public PVMFEventBase
 
         virtual ~PVMFAsyncEvent() {}
 
-        PVMFEventCategory IsA()
-        {
-            return iEventCategory;
-        }
+        OSCL_IMPORT_REF virtual PVMFEventCategory IsA() const;
 
         /**
          * @return Returns the unique type identifier of the event.

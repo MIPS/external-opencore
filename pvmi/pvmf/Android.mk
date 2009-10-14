@@ -20,7 +20,8 @@ LOCAL_SRC_FILES := \
  	src/pvmf_sync_util.cpp \
  	src/pvmf_timestamp.cpp \
  	src/pvmi_config_and_capability_utils.cpp \
- 	src/pvmi_kvp_util.cpp
+ 	src/pvmi_kvp_util.cpp \
+ 	src/pvmf_event_handling.cpp
 
 
 LOCAL_MODULE := libpvmf
