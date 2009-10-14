@@ -145,6 +145,46 @@ OSCL_EXPORT_REF void PV8601ToRFC822(PV8601timeStrBuf pv8601_buffer, CtimeStrBuf 
 
 }
 
+OSCL_EXPORT_REF void ISO8601ToRFC822(ISO8601timeStrBuf iso8601_buffer, CtimeStrBuf ctime_buffer)
+{
+    // Convert from ISO8601 Format (2001-08-05 18:54:30(Z))
+    // to RFC822 Format (Sun Aug  5 18:54:30 2001)
+    // No <time.h> functions will be used because this code must run on
+    // all platforms.
+    //---OSCL_HAS_ANSI_STRING_SUPPORT---//
+    if ((ISO8601TIME_BUFFER_SIZE - 1) != strlen(iso8601_buffer))
+    {
+        ctime_buffer[0] = 0;
+        return;
+    }
+
+    char buf[5];
+
+    int year, mon, day, hour, min, sec;
+
+    strncpy(buf, iso8601_buffer, 4);
+    buf[4] = 0;
+    year = atoi(buf);
+
+    buf[2] = 0;
+    strncpy(buf, iso8601_buffer + 5, 2);
+    mon = atoi(buf);
+    strncpy(buf, iso8601_buffer + 8, 2);
+    day = atoi(buf);
+    strncpy(buf, iso8601_buffer + 11, 2);
+    hour = atoi(buf);
+    strncpy(buf, iso8601_buffer + 14, 2);
+    min = atoi(buf);
+    strncpy(buf, iso8601_buffer + 17, 2);
+    sec = atoi(buf);
+
+    sprintf(ctime_buffer,
+            "%s %s %2d %02d:%02d:%02d %04d",
+            days[DayIndexFromDate(year, mon, day)],
+            months[mon-1],
+            day, hour, min, sec, year);
+
+}
 OSCL_EXPORT_REF void RFC822ToPV8601(CtimeStrBuf ctime_buffer, PV8601timeStrBuf pv8601_buffer)
 {
     // Convert from RFC822 Format (Sun Aug  5 18:54:30 2001)
@@ -245,5 +285,37 @@ OSCL_EXPORT_REF int TimeValue::get_pv8601_str_time(PV8601timeStrBuf time_strbuf)
 
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+OSCL_EXPORT_REF int TimeValue::get_ISO8601_str_time(ISO8601timeStrBuf time_strbuf)
+{
+    //---OSCL_HAS_UNIX_TIME_FUNCS---//
+    int num_chars = 0;
+    struct tm *timeptr;
+    struct tm buffer;
 
+    if (zulu)
+    {
+        // Get the zulu time (GMT)
+        timeptr = gmtime_r(&ts.tv_sec, &buffer);
 
+        // Form the string.
+        if ((num_chars = strftime(time_strbuf, sizeof(ISO8601timeStrBuf),
+                                  "%Y-%m-%d %H:%M:%SZ", timeptr)) == 0)
+        {
+            // Failed .. null the string and return.
+            time_strbuf[0] = NULL_TERM_CHAR;
+        }
+    }
+    else
+    {
+        // Get the local time.
+        timeptr = localtime_r(&ts.tv_sec, &buffer);
+
+        if ((num_chars = strftime(time_strbuf, sizeof(ISO8601timeStrBuf),
+                                  "%Y-%m-%d %H:%M:%S", timeptr)) == 0)
+            time_strbuf[0] = NULL_TERM_CHAR;
+    }
+
+    return num_chars;
+
+}

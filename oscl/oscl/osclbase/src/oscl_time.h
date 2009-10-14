@@ -56,13 +56,16 @@ NTPTime is used for the standard Network Time Protocol format.
 const int CTIME_BUFFER_SIZE = 26;
 
 const int PV8601TIME_BUFFER_SIZE = 21;
+const int ISO8601TIME_BUFFER_SIZE = 21;
 
 typedef char CtimeStrBuf[CTIME_BUFFER_SIZE];
 typedef char PV8601timeStrBuf[PV8601TIME_BUFFER_SIZE];
+typedef char ISO8601timeStrBuf[ISO8601TIME_BUFFER_SIZE];
 
 class TimeValue;  // Forward definition
 
 OSCL_IMPORT_REF void PV8601ToRFC822(PV8601timeStrBuf pv8601_buffer, CtimeStrBuf ctime_buffer);
+OSCL_IMPORT_REF void ISO8601ToRFC822(ISO8601timeStrBuf iso8601_buffer, CtimeStrBuf ctime_buffer);
 OSCL_IMPORT_REF void RFC822ToPV8601(CtimeStrBuf ctime_buffer, PV8601timeStrBuf);
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -210,6 +213,7 @@ class TimeValue
         */
         OSCL_COND_IMPORT_REF TimeValue(const OsclBasicTimeStruct& in_tv);
 
+        OSCL_COND_IMPORT_REF TimeValue(const ISO8601timeStrBuf time_strbuf);
         //! Create a TimeValue representing the absolute time specified by the
         //! year/month/day/hours/minutes/seconds/microseconds values passed as argument.
         /*!
@@ -290,12 +294,19 @@ class TimeValue
         */
         OSCL_IMPORT_REF char *get_str_ctime(CtimeStrBuf ctime_strbuf);
 
-        //! Get a PV extended text representation of the Time based on the ISO 8601 format.
+        //! Get a PV extended text representation of the Time based on the PV 8601 format.
         /*!
            \param time_strbuf A PV8601timeStrBuf object to which the text representation will be written,
            \return The number of characters copied to the buffer, not including the terminating null.  The returned string is of the form "19850412T101530.047Z".
          */
         OSCL_IMPORT_REF int get_pv8601_str_time(PV8601timeStrBuf time_strbuf);
+
+        //! Get a PV extended text representation of the Time based on the ISO 8601 format.
+        /*!
+           \param time_strbuf A ISO8601timeStrBuf object to which the text representation will be written,
+           \return The number of characters copied to the buffer, not including the terminating null.  The returned string is of the form "1985-04-12 10:15:30Z".
+         */
+        OSCL_IMPORT_REF int get_ISO8601_str_time(ISO8601timeStrBuf time_strbuf);
 
         //! Get a text representation of the time in the GMT timezone based on the RFC 822 / RFC 1123 (also described in the HTTP spec RFC 2068 and RFC 2616.
         /*!
@@ -310,6 +321,10 @@ class TimeValue
         //! Determine if the time value is zero.
         OSCL_COND_IMPORT_REF bool is_zero();
 
+        //! Manipulate internal flags to mark the time value as being in "zulu" (GMT) time.
+
+        OSCL_COND_IMPORT_REF bool is_zulu() const;
+        OSCL_COND_IMPORT_REF void set_zulu(bool is_zulu);
 
         // comparison operators
         OSCL_COND_IMPORT_REF friend bool operator ==(const TimeValue& a, const TimeValue& b);
@@ -332,8 +347,11 @@ class TimeValue
 
         OSCL_COND_IMPORT_REF OsclBasicTimeStruct * get_timeval_ptr();
 
+        OSCL_COND_IMPORT_REF TimeValue& operator+=(const int32 aSeconds);
+        OSCL_COND_IMPORT_REF TimeValue& operator-=(const int32 aSeconds);
     private:
 
+        bool zulu;
         OsclBasicTimeStruct ts;
         const OsclBasicTimeStruct *getBasicTimeStruct() const
         {
@@ -343,6 +361,10 @@ class TimeValue
 };
 
 OSCL_COND_IMPORT_REF TimeValue operator -(const TimeValue& a, const TimeValue& b);
+OSCL_COND_IMPORT_REF TimeValue operator+(const TimeValue& a, const int32 bSeconds);
+OSCL_COND_IMPORT_REF TimeValue operator+(const int32 aSeconds, const TimeValue& b);
+OSCL_COND_IMPORT_REF TimeValue operator-(const TimeValue& a, const int32 bSeconds);
+OSCL_COND_IMPORT_REF TimeValue operator-(const int32 aSeconds, const TimeValue& b);
 
 #if (!OSCL_DISABLE_INLINES)
 #include "oscl_time.inl"

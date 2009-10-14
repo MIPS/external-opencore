@@ -116,6 +116,15 @@ OSCL_COND_EXPORT_REF OSCL_INLINE bool TimeValue::is_zero()
     return ((ts.tv_usec == 0) && (ts.tv_sec == 0));
 }
 
+OSCL_COND_EXPORT_REF OSCL_INLINE bool TimeValue::is_zulu() const
+{
+    return zulu;
+}
+
+OSCL_COND_EXPORT_REF OSCL_INLINE void TimeValue::set_zulu(bool is_zulu)
+{
+    zulu = is_zulu;
+}
 OSCL_COND_EXPORT_REF OSCL_INLINE uint32 TimeValue::get_sec() const
 {
     return ts.tv_sec;
@@ -153,10 +162,67 @@ OSCL_COND_EXPORT_REF OSCL_INLINE TimeValue operator -(const TimeValue& a, const 
     return c;
 }
 
+
+OSCL_COND_EXPORT_REF OSCL_INLINE TimeValue operator+(const TimeValue& a, const int32 bSeconds)
+{
+    TimeValue c = a;
+    return  c += bSeconds;
+}
+
+OSCL_COND_IMPORT_REF OSCL_INLINE TimeValue operator+(const int32 aSeconds, const TimeValue& b)
+{
+    TimeValue c = b;
+    return  c += aSeconds;
+}
+
+OSCL_COND_EXPORT_REF OSCL_INLINE TimeValue operator-(const TimeValue& a, const int32 bSeconds)
+{
+    TimeValue c = a;
+    return c -= bSeconds;
+}
+
+OSCL_COND_IMPORT_REF OSCL_INLINE TimeValue operator-(const int32 aSeconds, const TimeValue& b)
+{
+    TimeValue c = b;
+    return c -= aSeconds;
+}
+
+OSCL_COND_EXPORT_REF OSCL_INLINE TimeValue& TimeValue::operator+=(const int32 aSeconds)
+{
+    // Adding a negative number?
+    if (aSeconds < 0)
+    {
+        // Negative number.  Convert to a positive.
+        int32 sec_value = OSCL_ABS(aSeconds);
+
+        //  Subtract instead.
+        return *this -= sec_value;
+    }
+
+    TimeValue aSec(aSeconds, SECONDS);
+    return *this += aSec;
+}
+
+OSCL_COND_EXPORT_REF OSCL_INLINE TimeValue& TimeValue::operator-=(const int32 aSeconds)
+{
+    // Subtracting a negative number?
+    if (aSeconds < 0)
+    {
+        // Negative number.  Convert to a positive.
+        int32 sec_value = OSCL_ABS(aSeconds);
+
+        //  Add instead.
+        return *this += sec_value;
+    }
+
+    TimeValue aSec(aSeconds, SECONDS);
+    return *this -= aSec;
+}
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 OSCL_COND_EXPORT_REF OSCL_INLINE TimeValue& TimeValue::operator =(const TimeValue & a)
 {
+    this->zulu = a.zulu;
     this->ts.tv_usec = a.ts.tv_usec;
     this->ts.tv_sec = a.ts.tv_sec;
     return *this;
@@ -270,6 +336,7 @@ OSCL_COND_EXPORT_REF OSCL_INLINE void TimeValue::set_to_zero()
 
 OSCL_COND_EXPORT_REF OSCL_INLINE TimeValue::TimeValue()
 {
+    zulu = false;
     gettimeofday(&ts, NULL);
 }
 
@@ -278,6 +345,7 @@ OSCL_COND_EXPORT_REF OSCL_INLINE TimeValue::TimeValue()
 
 OSCL_COND_EXPORT_REF OSCL_INLINE TimeValue::TimeValue(const TimeValue& Tv)
 {
+    zulu = Tv.zulu;
     ts.tv_usec = Tv.ts.tv_usec;
     ts.tv_sec  = Tv.ts.tv_sec;
 }
@@ -286,6 +354,7 @@ OSCL_COND_EXPORT_REF OSCL_INLINE TimeValue::TimeValue(const TimeValue& Tv)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 OSCL_COND_EXPORT_REF OSCL_INLINE TimeValue::TimeValue(const OsclBasicTimeStruct& in_tv)
 {
+    zulu = false;
     ts.tv_usec = in_tv.tv_usec;
     ts.tv_sec = in_tv.tv_sec;
 }
@@ -327,6 +396,7 @@ OSCL_COND_EXPORT_REF OSCL_INLINE TimeValue::TimeValue(uint16 aYear, uint16 aMont
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 OSCL_COND_EXPORT_REF OSCL_INLINE TimeValue::TimeValue(long num_units, TimeUnits units)
 {
+    zulu = false;
     ts.tv_sec = num_units / MapToSeconds[units];
     long diff = num_units - MapToSeconds[units] * ts.tv_sec;
     ts.tv_usec = diff * MapToUSeconds[units];
@@ -337,6 +407,56 @@ OSCL_COND_EXPORT_REF OSCL_INLINE void TimeValue::set_from_ntp_time(const uint32 
 {
     ts.tv_sec = ntp_offset_seconds - unix_ntp_offset;
     ts.tv_usec = 0;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+OSCL_COND_EXPORT_REF OSCL_INLINE TimeValue::TimeValue(const ISO8601timeStrBuf time_strbuf)
+{
+    char buf[5];
+
+    int year, mon, day, hour, min, sec;
+
+    strncpy(buf, time_strbuf, 4);
+    buf[4] = 0;
+    year = atoi(buf);
+    buf[2] = 0;
+    strncpy(buf, time_strbuf + 5, 2);
+    mon = atoi(buf);
+    strncpy(buf, time_strbuf + 8, 2);
+    day = atoi(buf);
+    strncpy(buf, time_strbuf + 11, 2);
+    hour = atoi(buf);
+    strncpy(buf, time_strbuf + 14, 2);
+    min = atoi(buf);
+    strncpy(buf, time_strbuf + 17, 2);
+    sec = atoi(buf);
+
+    zulu = (time_strbuf[19] == 'Z') ? true : false;
+
+    // Fill in the time structure
+    OsclBasicDateTimeStruct timeStruct;
+
+    timeStruct.tm_sec = sec;
+    timeStruct.tm_min = min;
+    timeStruct.tm_hour = hour;
+    timeStruct.tm_mday = day;
+    timeStruct.tm_mon = mon - 1;
+    timeStruct.tm_year = year - 1900;
+    timeStruct.tm_wday = -1;
+    timeStruct.tm_yday = -1;
+    timeStruct.tm_isdst = -1;
+    timeStruct.tm_gmtoff = -1;
+
+    // Convert to a timeval
+    ts.tv_sec = mktime(&timeStruct);
+    ts.tv_usec = 0;
+
+    if (zulu)
+    {
+        // mktime sets the tv_sec to local time.
+        // Adjust the ts.tv_sec according to the GMT
+        ts.tv_sec += timeStruct.tm_gmtoff;
+    }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
