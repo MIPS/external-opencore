@@ -589,12 +589,14 @@ AssetInfoLocationAtom::AssetInfoLocationAtom(MP4_FF_FILE *fp, uint32 size, uint3
         {
             _charType = ORIGINAL_CHAR_TYPE_UTF8;
             // Check to see if the string is actually null-terminated
+            int32 currPos1 = AtomUtils::getCurrentFilePosition(fp);
             if (!AtomUtils::readNullTerminatedString(fp, _defaultNotice))
             {
                 _success = false;
                 return;
             }
-            count -= _defaultNotice.get_size() + 1;
+            int32 currPos2 = AtomUtils::getCurrentFilePosition(fp);
+            count -= (currPos2 - currPos1);
         }
 
         PV_MP4_FF_ARRAY_NEW(NULL, oscl_wchar, _defaultNotice.get_size() + 1, _pLocationStruct->_location_name);
@@ -676,12 +678,14 @@ AssetInfoLocationAtom::AssetInfoLocationAtom(MP4_FF_FILE *fp, uint32 size, uint3
         {
             _charType = ORIGINAL_CHAR_TYPE_UTF8;
             // Check to see if the string is actually null-terminated
+            int32 currPos1 = AtomUtils::getCurrentFilePosition(fp);
             if (!AtomUtils::readNullTerminatedString(fp, _astronomical_body))
             {
                 _success = false;
                 return;
             }
-            count -= _astronomical_body.get_size() + 1;
+            int32 currPos2 = AtomUtils::getCurrentFilePosition(fp);
+            count -= (currPos2 - currPos1);
         }
         PV_MP4_FF_ARRAY_NEW(NULL, oscl_wchar, _astronomical_body.get_size() + 1, _pLocationStruct->_astronomical_body);
         oscl_strncpy(_pLocationStruct->_astronomical_body, _astronomical_body.get_str(), _astronomical_body.get_size());
@@ -722,12 +726,14 @@ AssetInfoLocationAtom::AssetInfoLocationAtom(MP4_FF_FILE *fp, uint32 size, uint3
         {
             _charType = ORIGINAL_CHAR_TYPE_UTF8;
             // Check to see if the string is actually null-terminated
+            int32 currPos1 = AtomUtils::getCurrentFilePosition(fp);
             if (!AtomUtils::readNullTerminatedString(fp, _additional_notes))
             {
                 _success = false;
                 return;
             }
-            count -= _additional_notes.get_size() + 1;
+            int32 currPos2 = AtomUtils::getCurrentFilePosition(fp);
+            count -= (currPos2 - currPos1);
         }
         PV_MP4_FF_ARRAY_NEW(NULL, oscl_wchar, _additional_notes.get_size() + 1, _pLocationStruct->_additional_notes);
         oscl_strncpy(_pLocationStruct->_additional_notes, _additional_notes.get_str(), _additional_notes.get_size());
@@ -809,12 +815,14 @@ AssetInfoAlbumAtom::AssetInfoAlbumAtom(MP4_FF_FILE *fp, uint32 size, uint32 type
         {
             _charType = ORIGINAL_CHAR_TYPE_UTF8;
             // Check to see if the string is actually null-terminated
+            int32 currPos1 = AtomUtils::getCurrentFilePosition(fp);
             if (!AtomUtils::readNullTerminatedString(fp, _defaultNotice))
             {
                 _success = false;
                 return;
             }
-            count -= _defaultNotice.get_size() + 1;
+            int32 currPos2 = AtomUtils::getCurrentFilePosition(fp);
+            count -= (currPos2 - currPos1);
         }
         if (_defaultNotice.get_size() > size)
         {
