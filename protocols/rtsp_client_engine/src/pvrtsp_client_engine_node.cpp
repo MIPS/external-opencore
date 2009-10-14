@@ -1872,7 +1872,9 @@ OSCL_EXPORT_REF PVMFStatus PVRTSPEngineNode::SendRtspDescribe(PVRTSPEngineComman
                         return PVMFErrNoMemory;
                     }
 
-                    iSessionInfo.pSDPBuf = OsclRefCounterMemFrag(iEntityMemFrag, my_refcnt, iEntityMemFrag.len);
+
+                    uint32 trueBufferLen = (iEntityMemFrag.len - 1) / 2 + 1;
+                    iSessionInfo.pSDPBuf = OsclRefCounterMemFrag(iEntityMemFrag, my_refcnt, trueBufferLen);
                     {//done with the entity body, change the ownership of the mem
                         iEntityMemFrag.len = 0;
                         iEntityMemFrag.ptr = NULL;
@@ -4225,7 +4227,9 @@ bool PVRTSPEngineNode::rtspParserLoop(void)
                 break;
             }
             case RTSPParser::ENTITY_BODY_IS_READY:
-                ((uint8*)iEntityMemFrag.ptr)[iEntityMemFrag.len-1] = '\0';
+                // The actual length of the entity body is (iEntityMemFrag.len-1)/2. See reason
+                // in state RTSPParser::WAITING_FOR_ENTITY_BODY_MEMORY handling.
+                ((uint8*)iEntityMemFrag.ptr)[(iEntityMemFrag.len-1)/2] = '\0';
                 //let the Doxxx() to process the entity body, like sdp, still img, and server msg
             case RTSPParser::REQUEST_IS_READY:
             {
@@ -4242,11 +4246,16 @@ bool PVRTSPEngineNode::rtspParserLoop(void)
                     iEntityMemFrag.ptr = NULL;
                 }
 
+                // A larger buffer is allocated here to account for the case where illegal characters
+                // are present in a URL sent as the entity body. The APIs PVStringUri::PersentageToEscapedEncoding
+                // and PVStringUri::IllegalCharactersToEscapedEncoding do NOT check for the length
+                // of the destination string before copying the escaped URL to it.
+                uint32 uEntityMemFragLenWithBuffer = 2 * (iIncomingMsg.contentLength) + 1;
                 iEntityMemFrag.len = 0;
-                iEntityMemFrag.ptr = OSCL_MALLOC(iIncomingMsg.contentLength + 1);
+                iEntityMemFrag.ptr = OSCL_MALLOC(uEntityMemFragLenWithBuffer);
 
                 OsclError::LeaveIfNull(iEntityMemFrag.ptr);
-                iEntityMemFrag.len = (iIncomingMsg.contentLength + 1);
+                iEntityMemFrag.len = uEntityMemFragLenWithBuffer;
 
                 if (!iRTSPParser->registerEntityBody(&iEntityMemFrag))
                 {
