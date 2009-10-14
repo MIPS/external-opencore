@@ -79,7 +79,7 @@ class PVMFEventBase
         /**
         What type of event is this ?
         **/
-        OSCL_IMPORT_REF virtual PVMFEventCategory IsA() const = 0;
+        virtual PVMFEventCategory IsA() const = 0;
 };
 
 /**
@@ -145,7 +145,7 @@ class OSCL_IMPORT_REF PVMFCmdResp : public PVMFEventBase
 
         virtual ~PVMFCmdResp() {}
 
-        OSCL_IMPORT_REF virtual PVMFEventCategory IsA() const;
+        virtual PVMFEventCategory IsA() const;
 
         /**
          * @return Returns the unique ID associated with a command of this type.
@@ -354,7 +354,7 @@ class OSCL_IMPORT_REF PVMFAsyncEvent : public PVMFEventBase
 
         virtual ~PVMFAsyncEvent() {}
 
-        OSCL_IMPORT_REF virtual PVMFEventCategory IsA() const;
+        virtual PVMFEventCategory IsA() const;
 
         /**
          * @return Returns the unique type identifier of the event.
