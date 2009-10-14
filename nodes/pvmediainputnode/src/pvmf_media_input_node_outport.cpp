@@ -61,6 +61,7 @@ PvmfMediaInputNodeOutPort::PvmfMediaInputNodeOutPort(PvmfMediaInputNode* aNode, 
 {
     iNALType = 0;
     iCmdId = 0;
+    iMioInfoErrorCmdId = 0;
     AddToScheduler();
     iFormatType = PVMF_MIME_FORMAT_UNKNOWN;
     iPeer = NULL;
@@ -279,6 +280,36 @@ PVMFCommandId PvmfMediaInputNodeOutPort::writeAsync(uint8 format_type, int32 for
                     SendEndOfTrackCommand(data_header_info);
                     MediaIOStarted();
                     return iCmdId++;
+                }
+                break;
+                case PVMI_MEDIAXFER_FMT_INDEX_INFO_EVENT:
+                case PVMI_MEDIAXFER_FMT_INDEX_ERROR_EVENT:
+                {
+                    OSCL_ASSERT(iNode);
+                    OSCL_ASSERT(iMediaInput);
+                    if (!data)
+                    {
+                        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
+                                        (0, "PvmfMediaInputNodeOutPort::writeAsync: Error - data is NULL"));
+                        OSCL_LEAVE(OsclErrArgument);
+                        return -1;
+                    }
+
+                    if (data_len != sizeof(PVMFAsyncEvent))
+                    {
+                        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
+                                        (0, "PvmfMediaInputNodeOutPort::writeAsync: Error - data length is not size of PVMFAsyncEvent"));
+                        OSCL_LEAVE(OsclErrArgument);
+                        return -1;
+                    }
+
+                    PVMFAsyncEvent* event = OSCL_STATIC_CAST(PVMFAsyncEvent*, data);
+                    iNode->ReportErrorEvent(event->GetEventType(), event->GetEventData());
+
+                    // Not really processing this asynchronously. Just call writeComplete
+                    // synchronously
+                    iMediaInput->writeComplete(PVMFSuccess, iMioInfoErrorCmdId, context);
+                    return iMioInfoErrorCmdId++;
                 }
                 break;
                 default:

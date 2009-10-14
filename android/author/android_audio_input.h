@@ -289,6 +289,11 @@ public:
 
     /* Set the input number of channels */
     bool setAudioNumChannels(int32 iNumChannels);
+    /* SendEvent is used to notify peer that we have an error */
+    void SendEvent(PVMFEventCategory aCategory,
+                   PVMFStatus aStatus,
+                   OsclAny* aEventData = NULL,
+                   int32* aEventCode = NULL);
 
 private:
     AndroidAudioInput();

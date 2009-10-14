@@ -145,6 +145,7 @@ class PvmfMediaInputNodeOutPort
         uint32 iRemoteStatus;
 
         uint32 iCmdId;
+        uint32 iMioInfoErrorCmdId;
 
         PvmfMediaInputDataBufferAlloc* iMediaDataAlloc;
         OsclMemPoolFixedChunkAllocator* iMediaDataAllocMemPool;

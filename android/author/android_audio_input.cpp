@@ -27,6 +27,13 @@
 #include <media/AudioRecord.h>
 #include <sys/prctl.h>
 
+#ifndef PVMF_BASIC_ERRORINFOMESSAGE_H_INCLUDED
+#include "pvmf_basic_errorinfomessage.h"
+#endif
+#ifndef PVMF_MEDIA_INPUT_NODE_FACTORY_H_INCLUDED
+#include "pvmf_media_input_node_factory.h"  // For the PvmfMediaInputNodeUuid
+#endif
+
 using namespace android;
 
 // TODO: get buffer size from AudioFlinger
@@ -401,7 +408,24 @@ OSCL_EXPORT_REF void AndroidAudioInput::writeComplete(PVMFStatus aStatus, PVMFCo
         OsclAny* aContext)
 {
     LOGV("writeComplete(%d, %p)", write_cmd_id, aContext);
-    OSCL_UNUSED_ARG(aContext);
+
+    if (aContext)
+    {
+        // Is this a callback to complete an info/error event?
+        PVMFAsyncEvent* asyncEvent = OSCL_STATIC_CAST(PVMFAsyncEvent*, aContext);
+        if ((asyncEvent->IsA() == PVMFInfoEvent) || (asyncEvent->IsA() == PVMFErrorEvent))
+        {
+            // This is the callback... cleanup the allocated memory
+            PVInterface* extInterface = asyncEvent->GetEventExtensionInterface();
+            if (extInterface)
+            {
+                PVMFBasicErrorInfoMessage* eventMsg = OSCL_STATIC_CAST(PVMFBasicErrorInfoMessage*, extInterface);
+                eventMsg->removeRef();
+            }
+            OSCL_DELETE(asyncEvent);
+        }
+    }
+
     if(aStatus != PVMFSuccess)
     {
         return;
@@ -430,6 +454,82 @@ OSCL_EXPORT_REF void AndroidAudioInput::writeComplete(PVMFStatus aStatus, PVMFCo
 
     // Error: unmatching ID. They should be in sequence
     //LOGE("writeComplete ERROR SentMediaQ[0].iId %d write_cmd_id %d\n", iSentMediaData[0].iId, write_cmd_id);
+}
+
+void AndroidAudioInput::SendEvent(PVMFEventCategory aCategory,
+                                  PVMFStatus aStatus,
+                                  OsclAny* aEventData,
+                                  int32* aEventCode)
+{
+    LOGE("AndroidAudioInput::SendEvent: aCategory=%d, aStatus=%d, aEventData=%p, aEventCode=%p",
+                     aCategory, aStatus, aEventData, aEventCode);
+
+    PvmiMediaXferHeader mediaXferHeader;
+    oscl_memset(&mediaXferHeader, '\0', sizeof(mediaXferHeader));
+
+    if (!iPeer)
+    {
+        LOGE("AndroidAudioInput::SendEvent: Error - iPeer not availbale");
+        return;
+    }
+
+    int32 formatIndex = 0;
+    switch (aCategory)
+    {
+        case PVMFErrorEvent:
+            formatIndex = PVMI_MEDIAXFER_FMT_INDEX_ERROR_EVENT;
+            break;
+
+        case PVMFInfoEvent:
+            formatIndex = PVMI_MEDIAXFER_FMT_INDEX_INFO_EVENT;
+            break;
+
+        default:
+            LOGE("AndroidAudioInput::SendEvent: Error - Unsupported event category");
+            return;
+            break;
+    }
+
+    PVMFBasicErrorInfoMessage* eventMsg = NULL;
+    if (aEventCode)
+    {
+        // Set the MediaInputNode UUID
+        PVUuid uuid = PvmfMediaInputNodeUuid;
+
+        eventMsg = OSCL_NEW(PVMFBasicErrorInfoMessage,
+                            (*aEventCode, uuid, NULL));
+    }
+
+    PVMFAsyncEvent* asyncEvent = OSCL_NEW(PVMFAsyncEvent, (aCategory,
+                                           aStatus,
+                                           NULL,
+                                           OSCL_STATIC_CAST(PVInterface *, eventMsg),
+                                           aEventData,
+                                           NULL,
+                                           0));
+
+    if (!asyncEvent)
+    {
+        LOGE("AndroidAudioInput::SendEvent: Error - PVMFAsyncEvent allocation failed");
+        return;
+    }
+
+    int32 err = 0;
+    OSCL_TRY(err,
+             iPeer->writeAsync(PVMI_MEDIAXFER_FMT_TYPE_NOTIFICATION,
+                               formatIndex,
+                               (uint8*)asyncEvent,
+                               sizeof(PVMFAsyncEvent),
+                               mediaXferHeader,
+                               /* Pass asyncEvent as context for deallocate in writeComplete*/
+                               (OsclAny*)asyncEvent);
+            );
+
+    if (err != OsclErrNone)
+    {
+        LOGE("AndroidAudioInput::SendEvent: Error - writeAsync failed. err=%x", err);
+        return;
+    }
 }
 
 ////////////////////////////////////////////////////////////////////////////

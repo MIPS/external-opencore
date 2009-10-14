@@ -29,6 +29,13 @@
 #include "oscl_dll.h"
 #include "oscl_tickcount.h"
 
+#ifndef PVMF_BASIC_ERRORINFOMESSAGE_H_INCLUDED
+#include "pvmf_basic_errorinfomessage.h"
+#endif
+#ifndef PVMF_MEDIA_INPUT_NODE_FACTORY_H_INCLUDED
+#include "pvmf_media_input_node_factory.h"  // For the PvmfMediaInputNodeUuid
+#endif
+
 #include "android_camera_input.h"
 
 using namespace android;
@@ -417,7 +424,23 @@ void AndroidCameraInput::writeComplete(PVMFStatus aStatus,
        OsclAny* aContext)
 {
     LOGV("writeComplete");
-    OSCL_UNUSED_ARG(aContext);
+
+    if (aContext)
+    {
+        // Is this a callback to complete an info/error event?
+        PVMFAsyncEvent* asyncEvent = OSCL_STATIC_CAST(PVMFAsyncEvent*, aContext);
+        if ((asyncEvent->IsA() == PVMFInfoEvent) || (asyncEvent->IsA() == PVMFErrorEvent))
+        {
+            // This is the callback... cleanup the allocated memory
+            PVInterface* extInterface = asyncEvent->GetEventExtensionInterface();
+            if (extInterface)
+            {
+                PVMFBasicErrorInfoMessage* eventMsg = OSCL_STATIC_CAST(PVMFBasicErrorInfoMessage*, extInterface);
+                eventMsg->removeRef();
+            }
+            OSCL_DELETE(asyncEvent);
+        }
+    }
 
     iFrameQueueMutex.Lock();
     if (iSentMediaData.empty()) {
@@ -451,6 +474,81 @@ void AndroidCameraInput::writeComplete(PVMFStatus aStatus,
     // reference count is always updated, even if the write fails
     if (aStatus != PVMFSuccess) {
         LOGE("writeAsync failed. aStatus=%d", aStatus);
+    }
+}
+
+void AndroidCameraInput::SendEvent(PVMFEventCategory aCategory,
+                                  PVMFStatus aStatus,
+                                  OsclAny* aEventData,
+                                  int32* aEventCode)
+{
+    LOGE("AndroidCameraInput::SendEvent: aCategory=%d, aStatus=%d, aEventData=%p, aEventCode=%p",
+                     aCategory, aStatus, aEventData, aEventCode);
+
+    PvmiMediaXferHeader mediaXferHeader;
+    oscl_memset(&mediaXferHeader, '\0', sizeof(mediaXferHeader));
+
+    if (!iPeer)
+    {
+        LOGE("AndroidCameraInput::SendEvent: Error - iPeer not availbale");
+        return;
+    }
+
+    int32 formatIndex = 0;
+    switch (aCategory)
+    {
+        case PVMFErrorEvent:
+            formatIndex = PVMI_MEDIAXFER_FMT_INDEX_ERROR_EVENT;
+            break;
+
+        case PVMFInfoEvent:
+            formatIndex = PVMI_MEDIAXFER_FMT_INDEX_INFO_EVENT;
+            break;
+
+        default:
+            LOGE("AndroidCameraInput::SendEvent: Error - Unsupported event category");
+            return;
+    }
+
+    PVMFBasicErrorInfoMessage* eventMsg = NULL;
+    if (aEventCode)
+    {
+        // Set the MediaInputNode UUID
+        PVUuid uuid = PvmfMediaInputNodeUuid;
+
+        eventMsg = OSCL_NEW(PVMFBasicErrorInfoMessage,
+                            (*aEventCode, uuid, NULL));
+    }
+
+    PVMFAsyncEvent* asyncEvent = OSCL_NEW(PVMFAsyncEvent, (aCategory,
+                                           aStatus,
+                                           NULL,
+                                           OSCL_STATIC_CAST(PVInterface *, eventMsg),
+                                           aEventData,
+                                           NULL,
+                                           0));
+
+    if (!asyncEvent)
+    {
+        LOGE("AndroidCameraInput::SendEvent: Error - PVMFAsyncEvent allocation failed");
+        return;
+    }
+
+    int32 err = 0;
+    OSCL_TRY(err,
+             iPeer->writeAsync(PVMI_MEDIAXFER_FMT_TYPE_NOTIFICATION,
+                               formatIndex,
+                               (uint8*)asyncEvent,
+                               sizeof(PVMFAsyncEvent),
+                               mediaXferHeader,
+                               /* Pass asyncEvent as context for deallocate in writeComplete*/
+                               (OsclAny*)asyncEvent);
+            );
+
+    if (err != OsclErrNone)
+    {
+        LOGE("AndroidCameraInput::SendEvent: Error - writeAsync failed. err=%x", err);
+        return;
     }
 }
 

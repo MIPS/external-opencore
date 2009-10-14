@@ -307,6 +307,11 @@ public:
     PVMFStatus              postWriteAsync(nsecs_t timestamp, const sp<IMemory>& frame);
 
     bool isRecorderStarting() { return iState==STATE_STARTED?true:false; }
+    /* SendEvent is used to notify peer that we have an error */
+    void SendEvent(PVMFEventCategory aCategory,
+                   PVMFStatus aStatus,
+                   OsclAny* aEventData = NULL,
+                   int32* aEventCode = NULL);
 
 private:
     // release all queued recording frames that have not been
