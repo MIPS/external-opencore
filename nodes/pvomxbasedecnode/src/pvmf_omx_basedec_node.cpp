@@ -1460,7 +1460,7 @@ bool PVMFOMXBaseDecNode::CheckComponentCapabilities(PVMFFormatType* aFormat, OMX
         iOMXComponentUsesInterleaved4BNALSizes = false;
     }
 
-    if ((*aFormat == PVMF_MIME_H264_VIDEO) && !iOMXComponentCanHandleIncompleteFrames)
+    if ((*aFormat == PVMF_MIME_H264_VIDEO) && !iOMXComponentCanHandleIncompleteFrames && !iOMXComponentUsesFullAVCFrames)
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
                         (0, "%s::CheckComponentCapabilities() Component cannot support streaming", iName.Str()));
