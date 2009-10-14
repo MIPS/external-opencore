@@ -766,8 +766,10 @@ int32 HTTPParserInput::checkNextLine(HTTPMemoryFragment &aInputDataStream)
         else if (*ptr == HTTP_CHAR_CR || *ptr == HTTP_CHAR_LF)
         {
             // Check for header over multiple lines, header will be divided over multiple header if
-            // ptr[0] and ptr[1] points either CR or LF and ptr[2] points to either SPACE or TAB
-            if (streamLength > 2 && (ptr[2] == HTTP_CHAR_SPACE || ptr[2] == HTTP_CHAR_TAB))
+            // ptr[0] and ptr[1] points either CR or LF and ptr[2] points to either SPACE or TAB,
+            // but make sure that the header starts with non-CR or non-LF character
+            if ((*start_ptr != HTTP_CHAR_CR && *start_ptr != HTTP_CHAR_LF) &&
+                    (streamLength > 2 && (ptr[2] == HTTP_CHAR_SPACE || ptr[2] == HTTP_CHAR_TAB)))
             {
                 ptr += 2; // ptr increase by 2, One for CR and second for LF
                 streamLength -= 2;
