@@ -4038,6 +4038,13 @@ void PVMFSMRTSPTUnicastNode::HandleJitterBufferCommandCompleted(const PVMFCmdRes
             /* If start has been cancelled wait for cancel success */
             if (aResponse.GetCmdStatus() != PVMFErrCancelled)
             {
+                //Though start of Jb is complete i.e delay has been established. But JB node will be able to sent out the
+                //packets from it with proper timestamps only when session controller start completes and configures the
+                //JB node properly with playrange, rtp info etc.
+                //So let us wait for SM node start complete which will be complete once all child nodes(including session controller) start complete.
+                PVMFJitterBufferExtensionInterface* jbExtIntf =
+                    (PVMFJitterBufferExtensionInterface*)(iJitterBufferNodeContainer->iExtensions[0]);
+                jbExtIntf->StopOutputPorts();
                 CompleteStart();
             }
         }
@@ -4557,6 +4564,14 @@ void PVMFSMRTSPTUnicastNode::CompleteStart()
     {
         if (!iCurrentCommand.empty() && iCancelCommand.empty())
         {
+            //Start of all the child nodes completed.
+            //Let us start the output ports of the JB node.
+            PVMFSMFSPChildNodeContainer* iJitterBufferNodeContainer =
+                getChildNodeContainer(PVMF_SM_FSP_JITTER_BUFFER_NODE);
+            OSCL_ASSERT(iJitterBufferNodeContainer);
+            PVMFJitterBufferExtensionInterface* jbExtIntf =
+                (PVMFJitterBufferExtensionInterface*)(iJitterBufferNodeContainer->iExtensions[0]);
+            jbExtIntf->StartOutputPorts();
             PVMFSMFSPBaseNodeCommand& aCmd = iCurrentCommand.front();
             if ((aCmd.iCmd == PVMF_SMFSP_NODE_START) ||
                     (aCmd.iCmd == PVMF_SMFSP_NODE_SET_DATASOURCE_POSITION))

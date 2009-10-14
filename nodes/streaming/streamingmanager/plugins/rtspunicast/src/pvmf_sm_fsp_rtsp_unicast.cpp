@@ -4134,8 +4134,6 @@ void PVMFSMRTSPUnicastNode::HandleRTSPSessionControllerCommandCompleted(const PV
     PVMFSMFSPCommandContext *cmdContextData =
         OSCL_REINTERPRET_CAST(PVMFSMFSPCommandContext*, aResponse.GetContext());
     cmdContextData->oFree = true;
-
-
     PVMF_SM_RTSP_LOGINFO((0, "PVMFSMRTSPUnicastNode::HandleRTSPSessionControllerCommandCompleted In - cmd [%d] iSessionControllerNodeContainer->iNodeCmdState [%d] iInterfaceState[%d]", cmdContextData->cmd, iSessionControllerNodeContainer->iNodeCmdState, iInterfaceState));
 
     //RTSPPLUSUNICAST plugin uses sync version of QueryInterface to get xtension interface of its various child nodes
@@ -4270,24 +4268,8 @@ void PVMFSMRTSPUnicastNode::HandleRTSPSessionControllerCommandCompleted(const PV
              * Send start complete params to child nodes
              * viz. actual play range, rtp info params etc
              */
+
             SendSessionControlStartCompleteParams();
-            /* We should resume output of JB has it been paused */
-            for (uint32 i = 0; i < iFSPChildNodeContainerVec.size(); i++)
-            {
-                if (iFSPChildNodeContainerVec[i].iNodeTag == PVMF_SM_FSP_JITTER_BUFFER_NODE &&
-                        iFSPChildNodeContainerVec[i].iNodeCmdState == PVMFSMFSP_NODE_CMD_IDLE)
-                {
-                    PVMFSMFSPChildNodeContainer* iJitterBufferNodeContainer = getChildNodeContainer(PVMF_SM_FSP_JITTER_BUFFER_NODE);
-                    if (iJitterBufferNodeContainer == NULL)
-                    {
-                        OSCL_LEAVE(OsclErrBadHandle);
-                        return;
-                    }
-                    PVMFJitterBufferExtensionInterface* jbExtIntf =
-                        (PVMFJitterBufferExtensionInterface*)(iJitterBufferNodeContainer->iExtensions[0]);
-                    jbExtIntf->StartOutputPorts();
-                }
-            }
             CompleteStart();
         }
         break;
@@ -4491,18 +4473,13 @@ void PVMFSMRTSPUnicastNode::HandleJitterBufferCommandCompleted(const PVMFCmdResp
             /* If start has been cancelled wait for cancel success */
             if (aResponse.GetCmdStatus() != PVMFErrCancelled)
             {
-                /* We need to pause output of JB before RTSP response is received */
-                for (uint32 i = 0; i < iFSPChildNodeContainerVec.size(); i++)
-                {
-                    if (iFSPChildNodeContainerVec[i].iNodeTag == PVMF_SM_FSP_RTSP_SESSION_CONTROLLER_NODE &&
-                            iFSPChildNodeContainerVec[i].iNodeCmdState == PVMFSMFSP_NODE_CMD_PENDING)
-                    {
-                        PVMFJitterBufferExtensionInterface* jbExtIntf =
-                            (PVMFJitterBufferExtensionInterface*)(iJitterBufferNodeContainer->iExtensions[0]);
-                        jbExtIntf->StopOutputPorts();
-                        PVMF_SM_RTSP_LOGERROR((0, "PVMFSMRTSPUnicastNode::HandleJitterBufferCommandCompleted - StopOutputPorts()"));
-                    }
-                }
+                //Though start of Jb is complete i.e delay has been established. But JB node will be able to sent out the
+                //packets from it with proper timestamps only when session controller start completes and configures the
+                //JB node properly with playrange, rtp info etc.
+                //So let us wait for SM node start complete which will be complete once all child nodes(including session controller) start complete.
+                PVMFJitterBufferExtensionInterface* jbExtIntf =
+                    (PVMFJitterBufferExtensionInterface*)(iJitterBufferNodeContainer->iExtensions[0]);
+                jbExtIntf->StopOutputPorts();
                 CompleteStart();
             }
         }
@@ -4988,6 +4965,14 @@ void PVMFSMRTSPUnicastNode::CompleteStart()
     {
         if (!iCurrentCommand.empty() && iCancelCommand.empty())
         {
+            //Start of all the child nodes completed.
+            //Let us start the output ports of the JB node.
+            PVMFSMFSPChildNodeContainer* iJitterBufferNodeContainer =
+                getChildNodeContainer(PVMF_SM_FSP_JITTER_BUFFER_NODE);
+            OSCL_ASSERT(iJitterBufferNodeContainer);
+            PVMFJitterBufferExtensionInterface* jbExtIntf =
+                (PVMFJitterBufferExtensionInterface*)(iJitterBufferNodeContainer->iExtensions[0]);
+            jbExtIntf->StartOutputPorts();
             PVMFSMFSPBaseNodeCommand& aCmd = iCurrentCommand.front();
             if ((aCmd.iCmd == PVMF_SMFSP_NODE_START) ||
                     (aCmd.iCmd == PVMF_SMFSP_NODE_SET_DATASOURCE_POSITION))
