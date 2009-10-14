@@ -2178,12 +2178,12 @@ OSCL_EXPORT_REF bool PVMFOMXBaseDecNode::SendInputBufferToOMXComponent()
                 if (iIsVC1AdvancedProfile)
                 {
                     uint8 vc1_frame_sc[4] = {0, 0, 1, 0xD};
-                    uint8 *buffer = input_buf->pBufHdr->pBuffer + input_buf->pBufHdr->nFilledLen;
+                    uint8 *buffer = ((uint8 *)frag.getMemFragPtr());
 
                     if (buffer[0] || buffer[1] || !(buffer[2] == 1) || !(buffer[3] == 0xD))
                     {
                         /* does not have frame start code, therefore inserting it */
-                        oscl_memcpy(buffer, vc1_frame_sc, 4);
+                        oscl_memcpy(input_buf->pBufHdr->pBuffer + input_buf->pBufHdr->nFilledLen, vc1_frame_sc, 4);
 
                         input_buf->pBufHdr->nFilledLen += 4;
                     }
