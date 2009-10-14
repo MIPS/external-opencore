@@ -407,8 +407,8 @@ class PVRTSPEngineNode
         RTSPIncomingMessage iIncomingMsg;
         SocketContainer iSendSocket, iRecvSocket;
         RTSPParser::ParserState iRTSPParserState;
-        OSCL_EXPORT_REF static const int REQ_SEND_SOCKET_ID;
-        OSCL_EXPORT_REF static const int REQ_RECV_SOCKET_ID;
+        static const int REQ_SEND_SOCKET_ID;
+        static const int REQ_RECV_SOCKET_ID;
     protected:
         int TIMEOUT_WATCHDOG;
         PVMFSharedMediaDataPtr iEmbeddedDataPtr;

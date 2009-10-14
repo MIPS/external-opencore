@@ -2004,7 +2004,7 @@ OSCL_EXPORT_REF PVMFStatus PVRTSPEngineNode::SendRtspSetup(PVRTSPEngineCommand &
     return iRet;
 }
 
-OSCL_EXPORT_REF bool PVRTSPEngineNode::parseURL(const OSCL_wString& aURL)
+bool PVRTSPEngineNode::parseURL(const OSCL_wString& aURL)
 //(wchar_t *url)
 {
     if (0 == oscl_UnicodeToUTF8(aURL.get_cstr(), aURL.get_size(), ((mbchar*)iRTSPEngTmpBuf.ptr), iRTSPEngTmpBuf.len))
