@@ -621,7 +621,7 @@ int32 ProtocolState::doProcessMicroStateGetResponsePreCheck()
 int32 ProtocolState::doProcessMicroStateGetResponse(INPUT_DATA_QUEUE &aDataQueue)
 {
     int32 status = processMicroStateGetResponse(aDataQueue);
-    if (isGotEOS(status) || is1xxResponse() || isEndofMessage(status))
+    if (isGotEOS(status) || (isHttpHeaderParsed() && is1xxResponse()) || isEndofMessage(status))
     {
         // notify user that data processing at the current state is completely done.
         // user may choose to change to next protocol state
@@ -730,6 +730,8 @@ OSCL_EXPORT_REF int32 ProtocolState::processMicroStateGetResponsePreCheck()
 
 OSCL_EXPORT_REF int32 ProtocolState::processMicroStateGetResponse(INPUT_DATA_QUEUE &aDataQueue)
 {
+    if (!iParser->isHttpHeaderParsed())
+        setResponseBasics();
     int32 status = iParser->parseResponse(aDataQueue);
     return checkParsingStatus(status);
 }

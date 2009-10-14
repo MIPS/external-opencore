@@ -99,16 +99,23 @@ OSCL_EXPORT_REF uint32 HTTPParser::getHTTPStatusCode()
 }
 
 ////////////////////////////////////////////////////////////////////////////////////
+OSCL_EXPORT_REF void HTTPParser::getContentInfo(HTTPContentInfo &aContentInfo)
+{
+    aContentInfo.clear();
+    if (iContentInfo) iContentInfo->get(aContentInfo);
+}
+
+////////////////////////////////////////////////////////////////////////////////////
 OSCL_EXPORT_REF uint32 HTTPParser::getHttpVersionNum()
 {
     return iHeader->getHttpVersionNum();
 }
 
 ////////////////////////////////////////////////////////////////////////////////////
-OSCL_EXPORT_REF void HTTPParser::getContentInfo(HTTPContentInfo &aContentInfo)
+//Set maximum line size for multiline response
+OSCL_IMPORT_REF void HTTPParser::setMaxLineSizeForMultiLineResponse(int32 &aSizeLimit)
 {
-    aContentInfo.clear();
-    if (iContentInfo) iContentInfo->get(aContentInfo);
+    iHeader->setMaxLineSizeForMultiLineResponse(aSizeLimit);
 }
 
 
@@ -749,10 +756,28 @@ int32 HTTPParserInput::checkNextLine(HTTPMemoryFragment &aInputDataStream)
 {
     char *ptr = (char *)aInputDataStream.getPtr(), *start_ptr = ptr;
     int32 streamLength = aInputDataStream.getAvailableSpace();
-    while (streamLength > 1 && (*ptr != HTTP_CHAR_CR && *ptr != HTTP_CHAR_LF))
+    while (streamLength > 1)
     {
-        ptr++;
-        streamLength--;
+        if (*ptr != HTTP_CHAR_CR && *ptr != HTTP_CHAR_LF)
+        {
+            ptr++;
+            streamLength--;
+        }
+        else if (*ptr == HTTP_CHAR_CR || *ptr == HTTP_CHAR_LF)
+        {
+            // Check for header over multiple lines, header will be divided over multiple header if
+            // ptr[0] and ptr[1] points either CR or LF and ptr[2] points to either SPACE or TAB
+            if (streamLength > 2 && (ptr[2] == HTTP_CHAR_SPACE || ptr[2] == HTTP_CHAR_TAB))
+            {
+                ptr += 2; // ptr increase by 2, One for CR and second for LF
+                streamLength -= 2;
+                iCurrentHeaderOverMultipleLine = true; // Since header over muliple header, update data member flag to TRUE
+            }
+            else
+            {
+                break;       // break when find complete next line
+            }
+        }
     }
 
     if (*ptr == HTTP_CHAR_CR || *ptr == HTTP_CHAR_LF)
@@ -1032,14 +1057,75 @@ void HTTPParserBaseObject::saveEndingCRLF(char *ptr, uint32 len, uint8& aCRLF, b
     }
 }
 
+/*
+This function removes all extra SPACE,TAB,CRLF. It copies outputdata to aHeaderFieldBuffer buffer.
+Ex: input = "headeCRLF  rField= headerValCRLF ueCRLF"
+    ouput = "headerField= headerValueCRLF"
+*/
+bool HTTPParserBaseObject::removeUnwantedCharacterHeaderFieldOverMultipleLine(HTTPMemoryFragment &aInputLineData, char *aHeaderFieldBuffer, int32 &headerLength)
+{
+    char *ptr = (char *)aInputLineData.getPtr();
+    bool crlfFlag = false;
+    uint32 i = 0;
+    uint32 checkHeaderLengthExceed = 0;
+    headerLength = 0;
+    while (i < aInputLineData.getCapacity() - 2) //2 for CRLF
+    {
+        if (*ptr == HTTP_CHAR_CR && *(ptr + 1) == HTTP_CHAR_LF)
+        {
+            i += 2;
+            ptr += 2;    //to remove extra CRLF
+            crlfFlag = true;
+            if (checkHeaderLengthExceed > iMaxLineSizeForMultiLineResponse) //It does not include CR LF
+                return false;
+            else
+                checkHeaderLengthExceed = 0;
+        }
+        else
+        {
+            if (crlfFlag && *ptr != HTTP_CHAR_SPACE && *ptr != HTTP_CHAR_TAB)
+            {
+                crlfFlag = false;
+            }
 
+            if (!crlfFlag) //to remove SPACE or TAB just after CRLF
+            {
+                aHeaderFieldBuffer[headerLength] = *ptr;
+                headerLength++;
+            }
+            ptr++;
+            i++;
+            checkHeaderLengthExceed++;
+        }
+    }
+    aHeaderFieldBuffer[headerLength++] = *ptr++;  //CR
+    aHeaderFieldBuffer[headerLength] = *ptr;      //LF
+    return true;
+}
+
+bool HTTPParserBaseObject::processHeaderFieldOverMulipleLine(HTTPMemoryFragment &aInputLineData, char *aHeaderFieldBuffer)
+{
+    OsclMemAllocator alloc;
+    int32 headerLength = 0;
+    aHeaderFieldBuffer = (char *)alloc.allocate(aInputLineData.getCapacity());
+    if (aHeaderFieldBuffer == NULL) return false;
+    oscl_memcpy(aHeaderFieldBuffer, "\0", aInputLineData.getCapacity());
+    if (false == removeUnwantedCharacterHeaderFieldOverMultipleLine(aInputLineData, aHeaderFieldBuffer, headerLength))
+    {
+        alloc.deallocate(aHeaderFieldBuffer);
+        LOGINFO((0, "HTTPParserHeaderObject::parse() : Header field length exceeds"));
+        return false;
+    }
+    aInputLineData.bind(aHeaderFieldBuffer, headerLength);
+    return true;
+}
 /////////////////////////////////////////////////////////////////////////////////////
 ////////// HTTPParserHeaderObject Implementation ////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////
 int32 HTTPParserHeaderObject::parse(HTTPParserInput &aParserInput, RefCountHTTPEntityUnit &aEntityUnit)
 {
     HTTPMemoryFragment aInputLineData;
-
+    char *aHeaderFieldBuffer = NULL;
     while (aParserInput.getNextCompleteLine(aInputLineData))
     {
         if (!iHeaderFirstLineParsed)
@@ -1051,6 +1137,21 @@ int32 HTTPParserHeaderObject::parse(HTTPParserInput &aParserInput, RefCountHTTPE
         }
         else
         {
+            //setCurrentHeaderNumLine(aParserInput.getCurrentHeaderNumLine());
+            if (aParserInput.getHeaderOverMultipleLineFlag())
+            {
+                if (false == processHeaderFieldOverMulipleLine(aInputLineData, aHeaderFieldBuffer))
+                {
+                    aParserInput.setHeaderOverMultipleLineFlag(false);
+                    return HTTPParser::PARSE_LINESIZE_FOR_MULTILINE_HEADER_EXCEED; //when header is over multiple line check header length
+                }
+
+            }
+            else if ((aInputLineData.getCapacity() - 2) > iMaxLineSizeForMultiLineResponse)
+            {
+                LOGINFO((0, "HTTPParserHeaderObject::parse() : Header field length exceeds"));
+                return HTTPParser::PARSE_LINESIZE_FOR_MULTILINE_HEADER_EXCEED; //when header is not over multiple line check header length
+            }
             int32 status = parseHeaderFields(aInputLineData);
             if (status == HTTPParser::PARSE_HEADER_AVAILABLE)
             {
@@ -1066,6 +1167,12 @@ int32 HTTPParserHeaderObject::parse(HTTPParserInput &aParserInput, RefCountHTTPE
                 }
                 if (checkResponseParsedComplete()) iResponseParsedComplete = true;
                 return HTTPParser::PARSE_HEADER_AVAILABLE;
+            }
+            if (aParserInput.getHeaderOverMultipleLineFlag())
+            {
+                OsclMemAllocator alloc;
+                alloc.deallocate(aHeaderFieldBuffer);
+                aParserInput.setHeaderOverMultipleLineFlag(false);
             }
             if (status != HTTPParser::PARSE_SUCCESS) return status;
         }

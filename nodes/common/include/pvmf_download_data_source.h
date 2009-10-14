@@ -44,7 +44,7 @@ class PVMFDownloadDataSourceHTTP : public PVInterface
         uint32  iMaxFileSize;               //the max size of the file.
         OSCL_String &iProxyName;            //HTTP proxy name, either ip or dns
         int32   iProxyPort;                 //HTTP proxy port
-
+        int32 iMaxHttpHeaderFieldSize;     //HTTP header field size, in DLNA PPB size is 998
         typedef enum        // For Download only
         {
             ENoPlayback         = 0,
@@ -68,6 +68,7 @@ class PVMFDownloadDataSourceHTTP : public PVInterface
                 , iMaxFileSize(aMaxSize)
                 , iProxyName(aProxyName)
                 , iProxyPort(aProxyPort)
+                , iMaxHttpHeaderFieldSize(0x7fffffff)
                 , iPlaybackControl(aPlaybackControl)
         {
         }

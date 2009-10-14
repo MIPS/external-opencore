@@ -228,6 +228,7 @@ class PVMFSourceContextDataDownloadHTTP : public PVInterface
             iRefCounter = 0;
             bIsNewSession = true;
             iMaxFileSize = 0;
+            iMaxHttpHeaderFieldSize = 0x7fffffff;
         };
 
         PVMFSourceContextDataDownloadHTTP(const PVMFSourceContextDataDownloadHTTP& aSrc) : PVInterface(aSrc)
@@ -276,6 +277,7 @@ class PVMFSourceContextDataDownloadHTTP : public PVInterface
         uint32  iMaxFileSize;               //the max size of the file.
         OSCL_HeapString<OsclMemAllocator> iProxyName;           //HTTP proxy name, either ip or dns
         int32   iProxyPort;                 //HTTP proxy port
+        int32 iMaxHttpHeaderFieldSize;     //HTTP header field size, in DLNA PPB size is 998
 
         typedef enum        // For Download only
         {
@@ -303,6 +305,7 @@ class PVMFSourceContextDataDownloadHTTP : public PVInterface
             iProxyPort          = aSrc.iProxyPort;
             iUserID             = aSrc.iUserID;
             iUserPasswd         = aSrc.iUserPasswd;
+            iMaxHttpHeaderFieldSize = aSrc.iMaxHttpHeaderFieldSize;
         };
 };
 

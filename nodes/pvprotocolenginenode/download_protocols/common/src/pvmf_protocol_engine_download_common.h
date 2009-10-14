@@ -63,6 +63,7 @@ class DownloadState : public ProtocolState
         OSCL_IMPORT_REF virtual int32 processMicroStateGetResponsePreCheck();
         // To compose a request, only need to override/implement these two functions
         OSCL_IMPORT_REF virtual void setRequestBasics();
+        OSCL_IMPORT_REF virtual void setResponseBasics();
         OSCL_IMPORT_REF virtual bool setHeaderFields();
         OSCL_IMPORT_REF virtual int32 updateDownloadStatistics();
         OSCL_IMPORT_REF virtual void saveConfig();

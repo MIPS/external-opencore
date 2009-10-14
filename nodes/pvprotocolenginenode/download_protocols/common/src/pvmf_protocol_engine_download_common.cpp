@@ -42,11 +42,24 @@ OSCL_EXPORT_REF int32 DownloadState::processMicroStateGetResponsePreCheck()
 
 OSCL_EXPORT_REF void DownloadState::setRequestBasics()
 {
-    iComposer->setMethod(HTTP_METHOD_GET);
-    //iComposer->setVersion(HTTP_V1_1);
-    iComposer->setVersion((HTTPVersion)iCfgFile->getHttpVersion());
-    StrPtrLen uri((iURI.getURI()).get_cstr(), (iURI.getURI()).get_size());
-    iComposer->setURI(uri);
+    if (iComposer)
+    {
+        iComposer->setMaxLineSizeForMultiLineRequest(iCfgFile->getMaxLineSizeForMultiLineHeader());
+        iComposer->setMethod(HTTP_METHOD_GET);
+        //iComposer->setVersion(HTTP_V1_1);
+        iComposer->setVersion((HTTPVersion)iCfgFile->getHttpVersion());
+        StrPtrLen uri((iURI.getURI()).get_cstr(), (iURI.getURI()).get_size());
+        iComposer->setURI(uri);
+    }
+}
+
+OSCL_EXPORT_REF void DownloadState::setResponseBasics()
+{
+    if (iCfgFile && iParser)
+    {
+        int32 aSizeLimit = iCfgFile->getMaxLineSizeForMultiLineHeader();
+        (iParser->getHttpParser())->setMaxLineSizeForMultiLineResponse(aSizeLimit);
+    }
 }
 
 // For composing a request, only need to override this function

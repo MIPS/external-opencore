@@ -1081,6 +1081,7 @@ void PVMFDownloadDataSourceContainer::copy(const PVMFDownloadDataSourceHTTP& aSo
     iMaxFileSize      = aSourceData.iMaxFileSize;
     iPlaybackControl  = (uint32)convert(aSourceData.iPlaybackControl);
     if (aSourceData.iPlaybackControl == PVMFDownloadDataSourceHTTP::ENoSaveToFile) iIsNewSession = true; // always use new download session for progressive streaming
+    if (aSourceData.iPlaybackControl == PVMFDownloadDataSourceHTTP::ENoSaveToFile) iMaxHttpHeaderFieldSize = aSourceData.iMaxHttpHeaderFieldSize; // http header field size valid only for progressive streaming, in DLNA PPB size is 998
     iConfigFileName   = aSourceData.iConfigFileName;
     iDownloadFileName = aSourceData.iDownloadFileName;
     iProxyName        = aSourceData.iProxyName;
@@ -1108,6 +1109,7 @@ void PVMFDownloadDataSourceContainer::copy(const PVMFSourceContextDataDownloadHT
     iMaxFileSize      = aSourceData.iMaxFileSize;
     iPlaybackControl  = (uint32)aSourceData.iPlaybackControl;
     if (aSourceData.iPlaybackControl == PVMFSourceContextDataDownloadHTTP::ENoSaveToFile) iIsNewSession = true; // always use new download session for progressive streaming
+    if (aSourceData.iPlaybackControl == PVMFSourceContextDataDownloadHTTP::ENoSaveToFile) iMaxHttpHeaderFieldSize = aSourceData.iMaxHttpHeaderFieldSize; // http header field size valid only for progressive streaming, in DLNA PPB size is 998
     iConfigFileName   = aSourceData.iConfigFileName;
     iDownloadFileName = aSourceData.iDownloadFileName;
     iProxyName        = aSourceData.iProxyName;

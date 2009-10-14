@@ -429,7 +429,7 @@ OSCL_EXPORT_REF PVMFStatus PVProgressiveDownloadCfgFileContainer::configCfgFile(
     iCfgFileObj->SetPlaybackMode(convertToConfigFilePlaybackMode(iPlaybackMode));
     iCfgFileObj->SetProxyName(iDataSource->iProxyName);
     iCfgFileObj->SetProxyPort(iDataSource->iProxyPort);
-
+    iCfgFileObj->setMaxLineSizeForMultiLineHeader(iDataSource->iMaxHttpHeaderFieldSize);
     // user agent
     OSCL_FastString user_agent(PDL_HTTP_USER_AGENT); // defined in pvmf_protocolengine_node_tunables.h
     iCfgFileObj->SetUserAgent(user_agent);

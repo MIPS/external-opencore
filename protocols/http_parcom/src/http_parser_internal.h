@@ -152,6 +152,7 @@ class HTTPParserInput
             iHTTPMemFrag.clear();
             iDataInQueueMemFragOffset = 0;
             iLineBufferOccupied = 0;
+            iCurrentHeaderOverMultipleLine = false;
         }
 
         void clearOutputQueue()
@@ -182,10 +183,20 @@ class HTTPParserInput
         void skipCRLF();
         void skipCRLFChunkedCoding();
 
+        void setHeaderOverMultipleLineFlag(bool aMultiLine)
+        {
+            iCurrentHeaderOverMultipleLine = aMultiLine;
+        }
+
+        bool getHeaderOverMultipleLineFlag()
+        {
+            return iCurrentHeaderOverMultipleLine;
+        }
+
     private:
 
         // constructor
-        HTTPParserInput() : iLineBufferSize(DEFAULT_MAX_LINE_BUFFER_SIZE)
+        HTTPParserInput() : iLineBufferSize(DEFAULT_MAX_LINE_BUFFER_SIZE), iCurrentHeaderOverMultipleLine(false)
         {
             clear();
         }
@@ -212,6 +223,7 @@ class HTTPParserInput
         char *iLineBuffer;               // concatenate multiple fragments of each header line
         uint32 iLineBufferSize;
         uint32 iLineBufferOccupied;
+        bool iCurrentHeaderOverMultipleLine;
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////
@@ -228,10 +240,16 @@ class HTTPParserBaseObject
         int32 parseHeaderFields(HTTPMemoryFragment &aInputLineData, const bool aReplaceOldValue = false);
         bool constructEntityUnit(HTTPParserInput &aParserInput, RefCountHTTPEntityUnit &aEntityUnit);
         void saveEndingCRLF(char *ptr, uint32 len, uint8& aCRLF, bool aNeedReset = true);
+        bool removeUnwantedCharacterHeaderFieldOverMultipleLine(HTTPMemoryFragment &aInputLineData, char *aHeaderFieldBuffer, int32 &headerLength);
+        bool processHeaderFieldOverMulipleLine(HTTPMemoryFragment &aInputLineData, char *aHeaderFieldBuffer);
+        void setMaxLineSizeForMultiLineResponse(const int32 &aSizeLimit = 0x7fffffff)
+        {
+            iMaxLineSizeForMultiLineResponse = aSizeLimit;
+        }
 
         // constructor
         HTTPParserBaseObject(StringKeyValueStore *aKeyValueStore = NULL, PVMFBufferPoolAllocator *aEntityUnitAlloc = NULL) :
-                iKeyValueStore(aKeyValueStore), iEntityUnitAlloc(aEntityUnitAlloc), iPrevCRLF(0)
+                iKeyValueStore(aKeyValueStore), iEntityUnitAlloc(aEntityUnitAlloc), iPrevCRLF(0), iMaxLineSizeForMultiLineResponse(0xffffffff)
         {
             iLogger = PVLogger::GetLoggerObject(LOGGER_TAG);
         }
@@ -266,6 +284,7 @@ class HTTPParserBaseObject
         PVMFBufferPoolAllocator *iEntityUnitAlloc;
         uint8 iPrevCRLF; // bit0 -- LF , bit1 -- CR
         PVLogger *iLogger;
+        uint32 iMaxLineSizeForMultiLineResponse;
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////

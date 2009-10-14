@@ -44,6 +44,7 @@ OSCL_EXPORT_REF PVDlCfgFile::PVDlCfgFile()
         , iLogger(NULL)
         , bIsNewSession(true)
         , iHttpVersionNum(PDL_HTTP_VERSION_NUMBER) // assume 0 => Http 1.0 ; 1 => Http 1.1
+        , iMaxLineSizeForMultiLineHeader(0x7fffffff)
         , iDisableHeadRequest(false)
 {
     int32 err;

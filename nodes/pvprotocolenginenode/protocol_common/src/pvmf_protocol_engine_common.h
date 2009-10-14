@@ -321,6 +321,11 @@ class ProtocolState : public HttpParsingBasicObjectObserver,
             ;
         }
 
+        bool isHttpHeaderParsed()
+        {
+            return iParser->isHttpHeaderParsed();
+        }
+
         // constructor
         ProtocolState() : iComposer(NULL),
                 iParser(NULL),
@@ -370,6 +375,10 @@ class ProtocolState : public HttpParsingBasicObjectObserver,
         virtual void setRequestBasics() = 0;
         // Each derived class needs to implement this one
         virtual bool setHeaderFields() = 0;
+        virtual void setResponseBasics()
+        {
+            ;
+        }
         // do final compose, fixed for all derived classes
         OSCL_IMPORT_REF virtual int32 doCompose(OsclMemoryFragment &aFrag);
         OSCL_IMPORT_REF bool setExtensionFields(Oscl_Vector<OSCL_HeapString<OsclMemAllocator>, OsclMemAllocator> &aExtensionHeaderKeys,
@@ -684,6 +693,23 @@ class HttpBasedProtocol : public ProtocolStateObserver,
         void resetTotalHttpStreamingSize()
         {
             if (iParser) iParser->resetTotalHttpStreamingSize();
+        }
+
+        void setMaxLineSizeForMultiLineHeader(int32 &aSizeLimit)
+        {
+            if (iParser)
+            {
+                (iParser->getHttpParser())->setMaxLineSizeForMultiLineResponse(aSizeLimit);
+            }
+            if (iComposer)
+            {
+                iComposer->setMaxLineSizeForMultiLineRequest(aSizeLimit);
+            }
+        }
+
+        bool isHttpHeaderParsed()
+        {
+            return iParser->isHttpHeaderParsed();
         }
 
         virtual void reset()

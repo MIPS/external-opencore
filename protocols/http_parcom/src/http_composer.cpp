@@ -21,7 +21,6 @@
 #include "oscl_string_utils.h"
 #include "oscl_string_containers.h"
 
-
 ////////////////////////////////////////////////////////////////////////////////////
 ////// HTTPComposer implementation /////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////
@@ -288,17 +287,26 @@ bool HTTPComposer::composeHeaders(HTTPMemoryFragment &aComposedMessageBuffer)
             index = 0;
             while (iKeyValueStore->getValueByKey(keyList[j], valueList[i], index))
             {
-                // put key
-                oscl_memcpy(ptr, keyList[j].c_str(), keyList[j].length()); // same field key
-                ptr += keyList[j].length();
-                *ptr++ = HTTP_CHAR_COLON;
-                *ptr++ = HTTP_CHAR_SPACE;
+                //bydefault iMaxLineSizeForMultiLineRequest value is 0x7fffffff, So control will divide header into multiple line.
+                if ((keyList[j].length() + valueList[i].length()) > iMaxLineSizeForMultiLineRequest)
+                {
+                    //Break header field into multiple lines, if any key-value pair's length is greater then iMaxLineSizeForMultiLineRequest
+                    createMultiHeaderLine(ptr, keyList[j], valueList[i]);
+                }
+                else
+                {
+                    // put key
+                    oscl_memcpy(ptr, keyList[j].c_str(), keyList[j].length()); // same field key
+                    ptr += keyList[j].length();
+                    *ptr++ = HTTP_CHAR_COLON;
+                    *ptr++ = HTTP_CHAR_SPACE;
 
-                // put value
-                oscl_memcpy(ptr, valueList[i].c_str(), valueList[i].length()); // same field key
-                ptr += valueList[i].length();
-                *ptr++ = HTTP_CHAR_CR;
-                *ptr++ = HTTP_CHAR_LF;
+                    // put value
+                    oscl_memcpy(ptr, valueList[i].c_str(), valueList[i].length()); // same field key
+                    ptr += valueList[i].length();
+                    *ptr++ = HTTP_CHAR_CR;
+                    *ptr++ = HTTP_CHAR_LF;
+                }
                 index++;
             }
             i += index;
@@ -314,3 +322,35 @@ bool HTTPComposer::composeHeaders(HTTPMemoryFragment &aComposedMessageBuffer)
     return true;
 }
 
+bool HTTPComposer::createMultiHeaderLine(char* &ptr, StrPtrLen &keyList, StrPtrLen &valueList)
+{
+    OsclMemAllocator alloc;
+    int32 keyValueLength = keyList.length() + valueList.length() + 2; // 2 for COLON & SPACE
+    char *ptrMultiHeader = (char *)alloc.allocate(keyValueLength);
+    oscl_memcpy(ptrMultiHeader, "\0", (keyValueLength));
+    char *startPtr = ptrMultiHeader;
+    //copy full key-value to ptrMultiHeader buffer
+    oscl_memcpy(ptrMultiHeader, keyList.c_str(), keyList.length()); // copy key field
+    ptrMultiHeader += keyList.length();
+    *ptrMultiHeader++ = HTTP_CHAR_COLON;
+    *ptrMultiHeader++ = HTTP_CHAR_SPACE;
+    oscl_memcpy(ptrMultiHeader, valueList.c_str(), valueList.length()); // copy value field
+    ptrMultiHeader = startPtr;
+    while (keyValueLength > 0)
+    {
+        uint32 copyBuffer = OSCL_MIN(keyValueLength, iMaxLineSizeForMultiLineRequest);
+        oscl_memcpy(ptr, startPtr, copyBuffer);
+        startPtr += copyBuffer;
+        ptr += copyBuffer;
+        keyValueLength -= copyBuffer;
+        *ptr++ = HTTP_CHAR_CR;
+        *ptr++ = HTTP_CHAR_LF;
+        if (keyValueLength > 0)
+        {
+            *ptr++ = HTTP_CHAR_SPACE;   // add SPACE or TAB but don't add after last line
+            iHeaderLength += 3;
+        }
+    }
+    alloc.deallocate(ptrMultiHeader);
+    return true;
+}

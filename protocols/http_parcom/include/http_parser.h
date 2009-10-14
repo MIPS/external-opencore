@@ -93,7 +93,8 @@ class HTTPParser
             PARSE_HTTP_VERSION_NOT_SUPPORTED = -3,  // no HTTP version or HTTP version is different from 1.0 or 1.1.
             PARSE_TRANSFER_ENCODING_NOT_SUPPORTED = -4,
             PARSE_MEMORY_ALLOCATION_FAILURE = -5,   // memory allocation for entity units
-            PARSE_HEADER_NOT_PARSED_YET = -6        // HTTP header hasn't been parsed yet, so shouldn't expect parsing entity body
+            PARSE_HEADER_NOT_PARSED_YET = -6,        // HTTP header hasn't been parsed yet, so shouldn't expect parsing entity body
+            PARSE_LINESIZE_FOR_MULTILINE_HEADER_EXCEED = -7   //HTTP header-field length greater than 998
         };
 
 
@@ -121,6 +122,8 @@ class HTTPParser
 
         // factory method
         OSCL_IMPORT_REF static HTTPParser *create();
+
+        OSCL_IMPORT_REF void setMaxLineSizeForMultiLineResponse(int32 &aSizeLimit);
 
         // destructor
         OSCL_IMPORT_REF ~HTTPParser();

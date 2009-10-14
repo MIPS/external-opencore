@@ -421,7 +421,7 @@ class PVMFDownloadDataSourceContainer
         uint32 iProxyPort;                                      // HTTP proxy port
         OSCL_HeapString<OsclMemAllocator> iUserID;              // UserID string used for HTTP basic/digest authentication
         OSCL_HeapString<OsclMemAllocator> iUserPasswd;          // password string used for HTTP basic/digest authentication
-
+        int32 iMaxHttpHeaderFieldSize;
 
         CPVXInfo *iPvxInfo;                                     // Fasttrack only, contains all the info in the .pvx file except the URL
 
@@ -450,6 +450,7 @@ class PVMFDownloadDataSourceContainer
             iMaxFileSize     = 0;
             iPlaybackControl = 0;
             iProxyPort       = 0;
+            iMaxHttpHeaderFieldSize = 0x7fffffff;
             iPvxInfo         = NULL;
         }
 

@@ -25,6 +25,8 @@
 #include "oscl_mem.h"
 #include "oscl_str_ptr_len.h"
 
+#define SIGNINTMAXVALUE    0x7fffffff
+
 enum HTTPVersion
 {
     HTTP_V1_0 = 0,
@@ -147,6 +149,11 @@ class HTTPComposer
         // factory method
         OSCL_IMPORT_REF static HTTPComposer *create();
 
+        OSCL_IMPORT_REF void setMaxLineSizeForMultiLineRequest(const int32 &aSizeLimit = SIGNINTMAXVALUE)
+        {
+            iMaxLineSizeForMultiLineRequest = aSizeLimit;
+        }
+
         // destructor
         OSCL_IMPORT_REF ~HTTPComposer();
 
@@ -158,11 +165,12 @@ class HTTPComposer
         // compose all headers of a HTTP request
         bool composeHeaders(HTTPMemoryFragment &aComposedMessageBuffer);
 
+        bool createMultiHeaderLine(char* &ptr, StrPtrLen &keyList, StrPtrLen &valueList);
         // called by create(), construct the composer
         bool construct();
 
         // constructor
-        HTTPComposer() : iKeyValueStore(NULL)
+        HTTPComposer() : iMaxLineSizeForMultiLineRequest(SIGNINTMAXVALUE), iKeyValueStore(NULL)
         {
             ;
         }
@@ -176,7 +184,7 @@ class HTTPComposer
         uint32 iHeaderLength;
         uint32 iFirstLineLength; // length of the request/response line in HTTP header
         uint32 iEntityBodyLength;
-
+        int32 iMaxLineSizeForMultiLineRequest;
         // field key-value store to handle key-value operations
         StringKeyValueStore *iKeyValueStore;
 };

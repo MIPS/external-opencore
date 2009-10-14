@@ -3047,13 +3047,19 @@ bool HttpHeaderAvailableHandler::handle(PVProtocolEngineNodeInternalEvent &aEven
 
 bool HttpHeaderAvailableHandler::Handle1xxResponse()
 {
+    if (!iNode || !(iNode->iProtocol))
+        return false;
     int32 statusCode = iNode->iProtocol->getResponseStatusCode();
-    if (statusCode >= Response1xxStartStatusCode && statusCode < Response1xxEndStatusCode)
+    bool isHttpHeaderParsed = iNode->iProtocol->isHttpHeaderParsed();
+    if (statusCode >= Response1xxStartStatusCode && statusCode < Response1xxEndStatusCode && isHttpHeaderParsed)
     {
-        iNode->iNodeTimer->start(SERVER_RESPONSE_TIMER_ID);
-        iNode->iNodeTimer->cancel(SERVER_INACTIVITY_TIMER_ID);
-        LOGINFODATAPATH((0, "HttpHeaderAvailableHandler::handle(): Since 1xx response, restart server_respose_timer and cancel inactivity timer"));
-        return true;
+        if (iNode->iNodeTimer)
+        {
+            iNode->iNodeTimer->start(SERVER_RESPONSE_TIMER_ID);
+            iNode->iNodeTimer->cancel(SERVER_INACTIVITY_TIMER_ID);
+            LOGINFODATAPATH((0, "HttpHeaderAvailableHandler::handle(): Since 1xx response, restart server_respose_timer and cancel inactivity timer"));
+            return true;
+        }
     }
     return false;
 }

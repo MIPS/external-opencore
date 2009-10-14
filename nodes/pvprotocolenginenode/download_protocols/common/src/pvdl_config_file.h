@@ -262,6 +262,15 @@ class PVDlCfgFile
             return iHttpVersionNum;
         }
 
+        void setMaxLineSizeForMultiLineHeader(int32 &aMaxLineSizeForMultiLineHeader)
+        {
+            iMaxLineSizeForMultiLineHeader = aMaxLineSizeForMultiLineHeader;
+        }
+        int32 getMaxLineSizeForMultiLineHeader()
+        {
+            return iMaxLineSizeForMultiLineHeader;
+        }
+
         //for integratity check and also argument passing
         void SetDownloadFileName(OSCL_wString &aFileName)
         {
@@ -399,6 +408,7 @@ class PVDlCfgFile
         PVLogger* iLogger;
         bool bIsNewSession;
         uint32 iHttpVersionNum;
+        int32 iMaxLineSizeForMultiLineHeader;
 
         Oscl_Vector<OSCL_HeapString<OsclMemAllocator>, OsclMemAllocator> iExtensionHeaderKeys;
         Oscl_Vector<OSCL_HeapString<OsclMemAllocator>, OsclMemAllocator> iExtensionHeaderValues;
