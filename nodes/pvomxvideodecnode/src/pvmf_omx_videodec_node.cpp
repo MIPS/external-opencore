@@ -151,6 +151,8 @@ PVMFOMXVideoDecNode::PVMFOMXVideoDecNode(int32 aPriority) :
 
     iLastYUVWidth = 0;
     iLastYUVHeight = 0;
+    iStride = 0;
+    iSliceHeight = 0;
 }
 
 /////////////////////
@@ -178,39 +180,11 @@ PVMFStatus PVMFOMXVideoDecNode::HandlePortReEnable()
         // read the alignment
         iOutputBufferAlignment = iParamPort.nBufferAlignment;
 
-        iOMXComponentOutputBufferSize = ((iParamPort.format.video.nFrameWidth + 15) & (~15)) * ((iParamPort.format.video.nFrameHeight + 15) & (~15)) * 3 / 2;
-
-        // check the new buffer size
-        if (iInPort)
-        {
-            if (((PVMFOMXDecPort*)iInPort)->iFormat == PVMF_MIME_H264_VIDEO ||
-                    ((PVMFOMXDecPort*)iInPort)->iFormat == PVMF_MIME_H264_VIDEO_MP4 ||
-                    ((PVMFOMXDecPort*)iInPort)->iFormat == PVMF_MIME_H264_VIDEO_RAW ||
-                    ((PVMFOMXDecPort*)iInPort)->iFormat == PVMF_MIME_M4V ||
-                    ((PVMFOMXDecPort*)iInPort)->iFormat == PVMF_MIME_H2631998 ||
-                    ((PVMFOMXDecPort*)iInPort)->iFormat == PVMF_MIME_H2632000)
-            {
-                iOMXComponentOutputBufferSize = ((iParamPort.format.video.nFrameWidth + 15) & (~15)) * ((iParamPort.format.video.nFrameHeight + 15) & (~15)) * 3 / 2;
-            }
-            else if (((PVMFOMXDecPort*)iInPort)->iFormat == PVMF_MIME_WMV) // This is a requirement for the WMV decoder that we have currently
-            {
-                iOMXComponentOutputBufferSize = ((iParamPort.format.video.nFrameWidth + 3) & (~3)) * (iParamPort.format.video.nFrameHeight) * 3 / 2;
-            }
-            else if (((PVMFOMXDecPort*)iInPort)->iFormat == PVMF_MIME_REAL_VIDEO)
-            {
-                iOMXComponentOutputBufferSize = (iParamPort.format.video.nFrameWidth * iParamPort.format.video.nFrameHeight * 3) / 2;
-            }
-            else
-            {
-                OSCL_ASSERT(false);
-            }
-        }
         // set the new width / height
         iYUVWidth =  iParamPort.format.video.nFrameWidth;
         iYUVHeight = iParamPort.format.video.nFrameHeight;
 
-        if (iOMXComponentOutputBufferSize < iParamPort.nBufferSize)
-            iOMXComponentOutputBufferSize = iParamPort.nBufferSize;
+        iOMXComponentOutputBufferSize = iParamPort.nBufferSize;
 
         iNumOutputBuffers = iParamPort.nBufferCountActual;
 
@@ -223,6 +197,21 @@ PVMFStatus PVMFOMXVideoDecNode::HandlePortReEnable()
 
         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                         (0, "PVMFOMXVideoDecNode::HandlePortReEnable() new output buffers %d, size %d", iNumOutputBuffers, iOMXComponentOutputBufferSize));
+
+        iStride = OSCL_ABS(iParamPort.format.video.nStride);
+        iSliceHeight = iParamPort.format.video.nSliceHeight;
+
+        // This should not happen. If it does, it is a bug in the OMX component.
+        OSCL_ASSERT((iStride >= iParamPort.format.video.nFrameWidth) || (iSliceHeight >= iParamPort.format.video.nFrameHeight));
+        if (iStride < iParamPort.format.video.nFrameWidth)
+        {
+            iStride = iParamPort.format.video.nFrameWidth;
+        }
+
+        if (iSliceHeight < iParamPort.format.video.nFrameHeight)
+        {
+            iSliceHeight = iParamPort.format.video.nFrameHeight;
+        }
 
         // make sure to set the actual number of buffers (in case the number has changed)
         iParamPort.nBufferCountActual = iNumOutputBuffers;
@@ -281,28 +270,8 @@ PVMFStatus PVMFOMXVideoDecNode::HandlePortReEnable()
                     fsiInfo->viewable_height = iYUVHeight;
                     fsiInfo->num_buffers = iNumOutputBuffers;
                     fsiInfo->buffer_size = iOMXComponentOutputBufferSize;
-
-                    if (((PVMFOMXDecPort*)iInPort)->iFormat == PVMF_MIME_H264_VIDEO ||
-                            ((PVMFOMXDecPort*)iInPort)->iFormat == PVMF_MIME_H264_VIDEO_MP4 ||
-                            ((PVMFOMXDecPort*)iInPort)->iFormat == PVMF_MIME_H264_VIDEO_RAW ||
-                            ((PVMFOMXDecPort*)iInPort)->iFormat == PVMF_MIME_M4V ||
-                            ((PVMFOMXDecPort*)iInPort)->iFormat == PVMF_MIME_H2631998 ||
-                            ((PVMFOMXDecPort*)iInPort)->iFormat == PVMF_MIME_H2632000)
-                    {
-                        fsiInfo->buffer_width = (iYUVWidth + 15) & (~15);
-                        fsiInfo->buffer_height = (iYUVHeight + 15) & (~15);
-                    }
-                    else if (((PVMFOMXDecPort*)iInPort)->iFormat == PVMF_MIME_WMV)
-                    {
-                        fsiInfo->buffer_width = (iYUVWidth + 3) & -4;
-                        fsiInfo->buffer_height = iYUVHeight;
-                    }
-                    //For PVMF_MIME_REAL_VIDEO format, this else case would be applicable
-                    else
-                    {
-                        fsiInfo->buffer_width = iYUVWidth;
-                        fsiInfo->buffer_height = iYUVHeight;
-                    }
+                    fsiInfo->buffer_width = iStride;
+                    fsiInfo->buffer_height = iSliceHeight;
 
                     OsclMemAllocator alloc;
                     int32 KeyLength = oscl_strlen(PVMF_FORMAT_SPECIFIC_INFO_KEY_YUV) + 1;
@@ -863,6 +832,21 @@ bool PVMFOMXVideoDecNode::NegotiateComponentParameters(OMX_PTR aOutputParameters
         }
     }
 
+    iStride = OSCL_ABS(iParamPort.format.video.nStride);
+    iSliceHeight = iParamPort.format.video.nSliceHeight;
+
+    // This should not happen. If it does, it is a bug in the OMX component.
+    OSCL_ASSERT((iStride >= iParamPort.format.video.nFrameWidth) || (iSliceHeight >= iParamPort.format.video.nFrameHeight));
+    if (iStride < iParamPort.format.video.nFrameWidth)
+    {
+        iStride = iParamPort.format.video.nFrameWidth;
+    }
+
+    if (iSliceHeight < iParamPort.format.video.nFrameHeight)
+    {
+        iSliceHeight = iParamPort.format.video.nFrameHeight;
+    }
+
     //Send the FSI information to media output node here
 
     if (iLastYUVWidth != iYUVWidth || iYUVHeight != iLastYUVHeight)
@@ -907,28 +891,8 @@ bool PVMFOMXVideoDecNode::NegotiateComponentParameters(OMX_PTR aOutputParameters
                     fsiInfo->viewable_height = iYUVHeight;
                     fsiInfo->num_buffers = iNumOutputBuffers;
                     fsiInfo->buffer_size = iOMXComponentOutputBufferSize;
-
-                    if (((PVMFOMXDecPort*)iInPort)->iFormat == PVMF_MIME_H264_VIDEO ||
-                            ((PVMFOMXDecPort*)iInPort)->iFormat == PVMF_MIME_H264_VIDEO_MP4 ||
-                            ((PVMFOMXDecPort*)iInPort)->iFormat == PVMF_MIME_H264_VIDEO_RAW ||
-                            ((PVMFOMXDecPort*)iInPort)->iFormat == PVMF_MIME_M4V ||
-                            ((PVMFOMXDecPort*)iInPort)->iFormat == PVMF_MIME_H2631998 ||
-                            ((PVMFOMXDecPort*)iInPort)->iFormat == PVMF_MIME_H2632000)
-                    {
-                        fsiInfo->buffer_width = (iYUVWidth + 15) & (~15);
-                        fsiInfo->buffer_height = (iYUVHeight + 15) & (~15);
-                    }
-                    else if (((PVMFOMXDecPort*)iInPort)->iFormat == PVMF_MIME_WMV)
-                    {
-                        fsiInfo->buffer_width = (iYUVWidth + 3) & -4;
-                        fsiInfo->buffer_height = iYUVHeight;
-                    }
-                    //For PVMF_MIME_REAL_VIDEO format, this else case would be applicable
-                    else
-                    {
-                        fsiInfo->buffer_width = iYUVWidth;
-                        fsiInfo->buffer_height = iYUVHeight;
-                    }
+                    fsiInfo->buffer_width = iStride;
+                    fsiInfo->buffer_height = iSliceHeight;
 
                     OsclMemAllocator alloc;
                     int32 KeyLength = oscl_strlen(PVMF_FORMAT_SPECIFIC_INFO_KEY_YUV) + 1;
@@ -1584,29 +1548,9 @@ bool PVMFOMXVideoDecNode::QueueOutputBuffer(OsclSharedPtr<PVMFMediaDataImpl> &me
                     fsiInfo->viewable_height = iYUVHeight;
                     fsiInfo->num_buffers = 0;
                     fsiInfo->buffer_size = 0;
-
-                    if (((PVMFOMXDecPort*)iInPort)->iFormat == PVMF_MIME_H264_VIDEO ||
-                            ((PVMFOMXDecPort*)iInPort)->iFormat == PVMF_MIME_H264_VIDEO_MP4 ||
-                            ((PVMFOMXDecPort*)iInPort)->iFormat == PVMF_MIME_H264_VIDEO_RAW ||
-                            ((PVMFOMXDecPort*)iInPort)->iFormat == PVMF_MIME_M4V ||
-                            ((PVMFOMXDecPort*)iInPort)->iFormat == PVMF_MIME_H2631998 ||
-                            ((PVMFOMXDecPort*)iInPort)->iFormat == PVMF_MIME_H2632000)
-
-                    {
-                        fsiInfo->buffer_width = (iYUVWidth + 15) & (~15);
-                        fsiInfo->buffer_height = (iYUVHeight + 15) & (~15);
-                    }
-                    else if (((PVMFOMXDecPort*)iInPort)->iFormat == PVMF_MIME_WMV)
-                    {
-                        fsiInfo->buffer_width = (iYUVWidth + 3) & -4;
-                        fsiInfo->buffer_height = iYUVHeight;
-                    }
-                    //For PVMF_MIME_REAL_VIDEO format, this else case would be applicable
-                    else
-                    {
-                        fsiInfo->buffer_width = iYUVWidth;
-                        fsiInfo->buffer_height = iYUVHeight;
-                    }
+                    fsiInfo->buffer_width = iStride;
+                    fsiInfo->buffer_height = iSliceHeight;
+                    fsiInfo->buffer_size = iOMXComponentOutputBufferSize;
 
                     // NOTE: we first try to send the FSI_YUV key. If the MIO can take it - we're ok.
                     // if MIO can't take it - for bw compatibility - we'll send the ordinary FSI key
