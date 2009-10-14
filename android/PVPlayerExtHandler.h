@@ -11,8 +11,8 @@ using namespace android;
 class PVPlayerExtensionHandler
 {
 public:
-	PVPlayerExtensionHandler(const PlayerDriver& pd);
-	virtual ~PVPlayerExtensionHandler();
+    PVPlayerExtensionHandler(const PlayerDriver& pd);
+    virtual ~PVPlayerExtensionHandler();
 
     /**
      * Extension UUID String is fetched from the data parcel. If the requested Extension is found in the registry,
@@ -40,14 +40,14 @@ public:
     */
     virtual status_t callPlayerExtension(PlayerExtensionCommand* cmd, const Parcel& data, Parcel& reply);
 
-	// access to playerdriver and its fields
-	PlayerDriver& getPlayerDriver() { return const_cast<PlayerDriver &>(mPlayerDriver); }
+    // access to playerdriver and its fields
+    PlayerDriver& getPlayerDriver() { return const_cast<PlayerDriver &>(mPlayerDriver); }
     PVPlayerInterface* getPlayer() { return mPlayerDriver.mPlayer; }
     void FinishSyncCommand(PlayerCommand* cmd){(const_cast<PlayerDriver &> (mPlayerDriver)).FinishSyncCommand(cmd);}
     // returns true if aCmd was handled by an extension or false to request default completion
     virtual bool commandCompleted( PlayerExtensionCommand* cmd, const PVCmdResponse &resp );
 protected:
-	const PlayerDriver& mPlayerDriver;
+    const PlayerDriver& mPlayerDriver;
     PVPlayerExtensionRegistry mPVPlayerExtnIfaceRegistry;
 private:
     enum{

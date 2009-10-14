@@ -557,17 +557,19 @@ void PlayerDriver::handleSetDataSource(PlayerSetDataSource* command)
             return;
         }
     } else {
+        LOGV("handleSetDataSource - called with a filepath - %s",url);
         mDataSource->SetDataSourceFormatType((const char*)PVMF_MIME_FORMAT_UNKNOWN); // Let PV figure it out
         delete mLocalContextData;
         mLocalContextData = NULL;
-
-        LOGV("handleSetDataSource - called with a filepath - %s",url);
+        mLocalContextData = new PVMFSourceContextData();
+        mLocalContextData->EnableCommonSourceContext();
         const char* ext = strrchr(url, '.');
         if (ext && ( strcasecmp(ext, ".sdp") == 0) ) {
             // For SDP files, currently there is no recognizer. So, to play from such files,
             // there is a need to set the format type.
             mDataSource->SetDataSourceFormatType((const char*)PVMF_MIME_DATA_SOURCE_SDP_FILE);
         }
+        mDataSource->SetDataSourceContextData((OsclAny*)mLocalContextData);
     }
 
     OSCL_TRY(error, mPlayer->AddDataSource(*mDataSource, command));
