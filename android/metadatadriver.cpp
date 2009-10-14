@@ -28,7 +28,9 @@
 
 using namespace android;
 
-const char* MetadataDriver::ALBUM_ART_KEY = "graphic";
+// Limit max size of album art to 3M
+// If album art exceeds the max, dont truncate, return nothing.
+const char* MetadataDriver::ALBUM_ART_KEY = "graphic;maxsize=3000000;truncate=false";
 
 const char* MetadataDriver::METADATA_KEYS[NUM_METADATA_KEYS] = {
         "tracknumber",
