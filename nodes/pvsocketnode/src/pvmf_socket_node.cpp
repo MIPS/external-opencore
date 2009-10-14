@@ -3478,7 +3478,19 @@ bool PVMFSocketNode::queryInterface(const PVUuid& uuid, PVInterface*& iface)
     {
         if (!iExtensionInterface)
         {
-            iExtensionInterface = OSCL_NEW(PVMFSocketNodeExtensionInterfaceImpl, (this));
+            PVMFSocketNodeAllocator alloc;
+            int32 err;
+            OsclAny*ptr = NULL;
+            OSCL_TRY(err,
+                     ptr = alloc.ALLOCATE(sizeof(PVMFSocketNodeExtensionInterfaceImpl));
+                    );
+            if (err != OsclErrNone || !ptr)
+            {
+                PVMF_SOCKETNODE_LOGERROR((0, "PVMFSocketNode::queryInterface: Error - Out of memory"));
+                OSCL_LEAVE(OsclErrNoMemory);
+            }
+            iExtensionInterface =
+                OSCL_PLACEMENT_NEW(ptr, PVMFSocketNodeExtensionInterfaceImpl(this));
         }
         if (iExtensionInterface)
         {
@@ -3509,7 +3521,18 @@ PVMFStatus PVMFSocketNode::DoQueryInterface(PVMFSocketNodeCommand&  aCmd)
     {
         if (!iExtensionInterface)
         {
-            iExtensionInterface = OSCL_NEW(PVMFSocketNodeExtensionInterfaceImpl, (this));
+            PVMFSocketNodeAllocator alloc;
+            int32 err;
+            OsclAny*ptr = NULL;
+            OSCL_TRY(err,
+                     ptr = alloc.ALLOCATE(sizeof(PVMFSocketNodeExtensionInterfaceImpl));
+                    );
+            if (err != OsclErrNone || !ptr)
+            {
+                PVMF_SOCKETNODE_LOGERROR((0, "PVMFSocketNode::queryInterface: Error - Out of memory"));
+                OSCL_LEAVE(OsclErrNoMemory);
+            }
+            iExtensionInterface = OSCL_PLACEMENT_NEW(ptr, PVMFSocketNodeExtensionInterfaceImpl(this));
         }
         if (iExtensionInterface)
         {
