@@ -2527,7 +2527,7 @@ OSCL_EXPORT_REF PVMFStatus PVRTSPEngineNode::composePlayRequest(RTSPOutgoingMess
     return PVMFSuccess;
 }
 
-PVMFStatus PVRTSPEngineNode::populatePlayRequestFields(RTSPOutgoingMessage &aMsg)
+OSCL_EXPORT_REF PVMFStatus PVRTSPEngineNode::populatePlayRequestFields(RTSPOutgoingMessage &aMsg)
 {
     if (iSessionInfo.iSID.get_size())
     {
@@ -3758,7 +3758,7 @@ OSCL_EXPORT_REF void PVRTSPEngineNode::ReportInfoEvent(PVMFEventType aEventType,
 /////////////////////////////////////////////////////
 // Port Processing routines
 /////////////////////////////////////////////////////
-void PVRTSPEngineNode::HandlePortActivity(const PVMFPortActivity &aActivity)
+OSCL_EXPORT_REF void PVRTSPEngineNode::HandlePortActivity(const PVMFPortActivity &aActivity)
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                     (0, "0x%x PVRTSPEngineNode::HandlePortActivity: port=0x%x, type=%d IQ=%d OQ=%d",
@@ -3832,7 +3832,7 @@ void PVRTSPEngineNode::QueuePortActivity(const PVMFPortActivity &aActivity)
     }
 }
 
-void PVRTSPEngineNode::TimeoutOccurred(int32 timerID, int32 timeoutInfo)
+OSCL_EXPORT_REF void PVRTSPEngineNode::TimeoutOccurred(int32 timerID, int32 timeoutInfo)
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVRTSPEngineNode::TimeoutOccurred() in timerID=%d", timerID));
     OSCL_UNUSED_ARG(timeoutInfo);

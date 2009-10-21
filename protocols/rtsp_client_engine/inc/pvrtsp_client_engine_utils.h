@@ -72,8 +72,8 @@ const char DOT = '.';
 *             composition or not. In case of successful composition, the complete URL
 *             is returned in the third parameter.
 */
-bool composeURL(const char *baseURL, const char *relativeURL, \
-                char *completeURL, unsigned int &completeURLLen);
+OSCL_IMPORT_REF bool composeURL(const char *baseURL, const char *relativeURL, \
+                                char *completeURL, unsigned int &completeURLLen);
 
 /*
  * Function   : const char* findRelativeURL(const char *aURL)
@@ -82,7 +82,7 @@ bool composeURL(const char *baseURL, const char *relativeURL, \
  * Description: This function finds the relative URL within the aURL, including the forward slash. Returns NULL if NOT found.
  * Output     : The relative URL or NULL.
  */
-const char* findRelativeURL(const char *aURL);
+OSCL_IMPORT_REF const char* findRelativeURL(const char *aURL);
 
 /*
 *Function   : URLType findRelativeURLType(char *relativeURL)

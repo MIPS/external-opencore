@@ -21,7 +21,7 @@
 #include "oscl_mem.h"
 #include "oscl_mem_basic_functions.h"
 
-bool composeURL(const char *baseURL, const char *relativeURL, char *completeURL, unsigned int &completeURLLen)
+OSCL_EXPORT_REF bool composeURL(const char *baseURL, const char *relativeURL, char *completeURL, unsigned int &completeURLLen)
 {
     char* copyOfBaseURL = OSCL_ARRAY_NEW(char, 8 * MAX_LONG_TEXT_LEN);
     if (NULL == copyOfBaseURL)
@@ -96,7 +96,7 @@ bool composeURL(const char *baseURL, const char *relativeURL, char *completeURL,
     return true;
 }
 
-const char* findRelativeURL(const char *aURL)
+OSCL_EXPORT_REF const char* findRelativeURL(const char *aURL)
 {
     int i = 0;
     while (aURL[i] != '\0')
