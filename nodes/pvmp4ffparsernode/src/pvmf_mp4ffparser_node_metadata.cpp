@@ -457,7 +457,7 @@ PVMFStatus PVMFMP4FFParserNode::DoGetMetadataValues(PVMFMP4FFParserNodeCommand& 
                         // Check if the max number of value entries were added
                         if (max_entries > 0 && numentriesadded >= max_entries)
                         {
-
+                            iMP4ParserNodeMetadataValueCount = (*valuelistptr).size();
                             return PVMFSuccess;
                         }
                     }
@@ -628,7 +628,7 @@ PVMFStatus PVMFMP4FFParserNode::DoGetMetadataValues(PVMFMP4FFParserNodeCommand& 
                             // Check if the max number of value entries were added
                             if (max_entries > 0 && numentriesadded >= max_entries)
                             {
-
+                                iMP4ParserNodeMetadataValueCount = (*valuelistptr).size();
                                 return PVMFSuccess;
                             }
                         }
@@ -705,7 +705,7 @@ PVMFStatus PVMFMP4FFParserNode::DoGetMetadataValues(PVMFMP4FFParserNodeCommand& 
                             // Check if the max number of value entries were added
                             if (max_entries > 0 && numentriesadded >= max_entries)
                             {
-
+                                iMP4ParserNodeMetadataValueCount = (*valuelistptr).size();
                                 return PVMFSuccess;
                             }
                         }
@@ -782,7 +782,7 @@ PVMFStatus PVMFMP4FFParserNode::DoGetMetadataValues(PVMFMP4FFParserNodeCommand& 
                             // Check if the max number of value entries were added
                             if (max_entries > 0 && numentriesadded >= max_entries)
                             {
-
+                                iMP4ParserNodeMetadataValueCount = (*valuelistptr).size();
                                 return PVMFSuccess;
                             }
                         }
@@ -857,7 +857,7 @@ PVMFStatus PVMFMP4FFParserNode::DoGetMetadataValues(PVMFMP4FFParserNodeCommand& 
                             // Check if the max number of value entries were added
                             if (max_entries > 0 && numentriesadded >= max_entries)
                             {
-
+                                iMP4ParserNodeMetadataValueCount = (*valuelistptr).size();
                                 return PVMFSuccess;
                             }
                         }
@@ -932,7 +932,7 @@ PVMFStatus PVMFMP4FFParserNode::DoGetMetadataValues(PVMFMP4FFParserNodeCommand& 
                             // Check if the max number of value entries were added
                             if (max_entries > 0 && numentriesadded >= max_entries)
                             {
-
+                                iMP4ParserNodeMetadataValueCount = (*valuelistptr).size();
                                 return PVMFSuccess;
                             }
                         }
