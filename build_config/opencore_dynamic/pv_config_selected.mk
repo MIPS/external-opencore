@@ -463,9 +463,18 @@ pvmtp_engine_lib=n
 pvmtpip_engine_lib=n
 pviptransport_lib=n
 pvsqlite_lib=n
+
+#
+# Menu for configuring Janus wmdrm
+#
 pvwmdrm_lib=n
+
+
+#
+# Menu for configuring PlayReady wmdrm
+#
 pvwmdrmmd_lib=n
-wmdrm_config=n
+
 pvdivxdrm_lib=n
 pvdivxdrm_oem_settings_lib=n
 
