@@ -43,6 +43,7 @@ static const char* const TPVSocketEventStr[] =
     , "EPVSocketTimeout"
     , "EPVSocketFailure"
     , "EPVSocketCancel"
+    , "EPVSocketNotImplemented"
 };
 
 /** OsclSocketRequestAO is the base class for all the AOs that
@@ -190,7 +191,28 @@ void OsclSocketRequestAO::CleanupParam(bool aDeallocate)
     }
 }
 
+TPVSocketEvent OsclSocketMethod::ThreadLogoff()
+{
+    //make sure there's not already a request
+    //in progress
+    if (iSocketRequestAO->IsBusy()
+            || IsBusy())
+        return EPVSocketFailure;
 
+    if (IsAdded())
+        RemoveFromScheduler();
+    if (iSocketRequestAO->IsAdded())
+        iSocketRequestAO->RemoveFromScheduler();
+
+    return EPVSocketSuccess;
+}
+
+TPVSocketEvent OsclSocketMethod::ThreadLogon()
+{
+    //nothing needed here-- the individual methods will
+    //add themselves to scheduler as needed.
+    return EPVSocketSuccess;
+}
 /** OsclSocketMethod is the base class for all the AOs that
   implement asynchronous socket requests.  It implements the timeout.
   */

@@ -46,7 +46,7 @@ class OsclSocketServI: public OsclTimerObject, public OsclSocketServIBase
 {
     public:
         static OsclSocketServI* NewL(Oscl_DefAlloc &a);
-        int32 Connect(uint32 aMessageSlots);
+        int32 Connect(uint32 aMessageSlots, bool aShareSession);
         void Close(bool);
 
         //check if calling context is server thread.

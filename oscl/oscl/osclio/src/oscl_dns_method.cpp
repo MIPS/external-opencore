@@ -42,6 +42,7 @@ static const char* const TPVDNSEventStr[] =
 //////////// Request AO //////////////////////
 void OsclDNSRequestAO::NewRequest()
 {
+    AddToScheduler();
     PendForExec();
     LOGINFOMED((0, "OsclSocket: New Request %s", TPVDNSFxnStr[iDNSMethod->iDNSFxn]));
 }
@@ -78,17 +79,16 @@ void OsclDNSRequestAO::Run()
     switch (Status())
     {
         case OSCL_REQUEST_ERR_NONE:
-            Success();
             LOGINFOMED((0, "OsclSocket: %s %s", TPVDNSFxnStr[iDNSMethod->iDNSFxn], TPVDNSEventStr[EPVDNSSuccess]));
-            iDNSMethod->iDNSObserver->HandleDNSEvent(iDNSMethod->iId, iDNSMethod->iDNSFxn, EPVDNSSuccess, 0);
+            Success();
             break;
         case OSCL_REQUEST_ERR_CANCEL:
             LOGINFOMED((0, "OsclSocket: %s %s", TPVDNSFxnStr[iDNSMethod->iDNSFxn], TPVDNSEventStr[EPVDNSCancel]));
-            iDNSMethod->iDNSObserver->HandleDNSEvent(iDNSMethod->iId, iDNSMethod->iDNSFxn, EPVDNSCancel, 0);
+            Cancelled();
             break;
         default:
             LOGINFOMED((0, "OsclSocket: %s %s %d", TPVDNSFxnStr[iDNSMethod->iDNSFxn], TPVDNSEventStr[EPVDNSCancel], GetSocketError()));
-            iDNSMethod->iDNSObserver->HandleDNSEvent(iDNSMethod->iId, iDNSMethod->iDNSFxn, EPVDNSFailure, GetSocketError());
+            Failure();
             break;
     }
 }
@@ -128,7 +128,7 @@ bool OsclDNSMethod::StartMethod(int32 aTimeoutMsec)
         return false;
 
     AddToScheduler();
-    iDNSRequestAO->AddToScheduler();
+    //iDNSRequestAO->AddToScheduler();
 
     //set the timeout
     if (aTimeoutMsec > 0)

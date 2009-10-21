@@ -128,15 +128,16 @@ class OsclDNS: public HeapBase
          *
          * @param name: Null-terminated string containing the host
          *    name.
-         * @param addr: The output address.  The ipAddr field will
-         *    contain the network address of the host in dotted decimal
-         *    notation.
+         * @param addr: The output address corresponding to the host.
+         *    The ipAddr field will contain the network address of the
+         *    host in dotted decimal notation.
          * @param aTimeoutMsec: A timeout for the request in milliseconds,
          *    or (-1) to indicate infinite wait.
+         * @param aAddressList : A list of addresses for the host.
          * @returns: EPVDNSPending for success, EPVDNSFailure for failure.
          */
         OSCL_IMPORT_REF TPVDNSEvent GetHostByName(char *name, OsclNetworkAddress& addr,
-                int32 aTimeoutMsec = -1);
+                int32 aTimeoutMsec = -1, Oscl_Vector<OsclNetworkAddress, OsclMemAllocator>* aAddressList = NULL);
 
         /**
          * Cancel GetHostByName

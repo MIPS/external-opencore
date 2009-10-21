@@ -36,10 +36,15 @@ class OsclIPSocketI
         int32 Bind(OsclNetworkAddress& aAddress);
         int32 Join(OsclNetworkAddress& aAddress);
         int32 SetRecvBufferSize(uint32 size);
+        int32 SetOptionToReuseAddress();
+        int32 SetTOS(const OsclSocketTOS& aTOS);
+        int32 GetPeerName(OsclNetworkAddress& peerName);
         virtual int32 Close() = 0;
         virtual uint8 *GetRecvData(int32 *aLength) = 0;
         virtual uint8 *GetSendData(int32 *aLength) = 0;
         virtual ~OsclIPSocketI() {}
+        void ThreadLogoff();
+        void ThreadLogon(OsclSocketObserver *aObs, OsclSocketServI* aServ);
 
         OsclSocketServI* SocketServ()
         {

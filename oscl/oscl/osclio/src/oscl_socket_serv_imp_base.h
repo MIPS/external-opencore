@@ -35,7 +35,7 @@ class OsclSocketServIBase
         virtual ~OsclSocketServIBase()
         {}
 
-        virtual int32 Connect(uint32 aMessageSlots) = 0;
+        virtual int32 Connect(uint32 aMessageSlots, bool aShareSession) = 0;
         virtual void Close(bool) = 0;
 
     protected:

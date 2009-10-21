@@ -87,6 +87,7 @@ class OsclNativeFile : public HeapBase
         int32  EndOfFile();
         TOsclFileOffset Size();
         int32 Close();
+        int32 SetSize(uint32 size);
 
         //query for current open mode.
         uint32 Mode()

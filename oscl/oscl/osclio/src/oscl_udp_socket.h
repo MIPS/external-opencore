@@ -40,8 +40,15 @@ class OsclUDPSocketI : public OsclIPSocketI
 
         //Synchronous methods
         int32 Close();
+        int32 JoinMulticastGroup(OsclIpMReq& aMReq);
+        int32 SetMulticastTTL(int32 aTTL);
         inline uint8 *GetRecvData(int32 *aLength);
         inline uint8 *GetSendData(int32 *aLength);
+        TPVSocketEvent ThreadLogoff();
+        TPVSocketEvent ThreadLogon(
+            OsclSocketServI *aServ,
+            OsclSocketObserver *aObserver
+        );
 
         //Asynchronous methods
         inline TPVSocketEvent BindAsync(OsclNetworkAddress& aAddress,
@@ -96,6 +103,8 @@ inline TPVSocketEvent OsclUDPSocketI::BindAsync(OsclNetworkAddress& aAddress,
         int32 aTimeoutMsec)
 {
     if (!OsclSocketIBase::HasAsyncBind())
+        return EPVSocketNotImplemented;
+    if (!iObserver)
         return EPVSocketFailure;//not available.
 
     iAddress.ipAddr.Set(aAddress.ipAddr.Str());
@@ -113,6 +122,8 @@ inline TPVSocketEvent OsclUDPSocketI::SendTo(const uint8* &aPtr, uint32 aLen,
         OsclNetworkAddress& aAddress,
         int32 aTimeoutMsec)
 {
+    if (!iObserver)
+        return EPVSocketFailure;//socket is logged off.
     return (iSendToMethod->SendTo(aPtr, aLen, aAddress, aTimeoutMsec));
 }
 
@@ -128,6 +139,8 @@ inline TPVSocketEvent OsclUDPSocketI::RecvFrom(uint8* &aPtr, uint32 aMaxLen,
         Oscl_Vector<uint32, OsclMemAllocator>* aPacketLen,
         Oscl_Vector<OsclNetworkAddress, OsclMemAllocator>* aPacketSource)
 {
+    if (!iObserver)
+        return EPVSocketFailure;//socket is logged off.
     return (iRecvFromMethod->RecvFrom(aPtr, aMaxLen, aAddress, aTimeoutMsec, aMultiMax, aPacketLen, aPacketSource));
 }
 

@@ -56,6 +56,11 @@ class OsclTCPSocketI : public OsclIPSocketI
 
         virtual ~OsclTCPSocketI();
 
+        TPVSocketEvent ThreadLogoff();
+        TPVSocketEvent ThreadLogon(
+            OsclSocketServI *aServ,
+            OsclSocketObserver *aObserver
+        );
         int32 Close();
         inline int32 Listen(int aQueueSize);
         //the returned value is platform-specific
@@ -157,6 +162,8 @@ inline TPVSocketEvent OsclTCPSocketI::BindAsync(OsclNetworkAddress& aAddress,
         int32 aTimeout)
 {
     if (!OsclSocketIBase::HasAsyncBind())
+        return EPVSocketNotImplemented;
+    if (!iObserver)
         return EPVSocketFailure;//not available.
 
     iAddress.ipAddr.Set(aAddress.ipAddr.Str());
@@ -174,6 +181,8 @@ inline TPVSocketEvent OsclTCPSocketI::ListenAsync(uint32 qsize,
         int32 aTimeout)
 {
     if (!OsclSocketIBase::HasAsyncListen())
+        return EPVSocketNotImplemented;
+    if (!iObserver)
         return EPVSocketFailure;//not available
 
     return (iListenMethod->Listen(qsize, aTimeout));
@@ -188,6 +197,8 @@ inline void OsclTCPSocketI::CancelListen()
 inline TPVSocketEvent OsclTCPSocketI::Connect(OsclNetworkAddress& aAddress,
         int32 aTimeout)
 {
+    if (!iObserver)
+        return EPVSocketFailure;//socket is logged off.
     return (iConnectMethod->Connect(aAddress, aTimeout));
 }
 
@@ -200,6 +211,8 @@ inline void OsclTCPSocketI::CancelConnect()
 inline TPVSocketEvent OsclTCPSocketI::Shutdown(TPVSocketShutdown  aHow,
         int32 aTimeout)
 {
+    if (!iObserver)
+        return EPVSocketFailure;//socket is logged off.
     return (iShutdownMethod->Shutdown(aHow, aTimeout));
 }
 
@@ -211,6 +224,8 @@ inline void OsclTCPSocketI::CancelShutdown()
 //////////////////////////////////////////////////////////////////////////////////
 inline TPVSocketEvent OsclTCPSocketI::Accept(int32 aTimeout)
 {
+    if (!iObserver)
+        return EPVSocketFailure;//socket is logged off.
     return (iAcceptMethod->Accept(aTimeout));
 }
 
@@ -223,6 +238,8 @@ inline void OsclTCPSocketI::CancelAccept()
 inline TPVSocketEvent OsclTCPSocketI::Send(const uint8* &aPtr, uint32 aLen,
         int32 aTimeoutMsec)
 {
+    if (!iObserver)
+        return EPVSocketFailure;//socket is logged off.
     return (iSendMethod->Send(aPtr, aLen, aTimeoutMsec));
 }
 
@@ -235,6 +252,8 @@ inline void OsclTCPSocketI::CancelSend()
 inline TPVSocketEvent OsclTCPSocketI::Recv(uint8* &aPtr, uint32 aMaxLen,
         int32 aTimeout)
 {
+    if (!iObserver)
+        return EPVSocketFailure;//socket is logged off.
     return (iRecvMethod->Recv(aPtr, aMaxLen, aTimeout));
 }
 

@@ -47,9 +47,9 @@ OSCL_EXPORT_REF OsclSocketServ::~OsclSocketServ()
     }
 }
 
-OSCL_EXPORT_REF int32 OsclSocketServ::Connect(uint32 aMessageSlots)
+OSCL_EXPORT_REF int32 OsclSocketServ::Connect(uint32 aMessageSlots, bool aShareSession)
 {
-    return (int32)iServ->Connect(aMessageSlots);
+    return (int32)iServ->Connect(aMessageSlots, aShareSession);
 }
 
 OSCL_EXPORT_REF void OsclSocketServ::Close(bool aCleanup)
@@ -91,6 +91,25 @@ OSCL_EXPORT_REF int32 OsclUDPSocket::Join(OsclNetworkAddress& aAddress)
     return iUDPSocket->Join(aAddress);
 }
 
+OSCL_EXPORT_REF int32 OsclUDPSocket::JoinMulticastGroup(OsclIpMReq& aMReq)
+{
+    return iUDPSocket->JoinMulticastGroup(aMReq);
+}
+
+OSCL_EXPORT_REF int32 OsclUDPSocket::SetOptionToReuseAddress()
+{
+    return iUDPSocket->SetOptionToReuseAddress();
+}
+
+OSCL_EXPORT_REF int32 OsclUDPSocket::SetMulticastTTL(int32 aTTL)
+{
+    return iUDPSocket->SetMulticastTTL(aTTL);
+}
+
+OSCL_EXPORT_REF int32 OsclUDPSocket::SetTOS(const OsclSocketTOS& aTOS)
+{
+    return iUDPSocket->SetTOS(aTOS);
+}
 OSCL_EXPORT_REF TPVSocketEvent OsclUDPSocket::BindAsync(OsclNetworkAddress& aAddress, int32 aTimeoutMsec)
 {
     return iUDPSocket->BindAsync(aAddress, aTimeoutMsec);
@@ -148,6 +167,21 @@ OSCL_EXPORT_REF void OsclUDPSocket::CancelRecvFrom()
 OSCL_EXPORT_REF int32 OsclUDPSocket::SetRecvBufferSize(uint32 size)
 {
     return iUDPSocket->SetRecvBufferSize(size);
+}
+
+OSCL_EXPORT_REF int32 OsclUDPSocket::GetPeerName(OsclNetworkAddress& peerName)
+{
+    return iUDPSocket->GetPeerName(peerName);
+}
+
+OSCL_EXPORT_REF TPVSocketEvent OsclUDPSocket::ThreadLogon(OsclSocketServ& aServ, OsclSocketObserver *aObserver)
+{
+    return iUDPSocket->ThreadLogon(aServ.iServ, aObserver);
+}
+
+OSCL_EXPORT_REF TPVSocketEvent OsclUDPSocket::ThreadLogoff()
+{
+    return iUDPSocket->ThreadLogoff();
 }
 
 OSCL_EXPORT_REF OsclTCPSocket *OsclTCPSocket::NewL(Oscl_DefAlloc &alloc,
@@ -298,7 +332,27 @@ OSCL_EXPORT_REF void OsclTCPSocket::CancelRecv()
     iTCPSocket->CancelRecv();
 }
 
+OSCL_EXPORT_REF int32 OsclTCPSocket::SetOptionToReuseAddress()
+{
+    return iTCPSocket->SetOptionToReuseAddress();
+}
 
+OSCL_EXPORT_REF int32 OsclTCPSocket::SetTOS(const OsclSocketTOS& aTOS)
+{
+    return iTCPSocket->SetTOS(aTOS);
+}
 
+OSCL_EXPORT_REF int32 OsclTCPSocket::GetPeerName(OsclNetworkAddress& peerName)
+{
+    return iTCPSocket->GetPeerName(peerName);
+}
 
+OSCL_EXPORT_REF TPVSocketEvent OsclTCPSocket::ThreadLogon(OsclSocketServ& aServ, OsclSocketObserver *aObserver)
+{
+    return iTCPSocket->ThreadLogon(aServ.iServ, aObserver);
+}
 
+OSCL_EXPORT_REF TPVSocketEvent OsclTCPSocket::ThreadLogoff()
+{
+    return iTCPSocket->ThreadLogoff();
+}

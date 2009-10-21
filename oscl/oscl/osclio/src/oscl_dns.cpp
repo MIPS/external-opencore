@@ -73,9 +73,9 @@ OSCL_EXPORT_REF OsclDNS::~OsclDNS()
 }
 
 OSCL_EXPORT_REF TPVDNSEvent OsclDNS::GetHostByName(char *name, OsclNetworkAddress &addr,
-        int32 aTimeoutMsec)
+        int32 aTimeoutMsec, Oscl_Vector<OsclNetworkAddress, OsclMemAllocator>* aAddressList)
 {
-    return iGetHostByNameMethod->GetHostByName(name, &addr, aTimeoutMsec);
+    return iGetHostByNameMethod->GetHostByName(name, &addr, aTimeoutMsec, aAddressList);
 }
 
 OSCL_EXPORT_REF void OsclDNS::CancelGetHostByName()

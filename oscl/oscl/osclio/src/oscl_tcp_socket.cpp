@@ -119,6 +119,81 @@ OsclTCPSocketI::~OsclTCPSocketI()
     iAlloc.deallocate(iSocket);
 }
 
+TPVSocketEvent OsclTCPSocketI::ThreadLogoff()
+{
+    TPVSocketEvent result;
+
+    result = iConnectMethod->ThreadLogoff();
+    if (result != EPVSocketSuccess)
+        return result;
+    result = iShutdownMethod->ThreadLogoff();
+    if (result != EPVSocketSuccess)
+        return result;
+    result = iAcceptMethod->ThreadLogoff();
+    if (result != EPVSocketSuccess)
+        return result;
+    result = iSendMethod->ThreadLogoff();
+    if (result != EPVSocketSuccess)
+        return result;
+    result = iRecvMethod->ThreadLogoff();
+    if (result != EPVSocketSuccess)
+        return result;
+    result = iListenMethod->ThreadLogoff();
+    if (result != EPVSocketSuccess)
+        return result;
+    result = iBindMethod->ThreadLogoff();
+    if (result != EPVSocketSuccess)
+        return result;
+
+    result = iSocket->ThreadLogoff();
+    if (result != EPVSocketSuccess)
+        return result;
+
+    //do this last since it makes the socket unusable,
+    //there wait until all other logoffs have succeeded.
+    OsclIPSocketI::ThreadLogoff();
+
+    return result;
+}
+
+TPVSocketEvent OsclTCPSocketI::ThreadLogon(OsclSocketServI *aServ, OsclSocketObserver *aObserver)
+{
+    TPVSocketEvent result;
+
+    result = iConnectMethod->ThreadLogon();
+    if (result != EPVSocketSuccess)
+        return result;
+    result = iShutdownMethod->ThreadLogon();
+    if (result != EPVSocketSuccess)
+        return result;
+    result = iAcceptMethod->ThreadLogon();
+    if (result != EPVSocketSuccess)
+        return result;
+    result = iSendMethod->ThreadLogon();
+    if (result != EPVSocketSuccess)
+        return result;
+    result = iRecvMethod->ThreadLogon();
+    if (result != EPVSocketSuccess)
+        return result;
+    result = iListenMethod->ThreadLogon();
+    if (result != EPVSocketSuccess)
+        return result;
+    result = iBindMethod->ThreadLogon();
+    if (result != EPVSocketSuccess)
+        return result;
+
+    result = iSocket->ThreadLogon(aServ);
+    if (result != EPVSocketSuccess)
+        return result;
+
+    //do this last since it makes the socket
+    //usable again-- wait until all other
+    //logons have succeeded.
+    OsclIPSocketI::ThreadLogon(aObserver, aServ);
+
+    return result;
+}
+
 //////////////////////////////////////////////////////////////////////////////////
 int32 OsclTCPSocketI::Close()
 {

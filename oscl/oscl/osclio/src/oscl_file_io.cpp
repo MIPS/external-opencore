@@ -630,6 +630,36 @@ OSCL_EXPORT_REF TOsclFileOffset Oscl_File::Tell()
     return result;
 }
 
+OSCL_EXPORT_REF int32 Oscl_File::SetSize(uint32 size)
+{
+    if (iLogger)
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
+                        (0, "Oscl_File(0x%x)::SetSize IN", this));
+    }
+
+    uint32 ticks = 0;
+    if (iFileStats)
+        iFileStats->Start(ticks);
+
+    int32 result = (-1);
+
+    if (iIsOpen)
+    {
+        result = CallNativeSetSize(size);
+    }
+
+    if (iFileStats
+            && result == 0)
+        iFileStats->End(EOsclFileOp_SetSize, ticks);
+
+    if (iLogger)
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
+                        (0, "Oscl_File(0x%x)::SetSize OUT result %d", this, result));
+    }
+    return result;
+}
 OSCL_EXPORT_REF int32 Oscl_File::Flush()
 {
     if (iLogger)
@@ -978,6 +1008,35 @@ TOsclFileOffset  Oscl_File::CallNativeTell()
     return result;
 }
 
+int32  Oscl_File::CallNativeSetSize(uint32 size)
+{
+    if (iNativeLogger)
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iNativeLogger, PVLOGMSG_DEBUG,
+                        (0, "OsclNativeFile(0x%x)::SetSize IN", this));
+    }
+
+    uint32 ticks = 0;
+    if (iFileStats)
+        iFileStats->Start(ticks);
+
+    int32 result = (-1);
+
+    if (iNativeFile)
+        result = iNativeFile->SetSize(size);
+
+    if (iFileStats
+            && result == 0)
+        iFileStats->End(EOsclFileOp_NativeSetSize, ticks);
+
+    if (iNativeLogger)
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iNativeLogger, PVLOGMSG_DEBUG,
+                        (0, "OsclNativeFile(0x%x)::SetSize OUT result %d", this, result));
+    }
+
+    return result;
+}
 
 int32  Oscl_File::CallNativeFlush()
 {

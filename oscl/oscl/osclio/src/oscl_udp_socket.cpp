@@ -66,6 +66,52 @@ OsclUDPSocketI::~OsclUDPSocketI()
     iAlloc.deallocate(iSocket);
 }
 
+TPVSocketEvent OsclUDPSocketI::ThreadLogoff()
+{
+    OsclIPSocketI::ThreadLogoff();
+
+    TPVSocketEvent result;
+
+    result = iSendToMethod->ThreadLogoff();
+    if (result != EPVSocketSuccess)
+        return result;
+    result = iRecvFromMethod->ThreadLogoff();
+    if (result != EPVSocketSuccess)
+        return result;
+    result = iBindMethod->ThreadLogoff();
+    if (result != EPVSocketSuccess)
+        return result;
+
+    result = iSocket->ThreadLogoff();
+    if (result != EPVSocketSuccess)
+        return result;
+
+    return result;
+
+}
+
+TPVSocketEvent OsclUDPSocketI::ThreadLogon(OsclSocketServI *aServ, OsclSocketObserver *aObserver)
+{
+    OsclIPSocketI::ThreadLogon(aObserver, aServ);
+
+    TPVSocketEvent result;
+
+    result = iSendToMethod->ThreadLogon();
+    if (result != EPVSocketSuccess)
+        return result;
+    result = iRecvFromMethod->ThreadLogon();
+    if (result != EPVSocketSuccess)
+        return result;
+    result = iBindMethod->ThreadLogon();
+    if (result != EPVSocketSuccess)
+        return result;
+
+    result = iSocket->ThreadLogon(aServ);
+    if (result != EPVSocketSuccess)
+        return result;
+
+    return result;
+}
 //////////////////////////////////////////////////////////////////////////////////
 int32 OsclUDPSocketI::Close()
 {
@@ -79,6 +125,21 @@ int32 OsclUDPSocketI::Close()
     }
     else
         return OsclErrGeneral;
+}
+
+//////////////////////////////////////////////////////////////////////////////////
+int32 OsclUDPSocketI::JoinMulticastGroup(OsclIpMReq& aMReq)
+{
+    TIpMReq mReq;
+    OsclSocketI::MakeMulticastGroupInformation(aMReq, mReq);
+    return iSocket->SetSockOpt(EPVIPProtoIP, EPVIPAddMembership, &mReq, sizeof(mReq));
+}
+
+//////////////////////////////////////////////////////////////////////////////////
+int32 OsclUDPSocketI::SetMulticastTTL(int32 aTTL)
+{
+
+    return iSocket->SetSockOpt(EPVIPProtoIP, EPVIPMulticastTTL, &aTTL, sizeof(aTTL));
 }
 
 //Private methods

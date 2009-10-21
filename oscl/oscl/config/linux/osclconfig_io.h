@@ -74,6 +74,7 @@
 typedef int TOsclSocket;
 typedef struct sockaddr_in TOsclSockAddr;
 typedef socklen_t TOsclSockAddrLen;
+typedef struct ip_mreq TIpMReq;
 
 //Init addr macro
 #define OsclValidInetAddr(addr) (inet_addr(addr)!=((in_addr_t)(-1)))
@@ -89,6 +90,15 @@ typedef socklen_t TOsclSockAddrLen;
 #define OsclUnMakeSockAddr(sockaddr,addrstr)\
     addrstr=inet_ntoa(sockaddr.sin_addr);
 
+//address conversion macro-- from string to inaddr
+#define OsclMakeInAddr(in_addr,addrstr,ok)\
+    int32 result = inet_aton((const char*)addrstr, &in_addr);\
+    ok=(result!=0);
+
+//address conversion macro-- from inaddr to string
+#define OsclUnMakeInAddr(in_addr,addrstr)\
+    addrstr=inet_ntoa(in_addr);
+
 //wrappers for berkeley socket calls
 #define OsclSetRecvBufferSize(s,val,ok,err) \
     ok=(setsockopt(s,SOL_SOCKET,SO_RCVBUF,(char*)&val, sizeof(int)) !=-1);\
@@ -99,6 +109,10 @@ typedef socklen_t TOsclSockAddrLen;
     sockaddr* sadr = OSCL_STATIC_CAST(sockaddr*, tmpadr);\
     ok=(bind(s,sadr,sizeof(addr))!=(-1));\
         if (!ok)err=errno
+
+#define OsclSetSockOpt(s,optLevel,optName,optVal,optLen,ok,err)\
+    ok=(setsockopt(s,optLevel,optName,OSCL_STATIC_CAST(const char*,optVal),optLen) != (-1));\
+    if (!ok)err=errno
 
 #define OsclJoin(s,addr,ok,err)\
         struct ip_mreq mreq; \
@@ -151,6 +165,9 @@ typedef socklen_t TOsclSockAddrLen;
     sockaddr* sadr = OSCL_STATIC_CAST(sockaddr*, tmpadr);\
     ok=(connect(s,sadr,sizeof(addr))!=(-1));\
     if (!ok){err=errno;wouldblock=(err==EINPROGRESS);}
+#define OsclGetPeerName(s,name,namelen,ok,err)\
+    ok=(getpeername(s,(sockaddr*)&name,(socklen_t*)&namelen) != (-1) );\
+    if (!ok)err=errno
 
 #define OsclGetAsyncSockErr(s,ok,err)\
     int opterr;socklen_t optlen=sizeof(opterr);\
@@ -213,6 +230,28 @@ typedef struct hostent TOsclHostent;
     dottedaddr=inet_ntoa(_inaddr);\
     ok=(dottedaddr!=NULL);
 
+//extract dotted address from a hostent into the vector of OsclNetworkAddress
+#define OsclGetDottedAddrVector(hostent,dottedaddr,dottedaddrvect,ok)\
+    if(dottedaddrvect)\
+    {\
+    long **_addrlist=(long**)hostent->h_addr_list;\
+    for(int i = 0; _addrlist[i] != NULL; i++){\
+        struct in_addr _inaddr;\
+        _inaddr.s_addr=*_addrlist[i];\
+        OsclNetworkAddress addr(inet_ntoa(_inaddr), 0);\
+        dottedaddrvect->push_back(addr);\
+    }\
+    if (!dottedaddrvect->empty())\
+        {dottedaddr->port = dottedaddrvect->front().port; dottedaddr->ipAddr.Set(dottedaddrvect->front().ipAddr.Str());}\
+    ok=(!dottedaddrvect->empty() && (((*dottedaddrvect)[0]).ipAddr.Str() != NULL));\
+    }\
+    else\
+    {\
+        char *add;\
+        OsclGetDottedAddr(hostent,add,ok);\
+        if(ok) dottedaddr->ipAddr.Set(add);\
+    }
+
 //socket shutdown codes
 #define OSCL_SD_RECEIVE SHUT_RD
 #define OSCL_SD_SEND SHUT_WR
@@ -226,9 +265,23 @@ typedef struct hostent TOsclHostent;
 #define OSCL_SOCK_DATAGRAM SOCK_DGRAM
 
 //IP protocol codes
+#define OSCL_IPPROTO_IP  IPPROTO_IP
 #define OSCL_IPPROTO_TCP IPPROTO_TCP
 #define OSCL_IPPROTO_UDP IPPROTO_UDP
 
+//Socket option Levels
+#define OSCL_SOL_SOCKET SOL_SOCKET
+#define OSCL_SOL_IP     IPPROTO_IP
+#define OSCL_SOL_TCP    IPPROTO_TCP
+#define OSCL_SOL_UDP    IPPROTO_UDP
+
+//Socket Option Values (level = IP)
+#define OSCL_SOCKOPT_IP_MULTICAST_TTL   IP_MULTICAST_TTL
+#define OSCL_SOCKOPT_IP_ADDMEMBERSHIP   IP_ADD_MEMBERSHIP
+#define OSCL_SOCKOPT_IP_TOS             IP_TOS
+
+//Socket Option Values (level = Socket)
+#define OSCL_SOCKOPT_SOL_REUSEADDR      SO_REUSEADDR
 //End sockets
 
 // file IO support

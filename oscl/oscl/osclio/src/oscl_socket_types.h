@@ -49,6 +49,7 @@ enum TPVSocketEvent
     , EPVSocketTimeout
     , EPVSocketFailure
     , EPVSocketCancel
+    , EPVSocketNotImplemented //for unavailable features.
 } ;
 
 enum TPVSocketShutdown
@@ -58,6 +59,84 @@ enum TPVSocketShutdown
     , EPVSocketBothShutdown
 } ;
 
+class OsclSocketTOS
+{
+    public:
+        enum TPVServicePrecedence
+        {
+            EPVRoutine        = 0,
+            EPVPriority       = 1,
+            EPVImmediate      = 2,
+            EPVFlash          = 3,
+            EPVOverrideFlash  = 4,
+            EPVCritic_Ecp     = 5,
+            EPVInetControl    = 6,
+            EPVNetControl     = 7
+        };
+
+        enum TPVServicePriority
+        {
+            EPVNoTOS        = 0x0,
+            EPVLDelay       = (1 << 4),
+            EPVHiThrpt      = (1 << 3),
+            EPVHiRel        = (1 << 2)
+        };
+
+        OsclSocketTOS(): iTOSUnusedBits(2), iTOSPriorityBits(3)
+        {
+            ClearTOS();
+        }
+
+        void SetPrecedence(TPVServicePrecedence aPrecedence)
+        {
+            iPrecedence = aPrecedence;
+        }
+
+        void SetPriority(bool aMinimizeDelay, bool aMaximizeThroughput, bool MaximizeReliability)
+        {
+            iPriority   = (aMinimizeDelay ? EPVLDelay : EPVNoTOS) | (aMaximizeThroughput ? EPVHiThrpt : EPVNoTOS) | (MaximizeReliability ? EPVHiRel : EPVNoTOS);
+        }
+
+        void ClearTOS()
+        {
+            iPrecedence = OsclSocketTOS::EPVRoutine;
+            iPriority   = OsclSocketTOS::EPVNoTOS;
+        }
+
+        uint8 GetTOS() const
+        {
+            /**Format of Ip Header's TOS field as specified in RFC 791
+             *   0     1     2     3     4     5     6     7
+             *+-----+-----+-----+-----+-----+-----+-----+-----+
+             *|   PRECEDENCE    |  D  |  T  |  R  |  0  |  0  |
+             *+-----+-----+-----+-----+-----+-----+-----+-----+
+            */
+            return ((iPrecedence << (iTOSPriorityBits + iTOSUnusedBits) & 0xFF) || ((iPriority << iTOSUnusedBits) & 0xFF));
+        }
+
+    private:
+        uint8    iPrecedence;
+        uint8    iPriority;
+        const uint8 iTOSUnusedBits;
+        const uint8 iTOSPriorityBits;
+};
+
+enum TPVSocketOptionName
+{
+    //IP Level
+    EPVIPMulticastTTL
+    , EPVIPAddMembership
+    , EPVIPTOS
+    //Socket level
+    , EPVSockReuseAddr  //On Symbian this option is at IP level...
+} ;
+
+enum TPVSocketOptionLevel
+{
+    EPVIPProtoIP
+    , EPVIPProtoTCP
+    , EPVSocket
+} ;
 #define PVNETWORKADDRESS_LEN 50
 
 class OsclNetworkAddress
@@ -89,6 +168,20 @@ class OsclNetworkAddress
         };
 
 } ;
+
+class OsclIpMReq
+{
+    public:
+        OsclIpMReq(
+            const char *intrfcAddr
+            , const char* multcstAddr)
+        {
+            interfaceAddr.Set(intrfcAddr);
+            multicastAddr.Set(multcstAddr);
+        }
+        OsclNameString<PVNETWORKADDRESS_LEN> interfaceAddr;
+        OsclNameString<PVNETWORKADDRESS_LEN> multicastAddr;
+};
 
 /**
 * Socket event observer.  The client implements this to get

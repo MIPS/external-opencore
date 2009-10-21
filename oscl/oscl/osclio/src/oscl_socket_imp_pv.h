@@ -35,6 +35,7 @@
 #define PVSOCK_ERR_SERV_NOT_CONNECTED (-4)
 #define PVSOCK_ERR_SOCK_NOT_CONNECTED (-5)
 #define PVSOCK_ERR_NOT_IMPLEMENTED (-6)
+#define PVSOCK_ERR_NOT_SUPPORTED (-7)
 
 
 class OsclSocketServI;
@@ -53,10 +54,14 @@ class OsclSocketI: public OsclSocketIBase
         int32 Open(OsclSocketServI& aServer, uint32 addrFamily, uint32 sockType, uint32 protocol);
         int32 Open(OsclSocketServI& aServer);
         int32 Bind(OsclNetworkAddress& anAddr);
+        int32 SetSockOpt(TPVSocketOptionLevel aOptionLevel, TPVSocketOptionName aOptionName, OsclAny* aOptionValue, int32 aOptionLen);
+        int32 GetPeerName(OsclNetworkAddress& peerName);
         int32 Join(OsclNetworkAddress& anAddr);
         int32 Close();
         int32 Listen(uint32 qSize);
         int32 SetRecvBufferSize(uint32 size);
+        TPVSocketEvent ThreadLogoff();
+        TPVSocketEvent ThreadLogon(OsclSocketServI* aServ);
 
         //asynchronous methods.
 
@@ -91,7 +96,7 @@ class OsclSocketI: public OsclSocketIBase
         inline void CancelRecvFrom();
 
         inline bool IsOpen();
-
+        int32 GetOsclSockOptLevelName(const TPVSocketOptionLevel aOptionLevel, const TPVSocketOptionName aOptionName, int32& aOsclOptionLevel, int32& aOsclOptionName);
 
 
         //PV socket server
@@ -106,6 +111,8 @@ class OsclSocketI: public OsclSocketIBase
         }
         static bool MakeAddr(OsclNetworkAddress& in, TOsclSockAddr& addr);
         static void MakeAddr(TOsclSockAddr& in, OsclNetworkAddress& addr);
+        static bool MakeMulticastGroupInformation(OsclIpMReq& in, TIpMReq& addr);
+        static void MakeMulticastGroupInformation(TIpMReq& in, OsclIpMReq& addr);
 
         //routines to handle each type of socket request under the
         //server thread.

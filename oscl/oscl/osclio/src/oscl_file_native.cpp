@@ -434,6 +434,16 @@ int32 OsclNativeFile::Seek(TOsclFileOffset offset, Oscl_File::seek_type origin)
     return -1;
 }
 
+int32 OsclNativeFile::SetSize(uint32 size)
+{
+    int32 fd = fileno(iFile);
+    if (-1 != fd)
+    {
+        return ftruncate(fd, size);
+    }
+    return -1;
+}
+
 
 TOsclFileOffset OsclNativeFile::Tell()
 {

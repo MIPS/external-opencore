@@ -59,12 +59,12 @@ OsclGetHostByNameMethod::~OsclGetHostByNameMethod()
 }
 
 TPVDNSEvent OsclGetHostByNameMethod::GetHostByName(char *name, OsclNetworkAddress *addr,
-        int32 aTimeout)
+        int32 aTimeout, Oscl_Vector<OsclNetworkAddress, OsclMemAllocator> * aAddressList)
 {
     if (!StartMethod(aTimeout))
         return EPVDNSFailure;
 
-    iGetHostByNameRequest->GetHostByName(name, addr);
+    iGetHostByNameRequest->GetHostByName(name, addr, aAddressList);
 
     return EPVDNSPending;
 }
@@ -92,7 +92,7 @@ OsclGetHostByNameRequest::~OsclGetHostByNameRequest()
     iParam = NULL;
 }
 
-void OsclGetHostByNameRequest::GetHostByName(char *name, OsclNetworkAddress *addr)
+void OsclGetHostByNameRequest::GetHostByName(char *name, OsclNetworkAddress *addr, Oscl_Vector<OsclNetworkAddress, OsclMemAllocator> *aAddressList)
 {
     NewRequest();
 
@@ -106,7 +106,7 @@ void OsclGetHostByNameRequest::GetHostByName(char *name, OsclNetworkAddress *add
         return;
     }
 
-    iParam = GetHostByNameParam::Create(name, addr);
+    iParam = GetHostByNameParam::Create(name, addr, aAddressList);
     if (!iParam)
         PendComplete(OsclErrNoMemory);
     else
@@ -115,7 +115,61 @@ void OsclGetHostByNameRequest::GetHostByName(char *name, OsclNetworkAddress *add
 
 void OsclGetHostByNameRequest::Success()
 {
-    iDNSI->GetHostByNameSuccess(*iParam);
+    switch (iRequestPhase)
+    {
+        case GetFirstHostAddress:
+        {
+            iDNSI->GetHostByNameSuccess(*iParam);
+            if (!iDNSI->GetHostByNameResponseContainsAliasInfo() && iParam->canPersistMoreHostAddresses())
+            {
+                iRequestPhase = GetAlternateHostAddress;
+                NewRequest();
+                iDNSI->GetNextHost(*this);
+            }
+            else
+            {
+                iDNSMethod->iDNSObserver->HandleDNSEvent(iDNSMethod->iId, iDNSMethod->iDNSFxn, EPVDNSSuccess, 0);
+            }
+        }
+        break;
+        case GetAlternateHostAddress:
+        {
+            iDNSI->GetNextHostSuccess(*iParam);
+            NewRequest();
+            iDNSI->GetNextHost(*this);
+        }
+        break;
+    }
 }
 
+void OsclGetHostByNameRequest::Failure()
+{
+    switch (iRequestPhase)
+    {
+        case GetFirstHostAddress:
+        {
+            iDNSMethod->iDNSObserver->HandleDNSEvent(iDNSMethod->iId, iDNSMethod->iDNSFxn, EPVDNSFailure, GetSocketError());
+        }
+        break;
+        case GetAlternateHostAddress:
+        {
+            iDNSMethod->iDNSObserver->HandleDNSEvent(iDNSMethod->iId, iDNSMethod->iDNSFxn, EPVDNSSuccess, 0);
+            iRequestPhase = GetFirstHostAddress;
+        }
+        break;
+    }
+}
 
+void OsclGetHostByNameRequest::Cancelled()
+{
+    switch (iRequestPhase)
+    {
+        case GetFirstHostAddress:
+        case GetAlternateHostAddress:
+        {
+            iDNSMethod->iDNSObserver->HandleDNSEvent(iDNSMethod->iId, iDNSMethod->iDNSFxn, EPVDNSCancel, 0);
+            iRequestPhase = GetFirstHostAddress;
+        }
+        break;
+    }
+}

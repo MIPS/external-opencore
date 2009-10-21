@@ -107,12 +107,12 @@ void DNSRequestParam::InThread()
 #endif
 
 GetHostByNameParam* GetHostByNameParam::Create(const char *name,
-        OsclNetworkAddress* &addr)
+        OsclNetworkAddress* &addr, Oscl_Vector<OsclNetworkAddress, OsclMemAllocator>* aAddressList)
 {
     Oscl_TAlloc<GetHostByNameParam, TDNSRequestParamAllocator> alloc;
     GetHostByNameParam* self = alloc.allocate(1);
     if (self)
-        OSCL_PLACEMENT_NEW(self, GetHostByNameParam(name, addr));
+        OSCL_PLACEMENT_NEW(self, GetHostByNameParam(name, addr, aAddressList));
     return self;
 }
 
@@ -130,10 +130,12 @@ GetHostByNameParam::~GetHostByNameParam()
 }
 
 GetHostByNameParam::GetHostByNameParam(const char *name,
-                                       OsclNetworkAddress* &addr)
+                                       OsclNetworkAddress* &addr,
+                                       Oscl_Vector<OsclNetworkAddress, OsclMemAllocator>* aAddressList)
         : DNSRequestParam(EPVDNSGetHostByName)
         , iName(NULL)
         , iAddr(addr)
+        , iAddressList(aAddressList)
 {
     uint32 size = oscl_strlen(name);
     TDNSRequestParamAllocator alloc;
@@ -142,6 +144,11 @@ GetHostByNameParam::GetHostByNameParam(const char *name,
     oscl_strncpy(iName, name, (size + 1));
 
     iAddr->ipAddr.Set("");
+    if (iAddressList)
+    {
+        iAddressList->clear();
+        iAddressList->reserve(addressListCapacity);
+    }
 }
 
 

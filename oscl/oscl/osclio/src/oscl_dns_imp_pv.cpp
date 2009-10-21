@@ -73,6 +73,15 @@ void OsclDNSI::GetHostByNameSuccess(GetHostByNameParam &aParam)
     OSCL_UNUSED_ARG(aParam);
 }
 
+void OsclDNSI::GetNextHost(OsclDNSRequestAO& ao)
+{
+    OSCL_UNUSED_ARG(ao);
+}
+
+void OsclDNSI::GetNextHostSuccess(GetHostByNameParam &aParam)
+{
+    OSCL_UNUSED_ARG(aParam);
+}
 void OsclDNSI::CancelGetHostByName()
 {
     iGetHostByNameRequest.CancelRequest();
@@ -115,6 +124,10 @@ bool OsclDNSI::IsReady(OsclDNSRequestAO &ao)
     }
     return true;
 }
+bool OsclDNSI::GetHostByNameResponseContainsAliasInfo()
+{
+    return true;
+}
 
 void OsclDNSI::ProcessDnsRequest(GetHostByNameParam* aParam, int32& aComplete, int32& aSockerr)
 //called under server thread or AO.
@@ -140,11 +153,12 @@ void OsclDNSI::ProcessDnsRequest(GetHostByNameParam* aParam, int32& aComplete, i
     else
     {
         //convert to dotted address notation
-        char *dottedaddr;
-        OsclGetDottedAddr(hostent, dottedaddr, ok);
+        //char *dottedaddr;
+        //OsclGetDottedAddr(hostent, dottedaddr, ok);
+        OsclGetDottedAddrVector(hostent, aParam->iAddr, aParam->iAddressList, ok);
         if (ok)
         {
-            aParam->iAddr->ipAddr.Set(dottedaddr);
+            // aParam->iAddr->ipAddr.Set(dottedaddr);
             aComplete = OSCL_REQUEST_ERR_NONE;
             aSockerr = sockerr;
         }

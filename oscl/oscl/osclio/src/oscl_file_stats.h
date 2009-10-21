@@ -66,6 +66,7 @@ enum TOsclFileOp
     , EOsclFileOp_Size
     , EOsclFileOp_Flush
     , EOsclFileOp_EndOfFile
+    , EOsclFileOp_SetSize
     , EOsclFileOp_NativeOpen
     , EOsclFileOp_NativeClose
     , EOsclFileOp_NativeRead
@@ -75,6 +76,7 @@ enum TOsclFileOp
     , EOsclFileOp_NativeSize
     , EOsclFileOp_NativeFlush
     , EOsclFileOp_NativeEndOfFile
+    , EOsclFileOp_NativeSetSize
     , EOsclFileOp_Last
 };
 static const char* const TOsclFileOpStr[] =
@@ -88,6 +90,7 @@ static const char* const TOsclFileOpStr[] =
     , "Size"
     , "Flush"
     , "EndOfFile"
+    , "SetSize"
     , "NativeOpen"
     , "NativeClose"
     , "NativeRead"
@@ -97,6 +100,7 @@ static const char* const TOsclFileOpStr[] =
     , "NativeSize"
     , "NativeFlush"
     , "NativeEndOfFile"
+    , "NativeSetSize"
     , "???"
 };
 

@@ -71,6 +71,8 @@ class OsclSocketMethod : public OsclTimerObject
             return iContainer.Alloc();
         }
 
+        TPVSocketEvent ThreadLogon();
+        TPVSocketEvent ThreadLogoff();
     protected:
         void ConstructL(OsclSocketRequestAO *aAO)
         {

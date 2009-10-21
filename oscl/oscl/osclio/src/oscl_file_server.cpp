@@ -33,7 +33,7 @@ OSCL_EXPORT_REF Oscl_FileServer::~Oscl_FileServer()
 {
 }
 
-OSCL_EXPORT_REF int32 Oscl_FileServer::Connect()
+OSCL_EXPORT_REF int32 Oscl_FileServer::Connect(bool aShareSession)
 {
     //default-- assume there is nothing needed.
     return 0;

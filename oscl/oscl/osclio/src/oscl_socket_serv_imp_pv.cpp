@@ -518,7 +518,7 @@ void OsclSocketServI::ConstructL()
     CONSTRUCT_STATS(this);
 }
 
-int32 OsclSocketServI::Connect(uint32 aMessageSlots)
+int32 OsclSocketServI::Connect(uint32 aMessageSlots, bool aShareSession)
 {
     CONSTRUCT_STATS(this);
 
@@ -530,6 +530,7 @@ int32 OsclSocketServI::Connect(uint32 aMessageSlots)
     //Connect to Oscl socket server
 
     OSCL_UNUSED_ARG(aMessageSlots);
+    OSCL_UNUSED_ARG(aShareSession);
 
     //should only connect once
     if (iServState == ESocketServ_Connected)
@@ -1095,6 +1096,7 @@ static TOsclThreadFuncRet OSCL_THREAD_DECL sockthreadmain2(TOsclThreadFuncArg ar
 static TOsclThreadFuncRet OSCL_THREAD_DECL sockthreadmain(TOsclThreadFuncArg arg)
 //socket server thread.
 {
+    OSCL_ASSERT(arg);
     OsclBase::Init();
     OsclErrorTrap::Init();
 

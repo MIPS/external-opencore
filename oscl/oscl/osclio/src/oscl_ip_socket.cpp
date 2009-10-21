@@ -32,6 +32,18 @@ void OsclIPSocketI::ConstructL(OsclSocketObserver *aObs, OsclSocketI* aSock, Osc
     iLogger = PVLogger::GetLoggerObject("osclsocket");
 }
 
+void OsclIPSocketI::ThreadLogoff()
+{
+    iLogger = NULL;
+    iObserver = NULL;
+    iSocketServ = NULL;
+}
+void OsclIPSocketI::ThreadLogon(OsclSocketObserver *aObs, OsclSocketServI* aServ)
+{
+    iObserver = aObs;
+    iSocketServ = aServ;
+    iLogger = PVLogger::GetLoggerObject("osclsocket");
+}
 
 int32 OsclIPSocketI::Bind(OsclNetworkAddress &aAddress)
 {
@@ -45,6 +57,23 @@ int32 OsclIPSocketI::Bind(OsclNetworkAddress &aAddress)
     {
         return OsclErrGeneral;
     }
+}
+
+int32 OsclIPSocketI::SetOptionToReuseAddress()
+{
+    int32 reuseAddr = 1;
+    return iSocket->SetSockOpt(EPVSocket, EPVSockReuseAddr, &reuseAddr, sizeof(reuseAddr));
+}
+
+int32 OsclIPSocketI::SetTOS(const OsclSocketTOS& aTOS)
+{
+    int32 tos = aTOS.GetTOS();
+    return  iSocket->SetSockOpt(EPVIPProtoIP, EPVIPTOS, &tos, sizeof(tos));
+}
+
+int32 OsclIPSocketI::GetPeerName(OsclNetworkAddress& peerName)
+{
+    return iSocket->GetPeerName(peerName);
 }
 
 int32 OsclIPSocketI::Join(OsclNetworkAddress &aAddress)

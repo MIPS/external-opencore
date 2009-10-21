@@ -29,6 +29,175 @@
 #endif
 
 template < class Layout, int32 LayoutBufferSize, class Lock = OsclNullLock >
+class SharableTextFileAppender : public PVLoggerAppender
+{
+    public:
+        typedef PVLoggerAppender::message_id_type message_id_type;
+
+        static SharableTextFileAppender<Layout, LayoutBufferSize, Lock>* CreateAppender(OSCL_TCHAR * filename, uint32 cacheSize = 0)
+        {
+
+            SharableTextFileAppender<Layout, LayoutBufferSize, Lock> * appender = new SharableTextFileAppender<Layout, LayoutBufferSize, Lock>();
+            if (NULL == appender) return NULL;
+
+#ifdef T_ARM
+// Seems like ADS 1.2 compiler crashes if template argument is used as part of another template argument so explicitly declare it.
+            OSCLMemAutoPtr<SharableTextFileAppender<Layout, LayoutBufferSize, Lock>, Oscl_TAlloc<SharableTextFileAppender<Layout, LayoutBufferSize, Lock>, OsclMemAllocator> > holdAppender(appender);
+#else
+            OSCLMemAutoPtr<SharableTextFileAppender<Layout, LayoutBufferSize, Lock> > holdAppender(appender);
+#endif
+
+//TV_OSCL log file appender
+//make file server session sharable for multithreaded usage
+            if (0 != appender->_fs.Connect(true)) return NULL;
+
+            //set log file object options
+            //this has its own cache so there's no reason to use pv cache.
+            appender->_logFile.SetPVCacheSize(0);
+            //make sure there's no logging on this file or we get infinite loop!
+            appender->_logFile.SetLoggingEnable(false);
+            appender->_logFile.SetSummaryStatsLoggingEnable(false);
+            //end of log file object options.
+
+            if (0 != appender->_logFile.Open(filename,
+                                             Oscl_File::MODE_READWRITE | Oscl_File::MODE_TEXT,
+                                             appender->_fs))
+            {
+                return NULL;
+            }
+
+            if (cacheSize)
+            {
+                appender->_cache.ptr = OSCL_DEFAULT_MALLOC(cacheSize);
+                appender->_cache.len = 0;
+            }
+            appender->_cacheSize = cacheSize;
+
+            return holdAppender.release();
+        }
+
+        virtual ~SharableTextFileAppender()
+        {
+            if (_cache.ptr)
+            {
+                _logFile.Write(_cache.ptr, sizeof(char), _cache.len);
+                OSCL_DEFAULT_FREE(_cache.ptr);
+            }
+            _logFile.Close();
+            _fs.Close();
+            if (stringbuf)
+                OSCL_DEFAULT_FREE((OsclAny*)stringbuf);
+        }
+
+        void AppendString(message_id_type msgID, const char *fmt, va_list va)
+        {
+            _lock.Lock();
+
+            if (!stringbuf)
+                stringbuf = (char*)OSCL_DEFAULT_MALLOC(LayoutBufferSize);
+            if (!stringbuf)
+                return;//out of memory!
+            int32 size;
+            char newline[2];
+            newline[0] = 0x0D;
+            newline[1] = 0x0A;
+
+            size = _layout.FormatString(stringbuf, LayoutBufferSize, msgID, fmt, va);
+
+            if (_cache.ptr)
+            {
+                if (_cache.len + size + 2 < _cacheSize)
+                {
+                    oscl_memcpy(OSCL_STATIC_CAST(uint8*, _cache.ptr) + _cache.len, stringbuf, size);
+                    _cache.len += size;
+                    oscl_memcpy(OSCL_STATIC_CAST(uint8*, _cache.ptr) + _cache.len, newline, 2);
+                    _cache.len += 2;
+                }
+                else
+                {
+                    _logFile.Write(_cache.ptr, sizeof(char), _cache.len);
+                    _logFile.Write(stringbuf, sizeof(char), size);
+                    _logFile.Write(newline, sizeof(char), 2);
+                    _logFile.Flush();
+                    _cache.len = 0;
+                }
+            }
+            else
+            {
+                _logFile.Write(stringbuf, sizeof(char), size);
+                _logFile.Write(newline, sizeof(char), 2);
+                _logFile.Flush();
+            }
+
+            _lock.Unlock();
+        }
+
+        void AppendBuffers(message_id_type msgID, int32 numPairs, va_list va)
+        {
+            OSCL_UNUSED_ARG(msgID);
+
+            for (int32 i = 0; i < numPairs; i++)
+            {
+                int32 length = va_arg(va, int32);
+                uint8* buffer = va_arg(va, uint8*);
+
+                int32 jj;
+                for (jj = 10; jj < length; jj += 10)
+                {
+                    AppendStringA(0, "  %x %x %x %x %x %x %x %x %x %x", buffer[0], buffer[1], buffer[2], buffer[3], buffer[4], buffer[5], buffer[6], buffer[7], buffer[8], buffer[9]);
+                    buffer += 10;
+                }
+
+                uint8 remainderbuf[10];
+                uint32 remainder = length - (jj - 10);
+                if (remainder > 0 && remainder <= 10)
+                {
+                    oscl_memcpy(remainderbuf, buffer, remainder);
+                    oscl_memset(remainderbuf + remainder, 0, 10 - remainder);
+                    buffer = remainderbuf;
+                    AppendStringA(0, "  %x %x %x %x %x %x %x %x %x %x", buffer[0], buffer[1], buffer[2], buffer[3], buffer[4], buffer[5], buffer[6], buffer[7], buffer[8], buffer[9]);
+                }
+            }
+            va_end(va);
+        }
+
+        SharableTextFileAppender()
+        {
+            _cache.len = 0;
+            _cache.ptr = 0;
+            stringbuf = NULL;
+        }
+
+    private:
+        void AppendStringA(message_id_type msgID, const char *fmt, ...)
+        {
+            va_list arguments;
+            va_start(arguments, fmt);
+            AppendString(msgID, fmt, arguments);
+            va_end(arguments);
+        }
+
+        Layout _layout;
+
+#ifdef T_ARM
+//ADS 1.2 compiler doesn't interpret this correctly.
+    public:
+#else
+    private:
+#endif
+        Oscl_FileServer _fs;
+        Oscl_File _logFile;
+        OsclMemoryFragment _cache;
+        uint32 _cacheSize;
+
+    private:
+        Lock _lock;
+        char* stringbuf;
+
+
+};
+
+template < class Layout, int32 LayoutBufferSize, class Lock = OsclNullLock >
 class TextFileAppender : public PVLoggerAppender
 {
     public:

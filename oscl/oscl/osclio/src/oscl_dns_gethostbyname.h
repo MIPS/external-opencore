@@ -38,7 +38,7 @@ class OsclGetHostByNameMethod : public OsclDNSMethod
         ~OsclGetHostByNameMethod();
 
         TPVDNSEvent GetHostByName(char *name, OsclNetworkAddress *addr,
-                                  int32 aTimeout);
+                                  int32 aTimeout, Oscl_Vector<OsclNetworkAddress, OsclMemAllocator> * aAddressList);
 
 
     private:
@@ -69,6 +69,7 @@ class OsclGetHostByNameRequest : public OsclDNSRequestAO
         OsclGetHostByNameRequest()
                 : OsclDNSRequestAO("osclghbnrequest")
                 , iParam(NULL)
+                , iRequestPhase(GetFirstHostAddress)
         {}
 
         void ConstructL(OsclDNSI *aDNS,
@@ -77,11 +78,20 @@ class OsclGetHostByNameRequest : public OsclDNSRequestAO
             OsclDNSRequestAO::ConstructL(aDNS, aMethod);
         }
 
-        void Success();
+        virtual void Success();
+        virtual void Failure();
+        virtual void Cancelled();
 
-        void GetHostByName(char *name, OsclNetworkAddress *addr);
+        void GetHostByName(char *name, OsclNetworkAddress *addr, Oscl_Vector<OsclNetworkAddress, OsclMemAllocator> *aAddressList);
 
         GetHostByNameParam *iParam;
+        enum GetHostByNameRequestPhase
+        {
+            GetFirstHostAddress,
+            GetAlternateHostAddress
+        };
+
+        GetHostByNameRequestPhase iRequestPhase;
         friend class OsclGetHostByNameMethod;
 
 };

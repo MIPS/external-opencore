@@ -90,7 +90,7 @@ class OsclSocketServ : public HeapBase
          * @return Returns OsclErrNone for success,
          *    or a platform-specific code.
          */
-        OSCL_IMPORT_REF int32 Connect(uint32 aMessageSlots = 8);
+        OSCL_IMPORT_REF int32 Connect(uint32 aMessageSlots = 8, bool aShareSession = false);
 
         /**
          * Close socket server.
@@ -148,6 +148,25 @@ class OsclUDPSocket : public HeapBase
         OSCL_IMPORT_REF ~OsclUDPSocket();
 
         /**
+         * Thread logoff routine.  This will prepare for transfer and
+        * use of the socket in another thread.
+         * All socket requests must be complete prior to calling this
+         * routine.  If any requests are still active, it will return
+        * EPVSocketFailure;
+         */
+        OSCL_IMPORT_REF TPVSocketEvent ThreadLogoff();
+        /**
+        * Thread logon routine.  This will complete the transfer of
+        * a socket from another thread for use in the current thread.
+        * The ThreadLogoff API must be called in the original thread
+        * prior to calling ThreadLogon.
+        */
+        OSCL_IMPORT_REF TPVSocketEvent ThreadLogon(
+            OsclSocketServ& aServ,
+            OsclSocketObserver *aObserver
+        );
+
+        /**
          * Close a UDP socket.
          *  This is a synchronous method.
          *
@@ -182,6 +201,74 @@ class OsclUDPSocket : public HeapBase
          * May throw an OsclErrNotSupported Exception
         */
         OSCL_IMPORT_REF int32 Join(OsclNetworkAddress& aAddress);
+
+        /**
+        * Join the multicast group.
+        * @param aMReq: Multicast group information.
+        * @return Returns: OsclErrNone for success, or a
+        *   platform-specific error code. or
+        *   PVSOCK_ERR_NOT_SUPPORTED, if underlying OS doesn't support joining
+        *   multicast group
+        *   PVSOCK_ERR_BAD_PARAM, if config io file is not configured in
+        *   accordance with underlying OS
+        *   PVSOCK_ERR_NOT_IMPLEMENTED, if this API is not implemented in OSCL
+        *   for the underlying OS
+        */
+        OSCL_IMPORT_REF int32 JoinMulticastGroup(OsclIpMReq& aMReq);
+
+        /**
+         * Controls the number of intermediate systems through which a multicast
+         * datagram can be forwarded.
+         * @param aTTL:Specifies the time-to-live value for multicast datagrams
+         * sent through this socket.
+         * @return Returns: OsclErrNone for success, or a
+         *   platform-specific error code. or
+         *   PVSOCK_ERR_NOT_SUPPORTED, if underlying OS doesn't support joining
+         *   multicast group
+         *   PVSOCK_ERR_BAD_PARAM, if config io file is not configured in
+         *   accordance with underlying OS
+         *   PVSOCK_ERR_NOT_IMPLEMENTED, if this API is not implemented in OSCL
+         *   for the underlying OS
+        */
+        OSCL_IMPORT_REF int32 SetMulticastTTL(int32 aTTL);
+
+        /**
+         * Allows the server to bind to an address which is in a TIME_WAIT state.
+         * @return Returns: OsclErrNone for success, or a
+         *   platform-specific error code. or
+         *   PVSOCK_ERR_NOT_SUPPORTED, if underlying OS doesn't support joining
+         *   multicast group
+         *   PVSOCK_ERR_BAD_PARAM, if config io file is not configured in
+         *   accordance with underlying OS
+         *   PVSOCK_ERR_NOT_IMPLEMENTED, if this API is not implemented in OSCL
+         *   for the underlying OS
+        */
+        OSCL_IMPORT_REF int32 SetOptionToReuseAddress();
+
+        /**
+         * Sets the Type of Service field of each outgoing IP datagram.
+         * @param aTOS: Specifies the type of service requested.
+         * @return Returns: OsclErrNone for success, or a
+         *   platform-specific error code. or
+         *   PVSOCK_ERR_NOT_SUPPORTED, if underlying OS doesn't support joining
+         *   multicast group
+         *   PVSOCK_ERR_BAD_PARAM, if config io file is not configured in
+         *   accordance with underlying OS
+         *   PVSOCK_ERR_NOT_IMPLEMENTED, if this API is not implemented in OSCL
+         *   for the underlying OS
+        */
+        OSCL_IMPORT_REF int32 SetTOS(const OsclSocketTOS& aTOS);
+
+        /**
+         * Retrieves the peer address of the socket
+         * @param aPeerName: This will store the peer address when API returns
+         * successfully.
+         * @return Returns OsclErrNone for success, or a
+         *   platform-specific error code. or
+         *   PVSOCK_ERR_NOT_IMPLEMENTED, if this API is not implemented in OSCL
+         *   for the underlying OS
+        */
+        OSCL_IMPORT_REF int32 GetPeerName(OsclNetworkAddress& aPeerName);
 
         /**
          * Bind a UDP socket to an address.
@@ -353,6 +440,24 @@ class OsclTCPSocket : public HeapBase
          */
         OSCL_IMPORT_REF ~OsclTCPSocket();
 
+        /**
+         * Thread logoff routine.  This will prepare for transfer and
+         * use of the socket in another thread.
+         * All socket requests must be complete prior to calling this
+         * routine.  If any requests are still active, it will return
+         * EPVSocketFailure;
+         */
+        OSCL_IMPORT_REF TPVSocketEvent ThreadLogoff();
+        /**
+         * Thread logon routine.  This will complete the transfer of
+         * a socket from another thread for use in the current thread.
+         * The ThreadLogoff API must be called in the original thread
+         * prior to calling ThreadLogon.
+         */
+        OSCL_IMPORT_REF TPVSocketEvent ThreadLogon(
+            OsclSocketServ& aServ,
+            OsclSocketObserver *aObserver
+        );
 
         /**
          * Close a TCP socket.
@@ -404,6 +509,43 @@ class OsclTCPSocket : public HeapBase
         */
         OSCL_IMPORT_REF void CancelBind();
 
+        /**
+         * Allows the server to bind to an address which is in a TIME_WAIT state.
+         * @return Returns: OsclErrNone for success, or a
+         *   platform-specific error code. or
+         *   PVSOCK_ERR_NOT_SUPPORTED, if underlying OS doesn't support joining
+         *   multicast group
+         *   PVSOCK_ERR_BAD_PARAM, if config io file is not configured in
+         *   accordance with underlying OS
+         *   PVSOCK_ERR_NOT_IMPLEMENTED, if this API is not implemented in OSCL
+         *   for the underlying OS
+        */
+        OSCL_IMPORT_REF int32 SetOptionToReuseAddress();
+
+        /**
+         * Sets the Type of Service field of each outgoing IP datagram.
+         * @param aTOS: Specifies the type of service requested.
+         * @return Returns: OsclErrNone for success, or a
+         *   platform-specific error code. or
+         *   PVSOCK_ERR_NOT_SUPPORTED, if underlying OS doesn't support joining
+         *   multicast group
+         *   PVSOCK_ERR_BAD_PARAM, if config io file is not configured in
+         *   accordance with underlying OS
+         *   PVSOCK_ERR_NOT_IMPLEMENTED, if this API is not implemented in OSCL
+         *   for the underlying OS
+        */
+        OSCL_IMPORT_REF int32 SetTOS(const OsclSocketTOS& aTOS);
+
+        /**
+         * Retrieves the peer address of the socket
+         * @param aPeerName: This will store the peer address when API returns
+         * successfully.
+         * @return Returns OsclErrNone for success, or a
+         *   platform-specific error code. or
+         *   PVSOCK_ERR_NOT_IMPLEMENTED, if this API is not implemented in OSCL
+         *   for the underlying OS
+        */
+        OSCL_IMPORT_REF int32 GetPeerName(OsclNetworkAddress& aPeerName);
         /**
          * Listen.
          *  This is a synchronous method.

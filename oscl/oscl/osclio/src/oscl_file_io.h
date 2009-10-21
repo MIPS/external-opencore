@@ -402,6 +402,16 @@ class Oscl_File : public HeapBase
          */
         OSCL_IMPORT_REF int32 Flush();
 
+        /**
+        * The File SetSize operation
+        * If the file has been opened for writing
+        * This sets the size of the file.  The file pointer position
+        * is unchanged unless the pointers position is greated than
+        * the new filesize.
+        *
+        * @return returns 0 if successful, and a non-zero value otherwise
+        */
+        OSCL_IMPORT_REF int32 SetSize(uint32 size);
 
         /**
          * The File EOF(end of file) operation
@@ -521,6 +531,7 @@ class Oscl_File : public HeapBase
         uint32 CallNativeRead(OsclAny *buffer, uint32 size, uint32 numelements);
         uint32 CallNativeWrite(const OsclAny *buffer, uint32 size, uint32 numelements);
         int32  CallNativeSeek(TOsclFileOffset offset, Oscl_File::seek_type origin);
+        int32  CallNativeSetSize(uint32 size);
         TOsclFileOffset  CallNativeTell();
         int32  CallNativeFlush();
         int32  CallNativeEndOfFile();

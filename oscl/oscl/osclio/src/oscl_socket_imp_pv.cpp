@@ -49,6 +49,25 @@ OsclSocketI::OsclSocketI(Oscl_DefAlloc &a) : OsclSocketIBase(a)
     iLogger = PVLogger::GetLoggerObject("osclsocket");
 }
 
+TPVSocketEvent OsclSocketI::ThreadLogoff()
+{
+    iLogger = NULL;
+    iSocketServ = NULL;
+#if(PV_OSCL_SOCKET_STATS_LOGGING)
+    iStats.ThreadLogoff();
+#endif
+    return EPVSocketSuccess;
+}
+
+TPVSocketEvent OsclSocketI::ThreadLogon(OsclSocketServI* aServ)
+{
+    iLogger = PVLogger::GetLoggerObject("osclsocket");
+    iSocketServ = aServ;
+#if(PV_OSCL_SOCKET_STATS_LOGGING)
+    iStats.ThreadLogon();
+#endif
+    return EPVSocketSuccess;
+}
 OsclSocketI::~OsclSocketI()
 {
     Close();
@@ -109,6 +128,99 @@ int32 OsclSocketI::Bind(OsclNetworkAddress& anAddr)
 #endif
 }
 
+int32 OsclSocketI::GetOsclSockOptLevelName(const TPVSocketOptionLevel aOptionLevel, const TPVSocketOptionName aOptionName, int32& aOsclOptionLevel, int32& aOsclOptionName)
+{
+    int32 retval = OsclErrNone;
+    switch (aOptionLevel)
+    {
+        case EPVIPProtoIP:
+        {
+            aOsclOptionLevel = OSCL_SOL_IP;
+            switch (aOptionName)
+            {
+                case EPVIPMulticastTTL:
+                    aOsclOptionName =   OSCL_SOCKOPT_IP_MULTICAST_TTL;
+                    break;
+                case EPVIPAddMembership:
+                    aOsclOptionName =   OSCL_SOCKOPT_IP_ADDMEMBERSHIP;
+                    break;
+                case EPVIPTOS:
+                    aOsclOptionName =   OSCL_SOCKOPT_IP_TOS;
+                    break;
+                default:
+                    retval = PVSOCK_ERR_BAD_PARAM;
+            }
+        }
+        break;
+        case EPVIPProtoTCP:
+        {
+            aOsclOptionLevel = OSCL_SOL_TCP;
+            retval = PVSOCK_ERR_BAD_PARAM; // None of socket options at TCP level supported in OSCL presently
+        }
+        break;
+        case EPVSocket:
+        {
+            aOsclOptionLevel = OSCL_SOL_SOCKET;
+            switch (aOptionName)
+            {
+                case EPVSockReuseAddr:
+                    aOsclOptionName = OSCL_SOCKOPT_SOL_REUSEADDR;
+                    break;
+                default:
+                    retval = PVSOCK_ERR_BAD_PARAM;
+            }
+        }
+        break;
+        default:
+            retval = PVSOCK_ERR_BAD_PARAM;
+    }
+    return retval;
+}
+
+int32 OsclSocketI::SetSockOpt(TPVSocketOptionLevel aOptionLevel, TPVSocketOptionName aOptionName, OsclAny* aOptionValue, int32 aOptionLen)
+{
+    int32 retval = OsclErrNone;
+#ifdef OsclSetSockOpt
+    int32 sockOptLevel, sockOptName;
+    if (PVSOCK_ERR_BAD_PARAM != GetOsclSockOptLevelName(aOptionLevel, aOptionName, sockOptLevel, sockOptName))
+    {
+        if ((PVSOCK_ERR_NOT_SUPPORTED != sockOptLevel) && (PVSOCK_ERR_NOT_SUPPORTED != sockOptName))
+        {
+            int32 err = 0;
+            bool ok;
+            OsclSetSockOpt(iSocket, sockOptLevel, sockOptName, aOptionValue, aOptionLen, ok, err);
+            if (!ok)
+                retval = err;
+        }
+        else
+            retval = PVSOCK_ERR_NOT_SUPPORTED;
+    }
+    else
+        retval = PVSOCK_ERR_BAD_PARAM;
+#else
+    retval = PVSOCK_ERR_NOT_IMPLEMENTED;
+#endif
+    return retval;
+}
+
+int32 OsclSocketI::GetPeerName(OsclNetworkAddress& peerName)
+{
+#ifdef OsclGetPeerName
+    TOsclSockAddr peerAddr;
+    int32 peerAddrLen = sizeof(peerAddr);
+    int32 err = 0;
+    bool ok;
+    OsclGetPeerName(iSocket, peerAddr, peerAddrLen, ok, err);
+    if (!ok)
+        return err;
+
+    MakeAddr(peerAddr, peerName);
+    return OsclErrNone;
+
+#else
+    return PVSOCK_ERR_NOT_IMPLEMENTED;
+#endif
+}
 int32 OsclSocketI::Join(OsclNetworkAddress& anAddr)
 {
 #ifdef OsclJoin
@@ -305,6 +417,49 @@ void OsclSocketI::MakeAddr(TOsclSockAddr& in, OsclNetworkAddress& addr)
     addr.ipAddr.Set(str);
 #else
     addr.ipAddr.Set(inet_ntoa(in.sin_addr));
+#endif
+}
+
+bool OsclSocketI::MakeMulticastGroupInformation(OsclIpMReq& in, TIpMReq& addr)
+{
+    bool retval = true;
+#ifdef OsclMakeInAddr
+    OsclMakeInAddr(addr.imr_interface, in.interfaceAddr.Str(), retval);
+    if (retval)
+    {
+        OsclMakeInAddr(addr.imr_multiaddr, in.multicastAddr.Str(), retval);
+    }
+#else
+    retval = false;
+#endif
+    return retval;
+}
+
+void OsclSocketI::MakeMulticastGroupInformation(TIpMReq& in, OsclIpMReq& addr)
+{
+#ifdef OsclUnMakeInAddr
+    char interfaceAddr[PVNETWORKADDRESS_LEN] = {0};
+    char multicastAddr[PVNETWORKADDRESS_LEN] = {0};
+    char* bufferPtr = NULL;
+    int32 buffLen;
+    OsclUnMakeInAddr(in.imr_interface, bufferPtr);
+    if (bufferPtr)
+    {
+        buffLen = oscl_strlen(bufferPtr);
+        oscl_strncpy(interfaceAddr, bufferPtr, buffLen);
+        interfaceAddr[buffLen] = '\0';
+    }
+    bufferPtr = NULL;
+    buffLen = 0;
+    OsclUnMakeInAddr(in.imr_multiaddr, bufferPtr);
+    if (bufferPtr)
+    {
+        buffLen = oscl_strlen(bufferPtr);
+        oscl_strncpy(multicastAddr, bufferPtr, buffLen);
+        multicastAddr[buffLen] = '\0';
+    }
+    addr.interfaceAddr.Set(interfaceAddr);
+    addr.multicastAddr.Set(multicastAddr);
 #endif
 }
 

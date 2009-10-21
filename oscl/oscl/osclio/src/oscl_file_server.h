@@ -65,7 +65,7 @@ class Oscl_FileServer
          *
          * @return returns 0 on success and a non-zero value otherwise
          */
-        OSCL_IMPORT_REF int32 Connect();
+        OSCL_IMPORT_REF int32 Connect(bool aShareSession = false);
 
         /**
          * Closes a file server.

@@ -92,20 +92,41 @@ class GetHostByNameParam: public DNSRequestParam
     public:
 
         //Use this routine to create, use DNSRequestParam::RemoveRef when finished.
-        static GetHostByNameParam* Create(const char *name, OsclNetworkAddress* &addr);
+        static GetHostByNameParam* Create(const char *name, OsclNetworkAddress* &addr, Oscl_Vector<OsclNetworkAddress, OsclMemAllocator>* aAddressList);
 
         //from DNSRequestParam
         void Destroy();
 
         ~GetHostByNameParam();
 
+        void PersistHostAddress(const OsclNetworkAddress& addr)
+        {
+            if (iAddressList && (iAddressList->size() < iAddressList->capacity()))
+            {
+                iAddressList->push_back(addr);
+            }
+
+            if (0 == oscl_strcmp(OSCL_STATIC_CAST(const char*, iAddr->ipAddr.Str()), ""))
+                iAddr->ipAddr.Set(addr.ipAddr.Str());
+        }
+
+        bool canPersistMoreHostAddresses()
+        {
+            return (iAddressList && (iAddressList->size() < iAddressList->capacity())) || (0 == oscl_strcmp(OSCL_STATIC_CAST(const char*, iAddr->ipAddr.Str()), ""));
+        }
+
         //request params.
         char *iName;
         OsclNetworkAddress *iAddr;
+        Oscl_Vector<OsclNetworkAddress, OsclMemAllocator> *iAddressList;
+        enum
+        {
+            addressListCapacity = 10
+        };
 
     private:
 
-        GetHostByNameParam(const char *name, OsclNetworkAddress* &addr);
+        GetHostByNameParam(const char *name, OsclNetworkAddress* &addr, Oscl_Vector<OsclNetworkAddress, OsclMemAllocator>* aAddressList);
 
 
 } ;

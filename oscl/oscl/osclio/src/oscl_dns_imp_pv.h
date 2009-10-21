@@ -43,7 +43,9 @@ class OsclDNSI: public OsclDNSIBase
 
         void GetHostByName(GetHostByNameParam& , OsclDNSRequestAO&);
         void GetHostByNameSuccess(GetHostByNameParam&);
-
+        void GetNextHost(OsclDNSRequestAO&);
+        void GetNextHostSuccess(GetHostByNameParam&);
+        bool GetHostByNameResponseContainsAliasInfo();
 
     private:
         OsclDNSI(Oscl_DefAlloc &a);
@@ -57,6 +59,7 @@ class OsclDNSI: public OsclDNSIBase
         //active requests
         OsclDNSRequest iGetHostByNameRequest;
         static void ProcessDnsRequest(GetHostByNameParam*, int32&, int32&);
+        friend class OsclGetHostByNameRequest;
 
         friend class DNSRequestParam;
 };

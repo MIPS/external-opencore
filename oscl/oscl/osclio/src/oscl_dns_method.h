@@ -113,6 +113,8 @@ class OsclDNSRequestAO : public OsclActiveObject
         void Run();
 
         virtual void Success() {}
+        virtual void Failure() {}
+        virtual void Cancelled() {}
 
         OsclDNSI *iDNSI;
         OsclDNSMethod *iDNSMethod;
@@ -122,7 +124,7 @@ class OsclDNSRequestAO : public OsclActiveObject
         friend class OsclDNSI;
         friend class OsclDNSMethod;
         friend class OsclDNSRequest;
-        friend class DNSRequestParam;
+        friend class GetHostByNameParam;
 };
 
 #endif

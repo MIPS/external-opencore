@@ -45,7 +45,9 @@ class OsclDNSIBase
 
         virtual void GetHostByName(GetHostByNameParam& , OsclDNSRequestAO&) = 0;
         virtual void GetHostByNameSuccess(GetHostByNameParam&) = 0;
-
+        virtual bool GetHostByNameResponseContainsAliasInfo() = 0;
+        virtual void GetNextHost(OsclDNSRequestAO&) = 0;
+        virtual void GetNextHostSuccess(GetHostByNameParam&) = 0;
         void CancelFxn(TPVDNSFxn);
 
     protected:
