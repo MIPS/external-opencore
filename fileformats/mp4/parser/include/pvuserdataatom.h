@@ -83,7 +83,7 @@ class PVUserDataAtom : public Atom
             charType = ORIGINAL_CHAR_TYPE_UTF16;
             return _rating;
         }
-        OSCL_wHeapString<OsclMemAllocator> getPVCreationDate(MP4FFParserOriginalCharEnc &charType)
+        OSCL_wString& getPVCreationDate(MP4FFParserOriginalCharEnc &charType)
         {
             charType = ORIGINAL_CHAR_TYPE_UTF16;
             return _creationDate;

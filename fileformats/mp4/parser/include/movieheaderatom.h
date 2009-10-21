@@ -84,14 +84,16 @@ class MovieHeaderAtom : public FullAtom
             return _nextTrackID;
         }
 
-        OSCL_wHeapString<OsclMemAllocator> getCreationDate()
+        OSCL_wString& getCreationDate()
         {
-            return (convertTimeToDate(_creationTime));
+            convertTimeToDate();
+            return (iCreationDataString);
         }
 
     private:
 
-        OSCL_wHeapString<OsclMemAllocator> convertTimeToDate(uint32 time);
+        OSCL_wHeapString<OsclMemAllocator> iCreationDataString;
+        void convertTimeToDate();
 
         uint32 _creationTime; // 4/8 (32/64bits) -- Will templatize later - using 32bits (version 0) for now
         uint64 _creationTime64;

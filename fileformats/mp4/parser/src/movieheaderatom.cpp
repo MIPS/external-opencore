@@ -118,9 +118,10 @@ MovieHeaderAtom::~MovieHeaderAtom()
     // Empty
 }
 
-OSCL_wHeapString<OsclMemAllocator> MovieHeaderAtom::convertTimeToDate(uint32 time)
+void MovieHeaderAtom::convertTimeToDate()
 {
     OSCL_HeapString<OsclMemAllocator> date;
+    uint32 time = _creationTime;
 
     char buf[64];
 
@@ -240,8 +241,7 @@ OSCL_wHeapString<OsclMemAllocator> MovieHeaderAtom::convertTimeToDate(uint32 tim
                        wDate,
                        (int32)(wDateBufLen));
 
-    OSCL_wHeapString<OsclMemAllocator> wDateStr;
-    wDateStr += wDate;
+    iCreationDataString = wDate;
 
-    return (wDateStr);
+    return;
 }

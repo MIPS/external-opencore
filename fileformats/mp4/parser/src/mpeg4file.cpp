@@ -579,25 +579,28 @@ Mpeg4File::Mpeg4File(MP4_FF_FILE *fp,
         _success = false;
     }
 
-    // skip ID3 tag parsing for progressive playback for now
-    uint32 bufferCapacity = AtomUtils::getFileBufferingCapacity(fp);
-    if (0 == bufferCapacity)
+    //populate metadata only if parsing was successful
+    if (_success)
     {
-        //Check to see if ID3V2 was present. In case it was present, ID3Parcom would have
-        //traversed ID3V1 as well. In case it was not there, ID3V2Atom would not have been created
-        //in MetaData Atom and hence parse ID3V1 now
-        if (!IsID3V2Present())
+        // skip ID3 tag parsing for progressive playback for now
+        uint32 bufferCapacity = AtomUtils::getFileBufferingCapacity(fp);
+        if (0 == bufferCapacity)
         {
-            PV_MP4_FF_NEW(fp->auditCB, PVID3ParCom, (), _pID3Parser);
-            parseID3Header(fp);
+            //Check to see if ID3V2 was present. In case it was present, ID3Parcom would have
+            //traversed ID3V1 as well. In case it was not there, ID3V2Atom would not have been created
+            //in MetaData Atom and hence parse ID3V1 now
+            if (!IsID3V2Present())
+            {
+                PV_MP4_FF_NEW(fp->auditCB, PVID3ParCom, (), _pID3Parser);
+                parseID3Header(fp);
+            }
+        }
+        //Populate the title vector with all the title metadata values.
+        if (!populateMetadataVectors())
+        {
+            PVMF_MP4FFPARSER_LOGMEDIASAMPELSTATEVARIABLES((0, "Mpeg4File::populateMetadataVector() Failed"));
         }
     }
-    //Populate the title vector with all the title metadata values.
-    if (!populateMetadataVectors())
-    {
-        PVMF_MP4FFPARSER_LOGMEDIASAMPELSTATEVARIABLES((0, "Mpeg4File::populateMetadataVector() Failed"));
-    }
-
 }
 
 
@@ -1348,7 +1351,7 @@ OSCL_wString& Mpeg4File::getPVRating(MP4FFParserOriginalCharEnc &charType)
     }
 }
 
-OSCL_wHeapString<OsclMemAllocator> Mpeg4File::getCreationDate(MP4FFParserOriginalCharEnc &charType)
+OSCL_wString& Mpeg4File::getCreationDate(MP4FFParserOriginalCharEnc &charType)
 {
     PVUserDataAtom *patom = NULL;
     if (_puserDataAtom != NULL)
@@ -1364,9 +1367,13 @@ OSCL_wHeapString<OsclMemAllocator> Mpeg4File::getCreationDate(MP4FFParserOrigina
             return _emptyString;
         }
     }
-    else
+    else if (_pmovieAtom != NULL)
     {
         return (_pmovieAtom->getCreationDate());
+    }
+    else
+    {
+        return _emptyString;
     }
 }
 

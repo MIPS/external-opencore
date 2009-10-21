@@ -243,7 +243,7 @@ class Mpeg4File : public IMpeg4File, public Parentable
         OSCL_wString& getPVRating(MP4FFParserOriginalCharEnc &charType) ;
         OSCL_wString& getPVCopyright(MP4FFParserOriginalCharEnc &charType) ;
         OSCL_wString& getPVVersion(MP4FFParserOriginalCharEnc &charType) ;
-        OSCL_wHeapString<OsclMemAllocator> getCreationDate(MP4FFParserOriginalCharEnc &charType) ;
+        OSCL_wString& getCreationDate(MP4FFParserOriginalCharEnc &charType) ;
 
         // from 'ftyp' atom
         uint32 getCompatibiltyMajorBrand()

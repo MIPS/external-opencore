@@ -161,7 +161,7 @@ class MovieAtom : public Atom
             }
         }
 
-        OSCL_wHeapString<OsclMemAllocator> getCreationDate()
+        OSCL_wString& getCreationDate()
         {
             if (_pmovieHeaderAtom != NULL)
             {
