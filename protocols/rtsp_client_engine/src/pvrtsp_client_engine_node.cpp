@@ -1267,13 +1267,14 @@ bool PVRTSPEngineNode::ProcessCommand(PVRTSPEngineCommand& aInCmd)
     return true;
 }
 
-PVMFStatus PVRTSPEngineNode::DispatchCommand(PVRTSPEngineCommand& aCmd)
+OSCL_EXPORT_REF PVMFStatus PVRTSPEngineNode::DispatchCommand(PVRTSPEngineCommand& aCmd)
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVRTSPEngineNode::DispatchCommand() in"));
 
     bool bRevertToPreviousStateImpossible = true;
     bool bErrorRecoveryImpossible = true;
     PVMFStatus iRet = PVMFFailure;
+
     switch (aCmd.iCmd)
     {
         case PVMF_GENERIC_NODE_QUERYUUID:
@@ -1448,6 +1449,17 @@ PVMFStatus PVRTSPEngineNode::DispatchCommand(PVRTSPEngineCommand& aCmd)
             break;
     }
 
+    PVMFStatus retVal = processDispatchCommand(aCmd, iRet, bRevertToPreviousStateImpossible, bErrorRecoveryImpossible);
+    if ((retVal == PVMFPending) || (iCurrentErrorCode != PVMFRTSPClientEngineNodeErrorEventStart))
+    {
+        return retVal;
+    }
+
+    return iRet;
+}
+
+OSCL_EXPORT_REF PVMFStatus PVRTSPEngineNode::processDispatchCommand(PVRTSPEngineCommand& aCmd, PVMFStatus iRet, bool bRevertToPreviousStateImpossible, bool bErrorRecoveryImpossible)
+{
     if (iRet != PVMFPending)
     {
         if (iRet != PVMFSuccess)
@@ -1589,7 +1601,7 @@ void PVRTSPEngineNode::CommandComplete(PVRTSPEngineNodeCmdQ& aCmdQ,
 }
 
 // Handle command and data events
-PVMFCommandId PVRTSPEngineNode::AddCmdToQueue(PVRTSPEngineCommand& aCmd)
+OSCL_EXPORT_REF PVMFCommandId PVRTSPEngineNode::AddCmdToQueue(PVRTSPEngineCommand& aCmd)
 {
     PVMFCommandId id;
 
@@ -2351,9 +2363,8 @@ OSCL_EXPORT_REF PVMFStatus PVRTSPEngineNode::processEntityBody(RTSPIncomingMessa
         bSrvRespPending = true;
     }
 
-    PVMFStatus tmpRet = PVMFSuccess;
     OSCL_UNUSED_ARG(aEntityMemFrag);
-    return tmpRet;
+    return PVMFSuccess;
 }
 
 
@@ -2488,7 +2499,7 @@ OSCL_EXPORT_REF PVMFStatus PVRTSPEngineNode::composeSetupRequest(RTSPOutgoingMes
     return composeSetupMessage(iMsg);
 }
 
-PVMFStatus PVRTSPEngineNode::composePlayRequest(RTSPOutgoingMessage &aMsg)
+OSCL_EXPORT_REF PVMFStatus PVRTSPEngineNode::composePlayRequest(RTSPOutgoingMessage &aMsg)
 {
     aMsg.reset();
     aMsg.numOfTransportEntries = 0;
@@ -2497,6 +2508,27 @@ PVMFStatus PVRTSPEngineNode::composePlayRequest(RTSPOutgoingMessage &aMsg)
     aMsg.cseq = iOutgoingSeq++;
     aMsg.cseqIsSet = true;
 
+    if (populatePlayRequestFields(aMsg) == PVMFFailure)
+    {
+        return PVMFFailure;
+    }
+
+    if (aMsg.compose() == false)
+    {
+        return PVMFFailure;
+    }
+
+    iSessionInfo.clientServerDelay = 0;
+    uint32 clock = 0;
+    bool overflowFlag = false;
+    iRoundTripClockTimeBase.GetCurrentTime32(clock, overflowFlag, PVMF_MEDIA_CLOCK_MSEC);
+    iSessionInfo.clientServerDelay = clock;
+
+    return PVMFSuccess;
+}
+
+PVMFStatus PVRTSPEngineNode::populatePlayRequestFields(RTSPOutgoingMessage &aMsg)
+{
     if (iSessionInfo.iSID.get_size())
     {
         aMsg.sessionId.setPtrLen(iSessionInfo.iSID.get_cstr(), iSessionInfo.iSID.get_size());
@@ -2566,17 +2598,6 @@ PVMFStatus PVRTSPEngineNode::composePlayRequest(RTSPOutgoingMessage &aMsg)
     {
         return PVMFFailure;
     }
-
-    if (aMsg.compose() == false)
-    {
-        return PVMFFailure;
-    }
-
-    iSessionInfo.clientServerDelay = 0;
-    uint32 clock = 0;
-    bool overflowFlag = false;
-    iRoundTripClockTimeBase.GetCurrentTime32(clock, overflowFlag, PVMF_MEDIA_CLOCK_MSEC);
-    iSessionInfo.clientServerDelay = clock;
 
     return PVMFSuccess;
 }
@@ -2746,6 +2767,23 @@ PVMFStatus PVRTSPEngineNode::composeMediaURL(int aTrackID, StrPtrLen &aMediaURI)
         return PVMFFailure;
     }
 
+    // Check for absolute media level URL
+    PVMFStatus retVal = checkForAbsoluteMediaURL(sdpMediaURL, aMediaURI);
+    if (retVal == PVMFFailure)
+    {
+        retVal = composeAbsoluteMediaURL(sdpMediaURL, aMediaURI);
+    }
+
+    return retVal;
+}
+
+OSCL_EXPORT_REF PVMFStatus PVRTSPEngineNode::checkForAbsoluteMediaURL(const char *sdpMediaURL, StrPtrLen &aMediaURI)
+{
+    PVMFStatus retVal = PVMFFailure;
+    OSCL_StackString<16> rtsp_str = _STRLIT_CHAR("rtsp");
+    OSCL_StackString<16> rtspt_str = _STRLIT_CHAR("rtspt");
+    OSCL_StackString<16> schemeDelimiter = _STRLIT_CHAR("://");
+
     if (!oscl_strncmp(sdpMediaURL, rtsp_str.get_cstr(), rtsp_str.get_size()))
     {
         if (!oscl_strncmp(sdpMediaURL, rtspt_str.get_cstr(), rtspt_str.get_size()))
@@ -2753,7 +2791,7 @@ PVMFStatus PVRTSPEngineNode::composeMediaURL(int aTrackID, StrPtrLen &aMediaURI)
             const char* actualURL = oscl_strstr(sdpMediaURL, schemeDelimiter.get_cstr());
             if (actualURL == NULL)
             {
-                return PVMFErrArgument;
+                retVal = PVMFErrArgument;
             }
             else
             {
@@ -2764,56 +2802,66 @@ PVMFStatus PVRTSPEngineNode::composeMediaURL(int aTrackID, StrPtrLen &aMediaURI)
             iRtspPrefixedURL += actualURL;
 
             aMediaURI = iRtspPrefixedURL.get_cstr();
+            retVal = PVMFSuccess;
         }
         else
         {
             aMediaURI = sdpMediaURL;
+            retVal = PVMFSuccess;
         }
-
     }
-    else
+    return retVal;
+}
+
+OSCL_EXPORT_REF PVMFStatus PVRTSPEngineNode::composeAbsoluteMediaURL(const char *sdpMediaURL, StrPtrLen &aMediaURI)
+{
+    PVMFStatus retVal = PVMFFailure;
+    OSCL_StackString<16> rtsp_str = _STRLIT_CHAR("rtsp");
+    const char *sdpSessionURL = (iSessionInfo.iSDPinfo->getSessionInfo())->getControlURL();
+
+    if (!oscl_strncmp(sdpSessionURL, rtsp_str.get_cstr(), rtsp_str.get_size()))
     {
-        const char *sdpSessionURL = (iSessionInfo.iSDPinfo->getSessionInfo())->getControlURL();
+        ((mbchar*)iRTSPEngTmpBuf.ptr)[0] = '\0';
+        uint tmpLen = iRTSPEngTmpBuf.len;
 
-        if (!oscl_strncmp(sdpSessionURL, rtsp_str.get_cstr(), rtsp_str.get_size()))
+        if (composeURL(sdpSessionURL, sdpMediaURL,
+                       ((mbchar*)iRTSPEngTmpBuf.ptr), tmpLen) != true)
         {
-            ((mbchar*)iRTSPEngTmpBuf.ptr)[0] = '\0';
-            uint tmpLen = iRTSPEngTmpBuf.len;
-
-            if (composeURL(sdpSessionURL, sdpMediaURL,
-                           ((mbchar*)iRTSPEngTmpBuf.ptr), tmpLen) != true)
-            {
-                return PVMFFailure;
-            }
-
-            aMediaURI = ((mbchar*)iRTSPEngTmpBuf.ptr);
+            retVal = PVMFFailure;
         }
-        //Compose absolute URL
         else
         {
-            char *baseURL;
-            if (iSessionInfo.iContentBaseURL.get_size())
-            {
-                baseURL = iSessionInfo.iContentBaseURL.get_str();
-            }
-            else
-            {
-                baseURL = iSessionInfo.iSessionURL.get_str();
-            }
-
-            {
-                uint tmpLen = iRTSPEngTmpBuf.len;
-                if (composeURL((const char *)baseURL,
-                               sdpMediaURL,
-                               ((mbchar*)iRTSPEngTmpBuf.ptr), tmpLen) != true)
-                {
-                    return PVMFFailure;
-                }
-            }
             aMediaURI = ((mbchar*)iRTSPEngTmpBuf.ptr);
+            retVal = PVMFSuccess;
         }
     }
-    return PVMFSuccess;
+    //Compose absolute URL
+    else
+    {
+        char *baseURL;
+        if (iSessionInfo.iContentBaseURL.get_size())
+        {
+            baseURL = iSessionInfo.iContentBaseURL.get_str();
+        }
+        else
+        {
+            baseURL = iSessionInfo.iSessionURL.get_str();
+        }
+
+        uint tmpLen = iRTSPEngTmpBuf.len;
+        if (composeURL((const char *)baseURL,
+                       sdpMediaURL,
+                       ((mbchar*)iRTSPEngTmpBuf.ptr), tmpLen) != true)
+        {
+            retVal = PVMFFailure;
+        }
+        else
+        {
+            aMediaURI = ((mbchar*)iRTSPEngTmpBuf.ptr);
+            retVal = PVMFSuccess;
+        }
+    }
+    return retVal;
 }
 
 PVMFStatus PVRTSPEngineNode::processCommonResponse(RTSPIncomingMessage &aMsg)
@@ -3677,10 +3725,10 @@ OSCL_EXPORT_REF void PVRTSPEngineNode::ReportErrorEvent(PVMFEventType aEventType
     }
 }
 
-void PVRTSPEngineNode::ReportInfoEvent(PVMFEventType aEventType,
-                                       OsclAny* aEventData,
-                                       PVUuid* aEventUUID,
-                                       int32* aEventCode)
+OSCL_EXPORT_REF void PVRTSPEngineNode::ReportInfoEvent(PVMFEventType aEventType,
+        OsclAny* aEventData,
+        PVUuid* aEventUUID,
+        int32* aEventCode)
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                     (0, "PVRTSPEngineNode:NodeInfoEvent Type %d Data %d"
@@ -4698,7 +4746,6 @@ OSCL_EXPORT_REF bool PVRTSPEngineNode::clearEventQueue(void)
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_INFO, (0, "PVRTSPEngineNode::clearEventQueue() Out myRet=%d ", myRet));
     return myRet;
 }
-
 
 
 /**

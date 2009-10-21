@@ -161,12 +161,12 @@ class SessionInfo
     public:
 
         OSCL_HeapString<PVRTSPEngineNodeAllocator> iSessionURL;
-        OSCL_HeapString<PVRTSPEngineNodeAllocator> iContentBaseURL;//Per session control URL from content base field
+        OSCL_HeapString<PVRTSPEngineNodeAllocator> iContentBaseURL;// Per session control URL from content base field
 
-        OSCL_HeapString<PVRTSPEngineNodeAllocator> iServerName;    //could be either DNS or ip address
+        OSCL_HeapString<PVRTSPEngineNodeAllocator> iServerName;    // could be either DNS or ip address
 
-        OSCL_HeapString<PVRTSPEngineNodeAllocator> iProxyName;     //could be either DNS or ip address
-        OSCL_HeapString<PVRTSPEngineNodeAllocator> iUuid;          //for Real http cloaking
+        OSCL_HeapString<PVRTSPEngineNodeAllocator> iProxyName;     // could be either DNS or ip address
+        OSCL_HeapString<PVRTSPEngineNodeAllocator> iUuid;
 
         uint32  iProxyPort;
 
@@ -182,24 +182,24 @@ class SessionInfo
         OsclSharedPtr<SDPInfo>  iSDPinfo;
         Oscl_Vector<StreamInfo, PVRTSPEngineNodeAllocator> iSelectedStream;
 
-        int number_of_channels;                 //Used for interaction with the media buffer class
-        int channel_tbl[MAX_TOTAL_TRACKS];      //Index from SDP track IDs to tracks actually selected
+        int number_of_channels;                 // Used for interaction with the media buffer class
+        int channel_tbl[MAX_TOTAL_TRACKS];      // Index from SDP track IDs to tracks actually selected
 
-        OSCL_HeapString<PVRTSPEngineNodeAllocator> iSID;    //alphanumeric session ID
+        OSCL_HeapString<PVRTSPEngineNodeAllocator> iSID;    // alphanumeric session ID
 
-        bool serverReplyFlag;           //Used for communication between the PVStream modules (network module and the task scheduler)
-        bool getStateFlag;              //Used to ensure that the PE's main loop has been called
-        bool pvServerIsSetFlag;             //Used to indicate if we are streaming from PVServer or not
-        bool tSIDIsSetFlag;             //Used to send session id from second SETUP request
+        bool serverReplyFlag;           // Used for communication between the PVStream modules (network module and the task scheduler)
+        bool getStateFlag;              // Used to ensure that the PE's main loop has been called
+        bool pvServerIsSetFlag;         // Used to indicate if we are streaming from PVServer or not
+        bool tSIDIsSetFlag;             // Used to send session id from second SETUP request
         uint32 iServerVersionNumber;    // Version number of PVSS
-        int32 prerollDuration;                  //Saves the jitter buffer size
+        int32 prerollDuration;          // Saves the jitter buffer size
 
-        int32 fwp_counter;              //Id of the first returned firewall packet
-        int32 rtt;                              //Saves the round trip time for firewall exchange
-        uint32 roundTripDelay;                   //Saves the round trip delay for a DESCRIBE request
-        uint64 clientServerDelay;                //Saves the client server delay during a DESCRIBE request
+        int32 fwp_counter;              // Id of the first returned firewall packet
+        int32 rtt;                      // Saves the round trip time for firewall exchange
+        uint32 roundTripDelay;          // Saves the round trip delay for a DESCRIBE request
+        uint64 clientServerDelay;       // Saves the client server delay during a DESCRIBE request
 
-        bool pipeLineFlag;                      //Used to indicate a pipe lined request
+        bool pipeLineFlag;              // Used to indicate a pipe lined request
 
         OSCL_HeapString<PVRTSPEngineNodeAllocator>  iUserAgent;
         OSCL_HeapString<PVRTSPEngineNodeAllocator>  iUserNetwork;
@@ -214,6 +214,12 @@ class SessionInfo
 
         enum PVRTSPStreamingType iStreamingType;
 
+        RtspRangeType                              iPlaylistRange;
+        PVEffectiveTime                            iPlaylistPlayTime;
+        OSCL_HeapString<PVRTSPEngineNodeAllocator> iPlaylistQueryString;    // Playlist query string
+        bool                                       iPlaylistQueryStringFlag;// Flag to indicate query string's presence
+        OSCL_HeapString<PVRTSPEngineNodeAllocator> iPlaylistUri;            // Playlist uri
+        bool                                       iPlaylistUriFlag;        // Flag to indicate playlist uri's presence
         bool                                       iSessionCompleted;
         void UpdateSessionCompletionStatus(bool aSessionCompleted)
         {
@@ -227,10 +233,13 @@ class SessionInfo
                 pvServerIsSetFlag(false),
                 iServerVersionNumber(0),
                 roundTripDelay(0),
+                iPlaylistQueryStringFlag(false),
+                iPlaylistUriFlag(false),
                 iSessionCompleted(false)
         {
             iUserAgent += _STRLIT_CHAR("PVPlayer ");
             iReqPlayRange.format = RtspRangeType::INVALID_RANGE;
+            iPlaylistRange.iPlaylistUrl[0] = '\0';
         };
 
 } ;
@@ -249,6 +258,7 @@ typedef PVMFGenericNodeCommand<PVRTSPEngineNodeAllocator> PVRTSPEngineCommandBas
 enum TPVMFRtspNodeCommand //TPVMFGenericNodeCommand
 {
     PVMF_RTSP_NODE_ERROR_RECOVERY = PVMF_GENERIC_NODE_COMMAND_LAST + 1
+    , PVMF_RTSP_NODE_PLAYLIST_PLAY
     , PVMF_RTSP_NODE_CANCELALLRESET
 };
 class PVRTSPEngineCommand: public PVRTSPEngineCommandBase
@@ -370,6 +380,7 @@ class PVRTSPEngineNode
         OSCL_IMPORT_REF PVMFStatus SendRtspTeardown(PVRTSPEngineCommand &aCmd);
         OSCL_IMPORT_REF virtual bool parseURL(const char* aURL);
         OSCL_IMPORT_REF PVMFStatus processIncomingMessage(RTSPIncomingMessage &iIncomingMsg);
+        OSCL_IMPORT_REF PVMFStatus populatePlayRequestFields(RTSPOutgoingMessage &aMsg);
         OSCL_IMPORT_REF virtual PVMFStatus composeSetupRequest(RTSPOutgoingMessage &iMsg, StreamInfo &aSelected);
         OSCL_IMPORT_REF PVMFStatus populateCommonSetupFields(RTSPOutgoingMessage &iMsg, StreamInfo &aSelected);
         OSCL_IMPORT_REF PVMFStatus composeSetupMessage(RTSPOutgoingMessage &iMsg);
@@ -612,7 +623,6 @@ class PVRTSPEngineNode
 
         OSCL_IMPORT_REF virtual PVMFStatus GetKeepAliveMethod(int32 &aTimeout, bool &aUseSetParameter, bool &aKeepAliveInPlay);
 
-
         OSCL_IMPORT_REF virtual PVMFStatus GetRTSPTimeOut(int32 &aTimeout);
         OSCL_IMPORT_REF virtual PVMFStatus SetRTSPTimeOut(int32 aTimeout);
 
@@ -675,6 +685,8 @@ class PVRTSPEngineNode
             PVRTSP_ENGINE_NODE_STATE_WAIT_PLAY,
 
             PVRTSP_ENGINE_NODE_STATE_PLAY_DONE,
+            PVRTSP_ENGINE_NODE_STATE_WAIT_PLAYLIST_PLAY,
+
             PVRTSP_ENGINE_NODE_STATE_WAIT_PAUSE,
             PVRTSP_ENGINE_NODE_STATE_PAUSE_DONE,
 
@@ -725,7 +737,9 @@ class PVRTSPEngineNode
 
 
         RTSPParser *iRTSPParser;
+    protected:
         uint32 iOutgoingSeq;
+    private:
 
         bool bNoRecvPending;//an Recv() is pending on RTSP socket
 
@@ -759,9 +773,9 @@ class PVRTSPEngineNode
         };
 
 
+    protected:
         //temp string compose buffer for internal use RTSP_MAX_FULL_REQUEST_SIZE
         OsclMemoryFragment  iRTSPEngTmpBuf;
-    protected:
         OsclMemoryFragment  iEntityMemFrag;
     private:
         // Queue of commands for cancel
@@ -812,9 +826,13 @@ class PVRTSPEngineNode
 
         void ChangeExternalState(TPVMFNodeInterfaceState aNewState);
 
+    protected:
         // Handle command and data events
-        PVMFCommandId AddCmdToQueue(PVRTSPEngineCommand& aCmd);
-        PVMFStatus DispatchCommand(PVRTSPEngineCommand& aCmd);
+        OSCL_IMPORT_REF PVMFCommandId AddCmdToQueue(PVRTSPEngineCommand& aCmd);
+        OSCL_IMPORT_REF virtual PVMFStatus DispatchCommand(PVRTSPEngineCommand& aCmd);
+        OSCL_IMPORT_REF PVMFStatus processDispatchCommand(PVRTSPEngineCommand& aCmd, PVMFStatus iRet, bool bRevertToPreviousStateImpossible, bool bErrorRecoveryImpossible);
+
+    private:
 
         bool ProcessCommand(PVRTSPEngineCommand& aCmd);
         bool rtspParserLoop(void);
@@ -852,7 +870,9 @@ class PVRTSPEngineNode
 
         PVMFStatus composeOptionsRequest(RTSPOutgoingMessage&);
         PVMFStatus composeDescribeRequest(RTSPOutgoingMessage&);
-        PVMFStatus composePlayRequest(RTSPOutgoingMessage &iMsg);
+    protected:
+        OSCL_IMPORT_REF virtual PVMFStatus composePlayRequest(RTSPOutgoingMessage &iMsg);
+    private:
         PVMFStatus composeStopRequest(RTSPOutgoingMessage &iMsg);
         PVMFStatus composePauseRequest(RTSPOutgoingMessage &iMsg);
         PVMFStatus composeKeepAliveRequest(RTSPOutgoingMessage &aMsg);
@@ -864,12 +884,14 @@ class PVRTSPEngineNode
         //should merge togather and move to jitter buffer
         PVMFStatus composeSessionURL(RTSPOutgoingMessage &aMsg);
         PVMFStatus composeMediaURL(int aTrackID, StrPtrLen &aMediaURI);
-
-        void ReportInfoEvent(PVMFEventType aEventType,
-                             OsclAny* aEventData = NULL,
-                             PVUuid* aEventUUID = NULL,
-                             int32* aEventCode = NULL);
-
+    protected:
+        OSCL_IMPORT_REF virtual PVMFStatus checkForAbsoluteMediaURL(const char *sdpMediaURL, StrPtrLen &aMediaURI);
+        OSCL_IMPORT_REF virtual PVMFStatus composeAbsoluteMediaURL(const char *sdpMediaURL, StrPtrLen &aMediaURI);
+        OSCL_IMPORT_REF void ReportInfoEvent(PVMFEventType aEventType,
+                                             OsclAny* aEventData = NULL,
+                                             PVUuid* aEventUUID = NULL,
+                                             int32* aEventCode = NULL);
+    private:
         void MapRTSPCodeToEventCode(RTSPStatusCode aStatusCode,
                                     int32& aEventCode);
         PVMFStatus CancelCurrentOps();
@@ -883,7 +905,9 @@ class PVRTSPEngineNode
 
         void ResetSessionInfo(void);
         PVRTSPEngineNodeExtensionInterface* iExtensionInterface;
+    protected:
         OSCL_HeapString<PVRTSPEngineNodeAllocator> iRtspPrefixedURL;
+    private:
 
         RTSPEntityBody iEmbeddedData;
 

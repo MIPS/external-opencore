@@ -92,8 +92,6 @@ class PVRTSPEngineNodeExtensionInterfaceImpl : public PVInterfaceImpl<PVRTSPEngi
         OSCL_IMPORT_REF virtual PVMFStatus SetKeepAliveMethod_keep_alive_in_play(bool aKeepAliveInPlay = false);
 
         OSCL_IMPORT_REF virtual PVMFStatus GetKeepAliveMethod(int32 &aTimeout, bool &aUseSetParameter, bool &aKeepAliveInPlay);
-
-
         OSCL_IMPORT_REF virtual PVMFStatus GetRTSPTimeOut(int32 &aTimeout);
         OSCL_IMPORT_REF virtual PVMFStatus SetRTSPTimeOut(int32 aTimeout);
 

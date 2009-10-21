@@ -155,7 +155,6 @@ OSCL_EXPORT_REF PVMFStatus PVRTSPEngineNodeExtensionInterfaceImpl::GetKeepAliveM
     return iContainer->GetKeepAliveMethod(aTimeout, aUseSetParameter, aKeepAliveInPlay);
 }
 
-
 OSCL_EXPORT_REF PVMFStatus PVRTSPEngineNodeExtensionInterfaceImpl::GetRTSPTimeOut(int32 &aTimeout)
 {
     return iContainer->GetRTSPTimeOut(aTimeout);

@@ -75,6 +75,12 @@ enum PVRTSPStreamingType
     PVRTSP_MS_TCP
 };
 
+typedef enum
+{
+    PVEffectiveTime_NOW,
+    PVEffectiveTime_END_OF_CLIP,
+    PVEffectiveTime_END_OF_PLAYLIST
+} PVEffectiveTime;
 
 struct StreamInfo
 {
