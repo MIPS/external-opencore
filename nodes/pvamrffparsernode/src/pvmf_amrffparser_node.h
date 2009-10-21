@@ -173,41 +173,39 @@ class PVMFAMRFFParserNode :  public PVMFNodeInterfaceImpl
         virtual void Run();
 
         //Command processing
-        bool FlushPending();
-        PVMFStatus HandleExtensionAPICommands(PVMFNodeCommand& aCmd);
+        PVMFStatus HandleExtensionAPICommands();
+
+        PVMFStatus CancelCurrentCommand();
 
         //Command handlers.
-        PVMFStatus DoQueryUuid(PVMFNodeCommand&);
-        PVMFStatus DoQueryInterface(PVMFNodeCommand&);
-        PVMFStatus DoInit(PVMFNodeCommand&);
-        PVMFStatus DoStop(PVMFNodeCommand&);
-        PVMFStatus DoReset(PVMFNodeCommand&);
-        PVMFStatus DoFlush(PVMFNodeCommand&);
-        PVMFStatus DoCancelAllCommands(PVMFNodeCommand&);
-        PVMFStatus DoCancelCommand(PVMFNodeCommand&);
-        PVMFStatus DoRequestPort(PVMFNodeCommand&, PVMFPortInterface*&);
-        PVMFStatus DoReleasePort(PVMFNodeCommand&);
+        PVMFStatus DoQueryUuid();
+        PVMFStatus DoQueryInterface();
+        PVMFStatus DoInit();
+        PVMFStatus DoStop();
+        PVMFStatus DoReset();
+        PVMFStatus DoRequestPort(PVMFPortInterface*&);
+        PVMFStatus DoReleasePort();
 
         void CompleteReset();
         void CompleteInit();
 
         // For metadata extention interface
-        PVMFStatus DoGetNodeMetadataKeys(PVMFNodeCommand& aCmd);
-        PVMFStatus DoGetNodeMetadataValues(PVMFNodeCommand& aCmd);
+        PVMFStatus DoGetNodeMetadataKeys();
+        PVMFStatus DoGetNodeMetadataValues();
         PVMFStatus InitMetaData();
 
         void CompleteGetMetaDataValues();
         int32 AddToValueList(Oscl_Vector<PvmiKvp, OsclMemAllocator>& aValueList, PvmiKvp& aNewValue);
-        PVMFStatus CompleteGetMetadataKeys(PVMFNodeCommand& aCmd);
+        PVMFStatus CompleteGetMetadataKeys();
         void PushToAvailableMetadataKeysList(const char* aKeystr, char* aOptionalParam = NULL);
 
         // For data source position extension interface
-        PVMFStatus DoSetDataSourcePosition(PVMFNodeCommand& aCmd);
-        PVMFStatus DoQueryDataSourcePosition(PVMFNodeCommand& aCmd);
-        PVMFStatus DoSetDataSourceRate(PVMFNodeCommand& aCmd);
+        PVMFStatus DoSetDataSourcePosition();
+        PVMFStatus DoQueryDataSourcePosition();
+        PVMFStatus DoSetDataSourceRate();
 
         /* For data source direction extension interface */
-        void DoSetDataSourceDirection(PVMFNodeCommand& aCmd);
+        void DoSetDataSourceDirection();
 
 
         // Track data processing

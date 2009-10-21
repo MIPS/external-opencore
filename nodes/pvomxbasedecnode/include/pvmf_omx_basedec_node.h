@@ -299,21 +299,19 @@ class PVMFOMXBaseDecNode: public PVMFNodeInterfaceImpl
         OSCL_IMPORT_REF virtual void Run();
 
     protected:
-        virtual PVMFStatus DoQueryUuid(PVMFNodeCommand&) = 0;
-        virtual PVMFStatus DoRequestPort(PVMFNodeCommand&, PVMFPortInterface*&) = 0;
-        virtual PVMFStatus DoGetNodeMetadataKey(PVMFNodeCommand&) = 0;
-        virtual PVMFStatus DoGetNodeMetadataValue(PVMFNodeCommand&) = 0;
-        OSCL_IMPORT_REF PVMFStatus DoQueryInterface(PVMFNodeCommand&);
-        OSCL_IMPORT_REF PVMFStatus DoReleasePort(PVMFNodeCommand&);
-        OSCL_IMPORT_REF PVMFStatus DoInit(PVMFNodeCommand&);
-        OSCL_IMPORT_REF PVMFStatus DoPrepare(PVMFNodeCommand&);
-        OSCL_IMPORT_REF PVMFStatus DoStart(PVMFNodeCommand&);
-        OSCL_IMPORT_REF PVMFStatus DoStop(PVMFNodeCommand&);
-        OSCL_IMPORT_REF PVMFStatus DoPause(PVMFNodeCommand&);
-        OSCL_IMPORT_REF PVMFStatus DoReset(PVMFNodeCommand&);
-        OSCL_IMPORT_REF PVMFStatus DoFlush(PVMFNodeCommand&);
-        OSCL_IMPORT_REF PVMFStatus DoCancelAllCommands(PVMFNodeCommand&);
-        OSCL_IMPORT_REF PVMFStatus DoCancelCommand(PVMFNodeCommand&);
+        virtual PVMFStatus DoQueryUuid() = 0;
+        virtual PVMFStatus DoRequestPort(PVMFPortInterface*&) = 0;
+        virtual PVMFStatus DoGetNodeMetadataKey() = 0;
+        virtual PVMFStatus DoGetNodeMetadataValue() = 0;
+        OSCL_IMPORT_REF PVMFStatus DoQueryInterface();
+        OSCL_IMPORT_REF PVMFStatus DoReleasePort();
+        OSCL_IMPORT_REF PVMFStatus DoInit();
+        OSCL_IMPORT_REF PVMFStatus DoPrepare();
+        OSCL_IMPORT_REF PVMFStatus DoStart();
+        OSCL_IMPORT_REF PVMFStatus DoStop();
+        OSCL_IMPORT_REF PVMFStatus DoPause();
+        OSCL_IMPORT_REF PVMFStatus DoReset();
+        OSCL_IMPORT_REF PVMFStatus DoFlush();
 
         //bool ProcessCommand(PVMFOMXBaseDecNodeCommand& aCmd);
         bool ProcessOutgoingMsg(PVMFPortInterface* aPort);
@@ -684,9 +682,8 @@ class PVMFOMXBaseDecNode: public PVMFNodeInterfaceImpl
         bool iIsVC1AdvancedProfile;
 
     private:
-        void MoveCmdToCurrentQueue(PVMFNodeCommand& aCmd);
-        OSCL_IMPORT_REF PVMFStatus HandleExtensionAPICommands(PVMFNodeCommand& aCmd);
-
+        OSCL_IMPORT_REF PVMFStatus HandleExtensionAPICommands();
+        OSCL_IMPORT_REF PVMFStatus CancelCurrentCommand();
 };
 
 

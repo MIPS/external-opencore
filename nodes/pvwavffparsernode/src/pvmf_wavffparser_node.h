@@ -216,29 +216,26 @@ class PVMFWAVFFParserNode : public PVMFNodeInterfaceImpl,
         PVMFStatus ProcessOutgoingMsg(PVMFPortInterface* aPort);
         bool HandleOutgoingQueueReady(PVMFPortInterface* aPortInterface);
 
-        bool FlushPending();
-
         //Command dispatchers
-        PVMFStatus HandleExtensionAPICommands(PVMFNodeCommand& aCmd);
+        PVMFStatus HandleExtensionAPICommands();
+
+        PVMFStatus CancelCurrentCommand();
 
         //Command handlers for PVMFNodeInterface APIs
-        PVMFStatus DoQueryUuid(PVMFNodeCommand&);
-        PVMFStatus DoQueryInterface(PVMFNodeCommand&);
-        PVMFStatus DoInit(PVMFNodeCommand&);
-        PVMFStatus DoStop(PVMFNodeCommand&);
-        PVMFStatus DoReset(PVMFNodeCommand&);
-        PVMFStatus DoFlush(PVMFNodeCommand&);
-        PVMFStatus DoCancelAllCommands(PVMFNodeCommand&);
-        PVMFStatus DoCancelCommand(PVMFNodeCommand&);
-        PVMFStatus DoRequestPort(PVMFNodeCommand&, PVMFPortInterface*& aPort);
-        PVMFStatus DoReleasePort(PVMFNodeCommand&);
+        PVMFStatus DoQueryUuid();
+        PVMFStatus DoQueryInterface();
+        PVMFStatus DoInit();
+        PVMFStatus DoStop();
+        PVMFStatus DoReset();
+        PVMFStatus DoRequestPort(PVMFPortInterface*& aPort);
+        PVMFStatus DoReleasePort();
 
         //Command handlers for Extension APIs
-        PVMFStatus DoSetDataSourcePosition(PVMFNodeCommand& aCmd);
-        PVMFStatus DoQueryDataSourcePosition(PVMFNodeCommand& aCmd);
-        PVMFStatus DoSetDataSourceRate(PVMFNodeCommand& aCmd);
-        PVMFStatus DoGetNodeMetadataKey(PVMFNodeCommand& aCmd);
-        PVMFStatus DoGetNodeMetadataValue(PVMFNodeCommand& aCmd);
+        PVMFStatus DoSetDataSourcePosition();
+        PVMFStatus DoQueryDataSourcePosition();
+        PVMFStatus DoSetDataSourceRate();
+        PVMFStatus DoGetNodeMetadataKey();
+        PVMFStatus DoGetNodeMetadataValue();
 
         void InitializeTrackStructure();
 

@@ -68,134 +68,6 @@
 // Default value of media sample Duration
 #define PVMF_DEFAULT_TRACK_DURATION 0xFFFFFFFF
 
-/************************************** PVMFNODEINTERFACEIMPL ***********************************/
-
-// forward declaration
-class PVMFNodeCommandBase;
-class PVMFNodeCommand;
-//Command queue type
-typedef PVMFNodeCommandQueue<PVMFNodeCommand, OsclMemAllocator> PVMFNodeCmdQ;
-
-class PVMFNodeInterfaceImpl : public PVMFNodeInterface,
-        public OsclActiveObject
-{
-    public:
-        // from OsclActiveObject
-        OSCL_IMPORT_REF virtual void DoCancel();
-
-        // contstructor
-        OSCL_IMPORT_REF PVMFNodeInterfaceImpl(int32 aPriority, const char name[]);
-        // destructor
-        OSCL_IMPORT_REF virtual ~PVMFNodeInterfaceImpl();
-
-        // from PVMFNodeInterface
-        OSCL_IMPORT_REF PVMFStatus ThreadLogon();
-        OSCL_IMPORT_REF PVMFStatus ThreadLogoff();
-        OSCL_IMPORT_REF virtual PVMFSessionId Connect(const PVMFNodeSessionInfo &aSession);
-        OSCL_IMPORT_REF virtual PVMFStatus Disconnect(PVMFSessionId aSessionId);
-        OSCL_IMPORT_REF virtual PVMFStatus GetCapability(PVMFNodeCapability& aNodeCapability);
-        OSCL_IMPORT_REF virtual PVMFPortIter* GetPorts(const PVMFPortFilter* aFilter = NULL);
-        OSCL_IMPORT_REF virtual PVMFCommandId QueryUUID(PVMFSessionId aSession,
-                const PvmfMimeString& aMimeType,
-                Oscl_Vector<PVUuid, OsclMemAllocator>& aUuids,
-                bool aExactUuidsOnly = false,
-                const OsclAny* aContext = NULL);
-        OSCL_IMPORT_REF virtual PVMFCommandId QueryInterface(PVMFSessionId aSession,
-                const PVUuid& aUuid,
-                PVInterface*& aInterfacePtr,
-                const OsclAny* aContext = NULL);
-        OSCL_IMPORT_REF virtual PVMFCommandId RequestPort(PVMFSessionId aSession,
-                int32 aPortTag,
-                const PvmfMimeString* aPortConfig = NULL,
-                const OsclAny* aContext = NULL);
-        OSCL_IMPORT_REF virtual PVMFCommandId ReleasePort(PVMFSessionId aSession,
-                PVMFPortInterface& aPort,
-                const OsclAny* aContext = NULL);
-        OSCL_IMPORT_REF virtual PVMFCommandId Init(PVMFSessionId aSession,
-                const OsclAny* aContext = NULL);
-        OSCL_IMPORT_REF virtual PVMFCommandId Prepare(PVMFSessionId aSession,
-                const OsclAny* aContext = NULL);
-        OSCL_IMPORT_REF virtual PVMFCommandId Start(PVMFSessionId aSession,
-                const OsclAny* aContext = NULL);
-        OSCL_IMPORT_REF virtual PVMFCommandId Stop(PVMFSessionId aSession,
-                const OsclAny* aContext = NULL);
-        OSCL_IMPORT_REF virtual PVMFCommandId Flush(PVMFSessionId aSession,
-                const OsclAny* aContext = NULL);
-        OSCL_IMPORT_REF virtual PVMFCommandId Pause(PVMFSessionId aSession,
-                const OsclAny* aContext = NULL);
-        OSCL_IMPORT_REF virtual PVMFCommandId Reset(PVMFSessionId aSession,
-                const OsclAny* aContext = NULL);
-        OSCL_IMPORT_REF virtual PVMFCommandId CancelAllCommands(PVMFSessionId aSession,
-                const OsclAny* aContextData = NULL);
-        OSCL_IMPORT_REF virtual PVMFCommandId CancelCommand(PVMFSessionId aSession,
-                PVMFCommandId aCmdId,
-                const OsclAny* aContextData = NULL);
-        OSCL_IMPORT_REF virtual void HandlePortActivity(const PVMFPortActivity& aActivity);
-
-        OSCL_IMPORT_REF PVMFCommandId QueueCommandL(PVMFNodeCommand& aCmd);
-
-        OSCL_IMPORT_REF void SetState(TPVMFNodeInterfaceState);
-        OSCL_IMPORT_REF TPVMFNodeInterfaceState GetState();
-        OSCL_IMPORT_REF virtual void ReportCmdCompleteEvent(PVMFSessionId s, PVMFCmdResp &resp);
-        OSCL_IMPORT_REF virtual void ReportErrorEvent(PVMFEventType aEventType, OsclAny* aEventData = NULL, PVInterface*aExtMsg = NULL, int32* aEventCode = 0);
-        OSCL_IMPORT_REF virtual void ReportErrorEvent(PVMFAsyncEvent&aEvent);
-        OSCL_IMPORT_REF virtual void ReportInfoEvent(PVMFEventType aEventType, OsclAny* aEventData = NULL, PVInterface*aExtMsg = NULL);
-        OSCL_IMPORT_REF virtual void ReportInfoEvent(PVMFAsyncEvent&aEvent);
-        OSCL_IMPORT_REF virtual void Reschedule();
-
-
-    protected:
-        // protected routines
-        OSCL_IMPORT_REF bool SendEndOfTrackCommand(PVMFPortInterface* aPort, int32 aStreamID, PVMFTimestamp aTimestamp, int32 aSeqNum, uint32 aDuration = PVMF_DEFAULT_TRACK_DURATION);
-        OSCL_IMPORT_REF bool SendBeginOfMediaStreamCommand(PVMFPortInterface* aPort, int32 aStreamID, PVMFTimestamp aTimestamp);
-        OSCL_IMPORT_REF void CommandComplete(PVMFNodeCmdQ& aCmdQ, PVMFNodeCommand& aCmd, PVMFStatus aStatus,
-                                             PVInterface* aExtMsg = NULL, OsclAny* aEventData = NULL, PVUuid* aEventUUID = NULL, int32* aEventCode = NULL);
-        // command dispatcher routiness
-        OSCL_IMPORT_REF bool ProcessCommand(PVMFNodeCommand& aCmd);
-        OSCL_IMPORT_REF virtual PVMFStatus HandleExtensionAPICommands(PVMFNodeCommand& aCmd) = 0;
-        //command handlers
-        OSCL_IMPORT_REF virtual PVMFStatus DoQueryUuid(PVMFNodeCommand&) = 0;
-        OSCL_IMPORT_REF virtual PVMFStatus DoQueryInterface(PVMFNodeCommand&) = 0;
-        OSCL_IMPORT_REF virtual PVMFStatus DoInit(PVMFNodeCommand&) = 0;
-        OSCL_IMPORT_REF virtual PVMFStatus DoStop(PVMFNodeCommand&) = 0;
-        OSCL_IMPORT_REF virtual PVMFStatus DoReset(PVMFNodeCommand&) = 0;
-        OSCL_IMPORT_REF virtual PVMFStatus DoFlush(PVMFNodeCommand&) = 0;
-        OSCL_IMPORT_REF virtual PVMFStatus DoCancelAllCommands(PVMFNodeCommand&) = 0;
-        OSCL_IMPORT_REF virtual PVMFStatus DoCancelCommand(PVMFNodeCommand&) = 0;
-        OSCL_IMPORT_REF virtual PVMFStatus DoRequestPort(PVMFNodeCommand&, PVMFPortInterface*& aPort) = 0;
-        OSCL_IMPORT_REF virtual PVMFStatus DoReleasePort(PVMFNodeCommand&) = 0;
-
-        // command handlers have implementation in base node class.
-        OSCL_IMPORT_REF virtual PVMFStatus DoPrepare(PVMFNodeCommand&);
-        OSCL_IMPORT_REF virtual PVMFStatus DoStart(PVMFNodeCommand&);
-        OSCL_IMPORT_REF virtual PVMFStatus DoPause(PVMFNodeCommand&);
-
-        // Command processing
-        OSCL_IMPORT_REF void MoveCmdToCurrentQueue(PVMFNodeCommand& aCmd);
-        OSCL_IMPORT_REF void MoveCmdToCancelQueue(PVMFNodeCommand& aCmd);
-    protected:
-        // protected members
-        // audit control block
-        OsclAuditCB iAuditCB;
-        // input command queue
-        PVMFNodeCmdQ iInputCommands;
-        // current command queue
-        PVMFNodeCmdQ iCurrentCommand;
-        // cancel command queue
-        PVMFNodeCmdQ iCancelCommand;
-        //stream id
-        uint32 iStreamID;
-        //node's capabilities
-        PVMFNodeCapability iNodeCapability;
-        // Reference counter for extension
-        uint32 iExtensionRefCount;
-        // node name
-        OsclNameString<PVEXECNAMELEN> iNodeName;
-    private:
-        PVLogger* iBaseLogger;
-};
-
-
 #define PVMFNodeCommandBase PVMFGenericNodeCommand<OsclMemAllocator>  // to remove typedef warning on symbian
 class PVMFNodeCommand: public PVMFNodeCommandBase
 {
@@ -321,6 +193,8 @@ class PVMFNodeCommand: public PVMFNodeCommandBase
                 default:
                     break;
             }
+            //Set the command ID as invalid after destroying it.
+            iCmd = PVMF_GENERIC_NODE_COMMAND_INVALID;
         }
 
         //need to overlaod the base Copy routine to copy metadata key.
@@ -342,6 +216,133 @@ class PVMFNodeCommand: public PVMFNodeCommandBase
                     break;
             }
         }
+};
+
+/************************************** PVMFNODEINTERFACEIMPL ***********************************/
+
+//Command queue type
+typedef PVMFNodeCommandQueue<PVMFNodeCommand, OsclMemAllocator> PVMFNodeCmdQ;
+
+class PVMFNodeInterfaceImpl : public PVMFNodeInterface,
+        public OsclActiveObject
+{
+    public:
+        // from OsclActiveObject
+        OSCL_IMPORT_REF virtual void DoCancel();
+
+        // contstructor
+        OSCL_IMPORT_REF PVMFNodeInterfaceImpl(int32 aPriority, const char name[]);
+        // destructor
+        OSCL_IMPORT_REF virtual ~PVMFNodeInterfaceImpl();
+
+        // from PVMFNodeInterface
+        OSCL_IMPORT_REF PVMFStatus ThreadLogon();
+        OSCL_IMPORT_REF PVMFStatus ThreadLogoff();
+        OSCL_IMPORT_REF virtual PVMFSessionId Connect(const PVMFNodeSessionInfo &aSession);
+        OSCL_IMPORT_REF virtual PVMFStatus Disconnect(PVMFSessionId aSessionId);
+        OSCL_IMPORT_REF virtual PVMFStatus GetCapability(PVMFNodeCapability& aNodeCapability);
+        OSCL_IMPORT_REF virtual PVMFPortIter* GetPorts(const PVMFPortFilter* aFilter = NULL);
+        OSCL_IMPORT_REF virtual PVMFCommandId QueryUUID(PVMFSessionId aSession,
+                const PvmfMimeString& aMimeType,
+                Oscl_Vector<PVUuid, OsclMemAllocator>& aUuids,
+                bool aExactUuidsOnly = false,
+                const OsclAny* aContext = NULL);
+        OSCL_IMPORT_REF virtual PVMFCommandId QueryInterface(PVMFSessionId aSession,
+                const PVUuid& aUuid,
+                PVInterface*& aInterfacePtr,
+                const OsclAny* aContext = NULL);
+        OSCL_IMPORT_REF virtual PVMFCommandId RequestPort(PVMFSessionId aSession,
+                int32 aPortTag,
+                const PvmfMimeString* aPortConfig = NULL,
+                const OsclAny* aContext = NULL);
+        OSCL_IMPORT_REF virtual PVMFCommandId ReleasePort(PVMFSessionId aSession,
+                PVMFPortInterface& aPort,
+                const OsclAny* aContext = NULL);
+        OSCL_IMPORT_REF virtual PVMFCommandId Init(PVMFSessionId aSession,
+                const OsclAny* aContext = NULL);
+        OSCL_IMPORT_REF virtual PVMFCommandId Prepare(PVMFSessionId aSession,
+                const OsclAny* aContext = NULL);
+        OSCL_IMPORT_REF virtual PVMFCommandId Start(PVMFSessionId aSession,
+                const OsclAny* aContext = NULL);
+        OSCL_IMPORT_REF virtual PVMFCommandId Stop(PVMFSessionId aSession,
+                const OsclAny* aContext = NULL);
+        OSCL_IMPORT_REF virtual PVMFCommandId Flush(PVMFSessionId aSession,
+                const OsclAny* aContext = NULL);
+        OSCL_IMPORT_REF virtual PVMFCommandId Pause(PVMFSessionId aSession,
+                const OsclAny* aContext = NULL);
+        OSCL_IMPORT_REF virtual PVMFCommandId Reset(PVMFSessionId aSession,
+                const OsclAny* aContext = NULL);
+        OSCL_IMPORT_REF virtual PVMFCommandId CancelAllCommands(PVMFSessionId aSession,
+                const OsclAny* aContextData = NULL);
+        OSCL_IMPORT_REF virtual PVMFCommandId CancelCommand(PVMFSessionId aSession,
+                PVMFCommandId aCmdId,
+                const OsclAny* aContextData = NULL);
+        OSCL_IMPORT_REF virtual void HandlePortActivity(const PVMFPortActivity& aActivity);
+
+        OSCL_IMPORT_REF PVMFCommandId QueueCommandL(PVMFNodeCommand& aCmd);
+
+        OSCL_IMPORT_REF void SetState(TPVMFNodeInterfaceState);
+        OSCL_IMPORT_REF TPVMFNodeInterfaceState GetState();
+        OSCL_IMPORT_REF bool IsCommandInProgress(PVMFNodeCommand&);
+        OSCL_IMPORT_REF virtual void ReportCmdCompleteEvent(PVMFSessionId s, PVMFCmdResp &resp);
+        OSCL_IMPORT_REF virtual void ReportErrorEvent(PVMFEventType aEventType, OsclAny* aEventData = NULL, PVInterface*aExtMsg = NULL, int32* aEventCode = 0);
+        OSCL_IMPORT_REF virtual void ReportErrorEvent(PVMFAsyncEvent&aEvent);
+        OSCL_IMPORT_REF virtual void ReportInfoEvent(PVMFEventType aEventType, OsclAny* aEventData = NULL, PVInterface*aExtMsg = NULL);
+        OSCL_IMPORT_REF virtual void ReportInfoEvent(PVMFAsyncEvent&aEvent);
+        OSCL_IMPORT_REF virtual void Reschedule();
+
+
+    protected:
+        // protected routines
+        OSCL_IMPORT_REF bool SendEndOfTrackCommand(PVMFPortInterface* aPort, int32 aStreamID, PVMFTimestamp aTimestamp, int32 aSeqNum, uint32 aDuration = PVMF_DEFAULT_TRACK_DURATION);
+        OSCL_IMPORT_REF bool SendBeginOfMediaStreamCommand(PVMFPortInterface* aPort, int32 aStreamID, PVMFTimestamp aTimestamp);
+        OSCL_IMPORT_REF void CommandComplete(PVMFNodeCommand& aCmd, PVMFStatus aStatus,
+                                             PVInterface* aExtMsg = NULL, OsclAny* aEventData = NULL, PVUuid* aEventUUID = NULL, int32* aEventCode = NULL);
+        // command dispatcher routiness
+        OSCL_IMPORT_REF bool ProcessCommand();
+        OSCL_IMPORT_REF virtual PVMFStatus HandleExtensionAPICommands() = 0;
+        OSCL_IMPORT_REF virtual PVMFStatus CancelCurrentCommand() = 0;
+
+        //command handlers
+        OSCL_IMPORT_REF virtual PVMFStatus DoQueryUuid() = 0;
+        OSCL_IMPORT_REF virtual PVMFStatus DoQueryInterface() = 0;
+        OSCL_IMPORT_REF virtual PVMFStatus DoInit() = 0;
+        OSCL_IMPORT_REF virtual PVMFStatus DoStop() = 0;
+        OSCL_IMPORT_REF virtual PVMFStatus DoReset() = 0;
+        OSCL_IMPORT_REF virtual PVMFStatus DoRequestPort(PVMFPortInterface*& aPort) = 0;
+        OSCL_IMPORT_REF virtual PVMFStatus DoReleasePort() = 0;
+
+        // command handlers have implementation in base node class.
+        OSCL_IMPORT_REF virtual PVMFStatus DoPrepare();
+        OSCL_IMPORT_REF virtual PVMFStatus DoStart();
+        OSCL_IMPORT_REF virtual PVMFStatus DoPause();
+        OSCL_IMPORT_REF virtual PVMFStatus DoCancelAllCommands();
+        OSCL_IMPORT_REF virtual PVMFStatus DoCancelCommand();
+        OSCL_IMPORT_REF virtual PVMFStatus DoFlush();
+
+        // Method to tell if a flush operation is in progress.
+        OSCL_IMPORT_REF virtual bool IsFlushPending();
+
+    protected:
+        // protected members
+        // audit control block
+        OsclAuditCB iAuditCB;
+        // input command queue
+        PVMFNodeCmdQ iInputCommands;
+        // current command
+        PVMFNodeCommand iCurrentCommand;
+        // cancel command
+        PVMFNodeCommand iCancelCommand;
+        //stream id
+        uint32 iStreamID;
+        //node's capabilities
+        PVMFNodeCapability iNodeCapability;
+        // Reference counter for extension
+        uint32 iExtensionRefCount;
+        // node name
+        OsclNameString<PVEXECNAMELEN> iNodeName;
+    private:
+        PVLogger* iBaseLogger;
 };
 
 #endif //PVMF_NODE_INTERFACE_IMPL_H_INCLUDED

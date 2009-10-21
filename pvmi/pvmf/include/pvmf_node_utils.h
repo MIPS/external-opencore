@@ -184,43 +184,43 @@ class PVMFPortVector: public PVMFPortIter
         uint32 iIterIndex;
 };
 
-/**
-// Node Command queue utilities.
-*/
-/* pre-defined invalid command id */
-#define PVMF_INVALID_COMMAND_ID -1
+/*
+ * Node Command queue utilities.
+ */
+
 //IDs for all of the asynchronous node commands.
 enum TPVMFGenericNodeCommand
 {
-    PVMF_GENERIC_NODE_QUERYUUID
-    , PVMF_GENERIC_NODE_QUERYINTERFACE
-    , PVMF_GENERIC_NODE_REQUESTPORT
-    , PVMF_GENERIC_NODE_RELEASEPORT
-    , PVMF_GENERIC_NODE_INIT
-    , PVMF_GENERIC_NODE_PREPARE
-    , PVMF_GENERIC_NODE_START
-    , PVMF_GENERIC_NODE_STOP
-    , PVMF_GENERIC_NODE_FLUSH
-    , PVMF_GENERIC_NODE_PAUSE
-    , PVMF_GENERIC_NODE_RESET
-    , PVMF_GENERIC_NODE_CANCELALLCOMMANDS
-    , PVMF_GENERIC_NODE_CANCELCOMMAND
+    PVMF_GENERIC_NODE_COMMAND_INVALID = -1,
+    PVMF_GENERIC_NODE_QUERYUUID = 0,
+    PVMF_GENERIC_NODE_QUERYINTERFACE, // 1
+    PVMF_GENERIC_NODE_REQUESTPORT, // 2
+    PVMF_GENERIC_NODE_RELEASEPORT, // 3
+    PVMF_GENERIC_NODE_INIT, // 4
+    PVMF_GENERIC_NODE_PREPARE, // 5
+    PVMF_GENERIC_NODE_START, // 6
+    PVMF_GENERIC_NODE_STOP, // 7
+    PVMF_GENERIC_NODE_FLUSH, // 8
+    PVMF_GENERIC_NODE_PAUSE, // 9
+    PVMF_GENERIC_NODE_RESET, //10
+    PVMF_GENERIC_NODE_CANCELALLCOMMANDS, // 11
+    PVMF_GENERIC_NODE_CANCELCOMMAND, // 12
     //From PvmfDataSourcePlaybackControlInterface
-    , PVMF_GENERIC_NODE_SET_DATASOURCE_POSITION
-    , PVMF_GENERIC_NODE_QUERY_DATASOURCE_POSITION
-    , PVMF_GENERIC_NODE_SET_DATASOURCE_RATE
+    PVMF_GENERIC_NODE_SET_DATASOURCE_POSITION, // 13
+    PVMF_GENERIC_NODE_QUERY_DATASOURCE_POSITION, // 14
+    PVMF_GENERIC_NODE_SET_DATASOURCE_RATE, // 15
     //From PVMFMetadataExtensionInterface
-    , PVMF_GENERIC_NODE_GETNODEMETADATAKEYS
-    , PVMF_GENERIC_NODE_GETNODEMETADATAVALUES
+    PVMF_GENERIC_NODE_GETNODEMETADATAKEYS, // 16
+    PVMF_GENERIC_NODE_GETNODEMETADATAVALUES, // 17
     //From PvmfDataSourceDirectionControlInterface
-    , PVMF_GENERIC_NODE_SET_DATASOURCE_DIRECTION
+    PVMF_GENERIC_NODE_SET_DATASOURCE_DIRECTION, // 18
     //From PVMFCPMPluginLicenseInterface
-    , PVMF_GENERIC_NODE_GET_LICENSE_W
-    , PVMF_GENERIC_NODE_GET_LICENSE
-    , PVMF_GENERIC_NODE_CANCEL_GET_LICENSE
+    PVMF_GENERIC_NODE_GET_LICENSE_W, // 19
+    PVMF_GENERIC_NODE_GET_LICENSE, // 20
+    PVMF_GENERIC_NODE_CANCEL_GET_LICENSE, // 21
     //Node Private command
-    , PVMF_GENERIC_NODE_CAPCONFIG_SETPARAMS
-    , PVMF_GENERIC_NODE_COMMAND_LAST //a placeholder for adding
+    PVMF_GENERIC_NODE_CAPCONFIG_SETPARAMS, // 22
+    PVMF_GENERIC_NODE_COMMAND_LAST //a placeholder for adding
     //node-specific commands to this list.
 };
 /**
@@ -232,6 +232,9 @@ class PVMFGenericNodeCommand
 {
     public:
         virtual ~PVMFGenericNodeCommand() {}
+        PVMFGenericNodeCommand(): iCmd(PVMF_GENERIC_NODE_COMMAND_INVALID)
+        {
+        }
 
         //base construction for all commands.  derived class can override this
         //to add initialization of other parameters.
@@ -507,6 +510,28 @@ class PVMFNodeCommandQueue
                 return &iVec[iVec.size()-1];
             }
         }
+
+        // Copy the front element of the vector in aElem and delete it.
+        void GetFrontAndErase(vec_element &aElem)
+        {
+            if (iVec.size() > 0)
+            {
+                aElem.Copy(front());
+                Erase(&front());
+            }
+        }
+
+        // Copy the command with the given Id from the vector in aElem and delete it.
+        void GetCmdByIdAndErase(PVMFCommandId aId, vec_element &aElem, uint32 aOffset = 0)
+        {
+            vec_element_ptr elem = FindById(aId, aOffset);
+            if (elem)
+            {
+                aElem.Copy(*elem);
+                Erase(elem);
+            }
+        }
+
 
         vec_element_ptr FindById(PVMFCommandId aId, uint32 aOffset = 0)
         {//find an element by its command id

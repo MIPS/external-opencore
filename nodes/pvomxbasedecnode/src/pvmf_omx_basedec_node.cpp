@@ -310,25 +310,36 @@ OSCL_EXPORT_REF PVMFOMXBaseDecNode::~PVMFOMXBaseDecNode()
     iDataIn.Unbind();
 }
 
-void PVMFOMXBaseDecNode::MoveCmdToCurrentQueue(PVMFNodeCommand& aCmd)
+OSCL_EXPORT_REF PVMFStatus PVMFOMXBaseDecNode::HandleExtensionAPICommands()
 {
-    int32 err;
-    OSCL_TRY(err, iCurrentCommand.StoreL(aCmd););
-    if (err != OsclErrNone)
-    {
-        CommandComplete(iInputCommands, aCmd, PVMFErrNoMemory);
-        return;
-    }
-    iInputCommands.Erase(&aCmd);
-    return;
-}
-
-OSCL_EXPORT_REF PVMFStatus PVMFOMXBaseDecNode::HandleExtensionAPICommands(PVMFNodeCommand& aCmd)
-{
-    OSCL_UNUSED_ARG(aCmd);
     return PVMFSuccess;
 }
 
+OSCL_EXPORT_REF PVMFStatus PVMFOMXBaseDecNode::CancelCurrentCommand()
+{
+    // Cancel DoFlush here and return success.
+    if (IsFlushPending())
+    {
+        CommandComplete(iCurrentCommand, PVMFErrCancelled);
+        return PVMFSuccess;
+    }
+
+    if (PVMF_GENERIC_NODE_RESET  == iCurrentCommand.iCmd)
+    {
+        if (iResetInProgress && !iResetMsgSent)
+        {
+            // if reset is started but reset msg has not been sent, we can cancel reset
+            // as if nothing happened. Otherwise, the callback will set the flag back to false
+            iResetInProgress = false;
+        }
+    }
+
+    /* The pending commands DoPrepare, DoStart, DoPause, DoStop and DoReset
+     * would be canceled in HandleComponentStateChange.
+     * So return pending for now.
+     */
+    return PVMFPending;
+}
 
 /////////////////////////////////////////////////////////////////////////////
 OSCL_EXPORT_REF PVMFStatus PVMFOMXBaseDecNode::SetDecoderNodeConfiguration(PVMFOMXBaseDecNodeConfig& aNodeConfig)
@@ -465,28 +476,24 @@ OSCL_EXPORT_REF void PVMFOMXBaseDecNode::Run()
     // if reset is in progress, call DoReset again until Reset Msg is sent
     if ((iResetInProgress == true) &&
             (iResetMsgSent == false) &&
-            (iCurrentCommand.size() > 0) &&
-            (iCurrentCommand.front().iCmd == PVMF_GENERIC_NODE_RESET)
+            (PVMF_GENERIC_NODE_RESET == iCurrentCommand.iCmd)
        )
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG, (0, "%s::Run() - Calling DoReset", iName.Str()));
 
         PVMFStatus status = PVMFFailure;
-        status = DoReset(iCurrentCommand.front());
+        status = DoReset();
 
         if (status != PVMFPending)
         {
-            if (iCurrentCommand.size() > 0)
-            {
-                CommandComplete(iCurrentCommand, iCurrentCommand.front(), status);
-            }
+            CommandComplete(iCurrentCommand, status);
         }
         return; // don't do anything else
     }
     //Check for NODE commands...
     if (!iInputCommands.empty())
     {
-        if (ProcessCommand(iInputCommands.front()))
+        if (ProcessCommand())
         {
             if (iInterfaceState != EPVMFNodeCreated
                     && (!iInputCommands.empty() || (iInPort && (iInPort->IncomingMsgQueueSize() > 0)) ||
@@ -513,8 +520,8 @@ OSCL_EXPORT_REF void PVMFOMXBaseDecNode::Run()
         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG, (0, "%s::Run() - Input commands empty", iName.Str()));
     }
 
-    if (((iCurrentCommand.size() == 0) && (iInterfaceState != EPVMFNodeStarted)) ||
-            ((iCurrentCommand.size() > 0) && (iCurrentCommand.front().iCmd == PVMF_GENERIC_NODE_START) && (iInterfaceState != EPVMFNodeStarted)))
+    if (((!IsCommandInProgress(iCancelCommand)) && (iInterfaceState != EPVMFNodeStarted)) ||
+            ((PVMF_GENERIC_NODE_START == iCurrentCommand.iCmd) && (iInterfaceState != EPVMFNodeStarted)))
     {
         // rescheduling because of input data will be handled in Command Processing Part
         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG, (0, "%s::Run() - Node not in Started state yet", iName.Str()));
@@ -712,8 +719,7 @@ OSCL_EXPORT_REF void PVMFOMXBaseDecNode::Run()
 
 
     //Check for flash command complition...
-    if (iInPort && iOutPort && (iCurrentCommand.size() > 0) &&
-            (iCurrentCommand.front().iCmd == PVMF_GENERIC_NODE_FLUSH) &&
+    if (iInPort && iOutPort && IsFlushPending() &&
             (iInPort->IncomingMsgQueueSize() == 0) &&
             (iOutPort->OutgoingMsgQueueSize() == 0) &&
             (iDataIn.GetRep() == NULL))
@@ -734,7 +740,7 @@ OSCL_EXPORT_REF void PVMFOMXBaseDecNode::Run()
         //resume port input so the ports can be re-started.
         iInPort->ResumeInput();
         iOutPort->ResumeInput();
-        CommandComplete(iCurrentCommand, iCurrentCommand.front(), PVMFSuccess);
+        CommandComplete(iCurrentCommand, PVMFSuccess);
         Reschedule();
     }
 
@@ -3402,17 +3408,15 @@ OSCL_EXPORT_REF void PVMFOMXBaseDecNode::HandleComponentStateChange(OMX_U32 deco
             iIsConfigDataProcessingCompletionNeeded = false;
 
 
-            if ((iCurrentCommand.size() > 0) &&
-                    (iCurrentCommand.front().iCmd == PVMF_GENERIC_NODE_PREPARE))
+            if (PVMF_GENERIC_NODE_PREPARE == iCurrentCommand.iCmd)
             {
                 iProcessingState = EPVMFOMXBaseDecNodeProcessingState_InitDecoder;
                 SetState(EPVMFNodePrepared);
                 //Complete the pending command and reschedule
-                CommandComplete(iCurrentCommand, iCurrentCommand.front(), PVMFSuccess);
+                CommandComplete(iCurrentCommand, PVMFSuccess);
                 Reschedule();
             }
-            else if ((iCurrentCommand.size() > 0) &&
-                     (iCurrentCommand.front().iCmd == PVMF_GENERIC_NODE_STOP))
+            else if (PVMF_GENERIC_NODE_STOP == iCurrentCommand.iCmd)
             {
                 // if we are stopped, we won't start until the node gets DoStart command.
                 //  in this case, we are ready to start sending buffers
@@ -3422,11 +3426,10 @@ OSCL_EXPORT_REF void PVMFOMXBaseDecNode::HandleComponentStateChange(OMX_U32 deco
                 SetState(EPVMFNodePrepared);
                 iStopCommandWasSentToComponent = false;
                 //Complete the pending command and reschedule
-                CommandComplete(iCurrentCommand, iCurrentCommand.front(), PVMFSuccess);
+                CommandComplete(iCurrentCommand, PVMFSuccess);
                 Reschedule();
             }
-            else if ((iCurrentCommand.size() > 0) &&
-                     (iCurrentCommand.front().iCmd == PVMF_GENERIC_NODE_RESET))
+            else if (PVMF_GENERIC_NODE_RESET == iCurrentCommand.iCmd)
             {
                 // State change to Idle was initiated due to Reset. First need to reach idle, and then loaded
                 // Once Idle is reached, we need to initiate idle->loaded transition
@@ -3447,12 +3450,11 @@ OSCL_EXPORT_REF void PVMFOMXBaseDecNode::HandleComponentStateChange(OMX_U32 deco
             //  or going from OMX_Pause -> OMX_Executing (coming from pause)
             //  either way, this is a response to "DoStart" command
 
-            if ((iCurrentCommand.size() > 0) &&
-                    (iCurrentCommand.front().iCmd == PVMF_GENERIC_NODE_START))
+            if (PVMF_GENERIC_NODE_START == iCurrentCommand.iCmd)
             {
                 SetState(EPVMFNodeStarted);
                 //Complete the pending command and reschedule
-                CommandComplete(iCurrentCommand, iCurrentCommand.front(), PVMFSuccess);
+                CommandComplete(iCurrentCommand, PVMFSuccess);
                 Reschedule();
             }
 
@@ -3472,8 +3474,7 @@ OSCL_EXPORT_REF void PVMFOMXBaseDecNode::HandleComponentStateChange(OMX_U32 deco
                 iProcessingState = EPVMFOMXBaseDecNodeProcessingState_ReadyToDecode;
 
             //  This state can be reached going from OMX_Executing-> OMX_Pause
-            if ((iCurrentCommand.size() > 0) &&
-                    (iCurrentCommand.front().iCmd == PVMF_GENERIC_NODE_PAUSE))
+            if (PVMF_GENERIC_NODE_PAUSE == iCurrentCommand.iCmd)
             {
 
                 // if we are paused, we won't start until the node gets DoStart command.
@@ -3486,7 +3487,7 @@ OSCL_EXPORT_REF void PVMFOMXBaseDecNode::HandleComponentStateChange(OMX_U32 deco
                 SetState(EPVMFNodePaused);
                 iPauseCommandWasSentToComponent = false;
                 //Complete the pending command and reschedule
-                CommandComplete(iCurrentCommand, iCurrentCommand.front(), PVMFSuccess);
+                CommandComplete(iCurrentCommand, PVMFSuccess);
                 Reschedule();
             }
 
@@ -3503,8 +3504,7 @@ OSCL_EXPORT_REF void PVMFOMXBaseDecNode::HandleComponentStateChange(OMX_U32 deco
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                             (0, "%s::HandleComponentStateChange: OMX_StateLoaded reached", iName.Str()));
             //Check if command's responce is pending
-            if ((iCurrentCommand.size() > 0) &&
-                    (iCurrentCommand.front().iCmd == PVMF_GENERIC_NODE_RESET))
+            if (PVMF_GENERIC_NODE_RESET == iCurrentCommand.iCmd)
             {
 
                 // move this here
@@ -3529,7 +3529,7 @@ OSCL_EXPORT_REF void PVMFOMXBaseDecNode::HandleComponentStateChange(OMX_U32 deco
                 iProcessingState = EPVMFOMXBaseDecNodeProcessingState_Idle;
                 //logoff & go back to Created state.
                 SetState(EPVMFNodeIdle);
-                CommandComplete(iCurrentCommand, iCurrentCommand.front(), PVMFSuccess);
+                CommandComplete(iCurrentCommand, PVMFSuccess);
                 iResetInProgress = false;
                 iResetMsgSent = false;
             }
@@ -3550,6 +3550,15 @@ OSCL_EXPORT_REF void PVMFOMXBaseDecNode::HandleComponentStateChange(OMX_U32 deco
 
     }//end of switch(decoder_state)
 
+    // OMX does not support cancelling the command.
+    // Once initiated, an async command to the OMX component will complete.
+    // So if the node is waiting for any pending cancel, cancel it now with Failure.
+
+    if (IsCommandInProgress(iCancelCommand))
+    {
+        CommandComplete(iCancelCommand, PVMFFailure);
+        return;
+    }
 }
 
 
@@ -3829,14 +3838,13 @@ bool PVMFOMXBaseDecNode::SendEndOfTrackCommand(void)
 }
 
 /////////////////////////////////////////////////////////////////////////////
-OSCL_EXPORT_REF PVMFStatus PVMFOMXBaseDecNode::DoInit(PVMFNodeCommand& aCmd)
+OSCL_EXPORT_REF PVMFStatus PVMFOMXBaseDecNode::DoInit()
 {
-    OSCL_UNUSED_ARG(aCmd);
     return PVMFSuccess;
 }
 
 /////////////////////////////////////////////////////////////////////////////
-OSCL_EXPORT_REF PVMFStatus PVMFOMXBaseDecNode::DoPrepare(PVMFNodeCommand& aCmd)
+OSCL_EXPORT_REF PVMFStatus PVMFOMXBaseDecNode::DoPrepare()
 {
     OMX_ERRORTYPE err = OMX_ErrorNone;
     Oscl_Vector<OMX_STRING, OsclMemAllocator> roles;
@@ -4221,17 +4229,13 @@ OSCL_EXPORT_REF PVMFStatus PVMFOMXBaseDecNode::DoPrepare(PVMFNodeCommand& aCmd)
     }
 
 
-    //this command is asynchronous.  move the command from
-    //the input command queue to the current command, where
-    //it will remain until it completes. We have to wait for
-    // OMX component state transition to complete
-
-    MoveCmdToCurrentQueue(aCmd);
+    //this command is asynchronous, it will remain pending
+    //until OMX component state transition is complete.
     return PVMFPending;
 }
 
 /////////////////////////////////////////////////////////////////////////////
-OSCL_EXPORT_REF PVMFStatus PVMFOMXBaseDecNode::DoStart(PVMFNodeCommand& aCmd)
+OSCL_EXPORT_REF PVMFStatus PVMFOMXBaseDecNode::DoStart()
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "%s::DoStart() In", iName.Str()));
 
@@ -4291,12 +4295,11 @@ OSCL_EXPORT_REF PVMFStatus PVMFOMXBaseDecNode::DoStart(PVMFNodeCommand& aCmd)
         status = PVMFErrInvalidState;
     }
 
-    MoveCmdToCurrentQueue(aCmd);
     return status;
 }
 
 /////////////////////////////////////////////////////////////////////////////
-OSCL_EXPORT_REF PVMFStatus PVMFOMXBaseDecNode::DoStop(PVMFNodeCommand& aCmd)
+OSCL_EXPORT_REF PVMFStatus PVMFOMXBaseDecNode::DoStop()
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "%s::DoStop() In", iName.Str()));
 
@@ -4398,15 +4401,12 @@ OSCL_EXPORT_REF PVMFStatus PVMFOMXBaseDecNode::DoStop(PVMFNodeCommand& aCmd)
         return PVMFErrInvalidState;
     }
 
-    MoveCmdToCurrentQueue(aCmd);
     return status;
 }
 
 /////////////////////////////////////////////////////////////////////////////
-OSCL_EXPORT_REF PVMFStatus PVMFOMXBaseDecNode::DoFlush(PVMFNodeCommand& aCmd)
+OSCL_EXPORT_REF PVMFStatus PVMFOMXBaseDecNode::DoFlush()
 {
-
-    MoveCmdToCurrentQueue(aCmd);
 
     //Notify all ports to suspend their input
     if (iInPort)
@@ -4419,13 +4419,13 @@ OSCL_EXPORT_REF PVMFStatus PVMFOMXBaseDecNode::DoFlush(PVMFNodeCommand& aCmd)
     }
     // Stop data source
 
-    // DV: Sending "OMX_CommandFlush" to the decoder: Not supported yet
+    // Sending "OMX_CommandFlush" to the decoder: Not supported yet
 
     return PVMFPending;
 }
 
 /////////////////////////////////////////////////////////////////////////////
-OSCL_EXPORT_REF PVMFStatus PVMFOMXBaseDecNode::DoPause(PVMFNodeCommand& aCmd)
+OSCL_EXPORT_REF PVMFStatus PVMFOMXBaseDecNode::DoPause()
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "%s::DoPause() In", iName.Str()));
 
@@ -4480,15 +4480,12 @@ OSCL_EXPORT_REF PVMFStatus PVMFOMXBaseDecNode::DoPause(PVMFNodeCommand& aCmd)
         return PVMFErrInvalidState;
     }
 
-    //this command is asynchronous.  move the command from
-    //the input command queue to the current command, where
-    //it will remain until it completes.
-    MoveCmdToCurrentQueue(aCmd);
+    //this command is asynchronous, return pending.
     return PVMFPending;
 }
 
 /////////////////////////////////////////////////////////////////////////////
-OSCL_EXPORT_REF PVMFStatus PVMFOMXBaseDecNode::DoReset(PVMFNodeCommand& aCmd)
+OSCL_EXPORT_REF PVMFStatus PVMFOMXBaseDecNode::DoReset()
 {
 
     OMX_ERRORTYPE  err;
@@ -4533,9 +4530,7 @@ OSCL_EXPORT_REF PVMFStatus PVMFOMXBaseDecNode::DoReset(PVMFNodeCommand& aCmd)
             {
                 // cmd is in current q
                 iResetInProgress = false;
-                if ((iCurrentCommand.size() > 0) &&
-                        (iCurrentCommand.front().iCmd == PVMF_GENERIC_NODE_RESET)
-                   )
+                if (PVMF_GENERIC_NODE_RESET == iCurrentCommand.iCmd)
                 {
                     status = PVMFErrResource;
                 }
@@ -4561,8 +4556,6 @@ OSCL_EXPORT_REF PVMFStatus PVMFOMXBaseDecNode::DoReset(PVMFNodeCommand& aCmd)
             }
             else
             {
-
-                //CommandComplete(iInputCommands, aCmd, PVMFErrResource);
                 //delete all ports and notify observer.
                 if (iInPort)
                 {
@@ -4611,7 +4604,6 @@ OSCL_EXPORT_REF PVMFStatus PVMFOMXBaseDecNode::DoReset(PVMFNodeCommand& aCmd)
             //it will remain until it is completed.
             if (!iResetInProgress)
             {
-                MoveCmdToCurrentQueue(aCmd);
                 iResetInProgress = true;
             }
 
@@ -4662,9 +4654,7 @@ OSCL_EXPORT_REF PVMFStatus PVMFOMXBaseDecNode::DoReset(PVMFNodeCommand& aCmd)
                         if (iResetInProgress)
                         {
                             iResetInProgress = false;
-                            if ((iCurrentCommand.size() > 0) &&
-                                    (iCurrentCommand.front().iCmd == PVMF_GENERIC_NODE_RESET)
-                               )
+                            if (PVMF_GENERIC_NODE_RESET == iCurrentCommand.iCmd)
                             {
                                 return PVMFErrResource;
                             }
@@ -4690,9 +4680,7 @@ OSCL_EXPORT_REF PVMFStatus PVMFOMXBaseDecNode::DoReset(PVMFNodeCommand& aCmd)
                         if (iResetInProgress)
                         {
                             iResetInProgress = false;
-                            if ((iCurrentCommand.size() > 0) &&
-                                    (iCurrentCommand.front().iCmd == PVMF_GENERIC_NODE_RESET)
-                               )
+                            if (PVMF_GENERIC_NODE_RESET == iCurrentCommand.iCmd)
                             {
                                 return PVMFErrResource;
                             }
@@ -4719,7 +4707,6 @@ OSCL_EXPORT_REF PVMFStatus PVMFOMXBaseDecNode::DoReset(PVMFNodeCommand& aCmd)
             //it will remain until it is completed.
             if (!iResetInProgress)
             {
-                MoveCmdToCurrentQueue(aCmd);
                 iResetInProgress = true;
             }
 
@@ -4782,9 +4769,7 @@ OSCL_EXPORT_REF PVMFStatus PVMFOMXBaseDecNode::DoReset(PVMFNodeCommand& aCmd)
             if (iResetInProgress)
             {
                 iResetInProgress = false;
-                if ((iCurrentCommand.size() > 0) &&
-                        (iCurrentCommand.front().iCmd == PVMF_GENERIC_NODE_RESET)
-                   )
+                if (PVMF_GENERIC_NODE_RESET == iCurrentCommand.iCmd)
                 {
                     return PVMFErrInvalidState;
                 }
@@ -4837,9 +4822,7 @@ OSCL_EXPORT_REF PVMFStatus PVMFOMXBaseDecNode::DoReset(PVMFNodeCommand& aCmd)
     if (iResetInProgress)
     {
         iResetInProgress = false;
-        if ((iCurrentCommand.size() > 0) &&
-                (iCurrentCommand.front().iCmd == PVMF_GENERIC_NODE_RESET)
-           )
+        if (PVMF_GENERIC_NODE_RESET == iCurrentCommand.iCmd)
         {
             status = PVMFSuccess;
         }
@@ -5002,90 +4985,7 @@ OSCL_EXPORT_REF void PVMFOMXBaseDecNode::HandlePortActivity(const PVMFPortActivi
 }
 
 /////////////////////////////////////////////////////////////////////////////
-OSCL_EXPORT_REF PVMFStatus PVMFOMXBaseDecNode::DoCancelAllCommands(PVMFNodeCommand& aCmd)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                    (0, "%s::DoCancelAllCommands", iName.Str()));
-
-    //first cancel the current command if any
-    {
-        while (!iCurrentCommand.empty())
-        {
-            CommandComplete(iCurrentCommand, iCurrentCommand[0], PVMFErrCancelled);
-        }
-
-    }
-
-    //next cancel all queued commands
-    {
-        //start at element 1 since this cancel command is element 0.
-        while (iInputCommands.size() > 1)
-        {
-            CommandComplete(iInputCommands, iInputCommands[1], PVMFErrCancelled);
-        }
-    }
-
-    if (iResetInProgress && !iResetMsgSent)
-    {
-        // if reset is started but reset msg has not been sent, we can cancel reset
-        // as if nothing happened. Otherwise, the callback will set the flag back to false
-        iResetInProgress = false;
-    }
-    //finally, report cancel complete.
-    return PVMFSuccess;
-}
-
-/////////////////////////////////////////////////////////////////////////////
-OSCL_EXPORT_REF PVMFStatus PVMFOMXBaseDecNode::DoCancelCommand(PVMFNodeCommand& aCmd)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                    (0, "%s::DoCancelCommand", iName.Str()));
-
-    //extract the command ID from the parameters.
-    PVMFCommandId id;
-    aCmd.PVMFNodeCommandBase::Parse(id);
-
-    //first check "current" command if any
-    {
-        PVMFNodeCommand* cmd = iCurrentCommand.FindById(id);
-        if (cmd)
-        {
-
-            // if reset is being canceled:
-            if (cmd->iCmd == PVMF_GENERIC_NODE_RESET)
-            {
-                if (iResetInProgress && !iResetMsgSent)
-                {
-                    // if reset is started but reset msg has not been sent, we can cancel reset
-                    // as if nothing happened. Otherwise, the callback will set the flag back to false
-                    iResetInProgress = false;
-                }
-            }
-            //cancel the queued command
-            CommandComplete(iCurrentCommand, *cmd, PVMFErrCancelled);
-            //report cancel success
-            return PVMFSuccess;
-        }
-    }
-
-    //next check input queue.
-    {
-        //start at element 1 since this cancel command is element 0.
-        PVMFNodeCommand* cmd = iInputCommands.FindById(id, 1);
-        if (cmd)
-        {
-            //cancel the queued command
-            CommandComplete(iInputCommands, *cmd, PVMFErrCancelled);
-            //report cancel success
-            return PVMFSuccess;
-        }
-    }
-    //if we get here the command isn't queued so the cancel fails.
-    return PVMFErrArgument;
-}
-
-/////////////////////////////////////////////////////////////////////////////
-OSCL_EXPORT_REF PVMFStatus PVMFOMXBaseDecNode::DoQueryInterface(PVMFNodeCommand&  aCmd)
+OSCL_EXPORT_REF PVMFStatus PVMFOMXBaseDecNode::DoQueryInterface()
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                     (0, "%s::DoQueryInterface", iName.Str()));
@@ -5093,7 +4993,7 @@ OSCL_EXPORT_REF PVMFStatus PVMFOMXBaseDecNode::DoQueryInterface(PVMFNodeCommand&
     PVInterface** ptr;
     PVMFStatus status = PVMFSuccess;
 
-    aCmd.PVMFNodeCommandBase::Parse(uuid, ptr);
+    iCurrentCommand.PVMFNodeCommandBase::Parse(uuid, ptr);
 
     if (*uuid == PVUuid(PVMF_OMX_BASE_DEC_NODE_CUSTOM1_UUID))
     {
@@ -5691,10 +5591,10 @@ OMX_ERRORTYPE PVMFOMXBaseDecNode::EventHandlerProcessing(OMX_OUT OMX_HANDLETYPE 
 }
 
 /////////////////////////////////////////////////////////////////////////////
-OSCL_EXPORT_REF PVMFStatus PVMFOMXBaseDecNode::DoReleasePort(PVMFNodeCommand& aCmd)
+OSCL_EXPORT_REF PVMFStatus PVMFOMXBaseDecNode::DoReleasePort()
 {
     PVMFPortInterface* p = NULL;
-    aCmd.PVMFNodeCommandBase::Parse(p);
+    iCurrentCommand.PVMFNodeCommandBase::Parse(p);
     PVMFOMXDecPort* port = (PVMFOMXDecPort*)p;
 
     if (port != NULL && (port == iInPort || port == iOutPort))
@@ -5837,3 +5737,4 @@ OSCL_EXPORT_REF void PVMFOMXBaseDecNode::AllocatePvmiKey(PvmiKeyType* KvpKey, Os
 {
     *KvpKey = (PvmiKeyType)(*alloc).ALLOCATE(KeyLength);
 }
+

@@ -486,39 +486,33 @@ class PVMFAACFFParserNode
         bool CheckForPortActivityQueues();
 
 
-
-        PVMFStatus HandleExtensionAPICommands(PVMFNodeCommand& aCmd);
-
-        bool FlushPending();
+        PVMFStatus HandleExtensionAPICommands();
+        PVMFStatus CancelCurrentCommand();
 
         //Command handlers.
         PVMFStatus CompleteReset();
         void CompleteInit();
         void CompleteGetMetaDataValues();
-        PVMFStatus CompleteGetMetadataKeys(PVMFNodeCommand& aCmd);
+        PVMFStatus CompleteGetMetadataKeys();
         void CompleteGetLicense();
 
         //Command handlers for PVMFNodeInterfaceImpl APIs
-        PVMFStatus DoQueryUuid(PVMFNodeCommand&);
-        PVMFStatus DoQueryInterface(PVMFNodeCommand&);
-        PVMFStatus DoInit(PVMFNodeCommand&);
-        PVMFStatus DoStop(PVMFNodeCommand&);
-        PVMFStatus DoReset(PVMFNodeCommand&);
-        PVMFStatus DoFlush(PVMFNodeCommand&);
-        PVMFStatus DoCancelAllCommands(PVMFNodeCommand&);
-        PVMFStatus DoCancelCommand(PVMFNodeCommand&);
-        PVMFStatus DoRequestPort(PVMFNodeCommand&, PVMFPortInterface*& aPort);
-        PVMFStatus DoReleasePort(PVMFNodeCommand&);
+        PVMFStatus DoQueryUuid();
+        PVMFStatus DoQueryInterface();
+        PVMFStatus DoInit();
+        PVMFStatus DoStop();
+        PVMFStatus DoReset();
+        PVMFStatus DoRequestPort(PVMFPortInterface*& aPort);
+        PVMFStatus DoReleasePort();
 
         //Command handlers for Extension APIs
-        PVMFStatus DoGetMetadataKeys(PVMFNodeCommand& aCmd);
-        PVMFStatus DoGetMetadataValues(PVMFNodeCommand& aCmd);
-        PVMFStatus DoSetDataSourcePosition(PVMFNodeCommand& aCmd);
-        PVMFStatus DoQueryDataSourcePosition(PVMFNodeCommand& aCmd);
-        PVMFStatus DoSetDataSourceRate(PVMFNodeCommand& aCmd);
-        PVMFStatus DoGetLicense(PVMFNodeCommand& aCmd,
-                                bool aWideCharVersion = false);
-        PVMFStatus DoCancelGetLicense(PVMFNodeCommand& aCmd);
+        PVMFStatus DoGetMetadataKeys();
+        PVMFStatus DoGetMetadataValues();
+        PVMFStatus DoSetDataSourcePosition();
+        PVMFStatus DoQueryDataSourcePosition();
+        PVMFStatus DoSetDataSourceRate();
+        PVMFStatus DoGetLicense(bool aWideCharVersion = false);
+        PVMFStatus DoCancelGetLicense();
 
         int32 AddToValueList(Oscl_Vector<PvmiKvp, OsclMemAllocator>& aValueList, PvmiKvp& aNewValue);
 

@@ -119,10 +119,6 @@ PVMFOMXVideoDecNode::PVMFOMXVideoDecNode(int32 aPriority) :
              //dynamic memory allocation.
              iInputCommands.Construct(PVMF_OMXBASEDEC_NODE_COMMAND_ID_START, PVMF_OMXBASEDEC_NODE_COMMAND_VECTOR_RESERVE);
 
-             //Create the "current command" queue.  It will only contain one
-             //command at a time, so use a reserve of 1.
-             iCurrentCommand.Construct(0, 1);
-
              //Set the node capability data.
              //This node can support an unlimited number of ports.
              iCapability.iCanSupportMultipleInputPorts = false;
@@ -1700,7 +1696,7 @@ bool PVMFOMXVideoDecNode::QueueOutputBuffer(OsclSharedPtr<PVMFMediaDataImpl> &me
 }
 
 /////////////////////////////////////////////////////////////////////////////
-PVMFStatus PVMFOMXVideoDecNode::DoRequestPort(PVMFNodeCommand& aCmd, PVMFPortInterface*& aPort)
+PVMFStatus PVMFOMXVideoDecNode::DoRequestPort(PVMFPortInterface*& aPort)
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                     (0, "PVMFOMXVideoDecNode::DoRequestPort() In"));
@@ -1710,7 +1706,7 @@ PVMFStatus PVMFOMXVideoDecNode::DoRequestPort(PVMFNodeCommand& aCmd, PVMFPortInt
     int32 tag;
     OSCL_String* portconfig;
 
-    aCmd.PVMFNodeCommandBase::Parse(tag, portconfig);
+    iCurrentCommand.PVMFNodeCommandBase::Parse(tag, portconfig);
 
     int32 leavecode = OsclErrNone;
     //validate the tag...
@@ -1759,7 +1755,7 @@ PVMFStatus PVMFOMXVideoDecNode::DoRequestPort(PVMFNodeCommand& aCmd, PVMFPortInt
 
 
 /////////////////////////////////////////////////////////////////////////////
-PVMFStatus PVMFOMXVideoDecNode::DoGetNodeMetadataKey(PVMFNodeCommand& aCmd)
+PVMFStatus PVMFOMXVideoDecNode::DoGetNodeMetadataKey()
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                     (0, "PVMFOMXVideoDecNode::DoGetNodeMetadataKey() In"));
@@ -1769,7 +1765,7 @@ PVMFStatus PVMFOMXVideoDecNode::DoGetNodeMetadataKey(PVMFNodeCommand& aCmd)
     int32 max_entries;
     char* query_key;
 
-    aCmd.PVMFNodeCommand::Parse(keylistptr, starting_index, max_entries, query_key);
+    iCurrentCommand.PVMFNodeCommand::Parse(keylistptr, starting_index, max_entries, query_key);
 
     // Check parameters
     if (keylistptr == NULL)
@@ -1890,7 +1886,7 @@ PVMFStatus PVMFOMXVideoDecNode::DoGetNodeMetadataKey(PVMFNodeCommand& aCmd)
 }
 
 /////////////////////////////////////////////////////////////////////////////
-PVMFStatus PVMFOMXVideoDecNode::DoGetNodeMetadataValue(PVMFNodeCommand& aCmd)
+PVMFStatus PVMFOMXVideoDecNode::DoGetNodeMetadataValue()
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFOMXVideoDecNode::DoGetNodeMetadataValue() In"));
 
@@ -1899,7 +1895,7 @@ PVMFStatus PVMFOMXVideoDecNode::DoGetNodeMetadataValue(PVMFNodeCommand& aCmd)
     uint32 starting_index;
     int32 max_entries;
 
-    aCmd.PVMFNodeCommand::Parse(keylistptr, valuelistptr, starting_index, max_entries);
+    iCurrentCommand.PVMFNodeCommand::Parse(keylistptr, valuelistptr, starting_index, max_entries);
 
     // Check the parameters
     if (keylistptr == NULL || valuelistptr == NULL)
@@ -2344,14 +2340,14 @@ bool PVMFOMXVideoDecNode::ReleaseAllPorts()
 }
 
 /////////////////////////////////////////////////////////////////////////////
-PVMFStatus PVMFOMXVideoDecNode::DoQueryUuid(PVMFNodeCommand& aCmd)
+PVMFStatus PVMFOMXVideoDecNode::DoQueryUuid()
 {
     //This node supports Query UUID from any state
 
     OSCL_String* mimetype;
     Oscl_Vector<PVUuid, OsclMemAllocator> *uuidvec;
     bool exactmatch;
-    aCmd.PVMFNodeCommandBase::Parse(mimetype, uuidvec, exactmatch);
+    iCurrentCommand.PVMFNodeCommandBase::Parse(mimetype, uuidvec, exactmatch);
 
     //Try to match the input mimetype against any of
     //the custom interfaces for this node

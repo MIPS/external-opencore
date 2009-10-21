@@ -72,10 +72,6 @@ PVMFOMXAudioDecNode::PVMFOMXAudioDecNode(int32 aPriority) :
              //dynamic memory allocation.
              iInputCommands.Construct(PVMF_OMXBASEDEC_NODE_COMMAND_ID_START, PVMF_OMXBASEDEC_NODE_COMMAND_VECTOR_RESERVE);
 
-             //Create the "current command" queue.  It will only contain one
-             //command at a time, so use a reserve of 1.
-             iCurrentCommand.Construct(0, 1);
-
              //Set the node capability data.
              //This node can support an unlimited number of ports.
              iCapability.iCanSupportMultipleInputPorts = false;
@@ -1982,7 +1978,7 @@ bool PVMFOMXAudioDecNode::QueueOutputBuffer(OsclSharedPtr<PVMFMediaDataImpl> &me
 }
 
 /////////////////////////////////////////////////////////////////////////////
-PVMFStatus PVMFOMXAudioDecNode::DoRequestPort(PVMFNodeCommand& aCmd, PVMFPortInterface*& aPort)
+PVMFStatus PVMFOMXAudioDecNode::DoRequestPort(PVMFPortInterface*& aPort)
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                     (0, "PVMFOMXAudioDecNode::DoRequestPort() In"));
@@ -1992,7 +1988,7 @@ PVMFStatus PVMFOMXAudioDecNode::DoRequestPort(PVMFNodeCommand& aCmd, PVMFPortInt
     int32 tag;
     OSCL_String* portconfig;
 
-    aCmd.PVMFNodeCommandBase::Parse(tag, portconfig);
+    iCurrentCommand.PVMFNodeCommandBase::Parse(tag, portconfig);
 
     int32 leavecode = OsclErrNone;
     //validate the tag...
@@ -2041,7 +2037,7 @@ PVMFStatus PVMFOMXAudioDecNode::DoRequestPort(PVMFNodeCommand& aCmd, PVMFPortInt
 
 
 /////////////////////////////////////////////////////////////////////////////
-PVMFStatus PVMFOMXAudioDecNode::DoGetNodeMetadataKey(PVMFNodeCommand& aCmd)
+PVMFStatus PVMFOMXAudioDecNode::DoGetNodeMetadataKey()
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                     (0, "PVMFOMXAudioDecNode::DoGetNodeMetadataKey() In"));
@@ -2051,7 +2047,7 @@ PVMFStatus PVMFOMXAudioDecNode::DoGetNodeMetadataKey(PVMFNodeCommand& aCmd)
     int32 max_entries;
     char* query_key;
 
-    aCmd.PVMFNodeCommand::Parse(keylistptr, starting_index, max_entries, query_key);
+    iCurrentCommand.PVMFNodeCommand::Parse(keylistptr, starting_index, max_entries, query_key);
 
     // Check parameters
     if (keylistptr == NULL)
@@ -2122,14 +2118,14 @@ PVMFStatus PVMFOMXAudioDecNode::DoGetNodeMetadataKey(PVMFNodeCommand& aCmd)
 }
 
 /////////////////////////////////////////////////////////////////////////////
-PVMFStatus PVMFOMXAudioDecNode::DoGetNodeMetadataValue(PVMFNodeCommand& aCmd)
+PVMFStatus PVMFOMXAudioDecNode::DoGetNodeMetadataValue()
 {
     PVMFMetadataList* keylistptr = NULL;
     Oscl_Vector<PvmiKvp, OsclMemAllocator>* valuelistptr = NULL;
     uint32 starting_index;
     int32 max_entries;
 
-    aCmd.PVMFNodeCommand::Parse(keylistptr, valuelistptr, starting_index, max_entries);
+    iCurrentCommand.PVMFNodeCommand::Parse(keylistptr, valuelistptr, starting_index, max_entries);
 
     // Check the parameters
     if (keylistptr == NULL || valuelistptr == NULL)
@@ -2483,14 +2479,14 @@ bool PVMFOMXAudioDecNode::ReleaseAllPorts()
 }
 
 /////////////////////////////////////////////////////////////////////////////
-PVMFStatus PVMFOMXAudioDecNode::DoQueryUuid(PVMFNodeCommand& aCmd)
+PVMFStatus PVMFOMXAudioDecNode::DoQueryUuid()
 {
     //This node supports Query UUID from any state
 
     OSCL_String* mimetype;
     Oscl_Vector<PVUuid, OsclMemAllocator> *uuidvec;
     bool exactmatch;
-    aCmd.PVMFNodeCommandBase::Parse(mimetype, uuidvec, exactmatch);
+    iCurrentCommand.PVMFNodeCommandBase::Parse(mimetype, uuidvec, exactmatch);
 
     //Try to match the input mimetype against any of
     //the custom interfaces for this node

@@ -67,18 +67,6 @@ OSCL_EXPORT_REF PVMFNodeInterfaceImpl::PVMFNodeInterfaceImpl(int32 aPriority, co
     {
         iInputCommands.clear();
     }
-
-    OSCL_TRY(err, iCurrentCommand.Construct(0, 1););
-    if (err != OsclErrNone)
-    {
-        iCurrentCommand.clear();
-    }
-
-    OSCL_TRY(err, iCancelCommand.Construct(0, 1););
-    if (err != OsclErrNone)
-    {
-        iCancelCommand.clear();
-    }
 }
 
 OSCL_EXPORT_REF PVMFSessionId PVMFNodeInterfaceImpl::Connect(const PVMFNodeSessionInfo &aSession)
@@ -113,25 +101,26 @@ OSCL_EXPORT_REF PVMFNodeInterfaceImpl::~PVMFNodeInterfaceImpl()
 {
     PVMF_NODEINTERFACE_IMPL_LOGSTACKTRACE((0, "%s ~PVMFNodeInterfaceImpl() In", iNodeName.Str()));
     iSessions.clear();
-    if (iExtensionRefCount > 0)
-    {
-        OSCL_ASSERT(false);
-    }
+
+    // Make sure the extension ref counter is 0
+    OSCL_ASSERT(iExtensionRefCount == 0);
+
     //Cleanup commands
-    //The command queues are self-deleting, but we want to
+    //The command queue is self-deleting, but we want to
     //notify the observer of unprocessed commands.
-    while (!iCurrentCommand.empty())
-    {
-        CommandComplete(iCurrentCommand, iCurrentCommand.front(), PVMFFailure);
-    }
-    while (!iCancelCommand.empty())
-    {
-        CommandComplete(iCancelCommand, iCancelCommand.front(), PVMFFailure);
-    }
+    PVMFNodeCommand cmd;
+
     while (!iInputCommands.empty())
     {
-        CommandComplete(iInputCommands, iInputCommands.front(), PVMFFailure);
+        iInputCommands.GetFrontAndErase(cmd);
+        CommandComplete(cmd, PVMFFailure);
     }
+
+    if (IsCommandInProgress(iCancelCommand))
+        CommandComplete(iCancelCommand, PVMFFailure);
+
+    if (IsCommandInProgress(iCurrentCommand))
+        CommandComplete(iCurrentCommand, PVMFFailure);
 
     PVMF_NODEINTERFACE_IMPL_LOGSTACKTRACE((0, "%s ~PVMFNodeInterfaceImpl() Out", iNodeName.Str()));
 }
@@ -303,6 +292,18 @@ OSCL_EXPORT_REF PVMFCommandId PVMFNodeInterfaceImpl::CancelAllCommands(PVMFSessi
     PVMF_NODEINTERFACE_IMPL_LOGSTACKTRACE((0, "%s::CancelAllCommands", iNodeName.Str()));
     PVMFNodeCommand cmd;
     cmd.PVMFNodeCommandBase::Construct(aSessionId, PVMF_GENERIC_NODE_CANCELALLCOMMANDS, aContext);
+
+    // Complete all the commands in the input queue here itself
+    // so that the queue is available for pushing more commands.
+    // Anything that is pending would be completed in DoCancelAllCommands.
+
+    PVMFNodeCommand tempcmd;
+    while (iInputCommands.size() > 0)
+    {
+        iInputCommands.GetFrontAndErase(tempcmd);
+        CommandComplete(tempcmd, PVMFErrCancelled);
+    }
+
     return QueueCommandL(cmd);
 }
 
@@ -362,13 +363,19 @@ OSCL_EXPORT_REF PVMFCommandId PVMFNodeInterfaceImpl::QueueCommandL(PVMFNodeComma
         return id;
     }
     OSCL_LEAVE(OsclErrInvalidState);
-    return PVMF_INVALID_COMMAND_ID;
+    return PVMF_GENERIC_NODE_COMMAND_INVALID;
 }
 
 OSCL_EXPORT_REF TPVMFNodeInterfaceState PVMFNodeInterfaceImpl::GetState()
 {
     PVMF_NODEINTERFACE_IMPL_LOGSTACKTRACE((0, "%s::GetState() In", iNodeName.Str()));
     return iInterfaceState;
+}
+
+OSCL_EXPORT_REF bool PVMFNodeInterfaceImpl::IsCommandInProgress(PVMFNodeCommand& aCmd)
+{
+    // If the command is in progress, it would have some valid command ID
+    return (PVMF_GENERIC_NODE_COMMAND_INVALID != aCmd.iCmd);
 }
 
 OSCL_EXPORT_REF void PVMFNodeInterfaceImpl::SetState(TPVMFNodeInterfaceState aNewState)
@@ -520,7 +527,7 @@ OSCL_EXPORT_REF bool PVMFNodeInterfaceImpl::SendBeginOfMediaStreamCommand(PVMFPo
     return true;
 }
 
-OSCL_EXPORT_REF void PVMFNodeInterfaceImpl::CommandComplete(PVMFNodeCmdQ& aCmdQ, PVMFNodeCommand& aCmd, PVMFStatus aStatus,
+OSCL_EXPORT_REF void PVMFNodeInterfaceImpl::CommandComplete(PVMFNodeCommand& aCmd, PVMFStatus aStatus,
         PVInterface* aExtMsg, OsclAny* aEventData, PVUuid* aEventUUID, int32* aEventCode)
 {
     PVMF_NODEINTERFACE_IMPL_LOGSTACKTRACE((0, "%s:CommandComplete Id %d Cmd %d Status %d Context %d Data %d"
@@ -557,7 +564,6 @@ OSCL_EXPORT_REF void PVMFNodeInterfaceImpl::CommandComplete(PVMFNodeCmdQ& aCmdQ,
                 SetState(EPVMFNodeStarted);
                 break;
             case PVMF_GENERIC_NODE_STOP:
-            case PVMF_GENERIC_NODE_FLUSH:
                 SetState(EPVMFNodePrepared);
                 break;
             case PVMF_GENERIC_NODE_PAUSE:
@@ -576,9 +582,6 @@ OSCL_EXPORT_REF void PVMFNodeInterfaceImpl::CommandComplete(PVMFNodeCmdQ& aCmdQ,
         PVMF_NODEINTERFACE_IMPL_INFO((0, "%s::CommandComplete Failed err %d cmd %d", iNodeName.Str(), aStatus, aCmd.iCmd));
     }
 
-    //Erase the command from the queue.
-    aCmdQ.Erase(&aCmd);
-
     //Report completion to the session observer.
     ReportCmdCompleteEvent(session, resp);
 
@@ -586,139 +589,159 @@ OSCL_EXPORT_REF void PVMFNodeInterfaceImpl::CommandComplete(PVMFNodeCmdQ& aCmdQ,
     {
         errormsg->removeRef();
     }
+
+    //command completion reported, destroy the command.
+    aCmd.Destroy();
+
 }
 
-OSCL_EXPORT_REF bool PVMFNodeInterfaceImpl::ProcessCommand(PVMFNodeCommand& aCmd)
+OSCL_EXPORT_REF bool PVMFNodeInterfaceImpl::ProcessCommand()
 {
-    PVMF_NODEINTERFACE_IMPL_LOGSTACKTRACE((0, "%s::ProcessCommand Cmd %d In", iNodeName.Str(), aCmd.iCmd));
+    PVMFNodeCommand cmd = iInputCommands.front();
+
+    PVMF_NODEINTERFACE_IMPL_LOGSTACKTRACE((0, "%s::ProcessCommand Cmd %d In", iNodeName.Str(), cmd.iCmd));
+
     //normally this node will not start processing one command
     //until the prior one is finished.  However, a hi priority
     //command such as Cancel must be able to interrupt a command
     //in progress.
     OsclAny* eventData = NULL;
-    if (!iCurrentCommand.empty() && !aCmd.hipri() && aCmd.iCmd != PVMF_GENERIC_NODE_CANCEL_GET_LICENSE)
+    if (IsCommandInProgress(iCurrentCommand) && !cmd.hipri() && PVMF_GENERIC_NODE_CANCEL_GET_LICENSE != cmd.iCmd)
         return false;
 
     PVMFStatus status = PVMFErrInvalidState;
 
-    switch (aCmd.iCmd)
+    // Pop the first command from the input queue to CancelCommand if its cancel or cancelall command.
+    if (cmd.hipri())
     {
-        case PVMF_GENERIC_NODE_QUERYUUID:
-            status = DoQueryUuid(aCmd);
-            break;
+        iInputCommands.GetFrontAndErase(iCancelCommand);
 
-        case PVMF_GENERIC_NODE_QUERYINTERFACE:
-            status = DoQueryInterface(aCmd);
-            break;
-
-        case PVMF_GENERIC_NODE_REQUESTPORT:
+        switch (iCancelCommand.iCmd)
         {
-            PVMFPortInterface* port = NULL;
-            status = DoRequestPort(aCmd, port);
-            if (status == PVMFSuccess)
-            {
-                eventData = (OsclAny*)port;
-            }
+            case PVMF_GENERIC_NODE_CANCELALLCOMMANDS:
+                status = DoCancelAllCommands();
+                break;
+
+            case PVMF_GENERIC_NODE_CANCELCOMMAND:
+                status = DoCancelCommand();
+                break;
+
+            default://unknown high priority command, do an assert here
+                //and complete the command with PVMFErrNotSupported
+                status = PVMFErrNotSupported;
+                OSCL_ASSERT(false);
+                break;
         }
-        break;
 
-        case PVMF_GENERIC_NODE_RELEASEPORT:
-            status = DoReleasePort(aCmd);
-            break;
-
-        case PVMF_GENERIC_NODE_INIT:
+        if (status != PVMFPending)
         {
-            if (iInterfaceState == EPVMFNodeIdle)
-            {
-                status = DoInit(aCmd);
-            }
+            CommandComplete(iCancelCommand, status);
         }
-        break;
-        case PVMF_GENERIC_NODE_PREPARE:
-        {
-            if (iInterfaceState == EPVMFNodeInitialized)
-            {
-                status = DoPrepare(aCmd);
-            }
-        }
-        break;
-
-        case PVMF_GENERIC_NODE_START:
-        {
-            if (iInterfaceState == EPVMFNodePrepared ||
-                    iInterfaceState == EPVMFNodePaused)
-            {
-                // if node is started, it needs to be scheduled to run
-                // so that it can start sending out/accepting data.
-                status = DoStart(aCmd);
-            }
-        }
-        break;
-
-        case PVMF_GENERIC_NODE_STOP:
-        {
-            if (iInterfaceState == EPVMFNodeStarted ||
-                    iInterfaceState == EPVMFNodePaused)
-            {
-                status = DoStop(aCmd);
-            }
-        }
-        break;
-
-        case PVMF_GENERIC_NODE_FLUSH:
-        {
-            if (iInterfaceState == EPVMFNodeStarted ||
-                    iInterfaceState == EPVMFNodePaused)
-            {
-                status = DoFlush(aCmd);
-            }
-        }
-        break;
-
-        case PVMF_GENERIC_NODE_PAUSE:
-        {
-            if (iInterfaceState == EPVMFNodeStarted)
-            {
-                status = DoPause(aCmd);
-            }
-        }
-        break;
-
-        case PVMF_GENERIC_NODE_RESET:
-            status = DoReset(aCmd);
-            break;
-
-        case PVMF_GENERIC_NODE_CANCELALLCOMMANDS:
-            status = DoCancelAllCommands(aCmd);
-            break;
-
-        case PVMF_GENERIC_NODE_CANCELCOMMAND:
-            status = DoCancelCommand(aCmd);
-            break;
-
-        default://unknown command type, possibly and extension api command
-            status = HandleExtensionAPICommands(aCmd);
-            break;
     }
+    else
+    {
+        // Pop the front command from InputCommand queue to CurrentCommand
+        iInputCommands.GetFrontAndErase(iCurrentCommand);
 
+        switch (iCurrentCommand.iCmd)
+        {
+            case PVMF_GENERIC_NODE_QUERYUUID:
+                status = DoQueryUuid();
+                break;
+
+            case PVMF_GENERIC_NODE_QUERYINTERFACE:
+                status = DoQueryInterface();
+                break;
+
+            case PVMF_GENERIC_NODE_REQUESTPORT:
+            {
+                PVMFPortInterface* port = NULL;
+                status = DoRequestPort(port);
+                if (status == PVMFSuccess)
+                {
+                    eventData = (OsclAny*)port;
+                }
+            }
+            break;
+
+            case PVMF_GENERIC_NODE_RELEASEPORT:
+                status = DoReleasePort();
+                break;
+
+            case PVMF_GENERIC_NODE_INIT:
+            {
+                if (iInterfaceState == EPVMFNodeIdle)
+                {
+                    status = DoInit();
+                }
+            }
+            break;
+            case PVMF_GENERIC_NODE_PREPARE:
+            {
+                if (iInterfaceState == EPVMFNodeInitialized)
+                {
+                    status = DoPrepare();
+                }
+            }
+            break;
+
+            case PVMF_GENERIC_NODE_START:
+            {
+                if (iInterfaceState == EPVMFNodePrepared ||
+                        iInterfaceState == EPVMFNodePaused)
+                {
+                    // if node is started, it needs to be scheduled to run
+                    // so that it can start sending out/accepting data.
+                    status = DoStart();
+                }
+            }
+            break;
+
+            case PVMF_GENERIC_NODE_STOP:
+            {
+                if (iInterfaceState == EPVMFNodeStarted ||
+                        iInterfaceState == EPVMFNodePaused)
+                {
+                    status = DoStop();
+                }
+            }
+            break;
+
+            case PVMF_GENERIC_NODE_FLUSH:
+            {
+                if (iInterfaceState == EPVMFNodeStarted ||
+                        iInterfaceState == EPVMFNodePaused)
+                {
+                    status = DoFlush();
+                }
+            }
+            break;
+
+            case PVMF_GENERIC_NODE_PAUSE:
+            {
+                if (iInterfaceState == EPVMFNodeStarted)
+                {
+                    status = DoPause();
+                }
+            }
+            break;
+
+            case PVMF_GENERIC_NODE_RESET:
+                status = DoReset();
+                break;
+
+            default://unknown command type, possibly and extension api command
+                status = HandleExtensionAPICommands();
+                break;
+        }
+
+        if (status != PVMFPending)
+        {
+            CommandComplete(iCurrentCommand, status, NULL, eventData);
+        }
+    }
     if (status != PVMFPending)
     {
-        // this'd mean that command has been moved to
-        // current command queue but it is not Pending
-        // Either its successful or has failed
-        // report command complete
-        if (iCurrentCommand.size() > 0)
-        {
-            CommandComplete(iCurrentCommand, aCmd, status);
-            return true;
-        }
-
-        // if the control gets here, report command complete
-        if (iInputCommands.size() > 0)
-        {
-            CommandComplete(iInputCommands, aCmd, status, NULL, eventData);
-        }
-
         // node needs to be reschduled, if there's any command
         // pending to be executed
         if (iInputCommands.size() > 0)
@@ -739,7 +762,7 @@ OSCL_EXPORT_REF void PVMFNodeInterfaceImpl::Reschedule()
 }
 
 // Command Handler for Prepare
-OSCL_EXPORT_REF PVMFStatus PVMFNodeInterfaceImpl::DoPrepare(PVMFNodeCommand& aCmd)
+OSCL_EXPORT_REF PVMFStatus PVMFNodeInterfaceImpl::DoPrepare()
 {
     PVMF_NODEINTERFACE_IMPL_LOGSTACKTRACE((0, "%s::DoPrepare()", iNodeName.Str()));
     SetState(EPVMFNodePrepared);
@@ -747,7 +770,7 @@ OSCL_EXPORT_REF PVMFStatus PVMFNodeInterfaceImpl::DoPrepare(PVMFNodeCommand& aCm
 }
 
 // Command Handler for Start
-OSCL_EXPORT_REF PVMFStatus PVMFNodeInterfaceImpl::DoStart(PVMFNodeCommand& aCmd)
+OSCL_EXPORT_REF PVMFStatus PVMFNodeInterfaceImpl::DoStart()
 {
     PVMF_NODEINTERFACE_IMPL_LOGSTACKTRACE((0, "%s::DoStart()", iNodeName.Str()));
     SetState(EPVMFNodeStarted);
@@ -755,43 +778,80 @@ OSCL_EXPORT_REF PVMFStatus PVMFNodeInterfaceImpl::DoStart(PVMFNodeCommand& aCmd)
 }
 
 // Command Handler for Pause
-OSCL_EXPORT_REF PVMFStatus PVMFNodeInterfaceImpl::DoPause(PVMFNodeCommand& aCmd)
+OSCL_EXPORT_REF PVMFStatus PVMFNodeInterfaceImpl::DoPause()
 {
     PVMF_NODEINTERFACE_IMPL_LOGSTACKTRACE((0, "%s::DoPause()", iNodeName.Str()));
     SetState(EPVMFNodePaused);
     return PVMFSuccess;
 }
 
+// Command Handler for CancelAllCommands
+OSCL_EXPORT_REF PVMFStatus PVMFNodeInterfaceImpl::DoCancelAllCommands()
+{
+    PVMF_NODEINTERFACE_IMPL_LOGSTACKTRACE((0, "%s::DoCancelAllCommands()", iNodeName.Str()));
+
+    // The queued commands in the input command queue were cancelled immediately after the CancelAllCommands
+    // was queued. Now Cancel the current command if any.
+
+    if (IsCommandInProgress(iCurrentCommand))
+    {
+        PVMFStatus status = CancelCurrentCommand();
+        return status;
+    }
+
+    return PVMFSuccess;
+}
+
+// Command Handler for CancelCommand
+OSCL_EXPORT_REF PVMFStatus PVMFNodeInterfaceImpl::DoCancelCommand()
+{
+    PVMF_NODEINTERFACE_IMPL_LOGSTACKTRACE((0, "%s::DoCancelCommand()", iNodeName.Str()));
+
+    // Extract the command ID from the parameters
+    PVMFCommandId id;
+    iCancelCommand.PVMFNodeCommandBase::Parse(id);
+
+    // Check if the command to be cancelled is the current command
+    if (iCurrentCommand.iId == id)
+    {
+        PVMFStatus status = CancelCurrentCommand();
+        return status;
+    }
+
+    // Otherwise check if its in input command queue
+    // Use a temporary variable cmd as iCurrentCommand may be in progress
+    PVMFNodeCommand cmd;
+    iInputCommands.GetCmdByIdAndErase(id, cmd);
+
+    // If a valid command is found
+    if (PVMF_GENERIC_NODE_COMMAND_INVALID != cmd.iCmd)
+    {
+        // Cancel the queued command
+        CommandComplete(cmd, PVMFErrCancelled);
+        return PVMFSuccess;
+    }
+
+    // The command not found in any queue.
+    return PVMFErrArgument;
+}
+
+// Command Handler for Flush
+OSCL_EXPORT_REF PVMFStatus PVMFNodeInterfaceImpl::DoFlush()
+{
+    PVMF_NODEINTERFACE_IMPL_LOGSTACKTRACE((0, "%s::DoFlush()", iNodeName.Str()));
+
+    // The flush will remain pending until it completes.
+    // The command is completed by the node in the subsequent Run.
+    return PVMFPending;
+}
+
 OSCL_EXPORT_REF void PVMFNodeInterfaceImpl::DoCancel()
 {
     OsclActiveObject::DoCancel();
-};
-
-OSCL_EXPORT_REF void PVMFNodeInterfaceImpl::MoveCmdToCurrentQueue(PVMFNodeCommand& aCmd)
-{
-    int32 err;
-    OSCL_TRY(err, iCurrentCommand.StoreL(aCmd););
-    if (err != OsclErrNone)
-    {
-        CommandComplete(iInputCommands, aCmd, PVMFErrNoMemory);
-    }
-    else
-    {
-        iInputCommands.Erase(&aCmd);
-    }
 }
 
-OSCL_EXPORT_REF void PVMFNodeInterfaceImpl::MoveCmdToCancelQueue(PVMFNodeCommand& aCmd)
+OSCL_EXPORT_REF bool PVMFNodeInterfaceImpl::IsFlushPending()
 {
-    int32 err;
-    OSCL_TRY(err, iCancelCommand.StoreL(aCmd););
-    if (err != OsclErrNone)
-    {
-        CommandComplete(iInputCommands, aCmd, PVMFErrNoMemory);
-    }
-    else
-    {
-        iInputCommands.Erase(&aCmd);
-    }
+    return (PVMF_GENERIC_NODE_FLUSH == iCurrentCommand.iCmd);
 }
 
