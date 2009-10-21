@@ -316,6 +316,18 @@ void OmxDecTestBufferBusy::Run()
                         }
                     }
 
+                    if (ipOutBuffer)
+                    {
+                        oscl_free(ipOutBuffer);
+                        ipOutBuffer = NULL;
+                    }
+
+                    if (ipOutReleased)
+                    {
+                        oscl_free(ipOutReleased);
+                        ipOutReleased = NULL;
+                    }
+
                     if (StateError == iState)
                     {
                         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
@@ -333,68 +345,16 @@ void OmxDecTestBufferBusy::Run()
 
         case StateDynamicReconfig:
         {
-            OMX_ERRORTYPE Err = OMX_ErrorNone;
+            OMX_BOOL Status = OMX_TRUE;
 
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "OmxDecTestBufferBusy::Run() - StateDynamicReconfig IN"));
 
-            INIT_GETPARAMETER_STRUCT(OMX_PARAM_PORTDEFINITIONTYPE, iParamPort);
-            iParamPort.nPortIndex = iOutputPortIndex;
-            Err = OMX_GetParameter(ipAppPriv->Handle, OMX_IndexParamPortDefinition, &iParamPort);
-            CHECK_ERROR(Err, "GetParameter_DynamicReconfig");
-
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG, (0, "OmxDecTestBufferBusy::Run() - GetParameter called for OMX_IndexParamPortDefinition on port %d", iParamPort.nPortIndex));
-
-            Err = OMX_SendCommand(ipAppPriv->Handle, OMX_CommandPortEnable, iOutputPortIndex, NULL);
-
-            CHECK_ERROR(Err, "SendCommand_PortEnable");
-
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
-                            (0, "OmxDecTestBufferBusy::Run() - Sent Command for OMX_CommandPortEnable on port %d as a part of dynamic port reconfiguration", iOutputPortIndex));
-
-            iPendingCommands = 1;
-
-            if (0 == oscl_strcmp(iFormat, "H264") || 0 == oscl_strcmp(iFormat, "H263")
-                    || 0 == oscl_strcmp(iFormat, "M4V") || 0 == oscl_strcmp(iFormat, "RV"))
-            {
-                iOutBufferSize = ((iParamPort.format.video.nFrameWidth + 15) & ~15) * ((iParamPort.format.video.nFrameHeight + 15) & ~15) * 3 / 2;
-
-                if (iOutBufferSize < iParamPort.nBufferSize)
-                {
-                    iOutBufferSize = iParamPort.nBufferSize;
-                }
-            }
-            else if (0 == oscl_strcmp(iFormat, "WMV"))
-            {
-                iOutBufferSize = ((iParamPort.format.video.nFrameWidth + 3) & ~3) * ((iParamPort.format.video.nFrameHeight + 3) & ~3) * 3 / 2;
-
-                if (iOutBufferSize < iParamPort.nBufferSize)
-                {
-                    iOutBufferSize = iParamPort.nBufferSize;
-                }
-            }
-            else
-            {
-                //For audio components take the size from the component
-                iOutBufferSize = iParamPort.nBufferSize;
-            }
-
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
-                            (0, "OmxDecTestBufferBusy::Run() - Allocating buffer again after port reconfigutauion has been complete"));
-
-            for (OMX_U32 ii = 0; ii < iOutBufferCount; ii++)
-            {
-                Err = OMX_AllocateBuffer(ipAppPriv->Handle, &ipOutBuffer[ii], iOutputPortIndex, NULL, iOutBufferSize);
-                CHECK_ERROR(Err, "AllocateBuffer_Output_DynamicReconfig");
-                ipOutReleased[ii] = OMX_TRUE;
-
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
-                                (0, "OmxDecTestBufferBusy::Run() - AllocateBuffer called for buffer index %d on port %d", ii, iOutputPortIndex));
-            }
-
-            if (StateError == iState)
+            Status = HandlePortReEnable();
+            if (OMX_FALSE == Status)
             {
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
                                 (0, "OmxDecTestBufferBusy::Run() - Error occured in this state, StateDynamicReconfig OUT"));
+                iState = StateError;
                 RunIfNotReady();
                 break;
             }

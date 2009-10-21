@@ -213,6 +213,7 @@ class OmxComponentDecTest : public OmxDecTestBase
         OMX_BOOL PrepareComponent();
         OMX_BOOL NegotiateComponentParametersAudio();
         OMX_BOOL NegotiateComponentParametersVideo();
+        OMX_BOOL HandlePortReEnable();
 
         OMX_BOOL GetSetCodecSpecificInfo();
 

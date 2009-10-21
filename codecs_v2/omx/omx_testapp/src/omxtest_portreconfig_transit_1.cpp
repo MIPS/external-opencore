@@ -509,6 +509,18 @@ void OmxDecTestPortReconfigTransitionTest::Run()
                         }
                     }
 
+                    if (ipOutBuffer)
+                    {
+                        oscl_free(ipOutBuffer);
+                        ipOutBuffer = NULL;
+                    }
+
+                    if (ipOutReleased)
+                    {
+                        oscl_free(ipOutReleased);
+                        ipOutReleased = NULL;
+                    }
+
                     if (StateError == iState)
                     {
                         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
@@ -556,49 +568,16 @@ void OmxDecTestPortReconfigTransitionTest::Run()
         case StateRestart:
         {
             //Enable the port
-            OMX_ERRORTYPE Err;
+            OMX_BOOL Status = OMX_TRUE;
 
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "OmxDecTestPortReconfigTransitionTest::Run() - StateRestart IN"));
 
-            Err = OMX_SendCommand(ipAppPriv->Handle, OMX_CommandPortEnable, iOutputPortIndex, NULL);
-            CHECK_ERROR(Err, "SendCommand_PortEnable");
-
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
-                            (0, "OmxDecTestPortReconfigTransitionTest::Run() - Sent Command for OMX_CommandPortEnable on port %d to continue dynamic port reconfiguration", iOutputPortIndex));
-
-            INIT_GETPARAMETER_STRUCT(OMX_PARAM_PORTDEFINITIONTYPE, iParamPort);
-            iParamPort.nPortIndex = iOutputPortIndex;
-
-            Err = OMX_GetParameter(ipAppPriv->Handle, OMX_IndexParamPortDefinition, &iParamPort);
-            CHECK_ERROR(Err, "GetParameter_OutputPort_DynamicReconfig");
-
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG, (0, "OmxDecTestPortReconfigTransitionTest::Run() - GetParameter called for OMX_IndexParamPortDefinition on port %d", iParamPort.nPortIndex));
-
-            if (0 == oscl_strcmp(iFormat, "H264") || 0 == oscl_strcmp(iFormat, "H263")
-                    || 0 == oscl_strcmp(iFormat, "M4V") || 0 == oscl_strcmp(iFormat, "RV"))
-            {
-                iOutBufferSize = ((iParamPort.format.video.nFrameWidth + 15) & ~15) * ((iParamPort.format.video.nFrameHeight + 15) & ~15) * 3 / 2;
-            }
-            else if (0 == oscl_strcmp(iFormat, "WMV"))
-            {
-                iOutBufferSize = ((iParamPort.format.video.nFrameWidth + 3) & ~3) * ((iParamPort.format.video.nFrameHeight + 3) & ~3) * 3 / 2;
-            }
-
-            for (OMX_U32 ii = 0; ii < iOutBufferCount; ii++)
-            {
-                Err = OMX_AllocateBuffer(ipAppPriv->Handle, &ipOutBuffer[ii], iOutputPortIndex, NULL, iOutBufferSize);
-                CHECK_ERROR(Err, "AllocateBuffer_Output_DynamicReconfig");
-                ipOutReleased[ii] = OMX_TRUE;
-
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
-                                (0, "OmxDecTestPortReconfigTransitionTest::Run() - AllocateBuffer called for buffer index %d on port %d", ii, iOutputPortIndex));
-            }
-
-            if (StateError == iState)
+            Status = HandlePortReEnable();
+            if (OMX_FALSE == Status)
             {
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                                (0, "OmxDecTestPortReconfigTransitionTest::Run() - Error occured in this state, StateDynamicReconfig OUT"));
-
+                                (0, "OmxDecTestPortReconfigTransitionTest::Run() - Error occured in this state, StateRestart OUT"));
+                iState = StateError;
                 RunIfNotReady();
                 break;
             }

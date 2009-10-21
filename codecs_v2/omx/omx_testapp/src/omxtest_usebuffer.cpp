@@ -330,6 +330,12 @@ void OmxDecTestUseBuffer::Run()
                         }
                     }
 
+                    if (ipUseOutBuff)
+                    {
+                        oscl_free(ipUseOutBuff);
+                        ipUseOutBuff = NULL;
+                    }
+
                     for (ii = 0; ii < iOutBufferCount; ii++)
                     {
                         if (ipOutBuffer[ii])
@@ -341,6 +347,18 @@ void OmxDecTestUseBuffer::Run()
                             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
                                             (0, "OmxDecTestUseBuffer::Run() - Called FreeBuffer for buffer index %d on port %d", ii, iOutputPortIndex));
                         }
+                    }
+
+                    if (ipOutBuffer)
+                    {
+                        oscl_free(ipOutBuffer);
+                        ipOutBuffer = NULL;
+                    }
+
+                    if (ipOutReleased)
+                    {
+                        oscl_free(ipOutReleased);
+                        ipOutReleased = NULL;
                     }
 
                     if (StateError == iState)
@@ -361,6 +379,7 @@ void OmxDecTestUseBuffer::Run()
         case StateDynamicReconfig:
         {
             OMX_ERRORTYPE Err = OMX_ErrorNone;
+            OMX_U32 ii;
 
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "OmxDecTestUseBuffer::Run() - StateDynamicReconfig IN"));
 
@@ -371,8 +390,30 @@ void OmxDecTestUseBuffer::Run()
 
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG, (0, "OmxDecTestUseBuffer::Run() - GetParameter called for OMX_IndexParamPortDefinition on port %d", iParamPort.nPortIndex));
 
-            Err = OMX_SendCommand(ipAppPriv->Handle, OMX_CommandPortEnable, iOutputPortIndex, NULL);
+            //For all the components, at the time of port reconfiguration take the size from the component
+            iOutBufferSize = iParamPort.nBufferSize;
 
+            //Check the number of output buffers after port reconfiguration
+            iOutBufferCount = iParamPort.nBufferCountActual;
+
+            // do we need to increase the number of buffers?
+            if (iOutBufferCount < iParamPort.nBufferCountMin)
+            {
+                iOutBufferCount = iParamPort.nBufferCountMin;
+            }
+
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                            (0, "OmxDecTestUseBuffer::Run() new output buffers %d, size %d", iOutBufferCount, iOutBufferSize));
+
+            // make sure to set the actual number of buffers (in case the number has changed)
+            INIT_GETPARAMETER_STRUCT(OMX_PARAM_PORTDEFINITIONTYPE, iParamPort);
+            iParamPort.nPortIndex = iOutputPortIndex;
+            iParamPort.nBufferCountActual = iOutBufferCount;
+
+            Err = OMX_SetParameter(ipAppPriv->Handle, OMX_IndexParamPortDefinition, &iParamPort);
+            CHECK_ERROR(Err, "SetParameter_IndexParamPortDefinition");
+
+            Err = OMX_SendCommand(ipAppPriv->Handle, OMX_CommandPortEnable, iOutputPortIndex, NULL);
             CHECK_ERROR(Err, "SendCommand_PortEnable");
 
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
@@ -380,35 +421,27 @@ void OmxDecTestUseBuffer::Run()
 
             iPendingCommands = 1;
 
-            if (0 == oscl_strcmp(iFormat, "H264") || 0 == oscl_strcmp(iFormat, "H263")
-                    || 0 == oscl_strcmp(iFormat, "M4V") || 0 == oscl_strcmp(iFormat, "RV"))
-            {
-                iOutBufferSize = ((iParamPort.format.video.nFrameWidth + 15) & ~15) * ((iParamPort.format.video.nFrameHeight + 15) & ~15) * 3 / 2;
+            //allocate memory for output buffer
+            ipOutBuffer = (OMX_BUFFERHEADERTYPE**) oscl_malloc(sizeof(OMX_BUFFERHEADERTYPE*) * iOutBufferCount);
+            CHECK_MEM(ipOutBuffer, "OutputBuffer");
 
-                if (iOutBufferSize < iParamPort.nBufferSize)
-                {
-                    iOutBufferSize = iParamPort.nBufferSize;
-                }
-            }
-            else if (0 == oscl_strcmp(iFormat, "WMV"))
-            {
-                iOutBufferSize = ((iParamPort.format.video.nFrameWidth + 3) & ~3) * ((iParamPort.format.video.nFrameHeight + 3) & ~3) * 3 / 2;
+            ipUseOutBuff = (OMX_U8**) oscl_malloc(sizeof(OMX_U8*) * iOutBufferCount);
+            CHECK_MEM(ipUseOutBuff, "OutputBuffer");
 
-                if (iOutBufferSize < iParamPort.nBufferSize)
-                {
-                    iOutBufferSize = iParamPort.nBufferSize;
-                }
-            }
-            else
+            ipOutReleased = (OMX_BOOL*) oscl_malloc(sizeof(OMX_BOOL) * iOutBufferCount);
+            CHECK_MEM(ipOutReleased, "OutputBufferFlag");
+
+            /* Initialize all the buffers to NULL */
+            for (ii = 0; ii < iOutBufferCount; ii++)
             {
-                //For audio components take the size from the component
-                iOutBufferSize = iParamPort.nBufferSize;
+                ipUseOutBuff[ii] = NULL;
+                ipOutBuffer[ii] = NULL;
             }
 
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
                             (0, "OmxDecTestUseBuffer::Run() - Allocating buffer again after port reconfigutauion has been complete"));
 
-            for (OMX_U32 ii = 0; ii < iOutBufferCount; ii++)
+            for (ii = 0; ii < iOutBufferCount; ii++)
             {
                 ipUseOutBuff[ii] = (OMX_U8*) oscl_malloc(iOutBufferSize);
                 CHECK_MEM(ipUseOutBuff[ii], "OutputBuffer");
@@ -416,6 +449,9 @@ void OmxDecTestUseBuffer::Run()
                 Err = OMX_UseBuffer(ipAppPriv->Handle, &ipOutBuffer[ii], iOutputPortIndex, NULL, iOutBufferSize, ipUseOutBuff[ii]);
                 CHECK_ERROR(Err, "UseBuffer_Output_DynamicReconfig");
                 ipOutReleased[ii] = OMX_TRUE;
+
+                ipOutBuffer[ii]->nOutputPortIndex = iOutputPortIndex;
+                ipOutBuffer[ii]->nInputPortIndex = 0;
 
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
                                 (0, "OmxDecTestUseBuffer::Run() - UseBuffer called for buffer index %d on port %d", ii, iOutputPortIndex));
