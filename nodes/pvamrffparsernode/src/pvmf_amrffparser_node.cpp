@@ -954,8 +954,8 @@ PVMFStatus PVMFAMRFFParserNode::DoQueryInterface()
         if (*uuid != PVMFCPMPluginLicenseInterfaceUuid)
         {
             (*ptr)->addRef();
-            status = PVMFSuccess;
         }
+        status = PVMFSuccess;
     }
     return status;
 }
