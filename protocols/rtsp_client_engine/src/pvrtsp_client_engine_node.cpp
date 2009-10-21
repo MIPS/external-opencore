@@ -430,7 +430,7 @@ OSCL_EXPORT_REF   PVMFCommandId PVRTSPEngineNode::Init(PVMFSessionId aSession
 OSCL_EXPORT_REF   PVMFCommandId PVRTSPEngineNode::Prepare(PVMFSessionId aSession
         , const OsclAny* aContext)
 {
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVRTSPEngineNode::Init() called"));
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVRTSPEngineNode::Prepare() called"));
 
     PVRTSPEngineCommand cmd;
     cmd.PVRTSPEngineCommandBase::Construct(aSession, PVMF_GENERIC_NODE_PREPARE, aContext);
