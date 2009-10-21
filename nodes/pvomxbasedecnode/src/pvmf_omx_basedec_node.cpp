@@ -312,7 +312,27 @@ OSCL_EXPORT_REF PVMFOMXBaseDecNode::~PVMFOMXBaseDecNode()
 
 OSCL_EXPORT_REF PVMFStatus PVMFOMXBaseDecNode::HandleExtensionAPICommands()
 {
-    return PVMFSuccess;
+    PVMFStatus status = PVMFFailure;
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "%s::HandleExtensionAPICommands() In", iName.Str()));
+    switch (iCurrentCommand.iCmd)
+    {
+
+        case PVMF_GENERIC_NODE_GETNODEMETADATAKEYS:
+            status = DoGetNodeMetadataKey();
+            break;
+
+        case PVMF_GENERIC_NODE_GETNODEMETADATAVALUES:
+            status = DoGetNodeMetadataValue();
+            break;
+
+        default: //unknown command, do an assert here
+            //and complete the command with PVMFErrNotSupported
+            status = PVMFErrNotSupported;
+            OSCL_ASSERT(false);
+            break;
+    }
+
+    return status;
 }
 
 OSCL_EXPORT_REF PVMFStatus PVMFOMXBaseDecNode::CancelCurrentCommand()
