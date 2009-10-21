@@ -30,6 +30,7 @@
 #define OSCL_HAS_UNIX_SUPPORT               0
 #define OSCL_HAS_MSWIN_SUPPORT              0
 #define OSCL_HAS_MSWIN_PARTIAL_SUPPORT      0
+#define OSCL_HAS_MSWIN_TIME_SUPPORT    0
 #define OSCL_HAS_SYMBIAN_SUPPORT            0
 #define OSCL_HAS_SAVAJE_SUPPORT             0
 #define OSCL_HAS_PV_C_OS_SUPPORT            0

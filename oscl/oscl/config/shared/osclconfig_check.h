@@ -141,7 +141,25 @@ Otherwise it should be set to 0.
 #endif
 
 /**
-\def OSCL_HAS_MSWIN_SUPPORT macro should be set to 1 if
+\def OSCL_HAS_MSWIN_TIME_SUPPORT macro should be set to 1 if
+the target platform supports the WinMobile API.
+Otherwise it should be set to 0.
+*/
+#ifndef OSCL_HAS_MSWIN_TIME_SUPPORT
+#error "ERROR: OSCL_HAS_MSWIN_TIME_SUPPORT has to be defined to either 1 or 0"
+#endif
+
+/**
+\def OSCL_HAS_MSWIN_PARTIAL_SUPPORT macro should be set to 1 if
+the target platform supports the WinMobile API.
+Otherwise it should be set to 0.
+*/
+#ifndef OSCL_HAS_MSWIN_PARTIAL_SUPPORT
+#error "ERROR: OSCL_HAS_MSWIN_PARTIAL_SUPPORT has to be defined to either 1 or 0"
+#endif
+
+/**
+\def OSCL_HAS_UNIX_SUPPORT macro should be set to 1 if
 the target platform supports the Unix API.
 Otherwise it should be set to 0.
 */
