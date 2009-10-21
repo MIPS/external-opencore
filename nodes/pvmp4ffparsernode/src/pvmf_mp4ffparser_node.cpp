@@ -4441,14 +4441,38 @@ bool PVMFMP4FFParserNode::RetrieveTrackData(PVMP4FFNodeTrackPortInfo& aTrackPort
             {
                 status = FindBestThumbnailKeyFrame(trackid, keySampleNum);
             }
-            if (status != PVMFSuccess)
+            if (status == PVMFSuccess)
             {
-                // no keyframe exist in the file hence thumbnail could not
-                // be retrieved, Treat this as EOS for ThumbNailMode only
-                aTrackPortInfo.iState = PVMP4FFNodeTrackPortInfo::TRACKSTATE_SEND_ENDOFTRACK;
-                return false;
+                retval = iMP4FileHandle->getKeyMediaSampleNumAt(trackid, keySampleNum, &iGau);
             }
-            retval = iMP4FileHandle->getKeyMediaSampleNumAt(trackid, keySampleNum, &iGau);
+            else
+            {
+                // No keyframe available.
+                // Go for the best possible solution if no key frames are available in stss atom.
+                // Just try to retrieve the first video frame, this could result in a distorted frame
+                // if first video frame is not a sync sample but it might be still better than no thumbnail.
+                // Before retrieving the frame just make sure that there are samples in video track,
+                // if there are no samples in the video track just report failure from here. No thumbnail possible.
+                if (iMP4FileHandle->getSampleCountInTrack(trackid) > 0)
+                {
+                    // Just retrieve the first video sample
+                    PVMF_MP4FFPARSERNODE_LOGDATATRAFFIC(
+                        (0, "PVMFMP4FFParserNode:RetrieveTrackData - FindBestThumbnailKeyFrame failed, best possible solution fetch the first video sample"));
+
+                    numsamples = 1;
+                    retval = iMP4FileHandle->getNextBundledAccessUnits(trackid, &numsamples, &iGau);
+                }
+                else
+                {
+                    // no sample in the video track.
+                    PVMF_MP4FFPARSERNODE_LOGDATATRAFFIC(
+                        (0, "PVMFMP4FFParserNode:RetrieveTrackData - FindBestThumbnailKeyFrame failed, No sample in video track just return EndOfTrack"));
+
+                    aTrackPortInfo.iState = PVMP4FFNodeTrackPortInfo::TRACKSTATE_SEND_ENDOFTRACK;
+                    return false;
+                }
+            }
+
             if (retval == EVERYTHING_FINE || retval == END_OF_TRACK)
             {
                 numsamples = 1;
@@ -8814,6 +8838,7 @@ PVMFStatus PVMFMP4FFParserNode::FindBestThumbnailKeyFrame(uint32 aId, uint32& aK
     }
     else
     {
+        PVMF_MP4FFPARSERNODE_LOGDATATRAFFIC((0, "PVMFMP4FFParserNode:FindBestThumbnailKeyFrame - No Samples present in SyncSample Table"));
         numsamples = 0;
         aKeyFrameNum = 0;
         return PVMFFailure;
