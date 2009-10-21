@@ -3374,8 +3374,14 @@ bool OutgoingMsgSentSuccessHandler::handle(PVProtocolEngineNodeInternalEvent &aE
 {
     OutgoingMsgSentSuccessInfoVec *aVec = (OutgoingMsgSentSuccessInfoVec*)aEvent.iEventInfo;
     if (!aVec || aVec->empty()) return false;
-    bool retVal = (iNode->PostProcessForMsgSentSuccess(aVec->front().iPort, aVec->front().iMsg) == PVMFSuccess);
-    if (!aVec->empty()) aVec->erase(aVec->begin());
+
+    bool retVal = true;
+    while (!aVec->empty() && retVal)
+    {
+        retVal = (iNode->PostProcessForMsgSentSuccess(aVec->front().iPort, aVec->front().iMsg) == PVMFSuccess);
+        aVec->erase(aVec->begin());
+    }
+
     return retVal;
 }
 
