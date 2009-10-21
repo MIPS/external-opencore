@@ -67,6 +67,10 @@
 #include "pv_2way_h324m_types.h"
 #endif
 
+#ifndef PVMI_KVP_H_INCLUDED
+#include "pvmi_kvp.h"
+#endif
+
 #include "h245def.h"
 
 #define REVERSE_DIR(dir) (TPVDirection)(PV_DIRECTION_BOTH-dir)
@@ -1077,5 +1081,8 @@ template<class Alloc> struct PV2WayRegFormatTypeCompare
 };
 
 typedef PV2WayRegFormatTypeCompare<OsclMemAllocator> pvmf_format_type_key_compare_class;
+
+OSCL_IMPORT_REF bool IsFormatType(const PvmiKvp& aKvp);
+OSCL_IMPORT_REF bool IsMatch(const PVMFFormatType& aFormat, const PvmiKvp& aKvp);
 
 #endif

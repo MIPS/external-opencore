@@ -1492,14 +1492,10 @@ PVMFFormatType CPV2WayDatapath::GetPortFormatType(PVMFPortInterface &aPort,
     {
         for (int32 ii = 0; ii < numkvpElements; ++ii)
         {
-            if ((pv_mime_strcmp(kvp[ii].key, "x-pvmf/port/formattype;valtype=char*") == 0) ||
-                    (aInput && (pv_mime_strcmp(kvp[ii].key, INPUT_FORMATS_VALTYPE) == 0)) ||
-                    (pv_mime_strcmp(kvp[ii].key, OUTPUT_FORMATS_VALTYPE) == 0))
+            if (IsFormatType(kvp[ii]))
             {
                 format = kvp[ii].value.pChar_value;
-                if ((format.isAudio() && iFormat.isAudio()) ||
-                        (format.isVideo() && iFormat.isVideo()) ||
-                        (format.isFile() && iFormat.isFile()))
+                if (PVMFFormatTypeToPVMediaType(format) == PVMFFormatTypeToPVMediaType(iFormat))
                 {
                     // keep the first found format in safe until there is a match in other port
                     if (format_datapath_media_type == PVMF_MIME_FORMAT_UNKNOWN)
@@ -1511,10 +1507,7 @@ PVMFFormatType CPV2WayDatapath::GetPortFormatType(PVMFPortInterface &aPort,
                 // if there is a match return it
                 for (int jj = 0; jj < numkvpOtherElements; ++jj)
                 {
-                    if ((format == kvpOther[jj].value.pChar_value) &&
-                            ((pv_mime_strcmp(kvpOther[jj].key, "x-pvmf/port/formattype;valtype=char*") == 0) ||
-                             (pv_mime_strcmp(kvpOther[ii].key, INPUT_FORMATS_VALTYPE) == 0) ||
-                             (pv_mime_strcmp(kvpOther[ii].key, OUTPUT_FORMATS_VALTYPE) == 0)))
+                    if (IsMatch(format, kvpOther[jj]))
                     {
                         ((PvmiCapabilityAndConfig *)configPtr)->releaseParameters(NULL,
                                 kvp, numkvpElements);

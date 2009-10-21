@@ -20,7 +20,8 @@
 
 #include "pvt_common.h"
 #include "pvt_params.h"
-
+#include "pvmi_config_and_capability.h"
+#include "pv_mime_string_utils.h"
 
 /* CPVMediaParam */
 OSCL_EXPORT_REF CPVMediaParam::CPVMediaParam(PVCodecType_t aCodecType)
@@ -802,4 +803,23 @@ OSCL_EXPORT_REF uint32 GetPriorityIndexForPVMFFormatType(PVMFFormatType aFormatT
         return PV2WAY_ENGINE_PRIORITY_INDEX_FOR_FORMAT_TYPE_END;
 }
 
+OSCL_EXPORT_REF bool IsFormatType(const PvmiKvp& aKvp)
+{
+    if ((pv_mime_strcmp(aKvp.key, "x-pvmf/port/formattype;valtype=char*") == 0) ||
+            (pv_mime_strcmp(aKvp.key, INPUT_FORMATS_VALTYPE) == 0) ||
+            (pv_mime_strcmp(aKvp.key, OUTPUT_FORMATS_VALTYPE) == 0))
+    {
+        return true;
+    }
+    return false;
+}
+
+OSCL_EXPORT_REF bool IsMatch(const PVMFFormatType& aFormat, const PvmiKvp& aKvp)
+{
+    if (IsFormatType(aKvp) && (aFormat == aKvp.value.pChar_value))
+    {
+        return true;
+    }
+    return false;
+}
 
