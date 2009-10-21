@@ -115,13 +115,23 @@ OSCL_EXPORT_REF int16 pv_video_config_parser(pvVideoConfigParserInputs *aInputs,
         aOutputs->level = 0;
     }
     else if (aInputs->iMimeType == PVMF_MIME_H264_VIDEO ||
-             aInputs->iMimeType == PVMF_MIME_H264_VIDEO_MP4) //avc
+             aInputs->iMimeType == PVMF_MIME_H264_VIDEO_MP4 ||
+             aInputs->iMimeType == PVMF_MIME_H264_VIDEO_RAW) //avc
     {
         int32 width, height, display_width, display_height = 0;
         int32 profile_idc, level_idc = 0;
-
-        // check codec info and get settings
         int16 retval;
+
+        if (aInputs->inBytes <= 0 || aInputs->inPtr == NULL)
+        {
+            aOutputs->width = 0;
+            aOutputs->height = 0;
+            aOutputs->level = 0;
+            aOutputs->profile = 0;
+
+            return 0;  // return success for now as the config info may be provided later.
+        }
+        // check codec info and get settings
         retval = iGetAVCConfigInfo(aInputs->inPtr,
                                    aInputs->inBytes,
                                    & width,

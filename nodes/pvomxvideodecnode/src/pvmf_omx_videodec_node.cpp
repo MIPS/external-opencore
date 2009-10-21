@@ -3146,7 +3146,6 @@ PVMFStatus PVMFOMXVideoDecNode::DoCapConfigVerifyParameters(PvmiKvp* aParameters
 
                     if (aInputs.iMimeType == PVMF_MIME_H264_VIDEO ||
                             aInputs.iMimeType == PVMF_MIME_H264_VIDEO_MP4 ||
-                            aInputs.iMimeType == PVMF_MIME_H264_VIDEO_RAW ||
                             aInputs.iMimeType == PVMF_MIME_M4V ||
                             aInputs.iMimeType == PVMF_MIME_WMV ||
                             aInputs.iMimeType == PVMF_MIME_REAL_VIDEO)

@@ -3986,7 +3986,6 @@ OSCL_EXPORT_REF PVMFStatus PVMFOMXBaseDecNode::DoPrepare()
                     format == PVMF_MIME_AAC_SIZEHDR ||
                     format == PVMF_MIME_H264_VIDEO ||
                     format == PVMF_MIME_H264_VIDEO_MP4 ||
-                    format == PVMF_MIME_H264_VIDEO_RAW ||
                     format == PVMF_MIME_M4V ||
                     format == PVMF_MIME_WMV ||
                     format == PVMF_MIME_REAL_VIDEO)
