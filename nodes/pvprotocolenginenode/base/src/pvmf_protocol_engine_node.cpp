@@ -2496,7 +2496,7 @@ PVMFStatus PVMFProtocolEngineNode::SelectTracks(PVMFMediaPresentationInfo& aInfo
     return iProtocolContainer->selectTracks(aInfo);
 }
 
-void PVMFProtocolEngineNode::ReportEvent(PVMFEventType aEventType, OsclAny* aEventData, const int32 aEventCode, OsclAny* aEventLocalBuffer, const uint32 aEventLocalBufferSize)
+void PVMFProtocolEngineNode::ReportEvent(PVMFEventType aEventType, OsclAny* aEventData, const int32 aEventCode, OsclAny* aEventLocalBuffer, const size_t aEventLocalBufferSize)
 {
     ReportInfoEvent(aEventType, aEventData, aEventCode, aEventLocalBuffer, aEventLocalBufferSize);
 }

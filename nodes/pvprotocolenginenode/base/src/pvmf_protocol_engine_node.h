@@ -368,7 +368,7 @@ class PVMFProtocolEngineNode :  public PVMFNodeInterface,
         bool QueueOutgoingMsgSentComplete(PVMFProtocolEnginePort *aPort, PVMFSharedMediaMsgPtr &aMsg, const PVMFStatus aStatus);
 
         // From EventReporterObserver
-        void ReportEvent(PVMFEventType aEventType, OsclAny* aEventData = NULL, const int32 aEventCode = 0, OsclAny* aEventLocalBuffer = NULL, const uint32 aEventLocalBufferSize = 0);
+        void ReportEvent(PVMFEventType aEventType, OsclAny* aEventData = NULL, const int32 aEventCode = 0, OsclAny* aEventLocalBuffer = NULL, const size_t aEventLocalBufferSize = 0);
         void NotifyContentTooLarge();
 
         // From ProtocolContainerObserver
