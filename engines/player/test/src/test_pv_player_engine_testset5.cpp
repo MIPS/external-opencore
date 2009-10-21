@@ -1123,6 +1123,11 @@ void pvplayer_async_test_downloadbase::CommandCompleted(const PVCmdResponse& aRe
                     RunIfNotReady(10*1000*1000);
                 }
             }
+            //ignore PVMFErrNotSupported
+            else if (aResponse.GetCmdStatus() == PVMFErrNotSupported)
+            {
+                RunIfNotReady(5*1000*1000);
+            }
             else
             {
                 fprintf(iTestMsgOutputFile, "***Repositioning Failed...\n");
@@ -1405,6 +1410,9 @@ void pvplayer_async_test_downloadbase::HandleErrorEvent(const PVAsyncErrorEvent&
 
             PVPATB_TEST_IS_TRUE(false);
             fprintf(file, "   GOT PVMFErrTimeout error event");
+            break;
+
+        case PVMFErrNotSupported:
             break;
 
         default:
