@@ -517,7 +517,7 @@ PVMFStatus PVMFRecognizerRegistryImpl::CheckForDataAvailability()
             {
                 // Get total content size to deal with cases where file being recognized is less than maxSize
                 uint32 totalSize = iDataStream->GetContentLength();
-                if ((status == PVDS_END_OF_STREAM) || (capacity == totalSize))
+                if ((status == PVDS_END_OF_STREAM) || ((capacity == totalSize) && (capacity != 0)))
                 {
                     LOGINFO((0, "PVMFRecognizerRegistryImpl::CheckForDataAvailability - EOS - TotalSize=%d, Capacity=%d",
                              totalSize, capacity));
