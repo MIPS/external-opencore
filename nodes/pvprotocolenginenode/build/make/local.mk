@@ -5,7 +5,7 @@ LOCAL_PATH := $(call get_makefile_dir)
 include $(MK)/clear.mk
 
 TARGET := protocolenginenode
-XCPPFLAGS += -DBUILD_PROGRESSIVE_DOWNLOAD_PLUGIN -DBUILD_PROGRESSIVE_STREAMING_PLUGIN -DBUILD_FASTTRACK_DOWNLOAD_PLUGIN -DBUILD_WMHTTPSTREAMING_PLUGIN -DBUILD_SHOUTCAST_PLUGIN
+XCPPFLAGS += -DBUILD_PROGRESSIVE_DOWNLOAD_PLUGIN -DBUILD_PROGRESSIVE_STREAMING_PLUGIN -DBUILD_FASTTRACK_DOWNLOAD_PLUGIN -DBUILD_WMHTTPSTREAMING_PLUGIN -DBUILD_SHOUTCAST_PLUGIN -DBUILD_RTMPSTREAMING_PLUGIN
 
 XINCDIRS +=  ../../config/$(BUILD_ARCH)  ../../config/linux
 XINCDIRS +=  ../../include ../../base/src ../../protocol_common/src ../../download_protocols/common/src ../../download_protocols/progressive_download/src ../../download_protocols/progressive_streaming/src ../../download_protocols/shoutcast/src ../../download_protocols/fasttrack_download/src ../../download_protocols/rtmp_streaming/src ../../wm_http_streaming/src ../../../../protocols/rtmp_parcom/include  ../../../../protocols/rtmp_parcom/src
@@ -30,6 +30,9 @@ SRCS := pvmf_protocol_engine_node.cpp \
 	../../download_protocols/shoutcast/src/pvmf_protocol_engine_shoutcast.cpp \
 	../../download_protocols/shoutcast/src/pvmf_protocol_engine_node_shoutcast.cpp \
 	../../download_protocols/shoutcast/src/pvmf_protocol_engine_node_shoutcast_container_factory.cpp \
+	../../download_protocols/rtmp_streaming/src/pvmf_protocol_engine_rtmp_streaming.cpp \
+	../../download_protocols/rtmp_streaming/src/pvmf_protocol_engine_node_rtmp_streaming.cpp \
+	../../download_protocols/rtmp_streaming/src/pvmf_protocol_engine_node_rtmp_streaming_container_factory.cpp \
 	../../download_protocols/fasttrack_download/src/pvmf_protocol_engine_fasttrack_download.cpp \
 	../../download_protocols/fasttrack_download/src/pvmf_protocol_engine_node_fasttrack_download.cpp \
 	../../download_protocols/fasttrack_download/src/pvmf_protocol_engine_node_fasttrack_download_container_factory.cpp \

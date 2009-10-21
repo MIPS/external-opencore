@@ -218,12 +218,7 @@ pvavcencnode_lib=n
 # Menu for configuring ProtocolEngine
 #
 pvprotocolenginenode_segments_lib=m
-
-#
-# Menu for configuring protocol_engine_node static
-#
 pvprotocolenginenode_lib=n
-
 pvprotocolenginenode_pdl_plugin_lib=m
 pvprotocolenginenode_ps_plugin_lib=m
 pvprotocolenginenode_ftdl_plugin_lib=n
