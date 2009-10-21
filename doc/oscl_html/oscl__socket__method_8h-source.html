@@ -29,7 +29,7 @@
 <a name="l00026"></a><a class="code" href="classOsclSocketMethod.html">00026</a> <span class="keyword">class </span><a class="code" href="classOsclSocketMethod.html">OsclSocketMethod</a> : <span class="keyword">public</span> <a class="code" href="classOsclTimerObject.html">OsclTimerObject</a>
 00027 {
 00028     <span class="keyword">public</span>:
-<a name="l00029"></a><a class="code" href="classOsclSocketMethod.html#a0">00029</a>         <a class="code" href="classOsclSocketMethod.html#a0">OsclSocketMethod</a>(<a class="code" href="classOsclIPSocketI.html">OsclIPSocketI</a>&amp; aContainer, <span class="keyword">const</span> <span class="keywordtype">char</span> *name, <a class="code" href="oscl__socket__types_8h.html#a19">TPVSocketFxn</a> fxn)
+<a name="l00029"></a><a class="code" href="classOsclSocketMethod.html#a0">00029</a>         <a class="code" href="classOsclSocketMethod.html#a0">OsclSocketMethod</a>(<a class="code" href="classOsclIPSocketI.html">OsclIPSocketI</a>&amp; aContainer, <span class="keyword">const</span> <span class="keywordtype">char</span> *name, <a class="code" href="oscl__socket__types_8h.html#a27">TPVSocketFxn</a> fxn)
 00030                 : <a class="code" href="classOsclTimerObject.html">OsclTimerObject</a>(<a class="code" href="oscl__socket__tuneables_8h.html#a0">PV_SOCKET_REQUEST_AO_PRIORITY</a>, name)
 00031                 , <a class="code" href="classOsclSocketMethod.html#m0">iContainer</a>(aContainer)
 00032                 , <a class="code" href="classOsclSocketMethod.html#m1">iSocketFxn</a>(fxn)
@@ -50,134 +50,136 @@
 00047 
 <a name="l00048"></a><a class="code" href="classOsclSocketMethod.html#m0">00048</a>         <a class="code" href="classOsclIPSocketI.html">OsclIPSocketI</a>&amp; <a class="code" href="classOsclSocketMethod.html#m0">iContainer</a>;
 00049 
-<a name="l00050"></a><a class="code" href="classOsclSocketMethod.html#m1">00050</a>         <a class="code" href="oscl__socket__types_8h.html#a19">TPVSocketFxn</a> <a class="code" href="classOsclSocketMethod.html#m1">iSocketFxn</a>;
+<a name="l00050"></a><a class="code" href="classOsclSocketMethod.html#m1">00050</a>         <a class="code" href="oscl__socket__types_8h.html#a27">TPVSocketFxn</a> <a class="code" href="classOsclSocketMethod.html#m1">iSocketFxn</a>;
 00051 
 <a name="l00052"></a><a class="code" href="classOsclSocketMethod.html#a5">00052</a>         <a class="code" href="classOscl__DefAlloc.html">Oscl_DefAlloc</a>&amp; <a class="code" href="classOsclSocketMethod.html#a5">Alloc</a>()
 00053         {
-00054             <span class="keywordflow">return</span> iContainer.<a class="code" href="classOsclIPSocketI.html#a8">Alloc</a>();
+00054             <span class="keywordflow">return</span> iContainer.<a class="code" href="classOsclIPSocketI.html#a13">Alloc</a>();
 00055         }
 00056 
-00057     <span class="keyword">protected</span>:
-<a name="l00058"></a><a class="code" href="classOsclSocketMethod.html#b0">00058</a>         <span class="keywordtype">void</span> <a class="code" href="classOsclSocketMethod.html#b0">ConstructL</a>(<a class="code" href="classOsclSocketRequestAO.html">OsclSocketRequestAO</a> *aAO)
-00059         {
-00060             <span class="keywordflow">if</span> (!aAO)
-00061                 <a class="code" href="classOsclError.html#d7">OsclError::Leave</a>(<a class="code" href="group__osclerror.html#a12">OsclErrGeneral</a>);
-00062             <a class="code" href="classOsclSocketMethod.html#n0">iSocketRequestAO</a> = aAO;
-00063         }
-00064 
-00065         <span class="keywordtype">bool</span> <a class="code" href="classOsclSocketMethod.html#b1">StartMethod</a>(int32 aTimeoutMsec);
+00057         <a class="code" href="oscl__socket__types_8h.html#a28">TPVSocketEvent</a> <a class="code" href="classOsclSocketMethod.html#a6">ThreadLogon</a>();
+00058         <a class="code" href="oscl__socket__types_8h.html#a28">TPVSocketEvent</a> <a class="code" href="classOsclSocketMethod.html#a7">ThreadLogoff</a>();
+00059     <span class="keyword">protected</span>:
+<a name="l00060"></a><a class="code" href="classOsclSocketMethod.html#b0">00060</a>         <span class="keywordtype">void</span> <a class="code" href="classOsclSocketMethod.html#b0">ConstructL</a>(<a class="code" href="classOsclSocketRequestAO.html">OsclSocketRequestAO</a> *aAO)
+00061         {
+00062             <span class="keywordflow">if</span> (!aAO)
+00063                 <a class="code" href="classOsclError.html#d7">OsclError::Leave</a>(<a class="code" href="group__osclerror.html#a12">OsclErrGeneral</a>);
+00064             <a class="code" href="classOsclSocketMethod.html#n0">iSocketRequestAO</a> = aAO;
+00065         }
 00066 
-00067         <span class="keyword">inline</span> <span class="keywordtype">void</span> <a class="code" href="classOsclSocketMethod.html#b2">MethodDone</a>();
+00067         <span class="keywordtype">bool</span> <a class="code" href="classOsclSocketMethod.html#b1">StartMethod</a>(int32 aTimeoutMsec);
 00068 
-00069         <span class="keywordtype">void</span> <a class="code" href="classOsclSocketMethod.html#b3">Run</a>();
+00069         <span class="keyword">inline</span> <span class="keywordtype">void</span> <a class="code" href="classOsclSocketMethod.html#b2">MethodDone</a>();
 00070 
-<a name="l00071"></a><a class="code" href="classOsclSocketMethod.html#n0">00071</a>         <a class="code" href="classOsclSocketRequestAO.html">OsclSocketRequestAO</a> *<a class="code" href="classOsclSocketMethod.html#n0">iSocketRequestAO</a>;
-00072 };
-00073 
-00074 <span class="preprocessor">#include "<a class="code" href="oscl__socket__imp_8h.html">oscl_socket_imp.h</a>"</span>
+00071         <span class="keywordtype">void</span> <a class="code" href="classOsclSocketMethod.html#b3">Run</a>();
+00072 
+<a name="l00073"></a><a class="code" href="classOsclSocketMethod.html#n0">00073</a>         <a class="code" href="classOsclSocketRequestAO.html">OsclSocketRequestAO</a> *<a class="code" href="classOsclSocketMethod.html#n0">iSocketRequestAO</a>;
+00074 };
 00075 
-<a name="l00080"></a><a class="code" href="classOsclSocketRequestAO.html">00080</a> <span class="keyword">class </span><a class="code" href="classOsclSocketRequestAO.html">OsclSocketRequestAO</a> : <span class="keyword">public</span> <a class="code" href="classOsclActiveObject.html">OsclActiveObject</a>
-00081 {
-00082     <span class="keyword">public</span>:
-<a name="l00083"></a><a class="code" href="classOsclSocketRequestAO.html#a0">00083</a>         <span class="keywordtype">void</span> <a class="code" href="classOsclSocketRequestAO.html#a0">ConstructL</a>()
-00084         {
-00085         }
-00086     <span class="keyword">protected</span>:
-00087 
-<a name="l00088"></a><a class="code" href="classOsclSocketRequestAO.html#b0">00088</a>         <a class="code" href="classOsclSocketRequestAO.html#b0">OsclSocketRequestAO</a>(<a class="code" href="classOsclSocketMethod.html">OsclSocketMethod</a>&amp; aContainer, <span class="keyword">const</span> <span class="keywordtype">char</span> *name)
-00089                 : <a class="code" href="classOsclActiveObject.html">OsclActiveObject</a>(<a class="code" href="oscl__socket__tuneables_8h.html#a0">PV_SOCKET_REQUEST_AO_PRIORITY</a>, name)
-00090                 , <a class="code" href="classOsclSocketRequestAO.html#n0">iContainer</a>(aContainer)
-00091                 , <a class="code" href="classOsclSocketRequestAO.html#n1">iSocketError</a>(0)
-00092                 , <a class="code" href="classOsclSocketRequestAO.html#n2">iParam</a>(<a class="code" href="group__osclbase.html#a88">NULL</a>)
-00093                 , <a class="code" href="classOsclSocketRequestAO.html#n3">iParamSize</a>(0)
-00094         {}
-00095 
-<a name="l00096"></a><a class="code" href="classOsclSocketRequestAO.html#b1">00096</a>         <span class="keyword">virtual</span> <a class="code" href="classOsclSocketRequestAO.html#b1">~OsclSocketRequestAO</a>()
-00097         {
-00098             <a class="code" href="classOsclSocketRequestAO.html#b3">CleanupParam</a>(<span class="keyword">true</span>);
-00099         }
-00100 
-00101         <a class="code" href="group__osclbase.html#a27">OsclAny</a>* <a class="code" href="classOsclSocketRequestAO.html#b2">NewRequest</a>(<span class="keyword">const</span> uint32 size) ;
-00102         <span class="keywordtype">void</span> <a class="code" href="classOsclSocketRequestAO.html#b3">CleanupParam</a>(<span class="keywordtype">bool</span> deallocate = <span class="keyword">false</span>);
-00103 
-00104 
-<a name="l00105"></a><a class="code" href="classOsclSocketRequestAO.html#b4">00105</a>         <span class="keywordtype">void</span> <a class="code" href="classOsclSocketRequestAO.html#b4">Abort</a>()
-00106         {
-00107             <a class="code" href="classOsclActiveObject.html#a9">Cancel</a>();
-00108         }
-00109 
-<a name="l00110"></a><a class="code" href="classOsclSocketRequestAO.html#b5">00110</a>         <span class="keywordtype">void</span> <a class="code" href="classOsclSocketRequestAO.html#b5">RequestDone</a>()
-00111         {
-00112             <a class="code" href="classOsclSocketRequestAO.html#n0">iContainer</a>.<a class="code" href="classOsclSocketMethod.html#a2">Abort</a>();
-00113         }
-00114 
-00115         <span class="keyword">inline</span> <span class="keywordtype">int</span> <a class="code" href="classOsclSocketRequestAO.html#b6">GetSocketError</a>();
+00076 <span class="preprocessor">#include "<a class="code" href="oscl__socket__imp_8h.html">oscl_socket_imp.h</a>"</span>
+00077 
+<a name="l00082"></a><a class="code" href="classOsclSocketRequestAO.html">00082</a> <span class="keyword">class </span><a class="code" href="classOsclSocketRequestAO.html">OsclSocketRequestAO</a> : <span class="keyword">public</span> <a class="code" href="classOsclActiveObject.html">OsclActiveObject</a>
+00083 {
+00084     <span class="keyword">public</span>:
+<a name="l00085"></a><a class="code" href="classOsclSocketRequestAO.html#a0">00085</a>         <span class="keywordtype">void</span> <a class="code" href="classOsclSocketRequestAO.html#a0">ConstructL</a>()
+00086         {
+00087         }
+00088     <span class="keyword">protected</span>:
+00089 
+<a name="l00090"></a><a class="code" href="classOsclSocketRequestAO.html#b0">00090</a>         <a class="code" href="classOsclSocketRequestAO.html#b0">OsclSocketRequestAO</a>(<a class="code" href="classOsclSocketMethod.html">OsclSocketMethod</a>&amp; aContainer, <span class="keyword">const</span> <span class="keywordtype">char</span> *name)
+00091                 : <a class="code" href="classOsclActiveObject.html">OsclActiveObject</a>(<a class="code" href="oscl__socket__tuneables_8h.html#a0">PV_SOCKET_REQUEST_AO_PRIORITY</a>, name)
+00092                 , <a class="code" href="classOsclSocketRequestAO.html#n0">iContainer</a>(aContainer)
+00093                 , <a class="code" href="classOsclSocketRequestAO.html#n1">iSocketError</a>(0)
+00094                 , <a class="code" href="classOsclSocketRequestAO.html#n2">iParam</a>(<a class="code" href="group__osclbase.html#a88">NULL</a>)
+00095                 , <a class="code" href="classOsclSocketRequestAO.html#n3">iParamSize</a>(0)
+00096         {}
+00097 
+<a name="l00098"></a><a class="code" href="classOsclSocketRequestAO.html#b1">00098</a>         <span class="keyword">virtual</span> <a class="code" href="classOsclSocketRequestAO.html#b1">~OsclSocketRequestAO</a>()
+00099         {
+00100             <a class="code" href="classOsclSocketRequestAO.html#b3">CleanupParam</a>(<span class="keyword">true</span>);
+00101         }
+00102 
+00103         <a class="code" href="group__osclbase.html#a27">OsclAny</a>* <a class="code" href="classOsclSocketRequestAO.html#b2">NewRequest</a>(<span class="keyword">const</span> uint32 size) ;
+00104         <span class="keywordtype">void</span> <a class="code" href="classOsclSocketRequestAO.html#b3">CleanupParam</a>(<span class="keywordtype">bool</span> deallocate = <span class="keyword">false</span>);
+00105 
+00106 
+<a name="l00107"></a><a class="code" href="classOsclSocketRequestAO.html#b4">00107</a>         <span class="keywordtype">void</span> <a class="code" href="classOsclSocketRequestAO.html#b4">Abort</a>()
+00108         {
+00109             <a class="code" href="classOsclActiveObject.html#a9">Cancel</a>();
+00110         }
+00111 
+<a name="l00112"></a><a class="code" href="classOsclSocketRequestAO.html#b5">00112</a>         <span class="keywordtype">void</span> <a class="code" href="classOsclSocketRequestAO.html#b5">RequestDone</a>()
+00113         {
+00114             <a class="code" href="classOsclSocketRequestAO.html#n0">iContainer</a>.<a class="code" href="classOsclSocketMethod.html#a2">Abort</a>();
+00115         }
 00116 
-<a name="l00117"></a><a class="code" href="classOsclSocketRequestAO.html#b7">00117</a>         <span class="keywordtype">void</span> <a class="code" href="classOsclSocketRequestAO.html#b7">DoCancel</a>()
-00118         {
-00119             <a class="code" href="classOsclSocketRequestAO.html#b10">SocketI</a>()-&gt;<a class="code" href="classOsclSocketIBase.html#a20">CancelFxn</a>(<a class="code" href="classOsclSocketRequestAO.html#n0">iContainer</a>.<a class="code" href="classOsclSocketMethod.html#m1">iSocketFxn</a>);
-00120             <span class="comment">//we launch the cancellation process here.  oscl scheduler</span>
-00121             <span class="comment">//will wait on completion of this AO request, which will</span>
-00122             <span class="comment">//happen in the server thread.</span>
-00123         }
-00124 
-00125         <span class="keywordtype">void</span> <a class="code" href="classOsclSocketRequestAO.html#b8">Run</a>();
+00117         <span class="keyword">inline</span> <span class="keywordtype">int</span> <a class="code" href="classOsclSocketRequestAO.html#b6">GetSocketError</a>();
+00118 
+<a name="l00119"></a><a class="code" href="classOsclSocketRequestAO.html#b7">00119</a>         <span class="keywordtype">void</span> <a class="code" href="classOsclSocketRequestAO.html#b7">DoCancel</a>()
+00120         {
+00121             <a class="code" href="classOsclSocketRequestAO.html#b10">SocketI</a>()-&gt;<a class="code" href="classOsclSocketIBase.html#a20">CancelFxn</a>(<a class="code" href="classOsclSocketRequestAO.html#n0">iContainer</a>.<a class="code" href="classOsclSocketMethod.html#m1">iSocketFxn</a>);
+00122             <span class="comment">//we launch the cancellation process here.  oscl scheduler</span>
+00123             <span class="comment">//will wait on completion of this AO request, which will</span>
+00124             <span class="comment">//happen in the server thread.</span>
+00125         }
 00126 
-<a name="l00127"></a><a class="code" href="classOsclSocketRequestAO.html#b9">00127</a>         <span class="keyword">virtual</span> <span class="keywordtype">void</span> <a class="code" href="classOsclSocketRequestAO.html#b9">Success</a>()
-00128         {}
-00129 
-<a name="l00130"></a><a class="code" href="classOsclSocketRequestAO.html#n0">00130</a>         <a class="code" href="classOsclSocketMethod.html">OsclSocketMethod</a>&amp; <a class="code" href="classOsclSocketRequestAO.html#n0">iContainer</a>;
-<a name="l00131"></a><a class="code" href="classOsclSocketRequestAO.html#n1">00131</a>         int32 <a class="code" href="classOsclSocketRequestAO.html#n1">iSocketError</a>;
-<a name="l00132"></a><a class="code" href="classOsclSocketRequestAO.html#n2">00132</a>         <a class="code" href="classSocketRequestParam.html">SocketRequestParam</a> *<a class="code" href="classOsclSocketRequestAO.html#n2">iParam</a>;
-<a name="l00133"></a><a class="code" href="classOsclSocketRequestAO.html#n3">00133</a>         uint32 <a class="code" href="classOsclSocketRequestAO.html#n3">iParamSize</a>;
-00134 
-<a name="l00135"></a><a class="code" href="classOsclSocketRequestAO.html#b10">00135</a>         <a class="code" href="classOsclSocketI.html">OsclSocketI</a> *<a class="code" href="classOsclSocketRequestAO.html#b10">SocketI</a>()
-00136         {
-00137             <span class="keywordflow">return</span> iContainer.<a class="code" href="classOsclSocketMethod.html#m0">iContainer</a>.<a class="code" href="classOsclIPSocketI.html#n4">iSocket</a>;
-00138         }
-00139 
-<a name="l00140"></a><a class="code" href="classOsclSocketRequestAO.html#b11">00140</a>         <a class="code" href="classOsclSocketObserver.html">OsclSocketObserver</a>* <a class="code" href="classOsclSocketRequestAO.html#b11">SocketObserver</a>()
-00141         {
-00142             <span class="keywordflow">return</span> iContainer.<a class="code" href="classOsclSocketMethod.html#m0">iContainer</a>.<a class="code" href="classOsclIPSocketI.html#n3">iObserver</a>;
-00143         }
-<a name="l00144"></a><a class="code" href="classOsclSocketRequestAO.html#b12">00144</a>         uint32 <a class="code" href="classOsclSocketRequestAO.html#b12">Id</a>()
-00145         {
-00146             <span class="keywordflow">return</span> iContainer.<a class="code" href="classOsclSocketMethod.html#m0">iContainer</a>.<a class="code" href="classOsclIPSocketI.html#n2">iId</a>;
-00147         }
-<a name="l00148"></a><a class="code" href="classOsclSocketRequestAO.html#b13">00148</a>         <a class="code" href="classOscl__DefAlloc.html">Oscl_DefAlloc</a>&amp; <a class="code" href="classOsclSocketRequestAO.html#b13">Alloc</a>()
-00149         {
-00150             <span class="keywordflow">return</span> iContainer.<a class="code" href="classOsclSocketMethod.html#m0">iContainer</a>.<a class="code" href="classOsclIPSocketI.html#a8">Alloc</a>();
-00151         }
-00152 
-<a name="l00153"></a><a class="code" href="classOsclSocketRequestAO.html#l0">00153</a>         <span class="keyword">friend</span> <span class="keyword">class </span><a class="code" href="classOsclSocketI.html">OsclSocketI</a>;
-<a name="l00154"></a><a class="code" href="classOsclSocketRequestAO.html#l1">00154</a>         <span class="keyword">friend</span> <span class="keyword">class </span><a class="code" href="classOsclSocketMethod.html">OsclSocketMethod</a>;
-<a name="l00155"></a><a class="code" href="classOsclSocketRequestAO.html#l2">00155</a>         <span class="keyword">friend</span> <span class="keyword">class </span><a class="code" href="classOsclSocketRequest.html">OsclSocketRequest</a>;
-00156 };
-00157 
-<a name="l00158"></a><a class="code" href="classOsclSocketMethod.html#a3">00158</a> <span class="keyword">inline</span> <span class="keywordtype">void</span> <a class="code" href="classOsclSocketMethod.html#a3">OsclSocketMethod::AbortAll</a>()
-00159 {
-00160     <a class="code" href="classOsclSocketMethod.html#a2">Abort</a>();
-00161     <span class="keywordflow">if</span> (iSocketRequestAO)
-00162         <a class="code" href="classOsclSocketMethod.html#n0">iSocketRequestAO</a>-&gt;<a class="code" href="classOsclSocketRequestAO.html#b4">Abort</a>();
-00163 }
-00164 
-<a name="l00165"></a><a class="code" href="classOsclSocketMethod.html#a4">00165</a> <span class="keyword">inline</span> <span class="keywordtype">void</span> <a class="code" href="classOsclSocketMethod.html#a4">OsclSocketMethod::CancelMethod</a>()
-00166 {
-00167     <span class="comment">//cancel the timeout if any</span>
-00168     <a class="code" href="classOsclSocketMethod.html#a2">Abort</a>();
-00169     <span class="comment">//cancel the request to the socket server.</span>
-00170     <a class="code" href="classOsclSocketMethod.html#n0">iSocketRequestAO</a>-&gt;<a class="code" href="classOsclSocketRequestAO.html#b7">DoCancel</a>();
-00171 }
-00172 
-<a name="l00173"></a><a class="code" href="classOsclSocketMethod.html#b2">00173</a> <span class="keyword">inline</span> <span class="keywordtype">void</span> <a class="code" href="classOsclSocketMethod.html#b2">OsclSocketMethod::MethodDone</a>()
-00174 {
-00175     <a class="code" href="classOsclSocketMethod.html#n0">iSocketRequestAO</a>-&gt;<a class="code" href="classOsclSocketRequestAO.html#b4">Abort</a>();
-00176 }
-00177 
-00178 <span class="preprocessor">#endif</span>
-00179 <span class="preprocessor"></span>
+00127         <span class="keywordtype">void</span> <a class="code" href="classOsclSocketRequestAO.html#b8">Run</a>();
+00128 
+<a name="l00129"></a><a class="code" href="classOsclSocketRequestAO.html#b9">00129</a>         <span class="keyword">virtual</span> <span class="keywordtype">void</span> <a class="code" href="classOsclSocketRequestAO.html#b9">Success</a>()
+00130         {}
+00131 
+<a name="l00132"></a><a class="code" href="classOsclSocketRequestAO.html#n0">00132</a>         <a class="code" href="classOsclSocketMethod.html">OsclSocketMethod</a>&amp; <a class="code" href="classOsclSocketRequestAO.html#n0">iContainer</a>;
+<a name="l00133"></a><a class="code" href="classOsclSocketRequestAO.html#n1">00133</a>         int32 <a class="code" href="classOsclSocketRequestAO.html#n1">iSocketError</a>;
+<a name="l00134"></a><a class="code" href="classOsclSocketRequestAO.html#n2">00134</a>         <a class="code" href="classSocketRequestParam.html">SocketRequestParam</a> *<a class="code" href="classOsclSocketRequestAO.html#n2">iParam</a>;
+<a name="l00135"></a><a class="code" href="classOsclSocketRequestAO.html#n3">00135</a>         uint32 <a class="code" href="classOsclSocketRequestAO.html#n3">iParamSize</a>;
+00136 
+<a name="l00137"></a><a class="code" href="classOsclSocketRequestAO.html#b10">00137</a>         <a class="code" href="classOsclSocketI.html">OsclSocketI</a> *<a class="code" href="classOsclSocketRequestAO.html#b10">SocketI</a>()
+00138         {
+00139             <span class="keywordflow">return</span> iContainer.<a class="code" href="classOsclSocketMethod.html#m0">iContainer</a>.<a class="code" href="classOsclIPSocketI.html#n4">iSocket</a>;
+00140         }
+00141 
+<a name="l00142"></a><a class="code" href="classOsclSocketRequestAO.html#b11">00142</a>         <a class="code" href="classOsclSocketObserver.html">OsclSocketObserver</a>* <a class="code" href="classOsclSocketRequestAO.html#b11">SocketObserver</a>()
+00143         {
+00144             <span class="keywordflow">return</span> iContainer.<a class="code" href="classOsclSocketMethod.html#m0">iContainer</a>.<a class="code" href="classOsclIPSocketI.html#n3">iObserver</a>;
+00145         }
+<a name="l00146"></a><a class="code" href="classOsclSocketRequestAO.html#b12">00146</a>         uint32 <a class="code" href="classOsclSocketRequestAO.html#b12">Id</a>()
+00147         {
+00148             <span class="keywordflow">return</span> iContainer.<a class="code" href="classOsclSocketMethod.html#m0">iContainer</a>.<a class="code" href="classOsclIPSocketI.html#n2">iId</a>;
+00149         }
+<a name="l00150"></a><a class="code" href="classOsclSocketRequestAO.html#b13">00150</a>         <a class="code" href="classOscl__DefAlloc.html">Oscl_DefAlloc</a>&amp; <a class="code" href="classOsclSocketRequestAO.html#b13">Alloc</a>()
+00151         {
+00152             <span class="keywordflow">return</span> iContainer.<a class="code" href="classOsclSocketMethod.html#m0">iContainer</a>.<a class="code" href="classOsclIPSocketI.html#a13">Alloc</a>();
+00153         }
+00154 
+<a name="l00155"></a><a class="code" href="classOsclSocketRequestAO.html#l0">00155</a>         <span class="keyword">friend</span> <span class="keyword">class </span><a class="code" href="classOsclSocketI.html">OsclSocketI</a>;
+<a name="l00156"></a><a class="code" href="classOsclSocketRequestAO.html#l1">00156</a>         <span class="keyword">friend</span> <span class="keyword">class </span><a class="code" href="classOsclSocketMethod.html">OsclSocketMethod</a>;
+<a name="l00157"></a><a class="code" href="classOsclSocketRequestAO.html#l2">00157</a>         <span class="keyword">friend</span> <span class="keyword">class </span><a class="code" href="classOsclSocketRequest.html">OsclSocketRequest</a>;
+00158 };
+00159 
+<a name="l00160"></a><a class="code" href="classOsclSocketMethod.html#a3">00160</a> <span class="keyword">inline</span> <span class="keywordtype">void</span> <a class="code" href="classOsclSocketMethod.html#a3">OsclSocketMethod::AbortAll</a>()
+00161 {
+00162     <a class="code" href="classOsclSocketMethod.html#a2">Abort</a>();
+00163     <span class="keywordflow">if</span> (iSocketRequestAO)
+00164         <a class="code" href="classOsclSocketMethod.html#n0">iSocketRequestAO</a>-&gt;<a class="code" href="classOsclSocketRequestAO.html#b4">Abort</a>();
+00165 }
+00166 
+<a name="l00167"></a><a class="code" href="classOsclSocketMethod.html#a4">00167</a> <span class="keyword">inline</span> <span class="keywordtype">void</span> <a class="code" href="classOsclSocketMethod.html#a4">OsclSocketMethod::CancelMethod</a>()
+00168 {
+00169     <span class="comment">//cancel the timeout if any</span>
+00170     <a class="code" href="classOsclSocketMethod.html#a2">Abort</a>();
+00171     <span class="comment">//cancel the request to the socket server.</span>
+00172     <a class="code" href="classOsclSocketMethod.html#n0">iSocketRequestAO</a>-&gt;<a class="code" href="classOsclSocketRequestAO.html#b7">DoCancel</a>();
+00173 }
+00174 
+<a name="l00175"></a><a class="code" href="classOsclSocketMethod.html#b2">00175</a> <span class="keyword">inline</span> <span class="keywordtype">void</span> <a class="code" href="classOsclSocketMethod.html#b2">OsclSocketMethod::MethodDone</a>()
+00176 {
+00177     <a class="code" href="classOsclSocketMethod.html#n0">iSocketRequestAO</a>-&gt;<a class="code" href="classOsclSocketRequestAO.html#b4">Abort</a>();
+00178 }
+00179 
+00180 <span class="preprocessor">#endif</span>
+00181 <span class="preprocessor"></span>
 </pre></div><hr size="1"><img src="pvlogo_small.jpg"><address style="align: right;"><small>OSCL API</small>
-<address style="align: left;"><small>Posting Version: CORE_8.000.1.1_RC1 </small>
+<address style="align: left;"><small>Posting Version: CORE_8.000.1.1_RC2 </small>
 </small></address>
 </body>
 </html>

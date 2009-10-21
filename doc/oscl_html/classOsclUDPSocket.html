@@ -21,18 +21,25 @@
 <tr><td></td></tr>
 <tr><td colspan=2><br><h2>Public Methods</h2></td></tr>
 <tr><td nowrap align=right valign=top>OSCL_IMPORT_REF&nbsp;</td><td valign=bottom><a class="el" href="classOsclUDPSocket.html#a0">~OsclUDPSocket</a> ()</td></tr>
-<tr><td nowrap align=right valign=top>OSCL_IMPORT_REF int32&nbsp;</td><td valign=bottom><a class="el" href="classOsclUDPSocket.html#a1">Close</a> ()</td></tr>
-<tr><td nowrap align=right valign=top>OSCL_IMPORT_REF int32&nbsp;</td><td valign=bottom><a class="el" href="classOsclUDPSocket.html#a2">Bind</a> (<a class="el" href="classOsclNetworkAddress.html">OsclNetworkAddress</a> &amp;aAddress)</td></tr>
-<tr><td nowrap align=right valign=top>OSCL_IMPORT_REF int32&nbsp;</td><td valign=bottom><a class="el" href="classOsclUDPSocket.html#a3">Join</a> (<a class="el" href="classOsclNetworkAddress.html">OsclNetworkAddress</a> &amp;aAddress)</td></tr>
-<tr><td nowrap align=right valign=top>OSCL_IMPORT_REF <a class="el" href="oscl__socket__types_8h.html#a20">TPVSocketEvent</a>&nbsp;</td><td valign=bottom><a class="el" href="classOsclUDPSocket.html#a4">BindAsync</a> (<a class="el" href="classOsclNetworkAddress.html">OsclNetworkAddress</a> &amp;aAddress, int32 aTimeoutMsec=(-1))</td></tr>
-<tr><td nowrap align=right valign=top>OSCL_IMPORT_REF void&nbsp;</td><td valign=bottom><a class="el" href="classOsclUDPSocket.html#a5">CancelBind</a> ()</td></tr>
-<tr><td nowrap align=right valign=top>OSCL_IMPORT_REF uint8 *&nbsp;</td><td valign=bottom><a class="el" href="classOsclUDPSocket.html#a6">GetRecvData</a> (int32 *aLength)</td></tr>
-<tr><td nowrap align=right valign=top>OSCL_IMPORT_REF uint8 *&nbsp;</td><td valign=bottom><a class="el" href="classOsclUDPSocket.html#a7">GetSendData</a> (int32 *aLength)</td></tr>
-<tr><td nowrap align=right valign=top>OSCL_IMPORT_REF <a class="el" href="oscl__socket__types_8h.html#a20">TPVSocketEvent</a>&nbsp;</td><td valign=bottom><a class="el" href="classOsclUDPSocket.html#a8">SendTo</a> (const uint8 *aPtr, uint32 aLen, <a class="el" href="classOsclNetworkAddress.html">OsclNetworkAddress</a> &amp;aAddress, int32 aTimeoutMsec=-1)</td></tr>
-<tr><td nowrap align=right valign=top>OSCL_IMPORT_REF void&nbsp;</td><td valign=bottom><a class="el" href="classOsclUDPSocket.html#a9">CancelSendTo</a> ()</td></tr>
-<tr><td nowrap align=right valign=top>OSCL_IMPORT_REF <a class="el" href="oscl__socket__types_8h.html#a20">TPVSocketEvent</a>&nbsp;</td><td valign=bottom><a class="el" href="classOsclUDPSocket.html#a10">RecvFrom</a> (uint8 *aPtr, uint32 aMaxLen, <a class="el" href="classOsclNetworkAddress.html">OsclNetworkAddress</a> &amp;aAddress, int32 aTimeoutMsec=-1, uint32 aMultiRecvLimit=0, <a class="el" href="classOscl__Vector.html">Oscl_Vector</a>&lt; uint32, <a class="el" href="classOsclMemAllocator.html">OsclMemAllocator</a> &gt; *aPacketLen=NULL, <a class="el" href="classOscl__Vector.html">Oscl_Vector</a>&lt; <a class="el" href="classOsclNetworkAddress.html">OsclNetworkAddress</a>, <a class="el" href="classOsclMemAllocator.html">OsclMemAllocator</a> &gt; *aPacketSource=NULL)</td></tr>
-<tr><td nowrap align=right valign=top>OSCL_IMPORT_REF void&nbsp;</td><td valign=bottom><a class="el" href="classOsclUDPSocket.html#a11">CancelRecvFrom</a> ()</td></tr>
-<tr><td nowrap align=right valign=top>OSCL_IMPORT_REF int32&nbsp;</td><td valign=bottom><a class="el" href="classOsclUDPSocket.html#a12">SetRecvBufferSize</a> (uint32 size)</td></tr>
+<tr><td nowrap align=right valign=top>OSCL_IMPORT_REF <a class="el" href="oscl__socket__types_8h.html#a28">TPVSocketEvent</a>&nbsp;</td><td valign=bottom><a class="el" href="classOsclUDPSocket.html#a1">ThreadLogoff</a> ()</td></tr>
+<tr><td nowrap align=right valign=top>OSCL_IMPORT_REF <a class="el" href="oscl__socket__types_8h.html#a28">TPVSocketEvent</a>&nbsp;</td><td valign=bottom><a class="el" href="classOsclUDPSocket.html#a2">ThreadLogon</a> (<a class="el" href="classOsclSocketServ.html">OsclSocketServ</a> &amp;aServ, <a class="el" href="classOsclSocketObserver.html">OsclSocketObserver</a> *aObserver)</td></tr>
+<tr><td nowrap align=right valign=top>OSCL_IMPORT_REF int32&nbsp;</td><td valign=bottom><a class="el" href="classOsclUDPSocket.html#a3">Close</a> ()</td></tr>
+<tr><td nowrap align=right valign=top>OSCL_IMPORT_REF int32&nbsp;</td><td valign=bottom><a class="el" href="classOsclUDPSocket.html#a4">Bind</a> (<a class="el" href="classOsclNetworkAddress.html">OsclNetworkAddress</a> &amp;aAddress)</td></tr>
+<tr><td nowrap align=right valign=top>OSCL_IMPORT_REF int32&nbsp;</td><td valign=bottom><a class="el" href="classOsclUDPSocket.html#a5">Join</a> (<a class="el" href="classOsclNetworkAddress.html">OsclNetworkAddress</a> &amp;aAddress)</td></tr>
+<tr><td nowrap align=right valign=top>OSCL_IMPORT_REF int32&nbsp;</td><td valign=bottom><a class="el" href="classOsclUDPSocket.html#a6">JoinMulticastGroup</a> (<a class="el" href="classOsclIpMReq.html">OsclIpMReq</a> &amp;aMReq)</td></tr>
+<tr><td nowrap align=right valign=top>OSCL_IMPORT_REF int32&nbsp;</td><td valign=bottom><a class="el" href="classOsclUDPSocket.html#a7">SetMulticastTTL</a> (int32 aTTL)</td></tr>
+<tr><td nowrap align=right valign=top>OSCL_IMPORT_REF int32&nbsp;</td><td valign=bottom><a class="el" href="classOsclUDPSocket.html#a8">SetOptionToReuseAddress</a> ()</td></tr>
+<tr><td nowrap align=right valign=top>OSCL_IMPORT_REF int32&nbsp;</td><td valign=bottom><a class="el" href="classOsclUDPSocket.html#a9">SetTOS</a> (const <a class="el" href="classOsclSocketTOS.html">OsclSocketTOS</a> &amp;aTOS)</td></tr>
+<tr><td nowrap align=right valign=top>OSCL_IMPORT_REF int32&nbsp;</td><td valign=bottom><a class="el" href="classOsclUDPSocket.html#a10">GetPeerName</a> (<a class="el" href="classOsclNetworkAddress.html">OsclNetworkAddress</a> &amp;aPeerName)</td></tr>
+<tr><td nowrap align=right valign=top>OSCL_IMPORT_REF <a class="el" href="oscl__socket__types_8h.html#a28">TPVSocketEvent</a>&nbsp;</td><td valign=bottom><a class="el" href="classOsclUDPSocket.html#a11">BindAsync</a> (<a class="el" href="classOsclNetworkAddress.html">OsclNetworkAddress</a> &amp;aAddress, int32 aTimeoutMsec=(-1))</td></tr>
+<tr><td nowrap align=right valign=top>OSCL_IMPORT_REF void&nbsp;</td><td valign=bottom><a class="el" href="classOsclUDPSocket.html#a12">CancelBind</a> ()</td></tr>
+<tr><td nowrap align=right valign=top>OSCL_IMPORT_REF uint8 *&nbsp;</td><td valign=bottom><a class="el" href="classOsclUDPSocket.html#a13">GetRecvData</a> (int32 *aLength)</td></tr>
+<tr><td nowrap align=right valign=top>OSCL_IMPORT_REF uint8 *&nbsp;</td><td valign=bottom><a class="el" href="classOsclUDPSocket.html#a14">GetSendData</a> (int32 *aLength)</td></tr>
+<tr><td nowrap align=right valign=top>OSCL_IMPORT_REF <a class="el" href="oscl__socket__types_8h.html#a28">TPVSocketEvent</a>&nbsp;</td><td valign=bottom><a class="el" href="classOsclUDPSocket.html#a15">SendTo</a> (const uint8 *aPtr, uint32 aLen, <a class="el" href="classOsclNetworkAddress.html">OsclNetworkAddress</a> &amp;aAddress, int32 aTimeoutMsec=-1)</td></tr>
+<tr><td nowrap align=right valign=top>OSCL_IMPORT_REF void&nbsp;</td><td valign=bottom><a class="el" href="classOsclUDPSocket.html#a16">CancelSendTo</a> ()</td></tr>
+<tr><td nowrap align=right valign=top>OSCL_IMPORT_REF <a class="el" href="oscl__socket__types_8h.html#a28">TPVSocketEvent</a>&nbsp;</td><td valign=bottom><a class="el" href="classOsclUDPSocket.html#a17">RecvFrom</a> (uint8 *aPtr, uint32 aMaxLen, <a class="el" href="classOsclNetworkAddress.html">OsclNetworkAddress</a> &amp;aAddress, int32 aTimeoutMsec=-1, uint32 aMultiRecvLimit=0, <a class="el" href="classOscl__Vector.html">Oscl_Vector</a>&lt; uint32, <a class="el" href="classOsclMemAllocator.html">OsclMemAllocator</a> &gt; *aPacketLen=NULL, <a class="el" href="classOscl__Vector.html">Oscl_Vector</a>&lt; <a class="el" href="classOsclNetworkAddress.html">OsclNetworkAddress</a>, <a class="el" href="classOsclMemAllocator.html">OsclMemAllocator</a> &gt; *aPacketSource=NULL)</td></tr>
+<tr><td nowrap align=right valign=top>OSCL_IMPORT_REF void&nbsp;</td><td valign=bottom><a class="el" href="classOsclUDPSocket.html#a18">CancelRecvFrom</a> ()</td></tr>
+<tr><td nowrap align=right valign=top>OSCL_IMPORT_REF int32&nbsp;</td><td valign=bottom><a class="el" href="classOsclUDPSocket.html#a19">SetRecvBufferSize</a> (uint32 size)</td></tr>
 <tr><td colspan=2><br><h2>Static Public Methods</h2></td></tr>
 <tr><td nowrap align=right valign=top>OSCL_IMPORT_REF OsclUDPSocket *&nbsp;</td><td valign=bottom><a class="el" href="classOsclUDPSocket.html#d0">NewL</a> (<a class="el" href="classOscl__DefAlloc.html">Oscl_DefAlloc</a> &amp;alloc, <a class="el" href="classOsclSocketServ.html">OsclSocketServ</a> &amp;aServ, <a class="el" href="classOsclSocketObserver.html">OsclSocketObserver</a> *aObserver, uint32 aId)</td></tr>
 </table>
@@ -69,7 +76,7 @@ Destructor. The object must be deleted using the same allocator used in the NewL
   </tr>
 </table>
 <hr><h2>Member Function Documentation</h2>
-<a name="a2" doxytag="OsclUDPSocket::Bind"></a><p>
+<a name="a4" doxytag="OsclUDPSocket::Bind"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -104,13 +111,13 @@ Bind address. </td></tr>
 Returns OsclErrNone for success, or a platform-specific error code. </dl>    </td>
   </tr>
 </table>
-<a name="a4" doxytag="OsclUDPSocket::BindAsync"></a><p>
+<a name="a11" doxytag="OsclUDPSocket::BindAsync"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
       <table cellpadding="0" cellspacing="0" border="0">
         <tr>
-          <td class="md" nowrap valign="top"> OSCL_IMPORT_REF <a class="el" href="oscl__socket__types_8h.html#a20">TPVSocketEvent</a> OsclUDPSocket::BindAsync </td>
+          <td class="md" nowrap valign="top"> OSCL_IMPORT_REF <a class="el" href="oscl__socket__types_8h.html#a28">TPVSocketEvent</a> OsclUDPSocket::BindAsync </td>
           <td class="md" valign="top">(&nbsp;</td>
           <td class="md" nowrap valign="top"><a class="el" href="classOsclNetworkAddress.html">OsclNetworkAddress</a> &amp;&nbsp;</td>
           <td class="mdname" nowrap>&nbsp; <em>aAddress</em>, </td>
@@ -150,7 +157,7 @@ Optional timeout. Use a negative value for infinite wait. </td></tr>
 Will return EPVSocketPending if successful. When the operation is complete, a callback to the observer will occur with the completion status. If the operation cannot be initiated, the call will return EPVSocketFailure and there will be no callback. </dl>    </td>
   </tr>
 </table>
-<a name="a5" doxytag="OsclUDPSocket::CancelBind"></a><p>
+<a name="a12" doxytag="OsclUDPSocket::CancelBind"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -180,7 +187,7 @@ Cancel Bind
 This method will cancel any pending BindAsync operation on the current socket, causing the BindAsync to complete with error EPVSocketCancel. If there is no pending BindAsync operation, this method will have no effect.     </td>
   </tr>
 </table>
-<a name="a11" doxytag="OsclUDPSocket::CancelRecvFrom"></a><p>
+<a name="a18" doxytag="OsclUDPSocket::CancelRecvFrom"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -210,7 +217,7 @@ Cancel RecvFrom
 This method will cancel any pending RecvFrom operation on the current socket, causing the RecvFrom to complete with error EPVSocketCancel. If there is no pending RecvFrom operation, this method will have no effect.     </td>
   </tr>
 </table>
-<a name="a9" doxytag="OsclUDPSocket::CancelSendTo"></a><p>
+<a name="a16" doxytag="OsclUDPSocket::CancelSendTo"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -240,7 +247,7 @@ Cancel SendTo
 This method will cancel any pending SendTo operation on the current socket, causing the SendTo to complete with error EPVSocketCancel. If there is no pending SendTo operation, this method will have no effect.     </td>
   </tr>
 </table>
-<a name="a1" doxytag="OsclUDPSocket::Close"></a><p>
+<a name="a3" doxytag="OsclUDPSocket::Close"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -271,7 +278,42 @@ Once it is closed a socket cannot be re-opened. Sockets are automatically closed
 Returns OsclErrNone for success, or a platform-specific error code. </dl>    </td>
   </tr>
 </table>
-<a name="a6" doxytag="OsclUDPSocket::GetRecvData"></a><p>
+<a name="a10" doxytag="OsclUDPSocket::GetPeerName"></a><p>
+<table width="100%" cellpadding="2" cellspacing="0" border="0">
+  <tr>
+    <td class="md">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> OSCL_IMPORT_REF int32 OsclUDPSocket::GetPeerName </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="classOsclNetworkAddress.html">OsclNetworkAddress</a> &amp;&nbsp;</td>
+          <td class="mdname1" valign="top" nowrap>&nbsp; <em>aPeerName</em>          </td>
+          <td class="md" valign="top">)&nbsp;</td>
+          <td class="md" nowrap></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+Retrieves the peer address of the socket <dl compact><dt><b>Parameters: </b></dt><dd>
+<table border=0 cellspacing=2 cellpadding=0>
+<tr><td valign=top><em>aPeerName:</em>&nbsp;</td><td>
+This will store the peer address when API returns successfully. </td></tr>
+</table>
+</dl><dl compact><dt><b>Returns: </b></dt><dd>
+Returns OsclErrNone for success, or a platform-specific error code. or PVSOCK_ERR_NOT_IMPLEMENTED, if this API is not implemented in OSCL for the underlying OS </dl>    </td>
+  </tr>
+</table>
+<a name="a13" doxytag="OsclUDPSocket::GetRecvData"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -306,7 +348,7 @@ Retrieve the received data after a successful RecvFrom operation. This is a sync
 Returns pointer to received data, or NULL if none. </dl>    </td>
   </tr>
 </table>
-<a name="a7" doxytag="OsclUDPSocket::GetSendData"></a><p>
+<a name="a14" doxytag="OsclUDPSocket::GetSendData"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -341,7 +383,7 @@ Retrieve the sent data after a successful SendTo operation. This is a synchronou
 Returns pointer to sent data, or NULL if none. </dl>    </td>
   </tr>
 </table>
-<a name="a3" doxytag="OsclUDPSocket::Join"></a><p>
+<a name="a5" doxytag="OsclUDPSocket::Join"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -374,6 +416,41 @@ Bind address. </td></tr>
 </table>
 </dl><dl compact><dt><b>Returns: </b></dt><dd>
 Returns OsclErrNone for success, or a platform-specific error code. May throw an OsclErrNotSupported Exception </dl>    </td>
+  </tr>
+</table>
+<a name="a6" doxytag="OsclUDPSocket::JoinMulticastGroup"></a><p>
+<table width="100%" cellpadding="2" cellspacing="0" border="0">
+  <tr>
+    <td class="md">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> OSCL_IMPORT_REF int32 OsclUDPSocket::JoinMulticastGroup </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="classOsclIpMReq.html">OsclIpMReq</a> &amp;&nbsp;</td>
+          <td class="mdname1" valign="top" nowrap>&nbsp; <em>aMReq</em>          </td>
+          <td class="md" valign="top">)&nbsp;</td>
+          <td class="md" nowrap></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+Join the multicast group. <dl compact><dt><b>Parameters: </b></dt><dd>
+<table border=0 cellspacing=2 cellpadding=0>
+<tr><td valign=top><em>aMReq:</em>&nbsp;</td><td>
+Multicast group information. </td></tr>
+</table>
+</dl><dl compact><dt><b>Returns: </b></dt><dd>
+Returns: OsclErrNone for success, or a platform-specific error code. or PVSOCK_ERR_NOT_SUPPORTED, if underlying OS doesn't support joining multicast group PVSOCK_ERR_BAD_PARAM, if config io file is not configured in accordance with underlying OS PVSOCK_ERR_NOT_IMPLEMENTED, if this API is not implemented in OSCL for the underlying OS </dl>    </td>
   </tr>
 </table>
 <a name="d0" doxytag="OsclUDPSocket::NewL"></a><p>
@@ -438,13 +515,13 @@ Socket ID. The caller must assign an ID to each socket. The ID is used to identi
 Returns pointer to socket. </dl>    </td>
   </tr>
 </table>
-<a name="a10" doxytag="OsclUDPSocket::RecvFrom"></a><p>
+<a name="a17" doxytag="OsclUDPSocket::RecvFrom"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
       <table cellpadding="0" cellspacing="0" border="0">
         <tr>
-          <td class="md" nowrap valign="top"> OSCL_IMPORT_REF <a class="el" href="oscl__socket__types_8h.html#a20">TPVSocketEvent</a> OsclUDPSocket::RecvFrom </td>
+          <td class="md" nowrap valign="top"> OSCL_IMPORT_REF <a class="el" href="oscl__socket__types_8h.html#a28">TPVSocketEvent</a> OsclUDPSocket::RecvFrom </td>
           <td class="md" valign="top">(&nbsp;</td>
           <td class="md" nowrap valign="top">uint8 *&nbsp;</td>
           <td class="mdname" nowrap>&nbsp; <em>aPtr</em>, </td>
@@ -524,13 +601,13 @@ Timeout in milliseconds, or (-1) for infinite wait.</td></tr>
 Will return EPVSocketPending if successful. When the operation is complete, a callback to the observer will occur with the completion status. If the operation cannot be initiated, the call will return EPVSocketFailure and there will be no callback. </dl>    </td>
   </tr>
 </table>
-<a name="a8" doxytag="OsclUDPSocket::SendTo"></a><p>
+<a name="a15" doxytag="OsclUDPSocket::SendTo"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
       <table cellpadding="0" cellspacing="0" border="0">
         <tr>
-          <td class="md" nowrap valign="top"> OSCL_IMPORT_REF <a class="el" href="oscl__socket__types_8h.html#a20">TPVSocketEvent</a> OsclUDPSocket::SendTo </td>
+          <td class="md" nowrap valign="top"> OSCL_IMPORT_REF <a class="el" href="oscl__socket__types_8h.html#a28">TPVSocketEvent</a> OsclUDPSocket::SendTo </td>
           <td class="md" valign="top">(&nbsp;</td>
           <td class="md" nowrap valign="top">const uint8 *&nbsp;</td>
           <td class="mdname" nowrap>&nbsp; <em>aPtr</em>, </td>
@@ -586,7 +663,71 @@ Timeout in milliseconds, or (-1) for infinite wait. </td></tr>
 Will return EPVSocketPending if successful. When the operation is complete, a callback to the observer will occur with the completion status. If the operation cannot be initiated, the call will return EPVSocketFailure and there will be no callback. </dl>    </td>
   </tr>
 </table>
-<a name="a12" doxytag="OsclUDPSocket::SetRecvBufferSize"></a><p>
+<a name="a7" doxytag="OsclUDPSocket::SetMulticastTTL"></a><p>
+<table width="100%" cellpadding="2" cellspacing="0" border="0">
+  <tr>
+    <td class="md">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> OSCL_IMPORT_REF int32 OsclUDPSocket::SetMulticastTTL </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top">int32&nbsp;</td>
+          <td class="mdname1" valign="top" nowrap>&nbsp; <em>aTTL</em>          </td>
+          <td class="md" valign="top">)&nbsp;</td>
+          <td class="md" nowrap></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+Controls the number of intermediate systems through which a multicast datagram can be forwarded. <dl compact><dt><b>Parameters: </b></dt><dd>
+<table border=0 cellspacing=2 cellpadding=0>
+<tr><td valign=top><em>aTTL:Specifies</em>&nbsp;</td><td>
+the time-to-live value for multicast datagrams sent through this socket. </td></tr>
+</table>
+</dl><dl compact><dt><b>Returns: </b></dt><dd>
+Returns: OsclErrNone for success, or a platform-specific error code. or PVSOCK_ERR_NOT_SUPPORTED, if underlying OS doesn't support joining multicast group PVSOCK_ERR_BAD_PARAM, if config io file is not configured in accordance with underlying OS PVSOCK_ERR_NOT_IMPLEMENTED, if this API is not implemented in OSCL for the underlying OS </dl>    </td>
+  </tr>
+</table>
+<a name="a8" doxytag="OsclUDPSocket::SetOptionToReuseAddress"></a><p>
+<table width="100%" cellpadding="2" cellspacing="0" border="0">
+  <tr>
+    <td class="md">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> OSCL_IMPORT_REF int32 OsclUDPSocket::SetOptionToReuseAddress </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="mdname1" valign="top" nowrap>&nbsp;          </td>
+          <td class="md" valign="top">)&nbsp;</td>
+          <td class="md" nowrap></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+Allows the server to bind to an address which is in a TIME_WAIT state. <dl compact><dt><b>Returns: </b></dt><dd>
+Returns: OsclErrNone for success, or a platform-specific error code. or PVSOCK_ERR_NOT_SUPPORTED, if underlying OS doesn't support joining multicast group PVSOCK_ERR_BAD_PARAM, if config io file is not configured in accordance with underlying OS PVSOCK_ERR_NOT_IMPLEMENTED, if this API is not implemented in OSCL for the underlying OS </dl>    </td>
+  </tr>
+</table>
+<a name="a19" doxytag="OsclUDPSocket::SetRecvBufferSize"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -621,10 +762,111 @@ buffer size </td></tr>
 Returns OsclErrNone for success, or a platform-specific error code. May throw an OsclErrNotSupported Exception. </dl>    </td>
   </tr>
 </table>
+<a name="a9" doxytag="OsclUDPSocket::SetTOS"></a><p>
+<table width="100%" cellpadding="2" cellspacing="0" border="0">
+  <tr>
+    <td class="md">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> OSCL_IMPORT_REF int32 OsclUDPSocket::SetTOS </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top">const <a class="el" href="classOsclSocketTOS.html">OsclSocketTOS</a> &amp;&nbsp;</td>
+          <td class="mdname1" valign="top" nowrap>&nbsp; <em>aTOS</em>          </td>
+          <td class="md" valign="top">)&nbsp;</td>
+          <td class="md" nowrap></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+Sets the Type of Service field of each outgoing IP datagram. <dl compact><dt><b>Parameters: </b></dt><dd>
+<table border=0 cellspacing=2 cellpadding=0>
+<tr><td valign=top><em>aTOS:</em>&nbsp;</td><td>
+Specifies the type of service requested. </td></tr>
+</table>
+</dl><dl compact><dt><b>Returns: </b></dt><dd>
+Returns: OsclErrNone for success, or a platform-specific error code. or PVSOCK_ERR_NOT_SUPPORTED, if underlying OS doesn't support joining multicast group PVSOCK_ERR_BAD_PARAM, if config io file is not configured in accordance with underlying OS PVSOCK_ERR_NOT_IMPLEMENTED, if this API is not implemented in OSCL for the underlying OS </dl>    </td>
+  </tr>
+</table>
+<a name="a1" doxytag="OsclUDPSocket::ThreadLogoff"></a><p>
+<table width="100%" cellpadding="2" cellspacing="0" border="0">
+  <tr>
+    <td class="md">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> OSCL_IMPORT_REF <a class="el" href="oscl__socket__types_8h.html#a28">TPVSocketEvent</a> OsclUDPSocket::ThreadLogoff </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="mdname1" valign="top" nowrap>&nbsp;          </td>
+          <td class="md" valign="top">)&nbsp;</td>
+          <td class="md" nowrap></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+Thread logoff routine. This will prepare for transfer and use of the socket in another thread. All socket requests must be complete prior to calling this routine. If any requests are still active, it will return EPVSocketFailure;     </td>
+  </tr>
+</table>
+<a name="a2" doxytag="OsclUDPSocket::ThreadLogon"></a><p>
+<table width="100%" cellpadding="2" cellspacing="0" border="0">
+  <tr>
+    <td class="md">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> OSCL_IMPORT_REF <a class="el" href="oscl__socket__types_8h.html#a28">TPVSocketEvent</a> OsclUDPSocket::ThreadLogon </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="classOsclSocketServ.html">OsclSocketServ</a> &amp;&nbsp;</td>
+          <td class="mdname" nowrap>&nbsp; <em>aServ</em>, </td>
+        </tr>
+        <tr>
+          <td></td>
+          <td></td>
+          <td class="md" nowrap><a class="el" href="classOsclSocketObserver.html">OsclSocketObserver</a> *&nbsp;</td>
+          <td class="mdname" nowrap>&nbsp; <em>aObserver</em></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="md">)&nbsp;</td>
+          <td class="md" colspan="2"></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+Thread logon routine. This will complete the transfer of a socket from another thread for use in the current thread. The ThreadLogoff API must be called in the original thread prior to calling ThreadLogon.     </td>
+  </tr>
+</table>
 <hr>The documentation for this class was generated from the following file:<ul>
 <li><a class="el" href="oscl__socket_8h-source.html">oscl_socket.h</a></ul>
 <hr size="1"><img src="pvlogo_small.jpg"><address style="align: right;"><small>OSCL API</small>
-<address style="align: left;"><small>Posting Version: CORE_8.000.1.1_RC1 </small>
+<address style="align: left;"><small>Posting Version: CORE_8.000.1.1_RC2 </small>
 </small></address>
 </body>
 </html>

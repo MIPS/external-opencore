@@ -16,38 +16,50 @@
 <a href="oscl__socket__types_8h-source.html">Go to the source code of this file.</a><table border=0 cellpadding=0 cellspacing=0>
 <tr><td></td></tr>
 <tr><td colspan=2><br><h2>Data Structures</h2></td></tr>
+<tr><td nowrap align=right valign=top>class &nbsp;</td><td valign=bottom><a class="el" href="classOsclIpMReq.html">OsclIpMReq</a></td></tr>
 <tr><td nowrap align=right valign=top>class &nbsp;</td><td valign=bottom><a class="el" href="classOsclNetworkAddress.html">OsclNetworkAddress</a></td></tr>
 <tr><td nowrap align=right valign=top>class &nbsp;</td><td valign=bottom><a class="el" href="classOsclSocketObserver.html">OsclSocketObserver</a></td></tr>
+<tr><td nowrap align=right valign=top>class &nbsp;</td><td valign=bottom><a class="el" href="classOsclSocketTOS.html">OsclSocketTOS</a></td></tr>
 <tr><td colspan=2><br><h2>Defines</h2></td></tr>
 <tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="oscl__socket__types_8h.html#a0">PVNETWORKADDRESS_LEN</a>&nbsp;&nbsp;&nbsp;50</td></tr>
 <tr><td colspan=2><br><h2>Enumerations</h2></td></tr>
-<tr><td nowrap align=right valign=top>enum &nbsp;</td><td valign=bottom><a class="el" href="oscl__socket__types_8h.html#a19">TPVSocketFxn</a> { <br>
-&nbsp;&nbsp;<a class="el" href="oscl__socket__types_8h.html#a19a1">EPVSocketSend</a> =  0, 
-<a class="el" href="oscl__socket__types_8h.html#a19a2">EPVSocketSendTo</a>, 
-<a class="el" href="oscl__socket__types_8h.html#a19a3">EPVSocketRecv</a>, 
-<a class="el" href="oscl__socket__types_8h.html#a19a4">EPVSocketRecvFrom</a>, 
+<tr><td nowrap align=right valign=top>enum &nbsp;</td><td valign=bottom><a class="el" href="oscl__socket__types_8h.html#a27">TPVSocketFxn</a> { <br>
+&nbsp;&nbsp;<a class="el" href="oscl__socket__types_8h.html#a27a1">EPVSocketSend</a> =  0, 
+<a class="el" href="oscl__socket__types_8h.html#a27a2">EPVSocketSendTo</a>, 
+<a class="el" href="oscl__socket__types_8h.html#a27a3">EPVSocketRecv</a>, 
+<a class="el" href="oscl__socket__types_8h.html#a27a4">EPVSocketRecvFrom</a>, 
 <br>
-&nbsp;&nbsp;<a class="el" href="oscl__socket__types_8h.html#a19a5">EPVSocketConnect</a>, 
-<a class="el" href="oscl__socket__types_8h.html#a19a6">EPVSocketAccept</a>, 
-<a class="el" href="oscl__socket__types_8h.html#a19a7">EPVSocketShutdown</a>, 
-<a class="el" href="oscl__socket__types_8h.html#a19a8">EPVSocketBind</a>, 
+&nbsp;&nbsp;<a class="el" href="oscl__socket__types_8h.html#a27a5">EPVSocketConnect</a>, 
+<a class="el" href="oscl__socket__types_8h.html#a27a6">EPVSocketAccept</a>, 
+<a class="el" href="oscl__socket__types_8h.html#a27a7">EPVSocketShutdown</a>, 
+<a class="el" href="oscl__socket__types_8h.html#a27a8">EPVSocketBind</a>, 
 <br>
-&nbsp;&nbsp;<a class="el" href="oscl__socket__types_8h.html#a19a9">EPVSocketListen</a>, 
-<a class="el" href="oscl__socket__types_8h.html#a19a10">EPVSocket_Last</a>
-<br>
- }</td></tr>
-<tr><td nowrap align=right valign=top>enum &nbsp;</td><td valign=bottom><a class="el" href="oscl__socket__types_8h.html#a20">TPVSocketEvent</a> { <br>
-&nbsp;&nbsp;<a class="el" href="oscl__socket__types_8h.html#a20a11">EPVSocketSuccess</a>, 
-<a class="el" href="oscl__socket__types_8h.html#a20a12">EPVSocketPending</a>, 
-<a class="el" href="oscl__socket__types_8h.html#a20a13">EPVSocketTimeout</a>, 
-<a class="el" href="oscl__socket__types_8h.html#a20a14">EPVSocketFailure</a>, 
-<br>
-&nbsp;&nbsp;<a class="el" href="oscl__socket__types_8h.html#a20a15">EPVSocketCancel</a>
+&nbsp;&nbsp;<a class="el" href="oscl__socket__types_8h.html#a27a9">EPVSocketListen</a>, 
+<a class="el" href="oscl__socket__types_8h.html#a27a10">EPVSocket_Last</a>
 <br>
  }</td></tr>
-<tr><td nowrap align=right valign=top>enum &nbsp;</td><td valign=bottom><a class="el" href="oscl__socket__types_8h.html#a21">TPVSocketShutdown</a> { <a class="el" href="oscl__socket__types_8h.html#a21a16">EPVSocketSendShutdown</a>, 
-<a class="el" href="oscl__socket__types_8h.html#a21a17">EPVSocketRecvShutdown</a>, 
-<a class="el" href="oscl__socket__types_8h.html#a21a18">EPVSocketBothShutdown</a>
+<tr><td nowrap align=right valign=top>enum &nbsp;</td><td valign=bottom><a class="el" href="oscl__socket__types_8h.html#a28">TPVSocketEvent</a> { <br>
+&nbsp;&nbsp;<a class="el" href="oscl__socket__types_8h.html#a28a11">EPVSocketSuccess</a>, 
+<a class="el" href="oscl__socket__types_8h.html#a28a12">EPVSocketPending</a>, 
+<a class="el" href="oscl__socket__types_8h.html#a28a13">EPVSocketTimeout</a>, 
+<a class="el" href="oscl__socket__types_8h.html#a28a14">EPVSocketFailure</a>, 
+<br>
+&nbsp;&nbsp;<a class="el" href="oscl__socket__types_8h.html#a28a15">EPVSocketCancel</a>, 
+<a class="el" href="oscl__socket__types_8h.html#a28a16">EPVSocketNotImplemented</a>
+<br>
+ }</td></tr>
+<tr><td nowrap align=right valign=top>enum &nbsp;</td><td valign=bottom><a class="el" href="oscl__socket__types_8h.html#a29">TPVSocketShutdown</a> { <a class="el" href="oscl__socket__types_8h.html#a29a17">EPVSocketSendShutdown</a>, 
+<a class="el" href="oscl__socket__types_8h.html#a29a18">EPVSocketRecvShutdown</a>, 
+<a class="el" href="oscl__socket__types_8h.html#a29a19">EPVSocketBothShutdown</a>
+ }</td></tr>
+<tr><td nowrap align=right valign=top>enum &nbsp;</td><td valign=bottom><a class="el" href="oscl__socket__types_8h.html#a30">TPVSocketOptionName</a> { <a class="el" href="oscl__socket__types_8h.html#a30a20">EPVIPMulticastTTL</a>, 
+<a class="el" href="oscl__socket__types_8h.html#a30a21">EPVIPAddMembership</a>, 
+<a class="el" href="oscl__socket__types_8h.html#a30a22">EPVIPTOS</a>, 
+<a class="el" href="oscl__socket__types_8h.html#a30a23">EPVSockReuseAddr</a>
+ }</td></tr>
+<tr><td nowrap align=right valign=top>enum &nbsp;</td><td valign=bottom><a class="el" href="oscl__socket__types_8h.html#a31">TPVSocketOptionLevel</a> { <a class="el" href="oscl__socket__types_8h.html#a31a24">EPVIPProtoIP</a>, 
+<a class="el" href="oscl__socket__types_8h.html#a31a25">EPVIPProtoTCP</a>, 
+<a class="el" href="oscl__socket__types_8h.html#a31a26">EPVSocket</a>
  }</td></tr>
 </table>
 <hr><h2>Define Documentation</h2>
@@ -74,7 +86,7 @@
   </tr>
 </table>
 <hr><h2>Enumeration Type Documentation</h2>
-<a name="a20" doxytag="oscl_socket_types.h::TPVSocketEvent"></a><p>
+<a name="a28" doxytag="oscl_socket_types.h::TPVSocketEvent"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -95,22 +107,24 @@
 <p>
 Return codes for asynchronous APIs <dl compact><dt><b>Enumeration values: </b></dt><dd>
 <table border=0 cellspacing=2 cellpadding=0>
-<tr><td valign=top><em><a name="a20a11" doxytag="EPVSocketSuccess"></a><em>EPVSocketSuccess</em></em>&nbsp;</td><td>
+<tr><td valign=top><em><a name="a28a11" doxytag="EPVSocketSuccess"></a><em>EPVSocketSuccess</em></em>&nbsp;</td><td>
 </td></tr>
-<tr><td valign=top><em><a name="a20a12" doxytag="EPVSocketPending"></a><em>EPVSocketPending</em></em>&nbsp;</td><td>
+<tr><td valign=top><em><a name="a28a12" doxytag="EPVSocketPending"></a><em>EPVSocketPending</em></em>&nbsp;</td><td>
 </td></tr>
-<tr><td valign=top><em><a name="a20a13" doxytag="EPVSocketTimeout"></a><em>EPVSocketTimeout</em></em>&nbsp;</td><td>
+<tr><td valign=top><em><a name="a28a13" doxytag="EPVSocketTimeout"></a><em>EPVSocketTimeout</em></em>&nbsp;</td><td>
 </td></tr>
-<tr><td valign=top><em><a name="a20a14" doxytag="EPVSocketFailure"></a><em>EPVSocketFailure</em></em>&nbsp;</td><td>
+<tr><td valign=top><em><a name="a28a14" doxytag="EPVSocketFailure"></a><em>EPVSocketFailure</em></em>&nbsp;</td><td>
 </td></tr>
-<tr><td valign=top><em><a name="a20a15" doxytag="EPVSocketCancel"></a><em>EPVSocketCancel</em></em>&nbsp;</td><td>
+<tr><td valign=top><em><a name="a28a15" doxytag="EPVSocketCancel"></a><em>EPVSocketCancel</em></em>&nbsp;</td><td>
+</td></tr>
+<tr><td valign=top><em><a name="a28a16" doxytag="EPVSocketNotImplemented"></a><em>EPVSocketNotImplemented</em></em>&nbsp;</td><td>
 </td></tr>
 </table>
 </dl>
     </td>
   </tr>
 </table>
-<a name="a19" doxytag="oscl_socket_types.h::TPVSocketFxn"></a><p>
+<a name="a27" doxytag="oscl_socket_types.h::TPVSocketFxn"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -131,32 +145,98 @@ Return codes for asynchronous APIs <dl compact><dt><b>Enumeration values: </b></
 <p>
 <dl compact><dt><b>Enumeration values: </b></dt><dd>
 <table border=0 cellspacing=2 cellpadding=0>
-<tr><td valign=top><em><a name="a19a1" doxytag="EPVSocketSend"></a><em>EPVSocketSend</em></em>&nbsp;</td><td>
+<tr><td valign=top><em><a name="a27a1" doxytag="EPVSocketSend"></a><em>EPVSocketSend</em></em>&nbsp;</td><td>
 </td></tr>
-<tr><td valign=top><em><a name="a19a2" doxytag="EPVSocketSendTo"></a><em>EPVSocketSendTo</em></em>&nbsp;</td><td>
+<tr><td valign=top><em><a name="a27a2" doxytag="EPVSocketSendTo"></a><em>EPVSocketSendTo</em></em>&nbsp;</td><td>
 </td></tr>
-<tr><td valign=top><em><a name="a19a3" doxytag="EPVSocketRecv"></a><em>EPVSocketRecv</em></em>&nbsp;</td><td>
+<tr><td valign=top><em><a name="a27a3" doxytag="EPVSocketRecv"></a><em>EPVSocketRecv</em></em>&nbsp;</td><td>
 </td></tr>
-<tr><td valign=top><em><a name="a19a4" doxytag="EPVSocketRecvFrom"></a><em>EPVSocketRecvFrom</em></em>&nbsp;</td><td>
+<tr><td valign=top><em><a name="a27a4" doxytag="EPVSocketRecvFrom"></a><em>EPVSocketRecvFrom</em></em>&nbsp;</td><td>
 </td></tr>
-<tr><td valign=top><em><a name="a19a5" doxytag="EPVSocketConnect"></a><em>EPVSocketConnect</em></em>&nbsp;</td><td>
+<tr><td valign=top><em><a name="a27a5" doxytag="EPVSocketConnect"></a><em>EPVSocketConnect</em></em>&nbsp;</td><td>
 </td></tr>
-<tr><td valign=top><em><a name="a19a6" doxytag="EPVSocketAccept"></a><em>EPVSocketAccept</em></em>&nbsp;</td><td>
+<tr><td valign=top><em><a name="a27a6" doxytag="EPVSocketAccept"></a><em>EPVSocketAccept</em></em>&nbsp;</td><td>
 </td></tr>
-<tr><td valign=top><em><a name="a19a7" doxytag="EPVSocketShutdown"></a><em>EPVSocketShutdown</em></em>&nbsp;</td><td>
+<tr><td valign=top><em><a name="a27a7" doxytag="EPVSocketShutdown"></a><em>EPVSocketShutdown</em></em>&nbsp;</td><td>
 </td></tr>
-<tr><td valign=top><em><a name="a19a8" doxytag="EPVSocketBind"></a><em>EPVSocketBind</em></em>&nbsp;</td><td>
+<tr><td valign=top><em><a name="a27a8" doxytag="EPVSocketBind"></a><em>EPVSocketBind</em></em>&nbsp;</td><td>
 </td></tr>
-<tr><td valign=top><em><a name="a19a9" doxytag="EPVSocketListen"></a><em>EPVSocketListen</em></em>&nbsp;</td><td>
+<tr><td valign=top><em><a name="a27a9" doxytag="EPVSocketListen"></a><em>EPVSocketListen</em></em>&nbsp;</td><td>
 </td></tr>
-<tr><td valign=top><em><a name="a19a10" doxytag="EPVSocket_Last"></a><em>EPVSocket_Last</em></em>&nbsp;</td><td>
+<tr><td valign=top><em><a name="a27a10" doxytag="EPVSocket_Last"></a><em>EPVSocket_Last</em></em>&nbsp;</td><td>
 </td></tr>
 </table>
 </dl>
     </td>
   </tr>
 </table>
-<a name="a21" doxytag="oscl_socket_types.h::TPVSocketShutdown"></a><p>
+<a name="a31" doxytag="oscl_socket_types.h::TPVSocketOptionLevel"></a><p>
+<table width="100%" cellpadding="2" cellspacing="0" border="0">
+  <tr>
+    <td class="md">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> enum TPVSocketOptionLevel
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+<dl compact><dt><b>Enumeration values: </b></dt><dd>
+<table border=0 cellspacing=2 cellpadding=0>
+<tr><td valign=top><em><a name="a31a24" doxytag="EPVIPProtoIP"></a><em>EPVIPProtoIP</em></em>&nbsp;</td><td>
+</td></tr>
+<tr><td valign=top><em><a name="a31a25" doxytag="EPVIPProtoTCP"></a><em>EPVIPProtoTCP</em></em>&nbsp;</td><td>
+</td></tr>
+<tr><td valign=top><em><a name="a31a26" doxytag="EPVSocket"></a><em>EPVSocket</em></em>&nbsp;</td><td>
+</td></tr>
+</table>
+</dl>
+    </td>
+  </tr>
+</table>
+<a name="a30" doxytag="oscl_socket_types.h::TPVSocketOptionName"></a><p>
+<table width="100%" cellpadding="2" cellspacing="0" border="0">
+  <tr>
+    <td class="md">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> enum TPVSocketOptionName
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+<dl compact><dt><b>Enumeration values: </b></dt><dd>
+<table border=0 cellspacing=2 cellpadding=0>
+<tr><td valign=top><em><a name="a30a20" doxytag="EPVIPMulticastTTL"></a><em>EPVIPMulticastTTL</em></em>&nbsp;</td><td>
+</td></tr>
+<tr><td valign=top><em><a name="a30a21" doxytag="EPVIPAddMembership"></a><em>EPVIPAddMembership</em></em>&nbsp;</td><td>
+</td></tr>
+<tr><td valign=top><em><a name="a30a22" doxytag="EPVIPTOS"></a><em>EPVIPTOS</em></em>&nbsp;</td><td>
+</td></tr>
+<tr><td valign=top><em><a name="a30a23" doxytag="EPVSockReuseAddr"></a><em>EPVSockReuseAddr</em></em>&nbsp;</td><td>
+</td></tr>
+</table>
+</dl>
+    </td>
+  </tr>
+</table>
+<a name="a29" doxytag="oscl_socket_types.h::TPVSocketShutdown"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -177,11 +257,11 @@ Return codes for asynchronous APIs <dl compact><dt><b>Enumeration values: </b></
 <p>
 <dl compact><dt><b>Enumeration values: </b></dt><dd>
 <table border=0 cellspacing=2 cellpadding=0>
-<tr><td valign=top><em><a name="a21a16" doxytag="EPVSocketSendShutdown"></a><em>EPVSocketSendShutdown</em></em>&nbsp;</td><td>
+<tr><td valign=top><em><a name="a29a17" doxytag="EPVSocketSendShutdown"></a><em>EPVSocketSendShutdown</em></em>&nbsp;</td><td>
 </td></tr>
-<tr><td valign=top><em><a name="a21a17" doxytag="EPVSocketRecvShutdown"></a><em>EPVSocketRecvShutdown</em></em>&nbsp;</td><td>
+<tr><td valign=top><em><a name="a29a18" doxytag="EPVSocketRecvShutdown"></a><em>EPVSocketRecvShutdown</em></em>&nbsp;</td><td>
 </td></tr>
-<tr><td valign=top><em><a name="a21a18" doxytag="EPVSocketBothShutdown"></a><em>EPVSocketBothShutdown</em></em>&nbsp;</td><td>
+<tr><td valign=top><em><a name="a29a19" doxytag="EPVSocketBothShutdown"></a><em>EPVSocketBothShutdown</em></em>&nbsp;</td><td>
 </td></tr>
 </table>
 </dl>
@@ -189,7 +269,7 @@ Return codes for asynchronous APIs <dl compact><dt><b>Enumeration values: </b></
   </tr>
 </table>
 <hr size="1"><img src="pvlogo_small.jpg"><address style="align: right;"><small>OSCL API</small>
-<address style="align: left;"><small>Posting Version: CORE_8.000.1.1_RC1 </small>
+<address style="align: left;"><small>Posting Version: CORE_8.000.1.1_RC2 </small>
 </small></address>
 </body>
 </html>

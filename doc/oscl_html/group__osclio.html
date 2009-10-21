@@ -132,18 +132,21 @@
 <a class="el" href="group__osclio.html#a29a9">EOsclFileOp_Flush</a>, 
 <br>
 &nbsp;&nbsp;<a class="el" href="group__osclio.html#a29a10">EOsclFileOp_EndOfFile</a>, 
-<a class="el" href="group__osclio.html#a29a11">EOsclFileOp_NativeOpen</a>, 
-<a class="el" href="group__osclio.html#a29a12">EOsclFileOp_NativeClose</a>, 
-<a class="el" href="group__osclio.html#a29a13">EOsclFileOp_NativeRead</a>, 
+<a class="el" href="group__osclio.html#a29a11">EOsclFileOp_SetSize</a>, 
+<a class="el" href="group__osclio.html#a29a12">EOsclFileOp_NativeOpen</a>, 
+<a class="el" href="group__osclio.html#a29a13">EOsclFileOp_NativeClose</a>, 
 <br>
-&nbsp;&nbsp;<a class="el" href="group__osclio.html#a29a14">EOsclFileOp_NativeWrite</a>, 
-<a class="el" href="group__osclio.html#a29a15">EOsclFileOp_NativeSeek</a>, 
-<a class="el" href="group__osclio.html#a29a16">EOsclFileOp_NativeTell</a>, 
-<a class="el" href="group__osclio.html#a29a17">EOsclFileOp_NativeSize</a>, 
+&nbsp;&nbsp;<a class="el" href="group__osclio.html#a29a14">EOsclFileOp_NativeRead</a>, 
+<a class="el" href="group__osclio.html#a29a15">EOsclFileOp_NativeWrite</a>, 
+<a class="el" href="group__osclio.html#a29a16">EOsclFileOp_NativeSeek</a>, 
+<a class="el" href="group__osclio.html#a29a17">EOsclFileOp_NativeTell</a>, 
 <br>
-&nbsp;&nbsp;<a class="el" href="group__osclio.html#a29a18">EOsclFileOp_NativeFlush</a>, 
-<a class="el" href="group__osclio.html#a29a19">EOsclFileOp_NativeEndOfFile</a>, 
-<a class="el" href="group__osclio.html#a29a20">EOsclFileOp_Last</a>
+&nbsp;&nbsp;<a class="el" href="group__osclio.html#a29a18">EOsclFileOp_NativeSize</a>, 
+<a class="el" href="group__osclio.html#a29a19">EOsclFileOp_NativeFlush</a>, 
+<a class="el" href="group__osclio.html#a29a20">EOsclFileOp_NativeEndOfFile</a>, 
+<a class="el" href="group__osclio.html#a29a21">EOsclFileOp_NativeSetSize</a>, 
+<br>
+&nbsp;&nbsp;<a class="el" href="group__osclio.html#a29a22">EOsclFileOp_Last</a>
 <br>
  }</td></tr>
 <tr><td colspan=2><br><h2>Functions</h2></td></tr>
@@ -508,25 +511,29 @@ TOsclFileHandle is an OS-native file handle type. With a class-based file API su
 </td></tr>
 <tr><td valign=top><em><a name="a29a10" doxytag="EOsclFileOp_EndOfFile"></a><em>EOsclFileOp_EndOfFile</em></em>&nbsp;</td><td>
 </td></tr>
-<tr><td valign=top><em><a name="a29a11" doxytag="EOsclFileOp_NativeOpen"></a><em>EOsclFileOp_NativeOpen</em></em>&nbsp;</td><td>
+<tr><td valign=top><em><a name="a29a11" doxytag="EOsclFileOp_SetSize"></a><em>EOsclFileOp_SetSize</em></em>&nbsp;</td><td>
 </td></tr>
-<tr><td valign=top><em><a name="a29a12" doxytag="EOsclFileOp_NativeClose"></a><em>EOsclFileOp_NativeClose</em></em>&nbsp;</td><td>
+<tr><td valign=top><em><a name="a29a12" doxytag="EOsclFileOp_NativeOpen"></a><em>EOsclFileOp_NativeOpen</em></em>&nbsp;</td><td>
 </td></tr>
-<tr><td valign=top><em><a name="a29a13" doxytag="EOsclFileOp_NativeRead"></a><em>EOsclFileOp_NativeRead</em></em>&nbsp;</td><td>
+<tr><td valign=top><em><a name="a29a13" doxytag="EOsclFileOp_NativeClose"></a><em>EOsclFileOp_NativeClose</em></em>&nbsp;</td><td>
 </td></tr>
-<tr><td valign=top><em><a name="a29a14" doxytag="EOsclFileOp_NativeWrite"></a><em>EOsclFileOp_NativeWrite</em></em>&nbsp;</td><td>
+<tr><td valign=top><em><a name="a29a14" doxytag="EOsclFileOp_NativeRead"></a><em>EOsclFileOp_NativeRead</em></em>&nbsp;</td><td>
 </td></tr>
-<tr><td valign=top><em><a name="a29a15" doxytag="EOsclFileOp_NativeSeek"></a><em>EOsclFileOp_NativeSeek</em></em>&nbsp;</td><td>
+<tr><td valign=top><em><a name="a29a15" doxytag="EOsclFileOp_NativeWrite"></a><em>EOsclFileOp_NativeWrite</em></em>&nbsp;</td><td>
 </td></tr>
-<tr><td valign=top><em><a name="a29a16" doxytag="EOsclFileOp_NativeTell"></a><em>EOsclFileOp_NativeTell</em></em>&nbsp;</td><td>
+<tr><td valign=top><em><a name="a29a16" doxytag="EOsclFileOp_NativeSeek"></a><em>EOsclFileOp_NativeSeek</em></em>&nbsp;</td><td>
 </td></tr>
-<tr><td valign=top><em><a name="a29a17" doxytag="EOsclFileOp_NativeSize"></a><em>EOsclFileOp_NativeSize</em></em>&nbsp;</td><td>
+<tr><td valign=top><em><a name="a29a17" doxytag="EOsclFileOp_NativeTell"></a><em>EOsclFileOp_NativeTell</em></em>&nbsp;</td><td>
 </td></tr>
-<tr><td valign=top><em><a name="a29a18" doxytag="EOsclFileOp_NativeFlush"></a><em>EOsclFileOp_NativeFlush</em></em>&nbsp;</td><td>
+<tr><td valign=top><em><a name="a29a18" doxytag="EOsclFileOp_NativeSize"></a><em>EOsclFileOp_NativeSize</em></em>&nbsp;</td><td>
 </td></tr>
-<tr><td valign=top><em><a name="a29a19" doxytag="EOsclFileOp_NativeEndOfFile"></a><em>EOsclFileOp_NativeEndOfFile</em></em>&nbsp;</td><td>
+<tr><td valign=top><em><a name="a29a19" doxytag="EOsclFileOp_NativeFlush"></a><em>EOsclFileOp_NativeFlush</em></em>&nbsp;</td><td>
 </td></tr>
-<tr><td valign=top><em><a name="a29a20" doxytag="EOsclFileOp_Last"></a><em>EOsclFileOp_Last</em></em>&nbsp;</td><td>
+<tr><td valign=top><em><a name="a29a20" doxytag="EOsclFileOp_NativeEndOfFile"></a><em>EOsclFileOp_NativeEndOfFile</em></em>&nbsp;</td><td>
+</td></tr>
+<tr><td valign=top><em><a name="a29a21" doxytag="EOsclFileOp_NativeSetSize"></a><em>EOsclFileOp_NativeSetSize</em></em>&nbsp;</td><td>
+</td></tr>
+<tr><td valign=top><em><a name="a29a22" doxytag="EOsclFileOp_Last"></a><em>EOsclFileOp_Last</em></em>&nbsp;</td><td>
 </td></tr>
 </table>
 </dl>
@@ -1171,7 +1178,7 @@ OSCL_FILEMGMT_ERR_TYPE, see enumeration for this type. </dl>    </td>
   </tr>
 </table>
 <hr size="1"><img src="pvlogo_small.jpg"><address style="align: right;"><small>OSCL API</small>
-<address style="align: left;"><small>Posting Version: CORE_8.000.1.1_RC1 </small>
+<address style="align: left;"><small>Posting Version: CORE_8.000.1.1_RC2 </small>
 </small></address>
 </body>
 </html>

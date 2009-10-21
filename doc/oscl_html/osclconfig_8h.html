@@ -25,15 +25,16 @@
 <tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="osclconfig_8h.html#a2">OSCL_EXPORT_REF</a>&nbsp;&nbsp;&nbsp;__attribute__ ((visibility("default")))</td></tr>
 <tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a>&nbsp;&nbsp;&nbsp;__attribute__ ((visibility("default")))</td></tr>
 <tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="osclconfig_8h.html#a4">OSCL_RELEASE_BUILD</a>&nbsp;&nbsp;&nbsp;0</td></tr>
-<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="osclconfig_8h.html#a5">OSCL_UNSIGNED_CONST</a>(x)&nbsp;&nbsp;&nbsp;x##u</td></tr>
-<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="osclconfig_8h.html#a6">OSCL_NATIVE_UINT64_TYPE</a>&nbsp;&nbsp;&nbsp;u_int64_t</td></tr>
-<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="osclconfig_8h.html#a7">OSCL_TEMPLATED_DESTRUCTOR_CALL</a>(type, simple_type)&nbsp;&nbsp;&nbsp;~type ()</td></tr>
-<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="osclconfig_8h.html#a8">__TFS__</a>&nbsp;&nbsp;&nbsp;&lt;&gt;</td></tr>
+<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="osclconfig_8h.html#a5">PVLOGGER_INST_LEVEL</a>&nbsp;&nbsp;&nbsp;5</td></tr>
+<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="osclconfig_8h.html#a6">OSCL_UNSIGNED_CONST</a>(x)&nbsp;&nbsp;&nbsp;x##u</td></tr>
+<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="osclconfig_8h.html#a7">OSCL_NATIVE_UINT64_TYPE</a>&nbsp;&nbsp;&nbsp;u_int64_t</td></tr>
+<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="osclconfig_8h.html#a8">OSCL_TEMPLATED_DESTRUCTOR_CALL</a>(type, simple_type)&nbsp;&nbsp;&nbsp;~type ()</td></tr>
+<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="osclconfig_8h.html#a9">__TFS__</a>&nbsp;&nbsp;&nbsp;&lt;&gt;</td></tr>
 <tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="group__osclconfig.html#a10">OSCL_HAS_PRAGMA_PACK</a>&nbsp;&nbsp;&nbsp;0</td></tr>
-<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="osclconfig_8h.html#a10">OSCL_HAS_PACKED_STRUCT</a>&nbsp;&nbsp;&nbsp;1</td></tr>
-<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="osclconfig_8h.html#a11">OSCL_PACKED_VAR</a>(x)&nbsp;&nbsp;&nbsp;x __attribute__((packed))</td></tr>
-<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="osclconfig_8h.html#a12">OSCL_PACKED_STRUCT_BEGIN</a></td></tr>
-<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="osclconfig_8h.html#a13">OSCL_PACKED_STRUCT_END</a>&nbsp;&nbsp;&nbsp;__attribute__((packed))</td></tr>
+<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="osclconfig_8h.html#a11">OSCL_HAS_PACKED_STRUCT</a>&nbsp;&nbsp;&nbsp;1</td></tr>
+<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="osclconfig_8h.html#a12">OSCL_PACKED_VAR</a>(x)&nbsp;&nbsp;&nbsp;x __attribute__((packed))</td></tr>
+<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="osclconfig_8h.html#a13">OSCL_PACKED_STRUCT_BEGIN</a></td></tr>
+<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="osclconfig_8h.html#a14">OSCL_PACKED_STRUCT_END</a>&nbsp;&nbsp;&nbsp;__attribute__((packed))</td></tr>
 <tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="group__osclconfig.html#a6">OSCL_ASSERT_ALWAYS</a>&nbsp;&nbsp;&nbsp;0</td></tr>
 </table>
 <hr><a name="_details"></a><h2>Detailed Description</h2>
@@ -42,7 +43,7 @@ This file contains configuration information for the linux platform.
 
 <p>
 <hr><h2>Define Documentation</h2>
-<a name="a8" doxytag="osclconfig.h::__TFS__"></a><p>
+<a name="a9" doxytag="osclconfig.h::__TFS__"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -130,7 +131,7 @@ This file contains configuration information for the linux platform.
     </td>
   </tr>
 </table>
-<a name="a10" doxytag="osclconfig.h::OSCL_HAS_PACKED_STRUCT"></a><p>
+<a name="a11" doxytag="osclconfig.h::OSCL_HAS_PACKED_STRUCT"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -174,7 +175,7 @@ This file contains configuration information for the linux platform.
     </td>
   </tr>
 </table>
-<a name="a6" doxytag="osclconfig.h::OSCL_NATIVE_UINT64_TYPE"></a><p>
+<a name="a7" doxytag="osclconfig.h::OSCL_NATIVE_UINT64_TYPE"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -196,7 +197,7 @@ This file contains configuration information for the linux platform.
     </td>
   </tr>
 </table>
-<a name="a12" doxytag="osclconfig.h::OSCL_PACKED_STRUCT_BEGIN"></a><p>
+<a name="a13" doxytag="osclconfig.h::OSCL_PACKED_STRUCT_BEGIN"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -218,7 +219,7 @@ This file contains configuration information for the linux platform.
     </td>
   </tr>
 </table>
-<a name="a13" doxytag="osclconfig.h::OSCL_PACKED_STRUCT_END"></a><p>
+<a name="a14" doxytag="osclconfig.h::OSCL_PACKED_STRUCT_END"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -240,7 +241,7 @@ This file contains configuration information for the linux platform.
     </td>
   </tr>
 </table>
-<a name="a11" doxytag="osclconfig.h::OSCL_PACKED_VAR"></a><p>
+<a name="a12" doxytag="osclconfig.h::OSCL_PACKED_VAR"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -289,7 +290,7 @@ This file contains configuration information for the linux platform.
     </td>
   </tr>
 </table>
-<a name="a7" doxytag="osclconfig.h::OSCL_TEMPLATED_DESTRUCTOR_CALL"></a><p>
+<a name="a8" doxytag="osclconfig.h::OSCL_TEMPLATED_DESTRUCTOR_CALL"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -319,7 +320,7 @@ This file contains configuration information for the linux platform.
     </td>
   </tr>
 </table>
-<a name="a5" doxytag="osclconfig.h::OSCL_UNSIGNED_CONST"></a><p>
+<a name="a6" doxytag="osclconfig.h::OSCL_UNSIGNED_CONST"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -346,8 +347,30 @@ This file contains configuration information for the linux platform.
     </td>
   </tr>
 </table>
+<a name="a5" doxytag="osclconfig.h::PVLOGGER_INST_LEVEL"></a><p>
+<table width="100%" cellpadding="2" cellspacing="0" border="0">
+  <tr>
+    <td class="md">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> #define PVLOGGER_INST_LEVEL&nbsp;&nbsp;&nbsp;5
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+    </td>
+  </tr>
+</table>
 <hr size="1"><img src="pvlogo_small.jpg"><address style="align: right;"><small>OSCL API</small>
-<address style="align: left;"><small>Posting Version: CORE_8.000.1.1_RC1 </small>
+<address style="align: left;"><small>Posting Version: CORE_8.000.1.1_RC2 </small>
 </small></address>
 </body>
 </html>

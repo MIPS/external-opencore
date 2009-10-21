@@ -130,11 +130,11 @@
 00208 {
 00209 
 00210     <span class="keyword">public</span>:
-<a name="l00211"></a><a class="code" href="classOscl__Vector.html#s0">00211</a>         <span class="keyword">typedef</span> T <a class="code" href="classOscl__Vector.html#s0">value_type</a>;
-<a name="l00212"></a><a class="code" href="classOscl__Vector.html#s1">00212</a>         <span class="keyword">typedef</span> T* <a class="code" href="classOscl__Vector.html#s1">pointer</a>;
-<a name="l00213"></a><a class="code" href="classOscl__Vector.html#s2">00213</a>         <span class="keyword">typedef</span> T&amp; <a class="code" href="classOscl__Vector.html#s2">reference</a>;
+<a name="l00211"></a><a class="code" href="classOscl__Vector.html#s0">00211</a>         <span class="keyword">typedef</span> T <a class="code" href="classOsclNetworkAddress.html">value_type</a>;
+<a name="l00212"></a><a class="code" href="classOscl__Vector.html#s1">00212</a>         <span class="keyword">typedef</span> T* <a class="code" href="classOsclNetworkAddress.html">pointer</a>;
+<a name="l00213"></a><a class="code" href="classOscl__Vector.html#s2">00213</a>         <span class="keyword">typedef</span> T&amp; <a class="code" href="classOsclNetworkAddress.html">reference</a>;
 <a name="l00214"></a><a class="code" href="classOscl__Vector.html#s3">00214</a>         <span class="keyword">typedef</span> <span class="keyword">const</span> T&amp; <a class="code" href="classOscl__Vector.html#s3">const_reference</a>;
-<a name="l00215"></a><a class="code" href="classOscl__Vector.html#s4">00215</a>         <span class="keyword">typedef</span> T* <a class="code" href="classOscl__Vector.html#s4">iterator</a>;
+<a name="l00215"></a><a class="code" href="classOscl__Vector.html#s4">00215</a>         <span class="keyword">typedef</span> T* <a class="code" href="classOsclNetworkAddress.html">iterator</a>;
 <a name="l00216"></a><a class="code" href="classOscl__Vector.html#s5">00216</a>         <span class="keyword">typedef</span> <span class="keyword">const</span> T* <a class="code" href="classOscl__Vector.html#s5">const_iterator</a>;
 00217 
 <a name="l00221"></a><a class="code" href="classOscl__Vector.html#a0">00221</a>         <a class="code" href="classOscl__Vector.html#a0">Oscl_Vector</a>() : <a class="code" href="classOscl__Vector__Base.html">Oscl_Vector_Base</a>(), <a class="code" href="classOscl__Opaque__Type__Alloc.html">Oscl_Opaque_Type_Alloc</a>()
@@ -177,7 +177,7 @@
 00288             <a class="code" href="classOscl__Vector__Base.html#b6">Oscl_Vector_Base::push_front</a>(&amp;x);
 00289         }
 00290 
-<a name="l00296"></a><a class="code" href="classOscl__Vector.html#a7">00296</a>         <a class="code" href="classOscl__Vector.html#s4">iterator</a> <a class="code" href="classOscl__Vector.html#a7">insert</a>(<a class="code" href="classOscl__Vector.html#s4">iterator</a> pos, <span class="keyword">const</span> T&amp; x)
+<a name="l00296"></a><a class="code" href="classOscl__Vector.html#a7">00296</a>         <a class="code" href="classOsclNetworkAddress.html">iterator</a> <a class="code" href="classOscl__Vector.html#a7">insert</a>(<a class="code" href="classOsclNetworkAddress.html">iterator</a> pos, <span class="keyword">const</span> T&amp; x)
 00297         {
 00298             <span class="keywordflow">return</span> (iterator)<a class="code" href="classOscl__Vector__Base.html#b7">Oscl_Vector_Base::insert</a>(pos, &amp;x);
 00299         }
@@ -229,22 +229,22 @@
 00374             <a class="code" href="classOscl__Vector__Base.html#b11">Oscl_Vector_Base::destroy</a>();
 00375         }
 00376 
-<a name="l00380"></a><a class="code" href="classOscl__Vector.html#a17">00380</a>         <a class="code" href="classOscl__Vector.html#s4">iterator</a> <a class="code" href="classOscl__Vector.html#a17">begin</a>()<span class="keyword"> const</span>
+<a name="l00380"></a><a class="code" href="classOscl__Vector.html#a17">00380</a>         <a class="code" href="classOsclNetworkAddress.html">iterator</a> <a class="code" href="classOscl__Vector.html#a17">begin</a>()<span class="keyword"> const</span>
 00381 <span class="keyword">        </span>{
 00382             <span class="keywordflow">return</span> (pointer)<a class="code" href="classOscl__Vector__Base.html#n2">elems</a>;
 00383         }
 00384 
-<a name="l00388"></a><a class="code" href="classOscl__Vector.html#a18">00388</a>         <a class="code" href="classOscl__Vector.html#s4">iterator</a> <a class="code" href="classOscl__Vector.html#a18">end</a>()<span class="keyword"> const</span>
+<a name="l00388"></a><a class="code" href="classOscl__Vector.html#a18">00388</a>         <a class="code" href="classOsclNetworkAddress.html">iterator</a> <a class="code" href="classOscl__Vector.html#a18">end</a>()<span class="keyword"> const</span>
 00389 <span class="keyword">        </span>{
 00390             <span class="keywordflow">return</span> (pointer)<a class="code" href="classOscl__Vector__Base.html#n2">elems</a> + <a class="code" href="classOscl__Vector__Base.html#n0">numelems</a>;
 00391         }
 00392 
-<a name="l00399"></a><a class="code" href="classOscl__Vector.html#a19">00399</a>         <a class="code" href="classOscl__Vector.html#s4">iterator</a> <a class="code" href="classOscl__Vector.html#a19">erase</a>(<a class="code" href="classOscl__Vector.html#s4">iterator</a> pos)
+<a name="l00399"></a><a class="code" href="classOscl__Vector.html#a19">00399</a>         <a class="code" href="classOsclNetworkAddress.html">iterator</a> <a class="code" href="classOscl__Vector.html#a19">erase</a>(<a class="code" href="classOsclNetworkAddress.html">iterator</a> pos)
 00400         {
 00401             <span class="keywordflow">return</span> (iterator)<a class="code" href="classOscl__Vector__Base.html#b8">Oscl_Vector_Base::erase</a>(pos);
 00402         }
 00403 
-<a name="l00411"></a><a class="code" href="classOscl__Vector.html#a20">00411</a>         <a class="code" href="classOscl__Vector.html#s4">iterator</a> <a class="code" href="classOscl__Vector.html#a19">erase</a>(<a class="code" href="classOscl__Vector.html#s4">iterator</a> first, <a class="code" href="classOscl__Vector.html#s4">iterator</a> last)
+<a name="l00411"></a><a class="code" href="classOscl__Vector.html#a20">00411</a>         <a class="code" href="classOsclNetworkAddress.html">iterator</a> <a class="code" href="classOscl__Vector.html#a19">erase</a>(<a class="code" href="classOsclNetworkAddress.html">iterator</a> first, <a class="code" href="classOsclNetworkAddress.html">iterator</a> last)
 00412         {
 00413             <span class="keywordflow">return</span> (iterator)<a class="code" href="classOscl__Vector__Base.html#b8">Oscl_Vector_Base::erase</a>(first, last);
 00414         }
@@ -292,7 +292,7 @@
 00459 
 00460 
 </pre></div><hr size="1"><img src="pvlogo_small.jpg"><address style="align: right;"><small>OSCL API</small>
-<address style="align: left;"><small>Posting Version: CORE_8.000.1.1_RC1 </small>
+<address style="align: left;"><small>Posting Version: CORE_8.000.1.1_RC2 </small>
 </small></address>
 </body>
 </html>

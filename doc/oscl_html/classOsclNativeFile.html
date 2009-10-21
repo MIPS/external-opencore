@@ -27,18 +27,19 @@
 <tr><td nowrap align=right valign=top>int32&nbsp;</td><td valign=bottom><a class="el" href="classOsclNativeFile.html#a4">Open</a> (const char *filename, uint32 mode, const <a class="el" href="classOsclNativeFileParams.html">OsclNativeFileParams</a> &amp;params, <a class="el" href="classOscl__FileServer.html">Oscl_FileServer</a> &amp;fileserv)</td></tr>
 <tr><td nowrap align=right valign=top>uint32&nbsp;</td><td valign=bottom><a class="el" href="classOsclNativeFile.html#a5">Read</a> (<a class="el" href="group__osclbase.html#a27">OsclAny</a> *buffer, uint32 size, uint32 numelements)</td></tr>
 <tr><td nowrap align=right valign=top>uint32&nbsp;</td><td valign=bottom><a class="el" href="classOsclNativeFile.html#a6">Write</a> (const <a class="el" href="group__osclbase.html#a27">OsclAny</a> *buffer, uint32 size, uint32 numelements)</td></tr>
-<tr><td nowrap align=right valign=top>int32&nbsp;</td><td valign=bottom><a class="el" href="classOsclNativeFile.html#a7">Seek</a> (<a class="el" href="osclconfig__io_8h.html#a50">TOsclFileOffset</a> offset, <a class="el" href="classOscl__File.html#s11">Oscl_File::seek_type</a> origin)</td></tr>
-<tr><td nowrap align=right valign=top><a class="el" href="osclconfig__io_8h.html#a50">TOsclFileOffset</a>&nbsp;</td><td valign=bottom><a class="el" href="classOsclNativeFile.html#a8">Tell</a> ()</td></tr>
+<tr><td nowrap align=right valign=top>int32&nbsp;</td><td valign=bottom><a class="el" href="classOsclNativeFile.html#a7">Seek</a> (<a class="el" href="osclconfig__io_8h.html#a68">TOsclFileOffset</a> offset, <a class="el" href="classOscl__File.html#s11">Oscl_File::seek_type</a> origin)</td></tr>
+<tr><td nowrap align=right valign=top><a class="el" href="osclconfig__io_8h.html#a68">TOsclFileOffset</a>&nbsp;</td><td valign=bottom><a class="el" href="classOsclNativeFile.html#a8">Tell</a> ()</td></tr>
 <tr><td nowrap align=right valign=top>int32&nbsp;</td><td valign=bottom><a class="el" href="classOsclNativeFile.html#a9">Flush</a> ()</td></tr>
 <tr><td nowrap align=right valign=top>int32&nbsp;</td><td valign=bottom><a class="el" href="classOsclNativeFile.html#a10">EndOfFile</a> ()</td></tr>
-<tr><td nowrap align=right valign=top><a class="el" href="osclconfig__io_8h.html#a50">TOsclFileOffset</a>&nbsp;</td><td valign=bottom><a class="el" href="classOsclNativeFile.html#a11">Size</a> ()</td></tr>
+<tr><td nowrap align=right valign=top><a class="el" href="osclconfig__io_8h.html#a68">TOsclFileOffset</a>&nbsp;</td><td valign=bottom><a class="el" href="classOsclNativeFile.html#a11">Size</a> ()</td></tr>
 <tr><td nowrap align=right valign=top>int32&nbsp;</td><td valign=bottom><a class="el" href="classOsclNativeFile.html#a12">Close</a> ()</td></tr>
-<tr><td nowrap align=right valign=top>uint32&nbsp;</td><td valign=bottom><a class="el" href="classOsclNativeFile.html#a13">Mode</a> ()</td></tr>
-<tr><td nowrap align=right valign=top>int32&nbsp;</td><td valign=bottom><a class="el" href="classOsclNativeFile.html#a14">GetError</a> ()</td></tr>
-<tr><td nowrap align=right valign=top>int32&nbsp;</td><td valign=bottom><a class="el" href="classOsclNativeFile.html#a15">ReadAsync</a> (<a class="el" href="group__osclbase.html#a27">OsclAny</a> *buffer, uint32 size, uint32 numelements, <a class="el" href="classOsclAOStatus.html">OsclAOStatus</a> &amp;status)</td></tr>
-<tr><td nowrap align=right valign=top>uint32&nbsp;</td><td valign=bottom><a class="el" href="classOsclNativeFile.html#a16">GetReadAsyncNumElements</a> ()</td></tr>
-<tr><td nowrap align=right valign=top>bool&nbsp;</td><td valign=bottom><a class="el" href="classOsclNativeFile.html#a17">HasAsyncRead</a> ()</td></tr>
-<tr><td nowrap align=right valign=top>void&nbsp;</td><td valign=bottom><a class="el" href="classOsclNativeFile.html#a18">ReadAsyncCancel</a> ()</td></tr>
+<tr><td nowrap align=right valign=top>int32&nbsp;</td><td valign=bottom><a class="el" href="classOsclNativeFile.html#a13">SetSize</a> (uint32 size)</td></tr>
+<tr><td nowrap align=right valign=top>uint32&nbsp;</td><td valign=bottom><a class="el" href="classOsclNativeFile.html#a14">Mode</a> ()</td></tr>
+<tr><td nowrap align=right valign=top>int32&nbsp;</td><td valign=bottom><a class="el" href="classOsclNativeFile.html#a15">GetError</a> ()</td></tr>
+<tr><td nowrap align=right valign=top>int32&nbsp;</td><td valign=bottom><a class="el" href="classOsclNativeFile.html#a16">ReadAsync</a> (<a class="el" href="group__osclbase.html#a27">OsclAny</a> *buffer, uint32 size, uint32 numelements, <a class="el" href="classOsclAOStatus.html">OsclAOStatus</a> &amp;status)</td></tr>
+<tr><td nowrap align=right valign=top>uint32&nbsp;</td><td valign=bottom><a class="el" href="classOsclNativeFile.html#a17">GetReadAsyncNumElements</a> ()</td></tr>
+<tr><td nowrap align=right valign=top>bool&nbsp;</td><td valign=bottom><a class="el" href="classOsclNativeFile.html#a18">HasAsyncRead</a> ()</td></tr>
+<tr><td nowrap align=right valign=top>void&nbsp;</td><td valign=bottom><a class="el" href="classOsclNativeFile.html#a19">ReadAsyncCancel</a> ()</td></tr>
 </table>
 <hr><h2>Constructor &amp; Destructor Documentation</h2>
 <a name="a0" doxytag="OsclNativeFile::OsclNativeFile"></a><p>
@@ -182,7 +183,7 @@
     </td>
   </tr>
 </table>
-<a name="a14" doxytag="OsclNativeFile::GetError"></a><p>
+<a name="a15" doxytag="OsclNativeFile::GetError"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -210,7 +211,7 @@
     </td>
   </tr>
 </table>
-<a name="a16" doxytag="OsclNativeFile::GetReadAsyncNumElements"></a><p>
+<a name="a17" doxytag="OsclNativeFile::GetReadAsyncNumElements"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -238,7 +239,7 @@
 Get the number of elements read in the last call to ReadAsync. @returns: number of elements read.     </td>
   </tr>
 </table>
-<a name="a17" doxytag="OsclNativeFile::HasAsyncRead"></a><p>
+<a name="a18" doxytag="OsclNativeFile::HasAsyncRead"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -266,7 +267,7 @@ Get the number of elements read in the last call to ReadAsync. @returns: number 
 @returns: true if async read is supported natively.     </td>
   </tr>
 </table>
-<a name="a13" doxytag="OsclNativeFile::Mode"></a><p>
+<a name="a14" doxytag="OsclNativeFile::Mode"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -488,7 +489,7 @@ Get the number of elements read in the last call to ReadAsync. @returns: number 
     </td>
   </tr>
 </table>
-<a name="a15" doxytag="OsclNativeFile::ReadAsync"></a><p>
+<a name="a16" doxytag="OsclNativeFile::ReadAsync"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -549,7 +550,7 @@ Request status for asynchronous completion @returns: 0 for success. </td></tr>
 </dl>    </td>
   </tr>
 </table>
-<a name="a18" doxytag="OsclNativeFile::ReadAsyncCancel"></a><p>
+<a name="a19" doxytag="OsclNativeFile::ReadAsyncCancel"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -585,7 +586,7 @@ Cancel any pending async read.     </td>
         <tr>
           <td class="md" nowrap valign="top"> int32 OsclNativeFile::Seek </td>
           <td class="md" valign="top">(&nbsp;</td>
-          <td class="md" nowrap valign="top"><a class="el" href="osclconfig__io_8h.html#a50">TOsclFileOffset</a>&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="osclconfig__io_8h.html#a68">TOsclFileOffset</a>&nbsp;</td>
           <td class="mdname" nowrap>&nbsp; <em>offset</em>, </td>
         </tr>
         <tr>
@@ -615,13 +616,42 @@ Cancel any pending async read.     </td>
     </td>
   </tr>
 </table>
+<a name="a13" doxytag="OsclNativeFile::SetSize"></a><p>
+<table width="100%" cellpadding="2" cellspacing="0" border="0">
+  <tr>
+    <td class="md">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int32 OsclNativeFile::SetSize </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top">uint32&nbsp;</td>
+          <td class="mdname1" valign="top" nowrap>&nbsp; <em>size</em>          </td>
+          <td class="md" valign="top">)&nbsp;</td>
+          <td class="md" nowrap></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+    </td>
+  </tr>
+</table>
 <a name="a11" doxytag="OsclNativeFile::Size"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
       <table cellpadding="0" cellspacing="0" border="0">
         <tr>
-          <td class="md" nowrap valign="top"> <a class="el" href="osclconfig__io_8h.html#a50">TOsclFileOffset</a> OsclNativeFile::Size </td>
+          <td class="md" nowrap valign="top"> <a class="el" href="osclconfig__io_8h.html#a68">TOsclFileOffset</a> OsclNativeFile::Size </td>
           <td class="md" valign="top">(&nbsp;</td>
           <td class="mdname1" valign="top" nowrap>&nbsp;          </td>
           <td class="md" valign="top">)&nbsp;</td>
@@ -649,7 +679,7 @@ Cancel any pending async read.     </td>
     <td class="md">
       <table cellpadding="0" cellspacing="0" border="0">
         <tr>
-          <td class="md" nowrap valign="top"> <a class="el" href="osclconfig__io_8h.html#a50">TOsclFileOffset</a> OsclNativeFile::Tell </td>
+          <td class="md" nowrap valign="top"> <a class="el" href="osclconfig__io_8h.html#a68">TOsclFileOffset</a> OsclNativeFile::Tell </td>
           <td class="md" valign="top">(&nbsp;</td>
           <td class="mdname1" valign="top" nowrap>&nbsp;          </td>
           <td class="md" valign="top">)&nbsp;</td>
@@ -718,7 +748,7 @@ Cancel any pending async read.     </td>
 <hr>The documentation for this class was generated from the following file:<ul>
 <li><a class="el" href="oscl__file__native_8h-source.html">oscl_file_native.h</a></ul>
 <hr size="1"><img src="pvlogo_small.jpg"><address style="align: right;"><small>OSCL API</small>
-<address style="align: left;"><small>Posting Version: CORE_8.000.1.1_RC1 </small>
+<address style="align: left;"><small>Posting Version: CORE_8.000.1.1_RC2 </small>
 </small></address>
 </body>
 </html>

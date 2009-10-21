@@ -15,14 +15,50 @@
 </map>
 <table border=0 cellpadding=0 cellspacing=0>
 <tr><td></td></tr>
+<tr><td colspan=2><br><h2>Public Types</h2></td></tr>
+<tr><td nowrap align=right valign=top>enum &nbsp;</td><td valign=bottom>{ <a class="el" href="classGetHostByNameParam.html#s1s0">addressListCapacity</a> =  10
+ }</td></tr>
 <tr><td colspan=2><br><h2>Public Methods</h2></td></tr>
 <tr><td nowrap align=right valign=top>void&nbsp;</td><td valign=bottom><a class="el" href="classGetHostByNameParam.html#a0">Destroy</a> ()</td></tr>
 <tr><td nowrap align=right valign=top>&nbsp;</td><td valign=bottom><a class="el" href="classGetHostByNameParam.html#a1">~GetHostByNameParam</a> ()</td></tr>
+<tr><td nowrap align=right valign=top>void&nbsp;</td><td valign=bottom><a class="el" href="classGetHostByNameParam.html#a2">PersistHostAddress</a> (const <a class="el" href="classOsclNetworkAddress.html">OsclNetworkAddress</a> &amp;addr)</td></tr>
+<tr><td nowrap align=right valign=top>bool&nbsp;</td><td valign=bottom><a class="el" href="classGetHostByNameParam.html#a3">canPersistMoreHostAddresses</a> ()</td></tr>
 <tr><td colspan=2><br><h2>Static Public Methods</h2></td></tr>
-<tr><td nowrap align=right valign=top>GetHostByNameParam *&nbsp;</td><td valign=bottom><a class="el" href="classGetHostByNameParam.html#d0">Create</a> (const char *name, <a class="el" href="classOsclNetworkAddress.html">OsclNetworkAddress</a> *&amp;addr)</td></tr>
+<tr><td nowrap align=right valign=top>GetHostByNameParam *&nbsp;</td><td valign=bottom><a class="el" href="classGetHostByNameParam.html#d0">Create</a> (const char *name, <a class="el" href="classOsclNetworkAddress.html">OsclNetworkAddress</a> *&amp;addr, <a class="el" href="classOscl__Vector.html">Oscl_Vector</a>&lt; <a class="el" href="classOsclNetworkAddress.html">OsclNetworkAddress</a>, <a class="el" href="classOsclMemAllocator.html">OsclMemAllocator</a> &gt; *aAddressList)</td></tr>
 <tr><td colspan=2><br><h2>Data Fields</h2></td></tr>
 <tr><td nowrap align=right valign=top>char *&nbsp;</td><td valign=bottom><a class="el" href="classGetHostByNameParam.html#m0">iName</a></td></tr>
 <tr><td nowrap align=right valign=top><a class="el" href="classOsclNetworkAddress.html">OsclNetworkAddress</a> *&nbsp;</td><td valign=bottom><a class="el" href="classGetHostByNameParam.html#m1">iAddr</a></td></tr>
+<tr><td nowrap align=right valign=top><a class="el" href="classOscl__Vector.html">Oscl_Vector</a>&lt; <a class="el" href="classOsclNetworkAddress.html">OsclNetworkAddress</a>,<br>
+ <a class="el" href="classOsclMemAllocator.html">OsclMemAllocator</a> &gt; *&nbsp;</td><td valign=bottom><a class="el" href="classGetHostByNameParam.html#m2">iAddressList</a></td></tr>
+</table>
+<hr><h2>Member Enumeration Documentation</h2>
+<a name="s1" doxytag="GetHostByNameParam::@0"></a><p>
+<table width="100%" cellpadding="2" cellspacing="0" border="0">
+  <tr>
+    <td class="md">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> anonymous enum
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+<dl compact><dt><b>Enumeration values: </b></dt><dd>
+<table border=0 cellspacing=2 cellpadding=0>
+<tr><td valign=top><em><a name="s1s0" doxytag="addressListCapacity"></a><em>addressListCapacity</em></em>&nbsp;</td><td>
+</td></tr>
+</table>
+</dl>
+    </td>
+  </tr>
 </table>
 <hr><h2>Constructor &amp; Destructor Documentation</h2>
 <a name="a1" doxytag="GetHostByNameParam::~GetHostByNameParam"></a><p>
@@ -54,6 +90,34 @@
   </tr>
 </table>
 <hr><h2>Member Function Documentation</h2>
+<a name="a3" doxytag="GetHostByNameParam::canPersistMoreHostAddresses"></a><p>
+<table width="100%" cellpadding="2" cellspacing="0" border="0">
+  <tr>
+    <td class="md">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> bool GetHostByNameParam::canPersistMoreHostAddresses </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="mdname1" valign="top" nowrap>&nbsp;          </td>
+          <td class="md" valign="top">)&nbsp;</td>
+          <td class="md" nowrap><code> [inline]</code></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+    </td>
+  </tr>
+</table>
 <a name="d0" doxytag="GetHostByNameParam::Create"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
@@ -69,7 +133,13 @@
           <td></td>
           <td></td>
           <td class="md" nowrap><a class="el" href="classOsclNetworkAddress.html">OsclNetworkAddress</a> *&amp;&nbsp;</td>
-          <td class="mdname" nowrap>&nbsp; <em>addr</em></td>
+          <td class="mdname" nowrap>&nbsp; <em>addr</em>, </td>
+        </tr>
+        <tr>
+          <td></td>
+          <td></td>
+          <td class="md" nowrap><a class="el" href="classOscl__Vector.html">Oscl_Vector</a>&lt; <a class="el" href="classOsclNetworkAddress.html">OsclNetworkAddress</a>, <a class="el" href="classOsclMemAllocator.html">OsclMemAllocator</a> &gt; *&nbsp;</td>
+          <td class="mdname" nowrap>&nbsp; <em>aAddressList</em></td>
         </tr>
         <tr>
           <td></td>
@@ -122,6 +192,35 @@
 Implements <a class="el" href="classDNSRequestParam.html#a3">DNSRequestParam</a>.    </td>
   </tr>
 </table>
+<a name="a2" doxytag="GetHostByNameParam::PersistHostAddress"></a><p>
+<table width="100%" cellpadding="2" cellspacing="0" border="0">
+  <tr>
+    <td class="md">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> void GetHostByNameParam::PersistHostAddress </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top">const <a class="el" href="classOsclNetworkAddress.html">OsclNetworkAddress</a> &amp;&nbsp;</td>
+          <td class="mdname1" valign="top" nowrap>&nbsp; <em>addr</em>          </td>
+          <td class="md" valign="top">)&nbsp;</td>
+          <td class="md" nowrap><code> [inline]</code></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+    </td>
+  </tr>
+</table>
 <hr><h2>Field Documentation</h2>
 <a name="m1" doxytag="GetHostByNameParam::iAddr"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
@@ -130,6 +229,28 @@ Implements <a class="el" href="classDNSRequestParam.html#a3">DNSRequestParam</a>
       <table cellpadding="0" cellspacing="0" border="0">
         <tr>
           <td class="md" nowrap valign="top"> <a class="el" href="classOsclNetworkAddress.html">OsclNetworkAddress</a>* GetHostByNameParam::iAddr
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+    </td>
+  </tr>
+</table>
+<a name="m2" doxytag="GetHostByNameParam::iAddressList"></a><p>
+<table width="100%" cellpadding="2" cellspacing="0" border="0">
+  <tr>
+    <td class="md">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> <a class="el" href="classOscl__Vector.html">Oscl_Vector</a>&lt;<a class="el" href="classOsclNetworkAddress.html">OsclNetworkAddress</a>, <a class="el" href="classOsclMemAllocator.html">OsclMemAllocator</a>&gt;* GetHostByNameParam::iAddressList
       </table>
     </td>
   </tr>
@@ -170,7 +291,7 @@ Implements <a class="el" href="classDNSRequestParam.html#a3">DNSRequestParam</a>
 <hr>The documentation for this class was generated from the following file:<ul>
 <li><a class="el" href="oscl__dns__param_8h-source.html">oscl_dns_param.h</a></ul>
 <hr size="1"><img src="pvlogo_small.jpg"><address style="align: right;"><small>OSCL API</small>
-<address style="align: left;"><small>Posting Version: CORE_8.000.1.1_RC1 </small>
+<address style="align: left;"><small>Posting Version: CORE_8.000.1.1_RC2 </small>
 </small></address>
 </body>
 </html>

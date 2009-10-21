@@ -56,51 +56,52 @@
 00064                     , <a class="code" href="classOscl__FileServer.html">Oscl_FileServer</a>&amp; fileserv);
 00065         uint32 <a class="code" href="classOsclNativeFile.html#a5">Read</a>(<a class="code" href="group__osclbase.html#a27">OsclAny</a> *buffer, uint32 size, uint32 numelements);
 00066         uint32 <a class="code" href="classOsclNativeFile.html#a6">Write</a>(<span class="keyword">const</span> <a class="code" href="group__osclbase.html#a27">OsclAny</a> *buffer, uint32 size, uint32 numelements);
-00067         int32  <a class="code" href="classOsclNativeFile.html#a7">Seek</a>(<a class="code" href="osclconfig__io_8h.html#a50">TOsclFileOffset</a> offset, <a class="code" href="classOscl__File.html#s11">Oscl_File::seek_type</a> origin);
-00068         <a class="code" href="osclconfig__io_8h.html#a50">TOsclFileOffset</a>  <a class="code" href="classOsclNativeFile.html#a8">Tell</a>();
+00067         int32  <a class="code" href="classOsclNativeFile.html#a7">Seek</a>(<a class="code" href="osclconfig__io_8h.html#a68">TOsclFileOffset</a> offset, <a class="code" href="classOscl__File.html#s11">Oscl_File::seek_type</a> origin);
+00068         <a class="code" href="osclconfig__io_8h.html#a68">TOsclFileOffset</a>  <a class="code" href="classOsclNativeFile.html#a8">Tell</a>();
 00069         int32  <a class="code" href="classOsclNativeFile.html#a9">Flush</a>();
 00070         int32  <a class="code" href="classOsclNativeFile.html#a10">EndOfFile</a>();
-00071         <a class="code" href="osclconfig__io_8h.html#a50">TOsclFileOffset</a> <a class="code" href="classOsclNativeFile.html#a11">Size</a>();
+00071         <a class="code" href="osclconfig__io_8h.html#a68">TOsclFileOffset</a> <a class="code" href="classOsclNativeFile.html#a11">Size</a>();
 00072         int32 <a class="code" href="classOsclNativeFile.html#a12">Close</a>();
-00073 
-00074         <span class="comment">//query for current open mode.</span>
-<a name="l00075"></a><a class="code" href="classOsclNativeFile.html#a13">00075</a>         uint32 <a class="code" href="classOsclNativeFile.html#a13">Mode</a>()
-00076         {
-00077             <span class="keywordflow">return</span> iMode;
-00078         }
-00079 
-00080         <span class="comment">//get last filesystem error.</span>
-00081         int32 <a class="code" href="classOsclNativeFile.html#a14">GetError</a>();
-00082 
-00092         int32 <a class="code" href="classOsclNativeFile.html#a15">ReadAsync</a>(<a class="code" href="group__osclbase.html#a27">OsclAny</a>*buffer, uint32 size, uint32 numelements, <a class="code" href="classOsclAOStatus.html">OsclAOStatus</a>&amp; status);
-00097         uint32 <a class="code" href="classOsclNativeFile.html#a16">GetReadAsyncNumElements</a>();
-00101         <span class="keywordtype">bool</span> <a class="code" href="classOsclNativeFile.html#a17">HasAsyncRead</a>();
-00105         <span class="keywordtype">void</span> <a class="code" href="classOsclNativeFile.html#a18">ReadAsyncCancel</a>();
-00106 
-00107     <span class="keyword">private</span>:
-00108 
-00109         <span class="comment">//current open mode</span>
-00110         uint32 iMode;
-00111 
-00112         <span class="comment">//was an open file handle passed in?</span>
-00113         <span class="keywordtype">bool</span> iOpenFileHandle;
-00114 
-00115         <span class="comment">//native file object.</span>
-00116         FILE* iFile;
-00117 
-00118         <span class="comment">//These are used for accessing individual assets that are bundled together</span>
-00119         <span class="comment">//into a single file, where each asset is treated as an independent file.</span>
-00120         <span class="keywordtype">bool</span>            iIsAsset;
-00121         <span class="keywordtype">bool</span>            iIsAssetReadOnly;
-00122         <a class="code" href="osclconfig__io_8h.html#a50">TOsclFileOffset</a> iAssetOffset;
-00123         <a class="code" href="osclconfig__io_8h.html#a50">TOsclFileOffset</a> iAssetSize;
-00124         <a class="code" href="osclconfig__io_8h.html#a50">TOsclFileOffset</a> iAssetLogicalFilePos;
-00125 };
-00126 
-00127 <span class="preprocessor">#endif // OSCL_FILE_NATIVE_H_INCLUDED</span>
-00128 <span class="preprocessor"></span>
+00073         int32 <a class="code" href="classOsclNativeFile.html#a13">SetSize</a>(uint32 size);
+00074 
+00075         <span class="comment">//query for current open mode.</span>
+<a name="l00076"></a><a class="code" href="classOsclNativeFile.html#a14">00076</a>         uint32 <a class="code" href="classOsclNativeFile.html#a14">Mode</a>()
+00077         {
+00078             <span class="keywordflow">return</span> iMode;
+00079         }
+00080 
+00081         <span class="comment">//get last filesystem error.</span>
+00082         int32 <a class="code" href="classOsclNativeFile.html#a15">GetError</a>();
+00083 
+00093         int32 <a class="code" href="classOsclNativeFile.html#a16">ReadAsync</a>(<a class="code" href="group__osclbase.html#a27">OsclAny</a>*buffer, uint32 size, uint32 numelements, <a class="code" href="classOsclAOStatus.html">OsclAOStatus</a>&amp; status);
+00098         uint32 <a class="code" href="classOsclNativeFile.html#a17">GetReadAsyncNumElements</a>();
+00102         <span class="keywordtype">bool</span> <a class="code" href="classOsclNativeFile.html#a18">HasAsyncRead</a>();
+00106         <span class="keywordtype">void</span> <a class="code" href="classOsclNativeFile.html#a19">ReadAsyncCancel</a>();
+00107 
+00108     <span class="keyword">private</span>:
+00109 
+00110         <span class="comment">//current open mode</span>
+00111         uint32 iMode;
+00112 
+00113         <span class="comment">//was an open file handle passed in?</span>
+00114         <span class="keywordtype">bool</span> iOpenFileHandle;
+00115 
+00116         <span class="comment">//native file object.</span>
+00117         FILE* iFile;
+00118 
+00119         <span class="comment">//These are used for accessing individual assets that are bundled together</span>
+00120         <span class="comment">//into a single file, where each asset is treated as an independent file.</span>
+00121         <span class="keywordtype">bool</span>            iIsAsset;
+00122         <span class="keywordtype">bool</span>            iIsAssetReadOnly;
+00123         <a class="code" href="osclconfig__io_8h.html#a68">TOsclFileOffset</a> iAssetOffset;
+00124         <a class="code" href="osclconfig__io_8h.html#a68">TOsclFileOffset</a> iAssetSize;
+00125         <a class="code" href="osclconfig__io_8h.html#a68">TOsclFileOffset</a> iAssetLogicalFilePos;
+00126 };
+00127 
+00128 <span class="preprocessor">#endif // OSCL_FILE_NATIVE_H_INCLUDED</span>
+00129 <span class="preprocessor"></span>
 </pre></div><hr size="1"><img src="pvlogo_small.jpg"><address style="align: right;"><small>OSCL API</small>
-<address style="align: left;"><small>Posting Version: CORE_8.000.1.1_RC1 </small>
+<address style="align: left;"><small>Posting Version: CORE_8.000.1.1_RC2 </small>
 </small></address>
 </body>
 </html>

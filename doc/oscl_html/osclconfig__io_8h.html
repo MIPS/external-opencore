@@ -47,42 +47,60 @@
 <tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="osclconfig__io_8h.html#a13">OsclValidInetAddr</a>(addr)&nbsp;&nbsp;&nbsp;(inet_addr(addr)!=INADDR_NONE)</td></tr>
 <tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="osclconfig__io_8h.html#a14">OsclMakeSockAddr</a>(sockaddr, port, addrstr, ok)</td></tr>
 <tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="osclconfig__io_8h.html#a15">OsclUnMakeSockAddr</a>(sockaddr, addrstr)&nbsp;&nbsp;&nbsp;addrstr=inet_ntoa(sockaddr.sin_addr);</td></tr>
-<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="osclconfig__io_8h.html#a16">OsclSetRecvBufferSize</a>(s, val, ok, err)</td></tr>
-<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="osclconfig__io_8h.html#a17">OsclBind</a>(s, addr, ok, err)</td></tr>
-<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="osclconfig__io_8h.html#a18">OsclJoin</a>(s, addr, ok, err)</td></tr>
-<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="osclconfig__io_8h.html#a19">OsclListen</a>(s, size, ok, err)</td></tr>
-<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="osclconfig__io_8h.html#a20">OsclAccept</a>(s, accept_s, ok, err, wouldblock)</td></tr>
-<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="osclconfig__io_8h.html#a21">OsclSetNonBlocking</a>(s, ok, err)</td></tr>
-<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="osclconfig__io_8h.html#a22">OsclShutdown</a>(s, how, ok, err)</td></tr>
-<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="osclconfig__io_8h.html#a23">OsclSocket</a>(s, fam, type, prot, ok, err)</td></tr>
-<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="osclconfig__io_8h.html#a24">OsclSendTo</a>(s, buf, len, addr, ok, err, nbytes, wouldblock)</td></tr>
-<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="osclconfig__io_8h.html#a25">OsclSend</a>(s, buf, len, ok, err, nbytes, wouldblock)</td></tr>
-<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="osclconfig__io_8h.html#a26">OsclCloseSocket</a>(s, ok, err)</td></tr>
-<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="osclconfig__io_8h.html#a27">OsclConnect</a>(s, addr, ok, err, wouldblock)</td></tr>
-<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="osclconfig__io_8h.html#a28">OsclGetAsyncSockErr</a>(s, ok, err)</td></tr>
-<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="osclconfig__io_8h.html#a29">OsclConnectComplete</a>(s, wset, eset, success, fail, ok, err)</td></tr>
-<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="osclconfig__io_8h.html#a30">OsclRecv</a>(s, buf, len, ok, err, nbytes, wouldblock)</td></tr>
-<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="osclconfig__io_8h.html#a31">OsclRecvFrom</a>(s, buf, len, paddr, paddrlen, ok, err, nbytes, wouldblock)</td></tr>
-<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="osclconfig__io_8h.html#a32">OsclSocketSelect</a>(nfds, rd, wr, ex, timeout, ok, err, nhandles)</td></tr>
-<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="osclconfig__io_8h.html#a33">OsclSocketStartup</a>(ok)</td></tr>
-<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="osclconfig__io_8h.html#a34">OsclSocketCleanup</a>(ok)</td></tr>
-<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="osclconfig__io_8h.html#a35">OsclGethostbyname</a>(name, hostent, ok, err)</td></tr>
-<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="osclconfig__io_8h.html#a36">OsclGetDottedAddr</a>(hostent, dottedaddr, ok)</td></tr>
-<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="osclconfig__io_8h.html#a37">OSCL_SD_RECEIVE</a>&nbsp;&nbsp;&nbsp;SHUT_RD</td></tr>
-<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="osclconfig__io_8h.html#a38">OSCL_SD_SEND</a>&nbsp;&nbsp;&nbsp;SHUT_WR</td></tr>
-<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="osclconfig__io_8h.html#a39">OSCL_SD_BOTH</a>&nbsp;&nbsp;&nbsp;SHUT_RDWR</td></tr>
-<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="osclconfig__io_8h.html#a40">OSCL_AF_INET</a>&nbsp;&nbsp;&nbsp;AF_INET</td></tr>
-<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="osclconfig__io_8h.html#a41">OSCL_SOCK_STREAM</a>&nbsp;&nbsp;&nbsp;SOCK_STREAM</td></tr>
-<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="osclconfig__io_8h.html#a42">OSCL_SOCK_DATAGRAM</a>&nbsp;&nbsp;&nbsp;SOCK_DGRAM</td></tr>
-<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="osclconfig__io_8h.html#a43">OSCL_IPPROTO_TCP</a>&nbsp;&nbsp;&nbsp;IPPROTO_TCP</td></tr>
-<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="osclconfig__io_8h.html#a44">OSCL_IPPROTO_UDP</a>&nbsp;&nbsp;&nbsp;IPPROTO_UDP</td></tr>
-<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="osclconfig__io_8h.html#a45">_FILE_OFFSET_BITS</a>&nbsp;&nbsp;&nbsp;64</td></tr>
+<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="osclconfig__io_8h.html#a16">OsclMakeInAddr</a>(in_addr, addrstr, ok)</td></tr>
+<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="osclconfig__io_8h.html#a17">OsclUnMakeInAddr</a>(in_addr, addrstr)&nbsp;&nbsp;&nbsp;addrstr=inet_ntoa(in_addr);</td></tr>
+<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="osclconfig__io_8h.html#a18">OsclSetRecvBufferSize</a>(s, val, ok, err)</td></tr>
+<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="osclconfig__io_8h.html#a19">OsclBind</a>(s, addr, ok, err)</td></tr>
+<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="osclconfig__io_8h.html#a20">OsclSetSockOpt</a>(s, optLevel, optName, optVal, optLen, ok, err)</td></tr>
+<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="osclconfig__io_8h.html#a21">OsclJoin</a>(s, addr, ok, err)</td></tr>
+<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="osclconfig__io_8h.html#a22">OsclListen</a>(s, size, ok, err)</td></tr>
+<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="osclconfig__io_8h.html#a23">OsclAccept</a>(s, accept_s, ok, err, wouldblock)</td></tr>
+<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="osclconfig__io_8h.html#a24">OsclSetNonBlocking</a>(s, ok, err)</td></tr>
+<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="osclconfig__io_8h.html#a25">OsclShutdown</a>(s, how, ok, err)</td></tr>
+<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="osclconfig__io_8h.html#a26">OsclSocket</a>(s, fam, type, prot, ok, err)</td></tr>
+<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="osclconfig__io_8h.html#a27">OsclSendTo</a>(s, buf, len, addr, ok, err, nbytes, wouldblock)</td></tr>
+<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="osclconfig__io_8h.html#a28">OsclSend</a>(s, buf, len, ok, err, nbytes, wouldblock)</td></tr>
+<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="osclconfig__io_8h.html#a29">OsclCloseSocket</a>(s, ok, err)</td></tr>
+<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="osclconfig__io_8h.html#a30">OsclConnect</a>(s, addr, ok, err, wouldblock)</td></tr>
+<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="osclconfig__io_8h.html#a31">OsclGetPeerName</a>(s, name, namelen, ok, err)</td></tr>
+<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="osclconfig__io_8h.html#a32">OsclGetAsyncSockErr</a>(s, ok, err)</td></tr>
+<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="osclconfig__io_8h.html#a33">OsclPipe</a>(x)&nbsp;&nbsp;&nbsp;pipe(x)</td></tr>
+<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="osclconfig__io_8h.html#a34">OsclReadFD</a>(fd, buf, cnt)&nbsp;&nbsp;&nbsp;read(fd,buf,cnt)</td></tr>
+<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="osclconfig__io_8h.html#a35">OsclWriteFD</a>(fd, buf, cnt)&nbsp;&nbsp;&nbsp;write(fd,buf,cnt)</td></tr>
+<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="osclconfig__io_8h.html#a36">OsclConnectComplete</a>(s, wset, eset, success, fail, ok, err)</td></tr>
+<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="osclconfig__io_8h.html#a37">OsclRecv</a>(s, buf, len, ok, err, nbytes, wouldblock)</td></tr>
+<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="osclconfig__io_8h.html#a38">OsclRecvFrom</a>(s, buf, len, paddr, paddrlen, ok, err, nbytes, wouldblock)</td></tr>
+<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="osclconfig__io_8h.html#a39">OsclSocketSelect</a>(nfds, rd, wr, ex, timeout, ok, err, nhandles)</td></tr>
+<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="osclconfig__io_8h.html#a40">OsclSocketStartup</a>(ok)</td></tr>
+<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="osclconfig__io_8h.html#a41">OsclSocketCleanup</a>(ok)</td></tr>
+<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="osclconfig__io_8h.html#a42">OsclGethostbyname</a>(name, hostent, ok, err)</td></tr>
+<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="osclconfig__io_8h.html#a43">OsclGetDottedAddr</a>(hostent, dottedaddr, ok)</td></tr>
+<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="osclconfig__io_8h.html#a44">OsclGetDottedAddrVector</a>(hostent, dottedaddr, dottedaddrvect, ok)</td></tr>
+<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="osclconfig__io_8h.html#a45">OSCL_SD_RECEIVE</a>&nbsp;&nbsp;&nbsp;SHUT_RD</td></tr>
+<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="osclconfig__io_8h.html#a46">OSCL_SD_SEND</a>&nbsp;&nbsp;&nbsp;SHUT_WR</td></tr>
+<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="osclconfig__io_8h.html#a47">OSCL_SD_BOTH</a>&nbsp;&nbsp;&nbsp;SHUT_RDWR</td></tr>
+<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="osclconfig__io_8h.html#a48">OSCL_AF_INET</a>&nbsp;&nbsp;&nbsp;AF_INET</td></tr>
+<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="osclconfig__io_8h.html#a49">OSCL_SOCK_STREAM</a>&nbsp;&nbsp;&nbsp;SOCK_STREAM</td></tr>
+<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="osclconfig__io_8h.html#a50">OSCL_SOCK_DATAGRAM</a>&nbsp;&nbsp;&nbsp;SOCK_DGRAM</td></tr>
+<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="osclconfig__io_8h.html#a51">OSCL_IPPROTO_IP</a>&nbsp;&nbsp;&nbsp;IPPROTO_IP</td></tr>
+<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="osclconfig__io_8h.html#a52">OSCL_IPPROTO_TCP</a>&nbsp;&nbsp;&nbsp;IPPROTO_TCP</td></tr>
+<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="osclconfig__io_8h.html#a53">OSCL_IPPROTO_UDP</a>&nbsp;&nbsp;&nbsp;IPPROTO_UDP</td></tr>
+<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="osclconfig__io_8h.html#a54">OSCL_SOL_SOCKET</a>&nbsp;&nbsp;&nbsp;SOL_SOCKET</td></tr>
+<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="osclconfig__io_8h.html#a55">OSCL_SOL_IP</a>&nbsp;&nbsp;&nbsp;IPPROTO_IP</td></tr>
+<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="osclconfig__io_8h.html#a56">OSCL_SOL_TCP</a>&nbsp;&nbsp;&nbsp;IPPROTO_TCP</td></tr>
+<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="osclconfig__io_8h.html#a57">OSCL_SOL_UDP</a>&nbsp;&nbsp;&nbsp;IPPROTO_UDP</td></tr>
+<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="osclconfig__io_8h.html#a58">OSCL_SOCKOPT_IP_MULTICAST_TTL</a>&nbsp;&nbsp;&nbsp;IP_MULTICAST_TTL</td></tr>
+<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="osclconfig__io_8h.html#a59">OSCL_SOCKOPT_IP_ADDMEMBERSHIP</a>&nbsp;&nbsp;&nbsp;IP_ADD_MEMBERSHIP</td></tr>
+<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="osclconfig__io_8h.html#a60">OSCL_SOCKOPT_IP_TOS</a>&nbsp;&nbsp;&nbsp;IP_TOS</td></tr>
+<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="osclconfig__io_8h.html#a61">OSCL_SOCKOPT_SOL_REUSEADDR</a>&nbsp;&nbsp;&nbsp;SO_REUSEADDR</td></tr>
+<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="osclconfig__io_8h.html#a62">_FILE_OFFSET_BITS</a>&nbsp;&nbsp;&nbsp;64</td></tr>
 <tr><td colspan=2><br><h2>Typedefs</h2></td></tr>
-<tr><td nowrap align=right valign=top>typedef int&nbsp;</td><td valign=bottom><a class="el" href="osclconfig__io_8h.html#a46">TOsclSocket</a></td></tr>
-<tr><td nowrap align=right valign=top>typedef sockaddr_in&nbsp;</td><td valign=bottom><a class="el" href="osclconfig__io_8h.html#a47">TOsclSockAddr</a></td></tr>
-<tr><td nowrap align=right valign=top>typedef socklen_t&nbsp;</td><td valign=bottom><a class="el" href="osclconfig__io_8h.html#a48">TOsclSockAddrLen</a></td></tr>
-<tr><td nowrap align=right valign=top>typedef hostent&nbsp;</td><td valign=bottom><a class="el" href="osclconfig__io_8h.html#a49">TOsclHostent</a></td></tr>
-<tr><td nowrap align=right valign=top>typedef off_t&nbsp;</td><td valign=bottom><a class="el" href="osclconfig__io_8h.html#a50">TOsclFileOffset</a></td></tr>
+<tr><td nowrap align=right valign=top>typedef int&nbsp;</td><td valign=bottom><a class="el" href="osclconfig__io_8h.html#a63">TOsclSocket</a></td></tr>
+<tr><td nowrap align=right valign=top>typedef sockaddr_in&nbsp;</td><td valign=bottom><a class="el" href="osclconfig__io_8h.html#a64">TOsclSockAddr</a></td></tr>
+<tr><td nowrap align=right valign=top>typedef socklen_t&nbsp;</td><td valign=bottom><a class="el" href="osclconfig__io_8h.html#a65">TOsclSockAddrLen</a></td></tr>
+<tr><td nowrap align=right valign=top>typedef ip_mreq&nbsp;</td><td valign=bottom><a class="el" href="osclconfig__io_8h.html#a66">TIpMReq</a></td></tr>
+<tr><td nowrap align=right valign=top>typedef hostent&nbsp;</td><td valign=bottom><a class="el" href="osclconfig__io_8h.html#a67">TOsclHostent</a></td></tr>
+<tr><td nowrap align=right valign=top>typedef off_t&nbsp;</td><td valign=bottom><a class="el" href="osclconfig__io_8h.html#a68">TOsclFileOffset</a></td></tr>
 </table>
 <hr><a name="_details"></a><h2>Detailed Description</h2>
 This file contains common typedefs based on the ANSI C limits.h header.
@@ -90,7 +108,7 @@ This file contains common typedefs based on the ANSI C limits.h header.
  This header file should work for any ANSI C compiler to determine the proper native C types to use for OSCL integer types.
 <p>
 <hr><h2>Define Documentation</h2>
-<a name="a45" doxytag="osclconfig_io.h::_FILE_OFFSET_BITS"></a><p>
+<a name="a62" doxytag="osclconfig_io.h::_FILE_OFFSET_BITS"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -112,7 +130,7 @@ This file contains common typedefs based on the ANSI C limits.h header.
     </td>
   </tr>
 </table>
-<a name="a40" doxytag="osclconfig_io.h::OSCL_AF_INET"></a><p>
+<a name="a48" doxytag="osclconfig_io.h::OSCL_AF_INET"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -420,7 +438,29 @@ This file contains common typedefs based on the ANSI C limits.h header.
     </td>
   </tr>
 </table>
-<a name="a43" doxytag="osclconfig_io.h::OSCL_IPPROTO_TCP"></a><p>
+<a name="a51" doxytag="osclconfig_io.h::OSCL_IPPROTO_IP"></a><p>
+<table width="100%" cellpadding="2" cellspacing="0" border="0">
+  <tr>
+    <td class="md">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> #define OSCL_IPPROTO_IP&nbsp;&nbsp;&nbsp;IPPROTO_IP
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+    </td>
+  </tr>
+</table>
+<a name="a52" doxytag="osclconfig_io.h::OSCL_IPPROTO_TCP"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -442,7 +482,7 @@ This file contains common typedefs based on the ANSI C limits.h header.
     </td>
   </tr>
 </table>
-<a name="a44" doxytag="osclconfig_io.h::OSCL_IPPROTO_UDP"></a><p>
+<a name="a53" doxytag="osclconfig_io.h::OSCL_IPPROTO_UDP"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -464,7 +504,7 @@ This file contains common typedefs based on the ANSI C limits.h header.
     </td>
   </tr>
 </table>
-<a name="a39" doxytag="osclconfig_io.h::OSCL_SD_BOTH"></a><p>
+<a name="a47" doxytag="osclconfig_io.h::OSCL_SD_BOTH"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -486,7 +526,7 @@ This file contains common typedefs based on the ANSI C limits.h header.
     </td>
   </tr>
 </table>
-<a name="a37" doxytag="osclconfig_io.h::OSCL_SD_RECEIVE"></a><p>
+<a name="a45" doxytag="osclconfig_io.h::OSCL_SD_RECEIVE"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -508,7 +548,7 @@ This file contains common typedefs based on the ANSI C limits.h header.
     </td>
   </tr>
 </table>
-<a name="a38" doxytag="osclconfig_io.h::OSCL_SD_SEND"></a><p>
+<a name="a46" doxytag="osclconfig_io.h::OSCL_SD_SEND"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -530,7 +570,7 @@ This file contains common typedefs based on the ANSI C limits.h header.
     </td>
   </tr>
 </table>
-<a name="a42" doxytag="osclconfig_io.h::OSCL_SOCK_DATAGRAM"></a><p>
+<a name="a50" doxytag="osclconfig_io.h::OSCL_SOCK_DATAGRAM"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -552,7 +592,7 @@ This file contains common typedefs based on the ANSI C limits.h header.
     </td>
   </tr>
 </table>
-<a name="a41" doxytag="osclconfig_io.h::OSCL_SOCK_STREAM"></a><p>
+<a name="a49" doxytag="osclconfig_io.h::OSCL_SOCK_STREAM"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -574,7 +614,183 @@ This file contains common typedefs based on the ANSI C limits.h header.
     </td>
   </tr>
 </table>
-<a name="a20" doxytag="osclconfig_io.h::OsclAccept"></a><p>
+<a name="a59" doxytag="osclconfig_io.h::OSCL_SOCKOPT_IP_ADDMEMBERSHIP"></a><p>
+<table width="100%" cellpadding="2" cellspacing="0" border="0">
+  <tr>
+    <td class="md">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> #define OSCL_SOCKOPT_IP_ADDMEMBERSHIP&nbsp;&nbsp;&nbsp;IP_ADD_MEMBERSHIP
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+    </td>
+  </tr>
+</table>
+<a name="a58" doxytag="osclconfig_io.h::OSCL_SOCKOPT_IP_MULTICAST_TTL"></a><p>
+<table width="100%" cellpadding="2" cellspacing="0" border="0">
+  <tr>
+    <td class="md">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> #define OSCL_SOCKOPT_IP_MULTICAST_TTL&nbsp;&nbsp;&nbsp;IP_MULTICAST_TTL
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+    </td>
+  </tr>
+</table>
+<a name="a60" doxytag="osclconfig_io.h::OSCL_SOCKOPT_IP_TOS"></a><p>
+<table width="100%" cellpadding="2" cellspacing="0" border="0">
+  <tr>
+    <td class="md">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> #define OSCL_SOCKOPT_IP_TOS&nbsp;&nbsp;&nbsp;IP_TOS
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+    </td>
+  </tr>
+</table>
+<a name="a61" doxytag="osclconfig_io.h::OSCL_SOCKOPT_SOL_REUSEADDR"></a><p>
+<table width="100%" cellpadding="2" cellspacing="0" border="0">
+  <tr>
+    <td class="md">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> #define OSCL_SOCKOPT_SOL_REUSEADDR&nbsp;&nbsp;&nbsp;SO_REUSEADDR
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+    </td>
+  </tr>
+</table>
+<a name="a55" doxytag="osclconfig_io.h::OSCL_SOL_IP"></a><p>
+<table width="100%" cellpadding="2" cellspacing="0" border="0">
+  <tr>
+    <td class="md">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> #define OSCL_SOL_IP&nbsp;&nbsp;&nbsp;IPPROTO_IP
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+    </td>
+  </tr>
+</table>
+<a name="a54" doxytag="osclconfig_io.h::OSCL_SOL_SOCKET"></a><p>
+<table width="100%" cellpadding="2" cellspacing="0" border="0">
+  <tr>
+    <td class="md">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> #define OSCL_SOL_SOCKET&nbsp;&nbsp;&nbsp;SOL_SOCKET
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+    </td>
+  </tr>
+</table>
+<a name="a56" doxytag="osclconfig_io.h::OSCL_SOL_TCP"></a><p>
+<table width="100%" cellpadding="2" cellspacing="0" border="0">
+  <tr>
+    <td class="md">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> #define OSCL_SOL_TCP&nbsp;&nbsp;&nbsp;IPPROTO_TCP
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+    </td>
+  </tr>
+</table>
+<a name="a57" doxytag="osclconfig_io.h::OSCL_SOL_UDP"></a><p>
+<table width="100%" cellpadding="2" cellspacing="0" border="0">
+  <tr>
+    <td class="md">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> #define OSCL_SOL_UDP&nbsp;&nbsp;&nbsp;IPPROTO_UDP
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+    </td>
+  </tr>
+</table>
+<a name="a23" doxytag="osclconfig_io.h::OsclAccept"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -615,7 +831,7 @@ This file contains common typedefs based on the ANSI C limits.h header.
     <span class="keywordflow">if</span> (!ok){err=errno;wouldblock=(err==EAGAIN||err==EWOULDBLOCK);}</pre></div>    </td>
   </tr>
 </table>
-<a name="a17" doxytag="osclconfig_io.h::OsclBind"></a><p>
+<a name="a19" doxytag="osclconfig_io.h::OsclBind"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -648,13 +864,13 @@ This file contains common typedefs based on the ANSI C limits.h header.
     <td>
 
 <p>
-<b>Value:</b><div class="fragment"><pre><a class="code" href="osclconfig__io_8h.html#a47">TOsclSockAddr</a>* tmpadr = &amp;addr;\
+<b>Value:</b><div class="fragment"><pre><a class="code" href="osclconfig__io_8h.html#a64">TOsclSockAddr</a>* tmpadr = &amp;addr;\
     sockaddr* sadr = <a class="code" href="group__osclbase.html#a93">OSCL_STATIC_CAST</a>(sockaddr*, tmpadr);\
     ok=(bind(s,sadr,<span class="keyword">sizeof</span>(addr))!=(-1));\
     <span class="keywordflow">if</span> (!ok)err=errno</pre></div>    </td>
   </tr>
 </table>
-<a name="a26" doxytag="osclconfig_io.h::OsclCloseSocket"></a><p>
+<a name="a29" doxytag="osclconfig_io.h::OsclCloseSocket"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -688,7 +904,7 @@ This file contains common typedefs based on the ANSI C limits.h header.
     <span class="keywordflow">if</span> (!ok)err=errno</pre></div>    </td>
   </tr>
 </table>
-<a name="a27" doxytag="osclconfig_io.h::OsclConnect"></a><p>
+<a name="a30" doxytag="osclconfig_io.h::OsclConnect"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -724,13 +940,13 @@ This file contains common typedefs based on the ANSI C limits.h header.
     <td>
 
 <p>
-<b>Value:</b><div class="fragment"><pre><a class="code" href="osclconfig__io_8h.html#a47">TOsclSockAddr</a>* tmpadr = &amp;addr;\
+<b>Value:</b><div class="fragment"><pre><a class="code" href="osclconfig__io_8h.html#a64">TOsclSockAddr</a>* tmpadr = &amp;addr;\
     sockaddr* sadr = <a class="code" href="group__osclbase.html#a93">OSCL_STATIC_CAST</a>(sockaddr*, tmpadr);\
     ok=(connect(s,sadr,<span class="keyword">sizeof</span>(addr))!=(-1));\
     <span class="keywordflow">if</span> (!ok){err=errno;wouldblock=(err==EINPROGRESS);}</pre></div>    </td>
   </tr>
 </table>
-<a name="a29" doxytag="osclconfig_io.h::OsclConnectComplete"></a><p>
+<a name="a36" doxytag="osclconfig_io.h::OsclConnectComplete"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -774,12 +990,12 @@ This file contains common typedefs based on the ANSI C limits.h header.
 <p>
 <b>Value:</b><div class="fragment"><pre>success=fail=<span class="keyword">false</span>;\
     <span class="keywordflow">if</span> (FD_ISSET(s,&amp;eset))\
-    {fail=<span class="keyword">true</span>;<a class="code" href="osclconfig__io_8h.html#a28">OsclGetAsyncSockErr</a>(s,ok,err);}\
+    {fail=<span class="keyword">true</span>;<a class="code" href="osclconfig__io_8h.html#a32">OsclGetAsyncSockErr</a>(s,ok,err);}\
     <span class="keywordflow">else</span> <span class="keywordflow">if</span> (FD_ISSET(s,&amp;wset))\
-    {<a class="code" href="osclconfig__io_8h.html#a28">OsclGetAsyncSockErr</a>(s,ok,err);<span class="keywordflow">if</span> (ok &amp;&amp; err==0)success=<span class="keyword">true</span>;<span class="keywordflow">else</span> fail=<span class="keyword">true</span>;}</pre></div>    </td>
+    {<a class="code" href="osclconfig__io_8h.html#a32">OsclGetAsyncSockErr</a>(s,ok,err);<span class="keywordflow">if</span> (ok &amp;&amp; err==0)success=<span class="keyword">true</span>;<span class="keywordflow">else</span> fail=<span class="keyword">true</span>;}</pre></div>    </td>
   </tr>
 </table>
-<a name="a28" doxytag="osclconfig_io.h::OsclGetAsyncSockErr"></a><p>
+<a name="a32" doxytag="osclconfig_io.h::OsclGetAsyncSockErr"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -814,7 +1030,7 @@ This file contains common typedefs based on the ANSI C limits.h header.
     <span class="keywordflow">if</span>(ok)err=opterr;<span class="keywordflow">else</span> err=errno;</pre></div>    </td>
   </tr>
 </table>
-<a name="a36" doxytag="osclconfig_io.h::OsclGetDottedAddr"></a><p>
+<a name="a43" doxytag="osclconfig_io.h::OsclGetDottedAddr"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -851,7 +1067,61 @@ This file contains common typedefs based on the ANSI C limits.h header.
     ok=(dottedaddr!=<a class="code" href="group__osclbase.html#a88">NULL</a>);</pre></div>    </td>
   </tr>
 </table>
-<a name="a35" doxytag="osclconfig_io.h::OsclGethostbyname"></a><p>
+<a name="a44" doxytag="osclconfig_io.h::OsclGetDottedAddrVector"></a><p>
+<table width="100%" cellpadding="2" cellspacing="0" border="0">
+  <tr>
+    <td class="md">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> #define OsclGetDottedAddrVector</td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top">hostent,         <tr>
+          <td></td>
+          <td></td>
+          <td class="md" nowrap>dottedaddr,         <tr>
+          <td></td>
+          <td></td>
+          <td class="md" nowrap>dottedaddrvect,         <tr>
+          <td></td>
+          <td></td>
+          <td class="md" nowrap>ok&nbsp;</td>
+          <td class="mdname1" valign="top" nowrap>&nbsp;          </td>
+          <td class="md" valign="top">)&nbsp;</td>
+          <td class="md" nowrap>
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+<b>Value:</b><div class="fragment"><pre><span class="keywordflow">if</span>(dottedaddrvect)\
+    {\
+    <span class="keywordtype">long</span> **_addrlist=(<span class="keywordtype">long</span>**)hostent-&gt;h_addr_list;\
+    <span class="keywordflow">for</span>(<span class="keywordtype">int</span> i = 0; _addrlist[i] != <a class="code" href="group__osclbase.html#a88">NULL</a>; i++){\
+        <span class="keyword">struct </span>in_addr _inaddr;\
+        _inaddr.s_addr=*_addrlist[i];\
+        <a class="code" href="classOsclNetworkAddress.html">OsclNetworkAddress</a> addr(inet_ntoa(_inaddr), 0);\
+        dottedaddrvect-&gt;push_back(addr);\
+    }\
+    <span class="keywordflow">if</span> (!dottedaddrvect-&gt;empty())\
+        {dottedaddr-&gt;port = dottedaddrvect-&gt;front().port; dottedaddr-&gt;ipAddr.Set(dottedaddrvect-&gt;front().ipAddr.Str());}\
+    ok=(!dottedaddrvect-&gt;empty() &amp;&amp; (((*dottedaddrvect)[0]).ipAddr.Str() != <a class="code" href="group__osclbase.html#a88">NULL</a>));\
+    }\
+    <span class="keywordflow">else</span>\
+    {\
+        <span class="keywordtype">char</span> *add;\
+        <a class="code" href="osclconfig__io_8h.html#a43">OsclGetDottedAddr</a>(hostent,add,ok);\
+        <span class="keywordflow">if</span>(ok) dottedaddr-&gt;ipAddr.Set(add);\
+    }</pre></div>    </td>
+  </tr>
+</table>
+<a name="a42" doxytag="osclconfig_io.h::OsclGethostbyname"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -889,7 +1159,47 @@ This file contains common typedefs based on the ANSI C limits.h header.
     <span class="keywordflow">if</span> (!ok)err=errno;</pre></div>    </td>
   </tr>
 </table>
-<a name="a18" doxytag="osclconfig_io.h::OsclJoin"></a><p>
+<a name="a31" doxytag="osclconfig_io.h::OsclGetPeerName"></a><p>
+<table width="100%" cellpadding="2" cellspacing="0" border="0">
+  <tr>
+    <td class="md">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> #define OsclGetPeerName</td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top">s,         <tr>
+          <td></td>
+          <td></td>
+          <td class="md" nowrap>name,         <tr>
+          <td></td>
+          <td></td>
+          <td class="md" nowrap>namelen,         <tr>
+          <td></td>
+          <td></td>
+          <td class="md" nowrap>ok,         <tr>
+          <td></td>
+          <td></td>
+          <td class="md" nowrap>err&nbsp;</td>
+          <td class="mdname1" valign="top" nowrap>&nbsp;          </td>
+          <td class="md" valign="top">)&nbsp;</td>
+          <td class="md" nowrap>
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+<b>Value:</b><div class="fragment"><pre>ok=(getpeername(s,(sockaddr*)&amp;name,(socklen_t*)&amp;namelen) != (-1) );\
+    <span class="keywordflow">if</span> (!ok)err=errno</pre></div>    </td>
+  </tr>
+</table>
+<a name="a21" doxytag="osclconfig_io.h::OsclJoin"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -933,7 +1243,7 @@ This file contains common typedefs based on the ANSI C limits.h header.
 }</pre></div>    </td>
   </tr>
 </table>
-<a name="a19" doxytag="osclconfig_io.h::OsclListen"></a><p>
+<a name="a22" doxytag="osclconfig_io.h::OsclListen"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -970,6 +1280,40 @@ This file contains common typedefs based on the ANSI C limits.h header.
     <span class="keywordflow">if</span> (!ok)err=errno</pre></div>    </td>
   </tr>
 </table>
+<a name="a16" doxytag="osclconfig_io.h::OsclMakeInAddr"></a><p>
+<table width="100%" cellpadding="2" cellspacing="0" border="0">
+  <tr>
+    <td class="md">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> #define OsclMakeInAddr</td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top">in_addr,         <tr>
+          <td></td>
+          <td></td>
+          <td class="md" nowrap>addrstr,         <tr>
+          <td></td>
+          <td></td>
+          <td class="md" nowrap>ok&nbsp;</td>
+          <td class="mdname1" valign="top" nowrap>&nbsp;          </td>
+          <td class="md" valign="top">)&nbsp;</td>
+          <td class="md" nowrap>
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+<b>Value:</b><div class="fragment"><pre>int32 result = inet_aton((<span class="keyword">const</span> <span class="keywordtype">char</span>*)addrstr, &amp;in_addr);\
+    ok=(result!=0);</pre></div>    </td>
+  </tr>
+</table>
 <a name="a14" doxytag="osclconfig_io.h::OsclMakeSockAddr"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
@@ -1003,13 +1347,73 @@ This file contains common typedefs based on the ANSI C limits.h header.
     <td>
 
 <p>
-<b>Value:</b><div class="fragment"><pre>sockaddr.sin_family=<a class="code" href="osclconfig__io_8h.html#a40">OSCL_AF_INET</a>;\
+<b>Value:</b><div class="fragment"><pre>sockaddr.sin_family=<a class="code" href="osclconfig__io_8h.html#a48">OSCL_AF_INET</a>;\
     sockaddr.sin_port=htons(port);\
     int32 result=inet_aton((<span class="keyword">const</span> <span class="keywordtype">char</span>*)addrstr,&amp;sockaddr.sin_addr);\
     ok=(result!=0);</pre></div>    </td>
   </tr>
 </table>
-<a name="a30" doxytag="osclconfig_io.h::OsclRecv"></a><p>
+<a name="a33" doxytag="osclconfig_io.h::OsclPipe"></a><p>
+<table width="100%" cellpadding="2" cellspacing="0" border="0">
+  <tr>
+    <td class="md">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> #define OsclPipe</td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top">x&nbsp;</td>
+          <td class="mdname1" valign="top" nowrap>&nbsp;          </td>
+          <td class="md" valign="top">)&nbsp;</td>
+          <td class="md" nowrap>&nbsp;&nbsp;&nbsp;pipe(x)
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+    </td>
+  </tr>
+</table>
+<a name="a34" doxytag="osclconfig_io.h::OsclReadFD"></a><p>
+<table width="100%" cellpadding="2" cellspacing="0" border="0">
+  <tr>
+    <td class="md">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> #define OsclReadFD</td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top">fd,         <tr>
+          <td></td>
+          <td></td>
+          <td class="md" nowrap>buf,         <tr>
+          <td></td>
+          <td></td>
+          <td class="md" nowrap>cnt&nbsp;</td>
+          <td class="mdname1" valign="top" nowrap>&nbsp;          </td>
+          <td class="md" valign="top">)&nbsp;</td>
+          <td class="md" nowrap>&nbsp;&nbsp;&nbsp;read(fd,buf,cnt)
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+    </td>
+  </tr>
+</table>
+<a name="a37" doxytag="osclconfig_io.h::OsclRecv"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -1056,7 +1460,7 @@ This file contains common typedefs based on the ANSI C limits.h header.
     <span class="keywordflow">if</span> (!ok){err=errno;wouldblock=(err==EAGAIN);}</pre></div>    </td>
   </tr>
 </table>
-<a name="a31" doxytag="osclconfig_io.h::OsclRecvFrom"></a><p>
+<a name="a38" doxytag="osclconfig_io.h::OsclRecvFrom"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -1112,7 +1516,7 @@ nbytes=recvfrom(s,(<span class="keywordtype">void</span>*)(buf),(size_t)(len),0,
 }</pre></div>    </td>
   </tr>
 </table>
-<a name="a25" doxytag="osclconfig_io.h::OsclSend"></a><p>
+<a name="a28" doxytag="osclconfig_io.h::OsclSend"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -1159,7 +1563,7 @@ nbytes=recvfrom(s,(<span class="keywordtype">void</span>*)(buf),(size_t)(len),0,
     <span class="keywordflow">if</span> (!ok){err=errno;wouldblock=(err==EAGAIN||err==EWOULDBLOCK);}</pre></div>    </td>
   </tr>
 </table>
-<a name="a24" doxytag="osclconfig_io.h::OsclSendTo"></a><p>
+<a name="a27" doxytag="osclconfig_io.h::OsclSendTo"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -1204,14 +1608,14 @@ nbytes=recvfrom(s,(<span class="keywordtype">void</span>*)(buf),(size_t)(len),0,
     <td>
 
 <p>
-<b>Value:</b><div class="fragment"><pre><a class="code" href="osclconfig__io_8h.html#a47">TOsclSockAddr</a>* tmpadr = &amp;addr;\
+<b>Value:</b><div class="fragment"><pre><a class="code" href="osclconfig__io_8h.html#a64">TOsclSockAddr</a>* tmpadr = &amp;addr;\
     sockaddr* sadr = <a class="code" href="group__osclbase.html#a93">OSCL_STATIC_CAST</a>(sockaddr*, tmpadr);\
     nbytes=sendto(s,(<span class="keyword">const</span> <span class="keywordtype">void</span>*)(buf),(size_t)(len),0,sadr,(socklen_t)<span class="keyword">sizeof</span>(addr));\
     ok=(nbytes!=(-1));\
     <span class="keywordflow">if</span> (!ok){err=errno;wouldblock=(err==EAGAIN||err==EWOULDBLOCK);}</pre></div>    </td>
   </tr>
 </table>
-<a name="a21" doxytag="osclconfig_io.h::OsclSetNonBlocking"></a><p>
+<a name="a24" doxytag="osclconfig_io.h::OsclSetNonBlocking"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -1245,7 +1649,7 @@ nbytes=recvfrom(s,(<span class="keywordtype">void</span>*)(buf),(size_t)(len),0,
     <span class="keywordflow">if</span> (!ok)err=errno</pre></div>    </td>
   </tr>
 </table>
-<a name="a16" doxytag="osclconfig_io.h::OsclSetRecvBufferSize"></a><p>
+<a name="a18" doxytag="osclconfig_io.h::OsclSetRecvBufferSize"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -1282,7 +1686,53 @@ nbytes=recvfrom(s,(<span class="keywordtype">void</span>*)(buf),(size_t)(len),0,
         <span class="keywordflow">if</span> (!ok)err=errno</pre></div>    </td>
   </tr>
 </table>
-<a name="a22" doxytag="osclconfig_io.h::OsclShutdown"></a><p>
+<a name="a20" doxytag="osclconfig_io.h::OsclSetSockOpt"></a><p>
+<table width="100%" cellpadding="2" cellspacing="0" border="0">
+  <tr>
+    <td class="md">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> #define OsclSetSockOpt</td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top">s,         <tr>
+          <td></td>
+          <td></td>
+          <td class="md" nowrap>optLevel,         <tr>
+          <td></td>
+          <td></td>
+          <td class="md" nowrap>optName,         <tr>
+          <td></td>
+          <td></td>
+          <td class="md" nowrap>optVal,         <tr>
+          <td></td>
+          <td></td>
+          <td class="md" nowrap>optLen,         <tr>
+          <td></td>
+          <td></td>
+          <td class="md" nowrap>ok,         <tr>
+          <td></td>
+          <td></td>
+          <td class="md" nowrap>err&nbsp;</td>
+          <td class="mdname1" valign="top" nowrap>&nbsp;          </td>
+          <td class="md" valign="top">)&nbsp;</td>
+          <td class="md" nowrap>
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+<b>Value:</b><div class="fragment"><pre>ok=(setsockopt(s,optLevel,optName,<a class="code" href="group__osclbase.html#a93">OSCL_STATIC_CAST</a>(<span class="keyword">const</span> <span class="keywordtype">char</span>*,optVal),optLen) != (-1));\
+    <span class="keywordflow">if</span> (!ok)err=errno</pre></div>    </td>
+  </tr>
+</table>
+<a name="a25" doxytag="osclconfig_io.h::OsclShutdown"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -1319,7 +1769,7 @@ nbytes=recvfrom(s,(<span class="keywordtype">void</span>*)(buf),(size_t)(len),0,
     <span class="keywordflow">if</span> (!ok)err=errno</pre></div>    </td>
   </tr>
 </table>
-<a name="a23" doxytag="osclconfig_io.h::OsclSocket"></a><p>
+<a name="a26" doxytag="osclconfig_io.h::OsclSocket"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -1363,7 +1813,7 @@ nbytes=recvfrom(s,(<span class="keywordtype">void</span>*)(buf),(size_t)(len),0,
     <span class="keywordflow">if</span> (!ok)err=errno</pre></div>    </td>
   </tr>
 </table>
-<a name="a34" doxytag="osclconfig_io.h::OsclSocketCleanup"></a><p>
+<a name="a41" doxytag="osclconfig_io.h::OsclSocketCleanup"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -1391,7 +1841,7 @@ nbytes=recvfrom(s,(<span class="keywordtype">void</span>*)(buf),(size_t)(len),0,
     ok=<span class="keyword">true</span></pre></div>    </td>
   </tr>
 </table>
-<a name="a32" doxytag="osclconfig_io.h::OsclSocketSelect"></a><p>
+<a name="a39" doxytag="osclconfig_io.h::OsclSocketSelect"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -1441,7 +1891,7 @@ nbytes=recvfrom(s,(<span class="keywordtype">void</span>*)(buf),(size_t)(len),0,
     <span class="keywordflow">if</span> (!ok)err=errno</pre></div>    </td>
   </tr>
 </table>
-<a name="a33" doxytag="osclconfig_io.h::OsclSocketStartup"></a><p>
+<a name="a40" doxytag="osclconfig_io.h::OsclSocketStartup"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -1467,6 +1917,36 @@ nbytes=recvfrom(s,(<span class="keywordtype">void</span>*)(buf),(size_t)(len),0,
 <p>
 <b>Value:</b><div class="fragment"><pre>signal(SIGPIPE,SIG_IGN);\
     ok=<span class="keyword">true</span></pre></div>    </td>
+  </tr>
+</table>
+<a name="a17" doxytag="osclconfig_io.h::OsclUnMakeInAddr"></a><p>
+<table width="100%" cellpadding="2" cellspacing="0" border="0">
+  <tr>
+    <td class="md">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> #define OsclUnMakeInAddr</td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top">in_addr,         <tr>
+          <td></td>
+          <td></td>
+          <td class="md" nowrap>addrstr&nbsp;</td>
+          <td class="mdname1" valign="top" nowrap>&nbsp;          </td>
+          <td class="md" valign="top">)&nbsp;</td>
+          <td class="md" nowrap>&nbsp;&nbsp;&nbsp;addrstr=inet_ntoa(in_addr);
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+    </td>
   </tr>
 </table>
 <a name="a15" doxytag="osclconfig_io.h::OsclUnMakeSockAddr"></a><p>
@@ -1526,8 +2006,63 @@ nbytes=recvfrom(s,(<span class="keywordtype">void</span>*)(buf),(size_t)(len),0,
     </td>
   </tr>
 </table>
+<a name="a35" doxytag="osclconfig_io.h::OsclWriteFD"></a><p>
+<table width="100%" cellpadding="2" cellspacing="0" border="0">
+  <tr>
+    <td class="md">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> #define OsclWriteFD</td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top">fd,         <tr>
+          <td></td>
+          <td></td>
+          <td class="md" nowrap>buf,         <tr>
+          <td></td>
+          <td></td>
+          <td class="md" nowrap>cnt&nbsp;</td>
+          <td class="mdname1" valign="top" nowrap>&nbsp;          </td>
+          <td class="md" valign="top">)&nbsp;</td>
+          <td class="md" nowrap>&nbsp;&nbsp;&nbsp;write(fd,buf,cnt)
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+    </td>
+  </tr>
+</table>
 <hr><h2>Typedef Documentation</h2>
-<a name="a50" doxytag="osclconfig_io.h::TOsclFileOffset"></a><p>
+<a name="a66" doxytag="osclconfig_io.h::TIpMReq"></a><p>
+<table width="100%" cellpadding="2" cellspacing="0" border="0">
+  <tr>
+    <td class="md">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> typedef struct ip_mreq TIpMReq
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+    </td>
+  </tr>
+</table>
+<a name="a68" doxytag="osclconfig_io.h::TOsclFileOffset"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -1549,7 +2084,7 @@ nbytes=recvfrom(s,(<span class="keywordtype">void</span>*)(buf),(size_t)(len),0,
     </td>
   </tr>
 </table>
-<a name="a49" doxytag="osclconfig_io.h::TOsclHostent"></a><p>
+<a name="a67" doxytag="osclconfig_io.h::TOsclHostent"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -1571,7 +2106,7 @@ nbytes=recvfrom(s,(<span class="keywordtype">void</span>*)(buf),(size_t)(len),0,
     </td>
   </tr>
 </table>
-<a name="a47" doxytag="osclconfig_io.h::TOsclSockAddr"></a><p>
+<a name="a64" doxytag="osclconfig_io.h::TOsclSockAddr"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -1593,7 +2128,7 @@ nbytes=recvfrom(s,(<span class="keywordtype">void</span>*)(buf),(size_t)(len),0,
     </td>
   </tr>
 </table>
-<a name="a48" doxytag="osclconfig_io.h::TOsclSockAddrLen"></a><p>
+<a name="a65" doxytag="osclconfig_io.h::TOsclSockAddrLen"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -1615,7 +2150,7 @@ nbytes=recvfrom(s,(<span class="keywordtype">void</span>*)(buf),(size_t)(len),0,
     </td>
   </tr>
 </table>
-<a name="a46" doxytag="osclconfig_io.h::TOsclSocket"></a><p>
+<a name="a63" doxytag="osclconfig_io.h::TOsclSocket"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -1638,7 +2173,7 @@ nbytes=recvfrom(s,(<span class="keywordtype">void</span>*)(buf),(size_t)(len),0,
   </tr>
 </table>
 <hr size="1"><img src="pvlogo_small.jpg"><address style="align: right;"><small>OSCL API</small>
-<address style="align: left;"><small>Posting Version: CORE_8.000.1.1_RC1 </small>
+<address style="align: left;"><small>Posting Version: CORE_8.000.1.1_RC2 </small>
 </small></address>
 </body>
 </html>

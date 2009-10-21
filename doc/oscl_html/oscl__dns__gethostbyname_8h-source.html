@@ -29,7 +29,7 @@
 00021         <a class="code" href="classOsclGetHostByNameMethod.html#a0">~OsclGetHostByNameMethod</a>();
 00022 
 00023         <a class="code" href="group__osclio.html#a25">TPVDNSEvent</a> <a class="code" href="classOsclGetHostByNameMethod.html#a1">GetHostByName</a>(<span class="keywordtype">char</span> *name, <a class="code" href="classOsclNetworkAddress.html">OsclNetworkAddress</a> *addr,
-00024                                   int32 aTimeout);
+00024                                   int32 aTimeout, <a class="code" href="classOscl__Vector.html">Oscl_Vector&lt;OsclNetworkAddress, OsclMemAllocator&gt;</a> * aAddressList);
 00025 
 00026 
 00027     <span class="keyword">private</span>:
@@ -60,29 +60,39 @@
 00052         <a class="code" href="classOsclGetHostByNameRequest.html">OsclGetHostByNameRequest</a>()
 00053                 : <a class="code" href="classOsclDNSRequestAO.html#b0">OsclDNSRequestAO</a>(<span class="stringliteral">"osclghbnrequest"</span>)
 00054                 , iParam(<a class="code" href="group__osclbase.html#a88">NULL</a>)
-00055         {}
-00056 
-00057         <span class="keywordtype">void</span> <a class="code" href="classOsclDNSRequestAO.html#b1">ConstructL</a>(<a class="code" href="classOsclDNSI.html">OsclDNSI</a> *aDNS,
-00058                         <a class="code" href="classOsclGetHostByNameMethod.html">OsclGetHostByNameMethod</a> *aMethod)
-00059         {
-00060             <a class="code" href="classOsclDNSRequestAO.html#b1">OsclDNSRequestAO::ConstructL</a>(aDNS, aMethod);
-00061         }
-00062 
-00063         <span class="keywordtype">void</span> <a class="code" href="classOsclDNSRequestAO.html#b9">Success</a>();
-00064 
-00065         <span class="keywordtype">void</span> GetHostByName(<span class="keywordtype">char</span> *name, <a class="code" href="classOsclNetworkAddress.html">OsclNetworkAddress</a> *addr);
-00066 
-00067         <a class="code" href="classGetHostByNameParam.html">GetHostByNameParam</a> *iParam;
-<a name="l00068"></a><a class="code" href="classOsclGetHostByNameRequest.html#l0">00068</a>         <span class="keyword">friend</span> <span class="keyword">class </span><a class="code" href="classOsclGetHostByNameMethod.html">OsclGetHostByNameMethod</a>;
+00055                 , iRequestPhase(GetFirstHostAddress)
+00056         {}
+00057 
+00058         <span class="keywordtype">void</span> <a class="code" href="classOsclDNSRequestAO.html#b1">ConstructL</a>(<a class="code" href="classOsclDNSI.html">OsclDNSI</a> *aDNS,
+00059                         <a class="code" href="classOsclGetHostByNameMethod.html">OsclGetHostByNameMethod</a> *aMethod)
+00060         {
+00061             <a class="code" href="classOsclDNSRequestAO.html#b1">OsclDNSRequestAO::ConstructL</a>(aDNS, aMethod);
+00062         }
+00063 
+00064         <span class="keyword">virtual</span> <span class="keywordtype">void</span> <a class="code" href="classOsclDNSRequestAO.html#b9">Success</a>();
+00065         <span class="keyword">virtual</span> <span class="keywordtype">void</span> <a class="code" href="classOsclDNSRequestAO.html#b10">Failure</a>();
+00066         <span class="keyword">virtual</span> <span class="keywordtype">void</span> <a class="code" href="classOsclDNSRequestAO.html#b11">Cancelled</a>();
+00067 
+00068         <span class="keywordtype">void</span> GetHostByName(<span class="keywordtype">char</span> *name, <a class="code" href="classOsclNetworkAddress.html">OsclNetworkAddress</a> *addr, <a class="code" href="classOscl__Vector.html">Oscl_Vector&lt;OsclNetworkAddress, OsclMemAllocator&gt;</a> *aAddressList);
 00069 
-00070 };
-00071 
-00072 
-00073 
-00074 <span class="preprocessor">#endif</span>
-00075 <span class="preprocessor"></span>
+00070         <a class="code" href="classGetHostByNameParam.html">GetHostByNameParam</a> *iParam;
+00071         <span class="keyword">enum</span> GetHostByNameRequestPhase
+00072         {
+00073             GetFirstHostAddress,
+00074             GetAlternateHostAddress
+00075         };
+00076 
+00077         GetHostByNameRequestPhase iRequestPhase;
+<a name="l00078"></a><a class="code" href="classOsclGetHostByNameRequest.html#l0">00078</a>         <span class="keyword">friend</span> <span class="keyword">class </span><a class="code" href="classOsclGetHostByNameMethod.html">OsclGetHostByNameMethod</a>;
+00079 
+00080 };
+00081 
+00082 
+00083 
+00084 <span class="preprocessor">#endif</span>
+00085 <span class="preprocessor"></span>
 </pre></div><hr size="1"><img src="pvlogo_small.jpg"><address style="align: right;"><small>OSCL API</small>
-<address style="align: left;"><small>Posting Version: CORE_8.000.1.1_RC1 </small>
+<address style="align: left;"><small>Posting Version: CORE_8.000.1.1_RC2 </small>
 </small></address>
 </body>
 </html>

@@ -21,26 +21,31 @@
 <tr><td></td></tr>
 <tr><td colspan=2><br><h2>Public Methods</h2></td></tr>
 <tr><td nowrap align=right valign=top>OSCL_IMPORT_REF&nbsp;</td><td valign=bottom><a class="el" href="classOsclTCPSocket.html#a0">~OsclTCPSocket</a> ()</td></tr>
-<tr><td nowrap align=right valign=top>OSCL_IMPORT_REF int32&nbsp;</td><td valign=bottom><a class="el" href="classOsclTCPSocket.html#a1">Close</a> ()</td></tr>
-<tr><td nowrap align=right valign=top>OSCL_IMPORT_REF int32&nbsp;</td><td valign=bottom><a class="el" href="classOsclTCPSocket.html#a2">Bind</a> (<a class="el" href="classOsclNetworkAddress.html">OsclNetworkAddress</a> &amp;aAddress)</td></tr>
-<tr><td nowrap align=right valign=top>OSCL_IMPORT_REF <a class="el" href="oscl__socket__types_8h.html#a20">TPVSocketEvent</a>&nbsp;</td><td valign=bottom><a class="el" href="classOsclTCPSocket.html#a3">BindAsync</a> (<a class="el" href="classOsclNetworkAddress.html">OsclNetworkAddress</a> &amp;aAddress, int32 aTimeoutMsec=(-1))</td></tr>
-<tr><td nowrap align=right valign=top>OSCL_IMPORT_REF void&nbsp;</td><td valign=bottom><a class="el" href="classOsclTCPSocket.html#a4">CancelBind</a> ()</td></tr>
-<tr><td nowrap align=right valign=top>OSCL_IMPORT_REF int32&nbsp;</td><td valign=bottom><a class="el" href="classOsclTCPSocket.html#a5">Listen</a> (int32 aQueueSize)</td></tr>
-<tr><td nowrap align=right valign=top>OSCL_IMPORT_REF <a class="el" href="oscl__socket__types_8h.html#a20">TPVSocketEvent</a>&nbsp;</td><td valign=bottom><a class="el" href="classOsclTCPSocket.html#a6">ListenAsync</a> (int32 aQueueSize, int32 aTimeoutMsec=(-1))</td></tr>
-<tr><td nowrap align=right valign=top>OSCL_IMPORT_REF void&nbsp;</td><td valign=bottom><a class="el" href="classOsclTCPSocket.html#a7">CancelListen</a> ()</td></tr>
-<tr><td nowrap align=right valign=top>OSCL_IMPORT_REF OsclTCPSocket *&nbsp;</td><td valign=bottom><a class="el" href="classOsclTCPSocket.html#a8">GetAcceptedSocketL</a> (uint32 aId)</td></tr>
-<tr><td nowrap align=right valign=top>OSCL_IMPORT_REF uint8 *&nbsp;</td><td valign=bottom><a class="el" href="classOsclTCPSocket.html#a9">GetRecvData</a> (int32 *aLength)</td></tr>
-<tr><td nowrap align=right valign=top>OSCL_IMPORT_REF uint8 *&nbsp;</td><td valign=bottom><a class="el" href="classOsclTCPSocket.html#a10">GetSendData</a> (int32 *aLength)</td></tr>
-<tr><td nowrap align=right valign=top>OSCL_IMPORT_REF <a class="el" href="oscl__socket__types_8h.html#a20">TPVSocketEvent</a>&nbsp;</td><td valign=bottom><a class="el" href="classOsclTCPSocket.html#a11">Connect</a> (<a class="el" href="classOsclNetworkAddress.html">OsclNetworkAddress</a> &amp;aAddress, int32 aTimeoutMsec=-1)</td></tr>
-<tr><td nowrap align=right valign=top>OSCL_IMPORT_REF void&nbsp;</td><td valign=bottom><a class="el" href="classOsclTCPSocket.html#a12">CancelConnect</a> ()</td></tr>
-<tr><td nowrap align=right valign=top>OSCL_IMPORT_REF <a class="el" href="oscl__socket__types_8h.html#a20">TPVSocketEvent</a>&nbsp;</td><td valign=bottom><a class="el" href="classOsclTCPSocket.html#a13">Shutdown</a> (<a class="el" href="oscl__socket__types_8h.html#a21">TPVSocketShutdown</a> aHow, int32 aTimeoutMsec=-1)</td></tr>
-<tr><td nowrap align=right valign=top>OSCL_IMPORT_REF void&nbsp;</td><td valign=bottom><a class="el" href="classOsclTCPSocket.html#a14">CancelShutdown</a> ()</td></tr>
-<tr><td nowrap align=right valign=top>OSCL_IMPORT_REF <a class="el" href="oscl__socket__types_8h.html#a20">TPVSocketEvent</a>&nbsp;</td><td valign=bottom><a class="el" href="classOsclTCPSocket.html#a15">Accept</a> (int32 aTimeout=-1)</td></tr>
-<tr><td nowrap align=right valign=top>OSCL_IMPORT_REF void&nbsp;</td><td valign=bottom><a class="el" href="classOsclTCPSocket.html#a16">CancelAccept</a> ()</td></tr>
-<tr><td nowrap align=right valign=top>OSCL_IMPORT_REF <a class="el" href="oscl__socket__types_8h.html#a20">TPVSocketEvent</a>&nbsp;</td><td valign=bottom><a class="el" href="classOsclTCPSocket.html#a17">Send</a> (const uint8 *aPtr, uint32 aLen, int32 aTimeoutMsec=-1)</td></tr>
-<tr><td nowrap align=right valign=top>OSCL_IMPORT_REF void&nbsp;</td><td valign=bottom><a class="el" href="classOsclTCPSocket.html#a18">CancelSend</a> ()</td></tr>
-<tr><td nowrap align=right valign=top>OSCL_IMPORT_REF <a class="el" href="oscl__socket__types_8h.html#a20">TPVSocketEvent</a>&nbsp;</td><td valign=bottom><a class="el" href="classOsclTCPSocket.html#a19">Recv</a> (uint8 *aPtr, uint32 aMaxLen, int32 aTimeoutMsec=-1)</td></tr>
-<tr><td nowrap align=right valign=top>OSCL_IMPORT_REF void&nbsp;</td><td valign=bottom><a class="el" href="classOsclTCPSocket.html#a20">CancelRecv</a> ()</td></tr>
+<tr><td nowrap align=right valign=top>OSCL_IMPORT_REF <a class="el" href="oscl__socket__types_8h.html#a28">TPVSocketEvent</a>&nbsp;</td><td valign=bottom><a class="el" href="classOsclTCPSocket.html#a1">ThreadLogoff</a> ()</td></tr>
+<tr><td nowrap align=right valign=top>OSCL_IMPORT_REF <a class="el" href="oscl__socket__types_8h.html#a28">TPVSocketEvent</a>&nbsp;</td><td valign=bottom><a class="el" href="classOsclTCPSocket.html#a2">ThreadLogon</a> (<a class="el" href="classOsclSocketServ.html">OsclSocketServ</a> &amp;aServ, <a class="el" href="classOsclSocketObserver.html">OsclSocketObserver</a> *aObserver)</td></tr>
+<tr><td nowrap align=right valign=top>OSCL_IMPORT_REF int32&nbsp;</td><td valign=bottom><a class="el" href="classOsclTCPSocket.html#a3">Close</a> ()</td></tr>
+<tr><td nowrap align=right valign=top>OSCL_IMPORT_REF int32&nbsp;</td><td valign=bottom><a class="el" href="classOsclTCPSocket.html#a4">Bind</a> (<a class="el" href="classOsclNetworkAddress.html">OsclNetworkAddress</a> &amp;aAddress)</td></tr>
+<tr><td nowrap align=right valign=top>OSCL_IMPORT_REF <a class="el" href="oscl__socket__types_8h.html#a28">TPVSocketEvent</a>&nbsp;</td><td valign=bottom><a class="el" href="classOsclTCPSocket.html#a5">BindAsync</a> (<a class="el" href="classOsclNetworkAddress.html">OsclNetworkAddress</a> &amp;aAddress, int32 aTimeoutMsec=(-1))</td></tr>
+<tr><td nowrap align=right valign=top>OSCL_IMPORT_REF void&nbsp;</td><td valign=bottom><a class="el" href="classOsclTCPSocket.html#a6">CancelBind</a> ()</td></tr>
+<tr><td nowrap align=right valign=top>OSCL_IMPORT_REF int32&nbsp;</td><td valign=bottom><a class="el" href="classOsclTCPSocket.html#a7">SetOptionToReuseAddress</a> ()</td></tr>
+<tr><td nowrap align=right valign=top>OSCL_IMPORT_REF int32&nbsp;</td><td valign=bottom><a class="el" href="classOsclTCPSocket.html#a8">SetTOS</a> (const <a class="el" href="classOsclSocketTOS.html">OsclSocketTOS</a> &amp;aTOS)</td></tr>
+<tr><td nowrap align=right valign=top>OSCL_IMPORT_REF int32&nbsp;</td><td valign=bottom><a class="el" href="classOsclTCPSocket.html#a9">GetPeerName</a> (<a class="el" href="classOsclNetworkAddress.html">OsclNetworkAddress</a> &amp;aPeerName)</td></tr>
+<tr><td nowrap align=right valign=top>OSCL_IMPORT_REF int32&nbsp;</td><td valign=bottom><a class="el" href="classOsclTCPSocket.html#a10">Listen</a> (int32 aQueueSize)</td></tr>
+<tr><td nowrap align=right valign=top>OSCL_IMPORT_REF <a class="el" href="oscl__socket__types_8h.html#a28">TPVSocketEvent</a>&nbsp;</td><td valign=bottom><a class="el" href="classOsclTCPSocket.html#a11">ListenAsync</a> (int32 aQueueSize, int32 aTimeoutMsec=(-1))</td></tr>
+<tr><td nowrap align=right valign=top>OSCL_IMPORT_REF void&nbsp;</td><td valign=bottom><a class="el" href="classOsclTCPSocket.html#a12">CancelListen</a> ()</td></tr>
+<tr><td nowrap align=right valign=top>OSCL_IMPORT_REF OsclTCPSocket *&nbsp;</td><td valign=bottom><a class="el" href="classOsclTCPSocket.html#a13">GetAcceptedSocketL</a> (uint32 aId)</td></tr>
+<tr><td nowrap align=right valign=top>OSCL_IMPORT_REF uint8 *&nbsp;</td><td valign=bottom><a class="el" href="classOsclTCPSocket.html#a14">GetRecvData</a> (int32 *aLength)</td></tr>
+<tr><td nowrap align=right valign=top>OSCL_IMPORT_REF uint8 *&nbsp;</td><td valign=bottom><a class="el" href="classOsclTCPSocket.html#a15">GetSendData</a> (int32 *aLength)</td></tr>
+<tr><td nowrap align=right valign=top>OSCL_IMPORT_REF <a class="el" href="oscl__socket__types_8h.html#a28">TPVSocketEvent</a>&nbsp;</td><td valign=bottom><a class="el" href="classOsclTCPSocket.html#a16">Connect</a> (<a class="el" href="classOsclNetworkAddress.html">OsclNetworkAddress</a> &amp;aAddress, int32 aTimeoutMsec=-1)</td></tr>
+<tr><td nowrap align=right valign=top>OSCL_IMPORT_REF void&nbsp;</td><td valign=bottom><a class="el" href="classOsclTCPSocket.html#a17">CancelConnect</a> ()</td></tr>
+<tr><td nowrap align=right valign=top>OSCL_IMPORT_REF <a class="el" href="oscl__socket__types_8h.html#a28">TPVSocketEvent</a>&nbsp;</td><td valign=bottom><a class="el" href="classOsclTCPSocket.html#a18">Shutdown</a> (<a class="el" href="oscl__socket__types_8h.html#a29">TPVSocketShutdown</a> aHow, int32 aTimeoutMsec=-1)</td></tr>
+<tr><td nowrap align=right valign=top>OSCL_IMPORT_REF void&nbsp;</td><td valign=bottom><a class="el" href="classOsclTCPSocket.html#a19">CancelShutdown</a> ()</td></tr>
+<tr><td nowrap align=right valign=top>OSCL_IMPORT_REF <a class="el" href="oscl__socket__types_8h.html#a28">TPVSocketEvent</a>&nbsp;</td><td valign=bottom><a class="el" href="classOsclTCPSocket.html#a20">Accept</a> (int32 aTimeout=-1)</td></tr>
+<tr><td nowrap align=right valign=top>OSCL_IMPORT_REF void&nbsp;</td><td valign=bottom><a class="el" href="classOsclTCPSocket.html#a21">CancelAccept</a> ()</td></tr>
+<tr><td nowrap align=right valign=top>OSCL_IMPORT_REF <a class="el" href="oscl__socket__types_8h.html#a28">TPVSocketEvent</a>&nbsp;</td><td valign=bottom><a class="el" href="classOsclTCPSocket.html#a22">Send</a> (const uint8 *aPtr, uint32 aLen, int32 aTimeoutMsec=-1)</td></tr>
+<tr><td nowrap align=right valign=top>OSCL_IMPORT_REF void&nbsp;</td><td valign=bottom><a class="el" href="classOsclTCPSocket.html#a23">CancelSend</a> ()</td></tr>
+<tr><td nowrap align=right valign=top>OSCL_IMPORT_REF <a class="el" href="oscl__socket__types_8h.html#a28">TPVSocketEvent</a>&nbsp;</td><td valign=bottom><a class="el" href="classOsclTCPSocket.html#a24">Recv</a> (uint8 *aPtr, uint32 aMaxLen, int32 aTimeoutMsec=-1)</td></tr>
+<tr><td nowrap align=right valign=top>OSCL_IMPORT_REF void&nbsp;</td><td valign=bottom><a class="el" href="classOsclTCPSocket.html#a25">CancelRecv</a> ()</td></tr>
 <tr><td colspan=2><br><h2>Static Public Methods</h2></td></tr>
 <tr><td nowrap align=right valign=top>OSCL_IMPORT_REF OsclTCPSocket *&nbsp;</td><td valign=bottom><a class="el" href="classOsclTCPSocket.html#d0">NewL</a> (<a class="el" href="classOscl__DefAlloc.html">Oscl_DefAlloc</a> &amp;alloc, <a class="el" href="classOsclSocketServ.html">OsclSocketServ</a> &amp;aServ, <a class="el" href="classOsclSocketObserver.html">OsclSocketObserver</a> *aObserver, uint32 aId)</td></tr>
 </table>
@@ -77,13 +82,13 @@ Destructor. The object must be deleted using the same allocator used in the NewL
   </tr>
 </table>
 <hr><h2>Member Function Documentation</h2>
-<a name="a15" doxytag="OsclTCPSocket::Accept"></a><p>
+<a name="a20" doxytag="OsclTCPSocket::Accept"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
       <table cellpadding="0" cellspacing="0" border="0">
         <tr>
-          <td class="md" nowrap valign="top"> OSCL_IMPORT_REF <a class="el" href="oscl__socket__types_8h.html#a20">TPVSocketEvent</a> OsclTCPSocket::Accept </td>
+          <td class="md" nowrap valign="top"> OSCL_IMPORT_REF <a class="el" href="oscl__socket__types_8h.html#a28">TPVSocketEvent</a> OsclTCPSocket::Accept </td>
           <td class="md" valign="top">(&nbsp;</td>
           <td class="md" nowrap valign="top">int32&nbsp;</td>
           <td class="mdname1" valign="top" nowrap>&nbsp; <em>aTimeout</em> = -1          </td>
@@ -112,7 +117,7 @@ Timeout in milliseconds, or (-1) for infinite wait. </td></tr>
 Will return EPVSocketPending if successful. When the operation is complete, a callback to the observer will occur with the completion status. If the operation cannot be initiated, the call will return EPVSocketFailure and there will be no callback. </dl>    </td>
   </tr>
 </table>
-<a name="a2" doxytag="OsclTCPSocket::Bind"></a><p>
+<a name="a4" doxytag="OsclTCPSocket::Bind"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -147,13 +152,13 @@ Bind address. </td></tr>
 Returns OsclErrNone for success, or a platform-specific error code. </dl>    </td>
   </tr>
 </table>
-<a name="a3" doxytag="OsclTCPSocket::BindAsync"></a><p>
+<a name="a5" doxytag="OsclTCPSocket::BindAsync"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
       <table cellpadding="0" cellspacing="0" border="0">
         <tr>
-          <td class="md" nowrap valign="top"> OSCL_IMPORT_REF <a class="el" href="oscl__socket__types_8h.html#a20">TPVSocketEvent</a> OsclTCPSocket::BindAsync </td>
+          <td class="md" nowrap valign="top"> OSCL_IMPORT_REF <a class="el" href="oscl__socket__types_8h.html#a28">TPVSocketEvent</a> OsclTCPSocket::BindAsync </td>
           <td class="md" valign="top">(&nbsp;</td>
           <td class="md" nowrap valign="top"><a class="el" href="classOsclNetworkAddress.html">OsclNetworkAddress</a> &amp;&nbsp;</td>
           <td class="mdname" nowrap>&nbsp; <em>aAddress</em>, </td>
@@ -193,7 +198,7 @@ Optional timeout. Use a negative value for infinite wait. </td></tr>
 Will return EPVSocketPending if successful. When the operation is complete, a callback to the observer will occur with the completion status. If the operation cannot be initiated, the call will return EPVSocketFailure and there will be no callback. </dl>    </td>
   </tr>
 </table>
-<a name="a16" doxytag="OsclTCPSocket::CancelAccept"></a><p>
+<a name="a21" doxytag="OsclTCPSocket::CancelAccept"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -223,7 +228,7 @@ Cancel Accept
 This method will cancel any pending Accept operation on the current socket, causing the Accept to complete with error EPVSocketCancel. If there is no pending Accept operation, this method will have no effect.     </td>
   </tr>
 </table>
-<a name="a4" doxytag="OsclTCPSocket::CancelBind"></a><p>
+<a name="a6" doxytag="OsclTCPSocket::CancelBind"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -253,7 +258,7 @@ Cancel Bind
 This method will cancel any pending BindAsync operation on the current socket, causing the BindAsync to complete with error EPVSocketCancel. If there is no pending BindAsync operation, this method will have no effect.     </td>
   </tr>
 </table>
-<a name="a12" doxytag="OsclTCPSocket::CancelConnect"></a><p>
+<a name="a17" doxytag="OsclTCPSocket::CancelConnect"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -283,7 +288,7 @@ Cancel Connect
 This method will cancel any pending Connect operation on the current socket, causing the Connect to complete with error EPVSocketCancel. If there is no pending Connect operation, this method will have no effect.     </td>
   </tr>
 </table>
-<a name="a7" doxytag="OsclTCPSocket::CancelListen"></a><p>
+<a name="a12" doxytag="OsclTCPSocket::CancelListen"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -313,7 +318,7 @@ Cancel Async Listen
 This method will cancel any pending ListenAsync operation on the current socket, causing the Listen to complete with error EPVSocketCancel. If there is no pending Listen operation, this method will have no effect.     </td>
   </tr>
 </table>
-<a name="a20" doxytag="OsclTCPSocket::CancelRecv"></a><p>
+<a name="a25" doxytag="OsclTCPSocket::CancelRecv"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -343,7 +348,7 @@ Cancel Recv
 This method will cancel any pending Recv operation on the current socket, causing the Recv to complete with error EPVSocketCancel. If there is no pending Recv operation, this method will have no effect.     </td>
   </tr>
 </table>
-<a name="a18" doxytag="OsclTCPSocket::CancelSend"></a><p>
+<a name="a23" doxytag="OsclTCPSocket::CancelSend"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -373,7 +378,7 @@ Cancel Send
 This method will cancel any pending Send operation on the current socket, causing the Send to complete with error EPVSocketCancel. If there is no pending Send operation, this method will have no effect.     </td>
   </tr>
 </table>
-<a name="a14" doxytag="OsclTCPSocket::CancelShutdown"></a><p>
+<a name="a19" doxytag="OsclTCPSocket::CancelShutdown"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -403,7 +408,7 @@ Cancel Shutdown
 This method will cancel any pending Shutdown operation on the current socket, causing the Shutdown to complete with error EPVSocketCancel. If there is no pending Shutdown operation, this method will have no effect.     </td>
   </tr>
 </table>
-<a name="a1" doxytag="OsclTCPSocket::Close"></a><p>
+<a name="a3" doxytag="OsclTCPSocket::Close"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -434,13 +439,13 @@ Once it is closed a socket cannot be re-opened. Sockets are automatically closed
 Returns OsclErrNone for success, or a platform-specific error code. </dl>    </td>
   </tr>
 </table>
-<a name="a11" doxytag="OsclTCPSocket::Connect"></a><p>
+<a name="a16" doxytag="OsclTCPSocket::Connect"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
       <table cellpadding="0" cellspacing="0" border="0">
         <tr>
-          <td class="md" nowrap valign="top"> OSCL_IMPORT_REF <a class="el" href="oscl__socket__types_8h.html#a20">TPVSocketEvent</a> OsclTCPSocket::Connect </td>
+          <td class="md" nowrap valign="top"> OSCL_IMPORT_REF <a class="el" href="oscl__socket__types_8h.html#a28">TPVSocketEvent</a> OsclTCPSocket::Connect </td>
           <td class="md" valign="top">(&nbsp;</td>
           <td class="md" nowrap valign="top"><a class="el" href="classOsclNetworkAddress.html">OsclNetworkAddress</a> &amp;&nbsp;</td>
           <td class="mdname" nowrap>&nbsp; <em>aAddress</em>, </td>
@@ -480,7 +485,7 @@ Timeout in milliseconds, or (-1) for infinite wait. </td></tr>
 Will return EPVSocketPending if successful. When the operation is complete, a callback to the observer will occur with the completion status. If the operation cannot be initiated, the call will return EPVSocketFailure and there will be no callback. </dl>    </td>
   </tr>
 </table>
-<a name="a8" doxytag="OsclTCPSocket::GetAcceptedSocketL"></a><p>
+<a name="a13" doxytag="OsclTCPSocket::GetAcceptedSocketL"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -515,7 +520,42 @@ Socket ID. The caller must assign an ID to each socket. The ID is used to identi
 Returns pointer to socket, or NULL if error. Note: The caller is reponsible for deleting any accepted socket that it retrieves. </dl>    </td>
   </tr>
 </table>
-<a name="a9" doxytag="OsclTCPSocket::GetRecvData"></a><p>
+<a name="a9" doxytag="OsclTCPSocket::GetPeerName"></a><p>
+<table width="100%" cellpadding="2" cellspacing="0" border="0">
+  <tr>
+    <td class="md">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> OSCL_IMPORT_REF int32 OsclTCPSocket::GetPeerName </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="classOsclNetworkAddress.html">OsclNetworkAddress</a> &amp;&nbsp;</td>
+          <td class="mdname1" valign="top" nowrap>&nbsp; <em>aPeerName</em>          </td>
+          <td class="md" valign="top">)&nbsp;</td>
+          <td class="md" nowrap></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+Retrieves the peer address of the socket <dl compact><dt><b>Parameters: </b></dt><dd>
+<table border=0 cellspacing=2 cellpadding=0>
+<tr><td valign=top><em>aPeerName:</em>&nbsp;</td><td>
+This will store the peer address when API returns successfully. </td></tr>
+</table>
+</dl><dl compact><dt><b>Returns: </b></dt><dd>
+Returns OsclErrNone for success, or a platform-specific error code. or PVSOCK_ERR_NOT_IMPLEMENTED, if this API is not implemented in OSCL for the underlying OS </dl>    </td>
+  </tr>
+</table>
+<a name="a14" doxytag="OsclTCPSocket::GetRecvData"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -550,7 +590,7 @@ Retrieve the received data after a successful Recv operation. This is a synchron
 Returns pointer to received data, or NULL if none. </dl>    </td>
   </tr>
 </table>
-<a name="a10" doxytag="OsclTCPSocket::GetSendData"></a><p>
+<a name="a15" doxytag="OsclTCPSocket::GetSendData"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -585,7 +625,7 @@ Retrieve the sent data after a successful Send operation. This is a synchronous 
 Returns pointer to sent data, or NULL if none. </dl>    </td>
   </tr>
 </table>
-<a name="a5" doxytag="OsclTCPSocket::Listen"></a><p>
+<a name="a10" doxytag="OsclTCPSocket::Listen"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -620,13 +660,13 @@ Queue size. </td></tr>
 Returns OsclErrNone for success, or a platform-specific error code. </dl>    </td>
   </tr>
 </table>
-<a name="a6" doxytag="OsclTCPSocket::ListenAsync"></a><p>
+<a name="a11" doxytag="OsclTCPSocket::ListenAsync"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
       <table cellpadding="0" cellspacing="0" border="0">
         <tr>
-          <td class="md" nowrap valign="top"> OSCL_IMPORT_REF <a class="el" href="oscl__socket__types_8h.html#a20">TPVSocketEvent</a> OsclTCPSocket::ListenAsync </td>
+          <td class="md" nowrap valign="top"> OSCL_IMPORT_REF <a class="el" href="oscl__socket__types_8h.html#a28">TPVSocketEvent</a> OsclTCPSocket::ListenAsync </td>
           <td class="md" valign="top">(&nbsp;</td>
           <td class="md" nowrap valign="top">int32&nbsp;</td>
           <td class="mdname" nowrap>&nbsp; <em>aQueueSize</em>, </td>
@@ -728,13 +768,13 @@ Socket ID. The caller must assign an ID to each socket. The ID is used to identi
 Returns pointer to socket. </dl>    </td>
   </tr>
 </table>
-<a name="a19" doxytag="OsclTCPSocket::Recv"></a><p>
+<a name="a24" doxytag="OsclTCPSocket::Recv"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
       <table cellpadding="0" cellspacing="0" border="0">
         <tr>
-          <td class="md" nowrap valign="top"> OSCL_IMPORT_REF <a class="el" href="oscl__socket__types_8h.html#a20">TPVSocketEvent</a> OsclTCPSocket::Recv </td>
+          <td class="md" nowrap valign="top"> OSCL_IMPORT_REF <a class="el" href="oscl__socket__types_8h.html#a28">TPVSocketEvent</a> OsclTCPSocket::Recv </td>
           <td class="md" valign="top">(&nbsp;</td>
           <td class="md" nowrap valign="top">uint8 *&nbsp;</td>
           <td class="mdname" nowrap>&nbsp; <em>aPtr</em>, </td>
@@ -782,13 +822,13 @@ Timeout in milliseconds, or (-1) for infinite wait. </td></tr>
 Will return EPVSocketPending if successful. When the operation is complete, a callback to the observer will occur with the completion status. If the operation cannot be initiated, the call will return EPVSocketFailure and there will be no callback. </dl>    </td>
   </tr>
 </table>
-<a name="a17" doxytag="OsclTCPSocket::Send"></a><p>
+<a name="a22" doxytag="OsclTCPSocket::Send"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
       <table cellpadding="0" cellspacing="0" border="0">
         <tr>
-          <td class="md" nowrap valign="top"> OSCL_IMPORT_REF <a class="el" href="oscl__socket__types_8h.html#a20">TPVSocketEvent</a> OsclTCPSocket::Send </td>
+          <td class="md" nowrap valign="top"> OSCL_IMPORT_REF <a class="el" href="oscl__socket__types_8h.html#a28">TPVSocketEvent</a> OsclTCPSocket::Send </td>
           <td class="md" valign="top">(&nbsp;</td>
           <td class="md" nowrap valign="top">const uint8 *&nbsp;</td>
           <td class="mdname" nowrap>&nbsp; <em>aPtr</em>, </td>
@@ -836,15 +876,79 @@ Timeout in milliseconds, or (-1) for infinite wait. </td></tr>
 Will return EPVSocketPending if successful. When the operation is complete, a callback to the observer will occur with the completion status. If the operation cannot be initiated, the call will return EPVSocketFailure and there will be no callback. </dl>    </td>
   </tr>
 </table>
-<a name="a13" doxytag="OsclTCPSocket::Shutdown"></a><p>
+<a name="a7" doxytag="OsclTCPSocket::SetOptionToReuseAddress"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
       <table cellpadding="0" cellspacing="0" border="0">
         <tr>
-          <td class="md" nowrap valign="top"> OSCL_IMPORT_REF <a class="el" href="oscl__socket__types_8h.html#a20">TPVSocketEvent</a> OsclTCPSocket::Shutdown </td>
+          <td class="md" nowrap valign="top"> OSCL_IMPORT_REF int32 OsclTCPSocket::SetOptionToReuseAddress </td>
           <td class="md" valign="top">(&nbsp;</td>
-          <td class="md" nowrap valign="top"><a class="el" href="oscl__socket__types_8h.html#a21">TPVSocketShutdown</a>&nbsp;</td>
+          <td class="mdname1" valign="top" nowrap>&nbsp;          </td>
+          <td class="md" valign="top">)&nbsp;</td>
+          <td class="md" nowrap></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+Allows the server to bind to an address which is in a TIME_WAIT state. <dl compact><dt><b>Returns: </b></dt><dd>
+Returns: OsclErrNone for success, or a platform-specific error code. or PVSOCK_ERR_NOT_SUPPORTED, if underlying OS doesn't support joining multicast group PVSOCK_ERR_BAD_PARAM, if config io file is not configured in accordance with underlying OS PVSOCK_ERR_NOT_IMPLEMENTED, if this API is not implemented in OSCL for the underlying OS </dl>    </td>
+  </tr>
+</table>
+<a name="a8" doxytag="OsclTCPSocket::SetTOS"></a><p>
+<table width="100%" cellpadding="2" cellspacing="0" border="0">
+  <tr>
+    <td class="md">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> OSCL_IMPORT_REF int32 OsclTCPSocket::SetTOS </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top">const <a class="el" href="classOsclSocketTOS.html">OsclSocketTOS</a> &amp;&nbsp;</td>
+          <td class="mdname1" valign="top" nowrap>&nbsp; <em>aTOS</em>          </td>
+          <td class="md" valign="top">)&nbsp;</td>
+          <td class="md" nowrap></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+Sets the Type of Service field of each outgoing IP datagram. <dl compact><dt><b>Parameters: </b></dt><dd>
+<table border=0 cellspacing=2 cellpadding=0>
+<tr><td valign=top><em>aTOS:</em>&nbsp;</td><td>
+Specifies the type of service requested. </td></tr>
+</table>
+</dl><dl compact><dt><b>Returns: </b></dt><dd>
+Returns: OsclErrNone for success, or a platform-specific error code. or PVSOCK_ERR_NOT_SUPPORTED, if underlying OS doesn't support joining multicast group PVSOCK_ERR_BAD_PARAM, if config io file is not configured in accordance with underlying OS PVSOCK_ERR_NOT_IMPLEMENTED, if this API is not implemented in OSCL for the underlying OS </dl>    </td>
+  </tr>
+</table>
+<a name="a18" doxytag="OsclTCPSocket::Shutdown"></a><p>
+<table width="100%" cellpadding="2" cellspacing="0" border="0">
+  <tr>
+    <td class="md">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> OSCL_IMPORT_REF <a class="el" href="oscl__socket__types_8h.html#a28">TPVSocketEvent</a> OsclTCPSocket::Shutdown </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="oscl__socket__types_8h.html#a29">TPVSocketShutdown</a>&nbsp;</td>
           <td class="mdname" nowrap>&nbsp; <em>aHow</em>, </td>
         </tr>
         <tr>
@@ -882,10 +986,76 @@ Timeout in milliseconds, or (-1) for infinite wait. </td></tr>
 Will return EPVSocketPending if successful. When the operation is complete, a callback to the observer will occur with the completion status. If the operation cannot be initiated, the call will return EPVSocketFailure and there will be no callback. </dl>    </td>
   </tr>
 </table>
+<a name="a1" doxytag="OsclTCPSocket::ThreadLogoff"></a><p>
+<table width="100%" cellpadding="2" cellspacing="0" border="0">
+  <tr>
+    <td class="md">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> OSCL_IMPORT_REF <a class="el" href="oscl__socket__types_8h.html#a28">TPVSocketEvent</a> OsclTCPSocket::ThreadLogoff </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="mdname1" valign="top" nowrap>&nbsp;          </td>
+          <td class="md" valign="top">)&nbsp;</td>
+          <td class="md" nowrap></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+Thread logoff routine. This will prepare for transfer and use of the socket in another thread. All socket requests must be complete prior to calling this routine. If any requests are still active, it will return EPVSocketFailure;     </td>
+  </tr>
+</table>
+<a name="a2" doxytag="OsclTCPSocket::ThreadLogon"></a><p>
+<table width="100%" cellpadding="2" cellspacing="0" border="0">
+  <tr>
+    <td class="md">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> OSCL_IMPORT_REF <a class="el" href="oscl__socket__types_8h.html#a28">TPVSocketEvent</a> OsclTCPSocket::ThreadLogon </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="classOsclSocketServ.html">OsclSocketServ</a> &amp;&nbsp;</td>
+          <td class="mdname" nowrap>&nbsp; <em>aServ</em>, </td>
+        </tr>
+        <tr>
+          <td></td>
+          <td></td>
+          <td class="md" nowrap><a class="el" href="classOsclSocketObserver.html">OsclSocketObserver</a> *&nbsp;</td>
+          <td class="mdname" nowrap>&nbsp; <em>aObserver</em></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="md">)&nbsp;</td>
+          <td class="md" colspan="2"></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+Thread logon routine. This will complete the transfer of a socket from another thread for use in the current thread. The ThreadLogoff API must be called in the original thread prior to calling ThreadLogon.     </td>
+  </tr>
+</table>
 <hr>The documentation for this class was generated from the following file:<ul>
 <li><a class="el" href="oscl__socket_8h-source.html">oscl_socket.h</a></ul>
 <hr size="1"><img src="pvlogo_small.jpg"><address style="align: right;"><small>OSCL API</small>
-<address style="align: left;"><small>Posting Version: CORE_8.000.1.1_RC1 </small>
+<address style="align: left;"><small>Posting Version: CORE_8.000.1.1_RC2 </small>
 </small></address>
 </body>
 </html>

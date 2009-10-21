@@ -18,14 +18,18 @@
 <tr><td colspan=2><br><h2>Public Methods</h2></td></tr>
 <tr><td nowrap align=right valign=top>virtual&nbsp;</td><td valign=bottom><a class="el" href="classOsclUDPSocketI.html#a0">~OsclUDPSocketI</a> ()</td></tr>
 <tr><td nowrap align=right valign=top>int32&nbsp;</td><td valign=bottom><a class="el" href="classOsclUDPSocketI.html#a1">Close</a> ()</td></tr>
-<tr><td nowrap align=right valign=top>uint8 *&nbsp;</td><td valign=bottom><a class="el" href="classOsclUDPSocketI.html#a2">GetRecvData</a> (int32 *aLength)</td></tr>
-<tr><td nowrap align=right valign=top>uint8 *&nbsp;</td><td valign=bottom><a class="el" href="classOsclUDPSocketI.html#a3">GetSendData</a> (int32 *aLength)</td></tr>
-<tr><td nowrap align=right valign=top><a class="el" href="oscl__socket__types_8h.html#a20">TPVSocketEvent</a>&nbsp;</td><td valign=bottom><a class="el" href="classOsclUDPSocketI.html#a4">BindAsync</a> (<a class="el" href="classOsclNetworkAddress.html">OsclNetworkAddress</a> &amp;aAddress, int32 aTimeoutMsec=-1)</td></tr>
-<tr><td nowrap align=right valign=top>void&nbsp;</td><td valign=bottom><a class="el" href="classOsclUDPSocketI.html#a5">CancelBind</a> ()</td></tr>
-<tr><td nowrap align=right valign=top><a class="el" href="oscl__socket__types_8h.html#a20">TPVSocketEvent</a>&nbsp;</td><td valign=bottom><a class="el" href="classOsclUDPSocketI.html#a6">SendTo</a> (const uint8 *&amp;aPtr, uint32 aLen, <a class="el" href="classOsclNetworkAddress.html">OsclNetworkAddress</a> &amp;aAddress, int32 aTimeoutMsec=-1)</td></tr>
-<tr><td nowrap align=right valign=top>void&nbsp;</td><td valign=bottom><a class="el" href="classOsclUDPSocketI.html#a7">CancelSendTo</a> ()</td></tr>
-<tr><td nowrap align=right valign=top><a class="el" href="oscl__socket__types_8h.html#a20">TPVSocketEvent</a>&nbsp;</td><td valign=bottom><a class="el" href="classOsclUDPSocketI.html#a8">RecvFrom</a> (uint8 *&amp;aPtr, uint32 aMaxLen, <a class="el" href="classOsclNetworkAddress.html">OsclNetworkAddress</a> &amp;aAddress, int32 aTimeoutMsec=-1, uint32 aMultiMaxLen=0, <a class="el" href="classOscl__Vector.html">Oscl_Vector</a>&lt; uint32, <a class="el" href="classOsclMemAllocator.html">OsclMemAllocator</a> &gt; *aPacketLen=NULL, <a class="el" href="classOscl__Vector.html">Oscl_Vector</a>&lt; <a class="el" href="classOsclNetworkAddress.html">OsclNetworkAddress</a>, <a class="el" href="classOsclMemAllocator.html">OsclMemAllocator</a> &gt; *aPacketSource=NULL)</td></tr>
-<tr><td nowrap align=right valign=top>void&nbsp;</td><td valign=bottom><a class="el" href="classOsclUDPSocketI.html#a9">CancelRecvFrom</a> ()</td></tr>
+<tr><td nowrap align=right valign=top>int32&nbsp;</td><td valign=bottom><a class="el" href="classOsclUDPSocketI.html#a2">JoinMulticastGroup</a> (<a class="el" href="classOsclIpMReq.html">OsclIpMReq</a> &amp;aMReq)</td></tr>
+<tr><td nowrap align=right valign=top>int32&nbsp;</td><td valign=bottom><a class="el" href="classOsclUDPSocketI.html#a3">SetMulticastTTL</a> (int32 aTTL)</td></tr>
+<tr><td nowrap align=right valign=top>uint8 *&nbsp;</td><td valign=bottom><a class="el" href="classOsclUDPSocketI.html#a4">GetRecvData</a> (int32 *aLength)</td></tr>
+<tr><td nowrap align=right valign=top>uint8 *&nbsp;</td><td valign=bottom><a class="el" href="classOsclUDPSocketI.html#a5">GetSendData</a> (int32 *aLength)</td></tr>
+<tr><td nowrap align=right valign=top><a class="el" href="oscl__socket__types_8h.html#a28">TPVSocketEvent</a>&nbsp;</td><td valign=bottom><a class="el" href="classOsclUDPSocketI.html#a6">ThreadLogoff</a> ()</td></tr>
+<tr><td nowrap align=right valign=top><a class="el" href="oscl__socket__types_8h.html#a28">TPVSocketEvent</a>&nbsp;</td><td valign=bottom><a class="el" href="classOsclUDPSocketI.html#a7">ThreadLogon</a> (<a class="el" href="classOsclSocketServI.html">OsclSocketServI</a> *aServ, <a class="el" href="classOsclSocketObserver.html">OsclSocketObserver</a> *aObserver)</td></tr>
+<tr><td nowrap align=right valign=top><a class="el" href="oscl__socket__types_8h.html#a28">TPVSocketEvent</a>&nbsp;</td><td valign=bottom><a class="el" href="classOsclUDPSocketI.html#a8">BindAsync</a> (<a class="el" href="classOsclNetworkAddress.html">OsclNetworkAddress</a> &amp;aAddress, int32 aTimeoutMsec=-1)</td></tr>
+<tr><td nowrap align=right valign=top>void&nbsp;</td><td valign=bottom><a class="el" href="classOsclUDPSocketI.html#a9">CancelBind</a> ()</td></tr>
+<tr><td nowrap align=right valign=top><a class="el" href="oscl__socket__types_8h.html#a28">TPVSocketEvent</a>&nbsp;</td><td valign=bottom><a class="el" href="classOsclUDPSocketI.html#a10">SendTo</a> (const uint8 *&amp;aPtr, uint32 aLen, <a class="el" href="classOsclNetworkAddress.html">OsclNetworkAddress</a> &amp;aAddress, int32 aTimeoutMsec=-1)</td></tr>
+<tr><td nowrap align=right valign=top>void&nbsp;</td><td valign=bottom><a class="el" href="classOsclUDPSocketI.html#a11">CancelSendTo</a> ()</td></tr>
+<tr><td nowrap align=right valign=top><a class="el" href="oscl__socket__types_8h.html#a28">TPVSocketEvent</a>&nbsp;</td><td valign=bottom><a class="el" href="classOsclUDPSocketI.html#a12">RecvFrom</a> (uint8 *&amp;aPtr, uint32 aMaxLen, <a class="el" href="classOsclNetworkAddress.html">OsclNetworkAddress</a> &amp;aAddress, int32 aTimeoutMsec=-1, uint32 aMultiMaxLen=0, <a class="el" href="classOscl__Vector.html">Oscl_Vector</a>&lt; uint32, <a class="el" href="classOsclMemAllocator.html">OsclMemAllocator</a> &gt; *aPacketLen=NULL, <a class="el" href="classOscl__Vector.html">Oscl_Vector</a>&lt; <a class="el" href="classOsclNetworkAddress.html">OsclNetworkAddress</a>, <a class="el" href="classOsclMemAllocator.html">OsclMemAllocator</a> &gt; *aPacketSource=NULL)</td></tr>
+<tr><td nowrap align=right valign=top>void&nbsp;</td><td valign=bottom><a class="el" href="classOsclUDPSocketI.html#a13">CancelRecvFrom</a> ()</td></tr>
 <tr><td colspan=2><br><h2>Static Public Methods</h2></td></tr>
 <tr><td nowrap align=right valign=top>OsclUDPSocketI *&nbsp;</td><td valign=bottom><a class="el" href="classOsclUDPSocketI.html#d0">NewL</a> (<a class="el" href="classOscl__DefAlloc.html">Oscl_DefAlloc</a> &amp;a, <a class="el" href="classOsclSocketServI.html">OsclSocketServI</a> *aServ, <a class="el" href="classOsclSocketObserver.html">OsclSocketObserver</a> *aObserver, uint32 aId)</td></tr>
 </table>
@@ -62,13 +66,13 @@ Internal implementation class for <a class="el" href="classOsclUDPSocket.html">O
   </tr>
 </table>
 <hr><h2>Member Function Documentation</h2>
-<a name="a4" doxytag="OsclUDPSocketI::BindAsync"></a><p>
+<a name="a8" doxytag="OsclUDPSocketI::BindAsync"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
       <table cellpadding="0" cellspacing="0" border="0">
         <tr>
-          <td class="md" nowrap valign="top"> <a class="el" href="oscl__socket__types_8h.html#a20">TPVSocketEvent</a> OsclUDPSocketI::BindAsync </td>
+          <td class="md" nowrap valign="top"> <a class="el" href="oscl__socket__types_8h.html#a28">TPVSocketEvent</a> OsclUDPSocketI::BindAsync </td>
           <td class="md" valign="top">(&nbsp;</td>
           <td class="md" nowrap valign="top"><a class="el" href="classOsclNetworkAddress.html">OsclNetworkAddress</a> &amp;&nbsp;</td>
           <td class="mdname" nowrap>&nbsp; <em>aAddress</em>, </td>
@@ -100,7 +104,7 @@ Internal implementation class for <a class="el" href="classOsclUDPSocket.html">O
     </td>
   </tr>
 </table>
-<a name="a5" doxytag="OsclUDPSocketI::CancelBind"></a><p>
+<a name="a9" doxytag="OsclUDPSocketI::CancelBind"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -128,7 +132,7 @@ Internal implementation class for <a class="el" href="classOsclUDPSocket.html">O
     </td>
   </tr>
 </table>
-<a name="a9" doxytag="OsclUDPSocketI::CancelRecvFrom"></a><p>
+<a name="a13" doxytag="OsclUDPSocketI::CancelRecvFrom"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -156,7 +160,7 @@ Internal implementation class for <a class="el" href="classOsclUDPSocket.html">O
     </td>
   </tr>
 </table>
-<a name="a7" doxytag="OsclUDPSocketI::CancelSendTo"></a><p>
+<a name="a11" doxytag="OsclUDPSocketI::CancelSendTo"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -211,10 +215,10 @@ Internal implementation class for <a class="el" href="classOsclUDPSocket.html">O
 <p>
 
 <p>
-Implements <a class="el" href="classOsclIPSocketI.html#a3">OsclIPSocketI</a>.    </td>
+Implements <a class="el" href="classOsclIPSocketI.html#a6">OsclIPSocketI</a>.    </td>
   </tr>
 </table>
-<a name="a2" doxytag="OsclUDPSocketI::GetRecvData"></a><p>
+<a name="a4" doxytag="OsclUDPSocketI::GetRecvData"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -242,10 +246,10 @@ Implements <a class="el" href="classOsclIPSocketI.html#a3">OsclIPSocketI</a>.   
 <p>
 
 <p>
-Implements <a class="el" href="classOsclIPSocketI.html#a4">OsclIPSocketI</a>.    </td>
+Implements <a class="el" href="classOsclIPSocketI.html#a7">OsclIPSocketI</a>.    </td>
   </tr>
 </table>
-<a name="a3" doxytag="OsclUDPSocketI::GetSendData"></a><p>
+<a name="a5" doxytag="OsclUDPSocketI::GetSendData"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -273,7 +277,36 @@ Implements <a class="el" href="classOsclIPSocketI.html#a4">OsclIPSocketI</a>.   
 <p>
 
 <p>
-Implements <a class="el" href="classOsclIPSocketI.html#a5">OsclIPSocketI</a>.    </td>
+Implements <a class="el" href="classOsclIPSocketI.html#a8">OsclIPSocketI</a>.    </td>
+  </tr>
+</table>
+<a name="a2" doxytag="OsclUDPSocketI::JoinMulticastGroup"></a><p>
+<table width="100%" cellpadding="2" cellspacing="0" border="0">
+  <tr>
+    <td class="md">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int32 OsclUDPSocketI::JoinMulticastGroup </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="classOsclIpMReq.html">OsclIpMReq</a> &amp;&nbsp;</td>
+          <td class="mdname1" valign="top" nowrap>&nbsp; <em>aMReq</em>          </td>
+          <td class="md" valign="top">)&nbsp;</td>
+          <td class="md" nowrap></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+    </td>
   </tr>
 </table>
 <a name="d0" doxytag="OsclUDPSocketI::NewL"></a><p>
@@ -326,13 +359,13 @@ Implements <a class="el" href="classOsclIPSocketI.html#a5">OsclIPSocketI</a>.   
     </td>
   </tr>
 </table>
-<a name="a8" doxytag="OsclUDPSocketI::RecvFrom"></a><p>
+<a name="a12" doxytag="OsclUDPSocketI::RecvFrom"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
       <table cellpadding="0" cellspacing="0" border="0">
         <tr>
-          <td class="md" nowrap valign="top"> <a class="el" href="oscl__socket__types_8h.html#a20">TPVSocketEvent</a> OsclUDPSocketI::RecvFrom </td>
+          <td class="md" nowrap valign="top"> <a class="el" href="oscl__socket__types_8h.html#a28">TPVSocketEvent</a> OsclUDPSocketI::RecvFrom </td>
           <td class="md" valign="top">(&nbsp;</td>
           <td class="md" nowrap valign="top">uint8 *&amp;&nbsp;</td>
           <td class="mdname" nowrap>&nbsp; <em>aPtr</em>, </td>
@@ -394,13 +427,13 @@ Implements <a class="el" href="classOsclIPSocketI.html#a5">OsclIPSocketI</a>.   
     </td>
   </tr>
 </table>
-<a name="a6" doxytag="OsclUDPSocketI::SendTo"></a><p>
+<a name="a10" doxytag="OsclUDPSocketI::SendTo"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
       <table cellpadding="0" cellspacing="0" border="0">
         <tr>
-          <td class="md" nowrap valign="top"> <a class="el" href="oscl__socket__types_8h.html#a20">TPVSocketEvent</a> OsclUDPSocketI::SendTo </td>
+          <td class="md" nowrap valign="top"> <a class="el" href="oscl__socket__types_8h.html#a28">TPVSocketEvent</a> OsclUDPSocketI::SendTo </td>
           <td class="md" valign="top">(&nbsp;</td>
           <td class="md" nowrap valign="top">const uint8 *&amp;&nbsp;</td>
           <td class="mdname" nowrap>&nbsp; <em>aPtr</em>, </td>
@@ -444,10 +477,107 @@ Implements <a class="el" href="classOsclIPSocketI.html#a5">OsclIPSocketI</a>.   
     </td>
   </tr>
 </table>
+<a name="a3" doxytag="OsclUDPSocketI::SetMulticastTTL"></a><p>
+<table width="100%" cellpadding="2" cellspacing="0" border="0">
+  <tr>
+    <td class="md">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int32 OsclUDPSocketI::SetMulticastTTL </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top">int32&nbsp;</td>
+          <td class="mdname1" valign="top" nowrap>&nbsp; <em>aTTL</em>          </td>
+          <td class="md" valign="top">)&nbsp;</td>
+          <td class="md" nowrap></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+    </td>
+  </tr>
+</table>
+<a name="a6" doxytag="OsclUDPSocketI::ThreadLogoff"></a><p>
+<table width="100%" cellpadding="2" cellspacing="0" border="0">
+  <tr>
+    <td class="md">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> <a class="el" href="oscl__socket__types_8h.html#a28">TPVSocketEvent</a> OsclUDPSocketI::ThreadLogoff </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="mdname1" valign="top" nowrap>&nbsp;          </td>
+          <td class="md" valign="top">)&nbsp;</td>
+          <td class="md" nowrap></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+
+<p>
+Reimplemented from <a class="el" href="classOsclIPSocketI.html#a10">OsclIPSocketI</a>.    </td>
+  </tr>
+</table>
+<a name="a7" doxytag="OsclUDPSocketI::ThreadLogon"></a><p>
+<table width="100%" cellpadding="2" cellspacing="0" border="0">
+  <tr>
+    <td class="md">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> <a class="el" href="oscl__socket__types_8h.html#a28">TPVSocketEvent</a> OsclUDPSocketI::ThreadLogon </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="classOsclSocketServI.html">OsclSocketServI</a> *&nbsp;</td>
+          <td class="mdname" nowrap>&nbsp; <em>aServ</em>, </td>
+        </tr>
+        <tr>
+          <td></td>
+          <td></td>
+          <td class="md" nowrap><a class="el" href="classOsclSocketObserver.html">OsclSocketObserver</a> *&nbsp;</td>
+          <td class="mdname" nowrap>&nbsp; <em>aObserver</em></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="md">)&nbsp;</td>
+          <td class="md" colspan="2"></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+    </td>
+  </tr>
+</table>
 <hr>The documentation for this class was generated from the following file:<ul>
 <li><a class="el" href="oscl__udp__socket_8h-source.html">oscl_udp_socket.h</a></ul>
 <hr size="1"><img src="pvlogo_small.jpg"><address style="align: right;"><small>OSCL API</small>
-<address style="align: left;"><small>Posting Version: CORE_8.000.1.1_RC1 </small>
+<address style="align: left;"><small>Posting Version: CORE_8.000.1.1_RC2 </small>
 </small></address>
 </body>
 </html>

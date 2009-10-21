@@ -21,11 +21,15 @@
 <tr><td nowrap align=right valign=top>int32&nbsp;</td><td valign=bottom><a class="el" href="classOsclDNSI.html#a2">Close</a> ()</td></tr>
 <tr><td nowrap align=right valign=top>void&nbsp;</td><td valign=bottom><a class="el" href="classOsclDNSI.html#a3">GetHostByName</a> (<a class="el" href="classGetHostByNameParam.html">GetHostByNameParam</a> &amp;, <a class="el" href="classOsclDNSRequestAO.html">OsclDNSRequestAO</a> &amp;)</td></tr>
 <tr><td nowrap align=right valign=top>void&nbsp;</td><td valign=bottom><a class="el" href="classOsclDNSI.html#a4">GetHostByNameSuccess</a> (<a class="el" href="classGetHostByNameParam.html">GetHostByNameParam</a> &amp;)</td></tr>
+<tr><td nowrap align=right valign=top>void&nbsp;</td><td valign=bottom><a class="el" href="classOsclDNSI.html#a5">GetNextHost</a> (<a class="el" href="classOsclDNSRequestAO.html">OsclDNSRequestAO</a> &amp;)</td></tr>
+<tr><td nowrap align=right valign=top>void&nbsp;</td><td valign=bottom><a class="el" href="classOsclDNSI.html#a6">GetNextHostSuccess</a> (<a class="el" href="classGetHostByNameParam.html">GetHostByNameParam</a> &amp;)</td></tr>
+<tr><td nowrap align=right valign=top>bool&nbsp;</td><td valign=bottom><a class="el" href="classOsclDNSI.html#a7">GetHostByNameResponseContainsAliasInfo</a> ()</td></tr>
 <tr><td colspan=2><br><h2>Static Public Methods</h2></td></tr>
 <tr><td nowrap align=right valign=top>OsclDNSI *&nbsp;</td><td valign=bottom><a class="el" href="classOsclDNSI.html#d0">NewL</a> (<a class="el" href="classOscl__DefAlloc.html">Oscl_DefAlloc</a> &amp;a)</td></tr>
 <tr><td colspan=2><br><h2>Friends</h2></td></tr>
 <tr><td nowrap align=right valign=top>class&nbsp;</td><td valign=bottom><a class="el" href="classOsclDNSI.html#l0">OsclDNSRequest</a></td></tr>
-<tr><td nowrap align=right valign=top>class&nbsp;</td><td valign=bottom><a class="el" href="classOsclDNSI.html#l1">DNSRequestParam</a></td></tr>
+<tr><td nowrap align=right valign=top>class&nbsp;</td><td valign=bottom><a class="el" href="classOsclDNSI.html#l1">OsclGetHostByNameRequest</a></td></tr>
+<tr><td nowrap align=right valign=top>class&nbsp;</td><td valign=bottom><a class="el" href="classOsclDNSI.html#l2">DNSRequestParam</a></td></tr>
 </table>
 <hr><a name="_details"></a><h2>Detailed Description</h2>
 OsclDNSI, non-Symbian implementation 
@@ -130,6 +134,36 @@ Implements <a class="el" href="classOsclDNSIBase.html#a2">OsclDNSIBase</a>.    <
 Implements <a class="el" href="classOsclDNSIBase.html#a3">OsclDNSIBase</a>.    </td>
   </tr>
 </table>
+<a name="a7" doxytag="OsclDNSI::GetHostByNameResponseContainsAliasInfo"></a><p>
+<table width="100%" cellpadding="2" cellspacing="0" border="0">
+  <tr>
+    <td class="md">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> bool OsclDNSI::GetHostByNameResponseContainsAliasInfo </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="mdname1" valign="top" nowrap>&nbsp;          </td>
+          <td class="md" valign="top">)&nbsp;</td>
+          <td class="md" nowrap><code> [virtual]</code></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+
+<p>
+Implements <a class="el" href="classOsclDNSIBase.html#a5">OsclDNSIBase</a>.    </td>
+  </tr>
+</table>
 <a name="a4" doxytag="OsclDNSI::GetHostByNameSuccess"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
@@ -159,6 +193,68 @@ Implements <a class="el" href="classOsclDNSIBase.html#a3">OsclDNSIBase</a>.    <
 
 <p>
 Implements <a class="el" href="classOsclDNSIBase.html#a4">OsclDNSIBase</a>.    </td>
+  </tr>
+</table>
+<a name="a5" doxytag="OsclDNSI::GetNextHost"></a><p>
+<table width="100%" cellpadding="2" cellspacing="0" border="0">
+  <tr>
+    <td class="md">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> void OsclDNSI::GetNextHost </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="classOsclDNSRequestAO.html">OsclDNSRequestAO</a> &amp;&nbsp;</td>
+          <td class="mdname1" valign="top" nowrap>&nbsp;          </td>
+          <td class="md" valign="top">)&nbsp;</td>
+          <td class="md" nowrap><code> [virtual]</code></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+
+<p>
+Implements <a class="el" href="classOsclDNSIBase.html#a6">OsclDNSIBase</a>.    </td>
+  </tr>
+</table>
+<a name="a6" doxytag="OsclDNSI::GetNextHostSuccess"></a><p>
+<table width="100%" cellpadding="2" cellspacing="0" border="0">
+  <tr>
+    <td class="md">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> void OsclDNSI::GetNextHostSuccess </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="classGetHostByNameParam.html">GetHostByNameParam</a> &amp;&nbsp;</td>
+          <td class="mdname1" valign="top" nowrap>&nbsp;          </td>
+          <td class="md" valign="top">)&nbsp;</td>
+          <td class="md" nowrap><code> [virtual]</code></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+
+<p>
+Implements <a class="el" href="classOsclDNSIBase.html#a7">OsclDNSIBase</a>.    </td>
   </tr>
 </table>
 <a name="d0" doxytag="OsclDNSI::NewL"></a><p>
@@ -222,7 +318,7 @@ Implements <a class="el" href="classOsclDNSIBase.html#a1">OsclDNSIBase</a>.    <
   </tr>
 </table>
 <hr><h2>Friends And Related Function Documentation</h2>
-<a name="l1" doxytag="OsclDNSI::DNSRequestParam"></a><p>
+<a name="l2" doxytag="OsclDNSI::DNSRequestParam"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -268,10 +364,34 @@ Implements <a class="el" href="classOsclDNSIBase.html#a1">OsclDNSIBase</a>.    <
 Reimplemented from <a class="el" href="classOsclDNSIBase.html#l0">OsclDNSIBase</a>.    </td>
   </tr>
 </table>
+<a name="l1" doxytag="OsclDNSI::OsclGetHostByNameRequest"></a><p>
+<table width="100%" cellpadding="2" cellspacing="0" border="0">
+  <tr>
+    <td class="md">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> friend class OsclGetHostByNameRequest<code> [friend]</code>
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+
+<p>
+Reimplemented from <a class="el" href="classOsclDNSIBase.html#l1">OsclDNSIBase</a>.    </td>
+  </tr>
+</table>
 <hr>The documentation for this class was generated from the following file:<ul>
 <li><a class="el" href="oscl__dns__imp__pv_8h-source.html">oscl_dns_imp_pv.h</a></ul>
 <hr size="1"><img src="pvlogo_small.jpg"><address style="align: right;"><small>OSCL API</small>
-<address style="align: left;"><small>Posting Version: CORE_8.000.1.1_RC1 </small>
+<address style="align: left;"><small>Posting Version: CORE_8.000.1.1_RC2 </small>
 </small></address>
 </body>
 </html>

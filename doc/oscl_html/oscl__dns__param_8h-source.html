@@ -83,29 +83,50 @@
 00075     <span class="keyword">public</span>:
 00076 
 00077         <span class="comment">//Use this routine to create, use DNSRequestParam::RemoveRef when finished.</span>
-00078         <span class="keyword">static</span> <a class="code" href="classGetHostByNameParam.html">GetHostByNameParam</a>* <a class="code" href="classGetHostByNameParam.html#d0">Create</a>(<span class="keyword">const</span> <span class="keywordtype">char</span> *name, <a class="code" href="classOsclNetworkAddress.html">OsclNetworkAddress</a>* &amp;addr);
+00078         <span class="keyword">static</span> <a class="code" href="classGetHostByNameParam.html">GetHostByNameParam</a>* <a class="code" href="classGetHostByNameParam.html#d0">Create</a>(<span class="keyword">const</span> <span class="keywordtype">char</span> *name, <a class="code" href="classOsclNetworkAddress.html">OsclNetworkAddress</a>* &amp;addr, <a class="code" href="classOscl__Vector.html">Oscl_Vector&lt;OsclNetworkAddress, OsclMemAllocator&gt;</a>* aAddressList);
 00079 
 00080         <span class="comment">//from DNSRequestParam</span>
 00081         <span class="keywordtype">void</span> <a class="code" href="classGetHostByNameParam.html#a0">Destroy</a>();
 00082 
 00083         <a class="code" href="classGetHostByNameParam.html#a1">~GetHostByNameParam</a>();
 00084 
-00085         <span class="comment">//request params.</span>
-<a name="l00086"></a><a class="code" href="classGetHostByNameParam.html#m0">00086</a>         <span class="keywordtype">char</span> *<a class="code" href="classGetHostByNameParam.html#m0">iName</a>;
-<a name="l00087"></a><a class="code" href="classGetHostByNameParam.html#m1">00087</a>         <a class="code" href="classOsclNetworkAddress.html">OsclNetworkAddress</a> *<a class="code" href="classGetHostByNameParam.html#m1">iAddr</a>;
-00088 
-00089     <span class="keyword">private</span>:
-00090 
-00091         <a class="code" href="classGetHostByNameParam.html">GetHostByNameParam</a>(<span class="keyword">const</span> <span class="keywordtype">char</span> *name, <a class="code" href="classOsclNetworkAddress.html">OsclNetworkAddress</a>* &amp;addr);
-00092 
-00093 
-00094 } ;
+<a name="l00085"></a><a class="code" href="classGetHostByNameParam.html#a2">00085</a>         <span class="keywordtype">void</span> <a class="code" href="classGetHostByNameParam.html#a2">PersistHostAddress</a>(<span class="keyword">const</span> <a class="code" href="classOsclNetworkAddress.html">OsclNetworkAddress</a>&amp; addr)
+00086         {
+00087             <span class="keywordflow">if</span> (<a class="code" href="classGetHostByNameParam.html#m2">iAddressList</a> &amp;&amp; (<a class="code" href="classGetHostByNameParam.html#m2">iAddressList</a>-&gt;<a class="code" href="classOscl__Vector__Base.html#a0">size</a>() &lt; <a class="code" href="classGetHostByNameParam.html#m2">iAddressList</a>-&gt;<a class="code" href="classOscl__Vector__Base.html#a1">capacity</a>()))
+00088             {
+00089                 <a class="code" href="classGetHostByNameParam.html#m2">iAddressList</a>-&gt;<a class="code" href="classOscl__Vector.html#a5">push_back</a>(addr);
+00090             }
+00091 
+00092             <span class="keywordflow">if</span> (0 == <a class="code" href="group__osclbase.html#a49">oscl_strcmp</a>(<a class="code" href="group__osclbase.html#a93">OSCL_STATIC_CAST</a>(<span class="keyword">const</span> <span class="keywordtype">char</span>*, <a class="code" href="classGetHostByNameParam.html#m1">iAddr</a>-&gt;<a class="code" href="classOsclNetworkAddress.html#m0">ipAddr</a>.<a class="code" href="classOsclNameString.html#a5">Str</a>()), <span class="stringliteral">""</span>))
+00093                 <a class="code" href="classGetHostByNameParam.html#m1">iAddr</a>-&gt;<a class="code" href="classOsclNetworkAddress.html#m0">ipAddr</a>.<a class="code" href="classOsclNameString.html#a3">Set</a>(addr.<a class="code" href="classOsclNetworkAddress.html#m0">ipAddr</a>.<a class="code" href="classOsclNameString.html#a5">Str</a>());
+00094         }
 00095 
-00096 
-00097 <span class="preprocessor">#endif</span>
-00098 <span class="preprocessor"></span>
+<a name="l00096"></a><a class="code" href="classGetHostByNameParam.html#a3">00096</a>         <span class="keywordtype">bool</span> <a class="code" href="classGetHostByNameParam.html#a3">canPersistMoreHostAddresses</a>()
+00097         {
+00098             <span class="keywordflow">return</span> (<a class="code" href="classGetHostByNameParam.html#m2">iAddressList</a> &amp;&amp; (<a class="code" href="classGetHostByNameParam.html#m2">iAddressList</a>-&gt;<a class="code" href="classOscl__Vector__Base.html#a0">size</a>() &lt; <a class="code" href="classGetHostByNameParam.html#m2">iAddressList</a>-&gt;<a class="code" href="classOscl__Vector__Base.html#a1">capacity</a>())) || (0 == <a class="code" href="group__osclbase.html#a49">oscl_strcmp</a>(<a class="code" href="group__osclbase.html#a93">OSCL_STATIC_CAST</a>(<span class="keyword">const</span> <span class="keywordtype">char</span>*, <a class="code" href="classGetHostByNameParam.html#m1">iAddr</a>-&gt;<a class="code" href="classOsclNetworkAddress.html#m0">ipAddr</a>.<a class="code" href="classOsclNameString.html#a5">Str</a>()), <span class="stringliteral">""</span>));
+00099         }
+00100 
+00101         <span class="comment">//request params.</span>
+<a name="l00102"></a><a class="code" href="classGetHostByNameParam.html#m0">00102</a>         <span class="keywordtype">char</span> *<a class="code" href="classGetHostByNameParam.html#m0">iName</a>;
+<a name="l00103"></a><a class="code" href="classGetHostByNameParam.html#m1">00103</a>         <a class="code" href="classOsclNetworkAddress.html">OsclNetworkAddress</a> *<a class="code" href="classGetHostByNameParam.html#m1">iAddr</a>;
+<a name="l00104"></a><a class="code" href="classGetHostByNameParam.html#m2">00104</a>         <a class="code" href="classOscl__Vector.html">Oscl_Vector&lt;OsclNetworkAddress, OsclMemAllocator&gt;</a> *<a class="code" href="classGetHostByNameParam.html#m2">iAddressList</a>;
+00105         <span class="keyword">enum</span>
+00106         {
+00107             <a class="code" href="classGetHostByNameParam.html#s1s0">addressListCapacity</a> = 10
+00108         };
+00109 
+00110     <span class="keyword">private</span>:
+00111 
+00112         <a class="code" href="classGetHostByNameParam.html">GetHostByNameParam</a>(<span class="keyword">const</span> <span class="keywordtype">char</span> *name, <a class="code" href="classOsclNetworkAddress.html">OsclNetworkAddress</a>* &amp;addr, <a class="code" href="classOscl__Vector.html">Oscl_Vector&lt;OsclNetworkAddress, OsclMemAllocator&gt;</a>* aAddressList);
+00113 
+00114 
+00115 } ;
+00116 
+00117 
+00118 <span class="preprocessor">#endif</span>
+00119 <span class="preprocessor"></span>
 </pre></div><hr size="1"><img src="pvlogo_small.jpg"><address style="align: right;"><small>OSCL API</small>
-<address style="align: left;"><small>Posting Version: CORE_8.000.1.1_RC1 </small>
+<address style="align: left;"><small>Posting Version: CORE_8.000.1.1_RC2 </small>
 </small></address>
 </body>
 </html>

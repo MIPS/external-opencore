@@ -20,12 +20,17 @@
 <tr><td nowrap align=right valign=top>int32&nbsp;</td><td valign=bottom><a class="el" href="classOsclIPSocketI.html#a0">Bind</a> (<a class="el" href="classOsclNetworkAddress.html">OsclNetworkAddress</a> &amp;aAddress)</td></tr>
 <tr><td nowrap align=right valign=top>int32&nbsp;</td><td valign=bottom><a class="el" href="classOsclIPSocketI.html#a1">Join</a> (<a class="el" href="classOsclNetworkAddress.html">OsclNetworkAddress</a> &amp;aAddress)</td></tr>
 <tr><td nowrap align=right valign=top>int32&nbsp;</td><td valign=bottom><a class="el" href="classOsclIPSocketI.html#a2">SetRecvBufferSize</a> (uint32 size)</td></tr>
-<tr><td nowrap align=right valign=top>virtual int32&nbsp;</td><td valign=bottom><a class="el" href="classOsclIPSocketI.html#a3">Close</a> ()=0</td></tr>
-<tr><td nowrap align=right valign=top>virtual uint8 *&nbsp;</td><td valign=bottom><a class="el" href="classOsclIPSocketI.html#a4">GetRecvData</a> (int32 *aLength)=0</td></tr>
-<tr><td nowrap align=right valign=top>virtual uint8 *&nbsp;</td><td valign=bottom><a class="el" href="classOsclIPSocketI.html#a5">GetSendData</a> (int32 *aLength)=0</td></tr>
-<tr><td nowrap align=right valign=top>virtual&nbsp;</td><td valign=bottom><a class="el" href="classOsclIPSocketI.html#a6">~OsclIPSocketI</a> ()</td></tr>
-<tr><td nowrap align=right valign=top><a class="el" href="classOsclSocketServI.html">OsclSocketServI</a> *&nbsp;</td><td valign=bottom><a class="el" href="classOsclIPSocketI.html#a7">SocketServ</a> ()</td></tr>
-<tr><td nowrap align=right valign=top><a class="el" href="classOscl__DefAlloc.html">Oscl_DefAlloc</a> &amp;&nbsp;</td><td valign=bottom><a class="el" href="classOsclIPSocketI.html#a8">Alloc</a> ()</td></tr>
+<tr><td nowrap align=right valign=top>int32&nbsp;</td><td valign=bottom><a class="el" href="classOsclIPSocketI.html#a3">SetOptionToReuseAddress</a> ()</td></tr>
+<tr><td nowrap align=right valign=top>int32&nbsp;</td><td valign=bottom><a class="el" href="classOsclIPSocketI.html#a4">SetTOS</a> (const <a class="el" href="classOsclSocketTOS.html">OsclSocketTOS</a> &amp;aTOS)</td></tr>
+<tr><td nowrap align=right valign=top>int32&nbsp;</td><td valign=bottom><a class="el" href="classOsclIPSocketI.html#a5">GetPeerName</a> (<a class="el" href="classOsclNetworkAddress.html">OsclNetworkAddress</a> &amp;peerName)</td></tr>
+<tr><td nowrap align=right valign=top>virtual int32&nbsp;</td><td valign=bottom><a class="el" href="classOsclIPSocketI.html#a6">Close</a> ()=0</td></tr>
+<tr><td nowrap align=right valign=top>virtual uint8 *&nbsp;</td><td valign=bottom><a class="el" href="classOsclIPSocketI.html#a7">GetRecvData</a> (int32 *aLength)=0</td></tr>
+<tr><td nowrap align=right valign=top>virtual uint8 *&nbsp;</td><td valign=bottom><a class="el" href="classOsclIPSocketI.html#a8">GetSendData</a> (int32 *aLength)=0</td></tr>
+<tr><td nowrap align=right valign=top>virtual&nbsp;</td><td valign=bottom><a class="el" href="classOsclIPSocketI.html#a9">~OsclIPSocketI</a> ()</td></tr>
+<tr><td nowrap align=right valign=top>void&nbsp;</td><td valign=bottom><a class="el" href="classOsclIPSocketI.html#a10">ThreadLogoff</a> ()</td></tr>
+<tr><td nowrap align=right valign=top>void&nbsp;</td><td valign=bottom><a class="el" href="classOsclIPSocketI.html#a11">ThreadLogon</a> (<a class="el" href="classOsclSocketObserver.html">OsclSocketObserver</a> *aObs, <a class="el" href="classOsclSocketServI.html">OsclSocketServI</a> *aServ)</td></tr>
+<tr><td nowrap align=right valign=top><a class="el" href="classOsclSocketServI.html">OsclSocketServI</a> *&nbsp;</td><td valign=bottom><a class="el" href="classOsclIPSocketI.html#a12">SocketServ</a> ()</td></tr>
+<tr><td nowrap align=right valign=top><a class="el" href="classOscl__DefAlloc.html">Oscl_DefAlloc</a> &amp;&nbsp;</td><td valign=bottom><a class="el" href="classOsclIPSocketI.html#a13">Alloc</a> ()</td></tr>
 <tr><td colspan=2><br><h2>Protected Methods</h2></td></tr>
 <tr><td nowrap align=right valign=top>&nbsp;</td><td valign=bottom><a class="el" href="classOsclIPSocketI.html#b0">OsclIPSocketI</a> (<a class="el" href="classOscl__DefAlloc.html">Oscl_DefAlloc</a> &amp;a)</td></tr>
 <tr><td nowrap align=right valign=top>void&nbsp;</td><td valign=bottom><a class="el" href="classOsclIPSocketI.html#b1">ConstructL</a> (<a class="el" href="classOsclSocketObserver.html">OsclSocketObserver</a> *aObs, <a class="el" href="classOsclSocketI.html">OsclSocketI</a> *aSock, <a class="el" href="classOsclSocketServI.html">OsclSocketServI</a> *aServ, uint32 aId)</td></tr>
@@ -42,7 +47,7 @@
 <tr><td nowrap align=right valign=top>class&nbsp;</td><td valign=bottom><a class="el" href="classOsclIPSocketI.html#l1">OsclSocketMethod</a></td></tr>
 </table>
 <hr><h2>Constructor &amp; Destructor Documentation</h2>
-<a name="a6" doxytag="OsclIPSocketI::~OsclIPSocketI"></a><p>
+<a name="a9" doxytag="OsclIPSocketI::~OsclIPSocketI"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -100,7 +105,7 @@
   </tr>
 </table>
 <hr><h2>Member Function Documentation</h2>
-<a name="a8" doxytag="OsclIPSocketI::Alloc"></a><p>
+<a name="a13" doxytag="OsclIPSocketI::Alloc"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -157,7 +162,7 @@
     </td>
   </tr>
 </table>
-<a name="a3" doxytag="OsclIPSocketI::Close"></a><p>
+<a name="a6" doxytag="OsclIPSocketI::Close"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -184,7 +189,7 @@
 <p>
 
 <p>
-Implemented in <a class="el" href="classOsclTCPSocketI.html#a1">OsclTCPSocketI</a>, and <a class="el" href="classOsclUDPSocketI.html#a1">OsclUDPSocketI</a>.    </td>
+Implemented in <a class="el" href="classOsclTCPSocketI.html#a3">OsclTCPSocketI</a>, and <a class="el" href="classOsclUDPSocketI.html#a1">OsclUDPSocketI</a>.    </td>
   </tr>
 </table>
 <a name="b1" doxytag="OsclIPSocketI::ConstructL"></a><p>
@@ -237,7 +242,36 @@ Implemented in <a class="el" href="classOsclTCPSocketI.html#a1">OsclTCPSocketI</
     </td>
   </tr>
 </table>
-<a name="a4" doxytag="OsclIPSocketI::GetRecvData"></a><p>
+<a name="a5" doxytag="OsclIPSocketI::GetPeerName"></a><p>
+<table width="100%" cellpadding="2" cellspacing="0" border="0">
+  <tr>
+    <td class="md">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int32 OsclIPSocketI::GetPeerName </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="classOsclNetworkAddress.html">OsclNetworkAddress</a> &amp;&nbsp;</td>
+          <td class="mdname1" valign="top" nowrap>&nbsp; <em>peerName</em>          </td>
+          <td class="md" valign="top">)&nbsp;</td>
+          <td class="md" nowrap></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+    </td>
+  </tr>
+</table>
+<a name="a7" doxytag="OsclIPSocketI::GetRecvData"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -265,10 +299,10 @@ Implemented in <a class="el" href="classOsclTCPSocketI.html#a1">OsclTCPSocketI</
 <p>
 
 <p>
-Implemented in <a class="el" href="classOsclTCPSocketI.html#a4">OsclTCPSocketI</a>, and <a class="el" href="classOsclUDPSocketI.html#a2">OsclUDPSocketI</a>.    </td>
+Implemented in <a class="el" href="classOsclTCPSocketI.html#a6">OsclTCPSocketI</a>, and <a class="el" href="classOsclUDPSocketI.html#a4">OsclUDPSocketI</a>.    </td>
   </tr>
 </table>
-<a name="a5" doxytag="OsclIPSocketI::GetSendData"></a><p>
+<a name="a8" doxytag="OsclIPSocketI::GetSendData"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -296,7 +330,7 @@ Implemented in <a class="el" href="classOsclTCPSocketI.html#a4">OsclTCPSocketI</
 <p>
 
 <p>
-Implemented in <a class="el" href="classOsclTCPSocketI.html#a5">OsclTCPSocketI</a>, and <a class="el" href="classOsclUDPSocketI.html#a3">OsclUDPSocketI</a>.    </td>
+Implemented in <a class="el" href="classOsclTCPSocketI.html#a7">OsclTCPSocketI</a>, and <a class="el" href="classOsclUDPSocketI.html#a5">OsclUDPSocketI</a>.    </td>
   </tr>
 </table>
 <a name="a1" doxytag="OsclIPSocketI::Join"></a><p>
@@ -309,6 +343,34 @@ Implemented in <a class="el" href="classOsclTCPSocketI.html#a5">OsclTCPSocketI</
           <td class="md" valign="top">(&nbsp;</td>
           <td class="md" nowrap valign="top"><a class="el" href="classOsclNetworkAddress.html">OsclNetworkAddress</a> &amp;&nbsp;</td>
           <td class="mdname1" valign="top" nowrap>&nbsp; <em>aAddress</em>          </td>
+          <td class="md" valign="top">)&nbsp;</td>
+          <td class="md" nowrap></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+    </td>
+  </tr>
+</table>
+<a name="a3" doxytag="OsclIPSocketI::SetOptionToReuseAddress"></a><p>
+<table width="100%" cellpadding="2" cellspacing="0" border="0">
+  <tr>
+    <td class="md">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int32 OsclIPSocketI::SetOptionToReuseAddress </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="mdname1" valign="top" nowrap>&nbsp;          </td>
           <td class="md" valign="top">)&nbsp;</td>
           <td class="md" nowrap></td>
         </tr>
@@ -357,7 +419,36 @@ Implemented in <a class="el" href="classOsclTCPSocketI.html#a5">OsclTCPSocketI</
     </td>
   </tr>
 </table>
-<a name="a7" doxytag="OsclIPSocketI::SocketServ"></a><p>
+<a name="a4" doxytag="OsclIPSocketI::SetTOS"></a><p>
+<table width="100%" cellpadding="2" cellspacing="0" border="0">
+  <tr>
+    <td class="md">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int32 OsclIPSocketI::SetTOS </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top">const <a class="el" href="classOsclSocketTOS.html">OsclSocketTOS</a> &amp;&nbsp;</td>
+          <td class="mdname1" valign="top" nowrap>&nbsp; <em>aTOS</em>          </td>
+          <td class="md" valign="top">)&nbsp;</td>
+          <td class="md" nowrap></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+    </td>
+  </tr>
+</table>
+<a name="a12" doxytag="OsclIPSocketI::SocketServ"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -368,6 +459,74 @@ Implemented in <a class="el" href="classOsclTCPSocketI.html#a5">OsclTCPSocketI</
           <td class="mdname1" valign="top" nowrap>&nbsp;          </td>
           <td class="md" valign="top">)&nbsp;</td>
           <td class="md" nowrap><code> [inline]</code></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+    </td>
+  </tr>
+</table>
+<a name="a10" doxytag="OsclIPSocketI::ThreadLogoff"></a><p>
+<table width="100%" cellpadding="2" cellspacing="0" border="0">
+  <tr>
+    <td class="md">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> void OsclIPSocketI::ThreadLogoff </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="mdname1" valign="top" nowrap>&nbsp;          </td>
+          <td class="md" valign="top">)&nbsp;</td>
+          <td class="md" nowrap></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+
+<p>
+Reimplemented in <a class="el" href="classOsclTCPSocketI.html#a1">OsclTCPSocketI</a>, and <a class="el" href="classOsclUDPSocketI.html#a6">OsclUDPSocketI</a>.    </td>
+  </tr>
+</table>
+<a name="a11" doxytag="OsclIPSocketI::ThreadLogon"></a><p>
+<table width="100%" cellpadding="2" cellspacing="0" border="0">
+  <tr>
+    <td class="md">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> void OsclIPSocketI::ThreadLogon </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="classOsclSocketObserver.html">OsclSocketObserver</a> *&nbsp;</td>
+          <td class="mdname" nowrap>&nbsp; <em>aObs</em>, </td>
+        </tr>
+        <tr>
+          <td></td>
+          <td></td>
+          <td class="md" nowrap><a class="el" href="classOsclSocketServI.html">OsclSocketServI</a> *&nbsp;</td>
+          <td class="mdname" nowrap>&nbsp; <em>aServ</em></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="md">)&nbsp;</td>
+          <td class="md" colspan="2"></td>
         </tr>
 
       </table>
@@ -588,7 +747,7 @@ Implemented in <a class="el" href="classOsclTCPSocketI.html#a5">OsclTCPSocketI</
 <hr>The documentation for this class was generated from the following file:<ul>
 <li><a class="el" href="oscl__ip__socket_8h-source.html">oscl_ip_socket.h</a></ul>
 <hr size="1"><img src="pvlogo_small.jpg"><address style="align: right;"><small>OSCL API</small>
-<address style="align: left;"><small>Posting Version: CORE_8.000.1.1_RC1 </small>
+<address style="align: left;"><small>Posting Version: CORE_8.000.1.1_RC2 </small>
 </small></address>
 </body>
 </html>

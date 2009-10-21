@@ -31,30 +31,33 @@
 00026 
 00027         <span class="keywordtype">void</span> <a class="code" href="classOsclDNSI.html#a3">GetHostByName</a>(<a class="code" href="classGetHostByNameParam.html">GetHostByNameParam</a>&amp; , <a class="code" href="classOsclDNSRequestAO.html">OsclDNSRequestAO</a>&amp;);
 00028         <span class="keywordtype">void</span> <a class="code" href="classOsclDNSI.html#a4">GetHostByNameSuccess</a>(<a class="code" href="classGetHostByNameParam.html">GetHostByNameParam</a>&amp;);
-00029 
-00030 
-00031     <span class="keyword">private</span>:
-00032         <a class="code" href="classOsclDNSI.html">OsclDNSI</a>(<a class="code" href="classOscl__DefAlloc.html">Oscl_DefAlloc</a> &amp;a);
-00033 
-00034         <span class="keywordtype">bool</span> <a class="code" href="classOsclDNSIBase.html#b1">IsReady</a>(<a class="code" href="classOsclDNSRequestAO.html">OsclDNSRequestAO</a>&amp; aObject);
+00029         <span class="keywordtype">void</span> <a class="code" href="classOsclDNSI.html#a5">GetNextHost</a>(<a class="code" href="classOsclDNSRequestAO.html">OsclDNSRequestAO</a>&amp;);
+00030         <span class="keywordtype">void</span> <a class="code" href="classOsclDNSI.html#a6">GetNextHostSuccess</a>(<a class="code" href="classGetHostByNameParam.html">GetHostByNameParam</a>&amp;);
+00031         <span class="keywordtype">bool</span> <a class="code" href="classOsclDNSI.html#a7">GetHostByNameResponseContainsAliasInfo</a>();
+00032 
+00033     <span class="keyword">private</span>:
+00034         <a class="code" href="classOsclDNSI.html">OsclDNSI</a>(<a class="code" href="classOscl__DefAlloc.html">Oscl_DefAlloc</a> &amp;a);
 00035 
-00036         <span class="keywordtype">void</span> <a class="code" href="classOsclDNSIBase.html#b2">CancelGetHostByName</a>();
+00036         <span class="keywordtype">bool</span> <a class="code" href="classOsclDNSIBase.html#b1">IsReady</a>(<a class="code" href="classOsclDNSRequestAO.html">OsclDNSRequestAO</a>&amp; aObject);
 00037 
-<a name="l00038"></a><a class="code" href="classOsclDNSI.html#l0">00038</a>         <span class="keyword">friend</span> <span class="keyword">class </span><a class="code" href="classOsclDNSRequest.html">OsclDNSRequest</a>;
+00038         <span class="keywordtype">void</span> <a class="code" href="classOsclDNSIBase.html#b2">CancelGetHostByName</a>();
 00039 
-00040         <span class="comment">//active requests</span>
-00041         <a class="code" href="classOsclDNSRequest.html">OsclDNSRequest</a> iGetHostByNameRequest;
-00042         <span class="keyword">static</span> <span class="keywordtype">void</span> ProcessDnsRequest(<a class="code" href="classGetHostByNameParam.html">GetHostByNameParam</a>*, int32&amp;, int32&amp;);
-00043 
-<a name="l00044"></a><a class="code" href="classOsclDNSI.html#l1">00044</a>         <span class="keyword">friend</span> <span class="keyword">class </span><a class="code" href="classDNSRequestParam.html">DNSRequestParam</a>;
-00045 };
+<a name="l00040"></a><a class="code" href="classOsclDNSI.html#l0">00040</a>         <span class="keyword">friend</span> <span class="keyword">class </span><a class="code" href="classOsclDNSRequest.html">OsclDNSRequest</a>;
+00041 
+00042         <span class="comment">//active requests</span>
+00043         <a class="code" href="classOsclDNSRequest.html">OsclDNSRequest</a> iGetHostByNameRequest;
+00044         <span class="keyword">static</span> <span class="keywordtype">void</span> ProcessDnsRequest(<a class="code" href="classGetHostByNameParam.html">GetHostByNameParam</a>*, int32&amp;, int32&amp;);
+<a name="l00045"></a><a class="code" href="classOsclDNSI.html#l1">00045</a>         <span class="keyword">friend</span> <span class="keyword">class </span><a class="code" href="classOsclGetHostByNameRequest.html">OsclGetHostByNameRequest</a>;
 00046 
-00047 <span class="preprocessor">#endif</span>
-00048 <span class="preprocessor"></span>
+<a name="l00047"></a><a class="code" href="classOsclDNSI.html#l2">00047</a>         <span class="keyword">friend</span> <span class="keyword">class </span><a class="code" href="classDNSRequestParam.html">DNSRequestParam</a>;
+00048 };
 00049 
-00050 
+00050 <span class="preprocessor">#endif</span>
+00051 <span class="preprocessor"></span>
+00052 
+00053 
 </pre></div><hr size="1"><img src="pvlogo_small.jpg"><address style="align: right;"><small>OSCL API</small>
-<address style="align: left;"><small>Posting Version: CORE_8.000.1.1_RC1 </small>
+<address style="align: left;"><small>Posting Version: CORE_8.000.1.1_RC2 </small>
 </small></address>
 </body>
 </html>

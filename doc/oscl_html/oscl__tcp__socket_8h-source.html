@@ -45,187 +45,206 @@
 00039 
 00040         <span class="keyword">virtual</span> <a class="code" href="classOsclTCPSocketI.html#a0">~OsclTCPSocketI</a>();
 00041 
-00042         int32 <a class="code" href="classOsclTCPSocketI.html#a1">Close</a>();
-00043         <span class="keyword">inline</span> int32 <a class="code" href="classOsclTCPSocketI.html#a2">Listen</a>(<span class="keywordtype">int</span> aQueueSize);
-00044         <span class="comment">//the returned value is platform-specific</span>
-00045 
-00046         <a class="code" href="classOsclTCPSocketI.html">OsclTCPSocketI</a> *<a class="code" href="classOsclTCPSocketI.html#a3">GetAcceptedSocketL</a>(uint32 aId);
-00047 
-00048         <span class="keyword">inline</span> uint8 *<a class="code" href="classOsclTCPSocketI.html#a4">GetRecvData</a>(int32 *aLength) ;
-00049         <span class="keyword">inline</span> uint8 *<a class="code" href="classOsclTCPSocketI.html#a5">GetSendData</a>(int32 *aLength);
+00042         <a class="code" href="oscl__socket__types_8h.html#a28">TPVSocketEvent</a> <a class="code" href="classOsclTCPSocketI.html#a1">ThreadLogoff</a>();
+00043         <a class="code" href="oscl__socket__types_8h.html#a28">TPVSocketEvent</a> <a class="code" href="classOsclTCPSocketI.html#a2">ThreadLogon</a>(
+00044             <a class="code" href="classOsclSocketServI.html">OsclSocketServI</a> *aServ,
+00045             <a class="code" href="classOsclSocketObserver.html">OsclSocketObserver</a> *aObserver
+00046         );
+00047         int32 <a class="code" href="classOsclTCPSocketI.html#a3">Close</a>();
+00048         <span class="keyword">inline</span> int32 <a class="code" href="classOsclTCPSocketI.html#a4">Listen</a>(<span class="keywordtype">int</span> aQueueSize);
+00049         <span class="comment">//the returned value is platform-specific</span>
 00050 
-00051         <span class="comment">//Asynchronous methods</span>
-00052         <span class="keyword">inline</span> <a class="code" href="oscl__socket__types_8h.html#a20">TPVSocketEvent</a> <a class="code" href="classOsclTCPSocketI.html#a6">BindAsync</a>(<a class="code" href="classOsclNetworkAddress.html">OsclNetworkAddress</a>&amp; aAddress,
-00053                                         int32 aTimeoutMsec = -1);
-00054         <span class="keyword">inline</span> <span class="keywordtype">void</span> <a class="code" href="classOsclTCPSocketI.html#a7">CancelBind</a>();
+00051         <a class="code" href="classOsclTCPSocketI.html">OsclTCPSocketI</a> *<a class="code" href="classOsclTCPSocketI.html#a5">GetAcceptedSocketL</a>(uint32 aId);
+00052 
+00053         <span class="keyword">inline</span> uint8 *<a class="code" href="classOsclTCPSocketI.html#a6">GetRecvData</a>(int32 *aLength) ;
+00054         <span class="keyword">inline</span> uint8 *<a class="code" href="classOsclTCPSocketI.html#a7">GetSendData</a>(int32 *aLength);
 00055 
-00056         <span class="keyword">inline</span> <a class="code" href="oscl__socket__types_8h.html#a20">TPVSocketEvent</a> <a class="code" href="classOsclTCPSocketI.html#a8">ListenAsync</a>(uint32 qsize,
-00057                                           int32 aTimeoutMsec = -1);
-00058         <span class="keyword">inline</span> <span class="keywordtype">void</span> <a class="code" href="classOsclTCPSocketI.html#a9">CancelListen</a>();
-00059 
-00060         <span class="keyword">inline</span> <a class="code" href="oscl__socket__types_8h.html#a20">TPVSocketEvent</a> <a class="code" href="classOsclTCPSocketI.html#a10">Connect</a>(<a class="code" href="classOsclNetworkAddress.html">OsclNetworkAddress</a>&amp; aAddress,
-00061                                       int32 aTimeoutMsec = -1);
-00062         <span class="keyword">inline</span> <span class="keywordtype">void</span> <a class="code" href="classOsclTCPSocketI.html#a11">CancelConnect</a>();
-00063 
-00064         <span class="keyword">inline</span> <a class="code" href="oscl__socket__types_8h.html#a20">TPVSocketEvent</a> <a class="code" href="classOsclTCPSocketI.html#a12">Shutdown</a>(<a class="code" href="oscl__socket__types_8h.html#a21">TPVSocketShutdown</a>  aHow,
-00065                                        int32 aTimeoutMsec = -1);
-00066         <span class="keyword">inline</span> <span class="keywordtype">void</span> <a class="code" href="classOsclTCPSocketI.html#a13">CancelShutdown</a>();
-00067 
-00068         <span class="keyword">inline</span> <a class="code" href="oscl__socket__types_8h.html#a20">TPVSocketEvent</a> <a class="code" href="classOsclTCPSocketI.html#a14">Accept</a>(int32 aTimeout = -1);
-00069         <span class="keyword">inline</span> <span class="keywordtype">void</span> <a class="code" href="classOsclTCPSocketI.html#a15">CancelAccept</a>();
-00070 
-00071         <span class="keyword">inline</span> <a class="code" href="oscl__socket__types_8h.html#a20">TPVSocketEvent</a> <a class="code" href="classOsclTCPSocketI.html#a16">Send</a>(<span class="keyword">const</span> uint8* &amp;aPtr, uint32 aLen,
-00072                                    int32 aTimeoutMsec = -1);
-00073         <span class="keyword">inline</span> <span class="keywordtype">void</span> <a class="code" href="classOsclTCPSocketI.html#a17">CancelSend</a>();
-00074 
-00075         <span class="keyword">inline</span> <a class="code" href="oscl__socket__types_8h.html#a20">TPVSocketEvent</a> <a class="code" href="classOsclTCPSocketI.html#a18">Recv</a>(uint8* &amp;aPtr, uint32 aMaxLen,
-00076                                    int32 aTimeoutMsec = -1);
-00077         <span class="keyword">inline</span> <span class="keywordtype">void</span> <a class="code" href="classOsclTCPSocketI.html#a19">CancelRecv</a>();
-00078 
-00079     <span class="keyword">private</span>:
-00080         <span class="keyword">static</span> <a class="code" href="classOsclTCPSocketI.html">OsclTCPSocketI</a> *<a class="code" href="classOsclTCPSocketI.html#d0">NewL</a>(<a class="code" href="classOscl__DefAlloc.html">Oscl_DefAlloc</a> &amp;a,
-00081                                     <a class="code" href="classOsclSocketServI.html">OsclSocketServI</a> *aServ,
-00082                                     <a class="code" href="classOsclSocketI.html">OsclSocketI</a> *aSocket,
-00083                                     <a class="code" href="classOsclSocketObserver.html">OsclSocketObserver</a> *aObserver,
-00084                                     uint32 aId);
-00085 
-00086         <a class="code" href="classOsclTCPSocketI.html">OsclTCPSocketI</a>(<a class="code" href="classOscl__DefAlloc.html">Oscl_DefAlloc</a> &amp;a) : <a class="code" href="classOsclIPSocketI.html#b0">OsclIPSocketI</a>(a),
-00087                 iConnectMethod(<a class="code" href="group__osclbase.html#a88">NULL</a>),
-00088                 iShutdownMethod(<a class="code" href="group__osclbase.html#a88">NULL</a>),
-00089                 iAcceptMethod(<a class="code" href="group__osclbase.html#a88">NULL</a>),
-00090                 iSendMethod(<a class="code" href="group__osclbase.html#a88">NULL</a>),
-00091                 iRecvMethod(<a class="code" href="group__osclbase.html#a88">NULL</a>)
-00092         {}
-00093 
-00094         <span class="keywordtype">void</span> <a class="code" href="classOsclIPSocketI.html#b1">ConstructL</a>(<a class="code" href="classOsclSocketServI.html">OsclSocketServI</a> *aServ,
-00095                         <a class="code" href="classOsclSocketObserver.html">OsclSocketObserver</a> *aObserver,
-00096                         uint32 aId);
-00097 
-00098         <span class="keywordtype">void</span> <a class="code" href="classOsclIPSocketI.html#b1">ConstructL</a>(<a class="code" href="classOsclSocketServI.html">OsclSocketServI</a> *aServ,
-00099                         <a class="code" href="classOsclSocketI.html">OsclSocketI</a> *aSocket,
+00056         <span class="comment">//Asynchronous methods</span>
+00057         <span class="keyword">inline</span> <a class="code" href="oscl__socket__types_8h.html#a28">TPVSocketEvent</a> <a class="code" href="classOsclTCPSocketI.html#a8">BindAsync</a>(<a class="code" href="classOsclNetworkAddress.html">OsclNetworkAddress</a>&amp; aAddress,
+00058                                         int32 aTimeoutMsec = -1);
+00059         <span class="keyword">inline</span> <span class="keywordtype">void</span> <a class="code" href="classOsclTCPSocketI.html#a9">CancelBind</a>();
+00060 
+00061         <span class="keyword">inline</span> <a class="code" href="oscl__socket__types_8h.html#a28">TPVSocketEvent</a> <a class="code" href="classOsclTCPSocketI.html#a10">ListenAsync</a>(uint32 qsize,
+00062                                           int32 aTimeoutMsec = -1);
+00063         <span class="keyword">inline</span> <span class="keywordtype">void</span> <a class="code" href="classOsclTCPSocketI.html#a11">CancelListen</a>();
+00064 
+00065         <span class="keyword">inline</span> <a class="code" href="oscl__socket__types_8h.html#a28">TPVSocketEvent</a> <a class="code" href="classOsclTCPSocketI.html#a12">Connect</a>(<a class="code" href="classOsclNetworkAddress.html">OsclNetworkAddress</a>&amp; aAddress,
+00066                                       int32 aTimeoutMsec = -1);
+00067         <span class="keyword">inline</span> <span class="keywordtype">void</span> <a class="code" href="classOsclTCPSocketI.html#a13">CancelConnect</a>();
+00068 
+00069         <span class="keyword">inline</span> <a class="code" href="oscl__socket__types_8h.html#a28">TPVSocketEvent</a> <a class="code" href="classOsclTCPSocketI.html#a14">Shutdown</a>(<a class="code" href="oscl__socket__types_8h.html#a29">TPVSocketShutdown</a>  aHow,
+00070                                        int32 aTimeoutMsec = -1);
+00071         <span class="keyword">inline</span> <span class="keywordtype">void</span> <a class="code" href="classOsclTCPSocketI.html#a15">CancelShutdown</a>();
+00072 
+00073         <span class="keyword">inline</span> <a class="code" href="oscl__socket__types_8h.html#a28">TPVSocketEvent</a> <a class="code" href="classOsclTCPSocketI.html#a16">Accept</a>(int32 aTimeout = -1);
+00074         <span class="keyword">inline</span> <span class="keywordtype">void</span> <a class="code" href="classOsclTCPSocketI.html#a17">CancelAccept</a>();
+00075 
+00076         <span class="keyword">inline</span> <a class="code" href="oscl__socket__types_8h.html#a28">TPVSocketEvent</a> <a class="code" href="classOsclTCPSocketI.html#a18">Send</a>(<span class="keyword">const</span> uint8* &amp;aPtr, uint32 aLen,
+00077                                    int32 aTimeoutMsec = -1);
+00078         <span class="keyword">inline</span> <span class="keywordtype">void</span> <a class="code" href="classOsclTCPSocketI.html#a19">CancelSend</a>();
+00079 
+00080         <span class="keyword">inline</span> <a class="code" href="oscl__socket__types_8h.html#a28">TPVSocketEvent</a> <a class="code" href="classOsclTCPSocketI.html#a20">Recv</a>(uint8* &amp;aPtr, uint32 aMaxLen,
+00081                                    int32 aTimeoutMsec = -1);
+00082         <span class="keyword">inline</span> <span class="keywordtype">void</span> <a class="code" href="classOsclTCPSocketI.html#a21">CancelRecv</a>();
+00083 
+00084     <span class="keyword">private</span>:
+00085         <span class="keyword">static</span> <a class="code" href="classOsclTCPSocketI.html">OsclTCPSocketI</a> *<a class="code" href="classOsclTCPSocketI.html#d0">NewL</a>(<a class="code" href="classOscl__DefAlloc.html">Oscl_DefAlloc</a> &amp;a,
+00086                                     <a class="code" href="classOsclSocketServI.html">OsclSocketServI</a> *aServ,
+00087                                     <a class="code" href="classOsclSocketI.html">OsclSocketI</a> *aSocket,
+00088                                     <a class="code" href="classOsclSocketObserver.html">OsclSocketObserver</a> *aObserver,
+00089                                     uint32 aId);
+00090 
+00091         <a class="code" href="classOsclTCPSocketI.html">OsclTCPSocketI</a>(<a class="code" href="classOscl__DefAlloc.html">Oscl_DefAlloc</a> &amp;a) : <a class="code" href="classOsclIPSocketI.html#b0">OsclIPSocketI</a>(a),
+00092                 iConnectMethod(<a class="code" href="group__osclbase.html#a88">NULL</a>),
+00093                 iShutdownMethod(<a class="code" href="group__osclbase.html#a88">NULL</a>),
+00094                 iAcceptMethod(<a class="code" href="group__osclbase.html#a88">NULL</a>),
+00095                 iSendMethod(<a class="code" href="group__osclbase.html#a88">NULL</a>),
+00096                 iRecvMethod(<a class="code" href="group__osclbase.html#a88">NULL</a>)
+00097         {}
+00098 
+00099         <span class="keywordtype">void</span> <a class="code" href="classOsclIPSocketI.html#b1">ConstructL</a>(<a class="code" href="classOsclSocketServI.html">OsclSocketServI</a> *aServ,
 00100                         <a class="code" href="classOsclSocketObserver.html">OsclSocketObserver</a> *aObserver,
 00101                         uint32 aId);
 00102 
-00103         <a class="code" href="classOsclBindMethod.html">OsclBindMethod</a> *iBindMethod;
-00104         <a class="code" href="classOsclListenMethod.html">OsclListenMethod</a> *iListenMethod;
-00105         <a class="code" href="classOsclConnectMethod.html">OsclConnectMethod</a> *iConnectMethod;
-00106         <a class="code" href="classOsclShutdownMethod.html">OsclShutdownMethod</a> *iShutdownMethod;
-00107         <a class="code" href="classOsclAcceptMethod.html">OsclAcceptMethod</a> *iAcceptMethod;
-00108         <a class="code" href="classOsclSendMethod.html">OsclSendMethod</a> *iSendMethod;
-00109         <a class="code" href="classOsclRecvMethod.html">OsclRecvMethod</a> *iRecvMethod;
-00110 };
-00111 
-00112 <span class="preprocessor">#include "<a class="code" href="oscl__socket__listen_8h.html">oscl_socket_listen.h</a>"</span>
-00113 <span class="preprocessor">#include "<a class="code" href="oscl__socket__recv_8h.html">oscl_socket_recv.h</a>"</span>
-00114 <span class="preprocessor">#include "<a class="code" href="oscl__socket__send_8h.html">oscl_socket_send.h</a>"</span>
-00115 <span class="preprocessor">#include "<a class="code" href="oscl__socket__accept_8h.html">oscl_socket_accept.h</a>"</span>
-00116 <span class="preprocessor">#include "<a class="code" href="oscl__socket__shutdown_8h.html">oscl_socket_shutdown.h</a>"</span>
-00117 <span class="preprocessor">#include "<a class="code" href="oscl__socket__connect_8h.html">oscl_socket_connect.h</a>"</span>
-00118 <span class="preprocessor">#include "<a class="code" href="oscl__socket__bind_8h.html">oscl_socket_bind.h</a>"</span>
-00119 
-<a name="l00121"></a><a class="code" href="classOsclTCPSocketI.html#a2">00121</a> <span class="keyword">inline</span> int32 <a class="code" href="classOsclTCPSocketI.html#a2">OsclTCPSocketI::Listen</a>(<span class="keywordtype">int</span> aQueueSize)
-00122 {
-00123     <span class="keywordflow">return</span> <a class="code" href="classOsclIPSocketI.html#n4">iSocket</a>-&gt;<a class="code" href="classOsclSocketI.html#a6">Listen</a>(aQueueSize) ;
-00124 }
-00125 
-<a name="l00127"></a><a class="code" href="classOsclTCPSocketI.html#a4">00127</a> <span class="keyword">inline</span> uint8 *<a class="code" href="classOsclTCPSocketI.html#a4">OsclTCPSocketI::GetRecvData</a>(int32 *aLength)
-00128 {
-00129     <span class="keywordflow">return</span> iRecvMethod-&gt;<a class="code" href="classOsclRecvMethod.html#a2">GetRecvData</a>(aLength);
-00130 }
-00131 
-<a name="l00133"></a><a class="code" href="classOsclTCPSocketI.html#a5">00133</a> <span class="keyword">inline</span> uint8 *<a class="code" href="classOsclTCPSocketI.html#a5">OsclTCPSocketI::GetSendData</a>(int32 *aLength)
-00134 {
-00135     <span class="keywordflow">return</span> iSendMethod-&gt;<a class="code" href="classOsclSendMethod.html#a2">GetSendData</a>(aLength);
-00136 }
-00137 
-<a name="l00139"></a><a class="code" href="classOsclTCPSocketI.html#a6">00139</a> <span class="keyword">inline</span> <a class="code" href="oscl__socket__types_8h.html#a20">TPVSocketEvent</a> <a class="code" href="classOsclTCPSocketI.html#a6">OsclTCPSocketI::BindAsync</a>(<a class="code" href="classOsclNetworkAddress.html">OsclNetworkAddress</a>&amp; aAddress,
-00140         int32 aTimeout)
-00141 {
-00142     <span class="keywordflow">if</span> (!<a class="code" href="classOsclSocketIBase.html#d0">OsclSocketIBase::HasAsyncBind</a>())
-00143         <span class="keywordflow">return</span> <a class="code" href="oscl__socket__types_8h.html#a20a14">EPVSocketFailure</a>;<span class="comment">//not available.</span>
-00144 
-00145     <a class="code" href="classOsclIPSocketI.html#n1">iAddress</a>.<a class="code" href="classOsclNetworkAddress.html#m0">ipAddr</a>.<a class="code" href="classOsclNameString.html#a3">Set</a>(aAddress.<a class="code" href="classOsclNetworkAddress.html#m0">ipAddr</a>.<a class="code" href="classOsclNameString.html#a5">Str</a>());
-00146     <a class="code" href="classOsclIPSocketI.html#n1">iAddress</a>.<a class="code" href="classOsclNetworkAddress.html#m1">port</a> = aAddress.<a class="code" href="classOsclNetworkAddress.html#m1">port</a>;
-00147     <span class="keywordflow">return</span> (iBindMethod-&gt;<a class="code" href="classOsclBindMethod.html#a1">Bind</a>(aAddress, aTimeout));
-00148 }
-00149 
-<a name="l00150"></a><a class="code" href="classOsclTCPSocketI.html#a7">00150</a> <span class="keyword">inline</span> <span class="keywordtype">void</span> <a class="code" href="classOsclTCPSocketI.html#a7">OsclTCPSocketI::CancelBind</a>()
-00151 {
-00152     iBindMethod-&gt;<a class="code" href="classOsclSocketMethod.html#a4">CancelMethod</a>();
-00153 }
-00154 
-<a name="l00156"></a><a class="code" href="classOsclTCPSocketI.html#a8">00156</a> <span class="keyword">inline</span> <a class="code" href="oscl__socket__types_8h.html#a20">TPVSocketEvent</a> <a class="code" href="classOsclTCPSocketI.html#a8">OsclTCPSocketI::ListenAsync</a>(uint32 qsize,
-00157         int32 aTimeout)
+00103         <span class="keywordtype">void</span> <a class="code" href="classOsclIPSocketI.html#b1">ConstructL</a>(<a class="code" href="classOsclSocketServI.html">OsclSocketServI</a> *aServ,
+00104                         <a class="code" href="classOsclSocketI.html">OsclSocketI</a> *aSocket,
+00105                         <a class="code" href="classOsclSocketObserver.html">OsclSocketObserver</a> *aObserver,
+00106                         uint32 aId);
+00107 
+00108         <a class="code" href="classOsclBindMethod.html">OsclBindMethod</a> *iBindMethod;
+00109         <a class="code" href="classOsclListenMethod.html">OsclListenMethod</a> *iListenMethod;
+00110         <a class="code" href="classOsclConnectMethod.html">OsclConnectMethod</a> *iConnectMethod;
+00111         <a class="code" href="classOsclShutdownMethod.html">OsclShutdownMethod</a> *iShutdownMethod;
+00112         <a class="code" href="classOsclAcceptMethod.html">OsclAcceptMethod</a> *iAcceptMethod;
+00113         <a class="code" href="classOsclSendMethod.html">OsclSendMethod</a> *iSendMethod;
+00114         <a class="code" href="classOsclRecvMethod.html">OsclRecvMethod</a> *iRecvMethod;
+00115 };
+00116 
+00117 <span class="preprocessor">#include "<a class="code" href="oscl__socket__listen_8h.html">oscl_socket_listen.h</a>"</span>
+00118 <span class="preprocessor">#include "<a class="code" href="oscl__socket__recv_8h.html">oscl_socket_recv.h</a>"</span>
+00119 <span class="preprocessor">#include "<a class="code" href="oscl__socket__send_8h.html">oscl_socket_send.h</a>"</span>
+00120 <span class="preprocessor">#include "<a class="code" href="oscl__socket__accept_8h.html">oscl_socket_accept.h</a>"</span>
+00121 <span class="preprocessor">#include "<a class="code" href="oscl__socket__shutdown_8h.html">oscl_socket_shutdown.h</a>"</span>
+00122 <span class="preprocessor">#include "<a class="code" href="oscl__socket__connect_8h.html">oscl_socket_connect.h</a>"</span>
+00123 <span class="preprocessor">#include "<a class="code" href="oscl__socket__bind_8h.html">oscl_socket_bind.h</a>"</span>
+00124 
+<a name="l00126"></a><a class="code" href="classOsclTCPSocketI.html#a4">00126</a> <span class="keyword">inline</span> int32 <a class="code" href="classOsclTCPSocketI.html#a4">OsclTCPSocketI::Listen</a>(<span class="keywordtype">int</span> aQueueSize)
+00127 {
+00128     <span class="keywordflow">return</span> <a class="code" href="classOsclIPSocketI.html#n4">iSocket</a>-&gt;<a class="code" href="classOsclSocketI.html#a8">Listen</a>(aQueueSize) ;
+00129 }
+00130 
+<a name="l00132"></a><a class="code" href="classOsclTCPSocketI.html#a6">00132</a> <span class="keyword">inline</span> uint8 *<a class="code" href="classOsclTCPSocketI.html#a6">OsclTCPSocketI::GetRecvData</a>(int32 *aLength)
+00133 {
+00134     <span class="keywordflow">return</span> iRecvMethod-&gt;<a class="code" href="classOsclRecvMethod.html#a2">GetRecvData</a>(aLength);
+00135 }
+00136 
+<a name="l00138"></a><a class="code" href="classOsclTCPSocketI.html#a7">00138</a> <span class="keyword">inline</span> uint8 *<a class="code" href="classOsclTCPSocketI.html#a7">OsclTCPSocketI::GetSendData</a>(int32 *aLength)
+00139 {
+00140     <span class="keywordflow">return</span> iSendMethod-&gt;<a class="code" href="classOsclSendMethod.html#a2">GetSendData</a>(aLength);
+00141 }
+00142 
+<a name="l00144"></a><a class="code" href="classOsclTCPSocketI.html#a8">00144</a> <span class="keyword">inline</span> <a class="code" href="oscl__socket__types_8h.html#a28">TPVSocketEvent</a> <a class="code" href="classOsclTCPSocketI.html#a8">OsclTCPSocketI::BindAsync</a>(<a class="code" href="classOsclNetworkAddress.html">OsclNetworkAddress</a>&amp; aAddress,
+00145         int32 aTimeout)
+00146 {
+00147     <span class="keywordflow">if</span> (!<a class="code" href="classOsclSocketIBase.html#d0">OsclSocketIBase::HasAsyncBind</a>())
+00148         <span class="keywordflow">return</span> <a class="code" href="oscl__socket__types_8h.html#a28a16">EPVSocketNotImplemented</a>;
+00149     <span class="keywordflow">if</span> (!<a class="code" href="classOsclIPSocketI.html#n3">iObserver</a>)
+00150         <span class="keywordflow">return</span> <a class="code" href="oscl__socket__types_8h.html#a28a14">EPVSocketFailure</a>;<span class="comment">//not available.</span>
+00151 
+00152     <a class="code" href="classOsclIPSocketI.html#n1">iAddress</a>.<a class="code" href="classOsclNetworkAddress.html#m0">ipAddr</a>.<a class="code" href="classOsclNameString.html#a3">Set</a>(aAddress.<a class="code" href="classOsclNetworkAddress.html#m0">ipAddr</a>.<a class="code" href="classOsclNameString.html#a5">Str</a>());
+00153     <a class="code" href="classOsclIPSocketI.html#n1">iAddress</a>.<a class="code" href="classOsclNetworkAddress.html#m1">port</a> = aAddress.<a class="code" href="classOsclNetworkAddress.html#m1">port</a>;
+00154     <span class="keywordflow">return</span> (iBindMethod-&gt;<a class="code" href="classOsclBindMethod.html#a1">Bind</a>(aAddress, aTimeout));
+00155 }
+00156 
+<a name="l00157"></a><a class="code" href="classOsclTCPSocketI.html#a9">00157</a> <span class="keyword">inline</span> <span class="keywordtype">void</span> <a class="code" href="classOsclTCPSocketI.html#a9">OsclTCPSocketI::CancelBind</a>()
 00158 {
-00159     <span class="keywordflow">if</span> (!<a class="code" href="classOsclSocketIBase.html#d1">OsclSocketIBase::HasAsyncListen</a>())
-00160         <span class="keywordflow">return</span> <a class="code" href="oscl__socket__types_8h.html#a20a14">EPVSocketFailure</a>;<span class="comment">//not available</span>
+00159     iBindMethod-&gt;<a class="code" href="classOsclSocketMethod.html#a4">CancelMethod</a>();
+00160 }
 00161 
-00162     <span class="keywordflow">return</span> (iListenMethod-&gt;<a class="code" href="classOsclListenMethod.html#a1">Listen</a>(qsize, aTimeout));
-00163 }
-00164 
-<a name="l00165"></a><a class="code" href="classOsclTCPSocketI.html#a9">00165</a> <span class="keyword">inline</span> <span class="keywordtype">void</span> <a class="code" href="classOsclTCPSocketI.html#a9">OsclTCPSocketI::CancelListen</a>()
-00166 {
-00167     iListenMethod-&gt;<a class="code" href="classOsclSocketMethod.html#a4">CancelMethod</a>();
-00168 }
-00169 
-<a name="l00171"></a><a class="code" href="classOsclTCPSocketI.html#a10">00171</a> <span class="keyword">inline</span> <a class="code" href="oscl__socket__types_8h.html#a20">TPVSocketEvent</a> <a class="code" href="classOsclTCPSocketI.html#a10">OsclTCPSocketI::Connect</a>(<a class="code" href="classOsclNetworkAddress.html">OsclNetworkAddress</a>&amp; aAddress,
-00172         int32 aTimeout)
-00173 {
-00174     <span class="keywordflow">return</span> (iConnectMethod-&gt;<a class="code" href="classOsclConnectMethod.html#a1">Connect</a>(aAddress, aTimeout));
-00175 }
-00176 
-<a name="l00177"></a><a class="code" href="classOsclTCPSocketI.html#a11">00177</a> <span class="keyword">inline</span> <span class="keywordtype">void</span> <a class="code" href="classOsclTCPSocketI.html#a11">OsclTCPSocketI::CancelConnect</a>()
-00178 {
-00179     iConnectMethod-&gt;<a class="code" href="classOsclSocketMethod.html#a4">CancelMethod</a>();
-00180 }
-00181 
-<a name="l00183"></a><a class="code" href="classOsclTCPSocketI.html#a12">00183</a> <span class="keyword">inline</span> <a class="code" href="oscl__socket__types_8h.html#a20">TPVSocketEvent</a> <a class="code" href="classOsclTCPSocketI.html#a12">OsclTCPSocketI::Shutdown</a>(<a class="code" href="oscl__socket__types_8h.html#a21">TPVSocketShutdown</a>  aHow,
-00184         int32 aTimeout)
-00185 {
-00186     <span class="keywordflow">return</span> (iShutdownMethod-&gt;<a class="code" href="classOsclShutdownMethod.html#a1">Shutdown</a>(aHow, aTimeout));
-00187 }
-00188 
-<a name="l00189"></a><a class="code" href="classOsclTCPSocketI.html#a13">00189</a> <span class="keyword">inline</span> <span class="keywordtype">void</span> <a class="code" href="classOsclTCPSocketI.html#a13">OsclTCPSocketI::CancelShutdown</a>()
-00190 {
-00191     iShutdownMethod-&gt;<a class="code" href="classOsclSocketMethod.html#a4">CancelMethod</a>();
-00192 }
-00193 
-<a name="l00195"></a><a class="code" href="classOsclTCPSocketI.html#a14">00195</a> <span class="keyword">inline</span> <a class="code" href="oscl__socket__types_8h.html#a20">TPVSocketEvent</a> <a class="code" href="classOsclTCPSocketI.html#a14">OsclTCPSocketI::Accept</a>(int32 aTimeout)
+<a name="l00163"></a><a class="code" href="classOsclTCPSocketI.html#a10">00163</a> <span class="keyword">inline</span> <a class="code" href="oscl__socket__types_8h.html#a28">TPVSocketEvent</a> <a class="code" href="classOsclTCPSocketI.html#a10">OsclTCPSocketI::ListenAsync</a>(uint32 qsize,
+00164         int32 aTimeout)
+00165 {
+00166     <span class="keywordflow">if</span> (!<a class="code" href="classOsclSocketIBase.html#d1">OsclSocketIBase::HasAsyncListen</a>())
+00167         <span class="keywordflow">return</span> <a class="code" href="oscl__socket__types_8h.html#a28a16">EPVSocketNotImplemented</a>;
+00168     <span class="keywordflow">if</span> (!<a class="code" href="classOsclIPSocketI.html#n3">iObserver</a>)
+00169         <span class="keywordflow">return</span> <a class="code" href="oscl__socket__types_8h.html#a28a14">EPVSocketFailure</a>;<span class="comment">//not available</span>
+00170 
+00171     <span class="keywordflow">return</span> (iListenMethod-&gt;<a class="code" href="classOsclListenMethod.html#a1">Listen</a>(qsize, aTimeout));
+00172 }
+00173 
+<a name="l00174"></a><a class="code" href="classOsclTCPSocketI.html#a11">00174</a> <span class="keyword">inline</span> <span class="keywordtype">void</span> <a class="code" href="classOsclTCPSocketI.html#a11">OsclTCPSocketI::CancelListen</a>()
+00175 {
+00176     iListenMethod-&gt;<a class="code" href="classOsclSocketMethod.html#a4">CancelMethod</a>();
+00177 }
+00178 
+<a name="l00180"></a><a class="code" href="classOsclTCPSocketI.html#a12">00180</a> <span class="keyword">inline</span> <a class="code" href="oscl__socket__types_8h.html#a28">TPVSocketEvent</a> <a class="code" href="classOsclTCPSocketI.html#a12">OsclTCPSocketI::Connect</a>(<a class="code" href="classOsclNetworkAddress.html">OsclNetworkAddress</a>&amp; aAddress,
+00181         int32 aTimeout)
+00182 {
+00183     <span class="keywordflow">if</span> (!<a class="code" href="classOsclIPSocketI.html#n3">iObserver</a>)
+00184         <span class="keywordflow">return</span> <a class="code" href="oscl__socket__types_8h.html#a28a14">EPVSocketFailure</a>;<span class="comment">//socket is logged off.</span>
+00185     <span class="keywordflow">return</span> (iConnectMethod-&gt;<a class="code" href="classOsclConnectMethod.html#a1">Connect</a>(aAddress, aTimeout));
+00186 }
+00187 
+<a name="l00188"></a><a class="code" href="classOsclTCPSocketI.html#a13">00188</a> <span class="keyword">inline</span> <span class="keywordtype">void</span> <a class="code" href="classOsclTCPSocketI.html#a13">OsclTCPSocketI::CancelConnect</a>()
+00189 {
+00190     iConnectMethod-&gt;<a class="code" href="classOsclSocketMethod.html#a4">CancelMethod</a>();
+00191 }
+00192 
+<a name="l00194"></a><a class="code" href="classOsclTCPSocketI.html#a14">00194</a> <span class="keyword">inline</span> <a class="code" href="oscl__socket__types_8h.html#a28">TPVSocketEvent</a> <a class="code" href="classOsclTCPSocketI.html#a14">OsclTCPSocketI::Shutdown</a>(<a class="code" href="oscl__socket__types_8h.html#a29">TPVSocketShutdown</a>  aHow,
+00195         int32 aTimeout)
 00196 {
-00197     <span class="keywordflow">return</span> (iAcceptMethod-&gt;<a class="code" href="classOsclAcceptMethod.html#a1">Accept</a>(aTimeout));
-00198 }
-00199 
-<a name="l00200"></a><a class="code" href="classOsclTCPSocketI.html#a15">00200</a> <span class="keyword">inline</span> <span class="keywordtype">void</span> <a class="code" href="classOsclTCPSocketI.html#a15">OsclTCPSocketI::CancelAccept</a>()
-00201 {
-00202     iAcceptMethod-&gt;<a class="code" href="classOsclSocketMethod.html#a4">CancelMethod</a>();
-00203 }
-00204 
-<a name="l00206"></a><a class="code" href="classOsclTCPSocketI.html#a16">00206</a> <span class="keyword">inline</span> <a class="code" href="oscl__socket__types_8h.html#a20">TPVSocketEvent</a> <a class="code" href="classOsclTCPSocketI.html#a16">OsclTCPSocketI::Send</a>(<span class="keyword">const</span> uint8* &amp;aPtr, uint32 aLen,
-00207         int32 aTimeoutMsec)
-00208 {
-00209     <span class="keywordflow">return</span> (iSendMethod-&gt;<a class="code" href="classOsclSendMethod.html#a1">Send</a>(aPtr, aLen, aTimeoutMsec));
-00210 }
-00211 
-<a name="l00212"></a><a class="code" href="classOsclTCPSocketI.html#a17">00212</a> <span class="keyword">inline</span> <span class="keywordtype">void</span> <a class="code" href="classOsclTCPSocketI.html#a17">OsclTCPSocketI::CancelSend</a>()
-00213 {
-00214     iSendMethod-&gt;<a class="code" href="classOsclSocketMethod.html#a4">CancelMethod</a>();
-00215 }
-00216 
-<a name="l00218"></a><a class="code" href="classOsclTCPSocketI.html#a18">00218</a> <span class="keyword">inline</span> <a class="code" href="oscl__socket__types_8h.html#a20">TPVSocketEvent</a> <a class="code" href="classOsclTCPSocketI.html#a18">OsclTCPSocketI::Recv</a>(uint8* &amp;aPtr, uint32 aMaxLen,
-00219         int32 aTimeout)
-00220 {
-00221     <span class="keywordflow">return</span> (iRecvMethod-&gt;<a class="code" href="classOsclRecvMethod.html#a1">Recv</a>(aPtr, aMaxLen, aTimeout));
-00222 }
-00223 
-<a name="l00224"></a><a class="code" href="classOsclTCPSocketI.html#a19">00224</a> <span class="keyword">inline</span> <span class="keywordtype">void</span> <a class="code" href="classOsclTCPSocketI.html#a19">OsclTCPSocketI::CancelRecv</a>()
-00225 {
-00226     iRecvMethod-&gt;<a class="code" href="classOsclSocketMethod.html#a4">CancelMethod</a>();
+00197     <span class="keywordflow">if</span> (!<a class="code" href="classOsclIPSocketI.html#n3">iObserver</a>)
+00198         <span class="keywordflow">return</span> <a class="code" href="oscl__socket__types_8h.html#a28a14">EPVSocketFailure</a>;<span class="comment">//socket is logged off.</span>
+00199     <span class="keywordflow">return</span> (iShutdownMethod-&gt;<a class="code" href="classOsclShutdownMethod.html#a1">Shutdown</a>(aHow, aTimeout));
+00200 }
+00201 
+<a name="l00202"></a><a class="code" href="classOsclTCPSocketI.html#a15">00202</a> <span class="keyword">inline</span> <span class="keywordtype">void</span> <a class="code" href="classOsclTCPSocketI.html#a15">OsclTCPSocketI::CancelShutdown</a>()
+00203 {
+00204     iShutdownMethod-&gt;<a class="code" href="classOsclSocketMethod.html#a4">CancelMethod</a>();
+00205 }
+00206 
+<a name="l00208"></a><a class="code" href="classOsclTCPSocketI.html#a16">00208</a> <span class="keyword">inline</span> <a class="code" href="oscl__socket__types_8h.html#a28">TPVSocketEvent</a> <a class="code" href="classOsclTCPSocketI.html#a16">OsclTCPSocketI::Accept</a>(int32 aTimeout)
+00209 {
+00210     <span class="keywordflow">if</span> (!<a class="code" href="classOsclIPSocketI.html#n3">iObserver</a>)
+00211         <span class="keywordflow">return</span> <a class="code" href="oscl__socket__types_8h.html#a28a14">EPVSocketFailure</a>;<span class="comment">//socket is logged off.</span>
+00212     <span class="keywordflow">return</span> (iAcceptMethod-&gt;<a class="code" href="classOsclAcceptMethod.html#a1">Accept</a>(aTimeout));
+00213 }
+00214 
+<a name="l00215"></a><a class="code" href="classOsclTCPSocketI.html#a17">00215</a> <span class="keyword">inline</span> <span class="keywordtype">void</span> <a class="code" href="classOsclTCPSocketI.html#a17">OsclTCPSocketI::CancelAccept</a>()
+00216 {
+00217     iAcceptMethod-&gt;<a class="code" href="classOsclSocketMethod.html#a4">CancelMethod</a>();
+00218 }
+00219 
+<a name="l00221"></a><a class="code" href="classOsclTCPSocketI.html#a18">00221</a> <span class="keyword">inline</span> <a class="code" href="oscl__socket__types_8h.html#a28">TPVSocketEvent</a> <a class="code" href="classOsclTCPSocketI.html#a18">OsclTCPSocketI::Send</a>(<span class="keyword">const</span> uint8* &amp;aPtr, uint32 aLen,
+00222         int32 aTimeoutMsec)
+00223 {
+00224     <span class="keywordflow">if</span> (!<a class="code" href="classOsclIPSocketI.html#n3">iObserver</a>)
+00225         <span class="keywordflow">return</span> <a class="code" href="oscl__socket__types_8h.html#a28a14">EPVSocketFailure</a>;<span class="comment">//socket is logged off.</span>
+00226     <span class="keywordflow">return</span> (iSendMethod-&gt;<a class="code" href="classOsclSendMethod.html#a1">Send</a>(aPtr, aLen, aTimeoutMsec));
 00227 }
 00228 
-00229 <span class="preprocessor">#endif</span>
-00230 <span class="preprocessor"></span>
+<a name="l00229"></a><a class="code" href="classOsclTCPSocketI.html#a19">00229</a> <span class="keyword">inline</span> <span class="keywordtype">void</span> <a class="code" href="classOsclTCPSocketI.html#a19">OsclTCPSocketI::CancelSend</a>()
+00230 {
+00231     iSendMethod-&gt;<a class="code" href="classOsclSocketMethod.html#a4">CancelMethod</a>();
+00232 }
+00233 
+<a name="l00235"></a><a class="code" href="classOsclTCPSocketI.html#a20">00235</a> <span class="keyword">inline</span> <a class="code" href="oscl__socket__types_8h.html#a28">TPVSocketEvent</a> <a class="code" href="classOsclTCPSocketI.html#a20">OsclTCPSocketI::Recv</a>(uint8* &amp;aPtr, uint32 aMaxLen,
+00236         int32 aTimeout)
+00237 {
+00238     <span class="keywordflow">if</span> (!<a class="code" href="classOsclIPSocketI.html#n3">iObserver</a>)
+00239         <span class="keywordflow">return</span> <a class="code" href="oscl__socket__types_8h.html#a28a14">EPVSocketFailure</a>;<span class="comment">//socket is logged off.</span>
+00240     <span class="keywordflow">return</span> (iRecvMethod-&gt;<a class="code" href="classOsclRecvMethod.html#a1">Recv</a>(aPtr, aMaxLen, aTimeout));
+00241 }
+00242 
+<a name="l00243"></a><a class="code" href="classOsclTCPSocketI.html#a21">00243</a> <span class="keyword">inline</span> <span class="keywordtype">void</span> <a class="code" href="classOsclTCPSocketI.html#a21">OsclTCPSocketI::CancelRecv</a>()
+00244 {
+00245     iRecvMethod-&gt;<a class="code" href="classOsclSocketMethod.html#a4">CancelMethod</a>();
+00246 }
+00247 
+00248 <span class="preprocessor">#endif</span>
+00249 <span class="preprocessor"></span>
 </pre></div><hr size="1"><img src="pvlogo_small.jpg"><address style="align: right;"><small>OSCL API</small>
-<address style="align: left;"><small>Posting Version: CORE_8.000.1.1_RC1 </small>
+<address style="align: left;"><small>Posting Version: CORE_8.000.1.1_RC2 </small>
 </small></address>
 </body>
 </html>

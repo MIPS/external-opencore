@@ -17,25 +17,27 @@
 <tr><td></td></tr>
 <tr><td colspan=2><br><h2>Public Methods</h2></td></tr>
 <tr><td nowrap align=right valign=top>virtual&nbsp;</td><td valign=bottom><a class="el" href="classOsclTCPSocketI.html#a0">~OsclTCPSocketI</a> ()</td></tr>
-<tr><td nowrap align=right valign=top>int32&nbsp;</td><td valign=bottom><a class="el" href="classOsclTCPSocketI.html#a1">Close</a> ()</td></tr>
-<tr><td nowrap align=right valign=top>int32&nbsp;</td><td valign=bottom><a class="el" href="classOsclTCPSocketI.html#a2">Listen</a> (int aQueueSize)</td></tr>
-<tr><td nowrap align=right valign=top>OsclTCPSocketI *&nbsp;</td><td valign=bottom><a class="el" href="classOsclTCPSocketI.html#a3">GetAcceptedSocketL</a> (uint32 aId)</td></tr>
-<tr><td nowrap align=right valign=top>uint8 *&nbsp;</td><td valign=bottom><a class="el" href="classOsclTCPSocketI.html#a4">GetRecvData</a> (int32 *aLength)</td></tr>
-<tr><td nowrap align=right valign=top>uint8 *&nbsp;</td><td valign=bottom><a class="el" href="classOsclTCPSocketI.html#a5">GetSendData</a> (int32 *aLength)</td></tr>
-<tr><td nowrap align=right valign=top><a class="el" href="oscl__socket__types_8h.html#a20">TPVSocketEvent</a>&nbsp;</td><td valign=bottom><a class="el" href="classOsclTCPSocketI.html#a6">BindAsync</a> (<a class="el" href="classOsclNetworkAddress.html">OsclNetworkAddress</a> &amp;aAddress, int32 aTimeoutMsec=-1)</td></tr>
-<tr><td nowrap align=right valign=top>void&nbsp;</td><td valign=bottom><a class="el" href="classOsclTCPSocketI.html#a7">CancelBind</a> ()</td></tr>
-<tr><td nowrap align=right valign=top><a class="el" href="oscl__socket__types_8h.html#a20">TPVSocketEvent</a>&nbsp;</td><td valign=bottom><a class="el" href="classOsclTCPSocketI.html#a8">ListenAsync</a> (uint32 qsize, int32 aTimeoutMsec=-1)</td></tr>
-<tr><td nowrap align=right valign=top>void&nbsp;</td><td valign=bottom><a class="el" href="classOsclTCPSocketI.html#a9">CancelListen</a> ()</td></tr>
-<tr><td nowrap align=right valign=top><a class="el" href="oscl__socket__types_8h.html#a20">TPVSocketEvent</a>&nbsp;</td><td valign=bottom><a class="el" href="classOsclTCPSocketI.html#a10">Connect</a> (<a class="el" href="classOsclNetworkAddress.html">OsclNetworkAddress</a> &amp;aAddress, int32 aTimeoutMsec=-1)</td></tr>
-<tr><td nowrap align=right valign=top>void&nbsp;</td><td valign=bottom><a class="el" href="classOsclTCPSocketI.html#a11">CancelConnect</a> ()</td></tr>
-<tr><td nowrap align=right valign=top><a class="el" href="oscl__socket__types_8h.html#a20">TPVSocketEvent</a>&nbsp;</td><td valign=bottom><a class="el" href="classOsclTCPSocketI.html#a12">Shutdown</a> (<a class="el" href="oscl__socket__types_8h.html#a21">TPVSocketShutdown</a> aHow, int32 aTimeoutMsec=-1)</td></tr>
-<tr><td nowrap align=right valign=top>void&nbsp;</td><td valign=bottom><a class="el" href="classOsclTCPSocketI.html#a13">CancelShutdown</a> ()</td></tr>
-<tr><td nowrap align=right valign=top><a class="el" href="oscl__socket__types_8h.html#a20">TPVSocketEvent</a>&nbsp;</td><td valign=bottom><a class="el" href="classOsclTCPSocketI.html#a14">Accept</a> (int32 aTimeout=-1)</td></tr>
-<tr><td nowrap align=right valign=top>void&nbsp;</td><td valign=bottom><a class="el" href="classOsclTCPSocketI.html#a15">CancelAccept</a> ()</td></tr>
-<tr><td nowrap align=right valign=top><a class="el" href="oscl__socket__types_8h.html#a20">TPVSocketEvent</a>&nbsp;</td><td valign=bottom><a class="el" href="classOsclTCPSocketI.html#a16">Send</a> (const uint8 *&amp;aPtr, uint32 aLen, int32 aTimeoutMsec=-1)</td></tr>
-<tr><td nowrap align=right valign=top>void&nbsp;</td><td valign=bottom><a class="el" href="classOsclTCPSocketI.html#a17">CancelSend</a> ()</td></tr>
-<tr><td nowrap align=right valign=top><a class="el" href="oscl__socket__types_8h.html#a20">TPVSocketEvent</a>&nbsp;</td><td valign=bottom><a class="el" href="classOsclTCPSocketI.html#a18">Recv</a> (uint8 *&amp;aPtr, uint32 aMaxLen, int32 aTimeoutMsec=-1)</td></tr>
-<tr><td nowrap align=right valign=top>void&nbsp;</td><td valign=bottom><a class="el" href="classOsclTCPSocketI.html#a19">CancelRecv</a> ()</td></tr>
+<tr><td nowrap align=right valign=top><a class="el" href="oscl__socket__types_8h.html#a28">TPVSocketEvent</a>&nbsp;</td><td valign=bottom><a class="el" href="classOsclTCPSocketI.html#a1">ThreadLogoff</a> ()</td></tr>
+<tr><td nowrap align=right valign=top><a class="el" href="oscl__socket__types_8h.html#a28">TPVSocketEvent</a>&nbsp;</td><td valign=bottom><a class="el" href="classOsclTCPSocketI.html#a2">ThreadLogon</a> (<a class="el" href="classOsclSocketServI.html">OsclSocketServI</a> *aServ, <a class="el" href="classOsclSocketObserver.html">OsclSocketObserver</a> *aObserver)</td></tr>
+<tr><td nowrap align=right valign=top>int32&nbsp;</td><td valign=bottom><a class="el" href="classOsclTCPSocketI.html#a3">Close</a> ()</td></tr>
+<tr><td nowrap align=right valign=top>int32&nbsp;</td><td valign=bottom><a class="el" href="classOsclTCPSocketI.html#a4">Listen</a> (int aQueueSize)</td></tr>
+<tr><td nowrap align=right valign=top>OsclTCPSocketI *&nbsp;</td><td valign=bottom><a class="el" href="classOsclTCPSocketI.html#a5">GetAcceptedSocketL</a> (uint32 aId)</td></tr>
+<tr><td nowrap align=right valign=top>uint8 *&nbsp;</td><td valign=bottom><a class="el" href="classOsclTCPSocketI.html#a6">GetRecvData</a> (int32 *aLength)</td></tr>
+<tr><td nowrap align=right valign=top>uint8 *&nbsp;</td><td valign=bottom><a class="el" href="classOsclTCPSocketI.html#a7">GetSendData</a> (int32 *aLength)</td></tr>
+<tr><td nowrap align=right valign=top><a class="el" href="oscl__socket__types_8h.html#a28">TPVSocketEvent</a>&nbsp;</td><td valign=bottom><a class="el" href="classOsclTCPSocketI.html#a8">BindAsync</a> (<a class="el" href="classOsclNetworkAddress.html">OsclNetworkAddress</a> &amp;aAddress, int32 aTimeoutMsec=-1)</td></tr>
+<tr><td nowrap align=right valign=top>void&nbsp;</td><td valign=bottom><a class="el" href="classOsclTCPSocketI.html#a9">CancelBind</a> ()</td></tr>
+<tr><td nowrap align=right valign=top><a class="el" href="oscl__socket__types_8h.html#a28">TPVSocketEvent</a>&nbsp;</td><td valign=bottom><a class="el" href="classOsclTCPSocketI.html#a10">ListenAsync</a> (uint32 qsize, int32 aTimeoutMsec=-1)</td></tr>
+<tr><td nowrap align=right valign=top>void&nbsp;</td><td valign=bottom><a class="el" href="classOsclTCPSocketI.html#a11">CancelListen</a> ()</td></tr>
+<tr><td nowrap align=right valign=top><a class="el" href="oscl__socket__types_8h.html#a28">TPVSocketEvent</a>&nbsp;</td><td valign=bottom><a class="el" href="classOsclTCPSocketI.html#a12">Connect</a> (<a class="el" href="classOsclNetworkAddress.html">OsclNetworkAddress</a> &amp;aAddress, int32 aTimeoutMsec=-1)</td></tr>
+<tr><td nowrap align=right valign=top>void&nbsp;</td><td valign=bottom><a class="el" href="classOsclTCPSocketI.html#a13">CancelConnect</a> ()</td></tr>
+<tr><td nowrap align=right valign=top><a class="el" href="oscl__socket__types_8h.html#a28">TPVSocketEvent</a>&nbsp;</td><td valign=bottom><a class="el" href="classOsclTCPSocketI.html#a14">Shutdown</a> (<a class="el" href="oscl__socket__types_8h.html#a29">TPVSocketShutdown</a> aHow, int32 aTimeoutMsec=-1)</td></tr>
+<tr><td nowrap align=right valign=top>void&nbsp;</td><td valign=bottom><a class="el" href="classOsclTCPSocketI.html#a15">CancelShutdown</a> ()</td></tr>
+<tr><td nowrap align=right valign=top><a class="el" href="oscl__socket__types_8h.html#a28">TPVSocketEvent</a>&nbsp;</td><td valign=bottom><a class="el" href="classOsclTCPSocketI.html#a16">Accept</a> (int32 aTimeout=-1)</td></tr>
+<tr><td nowrap align=right valign=top>void&nbsp;</td><td valign=bottom><a class="el" href="classOsclTCPSocketI.html#a17">CancelAccept</a> ()</td></tr>
+<tr><td nowrap align=right valign=top><a class="el" href="oscl__socket__types_8h.html#a28">TPVSocketEvent</a>&nbsp;</td><td valign=bottom><a class="el" href="classOsclTCPSocketI.html#a18">Send</a> (const uint8 *&amp;aPtr, uint32 aLen, int32 aTimeoutMsec=-1)</td></tr>
+<tr><td nowrap align=right valign=top>void&nbsp;</td><td valign=bottom><a class="el" href="classOsclTCPSocketI.html#a19">CancelSend</a> ()</td></tr>
+<tr><td nowrap align=right valign=top><a class="el" href="oscl__socket__types_8h.html#a28">TPVSocketEvent</a>&nbsp;</td><td valign=bottom><a class="el" href="classOsclTCPSocketI.html#a20">Recv</a> (uint8 *&amp;aPtr, uint32 aMaxLen, int32 aTimeoutMsec=-1)</td></tr>
+<tr><td nowrap align=right valign=top>void&nbsp;</td><td valign=bottom><a class="el" href="classOsclTCPSocketI.html#a21">CancelRecv</a> ()</td></tr>
 <tr><td colspan=2><br><h2>Static Public Methods</h2></td></tr>
 <tr><td nowrap align=right valign=top>OsclTCPSocketI *&nbsp;</td><td valign=bottom><a class="el" href="classOsclTCPSocketI.html#d0">NewL</a> (<a class="el" href="classOscl__DefAlloc.html">Oscl_DefAlloc</a> &amp;a, <a class="el" href="classOsclSocketServI.html">OsclSocketServI</a> *aServ, <a class="el" href="classOsclSocketObserver.html">OsclSocketObserver</a> *aObserver, uint32 aId)</td></tr>
 </table>
@@ -72,13 +74,13 @@ Internal implementation class for <a class="el" href="classOsclTCPSocket.html">O
   </tr>
 </table>
 <hr><h2>Member Function Documentation</h2>
-<a name="a14" doxytag="OsclTCPSocketI::Accept"></a><p>
+<a name="a16" doxytag="OsclTCPSocketI::Accept"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
       <table cellpadding="0" cellspacing="0" border="0">
         <tr>
-          <td class="md" nowrap valign="top"> <a class="el" href="oscl__socket__types_8h.html#a20">TPVSocketEvent</a> OsclTCPSocketI::Accept </td>
+          <td class="md" nowrap valign="top"> <a class="el" href="oscl__socket__types_8h.html#a28">TPVSocketEvent</a> OsclTCPSocketI::Accept </td>
           <td class="md" valign="top">(&nbsp;</td>
           <td class="md" nowrap valign="top">int32&nbsp;</td>
           <td class="mdname1" valign="top" nowrap>&nbsp; <em>aTimeout</em> = -1          </td>
@@ -101,13 +103,13 @@ Internal implementation class for <a class="el" href="classOsclTCPSocket.html">O
     </td>
   </tr>
 </table>
-<a name="a6" doxytag="OsclTCPSocketI::BindAsync"></a><p>
+<a name="a8" doxytag="OsclTCPSocketI::BindAsync"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
       <table cellpadding="0" cellspacing="0" border="0">
         <tr>
-          <td class="md" nowrap valign="top"> <a class="el" href="oscl__socket__types_8h.html#a20">TPVSocketEvent</a> OsclTCPSocketI::BindAsync </td>
+          <td class="md" nowrap valign="top"> <a class="el" href="oscl__socket__types_8h.html#a28">TPVSocketEvent</a> OsclTCPSocketI::BindAsync </td>
           <td class="md" valign="top">(&nbsp;</td>
           <td class="md" nowrap valign="top"><a class="el" href="classOsclNetworkAddress.html">OsclNetworkAddress</a> &amp;&nbsp;</td>
           <td class="mdname" nowrap>&nbsp; <em>aAddress</em>, </td>
@@ -139,7 +141,7 @@ Internal implementation class for <a class="el" href="classOsclTCPSocket.html">O
     </td>
   </tr>
 </table>
-<a name="a15" doxytag="OsclTCPSocketI::CancelAccept"></a><p>
+<a name="a17" doxytag="OsclTCPSocketI::CancelAccept"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -167,7 +169,7 @@ Internal implementation class for <a class="el" href="classOsclTCPSocket.html">O
     </td>
   </tr>
 </table>
-<a name="a7" doxytag="OsclTCPSocketI::CancelBind"></a><p>
+<a name="a9" doxytag="OsclTCPSocketI::CancelBind"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -195,7 +197,7 @@ Internal implementation class for <a class="el" href="classOsclTCPSocket.html">O
     </td>
   </tr>
 </table>
-<a name="a11" doxytag="OsclTCPSocketI::CancelConnect"></a><p>
+<a name="a13" doxytag="OsclTCPSocketI::CancelConnect"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -223,7 +225,7 @@ Internal implementation class for <a class="el" href="classOsclTCPSocket.html">O
     </td>
   </tr>
 </table>
-<a name="a9" doxytag="OsclTCPSocketI::CancelListen"></a><p>
+<a name="a11" doxytag="OsclTCPSocketI::CancelListen"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -251,7 +253,7 @@ Internal implementation class for <a class="el" href="classOsclTCPSocket.html">O
     </td>
   </tr>
 </table>
-<a name="a19" doxytag="OsclTCPSocketI::CancelRecv"></a><p>
+<a name="a21" doxytag="OsclTCPSocketI::CancelRecv"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -279,7 +281,7 @@ Internal implementation class for <a class="el" href="classOsclTCPSocket.html">O
     </td>
   </tr>
 </table>
-<a name="a17" doxytag="OsclTCPSocketI::CancelSend"></a><p>
+<a name="a19" doxytag="OsclTCPSocketI::CancelSend"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -307,7 +309,7 @@ Internal implementation class for <a class="el" href="classOsclTCPSocket.html">O
     </td>
   </tr>
 </table>
-<a name="a13" doxytag="OsclTCPSocketI::CancelShutdown"></a><p>
+<a name="a15" doxytag="OsclTCPSocketI::CancelShutdown"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -335,7 +337,7 @@ Internal implementation class for <a class="el" href="classOsclTCPSocket.html">O
     </td>
   </tr>
 </table>
-<a name="a1" doxytag="OsclTCPSocketI::Close"></a><p>
+<a name="a3" doxytag="OsclTCPSocketI::Close"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -362,16 +364,16 @@ Internal implementation class for <a class="el" href="classOsclTCPSocket.html">O
 <p>
 
 <p>
-Implements <a class="el" href="classOsclIPSocketI.html#a3">OsclIPSocketI</a>.    </td>
+Implements <a class="el" href="classOsclIPSocketI.html#a6">OsclIPSocketI</a>.    </td>
   </tr>
 </table>
-<a name="a10" doxytag="OsclTCPSocketI::Connect"></a><p>
+<a name="a12" doxytag="OsclTCPSocketI::Connect"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
       <table cellpadding="0" cellspacing="0" border="0">
         <tr>
-          <td class="md" nowrap valign="top"> <a class="el" href="oscl__socket__types_8h.html#a20">TPVSocketEvent</a> OsclTCPSocketI::Connect </td>
+          <td class="md" nowrap valign="top"> <a class="el" href="oscl__socket__types_8h.html#a28">TPVSocketEvent</a> OsclTCPSocketI::Connect </td>
           <td class="md" valign="top">(&nbsp;</td>
           <td class="md" nowrap valign="top"><a class="el" href="classOsclNetworkAddress.html">OsclNetworkAddress</a> &amp;&nbsp;</td>
           <td class="mdname" nowrap>&nbsp; <em>aAddress</em>, </td>
@@ -403,7 +405,7 @@ Implements <a class="el" href="classOsclIPSocketI.html#a3">OsclIPSocketI</a>.   
     </td>
   </tr>
 </table>
-<a name="a3" doxytag="OsclTCPSocketI::GetAcceptedSocketL"></a><p>
+<a name="a5" doxytag="OsclTCPSocketI::GetAcceptedSocketL"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -432,7 +434,7 @@ Implements <a class="el" href="classOsclIPSocketI.html#a3">OsclIPSocketI</a>.   
     </td>
   </tr>
 </table>
-<a name="a4" doxytag="OsclTCPSocketI::GetRecvData"></a><p>
+<a name="a6" doxytag="OsclTCPSocketI::GetRecvData"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -460,10 +462,10 @@ Implements <a class="el" href="classOsclIPSocketI.html#a3">OsclIPSocketI</a>.   
 <p>
 
 <p>
-Implements <a class="el" href="classOsclIPSocketI.html#a4">OsclIPSocketI</a>.    </td>
+Implements <a class="el" href="classOsclIPSocketI.html#a7">OsclIPSocketI</a>.    </td>
   </tr>
 </table>
-<a name="a5" doxytag="OsclTCPSocketI::GetSendData"></a><p>
+<a name="a7" doxytag="OsclTCPSocketI::GetSendData"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -491,10 +493,10 @@ Implements <a class="el" href="classOsclIPSocketI.html#a4">OsclIPSocketI</a>.   
 <p>
 
 <p>
-Implements <a class="el" href="classOsclIPSocketI.html#a5">OsclIPSocketI</a>.    </td>
+Implements <a class="el" href="classOsclIPSocketI.html#a8">OsclIPSocketI</a>.    </td>
   </tr>
 </table>
-<a name="a2" doxytag="OsclTCPSocketI::Listen"></a><p>
+<a name="a4" doxytag="OsclTCPSocketI::Listen"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -523,13 +525,13 @@ Implements <a class="el" href="classOsclIPSocketI.html#a5">OsclIPSocketI</a>.   
     </td>
   </tr>
 </table>
-<a name="a8" doxytag="OsclTCPSocketI::ListenAsync"></a><p>
+<a name="a10" doxytag="OsclTCPSocketI::ListenAsync"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
       <table cellpadding="0" cellspacing="0" border="0">
         <tr>
-          <td class="md" nowrap valign="top"> <a class="el" href="oscl__socket__types_8h.html#a20">TPVSocketEvent</a> OsclTCPSocketI::ListenAsync </td>
+          <td class="md" nowrap valign="top"> <a class="el" href="oscl__socket__types_8h.html#a28">TPVSocketEvent</a> OsclTCPSocketI::ListenAsync </td>
           <td class="md" valign="top">(&nbsp;</td>
           <td class="md" nowrap valign="top">uint32&nbsp;</td>
           <td class="mdname" nowrap>&nbsp; <em>qsize</em>, </td>
@@ -611,13 +613,13 @@ Implements <a class="el" href="classOsclIPSocketI.html#a5">OsclIPSocketI</a>.   
     </td>
   </tr>
 </table>
-<a name="a18" doxytag="OsclTCPSocketI::Recv"></a><p>
+<a name="a20" doxytag="OsclTCPSocketI::Recv"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
       <table cellpadding="0" cellspacing="0" border="0">
         <tr>
-          <td class="md" nowrap valign="top"> <a class="el" href="oscl__socket__types_8h.html#a20">TPVSocketEvent</a> OsclTCPSocketI::Recv </td>
+          <td class="md" nowrap valign="top"> <a class="el" href="oscl__socket__types_8h.html#a28">TPVSocketEvent</a> OsclTCPSocketI::Recv </td>
           <td class="md" valign="top">(&nbsp;</td>
           <td class="md" nowrap valign="top">uint8 *&amp;&nbsp;</td>
           <td class="mdname" nowrap>&nbsp; <em>aPtr</em>, </td>
@@ -655,13 +657,13 @@ Implements <a class="el" href="classOsclIPSocketI.html#a5">OsclIPSocketI</a>.   
     </td>
   </tr>
 </table>
-<a name="a16" doxytag="OsclTCPSocketI::Send"></a><p>
+<a name="a18" doxytag="OsclTCPSocketI::Send"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
       <table cellpadding="0" cellspacing="0" border="0">
         <tr>
-          <td class="md" nowrap valign="top"> <a class="el" href="oscl__socket__types_8h.html#a20">TPVSocketEvent</a> OsclTCPSocketI::Send </td>
+          <td class="md" nowrap valign="top"> <a class="el" href="oscl__socket__types_8h.html#a28">TPVSocketEvent</a> OsclTCPSocketI::Send </td>
           <td class="md" valign="top">(&nbsp;</td>
           <td class="md" nowrap valign="top">const uint8 *&amp;&nbsp;</td>
           <td class="mdname" nowrap>&nbsp; <em>aPtr</em>, </td>
@@ -699,15 +701,15 @@ Implements <a class="el" href="classOsclIPSocketI.html#a5">OsclIPSocketI</a>.   
     </td>
   </tr>
 </table>
-<a name="a12" doxytag="OsclTCPSocketI::Shutdown"></a><p>
+<a name="a14" doxytag="OsclTCPSocketI::Shutdown"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
       <table cellpadding="0" cellspacing="0" border="0">
         <tr>
-          <td class="md" nowrap valign="top"> <a class="el" href="oscl__socket__types_8h.html#a20">TPVSocketEvent</a> OsclTCPSocketI::Shutdown </td>
+          <td class="md" nowrap valign="top"> <a class="el" href="oscl__socket__types_8h.html#a28">TPVSocketEvent</a> OsclTCPSocketI::Shutdown </td>
           <td class="md" valign="top">(&nbsp;</td>
-          <td class="md" nowrap valign="top"><a class="el" href="oscl__socket__types_8h.html#a21">TPVSocketShutdown</a>&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="oscl__socket__types_8h.html#a29">TPVSocketShutdown</a>&nbsp;</td>
           <td class="mdname" nowrap>&nbsp; <em>aHow</em>, </td>
         </tr>
         <tr>
@@ -737,10 +739,78 @@ Implements <a class="el" href="classOsclIPSocketI.html#a5">OsclIPSocketI</a>.   
     </td>
   </tr>
 </table>
+<a name="a1" doxytag="OsclTCPSocketI::ThreadLogoff"></a><p>
+<table width="100%" cellpadding="2" cellspacing="0" border="0">
+  <tr>
+    <td class="md">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> <a class="el" href="oscl__socket__types_8h.html#a28">TPVSocketEvent</a> OsclTCPSocketI::ThreadLogoff </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="mdname1" valign="top" nowrap>&nbsp;          </td>
+          <td class="md" valign="top">)&nbsp;</td>
+          <td class="md" nowrap></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+
+<p>
+Reimplemented from <a class="el" href="classOsclIPSocketI.html#a10">OsclIPSocketI</a>.    </td>
+  </tr>
+</table>
+<a name="a2" doxytag="OsclTCPSocketI::ThreadLogon"></a><p>
+<table width="100%" cellpadding="2" cellspacing="0" border="0">
+  <tr>
+    <td class="md">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> <a class="el" href="oscl__socket__types_8h.html#a28">TPVSocketEvent</a> OsclTCPSocketI::ThreadLogon </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="classOsclSocketServI.html">OsclSocketServI</a> *&nbsp;</td>
+          <td class="mdname" nowrap>&nbsp; <em>aServ</em>, </td>
+        </tr>
+        <tr>
+          <td></td>
+          <td></td>
+          <td class="md" nowrap><a class="el" href="classOsclSocketObserver.html">OsclSocketObserver</a> *&nbsp;</td>
+          <td class="mdname" nowrap>&nbsp; <em>aObserver</em></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="md">)&nbsp;</td>
+          <td class="md" colspan="2"></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+    </td>
+  </tr>
+</table>
 <hr>The documentation for this class was generated from the following file:<ul>
 <li><a class="el" href="oscl__tcp__socket_8h-source.html">oscl_tcp_socket.h</a></ul>
 <hr size="1"><img src="pvlogo_small.jpg"><address style="align: right;"><small>OSCL API</small>
-<address style="align: left;"><small>Posting Version: CORE_8.000.1.1_RC1 </small>
+<address style="align: left;"><small>Posting Version: CORE_8.000.1.1_RC2 </small>
 </small></address>
 </body>
 </html>

@@ -24,7 +24,7 @@
 00019 
 00020         <a class="code" href="classOsclAcceptMethod.html#a0">~OsclAcceptMethod</a>();
 00021 
-00022         <a class="code" href="oscl__socket__types_8h.html#a20">TPVSocketEvent</a> <a class="code" href="classOsclAcceptMethod.html#a1">Accept</a>(int32 aTimeout);
+00022         <a class="code" href="oscl__socket__types_8h.html#a28">TPVSocketEvent</a> <a class="code" href="classOsclAcceptMethod.html#a1">Accept</a>(int32 aTimeout);
 00023 
 00024         <span class="keywordtype">void</span> <a class="code" href="classOsclAcceptMethod.html#a2">DiscardAcceptedSocket</a>();
 00025         <a class="code" href="classOsclSocketI.html">OsclSocketI</a> *<a class="code" href="classOsclAcceptMethod.html#a3">GetAcceptedSocket</a>();
@@ -32,7 +32,7 @@
 00027     <span class="keyword">private</span>:
 00028 
 00029         <a class="code" href="classOsclAcceptMethod.html">OsclAcceptMethod</a>(<a class="code" href="classOsclIPSocketI.html">OsclIPSocketI</a> &amp;c)
-00030                 : <a class="code" href="classOsclSocketMethod.html#a0">OsclSocketMethod</a>(c, <span class="stringliteral">"osclacceptmethod"</span>, <a class="code" href="oscl__socket__types_8h.html#a19a6">EPVSocketAccept</a>)
+00030                 : <a class="code" href="classOsclSocketMethod.html#a0">OsclSocketMethod</a>(c, <span class="stringliteral">"osclacceptmethod"</span>, <a class="code" href="oscl__socket__types_8h.html#a27a6">EPVSocketAccept</a>)
 00031                 , iAcceptedSocket(<a class="code" href="group__osclbase.html#a88">NULL</a>)
 00032         {}
 00033 
@@ -42,7 +42,7 @@
 00037 
 00038         <a class="code" href="classOsclSocketServI.html">OsclSocketServI</a> *SocketServ()
 00039         {
-00040             <span class="keywordflow">return</span> <a class="code" href="classOsclSocketMethod.html#m0">iContainer</a>.<a class="code" href="classOsclIPSocketI.html#a7">SocketServ</a>();
+00040             <span class="keywordflow">return</span> <a class="code" href="classOsclSocketMethod.html#m0">iContainer</a>.<a class="code" href="classOsclIPSocketI.html#a12">SocketServ</a>();
 00041         }
 00042     <span class="keyword">public</span>:
 <a name="l00043"></a><a class="code" href="classOsclAcceptMethod.html#a4">00043</a>         <a class="code" href="classOsclAcceptRequest.html">OsclAcceptRequest</a> *<a class="code" href="classOsclAcceptMethod.html#a4">AcceptRequest</a>()
@@ -79,7 +79,7 @@
 00077 <span class="preprocessor">#endif</span>
 00078 <span class="preprocessor"></span>
 </pre></div><hr size="1"><img src="pvlogo_small.jpg"><address style="align: right;"><small>OSCL API</small>
-<address style="align: left;"><small>Posting Version: CORE_8.000.1.1_RC1 </small>
+<address style="align: left;"><small>Posting Version: CORE_8.000.1.1_RC2 </small>
 </small></address>
 </body>
 </html>

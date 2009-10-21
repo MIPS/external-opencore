@@ -25,52 +25,57 @@
 00019         int32 <a class="code" href="classOsclIPSocketI.html#a0">Bind</a>(<a class="code" href="classOsclNetworkAddress.html">OsclNetworkAddress</a>&amp; aAddress);
 00020         int32 <a class="code" href="classOsclIPSocketI.html#a1">Join</a>(<a class="code" href="classOsclNetworkAddress.html">OsclNetworkAddress</a>&amp; aAddress);
 00021         int32 <a class="code" href="classOsclIPSocketI.html#a2">SetRecvBufferSize</a>(uint32 size);
-00022         <span class="keyword">virtual</span> int32 <a class="code" href="classOsclIPSocketI.html#a3">Close</a>() = 0;
-00023         <span class="keyword">virtual</span> uint8 *<a class="code" href="classOsclIPSocketI.html#a4">GetRecvData</a>(int32 *aLength) = 0;
-00024         <span class="keyword">virtual</span> uint8 *<a class="code" href="classOsclIPSocketI.html#a5">GetSendData</a>(int32 *aLength) = 0;
-<a name="l00025"></a><a class="code" href="classOsclIPSocketI.html#a6">00025</a>         <span class="keyword">virtual</span> <a class="code" href="classOsclIPSocketI.html#a6">~OsclIPSocketI</a>() {}
-00026 
-<a name="l00027"></a><a class="code" href="classOsclIPSocketI.html#a7">00027</a>         <a class="code" href="classOsclSocketServI.html">OsclSocketServI</a>* <a class="code" href="classOsclIPSocketI.html#a7">SocketServ</a>()
-00028         {
-00029             <span class="keywordflow">return</span> <a class="code" href="classOsclIPSocketI.html#n5">iSocketServ</a>;
-00030         }
-<a name="l00031"></a><a class="code" href="classOsclIPSocketI.html#a8">00031</a>         <a class="code" href="classOscl__DefAlloc.html">Oscl_DefAlloc</a>&amp; <a class="code" href="classOsclIPSocketI.html#a8">Alloc</a>()
-00032         {
-00033             <span class="keywordflow">return</span> <a class="code" href="classOsclIPSocketI.html#n0">iAlloc</a>;
-00034         }
-00035 
-00036     <span class="keyword">protected</span>:
-<a name="l00037"></a><a class="code" href="classOsclIPSocketI.html#n0">00037</a>         <a class="code" href="classOscl__DefAlloc.html">Oscl_DefAlloc</a> &amp;<a class="code" href="classOsclIPSocketI.html#n0">iAlloc</a>;
-00038 
-<a name="l00039"></a><a class="code" href="classOsclIPSocketI.html#n1">00039</a>         <a class="code" href="classOsclNetworkAddress.html">OsclNetworkAddress</a> <a class="code" href="classOsclIPSocketI.html#n1">iAddress</a>;
-<a name="l00040"></a><a class="code" href="classOsclIPSocketI.html#n2">00040</a>         uint32 <a class="code" href="classOsclIPSocketI.html#n2">iId</a>;
-<a name="l00041"></a><a class="code" href="classOsclIPSocketI.html#n3">00041</a>         <a class="code" href="classOsclSocketObserver.html">OsclSocketObserver</a> *<a class="code" href="classOsclIPSocketI.html#n3">iObserver</a>;
-<a name="l00042"></a><a class="code" href="classOsclIPSocketI.html#n4">00042</a>         <a class="code" href="classOsclSocketI.html">OsclSocketI</a> *<a class="code" href="classOsclIPSocketI.html#n4">iSocket</a>;
-<a name="l00043"></a><a class="code" href="classOsclIPSocketI.html#n5">00043</a>         <a class="code" href="classOsclSocketServI.html">OsclSocketServI</a> *<a class="code" href="classOsclIPSocketI.html#n5">iSocketServ</a>;
-<a name="l00044"></a><a class="code" href="classOsclIPSocketI.html#n6">00044</a>         <a class="code" href="classPVLogger.html">PVLogger</a>* <a class="code" href="classOsclIPSocketI.html#n6">iLogger</a>;
-00045 
-<a name="l00046"></a><a class="code" href="classOsclIPSocketI.html#l0">00046</a>         <span class="keyword">friend</span> <span class="keyword">class </span><a class="code" href="classOsclSocketRequestAO.html">OsclSocketRequestAO</a>;
-<a name="l00047"></a><a class="code" href="classOsclIPSocketI.html#l1">00047</a>         <span class="keyword">friend</span> <span class="keyword">class </span><a class="code" href="classOsclSocketMethod.html">OsclSocketMethod</a>;
-00048 
-<a name="l00049"></a><a class="code" href="classOsclIPSocketI.html#b0">00049</a>         <a class="code" href="classOsclIPSocketI.html#b0">OsclIPSocketI</a>(<a class="code" href="classOscl__DefAlloc.html">Oscl_DefAlloc</a>&amp; a): iAlloc(a)
-00050                 , <a class="code" href="classOsclIPSocketI.html#n2">iId</a>(0)
-00051                 , iObserver(<a class="code" href="group__osclbase.html#a88">NULL</a>)
-00052                 , iSocket(<a class="code" href="group__osclbase.html#a88">NULL</a>)
-00053                 , iSocketServ(<a class="code" href="group__osclbase.html#a88">NULL</a>)
-00054                 , iLogger(<a class="code" href="group__osclbase.html#a88">NULL</a>)
-00055         {}
-00056 
-00057         <span class="keywordtype">void</span> <a class="code" href="classOsclIPSocketI.html#b1">ConstructL</a>(<a class="code" href="classOsclSocketObserver.html">OsclSocketObserver</a> *aObs, <a class="code" href="classOsclSocketI.html">OsclSocketI</a>* aSock, <a class="code" href="classOsclSocketServI.html">OsclSocketServI</a>* aServ, uint32 aId);
-00058 
-00059 };
-00060 
+00022         int32 <a class="code" href="classOsclIPSocketI.html#a3">SetOptionToReuseAddress</a>();
+00023         int32 <a class="code" href="classOsclIPSocketI.html#a4">SetTOS</a>(<span class="keyword">const</span> <a class="code" href="classOsclSocketTOS.html">OsclSocketTOS</a>&amp; aTOS);
+00024         int32 <a class="code" href="classOsclIPSocketI.html#a5">GetPeerName</a>(<a class="code" href="classOsclNetworkAddress.html">OsclNetworkAddress</a>&amp; peerName);
+00025         <span class="keyword">virtual</span> int32 <a class="code" href="classOsclIPSocketI.html#a6">Close</a>() = 0;
+00026         <span class="keyword">virtual</span> uint8 *<a class="code" href="classOsclIPSocketI.html#a7">GetRecvData</a>(int32 *aLength) = 0;
+00027         <span class="keyword">virtual</span> uint8 *<a class="code" href="classOsclIPSocketI.html#a8">GetSendData</a>(int32 *aLength) = 0;
+<a name="l00028"></a><a class="code" href="classOsclIPSocketI.html#a9">00028</a>         <span class="keyword">virtual</span> <a class="code" href="classOsclIPSocketI.html#a9">~OsclIPSocketI</a>() {}
+00029         <span class="keywordtype">void</span> <a class="code" href="classOsclIPSocketI.html#a10">ThreadLogoff</a>();
+00030         <span class="keywordtype">void</span> <a class="code" href="classOsclIPSocketI.html#a11">ThreadLogon</a>(<a class="code" href="classOsclSocketObserver.html">OsclSocketObserver</a> *aObs, <a class="code" href="classOsclSocketServI.html">OsclSocketServI</a>* aServ);
+00031 
+<a name="l00032"></a><a class="code" href="classOsclIPSocketI.html#a12">00032</a>         <a class="code" href="classOsclSocketServI.html">OsclSocketServI</a>* <a class="code" href="classOsclIPSocketI.html#a12">SocketServ</a>()
+00033         {
+00034             <span class="keywordflow">return</span> <a class="code" href="classOsclIPSocketI.html#n5">iSocketServ</a>;
+00035         }
+<a name="l00036"></a><a class="code" href="classOsclIPSocketI.html#a13">00036</a>         <a class="code" href="classOscl__DefAlloc.html">Oscl_DefAlloc</a>&amp; <a class="code" href="classOsclIPSocketI.html#a13">Alloc</a>()
+00037         {
+00038             <span class="keywordflow">return</span> <a class="code" href="classOsclIPSocketI.html#n0">iAlloc</a>;
+00039         }
+00040 
+00041     <span class="keyword">protected</span>:
+<a name="l00042"></a><a class="code" href="classOsclIPSocketI.html#n0">00042</a>         <a class="code" href="classOscl__DefAlloc.html">Oscl_DefAlloc</a> &amp;<a class="code" href="classOsclIPSocketI.html#n0">iAlloc</a>;
+00043 
+<a name="l00044"></a><a class="code" href="classOsclIPSocketI.html#n1">00044</a>         <a class="code" href="classOsclNetworkAddress.html">OsclNetworkAddress</a> <a class="code" href="classOsclIPSocketI.html#n1">iAddress</a>;
+<a name="l00045"></a><a class="code" href="classOsclIPSocketI.html#n2">00045</a>         uint32 <a class="code" href="classOsclIPSocketI.html#n2">iId</a>;
+<a name="l00046"></a><a class="code" href="classOsclIPSocketI.html#n3">00046</a>         <a class="code" href="classOsclSocketObserver.html">OsclSocketObserver</a> *<a class="code" href="classOsclIPSocketI.html#n3">iObserver</a>;
+<a name="l00047"></a><a class="code" href="classOsclIPSocketI.html#n4">00047</a>         <a class="code" href="classOsclSocketI.html">OsclSocketI</a> *<a class="code" href="classOsclIPSocketI.html#n4">iSocket</a>;
+<a name="l00048"></a><a class="code" href="classOsclIPSocketI.html#n5">00048</a>         <a class="code" href="classOsclSocketServI.html">OsclSocketServI</a> *<a class="code" href="classOsclIPSocketI.html#n5">iSocketServ</a>;
+<a name="l00049"></a><a class="code" href="classOsclIPSocketI.html#n6">00049</a>         <a class="code" href="classPVLogger.html">PVLogger</a>* <a class="code" href="classOsclIPSocketI.html#n6">iLogger</a>;
+00050 
+<a name="l00051"></a><a class="code" href="classOsclIPSocketI.html#l0">00051</a>         <span class="keyword">friend</span> <span class="keyword">class </span><a class="code" href="classOsclSocketRequestAO.html">OsclSocketRequestAO</a>;
+<a name="l00052"></a><a class="code" href="classOsclIPSocketI.html#l1">00052</a>         <span class="keyword">friend</span> <span class="keyword">class </span><a class="code" href="classOsclSocketMethod.html">OsclSocketMethod</a>;
+00053 
+<a name="l00054"></a><a class="code" href="classOsclIPSocketI.html#b0">00054</a>         <a class="code" href="classOsclIPSocketI.html#b0">OsclIPSocketI</a>(<a class="code" href="classOscl__DefAlloc.html">Oscl_DefAlloc</a>&amp; a): iAlloc(a)
+00055                 , <a class="code" href="classOsclIPSocketI.html#n2">iId</a>(0)
+00056                 , iObserver(<a class="code" href="group__osclbase.html#a88">NULL</a>)
+00057                 , iSocket(<a class="code" href="group__osclbase.html#a88">NULL</a>)
+00058                 , iSocketServ(<a class="code" href="group__osclbase.html#a88">NULL</a>)
+00059                 , iLogger(<a class="code" href="group__osclbase.html#a88">NULL</a>)
+00060         {}
 00061 
-00062 
-00063 <span class="preprocessor">#endif</span>
-00064 <span class="preprocessor"></span>
+00062         <span class="keywordtype">void</span> <a class="code" href="classOsclIPSocketI.html#b1">ConstructL</a>(<a class="code" href="classOsclSocketObserver.html">OsclSocketObserver</a> *aObs, <a class="code" href="classOsclSocketI.html">OsclSocketI</a>* aSock, <a class="code" href="classOsclSocketServI.html">OsclSocketServI</a>* aServ, uint32 aId);
+00063 
+00064 };
 00065 
+00066 
+00067 
+00068 <span class="preprocessor">#endif</span>
+00069 <span class="preprocessor"></span>
+00070 
 </pre></div><hr size="1"><img src="pvlogo_small.jpg"><address style="align: right;"><small>OSCL API</small>
-<address style="align: left;"><small>Posting Version: CORE_8.000.1.1_RC1 </small>
+<address style="align: left;"><small>Posting Version: CORE_8.000.1.1_RC2 </small>
 </small></address>
 </body>
 </html>

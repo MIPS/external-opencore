@@ -20,7 +20,7 @@
 <table border=0 cellpadding=0 cellspacing=0>
 <tr><td></td></tr>
 <tr><td colspan=2><br><h2>Public Methods</h2></td></tr>
-<tr><td nowrap align=right valign=top>int32&nbsp;</td><td valign=bottom><a class="el" href="classOsclSocketServI.html#a0">Connect</a> (uint32 aMessageSlots)</td></tr>
+<tr><td nowrap align=right valign=top>int32&nbsp;</td><td valign=bottom><a class="el" href="classOsclSocketServI.html#a0">Connect</a> (uint32 aMessageSlots, bool aShareSession)</td></tr>
 <tr><td nowrap align=right valign=top>void&nbsp;</td><td valign=bottom><a class="el" href="classOsclSocketServI.html#a1">Close</a> (bool)</td></tr>
 <tr><td nowrap align=right valign=top>bool&nbsp;</td><td valign=bottom><a class="el" href="classOsclSocketServI.html#a2">IsServerThread</a> ()</td></tr>
 <tr><td colspan=2><br><h2>Static Public Methods</h2></td></tr>
@@ -79,9 +79,18 @@ Implements <a class="el" href="classOsclSocketServIBase.html#a2">OsclSocketServI
           <td class="md" nowrap valign="top"> int32 OsclSocketServI::Connect </td>
           <td class="md" valign="top">(&nbsp;</td>
           <td class="md" nowrap valign="top">uint32&nbsp;</td>
-          <td class="mdname1" valign="top" nowrap>&nbsp; <em>aMessageSlots</em>          </td>
-          <td class="md" valign="top">)&nbsp;</td>
-          <td class="md" nowrap><code> [virtual]</code></td>
+          <td class="mdname" nowrap>&nbsp; <em>aMessageSlots</em>, </td>
+        </tr>
+        <tr>
+          <td></td>
+          <td></td>
+          <td class="md" nowrap>bool&nbsp;</td>
+          <td class="mdname" nowrap>&nbsp; <em>aShareSession</em></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="md">)&nbsp;</td>
+          <td class="md" colspan="2"><code> [virtual]</code></td>
         </tr>
 
       </table>
@@ -338,7 +347,7 @@ Implements <a class="el" href="classOsclSocketServIBase.html#a1">OsclSocketServI
 <hr>The documentation for this class was generated from the following file:<ul>
 <li><a class="el" href="oscl__socket__serv__imp__pv_8h-source.html">oscl_socket_serv_imp_pv.h</a></ul>
 <hr size="1"><img src="pvlogo_small.jpg"><address style="align: right;"><small>OSCL API</small>
-<address style="align: left;"><small>Posting Version: CORE_8.000.1.1_RC1 </small>
+<address style="align: left;"><small>Posting Version: CORE_8.000.1.1_RC2 </small>
 </small></address>
 </body>
 </html>

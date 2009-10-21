@@ -28,15 +28,17 @@
 <table border=0 cellpadding=0 cellspacing=0>
 <tr><td></td></tr>
 <tr><td colspan=2><br><h2>Public Methods</h2></td></tr>
-<tr><td nowrap align=right valign=top>&nbsp;</td><td valign=bottom><a class="el" href="classOsclSocketMethod.html#a0">OsclSocketMethod</a> (<a class="el" href="classOsclIPSocketI.html">OsclIPSocketI</a> &amp;aContainer, const char *name, <a class="el" href="oscl__socket__types_8h.html#a19">TPVSocketFxn</a> fxn)</td></tr>
+<tr><td nowrap align=right valign=top>&nbsp;</td><td valign=bottom><a class="el" href="classOsclSocketMethod.html#a0">OsclSocketMethod</a> (<a class="el" href="classOsclIPSocketI.html">OsclIPSocketI</a> &amp;aContainer, const char *name, <a class="el" href="oscl__socket__types_8h.html#a27">TPVSocketFxn</a> fxn)</td></tr>
 <tr><td nowrap align=right valign=top>virtual&nbsp;</td><td valign=bottom><a class="el" href="classOsclSocketMethod.html#a1">~OsclSocketMethod</a> ()</td></tr>
 <tr><td nowrap align=right valign=top>void&nbsp;</td><td valign=bottom><a class="el" href="classOsclSocketMethod.html#a2">Abort</a> ()</td></tr>
 <tr><td nowrap align=right valign=top>void&nbsp;</td><td valign=bottom><a class="el" href="classOsclSocketMethod.html#a3">AbortAll</a> ()</td></tr>
 <tr><td nowrap align=right valign=top>void&nbsp;</td><td valign=bottom><a class="el" href="classOsclSocketMethod.html#a4">CancelMethod</a> ()</td></tr>
 <tr><td nowrap align=right valign=top><a class="el" href="classOscl__DefAlloc.html">Oscl_DefAlloc</a> &amp;&nbsp;</td><td valign=bottom><a class="el" href="classOsclSocketMethod.html#a5">Alloc</a> ()</td></tr>
+<tr><td nowrap align=right valign=top><a class="el" href="oscl__socket__types_8h.html#a28">TPVSocketEvent</a>&nbsp;</td><td valign=bottom><a class="el" href="classOsclSocketMethod.html#a6">ThreadLogon</a> ()</td></tr>
+<tr><td nowrap align=right valign=top><a class="el" href="oscl__socket__types_8h.html#a28">TPVSocketEvent</a>&nbsp;</td><td valign=bottom><a class="el" href="classOsclSocketMethod.html#a7">ThreadLogoff</a> ()</td></tr>
 <tr><td colspan=2><br><h2>Data Fields</h2></td></tr>
 <tr><td nowrap align=right valign=top><a class="el" href="classOsclIPSocketI.html">OsclIPSocketI</a> &amp;&nbsp;</td><td valign=bottom><a class="el" href="classOsclSocketMethod.html#m0">iContainer</a></td></tr>
-<tr><td nowrap align=right valign=top><a class="el" href="oscl__socket__types_8h.html#a19">TPVSocketFxn</a>&nbsp;</td><td valign=bottom><a class="el" href="classOsclSocketMethod.html#m1">iSocketFxn</a></td></tr>
+<tr><td nowrap align=right valign=top><a class="el" href="oscl__socket__types_8h.html#a27">TPVSocketFxn</a>&nbsp;</td><td valign=bottom><a class="el" href="classOsclSocketMethod.html#m1">iSocketFxn</a></td></tr>
 <tr><td colspan=2><br><h2>Protected Methods</h2></td></tr>
 <tr><td nowrap align=right valign=top>void&nbsp;</td><td valign=bottom><a class="el" href="classOsclSocketMethod.html#b0">ConstructL</a> (<a class="el" href="classOsclSocketRequestAO.html">OsclSocketRequestAO</a> *aAO)</td></tr>
 <tr><td nowrap align=right valign=top>bool&nbsp;</td><td valign=bottom><a class="el" href="classOsclSocketMethod.html#b1">StartMethod</a> (int32 aTimeoutMsec)</td></tr>
@@ -69,7 +71,7 @@ OsclSocketMethod is the base class for all socket methods. Two AOs are required 
         <tr>
           <td></td>
           <td></td>
-          <td class="md" nowrap><a class="el" href="oscl__socket__types_8h.html#a19">TPVSocketFxn</a>&nbsp;</td>
+          <td class="md" nowrap><a class="el" href="oscl__socket__types_8h.html#a27">TPVSocketFxn</a>&nbsp;</td>
           <td class="mdname" nowrap>&nbsp; <em>fxn</em></td>
         </tr>
         <tr>
@@ -364,6 +366,62 @@ Implements <a class="el" href="classPVActiveBase.html#a4">PVActiveBase</a>.    <
     </td>
   </tr>
 </table>
+<a name="a7" doxytag="OsclSocketMethod::ThreadLogoff"></a><p>
+<table width="100%" cellpadding="2" cellspacing="0" border="0">
+  <tr>
+    <td class="md">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> <a class="el" href="oscl__socket__types_8h.html#a28">TPVSocketEvent</a> OsclSocketMethod::ThreadLogoff </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="mdname1" valign="top" nowrap>&nbsp;          </td>
+          <td class="md" valign="top">)&nbsp;</td>
+          <td class="md" nowrap></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+    </td>
+  </tr>
+</table>
+<a name="a6" doxytag="OsclSocketMethod::ThreadLogon"></a><p>
+<table width="100%" cellpadding="2" cellspacing="0" border="0">
+  <tr>
+    <td class="md">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> <a class="el" href="oscl__socket__types_8h.html#a28">TPVSocketEvent</a> OsclSocketMethod::ThreadLogon </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="mdname1" valign="top" nowrap>&nbsp;          </td>
+          <td class="md" valign="top">)&nbsp;</td>
+          <td class="md" nowrap></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+    </td>
+  </tr>
+</table>
 <hr><h2>Field Documentation</h2>
 <a name="m0" doxytag="OsclSocketMethod::iContainer"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
@@ -393,7 +451,7 @@ Implements <a class="el" href="classPVActiveBase.html#a4">PVActiveBase</a>.    <
     <td class="md">
       <table cellpadding="0" cellspacing="0" border="0">
         <tr>
-          <td class="md" nowrap valign="top"> <a class="el" href="oscl__socket__types_8h.html#a19">TPVSocketFxn</a> OsclSocketMethod::iSocketFxn
+          <td class="md" nowrap valign="top"> <a class="el" href="oscl__socket__types_8h.html#a27">TPVSocketFxn</a> OsclSocketMethod::iSocketFxn
       </table>
     </td>
   </tr>
@@ -434,7 +492,7 @@ Implements <a class="el" href="classPVActiveBase.html#a4">PVActiveBase</a>.    <
 <hr>The documentation for this class was generated from the following file:<ul>
 <li><a class="el" href="oscl__socket__method_8h-source.html">oscl_socket_method.h</a></ul>
 <hr size="1"><img src="pvlogo_small.jpg"><address style="align: right;"><small>OSCL API</small>
-<address style="align: left;"><small>Posting Version: CORE_8.000.1.1_RC1 </small>
+<address style="align: left;"><small>Posting Version: CORE_8.000.1.1_RC2 </small>
 </small></address>
 </body>
 </html>

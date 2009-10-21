@@ -32,7 +32,7 @@
 00029 {
 00030     <span class="keyword">public</span>:
 00031         <span class="keyword">static</span> <a class="code" href="classOsclSocketServI.html">OsclSocketServI</a>* <a class="code" href="classOsclSocketServI.html#d0">NewL</a>(<a class="code" href="classOscl__DefAlloc.html">Oscl_DefAlloc</a> &amp;a);
-00032         int32 <a class="code" href="classOsclSocketServI.html#a0">Connect</a>(uint32 aMessageSlots);
+00032         int32 <a class="code" href="classOsclSocketServI.html#a0">Connect</a>(uint32 aMessageSlots, <span class="keywordtype">bool</span> aShareSession);
 00033         <span class="keywordtype">void</span> <a class="code" href="classOsclSocketServI.html#a1">Close</a>(<span class="keywordtype">bool</span>);
 00034 
 00035         <span class="comment">//check if calling context is server thread.</span>
@@ -59,7 +59,7 @@
 00056                 }
 00057                 <span class="keywordtype">bool</span> iEnable;
 00058                 <span class="keywordtype">void</span> Read();
-00059                 <span class="keywordtype">void</span> ProcessSelect(<a class="code" href="osclconfig__io_8h.html#a46">TOsclSocket</a>&amp;);
+00059                 <span class="keywordtype">void</span> ProcessSelect(<a class="code" href="osclconfig__io_8h.html#a63">TOsclSocket</a>&amp;);
 00060                 <span class="keywordtype">void</span> Init(<a class="code" href="classOsclSocketServI.html">OsclSocketServI</a>* aContainer);
 00061                 <span class="keywordtype">void</span> Cleanup();
 00062                 <span class="keywordtype">void</span> Write();
@@ -67,8 +67,8 @@
 00064 <span class="preprocessor"></span>                OsclSocketStats iStats;
 00065 <span class="preprocessor">#endif</span>
 00066 <span class="preprocessor"></span>            <span class="keyword">private</span>:
-00067                 <a class="code" href="osclconfig__io_8h.html#a47">TOsclSockAddr</a> iAddr;
-00068                 <a class="code" href="osclconfig__io_8h.html#a46">TOsclSocket</a> iSocket;
+00067                 <a class="code" href="osclconfig__io_8h.html#a64">TOsclSockAddr</a> iAddr;
+00068                 <a class="code" href="osclconfig__io_8h.html#a63">TOsclSocket</a> iSocket;
 00069                 <a class="code" href="classOsclSocketServI.html">OsclSocketServI</a>* iContainer;
 00070         };
 00071         <a class="code" href="classOsclSocketServI.html#l1">LoopbackSocket</a> iLoopbackSocket;
@@ -142,7 +142,7 @@
 00141 
 00142 
 </pre></div><hr size="1"><img src="pvlogo_small.jpg"><address style="align: right;"><small>OSCL API</small>
-<address style="align: left;"><small>Posting Version: CORE_8.000.1.1_RC1 </small>
+<address style="align: left;"><small>Posting Version: CORE_8.000.1.1_RC2 </small>
 </small></address>
 </body>
 </html>

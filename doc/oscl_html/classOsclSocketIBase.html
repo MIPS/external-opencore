@@ -36,7 +36,7 @@
 <tr><td nowrap align=right valign=top>virtual void&nbsp;</td><td valign=bottom><a class="el" href="classOsclSocketIBase.html#a17">RecvFromSuccess</a> (<a class="el" href="classRecvFromParam.html">RecvFromParam</a> &amp;)=0</td></tr>
 <tr><td nowrap align=right valign=top>virtual void&nbsp;</td><td valign=bottom><a class="el" href="classOsclSocketIBase.html#a18">BindAsync</a> (<a class="el" href="classBindParam.html">BindParam</a> &amp;, <a class="el" href="classOsclSocketRequestAO.html">OsclSocketRequestAO</a> &amp;)</td></tr>
 <tr><td nowrap align=right valign=top>virtual void&nbsp;</td><td valign=bottom><a class="el" href="classOsclSocketIBase.html#a19">ListenAsync</a> (<a class="el" href="classListenParam.html">ListenParam</a> &amp;, <a class="el" href="classOsclSocketRequestAO.html">OsclSocketRequestAO</a> &amp;)</td></tr>
-<tr><td nowrap align=right valign=top>void&nbsp;</td><td valign=bottom><a class="el" href="classOsclSocketIBase.html#a20">CancelFxn</a> (<a class="el" href="oscl__socket__types_8h.html#a19">TPVSocketFxn</a>)</td></tr>
+<tr><td nowrap align=right valign=top>void&nbsp;</td><td valign=bottom><a class="el" href="classOsclSocketIBase.html#a20">CancelFxn</a> (<a class="el" href="oscl__socket__types_8h.html#a27">TPVSocketFxn</a>)</td></tr>
 <tr><td colspan=2><br><h2>Static Public Methods</h2></td></tr>
 <tr><td nowrap align=right valign=top>bool&nbsp;</td><td valign=bottom><a class="el" href="classOsclSocketIBase.html#d0">HasAsyncBind</a> ()</td></tr>
 <tr><td nowrap align=right valign=top>bool&nbsp;</td><td valign=bottom><a class="el" href="classOsclSocketIBase.html#d1">HasAsyncListen</a> ()</td></tr>
@@ -53,7 +53,7 @@
 <tr><td nowrap align=right valign=top>virtual void&nbsp;</td><td valign=bottom><a class="el" href="classOsclSocketIBase.html#b9">CancelListen</a> ()</td></tr>
 <tr><td nowrap align=right valign=top>virtual bool&nbsp;</td><td valign=bottom><a class="el" href="classOsclSocketIBase.html#b10">IsOpen</a> ()=0</td></tr>
 <tr><td colspan=2><br><h2>Static Protected Methods</h2></td></tr>
-<tr><td nowrap align=right valign=top>int&nbsp;</td><td valign=bottom><a class="el" href="classOsclSocketIBase.html#e0">GetShutdown</a> (<a class="el" href="oscl__socket__types_8h.html#a21">TPVSocketShutdown</a> aOsclVal)</td></tr>
+<tr><td nowrap align=right valign=top>int&nbsp;</td><td valign=bottom><a class="el" href="classOsclSocketIBase.html#e0">GetShutdown</a> (<a class="el" href="oscl__socket__types_8h.html#a29">TPVSocketShutdown</a> aOsclVal)</td></tr>
 <tr><td colspan=2><br><h2>Protected Attributes</h2></td></tr>
 <tr><td nowrap align=right valign=top><a class="el" href="classOscl__DefAlloc.html">Oscl_DefAlloc</a> &amp;&nbsp;</td><td valign=bottom><a class="el" href="classOsclSocketIBase.html#n0">iAlloc</a></td></tr>
 <tr><td nowrap align=right valign=top><a class="el" href="classOsclSocketServI.html">OsclSocketServI</a> *&nbsp;</td><td valign=bottom><a class="el" href="classOsclSocketIBase.html#n1">iSocketServ</a></td></tr>
@@ -163,7 +163,7 @@ Socket implementation base class
 <p>
 
 <p>
-Implemented in <a class="el" href="classOsclSocketI.html#a9">OsclSocketI</a>.    </td>
+Implemented in <a class="el" href="classOsclSocketI.html#a13">OsclSocketI</a>.    </td>
   </tr>
 </table>
 <a name="a3" doxytag="OsclSocketIBase::Bind"></a><p>
@@ -327,7 +327,7 @@ Implemented in <a class="el" href="classOsclSocketI.html#a3">OsclSocketI</a>.   
         <tr>
           <td class="md" nowrap valign="top"> void OsclSocketIBase::CancelFxn </td>
           <td class="md" valign="top">(&nbsp;</td>
-          <td class="md" nowrap valign="top"><a class="el" href="oscl__socket__types_8h.html#a19">TPVSocketFxn</a>&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="oscl__socket__types_8h.html#a27">TPVSocketFxn</a>&nbsp;</td>
           <td class="mdname1" valign="top" nowrap>&nbsp;          </td>
           <td class="md" valign="top">)&nbsp;</td>
           <td class="md" nowrap></td>
@@ -543,7 +543,7 @@ Implemented in <a class="el" href="classOsclSocketI.html#a3">OsclSocketI</a>.   
 <p>
 
 <p>
-Implemented in <a class="el" href="classOsclSocketI.html#a5">OsclSocketI</a>.    </td>
+Implemented in <a class="el" href="classOsclSocketI.html#a7">OsclSocketI</a>.    </td>
   </tr>
 </table>
 <a name="a7" doxytag="OsclSocketIBase::Connect"></a><p>
@@ -583,7 +583,7 @@ Implemented in <a class="el" href="classOsclSocketI.html#a5">OsclSocketI</a>.   
 <p>
 
 <p>
-Implemented in <a class="el" href="classOsclSocketI.html#a8">OsclSocketI</a>.    </td>
+Implemented in <a class="el" href="classOsclSocketI.html#a12">OsclSocketI</a>.    </td>
   </tr>
 </table>
 <a name="e0" doxytag="OsclSocketIBase::GetShutdown"></a><p>
@@ -594,7 +594,7 @@ Implemented in <a class="el" href="classOsclSocketI.html#a8">OsclSocketI</a>.   
         <tr>
           <td class="md" nowrap valign="top"> int OsclSocketIBase::GetShutdown </td>
           <td class="md" valign="top">(&nbsp;</td>
-          <td class="md" nowrap valign="top"><a class="el" href="oscl__socket__types_8h.html#a21">TPVSocketShutdown</a>&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="oscl__socket__types_8h.html#a29">TPVSocketShutdown</a>&nbsp;</td>
           <td class="mdname1" valign="top" nowrap>&nbsp; <em>aOsclVal</em>          </td>
           <td class="md" valign="top">)&nbsp;</td>
           <td class="md" nowrap><code> [static, protected]</code></td>
@@ -727,7 +727,7 @@ Implemented in <a class="el" href="classOsclSocketI.html#a8">OsclSocketI</a>.   
 <p>
 
 <p>
-Implemented in <a class="el" href="classOsclSocketI.html#a4">OsclSocketI</a>.    </td>
+Implemented in <a class="el" href="classOsclSocketI.html#a6">OsclSocketI</a>.    </td>
   </tr>
 </table>
 <a name="a6" doxytag="OsclSocketIBase::Listen"></a><p>
@@ -758,7 +758,7 @@ Implemented in <a class="el" href="classOsclSocketI.html#a4">OsclSocketI</a>.   
 <p>
 
 <p>
-Implemented in <a class="el" href="classOsclSocketI.html#a6">OsclSocketI</a>.    </td>
+Implemented in <a class="el" href="classOsclSocketI.html#a8">OsclSocketI</a>.    </td>
   </tr>
 </table>
 <a name="a19" doxytag="OsclSocketIBase::ListenAsync"></a><p>
@@ -919,7 +919,7 @@ Implemented in <a class="el" href="classOsclSocketI.html#a1">OsclSocketI</a>.   
 <p>
 
 <p>
-Implemented in <a class="el" href="classOsclSocketI.html#a15">OsclSocketI</a>.    </td>
+Implemented in <a class="el" href="classOsclSocketI.html#a19">OsclSocketI</a>.    </td>
   </tr>
 </table>
 <a name="a16" doxytag="OsclSocketIBase::RecvFrom"></a><p>
@@ -959,7 +959,7 @@ Implemented in <a class="el" href="classOsclSocketI.html#a15">OsclSocketI</a>.  
 <p>
 
 <p>
-Implemented in <a class="el" href="classOsclSocketI.html#a17">OsclSocketI</a>.    </td>
+Implemented in <a class="el" href="classOsclSocketI.html#a21">OsclSocketI</a>.    </td>
   </tr>
 </table>
 <a name="a17" doxytag="OsclSocketIBase::RecvFromSuccess"></a><p>
@@ -990,7 +990,7 @@ Implemented in <a class="el" href="classOsclSocketI.html#a17">OsclSocketI</a>.  
 <p>
 
 <p>
-Implemented in <a class="el" href="classOsclSocketI.html#a18">OsclSocketI</a>.    </td>
+Implemented in <a class="el" href="classOsclSocketI.html#a22">OsclSocketI</a>.    </td>
   </tr>
 </table>
 <a name="a15" doxytag="OsclSocketIBase::RecvSuccess"></a><p>
@@ -1021,7 +1021,7 @@ Implemented in <a class="el" href="classOsclSocketI.html#a18">OsclSocketI</a>.  
 <p>
 
 <p>
-Implemented in <a class="el" href="classOsclSocketI.html#a16">OsclSocketI</a>.    </td>
+Implemented in <a class="el" href="classOsclSocketI.html#a20">OsclSocketI</a>.    </td>
   </tr>
 </table>
 <a name="a10" doxytag="OsclSocketIBase::Send"></a><p>
@@ -1061,7 +1061,7 @@ Implemented in <a class="el" href="classOsclSocketI.html#a16">OsclSocketI</a>.  
 <p>
 
 <p>
-Implemented in <a class="el" href="classOsclSocketI.html#a11">OsclSocketI</a>.    </td>
+Implemented in <a class="el" href="classOsclSocketI.html#a15">OsclSocketI</a>.    </td>
   </tr>
 </table>
 <a name="a11" doxytag="OsclSocketIBase::SendSuccess"></a><p>
@@ -1092,7 +1092,7 @@ Implemented in <a class="el" href="classOsclSocketI.html#a11">OsclSocketI</a>.  
 <p>
 
 <p>
-Implemented in <a class="el" href="classOsclSocketI.html#a12">OsclSocketI</a>.    </td>
+Implemented in <a class="el" href="classOsclSocketI.html#a16">OsclSocketI</a>.    </td>
   </tr>
 </table>
 <a name="a12" doxytag="OsclSocketIBase::SendTo"></a><p>
@@ -1132,7 +1132,7 @@ Implemented in <a class="el" href="classOsclSocketI.html#a12">OsclSocketI</a>.  
 <p>
 
 <p>
-Implemented in <a class="el" href="classOsclSocketI.html#a13">OsclSocketI</a>.    </td>
+Implemented in <a class="el" href="classOsclSocketI.html#a17">OsclSocketI</a>.    </td>
   </tr>
 </table>
 <a name="a13" doxytag="OsclSocketIBase::SendToSuccess"></a><p>
@@ -1163,7 +1163,7 @@ Implemented in <a class="el" href="classOsclSocketI.html#a13">OsclSocketI</a>.  
 <p>
 
 <p>
-Implemented in <a class="el" href="classOsclSocketI.html#a14">OsclSocketI</a>.    </td>
+Implemented in <a class="el" href="classOsclSocketI.html#a18">OsclSocketI</a>.    </td>
   </tr>
 </table>
 <a name="a9" doxytag="OsclSocketIBase::Shutdown"></a><p>
@@ -1203,7 +1203,7 @@ Implemented in <a class="el" href="classOsclSocketI.html#a14">OsclSocketI</a>.  
 <p>
 
 <p>
-Implemented in <a class="el" href="classOsclSocketI.html#a10">OsclSocketI</a>.    </td>
+Implemented in <a class="el" href="classOsclSocketI.html#a14">OsclSocketI</a>.    </td>
   </tr>
 </table>
 <hr><h2>Friends And Related Function Documentation</h2>
@@ -1369,7 +1369,7 @@ Reimplemented in <a class="el" href="classOsclSocketI.html#l7">OsclSocketI</a>. 
 <hr>The documentation for this class was generated from the following file:<ul>
 <li><a class="el" href="oscl__socket__imp__base_8h-source.html">oscl_socket_imp_base.h</a></ul>
 <hr size="1"><img src="pvlogo_small.jpg"><address style="align: right;"><small>OSCL API</small>
-<address style="align: left;"><small>Posting Version: CORE_8.000.1.1_RC1 </small>
+<address style="align: left;"><small>Posting Version: CORE_8.000.1.1_RC2 </small>
 </small></address>
 </body>
 </html>

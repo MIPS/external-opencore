@@ -98,22 +98,24 @@
 00096         <span class="keywordtype">void</span> <a class="code" href="classOsclDNSRequestAO.html#b8">Run</a>();
 00097 
 <a name="l00098"></a><a class="code" href="classOsclDNSRequestAO.html#b9">00098</a>         <span class="keyword">virtual</span> <span class="keywordtype">void</span> <a class="code" href="classOsclDNSRequestAO.html#b9">Success</a>() {}
-00099 
-<a name="l00100"></a><a class="code" href="classOsclDNSRequestAO.html#n0">00100</a>         <a class="code" href="classOsclDNSI.html">OsclDNSI</a> *<a class="code" href="classOsclDNSRequestAO.html#n0">iDNSI</a>;
-<a name="l00101"></a><a class="code" href="classOsclDNSRequestAO.html#n1">00101</a>         <a class="code" href="classOsclDNSMethod.html">OsclDNSMethod</a> *<a class="code" href="classOsclDNSRequestAO.html#n1">iDNSMethod</a>;
-<a name="l00102"></a><a class="code" href="classOsclDNSRequestAO.html#n2">00102</a>         int32 <a class="code" href="classOsclDNSRequestAO.html#n2">iSocketError</a>;
-<a name="l00103"></a><a class="code" href="classOsclDNSRequestAO.html#n3">00103</a>         <a class="code" href="classPVLogger.html">PVLogger</a>* <a class="code" href="classOsclDNSRequestAO.html#n3">iLogger</a>;
-00104 
-<a name="l00105"></a><a class="code" href="classOsclDNSRequestAO.html#l0">00105</a>         <span class="keyword">friend</span> <span class="keyword">class </span><a class="code" href="classOsclDNSI.html">OsclDNSI</a>;
-<a name="l00106"></a><a class="code" href="classOsclDNSRequestAO.html#l1">00106</a>         <span class="keyword">friend</span> <span class="keyword">class </span><a class="code" href="classOsclDNSMethod.html">OsclDNSMethod</a>;
-<a name="l00107"></a><a class="code" href="classOsclDNSRequestAO.html#l2">00107</a>         <span class="keyword">friend</span> <span class="keyword">class </span><a class="code" href="classOsclDNSRequest.html">OsclDNSRequest</a>;
-<a name="l00108"></a><a class="code" href="classOsclDNSRequestAO.html#l3">00108</a>         <span class="keyword">friend</span> <span class="keyword">class </span><a class="code" href="classDNSRequestParam.html">DNSRequestParam</a>;
-00109 };
-00110 
-00111 <span class="preprocessor">#endif</span>
-00112 <span class="preprocessor"></span>
+<a name="l00099"></a><a class="code" href="classOsclDNSRequestAO.html#b10">00099</a>         <span class="keyword">virtual</span> <span class="keywordtype">void</span> <a class="code" href="classOsclDNSRequestAO.html#b10">Failure</a>() {}
+<a name="l00100"></a><a class="code" href="classOsclDNSRequestAO.html#b11">00100</a>         <span class="keyword">virtual</span> <span class="keywordtype">void</span> <a class="code" href="classOsclDNSRequestAO.html#b11">Cancelled</a>() {}
+00101 
+<a name="l00102"></a><a class="code" href="classOsclDNSRequestAO.html#n0">00102</a>         <a class="code" href="classOsclDNSI.html">OsclDNSI</a> *<a class="code" href="classOsclDNSRequestAO.html#n0">iDNSI</a>;
+<a name="l00103"></a><a class="code" href="classOsclDNSRequestAO.html#n1">00103</a>         <a class="code" href="classOsclDNSMethod.html">OsclDNSMethod</a> *<a class="code" href="classOsclDNSRequestAO.html#n1">iDNSMethod</a>;
+<a name="l00104"></a><a class="code" href="classOsclDNSRequestAO.html#n2">00104</a>         int32 <a class="code" href="classOsclDNSRequestAO.html#n2">iSocketError</a>;
+<a name="l00105"></a><a class="code" href="classOsclDNSRequestAO.html#n3">00105</a>         <a class="code" href="classPVLogger.html">PVLogger</a>* <a class="code" href="classOsclDNSRequestAO.html#n3">iLogger</a>;
+00106 
+<a name="l00107"></a><a class="code" href="classOsclDNSRequestAO.html#l0">00107</a>         <span class="keyword">friend</span> <span class="keyword">class </span><a class="code" href="classOsclDNSI.html">OsclDNSI</a>;
+<a name="l00108"></a><a class="code" href="classOsclDNSRequestAO.html#l1">00108</a>         <span class="keyword">friend</span> <span class="keyword">class </span><a class="code" href="classOsclDNSMethod.html">OsclDNSMethod</a>;
+<a name="l00109"></a><a class="code" href="classOsclDNSRequestAO.html#l2">00109</a>         <span class="keyword">friend</span> <span class="keyword">class </span><a class="code" href="classOsclDNSRequest.html">OsclDNSRequest</a>;
+<a name="l00110"></a><a class="code" href="classOsclDNSRequestAO.html#l3">00110</a>         <span class="keyword">friend</span> <span class="keyword">class </span><a class="code" href="classGetHostByNameParam.html">GetHostByNameParam</a>;
+00111 };
+00112 
+00113 <span class="preprocessor">#endif</span>
+00114 <span class="preprocessor"></span>
 </pre></div><hr size="1"><img src="pvlogo_small.jpg"><address style="align: right;"><small>OSCL API</small>
-<address style="align: left;"><small>Posting Version: CORE_8.000.1.1_RC1 </small>
+<address style="align: left;"><small>Posting Version: CORE_8.000.1.1_RC2 </small>
 </small></address>
 </body>
 </html>

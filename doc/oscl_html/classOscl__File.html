@@ -44,7 +44,7 @@
 <tr><td nowrap align=right valign=top>OSCL_IMPORT_REF&nbsp;</td><td valign=bottom><a class="el" href="classOscl__File.html#a3">~Oscl_File</a> ()</td></tr>
 <tr><td nowrap align=right valign=top>OSCL_IMPORT_REF void&nbsp;</td><td valign=bottom><a class="el" href="classOscl__File.html#a4">SetPVCacheSize</a> (uint32 aSize)</td></tr>
 <tr><td nowrap align=right valign=top>void&nbsp;</td><td valign=bottom><a class="el" href="classOscl__File.html#a5">AddFixedCache</a> (const <a class="el" href="classOscl__File_1_1OsclFixedCacheParam.html">OsclFixedCacheParam</a> &amp;aParam)</td></tr>
-<tr><td nowrap align=right valign=top>void&nbsp;</td><td valign=bottom><a class="el" href="classOscl__File.html#a6">RemoveFixedCache</a> (const <a class="el" href="osclconfig__io_8h.html#a50">TOsclFileOffset</a> &amp;aPos)</td></tr>
+<tr><td nowrap align=right valign=top>void&nbsp;</td><td valign=bottom><a class="el" href="classOscl__File.html#a6">RemoveFixedCache</a> (const <a class="el" href="osclconfig__io_8h.html#a68">TOsclFileOffset</a> &amp;aPos)</td></tr>
 <tr><td nowrap align=right valign=top>void&nbsp;</td><td valign=bottom><a class="el" href="classOscl__File.html#a7">SetCacheObserver</a> (<a class="el" href="classOscl__File_1_1OsclCacheObserver.html">OsclCacheObserver</a> *aObs)</td></tr>
 <tr><td nowrap align=right valign=top>OSCL_IMPORT_REF void&nbsp;</td><td valign=bottom><a class="el" href="classOscl__File.html#a8">SetNativeAccessMode</a> (uint32 aMode)</td></tr>
 <tr><td nowrap align=right valign=top>OSCL_IMPORT_REF void&nbsp;</td><td valign=bottom><a class="el" href="classOscl__File.html#a9">SetNativeBufferSize</a> (int32 aSize)</td></tr>
@@ -54,16 +54,17 @@
 <tr><td nowrap align=right valign=top>OSCL_IMPORT_REF int32&nbsp;</td><td valign=bottom><a class="el" href="classOscl__File.html#a13">Open</a> (const <a class="el" href="group__osclbase.html#a34">oscl_wchar</a> *filename, uint32 mode, <a class="el" href="classOscl__FileServer.html">Oscl_FileServer</a> &amp;fileserv)</td></tr>
 <tr><td nowrap align=right valign=top>OSCL_IMPORT_REF uint32&nbsp;</td><td valign=bottom><a class="el" href="classOscl__File.html#a14">Read</a> (<a class="el" href="group__osclbase.html#a27">OsclAny</a> *buffer, uint32 size, uint32 numelements)</td></tr>
 <tr><td nowrap align=right valign=top>OSCL_IMPORT_REF uint32&nbsp;</td><td valign=bottom><a class="el" href="classOscl__File.html#a15">Write</a> (const <a class="el" href="group__osclbase.html#a27">OsclAny</a> *buffer, uint32 size, uint32 numelements)</td></tr>
-<tr><td nowrap align=right valign=top>OSCL_IMPORT_REF int32&nbsp;</td><td valign=bottom><a class="el" href="classOscl__File.html#a16">Seek</a> (<a class="el" href="osclconfig__io_8h.html#a50">TOsclFileOffset</a> offset, <a class="el" href="classOscl__File.html#s11">seek_type</a> origin)</td></tr>
-<tr><td nowrap align=right valign=top>OSCL_IMPORT_REF <a class="el" href="osclconfig__io_8h.html#a50">TOsclFileOffset</a>&nbsp;</td><td valign=bottom><a class="el" href="classOscl__File.html#a17">Tell</a> ()</td></tr>
+<tr><td nowrap align=right valign=top>OSCL_IMPORT_REF int32&nbsp;</td><td valign=bottom><a class="el" href="classOscl__File.html#a16">Seek</a> (<a class="el" href="osclconfig__io_8h.html#a68">TOsclFileOffset</a> offset, <a class="el" href="classOscl__File.html#s11">seek_type</a> origin)</td></tr>
+<tr><td nowrap align=right valign=top>OSCL_IMPORT_REF <a class="el" href="osclconfig__io_8h.html#a68">TOsclFileOffset</a>&nbsp;</td><td valign=bottom><a class="el" href="classOscl__File.html#a17">Tell</a> ()</td></tr>
 <tr><td nowrap align=right valign=top>OSCL_IMPORT_REF int32&nbsp;</td><td valign=bottom><a class="el" href="classOscl__File.html#a18">Close</a> ()</td></tr>
 <tr><td nowrap align=right valign=top>OSCL_IMPORT_REF int32&nbsp;</td><td valign=bottom><a class="el" href="classOscl__File.html#a19">Flush</a> ()</td></tr>
-<tr><td nowrap align=right valign=top>OSCL_IMPORT_REF int32&nbsp;</td><td valign=bottom><a class="el" href="classOscl__File.html#a20">EndOfFile</a> ()</td></tr>
-<tr><td nowrap align=right valign=top>OSCL_IMPORT_REF int32&nbsp;</td><td valign=bottom><a class="el" href="classOscl__File.html#a21">GetError</a> ()</td></tr>
-<tr><td nowrap align=right valign=top><a class="el" href="classOsclFileHandle.html">OsclFileHandle</a> *&nbsp;</td><td valign=bottom><a class="el" href="classOscl__File.html#a22">Handle</a> ()</td></tr>
-<tr><td nowrap align=right valign=top>OSCL_IMPORT_REF <a class="el" href="osclconfig__io_8h.html#a50">TOsclFileOffset</a>&nbsp;</td><td valign=bottom><a class="el" href="classOscl__File.html#a23">Size</a> ()</td></tr>
-<tr><td nowrap align=right valign=top>OSCL_IMPORT_REF void&nbsp;</td><td valign=bottom><a class="el" href="classOscl__File.html#a24">SetLoggingEnable</a> (bool aEnable)</td></tr>
-<tr><td nowrap align=right valign=top>OSCL_IMPORT_REF void&nbsp;</td><td valign=bottom><a class="el" href="classOscl__File.html#a25">SetSummaryStatsLoggingEnable</a> (bool aEnable)</td></tr>
+<tr><td nowrap align=right valign=top>OSCL_IMPORT_REF int32&nbsp;</td><td valign=bottom><a class="el" href="classOscl__File.html#a20">SetSize</a> (uint32 size)</td></tr>
+<tr><td nowrap align=right valign=top>OSCL_IMPORT_REF int32&nbsp;</td><td valign=bottom><a class="el" href="classOscl__File.html#a21">EndOfFile</a> ()</td></tr>
+<tr><td nowrap align=right valign=top>OSCL_IMPORT_REF int32&nbsp;</td><td valign=bottom><a class="el" href="classOscl__File.html#a22">GetError</a> ()</td></tr>
+<tr><td nowrap align=right valign=top><a class="el" href="classOsclFileHandle.html">OsclFileHandle</a> *&nbsp;</td><td valign=bottom><a class="el" href="classOscl__File.html#a23">Handle</a> ()</td></tr>
+<tr><td nowrap align=right valign=top>OSCL_IMPORT_REF <a class="el" href="osclconfig__io_8h.html#a68">TOsclFileOffset</a>&nbsp;</td><td valign=bottom><a class="el" href="classOscl__File.html#a24">Size</a> ()</td></tr>
+<tr><td nowrap align=right valign=top>OSCL_IMPORT_REF void&nbsp;</td><td valign=bottom><a class="el" href="classOscl__File.html#a25">SetLoggingEnable</a> (bool aEnable)</td></tr>
+<tr><td nowrap align=right valign=top>OSCL_IMPORT_REF void&nbsp;</td><td valign=bottom><a class="el" href="classOscl__File.html#a26">SetSummaryStatsLoggingEnable</a> (bool aEnable)</td></tr>
 <tr><td colspan=2><br><h2>Friends</h2></td></tr>
 <tr><td nowrap align=right valign=top>class&nbsp;</td><td valign=bottom><a class="el" href="classOscl__File.html#l0">OsclFileCache</a></td></tr>
 <tr><td nowrap align=right valign=top>class&nbsp;</td><td valign=bottom><a class="el" href="classOscl__File.html#l1">OsclFileCacheBuffer</a></td></tr>
@@ -376,7 +377,7 @@ Note: If the file object was opened with an external file handle, then Close wil
 returns 0 if successful, and a non-zero value otherwise </dl>    </td>
   </tr>
 </table>
-<a name="a20" doxytag="Oscl_File::EndOfFile"></a><p>
+<a name="a21" doxytag="Oscl_File::EndOfFile"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -438,7 +439,7 @@ The File Flush operation On an output stream OSCL_FileFlush causes any buffered 
 returns 0 if successful, and a non-zero value otherwise </dl>    </td>
   </tr>
 </table>
-<a name="a21" doxytag="Oscl_File::GetError"></a><p>
+<a name="a22" doxytag="Oscl_File::GetError"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -469,7 +470,7 @@ The File Error operation If no error has occurred on stream, returns 0. Otherwis
 </dl>    </td>
   </tr>
 </table>
-<a name="a22" doxytag="Oscl_File::Handle"></a><p>
+<a name="a23" doxytag="Oscl_File::Handle"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -674,7 +675,7 @@ returns the number of full elements actually read, which may be less than count 
         <tr>
           <td class="md" nowrap valign="top"> void Oscl_File::RemoveFixedCache </td>
           <td class="md" valign="top">(&nbsp;</td>
-          <td class="md" nowrap valign="top">const <a class="el" href="osclconfig__io_8h.html#a50">TOsclFileOffset</a> &amp;&nbsp;</td>
+          <td class="md" nowrap valign="top">const <a class="el" href="osclconfig__io_8h.html#a68">TOsclFileOffset</a> &amp;&nbsp;</td>
           <td class="mdname1" valign="top" nowrap>&nbsp; <em>aPos</em>          </td>
           <td class="md" valign="top">)&nbsp;</td>
           <td class="md" nowrap><code> [inline]</code></td>
@@ -708,7 +709,7 @@ Cache location and size. </td></tr>
         <tr>
           <td class="md" nowrap valign="top"> OSCL_IMPORT_REF int32 Oscl_File::Seek </td>
           <td class="md" valign="top">(&nbsp;</td>
-          <td class="md" nowrap valign="top"><a class="el" href="osclconfig__io_8h.html#a50">TOsclFileOffset</a>&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="osclconfig__io_8h.html#a68">TOsclFileOffset</a>&nbsp;</td>
           <td class="mdname" nowrap>&nbsp; <em>offset</em>, </td>
         </tr>
         <tr>
@@ -854,7 +855,7 @@ container for an open file handle. </td></tr>
 returns 0 if successful, non-zero if error. </dl>    </td>
   </tr>
 </table>
-<a name="a24" doxytag="Oscl_File::SetLoggingEnable"></a><p>
+<a name="a25" doxytag="Oscl_File::SetLoggingEnable"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -998,7 +999,39 @@ cache size in bytes. Zero disables the cache. </td></tr>
 </dl>    </td>
   </tr>
 </table>
-<a name="a25" doxytag="Oscl_File::SetSummaryStatsLoggingEnable"></a><p>
+<a name="a20" doxytag="Oscl_File::SetSize"></a><p>
+<table width="100%" cellpadding="2" cellspacing="0" border="0">
+  <tr>
+    <td class="md">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> OSCL_IMPORT_REF int32 Oscl_File::SetSize </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top">uint32&nbsp;</td>
+          <td class="mdname1" valign="top" nowrap>&nbsp; <em>size</em>          </td>
+          <td class="md" valign="top">)&nbsp;</td>
+          <td class="md" nowrap></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+The File SetSize operation If the file has been opened for writing This sets the size of the file. The file pointer position is unchanged unless the pointers position is greated than the new filesize.
+<p>
+<dl compact><dt><b>Returns: </b></dt><dd>
+returns 0 if successful, and a non-zero value otherwise </dl>    </td>
+  </tr>
+</table>
+<a name="a26" doxytag="Oscl_File::SetSummaryStatsLoggingEnable"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -1032,13 +1065,13 @@ true to enable, false to disable stats logging. </td></tr>
 </dl>    </td>
   </tr>
 </table>
-<a name="a23" doxytag="Oscl_File::Size"></a><p>
+<a name="a24" doxytag="Oscl_File::Size"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
       <table cellpadding="0" cellspacing="0" border="0">
         <tr>
-          <td class="md" nowrap valign="top"> OSCL_IMPORT_REF <a class="el" href="osclconfig__io_8h.html#a50">TOsclFileOffset</a> Oscl_File::Size </td>
+          <td class="md" nowrap valign="top"> OSCL_IMPORT_REF <a class="el" href="osclconfig__io_8h.html#a68">TOsclFileOffset</a> Oscl_File::Size </td>
           <td class="md" valign="top">(&nbsp;</td>
           <td class="mdname1" valign="top" nowrap>&nbsp;          </td>
           <td class="md" valign="top">)&nbsp;</td>
@@ -1069,7 +1102,7 @@ Get the file size in bytes.
     <td class="md">
       <table cellpadding="0" cellspacing="0" border="0">
         <tr>
-          <td class="md" nowrap valign="top"> OSCL_IMPORT_REF <a class="el" href="osclconfig__io_8h.html#a50">TOsclFileOffset</a> Oscl_File::Tell </td>
+          <td class="md" nowrap valign="top"> OSCL_IMPORT_REF <a class="el" href="osclconfig__io_8h.html#a68">TOsclFileOffset</a> Oscl_File::Tell </td>
           <td class="md" valign="top">(&nbsp;</td>
           <td class="mdname1" valign="top" nowrap>&nbsp;          </td>
           <td class="md" valign="top">)&nbsp;</td>
@@ -1259,7 +1292,7 @@ The number of elements written </dl>    </td>
 <hr>The documentation for this class was generated from the following file:<ul>
 <li><a class="el" href="oscl__file__io_8h-source.html">oscl_file_io.h</a></ul>
 <hr size="1"><img src="pvlogo_small.jpg"><address style="align: right;"><small>OSCL API</small>
-<address style="align: left;"><small>Posting Version: CORE_8.000.1.1_RC1 </small>
+<address style="align: left;"><small>Posting Version: CORE_8.000.1.1_RC2 </small>
 </small></address>
 </body>
 </html>

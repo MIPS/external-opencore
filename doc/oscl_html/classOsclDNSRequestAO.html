@@ -30,6 +30,8 @@
 <tr><td nowrap align=right valign=top>void&nbsp;</td><td valign=bottom><a class="el" href="classOsclDNSRequestAO.html#b7">DoCancel</a> ()</td></tr>
 <tr><td nowrap align=right valign=top>void&nbsp;</td><td valign=bottom><a class="el" href="classOsclDNSRequestAO.html#b8">Run</a> ()</td></tr>
 <tr><td nowrap align=right valign=top>virtual void&nbsp;</td><td valign=bottom><a class="el" href="classOsclDNSRequestAO.html#b9">Success</a> ()</td></tr>
+<tr><td nowrap align=right valign=top>virtual void&nbsp;</td><td valign=bottom><a class="el" href="classOsclDNSRequestAO.html#b10">Failure</a> ()</td></tr>
+<tr><td nowrap align=right valign=top>virtual void&nbsp;</td><td valign=bottom><a class="el" href="classOsclDNSRequestAO.html#b11">Cancelled</a> ()</td></tr>
 <tr><td colspan=2><br><h2>Protected Attributes</h2></td></tr>
 <tr><td nowrap align=right valign=top><a class="el" href="classOsclDNSI.html">OsclDNSI</a> *&nbsp;</td><td valign=bottom><a class="el" href="classOsclDNSRequestAO.html#n0">iDNSI</a></td></tr>
 <tr><td nowrap align=right valign=top><a class="el" href="classOsclDNSMethod.html">OsclDNSMethod</a> *&nbsp;</td><td valign=bottom><a class="el" href="classOsclDNSRequestAO.html#n1">iDNSMethod</a></td></tr>
@@ -39,7 +41,7 @@
 <tr><td nowrap align=right valign=top>class&nbsp;</td><td valign=bottom><a class="el" href="classOsclDNSRequestAO.html#l0">OsclDNSI</a></td></tr>
 <tr><td nowrap align=right valign=top>class&nbsp;</td><td valign=bottom><a class="el" href="classOsclDNSRequestAO.html#l1">OsclDNSMethod</a></td></tr>
 <tr><td nowrap align=right valign=top>class&nbsp;</td><td valign=bottom><a class="el" href="classOsclDNSRequestAO.html#l2">OsclDNSRequest</a></td></tr>
-<tr><td nowrap align=right valign=top>class&nbsp;</td><td valign=bottom><a class="el" href="classOsclDNSRequestAO.html#l3">DNSRequestParam</a></td></tr>
+<tr><td nowrap align=right valign=top>class&nbsp;</td><td valign=bottom><a class="el" href="classOsclDNSRequestAO.html#l3">GetHostByNameParam</a></td></tr>
 </table>
 <hr><a name="_details"></a><h2>Detailed Description</h2>
 This is the base class for all requests to the socket server. 
@@ -86,6 +88,34 @@ This is the base class for all requests to the socket server.
           <td class="mdname1" valign="top" nowrap>&nbsp;          </td>
           <td class="md" valign="top">)&nbsp;</td>
           <td class="md" nowrap><code> [inline, protected]</code></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+    </td>
+  </tr>
+</table>
+<a name="b11" doxytag="OsclDNSRequestAO::Cancelled"></a><p>
+<table width="100%" cellpadding="2" cellspacing="0" border="0">
+  <tr>
+    <td class="md">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> virtual void OsclDNSRequestAO::Cancelled </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="mdname1" valign="top" nowrap>&nbsp;          </td>
+          <td class="md" valign="top">)&nbsp;</td>
+          <td class="md" nowrap><code> [inline, protected, virtual]</code></td>
         </tr>
 
       </table>
@@ -169,6 +199,34 @@ This is the base class for all requests to the socket server.
 Cancel request handler. This gets called by scheduler when the request is cancelled. The default routine will complete the request. If any additional action is needed, the derived class may override this. If the derived class does override DoCancel, it must complete the request. 
 <p>
 Reimplemented from <a class="el" href="classOsclActiveObject.html#b0">OsclActiveObject</a>.    </td>
+  </tr>
+</table>
+<a name="b10" doxytag="OsclDNSRequestAO::Failure"></a><p>
+<table width="100%" cellpadding="2" cellspacing="0" border="0">
+  <tr>
+    <td class="md">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> virtual void OsclDNSRequestAO::Failure </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="mdname1" valign="top" nowrap>&nbsp;          </td>
+          <td class="md" valign="top">)&nbsp;</td>
+          <td class="md" nowrap><code> [inline, protected, virtual]</code></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+    </td>
   </tr>
 </table>
 <a name="b5" doxytag="OsclDNSRequestAO::GetSocketError"></a><p>
@@ -356,13 +414,13 @@ Implements <a class="el" href="classPVActiveBase.html#a4">PVActiveBase</a>.    <
   </tr>
 </table>
 <hr><h2>Friends And Related Function Documentation</h2>
-<a name="l3" doxytag="OsclDNSRequestAO::DNSRequestParam"></a><p>
+<a name="l3" doxytag="OsclDNSRequestAO::GetHostByNameParam"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
       <table cellpadding="0" cellspacing="0" border="0">
         <tr>
-          <td class="md" nowrap valign="top"> friend class DNSRequestParam<code> [friend]</code>
+          <td class="md" nowrap valign="top"> friend class GetHostByNameParam<code> [friend]</code>
       </table>
     </td>
   </tr>
@@ -536,7 +594,7 @@ Implements <a class="el" href="classPVActiveBase.html#a4">PVActiveBase</a>.    <
 <hr>The documentation for this class was generated from the following file:<ul>
 <li><a class="el" href="oscl__dns__method_8h-source.html">oscl_dns_method.h</a></ul>
 <hr size="1"><img src="pvlogo_small.jpg"><address style="align: right;"><small>OSCL API</small>
-<address style="align: left;"><small>Posting Version: CORE_8.000.1.1_RC1 </small>
+<address style="align: left;"><small>Posting Version: CORE_8.000.1.1_RC2 </small>
 </small></address>
 </body>
 </html>
