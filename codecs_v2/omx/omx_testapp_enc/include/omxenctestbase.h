@@ -99,9 +99,9 @@ class CallbackParentInt
 {
     public:
 #if PROXY_INTERFACE
-        EventHandlerThreadSafeCallbackAO*    ipThreadSafeHandlerEventHandler;
-        EmptyBufferDoneThreadSafeCallbackAO* ipThreadSafeHandlerEmptyBufferDone;
-        FillBufferDoneThreadSafeCallbackAO*  ipThreadSafeHandlerFillBufferDone;
+        OmxEncEventHandlerThreadSafeCallbackAO*    ipThreadSafeHandlerEventHandler;
+        OmxEncEmptyBufferDoneThreadSafeCallbackAO* ipThreadSafeHandlerEmptyBufferDone;
+        OmxEncFillBufferDoneThreadSafeCallbackAO*  ipThreadSafeHandlerFillBufferDone;
 #else
         virtual OMX_ERRORTYPE EventHandler(OMX_OUT OMX_HANDLETYPE aComponent,
                                            OMX_OUT OMX_PTR aAppData,

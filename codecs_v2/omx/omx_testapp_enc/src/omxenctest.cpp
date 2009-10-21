@@ -732,9 +732,9 @@ void OmxComponentEncTest::Run()
             }
 
 #if PROXY_INTERFACE
-            ipThreadSafeHandlerEventHandler = OSCL_NEW(EventHandlerThreadSafeCallbackAO, (this, EVENT_HANDLER_QUEUE_DEPTH, "EventHandlerAO"));
-            ipThreadSafeHandlerEmptyBufferDone = OSCL_NEW(EmptyBufferDoneThreadSafeCallbackAO, (this, iInBufferCount, "EmptyBufferDoneAO"));
-            ipThreadSafeHandlerFillBufferDone = OSCL_NEW(FillBufferDoneThreadSafeCallbackAO, (this, iOutBufferCount, "FillBufferDoneAO"));
+            ipThreadSafeHandlerEventHandler = OSCL_NEW(OmxEncEventHandlerThreadSafeCallbackAO, (this, EVENT_HANDLER_QUEUE_DEPTH, "EventHandlerAO"));
+            ipThreadSafeHandlerEmptyBufferDone = OSCL_NEW(OmxEncEmptyBufferDoneThreadSafeCallbackAO, (this, iInBufferCount, "EmptyBufferDoneAO"));
+            ipThreadSafeHandlerFillBufferDone = OSCL_NEW(OmxEncFillBufferDoneThreadSafeCallbackAO, (this, iOutBufferCount, "FillBufferDoneAO"));
 
             if ((NULL == ipThreadSafeHandlerEventHandler) ||
                     (NULL == ipThreadSafeHandlerEmptyBufferDone) ||

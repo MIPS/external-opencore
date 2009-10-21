@@ -57,9 +57,9 @@ void OmxEncTestCompRole::Run()
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "OmxEncTestCompRole::Run() - StateUnLoaded IN"));
 
 #if PROXY_INTERFACE
-            ipThreadSafeHandlerEventHandler = OSCL_NEW(EventHandlerThreadSafeCallbackAO, (this, EVENT_HANDLER_QUEUE_DEPTH, "EventHandlerAO"));
-            ipThreadSafeHandlerEmptyBufferDone = OSCL_NEW(EmptyBufferDoneThreadSafeCallbackAO, (this, EMPTY_BUFFER_DONE_QUEUE_DEPTH, "EmptyBufferDoneAO"));
-            ipThreadSafeHandlerFillBufferDone = OSCL_NEW(FillBufferDoneThreadSafeCallbackAO, (this, FILL_BUFFER_DONE_QUEUE_DEPTH, "FillBufferDoneAO"));
+            ipThreadSafeHandlerEventHandler = OSCL_NEW(OmxEncEventHandlerThreadSafeCallbackAO, (this, EVENT_HANDLER_QUEUE_DEPTH, "EventHandlerAO"));
+            ipThreadSafeHandlerEmptyBufferDone = OSCL_NEW(OmxEncEmptyBufferDoneThreadSafeCallbackAO, (this, EMPTY_BUFFER_DONE_QUEUE_DEPTH, "EmptyBufferDoneAO"));
+            ipThreadSafeHandlerFillBufferDone = OSCL_NEW(OmxEncFillBufferDoneThreadSafeCallbackAO, (this, FILL_BUFFER_DONE_QUEUE_DEPTH, "FillBufferDoneAO"));
 
             if ((NULL == ipThreadSafeHandlerEventHandler) ||
                     (NULL == ipThreadSafeHandlerEmptyBufferDone) ||

@@ -80,11 +80,11 @@ const char FillBufferDoneAOName[] = "EventHandlerCallbackAO";
 
 
 /**************** CLASS FOR EVENT HANDLER *************/
-class EventHandlerThreadSafeCallbackAO : public ThreadSafeCallbackAO
+class OmxEventHandlerThreadSafeCallbackAO : public ThreadSafeCallbackAO
 {
     public:
         // Constructor
-        EventHandlerThreadSafeCallbackAO(
+        OmxEventHandlerThreadSafeCallbackAO(
             void* aObserver = NULL,
             uint32 aDepth = DEFAULT_QUEUE_DEPTH,
             const char* aAOname = EventHandlerAOName,
@@ -98,24 +98,24 @@ class EventHandlerThreadSafeCallbackAO : public ThreadSafeCallbackAO
         virtual void Run();
         virtual OsclAny* DeQueue(OsclReturnCode &stat);
 
-        virtual ~EventHandlerThreadSafeCallbackAO();
+        virtual ~OmxEventHandlerThreadSafeCallbackAO();
         ThreadSafeMemPoolFixedChunkAllocator *iMemoryPool;
 
 };
 
 
 /**************** CLASS FOR EVENT HANDLER *************/
-class EmptyBufferDoneThreadSafeCallbackAO : public ThreadSafeCallbackAO
+class OmxEmptyBufferDoneThreadSafeCallbackAO : public ThreadSafeCallbackAO
 {
     public:
         // Constructor
-        EmptyBufferDoneThreadSafeCallbackAO(
+        OmxEmptyBufferDoneThreadSafeCallbackAO(
             void* aObserver = NULL,
             uint32 aDepth = DEFAULT_QUEUE_DEPTH,
             const char* aAOname = EmptyBufferDoneAOName,
             int32 aPriority = OsclActiveObject::EPriorityNominal);
 
-        virtual ~EmptyBufferDoneThreadSafeCallbackAO();
+        virtual ~OmxEmptyBufferDoneThreadSafeCallbackAO();
         // OVERLOADED ProcessEvent
         OsclReturnCode ProcessEvent(OsclAny* EventData);
         ThreadSafeMemPoolFixedChunkAllocator *iMemoryPool;
@@ -130,14 +130,14 @@ class EmptyBufferDoneThreadSafeCallbackAO : public ThreadSafeCallbackAO
 
 
 /**************** CLASS FOR EVENT HANDLER *************/
-class FillBufferDoneThreadSafeCallbackAO : public ThreadSafeCallbackAO
+class OmxFillBufferDoneThreadSafeCallbackAO : public ThreadSafeCallbackAO
 {
     public:
         // Constructor
-        FillBufferDoneThreadSafeCallbackAO(void* aObserver = NULL,
-                                           uint32 aDepth = DEFAULT_QUEUE_DEPTH,
-                                           const char* aAOname = FillBufferDoneAOName,
-                                           int32 aPriority = OsclActiveObject::EPriorityNominal);
+        OmxFillBufferDoneThreadSafeCallbackAO(void* aObserver = NULL,
+                                              uint32 aDepth = DEFAULT_QUEUE_DEPTH,
+                                              const char* aAOname = FillBufferDoneAOName,
+                                              int32 aPriority = OsclActiveObject::EPriorityNominal);
 
         // OVERLOADED ProcessEvent
         OsclReturnCode ProcessEvent(OsclAny* EventData);
@@ -145,7 +145,7 @@ class FillBufferDoneThreadSafeCallbackAO : public ThreadSafeCallbackAO
         virtual void Run();
         virtual OsclAny* DeQueue(OsclReturnCode &stat);
 
-        virtual ~FillBufferDoneThreadSafeCallbackAO();
+        virtual ~OmxFillBufferDoneThreadSafeCallbackAO();
         ThreadSafeMemPoolFixedChunkAllocator *iMemoryPool;
 };
 

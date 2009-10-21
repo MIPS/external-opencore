@@ -19,7 +19,7 @@
 #include "omxenctestbase.h"
 
 ////////////////////////////////////////////////////////////////////////////////////////////////
-EventHandlerThreadSafeCallbackAO::EventHandlerThreadSafeCallbackAO(void* aObserver,
+OmxEncEventHandlerThreadSafeCallbackAO::OmxEncEventHandlerThreadSafeCallbackAO(void* aObserver,
         uint32 aDepth,
         const char* aAOname,
         int32 aPriority)
@@ -41,7 +41,7 @@ EventHandlerThreadSafeCallbackAO::EventHandlerThreadSafeCallbackAO(void* aObserv
 
 }
 
-EventHandlerThreadSafeCallbackAO::~EventHandlerThreadSafeCallbackAO()
+OmxEncEventHandlerThreadSafeCallbackAO::~OmxEncEventHandlerThreadSafeCallbackAO()
 {
     if (iMemoryPool)
     {
@@ -50,7 +50,7 @@ EventHandlerThreadSafeCallbackAO::~EventHandlerThreadSafeCallbackAO()
     }
 }
 
-OsclReturnCode EventHandlerThreadSafeCallbackAO::ProcessEvent(OsclAny* EventData)
+OsclReturnCode OmxEncEventHandlerThreadSafeCallbackAO::ProcessEvent(OsclAny* EventData)
 {
     // In this case, ProcessEvent calls the method of the primary test AO to process the Event
     if (iObserver != NULL)
@@ -65,9 +65,9 @@ OsclReturnCode EventHandlerThreadSafeCallbackAO::ProcessEvent(OsclAny* EventData
 
 // We override the Run to process multiple (i.e. all in the queue) events in one Run
 
-void EventHandlerThreadSafeCallbackAO::Run()
+void OmxEncEventHandlerThreadSafeCallbackAO::Run()
 {
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "EventHandlerThreadSafeCallbackAO::Run() In"));
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "OmxEncEventHandlerThreadSafeCallbackAO::Run() In"));
 
     OsclAny *P; // parameter to dequeue
     OsclReturnCode status = OsclSuccess;
@@ -83,12 +83,12 @@ void EventHandlerThreadSafeCallbackAO::Run()
 
         if ((status == OsclSuccess) || (status == OsclPending))
         {
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "EventHandlerThreadSafeCallbackAO::Run() - Calling Process Event"));
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "OmxEncEventHandlerThreadSafeCallbackAO::Run() - Calling Process Event"));
             ProcessEvent(P);
         }
         else
         {
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "EventHandlerThreadSafeCallbackAO::Run() - could not dequeue event data"));
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "OmxEncEventHandlerThreadSafeCallbackAO::Run() - could not dequeue event data"));
         }
 
 
@@ -104,12 +104,12 @@ void EventHandlerThreadSafeCallbackAO::Run()
 
 
 
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "EventHandlerThreadSafeCallbackAO::Run() Out"));
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "OmxEncEventHandlerThreadSafeCallbackAO::Run() Out"));
 }
 
 // same as base-class DeQueue method, except no RunIfNotReady/PendForExec is called (since all events are processed in a loop)
 // (i.e. PendForExec control is done in the loop in Run)
-OsclAny* EventHandlerThreadSafeCallbackAO::DeQueue(OsclReturnCode &stat)
+OsclAny* OmxEncEventHandlerThreadSafeCallbackAO::DeQueue(OsclReturnCode &stat)
 {
     OsclAny *pData;
     OsclProcStatus::eOsclProcError sema_status;
@@ -123,7 +123,7 @@ OsclAny* EventHandlerThreadSafeCallbackAO::DeQueue(OsclReturnCode &stat)
     {
         // nothing to de-queue
         stat = OsclFailure;
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "EventHandlerThreadSafeCallbackAO::DeQueue() - No events in the queue - return ()"));
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "OmxEncEventHandlerThreadSafeCallbackAO::DeQueue() - No events in the queue - return ()"));
         Mutex.Unlock();
 
         return NULL;
@@ -141,7 +141,7 @@ OsclAny* EventHandlerThreadSafeCallbackAO::DeQueue(OsclReturnCode &stat)
     // check if there is need to call waitforevent
     if ((Q->NumElem) == 0)
     {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "EventHandlerThreadSafeCallbackAO::Run() - No more events, call PendForExec()"));
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "OmxEncEventHandlerThreadSafeCallbackAO::Run() - No more events, call PendForExec()"));
         PendForExec();
         stat = OsclPending; // let the Run know that the last event was pulled out of the queue
         // so that it can get out of the loop
@@ -166,7 +166,7 @@ OsclAny* EventHandlerThreadSafeCallbackAO::DeQueue(OsclReturnCode &stat)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////
-EmptyBufferDoneThreadSafeCallbackAO::EmptyBufferDoneThreadSafeCallbackAO(void* aObserver,
+OmxEncEmptyBufferDoneThreadSafeCallbackAO::OmxEncEmptyBufferDoneThreadSafeCallbackAO(void* aObserver,
         uint32 aDepth,
         const char* aAOname,
         int32 aPriority)
@@ -187,7 +187,7 @@ EmptyBufferDoneThreadSafeCallbackAO::EmptyBufferDoneThreadSafeCallbackAO(void* a
     iMemoryPool->deallocate(dummy);
 }
 
-EmptyBufferDoneThreadSafeCallbackAO::~EmptyBufferDoneThreadSafeCallbackAO()
+OmxEncEmptyBufferDoneThreadSafeCallbackAO::~OmxEncEmptyBufferDoneThreadSafeCallbackAO()
 {
     if (iMemoryPool)
     {
@@ -197,7 +197,7 @@ EmptyBufferDoneThreadSafeCallbackAO::~EmptyBufferDoneThreadSafeCallbackAO()
 
 }
 
-OsclReturnCode EmptyBufferDoneThreadSafeCallbackAO::ProcessEvent(OsclAny* EventData)
+OsclReturnCode OmxEncEmptyBufferDoneThreadSafeCallbackAO::ProcessEvent(OsclAny* EventData)
 {
     // In this case, ProcessEvent calls the method of the primary test AO to process the Event
     if (iObserver != NULL)
@@ -212,9 +212,9 @@ OsclReturnCode EmptyBufferDoneThreadSafeCallbackAO::ProcessEvent(OsclAny* EventD
 
 // We override the RunL to process multiple (i.e. all in the queue) events in one RunL
 
-void EmptyBufferDoneThreadSafeCallbackAO::Run()
+void OmxEncEmptyBufferDoneThreadSafeCallbackAO::Run()
 {
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "EmptyBufferDoneThreadSafeCallbackAO::Run() In"));
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "OmxEncEmptyBufferDoneThreadSafeCallbackAO::Run() In"));
 
     OsclAny *P; // parameter to dequeue
     OsclReturnCode status = OsclSuccess;
@@ -228,12 +228,12 @@ void EmptyBufferDoneThreadSafeCallbackAO::Run()
 
         if ((status == OsclSuccess) || (status == OsclPending))
         {
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "EmptyBufferDoneThreadSafeCallbackAO::Run() - Calling Process Event"));
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "OmxEncEmptyBufferDoneThreadSafeCallbackAO::Run() - Calling Process Event"));
             ProcessEvent(P);
         }
         else
         {
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "EmptyBufferDoneThreadSafeCallbackAO::Run() - could not dequeue event data"));
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "OmxEncEmptyBufferDoneThreadSafeCallbackAO::Run() - could not dequeue event data"));
         }
 
 
@@ -249,12 +249,12 @@ void EmptyBufferDoneThreadSafeCallbackAO::Run()
 
 
 
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "EmptyBufferDoneThreadSafeCallbackAO::Run() Out"));
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "OmxEncEmptyBufferDoneThreadSafeCallbackAO::Run() Out"));
 }
 
 // same as base-class DeQueue method, except no RunIfNotReady/PendForExec is called (since all events are processed in a loop)
 // (i.e. PendForExec control is done in the loop in Run)
-OsclAny* EmptyBufferDoneThreadSafeCallbackAO::DeQueue(OsclReturnCode &stat)
+OsclAny* OmxEncEmptyBufferDoneThreadSafeCallbackAO::DeQueue(OsclReturnCode &stat)
 {
     OsclAny *pData;
     OsclProcStatus::eOsclProcError sema_status;
@@ -268,7 +268,7 @@ OsclAny* EmptyBufferDoneThreadSafeCallbackAO::DeQueue(OsclReturnCode &stat)
     {
         // nothing to de-queue
         stat = OsclFailure;
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "EmptyBufferDoneThreadSafeCallbackAO::DeQueue() - No events in the queue - return ()"));
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "OmxEncEmptyBufferDoneThreadSafeCallbackAO::DeQueue() - No events in the queue - return ()"));
         Mutex.Unlock();
 
         return NULL;
@@ -286,7 +286,7 @@ OsclAny* EmptyBufferDoneThreadSafeCallbackAO::DeQueue(OsclReturnCode &stat)
     // check if there is need to call waitforevent
     if ((Q->NumElem) == 0)
     {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "EmptyBufferDoneThreadSafeCallbackAO::Run() - No more events, call PendForExec()"));
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "OmxEncEmptyBufferDoneThreadSafeCallbackAO::Run() - No more events, call PendForExec()"));
         PendForExec();
         stat = OsclPending; // let the Run know that the last event was pulled out of the queue
         // so that it can get out of the loop
@@ -308,7 +308,7 @@ OsclAny* EmptyBufferDoneThreadSafeCallbackAO::DeQueue(OsclReturnCode &stat)
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////
-FillBufferDoneThreadSafeCallbackAO::FillBufferDoneThreadSafeCallbackAO(void* aObserver,
+OmxEncFillBufferDoneThreadSafeCallbackAO::OmxEncFillBufferDoneThreadSafeCallbackAO(void* aObserver,
         uint32 aDepth,
         const char* aAOname,
         int32 aPriority)
@@ -328,7 +328,7 @@ FillBufferDoneThreadSafeCallbackAO::FillBufferDoneThreadSafeCallbackAO(void* aOb
     iMemoryPool->deallocate(dummy);
 }
 
-FillBufferDoneThreadSafeCallbackAO::~FillBufferDoneThreadSafeCallbackAO()
+OmxEncFillBufferDoneThreadSafeCallbackAO::~OmxEncFillBufferDoneThreadSafeCallbackAO()
 {
     if (iMemoryPool)
     {
@@ -338,7 +338,7 @@ FillBufferDoneThreadSafeCallbackAO::~FillBufferDoneThreadSafeCallbackAO()
 }
 
 
-OsclReturnCode FillBufferDoneThreadSafeCallbackAO::ProcessEvent(OsclAny* EventData)
+OsclReturnCode OmxEncFillBufferDoneThreadSafeCallbackAO::ProcessEvent(OsclAny* EventData)
 {
     // In this case, ProcessEvent calls the method of the primary test AO to process the Event
     if (iObserver != NULL)
@@ -353,9 +353,9 @@ OsclReturnCode FillBufferDoneThreadSafeCallbackAO::ProcessEvent(OsclAny* EventDa
 
 // We override the Run to process multiple (i.e. all in the queue) events in one Run
 
-void FillBufferDoneThreadSafeCallbackAO::Run()
+void OmxEncFillBufferDoneThreadSafeCallbackAO::Run()
 {
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "FillBufferDoneThreadSafeCallbackAO::Run() In"));
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "OmxEncFillBufferDoneThreadSafeCallbackAO::Run() In"));
 
     OsclAny *P; // parameter to dequeue
     OsclReturnCode status = OsclSuccess;
@@ -369,12 +369,12 @@ void FillBufferDoneThreadSafeCallbackAO::Run()
 
         if ((status == OsclSuccess) || (status == OsclPending))
         {
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "FillBufferDoneThreadSafeCallbackAO::Run() - Calling Process Event"));
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "OmxEncFillBufferDoneThreadSafeCallbackAO::Run() - Calling Process Event"));
             ProcessEvent(P);
         }
         else
         {
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "FillBufferDoneThreadSafeCallbackAO::Run() - could not dequeue event data"));
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "OmxEncFillBufferDoneThreadSafeCallbackAO::Run() - could not dequeue event data"));
         }
 
 
@@ -392,12 +392,12 @@ void FillBufferDoneThreadSafeCallbackAO::Run()
 
 
 
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "FillBufferDoneThreadSafeCallbackAO::Run() Out"));
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "OmxEncFillBufferDoneThreadSafeCallbackAO::Run() Out"));
 }
 
 // same as base-class DeQueue method, except no RunIfNotReady/PendForExec is called (since all events are processed in a loop)
 // (i.e. PendForExec control is done in the loop in Run)
-OsclAny* FillBufferDoneThreadSafeCallbackAO::DeQueue(OsclReturnCode &stat)
+OsclAny* OmxEncFillBufferDoneThreadSafeCallbackAO::DeQueue(OsclReturnCode &stat)
 {
     OsclAny *pData;
     OsclProcStatus::eOsclProcError sema_status;
@@ -411,7 +411,7 @@ OsclAny* FillBufferDoneThreadSafeCallbackAO::DeQueue(OsclReturnCode &stat)
     {
         // nothing to de-queue
         stat = OsclFailure;
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "FillBufferDoneThreadSafeCallbackAO::DeQueue() - No events in the queue - return ()"));
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "OmxEncFillBufferDoneThreadSafeCallbackAO::DeQueue() - No events in the queue - return ()"));
         Mutex.Unlock();
 
         return NULL;
@@ -428,7 +428,7 @@ OsclAny* FillBufferDoneThreadSafeCallbackAO::DeQueue(OsclReturnCode &stat)
     // check if there is need to call waitforevent
     if ((Q->NumElem) == 0)
     {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "FillBufferDoneThreadSafeCallbackAO::Run() - No more events, call PendForExec()"));
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "OmxEncFillBufferDoneThreadSafeCallbackAO::Run() - No more events, call PendForExec()"));
         PendForExec();
         stat = OsclPending; // let the Run know that the last event was pulled out of the queue
         // so that it can get out of the loop
