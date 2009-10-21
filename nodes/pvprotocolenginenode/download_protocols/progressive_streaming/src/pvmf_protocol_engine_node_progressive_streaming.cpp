@@ -417,7 +417,7 @@ OSCL_EXPORT_REF bool ProgressiveStreamingProgress::calculateDownloadPercent(uint
 ////////////////////////////////////////////////////////////////////////////////////
 //////  progressiveStreamingEventReporter implementation
 ////////////////////////////////////////////////////////////////////////////////////
-OSCL_EXPORT_REF void progressiveStreamingEventReporter::reportBufferStatusEvent(const uint32 aDownloadPercent)
+OSCL_EXPORT_REF void progressiveStreamingEventReporter::reportBufferStatusEvent(int aDownloadPercent)
 {
     // calculate buffer fullness
 
@@ -427,7 +427,7 @@ OSCL_EXPORT_REF void progressiveStreamingEventReporter::reportBufferStatusEvent(
     iObserver->ReportEvent(PVMFInfoBufferingStatus,
                            (OsclAny*)aBufferFullness,
                            PVMFPROTOCOLENGINENODEInfo_BufferingStatus,
-                           (uint8*)(&aDownloadPercent),
+                           &aDownloadPercent,
                            sizeof(aDownloadPercent));
     LOGINFODATAPATH((0, "progressiveStreamingEventReporter::reportBufferStatusEvent() DOWNLOAD PERCENTAGE: %d", aDownloadPercent));
 }

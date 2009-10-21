@@ -486,7 +486,7 @@ class PVMFJitterBufferNode : public PVInterface,
         //Node should only observe these and initialize it, and modification to these are supposed to be done by the
         //jitter buffer only
         bool    iDelayEstablished;
-        uint32  iJitterDelayPercent;
+        int  iJitterDelayPercent;
         PVMFJitterBufferDataState iJitterBufferState;
 
         /////////////////////////////////////////////////////////////////////////////

@@ -284,8 +284,8 @@ class OSCL_IMPORT_REF PVMFAsyncEvent : public PVMFEventBase
                        PVMFEventType aEventType,
                        OsclAny* aContext,
                        OsclAny* aEventData,
-                       uint8* aLocalBuffer,
-                       uint32 aLocalBufferSize) :
+                       const void* aLocalBuffer,
+                       const size_t aLocalBufferSize) :
                 iEventCategory(aEventCategory)
                 , iEventType(aEventType)
                 , iEventExtInterface(NULL)
@@ -295,7 +295,7 @@ class OSCL_IMPORT_REF PVMFAsyncEvent : public PVMFEventBase
         {
             if (aLocalBuffer)
             {
-                OSCL_ASSERT(aLocalBufferSize <= PVMF_ASYNC_EVENT_LOCAL_BUF_SIZE);
+                OSCL_ASSERT(iLocalBufferSize <= PVMF_ASYNC_EVENT_LOCAL_BUF_SIZE);
                 if (iLocalBufferSize > PVMF_ASYNC_EVENT_LOCAL_BUF_SIZE)
                 {
                     iLocalBufferSize = PVMF_ASYNC_EVENT_LOCAL_BUF_SIZE;
@@ -329,8 +329,8 @@ class OSCL_IMPORT_REF PVMFAsyncEvent : public PVMFEventBase
                        OsclAny* aContext,
                        PVInterface* aEventExtInterface,
                        OsclAny* aEventData,
-                       uint8* aLocalBuffer,
-                       uint32 aLocalBufferSize) :
+                       const void* aLocalBuffer,
+                       const size_t aLocalBufferSize) :
                 iEventCategory(aEventCategory)
                 , iEventType(aEventType)
                 , iEventExtInterface(aEventExtInterface)
@@ -340,7 +340,7 @@ class OSCL_IMPORT_REF PVMFAsyncEvent : public PVMFEventBase
         {
             if (aLocalBuffer)
             {
-                OSCL_ASSERT(aLocalBufferSize <= PVMF_ASYNC_EVENT_LOCAL_BUF_SIZE);
+                OSCL_ASSERT(iLocalBufferSize <= PVMF_ASYNC_EVENT_LOCAL_BUF_SIZE);
                 if (iLocalBufferSize > PVMF_ASYNC_EVENT_LOCAL_BUF_SIZE)
                 {
                     iLocalBufferSize = PVMF_ASYNC_EVENT_LOCAL_BUF_SIZE;

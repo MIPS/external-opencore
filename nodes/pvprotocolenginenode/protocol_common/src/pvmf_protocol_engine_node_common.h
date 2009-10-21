@@ -301,7 +301,7 @@ class ProtocolContainerObserver
         virtual void CompletePendingCmd(int32 status) = 0;
         virtual void CompleteInputCmd(PVMFProtocolEngineNodeCommand& aCmd, int32 status) = 0;
         virtual void ErasePendingCmd(PVMFProtocolEngineNodeCommand *aCmd) = 0;
-        virtual void ReportEvent(PVMFEventType aEventType, OsclAny* aEventData = NULL, const int32 aEventCode = 0, OsclAny* aEventLocalBuffer = NULL, const uint32 aEventLocalBufferSize = 0) = 0;
+        virtual void ReportEvent(PVMFEventType aEventType, OsclAny* aEventData = NULL, const int32 aEventCode = 0, OsclAny* aEventLocalBuffer = NULL, const size_t aEventLocalBufferSize = 0) = 0;
 };
 
 

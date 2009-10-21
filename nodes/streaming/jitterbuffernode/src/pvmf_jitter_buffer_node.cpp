@@ -3689,16 +3689,13 @@ void PVMFJitterBufferNode::ReportInfoEvent(PVMFEventType aEventType,
 
     if (aEventType == PVMFInfoBufferingStatus)
     {
-        uint8 localbuffer[8];
-        oscl_memset(localbuffer, 0, 8);
-        oscl_memcpy(localbuffer, &iJitterDelayPercent, sizeof(uint32));
         PVMFAsyncEvent asyncevent(PVMFInfoEvent,
                                   aEventType,
                                   NULL,
                                   NULL,
                                   aEventData,
-                                  localbuffer,
-                                  8);
+                                  &iJitterDelayPercent,
+                                  sizeof(iJitterDelayPercent));
         PVMFNodeInterface::ReportInfoEvent(asyncevent);
     }
     else if (aEventUUID && aEventCode)
