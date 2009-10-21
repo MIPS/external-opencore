@@ -174,10 +174,6 @@ $1: FORCE
 	$$(quiet) echo "  ifeq ($$(esc_dollar)(PV_WERROR),1)" >> $$@
 	$$(quiet) echo "    PV_CFLAGS += -Werror" >> $$@
 	$$(quiet) echo "  endif" >> $$@
-	$$(quiet) echo "  ifeq ($$(esc_dollar)(ENABLE_PV_LOGGING),1)" >> $$@
-	$$(quiet) echo "    PV_CFLAGS += -DPVLOGGER_INST_LEVEL=5" >> $$@
-	$$(quiet) echo "  endif"  >> $$@
-	$$(quiet) echo "" >> $$@
 	$$(quiet) echo "  ifeq ($$(esc_dollar)(TARGET_ARCH),arm)" >> $$@
 	$$(quiet) echo "    ifeq ($(TARGET_ARCH_VERSION),armv4t)" >> $$@
 	$$(quiet) echo "      PV_CFLAGS += -DPV_ARM_GCC_V4" >> $$@

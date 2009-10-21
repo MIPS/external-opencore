@@ -51,6 +51,16 @@
 #define OSCL_RELEASE_BUILD 0
 #endif
 
+#ifndef PVLOGGER_INST_LEVEL
+#if defined(NDEBUG)
+//Release mode logging - should be kept minimum
+#define PVLOGGER_INST_LEVEL 1
+#else
+//full logging
+#define PVLOGGER_INST_LEVEL 5
+#endif
+#endif
+
 // include common unix definitions
 #include "osclconfig_unix_android.h"
 

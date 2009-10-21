@@ -27,13 +27,20 @@
 FILE *file;
 
 class PVLoggerConfigFile{
-/*  
+/** By default:
+ *    - An Instrumentation level (defined by PVLOGGER_INST_LEVEL in external/opencore/oscl/oscl/config/android/osclconfig.h) is set to 1. 
+ *    - Logging in all components is enabled.
+ */
+
+/*  To enable debug level logs for all components, change PVLOGGER_INST_LEVEL to 5.
+
     To configure logging at runtime, a file pvlogger.txt must be located in the sdcard.
-    The format for log level and logger tag in the file should be: "level,node".  Note that there should be no space between log level and logger tag.
+    The format for log level and logger tag in the file should be: "level,node". 
     For example, pvlogger.txt can look like:
     1,PVPlayerEngine
     8,PVSocketNode
     Above example means log the message level PVLOGMSG_ALERT for PVPlayerEngine and PVLOGMSG_DEBUG for PVSocketNode.  See pvlogger.h for log level values.
+    NOTE: There should be no space between log level and logger tag.
 */
 public:
     PVLoggerConfigFile():iLogFileRead(false)
@@ -49,22 +56,15 @@ public:
         iFileServer.Close();
     }
 
-    bool IsLoggerConfigFilePresent()
-    {
-        if(-1 != ReadAndParseLoggerConfigFile())
-            return true;
-        return false;
-    }
-
     //Read and parse the config file
     //retval = -1 if the config file doesnt exist
-    int8 ReadAndParseLoggerConfigFile()
+    void ReadAndParseLoggerConfigFile()
     {
-        int8 retval = 1;
+        bool isRTSAvailable = false;
 
         if(0 != iLogFile.Open(iLogFileName,Oscl_File::MODE_READ, iFileServer))
         {
-            retval = -1;
+            isRTSAvailable = false;
         }
         else
         {
@@ -141,21 +141,16 @@ public:
                 }
                 iLogFile.Close();
                 iLogFileRead = true;
+                isRTSAvailable = true;
             }
         }
-        return retval;
+        SetLoggerSettings(isRTSAvailable);
     }
 
-    void SetLoggerSettings()
+    void SetLoggerSettings(bool isRTSAvailable)
     {
-        Oscl_Vector<LoggerConfigElement, OsclMemAllocator>::iterator it;
-
         PVLoggerAppender *appender=NULL;
         OsclRefCounter *refCounter=NULL;
-        if(iLoggerConfigElements.empty())
-        {
-            return;
-        }
         
         appender = new AndroidLogAppender<TimeAndIdLayout,1024>();
         OsclRefCounterSA<LogAppenderDestructDealloc<AndroidLogAppender<TimeAndIdLayout,1024> > > *appenderRefCounter =
@@ -164,12 +159,27 @@ public:
 
         OsclSharedPtr<PVLoggerAppender> appenderPtr(appender,refCounter);
 
-        for (it = iLoggerConfigElements.begin(); it!= iLoggerConfigElements.end(); it++)
-        {
+        if (isRTSAvailable == false) {
             PVLogger *node = NULL;
-            node = PVLogger::GetLoggerObject(it->iLoggerString);
-            node->AddAppender(appenderPtr);
-            node->SetLogLevel(it->iLogLevel);
+            node = PVLogger::GetLoggerObject(""); // All modules
+            node->AddAppender(appenderPtr);       // Using AndroidLogAppender
+            node->SetLogLevel(PVLOGMSG_DEBUG);    // Debug level
+
+        } else {
+            Oscl_Vector<LoggerConfigElement, OsclMemAllocator>::iterator it;
+
+            if(iLoggerConfigElements.empty())
+            {
+                return;
+            }
+
+            for (it = iLoggerConfigElements.begin(); it!= iLoggerConfigElements.end(); it++)
+            {
+                PVLogger *node = NULL;
+                node = PVLogger::GetLoggerObject(it->iLoggerString);
+                node->AddAppender(appenderPtr);
+                node->SetLogLevel(it->iLogLevel);
+            }
         }
     }
 

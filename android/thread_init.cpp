@@ -27,9 +27,7 @@
 
 #include "OMX_Core.h"
 
-#if (PVLOGGER_INST_LEVEL > 0)
 #include "android_logger_config.h"
-#endif
 
 using namespace android;
 static pthread_key_t ptkey=NULL;
@@ -87,13 +85,8 @@ bool InitializeForThread()
             LOGE("pthread_setspecific error %d", error);
             return false;
         }
-#if (PVLOGGER_INST_LEVEL > 0)
         PVLoggerConfigFile obj;
-        if(obj.IsLoggerConfigFilePresent())
-        {
-            obj.SetLoggerSettings();
-        }
-#endif
+        obj.ReadAndParseLoggerConfigFile();
     }
     return true;
 }

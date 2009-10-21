@@ -9,10 +9,6 @@ ifneq ($(strip $(EXTERNAL_OPENCORE_CONFIG_ONCE)),true)
   ifeq ($(PV_WERROR),1)
     PV_CFLAGS += -Werror
   endif
-  ifeq ($(ENABLE_PV_LOGGING),1)
-    PV_CFLAGS += -DPVLOGGER_INST_LEVEL=5
-  endif
-
   ifeq ($(TARGET_ARCH),arm)
     ifeq (,armv4t)
       PV_CFLAGS += -DPV_ARM_GCC_V4
