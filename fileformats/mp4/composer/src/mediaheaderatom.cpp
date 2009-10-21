@@ -26,10 +26,12 @@
 #include "mediaheaderatom.h"
 #include "atomutils.h"
 #include "a_atomdefs.h"
+#include "oscl_int64_utils.h"
+
 
 // Constructor
-PVA_FF_MediaHeaderAtom::PVA_FF_MediaHeaderAtom()
-        : PVA_FF_FullAtom(MEDIA_HEADER_ATOM, 0, 0)
+PVA_FF_MediaHeaderAtom::PVA_FF_MediaHeaderAtom(uint8 version)
+        : PVA_FF_FullAtom(MEDIA_HEADER_ATOM, version, 0)
 {
     init(); // Initialize all member variables
     recomputeSize();
@@ -46,8 +48,12 @@ PVA_FF_MediaHeaderAtom::~PVA_FF_MediaHeaderAtom()
 void
 PVA_FF_MediaHeaderAtom::init()
 {
-    PVA_FF_AtomUtils::setTime(_creationTime); // Setting creating time (since 1/1/1970) - NEED FIX to 1/1/1904
-    PVA_FF_AtomUtils::setTime(_modificationTime); // Setting modification time
+    // use a temporary variable to set the current time since the API setTime takes uint32 parameters
+    uint32 timeSet;
+    PVA_FF_AtomUtils::setTime(timeSet); // Setting creating time (since 1/1/1970) - NEED FIX to 1/1/1904
+    _creationTime = timeSet;
+    PVA_FF_AtomUtils::setTime(timeSet); // Setting modification time
+    _modificationTime = timeSet;
     _timeScale = DEFAULT_PRESENTATION_TIMESCALE;
     _duration = 0;
     _language = 0; // Until find better default value
@@ -92,10 +98,22 @@ void
 PVA_FF_MediaHeaderAtom::recomputeSize()
 {
     int32 size = getDefaultSize(); // Get size of base class members
-    size += 4; // creationTime
-    size += 4; // modificationTime
-    size += 4; // timeScale
-    size += 4; // duration
+
+    // Fields that vary depending on the version
+    if (getVersion() == 0)
+    {
+        size += 4; //_creationTime
+        size += 4; //_modificationTime
+        size += 4; //_timeScale
+        size += 4; //_duration
+    }
+    else // getVersion() == 1
+    {
+        size += 8; //_creationTime
+        size += 8; //_modificationTime
+        size += 4; //_timeScale
+        size += 8; //_duration
+    }
 
     size += 2; // language
     size += 2; // reserved
@@ -122,14 +140,33 @@ PVA_FF_MediaHeaderAtom::renderToFileStream(MP4_AUTHOR_FF_FILE_IO_WRAP *fp)
     }
     rendered += getDefaultSize();
 
-    if (!PVA_FF_AtomUtils::render32(fp, getCreationTime()))
+    if (getVersion() == 0)
     {
-        return false;
+        if (!PVA_FF_AtomUtils::render32(fp,
+                                        Oscl_Int64_Utils::get_uint64_lower32(getCreationTime())))
+        {
+            return false;
+        }
+
+        if (!PVA_FF_AtomUtils::render32(fp,
+                                        Oscl_Int64_Utils::get_uint64_lower32(getModificationTime())))
+
+        {
+            return false;
+        }
     }
-    if (!PVA_FF_AtomUtils::render32(fp, getModificationTime()))
+    else // getVersion() == 1
     {
-        return false;
+        if (!PVA_FF_AtomUtils::render64(fp, getCreationTime()))
+        {
+            return false;
+        }
+        if (!PVA_FF_AtomUtils::render64(fp, getModificationTime()))
+        {
+            return false;
+        }
     }
+
     if (!PVA_FF_AtomUtils::render32(fp, getTimeScale()))
     {
         return false;
@@ -139,13 +176,32 @@ PVA_FF_MediaHeaderAtom::renderToFileStream(MP4_AUTHOR_FF_FILE_IO_WRAP *fp)
      * To ensure that the total track duration includes the duration of the
      * last sample as well, which in our case fp same as the last but one.
      */
-    uint32 totalDuration = getDuration() + _deltaTS;
+    uint64 totalDuration = getDuration() + _deltaTS;
 
-    if (!PVA_FF_AtomUtils::render32(fp, totalDuration))
+    if (getVersion() == 0)
     {
-        return false;
+        if (!PVA_FF_AtomUtils::render32(fp,
+                                        Oscl_Int64_Utils::get_uint64_lower32(totalDuration)))
+        {
+            return false;
+        }
     }
-    rendered += 16;
+    else // getVersion() == 1
+    {
+        if (!PVA_FF_AtomUtils::render64(fp, totalDuration))
+        {
+            return false;
+        }
+    }
+
+    if (getVersion() == 0)
+    {
+        rendered += 16;
+    }
+    else
+    {
+        rendered += 28;
+    }
 
     if (!PVA_FF_AtomUtils::render16(fp, getLanguage()))
     {

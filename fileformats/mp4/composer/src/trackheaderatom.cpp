@@ -26,6 +26,8 @@
 #include "trackheaderatom.h"
 #include "atomutils.h"
 #include "a_atomdefs.h"
+#include "oscl_int64_utils.h"
+
 
 #define TIMED_TEXT_WIDTH 176
 #define TIMED_TEXT_HEIGHT 177
@@ -54,8 +56,12 @@ PVA_FF_TrackHeaderAtom::~PVA_FF_TrackHeaderAtom()
 void
 PVA_FF_TrackHeaderAtom::init(int32 type)
 {
-    PVA_FF_AtomUtils::setTime(_creationTime);
-    PVA_FF_AtomUtils::setTime(_modificationTime);
+    // use a temporary variable to set the current time since the API setTime takes uint32 parameters
+    uint32 timeSet;
+    PVA_FF_AtomUtils::setTime(timeSet);
+    _creationTime = timeSet;
+    PVA_FF_AtomUtils::setTime(timeSet);
+    _modificationTime = timeSet;
     setTimeScale(0);
 
     _duration = 0;
@@ -148,11 +154,23 @@ void
 PVA_FF_TrackHeaderAtom::recomputeSize()
 {
     int32 size = getDefaultSize(); // From base class
-    size += 4; // _creationTime;
-    size += 4; // _modificationTime
+
+    // Fields that vary depending on the version
+    if (getVersion() == 0)
+    {
+        size += 4; //_creationTime
+        size += 4; //_modificationTime
+        size += 4; //_duration
+    }
+    else // getVersion() == 1
+    {
+        size += 8; //_creationTime
+        size += 8; //_modificationTime
+        size += 8; //_duration
+    }
+
     size += 4; // _trackID;
     size += 4; // _reserved1
-    size += 4; // _duration;
     size += 60; // rest of reserved words
 
     _size = size;
@@ -177,13 +195,31 @@ PVA_FF_TrackHeaderAtom::renderToFileStream(MP4_AUTHOR_FF_FILE_IO_WRAP *fp)
     }
     rendered += getDefaultSize();
 
-    if (!PVA_FF_AtomUtils::render32(fp, getCreationTime()))
+    if (getVersion() == 0)
     {
-        return false;
+        if (!PVA_FF_AtomUtils::render32(fp,
+                                        Oscl_Int64_Utils::get_uint64_lower32(getCreationTime())))
+        {
+            return false;
+        }
+
+        if (!PVA_FF_AtomUtils::render32(fp,
+                                        Oscl_Int64_Utils::get_uint64_lower32(getModificationTime())))
+
+        {
+            return false;
+        }
     }
-    if (!PVA_FF_AtomUtils::render32(fp, getModificationTime()))
+    else // getVersion() == 1
     {
-        return false;
+        if (!PVA_FF_AtomUtils::render64(fp, getCreationTime()))
+        {
+            return false;
+        }
+        if (!PVA_FF_AtomUtils::render64(fp, getModificationTime()))
+        {
+            return false;
+        }
     }
 
     trackID = getTrackID();
@@ -193,7 +229,16 @@ PVA_FF_TrackHeaderAtom::renderToFileStream(MP4_AUTHOR_FF_FILE_IO_WRAP *fp)
     {
         return false;
     }
-    rendered += 12;
+
+
+    if (getVersion() == 0)
+    {
+        rendered += 12;
+    }
+    else
+    {
+        rendered += 20;
+    }
 
     if (!PVA_FF_AtomUtils::render32(fp, _reserved1))
     {
@@ -206,18 +251,32 @@ PVA_FF_TrackHeaderAtom::renderToFileStream(MP4_AUTHOR_FF_FILE_IO_WRAP *fp)
      * last sample as well, which in our case is same as the last but one.
      */
 
-    uint32 totalDuration = getDuration();
+    uint64 totalDuration = getDuration();
 
-    if (!totalDuration)
+    if (totalDuration == 0)
     {
         totalDuration = _currTrackDuration;
     }
 
-    if (!PVA_FF_AtomUtils::render32(fp, totalDuration))
+    if (getVersion() == 0)
     {
-        return false;
+        if (!PVA_FF_AtomUtils::render32(fp,
+                                        Oscl_Int64_Utils::get_uint64_lower32(totalDuration)))
+        {
+            return false;
+        }
+
+        rendered += 4;
     }
-    rendered += 4;
+    else // getVersion() == 1
+    {
+        if (!PVA_FF_AtomUtils::render64(fp, totalDuration))
+        {
+            return false;
+        }
+
+        rendered += 8;
+    }
 
     if (!PVA_FF_AtomUtils::render32(fp, _reserved2[0]))
     {

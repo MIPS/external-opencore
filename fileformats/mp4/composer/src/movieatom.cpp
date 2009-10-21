@@ -56,6 +56,7 @@ PVA_FF_MovieAtom::PVA_FF_MovieAtom(uint32 fileAuthoringFlags)
     _pAssetInfoKeyRecordingYearAtom = NULL;
 
     _oMovieFragmentEnabled = false;
+    _pMovieExtendsAtom = NULL;
     //Movie Fragment : Enable movie fragment mode and create movie extends atom
     if ((fileAuthoringFlags & PVMP4FF_MOVIE_FRAGMENT_MODE) == (PVMP4FF_MOVIE_FRAGMENT_MODE))
     {
@@ -64,7 +65,20 @@ PVA_FF_MovieAtom::PVA_FF_MovieAtom(uint32 fileAuthoringFlags)
 
     }
 
-    PV_MP4_FF_NEW(fp->auditCB, PVA_FF_MovieHeaderAtom, ((uint8)0, (uint32)0, fileAuthoringFlags), _pmovieHeaderAtom);
+    _oLiveMovieFragmentEnabled = false;
+    // Live movie fragment mode
+    // Note, this mode implies PVMP4FF_MOVIE_FRAGMENT_MODE, so both _oMovieFragmentEnabled and
+    // _oLiveMovieFragmentEnabled will be set to true
+    if ((fileAuthoringFlags & PVMP4FF_LIVE_MOVIE_FRAGMENT_MODE) == PVMP4FF_LIVE_MOVIE_FRAGMENT_MODE)
+    {
+        _oLiveMovieFragmentEnabled = true;
+    }
+
+    // Use version 1 of the FullBox spec only when PVMP4FF_LIVE_MOVIE_FRAGMENT_MODE is enabled
+    uint8 movieHeaderVersion = 0;
+    if (_oLiveMovieFragmentEnabled)
+        movieHeaderVersion = 1;
+    PV_MP4_FF_NEW(fp->auditCB, PVA_FF_MovieHeaderAtom, (movieHeaderVersion, (uint32)0, fileAuthoringFlags), _pmovieHeaderAtom);
 
 
     PV_MP4_FF_NEW(fp->auditCB, PVA_FF_TrackAtomVecType, (), _pMediaTrackVec);
@@ -234,7 +248,9 @@ PVA_FF_MovieAtom::recomputeSize()
 
     if (_puserDataAtom != NULL)
     {
-        if (_puserDataAtom->getUserDataAtomVecSize() > 0)
+
+        if ((_puserDataAtom->getUserDataAtomVecSize() > 0)
+                && !(_oLiveMovieFragmentEnabled))
         {
             size += _puserDataAtom->getSize();
         }
@@ -244,7 +260,8 @@ PVA_FF_MovieAtom::recomputeSize()
     {
         for (uint32 i = 0; i < _pMediaTrackVec->size(); i++)
         {
-            if ((*_pMediaTrackVec)[i]->getSampleCount() > 0)
+            if (((*_pMediaTrackVec)[i]->getSampleCount() > 0)
+                    || (_oLiveMovieFragmentEnabled))
             {
                 size += (*_pMediaTrackVec)[i]->getSize();
             }
@@ -270,10 +287,10 @@ PVA_FF_MovieAtom::recomputeSize()
 void
 PVA_FF_MovieAtom::prepareToRender()
 {
-    uint32 maxTrackDuration = 0;
+    uint64 maxTrackDuration = 0;
 
-    uint32 creationTime = _pmovieHeaderAtom->getCreationTime();
-    uint32 modTime      = _pmovieHeaderAtom->getModificationTime();
+    uint64 creationTime = _pmovieHeaderAtom->getCreationTime();
+    uint64 modTime      = _pmovieHeaderAtom->getModificationTime();
 
     if (_pMediaTrackVec != NULL)
     {
@@ -291,7 +308,7 @@ PVA_FF_MovieAtom::prepareToRender()
 
             track->prepareToRender();
 
-            uint32 TrackDuration = track->getDuration();
+            uint64 TrackDuration = track->getDuration();
 
             if (TrackDuration > maxTrackDuration)
             {
@@ -334,7 +351,10 @@ PVA_FF_MovieAtom::renderToFileStream(MP4_AUTHOR_FF_FILE_IO_WRAP *fp)
     {
         if (_puserDataAtom != NULL)
         {
-            if (_puserDataAtom->getUserDataAtomVecSize() > 0)
+            // Don't render user data atoms when the live movie
+            // fragment mode is enabled
+            if ((_puserDataAtom->getUserDataAtomVecSize() > 0)
+                    && !(_oLiveMovieFragmentEnabled))
             {
                 if (!_puserDataAtom->renderToFileStream(fp))
                 {
@@ -348,7 +368,10 @@ PVA_FF_MovieAtom::renderToFileStream(MP4_AUTHOR_FF_FILE_IO_WRAP *fp)
     {
         for (uint32 i = 0; i < _pMediaTrackVec->size(); i++)
         {
-            if ((*_pMediaTrackVec)[i]->getSampleCount() > 0)
+            // Render track information when there are samples available
+            // or the mode PVMP4FF_LIVE_MOVIE_FRAGMENT_MODE is enabled
+            if (((*_pMediaTrackVec)[i]->getSampleCount() > 0)
+                    || (_oLiveMovieFragmentEnabled))
             {
                 if (!((*_pMediaTrackVec)[i]->renderToFileStream(fp)))
                 {
@@ -660,11 +683,16 @@ PVA_FF_MovieAtom::createAssetInfoAtoms()
 
 // functions to set and update fragment duration in MVEX atom
 void
-PVA_FF_MovieAtom::setMovieFragmentDuration()
+PVA_FF_MovieAtom::setMovieFragmentDuration(uint32 movieFragmentDuration)
 {
+    if (_pMovieExtendsAtom != NULL)
+    {
+        // fragment duration is specified in milliseconds. Convert it to
+        // the presentation timescale
+        uint32 movieFragmentDur = (uint32)(((float)(movieFragmentDuration) * getTimeScale()) / 1000);
+        _pMovieExtendsAtom->setMovieFragmentDuration(movieFragmentDur);
 
-    _pMovieExtendsAtom->setMovieFragmentDuration(getDuration());
-
+    }
 }
 
 

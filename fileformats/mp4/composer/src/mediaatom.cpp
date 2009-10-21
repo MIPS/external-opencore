@@ -29,6 +29,7 @@
 // Constructor
 PVA_FF_MediaAtom::PVA_FF_MediaAtom(int32 mediaType,
                                    int32 codecType,
+                                   uint8 version,
                                    uint32 fileAuthoringFlags,
                                    uint32 protocol,
                                    uint8 profile,
@@ -37,7 +38,7 @@ PVA_FF_MediaAtom::PVA_FF_MediaAtom(int32 mediaType,
 
         : PVA_FF_Atom(MEDIA_ATOM)
 {
-    PV_MP4_FF_NEW(fp->auditCB, PVA_FF_MediaHeaderAtom, (), _pmediaHeader);
+    PV_MP4_FF_NEW(fp->auditCB, PVA_FF_MediaHeaderAtom, (version), _pmediaHeader);
 
     PV_MP4_FF_NEW(fp->auditCB, PVA_FF_HandlerAtom, (mediaType, (uint8)0, (uint8)0), _phandler);
 

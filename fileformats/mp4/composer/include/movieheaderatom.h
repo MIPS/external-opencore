@@ -35,11 +35,11 @@ class PVA_FF_MovieHeaderAtom : public PVA_FF_FullAtom
         virtual ~PVA_FF_MovieHeaderAtom();
 
         // Creation Time gets and sets - may not need to have the set method public!
-        void setCreationTime(uint32 ct)
+        void setCreationTime(uint64 ct)
         {
             _creationTime = ct;
         }
-        uint32 getCreationTime() const
+        uint64 getCreationTime() const
         {
             return _creationTime;
         }
@@ -65,7 +65,7 @@ class PVA_FF_MovieHeaderAtom : public PVA_FF_FullAtom
         }
 
         // Duration gets and sets
-        void setDuration(uint32 d)
+        void setDuration(uint64 d)
         {
             if (d > _duration)
             {
@@ -73,7 +73,7 @@ class PVA_FF_MovieHeaderAtom : public PVA_FF_FullAtom
             }
         }
 
-        uint32 getDuration() const
+        uint64 getDuration() const
         {
             return _duration;
         }
@@ -98,10 +98,10 @@ class PVA_FF_MovieHeaderAtom : public PVA_FF_FullAtom
 
     private:
 
-        uint32 _creationTime; // 4/8 (32/64bits) -- Will templatize later - using 32bits (version 0) for now
-        uint32 _modificationTime; // 4/8 (32/64bits) -- Will templatize later - using 32bits for now
+        uint64 _creationTime; // 4/8 (32/64bits) -- Will templatize later - using 32bits (version 0) for now
+        uint64 _modificationTime; // 4/8 (32/64bits) -- Will templatize later - using 32bits for now
         uint32 _timeScale; // 4 (32bits)
-        uint32 _duration; // 4/8 (32/64bits) -- Will templatize later - using 32bits for now
+        uint64 _duration; // 4/8 (32/64bits) -- Will templatize later - using 32bits for now
 
         uint32 _nextTrackID; // 4 (32 bits)
 

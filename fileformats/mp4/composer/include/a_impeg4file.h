@@ -301,6 +301,7 @@ class PVA_FF_IMpeg4File : public PVA_FF_ISucceedFail
         virtual void setTargetBitrate(uint32 trackID, uint32 avgBitRate, uint32 maxBitRate = 0, uint32 bufferSizeDB = 0) = 0;
         virtual void setTimeScale(uint32 trackID, uint32 rate) = 0;
         virtual void setMaxBufferSizeDB(uint32 trackID, uint32 max) = 0;
+        virtual bool setTrackDuration(uint32 trackID, uint64 duration) = 0;
 
         virtual void setMajorBrand(uint32 brand = BRAND_3GPP4) = 0;
         virtual void setMajorBrandVersion(uint32 version = VERSION_3GPP4) = 0;

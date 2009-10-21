@@ -57,7 +57,7 @@ class PVA_FF_MovieAtom : public PVA_FF_Atom, public PVA_FF_ISucceedFail
         virtual ~PVA_FF_MovieAtom();
 
         // Get the duration of the movie
-        uint32 getDuration()
+        uint64 getDuration()
         {
             return _pmovieHeaderAtom->getDuration();
         }
@@ -337,7 +337,7 @@ class PVA_FF_MovieAtom : public PVA_FF_Atom, public PVA_FF_ISucceedFail
         }
 
         // Movie Fragment : add movie extend atom usage APIs
-        void    setMovieFragmentDuration();
+        void    setMovieFragmentDuration(uint32 movieFragmentDuration);
         void    updateMovieFragmentDuration(uint32 trackID, uint32 ts);
         void    writeMovieFragmentDuration(MP4_AUTHOR_FF_FILE_IO_WRAP* fp);
         void    SetMaxSampleSize(uint32, uint32);
@@ -371,6 +371,7 @@ class PVA_FF_MovieAtom : public PVA_FF_Atom, public PVA_FF_ISucceedFail
         // Movie Fragment : Atoms needed in movie fragment mode
         PVA_FF_MovieExtendsAtom             *_pMovieExtendsAtom;
         bool                                _oMovieFragmentEnabled;
+        bool                                _oLiveMovieFragmentEnabled;
 };
 
 

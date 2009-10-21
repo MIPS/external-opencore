@@ -33,6 +33,7 @@ typedef Oscl_Vector<uint8, OsclMemAllocator> uint8VecType;
 // Constructor
 PVA_FF_TrackAtom::PVA_FF_TrackAtom(int32 type,
                                    uint32 id,
+                                   uint8 version,
                                    uint32 fileAuthoringFlags,
                                    int32 codecType,
                                    uint32 protocol,
@@ -68,10 +69,11 @@ PVA_FF_TrackAtom::PVA_FF_TrackAtom(int32 type,
         _setDecoderSpecificInfoDone = true;
     }
 
-    PV_MP4_FF_NEW(fp->auditCB, PVA_FF_TrackHeaderAtom, (type, id, (uint8)0, (uint32)0x000001, fileAuthoringFlags), _ptrackHeader);
+    PV_MP4_FF_NEW(fp->auditCB, PVA_FF_TrackHeaderAtom, (type, id, version, (uint32)0x000001, fileAuthoringFlags), _ptrackHeader);
 
     PV_MP4_FF_NEW(fp->auditCB, PVA_FF_MediaAtom, (type,
                   codecType,
+                  version,
                   fileAuthoringFlags,
                   protocol, profile,
                   profileComp, level),
@@ -269,13 +271,14 @@ PVA_FF_TrackAtom::renderToFileStream(MP4_AUTHOR_FF_FILE_IO_WRAP *fp)
 {
     int32 rendered = 0; // Keep track of number of bytes rendered
 
-    uint32 creationTime = _ptrackHeader->getCreationTime();
-    uint32 modTime      = _ptrackHeader->getModificationTime();
+    uint64 creationTime = _ptrackHeader->getCreationTime();
+    uint64 modTime      = _ptrackHeader->getModificationTime();
 
     PVA_FF_MediaHeaderAtom *mdhdPtr = _pmediaAtom->getMediaHeaderAtomPtr();
 
     mdhdPtr->setCreationTime(creationTime);
     mdhdPtr->setModificationTime(modTime);
+    mdhdPtr->setDuration(getDuration());
 
     recomputeSize();
 

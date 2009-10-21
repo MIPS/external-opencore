@@ -51,6 +51,7 @@ class PVA_FF_TrackAtom : public PVA_FF_Atom, public PVA_FF_ISucceedFail
         // parameter is ignored - hence the default parameter value.
         PVA_FF_TrackAtom(int32 type,
                          uint32 id,
+                         uint8 version,
                          uint32 fileAuthoringFlags,
                          int32 codecType = 0,
                          uint32 protocol = 0,
@@ -150,7 +151,7 @@ class PVA_FF_TrackAtom : public PVA_FF_Atom, public PVA_FF_ISucceedFail
             _pmediaAtom->setLanguage(language);
         }
 
-        uint32 getDuration() const
+        uint64 getDuration() const
         {
             return _ptrackHeader->getDuration();
         }

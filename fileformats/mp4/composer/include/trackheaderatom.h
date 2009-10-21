@@ -49,21 +49,21 @@ class PVA_FF_TrackHeaderAtom : public PVA_FF_FullAtom
         }
 
         // Creation Time gets and sets
-        void setCreationTime(uint32 ct)
+        void setCreationTime(uint64 ct)
         {
             _creationTime = ct;
         }
-        uint32 getCreationTime() const
+        uint64 getCreationTime() const
         {
             return _creationTime;
         }
 
         // Modification Time gets and sets
-        void setModificationTime(uint32 mt)
+        void setModificationTime(uint64 mt)
         {
             _modificationTime = mt;
         }
-        uint32 getModificationTime() const
+        uint64 getModificationTime() const
         {
             return _modificationTime;
         }
@@ -79,15 +79,15 @@ class PVA_FF_TrackHeaderAtom : public PVA_FF_FullAtom
         }
 
         // Duration gets and sets
-        void setDuration(uint32 d)
+        void setDuration(uint64 d)
         {
             _duration = d;
         }
-        uint32 getDuration() const
+        uint64 getDuration() const
         {
-            uint32 total_duration = 0;
+            uint64 total_duration = 0;
             total_duration = (_duration + _deltaTS);
-            if (!total_duration)
+            if (total_duration == 0)
                 total_duration = _currTrackDuration;
 
             return total_duration;
@@ -112,13 +112,13 @@ class PVA_FF_TrackHeaderAtom : public PVA_FF_FullAtom
         int32 _mediaType;
 
 
-        uint32 _creationTime; // 4/8 (32/64bits) -- Will templatize later - using 32bits for now
-        uint32 _modificationTime; // 4/8 (32/64bits) -- Will templatize later - using 32bits for now
+        uint64 _creationTime; // 4/8 (32/64bits) -- Will templatize later - using 32bits for now
+        uint64 _modificationTime; // 4/8 (32/64bits) -- Will templatize later - using 32bits for now
         uint32 _trackID; // 4 (32bits)
 
         uint32 _reserved1; // = 0;
 
-        uint32 _duration; // 4/8 (32/64bits) -- Will templatize later - using 32bits for now
+        uint64 _duration; // 4/8 (32/64bits) -- Will templatize later - using 32bits for now
 
         // Static reserved constants
         uint32 _reserved2[3]; // = { 0, 0, 0 };

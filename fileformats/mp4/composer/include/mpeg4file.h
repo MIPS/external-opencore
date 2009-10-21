@@ -201,6 +201,7 @@ class PVA_FF_Mpeg4File : public PVA_FF_IMpeg4File, public PVA_FF_Parentable
         void addTrackReference(uint32 currtrackID, int32 reftrackID);
         void setTargetBitrate(uint32 trackID, uint32 avgBitRate, uint32 maxBitRate = 0, uint32 bufferSizeDB = 0);
         void setTimeScale(uint32 trackID, uint32 rate);
+        bool setTrackDuration(uint32 trackID, uint64 duration);
 
         // An access function to set the output path string for PVA_FF_MediaDataAtom objects
         virtual void SetTempOutputPath(PVA_FF_UNICODE_STRING_PARAM outputPath);
@@ -385,6 +386,7 @@ class PVA_FF_Mpeg4File : public PVA_FF_IMpeg4File, public PVA_FF_Parentable
         uint32 _fileAuthoringFlags;
         bool   _oInterLeaveEnabled;
         bool   _oMovieAtomUpfront;
+        bool   _oLiveMovieFragmentEnabled;
         uint32 _interLeaveDuration; // Always in milliseconds
 
 

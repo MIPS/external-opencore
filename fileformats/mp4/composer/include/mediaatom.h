@@ -39,6 +39,7 @@ class PVA_FF_MediaAtom : public PVA_FF_Atom
         // parameter is ignored - hence the default parameter value.
         PVA_FF_MediaAtom(int32 mediaType,
                          int32 codecType,
+                         uint8 version,
                          uint32 fileAuthoringFlags,
                          uint32 protocol = 0,
                          uint8 profile = 1,

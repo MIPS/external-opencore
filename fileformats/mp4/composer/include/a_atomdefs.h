@@ -277,7 +277,9 @@ typedef enum
 //b1 is set - Meta data is upfront, this implies temp files are needed while authoring
 //b2 - undefined
 //b3 is set - Do not use temp files while authoring
-//b4-b31 - Reserved for future use
+//b6 is set - Movie fragment mode
+//b7 is set - Live movie fragment mode
+//b8-b31 - Reserved for future use
 
 /**
  * This mode authors non Progressive Downloadable output files using temp files
@@ -312,6 +314,10 @@ typedef enum
 // movie fragment mode
 // 6th bit is now reserved movie fragment mode and last bit is reserved for interleaving
 #define PVMP4FF_MOVIE_FRAGMENT_MODE 0x00000021
+
+// live movie fragment mode
+// For authoring open-ended sessions for live streaming
+#define PVMP4FF_LIVE_MOVIE_FRAGMENT_MODE 0x00000061
 
 #define DEFAULT_MOVIE_FRAGMENT_DURATION_IN_MS 10000
 

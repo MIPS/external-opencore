@@ -114,6 +114,7 @@ PVA_FF_Mpeg4File::PVA_FF_Mpeg4File(int32 mediaType)
     _oIsFileOpen = false;
     _pInterLeaveBufferVec = NULL;
     _oInterLeaveEnabled = false;
+    _oLiveMovieFragmentEnabled = false;
     _aFs = NULL;
 }
 
@@ -221,6 +222,7 @@ PVA_FF_Mpeg4File::init(int32 mediaType,
 
     // Movie Fragments flags initialised
     _oMovieFragmentEnabled      = false;
+    _oLiveMovieFragmentEnabled     = false;
     _oComposeMoofAtom           = false;
     _movieFragmentDuration      = DEFAULT_MOVIE_FRAGMENT_DURATION_IN_MS;
     _pCurrentMoofAtom           = NULL;
@@ -287,6 +289,14 @@ PVA_FF_Mpeg4File::init(int32 mediaType,
         _oMovieFragmentEnabled = true;
         _totalTempFileRemoval = true;
         _oUserDataUpFront     = false;
+    }
+
+    // Live movie fragment mode
+    // Note, this mode implies PVMP4FF_MOVIE_FRAGMENT_MODE, so both _oMovieFragmentEnabled and
+    // _oLiveMovieFragmentEnabled will be set to true
+    if ((fileAuthoringFlags & PVMP4FF_LIVE_MOVIE_FRAGMENT_MODE) == PVMP4FF_LIVE_MOVIE_FRAGMENT_MODE)
+    {
+        _oLiveMovieFragmentEnabled = true;
     }
 
     // Create user data atom
@@ -419,11 +429,18 @@ PVA_FF_Mpeg4File::addTrack(int32 mediaType, int32 codecType, uint8 profile,
         mda = getMediaDataAtomForTrack(0);
     }
 
+    // For track creation, use version 1 of FullBox spec when _oLiveMovieFragmentEnabled is true
+    uint8 fbVersion = 0;
+    if (_oLiveMovieFragmentEnabled)
+        fbVersion = 1;
+
+
     if ((uint32) mediaType == MEDIA_TYPE_AUDIO)
     {
         // Create default audio track and add it to moov atom
         PV_MP4_FF_NEW(fp->auditCB, PVA_FF_TrackAtom, (MEDIA_TYPE_AUDIO,
                       _pmovieAtom->getMutableMovieHeaderAtom().findNextTrackID(),
+                      fbVersion,
                       _fileAuthoringFlags,
                       codecType,
                       1, profile, profileComp, level),
@@ -481,6 +498,7 @@ PVA_FF_Mpeg4File::addTrack(int32 mediaType, int32 codecType, uint8 profile,
         // Create default video track and add it to moov atom
         PV_MP4_FF_NEW(fp->auditCB, PVA_FF_TrackAtom, (MEDIA_TYPE_VISUAL,
                       _pmovieAtom->getMutableMovieHeaderAtom().findNextTrackID(),
+                      fbVersion,
                       _fileAuthoringFlags,
                       codecType,
                       1, profile, profileComp, level),
@@ -517,6 +535,7 @@ PVA_FF_Mpeg4File::addTrack(int32 mediaType, int32 codecType, uint8 profile,
         // Create default video track and add it to moov atom
         PV_MP4_FF_NEW(fp->auditCB, PVA_FF_TrackAtom, (MEDIA_TYPE_TEXT,
                       _pmovieAtom->getMutableMovieHeaderAtom().findNextTrackID(),
+                      fbVersion,
                       _fileAuthoringFlags,
                       codecType,
                       1,
@@ -566,6 +585,23 @@ PVA_FF_Mpeg4File::setTimeScale(uint32 trackID, uint32 rate)
     // Set the sample rate for the specific video track
     _pmovieAtom->setTimeScale(trackID, rate);
     return;
+}
+
+bool
+PVA_FF_Mpeg4File::setTrackDuration(uint32 trackID, uint64 duration)
+{
+    PVA_FF_TrackAtom *mediaTrack = _pmovieAtom->getMediaTrack(trackID);
+    if (mediaTrack == NULL)
+        return false;
+
+    // Track duration can only be set for mode PVMP4FF_LIVE_MOVIE_FRAGMENT_MODE
+    if (_oLiveMovieFragmentEnabled == false)
+        return false;
+
+    PVA_FF_TrackHeaderAtom *ptkhdr = mediaTrack->getTrackHeaderAtomPtr();
+    ptkhdr->setDuration(duration);
+
+    return true;
 }
 
 //this will work same as the addsampletotrack but this
@@ -652,6 +688,7 @@ void
 PVA_FF_Mpeg4File::setMovieFragmentDuration(uint32 duration)
 {
     _movieFragmentDuration = duration;
+    _pmovieAtom->setMovieFragmentDuration(duration);
     return;
 }
 
@@ -2453,7 +2490,7 @@ PVA_FF_Mpeg4File::addMediaSampleInterleave(uint32 trackID, PVMP4FFComposerSample
             _pCurrentMoofAtom = pMoofAtom;
 
             // set Movie fragment duration
-            _pmovieAtom->setMovieFragmentDuration();
+            _pmovieAtom->setMovieFragmentDuration(_movieFragmentDuration);
 
             // add track fragments
             for (uint32 kk = 0; kk < _pmediaDataAtomVec->size(); kk++)
