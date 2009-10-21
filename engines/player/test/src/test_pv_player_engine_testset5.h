@@ -63,6 +63,7 @@ class pvplayer_async_test_downloadbase : public pvplayer_async_test_base
                 , iCurrentCmdId(0)
                 , iProtocolRollOver(false)
                 , iRepositionAfterDownloadComplete(false)
+                , iRepositionDuringDownload(false)
                 , iPauseAfterDownloadComplete(false)
                 , iPlayUntilEOS(false)
                 , iPauseResumeAfterUnderflow(false)
@@ -162,7 +163,14 @@ class pvplayer_async_test_downloadbase : public pvplayer_async_test_base
         {
             iRepositionAfterDownloadComplete = true;
         }
+
+        void enableReposDuringDownload()
+        {
+            iRepositionDuringDownload = true;
+        }
+
         bool iRepositionAfterDownloadComplete;
+        bool iRepositionDuringDownload;
 
         void enablePauseAfterDownloadComplete()
         {

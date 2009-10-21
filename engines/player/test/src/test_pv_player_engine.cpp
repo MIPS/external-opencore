@@ -3284,6 +3284,12 @@ void pvplayer_engine_test::test()
                 ((pvplayer_async_test_3gppdlnormal*)iCurrentTest)->enablePlayUntilEOS();
                 break;
 
+            case ProgDownloadPlayRepositionDuringDownloadTest:
+                testparam.iFileType = PVMF_MIME_MPEG4FF;
+                iCurrentTest = new pvplayer_async_test_3gppdlnormal_dlthenplay(testparam);
+                ((pvplayer_async_test_3gppdlnormal_dlthenplay*)iCurrentTest)->enableReposDuringDownload();
+                break;
+
             case ProgPlaybackMP4UntilEOSTest:
                 testparam.iFileType = PVMF_MIME_MPEG4FF;
                 iCurrentTest = new pvplayer_async_test_ppb_normal(testparam);

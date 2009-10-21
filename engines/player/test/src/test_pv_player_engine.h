@@ -788,6 +788,12 @@ class pvplayer_engine_test : public test_case,
             * Output (partially) downloaded media file and YUV and PCM data files from Playback.
             */
             ProgDownloadPlayStopPlayTest, //117
+            /**
+            * @test (118) Progressive Download Play-Reposition During Download Test.
+            * Input http url to a progressively downloadable file.
+            * Output (partially) downloaded media file and YUV and PCM data files from Playback.
+            */
+            ProgDownloadPlayRepositionDuringDownloadTest, //118
 
             LastDownloadTest, //placeholder
 

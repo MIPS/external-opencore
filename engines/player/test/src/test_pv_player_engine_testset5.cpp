@@ -274,7 +274,6 @@ void pvplayer_async_test_downloadbase::Run()
             fprintf(iTestMsgOutputFile, "***Configuring Params...\n");
 
             //set user-agent, make sure to set as "PVPLAYER VersionNumber" to satisfy Fast Track PV server for Fast Track test
-
             iKeyStringSetAsync = _STRLIT_CHAR("x-pvmf/net/user-agent;valtype=wchar*;mode=download");
             iKVPSetAsync.key = iKeyStringSetAsync.get_str();
 
@@ -308,7 +307,6 @@ void pvplayer_async_test_downloadbase::Run()
             iErrorKVP = NULL;
             OSCL_TRY(error, iPlayerCapConfigIF->setParametersSync(NULL, &iKVPSetAsync, 1, iErrorKVP));
             OSCL_FIRST_CATCH_ANY(error, PVPATB_TEST_IS_TRUE(false); iState = STATE_CLEANUPANDCOMPLETE; RunIfNotReady(); return);
-
             // set extension header
             // set arbitrary extension header one by one
             iKeyStringSetAsync = _STRLIT_CHAR("x-pvmf/net/protocol-extension-header;valtype=char*");
@@ -322,21 +320,27 @@ void pvplayer_async_test_downloadbase::Run()
 
             iKeyStringSetAsync = _STRLIT_CHAR("x-pvmf/net/protocol-extension-header;valtype=char*");
             iKVPSetAsync.key = iKeyStringSetAsync.get_str();
-            OSCL_HeapString<OsclMemAllocator> protocolExtensionHeaderGet(_STRLIT_CHAR("key=PVPlayerCoreEngineTest;value=GetHeader;method=GET"));
-            iKVPSetAsync.value.pChar_value = protocolExtensionHeaderGet.get_str();
-            iKVPSetAsync.capacity = protocolExtensionHeaderGet.get_size();
-            iErrorKVP = NULL;
-            OSCL_TRY(error, iPlayerCapConfigIF->setParametersSync(NULL, &iKVPSetAsync, 1, iErrorKVP));
-            OSCL_FIRST_CATCH_ANY(error, PVPATB_TEST_IS_TRUE(false); iState = STATE_CLEANUPANDCOMPLETE; RunIfNotReady(); return);
-
-            iKeyStringSetAsync = _STRLIT_CHAR("x-pvmf/net/protocol-extension-header;valtype=char*");
-            iKVPSetAsync.key = iKeyStringSetAsync.get_str();
             OSCL_HeapString<OsclMemAllocator> protocolExtensionHeaderHead(_STRLIT_CHAR("key=PVPlayerCoreEngineTest;value=HeadHeader;method=HEAD"));
             iKVPSetAsync.value.pChar_value = protocolExtensionHeaderHead.get_str();
             iKVPSetAsync.capacity = protocolExtensionHeaderHead.get_size();
             iErrorKVP = NULL;
             OSCL_TRY(error, iPlayerCapConfigIF->setParametersSync(NULL, &iKVPSetAsync, 1, iErrorKVP));
-            OSCL_FIRST_CATCH_ANY(error, PVPATB_TEST_IS_TRUE(false); iState = STATE_CLEANUPANDCOMPLETE; RunIfNotReady(); return);
+            OSCL_FIRST_CATCH_ANY(error, PVPATB_TEST_IS_TRUE(false);
+                                 iState = STATE_CLEANUPANDCOMPLETE;
+                                 RunIfNotReady();
+                                 return);
+
+            iKeyStringSetAsync = _STRLIT_CHAR("x-pvmf/net/protocol-extension-header;valtype=char*");
+            iKVPSetAsync.key = iKeyStringSetAsync.get_str();
+            OSCL_HeapString<OsclMemAllocator> protocolExtensionHeaderGet(_STRLIT_CHAR("key=PVPlayerCoreEngineTest;value=GetHeader;method=GET"));
+            iKVPSetAsync.value.pChar_value = protocolExtensionHeaderGet.get_str();
+            iKVPSetAsync.capacity = protocolExtensionHeaderGet.get_size();
+            iErrorKVP = NULL;
+            OSCL_TRY(error, iPlayerCapConfigIF->setParametersSync(NULL, &iKVPSetAsync, 1, iErrorKVP));
+            OSCL_FIRST_CATCH_ANY(error, PVPATB_TEST_IS_TRUE(false);
+                                 iState = STATE_CLEANUPANDCOMPLETE;
+                                 RunIfNotReady();
+                                 return);
 
             // Unnecessary Header should not display
             iKeyStringSetAsync = _STRLIT_CHAR("x-pvmf/net/protocol-extension-header;valtype=char*");
@@ -346,9 +350,26 @@ void pvplayer_async_test_downloadbase::Run()
             iKVPSetAsync.capacity = protocolExtensionHeaderPost.get_size();
             iErrorKVP = NULL;
             OSCL_TRY(error, iPlayerCapConfigIF->setParametersSync(NULL, &iKVPSetAsync, 1, iErrorKVP));
-            OSCL_FIRST_CATCH_ANY(error, PVPATB_TEST_IS_TRUE(false); iState = STATE_CLEANUPANDCOMPLETE; RunIfNotReady(); return);
+            OSCL_FIRST_CATCH_ANY(error, PVPATB_TEST_IS_TRUE(false);
+                                 iState = STATE_CLEANUPANDCOMPLETE;
+                                 RunIfNotReady();
+                                 return);
 
+            // download progress in percentage of time downloaded
+            if (iRepositionDuringDownload)
+            {
+                //Requesting buffering status in time percentage by setting key "x-pvmf/net/download-progress-info;valtype=char*"
+                //We will get notified about buffering status event in HandleInformationalEvent and issue seek requests based
+                //on this time percentage,
 
+                char tmp;
+                iKeyStringSetAsync = _STRLIT_CHAR("x-pvmf/net/download-progress-info;valtype=char*");
+                iKVPSetAsync.key = iKeyStringSetAsync.get_str();
+                iKVPSetAsync.value.pChar_value = &tmp;
+                iErrorKVP = NULL;
+                OSCL_TRY(error, iPlayerCapConfigIF->setParametersSync(NULL, &iKVPSetAsync, 1, iErrorKVP));
+                OSCL_FIRST_CATCH_ANY(error, PVPATB_TEST_IS_TRUE(false); iState = STATE_CLEANUPANDCOMPLETE; RunIfNotReady(); return);
+            }
             // set extension header
             // set arbitrary extension headers all together
             PvmiKvp kvpheader[3];
@@ -375,7 +396,10 @@ void pvplayer_async_test_downloadbase::Run()
             kvpheader[2].capacity = protocolExtensionHeaderHead1.get_size();
 
             OSCL_TRY(error, iPlayerCapConfigIF->setParametersSync(NULL, kvpheader, 3, iErrorKVP));
-            OSCL_FIRST_CATCH_ANY(error, PVPATB_TEST_IS_TRUE(false); iState = STATE_CLEANUPANDCOMPLETE; RunIfNotReady(); return);
+            OSCL_FIRST_CATCH_ANY(error, PVPATB_TEST_IS_TRUE(false);
+                                 iState = STATE_CLEANUPANDCOMPLETE;
+                                 RunIfNotReady();
+                                 return);
 
             // enable or disable HEAD request
             iKeyStringSetAsync = _STRLIT_CHAR("x-pvmf/net/http-header-request-disabled;valtype=bool");
@@ -383,14 +407,20 @@ void pvplayer_async_test_downloadbase::Run()
             iKVPSetAsync.value.bool_value = true;
             iErrorKVP = NULL;
             OSCL_TRY(error, iPlayerCapConfigIF->setParametersSync(NULL, &iKVPSetAsync, 1, iErrorKVP));
-            OSCL_FIRST_CATCH_ANY(error, PVPATB_TEST_IS_TRUE(false); iState = STATE_CLEANUPANDCOMPLETE; RunIfNotReady(); return);
+            OSCL_FIRST_CATCH_ANY(error, PVPATB_TEST_IS_TRUE(false);
+                                 iState = STATE_CLEANUPANDCOMPLETE;
+                                 RunIfNotReady();
+                                 return);
 
             iKeyStringSetAsync = _STRLIT_CHAR("x-pvmf/net/max-tcp-recv-buffer-size-download;valtype=uint32");
             iKVPSetAsync.key = iKeyStringSetAsync.get_str();
             iKVPSetAsync.value.uint32_value = 64000;
             iErrorKVP = NULL;
             OSCL_TRY(error, iPlayerCapConfigIF->setParametersSync(NULL, &iKVPSetAsync, 1, iErrorKVP));
-            OSCL_FIRST_CATCH_ANY(error, PVPATB_TEST_IS_TRUE(false); iState = STATE_CLEANUPANDCOMPLETE; RunIfNotReady(); return);
+            OSCL_FIRST_CATCH_ANY(error, PVPATB_TEST_IS_TRUE(false);
+                                 iState = STATE_CLEANUPANDCOMPLETE;
+                                 RunIfNotReady();
+                                 return);
 
             //set number of TCP recv buffers for progressive playback.
             if (iDownloadContextData
@@ -413,7 +443,10 @@ void pvplayer_async_test_downloadbase::Run()
             iKVPSetAsync.capacity = protocolExtensionHeaderCookie.get_size();
             iErrorKVP = NULL;
             OSCL_TRY(error, iPlayerCapConfigIF->setParametersSync(NULL, &iKVPSetAsync, 1, iErrorKVP));
-            OSCL_FIRST_CATCH_ANY(error, PVPATB_TEST_IS_TRUE(false); iState = STATE_CLEANUPANDCOMPLETE; RunIfNotReady(); return);
+            OSCL_FIRST_CATCH_ANY(error, PVPATB_TEST_IS_TRUE(false);
+                                 iState = STATE_CLEANUPANDCOMPLETE;
+                                 RunIfNotReady();
+                                 return);
             /////////////////////////////////////////////////////////
 
 
@@ -571,12 +604,21 @@ void pvplayer_async_test_downloadbase::Run()
         {
             if (iSessionDuration > 0)
             {
-                fprintf(iTestMsgOutputFile, "***Repositioning to %d ms\n", (iSessionDuration / 4));
                 PVPPlaybackPosition start, end;
                 start.iIndeterminate = false;
                 start.iPosUnit = PVPPBPOSUNIT_MILLISEC;
                 start.iMode = PVPPBPOS_MODE_NOW;
-                start.iPosValue.millisec_value = iSessionDuration / 4;
+                if (iRepositionDuringDownload)
+                {
+                    start.iPosValue.millisec_value = ((iLastBufferingStatusVal) * iSessionDuration) / 100;
+                    fprintf(iTestMsgOutputFile, "\n\r***Repositioning to %d ms\n\r", start.iPosValue.millisec_value);
+                }
+                else
+                {
+                    start.iPosValue.millisec_value = iSessionDuration / 4;
+                    fprintf(iTestMsgOutputFile, "\n\r***Repositioning to %d ms\n\r", (iSessionDuration / 4));
+                }
+
                 end.iIndeterminate = true;
                 OSCL_TRY(error, iCurrentCmdId = iPlayer->SetPlaybackRange(start, end, false, (OsclAny*) & iContextObject));
                 OSCL_FIRST_CATCH_ANY(error, PVPATB_TEST_IS_TRUE(false); iState = STATE_CLEANUPANDCOMPLETE; RunIfNotReady());
@@ -948,6 +990,15 @@ void pvplayer_async_test_downloadbase::CommandCompleted(const PVCmdResponse& aRe
                         RunIfNotReady(10*1000*1000);
                     break;
                 }
+                if (iRepositionDuringDownload)
+                {
+                    if (iLastBufferingStatusVal < 90)
+                    {
+                        iState = STATE_SETPLAYBACKRANGE;
+                        RunIfNotReady();
+                    }
+                    break;
+                }
                 //most other cases wait for buff complete.
                 if (iNumBufferingComplete)
                 {
@@ -1060,10 +1111,17 @@ void pvplayer_async_test_downloadbase::CommandCompleted(const PVCmdResponse& aRe
         case STATE_SETPLAYBACKRANGE:
             if (aResponse.GetCmdStatus() == PVMFSuccess)
             {
-                fprintf(iTestMsgOutputFile, "***Repositioning Success...\n");
-                //just play for 10 seconds then stop
-                iState = STATE_STOP;
-                RunIfNotReady(10*1000*1000);
+                fprintf(iTestMsgOutputFile, "***Repositioning Success...\n\r");
+                if (iRepositionDuringDownload && !iNumBufferingComplete)
+                {
+                    RunIfNotReady(5*1000*1000);
+                }
+                else
+                {
+                    //just play for 10 seconds then stop
+                    iState = STATE_STOP;
+                    RunIfNotReady(10*1000*1000);
+                }
             }
             else
             {
@@ -1635,6 +1693,19 @@ void pvplayer_async_test_downloadbase::HandleInformationalEvent(const PVAsyncInf
             }
         }
         break;
+
+        case PVMFInfoActualPlaybackPosition:
+        {
+            PVExclusivePtr aPtr;
+            aEvent.GetEventData(aPtr);
+            PVPPlaybackPosition* actualpos = (PVPPlaybackPosition*)aPtr;
+            if (actualpos != NULL)
+            {
+                fprintf(iTestMsgOutputFile, "###PVMFInfoActualPlaybackPosition (in ms) = %d\n",
+                        actualpos->iPosValue.millisec_value);
+            }
+        }
+        break;
         default:
             break;
     }
@@ -1885,8 +1956,6 @@ void pvplayer_async_test_3gppdlnormal_dlthenplay::CreateDataSource()
     uint32 iMaxFileSize = 0x7FFFFFFF;
     bool aIsNewSession = true;
 
-    iDownloadThenPlay = true;
-
     iDownloadContextData = new PVMFSourceContextData();
     iDownloadContextData->EnableCommonSourceContext();
     iDownloadContextData->EnableDownloadHTTPSourceContext();
@@ -1896,7 +1965,14 @@ void pvplayer_async_test_3gppdlnormal_dlthenplay::CreateDataSource()
     iDownloadContextData->DownloadHTTPData()->iMaxFileSize = iMaxFileSize;
     iDownloadContextData->DownloadHTTPData()->iProxyName = iDownloadProxy;
     iDownloadContextData->DownloadHTTPData()->iProxyPort = iDownloadProxyPort;
-    iDownloadContextData->DownloadHTTPData()->iPlaybackControl = PVMFSourceContextDataDownloadHTTP::EAfterDownload;
+
+    if (iRepositionDuringDownload)
+        iDownloadContextData->DownloadHTTPData()->iPlaybackControl = PVMFSourceContextDataDownloadHTTP::EAsap;
+    else
+    {
+        iDownloadContextData->DownloadHTTPData()->iPlaybackControl = PVMFSourceContextDataDownloadHTTP::EAfterDownload;
+        iDownloadThenPlay = true;
+    }
 
     iDataSource->SetDataSourceContextData(iDownloadContextData);
 }
