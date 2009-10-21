@@ -226,14 +226,14 @@ OSCL_EXPORT_REF OsclLibStatus OsclSharedLibrary::QueryInterface(const OsclUuid& 
         if (NULL == pErr)
         {
             // No error reported, but no symbol was found
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, ipLogger, PVLOGMSG_INFO,
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, ipLogger, PVLOGMSG_WARNING,
                             (0, "OsclLib::QueryInterface: Could not access PVGetInterface "
                              "symbol in library but no error reported"));
         }
         else
         {
             // Error reported
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, ipLogger, PVLOGMSG_INFO,
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, ipLogger, PVLOGMSG_WARNING,
                             (0, "OsclLib::QueryInterface: Could not access PVGetInterface "
                              "symbol in library: %s", pErr));
         }
@@ -248,7 +248,7 @@ OSCL_EXPORT_REF OsclLibStatus OsclSharedLibrary::QueryInterface(const OsclUuid& 
     }
     if (NULL == pSharedLibInterface)
     {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, ipLogger, PVLOGMSG_INFO,
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, ipLogger, PVLOGMSG_WARNING,
                         (0, "OsclSharedLibrary::QueryInterface: Could not access the "
                          "library pointer function"));
         return OsclLibFail;
@@ -257,7 +257,7 @@ OSCL_EXPORT_REF OsclLibStatus OsclSharedLibrary::QueryInterface(const OsclUuid& 
     aInterfacePtr = pSharedLibInterface->SharedLibraryLookup(aInterfaceId);
     if (NULL == aInterfacePtr)
     {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, ipLogger, PVLOGMSG_INFO,
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, ipLogger, PVLOGMSG_WARNING,
                         (0, "OsclLib::QueryInterface: NO library interface found for aInterfaceId."));
         return OsclLibFail;
     }

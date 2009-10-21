@@ -276,7 +276,7 @@ OSCL_EXPORT_REF OsclLibStatus OsclLibraryList::Populate(const OsclUuid& aInterfa
     }
     else
     {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, ipLogger, PVLOGMSG_WARNING,
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, ipLogger, PVLOGMSG_WARNING,
                         (0, "OsclLibraryList::Populate, Didn't find any DLL for the OsclUuid"));
         return OsclLibFail;
     }

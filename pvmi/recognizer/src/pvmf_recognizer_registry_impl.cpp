@@ -87,7 +87,7 @@ PVMFStatus PVMFRecognizerRegistryImpl::RegisterPlugin(PVMFRecognizerPluginFactor
     if (retVal == PVMFSuccess)
     {
         //this plugin factory has already been registered
-        LOGERROR((0, "PVMFRecognizerRegistryImpl::RegisterPlugin - Plugin Already Exists!"));
+        LOGINFOHI((0, "PVMFRecognizerRegistryImpl::RegisterPlugin - Plugin Already Exists!"));
         return PVMFErrAlreadyExists;
     }
     //create a new plugin params
