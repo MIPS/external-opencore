@@ -5223,6 +5223,10 @@ PVMFStatus PVPlayerEngine::DoSourceNodeGetDurationValue(PVCommandId aCmdId, Oscl
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVPlayerEngine::DoSourceNodeGetDurationValue() In"));
 
+    if (iSourceNodeMetadataExtIF == NULL)
+    {
+        return PVMFErrNotSupported;
+    }
 
     // Create a key list with just duration key
     iSourceDurationKeyList.clear();
@@ -5230,11 +5234,6 @@ PVMFStatus PVPlayerEngine::DoSourceNodeGetDurationValue(PVCommandId aCmdId, Oscl
     iSourceDurationKeyList.push_back(tmpstr);
     // Clear the value list
     iSourceDurationValueList.clear();
-
-    if (iSourceNodeMetadataExtIF == NULL)
-    {
-        return PVMFErrArgument;
-    }
 
     // Call GetNodeMetadataValues on the source node to retrieve duration
     PVPlayerEngineContext* context = AllocateEngineContext(NULL, iSourceNode, NULL, aCmdId, aCmdContext, PVP_CMD_SourceNodeGetDurationValue);
@@ -5810,7 +5809,7 @@ PVMFStatus PVPlayerEngine::DoChangePlaybackPosition(PVCommandId aCmdId, OsclAny*
              (iCurrentBeginPosition.iPlayListPosUnit != PVPPBPOSUNIT_MILLISEC)))
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::DoChangePlaybackPosition() Playback control IF on source node not available or invalid begin position"));
-        return PVMFFailure;
+        return PVMFErrNotSupported;
     }
 
     PVMFCommandId cmdid = -1;
@@ -5894,7 +5893,7 @@ PVMFStatus PVPlayerEngine::DoSourceNodeSetDataSourcePositionDuringPlayback(PVCom
     if (iSourceNodePBCtrlIF == NULL)
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::DoSourceNodeSetDataSourcePositionDuringPlayback() No source playback control IF"));
-        return PVMFFailure;
+        return PVMFErrNotSupported;
     }
     bool clockpausedhere = false;
     switch (iPlaybackPositionMode)
@@ -6261,7 +6260,7 @@ PVMFStatus PVPlayerEngine::DoSetPlaybackRate(PVPlayerEngineCommand& aCmd)
             && iSourceNodePBCtrlIF == NULL)
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::DoSetPlaybackRate() iSourceNodePBCtrlIF is NULL"));
-        return PVMFFailure;
+        return PVMFErrNotSupported;
     }
 
     // To do any direction change, the source node must have the direction control IF.
@@ -6269,7 +6268,7 @@ PVMFStatus PVPlayerEngine::DoSetPlaybackRate(PVPlayerEngineCommand& aCmd)
             && iSourceNodeDirCtrlIF == NULL)
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::DoSetPlaybackRate() iSourceNodeDirCtrlIF is NULL"));
-        return PVMFFailure;
+        return PVMFErrNotSupported;
     }
 
     // Reset the paused-due-to-EOS flag if direction changes
@@ -6368,7 +6367,7 @@ PVMFStatus PVPlayerEngine::UpdateCurrentDirection(PVMFCommandId aCmdId, OsclAny*
     if (!iSourceNodeDirCtrlIF)
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::UpdateCurrentDirection() Direction control IF on source node not available "));
-        status = PVMFFailure;
+        status = PVMFErrNotSupported;
         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVPlayerEngine::UpdateCurrentDirection() Out"));
         return status;
     }
@@ -7845,7 +7844,7 @@ PVMFStatus PVPlayerEngine::DoSinkDecCleanupSourcePrepare(PVCommandId aCmdId, Osc
     // Clear the Track selection List
     iTrackSelectionList.clear();
 
-    PVMFStatus cmdstatus = PVMFFailure;
+    PVMFStatus cmdstatus = PVMFErrNotSupported;
 
     // Notify the TargetNPT to the source node before calling Prepare.
     if (iSourceNodePBCtrlIF)
@@ -8401,7 +8400,7 @@ PVMFStatus PVPlayerEngine::DoSourceNodeSetDataSourceDirection(PVCommandId aCmdId
         if (iSourceNodeDirCtrlIF == NULL)
         {
             PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::DoSourceNodeSetDataSourceDirection() No source direction control IF"));
-            return PVMFFailure;
+            return PVMFErrNotSupported;
         }
 
         // Pause the playback clock
