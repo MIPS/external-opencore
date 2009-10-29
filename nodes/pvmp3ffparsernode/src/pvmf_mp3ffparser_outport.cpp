@@ -19,21 +19,12 @@
  * @file pvmf_mp3ffparser_outport.cpp
  */
 
-#ifndef PVMF_MP3FFPARSER_OUTPORT_H_INCLUDED
 #include "pvmf_mp3ffparser_outport.h"
-#endif
-#ifndef PVMF_NODE_INTERFACE_H_INCLUDED
 #include "pvmf_node_interface.h"
-#endif
-#ifndef PVMF_MP3FFPARSER_DEFS_H_INCLUDED
 #include "pvmf_mp3ffparser_defs.h"
-#endif
-#ifndef OSCL_MIME_STRING_UTILS_H
 #include "pv_mime_string_utils.h"
-#endif
-#ifndef PVMF_MP3FFPARSER_NODE_H_INCLUDED
 #include "pvmf_mp3ffparser_node.h"
-#endif
+
 
 ////////////////////////////////////////////////////////////////////////////
 PVMFMP3FFParserPort::PVMFMP3FFParserPort(int32 aTag, PVMFNodeInterface* aNode)

@@ -19,18 +19,12 @@
  * @file pvmf_mp3ffparser_factory.cpp
  * @brief Singleton factory for PVMFMP3FFParserNode
  */
-#ifndef PVMF_MP3FFPARSER_NODE_H_INCLUDED
+
 #include "pvmf_mp3ffparser_node.h"
-#endif
-#ifndef PVMF_MP3FFPARSER_FACTORY_H_INCLUDED
 #include "pvmf_mp3ffparser_factory.h"
-#endif
-#ifndef OSCL_ERROR_CODES_H_INCLUDED
 #include "oscl_error_codes.h"
-#endif
-#ifndef OSCL_EXCEPTION_H_INCLUDED
 #include "oscl_exception.h"
-#endif
+
 // Use default DLL entry point for Symbian
 #ifndef OSCL_DLL_H_INCLUDED
 #include "oscl_dll.h"

@@ -35,9 +35,6 @@
 #include "pvmi_config_and_capability_utils.h"
 #endif
 
-//Default vector reserve size
-#define PVMF_MP3FFPARSER_NODE_PORT_VECTOR_RESERVE 10
-
 #define PVMF_MP3FPARSERNODE_LOGINFO(m)  PVLOGGER_LOGMSG(PVLOGMSG_INST_REL,iLogger,PVLOGMSG_INFO,m);
 #define PVMF_MP3FPARSERNODE_LOGERROR(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_REL,iLogger,PVLOGMSG_ERR,m);
 
