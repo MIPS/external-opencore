@@ -2954,12 +2954,14 @@ void MP3Parser::GetDurationFromCompleteScan(uint32 &aClipDuration)
         aClipDuration = iClipDurationComputed;
         return;
     }
+    uint32 samplesPerFrame = spfIndexTable[iMP3HeaderInfo.frameVer][iMP3HeaderInfo.layerID];
+    uint32 samplingRate = srIndexTable[((iMP3HeaderInfo.frameVer)*4) + iMP3HeaderInfo.srIndex];
+    OsclFloat samplingRateinKHz = (OsclFloat)samplingRate / 1000;
 
-    // Just assign the iScanTimestamp to the ClipDuration. iScanTimestamp is made up after adding all
-    // frameDurations of the frames which are scanned as a part of DurationCalculator AO.
-    iClipDurationComputed = iScanTimestamp;
+    iClipDurationComputed = (uint32)(iScannedFrameCount * (OsclFloat)(samplesPerFrame / samplingRateinKHz));
     aClipDuration = iClipDurationComputed;
 }
+
 
 void MP3Parser::FillTOCTable(uint32 aFilePos, uint32 aTimeStampToFrame)
 {
