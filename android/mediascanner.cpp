@@ -501,6 +501,7 @@ static PVMFStatus parseASF(const char *filename, MediaScannerClient& client)
         // setting this invalid mimetype will make the java side ignore this file
         client.setMimeType("audio/x-wma-drm");
     }
+
     value = retriever->extractMetadata(METADATA_KEY_CODEC);
     if (value && strcmp(value, "Windows Media Audio 10 Professional") == 0) {
         // we don't support WM 10 Professional currently
