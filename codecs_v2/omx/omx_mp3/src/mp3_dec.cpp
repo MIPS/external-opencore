@@ -193,6 +193,27 @@ Int Mp3Decoder::Mp3DecodeAudio(OMX_S16* aOutBuff,
 
     if (MP3DEC_SUCCESS == Status)
     {
+        //After decoding the first frame, update all the input & output port settings
+        if (0 == *aFrameCount)
+        {
+
+            //Output Port Parameters
+            aAudioPcmParam->nSamplingRate = iMP3DecExt->samplingRate;
+            aAudioPcmParam->nChannels     = iMP3DecExt->num_channels;
+
+            //Input Port Parameters
+            aAudioMp3Param->nSampleRate = iMP3DecExt->samplingRate;
+            aAudioMp3Param->nChannels   = iMP3DecExt->num_channels;
+
+            aAudioMp3Param->eFormat     = (OMX_AUDIO_MP3STREAMFORMATTYPE)iMP3DecExt->version;
+            //Set the Resize flag to send the port settings changed callback
+            *aResizeFlag = OMX_TRUE;
+
+        }
+
+        /*
+         *  Consume used bytes
+         */
         *aInBufSize -= iMP3DecExt->inputBufferUsedLength;
 
         if (0 == *aInBufSize)
@@ -204,22 +225,34 @@ Int Mp3Decoder::Mp3DecodeAudio(OMX_S16* aOutBuff,
             iInputUsedLength += iMP3DecExt->inputBufferUsedLength;
         }
 
-        *aOutputLength = iMP3DecExt->outputFrameSize;
+        /*
+         *  Check integrity of decoded mp3 frame
+         */
 
-        //After decoding the first frame, update all the input & output port settings
-        if (0 == *aFrameCount)
+        if ((aAudioMp3Param->nSampleRate == (uint32)iMP3DecExt->samplingRate) &&
+                (aAudioMp3Param->nChannels   == (uint32)iMP3DecExt->num_channels) &&
+                (aAudioMp3Param->eFormat     == (OMX_AUDIO_MP3STREAMFORMATTYPE)iMP3DecExt->version))
+
         {
+            *aOutputLength = iMP3DecExt->outputFrameSize;
+        }
+        else
+        {
+            /*
+             *  restore known parameters (as a mismatch has happened)
+             */
 
-            //Output Port Parameters
-            aAudioPcmParam->nSamplingRate = iMP3DecExt->samplingRate;
-            aAudioPcmParam->nChannels = iMP3DecExt->num_channels;
+            iMP3DecExt->outputFrameSize = (aAudioMp3Param->eFormat) ? 576 : 1152;
+            iMP3DecExt->outputFrameSize = (aAudioMp3Param->nChannels == 1) ?
+                                          iMP3DecExt->outputFrameSize : (iMP3DecExt->outputFrameSize << 1);
 
-            //Input Port Parameters
-            aAudioMp3Param->nSampleRate = iMP3DecExt->samplingRate;
+            *aOutputLength = iMP3DecExt->outputFrameSize;
 
-            //Set the Resize flag to send the port settings changed callback
-            *aResizeFlag = OMX_TRUE;
+            /*
+             *  Clean history buffers to avoid audio artifacts
+             */
 
+            iAudioMp3Decoder->ResetDecoderL();
         }
 
     }
@@ -228,6 +261,9 @@ Int Mp3Decoder::Mp3DecodeAudio(OMX_S16* aOutBuff,
         *aInBufSize = 0;
         iInputUsedLength = 0;
         *aOutputLength = 0;
+
+        iAudioMp3Decoder->ResetDecoderL();
+
     }
     else if (Status == MP3DEC_INCOMPLETE_FRAME)
     {
