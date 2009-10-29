@@ -544,11 +544,6 @@ OSCL_EXPORT_REF void PVMFNodeInterfaceImpl::CommandComplete(PVMFNodeCommand& aCm
             extif = OSCL_STATIC_CAST(PVInterface*, errormsg);
         }
     }
-    else if (aExtMsg)
-    {
-        extif = aExtMsg;
-    }
-
 
     //create response
     PVMFCmdResp resp(aCmd.iId, aCmd.iContext, aStatus, extif, aEventData);
