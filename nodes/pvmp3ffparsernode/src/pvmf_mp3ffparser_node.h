@@ -86,6 +86,9 @@
 #ifndef PVMF_FORMAT_PROGDOWNLOAD_SUPPORT_EXTENSION_H_INCLUDED
 #include "pvmf_format_progdownload_support_extension.h"
 #endif
+#ifndef PVMI_DATASTREAMUSER_INTERFACE_H_INCLUDED
+#include "pvmi_datastreamuser_interface.h"
+#endif
 
 class PVMFSubNodeContainerBaseMp3
 {
