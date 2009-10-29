@@ -50,5 +50,6 @@ ifeq ($(BUILD_PV_ME),1)
 include $(PV_TOP)/engines/pvme/test/Android.mk
 endif
 endif
+-include $(PV_TOP)/extern_libs_v2/android/extended_features/Android.mk
 
 endif

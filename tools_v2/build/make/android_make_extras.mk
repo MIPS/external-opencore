@@ -130,7 +130,7 @@ define include_test_mk_list
 endef
 
 define include_extended_features_mk
-  $(PRINTF) "$(if $1,include $(esc_dollar)(PV_TOP)/extern_libs_v2/android/extended_features/Android.mk\n)" >> $2
+  $(PRINTF) "\055include $(esc_dollar)(PV_TOP)/extern_libs_v2/android/extended_features/Android.mk\n" >> $1
 endef
 
 define create_toplevel_android_mk
@@ -159,7 +159,7 @@ $1: FORCE
 	$$(quiet) $$(call include_test_mk_list,$$(PVME_TESTAPP),$$@)
 	$$(quiet) echo "endif" >> $$@
 	$$(quiet) echo "endif" >> $$@
-	$$(quiet) $$(call include_extended_features_mk,$$(INCL_EXTENDED_FEATURES),$$@)
+	$$(quiet) $$(call include_extended_features_mk,$$@)
 	$$(quiet) echo "" >> $$@
 	$$(quiet) echo "endif" >> $$@
 endef
