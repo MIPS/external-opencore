@@ -21,7 +21,7 @@
 // This header file is automatically generated at build-time
 // *** OFFICIAL RELEASE INFO -- Will not auto update
 
-#define PVPLAYER_ENGINE_SDKINFO_LABEL "1037314"
-#define PVPLAYER_ENGINE_SDKINFO_DATE 0x20091022
+#define PVPLAYER_ENGINE_SDKINFO_LABEL "1038824"
+#define PVPLAYER_ENGINE_SDKINFO_DATE 0x20091023
 
 #endif //PV_PLAYER_SDKINFO_H_INCLUDED

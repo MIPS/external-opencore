@@ -365,7 +365,7 @@ OMX_ERRORTYPE OmxComponentAvcEncAO::ConstructComponent(OMX_PTR pAppData, OMX_PTR
     pInPort = (ComponentPortType*) ipPorts[OMX_PORT_INPUTPORT_INDEX];
     pOutPort = (ComponentPortType*) ipPorts[OMX_PORT_OUTPUTPORT_INDEX];
 
-    pInPort->ActualNumPortFormatsSupported = 4;
+    pInPort->ActualNumPortFormatsSupported = 8;
 
     //OMX_VIDEO_PARAM_PORTFORMATTYPE INPUT PORT SETTINGS
     //On input port for index 0
@@ -399,6 +399,38 @@ OMX_ERRORTYPE OmxComponentAvcEncAO::ConstructComponent(OMX_PTR pAppData, OMX_PTR
     pInPort->VideoParam[3].eCompressionFormat = OMX_VIDEO_CodingUnused;
     pInPort->VideoParam[3].eColorFormat = OMX_COLOR_FormatYUV420SemiPlanar;
     pInPort->VideoParam[3].xFramerate = (15 << 16);
+
+    //On input port for index 4
+    SetHeader(&pInPort->VideoParam[4], sizeof(OMX_VIDEO_PARAM_PORTFORMATTYPE));
+    pInPort->VideoParam[4].nPortIndex = OMX_PORT_INPUTPORT_INDEX;
+    pInPort->VideoParam[4].nIndex = 4;
+    pInPort->VideoParam[4].eCompressionFormat = OMX_VIDEO_CodingUnused;
+    pInPort->VideoParam[4].eColorFormat = OMX_COLOR_FormatYCbYCr;
+    pInPort->VideoParam[4].xFramerate = (15 << 16);
+
+    //On input port for index 5
+    SetHeader(&pInPort->VideoParam[5], sizeof(OMX_VIDEO_PARAM_PORTFORMATTYPE));
+    pInPort->VideoParam[5].nPortIndex = OMX_PORT_INPUTPORT_INDEX;
+    pInPort->VideoParam[5].nIndex = 5;
+    pInPort->VideoParam[5].eCompressionFormat = OMX_VIDEO_CodingUnused;
+    pInPort->VideoParam[5].eColorFormat = OMX_COLOR_FormatYCrYCb;
+    pInPort->VideoParam[5].xFramerate = (15 << 16);
+
+    //On input port for index 6
+    SetHeader(&pInPort->VideoParam[6], sizeof(OMX_VIDEO_PARAM_PORTFORMATTYPE));
+    pInPort->VideoParam[6].nPortIndex = OMX_PORT_INPUTPORT_INDEX;
+    pInPort->VideoParam[6].nIndex = 6;
+    pInPort->VideoParam[6].eCompressionFormat = OMX_VIDEO_CodingUnused;
+    pInPort->VideoParam[6].eColorFormat = OMX_COLOR_FormatCbYCrY;
+    pInPort->VideoParam[6].xFramerate = (15 << 16);
+
+    //On input port for index 7
+    SetHeader(&pInPort->VideoParam[7], sizeof(OMX_VIDEO_PARAM_PORTFORMATTYPE));
+    pInPort->VideoParam[7].nPortIndex = OMX_PORT_INPUTPORT_INDEX;
+    pInPort->VideoParam[7].nIndex = 7;
+    pInPort->VideoParam[7].eCompressionFormat = OMX_VIDEO_CodingUnused;
+    pInPort->VideoParam[7].eColorFormat = OMX_COLOR_FormatCrYCbY;
+    pInPort->VideoParam[7].xFramerate = (15 << 16);
 
     pOutPort->ActualNumPortFormatsSupported = 1;
 

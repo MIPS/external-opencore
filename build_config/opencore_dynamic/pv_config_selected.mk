@@ -163,6 +163,14 @@ m4v_config_lib=m
 pv_config_parser_lib=m
 colorconvert_lib=m
 
+#
+# Choose the YUYV format
+#
+UY0VY1=y
+Y1VY0U=n
+Y0VY1U=n
+
+
 
 
 #

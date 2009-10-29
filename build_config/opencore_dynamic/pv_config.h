@@ -180,6 +180,14 @@
 #define pv_config_parser_lib m
 #define colorconvert_lib m
 
+//
+// Choose the YUYV format
+//
+#define UY0VY1 1
+#define Y1VY0U 0
+#define Y0VY1U 0
+
+
 
 
 //
@@ -520,7 +528,6 @@
 #define LIBS_codecs_v2_static "                                          "
 #define pvmp3ffrecognizer_m_lib "-lpvmp3ffrecognizer"
 #define pvmediainputnode_m_lib "-lpvmediainputnode"
-#define SOLIBDIRS_pvflvparser_node "  "
 #define pvmp4ff_m_mk ""
 #define pvrtsptunicast_streaming_so_name "pvrtsptunicast_streaming"
 #define pvavifileparser_y_mk ""
@@ -685,7 +692,7 @@
 #define pvmfrecognizer_y_lib ""
 #define rtppayloadparser_m_mk "/protocols/rtp_payload_parser/build/make"
 #define flvrecognizer_utility_y_lib ""
-#define LIBDIR_audio_static "             "
+#define pvjitterbuffercommon_m_mk "/nodes/streaming/jitterbuffernode/jitterbuffer/common/build/make"
 #define pvsdpparser_m_lib ""
 #define pvflvreginterface_m_mk ""
 #define rtprtcp_m_mk "/protocols/rtp/build/make"
@@ -973,6 +980,7 @@
 #define pvdtcpplugin_y_lib ""
 #define pvmediaoutputnode_y_lib ""
 #define pvpvrcommonimpl_streaming_so_name ""
+#define SOLIBDIRS_pvflvparser_node "  "
 #define pvwavffparsernode_y_lib ""
 #define protocolenginenode_download_common_m_mk "/nodes/pvprotocolenginenode/download_protocols/common/build/make"
 #define DYNAMIC_LOAD_OMX_M4VENC_COMPONENT 1
@@ -1702,6 +1710,7 @@
 #define pvmio_comm_loopback_y_mk ""
 #define pvmediaoutputnode_m_lib "-lpvmediaoutputnode"
 #define BUILD_STATIC_RTSPUNICAST 0
+#define LIBDIR_audio_static "             "
 #define SOLIBDIRS_pvrtspunicastwithpvr_streamingreg "n"
 #define pvra8decoder_m_lib ""
 #define pvdbconfigclass_so_name ""
@@ -1783,7 +1792,6 @@
 #define pvmtpip_engine_y_mk ""
 #define MODS_omx_sharedlibrary "-lopencore_common"
 #define pv_omx_interface_m_mk "/codecs_v2/omx/omx_sharedlibrary/interface/build/make"
-#define pvjitterbuffercommon_m_mk "/nodes/streaming/jitterbuffernode/jitterbuffer/common/build/make"
 #define pvavifileparser_y_lib ""
 #define pvrfileplaybackplugininterface_m_mk ""
 #define pvoma1passthruplugininterface_m_mk "/modules/cpm_oma1_passthru/build/make"

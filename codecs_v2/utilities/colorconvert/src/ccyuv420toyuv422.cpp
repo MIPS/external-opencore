@@ -154,7 +154,7 @@ int32 CCYUV420toYUV422::Convert(uint8 *inyuv, uint8 *outyuv)
                     tempY = *inyuv_2++;  //0000y1y0
                     tempU = *incb++;  //u0
                     tempV = *incr++;  //v0
-#if ENDIAN_1 //u0 y0 v0 y1
+#if UY0VY1 //u0 y0 v0 y1
                     temp = ((tempY & 0xFF) << 8) | ((tempY & 0xFF00) << 16); //y100y000
                     tempUV = (tempU | (tempV << 16)); //00v000u0
                     *outyuv_4++ = (temp | tempUV);  //y1v0y0u0
@@ -164,7 +164,7 @@ int32 CCYUV420toYUV422::Convert(uint8 *inyuv, uint8 *outyuv)
                     *outyuv_4_nextLine++ = (temp | tempUV);  //y1v0y0u0
 #endif
 
-#if ENDIAN_2 //y1 v0 y0 u0
+#if Y1VY0U //y1 v0 y0 u0
                     temp = ((tempY & 0xFF) << 16) | (tempY >> 8); //00y000y1
                     tempUV = (tempU << 24) | (tempV << 8); //u000v000
                     *outyuv_4++ = (temp | tempUV);  //u0y0v0y1
@@ -174,7 +174,7 @@ int32 CCYUV420toYUV422::Convert(uint8 *inyuv, uint8 *outyuv)
                     *outyuv_4_nextLine++ = (temp | tempUV);  //u0y0v0y1
 #endif
 
-#if ENDIAN_3 //y0 v0 y1 u0
+#if Y0VY1U //y0 v0 y1 u0
                     temp = (tempY & 0xFF) | ((tempY & 0xFF00) << 8) ; //00y100y0
                     tempUV = ((tempU << 16) | tempV) << 8; //u000v000
                     *outyuv_4++ = (temp | tempUV);  //u0y1v0y0
@@ -210,7 +210,7 @@ int32 CCYUV420toYUV422::Convert(uint8 *inyuv, uint8 *outyuv)
                     tempY2 = *inyuv_2_nextLine++;  //0000y3y2
                     tempU = *incb++;  //u0
                     tempV = *incr++;  //v0
-#if ENDIAN_1 //u0 y0 v0 y1                  
+#if UY0VY1 //u0 y0 v0 y1                  
                     tempUV = (tempU) | (tempV << 16); //00v000u0
                     tempY1Y2 = ((tempY1 & 0xFF) << 8) | ((tempY2 & 0xFF) << 24); //y100y000
                     outyuv_4[0] = tempUV | tempY1Y2;
@@ -221,7 +221,7 @@ int32 CCYUV420toYUV422::Convert(uint8 *inyuv, uint8 *outyuv)
                     outyuv_4 -= lpitch;
 #endif
 
-#if ENDIAN_2 //y1 v0 y0 u0
+#if Y1VY0U //y1 v0 y0 u0
 
                     tempUV = (tempU << 24) | (tempV << 8); //u000v000
                     tempY1Y2 = ((tempY2 & 0xFF) | ((tempY1 & 0xFF) << 16)); //00y000y1
@@ -233,7 +233,7 @@ int32 CCYUV420toYUV422::Convert(uint8 *inyuv, uint8 *outyuv)
                     outyuv_4 -= lpitch;
 #endif
 
-#if ENDIAN_3 //y0 v0 y1 u0
+#if Y0VY1U //y0 v0 y1 u0
 
                     tempUV = (tempU << 24) | (tempV << 8); //u000v000
                     tempY1Y2 = ((tempY1 & 0xFF) | ((tempY2 & 0xFF) << 16)); //00y100y0
@@ -271,7 +271,7 @@ int32 CCYUV420toYUV422::Convert(uint8 *inyuv, uint8 *outyuv)
                     tempY = *inyuv_2++;  //0000y1y0
                     tempU = *incb++;  //u0
                     tempV = *incr++;  //v0
-#if ENDIAN_1 //u0 y0 v0 y1 --180 degree--> u0 y1 v0 y0
+#if UY0VY1 //u0 y0 v0 y1 --180 degree--> u0 y1 v0 y0
                     temp = (tempY << 24) | (tempY & 0xFF00); //y000y100
                     tempUV = (tempU | (tempV << 16)); //00v000u0
                     *outyuv_4-- = (temp | tempUV);  //y0v0y1u0
@@ -281,7 +281,7 @@ int32 CCYUV420toYUV422::Convert(uint8 *inyuv, uint8 *outyuv)
                     *outyuv_4_nextLine-- = (temp | tempUV);  //y0v0y1u0
 #endif
 
-#if ENDIAN_2 //y1 v0 y0 u0 --180 degree--> y0 v0 y1 u0
+#if Y1VY0U //y1 v0 y0 u0 --180 degree--> y0 v0 y1 u0
                     temp = ((tempY & 0xFF00) << 8) | (tempY & 0xFF); //00y100y0
                     tempUV = (tempU << 24) | (tempV << 8); //u000v000
                     *outyuv_4-- = (temp | tempUV);  //u0y1v0y0
@@ -291,7 +291,7 @@ int32 CCYUV420toYUV422::Convert(uint8 *inyuv, uint8 *outyuv)
                     *outyuv_4_nextLine-- = (temp | tempUV);  //u0y1v0y0
 #endif
 
-#if ENDIAN_3 //y0 v0 y1 u0 --180 degree--> y1 v0 y0 u0
+#if Y0VY1U //y0 v0 y1 u0 --180 degree--> y1 v0 y0 u0
                     temp = ((tempY & 0xFF) << 16) | (tempY >> 8) ; //00y000y1
                     tempUV = ((tempU << 16) | tempV) << 8; //u000v000
                     *outyuv_4-- = (temp | tempUV);  //u0y0v0y1
@@ -328,7 +328,7 @@ int32 CCYUV420toYUV422::Convert(uint8 *inyuv, uint8 *outyuv)
                     tempU = *incb++;  //u0
                     tempV = *incr++;  //v0
 
-#if ENDIAN_1 //u0 y0 v0 y1                  
+#if UY0VY1 //u0 y0 v0 y1                  
                     tempUV = (tempU) | (tempV << 16); //00v000u0
                     tempY1Y2 = ((tempY1 & 0xFF) << 24) | ((tempY2 & 0xFF) << 8); //y000y100
                     outyuv_4[0] = tempUV | tempY1Y2;
@@ -339,7 +339,7 @@ int32 CCYUV420toYUV422::Convert(uint8 *inyuv, uint8 *outyuv)
                     outyuv_4 += lpitch;
 #endif
 
-#if ENDIAN_2 //y1 v0 y0 u0
+#if Y1VY0U //y1 v0 y0 u0
 
                     tempUV = (tempU << 24) | (tempV << 8); //u000v000
                     tempY1Y2 = (tempY1 & 0xFF) | ((tempY2 & 0xFF) << 16); //00y000y1
@@ -351,7 +351,7 @@ int32 CCYUV420toYUV422::Convert(uint8 *inyuv, uint8 *outyuv)
                     outyuv_4 += lpitch;
 #endif
 
-#if ENDIAN_3 //y0 v0 y1 u0   
+#if Y0VY1U //y0 v0 y1 u0   
 
                     tempUV = (tempU << 24) | (tempV << 8); //u000v000
                     tempY1Y2 = ((tempY2 & 0xFF) | ((tempY1 & 0xFF) << 16)); //00y100y0

@@ -43,6 +43,10 @@
 #include "ccyuv420semitoyuv420.h"
 #endif
 
+#ifndef CCYUV422TOYUV420_H_INCLUDED
+#include "ccyuv422toyuv420.h"
+#endif
+
 #ifndef OSCL_INT64_UTILS_H_INCLUDED
 #include "oscl_int64_utils.h"
 #endif

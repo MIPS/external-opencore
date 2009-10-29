@@ -3,7 +3,7 @@ test.m4v 	// output file name
 176		// input width
 144 		// input height
 30		// input source frame rate
-RGB24 		// input format - RGB12, RGB24, YUV420, YUV420SEMIPLANAR
+RGB24 		// input format - RGB12, RGB24, YUV420, YUV420SEMIPLANAR, UY0VY1,VY0UY1,Y1VY0U,Y1UY0V
 176		// target frame width
 144		// target frame height
 44000		// target bit rate

@@ -145,19 +145,19 @@ int32 CCYUV422toYUV420::Convert(uint8 *inyuv, uint8 *outyuv)
                 for (j = _mSrc_width >> 1; j > 0; j--)
                 {
                     temp = *inyuv_4++;
-#if ENDIAN_1
+#if UY0VY1
                     *outcb++ = (uint8)(temp & 0xFF);
                     *outy++ = (uint8)((temp >> 8) & 0xFF);
                     *outcr++ = (uint8)((temp >> 16) & 0xFF);
                     *outy++ = (uint8)((temp >> 24) & 0xFF);
 #endif
-#if ENDIAN_2
+#if Y1VY0U
                     *outcb++ = (uint8)((temp >> 24) & 0xFF);
                     *outy++ = (uint8)((temp >> 16) & 0xFF);
                     *outcr++ = (uint8)((temp >> 8) & 0xFF);
                     *outy++ = (uint8)(temp & 0xFF);
 #endif
-#if ENDIAN_3
+#if Y0VY1U
                     *outcb++ = (uint8)((temp >> 24) & 0xFF);
                     *outy++ = (uint8)(temp & 0xFF);
                     *outcr++ = (uint8)((temp >> 8) & 0xFF);
@@ -172,15 +172,15 @@ int32 CCYUV422toYUV420::Convert(uint8 *inyuv, uint8 *outyuv)
                 for (j = _mSrc_width >> 1; j > 0; j--)
                 {
                     temp = *inyuv_4++;
-#if ENDIAN_1
+#if UY0VY1
                     *outy++ = (uint8)((temp >> 8) & 0xFF) ;
                     *outy++ = (uint8)((temp >> 24) & 0xFF);
 #endif
-#if ENDIAN_2
+#if Y1VY0U
                     *outy++ = (uint8)((temp >> 16) & 0xFF);
                     *outy++ = (uint8)(temp & 0xFF);
 #endif
-#if ENDIAN_3
+#if Y0VY1U
                     *outy++ = (uint8)(temp & 0xFF);
                     *outy++ = (uint8)((temp >> 16) & 0xFF);
 #endif
@@ -202,7 +202,7 @@ int32 CCYUV422toYUV420::Convert(uint8 *inyuv, uint8 *outyuv)
                 for (j = _mSrc_width >> 1; j > 0; j--)
                 {
                     temp = *inyuv_4++;
-#if ENDIAN_1
+#if UY0VY1
                     outcb -= (lpitch >> 1);
                     *outcb = (uint8)(temp & 0xFF);
                     outy -= (lpitch << 1);
@@ -211,7 +211,7 @@ int32 CCYUV422toYUV420::Convert(uint8 *inyuv, uint8 *outyuv)
                     *outcr = (uint8)((temp >> 16) & 0xFF);
                     *outy = (uint8)((temp >> 24) & 0xFF);
 #endif
-#if ENDIAN_2
+#if Y1VY0U
                     outcb -= (lpitch >> 1);
                     *outcb = (uint8)((temp >> 24) & 0xFF);
                     outy -= (lpitch << 1);
@@ -220,7 +220,7 @@ int32 CCYUV422toYUV420::Convert(uint8 *inyuv, uint8 *outyuv)
                     *outcr = (uint8)((temp >> 8) & 0xFF);
                     *outy = (uint8)(temp & 0xFF);
 #endif
-#if ENDIAN_3
+#if Y0VY1U
                     outcr -= (lpitch >> 1);
                     *outcr = (uint8)((temp >> 24) & 0xFF);
                     outy -= (lpitch << 1);
@@ -236,17 +236,17 @@ int32 CCYUV422toYUV420::Convert(uint8 *inyuv, uint8 *outyuv)
                 for (j = _mSrc_width >> 1; j > 0; j--)
                 {
                     temp = *inyuv_4++;
-#if ENDIAN_1
+#if UY0VY1
                     outy -= (lpitch << 1);
                     outy[lheight] = (uint8)((temp >> 8) & 0xFF);
                     *outy = (uint8)((temp >> 24) & 0xFF);
 #endif
-#if ENDIAN_2
+#if Y1VY0U
                     outy -= (lpitch << 1);
                     outy[lheight] = (uint8)((temp >> 16) & 0xFF);
                     *outy = (uint8)(temp & 0xFF);
 #endif
-#if ENDIAN_3
+#if Y0VY1U
                     outy -= (lpitch << 1);
                     outy[lheight] = (uint8)(temp & 0xFF);
                     *outy = (uint8)((temp >> 16) & 0xFF);
@@ -273,19 +273,19 @@ int32 CCYUV422toYUV420::Convert(uint8 *inyuv, uint8 *outyuv)
                 for (j = _mSrc_width >> 1; j > 0; j--)
                 {
                     temp = *inyuv_4++;
-#if ENDIAN_1
+#if UY0VY1
                     *outcb-- = (uint8)(temp & 0xFF);
                     *outy-- = (uint8)((temp >> 8) & 0xFF);
                     *outcr-- = (uint8)((temp >> 16) & 0xFF);
                     *outy-- = (uint8)((temp >> 24) & 0xFF);
 #endif
-#if ENDIAN_2
+#if Y1VY0U
                     *outcr-- = (uint8)((temp >> 8) & 0xFF);
                     *outy-- = (uint8)((temp >> 16) & 0xFF);
                     *outy-- = (uint8)(temp & 0xFF);
                     *outcb-- = (uint8)((temp >> 24) & 0xFF);
 #endif
-#if ENDIAN_3
+#if Y0VY1U
                     *outcb-- = (uint8)((temp >> 8) & 0xFF);
                     *outy-- = (uint8)(temp & 0xFF);
                     *outy-- = (uint8)((temp >> 16) & 0xFF);
@@ -300,15 +300,15 @@ int32 CCYUV422toYUV420::Convert(uint8 *inyuv, uint8 *outyuv)
                 for (j = _mSrc_width >> 1; j > 0; j--)
                 {
                     temp = *inyuv_4++;
-#if ENDIAN_1
+#if UY0VY1
                     *outy-- = (uint8)((temp >> 8) & 0xFF) ;
                     *outy-- = (uint8)((temp >> 24) & 0xFF);
 #endif
-#if ENDIAN_2
+#if Y1VY0U
                     *outy-- = (uint8)((temp >> 16) & 0xFF);
                     *outy-- = (uint8)(temp & 0xFF);
 #endif
-#if ENDIAN_3
+#if Y0VY1U
                     *outy-- = (uint8)(temp & 0xFF);
                     *outy-- = (uint8)((temp >> 16) & 0xFF);
 #endif
@@ -332,7 +332,7 @@ int32 CCYUV422toYUV420::Convert(uint8 *inyuv, uint8 *outyuv)
                 for (j = _mSrc_width >> 1; j > 0; j--)
                 {
                     temp = *--inyuv_4;
-#if ENDIAN_1
+#if UY0VY1
                     outcb -= (lpitch >> 1);
                     *outcb = (uint8)(temp & 0xFF);
                     outy -= (lpitch << 1);
@@ -341,7 +341,7 @@ int32 CCYUV422toYUV420::Convert(uint8 *inyuv, uint8 *outyuv)
                     *outcr = (uint8)((temp >> 16) & 0xFF);
                     *outy = (uint8)((temp >> 8) & 0xFF);
 #endif
-#if ENDIAN_2
+#if Y1VY0U
                     outcb -= (lpitch >> 1);
                     *outcb = (uint8)((temp >> 24) & 0xFF);
                     outy -= (lpitch << 1);
@@ -350,7 +350,7 @@ int32 CCYUV422toYUV420::Convert(uint8 *inyuv, uint8 *outyuv)
                     *outcr = (uint8)((temp >> 8) & 0xFF);
                     *outy = (uint8)((temp >> 16) & 0xFF);
 #endif
-#if ENDIAN_3
+#if Y0VY1U
                     outcr -= (lpitch >> 1);
                     *outcr = (uint8)((temp >> 24) & 0xFF);
                     outy -= (lpitch << 1);
@@ -366,17 +366,17 @@ int32 CCYUV422toYUV420::Convert(uint8 *inyuv, uint8 *outyuv)
                 for (j = _mSrc_width >> 1; j > 0; j--)
                 {
                     temp = *--inyuv_4;
-#if ENDIAN_1
+#if UY0VY1
                     outy -= (lpitch << 1);
                     outy[lheight] = (uint8)((temp >> 24) & 0xFF);
                     *outy = (uint8)((temp >> 8) & 0xFF);
 #endif
-#if ENDIAN_2
+#if Y1VY0U
                     outy -= (lpitch << 1);
                     outy[lheight] = (uint8)(temp & 0xFF);
                     *outy = (uint8)((temp >> 16) & 0xFF);  // FIXED: 26 -> 16
 #endif
-#if ENDIAN_3
+#if Y0VY1U
                     outy -= (lpitch << 1);
                     outy[lheight] = (uint8)((temp >> 16) & 0xFF);
                     *outy = (uint8)(temp & 0xFF);  // FIXED: 26 -> 16

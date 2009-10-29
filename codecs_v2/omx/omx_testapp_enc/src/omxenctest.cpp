@@ -664,6 +664,14 @@ void OmxComponentEncTest::Run()
                         {
                             InputFrameSize = (iFrameWidth * iFrameHeight * 3) >> 1;
                         }
+                        else if ((OMX_COLOR_FormatYCbYCr == iColorFormat) ||
+                                 (OMX_COLOR_FormatYCrYCb == iColorFormat) ||
+                                 (OMX_COLOR_FormatCbYCrY == iColorFormat) ||
+                                 (OMX_COLOR_FormatCrYCbY == iColorFormat))
+                        {
+                            InputFrameSize = (iFrameWidth * iFrameHeight * 2);
+
+                        }
                         else
                         {
                             //We do not handle more color formats, return an error
@@ -1911,6 +1919,22 @@ OMX_BOOL OmxComponentEncTest::ParseM4vLine(const char* line_start,
                 {
                     iColorFormat = OMX_COLOR_FormatYUV420SemiPlanar;
                 }
+                else if (0 == oscl_strcmp(temp1, "Y1UY0V"))
+                {
+                    iColorFormat = OMX_COLOR_FormatYCbYCr;
+                }
+                else if (0 == oscl_strcmp(temp1, "Y1VY0U"))
+                {
+                    iColorFormat = OMX_COLOR_FormatYCrYCb;
+                }
+                else if (0 == oscl_strcmp(temp1, "UY0VY1"))
+                {
+                    iColorFormat = OMX_COLOR_FormatCbYCrY;
+                }
+                else if (0 == oscl_strcmp(temp1, "VY0UY1"))
+                {
+                    iColorFormat = OMX_COLOR_FormatCrYCbY;
+                }
                 else
                 {
                     return OMX_FALSE;
@@ -2215,6 +2239,22 @@ OMX_BOOL OmxComponentEncTest::ParseAvcLine(const char* line_start,
                 else if (0 == oscl_strcmp(temp1, "YUV420SEMIPLANAR"))
                 {
                     iColorFormat = OMX_COLOR_FormatYUV420SemiPlanar;
+                }
+                else if (0 == oscl_strcmp(temp1, "Y1UY0V"))
+                {
+                    iColorFormat = OMX_COLOR_FormatYCbYCr;
+                }
+                else if (0 == oscl_strcmp(temp1, "Y1VY0U"))
+                {
+                    iColorFormat = OMX_COLOR_FormatYCrYCb;
+                }
+                else if (0 == oscl_strcmp(temp1, "UY0VY1"))
+                {
+                    iColorFormat = OMX_COLOR_FormatCbYCrY;
+                }
+                else if (0 == oscl_strcmp(temp1, "VY0UY1"))
+                {
+                    iColorFormat = OMX_COLOR_FormatCrYCbY;
                 }
                 else
                 {

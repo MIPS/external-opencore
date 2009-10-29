@@ -4735,6 +4735,14 @@ OSCL_EXPORT_REF void OmxComponentVideo::CalculateBufferParameters(OMX_U32 PortIn
             ipPorts[PortIndex]->PortParam.nBufferSize = (videoformat->nSliceHeight * videoformat->nStride * 3) >> 1;
 
         }
+        else if (videoformat->eColorFormat == OMX_COLOR_FormatYCbYCr ||
+                 videoformat->eColorFormat == OMX_COLOR_FormatYCrYCb ||
+                 videoformat->eColorFormat == OMX_COLOR_FormatCbYCrY ||
+                 videoformat->eColorFormat == OMX_COLOR_FormatCrYCbY)
+        {
+            ipPorts[PortIndex]->PortParam.nBufferSize = videoformat->nSliceHeight * videoformat->nStride * 2;
+
+        }
 
     }
 

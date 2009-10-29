@@ -37,56 +37,55 @@ SRCS := omx_threadsafe_callbacks.cpp \
 
 
 
-LIBS :=  pv_video_config_parser \
-	getactualaacconfig \
-        omx_common_lib \
-        omx_mp3_component_lib \
-        pvmp3 \
-        omx_m4venc_component_lib \
-	omx_avcenc_component_lib \
-	omx_amrenc_component_lib \
-	omx_aacenc_component_lib \
-        omx_avc_component_lib \
-        pvavch264enc \
-        pvavcdecoder \
-        pv_avc_common_lib \
-        omx_amr_component_lib \
-        pvencoder_gsmamr \
-        pvdecoder_gsmamr \
-        pv_amr_nb_common_lib \
-        pvamrwbdecoder \
-        omx_m4v_component_lib \
-        pvm4vencoder \
-        pvmp4decoder \
-	m4v_config \
-        omx_wmv_component_lib \
-        wmvdecoder \
-        omx_rv_component_lib \
-        rvdecoder \
-        omx_ra_component_lib \
-        pvra8decoder \
-        pvrmffparser \
-	omx_aac_component_lib \
-        pv_aac_dec \
-        pv_aac_enc \
-	omx_wma_component_lib \
-        wmadecoder \
-        wmavoicedecoder \
-        omx_baseclass_lib \
-        pv_config_parser \
-        colorconvert \
-        unit_test \
-	pvomx_proxy_lib \
-	omx_queue_lib \
-	threadsafe_callback_ao \
-        osclio \
-        osclproc \
-        pvlogger \
-        osclutil \
-        osclmemory \
-        osclerror \
-        osclbase 
-        
+LIBS := pv_video_config_parser \
+		getactualaacconfig \
+		omx_common_lib \
+		omx_mp3_component_lib \
+		pvmp3 \
+		omx_m4venc_component_lib \
+		omx_avcenc_component_lib \
+		omx_amrenc_component_lib \
+		omx_aacenc_component_lib \
+		omx_avc_component_lib \
+		omx_rv_component_lib \
+		omx_wmv_component_lib \
+		omx_ra_component_lib \
+		omx_aac_component_lib \
+		omx_wma_component_lib \
+		omx_m4v_component_lib \
+		omx_amr_component_lib \
+		pvavch264enc \
+		pvavcdecoder \
+		pv_avc_common_lib \
+		pvencoder_gsmamr \
+		pvdecoder_gsmamr \
+		pv_amr_nb_common_lib \
+		pvamrwbdecoder \
+		pvm4vencoder \
+		pvmp4decoder \
+		m4v_config \
+		wmvdecoder \
+		rvdecoder \
+		pvra8decoder \
+		pvrmffparser \
+		pv_aac_dec \
+		pv_aac_enc \
+		wmadecoder \
+		wmavoicedecoder \
+		omx_baseclass_lib \
+		pv_config_parser \
+		colorconvert \
+		unit_test \
+		pvomx_proxy_lib \
+		omx_queue_lib \
+		threadsafe_callback_ao \
+		osclio \
+		osclproc \
+		pvlogger \
+		osclutil \
+		osclmemory \
+		osclerror \
+		osclbase
 
 SYSLIBS += $(SYS_THREAD_LIB)
 

@@ -210,6 +210,14 @@ void OmxEncTestPauseResume::Run()
                         {
                             InputFrameSize = (iFrameWidth * iFrameHeight * 3) >> 1;
                         }
+                        else if ((OMX_COLOR_FormatYCbYCr == iColorFormat) ||
+                                 (OMX_COLOR_FormatYCrYCb == iColorFormat) ||
+                                 (OMX_COLOR_FormatCbYCrY == iColorFormat) ||
+                                 (OMX_COLOR_FormatCrYCbY == iColorFormat))
+                        {
+                            InputFrameSize = (iFrameWidth * iFrameHeight * 2);
+
+                        }
                         else
                         {
                             //We do not handle more color formats, return an error

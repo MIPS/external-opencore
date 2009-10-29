@@ -143,7 +143,12 @@ OMX_ERRORTYPE AvcEncoder_OMX::AvcEncInit(OMX_VIDEO_PORTDEFINITIONTYPE aInputPara
     if ((OMX_COLOR_FormatYUV420Planar == aInputParam.eColorFormat) ||
             (OMX_COLOR_Format24bitRGB888 == aInputParam.eColorFormat) ||
             (OMX_COLOR_Format12bitRGB444 == aInputParam.eColorFormat) ||
-            (OMX_COLOR_FormatYUV420SemiPlanar == aInputParam.eColorFormat))
+            (OMX_COLOR_FormatYUV420SemiPlanar == aInputParam.eColorFormat) ||
+            (OMX_COLOR_FormatYCbYCr == aInputParam.eColorFormat) ||
+            (OMX_COLOR_FormatYCrYCb == aInputParam.eColorFormat) ||
+            (OMX_COLOR_FormatCbYCrY == aInputParam.eColorFormat) ||
+            (OMX_COLOR_FormatCrYCbY == aInputParam.eColorFormat))
+
     {
         iVideoFormat = aInputParam.eColorFormat;
     }
@@ -198,6 +203,19 @@ OMX_ERRORTYPE AvcEncoder_OMX::AvcEncInit(OMX_VIDEO_PORTDEFINITIONTYPE aInputPara
     if (OMX_COLOR_FormatYUV420SemiPlanar == iVideoFormat)
     {
         ccRGBtoYUV = CCYUV420SEMItoYUV420::New();
+        ccRGBtoYUV->Init(iSrcWidth, iSrcHeight, iSrcWidth, iSrcWidth , iSrcHeight, ((iSrcWidth + 15) >> 4) << 4, (iFrameOrientation == 180 ? CCBOTTOM_UP : 0));
+    }
+    if ((OMX_COLOR_FormatYCbYCr == iVideoFormat) ||
+            (OMX_COLOR_FormatYCrYCb == iVideoFormat) ||
+            (OMX_COLOR_FormatCbYCrY == iVideoFormat) ||
+            (OMX_COLOR_FormatCrYCbY == iVideoFormat))
+    {
+        /*
+        ** YUV422 interleaved format must be selected and compiled with the correct format using CML2 tool;
+        ** Otherwise, YUV422 input may not be in correct sequence.
+        ** This is needed because it is NOT optimal to have the mode selectable at run-time for color conversion.
+        */
+        ccRGBtoYUV = CCYUV422toYUV420::New();
         ccRGBtoYUV->Init(iSrcWidth, iSrcHeight, iSrcWidth, iSrcWidth , iSrcHeight, ((iSrcWidth + 15) >> 4) << 4, (iFrameOrientation == 180 ? CCBOTTOM_UP : 0));
     }
 
@@ -590,6 +608,25 @@ AVCEnc_Status AvcEncoder_OMX::AvcEncodeSendInput(OMX_U8*    aInBuffer,
     else if (OMX_COLOR_FormatYUV420SemiPlanar == iVideoFormat)
     {
         if (*aInBufSize < (OMX_U32)(iSrcWidth * iSrcHeight * 3) >> 1)
+        {
+            //Mark the inpur buffer consumed to indicate corrupt frame
+            *aInBufSize = 0;
+            return AVCENC_FAIL;
+        }
+        ccRGBtoYUV->Convert((uint8*)aInBuffer, iYUVIn);
+        iVideoIn = iYUVIn;
+    }
+    else if ((OMX_COLOR_FormatYCbYCr == iVideoFormat) ||
+             (OMX_COLOR_FormatYCrYCb == iVideoFormat) ||
+             (OMX_COLOR_FormatCbYCrY == iVideoFormat) ||
+             (OMX_COLOR_FormatCrYCbY == iVideoFormat))
+    {
+        /*
+        ** YUV422 interleaved format must be selected and compiled with the correct format using CML2 tool;
+        ** Otherwise, YUV422 input may not be in correct sequence.
+        ** This is needed because it is NOT optimal to have the mode selectable at run-time for color conversion.
+        */
+        if (*aInBufSize < (OMX_U32)(iSrcWidth * iSrcHeight * 2))
         {
             //Mark the inpur buffer consumed to indicate corrupt frame
             *aInBufSize = 0;
