@@ -1551,7 +1551,7 @@
 #define pv_http_retriever_y_mk ""
 #define SOLIBS_pvdb_recovery_utility "n"
 #define pvra8decnode_m_mk ""
-#define MODS_pvrtsptunicastforrm_streaming "-lopencore_net_support -lopencore_player -lopencore_common -lpvrtsptunicast_streaming -lopencore_rtsp -lopencore_streaming -lpvwmdrm -lpvrmffparser_node"
+#define MODS_pvrtsptunicastforrm_streaming "-lopencore_net_support -lopencore_player -lopencore_common -lpvrtsptunicast_streaming -lopencore_rtsp -lopencore_streaming -lpvwmdrm"
 #define pvfileplaybackwithpvrfsp_m_lib ""
 #define SOLIBDIRS_pvasflocalpbreg " "
 #define scsp_m_mk "/fileformats/scsp/build/make"

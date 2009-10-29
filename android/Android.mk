@@ -15,6 +15,7 @@ LOCAL_SRC_FILES := \
 	extension_handler_registry.cpp \
 	PVPlayerExtHandler.cpp
 
+LOCAL_C_FLAGS := $(PV_CFLAGS_MINUS_VISIBILITY)
 
 LOCAL_C_INCLUDES := $(PV_INCLUDES) \
 	$(PV_TOP)/engines/common/include \

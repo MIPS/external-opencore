@@ -129,6 +129,10 @@ define include_test_mk_list
  $(PRINTF) "$(subst $(SPACE)include,include,$(foreach app,$(strip $(call remove_quotes,$1)),include \$$(PV_TOP)$(strip $(call strip_two_levels_up,$(call remove_quotes,$(TESTAPP_DIR_$(app))/local.mk)))/Android.mk\n))" >> $2
 endef
 
+define include_extended_features_mk
+  $(PRINTF) "$(if $1,include $(esc_dollar)(PV_TOP)/extern_libs_v2/android/extended_features/Android.mk\n)" >> $2
+endef
+
 define create_toplevel_android_mk
 $1: FORCE
 	$$(quiet) echo "ifneq ($$(esc_dollar)(BUILD_WITHOUT_PV),true)" > $$@
@@ -155,6 +159,7 @@ $1: FORCE
 	$$(quiet) $$(call include_test_mk_list,$$(PVME_TESTAPP),$$@)
 	$$(quiet) echo "endif" >> $$@
 	$$(quiet) echo "endif" >> $$@
+	$$(quiet) $$(call include_extended_features_mk,$$(INCL_EXTENDED_FEATURES),$$@)
 	$$(quiet) echo "" >> $$@
 	$$(quiet) echo "endif" >> $$@
 endef

@@ -11,7 +11,7 @@ CFG_opencore_common := pvplayer.cfg
 
 CFG_pvasflocalpb := pvasflocal.cfg
 
-CFG_pvasfstreaming := pvasfstreaming.cfg
+CFG_pvmshttp_streaming := pvasfstreaming.cfg
 
 CFG_pvdivxparser_node := pvdivx.cfg
 

@@ -362,7 +362,7 @@ derive MODS_pvrtsptunicast_streamingreg from "-lopencore_common"
 derive pvrtsptunicastforrm_streaming_so_name from rtsptunicastwithreal_support==m ? "pvrtsptunicastforrm_streaming" : ""
 derive SOLIBS_pvrtsptunicastforrm_streaming from smrtsptrmplugininterface_m_lib.pvrtsptwithrealfsp_m_lib.realmedia_payload_parser_m_lib.rdt_parser_m_lib.pvrtsp_cli_eng_real_cloaking_node_m_lib
 derive SOLIBDIRS_pvrtsptunicastforrm_streaming from smrtsptrmplugininterface_m_mk.pvrtsptwithrealfsp_m_mk.realmedia_payload_parser_m_mk.rdt_parser_m_mk.pvrtsp_cli_eng_real_cloaking_node_m_mk
-derive MODS_pvrtsptunicastforrm_streaming from "-lopencore_net_support -lopencore_player -lopencore_common -lpvrtsptunicast_streaming -lopencore_rtsp -lopencore_streaming -lpvwmdrm -lpvrmffparser_node"
+derive MODS_pvrtsptunicastforrm_streaming from "-lopencore_net_support -lopencore_player -lopencore_common -lpvrtsptunicast_streaming -lopencore_rtsp -lopencore_streaming -lpvwmdrm"
 
 derive pvrtsptunicastforrm_streamingreg_so_name from rtsptunicastwithreal_support==m ? "pvrtsptunicastforrm_streamingreg" : ""
 derive SOLIBS_pvrtsptunicastforrm_streamingreg from smrtsptrmpluginregpopulator_m_lib
