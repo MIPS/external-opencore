@@ -90,6 +90,8 @@ class PVMFCPMPluginMeteringInterface : public PVInterface
          *    If there is more data than this size, then multiple
          *    server transactions will be done automatically.
          * @param [in] aMeterId: The metering Id.
+         * @param [in] aMeterCertUrl: Optional input URL to be used
+         *    to acquire the meter certificate.
          * @param [out] aStatus: Optional meter status output
          * @param [in] aTimeoutMsec: Optional timeout in milliseconds
          *    for each server communication.  Use -1 to indicate infinite wait.
@@ -102,8 +104,9 @@ class PVMFCPMPluginMeteringInterface : public PVInterface
             PVMFSessionId aSessionId
             , uint32 aMaxDataSize
             , const PVMFCPMMeterId& aMeterId
-            , int32 aTimeoutMsec = (-1)
-                                   , OsclAny* aContextData = NULL) = 0;
+            , OSCL_String* aMeterCertUrl = NULL
+                                           , int32 aTimeoutMsec = (-1)
+                                                                  , OsclAny* aContextData = NULL) = 0;
 
         /**
          * Method to get a list of all MIDs in the current meter cert store.

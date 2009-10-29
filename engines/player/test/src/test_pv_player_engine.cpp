@@ -2661,6 +2661,11 @@ void pvplayer_engine_test::test()
             case OpenPlayStopResetCPMTest:
                 iCurrentTest = new pvplayer_async_test_cpmopenplaystopreset(testparam);
                 break;
+
+            case OpenPlayStopResetCPMRecognizeTest:
+                iCurrentTest = new pvplayer_async_test_cpmopenplaystopreset(testparam, true);
+                break;
+
             case CPM_DLA_OMA1PASSTRHU_OpenFailAuthPlayStopResetTest:
                 iCurrentTest = new pvplayer_async_test_cpmdlapassthru(testparam,
                         PVMF_MIME_YUV420,
@@ -3681,6 +3686,10 @@ void pvplayer_engine_test::test()
                 break;
 
             case DLA_MeteringByMID_PlayReadyCPMTest:
+                fprintf(file, "PlayReady CPM tests not enabled\n");
+                break;
+
+            case DLA_MeteringByMeterURL_PlayReadyCPMTest:
                 fprintf(file, "PlayReady CPM tests not enabled\n");
                 break;
 
