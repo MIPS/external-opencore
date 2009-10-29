@@ -88,7 +88,7 @@ class PVMFEventBase
  * PVMFCmdResp class is used to pass completion status on previously issued
  * commands
  **/
-class OSCL_IMPORT_REF PVMFCmdResp : public PVMFEventBase
+class PVMFCmdResp : public PVMFEventBase
 {
     public:
         /**
@@ -145,7 +145,7 @@ class OSCL_IMPORT_REF PVMFCmdResp : public PVMFEventBase
 
         virtual ~PVMFCmdResp() {}
 
-        virtual PVMFEventCategory IsA() const;
+        OSCL_IMPORT_REF virtual PVMFEventCategory IsA() const ;
 
         /**
          * @return Returns the unique ID associated with a command of this type.
@@ -261,7 +261,7 @@ class OSCL_IMPORT_REF PVMFCmdResp : public PVMFEventBase
  * event
  **/
 #define PVMF_ASYNC_EVENT_LOCAL_BUF_SIZE 16
-class OSCL_IMPORT_REF PVMFAsyncEvent : public PVMFEventBase
+class PVMFAsyncEvent : public PVMFEventBase
 {
     public:
         PVMFAsyncEvent(PVMFEventCategory aEventCategory,
@@ -354,7 +354,7 @@ class OSCL_IMPORT_REF PVMFAsyncEvent : public PVMFEventBase
 
         virtual ~PVMFAsyncEvent() {}
 
-        virtual PVMFEventCategory IsA() const;
+        OSCL_IMPORT_REF virtual PVMFEventCategory IsA() const ;
 
         /**
          * @return Returns the unique type identifier of the event.
