@@ -19,20 +19,8 @@
 #define PVMF_DOWNLOADMANAGER_NODE_H_INCLUDED
 
 
-#ifndef OSCL_BASE_H_INCLUDED
-#include "oscl_base.h"
-#endif
-#ifndef OSCL_SCHEDULER_AO_H_INCLUDED
-#include "oscl_scheduler_ao.h"
-#endif
-#ifndef OSCL_STRING_H_INCLUDED
-#include "oscl_string.h"
-#endif
-#ifndef PVMF_FORMAT_TYPE_H_INCLUDED
-#include "pvmf_format_type.h"
-#endif
-#ifndef PVMF_NODE_INTERFACE_H_INCLUDED
-#include "pvmf_node_interface.h"
+#ifndef PVMF_NODE_INTERFACE_IMPL_H_INCLUDED
+#include "pvmf_node_interface_impl.h"
 #endif
 #ifndef PVMF_NODE_UTILS_H_INCLUDED
 #include "pvmf_node_utils.h"
@@ -51,9 +39,6 @@
 #endif
 #ifndef PVMF_TRACK_SELECTION_EXTENSION_H_INCLUDED
 #include "pvmf_track_selection_extension.h"
-#endif
-#ifndef PVMF_MEDIA_PRESENTATION_INFO_H_INCLUDED
-#include "pvmf_media_presentation_info.h"
 #endif
 #ifndef PVMF_DOWNLOAD_PROGRESS_INTERFACE_H_INCLUDED
 #include "pvmf_download_progress_interface.h"
@@ -104,173 +89,6 @@
 * Node command handling
 */
 
-typedef PVMFGenericNodeCommand<OsclMemAllocator> PVMFDownloadManagerNodeCommandBase;
-
-enum PVMFDownloadManagerNodeCommandType
-{
-    PVDLM_NODE_CMD_SETDATASOURCEPOSITION = PVMF_GENERIC_NODE_COMMAND_LAST
-    , PVDLM_NODE_CMD_QUERYDATASOURCEPOSITION
-    , PVDLM_NODE_CMD_SETDATASOURCERATE
-    , PVDLM_NODE_CMD_GETNODEMETADATAKEY
-    , PVDLM_NODE_CMD_GETNODEMETADATAVALUE
-};
-
-class PVMFDownloadManagerNodeCommand : public PVMFDownloadManagerNodeCommandBase
-{
-    public:
-        //override the default implementation of "hipri" and add the "cancel get license"
-        //command to the list of hi-priority commands.
-        bool hipri()
-        {
-            return PVMFDownloadManagerNodeCommandBase::hipri();
-        }
-
-        // Constructor and parser for GetNodeMetadataKey
-        void Construct(PVMFSessionId s, int32 cmd
-                       , PVMFMetadataList& aKeyList
-                       , uint32 aStartingIndex
-                       , int32 aMaxEntries
-                       , char* aQueryKey
-                       , const OsclAny* aContext)
-        {
-            PVMFDownloadManagerNodeCommandBase::Construct(s, cmd, aContext);
-            iParam1 = (OsclAny*) & aKeyList;
-            iParam2 = (OsclAny*)aStartingIndex;
-            iParam3 = (OsclAny*)aMaxEntries;
-            if (aQueryKey)
-            {
-                //allocate a copy of the query key string.
-                Oscl_TAlloc<OSCL_HeapString<OsclMemAllocator>, OsclMemAllocator> str;
-                iParam4 = str.ALLOC_AND_CONSTRUCT(aQueryKey);
-            }
-        }
-        void Parse(PVMFMetadataList*& MetaDataListPtr, uint32 &aStartingIndex, int32 &aMaxEntries, char*& aQueryKey)
-        {
-            MetaDataListPtr = (PVMFMetadataList*)iParam1;
-            aStartingIndex = (uint32)iParam2;
-            aMaxEntries = (int32)iParam3;
-            aQueryKey = NULL;
-            if (iParam4)
-            {
-                OSCL_HeapString<OsclMemAllocator>* keystring = (OSCL_HeapString<OsclMemAllocator>*)iParam4;
-                aQueryKey = keystring->get_str();
-            }
-        }
-
-        // Constructor and parser for GetNodeMetadataValue
-        void Construct(PVMFSessionId s, int32 cmd, PVMFMetadataList& aKeyList, Oscl_Vector<PvmiKvp, OsclMemAllocator>& aValueList, uint32 aStartIndex, int32 aMaxEntries, const OsclAny* aContext)
-        {
-            PVMFDownloadManagerNodeCommandBase::Construct(s, cmd, aContext);
-            iParam1 = (OsclAny*) & aKeyList;
-            iParam2 = (OsclAny*) & aValueList;
-            iParam3 = (OsclAny*)aStartIndex;
-            iParam4 = (OsclAny*)aMaxEntries;
-
-        }
-        void Parse(PVMFMetadataList* &aKeyList, Oscl_Vector<PvmiKvp, OsclMemAllocator>* &aValueList, uint32 &aStartingIndex, int32 &aMaxEntries)
-        {
-            aKeyList = (PVMFMetadataList*)iParam1;
-            aValueList = (Oscl_Vector<PvmiKvp, OsclMemAllocator>*)iParam2;
-            aStartingIndex = (uint32)iParam3;
-            aMaxEntries = (int32)iParam4;
-        }
-
-        // Constructor and parser for SetDataSourcePosition
-        void Construct(PVMFSessionId s, int32 cmd, PVMFTimestamp aTargetNPT, PVMFTimestamp& aActualNPT, PVMFTimestamp& aActualMediaDataTS,
-                       bool aSeekToSyncPoint, uint32 aStreamID, const OsclAny*aContext)
-        {
-            PVMFDownloadManagerNodeCommandBase::Construct(s, cmd, aContext);
-            iParam1 = (OsclAny*)aTargetNPT;
-            iParam2 = (OsclAny*) & aActualNPT;
-            iParam3 = (OsclAny*) & aActualMediaDataTS;
-            iParam4 = (OsclAny*)aSeekToSyncPoint;
-            iParam5 = (OsclAny*)aStreamID;
-        }
-        void Parse(PVMFTimestamp& aTargetNPT, PVMFTimestamp*& aActualNPT, PVMFTimestamp*& aActualMediaDataTS, bool& aSeekToSyncPoint, uint32& aStreamID)
-        {
-            aTargetNPT = (PVMFTimestamp)iParam1;
-            aActualNPT = (PVMFTimestamp*)iParam2;
-            aActualMediaDataTS = (PVMFTimestamp*)iParam3;
-            aSeekToSyncPoint = (iParam4) ? true : false;
-            aStreamID = (uint32)iParam5;
-        }
-
-        // Constructor and parser for QueryDataSourcePosition
-        void Construct(PVMFSessionId s, int32 cmd, PVMFTimestamp aTargetNPT, PVMFTimestamp& aActualNPT,
-                       bool aSeekToSyncPoint, const OsclAny*aContext)
-        {
-            PVMFDownloadManagerNodeCommandBase::Construct(s, cmd, aContext);
-            iParam1 = (OsclAny*)aTargetNPT;
-            iParam2 = (OsclAny*) & aActualNPT;
-            iParam3 = (OsclAny*)aSeekToSyncPoint;
-            iParam4 = NULL;
-            iParam5 = NULL;
-        }
-        void Parse(PVMFTimestamp& aTargetNPT, PVMFTimestamp*& aActualNPT, bool& aSeekToSyncPoint)
-        {
-            aTargetNPT = (PVMFTimestamp)iParam1;
-            aActualNPT = (PVMFTimestamp*)iParam2;
-            aSeekToSyncPoint = (iParam3) ? true : false;
-        }
-
-        // Constructor and parser for SetDataSourceRate
-        void Construct(PVMFSessionId s, int32 cmd, int32 aRate, PVMFTimebase* aTimebase, const OsclAny*aContext)
-        {
-            PVMFDownloadManagerNodeCommandBase::Construct(s, cmd, aContext);
-            iParam1 = (OsclAny*)aRate;
-            iParam2 = (OsclAny*)aTimebase;
-            iParam3 = NULL;
-            iParam4 = NULL;
-            iParam5 = NULL;
-        }
-        void Parse(int32& aRate, PVMFTimebase*& aTimebase)
-        {
-            aRate = (int32)iParam1;
-            aTimebase = (PVMFTimebase*)iParam2;
-        }
-
-        //need to overload the base Destroy routine to cleanup metadata key.
-        void Destroy()
-        {
-            PVMFGenericNodeCommand<OsclMemAllocator>::Destroy();
-            switch (iCmd)
-            {
-                case PVDLM_NODE_CMD_GETNODEMETADATAKEY:
-                    if (iParam4)
-                    {
-                        //cleanup the allocated string
-                        Oscl_TAlloc<OSCL_HeapString<OsclMemAllocator>, OsclMemAllocator> str;
-                        str.destruct_and_dealloc(iParam4);
-                    }
-                    break;
-                default:
-                    break;
-            }
-        }
-
-        //need to overlaod the base Copy routine to copy metadata key.
-        void Copy(const PVMFGenericNodeCommand<OsclMemAllocator>& aCmd)
-        {
-            PVMFGenericNodeCommand<OsclMemAllocator>::Copy(aCmd);
-            switch (aCmd.iCmd)
-            {
-                case PVDLM_NODE_CMD_GETNODEMETADATAKEY:
-                    if (aCmd.iParam4)
-                    {
-                        //copy the allocated string
-                        OSCL_HeapString<OsclMemAllocator>* aStr = (OSCL_HeapString<OsclMemAllocator>*)aCmd.iParam4;
-                        Oscl_TAlloc<OSCL_HeapString<OsclMemAllocator>, OsclMemAllocator> str;
-                        iParam4 = str.ALLOC_AND_CONSTRUCT(*aStr);
-                    }
-                    break;
-                default:
-                    break;
-            }
-        }
-};
-
-
-typedef PVMFNodeCommandQueue<PVMFDownloadManagerNodeCommand, OsclMemAllocator> PVMFDownloadManagerNodeCmdQueue;
 
 class PVMFDownloadManagerNode;
 class PVLogger;
@@ -292,24 +110,11 @@ class PVMFDownloadManagerSubNodeContainerBase
          */
         enum NodeType {EFormatParser, EProtocolEngine, ESocket, ECPM, ERecognizer};
 
-        void Construct(NodeType t, PVMFDownloadManagerNode* container);
-
-        // Each subnode has a pointer to its container, which is the DLMGR node
-        PVMFDownloadManagerNode* iContainer;
-
-        NodeType iType;
-        PVMFSessionId iSessionId;
-
-        //Node Command processing
-        PVMFCommandId iCmdId;
-
         enum CmdState
         {
             EIdle,   // no command
             EBusy    // command issued to the sub-node, completion pending.
         };
-
-        CmdState iCmdState;
 
         enum CmdType
         {
@@ -352,7 +157,24 @@ class PVMFDownloadManagerSubNodeContainerBase
             , ECPMReset = 32
         };
 
+        // Each subnode has a pointer to its container, which is the DLMGR node
+        PVMFDownloadManagerNode* iContainer;
+
+        NodeType iType;
+        PVMFSessionId iSessionId;
+
+        //Node Command processing
+        PVMFCommandId iCmdId;
+
+        CmdState iCmdState;
+
+        //for canceling commands.
+        PVMFCommandId iCancelCmdId;
+        CmdState iCancelCmdState;
+
         int32 iCmd;
+
+        void Construct(NodeType t, PVMFDownloadManagerNode* container);
 
         // The pure virtual method IssueCommand is called on a subnode container to request that the passed
         // command be issued to the contained node (or object).
@@ -366,8 +188,6 @@ class PVMFDownloadManagerSubNodeContainerBase
 
         //for canceling commands.
         virtual bool CancelPendingCommand() = 0;
-        PVMFCommandId iCancelCmdId;
-        CmdState iCancelCmdState;
         void CancelCommandDone(PVMFStatus, PVInterface*, OsclAny*);
 
         bool CmdPending()
@@ -589,8 +409,7 @@ class PVMFDownloadManagerRecognizerContainer
  *
  */
 class PVMFDownloadManagerNode
-        : public PVMFNodeInterface
-        , public OsclActiveObject
+        : public PVMFNodeInterfaceImpl
         , public PvmiCapabilityAndConfigBase
         //required extension interfaces for player source nodes.
         , public PVMFDataSourceInitializationExtensionInterface
@@ -609,35 +428,7 @@ class PVMFDownloadManagerNode
         // From PVMFNodeInterface
         PVMFStatus ThreadLogon();
         PVMFStatus ThreadLogoff();
-        PVMFStatus GetCapability(PVMFNodeCapability& aNodeCapability);
         PVMFPortIter* GetPorts(const PVMFPortFilter* aFilter = NULL);
-
-        PVMFCommandId QueryUUID(PVMFSessionId aSessionId,
-                                const PvmfMimeString& aMimeType,
-                                Oscl_Vector<PVUuid, OsclMemAllocator>& aUuids,
-                                bool aExactUuidsOnly = false,
-                                const OsclAny* aContext = NULL);
-        PVMFCommandId QueryInterface(PVMFSessionId aSessionId,
-                                     const PVUuid& aUuid,
-                                     PVInterface*& aInterfacePtr,
-                                     const OsclAny* aContext = NULL);
-
-        PVMFCommandId RequestPort(PVMFSessionId aSessionId, int32 aPortTag,
-                                  const PvmfMimeString* aPortConfig = NULL,
-                                  const OsclAny* aContext = NULL);
-        PVMFStatus ReleasePort(PVMFSessionId aSessionId, PVMFPortInterface& aPort,
-                               const OsclAny* aContext = NULL);
-
-        PVMFCommandId Init(PVMFSessionId aSessionId, const OsclAny* aContext = NULL);
-        PVMFCommandId Prepare(PVMFSessionId aSessionId, const OsclAny* aContext = NULL);
-        PVMFCommandId Start(PVMFSessionId aSessionId, const OsclAny* aContext = NULL);
-        PVMFCommandId Stop(PVMFSessionId aSessionId, const OsclAny* aContext = NULL);
-        PVMFCommandId Flush(PVMFSessionId aSessionId, const OsclAny* aContext = NULL);
-        PVMFCommandId Pause(PVMFSessionId aSessionId, const OsclAny* aContext = NULL);
-        PVMFCommandId Reset(PVMFSessionId aSessionId, const OsclAny* aContext = NULL);
-
-        PVMFCommandId CancelAllCommands(PVMFSessionId aSessionId, const OsclAny* aContextData = NULL);
-        PVMFCommandId CancelCommand(PVMFSessionId aSessionId, PVMFCommandId aCmdId, const OsclAny* aContextData = NULL);
 
         //From PVInterface
         void addRef();
@@ -714,50 +505,32 @@ class PVMFDownloadManagerNode
         void CPMCommandCompleted(const PVMFCmdResp& aResponse);
 
     private:
-        bool iDebugMode;
 
         void ConstructL();
 
         // from OsclTimerObject
-        void Run();
+        virtual void Run();
 
-        //Command processing
-        //There are 3 command queues.
-        //iInputCommands is the input queue for the node.  It is N deep and allows for high priority commands to go to the front of the list.
-        //iCurrentCommand is a 1-deep holding place for a command that has started executing but has asynchronous completion.
-        //iCancelCommand is a 1-deep holding place for a cancel command that has started executing but has asynchronous completion.
-        PVMFDownloadManagerNodeCmdQueue iInputCommands;
-        PVMFDownloadManagerNodeCmdQueue iCurrentCommand;
-        PVMFDownloadManagerNodeCmdQueue iCancelCommand;
-        PVMFCommandId QueueCommandL(PVMFDownloadManagerNodeCommand& aCmd);
-        void ProcessCommand();
-        void CommandComplete(PVMFDownloadManagerNodeCmdQueue& aCmdQueue, PVMFDownloadManagerNodeCommand& aCmd, PVMFStatus , PVInterface*, OsclAny*);
+        void CommandComplete(PVMFNodeCommand& aCmd, PVMFStatus , PVInterface*, OsclAny*);
 
         // Event reporting
-        void ReportErrorEvent(PVMFEventType aEventType, PVInterface*aExt = NULL, OsclAny* aEventData = NULL);
+
         void ReportInfoEvent(PVMFAsyncEvent&);
-        void ChangeNodeState(TPVMFNodeInterfaceState aNewState);
+        PVMFStatus HandleExtensionAPICommands();
+        PVMFStatus CancelCurrentCommand();
 
         // Node command handlers
-        PVMFStatus DoQueryUuid(PVMFDownloadManagerNodeCommand& aCmd);
-        PVMFStatus DoQueryInterface(PVMFDownloadManagerNodeCommand& aCmd);
-        PVMFStatus DoRequestPort(PVMFDownloadManagerNodeCommand& aCmd);
-        PVMFStatus DoReleasePort(PVMFDownloadManagerNodeCommand& aCmd);
-        PVMFStatus DoInitNode(PVMFDownloadManagerNodeCommand& aCmd);
-        PVMFStatus DoPrepareNode(PVMFDownloadManagerNodeCommand& aCmd);
-        PVMFStatus DoStartNode(PVMFDownloadManagerNodeCommand& aCmd);
-        PVMFStatus DoStopNode(PVMFDownloadManagerNodeCommand& aCmd);
-        PVMFStatus DoFlushNode(PVMFDownloadManagerNodeCommand& aCmd);
-        PVMFStatus DoPauseNode(PVMFDownloadManagerNodeCommand& aCmd);
-        PVMFStatus DoResetNode(PVMFDownloadManagerNodeCommand& aCmd);
-        PVMFStatus DoCancelAllCommands(PVMFDownloadManagerNodeCommand& aCmd);
-        PVMFStatus DoCancelCommand(PVMFDownloadManagerNodeCommand& aCmd);
-        // For metadata extention interface
-        PVMFStatus DoGetNodeMetadataKey(PVMFDownloadManagerNodeCommand& aCmd);
-        PVMFStatus DoGetNodeMetadataValue(PVMFDownloadManagerNodeCommand& aCmd);
-        // For data source position extension interface
-        PVMFStatus DoSetDataSourcePosition(PVMFDownloadManagerNodeCommand& aCmd);
-        PVMFStatus DoQueryDataSourcePosition(PVMFDownloadManagerNodeCommand& aCmd);
+        PVMFStatus DoQueryUuid();
+        PVMFStatus DoQueryInterface();
+        PVMFStatus DoRequestPort(PVMFPortInterface*& aPort);
+        PVMFStatus DoReleasePort();
+        PVMFStatus DoInit();
+        PVMFStatus DoPrepare();
+        PVMFStatus DoStart();
+        PVMFStatus DoStop();
+        PVMFStatus DoFlush();
+        PVMFStatus DoPause();
+        PVMFStatus DoReset();
 
         bool IsByteBasedDownloadProgress(OSCL_String &aDownloadProgressInfo);
         bool GetHttpExtensionHeaderParams(PvmiKvp &aParameter,
@@ -770,6 +543,8 @@ class PVMFDownloadManagerNode
         uint32 getItemLen(char *ptrItemStart, char *ptrItemEnd);
 
         bool IsDownloadExtensionHeaderValid(PvmiKvp &);
+
+        bool iDebugMode;
 
         // MIME type of the downloaded data
         OSCL_HeapString<OsclMemAllocator> iMimeType;
@@ -800,14 +575,10 @@ class PVMFDownloadManagerNode
         OSCL_wHeapString<OsclMemAllocator> iSourceURL;
         OsclAny*iSourceData;
 
-        PVMFNodeCapability iCapability;
         PVLogger* iLogger;
         friend class PVMFDownloadManagerSubNodeContainerBase;
         friend class PVMFDownloadManagerSubNodeContainer;
         friend class PVMFDownloadManagerRecognizerContainer;
-
-        // Reference counter for extension
-        uint32 iExtensionRefCount;
 
         //Sub-nodes.
         PVMFDownloadManagerSubNodeContainer iFormatParserNode;
@@ -887,7 +658,7 @@ class PVMFDownloadManagerNode
                 PVMFDownloadManagerSubNodeContainerBase::CmdType iCmd;
         };
         Oscl_Vector<CmdElem, OsclMemAllocator> iSubNodeCmdVec;
-        PVMFStatus ScheduleSubNodeCommands(PVMFDownloadManagerNodeCommand& aCmd);
+        PVMFStatus ScheduleSubNodeCommands();
         void Push(PVMFDownloadManagerSubNodeContainerBase&, PVMFDownloadManagerSubNodeContainerBase::CmdType);
 
         //Recognizer related
