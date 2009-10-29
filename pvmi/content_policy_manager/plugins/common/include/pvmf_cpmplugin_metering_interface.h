@@ -106,32 +106,6 @@ class PVMFCPMPluginMeteringInterface : public PVInterface
                                    , OsclAny* aContextData = NULL) = 0;
 
         /**
-         * Method to report metering data by iterating through the meter
-         * cert store.
-         * This method may acquire meter certs from a server.
-         *
-         * To get status during or after this operation, use GetMeteringStatus.
-         * To interrupt and cancel metering, use the plugin CancelCommand..
-         *
-         * @param [in] aSessionId: The observer session Id.
-         * @param [in] aMaxDataSize: The maximum data size for
-         *    each metering data buffer to be sent to the server.
-         *    If there is more data than this size, then multiple
-         *    server transactions will be done automatically.
-         * @param [in] aTimeoutMsec: Optional timeout in milliseconds
-         *    for each server communication.  Use -1 to indicate infinite wait.
-         * @param [in] aContextData: Optional user data that will be returned
-         *    in the command completion callback.
-         *
-         * @returns A unique command id for asynchronous completion.
-         */
-        virtual PVMFCommandId ReportMeteringData(
-            PVMFSessionId aSessionId
-            , uint32 aMaxDataSize
-            , int32 aTimeoutMsec = (-1)
-                                   , OsclAny* aContextData = NULL) = 0;
-
-        /**
          * Method to get a list of all MIDs in the current meter cert store.
          *
          * @param [out] aMeterCertList: List of all MIDs.
