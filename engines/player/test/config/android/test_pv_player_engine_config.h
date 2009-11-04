@@ -24,9 +24,6 @@
 
 #define USE_NATIVE_SCHEDULER 0
 
-#ifndef IGNORE_DEFAULT_CFG
-#include "test_pv_player_engine_config_ext.h"
-#endif
 
 // MP4 files to test.
 #define LOCAL_TEST_FILE_MP4_FORMAT_TYPE PVMF_MIME_MPEG4FF
