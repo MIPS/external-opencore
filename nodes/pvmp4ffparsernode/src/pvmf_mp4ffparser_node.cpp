@@ -2598,7 +2598,7 @@ void PVMFMP4FFParserNode::CompleteInit(PVMFMP4FFParserNodeCmdQueue& aCmdQ,
             if (iApprovedUsage.value.uint32_value !=
                     iRequestedUsage.value.uint32_value)
             {
-                if ((iCPMSourceData.iIntent & BITMASK_PVMF_SOURCE_INTENT_PLAY) == 0)
+                if (iCPMSourceData.iIntent == BITMASK_PVMF_SOURCE_INTENT_GETMETADATA)
                 {
                     CommandComplete(aCmdQ,
                                     aCmd,
@@ -2622,7 +2622,7 @@ void PVMFMP4FFParserNode::CompleteInit(PVMFMP4FFParserNodeCmdQueue& aCmdQ,
         }
         else if (iCPMContentType == PVMF_CPM_FORMAT_OMA2)
         {
-            if ((iCPMSourceData.iIntent & BITMASK_PVMF_SOURCE_INTENT_PLAY) == 0)
+            if (iCPMSourceData.iIntent == BITMASK_PVMF_SOURCE_INTENT_GETMETADATA)
             {
                 CommandComplete(aCmdQ,
                                 aCmd,
@@ -2798,6 +2798,12 @@ PVMFStatus PVMFMP4FFParserNode::DoStop(PVMFMP4FFParserNodeCommand& aCmd)
         for (uint32 i = 0; i < iNodeTrackPortList.size(); i++)
         {
             iNodeTrackPortList[i].iTimestamp = 0;
+
+            /* @TODO: This should not be required. However, FMU's GetFrame()
+             *        stops the playerengine and reinitializes it. So, we would need
+             *        this temporary 'workaround' to re-retrieve a thumbnail.
+             */
+            iNodeTrackPortList[i].iThumbSampleDone = 0;
         }
         iMP4FileHandle->resetPlayback();
     }
@@ -7242,9 +7248,9 @@ PVMFMP4FFParserNode::CheckCPMCommandCompleteStatus(PVMFCommandId aID,
     }
     else if (aID == iCPMRequestUsageId)
     {
-        if ((iCPMSourceData.iIntent & BITMASK_PVMF_SOURCE_INTENT_PLAY) == 0)
+        if (iCPMSourceData.iIntent == BITMASK_PVMF_SOURCE_INTENT_GETMETADATA)
         {
-            if (aStatus != PVMFSuccess)
+            if ((aStatus == PVMFErrDrmLicenseNotFound) || (aStatus == PVMFErrDrmLicenseExpired))
             {
                 /*
                  * If we are doing metadata only then we don't care

@@ -613,6 +613,7 @@ class PVFrameAndMetadataUtility
 
         // User specified player data source handle
         PVPlayerDataSource* iDataSource;
+        uint32 iSourceIntent;
         PVMFLocalDataSource* iLocalDataSource;
 
         // Video data sink

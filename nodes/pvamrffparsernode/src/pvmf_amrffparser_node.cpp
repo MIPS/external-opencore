@@ -2303,7 +2303,20 @@ PVMFAMRFFParserNode::CheckCPMCommandCompleteStatus(PVMFCommandId aID,
         }
 
     }
-
+    else if (aID == iCPMRequestUsageId)
+    {
+        if (iCPMSourceData.iIntent == BITMASK_PVMF_SOURCE_INTENT_GETMETADATA)
+        {
+            if ((aStatus == PVMFErrDrmLicenseNotFound) || (aStatus == PVMFErrDrmLicenseExpired))
+            {
+                /*
+                 * If we are doing metadata only then we don't care
+                 * if license is not available
+                 */
+                status = PVMFSuccess;
+            }
+        }
+    }
     return status;
 }
 

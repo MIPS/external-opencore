@@ -113,6 +113,7 @@ PVFrameAndMetadataUtility::~PVFrameAndMetadataUtility()
     }
     // Remove the data source handle
     iDataSource = NULL;
+    iSourceIntent = 0;
 
     OSCL_DELETE(iTimeoutTimer);
 }
@@ -385,6 +386,7 @@ PVFrameAndMetadataUtility::PVFrameAndMetadataUtility() :
         iPlayer(NULL),
         iOutputFormatType(PVMF_MIME_FORMAT_UNKNOWN),
         iDataSource(NULL),
+        iSourceIntent(0),
         iVideoNode(NULL),
         iVideoMIO(NULL),
         iAudioNode(NULL),
@@ -501,6 +503,7 @@ void PVFrameAndMetadataUtility::Run()
         }
         // Remove the data source handle
         iDataSource = NULL;
+        iSourceIntent = 0;
 
         // Cancel any pending timers
         if (iTimeoutTimer)
@@ -646,6 +649,7 @@ void PVFrameAndMetadataUtility::CommandCompleted(const PVCmdResponse& aResponse)
         if (playerstate == PVP_STATE_IDLE && iState != PVFM_UTILITY_STATE_IDLE)
         {
             iDataSource = NULL;
+            iSourceIntent = 0;
             iState = PVFM_UTILITY_STATE_IDLE;
         }
 
@@ -953,6 +957,7 @@ void PVFrameAndMetadataUtility::HandleInformationalEvent(const PVAsyncInformatio
                     }
                     // Remove the data source handle
                     iDataSource = NULL;
+                    iSourceIntent = 0;
 
                     SetUtilityState(PVFM_UTILITY_STATE_IDLE);
                 }
@@ -1627,8 +1632,36 @@ PVMFStatus PVFrameAndMetadataUtility::DoAddDataSource(PVFMUtilityCommand& aCmd)
 
     // Save the data source
     iDataSource = (PVPlayerDataSource*)(aCmd.GetParam(0).pOsclAny_value);
-    iLocalDataSource = (PVMFLocalDataSource*)(iDataSource->GetDataSourceContextData());
-
+    PVInterface* pvInterface = OSCL_STATIC_CAST(PVInterface*, (iDataSource->GetDataSourceContextData()));
+    if (pvInterface)
+    {
+        PVInterface* localDataSrc = NULL;
+        PVUuid localDataSrcUuid(PVMF_LOCAL_DATASOURCE_UUID);
+        if (pvInterface->queryInterface(localDataSrcUuid, localDataSrc))
+        {
+            PVMFLocalDataSource* opaqueData =
+                OSCL_STATIC_CAST(PVMFLocalDataSource*, localDataSrc);
+            opaqueData->iIntent &= ~(BITMASK_PVMF_SOURCE_INTENT_PLAY);
+            iSourceIntent = opaqueData->iIntent;
+        }
+        else
+        {
+            PVInterface* sourceDataContext = NULL;
+            PVInterface* commonDataContext = NULL;
+            PVUuid sourceContextUuid(PVMF_SOURCE_CONTEXT_DATA_UUID);
+            PVUuid commonContextUuid(PVMF_SOURCE_CONTEXT_DATA_COMMON_UUID);
+            if (pvInterface->queryInterface(sourceContextUuid, sourceDataContext))
+            {
+                if (sourceDataContext->queryInterface(commonContextUuid, commonDataContext))
+                {
+                    PVMFSourceContextDataCommon* cContext =
+                        OSCL_STATIC_CAST(PVMFSourceContextDataCommon*, commonDataContext);
+                    cContext->iIntent &= ~(BITMASK_PVMF_SOURCE_INTENT_PLAY);
+                    iSourceIntent = cContext->iIntent;
+                }
+            }
+        }
+    }
     // Initiate the player setup sequence
     PVMFStatus cmdstatus = DoADSPlayerAddDataSource(aCmd.GetCmdId(), aCmd.GetContext());
 
@@ -2087,6 +2120,12 @@ PVMFStatus PVFrameAndMetadataUtility::DoGetFrame(PVFMUtilityCommand& aCmd)
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVFrameAndMetadataUtility::DoGetFrame() called in wrong mode (%d)", iMode));
         return PVMFErrArgument;
     }
+
+    if (iSourceIntent == BITMASK_PVMF_SOURCE_INTENT_GETMETADATA)
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVFrameAndMetadataUtility::DoGetFrame() called with wrong source intent (0x%x)", iSourceIntent));
+        return PVMFErrArgument;
+    }
     int32 leavecode = 0;
 
     // Retrieve the requested video frame
@@ -2225,7 +2264,12 @@ PVMFStatus PVFrameAndMetadataUtility::DoGFPlayerPrepare(PVCommandId aCmdId, Oscl
     iFrameReceived = false;
 
     PVMFStatus retval;
-    if (iVideoFrameSelector->iSelectionMethod == PVFrameSelector::SPECIFIC_FRAME)
+    if (iSourceIntent & BITMASK_PVMF_SOURCE_INTENT_THUMBNAILS)
+    {
+        // When the THUMBNAIL intent is set, only one frame will be sent to the Video MIO.
+        retval = iVideoMIO->GetFrameByFrameNumber(0 /*FrameNum*/, iCurrentVideoFrameBuffer, *iVideoFrameBufferSize, iOutputFormatType, *this);
+    }
+    else if (iVideoFrameSelector->iSelectionMethod == PVFrameSelector::SPECIFIC_FRAME)
     {
         // Request the frame retrieval video MIO to retrieve the specified frame
         retval = iVideoMIO->GetFrameByFrameNumber(iVideoFrameSelector->iFrameInfo.iFrameIndex, iCurrentVideoFrameBuffer, *iVideoFrameBufferSize, iOutputFormatType, *this);
@@ -2732,7 +2776,7 @@ void PVFrameAndMetadataUtility::HandleADSPlayerInit(PVFMUtilityContext& aUtilCon
             }
             else if (iLocalDataSource != NULL)
             {
-                if (iLocalDataSource->iIntent == BITMASK_PVMF_SOURCE_INTENT_GETMETADATA)
+                if (iSourceIntent == BITMASK_PVMF_SOURCE_INTENT_GETMETADATA)
                 {
                     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_INFO, (0, "PVFrameAndMetadataUtility::HandleADSPlayerInit - ADS Complete"));
                     // Utility's AddDataSource() successfully completed
@@ -4274,6 +4318,7 @@ void PVFrameAndMetadataUtility::HandleRDSPlayerRemoveDataSource(PVFMUtilityConte
             // Utility's RemoveDataSource() successfully completed
             SetUtilityState(PVFM_UTILITY_STATE_IDLE);
             iDataSource = NULL;
+            iSourceIntent = 0;
 
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iPerfLogger, PVLOGMSG_NOTICE,
                             (0, "PVFrameAndMetadataUtility::RemoveDataSource() completed successfully Tick=%d", OsclTickCount::TickCount()));
@@ -4287,6 +4332,7 @@ void PVFrameAndMetadataUtility::HandleRDSPlayerRemoveDataSource(PVFMUtilityConte
             // set the data source handle to NULL and change to idle state
             SetUtilityState(PVFM_UTILITY_STATE_IDLE);
             iDataSource = NULL;
+            iSourceIntent = 0;
 
             PVMFErrorInfoMessageInterface* nextmsg = NULL;
             if (aCmdResp.GetEventExtensionInterface())

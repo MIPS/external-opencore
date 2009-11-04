@@ -207,39 +207,38 @@ class pvframemetadata_utility_test : public test_case,
         enum PVFrameMetadataUtilityAsyncTests
         {
             NewDeleteTest = 0,
-            GetSourceMetadataTest = NewDeleteTest + 1,
-            GetSourceMetadataandFrameTest = GetSourceMetadataTest + 1,
-            GetSourceMetadataandBestFrameTest = GetSourceMetadataandFrameTest + 1,
-            GetAllMetadataTest = GetSourceMetadataandBestFrameTest + 1, //4
+            GetSourceMetadataTest,
+            GetSourceMetadataandFrameTest,
+            GetSourceMetadataandBestFrameTest,
+            GetAllMetadataTest, //4
 
-            GetFirstFrameYUV420AndMetadataTest = GetAllMetadataTest + 1, //5
-            GetFirstFrameYUV420UtilityBufferTest = GetFirstFrameYUV420AndMetadataTest + 1,
-            GetFirstFrameRGB12AndMetadataTest = GetFirstFrameYUV420UtilityBufferTest + 1,
-            GetFirstFrameRGB12UtilityBufferTest = GetFirstFrameRGB12AndMetadataTest + 1,
-            GetFirstFrameRGB16AndMetadataTest = GetFirstFrameRGB12UtilityBufferTest + 1,
-            GetFirstFrameRGB16UtilityBufferTest = GetFirstFrameRGB16AndMetadataTest + 1,
-            GetFirstFrameRGB24AndMetadataTest = GetFirstFrameRGB16UtilityBufferTest + 1,
-            GetFirstFrameRGB24UtilityBufferTest = GetFirstFrameRGB24AndMetadataTest + 1, //12
+            GetFirstFrameYUV420AndMetadataTest, //5
+            GetFirstFrameYUV420UtilityBufferTest,
+            GetFirstFrameRGB12AndMetadataTest,
+            GetFirstFrameRGB12UtilityBufferTest,
+            GetFirstFrameRGB16AndMetadataTest,
+            GetFirstFrameRGB16UtilityBufferTest,
+            GetFirstFrameRGB24AndMetadataTest,
+            GetFirstFrameRGB24UtilityBufferTest, //12
 
-            Get30thFrameTest = GetFirstFrameRGB24UtilityBufferTest + 1, //13
-            Get10secFrameTest = Get30thFrameTest + 1,
+            Get30thFrameTest, //13
+            Get10secFrameTest,
+            CancelCommandTest, //15
 
-            CancelCommandTest = Get10secFrameTest + 1, //15
+            MultipleGetFirstFrameAndMetadataTest, //16
+            MultipleGetFramesYUVTest,
+            MultipleGetFramesRGB24Test,
+            InvalidSourceFileTest,
+            NoGetFrameTest, //20
+            NoVideoTrackTest,
+            ProtectedMetadataTest, //Hardcoded test content -- jazz1.wma
+            ProtectedThumbnailTest_WithThumbnailIntent, //Hardcoded test content -- stc10v.wmv
+            ProtectedThumbnailTest_WithPlayIntent, //Hardcoded test content -- stc10v.wmv
+            ProtectedThumbnailTest_WithMetadataIntent, //Hardcoded test content -- stc10v.wmv
+            SetTimeoutAndGetFrameTest,
+            SetPlayerKeyTest,
 
-            MultipleGetFirstFrameAndMetadataTest = CancelCommandTest + 1, //16
-            MultipleGetFramesYUVTest = MultipleGetFirstFrameAndMetadataTest + 1,
-            MultipleGetFramesRGB24Test = MultipleGetFramesYUVTest + 1,
-
-            InvalidSourceFileTest = MultipleGetFramesRGB24Test + 1, //19
-            NoGetFrameTest = InvalidSourceFileTest + 1,
-            NoVideoTrackTest = NoGetFrameTest + 1,
-            ProtectedMetadataTest = NoVideoTrackTest + 1,
-
-            SetTimeoutAndGetFrameTest = ProtectedMetadataTest + 1,
-            SetPlayerKeyTest = SetTimeoutAndGetFrameTest + 1,
-
-            LastTest = SetPlayerKeyTest + 1,//placeholder
-
+            LastTest, //placeholder
             BeyondLastTest = 999 //placeholder
         };
 

@@ -976,6 +976,16 @@ void pvframemetadata_utility_test::test()
             case ProtectedMetadataTest:
                 fprintf(file, "Janus CPM test cases disabled\n");
                 break;
+            case ProtectedThumbnailTest_WithThumbnailIntent:
+                fprintf(file, "Janus CPM test cases disabled\n");
+                break;
+            case ProtectedThumbnailTest_WithPlayIntent:
+                fprintf(file, "Janus CPM test cases disabled\n");
+                break;
+            case ProtectedThumbnailTest_WithMetadataIntent:
+                fprintf(file, "Janus CPM test cases disabled\n");
+                break;
+
             case SetTimeoutAndGetFrameTest:
                 iCurrentTest = new pvframemetadata_async_test_settimeout_getframe(testparam, 2, false);
                 break;

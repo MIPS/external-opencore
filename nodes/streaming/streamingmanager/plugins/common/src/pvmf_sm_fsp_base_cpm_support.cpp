@@ -351,6 +351,8 @@ OSCL_EXPORT_REF void PVMFSMFSPBaseNode::CompleteDRMInit()
         return;
     }
     //If protected content, get the decryption interface, if the intent is play
+    //Decryption interface for thumbnail intent is not needed as of today for
+    //streaming source.
     if (iCPMSourceData.iIntent & BITMASK_PVMF_SOURCE_INTENT_PLAY)
     {
         PVUuid uuid = PVMFCPMPluginDecryptionInterfaceUuid;

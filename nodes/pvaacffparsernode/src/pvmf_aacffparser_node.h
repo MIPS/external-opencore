@@ -511,8 +511,6 @@ class PVMFAACFFParserNode
         PVMFStatus DoSetDataSourcePosition();
         PVMFStatus DoQueryDataSourcePosition();
         PVMFStatus DoSetDataSourceRate();
-        PVMFStatus DoGetLicense(bool aWideCharVersion = false);
-        PVMFStatus DoCancelGetLicense();
 
         int32 AddToValueList(Oscl_Vector<PvmiKvp, OsclMemAllocator>& aValueList, PvmiKvp& aNewValue);
 

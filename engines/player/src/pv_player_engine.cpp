@@ -4444,6 +4444,49 @@ PVMFStatus PVPlayerEngine::DoAddDataSource(PVPlayerEngineCommand& aCmd)
 
     // Save the data source
     iDataSource = (PVPlayerDataSource*)(aCmd.GetParam(0).pOsclAny_value);
+    PVInterface* pvInterface = OSCL_STATIC_CAST(PVInterface*, (iDataSource->GetDataSourceContextData()));
+    uint32 intent = 0;
+    bool isIntentPresent = false;
+    if (pvInterface)
+    {
+        PVInterface* localDataSrc = NULL;
+        PVUuid localDataSrcUuid(PVMF_LOCAL_DATASOURCE_UUID);
+        if (pvInterface->queryInterface(localDataSrcUuid, localDataSrc))
+        {
+            PVMFLocalDataSource* opaqueData =
+                OSCL_STATIC_CAST(PVMFLocalDataSource*, localDataSrc);
+            intent = opaqueData->iIntent;
+            isIntentPresent = true;
+        }
+        else
+        {
+            PVInterface* sourceDataContext = NULL;
+            PVInterface* commonDataContext = NULL;
+            PVUuid sourceContextUuid(PVMF_SOURCE_CONTEXT_DATA_UUID);
+            PVUuid commonContextUuid(PVMF_SOURCE_CONTEXT_DATA_COMMON_UUID);
+            if (pvInterface->queryInterface(sourceContextUuid, sourceDataContext))
+            {
+                if (sourceDataContext->queryInterface(commonContextUuid, commonDataContext))
+                {
+                    PVMFSourceContextDataCommon* cContext =
+                        OSCL_STATIC_CAST(PVMFSourceContextDataCommon*, commonDataContext);
+                    intent = cContext->iIntent;
+                    isIntentPresent = true;
+                }
+            }
+        }
+        if ((isIntentPresent) &&
+                (((intent & (BITMASK_PVMF_SOURCE_INTENT_THUMBNAILS + BITMASK_PVMF_SOURCE_INTENT_PLAY + BITMASK_PVMF_SOURCE_INTENT_GETMETADATA)) == 0) ||
+                 ((intent & (BITMASK_PVMF_SOURCE_INTENT_THUMBNAILS + BITMASK_PVMF_SOURCE_INTENT_PLAY))
+                  == (BITMASK_PVMF_SOURCE_INTENT_THUMBNAILS + BITMASK_PVMF_SOURCE_INTENT_PLAY))))
+        {
+            // 1. Make sure that atleast one of the available intents is set.
+            // 2. Make sure that thumbnail and play intents are not set simultaneously.
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_PROF, iLogger, PVLOGMSG_ERR,
+                            (0, "PVPlayerEngine::DoAddDataSource() Intent (0x%x) passed in source context data is not valid.", intent));
+            return PVMFErrArgument;
+        }
+    }
 
     // (mg) For rollover reset to first available alternate
     iAlternateSrcFormatIndex = 0;
