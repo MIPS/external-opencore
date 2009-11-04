@@ -55,7 +55,6 @@ OMX_ERRORTYPE CallbackEventHandler(OMX_OUT OMX_HANDLETYPE aComponent,
     if (Node->IsComponentMultiThreaded())
     {
         // allocate the memory for the callback event specific data
-        //EventHandlerSpecificData* ED = (EventHandlerSpecificData*) oscl_malloc(sizeof (EventHandlerSpecificData));
         EventHandlerSpecificData* ED = (EventHandlerSpecificData*) Node->iThreadSafeHandlerEventHandler->iMemoryPool->allocate(sizeof(EventHandlerSpecificData));
 
         // pack the relevant data into the structure
@@ -97,7 +96,6 @@ OMX_ERRORTYPE CallbackEmptyBufferDone(OMX_OUT OMX_HANDLETYPE aComponent,
     {
 
         // allocate the memory for the callback event specific data
-        //EmptyBufferDoneSpecificData* ED = (EmptyBufferDoneSpecificData*) oscl_malloc(sizeof (EmptyBufferDoneSpecificData));
         EmptyBufferDoneSpecificData* ED = (EmptyBufferDoneSpecificData*) Node->iThreadSafeHandlerEmptyBufferDone->iMemoryPool->allocate(sizeof(EmptyBufferDoneSpecificData));
 
         // pack the relevant data into the structure
@@ -133,7 +131,6 @@ OMX_ERRORTYPE CallbackFillBufferDone(OMX_OUT OMX_HANDLETYPE aComponent,
     {
 
         // allocate the memory for the callback event specific data
-        //FillBufferDoneSpecificData* ED = (FillBufferDoneSpecificData*) oscl_malloc(sizeof (FillBufferDoneSpecificData));
         FillBufferDoneSpecificData* ED = (FillBufferDoneSpecificData*) Node->iThreadSafeHandlerFillBufferDone->iMemoryPool->allocate(sizeof(FillBufferDoneSpecificData));
 
         // pack the relevant data into the structure
@@ -296,6 +293,15 @@ OSCL_EXPORT_REF PVMFOMXBaseDecNode::~PVMFOMXBaseDecNode()
         oscl_free(out_ctrl_struct_ptr);
         out_ctrl_struct_ptr = NULL;
     }
+
+    if (iTrackUnderVerificationConfig)
+    {
+        oscl_free(iTrackUnderVerificationConfig);
+        iTrackUnderVerificationConfig = NULL;
+        iTrackUnderVerificationConfigSize = 0;
+    }
+
+    iOMXPreferredComponentOrderVec.clear();
 
     iLogger = NULL;
 
@@ -484,6 +490,9 @@ OSCL_EXPORT_REF PVMFOMXBaseDecNode::PVMFOMXBaseDecNode(int32 aPriority, const ch
     iKeepDroppingMsgsUntilMarkerBit = false;
     sendFsi = true;
 
+    iTrackUnderVerificationConfigSize = 0;
+    iTrackUnderVerificationConfig = NULL;
+    iOMXPreferredComponentOrderVec.clear();
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -3939,160 +3948,385 @@ OSCL_EXPORT_REF PVMFStatus PVMFOMXBaseDecNode::DoPrepare()
     }
 
 
+    /* Set callback structure */
+    iCallbacks.EventHandler    = CallbackEventHandler; //event_handler;
+    iCallbacks.EmptyBufferDone = CallbackEmptyBufferDone; //empty_buffer_done;
+    iCallbacks.FillBufferDone  = CallbackFillBufferDone; //fill_buffer_done;
+
     //Buffer large enough to store any kind of output parameter struct.
     char                  outputParameters[sizeof(VideoOMXConfigParserOutputs)];
     OMXConfigParserInputs inputParameters;
+
+
+    inputParameters.inPtr = (uint8*)((PVMFOMXDecPort*)iInPort)->iTrackConfig;
+    inputParameters.inBytes = (int32)((PVMFOMXDecPort*)iInPort)->iTrackConfigSize;
+
+    if (inputParameters.inBytes == 0 || inputParameters.inPtr == NULL)
+    {
+        // in case of following formats - config codec data is expected to
+        // be present in the query. If not, config parser cannot be called
+
+        if (format == PVMF_MIME_WMA ||
+                format == PVMF_MIME_MPEG4_AUDIO ||
+                format == PVMF_MIME_3640 ||
+                format == PVMF_MIME_LATM ||
+                format == PVMF_MIME_ADIF ||
+                format == PVMF_MIME_ASF_MPEG4_AUDIO ||
+                format == PVMF_MIME_AAC_SIZEHDR ||
+                format == PVMF_MIME_H264_VIDEO ||
+                format == PVMF_MIME_H264_VIDEO_MP4 ||
+                format == PVMF_MIME_M4V ||
+                format == PVMF_MIME_WMV ||
+                format == PVMF_MIME_REAL_VIDEO)
+        {
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
+                            (0, "%s::DoPrepare() Codec Config data is not present", iName.Str()));
+            return PVMFErrNoResources;
+        }
+    }
+
+    // in case of ASF_MPEG4 audio need to create aac config header
+    if (format == PVMF_MIME_ASF_MPEG4_AUDIO)
+    {
+
+        if (!CreateAACConfigDataFromASF(inputParameters.inPtr, inputParameters.inBytes, &iAACConfigData[0], iAACConfigDataLength))
+        {
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
+                            (0, "%s::DoPrepare() Error in AAC Codec Config data", iName.Str()));
+            return PVMFErrNoResources;
+        }
+
+        inputParameters.inPtr = &iAACConfigData[0];
+        inputParameters.inBytes = iAACConfigDataLength;
+    }
+
+
+
     OMX_BOOL status = OMX_FALSE;
     Oscl_Vector<OMX_STRING, OsclMemAllocator>::iterator role;
-    bool found = false;
+
     iIsVC1 = false;
     iIsVC1AdvancedProfile = false; /* default*/
 
-    for (role = roles.begin(); (role != roles.end()) && !found; role++)
+
+
+    OMX_U32 total_num_comps = 0;
+    OMX_U32 *num_comps_for_role = NULL;
+    OMX_U32 num_roles = roles.size(); // this is typically 1, but can be more than 1
+    OMX_STRING *CompOfRole = NULL;
+    OMX_U32 cumulative_comps = 0;
+    OMX_U32 ii = 0;
+
+    bool isTrackSelectionHelperUsed = false;
+
+    // Do we have a track selection helper list?
+    if (iOMXPreferredComponentOrderVec.size() > 0)
     {
-        inputParameters.cComponentRole = *role;
+        isTrackSelectionHelperUsed = true;
+        // If we have the list - no need to build it from scratch (the list of
+        // components that support the role(s) was built during
+        // track selection and verification for each track.
+        // Also, each omx component in the list has already been verified to support the track
+
+        total_num_comps = iOMXPreferredComponentOrderVec.size();
+
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
+                        (0, "%s::DoPrepare(): USING PREFERRED LIST OF COMPONENTS FROM THE ENGINE TRACK SELECTION HELPER - There are %d component for the given format ", iName.Str(), iOMXPreferredComponentOrderVec.size()));
+
+
+    }
+    else // ELSE no track selection helper
+    {
+        // we need to build a list of components that support the role(s)
+
+        num_comps_for_role = (OMX_U32*) oscl_malloc(num_roles * sizeof(OMX_U32));
+        if (num_comps_for_role == NULL)
+        {
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVMFOMXVideoDecNode::DoCapConfigGetParametersSync() Memory allocation for num array failed"));
+            return PVMFErrNoMemory;
+        }
+
+        // get the total number of components first that supports N roles
+        for (ii = 0, role = roles.begin(); role != roles.end(); role++, ii++)
+        {
+            inputParameters.cComponentRole = *role;
+
+            // call once to find out the number of components that can fit the given role and save
+            OMX_MasterGetComponentsOfRole(inputParameters.cComponentRole, &num_comps_for_role[ii], NULL);
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
+                            (0, "%s::DoPrepare(): There are %d components of role %s ", iName.Str(), num_comps_for_role[ii], *role));
+            total_num_comps += num_comps_for_role[ii];
+        }
+    }
+
+    // Now that we know the number of omx components for the role, we need to construct the list of OMX component names
+
+    // Are there any omx components?
+    if (total_num_comps > 0)
+    {
+        CompOfRole = (OMX_STRING *) oscl_malloc(total_num_comps * sizeof(OMX_STRING));
+        if (!CompOfRole)
+        {
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
+                            (0, "%s::DoPrepare(): unable to allocate CompOfRole", iName.Str()));
+            if (num_comps_for_role)
+                oscl_free(num_comps_for_role);
+
+            return PVMFErrNoMemory;
+        }
+        // allocate memory for component names in one chunk
+        OMX_U8 *memblockomx = (OMX_U8 *) oscl_malloc(total_num_comps * PV_OMX_MAX_COMPONENT_NAME_LENGTH * sizeof(OMX_U8));
+        if (memblockomx == NULL)
+        {
+            oscl_free(CompOfRole);
+            if (num_comps_for_role)
+                oscl_free(num_comps_for_role);
+
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
+                            (0, "%s::DoPrepare(): unable to allocate CompOfRole[0]", iName.Str()));
+            return PVMFErrNoMemory;
+        }
+        oscl_memset(memblockomx, 0, total_num_comps * PV_OMX_MAX_COMPONENT_NAME_LENGTH * sizeof(OMX_U8));
+        for (ii = 0; ii < total_num_comps; ii++)
+        {
+            CompOfRole[ii] = (OMX_STRING)(memblockomx + (ii * PV_OMX_MAX_COMPONENT_NAME_LENGTH * sizeof(OMX_U8)));
+        }
+
+
+        // If this is track selection helper - copy component names from the track selection helper list
+        if (isTrackSelectionHelperUsed)
+        {
+            ii = 0;
+            Oscl_Vector<OMX_STRING, OsclMemAllocator>::iterator component_name;
+            for (component_name = iOMXPreferredComponentOrderVec.begin();
+                    component_name != iOMXPreferredComponentOrderVec.end();
+                    component_name++)
+            {
+                oscl_strncpy(CompOfRole[ii++]
+                             , *component_name
+                             , PV_OMX_MAX_COMPONENT_NAME_LENGTH * sizeof(OMX_U8));
+            }
+        }
+        else // No track selection list ...
+        {
+            // need to crate the list by calling OMX_MasterGetComponentsOfRole
+            OMX_U32 cumulative_comps = 0;
+            for (ii = 0, role = roles.begin(); role != roles.end(); role++, ii++)
+            {
+                OMX_U32 num = 0;
+                // call 2nd time to fill the component names into the array
+                OMX_MasterGetComponentsOfRole((OMX_STRING) *role, &num, (OMX_U8 **) &CompOfRole[cumulative_comps]);
+                cumulative_comps += num_comps_for_role[ii];
+            }
+        }
+
+    } // end of iftotal_num_comps
+
+    // Now, we have the complete list of omx components that support the role(s)
+    // In case of multiple roles (i.e. VC1 + WMV), and in case of track selection helper list,
+    // roles of components in the list can be mixed such that VC1 component can be followed by WMV, followed by VC1 etc.
+    // In case of no track selection helper and multiple roles, component list that we built contain roles that
+    // are ordered such that all VC1 components are listed first, followed by all WMV components etc.
+
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
+                    (0, "%s::DoPrepare(): There are a total of %d components for the given format", iName.Str(), total_num_comps));
+
+
+    // Go through all the components, and try to instantiate and negotiate with the component.
+    // If there are multiple components that fit the role and format, and the track selection helper
+    // is used, components are selected based on the order provided by the track selection helper list.
+    // If there is no track selection helper, the components are listed and selected in the order they were
+    // registered during OMX_MasterInit
+    // If one component fails to pass config parser test, fails to be created or fails negotiation of parameters,
+    // the next one in the list is selected etc. until one component is found that works OK.
+
+
+    // init the role
+
+    uint32 role_ctr = 0;
+
+    if (!isTrackSelectionHelperUsed)
+    {
+        cumulative_comps = num_comps_for_role[role_ctr]; // remember in case of multiple roles
+    }
+
+    role = roles.begin();
+    inputParameters.cComponentRole = *role;
+
+    for (ii = 0; ii < total_num_comps; ii++)
+    {
+
+        inputParameters.cComponentName = CompOfRole[ii];
+
+        // in case of multiple roles for a format - check if we need to update the role
+        if (!isTrackSelectionHelperUsed)
+        {
+            if (ii == cumulative_comps)
+            {
+                // This happens if say, there are 2 roles(e.g. VC1, WMV) and 3 components for VC1 role, and 4 components for WMV role
+                // Then - num_comps_for_role[0] = 3, and num_comps_for_role[1] = 4, total_num_comps = 7
+                // If we've processed all components for the current role and previous roles, it's time to update the role
+
+                // NOTE: in case of track selection helper list - this udpate would be meaningless because
+                // components in the track selection helper list can have mixed roles (i.e. roles are not ordered)
+                role_ctr++;
+                role++;
+                inputParameters.cComponentRole = *role;
+                cumulative_comps += num_comps_for_role[role_ctr];
+            }
+
+            status = OMX_MasterConfigParser(&inputParameters, outputParameters);
+        }
+        else
+        {
+            // In case of track selection helper list, there is no need to check the config parser. This has already
+            // been done during the formation of the list.
+            // However, we do need to find out the role of the component in question.
+
+            // assume status is false
+            status = OMX_FALSE;
+            // find out how many roles the component supports
+            OMX_U32 NumRoles;
+            err = OMX_MasterGetRolesOfComponent(inputParameters.cComponentName, &NumRoles, NULL);
+            if ((err != OMX_ErrorNone) || (NumRoles == 0))
+            {
+                // in case of a problem, move on to the next component
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
+                                (0, "%s::DoPrepare() Problem getting component role for component %s", iName.Str(), inputParameters.cComponentName));
+
+                continue;
+            }
+
+            OMX_STRING *CompRoles = NULL;
+            CompRoles = (OMX_STRING *) oscl_malloc(NumRoles * sizeof(OMX_STRING *));
+            if (NULL == CompRoles)
+            {
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
+                                (0, "%s::DoPrepare() Problem getting component role for component %s", iName.Str(), inputParameters.cComponentName));
+                continue;
+            }
+
+            OMX_U8 *memblockomx = NULL;
+
+            memblockomx = (OMX_U8 *) oscl_malloc(NumRoles * PV_OMX_MAX_COMPONENT_NAME_LENGTH * sizeof(OMX_U8));
+            if (memblockomx == NULL)
+            {
+                oscl_free(CompRoles);
+
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
+                                (0, "%s::DoPrepare(): unable to allocate CompRole[0]", iName.Str()));
+                continue;
+            }
+            oscl_memset(memblockomx, 0, NumRoles * PV_OMX_MAX_COMPONENT_NAME_LENGTH * sizeof(OMX_U8));
+            OMX_U32 jj = 0;
+            for (jj = 0; jj < NumRoles; jj++)
+            {
+                CompRoles[jj] = (OMX_STRING)(memblockomx + (jj * PV_OMX_MAX_COMPONENT_NAME_LENGTH * sizeof(OMX_U8)));
+            }
+
+            // now call to get all the component roles
+            err = OMX_MasterGetRolesOfComponent(inputParameters.cComponentName, &NumRoles, (OMX_U8 **) CompRoles);
+            if ((err != OMX_ErrorNone) || (NumRoles == 0))
+            {
+                // in case of a problem, move on to the next component
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
+                                (0, "%s::DoPrepare() Problem getting component role for component %s", iName.Str(), inputParameters.cComponentName));
+
+                oscl_free(memblockomx);
+                oscl_free(CompRoles);
+                continue;
+            }
+
+            // now, match the format role with the component role (there has to be at least 1 match)
+            for (role = roles.begin(); role != roles.end(); role++)
+            {
+                for (jj = 0; jj < NumRoles; jj++)
+                {
+                    if (oscl_strcmp((OMX_STRING) *role, (OMX_STRING) CompRoles[jj]) == 0)
+                    {
+                        inputParameters.cComponentRole = *role;
+                        status = OMX_TRUE;
+                        break;
+                    }
+                }
+
+                if (status == OMX_TRUE)
+                    break;
+            }
+
+            oscl_free(memblockomx);
+            oscl_free(CompRoles);
+
+            // call the config parser to get the width/height etc.
+            status = OMX_MasterConfigParser(&inputParameters, outputParameters);
+
+        }
+
 
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_DEBUG,
-                        (0, "%s::Initializing OMX component and decoder for role %s", iName.Str(), *role));
+                        (0, "%s::Initializing OMX component %s and decoder for role %s", iName.Str(), CompOfRole[ii], *role));
 
-        /* Set callback structure */
-        iCallbacks.EventHandler    = CallbackEventHandler; //event_handler;
-        iCallbacks.EmptyBufferDone = CallbackEmptyBufferDone; //empty_buffer_done;
-        iCallbacks.FillBufferDone  = CallbackFillBufferDone; //fill_buffer_done;
-
-
-        // determine components which can fit the role
-        // then, create the component. If multiple components fit the role,
-        // the first one registered will be selected. If that one fails to
-        // be created, the second one in the list is selected etc.
-
-        OMX_U32 num_comps = 0;
-        OMX_STRING *CompOfRole;
-
-        inputParameters.inPtr = (uint8*)((PVMFOMXDecPort*)iInPort)->iTrackConfig;
-        inputParameters.inBytes = (int32)((PVMFOMXDecPort*)iInPort)->iTrackConfigSize;
-
-        if (inputParameters.inBytes == 0 || inputParameters.inPtr == NULL)
+        if (status == OMX_TRUE)
         {
-            // in case of following formats - config codec data is expected to
-            // be present in the query. If not, config parser cannot be called
+            // try to create component
+            err = OMX_MasterGetHandle(&iOMXDecoder, (OMX_STRING) inputParameters.cComponentName, (OMX_PTR) this, (OMX_CALLBACKTYPE *) & iCallbacks);
 
-            if (format == PVMF_MIME_WMA ||
-                    format == PVMF_MIME_MPEG4_AUDIO ||
-                    format == PVMF_MIME_3640 ||
-                    format == PVMF_MIME_LATM ||
-                    format == PVMF_MIME_ADIF ||
-                    format == PVMF_MIME_ASF_MPEG4_AUDIO ||
-                    format == PVMF_MIME_AAC_SIZEHDR ||
-                    format == PVMF_MIME_H264_VIDEO ||
-                    format == PVMF_MIME_H264_VIDEO_MP4 ||
-                    format == PVMF_MIME_M4V ||
-                    format == PVMF_MIME_WMV ||
-                    format == PVMF_MIME_REAL_VIDEO)
+            if ((err == OMX_ErrorNone) && (iOMXDecoder != NULL))
             {
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                                (0, "%s::DoPrepare() Codec Config data is not present", iName.Str()));
-                return PVMFErrNoResources;
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
+                                (0, "%s::DoPrepare(): Got Component %s handle ", iName.Str(), inputParameters.cComponentName));
             }
+            else
+            {
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
+                                (0, "%s::DoPrepare(): Cannot get component %s handle, try another component if available", iName.Str(), inputParameters.cComponentName));
+                status = OMX_FALSE;
+                continue;
+            }
+
+            if (!CheckComponentForMultRoles(inputParameters.cComponentName, inputParameters.cComponentRole))
+            {
+                // error, free handle and try to find a different component
+                OMX_MasterFreeHandle(iOMXDecoder);
+                iOMXDecoder = NULL;
+                status = OMX_FALSE;
+                continue;
+            }
+
+            if (!CheckComponentCapabilities(&format, outputParameters))
+            {
+                // error, free handle and try to find a different component
+                OMX_MasterFreeHandle(iOMXDecoder);
+                iOMXDecoder = NULL;
+                status = OMX_FALSE;
+                continue;
+            }
+
+            // found a component, and it passed all tests.   no need to continue.
+            // in case of multiple roles per Mime type (i.e. VC1 vs WMV)
+            // we need to check whether the selected component supports VC1 role or the WMV role
+            if (0 == oscl_strcmp(*role, "video_decoder.vc1"))
+            {
+                iIsVC1 = true;
+            }
+
+            break;
+        }
+        else
+        {
+            status = OMX_FALSE;
         }
 
-        // in case of ASF_MPEG4 audio need to create aac config header
-        if (format == PVMF_MIME_ASF_MPEG4_AUDIO)
-        {
+    } // end of for( total_num_comps )
 
-            if (!CreateAACConfigDataFromASF(inputParameters.inPtr, inputParameters.inBytes, &iAACConfigData[0], iAACConfigDataLength))
-            {
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                                (0, "%s::DoPrepare() Error in AAC Codec Config data", iName.Str()));
-                return PVMFErrNoResources;
-            }
+    // whether successful or not, need to free CompOfRoles
+    oscl_free(CompOfRole[0]); // only the 0th block was allocated
+    oscl_free(CompOfRole);
 
-            inputParameters.inPtr = &iAACConfigData[0];
-            inputParameters.inBytes = iAACConfigDataLength;
-        }
+    if (num_comps_for_role)
+        oscl_free(num_comps_for_role);
 
-        // call 1st time to find out the number of components that can fit the role
-        OMX_MasterGetComponentsOfRole(*role, &num_comps, NULL);
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
-                        (0, "%s::DoPrepare(): There are %d components of role %s ", iName.Str(), num_comps, *role));
-        uint32 ii;
 
-        if (num_comps > 0)
-        {
-            CompOfRole = (OMX_STRING *)oscl_malloc(num_comps * sizeof(OMX_STRING));
-
-            for (ii = 0; ii < num_comps; ii++)
-                CompOfRole[ii] = (OMX_STRING) oscl_malloc(PV_OMX_MAX_COMPONENT_NAME_LENGTH * sizeof(OMX_U8));
-
-            // call 2nd time to get the component names
-            OMX_MasterGetComponentsOfRole(*role, &num_comps, (OMX_U8 **)CompOfRole);
-
-            for (ii = 0; ii < num_comps; ii++)
-            {
-                inputParameters.cComponentName = CompOfRole[ii];
-                status = OMX_MasterConfigParser(&inputParameters, outputParameters);
-                if (status == OMX_TRUE)
-                {
-                    // try to create component
-                    err = OMX_MasterGetHandle(&iOMXDecoder, (OMX_STRING) inputParameters.cComponentName, (OMX_PTR) this, (OMX_CALLBACKTYPE *) & iCallbacks);
-
-                    if ((err == OMX_ErrorNone) && (iOMXDecoder != NULL))
-                    {
-                        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
-                                        (0, "%s::DoPrepare(): Got Component %s handle ", iName.Str(), inputParameters.cComponentName));
-                    }
-                    else
-                    {
-                        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
-                                        (0, "%s::DoPrepare(): Cannot get component %s handle, try another component if available", iName.Str(), inputParameters.cComponentName));
-                        status = OMX_FALSE;
-                        continue;
-                    }
-
-                    if (!CheckComponentForMultRoles(inputParameters.cComponentName, inputParameters.cComponentRole))
-                    {
-                        // error, free handle and try to find a different component
-                        OMX_MasterFreeHandle(iOMXDecoder);
-                        iOMXDecoder = NULL;
-                        status = OMX_FALSE;
-                        continue;
-                    }
-
-                    if (!CheckComponentCapabilities(&format, outputParameters))
-                    {
-                        // error, free handle and try to find a different component
-                        OMX_MasterFreeHandle(iOMXDecoder);
-                        iOMXDecoder = NULL;
-                        status = OMX_FALSE;
-                        continue;
-                    }
-
-                    // found a component, and it passed all tests.   no need to continue.
-
-                    found = true;
-                    if (0 == oscl_strcmp(*role, "video_decoder.vc1"))
-                    {
-                        iIsVC1 = true;
-                    }
-
-                    break;
-                }
-                else
-                {
-                    status = OMX_FALSE;
-                }
-            }
-            // whether successful or not, need to free CompOfRoles
-            for (ii = 0; ii < num_comps; ii++)
-            {
-                oscl_free(CompOfRole[ii]);
-                CompOfRole[ii] = NULL;
-            }
-
-            oscl_free(CompOfRole);
-
-        } //end loop though components for role
-    } //end loop through roles
 
     // reset the flag requiring config data processing by the component (even if it has been set previously) -
     // when we send config data (if a data format requires it) - we may set this flag to true

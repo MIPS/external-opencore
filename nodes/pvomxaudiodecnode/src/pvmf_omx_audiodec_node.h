@@ -72,6 +72,10 @@ class PVMFOMXAudioDecNode: public PVMFOMXBaseDecNode
 
         // for WMA params
         bool VerifyParametersSync(PvmiMIOSession aSession, PvmiKvp* aParameters, int num_elements);
+
+        PVMFStatus DoCapConfigGetParametersSync(PvmiKeyType aIdentifier, PvmiKvp*& aParameters, int& aNumParamElements, PvmiCapabilityContext aContext);
+        PVMFStatus DoCapConfigReleaseParameters(PvmiKvp* aParameters, int aNumElements);
+
     private:
 
         PVMFStatus DoQueryUuid();

@@ -7297,6 +7297,7 @@ PVMFStatus PVPlayerEngine::DoTrackSelection(bool oPopulatePlayableListOnly, bool
                 {
                     //add it to playable list
                     iPlayableList.addTrackInfo(*curtrack);
+
                 }
             }
 
@@ -7346,6 +7347,17 @@ PVMFStatus PVPlayerEngine::DoTrackSelection(bool oPopulatePlayableListOnly, bool
                                         iDatapathList[j].iDecNode = iTrackSelectionList[k].iTsDecNode;
                                         iDatapathList[j].iDecNodeSessionId = iTrackSelectionList[k].iTsDecNodeSessionId;
                                         iDatapathList[j].iDecNodeCapConfigIF = iTrackSelectionList[k].iTsDecNodeCapConfigIF;
+
+                                        // once the track is selected and added to datapath - tell the dec node about preferences (i.e. which omx component to prioritize)
+                                        if (iTrackSelectionHelper)
+                                        {
+                                            PVMFStatus status = NotifyDecNodeAboutComponentPreferences(iTrackSelectionList[k], curtrack);
+                                            if (status != PVMFSuccess)
+                                            {
+                                                // just log , but ignore, perhaps the dec node does not support the interface
+                                                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVPlayerEngine::DoTrackSelection() Cannot set dec node component preference for TrackId=%d", trackId));
+                                            }
+                                        }
                                     }
 
                                     iTrackSelectionList[k].iTsSinkNode = NULL;
@@ -7366,7 +7378,7 @@ PVMFStatus PVPlayerEngine::DoTrackSelection(bool oPopulatePlayableListOnly, bool
                         }
                         // a track has already been assigned for the datapath, check next datapath for the track
                     }
-                    k = iTrackSelectionList.size();
+                    k = iTrackSelectionList.size(); // break out of the for(k = ...) loop
                 }
                 // The trackId of the track does not match with the track in the List, check the next track.
             }
@@ -7433,6 +7445,7 @@ PVMFStatus PVPlayerEngine::DoVerifyTrackInfo(PVPlayerEngineTrackSelection &aTrac
     const char* aFormatValType = PVMF_FORMAT_SPECIFIC_INFO_KEY;
     OsclRefCounterMemFrag aConfig;
 
+
     kvp.length = oscl_strlen(aFormatValType) + 1; // +1 for \0
     kvp.key = (PvmiKeyType)alloc.ALLOCATE(kvp.length);
     if (kvp.key == NULL)
@@ -7444,112 +7457,248 @@ PVMFStatus PVPlayerEngine::DoVerifyTrackInfo(PVPlayerEngineTrackSelection &aTrac
     kvp.value.key_specific_value = (OsclAny*)(aConfig.getMemFragPtr());
     kvp.capacity = aConfig.getMemFragSize();
 
+    aTrack->setTrackWidth((uint32) 0); // initialize to 0 to invalidate
+    aTrack->setTrackHeight((uint32) 0);
+
     //Check if we have decoder node cap-config
     if (aTrackSelection.iTsDecNodeCapConfigIF != NULL)
     {
+
         PVMFFormatType DecnodeFormatType = aTrack->getTrackMimeType().get_str();
 
         PvmiKvp* iErrorKVP = NULL;
-        PvmiKvp iKVPSetFormat;
-        iKVPSetFormat.key = NULL;
+
+
+        // NOTES: 1) set both the FSI and MIME type as KVP parameters
+        // if track selection helper is present, we'll send both parameters in setparamsync call
+        // 2) in this piece of code - we don't know if we're dealing with audio or video dec node/track.
+        // so, we'll first try to set VIDEO parameters. If it succeeds - we're dealing with video dec node.
+        // if this fails - we'll try to set AUDIO parameters. If it succeeds,we're dealing with audio dec node
+        // if both audio & video queries fail, then track just fails
+
+        // 3) if track selection helper is present & omx nodes need to supply list of omx components, we'll try to
+        // use the omx customized queries. If this method fails, we'll fall back to "old" method that simply checks if track config info is
+        // valid/decodable or not (e.g. this would be the case with the old nodes that don't use Omx components).
+
+        // 4) If track selection helper is not present, we don't need need the list of omx components that support the track, and
+        // we'll just use the "old" simplified method for both omx&non-omx nodes that simply checks if track config info is
+        // valid/decodable or not
+
+        // 5) The simplified method requires a set parameter to set the MIME type, and then use verifyparameters call (which provides FSI)
+        // 6) The new omx customized method requires a set parameter to set both the Mime type and FSI, and then uses a getparameter call to
+        // get the list of omx component that support the track.
+
+        int numKvp = 0;
+        PvmiKvp* kvpPtr;
+
+        PvmiKvp iKVPSetFormat[2];
+        iKVPSetFormat[0] = kvp; // this is format specific info
+        iKVPSetFormat[1].key = NULL;
         OSCL_StackString<64> iKeyStringSetFormat;
-        iKVPSetFormat.value.pChar_value = (char*)DecnodeFormatType.getMIMEStrPtr();
+        iKVPSetFormat[1].value.pChar_value = (char*)DecnodeFormatType.getMIMEStrPtr();
 
-        // Query for video decoder first with the track, if no success, then check for audio decoder. Only one query will succeed.
-        // If both fails, check the status.
+
+
+        // Query for video decoder first with the track (providing both MIME type and FSI), if no success, then use the "old" method that just provides
+        // the mime type. If this fails as well - attempt the same thing for audio.
+        // for audio decoder.
+
         iKeyStringSetFormat = _STRLIT_CHAR(PVMF_VIDEO_DEC_FORMAT_TYPE_VALUE_KEY);
-        iKVPSetFormat.key = iKeyStringSetFormat.get_str();
+        iKVPSetFormat[1].key = iKeyStringSetFormat.get_str();
 
-        aTrackSelection.iTsDecNodeCapConfigIF->setParametersSync(NULL, &iKVPSetFormat, 1, iErrorKVP);
-        if (iErrorKVP == NULL)
+        bool isVideoAttempt = true;
+        // loop to avoid code duplication. In the first pass - we try video the node, if it works - we break out of the loop
+        // in the 2nd pass - we try the audio node (most of the code is the same), and break out of the loop
+        while (true)
         {
-            //verify codec specific info
-            int32 leavecode = 0;
-            OSCL_TRY(leavecode, aCheckcodec = aTrackSelection.iTsDecNodeCapConfigIF->verifyParametersSync(NULL, &kvp, 1));
-            OSCL_FIRST_CATCH_ANY(leavecode,
-                                 PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::DoVerifyTrackInfo() unsupported verifyParametersSync did a leave!"));
-                                 alloc.deallocate((OsclAny*)(kvp.key));
-                                 aCheckcodec = PVMFSuccess; // set it success in case track selection info is not yet available;
-                                 return PVMFSuccess;);
 
-            if (aCheckcodec != PVMFSuccess)
+            if (iTrackSelectionHelper)
             {
-                alloc.deallocate((OsclAny*)(kvp.key));
-                //In case of other error code, this is operation error.
-                if (aCheckcodec != PVMFErrNotSupported)
+                aTrackSelection.iTsDecNodeCapConfigIF->setParametersSync(NULL, iKVPSetFormat, 2, iErrorKVP);
+                if (iErrorKVP == NULL)
                 {
-                    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::DoVerifyTrackInfo() verifyParametersSync() on decoder node failed"));
-                    return aCheckcodec;
+                    // video set parameter succeeded - proceed with video.
+
+
+                    // Query using get
+                    OSCL_StackString<64> querykey;
+
+                    // try to check the list of omx components that support the track
+                    querykey = _STRLIT_CHAR(PVMF_DEC_AVAILABLE_OMX_COMPONENTS_KEY);
+
+                    aCheckcodec = aTrackSelection.iTsDecNodeCapConfigIF->getParametersSync(NULL, querykey.get_str(), kvpPtr, numKvp, NULL);
+                    if (aCheckcodec == PVMFSuccess)
+                    {
+                        if (numKvp > 0)
+                        {
+                            Oscl_Vector<OMXDecComponentItem, OsclMemAllocator> *pOMXcomponentList;
+                            pOMXcomponentList = aTrack->getOMXComponentSupportingTheTrackVec();
+                            int ii = 0;
+                            char *str = NULL;
+                            uint32 len = 0;
+                            for (ii = 0; ii < numKvp; ii++)
+                            {
+                                // get a string from the list and push it into the OMXComponentList
+                                str = kvpPtr[ii].value.pChar_value;
+                                len = kvpPtr[ii].length;
+                                pOMXcomponentList->push_back(OMXDecComponentItem(str, len));
+                            }
+
+                        }
+                        else
+                        {
+                            // the omx component list that support the track is empty, i.e. the track is not supported
+                            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::DoVerifyTrackInfo() verifyParametersSync() on decoder node succeeded - but no omx components support the track"));
+                            return PVMFErrNotSupported;
+
+                        }
+
+                        // must release memory
+                        status = aTrackSelection.iTsDecNodeCapConfigIF->releaseParameters(NULL, kvpPtr, numKvp);
+
+                    }
+                    else
+                    {
+                        // the query for omx component list that support the track failed
+                        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::DoVerifyTrackInfo() verifyParametersSync() on decoder node failed - no omx component supports the track"));
+                        return PVMFErrNotSupported;
+
+                    }
                 }
-                return status;
             }
 
-            int numKvp = 0;
-            PvmiKvp* kvpPtr;
-            // Query using get
-            OSCL_StackString<64> querykey;
-
-            querykey = _STRLIT_CHAR("x-pvmf/video/render");
-            if (aTrackSelection.iTsDecNodeCapConfigIF->getParametersSync(NULL, querykey.get_str(), kvpPtr, numKvp, NULL) == PVMFSuccess)
+            if ((iTrackSelectionHelper && iErrorKVP != NULL) || !iTrackSelectionHelper)
             {
-                //verify width/height
-                if (aTrackSelection.iTsSinkNodeCapConfigIF != NULL)
-                    aCheckcodec = aTrackSelection.iTsSinkNodeCapConfigIF->verifyParametersSync(NULL, kvpPtr, numKvp);
-                status = aTrackSelection.iTsDecNodeCapConfigIF->releaseParameters(NULL, kvpPtr, numKvp);
+                // invoking this piece of code means that we want to use the simplified track selection
+                // (without getting the list of omx components).
+                // this means that either no track selection helper is present (in which case - we apply the simplified method
+                // to both omx and non-omx nodes), or that the track selection helper is present, but that the previous
+                // set parameter call (meant to get the list of omx components) failed because we are dealing with old nodes which cannot take both the FSI & MIME info, only the MIME type
+
+                iErrorKVP = NULL;
+
+                // NOTE: Format type value key is stored at iKVPSetFormat[1] position (so that old nodes could reject the
+                // previous query
+                aTrackSelection.iTsDecNodeCapConfigIF->setParametersSync(NULL, &iKVPSetFormat[1], 1, iErrorKVP);
+                if (iErrorKVP == NULL)
+                {
+                    //verify codec specific info thru a function call (to avoid clobbering)
+                    aCheckcodec = TryDecNodeVerifyParameterSync(aTrackSelection, &kvp);
+
+                    if (aCheckcodec == PVMFFailure)
+                    {
+                        // this is the error that gets returned from the method in case of verifyparametersync did a leave
+                        alloc.deallocate((OsclAny*)(kvp.key));
+                        aCheckcodec = PVMFSuccess;
+                        return PVMFSuccess;
+                    }
+                    else if (aCheckcodec != PVMFSuccess)
+                    {
+                        alloc.deallocate((OsclAny*)(kvp.key));
+                        //In case of other error code, this is operation error.
+                        if (aCheckcodec != PVMFErrNotSupported)
+                        {
+                            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::DoVerifyTrackInfo() verifyParametersSync() on decoder node failed"));
+                            return aCheckcodec;
+                        }
+                        return status;
+                    }
+                }
             }
-        }
-        else
-        {
-            // Query failed for video decoder next try the audio decoder.
-            iErrorKVP = NULL;
-            iKeyStringSetFormat = NULL;
-            iKVPSetFormat.key = NULL;
-
-            iKeyStringSetFormat += _STRLIT_CHAR(PVMF_AUDIO_DEC_FORMAT_TYPE_VALUE_KEY);
-            iKVPSetFormat.key = iKeyStringSetFormat.get_str();
-
-            aTrackSelection.iTsDecNodeCapConfigIF->setParametersSync(NULL, &iKVPSetFormat, 1, iErrorKVP);
 
             if (iErrorKVP == NULL)
             {
-                //verify codec specific info
-                int32 leavecodeaudio = 0;
-                OSCL_TRY(leavecodeaudio, aCheckcodec = aTrackSelection.iTsDecNodeCapConfigIF->verifyParametersSync(NULL, &kvp, 1));
-                OSCL_FIRST_CATCH_ANY(leavecodeaudio,
-                                     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::DoVerifyTrackInfo() unsupported verifyParametersSync did a leave!"));
-                                     alloc.deallocate((OsclAny*)(kvp.key));
-                                     aCheckcodec = PVMFSuccess; // set it success in case track selection info is not yet available;
-                                     return PVMFSuccess;);
 
-                if (aCheckcodec != PVMFSuccess)
+                numKvp = 0;
+                if (true == isVideoAttempt)
                 {
-                    alloc.deallocate((OsclAny*)(kvp.key));
-                    //In case of other error code, this is operation error.
-                    if (aCheckcodec != PVMFErrNotSupported)
+                    // if we end up here, i.e.
+                    // if either simple track verify method or omx list verify track method succeeded for video,
+                    // then we know that this is video node and track. We need to verify things with sink node)
+
+                    // verify widht/height with the sink
+                    OSCL_StackString<64> querykey;
+                    querykey = _STRLIT_CHAR("x-pvmf/video/render");
+                    if (aTrackSelection.iTsDecNodeCapConfigIF->getParametersSync(NULL, querykey.get_str(), kvpPtr, numKvp, NULL) == PVMFSuccess)
                     {
-                        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::DoVerifyTrackInfo() verifyParametersSync() on decoder node failed"));
-                        return aCheckcodec;
+                        for (int32 ii = 0; ii < numKvp; ii++)
+                        {
+
+                            // record width and height of the video track
+                            if (pv_mime_strcmp(kvpPtr[ii].key, MOUT_VIDEO_WIDTH_KEY) >= 0)
+                            {
+                                aTrack->setTrackWidth(kvpPtr[0].value.uint32_value);
+                            }
+                            if (pv_mime_strcmp(kvpPtr[ii].key, MOUT_VIDEO_HEIGHT_KEY) >= 0)
+                            {
+                                aTrack->setTrackHeight(kvpPtr[1].value.uint32_value);
+                            }
+                        }
+
+                        //verify width/height
+                        if (aTrackSelection.iTsSinkNodeCapConfigIF != NULL)
+                            aCheckcodec = aTrackSelection.iTsSinkNodeCapConfigIF->verifyParametersSync(NULL, kvpPtr, numKvp);
+                        status = aTrackSelection.iTsDecNodeCapConfigIF->releaseParameters(NULL, kvpPtr, numKvp);
                     }
-                    return status;
                 }
-
-                int numKvp = 0;
-                PvmiKvp* kvpPtr;
-                // Query using get
-                OSCL_StackString<64> querykey;
-
-                querykey = _STRLIT_CHAR("x-pvmf/audio/render");
-                if (aTrackSelection.iTsDecNodeCapConfigIF->getParametersSync(NULL, querykey.get_str(), kvpPtr, numKvp, NULL) == PVMFSuccess)
+                else
                 {
-                    //verify samplerate and channels
-                    if (aTrackSelection.iTsSinkNodeCapConfigIF != NULL)
-                        aCheckcodec = aTrackSelection.iTsSinkNodeCapConfigIF->verifyParametersSync(NULL, kvpPtr, numKvp);
-                    status = aTrackSelection.iTsDecNodeCapConfigIF->releaseParameters(NULL, kvpPtr, numKvp);
+                    // this was the attempt to communicate with audio node, and it succeeded
+                    // if we end up here, i.e.
+                    // if either simple track verify method or omx list verify track method succeeded for audio,
+                    // then we know that this is audio node and track. We need to verify few things with sink node)
+                    numKvp = 0;
+                    OSCL_StackString<64> querykey;
+                    querykey = _STRLIT_CHAR("x-pvmf/audio/render");
+                    if (aTrackSelection.iTsDecNodeCapConfigIF->getParametersSync(NULL, querykey.get_str(), kvpPtr, numKvp, NULL) == PVMFSuccess)
+                    {
+                        //verify samplerate and channels
+                        if (aTrackSelection.iTsSinkNodeCapConfigIF != NULL)
+                            aCheckcodec = aTrackSelection.iTsSinkNodeCapConfigIF->verifyParametersSync(NULL, kvpPtr, numKvp);
+                        status = aTrackSelection.iTsDecNodeCapConfigIF->releaseParameters(NULL, kvpPtr, numKvp);
+                    }
                 }
+
+                break; // the attempt succeeded, so need to go through the loop again
             }
-        }
+            else
+            {
+                // this attempt failed. If it was an attempt to communicate with video node,
+                // then, repeat the loop for audio node.
+                // If it was already the attempt to communicate with audio node then, we've run out of options.
+                if (true == isVideoAttempt)
+                {
+                    // if we ended up here, it means that neither omx list nor the simplified verification worked for video
+                    // meaning that this is audio track and audio node (or else that something else is wrong)
+                    // Set up the parameters for audio here
+                    isVideoAttempt = false;
+                    iErrorKVP = NULL;
+
+                    iKeyStringSetFormat = NULL;
+                    // format specific info is already in iKVPSetFormat[0]
+                    // adjust the [1] field again to fit the audio case
+                    iKVPSetFormat[1].key = NULL;
+
+                    iKeyStringSetFormat += _STRLIT_CHAR(PVMF_AUDIO_DEC_FORMAT_TYPE_VALUE_KEY);
+                    iKVPSetFormat[1].key = iKeyStringSetFormat.get_str();
+                    // now go back and repeat the loop for audio
+                }
+                else
+                {
+                    // both video and audio set parameter sync failed for the parameter for both
+                    // omx list method and the simplified track verify method
+                    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::DoVerifyTrackInfo() No queries worked for either video or audio decoder node"));
+                    break; // break out of the loop
+
+                }
+
+            }
+
+        }// end of while(true)
+
+
     }
-    else
+    else // end of if(check whether we have dec node cap config)
     {
         if (aTrackSelection.iTsSinkNodeCapConfigIF != NULL)
         {
@@ -17430,6 +17579,93 @@ void PVPlayerEngine::DereferenceLicenseInterface()
     }
 }
 
+#define PV_OMX_MAX_COMPONENT_NAME_LENGTH 128
+PVMFStatus PVPlayerEngine::NotifyDecNodeAboutComponentPreferences(PVPlayerEngineTrackSelection &aTrackSelection, PVMFTrackInfo* aTrack)
+{
+
+    // check how many components are available
+    Oscl_Vector<OMXDecComponentItem, OsclMemAllocator> *pOMXcomponentList;
+    pOMXcomponentList = aTrack->getOMXComponentSupportingTheTrackVec();
+
+    if ((aTrackSelection.iTsDecNodeCapConfigIF != NULL) && (pOMXcomponentList->size() > 0))
+    {
+
+        // allocate memory for the kvp
+        PvmiKvp *Parameters = NULL;
+        Parameters = (PvmiKvp*)OSCL_MALLOC(sizeof(PvmiKvp));
+        if (Parameters == NULL)
+        {
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::NotifyDecNodeAboutComponentPreferences - Memory allocation for KVP failed"));
+            return PVMFErrNoMemory;
+        }
+
+        oscl_memset(Parameters, 0, sizeof(PvmiKvp));
+
+        // Allocate memory for the key
+        Parameters->key = (PvmiKeyType)OSCL_MALLOC((sizeof(_STRLIT_CHAR(PVMF_DEC_AVAILABLE_OMX_COMPONENTS_KEY)) + 1) * sizeof(char));
+        if (Parameters->key == NULL)
+        {
+            OSCL_FREE(Parameters);
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::NotifyDecNodeAboutComponentPreferences Memory allocation for key string failed"));
+            return PVMFErrNoMemory;
+        }
+
+        oscl_strset(Parameters->key, 0, (sizeof(_STRLIT_CHAR(PVMF_DEC_AVAILABLE_OMX_COMPONENTS_KEY)) + 1) * sizeof(char));
+
+        oscl_strncat(Parameters->key, _STRLIT_CHAR(PVMF_DEC_AVAILABLE_OMX_COMPONENTS_KEY), sizeof(_STRLIT_CHAR(PVMF_DEC_AVAILABLE_OMX_COMPONENTS_KEY)));
+        Parameters->key[sizeof(_STRLIT_CHAR(PVMF_DEC_AVAILABLE_OMX_COMPONENTS_KEY))] = 0; // null terminate
+
+        PvmiKvp* iErrorKVP = NULL;
+        Oscl_Vector<OMXDecComponentItem, OsclMemAllocator>::iterator component_item;
+        for (component_item = pOMXcomponentList->begin(); component_item != pOMXcomponentList->end(); component_item++)
+        {
+            // set the pointer based on the item in the list
+            OSCL_HeapString<OsclMemAllocator> omxcompname = (*component_item).getOMXComponentName();
+            Parameters->value.pChar_value = omxcompname.get_str();
+            Parameters->capacity = omxcompname.get_maxsize();
+
+
+            // now that KVP is ready - call SetParameterSync
+            aTrackSelection.iTsDecNodeCapConfigIF->setParametersSync(NULL, Parameters, 1, iErrorKVP);
+
+            if (iErrorKVP != NULL)
+            {
+                // release memory
+                OSCL_FREE(Parameters->key);
+                OSCL_FREE(Parameters);
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::NotifyDecNodeAboutComponentPreferences cannot set omx component preferred list in the dec node"));
+
+                return PVMFErrNotSupported;
+            }
+        }
+
+        // release memory
+        OSCL_FREE(Parameters->key);
+        OSCL_FREE(Parameters);
+        return PVMFSuccess;
+
+    }
+    else
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::NotifyDecNodeAboutComponentPreferences dec node does not support capconfig IF or no component supports the track "));
+        return PVMFErrNotSupported;
+
+    }
+
+}
+
+PVMFStatus PVPlayerEngine::TryDecNodeVerifyParameterSync(PVPlayerEngineTrackSelection &aTrackSelection, PvmiKvp *kvp)
+{
+//verify codec specific info
+    int32 leavecode = 0;
+    PVMFStatus status = PVMFSuccess;
+    OSCL_TRY(leavecode, status = aTrackSelection.iTsDecNodeCapConfigIF->verifyParametersSync(NULL, kvp, 1));
+    OSCL_FIRST_CATCH_ANY(leavecode,
+                         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::TryDecNodeVerifyParameterSync unsupported verifyParametersSync did a leave!"));
+                         return PVMFFailure;);
+
+    return status;
+}
 // END FILE
 
 

@@ -486,6 +486,9 @@ class PvmfAssetInfo3GPPLocationStruct
 // Keys for format specific info for any type of media
 #define PVMF_FORMAT_SPECIFIC_INFO_KEY "x-pvmf/media/format_specific_info;valtype=key_specific_value"
 
+// key for obtaining available OMX components
+#define PVMF_DEC_AVAILABLE_OMX_COMPONENTS_KEY "x-pvmf/media/omx_component_list;valtype=char*"
+
 // Keys for extended format specific info for  audio media
 #define PVMF_ASF_AUDIO_TYPE_SPECIFIC_INFO_KEY  "x-pvmf/media/asf_audio_type_specific_info;valtype=key_specific_value"
 

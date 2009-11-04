@@ -1473,6 +1473,8 @@ class PVPlayerEngine
 
         void       DereferenceLicenseInterface();
 
+        PVMFStatus NotifyDecNodeAboutComponentPreferences(PVPlayerEngineTrackSelection &aTrackSelection, PVMFTrackInfo* aTrack);
+        PVMFStatus TryDecNodeVerifyParameterSync(PVPlayerEngineTrackSelection &aTrackSelection, PvmiKvp *kvp);
         // Handle to the logger node
         PVLogger* iLogger;
         PVLogger* iReposLogger;

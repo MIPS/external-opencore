@@ -681,6 +681,10 @@ class PVMFOMXBaseDecNode: public PVMFNodeInterfaceImpl
         bool iIsVC1;
         bool iIsVC1AdvancedProfile;
 
+        uint32 iTrackUnderVerificationConfigSize;
+        uint8 *iTrackUnderVerificationConfig;
+        Oscl_Vector<OMX_STRING, OsclMemAllocator> iOMXPreferredComponentOrderVec;
+
     private:
         OSCL_IMPORT_REF PVMFStatus HandleExtensionAPICommands();
         OSCL_IMPORT_REF PVMFStatus CancelCurrentCommand();

@@ -2745,7 +2745,7 @@ PVMFStatus PVMFOMXAudioDecNode::DoCapConfigVerifyParameters(PvmiKvp* aParameters
     OSCL_UNUSED_ARG(aNumElements);
 
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                    (0, "PVMFOMXAudioDecNode::DoCapConfigVerifyParameters() In\n"));
+                    (0, "PVMFOMXAudioDecNode::DoCapConfigVerifyParameters() In"));
 
     pvAudioConfigParserInputs aInputs;
     OMXConfigParserInputs aInputParameters;
@@ -2881,14 +2881,14 @@ PVMFStatus PVMFOMXAudioDecNode::DoCapConfigVerifyParameters(PvmiKvp* aParameters
     {
         // if no component supports the role, nothing else to do
         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                        (0, "PVMFOMXAudioDecNode::DoCapConfigVerifyParameters() No omx component supports this role PVMFErrNotSupported\n"));
+                        (0, "PVMFOMXAudioDecNode::DoCapConfigVerifyParameters() No omx component supports this role PVMFErrNotSupported"));
         return PVMFErrNotSupported;
     }
 
     if (status == OMX_FALSE)
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                        (0, "PVMFOMXAudioDecNode::DoCapConfigVerifyParameters() ->OMXConfigParser() PVMFErrNotSupported\n"));
+                        (0, "PVMFOMXAudioDecNode::DoCapConfigVerifyParameters() ->OMXConfigParser() PVMFErrNotSupported"));
         return PVMFErrNotSupported;
     }
 
@@ -2909,42 +2909,86 @@ PVMFStatus PVMFOMXAudioDecNode::DoCapConfigVerifyParameters(PvmiKvp* aParameters
     }
 
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                    (0, "PVMFOMXAudioDecNode::DoCapConfigVerifyParameters() Out\n"));
+                    (0, "PVMFOMXAudioDecNode::DoCapConfigVerifyParameters() Out"));
     return PVMFSuccess;
 }
 
 void PVMFOMXAudioDecNode::DoCapConfigSetParameters(PvmiKvp* aParameters, int aNumElements, PvmiKvp* &aRetKVP)
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                    (0, "PVMFOMXAudioDecNode::DoCapConfigSetParameters() In\n"));
-    OSCL_UNUSED_ARG(aNumElements);
-    OSCL_UNUSED_ARG(aRetKVP);
+                    (0, "PVMFOMXAudioDecNode::DoCapConfigSetParameters() In"));
 
-    // find out if the audio dec format key is used for the query
-    if (pv_mime_strcmp(aParameters->key, PVMF_AUDIO_DEC_FORMAT_TYPE_VALUE_KEY) == 0)
+    if (aParameters == NULL || aNumElements < 1)
     {
-        // set the mime type if audio format is being used
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                        (0, "PVMFOMXAudioDecNode::DoCapConfigSetParameters() set audio dec format type to %s\n", aParameters->value.pChar_value));
-
-        iNodeConfig.iMimeType = aParameters->value.pChar_value;
-    }
-
-    else
-    {
-        // For now, ignore other queries
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                        (0, "PVMFOMXAudioDecNode::DoCapConfigSetParameters() Key not used"));
-
-        // indicate "error" by setting return KVP to the original
         aRetKVP = aParameters;
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVMFOMXAudioDecNode::DoCapConfigSetParameters() Passed in parameter invalid"));
+        return;
     }
 
+    int32 ii;
+
+    for (ii = 0; ii < aNumElements; ii ++)
+    {
+
+        // find out if the audio dec format key is used for the query
+        if (pv_mime_strcmp(aParameters[ii].key, PVMF_FORMAT_SPECIFIC_INFO_KEY) == 0)
+        {
+
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                            (0, "PVMFOMXAudioDecNode::DoCapConfigSetParameters() set audio format specific info"));
+
+            if (iTrackUnderVerificationConfig)
+            {
+                oscl_free(iTrackUnderVerificationConfig);
+                iTrackUnderVerificationConfig = NULL;
+                iTrackUnderVerificationConfigSize = 0;
+            }
+
+            iTrackUnderVerificationConfigSize = aParameters[ii].capacity;
+
+            if (iTrackUnderVerificationConfigSize > 0)
+            {
+                iTrackUnderVerificationConfig = (uint8*)(oscl_malloc(sizeof(uint8) * iTrackUnderVerificationConfigSize));
+                oscl_memcpy(iTrackUnderVerificationConfig, aParameters[ii].value.key_specific_value, iTrackUnderVerificationConfigSize);
+            }
+
+        }
+        else if (pv_mime_strcmp(aParameters[ii].key,  _STRLIT_CHAR(PVMF_DEC_AVAILABLE_OMX_COMPONENTS_KEY)) == 0)
+        {
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                            (0, "PVMFOMXAudioDecNode::DoCapConfigSetParameters() set preferred omx component list"));
+
+
+            // each kvp paramater corresponds to one omx component - a new item in the vector is created
+
+            iOMXPreferredComponentOrderVec.push_back((OMX_STRING)(aParameters[ii].value.pChar_value));
+
+
+        }
+        else if (pv_mime_strcmp(aParameters[ii].key, PVMF_AUDIO_DEC_FORMAT_TYPE_VALUE_KEY) == 0)
+        {
+            // set the mime type if audio format is being used
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                            (0, "PVMFOMXAudioDecNode::DoCapConfigSetParameters() set audio dec format type to %s", aParameters->value.pChar_value));
+
+            iNodeConfig.iMimeType = aParameters[ii].value.pChar_value;
+        }
+        else
+        {
+            // For now, ignore other queries
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                            (0, "PVMFOMXAudioDecNode::DoCapConfigSetParameters() Key not used"));
+
+            // indicate "error" by setting return KVP to the original
+            aRetKVP = aParameters;
+            break;
+        }
+    }
 
 
 
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                    (0, "PVMFOMXAudioDecNode::DoCapConfigSetParameters() Out\n"));
+                    (0, "PVMFOMXAudioDecNode::DoCapConfigSetParameters() Out"));
 }
 
 
@@ -2984,7 +3028,7 @@ bool PVMFOMXAudioDecNode::CreateAACConfigDataFromASF(uint8 *inptr, uint32 inlen,
     if (NULL == inptr || inlen < 20)
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                        (0, "PVMFOMXAudioDecNode::CreateAACConfigDataFromASF() Error - insufficient config data\n"));
+                        (0, "PVMFOMXAudioDecNode::CreateAACConfigDataFromASF() Error - insufficient config data"));
 
         return false;
     }
@@ -3067,7 +3111,7 @@ bool PVMFOMXAudioDecNode::CreateAACConfigDataFromASF(uint8 *inptr, uint32 inlen,
     if (i > 13)
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                        (0, "PVMFOMXAudioDecNode::CreateAACConfigDataFromASF() Error - unsupported sampling rate\n"));
+                        (0, "PVMFOMXAudioDecNode::CreateAACConfigDataFromASF() Error - unsupported sampling rate"));
 
         return false;
     }
@@ -3081,7 +3125,7 @@ bool PVMFOMXAudioDecNode::CreateAACConfigDataFromASF(uint8 *inptr, uint32 inlen,
     if ((NumChannels > 2))
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                        (0, "PVMFOMXAudioDecNode::CreateAACConfigDataFromASF() Error - unsupported number of channels\n"));
+                        (0, "PVMFOMXAudioDecNode::CreateAACConfigDataFromASF() Error - unsupported number of channels"));
 
         return false;
     }
@@ -3106,7 +3150,7 @@ bool PVMFOMXAudioDecNode::CreateAACConfigDataFromASF(uint8 *inptr, uint32 inlen,
         if (i > 13)
         {
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                            (0, "PVMFOMXAudioDecNode::CreateAACConfigDataFromASF() Error - unsupported sampling rate\n"));
+                            (0, "PVMFOMXAudioDecNode::CreateAACConfigDataFromASF() Error - unsupported sampling rate"));
 
             return false;
         }
@@ -3138,4 +3182,242 @@ bool PVMFOMXAudioDecNode::CreateAACConfigDataFromASF(uint8 *inptr, uint32 inlen,
 }
 
 
+PVMFStatus PVMFOMXAudioDecNode::DoCapConfigReleaseParameters(PvmiKvp* aParameters, int aNumElements)
+{
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFOMXAudioDecNode::DoCapConfigReleaseParameters() In"));
 
+    if (aParameters == NULL || aNumElements < 1)
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVMFOMXAudioDecNode::DoCapConfigReleaseParameters() KVP list is NULL or number of elements is 0"));
+        return PVMFErrArgument;
+    }
+
+
+    if (pv_mime_strcmp(aParameters[0].key, _STRLIT_CHAR(PVMF_DEC_AVAILABLE_OMX_COMPONENTS_KEY)) == 0)
+    {
+        // everything was allocated in blocks, so it's enough to release the beginning
+        oscl_free(aParameters[0].key);
+        oscl_free(aParameters[0].value.pChar_value);
+        // Free memory for the parameter list
+        oscl_free(aParameters);
+        aParameters = NULL;
+
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFOMXAudioDecNode::DoCapConfigReleaseParameters() Out"));
+        return PVMFSuccess;
+    }
+
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVMFOMXAudioDecNode::DoCapConfigReleaseParameters() KVP list is NULL or number of elements is 0"));
+    return PVMFErrArgument;
+}
+
+PVMFStatus PVMFOMXAudioDecNode::DoCapConfigGetParametersSync(PvmiKeyType aIdentifier, PvmiKvp*& aParameters, int& aNumParamElements, PvmiCapabilityContext aContext)
+{
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFOMXAudioDecNode::DoCapConfigGetParametersSync() In"));
+    OSCL_UNUSED_ARG(aContext);
+
+    // Initialize the output parameters
+    aNumParamElements = 0;
+    aParameters = NULL;
+
+    if (pv_mime_strcmp(aIdentifier, _STRLIT_CHAR(PVMF_DEC_AVAILABLE_OMX_COMPONENTS_KEY)) == 0)
+    {
+        // get the list of omx components that support the track.
+        // Track config info and mime type was previously set through capconfig - setparametersync
+
+        pvAudioConfigParserInputs aInputs;
+        OMXConfigParserInputs aInputParameters;
+        AudioOMXConfigParserOutputs aOutputParameters;
+
+        aInputs.inPtr = (uint8*) iTrackUnderVerificationConfig;
+        aInputs.inBytes = (int32) iTrackUnderVerificationConfigSize;
+        aInputs.iMimeType = iNodeConfig.iMimeType;
+
+        aInputParameters.inBytes = aInputs.inBytes;
+        aInputParameters.inPtr = aInputs.inPtr;
+
+        if (aInputs.inBytes == 0 || aInputs.inPtr == NULL)
+        {
+            // in case of following formats - config codec data is expected to
+            // be present in the query. If not, config parser cannot be called
+
+            if (aInputs.iMimeType == PVMF_MIME_WMA ||
+                    aInputs.iMimeType == PVMF_MIME_MPEG4_AUDIO ||
+                    aInputs.iMimeType == PVMF_MIME_3640 ||
+                    aInputs.iMimeType == PVMF_MIME_LATM ||
+                    aInputs.iMimeType == PVMF_MIME_ADIF ||
+                    aInputs.iMimeType == PVMF_MIME_ASF_MPEG4_AUDIO ||
+                    aInputs.iMimeType == PVMF_MIME_AAC_SIZEHDR)
+            {
+
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVMFOMXAudioDecNode::DoCapConfigGetParameters() Codec Config data is not present"));
+                return PVMFErrNotSupported;
+
+            }
+        }
+
+
+        // in case of ASF_MPEG4 audio need to create aac config header
+        if (aInputs.iMimeType == PVMF_MIME_ASF_MPEG4_AUDIO)
+        {
+            if (!CreateAACConfigDataFromASF(aInputParameters.inPtr, aInputParameters.inBytes, &iAACConfigData[0], iAACConfigDataLength))
+            {
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
+                                (0, "PVMFOMXAudioDecNode::DoCapConfigGetParameters() - Error in creating AAC Codec Config data"));
+
+
+                return PVMFErrNotSupported;
+            }
+
+            aInputParameters.inPtr = &iAACConfigData[0];
+            aInputParameters.inBytes = iAACConfigDataLength;
+        }
+
+
+        if (aInputs.iMimeType == PVMF_MIME_MPEG4_AUDIO ||
+                aInputs.iMimeType == PVMF_MIME_3640 ||
+                aInputs.iMimeType == PVMF_MIME_LATM ||
+                aInputs.iMimeType == PVMF_MIME_ADIF ||
+                aInputs.iMimeType == PVMF_MIME_ASF_MPEG4_AUDIO ||
+                aInputs.iMimeType == PVMF_MIME_AAC_SIZEHDR)
+        {
+            aInputParameters.cComponentRole = (OMX_STRING)"audio_decoder.aac";
+        }
+        // AMR
+        else if (aInputs.iMimeType == PVMF_MIME_AMR_IF2 ||
+                 aInputs.iMimeType == PVMF_MIME_AMR_IETF ||
+                 aInputs.iMimeType == PVMF_MIME_AMR)
+        {
+            aInputParameters.cComponentRole = (OMX_STRING)"audio_decoder.amrnb";
+        }
+        else if (aInputs.iMimeType == PVMF_MIME_AMRWB_IETF ||
+                 aInputs.iMimeType == PVMF_MIME_AMRWB)
+        {
+            aInputParameters.cComponentRole = (OMX_STRING)"audio_decoder.amrwb";
+        }
+        else if (aInputs.iMimeType == PVMF_MIME_MP3)
+        {
+            aInputParameters.cComponentRole = (OMX_STRING)"audio_decoder.mp3";
+        }
+        else if (aInputs.iMimeType ==  PVMF_MIME_WMA)
+        {
+            aInputParameters.cComponentRole = (OMX_STRING)"audio_decoder.wma";
+        }
+        else
+        {
+            // Illegal codec specified.
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "%s::PVMFOMXAudioDecNode::DoCapConfigGetParameters() Input port format other then codec type", iName.Str()));
+            return PVMFErrNotSupported;
+        }
+
+
+
+
+        OMX_BOOL status = OMX_FALSE;
+        OMX_U32 num_comps = 0;
+        OMX_STRING *CompOfRole;
+        OMX_U32 ii;
+
+        // call once to find out the number of components that can fit the role
+        OMX_MasterGetComponentsOfRole(aInputParameters.cComponentRole, &num_comps, NULL);
+
+
+
+
+        if (num_comps > 0)
+        {
+            // allocate num_comps kvps and keys all in one block
+
+            aParameters = (PvmiKvp*)oscl_malloc(num_comps * sizeof(PvmiKvp));
+            if (aParameters == NULL)
+            {
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVMFOMXVideoDecNode::DoCapConfigGetParametersSync() Memory allocation for KVP failed"));
+                return PVMFErrNoMemory;
+            }
+
+            oscl_memset(aParameters, 0, num_comps*sizeof(PvmiKvp));
+
+            // Allocate memory for the key strings in each KVP
+            PvmiKeyType memblock = (PvmiKeyType)oscl_malloc(num_comps * (sizeof(_STRLIT_CHAR(PVMF_DEC_AVAILABLE_OMX_COMPONENTS_KEY)) + 1) * sizeof(char));
+            if (memblock == NULL)
+            {
+                oscl_free(aParameters);
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVMFOMXVideoDecNode::DoCapConfigGetParametersSync() Memory allocation for key string failed"));
+                return PVMFErrNoMemory;
+            }
+            oscl_strset(memblock, 0, num_comps *(sizeof(_STRLIT_CHAR(PVMF_DEC_AVAILABLE_OMX_COMPONENTS_KEY)) + 1) * sizeof(char));
+
+
+            // allocate a block of memory for component names
+            OMX_U8 *memblockomx = (OMX_U8 *) oscl_malloc(num_comps * PV_OMX_MAX_COMPONENT_NAME_LENGTH * sizeof(OMX_U8));
+            if (memblockomx == NULL)
+            {
+                oscl_free(aParameters);
+                oscl_free(memblock);
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVMFOMXVideoDecNode::DoCapConfigGetParametersSync() Memory allocation for omx component strings failed"));
+                return PVMFErrNoMemory;
+            }
+
+            oscl_memset(memblockomx, 0, num_comps * PV_OMX_MAX_COMPONENT_NAME_LENGTH * sizeof(OMX_U8));
+
+            // allocate a placeholder
+            CompOfRole = (OMX_STRING *)oscl_malloc(num_comps * sizeof(OMX_STRING));
+
+            for (ii = 0; ii < num_comps; ii++)
+            {
+                CompOfRole[ii] = (OMX_STRING)(memblockomx + (ii * PV_OMX_MAX_COMPONENT_NAME_LENGTH * sizeof(OMX_U8)));
+            }
+
+            // call 2nd time to get the component names
+            OMX_MasterGetComponentsOfRole(aInputParameters.cComponentRole, &num_comps, (OMX_U8 **)CompOfRole);
+            for (ii = 0; ii < num_comps; ii++)
+            {
+                aInputParameters.cComponentName = CompOfRole[ii];
+                status = OMX_MasterConfigParser(&aInputParameters, &aOutputParameters);
+                if (status == OMX_TRUE)
+                {
+                    // component passes the test - write the component name into kvp list
+                    // write the key
+                    aParameters[ii].key = memblock + (aNumParamElements * (sizeof(_STRLIT_CHAR(PVMF_DEC_AVAILABLE_OMX_COMPONENTS_KEY)) + 1) * sizeof(char)) ;
+                    oscl_strncat(aParameters[ii].key, _STRLIT_CHAR(PVMF_DEC_AVAILABLE_OMX_COMPONENTS_KEY), sizeof(_STRLIT_CHAR(PVMF_DEC_AVAILABLE_OMX_COMPONENTS_KEY)));
+                    aParameters[ii].key[sizeof(_STRLIT_CHAR(PVMF_DEC_AVAILABLE_OMX_COMPONENTS_KEY))] = 0; // null terminate
+
+                    // write the length
+                    aParameters[ii].length = PV_OMX_MAX_COMPONENT_NAME_LENGTH;
+
+                    aParameters[ii].value.pChar_value = CompOfRole[ii];
+                    aNumParamElements++;
+
+                }
+
+            }
+
+            // free memory for CompOfRole placeholder.
+            // The other blocks of memory will be freed during release parameter sync
+            oscl_free(CompOfRole);
+        }
+        else
+        {
+            // if no component supports the role, nothing else to do
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "%s::PVMFOMXVideoDecNode::DoCapConfigGetParameters() No OMX components support the role", iName.Str()));
+            return PVMFErrNotSupported;
+        }
+
+
+        return PVMFSuccess;
+
+
+    }
+
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFOMXVideoDecNode::DoCapConfigGetParametersSync() Out"));
+    if (aNumParamElements == 0)
+    {
+        // If no one could get the parameter, return error
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVMFOMXVideoDecNode::DoCapConfigGetParametersSync() Unsupported key"));
+        return PVMFFailure;
+    }
+    else
+    {
+        return PVMFSuccess;
+    }
+
+}

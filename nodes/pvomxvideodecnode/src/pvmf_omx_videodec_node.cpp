@@ -2498,6 +2498,212 @@ PVMFStatus PVMFOMXVideoDecNode::DoCapConfigGetParametersSync(PvmiKeyType aIdenti
     char* compstr = NULL;
     pv_mime_string_extract_type(0, aIdentifier, compstr);
 
+    if (pv_mime_strcmp(aIdentifier, _STRLIT_CHAR(PVMF_DEC_AVAILABLE_OMX_COMPONENTS_KEY)) == 0)
+    {
+        // get the list of omx components that support the track.
+        // Track config info and mime type was previously set through capconfig - setparametersync
+        Oscl_Vector<OMX_STRING, OsclMemAllocator> roles;
+
+        pvVideoConfigParserInputs aInputs;
+        OMXConfigParserInputs aInputParameters;
+        VideoOMXConfigParserOutputs aOutputParameters;
+
+        aInputs.inPtr = (uint8*) iTrackUnderVerificationConfig;
+        aInputs.inBytes = (int32) iTrackUnderVerificationConfigSize;
+        aInputs.iMimeType = iNodeConfig.iMimeType;
+
+        aInputParameters.inBytes = aInputs.inBytes;
+        aInputParameters.inPtr = aInputs.inPtr;
+
+        if (aInputs.inBytes == 0 || aInputs.inPtr == NULL)
+        {
+            // in case of following formats - config codec data is expected to
+            // be present in the query. If not, config parser cannot be called
+
+            if (aInputs.iMimeType == PVMF_MIME_H264_VIDEO ||
+                    aInputs.iMimeType == PVMF_MIME_H264_VIDEO_MP4 ||
+                    aInputs.iMimeType == PVMF_MIME_H264_VIDEO_RAW ||
+                    aInputs.iMimeType == PVMF_MIME_M4V ||
+                    aInputs.iMimeType == PVMF_MIME_WMV)
+            {
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVMFOMXVideoDecNode::DoCapConfigGetParameters() Codec Config data is not present"));
+                return PVMFErrNotSupported;
+            }
+        }
+
+        if (aInputs.iMimeType ==  PVMF_MIME_H264_VIDEO ||
+                aInputs.iMimeType == PVMF_MIME_H264_VIDEO_MP4 ||
+                aInputs.iMimeType == PVMF_MIME_H264_VIDEO_RAW)
+        {
+            roles.push_back((OMX_STRING) "video_decoder.avc");
+
+        }
+        else if (aInputs.iMimeType ==  PVMF_MIME_M4V)
+        {
+            roles.push_back((OMX_STRING)"video_decoder.mpeg4");
+        }
+        else if (aInputs.iMimeType ==  PVMF_MIME_H2631998 ||
+                 aInputs.iMimeType == PVMF_MIME_H2632000)
+        {
+            roles.push_back((OMX_STRING)"video_decoder.h263");
+        }
+        else if (aInputs.iMimeType ==  PVMF_MIME_WMV)
+        {
+            roles.push_back((OMX_STRING)"video_decoder.vc1");
+            roles.push_back((OMX_STRING)"video_decoder.wmv");
+        }
+        else
+        {
+            // Illegal codec specified.
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "%s::PVMFOMXVideoDecNode::DoCapConfigVerifyParameters() Input port format other then codec type", iName.Str()));
+            return PVMFErrNotSupported;
+        }
+
+
+
+        OMX_BOOL status = OMX_FALSE;
+        OMX_U32 total_num_comps = 0;
+        OMX_STRING *CompOfRole;
+        OMX_U32 ii;
+        OMX_U32 *num_comps_for_role = NULL;
+        OMX_U32 num_roles = roles.size(); // this is typically 1, but can be more than 1
+
+        num_comps_for_role = (OMX_U32*) oscl_malloc(num_roles * sizeof(OMX_U32));
+        if (num_comps_for_role == NULL)
+        {
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVMFOMXVideoDecNode::DoCapConfigGetParametersSync() Memory allocation for num array failed"));
+            return PVMFErrNoMemory;
+        }
+
+        Oscl_Vector<OMX_STRING, OsclMemAllocator>::iterator role;
+
+        // get the total number of components first that supports N roles
+        for (ii = 0, role = roles.begin(); role != roles.end(); role++, ii++)
+        {
+            aInputParameters.cComponentRole = *role;
+
+            // call once to find out the number of components that can fit the given role and save
+            OMX_MasterGetComponentsOfRole(aInputParameters.cComponentRole, &num_comps_for_role[ii], NULL);
+
+            total_num_comps += num_comps_for_role[ii];
+        }
+
+        // do memory and parameter allocation
+        if (total_num_comps > 0)
+        {
+            // allocate num_comps kvps and keys all in one block
+
+            aParameters = (PvmiKvp*)oscl_malloc(total_num_comps * sizeof(PvmiKvp));
+            if (aParameters == NULL)
+            {
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVMFOMXVideoDecNode::DoCapConfigGetParametersSync() Memory allocation for KVP failed"));
+                oscl_free(num_comps_for_role);
+                return PVMFErrNoMemory;
+            }
+
+            oscl_memset(aParameters, 0, total_num_comps*sizeof(PvmiKvp));
+
+            // Allocate memory for the key strings in each KVP
+            PvmiKeyType memblock = (PvmiKeyType)oscl_malloc(total_num_comps * (sizeof(_STRLIT_CHAR(PVMF_DEC_AVAILABLE_OMX_COMPONENTS_KEY)) + 1) * sizeof(char));
+            if (memblock == NULL)
+            {
+                oscl_free(aParameters);
+                oscl_free(num_comps_for_role);
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVMFOMXVideoDecNode::DoCapConfigGetParametersSync() Memory allocation for key string failed"));
+                return PVMFErrNoMemory;
+            }
+            oscl_strset(memblock, 0, total_num_comps *(sizeof(_STRLIT_CHAR(PVMF_DEC_AVAILABLE_OMX_COMPONENTS_KEY)) + 1) * sizeof(char));
+
+
+            // allocate a block of memory for component names
+            OMX_U8 *memblockomx = (OMX_U8 *) oscl_malloc(total_num_comps * PV_OMX_MAX_COMPONENT_NAME_LENGTH * sizeof(OMX_U8));
+            if (memblockomx == NULL)
+            {
+                oscl_free(aParameters);
+                oscl_free(memblock);
+                oscl_free(num_comps_for_role);
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVMFOMXVideoDecNode::DoCapConfigGetParametersSync() Memory allocation for omx component strings failed"));
+                return PVMFErrNoMemory;
+            }
+
+            oscl_memset(memblockomx, 0, total_num_comps * PV_OMX_MAX_COMPONENT_NAME_LENGTH * sizeof(OMX_U8));
+
+            // allocate a placeholder
+            CompOfRole = (OMX_STRING *)oscl_malloc(total_num_comps * sizeof(OMX_STRING));
+            if (CompOfRole == NULL)
+            {
+                oscl_free(memblockomx);
+                oscl_free(aParameters);
+                oscl_free(memblock);
+                oscl_free(num_comps_for_role);
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVMFOMXVideoDecNode::DoCapConfigGetParametersSync() Memory allocation for omx component strings failed"));
+                return PVMFErrNoMemory;
+            }
+
+            for (ii = 0; ii < total_num_comps; ii++)
+            {
+                CompOfRole[ii] = (OMX_STRING)(memblockomx + (ii * PV_OMX_MAX_COMPONENT_NAME_LENGTH * sizeof(OMX_U8)));
+            }
+            //////////// so far, we allocated & initialized all memory. Now, go through roles, and add components that support the role
+
+
+
+            OMX_U32 num = 0;
+            OMX_U32 jj = 0;
+            OMX_U32 cumulative_comps = 0;
+            for (jj = 0, role = roles.begin(); role != roles.end(); role++, jj++)
+            {
+                aInputParameters.cComponentRole = *role;
+
+                // adjust the value of indices
+                // call 2nd time to get the component names
+                OMX_MasterGetComponentsOfRole(aInputParameters.cComponentRole, &num, (OMX_U8 **) &CompOfRole[cumulative_comps]);
+
+                for (ii = cumulative_comps; ii < cumulative_comps + num_comps_for_role[jj]; ii++)
+                {
+                    aInputParameters.cComponentName = CompOfRole[ii];
+                    status = OMX_MasterConfigParser(&aInputParameters, &aOutputParameters);
+                    if (status == OMX_TRUE)
+                    {
+                        // component passes the test - write the component name into kvp list
+                        // write the key
+                        aParameters[ii].key = memblock + (aNumParamElements * (sizeof(_STRLIT_CHAR(PVMF_DEC_AVAILABLE_OMX_COMPONENTS_KEY)) + 1) * sizeof(char)) ;
+                        oscl_strncat(aParameters[ii].key, _STRLIT_CHAR(PVMF_DEC_AVAILABLE_OMX_COMPONENTS_KEY), sizeof(_STRLIT_CHAR(PVMF_DEC_AVAILABLE_OMX_COMPONENTS_KEY)));
+                        aParameters[ii].key[sizeof(_STRLIT_CHAR(PVMF_DEC_AVAILABLE_OMX_COMPONENTS_KEY))] = 0; // null terminate
+
+                        // write the length
+                        aParameters[ii].length = PV_OMX_MAX_COMPONENT_NAME_LENGTH;
+
+                        aParameters[ii].value.pChar_value = CompOfRole[ii];
+                        aNumParamElements++;
+
+                        // also record width and height for future reference (query by the player engine)
+                        iNewWidth = aOutputParameters.width;
+                        iNewHeight = aOutputParameters.height;
+
+                    }
+                }
+                cumulative_comps += num_comps_for_role[jj];
+            }
+
+            // free memory for CompOfRole placeholder.
+            // The other blocks of memory will be freed during release parameter sync
+            oscl_free(CompOfRole);
+            oscl_free(num_comps_for_role);
+        }
+        else
+        {
+            // if no component supports the role, nothing else to do
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "%s::PVMFOMXVideoDecNode::DoCapConfigGetParameters() No OMX components support the role", iName.Str()));
+            oscl_free(num_comps_for_role);
+            return PVMFErrNotSupported;
+        }
+
+
+        return PVMFSuccess;
+
+
+    }
     if ((pv_mime_strcmp(compstr, _STRLIT_CHAR("x-pvmf/video/decoder")) < 0) || compcount < 3)
     {
         if ((pv_mime_strcmp(compstr, _STRLIT_CHAR("x-pvmf/video/render")) < 0) || compcount != 3)
@@ -2887,6 +3093,20 @@ PVMFStatus PVMFOMXVideoDecNode::DoCapConfigReleaseParameters(PvmiKvp* aParameter
         return PVMFErrArgument;
     }
 
+
+    if (pv_mime_strcmp(aParameters[0].key, _STRLIT_CHAR(PVMF_DEC_AVAILABLE_OMX_COMPONENTS_KEY)) == 0)
+    {
+        // everything was allocated in blocks, so it's enough to release the beginning
+        oscl_free(aParameters[0].key);
+        oscl_free(aParameters[0].value.pChar_value);
+        // Free memory for the parameter list
+        oscl_free(aParameters);
+        aParameters = NULL;
+
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFOMXVideoDecNode::DoCapConfigReleaseParameters() Out"));
+        return PVMFSuccess;
+    }
+
     // Count the number of components and parameters in the key
     int compcount = pv_mime_string_compcnt(aParameters[0].key);
     // Retrieve the first component from the key string
@@ -2977,6 +3197,42 @@ void PVMFOMXVideoDecNode::DoCapConfigSetParameters(PvmiKvp* aParameters, int aNu
         // Retrieve the first component from the key string
         char* compstr = NULL;
         pv_mime_string_extract_type(0, aParameters[paramind].key, compstr);
+
+        // find out if the format specific key is used for the query
+        if (pv_mime_strcmp(aParameters[paramind].key, PVMF_FORMAT_SPECIFIC_INFO_KEY) == 0)
+        {
+            // set the mime type if audio format is being used
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                            (0, "PVMFOMXVideoDecNode::DoCapConfigSetParameters() set video format specific info\n"));
+
+            if (iTrackUnderVerificationConfig)
+            {
+                oscl_free(iTrackUnderVerificationConfig);
+                iTrackUnderVerificationConfig = NULL;
+                iTrackUnderVerificationConfigSize = 0;
+            }
+
+            iTrackUnderVerificationConfigSize = aParameters[paramind].capacity;
+            if (iTrackUnderVerificationConfigSize > 0)
+            {
+                iTrackUnderVerificationConfig = (uint8*)(oscl_malloc(sizeof(uint8) * iTrackUnderVerificationConfigSize));
+                oscl_memcpy(iTrackUnderVerificationConfig, aParameters[paramind].value.key_specific_value, iTrackUnderVerificationConfigSize);
+            }
+
+            // skip to the next parameter
+            continue;
+        }
+
+        if (pv_mime_strcmp(aParameters[paramind].key,  _STRLIT_CHAR(PVMF_DEC_AVAILABLE_OMX_COMPONENTS_KEY)) == 0)
+        {
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                            (0, "PVMFOMXVideoDecNode::DoCapConfigSetParameters() set preferred omx component list\n"));
+
+            // each kvp paramater corresponds to one omx component - a new item in the vector is created
+            iOMXPreferredComponentOrderVec.push_back((OMX_STRING)(aParameters[paramind].value.pChar_value));
+            continue;
+
+        }
 
         if ((pv_mime_strcmp(compstr, _STRLIT_CHAR("x-pvmf/video/decoder")) < 0) || compcount < 4)
         {

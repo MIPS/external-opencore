@@ -51,6 +51,37 @@ enum PVMF_TRACK_INFO_TRACK_ALTERNATE_TYPE
     PVMF_TRACK_ALTERNATE_TYPE_BANDWIDTH_AND_CODEC_PARAMS,
 };
 
+typedef class OMXDecComponentItem
+{
+    public:
+        OMXDecComponentItem() {};
+        OMXDecComponentItem(char *str, uint32 len)
+                : OmxComponentName(str, len)
+        {};
+
+        OMXDecComponentItem(const OMXDecComponentItem& aSourceCompItem)
+                : OmxComponentName(aSourceCompItem.OmxComponentName)
+        {};
+
+        OMXDecComponentItem& operator=(const OMXDecComponentItem& aSourceCompItem)
+        {
+            if (&aSourceCompItem != this)
+            {
+                OmxComponentName = aSourceCompItem.OmxComponentName;
+            }
+            return *this;
+        }
+        ~OMXDecComponentItem() {};
+
+        OSCL_HeapString<OsclMemAllocator> getOMXComponentName()
+        {
+            return OmxComponentName;
+        };
+
+    private:
+        OSCL_HeapString<OsclMemAllocator> OmxComponentName;
+} OMXDecComponentItem;
+
 class PVMFTrackInfo : public HeapBase
 {
     public:
@@ -65,6 +96,8 @@ class PVMFTrackInfo : public HeapBase
             iTrackAlternateType = PVMF_TRACK_ALTERNATE_TYPE_UNDEFINED;
             oDurationAvailable = true;
             iTrackFrameRate = 0;
+            iTrackWidth = 0;
+            iTrackHeight = 0;
         }
 
         PVMFTrackInfo(const PVMFTrackInfo& aSourceTrackInfo) : HeapBase(aSourceTrackInfo)
@@ -84,6 +117,10 @@ class PVMFTrackInfo : public HeapBase
             iAlternateTrackIDVec = aSourceTrackInfo.iAlternateTrackIDVec;
             oDurationAvailable   = aSourceTrackInfo.oDurationAvailable;
             iLanguage            = aSourceTrackInfo.iLanguage;
+            iTrackWidth     = aSourceTrackInfo.iTrackWidth;
+            iTrackHeight    = aSourceTrackInfo.iTrackHeight;
+            iOMXComponentsSupportingTheTrackVec = aSourceTrackInfo.iOMXComponentsSupportingTheTrackVec;
+
         }
 
         PVMFTrackInfo& operator=(const PVMFTrackInfo& aSourceTrackInfo)
@@ -105,6 +142,9 @@ class PVMFTrackInfo : public HeapBase
                 iAlternateTrackIDVec = aSourceTrackInfo.iAlternateTrackIDVec;
                 oDurationAvailable   = aSourceTrackInfo.oDurationAvailable;
                 iLanguage            = aSourceTrackInfo.iLanguage;
+                iTrackWidth     = aSourceTrackInfo.iTrackWidth;
+                iTrackHeight    = aSourceTrackInfo.iTrackHeight;
+                iOMXComponentsSupportingTheTrackVec = aSourceTrackInfo.iOMXComponentsSupportingTheTrackVec;
             }
             return *this;
         }
@@ -273,6 +313,45 @@ class PVMFTrackInfo : public HeapBase
             return iLanguage;
         }
 
+        uint32 getTrackWidth(void)
+        {
+            return iTrackWidth;
+        }
+
+        void setTrackWidth(uint32 aTrackWidth)
+        {
+            iTrackWidth = aTrackWidth;
+        }
+
+        uint32 getTrackHeight(void)
+        {
+            return iTrackHeight;
+        }
+
+        void setTrackHeight(uint32 aTrackHeight)
+        {
+            iTrackHeight = aTrackHeight;
+        }
+
+        void addOMXComponentSupportingTheTrack(OMXDecComponentItem aOMXItem)
+        {
+            iOMXComponentsSupportingTheTrackVec.push_back(aOMXItem);
+        }
+
+        Oscl_Vector<OMXDecComponentItem, OsclMemAllocator> *getOMXComponentSupportingTheTrackVec()
+        {
+            return &(iOMXComponentsSupportingTheTrackVec);
+        }
+
+        OMXDecComponentItem* getOMXComponent(uint32 aIndex) const
+        {
+            if (aIndex >= iOMXComponentsSupportingTheTrackVec.size())
+            {
+                return NULL;
+            }
+            return (OSCL_CONST_CAST(OMXDecComponentItem*, &(iOMXComponentsSupportingTheTrackVec[aIndex])));
+        }
+
     private:
         OSCL_HeapString<OsclMemAllocator> iTrackMimeType;
         int32 iTrackID;
@@ -295,6 +374,20 @@ class PVMFTrackInfo : public HeapBase
          * If iLanguage is empty English should be assumed.
          */
         OSCL_HeapString<OsclMemAllocator> iLanguage;
+
+        /*
+         * When verifying a track in the decoder node - these values (if available) will be filled in
+         * The width and height are meant to help the track selection helper algorithm make decisions.
+         * In case of audio track or if the width/height are not available up front - the values remain 0
+         */
+        uint32 iTrackWidth;
+        uint32 iTrackHeight;
+        /*
+         * If OMX decoder APIs are being used, and track selection helper is registered, the list of
+         * OMX components that support the track are provided in the list iOMXComponentsSupportingTheTrackVec
+         */
+        Oscl_Vector<OMXDecComponentItem, OsclMemAllocator> iOMXComponentsSupportingTheTrackVec;
+
 };
 
 
