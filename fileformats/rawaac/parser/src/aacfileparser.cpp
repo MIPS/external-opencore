@@ -1494,22 +1494,20 @@ class AutoPtrArrayContainer
 // CAUTION
 //
 //------------------------------------------------------------------------------
-OSCL_EXPORT_REF CAACFileParser::CAACFileParser(void)
-{
-    iAACDuration = 0;
-    iAACFormat   = EAACUnrecognized;
-    iLogger = PVLogger::GetLoggerObject("pvaacparser");
-    iDiagnosticLogger = PVLogger::GetLoggerObject("playerdiagnostics.pvaac_parser");
-
-    iMetadataSize = 0;
-    iDownloadFileSize = 0;
-    iAACFileSize = 0;
-
-    iTotalNumFramesRead = 0;
-    iEndOfFileReached = false;
-    ipBSO = NULL;
-    iFirstTime = false;
-}
+OSCL_EXPORT_REF CAACFileParser::CAACFileParser(void) :
+        iAACDuration(0),
+        iAACSampleFrequency(0),
+        iAACBitRate(0),
+        iAACHeaderLen(0),
+        iFirstTime(false),
+        iAACFileSize(0),
+        iTotalNumFramesRead(0),
+        iAACFormat(EAACUnrecognized),
+        iEndOfFileReached(false),
+        iLogger(PVLogger::GetLoggerObject("pvaacparser")),
+        iDiagnosticLogger(PVLogger::GetLoggerObject("playerdiagnostics.pvaac_parser")),
+        ipBSO(NULL)
+{}
 
 //----------------------------------------------------------------------------
 // FUNCTION NAME: CAACFileParser::~CAACFileParser
