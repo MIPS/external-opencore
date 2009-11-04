@@ -601,6 +601,11 @@ class PvmfAssetInfo3GPPLocationStruct
 #define MOUT_UPDATE_VIDEO_WINDOW_KEY "x-pvmf/video/render/update_video_window;valtype=uint32_value"
 #define MOUT_CLIP_TYPE_STREAMING_KEY "x-pvmf/video/render/clip_type_streaming;valtype=uint32_value"
 
+// Volume settings
+#define PVMF_AUDIO_SETVOLUME    "x-pvmf/audio/render/setvolume;valtype=uint32"
+#define PVMF_AUDIO_GETVOLUME    "x-pvmf/audio/render/getvolume;valtype=uint32"
+#define PVMF_AUDIO_MUTE         "x-pvmf/audio/render/mute;valtype=bool"
+
 #endif // PVMI_KVP_H_INCLUDED
 
 
