@@ -1276,7 +1276,7 @@ void AndroidAudioInput::SendMicData(void)
     data_hdr.flags=0;
     data_hdr.duration = data.iDuration;
     data_hdr.stream_id=0;
-	int32 err = 0;
+    int32 err = 0;
     PVMFCommandId writeAsyncID = 0;
     OSCL_TRY(err,
              writeAsyncID = iPeer->writeAsync(PVMI_MEDIAXFER_FMT_TYPE_DATA, 0, data.iData, data.iDataLen, data_hdr);

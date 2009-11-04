@@ -102,8 +102,8 @@ static PVMFStatus parseMP3(const char *filename, MediaScannerClient& client)
     }
 
     fileHandle.Seek(0, Oscl_File::SEEKSET);
-	pvId3Param.ParseID3Tag(&fileHandle);
-	fileHandle.Close();
+    pvId3Param.ParseID3Tag(&fileHandle);
+    fileHandle.Close();
     iFs.Close();
 
     //Get the frames information from ID3 library
@@ -199,8 +199,8 @@ static PVMFStatus parseMP3(const char *filename, MediaScannerClient& client)
             LOGE("IMpeg3File constructor returned %d.\n", err);
             return err;
         }
-		err = mp3File.ParseMp3File();
-		if (err != MP3_SUCCESS) {
+        err = mp3File.ParseMp3File();
+        if (err != MP3_SUCCESS) {
             LOGE("IMpeg3File::ParseMp3File returned %d.\n", err);
             return err;
         }
@@ -482,9 +482,9 @@ static PVMFStatus parseMidi(const char *filename, MediaScannerClient& client) {
 static PVMFStatus parseASF(const char *filename, MediaScannerClient& client)
 {
     sp<MediaMetadataRetriever> retriever = new MediaMetadataRetriever();
-	if(retriever == NULL) {
-		return PVMFErrNoMemory;
-	}
+    if(retriever == NULL) {
+        return PVMFErrNoMemory;
+    }
     retriever->setMode( 1 /*MediaMetadataRetriever.MODE_GET_METADATA_ONLY*/);
     status_t status = retriever->setDataSource(filename);
     if (status != NO_ERROR) {
@@ -543,40 +543,40 @@ static PVMFStatus parseASF(const char *filename, MediaScannerClient& client)
 status_t MediaScanner::processFile(const char *path, const char* mimeType, MediaScannerClient& client)
 {
     status_t result;
-	int error = 0;
+    int error = 0;
     InitializeForThread();
-	
-	OSCL_TRY(error,
-			client.setLocale(mLocale);
-			client.beginFile();
-			
-			//LOGD("processFile %s mimeType: %s\n", path, mimeType);
-			const char* extension = strrchr(path, '.');
+    
+    OSCL_TRY(error,
+            client.setLocale(mLocale);
+            client.beginFile();
+            
+            //LOGD("processFile %s mimeType: %s\n", path, mimeType);
+            const char* extension = strrchr(path, '.');
 
-			if (extension && strcasecmp(extension, ".mp3") == 0) {
-				result = parseMP3(path, client);
-			} else if (extension &&
-				(strcasecmp(extension, ".mp4") == 0 || strcasecmp(extension, ".m4a") == 0 ||
-				 strcasecmp(extension, ".3gp") == 0 || strcasecmp(extension, ".3gpp") == 0 ||
-				 strcasecmp(extension, ".3g2") == 0 || strcasecmp(extension, ".3gpp2") == 0)) {
-				result = parseMP4(path, client);
-			} else if (extension && strcasecmp(extension, ".ogg") == 0) {
-				result = parseOgg(path, client);
-			} else if (extension &&
-				( strcasecmp(extension, ".mid") == 0 || strcasecmp(extension, ".smf") == 0
-				|| strcasecmp(extension, ".imy") == 0)) {
-				result = parseMidi(path, client);
-			} else if (extension &&
-				(strcasecmp(extension, ".wma") == 0 || strcasecmp(extension, ".wmv") == 0 ||
-					 strcasecmp(extension, ".asf") == 0 )) { 
-			        result = parseASF(path, client);   
-			} else {
-				result = PVMFFailure;
-			}
-			client.endFile();
-			);
-	
-	OSCL_FIRST_CATCH_ANY( error,LOGV("OSCL_LEAVE happened in processFile Exit with failure");return PVMFFailure);
+            if (extension && strcasecmp(extension, ".mp3") == 0) {
+                result = parseMP3(path, client);
+            } else if (extension &&
+                (strcasecmp(extension, ".mp4") == 0 || strcasecmp(extension, ".m4a") == 0 ||
+                 strcasecmp(extension, ".3gp") == 0 || strcasecmp(extension, ".3gpp") == 0 ||
+                 strcasecmp(extension, ".3g2") == 0 || strcasecmp(extension, ".3gpp2") == 0)) {
+                result = parseMP4(path, client);
+            } else if (extension && strcasecmp(extension, ".ogg") == 0) {
+                result = parseOgg(path, client);
+            } else if (extension &&
+                ( strcasecmp(extension, ".mid") == 0 || strcasecmp(extension, ".smf") == 0
+                || strcasecmp(extension, ".imy") == 0)) {
+                result = parseMidi(path, client);
+            } else if (extension &&
+                (strcasecmp(extension, ".wma") == 0 || strcasecmp(extension, ".wmv") == 0 ||
+                     strcasecmp(extension, ".asf") == 0 )) { 
+                    result = parseASF(path, client);   
+            } else {
+                result = PVMFFailure;
+            }
+            client.endFile();
+            );
+    
+    OSCL_FIRST_CATCH_ANY( error,LOGV("OSCL_LEAVE happened in processFile Exit with failure");return PVMFFailure);
     return result;
 }
 
@@ -674,34 +674,34 @@ status_t MediaScanner::processDirectory(const char *path, const char* extensions
         MediaScannerClient& client, ExceptionCheck exceptionCheck, void* exceptionEnv)
 {
     InitializeForThread();
-	int error = 0;
-	status_t result = PVMFSuccess;
+    int error = 0;
+    status_t result = PVMFSuccess;
 
-	OSCL_TRY(error,	
-			int pathLength = strlen(path);
-			if (pathLength >= PATH_MAX) {
-				return PVMFFailure;
-			}
-			char* pathBuffer = (char *)malloc(PATH_MAX + 1);
-			if (!pathBuffer) {
-				return PVMFFailure;
-			}
+    OSCL_TRY(error,    
+            int pathLength = strlen(path);
+            if (pathLength >= PATH_MAX) {
+                return PVMFFailure;
+            }
+            char* pathBuffer = (char *)malloc(PATH_MAX + 1);
+            if (!pathBuffer) {
+                return PVMFFailure;
+            }
 
-			int pathRemaining = PATH_MAX - pathLength;
-			strcpy(pathBuffer, path);
-			if (pathBuffer[pathLength - 1] != '/') {
-				pathBuffer[pathLength] = '/';
-				pathBuffer[pathLength + 1] = 0;
-				--pathRemaining;
-			}
+            int pathRemaining = PATH_MAX - pathLength;
+            strcpy(pathBuffer, path);
+            if (pathBuffer[pathLength - 1] != '/') {
+                pathBuffer[pathLength] = '/';
+                pathBuffer[pathLength + 1] = 0;
+                --pathRemaining;
+            }
 
-			client.setLocale(mLocale);
-			result = doProcessDirectory(pathBuffer, pathRemaining, extensions, client, exceptionCheck, exceptionEnv);
+            client.setLocale(mLocale);
+            result = doProcessDirectory(pathBuffer, pathRemaining, extensions, client, exceptionCheck, exceptionEnv);
 
-			free(pathBuffer);
-			);
+            free(pathBuffer);
+            );
 
-	OSCL_FIRST_CATCH_ANY(error,LOGV("OSCL_LEAVE happened in processDirectory Exit with failure"); return PVMFFailure);	
+    OSCL_FIRST_CATCH_ANY(error,LOGV("OSCL_LEAVE happened in processDirectory Exit with failure"); return PVMFFailure);    
     return result;
 }
 
@@ -742,9 +742,9 @@ static char* extractMP3AlbumArt(int fd)
 
     FILE *f = fdopen(fd, "r");
     filehandle = new OsclFileHandle(f);
-	if(filehandle == NULL) {
-		return NULL;
-	}
+    if(filehandle == NULL) {
+        return NULL;
+    }
     file.SetFileHandle(filehandle);
 
     if( 0 != file.Open(NULL, Oscl_File::MODE_READ | Oscl_File::MODE_BINARY, iFs) )
@@ -762,7 +762,7 @@ static char* extractMP3AlbumArt(int fd)
     PvmiKvpSharedPtrVector framevector;
     pvId3Param.GetID3Frames(framevector);
 
-	uint32 num_frames = framevector.size();
+    uint32 num_frames = framevector.size();
     for (uint32 i = 0; i < num_frames; i++)
     {
         const char* key = framevector[i]->key;
@@ -830,27 +830,27 @@ static char* extractM4AAlbumArt(int fd)
 char* MediaScanner::extractAlbumArt(int fd)
 {
     InitializeForThread();
-	
-	char *	albumArtData = NULL;
-	int error = 0;
+    
+    char *    albumArtData = NULL;
+    int error = 0;
     int32 ident;
     lseek(fd, 4, SEEK_SET);
     read(fd, &ident, sizeof(ident));
-	
-	OSCL_TRY(error,	
-			if (ident == 0x70797466) {
-				// some kind of mpeg 4 stream
-				lseek(fd, 0, SEEK_SET);
-				albumArtData = extractM4AAlbumArt(fd);
-			} else {
-				// might be mp3
-				albumArtData = extractMP3AlbumArt(fd);
-			}
-			);
+    
+    OSCL_TRY(error,    
+            if (ident == 0x70797466) {
+                // some kind of mpeg 4 stream
+                lseek(fd, 0, SEEK_SET);
+                albumArtData = extractM4AAlbumArt(fd);
+            } else {
+                // might be mp3
+                albumArtData = extractMP3AlbumArt(fd);
+            }
+            );
 
-	OSCL_FIRST_CATCH_ANY(error,LOGV("OSCL_LEAVE happened in extractAlbumArt retrun null");return NULL);	
-	return albumArtData;
-	
+    OSCL_FIRST_CATCH_ANY(error,LOGV("OSCL_LEAVE happened in extractAlbumArt retrun null");return NULL);    
+    return albumArtData;
+    
 }
 
 MediaScannerClient::MediaScannerClient()

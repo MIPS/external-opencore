@@ -134,16 +134,16 @@ const char *PlayerCommandCodeToString(PlayerCommand::Code code) {
 // @return the corresponding android error/info code.
 int MapStatusToEventCode(const PVMFStatus status) {
     switch (status) {
-		case PVMFErrContentInvalidForProgressivePlayback :
-			LOGE("PVMFErrContentInvalidForProgressivePlayback event recieved");
-			return ::android::MEDIA_ERROR_NOT_VALID_FOR_PROGRESSIVE_PLAYBACK;
+        case PVMFErrContentInvalidForProgressivePlayback :
+            LOGE("PVMFErrContentInvalidForProgressivePlayback event recieved");
+            return ::android::MEDIA_ERROR_NOT_VALID_FOR_PROGRESSIVE_PLAYBACK;
 
-		default:
-			// Takes advantage that both error and info codes are mapped to the
-			// same value.
-			assert(::android::MEDIA_ERROR_UNKNOWN == ::android::MEDIA_INFO_UNKNOWN);
-			return ::android::MEDIA_ERROR_UNKNOWN;
-	}
+        default:
+            // Takes advantage that both error and info codes are mapped to the
+            // same value.
+            assert(::android::MEDIA_ERROR_UNKNOWN == ::android::MEDIA_INFO_UNKNOWN);
+            return ::android::MEDIA_ERROR_UNKNOWN;
+    }
 }
 
 }  // anonymous namespace
