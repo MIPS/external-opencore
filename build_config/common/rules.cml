@@ -150,7 +150,7 @@ derive MODS_pv from ""
 derive opencore_player_so_name from pvsplit_so==y ? "opencore_player" : ""
 derive SOLIBS_opencore_player from (pv_aac_dec_imp_m_lib.
                        pvamrwbdecoder_imp_m_lib.
-                       pvmp3_imp_m_lib.wmadecoder_imp_m_lib.wmavoicedecoder_imp_m_lib.pvra8decoder_imp_m_lib.pvrmffparser_m_lib.
+                       pvmp3_imp_m_lib.wmadecoder_imp_m_lib.wmavoicedecoder_imp_m_lib.pvra8decoder_imp_m_lib.
                        rvdecoder_imp_m_lib.pvmp4decoder_imp_m_lib.wmvdecoder_imp_m_lib.
                        cpm_m_lib.
                        pvpvxparser_m_lib.pvid3parcom_m_lib.
@@ -161,13 +161,13 @@ derive SOLIBS_opencore_player from (pv_aac_dec_imp_m_lib.
                        pvmp4ff_m_lib.pvmp4ffopencore_m_lib.mp4recognizer_utility_m_lib.
                        pvaacparser_m_lib.pvaacffparsernode_m_lib.aacdecnode_m_lib.pvaacffrecognizer_m_lib.
                        pvwavffparsernode_m_lib.pvwavffrecognizer_m_lib.pvrvdecnode_m_lib.
-                       pvra8decnode_m_lib.realaudio_deinterleaver_m_lib.
+                       pvra8decnode_m_lib.
                        pvpvrff_m_lib.pvpvr_m_lib.pvpvrnode_m_lib.pvmfrecognizer_m_lib.
                        pvrtppacketsourcenode_m_lib.packetsources_default_m_lib.
                        pvframemetadatautility_m_lib.pvplayer_engine_m_lib)
 derive SOLIBDIRS_opencore_player from (pv_aac_dec_imp_m_mk.
                        pvamrwbdecoder_imp_m_mk.
-                       pvmp3_imp_m_mk.wmadecoder_imp_m_mk.wmavoicedecoder_imp_m_mk.pvra8decoder_imp_m_mk.pvrmffparser_m_mk.
+                       pvmp3_imp_m_mk.wmadecoder_imp_m_mk.wmavoicedecoder_imp_m_mk.pvra8decoder_imp_m_mk.
                        rvdecoder_imp_m_mk.pvmp4decoder_imp_m_mk.wmvdecoder_imp_m_mk.
                        cpm_m_mk.
                        pvpvxparser_m_mk.pvid3parcom_m_mk.
@@ -178,7 +178,7 @@ derive SOLIBDIRS_opencore_player from (pv_aac_dec_imp_m_mk.
                        pvmp4ff_m_mk.pvmp4ffopencore_m_mk.mp4recognizer_utility_m_mk.
                        pvaacparser_m_mk.pvaacffparsernode_m_mk.aacdecnode_m_mk.pvaacffrecognizer_m_mk.
                        pvwavffparsernode_m_mk.pvwavffrecognizer_m_mk.
-                       pvrvdecnode_m_mk.pvra8decnode_m_mk.realaudio_deinterleaver_m_mk.
+                       pvrvdecnode_m_mk.pvra8decnode_m_mk.
                        pvpvrff_m_mk.pvpvr_m_mk.pvpvrnode_m_mk.pvmfrecognizer_m_mk.
                        pvrtppacketsourcenode_m_mk.packetsources_default_m_mk.
                        pvframemetadatautility_m_mk.pvplayer_engine_m_mk)
@@ -301,6 +301,11 @@ derive SOLIBS_pvasfcommon from pvasfff_m_lib.asfrecognizer_utility_m_lib
 derive SOLIBDIRS_pvasfcommon from pvasfff_m_mk.asfrecognizer_utility_m_mk
 derive MODS_pvasfcommon from "-lopencore_common"
 
+derive pvrealsupportcommon_so_name from rmff_support==y or omx_ra_component_lib==m or rtsptunicastwithreal_support==m  ? "pvrealsupportcommon" : ""
+derive SOLIBS_pvrealsupportcommon from pvrmffparser_m_lib
+derive SOLIBDIRS_pvrealsupportcommon from pvrmffparser_m_mk
+derive MODS_pvrealsupportcommon from "-lopencore_common" 
+
 derive pvprotocolengine_asfstreaming_so_name from mshttp_support==m ? "pvprotocolengine_asfstreaming" : ""
 derive SOLIBS_pvprotocolengine_asfstreaming from pvprotocolenginewmhttpstreaminginterface_m_lib.pvprotocolenginenode_wmhttpstreaming_plugin_m_lib
 derive SOLIBDIRS_pvprotocolengine_asfstreaming from pvprotocolenginewmhttpstreaminginterface_m_mk.pvprotocolenginenode_wmhttpstreaming_plugin_m_mk
@@ -360,9 +365,9 @@ derive MODS_pvrtsptunicast_streamingreg from "-lopencore_common"
 
 #RTSPTWithRealSupport
 derive pvrtsptunicastforrm_streaming_so_name from rtsptunicastwithreal_support==m ? "pvrtsptunicastforrm_streaming" : ""
-derive SOLIBS_pvrtsptunicastforrm_streaming from smrtsptrmplugininterface_m_lib.pvrtsptwithrealfsp_m_lib.realmedia_payload_parser_m_lib.rdt_parser_m_lib.pvrtsp_cli_eng_real_cloaking_node_m_lib
-derive SOLIBDIRS_pvrtsptunicastforrm_streaming from smrtsptrmplugininterface_m_mk.pvrtsptwithrealfsp_m_mk.realmedia_payload_parser_m_mk.rdt_parser_m_mk.pvrtsp_cli_eng_real_cloaking_node_m_mk
-derive MODS_pvrtsptunicastforrm_streaming from "-lopencore_net_support -lopencore_player -lopencore_common -lpvrtsptunicast_streaming -lopencore_rtsp -lopencore_streaming -lpvwmdrm"
+derive SOLIBS_pvrtsptunicastforrm_streaming from smrtsptrmplugininterface_m_lib.pvrtsptwithrealfsp_m_lib.realmedia_payload_parser_m_lib.rdt_parser_m_lib.pvrtsp_cli_eng_real_cloaking_node_m_lib.realaudio_deinterleaver_m_lib
+derive SOLIBDIRS_pvrtsptunicastforrm_streaming from smrtsptrmplugininterface_m_mk.pvrtsptwithrealfsp_m_mk.realmedia_payload_parser_m_mk.rdt_parser_m_mk.pvrtsp_cli_eng_real_cloaking_node_m_mk.realaudio_deinterleaver_m_mk
+derive MODS_pvrtsptunicastforrm_streaming from "-lopencore_net_support -lopencore_player -lopencore_common -lpvrtsptunicast_streaming -lopencore_rtsp -lopencore_streaming -lpvwmdrm -lpvrealsupportcommon" 
 
 derive pvrtsptunicastforrm_streamingreg_so_name from rtsptunicastwithreal_support==m ? "pvrtsptunicastforrm_streamingreg" : ""
 derive SOLIBS_pvrtsptunicastforrm_streamingreg from smrtsptrmpluginregpopulator_m_lib
@@ -497,7 +502,7 @@ derive MODS_pvdivx_recognizer from "-lopencore_common"
 derive pvrmffparser_node_so_name from rmff_support==y ? "pvrmffparser_node" : ""
 derive SOLIBS_pvrmffparser_node from pvrmffinterface_m_lib.pvrmffparsernode_m_lib.pvrmff_m_lib
 derive SOLIBDIRS_pvrmffparser_node from pvrmffinterface_m_mk.pvrmffparsernode_m_mk.pvrmff_m_mk
-derive MODS_pvrmffparser_node from "-lpvrmff_recognizer -lopencore_player -lopencore_common"
+derive MODS_pvrmffparser_node from "-lpvrmff_recognizer -lopencore_player -lopencore_common -lpvrealsupportcommon"
 
 derive pvrmff_recognizer_so_name from rmff_support==y ? "pvrmff_recognizer" : ""
 derive SOLIBS_pvrmff_recognizer from pvrmffreginterface_m_lib.pvrmffrecognizer_m_lib.pvrmffrecognizer_utility_m_lib
@@ -576,7 +581,7 @@ derive MODS_omx_wmadec_sharedlibrary from "-lomx_sharedlibrary -lopencore_common
 derive omx_radec_sharedlibrary_so_name from omx_ra_component_lib==m ? "omx_radec_sharedlibrary" : ""
 derive SOLIBS_omx_radec_sharedlibrary from omx_ra_component_m_lib.pvra8decoder_m_lib
 derive SOLIBDIRS_omx_radec_sharedlibrary from omx_ra_component_m_mk.pvra8decoder_m_mk
-derive MODS_omx_radec_sharedlibrary from "-lomx_sharedlibrary -lopencore_common -lopencore_player"
+derive MODS_omx_radec_sharedlibrary from "-lomx_sharedlibrary -lopencore_common -lopencore_player -lpvrealsupportcommon"
 
 derive omx_avcenc_sharedlibrary_so_name from omx_avcenc_component_lib==m ? "omx_avcenc_sharedlibrary" : ""
 derive SOLIBS_omx_avcenc_sharedlibrary from omx_avcenc_component_m_lib.pvavch264enc_m_lib
@@ -641,6 +646,7 @@ derive TARGET_shared from (pv_so_name.opencore_common_so_name.opencore_author_so
 			   pvfasttrack_downloadreg_so_name.pvfasttrack_download_so_name.
                            opencore_streamingreg_so_name.opencore_streaming_so_name.
                            pvasfcommon_so_name.
+                           pvrealsupportcommon_so_name.
                            pvasflocalpbreg_so_name.pvasflocalpb_so_name.
 			   pvprotocolengine_asfstreamingreg_so_name.pvprotocolengine_asfstreaming_so_name.
                            opencore_mp4localreg_so_name.opencore_mp4local_so_name.
