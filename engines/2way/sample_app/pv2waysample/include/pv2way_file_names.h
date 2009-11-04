@@ -44,9 +44,9 @@
 #define VIDEO_FRAMEWIDTH 176
 #define VIDEO_FRAMERATE 5
 
-#define AUDIO_SOURCE_FILENAME _STRLIT("pcm16testinput.pcm")
-#define AUDIO_SINK_FILENAME _STRLIT("pcm16testoutput.pcm")
-#define VIDEO_SOURCE_FILENAME _STRLIT("yuv420video.dat")
+#define AUDIO_SOURCE_FILENAME _STRLIT("audio_in.pcm16")
+#define AUDIO_SINK_FILENAME _STRLIT("audio_out.pcm16")
+#define VIDEO_SOURCE_FILENAME _STRLIT("video_in.yuv420")
 #define VIDEO_SINK_FILENAME _STRLIT("video_out.yuv420")
 #endif
 
@@ -64,17 +64,17 @@
 #define TEST_RX_LOG_FILENAME _STRLIT("commrx.bin")
 #define TEST_TX_LOG_FILENAME _STRLIT("commtx.bin")
 #define AUDIO_SOURCE3_FILENAME _STRLIT("audio_in.amr")
-#define AUDIO_SOURCE_RAW_FILENAME _STRLIT("pcm16testinput.pcm")
-#define VIDEO_SOURCE_YUV_FILENAME _STRLIT("yuv420video.yuv")
-#define VIDEO_SOURCE_H263_FILENAME _STRLIT("h263video.h263")
-#define VIDEO_SOURCE_M4V_FILENAME _STRLIT("m4vvideo.m4v")
+#define AUDIO_SOURCE_RAW_FILENAME _STRLIT("audio_in.pcm16")
+#define VIDEO_SOURCE_YUV_FILENAME _STRLIT("video_in.yuv420")
+#define VIDEO_SOURCE_H263_FILENAME _STRLIT("video_in.h263")
+#define VIDEO_SOURCE_M4V_FILENAME _STRLIT("video_in.m4v")
 #define AUDIO_SOURCE_FILENAME _STRLIT("audio_in.if2")
-#define AUDIO_SINK_RAW_FILENAME _STRLIT("audio_pcm16_out.dat")
-#define VIDEO_SINK_YUV_FILENAME _STRLIT("video_yuv_out.dat")
-#define VIDEO_SINK_H263_FILENAME _STRLIT("video_h263_out.dat")
-#define VIDEO_SINK_M4V_FILENAME _STRLIT("video_m4v_out.dat")
-#define VIDEO_SOURCE_FILENAME _STRLIT("holmes.h263")
-#define VIDEO_SINK_FILENAME _STRLIT("holmes_out.h263")
+#define AUDIO_SINK_RAW_FILENAME _STRLIT("audio_out.pcm16")
+#define VIDEO_SINK_YUV_FILENAME _STRLIT("video_out.yuv420")
+#define VIDEO_SINK_H263_FILENAME _STRLIT("video_out.h263")
+#define VIDEO_SINK_M4V_FILENAME _STRLIT("video_out.m4v")
+#define VIDEO_SOURCE_FILENAME _STRLIT("video_in.h263")
+#define VIDEO_SINK_FILENAME _STRLIT("video_out.h263")
 
 
 #define AUDIO_SINK2_FILENAME _STRLIT("audio_ietf_out.dat")

@@ -50,12 +50,22 @@ PVMFFormatType PV2WayMedia::GetMediaFormat(const oscl_wchar* aFileName)
     oscl_UnicodeToUTF8(aFileName, oscl_strlen(aFileName), file, fileLen + 1);
 
     int len = oscl_strlen(file);
-    int extnpos = len - (EXTN_LEN - 1);
 
-    if (len > 0)
+    int filenameLen = len;
+    char *tempfile = file + len; //Move pointer to end of string
+
+    int counter = 0;
+    filenameLen = len;
+    while (filenameLen > 0 && file[filenameLen] != '.' && file[filenameLen] != '\\')
     {
-        oscl_strncpy(extn, &file[extnpos], EXTN_LEN);
+        tempfile--;
+        filenameLen--;
+        counter++;
+    }
 
+    if (counter > 0)
+    {
+        oscl_strncpy(extn, tempfile, counter + 1);
     }
 
     ConvertToLowerCase(extn);
@@ -66,7 +76,7 @@ PVMFFormatType PV2WayMedia::GetMediaFormat(const oscl_wchar* aFileName)
         inputFileFormatType = PVMF_MIME_AMR_IF2;
 
     }
-    else if (oscl_strncmp(extn, "ietf", count) == 0)
+    else if (oscl_strncmp(extn, ".ietf", count) == 0)
     {
         inputFileFormatType = PVMF_MIME_AMR_IETF;
 
@@ -81,10 +91,26 @@ PVMFFormatType PV2WayMedia::GetMediaFormat(const oscl_wchar* aFileName)
         inputFileFormatType = PVMF_MIME_M4V;
 
     }
-    else if (oscl_strncmp(extn, "h263", count) == 0)
+    else if (oscl_strncmp(extn, ".h263", count) == 0)
     {
         inputFileFormatType = PVMF_MIME_H2632000;
 
+    }
+    else if (oscl_strncmp(extn, ".yuv420", count) == 0)
+    {
+        inputFileFormatType = PVMF_MIME_YUV420;
+    }
+    else if (oscl_strncmp(extn, ".yuv422", count) == 0)
+    {
+        inputFileFormatType = PVMF_MIME_YUV422;
+    }
+    else if (oscl_strncmp(extn, ".pcm16", count) == 0)
+    {
+        inputFileFormatType = PVMF_MIME_PCM16;
+    }
+    else if (oscl_strncmp(extn, ".pcm8", count) == 0)
+    {
+        inputFileFormatType = PVMF_MIME_PCM8;
     }
     else
     {

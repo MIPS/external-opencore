@@ -25,7 +25,7 @@ const uint32 KAudioMicroSecsPerDataEvent = 20000;
 const uint32 KVideoMicroSecsPerDataEvent = 100000;
 const uint32  TOTAL_BYTES_READ           = 50;
 const uint32 One_Yuv_Frame_Size          = 38016;
-#define InputFileName       "test.yuv"
+#define InputFileName       "video_in.yuv420"
 
 #define DUMMY_MEDIADATA_POOLNUM 11
 

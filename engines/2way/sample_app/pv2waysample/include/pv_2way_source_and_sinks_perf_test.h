@@ -38,8 +38,8 @@
 #include "pvmf_dummy_fileinput_node_factory.h"
 #include "pvmf_dummy_fileoutput_factory.h"
 
-#define AUDIO_SOURCE_FILENAME_FOR_PERF _STRLIT("data/amr_ietf_one_frame.amr")
-#define VIDEO_SOURCE_FILENAME_FOR_PERF _STRLIT("data/hit040.h263")
+#define AUDIO_SOURCE_FILENAME_FOR_PERF _STRLIT("data/audio_in.amr")
+#define VIDEO_SOURCE_FILENAME_FOR_PERF _STRLIT("data/video_in.h263")
 
 
 class PV2WaySourceAndSinksPerfTest : public PV2WaySourceAndSinksBase

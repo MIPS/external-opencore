@@ -54,7 +54,7 @@ class LipSyncDummyMIOSettings;
 #define TITLE_LENGTH   300
 #define FILENAME_LEN   255
 #define OUTPUT_TXT_LEN   20
-#define EXTN_LEN       8
+#define EXTN_LEN       10
 #define PORT_LEN 8
 #define TRANS_LEN 64
 #define LOOP_LEN 64
