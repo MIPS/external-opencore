@@ -138,6 +138,7 @@ void AdaptationLayer2::ParsePacket(OsclSharedPtr<PVMFMediaDataImpl>& pkt, Incomi
     uint8 SeqNum = 0;
     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "AdaptationLayer2::ParsePacket pdu size(%d)", pkt->getFilledSize()));
     info.sdu_size = (uint16)(pkt->getFilledSize() - iSNPos - PV2WAY_H223_AL2_CRC_SIZE);
+    info.seq_num = iSeqNum;
     if (info.sdu_size  <= 0)
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_WARNING, (0, "AdaptationLayer2::ParsePacket sdu size(%d) < 0", info.sdu_size));
@@ -313,6 +314,7 @@ void AdaptationLayer3::ParsePacket(OsclSharedPtr<PVMFMediaDataImpl>& pkt, Incomi
     uint16 SeqNum = 0;
     uint16 Crc = 0, VrMax = 0;
     iPktNum++;
+    info.seq_num = iSeqNum;
     info.crc_error = false;
     info.seq_num_error = 0;
     info.sdu_size = (uint16)(pkt->getFilledSize() - iSNPos - PV2WAY_H223_AL3_CRC_SIZE);

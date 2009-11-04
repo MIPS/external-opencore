@@ -43,6 +43,7 @@
 #define VOL_HEADER_START_BYTE_3 0x01
 #define VOL_HEADER_START_BYTE_4 0xB0
 
+#define PVMF_VIDEOPARSER_START_SEQUENCE_NUMBER 1000 /* Does not have to start from 0 */
 
 static const uint8 M4vScLlookup[] =
 {
@@ -93,6 +94,7 @@ PVMFVideoParserNode::PVMFVideoParserNode() : OsclActiveObject(OsclActiveObject::
 {
 
     iTimestamp = 0;
+    iSequenceNumber = PVMF_VIDEOPARSER_START_SEQUENCE_NUMBER;
     iLastSduHadMarker = false;
 
 
@@ -771,15 +773,11 @@ void PVMFVideoParserNode::DataReceived(OsclSharedPtr<PVMFMediaMsg>& aMsg)
         if (iLastSduHadMarker)
         {
             iTimestamp = mediaData->getTimestamp();
-            iVideoFrame->setTimestamp(iTimestamp);
-            iVideoFrame->setSeqNum(1);
             mediaData->getFormatSpecificInfo(formatSpecificInfo);
             iVideoFrame->setFormatSpecificInfo(formatSpecificInfo);
         }
-        else
-
-            iVideoFrame->setTimestamp(iTimestamp);
-
+        iVideoFrame->setTimestamp(iTimestamp);
+        iVideoFrame->setSeqNum(iSequenceNumber++);
 
         iNotFirstFrag = true;
 
@@ -792,6 +790,8 @@ void PVMFVideoParserNode::SendFrame(bool bMarkerInfo)
 {
     OsclSharedPtr<PVMFMediaMsg> mediaMsg;
 
+    if (iVideoFrame->getFilledSize() == 0)
+        return;
 
     OsclSharedPtr<PVMFMediaDataImpl> mediaDataImpl;
     if (iVideoFrame->getMediaDataImpl(mediaDataImpl))

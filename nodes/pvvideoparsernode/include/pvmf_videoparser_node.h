@@ -302,8 +302,8 @@ class PVMFVideoParserNode : public OsclActiveObject, public PVMFNodeInterface
         uint32 iFormatSpecificInfoLen;
         bool iNotFirstFrag;
         bool iLastSduHadMarker;
-        unsigned int iTimestamp;
-
+        uint32 iTimestamp;
+        uint32 iSequenceNumber;
 };
 
 #endif // PVMF_VIDEOPARSER_NODE_H_INCLUDED

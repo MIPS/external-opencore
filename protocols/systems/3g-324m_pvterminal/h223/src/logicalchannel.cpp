@@ -1603,7 +1603,11 @@ PVMFStatus H223IncomingChannel::AlPduData(uint8* buf, uint16 len)
     if (iAlPduMediaData.GetRep() == NULL || iAlPduMediaData->getFilledSize() == 0)
     {
         bool overflow = false;
-        iClock->GetCurrentTime32(iCurTimestamp, overflow, PVMF_MEDIA_CLOCK_MSEC);
+        if (lcn != 0 && iClock)
+        {
+            // not the control channel
+            iClock->GetCurrentTime32(iCurTimestamp, overflow, PVMF_MEDIA_CLOCK_MSEC);
+        }
     }
     uint32 copied = CopyAlPduData(buf, len);
     return (copied == len) ? PVMFSuccess : PVMFFailure;
@@ -1686,7 +1690,7 @@ PVMFStatus H223IncomingChannel::AlDispatch()
     PVMFTimestamp baseTimestamp = 0;
     SetSampleTimestamps(baseTimestamp);
     aMediaData->setTimestamp(baseTimestamp);
-
+    aMediaData->setSeqNum(info.seq_num);
     iAlPduMediaData->setErrorsFlag(errorsFlag);
 
     PVMFSharedMediaMsgPtr aMediaMsg;

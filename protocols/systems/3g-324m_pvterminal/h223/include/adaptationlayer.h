@@ -38,9 +38,10 @@
 class IncomingALPduInfo
 {
     public:
-        IncomingALPduInfo() : sdu_size(0), crc_error(0), seq_num_error(0) {}
+        IncomingALPduInfo() : sdu_size(0), crc_error(0), seq_num(0), seq_num_error(0) {}
         int16 sdu_size;
         bool crc_error;
+        int32 seq_num;
         int32 seq_num_error;
 };
 
