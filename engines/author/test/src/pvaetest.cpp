@@ -2960,41 +2960,42 @@ void pvauthor_async_test_base::VerifyOutputFile()
     IMpeg4File *mp4ff = NULL;
     PVMFStatus status = PVMFErrNotSupported;
     //check if it is .amr file first
-    if (MP4FileRecognizer::IsMP4File(iOutputFileName) == true)
+    //TESTING create a fileserver
+    Oscl_FileServer fs;
+    if (fs.Connect() != 0)
     {
-        //parse the file
-        mp4ff = IMpeg4File::readMP4File(iOutputFileName, NULL);
-        if (mp4ff != NULL)
+        fprintf(iStdOut, "FileServer Connect Failed\n");
+        status = PVMFFailure;
+    }
+    else
+    {
+        if (MP4FileRecognizer::IsMP4File(iOutputFileName, &fs) == true)
         {
-            if (mp4ff->MP4Success())
+            //parse the file
+            mp4ff = IMpeg4File::readMP4File(iOutputFileName, NULL, NULL, 0, &fs, true);
+            if (mp4ff != NULL)
             {
-                //we were able to parse the file successfully
-                //now verify parameters
-                status = VerifySessionParameters(mp4ff);
-                if (status == PVMFSuccess)
+                if (mp4ff->MP4Success())
                 {
-                    status = VerifyTrackParameters(mp4ff);
+                    //we were able to parse the file successfully
+                    //now verify parameters
+                    status = VerifySessionParameters(mp4ff);
+                    if (status == PVMFSuccess)
+                    {
+                        status = VerifyTrackParameters(mp4ff);
+                    }
+                }
+                else
+                {
+                    fprintf(iStdOut, "IMpeg4File::readMP4File Failed - Err=%d\n", mp4ff->GetMP4Error());
+                    status = PVMFFailure;
                 }
             }
             else
             {
-                fprintf(iStdOut, "IMpeg4File::readMP4File Failed - Err=%d\n", mp4ff->GetMP4Error());
+                fprintf(iStdOut, "IMpeg4File::readMP4File returns NULL\n");
                 status = PVMFFailure;
             }
-        }
-        else
-        {
-            fprintf(iStdOut, "IMpeg4File::readMP4File returns NULL\n");
-            status = PVMFFailure;
-        }
-    }
-    else
-    {
-        Oscl_FileServer fs;
-        if (fs.Connect() != 0)
-        {
-            fprintf(iStdOut, "FileServer Connect Failed\n");
-            status = PVMFFailure;
         }
         else
         {

@@ -128,7 +128,7 @@ void OmxEncTestBufferBusy::Run()
             //This will initialize the size and version of the iPortInit structure
             INIT_GETPARAMETER_STRUCT(OMX_PORT_PARAM_TYPE, iPortInit);
 
-            if (0 == oscl_strcmp(iFormat, "AMRNB"))
+            if ((0 == oscl_strcmp(iFormat, "AMRNB")) || (0 == oscl_strcmp(iFormat, "AAC")))
             {
                 if (ipInputFile)
                 {
@@ -136,10 +136,6 @@ void OmxEncTestBufferBusy::Run()
                     iInputFileSize = ftell(ipInputFile);
                     fseek(ipInputFile, 0, SEEK_SET);
                 }
-                Err = OMX_GetParameter(ipAppPriv->Handle, OMX_IndexParamAudioInit, &iPortInit);
-            }
-            else if (0 == oscl_strcmp(iFormat, "AAC"))
-            {
                 Err = OMX_GetParameter(ipAppPriv->Handle, OMX_IndexParamAudioInit, &iPortInit);
             }
             else
@@ -861,14 +857,14 @@ void OmxEncTestBufferBusy::Run()
             {
                 if (OMX_FALSE == iStopInput)
                 {
-                    if (0 == oscl_strcmp(iFormat, "AMRNB"))
+                    if ((0 == oscl_strcmp(iFormat, "AMRNB")) || (0 == oscl_strcmp(iFormat, "AAC")))
                     {
-                        Status = GetInputFrameAMR();
+                        Status = GetInputAudioFrame();
 
                     }
                     else
                     {
-                        Status = GetInputFrame();
+                        Status = GetInputVideoFrame();
                     }
                 }
                 else
@@ -1102,6 +1098,8 @@ void OmxEncTestBufferBusy::Run()
                                 (0, "OmxEncTestEosMissing::Run() - %s: Success", TestName));
 #ifdef PRINT_RESULT
                 printf("%s: Success \n", TestName);
+                OMX_ENC_TEST(true);
+                iTestCase->TestCompleted();
 #endif
             }
 

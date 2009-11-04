@@ -234,6 +234,8 @@ void OmxEncTestCompRole::Run()
             {
 #ifdef PRINT_RESULT
                 printf("%s: Success \n", TestName);
+                OMX_ENC_TEST(true);
+                iTestCase->TestCompleted();
 #endif
 
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_INFO,

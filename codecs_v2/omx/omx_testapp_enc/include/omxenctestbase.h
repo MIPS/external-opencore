@@ -52,6 +52,7 @@
 
 #endif
 
+#include <stdio.h>
 
 //Three different default queue sizes for each callback.
 //Idea here is to add flexibility to the code so that these queue sizes can be changed as per requirement
@@ -396,8 +397,7 @@ class OmxEncTestBase : public OsclActiveObject
 
         virtual void Run() = 0;
         virtual bool WriteOutput(OMX_U8* aOutBuff, OMX_U32 aSize) = 0;
-        virtual OMX_ERRORTYPE GetInput() = 0;
-        virtual OMX_ERRORTYPE GetInputFrame() = 0;
+        virtual OMX_ERRORTYPE GetInputVideoFrame() = 0;
 };
 
 #endif      // OMXENCTESTBASE_H_INCLUDED

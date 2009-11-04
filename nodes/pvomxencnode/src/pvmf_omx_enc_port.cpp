@@ -248,7 +248,6 @@ void PVMFOMXEncPort::setParametersSync(PvmiMIOSession aSession,
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
                             (0, "PVMFOMXEncPort::setParametersSync: Error - VerifiyAndSetParameter failed on parameter #%d", i));
             aRet_kvp = &(aParameters[i]);
-            OSCL_LEAVE(OsclErrArgument);
         }
     }
 

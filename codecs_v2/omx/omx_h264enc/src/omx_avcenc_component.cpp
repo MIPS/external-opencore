@@ -32,7 +32,7 @@ const uint8 NAL_START_CODE[4] = {0, 0, 0, 1};
         param.nVersion.s.nStep = SPECSTEP;
 
 // This function is called by OMX_GetHandle and it creates an instance of the avc component AO
-OMX_ERRORTYPE AvcEncOmxComponentFactory(OMX_OUT OMX_HANDLETYPE* pHandle, OMX_IN OMX_PTR pAppData, OMX_PTR pProxy, OMX_STRING aOmxLibName, OMX_PTR &aOmxLib, OMX_PTR aOsclUuid, OMX_U32 &aRefCount)
+OSCL_EXPORT_REF OMX_ERRORTYPE AvcEncOmxComponentFactory(OMX_OUT OMX_HANDLETYPE* pHandle, OMX_IN OMX_PTR pAppData, OMX_PTR pProxy, OMX_STRING aOmxLibName, OMX_PTR &aOmxLib, OMX_PTR aOsclUuid, OMX_U32 &aRefCount)
 {
     OSCL_UNUSED_ARG(aOmxLibName);
     OSCL_UNUSED_ARG(aOmxLib);
@@ -62,7 +62,7 @@ OMX_ERRORTYPE AvcEncOmxComponentFactory(OMX_OUT OMX_HANDLETYPE* pHandle, OMX_IN 
 
 
 // This function is called by OMX_FreeHandle when component AO needs to be destroyed
-OMX_ERRORTYPE AvcEncOmxComponentDestructor(OMX_IN OMX_HANDLETYPE pHandle, OMX_PTR &aOmxLib, OMX_PTR aOsclUuid, OMX_U32 &aRefCount)
+OSCL_EXPORT_REF OMX_ERRORTYPE AvcEncOmxComponentDestructor(OMX_IN OMX_HANDLETYPE pHandle, OMX_PTR &aOmxLib, OMX_PTR aOsclUuid, OMX_U32 &aRefCount)
 {
     OSCL_UNUSED_ARG(aOmxLib);
     OSCL_UNUSED_ARG(aOsclUuid);

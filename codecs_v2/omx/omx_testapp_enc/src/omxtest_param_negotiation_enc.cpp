@@ -1241,6 +1241,8 @@ void OmxEncTestBufferNegotiation::Run()
 
 #ifdef PRINT_RESULT
                 printf("%s: Success \n", TestName);
+                OMX_ENC_TEST(true);
+                iTestCase->TestCompleted();
 #endif
             }
 

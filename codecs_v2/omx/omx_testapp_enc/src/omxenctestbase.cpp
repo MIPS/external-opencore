@@ -152,7 +152,6 @@ OMX_ERRORTYPE OmxEncTestBase::EventHandler(OMX_OUT OMX_HANDLETYPE aComponent,
             {
                     //Falling through next case
                 case OMX_StateInvalid:
-                case OMX_StatePause:
                 case OMX_StateWaitForResources:
                     break;
 
@@ -187,6 +186,7 @@ OMX_ERRORTYPE OmxEncTestBase::EventHandler(OMX_OUT OMX_HANDLETYPE aComponent,
                     break;
 
                 case OMX_StateExecuting:    //Change the state on receiving callback
+                {
                     if (StateIdle == iState)    //Chk whether some error condition has occured previously or not
                     {
                         iState = StateExecuting;
@@ -195,7 +195,32 @@ OMX_ERRORTYPE OmxEncTestBase::EventHandler(OMX_OUT OMX_HANDLETYPE aComponent,
                             RunIfNotReady();
                         }
                     }
-                    break;
+                    else if (StatePause == iState)
+                    {
+                        iState = StateExecuting;
+                        if (0 == --iPendingCommands)
+                        {
+                            RunIfNotReady();
+                        }
+                    }
+                }
+                break;
+
+                case OMX_StatePause:    //Change the state on receiving callback
+                {
+                    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
+                                    (0, "OmxDecTestBase::EventHandler() - Callback, State Changed to OMX_StatePause"));
+
+                    if (StateExecuting == iState)
+                    {
+                        iState = StatePause;
+                        if (0 == --iPendingCommands)
+                        {
+                            RunIfNotReady();
+                        }
+                    }
+                }
+                break;
 
                 default:
                     break;
@@ -266,6 +291,7 @@ OMX_ERRORTYPE OmxEncTestBase::EmptyBufferDone(OMX_OUT OMX_HANDLETYPE aComponent,
         OMX_OUT OMX_PTR aAppData,
         OMX_OUT OMX_BUFFERHEADERTYPE* aBuffer)
 {
+    OSCL_UNUSED_ARG(aComponent);
     OSCL_UNUSED_ARG(aAppData);
 
     //Check the validity of buffer
@@ -334,6 +360,7 @@ OMX_ERRORTYPE OmxEncTestBase::FillBufferDone(OMX_OUT OMX_HANDLETYPE aComponent,
         OMX_OUT OMX_PTR aAppData,
         OMX_OUT OMX_BUFFERHEADERTYPE* aBuffer)
 {
+    OSCL_UNUSED_ARG(aComponent);
     OSCL_UNUSED_ARG(aAppData);
 
     //Check the validity of buffer

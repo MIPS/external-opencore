@@ -116,6 +116,8 @@ PVA_FF_Mpeg4File::PVA_FF_Mpeg4File(int32 mediaType)
     _oInterLeaveEnabled = false;
     _oLiveMovieFragmentEnabled = false;
     _aFs = NULL;
+    _pMfraAtom = NULL;
+
 }
 
 // Destructor
@@ -150,7 +152,6 @@ PVA_FF_Mpeg4File::~PVA_FF_Mpeg4File()
         PV_MP4_FF_TEMPLATED_DELETE(NULL, PVA_FF_MediaDataAtomVecType, Oscl_Vector, _pmediaDataAtomVec);
     }
 
-
     if ((_oInterLeaveEnabled) && (NULL != _pInterLeaveBufferVec))
     {
         // delete all interleave buffers
@@ -183,6 +184,7 @@ PVA_FF_Mpeg4File::~PVA_FF_Mpeg4File()
     {
         PV_MP4_FF_DELETE(NULL, PVA_FF_FileTypeAtom, _pFileTypeAtom);
     }
+
     if (_aFs)
     {
         PVA_FF_AtomUtils::closeFileSession(OSCL_STATIC_CAST(Oscl_FileServer*, _aFs));

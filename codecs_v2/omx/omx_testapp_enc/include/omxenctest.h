@@ -23,23 +23,15 @@
 #ifndef OMXENCTEST_H_INCLUDED
 #define OMXENCTEST_H_INCLUDED
 
+#ifndef TEST_CASE_H
+#include "test_case.h"
+#endif
+
 #ifndef OMXENCTESTBASE_H_INCLUDED
 #include "omxenctestbase.h"
 #endif
 
-enum EncTests
-{
-    GET_ROLES_TEST = 0,
-    PARAM_NEGOTIATION_TEST,
-    NORMAL_SEQ_TEST ,
-    USE_BUFFER_TEST,
-    BUFFER_BUSY_TEST,
-    PARTIAL_FRAMES_TEST,
-    EXTRA_PARTIAL_FRAMES_TEST,
-    PAUSE_RESUME_TEST,
-    ENDOFSTREAM_MISSING_TEST,
-    WITHOUT_MARKER_BIT_TEST,
-};
+#define OMX_PREPEND_IO_FILENAME ""
 
 
 /* Macro to reset the structure for GetParemeter call and also to set the size and version of it*/
@@ -51,18 +43,20 @@ enum EncTests
     (str).nVersion.s.nRevision = 0x0;\
     (str).nVersion.s.nStep = 0x0
 
+//This macro helps to keep the TestCase pass/fail count
+#define OMX_ENC_TEST( condition ) (this->iTestCase->test_is_true_stub( (condition), (#condition), __FILE__, __LINE__ ))
 
 //Macro to verify whether some error occured in the openmax API or not
 //e is the return value of the API and s is the string to be printed with the error
 #define CHECK_ERROR(e, s) \
     if (OMX_ErrorNone != (e))\
     {\
+        OMX_ENC_TEST(false);\
         printf("%s Error, Stop the test case\n", s);\
         iState = StateError;\
         RunIfNotReady();\
         break;\
     }
-
 
 //Macro to verify whether some error occured in memory allocation or not
 //m is the pointer to which memory has been allocated and s is the string to be printed in case of error
@@ -168,12 +162,74 @@ enum AAC_SETTING_TYPE
     AAC_TOOL
 };
 
+class OmxComponentEncTest;
+// test_base-based class which will run async tests on pvPlayer engine
+class OmxEncTest_wrapper : public test_case
+
+{
+    public:
+        OmxEncTest_wrapper(FILE *filehandle, const int32 &aFirstTest, const int32 &aLastTest,
+                           char *aConfigFileName, OSCL_HeapString<OsclMemAllocator> &aRole,
+                           OSCL_HeapString<OsclMemAllocator> &aComponentFormat);
+        // From test_case
+        virtual void test();
+        //This function will help us to act like an observer
+        void TestCompleted();
+
+        enum EncTests
+        {
+            GET_ROLES_TEST = 0,
+            PARAM_NEGOTIATION_TEST,
+            NORMAL_SEQ_TEST ,
+            USE_BUFFER_TEST,
+            BUFFER_BUSY_TEST,
+            PARTIAL_FRAMES_TEST,
+            EXTRA_PARTIAL_FRAMES_TEST,
+            PAUSE_RESUME_TEST,
+            ENDOFSTREAM_MISSING_TEST,
+            WITHOUT_MARKER_BIT_TEST,
+        };
+
+        inline int32 GetCurrentTestNumber()
+        {
+            return iCurrentTestNumber;
+        }
+    private:
+        OmxComponentEncTest* iTestApp;
+        int32 iCurrentTestNumber;
+        int32 iFirstTest;
+        int32 iLastTest;
+
+        FILE *iFilehandle;
+        OMX_BOOL iInitSchedulerFlag;
+
+        char *iConfigFileName;
+        OSCL_HeapString<OsclMemAllocator> iRole;
+        OSCL_HeapString<OsclMemAllocator> iComponentFormat;
+
+        // For test results
+        int32 iTotalSuccess;
+        int32 iTotalError;
+        int32 iTotalFail;
+};
+
+//Omx test suite
+class OmxEncTestSuite : public test_case
+{
+    public:
+        OmxEncTestSuite(FILE *filehandle, const int32 &aFirstTest,
+                        const int32 &aLastTest,
+                        char *aConfigFileName, OSCL_HeapString<OsclMemAllocator> &aRole,
+                        OSCL_HeapString<OsclMemAllocator> &aComponentFormat);
+    private:
+        OmxEncTest_wrapper *iWrapper;
+};
 
 //Main AO class for the TestApplication
 class OmxComponentEncTest : public OmxEncTestBase
 {
     public:
-        OmxComponentEncTest() : OmxEncTestBase("OMX_EncTestApp")
+        OmxComponentEncTest(OmxEncTest_wrapper *aTestCase) : OmxEncTestBase("OMX_EncTestApp")
         {
             iRole = (OMX_STRING) oscl_malloc(ROLE_SIZE);
             ipConfigFile = NULL;
@@ -195,9 +251,9 @@ class OmxComponentEncTest : public OmxEncTestBase
             iAacProfile = OMX_AUDIO_AACObjectLC;
             iAacStreamFormat = OMX_AUDIO_AACStreamFormatMP2ADTS;
 
-
+            iTestCase = aTestCase;
         }
-        OMX_BOOL Parse(char aConfigFileName[], OMX_STRING role, char Component[]);
+        OMX_BOOL Parse(char aConfigFileName[], OSCL_HeapString<OsclMemAllocator> &role, OSCL_HeapString<OsclMemAllocator> &Component);
 
         ~OmxComponentEncTest()
         {
@@ -214,6 +270,7 @@ class OmxComponentEncTest : public OmxEncTestBase
 
         }
 
+        OmxEncTest_wrapper *iTestCase;
     protected:
 
         bool WriteOutput(OMX_U8* aOutBuff, OMX_U32 aSize);
@@ -235,9 +292,8 @@ class OmxComponentEncTest : public OmxEncTestBase
         void Extract(const char * line_start,
                      const char * line_end, char * first, int32& len);
 
-        OMX_ERRORTYPE GetInput();
-        OMX_ERRORTYPE GetInputFrame();
-        OMX_ERRORTYPE GetInputFrameAMR();
+        OMX_ERRORTYPE GetInputVideoFrame();
+        OMX_ERRORTYPE GetInputAudioFrame();
 
         OMX_STRING  iRole;
         char        iInputFileName[200];
@@ -329,8 +385,8 @@ class OmxComponentEncTest : public OmxEncTestBase
 class OmxEncTestUseBuffer : public OmxComponentEncTest
 {
     public:
-        OmxEncTestUseBuffer():
-                OmxComponentEncTest() { };
+        OmxEncTestUseBuffer(OmxEncTest_wrapper *aTestCase):
+                OmxComponentEncTest(aTestCase) { };
     private:
         void Run();
 };
@@ -338,8 +394,8 @@ class OmxEncTestUseBuffer : public OmxComponentEncTest
 class OmxEncTestEosMissing : public OmxComponentEncTest
 {
     public:
-        OmxEncTestEosMissing():
-                OmxComponentEncTest() { };
+        OmxEncTestEosMissing(OmxEncTest_wrapper *aTestCase):
+                OmxComponentEncTest(aTestCase) { };
     private:
         void Run();
 
@@ -348,8 +404,8 @@ class OmxEncTestEosMissing : public OmxComponentEncTest
 class OmxEncTestWithoutMarker : public OmxComponentEncTest
 {
     public:
-        OmxEncTestWithoutMarker():
-                OmxComponentEncTest() { };
+        OmxEncTestWithoutMarker(OmxEncTest_wrapper *aTestCase):
+                OmxComponentEncTest(aTestCase) { };
     private:
         void Run();
 };
@@ -357,8 +413,8 @@ class OmxEncTestWithoutMarker : public OmxComponentEncTest
 class OmxEncTestPartialFrames : public OmxComponentEncTest
 {
     public:
-        OmxEncTestPartialFrames():
-                OmxComponentEncTest() { };
+        OmxEncTestPartialFrames(OmxEncTest_wrapper *aTestCase):
+                OmxComponentEncTest(aTestCase) { };
     private:
         void Run();
 };
@@ -366,8 +422,8 @@ class OmxEncTestPartialFrames : public OmxComponentEncTest
 class OmxEncTestExtraPartialFrames : public OmxComponentEncTest
 {
     public:
-        OmxEncTestExtraPartialFrames():
-                OmxComponentEncTest() { };
+        OmxEncTestExtraPartialFrames(OmxEncTest_wrapper *aTestCase):
+                OmxComponentEncTest(aTestCase) { };
     private:
         void Run();
 };
@@ -376,8 +432,12 @@ class OmxEncTestExtraPartialFrames : public OmxComponentEncTest
 class OmxEncTestPauseResume : public OmxComponentEncTest
 {
     public:
-        OmxEncTestPauseResume():
-                OmxComponentEncTest() { };
+        OmxEncTestPauseResume(OmxEncTest_wrapper *aTestCase):
+                OmxComponentEncTest(aTestCase)
+        {
+            iFrameCount = 0;
+            iPauseCommandSent = OMX_FALSE;
+        };
     private:
         void Run();
         OMX_U32 iFrameCount;
@@ -388,8 +448,8 @@ class OmxEncTestPauseResume : public OmxComponentEncTest
 class OmxEncTestCompRole : public OmxComponentEncTest
 {
     public:
-        OmxEncTestCompRole():
-                OmxComponentEncTest() { };
+        OmxEncTestCompRole(OmxEncTest_wrapper *aTestCase):
+                OmxComponentEncTest(aTestCase) { };
     private:
         void Run();
 };
@@ -398,8 +458,8 @@ class OmxEncTestCompRole : public OmxComponentEncTest
 class OmxEncTestBufferBusy : public OmxComponentEncTest
 {
     public:
-        OmxEncTestBufferBusy():
-                OmxComponentEncTest() { };
+        OmxEncTestBufferBusy(OmxEncTest_wrapper *aTestCase):
+                OmxComponentEncTest(aTestCase) { };
     private:
         void Run();
 };
@@ -408,8 +468,8 @@ class OmxEncTestBufferBusy : public OmxComponentEncTest
 class OmxEncTestBufferNegotiation : public OmxComponentEncTest
 {
     public:
-        OmxEncTestBufferNegotiation():
-                OmxComponentEncTest()
+        OmxEncTestBufferNegotiation(OmxEncTest_wrapper *aTestCase):
+                OmxComponentEncTest(aTestCase)
         {
             iNumInputBuffers = 0;
             iNumOutputBuffers = 0;

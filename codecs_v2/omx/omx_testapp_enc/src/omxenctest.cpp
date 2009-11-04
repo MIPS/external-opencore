@@ -19,34 +19,36 @@
 #include "oscl_string_utils.h"
 #include "oscl_str_ptr_len.h"
 #include "oscl_stdstring.h"
+#include "text_test_interpreter.h"
 
-#ifndef PVLOGGER_STDERR_APPENDER_H_INCLUDED
-#include "pvlogger_stderr_appender.h"
+#include "pvlogger.h"
+#include "pvlogger_cfg_file_parser.h"
+
+#include "oscl_string_utils.h"
+
+#include "oscl_string_containers.h"
+
+#ifndef __UNIT_TEST_TEST_ARGS__
+#include "unit_test_args.h"
 #endif
 
-#ifndef PVLOGGER_FILE_APPENDER_H_INCLUDED
-#include "pvlogger_file_appender.h"
+#ifndef OSCL_UTF8CONV_H
+#include "oscl_utf8conv.h"
 #endif
-
-
-#ifndef PVLOGGER_TIME_AND_ID_LAYOUT_H_INCLUDED
-#include "pvlogger_time_and_id_layout.h"
-#endif
-
 
 #define NUMBER_TEST_CASES 9
 
 
 
 //Read the data from input file & pass it to the AMR component
-OMX_ERRORTYPE OmxComponentEncTest::GetInputFrameAMR()
+OMX_ERRORTYPE OmxComponentEncTest::GetInputAudioFrame()
 {
     OMX_S32 Index;
     OMX_S32 ReadCount;
     OMX_S32 Size;
     OMX_ERRORTYPE Status;
 
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "OmxComponentEncTest::GetInputFrameAMR() - IN"));
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "OmxComponentEncTest::GetInputAudioFrame() - IN"));
 
 
     if (OMX_TRUE == iInputReady)
@@ -66,7 +68,7 @@ OMX_ERRORTYPE OmxComponentEncTest::GetInputFrameAMR()
 
             if (iInBufferCount == Index)
             {
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG, (0, "OmxComponentEncTest::GetInputFrameAMR() - Input buffer not available, OUT"));
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG, (0, "OmxComponentEncTest::GetInputAudioFrame() - Input buffer not available, OUT"));
                 return OMX_ErrorNone;
             }
 
@@ -103,7 +105,7 @@ OMX_ERRORTYPE OmxComponentEncTest::GetInputFrameAMR()
                 Size = ReadCount;
                 iFragmentInProgress = OMX_FALSE;
 
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "OmxComponentEncTest::GetInputFrameAMR() - Input file has ended, OUT"));
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "OmxComponentEncTest::GetInputAudioFrame() - Input file has ended, OUT"));
             }
 
             if (iFragmentInProgress)
@@ -111,7 +113,7 @@ OMX_ERRORTYPE OmxComponentEncTest::GetInputFrameAMR()
                 ipInBuffer[Index]->nFlags  = 0;
 
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
-                                (0, "OmxComponentEncTest::GetInputFrameAMR() - Input buffer of index %d without any marker", Index));
+                                (0, "OmxComponentEncTest::GetInputAudioFrame() - Input buffer of index %d without any marker", Index));
             }
             else
             {
@@ -125,7 +127,7 @@ OMX_ERRORTYPE OmxComponentEncTest::GetInputFrameAMR()
         ipInBuffer[Index]->nOffset = 0;
 
         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
-                        (0, "OmxComponentEncTest::GetInputFrameAMR() - Calling EmptyThisBuffer with Alloc Len %d, Filled Len %d Offset %d TimeStamp %d",
+                        (0, "OmxComponentEncTest::GetInputAudioFrame() - Calling EmptyThisBuffer with Alloc Len %d, Filled Len %d Offset %d TimeStamp %d",
                          ipInBuffer[Index]->nAllocLen, ipInBuffer[Index]->nFilledLen, ipInBuffer[Index]->nOffset, ipInBuffer[Index]->nTimeStamp));
 
         Status = OMX_EmptyThisBuffer(ipAppPriv->Handle, ipInBuffer[Index]);
@@ -135,7 +137,7 @@ OMX_ERRORTYPE OmxComponentEncTest::GetInputFrameAMR()
             ipInputAvail[Index] = OMX_FALSE; // mark unavailable
 
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
-                            (0, "OmxComponentEncTest::GetInputFrameAMR() - Sent the input buffer sucessfully, OUT"));
+                            (0, "OmxComponentEncTest::GetInputAudioFrame() - Sent the input buffer sucessfully, OUT"));
 
             return OMX_ErrorNone;
         }
@@ -145,7 +147,7 @@ OMX_ERRORTYPE OmxComponentEncTest::GetInputFrameAMR()
             iInputReady = OMX_FALSE;
             iInputWasRefused = OMX_TRUE;
 
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "OmxComponentEncTest::GetInputFrameAMR() - EmptyThisBuffer failed with Error OMX_ErrorInsufficientResources, OUT"));
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "OmxComponentEncTest::GetInputAudioFrame() - EmptyThisBuffer failed with Error OMX_ErrorInsufficientResources, OUT"));
 
             return OMX_ErrorInsufficientResources;
         }
@@ -154,172 +156,23 @@ OMX_ERRORTYPE OmxComponentEncTest::GetInputFrameAMR()
             iStopProcessingInput = OMX_TRUE;
             iLastInputFrame = iFrameNum;
 
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "OmxComponentEncTest::GetInputFrameAMR() - Error, EmptyThisBuffer failed, OUT"));
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "OmxComponentEncTest::GetInputAudioFrame() - Error, EmptyThisBuffer failed, OUT"));
 
             return OMX_ErrorNone;
         }
     }
     else
     {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "OmxComponentEncTest::GetInputFrameAMR() - Error, Input is not ready to be sent, OUT"));
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "OmxComponentEncTest::GetInputAudioFrame() - Error, Input is not ready to be sent, OUT"));
         return OMX_ErrorInsufficientResources;
     }
 
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "OmxComponentEncTest::GetInputFrameAMR() - OUT"));
-    return OMX_ErrorNone;
-}
-
-
-
-
-OMX_ERRORTYPE OmxComponentEncTest::GetInput()
-{
-    OMX_S32 Index;
-    OMX_S32 ReadCount;
-    OMX_S32 Size;
-    OMX_ERRORTYPE Status;
-
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "OmxComponentEncTest::GetInput() - IN"));
-
-    if (OMX_TRUE == iInputReady)
-    {
-        if (OMX_TRUE == iInputWasRefused)
-        {
-            Index = iInIndex; //use previously found and saved Index, do not read the file (this was done earlier)
-            iInputWasRefused = OMX_FALSE; // reset the flag
-        }
-        else
-        {
-            Index = 0;
-            while (OMX_FALSE == ipInputAvail[Index] && Index < iInBufferCount)
-            {
-                Index++;
-            }
-
-            if (iInBufferCount == Index)
-            {
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG, (0, "OmxComponentEncTest::GetInput() - Input buffer not available, OUT"));
-                return OMX_ErrorNone;
-            }
-
-            if (!iFragmentInProgress)
-            {
-                iCurFrag = 0;
-                Size = iInBufferSize;
-                for (OMX_S32 kk = 0; kk < iNumSimFrags - 1; kk++)
-                {
-                    iSimFragSize[kk] = Size / iNumSimFrags;
-                }
-                iSimFragSize[iNumSimFrags-1] = Size - (iNumSimFrags - 1) * (Size / iNumSimFrags); // last fragment
-            }
-
-            Size = iSimFragSize[iCurFrag];
-            iCurFrag++;
-            if (iCurFrag == iNumSimFrags)
-            {
-                iFragmentInProgress = OMX_FALSE;
-            }
-            else
-            {
-                iFragmentInProgress = OMX_TRUE;
-            }
-
-            ReadCount = fread(ipInBuffer[Index]->pBuffer, 1, Size, ipInputFile);
-            if (!(0 == oscl_strcmp(iFormat, "AMRNB")))
-            {
-                ipInBuffer[Index]->nTimeStamp = ((iFrameNum * 1000) / iFrameRate);
-            }
-
-            if (0 == ReadCount)
-            {
-                iStopProcessingInput = OMX_TRUE;
-                iInIndex = Index;
-                iLastInputFrame = iFrameNum;
-                iFragmentInProgress = OMX_FALSE;
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "OmxComponentEncTest::GetInput() - Input file has ended, OUT"));
-
-                return OMX_ErrorNone;
-            }
-            else if (ReadCount < Size)
-            {
-                iStopProcessingInput = OMX_TRUE;
-                iInIndex = Index;
-                iLastInputFrame = iFrameNum;
-                iFragmentInProgress = OMX_FALSE;
-
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG, (0, "OmxComponentEncTest::GetInput() - Last piece of data in input file"));
-
-                Size = ReadCount;
-            }
-
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG, (0, "OmxComponentEncTest::GetInput() - Input data of %d bytes read from the file", Size));
-
-            if (iFragmentInProgress)
-            {
-
-                ipInBuffer[Index]->nFlags  = 0;
-
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
-                                (0, "OmxComponentEncTest::GetInput() - Input buffer of index %d without any marker", Index));
-
-            }
-            else
-            {
-                //Don't mark the EndOfFrame flag
-                iFrameNum++;
-            }
-
-            ipInBuffer[Index]->nFilledLen = Size;
-        }
-
-        ipInBuffer[Index]->nOffset = 0;
-
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
-                        (0, "OmxComponentEncTest::GetInput() - Calling EmptyThisBuffer with Alloc Len %d, Filled Len %d Offset %d TimeStamp %d",
-                         ipInBuffer[Index]->nAllocLen, ipInBuffer[Index]->nFilledLen, ipInBuffer[Index]->nOffset, ipInBuffer[Index]->nTimeStamp));
-
-
-        Status = OMX_EmptyThisBuffer(ipAppPriv->Handle, ipInBuffer[Index]);
-
-        if (OMX_ErrorNone == Status)
-        {
-            ipInputAvail[Index] = OMX_FALSE; // mark unavailable
-
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
-                            (0, "OmxComponentEncTest::GetInput() - Sent the input buffer sucessfully, OUT"));
-
-            return OMX_ErrorNone;
-        }
-        else if (OMX_ErrorInsufficientResources == Status)
-        {
-            iInIndex = Index; // save the current input buffer, wait for call back
-            iInputReady = OMX_FALSE;
-            iInputWasRefused = OMX_TRUE;
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "OmxComponentEncTest::GetInput() - EmptyThisBuffer failed with Error OMX_ErrorInsufficientResources, OUT"));
-            return OMX_ErrorInsufficientResources;
-        }
-        else
-        {
-            iStopProcessingInput = OMX_TRUE;
-            iLastInputFrame = iFrameNum;
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "OmxComponentEncTest::GetInput() - Error, EmptyThisBuffer failed, OUT"));
-
-            return OMX_ErrorNone;
-        }
-    }
-    else
-    {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "OmxComponentEncTest::GetInput() - Error, Input is not ready to be sent, OUT"));
-        return OMX_ErrorInsufficientResources;
-    }
-
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "OmxComponentEncTest::GetInput() - OUT"));
-
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "OmxComponentEncTest::GetInputAudioFrame() - OUT"));
     return OMX_ErrorNone;
 }
 
 //Read the data from input file & pass it to the  component
-OMX_ERRORTYPE OmxComponentEncTest::GetInputFrame()
+OMX_ERRORTYPE OmxComponentEncTest::GetInputVideoFrame()
 {
     OMX_S32 Index;
     OMX_S32 ReadCount;
@@ -372,7 +225,8 @@ OMX_ERRORTYPE OmxComponentEncTest::GetInputFrame()
             }
 
             ReadCount = fread(ipInBuffer[Index]->pBuffer, 1, Size, ipInputFile);
-            ipInBuffer[Index]->nTimeStamp = ((iFrameNum * 1000) / iFrameRate);
+            if ((0 == oscl_strcmp(iFormat, "AVC")) || (0 == oscl_strcmp(iFormat, "M4V")))
+                ipInBuffer[Index]->nTimeStamp = ((iFrameNum * 1000) / iFrameRate);
 
             if (0 == ReadCount)
             {
@@ -408,7 +262,10 @@ OMX_ERRORTYPE OmxComponentEncTest::GetInputFrame()
             }
             else
             {
-                ipInBuffer[Index]->nFlags |= OMX_BUFFERFLAG_ENDOFFRAME;
+                if (iTestCase->GetCurrentTestNumber() != OmxEncTest_wrapper::WITHOUT_MARKER_BIT_TEST)
+                {
+                    ipInBuffer[Index]->nFlags |= OMX_BUFFERFLAG_ENDOFFRAME;
+                }
                 iFrameNum++;
             }
 
@@ -585,7 +442,7 @@ void OmxComponentEncTest::Run()
             //This will initialize the size and version of the iPortInit structure
             INIT_GETPARAMETER_STRUCT(OMX_PORT_PARAM_TYPE, iPortInit);
 
-            if (0 == oscl_strcmp(iFormat, "AMRNB"))
+            if ((0 == oscl_strcmp(iFormat, "AMRNB")) || (0 == oscl_strcmp(iFormat, "AAC")))
             {
                 if (ipInputFile)
                 {
@@ -593,10 +450,6 @@ void OmxComponentEncTest::Run()
                     iInputFileSize = ftell(ipInputFile);
                     fseek(ipInputFile, 0, SEEK_SET);
                 }
-                Err = OMX_GetParameter(ipAppPriv->Handle, OMX_IndexParamAudioInit, &iPortInit);
-            }
-            else if (0 == oscl_strcmp(iFormat, "AAC"))
-            {
                 Err = OMX_GetParameter(ipAppPriv->Handle, OMX_IndexParamAudioInit, &iPortInit);
             }
             else
@@ -1305,13 +1158,13 @@ void OmxComponentEncTest::Run()
 
                 if (Index != iInBufferCount)
                 {
-                    if (0 == oscl_strcmp(iFormat, "AMRNB"))
+                    if (0 == oscl_strcmp(iFormat, "AMRNB") || (0 == oscl_strcmp(iFormat, "AAC")))
                     {
-                        Status = GetInputFrameAMR();
+                        Status = GetInputAudioFrame();
                     }
                     else
                     {
-                        Status = GetInputFrame();
+                        Status = GetInputVideoFrame();
                     }
                 }
             }
@@ -1568,6 +1421,8 @@ void OmxComponentEncTest::Run()
                                 (0, "OmxEncTestEosMissing::Run() - %s: Success", TestName));
 #ifdef PRINT_RESULT
                 printf("%s: Success \n", TestName);
+                OMX_ENC_TEST(true);
+                iTestCase->TestCompleted();
 #endif
             }
 
@@ -1650,7 +1505,7 @@ void OmxComponentEncTest::Run()
     return;
 }
 
-OMX_BOOL OmxComponentEncTest::Parse(char aConfigFileName[], OMX_STRING role, char Component[])
+OMX_BOOL OmxComponentEncTest::Parse(char aConfigFileName[], OSCL_HeapString<OsclMemAllocator> &role, OSCL_HeapString<OsclMemAllocator> &Component)
 {
     OMX_BOOL Status = OMX_TRUE;
 
@@ -1662,8 +1517,10 @@ OMX_BOOL OmxComponentEncTest::Parse(char aConfigFileName[], OMX_STRING role, cha
         return OMX_FALSE;
     }
 
-    strcpy(iRole, role);
-    strcpy(iFormat, Component);
+    oscl_strncpy(iRole, role.get_cstr(), role.get_size());
+    //verify that the string is null terminated
+    iRole[(role.get_size() < ROLE_SIZE) ? role.get_size() : ROLE_SIZE] = '\0';
+    oscl_strncpy(iFormat, Component.get_cstr(), Component.get_size());
 
     if (ConfigBuffer)
     {
@@ -1755,11 +1612,23 @@ OMX_BOOL OmxComponentEncTest::ParseAmrLine(const char* line_start,
             case INPUT_FILE_NAME_AMR:
             {
                 Extract(line_start, line_end, iInputFileName, len1);
+                OSCL_HeapString<OsclMemAllocator> filenameExtension(OMX_PREPEND_IO_FILENAME);
+                OSCL_HeapString<OsclMemAllocator> filename(iInputFileName, len1);
+                filenameExtension += filename;
+                //make sure the string is clear before writing anything to it
+                oscl_memset(iInputFileName, '\0', sizeof(iInputFileName));
+                oscl_strncpy(iInputFileName, filenameExtension.get_cstr(), filenameExtension.get_size());
             }
             break;
             case OUTPUT_FILE_NAME_AMR:
             {
                 Extract(line_start, line_end, iOutputFileName, len1);
+                OSCL_HeapString<OsclMemAllocator> filenameExtension(OMX_PREPEND_IO_FILENAME);
+                OSCL_HeapString<OsclMemAllocator> filename(iOutputFileName, len1);
+                filenameExtension += filename;
+                //make sure the string is clear before writing anything to it
+                oscl_memset(iOutputFileName, '\0', sizeof(iOutputFileName));
+                oscl_strncpy(iOutputFileName, filenameExtension.get_cstr(), filenameExtension.get_size());
             }
             break;
             case INPUT_BITS_PER_SAMPLE:
@@ -1870,13 +1739,23 @@ OMX_BOOL OmxComponentEncTest::ParseM4vLine(const char* line_start,
             case INPUT_FILE_NAME_M4V:
             {
                 Extract(line_start, line_end, iInputFileName, len1);
-
+                OSCL_HeapString<OsclMemAllocator> filenameExtension(OMX_PREPEND_IO_FILENAME);
+                OSCL_HeapString<OsclMemAllocator> filename(iInputFileName, len1);
+                filenameExtension += filename;
+                //make sure the string is clear before writing anything to it
+                oscl_memset(iInputFileName, '\0', sizeof(iInputFileName));
+                oscl_strncpy(iInputFileName, filenameExtension.get_cstr(), filenameExtension.get_size());
             }
             break;
             case OUTPUT_FILE_NAME_M4V:
             {
                 Extract(line_start, line_end, iOutputFileName, len1);
-
+                OSCL_HeapString<OsclMemAllocator> filenameExtension(OMX_PREPEND_IO_FILENAME);
+                OSCL_HeapString<OsclMemAllocator> filename(iOutputFileName, len1);
+                filenameExtension += filename;
+                //make sure the string is clear before writing anything to it
+                oscl_memset(iOutputFileName, '\0', sizeof(iOutputFileName));
+                oscl_strncpy(iOutputFileName, filenameExtension.get_cstr(), filenameExtension.get_size());
             }
             break;
             case INPUT_WIDTH_M4V:
@@ -2193,11 +2072,23 @@ OMX_BOOL OmxComponentEncTest::ParseAvcLine(const char* line_start,
             case INPUT_FILE_NAME:
             {
                 Extract(line_start, line_end, iInputFileName, len1);
+                OSCL_HeapString<OsclMemAllocator> filenameExtension(OMX_PREPEND_IO_FILENAME);
+                OSCL_HeapString<OsclMemAllocator> filename(iInputFileName, len1);
+                filenameExtension += filename;
+                //make sure the string is clear before writing anything to it
+                oscl_memset(iInputFileName, '\0', sizeof(iInputFileName));
+                oscl_strncpy(iInputFileName, filenameExtension.get_cstr(), filenameExtension.get_size());
             }
             break;
             case OUTPUT_FILE_NAME:
             {
                 Extract(line_start, line_end, iOutputFileName, len1);
+                OSCL_HeapString<OsclMemAllocator> filenameExtension(OMX_PREPEND_IO_FILENAME);
+                OSCL_HeapString<OsclMemAllocator> filename(iOutputFileName, len1);
+                filenameExtension += filename;
+                //make sure the string is clear before writing anything to it
+                oscl_memset(iOutputFileName, '\0', sizeof(iOutputFileName));
+                oscl_strncpy(iOutputFileName, filenameExtension.get_cstr(), filenameExtension.get_size());
             }
             break;
             case INPUT_WIDTH:
@@ -2554,11 +2445,23 @@ OMX_BOOL OmxComponentEncTest::ParseAacLine(const char* line_start,
             case INPUT_FILE_NAME_AAC:
             {
                 Extract(line_start, line_end, iInputFileName, len1);
+                OSCL_HeapString<OsclMemAllocator> filenameExtension(OMX_PREPEND_IO_FILENAME);
+                OSCL_HeapString<OsclMemAllocator> filename(iInputFileName, len1);
+                filenameExtension += filename;
+                //make sure the string is clear before writing anything to it
+                oscl_memset(iInputFileName, '\0', sizeof(iInputFileName));
+                oscl_strncpy(iInputFileName, filenameExtension.get_cstr(), filenameExtension.get_size());
             }
             break;
             case OUTPUT_FILE_NAME_AAC:
             {
                 Extract(line_start, line_end, iOutputFileName, len1);
+                OSCL_HeapString<OsclMemAllocator> filenameExtension(OMX_PREPEND_IO_FILENAME);
+                OSCL_HeapString<OsclMemAllocator> filename(iOutputFileName, len1);
+                filenameExtension += filename;
+                //make sure the string is clear before writing anything to it
+                oscl_memset(iOutputFileName, '\0', sizeof(iOutputFileName));
+                oscl_strncpy(iOutputFileName, filenameExtension.get_cstr(), filenameExtension.get_size());
             }
             break;
             case IP_NUMBER_OF_CHANNELS:
@@ -2754,449 +2657,450 @@ OMX_BOOL OmxComponentEncTest::ParseAacLine(const char* line_start,
     return OMX_TRUE;
 }
 
-
-
-template<class DestructClass>
-class LogAppenderDestructDealloc : public OsclDestructDealloc
+bool LookForCmd(cmd_line *command_line, OSCL_HeapString<OsclMemAllocator> &command, int &ArgCount)
 {
-    public:
-        virtual void destruct_and_dealloc(OsclAny *ptr)
+    bool cmdline_iswchar = command_line->is_wchar();
+    int count = command_line->get_count();
+    if (count == 0)
+    {
+        // there were no command line options
+        return false;
+    }
+    char *sourceFind;
+    if (cmdline_iswchar)
+    {
+        sourceFind = OSCL_ARRAY_NEW(char, 256);
+    }
+    else
+    {
+        sourceFind = NULL;
+    }
+    int configSearch = 0;
+    //this flag will be true in case aCommand is found
+    bool configFound = false;
+    // Go through each argument
+    for (; configSearch < count; configSearch++)
+    {
+        // Convert to UTF8 if necessary
+        if (cmdline_iswchar)
         {
-            delete((DestructClass*)ptr);
+            OSCL_TCHAR* cmd = NULL;
+            command_line->get_arg(configSearch, cmd);
+            oscl_UnicodeToUTF8(cmd, oscl_strlen(cmd), sourceFind, 256);
         }
-};
+        else
+        {
+            sourceFind = NULL;
+            command_line->get_arg(configSearch, sourceFind);
+        }
+        //Compare strings and see if they match
+        if (oscl_strcmp(sourceFind, command.get_cstr()) == 0)
+        {
+            configFound = true;
+            ArgCount = ++configSearch;
+            break;
+        }
+    }
+    if (cmdline_iswchar)
+    {
+        OSCL_ARRAY_DELETE(sourceFind);
+        sourceFind = NULL;
+    }
+    if (configFound)
+        return true;
+
+    return false;
+}
+
+bool isConfigFilePresent(FILE* filehandle, cmd_line *command_line, char *aArgument)
+{
+    OSCL_HeapString<OsclMemAllocator> config = "-config";
+    int configSearch = 0;
+    bool cmdline_iswchar = command_line->is_wchar();
+
+    if (LookForCmd(command_line, config, configSearch))
+    {
+        //We've found -config, now let's get the filename
+        // Convert to UTF8 if necessary
+        fprintf(filehandle, "config file foundn\n");
+        if (cmdline_iswchar)
+        {
+            OSCL_TCHAR* cmd = NULL;
+            command_line->get_arg(configSearch, cmd);
+            oscl_UnicodeToUTF8(cmd, oscl_strlen(cmd), aArgument, 200);
+        }
+        else
+        {
+            command_line->get_arg(configSearch, aArgument);
+        }
+        return true;
+    }
+    return false;
+}
+
+void FindTestRange(FILE *filehandle, cmd_line *command_line, uint32 &FirstTest, uint32 &LastTest)
+{
+    OSCL_HeapString<OsclMemAllocator> test = "-t";
+    int testSearch = 0;
+    FirstTest = 0;
+    LastTest = NUMBER_TEST_CASES;
+    bool cmdline_iswchar = command_line->is_wchar();
+    char *strFirstTest, *strLastTest;
+    if (cmdline_iswchar)
+    {
+        strFirstTest = OSCL_ARRAY_NEW(char, 16);
+        strLastTest = OSCL_ARRAY_NEW(char, 16);
+    }
+    else
+    {
+        strFirstTest = strLastTest = NULL;
+    }
+
+    if (LookForCmd(command_line, test, testSearch))
+    {
+        fprintf(filehandle, "test found \n");
+        //We've found -t, now let's get test range
+        // Convert to UTF8 if necessary
+        if (cmdline_iswchar)
+        {
+            OSCL_TCHAR* cmd = NULL;
+            command_line->get_arg(testSearch++, cmd);
+            oscl_UnicodeToUTF8(cmd, oscl_strlen(cmd), strFirstTest, 20);
+
+            command_line->get_arg(testSearch, cmd);
+            oscl_UnicodeToUTF8(cmd, oscl_strlen(cmd), strLastTest, 20);
+        }
+        else
+        {
+            strFirstTest = strLastTest = NULL;
+            command_line->get_arg(testSearch++, strFirstTest);
+            command_line->get_arg(testSearch, strLastTest);
+        }
+        PV_atoi(strFirstTest, '0', FirstTest);
+        PV_atoi(strLastTest, '0', LastTest);
+    }
+
+    if (cmdline_iswchar)
+    {
+        OSCL_ARRAY_DELETE(strFirstTest);
+        strFirstTest = NULL;
+        OSCL_ARRAY_DELETE(strLastTest);
+        strLastTest = NULL;
+    }
+}
+
+bool isCodecTypePresent(FILE *filehandle, cmd_line *command_line, OSCL_HeapString<OsclMemAllocator> &Role, OSCL_HeapString<OsclMemAllocator> &ComponentFormat)
+{
+    OSCL_HeapString<OsclMemAllocator> codec = "-c";
+    bool cmdline_iswchar = command_line->is_wchar();
+    int codecTypeSearch = 0;
+    char *codecTypeSelected;
+    if (cmdline_iswchar)
+    {
+        codecTypeSelected = OSCL_ARRAY_NEW(char, 16);
+    }
+    else
+    {
+        codecTypeSelected = NULL;
+    }
+    if (LookForCmd(command_line, codec, codecTypeSearch))
+    {
+        if (cmdline_iswchar)
+        {
+            OSCL_TCHAR* cmd = NULL;
+            command_line->get_arg(codecTypeSearch, cmd);
+            oscl_UnicodeToUTF8(cmd, oscl_strlen(cmd), codecTypeSelected, 16);
+        }
+        else
+        {
+            codecTypeSelected = NULL;
+            command_line->get_arg(codecTypeSearch, codecTypeSelected);
+        }
+    }
+    else
+    {
+        //return false since a codec was not found
+        fprintf(filehandle, "codec was not found\n");
+        return false;
+    }
+
+    if (0 == oscl_strcmp(codecTypeSelected, "avc"))
+    {
+        Role = "video_encoder.avc";
+        ComponentFormat = "H264";
+    }
+    else if (0 == oscl_strcmp(codecTypeSelected, "mpeg4"))
+    {
+        Role = "video_encoder.mpeg4";
+        ComponentFormat = "M4V";
+    }
+    else if (0 == oscl_strcmp(codecTypeSelected, "amr"))
+    {
+        Role = "audio_encoder.amrnb";
+        ComponentFormat = "AMRNB";
+    }
+    else if (0 == oscl_strcmp(codecTypeSelected, "aac"))
+    {
+        Role = "audio_encoder.aac";
+        ComponentFormat = "AAC";
+    }
+    else
+    {
+        fprintf(filehandle, "Unsupported component type\n");
+        return false;
+    }
+
+    if (cmdline_iswchar)
+    {
+        OSCL_ARRAY_DELETE(codecTypeSelected);
+        codecTypeSelected  = NULL;
+    }
+    return true;
+}
+
+void FindLoggerOption(FILE *filehandle, cmd_line *command_line, bool &IsLogFile)
+{
+    OSCL_HeapString<OsclMemAllocator> logFileStr = "-logfile";
+    int index = 0;
+    //if we find -logfile in the list then we must enable the text appenders
+    if (LookForCmd(command_line, logFileStr, index))
+    {
+        fprintf(filehandle, "logging to file enabled\n");
+        IsLogFile = true;
+    }
+    else
+    {
+        IsLogFile = false;
+    }
+}
 
 // Main entry point for the code
-int main(int argc, char** argv)
+int local_main(FILE* filehandle, cmd_line *command_line)
 {
-    char ConfigFileName[200] = "\0";
-    OMX_STRING Role = NULL;
-    int ArgIndex = 0, FirstTest, LastTest;
-    OmxComponentEncTest* pTestApp;
-
-    char ComponentFormat[10] = "\0";
-
-
-    OMX_BOOL IsLogFile = OMX_FALSE;
-
     // OSCL Initializations
     OsclBase::Init();
     OsclErrorTrap::Init();
     OsclMem::Init();
     PVLogger::Init();
 
-    if (argc > 1)
-    {
-        oscl_strncpy(ConfigFileName, argv[1], oscl_strlen(argv[1]) + 1);
+    fprintf(filehandle, "OMX Encoder Test App\n");
+    char ConfigFileName[200] = "\0";
+    OSCL_HeapString<OsclMemAllocator> Role;
+    OSCL_HeapString<OsclMemAllocator> ComponentFormat;
+    uint32 FirstTest, LastTest;
+    bool IsLogFile = false;
 
+    // config file and codecType are mandatory, so if they are not present let's
+    //clean up and get out
+    if (isConfigFilePresent(filehandle, command_line, ConfigFileName) && isCodecTypePresent(filehandle, command_line, Role, ComponentFormat))
+    {
+        fprintf(filehandle, "config file = %s\n", ConfigFileName);
+        fprintf(filehandle, "Role = %s \n ComponentFormat = %s\n", Role.get_cstr(), ComponentFormat.get_cstr());
 
         //default is to run all tests.
-        FirstTest = 0;
-        LastTest = NUMBER_TEST_CASES;
+        FindTestRange(filehandle, command_line, FirstTest, LastTest);
+        fprintf(filehandle, "test range => %d  to %d\n", FirstTest, LastTest);
 
-        ArgIndex = 2;
-
-        while (ArgIndex < argc)
-        {
-            if ('-' == *(argv[ArgIndex]))
-            {
-                switch (argv[ArgIndex][1])
-                {
-                    case 't':
-                    {
-                        ArgIndex++;
-                        FirstTest = atoi(argv[ArgIndex++]);
-                        LastTest = atoi(argv[ArgIndex++]);
-                    }
-                    break;
-
-                    case 'c':
-                    {
-                        char* Result;
-                        ArgIndex++;
-
-                        Role = (OMX_STRING) oscl_malloc(PV_OMX_MAX_COMPONENT_NAME_LENGTH * sizeof(OMX_U8));
-
-                        if (NULL != (Result = (OMX_STRING) oscl_strstr(argv[ArgIndex], "avc")))
-                        {
-                            oscl_strncpy(Role, "video_encoder.avc", oscl_strlen("video_encoder.avc") + 1);
-                            oscl_strncpy(ComponentFormat, "H264", oscl_strlen("H264") + 1);
-                        }
-                        else if (NULL != (Result = (OMX_STRING) oscl_strstr(argv[ArgIndex], "mpeg4")))
-                        {
-                            oscl_strncpy(Role, "video_encoder.mpeg4", oscl_strlen("video_encoder.mpeg4") + 1);
-                            oscl_strncpy(ComponentFormat, "M4V", oscl_strlen("M4V") + 1);
-                        }
-                        else if (NULL != (Result = (OMX_STRING) oscl_strstr(argv[ArgIndex], "amr")))
-                        {
-                            oscl_strncpy(Role, "audio_encoder.amrnb", oscl_strlen("audio_encoder.amrnb") + 1);
-                            oscl_strncpy(ComponentFormat, "AMRNB", oscl_strlen("AMRNB") + 1);
-                        }
-                        else if (NULL != (Result = (OMX_STRING) oscl_strstr(argv[ArgIndex], "aac")))
-                        {
-                            oscl_strncpy(Role, "audio_encoder.aac", oscl_strlen("audio_encoder.aac") + 1);
-                            oscl_strncpy(ComponentFormat, "AAC", oscl_strlen("AAC") + 1);
-                        }
-                        else
-                        {
-                            printf("Unsupported component type\n");
-                            exit(1);
-                        }
-
-                        ArgIndex++;
-                    }
-                    break;
-
-                    default:
-                    {
-                        printf("Usage: Config_file {options}\n");
-                        printf("Option{} \n");
-                        printf("-c      {CodecType}\n");
-                        printf("        CodecType could be avc,mpeg4,amr, aac\n");
-                        printf("-t x y  {A range of test cases to run}\n ");
-                        printf("       {To run one test case use same index for x and y} {Default is ALL}\n");
-
-                        // Clean OSCL
-                        PVLogger::Cleanup();
-                        OsclErrorTrap::Cleanup();
-                        OsclMem::Cleanup();
-                        OsclBase::Cleanup();
-
-                        exit(-1);
-                    }
-                    break;
-                }
-            }
-            else
-            {
-                printf("Usage: Config_file {options}\n");
-                printf("Option{} \n");
-                printf("-c      {CodecType}\n");
-                printf("        CodecType could be avc, mpeg4, amr, aac\n");
-                printf("-t x y  {A range of test cases to run}\n ");
-                printf("       {To run one test case use same index for x and y} {Default is ALL}\n");
-
-                // Clean OSCL
-                PVLogger::Cleanup();
-                OsclErrorTrap::Cleanup();
-                OsclMem::Cleanup();
-                OsclBase::Cleanup();
-                exit(-1);
-            }
-        }
-    }
-    else
-    {
-        printf("Usage: Config_file {options}\n");
-        printf("Option{} \n");
-        printf("-c      {CodecType}\n");
-        printf("        CodecType could be avc, mpeg4, amr, aac\n");
-        printf("-t x y  {A range of test cases to run}\n ");
-        printf("       {To run one test case use same index for x and y} {Default is ALL}\n");
-
-        // Clean OSCL
-        PVLogger::Cleanup();
-        OsclErrorTrap::Cleanup();
-        OsclMem::Cleanup();
-        OsclBase::Cleanup();
-        exit(-1);
-    }
-
-    OMX_BOOL InitSchedulerFlag = OMX_FALSE;
-
-    int CurrentTestNumber = FirstTest;
-
-//This scope operator will make sure that LogAppenderDestructDealloc is called before the Logger cleanup
-
-    {
-        //Enable the following code for logging
-        PVLoggerAppender *appender = NULL;
-        OsclRefCounter *refCounter = NULL;
-
+        //find if logs need to be printed to a file
+        FindLoggerOption(filehandle, command_line, IsLogFile);
         if (IsLogFile)
         {
-            OSCL_TCHAR LogFileName[200] = {'l', 'o', 'g', 'f', 'i', 'l', 'e', '.', 't', 'x', 't'};
-            appender = (PVLoggerAppender*)TextFileAppender<TimeAndIdLayout, 1024>::CreateAppender((oscl_wchar*)(LogFileName));
-            OsclRefCounterSA<LogAppenderDestructDealloc<TextFileAppender<TimeAndIdLayout, 1024> > > *appenderRefCounter =
-                new OsclRefCounterSA<LogAppenderDestructDealloc<TextFileAppender<TimeAndIdLayout, 1024> > >(appender);
-            refCounter = appenderRefCounter;
-
+            // Toggle to enable logging output to file or console
+            OSCL_HeapString<OsclMemAllocator> logfilename(PVLOG_PREPEND_OUT_FILENAME);
+            logfilename += PVLOG_OUT_FILENAME;
+            PVLoggerCfgFileParser::SetupLogAppender(PVLoggerCfgFileParser::ePVLOG_APPENDER_FILE,
+                                                    logfilename.get_str(), _STRLIT_CHAR(""), PVLOGMSG_VERBOSE);
         }
         else
         {
-            appender = new StdErrAppender<TimeAndIdLayout, 1024>();
-            OsclRefCounterSA<LogAppenderDestructDealloc<StdErrAppender<TimeAndIdLayout, 1024> > > *appenderRefCounter =
-                new OsclRefCounterSA<LogAppenderDestructDealloc<StdErrAppender<TimeAndIdLayout, 1024> > >(appender);
-            refCounter = appenderRefCounter;
-
+            PVLoggerCfgFileParser::SetupLogAppender(PVLoggerCfgFileParser::ePVLOG_APPENDER_STDERR);
         }
 
-        OsclSharedPtr<PVLoggerAppender> appenderPtr(appender, refCounter);
+        //create a test suite
+        OmxEncTestSuite *pTestSuite = OSCL_NEW(OmxEncTestSuite, (filehandle, FirstTest, LastTest, ConfigFileName, Role, ComponentFormat));
 
-        //Log all the loggers
-        PVLogger *rootnode = PVLogger::GetLoggerObject("");
-        rootnode->AddAppender(appenderPtr);
-        rootnode->SetLogLevel(PVLOGMSG_DEBUG);
+        pTestSuite->run_test();     //Run the test
 
-        while (CurrentTestNumber <= LastTest)
-        {
-            // Shutdown PVLogger and scheduler before checking mem stats
+        //Create interpreter
+        text_test_interpreter interp;
 
-            switch (CurrentTestNumber)
-            {
-                case GET_ROLES_TEST:
-                {
-                    printf("\nStarting test %4d: GET_ROLES_TEST \n", CurrentTestNumber);
+        //interpretating results and dumping them into a UnitTest_String
+        _STRING rs = interp.interpretation(pTestSuite->last_result());
 
-                    pTestApp = OSCL_NEW(OmxEncTestCompRole, ());
+        //Print in filehandle
+        fprintf(filehandle, rs.c_str());
 
-                    pTestApp->Parse(ConfigFileName, Role, ComponentFormat);
+        int result;
+        const test_result the_result = pTestSuite->last_result();
+        //if the success count is different from the total test count then return 1,else 0
+        result = (int)(the_result.success_count() != the_result.total_test_count());
 
-                    if (OMX_FALSE == InitSchedulerFlag)
-                    {
-                        pTestApp->InitScheduler();
-                        InitSchedulerFlag = OMX_TRUE;
-                    }
+        OSCL_DELETE(pTestSuite);
 
-                    pTestApp->StartTestApp();
-
-                    OSCL_DELETE(pTestApp);
-                    pTestApp = NULL;
-                    CurrentTestNumber++;
-                }
-                break;
-
-                case PARAM_NEGOTIATION_TEST:
-                {
-                    printf("\nStarting test %4d: PARAM_NEGOTIATION_TEST\n", CurrentTestNumber);
-
-                    pTestApp = OSCL_NEW(OmxEncTestBufferNegotiation, ());
-
-                    pTestApp->Parse(ConfigFileName, Role, ComponentFormat);
-
-                    if (OMX_FALSE == InitSchedulerFlag)
-                    {
-                        pTestApp->InitScheduler();
-                        InitSchedulerFlag = OMX_TRUE;
-                    }
-
-                    pTestApp->StartTestApp();
-
-                    OSCL_DELETE(pTestApp);
-                    pTestApp = NULL;
-
-                    CurrentTestNumber++;
-                }
-                break;
-
-                case NORMAL_SEQ_TEST:
-                {
-                    printf("\nStarting test %4d: NORMAL_SEQ_TEST \n", CurrentTestNumber);
-
-                    pTestApp = OSCL_NEW(OmxComponentEncTest, ());
-
-                    pTestApp->Parse(ConfigFileName, Role, ComponentFormat);
-
-                    if (OMX_FALSE == InitSchedulerFlag)
-                    {
-                        pTestApp->InitScheduler();
-                        InitSchedulerFlag = OMX_TRUE;
-                    }
-
-                    pTestApp->StartTestApp();
-
-                    OSCL_DELETE(pTestApp);
-                    pTestApp = NULL;
-
-
-                    CurrentTestNumber++;
-                }
-                break;
-
-                case USE_BUFFER_TEST:
-                {
-                    printf("\nStarting test %4d: USE_BUFFER_TEST \n", CurrentTestNumber);
-
-                    pTestApp = OSCL_NEW(OmxEncTestUseBuffer, ());
-
-                    pTestApp->Parse(ConfigFileName, Role, ComponentFormat);
-
-                    if (OMX_FALSE == InitSchedulerFlag)
-                    {
-                        pTestApp->InitScheduler();
-                        InitSchedulerFlag = OMX_TRUE;
-                    }
-
-                    pTestApp->StartTestApp();
-
-                    OSCL_DELETE(pTestApp);
-                    pTestApp = NULL;
-
-                    CurrentTestNumber++;
-                }
-                break;
-
-                case BUFFER_BUSY_TEST:
-                {
-                    printf("\nStarting test %4d: BUFFER_BUSY_TEST\n", CurrentTestNumber);
-
-                    pTestApp = OSCL_NEW(OmxEncTestBufferBusy, ());
-
-                    pTestApp->Parse(ConfigFileName, Role, ComponentFormat);
-
-                    if (OMX_FALSE == InitSchedulerFlag)
-                    {
-                        pTestApp->InitScheduler();
-                        InitSchedulerFlag = OMX_TRUE;
-                    }
-
-                    pTestApp->StartTestApp();
-
-                    OSCL_DELETE(pTestApp);
-                    pTestApp = NULL;
-
-                    CurrentTestNumber++;
-                }
-                break;
-
-
-                case PARTIAL_FRAMES_TEST:
-                {
-                    printf("\nStarting test %4d: PARTIAL_FRAMES_TEST \n", CurrentTestNumber);
-
-                    pTestApp = OSCL_NEW(OmxEncTestPartialFrames, ());
-
-                    pTestApp->Parse(ConfigFileName, Role, ComponentFormat);
-
-                    if (OMX_FALSE == InitSchedulerFlag)
-                    {
-                        pTestApp->InitScheduler();
-                        InitSchedulerFlag = OMX_TRUE;
-                    }
-
-                    pTestApp->StartTestApp();
-
-                    OSCL_DELETE(pTestApp);
-                    pTestApp = NULL;
-                    CurrentTestNumber++;
-                }
-                break;
-
-                case EXTRA_PARTIAL_FRAMES_TEST:
-                {
-                    printf("\nStarting test %4d: EXTRA_PARTIAL_FRAMES_TEST \n", CurrentTestNumber);
-
-                    pTestApp = OSCL_NEW(OmxEncTestExtraPartialFrames, ());
-
-                    pTestApp->Parse(ConfigFileName, Role, ComponentFormat);
-
-                    if (OMX_FALSE == InitSchedulerFlag)
-                    {
-                        pTestApp->InitScheduler();
-                        InitSchedulerFlag = OMX_TRUE;
-                    }
-
-                    pTestApp->StartTestApp();
-
-                    OSCL_DELETE(pTestApp);
-                    pTestApp = NULL;
-                    CurrentTestNumber++;
-                }
-                break;
-
-                case PAUSE_RESUME_TEST:
-                {
-                    printf("\nStarting test %4d: PAUSE_RESUME_TEST\n", CurrentTestNumber);
-
-                    pTestApp = OSCL_NEW(OmxEncTestPauseResume, ());
-
-                    pTestApp->Parse(ConfigFileName, Role, ComponentFormat);
-
-                    if (OMX_FALSE == InitSchedulerFlag)
-                    {
-                        pTestApp->InitScheduler();
-                        InitSchedulerFlag = OMX_TRUE;
-                    }
-
-                    pTestApp->StartTestApp();
-
-                    OSCL_DELETE(pTestApp);
-                    pTestApp = NULL;
-
-                    CurrentTestNumber++;
-                }
-                break;
-
-                case ENDOFSTREAM_MISSING_TEST:
-                {
-                    printf("\nStarting test %4d: ENDOFSTREAM_MISSING_TEST \n", CurrentTestNumber);
-
-                    pTestApp = OSCL_NEW(OmxEncTestEosMissing, ());
-
-                    pTestApp->Parse(ConfigFileName, Role, ComponentFormat);
-
-                    if (OMX_FALSE == InitSchedulerFlag)
-                    {
-                        pTestApp->InitScheduler();
-                        InitSchedulerFlag = OMX_TRUE;
-                    }
-
-                    pTestApp->StartTestApp();
-
-                    OSCL_DELETE(pTestApp);
-                    pTestApp = NULL;
-
-                    CurrentTestNumber++;
-                }
-                break;
-
-                case WITHOUT_MARKER_BIT_TEST:
-                {
-                    printf("\nStarting test %4d: WITHOUT_MARKER_BIT_TEST \n", CurrentTestNumber);
-
-                    pTestApp = OSCL_NEW(OmxEncTestWithoutMarker, ());
-
-                    pTestApp->Parse(ConfigFileName, Role, ComponentFormat);
-
-                    if (OMX_FALSE == InitSchedulerFlag)
-                    {
-                        pTestApp->InitScheduler();
-                        InitSchedulerFlag = OMX_TRUE;
-                    }
-
-                    pTestApp->StartTestApp();
-
-                    OSCL_DELETE(pTestApp);
-                    pTestApp = NULL;
-                    CurrentTestNumber++;
-                }
-                break;
-
-                default:
-                {
-                    // just skip the count
-                    CurrentTestNumber++;
-                }
-                break;
-            }
-        }
-
-
-        if (Role)
-        {
-            oscl_free(Role);
-            Role = NULL;
-        }
+        return result;
     }
-
+    else
+    {
+        fprintf(filehandle, "Usage: Config_file {options}\n");
+        fprintf(filehandle, "Option{} \n");
+        fprintf(filehandle, "-c      {CodecType}\n");
+        fprintf(filehandle, "        CodecType could be avc, mpeg4, amr, aac\n");
+        fprintf(filehandle, "-t x y  {A range of test cases to run}\n ");
+        fprintf(filehandle, "       {To run one test case use same index for x and y} {Default is ALL}\n");
+    }
 
     // Clean OSCL
     PVLogger::Cleanup();
     OsclErrorTrap::Cleanup();
     OsclMem::Cleanup();
     OsclBase::Cleanup();
-
     return 0;
+}
+
+OmxEncTestSuite::OmxEncTestSuite(FILE *filehandle, const int32 &aFirstTest, const int32 &aLastTest,
+                                 char *aConfigFileName, OSCL_HeapString<OsclMemAllocator> &aRole, OSCL_HeapString<OsclMemAllocator> &aComponentFormat)
+        : iWrapper(NULL)
+{
+    iWrapper = OSCL_NEW(OmxEncTest_wrapper , (filehandle, aFirstTest, aLastTest, aConfigFileName, aRole, aComponentFormat));
+    adopt_test_case(iWrapper);
+}
+
+OmxEncTest_wrapper::OmxEncTest_wrapper(FILE *filehandle, const int32 &aFirstTest, const int32 &aLastTest,
+                                       char *aConfigFileName, OSCL_HeapString<OsclMemAllocator> &aRole,
+                                       OSCL_HeapString<OsclMemAllocator> &aComponentFormat) :
+        iTestApp(NULL),
+        iCurrentTestNumber(0),
+        iFirstTest(aFirstTest),
+        iLastTest(aLastTest),
+        iFilehandle(filehandle),
+        iInitSchedulerFlag(OMX_FALSE),
+        iConfigFileName(aConfigFileName),
+        iRole(aRole),
+        iComponentFormat(aComponentFormat),
+        iTotalSuccess(0),
+        iTotalError(0),
+        iTotalFail(0)
+{}
+
+void OmxEncTest_wrapper::test()
+{
+    iCurrentTestNumber = iFirstTest;
+    while (iCurrentTestNumber <= iLastTest)
+    {
+        // Shutdown PVLogger and scheduler before checking mem stats
+        switch (iCurrentTestNumber)
+        {
+            case GET_ROLES_TEST:
+            {
+                fprintf(iFilehandle, "\nStarting test %4d: GET_ROLES_TEST \n", iCurrentTestNumber);
+                iTestApp = OSCL_NEW(OmxEncTestCompRole, (this));
+            }
+            break;
+
+            case PARAM_NEGOTIATION_TEST:
+            {
+                fprintf(iFilehandle, "\nStarting test %4d: PARAM_NEGOTIATION_TEST\n", iCurrentTestNumber);
+                iTestApp = OSCL_NEW(OmxEncTestBufferNegotiation, (this));
+            }
+            break;
+
+            case NORMAL_SEQ_TEST:
+            {
+                fprintf(iFilehandle, "\nStarting test %4d: NORMAL_SEQ_TEST \n", iCurrentTestNumber);
+                iTestApp = OSCL_NEW(OmxComponentEncTest, (this));
+            }
+            break;
+
+            case USE_BUFFER_TEST:
+            {
+                fprintf(iFilehandle, "\nStarting test %4d: USE_BUFFER_TEST \n", iCurrentTestNumber);
+                iTestApp = OSCL_NEW(OmxEncTestUseBuffer, (this));
+            }
+            break;
+
+            case BUFFER_BUSY_TEST:
+            {
+                fprintf(iFilehandle, "\nStarting test %4d: BUFFER_BUSY_TEST\n", iCurrentTestNumber);
+                iTestApp = OSCL_NEW(OmxEncTestBufferBusy, (this));
+            }
+            break;
+
+
+            case PARTIAL_FRAMES_TEST:
+            {
+                fprintf(iFilehandle, "\nStarting test %4d: PARTIAL_FRAMES_TEST \n", iCurrentTestNumber);
+                iTestApp = OSCL_NEW(OmxEncTestPartialFrames, (this));
+            }
+            break;
+
+            case EXTRA_PARTIAL_FRAMES_TEST:
+            {
+                fprintf(iFilehandle, "\nStarting test %4d: EXTRA_PARTIAL_FRAMES_TEST \n", iCurrentTestNumber);
+                iTestApp = OSCL_NEW(OmxEncTestExtraPartialFrames, (this));
+            }
+            break;
+
+            case PAUSE_RESUME_TEST:
+            {
+                fprintf(iFilehandle, "\nStarting test %4d: PAUSE_RESUME_TEST\n", iCurrentTestNumber);
+                iTestApp = OSCL_NEW(OmxEncTestPauseResume, (this));
+            }
+            break;
+
+            case ENDOFSTREAM_MISSING_TEST:
+            {
+                fprintf(iFilehandle, "\nStarting test %4d: ENDOFSTREAM_MISSING_TEST \n", iCurrentTestNumber);
+                iTestApp = OSCL_NEW(OmxEncTestEosMissing, (this));
+            }
+            break;
+
+            case WITHOUT_MARKER_BIT_TEST:
+            {
+                fprintf(iFilehandle, "\nStarting test %4d: WITHOUT_MARKER_BIT_TEST \n", iCurrentTestNumber);
+                iTestApp = OSCL_NEW(OmxEncTestWithoutMarker, (this));
+            }
+            break;
+
+            default:
+            {
+                // just skip the count
+                ++iCurrentTestNumber;
+            }
+            break;
+        }
+
+        if (iTestApp != NULL)
+        {
+            iTestApp->Parse(iConfigFileName, iRole, iComponentFormat);
+            if (OMX_FALSE == iInitSchedulerFlag)
+            {
+                iTestApp->InitScheduler();
+                iInitSchedulerFlag = OMX_TRUE;
+            }
+            iTestApp->StartTestApp();
+            OSCL_DELETE(iTestApp);
+            iTestApp = NULL;
+        }
+        else
+        {
+            fprintf(iFilehandle, "test case was not created!!\n");
+            ++iCurrentTestNumber;
+        }
+    }
+}
+void OmxEncTest_wrapper::TestCompleted()
+{
+    // Print out the result for this test case
+    const test_result the_result = this->last_result();
+    fprintf(iFilehandle, "Results for Test Case %d:\n", iCurrentTestNumber);
+    fprintf(iFilehandle, "  Successes %d, Failures %d\n"
+            , the_result.success_count() - iTotalSuccess, the_result.failures().size() - iTotalFail);
+    iTotalSuccess = the_result.success_count();
+    iTotalFail = the_result.failures().size();
+    iTotalError = the_result.errors().size();
+
+    // Go to next test
+    ++iCurrentTestNumber;
 }
 
 void OmxComponentEncTest::StopOnError()

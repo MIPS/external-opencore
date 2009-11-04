@@ -1301,12 +1301,6 @@ PVMFStatus PvmiMIOFileInput::DoInit()
             iFsOpened_log = true;
         }
 
-        if (iFsOpened_log)
-        {
-            iFs_log.Close();
-            iFsOpened_log = false;
-        }
-
         if (iFileOpened_log ||
                 0 != iLogFile.Open(iSettings.iLogFileName.get_cstr(), Oscl_File::MODE_READ | Oscl_File::MODE_BINARY, iFs_log))
         {
