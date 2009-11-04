@@ -820,8 +820,7 @@ OSCL_EXPORT_REF int16 iGetAVCConfigInfo(uint8 *buffer, int32 length, int32 *widt
 
             sps_length = 0;
             // search for the next start code
-            while (!(sps[sps_length] == 0 && sps[sps_length+1] == 0 && sps[sps_length+2] == 1) &&
-                    sps_length < length - i - 2)
+            while (sps_length < length - i - 2 && !(sps[sps_length] == 0 && sps[sps_length+1] == 0 && sps[sps_length+2] == 1))
             {
                 sps_length++;
             }
@@ -834,6 +833,12 @@ OSCL_EXPORT_REF int16 iGetAVCConfigInfo(uint8 *buffer, int32 length, int32 *widt
 
             pps_length = length - i - sps_length - 3;
             pps = sps + sps_length + 3;
+
+            // for zero_byte
+            if (sps_length > 0 && sps[sps_length-1] == 0)
+            {
+                sps_length--;
+            }
         }
         else
         {
