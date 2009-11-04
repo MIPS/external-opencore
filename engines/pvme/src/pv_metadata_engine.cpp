@@ -1014,6 +1014,20 @@ void PVMetadataEngine::RecognizeCompleted(PVMFFormatType aSourceFormatType, Oscl
     PVCommandId cmdid = reccontext->iCmdId;
     OsclAny* cmdcontext = reccontext->iCmdContext;
 
+    /*In case previous source node is not null, and we have called DoQuerySourceFormatType
+    from HandleSourceNodeReset, we will have to set it to NULL here before setting up new source node*/
+    if (iSourceNode != NULL)
+    {
+        //Previous source node is not required, but don't release it here just free the interface pointers
+        ReleaseSourceNodeInterfaces();
+        //Store the values of previous source node so that the node can be released later on
+        iPreviousSourceNode = iSourceNode;
+        iPreviousSourceNodeUuid = iSourceNodeUuid;
+        iPreviousSourceNodeSessionId = iSourceNodeSessionId;
+
+        iSourceNode = NULL;
+    }
+
     // Start the source node creation and setup sequence
     PVMFStatus retval = DoSetupSourceNode(cmdid, cmdcontext);
 
