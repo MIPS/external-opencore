@@ -22,7 +22,8 @@
 #include "pvmf_media_input_node_factory.h"
 
 OSCL_EXPORT_REF PV2WaySourceAndSinksFile::PV2WaySourceAndSinksFile(PV2Way324InitInfo& aSdkInitInfo) :
-        PV2WaySourceAndSinksBase(aSdkInitInfo)
+        PV2WaySourceAndSinksBase(aSdkInitInfo),
+        iAudioRenderingDevice(false)
 {
 }
 
@@ -66,7 +67,8 @@ OSCL_EXPORT_REF PVMFNodeInterface* PV2WaySourceAndSinksFile::CreateMIONode(Codec
         {
             if (format.isAudio())
             {
-                mioNode = iMioAudioOutputFactory.Create(fileSettings);
+                //if we've added a audio rendering device then we should notify the factory
+                mioNode = iMioAudioOutputFactory.Create(fileSettings, iAudioRenderingDevice);
             }
             else if (format.isVideo())
             {
@@ -130,5 +132,13 @@ OSCL_EXPORT_REF void PV2WaySourceAndSinksFile::DeleteMIONode(CodecSpecifier* afo
     *aMioNode = NULL;
 }
 
+OSCL_EXPORT_REF void PV2WaySourceAndSinksFile::AddCapturingRenderingDevice(TPVDirection aDir,
+        PV2WayMediaType aMediaType)
+{
+    //depending on the direction and mediaType we will add the device
+    if ((aMediaType == PV_AUDIO) && (aDir == INCOMING))
+        iAudioRenderingDevice = true;
+    //TODO: eventually more devices will be added like video capture, audio capture etc etc
+}
 
 

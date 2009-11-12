@@ -77,6 +77,7 @@ class engine_test_suite : public test_case
         bool proxy_tests1(const bool aProxy);
         bool proxy_tests2(const bool aProxy);
         bool proxy_tests3(const bool aProxy);
+        bool proxy_tests5(const bool aProxy);
 #else
         bool proxy_tests4(const bool aProxy);
 #endif

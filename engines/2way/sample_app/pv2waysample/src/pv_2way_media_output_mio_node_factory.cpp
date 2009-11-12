@@ -23,6 +23,7 @@
 #include "pvmi_media_io_fileoutput.h"
 #include "pv_media_output_node_factory.h"
 
+
 int PV2WayMediaOutputMIONodeFactory::CreateMedia(PvmiMIOFileInputSettings& aFileSettings)
 {
     PVMFFormatType pvmf_mediatype = aFileSettings.iMediaFormat;
@@ -31,7 +32,9 @@ int PV2WayMediaOutputMIONodeFactory::CreateMedia(PvmiMIOFileInputSettings& aFile
     if (pvmf_mediatype.isAudio())
     {
         mio_media_type = MEDIATYPE_AUDIO;
-
+        if (iAudioRenderingDevice)
+        {
+        }
     }
     else if (pvmf_mediatype.isVideo())
     {
@@ -55,8 +58,17 @@ int PV2WayMediaOutputMIONodeFactory::CreateMedia(PvmiMIOFileInputSettings& aFile
 
 void PV2WayMediaOutputMIONodeFactory::DeleteMedia()
 {
-    OSCL_DELETE(iMediaControl);
-    iMediaControl = NULL;
+
+    if (iMediaControl)
+    {
+        if (iAudioRenderingDevice)
+        {
+        }
+        else
+            OSCL_DELETE(iMediaControl);
+
+        iMediaControl = NULL;
+    }
 }
 
 OSCL_EXPORT_REF void PV2WayMediaOutputMIONodeFactory::Delete(PVMFNodeInterface** aMioNode)
@@ -66,8 +78,9 @@ OSCL_EXPORT_REF void PV2WayMediaOutputMIONodeFactory::Delete(PVMFNodeInterface**
     DeleteMedia();
 }
 
-OSCL_EXPORT_REF PVMFNodeInterface* PV2WayMediaOutputMIONodeFactory::Create(PvmiMIOFileInputSettings& aFileSettings)
+OSCL_EXPORT_REF PVMFNodeInterface* PV2WayMediaOutputMIONodeFactory::Create(PvmiMIOFileInputSettings& aFileSettings, bool aRenderingDevice)
 {
+    iAudioRenderingDevice = aRenderingDevice;
     PVMFNodeInterface* mioNode = NULL;
     if (PVMFSuccess == CreateMedia(aFileSettings))
     {
@@ -78,5 +91,8 @@ OSCL_EXPORT_REF PVMFNodeInterface* PV2WayMediaOutputMIONodeFactory::Create(PvmiM
     return mioNode;
 }
 
-
+OSCL_EXPORT_REF void PV2WayMediaOutputMIONodeFactory::Release()
+{
+    delete this;
+}
 

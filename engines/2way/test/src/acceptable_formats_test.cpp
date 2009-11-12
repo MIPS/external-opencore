@@ -25,6 +25,7 @@ void acceptable_formats_test::AllNodesAdded()
 
 void acceptable_formats_test::FinishTimerCallback()
 {
+    PV2WayUtil::OutputInfo("acceptable_formats_test::FinishTimerCallback()\n");
     bool match1 = false;
     bool match2 = false;
     bool match3 = false;

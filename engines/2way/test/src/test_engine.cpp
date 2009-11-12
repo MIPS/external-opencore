@@ -719,6 +719,7 @@ void engine_test_suite::AddAudioTests(const bool aProxy,
                                       int32 firstTest,
                                       int32 lastTest)
 {
+
     if (inRange(firstTest, lastTest))
     {
         test_base* temp = OSCL_NEW(audio_only_test, (aProxy));
@@ -727,6 +728,7 @@ void engine_test_suite::AddAudioTests(const bool aProxy,
         temp->AddSourceAndSinks(iSourceAndSinks);
         adopt_test_case(temp);
     }
+
     if (inRange(firstTest, lastTest))
     {
         test_base* temp = OSCL_NEW(audio_only_test, (aProxy));
@@ -735,6 +737,8 @@ void engine_test_suite::AddAudioTests(const bool aProxy,
         temp->AddSourceAndSinks(iSourceAndSinks);
         adopt_test_case(temp);
     }
+
+
     if (inRange(firstTest, lastTest))
     {
         test_base* temp = OSCL_NEW(audio_only_test, (aProxy));
@@ -1106,13 +1110,34 @@ bool engine_test_suite::proxy_tests3(const bool aProxy)
     // temporarily comment out while fixing
     AddNegotiatedFormatsTests(aProxy, firstTest, lastTest);
 
-    //pause resume test case.
-    AddPauseResumeTests(aProxy, firstTest, lastTest);
-
-
     return true;
 }
 
+bool engine_test_suite::proxy_tests5(const bool aProxy)
+{
+
+    uint32 firstTest = 0;
+    uint32 lastTest = MAX_324_TEST;
+    bool alltests = false;
+
+    PV2WayUtil::FindTestRange(global_cmd_line, firstTest, lastTest);
+
+    //Basic 2way tests
+    PV2WayUtil::OutputInfo("Pause Resume engine tests.  First: %d Last: %d\n", firstTest, lastTest);
+    if (firstTest == 0 && lastTest == MAX_324_TEST)
+        alltests = true;
+
+    if (!codecs.setvalues())
+    {
+        PV2WayUtil::OutputInfo("ERROR! Could not locate all input files.\n");
+        return false;
+    }
+
+    //pause resume test case.
+    AddPauseResumeTests(aProxy, firstTest, lastTest);
+
+    return true;
+}
 bool engine_test_suite::proxy_tests(const bool aProxy)
 {
     proxy_tests1(aProxy);
@@ -1206,7 +1231,6 @@ int local_main(FILE* filehandle, cmd_line *command_line)
 #endif
 #endif
     result = test_wrapper();
-
     PVLogger::Cleanup();
 #ifndef OSCL_BYPASS_MEMMGT
 #ifndef NDEBUG
@@ -1338,6 +1362,29 @@ int start_test3(test_result *aTestResult)
     OSCL_DELETE(engine_tests);
     return result;
 }
+int start_test5(test_result *aTestResult)
+{
+    int32 leave = 0;
+    int result = 0;
+    engine_test_suite* engine_tests = NULL;
+    engine_tests = OSCL_NEW(engine_test_suite, ());
+    if (engine_tests)
+    {
+        if (!engine_tests->proxy_tests5(true))
+        {
+            PV2WayUtil::OutputInfo("ERROR - unable to setup tests\n");
+        }
+        OSCL_TRY(leave, engine_tests->run_test());
+        if (leave != 0)
+            PV2WayUtil::OutputInfo("Leave %d\n", leave);
+
+        const test_result the_result = engine_tests->last_result();
+        result = (the_result.success_count() != the_result.total_test_count());
+        aTestResult->add_result(engine_tests->last_result());
+    }
+    OSCL_DELETE(engine_tests);
+    return result;
+}
 #else
 int start_test4(test_result *aTestResult)
 {
@@ -1379,18 +1426,20 @@ int start_test()
     //this will clear all the private members of test_result
     TestResult->delete_contents();
 #ifndef LIP_SYNC_TESTING
-    //for (uint i = 0; i < 1000; ++i)
-    {
-        temp = start_test1(TestResult);
-        if (temp != 0)
-            result = temp;
-        temp = start_test2(TestResult);
-        if (temp != 0)
-            result = temp;
-        temp = start_test3(TestResult);
-        if (temp != 0)
-            result = temp;
-    }
+
+    temp = start_test1(TestResult);
+    if (temp != 0)
+        result = temp;
+    temp = start_test2(TestResult);
+    if (temp != 0)
+        result = temp;
+    temp = start_test3(TestResult);
+    if (temp != 0)
+        result = temp;
+    temp = start_test5(TestResult);
+    if (temp != 0)
+        result = temp;
+
 #else
     temp = start_test4(TestResult);
     if (temp != 0)

@@ -32,6 +32,7 @@
 #endif
 
 #define MAX_TEST_DURATION 60    // in seconds
+
 #define TEST_DURATION 3         // in seconds
 
 class test_base : public engine_test,

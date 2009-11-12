@@ -46,8 +46,10 @@ void av_test::AllNodesRemoved()
 
 void av_test::TimeoutOccurred(int32 timerID, int32 timeoutInfo)
 {
+    PV2WayUtil::OutputInfo("TimeoutOccurred\n");
     if (timerID == iTimerConnectionID)
     {
+        PV2WayUtil::OutputInfo("TimeoutOccurred Connection\n");
         // if the timerConnection status has gone off
         // cancel other timer
         timer->Cancel(iTimerTestTimeoutID);

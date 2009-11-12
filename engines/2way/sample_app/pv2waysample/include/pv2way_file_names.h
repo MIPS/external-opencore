@@ -60,6 +60,7 @@
 
 
 
+//#if OSCL_HAS_SYMBIAN_SUPPORT
 #define AUDIO_SINK_FILENAME _STRLIT("audio_out.if2")
 #define TEST_RX_LOG_FILENAME _STRLIT("commrx.bin")
 #define TEST_TX_LOG_FILENAME _STRLIT("commtx.bin")

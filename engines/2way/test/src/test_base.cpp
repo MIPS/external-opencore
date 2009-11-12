@@ -562,6 +562,7 @@ bool test_base::start_async_test()
     timer->SetObserver(this);
     //timer->AddToScheduler();
 
+    PV2WayUtil::OutputInfo("TimerID = %d, TestInfo = %d, MaxDur = %d\n", iTimerTestTimeoutID, iTimeoutTestInfo, iMaxTestDuration);
     // request the test to run up to
     timer->Request(iTimerTestTimeoutID, iTimeoutTestInfo, iMaxTestDuration);
 
@@ -754,8 +755,10 @@ void test_base::TestCompleted()
 
 void test_base::TimeoutOccurred(int32 timerID, int32 timeoutInfo)
 {
+    PV2WayUtil::OutputInfo("\nTimeoutOccurred\n");
     if (timerID == iTimerConnectionID)
     {
+        PV2WayUtil::OutputInfo("\nTimerConnectionID \n");
         // if the timerConnection status has gone off
         // cancel other timer
         timer->Cancel(iTimerTestTimeoutID);

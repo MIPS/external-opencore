@@ -58,6 +58,8 @@ class PV2WaySourceAndSinksFile : public PV2WaySourceAndSinksBase
         OSCL_IMPORT_REF void DeleteMIONode(CodecSpecifier* aformat,
                                            TPVDirection adir,
                                            PVMFNodeInterface** aMioNode);
+        OSCL_IMPORT_REF void AddCapturingRenderingDevice(TPVDirection aDir,
+                PV2WayMediaType aMediaType);
     protected:
         void OutputInfo(PVLogger::log_level_type aLogLevel, const char * str, ...)
         {
@@ -73,6 +75,9 @@ class PV2WaySourceAndSinksFile : public PV2WaySourceAndSinksBase
         PV2WayMediaOutputMIONodeFactory iMioAudioOutputFactory;
         PV2WayMediaInputMIONodeFactory iMioVideoInputFactory;
         PV2WayMediaOutputMIONodeFactory iMioVideoOutputFactory;
+
+        //devices
+        bool iAudioRenderingDevice;
 };
 
 
