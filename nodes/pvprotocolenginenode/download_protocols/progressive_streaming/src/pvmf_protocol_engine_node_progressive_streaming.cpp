@@ -316,13 +316,11 @@ void pvProgressiveStreamingOutput::RegisterForWriteNotification(uint32 afragSize
                 callback DataStreamCommandCompleted is because of this request or something else like reposition e.t.c. */
             iDataStream->RequestWriteCapacityNotification(iSessionID,
                     *observer, afragSize, (OsclAny*)this);
-            LOGINFODATAPATH((0, "pvProgressiveStreamingOutput::RegisterForWriteNotification() register for the WriteNotification \
-								as there is no enough memory in write data stream"));
+            LOGINFODATAPATH((0, "pvProgressiveStreamingOutput::RegisterForWriteNotification() register for the WriteNotification as there is not enough memory in write data stream"));
         }
         else
         {
-            LOGINFODATAPATH((0, "pvProgressiveStreamingOutput::RegisterForWriteNotification() WriteNotification is already \
-								pending with Write Data Stream."));
+            LOGINFODATAPATH((0, "pvProgressiveStreamingOutput::RegisterForWriteNotification() WriteNotification is already pending with Write Data Stream."));
         }
     }
 }

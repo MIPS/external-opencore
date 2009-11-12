@@ -3006,8 +3006,7 @@ void PVMFMP3FFParserNode::DataStreamInformationalEvent(const PVMFAsyncEvent& aEv
 void PVMFMP3FFParserNode::DataStreamErrorEvent(const PVMFAsyncEvent& aEvent)
 {
     OSCL_UNUSED_ARG(aEvent);
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR, (0, "PVMFMP3FFParserNode::DataStreamErrorEvent() \
-		Doing an assert here. Unexpected error callback from DataStream"));
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR, (0, "PVMFMP3FFParserNode::DataStreamErrorEvent() Doing an assert here. Unexpected error callback from DataStream"));
     //Should never be called
     OSCL_ASSERT(false);
 }
