@@ -98,6 +98,8 @@ PVMFOMXAudioDecNode::PVMFOMXAudioDecNode(int32 aPriority) :
 
              iCapability.iInputFormatCapability.push_back(PVMF_MIME_WMA);
 
+             iCapability.iInputFormatCapability.push_back(PVMF_MIME_REAL_AUDIO);
+
              iCapability.iOutputFormatCapability.push_back(PVMF_MIME_PCM16);
 
              iAvailableMetadataKeys.reserve(PVMF_OMXAUDIODEC_NUM_METADATA_VALUES);
@@ -568,6 +570,7 @@ PVMFStatus PVMFOMXAudioDecNode::HandlePortReEnable()
     OMX_PTR CodecProfilePtr;
     OMX_INDEXTYPE CodecProfileIndx;
     OMX_AUDIO_PARAM_AACPROFILETYPE Audio_Aac_Param;
+    OMX_AUDIO_PARAM_RATYPE Audio_Ra_Param;
 
     // determine the proper index and structure (based on codec type)
     if (iInPort)
@@ -585,6 +588,27 @@ PVMFStatus PVMFOMXAudioDecNode::HandlePortReEnable()
             Audio_Aac_Param.nPortIndex = iInputPortIndex;
 
             CONFIG_SIZE_AND_VERSION(Audio_Aac_Param);
+
+
+            // get parameters:
+            Err = OMX_GetParameter(iOMXDecoder, CodecProfileIndx, CodecProfilePtr);
+            if (Err != OMX_ErrorNone)
+            {
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
+                                (0, "PVMFOMXAudioDecNode::HandlePortReEnable() Port Reconfiguration -> Input port parameters problem"));
+
+                SetState(EPVMFNodeError);
+                ReportErrorEvent(PVMFErrResource);
+                return PVMFErrResource;
+            }
+        }
+        else if (((PVMFOMXDecPort*)iInPort)->iFormat ==  PVMF_MIME_REAL_AUDIO)
+        {
+            CodecProfilePtr = (OMX_PTR) & Audio_Ra_Param;
+            CodecProfileIndx = OMX_IndexParamAudioRa;
+            Audio_Ra_Param.nPortIndex = iInputPortIndex;
+
+            CONFIG_SIZE_AND_VERSION(Audio_Ra_Param);
 
 
             // get parameters:
@@ -647,6 +671,11 @@ PVMFStatus PVMFOMXAudioDecNode::HandlePortReEnable()
         // and let the decoder control how it is filled
         iSamplesPerFrame = 0; // unknown
     }
+    else if (Format == PVMF_MIME_REAL_AUDIO)
+    {
+        iSamplesPerFrame = Audio_Ra_Param.nSamplePerFrame;
+    }
+
 
     // is this output port?
     if (iPortIndexForDynamicReconfig == iOutputPortIndex)
@@ -1039,6 +1068,7 @@ bool PVMFOMXAudioDecNode::NegotiateComponentParameters(OMX_PTR aOutputParameters
             iTimestampDeltaForMemFragment = mcc.get_converted_ts(iTimeScale); // this is 1000000 microsecond timescale
         }
     }
+
 
     CONFIG_SIZE_AND_VERSION(AudioPortParameters);
     // get starting number
@@ -1444,6 +1474,10 @@ bool PVMFOMXAudioDecNode::NegotiateComponentParameters(OMX_PTR aOutputParameters
     {
         iOMXAudioCompressionFormat = OMX_AUDIO_CodingWMA;
     }
+    else if (Format == PVMF_MIME_REAL_AUDIO)
+    {
+        iOMXAudioCompressionFormat = OMX_AUDIO_CodingRA;
+    }
     else
     {
         // Illegal codec specified.
@@ -1509,6 +1543,7 @@ bool PVMFOMXAudioDecNode::GetSetCodecSpecificInfo()
     OMX_AUDIO_PARAM_AMRTYPE Audio_Amr_Param;
     OMX_AUDIO_PARAM_MP3TYPE Audio_Mp3_Param;
     OMX_AUDIO_PARAM_WMATYPE Audio_Wma_Param;
+    OMX_AUDIO_PARAM_RATYPE Audio_Ra_Param;
     OMX_ERRORTYPE Err = OMX_ErrorNone;
     PVMFFormatType Format = PVMF_MIME_FORMAT_UNKNOWN;
 
@@ -1561,6 +1596,14 @@ bool PVMFOMXAudioDecNode::GetSetCodecSpecificInfo()
         Audio_Wma_Param.nPortIndex = iInputPortIndex;
 
         CONFIG_SIZE_AND_VERSION(Audio_Wma_Param);
+    }
+    else if (Format == PVMF_MIME_REAL_AUDIO)
+    {
+        CodecProfilePtr = (OMX_PTR) & Audio_Ra_Param;
+        CodecProfileIndx = OMX_IndexParamAudioRa;
+        Audio_Ra_Param.nPortIndex = iInputPortIndex;
+
+        CONFIG_SIZE_AND_VERSION(Audio_Ra_Param);
     }
 
     // first get parameters:
@@ -1647,6 +1690,10 @@ bool PVMFOMXAudioDecNode::GetSetCodecSpecificInfo()
     {
         Audio_Wma_Param.eFormat = OMX_AUDIO_WMAFormatUnused; // set this initially
     }
+    else if (Format == PVMF_MIME_REAL_AUDIO)
+    {
+        Audio_Ra_Param.eFormat = OMX_AUDIO_RA8; // set this initially
+    }
     else
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
@@ -1703,6 +1750,13 @@ bool PVMFOMXAudioDecNode::GetSetCodecSpecificInfo()
         // and let the decoder control how it is filled
         iSamplesPerFrame = 0; // unknown
     }
+    else if (Format == PVMF_MIME_REAL_AUDIO)
+    {
+        // samples per frame is unknown in RA as of now, keep it to 0
+        // and let the decoder control how it is filled
+        iSamplesPerFrame = 0; // unknown
+    }
+
 
     // iSamplesPerFrame depends on the codec.
     // for AAC: iSamplesPerFrame = 1024
@@ -1711,6 +1765,7 @@ bool PVMFOMXAudioDecNode::GetSetCodecSpecificInfo()
     // for AMRWB: iSamplesPerFrame = 320
     // for MP3:   iSamplesPerFrame = unknown, but either 1152 or 576 (we pick 1152 as default)
     // for WMA:    unknown (iSamplesPerFrame is set to 0)
+    // for RA:     unknown (iSamplesPerFrame is set to 0)
 
     // GET the output buffer params and sizes
     OMX_AUDIO_PARAM_PCMMODETYPE Audio_Pcm_Param;
@@ -1863,7 +1918,8 @@ bool PVMFOMXAudioDecNode::InitDecoder(PVMFSharedMediaDataPtr& DataIn)
         initbufsize = 0;
     }
 
-    else if (((PVMFOMXDecPort*)iInPort)->iFormat == PVMF_MIME_WMA)
+    else if ((((PVMFOMXDecPort*)iInPort)->iFormat == PVMF_MIME_WMA) ||
+             (((PVMFOMXDecPort*)iInPort)->iFormat == PVMF_MIME_REAL_AUDIO))
     {
         // in case of WMA, get config parameters from the port
         initbuffer = ((PVMFOMXDecPort*)iInPort)->getTrackConfig();
@@ -1872,7 +1928,6 @@ bool PVMFOMXAudioDecNode::InitDecoder(PVMFSharedMediaDataPtr& DataIn)
         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                         (0, "PVMFOMXAudioDecNode::InitDecoder() for WMA Decoder. Initialization data Size %d.", initbufsize));
     }
-
 
     if (initbufsize > 0)
     {
@@ -2473,7 +2528,8 @@ PVMFStatus PVMFOMXAudioDecNode::DoGetNodeMetadataValue()
                     (((PVMFOMXDecPort*)iInPort)->iFormat == PVMF_MIME_AMRWB_IETF) ||
                     (((PVMFOMXDecPort*)iInPort)->iFormat == PVMF_MIME_AMRWB) ||
                     (((PVMFOMXDecPort*)iInPort)->iFormat == PVMF_MIME_MP3) ||
-                    (((PVMFOMXDecPort*)iInPort)->iFormat == PVMF_MIME_WMA)
+                    (((PVMFOMXDecPort*)iInPort)->iFormat == PVMF_MIME_WMA) ||
+                    (((PVMFOMXDecPort*)iInPort)->iFormat == PVMF_MIME_REAL_AUDIO)
 
                )
             {
@@ -2535,6 +2591,10 @@ PVMFStatus PVMFOMXAudioDecNode::DoGetNodeMetadataValue()
                     else if (((PVMFOMXDecPort*)iInPort)->iFormat == PVMF_MIME_WMA)
                     {
                         valuelen = oscl_strlen(_STRLIT_CHAR(PVMF_MIME_WMA)) + 1;
+                    }
+                    else if (((PVMFOMXDecPort*)iInPort)->iFormat == PVMF_MIME_REAL_AUDIO)
+                    {
+                        valuelen = oscl_strlen(_STRLIT_CHAR(PVMF_MIME_REAL_AUDIO)) + 1;
                     }
                     else
                     {
@@ -2607,6 +2667,10 @@ PVMFStatus PVMFOMXAudioDecNode::DoGetNodeMetadataValue()
                         else if (((PVMFOMXDecPort*)iInPort)->iFormat == PVMF_MIME_WMA)
                         {
                             oscl_strncpy(KeyVal.value.pChar_value, _STRLIT_CHAR(PVMF_MIME_WMA), valuelen);
+                        }
+                        else if (((PVMFOMXDecPort*)iInPort)->iFormat == PVMF_MIME_REAL_AUDIO)
+                        {
+                            oscl_strncpy(KeyVal.value.pChar_value, _STRLIT_CHAR(PVMF_MIME_REAL_AUDIO), valuelen);
                         }
                         else
                         {
@@ -2847,7 +2911,8 @@ uint32 PVMFOMXAudioDecNode::GetNumMetadataValues(PVMFMetadataList& aKeyList)
                     (((PVMFOMXDecPort*)iInPort)->iFormat == PVMF_MIME_AMRWB_IETF) ||
                     (((PVMFOMXDecPort*)iInPort)->iFormat == PVMF_MIME_AMRWB) ||
                     (((PVMFOMXDecPort*)iInPort)->iFormat == PVMF_MIME_MP3) ||
-                    (((PVMFOMXDecPort*)iInPort)->iFormat == PVMF_MIME_WMA)
+                    (((PVMFOMXDecPort*)iInPort)->iFormat == PVMF_MIME_WMA) ||
+                    (((PVMFOMXDecPort*)iInPort)->iFormat == PVMF_MIME_REAL_AUDIO)
 
                )
 
@@ -2994,7 +3059,8 @@ PVMFStatus PVMFOMXAudioDecNode::DoCapConfigVerifyParameters(PvmiKvp* aParameters
                 aInputs.iMimeType == PVMF_MIME_LATM ||
                 aInputs.iMimeType == PVMF_MIME_ADIF ||
                 aInputs.iMimeType == PVMF_MIME_ASF_MPEG4_AUDIO ||
-                aInputs.iMimeType == PVMF_MIME_AAC_SIZEHDR)
+                aInputs.iMimeType == PVMF_MIME_AAC_SIZEHDR ||
+                aInputs.iMimeType == PVMF_MIME_REAL_AUDIO)
         {
             if (aInputs.iMimeType == PVMF_MIME_LATM)
             {
@@ -3056,6 +3122,10 @@ PVMFStatus PVMFOMXAudioDecNode::DoCapConfigVerifyParameters(PvmiKvp* aParameters
     else if (aInputs.iMimeType ==  PVMF_MIME_WMA)
     {
         aInputParameters.cComponentRole = (OMX_STRING)"audio_decoder.wma";
+    }
+    else if (aInputs.iMimeType ==  PVMF_MIME_REAL_AUDIO)
+    {
+        aInputParameters.cComponentRole = (OMX_STRING)"audio_decoder.ra";
     }
     else
     {

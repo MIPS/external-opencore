@@ -95,7 +95,8 @@ OSCL_EXPORT_REF bool PVMFOMXDecPort::IsFormatSupported(PVMFFormatType aFmt)
                        (aFmt == PVMF_MIME_AMRWB_IETF) ||
                        (aFmt == PVMF_MIME_AMRWB) ||
                        (aFmt == PVMF_MIME_MP3) ||
-                       (aFmt == PVMF_MIME_WMA)
+                       (aFmt == PVMF_MIME_WMA) ||
+                       (aFmt == PVMF_MIME_REAL_AUDIO)
                       );
     }
 

@@ -52,6 +52,10 @@
 
 #define AAC_DEFAULT_SAMPLES_PER_FRAME 1024
 
+#define RA_DEFAULT_SAMPLE_RATE 22050
+#define RA_DEFAULT_NUM_CHANNELS 1
+#define RA_DEFAULT_SAMPLES_PER_FRAME 512
+
 OSCL_DLL_ENTRY_POINT_DEFAULT()
 
 
@@ -388,7 +392,7 @@ OSCL_EXPORT_REF int32 pv_audio_config_parser(pvAudioConfigParserInputs *aInputs,
 #if !defined(WMA_AUDIO_SUPPORTED)
                 bBitStreamSupported = false;
                 break;
-#endif  // WMA_AUDIO_SUPPORTED  
+#endif  // WMA_AUDIO_SUPPORTED
 
                 if (aOutputs->Channels > 8)
                 {
@@ -694,6 +698,13 @@ OSCL_EXPORT_REF int32 pv_audio_config_parser(pvAudioConfigParserInputs *aInputs,
         }
 
         aOutputs->SamplesPerFrame = SamplesPerFrame;
+    }
+    else if (aInputs->iMimeType == PVMF_MIME_REAL_AUDIO)    //Real Audio
+    {
+        // use these as default value, let decoder discover the actual size and perform port reconfig
+        aOutputs->Channels = RA_DEFAULT_NUM_CHANNELS;
+        aOutputs->SamplesPerSec = RA_DEFAULT_SAMPLE_RATE;
+        aOutputs->SamplesPerFrame = RA_DEFAULT_SAMPLES_PER_FRAME;
     }
 
     if (!bBitStreamValid)

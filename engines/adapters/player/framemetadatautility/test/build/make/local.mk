@@ -135,6 +135,7 @@ LIBS :=  pvframemetadatautility \
         omx_rv_component_lib \
         pvrvdecnode \
         rvdecoder \
+        omx_ra_component_lib \
         pvra8decnode \
         pvra8decoder \
         pvrmffparsernode \

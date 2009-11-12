@@ -3937,6 +3937,10 @@ OSCL_EXPORT_REF PVMFStatus PVMFOMXBaseDecNode::DoPrepare()
     {
         roles.push_back((OMX_STRING)"audio_decoder.wma");
     }
+    else if (format ==  PVMF_MIME_REAL_AUDIO)
+    {
+        roles.push_back((OMX_STRING)"audio_decoder.ra");
+    }
     else if (format ==  PVMF_MIME_H264_VIDEO ||
              format == PVMF_MIME_H264_VIDEO_MP4 ||
              format == PVMF_MIME_H264_VIDEO_RAW)
@@ -3998,7 +4002,8 @@ OSCL_EXPORT_REF PVMFStatus PVMFOMXBaseDecNode::DoPrepare()
                 format == PVMF_MIME_H264_VIDEO_MP4 ||
                 format == PVMF_MIME_M4V ||
                 format == PVMF_MIME_WMV ||
-                format == PVMF_MIME_REAL_VIDEO)
+                format == PVMF_MIME_REAL_VIDEO ||
+                format == PVMF_MIME_REAL_AUDIO)
         {
             PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
                             (0, "%s::DoPrepare() Codec Config data is not present", iName.Str()));
@@ -4422,8 +4427,10 @@ OSCL_EXPORT_REF PVMFStatus PVMFOMXBaseDecNode::DoPrepare()
     }
 
     // ONLY FOR AVC FILE PLAYBACK WILL 1 FRAGMENT CONTAIN ONE FULL NAL
+    //This will be true for AAC and Real Audio format as well
     if ((format == PVMF_MIME_H264_VIDEO) || (format == PVMF_MIME_H264_VIDEO_MP4) || (format == PVMF_MIME_H264_VIDEO_RAW)
-            || (format == PVMF_MIME_MPEG4_AUDIO) || (format == PVMF_MIME_ASF_MPEG4_AUDIO))
+            || (format == PVMF_MIME_MPEG4_AUDIO) || (format == PVMF_MIME_ASF_MPEG4_AUDIO)
+            || (format == PVMF_MIME_REAL_AUDIO))
     {
         // every memory fragment in case of AVC is a full NAL
         iSetMarkerBitForEveryFrag = true;
