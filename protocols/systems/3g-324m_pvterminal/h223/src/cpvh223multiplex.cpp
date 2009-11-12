@@ -86,6 +86,7 @@ CPVH223Multiplex::CPVH223Multiplex(TPVLoopbackMode aLoopbackMode)
     iAudlcn = 0;
     iSqrCalVidAudTS = 0;
     iRtMnSqCalc = 0;
+    iInterleavingFlagsAvailable = false;
     Init();
 
     ResetStats();
@@ -217,6 +218,7 @@ TPVStatusCode CPVH223Multiplex::Close()
         iInterleavingPacket.Unbind();
         OSCL_DEFAULT_FREE(iInterleavingMultiplexFlags);
         iInterleavingMultiplexFlags = NULL;
+        iInterleavingFlagsAvailable = false;
     }
 
     for (unsigned out_lcn = 0; out_lcn < iOutgoingChannels.size(); out_lcn++)
@@ -281,6 +283,7 @@ void CPVH223Multiplex::LevelSetupComplete(PVMFStatus status, TPVH223Level level)
         OSCL_DEFAULT_FREE(iInterleavingMultiplexFlags);
         iInterleavingMultiplexFlags = NULL;
         iInterleavingMultiplexFlagsSize = 0;
+        iInterleavingFlagsAvailable = false;
     }
     if (status == PVMFPending)
     {
@@ -358,10 +361,7 @@ PVMFStatus CPVH223Multiplex::GetOutgoingMuxPdus(MuxPduPacketList& packets)
 
         int32 max_pdus_size = iNumBytesPerMinSampleInterval;
 
-        if (iInterleavingPacket &&
-                iInterleavingPacket.GetRep() &&
-                iInterleavingPacket->getFilledSize() &&
-                iInterleavingMultiplexFlags &&
+        if (iInterleavingFlagsAvailable &&
                 ((iPduNum % PV_H223_INTERLEAVING_FLAG_SEND_FREQUENCY) == 0))
         {
             PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "CPVH223Multiplex::GetOutgoingMuxPdus Adding interleaving packet."));
@@ -1436,11 +1436,13 @@ void CPVH223Multiplex::SetInterleavingMultiplexFlags(uint16 size, uint8* flags)
         iInterleavingPacket.Unbind();
         OSCL_DEFAULT_FREE(iInterleavingMultiplexFlags);
         iInterleavingMultiplexFlags = NULL;
+        iInterleavingFlagsAvailable = false;
     }
     iInterleavingMultiplexFlagsSize = size;
     iInterleavingMultiplexFlags = (uint8*)OSCL_DEFAULT_MALLOC(size);
     oscl_memcpy(iInterleavingMultiplexFlags, flags, size);
     iInterleavingPacket = iMuxPduPacketAlloc->allocate(1);
+    iInterleavingFlagsAvailable = true;
     if (!iInterleavingPacket)
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,

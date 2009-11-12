@@ -297,6 +297,7 @@ class CPVH223Multiplex :  public LowerLayerObserver,
         OsclSharedPtr<PVMFMediaDataImpl> iInterleavingPacket;
         bool iEnableStuffing;
         bool iStuffOnlyFirstSend;
+        bool iInterleavingFlagsAvailable;
 };
 
 typedef CPVH223Multiplex H223;
