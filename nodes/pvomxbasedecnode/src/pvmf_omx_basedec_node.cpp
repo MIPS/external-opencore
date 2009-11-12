@@ -3684,7 +3684,7 @@ OMX_ERRORTYPE PVMFOMXBaseDecNode::EmptyBufferDoneProcessing(OMX_OUT OMX_HANDLETY
 /////////////////////////////////////////////////////////////////////////////
 ////////////////////// CALLBACK PROCESSING FOR FILL BUFFER DONE - output buffer is ready
 /////////////////////////////////////////////////////////////////////////////
-OMX_ERRORTYPE PVMFOMXBaseDecNode::FillBufferDoneProcessing(OMX_OUT OMX_HANDLETYPE aComponent,
+OSCL_EXPORT_REF OMX_ERRORTYPE PVMFOMXBaseDecNode::FillBufferDoneProcessing(OMX_OUT OMX_HANDLETYPE aComponent,
         OMX_OUT OMX_PTR aAppData,
         OMX_OUT OMX_BUFFERHEADERTYPE* aBuffer)
 {
