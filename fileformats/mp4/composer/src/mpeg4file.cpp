@@ -312,7 +312,11 @@ PVA_FF_Mpeg4File::init(int32 mediaType,
     // Movie fragment atom vectors initialised
     if (_oMovieFragmentEnabled)
     {
-        PV_MP4_FF_NEW(fp->auditCB, PVA_FF_MovieFragmentRandomAccessAtom, (), _pMfraAtom);
+        // use version 1 of the track fragment rand access box only for PVMP4FF_LIVE_MOVIE_FRAGMENT_MODE
+        uint8 tfraversion = (uint8)0;
+        if (_oLiveMovieFragmentEnabled)
+            tfraversion = (uint8)1;
+        PV_MP4_FF_NEW(fp->auditCB, PVA_FF_MovieFragmentRandomAccessAtom, (tfraversion), _pMfraAtom);
     }
 
     // Create miscellaneous vector of atoms
@@ -562,6 +566,11 @@ PVA_FF_Mpeg4File::addTrack(int32 mediaType, int32 codecType, uint8 profile,
         // just added (with a 1-based index NOT a zero-based index)
         TrackID = pmediatrack->getTrackID();
     }
+
+    // Add a new track fragment rand. access box for live movie fragment mode
+    if (_oLiveMovieFragmentEnabled)
+        _pMfraAtom->addTrackFragmentRandomAccessAtom(TrackID);
+
     recomputeSize();
     return (TrackID);
 }
@@ -1467,6 +1476,10 @@ PVA_FF_Mpeg4File::renderToFile(PVA_FF_UNICODE_STRING_PARAM filename)
         {
             status = false;
         }
+
+        // Render mfra always for _oLiveMovieFragmentEnabled
+        if (_oLiveMovieFragmentEnabled)
+            _pMfraAtom->renderToFileStream(&fp);
 
         fp._filePtr->Flush();
 
@@ -2515,7 +2528,9 @@ PVA_FF_Mpeg4File::addMediaSampleInterleave(uint32 trackID, PVMP4FFComposerSample
                                                                 pTrack->getMediaTimeScale());
 
                             // add random access atom for each track
-                            _pMfraAtom->addTrackFragmentRandomAccessAtom(pTrack->getTrackID());
+                            // make sure it hasn't been added yet.
+                            if (_pMfraAtom->getTfraAtom(pTrack->getTrackID()) == NULL)
+                                _pMfraAtom->addTrackFragmentRandomAccessAtom(pTrack->getTrackID());
                         }
                     }
                 }
@@ -3255,6 +3270,14 @@ PVA_FF_Mpeg4File::renderMovieFragments()
     _baseOffset = _offsetDataRenderedToFile; // base offset is used to set base data offset of Moof
 
     return true;
+}
+
+void PVA_FF_Mpeg4File::addMovieFragmentRandAccessEntry(uint32 trackId, uint64 time, uint64 moofOffset,
+        uint32 trafNumber, uint32 trunNumber,  uint32 sampleNumber)
+{
+    // Add a new track fragment rand. access box for live movie fragment mode
+    if (_oLiveMovieFragmentEnabled)
+        _pMfraAtom->addSampleEntry(trackId, time, moofOffset, trafNumber, trunNumber,  sampleNumber);
 }
 
 

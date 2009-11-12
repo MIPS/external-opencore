@@ -23,8 +23,8 @@ typedef Oscl_Vector <PVA_FF_TfraAtom*, OsclMemAllocator>
 PVA_FF_TrackFragmentRandomAccessAtomVecType;
 
 // constructor
-PVA_FF_MovieFragmentRandomAccessAtom::PVA_FF_MovieFragmentRandomAccessAtom()
-        : PVA_FF_Atom(MOVIE_FRAGMENT_RANDOM_ACCESS_ATOM)
+PVA_FF_MovieFragmentRandomAccessAtom::PVA_FF_MovieFragmentRandomAccessAtom(uint8 trackFragVersion)
+        : PVA_FF_Atom(MOVIE_FRAGMENT_RANDOM_ACCESS_ATOM), trackFragmentVersion(trackFragVersion)
 {
     // Initialise movie fragment random access offset atom
     PV_MP4_FF_NEW(fp->auditCB, PVA_FF_MfroAtom, (), _pMfroAtom);
@@ -58,7 +58,7 @@ void
 PVA_FF_MovieFragmentRandomAccessAtom::addTrackFragmentRandomAccessAtom(uint32 trackId)
 {
     PVA_FF_TfraAtom*    pTfraAtom;
-    PV_MP4_FF_NEW(fp->auditCB, PVA_FF_TfraAtom, ((trackId)), pTfraAtom);
+    PV_MP4_FF_NEW(fp->auditCB, PVA_FF_TfraAtom, (trackId, trackFragmentVersion), pTfraAtom);
 
     _pTfraList->push_back(pTfraAtom);
     pTfraAtom->setParent(this);
@@ -86,8 +86,8 @@ PVA_FF_MovieFragmentRandomAccessAtom::getTfraAtom(uint32 trackId)
 
 // add new random access entry for given track
 void
-PVA_FF_MovieFragmentRandomAccessAtom::addSampleEntry(uint32 trackId, uint32 time,
-        uint32 moofOffset,  uint32 trafNumber,
+PVA_FF_MovieFragmentRandomAccessAtom::addSampleEntry(uint32 trackId, uint64 time,
+        uint64 moofOffset,  uint32 trafNumber,
         uint32 trunNumber,  uint32 sampleNumber)
 {
     if (_pTfraList->size() != 0)

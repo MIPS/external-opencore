@@ -265,6 +265,10 @@ class PVA_FF_Mpeg4File : public PVA_FF_IMpeg4File, public PVA_FF_Parentable
         void setMovieFragmentDuration(uint32 duration);
         uint32 getMovieFragmentDuration();
 
+        // movie fragment random access samples
+        void addMovieFragmentRandAccessEntry(uint32 trackId, uint64 time, uint64 moofOffset,
+                                             uint32 trafNumber, uint32 trunNumber,  uint32 sampleNumber);
+
         bool renderMoovAtom();
         bool renderMovieFragments();
 

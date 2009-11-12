@@ -30,7 +30,7 @@ class PVA_FF_MovieFragmentRandomAccessAtom : public PVA_FF_Atom
 {
 
     public:
-        PVA_FF_MovieFragmentRandomAccessAtom();
+        PVA_FF_MovieFragmentRandomAccessAtom(uint8 trackFragVersion = (uint8)0);
 
         virtual ~PVA_FF_MovieFragmentRandomAccessAtom();
 
@@ -38,7 +38,7 @@ class PVA_FF_MovieFragmentRandomAccessAtom : public PVA_FF_Atom
 
         PVA_FF_TfraAtom*    getTfraAtom(uint32 trackId);
 
-        void    addSampleEntry(uint32 trackId, uint32 time, uint32 moofOffset,
+        void    addSampleEntry(uint32 trackId, uint64 time, uint64 moofOffset,
                                uint32 trafNumber, uint32 trunNumber,
                                uint32 sampleNumber);
 
@@ -49,6 +49,7 @@ class PVA_FF_MovieFragmentRandomAccessAtom : public PVA_FF_Atom
     private:
         PVA_FF_MfroAtom                                     *_pMfroAtom;
         Oscl_Vector <PVA_FF_TfraAtom*, OsclMemAllocator>    *_pTfraList;
+        uint8 trackFragmentVersion;
 
         virtual void recomputeSize();
 };

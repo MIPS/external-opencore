@@ -26,8 +26,8 @@
 
 struct PVA_FF_RandomAccessEntry
 {
-    uint32  time;
-    uint32  moofOffset;
+    uint64  time;
+    uint64  moofOffset;
     uint16  trafNumber;
     uint16  trunNumber;
     uint16  sampleNumber;
@@ -36,11 +36,11 @@ struct PVA_FF_RandomAccessEntry
 class PVA_FF_TfraAtom : public PVA_FF_FullAtom
 {
     public:
-        PVA_FF_TfraAtom(uint32 trackId);
+        PVA_FF_TfraAtom(uint32 trackId, uint8 version);
 
         virtual ~PVA_FF_TfraAtom();
 
-        void    addSampleEntry(uint32 ts, uint32 moofOffset,
+        void    addSampleEntry(uint64 ts, uint64 moofOffset,
                                uint32 trafNumber, uint32 trunNumber,
                                uint32 sampleNumber);
 

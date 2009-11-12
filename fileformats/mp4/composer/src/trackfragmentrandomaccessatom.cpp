@@ -18,11 +18,13 @@
 #define IMPLEMENT_TrackFragmentRandomAccessAtom
 
 #include "trackfragmentrandomaccessatom.h"
+#include "oscl_int64_utils.h"
+
 typedef Oscl_Vector<PVA_FF_RandomAccessEntry, OsclMemAllocator> PVA_FF_RandomAccessEntryVecType;
 
 // constructor
-PVA_FF_TfraAtom::PVA_FF_TfraAtom(uint32 trackId)
-        : PVA_FF_FullAtom(TRACK_FRAGMENT_RANDOM_ACCESS_ATOM, (uint8)0, (uint32)0)
+PVA_FF_TfraAtom::PVA_FF_TfraAtom(uint32 trackId, uint8 version)
+        : PVA_FF_FullAtom(TRACK_FRAGMENT_RANDOM_ACCESS_ATOM, version, (uint32)0)
 {
     _trackId = trackId;
     _reserved = TFRA_LENGTH_SIZE;
@@ -48,7 +50,7 @@ PVA_FF_TfraAtom::~PVA_FF_TfraAtom()
 
 // add new entry to TFRA
 void
-PVA_FF_TfraAtom::addSampleEntry(uint32 ts, uint32 moofOffset, uint32 trafNumber,
+PVA_FF_TfraAtom::addSampleEntry(uint64 ts, uint64 moofOffset, uint32 trafNumber,
                                 uint32 trunNumber, uint32 sampleNumber)
 {
     PVA_FF_RandomAccessEntry sampleEntry;
@@ -102,18 +104,24 @@ PVA_FF_TfraAtom::recomputeSize()
     size += 4;  // reserved
     size += 4;  // entry count
 
-    if (_entryCount != 0)
+    // calculate the rand. access table size
+    int32 entrysize = 0;
+    if (getVersion() == 0)
     {
-        for (uint32 ii = 0; ii < _entryCount; ii++)
-        {
-            size += 4;  // time
-            size += 4;  // MoofOffset
-            size += 2;  // traf number
-            size += 2;  // trun number
-            size += 2;  // sample number
-        }
+        entrysize += 4;  // time
+        entrysize += 4;  // MoofOffset
+    }
+    else
+    {
+        entrysize += 8;  // time
+        entrysize += 8;  // MoofOffset
     }
 
+    entrysize += 2;  // traf number
+    entrysize += 2;  // trun number
+    entrysize += 2;  // sample number
+
+    size += entrysize * (_entryCount);
     _size = size;
 
     // Update the parent atom size
@@ -157,17 +165,36 @@ PVA_FF_TfraAtom::renderToFileStream(MP4_AUTHOR_FF_FILE_IO_WRAP* fp)
     for (uint32 ii = 0; ii < _entryCount; ii++)
     {
 
-        if (!PVA_FF_AtomUtils::render32(fp, (*_pSampleEntries)[ii].time))
+        if (getVersion() == 0)
         {
-            return false;
-        }
-        rendered += 4;
+            if (!PVA_FF_AtomUtils::render32(fp,
+                                            Oscl_Int64_Utils::get_uint64_lower32((*_pSampleEntries)[ii].time)))
+            {
+                return false;
+            }
+            rendered += 4;
 
-        if (!PVA_FF_AtomUtils::render32(fp, (*_pSampleEntries)[ii].moofOffset))
-        {
-            return false;
+            if (!PVA_FF_AtomUtils::render32(fp,
+                                            Oscl_Int64_Utils::get_uint64_lower32((*_pSampleEntries)[ii].moofOffset)))
+            {
+                return false;
+            }
+            rendered += 4;
         }
-        rendered += 4;
+        else
+        {
+            if (!PVA_FF_AtomUtils::render64(fp, (*_pSampleEntries)[ii].time))
+            {
+                return false;
+            }
+            rendered += 8;
+
+            if (!PVA_FF_AtomUtils::render64(fp, (*_pSampleEntries)[ii].moofOffset))
+            {
+                return false;
+            }
+            rendered += 8;
+        }
 
         if (!PVA_FF_AtomUtils::render16(fp, (*_pSampleEntries)[ii].trafNumber))
         {
