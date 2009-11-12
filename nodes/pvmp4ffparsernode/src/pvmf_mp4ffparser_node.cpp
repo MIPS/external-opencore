@@ -19,55 +19,19 @@
 
 #include "pvmf_mp4ffparser_node_tuneables.h"
 
-#include "pvmf_mp4ffparser_outport.h"
-
 #include "impeg4file.h"
 
 #include "media_clock_converter.h"
 
-#include "pvlogger.h"
-
-#include "oscl_error_codes.h"
-
-#include "oscl_tickcount.h"
-
-#include "oscl_base.h"
-
-#include "pv_mime_string_utils.h"
-
 #include "oscl_snprintf.h"
-
-#include "pvmf_timestamp.h"
 
 #include "pvmf_fileformat_events.h"
 
 #include "pvmf_mp4ffparser_events.h"
 
-#include "pvmf_errorinfomessage_extension.h"
-
-#include "pvmf_download_progress_interface.h"
-
-#include "pvmf_duration_infomessage.h"
-
-#include "pvmf_durationinfomessage_extension.h"
-
-#include "oscl_int64_utils.h"
-
-#include "pvmf_media_cmd.h"
-
 #include "pvmf_media_msg_format_ids.h"
 
-#include "pvmf_local_data_source.h"
-
-#include "pvmi_kvp_util.h"
-
-#include "oscl_string_containers.h"
-
-#include "oscl_string_utils.h"
-
 #include "h263decoderspecificinfo.h"
-
-#include "oscl_bin_stream.h"
 
 #include "m4v_config_parser.h"
 
@@ -87,7 +51,7 @@
 #define MILLISECOND_TIMESCALE 1000
 
 PVMFMP4FFParserNode::PVMFMP4FFParserNode(int32 aPriority) :
-        OsclTimerObject(aPriority, "PVMFMP4FFParserNode"),
+        PVMFNodeInterfaceImpl(aPriority, "PVMFMP4FFParserNode"),
         iMP4FileHandle(NULL),
         iPortIter(NULL),
         iLogger(NULL),
@@ -107,7 +71,6 @@ PVMFMP4FFParserNode::PVMFMP4FFParserNode(int32 aPriority) :
     autopaused = false;
     iDownloadFileSize = 0;
     download_progress_interface = NULL;
-    iExtensionRefCount = 0;
     iThumbNailMode = false;
     iPreviewMode = false;
     iSourceContextDataValid = false;
@@ -132,7 +95,7 @@ PVMFMP4FFParserNode::PVMFMP4FFParserNode(int32 aPriority) :
     oWaitingOnLicense  = false;
     iPoorlyInterleavedContentEventSent = false;
 
-    iInterfaceState = EPVMFNodeCreated;
+
     iParsingMode = PVMF_MP4FF_PARSER_NODE_ENABLE_PARSER_OPTIMIZATION;
     oIsAACFramesFragmented = PVMFMP4FF_BREAKUP_AAC_FRAMES_INTO_MULTIPLE_MEDIA_FRAGS;
 
@@ -182,8 +145,6 @@ PVMFMP4FFParserNode::PVMFMP4FFParserNode(int32 aPriority) :
     iPVLoggerStateEnableFlag = false;
     iNativeAccessMode = DEFAULT_NATIVE_ACCESS_MODE;
 
-    iStreamID = 0;
-
     iDataStreamRequestPending = false;
 
     iJitterBufferDurationInMs = PVMF_MP4FFPARSER_NODE_PSEUDO_STREAMING_BUFFER_DURATION_IN_MS;
@@ -191,41 +152,46 @@ PVMFMP4FFParserNode::PVMFMP4FFParserNode(int32 aPriority) :
     iJitterBufferDurationInMs = PVMF_MP4FFPARSER_NODE_PSEUDO_STREAMING_BUFFER_DURATION_IN_MS;
     iBaseKey = INVALID;
 
+    iLogger = PVLogger::GetLoggerObject("PVMFMP4FFParserNode");
+    iDataPathLogger = PVLogger::GetLoggerObject("datapath.sourcenode.mp4parsernode");
+    iAVCDataPathLogger = PVLogger::GetLoggerObject("datapath.sourcenode.mp4parsernode.avc");
+    if (iAVCDataPathLogger != NULL)
+    {
+        iAVCDataPathLogger->DisableAppenderInheritance();
+    }
+    iClockLogger = PVLogger::GetLoggerObject("clock");
+    iDiagnosticsLogger = PVLogger::GetLoggerObject("pvplayerdiagnostics.mp4parsernode");
+    iGaplessLogger = PVLogger::GetLoggerObject("gapless.sourcenode");
+
+    iFileServer.Connect();
+
     int32 err;
     OSCL_TRY(err,
-             //Create the input command queue.  Use a reserve to avoid lots of
-             //dynamic memory allocation.
-             iInputCommands.Construct(1000/*Starting command ID*/, 10/*Number slots to reserve in queue*/);
-
-             //Create the "current command" queue.  It will only contain one
-             //command at a time, so use a reserve of 1.
-             iCurrentCommand.Construct(0, 1);
-             iCancelCommand.Construct(0, 1);
 
              //Set the node capability data.
-             iCapability.iCanSupportMultipleInputPorts = false;
-             iCapability.iCanSupportMultipleOutputPorts = true;
-             iCapability.iHasMaxNumberOfPorts = true;
-             iCapability.iMaxNumberOfPorts = 6;
-             iCapability.iInputFormatCapability.push_back(PVMFFormatType(PVMF_MIME_MPEG4FF));
-             iCapability.iOutputFormatCapability.push_back(PVMFFormatType(PVMF_MIME_AMR_IETF));
-             iCapability.iOutputFormatCapability.push_back(PVMFFormatType(PVMF_MIME_AMRWB_IETF));
-             iCapability.iOutputFormatCapability.push_back(PVMFFormatType(PVMF_MIME_MPEG4_AUDIO));
-             iCapability.iOutputFormatCapability.push_back(PVMFFormatType(PVMF_MIME_M4V));
-             iCapability.iOutputFormatCapability.push_back(PVMFFormatType(PVMF_MIME_H2631998));
-             iCapability.iOutputFormatCapability.push_back(PVMFFormatType(PVMF_MIME_H2632000));
-             iCapability.iOutputFormatCapability.push_back(PVMFFormatType(PVMF_MIME_H264_VIDEO_MP4));
+             iNodeCapability.iCanSupportMultipleInputPorts = false;
+             iNodeCapability.iCanSupportMultipleOutputPorts = true;
+             iNodeCapability.iHasMaxNumberOfPorts = true;
+             iNodeCapability.iMaxNumberOfPorts = 6;
+             iNodeCapability.iInputFormatCapability.push_back(PVMFFormatType(PVMF_MIME_MPEG4FF));
+             iNodeCapability.iOutputFormatCapability.push_back(PVMFFormatType(PVMF_MIME_AMR_IETF));
+             iNodeCapability.iOutputFormatCapability.push_back(PVMFFormatType(PVMF_MIME_AMRWB_IETF));
+             iNodeCapability.iOutputFormatCapability.push_back(PVMFFormatType(PVMF_MIME_MPEG4_AUDIO));
+             iNodeCapability.iOutputFormatCapability.push_back(PVMFFormatType(PVMF_MIME_M4V));
+             iNodeCapability.iOutputFormatCapability.push_back(PVMFFormatType(PVMF_MIME_H2631998));
+             iNodeCapability.iOutputFormatCapability.push_back(PVMFFormatType(PVMF_MIME_H2632000));
+             iNodeCapability.iOutputFormatCapability.push_back(PVMFFormatType(PVMF_MIME_H264_VIDEO_MP4));
 
              iAvailableMetadataKeys.clear();
 
-             iUnderFlowCheckTimer = OSCL_NEW(OsclTimer<OsclMemAllocator>,
-                                             ("PVMFMP4FFNodeUnderFlowTimer"));
+             iUnderFlowCheckTimer = PVMF_BASE_NODE_NEW(OsclTimer<OsclMemAllocator>,
+                                    ("PVMFMP4FFNodeUnderFlowTimer"));
 
              iUnderFlowCheckTimer->SetObserver(this);
              iUnderFlowCheckTimer->SetFrequency(PVMP4FF_UNDERFLOW_STATUS_EVENT_FREQUENCY);
             );
 
-    iPortIter = OSCL_NEW(PVMFMP4FFPortIter, (iNodeTrackPortList));
+    iPortIter = PVMF_BASE_NODE_NEW(PVMFMP4FFPortIter, (iNodeTrackPortList));
     if (iPortIter == NULL)
     {
         err = OsclErrNoMemory;
@@ -235,12 +201,9 @@ PVMFMP4FFParserNode::PVMFMP4FFParserNode(int32 aPriority) :
     {
         //if a leave happened, cleanup and re-throw the error
         iInputCommands.clear();
-        iCurrentCommand.clear();
-        iCancelCommand.clear();
-        iCapability.iInputFormatCapability.clear();
-        iCapability.iOutputFormatCapability.clear();
-        OSCL_CLEANUP_BASE_CLASS(PVMFNodeInterface);
-        OSCL_CLEANUP_BASE_CLASS(OsclTimerObject);
+        iNodeCapability.iInputFormatCapability.clear();
+        iNodeCapability.iOutputFormatCapability.clear();
+        OSCL_CLEANUP_BASE_CLASS(PVMFNodeInterfaceImpl);
         OSCL_LEAVE(err);
     }
 }
@@ -261,16 +224,12 @@ PVMFMP4FFParserNode::~PVMFMP4FFParserNode()
 
     LogDiagnostics();
     Cancel();
-    if (IsAdded())
-    {
-        RemoveFromScheduler();
-    }
 
     if (iUnderFlowCheckTimer != NULL)
     {
         iUnderFlowCheckTimer->Clear();
     }
-    OSCL_DELETE(iUnderFlowCheckTimer);
+    PVMF_BASE_NODE_DELETE(iUnderFlowCheckTimer);
 
     // release the download progress interface if any
     if (download_progress_interface != NULL)
@@ -285,27 +244,28 @@ PVMFMP4FFParserNode::~PVMFMP4FFParserNode()
     ReleaseAllPorts();
     RemoveAllCommands();
 
-    OSCL_DELETE(iPortIter);
+    PVMF_BASE_NODE_DELETE(iPortIter);
     iPortIter = NULL;
 
     CleanupFileSource();
+
     iFileServer.Close();
 
     if (iRequestedUsage.key)
     {
-        OSCL_ARRAY_DELETE(iRequestedUsage.key);
+        PVMF_BASE_NODE_ARRAY_DELETE(iRequestedUsage.key);
         iRequestedUsage.key = NULL;
     }
 
     if (iApprovedUsage.key)
     {
-        OSCL_ARRAY_DELETE(iApprovedUsage.key);
+        PVMF_BASE_NODE_ARRAY_DELETE(iApprovedUsage.key);
         iApprovedUsage.key = NULL;
     }
 
     if (iAuthorizationDataKvp.key)
     {
-        OSCL_ARRAY_DELETE(iAuthorizationDataKvp.key);
+        PVMF_BASE_NODE_ARRAY_DELETE(iAuthorizationDataKvp.key);
         iAuthorizationDataKvp.key = NULL;
     }
 
@@ -316,238 +276,14 @@ PVMFMP4FFParserNode::~PVMFMP4FFParserNode()
         iCPM = NULL;
     }
 
-    if (iExtensionRefCount > 0)
-    {
-        OSCL_ASSERT(false);
-    }
+    iLogger = NULL;
+    iDataPathLogger = NULL;
+    iAVCDataPathLogger = NULL;
+    iClockLogger = NULL;
+    iDiagnosticsLogger = NULL;
+    iGaplessLogger = NULL;
 
-    //The command queues are self-deleting, but we want to
-    //notify the observer of unprocessed commands.
-    while (!iCurrentCommand.empty())
-    {
-        CommandComplete(iCurrentCommand, iCurrentCommand.front(), PVMFFailure, NULL, NULL);
-    }
-    while (!iCancelCommand.empty())
-    {
-        CommandComplete(iCancelCommand, iCancelCommand.front(), PVMFFailure, NULL, NULL);
-    }
-    while (!iInputCommands.empty())
-    {
-        CommandComplete(iInputCommands, iInputCommands.front(), PVMFFailure, NULL, NULL);
-    }
 }
-
-
-PVMFStatus PVMFMP4FFParserNode::ThreadLogon()
-{
-    if (iInterfaceState == EPVMFNodeCreated)
-    {
-        if (!IsAdded())
-        {
-            AddToScheduler();
-        }
-        iLogger = PVLogger::GetLoggerObject("PVMFMP4FFParserNode");
-        iDataPathLogger = PVLogger::GetLoggerObject("datapath.sourcenode.mp4parsernode");
-        iAVCDataPathLogger = PVLogger::GetLoggerObject("datapath.sourcenode.mp4parsernode.avc");
-        if (iAVCDataPathLogger != NULL)
-        {
-            iAVCDataPathLogger->DisableAppenderInheritance();
-        }
-        iClockLogger = PVLogger::GetLoggerObject("clock");
-        iDiagnosticsLogger = PVLogger::GetLoggerObject("pvplayerdiagnostics.mp4parsernode");
-        iGaplessLogger = PVLogger::GetLoggerObject("gapless.sourcenode");
-
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFMP4FFParserNode::ThreadLogon() called"));
-
-        iFileServer.Connect();
-        ChangeNodeState(EPVMFNodeIdle);
-        return PVMFSuccess;
-    }
-
-    return PVMFErrInvalidState;
-}
-
-
-PVMFStatus PVMFMP4FFParserNode::ThreadLogoff()
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFMP4FFParserNode::ThreadLogoff() called"));
-
-    if (iInterfaceState == EPVMFNodeIdle)
-    {
-        CleanupFileSource();
-        iFileServer.Close();
-
-        if (IsAdded())
-        {
-            RemoveFromScheduler();
-        }
-        iLogger = NULL;
-        iDataPathLogger = NULL;
-        iAVCDataPathLogger = NULL;
-        iClockLogger = NULL;
-        iDiagnosticsLogger = NULL;
-        iGaplessLogger = NULL;
-
-        ChangeNodeState(EPVMFNodeCreated);
-        return PVMFSuccess;
-    }
-
-    return PVMFErrInvalidState;
-}
-
-
-PVMFStatus PVMFMP4FFParserNode::GetCapability(PVMFNodeCapability& aNodeCapability)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFMP4FFParserNode::GetCapability() called"));
-
-    aNodeCapability = iCapability;
-
-    return PVMFSuccess;
-}
-
-
-PVMFPortIter* PVMFMP4FFParserNode::GetPorts(const PVMFPortFilter* aFilter)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFMP4FFParserNode::GetPorts() called"));
-
-    OSCL_UNUSED_ARG(aFilter);
-    iPortIter->Reset();
-    return iPortIter;
-}
-
-
-PVMFCommandId PVMFMP4FFParserNode::QueryUUID(PVMFSessionId aSessionId, const PvmfMimeString& aMimeType,
-        Oscl_Vector<PVUuid, OsclMemAllocator>& aUuids, bool aExactUuidsOnly, const OsclAny* aContext)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFMP4FFParserNode::QueryUUID() called"));
-
-    PVMFMP4FFParserNodeCommand cmd;
-    cmd.PVMFMP4FFParserNodeCommandBase::Construct(aSessionId, PVMF_GENERIC_NODE_QUERYUUID, aMimeType, aUuids, aExactUuidsOnly, aContext);
-    return QueueCommandL(cmd);
-}
-
-
-PVMFCommandId PVMFMP4FFParserNode::QueryInterface(PVMFSessionId aSessionId, const PVUuid& aUuid,
-        PVInterface*& aInterfacePtr, const OsclAny* aContext)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFMP4FFParserNode::QueryInterface() called"));
-
-    PVMFMP4FFParserNodeCommand cmd;
-    cmd.PVMFMP4FFParserNodeCommandBase::Construct(aSessionId, PVMF_GENERIC_NODE_QUERYINTERFACE, aUuid, aInterfacePtr, aContext);
-    return QueueCommandL(cmd);
-}
-
-
-PVMFCommandId PVMFMP4FFParserNode::RequestPort(PVMFSessionId aSessionId, int32 aPortTag,
-        const PvmfMimeString* aPortConfig, const OsclAny* aContext)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFMP4FFParserNode::RequestPort() called"));
-
-    PVMFMP4FFParserNodeCommand cmd;
-    cmd.PVMFMP4FFParserNodeCommandBase::Construct(aSessionId, PVMF_GENERIC_NODE_REQUESTPORT, aPortTag, aPortConfig, aContext);
-    return QueueCommandL(cmd);
-}
-
-
-PVMFStatus PVMFMP4FFParserNode::ReleasePort(PVMFSessionId aSessionId, PVMFPortInterface& aPort, const OsclAny* aContext)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFMP4FFParserNode::ReleasePort() called"));
-
-    PVMFMP4FFParserNodeCommand cmd;
-    cmd.PVMFMP4FFParserNodeCommandBase::Construct(aSessionId, PVMF_GENERIC_NODE_RELEASEPORT, aPort, aContext);
-    return QueueCommandL(cmd);
-}
-
-
-PVMFCommandId PVMFMP4FFParserNode::Init(PVMFSessionId aSessionId, const OsclAny* aContext)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFMP4FFParserNode::Init() called"));
-
-    PVMFMP4FFParserNodeCommand cmd;
-    cmd.PVMFMP4FFParserNodeCommandBase::Construct(aSessionId, PVMF_GENERIC_NODE_INIT, aContext);
-    return QueueCommandL(cmd);
-}
-
-
-PVMFCommandId PVMFMP4FFParserNode::Prepare(PVMFSessionId aSessionId, const OsclAny* aContext)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFMP4FFParserNode::Prepare() called"));
-
-    PVMFMP4FFParserNodeCommand cmd;
-    cmd.PVMFMP4FFParserNodeCommandBase::Construct(aSessionId, PVMF_GENERIC_NODE_PREPARE, aContext);
-    return QueueCommandL(cmd);
-}
-
-
-PVMFCommandId PVMFMP4FFParserNode::Start(PVMFSessionId aSessionId, const OsclAny* aContext)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFMP4FFParserNode::Start() called"));
-
-    PVMFMP4FFParserNodeCommand cmd;
-    cmd.PVMFMP4FFParserNodeCommandBase::Construct(aSessionId, PVMF_GENERIC_NODE_START, aContext);
-    return QueueCommandL(cmd);
-}
-
-
-PVMFCommandId PVMFMP4FFParserNode::Stop(PVMFSessionId aSessionId, const OsclAny* aContext)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFMP4FFParserNode::Stop() called"));
-
-    PVMFMP4FFParserNodeCommand cmd;
-    cmd.PVMFMP4FFParserNodeCommandBase::Construct(aSessionId, PVMF_GENERIC_NODE_STOP, aContext);
-    return QueueCommandL(cmd);
-}
-
-
-PVMFCommandId PVMFMP4FFParserNode::Flush(PVMFSessionId aSessionId, const OsclAny* aContext)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFMP4FFParserNode::Flush() called"));
-
-    PVMFMP4FFParserNodeCommand cmd;
-    cmd.PVMFMP4FFParserNodeCommandBase::Construct(aSessionId, PVMF_GENERIC_NODE_FLUSH, aContext);
-    return QueueCommandL(cmd);
-}
-
-
-PVMFCommandId PVMFMP4FFParserNode::Pause(PVMFSessionId aSessionId, const OsclAny* aContext)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFMP4FFParserNode::Pause() called"));
-
-    PVMFMP4FFParserNodeCommand cmd;
-    cmd.PVMFMP4FFParserNodeCommandBase::Construct(aSessionId, PVMF_GENERIC_NODE_PAUSE, aContext);
-    return QueueCommandL(cmd);
-}
-
-
-PVMFCommandId PVMFMP4FFParserNode::Reset(PVMFSessionId aSessionId, const OsclAny* aContext)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFMP4FFParserNode::Reset() called"));
-
-    PVMFMP4FFParserNodeCommand cmd;
-    cmd.PVMFMP4FFParserNodeCommandBase::Construct(aSessionId, PVMF_GENERIC_NODE_RESET, aContext);
-    return QueueCommandL(cmd);
-}
-
-
-PVMFCommandId PVMFMP4FFParserNode::CancelAllCommands(PVMFSessionId aSessionId, const OsclAny* aContext)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFMP4FFParserNode::CancelAllCommands() called"));
-
-    PVMFMP4FFParserNodeCommand cmd;
-    cmd.PVMFMP4FFParserNodeCommandBase::Construct(aSessionId, PVMF_GENERIC_NODE_CANCELALLCOMMANDS, aContext);
-    return QueueCommandL(cmd);
-}
-
-
-PVMFCommandId PVMFMP4FFParserNode::CancelCommand(PVMFSessionId aSessionId, PVMFCommandId aCmdId, const OsclAny* aContext)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFMP4FFParserNode::CancelCommand() called"));
-
-    PVMFMP4FFParserNodeCommand cmd;
-    cmd.PVMFMP4FFParserNodeCommandBase::Construct(aSessionId, PVMF_GENERIC_NODE_CANCELCOMMAND, aCmdId, aContext);
-    return QueueCommandL(cmd);
-}
-
 
 void PVMFMP4FFParserNode::addRef()
 {
@@ -560,6 +296,14 @@ void PVMFMP4FFParserNode::removeRef()
     --iExtensionRefCount;
 }
 
+PVMFPortIter* PVMFMP4FFParserNode::GetPorts(const PVMFPortFilter* aFilter)
+{
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFMP4FFParserNode::GetPorts() called"));
+
+    OSCL_UNUSED_ARG(aFilter);
+    iPortIter->Reset();
+    return iPortIter;
+}
 
 PVMFStatus PVMFMP4FFParserNode::QueryInterfaceSync(PVMFSessionId aSession,
         const PVUuid& aUuid,
@@ -709,7 +453,7 @@ PVMFStatus PVMFMP4FFParserNode::SetSourceInitializationData(OSCL_wString& aSourc
                 iCPMSourceData.iIntent = opaqueData->iIntent;
                 if (opaqueData->iFileHandle)
                 {
-                    iFileHandle = OSCL_NEW(OsclFileHandle, (*(opaqueData->iFileHandle)));
+                    iFileHandle = PVMF_BASE_NODE_NEW(OsclFileHandle, (*(opaqueData->iFileHandle)));
                     iCPMSourceData.iFileHandle = iFileHandle;
                 }
                 if (opaqueData->iContentAccessFactory != NULL)
@@ -767,7 +511,7 @@ PVMFStatus PVMFMP4FFParserNode::SetSourceInitializationData(OSCL_wString& aSourc
                         }
                         if (cContext->iFileHandle)
                         {
-                            iFileHandle = OSCL_NEW(OsclFileHandle, (*(cContext->iFileHandle)));
+                            iFileHandle = PVMF_BASE_NODE_NEW(OsclFileHandle, (*(cContext->iFileHandle)));
                         }
                         if (cContext->iContentAccessFactory != NULL)
                         {
@@ -944,9 +688,9 @@ PVMFCommandId PVMFMP4FFParserNode::SetDataSourcePosition(PVMFSessionId aSessionI
                     (0, "PVMFMP4FFParserNode::SetDataSourcePosition: aTargetNPT=%d, aSeekToSyncPoint=%d, aContext=0x%x",
                      aTargetNPT, aSeekToSyncPoint, aContext));
 
-    PVMFMP4FFParserNodeCommand cmd;
-    cmd.PVMFMP4FFParserNodeCommand::Construct(aSessionId, PVMP4FF_NODE_CMD_SETDATASOURCEPOSITION, aTargetNPT, aActualNPT,
-            aActualMediaDataTS, aSeekToSyncPoint, aStreamID, aContext);
+    PVMFNodeCommand cmd;
+    cmd.PVMFNodeCommand::Construct(aSessionId, PVMF_GENERIC_NODE_SET_DATASOURCE_POSITION, aTargetNPT, &aActualNPT,
+                                   &aActualMediaDataTS, aSeekToSyncPoint, aStreamID, aContext);
     return QueueCommandL(cmd);
 }
 
@@ -972,9 +716,9 @@ PVMFCommandId PVMFMP4FFParserNode::QueryDataSourcePosition(PVMFSessionId aSessio
         aActualNPT = 0;
     }
 
-    PVMFMP4FFParserNodeCommand cmd;
-    cmd.PVMFMP4FFParserNodeCommand::Construct(aSessionId, PVMP4FF_NODE_CMD_QUERYDATASOURCEPOSITION, aTargetNPT, aActualNPT,
-            aSeekToSyncPoint, aContext);
+    PVMFNodeCommand cmd;
+    cmd.PVMFNodeCommand::Construct(aSessionId, PVMF_GENERIC_NODE_QUERY_DATASOURCE_POSITION, aTargetNPT, &aActualNPT,
+                                   aSeekToSyncPoint, aContext);
     return QueueCommandL(cmd);
 }
 
@@ -988,9 +732,9 @@ PVMFCommandId PVMFMP4FFParserNode::QueryDataSourcePosition(PVMFSessionId aSessio
                     (0, "PVMFMP4FFParserNode::QueryDataSourcePosition: aTargetNPT=%d, aSeekToSyncPoint=%d, aContext=0x%x",
                      aTargetNPT, aSeekToSyncPoint, aContext));
 
-    PVMFMP4FFParserNodeCommand cmd;
-    cmd.PVMFMP4FFParserNodeCommand::Construct(aSessionId, PVMP4FF_NODE_CMD_QUERYDATASOURCEPOSITION, aTargetNPT,
-            aSeekPointBeforeTargetNPT, aSeekPointAfterTargetNPT, aContext, aSeekToSyncPoint);
+    PVMFNodeCommand cmd;
+    cmd.PVMFNodeCommand::Construct(aSessionId, PVMF_GENERIC_NODE_QUERY_DATASOURCE_POSITION, aTargetNPT,
+                                   aSeekPointBeforeTargetNPT, aSeekPointAfterTargetNPT, aContext, aSeekToSyncPoint);
     return QueueCommandL(cmd);
 }
 
@@ -998,8 +742,8 @@ PVMFCommandId PVMFMP4FFParserNode::SetDataSourceRate(PVMFSessionId aSessionId, i
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFMP4FFParserNode::SetDataSourceRate() called"));
 
-    PVMFMP4FFParserNodeCommand cmd;
-    cmd.PVMFMP4FFParserNodeCommand::Construct(aSessionId, PVMP4FF_NODE_CMD_SETDATASOURCERATE, aRate, aTimebase, aContext);
+    PVMFNodeCommand cmd;
+    cmd.PVMFNodeCommand::Construct(aSessionId, PVMF_GENERIC_NODE_SET_DATASOURCE_RATE, aRate, aTimebase, aContext);
     return QueueCommandL(cmd);
 }
 
@@ -1008,9 +752,9 @@ PVMFCommandId PVMFMP4FFParserNode::SetDataSourceDirection(PVMFSessionId aSession
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFMP4FFParserNode::SetDataSourceDirection() called"));
 
-    PVMFMP4FFParserNodeCommand cmd;
-    cmd.PVMFMP4FFParserNodeCommand::Construct(aSessionId, PVMP4FF_NODE_CMD_SETDATASOURCEDIRECTION, aDirection, aActualNPT, aActualMediaDataTS,
-            aTimebase, aContext);
+    PVMFNodeCommand cmd;
+    cmd.PVMFNodeCommand::Construct(aSessionId, PVMF_GENERIC_NODE_SET_DATASOURCE_DIRECTION, aDirection, aActualNPT, aActualMediaDataTS,
+                                   aTimebase, aContext);
 
     return QueueCommandL(cmd);
 }
@@ -1180,17 +924,17 @@ PVMFStatus PVMFMP4FFParserNode::GetSyncSampleInfo(PVMFTrackInfo& aTrackInfo, PVM
     }
 
     // Allocate memory for the info
-    uint32* syncts = OSCL_ARRAY_NEW(uint32, numsamplestoget);
-    uint32* syncfrnum = OSCL_ARRAY_NEW(uint32, numsamplestoget);
+    uint32* syncts = PVMF_BASE_NODE_ARRAY_NEW(uint32, numsamplestoget);
+    uint32* syncfrnum = PVMF_BASE_NODE_ARRAY_NEW(uint32, numsamplestoget);
     if (syncts == NULL || syncfrnum == NULL)
     {
         if (syncts)
         {
-            OSCL_ARRAY_DELETE(syncts);
+            PVMF_BASE_NODE_ARRAY_DELETE(syncts);
         }
         if (syncfrnum)
         {
-            OSCL_ARRAY_DELETE(syncfrnum);
+            PVMF_BASE_NODE_ARRAY_DELETE(syncfrnum);
         }
         return PVMFErrNoMemory;
     }
@@ -1202,11 +946,11 @@ PVMFStatus PVMFMP4FFParserNode::GetSyncSampleInfo(PVMFTrackInfo& aTrackInfo, PVM
         // Error
         if (syncts)
         {
-            OSCL_ARRAY_DELETE(syncts);
+            PVMF_BASE_NODE_ARRAY_DELETE(syncts);
         }
         if (syncfrnum)
         {
-            OSCL_ARRAY_DELETE(syncfrnum);
+            PVMF_BASE_NODE_ARRAY_DELETE(syncfrnum);
         }
         return PVMFFailure;
     }
@@ -1228,11 +972,11 @@ PVMFStatus PVMFMP4FFParserNode::GetSyncSampleInfo(PVMFTrackInfo& aTrackInfo, PVM
 
     if (syncts)
     {
-        OSCL_ARRAY_DELETE(syncts);
+        PVMF_BASE_NODE_ARRAY_DELETE(syncts);
     }
     if (syncfrnum)
     {
-        OSCL_ARRAY_DELETE(syncfrnum);
+        PVMF_BASE_NODE_ARRAY_DELETE(syncfrnum);
     }
     return PVMFSuccess;
 }
@@ -1273,8 +1017,8 @@ PVMFStatus PVMFMP4FFParserNode::GetSyncSampleInfo(PVMFSampleNumTSList& aList, PV
         numsamplestoget = 2;
     }
     // Allocate memory for the info
-    uint32* syncts = OSCL_ARRAY_NEW(uint32, numsamplestoget + 1);
-    uint32* syncfrnum = OSCL_ARRAY_NEW(uint32, numsamplestoget + 1);
+    uint32* syncts = PVMF_BASE_NODE_ARRAY_NEW(uint32, numsamplestoget + 1);
+    uint32* syncfrnum = PVMF_BASE_NODE_ARRAY_NEW(uint32, numsamplestoget + 1);
     oscl_memset(syncts, 0, numsamplestoget + 1);
     oscl_memset(syncfrnum, 0, numsamplestoget + 1);
 
@@ -1282,11 +1026,11 @@ PVMFStatus PVMFMP4FFParserNode::GetSyncSampleInfo(PVMFSampleNumTSList& aList, PV
     {
         if (syncts)
         {
-            OSCL_ARRAY_DELETE(syncts);
+            PVMF_BASE_NODE_ARRAY_DELETE(syncts);
         }
         if (syncfrnum)
         {
-            OSCL_ARRAY_DELETE(syncfrnum);
+            PVMF_BASE_NODE_ARRAY_DELETE(syncfrnum);
         }
         return PVMFErrNoMemory;
     }
@@ -1299,11 +1043,11 @@ PVMFStatus PVMFMP4FFParserNode::GetSyncSampleInfo(PVMFSampleNumTSList& aList, PV
         // Error
         if (syncts)
         {
-            OSCL_ARRAY_DELETE(syncts);
+            PVMF_BASE_NODE_ARRAY_DELETE(syncts);
         }
         if (syncfrnum)
         {
-            OSCL_ARRAY_DELETE(syncfrnum);
+            PVMF_BASE_NODE_ARRAY_DELETE(syncfrnum);
         }
         return PVMFFailure;
     }
@@ -1325,11 +1069,11 @@ PVMFStatus PVMFMP4FFParserNode::GetSyncSampleInfo(PVMFSampleNumTSList& aList, PV
     }
     if (syncts)
     {
-        OSCL_ARRAY_DELETE(syncts);
+        PVMF_BASE_NODE_ARRAY_DELETE(syncts);
     }
     if (syncfrnum)
     {
-        OSCL_ARRAY_DELETE(syncfrnum);
+        PVMF_BASE_NODE_ARRAY_DELETE(syncfrnum);
     }
     return PVMFSuccess;
 }
@@ -1393,387 +1137,38 @@ void PVMFMP4FFParserNode::Run()
     }
 
     // Process port activity
-    while (!iPortActivityQueue.empty() && (iInterfaceState == EPVMFNodeStarted || FlushPending()))
+    while (!iPortActivityQueue.empty() && (iInterfaceState == EPVMFNodeStarted || IsFlushPending()))
     {
         ProcessPortActivity();
     }
 
     // Send out media data when started and not flushing
-    if (iInterfaceState == EPVMFNodeStarted && !FlushPending())
+    if (iInterfaceState == EPVMFNodeStarted && !IsFlushPending())
     {
         HandleTrackState();
     }
 
     //Check for completion of a flush command...
-    if (FlushPending() && iPortActivityQueue.empty())
+    if (IsFlushPending() && iPortActivityQueue.empty())
     {
         //Flush is complete.
-        CommandComplete(iCurrentCommand, iCurrentCommand.front(), PVMFSuccess);
-    }
-}
-
-
-PVMFCommandId PVMFMP4FFParserNode::QueueCommandL(PVMFMP4FFParserNodeCommand& aCmd)
-{
-    if (IsAdded())
-    {
-        PVMFCommandId id;
-        id = iInputCommands.AddL(aCmd);
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFMP4FFParserNode::QueueCommandL() called id=%d", id));
-        /* Wakeup the AO */
-        RunIfNotReady();
-        return id;
-    }
-    OSCL_LEAVE(OsclErrInvalidState);
-    return -1;
-}
-
-void PVMFMP4FFParserNode::MoveCmdToCurrentQueue(PVMFMP4FFParserNodeCommand& aCmd)
-{
-    //note: the StoreL cannot fail since the queue is never more than 1 deep
-    //and we reserved space.
-    iCurrentCommand.StoreL(aCmd);
-    iInputCommands.Erase(&aCmd);
-}
-
-void PVMFMP4FFParserNode::MoveCmdToCancelQueue(PVMFMP4FFParserNodeCommand& aCmd)
-{
-    //note: the StoreL cannot fail since the queue is never more than 1 deep
-    //and we reserved space.
-    iCancelCommand.StoreL(aCmd);
-    iInputCommands.Erase(&aCmd);
-}
-
-void PVMFMP4FFParserNode::ProcessCommand()
-{
-    //can't do anything while an asynchronous cancel is in progress...
-    if (!iCancelCommand.empty())
-        return;
-
-    PVMFMP4FFParserNodeCommand& aCmd = iInputCommands.front();
-
-    //normally this node will not start processing one command
-    //until the prior one is finished.  However, a hi priority
-    //command such as Cancel must be able to interrupt a command
-    //in progress.
-    if (!iCurrentCommand.empty())
-    {
-        return ;
-    }
-
-    PVMFStatus cmdstatus;
-    switch (aCmd.iCmd)
-    {
-        case PVMF_GENERIC_NODE_QUERYUUID:
-            cmdstatus = DoQueryUuid(aCmd);
-            CommandComplete(iInputCommands, aCmd, cmdstatus);
-            break;
-
-        case PVMF_GENERIC_NODE_QUERYINTERFACE:
-            cmdstatus = DoQueryInterface(aCmd);
-            CommandComplete(iInputCommands, aCmd, cmdstatus);
-            break;
-
-        case PVMF_GENERIC_NODE_REQUESTPORT:
-        {
-            PVMFPortInterface*port;
-            cmdstatus = DoRequestPort(aCmd, port);
-            CommandComplete(iInputCommands, aCmd, cmdstatus, (OsclAny*)port);
-        }
-        break;
-
-        case PVMF_GENERIC_NODE_RELEASEPORT:
-            cmdstatus = DoReleasePort(aCmd);
-            CommandComplete(iInputCommands, aCmd, cmdstatus);
-            break;
-
-        case PVMF_GENERIC_NODE_INIT:
-            cmdstatus = DoInit(aCmd);
-            switch (cmdstatus)
-            {
-                case PVMFPending:
-                    MoveCmdToCurrentQueue(aCmd);
-                    //wait on CPM or data stream callback.
-                    break;
-                case PVMFSuccess:
-                    //This means that init can be completed right away
-                    //without waiting on either CPM or datastream callbacks
-                    //This happens if:
-                    //1) Local playback of unprotected content
-                    //2) FT / PDL /PPB of unprotected content where in movieatom
-                    //is complete when init was processed
-                    CompleteInit(iInputCommands, aCmd);
-                    break;
-                default:
-                    CommandComplete(iInputCommands, aCmd, cmdstatus);
-                    break;
-            }
-            break;
-
-        case PVMF_GENERIC_NODE_PREPARE:
-            cmdstatus = DoPrepare(aCmd);
-            //doprepare may complete synchronously or asynchronously.
-            switch (cmdstatus)
-            {
-                case PVMFPending:
-                    //wait on DataStream callback.
-                    MoveCmdToCurrentQueue(aCmd);
-                    break;
-                default:
-                    CommandComplete(iInputCommands, aCmd, cmdstatus);
-                    break;
-            }
-            break;
-
-        case PVMF_GENERIC_NODE_START:
-            cmdstatus = DoStart(aCmd);
-            CommandComplete(iInputCommands, aCmd, cmdstatus);
-            break;
-
-        case PVMF_GENERIC_NODE_STOP:
-            cmdstatus = DoStop(aCmd);
-            CommandComplete(iInputCommands, aCmd, cmdstatus);
-            break;
-
-        case PVMF_GENERIC_NODE_FLUSH:
-            cmdstatus = DoFlush(aCmd);
-            switch (cmdstatus)
-            {
-                case PVMFPending:
-                    MoveCmdToCurrentQueue(aCmd);
-                    break;
-                default:
-                    CommandComplete(iInputCommands, aCmd, cmdstatus);
-                    break;
-            }
-            break;
-
-        case PVMF_GENERIC_NODE_PAUSE:
-            cmdstatus = DoPause(aCmd);
-            CommandComplete(iInputCommands, aCmd, cmdstatus);
-            break;
-
-        case PVMF_GENERIC_NODE_RESET:
-            cmdstatus = DoReset(aCmd);
-            //reset may complete synchronously or asynchronously.
-            switch (cmdstatus)
-            {
-                case PVMFPending:
-                    MoveCmdToCurrentQueue(aCmd);
-                    //wait on CPM callback.
-                    break;
-                case PVMFSuccess:
-                    CompleteReset(iInputCommands, aCmd);
-                    break;
-                default:
-                    CommandComplete(iInputCommands, aCmd, cmdstatus);
-                    break;
-            }
-            break;
-
-        case PVMF_GENERIC_NODE_CANCELALLCOMMANDS:
-            cmdstatus = DoCancelAllCommands(aCmd);
-            switch (cmdstatus)
-            {
-                case PVMFPending:
-                    MoveCmdToCancelQueue(aCmd);
-                    //wait on CPM callback.
-                    break;
-                default:
-                    CommandComplete(iInputCommands, aCmd, cmdstatus);
-                    break;
-            }
-            break;
-
-        case PVMF_GENERIC_NODE_CANCELCOMMAND:
-            cmdstatus = DoCancelCommand(aCmd);
-            switch (cmdstatus)
-            {
-                case PVMFPending:
-                    MoveCmdToCancelQueue(aCmd);
-                    //wait on CPM callback.
-                    break;
-                default:
-                    CommandComplete(iInputCommands, aCmd, cmdstatus);
-                    break;
-            }
-            break;
-
-        case PVMP4FF_NODE_CMD_GETNODEMETADATAKEYS:
-            cmdstatus = DoGetMetadataKeys(aCmd);
-            if (cmdstatus != PVMFPending)
-            {
-                CommandComplete(iInputCommands, aCmd, cmdstatus);
-            }
-            else
-            {
-                MoveCmdToCurrentQueue(aCmd);
-            }
-            break;
-
-        case PVMP4FF_NODE_CMD_GETNODEMETADATAVALUES:
-            cmdstatus = DoGetMetadataValues(aCmd);
-            if (cmdstatus != PVMFPending)
-            {
-                CommandComplete(iInputCommands, aCmd, cmdstatus);
-            }
-            else
-            {
-                MoveCmdToCurrentQueue(aCmd);
-            }
-            break;
-
-        case PVMP4FF_NODE_CMD_SETDATASOURCEPOSITION:
-        {
-            PVUuid eventuuid;
-            PVMFStatus eventcode;
-            cmdstatus = DoSetDataSourcePosition(aCmd, eventcode, eventuuid);
-            if (eventcode == PVMFSuccess)
-            {
-                CommandComplete(iInputCommands, aCmd, cmdstatus);
-            }
-            else
-            {
-                CommandComplete(iInputCommands, aCmd, cmdstatus, NULL, &eventuuid, &eventcode);
-            }
-        }
-        break;
-
-        case PVMP4FF_NODE_CMD_QUERYDATASOURCEPOSITION:
-            cmdstatus = DoQueryDataSourcePosition(aCmd);
-            CommandComplete(iInputCommands, aCmd, cmdstatus);
-            break;
-
-        case PVMP4FF_NODE_CMD_SETDATASOURCERATE:
-            cmdstatus = DoSetDataSourceRate(aCmd);
-            CommandComplete(iInputCommands, aCmd, cmdstatus);
-            break;
-
-        case PVMF_MP4_PARSER_NODE_CAPCONFIG_SETPARAMS:
-        {
-            PvmiMIOSession session;
-            PvmiKvp* aParameters;
-            int num_elements;
-            PvmiKvp** ppRet_kvp;
-            aCmd.Parse(session, aParameters, num_elements, ppRet_kvp);
-            setParametersSync(NULL, aParameters, num_elements, *ppRet_kvp);
-            CommandComplete(iInputCommands, aCmd, PVMFSuccess);
-        }
-        break;
-
-        case PVMP4FF_NODE_CMD_SETDATASOURCEDIRECTION:
-            cmdstatus = DoSetDataSourceDirection(aCmd);
-            CommandComplete(iInputCommands, aCmd, cmdstatus);
-            break;
-
-        default://unknown command type
-            CommandComplete(iInputCommands, aCmd, PVMFErrNotSupported);
-            break;
-    }
-}
-
-void PVMFMP4FFParserNode::CommandComplete(PVMFMP4FFParserNodeCmdQueue& aCmdQ, PVMFMP4FFParserNodeCommand& aCmd, PVMFStatus aStatus, OsclAny* aEventData, PVUuid* aEventUUID, int32* aEventCode)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFMP4FFParserNode::CommandComplete() In Id %d Cmd %d Status %d Context %d Data %d",
-                    aCmd.iId, aCmd.iCmd, aStatus, aCmd.iContext, aEventData));
-
-    bool oCompleteCancel = false;
-    if ((aCmd.iCmd == PVMF_GENERIC_NODE_INIT) &&
-            (iCancelCommand.empty() == false))
-    {
-        //cancel has been waiting on init
-        oCompleteCancel = true;
-    }
-    //Do standard node command state changes.
-    if (aStatus == PVMFSuccess)
-    {
-        switch (aCmd.iCmd)
-        {
-            case PVMF_GENERIC_NODE_INIT:
-                ChangeNodeState(EPVMFNodeInitialized);
-                break;
-            case PVMF_GENERIC_NODE_PREPARE:
-                ChangeNodeState(EPVMFNodePrepared);
-                break;
-            case PVMF_GENERIC_NODE_START:
-                ChangeNodeState(EPVMFNodeStarted);
-                //wakeup the AO when started...
-                RunIfNotReady();
-                break;
-            case PVMF_GENERIC_NODE_PAUSE:
-                ChangeNodeState(EPVMFNodePaused);
-                break;
-            case PVMF_GENERIC_NODE_STOP:
-                ChangeNodeState(EPVMFNodePrepared);
-                break;
-            case PVMF_GENERIC_NODE_FLUSH:
-                ChangeNodeState(EPVMFNodePrepared);
-                break;
-            case PVMF_GENERIC_NODE_RESET:
-                ChangeNodeState(EPVMFNodeIdle);
-                break;
-        }
-    }
-
-    if (aStatus != PVMFSuccess)
-    {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFMP4FFParserNode::CommandComplete() In Id %d Cmd %d Status %d Context %d Data %d",
-                        aCmd.iId, aCmd.iCmd, aStatus, aCmd.iContext, aEventData));
-    }
-
-    PVInterface* extif = NULL;
-    PVMFBasicErrorInfoMessage* errormsg = NULL;
-    if (aEventUUID && aEventCode)
-    {
-        int32 leavecode = CreateErrorInfoMsg(&errormsg, *aEventUUID, *aEventCode);
-        if (leavecode == 0 && errormsg)
-        {
-            extif = OSCL_STATIC_CAST(PVInterface*, errormsg);
-        }
-
-    }
-    //create response
-    PVMFCmdResp resp(aCmd.iId, aCmd.iContext, aStatus, extif, aEventData);
-    PVMFSessionId session = aCmd.iSession;
-
-    //Erase the command from the queue.
-    aCmdQ.Erase(&aCmd);
-
-    //Report completion to the session observer.
-    ReportCmdCompleteEvent(session, resp);
-
-    if (errormsg)
-    {
-        errormsg->removeRef();
-    }
-
-    if (oCompleteCancel)
-    {
-        CompleteCancelAfterInit();
-    }
-
-    //Re-schedule if there are additional commands
-    if (!iInputCommands.empty()
-            && IsAdded())
-    {
-        RunIfNotReady();
+        CommandComplete(iCurrentCommand, PVMFSuccess);
     }
 }
 
 void PVMFMP4FFParserNode::CompleteCancelAfterInit()
 {
     // cancel commands were pending, but not processed. return failed cancel
-    while (!iCancelCommand.empty())
+    if (IsCommandInProgress(iCancelCommand))
     {
-        PVMFMP4FFParserNodeCommand& cmdCancel = iCancelCommand.front();
-        PVMFCmdResp resp(cmdCancel.iId, cmdCancel.iContext, PVMFFailure);
-        PVMFSessionId session = cmdCancel.iSession;
-
-        //Erase the command from the queue.
-        iCancelCommand.Erase(&cmdCancel);
+        PVMFCmdResp resp(iCancelCommand.iId, iCancelCommand.iContext, PVMFFailure);
+        PVMFSessionId session = iCancelCommand.iSession;
 
         //Report completion to the session observer.
         ReportCmdCompleteEvent(session, resp);
+
+        //command completion reported, destroy the command.
+        iCancelCommand.Destroy();
     }
 }
 
@@ -1786,7 +1181,7 @@ void PVMFMP4FFParserNode::ReportMP4FFParserErrorEvent(PVMFEventType aEventType, 
     {
         int32 leavecode = 0;
         PVMFBasicErrorInfoMessage* eventmsg = NULL;
-        OSCL_TRY(leavecode, eventmsg = OSCL_NEW(PVMFBasicErrorInfoMessage, (*aEventCode, *aEventUUID, NULL)));
+        OSCL_TRY(leavecode, eventmsg = PVMF_BASE_NODE_NEW(PVMFBasicErrorInfoMessage, (*aEventCode, *aEventUUID, NULL)));
         PVMFAsyncEvent asyncevent(PVMFErrorEvent, aEventType, NULL, OSCL_STATIC_CAST(PVInterface*, eventmsg), aEventData, NULL, 0);
         PVMFNodeInterface::ReportErrorEvent(asyncevent);
         if (eventmsg)
@@ -1810,7 +1205,7 @@ void PVMFMP4FFParserNode::ReportMP4FFParserInfoEvent(PVMFEventType aEventType, O
     {
         int32 leavecode = 0;
         PVMFBasicErrorInfoMessage* eventmsg = NULL;
-        OSCL_TRY(leavecode, eventmsg = OSCL_NEW(PVMFBasicErrorInfoMessage, (*aEventCode, *aEventUUID, NULL)));
+        OSCL_TRY(leavecode, eventmsg = PVMF_BASE_NODE_NEW(PVMFBasicErrorInfoMessage, (*aEventCode, *aEventUUID, NULL)));
         PVMFAsyncEvent asyncevent(PVMFInfoEvent, aEventType, NULL, OSCL_STATIC_CAST(PVInterface*, eventmsg), aEventData, NULL, 0);
         PVMFNodeInterface::ReportInfoEvent(asyncevent);
         if (eventmsg)
@@ -1825,22 +1220,14 @@ void PVMFMP4FFParserNode::ReportMP4FFParserInfoEvent(PVMFEventType aEventType, O
 }
 
 
-void PVMFMP4FFParserNode::ChangeNodeState(TPVMFNodeInterfaceState aNewState)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFMP4FFParserNode::ChangeNodeState() Old %d New %d", iInterfaceState, aNewState));
-
-    SetState(aNewState);
-}
-
-
-PVMFStatus PVMFMP4FFParserNode::DoQueryUuid(PVMFMP4FFParserNodeCommand& aCmd)
+PVMFStatus PVMFMP4FFParserNode::DoQueryUuid()
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFMP4FFParserNode::DoQueryUuid() In"));
 
     OSCL_String* mimetype;
     Oscl_Vector<PVUuid, OsclMemAllocator> *uuidvec;
     bool exactmatch;
-    aCmd.PVMFMP4FFParserNodeCommandBase::Parse(mimetype, uuidvec, exactmatch);
+    iCurrentCommand.PVMFNodeCommandBase::Parse(mimetype, uuidvec, exactmatch);
 
     // @TODO Add MIME string matching
     // For now just return all available extension interface UUID
@@ -1856,13 +1243,13 @@ PVMFStatus PVMFMP4FFParserNode::DoQueryUuid(PVMFMP4FFParserNodeCommand& aCmd)
 }
 
 
-PVMFStatus PVMFMP4FFParserNode::DoQueryInterface(PVMFMP4FFParserNodeCommand& aCmd)
+PVMFStatus PVMFMP4FFParserNode::DoQueryInterface()
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFMP4FFParserNode::DoQueryInterface() In"));
 
     PVUuid* uuid;
     PVInterface** ptr;
-    aCmd.PVMFMP4FFParserNodeCommandBase::Parse(uuid, ptr);
+    iCurrentCommand.PVMFNodeCommandBase::Parse(uuid, ptr);
 
     if (queryInterface(*uuid, *ptr))
     {
@@ -1882,7 +1269,7 @@ PVMFStatus PVMFMP4FFParserNode::DoQueryInterface(PVMFMP4FFParserNodeCommand& aCm
 }
 
 
-PVMFStatus PVMFMP4FFParserNode::DoRequestPort(PVMFMP4FFParserNodeCommand& aCmd, PVMFPortInterface*&aPort)
+PVMFStatus PVMFMP4FFParserNode::DoRequestPort(PVMFPortInterface*& aPort)
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFMP4FFParserNode::DoRequestPort() In"));
 
@@ -1897,7 +1284,7 @@ PVMFStatus PVMFMP4FFParserNode::DoRequestPort(PVMFMP4FFParserNodeCommand& aCmd, 
     //retrieve port tag.
     int32 tag;
     PvmfMimeString* mimetype;
-    aCmd.PVMFMP4FFParserNodeCommandBase::Parse(tag, mimetype);
+    iCurrentCommand.PVMFNodeCommandBase::Parse(tag, mimetype);
     if (!mimetype)
     {
         return PVMFErrArgument;//no mimetype supplied.
@@ -1969,25 +1356,25 @@ PVMFStatus PVMFMP4FFParserNode::DoRequestPort(PVMFMP4FFParserNodeCommand& aCmd, 
     if (oTextTrack == false)
     {
         OSCL_TRY(leavecode,
-                 outport = OSCL_NEW(PVMFMP4FFParserOutPort, (tag, this, portname.get_str()));
-                 clockconv = OSCL_NEW(MediaClockConverter, (iMP4FileHandle->getTrackMediaTimescale(trackid)));
-                 trackdatamempool = OSCL_NEW(OsclMemPoolResizableAllocator, (trackmaxqueuedepth * trackmaxdatasize, PVMF_MP4FF_PARSER_NODE_MEM_POOL_GROWTH_LIMIT));
-                 mediadataimplalloc = OSCL_NEW(PVMFResizableSimpleMediaMsgAlloc, (trackdatamempool));
-                 mediadatamempool = OSCL_NEW(PVMFMemPoolFixedChunkAllocator, (mempoolname.get_str(), PVMP4FF_MEDIADATA_POOLNUM, PVMP4FF_MEDIADATA_CHUNKSIZE));
-                 mediadatagroupimplmempool = OSCL_NEW(OsclMemPoolFixedChunkAllocator, (PVMP4FF_MEDIADATA_POOLNUM));
-                 mediadatagroupalloc = OSCL_NEW(PVMFMediaFragGroupCombinedAlloc<OsclMemAllocator>, (PVMP4FF_MEDIADATA_POOLNUM, 20, mediadatagroupimplmempool));
+                 outport = PVMF_BASE_NODE_NEW(PVMFMP4FFParserOutPort, (tag, this, portname.get_str()));
+                 clockconv = PVMF_BASE_NODE_NEW(MediaClockConverter, (iMP4FileHandle->getTrackMediaTimescale(trackid)));
+                 trackdatamempool = PVMF_BASE_NODE_NEW(OsclMemPoolResizableAllocator, (trackmaxqueuedepth * trackmaxdatasize, PVMF_MP4FF_PARSER_NODE_MEM_POOL_GROWTH_LIMIT));
+                 mediadataimplalloc = PVMF_BASE_NODE_NEW(PVMFResizableSimpleMediaMsgAlloc, (trackdatamempool));
+                 mediadatamempool = PVMF_BASE_NODE_NEW(PVMFMemPoolFixedChunkAllocator, (mempoolname.get_str(), PVMP4FF_MEDIADATA_POOLNUM, PVMP4FF_MEDIADATA_CHUNKSIZE));
+                 mediadatagroupimplmempool = PVMF_BASE_NODE_NEW(OsclMemPoolFixedChunkAllocator, (PVMP4FF_MEDIADATA_POOLNUM));
+                 mediadatagroupalloc = PVMF_BASE_NODE_NEW(PVMFMediaFragGroupCombinedAlloc<OsclMemAllocator>, (PVMP4FF_MEDIADATA_POOLNUM, 20, mediadatagroupimplmempool));
                 );
     }
     else
     {
         OSCL_TRY(leavecode,
-                 outport = OSCL_NEW(PVMFMP4FFParserOutPort, (tag, this, portname.get_str()));
-                 clockconv = OSCL_NEW(MediaClockConverter, (iMP4FileHandle->getTrackMediaTimescale(trackid)));
-                 trackdatamempool = OSCL_NEW(OsclMemPoolResizableAllocator, (trackmaxqueuedepth * trackmaxdatasize, PVMF_MP4FF_PARSER_NODE_MEM_POOL_GROWTH_LIMIT));
-                 textmediadataimplalloc = OSCL_NEW(PVMFTimedTextMediaDataAlloc, (trackdatamempool));
-                 mediadatamempool = OSCL_NEW(PVMFMemPoolFixedChunkAllocator, (mempoolname.get_str(), PVMP4FF_TEXT_TRACK_MEDIADATA_POOLNUM, PVMP4FF_MEDIADATA_CHUNKSIZE));
-                 mediadatagroupimplmempool = OSCL_NEW(OsclMemPoolFixedChunkAllocator, (PVMP4FF_MEDIADATA_POOLNUM));
-                 mediadatagroupalloc = OSCL_NEW(PVMFMediaFragGroupCombinedAlloc<OsclMemAllocator>, (PVMP4FF_TEXT_TRACK_MEDIADATA_POOLNUM, 20, mediadatagroupimplmempool));
+                 outport = PVMF_BASE_NODE_NEW(PVMFMP4FFParserOutPort, (tag, this, portname.get_str()));
+                 clockconv = PVMF_BASE_NODE_NEW(MediaClockConverter, (iMP4FileHandle->getTrackMediaTimescale(trackid)));
+                 trackdatamempool = PVMF_BASE_NODE_NEW(OsclMemPoolResizableAllocator, (trackmaxqueuedepth * trackmaxdatasize, PVMF_MP4FF_PARSER_NODE_MEM_POOL_GROWTH_LIMIT));
+                 textmediadataimplalloc = PVMF_BASE_NODE_NEW(PVMFTimedTextMediaDataAlloc, (trackdatamempool));
+                 mediadatamempool = PVMF_BASE_NODE_NEW(PVMFMemPoolFixedChunkAllocator, (mempoolname.get_str(), PVMP4FF_TEXT_TRACK_MEDIADATA_POOLNUM, PVMP4FF_MEDIADATA_CHUNKSIZE));
+                 mediadatagroupimplmempool = PVMF_BASE_NODE_NEW(OsclMemPoolFixedChunkAllocator, (PVMP4FF_MEDIADATA_POOLNUM));
+                 mediadatagroupalloc = PVMF_BASE_NODE_NEW(PVMFMediaFragGroupCombinedAlloc<OsclMemAllocator>, (PVMP4FF_TEXT_TRACK_MEDIADATA_POOLNUM, 20, mediadatagroupimplmempool));
                 );
     }
 
@@ -2012,11 +1399,11 @@ PVMFStatus PVMFMP4FFParserNode::DoRequestPort(PVMFMP4FFParserNodeCommand& aCmd, 
     {
         if (outport)
         {
-            OSCL_DELETE(((PVMFMP4FFParserOutPort*)outport));
+            PVMF_BASE_NODE_DELETE(((PVMFMP4FFParserOutPort*)outport));
         }
         if (clockconv)
         {
-            OSCL_DELETE(clockconv);
+            PVMF_BASE_NODE_DELETE(clockconv);
         }
         if (trackdatamempool)
         {
@@ -2025,15 +1412,15 @@ PVMFStatus PVMFMP4FFParserNode::DoRequestPort(PVMFMP4FFParserNodeCommand& aCmd, 
         }
         if (mediadataimplalloc)
         {
-            OSCL_DELETE(mediadataimplalloc);
+            PVMF_BASE_NODE_DELETE(mediadataimplalloc);
         }
         if (textmediadataimplalloc)
         {
-            OSCL_DELETE(textmediadataimplalloc);
+            PVMF_BASE_NODE_DELETE(textmediadataimplalloc);
         }
         if (mediadatamempool)
         {
-            OSCL_DELETE(mediadatamempool);
+            PVMF_BASE_NODE_DELETE(mediadatamempool);
         }
         if (mediadatagroupalloc)
         {
@@ -2097,7 +1484,7 @@ PVMFStatus PVMFMP4FFParserNode::DoRequestPort(PVMFMP4FFParserNodeCommand& aCmd, 
     trackportinfo.iMediaDataMemPool = mediadatamempool;
     trackportinfo.iMediaDataGroupImplMemPool = mediadatagroupimplmempool;
     trackportinfo.iMediaDataGroupAlloc = mediadatagroupalloc;
-    trackportinfo.iNode = OSCL_STATIC_CAST(OsclTimerObject* , this);
+    trackportinfo.iNode = (PVMFNodeInterfaceImpl*)this;
     trackportinfo.iTimestamp = tsStartOffset;
     trackportinfo.iSeqNum = 0;
 
@@ -2234,7 +1621,6 @@ PVMFStatus PVMFMP4FFParserNode::DoRequestPort(PVMFMP4FFParserNodeCommand& aCmd, 
     return PVMFSuccess;
 }
 
-
 void PVMFMP4FFParserNode::GetTrackMaxParameters(PVMFFormatType aFormatType, uint32& aMaxDataSize, uint32& aMaxQueueDepth)
 {
     if (aFormatType == PVMF_MIME_M4V)
@@ -2281,14 +1667,14 @@ void PVMFMP4FFParserNode::GetTrackMaxParameters(PVMFFormatType aFormatType, uint
 }
 
 
-PVMFStatus PVMFMP4FFParserNode::DoReleasePort(PVMFMP4FFParserNodeCommand& aCmd)
+PVMFStatus PVMFMP4FFParserNode::DoReleasePort()
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFMP4FFParserNode::DoReleasePort() In"));
 
     LogDiagnostics();
     //Find the port in the port vector
     PVMFPortInterface* port;
-    aCmd.PVMFMP4FFParserNodeCommandBase::Parse(port);
+    iCurrentCommand.PVMFNodeCommandBase::Parse(port);
 
     // Remove the selected track from the track list
     int32 i = 0;
@@ -2301,11 +1687,11 @@ PVMFStatus PVMFMP4FFParserNode::DoReleasePort(PVMFMP4FFParserNodeCommand& aCmd)
             iNodeTrackPortList[i].iMediaData.Unbind();
             if (iNodeTrackPortList[i].iPortInterface)
             {
-                OSCL_DELETE(((PVMFMP4FFParserOutPort*)iNodeTrackPortList[i].iPortInterface));
+                PVMF_BASE_NODE_DELETE(((PVMFMP4FFParserOutPort*)iNodeTrackPortList[i].iPortInterface));
             }
             if (iNodeTrackPortList[i].iClockConverter)
             {
-                OSCL_DELETE(iNodeTrackPortList[i].iClockConverter);
+                PVMF_BASE_NODE_DELETE(iNodeTrackPortList[i].iClockConverter);
             }
             if (iNodeTrackPortList[i].iTrackDataMemoryPool)
             {
@@ -2315,11 +1701,11 @@ PVMFStatus PVMFMP4FFParserNode::DoReleasePort(PVMFMP4FFParserNodeCommand& aCmd)
             }
             if (iNodeTrackPortList[i].iMediaDataImplAlloc)
             {
-                OSCL_DELETE(iNodeTrackPortList[i].iMediaDataImplAlloc);
+                PVMF_BASE_NODE_DELETE(iNodeTrackPortList[i].iMediaDataImplAlloc);
             }
             if (iNodeTrackPortList[i].iTextMediaDataImplAlloc)
             {
-                OSCL_DELETE(iNodeTrackPortList[i].iTextMediaDataImplAlloc);
+                PVMF_BASE_NODE_DELETE(iNodeTrackPortList[i].iTextMediaDataImplAlloc);
             }
             if (iNodeTrackPortList[i].iMediaDataMemPool)
             {
@@ -2370,7 +1756,7 @@ PVMFStatus PVMFMP4FFParserNode::InitOMA2DRMInfo()
     {
         if (iOMA2DecryptionBuffer == NULL)
         {
-            iOMA2DecryptionBuffer = OSCL_ARRAY_NEW(uint8, PVMP4FF_OMA2_DECRYPTION_BUFFER_SIZE);
+            iOMA2DecryptionBuffer = PVMF_BASE_NODE_ARRAY_NEW(uint8, PVMP4FF_OMA2_DECRYPTION_BUFFER_SIZE);
         }
 
         int32 iNumTracks = iMP4FileHandle->getNumTracks();
@@ -2401,10 +1787,10 @@ PVMFStatus PVMFMP4FFParserNode::InitOMA2DRMInfo()
                     uint32 sampleSize = info.len;
                     if (sampleSize > 0)
                     {
-                        uint8* sampleBuf = OSCL_ARRAY_NEW(uint8, (sizeof(sampleSize) +
-                                                          sampleSize +
-                                                          sizeof(odkmBoxSize) +
-                                                          odkmBoxSize));
+                        uint8* sampleBuf = PVMF_BASE_NODE_ARRAY_NEW(uint8, (sizeof(sampleSize) +
+                                           sampleSize +
+                                           sizeof(odkmBoxSize) +
+                                           odkmBoxSize));
                         uint8* destBuf = sampleBuf;
                         oscl_memcpy((OsclAny*)destBuf, (const OsclAny*)(&odkmBoxSize), sizeof(odkmBoxSize));
                         destBuf += sizeof(odkmBoxSize);
@@ -2441,17 +1827,9 @@ PVMFStatus PVMFMP4FFParserNode::InitOMA2DRMInfo()
 }
 
 
-PVMFStatus PVMFMP4FFParserNode::DoInit(PVMFMP4FFParserNodeCommand& aCmd)
+PVMFStatus PVMFMP4FFParserNode::DoInit()
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFMP4FFParserNode::DoInitNode() In"));
-
-    OSCL_UNUSED_ARG(aCmd);
-
-    if (iInterfaceState != EPVMFNodeIdle)
-    {
-        // Wrong state
-        return PVMFErrInvalidState;
-    }
 
     if (iCPM)
     {
@@ -2487,18 +1865,23 @@ PVMFStatus PVMFMP4FFParserNode::DoInit(PVMFMP4FFParserNodeCommand& aCmd)
     }
     else
     {
-        return (CheckForMP4HeaderAvailability());
+        PVMFStatus status = CheckForMP4HeaderAvailability();
+        if (status == PVMFSuccess)
+        {
+            status = CompleteInit(iCurrentCommand);
+        }
+        return status;
     }
 }
 
-bool PVMFMP4FFParserNode::ParseMP4File(PVMFMP4FFParserNodeCmdQueue& aCmdQ,
-                                       PVMFMP4FFParserNodeCommand& aCmd)
+bool PVMFMP4FFParserNode::ParseMP4File(PVMFNodeCommand& aCmd, PVMFStatus& aStatus)
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFMP4FFParserNode::ParseMP4File() In"));
 
-    bool oRet = false;
     PVUuid eventuuid;
     PVMFStatus eventcode;
+
+    bool oRet = false;
 
     PVMF_MP4FFPARSERNODE_LOGINFO((0, "IMpeg4File::readMP4File - iCPMContentAccessFactory = 0x%x", iCPMContentAccessFactory));
     PVMF_MP4FFPARSERNODE_LOGINFO((0, "IMpeg4File::readMP4File - iFileHandle = 0x%x", iFileHandle));
@@ -2528,10 +1911,8 @@ bool PVMFMP4FFParserNode::ParseMP4File(PVMFMP4FFParserNodeCmdQueue& aCmdQ,
     if (iMP4FileHandle == NULL)
     {
         PVMF_MP4FFPARSERNODE_LOGERROR((0, "IMpeg4File::readMP4File returns NULL"));
-        CommandComplete(aCmdQ,
-                        aCmd,
-                        PVMFErrNoMemory,
-                        NULL, NULL, NULL);
+
+        CommandComplete(aCmd, PVMFErrNoMemory);
         return oRet;
     }
 
@@ -2546,57 +1927,46 @@ bool PVMFMP4FFParserNode::ParseMP4File(PVMFMP4FFParserNodeCmdQueue& aCmdQ,
         }
 
         IMpeg4File::DestroyMP4FileObject(iMP4FileHandle);
-
         iMP4FileHandle = NULL;
 
-        CommandComplete(aCmdQ,
-                        aCmd,
-                        PVMFErrResource,
-                        NULL,
-                        &eventuuid,
-                        &eventcode);
+        CommandComplete(aCmd, PVMFErrResource, NULL, NULL, &eventuuid, &eventcode);
         return oRet;
     }
     if (iExternalDownload == true)
     {
-        oRet = iMP4FileHandle->CreateDataStreamSessionForExternalDownload(iFilename,
-                dsFactory,
-                iFileHandle,
-                &iFileServer);
+        oRet = iMP4FileHandle->CreateDataStreamSessionForExternalDownload(iFilename, dsFactory,
+                iFileHandle, &iFileServer);
         if (!oRet)
             return oRet;
     }
 
-    PVMFStatus status = InitMetaData();
+    aStatus = InitMetaData();
 
     if (iCPMContentType == PVMF_CPM_FORMAT_OMA2)
     {
-        status = InitOMA2DRMInfo();
-        if (status == PVMFSuccess)
+        aStatus = InitOMA2DRMInfo();
+        if (aStatus == PVMFSuccess)
         {
             oRet = true;
         }
     }
     else
     {
-        if (status == PVMFSuccess)
+        if (aStatus == PVMFSuccess)
         {
             oRet = true;
         }
 
-        CommandComplete(aCmdQ,
-                        aCmd,
-                        status,
-                        NULL,
-                        NULL,
-                        NULL);
+        CommandComplete(aCmd, aStatus);
+        aStatus = PVMFCmdCompleted;
     }
     return oRet;
 }
 
-void PVMFMP4FFParserNode::CompleteInit(PVMFMP4FFParserNodeCmdQueue& aCmdQ,
-                                       PVMFMP4FFParserNodeCommand& aCmd)
+PVMFStatus PVMFMP4FFParserNode::CompleteInit(PVMFNodeCommand& aCmd)
 {
+    PVMFStatus Status = PVMFSuccess;
+
     if (iCPM)
     {
         if ((iCPMContentType == PVMF_CPM_FORMAT_OMA1) ||
@@ -2607,35 +1977,25 @@ void PVMFMP4FFParserNode::CompleteInit(PVMFMP4FFParserNodeCmdQueue& aCmdQ,
             {
                 if (iCPMSourceData.iIntent == BITMASK_PVMF_SOURCE_INTENT_GETMETADATA)
                 {
-                    CommandComplete(aCmdQ,
-                                    aCmd,
-                                    PVMFSuccess,
-                                    NULL, NULL, NULL);
-                    return;
+                    Status = PVMFSuccess;
                 }
                 else
                 {
-                    CommandComplete(aCmdQ,
-                                    aCmd,
-                                    PVMFErrAccessDenied,
-                                    NULL, NULL, NULL);
-                    return;
+                    Status = PVMFErrAccessDenied;
                 }
+                CommandComplete(aCmd, Status);
+                return Status;
             }
             else
             {
-                ParseMP4File(aCmdQ, aCmd);
+                ParseMP4File(aCmd, Status);
             }
         }
         else if (iCPMContentType == PVMF_CPM_FORMAT_OMA2)
         {
             if (iCPMSourceData.iIntent == BITMASK_PVMF_SOURCE_INTENT_GETMETADATA)
             {
-                CommandComplete(aCmdQ,
-                                aCmd,
-                                PVMFSuccess,
-                                NULL, NULL, NULL);
-                return;
+                Status = PVMFSuccess;
             }
             else
             {
@@ -2650,40 +2010,31 @@ void PVMFMP4FFParserNode::CompleteInit(PVMFMP4FFParserNodeCmdQueue& aCmdQ,
                     if (iDecryptionInterface != NULL)
                     {
                         iDecryptionInterface->Init();
-                        CommandComplete(aCmdQ,
-                                        aCmd,
-                                        PVMFSuccess,
-                                        NULL, NULL, NULL);
-                        return;
+                        Status = PVMFSuccess;
                     }
                 }
-                CommandComplete(aCmdQ,
-                                aCmd,
-                                PVMFErrAccessDenied,
-                                NULL, NULL, NULL);
+                Status = PVMFErrAccessDenied;
             }
+            CommandComplete(aCmd, Status);
+            return Status;
         }
         else
         {
             /* CPM doesnt care about MP4 / 3GP files */
-            ParseMP4File(aCmdQ, aCmd);
+            ParseMP4File(aCmd, Status);
         }
     }
     else
     {
-        ParseMP4File(aCmdQ, aCmd);
+        ParseMP4File(aCmd, Status);
     }
-    return;
+    return Status;
 }
 
-PVMFStatus PVMFMP4FFParserNode::DoPrepare(PVMFMP4FFParserNodeCommand& /*aCmd*/)
+PVMFStatus PVMFMP4FFParserNode::DoPrepare()
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFMP4FFParserNode::DoPrepareNode() In"));
 
-    if (iInterfaceState != EPVMFNodeInitialized)
-    {
-        return PVMFErrInvalidState;
-    }
     /* Do initial buffering in case of PDL / FT  or in case of External Download */
     if ((iExternalDownload == true) && (iDownloadComplete == false) && (iMP4FileHandle != NULL))
     {
@@ -2753,41 +2104,12 @@ PVMFStatus PVMFMP4FFParserNode::DoPrepare(PVMFMP4FFParserNodeCommand& /*aCmd*/)
     return PVMFSuccess;
 }
 
-void PVMFMP4FFParserNode::CompletePrepare(PVMFStatus aStatus)
-{
-    CommandComplete(iCurrentCommand, iCurrentCommand.front(), aStatus);
-}
-
-
-PVMFStatus PVMFMP4FFParserNode::DoStart(PVMFMP4FFParserNodeCommand& /*aCmd*/)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFMP4FFParserNode::DoStartNode() In"));
-    if (iInterfaceState != EPVMFNodePrepared &&
-            iInterfaceState != EPVMFNodePaused)
-    {
-        return PVMFErrInvalidState;
-    }
-
-    // If resuming, do not reset the auto-pause variables
-    // parser node should send InfoReadyEvent to Engine
-    // if in underflow condition.
-
-    return PVMFSuccess;
-}
-
-
-PVMFStatus PVMFMP4FFParserNode::DoStop(PVMFMP4FFParserNodeCommand& aCmd)
+PVMFStatus PVMFMP4FFParserNode::DoStop()
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFMP4FFParserNode::DoStopNode() In"));
-    OSCL_UNUSED_ARG(aCmd);
 
     LogDiagnostics();
     iStreamID = 0;
-    if (iInterfaceState != EPVMFNodeStarted &&
-            iInterfaceState != EPVMFNodePaused)
-    {
-        return PVMFErrInvalidState;
-    }
 
     // stop and reset position to beginning
     ResetAllTracks();
@@ -2818,42 +2140,9 @@ PVMFStatus PVMFMP4FFParserNode::DoStop(PVMFMP4FFParserNodeCommand& aCmd)
     return PVMFSuccess;
 }
 
-
-PVMFStatus PVMFMP4FFParserNode::DoFlush(PVMFMP4FFParserNodeCommand& aCmd)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFMP4FFParserNode::DoFlushNode() In"));
-
-    OSCL_UNUSED_ARG(aCmd);
-
-    if (iInterfaceState != EPVMFNodeStarted &&
-            iInterfaceState != EPVMFNodePaused)
-    {
-        return PVMFErrInvalidState;
-    }
-
-    //the flush is asynchronous.  Completion is detected in the Run.
-    //Make sure the AO is active to finish the flush..
-    RunIfNotReady();
-    return PVMFPending;
-}
-
-
-bool PVMFMP4FFParserNode::FlushPending()
-{
-    return (iCurrentCommand.size() > 0 && iCurrentCommand.front().iCmd == PVMF_GENERIC_NODE_FLUSH);
-}
-
-
-PVMFStatus PVMFMP4FFParserNode::DoPause(PVMFMP4FFParserNodeCommand& aCmd)
+PVMFStatus PVMFMP4FFParserNode::DoPause()
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFMP4FFParserNode::DoPauseNode() In"));
-
-    OSCL_UNUSED_ARG(aCmd);
-
-    if (iInterfaceState != EPVMFNodeStarted)
-    {
-        return PVMFErrInvalidState;
-    }
 
     if (!iUnderFlowEventReported && iExternalDownload)
     {
@@ -2885,11 +2174,9 @@ PVMFStatus PVMFMP4FFParserNode::DoPause(PVMFMP4FFParserNodeCommand& aCmd)
 }
 
 
-PVMFStatus PVMFMP4FFParserNode::DoReset(PVMFMP4FFParserNodeCommand& aCmd)
+PVMFStatus PVMFMP4FFParserNode::DoReset()
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFMP4FFParserNode::DoResetNode() In"));
-
-    OSCL_UNUSED_ARG(aCmd);
 
     LogDiagnostics();
 
@@ -2915,6 +2202,8 @@ PVMFStatus PVMFMP4FFParserNode::DoReset(PVMFMP4FFParserNodeCommand& aCmd)
     iParseAudioDuringREW = false;
     iParseVideoOnly = false;
     iDataRate = NORMAL_PLAYRATE;
+
+    PVMFStatus status = PVMFSuccess;
 
     if (download_progress_interface != NULL)
     {
@@ -2946,23 +2235,14 @@ PVMFStatus PVMFMP4FFParserNode::DoReset(PVMFMP4FFParserNodeCommand& aCmd)
             ReleaseAllPorts();
             CleanupFileSource();
             iSelectedTrackInfoList.clear();
-            SetState(EPVMFNodeIdle);
-            return PVMFSuccess;
-
         }
     }
-    else
-    {
-        /*
-         * Reset without init completing, so just reset the parser node,
-         * no CPM stuff necessary
-         */
-        return PVMFSuccess;
 
-    }
+    status = CompleteReset();
+    return status;
 }
 
-void PVMFMP4FFParserNode::CompleteReset(PVMFMP4FFParserNodeCmdQueue& aCmdQ, PVMFMP4FFParserNodeCommand& aCmd)
+PVMFStatus PVMFMP4FFParserNode::CompleteReset()
 {
     // stop and cleanup
     // release the download_progress_clock if any
@@ -2980,90 +2260,12 @@ void PVMFMP4FFParserNode::CompleteReset(PVMFMP4FFParserNodeCmdQueue& aCmdQ, PVMF
     CleanupFileSource();
     iSelectedTrackInfoList.clear();
 
-    CommandComplete(aCmdQ, aCmd, PVMFSuccess);
-
-    return;
-}
-
-
-PVMFStatus PVMFMP4FFParserNode::DoCancelAllCommands(PVMFMP4FFParserNodeCommand& /*aCmd*/)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFMP4FFParserNode::DoCancelAllCommands() In"));
-
-    // The "current command" queue is used to hold different asynchronous commands
-    // 1) Init command during Local Playback or when there is no DS cmd pending, we will have to wait for
-    // CPM to be initalised. All asynchronous CPM cmds needs to be completed to complete Init.
-    // 2) Init command when partial MOOV is downlaoded during PDL and PS - can be cancelled.
-    // 3) Prepare command when parser node requests for 4 secs of data to datastream before
-    // sending prepare complete - can be cancelled.
-    if (!iCurrentCommand.empty())
-    {
-        PVMFStatus retVal = PVMFSuccess;
-        retVal = DoCancelCurrentCommand(iCurrentCommand[0]);
-        if (retVal == PVMFPending)
-        {
-            return retVal;
-        }
-    }
-
-    //cancel all queued commands
-    //start at element 1 since this cancel command is element 0.
-    while (iInputCommands.size() > 1)
-    {
-        CommandComplete(iInputCommands, iInputCommands[1], PVMFErrCancelled);
-    }
-
     return PVMFSuccess;
 }
 
-
-PVMFStatus PVMFMP4FFParserNode::DoCancelCommand(PVMFMP4FFParserNodeCommand& aCmd)
+PVMFStatus PVMFMP4FFParserNode::CancelCurrentCommand()
 {
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFMP4FFParserNode::DoCancelCommand() In"));
-
-    //extract the command ID from the parameters.
-    PVMFCommandId id;
-    aCmd.PVMFMP4FFParserNodeCommandBase::Parse(id);
-
-    //first check "current" command if any
-    PVMFMP4FFParserNodeCommand* cmd = iCurrentCommand.FindById(id);
-    // The "current command" queue is used to hold different asynchronous commands
-    // 1) Init command during Local Playback or when there is no DS cmd pending, we will have to wait for
-    // CPM to be initalised. All asynchronous CPM cmds needs to be completed to complete Init.
-    // 2) Init command when partial MOOV is downlaoded during PDL and PS - can be cancelled.
-    // 3) Prepare command when parser node requests for 4 secs of data to datastream before
-    // sending prepare complete - can be cancelled.
-    if (cmd)
-    {
-        PVMFStatus retVal = PVMFSuccess;
-        retVal = DoCancelCurrentCommand(*cmd);
-        if (retVal == PVMFPending)
-        {
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFMP4FFParserNode::DoCancelCommand() Return Pending"));
-            return retVal;
-        }
-    }
-
-    //next check input queue.
-    //start at element 1 since this cancel command is element 0.
-    cmd = iInputCommands.FindById(id, 1);
-    if (cmd)
-    {
-        //cancel the queued command
-        CommandComplete(iInputCommands, *cmd, PVMFErrCancelled);
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFMP4FFParserNode::DoCancelCommand() Return Success"));
-        //report cancel success
-        return PVMFSuccess;
-    }
-
-    //if we get here the command isn't queued so the cancel fails.
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFMP4FFParserNode::DoCancelCommand() Return Failure"));
-    return PVMFSuccess;
-}
-
-PVMFStatus PVMFMP4FFParserNode::DoCancelCurrentCommand(PVMFMP4FFParserNodeCommand& aCmd)
-{
-    if (aCmd.iCmd == PVMF_GENERIC_NODE_INIT)
+    if (iCurrentCommand.iCmd == PVMF_GENERIC_NODE_INIT)
     {
         if (iDataStreamInterface != NULL)
         {
@@ -3081,19 +2283,19 @@ PVMFStatus PVMFMP4FFParserNode::DoCancelCurrentCommand(PVMFMP4FFParserNodeComman
                 if (retVal == PVDS_SUCCESS)
                 {
                     // Complete Init as cancelled.
-                    CommandComplete(iCurrentCommand, aCmd, PVMFErrCancelled);
+                    CommandComplete(iCurrentCommand, PVMFErrCancelled);
                 }
                 else
                 {
                     // Not a valid DataStream Session, Complete Init as failure.
-                    CommandComplete(iCurrentCommand, aCmd, PVMFFailure);
+                    CommandComplete(iCurrentCommand, PVMFFailure);
                 }
             }
             else if (download_progress_interface != NULL && iProgressivelyPlayable == false)
             {
                 // call cancel resume notification and complete Init as cancelled.
                 download_progress_interface->cancelResumeNotification();
-                CommandComplete(iCurrentCommand, aCmd, PVMFErrCancelled);
+                CommandComplete(iCurrentCommand, PVMFErrCancelled);
             }
             else
             {
@@ -3107,7 +2309,7 @@ PVMFStatus PVMFMP4FFParserNode::DoCancelCurrentCommand(PVMFMP4FFParserNodeComman
             return PVMFPending;
         }
     }
-    else if (aCmd.iCmd == PVMF_GENERIC_NODE_PREPARE)
+    else if (iCurrentCommand.iCmd == PVMF_GENERIC_NODE_PREPARE)
     {
         if (autopaused)
         {
@@ -3123,12 +2325,12 @@ PVMFStatus PVMFMP4FFParserNode::DoCancelCurrentCommand(PVMFMP4FFParserNodeComman
                 if (retVal == EVERYTHING_FINE)
                 {
                     // Complete Prepare as cancelled.
-                    CommandComplete(iCurrentCommand, aCmd, PVMFErrCancelled);
+                    CommandComplete(iCurrentCommand, PVMFErrCancelled);
                 }
                 else
                 {
                     // Not a valid DataStream Session, Complete Prepare as failure.
-                    CommandComplete(iCurrentCommand, aCmd, PVMFFailure);
+                    CommandComplete(iCurrentCommand, PVMFFailure);
                 }
             }
         }
@@ -3140,16 +2342,17 @@ PVMFStatus PVMFMP4FFParserNode::DoCancelCurrentCommand(PVMFMP4FFParserNodeComman
     return PVMFSuccess;
 }
 
-PVMFStatus PVMFMP4FFParserNode::DoSetDataSourcePosition(PVMFMP4FFParserNodeCommand& aCmd, PVMFStatus &aEventCode, PVUuid &aEventUuid)
+PVMFStatus PVMFMP4FFParserNode::DoSetDataSourcePosition()
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFMP4FFParserNode::DoSetDataSourcePosition() In"));
 
-    aEventCode = PVMFSuccess;
+    PVMFStatus aEventCode = PVMFSuccess;
+    PVUuid aEventUuid;
 
     int32 err = 0;
     uint32* trackList = NULL;
     uint32 i = 0;
-    OSCL_TRY(err, trackList = OSCL_ARRAY_NEW(uint32, MAX_TRACK_NO););
+    OSCL_TRY(err, trackList = PVMF_BASE_NODE_ARRAY_NEW(uint32, MAX_TRACK_NO););
     OSCL_FIRST_CATCH_ANY(err, return PVMFErrNoMemory);
     for (i = 0; i < MAX_TRACK_NO; i++)
     {
@@ -3157,7 +2360,7 @@ PVMFStatus PVMFMP4FFParserNode::DoSetDataSourcePosition(PVMFMP4FFParserNodeComma
     }
     if (!trackList || iNodeTrackPortList.empty())
     {
-        OSCL_ARRAY_DELETE(trackList);
+        PVMF_BASE_NODE_ARRAY_DELETE(trackList);
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVMFMP4FFParserNode::DoSetDataSourcePosition() Memory for track list could not be allocated or no tracks to position"));
         return PVMFFailure;
     }
@@ -3174,12 +2377,12 @@ PVMFStatus PVMFMP4FFParserNode::DoSetDataSourcePosition(PVMFMP4FFParserNodeComma
     bool seektosyncpoint = false;
     uint32 streamID = 0;
 
-    aCmd.PVMFMP4FFParserNodeCommand::Parse(targetNPT, actualNPT, actualMediaDataTS, seektosyncpoint, streamID);
+    iCurrentCommand.PVMFNodeCommand::Parse(targetNPT, actualNPT, actualMediaDataTS, seektosyncpoint, streamID);
 
     // Validate the parameters
     if (actualNPT == NULL || actualMediaDataTS == NULL)
     {
-        OSCL_ARRAY_DELETE(trackList);
+        PVMF_BASE_NODE_ARRAY_DELETE(trackList);
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVMFMP4FFParserNode::DoSetDataSourcePosition() Invalid parameters"));
         return PVMFErrArgument;
     }
@@ -3216,7 +2419,7 @@ PVMFStatus PVMFMP4FFParserNode::DoSetDataSourcePosition(PVMFMP4FFParserNodeComma
         {
             // For now, fail in this case. In future, we might want to reposition to somewhere valid.
             PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVMFMP4FFParserNode::DoSetDataSourcePosition() Positioning past the amount downloaded so return as argument error"));
-            OSCL_ARRAY_DELETE(trackList);
+            PVMF_BASE_NODE_ARRAY_DELETE(trackList);
             return PVMFErrArgument;
         }
     }
@@ -3277,16 +2480,15 @@ PVMFStatus PVMFMP4FFParserNode::DoSetDataSourcePosition(PVMFMP4FFParserNodeComma
         }
     }
     uint64 duration64 = iMP4FileHandle->getMovieDuration();
-    uint32 durationms = 0;
-    uint32 duration = durationms = Oscl_Int64_Utils::get_uint64_lower32(duration64);
+    uint32 duration = Oscl_Int64_Utils::get_uint64_lower32(duration64);
     uint32 timescale = iMP4FileHandle->getMovieTimescale();
     if (timescale > 0 && timescale != 1000)
     {
         // Convert to milliseconds
         MediaClockConverter mcc(timescale, duration);
-        durationms = mcc.get_converted_ts(1000);
+        duration = mcc.get_converted_ts(1000);
     }
-    if ((targetNPT >= durationms) && (PVMF_DATA_SOURCE_DIRECTION_REVERSE != iPlayBackDirection))
+    if ((targetNPT >= duration) && (PVMF_DATA_SOURCE_DIRECTION_REVERSE != iPlayBackDirection))
     {
         //report EOT for all streams.
         for (i = 0; i < iNodeTrackPortList.size(); i++)
@@ -3324,8 +2526,8 @@ PVMFStatus PVMFMP4FFParserNode::DoSetDataSourcePosition(PVMFMP4FFParserNodeComma
             }
         }
 
-        *actualNPT = durationms;
-        OSCL_ARRAY_DELETE(trackList);
+        *actualNPT = duration;
+        PVMF_BASE_NODE_ARRAY_DELETE(trackList);
         return PVMFSuccess;
     }
 
@@ -3515,12 +2717,12 @@ PVMFStatus PVMFMP4FFParserNode::DoSetDataSourcePosition(PVMFMP4FFParserNodeComma
         {
             // Return as error
             PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVMFMP4FFParserNode::DoSetDataSourcePosition() Peeking next sample failed while determining the min timestamp after repositioning"));
-            if (!MapMP4ErrorCodeToEventCode(retval, aEventUuid, aEventCode))
+            if (!MapMP4ErrorCodeToEventCode(retval,  aEventUuid, aEventCode))
             {
                 aEventUuid = PVMFFileFormatEventTypesUUID;
                 aEventCode = PVMFFFErrMisc;
             }
-            OSCL_ARRAY_DELETE(trackList);
+            PVMF_BASE_NODE_ARRAY_DELETE(trackList);
             OSCL_FREE(trackTSAfterRepo);
             trackTSAfterRepo = NULL;
             OSCL_FREE(retValPerTrack);
@@ -3646,7 +2848,7 @@ PVMFStatus PVMFMP4FFParserNode::DoSetDataSourcePosition(PVMFMP4FFParserNodeComma
                                          targetNPT, *actualNPT, *actualMediaDataTS));
 
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFMP4FFParserNode::DoSetDataSourcePosition() Out"));
-    OSCL_ARRAY_DELETE(trackList);
+    PVMF_BASE_NODE_ARRAY_DELETE(trackList);
     OSCL_FREE(trackTSAfterRepo);
     trackTSAfterRepo = NULL;
     OSCL_FREE(retValPerTrack);
@@ -3657,7 +2859,7 @@ PVMFStatus PVMFMP4FFParserNode::DoSetDataSourcePosition(PVMFMP4FFParserNodeComma
 }
 
 
-PVMFStatus PVMFMP4FFParserNode::DoQueryDataSourcePosition(PVMFMP4FFParserNodeCommand& aCmd)
+PVMFStatus PVMFMP4FFParserNode::DoQueryDataSourcePosition()
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFMP4FFParserNode::DoQueryDataSourcePosition() In"));
 
@@ -3666,7 +2868,7 @@ PVMFStatus PVMFMP4FFParserNode::DoQueryDataSourcePosition(PVMFMP4FFParserNodeCom
     uint32* seekPointAfterTargetNPT = NULL;
     bool seektosyncpoint = false;
 
-    aCmd.PVMFMP4FFParserNodeCommand::Parse(targetNPT, seekPointBeforeTargetNPT,
+    iCurrentCommand.PVMFNodeCommand::Parse(targetNPT, seekPointBeforeTargetNPT,
                                            seektosyncpoint, seekPointAfterTargetNPT);
 
     // Check the passed-in parameters
@@ -3713,17 +2915,16 @@ PVMFStatus PVMFMP4FFParserNode::DoQueryDataSourcePosition(PVMFMP4FFParserNodeCom
 
     // See if targetNPT is greater than or equal to clip duration.
     uint64 duration64 = iMP4FileHandle->getMovieDuration();
-    uint32 durationms = 0;
-    uint32 duration = durationms = Oscl_Int64_Utils::get_uint64_lower32(duration64);
+    uint32 duration = Oscl_Int64_Utils::get_uint64_lower32(duration64);
     uint32 timescale = iMP4FileHandle->getMovieTimescale();
     if (timescale > 0 && timescale != 1000)
     {
         // Convert to milliseconds
         MediaClockConverter mcc(timescale);
         mcc.update_clock(duration);
-        durationms = mcc.get_converted_ts(1000);
+        duration = mcc.get_converted_ts(1000);
     }
-    if (targetNPT >= durationms)
+    if (targetNPT >= duration)
     {
         *seekPointBeforeTargetNPT = targetNPT;
         *seekPointAfterTargetNPT = targetNPT;
@@ -3766,14 +2967,14 @@ PVMFStatus PVMFMP4FFParserNode::DoQueryDataSourcePosition(PVMFMP4FFParserNodeCom
 }
 
 
-PVMFStatus PVMFMP4FFParserNode::DoSetDataSourceRate(PVMFMP4FFParserNodeCommand& aCmd)
+PVMFStatus PVMFMP4FFParserNode::DoSetDataSourceRate()
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFMP4FFParserNode::DoSetDataSourceRate() In"));
 
     // Retrieve the new rate
     int32 rate;
     PVMFTimebase* timebase = NULL;
-    aCmd.PVMFMP4FFParserNodeCommand::Parse(rate, timebase);
+    iCurrentCommand.PVMFNodeCommand::Parse(rate, timebase);
 
     if (timebase == NULL)
     {
@@ -3809,19 +3010,19 @@ PVMFStatus PVMFMP4FFParserNode::DoSetDataSourceRate(PVMFMP4FFParserNodeCommand& 
     return PVMFSuccess;
 }
 
-PVMFStatus PVMFMP4FFParserNode::DoSetDataSourceDirection(PVMFMP4FFParserNodeCommand& aCmd)
+PVMFStatus PVMFMP4FFParserNode::DoSetDataSourceDirection()
 {
     int32 direction = -1;
     uint32* actualNPT = NULL;
     uint32* actualMediaDataTS = NULL;
     PVMFTimebase* timebase;
 
-    aCmd.PVMFMP4FFParserNodeCommand::Parse(direction, actualNPT, actualMediaDataTS, timebase);
+    iCurrentCommand.PVMFNodeCommand::Parse(direction, actualNPT, actualMediaDataTS, timebase);
 
     /* Validate the parameters */
     if ((actualNPT == NULL) || (actualMediaDataTS == NULL))
     {
-        CommandComplete(iInputCommands, aCmd, PVMFErrArgument);
+        CommandComplete(iCurrentCommand, PVMFErrArgument);
         return PVMFFailure;
     }
 
@@ -3876,7 +3077,7 @@ PVMFStatus PVMFMP4FFParserNode::DoSetDataSourceDirection(PVMFMP4FFParserNodeComm
     if ((iInterfaceState == EPVMFNodePrepared) &&
             (direction == PVMF_DATA_SOURCE_DIRECTION_FORWARD))
     {
-        CommandComplete(iInputCommands, aCmd, PVMFSuccess);
+        CommandComplete(iCurrentCommand, PVMFSuccess);
         return PVMFSuccess;
     }
 
@@ -3961,8 +3162,18 @@ void PVMFMP4FFParserNode::HandleTrackState()
             case PVMP4FFNodeTrackPortInfo::TRACKSTATE_TRANSMITTING_GETDATA:
                 if (iNodeTrackPortList[i].iSendBOS)
                 {
-                    if (!SendBeginOfMediaStreamCommand(iNodeTrackPortList[i]))
+                    iNodeTrackPortList[i].iClockConverter->update_clock(iNodeTrackPortList[i].iTimestamp);
+                    uint32 timestamp = iNodeTrackPortList[i].iClockConverter->get_converted_ts(1000);
+                    if (!SendBeginOfMediaStreamCommand(iNodeTrackPortList[i].iPortInterface, iStreamID, timestamp))
+                    {
+                        if (iNodeTrackPortList[i].iState == PVMP4FFNodeTrackPortInfo::TRACKSTATE_TRANSMITTING_SENDDATA)
+                            iNodeTrackPortList[i].iState = PVMP4FFNodeTrackPortInfo::TRACKSTATE_DESTFULL;
                         break;
+                    }
+                    else
+                    {
+                        iNodeTrackPortList[i].iSendBOS = false;
+                    }
                 }
                 if (iNodeTrackPortList[i].iFirstFrameAfterRepositioning)
                 {
@@ -3989,19 +3200,19 @@ void PVMFMP4FFParserNode::HandleTrackState()
                             (iNodeTrackPortList[i].iState == PVMP4FFNodeTrackPortInfo::TRACKSTATE_TRANSMITTING_SENDEOC))
 
                     {
-                        RunIfNotReady();
+                        Reschedule();
                     }
                     if (iNodeTrackPortList[i].iState == PVMP4FFNodeTrackPortInfo::TRACKSTATE_SKIP_CORRUPT_SAMPLE)
                     {
                         iNodeTrackPortList[i].iState = PVMP4FFNodeTrackPortInfo::TRACKSTATE_TRANSMITTING_GETDATA;
-                        RunIfNotReady();
+                        Reschedule();
                     }
                     break;
                 }
                 if (iNodeTrackPortList[i].iState == PVMP4FFNodeTrackPortInfo::TRACKSTATE_TRACKMAXDATASIZE_RESIZE)
                 {
                     iNodeTrackPortList[i].iState = PVMP4FFNodeTrackPortInfo::TRACKSTATE_TRANSMITTING_GETDATA;
-                    RunIfNotReady();
+                    Reschedule();
                     break;
                 }
                 else
@@ -4014,19 +3225,52 @@ void PVMFMP4FFParserNode::HandleTrackState()
                 if (SendTrackData(iNodeTrackPortList[i]))
                 {
                     iNodeTrackPortList[i].iState = PVMP4FFNodeTrackPortInfo::TRACKSTATE_TRANSMITTING_GETDATA;
-                    RunIfNotReady();
+                    Reschedule();
                 }
                 break;
 
             case PVMP4FFNodeTrackPortInfo::TRACKSTATE_SEND_ENDOFTRACK:
+            {
+                iNodeTrackPortList[i].iClockConverter->update_clock(iNodeTrackPortList[i].iTimestamp);
+                uint32 timestamp = iNodeTrackPortList[i].iClockConverter->get_converted_ts(1000);
                 if (iNodeTrackPortList[i].iSendBOS)
                 {
-                    if (!SendBeginOfMediaStreamCommand(iNodeTrackPortList[i]))
+                    if (!SendBeginOfMediaStreamCommand(iNodeTrackPortList[i].iPortInterface, iStreamID, timestamp))
+                    {
+
+                        if (iNodeTrackPortList[i].iState == PVMP4FFNodeTrackPortInfo::TRACKSTATE_TRANSMITTING_SENDDATA)
+                            iNodeTrackPortList[i].iState = PVMP4FFNodeTrackPortInfo::TRACKSTATE_DESTFULL;
                         break;
+                    }
+                    else
+                    {
+                        iNodeTrackPortList[i].iSendBOS = false;
+                    }
                 }
-                if (SendEndOfTrackCommand(iNodeTrackPortList[i]))
+
+                // Initialize duration to a default value
+                uint32 TextSampleDuration = PVMF_DEFAULT_TRACK_DURATION;
+                if (iNodeTrackPortList[i].iFormatTypeInteger == PVMF_MP4_PARSER_NODE_3GPP_TIMED_TEXT &&
+                        iEOTForTextSentToMIO)
+                {
+                    iEOTForTextSentToMIO = false;
+                    if (iSetTextSampleDurationZero)
+                    {
+                        TextSampleDuration = 0;
+                    }
+                }
+                else
+                {
+                    //EOS timestamp(aTrackPortInfo.iTimestamp)is considered while deciding the iResumeTimeStamp in the mediaoutput node
+                    //therefore its length should also be considered while making decision to forward or drop the packet
+                    //at the mediaoutput node.
+                    TextSampleDuration = PVMP4FF_DEFAULT_EOS_DURATION_IN_SEC * (iNodeTrackPortList[i].iClockConverter->get_timescale());
+                }
+
+                if (SendEndOfTrackCommand(iNodeTrackPortList[i].iPortInterface, iStreamID, timestamp, iNodeTrackPortList[i].iSeqNum++, TextSampleDuration))
                 {
                     // EOS command sent successfully
+                    iNodeTrackPortList[i].iTimestamp += (PVMP4FF_DEFAULT_EOS_DURATION_IN_SEC * iNodeTrackPortList[i].iClockConverter->get_timescale());
                     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_NOTICE, (0, "PVMFMP4FFParserNode::HandleTrackState() EOS media command sent successfully"));
                     iNodeTrackPortList[i].iState = PVMP4FFNodeTrackPortInfo::TRACKSTATE_ENDOFTRACK;
                     ReportMP4FFParserInfoEvent(PVMFInfoEndOfData);
@@ -4037,7 +3281,8 @@ void PVMFMP4FFParserNode::HandleTrackState()
                     // before trying again.
                     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_NOTICE, (0, "PVMFMP4FFParserNode::HandleTrackState() EOS media command sending failed"));
                 }
-                break;
+            }
+            break;
 
             case PVMP4FFNodeTrackPortInfo::TRACKSTATE_TRANSMITTING_SENDBOC:
                 // need to send BOC
@@ -4048,7 +3293,7 @@ void PVMFMP4FFParserNode::HandleTrackState()
                     if (!SendBeginOfClipCommand(iNodeTrackPortList[i]))
                     {
                         // try again
-                        RunIfNotReady();
+                        Reschedule();
                     }
                 }
                 // may need to send EOC as well
@@ -4067,9 +3312,10 @@ void PVMFMP4FFParserNode::HandleTrackState()
                     if (!SendEndOfClipCommand(iNodeTrackPortList[i]))
                     {
                         // try again
-                        RunIfNotReady();
+                        Reschedule();
                     }
                 }
+
 
                 // send data
                 iNodeTrackPortList[i].iState = PVMP4FFNodeTrackPortInfo::TRACKSTATE_TRANSMITTING_SENDDATA;
@@ -4218,7 +3464,7 @@ bool PVMFMP4FFParserNode::RetrieveTrackConfigInfoAndFirstSample(uint32 aTrackId,
             uint32 sampleSize = info.len;
             if (sampleSize > 0)
             {
-                uint8* sampleBuf = OSCL_ARRAY_NEW(uint8, sampleSize);
+                uint8* sampleBuf = PVMF_BASE_NODE_ARRAY_NEW(uint8, sampleSize);
 
                 oscl_memset(&iGau.buf, 0, sizeof(iGau.buf));
                 oscl_memset(&iGau.info, 0, sizeof(iGau.info));
@@ -4263,7 +3509,7 @@ bool PVMFMP4FFParserNode::RetrieveTrackConfigInfoAndFirstSample(uint32 aTrackId,
 
                 // Save format specific info plus first sample
                 aConfig = OsclRefCounterMemFrag(memfrag, my_refcnt, (specinfosize + sampleSize));
-                OSCL_ARRAY_DELETE(sampleBuf);
+                PVMF_BASE_NODE_ARRAY_DELETE(sampleBuf);
                 return true;
             }
         }
@@ -4686,7 +3932,17 @@ bool PVMFMP4FFParserNode::RetrieveTrackData(PVMP4FFNodeTrackPortInfo& aTrackPort
             {
                 // If BOS has not been sent, it needs to be send before EOS.
                 // E.g., In case the first call to RetrieveTrack produces END_OF_TRACK.
-                SendBeginOfMediaStreamCommand(aTrackPortInfo);
+                aTrackPortInfo.iClockConverter->update_clock(aTrackPortInfo.iTimestamp);
+                uint32 timestamp = aTrackPortInfo.iClockConverter->get_converted_ts(1000);
+                if (!SendBeginOfMediaStreamCommand(aTrackPortInfo.iPortInterface, iStreamID, timestamp))
+                {
+                    if (aTrackPortInfo.iState == PVMP4FFNodeTrackPortInfo::TRACKSTATE_TRANSMITTING_SENDDATA)
+                        aTrackPortInfo.iState = PVMP4FFNodeTrackPortInfo::TRACKSTATE_DESTFULL;
+                }
+                else
+                {
+                    aTrackPortInfo.iSendBOS = false;
+                }
             }
             aTrackPortInfo.iState = PVMP4FFNodeTrackPortInfo::TRACKSTATE_SEND_ENDOFTRACK;
             // End of track reached so send EOS media command
@@ -5643,7 +4899,7 @@ bool PVMFMP4FFParserNode::UpdateTextSampleEntry(PVMP4FFNodeTrackPortInfo& aTrack
         {
             // Allocate memory for the font record list
             errcode = 0;
-            OSCL_TRY(errcode, textse_ptr->iFontRecordList = OSCL_ARRAY_NEW(PVMFTimedTextFontRecord, textse_ptr->iFontEntryCount));
+            OSCL_TRY(errcode, textse_ptr->iFontRecordList = PVMF_BASE_NODE_ARRAY_NEW(PVMFTimedTextFontRecord, textse_ptr->iFontEntryCount));
             OSCL_FIRST_CATCH_ANY(errcode,
                                  PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVMFMP4FFParserNode::UpdateTextSampleEntry() Memory for PVMFTimedTextFontRecord list could not be allocated"));
                                  return false);
@@ -5659,7 +4915,7 @@ bool PVMFMP4FFParserNode::UpdateTextSampleEntry(PVMP4FFNodeTrackPortInfo& aTrack
                     if (textse_ptr->iFontRecordList[i].iFontNameLength > 0)
                     {
                         // Allocate memory for the font name
-                        textse_ptr->iFontRecordList[i].iFontName = OSCL_ARRAY_NEW(uint8, textse_ptr->iFontRecordList[i].iFontNameLength + 1);
+                        textse_ptr->iFontRecordList[i].iFontName = PVMF_BASE_NODE_ARRAY_NEW(uint8, textse_ptr->iFontRecordList[i].iFontNameLength + 1);
 
                         // Copy the font name string
                         oscl_strncpy((char*)(textse_ptr->iFontRecordList[i].iFontName), (char*)(fontrec->getFontName()), textse_ptr->iFontRecordList[i].iFontNameLength + 1);
@@ -5691,68 +4947,6 @@ bool PVMFMP4FFParserNode::UpdateTextSampleEntry(PVMP4FFNodeTrackPortInfo& aTrack
     return true;
 }
 
-bool PVMFMP4FFParserNode::SendEndOfTrackCommand(PVMP4FFNodeTrackPortInfo& aTrackPortInfo)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFMP4FFParserNode::SendEndOfTrackCommand() In"));
-
-    PVMFSharedMediaCmdPtr sharedMediaCmdPtr = PVMFMediaCmd::createMediaCmd();
-
-    sharedMediaCmdPtr->setFormatID(PVMF_MEDIA_CMD_EOS_FORMAT_ID);
-
-    // Set the sequence number
-    uint32 seqNum = aTrackPortInfo.iSeqNum;
-    sharedMediaCmdPtr->setSeqNum(seqNum);
-    aTrackPortInfo.iSeqNum++;
-
-    //set stream id
-    sharedMediaCmdPtr->setStreamID(iStreamID);
-
-    // Set the timestamp
-    // Retrieve timestamp and convert to milliseconds
-    aTrackPortInfo.iClockConverter->update_clock(aTrackPortInfo.iTimestamp);
-    uint32 timestamp = aTrackPortInfo.iClockConverter->get_converted_ts(1000);
-    sharedMediaCmdPtr->setTimestamp(timestamp);
-    //EOS timestamp(aTrackPortInfo.iTimestamp)is considered while deciding the iResumeTimeStamp in the mediaoutput node
-    //therefore its length should also be considered while making decision to forward or drop the packet
-    //at the mediaoutput node.
-    if (aTrackPortInfo.iFormatTypeInteger == PVMF_MP4_PARSER_NODE_3GPP_TIMED_TEXT &&
-            iEOTForTextSentToMIO)
-    {
-        iEOTForTextSentToMIO = false;
-        if (iSetTextSampleDurationZero)
-        {
-            sharedMediaCmdPtr->setDuration(0);
-        }
-    }
-    else
-    {
-        //EOS timestamp(aTrackPortInfo.iTimestamp)is considered while deciding the iResumeTimeStamp in the mediaoutput node
-        //therefore its length should also be considered while making decision to forward or drop the packet
-        //at the mediaoutput node.
-        sharedMediaCmdPtr->setDuration(PVMP4FF_DEFAULT_EOS_DURATION_IN_SEC *(aTrackPortInfo.iClockConverter->get_timescale()));
-    }
-
-    PVMFSharedMediaMsgPtr mediaMsgOut;
-    convertToPVMFMediaCmdMsg(mediaMsgOut, sharedMediaCmdPtr);
-    if (aTrackPortInfo.iPortInterface->QueueOutgoingMsg(mediaMsgOut) != PVMFSuccess)
-    {
-        return false;
-    }
-
-    aTrackPortInfo.iTimestamp += (PVMP4FF_DEFAULT_EOS_DURATION_IN_SEC * aTrackPortInfo.iClockConverter->get_timescale());
-
-    PVMF_MP4FFPARSERNODE_LOGDATATRAFFIC((0, "PVMFMP4FFParserNode::SendEndOfTrackCommand - Mime=%s, StreamID=%d, TrackID=%d, TS=%d, SEQNUM=%d",
-                                         aTrackPortInfo.iMimeType.get_cstr(),
-                                         iStreamID,
-                                         aTrackPortInfo.iTrackId,
-                                         timestamp,
-                                         seqNum));
-
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFMP4FFParserNode::SendEndOfTrackCommand() Out"));
-    return true;
-}
-
-
 void PVMFMP4FFParserNode::QueuePortActivity(const PVMFPortActivity &aActivity)
 {
     //queue a new port activity event
@@ -5766,7 +4960,7 @@ void PVMFMP4FFParserNode::QueuePortActivity(const PVMFPortActivity &aActivity)
     else
     {
         //wake up the AO to process the port activity event.
-        RunIfNotReady();
+        Reschedule();
     }
 }
 
@@ -5858,14 +5052,14 @@ void PVMFMP4FFParserNode::HandlePortActivity(const PVMFPortActivity &aActivity)
                                     // Change the track state to only send the data
                                     iNodeTrackPortList[i].iState = PVMP4FFNodeTrackPortInfo::TRACKSTATE_TRANSMITTING_SENDDATA;
                                     // Activate the node to process the track state change
-                                    RunIfNotReady();
+                                    Reschedule();
                                 }
                                 break;
 
                                 case PVMP4FFNodeTrackPortInfo::TRACKSTATE_SEND_ENDOFTRACK:
                                 {
                                     //wakeup the AO to try and send the end-of-track again.
-                                    RunIfNotReady();
+                                    Reschedule();
                                 }
                                 break;
 
@@ -5995,11 +5189,11 @@ bool PVMFMP4FFParserNode::ReleaseAllPorts()
         iNodeTrackPortList[0].iMediaData.Unbind();
         if (iNodeTrackPortList[0].iPortInterface)
         {
-            OSCL_DELETE(((PVMFMP4FFParserOutPort*)iNodeTrackPortList[0].iPortInterface));
+            PVMF_BASE_NODE_DELETE(((PVMFMP4FFParserOutPort*)iNodeTrackPortList[0].iPortInterface));
         }
         if (iNodeTrackPortList[0].iClockConverter)
         {
-            OSCL_DELETE(iNodeTrackPortList[0].iClockConverter);
+            PVMF_BASE_NODE_DELETE(iNodeTrackPortList[0].iClockConverter);
         }
         if (iNodeTrackPortList[0].iTrackDataMemoryPool)
         {
@@ -6009,11 +5203,11 @@ bool PVMFMP4FFParserNode::ReleaseAllPorts()
         }
         if (iNodeTrackPortList[0].iMediaDataImplAlloc)
         {
-            OSCL_DELETE(iNodeTrackPortList[0].iMediaDataImplAlloc);
+            PVMF_BASE_NODE_DELETE(iNodeTrackPortList[0].iMediaDataImplAlloc);
         }
         if (iNodeTrackPortList[0].iTextMediaDataImplAlloc)
         {
-            OSCL_DELETE(iNodeTrackPortList[0].iTextMediaDataImplAlloc);
+            PVMF_BASE_NODE_DELETE(iNodeTrackPortList[0].iTextMediaDataImplAlloc);
         }
         if (iNodeTrackPortList[0].iMediaDataMemPool)
         {
@@ -6047,14 +5241,16 @@ void PVMFMP4FFParserNode::RemoveAllCommands()
 {
     //The command queues are self-deleting, but we want to
     //notify the observer of unprocessed commands.
-    while (!iCurrentCommand.empty())
+    if (IsCommandInProgress(iCurrentCommand))
     {
-        CommandComplete(iCurrentCommand, iCurrentCommand.front(), PVMFFailure);
+        CommandComplete(iCurrentCommand, PVMFFailure);
     }
 
-    while (!iInputCommands.empty())
+    PVMFNodeCommand Cmd;
+    while (iInputCommands.size() > 0)
     {
-        CommandComplete(iInputCommands, iInputCommands.front(), PVMFFailure);
+        iInputCommands.GetFrontAndErase(Cmd);
+        CommandComplete(Cmd, PVMFFailure);
     }
 }
 
@@ -6088,7 +5284,7 @@ void PVMFMP4FFParserNode::CleanupFileSource()
 
     if (iOMA2DecryptionBuffer != NULL)
     {
-        OSCL_ARRAY_DELETE(iOMA2DecryptionBuffer);
+        PVMF_BASE_NODE_ARRAY_DELETE(iOMA2DecryptionBuffer);
         iOMA2DecryptionBuffer = NULL;
     }
 
@@ -6103,7 +5299,7 @@ void PVMFMP4FFParserNode::CleanupFileSource()
 
     if (iFileHandle)
     {
-        OSCL_DELETE(iFileHandle);
+        PVMF_BASE_NODE_DELETE(iFileHandle);
         iFileHandle = NULL;
     }
 
@@ -6310,12 +5506,12 @@ void PVMFMP4FFParserNode::playResumeNotification(bool aDownloadComplete)
         PVMF_MP4FFPARSERNODE_LOGDATATRAFFIC((0, "PVMFMP4FFParserNode::playResumeNotification() - Auto Resume Triggered, FileSize = %d, NPT = %d", iFileSizeLastConvertedToTime, iLastNPTCalcInConvertSizeToTime));
         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFMP4FFParserNode::playResumeNotification() Sending PVMFInfoDataReady event"));
         // Schedule AO to run again
-        RunIfNotReady();
+        Reschedule();
     }
-    else if ((iCurrentCommand.empty() == false) &&
-             (iCurrentCommand.front().iCmd == PVMF_GENERIC_NODE_INIT))
+    else if (iCurrentCommand.iCmd == PVMF_GENERIC_NODE_INIT)
     {
         /* Callbacks intiated  as part of node init */
+        PVMFStatus Status = PVMFSuccess;
         if (iDownloadComplete == true)
         {
             if (iCPMSequenceInProgress == false)
@@ -6340,8 +5536,7 @@ void PVMFMP4FFParserNode::playResumeNotification(bool aDownloadComplete)
                     if (iCPMContentType == PVMF_CPM_FORMAT_OMA2)
                     {
                         PVMP4FFNodeTrackOMA2DRMInfo* oma2trackInfo = NULL;
-                        if (ParseMP4File(iCurrentCommand,
-                                         iCurrentCommand.front()))
+                        if (ParseMP4File(iCurrentCommand, Status))
                         {
                             if (CheckForOMA2AuthorizationComplete(oma2trackInfo) == PVMFPending)
                             {
@@ -6351,7 +5546,7 @@ void PVMFMP4FFParserNode::playResumeNotification(bool aDownloadComplete)
                         }
                     }
                 }
-                CompleteInit(iCurrentCommand, iCurrentCommand.front());
+                CompleteInit(iCurrentCommand);
             }
         }
         //Ignore this callback we are waiting on notifydownload complete
@@ -7028,7 +6223,6 @@ void PVMFMP4FFParserNode::ResetOMA2Flags()
         OSCL_ASSERT(false);
     }
     PVMF_MP4FFPARSERNODE_LOGDATATRAFFIC((0, "PVMFMP4FFParserNode::ResetOMA2Flags - Complete"));
-    return;
 }
 
 void PVMFMP4FFParserNode::RequestUsage(PVMP4FFNodeTrackOMA2DRMInfo* aInfo)
@@ -7078,19 +6272,19 @@ void PVMFMP4FFParserNode::PopulateOMA2DRMInfo(PVMP4FFNodeTrackOMA2DRMInfo* aInfo
     //Cleanup any old key.
     if (iRequestedUsage.key)
     {
-        OSCL_ARRAY_DELETE(iRequestedUsage.key);
+        PVMF_BASE_NODE_ARRAY_DELETE(iRequestedUsage.key);
         iRequestedUsage.key = NULL;
     }
 
     if (iApprovedUsage.key)
     {
-        OSCL_ARRAY_DELETE(iApprovedUsage.key);
+        PVMF_BASE_NODE_ARRAY_DELETE(iApprovedUsage.key);
         iApprovedUsage.key = NULL;
     }
 
     if (iAuthorizationDataKvp.key)
     {
-        OSCL_ARRAY_DELETE(iAuthorizationDataKvp.key);
+        PVMF_BASE_NODE_ARRAY_DELETE(iAuthorizationDataKvp.key);
         iAuthorizationDataKvp.key = NULL;
     }
 
@@ -7099,25 +6293,25 @@ void PVMFMP4FFParserNode::PopulateOMA2DRMInfo(PVMP4FFNodeTrackOMA2DRMInfo* aInfo
     int32 leavecode = 0;
 
     OSCL_TRY(leavecode,
-             iRequestedUsage.key = OSCL_ARRAY_NEW(char, UseKeyLen + 1);
-             iApprovedUsage.key = OSCL_ARRAY_NEW(char, UseKeyLen + 1);
-             iAuthorizationDataKvp.key = OSCL_ARRAY_NEW(char, AuthKeyLen + 1);
+             iRequestedUsage.key = PVMF_BASE_NODE_ARRAY_NEW(char, UseKeyLen + 1);
+             iApprovedUsage.key = PVMF_BASE_NODE_ARRAY_NEW(char, UseKeyLen + 1);
+             iAuthorizationDataKvp.key = PVMF_BASE_NODE_ARRAY_NEW(char, AuthKeyLen + 1);
             );
     if (leavecode || !iRequestedUsage.key || !iApprovedUsage.key || !iAuthorizationDataKvp.key)
     {
         if (iRequestedUsage.key)
         {
-            OSCL_ARRAY_DELETE(iRequestedUsage.key);
+            PVMF_BASE_NODE_ARRAY_DELETE(iRequestedUsage.key);
             iRequestedUsage.key = NULL;
         }
         if (iApprovedUsage.key)
         {
-            OSCL_ARRAY_DELETE(iApprovedUsage.key);
+            PVMF_BASE_NODE_ARRAY_DELETE(iApprovedUsage.key);
             iApprovedUsage.key = NULL;
         }
         if (iAuthorizationDataKvp.key)
         {
-            OSCL_ARRAY_DELETE(iAuthorizationDataKvp.key);
+            PVMF_BASE_NODE_ARRAY_DELETE(iAuthorizationDataKvp.key);
             iAuthorizationDataKvp.key = NULL;
         }
 
@@ -7171,19 +6365,19 @@ void PVMFMP4FFParserNode::PopulateOMA1DRMInfo()
     //Cleanup any old key.
     if (iRequestedUsage.key)
     {
-        OSCL_ARRAY_DELETE(iRequestedUsage.key);
+        PVMF_BASE_NODE_ARRAY_DELETE(iRequestedUsage.key);
         iRequestedUsage.key = NULL;
     }
 
     if (iApprovedUsage.key)
     {
-        OSCL_ARRAY_DELETE(iApprovedUsage.key);
+        PVMF_BASE_NODE_ARRAY_DELETE(iApprovedUsage.key);
         iApprovedUsage.key = NULL;
     }
 
     if (iAuthorizationDataKvp.key)
     {
-        OSCL_ARRAY_DELETE(iAuthorizationDataKvp.key);
+        PVMF_BASE_NODE_ARRAY_DELETE(iAuthorizationDataKvp.key);
         iAuthorizationDataKvp.key = NULL;
     }
 
@@ -7192,25 +6386,25 @@ void PVMFMP4FFParserNode::PopulateOMA1DRMInfo()
     int32 leavecode = 0;
 
     OSCL_TRY(leavecode,
-             iRequestedUsage.key = OSCL_ARRAY_NEW(char, UseKeyLen + 1);
-             iApprovedUsage.key = OSCL_ARRAY_NEW(char, UseKeyLen + 1);
-             iAuthorizationDataKvp.key = OSCL_ARRAY_NEW(char, AuthKeyLen + 1);
+             iRequestedUsage.key = PVMF_BASE_NODE_ARRAY_NEW(char, UseKeyLen + 1);
+             iApprovedUsage.key = PVMF_BASE_NODE_ARRAY_NEW(char, UseKeyLen + 1);
+             iAuthorizationDataKvp.key = PVMF_BASE_NODE_ARRAY_NEW(char, AuthKeyLen + 1);
             );
     if (leavecode || !iRequestedUsage.key || !iApprovedUsage.key || !iAuthorizationDataKvp.key)
     {
         if (iRequestedUsage.key)
         {
-            OSCL_ARRAY_DELETE(iRequestedUsage.key);
+            PVMF_BASE_NODE_ARRAY_DELETE(iRequestedUsage.key);
             iRequestedUsage.key = NULL;
         }
         if (iApprovedUsage.key)
         {
-            OSCL_ARRAY_DELETE(iApprovedUsage.key);
+            PVMF_BASE_NODE_ARRAY_DELETE(iApprovedUsage.key);
             iApprovedUsage.key = NULL;
         }
         if (iAuthorizationDataKvp.key)
         {
-            OSCL_ARRAY_DELETE(iAuthorizationDataKvp.key);
+            PVMF_BASE_NODE_ARRAY_DELETE(iAuthorizationDataKvp.key);
             iAuthorizationDataKvp.key = NULL;
         }
 
@@ -7372,7 +6566,7 @@ void PVMFMP4FFParserNode::CPMCommandCompleted(const PVMFCmdResp& aResponse)
         PVMF_MP4FFPARSERNODE_LOGINFO((0, "PVMFMP4FFParserNode::CPMCommandCompleted - Unknown CPM Format - Ignoring CPM"));
         if (CheckForMP4HeaderAvailability() != PVMFPending)
         {
-            CompleteInit(iCurrentCommand, iCurrentCommand.front());
+            CompleteInit(iCurrentCommand);
         }
         return;
     }
@@ -7380,32 +6574,26 @@ void PVMFMP4FFParserNode::CPMCommandCompleted(const PVMFCmdResp& aResponse)
     if (status != PVMFSuccess)
     {
         /*
-         * If any command fails, the sequence fails.
-         */
+        * If any other command fails, the sequence fails.
+        */
         if (aResponse.GetEventData() == NULL)
         {
             // If any command fails, the sequence fails.
-            CommandComplete(iCurrentCommand,
-                            iCurrentCommand.front(),
-                            aResponse.GetCmdStatus());
+            CommandComplete(iCurrentCommand, aResponse.GetCmdStatus());
         }
         else
         {
             // Need to pass EventData (=License URL) up to UI.
             CommandComplete(iCurrentCommand,
-                            iCurrentCommand.front(),
-                            aResponse.GetCmdStatus(),
-                            aResponse.GetEventData());
+                            aResponse.GetCmdStatus());
         }
         /*
          * if there was any pending cancel, it was waiting on
          * this command to complete-- so the cancel is now done.
          */
-        if (!iCancelCommand.empty())
+        if (IsCommandInProgress(iCancelCommand))
         {
-            CommandComplete(iCancelCommand,
-                            iCancelCommand.front(),
-                            PVMFSuccess);
+            CommandComplete(iCancelCommand, PVMFSuccess);
         }
     }
     else
@@ -7449,8 +6637,8 @@ void PVMFMP4FFParserNode::CPMCommandCompleted(const PVMFCmdResp& aResponse)
                 if (CheckForMP4HeaderAvailability() != PVMFPending)
                 {
                     PVMP4FFNodeTrackOMA2DRMInfo* oma2trackInfo = NULL;
-                    if (ParseMP4File(iCurrentCommand,
-                                     iCurrentCommand.front()))
+                    PVMFStatus Status = PVMFSuccess;
+                    if (ParseMP4File(iCurrentCommand, Status))
                     {
                         if (CheckForOMA2AuthorizationComplete(oma2trackInfo) == PVMFPending)
                         {
@@ -7465,7 +6653,7 @@ void PVMFMP4FFParserNode::CPMCommandCompleted(const PVMFCmdResp& aResponse)
                 PVMF_MP4FFPARSERNODE_LOGINFO((0, "PVMFMP4FFParserNode::CPMCommandCompleted - Unknown CPM Format - Ignoring CPM"));
                 if (CheckForMP4HeaderAvailability() != PVMFPending)
                 {
-                    CompleteInit(iCurrentCommand, iCurrentCommand.front());
+                    CompleteInit(iCurrentCommand);
                 }
             }
         }
@@ -7473,8 +6661,7 @@ void PVMFMP4FFParserNode::CPMCommandCompleted(const PVMFCmdResp& aResponse)
         {
             PVMF_MP4FFPARSERNODE_LOGINFO((0, "PVMFMP4FFParserNode::CPMCommandCompleted - Request Usage complete"));
             //End of Node Init sequence.
-            OSCL_ASSERT(!iCurrentCommand.empty());
-            OSCL_ASSERT(iCurrentCommand.front().iCmd == PVMF_GENERIC_NODE_INIT);
+            OSCL_ASSERT(iCurrentCommand.iCmd == PVMF_GENERIC_NODE_INIT);
             oWaitingOnLicense = false;
             if (iCPMContentType == PVMF_CPM_FORMAT_OMA2)
             {
@@ -7489,7 +6676,7 @@ void PVMFMP4FFParserNode::CPMCommandCompleted(const PVMFCmdResp& aResponse)
                 else if (status == PVMFSuccess)
                 {
                     //All tracks authorized, complete init
-                    CompleteInit(iCurrentCommand, iCurrentCommand.front());
+                    CompleteInit(iCurrentCommand);
                 }
                 else
                 {
@@ -7504,14 +6691,14 @@ void PVMFMP4FFParserNode::CPMCommandCompleted(const PVMFCmdResp& aResponse)
                     //OMA1 content - Authorization complete
                     if (CheckForMP4HeaderAvailability() != PVMFPending)
                     {
-                        CompleteInit(iCurrentCommand, iCurrentCommand.front());
+                        CompleteInit(iCurrentCommand);
                     }
                 }
                 else
                 {
                     //we are just doing metadata (not necessarily from mp4 file header,
                     // say just drm metadata), so complete init from here
-                    CompleteInit(iCurrentCommand, iCurrentCommand.front());
+                    CompleteInit(iCurrentCommand);
                 }
             }
         }
@@ -7537,33 +6724,29 @@ void PVMFMP4FFParserNode::CPMCommandCompleted(const PVMFCmdResp& aResponse)
         {
             PVMF_MP4FFPARSERNODE_LOGINFO((0, "PVMFMP4FFParserNode::CPMCommandCompleted -  CPM Reset complete"));
             //End of Node Reset sequence
-            OSCL_ASSERT(!iCurrentCommand.empty());
-            OSCL_ASSERT(iCurrentCommand.front().iCmd == PVMF_GENERIC_NODE_RESET);
-            CompleteReset(iCurrentCommand, iCurrentCommand.front());
+            OSCL_ASSERT(iCurrentCommand.iCmd == PVMF_GENERIC_NODE_RESET);
+            status = CompleteReset();
+            CommandComplete(iCurrentCommand, status);
         }
         else if (id == iCPMGetMetaDataKeysCmdId)
         {
             PVMF_MP4FFPARSERNODE_LOGINFO((0, "PVMFMP4FFParserNode::CPMCommandCompleted -  CPM GetMetaDataKeys complete"));
             /* End of GetNodeMetaDataKeys */
-            PVMFStatus status =
-                CompleteGetMetadataKeys(iCurrentCommand.front());
+            PVMFStatus status = CompleteGetMetadataKeys();
             CommandComplete(iCurrentCommand,
-                            iCurrentCommand.front(),
                             status);
         }
         else if (id == iCPMGetMetaDataValuesCmdId)
         {
             PVMF_MP4FFPARSERNODE_LOGINFO((0, "PVMFMP4FFParserNode::CPMCommandCompleted -  CPM GetMetaDataValues complete"));
             /* End of GetNodeMetaDataValues */
-            OSCL_ASSERT(!iCurrentCommand.empty());
-            OSCL_ASSERT(iCurrentCommand.front().iCmd == PVMP4FF_NODE_CMD_GETNODEMETADATAVALUES);
+            OSCL_ASSERT(iCurrentCommand.iCmd == PVMF_GENERIC_NODE_GETNODEMETADATAVALUES);
             CompleteGetMetaDataValues();
         }
         else
         {
             /* Unknown cmd - error */
             CommandComplete(iCurrentCommand,
-                            iCurrentCommand.front(),
                             PVMFFailure);
         }
     }
@@ -7681,7 +6864,7 @@ void PVMFMP4FFParserNode::DataStreamCommandCompleted(const PVMFCmdResp& aRespons
             case PVMP4FFNodeTrackPortInfo::TRACKSTATE_INSUFFICIENTDATA:
                 iNodeTrackPortList[i].iState = PVMP4FFNodeTrackPortInfo::TRACKSTATE_TRANSMITTING_GETDATA;
                 iUnderFlowCheckTimer->Cancel(PVMF_MP4FFPARSERNODE_UNDERFLOW_STATUS_TIMER_ID);
-                RunIfNotReady();
+                Reschedule();
                 break;
 
             default:
@@ -7707,7 +6890,7 @@ void PVMFMP4FFParserNode::DataStreamCommandCompleted(const PVMFCmdResp& aRespons
                         // nothing to do
                         break;
                 }
-                RunIfNotReady();
+                Reschedule();
             }
 
             // report data ready only if underflow was not suppressed earlier
@@ -7720,15 +6903,14 @@ void PVMFMP4FFParserNode::DataStreamCommandCompleted(const PVMFCmdResp& aRespons
             }
             if (iExternalDownload == true)
             {
-                if ((iCurrentCommand.empty() == false) &&
-                        (iCurrentCommand.front().iCmd == PVMF_GENERIC_NODE_PREPARE))
+                if (iCurrentCommand.iCmd == PVMF_GENERIC_NODE_PREPARE)
                 {
                     //we could be waiting on this call back to complete prepare
-                    CompletePrepare(aResponse.GetCmdStatus());
+                    CommandComplete(iCurrentCommand, aResponse.GetCmdStatus());
                 }
             }
             // Schedule AO to run again
-            RunIfNotReady();
+            Reschedule();
             return;
         }
         else
@@ -7736,11 +6918,10 @@ void PVMFMP4FFParserNode::DataStreamCommandCompleted(const PVMFCmdResp& aRespons
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR, (0, "PVMFMP4FFParserNode::DataStreamReadCapacityNotificationCallBack() Reporting failure"));
             if (iExternalDownload == true)
             {
-                if ((iCurrentCommand.empty() == false) &&
-                        (iCurrentCommand.front().iCmd == PVMF_GENERIC_NODE_PREPARE))
+                if (iCurrentCommand.iCmd == PVMF_GENERIC_NODE_PREPARE)
                 {
                     //we could be waiting on this call back to complete prepare
-                    CompletePrepare(aResponse.GetCmdStatus());
+                    CommandComplete(iCurrentCommand, aResponse.GetCmdStatus());
                 }
                 else
                 {
@@ -7753,8 +6934,7 @@ void PVMFMP4FFParserNode::DataStreamCommandCompleted(const PVMFCmdResp& aRespons
             }
         }
     }
-    else if ((iCurrentCommand.empty() == false) &&
-             (iCurrentCommand.front().iCmd == PVMF_GENERIC_NODE_INIT))
+    else if (iCurrentCommand.iCmd == PVMF_GENERIC_NODE_INIT)
     {
         /* Callbacks intiated  as part of node init */
         if (aResponse.GetCmdId() == iRequestReadCapacityNotificationID)
@@ -7774,8 +6954,8 @@ void PVMFMP4FFParserNode::DataStreamCommandCompleted(const PVMFCmdResp& aRespons
                 if (iCPMContentType == PVMF_CPM_FORMAT_OMA2)
                 {
                     PVMP4FFNodeTrackOMA2DRMInfo* oma2trackInfo = NULL;
-                    if (ParseMP4File(iCurrentCommand,
-                                     iCurrentCommand.front()))
+                    PVMFStatus Status = PVMFSuccess;
+                    if (ParseMP4File(iCurrentCommand, Status))
                     {
                         if (CheckForOMA2AuthorizationComplete(oma2trackInfo) == PVMFPending)
                         {
@@ -7787,7 +6967,7 @@ void PVMFMP4FFParserNode::DataStreamCommandCompleted(const PVMFCmdResp& aRespons
             }
             if (PVMFPending != CheckForMP4HeaderAvailability())
             {
-                CompleteInit(iCurrentCommand, iCurrentCommand.front());
+                CompleteInit(iCurrentCommand);
             }
         }
         else
@@ -7800,7 +6980,7 @@ void PVMFMP4FFParserNode::DataStreamCommandCompleted(const PVMFCmdResp& aRespons
     {
         PVMF_MP4FFPARSERNODE_LOGDATATRAFFIC((0, "PVMFMP4FFParserNode::DataStreamReadCapacityNotificationCallBack() in non-autopaused state"));
         // Schedule AO to run again
-        RunIfNotReady();
+        Reschedule();
     }
     return;
 }
@@ -8459,7 +7639,7 @@ PVMFStatus PVMFMP4FFParserNode::GetVideoFrameWidth(uint32 aId, int32& aWidth, in
                 uint32 sampleSize = info.len;
                 if (sampleSize > 0)
                 {
-                    uint8* sampleBuf = OSCL_ARRAY_NEW(uint8, sampleSize);
+                    uint8* sampleBuf = PVMF_BASE_NODE_ARRAY_NEW(uint8, sampleSize);
 
                     oscl_memset(&iGau.buf, 0, sizeof(iGau.buf));
                     oscl_memset(&iGau.info, 0, sizeof(iGau.info));
@@ -8502,7 +7682,7 @@ PVMFStatus PVMFMP4FFParserNode::GetVideoFrameWidth(uint32 aId, int32& aWidth, in
                         }
                     }
                     iMP4FileHandle->resetPlayback();
-                    OSCL_ARRAY_DELETE(sampleBuf);
+                    PVMF_BASE_NODE_ARRAY_DELETE(sampleBuf);
                 }
             }
         }
@@ -8619,7 +7799,7 @@ PVMFStatus PVMFMP4FFParserNode::GetVideoFrameHeight(uint32 aId, int32& aHeight, 
                 uint32 sampleSize = info.len;
                 if (sampleSize > 0)
                 {
-                    uint8* sampleBuf = OSCL_ARRAY_NEW(uint8, sampleSize);
+                    uint8* sampleBuf = PVMF_BASE_NODE_ARRAY_NEW(uint8, sampleSize);
 
                     oscl_memset(&iGau.buf, 0, sizeof(iGau.buf));
                     oscl_memset(&iGau.info, 0, sizeof(iGau.info));
@@ -8662,7 +7842,7 @@ PVMFStatus PVMFMP4FFParserNode::GetVideoFrameHeight(uint32 aId, int32& aHeight, 
                         aHeight = height;
                     }
                     iMP4FileHandle->resetPlayback();
-                    OSCL_ARRAY_DELETE(sampleBuf);
+                    PVMF_BASE_NODE_ARRAY_DELETE(sampleBuf);
                 }
             }
         }
@@ -8840,17 +8020,17 @@ PVMFStatus PVMFMP4FFParserNode::FindBestThumbnailKeyFrame(uint32 aId, uint32& aK
         PVMF_MP4FFPARSERNODE_LOGDATATRAFFIC((0, "PVMFMP4FFParserNode:FindBestThumbnailKeyFrame - NumKeySamples=%d, TrackID=%d", numsamples, aId));
 
         // Allocate memory for the info
-        uint32* syncts = OSCL_ARRAY_NEW(uint32, numsamples);
-        uint32* syncfrnum = OSCL_ARRAY_NEW(uint32, numsamples);
+        uint32* syncts = PVMF_BASE_NODE_ARRAY_NEW(uint32, numsamples);
+        uint32* syncfrnum = PVMF_BASE_NODE_ARRAY_NEW(uint32, numsamples);
         if (syncts == NULL || syncfrnum == NULL)
         {
             if (syncts)
             {
-                OSCL_ARRAY_DELETE(syncts);
+                PVMF_BASE_NODE_ARRAY_DELETE(syncts);
             }
             if (syncfrnum)
             {
-                OSCL_ARRAY_DELETE(syncfrnum);
+                PVMF_BASE_NODE_ARRAY_DELETE(syncfrnum);
             }
             return PVMFErrNoMemory;
         }
@@ -8866,11 +8046,11 @@ PVMFStatus PVMFMP4FFParserNode::FindBestThumbnailKeyFrame(uint32 aId, uint32& aK
             // Error
             if (syncts)
             {
-                OSCL_ARRAY_DELETE(syncts);
+                PVMF_BASE_NODE_ARRAY_DELETE(syncts);
             }
             if (syncfrnum)
             {
-                OSCL_ARRAY_DELETE(syncfrnum);
+                PVMF_BASE_NODE_ARRAY_DELETE(syncfrnum);
             }
             numsamples = 0;
             aKeyFrameNum = 0;
@@ -8906,11 +8086,11 @@ PVMFStatus PVMFMP4FFParserNode::FindBestThumbnailKeyFrame(uint32 aId, uint32& aK
         PVMF_MP4FFPARSERNODE_LOGDATATRAFFIC((0, "PVMFMP4FFParserNode:FindBestThumbnailKeyFrame - Picked Best KeyFrame=%d", aKeyFrameNum));
         if (syncts)
         {
-            OSCL_ARRAY_DELETE(syncts);
+            PVMF_BASE_NODE_ARRAY_DELETE(syncts);
         }
         if (syncfrnum)
         {
-            OSCL_ARRAY_DELETE(syncfrnum);
+            PVMF_BASE_NODE_ARRAY_DELETE(syncfrnum);
         }
     }
     else if (retval == 2)
@@ -8948,40 +8128,6 @@ PVMFStatus PVMFMP4FFParserNode::FindBestThumbnailKeyFrame(uint32 aId, uint32& aK
     return PVMFSuccess;
 }
 
-bool PVMFMP4FFParserNode::SendBeginOfMediaStreamCommand(PVMP4FFNodeTrackPortInfo& aTrackPortInfo)
-{
-    PVMFSharedMediaCmdPtr sharedMediaCmdPtr = PVMFMediaCmd::createMediaCmd();
-    sharedMediaCmdPtr->setFormatID(PVMF_MEDIA_CMD_BOS_FORMAT_ID);
-
-    aTrackPortInfo.iClockConverter->update_clock(aTrackPortInfo.iTimestamp);
-    uint32 timestamp = aTrackPortInfo.iClockConverter->get_converted_ts(1000);
-    sharedMediaCmdPtr->setTimestamp(timestamp);
-
-    PVMFSharedMediaMsgPtr mediaMsgOut;
-    convertToPVMFMediaCmdMsg(mediaMsgOut, sharedMediaCmdPtr);
-    mediaMsgOut->setStreamID(iStreamID);
-    mediaMsgOut->setSeqNum(aTrackPortInfo.iSeqNum);
-
-    if (aTrackPortInfo.iPortInterface->QueueOutgoingMsg(mediaMsgOut) != PVMFSuccess)
-    {
-        // Output queue is busy, so wait for the output queue being ready
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
-                        (0, "PVMFMP4FFParserNode::SendBeginOfMediaStreamCommand: Outgoing queue busy. "));
-        if (aTrackPortInfo.iState == PVMP4FFNodeTrackPortInfo::TRACKSTATE_TRANSMITTING_SENDDATA)
-        {
-            aTrackPortInfo.iState = PVMP4FFNodeTrackPortInfo::TRACKSTATE_DESTFULL;
-        }
-        return false;
-    }
-    aTrackPortInfo.iSendBOS = false;
-    PVMF_MP4FFPARSERNODE_LOGDATATRAFFIC((0, "PVMFMP4FFParserNode::SendBeginOfMediaStreamCommand() BOS sent - Mime=%s, StreamId=%d, TS=%d",
-                                         aTrackPortInfo.iMimeType.get_cstr(),
-                                         iStreamID,
-                                         timestamp));
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFMP4FFParserNode::SendBeginOfMediaStreamCommand() BOS sent StreamId=%d ", iStreamID));
-    return true;
-}
-
 void PVMFMP4FFParserNode::NotificationsInterfaceDestroyed()
 {
     iClockNotificationsInf = NULL;
@@ -9003,49 +8149,50 @@ void PVMFMP4FFParserNode::ClockStateUpdated()
     }
 }
 
-
-int32 PVMFMP4FFParserNode::CreateErrorInfoMsg(PVMFBasicErrorInfoMessage** aErrorMsg, PVUuid aEventUUID, int32 aEventCode)
+PVMFStatus PVMFMP4FFParserNode::HandleExtensionAPICommands()
 {
-    int32 leavecode = 0;
-    OSCL_TRY(leavecode, *aErrorMsg = OSCL_NEW(PVMFBasicErrorInfoMessage, (aEventCode, aEventUUID, NULL)));
-    return leavecode;
-}
-
-
-bool PVMFMP4FFParserNode::SendBeginOfClipCommand(PVMP4FFNodeTrackPortInfo& aTrackPortInfo)
-{
-    PVMFSharedMediaCmdPtr sharedMediaCmdPtr = PVMFMediaCmd::createMediaCmd();
-    sharedMediaCmdPtr->setFormatID(PVMF_MEDIA_CMD_BOC_FORMAT_ID);
-
-    aTrackPortInfo.iClockConverter->update_clock(aTrackPortInfo.iTimestamp);
-    uint32 timestamp = aTrackPortInfo.iClockConverter->get_converted_ts(1000);
-    sharedMediaCmdPtr->setTimestamp(timestamp);
-    sharedMediaCmdPtr->setSeqNum(aTrackPortInfo.iSeqNum++);
-    sharedMediaCmdPtr->setStreamID(iStreamID);
-    // set format specific info
-    sharedMediaCmdPtr->setFormatSpecificInfo(aTrackPortInfo.iBOCFormatSpecificInfo);
-
-    // Convert media command to media message
-    PVMFSharedMediaMsgPtr mediaMsgOut;
-    convertToPVMFMediaCmdMsg(mediaMsgOut, sharedMediaCmdPtr);
-
-    if (aTrackPortInfo.iPortInterface->QueueOutgoingMsg(mediaMsgOut) != PVMFSuccess)
+    PVMFStatus status = PVMFErrNotSupported;
+    switch (iCurrentCommand.iCmd)
     {
-        // Output queue is busy, so wait for the output queue being ready
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
-                        (0, "PVMFMP4FFParserNode::SendBeginOfClipCommand: Outgoing queue busy. "));
-        return false;
+        case PVMF_GENERIC_NODE_GETNODEMETADATAKEYS:
+            status = DoGetNodeMetadataKeys();
+            break;
+        case PVMF_GENERIC_NODE_GETNODEMETADATAVALUES:
+            status = DoGetNodeMetadataValues();
+            break;
+        case PVMF_GENERIC_NODE_SET_DATASOURCE_POSITION:
+        {
+            status = DoSetDataSourcePosition();
+            break;
+        }
+        case PVMF_GENERIC_NODE_QUERY_DATASOURCE_POSITION:
+            status = DoQueryDataSourcePosition();
+            break;
+        case PVMF_GENERIC_NODE_SET_DATASOURCE_RATE:
+            status = DoSetDataSourceRate();
+            break;
+        case PVMF_GENERIC_NODE_CAPCONFIG_SETPARAMS:
+        {
+            PvmiMIOSession session;
+            PvmiKvp* aParameters;
+            int num_elements;
+            PvmiKvp** ppRet_kvp;
+            iCurrentCommand.Parse(session, aParameters, num_elements, ppRet_kvp);
+            setParametersSync(NULL, aParameters, num_elements, *ppRet_kvp);
+            CommandComplete(iCurrentCommand, PVMFSuccess);
+        }
+        break;
+        case PVMF_GENERIC_NODE_SET_DATASOURCE_DIRECTION:
+            status = DoSetDataSourceDirection();
+            break;
+
+        default:
+            // unknown command type, do nothing
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFMP4FFParserNode::HandleExtensionAPICommands() - Unknown Cmd type %d; Cmd Id %d", iCurrentCommand.iCmd, iCurrentCommand.iId));
+            OSCL_ASSERT(false);
+            break;
     }
-
-    // BOC was sent successfully
-    aTrackPortInfo.iHasBOCFrame = false;
-
-    PVMF_MP4FFPARSERNODE_LOGDATATRAFFIC((0, "PVMFMP4FFParserNode::SendBeginOfClipCommand() BOC sent - Mime=%s, StreamId=%d, TS=%d",
-                                         aTrackPortInfo.iMimeType.get_cstr(),
-                                         iStreamID,
-                                         timestamp));
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFMP4FFParserNode::SendBeginOfClipCommand() BOC sent StreamId=%d ", iStreamID));
-    return true;
+    return status;
 }
 
 
@@ -9087,6 +8234,41 @@ bool PVMFMP4FFParserNode::SendEndOfClipCommand(PVMP4FFNodeTrackPortInfo& aTrackP
     return true;
 }
 
+bool PVMFMP4FFParserNode::SendBeginOfClipCommand(PVMP4FFNodeTrackPortInfo& aTrackPortInfo)
+{
+    PVMFSharedMediaCmdPtr sharedMediaCmdPtr = PVMFMediaCmd::createMediaCmd();
+    sharedMediaCmdPtr->setFormatID(PVMF_MEDIA_CMD_BOC_FORMAT_ID);
+
+    aTrackPortInfo.iClockConverter->update_clock(aTrackPortInfo.iTimestamp);
+    uint32 timestamp = aTrackPortInfo.iClockConverter->get_converted_ts(1000);
+    sharedMediaCmdPtr->setTimestamp(timestamp);
+    sharedMediaCmdPtr->setSeqNum(aTrackPortInfo.iSeqNum++);
+    sharedMediaCmdPtr->setStreamID(iStreamID);
+    // set format specific info
+    sharedMediaCmdPtr->setFormatSpecificInfo(aTrackPortInfo.iBOCFormatSpecificInfo);
+
+    // Convert media command to media message
+    PVMFSharedMediaMsgPtr mediaMsgOut;
+    convertToPVMFMediaCmdMsg(mediaMsgOut, sharedMediaCmdPtr);
+
+    if (aTrackPortInfo.iPortInterface->QueueOutgoingMsg(mediaMsgOut) != PVMFSuccess)
+    {
+        // Output queue is busy, so wait for the output queue being ready
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
+                        (0, "PVMFMP4FFParserNode::SendBeginOfClipCommand: Outgoing queue busy. "));
+        return false;
+    }
+
+    // BOC was sent successfully
+    aTrackPortInfo.iHasBOCFrame = false;
+
+    PVMF_MP4FFPARSERNODE_LOGDATATRAFFIC((0, "PVMFMP4FFParserNode::SendBeginOfClipCommand() BOC sent - Mime=%s, StreamId=%d, TS=%d",
+                                         aTrackPortInfo.iMimeType.get_cstr(),
+                                         iStreamID,
+                                         timestamp));
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFMP4FFParserNode::SendBeginOfClipCommand() BOC sent StreamId=%d ", iStreamID));
+    return true;
+}
 
 
 

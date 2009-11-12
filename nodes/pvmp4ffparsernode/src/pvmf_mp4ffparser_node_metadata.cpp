@@ -101,8 +101,8 @@ PVMFCommandId PVMFMP4FFParserNode::GetNodeMetadataKeys(PVMFSessionId aSessionId,
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFMP4FFParserNode::GetNodeMetadataKeys() called"));
 
-    PVMFMP4FFParserNodeCommand cmd;
-    cmd.PVMFMP4FFParserNodeCommand::Construct(aSessionId, PVMP4FF_NODE_CMD_GETNODEMETADATAKEYS, aKeyList, starting_index, max_entries, query_key, aContext);
+    PVMFNodeCommand cmd;
+    cmd.PVMFNodeCommand::Construct(aSessionId, PVMF_GENERIC_NODE_GETNODEMETADATAKEYS, aKeyList, starting_index, max_entries, query_key, aContext);
     return QueueCommandL(cmd);
 }
 
@@ -111,8 +111,8 @@ PVMFCommandId PVMFMP4FFParserNode::GetNodeMetadataValues(PVMFSessionId aSessionI
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFMP4FFParserNode::GetNodeMetadataValue() called"));
 
-    PVMFMP4FFParserNodeCommand cmd;
-    cmd.PVMFMP4FFParserNodeCommand::Construct(aSessionId, PVMP4FF_NODE_CMD_GETNODEMETADATAVALUES, aKeyList, aValueList, starting_index, max_entries, aContext);
+    PVMFNodeCommand cmd;
+    cmd.PVMFNodeCommand::Construct(aSessionId, PVMF_GENERIC_NODE_GETNODEMETADATAVALUES, aKeyList, aValueList, starting_index, max_entries, aContext);
     return QueueCommandL(cmd);
 }
 
@@ -169,7 +169,7 @@ PVMFStatus PVMFMP4FFParserNode::ReleaseNodeMetadataValues(Oscl_Vector<PvmiKvp, O
 
 
 PVMFStatus
-PVMFMP4FFParserNode::DoGetMetadataKeys(PVMFMP4FFParserNodeCommand& aCmd)
+PVMFMP4FFParserNode::DoGetNodeMetadataKeys()
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFMP4FFParserNode::DoGetMetadataKeys() In"));
     /* Get Metadata keys from CPM for protected content only */
@@ -183,10 +183,10 @@ PVMFMP4FFParserNode::DoGetMetadataKeys(PVMFMP4FFParserNodeCommand& aCmd)
     {
         return PVMFErrInvalidState;
     }
-    return (CompleteGetMetadataKeys(aCmd));
+    return (CompleteGetMetadataKeys());
 }
 
-PVMFStatus PVMFMP4FFParserNode::CompleteGetMetadataKeys(PVMFMP4FFParserNodeCommand& aCmd)
+PVMFStatus PVMFMP4FFParserNode::CompleteGetMetadataKeys()
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFMP4FFParserNode::CompleteGetMetadataKeys() In"));
 
@@ -195,7 +195,7 @@ PVMFStatus PVMFMP4FFParserNode::CompleteGetMetadataKeys(PVMFMP4FFParserNodeComma
     int32 max_entries;
     char* query_key = NULL;
 
-    aCmd.PVMFMP4FFParserNodeCommand::Parse(keylistptr, starting_index, max_entries, query_key);
+    iCurrentCommand.PVMFNodeCommand::Parse(keylistptr, starting_index, max_entries, query_key);
 
     // Check parameters
     if (keylistptr == NULL)
@@ -299,7 +299,7 @@ PVMFStatus PVMFMP4FFParserNode::CompleteGetMetadataKeys(PVMFMP4FFParserNodeComma
 }
 
 
-PVMFStatus PVMFMP4FFParserNode::DoGetMetadataValues(PVMFMP4FFParserNodeCommand& aCmd)
+PVMFStatus PVMFMP4FFParserNode::DoGetNodeMetadataValues()
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                     (0, "PVMFMP4FFParserNode::DoGetMetadataValues() In"));
@@ -315,7 +315,7 @@ PVMFStatus PVMFMP4FFParserNode::DoGetMetadataValues(PVMFMP4FFParserNodeCommand& 
     uint32 numvalentries = 0;
 
     // Extract parameters from command structure
-    aCmd.PVMFMP4FFParserNodeCommand::Parse(keylistptr_in,
+    iCurrentCommand.PVMFNodeCommand::Parse(keylistptr_in,
                                            valuelistptr,
                                            starting_index,
                                            max_entries);
@@ -1018,7 +1018,7 @@ void PVMFMP4FFParserNode::CompleteGetMetaDataValues()
     uint32 starting_index;
     int32 max_entries;
 
-    iCurrentCommand.front().PVMFMP4FFParserNodeCommand::Parse(keylistptr, valuelistptr, starting_index, max_entries);
+    iCurrentCommand.PVMFNodeCommand::Parse(keylistptr, valuelistptr, starting_index, max_entries);
 
     for (uint32 i = 0; i < (*valuelistptr).size(); i++)
     {
@@ -1026,7 +1026,6 @@ void PVMFMP4FFParserNode::CompleteGetMetaDataValues()
     }
 
     CommandComplete(iCurrentCommand,
-                    iCurrentCommand.front(),
                     PVMFSuccess);
 }
 

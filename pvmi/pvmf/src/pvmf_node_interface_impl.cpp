@@ -39,8 +39,10 @@ OSCL_EXPORT_REF PVMFNodeInterfaceImpl::PVMFNodeInterfaceImpl(int32 aPriority, co
         iBaseLogger(NULL)
 {
     iBaseLogger = PVLogger::GetLoggerObject("PVMFNodeInterfaceImpl");
+
 #if !(OSCL_BYPASS_MEMMGT)
     iAuditCB.pAudit = NULL;
+
     // set audit object
     iAuditCB.pAudit = OsclMemGlobalAuditObject::getGlobalMemAuditObject();
     if (true == iAuditCB.pAudit->MM_AddTag(aNodeName))
@@ -610,6 +612,7 @@ OSCL_EXPORT_REF bool PVMFNodeInterfaceImpl::ProcessCommand()
     //until the prior one is finished.  However, a hi priority
     //command such as Cancel must be able to interrupt a command
     //in progress.
+
     if (IsCommandInProgress(iCurrentCommand) && !cmd.hipri() && PVMF_GENERIC_NODE_CANCEL_GET_LICENSE != cmd.iCmd)
         return false;
 
@@ -860,4 +863,3 @@ OSCL_EXPORT_REF bool PVMFNodeInterfaceImpl::IsFlushPending()
 {
     return (PVMF_GENERIC_NODE_FLUSH == iCurrentCommand.iCmd);
 }
-

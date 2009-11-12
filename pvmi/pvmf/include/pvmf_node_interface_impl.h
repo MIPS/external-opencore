@@ -143,6 +143,26 @@ class PVMFNodeCommand: public PVMFNodeCommandBase
             aStreamID = (uint32)iParam5;
         }
 
+        /* Constructor and parser for setParametersAsync */
+        void Construct(PVMFSessionId s, int32 cmd, PvmiMIOSession aSession,
+                       PvmiKvp* aParameters, int num_elements,
+                       PvmiKvp*& aRet_kvp, OsclAny* aContext)
+        {
+            PVMFNodeCommandBase::Construct(s, cmd, aContext);
+            iParam1 = (OsclAny*)aSession;
+            iParam2 = (OsclAny*)aParameters;
+            iParam3 = (OsclAny*)num_elements;
+            iParam4 = (OsclAny*) & aRet_kvp;
+        }
+        void Parse(PvmiMIOSession& aSession, PvmiKvp*& aParameters,
+                   int &num_elements, PvmiKvp** &ppRet_kvp)
+        {
+            aSession = (PvmiMIOSession)iParam1;
+            aParameters = (PvmiKvp*)iParam2;
+            num_elements = (int)iParam3;
+            ppRet_kvp = (PvmiKvp**)iParam4;
+        }
+
         // Constructor and parser for QueryDataSourcePosition
         void Construct(PVMFSessionId s, int32 cmd, PVMFTimestamp aTargetNPT, PVMFTimestamp* aActualNPT, bool aSeekToSyncPoint, const OsclAny*aContext)
         {
@@ -160,6 +180,49 @@ class PVMFNodeCommand: public PVMFNodeCommandBase
             aSeekToSyncPoint = (iParam3 ? true : false);
         }
 
+        // Constructor and parser for QueryDataSourcePosition with aSeekPointBeforeTargetNPT and aSeekPointAfterTargetNPT
+        void Construct(PVMFSessionId s, int32 cmd, PVMFTimestamp aTargetNPT,
+                       PVMFTimestamp& aSeekPointBeforeTargetNPT, PVMFTimestamp& aSeekPointAfterTargetNPT,
+                       const OsclAny*aContext, bool aSeekToSyncPoint)
+        {
+            PVMFNodeCommandBase::Construct(s, cmd, aContext);
+            iParam1 = (OsclAny*)aTargetNPT;
+            iParam3 = (OsclAny*)aSeekToSyncPoint;
+            iParam4 = (OsclAny*) & aSeekPointBeforeTargetNPT;
+            iParam5 = (OsclAny*) & aSeekPointAfterTargetNPT;
+        }
+        void Parse(PVMFTimestamp& aTargetNPT, PVMFTimestamp*& aSeekPointBeforeTargetNPT,
+                   bool& aSeekToSyncPoint, PVMFTimestamp*& aSeekPointAfterTargetNPT)
+        {
+            aTargetNPT = (PVMFTimestamp)iParam1;
+            aSeekPointBeforeTargetNPT = (PVMFTimestamp*)iParam4;
+            aSeekPointAfterTargetNPT = (PVMFTimestamp*)iParam5;
+            aSeekToSyncPoint = (iParam3) ? true : false;
+        }
+
+        /* Constructor and parser for SetDataSourceDirection */
+        void Construct(PVMFSessionId s, int32 cmd, int32 aDirection,
+                       PVMFTimestamp& aActualNPT, PVMFTimestamp& aActualMediaDataTS,
+                       PVMFTimebase* aTimebase, OsclAny* aContext)
+        {
+            PVMFNodeCommandBase::Construct(s, cmd, aContext);
+            iParam1 = (OsclAny*)aDirection;
+            iParam2 = (OsclAny*) & aActualNPT;
+            iParam3 = (OsclAny*) & aActualMediaDataTS;
+            iParam4 = (OsclAny*)aTimebase;
+            iParam5 = NULL;
+        }
+        void Parse(int32& aDirection,
+                   PVMFTimestamp*& aActualNPT,
+                   PVMFTimestamp*& aActualMediaDataTS,
+                   PVMFTimebase*& aTimebase)
+        {
+            aDirection = (int32)iParam1;
+            aActualNPT = (PVMFTimestamp*)iParam2;
+            aActualMediaDataTS = (PVMFTimestamp*)iParam3;
+            aTimebase = (PVMFTimebase*)iParam4;
+        }
+
         // Constructor and parser for SetDataSourceRate
         void Construct(PVMFSessionId s, int32 cmd, int32 aRate, PVMFTimebase* aTimebase, const OsclAny* aContext)
         {
@@ -174,6 +237,60 @@ class PVMFNodeCommand: public PVMFNodeCommandBase
         {
             aRate = (int32)iParam1;
             aTimebase = (PVMFTimebase*)iParam2;
+        }
+
+        // Constructor and parser for GetLicenseW
+        void Construct(PVMFSessionId s,
+                       int32 cmd,
+                       OSCL_wString& aContentName,
+                       OsclAny* aLicenseData,
+                       uint32 aDataSize,
+                       int32 aTimeoutMsec,
+                       OsclAny* aContext)
+        {
+            PVMFNodeCommandBase::Construct(s, cmd, aContext);
+            iParam1 = (OsclAny*) & aContentName;
+            iParam2 = (OsclAny*)aLicenseData;
+            iParam3 = (OsclAny*)aDataSize;
+            iParam4 = (OsclAny*)aTimeoutMsec;
+            iParam5 = NULL;
+        }
+        void Parse(OSCL_wString*& aContentName,
+                   OsclAny*& aLicenseData,
+                   uint32& aDataSize,
+                   int32& aTimeoutMsec)
+        {
+            aContentName = (OSCL_wString*)iParam1;
+            aLicenseData = (PVMFTimestamp*)iParam2;
+            aDataSize = (uint32)iParam3;
+            aTimeoutMsec = (int32)iParam4;
+        }
+
+        // Constructor and parser for GetLicense
+        void Construct(PVMFSessionId s,
+                       int32 cmd,
+                       OSCL_String& aContentName,
+                       OsclAny* aLicenseData,
+                       uint32 aDataSize,
+                       int32 aTimeoutMsec,
+                       OsclAny* aContext)
+        {
+            PVMFNodeCommandBase::Construct(s, cmd, aContext);
+            iParam1 = (OsclAny*) & aContentName;
+            iParam2 = (OsclAny*)aLicenseData;
+            iParam3 = (OsclAny*)aDataSize;
+            iParam4 = (OsclAny*)aTimeoutMsec;
+            iParam5 = NULL;
+        }
+        void Parse(OSCL_String*& aContentName,
+                   OsclAny*& aLicenseData,
+                   uint32& aDataSize,
+                   int32& aTimeoutMsec)
+        {
+            aContentName = (OSCL_String*)iParam1;
+            aLicenseData = (PVMFTimestamp*)iParam2;
+            aDataSize = (uint32)iParam3;
+            aTimeoutMsec = (int32)iParam4;
         }
 
         //need to overload the base Destroy routine to cleanup metadata key.
@@ -298,6 +415,7 @@ class PVMFNodeInterfaceImpl : public PVMFNodeInterface,
         OSCL_IMPORT_REF bool SendBeginOfMediaStreamCommand(PVMFPortInterface* aPort, int32 aStreamID, PVMFTimestamp aTimestamp);
         OSCL_IMPORT_REF void CommandComplete(PVMFNodeCommand& aCmd, PVMFStatus aStatus,
                                              PVInterface* aExtMsg = NULL, OsclAny* aEventData = NULL, PVUuid* aEventUUID = NULL, int32* aEventCode = NULL);
+
         // command dispatcher routiness
         OSCL_IMPORT_REF bool ProcessCommand();
         OSCL_IMPORT_REF virtual PVMFStatus HandleExtensionAPICommands() = 0;
@@ -341,6 +459,7 @@ class PVMFNodeInterfaceImpl : public PVMFNodeInterface,
         uint32 iExtensionRefCount;
         // node name
         OsclNameString<PVEXECNAMELEN> iNodeName;
+
     private:
         PVLogger* iBaseLogger;
 };

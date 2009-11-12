@@ -323,11 +323,7 @@ class PVMP4FFNodeTrackPortInfo : public OsclMemPoolFixedChunkAllocatorObserver,
                 iState = TRACKSTATE_TRANSMITTING_GETDATA;
                 if (iNode)
                 {
-                    if (iNode->IsAdded())
-                    {
-                        // Activate the parent node if necessary
-                        iNode->RunIfNotReady();
-                    }
+                    iNode->Reschedule();
                 }
             }
         }
@@ -346,11 +342,7 @@ class PVMP4FFNodeTrackPortInfo : public OsclMemPoolFixedChunkAllocatorObserver,
                 iState = TRACKSTATE_TRANSMITTING_GETDATA;
                 if (iNode)
                 {
-                    if (iNode->IsAdded())
-                    {
-                        // Activate the parent node if necessary
-                        iNode->RunIfNotReady();
-                    }
+                    iNode->Reschedule();
                 }
             }
         }
@@ -393,8 +385,8 @@ class PVMP4FFNodeTrackPortInfo : public OsclMemPoolFixedChunkAllocatorObserver,
         // Allocator for media frag group
         PVMFMediaFragGroupCombinedAlloc<OsclMemAllocator>* iMediaDataGroupAlloc;
 
-        // MP4 FF parser node handle as AO class
-        OsclTimerObject* iNode;
+        // MP4 FF parser node is handled as Base node class
+        PVMFNodeInterfaceImpl* iNode;
         // Timestamp
         uint32 iTimestamp;
         // Flag to indicate that next frame will be the first frame after repositioning
@@ -507,9 +499,9 @@ class PVMFMP4FFParserOutPort : public PvmfPortBaseImpl,
         public PvmiCapabilityAndConfigPortFormatImpl
 {
     public:
-        PVMFMP4FFParserOutPort(int32 aTag, PVMFNodeInterface* aNode, const char*);
+        PVMFMP4FFParserOutPort(int32 aTag, PVMFNodeInterfaceImpl* aNode, const char*);
         PVMFMP4FFParserOutPort(int32 aTag
-                               , PVMFNodeInterface* aNode
+                               , PVMFNodeInterfaceImpl* aNode
                                , uint32 aInCapacity
                                , uint32 aInReserve
                                , uint32 aInThreshold

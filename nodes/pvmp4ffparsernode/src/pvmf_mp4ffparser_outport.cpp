@@ -29,7 +29,7 @@
 
 
 
-PVMFMP4FFParserOutPort::PVMFMP4FFParserOutPort(int32 aTag, PVMFNodeInterface* aNode, const char*name)
+PVMFMP4FFParserOutPort::PVMFMP4FFParserOutPort(int32 aTag, PVMFNodeInterfaceImpl* aNode, const char*name)
         : PvmfPortBaseImpl(aTag, aNode, name)
 {
     iMP4FFParserNode = OSCL_STATIC_CAST(PVMFMP4FFParserNode*, aNode);
@@ -37,7 +37,7 @@ PVMFMP4FFParserOutPort::PVMFMP4FFParserOutPort(int32 aTag, PVMFNodeInterface* aN
 }
 
 
-PVMFMP4FFParserOutPort::PVMFMP4FFParserOutPort(int32 aTag, PVMFNodeInterface* aNode
+PVMFMP4FFParserOutPort::PVMFMP4FFParserOutPort(int32 aTag, PVMFNodeInterfaceImpl* aNode
         , uint32 aInCapacity
         , uint32 aInReserve
         , uint32 aInThreshold
