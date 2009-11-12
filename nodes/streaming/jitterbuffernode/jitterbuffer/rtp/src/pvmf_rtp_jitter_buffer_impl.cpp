@@ -136,6 +136,8 @@ PVMFRTPJitterBufferImpl::PVMFRTPJitterBufferImpl(const PVMFJitterBufferConstruct
     iBurstThreshold = 1.5;
     iBurstDetectDurationInMilliSec = 0;
     iInitialBuffering = true;
+    iRTCPBasedAVSyncRequired = true;
+    iRTPAVSyncOffset = 0;
     iBurstClock = NULL;
     iAccessUnits.clear();
     ipRTPInfoTrackerLogger = PVLogger::GetLoggerObject("RTPInfoTracker");
@@ -198,6 +200,8 @@ OSCL_EXPORT_REF void PVMFRTPJitterBufferImpl::ResetJitterBuffer()
     iBurstThreshold = 1.5;
     iBurstDetectDurationInMilliSec = 0;
     iInitialBuffering = true;
+    iRTCPBasedAVSyncRequired = true;
+    iRTPAVSyncOffset = 0;
     iCurrFormatId = 0;
 
     if (iPacketArrivalClock)
@@ -266,6 +270,8 @@ OSCL_EXPORT_REF void PVMFRTPJitterBufferImpl::setRTPInfoParams(PVMFRTPInfoParams
     {
         if (iRTPInfoParams.rtpTimeBaseSet)
         {
+            iRTCPBasedAVSyncRequired = false;
+            ResetRTCPAVSyncAdjustments();
             iPrevTSOut = iRTPInfoParams.rtpTime;
             iPrevTSIn = iRTPInfoParams.rtpTime;
             iPrevAdjustedRTPTS = iRTPInfoParams.rtpTime;
@@ -274,7 +280,6 @@ OSCL_EXPORT_REF void PVMFRTPJitterBufferImpl::setRTPInfoParams(PVMFRTPInfoParams
                 iPlayListRTPTimeBaseSet = true;
                 iPlayListRTPTimeBase = iRTPInfoParams.rtpTime;
             }
-
         }
         else
         {
@@ -393,12 +398,21 @@ OSCL_EXPORT_REF void  PVMFRTPJitterBufferImpl::SetRTPTimeStampOffset(uint32 newT
     // Based on that, the following is assumed:
     // 1) seqLockTimeStamp is valid
     // 2) newTSBase <= seqLockTimeStamp
-
-    iMonotonicTimeStamp += (seqLockTimeStamp - newTSBase);
-    iMaxAdjustedRTPTS += (seqLockTimeStamp - newTSBase);
+    if (iRTCPBasedAVSyncRequired)
+    {
+        iRTPAVSyncOffset = seqLockTimeStamp - newTSBase;
+        iMonotonicTimeStamp += iRTPAVSyncOffset;
+        iMaxAdjustedRTPTS += iRTPAVSyncOffset;
+        iRTCPBasedAVSyncRequired = false;
+    }
 }
 
-
+void  PVMFRTPJitterBufferImpl::ResetRTCPAVSyncAdjustments()
+{
+    iMonotonicTimeStamp -= iRTPAVSyncOffset;
+    iMaxAdjustedRTPTS -= iRTPAVSyncOffset;
+    iRTPAVSyncOffset = 0;
+}
 
 /**
 */
@@ -1304,9 +1318,11 @@ void PVMFRTPJitterBufferImpl::ComputeMaxAdjustedRTPTS()
 
     PVMFRTPInfoParams* rtpInfoParams = FindRTPInfoParams(aSeqNum);
 
-    PVMF_JB_LOGINFO((0, "PVMFJitterBufferImpl::ComputeMaxAdjustedRTPTS - maxSeqNumReceived=%d, rtpInfoParams->seqNum=%d, iPrevSeqNumBaseIn=%d, Mime=%s",
-                     aSeqNum, rtpInfoParams->seqNum, iPrevSeqNumBaseIn, irMimeType.get_cstr()));
-
+#if (PVLOGGER_INST_LEVEL > PVLOGMSG_INST_LLDBG)
+    uint32 logSeqNum = rtpInfoParams ? (rtpInfoParams->seqNum) : 0;
+    PVMF_JB_LOGINFO((0, "PVMFJitterBufferImpl::ComputeMaxAdjustedRTPTS - maxSeqNumReceived=%d, rtpInfoParams = %x, rtpInfoParams->seqNum =%d, iPrevSeqNumBaseIn=%d, Mime=%s",
+                     aSeqNum, rtpInfoParams, logSeqNum, iPrevSeqNumBaseIn, irMimeType.get_cstr()));
+#endif
     uint16 diff = 0;
     if (rtpInfoParams && rtpInfoParams->seqNumBaseSet && IsSequenceNumEarlier(OSCL_STATIC_CAST(uint16, iPrevSeqNumBaseIn), OSCL_STATIC_CAST(uint16, rtpInfoParams->seqNum), diff))
     {

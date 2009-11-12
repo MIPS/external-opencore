@@ -304,7 +304,7 @@ class PVRTCPProtoImplementorObserver
 class PVRTCPProtoImplementor: public PVRTCPChannelControllerObserver
 {
     public:
-        OSCL_IMPORT_REF static PVRTCPProtoImplementor* New(PVMFMediaClock& aClientPlayBackClock, PVMFMediaClock& aRTCPClock, PVRTCPProtoImplementorObserver* aObs, bool aBroadcastSession);
+        OSCL_IMPORT_REF static PVRTCPProtoImplementor* New(PVMFMediaClock& aClientPlayBackClock, PVMFMediaClock& aRTCPClock, PVRTCPProtoImplementorObserver* aObs);
         OSCL_IMPORT_REF ~PVRTCPProtoImplementor();
 
         OSCL_EXPORT_REF void AddPVRTCPChannelController(PVRTCPChannelController* aPVRTCPChannelController);
@@ -314,6 +314,8 @@ class PVRTCPProtoImplementor: public PVRTCPChannelControllerObserver
         OSCL_IMPORT_REF void StartRTCPMessageExchange();
         OSCL_IMPORT_REF void PauseRTCPMessageExchange();
         OSCL_IMPORT_REF void StopRTCPMessageExchange();
+
+        OSCL_IMPORT_REF  void EnableRTCPbasedAVSync(bool aEnableRTCPBasedAVSync);
 
         OSCL_IMPORT_REF void Reset();
 
@@ -345,12 +347,11 @@ class PVRTCPProtoImplementor: public PVRTCPChannelControllerObserver
         PVMFStatus RTCPByeReceived(PVRTCPChannelController* aChannelController);
         PVMFStatus RTCPRRReadyToSend(PVMFPortInterface*& aPort, PVMFSharedMediaMsgPtr& aMessage);
     private:
-        PVRTCPProtoImplementor(PVMFMediaClock& aClientPlayBackClock, PVMFMediaClock& aRTCPClock, PVRTCPProtoImplementorObserver* aObs, bool aBroadcastSession);
+        PVRTCPProtoImplementor(PVMFMediaClock& aClientPlayBackClock, PVMFMediaClock& aRTCPClock, PVRTCPProtoImplementorObserver* aObs);
         void ResetParams(bool aMemoryCleanUp = false);
         bool ProcessRTCPSRforAVSync();
         void Construct();
 
-        const bool                      iBroadcastSession;
         PVMFMediaClock&                 irClientPlayBackClock;
         PVMFMediaClock&                 irRTCPClock;
         PVRTCPProtoImplementorObserver* ipObserver;

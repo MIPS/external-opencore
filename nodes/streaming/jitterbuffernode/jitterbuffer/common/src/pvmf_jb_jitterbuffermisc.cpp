@@ -398,8 +398,8 @@ OSCL_EXPORT_REF void PVMFJitterBufferMisc::Prepare()
     }
     if (RTCPProtocolImplementorRequired())
     {
-        ipRTCPProtoImplementator = PVRTCPProtoImplementor::New(irClientPlaybackClock, *ipWallClock, this, iBroadcastSession);
-
+        ipRTCPProtoImplementator = PVRTCPProtoImplementor::New(irClientPlaybackClock, *ipWallClock, this);
+        ipRTCPProtoImplementator->EnableRTCPbasedAVSync(true);
         //Set the rate adaptaton parmas if not already set
         PVMFPortInterface* feedbackPort = NULL;
         PVMFJitterBuffer* jitterBuffer = NULL;

@@ -113,6 +113,7 @@ class PVMFRTPJitterBufferImpl: public PVMFJitterBufferImpl
             iAccessUnits.clear();
         }
         virtual PVMFStatus GetParsedMediaMsg(PVMFSharedMediaMsgPtr& aMediaMsgPtr);
+        void ResetRTCPAVSyncAdjustments();
 
         void AllocateMediaDataGroupMediaMsg(OsclSharedPtr<PVMFMediaDataImpl>& aMediaDataImplPtr)
         {
@@ -143,7 +144,8 @@ class PVMFRTPJitterBufferImpl: public PVMFJitterBufferImpl
         float           iBurstThreshold;
         uint32          iBurstDetectDurationInMilliSec;
         bool            iInitialBuffering;
-
+        int32           iRTPAVSyncOffset;
+        bool            iRTCPBasedAVSyncRequired;
         uint32          iPlayListRTPTimeBase;
         bool            iPlayListRTPTimeBaseSet;
 

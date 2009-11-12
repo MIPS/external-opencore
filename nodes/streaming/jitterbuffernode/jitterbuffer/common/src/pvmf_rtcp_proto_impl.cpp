@@ -569,16 +569,16 @@ PVMFStatus PVRTCPChannelController::ComposeFeedBackPacket()
 ///////////////////////////////////////////////////////////////////////////////
 //PVRTCPProtoImplementor Implementation
 ///////////////////////////////////////////////////////////////////////////////
-OSCL_EXPORT_REF PVRTCPProtoImplementor* PVRTCPProtoImplementor::New(PVMFMediaClock& aClientPlayBackClock, PVMFMediaClock& aRTCPClock, PVRTCPProtoImplementorObserver* aEventNotifier, bool aBroadcastSession)
+OSCL_EXPORT_REF PVRTCPProtoImplementor* PVRTCPProtoImplementor::New(PVMFMediaClock& aClientPlayBackClock, PVMFMediaClock& aRTCPClock, PVRTCPProtoImplementorObserver* aEventNotifier)
 {
     int32 err = OsclErrNone;
     PVRTCPProtoImplementor* pRtcpProtoImplementor = NULL;
-    OSCL_TRY(err, pRtcpProtoImplementor = OSCL_NEW(PVRTCPProtoImplementor, (aClientPlayBackClock, aRTCPClock, aEventNotifier, aBroadcastSession));
+    OSCL_TRY(err, pRtcpProtoImplementor = OSCL_NEW(PVRTCPProtoImplementor, (aClientPlayBackClock, aRTCPClock, aEventNotifier));
              if (pRtcpProtoImplementor)
 {
     pRtcpProtoImplementor->Construct();
-    }
-            );
+    });
+
 
     if (OsclErrNone != err && pRtcpProtoImplementor)
     {
@@ -591,9 +591,8 @@ OSCL_EXPORT_REF PVRTCPProtoImplementor* PVRTCPProtoImplementor::New(PVMFMediaClo
     return pRtcpProtoImplementor;
 }
 
-PVRTCPProtoImplementor::PVRTCPProtoImplementor(PVMFMediaClock& aClientPlayBackClock, PVMFMediaClock& aRTCPClock, PVRTCPProtoImplementorObserver*    aObserver, bool aBroadcastSession)
-        : iBroadcastSession(aBroadcastSession)
-        , irClientPlayBackClock(aClientPlayBackClock)
+PVRTCPProtoImplementor::PVRTCPProtoImplementor(PVMFMediaClock& aClientPlayBackClock, PVMFMediaClock& aRTCPClock, PVRTCPProtoImplementorObserver*    aObserver)
+        : irClientPlayBackClock(aClientPlayBackClock)
         , irRTCPClock(aRTCPClock)
         , ipObserver(aObserver)
 {
@@ -605,9 +604,14 @@ PVRTCPProtoImplementor::PVRTCPProtoImplementor(PVMFMediaClock& aClientPlayBackCl
 void PVRTCPProtoImplementor::ResetParams(bool aMemoryCleanUp)
 {
     OSCL_UNUSED_ARG(aMemoryCleanUp);
-    iPerformRTCPBasedAVSync = iBroadcastSession ? true : false;
+    iPerformRTCPBasedAVSync = false;
     iRTCPAVSyncProcessed =  false;
     iPlayStopTimeAvailable = false;
+}
+
+void PVRTCPProtoImplementor::EnableRTCPbasedAVSync(bool aEnableRTCPBasedAVSync)
+{
+    iPerformRTCPBasedAVSync = aEnableRTCPBasedAVSync;
 }
 
 void PVRTCPProtoImplementor::Construct()
