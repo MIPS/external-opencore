@@ -3777,7 +3777,7 @@ OMX_ERRORTYPE PVMFOMXBaseDecNode::FillBufferDoneProcessing(OMX_OUT OMX_HANDLETYP
 //////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////// Attach a MediaDataImpl wrapper (refcount, deallocator etc.)
 /////////////////////////////// to the output buffer /////////////////////////////////////////
-OsclSharedPtr<PVMFMediaDataImpl> PVMFOMXBaseDecNode::WrapOutputBuffer(uint8 *pData, uint32 aDataLen, OsclAny *pContext)
+OSCL_EXPORT_REF OsclSharedPtr<PVMFMediaDataImpl> PVMFOMXBaseDecNode::WrapOutputBuffer(uint8 *pData, uint32 aDataLen, OsclAny *pContext)
 {
     // wrap output buffer into a mediadataimpl
     uint32 aligned_class_size = oscl_mem_aligned_size(sizeof(PVMFSimpleMediaBuffer));
@@ -5452,7 +5452,7 @@ OSCL_EXPORT_REF OMX_TICKS PVMFOMXBaseDecNode::ConvertTimestampIntoOMXTicks(const
 
 }
 ////////////////////////////////////////////////////////////////////////////////////
-uint32 PVMFOMXBaseDecNode::ConvertOMXTicksIntoTimestamp(const OMX_TICKS &src)
+OSCL_EXPORT_REF uint32 PVMFOMXBaseDecNode::ConvertOMXTicksIntoTimestamp(const OMX_TICKS &src)
 {
     // omx ticks use microsecond timescale (iTimeScale = 1000000)
     // This is similar to mediaclockconverter set_value method
@@ -5974,7 +5974,7 @@ OSCL_EXPORT_REF OsclAny* PVMFOMXBaseDecNode::AllocateKVPKeyArray(int32& aLeaveCo
     return aBuffer;
 }
 
-PVMFStatus PVMFOMXBaseDecNode::RetrieveMP3FrameLength(uint8 *pBuffer)
+OSCL_EXPORT_REF PVMFStatus PVMFOMXBaseDecNode::RetrieveMP3FrameLength(uint8 *pBuffer)
 {
     OSCL_UNUSED_ARG(pBuffer);
 

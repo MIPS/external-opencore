@@ -375,7 +375,7 @@ class PVMFOMXBaseDecNode: public PVMFNodeInterfaceImpl
                                       bool  aIsThisInputBuffer      // is this input or output
                                      );
 
-        OsclSharedPtr<class PVMFMediaDataImpl> WrapOutputBuffer(uint8 *pData, uint32 aDataLen, OsclAny *pContext);
+        OSCL_IMPORT_REF OsclSharedPtr<class PVMFMediaDataImpl> WrapOutputBuffer(uint8 *pData, uint32 aDataLen, OsclAny *pContext);
         virtual bool QueueOutputBuffer(OsclSharedPtr<PVMFMediaDataImpl> &mediadataimplout, uint32 aDataLen) = 0;
 
         bool SendOutputBufferToOMXComponent();
@@ -409,7 +409,7 @@ class PVMFOMXBaseDecNode: public PVMFNodeInterfaceImpl
         //OSCL_IMPORT_REF PVMFCommandId QueueCommandL(PVMFOMXBaseDecNodeCommand& aCmd);
 
         // MP3 related functions
-        virtual PVMFStatus RetrieveMP3FrameLength(uint8 *pBuffer);
+        OSCL_IMPORT_REF virtual PVMFStatus RetrieveMP3FrameLength(uint8 *pBuffer);
         OSCL_IMPORT_REF virtual int32 GetNAL_OMXNode(uint8** bitstream, uint32* size);
         OSCL_IMPORT_REF virtual bool ParseAndReWrapH264RAW(PVMFSharedMediaDataPtr& aMediaDataPtr);
         OSCL_IMPORT_REF virtual bool CreateAACConfigDataFromASF(uint8 *inptr, uint32 inlen, uint8 *outptr, uint32 &outlen);
@@ -680,7 +680,7 @@ class PVMFOMXBaseDecNode: public PVMFNodeInterfaceImpl
         OMX_TICKS iOMXTicksTimestamp;
         uint32 iTimestampDeltaForMemFragment;
         OSCL_IMPORT_REF OMX_TICKS ConvertTimestampIntoOMXTicks(const MediaClockConverter &src);
-        uint32 ConvertOMXTicksIntoTimestamp(const OMX_TICKS &src);
+        OSCL_IMPORT_REF uint32 ConvertOMXTicksIntoTimestamp(const OMX_TICKS &src);
 
         uint8 iAACConfigData[4];
         uint32 iAACConfigDataLength;
