@@ -48,6 +48,7 @@
 #define mmioFOURCC_WMC(ch0, ch1, ch2, ch3)  MAKEFOURCC_WMC(ch0, ch1, ch2, ch3)
 #endif
 
+#define FOURCC_WMV1     mmioFOURCC_WMC('W','M','V','1')
 #define FOURCC_WMV2     mmioFOURCC_WMC('W','M','V','2')
 #define FOURCC_WMV3     mmioFOURCC_WMC('W','M','V','3')
 #define FOURCC_WMVA     mmioFOURCC_WMC('W','M','V','A')
@@ -58,6 +59,7 @@
 #define FOURCC_MP43     mmioFOURCC_WMC('M','P','4','3')
 #define FOURCC_mp42     mmioFOURCC_WMC('m','p','4','2')
 #define FOURCC_mp43     mmioFOURCC_WMC('m','p','4','3')
+#define FOURCC_MP4S     mmioFOURCC_WMC('M','P','4','S')
 
 // For PlayReady
 #define FOURCC_PRDY     mmioFOURCC_WMC('P','R','D','Y')
@@ -188,14 +190,16 @@ OSCL_EXPORT_REF int16 pv_video_config_parser(pvVideoConfigParserInputs *aInputs,
         // in case of WMV store "Compression Type as Level"
         aOutputs->level = NewCompression;
 
-        if (NewCompression != FOURCC_WMV2 &&
+        if (NewCompression != FOURCC_WMV1 &&
+                NewCompression != FOURCC_WMV2 &&
                 NewCompression != FOURCC_WMV3 &&
                 NewCompression != FOURCC_WVC1 &&
                 NewCompression != FOURCC_WMVA &&
                 NewCompression != FOURCC_MP42 &&
                 NewCompression != FOURCC_MP43 &&
                 NewCompression != FOURCC_mp42 &&
-                NewCompression != FOURCC_mp43)
+                NewCompression != FOURCC_mp43 &&
+                NewCompression != FOURCC_MP4S)
         {
             return -1;
         }
