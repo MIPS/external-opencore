@@ -43,7 +43,7 @@ class PVA_FF_SampleTableAtom : public PVA_FF_Atom
         // If this constructor is used to create any other typ eof track atom, the protocol
         // parameter is ignored - hence the default parameter value.
         PVA_FF_SampleTableAtom(uint32 mediaType,
-                               int32 codecType,
+                               PVA_FF_MP4_CODEC_TYPE codecType,
                                uint32 fileAuthoringFlags,
                                uint32 protocol = 0,
                                uint8 profile = 1,

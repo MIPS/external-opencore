@@ -27,7 +27,7 @@
 #include "a_atomdefs.h"
 
 // Constructor - used for a NEW stream (i.e. a new track)
-PVA_FF_ESDescriptor::PVA_FF_ESDescriptor(int32 streamType, int32 codecType)
+PVA_FF_ESDescriptor::PVA_FF_ESDescriptor(int32 streamType, PVA_FF_MP4_CODEC_TYPE codecType)
         : PVA_FF_BaseDescriptor(0x03)
 {
     PV_MP4_FF_NEW(fp->auditCB, PVA_FF_DecoderConfigDescriptor, (streamType, codecType), _pdcd);

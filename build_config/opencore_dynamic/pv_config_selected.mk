@@ -457,6 +457,7 @@ pv2waysample_lib=m
 engines_common_headers_lib=m
 pvframemetadatautility_lib=m
 pvmetadata_engine_lib=m
+pvmp4tu_lib=n
 
 
 #

@@ -214,21 +214,10 @@ PVA_FF_AtomUtils::renderNullTerminatedUnicodeString(MP4_AUTHOR_FF_FILE_IO_WRAP *
 bool
 PVA_FF_AtomUtils::renderByteData(MP4_AUTHOR_FF_FILE_IO_WRAP *fp, uint32 length, uint8 *data)
 {
-    bool retVal = true;
+    if (0 != fp)
+        return (length == fp->_filePtr->Write(data, 1, length));
 
-    if (fp != NULL)
-    {
-        if (fp->_filePtr->Write(data, 1, length) != length)
-        {
-            retVal = false;
-        }
-    }
-    else
-    {
-        retVal = false;
-    }
-
-    return (retVal);
+    return false;
 }
 
 // Setting the current time value - seconds since 1/1/1904

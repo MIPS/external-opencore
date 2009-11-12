@@ -15,6 +15,7 @@
  * and limitations under the License.
  * -------------------------------------------------------------------
  */
+#include "a_impeg4file.h"
 #include "a_atomdefs.h"
 #include "assetinfoatoms.h"
 

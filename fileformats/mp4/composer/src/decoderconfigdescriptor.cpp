@@ -28,7 +28,7 @@
 
 typedef Oscl_Vector<PVA_FF_DecoderSpecificInfo*, OsclMemAllocator> PVA_FF_DecoderSpecificInfoVecType;
 // Constructor
-PVA_FF_DecoderConfigDescriptor::PVA_FF_DecoderConfigDescriptor(int32 streamType, int32 codecType)
+PVA_FF_DecoderConfigDescriptor::PVA_FF_DecoderConfigDescriptor(int32 streamType, PVA_FF_MP4_CODEC_TYPE codecType)
         : PVA_FF_BaseDescriptor(0x04)
 {
     _codecType = codecType;
@@ -61,7 +61,7 @@ PVA_FF_DecoderConfigDescriptor::init(int32 mediaType)
         {
             switch (_codecType)
             {
-                case CODEC_TYPE_AAC_AUDIO:
+                case PVA_FF_MP4_CODEC_TYPE_AAC_AUDIO:
                     _objectTypeIndication = 0x40;
                     break;
 
@@ -79,16 +79,18 @@ PVA_FF_DecoderConfigDescriptor::init(int32 mediaType)
         {
             switch (_codecType)
             {
-                case CODEC_TYPE_BASELINE_H263_VIDEO:
+                case PVA_FF_MP4_CODEC_TYPE_BASELINE_H263_VIDEO:
                     _objectTypeIndication = 0xc0; // Simple profile
                     break;
 
-                case CODEC_TYPE_MPEG4_VIDEO:
+                case PVA_FF_MP4_CODEC_TYPE_MPEG4_VIDEO:
                     _objectTypeIndication = 0x20; // Simple profile
                     break;
 
-                case CODEC_TYPE_AVC_VIDEO:
+                case PVA_FF_MP4_CODEC_TYPE_AVC_VIDEO:
                     _objectTypeIndication = 0x30;
+                    break;
+                default:
                     break;
             }
             _streamType = 0x04; // 0x04 for VisualStream

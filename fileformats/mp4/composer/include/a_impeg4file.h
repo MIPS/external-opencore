@@ -28,8 +28,6 @@
 #endif
 
 #include "pv_mp4ffcomposer_config.h"
-#include "a_isucceedfail.h"
-#include "a_atomdefs.h"
 
 #ifndef OSCL_FILE_IO_H_INCLUDED
 #include "oscl_file_io.h"
@@ -48,9 +46,118 @@ typedef const OSCL_wString& PVA_FF_UNICODE_STRING_PARAM;
 typedef OSCL_wHeapString<OsclMemAllocator> PVA_FF_UNICODE_HEAP_STRING;
 typedef Oscl_File* MP4_AUTHOR_FF_FILE_HANDLE;
 
+typedef enum
+{
+    PVA_FF_MP4_CODEC_TYPE_UNDEFINED = 0,
+    PVA_FF_MP4_CODEC_TYPE_AMR_AUDIO,
+    PVA_FF_MP4_CODEC_TYPE_AAC_AUDIO,
+    PVA_FF_MP4_CODEC_TYPE_AMR_WB_AUDIO,
+    PVA_FF_MP4_CODEC_TYPE_MPEG4_VIDEO,
+    PVA_FF_MP4_CODEC_TYPE_BASELINE_H263_VIDEO,
+    PVA_FF_MP4_CODEC_TYPE_AVC_VIDEO,
+    PVA_FF_MP4_CODEC_TYPE_TIMED_TEXT,
+} PVA_FF_MP4_CODEC_TYPE;
+
+
 struct GAU;
 
-class PVA_FF_IMpeg4File : public PVA_FF_ISucceedFail
+class PVMP4FFComposerSampleParam
+{
+    public:
+        PVMP4FFComposerSampleParam()
+        {
+            _psample = NULL;
+            _timeStamp = 0;
+            _flags = 0;
+            _sampleDuration = 0;
+            _sampleSize = 0;
+            _baseOffset = 0;
+            _index = 0;
+            _ptextSampleModifier = NULL;
+        }
+
+        Oscl_Vector<OsclMemoryFragment, OsclMemAllocator> _fragmentList;
+        uint8 *_psample;
+        uint32 _timeStamp;
+        uint8 _flags;
+        uint32 _sampleDuration;
+        uint32 _sampleSize;
+        uint32 _baseOffset;
+        int32 _index;
+        uint8* _ptextSampleModifier;
+};
+
+class PVMP4FFComposerAudioEncodeParams
+{
+    public:
+        PVMP4FFComposerAudioEncodeParams()
+        {
+            samplingRate = 0;
+            numberOfChannels = 2;
+            bitsPerSample = 16;
+        }
+
+        uint32 samplingRate;
+        uint32 numberOfChannels;
+        uint32 bitsPerSample;
+};
+
+#define LANGUAGE_CODE_UNKNOWN   0x55C4
+#define RATING_ENTITY_UNKNOWN   0
+#define RATING_CRITERIA_UNKNOWN 0
+
+//Encoding mode defines
+//Please note that only SOME COMBINATIONS are allowed
+//b31.....b4b3b2b1b0 - Bit Mask Definitions
+//No bits are set - default mode - no interleaving, meta data at the end
+//b0 is set - Media data is interleaved, BIFS and OD are still seperate tracks
+//b1 is set - Meta data is upfront, this implies temp files are needed while authoring
+//b2 - undefined
+//b3 is set - Do not use temp files while authoring
+//b6 is set - Movie fragment mode
+//b7 is set - Live movie fragment mode
+//b8-b31 - Reserved for future use
+
+/**
+ * This mode authors non Progressive Downloadable output files using temp files
+ * during authoring:
+ * Meta data towards the end of the clip
+ * Media data is not interleaved. Temp files are used.
+ * Media data is authored in separate media atoms for each track
+ * Temporary files are written to the same directory as the output file.
+ */
+#define PVMP4FF_SET_MEDIA_INTERLEAVE_MODE   0x00000001
+
+#define PVMP4FF_SET_META_DATA_UPFRONT_MODE  0x00000002
+
+/**
+ * This mode authors 3GPP Progressive Downloadable output files:
+ * Meta Data is upfront.
+ * Media Data is interleaved. Temp files are used.
+ * Temporary files are written to the same directory as the output file.
+ */
+#define PVMP4FF_3GPP_PROGRESSIVE_DOWNLOAD_MODE 0x00000003
+
+/**
+ * This mode authors 3GPP Downloadable output files:
+ * Meta Data is towards the end of the clip.
+ * Media Data is interleaved.
+ * No temp files are used.
+ */
+#define PVMP4FF_3GPP_DOWNLOAD_MODE  0x00000009
+
+#define PVMP4FF_SET_FIRST_SAMPLE_EDIT_MODE  0x00000010
+
+// movie fragment mode
+// 6th bit is now reserved movie fragment mode and last bit is reserved for interleaving
+#define PVMP4FF_MOVIE_FRAGMENT_MODE 0x00000021
+
+// live movie fragment mode
+// For authoring open-ended sessions for live streaming
+#define PVMP4FF_LIVE_MOVIE_FRAGMENT_MODE 0x00000061
+
+
+class PVA_FF_IMpeg4File
 {
     public:
         /**
@@ -290,7 +397,7 @@ class PVA_FF_IMpeg4File : public PVA_FF_ISucceedFail
         virtual void SetTempFilePostFix(PVA_FF_UNICODE_STRING_PARAM postFix) = 0;
 
         virtual uint32  addTrack(int32 mediaType,
-                                 int32 codecType,
+                                 PVA_FF_MP4_CODEC_TYPE codecType,
                                  uint8 profile = 1,
                                  uint8 profileComp = 0xFF,
                                  uint8 level = 0xFF) = 0;
@@ -303,8 +410,8 @@ class PVA_FF_IMpeg4File : public PVA_FF_ISucceedFail
         virtual void setMaxBufferSizeDB(uint32 trackID, uint32 max) = 0;
         virtual bool setTrackDuration(uint32 trackID, uint64 duration) = 0;
 
-        virtual void setMajorBrand(uint32 brand = BRAND_3GPP4) = 0;
-        virtual void setMajorBrandVersion(uint32 version = VERSION_3GPP4) = 0;
+        virtual void setMajorBrand(uint32 brand) = 0;
+        virtual void setMajorBrandVersion(uint32 version) = 0;
         virtual void addCompatibleBrand(uint32 brand) = 0;
 
         virtual void setVideoParams(uint32 trackID, float frate, uint16 interval,

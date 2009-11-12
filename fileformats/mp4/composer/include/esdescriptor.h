@@ -31,7 +31,7 @@ class PVA_FF_ESDescriptor : public PVA_FF_BaseDescriptor
 {
 
     public:
-        PVA_FF_ESDescriptor(int32 streamType, int32 codecType); // Constructor
+        PVA_FF_ESDescriptor(int32 streamType, PVA_FF_MP4_CODEC_TYPE codecType); // Constructor
 
         virtual ~PVA_FF_ESDescriptor(); // Destructor
 

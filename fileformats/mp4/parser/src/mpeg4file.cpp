@@ -3315,9 +3315,7 @@ uint32 Mpeg4File::resetPlayback(uint32 time, uint16 numTracks, uint32 *trackList
     OSCL_UNUSED_ARG(numTracks);
 
     uint32 modifiedTimeStamp = time;
-    uint32 trackID = 0;
 
-    uint32 retVal = 0;
     bool oMoofFound = false;
 
     uint32 convertedTS = 0;
@@ -3325,7 +3323,7 @@ uint32 Mpeg4File::resetPlayback(uint32 time, uint16 numTracks, uint32 *trackList
 
     uint32 moof_offset = 0, traf_number = 0, trun_number = 0, sample_num = 0;
 
-    trackID = *trackList; //  numTracks is the track index in trackList
+    const uint32& trackID = *trackList; //  numTracks is the track index in trackList
     uint32 moofIdx = getIndexForTrackID(trackID);
     if (getTrackMediaType(trackID) == MEDIA_TYPE_VISUAL)
     {
@@ -3619,7 +3617,8 @@ uint32 Mpeg4File::resetPlayback(uint32 time, uint16 numTracks, uint32 *trackList
             }
         }
     }
-    retVal = modifiedTimeStamp;
+
+    uint32 retVal = modifiedTimeStamp;
     if ((getTrackMediaType(trackID) == MEDIA_TYPE_AUDIO) ||
             (getTrackMediaType(trackID) == MEDIA_TYPE_TEXT))
     {

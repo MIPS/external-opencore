@@ -27,16 +27,12 @@
 #include "atomutils.h"
 #include "a_atomdefs.h"
 
-#define MEDIA_TRACK_ID_OFFSET 3
-
 typedef Oscl_Vector<PVA_FF_TrackAtom*, OsclMemAllocator> PVA_FF_TrackAtomVecType;
 
 // Constructor
 PVA_FF_MovieAtom::PVA_FF_MovieAtom(uint32 fileAuthoringFlags)
         :   PVA_FF_Atom(MOVIE_ATOM)
 {
-    _success = true;
-
     _scalability = -1;
     _fileType = 0;
 
@@ -403,8 +399,8 @@ void
 PVA_FF_MovieAtom::addDecoderSpecificInfo(PVA_FF_DecoderSpecificInfo *pinfo, int32 trackID)
 {
     PVA_FF_TrackAtom *mediaTrack = getMediaTrack(trackID);
-
-    mediaTrack->addDecoderSpecificInfo(pinfo);
+    if (0 != mediaTrack)
+        mediaTrack->addDecoderSpecificInfo(pinfo);
 }
 
 //added for timed text
@@ -412,38 +408,33 @@ void
 PVA_FF_MovieAtom::addTextDecoderSpecificInfo(PVA_FF_TextSampleDescInfo *pinfo, int32 trackID)
 {
     PVA_FF_TrackAtom *mediaTrack = getMediaTrack(trackID);
-    mediaTrack->addTextDecoderSpecificInfo(pinfo);
+    if (0 != mediaTrack)
+        mediaTrack->addTextDecoderSpecificInfo(pinfo);
 }
 
-int32
-PVA_FF_MovieAtom::getCodecType(uint32 trackID)
+PVA_FF_MP4_CODEC_TYPE
+PVA_FF_MovieAtom::getCodecType(uint32 trackID) const
 {
-    PVA_FF_TrackAtom *track = getMediaTrack(trackID);
+    PVA_FF_TrackAtom* track = getMediaTrack(trackID);
 
-    if (track != NULL)
-    {
-        return (track->getCodecType());
-    }
-    else
-    {
-        return (-1);
-    }
+    if (0 == track)
+        return PVA_FF_MP4_CODEC_TYPE_UNDEFINED;
+
+    return (track->getCodecType());
 }
 
 PVA_FF_TrackAtom*
-PVA_FF_MovieAtom::getMediaTrack(uint32 trackID)
+PVA_FF_MovieAtom::getMediaTrack(uint32 trackID) const
 {
-    for (uint32 i = 0; i < _pMediaTrackVec->size(); i++)
+    for (uint32 i = 0; i < _pMediaTrackVec->size(); ++i)
     {
-        PVA_FF_TrackHeaderAtom *ptkhdr = (*_pMediaTrackVec)[i]->getTrackHeaderAtomPtr();
+        PVA_FF_TrackHeaderAtom* ptkhdr = (*_pMediaTrackVec)[i]->getTrackHeaderAtomPtr();
 
-        if (ptkhdr->getTrackID() == trackID)
-        {
+        if (0 != ptkhdr && trackID == ptkhdr->getTrackID())
             return (*_pMediaTrackVec)[i];
-        }
     }
 
-    return NULL;
+    return 0;
 }
 
 
@@ -461,51 +452,35 @@ PVA_FF_MovieAtom::setMaxBufferSizeDB(uint32 trackID, uint32 max)
 void
 PVA_FF_MovieAtom::addSampleToTrack(uint32 trackID, PVMP4FFComposerSampleParam *pSampleParam, bool oChunkStart)
 {
-    if (pSampleParam == NULL)
+    if (0 == pSampleParam)
         return;
 
-    PVA_FF_TrackAtom *mediaTrack;
-    uint32 mediaType = 0;
+    PVA_FF_TrackAtom* mediaTrack = getMediaTrack(trackID);
 
-    mediaTrack = getMediaTrack(trackID);
+    if (0 == mediaTrack)
+        return;
 
-    if (mediaTrack != NULL)
+    uint32 mediaTimeScale = mediaTrack->getMediaTimeScale();
+    if (mediaTimeScale != 0)
     {
-        mediaType  = mediaTrack->getMediaType();
+        uint32 ts_in_milliseconds = (uint32)((pSampleParam->_timeStamp * 1000.0f) / mediaTimeScale);
 
-        uint32 mediaTimeScale = mediaTrack->getMediaTimeScale();
-        if (mediaTimeScale != 0)
-        {
-            uint32 ts_in_milliseconds = (uint32)((pSampleParam->_timeStamp * 1000.0f) / mediaTimeScale);
-
-            // Add sample to movie header so can update its _duration
-            _pmovieHeaderAtom->addSample(ts_in_milliseconds);
-        }
+        // Add sample to movie header so can update its _duration
+        _pmovieHeaderAtom->addSample(ts_in_milliseconds);
     }
 
-
-    if (mediaType == MEDIA_TYPE_VISUAL)
+    // Updates the members with the next sample received
+    uint32 mediaType = mediaTrack->getMediaType();
+    switch (mediaType)
     {
-        // Updates the members with the next sample received
-        mediaTrack->nextSample(MEDIA_TYPE_VISUAL,
-                               pSampleParam,
-                               oChunkStart);
-
-    }
-
-    if (mediaType == MEDIA_TYPE_AUDIO)
-    {
-        // Updates the members with the next sample received
-        mediaTrack->nextSample(MEDIA_TYPE_AUDIO,
-                               pSampleParam,
-                               oChunkStart);
-    }
-    if (mediaType == MEDIA_TYPE_TEXT)
-    {
-        // Updates the members with the next sample received
-        mediaTrack->nextSample(MEDIA_TYPE_TEXT,
-                               pSampleParam,
-                               oChunkStart);
+        case MEDIA_TYPE_VISUAL:
+        case MEDIA_TYPE_AUDIO:
+        case MEDIA_TYPE_TEXT:
+            mediaTrack->nextSample(mediaType,
+                                   pSampleParam,
+                                   oChunkStart);
+        default:
+            ;
     }
 }
 
@@ -514,35 +489,33 @@ PVA_FF_MovieAtom::addTextSampleToTrack(uint32 trackID,
                                        PVMP4FFComposerSampleParam *pSampleParam,
                                        bool oChunkStart)
 {
-    if (pSampleParam == NULL)
+    if (0 == pSampleParam)
         return;
 
-    PVA_FF_TrackAtom *mediaTrack;
-    uint32 mediaType = 0;
+    PVA_FF_TrackAtom* mediaTrack = getMediaTrack(trackID);
 
-    mediaTrack = getMediaTrack(trackID);
+    if (0 == mediaTrack)
+        return;
 
-    if (mediaTrack != NULL)
+    uint32 mediaTimeScale = mediaTrack->getMediaTimeScale();
+    if (mediaTimeScale != 0)
     {
-        mediaType  = mediaTrack->getMediaType();
+        uint32 ts_in_milliseconds = (uint32)((pSampleParam->_timeStamp * 1000.0f) / mediaTimeScale);
 
-        uint32 mediaTimeScale = mediaTrack->getMediaTimeScale();
-        if (mediaTimeScale != 0)
-        {
-            uint32 ts_in_milliseconds = (uint32)((pSampleParam->_timeStamp * 1000.0f) / mediaTimeScale);
-
-            // Add sample to movie header so can update its _duration
-            _pmovieHeaderAtom->addSample(ts_in_milliseconds);
-        }
+        // Add sample to movie header so can update its _duration
+        _pmovieHeaderAtom->addSample(ts_in_milliseconds);
     }
 
-
-    if (mediaType == MEDIA_TYPE_TEXT)
+    // Updates the members with the next sample received
+    uint32 mediaType = mediaTrack->getMediaType();
+    switch (mediaType)
     {
-        // Updates the members with the next sample received
-        mediaTrack->nextTextSample(MEDIA_TYPE_TEXT,
-                                   pSampleParam,
-                                   oChunkStart);
+        case MEDIA_TYPE_TEXT:
+            mediaTrack->nextTextSample(mediaType,
+                                       pSampleParam,
+                                       oChunkStart);
+        default:
+            ;
     }
 }
 
@@ -552,13 +525,11 @@ PVA_FF_MovieAtom::reAuthorFirstSampleInTrack(uint32 trackID,
         uint32 baseOffset)
 {
 
-    PVA_FF_TrackAtom *mediaTrack;
+    PVA_FF_TrackAtom* mediaTrack = getMediaTrack(trackID);
+    if (0 == mediaTrack)
+        return false;
 
-    mediaTrack = getMediaTrack(trackID);
-
-    return (
-               mediaTrack->reAuthorFirstSample(size,
-                                               baseOffset));
+    return mediaTrack->reAuthorFirstSample(size, baseOffset);
 }
 
 

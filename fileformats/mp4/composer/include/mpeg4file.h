@@ -34,7 +34,6 @@
 #include "movieatom.h"
 #include "mediadataatom.h"
 #include "a_atomdefs.h"
-#include "a_isucceedfail.h"
 
 #include "interleavebuffer.h"
 
@@ -188,7 +187,7 @@ class PVA_FF_Mpeg4File : public PVA_FF_IMpeg4File, public PVA_FF_Parentable
                                          uint8 level);
 
         uint32 addTrack(int32 mediaType,
-                        int32 codecType,
+                        PVA_FF_MP4_CODEC_TYPE codecType,
                         uint8 profile = 1,
                         uint8 profileComp = 0xFF,
                         uint8 level = 0xFF);

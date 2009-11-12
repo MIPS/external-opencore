@@ -19,6 +19,7 @@
 #define __InterleaveBuffer_H__
 
 #include "atom.h"
+#include "a_impeg4file.h"
 #include "a_atomdefs.h"
 #include "atomutils.h"
 

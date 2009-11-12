@@ -24,6 +24,7 @@
 
 #include "chunkoffsetatom.h"
 #include "atomutils.h"
+#include "a_impeg4file.h"
 #include "a_atomdefs.h"
 
 typedef Oscl_Vector<uint32, OsclMemAllocator> uint32VecType;

@@ -40,21 +40,21 @@ PVA_FF_InterLeaveBuffer::PVA_FF_InterLeaveBuffer(uint32 mediaType,
     // initialise interleaved buffers for audio or video track( max size)
     if ((uint32) mediaType == MEDIA_TYPE_AUDIO)
     {
-        if (codecType == CODEC_TYPE_AMR_AUDIO)
+        if (codecType == PVA_FF_MP4_CODEC_TYPE_AMR_AUDIO)
         {
             _interLeaveBuffer =
                 (uint8 *)(oscl_malloc(sizeof(uint8) * AMR_INTERLEAVE_BUFFER_SIZE));
 
             _maxInterLeaveBufferSize = AMR_INTERLEAVE_BUFFER_SIZE;
         }
-        else if (codecType == CODEC_TYPE_AAC_AUDIO)
+        else if (codecType == PVA_FF_MP4_CODEC_TYPE_AAC_AUDIO)
         {
             _interLeaveBuffer =
                 (uint8 *)(oscl_malloc(sizeof(uint8) * AAC_INTERLEAVE_BUFFER_SIZE));
 
             _maxInterLeaveBufferSize = AAC_INTERLEAVE_BUFFER_SIZE;
         }
-        else if (codecType == CODEC_TYPE_AMR_WB_AUDIO)
+        else if (codecType == PVA_FF_MP4_CODEC_TYPE_AMR_WB_AUDIO)
         {
             _interLeaveBuffer =
                 (uint8 *)(oscl_malloc(sizeof(uint8) * AMR_WB_INTERLEAVE_BUFFER_SIZE));
@@ -109,60 +109,50 @@ PVA_FF_InterLeaveBuffer::~PVA_FF_InterLeaveBuffer()
 bool
 PVA_FF_InterLeaveBuffer::addSampleToInterLeaveBuffer(PVMP4FFComposerSampleParam *pSampleParam)
 {
-    if (pSampleParam == NULL)
+    if (0 == _interLeaveBuffer || 0 == pSampleParam || false == checkInterLeaveBufferSpace(pSampleParam->_sampleSize))
         return false;
 
     // temporary variables
     uint32 bytesWritten = 0;
-    uint32 length = 0;
-    uint32 ii = 0;
-    OsclBinIStreamBigEndian stream;
+    uint8* currPtr = _interLeaveBuffer + _currInterLeaveBufferSize;
 
-    if (_interLeaveBuffer != NULL)
+    if (MEDIA_TYPE_VISUAL == _mediaType  && PVA_FF_MP4_CODEC_TYPE_AVC_VIDEO == _codecType)
     {
-        uint8* currPtr = _interLeaveBuffer + _currInterLeaveBufferSize;
-
-        if (checkInterLeaveBufferSpace(pSampleParam->_sampleSize))
+        OsclBinIStreamBigEndian stream;
+        uint32 length = 0;
+        for (uint32 ii = 0; ii < pSampleParam->_fragmentList.size(); ++ii)
         {
-            if (_mediaType == MEDIA_TYPE_VISUAL && _codecType == CODEC_TYPE_AVC_VIDEO)
-            {
-                for (ii = 0; ii < pSampleParam->_fragmentList.size(); ii++)
-                {
-                    // read NAL length in Big Endian format
-                    stream.Attach((OsclAny*) &(pSampleParam->_fragmentList[ii].len), 4);
-                    stream >> length;
+            // read NAL length in Big Endian format
+            stream.Attach((OsclAny*) &(pSampleParam->_fragmentList[ii].len), 4);
+            stream >> length;
 
-                    // compose nal length in two bytes
-                    oscl_memcpy((OsclAny*)(currPtr + bytesWritten), ((uint8*)&length), 4);
+            // compose nal length in two bytes
+            oscl_memcpy((OsclAny*)(currPtr + bytesWritten), ((uint8*)&length), 4);
 
-                    // write NAL uint
-                    oscl_memcpy((OsclAny*)(currPtr + bytesWritten + 4), (OsclAny*)pSampleParam->_fragmentList[ii].ptr, pSampleParam->_fragmentList[ii].len);
-                    bytesWritten += (pSampleParam->_fragmentList[ii].len + 4);
-                }
-            }
-            else
-            {
-                for (ii = 0; ii < pSampleParam->_fragmentList.size(); ii++)
-                {
-                    oscl_memcpy(currPtr + bytesWritten, pSampleParam->_fragmentList[ii].ptr, pSampleParam->_fragmentList[ii].len);
-                    bytesWritten += pSampleParam->_fragmentList[ii].len;
-                }
-            }
-
-            _currInterLeaveBufferSize += pSampleParam->_sampleSize;
-            _lastInterLeaveBufferTS = pSampleParam->_timeStamp;
-
-            //Store meta data params
-            _pTimeStampVec->push_back(pSampleParam->_timeStamp);
-            _pSampleSizeVec->push_back(pSampleParam->_sampleSize);
-            _pSampleFlagsVec->push_back(pSampleParam->_flags);
-            _pIndexVec->push_back(pSampleParam->_index);
-            _pSampleDurationVec->push_back(pSampleParam->_sampleDuration);
-            return true;
+            // write NAL uint
+            oscl_memcpy((OsclAny*)(currPtr + bytesWritten + 4), (OsclAny*)pSampleParam->_fragmentList[ii].ptr, pSampleParam->_fragmentList[ii].len);
+            bytesWritten += (pSampleParam->_fragmentList[ii].len + 4);
+        }
+    }
+    else
+    {
+        for (uint32 ii = 0; ii < pSampleParam->_fragmentList.size(); ++ii)
+        {
+            oscl_memcpy(currPtr + bytesWritten, pSampleParam->_fragmentList[ii].ptr, pSampleParam->_fragmentList[ii].len);
+            bytesWritten += pSampleParam->_fragmentList[ii].len;
         }
     }
 
-    return false;
+    _currInterLeaveBufferSize += pSampleParam->_sampleSize;
+    _lastInterLeaveBufferTS = pSampleParam->_timeStamp;
+
+    //Store meta data params
+    _pTimeStampVec->push_back(pSampleParam->_timeStamp);
+    _pSampleSizeVec->push_back(pSampleParam->_sampleSize);
+    _pSampleFlagsVec->push_back(pSampleParam->_flags);
+    _pIndexVec->push_back(pSampleParam->_index);
+    _pSampleDurationVec->push_back(pSampleParam->_sampleDuration);
+    return true;
 }
 
 
@@ -170,11 +160,7 @@ PVA_FF_InterLeaveBuffer::addSampleToInterLeaveBuffer(PVMP4FFComposerSampleParam 
 bool
 PVA_FF_InterLeaveBuffer::checkInterLeaveBufferSpace(uint32 size)
 {
-    if ((_currInterLeaveBufferSize + size) > _maxInterLeaveBufferSize)
-    {
-        return false;
-    }
-    return true;
+    return ((_currInterLeaveBufferSize + size) <= _maxInterLeaveBufferSize);
 }
 
 Oscl_Vector<uint32, OsclMemAllocator>*

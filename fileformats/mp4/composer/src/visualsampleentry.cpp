@@ -28,7 +28,7 @@
 
 
 // Constructor
-PVA_FF_VisualSampleEntry::PVA_FF_VisualSampleEntry(int32 codecType)
+PVA_FF_VisualSampleEntry::PVA_FF_VisualSampleEntry(PVA_FF_MP4_CODEC_TYPE codecType)
         : PVA_FF_SampleEntry(VIDEO_SAMPLE_ENTRY)
 {
     PV_MP4_FF_NEW(fp->auditCB, PVA_FF_ESDAtom, (MEDIA_TYPE_VISUAL, codecType), _pes);

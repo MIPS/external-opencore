@@ -18,7 +18,6 @@
 #define IMPLEMENT_MovieExtendsHeaderAtom
 
 #include "movieextendsheaderatom.h"
-#include "a_isucceedfail.h"
 #include "atomutils.h"
 
 

@@ -43,6 +43,12 @@
 #ifndef OSCL_MEM_BASIC_FUNCTIONS_H
 #include "oscl_mem_basic_functions.h"
 #endif
+#ifndef __A_IMpeg4File_H__
+#include "a_impeg4file.h"
+#endif
+#ifndef __AtomDefs_H__
+#include "a_atomdefs.h"
+#endif
 
 #ifdef ANDROID
 namespace android
@@ -1708,7 +1714,7 @@ void PVMp4FFComposerNode::DoStart(PVMp4FFCNCmd& aCmd)
 //////////////////////////////////////////////////////////////////////////////////
 PVMFStatus PVMp4FFComposerNode::AddTrack(PVMp4FFComposerPort *aPort)
 {
-    int32 codecType = 0;
+    PVA_FF_MP4_CODEC_TYPE codecType = PVA_FF_MP4_CODEC_TYPE_UNDEFINED;
     int32 mediaType = 0;
     int32 trackId = 0;
     PVMP4FFCNFormatSpecificConfig* config = aPort->GetFormatSpecificConfig();
@@ -1720,39 +1726,39 @@ PVMFStatus PVMp4FFComposerNode::AddTrack(PVMp4FFComposerPort *aPort)
 
     if (aPort->GetFormat() == PVMF_MIME_3GPP_TIMEDTEXT)
     {
-        codecType = CODEC_TYPE_TIMED_TEXT;
+        codecType = PVA_FF_MP4_CODEC_TYPE_TIMED_TEXT;
         mediaType = MEDIA_TYPE_TEXT;
     }
     else if ((aPort->GetFormat() == PVMF_MIME_H264_VIDEO_MP4) ||
              (aPort->GetFormat() == PVMF_MIME_ISO_AVC_SAMPLE_FORMAT))
     {
-        codecType = CODEC_TYPE_AVC_VIDEO;
+        codecType = PVA_FF_MP4_CODEC_TYPE_AVC_VIDEO;
         mediaType = MEDIA_TYPE_VISUAL;
     }
     else if (aPort->GetFormat() == PVMF_MIME_M4V)
     {
-        codecType = CODEC_TYPE_MPEG4_VIDEO;
+        codecType = PVA_FF_MP4_CODEC_TYPE_MPEG4_VIDEO;
         mediaType = MEDIA_TYPE_VISUAL;
     }
     else if (aPort->GetFormat() == PVMF_MIME_H2631998 ||
              aPort->GetFormat() == PVMF_MIME_H2632000)
     {
-        codecType = CODEC_TYPE_BASELINE_H263_VIDEO;
+        codecType = PVA_FF_MP4_CODEC_TYPE_BASELINE_H263_VIDEO;
         mediaType = MEDIA_TYPE_VISUAL;
     }
     else if (aPort->GetFormat() == PVMF_MIME_AMR_IETF)
     {
-        codecType = CODEC_TYPE_AMR_AUDIO;
+        codecType = PVA_FF_MP4_CODEC_TYPE_AMR_AUDIO;
         mediaType = MEDIA_TYPE_AUDIO;
     }
     else if (aPort->GetFormat() == PVMF_MIME_AMRWB_IETF)
     {
-        codecType = CODEC_TYPE_AMR_WB_AUDIO;
+        codecType = PVA_FF_MP4_CODEC_TYPE_AMR_WB_AUDIO;
         mediaType = MEDIA_TYPE_AUDIO;
     }
     else if (aPort->GetFormat() ==  PVMF_MIME_MPEG4_AUDIO)
     {
-        codecType = CODEC_TYPE_AAC_AUDIO;
+        codecType = PVA_FF_MP4_CODEC_TYPE_AAC_AUDIO;
         mediaType = MEDIA_TYPE_AUDIO;
     }
     else
@@ -1807,15 +1813,17 @@ PVMFStatus PVMp4FFComposerNode::AddTrack(PVMp4FFComposerPort *aPort)
         case MEDIA_TYPE_VISUAL:
             switch (codecType)
             {
-                case CODEC_TYPE_BASELINE_H263_VIDEO:
+                case PVA_FF_MP4_CODEC_TYPE_BASELINE_H263_VIDEO:
                     iMpeg4File->setH263ProfileLevel(trackId, config->iH263Profile, config->iH263Level);
                     // Don't break here. Continue to set other video properties
-                case CODEC_TYPE_AVC_VIDEO:
-                case CODEC_TYPE_MPEG4_VIDEO:
+                case PVA_FF_MP4_CODEC_TYPE_AVC_VIDEO:
+                case PVA_FF_MP4_CODEC_TYPE_MPEG4_VIDEO:
                     iMpeg4File->setTargetBitrate(trackId, config->iBitrate, config->iMaxBitrate, config->iBufferSizeDB);
                     iMpeg4File->setTimeScale(trackId, config->iTimescale);
                     iMpeg4File->setVideoParams(trackId, (float)config->iFrameRate,
                                                (uint16)config->iIFrameInterval, config->iWidth, config->iHeight);
+                    break;
+                default:
                     break;
             }
             break;
@@ -2716,7 +2724,7 @@ int32 PVMp4FFComposerNode::GetIETFFrameSize(uint8 aFrameType,
         int32 aCodecType)
 {
     uint8 frameType = (uint8)(aFrameType >> 3) & 0x0f;
-    if (aCodecType == CODEC_TYPE_AMR_AUDIO)
+    if ((uint32)aCodecType == PVA_FF_MP4_CODEC_TYPE_AMR_AUDIO)
     {
         // Find frame size for each frame type
         switch (frameType)
@@ -2750,7 +2758,7 @@ int32 PVMp4FFComposerNode::GetIETFFrameSize(uint8 aFrameType,
                 return -1;
         }
     }
-    else if (aCodecType == CODEC_TYPE_AMR_WB_AUDIO)
+    else if ((uint32)aCodecType == PVA_FF_MP4_CODEC_TYPE_AMR_WB_AUDIO)
     {
         // Find frame size for each frame type
         switch (frameType)

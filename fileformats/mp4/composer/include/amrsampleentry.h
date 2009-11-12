@@ -23,6 +23,7 @@
 #ifndef __AMRSampleEntry_H__
 #define __AMRSampleEntry_H__
 
+#include "a_impeg4file.h"
 #include "sampleentry.h"
 #include "amrdecoderspecificinfo3gpp.h"
 

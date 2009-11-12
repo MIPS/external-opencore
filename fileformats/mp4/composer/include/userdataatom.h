@@ -24,11 +24,10 @@
 #define __UserDataAtom_H__
 
 #include "atom.h"
-#include "a_isucceedfail.h"
 #include "atomutils.h"
 
 
-class PVA_FF_UserDataAtom : public PVA_FF_Atom, public PVA_FF_ISucceedFail
+class PVA_FF_UserDataAtom : public PVA_FF_Atom
 {
 
     public:

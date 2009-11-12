@@ -27,7 +27,7 @@
 
 
 // Constructor
-PVA_FF_AudioSampleEntry::PVA_FF_AudioSampleEntry(int32 codecType)
+PVA_FF_AudioSampleEntry::PVA_FF_AudioSampleEntry(PVA_FF_MP4_CODEC_TYPE codecType)
         : PVA_FF_SampleEntry(FourCharConstToUint32('m', 'p', '4', 'a'))
 {
     PV_MP4_FF_NEW(fp->auditCB, PVA_FF_ESDAtom, (MEDIA_TYPE_AUDIO, codecType), _pes);

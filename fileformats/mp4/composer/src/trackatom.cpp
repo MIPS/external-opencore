@@ -35,14 +35,13 @@ PVA_FF_TrackAtom::PVA_FF_TrackAtom(int32 type,
                                    uint32 id,
                                    uint8 version,
                                    uint32 fileAuthoringFlags,
-                                   int32 codecType,
+                                   PVA_FF_MP4_CODEC_TYPE codecType,
                                    uint32 protocol,
                                    uint8 profile,
                                    uint8 profileComp,
                                    uint8 level)
         : PVA_FF_Atom(TRACK_ATOM)
 {
-    _success = true;
     FIRST_SAMPLE = true;
     _intialTrackTimeOffsetInMilliSeconds = 0;
     _eList = NULL;
@@ -59,8 +58,8 @@ PVA_FF_TrackAtom::PVA_FF_TrackAtom(int32 type,
 
     _pUserDataAtom    = NULL;
 
-    if ((codecType == CODEC_TYPE_MPEG4_VIDEO) ||
-            (codecType == CODEC_TYPE_AAC_AUDIO))
+    if ((codecType == PVA_FF_MP4_CODEC_TYPE_MPEG4_VIDEO) ||
+            (codecType == PVA_FF_MP4_CODEC_TYPE_AAC_AUDIO))
     {
         _setDecoderSpecificInfoDone = false;
     }
@@ -114,13 +113,13 @@ PVA_FF_TrackAtom::nextSample(int32 mediaType,
                              PVMP4FFComposerSampleParam *pSampleParam,
                              bool oChunkStart)
 {
-    if (pSampleParam == NULL)
+    if (0 == pSampleParam)
         return;
 
     uint32 ts_in_milliseconds = 0;
     uint32 mediaTimeScale = getMediaTimeScale();
 
-    if (mediaTimeScale != 0)
+    if (0 != mediaTimeScale)
     {
         ts_in_milliseconds = (uint32)((pSampleParam->_timeStamp * 1000.0f) / mediaTimeScale);
 
@@ -129,23 +128,20 @@ PVA_FF_TrackAtom::nextSample(int32 mediaType,
         _ptrackHeader->addSample(ts_in_milliseconds);
     }
 
-    if (FIRST_SAMPLE)
+    if (true == FIRST_SAMPLE)
     {
         FIRST_SAMPLE = false;
-        if (pSampleParam->_timeStamp != 0)
+        if (0 != pSampleParam->_timeStamp)
         {
             PV_MP4_FF_NEW(fp->auditCB, PVA_FF_EditAtom, (), _eList);
-
             _eList->setParent(this);
-
-            //Edit durations are sposed to be movie time scale
+            // edit durations are sposed to be movie time scale
             _eList->addEmptyEdit(ts_in_milliseconds);
-
             _intialTrackTimeOffsetInMilliSeconds = ts_in_milliseconds;
         }
         else
         {
-            _eList = NULL;
+            _eList = 0;
         }
     }
 
@@ -158,7 +154,7 @@ PVA_FF_TrackAtom::nextTextSample(int32 mediaType,
                                  PVMP4FFComposerSampleParam *pSampleParam,
                                  bool oChunkStart)
 {
-    if (pSampleParam == NULL)
+    if (0 == pSampleParam)
         return;
 
     uint32 ts_in_milliseconds = 0;
@@ -173,52 +169,46 @@ PVA_FF_TrackAtom::nextTextSample(int32 mediaType,
         _ptrackHeader->addSample(ts_in_milliseconds, pSampleParam->_sampleDuration);
     }
 
-    if (FIRST_SAMPLE)
+    if (true == FIRST_SAMPLE)
     {
         FIRST_SAMPLE = false;
-        if (pSampleParam->_timeStamp != 0)
+        if (0 != pSampleParam->_timeStamp)
         {
             PV_MP4_FF_NEW(fp->auditCB, PVA_FF_EditAtom, (), _eList);
 
             _eList->setParent(this);
-
-            //Edit durations are sposed to be movie time scale
+            // edit durations are sposed to be movie time scale
             _eList->addEmptyEdit(ts_in_milliseconds);
-
             _intialTrackTimeOffsetInMilliSeconds = ts_in_milliseconds;
         }
         else
         {
-            _eList = NULL;
+            _eList = 0;
         }
     }
 
     _pmediaAtom->nextTextSample(mediaType, pSampleParam, oChunkStart);
-
 }
 
 bool
 PVA_FF_TrackAtom::reAuthorFirstSample(uint32 size,
                                       uint32 baseOffset)
 {
-    return(
-              _pmediaAtom->reAuthorFirstSample(size,
-                                               baseOffset));
+    return _pmediaAtom->reAuthorFirstSample(size, baseOffset);
 }
 
 int32
 PVA_FF_TrackAtom::addTrackReference(uint32 ref)
 {
-    if (_ptrackReference == NULL)
+    if (0 == _ptrackReference)
     {
         PV_MP4_FF_NEW(fp->auditCB, PVA_FF_TrackReferenceAtom, (TREF_TYPE_DEPEND), _ptrackReference);
         _ptrackReference->setParent(this);
     }
 
-    if (_ptrackReference != NULL)
-    {
+    if (0 != _ptrackReference)
         return _ptrackReference->addTrackReference(ref);
-    }
+
     return 0;
 }
 
@@ -241,25 +231,25 @@ PVA_FF_TrackAtom::recomputeSize()
 {
     int32 size = getDefaultSize(); // From base class
 
-    if (_pUserDataAtom != NULL)
+    if (0 != _pUserDataAtom)
     {
         size += _pUserDataAtom->getSize();
     }
 
-    if (_eList != NULL)
+    if (0 != _eList)
     {
         size += _eList->getSize();
     }
     size += _ptrackHeader->getSize();
     size += _pmediaAtom->getSize();
-    if (_ptrackReference != NULL)
+    if (0 != _ptrackReference)
     {
         size += _ptrackReference->getSize();
     }
     _size = size;
 
     // Update the size of the parent atom since this child atom may have changed
-    if (_pparent != NULL)
+    if (0 != _pparent)
     {
         _pparent->recomputeSize();
     }
@@ -289,7 +279,7 @@ PVA_FF_TrackAtom::renderToFileStream(MP4_AUTHOR_FF_FILE_IO_WRAP *fp)
     // Set ESID
     _pmediaAtom->setESID((uint16)(_ptrackHeader->getTrackID()));
     {
-        if (_pUserDataAtom != NULL)
+        if (0 != _pUserDataAtom)
         {
             if (!_pUserDataAtom->renderToFileStream(fp))
             {
@@ -299,34 +289,27 @@ PVA_FF_TrackAtom::renderToFileStream(MP4_AUTHOR_FF_FILE_IO_WRAP *fp)
     }
     // Render the track header atom
     if (!_ptrackHeader->renderToFileStream(fp))
-    {
         return false;
-    }
+
     rendered += getTrackHeaderAtom().getSize();
 
-    //Render Edit atom
-    if (_eList != NULL)
+    if (0 != _eList)
     {
-        if (!_eList->renderToFileStream(fp))
-        {
+        if (!_eList->renderToFileStream(fp)) // render Edit atom
             return false;
-        }
     }
 
     // Render trackReference atom if present
-    if (_ptrackReference != NULL)
+    if (0 != _ptrackReference)
     {
         if (!_ptrackReference->renderToFileStream(fp))
-        {
             return false;
-        }
     }
 
     // Render the media atom
     if (!_pmediaAtom->renderToFileStream(fp))
-    {
         return false;
-    }
+
     rendered += getMediaAtom().getSize();
 
     return true;

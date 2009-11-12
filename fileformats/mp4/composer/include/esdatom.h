@@ -32,7 +32,7 @@ class PVA_FF_ESDAtom : public PVA_FF_FullAtom
 {
 
     public:
-        PVA_FF_ESDAtom(int32 streamType, int32 codecType); // Constructor
+        PVA_FF_ESDAtom(int32 streamType, PVA_FF_MP4_CODEC_TYPE codecType); // Constructor
 
         virtual ~PVA_FF_ESDAtom();
 

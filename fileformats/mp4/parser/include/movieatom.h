@@ -106,6 +106,28 @@ class MovieAtom : public Atom
         int32 updateFileSize(uint32 filesize);
 
         int32 getNextMediaSample(uint32 id, uint8 *buf, uint32 &size, uint32 &index, uint32 &SampleOffset);
+
+        //==========================================================================
+        // getMediaSample                                                   PUBLIC
+        //==========================================================================
+        // Fill caller-supplied buffer with bytes representing the media sample.
+        //   sampeNumber
+        //     [IN] Sample number to retrieve.
+        //   id
+        //     [IN] Track id.
+        //   buf
+        //     [IN/OUT] Pointer to the buffer to fill with sample data. The pointer
+        //      will not be modified, but the buffer pointed to will be filled if
+        //      the sample size is less than 'size' bytes.
+        //   size
+        //     [IN/OUT] Size of buffer pointed to by 'buf'. On return, 'size' will
+        //     contain the number of bytes written to 'buf'. If buffer size is too
+        //     small, 'size' will contain the size needed.
+        //   index
+        //     [OUT]
+        //   SampleOffset
+        //     [OUT] Number of bytes from start of file to the beginning of sample.
+        //
         int32 getMediaSample(uint32 sampleNumber, uint32 id, uint8 *buf, int32 &size, uint32 &index, uint32 &SampleOffset);
 
         MP4_ERROR_CODE getKeyMediaSampleNumAt(uint32 aTrackId,

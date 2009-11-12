@@ -223,26 +223,6 @@ const uint32    MOVIE_FRAGMENT_RANDOM_ACCESS_OFFSET_ATOM = FourCharConstToUint32
 #define VERSION_3GPP5 0x00000100
 #define VERSION_3GPP6 0x00000600
 
-typedef enum
-{
-    CODEC_TYPE_AMR_AUDIO = 1,
-    CODEC_TYPE_AAC_AUDIO = 2,
-    CODEC_TYPE_AMR_WB_AUDIO = 3
-} AUDIO_CODEC_TYPES;
-
-typedef enum
-{
-    CODEC_TYPE_MPEG4_VIDEO = 4,
-    CODEC_TYPE_BASELINE_H263_VIDEO = 5,
-    CODEC_TYPE_AVC_VIDEO = 6
-} VIDEO_CODEC_TYPES;
-
-typedef enum
-{
-    CODEC_TYPE_TIMED_TEXT = 7
-
-} TEXT_CODEC_TYPES;
-
 #define MPEG4_SP_L0    0x08
 #define MPEG4_SP_L1    0x01
 #define MPEG4_SP_L2    0x02
@@ -261,105 +241,9 @@ typedef enum
 
 #define MAX_PV_BASE_SIMPLE_PROFILE_VOL_HEADER_SIZE 28
 
-#define LANGUAGE_CODE_UNKNOWN   0x55C4
-#define RATING_ENTITY_UNKNOWN   0
-#define RATING_CRITERIA_UNKNOWN 0
-
 #define DEFAULT_INTERLEAVE_INTERVAL 1000
-
-//Encoding mode defines
-
-//Please note that only SOME COMBINATIONS are allowed
-
-//b31.....b4b3b2b1b0 - Bit Mask Definitions
-//No bits are set - default mode - no interleaving, meta data at the end
-//b0 is set - Media data is interleaved, BIFS and OD are still seperate tracks
-//b1 is set - Meta data is upfront, this implies temp files are needed while authoring
-//b2 - undefined
-//b3 is set - Do not use temp files while authoring
-//b6 is set - Movie fragment mode
-//b7 is set - Live movie fragment mode
-//b8-b31 - Reserved for future use
-
-/**
- * This mode authors non Progressive Downloadable output files using temp files
- * during authoring:
- * Meta data towards the end of the clip
- * Media data is not interleaved. Temp files are used.
- * Media data is authored in separate media atoms for each track
- * Temporary files are written to the same directory as the output file.
- */
-#define PVMP4FF_SET_MEDIA_INTERLEAVE_MODE   0x00000001
-
-#define PVMP4FF_SET_META_DATA_UPFRONT_MODE  0x00000002
-
-/**
- * This mode authors 3GPP Progressive Downloadable output files:
- * Meta Data is upfront.
- * Media Data is interleaved. Temp files are used.
- * Temporary files are written to the same directory as the output file.
- */
-#define PVMP4FF_3GPP_PROGRESSIVE_DOWNLOAD_MODE 0x00000003
-
-/**
- * This mode authors 3GPP Downloadable output files:
- * Meta Data is towards the end of the clip.
- * Media Data is interleaved.
- * No temp files are used.
- */
-#define PVMP4FF_3GPP_DOWNLOAD_MODE  0x00000009
-
-#define PVMP4FF_SET_FIRST_SAMPLE_EDIT_MODE  0x00000010
-
-// movie fragment mode
-// 6th bit is now reserved movie fragment mode and last bit is reserved for interleaving
-#define PVMP4FF_MOVIE_FRAGMENT_MODE 0x00000021
-
-// live movie fragment mode
-// For authoring open-ended sessions for live streaming
-#define PVMP4FF_LIVE_MOVIE_FRAGMENT_MODE 0x00000061
 
 #define DEFAULT_MOVIE_FRAGMENT_DURATION_IN_MS 10000
 
-class PVMP4FFComposerSampleParam
-{
-    public:
-        PVMP4FFComposerSampleParam()
-        {
-            _psample = NULL;
-            _timeStamp = 0;
-            _flags = 0;
-            _sampleDuration = 0;
-            _sampleSize = 0;
-            _baseOffset = 0;
-            _index = 0;
-            _ptextSampleModifier = NULL;
-        }
-
-        Oscl_Vector<OsclMemoryFragment, OsclMemAllocator> _fragmentList;
-        uint8 *_psample;
-        uint32 _timeStamp;
-        uint8 _flags;
-        uint32 _sampleDuration;
-        uint32 _sampleSize;
-        uint32 _baseOffset;
-        int32 _index;
-        uint8* _ptextSampleModifier;
-};
-
-class PVMP4FFComposerAudioEncodeParams
-{
-    public:
-        PVMP4FFComposerAudioEncodeParams()
-        {
-            samplingRate = 0;
-            numberOfChannels = 2;
-            bitsPerSample = 16;
-        }
-
-        uint32 samplingRate;
-        uint32 numberOfChannels;
-        uint32 bitsPerSample;
-};
 
 #endif

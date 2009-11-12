@@ -96,7 +96,6 @@ LOCAL_COPY_HEADERS_TO := $(PV_COPY_HEADERS_TO)
 
 LOCAL_COPY_HEADERS := \
 	include/a_impeg4file.h \
- 	include/a_isucceedfail.h \
  	include/a_atomdefs.h \
  	include/textsampledescinfo.h \
  	include/../config/opencore/pv_mp4ffcomposer_config.h

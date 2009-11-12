@@ -916,52 +916,29 @@ uint32 MovieAtom::resetPlayback(uint32 time, uint16 numTracks, uint32 *trackList
     {
         trackAtom = getTrackForID(*(trackList + i));
 
-        if (trackAtom != NULL)
+        if (0 == trackAtom)
         {
+            modifiedTimeStamp = 0;
+            continue;
+        }
 
-            //only reset video and audio track
-            if (trackAtom->getMediaType() == MEDIA_TYPE_VISUAL)
+        //only reset video
+        if (trackAtom->getMediaType() == MEDIA_TYPE_VISUAL)
+        {
+            _oVideoTrackPresent = true;
+
+            if (trackAtom->dependsOn() != 0)
             {
-                _oVideoTrackPresent = true;
+                IndependentTrackAtom = getTrackForID(trackAtom->dependsOn());
 
-                if (trackAtom->dependsOn() != 0)
+                if (IndependentTrackAtom != NULL)
                 {
-                    IndependentTrackAtom = getTrackForID(trackAtom->dependsOn());
-
-                    if (IndependentTrackAtom != NULL)
-                    {
-                        // convert modifiedTimeStamp (which is in ms) to the appropriate
-                        // media time scale
-                        MediaClockConverter mcc1(1000, modifiedTimeStamp);
-                        convertedTS = mcc1.get_converted_ts(getTrackMediaTimescale(*(trackList + i)));
-
-                        returnedTS = IndependentTrackAtom->resetPlayBack(convertedTS);
-
-                        // convert returnedTS (which is in media time scale) to the ms
-                        MediaClockConverter mcc(getTrackMediaTimescale(*(trackList + i)), returnedTS);
-                        timestamp = mcc.get_converted_ts(1000);
-
-                        if (timestamp <= modifiedTimeStamp)
-                        {
-                            modifiedTimeStamp = timestamp;
-                        }
-
-                    }
-
-                    bool oDependsOn = true;
-
-                    trackAtom->resetPlayBack(convertedTS, oDependsOn);
-                }
-                else
-                {
-                    modifiedTimeStamp = time;
-
                     // convert modifiedTimeStamp (which is in ms) to the appropriate
                     // media time scale
                     MediaClockConverter mcc1(1000, modifiedTimeStamp);
                     convertedTS = mcc1.get_converted_ts(getTrackMediaTimescale(*(trackList + i)));
 
-                    returnedTS = trackAtom->resetPlayBack(convertedTS);
+                    returnedTS = IndependentTrackAtom->resetPlayBack(convertedTS);
 
                     // convert returnedTS (which is in media time scale) to the ms
                     MediaClockConverter mcc(getTrackMediaTimescale(*(trackList + i)), returnedTS);
@@ -973,38 +950,21 @@ uint32 MovieAtom::resetPlayback(uint32 time, uint16 numTracks, uint32 *trackList
                     }
 
                 }
+
+                bool oDependsOn = true;
+
+                trackAtom->resetPlayBack(convertedTS, oDependsOn);
             }
-        }
-        else
-        {
-            modifiedTimeStamp = 0;
-        }
-    }
-
-    for (i = 0; i < numTracks; i++)
-    {
-        trackAtom = getTrackForID(*(trackList + i));
-
-        if (trackAtom != NULL)
-        {
-
-            //only reset video and audio track
-            if ((trackAtom ->getMediaType() == MEDIA_TYPE_AUDIO) ||
-                    (trackAtom ->getMediaType() == MEDIA_TYPE_TEXT))
+            else
             {
+                modifiedTimeStamp = time;
+
                 // convert modifiedTimeStamp (which is in ms) to the appropriate
                 // media time scale
                 MediaClockConverter mcc1(1000, modifiedTimeStamp);
                 convertedTS = mcc1.get_converted_ts(getTrackMediaTimescale(*(trackList + i)));
 
-                if (_oVideoTrackPresent)
-                {
-                    returnedTS = trackAtom->resetPlayBack(convertedTS, true);
-                }
-                else
-                {
-                    returnedTS = trackAtom->resetPlayBack(convertedTS);
-                }
+                returnedTS = trackAtom->resetPlayBack(convertedTS);
 
                 // convert returnedTS (which is in media time scale) to the ms
                 MediaClockConverter mcc(getTrackMediaTimescale(*(trackList + i)), returnedTS);
@@ -1014,11 +974,40 @@ uint32 MovieAtom::resetPlayback(uint32 time, uint16 numTracks, uint32 *trackList
                 {
                     modifiedTimeStamp = timestamp;
                 }
+
             }
         }
-        else
+    }
+
+    for (i = 0; i < numTracks; i++)
+    {
+        trackAtom = getTrackForID(*(trackList + i));
+
+        if (0 == trackAtom)
         {
             modifiedTimeStamp = 0;
+            continue;
+        }
+
+        //only reset video and audio track
+        if ((trackAtom ->getMediaType() == MEDIA_TYPE_AUDIO) ||
+                (trackAtom ->getMediaType() == MEDIA_TYPE_TEXT))
+        {
+            // convert modifiedTimeStamp (which is in ms) to the appropriate
+            // media time scale
+            MediaClockConverter mcc1(1000, modifiedTimeStamp);
+            convertedTS = mcc1.get_converted_ts(getTrackMediaTimescale(*(trackList + i)));
+
+            returnedTS = trackAtom->resetPlayBack(convertedTS, _oVideoTrackPresent);
+
+            // convert returnedTS (which is in media time scale) to the ms
+            MediaClockConverter mcc(getTrackMediaTimescale(*(trackList + i)), returnedTS);
+            timestamp = mcc.get_converted_ts(1000);
+
+            if (timestamp <= modifiedTimeStamp)
+            {
+                modifiedTimeStamp = timestamp;
+            }
         }
     }
 

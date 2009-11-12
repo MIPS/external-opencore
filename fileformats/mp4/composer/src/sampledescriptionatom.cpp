@@ -48,7 +48,7 @@ typedef Oscl_Vector<PVA_FF_SampleEntry*, OsclMemAllocator> PVA_FF_SampleEntryVec
 typedef Oscl_Vector<uint32, OsclMemAllocator> PVA_FF_SampleEntryTypeVecType;
 
 // Constructor
-PVA_FF_SampleDescriptionAtom::PVA_FF_SampleDescriptionAtom(uint32 mediaType, int32 codecType,
+PVA_FF_SampleDescriptionAtom::PVA_FF_SampleDescriptionAtom(uint32 mediaType, PVA_FF_MP4_CODEC_TYPE codecType,
         uint32 protocol, uint8 profile,
         uint8 profileComp, uint8 level)
         : PVA_FF_FullAtom(SAMPLE_DESCRIPTION_ATOM, (uint8)0, (uint32)0),
@@ -85,7 +85,7 @@ PVA_FF_SampleDescriptionAtom::init(int32 mediaType, uint32 protocol, uint8 profi
         case MEDIA_TYPE_TEXT:
         {
             _handlerType = MEDIA_TYPE_TEXT;
-            if (_codecType == CODEC_TYPE_TIMED_TEXT)
+            if (_codecType == PVA_FF_MP4_CODEC_TYPE_TIMED_TEXT)
             {
                 PV_MP4_FF_NEW(fp->auditCB, PVA_FF_TextSampleEntry, (), entry);
 
@@ -99,19 +99,19 @@ PVA_FF_SampleDescriptionAtom::init(int32 mediaType, uint32 protocol, uint8 profi
         case MEDIA_TYPE_AUDIO:
         {
             _handlerType = MEDIA_TYPE_AUDIO;
-            if (_codecType == CODEC_TYPE_AAC_AUDIO)
+            if (_codecType == PVA_FF_MP4_CODEC_TYPE_AAC_AUDIO)
             {
                 PV_MP4_FF_NEW(fp->auditCB, PVA_FF_AudioSampleEntry, (_codecType), entry);
                 addSampleEntry(entry);
             }
-            else if (_codecType == CODEC_TYPE_AMR_AUDIO)
+            else if (_codecType == PVA_FF_MP4_CODEC_TYPE_AMR_AUDIO)
             {
                 PV_MP4_FF_NEW(fp->auditCB, PVA_FF_AMRSampleEntry, (AMR_SAMPLE_ENTRY), entry);
                 addSampleEntry(entry);
                 entry->setParent(this);
                 entry->recomputeSize();
             }
-            else if (_codecType == CODEC_TYPE_AMR_WB_AUDIO)
+            else if (_codecType == PVA_FF_MP4_CODEC_TYPE_AMR_WB_AUDIO)
             {
                 PV_MP4_FF_NEW(fp->auditCB, PVA_FF_AMRSampleEntry, (AMR_WB_SAMPLE_ENTRY), entry);
                 addSampleEntry(entry);
@@ -124,12 +124,12 @@ PVA_FF_SampleDescriptionAtom::init(int32 mediaType, uint32 protocol, uint8 profi
         {
             _handlerType = MEDIA_TYPE_VISUAL;
 
-            if (_codecType == CODEC_TYPE_BASELINE_H263_VIDEO)
+            if (_codecType == PVA_FF_MP4_CODEC_TYPE_BASELINE_H263_VIDEO)
             {
                 PV_MP4_FF_NEW(fp->auditCB, PVA_FF_H263SampleEntry, (), entry);
                 addSampleEntry(entry);
             }
-            else if (_codecType == CODEC_TYPE_AVC_VIDEO)
+            else if (_codecType == PVA_FF_MP4_CODEC_TYPE_AVC_VIDEO)
             {
                 PV_MP4_FF_NEW(fp->auditCB, PVA_FF_AVCSampleEntry, (profile, profileComp, level), entry);
                 addSampleEntry(entry);
@@ -235,7 +235,7 @@ void PVA_FF_SampleDescriptionAtom::addTextDecoderSpecificInfo(PVA_FF_TextSampleD
     {
         case MEDIA_TYPE_TEXT:
         {
-            if (_codecType == CODEC_TYPE_TIMED_TEXT)
+            if (_codecType == PVA_FF_MP4_CODEC_TYPE_TIMED_TEXT)
             {//storing the start, end and the sample index number
                 //to which these samples belongs to.
 
@@ -287,11 +287,11 @@ PVA_FF_SampleDescriptionAtom::addDecoderSpecificInfo(PVA_FF_DecoderSpecificInfo 
     {
         case MEDIA_TYPE_VISUAL:
         {
-            if (_codecType == CODEC_TYPE_MPEG4_VIDEO)
+            if (_codecType == PVA_FF_MP4_CODEC_TYPE_MPEG4_VIDEO)
             {
                 getMutableSampleEntryAt(0)->addDecoderSpecificInfo(pinfo);
             }
-            else if (_codecType == CODEC_TYPE_AVC_VIDEO)
+            else if (_codecType == PVA_FF_MP4_CODEC_TYPE_AVC_VIDEO)
             {
                 getMutableSampleEntryAt(0)->addDecoderSpecificInfo(pinfo);
                 getMutableSampleEntryAt(0)->recomputeSize();
@@ -308,7 +308,7 @@ PVA_FF_SampleDescriptionAtom::addDecoderSpecificInfo(PVA_FF_DecoderSpecificInfo 
 
         case MEDIA_TYPE_AUDIO:
         {
-            if (_codecType == CODEC_TYPE_AAC_AUDIO)
+            if (_codecType == PVA_FF_MP4_CODEC_TYPE_AAC_AUDIO)
             {
                 getMutableSampleEntryAt(0)->addDecoderSpecificInfo(pinfo);
             }
@@ -361,7 +361,7 @@ PVA_FF_SampleDescriptionAtom::setTargetBitrate(uint32 avgBitrate, uint32 maxBitR
         case MEDIA_TYPE_AUDIO:
         {
             _currAudioBitrate = avgBitrate;
-            if (_codecType == CODEC_TYPE_AAC_AUDIO)
+            if (_codecType == PVA_FF_MP4_CODEC_TYPE_AAC_AUDIO)
             {
                 PVA_FF_AudioSampleEntry *entry = (PVA_FF_AudioSampleEntry*) getSampleEntryAt(0);
                 if (entry)
@@ -402,7 +402,7 @@ PVA_FF_SampleDescriptionAtom::nextSample(uint32 size, uint8 flags)
     {
         case MEDIA_TYPE_VISUAL:
         {
-            if (_codecType == CODEC_TYPE_MPEG4_VIDEO)
+            if (_codecType == PVA_FF_MP4_CODEC_TYPE_MPEG4_VIDEO)
             {
                 PVA_FF_VisualSampleEntry *entry = (PVA_FF_VisualSampleEntry*) getSampleEntryAt(0);
                 if (entry)
@@ -415,7 +415,7 @@ PVA_FF_SampleDescriptionAtom::nextSample(uint32 size, uint8 flags)
         }
         case MEDIA_TYPE_AUDIO:
         {
-            if (_codecType == CODEC_TYPE_AAC_AUDIO)
+            if (_codecType == PVA_FF_MP4_CODEC_TYPE_AAC_AUDIO)
             {
                 //HANDLE LIKE VIDEO - ONLY ONE SAMPLE ENTRY PER TRACK
                 PVA_FF_AudioSampleEntry *entry = (PVA_FF_AudioSampleEntry*) getSampleEntryAt(0);
@@ -428,8 +428,8 @@ PVA_FF_SampleDescriptionAtom::nextSample(uint32 size, uint8 flags)
             else
             {
                 unsigned short mode_set = 0;
-                if ((_codecType == CODEC_TYPE_AMR_AUDIO) ||
-                        (_codecType == CODEC_TYPE_AMR_WB_AUDIO))
+                if ((_codecType == PVA_FF_MP4_CODEC_TYPE_AMR_AUDIO) ||
+                        (_codecType == PVA_FF_MP4_CODEC_TYPE_AMR_WB_AUDIO))
                 {
                     //CHECK FOR FRAME TYPE AND SET FLAGS ACCORDINGLY
                     audio_frame_type = (flags >> 3) & 0x0F;
@@ -711,7 +711,7 @@ PVA_FF_SampleDescriptionAtom::renderToFileStream(MP4_AUTHOR_FF_FILE_IO_WRAP *fp)
         }
         else if ((uint32) _mediaType == MEDIA_TYPE_VISUAL)
         {
-            if (_codecType == CODEC_TYPE_BASELINE_H263_VIDEO)
+            if (_codecType == PVA_FF_MP4_CODEC_TYPE_BASELINE_H263_VIDEO)
             {
                 PVA_FF_H263SampleEntry *entry =
                     (PVA_FF_H263SampleEntry *)((*_psampleEntryVec)[i]);
@@ -723,7 +723,7 @@ PVA_FF_SampleDescriptionAtom::renderToFileStream(MP4_AUTHOR_FF_FILE_IO_WRAP *fp)
                 h263SpecificAtom->setCodecProfile(_h263Profile);
                 h263SpecificAtom->setCodecLevel(_h263Level);
             }
-            else if (_codecType == CODEC_TYPE_AVC_VIDEO)
+            else if (_codecType == PVA_FF_MP4_CODEC_TYPE_AVC_VIDEO)
             {
                 PVA_FF_AVCSampleEntry *entry =
                     (PVA_FF_AVCSampleEntry *)((*_psampleEntryVec)[i]);
@@ -777,7 +777,7 @@ PVA_FF_SampleDescriptionAtom::SetMaxSampleSize(uint32 aSize)
     {
         case MEDIA_TYPE_VISUAL:
         {
-            if (_codecType == CODEC_TYPE_MPEG4_VIDEO)
+            if (_codecType == PVA_FF_MP4_CODEC_TYPE_MPEG4_VIDEO)
             {
                 PVA_FF_VisualSampleEntry *entry = (PVA_FF_VisualSampleEntry*) getSampleEntryAt(0);
                 if (entry)
@@ -789,7 +789,7 @@ PVA_FF_SampleDescriptionAtom::SetMaxSampleSize(uint32 aSize)
         }
         case MEDIA_TYPE_AUDIO:
         {
-            if (_codecType == CODEC_TYPE_AAC_AUDIO)
+            if (_codecType == PVA_FF_MP4_CODEC_TYPE_AAC_AUDIO)
             {
                 PVA_FF_AudioSampleEntry *entry = (PVA_FF_AudioSampleEntry*) getSampleEntryAt(0);
                 if (entry)
@@ -819,7 +819,7 @@ PVA_FF_SampleDescriptionAtom::writeMaxSampleSize(MP4_AUTHOR_FF_FILE_IO_WRAP *_af
     {
         case MEDIA_TYPE_VISUAL:
         {
-            if (_codecType == CODEC_TYPE_MPEG4_VIDEO)
+            if (_codecType == PVA_FF_MP4_CODEC_TYPE_MPEG4_VIDEO)
             {
                 PVA_FF_VisualSampleEntry *entry = (PVA_FF_VisualSampleEntry*) getSampleEntryAt(0);
                 if (entry)
@@ -831,7 +831,7 @@ PVA_FF_SampleDescriptionAtom::writeMaxSampleSize(MP4_AUTHOR_FF_FILE_IO_WRAP *_af
         }
         case MEDIA_TYPE_AUDIO:
         {
-            if (_codecType == CODEC_TYPE_AAC_AUDIO)
+            if (_codecType == PVA_FF_MP4_CODEC_TYPE_AAC_AUDIO)
             {
                 PVA_FF_AudioSampleEntry *entry = (PVA_FF_AudioSampleEntry*) getSampleEntryAt(0);
                 if (entry)
@@ -861,7 +861,7 @@ PVA_FF_SampleDescriptionAtom::setAudioEncodeParams(PVMP4FFComposerAudioEncodePar
     {
         case MEDIA_TYPE_AUDIO:
         {
-            if (_codecType == CODEC_TYPE_AAC_AUDIO)
+            if (_codecType == PVA_FF_MP4_CODEC_TYPE_AAC_AUDIO)
             {
                 PVA_FF_AudioSampleEntry *entry = (PVA_FF_AudioSampleEntry*) getSampleEntryAt(0);
                 if (entry)
@@ -869,8 +869,8 @@ PVA_FF_SampleDescriptionAtom::setAudioEncodeParams(PVMP4FFComposerAudioEncodePar
                     entry->setAudioEncodeParams(audioParams);
                 }
             }
-            else if (_codecType == CODEC_TYPE_AMR_AUDIO ||
-                     _codecType == CODEC_TYPE_AMR_WB_AUDIO)
+            else if (_codecType == PVA_FF_MP4_CODEC_TYPE_AMR_AUDIO ||
+                     _codecType == PVA_FF_MP4_CODEC_TYPE_AMR_WB_AUDIO)
             {
                 PVA_FF_AMRSampleEntry *entry = (PVA_FF_AMRSampleEntry *)(getSampleEntryAt(0));
                 if (entry)

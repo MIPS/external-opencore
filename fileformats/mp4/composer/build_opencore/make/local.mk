@@ -92,7 +92,6 @@ SRCS := amrdecoderspecificinfo3gpp.cpp \
 	trackfragmentrunatom.cpp
 	
 HDRS := a_impeg4file.h \
-       a_isucceedfail.h \
        a_atomdefs.h \
        textsampledescinfo.h \
        ../config/opencore/pv_mp4ffcomposer_config.h

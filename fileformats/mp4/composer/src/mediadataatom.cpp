@@ -41,18 +41,20 @@ typedef Oscl_Vector<PVA_FF_Renderable*, OsclMemAllocator> PVA_FF_RenderableVecTy
 typedef Oscl_Vector<PVA_FF_TrackAtom*, OsclMemAllocator> PVA_FF_TrackAtomVecType;
 
 // Constructor
-PVA_FF_MediaDataAtom::PVA_FF_MediaDataAtom(PVA_FF_UNICODE_STRING_PARAM targetFileName,
-        MP4_AUTHOR_FF_FILE_HANDLE targetFileHandle,
-        void  *osclFileServerSession,
-        uint32 aCacheSize,
-        PVA_FF_UNICODE_STRING_PARAM outputPathString,
-        PVA_FF_UNICODE_STRING_PARAM postfixString,
-        int32 tempFileIndex)
+PVA_FF_MediaDataAtom::PVA_FF_MediaDataAtom
+(
+    PVA_FF_UNICODE_STRING_PARAM targetFileName,
+    MP4_AUTHOR_FF_FILE_HANDLE targetFileHandle,
+    void  *osclFileServerSession,
+    uint32 aCacheSize,
+    PVA_FF_UNICODE_STRING_PARAM outputPathString,
+    PVA_FF_UNICODE_STRING_PARAM postfixString,
+    int32 tempFileIndex
+)
         : PVA_FF_Atom(MEDIA_DATA_ATOM)
 {
     _osclFileServerSession = osclFileServerSession;
 
-    _success = true;
     _prenderables = NULL;
     PV_MP4_FF_NEW(fp->auditCB, PVA_FF_RenderableVecType, (), _prenderables);
     PV_MP4_FF_NEW(fp->auditCB, PVA_FF_TrackAtomVecType, (), _ptrackReferencePtrVec);
@@ -77,7 +79,7 @@ PVA_FF_MediaDataAtom::PVA_FF_MediaDataAtom(PVA_FF_UNICODE_STRING_PARAM targetFil
     _osclFileServerSession = osclFileServerSession;
     // ADDED TO CHECK FOR ANY FILE WRITE FAILURES
 
-    if (targetFileName.get_size() > 0)
+    if (0 < targetFileName.get_size())
     {
         _pofstream._osclFileServerSession = OSCL_STATIC_CAST(Oscl_FileServer*, _osclFileServerSession);
         int retVal = PVA_FF_AtomUtils::openFile(&_pofstream, targetFileName, Oscl_File::MODE_READWRITE | Oscl_File::MODE_BINARY, aCacheSize);
@@ -148,75 +150,67 @@ PVA_FF_MediaDataAtom::~PVA_FF_MediaDataAtom()
 void
 PVA_FF_MediaDataAtom::prepareTempFile(uint32 aCacheSize)
 {
-    if (_pofstream._filePtr == NULL && !_fileWriteError)
+    if (0 != _pofstream._filePtr || true == _fileWriteError)
+        return;
+
+    // 05/31/01 Generate temporary files into output path (the actual mp4 location)
+    // _tempFilename already contains the output path ("drive:\\...\\...\\")
+    _tempFilename += _STRLIT("temp");
+    // Assign the rest of the temp filename - index plus suffix
+    _tempFilename += (uint16)(_tempFileIndex++);
+    _tempFilename += _STRLIT("_");
+    _tempFilename += _tempFilePostfix;
+    _tempFilename += _STRLIT(".mdat");
+
+    _pofstream._osclFileServerSession = OSCL_STATIC_CAST(Oscl_FileServer*, _osclFileServerSession);
+
+    PVA_FF_AtomUtils::openFile(&_pofstream, _tempFilename, Oscl_File::MODE_READWRITE | Oscl_File::MODE_BINARY, aCacheSize);
+
+    if (_pofstream._filePtr == NULL)
     {
-        // 05/31/01 Generate temporary files into output path (the actual mp4 location)
-        // _tempFilename already contains the output path ("drive:\\...\\...\\")
-        //
-        _tempFilename += _STRLIT("temp");
-        // Assign the rest of the temp filename - index plus suffix
-        _tempFilename += (uint16)(_tempFileIndex++);
-
-        // 03/21/01 Multiple instances support
-        _tempFilename += _STRLIT("_");
-        _tempFilename += _tempFilePostfix;
-        //
-
-        _tempFilename += _STRLIT(".mdat");
-
-        _pofstream._osclFileServerSession = OSCL_STATIC_CAST(Oscl_FileServer*, _osclFileServerSession);
-
-        PVA_FF_AtomUtils::openFile(&_pofstream, _tempFilename, Oscl_File::MODE_READWRITE | Oscl_File::MODE_BINARY, aCacheSize);
-
-        if (_pofstream._filePtr == NULL)
-        {
-            _fileWriteError = true;
-        }
-        else
-        {
-            _oIsFileOpen = true;
-        }
-
-        // Render the atoms base members to the media data atom file
-        renderAtomBaseMembers(&_pofstream);
-
-        _fileOffsetForChunkStart = getDefaultSize();
-        _fileSize = getDefaultSize();
+        _fileWriteError = true;
     }
+    else
+    {
+        _oIsFileOpen = true;
+    }
+
+    renderAtomBaseMembers(&_pofstream); // render base members to media data atom file
+
+    _fileOffsetForChunkStart = getDefaultSize();
+    _fileSize = getDefaultSize();
 }
 
 bool
 PVA_FF_MediaDataAtom::prepareTargetFile(uint32 mediaStartOffset)
 {
-    if ((_pofstream._filePtr != NULL) && (_fileWriteError != true))
+    if (0 == _pofstream._filePtr || true == _fileWriteError)
+        return false;
+
+    if (0 < mediaStartOffset)
     {
-        if (mediaStartOffset > 0)
+        // Write zeros to accomodate the user data upfront
+        uint8* tempBuffer = NULL;
+        PV_MP4_FF_ARRAY_NEW(NULL, uint8, mediaStartOffset, tempBuffer);
+
+        oscl_memset(tempBuffer, 0, mediaStartOffset);
+
+        if (!(PVA_FF_AtomUtils::renderByteData(&_pofstream, mediaStartOffset, tempBuffer)))
         {
-            // Write zeros to accomodate the user data upfront
-            uint8* tempBuffer = NULL;
-            PV_MP4_FF_ARRAY_NEW(NULL, uint8, mediaStartOffset, tempBuffer);
-
-            oscl_memset(tempBuffer, 0, mediaStartOffset);
-
-            if (!(PVA_FF_AtomUtils::renderByteData(&_pofstream, mediaStartOffset, tempBuffer)))
-            {
-                PV_MP4_ARRAY_DELETE(NULL, tempBuffer);
-                return false;
-            }
             PV_MP4_ARRAY_DELETE(NULL, tempBuffer);
+            return false;
         }
-
-        // Render the atoms base members to the media data atom file
-        renderAtomBaseMembers(&_pofstream);
-
-        _fileOffsetForChunkStart = getDefaultSize();
-        _fileSize = getDefaultSize();
-
-        _targetFileMediaStartOffset = mediaStartOffset;
-
-        return true;
+        PV_MP4_ARRAY_DELETE(NULL, tempBuffer);
     }
-    return false;
+
+    // Render the atoms base members to the media data atom file
+    renderAtomBaseMembers(&_pofstream);
+
+    _fileOffsetForChunkStart = getDefaultSize();
+    _fileSize = getDefaultSize();
+    _targetFileMediaStartOffset = mediaStartOffset;
+
+    return true;
 }
 
 
@@ -228,7 +222,6 @@ PVA_FF_MediaDataAtom::prepareTargetFileForFragments(uint32 mediaStartOffset)
 
     renderAtomBaseMembers(&_pofstream);
     _fileOffsetForChunkStart = getDefaultSize();
-
     _fileSize = getDefaultSize();
 
     return _fileOffsetForChunkStart;
@@ -237,30 +230,27 @@ PVA_FF_MediaDataAtom::prepareTargetFileForFragments(uint32 mediaStartOffset)
 bool
 PVA_FF_MediaDataAtom::closeTargetFile()
 {
-    if ((_pofstream._filePtr != NULL) && (_fileWriteError != true))
-    {
-        // Get current position of put pointer
-        _totalDataRenderedToTargetFile =
-            PVA_FF_AtomUtils::getCurrentFilePosition(&_pofstream);
+    if (0 == _pofstream._filePtr || true == _fileWriteError)
+        return false;
 
-        // Go to the beginning of the media data
-        PVA_FF_AtomUtils::seekFromStart(&_pofstream, _targetFileMediaStartOffset);
+    // Get current position of put pointer
+    _totalDataRenderedToTargetFile =
+        PVA_FF_AtomUtils::getCurrentFilePosition(&_pofstream);
 
-        // Update size field
-        if (!PVA_FF_AtomUtils::render32(&_pofstream, getSize()))
-        {
-            return false;
-        }
+    // Go to the beginning of the media data
+    PVA_FF_AtomUtils::seekFromStart(&_pofstream, _targetFileMediaStartOffset);
 
-        // Return the _pofstream's pointer to start
-        PVA_FF_AtomUtils::seekFromStart(&_pofstream, 0);
+    // Update size field
+    if (false == PVA_FF_AtomUtils::render32(&_pofstream, getSize()))
+        return false;
 
-        _fileOffsetForChunkStart =
-            _targetFileMediaStartOffset + getDefaultSize();
+    // Return the _pofstream's pointer to start
+    PVA_FF_AtomUtils::seekFromStart(&_pofstream, 0);
 
-        return true;
-    }
-    return false;
+    _fileOffsetForChunkStart =
+        _targetFileMediaStartOffset + getDefaultSize();
+
+    return true;
 }
 
 Oscl_File*
@@ -273,103 +263,65 @@ PVA_FF_MediaDataAtom::getTargetFilePtr()
 bool
 PVA_FF_MediaDataAtom::addRawSample(void *psample, uint32 length)
 {
-    bool retVal = true;
+    if (true == _fileWriteError || 0 == _pofstream._filePtr)
+        return false;
 
-    if (!_fileWriteError)
-    {
-        if (_pofstream._filePtr == NULL)
-        {
-            return false;
-        }
+    _fileWriteError = (false == PVA_FF_AtomUtils::renderByteData(&_pofstream, length, (uint8*)psample));
+    _fileSize += length;                        // update the size of the atom
+    recomputeSize();                            // update the size of the atom
 
-        bool ret = PVA_FF_AtomUtils::renderByteData(&_pofstream, length, (uint8 *)psample);
-
-        if (ret == false)
-        {
-            _fileWriteError = true;
-            retVal = false;
-        }
-
-        _fileSize += length; // Update the size of the atom
-
-        // Update the size of the atom
-        recomputeSize();
-    }
-    else
-    {
-        retVal = false;
-    }
-
-    return (retVal);
+    return (false == _fileWriteError);
 }
 
 bool PVA_FF_MediaDataAtom::addRawSample(Oscl_Vector <OsclMemoryFragment, OsclMemAllocator>& fragmentList,
-                                        uint32 length, int32 mediaType, int32 codecType)
+                                        uint32 length, int32 mediaType, PVA_FF_MP4_CODEC_TYPE codecType)
 {
+    if (true == _fileWriteError || 0 == _pofstream._filePtr)
+        return false;
+
     bool retVal = true;
-    bool ret = true;
-    uint32 ii = 0;
-    OsclBinIStreamBigEndian stream;
 
-    if (!_fileWriteError)
+    if (MEDIA_TYPE_VISUAL == (uint32)mediaType && PVA_FF_MP4_CODEC_TYPE_AVC_VIDEO == codecType)
     {
-        if (_pofstream._filePtr == NULL)
-        {
-            return false;
-        }
-
         uint32 nalLength = 0;
-        if (mediaType == (int32)MEDIA_TYPE_VISUAL && codecType == CODEC_TYPE_AVC_VIDEO)
+        OsclBinIStreamBigEndian stream;
+        for (uint32 ii = 0; ii < fragmentList.size(); ++ii)
         {
-            for (ii = 0; ii < fragmentList.size(); ii++)
-            {
-                // read NAL length in Big Endian format
-                stream.Attach((OsclAny*) &(fragmentList[ii].len), 4);
-                stream >> nalLength;
+            // read NAL length in Big Endian format
+            stream.Attach((OsclAny*) &(fragmentList[ii].len), 4);
+            stream >> nalLength;
 
-                // compose nal length in two bytes
-                ret = PVA_FF_AtomUtils::renderByteData(&_pofstream, 4, (uint8 *) & nalLength);
-                if (ret == false)
-                {
-                    _fileWriteError = true;
-                    retVal = false;
-                }
-
-                // write NAL uint
-                ret = PVA_FF_AtomUtils::renderByteData(&_pofstream, fragmentList[ii].len, (uint8 *)fragmentList[ii].ptr);
-                if (ret == false)
-                {
-                    _fileWriteError = true;
-                    retVal = false;
-                }
-            }
-        }
-        else
-        {
-            for (ii = 0; ii < fragmentList.size(); ii++)
+            // compose nal length in two bytes
+            if (false == PVA_FF_AtomUtils::renderByteData(&_pofstream, 4, (uint8 *) & nalLength))
             {
-                ret = PVA_FF_AtomUtils::renderByteData(&_pofstream, fragmentList[ii].len, (uint8 *)fragmentList[ii].ptr);
+                _fileWriteError = true;
+                retVal = false;
             }
 
+            // write NAL uint
+            if (false == PVA_FF_AtomUtils::renderByteData(&_pofstream, fragmentList[ii].len, (uint8 *)fragmentList[ii].ptr))
+            {
+                _fileWriteError = true;
+                retVal = false;
+            }
         }
-
-        if (ret == false)
-        {
-            _fileWriteError = true;
-            retVal = false;
-        }
-
-        _fileSize += length; // Update the size of the atom
-
-        // Update the size of the atom
-        recomputeSize();
     }
     else
     {
-        retVal = false;
+        for (uint32 ii = 0; ii < fragmentList.size(); ++ii)
+        {
+            if (false == PVA_FF_AtomUtils::renderByteData(&_pofstream, fragmentList[ii].len, (uint8 *)fragmentList[ii].ptr))
+            {
+                _fileWriteError = true;
+                retVal = false;
+            }
+        }
     }
 
-    return (retVal);
+    _fileSize += length;                          // update the size of the atom
+    recomputeSize();                              // update the size of the atom
+
+    return retVal;
 }
 
 int32
@@ -395,24 +347,14 @@ void
 PVA_FF_MediaDataAtom::recomputeSize()
 {
     // Entire atom size fp same as atom file size
-    if (_fileSize == 0)
-    {
-        _size = getDefaultSize();
-    }
-    else
-    {
-        _size = _fileSize;
-    }
+    _size = (0 == _fileSize) ? getDefaultSize() : _fileSize;
 }
 
 uint32
 PVA_FF_MediaDataAtom::getMediaDataSize()
 {
     recomputeSize();
-
-    uint32 size = getSize();
-
-    return (size);
+    return getSize();
 }
 
 // Rendering the PVA_FF_Atom in proper format (bitlengths, etc.) to an ostream
@@ -470,24 +412,18 @@ PVA_FF_MediaDataAtom::renderToFileStream(MP4_AUTHOR_FF_FILE_IO_WRAP *fp)
 
     PV_MP4_FF_ARRAY_NEW(NULL, uint8, TEMP_TO_TARGET_FILE_COPY_BLOCK_SIZE, dataBuf);
 
-    while (tempFileSize > 0)
+    while (0 < tempFileSize)
     {
-        if (tempFileSize < TEMP_TO_TARGET_FILE_COPY_BLOCK_SIZE)
-        {
-            readBlockSize = tempFileSize;
-        }
-        else
-        {
-            readBlockSize = TEMP_TO_TARGET_FILE_COPY_BLOCK_SIZE;
-        }
+        readBlockSize = (tempFileSize < TEMP_TO_TARGET_FILE_COPY_BLOCK_SIZE)
+                        ? tempFileSize : TEMP_TO_TARGET_FILE_COPY_BLOCK_SIZE;
 
-        if (!(PVA_FF_AtomUtils::readByteData(&mdatFilePtr, readBlockSize, dataBuf)))
+        if (true != PVA_FF_AtomUtils::readByteData(&mdatFilePtr, readBlockSize, dataBuf))
         {
             _targetFileWriteError = true;
             return false;
         }
 
-        if (!(PVA_FF_AtomUtils::renderByteData(fp, readBlockSize, dataBuf)))
+        if (true != PVA_FF_AtomUtils::renderByteData(fp, readBlockSize, dataBuf))
         {
             _targetFileWriteError = true;
             return false;
@@ -496,11 +432,8 @@ PVA_FF_MediaDataAtom::renderToFileStream(MP4_AUTHOR_FF_FILE_IO_WRAP *fp)
     }
 
     PV_MP4_FF_DELETE(NULL, uint8, dataBuf);
-
     rendered += _fileSize;
-
     PVA_FF_AtomUtils::closeFile(&mdatFilePtr);
-
     return true;
 }
 

@@ -33,7 +33,7 @@ PVA_FF_MpegSampleEntry::PVA_FF_MpegSampleEntry(int32 mediaType)
 {
     // codecType fp hard coded to ZERO intentionally as PVA_FF_MpegSampleEntry fp called for
     // non-media samples ONLY.
-    PV_MP4_FF_NEW(fp->auditCB, PVA_FF_ESDAtom, (mediaType, 0), _pes);
+    PV_MP4_FF_NEW(fp->auditCB, PVA_FF_ESDAtom, (mediaType, PVA_FF_MP4_CODEC_TYPE_UNDEFINED), _pes);
     init();
     recomputeSize();
 

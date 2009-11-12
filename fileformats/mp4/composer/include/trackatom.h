@@ -24,9 +24,10 @@
 #ifndef __TrackAtom_H__
 #define __TrackAtom_H__
 
+#include "a_impeg4file.h"
+
 #include "pv_mp4ffcomposer_config.h"
 #include "atom.h"
-#include "a_isucceedfail.h"
 
 #include "trackheaderatom.h"
 #include "mediaatom.h"
@@ -41,7 +42,7 @@ typedef Oscl_Vector<uint32, OsclMemAllocator> uint32VecType;
 typedef Oscl_Vector<int32, OsclMemAllocator> int32VecType;
 typedef Oscl_Vector<uint8, OsclMemAllocator> uint8VecType;
 
-class PVA_FF_TrackAtom : public PVA_FF_Atom, public PVA_FF_ISucceedFail
+class PVA_FF_TrackAtom : public PVA_FF_Atom
 {
 
     public:
@@ -53,13 +54,13 @@ class PVA_FF_TrackAtom : public PVA_FF_Atom, public PVA_FF_ISucceedFail
                          uint32 id,
                          uint8 version,
                          uint32 fileAuthoringFlags,
-                         int32 codecType = 0,
+                         PVA_FF_MP4_CODEC_TYPE codecType = PVA_FF_MP4_CODEC_TYPE_UNDEFINED,
                          uint32 protocol = 0,
                          uint8 profile = 1,
                          uint8 profileComp = 0xFF,
                          uint8 level = 0xFF); // Constructor
 
-        int32 getCodecType()
+        PVA_FF_MP4_CODEC_TYPE getCodecType()
         {
             return _codecType;
         }
@@ -248,7 +249,7 @@ class PVA_FF_TrackAtom : public PVA_FF_Atom, public PVA_FF_ISucceedFail
 
         PVA_FF_UserDataAtom       *_pUserDataAtom;
 
-        int32 _codecType;
+        PVA_FF_MP4_CODEC_TYPE _codecType;
         int32 _mediaType;
 
         bool FIRST_SAMPLE;

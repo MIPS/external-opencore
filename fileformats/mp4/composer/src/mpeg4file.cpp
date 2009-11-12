@@ -97,12 +97,8 @@ const uint32 AMRModeSetMask[16] =
 PVA_FF_Mpeg4File::PVA_FF_Mpeg4File(int32 mediaType)
 {
     OSCL_UNUSED_ARG(mediaType);
-    _success = true;
-
     _tempFilePostfix = _STRLIT("");
-
     _tempOutputPath = _STRLIT("");
-
     _oUserDataPopulated = true;
     _pmovieAtom = NULL;
     _pmediaDataAtomVec = NULL;
@@ -224,7 +220,7 @@ PVA_FF_Mpeg4File::init(int32 mediaType,
 
     // Movie Fragments flags initialised
     _oMovieFragmentEnabled      = false;
-    _oLiveMovieFragmentEnabled     = false;
+    _oLiveMovieFragmentEnabled  = false;
     _oComposeMoofAtom           = false;
     _movieFragmentDuration      = DEFAULT_MOVIE_FRAGMENT_DURATION_IN_MS;
     _pCurrentMoofAtom           = NULL;
@@ -409,7 +405,7 @@ PVA_FF_Mpeg4File::setOutputFileHandle(MP4_AUTHOR_FF_FILE_HANDLE outputFileHandle
 }
 
 uint32
-PVA_FF_Mpeg4File::addTrack(int32 mediaType, int32 codecType, uint8 profile,
+PVA_FF_Mpeg4File::addTrack(int32 mediaType, PVA_FF_MP4_CODEC_TYPE codecType, uint8 profile,
                            uint8 profileComp, uint8 level)
 {
     uint32 TrackID = 0;
@@ -472,12 +468,12 @@ PVA_FF_Mpeg4File::addTrack(int32 mediaType, int32 codecType, uint8 profile,
 
         TrackID = pmediatrack->getTrackID();
 
-        if ((codecType == CODEC_TYPE_AMR_AUDIO) ||
-                (codecType == CODEC_TYPE_AMR_WB_AUDIO))
+        if ((codecType == PVA_FF_MP4_CODEC_TYPE_AMR_AUDIO) ||
+                (codecType == PVA_FF_MP4_CODEC_TYPE_AMR_WB_AUDIO))
         {
             _o3GPPTrack = true;
         }
-        if (codecType == CODEC_TYPE_AAC_AUDIO)
+        if (codecType == PVA_FF_MP4_CODEC_TYPE_AAC_AUDIO)
         {
             _o3GPPTrack = true;
             _oMPEGTrack = true;
@@ -486,16 +482,16 @@ PVA_FF_Mpeg4File::addTrack(int32 mediaType, int32 codecType, uint8 profile,
 
     if ((uint32) mediaType == MEDIA_TYPE_VISUAL)
     {
-        if (codecType == CODEC_TYPE_BASELINE_H263_VIDEO)
+        if (codecType == PVA_FF_MP4_CODEC_TYPE_BASELINE_H263_VIDEO)
         {
             _o3GPPTrack = true;
         }
-        else if (codecType == CODEC_TYPE_AVC_VIDEO)
+        else if (codecType == PVA_FF_MP4_CODEC_TYPE_AVC_VIDEO)
         {
             _o3GPPTrack = true;
             _oAVCTrack  = true;
         }
-        else if (codecType == CODEC_TYPE_MPEG4_VIDEO)
+        else if (codecType == PVA_FF_MP4_CODEC_TYPE_MPEG4_VIDEO)
         {
             _o3GPPTrack = true;
             _oMPEGTrack = true;
@@ -533,7 +529,7 @@ PVA_FF_Mpeg4File::addTrack(int32 mediaType, int32 codecType, uint8 profile,
 
     if ((uint32) mediaType == MEDIA_TYPE_TEXT)//added for the support of timed text track
     {
-        if (codecType == CODEC_TYPE_TIMED_TEXT)
+        if (codecType == PVA_FF_MP4_CODEC_TYPE_TIMED_TEXT)
         {
             _o3GPPTrack = true;
             _oTextTrack = true;
@@ -619,37 +615,27 @@ PVA_FF_Mpeg4File::setTrackDuration(uint32 trackID, uint64 duration)
 //will be called only for timed text file format
 bool PVA_FF_Mpeg4File::addTextSampleToTrack(uint32 trackID, PVMP4FFComposerSampleParam *pSampleParam)
 {
-    if (pSampleParam == NULL)
+    if (0 == pSampleParam)
         return false;
 
-    PVA_FF_TrackAtom *mediaTrack;
-    uint32 mediaType;
-    int32 codecType;
     bool retVal = true;
+    PVA_FF_TrackAtom* mediaTrack = _pmovieAtom->getMediaTrack(trackID);
+    uint32 mediaType  = mediaTrack->getMediaType();
+    PVA_FF_MP4_CODEC_TYPE codecType = _pmovieAtom->getCodecType(trackID);
 
-    mediaTrack = _pmovieAtom->getMediaTrack(trackID);
-    mediaType  = mediaTrack->getMediaType();
-    codecType = _pmovieAtom->getCodecType(trackID);
     // Create media sample buffer and size field
     uint32 size = 0;
-    // temporary variables
-    uint32 ii = 0;
-    OsclBinIStreamBigEndian stream;
-
     if (!pSampleParam->_fragmentList.empty())
     {
         if (mediaType == MEDIA_TYPE_TEXT)//CALCULATES SIZE OF TIMED TEXT SAMPLE
         {
-            for (ii = 0; ii < pSampleParam->_fragmentList.size(); ii++)
-            {
+            for (uint32 ii = 0; ii < pSampleParam->_fragmentList.size(); ii++)
                 size += pSampleParam->_fragmentList[ii].len;
-            }
         }
     }
+    pSampleParam->_sampleSize = size;
 
     PVA_FF_MediaDataAtom *mdatAtom = getMediaDataAtomForTrack(trackID);
-
-    pSampleParam->_sampleSize = size;
 
     if (mediaType == MEDIA_TYPE_TEXT)
     {
@@ -661,7 +647,7 @@ bool PVA_FF_Mpeg4File::addTextSampleToTrack(uint32 trackID, PVMP4FFComposerSampl
             if (mediaTrack)
             {
                 // Add to mdat PVA_FF_Atom for the specified track
-                if (codecType == CODEC_TYPE_TIMED_TEXT)
+                if (codecType == PVA_FF_MP4_CODEC_TYPE_TIMED_TEXT)
                 {
                     if (_oInterLeaveEnabled)
                     {
@@ -715,150 +701,112 @@ PVA_FF_Mpeg4File::getMovieFragmentDuration()
 bool
 PVA_FF_Mpeg4File::addSampleToTrack(uint32 trackID, PVMP4FFComposerSampleParam *pSampleParam)
 {
-    if (pSampleParam == NULL)
+    if (0 == pSampleParam)
         return false;
 
-    PVA_FF_TrackAtom *mediaTrack;
-    uint32 mediaType;
-    int32 codecType;
-    bool retVal = true;
-    //int32 flags;
+    PVA_FF_TrackAtom* mediaTrack = _pmovieAtom->getMediaTrack(trackID);
+    if (0 == mediaTrack)
+        return false;
 
-    mediaTrack = _pmovieAtom->getMediaTrack(trackID);
-    mediaType  = mediaTrack->getMediaType();
-    codecType = _pmovieAtom->getCodecType(trackID);
+    const uint32 mediaType = mediaTrack->getMediaType();
+    const PVA_FF_MP4_CODEC_TYPE codecType = _pmovieAtom->getCodecType(trackID);
+
+    bool retVal = true;
 
     // Create media sample buffer and size field
     uint32 size = 0;
-    // temporary variables
-    uint32 ii = 0;
-    OsclBinIStreamBigEndian stream;
-    OsclMemoryFragment fragment;
-    if (!pSampleParam->_fragmentList.empty())
-    {
-        // calculate size of AVC sample
-        if (mediaType == MEDIA_TYPE_VISUAL && codecType == CODEC_TYPE_AVC_VIDEO)
-        {
-            // compose AVC sample
-            for (uint32 ii = 0; ii < pSampleParam->_fragmentList.size(); ii++)
-            {
-                size += (pSampleParam->_fragmentList[ii].len + 4); // length + '2' size of NAL unit length field
-            }
-        }
-        // all memory fragments in the vector combines into one sample
-        else
-        {
-            for (ii = 0; ii < pSampleParam->_fragmentList.size(); ii++)
-            {
-                size += pSampleParam->_fragmentList[ii].len;
-            }
-        }
-    }
+    if (true == pSampleParam->_fragmentList.empty())
+        return false;
+
+    // compensate for AVC sample? length + '2' size of NAL unit length field
+    const uint8 avc_extra_len = (mediaType == MEDIA_TYPE_VISUAL && codecType == PVA_FF_MP4_CODEC_TYPE_AVC_VIDEO) ? 4 : 0;
+
+    // all memory fragments in the vector combines into one sample
+    for (uint32 ii = 0; ii < pSampleParam->_fragmentList.size(); ++ii)
+        size += (pSampleParam->_fragmentList[ii].len + avc_extra_len);
+
     pSampleParam->_sampleSize = size;
 
-    PVA_FF_MediaDataAtom *mdatAtom = getMediaDataAtomForTrack(trackID);
-    if (mediaType == MEDIA_TYPE_AUDIO)
+    PVA_FF_MediaDataAtom* mdatAtom = getMediaDataAtomForTrack(trackID);
+    if (MEDIA_TYPE_AUDIO == mediaType)
     {
-        if (_modifiable)
+        if (!_modifiable)
+            return false;
+
+        if (PVA_FF_MP4_CODEC_TYPE_AMR_AUDIO == codecType ||
+                PVA_FF_MP4_CODEC_TYPE_AMR_WB_AUDIO == codecType)
         {
-            if (mediaTrack != NULL)
-            {
-                if ((mediaTrack->getCodecType() == CODEC_TYPE_AMR_AUDIO) ||
-                        (mediaTrack->getCodecType() == CODEC_TYPE_AMR_WB_AUDIO))
-                {
-                    if (size >= 1)
-                    {
-                        PVA_FF_TrackAtom *track = _pmovieAtom->getMediaTrack(trackID);
-                        if (track != NULL)
-                        {
-                            // FT is in the first byte that comes off the encoder
-                            pSampleParam->_flags = *((uint8*)(pSampleParam->_fragmentList.front().ptr));
-                            uint32 mode_set = 0;
-                            if (pSampleParam->_flags < 16)
-                            {
-                                mode_set = AMRModeSetMask[(pSampleParam->_flags&0x0f)];
-                            }
-                            if (pSampleParam->_flags < 9)
-                            {
-                                // JUST TO ENSURE THAT THE PADDED BITS ARE ZERO
-                                fragment = pSampleParam->_fragmentList.back();
-                                if (mediaTrack->getCodecType() == CODEC_TYPE_AMR_AUDIO)
-                                {
-                                    ((uint8*)fragment.ptr)[ fragment.len - 1] &= aAMRNBZeroSetMask[(pSampleParam->_flags&0x0f)];
-                                }
-                                else if (mediaTrack->getCodecType() == CODEC_TYPE_AMR_WB_AUDIO)
-                                {
-                                    ((uint8*)fragment.ptr)[ fragment.len - 1] &= aAMRWBZeroSetMask[(pSampleParam->_flags&0x0f)];
-                                }
-
-                            }
-                            if (_oInterLeaveEnabled)
-                            {
-                                if (!addMediaSampleInterleave(trackID, pSampleParam))
-                                {
-                                    return false;
-                                }
-                            }
-                            else
-                            {
-                                // Add to mdat PVA_FF_Atom for the specified track
-                                if (!mdatAtom->addRawSample(pSampleParam->_fragmentList,
-                                                            pSampleParam->_sampleSize,
-                                                            mediaType, codecType))
-                                {
-                                    retVal = false;
-                                }
-                                // Add to moov atom (in turn adds to tracks)
-                                _pmovieAtom->addSampleToTrack(trackID, pSampleParam);
-                            }
-                        }
-                    }
-                    else
-                    {
-                        return false;
-                    }
-                }
-                else if (mediaTrack->getCodecType() == CODEC_TYPE_AAC_AUDIO)
-                {
-                    if (size > 0)
-                    {
-                        if (_oInterLeaveEnabled)
-                        {
-                            if (!addMediaSampleInterleave(trackID, pSampleParam))
-                            {
-                                return false;
-                            }
-                        }
-                        else
-                        {
-
-                            // Add to mdat PVA_FF_Atom for the specified track
-
-                            if (!mdatAtom->addRawSample((pSampleParam->_fragmentList), (size), mediaType, codecType))
-                            {
-                                retVal = false;
-                            }
-
-                            pSampleParam->_flags = 0;
-
-                            // Add to moov atom (in turn adds to tracks)
-                            _pmovieAtom->addSampleToTrack(trackID, pSampleParam);
-                        }
-                    }
-                }
-            }
-            else
-            {
+            if (1 > size)
                 return false;
+
+            PVA_FF_TrackAtom *track = _pmovieAtom->getMediaTrack(trackID);
+            if (track != NULL)
+            {
+                // FT is in the first byte that comes off the encoder
+                pSampleParam->_flags = *((uint8*)(pSampleParam->_fragmentList.front().ptr));
+                uint32 mode_set = 0;
+                if (pSampleParam->_flags < 16)
+                {
+                    mode_set = AMRModeSetMask[(pSampleParam->_flags&0x0f)];
+                }
+                if (pSampleParam->_flags < 9)
+                {
+                    // JUST TO ENSURE THAT THE PADDED BITS ARE ZERO
+                    OsclMemoryFragment fragment = pSampleParam->_fragmentList.back();
+                    if (PVA_FF_MP4_CODEC_TYPE_AMR_AUDIO == codecType)
+                    {
+                        ((uint8*)fragment.ptr)[ fragment.len - 1] &= aAMRNBZeroSetMask[(pSampleParam->_flags&0x0f)];
+                    }
+                    else if (PVA_FF_MP4_CODEC_TYPE_AMR_WB_AUDIO == codecType)
+                    {
+                        ((uint8*)fragment.ptr)[ fragment.len - 1] &= aAMRWBZeroSetMask[(pSampleParam->_flags&0x0f)];
+                    }
+
+                }
+                if (_oInterLeaveEnabled)
+                {
+                    if (!addMediaSampleInterleave(trackID, pSampleParam))
+                        return false;
+                }
+                else
+                {
+                    // Add to mdat PVA_FF_Atom for the specified track
+                    if (!mdatAtom->addRawSample(pSampleParam->_fragmentList,
+                                                pSampleParam->_sampleSize,
+                                                mediaType, codecType))
+                    {
+                        retVal = false;
+                    }
+                    // Add to moov atom (in turn adds to tracks)
+                    _pmovieAtom->addSampleToTrack(trackID, pSampleParam);
+                }
             }
         }
-        else
+        else if (PVA_FF_MP4_CODEC_TYPE_AAC_AUDIO == codecType)
         {
-            return false;
+            if (size > 0)
+            {
+                if (_oInterLeaveEnabled)
+                {
+                    if (!addMediaSampleInterleave(trackID, pSampleParam))
+                        return false;
+                }
+                else
+                {
+                    // Add to mdat PVA_FF_Atom for the specified track
+                    if (!mdatAtom->addRawSample((pSampleParam->_fragmentList), (size), mediaType, codecType))
+                        retVal = false;
+
+                    pSampleParam->_flags = 0;
+
+                    // Add to moov atom (in turn adds to tracks)
+                    _pmovieAtom->addSampleToTrack(trackID, pSampleParam);
+                }
+            }
         }
     }
 
-    if (mediaType == MEDIA_TYPE_VISUAL)
+    if (MEDIA_TYPE_VISUAL == mediaType)
     {
         // For the first frame in each layer, pull off the VOL header.  For the base layer
         // (layer=0), this fp the first 28 bytes.  For the enhancememnt(temporal) layer
@@ -875,56 +823,44 @@ PVA_FF_Mpeg4File::addSampleToTrack(uint32 trackID, PVMP4FFComposerSampleParam *p
         // uint8 layer = (uint8)((flags & 0x70) >> 4);
 
 
-        if (codecType == CODEC_TYPE_BASELINE_H263_VIDEO)
+        if (PVA_FF_MP4_CODEC_TYPE_BASELINE_H263_VIDEO == codecType)
         {
-            if (_firstFrameInLayer0)
-            {
+            if (true == _firstFrameInLayer0)
                 _firstFrameInLayer0 = false;
-            }
         }
 
-        if (_modifiable)
-        {
-            // The layer in the flags byte indicates which video track to add to
-            // int32 trackNum = (int32)(flags & 0x70) >> 4;
-
-            if (mediaTrack)
-            {
-                // Add to mdat PVA_FF_Atom for the specified track
-                if ((codecType == CODEC_TYPE_MPEG4_VIDEO) ||
-                        (codecType == CODEC_TYPE_BASELINE_H263_VIDEO) ||
-                        (codecType == CODEC_TYPE_AVC_VIDEO))
-                {
-                    if (_oInterLeaveEnabled)
-                    {
-                        if (!addMediaSampleInterleave(trackID, pSampleParam))
-                        {
-                            return false;
-                        }
-                    }
-                    else
-                    {
-
-                        if (!mdatAtom->addRawSample((pSampleParam->_fragmentList), (size), mediaType, codecType))
-                        {
-                            retVal = false;
-                        }
-                        _pmovieAtom->addSampleToTrack(trackID, pSampleParam);
-                    }
-                }
-            }
-            else
-            {
-                return false;
-            }
-        }
-        else
-        {
+        if (!_modifiable)
             return false;
+
+        // The layer in the flags byte indicates which video track to add to
+        // int32 trackNum = (int32)(flags & 0x70) >> 4;
+
+        // Add to mdat PVA_FF_Atom for the specified track
+        switch (codecType)
+        {
+            case PVA_FF_MP4_CODEC_TYPE_MPEG4_VIDEO:
+            case PVA_FF_MP4_CODEC_TYPE_BASELINE_H263_VIDEO:
+            case PVA_FF_MP4_CODEC_TYPE_AVC_VIDEO:
+            {
+                if (true == _oInterLeaveEnabled)
+                {
+                    return addMediaSampleInterleave(trackID, pSampleParam);
+                }
+                else
+                {
+                    if (!mdatAtom->addRawSample((pSampleParam->_fragmentList), (size), mediaType, codecType))
+                        retVal = false;
+
+                    _pmovieAtom->addSampleToTrack(trackID, pSampleParam);
+                }
+                break;
+            }
+            default:
+                return false;
         }
     }
 
-    return (retVal);
+    return retVal;
 }
 
 // The following methods are used to set the user data
@@ -1123,13 +1059,16 @@ PVA_FF_Mpeg4File::setTextDecoderSpecificInfo(PVA_FF_TextSampleDescInfo *header, 
 void
 PVA_FF_Mpeg4File::setDecoderSpecificInfo(uint8 * header, int32 size, int32 trackID)
 {
+    if (0 >= size)
+        return;
+
     PVA_FF_DecoderSpecificInfo *pinfo = NULL;
     PV_MP4_FF_NEW(fp->auditCB, PVA_FF_DecoderSpecificInfo, (header, (uint32)size), pinfo);
     _pmovieAtom->addDecoderSpecificInfo(pinfo, trackID);
     PVA_FF_TrackAtom *track = _pmovieAtom->getMediaTrack(trackID);
     if (track->getMediaType() == MEDIA_TYPE_VISUAL)
     {
-        if (track->getCodecType() == CODEC_TYPE_AVC_VIDEO)
+        if (track->getCodecType() == PVA_FF_MP4_CODEC_TYPE_AVC_VIDEO)
         {
             PV_MP4_FF_DELETE(NULL, PVA_FF_DecoderSpecificInfo, pinfo);
         }
@@ -1628,8 +1567,8 @@ PVA_FF_Mpeg4File::addMultipleAccessUnitsToTrack(uint32 trackID, GAU *pgau)
     {
         if (_modifiable)
         {
-            if ((mediaTrack->getCodecType() == CODEC_TYPE_AMR_AUDIO) ||
-                    (mediaTrack->getCodecType() == CODEC_TYPE_AMR_WB_AUDIO))
+            if ((mediaTrack->getCodecType() == PVA_FF_MP4_CODEC_TYPE_AMR_AUDIO) ||
+                    (mediaTrack->getCodecType() == PVA_FF_MP4_CODEC_TYPE_AMR_WB_AUDIO))
             {
                 int32 index = 0;
 
@@ -2081,7 +2020,7 @@ bool
 PVA_FF_Mpeg4File::flushInterLeaveBuffer(uint32 trackID)
 {
     uint32 mediaType;
-    int32 codecType;
+    PVA_FF_MP4_CODEC_TYPE codecType;
 
 
     PVA_FF_TrackAtom* mediaTrack = _pmovieAtom->getMediaTrack(trackID);
@@ -2113,7 +2052,7 @@ PVA_FF_Mpeg4File::flushInterLeaveBuffer(uint32 trackID)
 
         Oscl_Vector<int32, OsclMemAllocator> *indexVec = NULL;
 
-        if (mediaType == MEDIA_TYPE_TEXT && codecType == CODEC_TYPE_TIMED_TEXT)
+        if (mediaType == MEDIA_TYPE_TEXT && codecType == PVA_FF_MP4_CODEC_TYPE_TIMED_TEXT)
         {
             indexVec = pInterLeaveBuffer->getTextIndexVec();
         }
@@ -2131,7 +2070,7 @@ PVA_FF_Mpeg4File::flushInterLeaveBuffer(uint32 trackID)
                 sampleParam._sampleSize = (*sizeVec)[i];
                 sampleParam._flags = (*flagsVec)[i];
 
-                if (mediaType == MEDIA_TYPE_TEXT && codecType == CODEC_TYPE_TIMED_TEXT)
+                if (mediaType == MEDIA_TYPE_TEXT && codecType == PVA_FF_MP4_CODEC_TYPE_TIMED_TEXT)
                 {
                     sampleParam._index = (*indexVec)[i];
                     sampleParam._sampleDuration = (*sampleDurationVec)[i];
@@ -2408,22 +2347,16 @@ PVA_FF_Mpeg4File::prepareToEncode()
     _oFtypPopulated = true;
 
     bool targetRender = false;
-
-    for (uint32 j = 0; j < _pmediaDataAtomVec->size(); j++)
+    for (uint32 j = 0; j < _pmediaDataAtomVec->size(); ++j)
     {
-        if (_totalTempFileRemoval)
+        if (true == _totalTempFileRemoval)
         {
-            if (targetRender)
-            {
-                //Only one track is allowed to be rendered directly onto the target
-                //file
+            // only one track allowed to be rendered directly onto the target file
+            if (true == targetRender) // already rendered a track?
                 return false;
-            }
-            else
-            {
-                targetRender = true;
-                ((*_pmediaDataAtomVec)[j]->prepareTargetFile(_initialUserDataSize));
-            }
+
+            targetRender = true;
+            ((*_pmediaDataAtomVec)[j]->prepareTargetFile(_initialUserDataSize));
         }
     }
 
@@ -2445,7 +2378,7 @@ PVA_FF_Mpeg4File::addMediaSampleInterleave(uint32 trackID, PVMP4FFComposerSample
     PVA_FF_TrackAtom *mediaTrack = _pmovieAtom->getMediaTrack(trackID);
     PVA_FF_MediaDataAtom *mdatAtom = getMediaDataAtomForTrack(trackID);
     PVA_FF_InterLeaveBuffer *pInterLeaveBuffer = getInterLeaveBuffer(trackID);
-    int32 codecType = _pmovieAtom->getCodecType(trackID);
+    PVA_FF_MP4_CODEC_TYPE codecType = _pmovieAtom->getCodecType(trackID);
     uint32 mediaType = mediaTrack->getMediaType();
 
     pSampleParam->_index = 0;
@@ -2548,93 +2481,36 @@ PVA_FF_Mpeg4File::addMediaSampleInterleave(uint32 trackID, PVMP4FFComposerSample
 
             // base offset set to start of mdat (after fourcc code) as base data offset
             _baseOffset += _pCurrentMediaDataAtom->prepareTargetFileForFragments(_offsetDataRenderedToFile);
-
         }
-
     }
 
-    if (_oMovieFragmentEnabled == false || _oComposeMoofAtom == false)
+    if (false == _oMovieFragmentEnabled || false == _oComposeMoofAtom)
     {
-
-        if (!pInterLeaveBuffer->checkInterLeaveBufferSpace(pSampleParam->_sampleSize))
+        // interleave buffer have enough space?
+        if (true == pInterLeaveBuffer->checkInterLeaveBufferSpace(pSampleParam->_sampleSize))
         {
-            // Set Chunk end time to the last sample TS
-            // in the interleave buffer
-            pInterLeaveBuffer->setLastChunkEndTime(pSampleParam->_timeStamp);
-
-            _oChunkStart = true;
-
-            Oscl_Vector<uint32, OsclMemAllocator> *tsVec =
-                pInterLeaveBuffer->getTimeStampVec();
-
-            Oscl_Vector<uint32, OsclMemAllocator> *sizeVec =
-                pInterLeaveBuffer->getSampleSizeVec();
-
-            Oscl_Vector<uint8, OsclMemAllocator> *flagsVec =
-                pInterLeaveBuffer->getFlagsVec();
-
-            int32 numBufferedSamples = tsVec->size();
-
-            pSampleParam->_baseOffset = _baseOffset;
-            for (int32 ii = 0; ii < numBufferedSamples; ii++)
+            // exceeded the interleave duration?
+            if (true != checkInterLeaveDuration(trackID, pSampleParam->_timeStamp))
             {
-                PVMP4FFComposerSampleParam  sampleParam;
-                sampleParam._timeStamp   = (*tsVec)[ii];
-                sampleParam._sampleSize = (*sizeVec)[ii];
-                sampleParam._flags = (*flagsVec)[ii];
-                sampleParam._baseOffset = _baseOffset;
-
-                // Add to moov atom (in turn adds to tracks)
-                _pmovieAtom->addSampleToTrack(trackID,
-                                              &sampleParam,
-                                              _oChunkStart);
-
                 _oChunkStart = false;
             }
-
-            if (numBufferedSamples > 0)
-            {
-                //Render chunk
-                uint32 chunkSize = 0;
-                uint8* ptr = pInterLeaveBuffer->resetInterLeaveBuffer(chunkSize);
-
-                if (!mdatAtom->addRawSample(ptr, chunkSize))
-                {
-                    return false;
-                }
-                _baseOffset += chunkSize;
-                pSampleParam->_baseOffset = _baseOffset;
-            }
-
-            if (!(pInterLeaveBuffer->addSampleToInterLeaveBuffer(pSampleParam)))
-            {
-                return false;
-            }
-        }
-        else
-        {
-            if (checkInterLeaveDuration(trackID, pSampleParam->_timeStamp))
+            else
             {
                 _oChunkStart = true;
 
-                Oscl_Vector<uint32, OsclMemAllocator> *tsVec =
-                    pInterLeaveBuffer->getTimeStampVec();
-
-                Oscl_Vector<uint32, OsclMemAllocator> *sizeVec =
-                    pInterLeaveBuffer->getSampleSizeVec();
-
-                Oscl_Vector<uint8, OsclMemAllocator> *flagsVec =
-                    pInterLeaveBuffer->getFlagsVec();
+                Oscl_Vector<uint32, OsclMemAllocator>* tsVec   = pInterLeaveBuffer->getTimeStampVec();
+                Oscl_Vector<uint32, OsclMemAllocator>* sizeVec = pInterLeaveBuffer->getSampleSizeVec();
+                Oscl_Vector<uint8, OsclMemAllocator>* flagsVec = pInterLeaveBuffer->getFlagsVec();
 
                 int32 numBufferedSamples = tsVec->size();
 
                 pSampleParam->_baseOffset = _baseOffset;
-                for (int32 ii = 0; ii < numBufferedSamples; ii++)
+                for (int32 ii = 0; ii < numBufferedSamples; ++ii)
                 {
                     PVMP4FFComposerSampleParam  sampleParam;
-                    sampleParam._timeStamp   = (*tsVec)[ii];
+                    sampleParam._timeStamp  = (*tsVec)[ii];
                     sampleParam._sampleSize = (*sizeVec)[ii];
-                    sampleParam._flags = (*flagsVec)[ii];
+                    sampleParam._flags      = (*flagsVec)[ii];
                     sampleParam._baseOffset = _baseOffset;
 
                     // Add to moov atom (in turn adds to tracks)
@@ -2643,61 +2519,159 @@ PVA_FF_Mpeg4File::addMediaSampleInterleave(uint32 trackID, PVMP4FFComposerSample
                     _oChunkStart = false;
                 }
 
-                if (numBufferedSamples > 0)
+                if (0 < numBufferedSamples)
                 {
-                    //Render chunk
+                    // render chunk
                     uint32 chunkSize = 0;
                     uint8* ptr = pInterLeaveBuffer->resetInterLeaveBuffer(chunkSize);
 
-                    if (!mdatAtom->addRawSample(ptr, chunkSize))
-                    {
+                    if (false == mdatAtom->addRawSample(ptr, chunkSize))
                         return false;
-                    }
+
                     _baseOffset += chunkSize;
                     pSampleParam->_baseOffset = _baseOffset;
                 }
             }
-            else
+
+            pSampleParam->_baseOffset = _baseOffset;
+            return pInterLeaveBuffer->addSampleToInterLeaveBuffer(pSampleParam);
+        }
+
+        // set chunk end time to the last sample TS in the interleave buffer
+        pInterLeaveBuffer->setLastChunkEndTime(pSampleParam->_timeStamp);
+
+        _oChunkStart = true;
+
+        Oscl_Vector<uint32, OsclMemAllocator>* tsVec   = pInterLeaveBuffer->getTimeStampVec();
+        Oscl_Vector<uint32, OsclMemAllocator>* sizeVec = pInterLeaveBuffer->getSampleSizeVec();
+        Oscl_Vector<uint8, OsclMemAllocator>* flagsVec = pInterLeaveBuffer->getFlagsVec();
+
+        int32 numBufferedSamples = tsVec->size();
+
+        pSampleParam->_baseOffset = _baseOffset;
+        for (int32 ii = 0; ii < numBufferedSamples; ++ii)
+        {
+            PVMP4FFComposerSampleParam  sampleParam;
+            sampleParam._timeStamp  = (*tsVec)[ii];
+            sampleParam._sampleSize = (*sizeVec)[ii];
+            sampleParam._flags      = (*flagsVec)[ii];
+            sampleParam._baseOffset = _baseOffset;
+
+            // add to moov atom (in turn adds to tracks)
+            _pmovieAtom->addSampleToTrack(trackID, &sampleParam, _oChunkStart);
+
+            _oChunkStart = false;
+        }
+
+        if (0 < numBufferedSamples)
+        {
+            //Render chunk
+            uint32 chunkSize = 0;
+            uint8* ptr = pInterLeaveBuffer->resetInterLeaveBuffer(chunkSize);
+
+            if (!mdatAtom->addRawSample(ptr, chunkSize))
+                return false;
+
+            _baseOffset += chunkSize;
+            pSampleParam->_baseOffset = _baseOffset;
+        }
+
+        return pInterLeaveBuffer->addSampleToInterLeaveBuffer(pSampleParam);
+    }
+
+    // add data in movie fragment
+    uint32 trackFragmentDuration = _pCurrentMoofAtom->getTrackFragmentDuration(trackID);
+
+    // check if Movie Fragment duration is reached for current fragment
+    if (trackFragmentDuration < _movieFragmentDuration)
+    {
+        // add fragment to the current track fragment
+
+        //check for interleaving in current track fragment
+        PVA_FF_TrackFragmentAtom *pCurrentTrackFragment;
+        pCurrentTrackFragment = _pCurrentMoofAtom->getTrackFragment(trackID);
+
+        if (!pInterLeaveBuffer->checkInterLeaveBufferSpace(pSampleParam->_sampleSize))
+        {
+            // Set trun end time to the last sample TS
+            // in the interleave buffer
+            pInterLeaveBuffer->setLastChunkEndTime(pSampleParam->_timeStamp);
+
+            _oTrunStart = true;
+
+            Oscl_Vector<uint32, OsclMemAllocator>* tsVec   = pInterLeaveBuffer->getTimeStampVec();
+            Oscl_Vector<uint32, OsclMemAllocator>* sizeVec = pInterLeaveBuffer->getSampleSizeVec();
+            Oscl_Vector<uint8, OsclMemAllocator>* flagsVec = pInterLeaveBuffer->getFlagsVec();
+
+            int32 numBufferedSamples = tsVec->size();
+
+            for (int32 ii = 0; ii < numBufferedSamples; ii++)
             {
-                _oChunkStart = false;
+                uint32 sampleTS   = (*tsVec)[ii];
+                uint32 sampleSize = (*sizeVec)[ii];
+                uint8  sampleFlag = (*flagsVec)[ii];
+
+                // Add to moof atom (in turn adds to tracks)
+                _pCurrentMoofAtom->addSampleToFragment(trackID, sampleSize, sampleTS,
+                                                       sampleFlag,
+                                                       _baseOffset, // update data offset for each new trun
+                                                       _oTrunStart); // determine to add new trun or not
+
+                // update movie duration in MVEX atom
+                _pmovieAtom->updateMovieFragmentDuration(trackID, sampleTS);
+
+                if (MEDIA_TYPE_VISUAL == mediaType)
+                {
+                    // make entry for every sync sample
+                    uint8 codingType = (uint8)((sampleFlag >> 2) & 0x03);
+                    if (CODING_TYPE_I == codingType)
+                    {
+                        // add video key frame as random sample entry
+                        _pMfraAtom->addSampleEntry(trackID, sampleTS, _currentMoofOffset,
+                                                   _pCurrentMoofAtom->getTrackFragmentNumber(trackID),
+                                                   pCurrentTrackFragment->getTrunNumber(),
+                                                   (ii + 1));
+                    }
+                }
+                else if (MEDIA_TYPE_AUDIO == mediaType && true == _oTrunStart)
+                {
+                    // add first audio sample in each TRUN as random sample entry
+                    _pMfraAtom->addSampleEntry(trackID, sampleTS, _currentMoofOffset,
+                                               _pCurrentMoofAtom->getTrackFragmentNumber(trackID),
+                                               pCurrentTrackFragment->getTrunNumber(),
+                                               (ii + 1));
+                }
+
+                _oTrunStart = false;
             }
+
+            pCurrentTrackFragment->updateLastTSEntry(pSampleParam->_timeStamp);
+
+            if (0 < numBufferedSamples)
+            {
+                //Render chunk
+                uint32 trunSize = 0;
+                uint8* ptr = pInterLeaveBuffer->resetInterLeaveBuffer(trunSize);
+
+                if (!_pCurrentMediaDataAtom->addRawSample(ptr, trunSize))
+                    return false;
+
+                _baseOffset += trunSize;
+            }
+
             pSampleParam->_baseOffset = _baseOffset;
             if (!(pInterLeaveBuffer->addSampleToInterLeaveBuffer(pSampleParam)))
-            {
                 return false;
-            }
         }
-    }
-    else
-    {
-        // add data in movie fragment
-        uint32 trackFragmentDuration = _pCurrentMoofAtom->getTrackFragmentDuration(trackID);
-
-        // check if Movie Fragment duration is reached for current fragment
-        if (trackFragmentDuration < _movieFragmentDuration)
+        else
         {
-            // add fragment to the current track fragment
-
-            //check for interleaving in current track fragment
-            PVA_FF_TrackFragmentAtom *pCurrentTrackFragment;
-            pCurrentTrackFragment = _pCurrentMoofAtom->getTrackFragment(trackID);
-
-            if (!pInterLeaveBuffer->checkInterLeaveBufferSpace(pSampleParam->_sampleSize))
+            if (checkInterLeaveDuration(trackID, pSampleParam->_timeStamp))
             {
-                // Set trun end time to the last sample TS
-                // in the interleave buffer
-                pInterLeaveBuffer->setLastChunkEndTime(pSampleParam->_timeStamp);
-
                 _oTrunStart = true;
 
-                Oscl_Vector<uint32, OsclMemAllocator> *tsVec =
-                    pInterLeaveBuffer->getTimeStampVec();
-
-                Oscl_Vector<uint32, OsclMemAllocator> *sizeVec =
-                    pInterLeaveBuffer->getSampleSizeVec();
-
-                Oscl_Vector<uint8, OsclMemAllocator> *flagsVec =
-                    pInterLeaveBuffer->getFlagsVec();
+                Oscl_Vector<uint32, OsclMemAllocator>* tsVec   = pInterLeaveBuffer->getTimeStampVec();
+                Oscl_Vector<uint32, OsclMemAllocator>* sizeVec = pInterLeaveBuffer->getSampleSizeVec();
+                Oscl_Vector<uint8, OsclMemAllocator>* flagsVec = pInterLeaveBuffer->getFlagsVec();
 
                 int32 numBufferedSamples = tsVec->size();
 
@@ -2708,16 +2682,16 @@ PVA_FF_Mpeg4File::addMediaSampleInterleave(uint32 trackID, PVMP4FFComposerSample
                     uint32 sampleSize = (*sizeVec)[ii];
                     uint8  sampleFlag = (*flagsVec)[ii];
 
-                    // Add to moof atom (in turn adds to tracks)
-                    _pCurrentMoofAtom->addSampleToFragment(trackID, sampleSize, sampleTS,
-                                                           sampleFlag,
-                                                           _baseOffset, // update data offset for each new trun
-                                                           _oTrunStart); // determine to add new trun or not
-
                     // update movie duration in MVEX atom
                     _pmovieAtom->updateMovieFragmentDuration(trackID, sampleTS);
 
-                    if (mediaType == MEDIA_TYPE_VISUAL)
+                    // Add to moov atom (in turn adds to tracks)
+                    _pCurrentMoofAtom->addSampleToFragment(trackID, sampleSize, sampleTS,
+                                                           sampleFlag,
+                                                           _baseOffset,
+                                                           _oTrunStart);
+
+                    if (MEDIA_TYPE_VISUAL == mediaType)
                     {
                         // make entry for every sync sample
                         uint8 codingType = (uint8)((sampleFlag >> 2) & 0x03);
@@ -2730,14 +2704,13 @@ PVA_FF_Mpeg4File::addMediaSampleInterleave(uint32 trackID, PVMP4FFComposerSample
                                                        (ii + 1));
                         }
                     }
-                    else if (mediaType == MEDIA_TYPE_AUDIO && _oTrunStart == true)
+                    else if (MEDIA_TYPE_AUDIO == mediaType  && true == _oTrunStart)
                     {
                         // add first audio sample in each TRUN as random sample entry
                         _pMfraAtom->addSampleEntry(trackID, sampleTS, _currentMoofOffset,
                                                    _pCurrentMoofAtom->getTrackFragmentNumber(trackID),
                                                    pCurrentTrackFragment->getTrunNumber(),
                                                    (ii + 1));
-
                     }
 
                     _oTrunStart = false;
@@ -2752,205 +2725,115 @@ PVA_FF_Mpeg4File::addMediaSampleInterleave(uint32 trackID, PVMP4FFComposerSample
                     uint8* ptr = pInterLeaveBuffer->resetInterLeaveBuffer(trunSize);
 
                     if (!_pCurrentMediaDataAtom->addRawSample(ptr, trunSize))
-                    {
                         return false;
-                    }
-                    _baseOffset += trunSize;
-                }
 
-                pSampleParam->_baseOffset = _baseOffset;
-                if (!(pInterLeaveBuffer->addSampleToInterLeaveBuffer(pSampleParam)))
-                {
-                    return false;
+                    _baseOffset += trunSize;
                 }
             }
             else
             {
-                if (checkInterLeaveDuration(trackID, pSampleParam->_timeStamp))
-                {
-                    _oTrunStart = true;
-
-
-                    Oscl_Vector<uint32, OsclMemAllocator> *tsVec =
-                        pInterLeaveBuffer->getTimeStampVec();
-
-                    Oscl_Vector<uint32, OsclMemAllocator> *sizeVec =
-                        pInterLeaveBuffer->getSampleSizeVec();
-
-                    Oscl_Vector<uint8, OsclMemAllocator> *flagsVec =
-                        pInterLeaveBuffer->getFlagsVec();
-
-                    int32 numBufferedSamples = tsVec->size();
-
-                    for (int32 ii = 0; ii < numBufferedSamples; ii++)
-                    {
-                        uint32 sampleTS   = (*tsVec)[ii];
-                        uint32 sampleSize = (*sizeVec)[ii];
-                        uint8  sampleFlag = (*flagsVec)[ii];
-
-                        // update movie duration in MVEX atom
-                        _pmovieAtom->updateMovieFragmentDuration(trackID, sampleTS);
-
-                        // Add to moov atom (in turn adds to tracks)
-                        _pCurrentMoofAtom->addSampleToFragment(trackID, sampleSize, sampleTS,
-                                                               sampleFlag,
-                                                               _baseOffset,
-                                                               _oTrunStart);
-
-                        if (mediaType == MEDIA_TYPE_VISUAL)
-                        {
-                            // make entry for every sync sample
-                            uint8 codingType = (uint8)((sampleFlag >> 2) & 0x03);
-                            if (codingType == CODING_TYPE_I)
-                            {
-                                // add video key frame as random sample entry
-                                _pMfraAtom->addSampleEntry(trackID, sampleTS, _currentMoofOffset,
-                                                           _pCurrentMoofAtom->getTrackFragmentNumber(trackID),
-                                                           pCurrentTrackFragment->getTrunNumber(),
-                                                           (ii + 1));
-                            }
-                        }
-                        else if (mediaType == MEDIA_TYPE_AUDIO && _oTrunStart == true)
-                        {
-                            // add first audio sample in each TRUN as random sample entry
-                            _pMfraAtom->addSampleEntry(trackID, sampleTS, _currentMoofOffset,
-                                                       _pCurrentMoofAtom->getTrackFragmentNumber(trackID),
-                                                       pCurrentTrackFragment->getTrunNumber(),
-                                                       (ii + 1));
-
-                        }
-
-
-                        _oTrunStart = false;
-                    }
-
-                    pCurrentTrackFragment->updateLastTSEntry(pSampleParam->_timeStamp);
-
-                    if (numBufferedSamples > 0)
-                    {
-                        //Render chunk
-                        uint32 trunSize = 0;
-                        uint8* ptr = pInterLeaveBuffer->resetInterLeaveBuffer(trunSize);
-
-                        if (!_pCurrentMediaDataAtom->addRawSample(ptr, trunSize))
-                        {
-                            return false;
-                        }
-                        _baseOffset += trunSize;
-                    }
-                }
-                else
-                {
-                    _oTrunStart = false;
-                }
-
-                pSampleParam->_baseOffset = _baseOffset;
-                if (!(pInterLeaveBuffer->addSampleToInterLeaveBuffer(pSampleParam)))
-                {
-                    return false;
-                }
+                _oTrunStart = false;
             }
-        }
-        else
-        {
 
-            // add sample
             pSampleParam->_baseOffset = _baseOffset;
-
             if (!(pInterLeaveBuffer->addSampleToInterLeaveBuffer(pSampleParam)))
-            {
                 return false;
-            }
-
-            uint32 kk = 0;
-
-            // update last sample TS entry
-            for (kk = 0; kk < _pmediaDataAtomVec->size(); kk++)
-            {
-                if (_totalTempFileRemoval)
-                {
-
-                    Oscl_Vector<PVA_FF_TrackAtom*, OsclMemAllocator> *trefVec =
-                        (*_pmediaDataAtomVec)[kk]->getTrackReferencePtrVec();
-
-                    if (trefVec != NULL)
-                    {
-                        for (uint32 trefVecIndex = 0; trefVecIndex < trefVec->size(); trefVecIndex++)
-                        {
-                            PVA_FF_TrackAtom* pTrack = (*trefVec)[trefVecIndex];
-                            uint32 trackID = pTrack->getTrackID();
-
-                            PVA_FF_TrackFragmentAtom *pCurrentTrackFragment;
-                            pCurrentTrackFragment = _pCurrentMoofAtom->getTrackFragment(trackID);
-
-                            PVA_FF_InterLeaveBuffer *pInterLeaveBuffer = getInterLeaveBuffer(trackID);
-                            uint32 ts = pInterLeaveBuffer->getFirstTSEntry();
-                            pCurrentTrackFragment->updateLastTSEntry(ts);
-                        }
-                    }
-                }
-            }
-
-            // close MDAT atom and render current fragment
-            if (!renderMovieFragments())
-            {
-                _fileWriteFailed = true;
-                return false;
-            }
-
-            // delete current moof atom
-            PV_MP4_FF_DELETE(NULL, PVA_FF_MovieFragmentAtom, _pCurrentMoofAtom);
-
-            // allocate new fragment
-            PVA_FF_MovieFragmentAtom *pMoofAtom;
-            _sequenceNumber++;
-            PV_MP4_FF_NEW(fp->auditCB, PVA_FF_MovieFragmentAtom, (_sequenceNumber,
-                          _movieFragmentDuration,
-                          _interLeaveDuration),
-                          pMoofAtom);
-            _pCurrentMoofAtom = pMoofAtom;
-
-            // add track fragments
-            for (kk = 0; kk < _pmediaDataAtomVec->size(); kk++)
-            {
-                if (_totalTempFileRemoval)
-                {
-                    Oscl_Vector<PVA_FF_TrackAtom*, OsclMemAllocator> *trefVec =
-                        (*_pmediaDataAtomVec)[kk]->getTrackReferencePtrVec();
-
-                    if (trefVec != NULL)
-                    {
-                        for (uint32 trefVecIndex = 0; trefVecIndex < trefVec->size(); trefVecIndex++)
-                        {
-                            PVA_FF_TrackAtom* pTrack = (*trefVec)[trefVecIndex];
-
-                            _pCurrentMoofAtom->addTrackFragment(pTrack->getMediaType(),
-                                                                pTrack->getCodecType(),
-                                                                pTrack->getTrackID(),
-                                                                pTrack->getMediaTimeScale());
-
-                        }
-                    }
-                }
-            }
-
-            // delete current MDAT atom for movie fragment
-            PV_MP4_FF_DELETE(NULL, PVA_FF_MediaDataAtom, _pCurrentMediaDataAtom);
-
-            // form new MDAT atom
-            PVA_FF_MediaDataAtom *pMdatAtom = NULL;
-            PVA_FF_UNICODE_STRING_PARAM emptyString = PVA_FF_UNICODE_HEAP_STRING(_STRLIT_WCHAR(""));
-            PV_MP4_FF_NEW(fp->auditCB, PVA_FF_MediaDataAtom, (emptyString, _targetFileHandle, _aFs, iCacheSize), pMdatAtom);
-
-            _pCurrentMediaDataAtom = pMdatAtom;
-
-            // current moof offset set at start of mdat, (later updated by size of mdat atom)
-            _currentMoofOffset = _baseOffset;
-
-            // base offset set to start of mdat (after fourcc code) as base data offset
-            _baseOffset += _pCurrentMediaDataAtom->prepareTargetFileForFragments(_offsetDataRenderedToFile);
         }
     }
+    else
+    {
+        pSampleParam->_baseOffset = _baseOffset; // add sample
+
+        if (!(pInterLeaveBuffer->addSampleToInterLeaveBuffer(pSampleParam)))
+            return false;
+
+        uint32 kk = 0;
+
+        // update last sample TS entry
+        for (kk = 0; kk < _pmediaDataAtomVec->size(); kk++)
+        {
+            if (false == _totalTempFileRemoval)
+                continue;
+
+            Oscl_Vector<PVA_FF_TrackAtom*, OsclMemAllocator> *trefVec =
+                (*_pmediaDataAtomVec)[kk]->getTrackReferencePtrVec();
+
+            if (0 == trefVec)
+                continue;
+
+            for (uint32 trefVecIndex = 0; trefVecIndex < trefVec->size(); trefVecIndex++)
+            {
+                PVA_FF_TrackAtom* pTrack = (*trefVec)[trefVecIndex];
+                uint32 trackID = pTrack->getTrackID();
+
+                PVA_FF_TrackFragmentAtom *pCurrentTrackFragment;
+                pCurrentTrackFragment = _pCurrentMoofAtom->getTrackFragment(trackID);
+
+                PVA_FF_InterLeaveBuffer *pInterLeaveBuffer = getInterLeaveBuffer(trackID);
+                uint32 ts = pInterLeaveBuffer->getFirstTSEntry();
+                pCurrentTrackFragment->updateLastTSEntry(ts);
+            }
+        }
+
+        // close MDAT atom and render current fragment
+        if (!renderMovieFragments())
+        {
+            _fileWriteFailed = true;
+            return false;
+        }
+
+        // delete current moof atom
+        PV_MP4_FF_DELETE(NULL, PVA_FF_MovieFragmentAtom, _pCurrentMoofAtom);
+
+        // allocate new fragment
+        PVA_FF_MovieFragmentAtom *pMoofAtom;
+        _sequenceNumber++;
+        PV_MP4_FF_NEW(fp->auditCB, PVA_FF_MovieFragmentAtom, (_sequenceNumber,
+                      _movieFragmentDuration,
+                      _interLeaveDuration),
+                      pMoofAtom);
+        _pCurrentMoofAtom = pMoofAtom;
+
+        // add track fragments
+        for (kk = 0; kk < _pmediaDataAtomVec->size(); kk++)
+        {
+            if (false == _totalTempFileRemoval)
+                continue;
+
+            Oscl_Vector<PVA_FF_TrackAtom*, OsclMemAllocator> *trefVec =
+                (*_pmediaDataAtomVec)[kk]->getTrackReferencePtrVec();
+
+            if (0 == trefVec)
+                continue;
+
+            for (uint32 trefVecIndex = 0; trefVecIndex < trefVec->size(); trefVecIndex++)
+            {
+                PVA_FF_TrackAtom* pTrack = (*trefVec)[trefVecIndex];
+
+                _pCurrentMoofAtom->addTrackFragment(pTrack->getMediaType(),
+                                                    pTrack->getCodecType(),
+                                                    pTrack->getTrackID(),
+                                                    pTrack->getMediaTimeScale());
+            }
+        }
+
+        // delete current MDAT atom for movie fragment
+        PV_MP4_FF_DELETE(NULL, PVA_FF_MediaDataAtom, _pCurrentMediaDataAtom);
+
+        // form new MDAT atom
+        PVA_FF_MediaDataAtom *pMdatAtom = NULL;
+        PVA_FF_UNICODE_STRING_PARAM emptyString = PVA_FF_UNICODE_HEAP_STRING(_STRLIT_WCHAR(""));
+        PV_MP4_FF_NEW(fp->auditCB, PVA_FF_MediaDataAtom, (emptyString, _targetFileHandle, _aFs, iCacheSize), pMdatAtom);
+
+        _pCurrentMediaDataAtom = pMdatAtom;
+
+        // current moof offset set at start of mdat, (later updated by size of mdat atom)
+        _currentMoofOffset = _baseOffset;
+
+        // base offset set to start of mdat (after fourcc code) as base data offset
+        _baseOffset += _pCurrentMediaDataAtom->prepareTargetFileForFragments(_offsetDataRenderedToFile);
+    }
+
     return true;
 }
 
@@ -2963,7 +2846,7 @@ PVA_FF_Mpeg4File::addTextMediaSampleInterleave(uint32 trackID, PVMP4FFComposerSa
     PVA_FF_TrackAtom *mediaTrack = _pmovieAtom->getMediaTrack(trackID);
     PVA_FF_MediaDataAtom *mdatAtom = getMediaDataAtomForTrack(trackID);
     PVA_FF_InterLeaveBuffer *pInterLeaveBuffer = getInterLeaveBuffer(trackID);
-    int32 codecType = _pmovieAtom->getCodecType(trackID);
+    PVA_FF_MP4_CODEC_TYPE codecType = _pmovieAtom->getCodecType(trackID);
     uint32 mediaType  = mediaTrack->getMediaType();
 
     if (_oFirstSampleEditMode)

@@ -32,14 +32,14 @@
 #ifndef OSCL_FILE_IO_H_INCLUDED
 #include "oscl_file_io.h"
 #endif
+#ifndef OSCL_BIN_STREAM_H_INCLUDED
+#include "oscl_bin_stream.h"
+#endif
 #ifndef OSCL_SCHEDULER_AO_H_INCLUDED
 #include "oscl_scheduler_ao.h"
 #endif
 #ifndef PVLOGGER_H_INCLUDED
 #include "pvlogger.h"
-#endif
-#ifndef __A_IMpeg4File_H__
-#include "a_impeg4file.h"
 #endif
 #ifndef __MEDIA_CLOCK_CONVERTER_H
 #include "media_clock_converter.h"
@@ -74,21 +74,21 @@
 #ifndef PVMF_COMPOSER_SIZE_AND_DURATION_H_INCLUDED
 #include "pvmf_composer_size_and_duration.h"
 #endif
-
 #ifndef PVMI_CONFIG_AND_CAPABILITY_BASE_H_INCLUDED
 #include "pvmi_config_and_capability_base.h"
 #endif
 #ifndef PVMF_MEDIA_MSG_FORMAT_IDS_H_INCLUDED
 #include "pvmf_media_msg_format_ids.h"
 #endif
-
 #ifndef PVMI_KVP_H_INCLUDED
 #include "pvmi_kvp.h"
 #endif
 
 // Forward declaration
 class PVMp4FFComposerPort;
-
+class PVA_FF_IMpeg4File;
+class PVMP4FFComposerSampleParam;
+class PVA_FF_TextSampleDescInfo;
 
 //memory allocator type for this node.
 typedef OsclMemAllocator PVMp4FFCNAlloc;

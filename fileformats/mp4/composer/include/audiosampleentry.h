@@ -23,6 +23,7 @@
 
 #include "sampleentry.h"
 #include "esdatom.h"
+#include "a_impeg4file.h"
 #include "a_atomdefs.h"
 
 
@@ -30,7 +31,7 @@ class PVA_FF_AudioSampleEntry : public PVA_FF_SampleEntry
 {
 
     public:
-        PVA_FF_AudioSampleEntry(int32 codecType); // Constructor
+        PVA_FF_AudioSampleEntry(PVA_FF_MP4_CODEC_TYPE codecType); // Constructor
 
         virtual ~PVA_FF_AudioSampleEntry();
 

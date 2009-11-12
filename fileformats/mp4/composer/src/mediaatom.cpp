@@ -28,7 +28,7 @@
 
 // Constructor
 PVA_FF_MediaAtom::PVA_FF_MediaAtom(int32 mediaType,
-                                   int32 codecType,
+                                   PVA_FF_MP4_CODEC_TYPE codecType,
                                    uint8 version,
                                    uint32 fileAuthoringFlags,
                                    uint32 protocol,
@@ -39,9 +39,7 @@ PVA_FF_MediaAtom::PVA_FF_MediaAtom(int32 mediaType,
         : PVA_FF_Atom(MEDIA_ATOM)
 {
     PV_MP4_FF_NEW(fp->auditCB, PVA_FF_MediaHeaderAtom, (version), _pmediaHeader);
-
     PV_MP4_FF_NEW(fp->auditCB, PVA_FF_HandlerAtom, (mediaType, (uint8)0, (uint8)0), _phandler);
-
     PV_MP4_FF_NEW(fp->auditCB, PVA_FF_MediaInformationAtom, (mediaType,
                   codecType,
                   fileAuthoringFlags,
@@ -67,10 +65,10 @@ PVA_FF_MediaAtom::nextSample(int32 mediaType,
                              PVMP4FFComposerSampleParam *pSampleParam,
                              bool oChunkStart)
 {
-    if (pSampleParam == NULL)
+    if (0 == pSampleParam)
         return;
-    _pmediaInformation->nextSample(mediaType, pSampleParam, oChunkStart);
 
+    _pmediaInformation->nextSample(mediaType, pSampleParam, oChunkStart);
     _pmediaHeader->addSample(pSampleParam->_timeStamp);
 }
 
@@ -79,11 +77,10 @@ PVA_FF_MediaAtom::nextTextSample(int32 mediaType,
                                  PVMP4FFComposerSampleParam *pSampleParam,
                                  bool oChunkStart)
 {
-    if (pSampleParam == NULL)
+    if (0 == pSampleParam)
         return;
 
     _pmediaInformation->nextTextSample(mediaType, pSampleParam, oChunkStart);
-
     _pmediaHeader->addSample(pSampleParam->_timeStamp);
 }
 
@@ -91,9 +88,7 @@ bool
 PVA_FF_MediaAtom::reAuthorFirstSample(uint32 size,
                                       uint32 baseOffset)
 {
-    return(
-              _pmediaInformation->reAuthorFirstSample(size,
-                                                      baseOffset));
+    return _pmediaInformation->reAuthorFirstSample(size, baseOffset);
 }
 
 // in movie fragment mode set the actual duration of
@@ -101,9 +96,7 @@ PVA_FF_MediaAtom::reAuthorFirstSample(uint32 size,
 void
 PVA_FF_MediaAtom::updateLastTSEntry(uint32 ts)
 {
-
     _pmediaInformation->updateLastTSEntry(ts);
-
     _pmediaHeader->updateLastTSEntry(ts);
 }
 
@@ -121,10 +114,8 @@ PVA_FF_MediaAtom::recomputeSize()
     _size = size;
 
     // Update size of parent atom if it exists
-    if (_pparent != NULL)
-    {
+    if (0 != _pparent)
         _pparent->recomputeSize();
-    }
 }
 
 // Rendering the PVA_FF_Atom in proper format (bitlengths, etc.) to an ostream

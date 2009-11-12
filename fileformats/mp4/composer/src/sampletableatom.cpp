@@ -29,7 +29,7 @@
 
 // Constructor
 PVA_FF_SampleTableAtom::PVA_FF_SampleTableAtom(uint32 mediaType,
-        int32 codecType,
+        PVA_FF_MP4_CODEC_TYPE codecType,
         uint32 fileAuthoringFlags,
         uint32 protocol,
         uint8 profile,

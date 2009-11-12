@@ -54,13 +54,14 @@ TrackAtom::TrackAtom(MP4_FF_FILE *fp,
                      uint32 parsingMode,
                      bool aOpenFileOncePerTrack)
         : Atom(fp, size, type)
+        , _puserdataatom(0)
+        , _pEditAtom(0)
+        , _ptrackHeader(0)
+        , _ptrackReference(0)
+        , _pmediaAtom(0)
+        , _pMediaType(0xFFFFFFFF)
 {
 
-    _ptrackHeader      = NULL;
-    _ptrackReference   = NULL;
-    _pmediaAtom        = NULL;
-    _puserdataatom     = NULL;
-    _pEditAtom         = NULL;
 
     if (_success)
     {

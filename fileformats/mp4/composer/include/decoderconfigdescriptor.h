@@ -26,13 +26,13 @@
 #include "basedescriptor.h"
 
 #include "decoderspecificinfo.h"
-
+#include "a_impeg4file.h"
 
 class PVA_FF_DecoderConfigDescriptor : public PVA_FF_BaseDescriptor
 {
 
     public:
-        PVA_FF_DecoderConfigDescriptor(int32 streamType, int32 codecType); // Constructor
+        PVA_FF_DecoderConfigDescriptor(int32 streamType, PVA_FF_MP4_CODEC_TYPE codecType); // Constructor
 
         virtual ~PVA_FF_DecoderConfigDescriptor();
 
@@ -127,7 +127,7 @@ class PVA_FF_DecoderConfigDescriptor : public PVA_FF_BaseDescriptor
         uint32 _bufferSizeDB; // (24)
         uint32 _maxBitrate; // (32)
         uint32 _avgBitrate; // (32)
-        int32 _codecType;
+        PVA_FF_MP4_CODEC_TYPE _codecType;
         uint32 iCurrFilePos;
 
         Oscl_Vector<PVA_FF_DecoderSpecificInfo*, OsclMemAllocator> *_pdecSpecificInfoVec;

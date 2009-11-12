@@ -31,5 +31,7 @@ CFG_pvmtp_jni := mtpdb.cfg
 
 EXTRA_SHARED_LIBRARIES_pvupnp := libutils libcutils
 
+EXTRA_SHARED_LIBRARIES_pvmp4tu := libutils libcutils libnativehelper libandroid_runtime
+
 CFG_pvdivxdrm := pvdivxdrm.cfg
 

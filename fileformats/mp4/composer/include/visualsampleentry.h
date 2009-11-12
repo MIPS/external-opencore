@@ -31,7 +31,7 @@ class PVA_FF_VisualSampleEntry : public PVA_FF_SampleEntry
 {
 
     public:
-        PVA_FF_VisualSampleEntry(int32 codecType); // Constructor
+        PVA_FF_VisualSampleEntry(PVA_FF_MP4_CODEC_TYPE codecType); // Constructor
 
         virtual ~PVA_FF_VisualSampleEntry();
 

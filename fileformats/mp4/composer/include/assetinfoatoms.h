@@ -21,9 +21,6 @@
 #ifndef ATOM_H_INCLUDED
 #include "atom.h"
 #endif
-#ifndef A_ISUCCEEDFAIL_H_INCLUDED
-#include "a_isucceedfail.h"
-#endif
 #ifndef FULLATOM_H_INCLUDED
 #include "fullatom.h"
 #endif

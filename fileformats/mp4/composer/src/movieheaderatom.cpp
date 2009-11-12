@@ -25,6 +25,7 @@
 
 #include "movieheaderatom.h"
 #include "atomutils.h"
+#include "a_impeg4file.h"
 #include "a_atomdefs.h"
 #include "oscl_int64_utils.h"
 

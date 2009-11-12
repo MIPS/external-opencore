@@ -24,6 +24,7 @@
 #ifndef __SampleDescriptionAtom_H__
 #define __SampleDescriptionAtom_H__
 
+#include "a_impeg4file.h"
 #include "a_atomdefs.h"
 #include "fullatom.h"
 #include "sampleentry.h"
@@ -36,7 +37,7 @@ class PVA_FF_SampleDescriptionAtom : public PVA_FF_FullAtom
 
     public:
         PVA_FF_SampleDescriptionAtom(uint32 mediaType,
-                                     int32 codecType,
+                                     PVA_FF_MP4_CODEC_TYPE codecType,
                                      uint32 protocol = 0,
                                      uint8 profile = 1,
                                      uint8 profileComp = 0xFF,
@@ -127,7 +128,7 @@ class PVA_FF_SampleDescriptionAtom : public PVA_FF_FullAtom
 
         int32 _mediaType;
         int32 _currAudioBitrate;
-        int32 _codecType;
+        PVA_FF_MP4_CODEC_TYPE _codecType;
 
         uint32 _mediaTimeScale;
 

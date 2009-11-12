@@ -27,7 +27,6 @@
 #define PV_ERROR -1
 
 #include "atom.h"
-#include "a_isucceedfail.h"
 
 #include "pv_mp4ffcomposer_config.h"
 
@@ -48,7 +47,7 @@
 #endif
 
 
-class PVA_FF_MovieAtom : public PVA_FF_Atom, public PVA_FF_ISucceedFail
+class PVA_FF_MovieAtom : public PVA_FF_Atom
 {
 
     public:
@@ -113,7 +112,7 @@ class PVA_FF_MovieAtom : public PVA_FF_Atom, public PVA_FF_ISucceedFail
         // Getting and setting the Mpeg4 VOL header for timed text
         void addTextDecoderSpecificInfo(PVA_FF_TextSampleDescInfo *pinfo, int32 trackID);
 
-        PVA_FF_TrackAtom *getMediaTrack(uint32 trackID);
+        PVA_FF_TrackAtom *getMediaTrack(uint32 trackID) const;
 
         void addTextSampleToTrack(uint32 trackID, PVMP4FFComposerSampleParam *pSampleParam, bool _oChunkStart = false);
 
@@ -125,7 +124,7 @@ class PVA_FF_MovieAtom : public PVA_FF_Atom, public PVA_FF_ISucceedFail
 
         void setTargetBitrate(uint32 trackID, uint32 avgBitRate, uint32 maxBitRate, uint32 bufferSizeDB);
         void setTimeScale(uint32 trackID, uint32 rate);
-        int32 getCodecType(uint32 trackID);
+        PVA_FF_MP4_CODEC_TYPE getCodecType(uint32 trackID) const;
 
         void setMaxBufferSizeDB(uint32 trackID, uint32 max);
 

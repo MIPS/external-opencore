@@ -28,7 +28,7 @@
 #include "atomutils.h"
 
 // Constructor
-PVA_FF_ESDAtom::PVA_FF_ESDAtom(int32 streamType, int32 codecType)
+PVA_FF_ESDAtom::PVA_FF_ESDAtom(int32 streamType, PVA_FF_MP4_CODEC_TYPE codecType)
         : PVA_FF_FullAtom(ESD_ATOM, (uint8)0, (uint32)0)
 {
 

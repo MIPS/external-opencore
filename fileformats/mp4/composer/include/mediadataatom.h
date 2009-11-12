@@ -24,15 +24,13 @@
 #define __MediaDataAtom_H__
 
 #include "atom.h"
-#include "a_isucceedfail.h"
-
 #include "a_atomdefs.h"
 #include "renderable.h"
 #include "trackatom.h"
 
 #include <stdio.h>
 
-class PVA_FF_MediaDataAtom : public PVA_FF_Atom, public PVA_FF_ISucceedFail
+class PVA_FF_MediaDataAtom : public PVA_FF_Atom
 {
 
     public:
@@ -50,7 +48,7 @@ class PVA_FF_MediaDataAtom : public PVA_FF_Atom, public PVA_FF_ISucceedFail
         bool addRawSample(void *psample, uint32 length = 0);
         // accepts memory fragments
         bool addRawSample(Oscl_Vector <OsclMemoryFragment, OsclMemAllocator>& fragmentList,
-                          uint32 length, int32 mediaType, int32 codecType);
+                          uint32 length, int32 mediaType, PVA_FF_MP4_CODEC_TYPE codecType);
 
         int32 addRenderableSample(PVA_FF_Renderable *psample); // Adds to vector of renderables
 
@@ -98,7 +96,7 @@ class PVA_FF_MediaDataAtom : public PVA_FF_Atom, public PVA_FF_ISucceedFail
         uint32 prepareTargetFileForFragments(uint32 mediaStartOffset);
         bool closeTargetFile();
 
-        uint32 getTotalDataRenderedToTargetFile()
+        uint32 getTotalDataRenderedToTargetFile() const
         {
             return _totalDataRenderedToTargetFile;
         }

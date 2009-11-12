@@ -577,47 +577,32 @@ TimeToSampleAtom::getTimeDeltaForSampleNumberGet(uint32 sampleNum)
 {
     // It is assumed that sample 0 has a ts of 0 - i.e. the first
     // entry in the table starts with the delta between sample 1 and sample 0
-    if ((_psampleDeltaVec == NULL) ||
-            (_psampleCountVec == NULL) ||
-            (_entryCount == 0))
-    {
+    if (0 == _psampleDeltaVec || 0 == _psampleCountVec || 0 == _entryCount)
         return PV_ERROR;
-    }
 
     // note that sampleNum is a zero based index while _currGetSampleCount is 1 based index
     if (sampleNum < _currGetSampleCount)
+        return _currGetTimeDelta;
+
+    do
     {
-        return (_currGetTimeDelta);
+        ++_currGetIndex;
+        if (_parsing_mode)
+            CheckAndParseEntry(_currGetIndex);
+        _currGetSampleCount += _psampleCountVec[_currGetIndex%_stbl_buff_size];
+        _currGetTimeDelta    = _psampleDeltaVec[_currGetIndex%_stbl_buff_size];
     }
-    else
-    {
+    while (0 == _currGetSampleCount);
 
-        do
-        {
-            _currGetIndex++;
-            if (_parsing_mode)
-                CheckAndParseEntry(_currGetIndex);
-            _currGetSampleCount += _psampleCountVec[_currGetIndex%_stbl_buff_size];
-            _currGetTimeDelta    = _psampleDeltaVec[_currGetIndex%_stbl_buff_size];
-        }
-        while (_currGetSampleCount == 0);
+    PVMF_MP4FFPARSER_LOGMEDIASAMPELSTATEVARIABLES((0, "TimeToSampleAtom::getTimeDeltaForSampleNumberGet- _currGetIndex =%d", _currGetIndex));
+    PVMF_MP4FFPARSER_LOGMEDIASAMPELSTATEVARIABLES((0, "TimeToSampleAtom::getTimeDeltaForSampleNumberGet- _currGetSampleCount =%d", _currGetSampleCount));
+    PVMF_MP4FFPARSER_LOGMEDIASAMPELSTATEVARIABLES((0, "TimeToSampleAtom::getTimeDeltaForSampleNumberGet- _currGetTimeDelta =%d", _currGetTimeDelta));
 
-        PVMF_MP4FFPARSER_LOGMEDIASAMPELSTATEVARIABLES((0, "TimeToSampleAtom::getTimeDeltaForSampleNumberGet- _currGetIndex =%d", _currGetIndex));
-        PVMF_MP4FFPARSER_LOGMEDIASAMPELSTATEVARIABLES((0, "TimeToSampleAtom::getTimeDeltaForSampleNumberGet- _currGetSampleCount =%d", _currGetSampleCount));
-        PVMF_MP4FFPARSER_LOGMEDIASAMPELSTATEVARIABLES((0, "TimeToSampleAtom::getTimeDeltaForSampleNumberGet- _currGetTimeDelta =%d", _currGetTimeDelta));
+    if (sampleNum < _currGetSampleCount)
+        return _currGetTimeDelta;
 
-        if (sampleNum < _currGetSampleCount)
-        {
-            return (_currGetTimeDelta);
-        }
-        else
-        {
-            PVMF_MP4FFPARSER_LOGERROR((0, "ERROR =>TimeToSampleAtom::getTimeDeltaForSampleNumberGet sampleNum = %d", sampleNum));
-            return (PV_ERROR);
-        }
-    }
-
-
+    PVMF_MP4FFPARSER_LOGERROR((0, "ERROR =>TimeToSampleAtom::getTimeDeltaForSampleNumberGet sampleNum = %d", sampleNum));
+    return PV_ERROR;
 }
 
 int32
