@@ -56,7 +56,9 @@ endif
 ifeq ($(HOST_ARCH),WindowsNT)
     HOST_ARCH := win32
 endif
-
+ifeq ($(HOST_ARCH),Darwin)
+    HOST_ARCH := mac
+endif
 
 ifndef ARCHITECTURE
  ifdef ARCH
@@ -142,8 +144,8 @@ IGNORE_HDRS_INSTALL_TARGETS = clean completion_targets android_make cml2-compile
 #$(call include_hdr_installed,target) 
 define include_hdr_installed 
 #Install headers only if the target is not a part of IGNORE_HDRS_INSTALL_TARGETS 
-        include $(INCDESTDIR)/ALL_HDRS_INSTALLED 
-        include $(DESTDIR)/ALL_LIBS_INSTALLED 
+	include $(INCDESTDIR)/ALL_HDRS_INSTALLED 
+	include $(DESTDIR)/ALL_LIBS_INSTALLED 
 endef 
 
 ifeq ($(MAKECMDGOALS),) 

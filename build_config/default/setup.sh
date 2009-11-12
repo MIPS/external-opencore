@@ -73,7 +73,24 @@ function mkcmdcmpl()
     echo_stdout "done getting make cmdline completion values."
 }
 
-
+function get_host_platform()
+{
+    local tmp_host
+    tmp_host=`uname`
+    case $tmp_host in
+    Linux)
+       tmp_host="linux"
+       ;;
+    Darwin)
+       tmp_host="mac"
+       ;;
+    *)
+       echo_stdout "*** WARNING - host platform $tmp_host unknown"
+       tmp_host="unknown"
+       ;;
+    esac
+    eval "$1=$tmp_host"
+}
 
 echo_stdout "started."
 echo_stdout "setting up build environment with default configuration"
@@ -104,7 +121,9 @@ echo_stdout "MK                     ==> $MK"
 export ARTISTIC_STYLE_OPTIONS=$BASE_DIR/tools_v2/editor_settings/astylerc
 echo_stdout "ARTISTIC_STYLE_OPTIONS ==> $ARTISTIC_STYLE_OPTIONS"
 
-extern_tools_path=$BASE_DIR/extern_tools_v2/bin/linux
+get_host_platform host
+extern_tools_path=$BASE_DIR/extern_tools_v2/bin/$host
+
 export PATH=$extern_tools_path:$PATH
 export BASE_PATH=$PATH
 
