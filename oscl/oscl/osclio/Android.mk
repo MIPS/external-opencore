@@ -68,6 +68,7 @@ LOCAL_COPY_HEADERS := \
  	src/oscl_socket.h \
  	src/oscl_socket_types.h \
  	src/oscl_dns.h \
- 	src/oscl_file_types.h
+ 	src/oscl_file_types.h \
+ 	src/oscl_file_native.h
 
 include $(BUILD_STATIC_LIBRARY)

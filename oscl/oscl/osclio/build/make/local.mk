@@ -60,6 +60,7 @@ HDRS := oscl_file_dir_utils.h \
 	oscl_socket.h \
 	oscl_socket_types.h \
 	oscl_dns.h \
-	oscl_file_types.h
+	oscl_file_types.h \
+	oscl_file_native.h
 
 include $(MK)/library.mk
