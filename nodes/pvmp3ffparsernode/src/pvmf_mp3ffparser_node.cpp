@@ -495,7 +495,6 @@ PVMFStatus PVMFMP3FFParserNode::DoInit()
         else
         {
             Push(iCPMContainer, PVMFSubNodeContainerBaseMp3::ECPMApproveUsage);
-            Push(iCPMContainer, PVMFSubNodeContainerBaseMp3::ECPMCheckUsage);
         }
 
         status = PVMFPending;
@@ -2612,9 +2611,6 @@ PVMFStatus PVMFCPMContainerMp3::IssueCommand(int32 aCmd)
                 iContainer->Push(*this, PVMFSubNodeContainerBaseMp3::ECPMOpenSession);
                 iContainer->Push(*this, PVMFSubNodeContainerBaseMp3::ECPMRegisterContent);
 
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iContainer->iLogger, PVLOGMSG_STACK_TRACE,
-                                (0, "PVMFCPMContainerMp3::IssueCommand Calling Init"));
-
                 iCmdState = EBusy;
                 iCmdId = iCPM->Init();
                 return PVMFPending;
@@ -2782,10 +2778,10 @@ bool PVMFCPMContainerMp3::CancelPendingCommand()
 OSCL_EXPORT_REF void PVMFCPMContainerMp3::CPMCommandCompleted(const PVMFCmdResp& aResponse)
 {
     //A command to the CPM node is complete
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iContainer->iLogger, PVLOGMSG_STACK_TRACE,
-                    (0, "PVMFCPMContainerMp3::CPMCommandCompleted "));
-
     PVMFCommandId aCmdId = aResponse.GetCmdId();
+
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iContainer->iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "PVMFCPMContainerMp3::CPMCommandCompleted cmdId=%d, iCmdId=%d, iCmdState=%d, cmd=%d", aCmdId, iCmdId, iCmdState, iCmd));
 
     if (aCmdId == iCmdId && iCmdState == EBusy)
     {
@@ -2811,6 +2807,16 @@ OSCL_EXPORT_REF void PVMFCPMContainerMp3::CPMCommandCompleted(const PVMFCmdResp&
                                  PVMFSubNodeContainerBaseMp3::ECPMGetLicenseInterface);
                 iContainer->Push(iContainer->iCPMContainer,
                                  PVMFSubNodeContainerBaseMp3::ECPMApproveUsage);
+            }
+            CommandDone(status,
+                        aResponse.GetEventExtensionInterface(),
+                        aResponse.GetEventData());
+        }
+        else if (iCmd == ECPMApproveUsage)
+        {
+            PVMFStatus status = aResponse.GetCmdStatus();
+            if (status == PVMFSuccess)
+            {
                 iContainer->Push(iContainer->iCPMContainer,
                                  PVMFSubNodeContainerBaseMp3::ECPMCheckUsage);
             }
@@ -2908,10 +2914,15 @@ void PVMFSubNodeContainerBaseMp3::CommandDone(PVMFStatus aStatus, PVInterface*aE
             iContainer->SetState(EPVMFNodeError);
         }
     }
-    //figure out the next step in the sequence
-    //A node command is done when either all sub-node commands are
-    //done or when one fails.
-    if (status == PVMFSuccess && !iContainer->iSubNodeCmdVec.empty())
+    // Figure out the next step in the sequence
+    // We need to finish all the subnode commands before completing the node
+    // command. But, before continuing with the rest of the commands, store
+    // the first failure from the subnode.
+    if ((status != PVMFSuccess) && (iFirstSubNodeFailure == PVMFSuccess))
+    {
+        iFirstSubNodeFailure = status;
+    }
+    if (!iContainer->iSubNodeCmdVec.empty())
     {
         //The node needs to issue the next sub-node command.
         iContainer->Reschedule();
@@ -2920,7 +2931,8 @@ void PVMFSubNodeContainerBaseMp3::CommandDone(PVMFStatus aStatus, PVInterface*aE
     {
         //node command is done.
         OSCL_ASSERT(iContainer->IsCommandInProgress(iContainer->iCurrentCommand));
-        iContainer->CommandComplete(iContainer->iCurrentCommand, status, aExtMsg, aEventData);
+        iContainer->CommandComplete(iContainer->iCurrentCommand, iFirstSubNodeFailure, aExtMsg, aEventData);
+        iFirstSubNodeFailure = PVMFSuccess;
     }
 }
 

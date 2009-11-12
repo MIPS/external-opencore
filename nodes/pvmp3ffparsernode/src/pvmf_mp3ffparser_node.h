@@ -98,6 +98,7 @@ class PVMFSubNodeContainerBaseMp3
             iCmdState = EIdle;
             iCancelCmdState = EIdle;
             iContainer = NULL;
+            iFirstSubNodeFailure = PVMFSuccess;
         }
         virtual ~PVMFSubNodeContainerBaseMp3()
         {
@@ -152,6 +153,7 @@ class PVMFSubNodeContainerBaseMp3
         int32 iCmd;
         PVMFCommandId iCancelCmdId;
         CmdState iCancelCmdState;
+        PVMFStatus iFirstSubNodeFailure;
 };
 
 class PVMFCPMContainerMp3: public PVMFSubNodeContainerBaseMp3, public PVMFCPMStatusObserver
