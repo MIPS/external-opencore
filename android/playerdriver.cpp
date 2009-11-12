@@ -571,7 +571,6 @@ void PlayerDriver::handleSetDataSource(PlayerSetDataSource* command)
         }
         mDataSource->SetDataSourceContextData((OsclAny*)mLocalContextData);
     }
-
     OSCL_TRY(error, mPlayer->AddDataSource(*mDataSource, command));
     OSCL_FIRST_CATCH_ANY(error, commandFailed(command));
 }
