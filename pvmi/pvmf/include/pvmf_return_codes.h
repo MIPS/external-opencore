@@ -47,6 +47,10 @@ const PVMFStatus PVMFPending = 0;
  Return code for never set
  */
 const PVMFStatus PVMFNotSet = 2;
+/*
+ Return code for Command Complete
+ */
+const PVMFStatus PVMFCmdCompleted = 3;
 
 
 // Error codes (negative values)

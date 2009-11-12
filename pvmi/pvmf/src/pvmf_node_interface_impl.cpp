@@ -610,10 +610,10 @@ OSCL_EXPORT_REF bool PVMFNodeInterfaceImpl::ProcessCommand()
     //until the prior one is finished.  However, a hi priority
     //command such as Cancel must be able to interrupt a command
     //in progress.
-    OsclAny* eventData = NULL;
     if (IsCommandInProgress(iCurrentCommand) && !cmd.hipri() && PVMF_GENERIC_NODE_CANCEL_GET_LICENSE != cmd.iCmd)
         return false;
 
+    OsclAny* eventData = NULL;
     PVMFStatus status = PVMFErrInvalidState;
 
     // Pop the first command from the input queue to CancelCommand if its cancel or cancelall command.
@@ -638,7 +638,7 @@ OSCL_EXPORT_REF bool PVMFNodeInterfaceImpl::ProcessCommand()
                 break;
         }
 
-        if (status != PVMFPending)
+        if ((status != PVMFPending) && (status != PVMFCmdCompleted))
         {
             CommandComplete(iCancelCommand, status);
         }
@@ -681,6 +681,7 @@ OSCL_EXPORT_REF bool PVMFNodeInterfaceImpl::ProcessCommand()
                 }
             }
             break;
+
             case PVMF_GENERIC_NODE_PREPARE:
             {
                 if (iInterfaceState == EPVMFNodeInitialized)
@@ -740,14 +741,14 @@ OSCL_EXPORT_REF bool PVMFNodeInterfaceImpl::ProcessCommand()
                 break;
         }
 
-        if (status != PVMFPending)
+        if ((status != PVMFPending) && (status != PVMFCmdCompleted))
         {
             CommandComplete(iCurrentCommand, status, NULL, eventData);
         }
     }
     if (status != PVMFPending)
     {
-        // node needs to be reschduled, if there's any command
+        // node needs to be rescheduled, if there's any command
         // pending to be executed
         if (iInputCommands.size() > 0)
         {
