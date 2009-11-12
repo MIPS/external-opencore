@@ -2063,7 +2063,7 @@ uint32 MP3Parser::SeekPointFromTimestamp(uint32 &timestamp)
                 // since mp3FindSync finds the next sync point after the timestamp, quantize timestamp to the next frame boundary
                 uint32 frameSizeMult1000 = iMP3ConfigInfo.FrameSizeUnComp * 1000;
                 currframe = (uint32)(((int64)timestamp * (int64)iMP3ConfigInfo.SamplingRate + (frameSizeMult1000 - 1)) / frameSizeMult1000);
-                timestamp = (int32)((int64)currframe * (int64)frameSizeMult1000) / iMP3ConfigInfo.SamplingRate;
+                timestamp = (uint32)(((int64)currframe * (int64)frameSizeMult1000) / iMP3ConfigInfo.SamplingRate);
             }
         }
         else if (retVal == MP3_INSUFFICIENT_DATA || retVal == MP3_END_OF_FILE)
