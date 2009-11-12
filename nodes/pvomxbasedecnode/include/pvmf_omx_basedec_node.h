@@ -692,6 +692,8 @@ class PVMFOMXBaseDecNode: public PVMFNodeInterfaceImpl
         uint8 *iTrackUnderVerificationConfig;
         Oscl_Vector<OMX_STRING, OsclMemAllocator> iOMXPreferredComponentOrderVec;
 
+        bool iComputeSamplesPerFrame;
+
     private:
         OSCL_IMPORT_REF PVMFStatus HandleExtensionAPICommands();
         OSCL_IMPORT_REF PVMFStatus CancelCurrentCommand();

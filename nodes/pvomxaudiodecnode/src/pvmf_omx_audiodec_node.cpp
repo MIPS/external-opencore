@@ -111,6 +111,8 @@ PVMFOMXAudioDecNode::PVMFOMXAudioDecNode(int32 aPriority) :
     iCountSamplesInBuffer = false;
     iBufferContainsIntFrames = true;
 
+    iComputeSamplesPerFrame = true;
+
     //Try Allocate FSI buffer
 
     // Do This first in case of Query
@@ -528,6 +530,7 @@ bool PVMFOMXAudioDecNode::ProcessIncomingMsg(PVMFPortInterface* aPort)
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iDataPathLogger, PVLOGMSG_INFO,
                             (0, "PVMFOMXAudioDecNode::ProcessIncomingMsg: iTSOfFirstDataMsgAfterBOS = %d", msg->getTimestamp()));
             iTSOfFirstDataMsgAfterBOS = msg->getTimestamp();
+            iInputTimestampClock.set_clock(iTSOfFirstDataMsgAfterBOS, 0);
         }
         convertToPVMFMediaData(iDataIn, msg);
         ((PVMFOMXDecPort*)aPort)->iNumFramesConsumed++;

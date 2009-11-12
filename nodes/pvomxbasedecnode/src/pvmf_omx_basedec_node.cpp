@@ -496,6 +496,8 @@ OSCL_EXPORT_REF PVMFOMXBaseDecNode::PVMFOMXBaseDecNode(int32 aPriority, const ch
     iTrackUnderVerificationConfigSize = 0;
     iTrackUnderVerificationConfig = NULL;
     iOMXPreferredComponentOrderVec.clear();
+
+    iComputeSamplesPerFrame = true;
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -921,6 +923,14 @@ OSCL_EXPORT_REF bool PVMFOMXBaseDecNode::ProcessIncomingMsg(PVMFPortInterface* a
         iTimestampVec.push_front(iDataIn->getTimestamp());
     }
 
+
+    if (iFirstDataMsgAfterBOS)
+{
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iDataPathLogger, PVLOGMSG_INFO,
+                    (0, "%s::ProcessIncomingMsg: iTSOfFirstDataMsgAfterBOS = %d", iName.Str(), msg->getTimestamp()));
+        iTSOfFirstDataMsgAfterBOS = msg->getTimestamp();
+        iInputTimestampClock.set_clock(iTSOfFirstDataMsgAfterBOS, 0);
+    }
 
     iCurrFragNum = 0; // for new message, reset the fragment counter
     iIsNewDataFragment = true;
@@ -2337,13 +2347,15 @@ OSCL_EXPORT_REF bool PVMFOMXBaseDecNode::SendInputBufferToOMXComponent()
         }
 
         // determine framesize for MP3
-        if (((PVMFOMXDecPort*)iInPort)->iFormat == PVMF_MIME_MP3 && iInPacketSeqNum == 0)
+        if (((PVMFOMXDecPort*)iInPort)->iFormat == PVMF_MIME_MP3 && iComputeSamplesPerFrame)
         {
             if (PVMFSuccess != RetrieveMP3FrameLength(input_buf->pBufHdr->pBuffer + input_buf->pBufHdr->nOffset))
             {
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                                 (0, "%s::SendInputBufferToOMXComponent() - Error attempting to determing MP3 frame length from buffer 0x%x", iName.Str(), input_buf->pBufHdr->pBuffer));
             }
+            else
+                iComputeSamplesPerFrame = false;
         }
 
 
@@ -5079,6 +5091,8 @@ OSCL_EXPORT_REF PVMFStatus PVMFOMXBaseDecNode::DoReset()
     iEOCReceived = false;
     iBOCReceived = false;
 
+    iComputeSamplesPerFrame = true;
+
     if (iOMXComponentUsesFullAVCFrames)
     {
         iNALCount = 0;
@@ -5778,6 +5792,9 @@ OMX_ERRORTYPE PVMFOMXBaseDecNode::EventHandlerProcessing(OMX_OUT OMX_HANDLETYPE 
             // reset the flag requiring config data processing by the component
             // getting port settings changed event means that component must have consumed config data if it were present
             iIsConfigDataProcessingCompletionNeeded = false;
+
+            // Recompute iSamplesPerFrame
+            iComputeSamplesPerFrame = true;
 
             //first check how many ports requested dynamic port reconfiguration
             if (OMX_ALL == aData1)
