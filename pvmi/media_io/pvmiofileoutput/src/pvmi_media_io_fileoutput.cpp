@@ -1820,6 +1820,71 @@ void PVRefFileOutput::setParametersSync(PvmiMIOSession aSession,
                             (0, "PVRefFileOutput::setParametersSync() Buffer Size, Value %d", iBufferSize));
 
         }
+        else if (pv_mime_strcmp(aParameters[i].key, PVMF_FORMAT_WMA_RCA_HEADER_KEY) == 0)
+        {
+            if (iLogOutputToFile)
+
+            {
+                Oscl_File iFile;
+                OSCL_wHeapString<OsclMemAllocator> iWmaRCAFileName;
+                iWmaRCAFileName += iOutputFileName;
+                oscl_wchar* wstr = oscl_strstr(iWmaRCAFileName.get_str(), _STRLIT_WCHAR(".dat"));
+                wstr[1] = (oscl_wchar)'R';
+                wstr[2] = (oscl_wchar)'C';
+                wstr[3] = (oscl_wchar)'A';
+                if (iFile.Open(iWmaRCAFileName.get_cstr(), Oscl_File::MODE_READWRITE | Oscl_File::MODE_BINARY, iFs) != 0)
+                {
+                    PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_ERR,
+                                    (0, "PVRefFileOutput::setParametersSync: Error - iFile Open failed"));
+                }
+                else
+                {
+                    if (aParameters[i].value.pChar_value != NULL)
+                    {
+                        if (iFile.Write(aParameters[i].value.pChar_value,
+                                        sizeof(uint8),
+                                        (int32)aParameters[i].capacity) != (uint32)aParameters[i].length)
+                        {
+                            PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_ERR,
+                                            (0, "PVRefFileOutput::setParametersSync: Error - File write failed"));
+                        }
+                    }
+                    iFile.Close();
+                }
+            }
+        }
+        else if (pv_mime_strcmp(aParameters[i].key, PVMF_FORMAT_WMV_RCV_HEADER_KEY) == 0)
+        {
+            if (iLogOutputToFile)
+            {
+                Oscl_File iFile;
+                OSCL_wHeapString<OsclMemAllocator> iWmaRCVFileName;
+                iWmaRCVFileName += iOutputFileName;
+                oscl_wchar* wstr = oscl_strstr(iWmaRCVFileName.get_str(), _STRLIT_WCHAR(".dat"));
+                wstr[1] = (oscl_wchar)'R';
+                wstr[2] = (oscl_wchar)'C';
+                wstr[3] = (oscl_wchar)'V';
+                if (iFile.Open(iWmaRCVFileName.get_cstr(), Oscl_File::MODE_READWRITE | Oscl_File::MODE_BINARY, iFs) != 0)
+                {
+                    PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_ERR,
+                                    (0, "PVRefFileOutput::setParametersSync: Error - iFile Open failed"));
+                }
+                else
+                {
+                    if (aParameters[i].value.pChar_value != NULL)
+                    {
+                        if (iFile.Write(aParameters[i].value.pChar_value,
+                                        sizeof(uint8),
+                                        (int32)aParameters[i].capacity) != (uint32)aParameters[i].length)
+                        {
+                            PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_ERR,
+                                            (0, "PVRefFileOutput::setParametersSync: Error - File write failed"));
+                        }
+                    }
+                    iFile.Close();
+                }
+            }
+        }
         else
         {
             //if we get here the key is unrecognized.

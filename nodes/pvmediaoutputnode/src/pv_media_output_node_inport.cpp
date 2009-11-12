@@ -2466,6 +2466,13 @@ OSCL_EXPORT_REF void PVMediaOutputNodePort::setParametersSync(PvmiMIOSession aSe
             ConfigMIO(0, aRet_kvp);
             iNode->iMIOConfig->setParametersSync(iNode->iMIOSession, &aParameters[i], 1, aRet_kvp);
         }
+        else if ((pv_mime_strcmp(aParameters[i].key, PVMF_FORMAT_WMA_RCA_HEADER_KEY) == 0)  ||
+                 (pv_mime_strcmp(aParameters[i].key, PVMF_FORMAT_WMV_RCV_HEADER_KEY) == 0))
+        {
+            PVMF_MOPORT_LOGDATAPATH((0, "PVMediaOutputNodePort::setParametersSync - RCA/RCV Header - Fmt=%s",
+                                     iSinkFormatString.get_str()));
+            ConfigMIO(&aParameters[i], aRet_kvp);
+        }
         else
             iNode->iMIOConfig->setParametersSync(iNode->iMIOSession, &aParameters[i], 1, aRet_kvp);
     }
