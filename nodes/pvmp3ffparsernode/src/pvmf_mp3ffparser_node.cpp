@@ -64,6 +64,7 @@ PVMFMP3FFParserNode::PVMFMP3FFParserNode(int32 aPriority)
     iCheckForMP3HeaderDuringInit = false;
     iDurationCalcAO = NULL;
     iUseCPMPluginRegistry = false;
+    iSourceContextDataValid = false;
 
     int32 err;
 
@@ -1730,6 +1731,7 @@ void PVMFMP3FFParserNode::CleanupFileSource()
     oWaitingOnLicense = false;
     iDownloadComplete = false;
     iUseCPMPluginRegistry = false;
+    iSourceContextDataValid = false;
 }
 
 /**
@@ -1890,6 +1892,8 @@ PVMFStatus PVMFMP3FFParserNode::SetSourceInitializationData(OSCL_wString& aSourc
                 iFileHandle = OSCL_NEW(OsclFileHandle, (*(opaqueData->iFileHandle)));
                 iCPMSourceData.iFileHandle = iFileHandle;
             }
+            iCPMSourceData.iPreviewMode = opaqueData->iPreviewMode;
+            iCPMSourceData.iIntent = opaqueData->iIntent;
             if (opaqueData->iContentAccessFactory != NULL)
             {
                 //Cannot have both plugin usage and a datastream factory
@@ -2629,10 +2633,20 @@ PVMFStatus PVMFCPMContainerMp3::IssueCommand(int32 aCmd)
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iContainer->iLogger, PVLOGMSG_STACK_TRACE,
                             (0, "PVMFCPMContainerMp3::IssueCommand Calling RegisterContent"));
             iCmdState = EBusy;
-            iCmdId = iCPM->RegisterContent(iSessionId,
-                                           iContainer->iSourceURL,
-                                           iContainer->iSourceFormat,
-                                           (OsclAny*) & iContainer->iCPMSourceData);
+            if (iContainer->iSourceContextDataValid == true)
+            {
+                iCmdId = iCPM->RegisterContent(iSessionId,
+                                               iContainer->iSourceURL,
+                                               iContainer->iSourceFormat,
+                                               (OsclAny*) & iContainer->iSourceContextData);
+            }
+            else
+            {
+                iCmdId = iCPM->RegisterContent(iSessionId,
+                                               iContainer->iSourceURL,
+                                               iContainer->iSourceFormat,
+                                               (OsclAny*) & iContainer->iCPMSourceData);
+            }
             return PVMFPending;
 
         case ECPMGetLicenseInterface:
