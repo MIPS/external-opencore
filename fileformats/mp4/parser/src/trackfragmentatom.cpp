@@ -863,7 +863,18 @@ TrackFragmentAtom::getNextBundledAccessUnits(uint32 *n, uint32 totalSampleRead,
     {
         _currentPlaybackSampleTimestamp =  _startTrackFragmentTSOffset;
     }
+
+    // save the sample number of the first sample in the bundle
+    uint32 fNum = _currentTrackFragmentRunSampleNumber;
+
     nReturn = getNextNSamples(_currentTrackFragmentRunSampleNumber, n, totalSampleRead, pgau);
+
+    if (0 != *n)
+    {
+        // set the sample number of the first sample in the bundle
+        pgau->frameNum = fNum;
+    }
+
     return nReturn;
 }
 

@@ -75,7 +75,8 @@ static const uint8  FRAME_VESION_MPEG_2         = 0x02;
 static const uint8  FRAME_VESION_MPEG_2_5       = 0x00;
 
 static const uint8  MP3_FRAME_HEADER_SIZE               = 0x04;
-static const uint32 MP3_FIRST_FRAME_SIZE                = 128;
+// 120 bytes of XING VBR + max 47 bytes of LAME tag if present
+static const uint32 MP3_FIRST_FRAME_SIZE                = 167;
 /***********************************************************************
  * End XING VBR Header Constants
  ***********************************************************************/
@@ -361,6 +362,8 @@ MP3Parser::MP3Parser(PVFile* aFileHandle)
     oscl_memset(ConfigData, 0, sizeof(ConfigData));
     oscl_memset(&iVbriHeader, 0, sizeof(iVbriHeader));
     pSyncBuffer = NULL;
+
+    iGaplessInfoAvailable = false;
 }
 
 
@@ -473,6 +476,15 @@ MP3ErrorType MP3Parser::ParseMP3File(PVFile * fpUsed, bool aEnableCRC)
             if (iId3TagParser.IsID3V2Present())
             {
                 iTagSize = iId3TagParser.GetByteOffsetToStartOfAudioFrames();
+                PVMFStatus gapless = iId3TagParser.GetGaplessMetadata(iGaplessMetadata);
+                if (PVMFSuccess == gapless)
+                {
+                    iGaplessInfoAvailable = true;
+                }
+                else
+                {
+                    iGaplessInfoAvailable = false;
+                }
             }
         }
     }
@@ -680,9 +692,19 @@ MP3ErrorType MP3Parser::ParseMP3File(PVFile * fpUsed, bool aEnableCRC)
         // we do not want to run compaction algorithm and increase bin size,
         // therefore allocating an extra +1 space for this last entry.
         iTOC = OSCL_ARRAY_NEW(int32, MAX_TOC_ENTRY_COUNT + 1);
-        oscl_memset(iTOC, 0, sizeof(int32)*(MAX_TOC_ENTRY_COUNT + 1));
+        if (iTOC)
+            oscl_memset(iTOC, 0, sizeof(int32)*MAX_TOC_ENTRY_COUNT - 1);
     }
 
+
+    if (iGaplessInfoAvailable)
+    {
+        iGaplessMetadata.SetSamplesPerFrame(iSamplesPerFrame);
+
+        uint64 totalSamples = iGaplessMetadata.GetEncoderDelay() + iGaplessMetadata.GetZeroPadding() + iGaplessMetadata.GetOriginalStreamLength();
+        uint64 totalFrames = totalSamples / iSamplesPerFrame;
+        iGaplessMetadata.SetTotalFrames(totalFrames);
+    }
     iAvgBitrateInbps = iMP3ConfigInfo.BitRate;
     // Set the position to the position of the first MP3 frame
     errCode = MP3Utils::SeektoOffset(fp, revSeek + seekOffset, Oscl_File::SEEKCUR);
@@ -712,6 +734,12 @@ MP3ErrorType MP3Parser::ScanMP3File(PVFile * fpUsed, uint32 aFramesToScan)
     uint32 seekOffset = 0;
     MP3HeaderType mp3HeaderInfo;
     MP3ConfigInfoType mp3ConfigInfo;
+
+    if (mp3Type == EXINGType || mp3Type == EVBRIType)
+    {
+        uint32 clipDuration = 0;
+        GetDurationFromVBRIHeader(clipDuration);
+    }
 
     if (iClipDurationFromMetadata || (iClipDurationFromVBRIHeader &&
                                       ((iVbriHeader.entriesTOC >= 0) ||
@@ -1031,7 +1059,9 @@ bool MP3Parser::DecodeMP3Header(MP3HeaderType &aMP3HeaderInfo, MP3ConfigInfoType
                     // The TAG in an ID3V1.x MP3 File is 128 bytes long
                     audioDataSize -= ID3_V1_TAG_SIZE;
                 }
-                iNumberOfFrames = audioDataSize / (aMP3ConfigInfo.FrameLengthInBytes);
+
+                // ceil this calculation
+                iNumberOfFrames = (audioDataSize + (aMP3ConfigInfo.FrameLengthInBytes - 1)) / (aMP3ConfigInfo.FrameLengthInBytes);
 
                 if (aMP3ConfigInfo.BitRate <= 0)
                 {
@@ -1109,6 +1139,7 @@ bool  MP3Parser::DecodeXINGHeader(uint8 *XingBuffer,
                                   XINGHeaderType &mp3XingHD,
                                   MP3HeaderType &hdrInfo)
 {
+    /* Traditional XING VBR header                      */
     /*  4 XING - 4 flags - 4 frames - 4 bytes - 100 toc */
 
     uint8 * pBuf = XingBuffer;
@@ -1147,6 +1178,112 @@ bool  MP3Parser::DecodeXINGHeader(uint8 *XingBuffer,
         pBuf += 4;;
     }
     iNumberOfFrames = mp3XingHD.frames;
+
+    // if ID3v2 iTunes gapless tags are also present,
+    // there is no need to look for gapless metadata in the XING header,
+    // otherwise look for LAME encoder gapless info
+    if (!iGaplessInfoAvailable)
+    {
+        /* Encoder version string, if present               */
+        /* if LAME, prior to 3.90, 20 bytes for version tag */
+        /* 3.90 or later, 9 bytes for version tag           */
+        /* e.g. "LAME3.97b"                                 */
+        /* skip over 1 byte of info tag rev + VBR method    */
+        /* skip over 1 byte of low pass filter value        */
+        /* skip over 8 bytes of replay gain                 */
+        /* 1 byte of encoding flag with nogap info          */
+        /* skip over 1 bytes of bitrate info                */
+        /* 3 bytes of encoder delay and padding             */
+        /* skip over 1 bytes of miscellaneous info          */
+        /* skip over 1 bytes of MP3 gain                    */
+        /* skip over 2 bytes of preset and surround info    */
+        /* 4 bytes of music length (LAME tag frame + music) */
+        /* don't care about 2 bytes of CRC of music         */
+        /* don't care about 2 bytes of CRC of info tag      */
+
+        uint8 encoder[4];
+        uint8 version[3];
+        for (i = 0; i < 4; i++)
+        {
+            encoder[i] = pBuf[i];
+        }
+        if (encoder[0] == 'L' && encoder[1] == 'A' && encoder[2] == 'M' && encoder[3] == 'E')
+        {
+            iGaplessInfoAvailable = true;
+
+            // clip is encoded with LAME
+            // get the version number
+            for (i = 4; i < 7; i++)
+            {
+                version[i - 4] = pBuf[i];
+            }
+            if ((version[0] > '3' && version[0] <= '9' && version[1] == '.') ||
+                    (version[0] == '3' && version[1] == '.' && version[2] == '9') ||
+                    (version[0] < '3' && version[1] >= '0' && version[1] <= '9'))
+            {
+                // tag should be 9 bytes
+                pBuf += 9;
+            }
+            else
+            {
+                // tag should be 20 bytes
+                pBuf += 20;
+            }
+
+            // look for gapless info
+            pBuf += 10;
+
+            uint8 nogap = pBuf[0];
+            if (nogap & 0x30)
+            {
+                // it is part of a gapless album
+                iGaplessMetadata.SetPartOfGaplessAlbum(true);
+            }
+            else
+            {
+                // it is not part of a gapless album
+                iGaplessMetadata.SetPartOfGaplessAlbum(false);
+            }
+
+            pBuf += 2;
+
+            // get encoder delay and padding
+            uint8 delay[3];
+            for (i = 0; i < 3; i++)
+            {
+                delay[i] = pBuf[i];
+            }
+
+            uint16 enc_delay = 0;
+            uint16 zero_padding = 0;
+
+            // [xxxxxxxx][xxxxyyyy][yyyyyyyy]
+            // x = encoder delay, y = zero padding
+
+            enc_delay = delay[0];
+            enc_delay <<= 4;
+            enc_delay |= (delay[1] & 0xF0) >> 4;
+
+            zero_padding = delay[1] & 0x0F;
+            zero_padding <<= 8;
+            zero_padding |= delay[2];
+
+            pBuf += 7;
+
+            // get music length in bytes (include LAME tag frame, excludes ID3 tags)
+            // not sure we need this info
+            // int32 length = SwapFileToHostByteOrderInt32(pBuf);
+
+            iGaplessMetadata.SetEncoderDelay(enc_delay);
+            iGaplessMetadata.SetZeroPadding(zero_padding);
+
+            // calculate original stream length in samples
+            uint32 sfp = spfIndexTable[hdrInfo.frameVer][hdrInfo.layerID];
+            iGaplessMetadata.SetOriginalStreamLength((mp3XingHD.frames * sfp) - enc_delay - zero_padding);
+
+        } //end if LAME
+    } // end if
+
     return true;
 }
 
@@ -1449,6 +1586,7 @@ int32 MP3Parser::GetNextBundledAccessUnits(uint32 *n, GAU *pgau, MP3ErrorType &e
 {
     uint32 nBytesRead = 0;
     uint32 framets = 0;
+    uint32 frameDuration = 0;
     uint32 nBytesReadTotal = 0;
     int32  i;
     error = MP3_ERROR_UNKNOWN;
@@ -1464,7 +1602,7 @@ int32 MP3Parser::GetNextBundledAccessUnits(uint32 *n, GAU *pgau, MP3ErrorType &e
     {
         pgau->numMediaSamples = i;
 
-        error = GetNextMediaSample(pOutputBuffer, iLength, nBytesRead, framets);
+        error = GetNextMediaSample(pOutputBuffer, iLength, nBytesRead, framets, frameDuration);
         if ((error == MP3_SUCCESS))
         {
             if (nBytesRead > 0)
@@ -1472,6 +1610,13 @@ int32 MP3Parser::GetNextBundledAccessUnits(uint32 *n, GAU *pgau, MP3ErrorType &e
                 // Frame was read successfully
                 pgau->info[i].len = nBytesRead;
                 pgau->info[i].ts  = framets;
+                pgau->info[i].ts_delta = frameDuration;
+
+                if (0 == i)
+                {
+                    // first frame in the GAU, rturn the frame number (1 based)
+                    pgau->frameNum = iCurrFrameNumber;
+                }
             }
         }
         else
@@ -1530,7 +1675,7 @@ int32  MP3Parser::PeekNextBundledAccessUnits(uint32 *n, MediaMetaInfo *mInfo)
  * RETURN VALUE:
  * SIDE EFFECTS:
  ***********************************************************************/
-MP3ErrorType MP3Parser::GetNextMediaSample(uint8 *buffer, uint32 size, uint32& framesize, uint32& timestamp)
+MP3ErrorType MP3Parser::GetNextMediaSample(uint8 *buffer, uint32 size, uint32& framesize, uint32& timestamp, uint32& frameDuration)
 {
     MP3ErrorType mp3Err = MP3_SUCCESS;
 
@@ -1726,11 +1871,9 @@ BEGIN:
 
     timestamp = GetTimestampForCurrentSample();
     // update timestamp for next sample
-    // calculate frameDuration
-    if (mp3CDInfo.BitRate > 0)
-    {
-        iTimestamp = uint32(timestamp + (OsclFloat) mp3CDInfo.FrameLengthInBytes * 8000.00f / mp3CDInfo.BitRate);
-    }
+    // NOTE: PCM FRAME SIZE DOESN'T CHANGE, SO WE SHOULDN'T HAVE TO INCREMENT ON A SAMPLE BASIS
+    iTimestamp = (uint32)(((uint64)1000 * iCurrFrameNumber * mp3CDInfo.FrameSizeUnComp + (mp3CDInfo.SamplingRate >> 1)) / mp3CDInfo.SamplingRate);
+    frameDuration = iTimestamp - timestamp;
     return MP3_SUCCESS;
 }
 
@@ -1766,6 +1909,7 @@ uint32 MP3Parser::SeekPointFromTimestamp(uint32 &timestamp)
     uint32 seekOffset = 0;
     OsclFloat percent = 0;
     uint32 binNo = 0;
+    uint32 currframe = 0;
 
     bool bUseTOCForRepos = false;
 
@@ -1912,7 +2056,14 @@ uint32 MP3Parser::SeekPointFromTimestamp(uint32 &timestamp)
             if (iDurationScanComplete)
             {
                 OsclFloat offsetDiff = iTOC[binNo+1] - iTOC[binNo];
-                timestamp = (uint32)((binNo * iBinWidth) + iBinWidth * ((OsclFloat)(seekPoint - iTOC[binNo]) / offsetDiff));
+                timestamp = (uint32)((binNo * iBinWidth) + (iBinWidth * (seekPoint - iTOC[binNo]) / offsetDiff));
+            }
+            else
+            {
+                // since mp3FindSync finds the next sync point after the timestamp, quantize timestamp to the next frame boundary
+                uint32 frameSizeMult1000 = iMP3ConfigInfo.FrameSizeUnComp * 1000;
+                currframe = (uint32)(((int64)timestamp * (int64)iMP3ConfigInfo.SamplingRate + (frameSizeMult1000 - 1)) / frameSizeMult1000);
+                timestamp = (int32)((int64)currframe * (int64)frameSizeMult1000) / iMP3ConfigInfo.SamplingRate;
             }
         }
         else if (retVal == MP3_INSUFFICIENT_DATA || retVal == MP3_END_OF_FILE)
@@ -1937,7 +2088,14 @@ uint32 MP3Parser::SeekPointFromTimestamp(uint32 &timestamp)
     {
         if (iMP3ConfigInfo.FrameSizeUnComp > 0  && iMP3ConfigInfo.SamplingRate > 0)
         {
-            iCurrFrameNumber = (int32)(timestamp * (iMP3ConfigInfo.SamplingRate / iMP3ConfigInfo.FrameSizeUnComp) / 1000.00f);
+            if (currframe != 0)
+            {
+                iCurrFrameNumber = currframe;
+            }
+            else
+            {
+                iCurrFrameNumber = (int32)(((int64)timestamp * (int64)iMP3ConfigInfo.SamplingRate + (iMP3ConfigInfo.FrameSizeUnComp * 1000 - 1)) / (iMP3ConfigInfo.FrameSizeUnComp * 1000));
+            }
         }
     }
     else
@@ -3060,13 +3218,14 @@ void MP3Parser::FillTOCTable(uint32 aFilePos, uint32 aTimeStampToFrame)
 }
 
 
+bool MP3Parser::GetGaplessMetadata(PVMFGaplessMetadata& aGaplessMetadata)
+{
+    if (iGaplessInfoAvailable)
+    {
+        aGaplessMetadata = iGaplessMetadata;
+        return true;
+    }
 
-
-
-
-
-
-
-
-
+    return false;
+}
 

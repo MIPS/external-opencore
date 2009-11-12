@@ -68,6 +68,9 @@
 #ifndef PV_ID3_PARCOM_CONSTANTS_H_INCLUDED
 #include "pv_id3_parcom_constants.h"
 #endif
+#ifndef PVMF_GAPLESS_METADATA_H_INCLUDED
+#include "pvmf_gapless_metadata.h"
+#endif
 
 /** Forward declaration */
 class PVLogger;
@@ -287,6 +290,13 @@ class PVID3ParCom
 
         uint32 SearchTagV2_4(uint32 buff_sz, uint32 offset);
 
+        /**
+         * Retrieves the gapless metadata, if present
+         *
+         * @param aGaplessMetadata Output parameter to store the gapless metadata
+         * @return Status of operation
+         */
+        OSCL_IMPORT_REF PVMFStatus GetGaplessMetadata(PVMFGaplessMetadata& aGaplessMetadata);
 
     public:
         /** Enumerated list of supported character sets */
@@ -365,6 +375,18 @@ class PVID3ParCom
             bool      iFooterPresent;
             uint8     iID3V2LanguageID[4];
 
+        };
+
+        /**
+         * @brief The TGaplessInfo is a struct for temporary storage for gapless information
+         * extracted from the COM/COMM frames.
+         */
+        struct TGaplessInfo
+        {
+            uint32 iEncoderDelay;
+            uint32 iZeroPadding;
+            uint64 iOriginalLength;
+            bool iPartOfGaplessAlbum;
         };
 
         /**
@@ -881,7 +903,29 @@ class PVID3ParCom
          */
         PvmiKvpSharedPtr HandleErrorForKVPAllocation(OSCL_String& aKey, PvmiKvpValueType aValueType, uint32 aValueSize, bool &truncate, PVMFStatus &aStatus);
 
+        /**
+         * @brief Look for iTunNORM, iTunSMPN and iTunPGAP in COM/COMM frame with 8 bit char encoding
+         * @param aDescPtr, pointer to content description string in the COM/COMM frame
+         * @param aTextPtr, pointer to text string in the COM/COMM frame
+         * @param aTextCount, character count in text string
+         * @return aGaplessInfo, the gapless info stored in TGaplessInfo
+         * @return true if gapless info is found
+         */
+        bool CheckForITunesGaplessInfo8(uint8* aDescPtr, uint8* aTextPtr, uint32 aTextCount, TGaplessInfo& aGaplessInfo);
+
+        /**
+         * @brief Look for iTunNORM, iTunSMPN and iTunPGAP in COM/COMM frame in unicode
+         * @param aDescPtr, pointer to content description string in the COM/COMM frame
+         * @param aTextPtr, pointer to text string in the COM/COMM frame
+         * @param aTextCount, character count in text string
+         * @return aGaplessInfo, the gapless info stored in TGaplessInfo
+         * @return true if gapless info is found
+         */
+        bool CheckForITunesGaplessInfoUnicode(oscl_wchar* aDescPtr, oscl_wchar* aTextPtr, uint32 aTextCount, TGaplessInfo& aGaplessInfo);
+
     private:
+
+        uint8* AllocateMem(int32& err, uint32 size);
 
         // Variables for parsing
         PVFile* iInputFile;
@@ -906,6 +950,9 @@ class PVID3ParCom
         bool iUsePadding;
         bool iTagAtBof;
         bool iSeekFrameFound;
+
+        TGaplessInfo iGaplessInfo;
+        bool iGaplessInfoFound;
 
         OsclMemAllocator iAlloc;
         PVLogger* iLogger;

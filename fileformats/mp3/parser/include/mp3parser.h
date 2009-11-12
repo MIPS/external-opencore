@@ -254,7 +254,7 @@ class MP3Parser
         * @param timestamp Timestamp for the frame if the read is successful
         * @returns Result of operation: true=success; false=fail
         */
-        MP3ErrorType  GetNextMediaSample(uint8 *buf, uint32 bufsize, uint32& framesize, uint32& timestamp);
+        MP3ErrorType  GetNextMediaSample(uint8 *buf, uint32 bufsize, uint32& framesize, uint32& timestamp, uint32& frameDuration);
 
         /**
         * @brief Returns the timestamp of the frame
@@ -404,6 +404,16 @@ class MP3Parser
         }
 
         MP3ErrorType ScanMP3File(PVFile * fpUsed, uint32 aFramesToScan);
+
+        /**
+        * @brief Retrieves gapless playback metadata info
+        *
+        * @param aGaplessMetadata PVMFGaplessMetadata class to be filled
+        * @returns true if gapless metadata was found, false otherwise
+        */
+        bool GetGaplessMetadata(PVMFGaplessMetadata& aGaplessMetadata);
+
+
     private:
         MP3ErrorType ScanMP3File(PVFile* fpUsed);
         MP3ErrorType GetDurationFromVBRIHeader(uint32 &aDuration);
@@ -489,6 +499,9 @@ class MP3Parser
         MP3FileType mp3Type;
         int32 iTagSize;
         PvmiKvpSharedPtrVector iId3Frames;
+
+        bool iGaplessInfoAvailable;
+        PVMFGaplessMetadata iGaplessMetadata;
 };
 
 #endif // #ifdef MP3PARSER_H_INCLUDED

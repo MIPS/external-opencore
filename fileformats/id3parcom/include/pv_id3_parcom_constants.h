@@ -273,6 +273,17 @@
 #define ID3V2_2_FRAME_ID_DESCRIPTION    "TT3"
 #define ID3V2_2_FRAME_ID_VERSION        "TEN"
 
+// iTunes gapless metadata tags in content description in COM/COMM frames
+#define ID3_COMMENT_FRAME_ITUNES_TAG_SIZE   8
+
+#define ID3_COMMENT_FRAME_ITUNES_TAG_SMPB   "iTunSMPB"
+#define ID3_COMMENT_FRAME_ITUNES_TAG_PGAP   "iTunPGAP"
+
+#define ID3_COMMENT_FRAME_ITUNES_TAG_SMPB_WSTRING   _STRLIT_WCHAR("iTunSMPB")
+#define ID3_COMMENT_FRAME_ITUNES_TAG_PGAP_WSTRING   _STRLIT_WCHAR("iTunPGAP")
+
+#define IS_VALID_HEX_DIGIT(ch) ((ch >= 'A' && ch <= 'F') || (ch >= '0' && ch <= '9'))
+
 
 #define SIZE_OF_TRACK_LENGTH 8
 

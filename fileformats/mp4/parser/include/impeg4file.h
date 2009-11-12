@@ -74,6 +74,10 @@
 #endif
 #include "pv_id3_parcom_types.h"
 
+#ifndef PVMF_GAPLESS_METADATA_H_INCLUDED
+#include "pvmf_gapless_metadata.h"
+#endif
+
 class OsclFileHandle;
 class PvmiDataStreamObserver;
 class AVCSampleEntry;
@@ -404,6 +408,8 @@ class IMpeg4File : public ISucceedFail
         virtual PvmfApicStruct* getITunesImageData() const = 0;
 
         virtual bool IsMovieFragmentsPresent() const = 0;
+        // retrieve gapless metadata
+        virtual bool getITunesGaplessMetadata(PVMFGaplessMetadata& aGaplessMetadata) const = 0;
 
         // Reposition Related Video Track present API
         virtual void ResetVideoTrackPresentFlag() = 0;

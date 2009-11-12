@@ -92,6 +92,12 @@
 #include "pv_id3_parcom.h"
 #endif
 
+#ifndef PVMF_GAPLESS_METADATA_H_INCLUDED
+#include "pvmf_gapless_metadata.h"
+#endif
+
+#define ID3V1_STR_MAX_SIZE 64
+
 class AVCSampleEntry;
 
 struct TrackIndex
@@ -373,7 +379,7 @@ class Mpeg4File : public IMpeg4File, public Parentable
                 uint32 *n,
                 MediaMetaInfo *mInfo);
 
-        virtual int32 getNextBundledAccessUnits(const uint32 trackID, uint32 *n, GAU    *pgau);
+        virtual int32 getNextBundledAccessUnits(const uint32 trackID, uint32 *n, GAU *pgau);
         MovieFragmentAtom *getMovieFragmentForTrackId(uint32 id);
 
         uint32 getSampleCountInTrack(uint32 id);
@@ -1278,13 +1284,14 @@ class Mpeg4File : public IMpeg4File, public Parentable
                 return temp;
         }
 
-        //ID3V2 Metadata
-        uint16 getID3V2LangCode() const
+        bool getITunesGaplessMetadata(PVMFGaplessMetadata& aGaplessMetadata) const
         {
-            if (_pmovieAtom != NULL)
+            if (_pmovieAtom)
             {
-                return (_pmovieAtom->getID3V2LangCode());
+                return _pmovieAtom->getITunesGaplessMetadata(aGaplessMetadata);
             }
+            else
+                return false;
         }
 
         // For DRM Atom.

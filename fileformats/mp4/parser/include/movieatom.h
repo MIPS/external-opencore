@@ -77,6 +77,10 @@
 #include "movieextendsatom.h"
 #endif
 
+#ifndef PVMF_GAPLESS_METADATA_H_INCLUDED
+#include "pvmf_gapless_metadata.h"
+#endif
+
 
 class AVCSampleEntry;
 /*
@@ -794,6 +798,16 @@ class MovieAtom : public Atom
                 return _pUserDataAtom->getITunesLyrics();
             else
                 return temp;
+        }
+
+        bool getITunesGaplessMetadata(PVMFGaplessMetadata& aGaplessMetadata) const
+        {
+            if (_pUserDataAtom)
+            {
+                return _pUserDataAtom->getITunesGaplessMetadata(aGaplessMetadata);
+            }
+            else
+                return false;
         }
 
     private:

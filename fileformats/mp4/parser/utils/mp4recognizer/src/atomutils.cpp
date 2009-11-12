@@ -670,7 +670,7 @@ AtomUtils::getNextAtomType(MP4_FF_FILE *fp, uint32 &size, uint32 &type)
 
 
             type == PIXELASPECTRATIO_BOX ||
-
+            type == ITUNES_PART_OF_GAPLESS_ALBUM_ATOM ||
             type == EVRC_SAMPLE_ENTRY ||
             type == EVRCB_SAMPLE_ENTRY ||
             type == EVRCWB_SAMPLE_ENTRY ||

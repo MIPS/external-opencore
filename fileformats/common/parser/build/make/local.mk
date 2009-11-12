@@ -30,7 +30,8 @@ HDRS := pvfile.h \
 	pvmi_external_download_datastream_factory.h \
 	pvmi_external_download_datastream_impl.h \
 	pvmi_external_download_file_monitor.h \
-	pvmi_external_download_simulator.h
+	pvmi_external_download_simulator.h \
+        pvmf_gapless_metadata.h
 
  
 include $(MK)/library.mk

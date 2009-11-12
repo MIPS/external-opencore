@@ -1330,6 +1330,7 @@ bool PVMFMP3FFParserNode::RetrieveTrackData(PVMP3FFNodeTrackPortInfo& aTrackPort
     gau.buf.buf_states[0] = NULL;
     gau.buf.fragments[0].ptr = refCtrMemFragOut.getMemFrag().ptr;
     gau.buf.fragments[0].len = refCtrMemFragOut.getCapacity();
+    gau.frameNum = 0;
 
     // Mp3FF ErrorCode
     MP3ErrorType error = MP3_SUCCESS;

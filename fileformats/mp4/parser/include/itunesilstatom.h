@@ -23,9 +23,15 @@
 #include "pvmi_kvp.h"
 #include "atomdefs.h"
 
+#ifndef PVMF_GAPLESS_METADATA_H_INCLUDED
+#include "pvmf_gapless_metadata.h"
+#endif
+
 #define MAX_CD_IDENTIFIER_FREE_DATA_ATOM 16
 #define ITUNES_MAX_COVER_IMAGE_SIZE (1024*1024) //1 meg
 #define PREFIX_SIZE 16
+
+#define IS_VALID_HEX_DIGIT(ch) ((ch >= 'A' && ch <= 'F') || (ch >= '0' && ch <= '9'))
 
 //************************************MeaningAtom Class Starts  **********************************
 class ItunesMeaningAtom : public FullAtom
@@ -490,6 +496,63 @@ class ITunesCoverImageAtom: public ITunesMetaDataAtom
         PvmfApicStruct* _ImageData;
 };
 
+
+//************************************ Part of Gapless Album Class Starts  **********************************
+class ITunesPartOfGaplessAlbumAtom: public ITunesMetaDataAtom
+{
+    public:
+        ITunesPartOfGaplessAlbumAtom(MP4_FF_FILE *fp, uint32 size, uint32 type);
+        ~ITunesPartOfGaplessAlbumAtom();
+
+        bool getPGAP() const
+        {
+            return _partOfGaplessAlbum;
+        }
+
+    private:
+        // Part of Gapless Album.
+        bool _partOfGaplessAlbum;
+};
+
+//************************************ SMPB Class Starts  **********************************
+class ITunesSMPBFreeFormDataAtom: public ITunesMetaDataAtom
+{
+    public:
+        ITunesSMPBFreeFormDataAtom(MP4_FF_FILE *fp, uint32 size, uint32 type);
+        ~ITunesSMPBFreeFormDataAtom();
+
+        uint32 getEncoderDelay() const
+        {
+            return _encoderDelay;
+        }
+
+        uint32 getZeroPadding() const
+        {
+            return _zeroPadding;
+        }
+
+        uint64 getStreamLength() const
+        {
+            return _streamLength;
+        }
+
+        OSCL_wHeapString<OsclMemAllocator> getString()
+        {
+            return _StringData;
+        }
+
+    private:
+        // Encoder delay in samples
+        uint32 _encoderDelay;
+        // Zero padding in samples
+        uint32 _zeroPadding;
+        // Original stream lenght (exclusive of encoder delay and zero padding)
+        uint64 _streamLength;
+        // gapless info in string form
+        OSCL_wHeapString<OsclMemAllocator> _StringData;
+
+};
+
 //***************************** ILST Atom Class Starts    **************************
 class ITunesILSTAtom : public Atom
 {
@@ -790,6 +853,31 @@ class ITunesILSTAtom : public Atom
                 return temp;
         }
 
+
+        OSCL_wHeapString<OsclMemAllocator> getSMPBData() const
+        {
+            OSCL_wHeapString<OsclMemAllocator> temp;
+            if (_pITunesSMPBFreeFormDataAtom)
+                return _pITunesSMPBFreeFormDataAtom->getString();
+            else
+                return temp;
+        }
+
+        bool getGaplessMetadata(PVMFGaplessMetadata& aGaplessMetadata) const
+        {
+            if (_pITunesGaplessMetadata)
+            {
+                aGaplessMetadata.SetEncoderDelay(_pITunesGaplessMetadata->GetEncoderDelay());
+                aGaplessMetadata.SetZeroPadding(_pITunesGaplessMetadata->GetZeroPadding());
+                aGaplessMetadata.SetOriginalStreamLength(_pITunesGaplessMetadata->GetOriginalStreamLength());
+                aGaplessMetadata.SetPartOfGaplessAlbum(_pITunesGaplessMetadata->GetPartOfGaplessAlbum());
+
+                return true;
+            }
+            else
+                return false;
+        }
+
     private:
 
         //Meaning String
@@ -876,6 +964,15 @@ class ITunesILSTAtom : public Atom
 
         // Lyrics of the Song
         ITunesLyricsAtom        *_pITunesLyricsAtom;
+
+        // Gapless playback metadata atom
+        ITunesSMPBFreeFormDataAtom  *_pITunesSMPBFreeFormDataAtom;
+
+        // Part of gapless album
+        ITunesPartOfGaplessAlbumAtom *_pITunesPartOfGaplessAlbumAtom;
+
+        // Gapless playback metadata info (parsed)
+        PVMFGaplessMetadata *_pITunesGaplessMetadata;
 
         PVLogger *iLogger;
 };

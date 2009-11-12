@@ -1737,7 +1737,219 @@ ITunesCoverImageAtom::~ITunesCoverImageAtom()
         _ImageData = NULL;
     }
 }
-//************************************ Lyrics Class Ends  **********************************
+
+//************************************ Part Of Gapless Album Class Starts  **********************************
+ITunesPartOfGaplessAlbumAtom::ITunesPartOfGaplessAlbumAtom(MP4_FF_FILE *fp,
+        uint32 size,
+        uint32 type)
+        : ITunesMetaDataAtom(fp, size, type)
+{
+    uint32 atomType, atomSize;
+    AtomUtils::getNextAtomType(fp, atomSize, atomType);
+    if (atomType == ITUNES_ILST_DATA_ATOM && AtomUtils::read64(fp, _prefix))
+    {
+        if (_prefix == OTHER_PREFIX)
+        {
+            uint8 pgap = 0;
+            if (!AtomUtils::read8(fp, pgap))
+            {
+                _success = false;
+                _mp4ErrorCode = READ_ITUNES_ILST_META_DATA_FAILED;
+                PVMF_MP4FFPARSER_LOGERROR((0, "ERROR =>ITunesPartOfGaplessAlbumAtom::ITunesPartOfGaplessAlbumAtom READ_ITUNES_ILST_META_DATA_FAILED  if(_prefix == OTHER_PREFIX)"));
+                return;
+            }
+            if (1 == pgap)
+            {
+                _partOfGaplessAlbum = true;
+            }
+            else
+            {
+                _partOfGaplessAlbum = false;
+            }
+        }
+        else
+        {
+            _success = false;
+            _mp4ErrorCode = READ_ITUNES_ILST_META_DATA_FAILED;
+            PVMF_MP4FFPARSER_LOGERROR((0, "ERROR =>ITunesPartOfGaplessAlbumAtom::ITunesPartOfGaplessAlbumAtom READ_ITUNES_ILST_META_DATA_FAILED  else"));
+            return;
+        }
+    }
+}
+
+ITunesPartOfGaplessAlbumAtom::~ITunesPartOfGaplessAlbumAtom()
+{
+}
+
+//************************************ SMPB Class Starts  **********************************
+ITunesSMPBFreeFormDataAtom::ITunesSMPBFreeFormDataAtom(MP4_FF_FILE *fp,
+        uint32 size,
+        uint32 type)
+        : ITunesMetaDataAtom(fp, size, type)
+{
+    // parse the gapless info and store in _pITunesGaplessMetadata
+    // we need at least 44 bytes
+    // UTF8 iTunSMPB 00000000 00000210 00000AD4 000000000003FE1C 00000000 ...
+    // note that 00000210 00000AD4 is encoded as characters in hex as
+    // 20 30 30 30 30 30 30 30 34 20 30 30 30 30 30 41 44 34 20
+    // skip over the space
+    // skip over the first 8 characters
+    // skip over the space
+    // the second 8 characters contain the encoder delay in samples
+    // skip over the space
+    // the third 8 characters contain the zero padding in samples
+    // skip over the space
+    // the next 32 bytes contain the original stream length in samples
+
+    uint32 atomType = type, atomSize = size;
+    int32 nSize = (int32)(atomSize - PREFIX_SIZE);
+    if (nSize >= 44)
+    {
+        uint8* buf = NULL;
+        uint8* outbuf = NULL;
+        PV_MP4_FF_ARRAY_MALLOC(fp->auditCB, uint8, nSize, buf);
+        PV_MP4_FF_ARRAY_MALLOC(fp->auditCB, uint8, ((nSize + 1)*sizeof(oscl_wchar)), outbuf);
+        if (buf && outbuf)
+        {
+            if (atomType == ITUNES_ILST_DATA_ATOM && AtomUtils::read64(fp, _prefix))
+            {
+                if (_prefix == STRING_PREFIX)
+                {
+                    if (!AtomUtils::readByteData(fp, nSize, buf))
+                    {
+                        _success = false;
+                        _mp4ErrorCode = READ_ITUNES_ILST_META_DATA_FAILED;
+                        PVMF_MP4FFPARSER_LOGERROR((0, "ERROR =>ITunesSMPBFreeFormDataAtom::ITunesSMPBFreeFormDataAtom READ_ITUNES_ILST_META_DATA_FAILED"));
+                    }
+                    else
+                    {
+                        // store the info as a string
+                        oscl_UTF8ToUnicode((const char *)buf, nSize, (oscl_wchar*)outbuf, nSize + 1);
+                        OSCL_wHeapString<OsclMemAllocator> temp((const oscl_wchar *)outbuf);
+                        _StringData = temp;
+
+                        // parse the string and store the info in _pITunesGaplessMetadata
+                        int i = 0;
+                        uint8* ptr = buf;
+                        // skip over space + first 8 bytes + space
+                        ptr += 10;
+                        // check if the second 8 bytes contain valid hex digits
+                        bool goodNumber = true;
+                        for (i = 0; i < 8; i++)
+                        {
+                            if (!(IS_VALID_HEX_DIGIT(*(ptr + i))))
+                            {
+                                // bad number
+                                goodNumber = false;
+                                _encoderDelay = 0;
+                                break;
+                            }
+                        }
+                        if (goodNumber)
+                        {
+                            // convert string to number for encoder delay
+                            uint32 number = 0;
+                            bool ok = PV_atoi((const char*)ptr, 'x', 8, number);
+                            if (ok)
+                            {
+                                _encoderDelay = number;
+                            }
+                        }
+
+                        ptr += 9;
+                        // check if the next 8 bytes contain valid hex digits
+                        goodNumber = true;
+                        for (i = 0; i < 8; i++)
+                        {
+                            if (!(IS_VALID_HEX_DIGIT(*(ptr + i))))
+                            {
+                                // bad number
+                                goodNumber = false;
+                                _zeroPadding = 0;
+                                break;
+                            }
+                        }
+                        if (goodNumber)
+                        {
+                            // convert string to number for zero padding
+                            uint32 number = 0;
+                            bool ok = PV_atoi((const char*)ptr, 'x', 8, number);
+                            if (ok)
+                            {
+                                _zeroPadding = number;
+                            }
+                        }
+
+                        ptr += 9;
+                        // check if the next 16 bytes contain valid hex digits
+                        goodNumber = true;
+                        for (i = 0; i < 16; i++)
+                        {
+                            if (!(IS_VALID_HEX_DIGIT(*(ptr + i))))
+                            {
+                                // bad number
+                                goodNumber = false;
+                                _streamLength = 0;
+                                break;
+                            }
+                        }
+                        if (goodNumber)
+                        {
+                            // convert string to number for original stream length
+                            uint32 upper = 0;
+                            uint32 lower = 0;
+                            bool ok = PV_atoi((const char*)ptr, 'x', 8, upper);
+                            ptr += 8;
+                            bool ok2 = PV_atoi((const char*)ptr, 'x', 8, lower);
+                            if (ok && ok2)
+                            {
+                                Oscl_Int64_Utils::set_uint64(_streamLength, upper, lower);
+                            }
+                        }
+                    }
+                }
+                else //if atomType is not "DataAtom" and/or _prefix is not "string"
+                {
+
+                    _success = false;
+                    _mp4ErrorCode = READ_ITUNES_ILST_META_DATA_FAILED;
+                    PVMF_MP4FFPARSER_LOGERROR((0, "ERROR =>ITunesSMPBFreeFormDataAtom::ITunesSMPBFreeFormDataAtom READ_ITUNES_ILST_META_DATA_FAILED not a string"));
+                }
+            }
+        }
+        else
+        {
+            _success = false;
+            _mp4ErrorCode = READ_ITUNES_ILST_META_DATA_FAILED;
+            PVMF_MP4FFPARSER_LOGERROR((0, "ERROR =>ITunesSMPBFreeFormDataAtom::ITunesSMPBFreeFormDataAtom READ_ITUNES_ILST_META_DATA_FAILED read prefix failed"));
+
+        }
+        // Deleting the buffers
+        if (buf)
+        {
+            PV_MP4_ARRAY_FREE(fp->auditCB, buf);
+            buf = NULL;
+        }
+        if (outbuf)
+        {
+            PV_MP4_ARRAY_FREE(fp->auditCB, outbuf);
+            outbuf = NULL;
+        }
+    }
+    else
+    {
+        _success = false;
+        _mp4ErrorCode = READ_ITUNES_ILST_META_DATA_FAILED;
+        PVMF_MP4FFPARSER_LOGERROR((0, "ERROR =>ITunesSMPBFreeFormDataAtom::ITunesSMPBFreeFormDataAtom READ_ITUNES_ILST_META_DATA_FAILED not enough bytes"));
+
+    }
+}
+
+ITunesSMPBFreeFormDataAtom::~ITunesSMPBFreeFormDataAtom()
+{
+}
+
+//************************************ ILST Class Starts  **********************************
 ITunesILSTAtom::ITunesILSTAtom(MP4_FF_FILE *fp, uint32 size, uint32 type): Atom(fp, size, type)
 {
     _success = true;
@@ -1781,6 +1993,9 @@ ITunesILSTAtom::ITunesILSTAtom(MP4_FF_FILE *fp, uint32 size, uint32 type): Atom(
     _pITunesDiskDatatAtom = NULL;
     _pITunesLyricsAtom = NULL;
     _pITunesCoverImageAtom = NULL;
+    _pITunesSMPBFreeFormDataAtom = NULL;
+    _pITunesPartOfGaplessAlbumAtom = NULL;
+    _pITunesGaplessMetadata = NULL;
 
     uint32 count = _size - DEFAULT_ATOM_SIZE;
 
@@ -2133,6 +2348,41 @@ ITunesILSTAtom::ITunesILSTAtom(MP4_FF_FILE *fp, uint32 size, uint32 type): Atom(
                                 _iITunesCDIdentifierFreeFormDataAtomNum++;
 
                             }
+                            else if (!(oscl_strcmp(buf, ITUNES_FREE_FORM_DATA_ATOM_TYPE_SMPB)))
+                            {
+                                if (_pITunesSMPBFreeFormDataAtom == NULL)
+                                {
+                                    PV_MP4_FF_NEW(fp->auditCB,
+                                                  ITunesSMPBFreeFormDataAtom,
+                                                  (fp, FreeFormAtomSize, FreeFormAtomType),
+                                                  _pITunesSMPBFreeFormDataAtom);
+                                    if (!_pITunesSMPBFreeFormDataAtom->MP4Success())
+                                    {
+                                        AtomUtils::seekFromStart(fp, currPos);
+                                        AtomUtils::seekFromCurrPos(fp, FreeFormAtomSize);
+
+                                    }
+                                    count -= _pITunesSMPBFreeFormDataAtom->getSize();
+                                    atomsize -= _pITunesSMPBFreeFormDataAtom->getSize();
+
+                                    if (NULL == _pITunesGaplessMetadata)
+                                    {
+                                        _pITunesGaplessMetadata = OSCL_NEW(PVMFGaplessMetadata, ());
+                                    }
+
+                                    // store gapless metadata in PVMFGaplessMetadata
+                                    _pITunesGaplessMetadata->SetEncoderDelay(_pITunesSMPBFreeFormDataAtom->getEncoderDelay());
+                                    _pITunesGaplessMetadata->SetZeroPadding(_pITunesSMPBFreeFormDataAtom->getZeroPadding());
+                                    _pITunesGaplessMetadata->SetOriginalStreamLength(_pITunesSMPBFreeFormDataAtom->getStreamLength());
+                                }
+                                else //Duplicate atom
+                                {
+                                    AtomUtils::seekFromStart(fp, currPos);
+                                    AtomUtils::seekFromCurrPos(fp, FreeFormAtomSize);
+                                    count -= FreeFormAtomSize;
+                                    atomsize -= FreeFormAtomSize;
+                                }
+                            }
                             else /*Ignore the DataAtom */
                             {
                                 atomsize -= FreeFormAtomSize;
@@ -2387,6 +2637,33 @@ ITunesILSTAtom::ITunesILSTAtom(MP4_FF_FILE *fp, uint32 size, uint32 type): Atom(
             else
                 count -= _pITunesLyricsAtom->getSize();
         }
+        else if (atomType == ITUNES_PART_OF_GAPLESS_ALBUM_ATOM)
+        {
+            PV_MP4_FF_NEW(fp->auditCB, ITunesPartOfGaplessAlbumAtom, (fp, atomsize, atomType), _pITunesPartOfGaplessAlbumAtom);
+
+            if (!_pITunesPartOfGaplessAlbumAtom->MP4Success())
+            {
+                AtomUtils::seekFromStart(fp, currPtr);
+                AtomUtils::seekFromCurrPos(fp, atomsize);
+                if (_pITunesPartOfGaplessAlbumAtom != NULL)
+                {
+                    PV_MP4_FF_DELETE(NULL, ITunesPartOfGaplessAlbumAtom, _pITunesPartOfGaplessAlbumAtom);
+                    _pITunesPartOfGaplessAlbumAtom = NULL;
+                }
+                count -= atomsize;
+            }
+            else
+            {
+                count -= _pITunesPartOfGaplessAlbumAtom->getSize();
+
+                // store the info in _pITunesGaplessMetadata
+                if (NULL == _pITunesGaplessMetadata)
+                {
+                    _pITunesGaplessMetadata = OSCL_NEW(PVMFGaplessMetadata, ());
+                }
+                _pITunesGaplessMetadata->SetPartOfGaplessAlbum(_pITunesPartOfGaplessAlbumAtom->getPGAP());
+            }
+        }
         else
         {
             if (atomsize > DEFAULT_ATOM_SIZE)
@@ -2538,6 +2815,18 @@ ITunesILSTAtom::~ITunesILSTAtom()
     if (_pITunesCoverImageAtom != NULL)
     {
         PV_MP4_FF_DELETE(NULL, ITunesCoverImageAtom, _pITunesCoverImageAtom);
+    }
+    if (_pITunesSMPBFreeFormDataAtom != NULL)
+    {
+        PV_MP4_FF_DELETE(NULL, ITunesFreeFormDataAtom, _pITunesSMPBFreeFormDataAtom);
+    }
+    if (_pITunesPartOfGaplessAlbumAtom != NULL)
+    {
+        PV_MP4_FF_DELETE(NULL, ITunesPartOfGaplessAlbumAtom, _pITunesPartOfGaplessAlbumAtom);
+    }
+    if (_pITunesGaplessMetadata != NULL)
+    {
+        OSCL_DELETE(_pITunesGaplessMetadata);
     }
 }
 

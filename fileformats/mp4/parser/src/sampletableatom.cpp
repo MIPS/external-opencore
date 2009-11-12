@@ -2300,7 +2300,16 @@ SampleTableAtom::getNextBundledAccessUnits(uint32 *n,
         return nReturn;
     }
 
+    // save the sample number of the first sample in the bundle
+    uint32 fNum = _currentPlaybackSampleNumber;
+
     nReturn = getNextNSamples(_currentPlaybackSampleNumber, n, pgau);
+
+    if (0 != *n)
+    {
+        // set the sample number of the first sample in the bundle
+        pgau->frameNum = fNum;
+    }
 
     if (nReturn == INSUFFICIENT_BUFFER_SIZE)
     {

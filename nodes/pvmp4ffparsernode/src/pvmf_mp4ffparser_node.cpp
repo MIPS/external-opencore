@@ -2415,6 +2415,7 @@ PVMFStatus PVMFMP4FFParserNode::InitOMA2DRMInfo()
                         iGau.buf.buf_states[0] = NULL;
                         iGau.buf.fragments[0].ptr = (OsclAny*)destBuf;
                         iGau.buf.fragments[0].len = sampleSize;
+                        iGau.frameNum = 0;
                         retval =
                             iMP4FileHandle->getNextBundledAccessUnits(trackID,
                                     &numSamples,
@@ -4176,6 +4177,7 @@ bool PVMFMP4FFParserNode::RetrieveTrackConfigInfoAndFirstSample(uint32 aTrackId,
                 iGau.buf.buf_states[0] = NULL;
                 iGau.buf.fragments[0].ptr = (OsclAny*)sampleBuf;
                 iGau.buf.fragments[0].len = sampleSize;
+                iGau.frameNum = 0;
                 retval =
                     iMP4FileHandle->getNextBundledAccessUnits(aTrackId,
                             &numSamples,
@@ -4410,6 +4412,7 @@ bool PVMFMP4FFParserNode::RetrieveTrackData(PVMP4FFNodeTrackPortInfo& aTrackPort
     iGau.numMediaSamples = numsamples;
     iGau.buf.num_fragments = 1;
     iGau.buf.buf_states[0] = NULL;
+    iGau.frameNum = 0;
 
     if (iCPMContentType == PVMF_CPM_FORMAT_OMA2)
     {
@@ -8375,6 +8378,7 @@ PVMFStatus PVMFMP4FFParserNode::GetVideoFrameWidth(uint32 aId, int32& aWidth, in
                     iGau.buf.buf_states[0] = NULL;
                     iGau.buf.fragments[0].ptr = (OsclAny*)sampleBuf;
                     iGau.buf.fragments[0].len = sampleSize;
+                    iGau.frameNum = 0;
                     retval =
                         iMP4FileHandle->getNextBundledAccessUnits(aId,
                                 &numSamples,
@@ -8534,6 +8538,7 @@ PVMFStatus PVMFMP4FFParserNode::GetVideoFrameHeight(uint32 aId, int32& aHeight, 
                     iGau.buf.buf_states[0] = NULL;
                     iGau.buf.fragments[0].ptr = (OsclAny*)sampleBuf;
                     iGau.buf.fragments[0].len = sampleSize;
+                    iGau.frameNum = 0;
                     retval =
                         iMP4FileHandle->getNextBundledAccessUnits(aId,
                                 &numSamples,

@@ -321,11 +321,11 @@ OSCL_EXPORT_REF MP3ErrorType IMpeg3File::GetConfigDetails(MP3ContentFormatType &
     return MP3_ERROR_UNKNOWN;
 }
 
-OSCL_EXPORT_REF MP3ErrorType IMpeg3File::GetNextMediaSample(uint8 *buf, uint32 size, uint32& framesize, uint32& timestamp)
+OSCL_EXPORT_REF MP3ErrorType IMpeg3File::GetNextMediaSample(uint8 *buf, uint32 size, uint32& framesize, uint32& timestamp, uint32& frameDuration)
 {
     if (pMP3Parser != NULL)
     {
-        return (pMP3Parser->GetNextMediaSample(buf, size, framesize, timestamp));
+        return (pMP3Parser->GetNextMediaSample(buf, size, framesize, timestamp, frameDuration));
     }
     else
     {
@@ -1579,6 +1579,16 @@ OSCL_EXPORT_REF MP3ErrorType IMpeg3File::ScanMP3File(uint32 aFramesToScan)
     return errCode;
 }
 
+OSCL_EXPORT_REF bool IMpeg3File::GetGaplessMetadata(PVMFGaplessMetadata& aGaplessMetadata)
+{
+    if (pMP3Parser != NULL)
+    {
+        return pMP3Parser->GetGaplessMetadata(aGaplessMetadata);
+    }
+
+    return false;
+}
+
 OsclAny* IMpeg3File::AllocateKVPKeyArray(int32& aLeaveCode, PvmiKvpValueType aValueType, int32 aNumElements)
 {
     int32 leaveCode = OsclErrNone;
@@ -1633,3 +1643,4 @@ int32 IMpeg3File::PushKVPKey(OSCL_HeapString<OsclMemAllocator>& aString, Oscl_Ve
     OSCL_TRY(leavecode, aKeyList.push_back(aString));
     return leavecode;
 }
+

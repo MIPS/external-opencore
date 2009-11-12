@@ -69,6 +69,11 @@
 
 #include "atomdefs.h"
 
+#ifndef PVMF_GAPLESS_METADATA_H_INCLUDED
+#include "pvmf_gapless_metadata.h"
+#endif
+
+
 class UserDataAtom : public Atom
 {
 
@@ -505,6 +510,15 @@ class UserDataAtom : public Atom
                 return temp;
         }
 
+        bool getITunesGaplessMetadata(PVMFGaplessMetadata& aGaplessMetadata) const
+        {
+            if (_pMetaDataAtom)
+            {
+                return _pMetaDataAtom->getITunesGaplessMetadata(aGaplessMetadata);
+            }
+            else
+                return false;
+        }
 
 
         AssetInfoTitleAtom          *getAssetInfoTitleAtomAt(int32 index);

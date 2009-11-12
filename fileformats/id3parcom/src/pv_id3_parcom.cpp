@@ -44,6 +44,9 @@
 #ifndef WCHAR_SIZE_UTILS_H_INCLUDED
 #include "wchar_size_utils.h"
 #endif
+#ifndef OSCL_INT64_UTILS_H_INCLUDED
+#include "oscl_int64_utils.h"
+#endif
 
 #define LOG_STACK_TRACE(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, m);
 #define LOG_DEBUG(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG, m);
@@ -93,7 +96,8 @@ OSCL_EXPORT_REF PVID3ParCom::PVID3ParCom()
         iMaxTagSize(0),
         iUsePadding(false),
         iTagAtBof(false),
-        iSeekFrameFound(false)
+        iSeekFrameFound(false),
+        iGaplessInfoFound(false)
 {
     iLogger = PVLogger::GetLoggerObject("PVID3ParCom");
     iID3TagInfo.iID3V2ExtendedHeaderSize = 0;
@@ -104,6 +108,10 @@ OSCL_EXPORT_REF PVID3ParCom::PVID3ParCom()
 
     oscl_memset(&iID3TagInfo.iID3V2FrameFlag, 0, sizeof(iID3TagInfo.iID3V2FrameFlag));
 
+    iGaplessInfo.iEncoderDelay = 0;
+    iGaplessInfo.iZeroPadding = 0;
+    iGaplessInfo.iOriginalLength = 0;
+    iGaplessInfo.iPartOfGaplessAlbum = false;
 }
 
 ////////////////////////////////////////////////////////////////////////////
@@ -715,6 +723,26 @@ uint32 PVID3ParCom::SearchTagV2_4(uint32 aBuffSz, uint32 aFileOffset)
     oscl_free(buff);
     return 0;
 }
+
+////////////////////////////////////////////////////////////////////////////
+OSCL_EXPORT_REF PVMFStatus PVID3ParCom::GetGaplessMetadata(PVMFGaplessMetadata& aGaplessMetadata)
+{
+    PVMFStatus status = PVMFFailure;
+
+    if (iGaplessInfoFound)
+    {
+        // copy the info
+        aGaplessMetadata.SetEncoderDelay(iGaplessInfo.iEncoderDelay);
+        aGaplessMetadata.SetZeroPadding(iGaplessInfo.iZeroPadding);
+        aGaplessMetadata.SetOriginalStreamLength(iGaplessInfo.iOriginalLength);
+        aGaplessMetadata.SetPartOfGaplessAlbum(iGaplessInfo.iPartOfGaplessAlbum);
+
+        return PVMFSuccess;
+    }
+
+    return status;
+}
+
 
 ////////////////////////////////////////////////////////////////////////////
 void PVID3ParCom::ReadID3V1Tag(void)
@@ -2874,7 +2902,7 @@ PVMFStatus PVID3ParCom::ReadAlbumArtFrame(PVID3FrameType aFrameType, uint8 unico
 
                 OSCL_TRY(err, iFrames.push_back(kvpPtr););
                 OSCL_FIRST_CATCH_ANY(err,
-                                     LOG_ERR((0, "PVID3ParCom::ReadLyricsCommFrame: Error - iFrame.push_back failed"));
+                                     LOG_ERR((0, "PVID3ParCom::ReadAlbumArtFrame: Error - iFrame.push_back failed"));
                                      return PVMFErrNoMemory;);
 
                 return PVMFSuccess;
@@ -2930,7 +2958,7 @@ PVMFStatus PVID3ParCom::ReadAlbumArtFrame(PVID3FrameType aFrameType, uint8 unico
 
                 OSCL_TRY(err, iFrames.push_back(kvpPtr););
                 OSCL_FIRST_CATCH_ANY(err,
-                                     LOG_ERR((0, "PVID3ParCom::ReadLyricsCommFrame: Error - iFrame.push_back failed"));
+                                     LOG_ERR((0, "PVID3ParCom::ReadAlbumArtFrame: Error - iFrame.push_back failed"));
                                      return PVMFErrNoMemory;);
 
                 return PVMFSuccess;
@@ -2971,7 +2999,7 @@ PVMFStatus PVID3ParCom::ReadAlbumArtFrame(PVID3FrameType aFrameType, uint8 unico
 
             OSCL_TRY(err, iFrames.push_back(kvpPtr););
             OSCL_FIRST_CATCH_ANY(err,
-                                 LOG_ERR((0, "PVID3ParCom::ReadLyricsCommFrame: Error - iFrame.push_back failed"));
+                                 LOG_ERR((0, "PVID3ParCom::ReadAlbumArtFrame: Error - iFrame.push_back failed"));
                                  return PVMFErrNoMemory;);
 
             return PVMFSuccess;
@@ -3068,6 +3096,17 @@ PVMFStatus PVID3ParCom::ReadLyricsCommFrame(uint8 unicodeCheck, uint32 aFramesiz
     ptr += sizeof(PvmfLyricsCommStruct);
     used_size += sizeof(PvmfLyricsCommStruct);
 
+    // need to look for iTunes gapless playback info in the comment frames
+    // there will be more than 1 comment frames
+    // the content description will have iTunSMPB or iTunPGAP
+    // the gapless info will be in the actual text, following the content description
+    // e.g. for ID3v2.2
+    // ID3
+    // TT2 01 Track01
+    // TEN iTunes v7.0
+    // COM eng iTunSMPB 00000000 00000210 00000AD4 000000000003FE1C 00000000 0001DC4D 00000000 00000000 00000000 00000000 00000000 00000000
+    // COM eng iTunPGAP 1
+    // note that 00000210 00000AD4 is encoded as characters in hex as 30 30 30 30 30 30 30 34 20 30 30 30 30 30 41 44 34
     switch (unicodeCheck)
     {
         case PV_ID3_CHARSET_ISO88591:
@@ -3110,18 +3149,16 @@ PVMFStatus PVID3ParCom::ReadLyricsCommFrame(uint8 unicodeCheck, uint32 aFramesiz
 
             uint8 *data = NULL;
             uint32 datasz = framesize + 1;
-            OSCL_TRY(err, data = (uint8*)iAlloc.allocate(datasz););
+            err = OsclErrNone;
+            data = AllocateMem(err, datasz);
 
             if (OsclErrNone != err || !(data))
             {
                 LOG_ERR((0, "PVID3ParCom::ReadLyricsCommFrame: Error - allocation failed"));
                 iInputFile->Seek(framesize, Oscl_File::SEEKCUR);
-
             }
-
             else
             {
-
                 if ((readByteData(iInputFile, framesize, data) == false))
                 {
                     iAlloc.deallocate(data);
@@ -3135,6 +3172,17 @@ PVMFStatus PVID3ParCom::ReadLyricsCommFrame(uint8 unicodeCheck, uint32 aFramesiz
                     return PVMFErrOverflow;
                 oscl_UTF8ToUnicode((const char *)data, framesize, lcStruct->iData,  datasz);
                 lcStruct->iData[datasz] = 0;
+
+                // need to look for iTunSMPB and iTunPGAP in the content description
+                // if present, retrieve the associated info
+                if ((desc_sz >= ID3_COMMENT_FRAME_ITUNES_TAG_SIZE) && (framesize > 0))
+                {
+                    bool gapless = CheckForITunesGaplessInfo8((uint8 *)descriptor.get_cstr(), data, framesize, iGaplessInfo);
+                    if (!iGaplessInfoFound && gapless)
+                    {
+                        iGaplessInfoFound = true;
+                    }
+                }
 
                 iAlloc.deallocate(data);
             }
@@ -3222,7 +3270,6 @@ PVMFStatus PVID3ParCom::ReadLyricsCommFrame(uint8 unicodeCheck, uint32 aFramesiz
             }
             else
             {
-
                 oscl_memset(data, 0, datasz);
                 if ((readByteData(iInputFile, framesize, data) == false))
                 {
@@ -3235,8 +3282,19 @@ PVMFStatus PVID3ParCom::ReadLyricsCommFrame(uint8 unicodeCheck, uint32 aFramesiz
                 if (used_size > total_size)
                     return PVMFErrOverflow;
 
-                uint32 sz = EightBitToWideCharBufferTransfer(data, framesize, endianType , lcStruct->iData);
+                uint32 sz = EightBitToWideCharBufferTransfer(data, framesize, endianType, lcStruct->iData);
                 lcStruct->iData[sz] = 0;
+
+                // need to look for iTunSMPB and iTunPGAP in the content description
+                // it is easier to work with the resulting unicode strings
+                if ((desc_len >= ID3_COMMENT_FRAME_ITUNES_TAG_SIZE) && (sz > 0))
+                {
+                    bool gapless = CheckForITunesGaplessInfoUnicode(lcStruct->iDescription, lcStruct->iData, sz, iGaplessInfo);
+                    if (!iGaplessInfoFound && gapless)
+                    {
+                        iGaplessInfoFound = true;
+                    }
+                }
 
                 iAlloc.deallocate(data);
             }
@@ -3250,6 +3308,8 @@ PVMFStatus PVID3ParCom::ReadLyricsCommFrame(uint8 unicodeCheck, uint32 aFramesiz
 
     kvpPtr->capacity = (aFramesize - ID3V2_LANGUAGE_SIZE) + sizeof(PvmfLyricsCommStruct) ;
     kvpPtr->length = (aFramesize - ID3V2_LANGUAGE_SIZE) + sizeof(PvmfLyricsCommStruct) ;
+
+
 
     OSCL_TRY(err, iFrames.push_back(kvpPtr););
     OSCL_FIRST_CATCH_ANY(err,
@@ -4338,4 +4398,271 @@ PvmiKvpSharedPtr PVID3ParCom::HandleErrorForKVPAllocation(OSCL_String& aKey, Pvm
         aStatus = PVMFErrNoMemory;
     }
     return kvp;
+}
+
+
+bool PVID3ParCom::CheckForITunesGaplessInfo8(uint8* aDescriptionPtr, uint8* aTextPtr, uint32 aTextCount, TGaplessInfo& aGaplessInfo)
+{
+    bool found = false;
+
+    // look for iTunSMPB and iTunPGAP in the content description
+    if (oscl_memcmp(ID3_COMMENT_FRAME_ITUNES_TAG_SMPB, aDescriptionPtr, ID3_COMMENT_FRAME_ITUNES_TAG_SIZE) == 0)
+    {
+        // found iTunSMPB flag
+        // skip over the space
+        // skip over the first 8 bytes
+        // skip over the space
+        // the second 8 bytes contain the encoder delay in samples
+        // skip over the space
+        // the third 8 bytes contain the zero padding in samples
+        // skip over the space
+        // the next 16 bytes contain the original stream length in samples
+        if (aTextCount >= 44)
+        {
+            found = true;
+            int i = 0;
+            uint8* ptr = aTextPtr;
+            // skip over first 8 bytes + space
+            ptr += 10;
+            // check if the second 8 bytes contain valid hex digits
+            bool goodNumber = true;
+            for (i = 0; i < 8; i++)
+            {
+                if (!(IS_VALID_HEX_DIGIT(*(ptr + i))))
+                {
+                    // bad number
+                    goodNumber = false;
+                    break;
+                }
+            }
+            if (goodNumber)
+            {
+                // convert string to number for encoder delay
+                uint32 number = 0;
+                bool ok = PV_atoi((const char*)ptr, 'x', 8, number);
+                if (ok)
+                {
+                    aGaplessInfo.iEncoderDelay = number;
+                }
+            }
+
+            ptr += 9;
+            // check if the next 8 bytes contain valid hex digits
+            goodNumber = true;
+            for (i = 0; i < 8; i++)
+            {
+                if (!(IS_VALID_HEX_DIGIT(*(ptr + i))))
+                {
+                    // bad number
+                    goodNumber = false;
+                    break;
+                }
+            }
+            if (goodNumber)
+            {
+                // convert string to number for zero padding
+                uint32 number = 0;
+                bool ok = PV_atoi((const char*)ptr, 'x', 8, number);
+                if (ok)
+                {
+                    aGaplessInfo.iZeroPadding = number;
+                }
+            }
+
+            ptr += 9;
+            // check if the next 16 bytes contain valid hex digits
+            goodNumber = true;
+            for (i = 0; i < 16; i++)
+            {
+                if (!(IS_VALID_HEX_DIGIT(*(ptr + i))))
+                {
+                    // bad number
+                    goodNumber = false;
+                    break;
+                }
+            }
+            if (goodNumber)
+            {
+                // convert string to number for original stream length
+                uint32 upper = 0;
+                uint32 lower = 0;
+                bool ok = PV_atoi((const char*)ptr, 'x', 8, upper);
+                ptr += 8;
+                bool ok2 = PV_atoi((const char*)ptr, 'x', 8, lower);
+                if (ok && ok2)
+                {
+                    Oscl_Int64_Utils::set_uint64(aGaplessInfo.iOriginalLength, upper, lower);
+                }
+            }
+        }
+    }
+    else if (oscl_memcmp(ID3_COMMENT_FRAME_ITUNES_TAG_PGAP, aDescriptionPtr, ID3_COMMENT_FRAME_ITUNES_TAG_SIZE) == 0)
+    {
+        // found iTunPGAP tag, look at the value
+        found = true;
+        // skip over the space
+        // read the first byte of the text
+        // 0x31 => part of gapless album
+        // other values => not part of a gapless album
+        if ('1' == *aTextPtr)
+        {
+            aGaplessInfo.iPartOfGaplessAlbum = true;
+        }
+        else
+        {
+            aGaplessInfo.iPartOfGaplessAlbum = false;
+        }
+    }
+
+    return found;
+}
+
+
+bool PVID3ParCom::CheckForITunesGaplessInfoUnicode(oscl_wchar* aDescriptionPtr, oscl_wchar* aTextPtr, uint32 aTextCount, TGaplessInfo& aGaplessInfo)
+{
+    bool found = false;
+
+    // look for iTunSMPB and iTunPGAP in the content description
+    if (!oscl_strncmp(ID3_COMMENT_FRAME_ITUNES_TAG_SMPB_WSTRING, aDescriptionPtr, ID3_COMMENT_FRAME_ITUNES_TAG_SIZE))
+    {
+        // found iTunSMPB flag
+        // skip over the space
+        // skip over the first 8 characters/16 bytes
+        // skip over the space
+        // the second 8 characters/16 bytes contain the encoder delay in samples
+        // skip over the space
+        // the third 8 characters/16 bytes contain the zero padding in samples
+        // skip over the space
+        // the next 32 bytes contain the original stream length in samples
+        if (aTextCount >= 44)
+        {
+            found = true;
+            int i = 0;
+            oscl_wchar* ptr = aTextPtr;
+
+            // skip over first 8 chars and space
+            ptr += 10;
+            // check if the second 8 characters contain valid hex digits
+            bool goodNumber = true;
+            for (i = 0; i < 8; i++)
+            {
+                if (!(IS_VALID_HEX_DIGIT(*(ptr + i))))
+                {
+                    // bad number
+                    goodNumber = false;
+                    break;
+                }
+            }
+            if (goodNumber)
+            {
+                // convert unicode to UTF8 first
+                char utf8Buf[] = {'\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0'};
+
+                oscl_UnicodeToUTF8(ptr, 16, &utf8Buf[0], 8);
+
+                // then convert string to number for encoder delay
+                uint32 number = 0;
+                bool ok = PV_atoi(&utf8Buf[0], 'x', 8, number);
+                if (ok)
+                {
+                    aGaplessInfo.iEncoderDelay = number;
+                }
+            }
+
+            ptr += 9;
+            // check if the next 8 chars contain valid hex digits
+            goodNumber = true;
+            for (i = 0; i < 8; i++)
+            {
+                if (!(IS_VALID_HEX_DIGIT(*(ptr + i))))
+                {
+                    // bad number
+                    goodNumber = false;
+                    break;
+                }
+            }
+            if (goodNumber)
+            {
+                // convert unicode to UTF8 first
+                char utf8Buf[] = {'\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0'};
+
+                oscl_UnicodeToUTF8(ptr, 16, &utf8Buf[0], 8);
+
+                // then convert string to number for zero padding
+                uint32 number = 0;
+                bool ok = PV_atoi(&utf8Buf[0], 'x', 8, number);
+                if (ok)
+                {
+                    aGaplessInfo.iZeroPadding = number;
+                }
+            }
+
+            ptr += 9;
+            // check if the next 16 chars contain valid hex digits
+            goodNumber = true;
+            for (i = 0; i < 16; i++)
+            {
+                if (!(IS_VALID_HEX_DIGIT(*(ptr + i))))
+                {
+                    // bad number
+                    goodNumber = false;
+                    break;
+                }
+            }
+            if (goodNumber)
+            {
+                // convert unicode to UTF8 first
+                char utf8Buf[] = {'\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0'};
+                uint32 upper = 0;
+                uint32 lower = 0;
+
+                int32 utf8Count = oscl_UnicodeToUTF8(ptr, 16, &utf8Buf[0], 8);
+                if (8 == utf8Count)
+                {
+                    // then convert string to number for original stream length
+                    // convert the upper uint32 and then the lower uint32
+
+                    bool ok = PV_atoi(&utf8Buf[0], 'x', 8, upper);
+                    if (ok)
+                    {
+                        ptr += 8;
+                        utf8Count = oscl_UnicodeToUTF8(ptr, 16, &utf8Buf[0], 8);
+                        if (8 == utf8Count)
+                        {
+                            ok = PV_atoi(&utf8Buf[0], 'x', 8, lower);
+                            if (ok)
+                            {
+                                Oscl_Int64_Utils::set_uint64(aGaplessInfo.iOriginalLength, upper, lower);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    else if (!oscl_strncmp(ID3_COMMENT_FRAME_ITUNES_TAG_SMPB_WSTRING, aDescriptionPtr, ID3_COMMENT_FRAME_ITUNES_TAG_SIZE))
+    {
+        // found iTunPGAP tag, look at the value
+        found = true;
+        // read the first char of the text
+        // 0x31 => part of gapless album
+        // other values => not part of a gapless album
+        if ('1' == *aTextPtr)
+        {
+            aGaplessInfo.iPartOfGaplessAlbum = true;
+        }
+        else
+        {
+            aGaplessInfo.iPartOfGaplessAlbum = false;
+        }
+    }
+
+    return found;
+}
+
+uint8* PVID3ParCom::AllocateMem(int32& err, uint32 size)
+{
+    uint8* data = NULL;
+    OSCL_TRY(err, data = (uint8*)iAlloc.allocate(size););
+    return data;
 }

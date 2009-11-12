@@ -32,6 +32,10 @@
 #include "itunesilstatom.h"
 #include"atomdefs.h"
 
+#ifndef PVMF_GAPLESS_METADATA_H_INCLUDED
+#include "pvmf_gapless_metadata.h"
+#endif
+
 class ID3V2Atom : public FullAtom
 {
 
@@ -357,6 +361,16 @@ class MetaDataAtom: public Atom
                 return _pITunesILSTAtom->getLyrics();
             else
                 return temp;
+        }
+
+        bool getITunesGaplessMetadata(PVMFGaplessMetadata& aGaplessMetadata) const
+        {
+            if (_pITunesILSTAtom)
+            {
+                return _pITunesILSTAtom->getGaplessMetadata(aGaplessMetadata);
+            }
+            else
+                return false;
         }
 
         uint16 getID3V2LanguageCode()

@@ -225,7 +225,7 @@ class IMpeg3File
         * @param timestamp Timestamp of the frame
         * @returns Result of operation: true=success; false=fail
         */
-        OSCL_IMPORT_REF MP3ErrorType GetNextMediaSample(uint8 *buf, uint32 size, uint32& framesize, uint32& timestamp);
+        OSCL_IMPORT_REF MP3ErrorType GetNextMediaSample(uint8 *buf, uint32 size, uint32& framesize, uint32& timestamp, uint32& frameDuration);
 
         /**
         * @brief Returns the timestamp of the current frame
@@ -430,6 +430,14 @@ class IMpeg3File
                                                uint32 aInitSearchFileSize);
 
         OSCL_EXPORT_REF MP3ErrorType ScanMP3File(uint32 aFramesToScan);
+
+        /**
+        * @brief Retrieves gapless playback metadata info
+        *
+        * @param aGaplessMetadata PVMFGaplessMetadata class to be filled
+        * @returns true if gapless metadata was found, false otherwise
+        */
+        OSCL_IMPORT_REF bool GetGaplessMetadata(PVMFGaplessMetadata& aGaplessMetadata);
 
     private:
         OsclAny* AllocateKVPKeyArray(int32& leavecode, PvmiKvpValueType aValueType, int32 aNumElements);

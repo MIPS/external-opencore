@@ -73,6 +73,8 @@ struct GAU
     MediaMetaInfo    info[MAX_GAU_BUNDLE];
     bool free_buffer_states_when_done;
     uint64 SampleOffset;
+    uint32 frameNum; //Frame number of the first frame in the GAU (BOC is frame 1)
+
     OSCL_IMPORT_REF uint32  getSamplesTotalSize(uint32 number, MediaMetaInfo *metaInfo);  //return the sum of total sample size
 
     OSCL_IMPORT_REF GAU();

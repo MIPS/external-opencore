@@ -35,6 +35,7 @@ LOCAL_COPY_HEADERS := \
  	include/pvmi_external_download_datastream_factory.h \
  	include/pvmi_external_download_datastream_impl.h \
  	include/pvmi_external_download_file_monitor.h \
- 	include/pvmi_external_download_simulator.h
+ 	include/pvmi_external_download_simulator.h \
+ 	include/pvmf_gapless_metadata.h
 
 include $(BUILD_STATIC_LIBRARY)
