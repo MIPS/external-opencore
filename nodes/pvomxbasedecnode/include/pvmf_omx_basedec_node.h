@@ -279,7 +279,7 @@ class PVMFOMXBaseDecNode: public PVMFNodeInterfaceImpl
                 OMX_OUT OMX_PTR aAppData,
                 OMX_OUT OMX_BUFFERHEADERTYPE* aBuffer);
 
-        OSCL_IMPORT_REF OMX_ERRORTYPE FillBufferDoneProcessing(OMX_OUT OMX_HANDLETYPE aComponent,
+        OSCL_IMPORT_REF virtual OMX_ERRORTYPE FillBufferDoneProcessing(OMX_OUT OMX_HANDLETYPE aComponent,
                 OMX_OUT OMX_PTR aAppData,
                 OMX_OUT OMX_BUFFERHEADERTYPE* aBuffer);
 
@@ -408,6 +408,8 @@ class PVMFOMXBaseDecNode: public PVMFNodeInterfaceImpl
 
         //OSCL_IMPORT_REF PVMFCommandId QueueCommandL(PVMFOMXBaseDecNodeCommand& aCmd);
 
+        // MP3 related functions
+        virtual PVMFStatus RetrieveMP3FrameLength(uint8 *pBuffer);
         OSCL_IMPORT_REF virtual int32 GetNAL_OMXNode(uint8** bitstream, uint32* size);
         OSCL_IMPORT_REF virtual bool ParseAndReWrapH264RAW(PVMFSharedMediaDataPtr& aMediaDataPtr);
         OSCL_IMPORT_REF virtual bool CreateAACConfigDataFromASF(uint8 *inptr, uint32 inlen, uint8 *outptr, uint32 &outlen);
@@ -573,7 +575,8 @@ class PVMFOMXBaseDecNode: public PVMFNodeInterfaceImpl
         // BOS
         bool iSendBOS;
         uint32 iStreamID;
-        uint32 iBOSTimestamp;
+        uint32 iTSOfFirstDataMsgAfterBOS;
+        uint32 iCurrentClipId;
 
         // repositioning related flags
         bool iIsRepositioningRequestSentToComponent;
@@ -639,6 +642,10 @@ class PVMFOMXBaseDecNode: public PVMFNodeInterfaceImpl
         bool iEndOfDataReached;
         // Time stame upon EOS
         PVMFTimestamp iEndOfDataTimestamp;
+
+        // gapless audio info flags
+        bool iBOCReceived;
+        bool iEOCReceived;
 
         /* Diagnostic log related */
         PVLogger* iDiagnosticsLogger;

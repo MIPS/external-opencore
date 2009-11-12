@@ -113,6 +113,8 @@ class PVMP4FFNodeTrackPortInfo : public OsclMemPoolFixedChunkAllocatorObserver,
             TRACKSTATE_INITIALIZED,
             TRACKSTATE_TRANSMITTING_GETDATA,
             TRACKSTATE_TRANSMITTING_SENDDATA,
+            TRACKSTATE_TRANSMITTING_SENDBOC,
+            TRACKSTATE_TRANSMITTING_SENDEOC,
             TRACKSTATE_TRACKDATAPOOLEMPTY,
             TRACKSTATE_MEDIADATAPOOLEMPTY,
             TRACKSTATE_MEDIADATAFRAGGROUPPOOLEMPTY,
@@ -167,6 +169,14 @@ class PVMP4FFNodeTrackPortInfo : public OsclMemPoolFixedChunkAllocatorObserver,
             iLogger = PVLogger::GetLoggerObject("datapath.sourcenode.mp4parsernode");
             //PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0,"PVMP4FFNodeTrackPortInfo::PVMP4FFNodeTrackPortInfo"));
 
+            iGaplessInfoAvailable = false;
+            iSendBOC = false;
+            iSendEOC = false;
+            iHasBOCFrame = false;
+            iHasEOCFrame = false;
+            iFrameBOC = 0;
+            iFirstFrameEOC = 0;
+            iFramesToFollowEOC = 0;
         }
 
         PVMP4FFNodeTrackPortInfo(const PVMP4FFNodeTrackPortInfo& aSrc) :
@@ -216,6 +226,84 @@ class PVMP4FFNodeTrackPortInfo : public OsclMemPoolFixedChunkAllocatorObserver,
             iTargetNPTInMediaTimeScale = aSrc.iTargetNPTInMediaTimeScale;
 
             iLogger = aSrc.iLogger;
+
+            iGaplessInfoAvailable = aSrc.iGaplessInfoAvailable;
+            iGaplessMetadata = aSrc.iGaplessMetadata;
+            iSendBOC = aSrc.iSendBOC;
+            iSendEOC = aSrc.iSendEOC;
+            iHasBOCFrame = aSrc.iHasBOCFrame;
+            iHasEOCFrame = aSrc.iHasEOCFrame;
+            iFrameBOC = aSrc.iFrameBOC;
+            iFirstFrameEOC = aSrc.iFirstFrameEOC;
+            iFramesToFollowEOC = aSrc.iFramesToFollowEOC;
+
+            if (iGaplessInfoAvailable)
+            {
+                uint32 delay = iGaplessMetadata.GetEncoderDelay();
+                if (0 != delay)
+                {
+                    // create format specific info for BOC
+                    // uint32 - number of samples to skip
+                    // allocate memory for BOC specific info and ref counter
+                    OsclMemoryFragment frag;
+                    frag.ptr = NULL;
+                    frag.len = sizeof(BOCInfo);
+                    uint refCounterSize = oscl_mem_aligned_size(sizeof(OsclRefCounterDA));
+                    uint8* memBuffer = (uint8*)iBOCFormatSpecificInfoAlloc.ALLOCATE(refCounterSize + frag.len);
+                    if (!memBuffer)
+                    {
+                        // failure while allocating memory buffer
+                        iSendBOC = false;
+                    }
+
+                    oscl_memset(memBuffer, 0, refCounterSize + frag.len);
+                    // create ref counter
+                    OsclRefCounter* refCounter = new(memBuffer) OsclRefCounterDA(memBuffer,
+                            (OsclDestructDealloc*)&iBOCFormatSpecificInfoAlloc);
+                    memBuffer += refCounterSize;
+                    // create BOC info
+                    frag.ptr = (OsclAny*)(new(memBuffer) BOCInfo);
+                    ((BOCInfo*)frag.ptr)->samplesToSkip = delay;
+
+                    // store info in a ref counter memfrag
+                    // how do we make sure that we are not doing this more than once?
+                    iBOCFormatSpecificInfo = OsclRefCounterMemFrag(frag, refCounter, sizeof(struct BOCInfo));
+                }
+
+                uint32 padding = iGaplessMetadata.GetZeroPadding();
+                if (0 != padding)
+                {
+                    // create format specific info for EOC
+                    // uint32 - number of samples to skip
+                    // allocate memory for BOC specific info and ref counter
+                    OsclMemoryFragment frag;
+                    frag.ptr = NULL;
+                    frag.len = sizeof(EOCInfo);
+                    uint refCounterSize = oscl_mem_aligned_size(sizeof(OsclRefCounterDA));
+                    uint8* memBuffer = (uint8*)iBOCFormatSpecificInfoAlloc.ALLOCATE(refCounterSize + frag.len);
+                    if (!memBuffer)
+                    {
+                        // failure while allocating memory buffer
+                        iSendEOC = false;
+                    }
+
+                    oscl_memset(memBuffer, 0, refCounterSize + frag.len);
+                    // create ref counter
+                    OsclRefCounter* refCounter = new(memBuffer) OsclRefCounterDA(memBuffer,
+                            (OsclDestructDealloc*)&iEOCFormatSpecificInfoAlloc);
+                    memBuffer += refCounterSize;
+                    // create EOC info
+                    frag.ptr = (OsclAny*)(new(memBuffer) EOCInfo);
+                    // but we don't know how many frames will be following this msg yet!!!
+                    // this is set right before the command msg is sent
+                    ((EOCInfo*)frag.ptr)->framesToFollow = 0;
+                    ((EOCInfo*)frag.ptr)->samplesToSkip = padding;
+
+                    // store info in a ref counter memfrag
+                    // how do we make sure that we are not doing this more than once?
+                    iEOCFormatSpecificInfo = OsclRefCounterMemFrag(frag, refCounter, sizeof(EOCInfo));
+                }
+            }
         }
 
         virtual ~PVMP4FFNodeTrackPortInfo()
@@ -341,6 +429,25 @@ class PVMP4FFNodeTrackPortInfo : public OsclMemPoolFixedChunkAllocatorObserver,
 
         // no-render related
         uint32 iTargetNPTInMediaTimeScale;
+
+        // for gapless playback
+        bool iGaplessInfoAvailable;
+        PVMFGaplessMetadata iGaplessMetadata;
+        bool iSendBOC;
+        bool iSendEOC;
+        bool iHasBOCFrame;
+        bool iHasEOCFrame;
+        uint64 iFrameBOC;
+        uint64 iFirstFrameEOC;
+        uint32 iFramesToFollowEOC;
+
+        // BOC and EOC format specific info stored in a OsclRefCounterMemFrag
+        OsclMemAllocDestructDealloc<uint8> iBOCFormatSpecificInfoAlloc;
+        OsclRefCounterMemFrag iBOCFormatSpecificInfo;
+
+        OsclMemAllocDestructDealloc<uint8> iEOCFormatSpecificInfoAlloc;
+        OsclRefCounterMemFrag iEOCFormatSpecificInfo;
+
 };
 
 class PVMP4FFNodeTrackOMA2DRMInfo

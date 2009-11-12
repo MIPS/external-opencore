@@ -39,6 +39,12 @@
 #define NUMMETADATAKEYS 64
 
 
+/**
+ * Macros for calling PVLogger
+ */
+#define LOGGAPLESSINFO(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG,iGaplessLogger,PVLOGMSG_INFO,m);
+
+
 uint32 PVMFMP4FFParserNode::GetNumMetadataKeys(char* aQueryKeyString)
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFMP4FFParserNode::GetNumMetadataKeys() called"));
@@ -1044,15 +1050,6 @@ void PVMFMP4FFParserNode::CreateDurationInfoMsg(uint32 adurationms)
     }
 }
 
-
-PVMFStatus PVMFMP4FFParserNode::PushValueToList(Oscl_Vector<OSCL_HeapString<OsclMemAllocator>, OsclMemAllocator> &aRefMetaDataKeys, PVMFMetadataList *&aKeyListPtr, uint32 aLcv)
-{
-    int32 leavecode = 0;
-    OSCL_TRY(leavecode, aKeyListPtr->push_back(aRefMetaDataKeys[aLcv]));
-    OSCL_FIRST_CATCH_ANY(leavecode, PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVMFMP4FFParserNode::PushValueToList() Memory allocation failure when copying metadata key")); return PVMFErrNoMemory);
-    return PVMFSuccess;
-}
-
 PVMFStatus PVMFMP4FFParserNode::InitMetaData()
 {
     if (iMP4FileHandle)
@@ -1190,6 +1187,169 @@ PVMFStatus PVMFMP4FFParserNode::CreateNewArray(uint32** aTrackidList, uint32 aNu
     return PVMFSuccess;
 }
 
+PVMFStatus PVMFMP4FFParserNode::PushValueToList(Oscl_Vector<OSCL_HeapString<OsclMemAllocator>, OsclMemAllocator> &aRefMetaDataKeys, PVMFMetadataList *&aKeyListPtr, uint32 aLcv)
+{
+    int32 leavecode = 0;
+    OSCL_TRY(leavecode, aKeyListPtr->push_back(aRefMetaDataKeys[aLcv]));
+    OSCL_FIRST_CATCH_ANY(leavecode, PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVMFMP4FFParserNode::PushValueToList() Memory allocation failure when copying metadata key")); return PVMFErrNoMemory);
+    return PVMFSuccess;
+}
+
+void PVMFMP4FFParserNode::GetGaplessMetadata(PVMP4FFNodeTrackPortInfo& aInfo)
+{
+    // retrieve gapless metadata if present
+    // do it only once per clip
+    if (iMP4FileHandle && !aInfo.iGaplessInfoAvailable)
+    {
+        aInfo.iGaplessInfoAvailable = iMP4FileHandle->getITunesGaplessMetadata(aInfo.iGaplessMetadata);
+
+        if (aInfo.iGaplessInfoAvailable)
+        {
+            // need to add the sample per frame and total frames here
+            // AAC = 1024 samples per frame
+            // AAC+ and EAAC+ = 2048 samples per frame
+            uint32 totalFrames = iMP4FileHandle->getSampleCountInTrack(aInfo.iTrackId);
+            uint64 totalSamples = aInfo.iGaplessMetadata.GetZeroPadding() + aInfo.iGaplessMetadata.GetEncoderDelay() +
+                                  aInfo.iGaplessMetadata.GetOriginalStreamLength();
+            uint32 sfp = totalSamples / totalFrames;
+
+            // total frames include the encoder delay and zero padding
+            // we can probably find out the samples per frame from the decoder,
+            // for now, this may be adequate
+            aInfo.iGaplessMetadata.SetTotalFrames(totalFrames);
+            aInfo.iGaplessMetadata.SetSamplesPerFrame(sfp);
+
+            // check encoder delay
+            uint32 delay = aInfo.iGaplessMetadata.GetEncoderDelay();
+            if (0 != delay)
+            {
+                // frame numbers from the parser are 0 based
+                aInfo.iFrameBOC = 0;
+                aInfo.iSendBOC = true;
+
+                // create format specific info for BOC
+                // uint32 - number of samples to skip
+                // allocate memory for BOC specific info and ref counter
+                OsclMemoryFragment frag;
+                frag.ptr = NULL;
+                frag.len = sizeof(BOCInfo);
+                uint refCounterSize = oscl_mem_aligned_size(sizeof(OsclRefCounterDA));
+                uint8* memBuffer = (uint8*)aInfo.iBOCFormatSpecificInfoAlloc.ALLOCATE(refCounterSize + frag.len);
+                if (!memBuffer)
+                {
+                    // failure while allocating memory buffer
+                    aInfo.iSendBOC = false;
+                }
+
+                oscl_memset(memBuffer, 0, refCounterSize + frag.len);
+                // create ref counter
+                OsclRefCounter* refCounter = new(memBuffer) OsclRefCounterDA(memBuffer,
+                        (OsclDestructDealloc*)&aInfo.iBOCFormatSpecificInfoAlloc);
+                memBuffer += refCounterSize;
+                // create BOC info
+                frag.ptr = (OsclAny*)(new(memBuffer) BOCInfo);
+                ((BOCInfo*)frag.ptr)->samplesToSkip = delay;
+
+                // store info in a ref counter memfrag
+                // how do we make sure that we are not doing this more than once?
+                aInfo.iBOCFormatSpecificInfo = OsclRefCounterMemFrag(frag, refCounter, sizeof(struct BOCInfo));
+            }
+
+            // check zero padding
+            uint32 padding = aInfo.iGaplessMetadata.GetZeroPadding();
+            if (0 != padding)
+            {
+                // calculate frame number of the first frame of EOC
+                uint32 spf = aInfo.iGaplessMetadata.GetSamplesPerFrame();
+                if (0 != spf)
+                {
+                    uint64 total = aInfo.iGaplessMetadata.GetTotalFrames();
+                    uint32 frames = padding / spf;
+                    if (padding % spf)
+                    {
+                        frames++;
+                    }
+                    // frame numbers from the parser are 0 based
+                    aInfo.iFirstFrameEOC = total - frames;
+                    aInfo.iSendEOC = true;
+
+                    // create format specific info for EOC
+                    // uint32 - number of samples to skip
+                    // allocate memory for BOC specific info and ref counter
+                    OsclMemoryFragment frag;
+                    frag.ptr = NULL;
+                    frag.len = sizeof(EOCInfo);
+                    uint refCounterSize = oscl_mem_aligned_size(sizeof(OsclRefCounterDA));
+                    uint8* memBuffer = (uint8*)aInfo.iBOCFormatSpecificInfoAlloc.ALLOCATE(refCounterSize + frag.len);
+                    if (!memBuffer)
+                    {
+                        // failure while allocating memory buffer
+                        aInfo.iSendEOC = false;
+                    }
+
+                    oscl_memset(memBuffer, 0, refCounterSize + frag.len);
+                    // create ref counter
+                    OsclRefCounter* refCounter = new(memBuffer) OsclRefCounterDA(memBuffer,
+                            (OsclDestructDealloc*)&aInfo.iEOCFormatSpecificInfoAlloc);
+                    memBuffer += refCounterSize;
+                    // create EOC info
+                    frag.ptr = (OsclAny*)(new(memBuffer) EOCInfo);
+                    // but we don't know how many frames will be following this msg yet!!!
+                    ((EOCInfo*)frag.ptr)->framesToFollow = 0;
+                    ((EOCInfo*)frag.ptr)->samplesToSkip = padding;
+
+                    // store info in a ref counter memfrag
+                    // how do we make sure that we are not doing this more than once?
+                    aInfo.iEOCFormatSpecificInfo = OsclRefCounterMemFrag(frag, refCounter, sizeof(EOCInfo));
+                }
+            }
+
+            // log the gapless metadata
+            LOGGAPLESSINFO((0, "PVMFMP4FFParserNode::GetGaplessMetadata() encoder delay %d samples, zero padding %d samples, original length %d%d samples, samples per frame %d, total frames %d%d, part of gapless album %d",
+                            delay, padding, (uint32)(aInfo.iGaplessMetadata.GetOriginalStreamLength() >> 32), (uint32)(aInfo.iGaplessMetadata.GetOriginalStreamLength() & 0xFFFFFFFF),
+                            aInfo.iGaplessMetadata.GetSamplesPerFrame(), (uint32)(aInfo.iGaplessMetadata.GetTotalFrames() >> 32), (uint32)(aInfo.iGaplessMetadata.GetTotalFrames() & 0xFFFFFFFF),
+                            aInfo.iGaplessMetadata.GetPartOfGaplessAlbum()));
+        }
+        else
+        {
+            LOGGAPLESSINFO((0, "PVMFMP4FFParserNode::GetGaplessMetadata() No gapless metadata found"));
+        }
+    }
+}
+
+
+// adjust for gapless playback duration
+// return agjusted duration in milliseconds
+uint32 PVMFMP4FFParserNode::GetGaplessDuration(PVMP4FFNodeTrackPortInfo& aInfo)
+{
+    uint32 durationMs = 0;
+    uint64 duration64 = iMP4FileHandle->getTrackMediaDuration(aInfo.iTrackId);
+    uint32 duration = durationMs = Oscl_Int64_Utils::get_uint64_lower32(duration64);
+    uint32 timescale = iMP4FileHandle->getTrackMediaTimescale(aInfo.iTrackId);
+    if (timescale > 0 && timescale != 1000)
+    {
+        // Convert to milliseconds
+        MediaClockConverter mcc(timescale);
+        mcc.update_clock(duration);
+        durationMs = mcc.get_converted_ts(1000);
+    }
+
+    if (aInfo.iGaplessInfoAvailable)
+    {
+        // subtract the encoder delay and zero padding
+        uint32 droppedSamples = aInfo.iGaplessMetadata.GetEncoderDelay() + aInfo.iGaplessMetadata.GetZeroPadding();
+        uint32 samplingRate = GetAudioSampleRate(aInfo.iTrackId);
+        uint32 droppedMs = 0;
+        if (0 != samplingRate)
+        {
+            droppedMs = (droppedSamples * 1000) / samplingRate;
+        }
+        durationMs = (durationMs > droppedMs) ? (durationMs - droppedMs) : 0;
+    }
+
+    return durationMs;
+}
+
 uint32 PVMFMP4FFParserNode::GetNumAudioChannels(uint32 aId)
 {
     uint32 num_channels = 0;
@@ -1289,3 +1449,7 @@ uint32 PVMFMP4FFParserNode::GetAudioBitsPerSample(uint32 aId)
     //always 16 bits per samples
     return 16;
 }
+
+
+
+

@@ -394,7 +394,8 @@ OSCL_EXPORT_REF PVMFOMXBaseDecNode::PVMFOMXBaseDecNode(int32 aPriority, const ch
         iOMXDecoder(NULL),
         iSendBOS(false),
         iStreamID(0),
-        iBOSTimestamp(0),
+        iTSOfFirstDataMsgAfterBOS(0),
+        iCurrentClipId(0),
         iSeqNum(0),
         iSeqNum_In(0),
         iIsAdded(true),
@@ -404,6 +405,8 @@ OSCL_EXPORT_REF PVMFOMXBaseDecNode::PVMFOMXBaseDecNode(int32 aPriority, const ch
         iExtensionRefCount(0),
         iEndOfDataReached(false),
         iEndOfDataTimestamp(0),
+        iBOCReceived(false),
+        iEOCReceived(false),
         iDiagnosticsLogger(NULL),
         iDiagnosticsLogged(false),
         iAvgBitrateValue(0),
@@ -810,10 +813,6 @@ OSCL_EXPORT_REF bool PVMFOMXBaseDecNode::ProcessIncomingMsg(PVMFPortInterface* a
 
         //store the stream id and time stamp of bos message
         iStreamID = mediaMsgOut->getStreamID();
-        iBOSTimestamp = mediaMsgOut->getTimestamp();
-
-        iInputTimestampClock.set_clock(iBOSTimestamp, 0);
-        iOMXTicksTimestamp = ConvertTimestampIntoOMXTicks(iInputTimestampClock);
 
         iSendBOS = true;
 
@@ -868,12 +867,8 @@ OSCL_EXPORT_REF bool PVMFOMXBaseDecNode::ProcessIncomingMsg(PVMFPortInterface* a
     {
         //store the stream id and time stamp of bos message
         iStreamID = msg->getStreamID();
-        iBOSTimestamp = msg->getTimestamp();
+        iCurrentClipId = msg->getClipID();
         iSendBOS = true;
-
-        // we need to initialize the timestamp here - so that updates later on are accurate (in terms of rollover etc)
-        iInputTimestampClock.set_clock(iBOSTimestamp, 0);
-        iOMXTicksTimestamp = ConvertTimestampIntoOMXTicks(iInputTimestampClock);
 
         // if new BOS arrives, and
         //if we're in the middle of a partial frame assembly
@@ -897,7 +892,7 @@ OSCL_EXPORT_REF bool PVMFOMXBaseDecNode::ProcessIncomingMsg(PVMFPortInterface* a
         iKeepDroppingMsgsUntilMarkerBit = false;
 
         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                        (0, "%s::ProcessIncomingMsg: Received BOS stream %d, timestamp %d", iName.Str(), iStreamID, iBOSTimestamp));
+                        (0, "%s::ProcessIncomingMsg: Received BOS stream %d, clipId %d", iName.Str(), iStreamID, iCurrentClipId));
         ((PVMFOMXDecPort*)aPort)->iNumFramesConsumed++;
         return true;
     }
@@ -907,9 +902,10 @@ OSCL_EXPORT_REF bool PVMFOMXBaseDecNode::ProcessIncomingMsg(PVMFPortInterface* a
         iEndOfDataReached = true;
         // Save the timestamp for the EOS cmd
         iEndOfDataTimestamp = msg->getTimestamp();
+        iCurrentClipId = msg->getClipID();
 
         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                        (0, "%s::ProcessIncomingMsg: Received EOS", iName.Str()));
+                        (0, "%s::ProcessIncomingMsg: Received EOS clipId %d", iName.Str(), iCurrentClipId));
 
         ((PVMFOMXDecPort*)aPort)->iNumFramesConsumed++;
         return true; // do not do conversion into media data, just set the flag and leave
@@ -1726,6 +1722,8 @@ OSCL_EXPORT_REF bool PVMFOMXBaseDecNode::SendInputBufferToOMXComponent()
     if (!iOMXComponentSupportsPartialFrames)
     {
 
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                        (0, "%s::SendInputBufferToOMXComponent() -- No support for partial frames", iName.Str()));
         // there are 4 cases after receiving a media msg and realizing there were missing packet(s):
 
         // a) TS remains the same - i.e. missing 1 or more pieces in the middle of the same frame
@@ -2067,6 +2065,7 @@ OSCL_EXPORT_REF bool PVMFOMXBaseDecNode::SendInputBufferToOMXComponent()
             iCodecSeqNum += (iDataIn->getSeqNum() - iInPacketSeqNum); // increment the codec seq. # by the same
             // amount that the input seq. number increased
 
+            iFirstDataMsgAfterBOS = false;
             iInPacketSeqNum = iDataIn->getSeqNum(); // remember input sequence number
             iInTimestamp = iDataIn->getTimestamp();
 
@@ -2335,6 +2334,16 @@ OSCL_EXPORT_REF bool PVMFOMXBaseDecNode::SendInputBufferToOMXComponent()
                 }
             }
 
+        }
+
+        // determine framesize for MP3
+        if (((PVMFOMXDecPort*)iInPort)->iFormat == PVMF_MIME_MP3 && iInPacketSeqNum == 0)
+        {
+            if (PVMFSuccess != RetrieveMP3FrameLength(input_buf->pBufHdr->pBuffer + input_buf->pBufHdr->nOffset))
+            {
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                                (0, "%s::SendInputBufferToOMXComponent() - Error attempting to determing MP3 frame length from buffer 0x%x", iName.Str(), input_buf->pBufHdr->pBuffer));
+            }
         }
 
 
@@ -3689,7 +3698,6 @@ OMX_ERRORTYPE PVMFOMXBaseDecNode::FillBufferDoneProcessing(OMX_OUT OMX_HANDLETYP
 
         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                         (0, "%s::FillBufferDoneProcessing: Output buffer has EOS set", iName.Str()));
-
     }
 
     // if a buffer is empty, or if it should not be sent downstream (say, due to state change)
@@ -3811,9 +3819,9 @@ bool PVMFOMXBaseDecNode::SendBeginOfMediaStreamCommand()
                     (0, "%s::SendBeginOfMediaStreamCommand() In", iName.Str()));
 
     PVMFSharedMediaCmdPtr sharedMediaCmdPtr = PVMFMediaCmd::createMediaCmd();
-    // Set the formatID, timestamp, sequenceNumber and streamID for the media message
+    // Set the formatID, timestamp, sequenceNumber clipId and streamID for the media message
     sharedMediaCmdPtr->setFormatID(PVMF_MEDIA_CMD_BOS_FORMAT_ID);
-    sharedMediaCmdPtr->setTimestamp(iBOSTimestamp);
+    sharedMediaCmdPtr->setClipID(iCurrentClipId);
     //reset the sequence number
     uint32 seqNum = 0;
     sharedMediaCmdPtr->setSeqNum(seqNum);
@@ -3831,7 +3839,7 @@ bool PVMFOMXBaseDecNode::SendBeginOfMediaStreamCommand()
     iSendBOS = false;
 
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                    (0, "%s::SendBeginOfMediaStreamCommand() BOS Sent StreamID %d", iName.Str(), iStreamID));
+                    (0, "%s::SendBeginOfMediaStreamCommand() BOS Sent StreamID %d clipId %d", iName.Str(), iStreamID, iCurrentClipId));
     return true;
 }
 ////////////////////////////////////
@@ -3846,7 +3854,8 @@ bool PVMFOMXBaseDecNode::SendEndOfTrackCommand(void)
 
     // Set the timestamp
     sharedMediaCmdPtr->setTimestamp(iEndOfDataTimestamp);
-
+    // set the clip id
+    sharedMediaCmdPtr->setClipID(iCurrentClipId);
     // Set Streamid
     sharedMediaCmdPtr->setStreamID(iStreamID);
 
@@ -3862,7 +3871,7 @@ bool PVMFOMXBaseDecNode::SendEndOfTrackCommand(void)
     }
 
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                    (0, "%s::SendEndOfTrackCommand() Out", iName.Str()));
+                    (0, "%s::SendEndOfTrackCommand() clipId %d Out", iName.Str(), iCurrentClipId));
     return true;
 }
 
@@ -4584,6 +4593,8 @@ OSCL_EXPORT_REF PVMFStatus PVMFOMXBaseDecNode::DoStop()
     iIsEOSSentToComponent = false;
     iIsEOSReceivedFromComponent = false;
 
+    iEOCReceived = false;
+    iBOCReceived = false;
 
     iDoNotSendOutputBuffersDownstreamFlag = true; // stop sending output buffers downstream
     iDoNotSaveInputBuffersFlag = true;
@@ -4831,6 +4842,8 @@ OSCL_EXPORT_REF PVMFStatus PVMFOMXBaseDecNode::DoReset()
                 iEndOfDataReached = false;
                 iIsEOSSentToComponent = false;
                 iIsEOSReceivedFromComponent = false;
+                iEOCReceived = false;
+                iBOCReceived = false;
 
                 if (iOMXComponentUsesFullAVCFrames)
                 {
@@ -4947,6 +4960,9 @@ OSCL_EXPORT_REF PVMFStatus PVMFOMXBaseDecNode::DoReset()
                 iIsEOSSentToComponent = false;
                 iIsEOSReceivedFromComponent = false;
 
+                iEOCReceived = false;
+                iBOCReceived = false;
+
                 // also, perform Port deletion when the component replies with the command
                 // complete, not right here
             } // end of if(iResetMsgSent)
@@ -4985,6 +5001,9 @@ OSCL_EXPORT_REF PVMFStatus PVMFOMXBaseDecNode::DoReset()
                 iEndOfDataReached = false;
                 iIsEOSSentToComponent = false;
                 iIsEOSReceivedFromComponent = false;
+
+                iEOCReceived = false;
+                iBOCReceived = false;
 
 
                 iDoNotSendOutputBuffersDownstreamFlag = true; // stop sending output buffers downstream
@@ -5056,6 +5075,9 @@ OSCL_EXPORT_REF PVMFStatus PVMFOMXBaseDecNode::DoReset()
     iEndOfDataReached = false;
     iIsEOSSentToComponent = false;
     iIsEOSReceivedFromComponent = false;
+
+    iEOCReceived = false;
+    iBOCReceived = false;
 
     if (iOMXComponentUsesFullAVCFrames)
     {
@@ -5950,6 +5972,17 @@ OSCL_EXPORT_REF OsclAny* PVMFOMXBaseDecNode::AllocateKVPKeyArray(int32& aLeaveCo
     }
     aLeaveCode = leaveCode;
     return aBuffer;
+}
+
+PVMFStatus PVMFOMXBaseDecNode::RetrieveMP3FrameLength(uint8 *pBuffer)
+{
+    OSCL_UNUSED_ARG(pBuffer);
+
+    // stub function.  should only be called by omx audio dec node
+
+    OSCL_ASSERT(false);
+
+    return PVMFFailure;
 }
 
 OSCL_EXPORT_REF int32 PVMFOMXBaseDecNode::GetNAL_OMXNode(uint8** bitstream, uint32* size)

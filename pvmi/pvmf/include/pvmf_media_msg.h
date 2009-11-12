@@ -58,6 +58,7 @@ class PVMFMediaMsg
         virtual uint32 getStreamID() = 0;
         virtual uint32 getSeqNum() = 0;
         virtual PVUid32 getFormatID() = 0;
+        virtual uint32 getClipID() = 0;
         virtual bool queryInterface(const PVUuid& uuid, PVInterface*& iface) = 0;
         virtual bool getFormatSpecificInfo(OsclRefCounterMemFrag& memfrag) = 0;
         virtual void setTimestamp(const PVMFTimestamp& ts) = 0;

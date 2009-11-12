@@ -151,10 +151,12 @@ Int OmxAacDecoder::AacDecodeFrames(OMX_S16* aOutputBuffer,
         if (2 == iExt.aacPlusUpsamplingFactor)
         {
             *aSamplesPerFrame = 2 * AACDEC_PCM_FRAME_SAMPLE_SIZE;
+            aAudioAacParam->nFrameLength = *aSamplesPerFrame;
         }
         else
         {
             *aSamplesPerFrame = AACDEC_PCM_FRAME_SAMPLE_SIZE;
+            aAudioAacParam->nFrameLength = *aSamplesPerFrame;
         }
 
 
@@ -220,7 +222,7 @@ Int OmxAacDecoder::AacDecodeFrames(OMX_S16* aOutputBuffer,
                 PVMP4AudioDecoderDisableAacPlus(&iExt, &ipMem);
                 *aSamplesPerFrame = AACDEC_PCM_FRAME_SAMPLE_SIZE;
                 aAudioAacParam->eAACProfile = OMX_AUDIO_AACObjectMain;
-                aAudioAacParam->nFrameLength = AACDEC_PCM_FRAME_SAMPLE_SIZE;
+                aAudioAacParam->nFrameLength = *aSamplesPerFrame;
             }
 
             //Output Port Parameters

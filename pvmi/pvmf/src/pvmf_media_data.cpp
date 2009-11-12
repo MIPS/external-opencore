@@ -47,6 +47,11 @@ OSCL_EXPORT_REF PVUid32 PVMFMediaData::getFormatID()
     return hdr_ptr->format_id;
 }
 
+OSCL_EXPORT_REF PVUid32 PVMFMediaData::getClipID()
+{
+    return hdr_ptr->clip_id;
+}
+
 OSCL_EXPORT_REF bool PVMFMediaData::queryInterface(const PVUuid& uuid, PVInterface*& iface)
 {
     OSCL_UNUSED_ARG(uuid);

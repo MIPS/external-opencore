@@ -30,6 +30,10 @@
 #include "latmpayloadparser.h"
 #endif
 
+#ifndef PVMF_COMMON_AUDIO_DECNODE_H_INCLUDE
+#include "pvmf_common_audio_decnode.h"
+#endif
+
 #define PVMFOMXAUDIODECNODE_NUM_CMD_IN_POOL 8
 #define PVOMXAUDIODEC_DEFAULT_SAMPLINGRATE 48000
 #define PVOMXAUDIODEC_DEFAULT_OUTPUTPCM_TIME 200
@@ -37,6 +41,18 @@
 #define PVOMXAUDIODEC_AMRWB_SAMPLES_PER_FRAME 320
 #define PVOMXAUDIODEC_MP3_DEFAULT_SAMPLES_PER_FRAME 1152
 #define PVOMXAUDIO_MAX_SUPPORTED_FORMAT 31
+
+#define MP3_SYNC_WORD         (int32)0x7ff
+#define MP3_SYNC_WORD_LNGTH   11
+#define MP3_DECODER_DELAY       529
+
+/* MPEG Header Definitions - ID Bit Values */
+#define MPEG_1              0
+#define MPEG_2              1
+#define MPEG_2_5            2
+#define INVALID_VERSION     0xFFFFFFFF
+#define MP3_SUBBANDS_NUMBER        32
+#define MP3_FILTERBANK_BANDS       18
 
 // Key string info at the base level ("x-pvmf/audio/decoder")
 #define PVOMXAUDIODECNODECONFIG_BASE_NUMKEYS 6
@@ -69,6 +85,11 @@ class PVMFOMXAudioDecNode: public PVMFOMXBaseDecNode
         //From PVMFMetadataExtensionInterface
         uint32 GetNumMetadataKeys(char* query_key = NULL);
         uint32 GetNumMetadataValues(PVMFMetadataList& aKeyList);
+
+
+        OMX_ERRORTYPE FillBufferDoneProcessing(OMX_OUT OMX_HANDLETYPE aComponent,
+                                               OMX_OUT OMX_PTR aAppData,
+                                               OMX_OUT OMX_BUFFERHEADERTYPE* aBuffer);
 
         // for WMA params
         bool VerifyParametersSync(PvmiMIOSession aSession, PvmiKvp* aParameters, int num_elements);
@@ -103,6 +124,16 @@ class PVMFOMXAudioDecNode: public PVMFOMXBaseDecNode
 
         bool CreateAACConfigDataFromASF(uint8 *inptr, uint32 inlen, uint8 *outptr, uint32 &outlen);
 
+        // gapless audio
+        void CalculateBOCParameters();
+        void CalculateEOCParameters();
+        void HandleBOCProcessing(OMX_BUFFERHEADERTYPE* aBuffer);
+        void HandleEOCProcessing(OMX_BUFFERHEADERTYPE* aBuffer);
+
+        PVMFStatus CountSamplesInBuffer(OMX_BUFFERHEADERTYPE* aBuffer);
+
+        // mp3 utilities
+        PVMFStatus RetrieveMP3FrameLength(uint8 *pBuffer);
         OMX_AUDIO_CODINGTYPE iOMXAudioCompressionFormat;
 
         // Audio parameters
@@ -113,11 +144,29 @@ class PVMFOMXAudioDecNode: public PVMFOMXBaseDecNode
         uint32 iNumBytesPerFrame;       // depends on number of samples/channel and number of channels
         uint32 iMilliSecPerFrame;       //
 
+        // gapless audio - BOC
+        uint32 iBOCBytesToSkip;
+        uint32 iBOCSamplesToSkip;
+        uint32 iBOCTimeStamp;
+        uint32 iBOCBeginningOfContentTS;
+
+        // gapless audio - EOC
+        uint32 iEOCFramesToFollow;
+        uint32 iEOCSamplesToSkip;
+        uint32 iEOCTimeStamp;
+        uint32 iEOCSilenceRemovalSampleOffset;
+        uint32 iEOCSilenceRemovalStartFrame;
+
+        bool iCountSamplesInBuffer;
+        uint32 iClipSampleCount;
+        bool iBufferContainsIntFrames;
 
         // LATM parser for AAC
         PV_LATM_Parser *iLATMParser;
         uint8 *iLATMConfigBuffer;
         uint32 iLATMConfigBufferSize;
+        // logging gapless info
+        PVLogger* iGaplessLogger;
 };
 #endif // PVMF_OMXAUDIODEC_NODE_H_INCLUDED
 

@@ -46,6 +46,7 @@ class PVMFMediaCmd : public PVMFMediaMsg
         OSCL_IMPORT_REF virtual uint32 getStreamID();
         OSCL_IMPORT_REF virtual uint32 getSeqNum();
         OSCL_IMPORT_REF virtual PVUid32 getFormatID();
+        OSCL_IMPORT_REF virtual uint32 getClipID();
         OSCL_IMPORT_REF virtual bool queryInterface(const PVUuid& uuid, PVInterface*& iface);
         OSCL_IMPORT_REF virtual bool getFormatSpecificInfo(OsclRefCounterMemFrag& memfrag);
         OSCL_IMPORT_REF virtual void setTimestamp(const PVMFTimestamp& timestamp);
@@ -56,6 +57,7 @@ class PVMFMediaCmd : public PVMFMediaMsg
         /* Not from PVMFMediaMsg interface */
         OSCL_IMPORT_REF virtual void setFormatSpecificInfo(OsclRefCounterMemFrag& memfrag);
         OSCL_IMPORT_REF virtual void setFormatID(PVUid32 id);
+        OSCL_IMPORT_REF virtual void setClipID(uint32 clipId);
 
         OSCL_IMPORT_REF static OsclSharedPtr<PVMFMediaCmd>
         createMediaCmd(Oscl_DefAlloc* gen_alloc = NULL);

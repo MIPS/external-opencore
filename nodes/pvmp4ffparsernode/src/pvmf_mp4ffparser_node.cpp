@@ -91,6 +91,7 @@ PVMFMP4FFParserNode::PVMFMP4FFParserNode(int32 aPriority) :
         iMP4FileHandle(NULL),
         iPortIter(NULL),
         iLogger(NULL),
+        iGaplessLogger(NULL),
         iBackwardReposFlag(false), /* To avoid backwardlooping :: A flag to remember backward repositioning */
         iForwardReposFlag(false),
         iPlayBackDirection(PVMF_DATA_SOURCE_DIRECTION_FORWARD),
@@ -130,7 +131,6 @@ PVMFMP4FFParserNode::PVMFMP4FFParserNode(int32 aPriority) :
     iAuthorizationDataKvp.key = NULL;
     oWaitingOnLicense  = false;
     iPoorlyInterleavedContentEventSent = false;
-
 
     iInterfaceState = EPVMFNodeCreated;
     iParsingMode = PVMF_MP4FF_PARSER_NODE_ENABLE_PARSER_OPTIMIZATION;
@@ -355,6 +355,8 @@ PVMFStatus PVMFMP4FFParserNode::ThreadLogon()
         }
         iClockLogger = PVLogger::GetLoggerObject("clock");
         iDiagnosticsLogger = PVLogger::GetLoggerObject("pvplayerdiagnostics.mp4parsernode");
+        iGaplessLogger = PVLogger::GetLoggerObject("gapless.sourcenode");
+
         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFMP4FFParserNode::ThreadLogon() called"));
 
         iFileServer.Connect();
@@ -384,6 +386,7 @@ PVMFStatus PVMFMP4FFParserNode::ThreadLogoff()
         iAVCDataPathLogger = NULL;
         iClockLogger = NULL;
         iDiagnosticsLogger = NULL;
+        iGaplessLogger = NULL;
 
         ChangeNodeState(EPVMFNodeCreated);
         return PVMFSuccess;
@@ -2222,6 +2225,9 @@ PVMFStatus PVMFMP4FFParserNode::DoRequestPort(PVMFMP4FFParserNodeCommand& aCmd, 
         trackportinfo.iPortLogger->AddAppender(trackportinfo.iBinAppenderPtr);
     }
 
+    // fill in the gapless metadata
+    GetGaplessMetadata(trackportinfo);
+
     iNodeTrackPortList.push_back(trackportinfo);
     aPort = outport;
 
@@ -3978,7 +3984,10 @@ void PVMFMP4FFParserNode::HandleTrackState()
 
                 if (!RetrieveTrackData(iNodeTrackPortList[i]))
                 {
-                    if (iNodeTrackPortList[i].iState == PVMP4FFNodeTrackPortInfo::TRACKSTATE_SEND_ENDOFTRACK)
+                    if ((iNodeTrackPortList[i].iState == PVMP4FFNodeTrackPortInfo::TRACKSTATE_SEND_ENDOFTRACK) ||
+                            (iNodeTrackPortList[i].iState == PVMP4FFNodeTrackPortInfo::TRACKSTATE_TRANSMITTING_SENDBOC) ||
+                            (iNodeTrackPortList[i].iState == PVMP4FFNodeTrackPortInfo::TRACKSTATE_TRANSMITTING_SENDEOC))
+
                     {
                         RunIfNotReady();
                     }
@@ -4027,6 +4036,48 @@ void PVMFMP4FFParserNode::HandleTrackState()
                     // EOS command sending failed -- wait on outgoing queue ready notice
                     // before trying again.
                     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_NOTICE, (0, "PVMFMP4FFParserNode::HandleTrackState() EOS media command sending failed"));
+                }
+                break;
+
+            case PVMP4FFNodeTrackPortInfo::TRACKSTATE_TRANSMITTING_SENDBOC:
+                // need to send BOC
+                // then followed by data
+                if (iNodeTrackPortList[i].iSendBOC && iNodeTrackPortList[i].iHasBOCFrame)
+                {
+                    // send BOC downstream
+                    if (!SendBeginOfClipCommand(iNodeTrackPortList[i]))
+                    {
+                        // try again
+                        RunIfNotReady();
+                    }
+                }
+                // may need to send EOC as well
+                if (iNodeTrackPortList[i].iSendEOC && iNodeTrackPortList[i].iHasEOCFrame)
+                {
+                    iNodeTrackPortList[i].iState = PVMP4FFNodeTrackPortInfo::TRACKSTATE_TRANSMITTING_SENDEOC;
+                }
+                // falling through
+            case PVMP4FFNodeTrackPortInfo::TRACKSTATE_TRANSMITTING_SENDEOC:
+
+                // need to send EOC
+                // then followed by data
+                if (iNodeTrackPortList[i].iSendEOC && iNodeTrackPortList[i].iHasEOCFrame)
+                {
+                    // send EOC downstream
+                    if (!SendEndOfClipCommand(iNodeTrackPortList[i]))
+                    {
+                        // try again
+                        RunIfNotReady();
+                    }
+                }
+
+                // send data
+                iNodeTrackPortList[i].iState = PVMP4FFNodeTrackPortInfo::TRACKSTATE_TRANSMITTING_SENDDATA;
+
+                if (SendTrackData(iNodeTrackPortList[i]))
+                {
+                    iNodeTrackPortList[i].iState = PVMP4FFNodeTrackPortInfo::TRACKSTATE_TRANSMITTING_GETDATA;
+                    RunIfNotReady();
                 }
                 break;
 
@@ -4524,6 +4575,19 @@ bool PVMFMP4FFParserNode::RetrieveTrackData(PVMP4FFNodeTrackPortInfo& aTrackPort
     else
     {
         retval = iMP4FileHandle->getNextBundledAccessUnits(trackid, &numsamples, &iGau);
+
+        for (uint32 index = 0; index < numsamples; index++)
+        {
+            if ((iGau.frameNum + index) == aTrackPortInfo.iFrameBOC)
+            {
+                aTrackPortInfo.iHasBOCFrame = true;
+            }
+            if ((iGau.frameNum + index) == aTrackPortInfo.iFirstFrameEOC)
+            {
+                aTrackPortInfo.iFramesToFollowEOC = numsamples;
+                aTrackPortInfo.iHasEOCFrame = true;
+            }
+        }
     }
 
     if (retval == NO_SAMPLE_IN_CURRENT_MOOF && numsamples == 0)
@@ -5210,29 +5274,56 @@ bool PVMFMP4FFParserNode::RetrieveTrackData(PVMP4FFNodeTrackPortInfo& aTrackPort
             aTrackPortInfo.iState = PVMP4FFNodeTrackPortInfo::TRACKSTATE_SKIP_CORRUPT_SAMPLE;
             return false;
         }
-        else
-        {
-            return true;
-        }
     }
     else if ((aTrackPortInfo.iFormatTypeInteger == PVMF_MP4_PARSER_NODE_MPEG4_AUDIO)
              && (oIsAACFramesFragmented))
     {
         // Check that the media frag group has been allocated
         OSCL_ASSERT(mediadatafraggroup.GetRep() != NULL);
-        return GenerateAACFrameFrags(aTrackPortInfo, mediadatafraggroup);
+        bool ok = GenerateAACFrameFrags(aTrackPortInfo, mediadatafraggroup);
+        if (!ok)
+        {
+            return false;
+        }
     }
     else if (aTrackPortInfo.iFormatTypeInteger == PVMF_MP4_PARSER_NODE_3GPP_TIMED_TEXT)
     {
         // Check if the text sample entry needs to be set
         PVMFTimedTextMediaData* textmediadata = (PVMFTimedTextMediaData*) refCtrMemFragOut.getMemFrag().ptr;
         UpdateTextSampleEntry(aTrackPortInfo, iGau.info[0].sample_info, *textmediadata);
-        return true;
     }
-    else
+
+    // should be returning true here
+    // there is a data msg waiting to be sent
+    // if gapless, check if BOC and/or EOC has to be sent
+    // if the whole clip fits inside the frag, both BOC and EOC have to be sent
+    if (aTrackPortInfo.iSendBOC && aTrackPortInfo.iHasBOCFrame)
     {
-        return true;
+        // first frame and gapless
+        // send BOC msg downstream
+        if (!SendBeginOfClipCommand(aTrackPortInfo))
+        {
+            // failed to send BOC
+            // data is already in aTrackPortInfo.iMediaData
+            aTrackPortInfo.iState = PVMP4FFNodeTrackPortInfo::TRACKSTATE_TRANSMITTING_SENDBOC;
+            return false;
+        }
     }
+
+    if (aTrackPortInfo.iSendEOC && aTrackPortInfo.iHasEOCFrame)
+    {
+        // first frame containing zero padding and gapless
+        // send EOC msg downstream
+        if (!SendEndOfClipCommand(aTrackPortInfo))
+        {
+            // failed to send EOC
+            // data is already in aTrackPortInfo.iMediaData
+            aTrackPortInfo.iState = PVMP4FFNodeTrackPortInfo::TRACKSTATE_TRANSMITTING_SENDEOC;
+            return false;
+        }
+    }
+
+    return true;
 }
 
 
@@ -8921,6 +9012,80 @@ int32 PVMFMP4FFParserNode::CreateErrorInfoMsg(PVMFBasicErrorInfoMessage** aError
 }
 
 
+bool PVMFMP4FFParserNode::SendBeginOfClipCommand(PVMP4FFNodeTrackPortInfo& aTrackPortInfo)
+{
+    PVMFSharedMediaCmdPtr sharedMediaCmdPtr = PVMFMediaCmd::createMediaCmd();
+    sharedMediaCmdPtr->setFormatID(PVMF_MEDIA_CMD_BOC_FORMAT_ID);
+
+    aTrackPortInfo.iClockConverter->update_clock(aTrackPortInfo.iTimestamp);
+    uint32 timestamp = aTrackPortInfo.iClockConverter->get_converted_ts(1000);
+    sharedMediaCmdPtr->setTimestamp(timestamp);
+    sharedMediaCmdPtr->setSeqNum(aTrackPortInfo.iSeqNum++);
+    sharedMediaCmdPtr->setStreamID(iStreamID);
+    // set format specific info
+    sharedMediaCmdPtr->setFormatSpecificInfo(aTrackPortInfo.iBOCFormatSpecificInfo);
+
+    // Convert media command to media message
+    PVMFSharedMediaMsgPtr mediaMsgOut;
+    convertToPVMFMediaCmdMsg(mediaMsgOut, sharedMediaCmdPtr);
+
+    if (aTrackPortInfo.iPortInterface->QueueOutgoingMsg(mediaMsgOut) != PVMFSuccess)
+    {
+        // Output queue is busy, so wait for the output queue being ready
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
+                        (0, "PVMFMP4FFParserNode::SendBeginOfClipCommand: Outgoing queue busy. "));
+        return false;
+    }
+
+    // BOC was sent successfully
+    aTrackPortInfo.iHasBOCFrame = false;
+
+    PVMF_MP4FFPARSERNODE_LOGDATATRAFFIC((0, "PVMFMP4FFParserNode::SendBeginOfClipCommand() BOC sent - Mime=%s, StreamId=%d, TS=%d",
+                                         aTrackPortInfo.iMimeType.get_cstr(),
+                                         iStreamID,
+                                         timestamp));
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFMP4FFParserNode::SendBeginOfClipCommand() BOC sent StreamId=%d ", iStreamID));
+    return true;
+}
+
+
+bool PVMFMP4FFParserNode::SendEndOfClipCommand(PVMP4FFNodeTrackPortInfo& aTrackPortInfo)
+{
+    PVMFSharedMediaCmdPtr sharedMediaCmdPtr = PVMFMediaCmd::createMediaCmd();
+    sharedMediaCmdPtr->setFormatID(PVMF_MEDIA_CMD_EOC_FORMAT_ID);
+
+    uint32 timestamp = aTrackPortInfo.iMediaData->getTimestamp();
+    sharedMediaCmdPtr->setTimestamp(timestamp);
+    sharedMediaCmdPtr->setSeqNum(aTrackPortInfo.iSeqNum++);
+    sharedMediaCmdPtr->setStreamID(iStreamID);
+
+    // set format specific info
+    struct EOCInfo* fragPtr = (struct EOCInfo*)aTrackPortInfo.iEOCFormatSpecificInfo.getMemFragPtr();
+    fragPtr->framesToFollow = aTrackPortInfo.iFramesToFollowEOC;
+    sharedMediaCmdPtr->setFormatSpecificInfo(aTrackPortInfo.iEOCFormatSpecificInfo);
+
+    // Convert media command to media message
+    PVMFSharedMediaMsgPtr mediaMsgOut;
+    convertToPVMFMediaCmdMsg(mediaMsgOut, sharedMediaCmdPtr);
+
+    if (aTrackPortInfo.iPortInterface->QueueOutgoingMsg(mediaMsgOut) != PVMFSuccess)
+    {
+        // Output queue is busy, so wait for the output queue being ready
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
+                        (0, "PVMFMP4FFParserNode::SendEndOfClipCommand: Outgoing queue busy. "));
+        return false;
+    }
+
+    // EOC was sent successfully
+    aTrackPortInfo.iHasEOCFrame = false;
+
+    PVMF_MP4FFPARSERNODE_LOGDATATRAFFIC((0, "PVMFMP4FFParserNode::SendEndOfClipCommand() EOC sent - Mime=%s, StreamId=%d, TS=%d",
+                                         aTrackPortInfo.iMimeType.get_cstr(),
+                                         iStreamID,
+                                         timestamp));
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFMP4FFParserNode::SendEndOfClipCommand() EOC sent StreamId=%d ", iStreamID));
+    return true;
+}
 
 
 

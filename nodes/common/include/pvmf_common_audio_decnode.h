@@ -43,4 +43,32 @@
 #endif
 
 
+
+
+/* PVMF_MEDIA_CMD_BOC_FORMAT_ID
+   format ID for beginning-of-clip messages to use with gapless
+   playback.
+   Format-specific info (uint32): number of samples to skip
+   at the beginning of the next media data frame.
+*/
+struct BOCInfo
+{
+    uint32 samplesToSkip;
+};
+
+/* PVMF_MEDIA_CMD_EOC_FORMAT_ID
+   format ID for end-of-clip messages to use with gapless
+   playback.
+   Format-specific info contains two 32-bit values:
+      (uint32): number of frames that will follow this message.
+      (uint32): number of samples to skip.
+*/
+
+struct EOCInfo
+{
+    uint32 framesToFollow;
+    uint32 samplesToSkip;
+};
+
+
 #endif

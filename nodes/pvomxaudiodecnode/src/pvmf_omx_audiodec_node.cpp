@@ -36,6 +36,8 @@
 
 #define PVMF_OMXAUDIODEC_NUM_METADATA_VALUES 6
 
+
+
 // Constant character strings for metadata keys
 static const char PVOMXAUDIODECMETADATA_CODECINFO_AUDIO_FORMAT_KEY[] = "codec-info/audio/format";
 static const char PVOMXAUDIODECMETADATA_CODECINFO_AUDIO_CHANNELS_KEY[] = "codec-info/audio/channels";
@@ -54,6 +56,7 @@ PVMFOMXAudioDecNode::~PVMFOMXAudioDecNode()
 {
     DeleteLATMParser();
     ReleaseAllPorts();
+    iGaplessLogger = NULL;
 }
 
 // Class Constructor
@@ -105,6 +108,9 @@ PVMFOMXAudioDecNode::PVMFOMXAudioDecNode(int32 aPriority) :
     iLATMConfigBuffer = NULL;
     iLATMConfigBufferSize = 0;
 
+    iCountSamplesInBuffer = false;
+    iBufferContainsIntFrames = true;
+
     //Try Allocate FSI buffer
 
     // Do This first in case of Query
@@ -118,6 +124,7 @@ PVMFOMXAudioDecNode::PVMFOMXAudioDecNode(int32 aPriority) :
     iDataPathLogger = PVLogger::GetLoggerObject("datapath");
     iClockLogger = PVLogger::GetLoggerObject("clock");
     iDiagnosticsLogger = PVLogger::GetLoggerObject("pvplayerdiagnostics.decnode.OMXAudioDecnode");
+    iGaplessLogger = PVLogger::GetLoggerObject("gapless.decnode");
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -173,13 +180,8 @@ bool PVMFOMXAudioDecNode::ProcessIncomingMsg(PVMFPortInterface* aPort)
         PVMFSharedMediaMsgPtr mediaMsgOut;
         convertToPVMFMediaCmdMsg(mediaMsgOut, BOSCmdPtr);
 
-        //store the stream id and time stamp of bos message
+        //store the stream id bos message
         iStreamID = mediaMsgOut->getStreamID();
-        iBOSTimestamp = mediaMsgOut->getTimestamp();
-
-
-        iInputTimestampClock.set_clock(iBOSTimestamp, 0);
-        iOMXTicksTimestamp = ConvertTimestampIntoOMXTicks(iInputTimestampClock);
 
         iSendBOS = true;
 
@@ -240,11 +242,9 @@ bool PVMFOMXAudioDecNode::ProcessIncomingMsg(PVMFPortInterface* aPort)
     {
         //store the stream id and time stamp of bos message
         iStreamID = msg->getStreamID();
-        iBOSTimestamp = msg->getTimestamp();
+        iCurrentClipId = msg->getClipID();
 
-
-        iInputTimestampClock.set_clock(iBOSTimestamp, 0);
-        iOMXTicksTimestamp = ConvertTimestampIntoOMXTicks(iInputTimestampClock);
+        iClipSampleCount = 0;
 
         iSendBOS = true;
 
@@ -270,7 +270,7 @@ bool PVMFOMXAudioDecNode::ProcessIncomingMsg(PVMFPortInterface* aPort)
         iKeepDroppingMsgsUntilMarkerBit = false;
 
         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                        (0, "PVMFOMXAudioDecNode::ProcessIncomingMsg: Received BOS stream %d, timestamp %d", iStreamID, iBOSTimestamp));
+                        (0, "PVMFOMXAudioDecNode::ProcessIncomingMsg: Received BOS stream %d, clipId %d", iStreamID, iCurrentClipId));
         ((PVMFOMXDecPort*)aPort)->iNumFramesConsumed++;
         return true;
     }
@@ -280,12 +280,101 @@ bool PVMFOMXAudioDecNode::ProcessIncomingMsg(PVMFPortInterface* aPort)
         iEndOfDataReached = true;
         // Save the timestamp for the EOS cmd
         iEndOfDataTimestamp = msg->getTimestamp();
+        iCurrentClipId = msg->getClipID();
 
         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                        (0, "PVMFOMXAudioDecNode::ProcessIncomingMsg: Received EOS"));
+                        (0, "PVMFOMXAudioDecNode::ProcessIncomingMsg: Received EOS clipId %d", iCurrentClipId));
 
         ((PVMFOMXDecPort*)aPort)->iNumFramesConsumed++;
         return true; // do not do conversion into media data, just set the flag and leave
+    }
+    else if (msg->getFormatID() == PVMF_MEDIA_CMD_BOC_FORMAT_ID)
+    {
+        // get pointer to the data fragment
+        OsclRefCounterMemFrag DataFrag;
+        msg->getFormatSpecificInfo(DataFrag);
+
+        // get format specific info
+        BOCInfo* bocInfoPtr = (BOCInfo*)DataFrag.getMemFragPtr();
+        int32 bocInfoSize = (int32)DataFrag.getMemFragSize();
+        OSCL_UNUSED_ARG(bocInfoSize); // bocInfoSize is used only for logging
+        if (bocInfoPtr == NULL)
+        {
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                            (0, "PVMFOMXAudioDecNode::ProcessIncomingMsg: Received BOC, memFragPtr %x, memFragSize %d, but memFragPtr is NULL",
+                             bocInfoPtr, bocInfoSize));
+
+            return false;
+        }
+
+        iBOCSamplesToSkip = bocInfoPtr->samplesToSkip;
+        iBOCTimeStamp = msg->getTimestamp();
+        iBOCReceived = true;
+
+        if (iNodeConfig.iMimeType == PVMF_MIME_MP3)
+        {
+            iBOCSamplesToSkip += MP3_DECODER_DELAY;
+        }
+
+        CalculateBOCParameters();
+
+        // only count samples if there is gapless metadata (i.e. BOC is sent)
+        iCountSamplesInBuffer = true;
+        iClipSampleCount = 0;
+
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                        (0, "PVMFOMXAudioDecNode::ProcessIncomingMsg: Received BOC, memFragPtr %x, memFragSize %d, samplesToSkipBOC %d",
+                         bocInfoPtr, bocInfoSize, bocInfoPtr->samplesToSkip));
+
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iGaplessLogger, PVLOGMSG_INFO,
+                        (0, "PVMFOMXAudioDecNode::ProcessIncomingMsg() Gapless BOC, bocInfoPtr->samplesToSkip %d, iBOCSamplesToSkip %d",
+                         bocInfoPtr->samplesToSkip, iBOCSamplesToSkip));
+
+        ((PVMFOMXDecPort*)aPort)->iNumFramesConsumed++;
+        return true;
+    }
+    else if (msg->getFormatID() == PVMF_MEDIA_CMD_EOC_FORMAT_ID)
+    {
+        // get pointer to the data fragment
+        OsclRefCounterMemFrag DataFrag;
+        msg->getFormatSpecificInfo(DataFrag);
+
+        // get format specific info
+        EOCInfo* eocInfoPtr = (EOCInfo*)DataFrag.getMemFragPtr();
+        int32 eocInfoSize = (int32)DataFrag.getMemFragSize();
+        OSCL_UNUSED_ARG(eocInfoSize); // eocInfoSize is used only for logging
+
+        if (eocInfoPtr == NULL)
+        {
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                            (0, "PVMFOMXAudioDecNode::ProcessIncomingMsg: Received EOC, memFragPtr %x, memFragSize %d, but memFragPtr is NULL",
+                             eocInfoPtr, eocInfoSize));
+
+            return false;
+        }
+
+        iEOCSamplesToSkip = eocInfoPtr->samplesToSkip;
+        iEOCFramesToFollow = eocInfoPtr->framesToFollow;
+        iEOCTimeStamp = msg->getTimestamp();
+        iEOCReceived = true;
+
+        if (iNodeConfig.iMimeType == PVMF_MIME_MP3)
+        {
+            iEOCSamplesToSkip -= OSCL_MIN(MP3_DECODER_DELAY, iEOCSamplesToSkip);
+        }
+
+        CalculateEOCParameters();
+
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                        (0, "PVMFOMXAudioDecNode::ProcessIncomingMsg: Received EOC, memFragPtr %x, memFragSize %d, framesToFollowEOC % d, samplesToSkipEOC %d",
+                         eocInfoPtr, eocInfoSize, eocInfoPtr->samplesToSkip, eocInfoPtr->framesToFollow));
+
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iGaplessLogger, PVLOGMSG_INFO,
+                        (0, "PVMFOMXAudioDecNode::ProcessIncomingMsg() Gapless EOC, framesToFollowEOC %d, eocInfoPtr->samplesToSkip %d, iEOCSamplesToSkip %d",
+                         iEOCFramesToFollow, eocInfoPtr->samplesToSkip, iEOCSamplesToSkip));
+
+        ((PVMFOMXDecPort*)aPort)->iNumFramesConsumed++;
+        return true;
     }
 
 
@@ -434,6 +523,12 @@ bool PVMFOMXAudioDecNode::ProcessIncomingMsg(PVMFPortInterface* aPort)
         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iDataPathLogger, PVLOGMSG_INFO,
                         (0, "PVMFOMXAudioDecNode::ProcessIncomingMsg: TS=%d, SEQNUM= %d", msg->getTimestamp(), msg->getSeqNum()));
 
+        if (iFirstDataMsgAfterBOS)
+        {
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iDataPathLogger, PVLOGMSG_INFO,
+                            (0, "PVMFOMXAudioDecNode::ProcessIncomingMsg: iTSOfFirstDataMsgAfterBOS = %d", msg->getTimestamp()));
+            iTSOfFirstDataMsgAfterBOS = msg->getTimestamp();
+        }
         convertToPVMFMediaData(iDataIn, msg);
         ((PVMFOMXDecPort*)aPort)->iNumFramesConsumed++;
     }
@@ -617,6 +712,12 @@ PVMFStatus PVMFOMXAudioDecNode::HandlePortReEnable()
             // a buffer size larger than nBufferSize.
             iOMXComponentOutputBufferSize = iParamPort.nBufferSize;
         }
+
+        if (iBOCReceived)
+            CalculateBOCParameters();
+
+        if (iEOCReceived)
+            CalculateEOCParameters();
 
         // read the alignment again - just in case
         iOutputBufferAlignment = iParamPort.nBufferAlignment;
@@ -1118,8 +1219,6 @@ bool PVMFOMXAudioDecNode::NegotiateComponentParameters(OMX_PTR aOutputParameters
     // Based on sampling rate - we also determine the desired output buffer size
     if (!GetSetCodecSpecificInfo())
         return false;
-
-
 
     //Port 1 for output port
     iParamPort.nPortIndex = iOutputPortIndex;
@@ -1659,6 +1758,12 @@ bool PVMFOMXAudioDecNode::GetSetCodecSpecificInfo()
     else
         iOMXComponentOutputBufferSize = (2 * iNumberOfAudioChannels * PVOMXAUDIODEC_DEFAULT_OUTPUTPCM_TIME * iPCMSamplingRate) / 1000; // assuming 16 bits per sample
 
+    if (iBOCReceived)
+        CalculateBOCParameters();
+
+    if (iEOCReceived)
+        CalculateEOCParameters();
+
     //Port 1 for output port
     iParamPort.nPortIndex = iOutputPortIndex;
     CONFIG_SIZE_AND_VERSION(iParamPort);
@@ -1785,7 +1890,125 @@ bool PVMFOMXAudioDecNode::InitDecoder(PVMFSharedMediaDataPtr& DataIn)
 }
 
 
+/////////////////////////////////////////////////////////////////////////////
+////////////////////// CALLBACK PROCESSING FOR FILL BUFFER DONE - output buffer is ready
+/////////////////////////////////////////////////////////////////////////////
+OMX_ERRORTYPE PVMFOMXAudioDecNode::FillBufferDoneProcessing(OMX_OUT OMX_HANDLETYPE aComponent,
+        OMX_OUT OMX_PTR aAppData,
+        OMX_OUT OMX_BUFFERHEADERTYPE* aBuffer)
+{
+    OSCL_UNUSED_ARG(aComponent);
+    OSCL_UNUSED_ARG(aAppData);
 
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "PVMFOMXAudioDecNode::FillBufferDoneProcessing: In"));
+
+    OSCL_ASSERT((void*) aComponent == (void*) iOMXDecoder); // component should match the component
+    OSCL_ASSERT(aAppData == (OMX_PTR)(this));       // AppData should represent this node ptr
+
+    // first, get the buffer "context", i.e. pointer to application private data that contains the
+    // address of the mempool buffer (so that it can be released)
+    OutputBufCtrlStruct *pContext = (OutputBufCtrlStruct*) aBuffer->pAppPrivate;
+
+    // check for EOS flag
+    if ((aBuffer->nFlags & OMX_BUFFERFLAG_EOS))
+    {
+        // EOS received - enable sending EOS msg
+        iIsEOSReceivedFromComponent = true;
+
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                        (0, "PVMFOMXAudioDecNode::FillBufferDoneProcessing: Output buffer has EOS set"));
+    }
+
+    if (iCountSamplesInBuffer)
+    {
+        CountSamplesInBuffer(aBuffer);
+    }
+
+    // check for BOC.
+    if (iBOCReceived)
+    {
+        HandleBOCProcessing(aBuffer);
+    }
+
+    // check for EOC.
+    if (iEOCReceived)
+    {
+        HandleEOCProcessing(aBuffer);
+    }
+
+    // if a buffer is empty, or if it should not be sent downstream (say, due to state change)
+    // release the buffer back to the pool
+    if ((aBuffer->nFilledLen == 0) || (iDoNotSendOutputBuffersDownstreamFlag == true))
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                        (0, "PVMFOMXAudioDecNode::FillBufferDoneProcessing: Release output buffer %x pointing to buffer %x back to mempool - buffer empty or not to be sent downstream", pContext, pContext->pMemPoolEntry));
+
+        iOutBufMemoryPool->deallocate(pContext->pMemPoolEntry);
+    }
+    else
+    {
+
+        // get pointer to actual buffer data
+        uint8 *pBufdata = ((uint8*) aBuffer->pBuffer);
+        // move the data pointer based on offset info
+        pBufdata += aBuffer->nOffset;
+
+        iOutTimeStamp = ConvertOMXTicksIntoTimestamp(aBuffer->nTimeStamp);
+
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                        (0, "PVMFOMXAudioDecNode::FillBufferDoneProcessing: Output frame %d with timestamp %d received", iFrameCounter++, iOutTimeStamp));
+
+
+        ipPrivateData = (OsclAny *) aBuffer->pPlatformPrivate; // record the pointer
+
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                        (0, "PVMFOMXAudioDecNode::FillBufferDoneProcessing: Wrapping buffer %x of size %d", pBufdata, aBuffer->nFilledLen));
+        // wrap the buffer into the MediaDataImpl wrapper, and queue it for sending downstream
+        // wrapping will create a refcounter. When refcounter goes to 0 i.e. when media data
+        // is released in downstream components, the custom deallocator will automatically release the buffer back to the
+        //  mempool. To do that, the deallocator needs to have info about Context
+        // NOTE: we had to wait until now to wrap the buffer data because we only know
+        //          now where the actual data is located (based on buffer offset)
+        OsclSharedPtr<PVMFMediaDataImpl> MediaDataOut = WrapOutputBuffer(pBufdata, (uint32)(aBuffer->nFilledLen), pContext->pMemPoolEntry);
+
+        // if you can't get the MediaDataOut, release the buffer back to the pool
+        if (MediaDataOut.GetRep() == NULL)
+        {
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                            (0, "PVMFOMXAudioDecNode::FillBufferDoneProcessing: Problem wrapping buffer %x of size %d - releasing the buffer", pBufdata, aBuffer->nFilledLen));
+
+            iOutBufMemoryPool->deallocate(pContext->pMemPoolEntry);
+        }
+        else
+        {
+
+            // if there's a problem queuing output buffer, MediaDataOut will expire at end of scope and
+            // release buffer back to the pool, (this should not be the case)
+            if (QueueOutputBuffer(MediaDataOut, aBuffer->nFilledLen))
+            {
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                                (0, "PVMFOMXAudioDecNode::FillBufferDoneProcessing: Buffer %x of size %d queued - reschedule the node to send out", pBufdata, aBuffer->nFilledLen));
+
+                // if queing went OK,
+                // re-schedule the node so that outgoing queue can be emptied (unless the outgoing port is busy)
+                if ((iOutPort) && !(iOutPort->IsConnectedPortBusy()))
+                    RunIfNotReady();
+            }
+            else
+            {
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                                (0, "PVMFOMXAudioDecNode::FillBufferDoneProcessing: Problem queing buffer %x of size %d - releasing the buffer", pBufdata, aBuffer->nFilledLen));
+            }
+
+
+        }
+
+    }
+    // the OMX spec says that no error is to be returned
+    return OMX_ErrorNone;
+
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////// Put output buffer in outgoing queue //////////////////////////////
@@ -2991,6 +3214,277 @@ void PVMFOMXAudioDecNode::DoCapConfigSetParameters(PvmiKvp* aParameters, int aNu
                     (0, "PVMFOMXAudioDecNode::DoCapConfigSetParameters() Out"));
 }
 
+void PVMFOMXAudioDecNode::CalculateBOCParameters()
+{
+    OSCL_ASSERT(iBOCReceived);
+
+    iBOCBytesToSkip = iBOCSamplesToSkip * iNumberOfAudioChannels * 2; // assuming 16-bit data
+    iBOCBeginningOfContentTS = iBOCTimeStamp + ((iBOCSamplesToSkip * iInTimeScale + iPCMSamplingRate - 1) / iPCMSamplingRate);
+}
+
+void PVMFOMXAudioDecNode::HandleBOCProcessing(OMX_BUFFERHEADERTYPE* aBuffer)
+{
+    if (aBuffer->nTimeStamp > (((int64)iBOCBeginningOfContentTS *(int64)iTimeScale) / (int64)iInTimeScale))
+    {
+        // buffer time stamp is passed the beginning of content time stamp before dropping all BOC samples
+        // this is most likely due to a reposition during the BOC silence dropping
+        iBOCReceived = false;
+
+        return;
+    }
+
+    if (iBOCBytesToSkip < aBuffer->nFilledLen)
+    {
+        aBuffer->nOffset += iBOCBytesToSkip;
+        aBuffer->nFilledLen -= iBOCBytesToSkip;
+
+        iBOCBytesToSkip = 0;
+        iBOCReceived = false;
+
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                        (0, "PVMFOMXAudioDecNode::HandleBOCProcessing: Dropping %d samples from buffer %x due to BOC", iBOCSamplesToSkip, (OsclAny*) aBuffer->pAppPrivate));
+    }
+    else
+    {
+        iBOCBytesToSkip -= aBuffer->nFilledLen;
+        aBuffer->nFilledLen = 0;
+
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                        (0, "PVMFOMXAudioDecNode::HandleBOCProcessing: Dropping %d samples (the entire buffer) from buffer %x due to BOC.  There are %d samples more to drop.", aBuffer->nFilledLen, (OsclAny*) aBuffer->pAppPrivate, iBOCSamplesToSkip));
+    }
+}
+
+void PVMFOMXAudioDecNode::CalculateEOCParameters()
+{
+    OSCL_ASSERT(iEOCReceived);
+
+    // calculate the total number of frames
+    // timestamp is from media msg, therefore in milliseconds
+    uint32 totalFrames = (uint32)(((int64)(iEOCTimeStamp - iTSOfFirstDataMsgAfterBOS) * (int64)iPCMSamplingRate + (((int64)iInTimeScale * (int64)iSamplesPerFrame) >> 1)) / ((int64)iInTimeScale * (int64)iSamplesPerFrame) + iEOCFramesToFollow); // round to frame boundaries
+
+    // calculate the frame at which silence removal should begin
+    iEOCSilenceRemovalStartFrame = totalFrames - ((iEOCSamplesToSkip + iSamplesPerFrame - 1) / iSamplesPerFrame);
+
+    // calculate the offset in samples within the frame at which silence removal should begin
+    iEOCSilenceRemovalSampleOffset = iSamplesPerFrame - (iEOCSamplesToSkip % iSamplesPerFrame);
+}
+
+void PVMFOMXAudioDecNode::HandleEOCProcessing(OMX_BUFFERHEADERTYPE* aBuffer)
+{
+    uint32 bytesPerSample = 2; // assuming 16-bit data
+    uint32 bufferLengthSamples = aBuffer->nFilledLen / (bytesPerSample * iNumberOfAudioChannels);
+
+    if (iBufferContainsIntFrames)
+    {
+        uint32 outputBufferStartFrame;
+        uint32 outputBufferEndFrame;
+        uint32 framesInBuffer;
+
+        // calculate everything in frames, since timestamps won't be sample accurate.
+        // also assume that there is always an integer number of frames per buffer.
+        // note: timestamp is from OMX buffer, therefore in microseconds
+        // note: frames are 0-indexed here
+        int64 normTS = aBuffer->nTimeStamp - (((int64)iTSOfFirstDataMsgAfterBOS * (int64)iTimeScale) / (int64)iInTimeScale);
+        outputBufferStartFrame = (uint32)((normTS * (int64)iPCMSamplingRate + (((int64)iTimeScale * (int64)iSamplesPerFrame) >> 1)) / ((int64)iTimeScale * (int64)iSamplesPerFrame)); // round to frame boundaries
+        framesInBuffer = bufferLengthSamples / iSamplesPerFrame; // no rounding needed since length should be an integer number of frames
+
+        OSCL_ASSERT((bufferLengthSamples % iSamplesPerFrame) == 0); // double check
+
+        outputBufferEndFrame = outputBufferStartFrame + framesInBuffer - 1;
+
+        // check to see if silence removal begins within this buffer
+        if (outputBufferEndFrame >= iEOCSilenceRemovalStartFrame)
+        {
+            uint32 validSamples;
+            uint32 newFilledLen;
+            uint32 skippedSamples;
+
+            validSamples = OSCL_MAX((int32) iEOCSilenceRemovalStartFrame - (int32)outputBufferStartFrame, 0) * iSamplesPerFrame + iEOCSilenceRemovalSampleOffset;
+            newFilledLen = validSamples * bytesPerSample * iNumberOfAudioChannels;
+            skippedSamples = bufferLengthSamples - validSamples;
+
+            iEOCSamplesToSkip = OSCL_MAX((int32) iEOCSamplesToSkip - (int32) skippedSamples, 0);
+
+            if (iEOCSamplesToSkip == 0)
+            {
+                iEOCReceived = false;
+            }
+            else
+            {
+                // update start point information
+                iEOCSilenceRemovalSampleOffset += skippedSamples;
+
+                iEOCSilenceRemovalStartFrame += iEOCSilenceRemovalSampleOffset / iSamplesPerFrame;
+                iEOCSilenceRemovalSampleOffset = iEOCSilenceRemovalSampleOffset % iSamplesPerFrame;
+            }
+
+            OSCL_ASSERT(newFilledLen <= aBuffer->nFilledLen);
+
+            aBuffer->nFilledLen = newFilledLen;
+
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                            (0, "PVMFOMXAudioDecNode::HandleEOCProcessing: Dropping %d samples from buffer %x due to EOC", skippedSamples, (OsclAny*) aBuffer->pAppPrivate));
+        }
+    }
+    else
+    {
+        // the method for gapless silence removal without int frames per buffer isn't guaranteed to be sample accurate
+
+        uint32 outputBufferStartSample;
+        uint32 outputBufferEndSample;
+        uint32 EOCSilenceRemovalStartSample = (iEOCSilenceRemovalStartFrame * iSamplesPerFrame) + iEOCSilenceRemovalSampleOffset;
+
+        // find the difference between the time based off of timestamps and that based off of accumulated samples
+        // the timestamps have a max error dependent on their resolution (timescale) equivalent to: ceil(sampling_rate / timescale)
+        // if the accumulated sample count is within this max error then most likely no data has been dropped, and the accumulated sample
+        // count is more accurate than the timestamps.  however, if it is outside of that error window then we should use the
+        // calculation based off of the timestamps; since while the ts calculation may not be sample accurate, it will be more accurate
+        // than the accumulated sample count in the case of dropped data
+        int64 normTS = aBuffer->nTimeStamp - (((int64)iTSOfFirstDataMsgAfterBOS * (int64)iTimeScale) / (int64)iInTimeScale);
+
+        int32 sampleDelta = (int32)(((normTS * (int64)iPCMSamplingRate) / (int64)iTimeScale) - (iClipSampleCount - bufferLengthSamples));
+        int32 tsMaxError = (iPCMSamplingRate + (iInTimeScale - 1)) / iInTimeScale;
+
+        if (oscl_abs(sampleDelta) < tsMaxError)
+        {
+            // use accumulated sample count based calculation
+
+            outputBufferStartSample = iClipSampleCount - bufferLengthSamples;
+            outputBufferEndSample = iClipSampleCount;
+        }
+        else
+        {
+            // some data must have been dropped, use the timestamp based calculation
+
+            outputBufferStartSample = (uint32)((normTS * (int64)iPCMSamplingRate) / (int64)iTimeScale);
+            outputBufferEndSample = outputBufferStartSample + bufferLengthSamples;
+        }
+
+
+        // check to see if silence removal begins within this buffer
+        if (outputBufferEndSample >= EOCSilenceRemovalStartSample)
+        {
+            uint32 validSamples;
+            uint32 newFilledLen;
+            uint32 skippedSamples;
+
+            validSamples = OSCL_MAX((int32)EOCSilenceRemovalStartSample - (int32) outputBufferStartSample, 0);
+            newFilledLen = validSamples * bytesPerSample * iNumberOfAudioChannels;
+            skippedSamples = bufferLengthSamples - validSamples;
+
+            iEOCSamplesToSkip = OSCL_MAX((int32) iEOCSamplesToSkip - (int32) skippedSamples, 0);
+
+            if (iEOCSamplesToSkip == 0)
+            {
+                iEOCReceived = false;
+            }
+            else
+            {
+                // update start point information
+                iEOCSilenceRemovalSampleOffset += skippedSamples;
+
+                iEOCSilenceRemovalStartFrame += iEOCSilenceRemovalSampleOffset / iSamplesPerFrame;
+                iEOCSilenceRemovalSampleOffset = iEOCSilenceRemovalSampleOffset % iSamplesPerFrame;
+            }
+
+            OSCL_ASSERT(newFilledLen <= aBuffer->nFilledLen);
+
+            aBuffer->nFilledLen = newFilledLen;
+
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                            (0, "PVMFOMXAudioDecNode::HandleEOCProcessing: Dropping %d samples from buffer %x due to EOC", skippedSamples, (OsclAny*) aBuffer->pAppPrivate));
+        }
+    }
+
+}
+
+PVMFStatus PVMFOMXAudioDecNode::RetrieveMP3FrameLength(uint8 *pBuffer)
+{
+
+    PVMFStatus err = PVMFSuccess;
+    uint32  temp;
+    uint8  tmp1;
+    uint8  tmp2;
+    uint8  tmp3;
+    uint8  tmp4;
+    uint32  version;
+
+    /*
+     *  MPEG Audio Version ID
+     */
+    tmp1 = *pBuffer;
+    tmp2 = *(pBuffer + 1);
+    tmp3 = *(pBuffer + 2);
+    tmp4 = *(pBuffer + 3);
+
+    temp = ((((uint32)(tmp1)) << 24) |
+            (((uint32)(tmp2)) << 16) |
+            (((uint32)(tmp3)) <<  8) |
+            (((uint32)(tmp4))));
+
+    if (((temp >> 21) & MP3_SYNC_WORD) != MP3_SYNC_WORD)
+    {
+        return PVMFErrCorrupt;
+    }
+
+    temp = (temp << 11) >> 11;
+
+
+    switch (temp >> 19)  /* 2 */
+    {
+        case 0:
+            version = MPEG_2_5;
+            break;
+        case 2:
+            version = MPEG_2;
+            break;
+        case 3:
+            version = MPEG_1;
+            break;
+        default:
+            version = INVALID_VERSION;
+            err = PVMFErrNotSupported;
+            break;
+    }
+
+
+
+    iSamplesPerFrame = (version == MPEG_1) ?
+                       2 * MP3_SUBBANDS_NUMBER * MP3_FILTERBANK_BANDS :
+                       MP3_SUBBANDS_NUMBER * MP3_FILTERBANK_BANDS;
+
+    return err;
+}
+
+PVMFStatus PVMFOMXAudioDecNode::CountSamplesInBuffer(OMX_BUFFERHEADERTYPE* aBuffer)
+{
+    if (aBuffer->nTimeStamp < (((int64)iTSOfFirstDataMsgAfterBOS *(int64)iTimeScale) / (int64)iInTimeScale))
+    {
+        // time stamp is before BOS (i.e. the buffer could be from the port flush)
+        // therefore don't count this buffer
+        return PVMFSuccess;
+    }
+
+    uint32 bytesPerSample = 2; // assuming 16-bit data
+
+    if ((0 == iNumberOfAudioChannels) ||
+            (0 == iSamplesPerFrame))
+    {
+        return PVMFFailure;
+    }
+
+    uint32 samplesInBuffer = aBuffer->nFilledLen / (bytesPerSample * iNumberOfAudioChannels);
+
+    // one way toggle
+    if ((0 != (samplesInBuffer % iSamplesPerFrame)) && (iBufferContainsIntFrames == true))
+    {
+        iBufferContainsIntFrames = false;
+    }
+
+    iClipSampleCount += samplesInBuffer;
+
+    return PVMFSuccess;
+}
 
 // needed for AAC in ASF
 typedef enum

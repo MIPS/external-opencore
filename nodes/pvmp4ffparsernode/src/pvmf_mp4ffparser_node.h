@@ -155,6 +155,14 @@
 #include "pvmi_datastreamuser_interface.h"
 #endif
 
+#ifndef PVMF_GAPLESS_METADATA_H_INCLUDED
+#include "pvmf_gapless_metadata.h"
+#endif
+
+#ifndef PVMF_COMMON_AUDIO_DECNODE_H_INCLUDE
+#include "pvmf_common_audio_decnode.h"
+#endif
+
 #ifndef PVMF_MP4FFPARSER_OUTPORT_H_INCLUDED
 #include "pvmf_mp4ffparser_outport.h"
 #endif
@@ -704,6 +712,7 @@ class PVMFMP4FFParserNode
         bool UpdateTextSampleEntry(PVMP4FFNodeTrackPortInfo& aTrackPortInfo, uint32 aEntryIndex, PVMFTimedTextMediaData& aTextMediaData);
         bool SendEndOfTrackCommand(PVMP4FFNodeTrackPortInfo& aTrackPortInfo);
         bool SendBeginOfMediaStreamCommand(PVMP4FFNodeTrackPortInfo& aTrackPortInfo);
+        uint32 GetGaplessDuration(PVMP4FFNodeTrackPortInfo& aTrackPortInfo);
 
         // Port processing
         void ProcessPortActivity();
@@ -764,6 +773,7 @@ class PVMFMP4FFParserNode
         PVLogger* iAVCDataPathLogger;
         PVLogger* iClockLogger;
         PVLogger* iDiagnosticsLogger;
+        PVLogger* iGaplessLogger;
         // Reference counter for extension
         uint32 iExtensionRefCount;
 
@@ -856,6 +866,10 @@ class PVMFMP4FFParserNode
         PVMFStatus PushValueToList(Oscl_Vector<OSCL_HeapString<OsclMemAllocator>, OsclMemAllocator> &aRefMetadataKeys,
                                    PVMFMetadataList *&aKeyListPtr,
                                    uint32 aLcv);
+        void GetGaplessMetadata(PVMP4FFNodeTrackPortInfo& aInfo);
+        bool SendBeginOfClipCommand(PVMP4FFNodeTrackPortInfo& aTrackPortInfo);
+        bool SendEndOfClipCommand(PVMP4FFNodeTrackPortInfo& aTrackPortInfo);
+
         PVMIDataStreamSyncInterface* iDataStreamInterface;
         PVMFDataStreamFactory* iDataStreamFactory;
         PVMFDataStreamReadCapacityObserver* iDataStreamReadCapacityObserver;

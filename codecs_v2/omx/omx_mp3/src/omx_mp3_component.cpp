@@ -403,6 +403,9 @@ void OpenmaxMp3AO::ResetComponent()
             ipTempOutBufferForPortReconfig = NULL;
             iSizeOutBufferForPortReconfig = 0;
         }
+
+        // Reset iFrameCount such that it checks for PortReconfig after resuming
+        iFrameCount = 0;
     }
 }
 

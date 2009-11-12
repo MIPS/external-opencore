@@ -94,6 +94,16 @@ OSCL_EXPORT_REF void PVMFMediaCmd::setFormatID(PVUid32 id)
     hdr_ptr->format_id = id;
 }
 
+OSCL_EXPORT_REF uint32 PVMFMediaCmd::getClipID()
+{
+    return hdr_ptr->clip_id;
+}
+
+OSCL_EXPORT_REF void PVMFMediaCmd::setClipID(uint32 clipId)
+{
+    hdr_ptr->clip_id = clipId;
+}
+
 class MediaCmdCleanupSA : public OsclDestructDealloc
 {
     public:

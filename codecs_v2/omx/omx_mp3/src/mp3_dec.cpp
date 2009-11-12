@@ -194,7 +194,10 @@ Int Mp3Decoder::Mp3DecodeAudio(OMX_S16* aOutBuff,
     if (MP3DEC_SUCCESS == Status)
     {
         //After decoding the first frame, update all the input & output port settings
-        if (0 == *aFrameCount)
+        if ((0 == *aFrameCount) &&
+                ((aAudioPcmParam->nSamplingRate != (OMX_U32)iMP3DecExt->samplingRate) ||
+                 (aAudioPcmParam->nChannels     != (OMX_U32)iMP3DecExt->num_channels)))
+
         {
 
             //Output Port Parameters

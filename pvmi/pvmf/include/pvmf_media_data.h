@@ -81,6 +81,7 @@ class PVMFMediaData : public PVMFMediaMsg
         OSCL_IMPORT_REF virtual uint32 getDuration();
         OSCL_IMPORT_REF virtual uint32 getStreamID();
         OSCL_IMPORT_REF virtual uint32 getSeqNum();
+        OSCL_IMPORT_REF virtual uint32 getClipID();
         OSCL_IMPORT_REF virtual PVUid32 getFormatID();
         OSCL_IMPORT_REF virtual bool queryInterface(const PVUuid& uuid, PVInterface*& iface);
         OSCL_IMPORT_REF virtual bool getFormatSpecificInfo(OsclRefCounterMemFrag& memfrag);

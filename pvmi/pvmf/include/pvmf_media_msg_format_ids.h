@@ -48,6 +48,21 @@ const PVUid32 PVMF_MEDIA_CMD_BOS_FORMAT_ID  = 0x00000103;
 /* format id for no-op messages */
 const PVUid32 PVMF_MEDIA_CMD_NOOP_FORMAT_ID  = 0x00000104;
 
+/* format ID for beginning-of-clip messages to use with gapless
+   playback.
+   Format-specific info (uint32): number of samples to skip
+   at the beginning of the next media data frame.
+*/
+const PVUid32 PVMF_MEDIA_CMD_BOC_FORMAT_ID  = 0x00000105;
+
+/* format ID for end-of-clip messages to use with gapless
+   playback.
+   Format-specific info contains two 32-bit values:
+      (uint32): number of frames that will follow this message.
+      (uint32): number of samples to skip.
+*/
+const PVUid32 PVMF_MEDIA_CMD_EOC_FORMAT_ID  = 0x00000106;
+
 const PVUid32 PVMF_MEDIA_CMD_FORMAT_IDS_END = 0x00000200;
 
 /* command ids above 512 are reserved for node specific commands */
