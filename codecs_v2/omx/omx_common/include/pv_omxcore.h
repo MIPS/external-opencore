@@ -137,6 +137,8 @@ class OmxSharedLibraryInterface
 {
     public:
         virtual OsclAny *QueryOmxComponentInterface(const OsclUuid& aOmxTypeId, const OsclUuid& aInterfaceId) = 0;
+
+        virtual ~OmxSharedLibraryInterface(){}
 };
 #endif // USE_DYNAMIC_LOAD_OMX_COMPONENTS
 

@@ -1,7 +1,7 @@
 #ifndef DISPATCH_H_INCLUDED
 #define DISPATCH_H_INCLUDED
 
-#include "utils/Parcel.h"
+#include "binder/Parcel.h"
 using namespace android;
 
 class PlayerExtensionCommand;

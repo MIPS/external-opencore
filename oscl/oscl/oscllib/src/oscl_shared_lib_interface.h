@@ -26,6 +26,8 @@ class OsclSharedLibraryInterface
 {
     public:
         virtual OsclAny* SharedLibraryLookup(const OsclUuid& aInterfaceId) = 0;
+
+        virtual ~OsclSharedLibraryInterface(){}
 };
 #endif // OSCL_SHARED_LIB_INTERFACE_H_INCLUDED
 

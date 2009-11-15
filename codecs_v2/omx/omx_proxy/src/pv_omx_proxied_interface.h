@@ -201,6 +201,8 @@ class PVMainProxy_OMX
         **   notifications still remaining on the queue.
         */
         virtual void DeliverNotifications(int32 aMaxCount, int32& aPendingCount) = 0;
+
+        virtual ~PVMainProxy_OMX(){}
 };
 
 /**
@@ -243,6 +245,8 @@ class PVProxiedEngine_OMX
         **   to the main proxy.
         */
         virtual void PVThreadLogoff(PVMainProxy_OMX &proxy) = 0;
+
+        virtual ~PVProxiedEngine_OMX(){}
 };
 
 /**
@@ -298,6 +302,8 @@ class PVProxiedInterfaceServer_OMX
         ** @param aMsg: the notification data.
         */
         virtual void CleanupNotification(TPVProxyMsgId aId, OsclAny* aMsg) = 0;
+
+        virtual ~PVProxiedInterfaceServer_OMX(){}
 };
 
 /**
@@ -325,6 +331,8 @@ class PVProxiedInterfaceClient_OMX
         ** @param aMsg: the command data.
         */
         virtual void CleanupCommand(TPVProxyMsgId aId, OsclAny* aMsg) = 0;
+
+        virtual ~PVProxiedInterfaceClient_OMX(){}
 };
 
 /**

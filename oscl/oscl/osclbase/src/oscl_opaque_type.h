@@ -67,6 +67,8 @@ class Oscl_Opaque_Type_Alloc
          * Deallocate memory previously allocated with "allocate"
          */
         virtual void deallocate(OsclAny* p) = 0;
+
+        virtual ~Oscl_Opaque_Type_Alloc(){}
 };
 
 /**
@@ -91,6 +93,7 @@ class Oscl_Opaque_Type_Compare
          */
         virtual int compare_EQ(const OsclAny* a, const OsclAny* b) const = 0;
 
+        virtual ~Oscl_Opaque_Type_Compare(){}
 };
 
 /**
@@ -140,6 +143,8 @@ class Oscl_Opaque_Type_Alloc_LL
          * Compare data.
          */
         virtual bool compare_data(const OsclAny*elem, const OsclAny*data_val)const = 0;
+
+        virtual ~Oscl_Opaque_Type_Alloc_LL() {}
 };
 
 /*! @} */

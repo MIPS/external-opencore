@@ -23,7 +23,14 @@
 #ifndef _AUTHORDRIVER_PRIV_H
 #define _AUTHORDRIVER_PRIV_H
 
-#include <utils.h>
+//#include <utils/ported.h>
+#include <utils/Log.h>
+#include <utils/threads.h>
+#include <utils/Timers.h>
+#include <utils/List.h>
+#include <utils/StringArray.h>
+#include <utils/misc.h>
+#include <utils/Errors.h>
 
 #include <ui/ICamera.h>
 
@@ -114,6 +121,8 @@ public:
     {
         delete((DestructClass*)ptr);
     }
+
+    virtual ~LogAppenderDestructDealloc(){}
 };
 
 // Commands that MediaAuthor sends to the AuthorDriver.

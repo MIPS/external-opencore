@@ -18,6 +18,8 @@ class ExtnRegPopulatorInterface
 {
 public:
     virtual void registerExtensions(ExtensionRegistryInterface* aRegistry) = 0;
+
+    virtual ~ExtnRegPopulatorInterface(){}
 };
 
 /**
@@ -76,6 +78,8 @@ public:
      *        Infornmation required for creation and deletion of extension
  */
     virtual void registerExtension(const PVPlayerExtnInfo& extnInfo) = 0;
+
+    virtual ~ExtensionRegistryInterface(){}
 };
 
 #endif // EXTENSION_REGISTRY_POPULATOR_INTERFACE_H_INCLUDED
