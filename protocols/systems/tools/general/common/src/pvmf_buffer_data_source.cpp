@@ -55,6 +55,11 @@ OSCL_EXPORT_REF PVMFBufferDataSource::~PVMFBufferDataSource()
         OSCL_DEFAULT_FREE(iFsi);
         iFsi = NULL;
     }
+
+    // we need to clear the activity handler, since otherwise the PvmfPortBaseImpl destructor
+    // ends up calling back onto our HandlePortActivity method, which no longer exists because
+    // this objects's destructor has already been called.
+    SetActivityHandler(NULL);
 }
 
 void PVMFBufferDataSource::HandlePortActivity(const PVMFPortActivity &aActivity)
