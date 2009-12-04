@@ -1321,7 +1321,7 @@ void PVMFRTPJitterBufferImpl::ComputeMaxAdjustedRTPTS()
 #if (PVLOGGER_INST_LEVEL > PVLOGMSG_INST_LLDBG)
     uint32 logSeqNum = rtpInfoParams ? (rtpInfoParams->seqNum) : 0;
     PVMF_JB_LOGINFO((0, "PVMFJitterBufferImpl::ComputeMaxAdjustedRTPTS - maxSeqNumReceived=%d, rtpInfoParams = %x, rtpInfoParams->seqNum =%d, iPrevSeqNumBaseIn=%d, Mime=%s",
-                     aSeqNum, rtpInfoParams, logSeqNum, iPrevSeqNumBaseIn, irMimeType.get_cstr()));
+                     aSeqNum, rtpInfoParams ? rtpInfoParams : 0, logSeqNum, iPrevSeqNumBaseIn, irMimeType.get_cstr()));
 #endif
     uint16 diff = 0;
     if (rtpInfoParams && rtpInfoParams->seqNumBaseSet && IsSequenceNumEarlier(OSCL_STATIC_CAST(uint16, iPrevSeqNumBaseIn), OSCL_STATIC_CAST(uint16, rtpInfoParams->seqNum), diff))
@@ -1422,8 +1422,7 @@ void PVMFRTPJitterBufferImpl::DeterminePrevTimeStamp(uint32 aSeqNum)
         //So, let the iPrevTsOut be unchanged.
     }
     PVMF_JB_LOGINFO((0, "PVMFJitterBufferImpl::DeterminePrevTimeStamp: MimeStr %s, RTPInfoSeqNum=%d, iPrevSeqNumBaseOut=%d, iPrevTSOut=%u",
-                     irMimeType.get_cstr(), rtpInfoParams->seqNum, iPrevSeqNumBaseOut, iPrevTSOut));
-
+                     irMimeType.get_cstr(), rtpInfoParams ? rtpInfoParams->seqNum : 0, iPrevSeqNumBaseOut, iPrevTSOut));
 }
 
 void PVMFRTPJitterBufferImpl::ReportJBInfoEvent(PVMFAsyncEvent& aEvent)
