@@ -922,9 +922,10 @@ PVMFStatus PVMFAACFFParserNode::DoReset()
         iDownloadProgressInterface->cancelResumeNotification();
     }
 
-    if ((iAACParser) && (iCPM))
+    if ((iAACParser) && (iCPM) && (iCPMContentType != PVMF_CPM_CONTENT_FORMAT_UNKNOWN))
     {
         SendUsageComplete();
+        return PVMFPending;
     }
     else
     {
@@ -932,9 +933,8 @@ PVMFStatus PVMFAACFFParserNode::DoReset()
          * Reset without init completing, so just reset the parser node,
          * no CPM stuff necessary
          */
-        CompleteReset();
+        return CompleteReset();
     }
-    return PVMFPending;
 }
 
 PVMFStatus PVMFAACFFParserNode::CompleteReset()
@@ -942,7 +942,6 @@ PVMFStatus PVMFAACFFParserNode::CompleteReset()
     // stop and cleanup
     ReleaseTrack();
     CleanupFileSource();
-    CommandComplete(iCurrentCommand, PVMFSuccess);
     return PVMFSuccess;
 }
 
@@ -2868,6 +2867,7 @@ void PVMFAACFFParserNode::CPMCommandCompleted(const PVMFCmdResp& aResponse)
             // End of Node Reset sequence
             OSCL_ASSERT(PVMF_GENERIC_NODE_RESET == iCurrentCommand.iCmd);
             CompleteReset();
+            CommandComplete(iCurrentCommand, PVMFSuccess);
         }
         else if (id == iCPMGetMetaDataValuesCmdId)
         {

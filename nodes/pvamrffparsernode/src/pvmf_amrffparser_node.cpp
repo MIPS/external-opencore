@@ -1093,9 +1093,10 @@ PVMFStatus PVMFAMRFFParserNode::DoReset()
         iDownloadProgressInterface->cancelResumeNotification();
     }
 
-    if ((iAMRParser) && (iCPM))
+    if ((iAMRParser) && (iCPM) && (iCPMContentType != PVMF_CPM_CONTENT_FORMAT_UNKNOWN))
     {
         SendUsageComplete();
+        return PVMFPending;
     }
     else
     {
@@ -1104,8 +1105,8 @@ PVMFStatus PVMFAMRFFParserNode::DoReset()
          * no CPM stuff necessary
          */
         CompleteReset();
+        return PVMFSuccess;
     }
-    return PVMFPending;
 }
 
 PVMFStatus PVMFAMRFFParserNode::DoRequestPort(PVMFPortInterface*&aPort)
@@ -2448,6 +2449,7 @@ void PVMFAMRFFParserNode::CPMCommandCompleted(const PVMFCmdResp& aResponse)
             /* End of Node Reset sequence */
             OSCL_ASSERT(PVMF_GENERIC_NODE_RESET == iCurrentCommand.iCmd);
             CompleteReset();
+            CommandComplete(iCurrentCommand, PVMFSuccess);
         }
         else if (id == iCPMGetMetaDataValuesCmdId)
         {
@@ -2616,7 +2618,6 @@ void PVMFAMRFFParserNode::CompleteReset()
     /* stop and cleanup */
     ReleaseAllPorts();
     CleanupFileSource();
-    CommandComplete(iCurrentCommand, PVMFSuccess);
     return;
 }
 
