@@ -143,7 +143,7 @@ AVCEnc_Status  SetEncodeParam(AVCHandle* avcHandle, AVCEncParams* encParam,
         seqParam->pic_height_in_map_units_minus1 = video->PicHeightInMapUnits - 1;
         seqParam->frame_mbs_only_flag = TRUE;
         seqParam->mb_adaptive_frame_field_flag = FALSE;
-        seqParam->direct_8x8_inference_flag = FALSE; /* default */
+        seqParam->direct_8x8_inference_flag = TRUE; /* default */
         seqParam->frame_cropping_flag = FALSE;
         seqParam->frame_crop_bottom_offset = 0;
         seqParam->frame_crop_left_offset = 0;
@@ -312,7 +312,7 @@ AVCEnc_Status  SetEncodeParam(AVCHandle* avcHandle, AVCEncParams* encParam,
         {
             return AVCENC_WEIGHTED_BIPRED_FAIL;
         }
-        picParam->pic_init_qp_minus26 = 0; /* default, will be changed at slice level anyway */
+        picParam->pic_init_qp_minus26 = encParam->initQP - 26;
         if (picParam->pic_init_qp_minus26 < -26 || picParam->pic_init_qp_minus26 > 25)
         {
             return AVCENC_INIT_QP_FAIL; /* out of range */

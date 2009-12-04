@@ -230,6 +230,27 @@ class PVMp4H263EncExtensionInterface : public PVInterface
         */
         virtual bool SetFSIParam(uint8* aFSIBuff, int aFSIBuffLength) = 0;
 
+        /**
+         * Enable or disable short header decoding for MPEG4.
+         * @param aShortHeaderFlag Set to true to enable Short Header mode, else false.
+         * @return True if successful, else false
+         */
+        virtual bool SetShortHeader(bool aShortHeaderFlag) = 0;
+
+        /**
+         * Enable or disable Resync Marker in MPEG4 decoding.
+         * @param aResyncMarkerFlag Set to true to enable Resync Marker, else false.
+         * @return True if successful, else false
+         */
+        virtual bool SetResyncMarker(bool aResyncMarkerFlag) = 0;
+
+        /**
+         * Sets the TimeIncRes in MPEG4.
+         *
+         * @param aTimeIncRes is TimeIncRes value.
+         * @return True if successful, else false
+         */
+        virtual bool SetTimeIncRes(int32 aTimeIncRes) = 0;
 
 
 };

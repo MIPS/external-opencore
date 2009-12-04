@@ -522,7 +522,7 @@ uint32 OsclAsyncFile::doRead(uint8 *& aBuffer1, uint32 aDataSize, uint32 aNumEle
 bool OsclAsyncFile::FindDataBuffer(OsclAsyncFileBuffer*& aDataBuffer, int32& aBufferId, TOsclFileOffset aOffset, int32 aSize)
 {
     // Look for the requested value on the queue
-    OsclAsyncFileBuffer* tmpDataBuffer;
+    OsclAsyncFileBuffer* tmpDataBuffer = NULL;
     int32 i;
     bool found = false;
     for (i = 0; i < iKCacheBufferCount; i++)

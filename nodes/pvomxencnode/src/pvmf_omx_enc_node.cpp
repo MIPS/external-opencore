@@ -15,6 +15,7 @@
  * and limitations under the License.
  * -------------------------------------------------------------------
  */
+
 #include "pvmf_omx_enc_node.h"
 #include "pvlogger.h"
 #include "oscl_error_codes.h"
@@ -389,6 +390,12 @@ PVMFOMXEncNode::~PVMFOMXEncNode()
     if (iNALPtrArray != NULL)
     {
         oscl_free(iNALPtrArray);
+    }
+
+    if (iVideoEncodeParam.iFSIBuff)
+    {
+        oscl_free(iVideoEncodeParam.iFSIBuff);
+        iVideoEncodeParam.iFSIBuff = NULL;
     }
 
     //Release Input buffer
@@ -848,6 +855,7 @@ PVMFOMXEncNode::PVMFOMXEncNode(int32 aPriority) :
     iInFormat = PVMF_MIME_FORMAT_UNKNOWN;
     iOutFormat = PVMF_MIME_FORMAT_UNKNOWN;
 
+
     // zero out encoder param structure
 
     oscl_memset(&iVideoInputFormat, 0, sizeof(iVideoInputFormat));
@@ -889,6 +897,10 @@ PVMFOMXEncNode::PVMFOMXEncNode(int32 aPriority) :
     iVideoEncodeParam.iNoFrameSkip = false;
     iVideoEncodeParam.iClipDuration = 0;
     iVideoEncodeParam.iProfileLevel = EI_CORE_LEVEL2;
+    iVideoEncodeParam.iTimeIncRes = 1000; // newly added -NS
+    iVideoEncodeParam.iFSIBuff = NULL;
+    iVideoEncodeParam.iFSIBuffLength = 0;
+
     /////////////////AVC SPECIFIC///////////////////////////
     iVideoEncodeParam.iEncMode = EI_ENCMODE_RECORDER;
     iVideoEncodeParam.iAVCProfile = EI_PROFILE_BASELINE;
@@ -2561,6 +2573,8 @@ bool PVMFOMXEncNode::SetMP4EncoderParameters()
 {
     OMX_ERRORTYPE Err = OMX_ErrorNone;
 
+    M4VConfigInfo iOMXM4VConfigInfo;
+
     OMX_VIDEO_PARAM_MPEG4TYPE Mpeg4Type;
     OMX_VIDEO_PARAM_ERRORCORRECTIONTYPE ErrCorrType;
 
@@ -2578,17 +2592,182 @@ bool PVMFOMXEncNode::SetMP4EncoderParameters()
                         (0, "PVMFOMXEncNode-%s::SetMP4EncoderParameters Parameter Invalid OMX_IndexParamVideoMpeg4", iNodeTypeId));
     }
 
-
     //Set the OMX_VIDEO_PARAM_MPEG4TYPE parameters
+
+    if (iVideoEncodeParam.iFSIBuffLength)
+    {
+        // If FSI is present, then modify the encoding parameters parameters
+        if (ParseM4VFSI(iVideoEncodeParam.iFSIBuff, iVideoEncodeParam.iFSIBuffLength, &iOMXM4VConfigInfo))
+        {
+            // Error in FSI parsing
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                            (0, "PVMFOMXEncNode-%s::SetMP4EncoderParameters ParseM4VFSI Failure", iNodeTypeId));
+            return false;
+        }
+        else
+        {
+            // FSI parsing is successful. Setting the iVideoEncodeParam parameters as per needed from FSI.
+            iVideoEncodeParam.iFrameWidth[0] = iOMXM4VConfigInfo.iFrameWidth[0];
+            iVideoEncodeParam.iFrameHeight[0] = iOMXM4VConfigInfo.iFrameHeight[0];
+            iVideoEncodeParam.iTimeIncRes = iOMXM4VConfigInfo.iTimeIncRes;
+            iVideoEncodeParam.iRVLCEnable = iOMXM4VConfigInfo.iRVLCEnable;
+            iVideoEncodeParam.iDataPartitioning = iOMXM4VConfigInfo.iDataPartitioning;
+            iVideoEncodeParam.iResyncMarker = iOMXM4VConfigInfo.iResyncMarker;
+
+            Mpeg4Type.nTimeIncRes = iOMXM4VConfigInfo.iTimeIncRes;
+            if (iOMXM4VConfigInfo.iShortHeader)
+            {
+                Mpeg4Type.bSVH = OMX_TRUE;
+            }
+            else
+            {
+                Mpeg4Type.bSVH = OMX_FALSE;
+            }
+
+            switch (iOMXM4VConfigInfo.iProfileLevel)
+            {
+
+                case SIMPLE_LEVEL0:
+                    Mpeg4Type.eProfile = OMX_VIDEO_MPEG4ProfileSimple;
+                    Mpeg4Type.eLevel = OMX_VIDEO_MPEG4Level0;
+                    break;
+
+                case SIMPLE_LEVEL1:
+                    Mpeg4Type.eProfile = OMX_VIDEO_MPEG4ProfileSimple;
+                    Mpeg4Type.eLevel = OMX_VIDEO_MPEG4Level1;
+                    break;
+
+                case SIMPLE_LEVEL2:
+                    Mpeg4Type.eProfile = OMX_VIDEO_MPEG4ProfileSimple;
+                    Mpeg4Type.eLevel = OMX_VIDEO_MPEG4Level2;
+                    break;
+
+                case SIMPLE_LEVEL3:
+                    Mpeg4Type.eProfile = OMX_VIDEO_MPEG4ProfileSimple;
+                    Mpeg4Type.eLevel = OMX_VIDEO_MPEG4Level3;
+                    break;
+
+                case CORE_LEVEL1:
+                    Mpeg4Type.eProfile = OMX_VIDEO_MPEG4ProfileCore;
+                    Mpeg4Type.eLevel = OMX_VIDEO_MPEG4Level1;
+                    break;
+
+                case CORE_LEVEL2:
+                    Mpeg4Type.eProfile = OMX_VIDEO_MPEG4ProfileCore;
+                    Mpeg4Type.eLevel = OMX_VIDEO_MPEG4Level2;
+                    break;
+
+                case SIMPLE_SCALABLE_LEVEL0:
+                    Mpeg4Type.eProfile = OMX_VIDEO_MPEG4ProfileSimpleScalable;
+                    Mpeg4Type.eLevel = OMX_VIDEO_MPEG4Level0;
+                    break;
+
+                case SIMPLE_SCALABLE_LEVEL1:
+                    Mpeg4Type.eProfile = OMX_VIDEO_MPEG4ProfileSimpleScalable;
+                    Mpeg4Type.eLevel = OMX_VIDEO_MPEG4Level1;
+                    break;
+
+                case SIMPLE_SCALABLE_LEVEL2:
+                    Mpeg4Type.eProfile = OMX_VIDEO_MPEG4ProfileSimpleScalable;
+                    Mpeg4Type.eLevel = OMX_VIDEO_MPEG4Level2;
+                    break;
+
+                case CORE_SCALABLE_LEVEL1:
+                    Mpeg4Type.eProfile = OMX_VIDEO_MPEG4ProfileCoreScalable;
+                    Mpeg4Type.eLevel = OMX_VIDEO_MPEG4Level1;
+                    break;
+
+                case CORE_SCALABLE_LEVEL2:
+                    Mpeg4Type.eProfile = OMX_VIDEO_MPEG4ProfileCoreScalable;
+                    Mpeg4Type.eLevel = OMX_VIDEO_MPEG4Level2;
+                    break;
+
+                case CORE_SCALABLE_LEVEL3:
+                    Mpeg4Type.eProfile = OMX_VIDEO_MPEG4ProfileCoreScalable;
+                    Mpeg4Type.eLevel = OMX_VIDEO_MPEG4Level3;
+                    break;
+
+            }
+        }
+    }
+    else
+    {
+        // NO FSI Buffer
+        Mpeg4Type.bSVH = OMX_FALSE; //((iEncoderParam.iContentType == EI_H263)? true: false);
+        Mpeg4Type.nTimeIncRes = 1000;  //30000 (in relation to (should be higher than) frame rate )
+        switch (iVideoEncodeParam.iProfileLevel)
+        {
+
+            case EI_SIMPLE_LEVEL0:
+                Mpeg4Type.eProfile = OMX_VIDEO_MPEG4ProfileSimple;
+                Mpeg4Type.eLevel = OMX_VIDEO_MPEG4Level0;
+                break;
+
+            case EI_SIMPLE_LEVEL1:
+                Mpeg4Type.eProfile = OMX_VIDEO_MPEG4ProfileSimple;
+                Mpeg4Type.eLevel = OMX_VIDEO_MPEG4Level1;
+                break;
+
+            case EI_SIMPLE_LEVEL2:
+                Mpeg4Type.eProfile = OMX_VIDEO_MPEG4ProfileSimple;
+                Mpeg4Type.eLevel = OMX_VIDEO_MPEG4Level2;
+                break;
+
+            case EI_SIMPLE_LEVEL3:
+                Mpeg4Type.eProfile = OMX_VIDEO_MPEG4ProfileSimple;
+                Mpeg4Type.eLevel = OMX_VIDEO_MPEG4Level3;
+                break;
+
+            case EI_CORE_LEVEL1:
+                Mpeg4Type.eProfile = OMX_VIDEO_MPEG4ProfileCore;
+                Mpeg4Type.eLevel = OMX_VIDEO_MPEG4Level1;
+                break;
+
+            case EI_CORE_LEVEL2:
+                Mpeg4Type.eProfile = OMX_VIDEO_MPEG4ProfileCore;
+                Mpeg4Type.eLevel = OMX_VIDEO_MPEG4Level2;
+                break;
+
+            case EI_SIMPLE_SCALABLE_LEVEL0:
+                Mpeg4Type.eProfile = OMX_VIDEO_MPEG4ProfileSimpleScalable;
+                Mpeg4Type.eLevel = OMX_VIDEO_MPEG4Level0;
+                break;
+
+            case EI_SIMPLE_SCALABLE_LEVEL1:
+                Mpeg4Type.eProfile = OMX_VIDEO_MPEG4ProfileSimpleScalable;
+                Mpeg4Type.eLevel = OMX_VIDEO_MPEG4Level1;
+                break;
+
+            case EI_SIMPLE_SCALABLE_LEVEL2:
+                Mpeg4Type.eProfile = OMX_VIDEO_MPEG4ProfileSimpleScalable;
+                Mpeg4Type.eLevel = OMX_VIDEO_MPEG4Level2;
+                break;
+
+            case EI_CORE_SCALABLE_LEVEL1:
+                Mpeg4Type.eProfile = OMX_VIDEO_MPEG4ProfileCoreScalable;
+                Mpeg4Type.eLevel = OMX_VIDEO_MPEG4Level1;
+                break;
+
+            case EI_CORE_SCALABLE_LEVEL2:
+                Mpeg4Type.eProfile = OMX_VIDEO_MPEG4ProfileCoreScalable;
+                Mpeg4Type.eLevel = OMX_VIDEO_MPEG4Level2;
+                break;
+
+            case EI_CORE_SCALABLE_LEVEL3:
+                Mpeg4Type.eProfile = OMX_VIDEO_MPEG4ProfileCoreScalable;
+                Mpeg4Type.eLevel = OMX_VIDEO_MPEG4Level3;
+                break;
+
+        }
+
+    }
 
     Mpeg4Type.nPortIndex = iOutputPortIndex;
     // extra parameters - hardcoded
     Mpeg4Type.nSliceHeaderSpacing = 0;
-    Mpeg4Type.bSVH = OMX_FALSE; //((iEncoderParam.iContentType == EI_H263)? true: false);
     Mpeg4Type.bGov = OMX_FALSE; // disable or enable GOV header
     // extra parameters - hardcoded
     Mpeg4Type.nAllowedPictureTypes = OMX_VIDEO_PictureTypeI | OMX_VIDEO_PictureTypeP;
-
 
     // params based on iFrame interval
     if (iVideoEncodeParam.iIFrameInterval == -1) // encode only one frame
@@ -2610,7 +2789,6 @@ bool PVMFOMXEncNode::SetMP4EncoderParameters()
     Mpeg4Type.nIDCVLCThreshold = 0;
     Mpeg4Type.bACPred = OMX_TRUE;
     Mpeg4Type.nMaxPacketSize = iVideoEncodeParam.iPacketSize;
-    Mpeg4Type.nTimeIncRes = 30000;//1000; // (in relation to (should be higher than) frame rate )
     Mpeg4Type.nHeaderExtension = 0;
     Mpeg4Type.bReversibleVLC = ((iVideoEncodeParam.iRVLCEnable == true) ? OMX_TRUE : OMX_FALSE);
 
@@ -2916,13 +3094,20 @@ bool PVMFOMXEncNode::SetH264EncoderParameters()
 {
     OMX_ERRORTYPE Err = OMX_ErrorNone;
 
+    AVCConfigInfo iOMXAVCConfigInfo;
+
     OMX_VIDEO_PARAM_AVCTYPE H264Type;
+    OMX_VIDEO_PARAM_AVCSLICEFMO SliceFMOParam;
+
     // to be refined
     OMX_VIDEO_PARAM_MOTIONVECTORTYPE MotionVector;
     OMX_VIDEO_PARAM_INTRAREFRESHTYPE RefreshParam;
     OMX_VIDEO_PARAM_VBSMCTYPE VbsmcType;
 
+    // Needed to update parameters in QuantParam from FSI
+    OMX_VIDEO_PARAM_QUANTIZATIONTYPE QuantParam;
 
+    //OMX_VIDEO_PARAM_AVCTYPE
     CONFIG_SIZE_AND_VERSION(H264Type);
     H264Type.nPortIndex = iOutputPortIndex;
 
@@ -2930,7 +3115,123 @@ bool PVMFOMXEncNode::SetH264EncoderParameters()
     if (OMX_ErrorNone != Err)
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                        (0, "PVMFOMXEncNode-%s::SetH264EncoderParameters Parameter Invalid OMX_IndexParamVideoAvc", iNodeTypeId));
+                        (0, "PVMFOMXEncNode-%s::SetH264EncoderParameters Parameter Invalid", iNodeTypeId));
+    }
+
+    if (iVideoEncodeParam.iFSIBuffLength)
+    {
+        // If FSI is present, then modify the encoding parameters parameters
+        if (ParseAVCFSI(iVideoEncodeParam.iFSIBuff, iVideoEncodeParam.iFSIBuffLength, &iOMXAVCConfigInfo))
+        {
+            // Error in FSI parsing
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                            (0, "PVMFOMXEncNode-%s::SetH264EncoderParameters ParseAVCFSI Failure", iNodeTypeId));
+            return false;
+        }
+
+        switch (iOMXAVCConfigInfo.nProfile)
+        {
+            case 66 :
+                H264Type.eProfile = OMX_VIDEO_AVCProfileBaseline;
+                break;
+            case 77 :
+                H264Type.eProfile = OMX_VIDEO_AVCProfileMain;
+                break;
+            default :
+                // Default to baseline profile
+                H264Type.eProfile = OMX_VIDEO_AVCProfileBaseline;
+                break;
+        }
+
+        switch (iOMXAVCConfigInfo.nLevel)
+        {
+            case  9 :
+                H264Type.eLevel = OMX_VIDEO_AVCLevel1b;
+                break;
+            case 10 :
+                H264Type.eLevel = OMX_VIDEO_AVCLevel1;
+                break;
+            case 11 :
+                H264Type.eLevel = iOMXAVCConfigInfo.bConstrained_set3_flag ? OMX_VIDEO_AVCLevel1b : OMX_VIDEO_AVCLevel11;
+                break;
+            case 12 :
+                H264Type.eLevel = OMX_VIDEO_AVCLevel12;
+                break;
+            case 13 :
+                H264Type.eLevel = OMX_VIDEO_AVCLevel13;
+                break;
+            case 20 :
+                H264Type.eLevel = OMX_VIDEO_AVCLevel2;
+                break;
+            case 21 :
+                H264Type.eLevel = OMX_VIDEO_AVCLevel21;
+                break;
+            case 22 :
+                H264Type.eLevel = OMX_VIDEO_AVCLevel22;
+                break;
+            case 30 :
+                H264Type.eLevel = OMX_VIDEO_AVCLevel3;
+                break;
+            case 31 :
+                H264Type.eLevel = OMX_VIDEO_AVCLevel31;
+                break;
+            case 32 :
+                H264Type.eLevel = OMX_VIDEO_AVCLevel32;
+                break;
+            case 40 :
+                H264Type.eLevel = OMX_VIDEO_AVCLevel4;
+                break;
+            case 41 :
+                H264Type.eLevel = OMX_VIDEO_AVCLevel41;
+                break;
+            case 42 :
+                H264Type.eLevel = OMX_VIDEO_AVCLevel42;
+                break;
+            case 50 :
+                H264Type.eLevel = OMX_VIDEO_AVCLevel5;
+                break;
+            case 51 :
+                H264Type.eLevel = OMX_VIDEO_AVCLevel51;
+                break;
+            default :
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                                (0, "PVMFOMXEncNode-%s::SetH264EncoderParameters Error in AVC Level", iNodeTypeId));
+                return false;
+        }
+
+        iVideoEncodeParam.iFrameWidth[0] = iOMXAVCConfigInfo.nDisplayWidth;
+        iVideoEncodeParam.iFrameHeight[0] = iOMXAVCConfigInfo.nDisplayHeight;
+
+        H264Type.nRefFrames = iOMXAVCConfigInfo.nRefFrames;
+        H264Type.bFrameMBsOnly = iOMXAVCConfigInfo.bFrameMBsOnly ? OMX_TRUE : OMX_FALSE;
+        H264Type.bEnableFMO = iOMXAVCConfigInfo.bEnableFMO ? OMX_TRUE : OMX_FALSE;
+        H264Type.bEnableRS = iOMXAVCConfigInfo.bEnableRS ? OMX_TRUE : OMX_FALSE;
+        H264Type.bEntropyCodingCABAC = iOMXAVCConfigInfo.bEntropyCodingCABAC ? OMX_TRUE : OMX_FALSE;
+        H264Type.bMBAFF = iOMXAVCConfigInfo.bMBAFF ? OMX_TRUE : OMX_FALSE;
+        H264Type.bWeightedPPrediction = iOMXAVCConfigInfo.bWeightedPPrediction ? OMX_TRUE : OMX_FALSE;
+        H264Type.bconstIpred = iOMXAVCConfigInfo.bconstIpred ? OMX_TRUE : OMX_FALSE;
+        H264Type.bDirect8x8Inference = iOMXAVCConfigInfo.bDirect8x8Inference ? OMX_TRUE : OMX_FALSE;
+        H264Type.nWeightedBipredicitonMode = iOMXAVCConfigInfo.nWeightedBipredictionMode ? OMX_TRUE : OMX_FALSE;
+        H264Type.nRefIdx10ActiveMinus1 = iOMXAVCConfigInfo.nRefIdxl0ActiveMinus1;
+        H264Type.nRefIdx11ActiveMinus1 = iOMXAVCConfigInfo.nRefIdxl1ActiveMinus1;
+    }
+    else
+    {
+        // No FSI Buffer
+        H264Type.eProfile = OMX_VIDEO_AVCProfileBaseline;
+        H264Type.eLevel = OMX_VIDEO_AVCLevel1b;
+        H264Type.nRefFrames = 1;
+        H264Type.bFrameMBsOnly = OMX_TRUE;
+        H264Type.bEnableFMO = OMX_FALSE;
+        H264Type.bEnableRS = OMX_FALSE;
+        H264Type.bEntropyCodingCABAC = OMX_FALSE;
+        H264Type.bMBAFF = OMX_FALSE;
+        H264Type.bWeightedPPrediction = OMX_FALSE;
+        H264Type.bconstIpred = OMX_FALSE;
+        H264Type.bDirect8x8Inference = OMX_FALSE;
+        H264Type.nWeightedBipredicitonMode = OMX_FALSE;
+        H264Type.nRefIdx10ActiveMinus1 = 0;
+        H264Type.nRefIdx11ActiveMinus1 = 0;
     }
 
 
@@ -2948,38 +3249,98 @@ bool PVMFOMXEncNode::SetH264EncoderParameters()
     }
     else
     {
-        H264Type.nPFrames = (OMX_U32)(iVideoEncodeParam.iIFrameInterval * iVideoEncodeParam.iFrameRate[0] - 1);
+        if (iVideoEncodeParam.iFSIBuffLength)
+        {
+            H264Type.nPFrames = (OMX_U32)(iOMXAVCConfigInfo.nMaxFrameNum);
+            if (iOMXAVCConfigInfo.bDblkFilterFlag)
+            {
+                H264Type.eLoopFilterMode = OMX_VIDEO_AVCLoopFilterDisable;
+            }
+            else
+            {
+                H264Type.eLoopFilterMode = OMX_VIDEO_AVCLoopFilterEnable;
+            }
+        }
+        else
+        {
+            H264Type.nPFrames = (OMX_U32)(iVideoEncodeParam.iIFrameInterval * iVideoEncodeParam.iFrameRate[0] - 1);
+            H264Type.eLoopFilterMode = OMX_VIDEO_AVCLoopFilterEnable;
+        }
     }
 
     // extra parameters -hardcoded
     H264Type.nSliceHeaderSpacing = 0;
     H264Type.nBFrames = 0;
     H264Type.bUseHadamard = OMX_TRUE;
-    H264Type.nRefFrames = 1;
-    H264Type.nRefIdx10ActiveMinus1 = 0;
-    H264Type.nRefIdx11ActiveMinus1 = 0;
     H264Type.bEnableUEP = OMX_FALSE;
-    H264Type.bEnableFMO = OMX_FALSE;
     H264Type.bEnableASO = OMX_FALSE;
-    H264Type.bEnableRS = OMX_FALSE;
-    H264Type.eProfile = OMX_VIDEO_AVCProfileBaseline;
-    H264Type.eLevel = OMX_VIDEO_AVCLevel1b;
-    H264Type.bFrameMBsOnly = OMX_TRUE;
-    H264Type.bMBAFF = OMX_FALSE;
-    H264Type.bEntropyCodingCABAC = OMX_FALSE;
-    H264Type.bWeightedPPrediction = OMX_FALSE;
-    H264Type.bconstIpred = OMX_FALSE;
-    H264Type.bDirect8x8Inference = OMX_FALSE;
     H264Type.bDirectSpatialTemporal = OMX_FALSE;
     H264Type.nCabacInitIdc = 0;
-    H264Type.eLoopFilterMode = OMX_VIDEO_AVCLoopFilterEnable;
-
 
     Err = OMX_SetParameter(iOMXEncoder, OMX_IndexParamVideoAvc, &H264Type);
     if (OMX_ErrorNone != Err)
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                        (0, "PVMFOMXEncNode-%s::SetH264EncoderParameters Parameter Invalid OMX_IndexParamVideoAvc", iNodeTypeId));
+                        (0, "PVMFOMXEncNode-%s::SetH264EncoderParameters Parameter Invalid", iNodeTypeId));
+    }
+
+    // OMX_VIDEO_PARAM_AVCSLICEFMO Settings
+    CONFIG_SIZE_AND_VERSION(SliceFMOParam);
+
+    SliceFMOParam.nPortIndex = iOutputPortIndex;
+    Err = OMX_GetParameter(iOMXEncoder, OMX_IndexParamVideoSliceFMO, &SliceFMOParam);
+    if (OMX_ErrorNone != Err)
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                        (0, "PVMFOMXEncNode-%s::SetH264EncoderParameters Parameter Invalid", iNodeTypeId));
+    }
+
+    SliceFMOParam.nPortIndex = iOutputPortIndex;
+
+    if (iVideoEncodeParam.iFSIBuffLength)
+    {
+        // If FSI is present, then modify the encoding parameters parameters
+        SliceFMOParam.nNumSliceGroups = iOMXAVCConfigInfo.nNumSliceGroups; //Default it to 1
+        SliceFMOParam.nSliceGroupMapType = iOMXAVCConfigInfo.nSliceGroupMapType; //Default it to 1
+    }
+    else
+    {
+        // NO FSI buffer
+        SliceFMOParam.nNumSliceGroups = 1;
+        SliceFMOParam.nSliceGroupMapType = 1;
+    }
+
+    SliceFMOParam.eSliceMode = OMX_VIDEO_SLICEMODE_AVCDefault;
+    Err = OMX_SetParameter(iOMXEncoder, OMX_IndexParamVideoSliceFMO, &SliceFMOParam);
+    if (OMX_ErrorNone != Err)
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                        (0, "PVMFOMXEncNode-%s::SetH264EncoderParameters Parameter Invalid", iNodeTypeId));
+    }
+
+    //OMX_VIDEO_PARAM_QUANTIZATIONTYPE Settings
+    if (iVideoEncodeParam.iFSIBuffLength)
+    {
+        // If FSI is present, only, then modify the OMX_VIDEO_PARAM_QUANTIZATIONTYPE Settings
+
+        CONFIG_SIZE_AND_VERSION(QuantParam);
+        QuantParam.nPortIndex = iOutputPortIndex;
+
+        Err = OMX_GetParameter(iOMXEncoder, OMX_IndexParamVideoQuantization, &QuantParam);
+        if (OMX_ErrorNone != Err)
+        {
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                            (0, "PVMFOMXEncNode-%s::SetH264EncoderParameters Parameter Invalid", iNodeTypeId));
+        }
+
+        //Set the parameters now
+        QuantParam.nQpP = iOMXAVCConfigInfo.pic_init_qp;
+        Err = OMX_SetParameter(iOMXEncoder, OMX_IndexParamVideoQuantization, &QuantParam);
+        if (OMX_ErrorNone != Err)
+        {
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                            (0, "PVMFOMXEncNode-%s::SetH264EncoderParameters Parameter Invalid", iNodeTypeId));
+        }
     }
 
     //OMX_VIDEO_PARAM_MOTIONVECTORTYPE Settings
@@ -8548,8 +8909,81 @@ OSCL_EXPORT_REF bool PVMFOMXEncNode::SetCodec(PVMFFormatType aCodec)
 
 }
 
+////////////////////////////////////////////////////////////////////////////
+OSCL_EXPORT_REF  bool PVMFOMXEncNode::SetShortHeader(bool aShortHeaderFlag)
+{
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "PVMFOMXEncNode-%s::SetShortHeader to %d", iNodeTypeId, aShortHeaderFlag));
 
 
+    switch (iInterfaceState)
+    {
+        case EPVMFNodeStarted:
+        case EPVMFNodePaused:
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
+                            (0, "PVMFOMXEncEncNode-%s::SetShortHeader: Error iInterfaceState=%d", iNodeTypeId, iInterfaceState));
+            return false;
+
+        default:
+            break;
+    }
+
+    iVideoEncodeParam.iShortHeader = aShortHeaderFlag;
+    return true;
+
+}
+
+
+////////////////////////////////////////////////////////////////////////////
+OSCL_EXPORT_REF bool PVMFOMXEncNode::SetResyncMarker(bool aResyncMarkerFlag)
+{
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "PVMFOMXEncNode-%s::SetResyncMarker to %d", iNodeTypeId, aResyncMarkerFlag));
+
+
+    switch (iInterfaceState)
+    {
+        case EPVMFNodeStarted:
+        case EPVMFNodePaused:
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
+                            (0, "PVMFOMXEncEncNode-%s::SetResyncMarker: Error iInterfaceState=%d", iNodeTypeId, iInterfaceState));
+            return false;
+
+        default:
+            break;
+    }
+
+    iVideoEncodeParam.iResyncMarker = aResyncMarkerFlag;
+    return true;
+
+}
+
+
+////////////////////////////////////////////////////////////////////////////
+OSCL_EXPORT_REF bool PVMFOMXEncNode::SetTimeIncRes(int32 aTimeIncRes)
+{
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "PVMFOMXEncNode-%s::SetTimeIncRes to %d", iNodeTypeId, aTimeIncRes));
+
+
+    switch (iInterfaceState)
+    {
+        case EPVMFNodeStarted:
+        case EPVMFNodePaused:
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
+                            (0, "PVMFOMXEncEncNode-%s::SetTimeIncRes: Error iInterfaceState=%d", iNodeTypeId, iInterfaceState));
+            return false;
+
+        default:
+            break;
+    }
+
+    iVideoEncodeParam.iTimeIncRes = aTimeIncRes;
+    return true;
+
+}
+
+////////////////////////////////////////////////////////////////////////////
 PVMFStatus PVMFOMXEncNode::SetCodecType(PVMFFormatType aCodec)
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
@@ -8610,12 +9044,45 @@ PVMFStatus PVMFOMXEncNode::SetCodecType(PVMFFormatType aCodec)
 ////////////////////////////////////////////////////////////////////////////
 OSCL_EXPORT_REF bool PVMFOMXEncNode::SetFSIParam(uint8* aFSIBuff, int aFSIBuffLength)
 {
+    switch (iInterfaceState)
+    {
+        case EPVMFNodeCreated:
+        case EPVMFNodeIdle:
+        case EPVMFNodeInitialized:
+            break;
 
+        default:
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
+                            (0, "PVMFOMXEncNode-%s::SetFSIParam: Error- ERROR STATE", iNodeTypeId));
+            return false;
+    }
 
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
-                    (0, "PVMFOMXEncNode-%s::SetFSIParam: Error- NOT IMPLEMENTED", iNodeTypeId));
-    OSCL_UNUSED_ARG(aFSIBuff);
-    OSCL_UNUSED_ARG(aFSIBuffLength);
+    if (aFSIBuff == NULL)
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
+                        (0, "PVMFOMXEncNode-%s::SetFSIParam: aFSIBuff is NULL", iNodeTypeId));
+    }
+
+    //Check. If its already available, free it.
+    if (iVideoEncodeParam.iFSIBuff)
+    {
+        oscl_free(iVideoEncodeParam.iFSIBuff);
+        iVideoEncodeParam.iFSIBuff = NULL;
+    }
+    // Allocating FSI Buffer
+    if (aFSIBuffLength != 0)
+    {
+        iVideoEncodeParam.iFSIBuff = (uint8*) oscl_malloc(sizeof(uint8) * aFSIBuffLength);
+        if (iVideoEncodeParam.iFSIBuff == NULL)
+        {
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
+                            (0, "PVMFOMXEncNode-%s::SetFSIParam: Error- FSI Buffer NOT allocated", iNodeTypeId));
+            return false;
+        }
+        oscl_memcpy(iVideoEncodeParam.iFSIBuff, aFSIBuff, aFSIBuffLength);
+    }
+
+    iVideoEncodeParam.iFSIBuffLength = aFSIBuffLength;
 
     return true;
 }
@@ -10370,6 +10837,8 @@ bool PVMFOMXEncNode::CheckComponentCapabilities(PVMFFormatType* aOutFormat)
     }
 
     return true;
+
 }
+
 
 

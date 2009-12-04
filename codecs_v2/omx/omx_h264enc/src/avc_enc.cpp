@@ -414,7 +414,7 @@ OMX_ERRORTYPE AvcEncoder_OMX::AvcEncInit(OMX_VIDEO_PORTDEFINITIONTYPE aInputPara
         }
         else
         {
-            aEncOption.idr_period = aEncodeAvcParam.nPFrames + 1;
+            aEncOption.idr_period = aEncodeAvcParam.nPFrames;
         }
     }
 
@@ -459,19 +459,20 @@ OMX_ERRORTYPE AvcEncoder_OMX::AvcEncInit(OMX_VIDEO_PORTDEFINITIONTYPE aInputPara
     aEncOption.use_overrun_buffer = AVC_ON;
 #endif
 
-    aEncOption.db_filter = AVC_ON;
-
     if (OMX_VIDEO_AVCLoopFilterEnable == aEncodeAvcParam.eLoopFilterMode)
     {
         aEncOption.disable_db_idc = 0;
+        aEncOption.db_filter = AVC_OFF;
     }
     else if (OMX_VIDEO_AVCLoopFilterDisable == aEncodeAvcParam.eLoopFilterMode)
     {
         aEncOption.disable_db_idc = 1;
+        aEncOption.db_filter = AVC_ON;
     }
     else if (OMX_VIDEO_AVCLoopFilterDisableSliceBoundary == aEncodeAvcParam.eLoopFilterMode)
     {
         aEncOption.disable_db_idc = 2;
+        aEncOption.db_filter = AVC_ON;
     }
     else
     {

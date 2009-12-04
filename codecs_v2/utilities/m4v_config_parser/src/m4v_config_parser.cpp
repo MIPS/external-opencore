@@ -117,36 +117,58 @@ int16 SearchVOLHeader(mp4StreamType *psBits)
 OSCL_EXPORT_REF int16 iGetM4VConfigInfo(uint8 *buffer, int32 length, int32 *width, int32 *height, int32 *display_width, int32 *display_height)
 {
     int16 status;
-    mp4StreamType psBits;
-    psBits.data = buffer;
-    psBits.numBytes = length;
-    psBits.bitBuf = 0;
-    psBits.bitPos = 32;
-    psBits.bytePos = 0;
-    psBits.dataBitPos = 0;
+
     *width = *height = *display_height = *display_width = 0;
 
     if (length == 0)
     {
         return MP4_INVALID_VOL_PARAM;
     }
-    int32 profilelevel = 0; // dummy value discarded here
-    status = iDecodeVOLHeader(&psBits, width, height, display_width, display_height, &profilelevel);
+    int32 profilelevelvalue = 0; // dummy value discarded here
+    status = iDecodeVOLHeader(buffer, length, width, height, display_width, display_height, &profilelevelvalue);
     return status;
 }
 
 // name: iDecodeVOLHeader
 // Purpose: decode VOL header
 // return:  error code
-OSCL_EXPORT_REF int16 iDecodeVOLHeader(mp4StreamType *psBits, int32 *width, int32 *height, int32 *display_width, int32 *display_height, int32 *profilelevel)
+OSCL_EXPORT_REF int16 iDecodeVOLHeader(uint8 *buffer, int32 length, int32 *width, int32 *height, int32 *display_width, int32 *display_height, int32 *profilelevel)
 {
+    int16 status = 0;
+    M4VConfigInfo iM4VConfigInfo;
+    ParseM4VFSI(buffer, length, &iM4VConfigInfo);
+    *display_width = iM4VConfigInfo.iFrameWidth[0];
+    *display_height = iM4VConfigInfo.iFrameHeight[0];
+    *width = (iM4VConfigInfo.iFrameWidth[0] + 15) & -16;
+    *height = (iM4VConfigInfo.iFrameHeight[0] + 15) & -16;
+    *profilelevel = iM4VConfigInfo.iProfilelevelValue;
+    return status;
+}
+
+OSCL_EXPORT_REF int16 ParseM4VFSI(uint8* buffer, uint32 length,  M4VConfigInfo* iM4VConfigInfo)
+{
+    mp4StreamType* psBits, tempBits;
+
+    int32 iWidth, iHeight;
+
+    psBits = &tempBits;
+    psBits->data = buffer;
+    psBits->numBytes = length;
+    psBits->bitBuf = 0;
+    psBits->bitPos = 32;
+    psBits->bytePos = 0;
+    psBits->dataBitPos = 0;
+
     int16 iErrorStat;
     uint32 codeword;
     int32 time_increment_resolution, nbits_time_increment;
     int32 i, j;
 
-    *profilelevel = 0x0000FFFF; // init to some invalid value. When this value is returned, then no profilelevel info is available
+    oscl_memset(iM4VConfigInfo, 0, sizeof(M4VConfigInfo));
 
+    iM4VConfigInfo->iProfilelevelValue = 0x0000FFFF; // init to some invalid value. When this value is returned, then no profilelevel info is available
+
+    //visual_object_sequence_start_code
     ShowBits(psBits, 32, &codeword);
 
     if (codeword == VISUAL_OBJECT_SEQUENCE_START_CODE)
@@ -156,17 +178,58 @@ OSCL_EXPORT_REF int16 iDecodeVOLHeader(mp4StreamType *psBits, int32 *width, int3
 
         ReadBits(psBits, 8, &codeword);
 
-        // record profile and level
-        *profilelevel = (int) codeword;
+        /* profile_and_level_indication */
+        iM4VConfigInfo->iProfilelevelValue = (int) codeword;
+
+        switch (codeword)
+        {
+            case 0x08: /* SP_LVL0 */
+            {
+                iM4VConfigInfo->iProfileLevel =  SIMPLE_LEVEL0;
+                break;
+            }
+            case 0x01: /* SP_LVL1 */
+            {
+                iM4VConfigInfo->iProfileLevel =  SIMPLE_LEVEL1;
+                break;
+            }
+            case 0x02: /* SP_LVL2 */
+            {
+                iM4VConfigInfo->iProfileLevel =  SIMPLE_LEVEL2;
+                break;
+            }
+            case 0x03: /* SP_LVL3 */
+            {
+                iM4VConfigInfo->iProfileLevel =  SIMPLE_LEVEL3;
+                break;
+            }
+            case 0x21: /* CP_LVL1 */
+            {
+                iM4VConfigInfo->iProfileLevel =  CORE_LEVEL1;
+                break;
+            }
+            case 0x22: /* CP_LVL2 */
+            {
+                iM4VConfigInfo->iProfileLevel =  CORE_LEVEL2;
+                break;
+            }
+            default:
+            {
+                return MP4_INVALID_VOL_PARAM;
+            }
+        }
 
         ShowBits(psBits, 32, &codeword);
         if (codeword == USER_DATA_START_CODE)
         {
             iErrorStat = DecodeUserData(psBits);
-            if (iErrorStat) return MP4_INVALID_VOL_PARAM;
+            if (iErrorStat)
+            {
+                return MP4_INVALID_VOL_PARAM;
+            }
         }
 
-
+        //visual_object_start_code
         ReadBits(psBits, 32, &codeword);
         if (codeword != VISUAL_OBJECT_START_CODE)
         {
@@ -225,7 +288,10 @@ OSCL_EXPORT_REF int16 iDecodeVOLHeader(mp4StreamType *psBits, int32 *width, int3
         if (codeword == USER_DATA_START_CODE)
         {
             iErrorStat = DecodeUserData(psBits);
-            if (iErrorStat) return MP4_INVALID_VOL_PARAM;
+            if (iErrorStat)
+            {
+                return MP4_INVALID_VOL_PARAM;
+            }
         }
         ShowBits(psBits, 27, &codeword);
     }
@@ -245,6 +311,7 @@ OSCL_EXPORT_REF int16 iDecodeVOLHeader(mp4StreamType *psBits, int32 *width, int3
         {
             if (psBits->dataBitPos >= (psBits->numBytes << 3))
             {
+                iM4VConfigInfo->iShortHeader = 1;
                 return SHORT_HEADER_MODE; /* SH */
             }
             else
@@ -293,8 +360,8 @@ decode_vol:
             ReadBits(psBits, 8, &codeword);
         }
 
+        //vol_control_parameters
         ReadBits(psBits, 1, &codeword);
-
         if (codeword)
         {
             ReadBits(psBits, 2, &codeword);
@@ -317,54 +384,68 @@ decode_vol:
                 ReadBits(psBits, 15, &codeword);
                 ReadBits(psBits, 1, &codeword);
                 if (codeword != 1)
+                {
                     return MP4_INVALID_VOL_PARAM;
+                }
 
                 ReadBits(psBits, 15, &codeword);
                 ReadBits(psBits, 1, &codeword);
                 if (codeword != 1)
+                {
                     return MP4_INVALID_VOL_PARAM;
-
+                }
 
                 ReadBits(psBits, 19, &codeword);
                 if (!(codeword & 0x8))
+                {
                     return MP4_INVALID_VOL_PARAM;
+                }
 
                 ReadBits(psBits, 11, &codeword);
                 ReadBits(psBits, 1, &codeword);
                 if (codeword != 1)
+                {
                     return MP4_INVALID_VOL_PARAM;
+                }
 
                 ReadBits(psBits, 15, &codeword);
                 ReadBits(psBits, 1, &codeword);
                 if (codeword != 1)
+                {
                     return MP4_INVALID_VOL_PARAM;
+                }
             }
 
         }
 
+        // video_object_layer_shape
         ReadBits(psBits, 2, &codeword);
-
         if (codeword != 0)
         {
             return MP4_INVALID_VOL_PARAM;
         }
 
+        //Marker bit
         ReadBits(psBits, 1, &codeword);
         if (codeword != 1)
+        {
             return MP4_INVALID_VOL_PARAM;
+        }
 
+        //  vop_time_increment_resolution
         ReadBits(psBits, 16, &codeword);
         time_increment_resolution = codeword;
+        iM4VConfigInfo->iTimeIncRes = codeword;
 
-
+        // Marker bit
         ReadBits(psBits, 1, &codeword);
         if (codeword != 1)
+        {
             return MP4_INVALID_VOL_PARAM;
+        }
 
-
-
+        // fixed_vop_rate
         ReadBits(psBits, 1, &codeword);
-
         if (codeword && time_increment_resolution > 2)
         {
             i = time_increment_resolution - 1;
@@ -378,23 +459,97 @@ decode_vol:
             ReadBits(psBits, nbits_time_increment, &codeword);
         }
 
+        /* video_object_layer_shape is RECTANGULAR */
+        //Marker bit
         ReadBits(psBits, 1, &codeword);
         if (codeword != 1)
+        {
             return MP4_INVALID_VOL_PARAM;
+        }
 
         /* this should be 176 for QCIF */
         ReadBits(psBits, 13, &codeword);
-        *display_width = (int32)codeword;
+        iM4VConfigInfo->iFrameWidth[0] = (int32)codeword;
         ReadBits(psBits, 1, &codeword);
         if (codeword != 1)
+        {
             return MP4_INVALID_VOL_PARAM;
+        }
 
         /* this should be 144 for QCIF */
         ReadBits(psBits, 13, &codeword);
-        *display_height = (int32)codeword;
+        iM4VConfigInfo->iFrameHeight[0] = (int32)codeword;
 
-        *width = (*display_width + 15) & -16;
-        *height = (*display_height + 15) & -16;
+        iWidth = (iM4VConfigInfo->iFrameWidth[0] + 15) & -16;
+        iHeight = (iM4VConfigInfo->iFrameHeight[0] + 15) & -16;
+
+        //Marker bit
+        ReadBits(psBits, 1, &codeword);
+        if (codeword != 1) return MP4_INVALID_VOL_PARAM;
+
+        //Interlaced
+        ReadBits(psBits, 1, &codeword);
+        if (codeword != 0) return MP4_INVALID_VOL_PARAM;
+
+        //obmc_disable
+        ReadBits(psBits, 1, &codeword);
+        if (codeword != 1) return MP4_INVALID_VOL_PARAM;
+
+        //sprite_enable
+        ReadBits(psBits, 1, &codeword);
+        if (codeword != 0) return MP4_INVALID_VOL_PARAM;
+
+        //not_8_bit
+        ReadBits(psBits, 1, &codeword);
+        if (codeword != 0) return MP4_INVALID_VOL_PARAM;
+
+        /* video_object_layer_shape is not GRAY_SCALE  */
+        //quant_type
+        ReadBits(psBits, 1, &codeword);
+        if (codeword != 0) //quant_type = 1
+        {
+            ReadBits(psBits, 1, &codeword); //load_intra_quant_mat
+            if (codeword) return MP4_INVALID_VOL_PARAM; // No support for user defined matrix.
+
+            ReadBits(psBits, 1, &codeword); //load_nonintra_quant_mat
+            if (codeword) return MP4_INVALID_VOL_PARAM; // No support for user defined matrix.
+
+        }
+
+        //complexity_estimation_disable
+        ReadBits(psBits, 1, &codeword);
+        if (!codeword)
+        {
+            return MP4_INVALID_VOL_PARAM;
+        }
+
+        //resync_marker_disable
+        ReadBits(psBits, 1, &codeword);
+        if (!codeword)
+        {
+            iM4VConfigInfo->iResyncMarker = 1;
+        }
+
+        //data_partitioned
+        ReadBits(psBits, 1, &codeword);
+        if (codeword)
+        {
+            iM4VConfigInfo->iDataPartitioning = true; //  DATA_PARTITIONING_MODE
+            //reversible_vlc
+            ReadBits(psBits, 1, &codeword);
+            iM4VConfigInfo->iRVLCEnable = (bool)codeword;
+
+        }
+        else
+        {
+            // No data_partitioned
+            iM4VConfigInfo->iDataPartitioning = false;
+        }
+
+        //scalability
+        ReadBits(psBits, 1, &codeword);
+        if (codeword) return MP4_INVALID_VOL_PARAM;
+
     }
     else
     {
@@ -402,7 +557,8 @@ decode_vol:
         ShowBits(psBits, SHORT_VIDEO_START_MARKER_LENGTH, &codeword);
         if (codeword == SHORT_VIDEO_START_MARKER)
         {
-            iDecodeShortHeader(psBits, width, height, display_width, display_height);
+            iM4VConfigInfo->iShortHeader = 1;
+            iDecodeShortHeader(psBits, &iWidth, &iHeight, (int32*)&(iM4VConfigInfo->iFrameWidth[0]), (int32*)&(iM4VConfigInfo->iFrameHeight[0]));
         }
         else
         {
@@ -414,10 +570,9 @@ decode_vol:
             }
         }
     }
+
     return 0;
 }
-
-
 
 OSCL_EXPORT_REF
 int16 iDecodeShortHeader(mp4StreamType *psBits,
@@ -778,14 +933,32 @@ int16 DecodeUserData(mp4StreamType *pStream)
 OSCL_EXPORT_REF int16 iGetAVCConfigInfo(uint8 *buffer, int32 length, int32 *width, int32 *height, int32 *display_width, int32 *display_height, int32 *profile_idc, int32 *level_idc)
 {
     int16 status;
+    AVCConfigInfo iAVCConfigInfo;
+
+    status = ParseAVCFSI(buffer, length, &iAVCConfigInfo);
+    *display_width = iAVCConfigInfo.nDisplayWidth;
+    *display_height = iAVCConfigInfo.nDisplayHeight;
+    *width = iAVCConfigInfo.nWidth;
+    *height = iAVCConfigInfo.nHeight;
+    *profile_idc = iAVCConfigInfo.nProfile;
+    *level_idc = iAVCConfigInfo.nLevel;
+
+    return status;
+}
+
+OSCL_EXPORT_REF int16 ParseAVCFSI(uint8* buffer, uint32 length, AVCConfigInfo* iAVCConfigInfo)
+{
+    int16 status;
     mp4StreamType psBits;
     uint16 sps_length, pps_length;
     int32 size;
-    int32 i = 0;
+    uint32 i = 0;
     uint8* sps = NULL;
     uint8* temp = (uint8 *)OSCL_MALLOC(sizeof(uint8) * length);
     uint8* pps = NULL;
 
+    // Zero initialization
+    oscl_memset(iAVCConfigInfo, 0, sizeof(AVCConfigInfo));
 
     if (temp)
     {
@@ -804,8 +977,6 @@ OSCL_EXPORT_REF int16 iGetAVCConfigInfo(uint8 *buffer, int32 length, int32 *widt
         OSCL_FREE(temp);
         return MP4_INVALID_VOL_PARAM;
     }
-
-    *width = *height = *display_height = *display_width = 0;
 
     if (sps[0] == 0 && sps[1] == 0)
     {
@@ -872,7 +1043,7 @@ OSCL_EXPORT_REF int16 iGetAVCConfigInfo(uint8 *buffer, int32 length, int32 *widt
     psBits.bytePos = 0;
     psBits.dataBitPos = 0;
 
-    if (DecodeSPS(&psBits, width, height, display_width, display_height, profile_idc, level_idc))
+    if (DecodeSPS(&psBits, iAVCConfigInfo))
     {
         OSCL_FREE(temp);
         return MP4_INVALID_VOL_PARAM;
@@ -889,7 +1060,7 @@ OSCL_EXPORT_REF int16 iGetAVCConfigInfo(uint8 *buffer, int32 length, int32 *widt
     psBits.bytePos = 0;
     psBits.dataBitPos = 0;
 
-    status = DecodePPS(&psBits);
+    status = DecodePPS(&psBits, iAVCConfigInfo);
 
     OSCL_FREE(temp);
 
@@ -897,7 +1068,7 @@ OSCL_EXPORT_REF int16 iGetAVCConfigInfo(uint8 *buffer, int32 length, int32 *widt
 }
 
 
-int16 DecodeSPS(mp4StreamType *psBits, int32 *width, int32 *height, int32 *display_width, int32 *display_height, int32 *profile_idc, int32 *level_idc)
+int16 DecodeSPS(mp4StreamType *psBits,  AVCConfigInfo* iAVCConfigInfo)
 {
     uint32 temp;
     int32 temp0;
@@ -906,56 +1077,83 @@ int16 DecodeSPS(mp4StreamType *psBits, int32 *width, int32 *height, int32 *displ
 
     ReadBits(psBits, 8, &temp);
 
-
-
+    // nal_unit_type == 7 for SPS
     if ((temp & 0x1F) != 7) return MP4_INVALID_VOL_PARAM;
 
     ReadBits(psBits, 8, &temp);
 
-    *profile_idc = temp;
+    //profile_idc
+    iAVCConfigInfo->nProfile = temp;
 
+    //constrained_set0_flag
     ReadBits(psBits, 1, &temp);
+    //constrained_set1_flag
     ReadBits(psBits, 1, &temp);
+    //constrained_set2_flag
     ReadBits(psBits, 1, &temp);
-    ReadBits(psBits, 5, &temp);
+    //constrained_set3_flag
+    ReadBits(psBits, 1, &temp);
+    iAVCConfigInfo->bConstrained_set3_flag = (bool)temp;
+
+    //reserved_zero_4bits
+    ReadBits(psBits, 4, &temp);
+
+    //level_idc
     ReadBits(psBits, 8, &temp);
-
-    *level_idc = temp;
-
+    iAVCConfigInfo->nLevel = temp;
     if (temp > 51)
         return MP4_INVALID_VOL_PARAM;
 
+    //seq_parameter_set_id
     ue_v(psBits, &temp);
+    //log2_max_frame_num_minus4
     ue_v(psBits, &temp);
+    iAVCConfigInfo->nMaxFrameNum = (1 << (temp + 4)) - 1;
+
+    //pic_order_cnt_type
     ue_v(psBits, &temp);
 
     if (temp == 0)
     {
+        //log2_max_pic_order_cnt_lsb_minus4
         ue_v(psBits, &temp);
     }
     else if (temp == 1)
     {
+        //delta_pic_order_always_zero_flag
         ReadBits(psBits, 1, &temp);
+        //offset_for_non_ref_pic
         se_v(psBits, &temp0);
+        //offset_for_top_to_bottom_field
         se_v(psBits, &temp0);
+        //num_ref_frames_in_pic_order_cnt_cycle
         ue_v(psBits, &temp);
 
         for (i = 0; i < temp; i++)
         {
+            //offset_for_ref_frame
             se_v(psBits, &temp0);
         }
     }
+
+    //num_ref_frames
     ue_v(psBits, &temp);
+    iAVCConfigInfo->nRefFrames = temp;
 
-
+    //gaps_in_frame_num_value_allowed_flag
     ReadBits(psBits, 1, &temp);
-    ue_v(psBits, &temp);
-    *display_width = *width = (temp + 1) << 4;
-    ue_v(psBits, &temp);
-    *display_height = *height = (temp + 1) << 4;
 
+    //pic_width_in_mbs_minus1
+    ue_v(psBits, &temp);
+    iAVCConfigInfo->nDisplayWidth = iAVCConfigInfo->nWidth = (temp + 1) << 4;
 
+    //pic_height_in_map_units_minus1
+    ue_v(psBits, &temp);
+    iAVCConfigInfo->nDisplayHeight = iAVCConfigInfo->nHeight = (temp + 1) << 4;
+
+    //frame_mbs_only_flag
     ReadBits(psBits, 1, &temp);
+    iAVCConfigInfo->bFrameMBsOnly = (bool)temp;
     if (!temp)
     {
         // we do not support if frame_mb_only_flag is off
@@ -963,27 +1161,31 @@ int16 DecodeSPS(mp4StreamType *psBits, int32 *width, int32 *height, int32 *displ
         //ReadBits(psBits,1, &temp);
     }
 
+    //direct_8x8_inference_flag
     ReadBits(psBits, 1, &temp);
+    iAVCConfigInfo->bDirect8x8Inference = (bool)temp;
 
+    //frame_cropping_flag
     ReadBits(psBits, 1, &temp);
 
     if (temp)
     {
-        ue_v(psBits, (uint32*)&left_offset);
-        ue_v(psBits, (uint32*)&right_offset);
-        ue_v(psBits, (uint32*)&top_offset);
-        ue_v(psBits, (uint32*)&bottom_offset);
+        ue_v(psBits, (uint32*)&left_offset);  //frame_crop_left_offset
+        ue_v(psBits, (uint32*)&right_offset); //frame_crop_right_offset
+        ue_v(psBits, (uint32*)&top_offset); //frame_crop_top_offset
+        ue_v(psBits, (uint32*)&bottom_offset); //frame_crop_bottom_offset
 
-        *display_width = *width - 2 * (right_offset + left_offset);
-        *display_height = *height - 2 * (top_offset + bottom_offset);
+        iAVCConfigInfo->nDisplayWidth = iAVCConfigInfo->nWidth - 2 * (right_offset + left_offset);
+        iAVCConfigInfo->nDisplayHeight = iAVCConfigInfo->nHeight - 2 * (top_offset + bottom_offset);
     }
 
     /*  no need to check further */
 #if USE_LATER
+    //vui_parameters_present_flag
     ReadBits(psBits, 1, &temp);
     if (temp)
     {
-        if (!DecodeVUI(psBits))
+        if (DecodeVUI(psBits))
         {
             return MP4_INVALID_VOL_PARAM;
         }
@@ -996,9 +1198,9 @@ int16 DecodeSPS(mp4StreamType *psBits, int32 *width, int32 *height, int32 *displ
 /* unused for now */
 int32 DecodeVUI(mp4StreamType *psBits)
 {
-    uint temp;
+    uint32 temp;
     uint32 temp32;
-    uint aspect_ratio_idc, overscan_appopriate_flag, video_format, video_full_range_flag;
+    uint32 aspect_ratio_idc, overscan_appopriate_flag, video_format, video_full_range_flag;
     int32 status;
 
     ReadBits(psBits, 1, &temp); /* aspect_ratio_info_present_flag */
@@ -1088,8 +1290,8 @@ int32 DecodeVUI(mp4StreamType *psBits)
 /* unused for now */
 int32 DecodeHRD(mp4StreamType *psBits)
 {
-    uint temp;
-    uint cpb_cnt_minus1;
+    uint32 temp;
+    uint32 cpb_cnt_minus1;
     uint i;
     int32 status;
 
@@ -1117,21 +1319,174 @@ int32 DecodeHRD(mp4StreamType *psBits)
 #endif
 
 // only check for entropy coding mode
-int32 DecodePPS(mp4StreamType *psBits)
+int32 DecodePPS(mp4StreamType *psBits, AVCConfigInfo* iAVCConfigInfo)
 {
-    uint32 temp, pic_parameter_set_id, seq_parameter_set_id, entropy_coding_mode_flag;
+    uint32 iCnt, temp, total_bit_left;
+    int32 ntemp;
+    uint32 num_slice_groups_minus1, slice_group_map_type;
+    uint32 pic_size_in_map_units_minus1, numBits;
 
+    //pic_parameter_set == 8
     ReadBits(psBits, 8, &temp);
-
     if ((temp & 0x1F) != 8) return MP4_INVALID_VOL_PARAM;
 
-    ue_v(psBits, &pic_parameter_set_id);
-    ue_v(psBits, &seq_parameter_set_id);
+    //pic_parameter_set_id
+    ue_v(psBits, &temp);
 
-    ReadBits(psBits, 1, &entropy_coding_mode_flag);
-    if (entropy_coding_mode_flag)
+    //seq_parameter_set_id
+    ue_v(psBits, &temp);
+
+    //entropy_coding_mode_flag
+    ReadBits(psBits, 1, &temp);
+    iAVCConfigInfo->bEntropyCodingCABAC = (bool)temp;
+
+    //pic_order_present_flag
+    ReadBits(psBits, 1, &temp);
+    iAVCConfigInfo->bMBAFF = (bool)temp;
+
+    //num_slice_groups_minus1
+    ue_v(psBits, &num_slice_groups_minus1);
+    iAVCConfigInfo->nNumSliceGroups = num_slice_groups_minus1 + 1;
+    if (num_slice_groups_minus1 > 7) //Max number of slice group
     {
         return 1;
+    }
+
+    iAVCConfigInfo->nSliceGroupMapType = 1; //Default to 1
+    if (num_slice_groups_minus1 > 0)
+    {
+        iAVCConfigInfo->bEnableFMO = 1;
+        //slice_group_map_type
+        ue_v(psBits, &(slice_group_map_type));
+        iAVCConfigInfo->nSliceGroupMapType = slice_group_map_type;
+
+        if (slice_group_map_type > 6)
+        {
+            return 1;
+        }
+
+        if (slice_group_map_type == 0)
+        {
+            for (iCnt = 0; iCnt <= num_slice_groups_minus1; iCnt++)
+            {
+                ue_v(psBits, &temp);
+            }
+        }
+        else if (slice_group_map_type == 2)
+        {
+            for (iCnt = 0; iCnt < num_slice_groups_minus1; iCnt++)
+            {
+                ue_v(psBits, &temp);
+                ue_v(psBits, &temp);
+            }
+        }
+        else if (slice_group_map_type == 3 ||
+                 slice_group_map_type == 4 ||
+                 slice_group_map_type == 5)
+        {
+            //slice_group_change_direction_flag
+            ReadBits(psBits, 1, &temp);
+            //slice_group_change_rate_minus1
+            ue_v(psBits, &temp);
+        }
+        else if (slice_group_map_type == 6)
+        {
+            //pic_size_in_map_units_minus1
+            ue_v(psBits, &pic_size_in_map_units_minus1);
+
+            numBits = 0;/* ceil(log2(num_slice_groups_minus1+1)) bits */
+            iCnt = num_slice_groups_minus1;
+            while (iCnt > 0)
+            {
+                numBits++;
+                iCnt >>= 1;
+            }
+
+            for (iCnt = 0; iCnt < (pic_size_in_map_units_minus1 + 1); iCnt++)
+            {
+                // slice_group_id[]
+                ReadBits(psBits, numBits, &temp);
+            }
+        }
+    }
+
+    //num_ref_idx_l0_active_minus1
+    ue_v(psBits, &temp);
+    iAVCConfigInfo->nRefIdxl0ActiveMinus1 = temp;
+    if (temp > 31)
+    {
+        return 1;
+    }
+
+    //num_ref_idx_l1_active_minus1
+    ue_v(psBits, &temp);
+    iAVCConfigInfo->nRefIdxl1ActiveMinus1 = temp;
+    if (temp > 31)
+    {
+        return 1;
+    }
+
+    //weighted_pred_flag
+    ReadBits(psBits, 1, &temp);
+    iAVCConfigInfo->bWeightedPPrediction = (bool)temp;
+
+    //weighted_bipred_idc
+    ReadBits(psBits, 2, &temp);
+    iAVCConfigInfo->nWeightedBipredictionMode = temp;
+    if (temp > 2)
+    {
+        return 1;
+    }
+
+    //pic_init_qp_minus26
+    se_v(psBits, &ntemp);
+    if (ntemp < -26 || ntemp > 25)
+    {
+        return 1;
+    }
+    iAVCConfigInfo->pic_init_qp = ntemp + 26;
+
+    //pic_init_qs_minus26
+    se_v(psBits, &ntemp);
+    if (ntemp < -26 || ntemp > 25)
+    {
+        return 1;
+    }
+
+    //chroma_qp_index_offset
+    se_v(psBits, &ntemp);
+    if (ntemp < -12 || ntemp > 12)
+    {
+        return 1;
+    }
+
+    // deblocking_filter_control_present_flag
+    ReadBits(psBits, 1, &temp);
+    iAVCConfigInfo->bDblkFilterFlag = (bool)temp;
+
+    // constrained_intra_pred_flag
+    ReadBits(psBits, 1, &temp);
+    iAVCConfigInfo->bconstIpred = (bool)temp;
+
+    // redundant_pic_cnt_present_flag
+    ReadBits(psBits, 1, &temp);
+    iAVCConfigInfo->bEnableRS = (bool)temp;
+
+    //if( more_rbsp_data( ) )
+    if ((psBits->numBytes << 3) > psBits->dataBitPos)
+    {
+        total_bit_left = (psBits->numBytes << 3) - psBits->dataBitPos;
+        if (total_bit_left <= 8)
+        {
+            ShowBits(psBits,  total_bit_left , &temp);
+            if (temp == (uint32)(1 << (total_bit_left - 1)))
+            {
+                // end of NAL;
+                return 0;
+            }
+        }
+        // transform_8x8_mode_flag
+        ReadBits(psBits, 1, &temp);
     }
 
     return 0;
@@ -1160,24 +1515,29 @@ void ue_v(mp4StreamType *psBits, uint32 *codeNum)
 
 }
 
-
-void se_v(mp4StreamType *psBits, int32 *value)
+void  se_v(mp4StreamType *psBits, int32 *value)
 {
-    int32 leadingZeros = 0;
-    uint32 temp;
+    uint32 temp, tmp_cnt;
+    int leading_zeros = 0;
+    ShowBits(psBits, 16, &temp);
+    tmp_cnt = temp | 0x1;
 
-    OSCL_UNUSED_ARG(value);
+    PV_CLZ(leading_zeros, tmp_cnt)
 
-    ReadBits(psBits, 1, &temp);
-    while (!temp)
+    if (leading_zeros < 8)
     {
-        leadingZeros++;
-        if (ReadBits(psBits, 1, &temp))
-        {
-            break;
-        }
+        temp >>= (15 - (leading_zeros << 1));
+        FlushBits(psBits, (leading_zeros << 1) + 1);
     }
-    ReadBits(psBits, leadingZeros, &temp);
+    else
+    {
+        ReadBits(psBits, (leading_zeros << 1) + 1, &temp);
+    }
+
+    *value = temp >> 1;
+
+    if (temp & 0x01)                          // lsb is signed bit
+        *value = -(*value);
 }
 
 void Parser_EBSPtoRBSP(uint8 *nal_unit, int32 *size)

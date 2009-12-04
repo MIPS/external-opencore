@@ -1115,7 +1115,6 @@ OMX_ERRORTYPE OmxComponentAvcEncAO::ComponentInit()
             (OMX_TRUE == pAvcParam->bMBAFF) ||
             (OMX_TRUE == pAvcParam->bEntropyCodingCABAC) ||
             (OMX_TRUE == pAvcParam->bWeightedPPrediction) ||
-            (OMX_TRUE == pAvcParam->bDirect8x8Inference) ||
             (OMX_TRUE == pAvcParam->bEnableFMO) ||
             (1 != pAvcSliceFMO->nSliceGroupMapType))
     {

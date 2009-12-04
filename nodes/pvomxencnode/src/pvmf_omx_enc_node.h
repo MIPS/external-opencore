@@ -135,6 +135,10 @@
 #include "media_clock_converter.h"
 #endif
 
+#ifndef PV_M4V_CONFIG_PARSER_H_INCLUDED
+#include "m4v_config_parser.h"
+#endif
+
 #define PVMFOMXENCNODE_NUM_CMD_IN_POOL 8
 #define PVOMXENCMAXNUMDPBFRAMESPLUS1 17
 #define PVOMXVIDEO_MAX_SUPPORTED_FORMAT 12
@@ -629,6 +633,18 @@ typedef struct PV_VideoEncodeParam
     /** Specifies that SPS and PPS are retrieved first and sent out-of-band */
     //bool              iOutOfBandParamSet;
 
+    /** Specifies FSI Buffer input */
+    uint8*              iFSIBuff;
+
+    /** Specifies FSI Buffer Length */
+    uint32             iFSIBuffLength;
+
+    /** Sets the number of ticks per second used for timing information encoded in MPEG4 bitstream.*/
+    int32                 iTimeIncRes;
+
+    /** Sets the number of ticks in time increment resolution between 2 source frames (equivalent to source frame rate). */
+    int32                 iTickPerSrc;
+
 
 } PV_VideoEncodeParam;
 
@@ -1006,7 +1022,10 @@ class PVMFOMXEncNode
 
         PVMFStatus SetCodecType(PVMFFormatType aCodec);
 
-        OSCL_IMPORT_REF virtual bool SetFSIParam(uint8* aFSIBuff, int aFSIBuffLength);
+        OSCL_IMPORT_REF bool SetFSIParam(uint8* aFSIBuff, int aFSIBuffLength);
+        OSCL_IMPORT_REF bool SetShortHeader(bool aShortHeaderFlag);
+        OSCL_IMPORT_REF bool SetResyncMarker(bool aResyncMarkerFlag);
+        OSCL_IMPORT_REF bool SetTimeIncRes(int32 aTimeIncRes);
 
         // from AudioEncExtensionInterface
         OSCL_IMPORT_REF PVMFStatus SetOutputBitRate(PVMF_GSMAMR_Rate aBitRate);

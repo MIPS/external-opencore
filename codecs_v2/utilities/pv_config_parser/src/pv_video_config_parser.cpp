@@ -82,22 +82,10 @@ OSCL_EXPORT_REF int16 pv_video_config_parser(pvVideoConfigParserInputs *aInputs,
 {
     if (aInputs->iMimeType == PVMF_MIME_M4V) //m4v
     {
-        mp4StreamType psBits;
-        psBits.data = aInputs->inPtr;
-        if (aInputs->inBytes <= 0)
-        {
-            return -1;
-        }
-        psBits.numBytes = aInputs->inBytes;
-        psBits.bytePos = 0;
-        psBits.bitBuf = 0;
-        psBits.dataBitPos = 0;
-        psBits.bitPos = 32;
-
         int32 width, height, display_width, display_height = 0;
         int32 profile_level = 0;
         int16 retval = 0;
-        retval = iDecodeVOLHeader(&psBits, &width, &height, &display_width, &display_height, &profile_level);
+        retval = iDecodeVOLHeader(aInputs->inPtr, aInputs->inBytes, &width, &height, &display_width, &display_height, &profile_level);
         if (retval != 0)
         {
             return retval;

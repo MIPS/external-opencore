@@ -3966,6 +3966,7 @@ OSCL_EXPORT_REF OMX_ERRORTYPE OmxComponentVideo::GetParameter(
     OMX_VIDEO_PARAM_ERRORCORRECTIONTYPE* pVideoErrCorr;
     OMX_VIDEO_PARAM_BITRATETYPE*         pVideoRateControl;
     OMX_VIDEO_PARAM_QUANTIZATIONTYPE*    pVideoQuant;
+    OMX_VIDEO_PARAM_AVCSLICEFMO*         pVideoAVCSlice;
     OMX_VIDEO_PARAM_VBSMCTYPE*           pVideoBlock;
     OMX_VIDEO_PARAM_MOTIONVECTORTYPE*    pVideoMotionVector;
     OMX_VIDEO_PARAM_INTRAREFRESHTYPE*    pVideoIntraRefresh;
@@ -4243,6 +4244,20 @@ OSCL_EXPORT_REF OMX_ERRORTYPE OmxComponentVideo::GetParameter(
         }
         break;
 
+        case OMX_IndexParamVideoSliceFMO:
+        {
+            pVideoAVCSlice = (OMX_VIDEO_PARAM_AVCSLICEFMO*) ComponentParameterStructure;
+            if (pVideoAVCSlice->nPortIndex != iCompressedFormatPortNum)
+            {
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE, (0, "OmxComponentVideo : GetParameter error bad port index"));
+                return OMX_ErrorBadPortIndex;
+            }
+            PortIndex = pVideoAVCSlice->nPortIndex;
+            oscl_memcpy(pVideoAVCSlice, &ipPorts[PortIndex]->AvcSliceFMO, sizeof(OMX_VIDEO_PARAM_AVCSLICEFMO));
+            SetHeader(pVideoAVCSlice, sizeof(OMX_VIDEO_PARAM_AVCSLICEFMO));
+        }
+        break;
+
         case OMX_IndexParamVideoVBSMC:
         {
             pVideoBlock = (OMX_VIDEO_PARAM_VBSMCTYPE*) ComponentParameterStructure;
@@ -4333,6 +4348,7 @@ OSCL_EXPORT_REF OMX_ERRORTYPE OmxComponentVideo::SetParameter(
     OMX_VIDEO_PARAM_ERRORCORRECTIONTYPE* pVideoErrCorr;
     OMX_VIDEO_PARAM_BITRATETYPE*         pVideoRateControl;
     OMX_VIDEO_PARAM_QUANTIZATIONTYPE*    pVideoQuant;
+    OMX_VIDEO_PARAM_AVCSLICEFMO*         pVideoAVCSlice;
     OMX_VIDEO_PARAM_VBSMCTYPE*           pVideoBlock;
     OMX_VIDEO_PARAM_MOTIONVECTORTYPE*    pVideoMotionVector;
     OMX_VIDEO_PARAM_INTRAREFRESHTYPE*    pVideoIntraRefresh;
@@ -4632,6 +4648,21 @@ OSCL_EXPORT_REF OMX_ERRORTYPE OmxComponentVideo::SetParameter(
                 return ErrorType;
             }
             oscl_memcpy(&ipPorts[PortIndex]->VideoQuantType, pVideoQuant, sizeof(OMX_VIDEO_PARAM_QUANTIZATIONTYPE));
+        }
+        break;
+
+        case OMX_IndexParamVideoSliceFMO:
+        {
+            pVideoAVCSlice = (OMX_VIDEO_PARAM_AVCSLICEFMO*) ComponentParameterStructure;
+            PortIndex = pVideoAVCSlice->nPortIndex;
+            /*Check Structure Header and verify component state*/
+            ErrorType = ParameterSanityCheck(hComponent, PortIndex, pVideoAVCSlice, sizeof(OMX_VIDEO_PARAM_AVCSLICEFMO));
+            if (ErrorType != OMX_ErrorNone)
+            {
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE, (0, "OmxComponentVideo : SetParameter error param check failed"));
+                return ErrorType;
+            }
+            oscl_memcpy(&ipPorts[PortIndex]->AvcSliceFMO, pVideoAVCSlice, sizeof(OMX_VIDEO_PARAM_AVCSLICEFMO));
         }
         break;
 
