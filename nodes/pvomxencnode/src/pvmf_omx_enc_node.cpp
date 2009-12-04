@@ -5609,13 +5609,13 @@ OMX_ERRORTYPE PVMFOMXEncNode::FillBufferDoneProcAVC(OMX_OUT OMX_HANDLETYPE aComp
         if (nal_type == 0x07) // SPS type NAL
         {
             // can the SPS fit into the buffer
-            if (aBuffer->nFilledLen <= (capacity - length))
+            if (bufLen <= (capacity - length))
             {
                 iSPSs[iNumSPSs].ptr = destptr;
-                iSPSs[iNumSPSs++].len = aBuffer->nFilledLen;
+                iSPSs[iNumSPSs++].len = bufLen;
 
-                oscl_memcpy(destptr, pBufdata, aBuffer->nFilledLen); // copy SPS into iParamSet memfragment
-                length += aBuffer->nFilledLen;
+                oscl_memcpy(destptr, pBufdata, bufLen); // copy SPS into iParamSet memfragment
+                length += bufLen;
                 iParamSet.getMemFrag().len = length; // update length
             }
 
@@ -5628,14 +5628,14 @@ OMX_ERRORTYPE PVMFOMXEncNode::FillBufferDoneProcAVC(OMX_OUT OMX_HANDLETYPE aComp
         {
 
             // can the PPS fit into the buffer?
-            if (aBuffer->nFilledLen <= (capacity - length))
+            if (bufLen <= (capacity - length))
             {
 
                 iPPSs[iNumPPSs].ptr = destptr;
-                iPPSs[iNumPPSs++].len = aBuffer->nFilledLen;
+                iPPSs[iNumPPSs++].len = bufLen;
 
-                oscl_memcpy(destptr, pBufdata, aBuffer->nFilledLen); // copy PPS into iParamSet memfragment
-                length += aBuffer->nFilledLen;
+                oscl_memcpy(destptr, pBufdata, bufLen); // copy PPS into iParamSet memfragment
+                length += bufLen;
                 iParamSet.getMemFrag().len = length; // update length
 
 
