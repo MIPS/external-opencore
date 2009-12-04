@@ -333,9 +333,9 @@ MovieFragmentAtom::peekNextBundledAccessUnits(uint32 id,
     return (nReturn);
 }
 
-int32 MovieFragmentAtom::resetPlayback(uint32 trackID, uint32 time, uint32 traf_number, uint32 trun_number, uint32 sample_num)
+uint64 MovieFragmentAtom::resetPlayback(uint32 trackID, uint64 time, uint32 traf_number, uint32 trun_number, uint32 sample_num)
 {
-    int32 nReturn = -1;
+    uint64 nReturn = 0;
 
     PVMF_MP4FFPARSER_LOGMEDIASAMPELSTATEVARIABLES((0, "MovieFragmentAtom::resetPlayback Called TrackID %d", trackID));
     if (traf_number > 0)
@@ -346,7 +346,7 @@ int32 MovieFragmentAtom::resetPlayback(uint32 trackID, uint32 time, uint32 traf_
             if (trackfragment->getTrackId() == trackID)
             {
                 nReturn =  trackfragment->resetPlayback(time, trun_number, sample_num);
-                PVMF_MP4FFPARSER_LOGMEDIASAMPELSTATEVARIABLES((0, "MovieFragmentAtom::resetPlayback Return Time %d", nReturn));
+                PVMF_MP4FFPARSER_LOGMEDIASAMPELSTATEVARIABLES((0, "MovieFragmentAtom::resetPlayback Return Time %d", Oscl_Int64_Utils::get_uint64_lower32(nReturn)));
             }
         }
     }
@@ -361,7 +361,7 @@ int32 MovieFragmentAtom::resetPlayback(uint32 trackID, uint32 time, uint32 traf_
                 if (trackfragment->getTrackId() == trackID)
                 {
                     nReturn = trackfragment->resetPlayback(time);
-                    PVMF_MP4FFPARSER_LOGMEDIASAMPELSTATEVARIABLES((0, "MovieFragmentAtom::resetPlayback Return Time %d", nReturn));
+                    PVMF_MP4FFPARSER_LOGMEDIASAMPELSTATEVARIABLES((0, "MovieFragmentAtom::resetPlayback Return Time %d", Oscl_Int64_Utils::get_uint64_lower32(nReturn)));
                     break;
                 }
             }
@@ -399,10 +399,10 @@ MovieFragmentAtom::~MovieFragmentAtom()
 
 }
 
-uint32
+uint64
 MovieFragmentAtom::getCurrentTrafDuration(uint32 id)
 {
-    int32 nReturn = 0;
+    uint64 nReturn = 0;
 
     TrackFragmentAtom *trackfragment = getTrackFragmentforID(id);
 
@@ -428,7 +428,7 @@ MovieFragmentAtom::getTotalSampleInTraf(uint32 id)
 }
 
 int32
-MovieFragmentAtom::getOffsetByTime(uint32 id, uint32 ts, int32* sampleFileOffset)
+MovieFragmentAtom::getOffsetByTime(uint32 id, uint64 ts, uint32* sampleFileOffset)
 {
     int32 nReturn = DEFAULT_ERROR;
 

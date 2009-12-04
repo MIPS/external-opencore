@@ -22,12 +22,12 @@
 #include "atomdefs.h"
 
 AVCSampleDependencyType::AVCSampleDependencyType(MP4_FF_FILE *fp, uint32 size, uint32 type, uint32 sample_count)
-        : FullAtom(size, _version, flags)
+        : FullAtom(fp, size, type)
 {
     OSCL_UNUSED_ARG(type);
     if (_success)
     {
-        if (_version == 0)
+        if (getVersion() == 0)
         {
 
             PV_MP4_FF_ARRAY_NEW(NULL, uint8, (sample_count), _reserved);

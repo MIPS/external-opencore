@@ -461,6 +461,7 @@ Mpeg4File::Mpeg4File(MP4_FF_FILE *fp,
             {
                 _success = false;
                 _mp4ErrorCode = pMovieFragmentRandomAccessAtom->GetMP4Error();
+                PV_MP4_FF_DELETE(NULL, MovieFragmentRandomAccessAtom, pMovieFragmentRandomAccessAtom);
                 break;
             }
             pMovieFragmentRandomAccessAtom->setParent(this);
@@ -502,7 +503,7 @@ Mpeg4File::Mpeg4File(MP4_FF_FILE *fp,
                 if (0 != bufferCapacity)
                 {
                     // progressive playback
-                    int32* offsetList = (int32 *)oscl_malloc(sizeof(int32) * numMediaTracks);
+                    uint32* offsetList = (uint32 *)oscl_malloc(sizeof(uint32) * numMediaTracks);
                     if (NULL == offsetList)
                     {
                         _success = false;
@@ -1073,10 +1074,10 @@ PVMFStatus Mpeg4File::populateDateVector()
 {
     MP4FFParserOriginalCharEnc charType = ORIGINAL_CHAR_TYPE_UNKNOWN;
     numDate = 0;
-    if (getCreationDate(charType).get_size() > 0)
+    const OSCL_wHeapString<OsclMemAllocator> creationDate = getCreationDate(charType);
+    if (creationDate.get_size() > 0)
     {
-        OSCL_wHeapString<OsclMemAllocator> valuestring = getCreationDate(charType);
-        dateValues.push_front(valuestring);
+        dateValues.push_front(creationDate);
         iDateCharType.push_front(charType);
         numDate++;
     }
@@ -1211,6 +1212,7 @@ PVMFStatus Mpeg4File::getYear(uint32 index, uint32& aVal)
     }
     return PVMFErrArgument;
 }
+
 OSCL_wString& Mpeg4File::getPVTitle(MP4FFParserOriginalCharEnc &charType)
 {
     PVUserDataAtom *patom = NULL;
@@ -1351,7 +1353,7 @@ OSCL_wString& Mpeg4File::getPVRating(MP4FFParserOriginalCharEnc &charType)
     }
 }
 
-OSCL_wString& Mpeg4File::getCreationDate(MP4FFParserOriginalCharEnc &charType)
+const OSCL_wString& Mpeg4File::getCreationDate(MP4FFParserOriginalCharEnc &charType)
 {
     PVUserDataAtom *patom = NULL;
     if (_puserDataAtom != NULL)
@@ -1519,7 +1521,7 @@ uint64 Mpeg4File::getMovieDuration() const
     if (_isMovieFragmentsPresent)
     {
         overallMovieDuration = _pmovieAtom->getMovieFragmentDuration();
-        if (Oscl_Int64_Utils::get_uint64_lower32(overallMovieDuration) != 0)
+        if (overallMovieDuration != 0)
         {
             return overallMovieDuration;
         }
@@ -1530,7 +1532,7 @@ uint64 Mpeg4File::getMovieDuration() const
             if (! trackList)
                 return 0;   // malloc failure
             _pmovieAtom->getTrackWholeIDList(trackList);
-            uint32 prevtrackDuration = 0, trackduration = 0;
+            uint64 prevtrackDuration = 0, trackduration = 0;
             for (uint32 i = 0; i < numTracks; i++)
             {
                 TrackDurationInfo* pTrackDurationInfo = (*_pTrackDurationContainer->_pTrackdurationInfoVec)[i];
@@ -1545,7 +1547,7 @@ uint64 Mpeg4File::getMovieDuration() const
                     id = trackList[i];
                 }
             }
-            Oscl_Int64_Utils::set_uint64(overallMovieDuration, 0, trackduration);
+            overallMovieDuration = trackduration;
 
             TrackAtom *trackAtom = NULL;
             uint32 mediaTimeScale = 0xFFFFFFFE;
@@ -1591,7 +1593,7 @@ uint64 Mpeg4File::getMovieFragmentDuration() const
         return 0;
 }
 
-uint32 Mpeg4File::getTimestampForSampleNumber(uint32 id, uint32 sampleNumber)
+MP4_ERROR_CODE Mpeg4File::getTimestampForSampleNumber(uint32 id, uint32 sampleNumber, uint64& aTimeStamp)
 {
     TrackAtom *trackAtom;
 
@@ -1601,20 +1603,20 @@ uint32 Mpeg4File::getTimestampForSampleNumber(uint32 id, uint32 sampleNumber)
 
         if (trackAtom != NULL)
         {
-            return trackAtom->getTimestampForSampleNumber(sampleNumber);
+            return trackAtom->getTimestampForSampleNumber(sampleNumber, aTimeStamp);
         }
         else
         {
-            return 0;
+            return READ_FAILED;
         }
     }
     else
     {
-        return 0;
+        return READ_FAILED;
     }
 }
 
-int32 Mpeg4File::getSampleSizeAt(uint32 id, int32 sampleNum)
+MP4_ERROR_CODE Mpeg4File::getSampleSizeAt(uint32 id, int32 sampleNum, uint32& aSampleSize)
 {
     TrackAtom *trackAtom;
 
@@ -1624,16 +1626,16 @@ int32 Mpeg4File::getSampleSizeAt(uint32 id, int32 sampleNum)
 
         if (trackAtom != NULL)
         {
-            return (trackAtom->getSampleSizeAt(sampleNum));
+            return (trackAtom->getSampleSizeAt(sampleNum, aSampleSize));
         }
         else
         {
-            return 0;
+            return DEFAULT_ERROR;
         }
     }
     else
     {
-        return 0;
+        return DEFAULT_ERROR;
     }
 }
 
@@ -1751,14 +1753,15 @@ uint64 Mpeg4File::getTrackMediaDuration(uint32 id)
             if (!trackList)
                 return 0;   // malloc failed
             _pmovieAtom->getTrackWholeIDList(trackList);
-            uint32 trackduration = 0;
+            uint64 trackduration = 0;
             for (int32 i = 0; i < numTracks; i++)
             {
                 if (trackList[i] == id)
                 {
                     TrackDurationInfo* pTrackDurationInfo = (*_pTrackDurationContainer->_pTrackdurationInfoVec)[i];
                     oscl_free(trackList);
-                    return trackduration = pTrackDurationInfo->trackDuration;
+                    trackduration = pTrackDurationInfo->trackDuration;
+                    return trackduration;
                 }
             }
             oscl_free(trackList);
@@ -2321,7 +2324,6 @@ int32 Mpeg4File::getNextBundledAccessUnits(const uint32 trackID,
                                     }
                                     else
                                     {
-                                        _movieFragmentSeqIdx[moofIdx]++;
                                         if (samplesTobeRead >= *n)
                                         {
                                             samplesTobeRead = samplesTobeRead - *n;
@@ -2333,12 +2335,14 @@ int32 Mpeg4File::getNextBundledAccessUnits(const uint32 trackID,
                         }
                     }
                     _movieFragmentIdx[moofIdx]++;
+                    _movieFragmentSeqIdx[moofIdx]++;
                 }
                 if (return1 == END_OF_TRACK)
                 {
                     *n = totalSampleRead;
                     _movieFragmentIdx[moofIdx] = 0;
                     return return1;
+
                 }
             }
             else
@@ -2793,7 +2797,7 @@ MovieFragmentAtom * Mpeg4File::getMovieFragmentForTrackId(uint32 id)
 
 void Mpeg4File::populateTrackDurationVec()
 {
-    uint32 trackDuration = 0;
+    uint64 trackDuration = 0;
     if (_pmovieAtom != NULL)
     {
         uint32 ids[256];
@@ -2806,7 +2810,7 @@ void Mpeg4File::populateTrackDurationVec()
         {
             uint32 trackID = ids[i];
             TrackDurationInfo *trackinfo = NULL;
-            trackDuration = Oscl_Int64_Utils::get_uint64_lower32(_pmovieAtom->getTrackMediaDuration(trackID));
+            trackDuration = _pmovieAtom->getTrackMediaDuration(trackID);
             PV_MP4_FF_NEW(fp->auditCB, TrackDurationInfo, (trackDuration, trackID), trackinfo);
             (*_pTrackDurationContainer->_pTrackdurationInfoVec).push_back(trackinfo);
 
@@ -2922,7 +2926,7 @@ MP4_ERROR_CODE Mpeg4File::getKeyMediaSampleNumAt(uint32 aTrackId,
     }
 }
 
-int32 Mpeg4File::getOffsetByTime(uint32 id, uint32 ts, int32* sampleFileOffset , uint32 jitterbuffertimeinmillisec)
+int32 Mpeg4File::getOffsetByTime(uint32 id, uint64 ts, uint32* sampleFileOffset , uint32 jitterbuffertimeinmillisec)
 {
     int32 ret =  DEFAULT_ERROR;
     uint32 sigmaAtomSize = 0;
@@ -2933,14 +2937,14 @@ int32 Mpeg4File::getOffsetByTime(uint32 id, uint32 ts, int32* sampleFileOffset ,
         {
             if (_isMovieFragmentsPresent)
             {
-                uint32 sigmaTrafDuration = 0;
+                uint64 sigmaTrafDuration = 0;
 
                 for (uint32 idx = 0; idx < _pMovieFragmentAtomVec->size(); idx++)
                 {
                     MovieFragmentAtom *pMovieFragmentAtom = (*_pMovieFragmentAtomVec)[idx];
                     if (pMovieFragmentAtom != NULL)
                     {
-                        uint32 currTrafDuration = pMovieFragmentAtom->getCurrentTrafDuration(id);
+                        uint64 currTrafDuration = pMovieFragmentAtom->getCurrentTrafDuration(id);
                         if (currTrafDuration >= ts)
                         {
                             pMovieFragmentAtom = (*_pMovieFragmentAtomVec)[idx];
@@ -2979,7 +2983,7 @@ int32 Mpeg4File::getOffsetByTime(uint32 id, uint32 ts, int32* sampleFileOffset ,
                                 moofCount -= _pMovieFragmentAtom->getSize();
                             }
 
-                            uint32 currTrafDuration = _pMovieFragmentAtom->getCurrentTrafDuration(id);
+                            uint64 currTrafDuration = _pMovieFragmentAtom->getCurrentTrafDuration(id);
 
                             if (currTrafDuration >= ts)
                             {
@@ -3049,14 +3053,14 @@ int32 Mpeg4File::getOffsetByTime(uint32 id, uint32 ts, int32* sampleFileOffset ,
 
                             if ((moofStartOffset + atomSize) > fileSize)
                             {
-                                uint32 timeScale = _pmovieAtom->getTrackMediaTimescale(id);
+                                const uint32 timeScale = _pmovieAtom->getTrackMediaTimescale(id);
                                 if ((timeScale == 0) || (timeScale == 0xFFFFFFFF))
                                 {
                                     PVMF_MP4FFPARSER_LOGMEDIASAMPELSTATEVARIABLES((0, "getOffsetByTime:: Invalid timeScale %d for Id %d", timeScale, id));
                                     return DEFAULT_ERROR;
                                 }
 
-                                uint32 trackPlayedSoFarInSec = ts / timeScale - jitterbuffertimeinmillisec / 1000;
+                                uint32 trackPlayedSoFarInSec = (uint32)(ts / timeScale - jitterbuffertimeinmillisec / 1000);
                                 uint32 rateOfDataUsageKbPerSec = 0;
                                 if (trackPlayedSoFarInSec != 0)
                                 {
@@ -3089,7 +3093,7 @@ int32 Mpeg4File::getOffsetByTime(uint32 id, uint32 ts, int32* sampleFileOffset ,
                             _pMovieFragmentAtomVec->push_back(_pMovieFragmentAtom);
                             _ptrMoofEnds = AtomUtils::getCurrentFilePosition(_movieFragmentFilePtr);
 
-                            uint32 currTrafDuration = _pMovieFragmentAtom->getCurrentTrafDuration(id);
+                            const uint64 currTrafDuration = _pMovieFragmentAtom->getCurrentTrafDuration(id);
 
                             if (currTrafDuration >= ts)
                             {
@@ -3131,7 +3135,7 @@ int32 Mpeg4File::getOffsetByTime(uint32 id, uint32 ts, int32* sampleFileOffset ,
                                         PVMF_MP4FFPARSER_LOGMEDIASAMPELSTATEVARIABLES((0, "getOffsetByTime:: Invalid timeScale %d for Id %d", timeScale, id));
                                         return DEFAULT_ERROR;
                                     }
-                                    uint32 trackPlayedSoFarInSec = ts / timeScale - jitterbuffertimeinmillisec / 1000;
+                                    uint32 trackPlayedSoFarInSec = uint32(ts / timeScale - jitterbuffertimeinmillisec / 1000);
                                     uint32 rateOfDataUsageKbPerSec = 0;
                                     if (trackPlayedSoFarInSec != 0)
                                     {
@@ -3187,7 +3191,7 @@ int32 Mpeg4File::getOffsetByTime(uint32 id, uint32 ts, int32* sampleFileOffset ,
     }
 }
 
-int32 Mpeg4File::getTimestampForRandomAccessPoints(uint32 id, uint32 *num, uint32 *tsBuf, uint32* numBuf, uint32 *offsetBuf)
+int32 Mpeg4File::getTimestampForRandomAccessPoints(uint32 id, uint32 *num, uint64 *tsBuf, uint32* numBuf, uint32 *offsetBuf)
 {
     if (_pmovieAtom != NULL)
     {
@@ -3230,7 +3234,7 @@ int32 Mpeg4File::getTimestampForRandomAccessPoints(uint32 id, uint32 *num, uint3
     return 0;
 }
 
-int32 Mpeg4File::getTimestampForRandomAccessPointsBeforeAfter(uint32 id, uint32 ts, uint32 *tsBuf, uint32* numBuf,
+int32 Mpeg4File::getTimestampForRandomAccessPointsBeforeAfter(uint32 id, uint64 ts, uint64 *tsBuf, uint32* numBuf,
         uint32& numsamplestoget,
         uint32 howManyKeySamples)
 {
@@ -3264,7 +3268,7 @@ int32 Mpeg4File::getTimestampForRandomAccessPointsBeforeAfter(uint32 id, uint32 
 
 void Mpeg4File::resetAllMovieFragments()
 {
-    uint32 trackDuration = 0;
+    uint64 trackDuration = 0;
     if (_isMovieFragmentsPresent)
     {
         if (_pMovieFragmentAtomVec != NULL)
@@ -3293,7 +3297,7 @@ void Mpeg4File::resetAllMovieFragments()
                         pTrackDurationInfo = NULL;
                     }
                 }
-                trackDuration = Oscl_Int64_Utils::get_uint64_lower32(_pmovieAtom->getTrackMediaDuration(trackID));
+                trackDuration = _pmovieAtom->getTrackMediaDuration(trackID);
                 PV_MP4_FF_NEW(fp->auditCB, TrackDurationInfo, (trackDuration, trackID), trackinfo);
                 (*_pTrackDurationContainer->_pTrackdurationInfoVec)[i] = trackinfo;
             }
@@ -3314,12 +3318,18 @@ uint32 Mpeg4File::resetPlayback(uint32 time, uint16 numTracks, uint32 *trackList
 {
     OSCL_UNUSED_ARG(numTracks);
 
+    if (0 == time)
+    {
+        resetPlayback();
+        return 0;
+    }
+
     uint32 modifiedTimeStamp = time;
 
     bool oMoofFound = false;
 
-    uint32 convertedTS = 0;
-    uint32 timestamp = 0, returnedTS = 0;
+    uint64 convertedTS = 0, returnedTS = 0;
+    uint32 timestamp = 0;
 
     uint32 moof_offset = 0, traf_number = 0, trun_number = 0, sample_num = 0;
 
@@ -3350,8 +3360,8 @@ uint32 Mpeg4File::resetPlayback(uint32 time, uint16 numTracks, uint32 *trackList
             // convert modifiedTimeStamp (which is in ms) to the appropriate
             // media time scale
             MediaClockConverter mcc1(1000);
-            mcc1.update_clock(modifiedTimeStamp);
-            convertedTS = mcc1.get_converted_ts(getTrackMediaTimescale(trackID));
+            mcc1.set_clock(modifiedTimeStamp, 0);
+            convertedTS = mcc1.get_converted_ts64(getTrackMediaTimescale(trackID));
             if (oMfraFound)
             {
                 for (uint32 idx = 0; idx < _pMovieFragmentRandomAccessAtomVec->size(); idx++)
@@ -3572,7 +3582,7 @@ uint32 Mpeg4File::resetPlayback(uint32 time, uint16 numTracks, uint32 *trackList
 
             // convert returnedTS (which is in media time scale) to the ms
             MediaClockConverter mcc(getTrackMediaTimescale(trackID));
-            mcc.update_clock(returnedTS);
+            mcc.set_clock(returnedTS, 0);
             timestamp = mcc.get_converted_ts(1000);
 
             if (timestamp <= modifiedTimeStamp)
@@ -3612,7 +3622,7 @@ uint32 Mpeg4File::resetPlayback(uint32 time, uint16 numTracks, uint32 *trackList
             {
                 resetAllMovieFragments();
                 uint32 trackVideo = trackID;
-                uint32 numTrackForVideo = 1;
+                uint16 numTrackForVideo = 1;
                 modifiedTimeStamp =  _pmovieAtom->resetPlayback(modifiedTimeStamp, numTrackForVideo, &trackVideo, bResetToIFrame);
             }
         }
@@ -3629,8 +3639,8 @@ uint32 Mpeg4File::resetPlayback(uint32 time, uint16 numTracks, uint32 *trackList
             // convert modifiedTimeStamp (which is in ms) to the appropriate
             // media time scale
             MediaClockConverter mcc1(1000);
-            mcc1.update_clock(modifiedTimeStamp);
-            convertedTS = mcc1.get_converted_ts(getTrackMediaTimescale(trackID));
+            mcc1.set_clock(modifiedTimeStamp, 0);
+            convertedTS = mcc1.get_converted_ts64(getTrackMediaTimescale(trackID));
             if (oMfraFound)
             {
                 for (uint32 idx = 0; idx < _pMovieFragmentRandomAccessAtomVec->size(); idx++)
@@ -3794,7 +3804,7 @@ uint32 Mpeg4File::resetPlayback(uint32 time, uint16 numTracks, uint32 *trackList
                                     }
                                     break;
                                 }
-                                uint32 currTrafDuration = _pMovieFragmentAtom->getCurrentTrafDuration(trackID);
+                                uint64 currTrafDuration = _pMovieFragmentAtom->getCurrentTrafDuration(trackID);
                                 if (currTrafDuration >= modifiedTimeStamp)
                                 {
                                     currMoofNum = _pMovieFragmentAtom->getSequenceNumber();
@@ -3870,7 +3880,7 @@ uint32 Mpeg4File::resetPlayback(uint32 time, uint16 numTracks, uint32 *trackList
 
             // convert returnedTS (which is in media time scale) to the ms
             MediaClockConverter mcc(getTrackMediaTimescale(trackID));
-            mcc.update_clock(returnedTS);
+            mcc.set_clock(returnedTS, 0);
             timestamp = mcc.get_converted_ts(1000);
 
 
@@ -3912,7 +3922,7 @@ uint32 Mpeg4File::resetPlayback(uint32 time, uint16 numTracks, uint32 *trackList
             {
                 resetAllMovieFragments();
                 uint32 trackAudio = trackID;
-                uint32 numTrackforAudio = 1;
+                uint16 numTrackforAudio = 1;
                 retVal = _pmovieAtom->resetPlayback(modifiedTimeStamp, numTrackforAudio, &trackAudio
                                                     , bResetToIFrame);
             }
@@ -3923,11 +3933,11 @@ uint32 Mpeg4File::resetPlayback(uint32 time, uint16 numTracks, uint32 *trackList
 
 }
 
-int32 Mpeg4File::queryRepositionTime(uint32 time,
-                                     uint16 numTracks,
-                                     uint32 *trackList,
-                                     bool bResetToIFrame,
-                                     bool bBeforeRequestedTime)
+uint32 Mpeg4File::queryRepositionTime(uint32 time,
+                                      uint16 numTracks,
+                                      uint32 *trackList,
+                                      bool bResetToIFrame,
+                                      bool bBeforeRequestedTime)
 {
 
     uint32 i = 0;
@@ -3952,8 +3962,9 @@ int32 Mpeg4File::queryRepositionTime(uint32 time,
         }
     }
 
-    uint32 convertedTS = 0;
-    uint32 timestamp = 0, returnedTS = 0;
+    uint64 convertedTS = 0;
+    uint64 returnedTS = 0;
+    uint32 timestamp = 0;
 
     for (i = 0; i < numTracks; i++)
     {
@@ -3972,8 +3983,8 @@ int32 Mpeg4File::queryRepositionTime(uint32 time,
                 // convert modifiedTimeStamp (which is in ms) to the appropriate
                 // media time scale
                 MediaClockConverter mcc1(1000);
-                mcc1.update_clock(modifiedTimeStamp);
-                convertedTS = mcc1.get_converted_ts(getTrackMediaTimescale(trackID));
+                mcc1.set_clock(modifiedTimeStamp, 0);
+                convertedTS = mcc1.get_converted_ts64(getTrackMediaTimescale(trackID));
                 if (oMfraFound)
                 {
                     oMfraFound = true;
@@ -3993,7 +4004,11 @@ int32 Mpeg4File::queryRepositionTime(uint32 time,
                 {
                     oMfraFound = false;
                     if (_parsing_mode == 1)
-                        return -1;
+                    {
+                        //Todo: Should have some sentinel for the invalid ts..
+                        //PVMF_MP4_MAX_UINT32 seems to be valid ts.
+                        return PVMF_MP4_MAX_UINT32;
+                    }
                 }
 
                 // convert returnedTS (which is in media time scale) to the ms
@@ -4192,7 +4207,7 @@ int32 Mpeg4File::peekNextBundledAccessUnits(const uint32 trackID,
             if (_parsing_mode == 0)
             {
                 int32 return1 = 0;
-                while (_peekMovieFragmentIdx[trackID] < _pMovieFragmentAtomVec->size())
+                while (_peekMovieFragmentIdx[moofIdx] < _pMovieFragmentAtomVec->size())
                 {
                     uint32 peekMovieFragmentIdx = _peekMovieFragmentIdx[moofIdx];
                     MovieFragmentAtom *pMovieFragmentAtom = (*_pMovieFragmentAtomVec)[peekMovieFragmentIdx];
@@ -4214,7 +4229,6 @@ int32 Mpeg4File::peekNextBundledAccessUnits(const uint32 trackID,
                                     }
                                     else
                                     {
-                                        _peekMovieFragmentSeqIdx[moofIdx]++;
                                         if (samplesTobeRead >= *n)
                                         {
                                             samplesTobeRead = samplesTobeRead - *n;
@@ -4226,6 +4240,7 @@ int32 Mpeg4File::peekNextBundledAccessUnits(const uint32 trackID,
                         }
                     }
                     _peekMovieFragmentIdx[moofIdx]++;
+                    _peekMovieFragmentSeqIdx[moofIdx]++;
                 }
                 if (return1 == END_OF_TRACK)
                 {
@@ -4399,8 +4414,9 @@ int32 Mpeg4File::peekNextBundledAccessUnits(const uint32 trackID,
                             {
                                 _peekMovieFragmentIdx[moofIdx]++;
                                 _peekMovieFragmentSeqIdx[moofIdx]++;
-                                *n = 0;
-                                return NO_SAMPLE_IN_CURRENT_MOOF;
+                                /**n = 0;
+                                return NO_SAMPLE_IN_CURRENT_MOOF;*/
+                                continue;
                             }
                         }
                     }
@@ -4577,28 +4593,25 @@ void Mpeg4File::resetPlayback()
     }
 }
 
-uint32 Mpeg4File::repositionFromMoof(uint32 time, uint32 trackID)
+bool Mpeg4File::repositionFromMoof(uint32 time, uint32 trackID)
 {
-    uint32 modifiedTimeStamp = time;
-    uint32 convertedTS = 0;
-    uint32 trackDuration = Oscl_Int64_Utils::get_uint64_lower32(getTrackMediaDurationForMovie(trackID));
-
+    const uint64 trackDuration = getTrackMediaDurationForMovie(trackID);
     MediaClockConverter mcc1(1000);
-    mcc1.update_clock(modifiedTimeStamp);
-    convertedTS = mcc1.get_converted_ts(getTrackMediaTimescale(trackID));
+    mcc1.set_clock(time, 0);
+    uint64 convertedTime = mcc1.get_converted_ts64(getTrackMediaTimescale(trackID));
 
     if (_isMovieFragmentsPresent)
     {
         if (IsTFRAPresentForTrack(trackID, false) == false)
         {
-            return 0;
+            return false;
         }
-        if (modifiedTimeStamp >= trackDuration)
+        if (convertedTime >= trackDuration)
         {
-            return 1; //repos in moof
+            return true; //repos in moof
         }
     }
-    return 0; //repos in moov
+    return false; //repos in moov
 }
 
 MP4_ERROR_CODE Mpeg4File::CancelNotificationSync()
@@ -4975,18 +4988,17 @@ PVMFStatus Mpeg4File::GetIndexParamValues(const char* aString, uint32& aStartInd
 
 uint32 Mpeg4File::GetNumMetadataValues(PVMFMetadataList& aKeyList)
 {
+    uint32 numvalentries = 0;
     if (aKeyList.size() == 0)
     {
-        return 0;
+        return numvalentries;
     }
-
-    uint32 numvalentries = 0;
 
     int32 iNumTracks = getNumTracks();
     uint32 iIdList[16];
     if (iNumTracks != getTrackIDList(iIdList, iNumTracks))
     {
-        return 0;
+        return numvalentries;
     }
     // Retrieve the track ID list
     OsclExclusiveArrayPtr<uint32> trackidlistexclusiveptr;
@@ -4995,7 +5007,7 @@ uint32 Mpeg4File::GetNumMetadataValues(PVMFMetadataList& aKeyList)
     PVMFStatus status = CreateNewArray(&trackidlist, numTracks);
     if (PVMFErrNoMemory == status)
     {
-        return PVMFErrNoMemory;
+        OSCL_LEAVE(PVMFErrNoMemory);
     }
     oscl_memset(trackidlist, 0, sizeof(uint32)*(numTracks));
     getTrackIDList(trackidlist, numTracks);
@@ -7429,7 +7441,7 @@ PVMFStatus Mpeg4File::GetMetadataValues(PVMFMetadataList& aKeyList, Oscl_Vector<
                 uint32 samplecount = getSampleCountInTrack(trackID);
 
                 MediaClockConverter mcc(getTrackMediaTimescale(trackID));
-                mcc.update_clock(trackduration);
+                mcc.set_clock(trackduration, 0);
                 uint32 TrackDurationInSec = mcc.get_converted_ts(1);
                 uint32 frame_rate = 0;
 
@@ -7485,13 +7497,19 @@ PVMFStatus Mpeg4File::GetMetadataValues(PVMFMetadataList& aKeyList, Oscl_Vector<
             // Increment the counter for the number of values found so far
             ++numvalentries;
 
-            // Create a value entry if past the starting index
+            //When timescale is  huge say 10000000. Then duration might need 64 bits to storeits value
+            //But, the existing codebase doesnt expect duarton to be big enough than to overflow 32 bits
+            //Therefore, we explicitly make timescale to be millisec and convert duration in millisec
+            //timescale so as our assumption of storing duration in 32  bit datatype still holds true
             if (numvalentries > aStartingValueIndex)
             {
+                const uint32 timescale = MILLISECOND_TIMESCALE;
                 uint64 duration64 = getMovieDuration();
-                uint32 duration = Oscl_Int64_Utils::get_uint64_lower32(duration64);
-                char timescalestr[20];
-                oscl_snprintf(timescalestr, 20, ";%s%d", PVMP4METADATA_TIMESCALE, getMovieTimescale());
+                MediaClockConverter mcc(getMovieTimescale());
+                mcc.set_clock(duration64, 0);
+                uint32 duration = mcc.get_converted_ts(timescale);
+                char timescalestr[20] = {0};
+                oscl_snprintf(timescalestr, 20, ";%s%d", PVMP4METADATA_TIMESCALE, timescale);
                 timescalestr[19] = '\0';
                 PVMFStatus retval = PVMFCreateKVPUtils::CreateKVPForUInt32Value(KeyVal, PVMP4METADATA_DURATION_KEY, duration, timescalestr);
                 if (retval != PVMFSuccess && retval != PVMFErrArgument)
@@ -7743,6 +7761,10 @@ PVMFStatus Mpeg4File::GetMetadataValues(PVMFMetadataList& aKeyList, Oscl_Vector<
         else if (oscl_strstr(aKeyList[lcv].get_cstr(), PVMP4METADATA_TRACKINFO_DURATION_KEY) != NULL)
         {
             // Track duration
+            //When timescale is  huge say 10000000. Then duration might need 64 bits to storeits value
+            //But, the existing codebase doesnt expect duarton to be big enough than to overflow 32 bits
+            //Therefore, we explicitly make timescale to be millisec and convert duration in millisec
+            //timescale so as our assumption of storing duration in 32  bit datatype still holds true
 
             // Determine the index requested. Default to all tracks
             // Check if the file has at least one track
@@ -7786,13 +7808,15 @@ PVMFStatus Mpeg4File::GetMetadataValues(PVMFMetadataList& aKeyList, Oscl_Vector<
                     else
                         timeScale = getTrackMediaTimescale(trackidlist[i]);
 
-                    oscl_snprintf(indextimescaleparam, 36, ";%s%d;%s%d", PVMP4METADATA_INDEX, i, PVMP4METADATA_TIMESCALE, timeScale);
+                    const uint32 millisecTs = MILLISECOND_TIMESCALE;
+                    oscl_snprintf(indextimescaleparam, 36, ";%s%d;%s%d", PVMP4METADATA_INDEX, i, PVMP4METADATA_TIMESCALE, millisecTs);
 
                     indextimescaleparam[35] = '\0';
 
                     uint64 trackduration64 = getTrackMediaDuration(trackidlist[i]);
-                    uint32 trackduration = Oscl_Int64_Utils::get_uint64_lower32(trackduration64);;
-
+                    MediaClockConverter mcc(timeScale);
+                    mcc.set_clock(trackduration64, 0);
+                    uint32 trackduration = mcc.get_converted_ts(1000);
                     retval = PVMFCreateKVPUtils::CreateKVPForUInt32Value(trackkvp, PVMP4METADATA_TRACKINFO_DURATION_KEY, trackduration, indextimescaleparam);
                 }
 
@@ -8439,17 +8463,17 @@ void Mpeg4File::getLanguageCode(uint16 langcode, int8 *LangCode)
 {
     //ISO-639-2/T 3-char Lang Code
     oscl_memset(LangCode, 0, 4);
-    LangCode[0] = 0x60 + ((langcode >> 10) & 0x1F);
-    LangCode[1] = 0x60 + ((langcode >> 5) & 0x1F);
-    LangCode[2] = 0x60 + ((langcode) & 0x1F);
+    LangCode[0] = OSCL_STATIC_CAST(int8, (0x60 + ((langcode >> 10) & 0x1F)));
+    LangCode[1] = OSCL_STATIC_CAST(int8, (0x60 + ((langcode >> 5) & 0x1F)));
+    LangCode[2] = OSCL_STATIC_CAST(int8, (0x60 + ((langcode) & 0x1F)));
 }
 
 void Mpeg4File::getBrand(uint32 aBrandVal, char *BrandVal)
 {
-    BrandVal[0] = (aBrandVal >> 24);
-    BrandVal[1] = (aBrandVal >> 16);
-    BrandVal[2] = (aBrandVal >> 8);
-    BrandVal[3] =  aBrandVal;
+    BrandVal[0] = OSCL_STATIC_CAST(char, ((aBrandVal >> 24)));
+    BrandVal[1] = OSCL_STATIC_CAST(char, ((aBrandVal >> 16)));
+    BrandVal[2] = OSCL_STATIC_CAST(char, ((aBrandVal >> 8)));
+    BrandVal[3] =  OSCL_STATIC_CAST(char, aBrandVal);
 }
 
 void Mpeg4File::DeleteAPICStruct(PvmfApicStruct*& aAPICStruct)

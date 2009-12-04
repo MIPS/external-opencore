@@ -32,7 +32,6 @@ MovieExtendsHeaderAtom ::MovieExtendsHeaderAtom(MP4_FF_FILE *fp, uint32 size, ui
 
     uint8 ver = getVersion();
 
-    _version = ver;
     if (_success)
     {
         if (ver == 0)

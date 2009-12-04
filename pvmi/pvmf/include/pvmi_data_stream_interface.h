@@ -452,6 +452,8 @@ class PVMIDataStreamSyncInterface : public PVInterface
         */
         virtual PvmiDataStreamStatus SetBufferingCapacity(uint32 aMinCapacity, uint32 aTrimMargin)
         {
+            OSCL_UNUSED_ARG(aMinCapacity);
+            OSCL_UNUSED_ARG(aTrimMargin);
             //This method is currently only supported by Memory Buffer Data Streams.
             return PVDS_NOT_SUPPORTED;
         }

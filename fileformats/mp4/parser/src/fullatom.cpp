@@ -63,7 +63,11 @@ FullAtom::FullAtom(MP4_FF_FILE *fp)
         //we support version 0 & 1
         if (_version)
         {
-            if ((_type == MOVIE_HEADER_ATOM) || (_type == TRACK_HEADER_ATOM) || (_type == MEDIA_HEADER_ATOM))
+            if ((_type == MOVIE_HEADER_ATOM) ||
+                    (_type == TRACK_HEADER_ATOM) ||
+                    (_type == MEDIA_HEADER_ATOM) ||
+                    (_type == MOVIE_EXTENDS_HEADER_ATOM) ||
+                    (_type == TRACK_FRAGMENT_RANDOM_ACCESS_ATOM))
                 ;
             else
             {
@@ -96,7 +100,11 @@ FullAtom::FullAtom(MP4_FF_FILE *fp, uint32 size, uint32 type)
         //we support version 0 & 1
         if (_version)
         {
-            if ((_type == MOVIE_HEADER_ATOM) || (_type == TRACK_HEADER_ATOM) || (_type == MEDIA_HEADER_ATOM))
+            if ((_type == MOVIE_HEADER_ATOM) ||
+                    (_type == TRACK_HEADER_ATOM) ||
+                    (_type == MEDIA_HEADER_ATOM) ||
+                    (_type == MOVIE_EXTENDS_HEADER_ATOM) ||
+                    (_type == TRACK_FRAGMENT_RANDOM_ACCESS_ATOM))
                 ;
             else
             {

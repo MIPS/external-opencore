@@ -62,7 +62,9 @@ class ExpandableBaseClass : public Parentable, public Renderable, public ISuccee
 {
 
     public:
-        ExpandableBaseClass() {} // Default constructor
+        ExpandableBaseClass(): _sizeOfSizeField(0)
+                , _sizeOfClass(0)
+                , _tag(0) {} // Default constructor
         ExpandableBaseClass(MP4_FF_FILE *fp, bool fixedLengthSizeField = false); // Stream-in Constructor
         virtual ~ExpandableBaseClass(); // Destructor
 

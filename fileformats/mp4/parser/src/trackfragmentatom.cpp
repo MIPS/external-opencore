@@ -77,7 +77,6 @@ TrackFragmentAtom::TrackFragmentAtom(MP4_FF_FILE *fp,
     iLogger = PVLogger::GetLoggerObject("mp4ffparser_traf");
     iStateVarLogger = PVLogger::GetLoggerObject("mp4ffparser_mediasamplestats_traf");
     iParsedDataLogger = PVLogger::GetLoggerObject("mp4ffparser_parseddata_traf");
-
     OsclAny*ptr = oscl_malloc(sizeof(MP4_FF_FILE));
     if (ptr == NULL)
     {
@@ -145,7 +144,7 @@ TrackFragmentAtom::TrackFragmentAtom(MP4_FF_FILE *fp,
                             if (trackInfo->trackId == trackId)
                             {
                                 _trackEndDuration = trackInfo->trackDuration;
-                                _startTrackFragmentTSOffset = Oscl_Int64_Utils::get_uint64_lower32(_trackEndDuration);
+                                _startTrackFragmentTSOffset = _trackEndDuration;
                             }
                         }
                     }
@@ -232,18 +231,24 @@ TrackFragmentAtom::TrackFragmentAtom(MP4_FF_FILE *fp,
                     }
                 }
                 _pTrackFragmentRunAtomVec->push_back(_pTrackFragmentRunAtom);
-                _trackEndDuration = _pTrackFragmentRunAtom->_sampleTimeStamp;
+                _trackEndDuration = _pTrackFragmentRunAtom->GetSampleTimeStamp();
 
                 PVMF_MP4FFPARSER_LOGMEDIASAMPELSTATEVARIABLES((0, "****** tr_flag =0x%x ********", trunFlags));
                 if (!parseTrafCompletely)
                 {
                     trafParsingCompleted = false;
-                    uint32 duration = Oscl_Int64_Utils::get_uint64_lower32(_trackEndDuration);
+                    uint64 duration = _trackEndDuration;
                     trackDurationContainer->updateTrackDurationForTrackId(trackId, duration);
                     break;
                 }
             }
-            uint32 track_duration = Oscl_Int64_Utils::get_uint64_lower32(_trackEndDuration);
+            else
+            {
+                count -= atomSize;
+                atomSize -= DEFAULT_ATOM_SIZE;
+                AtomUtils::seekFromCurrPos(fp, atomSize);
+            }
+            uint64 track_duration = _trackEndDuration;
             trackDurationContainer->updateTrackDurationForTrackId(trackId, track_duration);
             trafParsingCompleted = true;
         }
@@ -363,12 +368,18 @@ void TrackFragmentAtom::ParseTrafAtom(MP4_FF_FILE *fp,
                                     }
                                 }
                             }
-                            _trackEndDuration = _pTrackFragmentRunAtom->_sampleTimeStamp;
+                            _trackEndDuration = _pTrackFragmentRunAtom->GetSampleTimeStamp();
 
                             PVMF_MP4FFPARSER_LOGMEDIASAMPELSTATEVARIABLES((0, "****** tr_flag =0x%x ********", trunFlags));
                         }
                         trackDurationContainer->updateTrackDurationForTrackId(trackId,
-                                Oscl_Int64_Utils::get_uint64_lower32(_trackEndDuration));
+                                _trackEndDuration);
+                    }
+                    else
+                    {
+                        count -= atomSize;
+                        atomSize -= DEFAULT_ATOM_SIZE;
+                        AtomUtils::seekFromCurrPos(fp, atomSize);
                     }
                     trafParsingCompleted = false;
                 }
@@ -434,13 +445,13 @@ void TrackFragmentAtom::ParseTrafAtom(MP4_FF_FILE *fp,
                                 }
                             }
                         }
-                        _trackEndDuration = _pTrackFragmentRunAtom->_sampleTimeStamp;
+                        _trackEndDuration = _pTrackFragmentRunAtom->GetSampleTimeStamp();
 
                         PVMF_MP4FFPARSER_LOGMEDIASAMPELSTATEVARIABLES((0, "****** tr_flag =0x%x ********", trunFlags));
                     }
 
                     trackDurationContainer->updateTrackDurationForTrackId(trackId,
-                            Oscl_Int64_Utils::get_uint64_lower32(_trackEndDuration));
+                            _trackEndDuration);
                     trafParsingCompleted = false;
                 }
             }
@@ -492,18 +503,16 @@ TrackFragmentAtom::getNextNSamples(uint32 startSampleNum,
                                    GAU    *pgau)
 {
     uint32  numSamplesInCurrentTrackFragmentRun = 0;
-    int32 currTSBase = 0;
+    uint64 currTSBase = 0;
     uint32 samplesLeftInChunk = 0;
     uint32 numSamples = 0;
     _startTrackFragmentTSOffset = 0;
 
     uint32 samplesYetToBeRead = *n;
-    uint32 samplesReadBefore;
-    samplesReadBefore = *n;
     uint32 sampleNum = startSampleNum;
     uint32 sampleFileOffset = 0;
 
-    int32 sampleBeforeGet = (int32)startSampleNum;
+    uint32 sampleBeforeGet = startSampleNum;
 
     uint32 s = 0;
     uint32 end = 0;
@@ -518,7 +527,7 @@ TrackFragmentAtom::getNextNSamples(uint32 startSampleNum,
     uint32 start = 0;
     uint32 gauIdx = 0;
     uint32 frgptr = 0;
-    samplesReadBefore = totalSampleRead;
+    uint32 samplesReadBefore = totalSampleRead;
     uint32 totalnumSamples = 0;
 
     totalnumSamples = getTotalNumSampleInTraf();
@@ -553,13 +562,12 @@ TrackFragmentAtom::getNextNSamples(uint32 startSampleNum,
 
     while (samplesYetToBeRead)
     {
-        TrackFragmentRunAtom *tfRun;
         uint32 sampleCount;
         if (_mp4ErrorCode == END_OF_TRACK)
         {
             break;
         }
-        tfRun = getTrackFragmentRunForSampleNum(_currentTrackFragmentRunSampleNumber, sampleCount);
+        TrackFragmentRunAtom *tfRun = getTrackFragmentRunForSampleNum(_currentTrackFragmentRunSampleNumber, sampleCount);
         if (tfRun != NULL)
         {
             numSamplesInCurrentTrackFragmentRun = tfRun->getSampleCount();
@@ -574,7 +582,7 @@ TrackFragmentAtom::getNextNSamples(uint32 startSampleNum,
         }
 
         int32 tfrunoffset = 0;
-        tfrunoffset = Oscl_Int64_Utils::get_uint64_lower32(tfRun->getDataOffset());
+        tfrunoffset = tfRun->getDataOffset();
         int32 sampleSizeOffset = 0;
 
         uint32 sigmaSampleSize = 0, k = 0;
@@ -632,13 +640,12 @@ TrackFragmentAtom::getNextNSamples(uint32 startSampleNum,
             Oscl_Vector<TFrunSampleTable*, OsclMemAllocator>* _tfRunSampleInfo = tfRun->getSampleTable();
             if (_tfRunSampleInfo != NULL)
             {
-
-
-                currTSBase =  Oscl_Int64_Utils::get_uint64_lower32((*_tfRunSampleInfo)[k]->_sample_timestamp);
+                currTSBase = (*_tfRunSampleInfo)[k]->_sample_timestamp;
                 tempSize = (*_tfRunSampleInfo)[k]->_sample_size;
                 tsDelta = (*_tfRunSampleInfo)[k]->_sample_duration;
 
             }
+
             if (_tfRunSampleInfo == NULL || tempSize == -1)  // doesnt seem like one can continue if no _tfRunSampleInfo
             {
                 *n = 0;
@@ -648,6 +655,7 @@ TrackFragmentAtom::getNextNSamples(uint32 startSampleNum,
 
                 return (_mp4ErrorCode);
             }
+
             sigmaSampleSize += tempSize;
             pgau->info[s].len = tempSize;
             sampleFileOffset = (*_tfRunSampleInfo)[baseSampleNum]->_sample_offset;
@@ -657,10 +665,10 @@ TrackFragmentAtom::getNextNSamples(uint32 startSampleNum,
             debugOffset = sampleFileOffset;
 
             PVMF_MP4FFPARSER_LOGMEDIASAMPELSTATEVARIABLES((0, "TrackFragmentAtom::getNextNSamples- Track Fragment Run Offset[%d] =%d", s, tfrunoffset));
-            PVMF_MP4FFPARSER_LOGMEDIASAMPELSTATEVARIABLES((0, "TrackFragmentAtom::getNextNSamples- pgau->info[%d].len =%d", s, pgau->info[s].len));
-            PVMF_MP4FFPARSER_LOGMEDIASAMPELSTATEVARIABLES((0, "TrackFragmentAtom::getNextNSamples- pgau->info[%d].ts_delta =%d", s, pgau->info[s].ts_delta));
-            PVMF_MP4FFPARSER_LOGMEDIASAMPELSTATEVARIABLES((0, "TrackFragmentAtom::getNextNSamples- pgau->info[%d].ts =%d", s, pgau->info[s].ts));
-            PVMF_MP4FFPARSER_LOGMEDIASAMPELSTATEVARIABLES((0, "TrackFragmentAtom::getNextNSamples- Offset =%d", debugOffset));
+            PVMF_MP4FFPARSER_LOGMEDIASAMPELSTATEVARIABLES((0, "TrackFragmentAtom::getNextNSamples- pgau->info[%u].len =%u", s, pgau->info[s].len));
+            PVMF_MP4FFPARSER_LOGMEDIASAMPELSTATEVARIABLES((0, "TrackFragmentAtom::getNextNSamples- pgau->info[%u].ts_delta =%u", s, pgau->info[s].ts_delta));
+            PVMF_MP4FFPARSER_LOGMEDIASAMPELSTATEVARIABLES((0, "TrackFragmentAtom::getNextNSamples- pgau->info[%u].ts =%u", s, Oscl_Int64_Utils::get_uint64_lower32(pgau->info[s].ts)));
+            PVMF_MP4FFPARSER_LOGMEDIASAMPELSTATEVARIABLES((0, "TrackFragmentAtom::getNextNSamples- Offset =%u", debugOffset));
 
             s++;
             StartReadingFromSampleNum++;
@@ -779,7 +787,7 @@ TrackFragmentAtom::getNextNSamples(uint32 startSampleNum,
 }
 
 TrackFragmentRunAtom *
-TrackFragmentAtom::getTrackFragmentRunForSampleNum(uint32 samplenum, uint32 &sampleCount)
+TrackFragmentAtom::getTrackFragmentRunForSampleNum(uint32 samplenum, uint32 &sampleCount) const
 {
     if (_pTrackFragmentRunAtomVec != NULL)
     {
@@ -798,8 +806,9 @@ TrackFragmentAtom::getTrackFragmentRunForSampleNum(uint32 samplenum, uint32 &sam
     }
     return NULL;
 }
+
 uint32
-TrackFragmentAtom::getSampleNumberFromTimestamp(uint32 time)
+TrackFragmentAtom::getSampleNumberFromTimestamp(uint64 time) const
 {
     if (_pTrackFragmentRunAtomVec != NULL)
     {
@@ -814,7 +823,7 @@ TrackFragmentAtom::getSampleNumberFromTimestamp(uint32 time)
             samplecount = (*_pTrackFragmentRunAtomVec)[idx]->getSampleCount();
             for (uint32 idy = 0; idy < samplecount; idy++)
             {
-                if (time >= (uint32)(*trackFragmentRunSampleInfo)[idy]->_sample_timestamp)
+                if (time >= (*trackFragmentRunSampleInfo)[idy]->_sample_timestamp)
                 {
                     return samplenum;
                 }
@@ -826,8 +835,8 @@ TrackFragmentAtom::getSampleNumberFromTimestamp(uint32 time)
     return 0;
 }
 
-uint32
-TrackFragmentAtom::getTimestampForSampleNumber(uint32 sampleNumber)
+MP4_ERROR_CODE
+TrackFragmentAtom::getTimestampForSampleNumber(uint32 sampleNumber, uint64& aTimeStamp) const
 {
     if (_pTrackFragmentRunAtomVec != NULL)
     {
@@ -843,14 +852,14 @@ TrackFragmentAtom::getTimestampForSampleNumber(uint32 sampleNumber)
             {
                 if (sampleNumber == idy + 1)
                 {
-                    return Oscl_Int64_Utils::get_uint64_lower32(
-                               (*trackFragmentRunSampleInfo)[idy]->_sample_timestamp);
+                    aTimeStamp = (*trackFragmentRunSampleInfo)[idy]->_sample_timestamp;
+                    return EVERYTHING_FINE;
                 }
             }
         }
 
     }
-    return 0;
+    return DEFAULT_ERROR;
 }
 
 int32
@@ -878,7 +887,7 @@ TrackFragmentAtom::getNextBundledAccessUnits(uint32 *n, uint32 totalSampleRead,
     return nReturn;
 }
 
-uint64 TrackFragmentAtom::getBaseDataOffset()
+uint64 TrackFragmentAtom::getBaseDataOffset() const
 {
     if (_pTrackFragmentHeaderAtom != NULL)
     {
@@ -887,16 +896,17 @@ uint64 TrackFragmentAtom::getBaseDataOffset()
     return 0;
 }
 
-uint32 TrackFragmentAtom::getSampleCount()
+uint32 TrackFragmentAtom::getSampleCount() const
 {
     return 0;
 }
-Oscl_Vector<TFrunSampleTable*, OsclMemAllocator>* TrackFragmentAtom::getSampleTable()
+
+Oscl_Vector<TFrunSampleTable*, OsclMemAllocator>* TrackFragmentAtom::getSampleTable() const
 {
     return NULL;
 }
 
-uint32 TrackFragmentAtom::getSampleDescriptionIndex()
+uint32 TrackFragmentAtom::getSampleDescriptionIndex() const
 {
     if (_pTrackFragmentHeaderAtom != NULL)
     {
@@ -904,7 +914,8 @@ uint32 TrackFragmentAtom::getSampleDescriptionIndex()
     }
     return 0;
 }
-uint32 TrackFragmentAtom::getDefaultSampleDuration()
+
+uint32 TrackFragmentAtom::getDefaultSampleDuration() const
 {
     if (_pTrackFragmentHeaderAtom != NULL)
     {
@@ -912,7 +923,8 @@ uint32 TrackFragmentAtom::getDefaultSampleDuration()
     }
     return 0;
 }
-uint32 TrackFragmentAtom::getDefaultSampleSize()
+
+uint32 TrackFragmentAtom::getDefaultSampleSize() const
 {
     if (_pTrackFragmentHeaderAtom != NULL)
     {
@@ -920,7 +932,8 @@ uint32 TrackFragmentAtom::getDefaultSampleSize()
     }
     return 0;
 }
-uint32 TrackFragmentAtom::getDefaultSampleFlags()
+
+uint32 TrackFragmentAtom::getDefaultSampleFlags() const
 {
     if (_pTrackFragmentHeaderAtom != NULL)
     {
@@ -929,7 +942,7 @@ uint32 TrackFragmentAtom::getDefaultSampleFlags()
     return 0;
 }
 
-uint32 TrackFragmentAtom::getTotalNumSampleInTraf()
+uint32 TrackFragmentAtom::getTotalNumSampleInTraf() const
 {
     uint32 totalSampleNum = 0;
     if (_pTrackFragmentRunAtomVec != NULL)
@@ -944,14 +957,13 @@ uint32 TrackFragmentAtom::getTotalNumSampleInTraf()
     return totalSampleNum;
 }
 
-
 int32
 TrackFragmentAtom::peekNextNSamples(uint32 startSampleNum,
                                     uint32 *n, uint32 totalSampleRead,
                                     MediaMetaInfo *mInfo)
 {
     uint32  numSamplesInCurrentTrackFragmentRun = 0;
-    int32 currTSBase = 0;
+    uint64 currTSBase = 0;
     uint32 samplesLeftInChunk = 0;
     uint32 numSamples = 0;
     _startTrackFragmentTSOffset = 0;
@@ -1053,7 +1065,7 @@ TrackFragmentAtom::peekNextNSamples(uint32 startSampleNum,
             Oscl_Vector<TFrunSampleTable*, OsclMemAllocator>* _tfRunSampleInfo = tfRun->getSampleTable();
             if (_tfRunSampleInfo != NULL)
             {
-                currTSBase =  Oscl_Int64_Utils::get_uint64_lower32((*_tfRunSampleInfo)[k]->_sample_timestamp);
+                currTSBase = (*_tfRunSampleInfo)[k]->_sample_timestamp;
                 tempSize = (*_tfRunSampleInfo)[k]->_sample_size;
                 tsDelta = (*_tfRunSampleInfo)[k]->_sample_duration;
             }
@@ -1133,9 +1145,9 @@ TrackFragmentAtom::peekNextBundledAccessUnits(uint32 *n, uint32 totalSampleRead,
 }
 
 
-int32 TrackFragmentAtom::resetPlayback(uint32 time, uint32 trun_number, uint32 sample_num)
+uint64 TrackFragmentAtom::resetPlayback(uint64 time, uint32 trun_number, uint32 sample_num)
 {
-    int32 Return = -1;
+    uint64 Return = 0;
     uint32 samplesInPrevTrun = 0;
 
     for (uint32 idx = 0; idx < trun_number - 1; idx++)
@@ -1149,8 +1161,7 @@ int32 TrackFragmentAtom::resetPlayback(uint32 time, uint32 trun_number, uint32 s
         Oscl_Vector<TFrunSampleTable*, OsclMemAllocator>* _tfRunSampleInfo = trackFragmentRunAtom->getSampleTable();
         if (_tfRunSampleInfo != NULL)
         {
-            uint32 TimeStamp = Oscl_Int64_Utils::get_uint64_lower32(
-                                   (*_tfRunSampleInfo)[sample_num-1]->_sample_timestamp);
+            uint64 TimeStamp = (*_tfRunSampleInfo)[sample_num-1]->_sample_timestamp;
             if (time >= TimeStamp)
             {
                 _currentTrackFragmentRunSampleNumber = samplesInPrevTrun + (sample_num - 1);
@@ -1159,18 +1170,18 @@ int32 TrackFragmentAtom::resetPlayback(uint32 time, uint32 trun_number, uint32 s
                 Return = time;
             }
         }
-        _trackEndDuration = trackFragmentRunAtom->_sampleTimeStamp;
+        _trackEndDuration = trackFragmentRunAtom->GetSampleTimeStamp();
         for (uint32 idx = trun_number; idx < _pTrackFragmentRunAtomVec->size(); idx++)
         {
             trackFragmentRunAtom = (*_pTrackFragmentRunAtomVec)[idx];
             trackFragmentRunAtom->setSampleDurationAndTimeStampFromSampleNum(0,
-                    Oscl_Int64_Utils::get_uint64_lower32(_trackEndDuration),
+                    _trackEndDuration,
                     _default_duration);
-            _trackEndDuration = trackFragmentRunAtom->_sampleTimeStamp;
+            _trackEndDuration = trackFragmentRunAtom->GetSampleTimeStamp();
         }
 
         _pTrackDurationContainer->updateTrackDurationForTrackId(trackId,
-                Oscl_Int64_Utils::get_uint64_lower32(_trackEndDuration));
+                _trackEndDuration);
     }
     PVMF_MP4FFPARSER_LOGMEDIASAMPELSTATEVARIABLES((0, "TrackFragmentAtom::Return TS =%d", Return));
 
@@ -1178,9 +1189,9 @@ int32 TrackFragmentAtom::resetPlayback(uint32 time, uint32 trun_number, uint32 s
 
 }
 
-int32 TrackFragmentAtom::resetPlayback(uint32 time)
+uint64 TrackFragmentAtom::resetPlayback(uint64 time)
 {
-    int32 Return = -1;
+    int64 Return = -1;
     if (_pTrackFragmentRunAtomVec != NULL)
     {
         uint32 samplecount = 0;
@@ -1195,7 +1206,7 @@ int32 TrackFragmentAtom::resetPlayback(uint32 time)
             samplecount = (*_pTrackFragmentRunAtomVec)[idx]->getSampleCount();
             for (uint32 idy = 0; idy < samplecount; idy++)
             {
-                uint32 TimeStamp = Oscl_Int64_Utils::get_uint64_lower32((*trackFragmentRunSampleInfo)[idy]->_sample_timestamp);
+                uint64 TimeStamp = (*trackFragmentRunSampleInfo)[idy]->_sample_timestamp;
                 if (time >= TimeStamp)
                 {
                     _currentTrackFragmentRunSampleNumber = idy;
@@ -1206,17 +1217,17 @@ int32 TrackFragmentAtom::resetPlayback(uint32 time)
                 }
 
             }
-            _trackEndDuration = tfrun->_sampleTimeStamp;
+            _trackEndDuration = tfrun->GetSampleTimeStamp();
             for (uint32 idx = 1; idx < _pTrackFragmentRunAtomVec->size(); idx++)
             {
                 tfrun = (*_pTrackFragmentRunAtomVec)[idx];
                 tfrun->setSampleDurationAndTimeStampFromSampleNum(0,
-                        Oscl_Int64_Utils::get_uint64_lower32(_trackEndDuration),
+                        _trackEndDuration,
                         _default_duration);
-                _trackEndDuration = tfrun->_sampleTimeStamp;
+                _trackEndDuration = tfrun->GetSampleTimeStamp();
             }
             _pTrackDurationContainer->updateTrackDurationForTrackId(trackId,
-                    Oscl_Int64_Utils::get_uint64_lower32(_trackEndDuration));
+                    _trackEndDuration);
 
             if (Return != -1)
             {
@@ -1227,6 +1238,7 @@ int32 TrackFragmentAtom::resetPlayback(uint32 time)
     PVMF_MP4FFPARSER_LOGMEDIASAMPELSTATEVARIABLES((0, "TrackFragmentAtom::Return TS =%d", Return));
     return Return;
 }
+
 void TrackFragmentAtom::resetPlayback()
 {
     _currentTrackFragmentRunSampleNumber = 0;
@@ -1235,17 +1247,17 @@ void TrackFragmentAtom::resetPlayback()
     _currentPlaybackSampleTimestamp = _startTrackFragmentTSOffset;
 }
 
-uint32 TrackFragmentAtom::getCurrentTrafDuration()
+uint64 TrackFragmentAtom::getCurrentTrafDuration()
 {
-    return Oscl_Int64_Utils::get_uint64_lower32(_trackEndDuration);
+    return _trackEndDuration;
 }
 
 int32
-TrackFragmentAtom::getOffsetByTime(uint32 id, uint32 ts, int32* sampleFileOffset)
+TrackFragmentAtom::getOffsetByTime(uint32 id, uint64 time, uint32* sampleFileOffset)
 {
     OSCL_UNUSED_ARG(id);
-    uint32 time = ts;
-    uint32 prevTime = 0, prevOffset = 0;
+    uint64 prevTime = 0;
+    uint32 prevOffset = 0;
     if (_pTrackFragmentRunAtomVec != NULL)
     {
         for (uint32 idx = 0; idx < _pTrackFragmentRunAtomVec->size(); idx++)
@@ -1259,11 +1271,11 @@ TrackFragmentAtom::getOffsetByTime(uint32 id, uint32 ts, int32* sampleFileOffset
 
                     for (uint32 i = 0; i < _tfRunSampleInfo->size(); i++)
                     {
-                        if (time < Oscl_Int64_Utils::get_uint64_lower32((*_tfRunSampleInfo)[i]->_sample_timestamp))
+                        if (time < (*_tfRunSampleInfo)[i]->_sample_timestamp)
                         {
-                            uint32 tmp = Oscl_Int64_Utils::get_uint64_lower32((*_tfRunSampleInfo)[i]->_sample_timestamp);
-                            uint32 diffwithbeforeTS = time - prevTime;
-                            uint32 diffwithafterTS = tmp - time;
+                            uint64 tmp = (*_tfRunSampleInfo)[i]->_sample_timestamp;
+                            uint64 diffwithbeforeTS = time - prevTime;
+                            uint64 diffwithafterTS = tmp - time;
                             if (diffwithbeforeTS > diffwithafterTS)
                             {
                                 *sampleFileOffset = (*_tfRunSampleInfo)[i]->_sample_offset;;
@@ -1275,7 +1287,7 @@ TrackFragmentAtom::getOffsetByTime(uint32 id, uint32 ts, int32* sampleFileOffset
                                 return EVERYTHING_FINE;
                             }
                         }
-                        prevTime = Oscl_Int64_Utils::get_uint64_lower32((*_tfRunSampleInfo)[i]->_sample_timestamp);
+                        prevTime = (*_tfRunSampleInfo)[i]->_sample_timestamp;
                         prevOffset = (*_tfRunSampleInfo)[i]->_sample_offset;
                     }
                 }
@@ -1287,7 +1299,7 @@ TrackFragmentAtom::getOffsetByTime(uint32 id, uint32 ts, int32* sampleFileOffset
 }
 
 
-void TrackDurationContainer::updateTrackDurationForTrackId(int32 id, uint32 duration)
+void TrackDurationContainer::updateTrackDurationForTrackId(int32 id, uint64 duration)
 {
     if (_pTrackdurationInfoVec != NULL)
     {

@@ -360,7 +360,7 @@ PVMFStatus PVMFMP4FFParserNode::DoGetNodeMetadataValues()
     }
 
     uint32 lcv = 0;
-    // Retrieve the track ID list
+    // Retrieve the track ID list.
     OsclExclusiveArrayPtr<uint32> trackidlistexclusiveptr;
     uint32* trackidlist = NULL;
     uint32 numTracks = (uint32)(iMP4FileHandle->getNumTracks());
@@ -1100,8 +1100,9 @@ PVMFStatus PVMFMP4FFParserNode::InitMetaData()
         if (timescale > 0 && timescale != 1000)
         {
             // Convert to milliseconds
-            MediaClockConverter mcc(timescale, duration);
-            durationms = mcc.get_converted_ts(1000);
+            MediaClockConverter mcc(timescale);
+            mcc.set_clock(duration64, 0);
+            duration = durationms = mcc.get_converted_ts(1000);
         }
         CreateDurationInfoMsg(durationms);
     }
@@ -1112,9 +1113,7 @@ PVMFStatus PVMFMP4FFParserNode::InitMetaData()
         if (iMP4FileHandle != NULL)
         {
             MediaClockConverter mcc(iMP4FileHandle->getMovieTimescale());
-            uint32 movieduration =
-                Oscl_Int64_Utils::get_uint64_lower32(iMP4FileHandle->getMovieDuration());
-            mcc.update_clock(movieduration);
+            mcc.set_clock(iMP4FileHandle->getMovieDuration(), 0);
             uint32 moviedurationInMS = mcc.get_converted_ts(1000);
             if ((download_progress_interface != NULL) && (moviedurationInMS != 0))
             {

@@ -128,26 +128,26 @@ class MovieAtom : public Atom
         //   SampleOffset
         //     [OUT] Number of bytes from start of file to the beginning of sample.
         //
-        int32 getMediaSample(uint32 sampleNumber, uint32 id, uint8 *buf, int32 &size, uint32 &index, uint32 &SampleOffset);
+        int32 getMediaSample(uint32 sampleNumber, uint32 id, uint8 *buf, uint32 &size, uint32 &index, uint32 &SampleOffset);
 
         MP4_ERROR_CODE getKeyMediaSampleNumAt(uint32 aTrackId,
                                               uint32 aKeySampleNum,
                                               GAU    *pgau);
 
-        int32 getPrevKeyMediaSample(uint32 inputtimestamp,
+        int32 getPrevKeyMediaSample(uint64 inputtimestamp,
                                     uint32 &aKeySampleNum,
                                     uint32 id,
                                     uint32 *n,
                                     GAU    *pgau);
-        int32 getNextKeyMediaSample(uint32 inputtimestamp,
+        int32 getNextKeyMediaSample(uint64 inputtimestamp,
                                     uint32 &aKeySampleNum,
                                     uint32 id,
                                     uint32 *n,
                                     GAU    *pgau);
 
 
-        uint32 getTimestampForCurrentSample(uint32 id);
-        int32 getOffsetByTime(uint32 id, uint32 ts, int32* sampleFileOffset);
+        uint64 getTimestampForCurrentSample(uint32 id);
+        int32 getOffsetByTime(uint32 id, uint64 ts, uint32* sampleFileOffset);
 
         uint32 getNumKeyFrames(uint32 trackid)
         {
@@ -187,7 +187,7 @@ class MovieAtom : public Atom
             }
         }
 
-        OSCL_wString& getCreationDate()
+        const OSCL_wString& getCreationDate()
         {
             if (_pmovieHeaderAtom != NULL)
             {
@@ -224,9 +224,9 @@ class MovieAtom : public Atom
             return _fileType;
         }
 
-        int32 getTimestampForRandomAccessPoints(uint32 id, uint32 *num, uint32 *tsBuf, uint32* numBuf, uint32* offsetBuf);
+        int32 getTimestampForRandomAccessPoints(uint32 id, uint32 *num, uint64 *tsBuf, uint32* numBuf, uint32* offsetBuf);
 
-        int32 getTimestampForRandomAccessPointsBeforeAfter(uint32 id, uint32 ts, uint32 *tsBuf, uint32* numBuf,
+        int32 getTimestampForRandomAccessPointsBeforeAfter(uint32 id, uint64 ts, uint64 *tsBuf, uint32* numBuf,
                 uint32& numsamplestoget,
                 uint32 howManyKeySamples);
         int32 getNumTracks()
@@ -503,11 +503,11 @@ class MovieAtom : public Atom
 
         MP4_ERROR_CODE getMaxTrackTimeStamp(uint32 trackID,
                                             uint32 fileSize,
-                                            uint32& timeStamp);
+                                            uint64& timeStamp);
 
         MP4_ERROR_CODE getSampleNumberClosestToTimeStamp(uint32 trackID,
                 uint32 &sampleNumber,
-                uint32 timeStamp,
+                uint64 timeStamp,
                 uint32 sampleOffset = 0);
 
 

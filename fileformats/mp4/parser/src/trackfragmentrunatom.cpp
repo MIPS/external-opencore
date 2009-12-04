@@ -82,7 +82,7 @@ TrackFragmentRunAtom ::TrackFragmentRunAtom(MP4_FF_FILE *fp, uint32 size, uint32
     _sample_count = 0;
     _first_sample_flags = 0;
     _sampleTimeStamp = trackDuration;
-    tr_flag = getFlags();
+    uint32 tr_flag = getFlags();
     _trun_start_offset  = currentTrunOffset;
     _samplesToBeParsed = 0;
     _partialTrunOffset = 0;
@@ -90,7 +90,7 @@ TrackFragmentRunAtom ::TrackFragmentRunAtom(MP4_FF_FILE *fp, uint32 size, uint32
     iLogger = PVLogger::GetLoggerObject("mp4ffparser");
     iStateVarLogger = PVLogger::GetLoggerObject("mp4ffparser_mediasamplestats");
     iParsedDataLogger = PVLogger::GetLoggerObject("mp4ffparser_parseddata");
-
+    PVMF_MP4FFPARSER_LOGMEDIASAMPELSTATEVARIABLES((0, "TrackFragmentRunAtom ::TrackFragmentRunAtom In"));
     if (_success)
     {
         if (!AtomUtils::read32(fp, _sample_count))
@@ -166,6 +166,7 @@ TrackFragmentRunAtom ::TrackFragmentRunAtom(MP4_FF_FILE *fp, uint32 size, uint32
                 PVMF_MP4FFPARSER_LOGMEDIASAMPELSTATEVARIABLES((0, "Track Fragment Run=>Sample Number\t\t\t=%d", idx));
                 PVMF_MP4FFPARSER_LOGMEDIASAMPELSTATEVARIABLES((0, "Track Fragment Run=>Sample Offset\t\t\t=%d", sample_offset));
                 PVMF_MP4FFPARSER_LOGMEDIASAMPELSTATEVARIABLES((0, "Track Fragment Run=>Sample Sample Size\t\t=%d", pTFrunSampleTable->_sample_size));
+                PVMF_MP4FFPARSER_LOGMEDIASAMPELSTATEVARIABLES((0, "Track Fragment Run=>Sample Ts\t\t\t=%u", _sampleTimeStamp));
                 sample_offset += pTFrunSampleTable->_sample_size;
                 sigmaSampleSize += pTFrunSampleTable->_sample_size;
                 _sampleTimeStamp += pTFrunSampleTable->_sample_duration;
@@ -228,7 +229,7 @@ void TrackFragmentRunAtom::ParseTrunAtom(MP4_FF_FILE *fp,
     for (uint32 idx = 0; idx < _samplesToBeParsed ; idx++)
     {
         TFrunSampleTable *pTFrunSampleTable = NULL;
-        PV_MP4_FF_NEW(fp->auditCB, TFrunSampleTable, (fp, tr_flag, sample_offset, _sampleTimeStamp), pTFrunSampleTable);
+        PV_MP4_FF_NEW(fp->auditCB, TFrunSampleTable, (fp, getFlags(), sample_offset, _sampleTimeStamp), pTFrunSampleTable);
         _pTFrunSampleTable->push_back(pTFrunSampleTable);
         if (pTFrunSampleTable != NULL)
         {
@@ -257,13 +258,14 @@ void TrackFragmentRunAtom::setDefaultDuration(uint32 default_duration)
         if (_pTFrunSampleTable != NULL)
         {
             pTFrunSampleTable = (*_pTFrunSampleTable)[idx];
-            pTFrunSampleTable->setDefaultDuration(Oscl_Int64_Utils::get_uint64_lower32(_sampleTimeStamp), default_duration);
+            pTFrunSampleTable->setDefaultDuration(_sampleTimeStamp, default_duration);
             _sampleTimeStamp += default_duration;
         }
     }
 
 }
-void TrackFragmentRunAtom::setSampleDurationAndTimeStampFromSampleNum(uint32 startSampleNum, uint32 startSampleTS, uint32 default_duration)
+
+void TrackFragmentRunAtom::setSampleDurationAndTimeStampFromSampleNum(uint32 startSampleNum, uint64 startSampleTS, uint32 default_duration)
 {
     _sampleTimeStamp = startSampleTS;
     for (uint32 idx = startSampleNum; idx < _sample_count ; idx++)
@@ -276,13 +278,14 @@ void TrackFragmentRunAtom::setSampleDurationAndTimeStampFromSampleNum(uint32 sta
             {
                 default_duration = pTFrunSampleTable->_sample_duration;
             }
-            pTFrunSampleTable->setDefaultDuration(Oscl_Int64_Utils::get_uint64_lower32(_sampleTimeStamp), default_duration);
-            PVMF_MP4FFPARSER_LOGMEDIASAMPELSTATEVARIABLES((0, "Track Fragment Run=>Set Sample TS\t>>>>>>>>>>>>=%d", pTFrunSampleTable->_sample_timestamp));
+            pTFrunSampleTable->setDefaultDuration(_sampleTimeStamp, default_duration);
+            PVMF_MP4FFPARSER_LOGMEDIASAMPELSTATEVARIABLES((0, "Track Fragment Run=>Set Sample TS\t>>>>>>>>>>>>=%u", Oscl_Int64_Utils::get_uint64_lower32(pTFrunSampleTable->_sample_timestamp)));
             _sampleTimeStamp += default_duration;
         }
     }
 
 }
+
 void TrackFragmentRunAtom::setDefaultSampleSize(uint32 default_samplesize, uint32 &sigmaSampleSize)
 {
     uint32 sumSampleSize = 0;
@@ -301,4 +304,3 @@ void TrackFragmentRunAtom::setDefaultSampleSize(uint32 default_samplesize, uint3
     }
     sigmaSampleSize = sumSampleSize;
 }
-

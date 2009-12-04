@@ -46,7 +46,9 @@
 
 #include "oscl_scheduler.h"
 
-#define PV_ERROR -1
+#ifndef PVMF_RETURN_CODES_H_INCLUDED
+#include "pvmf_return_codes.h"
+#endif
 
 class CompositionOffsetAtom : public FullAtom,
         public OsclTimerObject
@@ -62,32 +64,32 @@ class CompositionOffsetAtom : public FullAtom,
         virtual ~CompositionOffsetAtom();
 
         // Member gets and sets
-        uint32 getEntryCount() const
+        uint32 GetEntryCount() const
         {
             return _entryCount;
         }
 
-        uint32 getSampleCountAt(int32 index);
-        int32 getSampleOffsetAt(int32 index);
-        int32 getTimeOffsetForSampleNumberPeek(uint32 sampleNum);
-        int32 getTimeOffsetForSampleNumber(uint32 num);
-        int32 getTimeOffsetForSampleNumberGet(uint32 num);
-        void setSamplesCount(uint32 SamplesCount);
+        MP4_ERROR_CODE GetSampleCountAt(uint32 aIndex, uint32& aSampleCount);
+        MP4_ERROR_CODE GetSampleOffsetAt(uint32 aIndex, uint32& aSampleOffset);
+        MP4_ERROR_CODE GetTimeOffsetForSampleNumberPeek(uint32 aSampleNum, uint32& aTimeOffset);
+        MP4_ERROR_CODE GetTimeOffsetForSampleNumber(uint32 aSampleNum, uint32& aTimeOffset);
+        MP4_ERROR_CODE GetTimeOffsetForSampleNumberGet(uint32 aSampleNum, uint32& aTimeOffset);
+        void SetSamplesCount(uint32 aSamplesCount);
 
-        int32 resetStateVariables();
-        int32 resetStateVariables(uint32 sampleNum);
+        MP4_ERROR_CODE ResetStateVariables();
+        MP4_ERROR_CODE ResetStateVariables(uint32 aSampleNum);
+        MP4_ERROR_CODE ResetPeekwithGet();
 
-        int32 resetPeekwithGet();
-        uint32 getCurrPeekSampleCount()
+        uint32 GetCurrPeekSampleCount() const
         {
             return _currPeekSampleCount;
         }
 
         //Marker Table Related Functions
-        int32 getTimeOffsetFromMT(uint32 samplenum, uint32 currEC, uint32 currSampleCount);
-        int32 createMarkerTable();
-        uint32 populateMarkerTable();
-        void deleteMarkerTable();
+        MP4_ERROR_CODE GetTimeOffsetFromMT(uint32 aSampleNum, uint32 aCurrEC, uint32 aCurrSampleCount, uint32& aTimeOffset);
+        PVMFStatus CreateMarkerTable();
+        uint32 PopulateMarkerTable();
+        void DeleteMarkerTable();
 
     private:
         bool ParseEntryUnit(uint32 entry_cnt);
@@ -113,9 +115,6 @@ class CompositionOffsetAtom : public FullAtom,
         uint32 MT_j;
 
         uint32 _mediaType;
-
-        // For visual samples
-        uint32 _currentTimestamp;
 
         MP4_FF_FILE *_fileptr;
 

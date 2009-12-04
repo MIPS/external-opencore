@@ -44,14 +44,25 @@ OSCL_EXPORT_REF void MediaClockConverter::set_value(const MediaClockConverter& s
         OSCL_LEAVE(OsclErrCorrupt);
     }
 
-    uint64 value = (uint64(src.get_wrap_count())) << 32;
+    uint64 value = 0;
+    if (src.current_ts64_upper32 == 0)
+    {
+        value = (uint64(src.get_wrap_count())) << 32;
+    }
+    else
+    {
+        value = (uint64(src.current_ts64_upper32)) << 32;
+    }
+
 
     value += src.get_current_timestamp();
 
     // rounding up
     value = (uint64(value) * timescale + uint64(src.get_timescale() - 1)) / src.get_timescale();
 
-    wrap_count = ((uint32)(value >> 32)) % timescale;
+    current_ts64_upper32 = (uint32)(value >> 32);
+
+    wrap_count = current_ts64_upper32 % timescale;
 
     current_ts = (uint32)(value & 0xFFFFFFFF);
 }
@@ -72,7 +83,15 @@ OSCL_EXPORT_REF void MediaClockConverter::set_timescale(uint32 new_timescale)
         OSCL_LEAVE(OsclErrCorrupt);
     }
 
-    uint64 value = ((uint64)wrap_count) << 32;
+    uint64 value = 0;
+    if (current_ts64_upper32 == 0)
+    {
+        value = ((uint64)wrap_count) << 32;
+    }
+    else
+    {
+        value = ((uint64)current_ts64_upper32) << 32;
+    }
     value += current_ts;
 
     // rounding up
@@ -80,7 +99,8 @@ OSCL_EXPORT_REF void MediaClockConverter::set_timescale(uint32 new_timescale)
 
     timescale = new_timescale;
 
-    wrap_count = ((uint32)(value >> 32)) % timescale;
+    current_ts64_upper32 = (uint32)(value >> 32);
+    wrap_count = current_ts64_upper32 % timescale;
 
     current_ts = (uint32)(value & 0xFFFFFFFF);
 }
@@ -109,8 +129,8 @@ OSCL_EXPORT_REF void MediaClockConverter::set_clock_other_timescale(uint32 value
     new_value = new_value + in_timescale64Comp ;
     new_value /= in_timescale;
 
-    wrap_count = ((uint32)(new_value >> 32)) % timescale;
-
+    current_ts64_upper32 = ((uint32)(new_value >> 32));
+    wrap_count = current_ts64_upper32 % timescale;
     current_ts = (uint32)(new_value & 0xFFFFFFFF);
 }
 
@@ -165,7 +185,6 @@ OSCL_EXPORT_REF uint32 MediaClockConverter::get_timediff_and_update_clock(uint32
     return 0;
 }
 
-
 //////////////////////////////////////////////////////////////////////////////////
 OSCL_EXPORT_REF bool MediaClockConverter::update_clock(uint32 new_ts)
 {
@@ -196,6 +215,23 @@ OSCL_EXPORT_REF bool MediaClockConverter::update_clock(uint32 new_ts)
 }
 
 //////////////////////////////////////////////////////////////////////////////////
+OSCL_EXPORT_REF bool MediaClockConverter::update_clock(uint64 new_ts)
+{
+    uint64 current_ts64 = 0;
+    current_ts64 = ((uint64)current_ts64_upper32) << 32;
+    current_ts64 += current_ts;
+    uint64 diff = new_ts - current_ts64;
+    if (diff < MISORDER_THRESHOLD)
+    {
+        current_ts = (uint32)(new_ts & 0xFFFFFFFF);
+        current_ts64_upper32 = ((uint32)(new_ts >> 32));
+        return true;
+    }
+    // otherwise this an earlier value so ignore it.
+    return false;
+}
+
+//////////////////////////////////////////////////////////////////////////////////
 OSCL_EXPORT_REF uint32 MediaClockConverter::get_converted_ts(uint32 new_timescale) const
 {
     // Timescale value cannot be zero
@@ -204,11 +240,41 @@ OSCL_EXPORT_REF uint32 MediaClockConverter::get_converted_ts(uint32 new_timescal
     {
         OSCL_LEAVE(OsclErrCorrupt);
     }
-
-    uint64 value = ((uint64)wrap_count) << 32;
+    uint64 value = 0;
+    if (current_ts64_upper32)
+    {
+        value = ((uint64)current_ts64_upper32) << 32;
+    }
+    else
+    {
+        value = ((uint64)wrap_count) << 32;
+    }
     // rounding up
     value = ((value + uint64(current_ts)) * uint64(new_timescale) + uint64(timescale - 1)) / uint64(timescale);
-
     return ((uint32) value);
 
 }
+
+OSCL_EXPORT_REF uint64 MediaClockConverter::get_converted_ts64(uint32 new_timescale) const
+{
+    //This function ignores wrap_count
+    // Timescale value cannot be zero
+    OSCL_ASSERT(timescale != 0);
+    if (0 == timescale)
+    {
+        OSCL_LEAVE(OsclErrCorrupt);
+    }
+
+    uint64 value = ((uint64)current_ts64_upper32) << 32;
+    // rounding up
+    value = ((value + uint64(current_ts)) * uint64(new_timescale) + uint64(timescale - 1)) / uint64(timescale);
+    return value;
+}
+
+OSCL_EXPORT_REF uint64 MediaClockConverter::get_current_timestamp64() const
+{
+    uint64 value = ((uint64)current_ts64_upper32) << 32;
+    value = value + uint64(current_ts);
+    return value;
+}
+

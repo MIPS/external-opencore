@@ -50,6 +50,8 @@
 
 #define MILLISECOND_TIMESCALE 1000
 
+static const uint32 MAX32BITUINT = 0xFFFFFFFF;
+
 PVMFMP4FFParserNode::PVMFMP4FFParserNode(int32 aPriority) :
         PVMFNodeInterfaceImpl(aPriority, "PVMFMP4FFParserNode"),
         iMP4FileHandle(NULL),
@@ -800,17 +802,16 @@ PVMFStatus PVMFMP4FFParserNode::GetTimestampForSampleNumber(PVMFTrackInfo& aTrac
     {
         return PVMFErrInvalidState;
     }
-
     // Retrieve the timestamp in track media timescale for the specified sample number
-    uint32 ts = iMP4FileHandle->getTimestampForSampleNumber(aTrackInfo.getTrackID(), aSampleNum);
-    if (ts == 0xFFFFFFFF)
+    uint64 ts = 0;
+    if (iMP4FileHandle->getTimestampForSampleNumber(aTrackInfo.getTrackID(), aSampleNum, ts) != EVERYTHING_FINE)
     {
         return PVMFFailure;
     }
 
     // Convert the timestamp from media timescale to milliseconds
     MediaClockConverter mcc(iMP4FileHandle->getTrackMediaTimescale(aTrackInfo.getTrackID()));
-    mcc.update_clock(ts);
+    mcc.set_clock(ts, 0);
     aTimestamp = mcc.get_converted_ts(1000);
 
     return PVMFSuccess;
@@ -828,8 +829,8 @@ PVMFStatus PVMFMP4FFParserNode::GetSampleNumberForTimestamp(PVMFTrackInfo& aTrac
 
     // Convert the timestamp to media timescale value
     MediaClockConverter mcc(1000);
-    mcc.update_clock(aTimestamp);
-    uint32 mediats = mcc.get_converted_ts(iMP4FileHandle->getTrackMediaTimescale(aTrackInfo.getTrackID()));
+    mcc.set_clock(aTimestamp, 0);
+    uint64 mediats = mcc.get_converted_ts64(iMP4FileHandle->getTrackMediaTimescale(aTrackInfo.getTrackID()));
 
     // Retrieve the sample number corresponding to the specified timestamp
     uint32 samplenum = 0;
@@ -926,7 +927,7 @@ PVMFStatus PVMFMP4FFParserNode::GetSyncSampleInfo(PVMFTrackInfo& aTrackInfo, PVM
     }
 
     // Allocate memory for the info
-    uint32* syncts = PVMF_BASE_NODE_ARRAY_NEW(uint32, numsamplestoget);
+    uint64* syncts = PVMF_BASE_NODE_ARRAY_NEW(uint64, numsamplestoget);
     uint32* syncfrnum = PVMF_BASE_NODE_ARRAY_NEW(uint32, numsamplestoget);
     if (syncts == NULL || syncfrnum == NULL)
     {
@@ -993,9 +994,9 @@ PVMFStatus PVMFMP4FFParserNode::GetSyncSampleInfo(PVMFSampleNumTSList& aList, PV
     }
 
     MediaClockConverter mcc1(1000);
-    mcc1.update_clock(aTargetTimeInMS);
-    uint32 targetTimestamp =
-        mcc1.get_converted_ts(iMP4FileHandle->getTrackMediaTimescale(aTrackInfo.getTrackID()));
+    mcc1.update_clock((uint32)aTargetTimeInMS);
+    uint64 targetTimestamp =
+        mcc1.get_converted_ts64(iMP4FileHandle->getTrackMediaTimescale(aTrackInfo.getTrackID()));
 
     int32 totalnum = 0;
     PVMFStatus status = GetNumberOfSyncSamples(aTrackInfo, totalnum);
@@ -1019,7 +1020,7 @@ PVMFStatus PVMFMP4FFParserNode::GetSyncSampleInfo(PVMFSampleNumTSList& aList, PV
         numsamplestoget = 2;
     }
     // Allocate memory for the info
-    uint32* syncts = PVMF_BASE_NODE_ARRAY_NEW(uint32, numsamplestoget + 1);
+    uint64* syncts = PVMF_BASE_NODE_ARRAY_NEW(uint64, numsamplestoget + 1);
     uint32* syncfrnum = PVMF_BASE_NODE_ARRAY_NEW(uint32, numsamplestoget + 1);
     oscl_memset(syncts, 0, numsamplestoget + 1);
     oscl_memset(syncfrnum, 0, numsamplestoget + 1);
@@ -1103,11 +1104,11 @@ PVMFStatus PVMFMP4FFParserNode::GetDataPositionForTimestamp(PVMFTrackInfo& aTrac
 
     // Convert the timestamp to media timescale value
     MediaClockConverter mcc(1000);
-    mcc.update_clock(aTimestamp);
-    uint32 mediats = mcc.get_converted_ts(iMP4FileHandle->getTrackMediaTimescale(aTrackInfo.getTrackID()));
+    mcc.set_clock(aTimestamp, 0);
+    uint64 mediats = mcc.get_converted_ts64(iMP4FileHandle->getTrackMediaTimescale(aTrackInfo.getTrackID()));
 
     // Retrieve the sample number corresponding to the specified timestamp
-    int32 fileoffset = 0;
+    uint32 fileoffset = 0;
     int32 retVal = iMP4FileHandle->getOffsetByTime(aTrackInfo.getTrackID(), mediats, &fileoffset, 0);
 
     if (retVal == EVERYTHING_FINE || retVal == END_OF_TRACK)
@@ -2487,7 +2488,8 @@ PVMFStatus PVMFMP4FFParserNode::DoSetDataSourcePosition()
     if (timescale > 0 && timescale != 1000)
     {
         // Convert to milliseconds
-        MediaClockConverter mcc(timescale, duration);
+        MediaClockConverter mcc(timescale);
+        mcc.set_clock(duration64, 0);
         duration = mcc.get_converted_ts(1000);
     }
     if ((targetNPT >= duration) && (PVMF_DATA_SOURCE_DIRECTION_REVERSE != iPlayBackDirection))
@@ -2501,7 +2503,7 @@ PVMFStatus PVMFMP4FFParserNode::DoSetDataSourcePosition()
             resetNPT = iMP4FileHandle->resetPlayback(0, (uint16)TRACK_NO_PER_RESET_PLAYBACK_CALL,
                        &trackList[i], seektosyncpoint);
             iNodeTrackPortList[i].iClockConverter->set_clock_other_timescale(*actualMediaDataTS, 1000);
-            iNodeTrackPortList[i].iTimestamp = iNodeTrackPortList[i].iClockConverter->get_current_timestamp();
+            iNodeTrackPortList[i].iTimestamp = iNodeTrackPortList[i].iClockConverter->get_current_timestamp64();
         }
 
         // Cancel callback notifications on Datastream
@@ -2548,7 +2550,7 @@ PVMFStatus PVMFMP4FFParserNode::DoSetDataSourcePosition()
     // Rest the video present before calling the resetPlayback Individually
     iMP4FileHandle->ResetVideoTrackPresentFlag();
 
-    int32 minFileOffset = 0x7FFFFFFF;
+    uint32 minFileOffset = 0x7FFFFFFF;
     if (0 != trackList[0])
     {
         tempNPT = targetNPT;        // For logging Purpose
@@ -2557,11 +2559,11 @@ PVMFStatus PVMFMP4FFParserNode::DoSetDataSourcePosition()
                     &tempTrackId, seektosyncpoint);
 
         MediaClockConverter mcc(1000);
-        mcc.update_clock(targetNPT);
-        uint32 mediats = mcc.get_converted_ts(iMP4FileHandle->getTrackMediaTimescale(tempTrackId));
+        mcc.set_clock(targetNPT, 0);
+        uint64 mediats64 = mcc.get_converted_ts64(iMP4FileHandle->getTrackMediaTimescale(tempTrackId));
 
-        int32 offset = 0;
-        int32 ret = iMP4FileHandle->getOffsetByTime(tempTrackId, mediats, &offset, 0);
+        uint32 offset = 0;
+        int32 ret = iMP4FileHandle->getOffsetByTime(tempTrackId, mediats64, &offset, 0);
         PVMF_MP4FFPARSERNODE_LOGDATATRAFFIC((0, "PVMFMP4FFParserNode::DoSetDataSourcePosition() getOffsetByTime ret %d Track %d NPT %d Offset %d",
                                              ret, trackList[0], targetNPT, offset));
         OSCL_UNUSED_ARG(ret);
@@ -2581,11 +2583,11 @@ PVMFStatus PVMFMP4FFParserNode::DoSetDataSourcePosition()
                     &tempTrackId, seektosyncpoint);
 
         MediaClockConverter mcc(1000);
-        mcc.update_clock(targetNPT);
-        uint32 mediats = mcc.get_converted_ts(iMP4FileHandle->getTrackMediaTimescale(tempTrackId));
+        mcc.set_clock(targetNPT, 0);
+        uint64 mediats64 = mcc.get_converted_ts64(iMP4FileHandle->getTrackMediaTimescale(tempTrackId));
 
-        int32 offset = 0;
-        int32 ret = iMP4FileHandle->getOffsetByTime(tempTrackId, mediats, &offset, 0);
+        uint32 offset = 0;
+        int32 ret = iMP4FileHandle->getOffsetByTime(tempTrackId, mediats64, &offset, 0);
         PVMF_MP4FFPARSERNODE_LOGDATATRAFFIC((0, "PVMFMP4FFParserNode::DoSetDataSourcePosition() getOffsetByTime ret %d Track %d NPT %d Offset %d",
                                              ret, trackList[1], targetNPT, offset));
         OSCL_UNUSED_ARG(ret);
@@ -2613,11 +2615,11 @@ PVMFStatus PVMFMP4FFParserNode::DoSetDataSourcePosition()
                                              targetNPT, tempNPT, trackList[2]));
 
         MediaClockConverter mcc(1000);
-        mcc.update_clock(tempNPT);
-        uint32 mediats = mcc.get_converted_ts(iMP4FileHandle->getTrackMediaTimescale(tempTrackId));
+        mcc.set_clock(tempNPT, 0);
+        uint64 mediats64 = mcc.get_converted_ts64(iMP4FileHandle->getTrackMediaTimescale(tempTrackId));
 
-        int32 offset = 0;
-        int32 ret = iMP4FileHandle->getOffsetByTime(tempTrackId, mediats, &offset, 0);
+        uint32 offset = 0;
+        int32 ret = iMP4FileHandle->getOffsetByTime(tempTrackId, mediats64, &offset, 0);
         PVMF_MP4FFPARSERNODE_LOGDATATRAFFIC((0, "PVMFMP4FFParserNode::DoSetDataSourcePosition() getOffsetByTime ret %d Track %d NPT %d Offset %d",
                                              ret, trackList[2], tempNPT, offset));
         OSCL_UNUSED_ARG(ret);
@@ -2642,7 +2644,7 @@ PVMFStatus PVMFMP4FFParserNode::DoSetDataSourcePosition()
 
     // First determine the track with the minimum timestamp after repositioning
     uint32 numSamples = 1;
-    uint32 mints = 0xFFFFFFFF;
+    uint32 mints = MAX32BITUINT;
     int32 retval = EVERYTHING_FINE;
     int32 *retValPerTrack = NULL;
     uint32 *retNumSamplesPerTrack = NULL;
@@ -2705,14 +2707,14 @@ PVMFStatus PVMFMP4FFParserNode::DoSetDataSourcePosition()
                 iNodeTrackPortList[i].iState = PVMP4FFNodeTrackPortInfo::TRACKSTATE_TRANSMITTING_GETDATA;
             }
 
-            iNodeTrackPortList[i].iTimestamp = iNodeTrackPortList[i].iClockConverter->get_current_timestamp();
+            iNodeTrackPortList[i].iTimestamp = iNodeTrackPortList[i].iClockConverter->get_current_timestamp64();
             iNodeTrackPortList[i].iFirstFrameAfterRepositioning = true;
             iNodeTrackPortList[i].iCurrentTextSampleEntry.Unbind();
             // convert target NPT to media timescale
             MediaClockConverter mcc(1000);
-            mcc.update_clock(targetNPT);
-            uint32 targetNPTtInMediaTimeScale =
-                mcc.get_converted_ts(iMP4FileHandle->getTrackMediaTimescale(iNodeTrackPortList[i].iTrackId));
+            mcc.set_clock(targetNPT, 0);
+            uint64 targetNPTtInMediaTimeScale =
+                mcc.get_converted_ts64(iMP4FileHandle->getTrackMediaTimescale(iNodeTrackPortList[i].iTrackId));
             iNodeTrackPortList[i].iTargetNPTInMediaTimeScale = targetNPTtInMediaTimeScale;
         }
         else
@@ -2735,7 +2737,7 @@ PVMFStatus PVMFMP4FFParserNode::DoSetDataSourcePosition()
         }
     }
 
-    if (mints == 0xFFFFFFFF)
+    if (mints == MAX32BITUINT)
     {
         mints = *actualNPT;
         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFMP4FFParserNode::DoSetDataSourcePosition() Minimum timestamp could not be determined so using the actual NPT %d", mints));
@@ -2824,13 +2826,13 @@ PVMFStatus PVMFMP4FFParserNode::DoSetDataSourcePosition()
             }
             iNodeTrackPortList[i].iState = PVMP4FFNodeTrackPortInfo::TRACKSTATE_TRANSMITTING_GETDATA;
 
-            iNodeTrackPortList[i].iTimestamp = iNodeTrackPortList[i].iClockConverter->get_current_timestamp();
+            iNodeTrackPortList[i].iTimestamp = iNodeTrackPortList[i].iClockConverter->get_current_timestamp64();
             iNodeTrackPortList[i].iFirstFrameAfterRepositioning = true;
             iNodeTrackPortList[i].iCurrentTextSampleEntry.Unbind();
             // convert target NPT to media timescale
             MediaClockConverter mcc(1000);
-            mcc.update_clock(targetNPT);
-            uint32 targetNPTtInMediaTimeScale =
+            mcc.set_clock(targetNPT, 0);
+            uint64 targetNPTtInMediaTimeScale =
                 mcc.get_converted_ts(iMP4FileHandle->getTrackMediaTimescale(iNodeTrackPortList[i].iTrackId));
             iNodeTrackPortList[i].iTargetNPTInMediaTimeScale = targetNPTtInMediaTimeScale;
 
@@ -2923,7 +2925,7 @@ PVMFStatus PVMFMP4FFParserNode::DoQueryDataSourcePosition()
     {
         // Convert to milliseconds
         MediaClockConverter mcc(timescale);
-        mcc.update_clock(duration);
+        mcc.set_clock(duration64, 0);
         duration = mcc.get_converted_ts(1000);
     }
     if (targetNPT >= duration)
@@ -3063,12 +3065,12 @@ PVMFStatus PVMFMP4FFParserNode::DoSetDataSourceDirection()
     //and is discarded.
 
     MediaClockConverter mcc(1000);
-    mcc.update_clock(*actualMediaDataTS);
+    mcc.set_clock(*actualMediaDataTS, 0);
     for (i = 0; i < iNodeTrackPortList.size(); i++)
     {
-        uint32 actualMediaDataTSInMediaTimeScale =
-            mcc.get_converted_ts(iMP4FileHandle->getTrackMediaTimescale(iNodeTrackPortList[i].iTrackId));
-        iNodeTrackPortList[i].iTimestamp = actualMediaDataTSInMediaTimeScale;
+        uint64 actualMediaDataTSInMediaTimeScale64 =
+            mcc.get_converted_ts64(iMP4FileHandle->getTrackMediaTimescale(iNodeTrackPortList[i].iTrackId));
+        iNodeTrackPortList[i].iTimestamp = actualMediaDataTSInMediaTimeScale64;
     }
 
     *actualNPT = 0;
@@ -3207,6 +3209,11 @@ void PVMFMP4FFParserNode::HandleTrackState()
                     if (iNodeTrackPortList[i].iState == PVMP4FFNodeTrackPortInfo::TRACKSTATE_SKIP_CORRUPT_SAMPLE)
                     {
                         iNodeTrackPortList[i].iState = PVMP4FFNodeTrackPortInfo::TRACKSTATE_TRANSMITTING_GETDATA;
+                        Reschedule();
+                    }
+                    if (iNodeTrackPortList[i].iNoSampleInCurrentMoof)
+                    {
+                        iNodeTrackPortList[i].iNoSampleInCurrentMoof = false;
                         Reschedule();
                     }
                     break;
@@ -3461,6 +3468,7 @@ bool PVMFMP4FFParserNode::RetrieveTrackConfigInfoAndFirstSample(uint32 aTrackId,
         retval = iMP4FileHandle->peekNextBundledAccessUnits(aTrackId,
                  &numSamples,
                  &info);
+
         if ((retval == EVERYTHING_FINE || END_OF_TRACK == retval) && numSamples > 0)
         {
             uint32 sampleSize = info.len;
@@ -3519,7 +3527,6 @@ bool PVMFMP4FFParserNode::RetrieveTrackConfigInfoAndFirstSample(uint32 aTrackId,
     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVMFMP4FFParserNode::RetrieveTrackConfigInfoAndFirstSample: Error - Incorrect Format Type"));
     return false;
 }
-
 
 bool PVMFMP4FFParserNode::checkTrackPosition(PVMP4FFNodeTrackPortInfo& aTrackPortInfo, uint32 numsamples)
 {
@@ -3766,9 +3773,9 @@ bool PVMFMP4FFParserNode::RetrieveTrackData(PVMP4FFNodeTrackPortInfo& aTrackPort
                     // Just retrieve the first video sample
                     PVMF_MP4FFPARSERNODE_LOGDATATRAFFIC(
                         (0, "PVMFMP4FFParserNode:RetrieveTrackData - FindBestThumbnailKeyFrame failed, best possible solution fetch the first video sample"));
-
                     numsamples = 1;
                     retval = iMP4FileHandle->getNextBundledAccessUnits(trackid, &numsamples, &iGau);
+
                 }
                 else
                 {
@@ -3838,10 +3845,11 @@ bool PVMFMP4FFParserNode::RetrieveTrackData(PVMP4FFNodeTrackPortInfo& aTrackPort
         }
     }
 
-    if (retval == NO_SAMPLE_IN_CURRENT_MOOF && numsamples == 0)
+    if ((retval == NO_SAMPLE_IN_CURRENT_MOOF) && numsamples == 0)
     {
         // no sample was retrieved, try to retrieve in next getNextBundledAccessUnits call
         // return false without modifying the state.
+        aTrackPortInfo.iNoSampleInCurrentMoof = true;
         mediadataout->~PVMFMediaData();
         return false;
     }
@@ -4050,10 +4058,9 @@ bool PVMFMP4FFParserNode::RetrieveTrackData(PVMP4FFNodeTrackPortInfo& aTrackPort
             if (iTextInvalidTSAfterReposition)
             {
                 iTextInvalidTSAfterReposition = false;
-                MediaClockConverter mcc(1000);
-                mcc.update_clock(iDelayAddToNextTextSample);
-                uint32 durationDelayInMediaTimeScale =
-                    mcc.get_converted_ts(iMP4FileHandle->getTrackMediaTimescale(trackid));
+                MediaClockConverter mcc(1000, iDelayAddToNextTextSample);
+                uint64 durationDelayInMediaTimeScale =
+                    mcc.get_converted_ts64(iMP4FileHandle->getTrackMediaTimescale(trackid));
                 if (tsDelta > durationDelayInMediaTimeScale)
                 {
                     iGau.info[0].ts_delta -= durationDelayInMediaTimeScale;
@@ -4359,7 +4366,7 @@ bool PVMFMP4FFParserNode::RetrieveTrackData(PVMP4FFNodeTrackPortInfo& aTrackPort
                         if (((retval == EVERYTHING_FINE) || (retval == END_OF_TRACK))
                                 && (numSamples > 0))
                         {
-                            int32 offset = 0;
+                            uint32 offset = 0;
 
                             if ((iMP4FileHandle->getOffsetByTime(iNodeTrackPortList[i].iTrackId, info[numSamples-1].ts, &offset, 0)) == EVERYTHING_FINE)
                             {
@@ -5338,7 +5345,7 @@ int32 PVMFMP4FFParserNode::convertSizeToTime(uint32 fileSize, uint32& timeStamp)
     {
         return DEFAULT_ERROR;
     }
-    timeStamp = 0xFFFFFFFF;
+    timeStamp = MAX32BITUINT;
     if (iNodeTrackPortList.size() <= 0)
     {//if track selection is not done, use all the tracks for calculation to avoid deadlock.
         int32 iNumTracks = iMP4FileHandle->getNumTracks();
@@ -5347,7 +5354,7 @@ int32 PVMFMP4FFParserNode::convertSizeToTime(uint32 fileSize, uint32& timeStamp)
         {
             return DEFAULT_ERROR;//PVMFFailure;
         }
-        uint32 track_timestamp = 0xFFFFFFFF;
+        uint64 track_timestamp = 0;
         for (int32 i = 0; i < iNumTracks; i++)
         {
             uint32 trackID = iIdList[i];
@@ -5356,7 +5363,7 @@ int32 PVMFMP4FFParserNode::convertSizeToTime(uint32 fileSize, uint32& timeStamp)
             {
                 // Convert the timestamp from media timescale to milliseconds
                 MediaClockConverter mcc(iMP4FileHandle->getTrackMediaTimescale(trackID));
-                mcc.update_clock(track_timestamp);
+                mcc.set_clock(track_timestamp, 0);
                 uint32 track_timeStamp = mcc.get_converted_ts(1000);
                 if (track_timeStamp < timeStamp)
                 {
@@ -5379,7 +5386,7 @@ int32 PVMFMP4FFParserNode::convertSizeToTime(uint32 fileSize, uint32& timeStamp)
     }
 
     //we do not count tracks that have reached EOS
-    uint32 track_timestamp = 0xFFFFFFFF;
+    uint64 track_timestamp = 0;
     int32 result = EVERYTHING_FINE;
     bool oAllTracksHaveReachedEOS = true;
 
@@ -5391,7 +5398,7 @@ int32 PVMFMP4FFParserNode::convertSizeToTime(uint32 fileSize, uint32& timeStamp)
                  fileSize,
                  track_timestamp);
 
-        if (result)
+        if (result ==  EVERYTHING_FINE)
         {
             PVMF_MP4FFPARSERNODE_LOGDATATRAFFIC((0, "PVMFMP4FFParserNode::convertSizeToTime() - getMaxTrackTimeStamp Failed, TrackID=%d, Mime=%s",
                                                  iNodeTrackPortList[0].iTrackId,
@@ -5422,7 +5429,7 @@ int32 PVMFMP4FFParserNode::convertSizeToTime(uint32 fileSize, uint32& timeStamp)
                      fileSize,
                      track_timestamp);
 
-            if (result)
+            if (result == EVERYTHING_FINE)
             {
                 PVMF_MP4FFPARSERNODE_LOGDATATRAFFIC((0, "PVMFMP4FFParserNode::convertSizeToTime() - getMaxTrackTimeStamp Failed, TrackID=%d, Mime=%s",
                                                      iNodeTrackPortList[ii].iTrackId,
@@ -6769,18 +6776,16 @@ PVMFStatus PVMFMP4FFParserNode::GetFileOffsetForAutoResume(uint32& aOffset, bool
         {
             uint32 trackID = iIdList[i];
             /* Convert PVMF_MP4FFPARSER_NODE_PSEUDO_STREAMING_BUFFER_DURATION_IN_MS to media timescale */
-            MediaClockConverter mcc(1000);
-            mcc.update_clock(iJitterBufferDurationInMs);
-            uint32 mediats = mcc.get_converted_ts(iMP4FileHandle->getTrackMediaTimescale(trackID));
+            MediaClockConverter mcc(1000, iJitterBufferDurationInMs);
+            uint64 mediats64 = mcc.get_converted_ts64(iMP4FileHandle->getTrackMediaTimescale(trackID));
 
-            int32 trackOffset = 0;
-            PVMFTimestamp ts = mediats;
+            uint32 trackOffset = 0;
             int32 retVal =
-                iMP4FileHandle->getOffsetByTime(trackID, ts, &trackOffset, iJitterBufferDurationInMs);
+                iMP4FileHandle->getOffsetByTime(trackID, mediats64, &trackOffset, iJitterBufferDurationInMs);
 
             if (retVal != EVERYTHING_FINE)
             {
-                PVMF_MP4FFPARSERNODE_LOGERROR((0, "PVMFMP4FFParserNode::GetFileOffsetForAutoResume1 - getOffsetByTime Failed - TrackId=%d, TS=%d, RetVal=%d",  trackID, ts, retVal));
+                PVMF_MP4FFPARSERNODE_LOGERROR((0, "PVMFMP4FFParserNode::GetFileOffsetForAutoResume1 - getOffsetByTime Failed - TrackId=%u, TS=%u, RetVal=%d",  trackID, Oscl_Int64_Utils::get_uint64_lower32(mediats64), retVal));
                 return PVMFFailure;
             }
 
@@ -6797,12 +6802,11 @@ PVMFStatus PVMFMP4FFParserNode::GetFileOffsetForAutoResume(uint32& aOffset, bool
         for (it = iNodeTrackPortList.begin(); it != iNodeTrackPortList.end(); it++)
         {
             /* Convert PVMF_MP4FFPARSER_NODE_PSEUDO_STREAMING_BUFFER_DURATION_IN_MS to media timescale */
-            MediaClockConverter mcc(1000);
-            mcc.update_clock(iJitterBufferDurationInMs);
-            uint32 mediats = mcc.get_converted_ts(iMP4FileHandle->getTrackMediaTimescale(it->iTrackId));
+            MediaClockConverter mcc(1000, iJitterBufferDurationInMs);
+            uint64 mediats64 = mcc.get_converted_ts64(iMP4FileHandle->getTrackMediaTimescale(it->iTrackId));
 
-            int32 trackOffset = 0;
-            PVMFTimestamp ts = it->iTimestamp + mediats;
+            uint32 trackOffset = 0;
+            uint64 ts = it->iTimestamp + mediats64;
             int32 retVal =
                 iMP4FileHandle->getOffsetByTime(it->iTrackId, ts, &trackOffset, iJitterBufferDurationInMs);
 
@@ -6826,12 +6830,11 @@ PVMFStatus PVMFMP4FFParserNode::GetFileOffsetForAutoResume(uint32& aOffset, PVMP
 {
     uint32 offset = 0;
     /* Convert PVMF_MP4FFPARSER_NODE_PSEUDO_STREAMING_BUFFER_DURATION_IN_MS to media timescale */
-    MediaClockConverter mcc(1000);
-    mcc.update_clock(iJitterBufferDurationInMs);
-    uint32 mediats = mcc.get_converted_ts(iMP4FileHandle->getTrackMediaTimescale(aInfo->iTrackId));
+    MediaClockConverter mcc(1000, iJitterBufferDurationInMs);
+    uint64 mediats64 = mcc.get_converted_ts64(iMP4FileHandle->getTrackMediaTimescale(aInfo->iTrackId));
 
-    int32 trackOffset = 0;
-    PVMFTimestamp ts = aInfo->iTimestamp + mediats;
+    uint32 trackOffset = 0;
+    uint64 ts = aInfo->iTimestamp + mediats64;
     int32 retVal =
         iMP4FileHandle->getOffsetByTime(aInfo->iTrackId, ts, &trackOffset, iJitterBufferDurationInMs);
 
@@ -7177,7 +7180,7 @@ PVMFStatus PVMFMP4FFParserNode::CheckForMP4HeaderAvailability()
                  */
                 if (download_progress_interface != NULL)
                 {
-                    uint32 nptTsinMS = 0xFFFFFFFF;
+                    uint32 nptTsinMS = MAX32BITUINT;
 
                     if ((NULL != iDataStreamInterface) && (0 != iDataStreamInterface->QueryBufferingCapacity()))
                     {
@@ -7195,7 +7198,7 @@ PVMFStatus PVMFMP4FFParserNode::CheckForMP4HeaderAvailability()
                 }
                 else if (iExternalDownload == true)
                 {
-                    uint32 maxSize = 0xFFFFFFFF;
+                    uint32 maxSize = MAX32BITUINT;
                     iRequestReadCapacityNotificationID =
                         iDataStreamInterface->RequestReadCapacityNotification(iDataStreamSessionID,
                                 *this,
@@ -7308,7 +7311,7 @@ PVMFStatus PVMFMP4FFParserNode::ReportUnderFlow()
     }
 
 
-    uint32 minTS = 0xFFFFFFFF;
+    uint32 minTS = MAX32BITUINT;
     for (it = iNodeTrackPortList.begin(); it != iNodeTrackPortList.end(); it++)
     {
         if (it->iState == PVMP4FFNodeTrackPortInfo::TRACKSTATE_DOWNLOAD_AUTOPAUSE)
@@ -7398,7 +7401,7 @@ void PVMFMP4FFParserNode::TimeoutOccurred(int32 timerID,
                 uint32 currNPT = 0;
                 convertSizeToTime(currentFileSize, currNPT);
 
-                uint32 minTS = 0xFFFFFFFF;
+                uint32 minTS = MAX32BITUINT;
                 Oscl_Vector<PVMP4FFNodeTrackPortInfo, OsclMemAllocator>::iterator it;
                 for (it = iNodeTrackPortList.begin(); it != iNodeTrackPortList.end(); it++)
                 {
@@ -8022,7 +8025,7 @@ PVMFStatus PVMFMP4FFParserNode::FindBestThumbnailKeyFrame(uint32 aId, uint32& aK
         PVMF_MP4FFPARSERNODE_LOGDATATRAFFIC((0, "PVMFMP4FFParserNode:FindBestThumbnailKeyFrame - NumKeySamples=%d, TrackID=%d", numsamples, aId));
 
         // Allocate memory for the info
-        uint32* syncts = PVMF_BASE_NODE_ARRAY_NEW(uint32, numsamples);
+        uint64* syncts = PVMF_BASE_NODE_ARRAY_NEW(uint64, numsamples);
         uint32* syncfrnum = PVMF_BASE_NODE_ARRAY_NEW(uint32, numsamples);
         if (syncts == NULL || syncfrnum == NULL)
         {
@@ -8070,14 +8073,14 @@ PVMFStatus PVMFMP4FFParserNode::FindBestThumbnailKeyFrame(uint32 aId, uint32& aK
 
         //go thru the key frame list and determine the optimal key frame
         uint32 keySampleNum = syncfrnum[0];
-        int32 keySampleSize =
-            iMP4FileHandle->getSampleSizeAt(aId, (int32)keySampleNum);
+        uint32 keySampleSize = 0;
+        iMP4FileHandle->getSampleSizeAt(aId, (int32)keySampleNum, keySampleSize);
         aKeyFrameNum = 0;
         for (uint32 i = 1; i < numsamples; i++)
         {
             uint32 keySampleNumNext = syncfrnum[i];
-            int32 keySampleSizeNext =
-                iMP4FileHandle->getSampleSizeAt(aId, (int32)keySampleNumNext);
+            uint32 keySampleSizeNext = 0;
+            iMP4FileHandle->getSampleSizeAt(aId, (int32)keySampleNumNext, keySampleSizeNext);
 
             if (keySampleSizeNext > keySampleSize)
             {
@@ -8105,13 +8108,13 @@ PVMFStatus PVMFMP4FFParserNode::FindBestThumbnailKeyFrame(uint32 aId, uint32& aK
         PVMF_MP4FFPARSERNODE_LOGDATATRAFFIC((0, "PVMFMP4FFParserNode:FindBestThumbnailKeyFrame - NumKeySamples=%d, TrackID=%d", numsamples, aId));
 
         //go thru the key frame list and determine the optimal key frame
-        int32 maxKeySampleSize = 0;
-        int32 keySampleSize = 0;
+        uint32 maxKeySampleSize = 0;
+        uint32 keySampleSize = 0;
         aKeyFrameNum = 0;
         for (uint32 i = 0; i < numsamples; i++)
         {
-            keySampleSize = iMP4FileHandle->getSampleSizeAt(aId, i);
-
+            keySampleSize = 0;
+            iMP4FileHandle->getSampleSizeAt(aId, i, keySampleSize);
             if (keySampleSize > maxKeySampleSize)
             {
                 maxKeySampleSize = keySampleSize;

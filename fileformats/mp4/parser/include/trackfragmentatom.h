@@ -60,8 +60,14 @@ class TrackDurationInfo : public HeapBase
             trackId = id;
         }
 
+        TrackDurationInfo(uint64 td, uint32 id)
+        {
+            trackDuration = td;
+            trackId = id;
+        }
+
         ~TrackDurationInfo() {}
-        uint32 trackDuration;
+        uint64 trackDuration;
         uint32 trackId;
     private:
 };
@@ -90,7 +96,7 @@ class TrackDurationContainer : public HeapBase
                 return NULL;
         }
 
-        void updateTrackDurationForTrackId(int32 id, uint32 duration);
+        void updateTrackDurationForTrackId(int32 id, uint64 duration);
 
         Oscl_Vector<TrackDurationInfo*, OsclMemAllocator> *_pTrackdurationInfoVec;
 
@@ -136,40 +142,39 @@ class TrackFragmentAtom : public Atom
             }
             return 0;
         }
-        uint32 getSampleCount();
-        Oscl_Vector<TFrunSampleTable*, OsclMemAllocator>* getSampleTable();
-        uint64 getBaseDataOffset();
-        uint32 getSampleDescriptionIndex();
-        uint32 getDefaultSampleDuration();
-        uint32 getDefaultSampleSize();
-        uint32 getDefaultSampleFlags();
-        TrackFragmentRunAtom *getTrackFragmentRunForSampleNum(uint32 samplenum, uint32 &samplecount);
+        uint32 getSampleCount() const;
+        Oscl_Vector<TFrunSampleTable*, OsclMemAllocator>* getSampleTable() const;
+        uint64 getBaseDataOffset() const;
+        uint32 getSampleDescriptionIndex() const;
+        uint32 getDefaultSampleDuration() const;
+        uint32 getDefaultSampleSize() const;
+        uint32 getDefaultSampleFlags() const;
+        TrackFragmentRunAtom *getTrackFragmentRunForSampleNum(uint32 samplenum, uint32 &samplecount) const;
         int32 getNextNSamples(uint32 startSampleNum, uint32 *n, uint32 totalSampleRead, GAU    *pgau);
         int32 getNextBundledAccessUnits(uint32 *n, uint32 totalSampleRead, GAU *pgau);
         int32 peekNextNSamples(uint32 startSampleNum, uint32 *n, uint32 totalSampleRead, MediaMetaInfo *mInfo);
         int32 peekNextBundledAccessUnits(uint32 *n, uint32 totalSampleRead, MediaMetaInfo *mInfo);
-        uint32 getTotalNumSampleInTraf();
-        uint32 _trackFragmentEndOffset;
-        int32 resetPlayback(uint32 time, uint32 trun_number, uint32 sample_num);
+        uint32 getTotalNumSampleInTraf() const;
+        uint32 getSampleNumberFromTimestamp(uint64 time) const;
+        MP4_ERROR_CODE getTimestampForSampleNumber(uint32 sampleNumber, uint64& aTimeStamp) const;
+        uint64 getCurrentTrafDuration();
+        int32 getOffsetByTime(uint32 id, uint64 ts, uint32* sampleFileOffset);
         void resetPlayback();
-        uint32 getSampleNumberFromTimestamp(uint32 time);
-        uint32 getTimestampForSampleNumber(uint32 sampleNumber);
-        uint32 getCurrentTrafDuration();
-        int32 getOffsetByTime(uint32 id, uint32 ts, int32* sampleFileOffset);
-        int32 resetPlayback(uint32 time);
-
+        uint64 resetPlayback(uint64 time);
+        uint64 resetPlayback(uint64 time, uint32 trun_number, uint32 sample_num);
+        uint32 _trackFragmentEndOffset;
 
     private:
 
         TrackFragmentHeaderAtom * _pTrackFragmentHeaderAtom;
         TrackFragmentRunAtom *_pTrackFragmentRunAtom;
         Oscl_Vector<TrackFragmentRunAtom*, OsclMemAllocator> *_pTrackFragmentRunAtomVec;
-        uint32 _currentPlaybackSampleTimestamp;
+        uint64 _currentPlaybackSampleTimestamp;
         uint32 _currentTrackFragmentRunSampleNumber;
         uint32 _peekPlaybackSampleNumber;
         MP4_FF_FILE *_pinput;
         MP4_FF_FILE *_commonFilePtr;
-        uint32 _startTrackFragmentTSOffset;
+        uint64 _startTrackFragmentTSOffset;
         uint32 _fileSize;
         uint32 _movieFragmentOffset;
         uint32 _prevSampleOffset;
@@ -184,7 +189,6 @@ class TrackFragmentAtom : public Atom
         uint32 tf_flags;
         uint32 trun_offset;
         bool trunParsingCompleted;
-
 };
 
 #endif

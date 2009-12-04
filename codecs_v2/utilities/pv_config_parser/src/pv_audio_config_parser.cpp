@@ -679,6 +679,10 @@ OSCL_EXPORT_REF int32 pv_audio_config_parser(pvAudioConfigParserInputs *aInputs,
                                     &SamplingRateIndex,
                                     &NumChannels,
                                     &SamplesPerFrame);
+        if (status != 0)//error
+        {
+            bBitStreamValid  = false;
+        }
 
         aOutputs->Channels = (uint16)NumChannels;
         if (aOutputs->Channels > 2)

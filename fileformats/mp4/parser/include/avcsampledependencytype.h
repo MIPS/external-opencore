@@ -36,7 +36,5 @@ class AVCSampleDependencyType: public FullAtom
         uint8 *_reserved;
         uint8 *_sample_depends_on;
         uint8 *_sample_is_depended_on;
-        uint8 _version;
-        uint32 flags;
 };
 #endif

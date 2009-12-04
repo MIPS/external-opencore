@@ -96,24 +96,23 @@ SyncSampleAtom::~SyncSampleAtom()
 }
 
 // Returns the sync sample number at vector location 'index'
-int32
-SyncSampleAtom::getSampleNumberAt(int32 index) const
+MP4_ERROR_CODE
+SyncSampleAtom::getSampleNumberAt(int32 index, uint32& aSampleNumber) const
 {
+    MP4_ERROR_CODE errCode = READ_FAILED;
     if (index < (int32)_entryCount)
     {
-        return (_psampleNumbers[index] - 1);
+        aSampleNumber = _psampleNumbers[index] - 1;
+        errCode  = EVERYTHING_FINE;
     }
-    else
-    {
-        return PV_ERROR;
-    }
+    return errCode;
 }
 
 // Returns the first sync sample that occurs at or after 'sampleNum'.  This is used
 // when seeking in the bitstream trying to find a random access sample.  This method
 // returns the random access sample that is closest immediately following 'sampleNum'
-int32
-SyncSampleAtom::getSyncSampleFollowing(uint32 sampleNum) const
+MP4_ERROR_CODE
+SyncSampleAtom::getSyncSampleFollowing(uint32 sampleNum, uint32& aSyncSampleFollowing) const
 {
     uint32 sync = 0;
     int32 count = 0;
@@ -126,7 +125,7 @@ SyncSampleAtom::getSyncSampleFollowing(uint32 sampleNum) const
         }
         else
         {
-            return PV_ERROR;
+            return DEFAULT_ERROR;
         }
     }
 
@@ -148,14 +147,15 @@ SyncSampleAtom::getSyncSampleFollowing(uint32 sampleNum) const
         }
     }
 
-    return sync;
+    aSyncSampleFollowing = sync;
+    return EVERYTHING_FINE;
 }
 
 // Returns the first sync sample that occurs at or after 'sampleNum'.  This is used
 // when seeking in the bitstream trying to find a random access sample.  This method
 // returns the random access sample that is closest immediately following 'sampleNum'
-int32
-SyncSampleAtom::getSyncSampleBefore(uint32 sampleNum) const
+MP4_ERROR_CODE
+SyncSampleAtom::getSyncSampleBefore(uint32 sampleNum, uint32& aSyncSampleBefore) const
 {
     uint32 sync = 0;
     int32 count = 0;
@@ -171,16 +171,14 @@ SyncSampleAtom::getSyncSampleBefore(uint32 sampleNum) const
     }
 
     //the nearest I frame before sampleNum
-    if (sync <= sampleNum)
-        return sync;
-    else
+    if (sync > sampleNum)
     {
         count = count - 2;
         sync = _psampleNumbers[count] - 1;
-        return sync;
     }
+    aSyncSampleBefore = sync;
+    return EVERYTHING_FINE;
 }
-
 
 bool
 SyncSampleAtom::IsSyncSample(uint32 sampleNum) const
@@ -195,5 +193,3 @@ SyncSampleAtom::IsSyncSample(uint32 sampleNum) const
 
     return false;
 }
-
-

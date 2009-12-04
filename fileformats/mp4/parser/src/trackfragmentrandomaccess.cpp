@@ -174,12 +174,13 @@ TrackFragmentRandomAccessAtom ::TrackFragmentRandomAccessAtom(MP4_FF_FILE *fp, u
         : FullAtom(fp, size, type)
 {
     OSCL_UNUSED_ARG(type);
+    _entry_count = 0;
     _trackId = 0;
     _length_size_of_traf_num = 0;
     _length_size_of_trun_num = 0;
     _length_size_of_sample_num = 0;
-    _entry_count = 0;
-    _version = getVersion();
+    _pTFRAEntriesVec = NULL;
+    const uint32 version = getVersion();
 
     iLogger = PVLogger::GetLoggerObject("mp4ffparser");
     iStateVarLogger = PVLogger::GetLoggerObject("mp4ffparser_mediasamplestats");
@@ -202,9 +203,9 @@ TrackFragmentRandomAccessAtom ::TrackFragmentRandomAccessAtom(MP4_FF_FILE *fp, u
             _mp4ErrorCode = READ_TRACK_FRAGMENT_RANDOM_ACCESS_ATOM_FAILED;
             return;
         }
-        _length_size_of_traf_num = (_reserved & 0x00000003);
-        _length_size_of_trun_num = ((_reserved >> 2) & 0x00000003);
-        _length_size_of_sample_num = ((_reserved >> 4) & 0x00000003);
+        _length_size_of_traf_num = OSCL_STATIC_CAST(uint8, (_reserved & 0x00000003));
+        _length_size_of_trun_num = OSCL_STATIC_CAST(uint8, ((_reserved >> 2) & 0x00000003));
+        _length_size_of_sample_num = OSCL_STATIC_CAST(uint8, (((_reserved >> 4) & 0x00000003)));
 
         if (!AtomUtils::read32(fp, _entry_count))
         {
@@ -212,24 +213,33 @@ TrackFragmentRandomAccessAtom ::TrackFragmentRandomAccessAtom(MP4_FF_FILE *fp, u
             _mp4ErrorCode = READ_TRACK_FRAGMENT_RANDOM_ACCESS_ATOM_FAILED;
             return;
         }
+
         for (uint32 idx = 0; idx < _entry_count ; idx++)
         {
             TFRAEntries *pTFRAEntries = NULL;
-            PV_MP4_FF_NEW(fp->auditCB, TFRAEntries, (fp, _version, _length_size_of_traf_num,
+            PV_MP4_FF_NEW(fp->auditCB, TFRAEntries, (fp, version, _length_size_of_traf_num,
                           _length_size_of_trun_num,
                           _length_size_of_sample_num),
                           pTFRAEntries);
-            _pTFRAEntriesVec->push_back(pTFRAEntries);
-            PVMF_MP4FFPARSER_LOGMEDIASAMPELSTATEVARIABLES((0, "TrackFragmentRandom Access Point _sample_number[%d] =%d", idx, pTFRAEntries->_sample_number));
-            PVMF_MP4FFPARSER_LOGMEDIASAMPELSTATEVARIABLES((0, "TrackFragmentRandom Access Point TimeStamp    [%d] =%d", idx, pTFRAEntries->getTimeStamp()));
-            PVMF_MP4FFPARSER_LOGMEDIASAMPELSTATEVARIABLES((0, "TrackFragmentRandom Access Point MoofOffset    [%d] =%d", idx, pTFRAEntries->getTimeMoofOffset()));
-            PVMF_MP4FFPARSER_LOGMEDIASAMPELSTATEVARIABLES((0, "TrackFragmentRandom Access Point _traf_number    [%d] =%d", idx, pTFRAEntries->_traf_number));
-            PVMF_MP4FFPARSER_LOGMEDIASAMPELSTATEVARIABLES((0, "TrackFragmentRandom Access Point _trun_number  [%d] =%d", idx, pTFRAEntries->_trun_number));
-
+            if (pTFRAEntries)
+            {
+                _pTFRAEntriesVec->push_back(pTFRAEntries);
+                PVMF_MP4FFPARSER_LOGMEDIASAMPELSTATEVARIABLES((0, "TrackFragmentRandom Access Point _sample_number[%u] =%u", idx, pTFRAEntries->GetSampleNumber()));
+                PVMF_MP4FFPARSER_LOGMEDIASAMPELSTATEVARIABLES((0, "TrackFragmentRandom Access Point TimeStamp    [%u] =%u", idx, pTFRAEntries->getTimeStamp()));
+                PVMF_MP4FFPARSER_LOGMEDIASAMPELSTATEVARIABLES((0, "TrackFragmentRandom Access Point MoofOffset    [%u] =%u", idx, pTFRAEntries->getTimeMoofOffset()));
+                PVMF_MP4FFPARSER_LOGMEDIASAMPELSTATEVARIABLES((0, "TrackFragmentRandom Access Point _traf_number    [%u] =%u", idx, pTFRAEntries->GetTrafNumber()));
+                PVMF_MP4FFPARSER_LOGMEDIASAMPELSTATEVARIABLES((0, "TrackFragmentRandom Access Point _trun_number  [%u] =%u", idx, pTFRAEntries->GetTrunNumber()));
+            }
+            else
+            {
+                _success = false;
+                _mp4ErrorCode = READ_TRACK_FRAGMENT_RANDOM_ACCESS_ATOM_FAILED;
+                return;
+            }
         }
-
     }
 }
+
 // Destructor
 TrackFragmentRandomAccessAtom::~TrackFragmentRandomAccessAtom()
 {
@@ -244,5 +254,3 @@ TrackFragmentRandomAccessAtom::~TrackFragmentRandomAccessAtom()
     }
 
 }
-
-

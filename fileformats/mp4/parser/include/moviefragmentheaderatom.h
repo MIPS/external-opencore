@@ -37,8 +37,6 @@ class MovieFragmentHeaderAtom : public FullAtom
 
     private:
         uint32 _sequence_number;
-        uint32 _version;
-        uint32 _flags;
 };
 
 #endif

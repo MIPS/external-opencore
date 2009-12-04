@@ -97,7 +97,7 @@ class MediaInformationAtom : public Atom
             return *_psampleTableAtom;
         }
 
-        int32 getTimestampForRandomAccessPoints(uint32 *num, uint32 *tsBuf, uint32* numBuf, uint32* offsetBuf)
+        int32 getTimestampForRandomAccessPoints(uint32 *num, uint64 *tsBuf, uint32* numBuf, uint32* offsetBuf)
         {
             if (_psampleTableAtom != NULL)
             {
@@ -109,7 +109,7 @@ class MediaInformationAtom : public Atom
             }
         }
 
-        int32 getTimestampForRandomAccessPointsBeforeAfter(uint32 ts, uint32 *tsBuf, uint32* numBuf,
+        int32 getTimestampForRandomAccessPointsBeforeAfter(uint64 ts, uint64 *tsBuf, uint32* numBuf,
                 uint32& numsamplestoget,
                 uint32 howManyKeySamples)
         {
@@ -174,7 +174,7 @@ class MediaInformationAtom : public Atom
         }
 
         // Returns next video frame
-        int32 getNextSample(uint8 *buf, int32 &size, uint32 &index, uint32 &SampleOffset)
+        int32 getNextSample(uint8 *buf, uint32 &size, uint32 &index, uint32 &SampleOffset)
         {
             if (_psampleTableAtom == NULL)
             {
@@ -206,7 +206,7 @@ class MediaInformationAtom : public Atom
 
         }
 
-        int32 getPrevKeyMediaSample(uint32 inputtimestamp,
+        int32 getPrevKeyMediaSample(uint64 inputtimestamp,
                                     uint32 &aKeySampleNum,
                                     uint32 *n,
                                     GAU    *pgau)
@@ -218,7 +218,7 @@ class MediaInformationAtom : public Atom
             return _psampleTableAtom->getPrevKeyMediaSample(inputtimestamp, aKeySampleNum, n, pgau);
         }
 
-        int32 getNextKeyMediaSample(uint32 inputtimestamp,
+        int32 getNextKeyMediaSample(uint64 inputtimestamp,
                                     uint32 &aKeySampleNum,
                                     uint32 *n,
                                     GAU    *pgau)
@@ -230,7 +230,7 @@ class MediaInformationAtom : public Atom
             return _psampleTableAtom->getNextKeyMediaSample(inputtimestamp, aKeySampleNum, n, pgau);
         }
 
-        int32 getMediaSample(uint32 sampleNumber, uint8 *buf, int32 &size, uint32 &index, uint32 &SampleOffset)
+        int32 getMediaSample(uint32 sampleNumber, uint8 *buf, uint32 &size, uint32 &index, uint32 &SampleOffset)
         {
             if (_psampleTableAtom == NULL)
             {
@@ -239,7 +239,7 @@ class MediaInformationAtom : public Atom
             return _psampleTableAtom->getSample(sampleNumber, buf, size, index, SampleOffset);
         }
 
-        int32 getOffsetByTime(uint32 ts, int32* sampleFileOffset)
+        int32 getOffsetByTime(uint64 ts, uint32* sampleFileOffset)
         {
             if (_psampleTableAtom == NULL)
             {
@@ -264,7 +264,7 @@ class MediaInformationAtom : public Atom
             }
         }
 
-        int32 resetPlayBack(uint32 time, bool oDependsOn)
+        uint64 resetPlayBack(uint64 time, bool oDependsOn)
         {
             if (_psampleTableAtom != NULL)
             {
@@ -276,7 +276,7 @@ class MediaInformationAtom : public Atom
             }
         }
 
-        int32 queryRepositionTime(int32 time, bool oDependsOn, bool bBeforeRequestedTime)
+        uint64 queryRepositionTime(uint64 time, bool oDependsOn, bool bBeforeRequestedTime)
         {
             if (_psampleTableAtom != NULL)
             {
@@ -289,34 +289,34 @@ class MediaInformationAtom : public Atom
         }
 
 
-        int32 IsResetNeeded(int32 time)
+        int32 IsResetNeeded(uint64 time)
         {
             if (_psampleTableAtom == NULL)
                 return READ_SAMPLE_TABLE_ATOM_FAILED;
             return _psampleTableAtom->IsResetNeeded(time);
         }
 
-        uint32 getTimestampForSampleNumber(uint32 sampleNumber)
+        MP4_ERROR_CODE getTimestampForSampleNumber(uint32 sampleNumber, uint64& aTimeStamp)
         {
             if (_psampleTableAtom != NULL)
             {
-                return _psampleTableAtom->getTimestampForSampleNumber(sampleNumber);
+                return _psampleTableAtom->getTimestampForSampleNumber(sampleNumber, aTimeStamp);
             }
             else
             {
-                return 0;
+                return READ_FAILED;
             }
         }
 
-        int32 getSampleSizeAt(int32 sampleNum)
+        MP4_ERROR_CODE getSampleSizeAt(int32 sampleNum, uint32 aSampleSize)
         {
             if (_psampleTableAtom != NULL)
             {
-                return   _psampleTableAtom->getSampleSizeAt(sampleNum);
+                return   _psampleTableAtom->getSampleSizeAt(sampleNum, aSampleSize);
             }
             else
             {
-                return 0;
+                return DEFAULT_ERROR;
             }
         }
 
@@ -324,7 +324,7 @@ class MediaInformationAtom : public Atom
         // This is mainly to be used when seeking in the bitstream - you request a video frame at timestamp
         // X, but the actual frame you get is Y, this method returns the timestamp for Y so you know which
         // audio sample to request.
-        int32 getTimestampForCurrentSample()
+        uint64 getTimestampForCurrentSample()
         {
             if (_psampleTableAtom != NULL)
             {
@@ -592,7 +592,7 @@ class MediaInformationAtom : public Atom
             }
         }
 
-        MP4_ERROR_CODE getMaxTrackTimeStamp(uint32 fileSize, uint32& timeStamp)
+        MP4_ERROR_CODE getMaxTrackTimeStamp(uint32 fileSize, uint64& timeStamp)
         {
             if (_psampleTableAtom != NULL)
             {
@@ -605,7 +605,7 @@ class MediaInformationAtom : public Atom
         }
 
         MP4_ERROR_CODE getSampleNumberClosestToTimeStamp(uint32 &sampleNumber,
-                uint32 timeStamp,
+                uint64 timeStamp,
                 uint32 sampleOffset = 0)
         {
             if (_psampleTableAtom != NULL)

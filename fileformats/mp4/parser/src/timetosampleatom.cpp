@@ -283,50 +283,21 @@ TimeToSampleAtom::~TimeToSampleAtom()
     }
 }
 
-// Return the number of samples  at index
-uint32
-TimeToSampleAtom::getSampleCountAt(int32 index)
+MP4_ERROR_CODE TimeToSampleAtom::GetSampleCountAt(uint32 aIndex, uint32& aCount)
 {
-    if (_psampleCountVec == NULL)
-    {
-        return (uint32) PV_ERROR;
-    }
-
-    if (index < (int32)_entryCount)
+    MP4_ERROR_CODE retval = READ_FAILED;
+    if ((aIndex < _entryCount) && _psampleCountVec)
     {
         if (_parsing_mode == 1)
-            CheckAndParseEntry(index);
-
-        return (int32)(_psampleCountVec[index%_stbl_buff_size]);
+            CheckAndParseEntry(aIndex);
+        aCount = _psampleCountVec[aIndex%_stbl_buff_size];
+        retval = EVERYTHING_FINE;
     }
     else
     {
-        PVMF_MP4FFPARSER_LOGERROR((0, "ERROR =>TimeToSampleAtom::getSampleCountAt index = %d", index));
-        return (uint32) PV_ERROR;
+        PVMF_MP4FFPARSER_LOGERROR((0, "ERROR =>TimeToSampleAtom::getSampleCountAt aIndex = %d", aIndex));
     }
-}
-
-// Return sample delta at index
-int32
-TimeToSampleAtom::getSampleDeltaAt(int32 index)
-{
-    if (_psampleDeltaVec == NULL)
-    {
-        return PV_ERROR;
-    }
-
-    if (index < (int32)_entryCount)
-    {
-        if (_parsing_mode == 1)
-            CheckAndParseEntry(index);
-
-        return (int32)(_psampleDeltaVec[index%_stbl_buff_size]);
-    }
-    else
-    {
-        PVMF_MP4FFPARSER_LOGERROR((0, "ERROR =>TimeToSampleAtom::getSampleDeltaAt index = %d", index));
-        return PV_ERROR;
-    }
+    return retval;
 }
 
 // Return the samples corresponding to the timestamp ts.  If there is not a sample
@@ -334,19 +305,19 @@ TimeToSampleAtom::getSampleDeltaAt(int32 index)
 // This atom maintains timestamp deltas between samples, i.e. delta[i] is the
 // timestamp difference between sample[i] and sample[i+1].  It is implicit that
 // sample[0] occurs at timestamp ts=0.
-int32
-TimeToSampleAtom::getSampleNumberFromTimestamp(uint32 ts, bool oAlwaysRetSampleCount)
+MP4_ERROR_CODE TimeToSampleAtom::GetSampleNumberFromTimestamp(uint64 aTimeStamp, uint32& aSampleNumber, bool oAlwaysRetSampleCount)
 {
+    MP4_ERROR_CODE retval = DEFAULT_ERROR;
     // It is assumed that sample 0 has a ts of 0 - i.e. the first
     // entry in the table starts with the delta between sample 1 and sample 0
     uint32 sampleCount = 0;
-    uint32 timeCount = 0;
+    uint64 timeCount = 0;
 
     if ((_psampleDeltaVec == NULL) ||
             (_psampleCountVec == NULL) ||
             (_entryCount      == 0))
     {
-        return PV_ERROR;
+        return retval;
     }
 
     for (uint32 i = 0; i < _entryCount; i++)
@@ -354,7 +325,7 @@ TimeToSampleAtom::getSampleNumberFromTimestamp(uint32 ts, bool oAlwaysRetSampleC
         if (_parsing_mode == 1)
             CheckAndParseEntry(i);
 
-        if (ts < timeCount)
+        if (aTimeStamp < timeCount)
         { // found range that the sample is in - need to backtrack
             if (_parsing_mode == 1)
                 CheckAndParseEntry(i - 1);
@@ -362,24 +333,26 @@ TimeToSampleAtom::getSampleNumberFromTimestamp(uint32 ts, bool oAlwaysRetSampleC
             uint32 samples = _psampleCountVec[(i-1)%_stbl_buff_size];
             sampleCount -= samples;
             timeCount -= _psampleDeltaVec[(i-1)%_stbl_buff_size] * samples;
-            while (timeCount <= ts)
+            while (timeCount <= aTimeStamp)
             {
                 timeCount += _psampleDeltaVec[(i-1)%_stbl_buff_size];
                 sampleCount += 1;
             }
 
-            if (timeCount > ts)
+            if (timeCount > aTimeStamp)
             {
                 if (sampleCount > 0)
                 {
                     sampleCount--;
                 }
-                return sampleCount;
+                aSampleNumber = sampleCount;
+                return EVERYTHING_FINE;
             }
         }
-        else if (ts == timeCount)
-        { // Found sample at ts
-            return sampleCount;
+        else if (aTimeStamp == timeCount)
+        { // Found sample at aTimeStamp
+            aSampleNumber = sampleCount;
+            return EVERYTHING_FINE;
         }
         else
         { // Sample not yet found - advance
@@ -401,70 +374,123 @@ TimeToSampleAtom::getSampleNumberFromTimestamp(uint32 ts, bool oAlwaysRetSampleC
         timeCount += delta;
         sampleCount += 1;
 
-        if (timeCount > ts)
+        if (timeCount > aTimeStamp)
         {
             if (sampleCount > 0)
             {
                 sampleCount--;
             }
-            return sampleCount;
+            aSampleNumber = sampleCount;
+            return EVERYTHING_FINE;
         }
-        else if (timeCount == ts)
+        else if (timeCount == aTimeStamp)
         {
-            return sampleCount;
+            aSampleNumber = sampleCount;
+            return EVERYTHING_FINE;
         }
     }
 
 
     sampleCount += 1;
-    if (ts >= timeCount)
+    if (aTimeStamp >= timeCount)
     {
         if (oAlwaysRetSampleCount)
         {
-            return sampleCount;
+            aSampleNumber = sampleCount;
+            return EVERYTHING_FINE;
         }
         else
         {
             if (_mediaType == MEDIA_TYPE_VISUAL)
             {
-                return sampleCount;
+                aSampleNumber = sampleCount;
+                return EVERYTHING_FINE;
             }
         }
     }
 
     // Went past last sample in last run of samples - not a valid timestamp
-    return PV_ERROR;
+    return retval;
 }
 
-// Returns the timestamp (ms) for the current sample given by num.  This is used when
-// randomly accessing a frame and the timestamp has not been accumulated. It is implicit
-// that sample[0] occurs at timestamp ts=0.
-int32 TimeToSampleAtom::getTimestampForSampleNumber(uint32 num)
+// Returns the timestamp delta (ms) for the current sample given by num.  This value
+// is the difference in timestamps between the sample (num) and the previous sample
+// in the track.  It is implicit that sample[0] occurs at timestamp ts=0.
+MP4_ERROR_CODE TimeToSampleAtom::GetTimeDeltaForSampleNumber(uint32 aNumber, uint32& aTimeDelta)
 {
+    MP4_ERROR_CODE retval = READ_FAILED;
+    // It is assumed that sample 0 has a ts of 0 - i.e. the first
+    // entry in the table starts with the delta between sample 1 and sample 0
     if ((_psampleDeltaVec == NULL) ||
             (_psampleCountVec == NULL) ||
             (_entryCount == 0))
     {
-        return PV_ERROR;
+        return retval;
     }
-    // It is assumed that sample 0 has a ts of 0 - i.e. the first
-    // entry in the table starts with the delta between sample 1 and sample 0
-    if (num == 0)
-        return 0;
+
+    if (0 == aNumber)
+    {
+        aTimeDelta = 0;
+        return EVERYTHING_FINE;
+    }
 
     uint32 sampleCount = 0;
-    int32 ts = 0; // Timestamp value to return
     for (uint32 i = 0; i < _entryCount; i++)
     {
         if (_parsing_mode == 1)
             CheckAndParseEntry(i);
 
-        if (num <= (sampleCount + _psampleCountVec[i%_stbl_buff_size]))
+        if (aNumber <= (sampleCount + _psampleCountVec[i%_stbl_buff_size]))
         { // Sample num within current entry
-            int32 count = num - sampleCount;
+            aTimeDelta = (_psampleDeltaVec[i%_stbl_buff_size]);
+            retval = EVERYTHING_FINE;
+            break;
+        }
+        else
+        {
+            sampleCount += _psampleCountVec[i%_stbl_buff_size];
+        }
+    }
+
+    // Went past end of list - not a valid sample number
+    return retval;
+}
+
+// Returns the timestamp (ms) for the current sample given by num.  This is used when
+// randomly accessing a frame and the timestamp has not been accumulated. It is implicit
+// that sample[0] occurs at timestamp ts=0.
+MP4_ERROR_CODE TimeToSampleAtom::GetTimestampForSampleNumber(uint32 aSampleNumber, uint64& aTimestamp)
+{
+    MP4_ERROR_CODE retval = READ_FAILED;
+    if ((_psampleDeltaVec == NULL) ||
+            (_psampleCountVec == NULL) ||
+            (_entryCount == 0))
+    {
+        return retval;
+    }
+    // It is assumed that sample 0 has a ts of 0 - i.e. the first
+    // entry in the table starts with the delta between sample 1 and sample 0
+    if (0 == aSampleNumber)
+    {
+        aTimestamp = 0;
+        return EVERYTHING_FINE;
+    }
+
+    uint32 sampleCount = 0;
+    uint64 ts = 0; // Timestamp value to return
+    for (uint32 i = 0; i < _entryCount; i++)
+    {
+        if (_parsing_mode == 1)
+            CheckAndParseEntry(i);
+
+        if (aSampleNumber <= (sampleCount + _psampleCountVec[i%_stbl_buff_size]))
+        { // Sample num within current entry
+            int32 count = aSampleNumber - sampleCount;
             ts += _psampleDeltaVec[i%_stbl_buff_size] * count;
+            aTimestamp = ts;
+            retval = EVERYTHING_FINE;
             PVMF_MP4FFPARSER_LOGMEDIASAMPELSTATEVARIABLES((0, "TimeToSampleAtom::getTimestampForSampleNumber- Time Stamp =%d", ts));
-            return ts;
+            break;
         }
         else
         {
@@ -474,69 +500,29 @@ int32 TimeToSampleAtom::getTimestampForSampleNumber(uint32 num)
     }
 
     // Went past end of list - not a valid sample number
-    return PV_ERROR;
+    return retval;
 }
 
 // Returns the timestamp delta (ms) for the current sample given by num.  This value
 // is the difference in timestamps between the sample (num) and the previous sample
 // in the track.  It is implicit that sample[0] occurs at timestamp ts=0.
-int32
-TimeToSampleAtom::getTimeDeltaForSampleNumber(uint32 num)
+MP4_ERROR_CODE TimeToSampleAtom::GetTimeDeltaForSampleNumberPeek(uint32 aSampleNumber, uint32& aTimeDelta)
 {
+    MP4_ERROR_CODE retval = READ_FAILED;
     // It is assumed that sample 0 has a ts of 0 - i.e. the first
     // entry in the table starts with the delta between sample 1 and sample 0
     if ((_psampleDeltaVec == NULL) ||
             (_psampleCountVec == NULL) ||
             (_entryCount == 0))
     {
-        return PV_ERROR;
-    }
-
-    if (num == 0)
-        return 0;
-
-    uint32 sampleCount = 0;
-    for (uint32 i = 0; i < _entryCount; i++)
-    {
-        if (_parsing_mode == 1)
-            CheckAndParseEntry(i);
-
-        if (num <= (sampleCount + _psampleCountVec[i%_stbl_buff_size]))
-        { // Sample num within current entry
-            return (_psampleDeltaVec[i%_stbl_buff_size]);
-        }
-        else
-        {
-            sampleCount += _psampleCountVec[i%_stbl_buff_size];
-        }
-    }
-
-    // Went past end of list - not a valid sample number
-    return PV_ERROR;
-}
-
-
-
-
-// Returns the timestamp delta (ms) for the current sample given by num.  This value
-// is the difference in timestamps between the sample (num) and the previous sample
-// in the track.  It is implicit that sample[0] occurs at timestamp ts=0.
-int32
-TimeToSampleAtom::getTimeDeltaForSampleNumberPeek(uint32 sampleNum)
-{
-    // It is assumed that sample 0 has a ts of 0 - i.e. the first
-    // entry in the table starts with the delta between sample 1 and sample 0
-    if ((_psampleDeltaVec == NULL) ||
-            (_psampleCountVec == NULL) ||
-            (_entryCount == 0))
-    {
-        return PV_ERROR;
+        return retval;
     }
 
     // note that sampleNum is a zero based index while _currGetSampleCount is 1 based index
-    if (sampleNum < _currPeekSampleCount)
+    if (aSampleNumber < _currPeekSampleCount)
     {
-        return (_currPeekTimeDelta);
+        aTimeDelta = _currPeekTimeDelta;
+        retval = EVERYTHING_FINE;
     }
     else
     {
@@ -555,40 +541,47 @@ TimeToSampleAtom::getTimeDeltaForSampleNumberPeek(uint32 sampleNum)
         PVMF_MP4FFPARSER_LOGMEDIASAMPELSTATEVARIABLES((0, "TimeToSampleAtom::getTimeDeltaForSampleNumberPeek- _currPeekSampleCount =%d", _currPeekSampleCount));
         PVMF_MP4FFPARSER_LOGMEDIASAMPELSTATEVARIABLES((0, "TimeToSampleAtom::getTimeDeltaForSampleNumberPeek- _currPeekTimeDelta =%d", _currPeekTimeDelta));
 
-        if (sampleNum < _currPeekSampleCount)
+        if (aSampleNumber < _currPeekSampleCount)
         {
-            return (_currPeekTimeDelta);
+            aTimeDelta = _currPeekTimeDelta;
+            retval = EVERYTHING_FINE;
         }
         else
         {
-            PVMF_MP4FFPARSER_LOGERROR((0, "ERROR =>TimeToSampleAtom::getTimeDeltaForSampleNumberPeek sampleNum = %d", sampleNum));
-            return (PV_ERROR);
+            PVMF_MP4FFPARSER_LOGERROR((0, "ERROR =>TimeToSampleAtom::getTimeDeltaForSampleNumberPeek sampleNum = %d", aSampleNumber));
         }
     }
-
-
+    return retval;
 }
 
 // Returns the timestamp delta (ms) for the current sample given by num.  This value
 // is the difference in timestamps between the sample (num) and the previous sample
 // in the track.  It is implicit that sample[0] occurs at timestamp ts=0.
-int32
-TimeToSampleAtom::getTimeDeltaForSampleNumberGet(uint32 sampleNum)
+MP4_ERROR_CODE TimeToSampleAtom::GetTimeDeltaForSampleNumberGet(uint32 aSampleNumber, uint32& aTimeDelta)
 {
+    MP4_ERROR_CODE retval = READ_FAILED;
     // It is assumed that sample 0 has a ts of 0 - i.e. the first
     // entry in the table starts with the delta between sample 1 and sample 0
-    if (0 == _psampleDeltaVec || 0 == _psampleCountVec || 0 == _entryCount)
-        return PV_ERROR;
+    if ((NULL == _psampleDeltaVec) ||
+            (NULL == _psampleCountVec) ||
+            (0 == _entryCount))
+    {
+        return retval;
+    }
 
     // note that sampleNum is a zero based index while _currGetSampleCount is 1 based index
-    if (sampleNum < _currGetSampleCount)
-        return _currGetTimeDelta;
+    if (aSampleNumber < _currGetSampleCount)
+    {
+        aTimeDelta = _currGetTimeDelta;
+        retval = EVERYTHING_FINE;
+    }
 
     do
     {
         ++_currGetIndex;
         if (_parsing_mode)
             CheckAndParseEntry(_currGetIndex);
+
         _currGetSampleCount += _psampleCountVec[_currGetIndex%_stbl_buff_size];
         _currGetTimeDelta    = _psampleDeltaVec[_currGetIndex%_stbl_buff_size];
     }
@@ -598,22 +591,27 @@ TimeToSampleAtom::getTimeDeltaForSampleNumberGet(uint32 sampleNum)
     PVMF_MP4FFPARSER_LOGMEDIASAMPELSTATEVARIABLES((0, "TimeToSampleAtom::getTimeDeltaForSampleNumberGet- _currGetSampleCount =%d", _currGetSampleCount));
     PVMF_MP4FFPARSER_LOGMEDIASAMPELSTATEVARIABLES((0, "TimeToSampleAtom::getTimeDeltaForSampleNumberGet- _currGetTimeDelta =%d", _currGetTimeDelta));
 
-    if (sampleNum < _currGetSampleCount)
-        return _currGetTimeDelta;
-
-    PVMF_MP4FFPARSER_LOGERROR((0, "ERROR =>TimeToSampleAtom::getTimeDeltaForSampleNumberGet sampleNum = %d", sampleNum));
-    return PV_ERROR;
+    if (aSampleNumber < _currGetSampleCount)
+    {
+        aTimeDelta = _currGetTimeDelta;
+        retval = EVERYTHING_FINE;
+    }
+    else
+    {
+        PVMF_MP4FFPARSER_LOGERROR((0, "ERROR =>TimeToSampleAtom::getTimeDeltaForSampleNumberGet sampleNum = %d", aSampleNumber));
+    }
+    return retval;
 }
 
-int32
-TimeToSampleAtom::resetStateVariables()
+MP4_ERROR_CODE
+TimeToSampleAtom::ResetStateVariables()
 {
     uint32 sampleNum = 0;
-    return (resetStateVariables(sampleNum));
+    return (ResetStateVariables(sampleNum));
 }
 
-int32
-TimeToSampleAtom::resetStateVariables(uint32 sampleNum)
+MP4_ERROR_CODE
+TimeToSampleAtom::ResetStateVariables(uint32 aSampleNum)
 {
     _currGetSampleCount = 0;
     _currGetIndex = -1;
@@ -628,7 +626,7 @@ TimeToSampleAtom::resetStateVariables(uint32 sampleNum)
             (_psampleCountVec == NULL) ||
             (_entryCount == 0))
     {
-        return PV_ERROR;
+        return DEFAULT_ERROR;
     }
 
 
@@ -645,7 +643,7 @@ TimeToSampleAtom::resetStateVariables(uint32 sampleNum)
         _currGetSampleCount += _psampleCountVec[i%_stbl_buff_size];
         _currGetTimeDelta    = _psampleDeltaVec[i%_stbl_buff_size];
 
-        if (sampleNum <= _currPeekSampleCount)
+        if (aSampleNum <= _currPeekSampleCount)
         {
             return (EVERYTHING_FINE);
         }
@@ -653,10 +651,10 @@ TimeToSampleAtom::resetStateVariables(uint32 sampleNum)
     }
 
     // Went past end of list - not a valid sample number
-    return PV_ERROR;
+    return DEFAULT_ERROR;
 }
 
-int32 TimeToSampleAtom::resetPeekwithGet()
+MP4_ERROR_CODE TimeToSampleAtom::ResetPeekwithGet()
 {
     _currPeekSampleCount = _currGetSampleCount;
     _currPeekIndex = _currGetIndex ;
@@ -681,4 +679,3 @@ void TimeToSampleAtom::CheckAndParseEntry(uint32 i)
         }
     }
 }
-

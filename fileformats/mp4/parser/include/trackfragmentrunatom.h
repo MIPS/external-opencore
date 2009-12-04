@@ -40,7 +40,7 @@ class TFrunSampleTable
         TFrunSampleTable(MP4_FF_FILE *fp , uint32 tr_flag, uint32 base_data_offset,
                          uint64 sampleTS);
 
-        void setDefaultDuration(uint32 sampleTS, uint32 default_duration)
+        void setDefaultDuration(uint64 sampleTS, uint32 default_duration)
         {
             _sample_timestamp = sampleTS;
             _sample_duration = default_duration;
@@ -60,7 +60,6 @@ class TFrunSampleTable
         uint32 _sample_offset;
         uint64 _sample_timestamp;
     private:
-
 };
 
 class TrackFragmentRunAtom : public FullAtom
@@ -85,11 +84,12 @@ class TrackFragmentRunAtom : public FullAtom
                            bool &trunParsingCompleted,
                            uint32 &countOfTrunsParsed);
 
-        uint64 getDataOffset()
+        uint32 getDataOffset() const
         {
             return _data_offset;
         }
-        uint32 getSampleCount()
+
+        uint32 getSampleCount() const
         {
             return _sample_count;
         }
@@ -98,24 +98,26 @@ class TrackFragmentRunAtom : public FullAtom
         {
             return _pTFrunSampleTable;
         }
-        uint32 _sample_offset;
-        uint64 _sampleTimeStamp;
+
+        uint64 GetSampleTimeStamp() const
+        {
+            return _sampleTimeStamp;
+        }
+
         void setDefaultDuration(uint32 default_duration);
         void setDefaultSampleSize(uint32 default_samplesize, uint32& sigmaSampleSize);
-        void setSampleDurationAndTimeStampFromSampleNum(uint32 startSampleNum, uint32 startDuration, uint32 default_duration);
+        void setSampleDurationAndTimeStampFromSampleNum(uint32 startSampleNum, uint64 startDuration, uint32 default_duration);
 
     private:
-        uint32 tr_flag;
         uint32 _sample_count;
         uint32 _data_offset;
         uint32 _first_sample_flags;
+        uint64 _sampleTimeStamp;
         Oscl_Vector<TFrunSampleTable*, OsclMemAllocator>  *_pTFrunSampleTable;
-        uint32 _version;
         PVLogger *iLogger, *iStateVarLogger, *iParsedDataLogger;
         uint32 _trun_start_offset;
         uint32 _samplesToBeParsed;
         uint32 _partialTrunOffset;
-
 };
 
 #endif

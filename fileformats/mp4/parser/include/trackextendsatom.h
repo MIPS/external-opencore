@@ -68,8 +68,6 @@ class TrackExtendsAtom : public FullAtom
         uint32 _default_sample_duration;
         uint32 _default_sample_size;
         uint32 _default_sample_flag;
-        uint32 _version;
-        uint32 _flags;
 };
 
 #endif

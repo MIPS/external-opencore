@@ -48,26 +48,17 @@ class TFRAEntries
 
         ~TFRAEntries() {};
 
-        uint64 _time64;
-        uint64 _moof_offset64;
-        uint32 _time32;
-        uint32 _moof_offset32;
-        ////
-        uint32 _traf_number;
-        uint32 _trun_number;
-        uint32 _sample_number;
-        uint32 _version;
-        uint32 getTimeStamp()
+        uint64 getTimeStamp() const
         {
             if (_version == 1)
             {
-                return Oscl_Int64_Utils::get_uint64_lower32(_time64);
+                return _time64;
             }
             else
                 return _time32;
-            //version check and then return 32 bit value
         }
-        uint32 getTimeMoofOffset()
+
+        uint32 getTimeMoofOffset() const
         {
             if (_version == 1)
             {
@@ -75,10 +66,32 @@ class TFRAEntries
             }
             else
                 return _moof_offset32;
-            //version check and then return 32 bit value
+        }
+
+        uint32 GetTrafNumber() const
+        {
+            return _traf_number;
+        }
+
+        uint32 GetTrunNumber() const
+        {
+            return _trun_number;
+        }
+
+        uint32 GetSampleNumber() const
+        {
+            return _sample_number;
         }
 
     private:
+        uint32 _version;
+        uint64 _time64;             //Valid when version ==1
+        uint64 _moof_offset64;      //Valid when version ==1
+        uint32 _time32;             //Valid when version ==0
+        uint32 _moof_offset32;      //Valid when version ==0
+        uint32 _traf_number;
+        uint32 _trun_number;
+        uint32 _sample_number;
 
 };
 
@@ -111,8 +124,6 @@ class TrackFragmentRandomAccessAtom : public FullAtom
         uint8 _length_size_of_sample_num;
 
         Oscl_Vector<TFRAEntries*, OsclMemAllocator>  *_pTFRAEntriesVec;
-        uint32 _version;
-
         PVLogger *iLogger, *iStateVarLogger, *iParsedDataLogger;
 };
 

@@ -162,18 +162,18 @@ class SampleTableAtom : public Atom
 
         void  resetPlayBack();
         void  resetTrackToEOT();
-        int32 resetPlayBackbyTime(uint32 time, bool oDependsOn);
-        int32 queryRepositionTime(int32 time, bool oDependsOn, bool bBeforeRequestedTime);
+        uint64 resetPlayBackbyTime(uint64 time, bool oDependsOn);
+        uint64 queryRepositionTime(uint64 time, bool oDependsOn, bool bBeforeRequestedTime);
 
-        int32 IsResetNeeded(int32 time);
+        int32 IsResetNeeded(uint64 time);
 
-        uint32 getTimestampForSampleNumber(uint32 sampleNumber);
+        MP4_ERROR_CODE getTimestampForSampleNumber(uint32 sampleNumber, uint64& aTimeStamp);
         int32 getCttsOffsetForSampleNumber(uint32 sampleNumber);
         int32 getCttsOffsetForSampleNumberPeek(uint32 sampleNumber);
         int32 getCttsOffsetForSampleNumberGet(uint32 sampleNumber);
-        int32 getSampleSizeAt(int32 sampleNum)
+        MP4_ERROR_CODE getSampleSizeAt(int32 sampleNum, uint32& aSampleSize)
         {
-            return getSampleSizeAtom().getSampleSizeAt(sampleNum);
+            return getSampleSizeAtom().getSampleSizeAt(sampleNum, aSampleSize);
         }
 
         // Get the type of SampleEntry atom (i.e. MPEG_SAMPLE_ENTRY, ... '<protocol>', etc.)
@@ -348,30 +348,30 @@ class SampleTableAtom : public Atom
         }
 
         // Gets for optional member atoms
-        int32 getTimestampForRandomAccessPoints(uint32 *num, uint32 *tsBuf, uint32* numBuf, uint32* offsetBuf);
+        int32 getTimestampForRandomAccessPoints(uint32 *num, uint64 *tsBuf, uint32* numBuf, uint32* offsetBuf);
         const SyncSampleAtom *getSyncSampleAtom() const
         {
             return _psyncSampleAtom;
         }
 
         // Returns next video frame
-        int32 getNextSample(uint8 *buf, int32 &size, uint32 &index, uint32 &SampleOffset);
+        int32 getNextSample(uint8 *buf, uint32 &size, uint32 &index, uint32 &SampleOffset);
 
-        int32 getMediaSample(uint32 sampleNumber, uint8 *buf, int32 &size, uint32 &index, uint32 &SampleOffset);
+        int32 getMediaSample(uint32 sampleNumber, uint8 *buf, uint32 &size, uint32 &index, uint32 &SampleOffset);
 
         // Returns next I-frame at time ts (in milliseconds) - or the very next I-frame in the stream
-        int32 getNextSampleAtTime(uint32 ts, uint8 *buf, int32 &size, uint32 &index, uint32 &SampleOffset);
+        int32 getNextSampleAtTime(uint32 ts, uint8 *buf, uint32 &size, uint32 &index, uint32 &SampleOffset);
 
         MP4_ERROR_CODE getKeyMediaSampleNumAt(uint32 aKeySampleNum,
                                               GAU    *pgau);
-        int32 getPrevKeyMediaSample(uint32 inputtimestamp, uint32 &aKeySampleNum, uint32 *n, GAU    *pgau);
-        int32 getNextKeyMediaSample(uint32 inputtimestamp, uint32 &aKeySampleNum, uint32 *n, GAU    *pgau);
+        int32 getPrevKeyMediaSample(uint64 inputtimestamp, uint32 &aKeySampleNum, uint32 *n, GAU    *pgau);
+        int32 getNextKeyMediaSample(uint64 inputtimestamp, uint32 &aKeySampleNum, uint32 *n, GAU    *pgau);
 
         // Returns the timestamp (in milliseconds) for the last sample returned
         // This is mainly to be used when seeking in the bitstream - you request a frame at timestamp
         // X, but the actual frame you get is Y, this method returns the timestamp for Y so you know which
         // audio sample to request.
-        int32 getTimestampForCurrentSample();
+        uint64 getTimestampForCurrentSample();
 
         // Returns the sample number of the last samplle returned
         // Used when requesting a hint sample for a specific randomly accessed sample
@@ -379,7 +379,7 @@ class SampleTableAtom : public Atom
         {
             return _currentPlaybackSampleNumber;
         }
-        int32 getSampleNumberAdjustedWithCTTS(uint32 aTs, int32 aSampleNumber);
+        int32 getSampleNumberAdjustedWithCTTS(uint64 aTs, int32 aSampleNumber);
 
         void advance()
         {
@@ -474,17 +474,17 @@ class SampleTableAtom : public Atom
             }
         }
 
-        int32 getOffsetByTime(uint32 ts, int32* sampleFileOffset);
+        int32 getOffsetByTime(uint64 ts, uint32* sampleFileOffset);
 
         int32 getNumAMRFramesPerSample()
         {
             return _numAMRFramesPerSample;
         }
 
-        MP4_ERROR_CODE getMaxTrackTimeStamp(uint32 fileSize, uint32& timeStamp);
+        MP4_ERROR_CODE getMaxTrackTimeStamp(uint32 fileSize, uint64& timeStamp);
 
         MP4_ERROR_CODE getSampleNumberClosestToTimeStamp(uint32 &sampleNumber,
-                uint32 timeStamp,
+                uint64 timeStamp,
                 uint32 sampleOffset = 0);
 
         AVCSampleEntry* getAVCSampleEntry(uint32 index)
@@ -518,8 +518,8 @@ class SampleTableAtom : public Atom
             return _oMultipleSampleDescription;
         }
 
-        int32 getSample(uint32 sampleNum, uint8 *buf, int32 &size, uint32 &index, uint32 &SampleOffset);
-        int32 getTimestampForRandomAccessPointsBeforeAfter(uint32 ts, uint32 *tsBuf, uint32* numBuf,
+        int32 getSample(uint32 sampleNum, uint8 *buf, uint32 &size, uint32 &index, uint32 &SampleOffset);
+        int32 getTimestampForRandomAccessPointsBeforeAfter(uint64 ts, uint64 *tsBuf, uint32* numBuf,
                 uint32& numsamplestoget,
                 uint32 howManyKeySamples);
 
@@ -556,8 +556,8 @@ class SampleTableAtom : public Atom
         // Optional member atoms
         SyncSampleAtom        *_psyncSampleAtom;
 
-        uint32 _currentPlaybackSampleTimestamp;
-        int32 _currentPlaybackSampleNumber;
+        uint64 _currentPlaybackSampleTimestamp;
+        uint32 _currentPlaybackSampleNumber;
 
         // TS offset value for the start of the media track.  The STTS
         // Atom only holds TS deltas.  For a track that does not begin at 0s, we need to hold an
@@ -579,8 +579,8 @@ class SampleTableAtom : public Atom
         int32 _remainingFramesInSample;
         uint32 _amrTempBufferOffset;
         int32  _amrFrameDelta;
-        int32  _amrFrameTimeStamp;
-        int32  _amrSampleSize;
+        uint64  _amrFrameTimeStamp;
+        uint32  _amrSampleSize;
 
         uint32 SamplesCount;
         MP4_FF_FILE *_commonFilePtr;

@@ -78,7 +78,6 @@ class MovieFragmentAtom : public Atom
 
         uint64 getDataOffset();
         uint32 getSampleCount();
-        Oscl_Vector<TFrunSampleTable*, OsclMemAllocator> getSampleTable();
         uint64 getBaseDataOffset();
         uint32 getSampleDescriptionIndex();
         uint32 getDefaultSampleDuration();
@@ -92,16 +91,13 @@ class MovieFragmentAtom : public Atom
         TrackFragmentAtom * getTrackFragmentforID(uint32 id);
 
         uint32 _currentTrackFragmentOffset;
-        int32 resetPlayback(uint32 trackID, uint32 time,
-                            uint32 traf_number, uint32 trun_number,
-                            uint32 sample_num);
+        uint64 resetPlayback(uint32 trackID, uint64 time,
+                             uint32 traf_number, uint32 trun_number,
+                             uint32 sample_num);
         void resetPlayback();
-        uint32 getCurrentTrafDuration(uint32 id);
+        uint64 getCurrentTrafDuration(uint32 id);
         uint32 getTotalSampleInTraf(uint32 id);
-        int32 getOffsetByTime(uint32 id, uint32 ts, int32* sampleFileOffset);
-
-
-
+        int32 getOffsetByTime(uint32 id, uint64 ts, uint32* sampleFileOffset);
     private:
         MovieFragmentHeaderAtom * _pMovieFragmentHeaderAtom;
         TrackFragmentAtom *_pTrackFragmentAtom;

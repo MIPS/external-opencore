@@ -386,7 +386,7 @@ OSCL_EXPORT_REF MovieAtom::~MovieAtom()
     }
 }
 
-uint32 MovieAtom::getTimestampForCurrentSample(uint32 id)
+uint64 MovieAtom::getTimestampForCurrentSample(uint32 id)
 {
     TrackAtom *track = getTrackForID(id);
 
@@ -400,7 +400,7 @@ uint32 MovieAtom::getTimestampForCurrentSample(uint32 id)
     }
 }
 
-int32 MovieAtom::getOffsetByTime(uint32 id, uint32 ts, int32* sampleFileOffset)
+int32 MovieAtom::getOffsetByTime(uint32 id, uint64 ts, uint32* sampleFileOffset)
 {
     TrackAtom *track = getTrackForID(id);
     if (track == NULL)
@@ -410,7 +410,7 @@ int32 MovieAtom::getOffsetByTime(uint32 id, uint32 ts, int32* sampleFileOffset)
     return track->getOffsetByTime(ts, sampleFileOffset);
 }
 
-int32 MovieAtom::getMediaSample(uint32 id, uint32 sampleNumber, uint8 *buf, int32 &size, uint32 &index, uint32 &SampleOffset)
+int32 MovieAtom::getMediaSample(uint32 id, uint32 sampleNumber, uint8 *buf, uint32 &size, uint32 &index, uint32 &SampleOffset)
 {
     int32 nReturn = 0;
 
@@ -438,7 +438,7 @@ MP4_ERROR_CODE MovieAtom::getKeyMediaSampleNumAt(uint32 aTrackId,
     return (nReturn);
 }
 
-int32 MovieAtom::getPrevKeyMediaSample(uint32 inputtimestamp,
+int32 MovieAtom::getPrevKeyMediaSample(uint64 inputtimestamp,
                                        uint32 &aKeySampleNum,
                                        uint32 id,
                                        uint32 *n,
@@ -452,11 +452,12 @@ int32 MovieAtom::getPrevKeyMediaSample(uint32 inputtimestamp,
     {
         return READ_TRACK_ATOM_FAILED;
     }
-    nReturn =  track->getPrevKeyMediaSample(inputtimestamp, aKeySampleNum, n, pgau);
-    return (nReturn);
+    nReturn =  track->getPrevKeyMediaSample(
+                   inputtimestamp, aKeySampleNum, n, pgau);
+    return nReturn;
 }
 
-int32 MovieAtom::getNextKeyMediaSample(uint32 inputtimestamp,
+int32 MovieAtom::getNextKeyMediaSample(uint64 inputtimestamp,
                                        uint32 &aKeySampleNum,
                                        uint32 id,
                                        uint32 *n,
@@ -471,7 +472,7 @@ int32 MovieAtom::getNextKeyMediaSample(uint32 inputtimestamp,
         return READ_TRACK_ATOM_FAILED;
     }
     nReturn =  track->getNextKeyMediaSample(inputtimestamp, aKeySampleNum, n, pgau);
-    return (nReturn);
+    return nReturn;
 }
 
 int32 MovieAtom::getNextMediaSample(uint32 id, uint8 *buf, uint32 &size, uint32 &index, uint32 &SampleOffset)
@@ -484,7 +485,7 @@ int32 MovieAtom::getNextMediaSample(uint32 id, uint8 *buf, uint32 &size, uint32 
         return READ_TRACK_ATOM_FAILED;
     }
 
-    int32 buf_size =  size;
+    uint32 buf_size =  size;
     nReturn =  track->getNextMediaSample(buf, buf_size, index, SampleOffset);
     size = buf_size;
     return (nReturn);
@@ -877,8 +878,9 @@ uint32 MovieAtom::resetPlayback(uint32 time, uint16 numTracks, uint32 *trackList
     // reset enhance layer to ts
     //
     uint32 i, modifiedTimeStamp;
-    uint32 timestamp, returnedTS;
-    uint32 convertedTS = 0;
+    uint32 timestamp = 0;
+    uint64 returnedTS = 0;
+    uint64 convertedTS = 0;
     TrackAtom *trackAtom;
     TrackAtom *IndependentTrackAtom;
 
@@ -894,11 +896,11 @@ uint32 MovieAtom::resetPlayback(uint32 time, uint16 numTracks, uint32 *trackList
             if (trackAtom != NULL)
             {
                 MediaClockConverter mcc1(1000, modifiedTimeStamp);
-                convertedTS = mcc1.get_converted_ts(getTrackMediaTimescale(*(trackList + i)));
-
+                convertedTS = mcc1.get_converted_ts64(getTrackMediaTimescale(*(trackList + i)));
                 returnedTS = trackAtom->resetPlayBack(convertedTS, true);
                 // convert returnedTS (which is in media time scale) to the ms
-                MediaClockConverter mcc(getTrackMediaTimescale(*(trackList + i)), returnedTS);
+                MediaClockConverter mcc(getTrackMediaTimescale(*(trackList + i)));
+                mcc.set_clock(returnedTS, 0);
                 timestamp = mcc.get_converted_ts(1000);
 
                 if (timestamp <= modifiedTimeStamp)
@@ -941,7 +943,8 @@ uint32 MovieAtom::resetPlayback(uint32 time, uint16 numTracks, uint32 *trackList
                     returnedTS = IndependentTrackAtom->resetPlayBack(convertedTS);
 
                     // convert returnedTS (which is in media time scale) to the ms
-                    MediaClockConverter mcc(getTrackMediaTimescale(*(trackList + i)), returnedTS);
+                    MediaClockConverter mcc(getTrackMediaTimescale(*(trackList + i)));
+                    mcc.set_clock(returnedTS, 0);
                     timestamp = mcc.get_converted_ts(1000);
 
                     if (timestamp <= modifiedTimeStamp)
@@ -967,7 +970,8 @@ uint32 MovieAtom::resetPlayback(uint32 time, uint16 numTracks, uint32 *trackList
                 returnedTS = trackAtom->resetPlayBack(convertedTS);
 
                 // convert returnedTS (which is in media time scale) to the ms
-                MediaClockConverter mcc(getTrackMediaTimescale(*(trackList + i)), returnedTS);
+                MediaClockConverter mcc(getTrackMediaTimescale(*(trackList + i)));
+                mcc.set_clock(returnedTS, 0);
                 timestamp = mcc.get_converted_ts(1000);
 
                 if (timestamp <= modifiedTimeStamp)
@@ -1028,8 +1032,10 @@ int32 MovieAtom::queryRepositionTime(uint32 time,
     // reset enhance layer to ts
     //
     uint32 i, modifiedTimeStamp;
-    uint32 timestamp, returnedTS;
-    uint32 convertedTS = 0, minTS = 0;
+    uint32 timestamp;
+    uint64 convertedTS = 0;
+    uint64 returnedTS = 0;
+    uint32 minTS = 0;
     TrackAtom *trackAtom;
     TrackAtom *IndependentTrackAtom;
 
@@ -1050,7 +1056,7 @@ int32 MovieAtom::queryRepositionTime(uint32 time,
                 // media time scale
                 MediaClockConverter mcc1(1000);
                 mcc1.update_clock(modifiedTimeStamp);
-                convertedTS = mcc1.get_converted_ts(trackAtom->getMediaTimescale());
+                convertedTS = mcc1.get_converted_ts64(trackAtom->getMediaTimescale());
 
                 returnedTS = trackAtom->queryRepositionTime(convertedTS, true, bBeforeRequestedTime);
 
@@ -2109,7 +2115,7 @@ int32 MovieAtom::getNumAMRFramesPerSample(uint32 trackID)
 
 MP4_ERROR_CODE MovieAtom::getMaxTrackTimeStamp(uint32 trackID,
         uint32 fileSize,
-        uint32& timeStamp)
+        uint64& timeStamp)
 {
     TrackAtom *trackAtom;
     trackAtom = getTrackForID(trackID);
@@ -2127,7 +2133,7 @@ MP4_ERROR_CODE MovieAtom::getMaxTrackTimeStamp(uint32 trackID,
 
 MP4_ERROR_CODE MovieAtom::getSampleNumberClosestToTimeStamp(uint32 trackID,
         uint32 &sampleNumber,
-        uint32 timeStamp,
+        uint64 timeStamp,
         uint32 sampleOffset)
 {
     TrackAtom *trackAtom;
@@ -2199,7 +2205,7 @@ OSCL_EXPORT_REF bool MovieAtom::isMultipleSampleDescriptionAvailable(uint32 trac
     return 0;
 }
 
-int32 MovieAtom::getTimestampForRandomAccessPoints(uint32 id, uint32 *num, uint32 *tsBuf, uint32* numBuf, uint32* offsetBuf)
+int32 MovieAtom::getTimestampForRandomAccessPoints(uint32 id, uint32 *num, uint64 *tsBuf, uint32* numBuf, uint32* offsetBuf)
 {
     TrackAtom *trackAtom;
     trackAtom = getTrackForID(id);
@@ -2213,7 +2219,7 @@ int32 MovieAtom::getTimestampForRandomAccessPoints(uint32 id, uint32 *num, uint3
     }
 }
 
-int32 MovieAtom::getTimestampForRandomAccessPointsBeforeAfter(uint32 id, uint32 ts, uint32 *tsBuf, uint32* numBuf,
+int32 MovieAtom::getTimestampForRandomAccessPointsBeforeAfter(uint32 id, uint64 ts, uint64 *tsBuf, uint32* numBuf,
         uint32& numsamplestoget,
         uint32 howManyKeySamples)
 {

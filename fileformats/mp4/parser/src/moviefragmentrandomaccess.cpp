@@ -155,7 +155,7 @@ bool MovieFragmentRandomAccessAtom::IsTFRAPresentForTrack(uint32 trackID, bool o
     return false;
 
 }
-int32 MovieFragmentRandomAccessAtom::getSyncSampleInfoClosestToTime(uint32 trackID, uint32 &time, uint32 &moof_offset,
+int32 MovieFragmentRandomAccessAtom::getSyncSampleInfoClosestToTime(uint32 trackID, uint64 &time, uint32 &moof_offset,
         uint32 &traf_number, uint32 &trun_number,
         uint32 &sample_num)
 {
@@ -180,21 +180,21 @@ int32 MovieFragmentRandomAccessAtom::getSyncSampleInfoClosestToTime(uint32 track
             Oscl_Vector<TFRAEntries*, OsclMemAllocator>* tfraEntries = tfraAtom->getTrackFragmentRandomAccessEntries();
             if (!tfraEntries)       // unlikely/error
                 return -1;
-            int32 prevTime = 0;
+            uint64 prevTime = 0;
             for (uint32 idy = 0; idy < entries; idy++)
             {
                 if (time < (*tfraEntries)[idy]->getTimeStamp())
                 {
-                    uint32 tmp = (*tfraEntries)[idy]->getTimeStamp();
-                    uint32 diffwithbeforeTS = time - prevTime;
-                    uint32 diffwithafterTS = tmp - time;
+                    uint64 tmp = (*tfraEntries)[idy]->getTimeStamp();
+                    uint64 diffwithbeforeTS = time - prevTime;
+                    uint64 diffwithafterTS = tmp - time;
                     if (diffwithbeforeTS > diffwithafterTS)
                     {
                         time = tmp;
                         moof_offset = (*tfraEntries)[idy]->getTimeMoofOffset();
-                        traf_number = (*tfraEntries)[idy]->_traf_number;
-                        trun_number = (*tfraEntries)[idy]->_trun_number;
-                        sample_num = (*tfraEntries)[idy]->_sample_number;
+                        traf_number = (*tfraEntries)[idy]->GetTrafNumber();
+                        trun_number = (*tfraEntries)[idy]->GetTrunNumber();
+                        sample_num = (*tfraEntries)[idy]->GetSampleNumber();
                         PVMF_MP4FFPARSER_LOGMEDIASAMPELSTATEVARIABLES((0, "MovieFragmentRandomAccessAtom::getSyncSampleInfoClosestToTime Return Time =%d", time));
                         return 0;
                     }
@@ -206,9 +206,9 @@ int32 MovieFragmentRandomAccessAtom::getSyncSampleInfoClosestToTime(uint32 track
                     }
                 }
                 moof_offset = (*tfraEntries)[idy]->getTimeMoofOffset();
-                traf_number = (*tfraEntries)[idy]->_traf_number;
-                trun_number = (*tfraEntries)[idy]->_trun_number;
-                sample_num = (*tfraEntries)[idy]->_sample_number;
+                traf_number = (*tfraEntries)[idy]->GetTrafNumber();
+                trun_number = (*tfraEntries)[idy]->GetTrunNumber();
+                sample_num = (*tfraEntries)[idy]->GetSampleNumber();
 
                 prevTime = (*tfraEntries)[idy]->getTimeStamp();
             }
@@ -222,13 +222,13 @@ int32 MovieFragmentRandomAccessAtom::getSyncSampleInfoClosestToTime(uint32 track
     return -1;
 }
 
-int32 MovieFragmentRandomAccessAtom::queryRepositionTime(uint32 trackID, int32 time, bool oDependsOn, bool bBeforeRequestedTime)
+uint64 MovieFragmentRandomAccessAtom::queryRepositionTime(uint32 trackID, uint64 time, bool oDependsOn, bool bBeforeRequestedTime)
 {
     OSCL_UNUSED_ARG(oDependsOn);
 
     uint32 num_tfra = 0;
-    int32 closestTime = 0;
-    PVMF_MP4FFPARSER_LOGMEDIASAMPELSTATEVARIABLES((0, "MovieFragmentRandomAccessAtom::getSyncSampleInfoClosestToTime Input Time =%d", time));
+    uint64 closestTime = 0;
+    PVMF_MP4FFPARSER_LOGMEDIASAMPELSTATEVARIABLES((0, "MovieFragmentRandomAccessAtom::getSyncSampleInfoClosestToTime Input Time =%u", time));
     if (_pTrackFragmentRandomAccessAtomVec != NULL)
     {
         num_tfra = _pTrackFragmentRandomAccessAtomVec->size();
@@ -241,19 +241,19 @@ int32 MovieFragmentRandomAccessAtom::queryRepositionTime(uint32 trackID, int32 t
                 Oscl_Vector<TFRAEntries*, OsclMemAllocator>* tfraEntries = tfraAtom->getTrackFragmentRandomAccessEntries();
                 if (!tfraEntries)   // unlikely/error
                     return closestTime;
-                int32 prevTime = 0;
+                uint64 prevTime = 0;
                 for (uint32 idy = 0; idy < entries; idy++)
                 {
                     if (bBeforeRequestedTime)
                     {
-                        if (time < (int32)(*tfraEntries)[idy]->getTimeStamp())
+                        if (time < (*tfraEntries)[idy]->getTimeStamp())
                         {
                             time = prevTime;
                             PVMF_MP4FFPARSER_LOGMEDIASAMPELSTATEVARIABLES((0, "MovieFragmentRandomAccessAtom::getSyncSampleInfoClosestToTime Return Time =%d", time));
                             break;
                         }
-                        else if ((time == (int32)(*tfraEntries)[idy]->getTimeStamp()) ||
-                                 ((idy == (entries - 1)) && (time > (int32)(*tfraEntries)[idy]->getTimeStamp())))
+                        else if ((time == (*tfraEntries)[idy]->getTimeStamp()) ||
+                                 ((idy == (entries - 1)) && (time > (*tfraEntries)[idy]->getTimeStamp())))
                         {
                             time = (*tfraEntries)[idy]->getTimeStamp();
                             break;
@@ -263,13 +263,13 @@ int32 MovieFragmentRandomAccessAtom::queryRepositionTime(uint32 trackID, int32 t
                     }
                     else
                     {
-                        if (time <= (int32)(*tfraEntries)[idy]->getTimeStamp())
+                        if (time <= (*tfraEntries)[idy]->getTimeStamp())
                         {
                             time = (*tfraEntries)[idy]->getTimeStamp();
                             PVMF_MP4FFPARSER_LOGMEDIASAMPELSTATEVARIABLES((0, "MovieFragmentRandomAccessAtom::getSyncSampleInfoClosestToTime Return Time =%d", time));
                             break;
                         }
-                        else if ((idy == (entries - 1)) && (time > (int32)(*tfraEntries)[idy]->getTimeStamp()))
+                        else if ((idy == (entries - 1)) && (time > (*tfraEntries)[idy]->getTimeStamp()))
                         {
                             time = (*tfraEntries)[idy]->getTimeStamp();
                             break;
@@ -289,7 +289,7 @@ int32 MovieFragmentRandomAccessAtom::queryRepositionTime(uint32 trackID, int32 t
     return closestTime;
 }
 
-int32 MovieFragmentRandomAccessAtom::getTimestampForRandomAccessPoints(uint32 id, uint32 *num, uint32 *tsBuf, uint32* numBuf, uint32* offsetBuff, uint32 samplesFromMovie)
+int32 MovieFragmentRandomAccessAtom::getTimestampForRandomAccessPoints(uint32 id, uint32 *num, uint64 *tsBuf, uint32* numBuf, uint32* offsetBuff, uint32 samplesFromMovie)
 {
     uint32 num_tfra = 0;
     uint32 samplesfromMoov = samplesFromMovie;
@@ -334,7 +334,7 @@ int32 MovieFragmentRandomAccessAtom::getTimestampForRandomAccessPoints(uint32 id
             if (tsBuf != NULL)
                 tsBuf[idx] = (*tfraEntries)[idx]->getTimeStamp();
             if (numBuf)
-                numBuf[idx] = (*tfraEntries)[idx]->_sample_number;
+                numBuf[idx] = (*tfraEntries)[idx]->GetSampleNumber();
             if (offsetBuff)
                 offsetBuff[idx] = (*tfraEntries)[idx]->getTimeMoofOffset();
         }
@@ -346,12 +346,12 @@ int32 MovieFragmentRandomAccessAtom::getTimestampForRandomAccessPoints(uint32 id
 }
 
 
-int32 MovieFragmentRandomAccessAtom::getTimestampForRandomAccessPointsBeforeAfter(uint32 id, uint32 ts, uint32 *tsBuf, uint32* numBuf,
+int32 MovieFragmentRandomAccessAtom::getTimestampForRandomAccessPointsBeforeAfter(uint32 id, uint64 ts, uint64 *tsBuf, uint32* numBuf,
         uint32& numsamplestoget,
         uint32 howManyKeySamples)
 {
     uint32 num_tfra = 0, prevSampleNum = 0, sample_num = 0;
-    uint32 time = ts;
+    uint64 time = ts;
     uint32 startIdx = 0, endIdx = 0;
 
     TrackFragmentRandomAccessAtom *tfraAtom = NULL;
@@ -379,17 +379,17 @@ int32 MovieFragmentRandomAccessAtom::getTimestampForRandomAccessPointsBeforeAfte
         Oscl_Vector<TFRAEntries*, OsclMemAllocator>* tfraEntries = tfraAtom->getTrackFragmentRandomAccessEntries();
         if (!tfraEntries)       // unlikely/error
             return 0;
-        int32 prevTime = 0;
+        uint64 prevTime = 0;
         for (uint32 idy = 0; idy < entries; idy++)
         {
             if (time <= (*tfraEntries)[idy]->getTimeStamp())
             {
-                uint32 tmp = (*tfraEntries)[idy]->getTimeStamp();
-                uint32 diffwithbeforeTS = time - prevTime;
-                uint32 diffwithafterTS = tmp - time;
+                uint64 tmp = (*tfraEntries)[idy]->getTimeStamp();
+                uint64 diffwithbeforeTS = time - prevTime;
+                uint64 diffwithafterTS = tmp - time;
                 if (diffwithbeforeTS > diffwithafterTS)
                 {
-                    sample_num = (*tfraEntries)[idy]->_sample_number;
+                    sample_num = (*tfraEntries)[idy]->GetSampleNumber();
                 }
                 else
                 {
@@ -399,7 +399,7 @@ int32 MovieFragmentRandomAccessAtom::getTimestampForRandomAccessPointsBeforeAfte
                 endIdx = entries;
                 break;
             }
-            prevSampleNum = (*tfraEntries)[idy]->_sample_number;
+            prevSampleNum = (*tfraEntries)[idy]->GetSampleNumber();
             prevTime = (*tfraEntries)[idy]->getTimeStamp();
         }
         if ((startIdx + howManyKeySamples) <= entries)
@@ -416,10 +416,8 @@ int32 MovieFragmentRandomAccessAtom::getTimestampForRandomAccessPointsBeforeAfte
         uint32 k = 0;
         for (idx = startIdx; idx < endIdx; idx++)
         {
-            int32 keySampleNum = (*tfraEntries)[idx]->_sample_number;
-            int32 keySampleTS = (*tfraEntries)[idx]->getTimeStamp();
-            numBuf[k] = keySampleNum;
-            tsBuf[k] = keySampleTS;
+            numBuf[k] = (*tfraEntries)[idx]->GetSampleNumber();
+            tsBuf[k] = (*tfraEntries)[idx]->getTimeStamp();
             k++;
         }
         numsamplestoget = k;

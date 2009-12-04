@@ -60,11 +60,11 @@ class SyncSampleAtom : public FullAtom
 
         // Returns the sync sample number at vector location 'index'
         // Note that index is not a sample number, but rather a position along the vector
-        int32 getSampleNumberAt(int32 index) const;
+        MP4_ERROR_CODE getSampleNumberAt(int32 index, uint32& aSampleNumber) const;
 
         // Returns the first sync sample that occurs at or after 'sampleNum'
-        int32 getSyncSampleFollowing(uint32 SampleNum) const;
-        int32 getSyncSampleBefore(uint32 SampleNum) const;
+        MP4_ERROR_CODE getSyncSampleFollowing(uint32 SampleNum, uint32& aSyncSampleFollowing) const;
+        MP4_ERROR_CODE getSyncSampleBefore(uint32 SampleNum, uint32& aSyncSampleBefore) const;
 
         bool IsSyncSample(uint32 sampleNum) const;
 

@@ -186,7 +186,7 @@ class ITunesGenreAtom: public ITunesMetaDataAtom
 
         int16 getGnreID() const
         {
-            return _gnreID - 1; //As per iTunes spec "genre-id" stored in iTunes files is
+            return (int16)(_gnreID - 1); //As per iTunes spec "genre-id" stored in iTunes files is
             //one more than the what is defined in ID3V1 spec,
             //substracting 1 to make it mapable on ID3V1 Genre table
         }

@@ -84,7 +84,7 @@ class MovieHeaderAtom : public FullAtom
             return _nextTrackID;
         }
 
-        OSCL_wString& getCreationDate()
+        const OSCL_wString& getCreationDate()
         {
             convertTimeToDate();
             return (iCreationDataString);

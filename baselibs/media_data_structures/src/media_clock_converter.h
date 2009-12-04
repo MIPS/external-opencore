@@ -31,7 +31,11 @@ class MediaClockConverter
 {
 
     public:
-        MediaClockConverter(uint32 in_timescale = 1, uint32 init_ts = 0)
+        //As of now we cannot provide 64 bit ts in the arg as overloaded ctor.
+        //Reason: if we do so, then in the existing codebase, that is passing in const number say 1000
+        //as param has to be explicitly typecasted to uint32 in all over the codebase.
+        //So intead we can pass in the upper 32 bits of the uint64 as uint32
+        MediaClockConverter(uint32 in_timescale = 1, uint32 init_ts = 0, uint32 init_ts64_upper32 = 0)
         {
             // Timescale value cannot be zero
             OSCL_ASSERT(in_timescale != 0);
@@ -42,6 +46,7 @@ class MediaClockConverter
             timescale = in_timescale;
             current_ts = init_ts;
             wrap_count = 0;
+            current_ts64_upper32 = init_ts64_upper32;
         };
 
         MediaClockConverter(const MediaClockConverter& a)
@@ -55,6 +60,7 @@ class MediaClockConverter
             timescale = a.timescale;
             current_ts = a.current_ts;
             wrap_count = a.wrap_count;
+            current_ts64_upper32 = a.current_ts64_upper32;
         };
 
         /**
@@ -73,6 +79,7 @@ class MediaClockConverter
                 timescale = a.timescale;
                 current_ts = a.current_ts;
                 wrap_count = a.wrap_count;
+                current_ts64_upper32 = a.current_ts64_upper32;
             }
             return *this;
         };
@@ -80,6 +87,7 @@ class MediaClockConverter
         void set_clock(uint32 init_ts, uint32 in_wrap_count)
         {
             current_ts = init_ts;
+            current_ts64_upper32 = 0;
 
             // Timescale value cannot be zero
             OSCL_ASSERT(timescale != 0);
@@ -90,13 +98,26 @@ class MediaClockConverter
             wrap_count = in_wrap_count % timescale;
         };
 
+        void set_clock(uint64 init_ts, uint32 in_wrap_count)
+        {
+            // Timescale value cannot be zero
+            OSCL_ASSERT(timescale != 0);
+            if (0 == timescale)
+            {
+                OSCL_LEAVE(OsclErrCorrupt);
+            }
+            current_ts = (uint32)(init_ts & 0xFFFFFFFF);
+            current_ts64_upper32 = ((uint32)(init_ts >> 32)) % timescale;
+            wrap_count = in_wrap_count % timescale;
+        }
+
         // set the clock with value from another timescale
         OSCL_IMPORT_REF void set_clock_other_timescale(uint32 value, uint32 timescale);
 
         OSCL_IMPORT_REF void set_timescale(uint32 new_timescale);
 
         OSCL_IMPORT_REF bool update_clock(uint32 new_ts);
-
+        OSCL_IMPORT_REF bool update_clock(uint64 new_ts);
         OSCL_IMPORT_REF uint32 get_timediff_and_update_clock(uint32 value, uint32 timescale,
                 uint32 output_timescale);
 
@@ -104,6 +125,7 @@ class MediaClockConverter
                 uint32 output_timescale);
 
         OSCL_IMPORT_REF uint32 get_converted_ts(uint32 new_timscale) const;
+        OSCL_IMPORT_REF uint64 get_converted_ts64(uint32 new_timscale) const;
         OSCL_IMPORT_REF uint32 get_wrap_count() const
         {
             return wrap_count;
@@ -112,6 +134,8 @@ class MediaClockConverter
         {
             return current_ts;
         };
+        OSCL_IMPORT_REF uint64 get_current_timestamp64() const;
+
         OSCL_IMPORT_REF uint32 get_timescale() const
         {
             return timescale;
@@ -123,6 +147,7 @@ class MediaClockConverter
         uint32 timescale;
         uint32 current_ts;
         uint32 wrap_count;
+        uint32 current_ts64_upper32;
 };
 
 

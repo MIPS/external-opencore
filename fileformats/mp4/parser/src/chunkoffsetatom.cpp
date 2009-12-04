@@ -233,12 +233,12 @@ bool ChunkOffsetAtom::ParseEntryUnit(uint32 sample_cnt)
 
 // Returns the chunk offset for the chunk at 'index'
 // In this case, 'index' is the actual chunk number
-int32
-ChunkOffsetAtom::getChunkOffsetAt(int32 index)
+MP4_ERROR_CODE
+ChunkOffsetAtom::getChunkOffsetAt(int32 index, uint32& aChunkOffset)
 {
     if (_pchunkOffsets == NULL)
     {
-        return PV_ERROR;
+        return DEFAULT_ERROR;
     }
 
     if (index < (int32)_entryCount)
@@ -259,16 +259,18 @@ ChunkOffsetAtom::getChunkOffsetAt(int32 index)
                         ParseEntryUnit(_parsed_entry_cnt);
                 }
             }
-            return (_pchunkOffsets[index%_stbl_buff_size]);
+            aChunkOffset = _pchunkOffsets[index%_stbl_buff_size];
+            return EVERYTHING_FINE;
         }
         else
         {
-            return (_pchunkOffsets[index]);
+            aChunkOffset = _pchunkOffsets[index];
+            return EVERYTHING_FINE;
         }
     }
     else
     {
-        return PV_ERROR;
+        return DEFAULT_ERROR;
     }
 }
 

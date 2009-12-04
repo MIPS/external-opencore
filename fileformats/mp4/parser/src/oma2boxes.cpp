@@ -675,8 +675,8 @@ EcnvBox::EcnvBox(MP4_FF_FILE *fp, uint32 size, uint32 type)
                         _pH263decSpecificInfo->_codec_profile = _pH263SpecificAtom->getCodecProfile();
 
                         uint32 width = _reserved2 & 0xFFFF0000;
-                        _pH263decSpecificInfo->_max_width = width >> 16;
-                        _pH263decSpecificInfo->_max_height = _reserved2 & 0x0000FFFF;
+                        _pH263decSpecificInfo->_max_width = OSCL_STATIC_CAST(uint16, (width >> 16));
+                        _pH263decSpecificInfo->_max_height = OSCL_STATIC_CAST(uint16, (_reserved2 & 0x0000FFFF));
                     }
 
                 }

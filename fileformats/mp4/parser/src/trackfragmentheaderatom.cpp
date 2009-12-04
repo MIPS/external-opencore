@@ -32,7 +32,7 @@ TrackFragmentHeaderAtom ::TrackFragmentHeaderAtom(MP4_FF_FILE *fp, uint32 size, 
     _default_sample_duration = 0;
     _default_sample_size = 0;
     _default_sample_flag = 0;
-    tf_flag = getFlags();
+    uint32 tf_flag = getFlags();
 
     if (_success)
     {
@@ -93,6 +93,7 @@ TrackFragmentHeaderAtom ::TrackFragmentHeaderAtom(MP4_FF_FILE *fp, uint32 size, 
         ///tf_flag & 0x010000 duration is empty
     }
 }
+
 // Destructor
 TrackFragmentHeaderAtom::~TrackFragmentHeaderAtom()
 {

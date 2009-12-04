@@ -41,7 +41,7 @@ class MovieExtendsHeaderAtom : public FullAtom
 
         uint64 getFragmentDuration()
         {
-            if (_version == 1)
+            if (getVersion() == 1)
             {
                 return _fragmentDuration64;
             }
@@ -52,8 +52,6 @@ class MovieExtendsHeaderAtom : public FullAtom
     private:
         uint32 _fragmentDuration32;
         uint64 _fragmentDuration64;
-        uint32 _version;
-        uint32 _flags;
 };
 
 #endif

@@ -58,7 +58,7 @@ class SampleSizeAtom : public FullAtom
             return _sampleCount;
         }
 
-        int32 getSampleSizeAt(uint32 index);
+        MP4_ERROR_CODE getSampleSizeAt(uint32 index, uint32& aSampleSize);
 
         int32 getMaxSampleSize()
         {

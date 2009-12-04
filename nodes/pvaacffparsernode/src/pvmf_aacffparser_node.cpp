@@ -2236,7 +2236,7 @@ PVMFStatus PVMFAACFFParserNode::DoSetDataSourcePosition()
             iTrack.iTimestampOffset += iAACFileInfo.iDuration;
 
             // Reset the clock to time 0
-            iTrack.iClockConverter->set_clock(0, 0);
+            iTrack.iClockConverter->set_clock(OSCL_STATIC_CAST(uint32, 0), 0);
 
             // Set the return parameters
             *actualNPT = iAACFileInfo.iDuration;
@@ -2305,7 +2305,7 @@ PVMFStatus PVMFAACFFParserNode::DoSetDataSourcePosition()
         iTrack.iTimestampOffset += iAACFileInfo.iDuration;
 
         // Reset the clock to time 0
-        iTrack.iClockConverter->set_clock(0, 0);
+        iTrack.iClockConverter->set_clock(OSCL_STATIC_CAST(uint32, 0), 0);
 
         // Set the return parameters
         *actualNPT = 0;
@@ -2331,7 +2331,7 @@ PVMFStatus PVMFAACFFParserNode::DoSetDataSourcePosition()
         iTrack.iTimestampOffset += 3600000;
 
         // Reset the clock to time 0
-        iTrack.iClockConverter->set_clock(0, 0);
+        iTrack.iClockConverter->set_clock(OSCL_STATIC_CAST(uint32, 0), 0);
 
         // Set the return parameters
         *actualNPT = 0;

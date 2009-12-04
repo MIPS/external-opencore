@@ -35,6 +35,7 @@
 // Normal constructor from fullatom constructor
 Atom::Atom(uint32 type)
 {
+    _size = 0;
     _type = type;
     _pparent = NULL;
 }

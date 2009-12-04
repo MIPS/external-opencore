@@ -81,6 +81,7 @@
 class OsclFileHandle;
 class PvmiDataStreamObserver;
 class AVCSampleEntry;
+
 /*------------- Interface of Class Mpeg4 File ----------------*/
 class IMpeg4File : public ISucceedFail
 {
@@ -98,21 +99,21 @@ class IMpeg4File : public ISucceedFail
         */
         virtual int32 getNextMediaSample(uint32 id, uint8 *buf, uint32 &size, uint32 &index, uint32 &SampleOffset) = 0;
 
-        virtual int32 getMediaSample(uint32 id, uint32 sampleNumber, uint8 *buf, int32 &size, uint32 &index, uint32 &SampleOffset) = 0;
+        virtual int32 getMediaSample(uint32 id, uint32 sampleNumber, uint8 *buf, uint32 &size, uint32 &index, uint32 &SampleOffset) = 0;
 
-        virtual int32 getOffsetByTime(uint32 id, uint32 ts, int32* sampleFileOffset, uint32 jitterbuffersize) = 0;
+        virtual int32 getOffsetByTime(uint32 id, uint64 ts, uint32* sampleFileOffset, uint32 jitterbuffersize) = 0;
 
         virtual int32 updateFileSize(uint32 filesize) = 0;
 
         virtual MP4_ERROR_CODE getKeyMediaSampleNumAt(uint32 aTrackId,
                 uint32 aKeySampleNum,
                 GAU    *pgau) = 0;
-        virtual int32 getPrevKeyMediaSample(uint32 inputtimestamp,
+        virtual int32 getPrevKeyMediaSample(uint64 inputtimestamp,
                                             uint32 &aKeySampleNum,
                                             uint32 id,
                                             uint32 *n,
                                             GAU    *pgau) = 0;
-        virtual int32 getNextKeyMediaSample(uint32 inputtimestamp,
+        virtual int32 getNextKeyMediaSample(uint64 inputtimestamp,
                                             uint32 &aKeySampleNum,
                                             uint32 id,
                                             uint32 *n,
@@ -122,7 +123,7 @@ class IMpeg4File : public ISucceedFail
            id:  The track ID of the track from which the method is to retrieve the sample timestamp.
            return:  The timestamp of the most recently return media sample in the "media timescale"
         */
-        virtual uint32 getMediaTimestampForCurrentSample(uint32 id) = 0;
+        virtual uint64 getMediaTimestampForCurrentSample(uint32 id) = 0;
 
 
         // META DATA APIS
@@ -167,8 +168,8 @@ class IMpeg4File : public ISucceedFail
         virtual uint32 getTrackDecoderSpecificInfoSize(uint32 id) = 0;
         virtual DecoderSpecificInfo *getTrackDecoderSpecificInfoAtSDI(uint32 trackID, uint32 index) = 0;
 
-        virtual uint32 getTimestampForSampleNumber(uint32 id, uint32 sampleNumber) = 0;
-        virtual int32 getSampleSizeAt(uint32 id, int32 sampleNum) = 0;
+        virtual MP4_ERROR_CODE getTimestampForSampleNumber(uint32 id, uint32 sampleNumber, uint64& aTimeStamp) = 0;
+        virtual MP4_ERROR_CODE getSampleSizeAt(uint32 id, int32 sampleNum, uint32& aSampleSize) = 0;
 
         //From PASP atom
         virtual uint32 getHspacing(uint32 id) = 0;
@@ -180,8 +181,8 @@ class IMpeg4File : public ISucceedFail
         virtual int32 getFileType() const = 0;
         virtual int32 getScalability() const = 0;
 
-        virtual int32 getTimestampForRandomAccessPoints(uint32 id, uint32 *num, uint32 *tsBuf, uint32* numBuf, uint32* offsetBuf = NULL) = 0;
-        virtual int32 getTimestampForRandomAccessPointsBeforeAfter(uint32 id, uint32 ts, uint32 *tsBuf, uint32* numBuf,
+        virtual int32 getTimestampForRandomAccessPoints(uint32 id, uint32 *num, uint64 *tsBuf, uint32* numBuf, uint32* offsetBuf = NULL) = 0;
+        virtual int32 getTimestampForRandomAccessPointsBeforeAfter(uint32 id, uint64 ts, uint64 *tsBuf, uint32* numBuf,
                 uint32 &numsamplestoget,
                 uint32 howManyKeySamples = 1) = 0;
 
@@ -204,11 +205,12 @@ class IMpeg4File : public ISucceedFail
 
         virtual void resetPlayback() = 0;
         virtual uint32 resetPlayback(uint32 time, uint16 numTracks, uint32 *trackList, bool bResetToIFrame = true) = 0;
-        virtual int32 queryRepositionTime(uint32 time,
-                                          uint16 numTracks,
-                                          uint32 *trackList,
-                                          bool bResetToIFrame = true,
-                                          bool bBeforeRequestedTime = true) = 0;
+        virtual uint32 queryRepositionTime(uint32 time,
+                                           uint16 numTracks,
+                                           uint32 *trackList,
+                                           bool bResetToIFrame = true,
+                                           bool bBeforeRequestedTime = true) = 0;
+
 
         virtual int32 querySyncFrameBeforeTime(uint32 time, uint16 numTracks, uint32 *trackList) = 0;
 
@@ -324,7 +326,7 @@ class IMpeg4File : public ISucceedFail
          *
          * @param fileSize
          *
-         * @param uint32& timeStamp
+         * @param uint64& timeStamp
          *
          * @return EVERYTHING_FINE - In case a valid sample and corresponding time
          * stamp was located.
@@ -335,9 +337,9 @@ class IMpeg4File : public ISucceedFail
          *
          */
 
-        MP4_ERROR_CODE virtual getMaxTrackTimeStamp(uint32 trackID,
+        virtual MP4_ERROR_CODE getMaxTrackTimeStamp(uint32 trackID,
                 uint32 fileSize,
-                uint32& timeStamp) = 0;
+                uint64& timeStamp) = 0;
 
         /*
          * This API returns the closest sample number, prior to the required timestamp
@@ -363,7 +365,7 @@ class IMpeg4File : public ISucceedFail
          */
         virtual MP4_ERROR_CODE getSampleNumberClosestToTimeStamp(uint32 trackID,
                 uint32 &sampleNumber,
-                uint32 timeStamp,
+                uint64 timeStamp,
                 uint32 sampleOffset = 0) = 0;
 
         /*

@@ -799,35 +799,35 @@ class pvplayer_engine_test : public test_case,
 
             /**
             * @test (150) Progressive Playback Until EOS Test
-            * Input http url to a progressively downloadable MP4 or MP3 file.
+            * Input http url to a progressively downloadable MP4, ASF or MP3 file.
             * Default url is an http url to an MP4 file.
             * Output YUV and PCM data files from Playback.
             */
             ProgPlaybackMP4UntilEOSTest = 150,
             /**
             * @test (151) Progressive Playback Short Test
-            * Input http url to a progressively downloadable MP4 or MP3 file.
+            * Input http url to a progressively downloadable MP4, ASF or MP3 file.
             * Default url is an http url to an MP4 file.
             * Output YUV and PCM data files from Playback.
             */
             ProgPlaybackMP4ShortTest, //151
             /**
             * @test (152) Progressive Playback Short Pause-Resume Test
-            * Input http url to a progressively downloadable MP4 or MP3 file.
+            * Input http url to a progressively downloadable MP4, ASF or MP3 file.
             * Default url is an http url to an MP4 file.
             * Output YUV and PCM data files from Playback.
             */
             ProgPlaybackMP4ShortPauseResumeTest, //152
             /**
             * @test (153) Progressive Playback Long Pause-Resume Test
-            * Input http url to a progressively downloadable MP4 or MP3 file.
+            * Input http url to a progressively downloadable MP4, ASF or MP3 file.
             * Default url is an http url to an MP4 file.
             * Output YUV and PCM data files from Playback.
             */
             ProgPlaybackMP4LongPauseResumeTest, //153
             /**
             * @test (154) Progressive Playback Start-Pause-Seek-Resume-Twice Test
-            * Input http url to a progressively downloadable MP4 or MP3 file.
+            * Input http url to a progressively downloadable MP4, ASF or MP3 file.
             * Default url is an http url to an MP4 file.
             * Output YUV and PCM data files from Playback.
             */
@@ -841,42 +841,42 @@ class pvplayer_engine_test : public test_case,
             ProgPlaybackMP4SeekStartTest, //155
             /**
             * @test (156) Progressive Playback Start-Pause-Seek-Resume-Loop Test
-            * Input http url to a progressively downloadable MP4 or MP3 file.
+            * Input http url to a progressively downloadable MP4, ASF or MP3 file.
             * Default url is an http url to an MP4 file.
             * Output YUV and PCM data files from Playback.
             */
             ProgPlaybackMP4StartPauseSeekResumeLoopTest, //156
             /**
             * @test (157) Progressive Playback Seek-Forward-Step-Loop Test
-            * Input http url to a progressively downloadable MP4 or MP3 file.
+            * Input http url to a progressively downloadable MP4, ASF or MP3 file.
             * Default url is an http url to an MP4 file.
             * Output YUV and PCM data files from Playback.
             */
             ProgPlaybackMP4SeekForwardStepLoopTest, //157
             /**
             * @test (158) Progressive Playback Play-Stop-Play Test
-            * Input http url to a progressively downloadable MP4 or MP3 file.
+            * Input http url to a progressively downloadable MP4, ASF or MP3 file.
             * Default url is an http url to an MP4 file.
             * Output YUV and PCM data files from Playback.
             */
             ProgPlaybackPlayStopPlayTest, //158
             /**
             * @test (159) Progressive Playback Seek to beginning of clip after Download Complete Test
-            * Input http url to a progressively downloadable MP4 or MP3 file.
+            * Input http url to a progressively downloadable MP4, ASF or MP3 file.
             * Default url is an http url to an MP4 file.
             * Output YUV and PCM data files from Playback.
             */
             ProgPlaybackMP4SeekToBOCAfterDownloadCompleteTest, //159
             /**
             * @test (160) Progressive Playback Seek in cache after Download Complete Test
-            * Input http url to a progressively downloadable MP4 or MP3 file.
+            * Input http url to a progressively downloadable MP4, ASF or MP3 file.
             * Default url is an http url to an MP4 file.
             * Output YUV and PCM data files from Playback.
             */
             ProgPlaybackMP4SeekInCacheAfterDownloadCompleteTest, //160
             /**
             * @test (161) Progressive Playback EOS Stop Play Again Test
-            * Input http url to a progressively downloadable MP4 or MP3 file.
+            * Input http url to a progressively downloadable MP4, ASF or MP3 file.
             * Default url is an http url to an MP4 file.
             * Output YUV and PCM data files from Playback.
             */

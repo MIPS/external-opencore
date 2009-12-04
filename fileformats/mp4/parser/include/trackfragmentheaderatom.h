@@ -39,44 +39,43 @@ class TrackFragmentHeaderAtom : public FullAtom
                                 uint32 type);
         virtual ~TrackFragmentHeaderAtom();
 
-        uint64 getBaseDataOffset()
+        uint64 getBaseDataOffset() const
         {
             return _base_data_offset;
         }
-        uint32 getSampleDescriptionIndex()
+
+        uint32 getSampleDescriptionIndex() const
         {
             return _sample_description_index;
         }
 
-        uint32 getDefaultSampleDuration()
+        uint32 getDefaultSampleDuration() const
         {
             return _default_sample_duration;
         }
 
-        uint32 getDefaultSampleSize()
+        uint32 getDefaultSampleSize() const
         {
             return _default_sample_size;
         }
 
-        uint32 getDefaultSampleFlag()
+        uint32 getDefaultSampleFlag() const
         {
             return _default_sample_flag;
         }
 
-        uint32 getTrackId()
+        uint32 getTrackId() const
         {
             return _trackID;
         }
 
     private:
-        uint32 tf_flag;
         uint32 _trackID;
         uint64 _base_data_offset;
         uint32 _sample_description_index;
         uint32 _default_sample_duration;
         uint32 _default_sample_size;
         uint32 _default_sample_flag;
-        uint32 _version;
 };
 
 #endif

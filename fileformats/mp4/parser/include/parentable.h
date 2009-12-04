@@ -40,11 +40,12 @@ class Parentable
 {
 
     public:
+        Parentable(): _pparent(NULL) {}
         void setParent(Parentable *parent)
         {
             _pparent = parent;
         }
-        Parentable *getParent()
+        Parentable *getParent() const
         {
             return _pparent;
         }

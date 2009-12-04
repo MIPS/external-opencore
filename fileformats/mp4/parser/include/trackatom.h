@@ -97,7 +97,7 @@ class TrackAtom : public Atom
         index:  An output parameter which is the index of the sample entry to which the returned sample refers.  If zero, will return based on the index set by the previous call to getNextMediaSample().
         return: The size in bytes of the data placed into the provided buffer.  If the buffer is not large enough, the return value is the negative of the size that is needed.
         */
-        int32 getNextMediaSample(uint8 *buf, int32 &size, uint32 &index, uint32 &SampleOffset)
+        int32 getNextMediaSample(uint8 *buf, uint32 &size, uint32 &index, uint32 &SampleOffset)
         {
             if (_pmediaAtom == NULL)
             {
@@ -128,7 +128,7 @@ class TrackAtom : public Atom
             }
         }
 
-        int32 getPrevKeyMediaSample(uint32 inputtimestamp,
+        int32 getPrevKeyMediaSample(uint64 inputtimestamp,
                                     uint32  &aKeySampleNum,
                                     uint32 *n,
                                     GAU    *pgau)
@@ -140,7 +140,7 @@ class TrackAtom : public Atom
             return _pmediaAtom->getPrevKeyMediaSample(inputtimestamp, aKeySampleNum, n, pgau);
         }
 
-        int32 getNextKeyMediaSample(uint32 inputtimestamp,
+        int32 getNextKeyMediaSample(uint64 inputtimestamp,
                                     uint32 &aKeySampleNum,
                                     uint32 *n,
                                     GAU    *pgau)
@@ -153,7 +153,7 @@ class TrackAtom : public Atom
         }
 
 
-        int32 getMediaSample(uint32 sampleNumber, uint8 *buf, int32 &size, uint32 &index, uint32 &SampleOffset)
+        int32 getMediaSample(uint32 sampleNumber, uint8 *buf, uint32 &size, uint32 &index, uint32 &SampleOffset)
         {
             if (_pmediaAtom == NULL)
             {
@@ -171,7 +171,7 @@ class TrackAtom : public Atom
             return DEFAULT_ERROR;
         }
 
-        int32 getOffsetByTime(uint32 ts, int32* sampleFileOffset)
+        int32 getOffsetByTime(uint64 ts, uint32* sampleFileOffset)
         {
             if (_pmediaAtom == NULL)
             {
@@ -185,18 +185,6 @@ class TrackAtom : public Atom
             if (_ptrackHeader != NULL)
             {
                 return _ptrackHeader->getTrackID();
-            }
-            else
-            {
-                return 0;
-            }
-        }
-
-        uint64 getTrackDuration() const
-        {
-            if (_ptrackHeader != NULL)
-            {
-                return _ptrackHeader->getDuration();
             }
             else
             {
@@ -238,7 +226,7 @@ class TrackAtom : public Atom
             }
         }
 
-        int32  resetPlayBack(uint32 time, bool oDependsOn = false)
+        uint64  resetPlayBack(uint64 time, bool oDependsOn = false)
         {
             if (_pmediaAtom != NULL)
             {
@@ -250,7 +238,7 @@ class TrackAtom : public Atom
             }
         }
 
-        int32  queryRepositionTime(int32 time, bool oDependsOn = false, bool bBeforeRequestedTime = true)
+        uint64  queryRepositionTime(uint64 time, bool oDependsOn = false, bool bBeforeRequestedTime = true)
         {
             if (_pmediaAtom != NULL)
             {
@@ -262,34 +250,35 @@ class TrackAtom : public Atom
             }
         }
 
-        int32 IsResetNeeded(int32 time)
+        int32 IsResetNeeded(uint32 time)
         {
             if (_pmediaAtom == NULL)
                 return READ_MEDIA_ATOM_FAILED;
-            return _pmediaAtom->IsResetNeeded((int32)((float)time*(float)_pmediaAtom->getMediaTimescale() / (float)1000));
+            uint64 timeOnMediaTimeScale = (int32)((float)time * (float)_pmediaAtom->getMediaTimescale() / (float)1000);
+            return _pmediaAtom->IsResetNeeded(timeOnMediaTimeScale);
         }
 
-        uint32 getTimestampForSampleNumber(uint32 sampleNumber)
+        MP4_ERROR_CODE getTimestampForSampleNumber(uint32 sampleNumber, uint64& aTimeStamp)
         {
             if (_pmediaAtom != NULL)
             {
-                return _pmediaAtom->getTimestampForSampleNumber(sampleNumber);
+                return _pmediaAtom->getTimestampForSampleNumber(sampleNumber, aTimeStamp);
             }
             else
             {
-                return 0;
+                return READ_FAILED;
             }
         }
 
-        int32 getSampleSizeAt(int32 sampleNum)
+        MP4_ERROR_CODE getSampleSizeAt(int32 sampleNum, uint32& aSampleSize)
         {
             if (_pmediaAtom != NULL)
             {
-                return _pmediaAtom->getSampleSizeAt(sampleNum);
+                return _pmediaAtom->getSampleSizeAt(sampleNum, aSampleSize);
             }
             else
             {
-                return 0;
+                return DEFAULT_ERROR;
             }
         }
 
@@ -298,7 +287,7 @@ class TrackAtom : public Atom
         // This is mainly to be used when seeking in the bitstream - you request a video frame at timestamp
         // X, but the actual frame you get is Y, this method returns the timestamp for Y so you know which
         // audio sample to request.
-        int32 getTimestampForCurrentSample()
+        uint64 getTimestampForCurrentSample()
         {
             if (_pmediaAtom != NULL)
             {
@@ -370,6 +359,10 @@ class TrackAtom : public Atom
         //From TrackHeader
         uint64 getTrackDuration()
         {
+
+            if (!getSampleCount())
+                return 0;
+
             if (_ptrackHeader != NULL)
             {
                 return _ptrackHeader->getDuration();
@@ -396,6 +389,9 @@ class TrackAtom : public Atom
         // From MediaAtom -> MediaHeader
         uint64 getMediaDuration()
         {
+
+            if (!getSampleCount())
+                return 0;
             if (_pmediaAtom != NULL)
             {
                 return _pmediaAtom->getMediaDuration();
@@ -664,7 +660,7 @@ class TrackAtom : public Atom
             }
         }
 
-        int32 getTimestampForRandomAccessPoints(uint32 *num, uint32 *tsBuf, uint32* numBuf, uint32* offsetBuf)
+        int32 getTimestampForRandomAccessPoints(uint32 *num, uint64 *tsBuf, uint32* numBuf, uint32* offsetBuf)
         {
             if (_pmediaAtom != NULL)
             {
@@ -676,7 +672,7 @@ class TrackAtom : public Atom
             }
         }
 
-        int32 getTimestampForRandomAccessPointsBeforeAfter(uint32 ts, uint32 *tsBuf, uint32* numBuf,
+        int32 getTimestampForRandomAccessPointsBeforeAfter(uint64 ts, uint64 *tsBuf, uint32* numBuf,
                 uint32& numsamplestoget,
                 uint32 howManyKeySamples)
         {
@@ -702,7 +698,7 @@ class TrackAtom : public Atom
             }
         }
 
-        MP4_ERROR_CODE getMaxTrackTimeStamp(uint32 fileSize, uint32& timeStamp)
+        MP4_ERROR_CODE getMaxTrackTimeStamp(uint32 fileSize, uint64& timeStamp)
         {
             if (_pmediaAtom != NULL)
             {
@@ -715,7 +711,7 @@ class TrackAtom : public Atom
         }
 
         MP4_ERROR_CODE getSampleNumberClosestToTimeStamp(uint32 &sampleNumber,
-                uint32 timeStamp,
+                uint64 timeStamp,
                 uint32 sampleOffset = 0)
         {
             if (_pmediaAtom != NULL)

@@ -37,8 +37,6 @@
 #include "fullatom.h"
 #endif
 
-#define PV_ERROR -1
-
 class TimeToSampleAtom : public FullAtom
 {
 
@@ -57,26 +55,21 @@ class TimeToSampleAtom : public FullAtom
             return _entryCount;
         }
 
-        uint32 getSampleCountAt(int32 index);
-        int32 getSampleDeltaAt(int32 index);
-        int32 getSampleNumberFromTimestamp(uint32 ts,
-                                           bool oAlwaysRetSampleCount = false);
-        int32 getTimeDeltaForSampleNumber(uint32 num);
-        int32 getTimestampForSampleNumber(uint32 num);
+        MP4_ERROR_CODE GetSampleCountAt(uint32 aIndex, uint32& aCount);
+        MP4_ERROR_CODE GetSampleNumberFromTimestamp(uint64 ts, uint32& aSampleNumber, bool oAlwaysRetSampleCount = false);
+        MP4_ERROR_CODE GetTimeDeltaForSampleNumber(uint32 aNumber, uint32& aTimeDelta);
+        MP4_ERROR_CODE GetTimestampForSampleNumber(uint32 aSampleNumber, uint64& aTimestamp);
+        MP4_ERROR_CODE GetTimeDeltaForSampleNumberPeek(uint32 aSampleNumber, uint32& aTimeDelta);
+        MP4_ERROR_CODE GetTimeDeltaForSampleNumberGet(uint32 aSampleNumber, uint32& aTimeDelta);
 
-        int32 getTimeDeltaForSampleNumberPeek(uint32 num);
-        int32 getTimeDeltaForSampleNumberGet(uint32 num);
+        MP4_ERROR_CODE ResetStateVariables();
+        MP4_ERROR_CODE ResetStateVariables(uint32 sampleNum);
+        MP4_ERROR_CODE ResetPeekwithGet();
 
-        int32 resetStateVariables();
-        int32 resetStateVariables(uint32 sampleNum);
-
-        int32 resetPeekwithGet();
-        uint32 getCurrPeekSampleCount()
+        uint32 GetCurrPeekSampleCount() const
         {
             return _currPeekSampleCount;
         }
-
-
 
     private:
         bool ParseEntryUnit(uint32 entry_cnt);
@@ -104,13 +97,12 @@ class TimeToSampleAtom : public FullAtom
 
         uint32 _currGetSampleCount;
         int32 _currGetIndex;
-        int32 _currGetTimeDelta;
+        uint32 _currGetTimeDelta;
         uint32 _currPeekSampleCount;
         int32 _currPeekIndex;
-        int32 _currPeekTimeDelta;
+        uint32 _currPeekTimeDelta;
         uint32 _parsing_mode;
         PVLogger *iLogger, *iStateVarLogger, *iParsedDataLogger;
-
 };
 
 #endif  // TIMETOSAMPLEATOM_H_INCLUDED

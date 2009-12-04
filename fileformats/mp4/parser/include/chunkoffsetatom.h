@@ -49,7 +49,7 @@ class ChunkOffsetAtom : public FullAtom
         }
 
         // Getting first chunk offset values
-        int32 getChunkOffsetAt(int32 index) ;
+        MP4_ERROR_CODE getChunkOffsetAt(int32 index, uint32& aChunkOffset) ;
         int32 getChunkClosestToOffset(uint32 offSet, int32& index);
 
 

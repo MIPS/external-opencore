@@ -131,6 +131,7 @@ class PVMP4FFNodeTrackPortInfo : public OsclMemPoolFixedChunkAllocatorObserver,
         PVMP4FFNodeTrackPortInfo()
         {
             iTrackId = -1;
+            iNoSampleInCurrentMoof = false;
             iPortInterface = NULL;
             iFormatType = PVMF_MIME_FORMAT_UNKNOWN;
             iFormatTypeInteger = 0;
@@ -184,6 +185,7 @@ class PVMP4FFNodeTrackPortInfo : public OsclMemPoolFixedChunkAllocatorObserver,
                 OsclMemPoolResizableAllocatorObserver(aSrc)
         {
             iTrackId = aSrc.iTrackId;
+            iNoSampleInCurrentMoof = aSrc.iNoSampleInCurrentMoof;
             iPortInterface = aSrc.iPortInterface;
             iMimeType = aSrc.iMimeType;
             iFormatType = aSrc.iFormatType;
@@ -388,7 +390,7 @@ class PVMP4FFNodeTrackPortInfo : public OsclMemPoolFixedChunkAllocatorObserver,
         // MP4 FF parser node is handled as Base node class
         PVMFNodeInterfaceImpl* iNode;
         // Timestamp
-        uint32 iTimestamp;
+        uint64 iTimestamp;
         // Flag to indicate that next frame will be the first frame after repositioning
         bool iFirstFrameAfterRepositioning;
         // Sequence Number
@@ -418,6 +420,7 @@ class PVMP4FFNodeTrackPortInfo : public OsclMemPoolFixedChunkAllocatorObserver,
 
         //thumb nail mode
         bool iThumbSampleDone;
+        bool iNoSampleInCurrentMoof;
 
         // no-render related
         uint32 iTargetNPTInMediaTimeScale;

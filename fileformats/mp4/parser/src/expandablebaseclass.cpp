@@ -62,7 +62,7 @@ ExpandableBaseClass::readSizeOfClassFromFileStream(MP4_FF_FILE *fp)
     // byte is valid - thus only the last 7 bits if each byte hold actual size data.  Therefore
     // the max size possible (limited to a 4-byte encoding) is 2^28 - 1.
 
-    _sizeOfClass = 0;
+    _sizeOfClass = _sizeOfSizeField = 0;
     uint32 size = 0;
     uint8 data;
     int32 numBytesRead = 0;

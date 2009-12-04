@@ -1714,7 +1714,7 @@ OSCL_EXPORT_REF bool CAACFileParser::InitAACFile(CAACFileParams& aParams,
             // get the duration in millisec
             MediaClockConverter mcc;
             mcc.set_timescale(iAACSampleFrequency);
-            mcc.set_clock(iAACDuration*1024, 0);
+            mcc.set_clock(OSCL_STATIC_CAST(uint32, (iAACDuration*1024)), 0);
             iAACDuration = mcc.get_converted_ts(1000);
 
             if (ipBSO->reset(0))
@@ -1732,7 +1732,7 @@ OSCL_EXPORT_REF bool CAACFileParser::InitAACFile(CAACFileParams& aParams,
             // rough duration calculation based on max bitrate for variable rate bitstream
             MediaClockConverter mcc;
             mcc.set_timescale(iAACBitRate);
-            mcc.set_clock(raw_data_bits, 0);
+            mcc.set_clock(OSCL_STATIC_CAST(uint32, raw_data_bits), 0);
             iAACDuration = mcc.get_converted_ts(1000);
 
             if (ipBSO->reset(ipBSO->GetByteOffsetToStartOfAudioFrames() + (iAACHeaderLen >> 3)))
@@ -1984,7 +1984,7 @@ OSCL_EXPORT_REF int32 CAACFileParser::ResetPlayback(uint32 aStartTime, uint32& a
 
     MediaClockConverter mcc;
     mcc.set_timescale(iAACSampleFrequency);
-    mcc.set_clock(iTotalNumFramesRead*1024, 0);
+    mcc.set_clock(OSCL_STATIC_CAST(uint32, (iTotalNumFramesRead*1024)), 0);
     aActualStartTime = mcc.get_converted_ts(1000);
 
     PVMF_AACPARSER_LOGDIAGNOSTICS((0, "CAACFileParser::resetplayback - aActualStartTime=%d", aActualStartTime));
@@ -2335,7 +2335,7 @@ OSCL_EXPORT_REF int32 CAACFileParser::PeekNextTimestamp(uint32& ts)
 {
     MediaClockConverter mcc;
     mcc.set_timescale(iAACSampleFrequency);
-    mcc.set_clock((iTotalNumFramesRead + 1)*1024, 0);
+    mcc.set_clock(OSCL_STATIC_CAST(uint32, ((iTotalNumFramesRead + 1)*1024)), 0);
     ts = mcc.get_converted_ts(1000);
 
     return AACBitstreamObject::EVERYTHING_OK;

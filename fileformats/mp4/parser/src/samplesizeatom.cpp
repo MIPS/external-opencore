@@ -268,12 +268,13 @@ SampleSizeAtom::~SampleSizeAtom()
 
 }
 
-int32
-SampleSizeAtom::getSampleSizeAt(uint32 index)
+MP4_ERROR_CODE
+SampleSizeAtom::getSampleSizeAt(uint32 index, uint32& aSampleSize)
 {
     if (_psampleSizeVec == NULL)
     {
-        return _sampleSize;
+        aSampleSize = _sampleSize;
+        return EVERYTHING_FINE;
     }
 
     if (_parsing_mode == 1)
@@ -296,7 +297,10 @@ SampleSizeAtom::getSampleSizeAt(uint32 index)
                         uint32 entryFallsInPreviousBuffer = _curr_buff_number - entryLoc;
 
                         if (entryFallsInPreviousBuffer == 1)
-                            return (_psampleSizeVec[index%_stbl_buff_size]);
+                        {
+                            aSampleSize = _psampleSizeVec[index%_stbl_buff_size];
+                            return EVERYTHING_FINE;
+                        }
                     }
                 }
                 _SkipOldEntry = false;
@@ -307,13 +311,15 @@ SampleSizeAtom::getSampleSizeAt(uint32 index)
                         ParseEntryUnit(_parsed_entry_cnt);
                 }
             }
-            return (_psampleSizeVec[index%_stbl_buff_size]);
+            aSampleSize = _psampleSizeVec[index%_stbl_buff_size];
+            return EVERYTHING_FINE;
         }
         else
         {
-            return PV_ERROR;
+            return DEFAULT_ERROR;
         }
     }
-    return _psampleSizeVec[index];
+    aSampleSize = _psampleSizeVec[index];
+    return EVERYTHING_FINE;
 }
 

@@ -205,11 +205,14 @@ class ISucceedFail
 {
 
     public:
-        bool MP4Success()
+        ISucceedFail(): _success(false)
+                , _mp4ErrorCode(DEFAULT_ERROR)
+        {}
+        bool MP4Success() const
         {
             return _success;
         }
-        int32 GetMP4Error()
+        int32 GetMP4Error() const
         {
             return _mp4ErrorCode;
         }

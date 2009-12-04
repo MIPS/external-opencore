@@ -152,7 +152,7 @@ class Mpeg4File : public IMpeg4File, public Parentable
             }
         }
 
-        int32 getPrevKeyMediaSample(uint32 inputtimestamp,
+        int32 getPrevKeyMediaSample(uint64 inputtimestamp,
                                     uint32 &aKeySampleNum,
                                     uint32 id,
                                     uint32 *n,
@@ -165,7 +165,7 @@ class Mpeg4File : public IMpeg4File, public Parentable
             return _pmovieAtom->getPrevKeyMediaSample(inputtimestamp, aKeySampleNum, id, n, pgau);
         }
 
-        int32 getNextKeyMediaSample(uint32 inputtimestamp,
+        int32 getNextKeyMediaSample(uint64 inputtimestamp,
                                     uint32 &aKeySampleNum,
                                     uint32 id,
                                     uint32 *n,
@@ -178,7 +178,7 @@ class Mpeg4File : public IMpeg4File, public Parentable
             return _pmovieAtom->getNextKeyMediaSample(inputtimestamp, aKeySampleNum, id, n, pgau);
         }
 
-        int32 getMediaSample(uint32 id, uint32 sampleNumber, uint8 *buf, int32 &size, uint32 &index, uint32 &SampleOffset)
+        int32 getMediaSample(uint32 id, uint32 sampleNumber, uint8 *buf, uint32 &size, uint32 &index, uint32 &SampleOffset)
         {
             if (_pmovieAtom == NULL)
             {
@@ -187,10 +187,10 @@ class Mpeg4File : public IMpeg4File, public Parentable
             return _pmovieAtom->getMediaSample(id, sampleNumber, buf, size, index, SampleOffset);
         }
 
-        int32 getOffsetByTime(uint32 id, uint32 ts, int32* sampleFileOffset , uint32 jitterbuffertimeinmillisec);
+        int32 getOffsetByTime(uint32 id, uint64 ts, uint32* sampleFileOffset , uint32 jitterbuffertimeinmillisec);
 
 
-        uint32 getMediaTimestampForCurrentSample(uint32 id)
+        uint64 getMediaTimestampForCurrentSample(uint32 id)
         {
             if (_pmovieAtom != NULL)
             {
@@ -202,10 +202,9 @@ class Mpeg4File : public IMpeg4File, public Parentable
             }
         }
 
-        int32 getTimestampForRandomAccessPoints(uint32 id, uint32 *num, uint32 *tsBuf, uint32* numBuf, uint32 *offsetBuf);
+        int32 getTimestampForRandomAccessPoints(uint32 id, uint32 *num, uint64 *tsBuf, uint32* numBuf, uint32 *offsetBuf);
 
-
-        int32 getTimestampForRandomAccessPointsBeforeAfter(uint32 id, uint32 ts, uint32 *tsBuf, uint32* numBuf,
+        int32 getTimestampForRandomAccessPointsBeforeAfter(uint32 id, uint64 ts, uint64 *tsBuf, uint32* numBuf,
                 uint32& numsamplestoget,
                 uint32 howManyKeySamples);
 
@@ -213,25 +212,25 @@ class Mpeg4File : public IMpeg4File, public Parentable
         //Return MPEG VOL header information
         virtual uint8* getTrackDecoderSpecificInfoContent(uint32 id);
         virtual uint32 getTrackDecoderSpecificInfoSize(uint32 id);
-        uint32 getTimestampForSampleNumber(uint32 id, uint32 sampleNumber) ;
-        int32 getSampleSizeAt(uint32 id, int32 sampleNum) ;
+        MP4_ERROR_CODE getTimestampForSampleNumber(uint32 id, uint32 sampleNumber, uint64& aTimeStamp);
+        MP4_ERROR_CODE getSampleSizeAt(uint32 id, int32 sampleNum, uint32& aSampleSize) ;
 
         virtual DecoderSpecificInfo* getTrackDecoderSpecificInfoAtSDI(uint32 trackID, uint32 index);
 
         virtual void resetPlayback();
 
-        uint32 repositionFromMoof(uint32 time, uint32 trackID);
+        bool repositionFromMoof(uint32 time, uint32 trackID);
 
         void resetAllMovieFragments();
 
 
         virtual uint32 resetPlayback(uint32 time, uint16 numTracks, uint32 *trackList, bool bResetToIFrame);
 
-        virtual int32 queryRepositionTime(uint32 time,
-                                          uint16 numTracks,
-                                          uint32 *trackList,
-                                          bool bResetToIFrame,
-                                          bool bBeforeRequestedTime);
+        virtual uint32 queryRepositionTime(uint32 time,
+                                           uint16 numTracks,
+                                           uint32 *trackList,
+                                           bool bResetToIFrame,
+                                           bool bBeforeRequestedTime);
 
         virtual int32   querySyncFrameBeforeTime(uint32 time, uint16 numTracks, uint32 *trackList)
         {
@@ -249,7 +248,7 @@ class Mpeg4File : public IMpeg4File, public Parentable
         OSCL_wString& getPVRating(MP4FFParserOriginalCharEnc &charType) ;
         OSCL_wString& getPVCopyright(MP4FFParserOriginalCharEnc &charType) ;
         OSCL_wString& getPVVersion(MP4FFParserOriginalCharEnc &charType) ;
-        OSCL_wString& getCreationDate(MP4FFParserOriginalCharEnc &charType) ;
+        const OSCL_wString& getCreationDate(MP4FFParserOriginalCharEnc &charType) ;
 
         // from 'ftyp' atom
         uint32 getCompatibiltyMajorBrand()
@@ -809,7 +808,7 @@ class Mpeg4File : public IMpeg4File, public Parentable
 
         MP4_ERROR_CODE getMaxTrackTimeStamp(uint32 trackID,
                                             uint32 fileSize,
-                                            uint32& timeStamp)
+                                            uint64& timeStamp)
         {
             if (_pmovieAtom != NULL)
             {
@@ -825,7 +824,7 @@ class Mpeg4File : public IMpeg4File, public Parentable
 
         MP4_ERROR_CODE getSampleNumberClosestToTimeStamp(uint32 trackID,
                 uint32 &sampleNumber,
-                uint32 timeStamp,
+                uint64 timeStamp,
                 uint32 sampleOffset = 0)
         {
             if (_pmovieAtom != NULL)
