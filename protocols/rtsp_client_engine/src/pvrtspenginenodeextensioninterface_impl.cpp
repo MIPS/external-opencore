@@ -169,3 +169,23 @@ OSCL_EXPORT_REF void PVRTSPEngineNodeExtensionInterfaceImpl::UpdateSessionComple
 {
     iContainer->UpdateSessionCompletionStatus(aSessionCompleted);
 }
+
+OSCL_EXPORT_REF void PVRTSPEngineNodeExtensionInterfaceImpl::SetSwitchSDPInfo(OsclSharedPtr<SDPInfo>& aSDPinfo, Oscl_Vector<StreamInfo, OsclMemAllocator>& aTrackIdMapping, bool aSDPAvailable)
+{
+    iContainer->SetSwitchSDPInfo(aSDPinfo, aTrackIdMapping, aSDPAvailable);
+}
+
+OSCL_EXPORT_REF PVMFStatus PVRTSPEngineNodeExtensionInterfaceImpl::SetPlaylistUri(const char* aPlaylistUri)
+{
+    return iContainer->SetPlaylistUri(aPlaylistUri);
+}
+
+OSCL_EXPORT_REF PVMFStatus PVRTSPEngineNodeExtensionInterfaceImpl::GetSwitchStreamInfo(Oscl_Vector<StreamInfo, OsclMemAllocator> &aSelectedStream)
+{
+    return iContainer->GetSwitchStreamInfo(aSelectedStream);
+}
+
+OSCL_EXPORT_REF PVMFCommandId PVRTSPEngineNodeExtensionInterfaceImpl::PlaylistPlay(PVMFSessionId aSession, const RtspRangeType& aRange, PVEffectiveTime aEffectiveTime, const OsclAny* aContext)
+{
+    return iContainer->PlaylistPlay(aSession, aRange, aEffectiveTime, aContext);
+}

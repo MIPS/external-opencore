@@ -160,7 +160,7 @@ class PVMFJitterBufferExtensionInterfaceImpl :
         OSCL_IMPORT_REF bool PrepareForRepositioning(bool oUseExpectedClientClockVal = false,
                 uint32 aExpectedClientClockVal = 0);
 
-        OSCL_IMPORT_REF bool setPortSSRC(PVMFPortInterface* aPort, uint32 aSSRC);
+        OSCL_IMPORT_REF bool setPortSSRC(PVMFPortInterface* aPort, uint32 aSSRC, bool a3GPPFCSSwitch = false);
 
         OSCL_IMPORT_REF bool setPortRTPParams(PVMFPortInterface* aPort,
                                               bool   aSeqNumBasePresent,
@@ -212,6 +212,8 @@ class PVMFJitterBufferExtensionInterfaceImpl :
 
         OSCL_IMPORT_REF bool ClearJitterBuffer(PVMFPortInterface* aPort, uint32 aSeqNum);
         OSCL_IMPORT_REF void FlushJitterBuffer();
+        OSCL_IMPORT_REF void ResetJitterBuffer();
+        OSCL_IMPORT_REF void SetClientClockToServerClock();
 
         OSCL_IMPORT_REF bool NotifyAutoPauseComplete();
 
@@ -239,6 +241,7 @@ class PVMFJitterBufferExtensionInterfaceImpl :
                 mediaInfo* aMediaInfo = NULL);
         OSCL_IMPORT_REF virtual void setPayloadParserRegistry(PayloadParserRegistry*);
         OSCL_IMPORT_REF virtual PVMFStatus setPortDataLogging(bool logEnable, OSCL_String* logPath = NULL);
+        OSCL_IMPORT_REF void SendEOSMessage(Oscl_Vector<int32, OsclMemAllocator> aRemovedTrackIDVector);
 
     private:
         PVMFJitterBufferNode *iContainer;

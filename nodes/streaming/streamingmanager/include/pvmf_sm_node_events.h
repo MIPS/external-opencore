@@ -195,6 +195,10 @@ typedef enum
 {
     PVMFRTSPClientEngineNodeInfoEventStart = 8192,
     PVMFRTSPClientEngineNodeInfoRedirect,
+    //"202"      ; Accepted
+    PVMRTSPClientEngineInfoRTSPPartialSuccessCode202,
+    //"206"      ; Partial Data
+    PVMRTSPClientEngineInfoRTSPPartialSuccessCode206,
     //"300"      ; Multiple Choices
     PVMRTSPClientEngineInfoRTSPRedirectCode300,
     //"301"      ; Moved Permanently
@@ -231,6 +235,9 @@ typedef struct
     uint32  iPlaylistUserDataLen;
     //char  *iPlaylistUserDataPtr;
     char iPlaylistUserDataPtr[512];
+
+    // RTP sequence number base
+    uint32 iRTPSeqNumberBase[10];
 } PVMFRTSPClientEngineNodePlaylistInfoType;
 #endif
 

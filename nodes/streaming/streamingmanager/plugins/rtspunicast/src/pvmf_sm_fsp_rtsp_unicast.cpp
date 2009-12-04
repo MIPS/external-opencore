@@ -94,6 +94,10 @@
 #include "pvrtsp_client_engine_node.h"
 #endif
 
+#ifndef PVMF_ERRORINFOMESSAGE_EXTENSION_H_INCLUDED
+#include "pvmf_errorinfomessage_extension.h"
+#endif
+
 #ifndef PVMF_SM_RTSP_UNICAST_CAPANDCONFIG_H
 #include "pvmf_sm_rtsp_unicast_capandconfig.h"
 #endif
@@ -126,9 +130,12 @@ PVMFSMRTSPUnicastNode * PVMFSMRTSPUnicastNode::New(int32 aPriority)
 
 PVMFSMRTSPUnicastNode::PVMFSMRTSPUnicastNode(int32 aPriority): PVMFSMFSPBaseNode(aPriority)
 {
+    iPlayListRepositioningSupported = true;
+    iSelectTracksAndSendFCSRequestFlag = false;
     iJitterBufferDurationInMilliSeconds = DEFAULT_JITTER_BUFFER_DURATION_IN_MS;
     oAutoReposition = false;
     iPauseDenied    = false;
+    iSwitchSDPLocation = NULL;
     ResetNodeParams(false);
 }
 
@@ -525,14 +532,20 @@ bool PVMFSMRTSPUnicastNode::ProcessCommand(PVMFSMFSPBaseNodeCommand& aCmd)
 
             /* add extention interface commands */
         case PVMF_SMFSP_NODE_SET_DATASOURCE_POSITION:
-            OSCL_ASSERT(iPlayListRepositioning != true);
-            if (!oAutoReposition)
+            if (iPlayListRepositioning)
             {
-                DoSetDataSourcePosition(aCmd);
+                DoSetDataSourcePositionPlayList(aCmd);
             }
             else
             {
-                DoSetDataSourcePositionOverflow(aCmd);
+                if (!oAutoReposition)
+                {
+                    DoSetDataSourcePosition(aCmd);
+                }
+                else
+                {
+                    DoSetDataSourcePositionOverflow(aCmd);
+                }
             }
             break;
 
@@ -2518,7 +2531,7 @@ PVMFStatus PVMFSMRTSPUnicastNode::GetConfigParameter(PvmiKvp*& aParameters,
                 {
                     oscl_free(aParameters[0].key);
                     oscl_free(aParameters);
-                    PVMF_SM_RTSP_LOGERROR((0, "PVMFSMRTSPUnicastPlusPVRNode::GetConfigParameter() "
+                    PVMF_SM_RTSP_LOGERROR((0, "PVMFSMRTSPUnicastNode::GetConfigParameter() "
                                            "Memory allocation for range uint32 failed"));
                     return PVMFErrNoMemory;
                 }
@@ -4230,6 +4243,41 @@ void PVMFSMRTSPUnicastNode::HandleRTSPSessionControllerCommandCompleted(const PV
                 aPerformErrHandling = false;
             }
         }
+        if (cmdContextData->cmd == PVMF_SM_FSP_RTSP_SESSION_CONTROLLER_PLAYLIST_PLAY)
+        {
+            PVInterface* localPVInterface = aResponse.GetEventExtensionInterface();
+            if (NULL != localPVInterface)
+            {
+                PVMFErrorInfoMessageInterface *localErrorInfoMessage = OSCL_REINTERPRET_CAST(PVMFErrorInfoMessageInterface*, localPVInterface);
+                int32 localErrorCode = 0;
+                PVUuid localUuid;
+                localErrorInfoMessage->GetCodeUUID(localErrorCode, localUuid);
+                // 202 means switch SDP available, but track selection needs to be done
+                if (PVMRTSPClientEngineInfoRTSPPartialSuccessCode202 == localErrorCode)
+                {
+                    // Set a flag that would trigger track selection and a new FCS request to be sent out.
+                    // The status of this flag is checked once switch SDP is retrieved from the entity body.
+                    iSelectTracksAndSendFCSRequestFlag = true;
+                    iPlaylistPlayInProgress = true;
+                    return;
+                }
+                else if ((PVMFRTSPClientEngineNodeErrorRTSPErrorCode404 == localErrorCode) ||
+                         (PVMFRTSPClientEngineNodeErrorRTSPErrorCode415 == localErrorCode) ||
+                         (PVMFRTSPClientEngineNodeErrorRTSPErrorCode457 == localErrorCode) ||
+                         (PVMFRTSPClientEngineNodeErrorRTSPErrorCode551 == localErrorCode))
+                {
+                    aPerformErrHandling = false;
+                    // Reset iSelectTracksAndSendFCSRequestFlag and iPlaylistPlayInProgress
+                    iSelectTracksAndSendFCSRequestFlag = false;
+                    iPlaylistPlayInProgress = false;
+                    iSessionControllerNodeContainer->iNodeCmdState = PVMFSMFSP_NODE_CMD_IDLE;
+                    BypassError();
+                    ReportInfoEvent(PVMFInfoPlayListClipTransition, NULL, &localUuid, &localErrorCode);
+                    return;
+                }
+
+            }
+        }
         /* if a failure has been overridden just fall thru */
         if (aPerformErrHandling == true)
         {
@@ -4326,6 +4374,64 @@ void PVMFSMRTSPUnicastNode::HandleRTSPSessionControllerCommandCompleted(const PV
                 iSessionControllerNodeContainer->iFeedBackPorts.push_back(port);
             }
             CompleteGraphConstruct();
+        }
+        break;
+        case PVMF_SM_FSP_RTSP_SESSION_CONTROLLER_PLAYLIST_PLAY:
+        {
+            // In case of 3GPP FCS with switch SDP available or in case of 202 response processing, all the information
+            // needed to transition to the next clip is available in the FCS response.
+            // There is no need to wait for an entity body (and thus the event PVMFInfoPlayListClipTransition).
+            if (iPVMFDataSourcePositionParamsPtr->iMode == 3)
+            {
+                // If switch SDP is not available locally and not processing 202 response,
+                // wait for entity body processing.
+                if (!iPVMFDataSourcePositionParamsPtr->iSDPAvailable && !iSelectTracksAndSendFCSRequestFlag)
+                {
+                    iPlaylistPlayInProgress = true;
+                }
+                else
+                {
+                    // Save switch SDP info
+                    iSdpInfo = iSwitchSDPInfo;
+
+                    // Reset iSelectTracksAndSendFCSRequestFlag
+                    iSelectTracksAndSendFCSRequestFlag = false;
+                }
+
+                // Check to see if tracks were removed
+                if (iRemovedTrackIDVector.size())
+                {
+                    // If tracks were removed, need to send EOS on those ports
+                    PVMFSMFSPChildNodeContainer* iJitterBufferNodeContainer =
+                        getChildNodeContainer(PVMF_SM_FSP_JITTER_BUFFER_NODE);
+                    OSCL_ASSERT(iJitterBufferNodeContainer);
+                    if (!iJitterBufferNodeContainer)
+                        return;
+                    PVMFJitterBufferExtensionInterface* jbExtIntf =
+                        (PVMFJitterBufferExtensionInterface*)iJitterBufferNodeContainer->iExtensions[0];
+                    OSCL_ASSERT(jbExtIntf);
+                    if (!jbExtIntf)
+                        return;
+                    jbExtIntf->SendEOSMessage(iRemovedTrackIDVector);
+                }
+
+                // Send the PVMFInfoPlayListSwitch info event to the engine
+                ReportInfoEvent(PVMFInfoPlayListSwitch);
+
+                // Update RTP Info received in server response
+                if (iPVMFDataSourcePositionParamsPtr->iSDPAvailable)
+                {
+                    UpdateRTPInfoAndFlushJitterBuffer();
+                    iSessionControllerNodeContainer->iNodeCmdState = PVMFSMFSP_NODE_CMD_IDLE;
+                    CompleteStart();
+                }
+            }
+
+            else
+            {
+                iSessionControllerNodeContainer->iNodeCmdState = PVMFSMFSP_NODE_CMD_IDLE;
+                CompleteStart();
+            }
         }
         break;
 
@@ -5805,35 +5911,168 @@ void PVMFSMRTSPUnicastNode::HandleNodeInformationalEvent(const PVMFAsyncEvent& a
                 return;
             }
 
-            PVMFSMFSPChildNodeContainer* iJitterBufferNodeContainer =
-                getChildNodeContainer(PVMF_SM_FSP_JITTER_BUFFER_NODE);
-            if (iJitterBufferNodeContainer == NULL)
+            // The following code is executed in case of 3GPP FCS without SDP available. The
+            // PVMFInfoPlayListClipTransition event is called once SDP text is received
+            // in the server response.
+            // RTP info in server response is updated first.
+            // New SDP information is processed next.
+
+
+            /*****
+             * i. Retrieve SDP text
+             */
+            PVMFStatus status;                                     // saves return value from rtspExtIntf->GetSDP() call
+            OsclRefCounterMemFrag iSDPText;                        // passed by reference to rtspExtIntf->GetSDP() call - saves SDP text
+            PVRTSPEngineNodeExtensionInterface* rtspExtIntf =
+                (PVRTSPEngineNodeExtensionInterface*)
+                (iSessionControllerNodeContainer->iExtensions[0]); // pointer to the RTSP extension interface object
+
+            // Call to get switch SDP text
+            status = rtspExtIntf->GetSDP(iSDPText);
+            if (status != PVMFSuccess)
             {
-                OSCL_LEAVE(OsclErrBadHandle);
+                PVMF_SM_RTSP_LOGINFO((0, "PVMFSMRTSPUnicastPlusPVRNode:HandleNodeInformationalEvent Unable to get new SDP %d", status));
                 return;
             }
-            PVMFJitterBufferExtensionInterface* jbExtIntf =
-                (PVMFJitterBufferExtensionInterface*)
-                (iJitterBufferNodeContainer->iExtensions[0]);
 
-            PVMFRTSPClientEngineNodePlaylistInfoType *myType = (PVMFRTSPClientEngineNodePlaylistInfoType*)(aEvent.GetEventData());
-            if (myType == NULL)
-            {//hang?
-                PVMF_SM_RTSP_LOGERROR((0, "PVMFSMRTSPUnicastNode::HandleNodeInformationalEvent - PVMFInfoPlayListClipTransition No event data - context=0x%x, event data=0x%x", aEvent.GetContext(), aEvent.GetEventData()));
-                if (IsBusy())
+            /*****
+             * ii. Parse SDP
+             */
+            PVMFSMSharedPtrAlloc<SDPInfo> sdpAlloc; // SDPInfo allocator object
+            SDP_Parser *sdpParser;                  // Pointer to SDP parser object
+            SDPMediaParserRegistry* sdpParserReg = SDPMediaParserRegistryPopulater::PopulateRegistry(); // Pointer to SDP parser registry object
+
+            // Create SDPInfo object and save
+            SDPInfo* sdpInfo = sdpAlloc.allocate();
+
+            // Create SDP parser and save
+            sdpParser = OSCL_NEW(SDP_Parser, (sdpParserReg));
+
+            // Parse switch SDP text
+            int32 sdpRetVal = sdpParser->parseSDP((const char*)(iSDPText.getMemFragPtr()),
+                                                  iSDPText.getMemFragSize(),
+                                                  sdpInfo);
+
+            // Cleanup parser, registry
+            OSCL_DELETE(sdpParser);
+            SDPMediaParserRegistryPopulater::CleanupRegistry(sdpParserReg);
+
+            // If SDP parsing fails, log failure (if logging enabled) and return
+            if (sdpRetVal != SDP_SUCCESS)
+            {
+                PVMF_SM_RTSP_LOGINFO((0, "PVMFSMRTSPUnicastPlusPVRNode:HandleNodeInformationalEvent SDP parser error %d", sdpRetVal));
+                return;
+            }
+
+            OsclRefCounterSA< PVMFSMSharedPtrAlloc<SDPInfo> > *refcnt =
+                new OsclRefCounterSA< PVMFSMSharedPtrAlloc<SDPInfo> >(sdpInfo);
+
+            OsclSharedPtr<SDPInfo> sharedSDPInfo(sdpInfo, refcnt);
+
+            // In case of a 200 response, simply save the SDP and pass it to the RTSP node
+            if (!iSelectTracksAndSendFCSRequestFlag)
+            {
+                // Save switch SDP info
+                iSwitchSDPInfo = sharedSDPInfo;
+
+                /*****
+                 * iii. Update RTSP node with new SDP info
+                 */
+                // First populate presentation info
+                PVMFMediaPresentationInfo aMediaInfo;
+                PopulatePresentationInfoFromSwitchSDP(aMediaInfo);
+
+                Oscl_Vector<StreamInfo, OsclMemAllocator> aSwitchSelectedStream;
+                if (SelectTracksFromSwitchSDP(aSwitchSelectedStream, aMediaInfo) == PVMFFailure)
                 {
-                    Cancel();
-                    RunIfNotReady();
+                    PVMF_SM_RTSP_LOGERROR((0, "PVMFSMRTSPUnicastPlusPVRNode:HandleNodeInformationalEvent:SelectTracksFromSwitchSDP - Failed"));
+                    return;
                 }
-                return;
+                // Send new SDP info to rtsp node
+                status = rtspExtIntf->SetSDPInfo(iSwitchSDPInfo, aSwitchSelectedStream);
+                if (status != PVMFSuccess)
+                {
+                    PVMF_SM_RTSP_LOGINFO((0, "PVMFSMRTSPUnicastPlusPVRNode:HandleNodeInformationalEvent Unable to pass new SDP info to RTSP node %d", status));
+                    return;
+                }
+                else
+                {
+                    UpdateRTPInfoAndFlushJitterBuffer();
+                    iSessionControllerNodeContainer->iNodeCmdState = PVMFSMFSP_NODE_CMD_IDLE;
+                    CompleteStart();
+                    // Save switch SDP as current SDP for future switches
+                    iSdpInfo = iSwitchSDPInfo;
+                }
+            }
+            // In case of 202 response processing, need to do track selection and
+            // send out a new FCS request.
+            else
+            {
+                // Save switch SDP info
+                iSwitchSDPInfo = sharedSDPInfo;
+
+                /******
+                 * iii. Track selection
+                 */
+                // First populate presentation info
+                PVMFMediaPresentationInfo aMediaInfo;
+                PopulatePresentationInfoFromSwitchSDP(aMediaInfo);
+
+                Oscl_Vector<StreamInfo, OsclMemAllocator> aSwitchSelectedStream;
+                if (SelectTracksFromSwitchSDP(aSwitchSelectedStream, aMediaInfo) == PVMFFailure)
+                {
+                    PVMF_SM_RTSP_LOGERROR((0, "PVMFSMRTSPUnicastPlusPVRNode:HandleNodeInformationalEvent:SelectTracksFromSwitchSDP - Failed"));
+                    return;
+                }
+
+                /******
+                 * iv. Send out another FCS request to the RTSP engine. Set the aSDPAvailable flag to true.
+                 */
+                rtspExtIntf->SetSwitchSDPInfo(iSwitchSDPInfo, aSwitchSelectedStream, true);
+
+                for (uint32 i = 0; i < iFSPChildNodeContainerVec.size(); i++)
+                {
+                    if (iFSPChildNodeContainerVec[i].iNodeTag == PVMF_SM_FSP_RTSP_SESSION_CONTROLLER_NODE)
+                    {
+                        PVMFSMFSPCommandContext* internalCmd = RequestNewInternalCmd();
+                        if (internalCmd != NULL)
+                        {
+                            internalCmd->cmd =
+                                iFSPChildNodeContainerVec[i].commandStartOffset +
+                                PVMF_SM_FSP_NODE_INTERNAL_PLAYLIST_PLAY_CMD_OFFSET;
+                            internalCmd->parentCmd = PVMF_SMFSP_NODE_SET_DATASOURCE_POSITION;
+
+                            OsclAny *cmdContextData = OSCL_REINTERPRET_CAST(OsclAny*, internalCmd);
+
+                            /* Set Requested Play Range */
+                            RtspRangeType rtspRange;
+                            rtspRange.format = RtspRangeType::PLAYLIST_TIME_RANGE;
+                            rtspRange.iPlaylistUrl[0] = '\0';
+                            rtspRange.start_is_set = true;
+                            rtspRange.playlist_start.iClipIndex = iPVMFDataSourcePositionParamsPtr->iPlayElementIndex;
+                            rtspRange.npt_start.npt_sec.sec = iPVMFDataSourcePositionParamsPtr->iTargetNPT / 1000;
+                            rtspRange.npt_start.npt_sec.milli_sec =
+                                (iPVMFDataSourcePositionParamsPtr->iTargetNPT - ((iPVMFDataSourcePositionParamsPtr->iTargetNPT / 1000) * 1000));
+                            rtspRange.end_is_set = false;
+                            PVEffectiveTime effectiveTime = (PVEffectiveTime)iPVMFDataSourcePositionParamsPtr->iMode;
+
+                            // Set playlist uri, if any, before calling playlist play
+                            rtspExtIntf->SetPlaylistUri(iPVMFDataSourcePositionParamsPtr->iPlaylistUri);
+                            rtspExtIntf->PlaylistPlay(iFSPChildNodeContainerVec[i].iSessionId,
+                                                      rtspRange,
+                                                      effectiveTime,
+                                                      cmdContextData);
+                            iFSPChildNodeContainerVec[i].iNodeCmdState = PVMFSMFSP_NODE_CMD_PENDING;
+                        }
+                        else
+                        {
+                            PVMF_SM_RTSP_LOGERROR((0, "PVMFSMRTSPUnicastPlusPVRNode:HandleNodeInformationalEvent:RequestNewInternalCmd - Failed"));
+                            return;
+                        }
+                    }
+                }
             }
 
-            NptTimeFormat npt_start;
-            npt_start.npt_format = NptTimeFormat::NPT_SEC;
-            npt_start.npt_sec.sec = myType->iPlaylistNPTSec;
-            npt_start.npt_sec.milli_sec = myType->iPlaylistNPTMillsec;
-
-            jbExtIntf->PurgeElementsWithNPTLessThan(npt_start);
             iSessionControllerNodeContainer->iNodeCmdState = PVMFSMFSP_NODE_CMD_IDLE;
             CompleteStart();
 
@@ -5894,6 +6133,13 @@ void PVMFSMRTSPUnicastNode::CleanUp()
     DestroyPayloadParserRegistry();
     ResetNodeParams();
     iLogger = NULL;
+    // Cleanup any old SDP file paths
+    if (iSwitchSDPLocation != NULL)
+    {
+        OSCL_FREE(iSwitchSDPLocation);
+        iSwitchSDPLocation = NULL;
+    }
+
 }
 
 void PVMFSMRTSPUnicastNode::PopulateDRMInfo()
@@ -6029,5 +6275,940 @@ void PVMFSMRTSPUnicastNode::DoSetDataSourcePositionOverflow(PVMFSMFSPBaseNodeCom
         PVMF_SM_RTSP_LOGERROR((0, "StreamingManagerNode:DoSetDataSourcePositionOverflow - Invalid State"));
         CommandComplete(iInputCommands, aCmd, PVMFErrInvalidState);
     }
+    return;
+}
+
+PVMFStatus PVMFSMRTSPUnicastNode::NotifyTargetPositionSync(PVMFTimestamp aTargetNPT)
+{
+    PVMFSMFSPChildNodeContainer* iSessionControllerNodeContainer =
+        getChildNodeContainer(PVMF_SM_FSP_RTSP_SESSION_CONTROLLER_NODE);
+
+    if (iSessionControllerNodeContainer == NULL)
+    {
+        OSCL_LEAVE(OsclErrBadHandle);
+        return PVMFFailure;
+    }
+
+
+    PVRTSPEngineNodeExtensionInterface* rtspExtIntf =
+        (PVRTSPEngineNodeExtensionInterface*)
+        (iSessionControllerNodeContainer->iExtensions[0]);
+
+    if (rtspExtIntf == NULL)
+    {
+        return PVMFFailure;
+    }
+
+    RtspRangeType rtspRange;
+    rtspRange.format = RtspRangeType::NPT_RANGE;
+    rtspRange.start_is_set = true;
+    rtspRange.npt_start.npt_format = NptTimeFormat::NPT_SEC;
+    rtspRange.npt_start.npt_sec.sec = aTargetNPT / 1000;
+    rtspRange.npt_start.npt_sec.milli_sec =
+        (aTargetNPT - ((aTargetNPT / 1000) * 1000));
+
+    /* Set end time from SDP, if available */
+    if (iSdpInfo)
+    {
+        sessionDescription* sessionInfo = iSdpInfo->getSessionInfo();
+        int32 sessionStartTime = 0, sessionStopTime = 0;
+        RtspRangeType *rtspRangeForEndTime = OSCL_CONST_CAST(RtspRangeType*, (sessionInfo->getRange()));
+        rtspRangeForEndTime->convertToMilliSec((int32&)sessionStartTime, (int32&)sessionStopTime);
+        // Pass the stop time only if it is available
+        if (rtspRangeForEndTime->end_is_set == true)
+        {
+            rtspRange.end_is_set = true;
+            rtspRange.npt_end.npt_format = NptTimeFormat::NPT_SEC;
+            rtspRange.npt_end.npt_sec.sec = sessionStopTime / 1000;
+            rtspRange.npt_end.npt_sec.milli_sec =
+                (sessionStopTime - ((sessionStopTime / 1000) * 1000));
+        }
+    }
+
+    return rtspExtIntf->SetRequestPlayRange(rtspRange);
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+//Node state
+//EPVMFNodePrepared:
+//              - Send BOS notification to JB node
+//              - Validate requested npt w.r.t session info
+//                  - if requested npt is within session range and is != session stop time
+//                          - Provide RTSP extension interface with RtspRangeType obj, with
+//                            rtspRange.playlist_start.iClipIndex = iPVMFDataSourcePositionParamsPtr->iPlayElementIndex;
+//                            rtspRange.npt_start.npt_sec.sec = iPVMFDataSourcePositionParamsPtr->iTargetNPT/1000;
+//                            rtspRange.end_is_set = false;
+//
+//                  -else
+//                          - available media data Ts after seek from JB node and set it to *iActualMediaDataTSPtr
+//                          - Report cmd status PVMFSuccess to observer
+//EPVMFNodeStarted
+//              -   Make sure session is either PVMF_MIME_DATA_SOURCE_RTSP_URL or PVMF_MIME_DATA_SOURCE_SDP_FILE. For invalid
+//                  session, complete command with status PVMFFailure
+//              -   Prepare JB for repositioning.
+//              -   Provide RTSP extension interface with RtspRangeType obj, with
+//                  rtspRange.playlist_start.iClipIndex = iPVMFDataSourcePositionParamsPtr->iPlayElementIndex;
+//                  rtspRange.npt_start.npt_sec.sec = iPVMFDataSourcePositionParamsPtr->iTargetNPT/1000;
+//                  rtspRange.end_is_set = false;
+//              -   Set playlisturi with RTSP node and call playlistplay
+//
+//EPVMFNodePaused
+//              -   Make sure session is either PVMF_MIME_DATA_SOURCE_RTSP_URL or PVMF_MIME_DATA_SOURCE_SDP_FILE. For invalid
+//                  session, complete command with status PVMFFailure
+//              -   Prepare JB for repositioning.
+//              -   Provide RTSP extension interface with RtspRangeType obj, with
+//                  rtspRange.playlist_start.iClipIndex = iPVMFDataSourcePositionParamsPtr->iPlayElementIndex;
+//                  rtspRange.npt_start.npt_sec.sec = iPVMFDataSourcePositionParamsPtr->iTargetNPT/1000;
+//                  rtspRange.end_is_set = false;
+//              -   Call playlistplay on RTSP extension interface.
+//Other state:
+//              - Report invalid state
+//
+///////////////////////////////////////////////////////////////////////////////
+void PVMFSMRTSPUnicastNode::DoSetDataSourcePositionPlayList(PVMFSMFSPBaseNodeCommand& aCmd)
+{
+    PVMF_SM_RTSP_LOGSTACKTRACE((0, "PVMFSMRTSPUnicastNode::DoSetDataSourcePositionPlayList - In"));
+
+    iActualRepositionStartNPTInMSPtr = NULL;
+    iActualMediaDataTSPtr = NULL;
+    iPVMFDataSourcePositionParamsPtr = NULL;
+    iJumpToIFrame = false;
+
+    aCmd.PVMFSMFSPBaseNodeCommand::Parse(iPVMFDataSourcePositionParamsPtr);
+
+    PVMFSMFSPChildNodeContainer* iJitterBufferNodeContainer =
+        getChildNodeContainer(PVMF_SM_FSP_JITTER_BUFFER_NODE);
+    if (iJitterBufferNodeContainer == NULL)
+    {
+        OSCL_LEAVE(OsclErrBadHandle);
+        return;
+    }
+    PVMFJitterBufferExtensionInterface* jbExtIntf =
+        (PVMFJitterBufferExtensionInterface*)
+        (iJitterBufferNodeContainer->iExtensions[0]);
+
+    // Save the playlist switch mode
+    iPlaylistSwitchMode = iPVMFDataSourcePositionParamsPtr->iMode;
+
+    iStreamID = iPVMFDataSourcePositionParamsPtr->iStreamID;
+    if (iPVMFDataSourcePositionParamsPtr->iMode == 3)
+    {
+        jbExtIntf->SendBOSMessage(iStreamID);
+    }
+
+    if (iInterfaceState == EPVMFNodePrepared)
+    {
+        /*
+        * SetDataSource from a prepared state could mean two things:
+        *  - In Play-Stop-Play usecase engine does a SetDataSourcePosition
+        *    to get the start media TS to set its playback clock
+        *  - Engine is trying to do a play with a non-zero start offset
+            */
+        if (iPVMFDataSourcePositionParamsPtr->iTargetNPT < iSessionStopTime)
+        {
+            if (iPVMFDataSourcePositionParamsPtr->iTargetNPT != iSessionStartTime)
+            {
+                /* Set Requested Play Range */
+                PVMFSMFSPChildNodeContainer* iSessionControllerNodeContainer =
+                    getChildNodeContainer(PVMF_SM_FSP_RTSP_SESSION_CONTROLLER_NODE);
+                if (iSessionControllerNodeContainer == NULL)
+                {
+                    OSCL_LEAVE(OsclErrBadHandle);
+                    return;
+                }
+                PVRTSPEngineNodeExtensionInterface* rtspExtIntf =
+                    (PVRTSPEngineNodeExtensionInterface*)
+                    (iSessionControllerNodeContainer->iExtensions[0]);
+
+                RtspRangeType rtspRange;
+                rtspRange.format = RtspRangeType::PLAYLIST_TIME_RANGE;
+                rtspRange.start_is_set = true;
+                rtspRange.playlist_start.iClipIndex = iPVMFDataSourcePositionParamsPtr->iPlayElementIndex;
+                rtspRange.npt_start.npt_sec.sec = iPVMFDataSourcePositionParamsPtr->iTargetNPT / 1000;
+                rtspRange.npt_start.npt_sec.milli_sec =
+                    (iPVMFDataSourcePositionParamsPtr->iTargetNPT - ((iPVMFDataSourcePositionParamsPtr->iTargetNPT / 1000) * 1000));
+                rtspRange.end_is_set = false;
+
+                if (rtspExtIntf->SetRequestPlayRange(rtspRange) != PVMFSuccess)
+                {
+                    PVMF_SM_RTSP_LOGERROR((0, "PVMFSMRTSPUnicastNode:DoSetDataSourcePositionPlayList - SetRequestPlayRange Failed"));
+                    CommandComplete(iInputCommands, aCmd, PVMFFailure);
+                    return;
+                }
+
+            }
+        }
+        GetActualMediaTSAfterSeek();
+        CommandComplete(iInputCommands, aCmd, PVMFSuccess);
+    }
+    else if ((iInterfaceState == EPVMFNodeStarted) || (iInterfaceState == EPVMFNodePaused))
+    {
+        iRepositioning = true;
+
+        /* Put the jitter buffer into a state of transition - only if the playlist switch mode is 0*/
+        if ((iPVMFDataSourcePositionParamsPtr->iMode == 3) ||
+                (iPVMFDataSourcePositionParamsPtr->iMode == 0) ||
+                (iPVMFDataSourcePositionParamsPtr->iMode == -1))
+        {
+            PVMFSMFSPChildNodeContainer* iJitterBufferNodeContainer =
+                getChildNodeContainer(PVMF_SM_FSP_JITTER_BUFFER_NODE);
+            if (iJitterBufferNodeContainer == NULL)
+            {
+                OSCL_LEAVE(OsclErrBadHandle);
+                return;
+            }
+            PVMFJitterBufferExtensionInterface* jbExtIntf =
+                (PVMFJitterBufferExtensionInterface*)
+                (iJitterBufferNodeContainer->iExtensions[0]);
+            jbExtIntf->PrepareForPlaylistSwitch();
+        }
+        /* If node is running, pause first */
+        if (iInterfaceState == EPVMFNodeStarted)
+        {
+            if (!DoRepositioningStart3GPPPlayListStreamingDuringPlay())
+            {
+                PVMF_SM_RTSP_LOGERROR((0, "StreamingManagerNode:DoSetDataSourcePositionPlayList - No Memory"));
+                CommandComplete(iInputCommands, aCmd, PVMFErrNoMemory);
+            }
+        }
+        /* If already paused do not pause */
+        else if (iInterfaceState == EPVMFNodePaused)
+        {
+            /* Start the nodes */
+            if (!DoRepositioningStart3GPPPlayListStreaming())
+            {
+                PVMF_SM_RTSP_LOGERROR((0, "StreamingManagerNode:DoSetDataSourcePositionPlayList - No Memory"));
+                CommandComplete(iInputCommands, aCmd, PVMFErrNoMemory);
+            }
+        }
+        MoveCmdToCurrentQueue(aCmd);
+    }
+    else
+    {
+        PVMF_SM_RTSP_LOGERROR((0, "StreamingManagerNode:DoSetDataSourcePositionPlayList - Invalid State"));
+        CommandComplete(iInputCommands, aCmd, PVMFErrInvalidState);
+    }
+    return;
+}
+
+bool PVMFSMRTSPUnicastNode::DoRepositioningStart3GPPPlayListStreamingDuringPlay()
+{
+    /* Set Requested Play Range */
+    PVMFSMFSPChildNodeContainer* iSessionControllerNodeContainer =
+        getChildNodeContainer(PVMF_SM_FSP_RTSP_SESSION_CONTROLLER_NODE);
+
+    if (iSessionControllerNodeContainer == NULL)
+    {
+        OSCL_LEAVE(OsclErrBadHandle);
+        return false;
+    }
+
+    PVRTSPEngineNodeExtensionInterface* rtspExtIntf =
+        (PVRTSPEngineNodeExtensionInterface*)
+        (iSessionControllerNodeContainer->iExtensions[0]);
+
+    RtspRangeType rtspRange;
+    rtspRange.format = RtspRangeType::PLAYLIST_TIME_RANGE;
+    rtspRange.iPlaylistUrl[0] = '\0';
+
+    rtspRange.start_is_set = true;
+    rtspRange.playlist_start.iClipIndex = iPVMFDataSourcePositionParamsPtr->iPlayElementIndex;
+    rtspRange.npt_start.npt_sec.sec = iPVMFDataSourcePositionParamsPtr->iTargetNPT / 1000;
+    rtspRange.npt_start.npt_sec.milli_sec =
+        (iPVMFDataSourcePositionParamsPtr->iTargetNPT - ((iPVMFDataSourcePositionParamsPtr->iTargetNPT / 1000) * 1000));
+    rtspRange.end_is_set = false;
+    PVEffectiveTime effectiveTime = (PVEffectiveTime)iPVMFDataSourcePositionParamsPtr->iMode;
+
+    // Is switch SDP available, process it and select tracks
+    Oscl_Vector<StreamInfo, OsclMemAllocator> aSwitchSelectedStream;      // Saves selected stream info
+    bool aSDPAvailable = iPVMFDataSourcePositionParamsPtr->iSDPAvailable; // Flag indicating if switch SDP available
+    if (aSDPAvailable)
+    {
+        // Cleanup any old SDP file paths
+        if (iSwitchSDPLocation != NULL)
+        {
+            OSCL_FREE(iSwitchSDPLocation);
+            iSwitchSDPLocation = NULL;
+        }
+        // Allocate required memory to save SDP file path
+        iSwitchSDPLocation = (oscl_wchar*)OSCL_MALLOC((oscl_strlen(iPVMFDataSourcePositionParamsPtr->iPlaylistUri) + 1) * sizeof(oscl_wchar));
+        if (iSwitchSDPLocation == NULL)
+        {
+            return false;
+        }
+        // First convert character array to wide character array
+        oscl_UTF8ToUnicode(iPVMFDataSourcePositionParamsPtr->iPlaylistUri, oscl_strlen(iPVMFDataSourcePositionParamsPtr->iPlaylistUri) + 1, iSwitchSDPLocation, oscl_strlen(iPVMFDataSourcePositionParamsPtr->iPlaylistUri) + 1);
+        // Create an OSCL_sHeapString with the file path
+        OSCL_wHeapString<OsclMemAllocator> aSDPLocation(iSwitchSDPLocation);
+        PVMFMediaPresentationInfo aMediaInfo;
+
+        // Parse SDP file pointed to by aSDPLocation
+        if (ParseSwitchSDP(aSDPLocation) != PVMFSuccess)
+        {
+            return false;
+        }
+        // Populate presentation info from the switch SDP. This is
+        // needed to index SDP track IDs.
+        // For e.g. the first track (indexed by 0) may have a track ID equal to 2.
+        if (PopulatePresentationInfoFromSwitchSDP(aMediaInfo) != PVMFSuccess)
+        {
+            return false;
+        }
+
+        // Select tracks from the switch SDP using the current SDP as basis.
+        if (SelectTracksFromSwitchSDP(aSwitchSelectedStream, aMediaInfo) == PVMFFailure)
+        {
+            return false;
+        }
+    }
+    // Now pass the new SDP info down to the RTSP node. Note that this API is
+    // called even when switch SDP is not available. In addition to passing
+    // SDP info (when available), the availability of SDP itself is indicated to
+    // to the RTSP node by this call.
+    rtspExtIntf->SetSwitchSDPInfo(iSwitchSDPInfo, aSwitchSelectedStream, aSDPAvailable);
+
+    for (uint32 i = 0; i < iFSPChildNodeContainerVec.size(); i++)
+    {
+        if (iFSPChildNodeContainerVec[i].iNodeTag == PVMF_SM_FSP_RTSP_SESSION_CONTROLLER_NODE)
+        {
+            PVMFSMFSPCommandContext* internalCmd = RequestNewInternalCmd();
+            if (internalCmd != NULL)
+            {
+                internalCmd->cmd =
+                    iFSPChildNodeContainerVec[i].commandStartOffset +
+                    PVMF_SM_FSP_NODE_INTERNAL_PLAYLIST_PLAY_CMD_OFFSET;
+                internalCmd->parentCmd = PVMF_SMFSP_NODE_SET_DATASOURCE_POSITION;
+
+                OsclAny *cmdContextData = OSCL_REINTERPRET_CAST(OsclAny*, internalCmd);
+                // Set playlist uri, if any, before calling playlist play
+                rtspExtIntf->SetPlaylistUri(iPVMFDataSourcePositionParamsPtr->iPlaylistUri);
+                rtspExtIntf->PlaylistPlay(iFSPChildNodeContainerVec[i].iSessionId,
+                                          rtspRange,
+                                          effectiveTime,
+                                          cmdContextData);
+                iFSPChildNodeContainerVec[i].iNodeCmdState = PVMFSMFSP_NODE_CMD_PENDING;
+            }
+            else
+            {
+                PVMF_SM_RTSP_LOGERROR((0, "PVMFSMRTSPUnicastNode:DoRepositioningStart3GPPPlayListStreamingDuringPlay:RequestNewInternalCmd - Failed"));
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
+bool PVMFSMRTSPUnicastNode::DoRepositioningStart3GPPPlayListStreaming()
+{
+    /* Set Requested Play Range */
+    PVMFSMFSPChildNodeContainer* iSessionControllerNodeContainer =
+        getChildNodeContainer(PVMF_SM_FSP_RTSP_SESSION_CONTROLLER_NODE);
+
+    if (iSessionControllerNodeContainer == NULL)
+    {
+        OSCL_LEAVE(OsclErrBadHandle);
+        return false;
+    }
+
+    PVRTSPEngineNodeExtensionInterface* rtspExtIntf =
+        (PVRTSPEngineNodeExtensionInterface*)
+        (iSessionControllerNodeContainer->iExtensions[0]);
+
+
+    RtspRangeType rtspRange;
+    rtspRange.format = RtspRangeType::PLAYLIST_TIME_RANGE;
+    rtspRange.iPlaylistUrl[0] = '\0';
+
+    //OSCL_StackString<256> newUrn(_STRLIT_CHAR("/public/playlist/va_playlists/pv2-aac64_mpeg4-rvlcs-64.ply"));
+    //oscl_strncpy(rtspRange.iPlaylistUrl, newUrn.get_cstr(), 1024);
+
+    rtspRange.start_is_set = true;
+    rtspRange.playlist_start.iClipIndex = iPVMFDataSourcePositionParamsPtr->iPlayElementIndex;
+    rtspRange.npt_start.npt_sec.sec = iPVMFDataSourcePositionParamsPtr->iTargetNPT / 1000;
+    rtspRange.npt_start.npt_sec.milli_sec =
+        (iPVMFDataSourcePositionParamsPtr->iTargetNPT - ((iPVMFDataSourcePositionParamsPtr->iTargetNPT / 1000) * 1000));
+    rtspRange.end_is_set = false;
+
+    PVMFSMFSPChildNodeContainerVector::iterator it;
+    for (it = iFSPChildNodeContainerVec.begin(); it != iFSPChildNodeContainerVec.end(); it++)
+    {
+        PVMFSMFSPCommandContext* internalCmd = RequestNewInternalCmd();
+        if (internalCmd != NULL)
+        {
+            internalCmd->cmd =
+                it->commandStartOffset +
+                PVMF_SM_FSP_NODE_INTERNAL_START_CMD_OFFSET;
+            internalCmd->parentCmd = PVMF_SMFSP_NODE_SET_DATASOURCE_POSITION;
+
+            OsclAny *cmdContextData = OSCL_REINTERPRET_CAST(OsclAny*, internalCmd);
+
+            PVMFNodeInterface* iNode = it->iNode;
+
+            iNode->Start(it->iSessionId, cmdContextData);
+            it->iNodeCmdState = PVMFSMFSP_NODE_CMD_PENDING;
+        }
+        else
+        {
+            PVMF_SM_RTSP_LOGERROR((0, "PVMFSMRTSPUnicastNode:DoRepositioningStart3GPPPlayListStreaming:RequestNewInternalCmd - Failed"));
+            return false;
+        }
+        if (it->iNodeTag == PVMF_SM_FSP_RTSP_SESSION_CONTROLLER_NODE)
+        {
+            PVMFSMFSPCommandContext* internalCmd = RequestNewInternalCmd();
+            if (internalCmd != NULL)
+            {
+                internalCmd->cmd =
+                    it->commandStartOffset +
+                    PVMF_SM_FSP_NODE_INTERNAL_PLAYLIST_PLAY_CMD_OFFSET;
+                internalCmd->parentCmd = PVMF_SMFSP_NODE_SET_DATASOURCE_POSITION;
+
+                OsclAny *cmdContextData = OSCL_REINTERPRET_CAST(OsclAny*, internalCmd);
+
+                rtspExtIntf->PlaylistPlay(it->iSessionId,
+                                          rtspRange,
+                                          PVEffectiveTime_NOW,
+                                          cmdContextData);
+            }
+            else
+            {
+                PVMF_SM_RTSP_LOGERROR((0, "PVMFSMRTSPUnicastNode:DoRepositioningStart3GPPPlayListStreaming:RequestNewInternalCmd - Failed"));
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
+PVMFStatus PVMFSMRTSPUnicastNode::ParseSwitchSDP(OSCL_wString& aClipLocation)
+{
+    /**
+     * Parsing SDP file.
+     */
+    //PVMFStatus status;
+    OsclRefCounterMemFrag iSwitchSDPText;
+    /* Parse SDP file contents into a buffer */
+    Oscl_FileServer fileServ;
+    Oscl_File osclFile;
+    fileServ.Connect();
+
+    if (osclFile.Open(aClipLocation.get_cstr(),
+                      Oscl_File::MODE_READ,
+                      fileServ) != 0)
+    {
+        PVMF_SM_RTSP_LOGERROR((0, "StreamingManagerNode:ParseSwitchSDP - Unable to open SDP file"));
+        return PVMFFailure;
+    }
+
+    /* Get File Size */
+    osclFile.Seek(0, Oscl_File::SEEKEND);
+    int32 fileSize = osclFile.Tell();
+    osclFile.Seek(0, Oscl_File::SEEKSET);
+
+    if (fileSize <= 0)
+    {
+        PVMF_SM_RTSP_LOGERROR((0, "StreamingManagerNode:ParseSwitchSDP - Corrupt SDP file"));
+        return PVMFFailure;
+    }
+
+    OsclMemAllocDestructDealloc<uint8> my_alloc;
+    OsclRefCounter* my_refcnt;
+    uint aligned_refcnt_size =
+        oscl_mem_aligned_size(sizeof(OsclRefCounterSA< OsclMemAllocDestructDealloc<uint8> >));
+    /*
+     * To acct for null char, as SDP buffer is treated akin to a string by the
+     * SDP parser lib.
+     */
+    uint allocsize = oscl_mem_aligned_size(aligned_refcnt_size + fileSize + 2);
+    uint8* my_ptr = GetMemoryChunk(my_alloc, allocsize);
+    if (!my_ptr)
+    {
+        PVMF_SM_RTSP_LOGERROR((0, "StreamingManagerNode:ParseSwitchSDP - Unable to process SDP file"));
+        return PVMFFailure;
+    }
+
+    my_refcnt = OSCL_PLACEMENT_NEW(my_ptr, OsclRefCounterSA< OsclMemAllocDestructDealloc<uint8> >(my_ptr));
+    my_ptr += aligned_refcnt_size;
+
+    OsclMemoryFragment memfrag;
+    memfrag.len = fileSize;
+    memfrag.ptr = my_ptr;
+
+    OsclRefCounterMemFrag tmpRefcntMemFrag(memfrag, my_refcnt, memfrag.len);
+    iSwitchSDPText = tmpRefcntMemFrag;
+
+    osclFile.Read(memfrag.ptr, 1, fileSize);
+
+    osclFile.Close();
+    fileServ.Close();
+
+    PVMFSMSharedPtrAlloc<SDPInfo> sdpAlloc;
+    SDPInfo* sdpInfo = sdpAlloc.allocate();
+
+    SDP_Parser *sdpParser;
+
+    SDPMediaParserRegistry* sdpParserReg = SDPMediaParserRegistryPopulater::PopulateRegistry();
+    sdpParser = OSCL_NEW(SDP_Parser, (sdpParserReg));
+
+    int32 sdpRetVal =
+        sdpParser->parseSDP((const char*)(iSwitchSDPText.getMemFragPtr()),
+                            iSwitchSDPText.getMemFragSize(),
+                            sdpInfo);
+
+    // save the SDP file name - the packet source node will need this
+    sdpInfo->setSDPFilename(aClipLocation);
+
+    OSCL_DELETE(sdpParser);
+    SDPMediaParserRegistryPopulater::CleanupRegistry(sdpParserReg);
+
+    OsclRefCounterSA< PVMFSMSharedPtrAlloc<SDPInfo> > *refcnt =
+        new OsclRefCounterSA< PVMFSMSharedPtrAlloc<SDPInfo> >(sdpInfo);
+
+    OsclSharedPtr<SDPInfo> sharedSDPInfo(sdpInfo, refcnt);
+
+    if (sdpRetVal != SDP_SUCCESS)
+    {
+        return PVMFFailure;
+    }
+
+    iSwitchSDPInfo = sharedSDPInfo;
+
+    return PVMFSuccess;
+}
+
+PVMFStatus PVMFSMRTSPUnicastNode::PopulatePresentationInfoFromSwitchSDP(PVMFMediaPresentationInfo& aMediaInfo)
+{
+    /**
+     * Populate presentation information
+     */
+    if (iSwitchSDPInfo == NULL)
+    {
+        return PVMFFailure;
+    }
+
+    /* Get SDP Session Info */
+    sessionDescription* sessionInfo = iSwitchSDPInfo->getSessionInfo();
+
+    RtspRangeType *sessionRange = OSCL_CONST_CAST(RtspRangeType*, (sessionInfo->getRange()));
+
+    int32 sessionStartTime = 0, sessionStopTime = 0;
+
+    sessionRange->convertToMilliSec(sessionStartTime, sessionStopTime);
+
+    int32 duration_msec = (sessionStopTime - sessionStartTime);
+
+    uint64 duration64;
+    Oscl_Int64_Utils::set_uint64(duration64, 0, (uint32)duration_msec);
+
+    if (sessionRange->end_is_set == true)
+    {
+        aMediaInfo.setDurationValue(duration64);
+        aMediaInfo.setDurationTimeScale(1000);
+    }
+    else
+    {
+        aMediaInfo.SetDurationAvailable(false);
+    }
+
+    aMediaInfo.setSeekableFlag((!(sessionInfo->getRandomAccessDenied())));
+
+    int32 numTracks = iSwitchSDPInfo->getNumMediaObjects();
+
+    SDPAltGroupType sdpAltGroupType = sessionInfo->getSDPAltGroupType();
+
+    PVMF_TRACK_INFO_TRACK_ALTERNATE_TYPE iAltType = PVMF_TRACK_ALTERNATE_TYPE_UNDEFINED;
+
+    if (sdpAltGroupType == SDP_ALT_GROUP_LANGUAGE)
+    {
+        iAltType = PVMF_TRACK_ALTERNATE_TYPE_LANGUAGE;
+    }
+    else if (sdpAltGroupType == SDP_ALT_GROUP_BANDWIDTH)
+    {
+        iAltType = PVMF_TRACK_ALTERNATE_TYPE_BANDWIDTH;
+    }
+
+    for (int32 i = 0; i < numTracks; i++)
+    {
+        // Get the vector of mediaInfo as there can alternates for each track.
+        Oscl_Vector<mediaInfo*, SDPParserAlloc> mediaInfoVec =
+            iSwitchSDPInfo->getMediaInfo(i);
+
+        uint32 minfoVecLen = mediaInfoVec.size();
+
+        for (uint32 j = 0; j < minfoVecLen; j++)
+        {
+            mediaInfo* mInfo = mediaInfoVec[j];
+
+            if (mInfo == NULL)
+            {
+                return PVMFFailure;
+            }
+
+            RtspRangeType *mediaRange = mInfo->getRtspRange();
+
+            int32 mediaStartTime = 0, mediaStopTime = 0;
+
+            mediaRange->convertToMilliSec(mediaStartTime, mediaStopTime);
+            int32 mediaDuration_ms = mediaStopTime - mediaStartTime;
+            uint64 mediaDuration64;
+            Oscl_Int64_Utils::set_uint64(mediaDuration64, 0, (uint32)mediaDuration_ms);
+
+            PVMFTrackInfo trackInfo;
+
+            Oscl_Vector<PayloadSpecificInfoTypeBase*, SDPParserAlloc> payloadVector;
+            payloadVector = mInfo->getPayloadSpecificInfoVector();
+
+            if (payloadVector.size() == 0)
+            {
+                return false;
+            }
+            /*
+            * There can be multiple payloads per media segment.
+            * We only support one for now, so
+            * use just the first payload
+            */
+            PayloadSpecificInfoTypeBase* payloadInfo = payloadVector[0];
+
+            // set config for later
+            int32 configSize = payloadInfo->configSize;
+            OsclAny* config = payloadInfo->configHeader.GetRep();
+
+            OSCL_StackString<256> mimeString;
+            const char* mimeType = mInfo->getMIMEType();
+            mimeString += mimeType;
+            trackInfo.setTrackMimeType(mimeString);
+
+            uint32 trackID = mInfo->getMediaInfoID();
+
+            trackInfo.setTrackID(trackID);
+            trackInfo.setPortTag(trackID);
+
+            trackInfo.setTrackBitRate(mInfo->getBitrate());
+
+            if (mediaRange->end_is_set == true)
+            {
+                trackInfo.setTrackDurationValue(mediaDuration64);
+            }
+            else
+            {
+                trackInfo.SetDurationAvailable(false);
+            }
+
+            if ((configSize > 0) && (config != NULL))
+            {
+                OsclMemAllocDestructDealloc<uint8> my_alloc;
+                OsclRefCounter* my_refcnt;
+                uint aligned_refcnt_size =
+                    oscl_mem_aligned_size(sizeof(OsclRefCounterSA< OsclMemAllocDestructDealloc<uint8> >));
+
+                uint8* my_ptr = GetMemoryChunk(my_alloc, aligned_refcnt_size + configSize);
+                if (!my_ptr)
+                    return PVMFFailure;
+
+                my_refcnt = OSCL_PLACEMENT_NEW(my_ptr, OsclRefCounterSA< OsclMemAllocDestructDealloc<uint8> >(my_ptr));
+                my_ptr += aligned_refcnt_size;
+
+                OsclMemoryFragment memfrag;
+                memfrag.len = (uint32)configSize;
+                memfrag.ptr = my_ptr;
+
+                oscl_memcpy((void*)(memfrag.ptr), (const void*)config, memfrag.len);
+
+                OsclRefCounterMemFrag tmpRefcntMemFrag(memfrag, my_refcnt, memfrag.len);
+                trackInfo.setTrackConfigInfo(tmpRefcntMemFrag);
+            }
+
+            int32 dependsOnTrackID = mInfo->getDependsOnTrackID();
+
+            if (dependsOnTrackID != -1)
+            {
+                trackInfo.setDependsOn();
+                mediaInfo* baseMediaInfo = iSwitchSDPInfo->getMediaInfoBasedOnDependsOnID(dependsOnTrackID);
+                if (baseMediaInfo == NULL)
+                {
+                    return PVMFFailure;
+                }
+                trackInfo.addDependsOnTrackID(baseMediaInfo->getMediaInfoID());
+            }
+
+            if (iAltType != PVMF_TRACK_ALTERNATE_TYPE_UNDEFINED)
+            {
+                /* Expose alternate track ids */
+                trackInfo.setTrackAlternates(iAltType);
+                for (uint32 k = 0; k < minfoVecLen; k++)
+                {
+                    mediaInfo* mInfo = mediaInfoVec[k];
+                    if (mInfo == NULL)
+                    {
+                        return PVMFFailure;
+                    }
+                    uint32 altID = mInfo->getMediaInfoID();
+                    if (altID != trackID)
+                    {
+                        trackInfo.addAlternateTrackID((int32)altID);
+                    }
+                }
+            }
+            aMediaInfo.addTrackInfo(trackInfo);
+        }
+    }
+
+    return PVMFSuccess;
+}
+
+
+/*
+ * This function gets called when the server responds successfully to a 3GPP FCS
+ * request. The function updates RTP info for all selected track.
+ */
+void PVMFSMRTSPUnicastNode::UpdateRTPInfoAndFlushJitterBuffer()
+{
+    PVMFSMFSPChildNodeContainer* iSessionControllerNodeContainer =
+        getChildNodeContainer(PVMF_SM_FSP_RTSP_SESSION_CONTROLLER_NODE);
+    if (iSessionControllerNodeContainer == NULL)
+    {
+        OSCL_LEAVE(OsclErrBadHandle);
+        return;
+    }
+
+    PVMFSMFSPChildNodeContainer* iJitterBufferNodeContainer =
+        getChildNodeContainer(PVMF_SM_FSP_JITTER_BUFFER_NODE);
+    if (iJitterBufferNodeContainer == NULL)
+    {
+        OSCL_LEAVE(OsclErrBadHandle);
+        return;
+    }
+    PVMFJitterBufferExtensionInterface* jbExtIntf =
+        (PVMFJitterBufferExtensionInterface*)
+        (iJitterBufferNodeContainer->iExtensions[0]);
+
+    PVRTSPEngineNodeExtensionInterface* rtspExtIntf =
+        (PVRTSPEngineNodeExtensionInterface*)
+        (iSessionControllerNodeContainer->iExtensions[0]);
+
+    Oscl_Vector<StreamInfo, OsclMemAllocator> aSelectedStream;
+
+    // Find currently selected tracks
+    if (rtspExtIntf->GetStreamInfo(aSelectedStream) != PVMFSuccess)
+    {
+        OSCL_LEAVE(OsclErrGeneral);
+    }
+
+    /* Get actual range information from rtsp extension interface*/
+    RtspRangeType rangeType;
+    int32 startTime = 0;
+    int32 stopTime = 0;
+
+    if (rtspExtIntf->GetActualPlayRange(rangeType) != PVMFSuccess)
+    {
+        return;
+    }
+
+    rangeType.convertToMilliSec(startTime, stopTime);
+
+    /* Use from SDP if not set */
+    bool end_is_set = rangeType.end_is_set;
+    if (end_is_set == false)
+    {
+        stopTime = iSessionStopTime;
+    }
+
+    // Loop over all selected tracks
+    for (uint32 i = 0; i < iSelectedMediaPresetationInfo.getNumTracks(); i++)
+    {
+        // Use the selected track info to lookup port information. This is safe since track selection
+        // happens once per session and port information corresponding to the tracks selected initially
+        // is re-used during FCS. This will change once we support adding new tracks during FCS.
+        PVMFTrackInfo *refTrackInfo = iSelectedMediaPresetationInfo.getTrackInfo(i);
+        uint32 refTrackID = refTrackInfo->getTrackID();
+        PVMFRTSPTrackInfo* trackInfo = FindTrackInfo(refTrackID);
+
+        if (trackInfo == NULL)
+        {
+            PVMF_SM_RTSP_LOGERROR((0, "PVMFSMRTSPUnicastNode::UpdateRTPInfoAndFlushJitterBuffer - FindTrackInfo Failed"));
+            return;
+        }
+        if (trackInfo->iJitterBufferInputPort == NULL)
+        {
+            PVMF_SM_RTSP_LOGERROR((0, "PVMFSMRTSPUnicastNode::UpdateRTPInfoAndFlushJitterBuffer - Invalid Port"));
+            return;
+        }
+
+        // Update RTP info for each track.
+        // Retrieve new RTP information (in the server response) from the RTSP client engine node.
+        Oscl_Vector<StreamInfo, OsclMemAllocator> aSwitchSelectedStream;
+        rtspExtIntf->GetSwitchStreamInfo(aSwitchSelectedStream);
+
+        // Wait until this information is available
+        if (aSwitchSelectedStream.size() == 0)
+        {
+            return;
+        }
+
+        if (aSwitchSelectedStream[i].ssrcIsSet)
+        {
+            // Reset jitter buffer only once
+            if (i == 0)
+            {
+                jbExtIntf->ResetJitterBuffer();
+            }
+            jbExtIntf->setPortSSRC(trackInfo->iJitterBufferInputPort, aSwitchSelectedStream[i].iSSRC, aSwitchSelectedStream[i].ssrcIsSet);
+            PVMF_SM_RTSP_LOGINFO((0, "PVMFSMRTSPUnicastNode::UpdateRTPInfoAndFlushJitterBuffer() - Updating SSRC to %d", aSwitchSelectedStream[i].iSSRC));
+        }
+
+        jbExtIntf->setPortRTPParams(trackInfo->iJitterBufferInputPort,
+                                    aSwitchSelectedStream[i].seqIsSet,
+                                    aSwitchSelectedStream[i].seq,
+                                    aSwitchSelectedStream[i].rtptimeIsSet,
+                                    aSwitchSelectedStream[i].rtptime,
+                                    rangeType.start_is_set,
+                                    startTime,
+                                    iRepositioning);
+        PVMF_SM_RTSP_LOGINFO((0, "PVMFSMRTSPUnicastNode::UpdateRTPInfoAndFlushJitterBuffer() - Updating seq num to %d and rtptime to %d", aSwitchSelectedStream[i].seq, aSwitchSelectedStream[i].rtptime));
+    }
+
+    /* Send actual stop time to Jitter Buffer */
+    if (jbExtIntf->setPlayRange(startTime,
+                                stopTime,
+                                iRepositioning,
+                                end_is_set) != true)
+    {
+        return;
+    }
+
+    // Bring client and server clocks together
+    jbExtIntf->SetClientClockToServerClock();
+}
+
+/*
+ * This function selects tracks from the switch SDP by matching MIME types with the
+ * tracks that are currenly selected and being streamed. The selected tracks
+ * are saved in a StreamInfo vector in addition to setting the 'Select' flag in
+ * their mediaInfo structures.
+ */
+PVMFStatus PVMFSMRTSPUnicastNode::SelectTracksFromSwitchSDP(Oscl_Vector<StreamInfo, OsclMemAllocator>& aSwitchSelectedStream, PVMFMediaPresentationInfo aMediaInfo)
+{
+
+    PVMFStatus retval = PVMFSuccess;                       // Return value
+    int32 currentTrackCount = 0, newTrackCount = 0;       // Keep count of current and new track
+    int32 currTrackCountDiff = 0, prevTrackCountDiff = 0; // Keep track of mismatched tracks
+
+    // Clear removed track ID vector
+    iRemovedTrackIDVector.clear();
+
+    for (int32 ii = 0; ii < iSdpInfo->getNumMediaObjects(); ii++)
+    {
+        // For current session, use the selected track info to find SDP tracks
+        PVMFTrackInfo *refTrackInfo = iSelectedMediaPresetationInfo.getTrackInfo(ii);
+        uint32 refTrackID = refTrackInfo->getTrackID();
+        // Retrieve media info from current SDP
+        mediaInfo* mInfo = iSdpInfo->getMediaInfoBasedOnID(refTrackID);
+        // Use only selected tracks
+        if (mInfo->getSelect())
+        {
+            currentTrackCount++;
+            // Loop over all the tracks in the new SDP to find a match
+            for (int32 jj = 0; jj < iSwitchSDPInfo->getNumMediaObjects(); jj++)
+            {
+                // Get track info and track ID for each track in the SDP
+                PVMFTrackInfo* trackInfo = aMediaInfo.getTrackInfo(jj);
+                uint32 trackID = trackInfo->getTrackID();
+                // Use track ID to retrieve mediaInfo
+                mediaInfo* sMediaInfo = iSwitchSDPInfo->getMediaInfoBasedOnID(trackID);
+                if (!oscl_strncmp(mInfo->getMIMEType(), sMediaInfo->getMIMEType(), oscl_strlen(mInfo->getMIMEType())))
+                {
+                    newTrackCount++;
+                    // Select the media info
+                    sMediaInfo->setSelect();
+                    // Quit loop
+                    jj = iSwitchSDPInfo->getNumMediaObjects();
+                    // Create streaminfo
+                    StreamInfo sInfo;
+                    sInfo.iSDPStreamId = trackID;
+                    aSwitchSelectedStream.push_back(sInfo);
+                }
+            }
+            currTrackCountDiff = currentTrackCount - newTrackCount;
+            // Indicates track removal
+            if (currTrackCountDiff > prevTrackCountDiff)
+            {
+                // Save this track ID in a vector. This will be needed to send EOS for those tracks
+                iRemovedTrackIDVector.push_back(ii);
+                // Update previous track count difference to current
+                prevTrackCountDiff = currTrackCountDiff;
+            }
+        }
+    }
+
+    // The engine's intervention during FCS track selection is needed except the case of a perfect match between current and switch SDP.
+    // A perfect match is defined as the case where all the currently selected tracks are matched with tracks from the switch
+    // SDP and there are no tracks left unselected in the switch SDP.
+    if ((iSwitchSDPInfo->getNumMediaObjects() == newTrackCount) && (currentTrackCount == newTrackCount))
+    {
+        iPerfectMatchDuringFCSTrackSelectionFlag = true;
+    }
+    else
+    {
+        iPerfectMatchDuringFCSTrackSelectionFlag = false;
+    }
+
+    // If no track is selected, return failure
+    if (newTrackCount == 0)
+    {
+        retval = PVMFFailure;
+    }
+
+    return retval;
+}
+
+
+void PVMFSMRTSPUnicastNode::BypassError()
+{
+    PVMF_SM_RTSP_LOGSTACKTRACE((0, "PVMFSMFSPPVRBase::BypassError() - In"));
+    if (CheckChildrenNodesStart())
+    {
+        if (!iCurrentCommand.empty() && iCancelCommand.empty())
+        {
+            PVMFSMFSPBaseNodeCommand aCmd = iCurrentCommand.front();
+            if ((aCmd.iCmd == PVMF_SMFSP_NODE_START) ||
+                    (aCmd.iCmd == PVMF_SMFSP_NODE_SET_DATASOURCE_POSITION))
+            {
+                if (iRepositioning)
+                {
+                    PVMF_SM_RTSP_LOGINFO((0, "PVMFSMRTSPUnicastNode::BypassError() - InRepos"));
+                    iRepositioning = false;
+                    iPlayListRepositioning = false;
+                    iPVMFDataSourcePositionParamsPtr = NULL;
+                    PVMFSMFSPChildNodeContainer* jitterBufferNodeContainer =
+                        getChildNodeContainer(PVMF_SM_FSP_JITTER_BUFFER_NODE);
+                    OSCL_ASSERT(jitterBufferNodeContainer);
+                    if (!jitterBufferNodeContainer)
+                        return;
+
+                    PVMFJitterBufferExtensionInterface* jbExtIntf =
+                        (PVMFJitterBufferExtensionInterface*)
+                        (jitterBufferNodeContainer->iExtensions[0]);
+
+                    OSCL_ASSERT(jbExtIntf);
+                    if (!jbExtIntf)
+                        return;
+
+                    /* Set jitter buffer state to ready */
+                    jbExtIntf->UpdateJitterBufferState();
+                }
+                SetState(EPVMFNodeStarted);
+                if (IsAdded())
+                {
+                    /* wakeup the AO */
+                    RunIfNotReady();
+                }
+                PVMF_SM_RTSP_LOGINFO((0, "PVMFSMRTSPUnicastNode::BypassError() - InLocalMode"));
+                RunIfNotReady();
+                CommandComplete(iCurrentCommand, iCurrentCommand.front(), PVMFSuccess, NULL, NULL, NULL);
+
+            }
+        }
+    }
+    PVMF_SM_RTSP_LOGSTACKTRACE((0, "PVMFSMFSPPVRBase::BypassError() - Out"));
     return;
 }

@@ -762,7 +762,7 @@ OSCL_EXPORT_REF bool PVMFJitterBufferMisc::SetPlayRange(int32 aStartTimeInMS, in
     return true;
 }
 
-OSCL_EXPORT_REF void PVMFJitterBufferMisc::SetPortSSRC(PVMFPortInterface* aPort, uint32 aSSRC)
+OSCL_EXPORT_REF void PVMFJitterBufferMisc::SetPortSSRC(PVMFPortInterface* aPort, uint32 aSSRC, bool a3GPPFCSSwitch)
 {
     bool isUpdateRequest = false;
 
@@ -777,7 +777,7 @@ OSCL_EXPORT_REF void PVMFJitterBufferMisc::SetPortSSRC(PVMFPortInterface* aPort,
         }
     }
 
-    if (!isUpdateRequest)
+    if (!isUpdateRequest || a3GPPFCSSwitch)
     {
         //Update with the JB
         Oscl_Vector<PVMFJitterBufferPortParams*, OsclMemAllocator>::const_iterator iter;

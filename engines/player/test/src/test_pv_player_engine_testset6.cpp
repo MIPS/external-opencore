@@ -146,14 +146,27 @@ void pvplayer_async_test_streamingopenplaystop::Run()
                     fileType = PVMF_MIME_DATA_SOURCE_RTSP_URL;
                     iFileType = PVMF_MIME_DATA_SOURCE_RTSP_URL;
                 }
-#if PVR_SUPPORT
-                else if (iPlayListURL)
+                else if (iPlayListURL && (iPlayListSwitchMode == 3))
+                {
+                    if (iTestID == pvplayer_engine_test::Streaming3GPPFCSWithSDPTest)
+                    {
+                        filename = THREE_GPP_FCS_SDP;
+                        fileType = PVMF_MIME_DATA_SOURCE_SDP_FILE;
+                        iFileType = PVMF_MIME_DATA_SOURCE_SDP_FILE;
+                    }
+                    else if (iTestID == pvplayer_engine_test::Streaming3GPPFCSWithURLTest)
+                    {
+                        filename = THREE_GPP_FCS_URL;
+                        fileType = PVMF_MIME_DATA_SOURCE_RTSP_URL;
+                        iFileType = PVMF_MIME_DATA_SOURCE_RTSP_URL;
+                    }
+                }
+                else if (iPlayListURL && (iPlayListSwitchMode != 3))
                 {
                     filename = DEFAULT_PV_PLAYLIST_URL;
                     fileType = PVMF_MIME_DATA_SOURCE_RTSP_URL;
                     iFileType = PVMF_MIME_DATA_SOURCE_RTSP_URL;
                 }
-#endif
                 else
                 {
                     filename = AMR_MPEG4_SDP_FILE;
@@ -230,17 +243,6 @@ void pvplayer_async_test_streamingopenplaystop::Run()
                 {
                     iSourceContextData->CommonData()->iFileHandle = ifilehandle;
                 }
-#if PVR_SUPPORT
-                if (iPlayListURL)
-                {
-                    iSourceContextData->EnablePVRSourceContext();
-                    PVMFSourceContextDataPVR* pvrData = iSourceContextData->PVRData();
-                    m_PVRControl = OSCL_NEW(PVMFPVRControl, ());
-                    pvrData->SetPVRControl(m_PVRControl);
-                    fileType = PVMF_MIME_DATA_SOURCE_RTSP_PVR_FCS_URL;
-                    iFileType = PVMF_MIME_DATA_SOURCE_RTSP_PVR_FCS_URL;
-                }
-#endif
                 PVInterface* sourceContext = NULL;
                 PVUuid streamingContextUuid(PVMF_SOURCE_CONTEXT_DATA_STREAMING_UUID);
                 if (iSourceContextData->queryInterface(streamingContextUuid, sourceContext))
@@ -718,6 +720,31 @@ void pvplayer_async_test_streamingopenplaystop::Run()
                             fprintf(iTestMsgOutputFile, "***Repositioning to playlistelem %d at the end of current playlist...\n", start.iPlayElementIndex);
                             OSCL_TRY(error, iCurrentCmdId = iPlayer->SetPlaybackRange(start, end, false, (OsclAny*) & iContextObject));
                         }
+                        else if (iPlayListSwitchMode == 3)
+                        {
+                            PVPPlaybackPosition start, end;
+                            start.iIndeterminate = false;
+                            start.iPosUnit = PVPPBPOSUNIT_PLAYLIST;
+                            start.iMode = PVPPBPOS_MODE_3GPP_FCS;
+                            start.iPlayListPosUnit = PVPPBPOSUNIT_MILLISEC;
+                            start.iPlayListPosValue.millisec_value = 0;
+                            start.iPlayElementIndex = 2;
+                            start.iPlayListUri = NULL;
+                            if (iTestID == pvplayer_engine_test::Streaming3GPPFCSWithSDPTest)
+                            {
+                                iSwitchURL = THREE_GPP_FCS_SWITCH_SDP;
+                                start.iPlayListPosValue3GPPFCS.iSDPAvailableFlag = true;
+                            }
+                            else if (iTestID == pvplayer_engine_test::Streaming3GPPFCSWithURLTest)
+                            {
+                                iSwitchURL = THREE_GPP_FCS_SWITCH_URL;
+                                start.iPlayListPosValue3GPPFCS.iSDPAvailableFlag = false;
+                            }
+                            start.iPlayListPosValue3GPPFCS.iControlUri = (char*) iSwitchURL.get_cstr();
+                            end.iIndeterminate = true;
+                            fprintf(iTestMsgOutputFile, "***3GPP FCS to %s...\n", iSwitchURL.get_cstr());
+                            OSCL_TRY(error, iCurrentCmdId = iPlayer->SetPlaybackRange(start, end, false, (OsclAny*) & iContextObject));
+                        }
 
                     }
                     else
@@ -1075,18 +1102,6 @@ void pvplayer_async_test_streamingopenplaystop::CommandCompleted(const PVCmdResp
         case STATE_INIT:
             if (aResponse.GetCmdStatus() == PVMFSuccess)
             {
-#if PVR_SUPPORT
-                if (iPlayListURL)
-                {
-                    PVRConfig pvrConfig;
-                    pvrConfig.SetLiveBufferEnabled(true);
-                    pvrConfig.SetRecordingEnabled(false);
-                    pvrConfig.SetLiveBufferStorage(iLiveBufferStorage);
-                    pvrConfig.SetLiveBufferSizeInSeconds(iLiveBufferDurationInSec);
-                    if (m_PVRControl)
-                        m_PVRControl->SetConfiguration(pvrConfig);
-                }
-#endif
                 iState = STATE_GETMETADATAKEYLIST;
                 RunIfNotReady();
             }
@@ -1252,7 +1267,7 @@ void pvplayer_async_test_streamingopenplaystop::CommandCompleted(const PVCmdResp
                 {
                     if (!iErrorCodeTest)
                     {
-                        if (iFileType != PVMF_MIME_DATA_SOURCE_HTTP_URL)
+                        if (iFileType != PVMF_MIME_DATA_SOURCE_HTTP_URL && (iPlayListSwitchMode != 3))
                         {
                             int32 error;
                             iKeyStringSetAsync = _STRLIT_CHAR("x-pvmf/net/delay;valtype=uint32");
@@ -1280,6 +1295,12 @@ void pvplayer_async_test_streamingopenplaystop::CommandCompleted(const PVCmdResp
                                 iState = STATE_STOP;
                                 RunIfNotReady(15*1000*1000);
                             }
+                        }
+                        else
+                        {
+                            //run for 15 seconds and stop
+                            iState = STATE_STOP;
+                            RunIfNotReady(15*1000*1000);
                         }
                     }
                     else

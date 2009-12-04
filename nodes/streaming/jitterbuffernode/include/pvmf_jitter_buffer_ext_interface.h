@@ -80,7 +80,7 @@ class PVMFJitterBufferExtensionInterface : public PVInterface
         OSCL_IMPORT_REF virtual void setClientPlayBackClock(PVMFMediaClock* clientClock) = 0;
         OSCL_IMPORT_REF virtual bool PrepareForRepositioning(bool oUseExpectedClientClockVal = false,
                 uint32 aExpectedClientClockVal = 0) = 0;    //called for RTSP based streaming only
-        OSCL_IMPORT_REF virtual bool setPortSSRC(PVMFPortInterface* aPort, uint32 aSSRC) = 0;
+        OSCL_IMPORT_REF virtual bool setPortSSRC(PVMFPortInterface* aPort, uint32 aSSRC, bool a3GPPFCSSwitch = false) = 0;
         OSCL_IMPORT_REF virtual bool setPortRTPParams(PVMFPortInterface* aPort,
                 bool   aSeqNumBasePresent,
                 uint32 aSeqNumBase,
@@ -115,6 +115,8 @@ class PVMFJitterBufferExtensionInterface : public PVInterface
         OSCL_IMPORT_REF virtual bool ClearJitterBuffer(PVMFPortInterface* aPort,
                 uint32 aSeqNum) = 0;
         OSCL_IMPORT_REF virtual void FlushJitterBuffer() = 0;
+        OSCL_IMPORT_REF virtual void ResetJitterBuffer() = 0;
+        OSCL_IMPORT_REF virtual void SetClientClockToServerClock() = 0;
 
         OSCL_IMPORT_REF virtual bool NotifyAutoPauseComplete() = 0;
         OSCL_IMPORT_REF virtual bool NotifyAutoResumeComplete() = 0;
@@ -134,6 +136,7 @@ class PVMFJitterBufferExtensionInterface : public PVInterface
         OSCL_IMPORT_REF virtual void setPayloadParserRegistry(PayloadParserRegistry*) = 0;
         OSCL_IMPORT_REF virtual PVMFStatus setPortDataLogging(bool logEnable, OSCL_String* logPath = NULL) = 0;
 
+        OSCL_IMPORT_REF virtual void SendEOSMessage(Oscl_Vector<int32, OsclMemAllocator> aRemovedTrackIDVector) = 0;
 };
 
 //Mimetype and Uuid for the extension interface

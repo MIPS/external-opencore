@@ -79,6 +79,10 @@
 #include "pvrtspenginenodeextensioninterface_impl.h"
 #endif
 
+#ifndef RTSP_PAR_COM_CONSTANTS_H_
+#include "rtsp_par_com_constants.h"
+#endif
+
 const int PVRTSPEngineNode::REQ_SEND_SOCKET_ID = 1;
 const int PVRTSPEngineNode::REQ_RECV_SOCKET_ID = 2;
 
@@ -131,9 +135,16 @@ OSCL_EXPORT_REF PVRTSPEngineNode::PVRTSPEngineNode(int32 aPriority) :
         iKeepAliveMethod(METHOD_OPTIONS),
         bAddXStrHeader(false),
         iErrorRecoveryAttempt(0),
-        iExtensionInterface(NULL)
+        iExtensionInterface(NULL),
+        iPipelinedMessage(NULL),
+        iPipelining(false),
+        i3gppSwitchSupported(true),
+        i3gppSwitchWithoutSDPSupported(true),
+        i3gppSwitchStreamSupported(true),
+        iStartupId(0)
 {
     int32 err;
+    OsclRand randomNumberGenerator;
     OSCL_TRY(err,
              //Create the input command queue.  Use a reserve to avoid lots of
              //dynamic memory allocation.
@@ -174,6 +185,9 @@ OSCL_EXPORT_REF PVRTSPEngineNode::PVRTSPEngineNode(int32 aPriority) :
              OsclError::LeaveIfNull(iMediaDataImplAlloc);
 
             );
+
+    // This id is needed for pipelined requests
+    iStartupId = randomNumberGenerator.Rand();
 
     if (err != OsclErrNone)
     {
@@ -274,6 +288,11 @@ OSCL_EXPORT_REF PVRTSPEngineNode::~PVRTSPEngineNode()
         ipFragGroupMemPool->removeRef();
     }
 
+    if (iPipelinedMessage != NULL)
+    {
+        OSCL_ARRAY_DELETE(iPipelinedMessage);
+        iPipelinedMessage = NULL;
+    }
 }
 
 OSCL_EXPORT_REF PVMFStatus PVRTSPEngineNode::ThreadLogon()
@@ -562,9 +581,11 @@ OSCL_EXPORT_REF PVMFStatus PVRTSPEngineNode::SetSDPInfo(OsclSharedPtr<SDPInfo>& 
 
     if ((iInterfaceState == EPVMFNodePrepared) ||
             (iInterfaceState == EPVMFNodeInitialized) ||
-            (iInterfaceState == EPVMFNodeIdle))
+            (iInterfaceState == EPVMFNodeIdle) ||
+            (iInterfaceState == EPVMFNodeStarted))
     {
-        if (iState == PVRTSP_ENGINE_NODE_STATE_DESCRIBE_DONE)
+        if ((iState == PVRTSP_ENGINE_NODE_STATE_DESCRIBE_DONE)
+                || (iState == PVRTSP_ENGINE_NODE_STATE_PLAY_DONE))
         {
             iSessionInfo.bExternalSDP = false;
         }
@@ -1443,7 +1464,11 @@ OSCL_EXPORT_REF PVMFStatus PVRTSPEngineNode::DispatchCommand(PVRTSPEngineCommand
                 ReportInfoEvent(PVMFInfoErrorHandlingComplete);
             }
             break;
-
+        case PVMF_RTSP_NODE_PLAYLIST_PLAY:
+        {
+            iRet = DoPlaylistPlay(aCmd);
+        }
+        break;
         default://unknown command type
             iRet = PVMFFailure;
             break;
@@ -1933,7 +1958,203 @@ PVMFStatus PVRTSPEngineNode::DoPrepareNode(PVRTSPEngineCommand &aCmd)
         return PVMFErrInvalidState;
     }
 
-    return SendRtspSetup(aCmd);
+    if (iPipelining)
+    {
+        return SendRtspPipelinedRequest(aCmd);
+    }
+    else
+    {
+        return SendRtspSetup(aCmd);
+    }
+}
+
+PVMFStatus PVRTSPEngineNode::SendRtspPipelinedRequest(PVRTSPEngineCommand &aCmd)
+{
+    /*
+     * aCmd is not used in this function and passed to OSCL_UNUSED_ARG to prevent compiler warnings.
+     */
+    OSCL_UNUSED_ARG(aCmd);
+    /*
+     * iRet saves the status returned by functions called in this function.
+     */
+    PVMFStatus iRet = PVMFPending;
+    /*
+     * rtspMessageBufferVec is used to save RTSP outgoing messages as they are composed.
+     * Once all the messages (SETUP and PLAY) are composed, rtspMessageBufferVec is used
+     * to compose the pipelined request from the individual messages.
+     */
+    Oscl_Vector<StrPtrLen*, PVRTSPEngineNodeAllocator> rtspMessageBufferVec;
+
+    switch (iState)
+    {
+            // Compose and send the pipelined SETUP and PLAY requests in this state
+        case PVRTSP_ENGINE_NODE_STATE_DESCRIBE_DONE:
+        {
+            // Compose SETUP requests first
+            while ((bNoSendPending) && ((uint32)setupTrackIndex  < iSessionInfo.iSelectedStream.size()))
+            {
+                RTSPOutgoingMessage *tmpOutgoingMsg =  OSCL_NEW(RTSPOutgoingMessage, ());
+                if (tmpOutgoingMsg == NULL)
+                {
+                    iCurrentErrorCode = PVMFRTSPClientEngineNodeErrorOutOfMemory;
+                    return  PVMFFailure;
+                }
+                if (PVMFSuccess != composeSetupRequest(*tmpOutgoingMsg, iSessionInfo.iSelectedStream[setupTrackIndex ]))
+                {
+                    iCurrentErrorCode = PVMFRTSPClientEngineNodeErrorRTSPComposeSetupRequestError;
+                    OSCL_DELETE(tmpOutgoingMsg);
+                    return  PVMFFailure;
+                }
+                // Save control URL of composed message for matching with SETUP response
+                iTrackURLArray[setupTrackIndex] = tmpOutgoingMsg->originalURI.c_str();
+                tmpOutgoingMsg->originalURI.setPtrLen(iTrackURLArray[setupTrackIndex].get_cstr(), iTrackURLArray[setupTrackIndex].get_size());
+                setupTrackIndex ++;
+
+                // Save composed message for use later
+                rtspMessageBufferVec.push_back(tmpOutgoingMsg->retrieveComposedBuffer());
+                iOutgoingMsgQueue.push(tmpOutgoingMsg);
+
+                // Setup the watch dog for server response
+                if (setupTrackIndex == 1)
+                {
+                    // Only setup watchdog for the first SETUP, but it monitors all
+                    iWatchdogTimer->Request(REQ_TIMER_WATCHDOG_ID, 0, TIMEOUT_WATCHDOG);
+                }
+            }
+            // Then compose PLAY request
+            RTSPOutgoingMessage *tmpOutgoingMsg = OSCL_NEW(RTSPOutgoingMessage, ());
+            if (tmpOutgoingMsg == NULL)
+            {
+                iCurrentErrorCode = PVMFRTSPClientEngineNodeErrorOutOfMemory;
+                return  PVMFFailure;
+            }
+
+            if (PVMFSuccess != composePlayRequest(*tmpOutgoingMsg))
+            {
+                iCurrentErrorCode = PVMFRTSPClientEngineNodeErrorRTSPComposeSetupRequestError;
+                OSCL_DELETE(tmpOutgoingMsg);
+                return  PVMFFailure;
+            }
+            iOutgoingMsgQueue.push(tmpOutgoingMsg);
+
+            // Save composed message
+            rtspMessageBufferVec.push_back(tmpOutgoingMsg->retrieveComposedBuffer());
+            // Allocate buffer to compose pipelined request
+            int32 totalMsgLen = 0;
+            uint32 ii;
+            // First find length of buffer
+            for (ii = 0; ii < rtspMessageBufferVec.size(); ii++)
+            {
+                totalMsgLen += rtspMessageBufferVec[ii]->length();
+            }
+
+            // Clear any old data in the buffer
+            if (iPipelinedMessage != NULL)
+            {
+                OSCL_ARRAY_DELETE(iPipelinedMessage);
+                iPipelinedMessage = NULL;
+            }
+
+            // Allocate memory
+            iPipelinedMessage = OSCL_ARRAY_NEW(uint8, totalMsgLen + 1);
+            uint32 offset = 0;
+            // Copy each of composed RTSP requests into the pipelined message buffer
+            for (ii = 0; ii < rtspMessageBufferVec.size(); ii++)
+            {
+                oscl_memcpy(iPipelinedMessage + offset, rtspMessageBufferVec[ii]->c_str(), rtspMessageBufferVec[ii]->length());
+                offset += rtspMessageBufferVec[ii]->length();
+            }
+            iPipelinedMessage[totalMsgLen] = '\0';
+
+            // Send message
+            if (PVMFSuccess != sendSocketOutgoingMsg(iSendSocket, iPipelinedMessage, totalMsgLen))
+            {
+                iCurrentErrorCode = PVMFRTSPClientEngineNodeErrorSocketSendError;
+                OSCL_DELETE(tmpOutgoingMsg);
+                iRet =  PVMFFailure;
+                break;
+            }
+
+            ChangeInternalState(PVRTSP_ENGINE_NODE_STATE_PROCESS_REST_SETUP);
+        }
+        break;
+        case PVRTSP_ENGINE_NODE_STATE_PROCESS_REST_SETUP:
+        {
+            // Need to keep track of all the SETUP responses here
+            if (RTSPParser::REQUEST_IS_READY == iRTSPParserState)
+            {
+                pipelinedRequestResponse.push_back(iIncomingMsg.statusCode);
+                iRet = processIncomingMessage(iIncomingMsg);
+                iRet = PVMFPending;
+
+                if (pipelinedRequestResponse.size() == (uint32)setupTrackIndex)
+                {
+                    ChangeInternalState(PVRTSP_ENGINE_NODE_STATE_SETUP_DONE);
+                }
+            }
+        }
+        break;
+        case PVRTSP_ENGINE_NODE_STATE_SETUP_DONE:
+        {
+            if (RTSPParser::REQUEST_IS_READY == iRTSPParserState)
+            {
+                pipelinedRequestResponse.push_back(iIncomingMsg.statusCode);
+                iRet = processIncomingMessage(iIncomingMsg);
+                if (iRet != PVMFPending)
+                {
+                    // Check all return values at this point
+                    iRet = PVMFSuccess;
+                    for (uint32 ii = 0; ii < pipelinedRequestResponse.size(); ii++)
+                    {
+                        // If the first SETUP failed, the session must be terminated
+                        if (0 == ii)
+                        {
+                            if (pipelinedRequestResponse[ii] != 200)
+                            {
+                                iRet = PVMFFailure;
+                                break;
+                            }
+                        }
+                        else
+                        {
+                            if (pipelinedRequestResponse[ii] != 200)
+                            {
+                                iRet = PVMFPending;
+                            }
+                        }
+                    }
+                    //cancel the watchdog
+                    iWatchdogTimer->Cancel(REQ_TIMER_WATCHDOG_ID);
+                    if (iRet == PVMFSuccess)
+                    {
+                        ChangeInternalState(PVRTSP_ENGINE_NODE_STATE_PLAY_DONE);
+                    }
+                    // Implies pipelined request failed - either SETUP or PLAY
+                    else if (iRet == PVMFPending)
+                    {
+                        // Fall back to non-pipelined mode
+                        ChangeInternalState(PVRTSP_ENGINE_NODE_STATE_PROCESS_REST_SETUP);
+                        iPipelining = false;
+                        setupTrackIndex = 1;
+                        RunIfNotReady();
+                    }
+                }
+            }
+            else if (!clearEventQueue())
+            {
+                //cancell the watchdog
+                iWatchdogTimer->Cancel(REQ_TIMER_WATCHDOG_ID);
+
+                iCurrentErrorCode = PVMFRTSPClientEngineNodeErrorSocketError;
+                iRet =  PVMFFailure;
+            }
+        }
+        break;
+        default:
+            break;
+
+    }
+    return iRet;
 }
 
 OSCL_EXPORT_REF PVMFStatus PVRTSPEngineNode::SendRtspSetup(PVRTSPEngineCommand &aCmd)
@@ -2116,6 +2337,10 @@ PVRTSPEngineNode::composeOptionsRequest(RTSPOutgoingMessage &iMsg)
         OSCL_StackString<64> playerGuidVal = _STRLIT_CHAR("00000000-0000-0000-0000-000000000000");
         iMsg.addField(&playerGuid, playerGuidVal.get_cstr());
     }
+    // Add 3gpp-pipelined, 3gpp-switch as supported features
+    StrCSumPtrLen Supported = _STRLIT_CHAR("Supported");
+    OSCL_HeapString<PVRTSPEngineNodeAllocator> myBuf("3gpp-pipelined, 3gpp-switch, 3gpp-switch-req-sdp, 3gpp-switch-stream");
+    iMsg.addField(&Supported, myBuf.get_cstr());
 
     if (iMsg.compose() == false)
     {
@@ -2197,6 +2422,10 @@ PVRTSPEngineNode::composeDescribeRequest(RTSPOutgoingMessage &iMsg)
         StrCSumPtrLen AcceptEncoding = _STRLIT_CHAR("Accept-Encoding");
         iMsg.addField(&AcceptEncoding, "");
     }
+    // Add 3gpp-pipelined, 3gpp-switch as supported features
+    StrCSumPtrLen Supported = _STRLIT_CHAR("Supported");
+    OSCL_HeapString<PVRTSPEngineNodeAllocator> myBuf("3gpp-pipelined, 3gpp-switch, 3gpp-switch-req-sdp, 3gpp-switch-stream");
+    iMsg.addField(&Supported, myBuf.get_cstr());
 
     if (iMsg.compose() == false)
     {
@@ -2345,24 +2574,51 @@ OSCL_EXPORT_REF PVMFStatus PVRTSPEngineNode::processEntityBody(RTSPIncomingMessa
 
     if (bNoSendPending)// bSrvRespPending
     {
-        if (PVMFSuccess != sendSocketOutgoingMsg(iSendSocket, *iSrvResponse))
+        if ((iSessionInfo.iPlaylistPlayTime == PVEffectiveTime_3GPP_FCS) &&
+                (!iSessionInfo.iSwitchSDPAvailable))
         {
-            /* need to pop the msg based on cseq, NOT necessarily the early ones,
-            although YES in this case.
-            */
-            iCurrentErrorCode = PVMFRTSPClientEngineNodeErrorSocketSendError;
-            OSCL_DELETE(iSrvResponse);
-            iSrvResponse = NULL;
-            return  PVMFFailure;
+            // Do not send a 501 response in case of 3GPP FCS switch without available SDP
         }
+        else
+        {
 
-        bNoSendPending = false;
+            if (PVMFSuccess != sendSocketOutgoingMsg(iSendSocket, *iSrvResponse))
+            {
+                /* need to pop the msg based on cseq, NOT necessarily the early ones,
+                although YES in this case.
+                    */
+                iCurrentErrorCode = PVMFRTSPClientEngineNodeErrorSocketSendError;
+                OSCL_DELETE(iSrvResponse);
+                iSrvResponse = NULL;
+                return  PVMFFailure;
+            }
+
+            bNoSendPending = false;
+        }
     }
     else
     {
         bSrvRespPending = true;
     }
+    // 3GPP FCS without switch SDP available. In this case, server sends switch SDP in
+    // response to the FCS request.
+    if ((iSessionInfo.iPlaylistPlayTime == PVEffectiveTime_3GPP_FCS) &&
+            (!iSessionInfo.iSwitchSDPAvailable))
+    {
+        OsclRefCounter* my_refcnt = new OsclRefCounterSA< RTSPNodeMemDestructDealloc >(iEntityMemFrag.ptr);
+        if (my_refcnt == NULL)
+        {
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVRTSPEngineNode::SendRtspDescribe() Unable to Allocate Memory"));
+            return PVMFErrNoMemory;
+        }
 
+        iSessionInfo.pSDPBuf = OsclRefCounterMemFrag(iEntityMemFrag, my_refcnt, iEntityMemFrag.len);
+        {//done with the entity body, change the ownership of the mem
+            iEntityMemFrag.len = 0;
+            iEntityMemFrag.ptr = NULL;
+        }
+        ReportInfoEvent(PVMFInfoPlayListClipTransition);
+    }
     OSCL_UNUSED_ARG(aEntityMemFrag);
     return PVMFSuccess;
 }
@@ -2476,7 +2732,23 @@ PVMFStatus PVRTSPEngineNode::SendRtspPlay(PVRTSPEngineCommand &aCmd)
             }
             break;
         }
-
+        case PVRTSP_ENGINE_NODE_STATE_PLAY_DONE:
+        {
+            if (iPipelining)
+            {
+                // Implies pipelined PLAY request succeeded
+                iRet = PVMFSuccess;
+                // Reset iPipelining flag here to prevent the "Pipelined-Requests" tag from being
+                // added to subsequent PLAY requests (either when resuming or repositioning)
+                iPipelining = false;
+            }
+            else
+            {
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR, (0, "PVRTSPEngineNode::SendRtspPlay() iState=%d Line %d", iState, __LINE__));
+                iRet = PVMFErrInvalidState;
+            }
+        }
+        break;
         default:
         {
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR, (0, "PVRTSPEngineNode::SendRtspPlay() iState=%d Line %d", iState, __LINE__));
@@ -2599,6 +2871,23 @@ OSCL_EXPORT_REF PVMFStatus PVRTSPEngineNode::populatePlayRequestFields(RTSPOutgo
         return PVMFFailure;
     }
 
+    if (iPipelining)
+    {
+        // Add "Require" field
+        OSCL_HeapString<PVRTSPEngineNodeAllocator> myBuffer("3gpp-pipelined");
+        StrCSumPtrLen _Require = "Require";
+        aMsg.addField(&_Require, myBuffer.get_str());
+
+        // Then add "Pipelined-Requests" field
+        mbchar buffer[256];
+
+        OSCL_HeapString<PVRTSPEngineNodeAllocator> myBuf("");
+        oscl_snprintf(buffer, 256, "%d", iStartupId);
+        myBuf += buffer;
+
+        StrCSumPtrLen _PipelinedRequests = "Pipelined-Requests";
+        aMsg.addField(&_PipelinedRequests, myBuf.get_str());
+    }
     return PVMFSuccess;
 }
 
@@ -2739,7 +3028,12 @@ PVMFStatus PVRTSPEngineNode::composeSessionURL(RTSPOutgoingMessage &aMsg)
         //Case where control url is absolute
         else if (!oscl_strncmp(sdpSessionURL, rtsp_str.get_cstr(), rtsp_str.get_size()))
         {
-            aMsg.originalURI = sdpSessionURL;
+            StrPtrLen urlCheckedForTunnelling;
+            if (checkForAbsoluteMediaURL(sdpSessionURL, urlCheckedForTunnelling) != PVMFSuccess)
+            {
+                return PVMFFailure;
+            }
+            aMsg.originalURI = urlCheckedForTunnelling;
         }
         //other cases
         else if (composeURL((const char *)baseURL, sdpSessionURL, \
@@ -2757,10 +3051,6 @@ PVMFStatus PVRTSPEngineNode::composeSessionURL(RTSPOutgoingMessage &aMsg)
 
 PVMFStatus PVRTSPEngineNode::composeMediaURL(int aTrackID, StrPtrLen &aMediaURI)
 {
-    OSCL_StackString<16> rtsp_str = _STRLIT_CHAR("rtsp");
-    OSCL_StackString<16> rtspt_str = _STRLIT_CHAR("rtspt");
-    OSCL_StackString<16> schemeDelimiter = _STRLIT_CHAR("://");
-
     const char *sdpMediaURL = (iSessionInfo.iSDPinfo->getMediaInfoBasedOnID(aTrackID))->getControlURL();
     if (sdpMediaURL == NULL)
     {
@@ -2783,6 +3073,8 @@ OSCL_EXPORT_REF PVMFStatus PVRTSPEngineNode::checkForAbsoluteMediaURL(const char
     OSCL_StackString<16> rtsp_str = _STRLIT_CHAR("rtsp");
     OSCL_StackString<16> rtspt_str = _STRLIT_CHAR("rtspt");
     OSCL_StackString<16> schemeDelimiter = _STRLIT_CHAR("://");
+
+    iRtspPrefixedURL = NULL;
 
     if (!oscl_strncmp(sdpMediaURL, rtsp_str.get_cstr(), rtsp_str.get_size()))
     {
@@ -3024,8 +3316,14 @@ OSCL_EXPORT_REF PVMFStatus PVRTSPEngineNode::processIncomingMessage(RTSPIncoming
     {
         //OK
         processCommonResponse(iIncomingMsg);
-
-        if (tmpOutgoingMsg->method == METHOD_SETUP)
+        if ((tmpOutgoingMsg->method == METHOD_DESCRIBE) || (tmpOutgoingMsg->method == METHOD_OPTIONS))
+        {
+            const StrPtrLen *serverSupportedFeatures = iIncomingMsg.queryField("Supported");
+            // Special processing is needed since spaces are replaced
+            // by '\0' by the RTSP parser.
+            ParseSupportedHeaderFor3GPPFCSFeatures(serverSupportedFeatures);
+        }
+        else if (tmpOutgoingMsg->method == METHOD_SETUP)
         {
             for (uint32 i = 0; i < iSessionInfo.iSelectedStream.size(); i++)
             {
@@ -3099,6 +3397,26 @@ OSCL_EXPORT_REF PVMFStatus PVRTSPEngineNode::processIncomingMessage(RTSPIncoming
         }
         else if (tmpOutgoingMsg->method == METHOD_PLAY)
         {
+            bool i3GPPFCSSwitch = false;
+            // Query outgoing message to see if it contains the "Switch-Stream" header
+            StrCSumPtrLen _SwitchStream = "Switch-Stream";
+            StrCSumPtrLen _Require = "Require";
+            StrPtrLen *queryResult;
+            queryResult = (StrPtrLen *)tmpOutgoingMsg->queryField(_SwitchStream);
+            if (queryResult != NULL)
+            {
+                i3GPPFCSSwitch = true;
+            }
+
+            queryResult = (StrPtrLen *)tmpOutgoingMsg->queryField(_Require);
+            if (queryResult != NULL)
+            {
+                if (NULL != oscl_strstr(queryResult->c_str(), "3gpp-switch-req-sdp"))
+                {
+                    i3GPPFCSSwitch = true;
+                }
+            }
+
             if (iSessionInfo.iActPlayRange.format == RtspRangeType::INVALID_RANGE)
             {//play
                 iSessionInfo.iActPlayRange  = iSessionInfo.iReqPlayRange;
@@ -3125,7 +3443,6 @@ OSCL_EXPORT_REF PVMFStatus PVRTSPEngineNode::processIncomingMessage(RTSPIncoming
                     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR, (0, "PVRTSPEngineNode::processIncomingMessage() ERROR iIncomingMsg.range.format = %d Ln %d", iIncomingMsg.range.format, __LINE__));
                 }
             }
-
             for (uint32 idx = 0; idx < iIncomingMsg.numOfRtpInfoEntries; idx++)
             {
                 RTSPRTPInfo *rtpinfo = iIncomingMsg.rtpInfo + idx;
@@ -3134,23 +3451,77 @@ OSCL_EXPORT_REF PVMFStatus PVRTSPEngineNode::processIncomingMessage(RTSPIncoming
                     //break;
                 }
                 char *url_temp = (char *) rtpinfo->url.c_str();
-
-                for (uint32 i = 0; i < iSessionInfo.iSelectedStream.size(); i++)
+                if (!i3GPPFCSSwitch)
                 {
-                    int sdp_track_id = iSessionInfo.iSelectedStream[i].iSDPStreamId;
-                    //simplified check here.
-                    if (NULL == oscl_strstr((iSessionInfo.iSDPinfo->getMediaInfoBasedOnID(sdp_track_id))->getControlURL(), url_temp))
+
+                    for (uint32 i = 0; i < iSessionInfo.iSelectedStream.size(); i++)
                     {
-                        if (NULL == oscl_strstr(url_temp, (iSessionInfo.iSDPinfo->getMediaInfoBasedOnID(sdp_track_id))->getControlURL()))
+                        int sdp_track_id = iSessionInfo.iSelectedStream[i].iSDPStreamId;
+                        //simplified check here.
+                        if (NULL == oscl_strstr((iSessionInfo.iSDPinfo->getMediaInfoBasedOnID(sdp_track_id))->getControlURL(), url_temp))
                         {
-                            continue;
+                            if (NULL == oscl_strstr(url_temp, (iSessionInfo.iSDPinfo->getMediaInfoBasedOnID(sdp_track_id))->getControlURL()))
+                            {
+                                continue;
+                            }
                         }
+                        iSessionInfo.iSelectedStream[i].seqIsSet = rtpinfo->seqIsSet;
+                        iSessionInfo.iSelectedStream[i].seq = rtpinfo->seq;
+                        iSessionInfo.iSelectedStream[i].rtptimeIsSet = rtpinfo->rtptimeIsSet;
+                        iSessionInfo.iSelectedStream[i].rtptime = rtpinfo->rtptime;
+                        iSessionInfo.iSelectedStream[i].iSerIpAddr.Set(iSessionInfo.iSrvAdd.ipAddr.Str());
                     }
-                    iSessionInfo.iSelectedStream[i].seqIsSet = rtpinfo->seqIsSet;
-                    iSessionInfo.iSelectedStream[i].seq = rtpinfo->seq;
-                    iSessionInfo.iSelectedStream[i].rtptimeIsSet = rtpinfo->rtptimeIsSet;
-                    iSessionInfo.iSelectedStream[i].rtptime = rtpinfo->rtptime;
-                    iSessionInfo.iSelectedStream[i].iSerIpAddr.Set(iSessionInfo.iSrvAdd.ipAddr.Str());
+                }
+
+                else
+                {
+                    for (uint32 i = 0; i < iSessionInfo.iSwitchSelectedStream.size(); i++)
+                    {
+                        int sdp_track_id = iSessionInfo.iSwitchSelectedStream[i].iSDPStreamId;
+                        //If switch SDP is available, use it.
+                        if (iSessionInfo.iSwitchSDPAvailable)
+                        {
+                            const char* mediaURL = (iSessionInfo.iSwitchSDPInfo->getMediaInfoBasedOnID(sdp_track_id))->getControlURL();
+                            if (NULL == oscl_strstr(mediaURL, url_temp))
+                            {
+                                if (NULL == oscl_strstr(url_temp, (iSessionInfo.iSwitchSDPInfo->getMediaInfoBasedOnID(sdp_track_id))->getControlURL()))
+                                {
+                                    continue;
+                                }
+                            }
+                        }
+                        // If not, use current session's SDP info for finding a match.
+                        else
+                        {
+                            if (NULL == oscl_strstr((iSessionInfo.iSDPinfo->getMediaInfoBasedOnID(sdp_track_id))->getControlURL(), url_temp))
+                            {
+                                if (NULL == oscl_strstr(url_temp, (iSessionInfo.iSDPinfo->getMediaInfoBasedOnID(sdp_track_id))->getControlURL()))
+                                {
+                                    continue;
+                                }
+                            }
+                        }
+                        iSessionInfo.iSwitchSelectedStream[i].ssrcIsSet = iIncomingMsg.transport[0].ssrcIsSet;
+                        if (iIncomingMsg.transport[0].ssrcIsSet)
+                        {
+                            iSessionInfo.iSwitchSelectedStream[i].iSSRC = iIncomingMsg.transport[0].ssrc;
+                        }
+
+                        iSessionInfo.iSwitchSelectedStream[i].seqIsSet = rtpinfo->seqIsSet;
+                        iSessionInfo.iSwitchSelectedStream[i].seq = rtpinfo->seq;
+                        iSessionInfo.iSwitchSelectedStream[i].rtptimeIsSet = rtpinfo->rtptimeIsSet;
+                        iSessionInfo.iSwitchSelectedStream[i].rtptime = rtpinfo->rtptime;
+                        iSessionInfo.iSwitchSelectedStream[i].iSerIpAddr.Set(iSessionInfo.iSrvAdd.ipAddr.Str());
+                        iSessionInfo.iSwitchSelectedStream[i].ssrcIsSet = rtpinfo->ssrcIsSet;
+                        iSessionInfo.iSwitchSelectedStream[i].iSSRC = rtpinfo->ssrc;
+                    }
+                    // Once we process a successful FCS response, update the session info's SDP info structure to
+                    // point to the switch SDP info
+                    if (iSessionInfo.iSwitchSDPAvailable)
+                    {
+                        iSessionInfo.iSDPinfo = iSessionInfo.iSwitchSDPInfo;
+                        iSessionInfo.iSwitchSDPAvailable = false;
+                    }
                 }
             }
             uint32 clock = 0;
@@ -3212,8 +3583,38 @@ OSCL_EXPORT_REF PVMFStatus PVRTSPEngineNode::processIncomingMessage(RTSPIncoming
                 OSCL_DELETE(tmpOutgoingMsg);
                 return iOutgoingMsgQueue.empty() ? PVMFSuccess : PVMFPending;
             }
+
+            if ((tmpOutgoingMsg->method == METHOD_PLAY) && (551 == iIncomingMsg.statusCode))
+            {
+                // Query outgoing message to see if it contains the "Require" header
+                StrCSumPtrLen _Require = "Require";
+                StrPtrLen *queryResult;
+                queryResult = (StrPtrLen *)tmpOutgoingMsg->queryField(_Require);
+                if (queryResult != NULL)
+                {
+                    // Turn off features that are not supported
+                    if (NULL != oscl_strstr(queryResult->c_str(), "3gpp-switch"))
+                    {
+                        i3gppSwitchSupported = false;
+                    }
+
+                    if (NULL != oscl_strstr(queryResult->c_str(), "3gpp-switch-req-sdp"))
+                    {
+                        i3gppSwitchWithoutSDPSupported = false;
+                    }
+
+                    if (NULL != oscl_strstr(queryResult->c_str(), "3gpp-switch-stream"))
+                    {
+                        i3gppSwitchStreamSupported = false;
+                    }
+                }
+            }
         }
 
+        if (iSessionInfo.iSwitchSDPAvailable)
+        {
+            iSessionInfo.iSwitchSDPAvailable = false;
+        }
         //error
         MapRTSPCodeToEventCode(iIncomingMsg.statusCode, iCurrentErrorCode);
         OSCL_DELETE(tmpOutgoingMsg);
@@ -3228,6 +3629,14 @@ void PVRTSPEngineNode::MapRTSPCodeToEventCode(RTSPStatusCode aStatusCode,
 {
     switch (aStatusCode)
     {
+        case 202:
+            //"202"      ; Accepted
+            aEventCode = PVMRTSPClientEngineInfoRTSPPartialSuccessCode202;
+            break;
+        case 206:
+            //"206"      ; Partial Data
+            aEventCode = PVMRTSPClientEngineInfoRTSPPartialSuccessCode206;
+            break;
         case 300:
             //"300"      ; Multiple Choices
             aEventCode = PVMRTSPClientEngineInfoRTSPRedirectCode300;
@@ -4747,6 +5156,134 @@ OSCL_EXPORT_REF bool PVRTSPEngineNode::clearEventQueue(void)
     return myRet;
 }
 
+OSCL_EXPORT_REF  PVMFCommandId PVRTSPEngineNode::PlaylistPlay(PVMFSessionId aSession, const RtspRangeType& aRange,
+        PVEffectiveTime aEffectiveTime,
+        const OsclAny* aContext)
+{
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVRTSPEngineNode::PlaylistPlay() called"));
+
+    iSessionInfo.iPlaylistRange = aRange;
+    iSessionInfo.iPlaylistPlayTime = aEffectiveTime;
+
+    PVRTSPEngineCommand cmd;
+    cmd.PVRTSPEngineCommandBase::Construct(aSession, PVMF_RTSP_NODE_PLAYLIST_PLAY, aContext);
+    return AddCmdToQueue(cmd);
+}
+
+PVMFStatus PVRTSPEngineNode::DoPlaylistPlay(PVRTSPEngineCommand &aCmd)
+{
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVRTSPEngineNode::DoPlaylistPlay() In"));
+
+    return SendRtspPlaylistPlay(aCmd);
+}
+
+PVMFStatus PVRTSPEngineNode::SendRtspPlaylistPlay(PVRTSPEngineCommand &aCmd)
+{
+    OSCL_UNUSED_ARG(aCmd);
+
+    PVMFStatus iRet = PVMFPending;
+    switch (iState)
+    {
+        case PVRTSP_ENGINE_NODE_STATE_PLAY_DONE:
+        {
+            if (!bNoSendPending)
+            {
+                break;
+            }
+            //compose and send PLAYLIST_PLAY
+            RTSPOutgoingMessage *tmpOutgoingMsg =  OSCL_NEW(RTSPOutgoingMessage, ());
+            if (tmpOutgoingMsg == NULL)
+            {
+                iCurrentErrorCode = PVMFRTSPClientEngineNodeErrorOutOfMemory;
+                iRet =  PVMFFailure;
+                break;
+            }
+            // If 3GPP FCS is not supported, return a failure. Set the error code to
+            // PVMFRTSPClientEngineNodeErrorRTSPErrorCode551 so that playback of the
+            // current clip is not interrupted.
+            PVMFStatus retval = compose3GPPPlaylistPlayRequest(*tmpOutgoingMsg);
+            if (PVMFSuccess != retval)
+            {
+                iCurrentErrorCode = (PVMFErrNotSupported == retval) ? PVMFRTSPClientEngineNodeErrorRTSPErrorCode551 :
+                                    PVMFRTSPClientEngineNodeErrorRTSPComposePlayRequestError;
+                OSCL_DELETE(tmpOutgoingMsg);
+                iRet =  PVMFFailure;
+                break;
+            }
+            if (PVMFSuccess != sendSocketOutgoingMsg(iSendSocket, *tmpOutgoingMsg))
+            {
+                iCurrentErrorCode = PVMFRTSPClientEngineNodeErrorSocketSendError;
+                OSCL_DELETE(tmpOutgoingMsg);
+                iRet =  PVMFFailure;
+                break;
+            }
+            bNoSendPending = false;
+            iOutgoingMsgQueue.push(tmpOutgoingMsg);
+            ChangeInternalState(PVRTSP_ENGINE_NODE_STATE_WAIT_PLAYLIST_PLAY);
+
+            //setup the watch dog for server response
+            iWatchdogTimer->Request(REQ_TIMER_WATCHDOG_ID, 0, TIMEOUT_WATCHDOG);
+
+            break;
+        }
+
+        case PVRTSP_ENGINE_NODE_STATE_WAIT_PLAYLIST_PLAY:
+        {
+            if (RTSPParser::REQUEST_IS_READY == iRTSPParserState)
+            {
+                iRet = processIncomingMessage(iIncomingMsg);
+                if (iRet != PVMFPending)
+                {
+                    //cancell the watchdog
+                    iWatchdogTimer->Cancel(REQ_TIMER_WATCHDOG_ID);
+                    ChangeInternalState(PVRTSP_ENGINE_NODE_STATE_PLAY_DONE);
+                }
+            }
+            else if (RTSPParser::ENTITY_BODY_IS_READY == iRTSPParserState)
+            {//got MS TCP RTP packets
+                // If this state is reached while processing the response to a 3GPP FCS request (without
+                // SDP available), save new SDP text and pass it up to the SM node/
+                if ((iSessionInfo.iPlaylistPlayTime == PVEffectiveTime_3GPP_FCS) &&
+                        (!iSessionInfo.iSwitchSDPAvailable))
+                {
+                    OsclRefCounter* my_refcnt = new OsclRefCounterSA< RTSPNodeMemDestructDealloc >(iEntityMemFrag.ptr);
+                    if (my_refcnt == NULL)
+                    {
+                        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVRTSPEngineNode::SendRtspDescribe() Unable to Allocate Memory"));
+                        return PVMFErrNoMemory;
+                    }
+
+                    iSessionInfo.pSDPBuf = OsclRefCounterMemFrag(iEntityMemFrag, my_refcnt, iEntityMemFrag.len);
+                    {//done with the entity body, change the ownership of the mem
+                        iEntityMemFrag.len = 0;
+                        iEntityMemFrag.ptr = NULL;
+                    }
+                    ChangeInternalState(PVRTSP_ENGINE_NODE_STATE_PLAY_DONE);
+                }
+                iRet =  PVMFSuccess;
+            }
+            else if (!clearEventQueue())
+            {
+                //cancell the watchdog
+                iWatchdogTimer->Cancel(REQ_TIMER_WATCHDOG_ID);
+
+                iCurrentErrorCode = PVMFRTSPClientEngineNodeErrorSocketError;
+                iRet =  PVMFFailure;
+            }
+            break;
+        }
+
+        default:
+        {
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR, (0, "PVRTSPEngineNode::SendRtspPlaylistPlay() iState=%d Line %d", iState, __LINE__));
+            iRet = PVMFErrInvalidState;
+            break;
+        }
+    }
+
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVRTSPEngineNode::SendRtspPlaylistPlay() Out"));
+    return iRet;
+}
 
 /**
  * Called by the command handler AO to do the Cancel All
@@ -5116,6 +5653,26 @@ OSCL_EXPORT_REF PVMFStatus PVRTSPEngineNode::composeSetupMessage(RTSPOutgoingMes
         iMsg.sessionIdIsSet = true;
     }
 
+    if (iPipelining)
+    {
+        if (setupTrackIndex)
+        {
+            // Add "Require" field only to second and higher SETUP requests
+            OSCL_HeapString<PVRTSPEngineNodeAllocator> myBuffer("3gpp-pipelined");
+            StrCSumPtrLen _Require = "Require";
+            iMsg.addField(&_Require, myBuffer.get_str());
+        }
+        // Then add "Pipelined-Requests" field
+        mbchar buffer[256];
+
+        OSCL_HeapString<PVRTSPEngineNodeAllocator> myBuf("");
+        oscl_snprintf(buffer, 256, "%d", iStartupId);
+        myBuf += buffer;
+
+        StrCSumPtrLen _PipelinedRequests = "Pipelined-Requests";
+        iMsg.addField(&_PipelinedRequests, myBuf.get_str());
+    }
+
     if (iMsg.compose() == false)
     {
         return PVMFFailure;
@@ -5336,4 +5893,347 @@ void PVRTSPEngineNode::CheckCancelAllSuccess()
         CommandComplete(iCancelCmdQueue, iCancelCmdQueue.front(), PVMFSuccess);
     }
     return;
+}
+
+
+/*
+ * This function composes a 3GPP FCS request. There are two basic scenarios and several
+ * details built around them. The first one is where a switch SDP is available and the second
+ * where a control URL and not a switch SDP is available. The details of each case is listed below.
+ *
+ * 1. Switch SDP available:
+ * (i)    The number of old and new tracks are the same (currently supported 01/02/09).
+ * (ii)   New SDP has more selected tracks than the old one. In this case, the matching old and new URLS are sent
+ *        as part of the FCS request. The SETUPs corresponding to the new tracks and PLAY are pipelined after the
+ *        FCS response is processed (handled in a different function)
+ * (iii)  There are fewer new tracks than old tracks. In this case, the "extra" old track URL is sent along with
+ *        the old/new pairs and is removed from the new session.
+ *
+ * 2. Switch SDP not available (only control level URL available):
+ *    In this case, there is only one way of requesting a switch. However, the server could respond in multiple
+ *    ways to the request. These are handled in the server response processing (processIncomingMessage) function.
+ *    Currently (01/02/09), only "200 OK" and "551 Option Not Supported" are handled.
+ */
+PVMFStatus PVRTSPEngineNode::compose3GPPPlaylistPlayRequest(RTSPOutgoingMessage &aMsg)
+{
+    aMsg.reset();
+    aMsg.numOfTransportEntries = 0;
+    aMsg.msgType = RTSPRequestMsg;
+    aMsg.method = METHOD_PLAY;
+    aMsg.cseq = iOutgoingSeq++;
+    aMsg.cseqIsSet = true;
+
+    // Session id is added first to the request
+    if (iSessionInfo.iSID.get_size())
+    {
+        aMsg.sessionId.setPtrLen(iSessionInfo.iSID.get_cstr(), iSessionInfo.iSID.get_size());
+        aMsg.sessionIdIsSet = true;
+    }
+
+    //Put user agent in SETUP an PLAY for testing for Real. IOT testing Jun 02, 05
+    aMsg.userAgent = iSessionInfo.iUserAgent.get_cstr();
+    aMsg.userAgentIsSet = true;
+
+    // Compose session level URL based on availability of switch SDP
+    const char *sdpSessionURL = (iSessionInfo.iSwitchSDPAvailable) ?
+                                (iSessionInfo.iSwitchSDPInfo->getSessionInfo())->getControlURL() :
+                                (iSessionInfo.iPlaylistUri.get_cstr());
+    if (sdpSessionURL == NULL)
+    {
+        return PVMFFailure;
+    }
+
+    aMsg.originalURI = sdpSessionURL;
+
+    // Add "Require" field
+    OSCL_HeapString<PVRTSPEngineNodeAllocator> myBuffer((iSessionInfo.iSwitchSDPAvailable) ? "3gpp-switch" : "3gpp-switch-req-sdp");
+    StrCSumPtrLen _Require = "Require";
+    aMsg.addField(&_Require, myBuffer.get_str());
+
+    if (iSessionInfo.iSwitchSDPAvailable)
+    {
+        // Compose request only if the feature is supported by the server
+        if (!i3gppSwitchSupported)
+        {
+            return PVMFErrNotSupported;
+        }
+
+        // Add check for i3gppSwitchStreamSupported
+
+        // Compose old and new urls only if switch SDP is available
+        if (composeOldAndNewURLs(aMsg) != PVMFSuccess)
+        {
+            return PVMFFailure;
+        }
+    }
+    else
+    {
+        // Compose request only if the feature is supported by the server
+        if (!i3gppSwitchWithoutSDPSupported)
+        {
+            return PVMFErrNotSupported;
+        }
+        // In case switch SDP is not available, add the "sdp-requested"
+        // header to the FCS request
+        OSCL_HeapString<PVRTSPEngineNodeAllocator> myReqBuffer("1");
+        StrCSumPtrLen _SDPRequested = "sdp-requested";
+        aMsg.addField(&_SDPRequested, myReqBuffer.get_str());
+    }
+
+    // Compose the FCS request
+    if (aMsg.compose() == false)
+    {
+        return PVMFFailure;
+    }
+
+    return PVMFSuccess;
+}
+
+/*
+ * This function is called when a switch SDP is available. It matches old (i.e. currently playing) tracks
+ * with new ones from the switch SDP based on MIME type. It then composes old and new media URLs for matching
+ * tracks.
+ * a. If there are more old tracks than new, it simply composes the media URL for the extra old ones (indicating
+ *    to the server that the old tracks must be removed.
+ * b. If there are more new tracks selected than old, handling of the additional new track(s) is not in
+ *    the scope of this function (must be handled in a pipelined request).
+ *    This function only composes the matching pairs of URLs.
+ * c. If there are only old URLs (meaning track removal), it is handled like in case a.
+ *
+ * This function follows the formatting convention specified in the 3GPP document "3GPP TS 26.234 V7.5.0 (2008-03)".
+ */
+PVMFStatus PVRTSPEngineNode::composeOldAndNewURLs(RTSPOutgoingMessage &iMsg)
+{
+    // Loop over current tracks from current SDP and compose old url
+    OSCL_HeapString<PVRTSPEngineNodeAllocator> oldAndNewURLs("");
+
+    for (uint32 ii = 0; ii < iSessionInfo.iSelectedStream.size(); ii++)
+    {
+        StrPtrLen oldURL;
+        uint32 oldTrackID = iSessionInfo.iSelectedStream[ii].iSDPStreamId;
+        mediaInfo* oldMediaInfo = iSessionInfo.iSDPinfo->getMediaInfoBasedOnID(oldTrackID);
+        if (composeMediaURL(oldTrackID, oldURL) != PVMFSuccess)
+        {
+            return PVMFFailure;
+        }
+        // Old URLs are prefixed with "old:"
+        oldAndNewURLs += "old=\"";
+        oldAndNewURLs += oldURL.c_str();
+        oldAndNewURLs += "\"";
+        // Old URLs are terminated with ";"
+        oldAndNewURLs += CHAR_SEMICOLON;
+
+        // Compose new URL corresponding to the old one. MIME type matching is used.
+        // In case a match is not found for a particular track, it will be removed from the session (since
+        // only the old URL is sent in the FCS request without a corresponding new URL).
+        for (int32 jj = 0; jj < iSessionInfo.iSwitchSDPInfo->getNumMediaObjects(); jj++)
+        {
+            uint32 newTrackID = iSessionInfo.iSwitchSelectedStream[jj].iSDPStreamId;
+            mediaInfo* newMediaInfo = iSessionInfo.iSwitchSDPInfo->getMediaInfoBasedOnID(newTrackID);
+            // Make sure a valid media info is present
+            if (NULL == newMediaInfo)
+            {
+                return PVMFFailure;
+            }
+            if (!oscl_strncmp(oldMediaInfo->getMIMEType(), newMediaInfo->getMIMEType(), oscl_strlen(oldMediaInfo->getMIMEType())))
+            {
+                StrPtrLen newURL;
+                if (composeSwitchMediaURL(newTrackID, newURL) != PVMFSuccess)
+                {
+                    return PVMFFailure;
+                }
+                // New URLs are prefixed with "new:"
+                oldAndNewURLs += "new=\"";
+                oldAndNewURLs += newURL.c_str();
+                oldAndNewURLs += "\"";
+                // New URLs excepts the last one are terminated
+                // with ","
+                if (ii != iSessionInfo.iSelectedStream.size() - 1)
+                {
+                    oldAndNewURLs += CHAR_COMMA;
+                }
+
+                jj = iSessionInfo.iSwitchSDPInfo->getNumMediaObjects();
+            }
+        }
+    }
+    StrCSumPtrLen _SwitchStream = "Switch-Stream";
+    iMsg.addField(&_SwitchStream, oldAndNewURLs.get_str());
+
+    return PVMFSuccess;
+}
+
+/*
+ * This function is derived from function composeMediaURL. It is different from composeMediaURL
+ * in that it uses the switch SDP instead of the session SDP to compose URLs.
+ */
+PVMFStatus PVRTSPEngineNode::composeSwitchMediaURL(int aTrackID, StrPtrLen &aMediaURI)
+{
+    OSCL_StackString<16> rtsp_str = _STRLIT_CHAR("rtsp");
+
+    const char *sdpMediaURL = (iSessionInfo.iSwitchSDPInfo->getMediaInfoBasedOnID(aTrackID))->getControlURL();
+    if (sdpMediaURL == NULL)
+    {
+        return PVMFFailure;
+    }
+
+    if (!oscl_strncmp(sdpMediaURL, rtsp_str.get_cstr(), rtsp_str.get_size()))
+    {
+        aMediaURI = sdpMediaURL;
+    }
+    else
+    {
+        const char *sdpSessionURL = (iSessionInfo.iSwitchSDPInfo->getSessionInfo())->getControlURL();
+
+        if (!oscl_strncmp(sdpSessionURL, rtsp_str.get_cstr(), rtsp_str.get_size()))
+        {
+            ((mbchar*)iRTSPEngTmpBuf.ptr)[0] = '\0';
+            uint tmpLen = iRTSPEngTmpBuf.len;
+
+            if (composeURL(sdpSessionURL, sdpMediaURL,
+                           ((mbchar*)iRTSPEngTmpBuf.ptr), tmpLen) != true)
+            {
+                return PVMFFailure;
+            }
+
+            aMediaURI = ((mbchar*)iRTSPEngTmpBuf.ptr);
+        }
+        //Compose absolute URL
+        else
+        {
+            // The code here will become relevant when support
+            // for FCS without SDP available is added.
+            char *baseURL;
+            if (iSessionInfo.iContentBaseURL.get_size())
+            {
+                baseURL = iSessionInfo.iContentBaseURL.get_str();
+            }
+            else
+            {
+                baseURL = iSessionInfo.iSessionURL.get_str();
+            }
+
+            {
+                uint tmpLen = iRTSPEngTmpBuf.len;
+                if (composeURL((const char *)baseURL,
+                               sdpMediaURL,
+                               ((mbchar*)iRTSPEngTmpBuf.ptr), tmpLen) != true)
+                {
+                    return PVMFFailure;
+                }
+            }
+            aMediaURI = ((mbchar*)iRTSPEngTmpBuf.ptr);
+        }
+    }
+    return PVMFSuccess;
+}
+
+OSCL_EXPORT_REF PVMFStatus PVRTSPEngineNode::GetSwitchStreamInfo(Oscl_Vector<StreamInfo, PVRTSPEngineNodeAllocator> &aSelectedStream)
+{
+    aSelectedStream = iSessionInfo.iSwitchSelectedStream;
+    return PVMFSuccess;
+}
+
+OSCL_EXPORT_REF void PVRTSPEngineNode::SetSwitchSDPInfo(OsclSharedPtr<SDPInfo>& aSDPinfo, Oscl_Vector<StreamInfo, OsclMemAllocator>& aSwitchSelectedStream, bool aSDPAvailable)
+{
+    if (aSDPAvailable)
+    {
+        iSessionInfo.iSwitchSDPInfo = aSDPinfo;
+        iSessionInfo.iSwitchSelectedStream = aSwitchSelectedStream;
+    }
+    else
+    {
+        iSessionInfo.iSwitchSelectedStream = iSessionInfo.iSelectedStream;
+    }
+    iSessionInfo.iSwitchSDPAvailable = aSDPAvailable;
+}
+
+/*
+ * This function parses the "Supported" header for 3GPP FCS support
+ * and sets flags appropriately.
+ */
+void PVRTSPEngineNode::ParseSupportedHeaderFor3GPPFCSFeatures(const StrPtrLen* serverSupportedFeatures)
+{
+    // Attempt to parse only if the server has a "Supported" header
+    if (serverSupportedFeatures)
+    {
+        // Initialize search strings
+        // Pipelining
+        StrPtrLen pipelining("3gpp-pipelined");
+        // 3GPP FCS with SDP available
+        StrPtrLen s3gppSwitch("3gpp-switch");
+        // 3GPP FCS without SDP available
+        StrPtrLen s3gppSwitchReqSdp("3gpp-switch-req-sdp");
+        // 3GPP FCS switching within current stream (add/remove/switch tracks)
+        StrPtrLen s3gppSwitchStream("3gpp-switch-stream");
+
+        // Query "Supported" header for each of the features
+        iPipelining = IsSubstring(*serverSupportedFeatures, pipelining);
+        i3gppSwitchSupported = IsSubstring(*serverSupportedFeatures, s3gppSwitch);
+        i3gppSwitchWithoutSDPSupported = IsSubstring(*serverSupportedFeatures, s3gppSwitchReqSdp);
+        i3gppSwitchStreamSupported = IsSubstring(*serverSupportedFeatures, s3gppSwitchStream);
+    }
+    else
+    {
+        // Set member flags to false
+        iPipelining = false;
+        i3gppSwitchSupported = false;
+        i3gppSwitchWithoutSDPSupported = false;
+        i3gppSwitchStreamSupported = false;
+    }
+}
+
+/*
+ * StrPtrLen class does not have a member function to find a substring. This
+ * function searches for a substring in a master string. This could be made a
+ * member function of StrPtrLen.
+ */
+bool PVRTSPEngineNode::IsSubstring(StrPtrLen masterString, StrPtrLen searchString)
+{
+    bool retval = false;
+    // Save the lengths of the master string and search string
+    int32 masterLen = masterString.length();
+    int32 searchLen = searchString.length();
+
+    // Return false if substring is longer than master string
+    if (masterLen < searchLen)
+    {
+        return retval;
+    }
+
+    // Slide the search string over the master string one
+    // character at a time (essentially a sliding window)
+    for (int ii = 0; ii < masterLen - searchLen + 1; ii++)
+    {
+        // offsetMasterString does the sliding operation
+        char* offsetMasterString = (char*)masterString.c_str() + ii;
+        // Search for 'searchLen' number of characters
+        if (!oscl_strncmp(offsetMasterString, searchString.c_str(), searchLen))
+        {
+            retval = true;
+            break;
+        }
+    }
+
+    return retval;
+}
+
+OSCL_EXPORT_REF PVMFStatus PVRTSPEngineNode::SetPlaylistUri(const char* aPlaylistUri)
+{
+    if (aPlaylistUri != NULL)
+    {
+        // Make a copy of the playlist uri
+        iSessionInfo.iPlaylistUri = aPlaylistUri;
+
+        // Set the query string flag to true
+        iSessionInfo.iPlaylistUriFlag = true;
+
+    }
+    else
+    {
+        // Set the query string flag to false
+        iSessionInfo.iPlaylistUriFlag = false;
+    }
+
+    return PVMFSuccess;
 }

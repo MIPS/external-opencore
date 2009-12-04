@@ -1484,6 +1484,9 @@ RTSPIncomingMessage::parseOneRTPInfoEntry(char * & cPtr, char * finishPtr)
 
     getOut = false;
 
+    // set ssrcIsSet to false by default
+    rtpInfo[numOfRtpInfoEntries - 1].ssrcIsSet = false;
+
     while ((!getOut) && cPtr < finishPtr && CHAR_COMMA != *cPtr)
     {
         // reset pointers
@@ -1612,6 +1615,28 @@ RTSPIncomingMessage::parseOneRTPInfoEntry(char * & cPtr, char * finishPtr)
                 return;
             }
         }
+        else if (4 == separator - subFieldName)
+        { // rtptime?
+            if (('s' == (subFieldName[0] | OSCL_ASCII_CASE_MAGIC_BIT))
+                    && ('s' == (subFieldName[1] | OSCL_ASCII_CASE_MAGIC_BIT))
+                    && ('r' == (subFieldName[2] | OSCL_ASCII_CASE_MAGIC_BIT))
+                    && ('c' == (subFieldName[3] | OSCL_ASCII_CASE_MAGIC_BIT))
+               )
+            {
+                uint32 ssrc = 0;
+                PV_atoi((separator + 1), 'x', ssrc);
+
+                rtpInfo[ numOfRtpInfoEntries-1 ].ssrc = ssrc;
+                rtpInfo[ numOfRtpInfoEntries-1 ].ssrcIsSet = true;
+            }
+            else
+            {
+                amMalformed = RTSPErrorSyntax;
+                return;
+            }
+        }
+
+
 
         else
         {

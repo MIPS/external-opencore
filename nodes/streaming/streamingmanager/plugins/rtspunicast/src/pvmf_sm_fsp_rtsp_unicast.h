@@ -38,6 +38,10 @@
 #include "pvmf_jitter_buffer_port.h"
 #endif
 
+#ifndef PVRTSP_ENGINE_NODE_EXTENSION_INTERFACE_H_INCLUDED
+#include "pvrtspenginenodeextensioninterface.h"
+#endif
+
 /**
  * Macros for calling PVLogger
  */
@@ -200,6 +204,9 @@ class PVMFSMRTSPUnicastNode: public PVMFSMFSPBaseNode
         virtual PVMFStatus GetMediaPresentationInfo(PVMFMediaPresentationInfo& aInfo);
         virtual PVMFStatus SelectTracks(PVMFMediaPresentationInfo& aInfo);
 
+        /* From PvmfDataSourcePlaybackControlInterface*/
+        virtual PVMFStatus NotifyTargetPositionSync(PVMFTimestamp aTargetNPT);
+
         /* From PVMFMetadataExtensionInterface */
         virtual uint32 GetNumMetadataKeys(char* aQueryKeyString = NULL);
         virtual uint32 GetNumMetadataValues(PVMFMetadataList& aKeyList);
@@ -354,5 +361,28 @@ class PVMFSMRTSPUnicastNode: public PVMFSMFSPBaseNode
         OsclSharedPtr<SDPInfo> iSdpInfo;
         bool oAutoReposition;
         bool iPauseDenied;  //For live streaming sessions, pause is denied.
+        /* 3GPP FCS related member functions and variables */
+        OsclSharedPtr<SDPInfo> iSwitchSDPInfo;                     // Saves switch SDP info - either locally available or from a FCS response
+        oscl_wchar* iSwitchSDPLocation;                            // Location of the switch SDP (if available) or control URL of switch clip
+        bool iSelectTracksAndSendFCSRequestFlag;                   // Set when the server responds with a "202 Accepted" message - means need
+        int32 iPlaylistSwitchMode;                                 // Saves the switch mode of the playlist switch - now, end of clip, end of playlist, or 3GPP FCS
+        // to select tracks from new SDP and send another FCS request
+        Oscl_Vector<int32, OsclMemAllocator> iRemovedTrackIDVector;// In case there are more current tracks than new ones in a FCS request,
+        // the extra current track IDs are saved in this vector and used
+        // to send EOS on those ports.
+        bool iPerfectMatchDuringFCSTrackSelectionFlag;
+
+        // Selects tracks from the switch SDP info based on MIME type matching with current SDP info.
+        PVMFStatus SelectTracksFromSwitchSDP(Oscl_Vector<StreamInfo, OsclMemAllocator>& aSwitchSelectedStream, PVMFMediaPresentationInfo aMediaInfo);
+        // Parses the SDP file pointed to by the argument. Called when the switch SDP file is available locally.
+        PVMFStatus ParseSwitchSDP(OSCL_wString& aClipLocation);
+        // Populates a presentation info structure from the switch SDP file - mainly to map indices to SDP track IDs.
+        PVMFStatus PopulatePresentationInfoFromSwitchSDP(PVMFMediaPresentationInfo& aMediaInfo);
+        // Updates the JB node with the RTP info received in a FCS response, and flushes
+        // JB for all tracks.
+        void UpdateRTPInfoAndFlushJitterBuffer();
+
+        void BypassError();
+
 };
 #endif

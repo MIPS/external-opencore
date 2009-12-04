@@ -60,9 +60,11 @@
 #define MPEG4_AAC_RTSP_URL "rtsp://pvserveroha.pv.com/public/Interop/3GPP/pv2/pv2-aac64_mpeg4-rvlcs-64.3gp"
 #define AMR_MPEG4_SDP_FILE "pv_amr_mpeg4.sdp"
 #define WM_BSS_URL "http://pvwmsoha.pv.com:8020/WMContent/MBR/mbr_8tracks.wmv"
-#if PVR_SUPPORT
 #define DEFAULT_PV_PLAYLIST_URL "rtsp://pvserver6.pv.com:554/public/playlist/va_playlists/ply_av_01_mp4_aac.ply"
-#endif
+#define THREE_GPP_FCS_URL "rtsp://192.160.7.55/Stage5/alca/fcs/amr-12_h264-52_1.3gp"
+#define THREE_GPP_FCS_SWITCH_URL "rtsp://192.160.7.55/Stage5/alca/fcs/amr-12_h264-52_2.3gp"
+#define THREE_GPP_FCS_SDP "3gpp_fcs_test_stream1.sdp"
+#define THREE_GPP_FCS_SWITCH_SDP "3gpp_fcs_test_stream2.sdp"
 
 class PVPlayerDataSourceURL;
 class PVPlayerDataSink;
@@ -235,9 +237,10 @@ class pvplayer_async_test_streamingopenplaystop : public pvplayer_async_test_bas
             iProtocolRollOverWithUnknownURLType = true;
         }
 
-        void setPlayListMode()
+        void setPlayListMode(int32 aPlaylistSwitchMode = 0)
         {
             iPlayListURL = true;
+            iPlayListSwitchMode = aPlaylistSwitchMode;
         }
 
         void setSeekAfterEOSMode()
@@ -329,6 +332,7 @@ class pvplayer_async_test_streamingopenplaystop : public pvplayer_async_test_bas
         uint32 iLiveBufferDurationInSec;
         PVRConfig::TLiveBufferStorage iLiveBufferStorage;
 #endif
+        OSCL_HeapString<OsclMemAllocator> iSwitchURL;
 
         OsclFileHandle* ifilehandle;
 };

@@ -211,7 +211,7 @@ class PVMFJitterBufferNode : public PVInterface,
         virtual void SetClientPlayBackClock(PVMFMediaClock* clientClock);
         virtual bool PrepareForRepositioning(bool oUseExpectedClientClockVal = false,
                                              uint32 aExpectedClientClockVal = 0);   //called for RTSP based streaming only
-        virtual bool SetPortSSRC(PVMFPortInterface* aPort, uint32 aSSRC);
+        virtual bool SetPortSSRC(PVMFPortInterface* aPort, uint32 aSSRC, bool a3GPPFCSSwitch = false);
         virtual bool SetPortRTPParams(PVMFPortInterface* aPort,
                                       bool   aSeqNumBasePresent,
                                       uint32 aSeqNumBase,
@@ -248,6 +248,8 @@ class PVMFJitterBufferNode : public PVInterface,
         virtual bool ClearJitterBuffer(PVMFPortInterface* aPort,
                                        uint32 aSeqNum);
         virtual void FlushJitterBuffer();
+        virtual void ResetJitterBuffer();
+        virtual void SetClientClockToServerClock();
 
 
         virtual void SetInputMediaHeaderPreParsed(PVMFPortInterface* aPort,
@@ -259,6 +261,8 @@ class PVMFJitterBufferNode : public PVInterface,
         virtual void SetBroadCastSession();
         virtual void DisableFireWallPackets();
         virtual void UpdateJitterBufferState();
+        // Need to send EOS messages for tracks that were removed during a 3GPP FCS
+        virtual void SendEOSMessage(Oscl_Vector<int32, OsclMemAllocator> aRemovedTrackIDVector);
         virtual void StartOutputPorts();
         virtual void StopOutputPorts();
 

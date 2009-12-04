@@ -3962,6 +3962,31 @@ void pvplayer_engine_test::test()
                         true);
             }
             break;
+            case Streaming3GPPFCSWithURLTest:
+            case Streaming3GPPFCSWithSDPTest:
+            {
+                if (iCurrentTestNumber == Streaming3GPPFCSWithURLTest)
+                {
+                    fprintf(file, "Streaming3GPPFCSWithURLTest\n");
+                }
+                else if (iCurrentTestNumber == Streaming3GPPFCSWithURLTest)
+                {
+                    fprintf(file, "Streaming3GPPFCSWithSDPTest\n");
+                }
+                iCurrentTest = new pvplayer_async_test_streamingopenplaystop(testparam,
+                        PVMF_MIME_YUV420,
+                        PVMF_MIME_PCM16,
+                        iCurrentTestNumber,
+                        false,
+                        true,
+                        true,
+                        false,
+                        false,
+                        false);
+
+                ((pvplayer_async_test_streamingopenplaystop*)iCurrentTest)->setPlayListMode(3);
+            }
+            break;
 
 
             case StreamingLongPauseTest:
@@ -7286,6 +7311,54 @@ void pvplayer_engine_test::test()
                 else
                 {
                     fprintf(file, "PVR_MLB_StreamingBitrateEstimationTest");
+                }
+                iCurrentTest = new pvplayer_async_test_pvr_streamingopenplaystop(testparam,
+                        PVMF_MIME_YUV420,
+                        PVMF_MIME_PCM16,
+                        iCurrentTestNumber);
+                pvplayer_async_test_pvr_streamingopenplaystop* ptr =
+                    (pvplayer_async_test_pvr_streamingopenplaystop*)iCurrentTest;
+                OSCL_UNUSED_ARG(ptr);
+#else
+                fprintf(file, "PVR tests not enabled\n");
+#endif
+            }
+            break;
+
+            case PVR_MLB_Streaming3GPPFCSWithoutSDPTest:
+            {
+#if PVR_SUPPORT
+                if (PVR_MLB_Streaming3GPPFCSWithoutSDPTest == iCurrentTestNumber)
+                {
+                    fprintf(file, "PVR_MLB_Streaming3GPPFCSWithoutSDPTest");
+                }
+                else
+                {
+                    fprintf(file, "PVR_MLB_Streaming3GPPFCSWithoutSDPTest");
+                }
+                iCurrentTest = new pvplayer_async_test_pvr_streamingopenplaystop(testparam,
+                        PVMF_MIME_YUV420,
+                        PVMF_MIME_PCM16,
+                        iCurrentTestNumber);
+                pvplayer_async_test_pvr_streamingopenplaystop* ptr =
+                    (pvplayer_async_test_pvr_streamingopenplaystop*)iCurrentTest;
+                OSCL_UNUSED_ARG(ptr);
+#else
+                fprintf(file, "PVR tests not enabled\n");
+#endif
+            }
+            break;
+
+            case PVR_MLB_Streaming3GPPFCSWithSDPTest:
+            {
+#if PVR_SUPPORT
+                if (PVR_MLB_Streaming3GPPFCSWithSDPTest == iCurrentTestNumber)
+                {
+                    fprintf(file, "PVR_MLB_Streaming3GPPFCSWithSDPTest");
+                }
+                else
+                {
+                    fprintf(file, "PVR_MLB_Streaming3GPPFCSWithSDPTest");
                 }
                 iCurrentTest = new pvplayer_async_test_pvr_streamingopenplaystop(testparam,
                         PVMF_MIME_YUV420,

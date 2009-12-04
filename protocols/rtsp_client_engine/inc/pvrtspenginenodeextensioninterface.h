@@ -79,7 +79,8 @@ typedef enum
 {
     PVEffectiveTime_NOW,
     PVEffectiveTime_END_OF_CLIP,
-    PVEffectiveTime_END_OF_PLAYLIST
+    PVEffectiveTime_END_OF_PLAYLIST,
+    PVEffectiveTime_3GPP_FCS
 } PVEffectiveTime;
 
 struct StreamInfo
@@ -200,7 +201,10 @@ class PVRTSPEngineNodeExtensionInterface : public PVInterface
         OSCL_IMPORT_REF virtual PVMFStatus SetKeepAliveMethod_keep_alive_in_play(bool aKeepAliveInPlay = false) = 0;
 
         OSCL_IMPORT_REF virtual PVMFStatus GetKeepAliveMethod(int32 &aTimeout, bool &aUseSetParameter, bool &aKeepAliveInPlay) = 0;
-
+        OSCL_IMPORT_REF virtual void SetSwitchSDPInfo(OsclSharedPtr<SDPInfo>& aSDPinfo, Oscl_Vector<StreamInfo, OsclMemAllocator>& aTrackIdMapping, bool aSDPAvailable) = 0;
+        OSCL_IMPORT_REF virtual PVMFCommandId PlaylistPlay(PVMFSessionId aSession, const RtspRangeType& aRange, PVEffectiveTime aEffectiveTime, const OsclAny* aContext = NULL) = 0;
+        OSCL_IMPORT_REF virtual PVMFStatus SetPlaylistUri(const char* aPlaylistUri) = 0;
+        OSCL_IMPORT_REF virtual PVMFStatus GetSwitchStreamInfo(Oscl_Vector<StreamInfo, OsclMemAllocator> &aSelectedStream) = 0;
         /**
         * This method is called to enable/disable X-STR http header to be a part of the HTTP GET or POST methods
         *

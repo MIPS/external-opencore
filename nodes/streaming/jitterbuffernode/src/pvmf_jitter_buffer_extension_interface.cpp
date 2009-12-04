@@ -135,9 +135,9 @@ bool PVMFJitterBufferExtensionInterfaceImpl::PrepareForRepositioning(bool oUseEx
 }
 
 OSCL_EXPORT_REF
-bool PVMFJitterBufferExtensionInterfaceImpl::setPortSSRC(PVMFPortInterface* aPort, uint32 aSSRC)
+bool PVMFJitterBufferExtensionInterfaceImpl::setPortSSRC(PVMFPortInterface* aPort, uint32 aSSRC, bool a3GPPFCSSwitch)
 {
-    return (iContainer->SetPortSSRC(aPort, aSSRC));
+    return (iContainer->SetPortSSRC(aPort, aSSRC, a3GPPFCSSwitch));
 }
 
 
@@ -222,6 +222,18 @@ OSCL_EXPORT_REF void
 PVMFJitterBufferExtensionInterfaceImpl::FlushJitterBuffer()
 {
     iContainer->FlushJitterBuffer();
+}
+
+OSCL_EXPORT_REF void
+PVMFJitterBufferExtensionInterfaceImpl::ResetJitterBuffer()
+{
+    iContainer->ResetJitterBuffer();
+}
+
+OSCL_EXPORT_REF void
+PVMFJitterBufferExtensionInterfaceImpl::SetClientClockToServerClock()
+{
+    iContainer->SetClientClockToServerClock();
 }
 
 OSCL_EXPORT_REF bool
@@ -321,4 +333,10 @@ OSCL_EXPORT_REF PVMFStatus
 PVMFJitterBufferExtensionInterfaceImpl::setPortDataLogging(bool logEnable, OSCL_String* logPath)
 {
     return (iContainer->setPortDataLogging(logEnable, logPath));
+}
+
+OSCL_EXPORT_REF void
+PVMFJitterBufferExtensionInterfaceImpl::SendEOSMessage(Oscl_Vector<int32, OsclMemAllocator> aRemovedTrackIDVector)
+{
+    iContainer->SendEOSMessage(aRemovedTrackIDVector);
 }

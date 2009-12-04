@@ -469,6 +469,7 @@ PVCommandId PVPlayerEngine::SetPlaybackRange(PVPPlaybackPosition aBeginPos, PVPP
             case PVPPBPOS_MODE_NOW:
             case PVPPBPOS_MODE_END_OF_CURRENT_PLAY_ELEMENT:
             case PVPPBPOS_MODE_END_OF_CURRENT_PLAY_SESSION:
+            case PVPPBPOS_MODE_3GPP_FCS:
                 break;
             case PVPPBPOS_MODE_UNKNOWN:
             default:
@@ -5976,11 +5977,27 @@ PVMFStatus PVPlayerEngine::DoSourceNodeSetDataSourcePositionDuringPlayback(PVCom
         {
             iDataSourcePosParams.iMode = PVMF_SET_DATA_SOURCE_POSITION_MODE_END_OF_CURRENT_PLAY_SESSION;
         }
+        else if (iCurrentBeginPosition.iMode == PVPPBPOS_MODE_3GPP_FCS)
+        {
+            uint32 clockcurpos = 0;
+            bool tmpbool = false;
+            iPlaybackClock.GetCurrentTime32(clockcurpos, tmpbool, PVMF_MEDIA_CLOCK_MSEC);
+            iDataSourcePosParams.iActualMediaDataTS = clockcurpos; // Set to current playback clock value so that failure handling is smooth.
+            iDataSourcePosParams.iMode = PVMF_SET_DATA_SOURCE_POSITION_MODE_3GPP_FCS;
+        }
         iDataSourcePosParams.iPlayElementIndex = iCurrentBeginPosition.iPlayElementIndex;
         iDataSourcePosParams.iSeekToSyncPoint = iSeekToSyncPoint;
         iDataSourcePosParams.iTargetNPT = iCurrentBeginPosition.iPlayListPosValue.millisec_value;
         iDataSourcePosParams.iStreamID = iStreamID;
-        iDataSourcePosParams.iPlaylistUri = iCurrentBeginPosition.iPlayListUri;
+        if (iCurrentBeginPosition.iMode == PVPPBPOS_MODE_3GPP_FCS)
+        {
+            iDataSourcePosParams.iSDPAvailable = iCurrentBeginPosition.iPlayListPosValue3GPPFCS.iSDPAvailableFlag;
+            iDataSourcePosParams.iPlaylistUri = iCurrentBeginPosition.iPlayListPosValue3GPPFCS.iControlUri;
+        }
+        else
+        {
+            iDataSourcePosParams.iPlaylistUri = iCurrentBeginPosition.iPlayListUri;
+        }
 
         leavecode = IssueSourceSetDataSourcePosition(true, (OsclAny*)context);
         if (leavecode != 0)

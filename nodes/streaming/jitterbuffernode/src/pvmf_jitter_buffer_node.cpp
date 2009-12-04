@@ -1035,7 +1035,7 @@ bool PVMFJitterBufferNode::PrepareForRepositioning(bool oUseExpectedClientClockV
     return true;
 }
 
-bool PVMFJitterBufferNode::SetPortSSRC(PVMFPortInterface* aPort, uint32 aSSRC)
+bool PVMFJitterBufferNode::SetPortSSRC(PVMFPortInterface* aPort, uint32 aSSRC, bool a3GPPFCSSwitch)
 {
     bool retval = false;
     PVMF_JBNODE_LOGINFO((0, "PVMFJitterBufferNode::SetPortSSRC aPort[%x], aSSRC[%d]", aPort, aSSRC));
@@ -1047,7 +1047,7 @@ bool PVMFJitterBufferNode::SetPortSSRC(PVMFPortInterface* aPort, uint32 aSSRC)
             if (iter && (*iter) && (&((*iter)->irPort) == aPort))
             {
                 retval = true;
-                ipJitterBufferMisc->SetPortSSRC(aPort, aSSRC);
+                ipJitterBufferMisc->SetPortSSRC(aPort, aSSRC, a3GPPFCSSwitch);
                 break;
             }
         }
@@ -3909,4 +3909,54 @@ void PVMFJitterBufferNode::MediaTrackSSRCEstablished(PVMFJitterBuffer* aJitterBu
             }
         }
     }
+}
+
+void PVMFJitterBufferNode::SendEOSMessage(Oscl_Vector<int32, OsclMemAllocator> aRemovedTrackIDVector)
+{
+    // This function is used to send EOS messages for tracks that were removed during a 3GPP FCS.
+    for (uint32 ii = 0; ii < aRemovedTrackIDVector.size(); ii++)
+    {
+        // Calculate input tag offset. Since input ports are numbered 0, 3, 6, ..., do the following
+        int32 aInputTagOffset = 3 * aRemovedTrackIDVector[ii];
+
+        // Just to be sure, check the port's tag type
+        if (iPortParamsQueue[aInputTagOffset]->iTag == PVMF_JITTER_BUFFER_PORT_TYPE_INPUT)
+        {
+            iPortParamsQueue[aInputTagOffset]->ipJitterBuffer->ResetJitterBuffer();
+            iPortParamsQueue[aInputTagOffset]->ipJitterBuffer->SetEOS(true);
+        }
+    }
+}
+
+void PVMFJitterBufferNode::ResetJitterBuffer()
+{
+    PVMF_JBNODE_LOGINFO((0, "PVMFJitterBufferNode::FlushJitterBuffer In"));
+    for (uint32 i = 0; i < iPortParamsQueue.size(); i++)
+    {
+        PVMFJitterBufferPortParams* pPortParams = iPortParamsQueue[i];
+        if (pPortParams->iTag == PVMF_JITTER_BUFFER_PORT_TYPE_INPUT)
+        {
+            if (pPortParams->ipJitterBuffer != NULL)
+            {
+                pPortParams->ipJitterBuffer->ResetJitterBuffer();
+            }
+        }
+    }
+}
+
+void PVMFJitterBufferNode::SetClientClockToServerClock()
+{
+    // Bring client clock to server clock's value
+    uint32 currentTime32 = 0;
+    uint32 currentTimeBase32 = 0;
+    bool overflowFlag = false;
+    ipJitterBufferMisc->GetEstimatedServerClock().GetCurrentTime32(currentTime32,
+            overflowFlag,
+            PVMF_MEDIA_CLOCK_MSEC,
+            currentTimeBase32);
+
+    overflowFlag = false;
+    ipClientPlayBackClock->Stop();
+    ipClientPlayBackClock->SetStartTime32(currentTime32,
+                                          PVMF_MEDIA_CLOCK_MSEC, overflowFlag);
 }

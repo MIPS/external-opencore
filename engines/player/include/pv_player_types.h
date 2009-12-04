@@ -104,7 +104,24 @@ typedef enum _PVPPlaybackPositionMode
     PVPPBPOS_MODE_NOW = 0,
     PVPPBPOS_MODE_END_OF_CURRENT_PLAY_ELEMENT = 1,
     PVPPBPOS_MODE_END_OF_CURRENT_PLAY_SESSION = 2,
+    PVPPBPOS_MODE_3GPP_FCS = 3,
 } PVPPlaybackPositionMode;
+
+typedef enum _PVPPPlaybackPositionTrackRemovalMode
+{
+    PVPPBPOS_REMOVE_MODE_UNKNOWN = -1,
+    PVPPBPOS_REMOVE_VIDEO = 0,
+    PVPPBPOS_REMOVE_AUDIO = 1,
+} PVPPPlaybackPositionTrackRemovalMode;
+
+typedef struct _PVPPlaybackPositionValue3GPPFCS
+{
+    bool iSDPAvailableFlag; // Indicates whether SDP corresponding to switch track(s) is available.
+    char* iControlUri;      // In case SDP is available, the name of the SDP file including complete path information.
+    // In case SDP is not available, the control URL of the new tracks.
+    bool iTrackRemovalFlag; // Indicates whether a track has to be removed or not.
+    PVPPPlaybackPositionTrackRemovalMode iTrackRemovalMode; // Indicates which track needs to be removed.
+} PVPPlaybackPositionValue3GPPFCS;
 
 typedef struct _PVPPlaybackPosition
 {
@@ -126,6 +143,7 @@ typedef struct _PVPPlaybackPosition
     _PVPPlaybackPositionValueUnion iPlayListPosValue;
     PVPPlaybackPositionUnit iPlayListPosUnit;
     char* iPlayListUri;
+    PVPPlaybackPositionValue3GPPFCS iPlayListPosValue3GPPFCS;
 } PVPPlaybackPosition;
 
 #endif

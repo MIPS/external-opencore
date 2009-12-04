@@ -1035,6 +1035,8 @@ class pvplayer_engine_test : public test_case,
              */
             StreamingPlayListErrorCodeTest, // 863
             StreamingOpenPlayMultipleSeekToEndOfClipUntilEOSTest, //864
+            Streaming3GPPFCSWithURLTest, //865
+            Streaming3GPPFCSWithSDPTest, //866
 
 
             StreamingOpenPlayMultiplePausePlayUntilEOSTest = 875, //875
@@ -2347,6 +2349,20 @@ class pvplayer_engine_test : public test_case,
             *              PLEASE USE A SDP FILE THAT ANOUNCES A SMALLER BITRATE THAN THE REAL ONE
             */
             PVR_MLB_StreamingBitrateEstimationTest = 1615,
+
+            /**
+             * @test (1616) PVR MLB: 3GPP FCS basic test without SDP available (using RTSP URLs)
+             * Description: This test case exercises the following 3GPP FCS features - viz., capablity handling, pipelined requests,
+             *              switching from one VoD clip to another.
+             */
+            PVR_MLB_Streaming3GPPFCSWithoutSDPTest, //1616
+
+            /**
+            * @test (1617) PVR MLB: 3GPP FCS basic test with SDP available
+            * Description: This test case exercises the following 3GPP FCS features - viz., capablity handling, pipelined requests,
+            *              switching from one VoD clip to another.
+            */
+            PVR_MLB_Streaming3GPPFCSWithSDPTest, //1617
 
             /**
             PVR FileSystem Live Buffer tests start at 1630

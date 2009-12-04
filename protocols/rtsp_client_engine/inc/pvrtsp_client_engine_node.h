@@ -220,6 +220,9 @@ class SessionInfo
         bool                                       iPlaylistQueryStringFlag;// Flag to indicate query string's presence
         OSCL_HeapString<PVRTSPEngineNodeAllocator> iPlaylistUri;            // Playlist uri
         bool                                       iPlaylistUriFlag;        // Flag to indicate playlist uri's presence
+        OsclSharedPtr<SDPInfo>                     iSwitchSDPInfo;          // Saves switch SDP info
+        Oscl_Vector<StreamInfo, OsclMemAllocator>  iSwitchSelectedStream;   // Saves selected track media information
+        bool                                       iSwitchSDPAvailable;     // Flag to indicate if SDP is available or not
         bool                                       iSessionCompleted;
         void UpdateSessionCompletionStatus(bool aSessionCompleted)
         {
@@ -623,6 +626,11 @@ class PVRTSPEngineNode
 
         OSCL_IMPORT_REF virtual PVMFStatus GetKeepAliveMethod(int32 &aTimeout, bool &aUseSetParameter, bool &aKeepAliveInPlay);
 
+        OSCL_IMPORT_REF virtual PVMFCommandId PlaylistPlay(PVMFSessionId aSession, const RtspRangeType& aRange, PVEffectiveTime aEffectiveTime, const OsclAny* aContext = NULL);
+        OSCL_IMPORT_REF virtual PVMFStatus SetPlaylistUri(const char* aPlaylistUri);
+        OSCL_IMPORT_REF virtual void SetSwitchSDPInfo(OsclSharedPtr<SDPInfo>& aSDPinfo, Oscl_Vector<StreamInfo, OsclMemAllocator>& aTrackIdMapping, bool aSDPAvailable);
+        OSCL_IMPORT_REF virtual PVMFStatus GetSwitchStreamInfo(Oscl_Vector<StreamInfo, PVRTSPEngineNodeAllocator> &aSelectedStream);
+
         OSCL_IMPORT_REF virtual PVMFStatus GetRTSPTimeOut(int32 &aTimeout);
         OSCL_IMPORT_REF virtual PVMFStatus SetRTSPTimeOut(int32 aTimeout);
 
@@ -852,6 +860,7 @@ class PVRTSPEngineNode
         PVMFStatus DoRequestPort(PVRTSPEngineCommand &aCmd, PVMFRTSPPort* &aPort);
         PVMFStatus DoAddPort(int32 id, bool isMedia, int32 tag, PVMFRTSPPort* &aPort);
         PVMFStatus DoReleasePort(PVRTSPEngineCommand &aCmd);
+        PVMFStatus DoPlaylistPlay(PVRTSPEngineCommand &aCmd);
 
         bool FlushPending();
         bool ProcessPortActivity();
@@ -859,6 +868,12 @@ class PVRTSPEngineNode
         PVMFStatus ProcessOutgoingMsg(PVMFPortInterface* aPort);
         PVMFStatus SendRtspPlay(PVRTSPEngineCommand &aCmd);
         PVMFStatus SendRtspPause(PVRTSPEngineCommand &aCmd);
+        /*
+         * SendRtspPipelinedRequest implements pipelining of RTSP SETUP and PLAY requests. It is
+         * a part of the 3GPP compliant fast content switch implementation.
+         */
+        PVMFStatus SendRtspPipelinedRequest(PVRTSPEngineCommand &aCmd);
+        PVMFStatus SendRtspPlaylistPlay(PVRTSPEngineCommand &aCmd);
 
         void MoveCmdToCancelQueue(PVRTSPEngineCommand& aCmd);
         void CommandComplete(PVRTSPEngineNodeCmdQ&,
@@ -870,6 +885,10 @@ class PVRTSPEngineNode
 
         PVMFStatus composeOptionsRequest(RTSPOutgoingMessage&);
         PVMFStatus composeDescribeRequest(RTSPOutgoingMessage&);
+        PVMFStatus compose3GPPPlaylistPlayRequest(RTSPOutgoingMessage &iMsg);
+        PVMFStatus composeOldAndNewURLs(RTSPOutgoingMessage &iMsg);
+        PVMFStatus composeSwitchMediaURL(int aTrackID, StrPtrLen &aMediaURI);
+
     protected:
         OSCL_IMPORT_REF virtual PVMFStatus composePlayRequest(RTSPOutgoingMessage &iMsg);
     private:
@@ -910,6 +929,17 @@ class PVRTSPEngineNode
     private:
 
         RTSPEntityBody iEmbeddedData;
+        Oscl_Vector <uint16, PVRTSPEngineNodeAllocator> pipelinedRequestResponse;
+        uint8* iPipelinedMessage;
+        bool iPipelining;
+        bool i3gppSwitchSupported;
+        bool i3gppSwitchWithoutSDPSupported;
+        bool i3gppSwitchStreamSupported;
+        int32 iStartupId;
+        OSCL_HeapString<PVRTSPEngineNodeAllocator> iTrackURLArray[3];
+        void ParseSupportedHeaderFor3GPPFCSFeatures(const StrPtrLen* serverSupportedFeatures);
+        bool IsSubstring(StrPtrLen masterString, StrPtrLen searchString);
+
 
 };
 

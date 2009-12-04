@@ -247,6 +247,9 @@ typedef struct
     RtpTimeStamp  rtptime;
     bool          rtptimeIsSet;
 
+    uint32        ssrc;
+    bool          ssrcIsSet;
+
 } RTSPRTPInfo;
 
 #endif // RTSP_PAR_COM_BASIC_DS_H_

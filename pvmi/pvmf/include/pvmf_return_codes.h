@@ -471,6 +471,10 @@ const PVMFStatus PVMFInfoShoutcastClipBitrate = 51;
  */
 const PVMFStatus PVMFInfoIsShoutcastSesssion = 52;
 /*
+ Notification that the engine must select tracks (for e.g. during a 3GPP FCS)
+ */
+const PVMFStatus PVMFInfoTrackSelectionNeeded = 53;
+/*
  Placeholder for end of range
  */
 const PVMFStatus PVMFInfoLast = 100;
