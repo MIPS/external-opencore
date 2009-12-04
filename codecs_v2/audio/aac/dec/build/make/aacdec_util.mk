@@ -2,4 +2,6 @@
 
 SRCS += ../util/getactualaacconfig/src/getactualaacconfig.cpp
 
-HDRS += ../util/getactualaacconfig/include/getactualaacconfig.h
+# Currently, we don't have a dynamic build that will build only the AAC
+# decoder and not the utility.
+#HDRS += ../util/getactualaacconfig/include/getactualaacconfig.h
