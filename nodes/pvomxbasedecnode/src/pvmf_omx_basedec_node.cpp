@@ -3595,8 +3595,16 @@ OSCL_EXPORT_REF void PVMFOMXBaseDecNode::HandleComponentStateChange(OMX_U32 deco
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
                             (0, "%s::HandleComponentStateChange: OMX_StateInvalid reached", iName.Str()));
 
+            if (iOMXDecoder == NULL)
+            {
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
+                                (0, "%s::HandleComponentStateChange: cleanup already done. Do nothing", iName.Str()));
+                return;
+            }
             //Clearup decoder
             DeleteOMXBaseDecoder();
+            //Stop using OMX component
+            iProcessingState = EPVMFOMXBaseDecNodeProcessingState_Idle;
 
             if (PVMF_GENERIC_NODE_RESET == iCurrentCommand.iCmd)
             {
@@ -3633,17 +3641,23 @@ OSCL_EXPORT_REF void PVMFOMXBaseDecNode::HandleComponentStateChange(OMX_U32 deco
                 iSecondPortReportedChange = false;
                 iDynamicReconfigInProgress = false;
 
-                iProcessingState = EPVMFOMXBaseDecNodeProcessingState_Idle;
                 // logoff & go back to Created state.
                 SetState(EPVMFNodeIdle);
                 CommandComplete(iCurrentCommand, PVMFSuccess);
                 iResetInProgress = false;
                 iResetMsgSent = false;
             }
-            else
+            else if (PVMF_GENERIC_NODE_COMMAND_INVALID != iCurrentCommand.iCmd)
             {
                 SetState(EPVMFNodeError);
                 CommandComplete(iCurrentCommand, PVMFErrResource);
+            }
+            else
+            {
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
+                                (0, "%s::HandleComponentStateChange: ERROR state transition event while OMX client does NOT have any pending state transition request", iName.Str()));
+                SetState(EPVMFNodeError);
+                ReportErrorEvent(PVMFErrResourceConfiguration);
             }
 
             break;
