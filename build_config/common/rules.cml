@@ -271,8 +271,8 @@ derive MODS_opencore_common from ""
 derive DEF_opencore_common from "/modules/shared_libs/opencore_common/opencore_common.def"
 
 derive opencore_net_support_so_name from mshttp_support==m or rtspbasedpluginselected_m_config==y ? "opencore_net_support" : ""
-derive SOLIBS_opencore_net_support from pvsocketnode_m_lib.pv_http_parcom_m_lib.protocolenginenode_segments_m_lib.pvjitterbuffercommon_m_lib.pvjitterbuffernode_m_lib.pvsdpparser_m_lib.pvsdpparser_opencore_m_lib.rtprtcp_m_lib
-derive SOLIBDIRS_opencore_net_support from pvsocketnode_m_mk.pv_http_parcom_m_mk.protocolenginenode_segments_m_mk.pvjitterbuffercommon_m_mk.pvjitterbuffernode_m_mk.pvsdpparser_m_mk.sdp_common_m_mk.rtprtcp_m_mk
+derive SOLIBS_opencore_net_support from pvsocketnode_m_lib.pv_http_parcom_m_lib.protocolenginenode_m_lib.pvjitterbuffercommon_m_lib.pvjitterbuffernode_m_lib.pvsdpparser_m_lib.pvsdpparser_opencore_m_lib.rtprtcp_m_lib
+derive SOLIBDIRS_opencore_net_support from pvsocketnode_m_mk.pv_http_parcom_m_mk.protocolenginenode_m_mk.pvjitterbuffercommon_m_mk.pvjitterbuffernode_m_mk.pvsdpparser_m_mk.sdp_common_m_mk.rtprtcp_m_mk
 derive MODS_opencore_net_support from "-lopencore_common"
 
 derive opencore_download_so_name from download_support==y ? "opencore_download" : ""
@@ -306,6 +306,13 @@ derive SOLIBS_pvrealsupportcommon from pvrmffparser_m_lib
 derive SOLIBDIRS_pvrealsupportcommon from pvrmffparser_m_mk
 derive MODS_pvrealsupportcommon from "-lopencore_common" 
 
+# Enabling loadable module for mshttp streaming or fasttrack forces menu option in PE node menu to YES
+require mshttp_support==m and penode_enabled==m implies penode_wmhttpstreaming_support==y
+require mshttp_support==y and penode_enabled==m implies penode_wmhttpstreaming_support==y
+require mshttp_support==n and penode_enabled==m implies penode_wmhttpstreaming_support==n
+require fasttrack_download_support==y and penode_enabled==m implies penode_ftdl_support==y
+require fasttrack_download_support==n and penode_enabled==m implies penode_ftdl_support==n
+
 derive pvprotocolengine_asfstreaming_so_name from mshttp_support==m ? "pvprotocolengine_asfstreaming" : ""
 derive SOLIBS_pvprotocolengine_asfstreaming from pvprotocolenginewmhttpstreaminginterface_m_lib.pvprotocolenginenode_wmhttpstreaming_plugin_m_lib
 derive SOLIBDIRS_pvprotocolengine_asfstreaming from pvprotocolenginewmhttpstreaminginterface_m_mk.pvprotocolenginenode_wmhttpstreaming_plugin_m_mk
@@ -317,8 +324,8 @@ derive SOLIBDIRS_pvprotocolengine_asfstreamingreg from pvprotocolenginewmhttpstr
 derive MODS_pvprotocolengine_asfstreamingreg from "-lopencore_common -lopencore_net_support"
 
 derive pvfasttrack_download_so_name from fasttrack_download_support==y ? "pvfasttrack_download" : ""
-derive SOLIBS_pvfasttrack_download from pvprotocolenginenode_ftdl_plugin_m_lib.pvprotocolenginefasttrackdownloadinterface_m_lib
-derive SOLIBDIRS_pvfasttrack_download from pvprotocolenginenode_ftdl_plugin_m_mk.pvprotocolenginefasttrackdownloadinterface_m_mk
+derive SOLIBS_pvfasttrack_download from pvprotocolenginefasttrackdownloadinterface_m_lib.pvprotocolenginenode_ftdl_plugin_m_lib
+derive SOLIBDIRS_pvfasttrack_download from pvprotocolenginefasttrackdownloadinterface_m_mk.pvprotocolenginenode_ftdl_plugin_m_mk
 derive MODS_pvfasttrack_download from "-lopencore_net_support -lopencore_common"
 
 derive pvfasttrack_downloadreg_so_name from fasttrack_download_support==y ? "pvfasttrack_downloadreg" : ""

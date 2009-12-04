@@ -226,23 +226,14 @@ pvavcencnode_lib=n
 #
 # Menu for configuring ProtocolEngine
 #
-pvprotocolenginenode_segments_lib=m
-pvprotocolenginenode_lib=n
-pvprotocolenginenode_pdl_plugin_lib=m
-pvprotocolenginenode_ps_plugin_lib=m
-pvprotocolenginenode_ftdl_plugin_lib=n
-pvprotocolenginenode_wmhttpstreaming_plugin_lib=n
-pvprotocolenginenode_shoutcast_plugin_lib=m
-
-#
-# Menu for configuring protocol engine node plugin registry
-#
-BUILD_PROGRESSIVE_DOWNLOAD_PLUGIN=y
-BUILD_PROGRESSIVE_STREAMING_PLUGIN=y
-BUILD_FASTTRACK_DOWNLOAD_PLUGIN=n
-BUILD_WMHTTPSTREAMING_PLUGIN=n
-BUILD_SHOUTCAST_PLUGIN=y
-
+penode_enabled=m
+penode_pdl_support=y
+penode_ps_support=y
+penode_ftdl_support=n
+penode_wmhttpstreaming_support=n
+penode_shoutcast_support=y
+penode_rtmp_support=n
+penode_smooth_streaming_support=n
 
 pvfileoutputnode_lib=m
 pvmediaoutputnode_lib=m
