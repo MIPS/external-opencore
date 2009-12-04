@@ -76,11 +76,10 @@
 #include "oscl_scheduler_ao.h"
 #endif
 
-#ifndef PVLOGGER_CFG_FILE_PARSER_H_INCLUDED
-#include "pvlogger_cfg_file_parser.h"
-#endif
+
 
 class pvmetadataengine_test_observer;
+class PVLoggerConfigFile;
 
 extern FILE* file;
 #define MAX_LEN 100
@@ -101,49 +100,47 @@ extern FILE* file;
  *             -# DeletePVMetadataEngine()
  *
  */
-class pv_metadata_engine_test
-        : public OsclTimerObject
-        , public PVCommandStatusObserver
-        , public PVInformationalEventObserver
-        , public PVErrorEventObserver
-        , public ThreadSafeQueueObserver
+class pv_metadata_engine_test : public OsclTimerObject,
+        public PVCommandStatusObserver,
+        public PVInformationalEventObserver,
+        public PVErrorEventObserver,
+        public ThreadSafeQueueObserver
 {
     public:
-        pv_metadata_engine_test
-        (
-            PVMetadataEngineTestParam a_testParam,
-            PVMetadataEngineThreadMode a_mode,
-            PVLoggerCfgFileParser::eAppenderType_t a_appenderType,
-            Oscl_Vector<PVLoggerCfgFileParser::LogCfgElement, OsclMemAllocator> a_vectorLogNodeCfg = 0
-        )
-                : OsclTimerObject(OsclActiveObject::EPriorityNominal, "PVMetadataEngineTest")
-                , iDataSource(0)
-                , iCurrentCmdId(0)
-                , iTestCaseName(_STRLIT_CHAR("Get Metadata"))
-                , AverageGetMetaDataTimeInMS(0)
-                , MaxGetMetaDataTime(0)
-                , MinGetMetaDataTime(0)
-                , numOfClips(0)
-                , metadataForFirstClip(true)
-                , iClipFilePresent(false)
-                , iMode(a_mode)
-                , iAppenderType(a_appenderType)
-                , iVectorLogNodeCfg(a_vectorLogNodeCfg)
-                , iObserver(a_testParam.iObserver)
-                , iTestCase(a_testParam.iTestCase)
-                , iTestMsgOutputFile(a_testParam.iTestMsgOutputFile)
+        pv_metadata_engine_test(PVMetadataEngineTestParam aTestParam, PVMetadataEngineThreadMode aMode, PVLoggerConfigFile& aLoggerInfo):
+                OsclTimerObject(OsclActiveObject::EPriorityNominal, "PVMetadataEngineTest")
+                , iCurrentCmdId(0), iLoggerInfo(aLoggerInfo)
+
         {
-            OSCL_ASSERT(0 != iObserver);
-            OSCL_ASSERT(0 != iTestCase);
+            OSCL_ASSERT(aTestParam.iObserver != NULL);
+            OSCL_ASSERT(aTestParam.iTestCase != NULL);
+            iObserver = aTestParam.iObserver;
+            iTestCase = aTestParam.iTestCase;
+            iTestMsgOutputFile = aTestParam.iTestMsgOutputFile;
+
+            iMode = aMode;
+
+            iTestCaseName = _STRLIT_CHAR("Get Metadata");
 
             // Initialize the variables to use for context data testing
             iContextObjectRefValue = 0x5C7A; // some random number
             iContextObject = iContextObjectRefValue;
+
+            iDataSource = NULL;
+            iClipFilePresent = false;
+
+            AverageGetMetaDataTimeInMS = 0;
+            MaxGetMetaDataTime = 0;
+            MinGetMetaDataTime = 0;
+            numOfClips = 0;
+            metadataForFirstClip = true;
+
+
         }
 
         ~pv_metadata_engine_test()
         {
-            for (it = iClips.begin(); it < iClips.end(); ++it)
+            for (it = iClips.begin(); it < iClips.end(); it++)
             {
                 oscl_free(*it);
             }
@@ -157,47 +154,53 @@ class pv_metadata_engine_test
         void HandleInformationalEvent(const PVAsyncInformationalEvent& aEvent);
 
         // Utility function to retrieve the filename from string and replace ',' with '_'
-        void RetrieveFilename
-        (
-            const oscl_wchar* a_pwszSource,
-            OSCL_wHeapString<OsclMemAllocator>& a_filename
-        )
+        void RetrieveFilename(const oscl_wchar* aSource, OSCL_wHeapString<OsclMemAllocator>& aFilename)
         {
-            if (0 == a_pwszSource)
-                return;
-
-            // Find the last '\' or '/' in the string
-            oscl_wchar* lastslash = (oscl_wchar*)a_pwszSource;
-            while (true)
+            if (aSource == NULL)
             {
-                const oscl_wchar* p = oscl_strstr(lastslash, _STRLIT_WCHAR("\\"));
-                if (0 != p)
-                {
-                    lastslash = (oscl_wchar*)p + 1;
-                    continue;
-                }
-
-                p = oscl_strstr(lastslash, _STRLIT_WCHAR("/"));
-                if (0 != p)
-                {
-                    lastslash = (oscl_wchar*)p + 1;
-                    continue;
-                }
-                break;
+                return;
             }
 
-            if (lastslash)
-                a_filename = lastslash; // copy the filename
-
-            while (true) // replace each '.' in filename with '_'
+            // Find the last '\' or '/' in the string
+            oscl_wchar* lastslash = (oscl_wchar*)aSource;
+            bool foundlastslash = false;
+            while (!foundlastslash)
             {
-                const oscl_wchar* tmp = oscl_strstr(a_filename.get_cstr(), _STRLIT_WCHAR("."));
-                if (0 != tmp)
+                const oscl_wchar* tmp1 = oscl_strstr(lastslash, _STRLIT_WCHAR("\\"));
+                const oscl_wchar* tmp2 = oscl_strstr(lastslash, _STRLIT_WCHAR("/"));
+                if (tmp1 != NULL)
+                {
+                    lastslash = (oscl_wchar*)tmp1 + 1;
+                }
+                else if (tmp2 != NULL)
+                {
+                    lastslash = (oscl_wchar*)tmp2 + 1;
+                }
+                else
+                {
+                    foundlastslash = true;
+                }
+            }
+
+            // Now copy the filename
+            if (lastslash)
+            {
+                aFilename = lastslash;
+            }
+
+            // Replace each '.' in filename with '_'
+            bool finishedreplace = false;
+            while (!finishedreplace)
+            {
+                const oscl_wchar* tmp = oscl_strstr(aFilename.get_cstr(), _STRLIT_WCHAR("."));
+                if (tmp != NULL)
                 {
                     oscl_strncpy((oscl_wchar*)tmp, _STRLIT_WCHAR("_"), 1);
-                    continue;
                 }
-                break;
+                else
+                {
+                    finishedreplace = true;
+                }
             }
         }
 
@@ -211,60 +214,66 @@ class pv_metadata_engine_test
             STATE_DELETE
         };
 
-        int32                                   iNumValues;
-        PVMETestState                           iState;
-        PVMetadataEngineInterfaceContainer      iPVMEContainer;
-        PVPlayerDataSourceURL*                  iDataSource;
-        PVCommandId                             iCurrentCmdId;
-        PVPMetadataList                         iMetadataKeyList;
-        Oscl_Vector<PvmiKvp, OsclMemAllocator>  iMetadataValueList;
-        OSCL_HeapString<OsclMemAllocator>       iTestCaseName;
+        PVMETestState iState;
+
+        PVMetadataEngineInterfaceContainer iPVMEContainer;
+        PVPlayerDataSourceURL* iDataSource;
+
+        PVCommandId iCurrentCmdId;
+
+        PVPMetadataList iMetadataKeyList;
+        Oscl_Vector<PvmiKvp, OsclMemAllocator> iMetadataValueList;
+        int32 iNumValues;
+        OSCL_HeapString<OsclMemAllocator> iTestCaseName;
+
 
     private:
-
         void ReadMetadataFile();
         void ReadClipsFile();
         void GetSourceFormatType(char* aFileName, PVMFFormatType& aInputFileFormatType);
         void PrintSupportedMetaDataKeys();
-        void ThreadSafeQueueDataAvailable(ThreadSafeQueue*);
 
         OSCL_wHeapString<OsclMemAllocator> wFileName;
+
         Oscl_FileServer iFS;
         Oscl_File iMetadataFile;
         char iTextOutputBuf[512];
 
-        uint32 iContextObject;
-        uint32 iContextObjectRefValue;
-        uint32 start_time;
-        uint32 end_time;
-        uint32 AverageGetMetaDataTimeInMS;
-        uint32 MaxGetMetaDataTime;
-        uint32 MinGetMetaDataTime;
-        int32  numOfClips;
-
+        uint32 start_time, end_time, AverageGetMetaDataTimeInMS, MaxGetMetaDataTime, MinGetMetaDataTime;
+        int numOfClips;
         bool metadataForFirstClip;
-        bool iClipFilePresent;
+        //Threaded or Non-Threaded Mode
+        PVMetadataEngineThreadMode iMode;
 
-        PVMetadataEngineThreadMode iMode; // threaded or non-Threaded Mode
-        PVLoggerCfgFileParser::eAppenderType_t iAppenderType;
-        Oscl_Vector<PVLoggerCfgFileParser::LogCfgElement, OsclMemAllocator> iVectorLogNodeCfg;
+        //To pass logging information to PVME
+        PVLoggerConfigFile& iLoggerInfo;
 
-        Oscl_Vector<char*, OsclMemAllocator> iClips; // to store the clips
+        //To store the clips
+        Oscl_Vector<char*, OsclMemAllocator> iClips;
         Oscl_Vector<char*, OsclMemAllocator>::iterator it;
 
-        PVLogger* iLogger; // handle to the logger node
+        // Handle to the logger node
+        PVLogger* iLogger;
         PVLogger* iPerfLogger;
 
         pvmetadataengine_test_observer* iObserver;
         test_case* iTestCase;
         FILE* iTestMsgOutputFile;
-        char* iFileName;
+        char *iFileName;
         oscl_wchar iTempWCharBuf[512];
         PVMFFormatType iFileType;
+
+
+        uint32 iContextObject;
+        uint32 iContextObjectRefValue;
+
+        bool iClipFilePresent;
 
         ThreadSafeQueue iThreadSafeCommandQueue;
         ThreadSafeQueue iThreadSafeErrorQueue;
         ThreadSafeQueue iThreadSafeInfoQueue;
+        void ThreadSafeQueueDataAvailable(ThreadSafeQueue*);
+
 };
 
 #endif      //TEST_PV_METADATA_ENGINE_TESTSET1_H_INCLUDED

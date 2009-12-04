@@ -42,6 +42,14 @@
 #include "pvlogger.h"
 #endif
 
+#ifndef PVLOGGER_STDERR_APPENDER_H_INCLUDED
+#include "pvlogger_stderr_appender.h"
+#endif
+
+#ifndef PVLOGGER_TIME_AND_ID_LAYOUT_H_INCLUDED
+#include "pvlogger_time_and_id_layout.h"
+#endif
+
 #ifndef OSCL_UTF8CONV_H_INCLUDED
 #include "oscl_utf8conv.h"
 #endif
@@ -56,6 +64,14 @@
 
 #ifndef OSCL_STRING_UTILS_H_INCLUDED
 #include "oscl_string_utils.h"
+#endif
+
+#ifndef PVLOGGER_MEM_APPENDER_H_INCLUDED
+#include "pvlogger_mem_appender.h"
+#endif
+
+#ifndef PVLOGGER_FILE_APPENDER_H_INCLUDED
+#include "pvlogger_file_appender.h"
 #endif
 
 #ifndef OSCL_MEM_AUDIT_H_INCLUDED
@@ -76,14 +92,84 @@
 
 class pv_metadata_engine_test;
 
+template<class DestructClass>
+class LogAppenderDestructDealloc : public OsclDestructDealloc
+{
+    public:
+        virtual void destruct_and_dealloc(OsclAny *ptr)
+        {
+            delete((DestructClass*)ptr);
+        }
+};
+
 //This function is used to read the contents of a file, one line at a time.
 int fgetline(Oscl_File* aFp, char aLine[], int aMax);
+
+class PVLoggerConfigFile
+{
+        /*  To change the logging settings without the need to compile the test application
+            Let us read the logging settings from the file instead of hard coding them over here
+            The name of the config file is pvlogger.ini
+            The format of entries in it is like
+            First entry will decide if the file appender has to be used or error appender will be used.
+            0 -> ErrAppender will be used
+            1 -> File Appender will be used
+            2 -> Mem Appender will be used
+            Entries after this will decide the module whose logging has to be taken.For example, contents of one sample config file could be
+            1
+            1,PVMetadataEngine
+            (pls note that no space is allowed between loglevel and logger tag)
+            This means, we intend to have logging of level 1 for the module PVMetadataEngine
+            on file.
+        */
+    public:
+
+        uint32 iAppenderType; //Type of appender to be used for the logging 0-> Err Appender, 1-> File Appender
+        Oscl_Vector<LoggerConfigElement, OsclMemAllocator> iLoggerConfigElements;
+        OSCL_wHeapString<OsclMemAllocator> logfilename;
+
+        PVLoggerConfigFile(): iLogFileRead(false)
+        {
+            iFileServer.Connect();
+            // Full path of pvlogger.ini is: SOURCENAME_PREPEND_STRING + pvlogger.ini
+            oscl_strncpy(iLogFileName, SOURCENAME_PREPEND_STRING,
+                         oscl_strlen(SOURCENAME_PREPEND_STRING) + 1);
+            oscl_strcat(iLogFileName, "pvlogger.ini");
+            oscl_memset(ibuffer, 0, sizeof(ibuffer));
+            iAppenderType = 0;
+
+        }
+
+        ~PVLoggerConfigFile()
+        {
+            iFileServer.Close();
+        }
+
+        bool get_next_line(const char *start_ptr, const char * end_ptr,
+                           const char *& line_start,
+                           const char *& line_end);
+
+        bool IsLoggerConfigFilePresent();
+
+        int8 ReadAndParseLoggerConfigFile();
+
+        void SetLoggerSettings();
+
+    private:
+
+        bool iLogFileRead;
+        Oscl_File iLogFile;
+        Oscl_FileServer iFileServer;
+        char iLogFileName[255];
+        char ibuffer[1024];
+
+};
 
 
 class pvme_test_suite : public test_case
 {
     public:
-        pvme_test_suite(int32 aFirstTest, int32 aLastTest);
+        pvme_test_suite(int32 aFirstTest, int32 aLastTest, int32 aLogLevel);
 };
 
 #define PVMEATB_TEST_IS_TRUE(condition) (iTestCase->test_is_true_stub( (condition), (#condition), __FILE__, __LINE__ ))
@@ -108,7 +194,7 @@ class pvmetadataengine_test : public test_case,
         public pvmetadataengine_test_observer
 {
     public:
-        pvmetadataengine_test(int32 aFirstTest, int32 aLastTest);
+        pvmetadataengine_test(int32 aFirstTest, int32 aLastTest, int32 aLogLevel);
         ~pvmetadataengine_test();
 
         enum PVMetadataEngineTests
@@ -129,6 +215,8 @@ class pvmetadataengine_test : public test_case,
         // From pvmetadataengine_test_observer
         void TestCompleted(test_case&);
 
+        void SetupLoggerScheduler();
+
     private:
         char *iFileName;
         PVMFFormatType iFileType;
@@ -142,6 +230,10 @@ class pvmetadataengine_test : public test_case,
         int iTotalSuccess;
         int iTotalError;
         int iTotalFail;
+
+        // For logging
+        int32 iLogLevel;
+        PVLoggerConfigFile obj;
 
         // For memory statistics
         uint32 iTotalAlloc;

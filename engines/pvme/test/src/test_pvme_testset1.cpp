@@ -20,6 +20,7 @@
 #endif
 
 
+
 //
 // pv_metadata_engine_test section
 //
@@ -58,10 +59,10 @@ void pv_metadata_engine_test::Run()
                 iThreadSafeInfoQueue.Configure(this);
 
                 iPVMEContainer.iSem.Create();
-                iPVMEContainer.iAppenderType = iAppenderType;
-                iPVMEContainer.iLogfilename += PVLOG_PREPEND_OUT_FILENAME;
-                iPVMEContainer.iLogfilename += _STRLIT_CHAR("pvme.log");
-                iPVMEContainer.iVectorLogNodeCfg = iVectorLogNodeCfg;
+
+                iPVMEContainer.iAppenderType = iLoggerInfo.iAppenderType;
+                iPVMEContainer.iLogfilename = iLoggerInfo.logfilename;
+                iPVMEContainer.iLoggerConfigElements = iLoggerInfo.iLoggerConfigElements;
             }
 
             OSCL_TRY(error, PVMetadataEngineFactory::CreatePVMetadataEngine(iPVMEContainer));

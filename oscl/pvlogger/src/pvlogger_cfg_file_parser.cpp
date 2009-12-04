@@ -22,23 +22,21 @@
 #ifndef PVLOGGER_CFG_FILE_PARSER_H_INCLUDED
 #include "pvlogger_cfg_file_parser.h"
 #endif
-
 #ifndef PVLOGGER_FILE_APPENDER_H_INCLUDED
 #include "pvlogger_file_appender.h"
 #endif
-
 #ifndef PVLOGGER_STDERR_APPENDER_H_INCLUDED
 #include "pvlogger_stderr_appender.h"
 #endif
-
 #ifndef PVLOGGER_MEM_APPENDER_H_INCLUDED
 #include "pvlogger_mem_appender.h"
 #endif
-
 #ifndef PVLOGGER_TIME_AND_ID_LAYOUT_H_INCLUDED
 #include "pvlogger_time_and_id_layout.h"
 #endif
-
+#ifndef OSCL_MEM_H_INCLUDED
+#include "oscl_mem.h"
+#endif
 #ifndef OSCL_STRING_CONTAINERS_H_INCLUDED
 #include "oscl_string_containers.h"
 #endif
@@ -69,9 +67,7 @@ OSCL_EXPORT_REF bool
 PVLoggerCfgFileParser::Parse
 (
     const char* pszCfgFileName,              // name of logger cfg file to parse
-    const char* pszLogFileName,                 // name of file to log output to
-    eAppenderType_t* pAppenderType/*=0*/,               // optional return value
-    Oscl_Vector<LogCfgElement, OsclMemAllocator>* pVectorLogNodeCfg/*=0*/
+    const char* pszLogFileName                  // name of file to log output to
 )
 {
     if (0 == pszCfgFileName || 0 == pszLogFileName)
@@ -164,9 +160,6 @@ PVLoggerCfgFileParser::Parse
                     else
                         at = ePVLOG_APPENDER_STDERR;
 
-                    if (0 != pAppenderType)            // optional return value?
-                        *pAppenderType = at;
-
                     OsclRefCounter* pRC = 0;
                     // error creating log appender?
                     if (OsclErrNone != CreateLogAppender(at, pszLogFileName,
@@ -244,12 +237,6 @@ PVLoggerCfgFileParser::Parse
                 eLogLevel = PVLOGMSG_DEBUG;
 
             AttachLogAppender(appenderPtr, bLogAllNodes ? "" : pszNode, eLogLevel);
-
-            if (0 != pVectorLogNodeCfg)               // caller supplied vector?
-            {
-                LogCfgElement elem(bLogAllNodes ? "" : pszNode, eLogLevel);
-                pVectorLogNodeCfg->push_back(elem);     // add element to vector
-            }
 
             if (true == bLogAllNodes)
                 bEof = true;

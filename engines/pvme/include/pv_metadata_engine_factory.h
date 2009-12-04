@@ -30,10 +30,6 @@
 #include "pv_metadata_engine.h"
 #endif
 
-#ifndef PVLOGGER_CFG_FILE_PARSER_H_INCLUDED
-#include "pvlogger_cfg_file_parser.h"
-#endif
-
 //Forward Declaration
 class PVMetadataEngineInterface;
 class PVCommandStatusObserver;
@@ -46,35 +42,49 @@ typedef enum
     PV_METADATA_ENGINE_THREADED_MODE
 } PVMetadataEngineThreadMode;
 
+class LoggerConfigElement
+{
+    public:
+        LoggerConfigElement()
+        {
+            iLoggerString = NULL;
+            iLogLevel = 8;
+        }
+        char *iLoggerString;
+        int8 iLogLevel;
+};
+
 
 class PVMetadataEngineInterfaceContainer
 {
     public:
-
         PVMetadataEngineInterfaceContainer()
-                : iCmdStatusObserver(0)
-                , iInfoEventObserver(0)
-                , iErrorEventObserver(0)
-                , iPVMEInterface(0)
-                , iMode(PV_METADATA_ENGINE_NON_THREADED_MODE)
-                , iPriority(ThreadPriorityNormal)
-        {}
-
+        {
+            iCmdStatusObserver = NULL;
+            iInfoEventObserver = NULL;
+            iErrorEventObserver = NULL;
+            iPVMEInterface = NULL;
+            iMode = PV_METADATA_ENGINE_NON_THREADED_MODE;
+            iPriority = ThreadPriorityNormal;
+        }
         virtual ~PVMetadataEngineInterfaceContainer() {};
 
-        // observers - to be provided by caller
-        PVCommandStatusObserver*        iCmdStatusObserver;
-        PVInformationalEventObserver*   iInfoEventObserver;
-        PVErrorEventObserver*           iErrorEventObserver;
-        PVMetadataEngineInterface*      iPVMEInterface;
-        PVMetadataEngineThreadMode      iMode; //Default is non-threaded mode.
-        OsclThreadPriority              iPriority; //Default is normal priority.
-        OsclSemaphore                   iSem;
+        //observers - to be provided by caller
+        PVCommandStatusObserver* iCmdStatusObserver;
+        PVInformationalEventObserver* iInfoEventObserver;
+        PVErrorEventObserver* iErrorEventObserver;
 
-        PVLoggerCfgFileParser::eAppenderType_t                              iAppenderType;
-        OSCL_HeapString<OsclMemAllocator>                                   iLogfilename;
-        Oscl_Vector<PVLoggerCfgFileParser::LogCfgElement, OsclMemAllocator> iVectorLogNodeCfg;
 
+        PVMetadataEngineInterface* iPVMEInterface;
+        //Default is non-threaded mode.
+        PVMetadataEngineThreadMode iMode;
+        //Default is normal priority.
+        OsclThreadPriority iPriority;
+        OsclSemaphore iSem;
+
+        uint32 iAppenderType; //Type of appender to be used for the logging 0-> Err Appender, 1-> File Appender
+        Oscl_Vector<LoggerConfigElement, OsclMemAllocator> iLoggerConfigElements;
+        OSCL_wHeapString<OsclMemAllocator> iLogfilename;
 };
 
 /**

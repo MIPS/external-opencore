@@ -19,11 +19,6 @@
 #include "pv_metadata_engine.h"
 #endif
 
-#ifndef PVLOGGER_CFG_FILE_PARSER_H_INCLUDED
-#include "pvlogger_cfg_file_parser.h"
-#endif
-
-
 PVMetadataEngine* PVMetadataEngine::New(PVMetadataEngineInterfaceContainer& aPVMEContainer)
 {
     if (aPVMEContainer.iCmdStatusObserver == NULL ||
@@ -72,30 +67,64 @@ PVMetadataEngine::PVMetadataEngine() :
         iPreviousSourceNode(NULL),
         iPreviousSourceNodeSessionId(0),
         iValueList(NULL)
-{}
+
+{
+}
 
 
 void PVMetadataEngine::Construct(PVMetadataEngineInterfaceContainer& aPVMEContainer)
 {
     aContainer = &aPVMEContainer;
 
-    iCmdStatusObserver  = aContainer->iCmdStatusObserver;
+    iCmdStatusObserver = aContainer->iCmdStatusObserver;
     iErrorEventObserver = aContainer->iErrorEventObserver;
-    iInfoEventObserver  = aContainer->iInfoEventObserver;
+    iInfoEventObserver = aContainer->iInfoEventObserver;
 
-    if (PV_METADATA_ENGINE_THREADED_MODE == aContainer->iMode)
+    if (aContainer->iMode == PV_METADATA_ENGINE_THREADED_MODE)
     {
-        OsclRefCounter* pRC = 0;
-        OsclSharedPtr<PVLoggerAppender> appenderPtr;
-        PVLoggerCfgFileParser::CreateLogAppender(aContainer->iAppenderType,
-                aContainer->iLogfilename.get_str(), pRC, appenderPtr);
+        Oscl_Vector<LoggerConfigElement, OsclMemAllocator>::iterator it;
+        PVLoggerAppender *appender = NULL;
+        OsclRefCounter *refCounter = NULL;
 
-        Oscl_Vector<PVLoggerCfgFileParser::LogCfgElement, OsclMemAllocator>::iterator iter;
-        for (iter = aContainer->iVectorLogNodeCfg.begin(); iter != aContainer->iVectorLogNodeCfg.end(); ++iter)
+        iAppenderType = aContainer->iAppenderType;
+        iLoggerConfigElements = aContainer->iLoggerConfigElements;
+
+        if (iAppenderType == 1)
         {
-            PVLogger* node = PVLogger::GetLoggerObject(iter->m_strNodeName.get_cstr());
+            logfilename = aContainer->iLogfilename;
+        }
+
+        if (iAppenderType == 0)
+        {
+            appender = new StdErrAppender<TimeAndIdLayout, 1024>();
+            OsclRefCounterSA<AppenderDestructDealloc<StdErrAppender<TimeAndIdLayout, 1024> > > *appenderRefCounter =
+                new OsclRefCounterSA<AppenderDestructDealloc<StdErrAppender<TimeAndIdLayout, 1024> > >(appender);
+            refCounter = appenderRefCounter;
+        }
+        else if (iAppenderType == 1)
+        {
+            appender = (PVLoggerAppender*)TextFileAppender<TimeAndIdLayout, 1024>::CreateAppender(logfilename.get_str());
+            OsclRefCounterSA<AppenderDestructDealloc<TextFileAppender<TimeAndIdLayout, 1024> > > *appenderRefCounter =
+                new OsclRefCounterSA<AppenderDestructDealloc<TextFileAppender<TimeAndIdLayout, 1024> > >(appender);
+            refCounter = appenderRefCounter;
+        }
+        else
+        {
+            appender = (PVLoggerAppender*)MemAppender<TimeAndIdLayout, 1024>::CreateAppender(logfilename.get_str());
+            OsclRefCounterSA<AppenderDestructDealloc<MemAppender<TimeAndIdLayout, 1024> > > *appenderRefCounter =
+                new OsclRefCounterSA<AppenderDestructDealloc<MemAppender<TimeAndIdLayout, 1024> > >(appender);
+            refCounter = appenderRefCounter;
+        }
+
+        OsclSharedPtr<PVLoggerAppender> appenderPtr(appender, refCounter);
+
+
+        for (it = iLoggerConfigElements.begin(); it != iLoggerConfigElements.end(); it++)
+        {
+            PVLogger *node = NULL;
+            node = PVLogger::GetLoggerObject(it->iLoggerString);
             node->AddAppender(appenderPtr);
-            node->SetLogLevel(iter->m_logLevel);
+            node->SetLogLevel(it->iLogLevel);
         }
     }
 
@@ -103,17 +132,20 @@ void PVMetadataEngine::Construct(PVMetadataEngineInterfaceContainer& aPVMEContai
     iOOTSyncCommandSem.Create();
     iThreadSafeQueue.Configure(this);
 
-    // allocate memory for vectors, if a leave occurs, let it bubble up
+    // Allocate memory for vectors
+    // If a leave occurs, let it bubble up
     iCurrentCmd.reserve(1);
     iPendingCmds.reserve(4);
 
-    AddToScheduler(); // Add this AO to the scheduler
+    // Add this AO to the scheduler
+    AddToScheduler();
 
-    // retrieve the logger objects
+    // Retrieve the logger object
     iLogger = PVLogger::GetLoggerObject("PVMetadataEngine");
     iPerfLogger = PVLogger::GetLoggerObject("pvmediagnostics");
 
     PVMERegistryPopulator::Populate(iPVMENodeRegistry, iPVMERecognizerRegistry);
+
     SetPVMEState(PVME_INTERNAL_STATE_IDLE);
 }
 
