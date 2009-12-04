@@ -1201,7 +1201,6 @@ int32 DecodeVUI(mp4StreamType *psBits)
     uint32 temp;
     uint32 temp32;
     uint32 aspect_ratio_idc, overscan_appopriate_flag, video_format, video_full_range_flag;
-    int32 status;
 
     ReadBits(psBits, 1, &temp); /* aspect_ratio_info_present_flag */
     if (temp)
