@@ -509,8 +509,6 @@ void AndroidSurfaceOutput::ThreadLogoff()
         RemoveFromScheduler();
         iLogger = NULL;
         iState = STATE_IDLE;
-        //Reset all data from this session
-        ResetData();
     }
 }
 
