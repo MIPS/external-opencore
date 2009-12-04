@@ -1048,6 +1048,11 @@ PVMFStatus PVMFProtocolEngineNode::DoBitsteamSwitch(PVMFProtocolEngineNodeComman
 
 PVMFStatus PVMFProtocolEngineNode::DoReposition(PVMFProtocolEngineNodeCommand& aCmd)
 {
+    for (uint32 i = 0; i < iInternalEventQueue.size(); i++)
+    {
+        if ((uint32)iInternalEventQueue[i].iEventId == (uint32)PVProtocolEngineNodeInternalEventType_EndOfProcessing)
+            iInternalEventQueue.erase(&iInternalEventQueue[i]);
+    }
     return iProtocolContainer->doSeek(aCmd);
 }
 

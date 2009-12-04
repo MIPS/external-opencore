@@ -4279,15 +4279,19 @@ bool PVMFMP4FFParserNode::RetrieveTrackData(PVMP4FFNodeTrackPortInfo& aTrackPort
          */
         if (download_progress_interface != NULL)
         {
-            if (iDownloadComplete)
+            if ((NULL == iDataStreamInterface) || (0 == iDataStreamInterface->QueryBufferingCapacity()))
             {
-                // Data could not be read from file
-                PVUuid erruuid = PVMFFileFormatEventTypesUUID;
-                int32 errcode = PVMFFFErrFileRead;
-                ReportMP4FFParserInfoEvent(PVMFInfoContentTruncated, NULL, &erruuid, &errcode);
-                // Treat this as EOS
-                aTrackPortInfo.iState = PVMP4FFNodeTrackPortInfo::TRACKSTATE_SEND_ENDOFTRACK;
-                return false;
+                //not progressive streaming
+                if (iDownloadComplete)
+                {
+                    // Data could not be read from file
+                    PVUuid erruuid = PVMFFileFormatEventTypesUUID;
+                    int32 errcode = PVMFFFErrFileRead;
+                    ReportMP4FFParserInfoEvent(PVMFInfoContentTruncated, NULL, &erruuid, &errcode);
+                    // Treat this as EOS
+                    aTrackPortInfo.iState = PVMP4FFNodeTrackPortInfo::TRACKSTATE_SEND_ENDOFTRACK;
+                    return false;
+                }
             }
 
             if (!autopaused)
@@ -4316,17 +4320,7 @@ bool PVMFMP4FFParserNode::RetrieveTrackData(PVMP4FFNodeTrackPortInfo& aTrackPort
                 }
                 requestedTimestamp = aTrackPortInfo.iClockConverter->get_converted_ts(1000);
 
-                if ((NULL != iDataStreamInterface) && (0 != iDataStreamInterface->QueryBufferingCapacity()))
-                {
-                    // if progressive streaming, playResumeNotifcation is guaranteed to be called
-                    // with the proper download complete state, ignore the current download status
-                    bool dlcomplete = false;
-                    download_progress_interface->requestResumeNotification(requestedTimestamp, dlcomplete);
-                }
-                else
-                {
-                    download_progress_interface->requestResumeNotification(requestedTimestamp, iDownloadComplete);
-                }
+                download_progress_interface->requestResumeNotification(requestedTimestamp, iDownloadComplete);
             }
             aTrackPortInfo.iState = PVMP4FFNodeTrackPortInfo::TRACKSTATE_DOWNLOAD_AUTOPAUSE;
             autopaused = true;
