@@ -5359,7 +5359,7 @@ int32 PVMFMP4FFParserNode::convertSizeToTime(uint32 fileSize, uint32& timeStamp)
         {
             uint32 trackID = iIdList[i];
             int32 result = iMP4FileHandle->getMaxTrackTimeStamp(trackID, fileSize, track_timestamp);
-            if (EVERYTHING_FINE != result)
+            if (EVERYTHING_FINE == result)
             {
                 // Convert the timestamp from media timescale to milliseconds
                 MediaClockConverter mcc(iMP4FileHandle->getTrackMediaTimescale(trackID));
