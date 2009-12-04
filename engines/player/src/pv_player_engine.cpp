@@ -11857,7 +11857,7 @@ PVMFStatus PVPlayerEngine::DoVerifyAndSetPlayerParameter(PvmiKvp& aParameter, bo
             // Change the config if to set
             if (aSetParam)
             {
-                return DoSetConfigSyncMargin(ri32->min, ri32->max, engcomp3ind - 7);
+                return DoSetConfigSyncMargin(ri32->min, ri32->max, engcomp3ind);
             }
         }
         break;
@@ -12053,7 +12053,7 @@ PVMFStatus PVPlayerEngine::DoSetConfigSyncMargin(int32 aEarlyMargin, int32 aLate
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVPlayerEngine::DoSetConfigSyncMargin() In"));
 
-    if (aMediaType == 0)
+    if (SYNCMARGIN_VIDEO == aMediaType)
     {
         // Video
         iSyncMarginVideo.min = aEarlyMargin;
@@ -12073,7 +12073,7 @@ PVMFStatus PVPlayerEngine::DoSetConfigSyncMargin(int32 aEarlyMargin, int32 aLate
             }
         }
     }
-    else if (aMediaType == 1)
+    else if (SYNCMARGIN_AUDIO == aMediaType)
     {
         // Audio
         iSyncMarginAudio.min = aEarlyMargin;
@@ -12093,7 +12093,7 @@ PVMFStatus PVPlayerEngine::DoSetConfigSyncMargin(int32 aEarlyMargin, int32 aLate
             }
         }
     }
-    else if (aMediaType == 2)
+    else if (SYNCMARGIN_TEXT == aMediaType)
     {
         // Text
         iSyncMarginText.min = aEarlyMargin;
