@@ -237,7 +237,7 @@ class OSCL_IMPORT_REF PVMFNodeInterface: public PVMFPortActivityHandler
 {
     public:
 
-        virtual ~PVMFNodeInterface();
+        OSCL_IMPORT_REF virtual ~PVMFNodeInterface();
 
         virtual PVMFStatus ThreadLogon() = 0;
         virtual PVMFStatus ThreadLogoff() = 0;
@@ -459,7 +459,7 @@ class OSCL_IMPORT_REF PVMFNodeInterface: public PVMFPortActivityHandler
         }
 
     protected:
-        PVMFNodeInterface(int32 aSessionReserve = PVMF_NODE_DEFAULT_SESSION_RESERVE);
+        OSCL_IMPORT_REF PVMFNodeInterface(int32 aSessionReserve = PVMF_NODE_DEFAULT_SESSION_RESERVE);
 
         Oscl_Vector<PVMFNodeSession, OsclMemAllocator> iSessions;
         TPVMFNodeInterfaceState iInterfaceState;
@@ -469,7 +469,7 @@ class OSCL_IMPORT_REF PVMFNodeInterface: public PVMFPortActivityHandler
         /** This method can be used to update the state and
         ** notify observers of the state change event.
         */
-        virtual void SetState(TPVMFNodeInterfaceState);
+        OSCL_IMPORT_REF virtual void SetState(TPVMFNodeInterfaceState);
 
         /* For the given session id, forward the command response if an
          * observer exists. No-op if the session id is bad or no command
@@ -479,8 +479,8 @@ class OSCL_IMPORT_REF PVMFNodeInterface: public PVMFPortActivityHandler
          *                   event connected to that node.
          * @param resp Command complete event.
          */
-        virtual void ReportCmdCompleteEvent(PVMFSessionId session_id,
-                                            const PVMFCmdResp &resp);
+        OSCL_IMPORT_REF virtual void ReportCmdCompleteEvent(PVMFSessionId session_id,
+                const PVMFCmdResp &resp);
 
         /* For each session handled by the node, if an appropriate
          * observer exists (info, error) a copy of the event is
@@ -490,19 +490,19 @@ class OSCL_IMPORT_REF PVMFNodeInterface: public PVMFPortActivityHandler
          * @param event To be reported to the session(s) observer(s) for
          *              the event's category.
          */
-        virtual void ReportErrorEvent(const PVMFAsyncEvent& aEvent);
-        virtual void ReportInfoEvent(const PVMFAsyncEvent& aEvent);
+        OSCL_IMPORT_REF virtual void ReportErrorEvent(const PVMFAsyncEvent& aEvent);
+        OSCL_IMPORT_REF virtual void ReportInfoEvent(const PVMFAsyncEvent& aEvent);
 
         /* Similar to the above except the event is built first.
          * TODO: Get rid of these. Callers should build the event object
          * including the pointer to their interfaces.
          */
-        virtual void ReportErrorEvent(PVMFEventType aEventType,
-                                      void* aEventData = NULL,
-                                      PVInterface*aExtMsg = NULL);
-        virtual void ReportInfoEvent(PVMFEventType aEventType,
-                                     void* aEventData = NULL,
-                                     PVInterface*aExtMsg = NULL);
+        OSCL_IMPORT_REF virtual void ReportErrorEvent(PVMFEventType aEventType,
+                void* aEventData = NULL,
+                PVInterface*aExtMsg = NULL);
+        OSCL_IMPORT_REF virtual void ReportInfoEvent(PVMFEventType aEventType,
+                void* aEventData = NULL,
+                PVInterface*aExtMsg = NULL);
 };
 
 #endif
