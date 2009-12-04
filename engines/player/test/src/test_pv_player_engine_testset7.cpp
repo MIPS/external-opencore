@@ -7725,9 +7725,9 @@ void pvplayer_async_test_mediaionode_repositionduringprepared::Run()
         {
             PVPPlaybackPosition start, end;
             start.iIndeterminate = false;
-            start.iPosUnit = PVPPBPOSUNIT_SEC;
+            start.iPosUnit = PVPPBPOSUNIT_MILLISEC;
             start.iMode = PVPPBPOS_MODE_NOW;
-            start.iPosValue.millisec_value = 20;
+            start.iPosValue.millisec_value = 0;
             end.iIndeterminate = true;
             OSCL_TRY(error, iCurrentCmdId = iPlayer->SetPlaybackRange(start, end, false, (OsclAny*) & iContextObject));
             OSCL_FIRST_CATCH_ANY(error, PVPATB_TEST_IS_TRUE(false); iState = STATE_CLEANUPANDCOMPLETE; RunIfNotReady());
@@ -7982,8 +7982,7 @@ void pvplayer_async_test_mediaionode_repositionduringprepared::CommandCompleted(
         case STATE_START:
             if (aResponse.GetCmdStatus() == PVMFSuccess)
             {
-                iState = STATE_STOP;
-                RunIfNotReady(10000000);
+                //
             }
             else
             {
@@ -8148,6 +8147,12 @@ void pvplayer_async_test_mediaionode_repositionduringprepared::HandleInformation
     {
         fprintf(iTestMsgOutputFile, "PVMFInfoErrorHandlingComplete...\n");
         iState = STATE_CLEANUPANDCOMPLETE;
+        RunIfNotReady();
+    }
+    if (aEvent.GetEventType() == PVMFInfoEndOfData)
+    {
+        fprintf(iTestMsgOutputFile, "PVMFInfoEndOfData...\n");
+        iState = STATE_STOP;
         RunIfNotReady();
     }
 }
