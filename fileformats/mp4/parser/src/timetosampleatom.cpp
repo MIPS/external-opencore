@@ -573,7 +573,7 @@ MP4_ERROR_CODE TimeToSampleAtom::GetTimeDeltaForSampleNumberGet(uint32 aSampleNu
     if (aSampleNumber < _currGetSampleCount)
     {
         aTimeDelta = _currGetTimeDelta;
-        retval = EVERYTHING_FINE;
+        return EVERYTHING_FINE;
     }
 
     do

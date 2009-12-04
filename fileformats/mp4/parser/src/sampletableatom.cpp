@@ -2198,7 +2198,7 @@ int32 SampleTableAtom::getCttsOffsetForSampleNumberPeek(uint32 sampleNumber)
     if (NULL != _pcompositionOffsetAtom)
     {
         MP4_ERROR_CODE errCode = _pcompositionOffsetAtom->GetTimeOffsetForSampleNumberPeek(sampleNumber, tempCompositionOffset);
-        if (errCode != EVERYTHING_FINE)
+        if (errCode == EVERYTHING_FINE)
         {
             PVMF_MP4FFPARSER_LOGMEDIASAMPELSTATEVARIABLES((0, "SampleTableAtom::getCttsOffsetForSampleNumberPeek- CTTS(%d) = %d", sampleNumber, tempCompositionOffset));
             return tempCompositionOffset;

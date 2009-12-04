@@ -5359,7 +5359,7 @@ int32 PVMFMP4FFParserNode::convertSizeToTime(uint32 fileSize, uint32& timeStamp)
         {
             uint32 trackID = iIdList[i];
             int32 result = iMP4FileHandle->getMaxTrackTimeStamp(trackID, fileSize, track_timestamp);
-            if (EVERYTHING_FINE == result)
+            if (EVERYTHING_FINE != result)
             {
                 // Convert the timestamp from media timescale to milliseconds
                 MediaClockConverter mcc(iMP4FileHandle->getTrackMediaTimescale(trackID));
@@ -5372,7 +5372,7 @@ int32 PVMFMP4FFParserNode::convertSizeToTime(uint32 fileSize, uint32& timeStamp)
                 PVMF_MP4FFPARSERNODE_LOGDATATRAFFIC((0, "PVMFMP4FFParserNode::convertSizeToTime() - getMaxTrackTimeStamp, NPT[%d]=%d, TrackTS=%d",
                                                      trackID,
                                                      timeStamp,
-                                                     track_timestamp));
+                                                     Oscl_Int64_Utils::get_uint64_lower32(track_timestamp)));
             }
             else
             {
@@ -5398,7 +5398,7 @@ int32 PVMFMP4FFParserNode::convertSizeToTime(uint32 fileSize, uint32& timeStamp)
                  fileSize,
                  track_timestamp);
 
-        if (result ==  EVERYTHING_FINE)
+        if (result !=  EVERYTHING_FINE)
         {
             PVMF_MP4FFPARSERNODE_LOGDATATRAFFIC((0, "PVMFMP4FFParserNode::convertSizeToTime() - getMaxTrackTimeStamp Failed, TrackID=%d, Mime=%s",
                                                  iNodeTrackPortList[0].iTrackId,
@@ -5429,7 +5429,7 @@ int32 PVMFMP4FFParserNode::convertSizeToTime(uint32 fileSize, uint32& timeStamp)
                      fileSize,
                      track_timestamp);
 
-            if (result == EVERYTHING_FINE)
+            if (result != EVERYTHING_FINE)
             {
                 PVMF_MP4FFPARSERNODE_LOGDATATRAFFIC((0, "PVMFMP4FFParserNode::convertSizeToTime() - getMaxTrackTimeStamp Failed, TrackID=%d, Mime=%s",
                                                      iNodeTrackPortList[ii].iTrackId,
@@ -5443,7 +5443,7 @@ int32 PVMFMP4FFParserNode::convertSizeToTime(uint32 fileSize, uint32& timeStamp)
             track_timestamp = mcc.get_converted_ts(1000);
 
             PVMF_MP4FFPARSERNODE_LOGDATATRAFFIC((0, "PVMFMP4FFParserNode::convertSizeToTime() - getMaxTrackTimeStamp, NPT=%d, TrackID=%d, Mime=%s",
-                                                 track_timestamp,
+                                                 Oscl_Int64_Utils::get_uint64_lower32(track_timestamp),
                                                  iNodeTrackPortList[ii].iTrackId,
                                                  iNodeTrackPortList[ii].iMimeType.get_cstr()));
 
