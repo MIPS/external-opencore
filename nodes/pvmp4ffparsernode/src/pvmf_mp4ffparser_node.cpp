@@ -1832,7 +1832,7 @@ PVMFStatus PVMFMP4FFParserNode::InitOMA2DRMInfo()
 
 PVMFStatus PVMFMP4FFParserNode::DoInit()
 {
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFMP4FFParserNode::DoInitNode() In"));
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFMP4FFParserNode::DoInit() In"));
 
     if (iCPM)
     {
@@ -1916,6 +1916,7 @@ bool PVMFMP4FFParserNode::ParseMP4File(PVMFNodeCommand& aCmd, PVMFStatus& aStatu
         PVMF_MP4FFPARSERNODE_LOGERROR((0, "IMpeg4File::readMP4File returns NULL"));
 
         CommandComplete(aCmd, PVMFErrNoMemory);
+        aStatus = PVMFCmdCompleted;
         return oRet;
     }
 
@@ -1933,6 +1934,7 @@ bool PVMFMP4FFParserNode::ParseMP4File(PVMFNodeCommand& aCmd, PVMFStatus& aStatu
         iMP4FileHandle = NULL;
 
         CommandComplete(aCmd, PVMFErrResource, NULL, NULL, &eventuuid, &eventcode);
+        aStatus = PVMFCmdCompleted;
         return oRet;
     }
     if (iExternalDownload == true)
@@ -1987,7 +1989,7 @@ PVMFStatus PVMFMP4FFParserNode::CompleteInit(PVMFNodeCommand& aCmd)
                     Status = PVMFErrAccessDenied;
                 }
                 CommandComplete(aCmd, Status);
-                return Status;
+                return PVMFCmdCompleted;
             }
             else
             {
@@ -2019,7 +2021,7 @@ PVMFStatus PVMFMP4FFParserNode::CompleteInit(PVMFNodeCommand& aCmd)
                 Status = PVMFErrAccessDenied;
             }
             CommandComplete(aCmd, Status);
-            return Status;
+            return PVMFCmdCompleted;
         }
         else
         {
