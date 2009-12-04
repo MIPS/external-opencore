@@ -18,17 +18,16 @@
 #ifndef __AVCConfigurationBox_H__
 #define __AVCConfigurationBox_H__
 
+#ifndef ATOM_H_INCLUDED
 #include "atom.h"
+#endif
+
 #include "atomutils.h"
 #include "oscl_file_io.h"
-#include "avcconfigurationbox.h"
 
 #ifndef OSCL_VECTOR_H_INCLUDED
 #include "oscl_vector.h"
 #endif
-
-
-
 
 
 class AVCConfigurationBox : public Atom
@@ -45,7 +44,7 @@ class AVCConfigurationBox : public Atom
                     _success = false;
                 };
 
-                ParameterSet(uint16 length, MP4_FF_FILE *fp);
+                ParameterSet(uint16 length, uint8* AVCConfigBuffer);
 
                 virtual ~ParameterSet()
                 {
@@ -73,7 +72,10 @@ class AVCConfigurationBox : public Atom
                 uint8 *_pParameterSet;
         };
 
-        AVCConfigurationBox(MP4_FF_FILE *fp, uint32 size, uint32 type);
+        OSCL_IMPORT_REF AVCConfigurationBox(MP4_FF_FILE *fp, uint32 size, uint32 type);
+
+        AVCConfigurationBox(uint32 type);
+
         virtual ~AVCConfigurationBox();
 
         uint8 getConfigurationVersion()
@@ -115,6 +117,8 @@ class AVCConfigurationBox : public Atom
 
 
         OSCL_IMPORT_REF bool getPictureParamSet(int32 index, uint16 &length, uint8* &paramSet);
+
+        OSCL_IMPORT_REF void PopulateAVCConfigurationFields(uint8* AVCConfigBuffer, uint32 size);
 
         uint32 getNumofPictureParamSet()
         {

@@ -14,9 +14,8 @@ SRCS := pvmp4ffrec.cpp \
 	atomutils.cpp
 
 HDRS := pvmp4ffrec.h \
-	atomdefs.h
-
-
+	atomdefs.h \
+	atomutils.h
 
 include $(MK)/library.mk
 

@@ -24,6 +24,7 @@ LOCAL_COPY_HEADERS_TO := $(PV_COPY_HEADERS_TO)
 
 LOCAL_COPY_HEADERS := \
 	include/pvmp4ffrec.h \
- 	include/atomdefs.h
+ 	include/atomdefs.h \
+ 	include/atomutils.h
 
 include $(BUILD_STATIC_LIBRARY)

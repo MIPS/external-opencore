@@ -16,15 +16,16 @@
  * -------------------------------------------------------------------
  */
 #define IMPLEMENT_AVCConfigurationBox
-
-#include "avcsampleentry.h"
-#include "atomutils.h"
+#include "avcconfigurationbox.h"
 #include "atomdefs.h"
+#include "oscl_bin_stream.h"
+#include "atomutils.h"
 
 #define LENGTH_SIZE_MINUS_ONE_MASK 0x03
 #define NUM_SEQUENCE_PARAM_SETS_MASK 0x01F
 
 typedef Oscl_Vector<AVCConfigurationBox::ParameterSet*, OsclMemAllocator> parameterSetVecType;
+
 
 AVCConfigurationBox::AVCConfigurationBox(MP4_FF_FILE *fp, uint32 size, uint32 type)
         : Atom(fp, size, type)
@@ -44,39 +45,80 @@ AVCConfigurationBox::AVCConfigurationBox(MP4_FF_FILE *fp, uint32 size, uint32 ty
         PV_MP4_FF_NEW(fp->auditCB, parameterSetVecType, (), _sequenceParameterSetVec);
         PV_MP4_FF_NEW(fp->auditCB, parameterSetVecType, (), _pictureParameterSetVec);
 
-        if (!AtomUtils::read8(fp, _configurationVersion))
-        {
-            return;
-        }
-        if (!AtomUtils::read8(fp, _avcProfileIndication))
-        {
-            return;
-        }
-        if (!AtomUtils::read8(fp, _profileCompatibility))
-        {
-            return;
-        }
 
-        if (!AtomUtils::read8(fp, _avcLevelIndication))
+        uint32 configSize = size - DEFAULT_ATOM_SIZE;
+
+        uint8* configBuffer;
+
+        configBuffer = (uint8*) oscl_malloc(configSize * sizeof(uint8));
+
+        oscl_memset(configBuffer, 0, configSize);
+
+        if (!AtomUtils::readByteData(fp, configSize, configBuffer))
         {
             return;
         }
+        PopulateAVCConfigurationFields(configBuffer, configSize);
+
+        if (configBuffer != NULL)
+        {
+            oscl_free(configBuffer);
+            configBuffer = NULL;
+        }
+    }
+}
+
+OSCL_EXPORT_REF AVCConfigurationBox::AVCConfigurationBox(uint32 type)
+        : Atom(type)
+{
+    _mp4ErrorCode = READ_AVC_CONFIG_BOX_FAILED;
+
+    _sequenceParameterSetVec = NULL;
+    _pictureParameterSetVec  = NULL;
+    _totalSeqParameterSetLength = 0;
+    _totalPicutureParameterSetLength = 0;
+
+    _pparent = NULL;
+
+    PV_MP4_FF_NEW(NULL, parameterSetVecType, (), _sequenceParameterSetVec);
+    PV_MP4_FF_NEW(NULL, parameterSetVecType, (), _pictureParameterSetVec);
+
+}
+
+
+OSCL_EXPORT_REF void AVCConfigurationBox::PopulateAVCConfigurationFields(uint8* AVCConfigBuffer, uint32 size)
+{
+    OsclBinIStreamBigEndian typeSpecificStream;
+
+    typeSpecificStream.Attach((void *)(AVCConfigBuffer), size);
+
+    if ((size > 0) && (AVCConfigBuffer != NULL))
+    {
+        typeSpecificStream >> _configurationVersion;
+        AVCConfigBuffer = AVCConfigBuffer + 1;
+
+        typeSpecificStream >> _avcProfileIndication;
+        AVCConfigBuffer = AVCConfigBuffer + 1;
+
+        typeSpecificStream >> _profileCompatibility;
+        AVCConfigBuffer = AVCConfigBuffer + 1;
+
+        typeSpecificStream >> _avcLevelIndication;
+        AVCConfigBuffer = AVCConfigBuffer + 1;
 
         _constraint_set0_flag = (uint8)((_profileCompatibility & ~0x7F) >> 7);
         _constraint_set1_flag = (uint8)((_profileCompatibility & ~0xBF) >> 6);
         _constraint_set2_flag = (uint8)((_profileCompatibility & ~0xDF) >> 5);
         _reserved_zero_5bits = 0;
 
-        if (!AtomUtils::read8(fp, _lengthSizeMinusOne))
-        {
-            return;
-        }
+        typeSpecificStream >> _lengthSizeMinusOne;
+        AVCConfigBuffer = AVCConfigBuffer + 1;
+
         _lengthSizeMinusOne &= LENGTH_SIZE_MINUS_ONE_MASK;
 
-        if (!AtomUtils::read8(fp, _numSequenceParameterSets))
-        {
-            return;
-        }
+        typeSpecificStream >> _numSequenceParameterSets;
+        AVCConfigBuffer = AVCConfigBuffer + 1;
+
         _numSequenceParameterSets &= NUM_SEQUENCE_PARAM_SETS_MASK;
 
         uint8 i;
@@ -84,15 +126,15 @@ AVCConfigurationBox::AVCConfigurationBox(MP4_FF_FILE *fp, uint32 size, uint32 ty
 
         for (i = 0; i < _numSequenceParameterSets; i++)
         {
-            if (!AtomUtils::read16(fp, parameterSetLen))
-            {
-                return;
-            }
+            typeSpecificStream >> parameterSetLen;
+            AVCConfigBuffer = AVCConfigBuffer + 2;
 
             _totalSeqParameterSetLength += parameterSetLen;
 
             ParameterSet *paramSet = NULL;
-            PV_MP4_FF_NEW(fp->auditCB, ParameterSet, (parameterSetLen, fp), paramSet);
+            PV_MP4_FF_NEW(NULL, ParameterSet, (parameterSetLen, &(*AVCConfigBuffer)), paramSet);
+
+            AVCConfigBuffer = AVCConfigBuffer + parameterSetLen;
 
             if (!(paramSet->getSuccess()))
             {
@@ -104,22 +146,19 @@ AVCConfigurationBox::AVCConfigurationBox(MP4_FF_FILE *fp, uint32 size, uint32 ty
 
         }
 
-        if (!AtomUtils::read8(fp, _numPictureParameterSets))
-        {
-            return;
-        }
+        typeSpecificStream.Attach((void *)(AVCConfigBuffer), size);
+        typeSpecificStream >> _numPictureParameterSets;
+        AVCConfigBuffer = AVCConfigBuffer + 1;
 
         for (i = 0; i < _numPictureParameterSets; i++)
         {
-            if (!AtomUtils::read16(fp, parameterSetLen))
-            {
-                return;
-            }
+            typeSpecificStream >> parameterSetLen;
+            AVCConfigBuffer = AVCConfigBuffer + 2;
 
             _totalPicutureParameterSetLength += parameterSetLen;
 
             ParameterSet *paramSet = NULL;
-            PV_MP4_FF_NEW(fp->auditCB, ParameterSet, (parameterSetLen, fp), paramSet);
+            PV_MP4_FF_NEW(NULL, ParameterSet, (parameterSetLen, &(*AVCConfigBuffer)), paramSet);
 
             if (!(paramSet->getSuccess()))
             {
@@ -128,12 +167,12 @@ AVCConfigurationBox::AVCConfigurationBox(MP4_FF_FILE *fp, uint32 size, uint32 ty
             }
 
             (*_pictureParameterSetVec).push_back(paramSet);
-
         }
         _success = true;
         _mp4ErrorCode = EVERYTHING_FINE;
-
     }
+
+
 }
 
 OSCL_EXPORT_REF bool AVCConfigurationBox::getPictureParamSet(int32 index, uint16 &length, uint8* &paramSet)
@@ -174,7 +213,7 @@ OSCL_EXPORT_REF bool AVCConfigurationBox::getSequenceParamSet(int32 index, uint1
     }
 }
 
-AVCConfigurationBox::ParameterSet::ParameterSet(uint16 length, MP4_FF_FILE *fp)
+AVCConfigurationBox::ParameterSet::ParameterSet(uint16 length, uint8* AVCConfigBuffer)
 {
     _parameterSetLength = 0;
     _pParameterSet = NULL;
@@ -184,9 +223,13 @@ AVCConfigurationBox::ParameterSet::ParameterSet(uint16 length, MP4_FF_FILE *fp)
     {
         _parameterSetLength = length;
 
+        OsclBinIStreamBigEndian typeSpecificStream;
+
+        typeSpecificStream.Attach((void *)(AVCConfigBuffer), length);
+
         PV_MP4_FF_ARRAY_NEW(NULL, uint8, _parameterSetLength, _pParameterSet);
 
-        if (!AtomUtils::readByteData(fp, _parameterSetLength, _pParameterSet))
+        if (!AtomUtils::readByteData(*(&AVCConfigBuffer), _parameterSetLength, _pParameterSet))
         {
             return ;
         }
