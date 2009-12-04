@@ -74,8 +74,6 @@
  *    usedBits - number of bits read thus far from the buffer. Bit 0 is
  *        the LSB of pBuffer[0].
  *    availableBits - number of bits available in the buffer.
- *    byteAlignOffset - used with ADTS in case sync word is not aligned
-                        on a boundary.
  */
 typedef struct
 {
@@ -83,7 +81,6 @@ typedef struct
     UInt      usedBits;      /* Keep this unsigned so can go to 65536 */
     UInt      availableBits; /* Ditto */
     UInt      inputBufferCurrentLength; /* Ditto */
-    Int      byteAlignOffset; /* Used in ADTS.  See find_adts_syncword() */
 } BITS;
 
 /*----------------------------------------------------------------------------

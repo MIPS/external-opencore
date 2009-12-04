@@ -289,14 +289,7 @@
 ; Include all pre-processor statements here. Include conditional
 ; compile variables also.
 ----------------------------------------------------------------------------*/
-#define LENGTH_VARIABLE_HEADER  28
-#define LENGTH_FIXED_HEADER     28
-#define LENGTH_SYNCWORD         15
-#define LENGTH_CRC              16
-
-#define ID_BIT_FILTER           0x7FFB
-#define SYNCWORD_15BITS         0x7FF8
-#define MASK_28BITS             0x0FFFFFFFL
+#define NUM_OF_TRIES    (5)
 
 /*----------------------------------------------------------------------------
 ; LOCAL FUNCTION DEFINITIONS
@@ -328,230 +321,271 @@ Int get_adts_header(
     Int            CorrectlyReadFramesCount)
 {
     UInt32 adts_header;
+    UInt32 adts_var_header = 0;
     UInt   lower_16;
-    Int    status = SUCCESS;
+    Int    status = MP4AUDEC_LOST_FRAME_SYNC;
     UInt   channel_configuration;
 
+
     /*
-     * Search for the LONG ADTS syncword (comprised of the entire fixed header)
-     * if the number of CorrectlyReadFrames is > CorrectlyReadFramesCount
-     *
-     * Otherwise, search for just the short syncword.
+     *  Loop NUM_OF_TRIES times until succesfully locking into a sync word
+     *  Success requires match and validation.
+     *  Search is done over the available buffered data.
      */
-    if (*(pInvoke) > CorrectlyReadFramesCount)
+    for (int k = 0 ; ((k < NUM_OF_TRIES) && (status != SUCCESS)); k++)
     {
+        status = SUCCESS;
+
         /*
-         * Find the long ADTS syncword
-         * (comprised of the entire ADTS fixed header)
+         *  Sync words are always byte aligned
          */
-
-        status = find_adts_syncword(pSyncword,
-                                    &(pVars->inputStream),
-                                    LENGTH_FIXED_HEADER,
-                                    MASK_28BITS);
-    }
-    else
-    {
-
-        *(pSyncword) = SYNCWORD_15BITS;
-
-        status = find_adts_syncword(pSyncword,
-                                    &(pVars->inputStream),
-                                    LENGTH_SYNCWORD,
-                                    ID_BIT_FILTER);
+        byte_align(&(pVars->inputStream));
 
         /*
-         *  Extract the data from the header following the syncword
-         */
-        adts_header = getbits((LENGTH_FIXED_HEADER - LENGTH_SYNCWORD),
-                              &(pVars->inputStream));
-
-        *(pSyncword) <<= (LENGTH_FIXED_HEADER - LENGTH_SYNCWORD);
-        *(pSyncword)  |= adts_header;
-
-        /* Denotes whether a CRC check should be performed */
-        pVars->prog_config.CRC_absent  = ((UInt)(adts_header >> 12)) & 0x0001;
-
-        /*
-         * All the unread bits in adts_header reside in the lower
-         * 16-bits at this point.  Perform a typecast for faster
-         * execution on 16-bit processors.
-         */
-        lower_16 = (UInt)adts_header;
-
-        /*
-         * Profile consists of 2 bits, which indicate
-         * the profile used.
+         * Search for the LONG ADTS syncword (comprised of the entire fixed header)
+         * if the number of CorrectlyReadFrames is > CorrectlyReadFramesCount
          *
-         * '00' AAC_MAIN profile
-         * '01' AAC_LC (Low Complexity) profile
-         * '10' AAC_SSR (Scaleable Sampling Rate) profile
-         * '11' AAC_LTP (Long Term Prediction) profile
+         * Otherwise, search for just the short syncword.
          */
-        pVars->prog_config.profile = (lower_16 >> 10) & 0x3;
-
-        if (((pVars->prog_config.profile + 1) == MP4AUDIO_AAC_SSR) ||
-                ((pVars->prog_config.profile + 1) == MP4AUDIO_AAC_MAIN))
+        if (*(pInvoke) > CorrectlyReadFramesCount)
         {
-            status = 1;     /* Not supported, only LC and LTP */
+            /*
+             * Find the long ADTS syncword
+             * (comprised of the entire ADTS fixed header)
+             */
+
+            status = find_adts_syncword(pSyncword,
+                                        &(pVars->inputStream),
+                                        LENGTH_FIXED_HEADER,
+                                        MASK_28BITS);
+
+            if (status == MP4AUDEC_LOST_FRAME_SYNC)
+            {
+                break;  /* No sync word found in the available data */
+            }
+
+            /* Grab the bits in the ADTS variable header */
+            adts_var_header = getbits(LENGTH_VARIABLE_HEADER,  &(pVars->inputStream));
+
+            /*
+             *  Validate sync word by checking next header a the distance specified in
+             *  the current header
+             */
+            status = validate_adts_syncword(adts_var_header,
+                                            pSyncword,
+                                            &(pVars->inputStream),
+                                            pInvoke);
+
+            if (status == MP4AUDEC_LOST_FRAME_SYNC)
+            {
+                pVars->inputStream.usedBits -= LENGTH_VARIABLE_HEADER;
+
+                continue;  /* No sync word could be validated, keep searching long sync word */
+            }
         }
-
-        /*
-         * Sampling_rate_idx consists of 4 bits
-         * see Ref #1 for their interpretation.
-         */
-        pVars->prog_config.sampling_rate_idx = (lower_16 >> 6) & 0xF;
-
-        /*
-         * private_bit is a bit for private use.  ISO/IEC will not make
-         * use of this bit in the future.
-         *
-         * We currently make no use of it, but parsing the information
-         * from the bitstream could be easily implemented with the
-         * following instruction...
-         *
-         * private_bit = (lower_16 & 0x0400) >> 10;
-         */
-
-        /*
-         * These 3 bits indicate the channel configuration used.
-         *
-         * If '0' then the channel configuration is unspecified here,
-         * and must be given by a program configuration element in
-         * the raw data block.
-         *
-         * If '1' then the channel configuration is MONO.
-         * If '2' then the channel configuration is STEREO
-         *
-         * 3-7 represent channel configurations which this library
-         * will not support in the forseeable future.
-         */
-        channel_configuration = (lower_16 >> 2) & 0x7;
-        /* do not support more than 2 channels */
-        if (channel_configuration > 2)
+        else
         {
-            status = 1;
-        }
 
-        /*
-         * The following 2 bits encode copyright information.
-         * original_copy is '0' if there is no copyright in the bitstream.
-         *                  '1' if the bitstream is copyright protected.
-         *
-         * home is '0' for a copy, '1' for an original.
-         *
-         * PacketVideo currently does nothing with this information,
-         * however, parsing the data from the bitstream could be easily
-         * implemented with the following instructions...
-         *
-         * original_copy = (lower_16 >> 1) & 0x1;
-         *
-         * home = (lower_16 & 0x1);
-         *
-         */
+            *(pSyncword) = SYNCWORD_15BITS;
 
-        /* Set up based on information extracted from the ADTS FIXED header */
+            status = find_adts_syncword(pSyncword,
+                                        &(pVars->inputStream),
+                                        LENGTH_SYNCWORD,
+                                        ID_BIT_FILTER);
 
-        /* This equals 1 for STEREO, 0 for MONO */
-        if (channel_configuration)
-        {
-            channel_configuration--;
-        }
-        pVars->prog_config.front.ele_is_cpe[0] = channel_configuration;
+            if (status == MP4AUDEC_LOST_FRAME_SYNC)
+            {
+                break;  /* No sync word found in the available data */
+            }
 
-        /* This value is constant for both MONO and STEREO */
-        pVars->prog_config.front.num_ele    = 1;
+            /*
+             *  Extract the data from the header following the syncword
+             */
+            adts_header = getbits((LENGTH_FIXED_HEADER - LENGTH_SYNCWORD),
+                                  &(pVars->inputStream));
 
-        /* ADTS does not specify this tag value - do we even use it? */
-        pVars->prog_config.front.ele_tag[0] = 0;
+            /*  Assembling possible long ADTS syncword */
+            *(pSyncword) <<= (LENGTH_FIXED_HEADER - LENGTH_SYNCWORD);
+            *(pSyncword)  |= adts_header;
 
-        /* Disable all mix related variables */
-        pVars->prog_config.mono_mix.present = 0;
-        pVars->prog_config.stereo_mix.present = 0;
-        pVars->prog_config.matrix_mix.present = 0;
+            /* Grab the bits in the ADTS variable header */
+            adts_var_header = getbits(LENGTH_VARIABLE_HEADER,  &(pVars->inputStream));
 
-        /* enter configuration into MC_Info structure */
-        if (status == SUCCESS)
-        {
-            /* profile + 1 == audioObjectType */
-            status =
-                set_mc_info(
-                    &(pVars->mc_info),
-                    (tMP4AudioObjectType)(pVars->prog_config.profile + 1),
-                    pVars->prog_config.sampling_rate_idx,
-                    pVars->prog_config.front.ele_tag[0],
-                    pVars->prog_config.front.ele_is_cpe[0],
-                    pVars->winmap, /* changed from pVars->pWinSeqInfo, */
-                    pVars->SFBWidth128);
+            /*
+             *  Validate sync word by checking next header a the distance specified in
+             *  the current header
+             */
 
-        } /* if (status == SUCCESS) */
+            status = validate_adts_syncword(adts_var_header,
+                                            pSyncword,
+                                            &(pVars->inputStream),
+                                            pInvoke);
+
+            if (status == MP4AUDEC_LOST_FRAME_SYNC)
+            {
+                pVars->inputStream.usedBits -= (LENGTH_VARIABLE_HEADER + LENGTH_SYNCWORD);
+
+                continue;  /* No sync word could be validated, keep searching initial sync word */
+            }
+
+
+            /* Denotes whether a CRC check should be performed  1 == NO, 0 == YES */
+            pVars->prog_config.CRC_absent  =
+                ((UInt)(*(pSyncword) >> (LENGTH_FIXED_HEADER - LENGTH_SYNCWORD))) & 1;
+
+            /*
+            * All the unread bits in adts_header reside in the lower
+            * 16-bits at this point.  Perform a typecast for faster
+            * execution on 16-bit processors.
+            */
+            lower_16 = (UInt)adts_header;
+
+            /*
+            * Profile consists of 2 bits, which indicate
+            * the profile used.
+            *
+            * '00' AAC_MAIN profile
+            * '01' AAC_LC (Low Complexity) profile
+            * '10' AAC_SSR (Scaleable Sampling Rate) profile
+            * '11' AAC_LTP (Long Term Prediction) profile
+            */
+            pVars->prog_config.profile = (lower_16 >> 10) & 0x3;
+
+            if ((pVars->prog_config.profile + 1) == MP4AUDIO_AAC_SSR ||
+                    (pVars->prog_config.profile + 1) == MP4AUDIO_AAC_MAIN)
+            {
+                status = 1;     /* Not supported */
+            }
+
+            /*
+             * Sampling_rate_idx consists of 4 bits
+             * see Ref #1 for their interpretation.
+             */
+            pVars->prog_config.sampling_rate_idx = (lower_16 >> 6) & 0xF;
+
+            /*
+             * private_bit is a bit for private use.  ISO/IEC will not make
+             * use of this bit in the future.
+             *
+             * We currently make no use of it, but parsing the information
+             * from the bitstream could be easily implemented with the
+             * following instruction...
+             *
+             * private_bit = (lower_16 & 0x0400) >> 10;
+             */
+
+            /*
+             * These 3 bits indicate the channel configuration used.
+             *
+             * If '0' then the channel configuration is unspecified here,
+             * and must be given by a program configuration element in
+             * the raw data block.
+             *
+             * If '1' then the channel configuration is MONO.
+             * If '2' then the channel configuration is STEREO
+             *
+             * 3-7 represent channel configurations which this library
+             * will not support in the forseeable future.
+             */
+            channel_configuration = (lower_16 >> 2) & 0x7;
+            /* do not support more than 2 channels */
+            if (channel_configuration > 2)
+            {
+                status = 1;
+            }
+
+            /*
+             * The following 2 bits encode copyright information.
+             * original_copy is '0' if there is no copyright in the bitstream.
+             *                  '1' if the bitstream is copyright protected.
+             *
+             * home is '0' for a copy, '1' for an original.
+             *
+             * PacketVideo currently does nothing with this information,
+             * however, parsing the data from the bitstream could be easily
+             * implemented with the following instructions...
+             *
+             * original_copy = (lower_16 >> 1) & 0x1;
+             *
+             * home = (lower_16 & 0x1);
+             *
+             */
+
+            /* Set up based on information extracted from the ADTS FIXED header */
+
+            /* This equals 1 for STEREO, 0 for MONO */
+            if (channel_configuration)
+            {
+                channel_configuration--;
+            }
+            pVars->prog_config.front.ele_is_cpe[0] = channel_configuration;
+
+            /* This value is constant for both MONO and STEREO */
+            pVars->prog_config.front.num_ele    = 1;
+
+            /* ADTS does not specify this tag value - do we even use it? */
+            pVars->prog_config.front.ele_tag[0] = 0;
+
+            /* Disable all mix related variables */
+            pVars->prog_config.mono_mix.present = 0;
+            pVars->prog_config.stereo_mix.present = 0;
+            pVars->prog_config.matrix_mix.present = 0;
+
+            /* enter configuration into MC_Info structure */
+            if (status == SUCCESS)
+            {
+                /* profile + 1 == audioObjectType */
+                status = set_mc_info(
+                             &(pVars->mc_info),
+                             (tMP4AudioObjectType)(pVars->prog_config.profile + 1),
+                             pVars->prog_config.sampling_rate_idx,
+                             pVars->prog_config.front.ele_tag[0],
+                             pVars->prog_config.front.ele_is_cpe[0],
+                             pVars->winmap, /* changed from pVars->pWinSeqInfo, */
+                             pVars->SFBWidth128);
+
+            } /* if (status == SUCCESS) */
 
 
 #ifdef AAC_PLUS
 
-        /*
-         *  For implicit signalling, no hint that sbr or ps is used, so we need to
-         *  check the sampling frequency of the aac content, if lesser or equal to
-         *  24 KHz, by defualt upsample, otherwise, do nothing
-         */
-        if ((pVars->prog_config.sampling_rate_idx >= 6) && (pVars->aacPlusEnabled == TRUE))
-        {
-            pVars->mc_info.upsamplingFactor = 2;
-            pVars->prog_config.sampling_rate_idx -= 3;
-            pVars->mc_info.sbrPresentFlag = 1;
-            pVars->sbrDecoderData.SbrChannel[0].syncState = SBR_ACTIVE;
-            pVars->sbrDecoderData.SbrChannel[1].syncState = SBR_ACTIVE;
-        }
+            /* default as adts has limited number of bits and can't carry this info */
+            pVars->mc_info.ExtendedAudioObjectType =  pVars->mc_info.audioObjectType;   /* default */
+
+            /*
+             *  For implicit signalling, no hint that sbr or ps is used, so we need to
+             *  check the sampling frequency of the aac content, if lesser or equal to
+             *  24 KHz, by defualt upsample, otherwise, do nothing
+             */
+            if ((pVars->prog_config.sampling_rate_idx >= 6) && (pVars->aacPlusEnabled == TRUE))
+            {
+                pVars->mc_info.upsamplingFactor = 2;
+                pVars->prog_config.sampling_rate_idx -= 3;
+                pVars->mc_info.sbrPresentFlag = 1;
+                pVars->sbrDecoderData.SbrChannel[0].syncState = SBR_ACTIVE;
+                pVars->sbrDecoderData.SbrChannel[1].syncState = SBR_ACTIVE;
+            }
 #endif
 
+            /*
+             * This keeps track of how many headers have been read in the file.
+             * After the three successful headers with the same configuration
+             * are read in, the entire ADTS fixed header is used as the syncword
+             * for a more robust 28-bit long syncword
+             */
 
-        /*
-         * The tag and is_cpe will be checked in huffdecode,
-         * remove this check routine.
-         */
-        /*if (status == SUCCESS)
-         *{
-         *   if ( (*pInvoke) != 0)
-         *   {
-         *       status =
-         *           check_mc_info(
-         *               &(pVars->mc_info),
-         *               &(pVars->savedMCInfo),
-         *               FALSE);
-         *   }
-         *   else
-         *   {
-         *       status =
-         *           check_mc_info(
-         *               &(pVars->mc_info),
-         *               &(pVars->savedMCInfo),
-         *               TRUE);
-         *   }
-         *
-         *}*/ /* if (status == SUCCESS) */
+            if (status == SUCCESS)
+            {
+                (*pInvoke)++;
+            }
+            else
+            {
+                (*pInvoke) = 0;
+            }
 
-        /*
-         * This keeps track of how many headers have been read in the file.
-         * After the three successful headers with the same configuration
-         * are read in, the entire ADTS fixed header is used as the syncword
-         * for a more robust 28-bit long syncword
-         */
+        } /* END if (*(pInvoke) > 3) */
+    }
 
-        if (status == SUCCESS)
-        {
-            (*pInvoke)++;
-        }
-        else
-        {
-            (*pInvoke) = 0;
-        }
-
-    } /* END if (*(pInvoke) > 3) */
-
-    /* Grab the bits in the ADTS variable header */
-    adts_header = getbits(
-                      LENGTH_VARIABLE_HEADER,
-                      &(pVars->inputStream));
     /*
      * copyright_identification bit is a single bit of the 72-bit
      * copyright_id field.  This consists of a 8-bit copyright identifier
@@ -572,19 +606,13 @@ Int get_adts_header(
      * copyright_id_start = ((UInt)(adts_header >> 26)) & 0x1;
      */
 
-    /*
-     * frame_length is a 13-bit field which indicates the length,
-     * in bytes, of the frame including error_check and headers.
-     * This information can theoretically be used to help verify syncwords.
-     */
-    pVars->prog_config.frame_length  = ((UInt)(adts_header >> 13)) & 0x1FFF;
 
     /*
      * All the unread bits in adts_header reside in the lower
      * 16-bits at this point.  Perform a typecast for faster
      * execution on 16-bit processors.
      */
-    lower_16 = (UInt)adts_header;
+    lower_16 = (UInt)adts_var_header;
 
     /*
      * Indicates the number of 32-bit words remaining in the
@@ -624,13 +652,11 @@ Int get_adts_header(
 
     if (pVars->prog_config.CRC_absent == 0)
     {
-        pVars->prog_config.CRC_check = (UInt)getbits(
-                                           LENGTH_CRC,
-                                           &(pVars->inputStream));
+        pVars->prog_config.CRC_check = (UInt)getbits(LENGTH_CRC,
+                                       &(pVars->inputStream));
     }
-
-    /* pVars->current_program = 0; */ /* shall be set after PCE is read */
 
     return (status);
 
 } /* END get_adts_header */
+

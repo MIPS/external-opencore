@@ -314,6 +314,8 @@ OSCL_EXPORT_REF void PVMP4AudioDecoderResetBuffer(void  *pMem)
 
     /* reset frame count to 1 */
     pVars->bno = 1;
+    /* reset ADTS validation counter to force a clean search */
+    pVars->invoke = 0;
 
     return ;
 

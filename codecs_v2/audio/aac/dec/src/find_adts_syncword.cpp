@@ -159,7 +159,6 @@
 ; Include all pre-processor statements here. Include conditional
 ; compile variables also.
 ----------------------------------------------------------------------------*/
-#define FIND_ADTS_ERROR -1
 
 /*----------------------------------------------------------------------------
 ; LOCAL FUNCTION DEFINITIONS
@@ -197,6 +196,7 @@ Int find_adts_syncword(
     UInt32 test_for_syncword;
     UInt32 syncword = *(pSyncword);
 
+
     /*
      * Determine the maximum number of bits available to this function for
      * the syncword search.
@@ -218,46 +218,122 @@ Int find_adts_syncword(
         test_for_syncword ^= syncword;
 
         /*
-         * Scan bit-by-bit through the bitstream, until the function either
-         * runs out of bits, or finds the syncword.
+         * Scan byte-by-byte through the bitstream, until the function either
+         * runs out of bytes, or finds the syncword.
          */
 
         while ((test_for_syncword != 0) && (search_length > 0))
         {
-            search_length--;
+            search_length -= 8;
 
-            adts_header <<= 1;
-            adts_header |= getbits(1, pInputStream);
+            adts_header <<= 8;
+            adts_header |= get9_n_lessbits(8, pInputStream);
 
             test_for_syncword  = adts_header & syncword_mask;
             test_for_syncword ^= syncword;
         }
 
-        if (search_length == 0)
+        if (search_length <= 0)
         {
-            status = FIND_ADTS_ERROR;
+            status = MP4AUDEC_LOST_FRAME_SYNC;
         }
 
-        /*
-         * Return the syncword's position in the bitstream.  Correct placement
-         * of the syncword will result in byte_align_offset == 0.
-         * If the syncword is found not to be byte-aligned, then return
-         * the degree of disalignment, so further decoding can
-         * be shifted as necessary.
-         *
-         */
-        pInputStream->byteAlignOffset =
-            (pInputStream->usedBits - syncword_length) & 0x7;
+        *(pSyncword) = adts_header;
 
     } /* END if (pInputStream->usedBits < ...) */
-
     else
     {
-        status = FIND_ADTS_ERROR;
+        status = MP4AUDEC_LOST_FRAME_SYNC;
     }
-
-    *(pSyncword) = adts_header;
 
     return (status);
 
 } /* find_adts_syncword() */
+
+
+
+/*----------------------------------------------------------------------------
+ FUNCTION DESCRIPTION
+
+ This module get the distance in bytes between the current and next sync word
+ then compare the content of the fix header (28 bits).
+
+ If no match is found, the function returns
+ status == MP4AUDEC_LOST_FRAME_SYNC, and reset the success counter *pInvoke
+
+------------------------------------------------------------------------------
+ INPUT AND OUTPUT DEFINITIONS
+
+ Inputs:
+
+    adts_var_header 28 bit content of the variable part of the adts header
+                    [UInt32]
+
+    pSyncword     = Pointer to variable containing the syncword that the
+                    function should be scanning for in the buffer. [ UInt32 * ]
+
+    pInputStream  = Pointer to a BITS structure, used by the function getbits
+                    to retrieve data from the bitstream.  [ BITS * ]
+
+    pInvoke       = Pointer holding the success adts counter.  [ Int * ]
+
+
+----------------------------------------------------------------------------*/
+
+/*----------------------------------------------------------------------------
+; FUNCTION CODE
+----------------------------------------------------------------------------*/
+
+
+Int validate_adts_syncword(
+    UInt32 adts_var_header,
+    UInt32 *pSyncword,
+    BITS   *pInputStream,
+    Int    *pInvoke)
+{
+
+    UInt32 frame_length;
+    UInt32 tmp;
+    Int    status = SUCCESS;
+
+    /*
+     * frame_length is a 13-bit field which indicates the length,
+     * in bytes, of the frame including error_check and headers.
+     * This information can theoretically be used to help verify syncwords.
+     * adts_var_header is 28 bits long, need to remove 13-bit conformed by
+     * buffer fullnes and headerless frame info , and mask the rest
+     */
+    frame_length  = ((UInt)(adts_var_header >> 13)) & 0x1FFF;
+
+    /* push current location, to validate 2 consecutive sync words */
+    tmp = pInputStream->usedBits;
+
+    /* Jump to next sync word, based on info on the header */
+    pInputStream->usedBits += (frame_length << 3)
+                              - LENGTH_FIXED_HEADER - LENGTH_VARIABLE_HEADER;
+
+
+    if ((Int)pInputStream->usedBits <
+            ((Int)pInputStream->availableBits - LENGTH_FIXED_HEADER))
+    {
+        uint32 temp = getbits(LENGTH_FIXED_HEADER, pInputStream);
+        /*
+         *  Check if fixed header in the very next predicted frame matches
+         */
+        if ((*(pSyncword) &  MASK_28BITS) != temp)
+        {
+            *(pInvoke) = 0;  /* reset valid adts frame counter */
+            status = MP4AUDEC_LOST_FRAME_SYNC;  /* no match means a false lock on sync word */
+        }
+    }
+    else
+    {
+        status = MP4AUDEC_LOST_FRAME_SYNC;  /* no match means a false lock on sync word */
+    }
+    /* pop current location */
+    pInputStream->usedBits = tmp;
+
+    return (status);
+
+} /* validate_adts_syncword() */
+

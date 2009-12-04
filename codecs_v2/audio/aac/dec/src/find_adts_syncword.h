@@ -37,6 +37,8 @@
 ; INCLUDES
 ----------------------------------------------------------------------------*/
 #include "s_bits.h"
+#include "pvmp4audiodecoder_api.h"
+
 
 /*----------------------------------------------------------------------------
 ; MACROS
@@ -47,6 +49,15 @@
 ; DEFINES
 ; Include all pre-processor statements here.
 ----------------------------------------------------------------------------*/
+#define LENGTH_VARIABLE_HEADER  28
+#define LENGTH_FIXED_HEADER     28
+#define LENGTH_CRC              16
+
+#define LENGTH_SYNCWORD         16
+#define ID_BIT_FILTER           0xFFF0
+#define SYNCWORD_15BITS         0xFFF0
+
+#define MASK_28BITS             0x0FFFFFFFL
 
 /*----------------------------------------------------------------------------
 ; EXTERNAL VARIABLES REFERENCES
@@ -69,11 +80,28 @@
 ; GLOBAL FUNCTION DEFINITIONS
 ; Function Prototype declaration
 ----------------------------------------------------------------------------*/
-Int find_adts_syncword(
-    UInt32 *pSyncword,
-    BITS   *pInputStream,
-    Int     syncword_length,
-    UInt32  syncword_mask);
+
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
+
+    Int find_adts_syncword(
+        UInt32 *pSyncword,
+        BITS   *pInputStream,
+        Int     syncword_length,
+        UInt32  syncword_mask);
+
+    Int validate_adts_syncword(
+        UInt32 adts_var_header,
+        UInt32 *pSyncword,
+        BITS   *pInputStream,
+        Int    *pInvoke);
+
+#ifdef __cplusplus
+}
+#endif
 
 /*----------------------------------------------------------------------------
 ; END
