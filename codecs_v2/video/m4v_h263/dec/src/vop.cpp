@@ -1086,51 +1086,26 @@ PV_STATUS DecodeH263Header(VideoDecData *video, Vop *currVop)
     switch (BitstreamReadBits16(stream, 3))
     {
         case 1:
-            if (video->initialized == PV_TRUE && video->size < 128*96)
-            {
-                status = PV_FAIL;
-                goto return_point;
-            }
             video->displayWidth = video->width =  128;
             video->displayHeight = video->height  = 96;
             break;
 
         case 2:
-            if (video->initialized == PV_TRUE && video->size < 176*144)
-            {
-                status = PV_FAIL;
-                goto return_point;
-            }
             video->displayWidth = video->width  = 176;
             video->displayHeight = video->height  = 144;
             break;
 
         case 3:
-            if (video->initialized == PV_TRUE && video->size < 352*288)
-            {
-                status = PV_FAIL;
-                goto return_point;
-            }
             video->displayWidth = video->width = 352;
             video->displayHeight = video->height = 288;
             break;
 
         case 4:
-            if (video->initialized == PV_TRUE && video->size < 704*576)
-            {
-                status = PV_FAIL;
-                goto return_point;
-            }
             video->displayWidth = video->width = 704;
             video->displayHeight = video->height = 576;
             break;
 
         case 5:
-            if (video->initialized == PV_TRUE && video->size < 1408*1152)
-            {
-                status = PV_FAIL;
-                goto return_point;
-            }
             video->displayWidth = video->width = 1408;
             video->displayHeight = video->height = 1152;
             break;
@@ -1169,51 +1144,26 @@ PV_STATUS DecodeH263Header(VideoDecData *video, Vop *currVop)
             switch (BitstreamReadBits16(stream, 3))
             {
                 case 1:
-                    if (video->initialized == PV_TRUE && video->size < 128*96)
-                    {
-                        status = PV_FAIL;
-                        goto return_point;
-                    }
                     video->displayWidth = video->width =  128;
                     video->displayHeight = video->height  = 96;
                     break;
 
                 case 2:
-                    if (video->initialized == PV_TRUE && video->size < 176*144)
-                    {
-                        status = PV_FAIL;
-                        goto return_point;
-                    }
                     video->displayWidth = video->width  = 176;
                     video->displayHeight = video->height  = 144;
                     break;
 
                 case 3:
-                    if (video->initialized == PV_TRUE && video->size < 352*288)
-                    {
-                        status = PV_FAIL;
-                        goto return_point;
-                    }
                     video->displayWidth = video->width = 352;
                     video->displayHeight = video->height = 288;
                     break;
 
                 case 4:
-                    if (video->initialized == PV_TRUE && video->size < 704*576)
-                    {
-                        status = PV_FAIL;
-                        goto return_point;
-                    }
                     video->displayWidth = video->width = 704;
                     video->displayHeight = video->height = 576;
                     break;
 
                 case 5:
-                    if (video->initialized == PV_TRUE && video->size < 1408*1152)
-                    {
-                        status = PV_FAIL;
-                        goto return_point;
-                    }
                     video->displayWidth = video->width = 1408;
                     video->displayHeight = video->height = 1152;
                     break;
@@ -1357,12 +1307,6 @@ PV_STATUS DecodeH263Header(VideoDecData *video, Vop *currVop)
             video->displayHeight = tmpvar << 2;
             video->height = (video->displayHeight + 15) & -16;
 
-            if (video->initialized == PV_TRUE && video->height * video->width > video->size)
-            {
-                status = PV_FAIL;
-                goto return_point;
-            }
-
             video->nTotalMB = video->width / MB_SIZE * video->height / MB_SIZE;
 
             if (video->nTotalMB <= 48)
@@ -1434,7 +1378,8 @@ PV_STATUS DecodeH263Header(VideoDecData *video, Vop *currVop)
         video->nBitsForMBID = CalcNumBits((uint)video->nTotalMB - 1); /* otherwise calculate above */
     }
     size = (int32)video->width * video->height;
-    if (video->currVop->predictionType == P_VOP && size > video->size)
+    if ((size > video->size) &&
+            ((video->currVop->predictionType == P_VOP) || (video->initialized == PV_TRUE)))
     {
         status = PV_FAIL;
         goto return_point;
