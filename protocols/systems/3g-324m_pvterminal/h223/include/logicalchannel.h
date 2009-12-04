@@ -26,6 +26,13 @@
 #include "lipsync_singleton_object.h"
 #endif
 
+#ifndef PVMF_RESIZABLE_SIMPLE_MEDIAMSG_H_INCLUDED
+#include "pvmf_resizable_simple_mediamsg.h"
+#endif
+
+#ifndef PVMF_FORMAT_TYPE_H_INCLUDED
+#include "pvmf_format_type.h"
+#endif
 
 #ifndef OSCL_MEM_MEMPOOL_H_INCLUDED
 #include "oscl_mem_mempool.h"
@@ -527,6 +534,16 @@ class H223IncomingChannel : public H223LogicalChannel
         /* PVMFPortActivityHandler virtuals */
         void HandlePortActivity(const PVMFPortActivity &aActivity);
 
+    protected:
+
+        PVMFStatus DispatchOutgoingMsg(PVMFSharedMediaDataPtr aMediaData);
+        bool CheckFrameBoundary(uint8* aDataPtr, int32 aDataSize, uint32 aCrcError);
+        bool pvmiSetPortFormatSpecificInfoSync(PvmiCapabilityAndConfig *aPort,
+                                               const char* aFormatValType);
+        PVMFStatus SendVideoFrame(PVMFSharedMediaDataPtr aMediaData);
+        PVMFStatus CallSendVideoFrame(PVMFSharedMediaDataPtr aMediaData);
+
+
     private:
         void PreAlPduData();
         PVMFStatus VerifyAndSetParameter(PvmiKvp* aKvp, bool aSetParam);
@@ -534,7 +551,6 @@ class H223IncomingChannel : public H223LogicalChannel
 
         OsclAny SendFormatSpecificInfo();
 
-        PVMFStatus DispatchPendingSdus();
 
         PVMFStatus SendBeginOfStreamMediaCommand();
 
@@ -546,7 +562,6 @@ class H223IncomingChannel : public H223LogicalChannel
 
         OsclMemAllocator iMemAlloc;
         PVMFSimpleMediaBufferCombinedAlloc iMediaDataAlloc;
-        Oscl_Vector<PVMFSharedMediaMsgPtr, OsclMemAllocator> iPendingSdus;
         OsclSharedPtr<PVMFMediaDataImpl> iAlPduMediaData;
         uint8* iAlPduFragPos;
         OsclRefCounterMemFrag iAlPduFrag;
@@ -567,7 +582,12 @@ class H223IncomingChannel : public H223LogicalChannel
         PVLogger* iIncomingAudioLogger;
         PVLogger* iIncomingVideoLogger;
         int32 iRenderingSkew;
-
+        uint32 iVideoFrameNum;
+        uint32 iMax_Chunk_Size;
+        PVMFSharedMediaDataPtr iVideoFrame;
+        OsclMemPoolResizableAllocator*  ipVideoFrameReszMemPool;
+        PVMFResizableSimpleMediaMsgAlloc*  ipVideoFrameAlloc;
+        OsclMemPoolFixedChunkAllocator *   ipVideoDataMemPool;
 };
 
 class MuxSduData
