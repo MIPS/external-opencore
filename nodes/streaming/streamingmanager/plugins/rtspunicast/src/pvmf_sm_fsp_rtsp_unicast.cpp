@@ -135,8 +135,8 @@ PVMFSMRTSPUnicastNode::PVMFSMRTSPUnicastNode(int32 aPriority): PVMFSMFSPBaseNode
     iJitterBufferDurationInMilliSeconds = DEFAULT_JITTER_BUFFER_DURATION_IN_MS;
     oAutoReposition = false;
     iPauseDenied    = false;
-    bool iUseRandomUDPPort = true;
-    uint32 iStartPortNum = 0;
+    iUseRandomUDPPort = true;
+    iStartPortNum = 0;
     iSwitchSDPLocation = NULL;
     ResetNodeParams(false);
 }
