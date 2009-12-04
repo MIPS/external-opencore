@@ -238,7 +238,7 @@ AVCConfigurationBox::ParameterSet::ParameterSet(uint16 length, uint8* AVCConfigB
 }
 
 // Destructor
-AVCConfigurationBox::~AVCConfigurationBox()
+OSCL_EXPORT_REF AVCConfigurationBox::~AVCConfigurationBox()
 {
     if (_sequenceParameterSetVec != NULL)
     {

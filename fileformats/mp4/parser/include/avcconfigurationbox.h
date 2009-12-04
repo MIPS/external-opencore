@@ -72,11 +72,11 @@ class AVCConfigurationBox : public Atom
                 uint8 *_pParameterSet;
         };
 
-        OSCL_IMPORT_REF AVCConfigurationBox(MP4_FF_FILE *fp, uint32 size, uint32 type);
+        AVCConfigurationBox(MP4_FF_FILE *fp, uint32 size, uint32 type);
 
-        AVCConfigurationBox(uint32 type);
+        OSCL_IMPORT_REF AVCConfigurationBox(uint32 type);
 
-        virtual ~AVCConfigurationBox();
+        OSCL_IMPORT_REF virtual ~AVCConfigurationBox();
 
         uint8 getConfigurationVersion()
         {
