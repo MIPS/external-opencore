@@ -897,6 +897,8 @@ class CPV324m2Way : OsclActiveObject,
         void DoAddDataSinkTscNode(CPVDatapathNode& datapathnode,
                                   CPV2WayDecDataChannelDatapath* datapath,
                                   TPV2WayCmdInfo *cmd);
+        void DoAddVideoParserNode(CPVDatapathNode& datapathnode,
+                                  CPV2WayDecDataChannelDatapath* datapath);
         void DoAddDataSinkNodeForH263_M4V(TPV2WayNode& aNode,
                                           CPVDatapathNode& datapathnode,
                                           CPV2WayDecDataChannelDatapath* datapath);
@@ -1008,7 +1010,7 @@ class CPV324m2Way : OsclActiveObject,
         PV2WayNodeInterface iVideoEncNodeInterface;
 
         TPV2WayNode iVideoDecNode;
-
+        TPV2WayNode iVideoParserNode;
 
         TPV2WayNode iAudioEncNode;
         TPV2WayNode iAudioDecNode;

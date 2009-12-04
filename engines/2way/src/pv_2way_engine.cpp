@@ -27,6 +27,7 @@
 #include "pv_2way_enc_data_channel_datapath.h"
 #include "pv_2way_mux_datapath.h"
 
+#include "pvmf_videoparser_node.h"
 
 #ifdef PV2WAY_USE_OMX
 #include "OMX_Core.h"
@@ -1200,7 +1201,37 @@ void CPV324m2Way::DoAddDataSinkTscNode(CPVDatapathNode& datapathnode,
                     (0, "CPV324m2Way::DoAddDataSinkTscNode - done\n"));
 }
 
-
+void CPV324m2Way::DoAddVideoParserNode(CPVDatapathNode& datapathnode,
+                                       CPV2WayDecDataChannelDatapath* datapath)
+{
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "CPV324m2Way::DoAddVideoParserNode\n"));
+    //Add video parser node to datapath
+    if (iVideoParserNode)
+    {
+        datapathnode.iNode = iVideoParserNode;
+        datapathnode.iConfigure = NULL;
+        datapathnode.iCanNodePause = false;
+        datapathnode.iIgnoreNodeState = false;
+        datapathnode.iInputPort.iRequestPortState = EPVMFNodeInitialized;
+        datapathnode.iInputPort.iPortSetType = EConnectedPortFormat;
+        datapathnode.iInputPort.iFormatType = PVMF_MIME_FORMAT_UNKNOWN;
+        datapathnode.iInputPort.iPortTag = PV2WAY_IN_PORT;
+        datapathnode.iOutputPort.iRequestPortState = EPVMFNodeInitialized;
+        datapathnode.iOutputPort.iCanCancelPort = false;
+        datapathnode.iOutputPort.iPortSetType = EUseOtherNodePortFormat;
+        datapathnode.iOutputPort.iFormatType = PVMF_MIME_FORMAT_UNKNOWN;
+        datapathnode.iOutputPort.iPortTag = PV2WAY_OUT_PORT;
+        datapath->AddNode(datapathnode);
+    }
+    else
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_WARNING,
+                        (0, "CPV324m2Way::DoAddVideoParserNode No video parser node to add.\n"));
+    }
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "CPV324m2Way::DoAddVideoParserNode - done\n"));
+}
 
 void CPV324m2Way::DoAddDataSinkNodeForH263_M4V(TPV2WayNode& aNode,
         CPVDatapathNode& datapathnode,
@@ -1380,6 +1411,9 @@ void CPV324m2Way::DoAddDataSink(TPV2WayNode& aNode,
                 //Add tsc node to datapath
                 DoAddDataSinkTscNode(datapathnode, datapath, cmd);
 
+                //Add video parser node to datapath
+                DoAddVideoParserNode(datapathnode, datapath);
+
                 //Add sink node to datapath
                 DoAddDataSinkNodeForH263_M4V(aNode, datapathnode, datapath);
 
@@ -1408,6 +1442,8 @@ void CPV324m2Way::DoAddDataSink(TPV2WayNode& aNode,
                 //Add tsc node to datapath
                 DoAddDataSinkTscNode(datapathnode, datapath, cmd);
 
+                //Add video parser node to datapath
+                DoAddVideoParserNode(datapathnode, datapath);
 
                 //Add video dec node to datapath
                 DoAddVideoDecNode(datapathnode, datapath);
@@ -2929,6 +2965,13 @@ void CPV324m2Way::SetDefaults()
     SetState(EIdle);
 
 
+    if (iVideoParserNode.iNode)
+    {
+        iVideoParserNode.iNode->ThreadLogoff();
+        OSCL_DELETE(iVideoParserNode.iNode);
+        iVideoParserNode.Clear();
+    }
+
     if (iVideoDecNode.iNode)
     {
         iVideoDecNode.iNode->ThreadLogoff();
@@ -3434,6 +3477,11 @@ void CPV324m2Way::HandleNodeInformationalEvent(const PVMFAsyncEvent& aEvent)
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_INFO,
                         (0, "CPV324m2Way::HandleNodeInformationalEvent video dec node\n"));
     }
+    else if (aEvent.GetContext() == iVideoParserNode)
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_INFO,
+                        (0, "CPV324m2Way::HandleNodeInformationalEvent video parser node\n"));
+    }
     else if (aEvent.GetContext() == iVideoEncNode)
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_INFO,
@@ -3934,7 +3982,14 @@ PVMFStatus CPV324m2Way::ConfigureNode(CPVDatapathNode *aNode)
                         (0, "CPV324m2Way::ConfigureNode - done\n"));
         return PVMFSuccess;
     }
-
+    else if (node == iVideoParserNode.iNode)
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_INFO,
+                        (0, "CPV324m2Way::ConfigureNode configuring video parser node\n"));
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                        (0, "CPV324m2Way::ConfigureNode - done\n"));
+        return PVMFSuccess;
+    }
     else
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
@@ -5339,12 +5394,12 @@ void CPV324m2Way::AddVideoDecoderNode(uint8* aFormatSpecificInfo, uint32 aFormat
     OSCL_FIRST_CATCH_ANY(error, PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger,
                          PVLOGMSG_ERR, (0, "CPV324m2Way::AddVideoDecoderNode unable to allocate video decoder node\n")));
 
-
+    OSCL_TRY(error, iVideoParserNode = TPV2WayNode(PVMFVideoParserNode::Create(aFormatSpecificInfo, aFormatSpecificInfoLen)););
     OSCL_FIRST_CATCH_ANY(error, PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger,
                          PVLOGMSG_ERR, (0, "CPV324m2Way::AddVideoDecoderNode unable to allocate video parser node\n")));
 
     InitiateSession(iVideoDecNode);
-
+    InitiateSession(iVideoParserNode);
     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                     (0, "CPV324m2Way::AddVideoDecoderNode - done\n"));
 }

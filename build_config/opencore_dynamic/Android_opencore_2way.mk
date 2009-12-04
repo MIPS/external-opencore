@@ -9,6 +9,7 @@ LOCAL_WHOLE_STATIC_LIBRARIES := \
  	libpvdummyinputnode \
  	libpvdummyoutputnode \
  	libpvclientserversocketnode \
+ 	libpvvideoparsernode \
  	libpvcommsionode \
  	libpvmio_comm_loopback \
  	libpvgeneraltools
@@ -28,6 +29,7 @@ include   $(PV_TOP)/protocols/systems/3g-324m_pvterminal/Android.mk
 include   $(PV_TOP)/nodes/pvdummyinputnode/Android.mk
 include   $(PV_TOP)/nodes/pvdummyoutputnode/Android.mk
 include   $(PV_TOP)/nodes/pvclientserversocketnode/Android.mk
+include   $(PV_TOP)/nodes/pvvideoparsernode/Android.mk
 include   $(PV_TOP)/nodes/pvcommsionode/Android.mk
 include   $(PV_TOP)/pvmi/media_io/pvmio_comm_loopback/Android.mk
 include   $(PV_TOP)/protocols/systems/common/Android.mk

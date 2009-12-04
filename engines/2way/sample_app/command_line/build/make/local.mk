@@ -51,6 +51,7 @@ END_LIBS = pvdummyinputnode pvdummyoutputnode \
 	pvmiofileinput \
 	pvmiofileoutput \
 	pvmf \
+	pvvideoparsernode \
 	colorconvert \
 	pvencoder_gsmamr \
 	pvdecoder_gsmamr \

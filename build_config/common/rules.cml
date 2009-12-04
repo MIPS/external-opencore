@@ -197,12 +197,14 @@ derive MODS_opencore_author from "-lopencore_common"
 derive opencore_2way_so_name from pvsplit_so==y ? "opencore_2way" : ""
 derive SOLIBS_opencore_2way from (pv2waysample_m_lib.pv2wayengine_m_lib.pv324m_m_lib.                      
                        pvdummyinputnode_m_lib.pvdummyoutputnode_m_lib.pvclientserversocketnode_m_lib.
+                       pvvideoparsernode_m_lib.
                        pvcommsionode_m_lib.
                        pvmio_comm_loopback_m_lib.
                        pvgeneraltools_m_lib.
                        unit_test_m_lib)
 derive SOLIBDIRS_opencore_2way from (pv2waysample_m_mk.pv2wayengine_m_mk.pv324m_m_mk.                       
                        pvdummyinputnode_m_mk.pvdummyoutputnode_m_mk.pvclientserversocketnode_m_mk.
+                       pvvideoparsernode_m_mk.
                        pvcommsionode_m_mk.
                        pvmio_comm_loopback_m_mk.pv324m_common_headers_m_mk.
                        pvgeneraltools_m_mk.
