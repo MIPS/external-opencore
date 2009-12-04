@@ -3657,7 +3657,11 @@ void pvplayer_engine_test::test()
                 fprintf(file, "PlayReady CPM tests not enabled\n");
                 break;
 
-            case DLA_OpenPlayStop_PlayReadyCPMTest_v4_WMA_ringtone:
+            case DLA_OpenPlayStop_PlayReadyCPMTest_v4_WMA_RingtoneRights:
+                fprintf(file, "PlayReady CPM tests not enabled\n");
+                break;
+
+            case DLA_QueryEngine_PlayReadyCPMTest_v4_WMA_RingtoneRights:
                 fprintf(file, "PlayReady CPM tests not enabled\n");
                 break;
 
