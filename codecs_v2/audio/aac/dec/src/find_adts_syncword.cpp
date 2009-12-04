@@ -191,7 +191,7 @@ Int find_adts_syncword(
 {
 
     Int    status = SUCCESS;
-    UInt   search_length;
+    Int   search_length;
     UInt32 adts_header = 0;
     UInt32 test_for_syncword;
     UInt32 syncword = *(pSyncword);
