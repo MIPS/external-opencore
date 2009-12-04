@@ -28,9 +28,13 @@
 #ifndef OSCL_TYPES_H_INCLUDED
 #include "oscl_types.h"
 #endif
-#ifndef OSCL_DEFALLOC_H_INCLUDED
-#include "oscl_defalloc.h"
+#ifndef OSCL_MEM_H_INCLUDED
+#include "oscl_mem.h"
 #endif
+#ifndef OSCL_STRING_CONTAINERS_H_INCLUDED
+#include "oscl_string_containers.h"
+#endif
+
 
 //******************************************************************************
 //                                                                     DEFINES
@@ -100,9 +104,13 @@ class PVLoggerCfgFileParser
 
     public:
 //==============================================================================
-// PUBLIC: ENUMERATIONS
+// PUBLIC: ENUMERATIONS & TYPEDEFS
 //==============================================================================
 
+        //======================================================================
+        // eAppenderType_t                                         ENUMERATION
+        //======================================================================
+        //
         typedef enum
         {
             ePVLOG_APPENDER_FILE,
@@ -110,26 +118,59 @@ class PVLoggerCfgFileParser
             ePVLOG_APPENDER_STDERR
         } eAppenderType_t;
 
+        //======================================================================
+        // LogCfgElement                                                STRUCT
+        //======================================================================
+        //
+        typedef struct LogCfgElement
+        {
+            LogCfgElement
+            (
+                const char* a_pszNodeName = 0,
+                PVLogger::log_level_type a_logLevel = PVLOGMSG_DEBUG
+            )
+                    : m_strNodeName(a_pszNodeName)
+                    , m_logLevel(a_logLevel)
+            {}
+
+            OSCL_HeapString<OsclMemAllocator> m_strNodeName;
+            PVLogger::log_level_type          m_logLevel;
+        };
 
 //==============================================================================
 // PUBLIC: STATIC METHODS
 //==============================================================================
 
-        //==========================================================================
-        // Parse                                                     STATIC PUBLIC
-        //==========================================================================
-        // Open pszCfgFileName to read nodes (and levels) to log. Returns true on
-        // success, false otherwise.
+        //======================================================================
+        //                                                FORWARD DECLARATIONS
+        //======================================================================
+
+        class Oscl_Vector<LogCfgElement, OsclMemAllocator>;
+
+        //======================================================================
+        // Parse                                                 STATIC PUBLIC
+        //======================================================================
+        // Open pszCfgFileName to read nodes (and levels) to log. Returns true
+        // on success, false otherwise.
+        //
+        // pszCfgFileName [IN]
+        //   config file name
+        // pszLogFileName [IN]
+        //    output log file name
+        // pVectorLogNodeCfg [OUT]
+        //    optional pointer to a vector. node/loglevel elements added
         //
         OSCL_IMPORT_REF static bool Parse
         (
             const char* pszCfgFileName,
-            const char* pszLogFileName
+            const char* pszLogFileName,
+            eAppenderType_t* pAppenderType = 0,
+            Oscl_Vector<LogCfgElement, OsclMemAllocator>* pVectorLogNodeCfg = 0
         );
 
-        //==========================================================================
-        // CreateLogAppender                                         STATIC PUBLIC
-        //==========================================================================
+        //======================================================================
+        // CreateLogAppender                                     STATIC PUBLIC
+        //======================================================================
         //
         //  [IN] eAppenderType_t
         //         The appender type.
@@ -148,9 +189,9 @@ class PVLoggerCfgFileParser
             OsclSharedPtr<PVLoggerAppender>& appenderPtr
         );
 
-        //==========================================================================
-        // AttachLogAppender                                         STATIC PUBLIC
-        //==========================================================================
+        //======================================================================
+        // AttachLogAppender                                     STATIC PUBLIC
+        //======================================================================
         //
         //  [IN] OsclSharedPtr<PVLoggerAppender>&
         //         The PVLoggerAppender to attach to the specified log node.
@@ -168,9 +209,9 @@ class PVLoggerCfgFileParser
         );
 
 
-        //==========================================================================
-        // SetupLogAppender                                          STATIC PUBLIC
-        //==========================================================================
+        //======================================================================
+        // SetupLogAppender                                      STATIC PUBLIC
+        //======================================================================
         //
         //  [IN] eAppenderType_t
         //         The appender type.
@@ -182,16 +223,16 @@ class PVLoggerCfgFileParser
         //  [IN] const PVLogger::log_level_type eLogLevel
         //         Log level.
         //  [IN/OUT] OsclSharedPtr<PVLoggerAppender>**
-        //         Optional parameter. When not null, the shared object pointed to
-        //         will contain a pointer to the newly created OsclSharedPtr object.
+        //         Optional parameter. When not null, shared object pointed to
+        //         will contain a pointer to newly created OsclSharedPtr object
         //
         OSCL_IMPORT_REF static bool SetupLogAppender
         (
             eAppenderType_t eAppenderType,
-            const char* pszLogFileName = 0,               // name of output log file
+            const char* pszLogFileName = 0,           // name of output log file
             const char* pszLogNode = _STRLIT_CHAR(""),
             const PVLogger::log_level_type eLogLevel = PVLOGMSG_DEBUG,
-            OsclSharedPtr<PVLoggerAppender>* pSharedAppenderPtr = 0 // optional
+            OsclSharedPtr<PVLoggerAppender>* pSharedAppenderPtr = 0  // optional
         );
 
 };
@@ -212,9 +253,9 @@ class LogAppenderDestructDealloc
 // PUBLIC: STATIC METHODS
 //==============================================================================
 
-        //==========================================================================
-        // destruct_and_dealloc                                             PUBLIC
-        //==========================================================================
+        //======================================================================
+        // destruct_and_dealloc                                         PUBLIC
+        //======================================================================
         //
         virtual void destruct_and_dealloc
         (

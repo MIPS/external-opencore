@@ -130,7 +130,6 @@
 #endif
 
 class PVMetadataEngineInterfaceContainer;
-class LoggerConfigElement;
 
 
 /**
@@ -166,16 +165,6 @@ typedef union PVMECommandParamUnion
     uint64*  pUint64_value;
     OsclAny* pOsclAny_value;
 } _PVMECommandParamUnion;
-
-template<class DestructClass>
-class AppenderDestructDealloc : public OsclDestructDealloc
-{
-    public:
-        virtual void destruct_and_dealloc(OsclAny *ptr)
-        {
-            delete((DestructClass*)ptr);
-        }
-};
 
 
 /**
@@ -537,11 +526,6 @@ class PVMetadataEngine : public OsclTimerObject,
         // Handle to the logger node
         PVLogger* iLogger;
         PVLogger* iPerfLogger;
-
-        //Appender, filename and list of logger tags passed by PVME user
-        uint32 iAppenderType; //Type of appender to be used for the logging 0-> Err Appender, 1-> File Appender
-        Oscl_Vector<LoggerConfigElement, OsclMemAllocator> iLoggerConfigElements;
-        OSCL_wHeapString<OsclMemAllocator> logfilename;
 
         // Context objects
         PVMEContext iPVMEContext;
