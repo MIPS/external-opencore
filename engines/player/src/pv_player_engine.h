@@ -565,7 +565,7 @@ struct PVPlayerKeyStringData
 
 
 // Key string info at the base level ("x-pvmf/player/")
-#define PVPLAYERCONFIG_BASE_NUMKEYS 13
+#define PVPLAYERCONFIG_BASE_NUMKEYS 14
 const PVPlayerKeyStringData PVPlayerConfigBaseKeys[PVPLAYERCONFIG_BASE_NUMKEYS] =
 {
     {"pbpos_units", PVMI_KVPTYPE_VALUE, PVMI_KVPVALTYPE_CHARPTR},
@@ -580,7 +580,8 @@ const PVPlayerKeyStringData PVPlayerConfigBaseKeys[PVPLAYERCONFIG_BASE_NUMKEYS] 
     {"nodecmd_timeout", PVMI_KVPTYPE_VALUE, PVMI_KVPVALTYPE_UINT32},
     {"nodedataqueuing_timeout", PVMI_KVPTYPE_VALUE, PVMI_KVPVALTYPE_UINT32},
     {"productinfo", PVMI_KVPTYPE_AGGREGATE, PVMI_KVPVALTYPE_KSV},
-    {"pbpos_enable", PVMI_KVPTYPE_VALUE, PVMI_KVPVALTYPE_BOOL}
+    {"pbpos_enable", PVMI_KVPTYPE_VALUE, PVMI_KVPVALTYPE_BOOL},
+    {"silenceinsertion_enable", PVMI_KVPTYPE_VALUE, PVMI_KVPVALTYPE_BOOL}
 };
 
 enum PlayerConfigBaseKeys_IndexMap
@@ -597,7 +598,8 @@ enum PlayerConfigBaseKeys_IndexMap
     NODECMD_TIMEOUT,
     NODEDATAQUEIUING_TIMEOUT,
     PRODUCTINFO,
-    PBPOS_ENABLE
+    PBPOS_ENABLE,
+    SILENCEINSERTION_ENABLE
 };
 
 // Key string info at the productinfo level ("x-pvmf/player/productinfo/")
@@ -1574,6 +1576,7 @@ class PVPlayerEngine
         range_int32 iSyncMarginText;
         uint32 iNodeCmdTimeout;
         uint32 iNodeDataQueuingTimeout;
+        bool iSilenceInsertionEnable;
         OSCL_HeapString<OsclMemAllocator> iProdInfoProdName;
         OSCL_HeapString<OsclMemAllocator> iProdInfoPartNum;
         OSCL_HeapString<OsclMemAllocator> iProdInfoHWPlatform;

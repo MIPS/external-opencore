@@ -510,6 +510,9 @@ class PvmfAssetInfo3GPPLocationStruct
 // Keys for format specific info for audio media type
 #define PVMF_FORMAT_SPECIFIC_INFO_KEY_PCM "x-pvmf/media/format_specific_info_pcm;valtype=key_specific_value"
 
+// Keys for enabling / disabling silence insertion for audio media type
+#define PVMF_AUDIO_SILENCE_INSERTION_KEY "x-pvmf/audio/decoder/silenceinsertion_enable;valtype=bool"
+
 // Keys for buffer allocator
 #define PVMF_BUFFER_ALLOCATOR_KEY "x-pvmf/media/buffer_allocator;valtype=key_specific_value"
 #define PVMF_SUPPORT_FOR_BUFFER_ALLOCATOR_IN_MIO_KEY "x-pvmf/media/buffer_allocator_in_mio;valtype=key_specific_value"

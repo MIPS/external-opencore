@@ -1155,6 +1155,7 @@ PVPlayerEngine::PVPlayerEngine() :
         iSyncPointSeekWindow(PVPLAYERENGINE_CONFIG_SEEKTOSYNCPOINTWINDOW_DEF),
         iNodeCmdTimeout(PVPLAYERENGINE_CONFIG_NODECMDTIMEOUT_DEF),
         iNodeDataQueuingTimeout(PVPLAYERENGINE_CONFIG_NODEDATAQUEUINGTIMEOUT_DEF),
+        iSilenceInsertionEnable(true),
         iProdInfoProdName(_STRLIT_CHAR(PVPLAYERENGINE_PRODINFO_PRODNAME_STRING)),
         iProdInfoPartNum(_STRLIT_CHAR(PVPLAYERENGINE_PRODINFO_PARTNUM_STRING)),
         iProdInfoHWPlatform(_STRLIT_CHAR(PVPLAYERENGINE_PRODINFO_HWPLATFORM_STRING)),
@@ -11375,6 +11376,24 @@ PVMFStatus PVPlayerEngine::DoGetPlayerParameter(PvmiKvp*& aParameters, int& aNum
                 // Bool so no capability
             }
             break;
+
+        case SILENCEINSERTION_ENABLE:  // "silenceinsertion_enable"
+            if (reqattr == PVMI_KVPATTR_CUR)
+            {
+                // Return current value
+                aParameters[0].value.bool_value = iSilenceInsertionEnable;
+            }
+            else if (reqattr == PVMI_KVPATTR_DEF)
+            {
+                // Return default
+                aParameters[0].value.bool_value = true;
+            }
+            else
+            {
+                // Return capability
+                // Bool so no capability
+            }
+            break;
         default:
             // Invalid index
             oscl_free(aParameters[0].key);
@@ -11914,6 +11933,16 @@ PVMFStatus PVPlayerEngine::DoVerifyAndSetPlayerParameter(PvmiKvp& aParameter, bo
                     }
                 }
 
+            }
+            break;
+
+        case SILENCEINSERTION_ENABLE: // "silenceinsertion_enable"
+            // Nothing to validate since it is boolean
+            // Change the config if to set
+            if (aSetParam)
+            {
+                iSilenceInsertionEnable = aParameter.value.bool_value;
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG, (0, "PVPlayerEngine::DoVerifyAndSetPlayerParameter() iSilenceInsertionEnable set to %d", iSilenceInsertionEnable));
             }
             break;
 
@@ -13490,9 +13519,9 @@ void PVPlayerEngine::HandleDecNodeQueryInterfaceOptional(PVPlayerEngineContext& 
         else if (audioTrack && retVal)
         {
             // Audio track
-            // Disable silence insertion
-            kvpparamkey = _STRLIT_CHAR("x-pvmf/audio/decoder/silenceinsertion_enable;valtype=bool");
-            kvpparam.value.bool_value = false;
+            // Enable/Disable silence insertion
+            kvpparamkey = _STRLIT_CHAR(PVMF_AUDIO_SILENCE_INSERTION_KEY);
+            kvpparam.value.bool_value = iSilenceInsertionEnable;
             aNodeContext.iEngineDatapath->iSinkNodeSyncCtrlIF->SetMargins((-1*iSyncMarginAudio.min), iSyncMarginAudio.max);
         }
 

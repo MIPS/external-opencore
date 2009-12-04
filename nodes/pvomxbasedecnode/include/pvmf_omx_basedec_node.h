@@ -688,6 +688,7 @@ class PVMFOMXBaseDecNode: public PVMFNodeInterfaceImpl
 
         bool iIsVC1;
         bool iIsVC1AdvancedProfile;
+        bool iSilenceInsertionFlag;
 
         uint32 iTrackUnderVerificationConfigSize;
         uint8 *iTrackUnderVerificationConfig;

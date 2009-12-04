@@ -415,7 +415,8 @@ OSCL_EXPORT_REF PVMFOMXBaseDecNode::PVMFOMXBaseDecNode(int32 aPriority, const ch
         iStopInResetMsgSent(false),
         iCompactFSISettingSucceeded(false),
         iIsVC1(false),
-        iIsVC1AdvancedProfile(false)
+        iIsVC1AdvancedProfile(false),
+        iSilenceInsertionFlag(true)
 {
     iThreadSafeHandlerEventHandler = NULL;
     iThreadSafeHandlerEmptyBufferDone = NULL;

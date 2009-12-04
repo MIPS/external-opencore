@@ -1203,6 +1203,8 @@ bool PVMFOMXAudioDecNode::NegotiateComponentParameters(OMX_PTR aOutputParameters
 
     CONFIG_SIZE_AND_VERSION(iParamPort);
     iParamPort.nPortIndex = iInputPortIndex;
+    iParamPort.format.audio.bFlagErrorConcealment = (OMX_BOOL) iSilenceInsertionFlag;
+
     // finalize setting input port parameters
     Err = OMX_SetParameter(iOMXDecoder, OMX_IndexParamPortDefinition, &iParamPort);
     if (Err != OMX_ErrorNone)
@@ -3291,6 +3293,14 @@ void PVMFOMXAudioDecNode::DoCapConfigSetParameters(PvmiKvp* aParameters, int aNu
 
             }
 
+        }
+        else if (pv_mime_strcmp(aParameters[ii].key, PVMF_AUDIO_SILENCE_INSERTION_KEY) == 0)
+        {
+            // Enable or Disable silence insertion in audio tracks
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                            (0, "PVMFOMXAudioDecNode::DoCapConfigSetParameters() Silence insertion key \n"));
+
+            iSilenceInsertionFlag = aParameters[ii].value.bool_value;
         }
         else
         {
