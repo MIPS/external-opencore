@@ -2682,15 +2682,18 @@ OMX_ERRORTYPE OmxComponentDecTest::GetInputFrameWmv()
     return OMX_ErrorNone;
 }
 
-//Read the data from input file & pass it to the RV component
-OMX_ERRORTYPE OmxComponentDecTest::GetInputFrameRv()
+//Read the data from input file & pass it to the RV and RA components
+OMX_ERRORTYPE OmxComponentDecTest::GetInputFrameRvRa()
 {
     OMX_U32 Index;
     OMX_U32 Size;
     OMX_ERRORTYPE Status;
     OMX_U32 ReadCount;
     OMX_U32 TempSize;
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "OmxComponentDecTest::GetInputFrameRv() - IN"));
+    OMX_BOOL MarkerBit = OMX_FALSE;
+    uint32 TimeStamp;
+
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "OmxComponentDecTest::GetInputFrameRvRa() - IN"));
 
     if (OMX_TRUE == iInputReady)
     {
@@ -2709,52 +2712,69 @@ OMX_ERRORTYPE OmxComponentDecTest::GetInputFrameRv()
 
             if (iInBufferCount == Index)
             {
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG, (0, "OmxComponentDecTest::GetInputFrameRv() - Input buffer not available, OUT"));
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG, (0, "OmxComponentDecTest::GetInputFrameRvRa() - Input buffer not available, OUT"));
                 return OMX_ErrorNone;
             }
 
             if (iHeaderSent)
             {
-                if (!iFragmentInProgress && !iDivideBuffer)
+                if (OMX_FALSE == iDivideBuffer)
                 {
-                    ReadCount = fread(&Size, 1, FRAME_SIZE_FIELD, ipInputFile); // read in 1st 4 bytes
-                    iCurFrag = 0;
+                    //First OMX_U32 bytes for the frame timestamp
+                    ReadCount = fread(&TimeStamp, 1, FRAME_TIME_STAMP_FIELD, ipInputFile); // read in 1st 4 bytes
+                    if (ReadCount < FRAME_TIME_STAMP_FIELD)
+                    {
+                        iStopProcessingInput = OMX_TRUE;
+                        iInIndex = Index;
+                        iLastInputFrame = iFrameNum;
 
+                        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "OmxComponentDecTest::GetInputFrameRvRa() - Input file has ended, OUT"));
+                        return OMX_ErrorNone;
+                    }
+
+                    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG, (0, "OmxComponentDecTest::GetInputFrameRvRa() - Next frame time stamp is %d", TimeStamp));
+
+                    //Next OMX_U8 bytes for the Marker info
+                    ReadCount = fread(&MarkerBit, 1, sizeof(OMX_U8), ipInputFile);  // read in next 1 bytes
+                    if (ReadCount < sizeof(OMX_U8))
+                    {
+                        iStopProcessingInput = OMX_TRUE;
+                        iInIndex = Index;
+                        iLastInputFrame = iFrameNum;
+
+                        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "OmxComponentDecTest::GetInputFrameRvRa() - Input file has ended, OUT"));
+                        return OMX_ErrorNone;
+                    }
+
+                    //If marker bit is not set for this fragment, then its a partial frame
+                    // set the iFragmentInProgress to true
+                    if (MarkerBit == OMX_FALSE)
+                    {
+                        iFragmentInProgress = OMX_TRUE;
+                    }
+                    else
+                    {
+                        iFragmentInProgress = OMX_FALSE;
+                    }
+
+                    //Next OMX_32 bytes for the Fragment size
+                    ReadCount = fread(&Size, 1, FRAME_SIZE_FIELD, ipInputFile); // read in next 4 bytes
                     if (ReadCount < FRAME_SIZE_FIELD)
                     {
                         iStopProcessingInput = OMX_TRUE;
                         iInIndex = Index;
                         iLastInputFrame = iFrameNum;
 
-                        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "OmxComponentDecTest::GetInputFrameRv() - Input file has ended, OUT"));
+                        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "OmxComponentDecTest::GetInputFrameRvRa() - Input file has ended, OUT"));
                         return OMX_ErrorNone;
                     }
 
-                    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG, (0, "OmxComponentDecTest::GetInputFrameRv() - Next frame size is %d", Size));
-
-                    for (OMX_S32 kk = 0; kk < iNumSimFrags - 1; kk++)
-                    {
-                        iSimFragSize[kk] = Size / iNumSimFrags;
-                    }
-
-                    iSimFragSize[iNumSimFrags - 1] = Size - (iNumSimFrags - 1) * (Size / iNumSimFrags); // last fragment
+                    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG, (0, "OmxComponentDecTest::GetInputFrameRvRa() - Next frame size is %d", Size));
                 }
 
 
                 if (OMX_FALSE == iDivideBuffer)
                 {
-                    Size = iSimFragSize[iCurFrag];
-                    iCurFrag++;
-
-                    if (iCurFrag == iNumSimFrags)
-                    {
-                        iFragmentInProgress = OMX_FALSE;
-                    }
-                    else
-                    {
-                        iFragmentInProgress = OMX_TRUE;
-                    }
-
                     if (Size > iInBufferSize)
                     {
                         iDivideBuffer = OMX_TRUE;
@@ -2790,13 +2810,13 @@ OMX_ERRORTYPE OmxComponentDecTest::GetInputFrameRv()
                     iInIndex = Index;
                     iLastInputFrame = iFrameNum;
 
-                    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "OmxComponentDecTest::GetInputFrameRv() - Input file read error, OUT"));
+                    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "OmxComponentDecTest::GetInputFrameRvRa() - Input file read error, OUT"));
 
                     return OMX_ErrorNone;   // corrupted file !!
                 }
 
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
-                                (0, "OmxComponentDecTest::GetInputFrameRv() - Bytes read from input file %d", Size));
+                                (0, "OmxComponentDecTest::GetInputFrameRvRa() - Bytes read from input file %d", Size));
 
                 ipInBuffer[Index]->nFilledLen = Size;
                 ipInBuffer[Index]->nOffset = 0;  // for now all data starts at the beginning of the buffer
@@ -2810,11 +2830,11 @@ OMX_ERRORTYPE OmxComponentDecTest::GetInputFrameRv()
                     iInIndex = Index;
                     iLastInputFrame = iFrameNum;
 
-                    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "OmxComponentDecTest::GetInputFrameRv() - Input file has ended, OUT"));
+                    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "OmxComponentDecTest::GetInputFrameRvRa() - Input file has ended, OUT"));
                     return OMX_ErrorNone;
                 }
 
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG, (0, "OmxComponentDecTest::GetInputFrameRv() - Next frame size is %d", Size));
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG, (0, "OmxComponentDecTest::GetInputFrameRvRa() - Next frame size is %d", Size));
 
                 ReadCount = fread(ipInBuffer[Index]->pBuffer, 1, Size, ipInputFile);
                 if (ReadCount < Size)
@@ -2823,15 +2843,19 @@ OMX_ERRORTYPE OmxComponentDecTest::GetInputFrameRv()
                     iInIndex = Index;
                     iLastInputFrame = iFrameNum;
 
-                    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "OmxComponentDecTest::GetInputFrameRv() - Input file read error, OUT"));
+                    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "OmxComponentDecTest::GetInputFrameRvRa() - Input file read error, OUT"));
                     return OMX_ErrorNone;   // corrupted file !!
                 }
 
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
-                                (0, "OmxComponentDecTest::GetInputFrameRv() - Bytes read from input file %d", Size));
+                                (0, "OmxComponentDecTest::GetInputFrameRvRa() - Bytes read from input file %d", Size));
 
                 ipInBuffer[Index]->nFilledLen = Size;
                 ipInBuffer[Index]->nOffset = 0;
+                TimeStamp = 0;
+
+                iInputTimestampClock.set_clock(TimeStamp, 0);
+
                 iHeaderSent = OMX_TRUE;
             }
 
@@ -2840,7 +2864,7 @@ OMX_ERRORTYPE OmxComponentDecTest::GetInputFrameRv()
                 ipInBuffer[Index]->nFlags  = 0;
 
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
-                                (0, "OmxComponentDecTest::GetInputFrameRv() - Input buffer of index %d without any marker", Index));
+                                (0, "OmxComponentDecTest::GetInputFrameRvRa() - Input buffer of index %d without any marker", Index));
             }
             else
             {
@@ -2848,14 +2872,20 @@ OMX_ERRORTYPE OmxComponentDecTest::GetInputFrameRv()
                 ipInBuffer[Index]->nFlags |= OMX_BUFFERFLAG_ENDOFFRAME;
 
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
-                                (0, "OmxComponentDecTest::GetInputFrameRv() - Input buffer of index %d with OMX_BUFFERFLAG_ENDOFFRAME flag marked", Index));
+                                (0, "OmxComponentDecTest::GetInputFrameRvRa() - Input buffer of index %d with OMX_BUFFERFLAG_ENDOFFRAME flag marked", Index));
             }
         }
 
 
         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
-                        (0, "OmxComponentDecTest::GetInputFrameRv() - Calling EmptyThisBuffer with Alloc Len %d, Filled Len %d Offset %d TimeStamp %d",
+                        (0, "OmxComponentDecTest::GetInputFrameRvRa() - Calling EmptyThisBuffer with Alloc Len %d, Filled Len %d Offset %d TimeStamp %d",
                          ipInBuffer[Index]->nAllocLen, ipInBuffer[Index]->nFilledLen, ipInBuffer[Index]->nOffset, ipInBuffer[Index]->nTimeStamp));
+
+
+        iInputTimestampClock.update_clock(TimeStamp); // this will also take into consideration the timestamp rollover
+
+        // convert TS in input timescale into OMX_TICKS
+        ipInBuffer[Index]->nTimeStamp = ConvertTimestampIntoOMXTicks(iInputTimestampClock);
 
         Status = OMX_EmptyThisBuffer(ipAppPriv->Handle, ipInBuffer[Index]);
         if (OMX_ErrorNone == Status)
@@ -2863,7 +2893,7 @@ OMX_ERRORTYPE OmxComponentDecTest::GetInputFrameRv()
             ipInputAvail[Index] = OMX_FALSE; // mark unavailable
 
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
-                            (0, "OmxComponentDecTest::GetInputFrameRv() - Sent the input buffer sucessfully, OUT"));
+                            (0, "OmxComponentDecTest::GetInputFrameRvRa() - Sent the input buffer sucessfully, OUT"));
             return OMX_ErrorNone;
         }
         else if (OMX_ErrorInsufficientResources == Status)
@@ -2872,7 +2902,7 @@ OMX_ERRORTYPE OmxComponentDecTest::GetInputFrameRv()
             iInputReady = OMX_FALSE;
             iInputWasRefused = OMX_TRUE;
 
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "OmxComponentDecTest::GetInputFrameRv() - EmptyThisBuffer failed with Error OMX_ErrorInsufficientResources, OUT"));
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "OmxComponentDecTest::GetInputFrameRvRa() - EmptyThisBuffer failed with Error OMX_ErrorInsufficientResources, OUT"));
             return OMX_ErrorInsufficientResources;
         }
         else
@@ -2880,17 +2910,17 @@ OMX_ERRORTYPE OmxComponentDecTest::GetInputFrameRv()
             iStopProcessingInput = OMX_TRUE;
             iLastInputFrame = iFrameNum;
 
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "OmxComponentDecTest::GetInputFrameRv() - ERROR, EmptyThisBuffer failed, OUT"));
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "OmxComponentDecTest::GetInputFrameRvRa() - ERROR, EmptyThisBuffer failed, OUT"));
             return OMX_ErrorNone;
         }
     }
     else
     {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "OmxComponentDecTest::GetInputFrameRv() - ERROR, Input is not ready to be sent, OUT"));
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "OmxComponentDecTest::GetInputFrameRvRa() - ERROR, Input is not ready to be sent, OUT"));
         return OMX_ErrorInsufficientResources;
     }
 
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "OmxComponentDecTest::GetInputFrameRv() - OUT"));
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "OmxComponentDecTest::GetInputFrameRvRa() - OUT"));
     return OMX_ErrorNone;
 }
 
@@ -3098,14 +3128,14 @@ OMX_ERRORTYPE OmxComponentDecTest::GetInputFrameMp3()
 
 
 
-OMX_ERRORTYPE OmxComponentDecTest::GetInputFrameWmaRa()
+OMX_ERRORTYPE OmxComponentDecTest::GetInputFrameWma()
 {
     OMX_U32 Index;
     OMX_U32 Size;
     OMX_ERRORTYPE Status;
     OMX_U32 ReadCount;
 
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "OmxComponentDecTest::GetInputFrameWmaRa() - IN"));
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "OmxComponentDecTest::GetInputFrameWma() - IN"));
 
     if (OMX_TRUE == iInputReady)
     {
@@ -3124,7 +3154,7 @@ OMX_ERRORTYPE OmxComponentDecTest::GetInputFrameWmaRa()
 
             if (iInBufferCount == Index)
             {
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG, (0, "OmxComponentDecTest::GetInputFrameWmaRa() - Input buffer not available, OUT"));
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG, (0, "OmxComponentDecTest::GetInputFrameWma() - Input buffer not available, OUT"));
                 return OMX_ErrorNone;
             }
 
@@ -3142,11 +3172,11 @@ OMX_ERRORTYPE OmxComponentDecTest::GetInputFrameWmaRa()
                         iInIndex = Index;
                         iLastInputFrame = iFrameNum;
 
-                        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "OmxComponentDecTest::GetInputFrameWmaRa() - Input file has ended, OUT"));
+                        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "OmxComponentDecTest::GetInputFrameWma() - Input file has ended, OUT"));
                         return OMX_ErrorNone;
                     }
 
-                    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG, (0, "OmxComponentDecTest::GetInputFrameWmaRa() - Next frame size is %d", Size));
+                    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG, (0, "OmxComponentDecTest::GetInputFrameWma() - Next frame size is %d", Size));
 
                     for (OMX_S32 kk = 0; kk < iNumSimFrags - 1; kk++)
                     {
@@ -3176,13 +3206,13 @@ OMX_ERRORTYPE OmxComponentDecTest::GetInputFrameWmaRa()
                     iInIndex = Index;
                     iLastInputFrame = iFrameNum;
 
-                    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "OmxComponentDecTest::GetInputFrameWmaRa() - Input file read error, OUT"));
+                    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "OmxComponentDecTest::GetInputFrameWma() - Input file read error, OUT"));
 
                     return OMX_ErrorNone;   // corrupted file !!
                 }
 
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
-                                (0, "OmxComponentDecTest::GetInputFrameWmaRa() - Bytes read from input file %d", Size));
+                                (0, "OmxComponentDecTest::GetInputFrameWma() - Bytes read from input file %d", Size));
 
                 ipInBuffer[Index]->nFilledLen = Size;
                 ipInBuffer[Index]->nOffset = 0;  // for now all data starts at the beginning of the buffer
@@ -3197,11 +3227,11 @@ OMX_ERRORTYPE OmxComponentDecTest::GetInputFrameWmaRa()
                     iInIndex = Index;
                     iLastInputFrame = iFrameNum;
 
-                    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "OmxComponentDecTest::GetInputFrameWmaRa() - Input file has ended, OUT"));
+                    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "OmxComponentDecTest::GetInputFrameWma() - Input file has ended, OUT"));
                     return OMX_ErrorNone;
                 }
 
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG, (0, "OmxComponentDecTest::GetInputFrameWmaRa() - Next frame size is %d", Size));
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG, (0, "OmxComponentDecTest::GetInputFrameWma() - Next frame size is %d", Size));
 
                 ReadCount = fread(ipInBuffer[Index]->pBuffer, 1, Size, ipInputFile);
                 if (ReadCount < Size)
@@ -3210,12 +3240,12 @@ OMX_ERRORTYPE OmxComponentDecTest::GetInputFrameWmaRa()
                     iInIndex = Index;
                     iLastInputFrame = iFrameNum;
 
-                    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "OmxComponentDecTest::GetInputFrameWmaRa() - Input file read error, OUT"));
+                    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "OmxComponentDecTest::GetInputFrameWma() - Input file read error, OUT"));
                     return OMX_ErrorNone;   // corrupted file !!
                 }
 
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
-                                (0, "OmxComponentDecTest::GetInputFrameWmaRa() - Bytes read from input file %d", Size));
+                                (0, "OmxComponentDecTest::GetInputFrameWma() - Bytes read from input file %d", Size));
 
                 ipInBuffer[Index]->nFilledLen = Size;
                 ipInBuffer[Index]->nOffset = 0;
@@ -3231,7 +3261,7 @@ OMX_ERRORTYPE OmxComponentDecTest::GetInputFrameWmaRa()
                 ipInBuffer[Index]->nFlags  = 0;
 
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
-                                (0, "OmxComponentDecTest::GetInputFrameWmaRa() - Input buffer of index %d without any marker", Index));
+                                (0, "OmxComponentDecTest::GetInputFrameWma() - Input buffer of index %d without any marker", Index));
             }
             else
             {
@@ -3239,13 +3269,13 @@ OMX_ERRORTYPE OmxComponentDecTest::GetInputFrameWmaRa()
                 ipInBuffer[Index]->nFlags |= OMX_BUFFERFLAG_ENDOFFRAME;
 
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
-                                (0, "OmxComponentDecTest::GetInputFrameWmaRa() - Input buffer of index %d with OMX_BUFFERFLAG_ENDOFFRAME flag marked", Index));
+                                (0, "OmxComponentDecTest::GetInputFrameWma() - Input buffer of index %d with OMX_BUFFERFLAG_ENDOFFRAME flag marked", Index));
             }
         }
 
 
         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
-                        (0, "OmxComponentDecTest::GetInputFrameWmaRa() - Calling EmptyThisBuffer with Alloc Len %d, Filled Len %d Offset %d TimeStamp %d",
+                        (0, "OmxComponentDecTest::GetInputFrameWma() - Calling EmptyThisBuffer with Alloc Len %d, Filled Len %d Offset %d TimeStamp %d",
                          ipInBuffer[Index]->nAllocLen, ipInBuffer[Index]->nFilledLen, ipInBuffer[Index]->nOffset, ipInBuffer[Index]->nTimeStamp));
 
         ipInBuffer[Index]->nTimeStamp = 0;
@@ -3255,7 +3285,7 @@ OMX_ERRORTYPE OmxComponentDecTest::GetInputFrameWmaRa()
             ipInputAvail[Index] = OMX_FALSE; // mark unavailable
 
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
-                            (0, "OmxComponentDecTest::GetInputFrameWmaRa() - Sent the input buffer sucessfully, OUT"));
+                            (0, "OmxComponentDecTest::GetInputFrameWma() - Sent the input buffer sucessfully, OUT"));
             return OMX_ErrorNone;
         }
         else if (OMX_ErrorInsufficientResources == Status)
@@ -3264,7 +3294,7 @@ OMX_ERRORTYPE OmxComponentDecTest::GetInputFrameWmaRa()
             iInputReady = OMX_FALSE;
             iInputWasRefused = OMX_TRUE;
 
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "OmxComponentDecTest::GetInputFrameWmaRa() - EmptyThisBuffer failed with Error OMX_ErrorInsufficientResources, OUT"));
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "OmxComponentDecTest::GetInputFrameWma() - EmptyThisBuffer failed with Error OMX_ErrorInsufficientResources, OUT"));
             return OMX_ErrorInsufficientResources;
         }
         else
@@ -3272,17 +3302,17 @@ OMX_ERRORTYPE OmxComponentDecTest::GetInputFrameWmaRa()
             iStopProcessingInput = OMX_TRUE;
             iLastInputFrame = iFrameNum;
 
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "OmxComponentDecTest::GetInputFrameWmaRa() - ERROR, EmptyThisBuffer failed, OUT"));
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "OmxComponentDecTest::GetInputFrameWma() - ERROR, EmptyThisBuffer failed, OUT"));
             return OMX_ErrorNone;
         }
     }
     else
     {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "OmxComponentDecTest::GetInputFrameWmaRa() - ERROR, Input is not ready to be sent, OUT"));
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "OmxComponentDecTest::GetInputFrameWma() - ERROR, Input is not ready to be sent, OUT"));
         return OMX_ErrorInsufficientResources;
     }
 
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "OmxComponentDecTest::GetInputFrameWmaRa() - OUT"));
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "OmxComponentDecTest::GetInputFrameWma() - OUT"));
     return OMX_ErrorNone;
 }
 
@@ -4983,7 +5013,7 @@ OMX_BOOL OmxComponentDecTest::GetSetCodecSpecificInfo()
         Audio_Wma_Param.nPortIndex = iInputPortIndex;
 
         INIT_GETPARAMETER_STRUCT(OMX_AUDIO_PARAM_WMATYPE, Audio_Wma_Param);
-        pGetInputFrame = &OmxComponentDecTest::GetInputFrameWmaRa;
+        pGetInputFrame = &OmxComponentDecTest::GetInputFrameWma;
     }
     else if (0 == oscl_strcmp(iFormat, "RA"))
     {
@@ -4992,7 +5022,7 @@ OMX_BOOL OmxComponentDecTest::GetSetCodecSpecificInfo()
         Audio_Ra_Param.nPortIndex = iInputPortIndex;
 
         INIT_GETPARAMETER_STRUCT(OMX_AUDIO_PARAM_RATYPE, Audio_Ra_Param);
-        pGetInputFrame = &OmxComponentDecTest::GetInputFrameWmaRa;
+        pGetInputFrame = &OmxComponentDecTest::GetInputFrameRvRa;
     }
 
 
@@ -5515,7 +5545,7 @@ OMX_BOOL OmxComponentDecTest::NegotiateComponentParametersVideo()
     else if (0 == oscl_strcmp(iFormat, "RV"))
     {
         OMXVideoCompressionFormat = OMX_VIDEO_CodingRV;
-        pGetInputFrame = &OmxComponentDecTest::GetInputFrameRv;
+        pGetInputFrame = &OmxComponentDecTest::GetInputFrameRvRa;
     }
     else
     {
@@ -6154,3 +6184,36 @@ void Mp3BitstreamObject::ResetInputStream()
     iInputBufferCurrentLength = 0;
     iCurrentFrameLength = 0;
 }
+
+
+OMX_TICKS OmxComponentDecTest::ConvertTimestampIntoOMXTicks(const MediaClockConverter& src)
+{
+    // This is similar to mediaclockconverter set_value method - except without using the modulo for upper part of 64 bits
+
+    // Timescale value cannot be zero
+    OSCL_ASSERT(src.get_timescale() != 0);
+    if (src.get_timescale() == 0)
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
+                        (0, "OmxComponentDecTest::ConvertTimestampIntoOMXTicks Input timescale is 0"));
+
+        return (OMX_TICKS) 0;
+    }
+
+    OSCL_ASSERT(iOmxTimeScale != 0);
+    if (0 == iOmxTimeScale)
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
+                        (0, "OmxComponentDecTest::ConvertTimestampIntoOMXTicks target timescale is 0"));
+
+        return (OMX_TICKS) 0;
+    }
+
+    uint64 value = (uint64(src.get_wrap_count())) << 32;
+    value += src.get_current_timestamp();
+    // rounding up
+    value = (uint64(value) * iOmxTimeScale + uint64(src.get_timescale() - 1)) / src.get_timescale();
+
+    return (OMX_TICKS) value;
+}
+

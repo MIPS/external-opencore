@@ -37,6 +37,10 @@
 
 #endif
 
+#ifndef __MEDIA_CLOCK_CONVERTER_H
+#include "media_clock_converter.h"
+#endif
+
 // for Mp4 bitstream
 #define BIT_BUFF_SIZE 8024000
 #define FRAME_SIZE_FIELD  4
@@ -153,6 +157,9 @@ class OmxComponentDecTest : public OmxDecTestBase
             iNoMarkerBitTest = OMX_FALSE;
             iExtraPartialFrameTest = OMX_FALSE;
             iDynamicPortReconfigTest = OMX_FALSE;
+            iDecTimeScale = 1000;
+            iOmxTimeScale = 1000000;
+            iInputTimestampClock.set_timescale(iDecTimeScale); // keep the timescale set to input timestamp
         }
 
         void VerifyOutput(OMX_U8 aTestName[]);
@@ -190,6 +197,10 @@ class OmxComponentDecTest : public OmxDecTestBase
         OMX_BOOL iExtraPartialFrameTest;
         OMX_BOOL iDynamicPortReconfigTest;
 
+        OMX_U32 iDecTimeScale;
+        OMX_U32 iOmxTimeScale;
+        MediaClockConverter iInputTimestampClock;
+
         OMX_ERRORTYPE GetInput();
     public:
         //GetInputFrame routine would be different for different components
@@ -199,9 +210,9 @@ class OmxComponentDecTest : public OmxDecTestBase
         OMX_ERRORTYPE GetInputFrameAac();
         OMX_ERRORTYPE GetInputFrameAmr();
         OMX_ERRORTYPE GetInputFrameWmv();
-        OMX_ERRORTYPE GetInputFrameRv();
+        OMX_ERRORTYPE GetInputFrameRvRa();
         OMX_ERRORTYPE GetInputFrameMp3();
-        OMX_ERRORTYPE GetInputFrameWmaRa();
+        OMX_ERRORTYPE GetInputFrameWma();
 
         //Function pointer that will point to the correct component's function
         OMX_ERRORTYPE(OmxComponentDecTest::*pGetInputFrame)();
@@ -216,6 +227,8 @@ class OmxComponentDecTest : public OmxDecTestBase
         OMX_BOOL HandlePortReEnable();
 
         OMX_BOOL GetSetCodecSpecificInfo();
+
+        OMX_TICKS ConvertTimestampIntoOMXTicks(const MediaClockConverter& src);
 
     private:
         void Run();

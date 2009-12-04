@@ -207,8 +207,8 @@ OMX_BOOL OmxDecTestBufferNegotiation::NegotiateParameters()
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
                     (0, "OmxDecTestBufferNegotiation::NegotiateParameters() - Trying to Set new buffer parameters on the input port"));
 
-    //Make the changes in buffer count & sizes
-    iInBufferSize = iParamPort.nBufferSize + 1000;
+    //Make the changes in buffer count
+    iInBufferSize = iParamPort.nBufferSize;
     iInBufferCount = iParamPort.nBufferCountActual + 2;
 
     iParamPort.nBufferCountActual = iInBufferCount;
@@ -229,8 +229,7 @@ OMX_BOOL OmxDecTestBufferNegotiation::NegotiateParameters()
     INIT_GETPARAMETER_STRUCT(OMX_PARAM_PORTDEFINITIONTYPE, iParamPort);
     Err = OMX_GetParameter(ipAppPriv->Handle, OMX_IndexParamPortDefinition, &iParamPort);
 
-    if ((OMX_ErrorNone != Err) || (iParamPort.nBufferCountActual != (OMX_U32)iInBufferCount) ||
-            (iParamPort.nBufferSize != (OMX_U32)iInBufferSize))
+    if ((OMX_ErrorNone != Err) || (iParamPort.nBufferCountActual != (OMX_U32)iInBufferCount))
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
                         (0, "OmxDecTestBufferNegotiation::NegotiateParameters() - Buffer parameter verificication failed with Get/Set Parameter combination on port %d, OUT", iInputPortIndex));
@@ -274,20 +273,9 @@ OMX_BOOL OmxDecTestBufferNegotiation::NegotiateParameters()
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
                     (0, "OmxDecTestBufferNegotiation::NegotiateParameters() - Trying to Set new buffer parameters on the output port"));
 
-    //Make the changes in buffer count & sizes
-
-    // Change size only for audio components, as for video, size is dependent upon WxH
-    // and cannot be changed independently
-    if (OMX_TRUE == iIsAudioFormat)
-    {
-        iOutBufferSize = iParamPort.nBufferSize + 1000;
-    }
-    else
-    {
-        iOutBufferSize = iParamPort.nBufferSize;
-    }
-
+    //Make the changes in buffer count
     iOutBufferCount = iParamPort.nBufferCountActual + 2;
+    iOutBufferSize = iParamPort.nBufferSize;
 
     iParamPort.nBufferCountActual = iOutBufferCount;
     iParamPort.nBufferSize = iOutBufferSize;
@@ -308,8 +296,7 @@ OMX_BOOL OmxDecTestBufferNegotiation::NegotiateParameters()
     iParamPort.nPortIndex = iOutputPortIndex;
 
     Err = OMX_GetParameter(ipAppPriv->Handle, OMX_IndexParamPortDefinition, &iParamPort);
-    if ((OMX_ErrorNone != Err) || (iParamPort.nBufferCountActual != iOutBufferCount)
-            || (iParamPort.nBufferSize != iOutBufferSize))
+    if ((OMX_ErrorNone != Err) || (iParamPort.nBufferCountActual != iOutBufferCount))
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
                         (0, "OmxDecTestBufferNegotiation::NegotiateParameters() - Buffer parameter verificication failed with Get/Set Parameter combination on port %d, OUT", iOutputPortIndex));

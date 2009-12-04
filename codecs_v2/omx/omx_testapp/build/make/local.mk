@@ -72,6 +72,7 @@ LIBS := pv_video_config_parser \
 		pv_aac_enc \
 		wmadecoder \
 		wmavoicedecoder \
+        	pvmediadatastruct \
 		omx_baseclass_lib \
 		pv_config_parser \
 		colorconvert \
