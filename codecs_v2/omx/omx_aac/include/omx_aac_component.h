@@ -38,6 +38,8 @@
 
 
 #define INPUT_BUFFER_SIZE_AAC 1536
+// Size of HE-AAC is 2048 samples. There are 2 bytes per sample and
+// if there are 2 channels - this makes 8192 bytes
 #define OUTPUT_BUFFER_SIZE_AAC 8192
 
 #define NUMBER_INPUT_BUFFER_AAC  10

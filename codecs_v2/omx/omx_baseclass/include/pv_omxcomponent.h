@@ -654,6 +654,8 @@ class OmxComponentAudio : public OmxComponentBase
         {
             OSCL_UNUSED_ARG(aAacPlusFlag);
         }
+
+        OSCL_IMPORT_REF virtual void CalculateBufferParameters(OMX_U32 PortIndex);
 };
 
 

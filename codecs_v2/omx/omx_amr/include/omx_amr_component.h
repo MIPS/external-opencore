@@ -35,6 +35,8 @@
 #endif
 
 #define INPUT_BUFFER_SIZE_AMR 2000
+// There is 160 samples per frame NB and 320 samples per frame for WB
+// There's 2 bytes per sample and the worst case is therefore 640 bytes per frame
 #define OUTPUT_BUFFER_SIZE_AMR 640
 
 #define NUMBER_INPUT_BUFFER_AMR  10

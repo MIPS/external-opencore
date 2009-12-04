@@ -480,6 +480,9 @@ class PvmfAssetInfo3GPPLocationStruct
 // key for audio decoder format
 #define PVMF_AUDIO_DEC_FORMAT_TYPE_VALUE_KEY "x-pvmf/audio/decoder/format-type;valtype=char*"
 
+// key for audio decoder output buffer duration in milliseconds
+#define PVMF_AUDIO_DEC_PCM_BUFFER_DURATION_KEY "x-pvmf/audio/decoder/pcm-buffer-duration;valtype=uint32"
+
 // key for video decoder format
 #define PVMF_VIDEO_DEC_FORMAT_TYPE_VALUE_KEY "x-pvmf/video/decoder/format-type;valtype=char*"
 

@@ -3712,6 +3712,8 @@ OSCL_EXPORT_REF OMX_ERRORTYPE OmxComponentAudio::SetParameter(
             /*Check Structure Header and verify component State*/
             ErrorType = ParameterSanityCheck(hComponent, PortIndex, pAudioPcmMode, sizeof(OMX_AUDIO_PARAM_PCMMODETYPE));
             oscl_memcpy(&ipPorts[PortIndex]->AudioPcmMode, pAudioPcmMode, sizeof(OMX_AUDIO_PARAM_PCMMODETYPE));
+            // set the buffer size etc. if necessary
+            CalculateBufferParameters(PortIndex);
         }
         break;
 
@@ -3860,7 +3862,14 @@ OSCL_EXPORT_REF OMX_ERRORTYPE OmxComponentAudio::SetParameter(
             }
 
             ipPorts[PortIndex]->PortParam.nBufferCountActual = pPortDef->nBufferCountActual;
-            ipPorts[PortIndex]->PortParam.nBufferSize = pPortDef->nBufferSize;
+            // check if the client is trying to set the nBufferSize. This is not acceptable - since
+            // nBufferSize is a read-only parameter. According to the OMX spec 3.2.2.9, the component
+            // shall retain the read-only value, but shall NOT return an error
+            if (ipPorts[PortIndex]->PortParam.nBufferSize != pPortDef->nBufferSize)
+            {
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE, (0, "OmxComponentAudio : SetParameter warning - client is trying to set the value of nBufferSize which is read-only"));
+            }
+
 
             oscl_memcpy(&ipPorts[PortIndex]->PortParam.format.audio, &pPortDef->format.audio, sizeof(OMX_AUDIO_PORTDEFINITIONTYPE));
         }
@@ -3919,6 +3928,15 @@ OSCL_EXPORT_REF OMX_ERRORTYPE OmxComponentAudio::SetParameter(
     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE, (0, "OmxComponentAudio : SetParameter OUT"));
     return ErrorType;
 
+}
+
+// This virtual function should be overwritten by specific codec component according to the buffer requirement.
+
+OSCL_EXPORT_REF void OmxComponentAudio::CalculateBufferParameters(OMX_U32 PortIndex)
+{
+    OSCL_UNUSED_ARG(PortIndex);
+
+    return;
 }
 
 
@@ -4521,7 +4539,17 @@ OSCL_EXPORT_REF OMX_ERRORTYPE OmxComponentVideo::SetParameter(
             }
 
             ipPorts[PortIndex]->PortParam.nBufferCountActual = pPortDef->nBufferCountActual;
-            ipPorts[PortIndex]->PortParam.nBufferSize = pPortDef->nBufferSize;
+
+            // check if the client is trying to set the nBufferSize. This is not acceptable - since
+            // nBufferSize is a read-only parameter. According to the OMX spec 3.2.2.9, the component
+            // shall retain the read-only value, but shall NOT return an error
+            // nBufferSize can be adjusted by sending different width/height values though
+            if (ipPorts[PortIndex]->PortParam.nBufferSize != pPortDef->nBufferSize)
+            {
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE, (0, "OmxComponentVideo : SetParameter warning - client is trying to set the value of nBufferSize which is read-only"));
+            }
+
+
 
             oscl_memcpy(&ipPorts[PortIndex]->PortParam.format.video, &pPortDef->format.video, sizeof(OMX_VIDEO_PORTDEFINITIONTYPE));
 

@@ -115,6 +115,10 @@ PVMFOMXAudioDecNode::PVMFOMXAudioDecNode(int32 aPriority) :
 
     iComputeSamplesPerFrame = true;
 
+    // This default value can be changed using cap-config
+    iOutputBufferPCMDuration = PVOMXAUDIODEC_DEFAULT_OUTPUTPCM_TIME; // set PCM buffer duration to default (200ms)
+
+
     //Try Allocate FSI buffer
 
     // Do This first in case of Query
@@ -724,9 +728,9 @@ PVMFStatus PVMFOMXAudioDecNode::HandlePortReEnable()
             iNumBytesPerFrame = 2 * iSamplesPerFrame * iNumberOfAudioChannels;
             iMilliSecPerFrame = (iSamplesPerFrame * 1000) / iPCMSamplingRate;
             // Determine the size of each PCM output buffer. Size would be big enough to hold certain time amount of PCM data
-            uint32 numframes = PVOMXAUDIODEC_DEFAULT_OUTPUTPCM_TIME / iMilliSecPerFrame;
+            uint32 numframes = iOutputBufferPCMDuration / iMilliSecPerFrame;
 
-            if (PVOMXAUDIODEC_DEFAULT_OUTPUTPCM_TIME % iMilliSecPerFrame)
+            if (iOutputBufferPCMDuration % iMilliSecPerFrame)
             {
                 // If there is a remainder, include one more frame
                 ++numframes;
@@ -736,7 +740,7 @@ PVMFStatus PVMFOMXAudioDecNode::HandlePortReEnable()
             iOMXComponentOutputBufferSize = numframes * iNumBytesPerFrame;
         }
         else
-            iOMXComponentOutputBufferSize = (2 * iNumberOfAudioChannels * PVOMXAUDIODEC_DEFAULT_OUTPUTPCM_TIME * iPCMSamplingRate) / 1000; // assuming 16 bits per sample
+            iOMXComponentOutputBufferSize = (2 * iNumberOfAudioChannels * iOutputBufferPCMDuration * iPCMSamplingRate) / 1000; // assuming 16 bits per sample
 
         if (iOMXComponentOutputBufferSize < iParamPort.nBufferSize)
         {
@@ -1803,9 +1807,9 @@ bool PVMFOMXAudioDecNode::GetSetCodecSpecificInfo()
         iNumBytesPerFrame = 2 * iSamplesPerFrame * iNumberOfAudioChannels;
         iMilliSecPerFrame = (iSamplesPerFrame * 1000) / iPCMSamplingRate;
         // Determine the size of each PCM output buffer. Size would be big enough to hold certain time amount of PCM data
-        uint32 numframes = PVOMXAUDIODEC_DEFAULT_OUTPUTPCM_TIME / iMilliSecPerFrame;
+        uint32 numframes = iOutputBufferPCMDuration / iMilliSecPerFrame;
 
-        if (PVOMXAUDIODEC_DEFAULT_OUTPUTPCM_TIME % iMilliSecPerFrame)
+        if (iOutputBufferPCMDuration % iMilliSecPerFrame)
         {
             // If there is a remainder, include one more frame
             ++numframes;
@@ -1814,7 +1818,7 @@ bool PVMFOMXAudioDecNode::GetSetCodecSpecificInfo()
         iOMXComponentOutputBufferSize = numframes * iNumBytesPerFrame;
     }
     else
-        iOMXComponentOutputBufferSize = (2 * iNumberOfAudioChannels * PVOMXAUDIODEC_DEFAULT_OUTPUTPCM_TIME * iPCMSamplingRate) / 1000; // assuming 16 bits per sample
+        iOMXComponentOutputBufferSize = (2 * iNumberOfAudioChannels * iOutputBufferPCMDuration * iPCMSamplingRate) / 1000; // assuming 16 bits per sample
 
     if (iBOCReceived)
         CalculateBOCParameters();
@@ -3269,6 +3273,25 @@ void PVMFOMXAudioDecNode::DoCapConfigSetParameters(PvmiKvp* aParameters, int aNu
 
             iNodeConfig.iMimeType = aParameters[ii].value.pChar_value;
         }
+        else if (pv_mime_strcmp(aParameters[ii].key, PVMF_AUDIO_DEC_PCM_BUFFER_DURATION_KEY) == 0)
+        {
+            // set the mime type if audio format is being used
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                            (0, "PVMFOMXAudioDecNode::DoCapConfigSetParameters() set audio dec pcm buffer size to %d milliseconds", aParameters->value.uint32_value));
+
+            iOutputBufferPCMDuration = aParameters[ii].value.uint32_value;
+            if (iOutputBufferPCMDuration == 0)
+            {
+
+                aRetKVP = aParameters; // indicate "error" by setting return KVP to original
+                iOutputBufferPCMDuration = PVOMXAUDIODEC_DEFAULT_OUTPUTPCM_TIME;
+
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                                (0, "PVMFOMXAudioDecNode::DoCapConfigSetParameters() set audio dec pcm buffer size to 0 milliseconds not allowed, reveting to default of %d", iOutputBufferPCMDuration));
+
+            }
+
+        }
         else
         {
             // For now, ignore other queries
@@ -3772,6 +3795,14 @@ PVMFStatus PVMFOMXAudioDecNode::DoCapConfigReleaseParameters(PvmiKvp* aParameter
         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFOMXAudioDecNode::DoCapConfigReleaseParameters() Out"));
         return PVMFSuccess;
     }
+    else if (pv_mime_strcmp(aParameters[0].key, _STRLIT_CHAR(PVMF_AUDIO_DEC_PCM_BUFFER_DURATION_KEY)) == 0)
+    {
+        oscl_free(aParameters[0].key);
+        oscl_free(aParameters);
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFOMXAudioDecNode::DoCapConfigReleaseParameters() Out"));
+        return PVMFSuccess;
+    }
+
 
     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVMFOMXAudioDecNode::DoCapConfigReleaseParameters() KVP list is NULL or number of elements is 0"));
     return PVMFErrArgument;
@@ -3974,6 +4005,42 @@ PVMFStatus PVMFOMXAudioDecNode::DoCapConfigGetParametersSync(PvmiKeyType aIdenti
 
 
     }
+    else if (pv_mime_strcmp(aIdentifier, PVMF_AUDIO_DEC_PCM_BUFFER_DURATION_KEY) == 0)
+    {
+        // set the mime type if audio format is being used
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                        (0, "PVMFOMXAudioDecNode::DoCapConfigGetParameters() audio dec pcm buffer size is %d milliseconds", iOutputBufferPCMDuration));
+
+        // allocate kvp
+        aNumParamElements = 1;
+        aParameters = (PvmiKvp*)oscl_malloc(sizeof(PvmiKvp));
+        if (aParameters == NULL)
+        {
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVMFOMXVideoDecNode::DoCapConfigGetParametersSync() Memory allocation for KVP failed"));
+            return PVMFErrNoMemory;
+        }
+        oscl_memset(aParameters, 0, sizeof(PvmiKvp));
+
+        // Allocate memory for the key strings in each KVP
+        PvmiKeyType memblock = (PvmiKeyType)oscl_malloc((sizeof(_STRLIT_CHAR(PVMF_AUDIO_DEC_PCM_BUFFER_DURATION_KEY)) + 1) * sizeof(char));
+        if (memblock == NULL)
+        {
+            oscl_free(aParameters);
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVMFOMXVideoDecNode::DoCapConfigGetParametersSync() Memory allocation for key string failed"));
+            return PVMFErrNoMemory;
+        }
+        oscl_strset(memblock, 0, (sizeof(_STRLIT_CHAR(PVMF_AUDIO_DEC_PCM_BUFFER_DURATION_KEY)) + 1) * sizeof(char));
+
+        aParameters->key = memblock;
+
+        oscl_strncat(aParameters->key, _STRLIT_CHAR(PVMF_AUDIO_DEC_PCM_BUFFER_DURATION_KEY), sizeof(_STRLIT_CHAR(PVMF_AUDIO_DEC_PCM_BUFFER_DURATION_KEY)));
+        aParameters->key[sizeof(_STRLIT_CHAR(PVMF_AUDIO_DEC_PCM_BUFFER_DURATION_KEY))] = 0; // null terminate
+
+
+        aParameters->value.uint32_value = iOutputBufferPCMDuration;
+
+    }
+
 
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFOMXVideoDecNode::DoCapConfigGetParametersSync() Out"));
     if (aNumParamElements == 0)

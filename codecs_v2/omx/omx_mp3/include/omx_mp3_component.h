@@ -40,6 +40,9 @@
 
 
 #define INPUT_BUFFER_SIZE_MP3 8192
+// The max size of mp3 frame is 1152 samples
+// There's 2 bytes per sample and if there's 2 channels -
+// the size of output buffer needs to be at least 4608 bytes
 #define OUTPUT_BUFFER_SIZE_MP3 4608
 
 #define NUMBER_INPUT_BUFFER_MP3  10

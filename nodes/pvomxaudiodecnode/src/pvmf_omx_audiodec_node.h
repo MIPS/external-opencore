@@ -143,6 +143,8 @@ class PVMFOMXAudioDecNode: public PVMFOMXBaseDecNode
         uint32 iSamplesPerFrame;        // number of samples per 1 frame of data (if known) per channel
         uint32 iNumBytesPerFrame;       // depends on number of samples/channel and number of channels
         uint32 iMilliSecPerFrame;       //
+        uint32 iOutputBufferPCMDuration; // initially set to PVOMXAUDIODEC_DEFAULT_OUTPUTPCM_TIME, but configurable thru capconfig
+
 
         // gapless audio - BOC
         uint32 iBOCBytesToSkip;
