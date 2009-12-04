@@ -4001,6 +4001,8 @@ void PVPlayerEngine::DoCancelCommandBeingProcessed(void)
 
             // No pending command so reset the nodes now
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVPlayerEngine::DoCancelCommandBeingProcessed() No command to cancel, now reset all nodes"));
+            // Clear the CancelCmd queue as the cmd has been cancelled.
+            iCmdToCancel.clear();
 
             DereferenceLicenseInterface();
 
@@ -4123,8 +4125,41 @@ PVMFStatus PVPlayerEngine::DoCancelPendingNodeDatapathCommand()
             }
             else
             {
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::DoCancelPendingNodeDatapathCommand() Unknown node. Asserting"));
-                OSCL_ASSERT(false);
+                // Entering here it might be possible that Engine is doing track selection and has issued a command on decoder node which has not yet made
+                // to the PVPlayerEngineDatapath (iEngineDatapath). In that case go through all the decoder nodes in iTrackSelectionList and try to find a
+                // matching decoder node. If found issue a cancel command to that node. If not found or if Engine is not doing Track Selection, then this is some
+                // unknown node just assert.
+                if (!iTrackSelectionList.empty())
+                {
+                    // Go through the TrackSelectionList used in TrackSelection
+                    for (uint32 j = 0; j < iTrackSelectionList.size(); j++)
+                    {
+                        // Compare the node here
+                        if ((iTrackSelectionList[j].iTsDecNode != NULL) && (iCurrentContextList[i]->iNode == iTrackSelectionList[j].iTsDecNode))
+                        {
+                            // Found the node, call Cancel Command on the node and also break out of the loop
+                            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVPlayerEngine::DoCancelPendingNodeDatapathCommand() Calling CancelAllCommands() on dec node"));
+                            leavecode = IssueNodeCancelCommand(iCurrentContextList[i], iTrackSelectionList[j].iTsDecNodeSessionId, (OsclAny*) & iNumberCancelCmdPending);
+                            if (leavecode == 0)
+                            {
+                                ++iNumberCancelCmdPending;
+                            }
+                            else
+                            {
+                                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
+                                                (0, "PVPlayerEngine::DoCancelPendingNodeDatapathCommand() CancelAllCommands() on dec node did a leave"));
+                                FreeEngineContext(iCurrentContextList[i]);
+                            }
+                            break;
+                        }
+                        // Node not found, continue checking the TrackSelectionList
+                    }
+                }
+                else
+                {
+                    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::DoCancelPendingNodeDatapathCommand() Unknown node. Asserting"));
+                    OSCL_ASSERT(false);
+                }
             }
         }
         else if (iCurrentContextList[i]->iDatapath != NULL)
