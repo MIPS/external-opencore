@@ -373,20 +373,21 @@ int32 AACBitstreamObject::isAACFile(PVFile* aFilePtr)
             //we do not even have 4 bytes in the file - so no point checking for ADTS
             return AACBitstreamObject::INSUFFICIENT_DATA;
         }
-        //Not ADIF - So check for ADTS
-        if (remainingBytes >= MAX_ADTS_PACKET_LENGTH)
+        // Not ADIF - So check for ADTS
+        // check for possible ADTS sync word
+        int32 index = find_adts_syncword(pBuffer);
+
+        if (index != -1)
         {
-            // check for possible ADTS sync word
-            int32 index = find_adts_syncword(pBuffer);
-            if (index != -1)
-            {
-                // definitely ADTS
-                iAACFormat = EAACADTS;
-                return AACBitstreamObject::EVERYTHING_OK;
-            }
+            // definitely ADTS
+            iAACFormat = EAACADTS;
+            return AACBitstreamObject::EVERYTHING_OK;
         }
+
         else
         {
+            // no ADTS match was found, maybe more data is needed. We can give up here
+            // or feed more data.
             return AACBitstreamObject::INSUFFICIENT_DATA;
         }
     }
@@ -426,10 +427,7 @@ int32 AACBitstreamObject::find_adts_syncword(uint8 *pBuffer)
         {
             uint8* buf = &pBuffer[index+3];
             frameLen = GetADTSFrameLength(buf);
-            if (frameLen >= MAX_ADTS_PACKET_LENGTH)
-            {
-                return (-1);
-            }
+
             nextIndex += frameLen;
             iAvgFrameSize = frameLen;
 
