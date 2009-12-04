@@ -3322,6 +3322,17 @@ OSCL_EXPORT_REF PVMFStatus PVRTSPEngineNode::processIncomingMessage(RTSPIncoming
             // Special processing is needed since spaces are replaced
             // by '\0' by the RTSP parser.
             ParseSupportedHeaderFor3GPPFCSFeatures(serverSupportedFeatures);
+
+            // Make sure the watchdog timer is requested in case of timeouts during long pauses.
+            if (tmpOutgoingMsg->method == iKeepAliveMethod)
+            {
+                if ((iState == PVRTSP_ENGINE_NODE_STATE_PAUSE_DONE) ||
+                        ((bKeepAliveInPlay) && (iState == PVRTSP_ENGINE_NODE_STATE_PLAY_DONE)))
+                {
+                    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_INFO, (0, "PVRTSPEngineNode::processIncomingMessage() start keep-alive timer %d. Ln %d", TIMEOUT_KEEPALIVE, __LINE__));
+                    iWatchdogTimer->Request(REQ_TIMER_KEEPALIVE_ID, 0, TIMEOUT_KEEPALIVE);
+                }
+            }
         }
         else if (tmpOutgoingMsg->method == METHOD_SETUP)
         {
