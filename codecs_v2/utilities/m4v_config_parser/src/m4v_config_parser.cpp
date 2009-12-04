@@ -136,7 +136,7 @@ OSCL_EXPORT_REF int16 iDecodeVOLHeader(uint8 *buffer, int32 length, int32 *width
 {
     int16 status = 0;
     M4VConfigInfo iM4VConfigInfo;
-    ParseM4VFSI(buffer, length, &iM4VConfigInfo);
+    status = ParseM4VFSI(buffer, length, &iM4VConfigInfo);
     *display_width = iM4VConfigInfo.iFrameWidth[0];
     *display_height = iM4VConfigInfo.iFrameHeight[0];
     *width = (iM4VConfigInfo.iFrameWidth[0] + 15) & -16;
@@ -1249,7 +1249,7 @@ int32 DecodeVUI(mp4StreamType *psBits)
     ReadBits(psBits, 1, &temp); /*  nal_hrd_parameters_present_flag */
     if (temp)
     {
-        if (!DecodeHRD(psBits))
+        if (DecodeHRD(psBits))
         {
             return 1;
         }
@@ -1257,7 +1257,7 @@ int32 DecodeVUI(mp4StreamType *psBits)
     ReadBits(psBits, 1, &temp32); /*    vcl_hrd_parameters_present_flag*/
     if (temp32)
     {
-        if (!DecodeHRD(psBits))
+        if (DecodeHRD(psBits))
         {
             return 1;
         }
@@ -1267,11 +1267,7 @@ int32 DecodeVUI(mp4StreamType *psBits)
         ReadBits(psBits, 1, &temp);     /*  low_delay_hrd_flag */
     }
     ReadBits(psBits, 1, &temp); /*  pic_struct_present_flag */
-    status = ReadBits(psBits, 1, &temp); /* _restriction_flag */
-    if (status != 0) // buffer overrun
-    {
-        return 1;
-    }
+    ReadBits(psBits, 1, &temp); /* bitstream_restriction_flag */
 
     if (temp)
     {

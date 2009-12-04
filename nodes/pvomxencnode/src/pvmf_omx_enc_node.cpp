@@ -2694,7 +2694,15 @@ bool PVMFOMXEncNode::SetMP4EncoderParameters()
     {
         // NO FSI Buffer
         Mpeg4Type.bSVH = OMX_FALSE; //((iEncoderParam.iContentType == EI_H263)? true: false);
-        Mpeg4Type.nTimeIncRes = 1000;  //30000 (in relation to (should be higher than) frame rate )
+        if (iVideoEncodeParam.iTimeIncRes < iVideoEncodeParam.iFrameRate[0])
+        {
+            // Error
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                            (0, "PVMFOMXEncNode-%s::SetMP4EncoderParameters- TimeIncRes is NOT greater than or equal to target Frame Rate", iNodeTypeId));
+            return false;
+        }
+        Mpeg4Type.nTimeIncRes =  iVideoEncodeParam.iTimeIncRes;  //30000 (in relation to (should be higher than) frame rate )
+
         switch (iVideoEncodeParam.iProfileLevel)
         {
 
