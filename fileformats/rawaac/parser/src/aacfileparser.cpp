@@ -549,13 +549,7 @@ int32 AACBitstreamObject::getFileInfo(int32& fileSize, TAACFormat& format, uint8
                 uint32 samplesPerFrame;
 
                 int32 status = GetActualAacConfig(pBuffer,
-                                                  &iAudioObjectType,
-                                                  &config_header_size,
-                                                  &sampleFreqIndex,
-                                                  &iChannelConfig,
-                                                  &samplesPerFrame,
-                                                  false);
-
+                                                  &iAudioObjectType, &config_header_size, &sampleFreqIndex, &iChannelConfig, &samplesPerFrame);
                 if (status != SUCCESS) return AACBitstreamObject::MISC_ERROR;
 
                 // Retrieve the audio object type

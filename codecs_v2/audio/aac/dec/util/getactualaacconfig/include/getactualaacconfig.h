@@ -41,8 +41,7 @@ OSCL_IMPORT_REF  int32 GetActualAacConfig(uint8* aConfigHeader,
         int32* aConfigHeaderSize,
         uint8* SamplingRateIndex,
         uint32* NumChannels,
-        uint32* aSamplesPerFrame,
-        bool    mime_3016);
+        uint32* aSamplesPerFrame);
 
 
 #endif

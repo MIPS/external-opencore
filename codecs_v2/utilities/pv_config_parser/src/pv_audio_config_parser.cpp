@@ -678,8 +678,7 @@ OSCL_EXPORT_REF int32 pv_audio_config_parser(pvAudioConfigParserInputs *aInputs,
                                     &bytes_consumed,
                                     &SamplingRateIndex,
                                     &NumChannels,
-                                    &SamplesPerFrame,
-                                    (aInputs->iMimeType == PVMF_MIME_AAC_SIZEHDR));
+                                    &SamplesPerFrame);
         if (status != 0)//error
         {
             bBitStreamValid  = false;
