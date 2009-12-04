@@ -499,6 +499,7 @@ class MP3Parser
         MP3FileType mp3Type;
         int32 iTagSize;
         PvmiKvpSharedPtrVector iId3Frames;
+        bool iSkipHeaderFrame;
 
         bool iGaplessInfoAvailable;
         PVMFGaplessMetadata iGaplessMetadata;

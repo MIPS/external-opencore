@@ -364,6 +364,7 @@ MP3Parser::MP3Parser(PVFile* aFileHandle)
     pSyncBuffer = NULL;
 
     iGaplessInfoAvailable = false;
+    iSkipHeaderFrame = false;
 }
 
 
@@ -653,9 +654,18 @@ MP3ErrorType MP3Parser::ParseMP3File(PVFile * fpUsed, bool aEnableCRC)
             revSeek -= MP3_FIRST_FRAME_SIZE;
 
             if (!DecodeXINGHeader(pFirstFrame, iXingHeader, iMP3HeaderInfo))
+            {
                 return MP3_FILE_XING_HDR_ERR;
+            }
             else
+            {
                 mp3Type = EXINGType;
+                // this frame is a Xing header, the MP3 media data should start after this frame
+                // position the file pointer to skip over this frame
+                // SeekToTimestamp will do that too
+                iSkipHeaderFrame = true;
+                revSeek += iMP3ConfigInfo.FrameLengthInBytes;
+            }
         }
     }
 
@@ -1891,6 +1901,12 @@ uint32  MP3Parser::SeekToTimestamp(uint32 timestampInMsec)
     if (!((!fp->GetCPM()) && (SeekPosition == iLocalFileSize) && (timestampInMsec == iClipDurationInMsec)))
     {
         SeekPosition += StartOffset;
+    }
+    // For clips with Xing Header,  TOC is used only for reposition > 0 msec
+    // Hence need to to make adjustment (in order to skip xing frame) for seek to 0 msec
+    if (iSkipHeaderFrame && (0 == timestampInMsec))
+    {
+        SeekPosition += iMP3ConfigInfo.FrameLengthInBytes;
     }
     fp->Seek(SeekPosition, Oscl_File::SEEKSET);
     return timestampInMsec;
