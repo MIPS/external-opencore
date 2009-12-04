@@ -790,6 +790,7 @@ class PVMFSocketNode
         OSCL_IMPORT_REF PVMFStatus GetMaxTCPRecvBufferSize(uint32& aSize, PVMFPortInterface* aPort = NULL) const;
         OSCL_IMPORT_REF PVMFStatus SetMaxTCPRecvBufferCount(uint32 aBufferSize, PVMFPortInterface* aPort = NULL);
         OSCL_IMPORT_REF PVMFStatus GetMaxTCPRecvBufferCount(uint32& aSize, PVMFPortInterface* aPort = NULL) const;
+        OSCL_EXPORT_REF PVMFStatus SetMaxUDPPortNum(uint32& aMaxUdpPortNum, uint32& aMinUdpPortNum);
         OsclMemPoolResizableAllocator* CreateSharedBuffer(const PVMFPortInterface* aPort , uint32 aBufferSize, uint32 aExpectedNumberOfBlocksPerBuffer, uint32 aResizeSize, uint32 aMaxNumResizes);
         //**********end PVMFSocketNodeExtensionInterface
 
@@ -879,7 +880,7 @@ class PVMFSocketNode
         //Used to stop all port activity, this var counts down from N to 0, or
         //has a value of (-1) to indicate it's inactive
         int32 iNumStopPortActivityPending;
-
+        uint32 iUdpPortRange;
         /*********************************************
         * Oscl Socket Handling
         **********************************************/
@@ -895,7 +896,6 @@ class PVMFSocketNode
         const int TIMEOUT_RECV;
         const int TIMEOUT_RECVFROM;
         const int TIMEOUT_SHUTDOWN;
-        const int UDP_PORT_RANGE;
         const int MAX_UDP_PACKET_SIZE;
         const int MIN_UDP_PACKET_SIZE;
 
@@ -1020,6 +1020,7 @@ class PVMFSocketNodeExtensionInterfaceImpl: public PVInterfaceImpl<PVMFSocketNod
         OSCL_IMPORT_REF virtual PVMFStatus GetMaxTCPRecvBufferSize(uint32& aSize, PVMFPortInterface* aPort = NULL) const;
         OSCL_IMPORT_REF virtual PVMFStatus SetMaxTCPRecvBufferCount(uint32 aCount, PVMFPortInterface* aPort = NULL);
         OSCL_IMPORT_REF virtual PVMFStatus GetMaxTCPRecvBufferCount(uint32& aCount, PVMFPortInterface* aPort = NULL) const;
+        OSCL_EXPORT_REF virtual PVMFStatus SetMaxUDPPortNum(uint32& aMaxUdpPortNum, uint32& aMinUdpPortNum) const;
         OSCL_IMPORT_REF virtual OsclMemPoolResizableAllocator* CreateSharedBuffer(const PVMFPortInterface* aPort , uint32 aBufferSize, uint32 aExpectedNumberOfBlocksPerBuffer, uint32 aResizeSize, uint32 aMaxNumResizes);
     private:
         PVMFSocketNode *iContainer;

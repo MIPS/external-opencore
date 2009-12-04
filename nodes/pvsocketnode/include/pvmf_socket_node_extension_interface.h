@@ -102,6 +102,13 @@ class PVMFSocketNodeExtensionInterface : public PVInterface
         */
         OSCL_IMPORT_REF virtual PVMFStatus GetMaxTCPRecvBufferCount(uint32& aCount, PVMFPortInterface* aPort = NULL) const = 0;
 
+        /**
+        Only for UDP based data flow, API helps to set UDP port range.
+        @aMaxUdpPortNum[in] - Maximum udp port number
+        @aMinUdpPortNum[in] - Minimum udp port number
+        @return - PVMFSuccess, if maximun port number successfully set
+        */
+        OSCL_EXPORT_REF virtual PVMFStatus SetMaxUDPPortNum(uint32& aMaxUdpPortNum, uint32& aMinUdpPortNum) const = 0;
         OSCL_IMPORT_REF virtual OsclMemPoolResizableAllocator* CreateSharedBuffer(const PVMFPortInterface* aPort , uint32 aBufferSize, uint32 aExpectedNumberOfBlocksPerBuffer, uint32 aResizeSize, uint32 aMaxNumResizes) = 0;
 
 };

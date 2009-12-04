@@ -135,6 +135,8 @@ PVMFSMRTSPUnicastNode::PVMFSMRTSPUnicastNode(int32 aPriority): PVMFSMFSPBaseNode
     iJitterBufferDurationInMilliSeconds = DEFAULT_JITTER_BUFFER_DURATION_IN_MS;
     oAutoReposition = false;
     iPauseDenied    = false;
+    bool iUseRandomUDPPort = true;
+    uint32 iStartPortNum = 0;
     iSwitchSDPLocation = NULL;
     ResetNodeParams(false);
 }
@@ -1253,8 +1255,9 @@ bool PVMFSMRTSPUnicastNode::ReserveSockets()
         (iSocketNodeContainer->iExtensions[0]);
 
     PVMFRTSPTrackInfoVector::iterator it;
-    uint32 startPortNum = 0;
+    if (iUseRandomUDPPort)
     {
+        iStartPortNum = 0;
         TimeValue current_time;
         current_time.set_to_current_time();
         uint32 my_seed = current_time.get_sec();
@@ -1263,7 +1266,7 @@ bool PVMFSMRTSPUnicastNode::ReserveSockets()
         random_num.Seed(my_seed);
         int32 first = random_num.Rand();
         uint32 myport = (first & 0x1FFF) + 0x2000;  //start from 8192
-        startPortNum = (myport >> 1) << 1;  //start from even
+        iStartPortNum = (myport >> 1) << 1;  //start from even
     }
 
     for (it = iTrackInfoVec.begin();
@@ -1277,7 +1280,7 @@ bool PVMFSMRTSPUnicastNode::ReserveSockets()
 
         PVMFStatus status = snExtIntf->AllocateConsecutivePorts(&portConfigWithMime,
                             it->iRTPSocketID,
-                            it->iRTCPSocketID, startPortNum);
+                            it->iRTCPSocketID, iStartPortNum);
         if (status != PVMFSuccess)
         {
             return false;
@@ -2549,8 +2552,6 @@ PVMFStatus PVMFSMRTSPUnicastNode::GetConfigParameter(PvmiKvp*& aParameters,
             }
         }
         break;
-
-
         default:
             // Invalid index
             oscl_free(aParameters[0].key);
@@ -3063,6 +3064,32 @@ PVMFStatus PVMFSMRTSPUnicastNode::VerifyAndSetConfigParameter(int index, PvmiKvp
                 if (!jbExtIntf)
                     return PVMFFailure;
                 jbExtIntf->DisableFireWallPackets();
+            }
+        }
+        break;
+
+        case BASEKEY_SET_UDP_MIN_MAX_PORT:
+        {
+            range_uint32 *maxMinUdpPort = (range_uint32 *)aParameter.value.key_specific_value;
+            if (maxMinUdpPort->min > maxMinUdpPort->max)
+            {
+                PVMF_SM_RTSP_LOGERROR((0, "PVMFSMRTSPUnicastNode::VerifyAndSetConfigParameter() UDP port range not valid"));
+                return PVMFErrArgument;
+            }
+
+            PVMFSMFSPChildNodeContainer* iSocketNodeContainer = getChildNodeContainer(PVMF_SM_FSP_SOCKET_NODE);
+            if (iSocketNodeContainer == NULL)
+            {
+                OSCL_LEAVE(OsclErrBadHandle);
+                return PVMFFailure;
+            }
+            PVMFSocketNodeExtensionInterface* socketNodeExtentionIntf =
+                (PVMFSocketNodeExtensionInterface*)iSocketNodeContainer->iExtensions[0];
+            if (socketNodeExtentionIntf)
+            {
+                socketNodeExtentionIntf->SetMaxUDPPortNum(maxMinUdpPort->max, maxMinUdpPort->min);
+                iStartPortNum = maxMinUdpPort->min;
+                iUseRandomUDPPort = false;
             }
         }
         break;

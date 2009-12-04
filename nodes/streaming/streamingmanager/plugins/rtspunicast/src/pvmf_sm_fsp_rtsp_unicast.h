@@ -366,6 +366,9 @@ class PVMFSMRTSPUnicastNode: public PVMFSMFSPBaseNode
         OsclSharedPtr<SDPInfo> iSdpInfo;
         bool oAutoReposition;
         bool iPauseDenied;  //For live streaming sessions, pause is denied.
+        bool iUseRandomUDPPort;
+        uint32 iStartPortNum;
+
         /* 3GPP FCS related member functions and variables */
         OsclSharedPtr<SDPInfo> iSwitchSDPInfo;                     // Saves switch SDP info - either locally available or from a FCS response
         oscl_wchar* iSwitchSDPLocation;                            // Location of the switch SDP (if available) or control URL of switch clip

@@ -78,6 +78,11 @@ OSCL_EXPORT_REF PVMFStatus PVMFSocketNodeExtensionInterfaceImpl::GetMaxTCPRecvBu
     return iContainer->GetMaxTCPRecvBufferCount(aCount, aPort);
 }
 
+OSCL_EXPORT_REF PVMFStatus PVMFSocketNodeExtensionInterfaceImpl::SetMaxUDPPortNum(uint32& aMaxUdpPortNum, uint32& aMinUdpPortNum) const
+{
+    return iContainer->SetMaxUDPPortNum(aMaxUdpPortNum, aMinUdpPortNum);
+}
+
 OSCL_EXPORT_REF OsclMemPoolResizableAllocator* PVMFSocketNodeExtensionInterfaceImpl::CreateSharedBuffer(const PVMFPortInterface* aPort , uint32 aBufferSize, uint32 aExpectedNumberOfBlocksPerBuffer, uint32 aResizeSize, uint32 aMaxNumResizes)
 {
     return iContainer->CreateSharedBuffer(aPort, aBufferSize, aExpectedNumberOfBlocksPerBuffer, aResizeSize, aMaxNumResizes);

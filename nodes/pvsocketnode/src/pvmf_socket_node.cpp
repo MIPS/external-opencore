@@ -282,7 +282,6 @@ OSCL_EXPORT_REF PVMFSocketNode::PVMFSocketNode(int32 aPriority)
         , TIMEOUT_RECV(-1)
         , TIMEOUT_RECVFROM(-1)
         , TIMEOUT_SHUTDOWN(10000)
-        , UDP_PORT_RANGE(2000)
         , MAX_UDP_PACKET_SIZE(MAX_SOCKET_BUFFER_SIZE)
         , MIN_UDP_PACKET_SIZE(MIN_SOCKET_BUFFER_SIZE)
         , iMaxTCPRecvBufferSizeToConfigure(-1)
@@ -300,7 +299,7 @@ OSCL_EXPORT_REF PVMFSocketNode::PVMFSocketNode(int32 aPriority)
     iExtensionInterface = NULL;
     iInSocketCallback = false;
     iNumStopPortActivityPending = (-1);//inactive.
-
+    iUdpPortRange = 2000;
     int32 err;
     OSCL_TRY(err,
 
@@ -713,6 +712,11 @@ OSCL_EXPORT_REF bool PVMFSocketNode::SetPortConfig(PVMFPortInterface &aPort, Osc
     return false;
 }
 
+OSCL_EXPORT_REF PVMFStatus PVMFSocketNode::SetMaxUDPPortNum(uint32& aMaxUdpPortNum, uint32& aMinUdpPortNum)
+{
+    iUdpPortRange = aMaxUdpPortNum - aMinUdpPortNum;
+    return PVMFSuccess;
+}
 //////////////////////////////////////////////////
 // End Additional Public APIs unique to Socket Node
 //////////////////////////////////////////////////
@@ -743,7 +747,7 @@ PVMFStatus PVMFSocketNode::AllocateConsecutivePorts(PvmfMimeString* aPortConfig,
     SocketPortConfig* lower_sock_config = OSCL_NEW(SocketPortConfig, ());
     SocketPortConfig* higher_sock_config = OSCL_NEW(SocketPortConfig, ());
 
-    for (int maxNumOfBind = UDP_PORT_RANGE; maxNumOfBind >= 0; maxNumOfBind--)
+    for (int maxNumOfBind = iUdpPortRange; maxNumOfBind >= 0; maxNumOfBind--)
     {
         OSCL_HeapString<OsclMemAllocator> rtpportConfigWithMime;
         rtpportConfigWithMime += aPortConfig->get_cstr();
@@ -808,7 +812,6 @@ PVMFStatus PVMFSocketNode::AllocateConsecutivePorts(PvmfMimeString* aPortConfig,
             iAllocatedPortVector.push_back(higher_sock_config);
 
             iSocketID = startSockID;
-
             aStartPortNum = higher_sock_config->iAddr.iLocalAdd.port + 1;
 
             status = PVMFSuccess;
@@ -826,7 +829,6 @@ PVMFStatus PVMFSocketNode::AllocateConsecutivePorts(PvmfMimeString* aPortConfig,
             udpSocket2->~OsclUDPSocket();
             iAlloc.deallocate(udpSocket2);
             higher_sock_config->iUDPSocket = NULL;
-
             aStartPortNum = higher_sock_config->iAddr.iLocalAdd.port + 1;
             startSockID = iSocketID;
         }
@@ -4411,8 +4413,7 @@ OsclAny* PVMFSocketNode::CreateOsclSocketAndBind(SOCKET_ADDR &aSockAdd, uint32 a
 
             //Bind this socket to the address
             bool bBindOK = false;
-            int maxNumOfBind = UDP_PORT_RANGE;
-            while (maxNumOfBind-- > 0)
+            while (iUdpPortRange-- > 0)
             {
 #if(ENABLE_SOCKET_NODE_STATS)
                 iSocketNodeStats.iNumBind++;

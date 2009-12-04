@@ -270,7 +270,7 @@ class PVMFClientServerSocketNode  : public PVMFNodeInterface
         OSCL_IMPORT_REF PVMFStatus GetMaxTCPRecvBufferSize(uint32& aSize);
         OSCL_IMPORT_REF PVMFStatus SetMaxTCPRecvBufferCount(uint32 aBufferSize);
         OSCL_IMPORT_REF PVMFStatus GetMaxTCPRecvBufferCount(uint32& aSize);
-
+        OSCL_EXPORT_REF PVMFStatus SetMaxUDPPortNum(uint32& aMaxUdpPortNum, uint32& aMinUdpPortNum);
         //**********end PVMFSocketNodeExtensionInterface
 
         //************ begin OsclSocketObserver

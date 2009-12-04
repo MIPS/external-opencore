@@ -43,7 +43,8 @@ static const StreamingManagerKeyStringData StreamingManagerConfig_BaseKeys[] =
     {"keep-alive-during-play", PVMI_KVPTYPE_VALUE, PVMI_KVPVALTYPE_BOOL},
     {"rtsp-timeout", PVMI_KVPTYPE_VALUE, PVMI_KVPVALTYPE_UINT32},
     {"rebuffering-threshold", PVMI_KVPTYPE_VALUE, PVMI_KVPVALTYPE_UINT32},
-    {"disable-firewall-packets", PVMI_KVPTYPE_VALUE, PVMI_KVPVALTYPE_BOOL}
+    {"disable-firewall-packets", PVMI_KVPTYPE_VALUE, PVMI_KVPVALTYPE_BOOL},
+    {"max-min-udp-port", PVMI_KVPTYPE_VALUE, PVMI_KVPVALTYPE_RANGE_UINT32}
 };
 
 static const uint StreamingManagerConfig_NumBaseKeys =
@@ -61,7 +62,8 @@ enum BaseKeys_IndexMapType
     BASEKEY_SESSION_CONTROLLER_KEEP_ALIVE_DURING_PLAY,
     BASEKEY_SESSION_CONTROLLER_RTSP_TIMEOUT,
     BASEKEY_REBUFFERING_THRESHOLD,
-    BASEKEY_DISABLE_FIREWALL_PACKETS
+    BASEKEY_DISABLE_FIREWALL_PACKETS,
+    BASEKEY_SET_UDP_MIN_MAX_PORT
 };
 
 typedef struct tagPVMFSMClientParams
