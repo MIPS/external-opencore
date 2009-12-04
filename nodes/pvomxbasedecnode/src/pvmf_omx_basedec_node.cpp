@@ -4619,7 +4619,7 @@ OSCL_EXPORT_REF PVMFStatus PVMFOMXBaseDecNode::DoStart()
         }
 
         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                        (0, "%s::DoStart() Changing Component state Idle->Executing", iName.Str()));
+                        (0, "%s::DoStart() Changing Component state Idle or Paused->Executing", iName.Str()));
 
         err = OMX_SendCommand(iOMXDecoder, OMX_CommandStateSet, OMX_StateExecuting, NULL);
         if (err != OMX_ErrorNone)
@@ -4795,7 +4795,7 @@ OSCL_EXPORT_REF PVMFStatus PVMFOMXBaseDecNode::DoPause()
     {
         /* Change state to OMX_StatePause from OMX_StateExecuting. */
         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                        (0, "%s::DoPause() Changing Component State Executing->Idle", iName.Str()));
+                        (0, "%s::DoPause() Changing Component State Executing->Paused", iName.Str()));
 
 
         // prevent the node from sending more buffers etc.

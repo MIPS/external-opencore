@@ -6601,7 +6601,7 @@ void PVMFOMXEncNode::DoStart(PVMFOMXEncNodeCommand& aCmd)
 
 
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                                (0, "PVMFOMXEncNode-%s::DoStart() Changing Component state Idle->Executing", iNodeTypeId));
+                                (0, "PVMFOMXEncNode-%s::DoStart() Changing Component state Idle or Paused->Executing", iNodeTypeId));
 
                 err = OMX_SendCommand(iOMXEncoder, OMX_CommandStateSet, OMX_StateExecuting, NULL);
                 if (err != OMX_ErrorNone)
@@ -6852,7 +6852,7 @@ void PVMFOMXEncNode::DoPause(PVMFOMXEncNodeCommand& aCmd)
             {
                 /* Change state to OMX_StatePause from OMX_StateExecuting. */
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                                (0, "PVMFOMXEncNode-%s::DoPause() Changing Component State Executing->Idle", iNodeTypeId));
+                                (0, "PVMFOMXEncNode-%s::DoPause() Changing Component State Executing->Paused", iNodeTypeId));
 
                 err = OMX_SendCommand(iOMXEncoder, OMX_CommandStateSet, OMX_StatePause, NULL);
                 if (err != OMX_ErrorNone)
