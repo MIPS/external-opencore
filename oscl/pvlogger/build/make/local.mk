@@ -18,7 +18,8 @@ HDRS := \
     pvlogger_file_appender.h \
     pvlogger_mem_appender.h \
     pvlogger_stderr_appender.h \
-    pvlogger_time_and_id_layout.h
+    pvlogger_time_and_id_layout.h \
+    pvlogger_empty_layout.h
 
 
 include $(MK)/library.mk

@@ -41,6 +41,7 @@
 
 
 #define OSCL_HAS_UNIX_TIME_FUNCS        1
+#define OSCL_HAS_MSWIN_TIME_FUNCS       0
 
 
 typedef struct timeval OsclBasicTimeStruct;

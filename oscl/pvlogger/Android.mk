@@ -26,6 +26,7 @@ LOCAL_COPY_HEADERS := \
  	src/pvlogger_file_appender.h \
  	src/pvlogger_mem_appender.h \
  	src/pvlogger_stderr_appender.h \
- 	src/pvlogger_time_and_id_layout.h
+ 	src/pvlogger_time_and_id_layout.h \
+ 	src/pvlogger_empty_layout.h
 
 include $(BUILD_STATIC_LIBRARY)
