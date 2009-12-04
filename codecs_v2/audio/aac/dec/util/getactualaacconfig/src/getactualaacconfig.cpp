@@ -161,7 +161,8 @@ OSCL_EXPORT_REF int32 GetActualAacConfig(uint8* aConfigHeader,
         int32* aConfigHeaderSize,
         uint8* SamplingRateIndex,
         uint32* NumChannels,
-        uint32* aSamplesPerFrame)
+        uint32* aSamplesPerFrame,
+        bool    mime_3016)
 {
 
     tPVMP4AudioDecoderExternal * iAACDecExt = NULL;
@@ -247,6 +248,11 @@ OSCL_EXPORT_REF int32 GetActualAacConfig(uint8* aConfigHeader,
          * decode the AudioSpecificConfig() structure
          */
         pVars->aacConfigUtilityEnabled = true;  /* set aac utility mode */
+
+        if (mime_3016 == true)  /* streaming rfc-3016 type, config holds streamMuxConfig */
+        {
+            pVars->inputStream.usedBits += 15;  /* jump over streamMuxConfig bits */
+        }
 
         status = get_audio_specific_config(pVars);
 

@@ -1380,7 +1380,8 @@ uint32 PVMFMP4FFParserNode::GetNumAudioChannels(uint32 aId)
                                &specinfosize,
                                &sampleRateIndex,
                                &num_channels,
-                               &samplesPerFrame);
+                               &samplesPerFrame,
+                               false);
         }
     }
 
@@ -1431,7 +1432,9 @@ uint32 PVMFMP4FFParserNode::GetAudioSampleRate(uint32 aId)
                                &specinfosize,
                                &sampleRateIndex,
                                &num_channels,
-                               &samplesPerFrame);
+                               &samplesPerFrame,
+                               false);
+
             if (sampleRateIndex < 13)
             {
                 sample_rate = sample_freq_table[(uint32)sampleRateIndex];
