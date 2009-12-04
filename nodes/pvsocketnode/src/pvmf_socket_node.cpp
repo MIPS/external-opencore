@@ -84,9 +84,14 @@ OsclMemPoolResizableAllocator* PVMFSocketNodeMemPool::CreateResizableDataBufferA
     if (iSharedBufferAlloc)
         return NULL;
 
+    int32 err;
+    OSCL_TRY(err,
+             iSharedBufferAlloc = OSCL_NEW(OsclMemPoolResizableAllocator, (iSharedDataBufferInfo.iSize, (1 + iSharedDataBufferInfo.iMaxNumResizes),
+                                           iSharedDataBufferInfo.iExpectedNumberOfBlocksPerBuffer));
+            );
+    if (err != OsclErrNone || !iSharedBufferAlloc)
+        return NULL;
 
-    iSharedBufferAlloc = OSCL_NEW(OsclMemPoolResizableAllocator, (iSharedDataBufferInfo.iSize, (1 + iSharedDataBufferInfo.iMaxNumResizes),
-                                  iSharedDataBufferInfo.iExpectedNumberOfBlocksPerBuffer));
     iSharedBufferAlloc->setMaxSzForNewMemPoolBuffer(iSharedDataBufferInfo.iResizeSize);
     iMediaMsgAllocator = OSCL_NEW(PVMFResizableSimpleMediaMsgAlloc, (iSharedBufferAlloc));
     return iSharedBufferAlloc;

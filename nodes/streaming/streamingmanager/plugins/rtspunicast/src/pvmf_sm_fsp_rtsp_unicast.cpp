@@ -5316,6 +5316,12 @@ void PVMFSMRTSPUnicastNode::CompleteGraphConstruct()
 
                 //Set with the socket node
                 OsclMemPoolResizableAllocator* socketAlloc = socketExtnIntf->CreateSharedBuffer(trackInfo.iNetworkNodePort, bufferSzForRTPPackets, DEFAULT_NUM_MEDIA_MSGS_IN_JITTER_BUFFER, resizeSizeInputPort, numResizeInputPort);
+                if (socketAlloc == NULL)
+                {
+                    PVMF_SM_RTSP_LOGERROR((0, "PVMFSMRTSPUnicastNode:CompleteGraphConstruct - CreateSharedBuffer Failed"));
+                    InternalCommandComplete(iCurrentCommand, aCmd, PVMFFailure);
+                    return;
+                }
                 jbExtIntf->SetJitterBufferChunkAllocator(socketAlloc, trackInfo.iJitterBufferInputPort);
                 const uint32 numMemChunksForRTCPMemPool = bufferSzForRTCPResponse / MAX_SOCKET_BUFFER_SIZE;
                 socketExtnIntf->CreateSharedBuffer(trackInfo.iNetworkNodeRTCPPort, bufferSzForRTCPResponse, numMemChunksForRTCPMemPool, resizeSizeFeedbackPort, numResizeFeedbackPort);
