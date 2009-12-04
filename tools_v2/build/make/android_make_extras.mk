@@ -67,6 +67,10 @@ define extra_sharedlib_list
   $(if $(strip $1),$(PRINTF) "\nLOCAL_SHARED_LIBRARIES := $1\n" >> $2,)
 endef
 
+define conditional_extra_sharedlib_list
+  $(if $(strip $1),$(PRINTF) "    LOCAL_SHARED_LIBRARIES := $1\n" >> $2,)
+endef
+
 define extra_include_list
   $(if $(strip $1),$(PRINTF) "$(foreach elem, $1,include $(patsubst %,%/Android.mk,$(patsubst %,\$$(PV_TOP)%,$(strip $(elem))))\n)" >> $2,)
 endef
@@ -90,6 +94,38 @@ include $(MK)/android_segments.mk
 ifneq ($(AGGREGATE_LIBS_MAKEFILE),)
 
 #### Start generation of aggregate makefiles #######
+
+define create_sdk_specific_aggregate_lib_android_mk
+Android_$1.mk: FORCE
+	$$(quiet) echo "LOCAL_PATH := $$(esc_dollar)(call my-dir)" > $$@
+	$$(quiet) echo "include $$(esc_dollar)(CLEAR_VARS)" >> $$@
+	$$(quiet) echo "" >> $$@
+	$$(quiet) $$(call cfg_list, $$(CFG_$1),$$@)
+	$$(quiet) echo "" >> $$@
+	$$(quiet) echo "LOCAL_WHOLE_STATIC_LIBRARIES := \\" >> $$@
+	$$(quiet) $$(call output_lib_list,$$($1_CUMULATIVE_TARGET_LIST),$$@)
+	$$(quiet) $$(call extra_lib_list, $$(EXTRA_LIBS_$1),$$@)
+	$$(quiet) echo "" >> $$@
+	$$(quiet) echo "LOCAL_MODULE := lib$1" >> $$@
+	$$(quiet) $$(call is_prelinking_allowed,$$($1_PRELINK),$$@)
+	$$(quiet) echo "\nifeq ($$(esc_dollar)(PLATFORM_VERSION),1.5)" >> $$@
+	$$(quiet) $$(call conditional_extra_sharedlib_list, $$(EXTRA_SHARED_LIBRARIES_$1_1.5),$$@)
+	$$(quiet) echo "else ifeq ($$(esc_dollar)(PLATFORM_VERSION),1.6)" >> $$@
+	$$(quiet) $$(call conditional_extra_sharedlib_list, $$(EXTRA_SHARED_LIBRARIES_$1_1.5),$$@)
+	$$(quiet) echo "else" >> $$@
+	$$(quiet) $$(call conditional_extra_sharedlib_list, $$(EXTRA_SHARED_LIBRARIES_$1),$$@)
+	$$(quiet) echo "endif" >> $$@
+	$$(quiet) echo "" >> $$@
+	$$(quiet) echo "-include $$(esc_dollar)(PV_TOP)/Android_system_extras.mk" >> $$@
+	$$(quiet) echo "" >> $$@
+	$$(quiet) echo "LOCAL_SHARED_LIBRARIES += $$(call format_shared_lib_names,$$(MODS_$1))" >> $$@
+	$$(quiet) echo "" >> $$@
+	$$(quiet) echo "include $$(esc_dollar)(BUILD_SHARED_LIBRARY)" >> $$@
+	$$(quiet) $$(call output_include_list,$$($1_CUMULATIVE_MAKEFILES),$$@)
+	$$(quiet) $$(call extra_include_list, $$(EXTRA_MAKEFILES_PATHS_$1),$$@)
+	$$(quiet) echo "" >> $$@
+endef
+
 define create_aggregate_lib_android_mk
 Android_$1.mk: FORCE
 	$$(quiet) echo "LOCAL_PATH := $$(esc_dollar)(call my-dir)" > $$@
@@ -249,7 +285,14 @@ ANDROID_AGGREGATE_LIB_LIST :=
 $(strip $(foreach lib,$(SHARED_LIB_TARGET_LIST),$(if $(strip $($(lib)_CUMULATIVE_TARGET_LIST) $(EXTRA_LIBS_$(lib))),$(eval ANDROID_AGGREGATE_LIB_LIST += $(lib)),)))
 ANDROID_MAKE_NAMES := $(patsubst %,Android_%.mk,$(ANDROID_AGGREGATE_LIB_LIST)) $(ANDROID_TOPLEVEL_MAKE_NAME) $(OPENCORE_CONFIG_MAKE_NAME)
 
-$(strip $(foreach lib,$(ANDROID_AGGREGATE_LIB_LIST),$(eval $(call create_aggregate_lib_android_mk,$(lib)))))
+# player and author need SDK-specific EXTRA_SHARED_LIBRARIES
+AUTHOR_SHARED_LIB := opencore_author
+PLAYER_SHARED_LIB := opencore_player
+ANDROID_GENERAL_AGGREGATE_LIB_LIST := $(strip $(subst $(AUTHOR_SHARED_LIB),,$(ANDROID_AGGREGATE_LIB_LIST)))
+ANDROID_GENERAL_AGGREGATE_LIB_LIST := $(strip $(subst $(PLAYER_SHARED_LIB),,$(ANDROID_GENERAL_AGGREGATE_LIB_LIST)))
+$(eval $(call create_sdk_specific_aggregate_lib_android_mk,$(AUTHOR_SHARED_LIB)))
+$(eval $(call create_sdk_specific_aggregate_lib_android_mk,$(PLAYER_SHARED_LIB)))
+$(strip $(foreach lib,$(ANDROID_GENERAL_AGGREGATE_LIB_LIST),$(eval $(call create_aggregate_lib_android_mk,$(lib)))))
 
 # Need the ability exclude 2way and pvme by default
 2WAY_SHARED_LIB := opencore_2way

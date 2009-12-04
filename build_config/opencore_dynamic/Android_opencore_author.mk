@@ -10,8 +10,13 @@ LOCAL_WHOLE_STATIC_LIBRARIES := \
 LOCAL_WHOLE_STATIC_LIBRARIES +=  libandroidpvauthor
 
 LOCAL_MODULE := libopencore_author
-
-LOCAL_SHARED_LIBRARIES :=  libutils libcutils libui libandroid_runtime libmedia liblog libicuuc libbinder
+\nifeq ($(PLATFORM_VERSION),1.5)
+    LOCAL_SHARED_LIBRARIES :=  libutils libcutils libui libandroid_runtime libmedia liblog libicuuc
+else ifeq ($(PLATFORM_VERSION),1.6)
+    LOCAL_SHARED_LIBRARIES :=  libutils libcutils libui libandroid_runtime libmedia liblog libicuuc
+else
+    LOCAL_SHARED_LIBRARIES :=  libutils libcutils libui libandroid_runtime libmedia liblog libicuuc libbinder
+endif
 
 -include $(PV_TOP)/Android_system_extras.mk
 
