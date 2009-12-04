@@ -33,7 +33,7 @@ using namespace android;
 const char* MetadataDriver::ALBUM_ART_KEY = "graphic;maxsize=3000000;truncate=false";
 
 const char* MetadataDriver::METADATA_KEYS[NUM_METADATA_KEYS] = {
-        "tracknumber",
+        "track-info/track-number",
         "album",
         "artist",
         "author",

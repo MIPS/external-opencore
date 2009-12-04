@@ -290,7 +290,7 @@ static PVMFStatus reportM4ATags(IMpeg4File *mp4Input, MediaScannerClient& client
     trackNum = mp4Input->getITunesThisTrackNo();
     totalTracks = mp4Input->getITunesTotalTracks();
     sprintf(buffer, "%d/%d", trackNum, totalTracks);
-    if (!client.addStringTag("tracknumber", buffer)) goto failure;
+    if (!client.addStringTag("track-info/track-number", buffer)) goto failure;
 
     // Duration
     duration = mp4Input->getMovieDuration();
@@ -534,7 +534,7 @@ static PVMFStatus parseASF(const char *filename, MediaScannerClient& client)
         client.addStringTag("year", value);
     value = retriever->extractMetadata(METADATA_KEY_CD_TRACK_NUMBER);
     if (value)
-        client.addStringTag("tracknumber", value);
+        client.addStringTag("track-info/track-number", value);
 
     retriever->disconnect();
     return PVMFSuccess;
