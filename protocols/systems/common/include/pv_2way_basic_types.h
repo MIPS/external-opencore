@@ -313,6 +313,8 @@ class PV2WayConnectOptions
                 iRemoteIdSize(aRemoteIdSize)
         {}
 
+        virtual ~PV2WayConnectOptions() {};
+
         /**
         * Pure virtual method that must be overridden.  Retrieves class name
         *

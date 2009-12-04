@@ -28,6 +28,7 @@
 class LipSyncNotifyTSObserver
 {
     public:
+        virtual ~LipSyncNotifyTSObserver() {};
         /*
          * Signals an update in the status of the MIO.
 

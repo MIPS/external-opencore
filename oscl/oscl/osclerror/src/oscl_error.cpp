@@ -65,8 +65,18 @@ OSCL_EXPORT_REF int32 OsclErrorTrap::Cleanup()
     if (errortrap)
     {
         Oscl_DefAlloc *alloc = errortrap->iAlloc;
+
+        bool default_alloc = (errortrap->iAlloc == &errortrap->iDefAlloc);
         errortrap->~OsclErrorTrapImp();
-        alloc->deallocate(errortrap);
+        if (default_alloc)
+        {
+            _OsclBasicAllocator defalloc;
+            defalloc.deallocate(errortrap);
+        }
+        else
+        {
+            alloc->deallocate(errortrap);
+        }
         OsclErrorTrapImp::SetErrorTrap(NULL, error);
     }
     else if (!error)

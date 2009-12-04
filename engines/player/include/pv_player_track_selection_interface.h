@@ -48,6 +48,8 @@ class PVMFMediaPresentationInfo;
 class PVMFTrackSelectionHelper
 {
     public:
+        virtual ~PVMFTrackSelectionHelper() {};
+
         /**
          * A synchronous method to obtain track selection inputs from the
          * user of pvPlayerSDK. If the user of pvPlayerSDK wishes to participate

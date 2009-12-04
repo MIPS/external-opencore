@@ -542,6 +542,7 @@ class PV2WayNodeInterface
 class MPV2WayNodeCommandObserver
 {
     public:
+        virtual ~MPV2WayNodeCommandObserver() {};
         virtual void CommandHandler(PV2WayNodeCmdType aType, const PVMFCmdResp& aResponse) = 0;
 
 };
@@ -686,6 +687,7 @@ class PVErrorEventObserver;
 class MPV2WayNodeConfigurationObserver
 {
     public:
+        virtual ~MPV2WayNodeConfigurationObserver() {};
         virtual PVMFStatus ConfigureNode(CPVDatapathNode *aNode) = 0;
 };
 

@@ -188,6 +188,7 @@ class PVRTCPChannelController;
 class PVRTCPChannelControllerObserver
 {
     public:
+        virtual ~PVRTCPChannelControllerObserver() {};
         virtual PVMFStatus RTCPSRReveived(PVRTCPChannelController* channelController) = 0;
         virtual PVMFStatus RTCPByeReceived(PVRTCPChannelController* channelController) = 0;
         virtual PVMFStatus RTCPRRReadyToSend(PVMFPortInterface*& aPort, PVMFSharedMediaMsgPtr& aMessage) = 0;
@@ -293,6 +294,7 @@ class PVRTCPChannelController: public PvmfRtcpTimerObserver
 class PVRTCPProtoImplementorObserver
 {
     public:
+        virtual ~PVRTCPProtoImplementorObserver() {};
         virtual PVMFStatus RTCPPacketReceived(RTCPPacketType aPacketType, PVRTCPChannelController* aController) = 0;
         virtual PVMFStatus RTCPReportReadyToSend(PVMFPortInterface*& aPort, PVMFSharedMediaMsgPtr& aMessage) = 0;
         virtual PVMFStatus ProcessInfoEvent(PVMFAsyncEvent& aEvent) = 0;

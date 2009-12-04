@@ -46,6 +46,7 @@ class ThreadSafeQueue;
 class ThreadSafeQueueObserver
 {
     public:
+        virtual ~ThreadSafeQueueObserver() {};
         /*
         ** Observer receives this callback when data has been added to the queue.
         ** There may be multiple data available when this is called.  There will

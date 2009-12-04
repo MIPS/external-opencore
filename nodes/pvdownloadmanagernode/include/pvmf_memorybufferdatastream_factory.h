@@ -151,7 +151,7 @@ class PVMFMemoryBufferDataStreamTempCache
 {
     public:
         PVMFMemoryBufferDataStreamTempCache();
-        ~PVMFMemoryBufferDataStreamTempCache();
+        virtual ~PVMFMemoryBufferDataStreamTempCache();
 
         virtual bool RemoveFirstEntry(OsclRefCounterMemFrag*& aFrag, uint8*& aFragPtr);
         virtual bool RemoveLastEntry(OsclRefCounterMemFrag*& aFrag, uint8*& aFragPtr);
@@ -204,7 +204,7 @@ class PVMFMemoryBufferDataStreamPermCache
 {
     public:
         PVMFMemoryBufferDataStreamPermCache();
-        ~PVMFMemoryBufferDataStreamPermCache();
+        virtual ~PVMFMemoryBufferDataStreamPermCache();
 
         virtual void SetDecryptionInterface(PVMFCPMPluginAccessUnitDecryptionInterface*& aDecryptionInterface) {};
         virtual uint32 GetTotalBytes();

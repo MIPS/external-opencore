@@ -425,7 +425,6 @@ class PVRTSPEngineNode
         static const int REQ_RECV_SOCKET_ID;
     protected:
         int TIMEOUT_WATCHDOG;
-        PVMFSharedMediaDataPtr iEmbeddedDataPtr;
         PVMFMediaFragGroupCombinedAlloc<OsclMemAllocator>* ipFragGroupAllocator;
         // allocator for outgoing media frag groups
         OsclMemPoolFixedChunkAllocator* ipFragGroupMemPool;
@@ -711,6 +710,7 @@ class PVRTSPEngineNode
         OSCL_IMPORT_REF OsclSharedPtr<PVMFMediaDataImpl> AllocateMediaData(int32& errCode);
         OSCL_IMPORT_REF void ChangeInternalState(PVRTSPEngineState aNewState);
         PVRTSPEngineNodeAllocator iAlloc;
+        PVMFSharedMediaDataPtr iEmbeddedDataPtr;
         OsclSocketServ  *iSockServ;
     private:
 

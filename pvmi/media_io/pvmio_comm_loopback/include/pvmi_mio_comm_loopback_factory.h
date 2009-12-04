@@ -95,6 +95,7 @@ class PvmiMIOCommLoopbackFactory
 class PvmiMIOCommLoopbackTestObserver
 {
     public:
+        virtual ~PvmiMIOCommLoopbackTestObserver() {};
         OSCL_IMPORT_REF virtual void LoopbackPos(PVMFTimestamp& aTimestamp) = 0;
 };
 

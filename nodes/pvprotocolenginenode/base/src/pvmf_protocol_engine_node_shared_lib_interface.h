@@ -34,6 +34,7 @@
 class ProtocolEngineNodeSharedLibraryInterface
 {
     public:
+        virtual ~ProtocolEngineNodeSharedLibraryInterface() {};
         /**
          * Query for the instance of a particular interface based on the interface UUID
          *

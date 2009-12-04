@@ -213,9 +213,8 @@ class Oscl_File : public HeapBase
         class OsclCacheObserver
         {
             public:
+                virtual ~OsclCacheObserver() {};
                 virtual OsclFileCacheBuffer* ChooseCurCache(OsclFileCache& aContext, TOsclFileOffset aPos) = 0;
-
-                virtual ~OsclCacheObserver(){}
         };
         void SetCacheObserver(OsclCacheObserver* aObs)
         {

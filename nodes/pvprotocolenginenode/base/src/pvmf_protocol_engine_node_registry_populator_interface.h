@@ -35,6 +35,8 @@ class PVMFProtocolEngineNodeRegistryInterface;
 class PVMFProtocolEngineNodeRegistryPopulatorInterface
 {
     public:
+        virtual ~PVMFProtocolEngineNodeRegistryPopulatorInterface() {};
+
         /*
         ** RegisterAllNodes will register one or more nodes in the registry
         ** @param aRegistry: the registry

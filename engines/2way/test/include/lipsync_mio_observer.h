@@ -23,6 +23,7 @@
 class LipSyncDummyMIOObserver
 {
     public:
+        virtual ~LipSyncDummyMIOObserver() {};
         /*
          * Signals an update in the status of the MIO.
          */

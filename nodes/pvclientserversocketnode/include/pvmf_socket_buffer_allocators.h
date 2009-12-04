@@ -51,6 +51,7 @@ static const char PVMF_SOCKALLOC_FEEDBACK_PORT_NAME[] = "PVMFJitterBufferPortFee
 class PVMFSMSharedBufferAllocWithReSizeAllocDeallocObserver
 {
     public:
+        virtual ~PVMFSMSharedBufferAllocWithReSizeAllocDeallocObserver() {};
         virtual void chunkdeallocated(OsclAny* aContextData) = 0;
 };
 

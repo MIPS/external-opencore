@@ -101,6 +101,7 @@ class PVMFDownloadManagerSubNodeContainerBase
 {
     public:
         PVMFDownloadManagerSubNodeContainerBase();
+        virtual ~PVMFDownloadManagerSubNodeContainerBase() {};
 
         /*
          *  EFormatParser indicates the format parser node

@@ -1425,6 +1425,7 @@ class PVLoggerSchedulerSetup
 class pvauthor_async_test_observer
 {
     public:
+        virtual ~pvauthor_async_test_observer() {};
         // Signals completion of test. Test instance can be deleted after this callback completes.
         virtual void CompleteTest(test_case &) = 0;
 };

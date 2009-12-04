@@ -99,6 +99,8 @@ class PVMFSMFSPInfo
 class PVMFFSPRegistryInterface
 {
     public:
+        virtual ~PVMFFSPRegistryInterface() {};
+
         /**
          * The QueryRegistry for PVMFFSPRegistry. Used mainly for Seaching of the UUID
          * whether it is available or not & returns Success if it is found else failure.

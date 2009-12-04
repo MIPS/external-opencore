@@ -47,6 +47,7 @@ class ColorConvertBase;
 class PVFMAudioMIOGetFrameObserver
 {
     public:
+        virtual ~PVFMAudioMIOGetFrameObserver() {};
         virtual void HandleFrameReadyEvent(PVMFStatus aEventStatus) = 0;
 };
 

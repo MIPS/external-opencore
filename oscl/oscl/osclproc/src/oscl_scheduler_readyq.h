@@ -65,7 +65,6 @@ class OsclReadyAlloc: public Oscl_DefAlloc
         OsclAny* allocate(const uint32 size) ;
         OsclAny* allocate_fl(const uint32 size, const char * file_name, const int line_num);
         void deallocate(OsclAny* p) ;
-        virtual ~OsclReadyAlloc(){}
     private:
         OsclMemAllocator iBasicAlloc;
 };

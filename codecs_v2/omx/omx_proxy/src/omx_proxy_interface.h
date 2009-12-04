@@ -560,8 +560,6 @@ class BasicDestructDealloc : public OsclDestructDealloc
         {
             delete(PVLoggerAppender*)ptr;
         }
-
-        virtual ~BasicDestructDealloc(){}
 };
 
 

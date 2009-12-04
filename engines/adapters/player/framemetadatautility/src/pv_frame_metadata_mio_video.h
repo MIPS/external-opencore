@@ -50,6 +50,7 @@ class ColorConvertBase;
 class PVFMVideoMIOGetFrameObserver
 {
     public:
+        virtual ~PVFMVideoMIOGetFrameObserver() {};
         virtual void HandleFrameReadyEvent(PVMFStatus aEventStatus) = 0;
 };
 

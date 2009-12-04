@@ -210,7 +210,7 @@ $1: FORCE
 	$$(quiet) echo "" >> $$@
 	$$(quiet) echo "  PV_TOP := $$(esc_dollar)(my-dir)" >> $$@
 	$$(quiet) echo "" >> $$@
-	$$(quiet) echo "  PV_CFLAGS := -Wno-non-virtual-dtor -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64 -DUSE_CML2_CONFIG" >> $$@
+	$$(quiet) echo "  PV_CFLAGS := -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64 -DUSE_CML2_CONFIG" >> $$@
 	$$(quiet) echo "" >> $$@
 	$$(quiet) echo "  ifeq ($$(esc_dollar)(PV_WERROR),1)" >> $$@
 	$$(quiet) echo "    PV_CFLAGS += -Werror" >> $$@

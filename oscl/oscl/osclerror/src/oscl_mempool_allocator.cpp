@@ -55,9 +55,9 @@ Assumptions     : None
 Known Issues    : None
 ***************************************************************************************/
 OsclMemPoolAllocator::OsclMemPoolAllocator(Oscl_DefAlloc* gen_alloc)
-        : iCustomAllocator(gen_alloc),
-        iBaseAddress(0)
+        : iBaseAddress(0)
 {
+    iAlloc = (gen_alloc) ? gen_alloc : &iDefAlloc;
 }
 
 /***************************************************************************************
@@ -104,14 +104,7 @@ OsclAny* OsclMemPoolAllocator::CreateMemPool(const uint32 aNumChunk, const uint3
 
     lChunkSizeMemAligned = oscl_mem_aligned_size(aChunkSize);
 
-    if (iCustomAllocator)
-    {
-        iBaseAddress = iCustomAllocator->ALLOCATE(aNumChunk * lChunkSizeMemAligned);
-    }
-    else
-    {
-        iBaseAddress = _oscl_malloc(aNumChunk * lChunkSizeMemAligned);
-    }
+    iBaseAddress = iAlloc->ALLOCATE(aNumChunk * lChunkSizeMemAligned);
 
     if (iBaseAddress == NULL)
     {
@@ -173,16 +166,8 @@ void OsclMemPoolAllocator::DestroyMemPool()
 
     }
 
-    if (iCustomAllocator)
-    {
-        iCustomAllocator->deallocate(iBaseAddress);
-    }
-    else
-    {
-        _oscl_free(iBaseAddress);
-    }
-
-    iCustomAllocator = 0;
+    iAlloc->deallocate(iBaseAddress);
+    iAlloc = 0;
 
     iBaseAddress = 0;
 

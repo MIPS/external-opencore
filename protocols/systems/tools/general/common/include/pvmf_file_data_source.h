@@ -57,6 +57,7 @@
 class PVMFFileDataSourceObserver
 {
     public:
+        virtual ~PVMFFileDataSourceObserver() {};
         virtual void FileDataFinished() = 0;
 };
 

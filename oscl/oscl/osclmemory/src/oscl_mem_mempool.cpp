@@ -85,20 +85,6 @@ OSCL_EXPORT_REF void OsclMemPoolFixedChunkAllocator::removeRef()
     }
 }
 
-
-OSCL_EXPORT_REF OsclMemPoolFixedChunkAllocator::~OsclMemPoolFixedChunkAllocator()
-{
-    // Decrement the ref count
-    --iRefCount;
-
-    // If ref count reaches 0 then destroy this object
-    if (iRefCount <= 0)
-    {
-        destroymempool();
-    }
-}
-
-
 OSCL_EXPORT_REF OsclAny* OsclMemPoolFixedChunkAllocator::allocate(const uint32 n)
 {
     // Create the memory pool if it hasn't been created yet.
@@ -760,13 +746,6 @@ OSCL_EXPORT_REF void OsclMemPoolResizableAllocator::removeRef()
         OSCL_DELETE(this);
     }
 }
-
-
-OSCL_EXPORT_REF OsclMemPoolResizableAllocator::~OsclMemPoolResizableAllocator()
-{
-    destroyallmempoolbuffers();
-}
-
 
 OsclMemPoolResizableAllocator::MemPoolBufferInfo* OsclMemPoolResizableAllocator::addnewmempoolbuffer(uint32 aBufferAlignedSize)
 {

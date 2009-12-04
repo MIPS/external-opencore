@@ -36,6 +36,7 @@
 class NodeSharedLibraryInterface
 {
     public:
+        virtual ~NodeSharedLibraryInterface() {};
         /**
          * Query for the instance of a particular interface based on the request the node UUID
          *

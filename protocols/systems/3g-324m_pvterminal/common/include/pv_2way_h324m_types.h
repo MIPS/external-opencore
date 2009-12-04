@@ -133,6 +133,7 @@ class PV2Way324ConnectOptions : public PV2WayConnectOptions
 class PVH223AlConfig
 {
     public:
+        virtual ~PVH223AlConfig() {};
         enum PVH223AlIndex
         {
             PVH223_AL1 = 1,

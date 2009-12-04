@@ -178,6 +178,7 @@ class pvme_test_suite : public test_case
 class pvmetadataengine_test_observer
 {
     public:
+        virtual ~pvmetadataengine_test_observer() {};
         // Signals completion of test. Test instance can be deleted after this callback completes.
         virtual void TestCompleted(test_case &) = 0;
 };

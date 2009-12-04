@@ -56,6 +56,7 @@ class mediaInfo;
 class PVMFJitterBufferMiscObserver
 {
     public:
+        virtual ~PVMFJitterBufferMiscObserver() {};
         virtual void MessageReadyToSend(PVMFPortInterface*& aPort, PVMFSharedMediaMsgPtr& aMessage) = 0;
         virtual void MediaReceivingChannelPrepared(bool aStatus) = 0;
         virtual void ProcessRTCPControllerEvent(PVMFAsyncEvent& aEvent) = 0;

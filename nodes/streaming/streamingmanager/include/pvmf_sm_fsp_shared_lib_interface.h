@@ -45,6 +45,7 @@
 class SMNodeFSPSharedLibraryInterface
 {
     public:
+        virtual ~SMNodeFSPSharedLibraryInterface() {};
         /**
          * Query for the instance of a particular interface based on the interface UUID
          *

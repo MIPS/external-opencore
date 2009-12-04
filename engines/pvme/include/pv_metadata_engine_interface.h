@@ -71,6 +71,7 @@
 class PVMetadataEngineInterface
 {
     public:
+        virtual ~PVMetadataEngineInterface() {};
         /**
          * This function returns the current state of PVMetadataEngine as a synchronous command.
          * Application may use this info to determine if the

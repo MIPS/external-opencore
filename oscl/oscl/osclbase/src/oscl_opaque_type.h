@@ -47,6 +47,8 @@
 class Oscl_Opaque_Type_Alloc
 {
     public:
+        virtual ~Oscl_Opaque_Type_Alloc() {}
+
         /**
          * Construct element at p using element at init_val as the initial value.
          * Both pointers must be non-NULL.
@@ -67,8 +69,6 @@ class Oscl_Opaque_Type_Alloc
          * Deallocate memory previously allocated with "allocate"
          */
         virtual void deallocate(OsclAny* p) = 0;
-
-        virtual ~Oscl_Opaque_Type_Alloc(){}
 };
 
 /**
@@ -77,6 +77,8 @@ class Oscl_Opaque_Type_Alloc
 class Oscl_Opaque_Type_Compare
 {
     public:
+        virtual ~Oscl_Opaque_Type_Compare() {}
+
         /**
          * Swap element at "a" with element at "b".
          * Both pointers must be non-NULL.
@@ -93,7 +95,6 @@ class Oscl_Opaque_Type_Compare
          */
         virtual int compare_EQ(const OsclAny* a, const OsclAny* b) const = 0;
 
-        virtual ~Oscl_Opaque_Type_Compare(){}
 };
 
 /**
@@ -103,6 +104,8 @@ class Oscl_Opaque_Type_Compare
 class Oscl_Opaque_Type_Alloc_LL
 {
     public:
+        virtual ~Oscl_Opaque_Type_Alloc_LL() {}
+
         /**
          * Construct element at p using element at init_val as the initial value.
          * Both pointers must be non-NULL.
@@ -143,8 +146,6 @@ class Oscl_Opaque_Type_Alloc_LL
          * Compare data.
          */
         virtual bool compare_data(const OsclAny*elem, const OsclAny*data_val)const = 0;
-
-        virtual ~Oscl_Opaque_Type_Alloc_LL() {}
 };
 
 /*! @} */

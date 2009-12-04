@@ -34,6 +34,7 @@
 class PVMIExternalDownloadSizeObserver
 {
     public:
+        virtual ~PVMIExternalDownloadSizeObserver() {};
         virtual void DownloadUpdate(uint32 aLatestFileSizeInBytes, bool aDownloadComplete) = 0;
 };
 

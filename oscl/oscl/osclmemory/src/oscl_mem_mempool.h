@@ -89,7 +89,17 @@ class OsclMemPoolFixedChunkAllocator : public Oscl_DefAlloc
 
         /** The destructor for the memory pool
           */
-        OSCL_IMPORT_REF virtual ~OsclMemPoolFixedChunkAllocator();
+        virtual ~OsclMemPoolFixedChunkAllocator()
+        {
+            // Decrement the ref count
+            --iRefCount;
+
+            // If ref count reaches 0 then destroy this object
+            if (iRefCount <= 0)
+            {
+                destroymempool();
+            }
+        }
 
         /** This API throws an exception when n is greater than the fixed chunk size or there are no free chunk available in the pool,
           * if "enablenullpointerreturn" has not been called.
@@ -329,7 +339,10 @@ class OsclMemPoolResizableAllocator : public Oscl_DefAlloc
 
         /** The destructor for the memory pool. Should not be called directly. Use removeRef() instead.
           */
-        OSCL_IMPORT_REF virtual ~OsclMemPoolResizableAllocator();
+        virtual ~OsclMemPoolResizableAllocator()
+        {
+            destroyallmempoolbuffers();
+        }
 
         MemPoolBufferInfo* addnewmempoolbuffer(uint32 aBufferSize);
         void destroyallmempoolbuffers();

@@ -102,8 +102,17 @@ OSCL_EXPORT_REF void OsclScheduler::Cleanup()
         OsclError::Leave(OsclErrNotInstalled);
     sched->UninstallScheduler();
     Oscl_DefAlloc *alloc = sched->iAlloc;
+    bool default_alloc = (sched->iAlloc == &sched->iDefAlloc);
     sched->~OsclExecSchedulerCommonBase();
-    alloc->deallocate(sched);
+    if (default_alloc)
+    {
+        OsclMemAllocator defalloc;
+        defalloc.deallocate(sched);
+    }
+    else
+    {
+        alloc->deallocate(sched);
+    }
 }
 
 /////////////////////////////////////

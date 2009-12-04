@@ -38,6 +38,7 @@
 class TwoWaySocketObserver
 {
     public:
+        virtual ~TwoWaySocketObserver() {};
         virtual void SocketConnected(PVMFNodeInterface* aCommServer) = 0;
         virtual void SocketDisconnected() = 0;
 };

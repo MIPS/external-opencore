@@ -132,8 +132,18 @@ OSCL_EXPORT_REF void CPVInterfaceProxy::ConstructL(uint32 nreserve1, uint32 nres
 OSCL_EXPORT_REF void CPVInterfaceProxy::Delete()
 //called under app thread context
 {
+    Oscl_DefAlloc *alloc = this->iAlloc;
+    bool default_alloc = (this->iAlloc == &this->iDefAlloc);
     this->~CPVInterfaceProxy();
-    iAlloc->deallocate(this);
+    if (default_alloc)
+    {
+        OsclMemAllocator defalloc;
+        defalloc.deallocate(this);
+    }
+    else
+    {
+        alloc->deallocate(this);
+    }
 }
 
 OSCL_EXPORT_REF CPVInterfaceProxy::~CPVInterfaceProxy()

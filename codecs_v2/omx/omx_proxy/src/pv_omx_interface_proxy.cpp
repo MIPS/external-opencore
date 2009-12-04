@@ -62,7 +62,7 @@ OSCL_EXPORT_REF CPVInterfaceProxy_OMX * CPVInterfaceProxy_OMX::NewL(
 //called under app thread context
 {
     // custom allocator not using TRY/LEAVE/TLS
-    oscl_allocator defallocL;
+    OsclMemAllocator defallocL;
     OsclAny *ptr = NULL;
     if (alloc)
     {
@@ -155,8 +155,18 @@ bool CPVInterfaceProxy_OMX::ConstructL(uint32 nreserve1, uint32 nreserve2, int32
 OSCL_EXPORT_REF void CPVInterfaceProxy_OMX::Delete()
 //called under app thread context
 {
+    Oscl_DefAlloc *alloc = this->iAlloc;
+    bool default_alloc = (this->iAlloc == &this->iDefAlloc);
     this->~CPVInterfaceProxy_OMX();
-    iAlloc->deallocate(this);
+    if (default_alloc)
+    {
+        OsclMemAllocator defalloc;
+        defalloc.deallocate(this);
+    }
+    else
+    {
+        alloc->deallocate(this);
+    }
 }
 
 CPVInterfaceProxy_OMX::~CPVInterfaceProxy_OMX()

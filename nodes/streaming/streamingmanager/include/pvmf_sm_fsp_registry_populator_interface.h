@@ -35,6 +35,8 @@ class PVMFFSPRegistryInterface;
 class PVMFSMFSPRegistryPopulatorInterface
 {
     public:
+        virtual ~PVMFSMFSPRegistryPopulatorInterface() {};
+
         /**
         ** The PVMFFSPRegistryInterface that wants to be populated by the
         ** PVMFSMFSPRegistryPopulatorInterface of some dll has to register

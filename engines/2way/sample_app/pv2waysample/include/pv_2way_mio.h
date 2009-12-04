@@ -81,6 +81,7 @@ typedef PV2WayRegFormatTypeCompare<OsclMemAllocator> pvmf_format_type_key_compar
 class PV2WayMIOObserver
 {
     public:
+        virtual ~PV2WayMIOObserver() {};
         virtual PVMFNodeInterface* CreateMIONode(CodecSpecifier* aformat, TPVDirection adir) = 0;
         virtual void DeleteMIONode(CodecSpecifier* aformat,
                                    TPVDirection adir,

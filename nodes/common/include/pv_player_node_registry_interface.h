@@ -98,6 +98,8 @@ class PVPlayerNodeInfo
 class PVPlayerNodeRegistryInterface
 {
     public:
+        virtual ~PVPlayerNodeRegistryInterface() {};
+
         /**
          * The QueryRegistry for PVPlayerNodeRegistry. Used mainly for Seaching of the UUID
          * whether it is available or not & returns Success if it is found else failure.
@@ -152,6 +154,7 @@ class PVPlayerNodeRegistryInterface
 class PVPlayerRecognizerRegistryInterface
 {
     public:
+        virtual ~PVPlayerRecognizerRegistryInterface() {};
         /**
          * The RegisterRecognizer for PVPlayerRecognizerRegistry. Used for registering plugins through the PVMFRecognizerPluginFactory* object.
          *
@@ -180,6 +183,7 @@ class PVPlayerRecognizerRegistryInterface
 class NodeRegistryPopulatorInterface
 {
     public:
+        virtual ~NodeRegistryPopulatorInterface() {};
         /*
         ** RegisterAllNodes will register one or more nodes in the registry
         ** @param aRegistry: the registry
@@ -207,6 +211,7 @@ class NodeRegistryPopulatorInterface
 class RecognizerPopulatorInterface
 {
     public:
+        virtual ~RecognizerPopulatorInterface() {};
         /*
         ** RegisterAllRecognizers will register one or more recognizers in the registry
         ** @param aRegistry: the registry

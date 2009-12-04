@@ -45,6 +45,7 @@ enum CLOCK_NOTIFICATION_INTF_TYPE
 class PVMFJBEventNotifierObserver
 {
     public:
+        virtual ~PVMFJBEventNotifierObserver() {};
         virtual void ProcessCallback(CLOCK_NOTIFICATION_INTF_TYPE aClockNotificationInterfaceType, uint32 aCallBkId, const OsclAny* aContext, PVMFStatus aStatus) = 0;
 };
 class PVMFJBEventNotificationRequestInfo;

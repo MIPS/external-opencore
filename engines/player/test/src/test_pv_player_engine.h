@@ -137,6 +137,7 @@ class pvplayer_engine_test_suite : public test_case
 class pvplayer_async_test_observer
 {
     public:
+        virtual ~pvplayer_async_test_observer() {};
         // Signals completion of test. Test instance can be deleted after this callback completes.
         virtual void TestCompleted(test_case &) = 0;
 };
@@ -2649,6 +2650,7 @@ class pvplayer_engine_test : public test_case,
 class PVPlayerProjTestFactory
 {
     public:
+        virtual ~PVPlayerProjTestFactory() {};
         /**
          * Creates customer project test case object as specified by test case number.  Default
          * implementation returns NULL.  Customer projects that wish to extend pvPlayer unit

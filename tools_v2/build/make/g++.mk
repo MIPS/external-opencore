@@ -41,7 +41,7 @@ DEBUG_CXXFLAGS?=-g
 RELEASE_CPPFLAGS?=-DNDEBUG
 OPT_CXXFLAG?=-O3
 INCDIRS += -I$(BUILD_ROOT)/installed_include
-CXXFLAGS?=-Wall -Wno-non-virtual-dtor
+CXXFLAGS?=-Wall
 
 #########################################################
 # $(call make-depend,source-file,object-file,depend-file,xpflags,xxflags)

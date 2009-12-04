@@ -289,6 +289,7 @@ enum NodeObjectType
 class ProtocolContainerObserver
 {
     public:
+        virtual ~ProtocolContainerObserver() {};
         virtual uint32 GetObserverState() = 0;
         virtual void SetObserverState(const uint32 aState) = 0;
         virtual bool DispatchEvent(PVProtocolEngineNodeInternalEvent *aEvent) = 0;
@@ -1235,6 +1236,7 @@ enum EventReporterSupportObjectType
 class EventReporterObserver
 {
     public:
+        virtual ~EventReporterObserver() {};
         virtual void ReportEvent(PVMFEventType aEventType, OsclAny* aEventData = NULL, const int32 aEventCode = 0, OsclAny* aEventLocalBuffer = NULL, const size_t aEventLocalBufferSize = 0) = 0;
         virtual void NotifyContentTooLarge() = 0;
         virtual uint32 GetObserverState() = 0;

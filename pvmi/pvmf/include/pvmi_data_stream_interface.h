@@ -116,7 +116,7 @@ class PVMFDataStreamReadCapacityObserver
     public:
         virtual PvmiDataStreamStatus GetStreamReadCapacity(uint32& aCapacity) = 0;
 
-        virtual ~PVMFDataStreamReadCapacityObserver(){}
+        virtual ~PVMFDataStreamReadCapacityObserver() {}
 };
 
 

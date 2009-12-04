@@ -74,6 +74,7 @@ class pvframemetadata_utility_test_suite : public test_case
 class pvframemetadata_async_test_observer
 {
     public:
+        virtual ~pvframemetadata_async_test_observer() {};
         // Signals completion of test. Test instance can be deleted after this callback completes.
         virtual void TestCompleted(test_case &) = 0;
 };

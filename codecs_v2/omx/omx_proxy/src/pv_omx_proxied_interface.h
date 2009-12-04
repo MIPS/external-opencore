@@ -55,6 +55,7 @@ typedef int32 TPVCommandId;
 class PVMainProxy_OMX
 {
     public:
+        virtual ~PVMainProxy_OMX() {}
 
         /**
         ** This call registers a proxied interface with the main
@@ -201,8 +202,6 @@ class PVMainProxy_OMX
         **   notifications still remaining on the queue.
         */
         virtual void DeliverNotifications(int32 aMaxCount, int32& aPendingCount) = 0;
-
-        virtual ~PVMainProxy_OMX(){}
 };
 
 /**
@@ -211,6 +210,7 @@ class PVMainProxy_OMX
 class PVProxiedEngine_OMX
 {
     public:
+        virtual ~PVProxiedEngine_OMX() {}
 
         /**
         ** Create PV logger appenders for the PV thread.
@@ -245,8 +245,6 @@ class PVProxiedEngine_OMX
         **   to the main proxy.
         */
         virtual void PVThreadLogoff(PVMainProxy_OMX &proxy) = 0;
-
-        virtual ~PVProxiedEngine_OMX(){}
 };
 
 /**
@@ -282,6 +280,8 @@ class PVProxiedInterface_OMX : public PVInterface
 class PVProxiedInterfaceServer_OMX
 {
     public:
+        virtual ~PVProxiedInterfaceServer_OMX() {}
+
         /**
         ** PVMainProxy calls this under the PV thread to process a
         ** command off the queue.
@@ -302,8 +302,6 @@ class PVProxiedInterfaceServer_OMX
         ** @param aMsg: the notification data.
         */
         virtual void CleanupNotification(TPVProxyMsgId aId, OsclAny* aMsg) = 0;
-
-        virtual ~PVProxiedInterfaceServer_OMX(){}
 };
 
 /**
@@ -313,6 +311,8 @@ class PVProxiedInterfaceServer_OMX
 class PVProxiedInterfaceClient_OMX
 {
     public:
+        virtual ~PVProxiedInterfaceClient_OMX() {}
+
         /**
         ** PVMainProxy calls this to process a notification off the
         ** queue.
@@ -331,8 +331,6 @@ class PVProxiedInterfaceClient_OMX
         ** @param aMsg: the command data.
         */
         virtual void CleanupCommand(TPVProxyMsgId aId, OsclAny* aMsg) = 0;
-
-        virtual ~PVProxiedInterfaceClient_OMX(){}
 };
 
 /**

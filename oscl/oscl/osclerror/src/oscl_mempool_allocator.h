@@ -47,6 +47,10 @@ Coding History  :
 #include "oscl_defalloc.h"
 #endif
 
+#ifndef OSCL_MEM_H_INCLUDED
+#include "oscl_mem.h"
+#endif
+
 class OsclMemPoolAllocator
 {
     public:
@@ -66,8 +70,8 @@ class OsclMemPoolAllocator
         uint oscl_mem_aligned_size(uint size);
 
     private:
-        // Custom allocator for memory
-        Oscl_DefAlloc* iCustomAllocator;
+        Oscl_DefAlloc *iAlloc;//allocator for mempool.
+        OsclMemAllocator iDefAlloc;//default allocator
 
         // Base address for memory pool
         OsclAny* iBaseAddress;
