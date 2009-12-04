@@ -438,7 +438,7 @@ void PlayerDriver::Run()
 
 }
 
-void PlayerDriver::commandFailed(PlayerCommand* command) 
+void PlayerDriver::commandFailed(PlayerCommand* command)
 {
     if (command == NULL) {
         LOGV("async code failed");
@@ -561,14 +561,14 @@ void PlayerDriver::handleSetDataSource(PlayerSetDataSource* command)
         mDataSource->SetDataSourceFormatType((const char*)PVMF_MIME_FORMAT_UNKNOWN); // Let PV figure it out
         delete mLocalContextData;
         mLocalContextData = NULL;
-        mLocalContextData = new PVMFSourceContextData();
-        mLocalContextData->EnableCommonSourceContext();
         const char* ext = strrchr(url, '.');
         if (ext && ( strcasecmp(ext, ".sdp") == 0) ) {
             // For SDP files, currently there is no recognizer. So, to play from such files,
             // there is a need to set the format type.
             mDataSource->SetDataSourceFormatType((const char*)PVMF_MIME_DATA_SOURCE_SDP_FILE);
         }
+        mLocalContextData = new PVMFSourceContextData();
+        mLocalContextData->EnableCommonSourceContext();
         mDataSource->SetDataSourceContextData((OsclAny*)mLocalContextData);
     }
     OSCL_TRY(error, mPlayer->AddDataSource(*mDataSource, command));
@@ -1008,6 +1008,7 @@ int PlayerDriver::playerThread()
     OsclScheduler::Cleanup();
     LOGV("OsclScheduler::Cleanup");
 
+    LOGV("OMX_MasterDeinit");
     OMX_MasterDeinit();
     UninitializeForThread();
     return 0;
@@ -1028,7 +1029,7 @@ void PlayerDriver::handleCheckLiveStreamingComplete(PlayerCheckLiveStreaming* cm
     const char* substr = oscl_strstr((char*)(mCheckLiveValue[0].key), _STRLIT_CHAR("pause-denied;valtype=bool"));
     if (substr!=NULL) {
         if ( mCheckLiveValue[0].value.bool_value == true ) {
-            LOGI("Live Streaming ...");
+            LOGI("Live Streaming...");
             mIsLiveStreaming = true;
         }
     }
@@ -1117,7 +1118,7 @@ void PlayerDriver::CommandCompleted(const PVCmdResponse& aResponse)
 
             case PlayerCommand::PLAYER_CHECK_LIVE_STREAMING:
                 handleCheckLiveStreamingComplete(static_cast<PlayerCheckLiveStreaming*>(command));
-            break;
+                break;
 
             case PlayerCommand::PLAYER_PAUSE:
                 LOGV("pause complete");
@@ -1471,7 +1472,8 @@ void PVPlayer::check_for_live_streaming(status_t s, void *cookie, bool cancelled
     if (s == NO_ERROR && !cancelled) {
         PVPlayer *p = (PVPlayer*)cookie;
         if ( (p->mPlayerDriver->getFormatType() == PVMF_MIME_DATA_SOURCE_RTSP_URL) ||
-            (p->mPlayerDriver->getFormatType() == PVMF_MIME_DATA_SOURCE_MS_HTTP_STREAMING_URL) ) {
+             (p->mPlayerDriver->getFormatType() == PVMF_MIME_DATA_SOURCE_MS_HTTP_STREAMING_URL) ) {
+            LOGV("check_for_live_streaming enQ PlayerCheckLiveStreaming command");
             p->mPlayerDriver->enqueueCommand(new PlayerCheckLiveStreaming( do_nothing, NULL));
         }
     }

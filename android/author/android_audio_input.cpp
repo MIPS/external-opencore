@@ -662,7 +662,7 @@ OSCL_EXPORT_REF PVMFStatus AndroidAudioInput::getParametersSync(PvmiMIOSession s
     return status;
 }
 
-    ////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////
 OSCL_EXPORT_REF PVMFStatus AndroidAudioInput::releaseParameters(PvmiMIOSession session,
         PvmiKvp* parameters,
         int num_elements)

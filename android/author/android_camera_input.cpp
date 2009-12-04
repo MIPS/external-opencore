@@ -1246,12 +1246,12 @@ PVMFStatus AndroidCameraInput::postWriteAsync(nsecs_t timestamp, const sp<IMemor
     }
 
     // calculate timestamp as offset from start time
-    uint32 t = (uint32)(timestamp / 1000000L) - iStartTickCount;
+    uint32 timeStamp = (uint32)(timestamp / 1000000L) - iStartTickCount;
 
-    // Make sure that no two samples have the same timestamp
     if (iDataEventCounter != 0) {
-        if (iTimeStamp != t) {
-            iTimeStamp = t;
+        // Make sure that no two samples have the same timestamp
+        if (iTimeStamp != timeStamp) {
+            iTimeStamp = timeStamp;
         } else {
             ++iTimeStamp;
         }

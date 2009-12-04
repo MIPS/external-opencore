@@ -1096,6 +1096,7 @@ int AuthorDriver::authorThread()
    //moved below delete this, similar code on playerdriver.cpp caused a crash.
    //cleanup of oscl should happen at the end.
     OsclScheduler::Cleanup();
+    LOGV("OMX_MasterDeinit");
     OMX_MasterDeinit();
     UninitializeForThread();
     return 0;

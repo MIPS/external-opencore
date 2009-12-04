@@ -392,8 +392,8 @@ class PlayerDriver :
     void handleGetPosition(PlayerGetPosition* command);
     void handleGetDuration(PlayerGetDuration* command);
     void handleGetStatus(PlayerGetStatus* command);
-    void handleExtensionCommand(PlayerExtensionCommand* command);
     void handleCheckLiveStreaming(PlayerCheckLiveStreaming* cmd);
+    void handleExtensionCommand(PlayerExtensionCommand* command);
 
     PVMFFormatType getFormatType();
     void CommandCompleted(const PVCmdResponse& aResponse);

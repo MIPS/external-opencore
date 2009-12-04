@@ -364,7 +364,7 @@ private:
     int                     mVideoFrameRate;
     //int                     mVideoBitRate;
     video_encoder           mVideoEncoder;
-    output_format           mOutputFormat; 
+    output_format           mOutputFormat;
 
     //int                     mAudioBitRate;
     audio_encoder           mAudioEncoder;
