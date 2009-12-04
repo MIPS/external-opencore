@@ -1161,11 +1161,32 @@ class PVMFOMXEncNode
         int32 CreateNewArray(char*&, int32);
         int32 MemAllocate(OsclAny*& , OsclMemPoolFixedChunkAllocator*, uint32);
 
+
+        OMX_ERRORTYPE FillBufferDoneProcM4V(OMX_OUT OMX_HANDLETYPE aComponent,
+                                            OMX_OUT OMX_PTR aAppData,
+                                            OMX_OUT OMX_BUFFERHEADERTYPE* aBuffer,
+                                            OutputBufCtrlStruct *pContext);
+
+        OMX_ERRORTYPE FillBufferDoneProcAVC(OMX_OUT OMX_HANDLETYPE aComponent,
+                                            OMX_OUT OMX_PTR aAppData,
+                                            OMX_OUT OMX_BUFFERHEADERTYPE* aBuffer,
+                                            OutputBufCtrlStruct *pContext);
+
+        OMX_ERRORTYPE FillBufferDoneProcETC(OMX_OUT OMX_HANDLETYPE aComponent,
+                                            OMX_OUT OMX_PTR aAppData,
+                                            OMX_OUT OMX_BUFFERHEADERTYPE* aBuffer,
+                                            OutputBufCtrlStruct *pContext);
+
         bool ParseFullAVCFramesIntoNALs(OMX_BUFFERHEADERTYPE* aOutputBuffer);
         bool AVCAnnexBGetNALUnit(uint8 *bitstream, uint8 **nal_unit, int32 *size, bool getPtrOnly);
         bool CheckM4vVopStartCode(uint8* data, int* len);
 
         friend class PVMFOMXEncPort;
+
+        OMX_ERRORTYPE(PVMFOMXEncNode::*iFillBufferDoneProc)(OMX_OUT OMX_HANDLETYPE aComponent,
+                OMX_OUT OMX_PTR aAppData,
+                OMX_OUT OMX_BUFFERHEADERTYPE* aBuffer,
+                OutputBufCtrlStruct *pContext);
 
         // Ports pointers
         PVMFPortInterface* iInPort;
