@@ -198,7 +198,11 @@ class PVMFNodeSessionInfo
                 , iInfoContext(NULL)
                 , iErrorContext(NULL)
         {}
-        PVMFNodeSessionInfo(PVMFNodeCmdStatusObserver*c, PVMFNodeInfoEventObserver*i, OsclAny* ic, PVMFNodeErrorEventObserver*e, OsclAny* ec)
+        PVMFNodeSessionInfo(PVMFNodeCmdStatusObserver*c,
+                            PVMFNodeInfoEventObserver*i,
+                            OsclAny* ic,
+                            PVMFNodeErrorEventObserver*e,
+                            OsclAny* ec)
                 : iCmdStatusObserver(c)
                 , iInfoObserver(i)
                 , iErrorObserver(e)
@@ -226,11 +230,10 @@ class PVMFPortActivityHandler
 {
     public:
         virtual void HandlePortActivity(const PVMFPortActivity &) = 0;
-
-        virtual ~PVMFPortActivityHandler(){}
+        virtual ~PVMFPortActivityHandler() {}
 };
 
-class PVMFNodeInterface: public PVMFPortActivityHandler
+class OSCL_IMPORT_REF PVMFNodeInterface: public PVMFPortActivityHandler
 {
     public:
 
@@ -468,14 +471,38 @@ class PVMFNodeInterface: public PVMFPortActivityHandler
         */
         OSCL_IMPORT_REF virtual void SetState(TPVMFNodeInterfaceState);
 
-        /** These methods can be used to report events to
-        ** the appropriate observers.
-        */
-        OSCL_IMPORT_REF virtual void ReportCmdCompleteEvent(PVMFSessionId s, PVMFCmdResp &resp);
-        OSCL_IMPORT_REF virtual void ReportErrorEvent(PVMFEventType aEventType, OsclAny* aEventData = NULL, PVInterface*aExtMsg = NULL);
-        OSCL_IMPORT_REF virtual void ReportErrorEvent(PVMFAsyncEvent&aEvent);
-        OSCL_IMPORT_REF virtual void ReportInfoEvent(PVMFEventType aEventType, OsclAny* aEventData = NULL, PVInterface*aExtMsg = NULL);
-        OSCL_IMPORT_REF virtual void ReportInfoEvent(PVMFAsyncEvent&aEvent);
+        /* For the given session id, forward the command response if an
+         * observer exists. No-op if the session id is bad or no command
+         * complete observer exists on that session.
+         *
+         * @param session_id Created when the user who should receive this
+         *                   event connected to that node.
+         * @param resp Command complete event.
+         */
+        OSCL_IMPORT_REF virtual void ReportCmdCompleteEvent(PVMFSessionId session_id,
+                const PVMFCmdResp &resp);
+
+        /* For each session handled by the node, if an appropriate
+         * observer exists (info, error) a copy of the event is
+         * dispatched with a copy of the session info/error context.
+         * No-op if the event category is wrong.
+         *
+         * @param event To be reported to the session(s) observer(s) for
+         *              the event's category.
+         */
+        OSCL_IMPORT_REF virtual void ReportErrorEvent(const PVMFAsyncEvent& aEvent);
+        OSCL_IMPORT_REF virtual void ReportInfoEvent(const PVMFAsyncEvent& aEvent);
+
+        /* Similar to the above except the event is built first.
+         * TODO: Get rid of these. Callers should build the event object
+         * including the pointer to their interfaces.
+         */
+        OSCL_IMPORT_REF virtual void ReportErrorEvent(PVMFEventType aEventType,
+                void* aEventData = NULL,
+                PVInterface*aExtMsg = NULL);
+        OSCL_IMPORT_REF virtual void ReportInfoEvent(PVMFEventType aEventType,
+                void* aEventData = NULL,
+                PVInterface*aExtMsg = NULL);
 };
 
 #endif

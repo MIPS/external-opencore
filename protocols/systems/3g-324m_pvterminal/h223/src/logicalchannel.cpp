@@ -137,6 +137,10 @@ H223LogicalChannel::~H223LogicalChannel()
         iFormatSpecificInfoLen = 0;
     }
 
+    // we need to clear the activity handler, since otherwise the PvmfPortBaseImpl destructor
+    // ends up calling back onto our HandlePortActivity method, which no longer exists because
+    // this objects's destructor has already been called.
+    SetActivityHandler(NULL);
 }
 
 void H223LogicalChannel::Init()
