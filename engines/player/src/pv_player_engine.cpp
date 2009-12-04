@@ -5816,7 +5816,16 @@ PVMFStatus PVPlayerEngine::DoSetPlaybackRange(PVPlayerEngineCommand& aCmd)
         retval = PVMFSuccess;
     }
 
-    iClipsCompleted = iCurrentBeginPosition.iPlayElementIndex;
+    if (iDataSource->GetNumClips() == 1)
+    {
+        iClipsCompleted = 0;
+    }
+    else
+    {
+        // For a datasource with multiple clips, it is expected that
+        // the iPlayElementIndex is provided.
+        iClipsCompleted = iCurrentBeginPosition.iPlayElementIndex;
+    }
 
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVPlayerEngine::DoSetPlaybackRange() Out"));
     return retval;
