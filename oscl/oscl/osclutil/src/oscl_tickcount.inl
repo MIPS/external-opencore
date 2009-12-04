@@ -32,7 +32,7 @@
 #include "osclconfig_time.h"
 #endif
 
-#define PV_USE_GETTIMEOFDAY 1
+#define PV_USE_CLOCKGETTIME 1
 
 
 /************************
@@ -48,23 +48,23 @@
 
 OSCL_COND_EXPORT_REF OSCL_INLINE uint32 OsclTickCount::TickCount()
 {
-#if   PV_USE_GETTIMEOFDAY
+#if   PV_USE_CLOCKGETTIME
 #define ROLLBACK_THRESHOLD 0x80000000
     // lock this function against other threads changing the static variables
     // ignore return value and error code
     int32 errorCode = 0;
     OsclSingletonRegistry::lockAndGetInstance(OSCL_SINGLETON_ID_TICKCOUNT, errorCode);
 
-    struct timeval tv;
+    struct timespec tv;
 
-    static struct timeval stv = {0, 0};
+    static struct timespec stv = {0, 0};
     static  uint32 prev_val = 0;
 
-    if ((0 == stv.tv_sec) && (0 == stv.tv_usec))
-        gettimeofday(&stv, NULL);
+    if ((0 == stv.tv_sec) && (0 == stv.tv_nsec))
+        clock_gettime(CLOCK_MONOTONIC, &stv);
 
-    gettimeofday(&tv, NULL);
-    uint32 clk_val = (tv.tv_sec - stv.tv_sec) * 1000 + (tv.tv_usec - stv.tv_usec) / 1000;
+    clock_gettime(CLOCK_MONOTONIC, &tv);
+    uint32 clk_val = (tv.tv_sec - stv.tv_sec) * 1000 + (tv.tv_nsec - stv.tv_nsec) / 1000000;
 
     if ((clk_val - prev_val) > ROLLBACK_THRESHOLD)
     {
@@ -86,7 +86,7 @@ OSCL_COND_EXPORT_REF OSCL_INLINE uint32 OsclTickCount::TickCount()
 // how many ticks per second
 OSCL_COND_EXPORT_REF OSCL_INLINE uint32 OsclTickCount::TickCountFrequency()
 {
-#if   PV_USE_GETTIMEOFDAY
+#if   PV_USE_CLOCKGETTIME
     return 1000;
 #else
 #error No definition for OsclTickCount::TickCountFrequency
@@ -96,7 +96,7 @@ OSCL_COND_EXPORT_REF OSCL_INLINE uint32 OsclTickCount::TickCountFrequency()
 // how many microseconds per tick
 OSCL_COND_EXPORT_REF OSCL_INLINE uint32 OsclTickCount::TickCountPeriod()
 {
-#if   PV_USE_GETTIMEOFDAY
+#if   PV_USE_CLOCKGETTIME
     return 1000;
 #else
 #error No definition for OsclTickCount::TickCountPeriod
@@ -105,7 +105,7 @@ OSCL_COND_EXPORT_REF OSCL_INLINE uint32 OsclTickCount::TickCountPeriod()
 
 OSCL_COND_EXPORT_REF OSCL_INLINE uint32 OsclTickCount::TicksToMsec(uint32 ticks)
 {
-#if   PV_USE_GETTIMEOFDAY
+#if   PV_USE_CLOCKGETTIME
     return ticks;
 #else
 #error No definition for OsclTickCount::TicksToMsec
@@ -114,7 +114,7 @@ OSCL_COND_EXPORT_REF OSCL_INLINE uint32 OsclTickCount::TicksToMsec(uint32 ticks)
 
 OSCL_COND_EXPORT_REF OSCL_INLINE uint32 OsclTickCount::MsecToTicks(uint32 msec)
 {
-#if   PV_USE_GETTIMEOFDAY
+#if   PV_USE_CLOCKGETTIME
     return msec;
 #else
 #error No definition for OsclTickCount::msectoticks

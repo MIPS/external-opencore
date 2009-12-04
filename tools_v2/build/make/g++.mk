@@ -7,7 +7,7 @@ AR ?= ar
 STRIP ?= strip
 ASM_INCLUDE_FLAG := -Wa,-I
 
-override SYSLIBS = -lc -lm -ldl -lstdc++ -lpthread
+override SYSLIBS = -lc -lm -ldl -lstdc++ -lpthread -lrt
 
 SHARED_CFLAGS ?= -fPIC
 SHARED_CXXFLAGS ?= -fPIC
