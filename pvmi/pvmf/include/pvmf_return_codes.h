@@ -475,6 +475,10 @@ const PVMFStatus PVMFInfoIsShoutcastSesssion = 52;
  */
 const PVMFStatus PVMFInfoTrackSelectionNeeded = 53;
 /*
+ Notification for corrupted clip during playlist playback
+ */
+const PVMFStatus PVMFInfoClipCorrupted = 54;
+/*
  Placeholder for end of range
  */
 const PVMFStatus PVMFInfoLast = 100;

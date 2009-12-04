@@ -79,6 +79,24 @@ class PVPlayerDataSourcePVMFNode : public PVPlayerDataSource
             return false;
         }
 
+        uint32 GetNumClips()
+        {
+            return 1;
+        }
+        uint32 ExtendClipList()
+        {
+            return 0;
+        }
+        uint32 SetCurrentClip(uint32 aIndex)
+        {
+            OSCL_UNUSED_ARG(aIndex);
+            return 0;
+        }
+        uint32 GetCurrentClip
+        {
+            return 0;
+        }
+
     private:
         PVMFFormatType iFormatType;
         PVMFNodeInterface* iNode;

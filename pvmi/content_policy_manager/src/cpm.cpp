@@ -707,6 +707,11 @@ OSCL_EXPORT_REF PVMFCommandId PVMFCPMImpl::Reset(const OsclAny* aContext)
     return QueueCommandL(cmd);
 }
 
+OSCL_EXPORT_REF PVMFStatus PVMFCPMImpl::SetMetadataClipIndex(uint32 aClipNum)
+{
+    return (aClipNum == 0) ? PVMFSuccess : PVMFErrArgument;
+}
+
 OSCL_EXPORT_REF PVMFCommandId
 PVMFCPMImpl::GetNodeMetadataKeys(PVMFSessionId aSessionId,
                                  PVMFMetadataList& aKeyList,

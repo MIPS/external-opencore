@@ -2134,9 +2134,12 @@ void PVMFProtocolEngineNode::CancelClear()
 ////////// PVMFDataSourceInitializationExtensionInterface implementation ////////////////////////
 PVMFStatus PVMFProtocolEngineNode::SetSourceInitializationData(OSCL_wString& aSourceURL,
         PVMFFormatType& aSourceFormat,
-        OsclAny* aSourceData,
+        OsclAny* aSourceData, uint32 aClipIndex,
         PVMFFormatTypeDRMInfo aType)
 {
+    if (aClipIndex != 0)
+        return PVMFErrArgument; //playlist not supported.
+
     // check supported protocol plugin
     if (!iRegistry.CheckPluginAvailability(aSourceFormat, aSourceData)) return PVMFErrNotSupported;
 

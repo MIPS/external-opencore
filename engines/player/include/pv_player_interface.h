@@ -336,6 +336,27 @@ class PVPlayerInterface
         virtual PVCommandId AddDataSource(PVPlayerDataSource& aDataSource, const OsclAny* aContextData = NULL) = 0;
 
         /**
+         * This function allows extending or updating a track list during playback.
+         * Changes can be applied prior to beginning initialization for any track.
+         *
+         * @param aDataSource
+         *          aDataSource contains an updated version of the data source previously provided in
+         *          AddDataSource command. The updated data source can contain  modifications to
+         *          existing clips in the list, or new clips added to the end of the list.
+         *          This API cannot be used to update data for clips that have already been initialized,
+         *          or to delete clips from the clip list.
+         * @param aContextData
+         *          Optional opaque data that will be passed back to the user with the command response
+         * @leave   This method can leave with one of the following error codes
+         *          OsclErrNotSupported if the format of the source is incompatible with what the SDK can handle
+         *          OsclErrInvalidState if invoked in the incorrect state, such as after initialization
+         *          of the selected track has already begin.
+         *          OsclErrNoMemory if the SDK failed to allocate memory during this operation
+         * @return A unique command id for asynchronous completion
+         */
+        virtual PVCommandId UpdateDataSource(PVPlayerDataSource& aDataSource, const OsclAny* aContextData = NULL) = 0;
+
+        /**
          * This function switches pvPlayer from PVP_STATE_IDLE state to the PVP_STATE_INITIALIZED state.
          * During the transition, pvPlayer is in the PVP_STATE_INITIALIZING transitional state and
          * the data source is being initialized to obtain metadata and track information of the source media.
@@ -375,13 +396,15 @@ class PVPlayerInterface
          *         keys are requested.
          * @param aContextData
          *         Optional opaque data that will be passed back to the user with the command response
+         * @param aClipIndex: an optional parameter for use with playlists to select the clip of interest.
          * @leave This method can leave with one of the following error codes
          *         OsclErrInvalidState if invoked in the incorrect state
          *         OsclErrNoMemory if the SDK failed to allocate memory during this operation
          * @returns A unique command id for asynchronous completion
          **/
         virtual PVCommandId GetMetadataKeys(PVPMetadataList& aKeyList, int32 aStartingIndex = 0, int32 aMaxEntries = -1,
-                                            char* aQueryKey = NULL, const OsclAny* aContextData = NULL) = 0;
+                                            char* aQueryKey = NULL, const OsclAny* aContextData = NULL,
+                                            uint32 aClipIndex = 0) = 0;
 
         /**
          * The function makes a request to return the metadata value(s) specified by the passed in metadata key list.
@@ -408,13 +431,15 @@ class PVPlayerInterface
          *         Boolean to let engine know if metadata values are copied by User of SDK in command complete callback.
          *         By default the SDK assumes this to be the case. If this argument is set to false by the caller,
          *         then SDK assumes that user will call ReleaseMetaDataValues at a later point.
+         * @param aClipIndex: an optional parameter for use with playlists to select the clip of interest.
          * @leave This method can leave with one of the following error codes
          *         OsclErrInvalidState if invoked in the incorrect state
          *         OsclErrNoMemory if the SDK failed to allocate memory during this operation
          * @returns A unique command id for asynchronous completion
          **/
         virtual PVCommandId GetMetadataValues(PVPMetadataList& aKeyList, int32 aStartingValueIndex, int32 aMaxValueEntries, int32& aNumAvailableValueEntries,
-                                              Oscl_Vector<PvmiKvp, OsclMemAllocator>& aValueList, const OsclAny* aContextData = NULL, bool aMetadataValuesCopiedInCallBack = true) = 0;
+                                              Oscl_Vector<PvmiKvp, OsclMemAllocator>& aValueList, const OsclAny* aContextData = NULL,
+                                              bool aMetadataValuesCopiedInCallBack = true, uint32 aClipIndex = 0) = 0;
 
         /**
          * The function makes a request to release the metadata value(s) specified by the passed in metadata value list.
@@ -428,12 +453,14 @@ class PVPlayerInterface
          *         Reference to a vector of KVP to place the specified metadata values
          * @param aContextData
          *         Optional opaque data that will be passed back to the user with the command response
+         * @param aClipIndex: an optional parameter for use with playlists to select the clip of interest.
          * @leave This method can leave with one of the following error codes
          *         OsclErrInvalidState if invoked in the incorrect state
          *         OsclErrNoMemory if the SDK failed to allocate memory during this operation
          * @returns A unique command id for asynchronous completion
          **/
-        virtual PVCommandId ReleaseMetadataValues(Oscl_Vector<PvmiKvp, OsclMemAllocator>& aValueList, const OsclAny* aContextData = NULL) = 0;
+        virtual PVCommandId ReleaseMetadataValues(Oscl_Vector<PvmiKvp, OsclMemAllocator>& aValueList, const OsclAny* aContextData = NULL,
+                uint32 aClipIndex = 0) = 0;
 
         /**
          * This function allows a player data sink to be specified for playback. This function must be called

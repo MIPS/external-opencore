@@ -273,6 +273,7 @@ class PVMFCPMPassThruPlugInOMA1 : public OsclActiveObject,
 
         OSCL_IMPORT_REF void SetObserver(PVMFCPMStatusObserver& aObserver);
         //From PVMFMetadataExtensionInterface
+        OSCL_IMPORT_REF PVMFStatus SetMetadataClipIndex(uint32 aClipIndex);
         OSCL_IMPORT_REF uint32 GetNumMetadataKeys(char* aQueryKeyString = NULL) ;
         OSCL_IMPORT_REF uint32 GetNumMetadataValues(PVMFMetadataList& aKeyList) ;
         OSCL_IMPORT_REF PVMFCommandId GetNodeMetadataKeys(PVMFSessionId aSessionId,

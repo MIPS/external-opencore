@@ -347,8 +347,15 @@ class PVMFMP3FFParserNode : public PVMFNodeInterfaceImpl,
         void addRef();
         void removeRef();
         bool queryInterface(const PVUuid& uuid, PVInterface *& iface);
-
-        PVMFStatus SetSourceInitializationData(OSCL_wString& aSourceURL, PVMFFormatType& aSourceFormat, OsclAny* aSourceData, PVMFFormatTypeDRMInfo aType = PVMF_FORMAT_TYPE_CONNECT_DRM_INFO_UNKNOWN);
+        void AudioSinkEvent(PVMFStatus aEvent, uint32 aStreamId)
+        {
+            OSCL_UNUSED_ARG(aEvent);
+            OSCL_UNUSED_ARG(aStreamId);
+            //ignore
+        }
+        PVMFStatus SetSourceInitializationData(OSCL_wString& aSourceURL, PVMFFormatType& aSourceFormat,
+                                               OsclAny* aSourceData, uint32 aClipIndex = 0,
+                                               PVMFFormatTypeDRMInfo aType = PVMF_FORMAT_TYPE_CONNECT_DRM_INFO_UNKNOWN);
         PVMFStatus SetClientPlayBackClock(PVMFMediaClock* aClientClock);
         PVMFStatus SetEstimatedServerClock(PVMFMediaClock* aClientClock);
 
@@ -361,6 +368,10 @@ class PVMFMP3FFParserNode : public PVMFNodeInterfaceImpl,
         void MetadataUpdated(uint32 aMetadataSize);
 #endif
         // From PVMFMetadataExtensionInterface
+        PVMFStatus SetMetadataClipIndex(uint32 aClipIndex)
+        {
+            return (aClipIndex == 0) ? PVMFSuccess : PVMFErrArgument;
+        }
         uint32 GetNumMetadataKeys(char* aQueryKeyString = NULL);
         uint32 GetNumMetadataValues(PVMFMetadataList& aKeyList);
         PVMFCommandId GetNodeMetadataKeys(PVMFSessionId aSessionId, PVMFMetadataList& aKeyList,

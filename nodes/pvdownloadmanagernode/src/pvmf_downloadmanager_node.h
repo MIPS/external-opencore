@@ -436,15 +436,20 @@ class PVMFDownloadManagerNode
         bool queryInterface(const PVUuid& uuid, PVInterface*& iface);
 
         //From PVMFDataSourceInitializationExtensionInterface
-        PVMFStatus SetSourceInitializationData(OSCL_wString& aSourceURL, PVMFFormatType& aSourceFormat, OsclAny* aSourceData, PVMFFormatTypeDRMInfo aType = PVMF_FORMAT_TYPE_CONNECT_DRM_INFO_UNKNOWN);
+        PVMFStatus SetSourceInitializationData(OSCL_wString& aSourceURL, PVMFFormatType& aSourceFormat, OsclAny* aSourceData, uint32 aClipIndex, PVMFFormatTypeDRMInfo aType = PVMF_FORMAT_TYPE_CONNECT_DRM_INFO_UNKNOWN);
         PVMFStatus SetClientPlayBackClock(PVMFMediaClock* aClientClock);
         PVMFStatus SetEstimatedServerClock(PVMFMediaClock* aClientClock);
+        void AudioSinkEvent(PVMFStatus aEvent, uint32 aStreamId);
 
         //From PVMFTrackSelectionExtensionInterface
         PVMFStatus GetMediaPresentationInfo(PVMFMediaPresentationInfo& aInfo);
         PVMFStatus SelectTracks(PVMFMediaPresentationInfo& aInfo);
 
         // From PVMFMetadataExtensionInterface
+        PVMFStatus SetMetadataClipIndex(uint32 aClipNum)
+        {
+            return (aClipNum == 0) ? PVMFSuccess : PVMFErrArgument;
+        }
         uint32 GetNumMetadataKeys(char* aQueryKeyString = NULL);
         uint32 GetNumMetadataValues(PVMFMetadataList& aKeyList);
         PVMFCommandId GetNodeMetadataKeys(PVMFSessionId aSessionId, PVMFMetadataList& aKeyList, uint32 aStartingKeyIndex, int32 aMaxKeyEntries,

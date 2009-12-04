@@ -2904,8 +2904,11 @@ PVMFStatus PVMFSMRTSPTUnicastNode::VerifyAndSetConfigParameter(int index, PvmiKv
 // Implemenation of PVMFDataSourceInitializationExtensionInterface interface
 ///////////////////////////////////////////////////////////////////////////////
 OSCL_EXPORT_REF
-PVMFStatus PVMFSMRTSPTUnicastNode::SetSourceInitializationData(OSCL_wString& aSourceURL, PVMFFormatType& aSourceFormat, OsclAny* aSourceData, PVMFFormatTypeDRMInfo aType)
+PVMFStatus PVMFSMRTSPTUnicastNode::SetSourceInitializationData(OSCL_wString& aSourceURL, PVMFFormatType& aSourceFormat, OsclAny* aSourceData, uint32 aClipIndex, PVMFFormatTypeDRMInfo aType)
 {
+    if (aClipIndex != 0)
+        return PVMFErrArgument; //playlist not supported.
+
     //Configure RTSP node for:
     // RTSP Proxy
     // Streaming type
@@ -3129,6 +3132,14 @@ PVMFStatus PVMFSMRTSPTUnicastNode::SetEstimatedServerClock(PVMFMediaClock* aClie
 {
     OSCL_UNUSED_ARG(aClientClock);
     return PVMFErrNotSupported;
+}
+
+OSCL_EXPORT_REF
+void PVMFSMRTSPTUnicastNode::AudioSinkEvent(PVMFStatus aEvent, uint32 aStreamId)
+{
+    OSCL_UNUSED_ARG(aEvent);
+    OSCL_UNUSED_ARG(aStreamId);
+    //ignore
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -3393,6 +3404,12 @@ PVMFStatus PVMFSMRTSPTUnicastNode::SelectTracks(PVMFMediaPresentationInfo& aInfo
 ///////////////////////////////////////////////////////////////////////////////
 //Implementation of PVMFMetadataExtensionInterface
 ///////////////////////////////////////////////////////////////////////////////
+OSCL_EXPORT_REF
+PVMFStatus PVMFSMRTSPTUnicastNode::SetMetadataClipIndex(uint32 aClipNum)
+{
+    return (aClipNum == 0) ? PVMFSuccess : PVMFErrArgument;
+}
+
 OSCL_EXPORT_REF
 uint32 PVMFSMRTSPTUnicastNode::GetNumMetadataKeys(char* aQueryKeyString)
 {

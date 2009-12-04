@@ -127,10 +127,11 @@ class PVMFStreamingManagerNode : public PVMFNodeInterface,
         /* From PVMFDataSourceInitializationExtensionInterface */
         virtual PVMFStatus SetSourceInitializationData(OSCL_wString& aSourceURL,
                 PVMFFormatType& aSourceFormat,
-                OsclAny* aSourceData,
+                OsclAny* aSourceData, uint32 aClipIndex,
                 PVMFFormatTypeDRMInfo aType = PVMF_FORMAT_TYPE_CONNECT_DRM_INFO_UNKNOWN);
         virtual PVMFStatus SetClientPlayBackClock(PVMFMediaClock* aClientClock);
         virtual PVMFStatus SetEstimatedServerClock(PVMFMediaClock* aClientClock);
+        virtual void AudioSinkEvent(PVMFStatus aEvent, uint32 aStreamId);
     private:
         /* From OsclActiveObject */
         void Run();

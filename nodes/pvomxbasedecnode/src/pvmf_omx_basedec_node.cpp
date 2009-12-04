@@ -5593,6 +5593,11 @@ OSCL_EXPORT_REF PVMFCommandId PVMFOMXBaseDecNode::GetNodeMetadataValues(PVMFSess
 
 // From PVMFMetadataExtensionInterface
 /////////////////////////////////////////////////////////////////////////////
+OSCL_EXPORT_REF PVMFStatus PVMFOMXBaseDecNode::SetMetadataClipIndex(uint32 aClipIndex)
+{
+    return (aClipIndex == 0) ? PVMFSuccess : PVMFErrArgument;
+}
+
 OSCL_EXPORT_REF PVMFStatus PVMFOMXBaseDecNode::ReleaseNodeMetadataKeys(PVMFMetadataList& , uint32 , uint32)
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "%s::ReleaseNodeMetadataKeys() called", iName.Str()));

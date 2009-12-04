@@ -296,6 +296,7 @@ class PVMediaOutputNodePort
         //we report PVMFInfoEndOfData with the poped streamid.
         //This logic depends on Mio comp. process data(at least eos msg) in a sequencial style.
         Oscl_Vector<uint32, OsclMemAllocator> iEosStreamIDVec;
+        Oscl_Vector<uint32, OsclMemAllocator> iClipIDVec;
         uint32 iSkipTimestamp;
         bool iSendStartOfDataEvent;
         bool DataToSkip(PVMFSharedMediaMsgPtr& aMsg);

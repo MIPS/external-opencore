@@ -195,10 +195,11 @@ class PVMFSMRTSPUnicastNode: public PVMFSMFSPBaseNode
         /* From PVMFDataSourceInitializationExtensionInterface */
         virtual PVMFStatus SetSourceInitializationData(OSCL_wString& aSourceURL,
                 PVMFFormatType& aSourceFormat,
-                OsclAny* aSourceData,
+                OsclAny* aSourceData, uint32 aClipIndex,
                 PVMFFormatTypeDRMInfo aType = PVMF_FORMAT_TYPE_CONNECT_DRM_INFO_UNKNOWN);
         virtual PVMFStatus SetClientPlayBackClock(PVMFMediaClock* aClientClock);
         virtual PVMFStatus SetEstimatedServerClock(PVMFMediaClock* aClientClock);
+        virtual void AudioSinkEvent(PVMFStatus aEvent, uint32 aStreamId);
 
         /* From PVMFTrackSelectionExtensionInterface */
         virtual PVMFStatus GetMediaPresentationInfo(PVMFMediaPresentationInfo& aInfo);
@@ -208,6 +209,10 @@ class PVMFSMRTSPUnicastNode: public PVMFSMFSPBaseNode
         virtual PVMFStatus NotifyTargetPositionSync(PVMFTimestamp aTargetNPT);
 
         /* From PVMFMetadataExtensionInterface */
+        PVMFStatus SetMetadataClipIndex(uint32 aClipNum)
+        {
+            return (aClipNum == 0) ? PVMFSuccess : PVMFErrArgument;
+        }
         virtual uint32 GetNumMetadataKeys(char* aQueryKeyString = NULL);
         virtual uint32 GetNumMetadataValues(PVMFMetadataList& aKeyList);
         PVMFStatus DoGetMetadataKeys(PVMFSMFSPBaseNodeCommand& aCmd);

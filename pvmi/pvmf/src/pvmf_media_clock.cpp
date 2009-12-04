@@ -1571,7 +1571,7 @@ void PVMFMediaClock::ClearPresentNPTQueue()
     }
 }
 
-void PVMFMediaClock::UpdateNPTClockPosition(
+OSCL_EXPORT_REF void PVMFMediaClock::UpdateNPTClockPosition(
     /*IN*/  uint32 aStartNPT,
     /*IN*/  bool aIsPlayBackDirectionBackwards)
 {
@@ -1594,7 +1594,7 @@ void PVMFMediaClock::UpdateNPTClockPosition(
     AdjustScheduling(true);
 }
 
-PVMFStatus PVMFMediaClock::GetNPTClockPosition(
+OSCL_EXPORT_REF PVMFStatus PVMFMediaClock::GetNPTClockPosition(
     /*OUT*/ uint32& aCurrentPosition)
 {
     uint32 currentTime = 0;

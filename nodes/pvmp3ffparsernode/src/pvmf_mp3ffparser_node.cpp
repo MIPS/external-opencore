@@ -1850,8 +1850,10 @@ bool PVMFMP3FFParserNode::queryInterface(const PVUuid& uuid, PVInterface*& iface
 PVMFStatus PVMFMP3FFParserNode::SetSourceInitializationData(OSCL_wString& aSourceURL,
         PVMFFormatType& aSourceFormat,
         OsclAny* aSourceData,
+        uint32 aClipIndex,
         PVMFFormatTypeDRMInfo aType)
 {
+    OSCL_UNUSED_ARG(aClipIndex);
     // Initialize the Source data
     if (iSourceURLSet)
     {

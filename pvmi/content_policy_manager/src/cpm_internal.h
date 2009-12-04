@@ -498,6 +498,7 @@ class PVMFCPMImpl
         OSCL_IMPORT_REF bool queryInterface(const PVUuid& uuid, PVInterface*& iface);
 
         /* From PVMFMetadataExtensionInterface */
+        OSCL_IMPORT_REF PVMFStatus SetMetadataClipIndex(uint32 aClipNum);
         OSCL_IMPORT_REF uint32 GetNumMetadataKeys(char* aQueryKeyString = NULL);
         OSCL_IMPORT_REF uint32 GetNumMetadataValues(PVMFMetadataList& aKeyList);
         OSCL_IMPORT_REF PVMFCommandId GetNodeMetadataKeys(PVMFSessionId aSessionId,

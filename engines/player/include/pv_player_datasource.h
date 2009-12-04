@@ -138,6 +138,45 @@ class PVPlayerDataSource
         virtual bool GetAlternateSourceFormatType(PVMFFormatType& aFormatType,
                 uint32 aIndex) = 0;
 
+        /**
+         * For playlist support
+         *
+         * @returns total number of clips in this data source.
+         **/
+        virtual uint32 GetNumClips() = 0;
+
+        /**
+         * For playlist support
+         *
+         * Extends the playlist by one by adding to the end
+         * and sets the current clip to the new clip.
+         * If the list cannot be expanded, the current clip
+         * is unchanged.
+         *
+         * @returns current clip number.
+         **/
+        virtual uint32 ExtendClipList() = 0;
+
+        /**
+         * For playlist support
+         * Sets current clip number to the given index.
+         * If the index is invalid, the current clip number is
+         * unchanged.
+         *
+         * @returns current clip number.
+         *
+         * @param aIndex: zero-based index
+         **/
+        virtual uint32 SetCurrentClip(uint32 aIndex) = 0;
+
+        /**
+         * For playlist support
+         * Retrieves current clip number.
+         *
+         * @returns current clip number.
+         *
+         **/
+        virtual uint32 GetCurrentClip() = 0;
 };
 
 #endif // PV_PLAYER_DATASOURCE_H_INCLUDED

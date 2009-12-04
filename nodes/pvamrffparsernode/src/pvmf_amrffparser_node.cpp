@@ -1457,9 +1457,13 @@ bool PVMFAMRFFParserNode::queryInterface(const PVUuid& uuid, PVInterface*& iface
 }
 
 
-PVMFStatus PVMFAMRFFParserNode::SetSourceInitializationData(OSCL_wString& aSourceURL, PVMFFormatType& aSourceFormat, OsclAny* aSourceData, PVMFFormatTypeDRMInfo aType)
+PVMFStatus PVMFAMRFFParserNode::SetSourceInitializationData(OSCL_wString& aSourceURL, PVMFFormatType& aSourceFormat, OsclAny* aSourceData, uint32 aClipIndex, PVMFFormatTypeDRMInfo aType)
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFAMRFFParserNode::SetSourceInitializationData() called"));
+
+    if (aClipIndex != 0)
+        return PVMFErrArgument; //playlist not supported.
+
     if (aSourceFormat != PVMF_MIME_AMRFF)
     {
         PVMF_AMRPARSERNODE_LOGERROR((0, "PVMFAMRParserNode::SetSourceInitializationData - Unsupported Format %s", aSourceFormat.getMIMEStrPtr()));
@@ -1571,6 +1575,11 @@ PVMFStatus PVMFAMRFFParserNode::SetEstimatedServerClock(PVMFMediaClock* aClientC
 {
     OSCL_UNUSED_ARG(aClientClock);
     return PVMFSuccess;
+}
+
+void PVMFAMRFFParserNode::AudioSinkEvent(PVMFStatus , uint32)
+{
+    //ignore this event
 }
 
 PVMFStatus PVMFAMRFFParserNode::GetMediaPresentationInfo(PVMFMediaPresentationInfo& aInfo)

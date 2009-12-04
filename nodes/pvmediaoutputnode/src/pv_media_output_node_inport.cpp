@@ -162,6 +162,7 @@ PVMediaOutputNodePort::PVMediaOutputNodePort(PVMediaOutputNode* aNode)
     iTotalFrames = 0;
 
     iEosStreamIDVec.reserve(2);
+    iClipIDVec.reserve(2);
 
     iOsclErrorTrapImp = OsclErrorTrap::GetErrorTrapImp();
     iLogger = PVLogger::GetLoggerObject("PVMediaOutputNodePort");
@@ -721,7 +722,7 @@ void PVMediaOutputNodePort::writeComplete(PVMFStatus status, PVMFCommandId aCmdI
             // there is no pending MIO control request
             PVMF_MOPORT_LOGDATAPATH((0, "PVMediaOutputNodePort::writeComplete For EOS - Fmt=%s",
                                      iSinkFormatString.get_str()));
-            if (iEosStreamIDVec.size() != 0)
+            if (iEosStreamIDVec.size() != 0 && iClipIDVec.size() != 0)
             {
                 //iEosStreamIDVec is used as a FIFO to store the steamids of eos sent to mio comp.
                 //streamid is pushed in at front when call writeasync(eos) to mio comp.
@@ -729,13 +730,17 @@ void PVMediaOutputNodePort::writeComplete(PVMFStatus status, PVMFCommandId aCmdI
                 //we report PVMFInfoEndOfData with the poped streamid.
                 //This logic depends on Mio comp. process data(at least eos msg) in a sequencial style.
                 uint32 EosStreamID = iEosStreamIDVec.back();
+                uint32 clipID = iClipIDVec.back();
 
                 // Asynchronous completion
                 if (status == PVMFSuccess)
                 {
                     // Report EndofData to engine only if MIO comp sends success for End Of Stream.
                     // FOr other return codes just pop out the EOS from the vector.
-                    iNode->ReportInfoEvent(PVMFInfoEndOfData, (OsclAny*)&EosStreamID);
+                    uint8 localbuffer[8];
+                    oscl_memcpy(localbuffer, &EosStreamID, sizeof(uint32));
+                    oscl_memcpy(&localbuffer[4], &clipID, sizeof(uint32));
+                    iNode->ReportInfoEvent(PVMFInfoEndOfData, (OsclAny*)&localbuffer);
                 }
                 else
                 {
@@ -743,6 +748,7 @@ void PVMediaOutputNodePort::writeComplete(PVMFStatus status, PVMFCommandId aCmdI
                 }
 
                 iEosStreamIDVec.pop_back();
+                iClipIDVec.pop_back();
             }
             else
             {
@@ -1297,6 +1303,7 @@ void PVMediaOutputNodePort::SendEndOfData()
 
     uint32 eosseqnum = iCurrentMediaMsg->getSeqNum();
     uint32 eostimestamp = iCurrentMediaMsg->getTimestamp();
+    uint32 clipid = iCurrentMediaMsg->getClipID();
 
     iWriteState = EWriteBusy;
 
@@ -1317,6 +1324,8 @@ void PVMediaOutputNodePort::SendEndOfData()
     //we report PVMFInfoEndOfData with the poped streamid.
     //This logic depends on Mio comp. process data(at least eos msg) in a sequencial style.
     iEosStreamIDVec.push_front(EosStreamId);
+    iClipIDVec.push_front(clipid);
+
     OSCL_TRY(err,
              cmdId = iMediaTransfer->writeAsync(PVMI_MEDIAXFER_FMT_TYPE_NOTIFICATION,  /*format_type*/
                                                 PVMI_MEDIAXFER_FMT_INDEX_END_OF_STREAM, /*format_index*/
@@ -1342,9 +1351,10 @@ void PVMediaOutputNodePort::SendEndOfData()
         oProcessIncomingMessage = false;
 
         // StreamID popped from vector when leave occurs in the writeAsync call
-        if (iEosStreamIDVec.size() != 0)
+        if (iEosStreamIDVec.size() != 0 && iClipIDVec.size() != 0)
         {
             iEosStreamIDVec.erase(iEosStreamIDVec.begin());
+            iClipIDVec.erase(iClipIDVec.begin());
         }
         else
         {
@@ -1384,7 +1394,7 @@ void PVMediaOutputNodePort::SendEndOfData()
                                      iCleanupQueue.size()));
 
             // Report End of Data to the user of media output node
-            if (iEosStreamIDVec.size() != 0)
+            if (iEosStreamIDVec.size() != 0 && iClipIDVec.size() != 0)
             {
                 //iEosStreamIDVec is used as a FIFO to store the steamids of eos sent to mio comp.
                 //streamid is pushed in at front when call writeasync(eos) to mio comp.
@@ -1392,8 +1402,13 @@ void PVMediaOutputNodePort::SendEndOfData()
                 //we report PVMFInfoEndOfData with the poped streamid.
                 //This logic depends on Mio comp. process data(at least eos msg) in a sequencial style.
                 uint32 EosStreamID = iEosStreamIDVec.back();
-                iNode->ReportInfoEvent(PVMFInfoEndOfData, (OsclAny*)&EosStreamID);
+                uint32 msgClipId = iClipIDVec.back();
+                uint8 localbuffer[8];
+                oscl_memcpy(localbuffer, &EosStreamID, sizeof(uint32));
+                oscl_memcpy(&localbuffer[4], &msgClipId, sizeof(uint32));
+                iNode->ReportInfoEvent(PVMFInfoEndOfData, (OsclAny*)&localbuffer);
                 iEosStreamIDVec.pop_back();
+                iClipIDVec.pop_back();
             }
             else
             {
@@ -1699,6 +1714,11 @@ void PVMediaOutputNodePort::Run()
                                      msgStreamId,
                                      IncomingMsgQueueSize()));
 
+            uint32 msgClipId = iCurrentMediaMsg->getClipID();
+            uint8 localbuffer[8];
+            oscl_memcpy(localbuffer, &msgStreamId, sizeof(uint32));
+            oscl_memcpy(&localbuffer[4], &msgClipId, sizeof(uint32));
+            iNode->ReportInfoEvent(PVMFInfoStartOfData, (OsclAny*)localbuffer);
             iNode->ReportBOS();
             iCurrentMediaMsg.Unbind();
             iFragIndex = 0;
@@ -1834,7 +1854,7 @@ void PVMediaOutputNodePort::HandlePortActivity(const PVMFPortActivity& aActivity
             break;
 
         case PVMF_PORT_ACTIVITY_INCOMING_MSG:
-            if (IncomingMsgQueueSize() > 0)
+            if (IncomingMsgQueueSize() > 0 && (iCurrentMediaMsg.GetRep() == NULL))
             {
                 PVMFSharedMediaMsgPtr peekMsgPtr;
                 bool oBos = false;
@@ -1874,8 +1894,13 @@ void PVMediaOutputNodePort::HandlePortActivity(const PVMFPortActivity& aActivity
                                                      msgStreamId,
                                                      IncomingMsgQueueSize()));
 
+                            uint32 msgClipId = peekMsgPtr->getClipID();
+                            uint8 localbuffer[8];
+                            oscl_memcpy(localbuffer, &msgStreamId, sizeof(uint32));
+                            oscl_memcpy(&localbuffer[4], &msgClipId, sizeof(uint32));
+                            iNode->ReportInfoEvent(PVMFInfoStartOfData, (OsclAny*)localbuffer);
                             iNode->ReportBOS();
-
+                            iSendStartOfDataEvent = false;
                             iCurrentMediaMsg.Unbind();
                             iFragIndex = 0;
                         }
@@ -1986,9 +2011,11 @@ void PVMediaOutputNodePort::HandlePortActivity(const PVMFPortActivity& aActivity
                                                                  IncomingMsgQueueSize()));
 
                                         uint32 eosStreamId = iCurrentMediaMsg->getStreamID();
-
-                                        iNode->ReportInfoEvent(PVMFInfoEndOfData, (OsclAny*)&eosStreamId);
-
+                                        uint32 msgClipId = iCurrentMediaMsg->getClipID();
+                                        uint8 localbuffer[8];
+                                        oscl_memcpy(localbuffer, &eosStreamId, sizeof(uint32));
+                                        oscl_memcpy(&localbuffer[4], &msgClipId, sizeof(uint32));
+                                        iNode->ReportInfoEvent(PVMFInfoEndOfData, (OsclAny*)&localbuffer);
                                         iCurrentMediaMsg.Unbind();
                                         iFragIndex = 0;
                                     }

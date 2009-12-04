@@ -368,9 +368,12 @@ bool PVMFDownloadManagerNode::queryInterface(const PVUuid& uuid, PVInterface*& i
 
 
 //public API from data source initialization interface
-PVMFStatus PVMFDownloadManagerNode::SetSourceInitializationData(OSCL_wString& aSourceURL, PVMFFormatType& aSourceFormat, OsclAny* aSourceData, PVMFFormatTypeDRMInfo aType)
+PVMFStatus PVMFDownloadManagerNode::SetSourceInitializationData(OSCL_wString& aSourceURL, PVMFFormatType& aSourceFormat, OsclAny* aSourceData, uint32 aClipIndex, PVMFFormatTypeDRMInfo aType)
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFDownloadManagerNode::SetSourceInitializationData() called"));
+
+    if (aClipIndex != 0)
+        return PVMFErrArgument; //playlist not supported.
 
 #if(PVMF_DOWNLOADMANAGER_SUPPORT_PPB)
 #if(PV_HAS_SHOUTCAST_SUPPORT_ENABLED)
@@ -405,7 +408,7 @@ PVMFStatus PVMFDownloadManagerNode::SetSourceInitializationData(OSCL_wString& aS
                         "PVMFDownloadManagerNode:SetSourceInitializationData() Can't find datasourceinit interface in protocol engine subnode container."));
         return PVMFFailure; //no source init interface.
     }
-    PVMFStatus status = (iProtocolEngineNode.DataSourceInit())->SetSourceInitializationData(iSourceURL, iSourceFormat, iSourceData);
+    PVMFStatus status = (iProtocolEngineNode.DataSourceInit())->SetSourceInitializationData(iSourceURL, iSourceFormat, iSourceData, 0);
     if (status != PVMFSuccess)
         return status;
 
@@ -797,6 +800,13 @@ PVMFStatus PVMFDownloadManagerNode::SetEstimatedServerClock(PVMFMediaClock*)
 {
     //not needed for download.
     return PVMFErrNotSupported;
+}
+
+void PVMFDownloadManagerNode::AudioSinkEvent(PVMFStatus aEvent, uint32 aStreamId)
+{
+    OSCL_UNUSED_ARG(aEvent);
+    OSCL_UNUSED_ARG(aStreamId);
+    //ignore
 }
 
 PVMFDownloadManagerSubNodeContainer& PVMFDownloadManagerNode::TrackSelectNode()
@@ -1872,14 +1882,16 @@ PVMFStatus PVMFDownloadManagerSubNodeContainer::IssueCommand(int32 aCmd)
                         PVMFFormatType fmt = PVMF_MIME_DATA_SOURCE_PVX_FILE;
                         (DataSourceInit())->SetSourceInitializationData(iContainer->iDownloadFileName
                                 , fmt
-                                , (OsclAny*)&iContainer->iLocalDataSource);
+                                , (OsclAny*)&iContainer->iLocalDataSource
+                                , 0);
                     }
                     else if (iContainer->iSourceFormat == PVMF_MIME_DATA_SOURCE_SHOUTCAST_URL)
                     {
                         // let the parser node know that it is playing from a shoutcast stream
                         (DataSourceInit())->SetSourceInitializationData(iContainer->iDownloadFileName
                                 , iContainer->iSourceFormat
-                                , (OsclAny*)iContainer->iSourceData);
+                                , (OsclAny*)iContainer->iSourceData
+                                , 0);
                     }
                     else if (iContainer->iSourceFormat == PVMF_MIME_DATA_SOURCE_DTCP_URL)
                     {
@@ -1887,6 +1899,7 @@ PVMFStatus PVMFDownloadManagerSubNodeContainer::IssueCommand(int32 aCmd)
                         (DataSourceInit())->SetSourceInitializationData(iContainer->iDownloadFileName
                                 , iContainer->iFmt
                                 , (OsclAny*)iContainer->iSourceData
+                                , 0
                                 , PVMF_FORMAT_TYPE_CONNECT_UNPROTECTED);
                     }
                     else
@@ -1894,7 +1907,8 @@ PVMFStatus PVMFDownloadManagerSubNodeContainer::IssueCommand(int32 aCmd)
                         // pass the recognized format to the parser.
                         (DataSourceInit())->SetSourceInitializationData(iContainer->iDownloadFileName
                                 , iContainer->iFmt
-                                , (OsclAny*)iContainer->iSourceData);
+                                , (OsclAny*)iContainer->iSourceData
+                                , 0);
                     }
 
                     //Pass datastream data.

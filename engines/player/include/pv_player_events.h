@@ -168,6 +168,8 @@ typedef enum
     /**
      pvPlayer sends this event when the playback has reached
      the specified end time and playback has been paused.
+     When playing from a clip list, this event is only sent
+     after the last clip.
      **/
     PVPlayerInfoEndTimeReached  = 8192,
 
@@ -189,6 +191,8 @@ typedef enum
      pvPlayer sends this event when the playback has reached
      the end of clip (all sink nodes reported PVMFInfoEndOfData)
      and playback has been paused.
+     When playing from a clip list, this event is only sent
+     after the last clip.
      **/
     PVPlayerInfoEndOfClipReached,
 
@@ -229,6 +233,36 @@ typedef enum
      Source node sends NotSupported to Change Position request.
      **/
     PVPlayerInfoChangePlaybackPositionNotSupported,
+
+    /**
+     pvPlayer sends this event when playing from a clip list, to indicate
+     that a new clip has been initialized and metadata is available.
+     This event's local buffer contains the clip index.
+     The format of local buffer is as follows:
+     Byte 1-4: uint32 (zero-based index of the initialized clip)
+     Byte 5-8: unused
+     **/
+    PVPlayerInfoClipInitialized,
+
+    /**
+     pvPlayer sends this event when playing from a clip list, to indicate
+     that a new clip playback has started.
+     This event's local buffer contains the clip index.
+     The format of local buffer is as follows:
+     Byte 1-4: uint32 (zero-based index of the started clip)
+     Byte 5-8: unused
+     **/
+    PVPlayerInfoClipPlaybackStarted,
+
+    /**
+     pvPlayer sends this event when playing from a clip list, to indicate
+     that a clip's playback has ended.
+     This event's local buffer contains the clip index.
+     The format of local buffer is as follows:
+     Byte 1-4: uint32 (zero-based index of the ended clip)
+     Byte 5-8: unused
+     **/
+    PVPlayerInfoClipPlaybackEnded,
 
     /**
      Placeholder for the last pvPlayer informational event

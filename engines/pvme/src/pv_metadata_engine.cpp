@@ -1207,7 +1207,7 @@ PVMFStatus PVMetadataEngine::DoSetSourceInitializationData()
         sourceURL += iDataSource->GetDataSourceURL().get_cstr();
     }
 
-    PVMFStatus retval = iSourceNodeInitIF->SetSourceInitializationData(sourceURL, iSourceFormatType, iDataSource->GetDataSourceContextData());
+    PVMFStatus retval = iSourceNodeInitIF->SetSourceInitializationData(sourceURL, iSourceFormatType, iDataSource->GetDataSourceContextData(), 0);
     if (retval != PVMFSuccess)
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVMetadataEngine::DoSetSourceInitializationData() SetSourceInitializationData failed"));

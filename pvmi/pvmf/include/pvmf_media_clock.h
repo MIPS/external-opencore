@@ -1263,11 +1263,11 @@ class PVMFMediaClock :  public OsclTimerObject,
 
         // From PVMFMediaClockNPTClockPositionAccessInterface
 
-        void UpdateNPTClockPosition(
+        OSCL_IMPORT_REF void UpdateNPTClockPosition(
             /*IN*/  uint32 aStartNPT,
             /*IN*/  bool aIsPlayBackDirectionBackwards);
 
-        PVMFStatus GetNPTClockPosition(
+        OSCL_IMPORT_REF PVMFStatus GetNPTClockPosition(
             /*OUT*/ uint32& aCurrentPosition);
 
         void ClearNPTClockPosition();

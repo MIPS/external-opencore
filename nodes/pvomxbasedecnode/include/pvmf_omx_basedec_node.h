@@ -229,6 +229,7 @@ class PVMFOMXBaseDecNode: public PVMFNodeInterfaceImpl
         OSCL_IMPORT_REF virtual PVMFStatus SetDecoderNodeConfiguration(PVMFOMXBaseDecNodeConfig& aConfig);
 
         //**********begin PVMFMetadataExtensionInterface
+        OSCL_IMPORT_REF virtual PVMFStatus SetMetadataClipIndex(uint32 aClipIndex);
         OSCL_IMPORT_REF virtual uint32 GetNumMetadataKeys(char* query_key = NULL) = 0;
         OSCL_IMPORT_REF virtual uint32 GetNumMetadataValues(PVMFMetadataList& aKeyList) = 0;
         OSCL_IMPORT_REF PVMFCommandId GetNodeMetadataKeys(PVMFSessionId aSessionId, PVMFMetadataList& aKeyList, uint32 starting_index, int32 max_entries,

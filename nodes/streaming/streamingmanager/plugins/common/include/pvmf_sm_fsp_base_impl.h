@@ -215,6 +215,7 @@ class PVMFSMFSPBaseNode
         //if they so choose.
 
         /* From PVMFMetadataExtensionInterface */
+        OSCL_IMPORT_REF PVMFStatus SetMetadataClipIndex(uint32 aClipNum);
         OSCL_IMPORT_REF virtual uint32 GetNumMetadataKeysBase(char* aQueryKeyString = NULL);
         OSCL_IMPORT_REF virtual uint32 GetNumMetadataValuesBase(PVMFMetadataList& aKeyList);
         OSCL_IMPORT_REF virtual PVMFCommandId GetNodeMetadataKeys(PVMFSessionId aSessionId,

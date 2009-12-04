@@ -37,8 +37,15 @@
 class PVPlayerDataSourceURL : public PVPlayerDataSource
 {
     public:
-        PVPlayerDataSourceURL() : iFormatType(PVMF_MIME_FORMAT_UNKNOWN), iURL(NULL), iContext(NULL) {};
-        ~PVPlayerDataSourceURL() {};
+        PVPlayerDataSourceURL()
+        {
+            OneClip src;
+            iClipList.push_back(src);
+            iCurrentClip = 0;
+        }
+
+        ~PVPlayerDataSourceURL()
+        {}
 
         PVPDataSourceType GetDataSourceType()
         {
@@ -47,17 +54,17 @@ class PVPlayerDataSourceURL : public PVPlayerDataSource
 
         PVMFFormatType GetDataSourceFormatType()
         {
-            return iFormatType;
+            return iClipList[iCurrentClip].iFormatType;
         }
 
         OSCL_wString& GetDataSourceURL()
         {
-            return iURL;
+            return iClipList[iCurrentClip].iURL;
         }
 
         OsclAny* GetDataSourceContextData()
         {
-            return iContext;
+            return iClipList[iCurrentClip].iContext;
         }
 
         PVMFNodeInterface* GetDataSourceNodeInterface()
@@ -67,23 +74,23 @@ class PVPlayerDataSourceURL : public PVPlayerDataSource
 
         void SetDataSourceFormatType(PVMFFormatType aFormatType)
         {
-            iFormatType = aFormatType;
+            iClipList[iCurrentClip].iFormatType = aFormatType;
         }
 
         void SetDataSourceURL(const OSCL_wString& aURL)
         {
-            iURL = aURL;
+            iClipList[iCurrentClip].iURL = aURL;
         }
 
         void SetDataSourceContextData(const OsclAny* aContext)
         {
-            iContext = (OsclAny*)aContext;
+            iClipList[iCurrentClip].iContext = (OsclAny*)aContext;
         }
 
         bool SetAlternateSourceFormatType(PVMFFormatType aFormatType)
         {
             int32 err;
-            OSCL_TRY(err, iAlternateFormatTypeVec.push_back(aFormatType););
+            OSCL_TRY(err, iClipList[iCurrentClip].iAlternateFormatTypeVec.push_back(aFormatType););
             if (err != OsclErrNone)
             {
                 return false;
@@ -93,25 +100,55 @@ class PVPlayerDataSourceURL : public PVPlayerDataSource
 
         uint32 GetNumAlternateSourceFormatTypes()
         {
-            return (iAlternateFormatTypeVec.size());
+            return (iClipList[iCurrentClip].iAlternateFormatTypeVec.size());
         }
 
         bool GetAlternateSourceFormatType(PVMFFormatType& aFormatType,
                                           uint32 aIndex)
         {
-            if (aIndex < iAlternateFormatTypeVec.size())
+            if (aIndex < iClipList[iCurrentClip].iAlternateFormatTypeVec.size())
             {
-                aFormatType = iAlternateFormatTypeVec[aIndex];
+                aFormatType = iClipList[iCurrentClip].iAlternateFormatTypeVec[aIndex];
                 return true;
             }
             return false;
         }
 
+        uint32 GetNumClips()
+        {
+            return iClipList.size();
+        }
+        uint32 ExtendClipList()
+        {
+            OneClip src;
+            iClipList.push_back(src);
+            iCurrentClip = iClipList.size() - 1;
+            return iCurrentClip;
+        }
+        uint32 SetCurrentClip(uint32 aIndex)
+        {
+            if (aIndex < iClipList.size())
+                iCurrentClip = aIndex;
+            return iCurrentClip;
+        }
+        uint32 GetCurrentClip()
+        {
+            return iCurrentClip;
+        }
+
     private:
-        PVMFFormatType iFormatType;
-        OSCL_wHeapString<OsclMemAllocator> iURL;
-        OsclAny* iContext;
-        Oscl_Vector<PVMFFormatType, OsclMemAllocator> iAlternateFormatTypeVec;
+        class OneClip
+        {
+            public:
+                OneClip() : iFormatType(PVMF_MIME_FORMAT_UNKNOWN), iURL(NULL), iContext(NULL)
+                {}
+                PVMFFormatType iFormatType;
+                OSCL_wHeapString<OsclMemAllocator> iURL;
+                OsclAny* iContext;
+                Oscl_Vector<PVMFFormatType, OsclMemAllocator> iAlternateFormatTypeVec;
+        };
+        uint32 iCurrentClip;
+        Oscl_Vector<OneClip, OsclMemAllocator> iClipList;
 };
 
 #endif // PV_PLAYER_DATASOURCEURL_H_INCLUDED

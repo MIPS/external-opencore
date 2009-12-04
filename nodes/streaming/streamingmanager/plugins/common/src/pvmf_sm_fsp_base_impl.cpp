@@ -727,6 +727,12 @@ OSCL_EXPORT_REF PVMFCommandId PVMFSMFSPBaseNode::SetDataSourceRate(PVMFSessionId
 ///////////////////////////////////////////////////////////////////////////////
 //Implementation of virtuals declared in PVMFMetadataExtensionInterface
 ///////////////////////////////////////////////////////////////////////////////
+OSCL_EXPORT_REF
+PVMFStatus PVMFSMFSPBaseNode::SetMetadataClipIndex(uint32 aClipNum)
+{
+    return (aClipNum == 0) ? PVMFSuccess : PVMFErrArgument;
+}
+
 OSCL_EXPORT_REF uint32 PVMFSMFSPBaseNode::GetNumMetadataKeysBase(char* aQueryKeyString)
 {
     uint32 num_entries = 0;

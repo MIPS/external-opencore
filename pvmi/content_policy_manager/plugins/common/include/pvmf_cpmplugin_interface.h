@@ -190,6 +190,12 @@ class PVMFCPMPluginInterface
                 OsclAny* aSourceData) = 0;
 
         /**
+         * Notifies the plugin that playback of the source has begun.
+         */
+        virtual void BeginPlayback()
+        {}
+
+        /**
          * Retrieves the mapped CPM content type for a passed in source. This could
          * be types based on DRM version or content rating etc
          **/

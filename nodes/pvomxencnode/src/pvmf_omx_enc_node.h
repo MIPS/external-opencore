@@ -911,6 +911,10 @@ class PVMFOMXEncNode
 
 
         //**********begin PVMFMetadataExtensionInterface
+        PVMFStatus SetMetadataClipIndex(uint32 aClipIndex)
+        {
+            return (aClipIndex == 0) ? PVMFSuccess : PVMFErrArgument;
+        }
         uint32 GetNumMetadataKeys(char* query_key = NULL);
         uint32 GetNumMetadataValues(PVMFMetadataList& aKeyList);
         PVMFCommandId GetNodeMetadataKeys(PVMFSessionId aSessionId, PVMFMetadataList& aKeyList, uint32 starting_index, int32 max_entries,

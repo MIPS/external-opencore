@@ -54,6 +54,17 @@ class PVMFMetadataExtensionInterface : public PVInterface
 {
     public:
         /**
+         * Synchronous method to set the clip index for all subsequent API calls on
+         * this interface.
+         *
+         * @param aClipIndex zero-based clip index
+         *
+         * @returns PVMFSuccess if the release of specified keys succeeded. PVMFErrArgument if indices are invalid.
+         *          PVMFFailure otherwise.
+        **/
+        virtual PVMFStatus SetMetadataClipIndex(uint32 aClipIndex) = 0;
+
+        /**
          * Synchronous method to return the number of metadata keys for the specified query key string
          *
          * @param aQueryKeyString A NULL terminated character string specifying a subset of metadata keys to count.

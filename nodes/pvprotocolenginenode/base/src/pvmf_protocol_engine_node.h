@@ -153,7 +153,7 @@ class PVMFProtocolEngineNode :  public PVMFNodeInterface,
         void removeRef();
         PVMFStatus SetSourceInitializationData(OSCL_wString& aSourceURL,
                                                PVMFFormatType& aSourceFormat,
-                                               OsclAny* aSourceData,
+                                               OsclAny* aSourceData, uint32 aClipIndex,
                                                PVMFFormatTypeDRMInfo aType = PVMF_FORMAT_TYPE_CONNECT_DRM_INFO_UNKNOWN);
         PVMFStatus SetClientPlayBackClock(PVMFMediaClock* aClientClock);
 
@@ -277,6 +277,13 @@ class PVMFProtocolEngineNode :  public PVMFNodeInterface,
             OSCL_UNUSED_ARG(aClientClock);
             OSCL_LEAVE(OsclErrNotSupported);
             return PVMFFailure;
+        }
+
+        void AudioSinkEvent(PVMFStatus aEvent, uint32 aStreamId)
+        {
+            OSCL_UNUSED_ARG(aEvent);
+            OSCL_UNUSED_ARG(aStreamId);
+            //ignore this event
         }
 
         // From PVMFDownloadProgressInterface

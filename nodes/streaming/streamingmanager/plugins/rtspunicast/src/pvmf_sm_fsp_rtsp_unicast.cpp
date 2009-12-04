@@ -3081,8 +3081,11 @@ PVMFStatus PVMFSMRTSPUnicastNode::VerifyAndSetConfigParameter(int index, PvmiKvp
 // Implemenation of PVMFDataSourceInitializationExtensionInterface interface
 ///////////////////////////////////////////////////////////////////////////////
 
-PVMFStatus PVMFSMRTSPUnicastNode::SetSourceInitializationData(OSCL_wString& aSourceURL, PVMFFormatType& aSourceFormat, OsclAny* aSourceData, PVMFFormatTypeDRMInfo aType)
+PVMFStatus PVMFSMRTSPUnicastNode::SetSourceInitializationData(OSCL_wString& aSourceURL, PVMFFormatType& aSourceFormat, OsclAny* aSourceData, uint32 aClipIndex, PVMFFormatTypeDRMInfo aType)
 {
+    if (aClipIndex != 0)
+        return PVMFErrArgument;//source playlist not support
+
     //To set proxy server info with the session controller node
     if (aSourceData != NULL)
     {
@@ -3277,6 +3280,12 @@ PVMFStatus PVMFSMRTSPUnicastNode::SetEstimatedServerClock(PVMFMediaClock* aClien
 {
     OSCL_UNUSED_ARG(aClientClock);
     return PVMFErrNotSupported;
+}
+void PVMFSMRTSPUnicastNode::AudioSinkEvent(PVMFStatus aEvent, uint32 aStreamId)
+{
+    OSCL_UNUSED_ARG(aEvent);
+    OSCL_UNUSED_ARG(aStreamId);
+    //ignore
 }
 
 ///////////////////////////////////////////////////////////////////////////////

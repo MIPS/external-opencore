@@ -938,6 +938,12 @@ OSCL_EXPORT_REF uint32 PVMFCPMPassThruPlugInOMA1::GetNumMetadataValues(PVMFMetad
     return total;
 }
 
+OSCL_EXPORT_REF PVMFStatus PVMFCPMPassThruPlugInOMA1::SetMetadataClipIndex(uint32 aClipIndex)
+{
+    //@TODO add implementation
+    return (aClipIndex == 0) ? PVMFSuccess : PVMFErrArgument;
+}
+
 /**
  * Asynchronous method to retrieve a list of metadata keys. The subset of all available keys in the node can
  * be specified by providing a combination of query key string, starting index, and maximum number of keys to retrieve

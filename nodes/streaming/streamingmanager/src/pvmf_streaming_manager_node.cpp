@@ -489,10 +489,12 @@ void PVMFStreamingManagerNode::HandlePortActivity(const PVMFPortActivity& aActiv
 /* PVMFDataSourceInitializationExtensionInterface's virtual functions implemenation */
 PVMFStatus PVMFStreamingManagerNode::SetSourceInitializationData(OSCL_wString& aSourceURL,
         PVMFFormatType& aSourceFormat,
-        OsclAny* aSourceData,
+        OsclAny* aSourceData, uint32 aClipIndex,
         PVMFFormatTypeDRMInfo aType)
 {
     PVMF_SM_LOGSTACKTRACE((0, "PVMFStreamingManagerNode::SetSourceInitializationData() In"));
+    if (aClipIndex != 0)
+        return PVMFErrArgument; //playlist not supported.
     PVMFStatus status = PVMFFailure;
     //we may have the sequence like
     //Reset->queryinterface(PVMFDataSourceInitializationExtensionInterface)->PVMFDataSourceInitializationExtensionInterface::SetSourceInitializationData
@@ -534,7 +536,7 @@ PVMFStatus PVMFStreamingManagerNode::SetSourceInitializationData(OSCL_wString& a
 
             if ((statusQ == PVMFSuccess) && (iFSPDataSourceInitializationIntf != NULL))
             {
-                status = iFSPDataSourceInitializationIntf->SetSourceInitializationData(aSourceURL, aSourceFormat, aSourceData);
+                status = iFSPDataSourceInitializationIntf->SetSourceInitializationData(aSourceURL, aSourceFormat, aSourceData, 0);
             }
             else
             {
@@ -588,6 +590,12 @@ PVMFStatus PVMFStreamingManagerNode::SetEstimatedServerClock(PVMFMediaClock* aEs
 
     PVMF_SM_LOGSTACKTRACE((0, "PVMFStreamingManagerNode::SetEstimatedServerClock - Out status [%d]", status));
     return status;
+}
+void PVMFStreamingManagerNode::AudioSinkEvent(PVMFStatus aEvent, uint32 aStreamId)
+{
+    OSCL_UNUSED_ARG(aEvent);
+    OSCL_UNUSED_ARG(aStreamId);
+    //ignore
 }
 
 /**

@@ -59,11 +59,13 @@ class PVMFDataSourceInitializationExtensionInterface : public PVInterface
          * @param aSourceURL Wide character string reference to the URL of the source (e.g. path/filename, HTTP URL, RTSP URL)
          * @param aSourceFormat Reference to a format type describing aSourceURL
          * @param aSourceData Pointer to opaque data which the receiving component would understand (e.g. authentication information)
+         * @param aClipIndex: zero-based clip index of this clip in a playlist.
          * @return PVMFSuccess if successfully set. PVMFErrNoMemory if no memory is available to copy the data. PVMFFailure for all other errors.
          */
         virtual PVMFStatus SetSourceInitializationData(OSCL_wString& aSourceURL,
                 PVMFFormatType& aSourceFormat,
                 OsclAny* aSourceData,
+                uint32 aClipIndex,
                 PVMFFormatTypeDRMInfo aType = PVMF_FORMAT_TYPE_CONNECT_DRM_INFO_UNKNOWN) = 0;
         /**
          * Sets the client playback clock for the use of the data source.
@@ -81,6 +83,13 @@ class PVMFDataSourceInitializationExtensionInterface : public PVInterface
          */
         virtual PVMFStatus SetEstimatedServerClock(PVMFMediaClock* aClientClock) = 0;
 
+        /**
+        * Notifies source node of some event messages received from the audio sink.
+        *
+        * @param aEvent: PVMFInfoStartOfData, PVMFInfoEndOfData
+        * @param aClipId: zero-based clip index of this clip in a playlist.
+        */
+        virtual void AudioSinkEvent(PVMFStatus aEvent, uint32 aClipId) = 0;
 };
 
 

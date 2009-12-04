@@ -359,6 +359,7 @@ typedef enum
     PVP_ENGINE_COMMAND_CANCEL_ALL_COMMANDS,
     PVP_ENGINE_COMMAND_GET_PVPLAYER_STATE,
     PVP_ENGINE_COMMAND_ADD_DATA_SOURCE,
+    PVP_ENGINE_COMMAND_UPDATE_DATA_SOURCE,
     PVP_ENGINE_COMMAND_INIT,
     PVP_ENGINE_COMMAND_GET_METADATA_KEY,
     PVP_ENGINE_COMMAND_GET_METADATA_VALUE,
@@ -922,10 +923,11 @@ class PVPlayerEngine
         PVCommandId GetPVPlayerState(PVPlayerState& aState, const OsclAny* aContextData = NULL);
         PVMFStatus GetPVPlayerStateSync(PVPlayerState& aState);
         PVCommandId AddDataSource(PVPlayerDataSource& aDataSource, const OsclAny* aContextData = NULL);
+        PVCommandId UpdateDataSource(PVPlayerDataSource& aDataSource, const OsclAny* aContextData = NULL);
         PVCommandId Init(const OsclAny* aContextData = NULL);
-        PVCommandId GetMetadataKeys(PVPMetadataList& aKeyList, int32 aStartingIndex = 0, int32 aMaxEntries = -1, char* aQueryKey = NULL, const OsclAny* aContextData = NULL);
-        PVCommandId GetMetadataValues(PVPMetadataList& aKeyList, int32 aStartingValueIndex, int32 aMaxValueEntries, int32& aNumAvailableValueEntries, Oscl_Vector<PvmiKvp, OsclMemAllocator>& aValueList, const OsclAny* aContextData = NULL, bool aMetadataValuesCopiedInCallBack = true);
-        PVCommandId ReleaseMetadataValues(Oscl_Vector<PvmiKvp, OsclMemAllocator>& aValueList, const OsclAny* aContextData = NULL);
+        PVCommandId GetMetadataKeys(PVPMetadataList& aKeyList, int32 aStartingIndex = 0, int32 aMaxEntries = -1, char* aQueryKey = NULL, const OsclAny* aContextData = NULL, uint32 aClipIndex = 0);
+        PVCommandId GetMetadataValues(PVPMetadataList& aKeyList, int32 aStartingValueIndex, int32 aMaxValueEntries, int32& aNumAvailableValueEntries, Oscl_Vector<PvmiKvp, OsclMemAllocator>& aValueList, const OsclAny* aContextData = NULL, bool aMetadataValuesCopiedInCallBack = true, uint32 aClipIndex = 0);
+        PVCommandId ReleaseMetadataValues(Oscl_Vector<PvmiKvp, OsclMemAllocator>& aValueList, const OsclAny* aContextData = NULL, uint32 aClipIndex = 0);
         PVCommandId AddDataSink(PVPlayerDataSink& aDataSink, const OsclAny* aContextData = NULL);
         PVCommandId SetPlaybackRange(PVPPlaybackPosition aBeginPos, PVPPlaybackPosition aEndPos, bool aQueueRange, const OsclAny* aContextData = NULL);
         PVCommandId GetPlaybackRange(PVPPlaybackPosition &aBeginPos, PVPPlaybackPosition &aEndPos, bool aQueued, const OsclAny* aContextData = NULL);
@@ -1105,6 +1107,7 @@ class PVPlayerEngine
         PVMFStatus DoQueryInterface(PVPlayerEngineCommand& aCmd);
         PVMFStatus DoGetPVPlayerState(PVPlayerEngineCommand& aCmd, bool aSyncCmd = false);
         PVMFStatus DoAddDataSource(PVPlayerEngineCommand& aCmd);
+        PVMFStatus DoUpdateDataSource(PVPlayerEngineCommand& aCmd);
         PVMFStatus DoQuerySourceFormatType(PVCommandId aCmdId, OsclAny* aCmdContext);
         PVMFStatus DoSetupSourceNode(PVCommandId aCmdId, OsclAny* aCmdContext);
         PVMFStatus SetupDataSourceForUnknownURLAccess();
@@ -1137,7 +1140,7 @@ class PVPlayerEngine
         PVMFStatus DoGetPlaybackRate(PVPlayerEngineCommand& aCmd);
         PVMFStatus DoGetPlaybackMinMaxRate(PVPlayerEngineCommand& aCmd);
         PVMFStatus DoPrepare(PVPlayerEngineCommand& aCmd);
-        PVMFStatus DoSinkNodeQueryCapConfigIF(PVCommandId aCmdId, OsclAny* aCmdContext);
+        PVMFStatus DoSinkNodeQueryInterfaceMandatory(PVCommandId aCmdId, OsclAny* aCmdContext);
         PVMFStatus DoSinkNodeInit(PVCommandId aCmdId, OsclAny* aCmdContext);
         PVMFStatus DoSinkNodeTrackSelection(PVCommandId aCmdId, OsclAny* aCmdContext);
         PVMFStatus DoDecNodeQueryCapConfigIF(PVCommandId aCmdId, OsclAny* aCmdContext);
@@ -1156,7 +1159,7 @@ class PVPlayerEngine
         PVMFStatus DoSourceNodeSetDataSourceDirection(PVCommandId aCmdId, OsclAny* aCmdContext);
         PVMFStatus DoSourceNodeStart(PVCommandId aCmdId, OsclAny* aCmdContext);
         PVMFStatus DoDatapathStart(PVPlayerEngineDatapath &aDatapath, PVCommandId aCmdId, OsclAny* aCmdContext);
-        PVMFStatus DoSinkNodeSkipMediaData(PVCommandId aCmdId, OsclAny* aCmdContext);
+        PVMFStatus DoSinkNodeSkipMediaData(PVCommandId aCmdId, bool aSFR, int32 aCmdType, OsclAny* aCmdContext);
         PVMFStatus DoStart(PVPlayerEngineCommand& aCmd);
         PVMFStatus DoPause(PVPlayerEngineCommand& aCmd);
         PVMFStatus DoDatapathPause(PVPlayerEngineDatapath &aDatapath, PVCommandId aCmdId, OsclAny* aCmdContext, bool aSinkPaused);
@@ -1269,6 +1272,7 @@ class PVPlayerEngine
             int32 iMaxKeyEntries;
             char* iQueryKey;
             PVPMetadataList* iKeyList;
+            int32 iClipIndex;
 
             uint32 iCurrentInterfaceIndex;
             int32 iNumKeyEntriesToFill;
@@ -1284,6 +1288,7 @@ class PVPlayerEngine
             int32* iNumAvailableValues;
             PVPMetadataList* iKeyList;
             Oscl_Vector<PvmiKvp, OsclMemAllocator>* iValueList;
+            int32 iClipIndex;
 
             uint32 iCurrentInterfaceIndex;
             int32 iNumValueEntriesToFill;
@@ -1407,7 +1412,7 @@ class PVPlayerEngine
         void HandleSinkNodeReset(PVPlayerEngineContext& aNodeContext, const PVMFCmdResp& aNodeResp);
         void HandleDecNodeReset(PVPlayerEngineContext& aNodeContext, const PVMFCmdResp& aNodeResp);
 
-        void HandleSinkNodeQueryCapConfigIF(PVPlayerEngineContext& aNodeContext, const PVMFCmdResp& aNodeResp);
+        void HandleSinkNodeQueryInterfaceMandatory(PVPlayerEngineContext& aNodeContext, const PVMFCmdResp& aNodeResp);
         void HandleSinkNodeInit(PVPlayerEngineContext& aNodeContext, const PVMFCmdResp& aNodeResp);
         void HandleDecNodeQueryCapConfigIF(PVPlayerEngineContext& aNodeContext, const PVMFCmdResp& aNodeResp);
         void HandleDecNodeInit(PVPlayerEngineContext& aNodeContext, const PVMFCmdResp& aNodeResp);
@@ -1433,6 +1438,7 @@ class PVPlayerEngine
         void HandleDecNodeInfoEvent(const PVMFAsyncEvent& aEvent, int32 aDatapathIndex);
         void HandleSinkNodeInfoEvent(const PVMFAsyncEvent& aEvent, int32 aDatapathIndex);
         bool AllDatapathReceivedEndOfData();
+        void ResetDatapathEndOfDataStatus();
 
         // Utility functions to send specific async events
         void SendEndOfClipInfoEvent(PVMFStatus aStatus, PVInterface* aExtInterface = NULL);
@@ -1467,6 +1473,7 @@ class PVPlayerEngine
         PVMFStatus IssueSourceSetDataSourcePosition(bool aIsPosUnitPlayList, OsclAny* aCmdContext);
         PVMFStatus IssueDecNodeInit(PVMFNodeInterface* aNode, PVMFSessionId aDecNodeSessionId, OsclAny* aCmdContext, PVMFCommandId &aCmdId);
         PVMFStatus IssueDecNodeReset(PVMFNodeInterface* aNode, PVMFSessionId aDecNodeSessionId, OsclAny* aCmdContext, PVMFCommandId &aCmdId);
+        void IssueSourceNodeAudioSinkEvent(const PVMFAsyncEvent& aEvent);
         PVMFStatus IssueQueryInterface(PVMFNodeInterface* aNode, PVMFSessionId aSessionId, const PVUuid aUuid, PVInterface*& aInterfacePtr, OsclAny* aCmdContext, PVMFCommandId& aCmdId);
         PVMFStatus DoSourceURLQueryFormatType(PVPlayerEngineContext* context, OsclFileHandle* filehandle);
         PVMFStatus DoCancelGetLicense(PVMFCommandId aCmdId, PVPlayerEngineContext* context);
@@ -1521,7 +1528,7 @@ class PVPlayerEngine
         PVMFTimestamp iTargetNPT;
         PVMFTimestamp iActualMediaDataTS;
         PVMFTimestamp iSkipMediaDataTS;
-        PVMFTimestamp iStartNPT;
+        PVMFTimestamp iStartNPT; // Used only for logging
         PVMFTimestamp iStartMediaDataTS;
         uint32 iWatchDogTimerInterval;
         PVMFTimestamp iSeekPointBeforeTargetNPT;
@@ -1540,6 +1547,8 @@ class PVPlayerEngine
 
         // Flag to keep track of whether playback has ended with end of clip
         bool iPlaybackPausedDueToEndOfClip;
+        // Flag to keep track of whether playback has ended with specified duration
+        bool iPlaybackPausedDueToEndOfTimeReached;
 
         // Variables to store the source data duration
         bool iSourceDurationAvailable;
@@ -1607,6 +1616,8 @@ class PVPlayerEngine
 
         PVPPlaybackPositionMode iPlaybackPositionMode;
         bool iOverflowFlag;
+        uint32 iClipsCompleted;
+        uint32 iClipsCorrupted;
 
         //CPM related - As of today we use this instance of CPM in QueryInterface calls only
         //outside of this engine has no interactions with CPM.

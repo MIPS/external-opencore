@@ -387,8 +387,10 @@ bool PVMFMP4FFParserNode::queryInterface(const PVUuid& uuid, PVInterface*& iface
 PVMFStatus PVMFMP4FFParserNode::SetSourceInitializationData(OSCL_wString& aSourceURL,
         PVMFFormatType& aSourceFormat,
         OsclAny* aSourceData,
+        uint32 aClipIndex,
         PVMFFormatTypeDRMInfo aType)
 {
+    OSCL_UNUSED_ARG(aClipIndex);
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFMP4FFParserNode::SetSourceInitializationData() called"));
 
     OSCL_UNUSED_ARG(aSourceData);

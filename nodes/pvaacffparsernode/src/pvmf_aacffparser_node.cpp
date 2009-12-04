@@ -1485,9 +1485,12 @@ bool PVMFAACFFParserNode::queryInterface(const PVUuid& uuid, PVInterface*& iface
     return true;
 }
 
-PVMFStatus PVMFAACFFParserNode::SetSourceInitializationData(OSCL_wString& aSourceURL, PVMFFormatType& aSourceFormat, OsclAny* aSourceData, PVMFFormatTypeDRMInfo aType)
+PVMFStatus PVMFAACFFParserNode::SetSourceInitializationData(OSCL_wString& aSourceURL, PVMFFormatType& aSourceFormat, OsclAny* aSourceData, uint32 aClipIndex, PVMFFormatTypeDRMInfo aType)
 {
     PVMF_AACPARSERNODE_LOGSTACKTRACE((0, "PVMFAACParserNode::SetSourceInitializationData called"));
+
+    if (aClipIndex != 0)
+        return PVMFErrArgument; //playlist not supported.
 
     if ((aSourceFormat != PVMF_MIME_AACFF) && (aSourceFormat != PVMF_MIME_RAWAAC))
     {
@@ -1599,6 +1602,13 @@ PVMFStatus PVMFAACFFParserNode::SetEstimatedServerClock(PVMFMediaClock* aClientC
 {
     OSCL_UNUSED_ARG(aClientClock);
     return PVMFSuccess;
+}
+
+void PVMFAACFFParserNode::AudioSinkEvent(PVMFStatus aEvent, uint32 aStreamId)
+{
+    OSCL_UNUSED_ARG(aEvent);
+    OSCL_UNUSED_ARG(aStreamId);
+    //ignore
 }
 
 //From PVMFTrackSelectionExtensionInterface

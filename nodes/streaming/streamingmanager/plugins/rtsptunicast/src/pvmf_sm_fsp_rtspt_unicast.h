@@ -195,15 +195,19 @@ class PVMFSMRTSPTUnicastNode: public PVMFSMFSPBaseNode
         OSCL_IMPORT_REF virtual PVMFStatus SetSourceInitializationData(OSCL_wString& aSourceURL,
                 PVMFFormatType& aSourceFormat,
                 OsclAny* aSourceData,
+                uint32 aClipIndex,
                 PVMFFormatTypeDRMInfo aType = PVMF_FORMAT_TYPE_CONNECT_DRM_INFO_UNKNOWN);
         OSCL_IMPORT_REF virtual PVMFStatus SetClientPlayBackClock(PVMFMediaClock* aClientClock);
         OSCL_IMPORT_REF virtual PVMFStatus SetEstimatedServerClock(PVMFMediaClock* aClientClock);
+        OSCL_IMPORT_REF virtual void AudioSinkEvent(PVMFStatus aEvent, uint32 aStreamId);
+
 
         /* From PVMFTrackSelectionExtensionInterface */
         OSCL_IMPORT_REF virtual PVMFStatus GetMediaPresentationInfo(PVMFMediaPresentationInfo& aInfo);
         OSCL_IMPORT_REF virtual PVMFStatus SelectTracks(PVMFMediaPresentationInfo& aInfo);
 
         /* From PVMFMetadataExtensionInterface */
+        OSCL_IMPORT_REF PVMFStatus SetMetadataClipIndex(uint32 aClipNum);
         OSCL_IMPORT_REF virtual uint32 GetNumMetadataKeys(char* aQueryKeyString = NULL);
         OSCL_IMPORT_REF virtual uint32 GetNumMetadataValues(PVMFMetadataList& aKeyList);
         OSCL_IMPORT_REF PVMFCommandId DoGetMetadataKeys(PVMFSMFSPBaseNodeCommand& aCmd);
