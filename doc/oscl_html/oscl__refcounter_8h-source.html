@@ -61,12 +61,12 @@
 00112                 <span class="keywordflow">if</span> (ptr == <span class="keyword">this</span>)
 00113                 {
 00114                     <span class="comment">// buffer is part of the refcounter</span>
-00115                     deallocator-&gt;<a class="code" href="classOsclDestructDealloc.html#a0">destruct_and_dealloc</a>(<span class="keyword">this</span>);
+00115                     deallocator-&gt;<a class="code" href="classOsclDestructDealloc.html#a1">destruct_and_dealloc</a>(<span class="keyword">this</span>);
 00116                 }
 00117                 <span class="keywordflow">else</span>
 00118                 {
 00119                     <span class="comment">// delete the buffer and the refcounter object</span>
-00120                     deallocator-&gt;<a class="code" href="classOsclDestructDealloc.html#a0">destruct_and_dealloc</a>(ptr);
+00120                     deallocator-&gt;<a class="code" href="classOsclDestructDealloc.html#a1">destruct_and_dealloc</a>(ptr);
 00121                     <span class="keyword">delete</span>(this);
 00122                 }
 00123             }
@@ -170,12 +170,12 @@
 00291                 {
 00292 
 00293                     <span class="comment">// buffer is part of the refcounter</span>
-00294                     deallocator-&gt;<a class="code" href="classOsclDestructDealloc.html#a0">destruct_and_dealloc</a>(<span class="keyword">this</span>);
+00294                     deallocator-&gt;<a class="code" href="classOsclDestructDealloc.html#a1">destruct_and_dealloc</a>(<span class="keyword">this</span>);
 00295                 }
 00296                 <span class="keywordflow">else</span>
 00297                 {
 00298                     <span class="comment">// delete the buffer and the refcounter object</span>
-00299                     deallocator-&gt;<a class="code" href="classOsclDestructDealloc.html#a0">destruct_and_dealloc</a>(ptr);
+00299                     deallocator-&gt;<a class="code" href="classOsclDestructDealloc.html#a1">destruct_and_dealloc</a>(ptr);
 00300                     <span class="keyword">delete</span>(this);
 00301                 }
 00302             }
@@ -303,7 +303,7 @@
 00468 
 00472 <span class="preprocessor">#endif</span>
 </pre></div><hr size="1"><img src="pvlogo_small.jpg"><address style="align: right;"><small>OSCL API</small>
-<address style="align: left;"><small>Posting Version: CORE_8.000.1.1 </small>
+<address style="align: left;"><small>Posting Version: CORE_8.003.1.1 </small>
 </small></address>
 </body>
 </html>

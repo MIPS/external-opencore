@@ -23,15 +23,45 @@
 <table border=0 cellpadding=0 cellspacing=0>
 <tr><td></td></tr>
 <tr><td colspan=2><br><h2>Public Methods</h2></td></tr>
-<tr><td nowrap align=right valign=top>virtual void&nbsp;</td><td valign=bottom><a class="el" href="classOscl__Opaque__Type__Compare.html#a0">swap</a> (<a class="el" href="group__osclbase.html#a27">OsclAny</a> *a, const <a class="el" href="group__osclbase.html#a27">OsclAny</a> *b)=0</td></tr>
-<tr><td nowrap align=right valign=top>virtual int&nbsp;</td><td valign=bottom><a class="el" href="classOscl__Opaque__Type__Compare.html#a1">compare_LT</a> (<a class="el" href="group__osclbase.html#a27">OsclAny</a> *a, <a class="el" href="group__osclbase.html#a27">OsclAny</a> *b) const=0</td></tr>
-<tr><td nowrap align=right valign=top>virtual int&nbsp;</td><td valign=bottom><a class="el" href="classOscl__Opaque__Type__Compare.html#a2">compare_EQ</a> (const <a class="el" href="group__osclbase.html#a27">OsclAny</a> *a, const <a class="el" href="group__osclbase.html#a27">OsclAny</a> *b) const=0</td></tr>
+<tr><td nowrap align=right valign=top>virtual&nbsp;</td><td valign=bottom><a class="el" href="classOscl__Opaque__Type__Compare.html#a0">~Oscl_Opaque_Type_Compare</a> ()</td></tr>
+<tr><td nowrap align=right valign=top>virtual void&nbsp;</td><td valign=bottom><a class="el" href="classOscl__Opaque__Type__Compare.html#a1">swap</a> (<a class="el" href="group__osclbase.html#a27">OsclAny</a> *a, const <a class="el" href="group__osclbase.html#a27">OsclAny</a> *b)=0</td></tr>
+<tr><td nowrap align=right valign=top>virtual int&nbsp;</td><td valign=bottom><a class="el" href="classOscl__Opaque__Type__Compare.html#a2">compare_LT</a> (<a class="el" href="group__osclbase.html#a27">OsclAny</a> *a, <a class="el" href="group__osclbase.html#a27">OsclAny</a> *b) const=0</td></tr>
+<tr><td nowrap align=right valign=top>virtual int&nbsp;</td><td valign=bottom><a class="el" href="classOscl__Opaque__Type__Compare.html#a3">compare_EQ</a> (const <a class="el" href="group__osclbase.html#a27">OsclAny</a> *a, const <a class="el" href="group__osclbase.html#a27">OsclAny</a> *b) const=0</td></tr>
 </table>
 <hr><a name="_details"></a><h2>Detailed Description</h2>
 Opaque type operations with swap &amp; comparisons. 
 <p>
+<hr><h2>Constructor &amp; Destructor Documentation</h2>
+<a name="a0" doxytag="Oscl_Opaque_Type_Compare::~Oscl_Opaque_Type_Compare"></a><p>
+<table width="100%" cellpadding="2" cellspacing="0" border="0">
+  <tr>
+    <td class="md">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> virtual Oscl_Opaque_Type_Compare::~Oscl_Opaque_Type_Compare </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="mdname1" valign="top" nowrap>&nbsp;          </td>
+          <td class="md" valign="top">)&nbsp;</td>
+          <td class="md" nowrap><code> [inline, virtual]</code></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+    </td>
+  </tr>
+</table>
 <hr><h2>Member Function Documentation</h2>
-<a name="a2" doxytag="Oscl_Opaque_Type_Compare::compare_EQ"></a><p>
+<a name="a3" doxytag="Oscl_Opaque_Type_Compare::compare_EQ"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -71,7 +101,7 @@ Return a==b.
 Implemented in <a class="el" href="classOsclPriorityQueue.html#b6">OsclPriorityQueue&lt; Qelem, Alloc, Container, Compare &gt;</a>, <a class="el" href="classOsclPriorityQueue.html#b6">OsclPriorityQueue&lt; TOsclReady, OsclReadyAlloc, Oscl_Vector&lt; TOsclReady, OsclReadyAlloc &gt;, OsclReadyCompare &gt;</a>, and <a class="el" href="classOsclPriorityQueue.html#b6">OsclPriorityQueue&lt; TOsclReady, OsclReadyAlloc, Oscl_Vector&lt; TOsclReady, OsclReadyAlloc &gt;, OsclTimerCompare &gt;</a>.    </td>
   </tr>
 </table>
-<a name="a1" doxytag="Oscl_Opaque_Type_Compare::compare_LT"></a><p>
+<a name="a2" doxytag="Oscl_Opaque_Type_Compare::compare_LT"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -111,7 +141,7 @@ Return a&lt;b.
 Implemented in <a class="el" href="classOsclPriorityQueue.html#b5">OsclPriorityQueue&lt; Qelem, Alloc, Container, Compare &gt;</a>, <a class="el" href="classOsclPriorityQueue.html#b5">OsclPriorityQueue&lt; TOsclReady, OsclReadyAlloc, Oscl_Vector&lt; TOsclReady, OsclReadyAlloc &gt;, OsclReadyCompare &gt;</a>, and <a class="el" href="classOsclPriorityQueue.html#b5">OsclPriorityQueue&lt; TOsclReady, OsclReadyAlloc, Oscl_Vector&lt; TOsclReady, OsclReadyAlloc &gt;, OsclTimerCompare &gt;</a>.    </td>
   </tr>
 </table>
-<a name="a0" doxytag="Oscl_Opaque_Type_Compare::swap"></a><p>
+<a name="a1" doxytag="Oscl_Opaque_Type_Compare::swap"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -154,7 +184,7 @@ Implemented in <a class="el" href="classOsclPriorityQueue.html#b4">OsclPriorityQ
 <hr>The documentation for this class was generated from the following file:<ul>
 <li><a class="el" href="oscl__opaque__type_8h-source.html">oscl_opaque_type.h</a></ul>
 <hr size="1"><img src="pvlogo_small.jpg"><address style="align: right;"><small>OSCL API</small>
-<address style="align: left;"><small>Posting Version: CORE_8.000.1.1 </small>
+<address style="align: left;"><small>Posting Version: CORE_8.003.1.1 </small>
 </small></address>
 </body>
 </html>

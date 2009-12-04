@@ -25,54 +25,60 @@
 <a name="l00030"></a><a class="code" href="classOscl__Opaque__Type__Alloc.html">00030</a> <span class="keyword">class </span><a class="code" href="classOscl__Opaque__Type__Alloc.html">Oscl_Opaque_Type_Alloc</a>
 00031 {
 00032     <span class="keyword">public</span>:
-00037         <span class="keyword">virtual</span> <span class="keywordtype">void</span> <a class="code" href="classOscl__Opaque__Type__Alloc.html#a0">construct</a>(<a class="code" href="group__osclbase.html#a27">OsclAny</a>* p, <span class="keyword">const</span> <a class="code" href="group__osclbase.html#a27">OsclAny</a>* init_val) = 0;
-00038 
-00042         <span class="keyword">virtual</span> <span class="keywordtype">void</span> <a class="code" href="classOscl__Opaque__Type__Alloc.html#a1">destroy</a>(<a class="code" href="group__osclbase.html#a27">OsclAny</a>* p) = 0;
-00043 
-00047         <span class="keyword">virtual</span> <a class="code" href="group__osclbase.html#a27">OsclAny</a>* <a class="code" href="classOscl__Opaque__Type__Alloc.html#a2">allocate</a>(<span class="keyword">const</span> uint32 size) = 0;
-00048 
-00052         <span class="keyword">virtual</span> <span class="keywordtype">void</span> <a class="code" href="classOscl__Opaque__Type__Alloc.html#a3">deallocate</a>(<a class="code" href="group__osclbase.html#a27">OsclAny</a>* p) = 0;
-00053 };
-00054 
-<a name="l00058"></a><a class="code" href="classOscl__Opaque__Type__Compare.html">00058</a> <span class="keyword">class </span><a class="code" href="classOscl__Opaque__Type__Compare.html">Oscl_Opaque_Type_Compare</a>
-00059 {
-00060     <span class="keyword">public</span>:
-00065         <span class="keyword">virtual</span> <span class="keywordtype">void</span> <a class="code" href="classOscl__Opaque__Type__Compare.html#a0">swap</a>(<a class="code" href="group__osclbase.html#a27">OsclAny</a>* a, <span class="keyword">const</span> <a class="code" href="group__osclbase.html#a27">OsclAny</a>* b) = 0;
-00066 
-00070         <span class="keyword">virtual</span> <span class="keywordtype">int</span> <a class="code" href="classOscl__Opaque__Type__Compare.html#a1">compare_LT</a>(<a class="code" href="group__osclbase.html#a27">OsclAny</a>* a, <a class="code" href="group__osclbase.html#a27">OsclAny</a>* b) <span class="keyword">const</span> = 0;
-00071 
-00075         <span class="keyword">virtual</span> <span class="keywordtype">int</span> <a class="code" href="classOscl__Opaque__Type__Compare.html#a2">compare_EQ</a>(<span class="keyword">const</span> <a class="code" href="group__osclbase.html#a27">OsclAny</a>* a, <span class="keyword">const</span> <a class="code" href="group__osclbase.html#a27">OsclAny</a>* b) <span class="keyword">const</span> = 0;
-00076 
-00077 };
-00078 
-<a name="l00083"></a><a class="code" href="classOscl__Opaque__Type__Alloc__LL.html">00083</a> <span class="keyword">class </span><a class="code" href="classOscl__Opaque__Type__Alloc__LL.html">Oscl_Opaque_Type_Alloc_LL</a>
-00084 {
-00085     <span class="keyword">public</span>:
-00090         <span class="keyword">virtual</span> <span class="keywordtype">void</span> <a class="code" href="classOscl__Opaque__Type__Alloc__LL.html#a0">construct</a>(<a class="code" href="group__osclbase.html#a27">OsclAny</a>* p, <span class="keyword">const</span> <a class="code" href="group__osclbase.html#a27">OsclAny</a>* init_val) = 0;
+<a name="l00033"></a><a class="code" href="classOscl__Opaque__Type__Alloc.html#a0">00033</a>         <span class="keyword">virtual</span> <a class="code" href="classOscl__Opaque__Type__Alloc.html#a0">~Oscl_Opaque_Type_Alloc</a>() {}
+00034 
+00039         <span class="keyword">virtual</span> <span class="keywordtype">void</span> <a class="code" href="classOscl__Opaque__Type__Alloc.html#a1">construct</a>(<a class="code" href="group__osclbase.html#a27">OsclAny</a>* p, <span class="keyword">const</span> <a class="code" href="group__osclbase.html#a27">OsclAny</a>* init_val) = 0;
+00040 
+00044         <span class="keyword">virtual</span> <span class="keywordtype">void</span> <a class="code" href="classOscl__Opaque__Type__Alloc.html#a2">destroy</a>(<a class="code" href="group__osclbase.html#a27">OsclAny</a>* p) = 0;
+00045 
+00049         <span class="keyword">virtual</span> <a class="code" href="group__osclbase.html#a27">OsclAny</a>* <a class="code" href="classOscl__Opaque__Type__Alloc.html#a3">allocate</a>(<span class="keyword">const</span> uint32 size) = 0;
+00050 
+00054         <span class="keyword">virtual</span> <span class="keywordtype">void</span> <a class="code" href="classOscl__Opaque__Type__Alloc.html#a4">deallocate</a>(<a class="code" href="group__osclbase.html#a27">OsclAny</a>* p) = 0;
+00055 };
+00056 
+<a name="l00060"></a><a class="code" href="classOscl__Opaque__Type__Compare.html">00060</a> <span class="keyword">class </span><a class="code" href="classOscl__Opaque__Type__Compare.html">Oscl_Opaque_Type_Compare</a>
+00061 {
+00062     <span class="keyword">public</span>:
+<a name="l00063"></a><a class="code" href="classOscl__Opaque__Type__Compare.html#a0">00063</a>         <span class="keyword">virtual</span> <a class="code" href="classOscl__Opaque__Type__Compare.html#a0">~Oscl_Opaque_Type_Compare</a>() {}
+00064 
+00069         <span class="keyword">virtual</span> <span class="keywordtype">void</span> <a class="code" href="classOscl__Opaque__Type__Compare.html#a1">swap</a>(<a class="code" href="group__osclbase.html#a27">OsclAny</a>* a, <span class="keyword">const</span> <a class="code" href="group__osclbase.html#a27">OsclAny</a>* b) = 0;
+00070 
+00074         <span class="keyword">virtual</span> <span class="keywordtype">int</span> <a class="code" href="classOscl__Opaque__Type__Compare.html#a2">compare_LT</a>(<a class="code" href="group__osclbase.html#a27">OsclAny</a>* a, <a class="code" href="group__osclbase.html#a27">OsclAny</a>* b) <span class="keyword">const</span> = 0;
+00075 
+00079         <span class="keyword">virtual</span> <span class="keywordtype">int</span> <a class="code" href="classOscl__Opaque__Type__Compare.html#a3">compare_EQ</a>(<span class="keyword">const</span> <a class="code" href="group__osclbase.html#a27">OsclAny</a>* a, <span class="keyword">const</span> <a class="code" href="group__osclbase.html#a27">OsclAny</a>* b) <span class="keyword">const</span> = 0;
+00080 
+00081 };
+00082 
+<a name="l00087"></a><a class="code" href="classOscl__Opaque__Type__Alloc__LL.html">00087</a> <span class="keyword">class </span><a class="code" href="classOscl__Opaque__Type__Alloc__LL.html">Oscl_Opaque_Type_Alloc_LL</a>
+00088 {
+00089     <span class="keyword">public</span>:
+<a name="l00090"></a><a class="code" href="classOscl__Opaque__Type__Alloc__LL.html#a0">00090</a>         <span class="keyword">virtual</span> <a class="code" href="classOscl__Opaque__Type__Alloc__LL.html#a0">~Oscl_Opaque_Type_Alloc_LL</a>() {}
 00091 
-00095         <span class="keyword">virtual</span> <span class="keywordtype">void</span> <a class="code" href="classOscl__Opaque__Type__Alloc__LL.html#a1">destroy</a>(<a class="code" href="group__osclbase.html#a27">OsclAny</a>* p) = 0;
-00096 
-00100         <span class="keyword">virtual</span> <a class="code" href="group__osclbase.html#a27">OsclAny</a>* <a class="code" href="classOscl__Opaque__Type__Alloc__LL.html#a2">allocate</a>(<span class="keyword">const</span> uint32 size) = 0;
-00101 
-00105         <span class="keyword">virtual</span> <span class="keywordtype">void</span> <a class="code" href="classOscl__Opaque__Type__Alloc__LL.html#a3">deallocate</a>(<a class="code" href="group__osclbase.html#a27">OsclAny</a>* p) = 0;
-00106 
-00110         <span class="keyword">virtual</span> <a class="code" href="group__osclbase.html#a27">OsclAny</a>* <a class="code" href="classOscl__Opaque__Type__Alloc__LL.html#a4">get_next</a>(<span class="keyword">const</span> <a class="code" href="group__osclbase.html#a27">OsclAny</a>* elem)<span class="keyword">const</span> = 0;
-00111 
-00115         <span class="keyword">virtual</span> <span class="keywordtype">void</span> <a class="code" href="classOscl__Opaque__Type__Alloc__LL.html#a5">set_next</a>(<a class="code" href="group__osclbase.html#a27">OsclAny</a>* elem, <span class="keyword">const</span> <a class="code" href="group__osclbase.html#a27">OsclAny</a>* nextelem) = 0;
-00116 
-00120         <span class="keyword">virtual</span> <span class="keywordtype">void</span> <a class="code" href="classOscl__Opaque__Type__Alloc__LL.html#a6">get_data</a>(<a class="code" href="group__osclbase.html#a27">OsclAny</a>*elem, <a class="code" href="group__osclbase.html#a27">OsclAny</a>*data_val) = 0;
-00121 
-00125         <span class="keyword">virtual</span> <span class="keywordtype">bool</span> <a class="code" href="classOscl__Opaque__Type__Alloc__LL.html#a7">compare_data</a>(<span class="keyword">const</span> <a class="code" href="group__osclbase.html#a27">OsclAny</a>*elem, <span class="keyword">const</span> <a class="code" href="group__osclbase.html#a27">OsclAny</a>*data_val)<span class="keyword">const</span> = 0;
-00126 };
+00096         <span class="keyword">virtual</span> <span class="keywordtype">void</span> <a class="code" href="classOscl__Opaque__Type__Alloc__LL.html#a1">construct</a>(<a class="code" href="group__osclbase.html#a27">OsclAny</a>* p, <span class="keyword">const</span> <a class="code" href="group__osclbase.html#a27">OsclAny</a>* init_val) = 0;
+00097 
+00101         <span class="keyword">virtual</span> <span class="keywordtype">void</span> <a class="code" href="classOscl__Opaque__Type__Alloc__LL.html#a2">destroy</a>(<a class="code" href="group__osclbase.html#a27">OsclAny</a>* p) = 0;
+00102 
+00106         <span class="keyword">virtual</span> <a class="code" href="group__osclbase.html#a27">OsclAny</a>* <a class="code" href="classOscl__Opaque__Type__Alloc__LL.html#a3">allocate</a>(<span class="keyword">const</span> uint32 size) = 0;
+00107 
+00111         <span class="keyword">virtual</span> <span class="keywordtype">void</span> <a class="code" href="classOscl__Opaque__Type__Alloc__LL.html#a4">deallocate</a>(<a class="code" href="group__osclbase.html#a27">OsclAny</a>* p) = 0;
+00112 
+00116         <span class="keyword">virtual</span> <a class="code" href="group__osclbase.html#a27">OsclAny</a>* <a class="code" href="classOscl__Opaque__Type__Alloc__LL.html#a5">get_next</a>(<span class="keyword">const</span> <a class="code" href="group__osclbase.html#a27">OsclAny</a>* elem)<span class="keyword">const</span> = 0;
+00117 
+00121         <span class="keyword">virtual</span> <span class="keywordtype">void</span> <a class="code" href="classOscl__Opaque__Type__Alloc__LL.html#a6">set_next</a>(<a class="code" href="group__osclbase.html#a27">OsclAny</a>* elem, <span class="keyword">const</span> <a class="code" href="group__osclbase.html#a27">OsclAny</a>* nextelem) = 0;
+00122 
+00126         <span class="keyword">virtual</span> <span class="keywordtype">void</span> <a class="code" href="classOscl__Opaque__Type__Alloc__LL.html#a7">get_data</a>(<a class="code" href="group__osclbase.html#a27">OsclAny</a>*elem, <a class="code" href="group__osclbase.html#a27">OsclAny</a>*data_val) = 0;
 00127 
-00131 <span class="preprocessor">#endif</span>
-00132 <span class="preprocessor"></span>
+00131         <span class="keyword">virtual</span> <span class="keywordtype">bool</span> <a class="code" href="classOscl__Opaque__Type__Alloc__LL.html#a8">compare_data</a>(<span class="keyword">const</span> <a class="code" href="group__osclbase.html#a27">OsclAny</a>*elem, <span class="keyword">const</span> <a class="code" href="group__osclbase.html#a27">OsclAny</a>*data_val)<span class="keyword">const</span> = 0;
+00132 };
 00133 
-00134 
-00135 
-00136 
+00137 <span class="preprocessor">#endif</span>
+00138 <span class="preprocessor"></span>
+00139 
+00140 
+00141 
+00142 
 </pre></div><hr size="1"><img src="pvlogo_small.jpg"><address style="align: right;"><small>OSCL API</small>
-<address style="align: left;"><small>Posting Version: CORE_8.000.1.1 </small>
+<address style="align: left;"><small>Posting Version: CORE_8.003.1.1 </small>
 </small></address>
 </body>
 </html>

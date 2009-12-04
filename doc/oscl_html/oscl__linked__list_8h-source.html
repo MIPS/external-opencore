@@ -208,13 +208,13 @@
 00374         }
 00375 
 00376         <span class="comment">//from Oscl_Opaque_Type_Alloc_LL</span>
-00377         <a class="code" href="group__osclbase.html#a27">OsclAny</a>* <a class="code" href="classOscl__Opaque__Type__Alloc__LL.html#a2">allocate</a>(<span class="keyword">const</span> uint32 size)
+00377         <a class="code" href="group__osclbase.html#a27">OsclAny</a>* <a class="code" href="classOscl__Opaque__Type__Alloc__LL.html#a3">allocate</a>(<span class="keyword">const</span> uint32 size)
 00378         {
 00379             <span class="keywordflow">return</span> alloc.ALLOCATE(size);
 00380         }
 00381 
 00382         <span class="comment">//from Oscl_Opaque_Type_Alloc_LL</span>
-00383         <span class="keywordtype">void</span> <a class="code" href="classOscl__Opaque__Type__Alloc__LL.html#a3">deallocate</a>(<a class="code" href="group__osclbase.html#a27">OsclAny</a>* p)
+00383         <span class="keywordtype">void</span> <a class="code" href="classOscl__Opaque__Type__Alloc__LL.html#a4">deallocate</a>(<a class="code" href="group__osclbase.html#a27">OsclAny</a>* p)
 00384         {
 00385             alloc.deallocate(p);
 00386         }
@@ -226,14 +226,14 @@
 00392         }
 00393 
 00394         <span class="comment">//from Oscl_Opaque_Type_Alloc_LL</span>
-00395         <span class="keywordtype">void</span> <a class="code" href="classOscl__Opaque__Type__Alloc__LL.html#a5">set_next</a>(<a class="code" href="group__osclbase.html#a27">OsclAny</a>* elem, <span class="keyword">const</span> <a class="code" href="group__osclbase.html#a27">OsclAny</a>* nextelem)
+00395         <span class="keywordtype">void</span> <a class="code" href="classOscl__Opaque__Type__Alloc__LL.html#a6">set_next</a>(<a class="code" href="group__osclbase.html#a27">OsclAny</a>* elem, <span class="keyword">const</span> <a class="code" href="group__osclbase.html#a27">OsclAny</a>* nextelem)
 00396         {
 00397             <a class="code" href="group__osclbase.html#a85">OSCL_ASSERT</a>(elem);
 00398             ((<a class="code" href="classLinkedListElement.html">LinkedListElement&lt;LLClass&gt;</a>*)elem)-&gt;next = (<a class="code" href="classLinkedListElement.html">LinkedListElement&lt;LLClass&gt;</a>*)nextelem;
 00399         }
 00400 
 00401         <span class="comment">//from Oscl_Opaque_Type_Alloc_LL</span>
-00402         <span class="keywordtype">void</span> <a class="code" href="classOscl__Opaque__Type__Alloc__LL.html#a6">get_data</a>(<a class="code" href="group__osclbase.html#a27">OsclAny</a>*elem, <a class="code" href="group__osclbase.html#a27">OsclAny</a>*data_val)
+00402         <span class="keywordtype">void</span> <a class="code" href="classOscl__Opaque__Type__Alloc__LL.html#a7">get_data</a>(<a class="code" href="group__osclbase.html#a27">OsclAny</a>*elem, <a class="code" href="group__osclbase.html#a27">OsclAny</a>*data_val)
 00403         {
 00404             <a class="code" href="group__osclbase.html#a85">OSCL_ASSERT</a>(elem);
 00405             <a class="code" href="group__osclbase.html#a85">OSCL_ASSERT</a>(data_val);
@@ -241,7 +241,7 @@
 00407         }
 00408 
 00409         <span class="comment">//from Oscl_Opaque_Type_Alloc_LL</span>
-00410         <span class="keywordtype">bool</span> <a class="code" href="classOscl__Opaque__Type__Alloc__LL.html#a7">compare_data</a>(<span class="keyword">const</span> <a class="code" href="group__osclbase.html#a27">OsclAny</a>*elem, <span class="keyword">const</span> <a class="code" href="group__osclbase.html#a27">OsclAny</a>*data_val)<span class="keyword">const</span>
+00410         <span class="keywordtype">bool</span> <a class="code" href="classOscl__Opaque__Type__Alloc__LL.html#a8">compare_data</a>(<span class="keyword">const</span> <a class="code" href="group__osclbase.html#a27">OsclAny</a>*elem, <span class="keyword">const</span> <a class="code" href="group__osclbase.html#a27">OsclAny</a>*data_val)<span class="keyword">const</span>
 00411         {
 00412             <a class="code" href="group__osclbase.html#a85">OSCL_ASSERT</a>(elem);
 00413             <a class="code" href="group__osclbase.html#a85">OSCL_ASSERT</a>(data_val);
@@ -361,7 +361,7 @@
 00587 <span class="preprocessor">#endif  // __LINKED_LIST_H</span>
 00588 <span class="preprocessor"></span>
 </pre></div><hr size="1"><img src="pvlogo_small.jpg"><address style="align: right;"><small>OSCL API</small>
-<address style="align: left;"><small>Posting Version: CORE_8.000.1.1 </small>
+<address style="align: left;"><small>Posting Version: CORE_8.003.1.1 </small>
 </small></address>
 </body>
 </html>

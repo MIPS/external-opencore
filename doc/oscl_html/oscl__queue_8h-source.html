@@ -171,19 +171,19 @@
 00284         Alloc defAlloc;
 00285 
 00286         <span class="comment">//from Oscl_Opaque_Type_Alloc</span>
-00287         <a class="code" href="group__osclbase.html#a27">OsclAny</a>* <a class="code" href="classOscl__Opaque__Type__Alloc.html#a2">allocate</a>(<span class="keyword">const</span> uint32 <a class="code" href="classOscl__Queue__Base.html#a0">size</a>)
+00287         <a class="code" href="group__osclbase.html#a27">OsclAny</a>* <a class="code" href="classOscl__Opaque__Type__Alloc.html#a3">allocate</a>(<span class="keyword">const</span> uint32 <a class="code" href="classOscl__Queue__Base.html#a0">size</a>)
 00288         {
 00289             <span class="keywordflow">return</span> defAlloc.allocate(<a class="code" href="classOscl__Queue__Base.html#a0">size</a>);
 00290         }
 00291 
 00292         <span class="comment">//from Oscl_Opaque_Type_Alloc</span>
-00293         <span class="keywordtype">void</span> <a class="code" href="classOscl__Opaque__Type__Alloc.html#a3">deallocate</a>(<a class="code" href="group__osclbase.html#a27">OsclAny</a>* p)
+00293         <span class="keywordtype">void</span> <a class="code" href="classOscl__Opaque__Type__Alloc.html#a4">deallocate</a>(<a class="code" href="group__osclbase.html#a27">OsclAny</a>* p)
 00294         {
 00295             defAlloc.deallocate(p);
 00296         }
 00297 
 00298         <span class="comment">//from Oscl_Opaque_Type_Alloc</span>
-00299         <span class="keywordtype">void</span> <a class="code" href="classOscl__Opaque__Type__Alloc.html#a0">construct</a>(<a class="code" href="group__osclbase.html#a27">OsclAny</a>* p, <span class="keyword">const</span> <a class="code" href="group__osclbase.html#a27">OsclAny</a>* x)
+00299         <span class="keywordtype">void</span> <a class="code" href="classOscl__Opaque__Type__Alloc.html#a1">construct</a>(<a class="code" href="group__osclbase.html#a27">OsclAny</a>* p, <span class="keyword">const</span> <a class="code" href="group__osclbase.html#a27">OsclAny</a>* x)
 00300         {
 00301             <a class="code" href="group__osclbase.html#a85">OSCL_ASSERT</a>(x);
 00302             <span class="keyword">new</span>(p) <a class="code" href="classOscl__Queue.html#s0">value_type</a>(*((T*)x));
@@ -227,7 +227,7 @@
 00353 <span class="preprocessor"></span>
 00354 
 </pre></div><hr size="1"><img src="pvlogo_small.jpg"><address style="align: right;"><small>OSCL API</small>
-<address style="align: left;"><small>Posting Version: CORE_8.000.1.1 </small>
+<address style="align: left;"><small>Posting Version: CORE_8.003.1.1 </small>
 </small></address>
 </body>
 </html>

@@ -254,20 +254,20 @@
 00418         Alloc defAlloc;
 00419 
 00420         <span class="comment">//from Oscl_Opaque_Type_Alloc</span>
-00421         <a class="code" href="group__osclbase.html#a27">OsclAny</a>* <a class="code" href="classOscl__Opaque__Type__Alloc.html#a2">allocate</a>(<span class="keyword">const</span> uint32 <a class="code" href="classOscl__Vector__Base.html#a0">size</a>)
+00421         <a class="code" href="group__osclbase.html#a27">OsclAny</a>* <a class="code" href="classOscl__Opaque__Type__Alloc.html#a3">allocate</a>(<span class="keyword">const</span> uint32 <a class="code" href="classOscl__Vector__Base.html#a0">size</a>)
 00422         {
 00423             <span class="comment">//prevent zero-size allocations since some allocators don't handle this</span>
 00424             <span class="keywordflow">return</span> (size) ? defAlloc.ALLOCATE(<a class="code" href="classOscl__Vector__Base.html#a0">size</a>) : <a class="code" href="group__osclbase.html#a88">NULL</a>;
 00425         }
 00426 
 00427         <span class="comment">//from Oscl_Opaque_Type_Alloc</span>
-00428         <span class="keywordtype">void</span> <a class="code" href="classOscl__Opaque__Type__Alloc.html#a3">deallocate</a>(<a class="code" href="group__osclbase.html#a27">OsclAny</a>* p)
+00428         <span class="keywordtype">void</span> <a class="code" href="classOscl__Opaque__Type__Alloc.html#a4">deallocate</a>(<a class="code" href="group__osclbase.html#a27">OsclAny</a>* p)
 00429         {
 00430             defAlloc.deallocate(p);
 00431         }
 00432 
 00433         <span class="comment">//from Oscl_Opaque_Type_Alloc</span>
-00434         <span class="keywordtype">void</span> <a class="code" href="classOscl__Opaque__Type__Alloc.html#a0">construct</a>(<a class="code" href="group__osclbase.html#a27">OsclAny</a>* p, <span class="keyword">const</span> <a class="code" href="group__osclbase.html#a27">OsclAny</a>* x)
+00434         <span class="keywordtype">void</span> <a class="code" href="classOscl__Opaque__Type__Alloc.html#a1">construct</a>(<a class="code" href="group__osclbase.html#a27">OsclAny</a>* p, <span class="keyword">const</span> <a class="code" href="group__osclbase.html#a27">OsclAny</a>* x)
 00435         {
 00436             <a class="code" href="group__osclbase.html#a85">OSCL_ASSERT</a>(x);
 00437             <span class="keyword">new</span>(p) <a class="code" href="classOscl__Vector.html#s0">value_type</a>(*((T*)x));
@@ -292,7 +292,7 @@
 00459 
 00460 
 </pre></div><hr size="1"><img src="pvlogo_small.jpg"><address style="align: right;"><small>OSCL API</small>
-<address style="align: left;"><small>Posting Version: CORE_8.000.1.1 </small>
+<address style="align: left;"><small>Posting Version: CORE_8.003.1.1 </small>
 </small></address>
 </body>
 </html>
