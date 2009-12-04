@@ -169,7 +169,6 @@ OSCL_EXPORT_REF int32 GetActualAacConfig(uint8* aConfigHeader,
     tDec_Int_File *pVars;            /* Helper pointer */
     MC_Info       *pMC_Info;         /* Helper pointer */
 
-
     Int            status = ERROR_BUFFER_OVERRUN;
 
     /*
@@ -248,7 +247,15 @@ OSCL_EXPORT_REF int32 GetActualAacConfig(uint8* aConfigHeader,
          */
         pVars->aacConfigUtilityEnabled = true;  /* set aac utility mode */
 
+        int tmp = pVars->inputStream.usedBits;  /* store initial offset */
+
         status = get_audio_specific_config(pVars);
+
+        if (status != SUCCESS)                  /* on error, check if streamMuxConfig was sent */
+        {
+            pVars->inputStream.usedBits = tmp + 15;  /* jump over streamMuxConfig bits */
+            status = get_audio_specific_config(pVars);
+        }
 
     }
 
