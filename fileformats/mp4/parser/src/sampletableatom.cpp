@@ -243,14 +243,7 @@ SampleTableAtom::SampleTableAtom(MP4_FF_FILE *fp,
                     }
                     else
                     {
-                        if (_psampleDescriptionAtom->getObjectTypeIndication() == AMR_AUDIO)
-                        {
-                            _numAMRFramesPerSample = 1;
-                        }
-                        else
-                        {
-                            _numAMRFramesPerSample = 0;
-                        }
+                        _numAMRFramesPerSample = 0;
                     }
                 }
                 else
@@ -2627,30 +2620,7 @@ SampleTableAtom::getNextNSamples(uint32 startSampleNum,
                 return (_mp4ErrorCode);
             }
 
-#ifdef OUTPUT_AMR_TOC
-            uint8 objectType = getObjectTypeIndication();
-            if (objectType == AMR_AUDIO)
-            {
-                AMRDecoderSpecificInfo *pinfo =
-                    (AMRDecoderSpecificInfo *)(getDecoderSpecificInfoForSDI(SDIndex));
-
-                if (pgau->info[s].sample_info != pinfo->getFrameType())
-                {
-                    pgau->info[s].sample_info = pinfo->getFrameType();
-                }
-                else
-                {
-                    pgau->info[s].sample_info = pinfo->getFrameType();
-                }
-
-            }
-            else
-            {
-                pgau->info[s].sample_info = SDIndex;
-            }
-#else
             pgau->info[s].sample_info = SDIndex;
-#endif
 
             pgau->info[s].ts_delta = tsDelta;
 

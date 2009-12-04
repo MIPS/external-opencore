@@ -5886,14 +5886,6 @@ bool PVMFMP4FFParserNode::MapMP4ErrorCodeToEventCode(int32 aMP4ErrCode, PVUuid& 
             aEventCode = PVMFMP4FFParserErrRequirementsAtomReadFailed;
             break;
 
-        case READ_WMF_SET_MEDIA_ATOM_FAILED:
-            aEventCode = PVMFMP4FFParserErrWMFSetMediaAtomReadFailed;
-            break;
-
-        case READ_WMF_SET_SESSION_ATOM_FAILED:
-            aEventCode = PVMFMP4FFParserErrWMFSetSessionAtomReadFailed;
-            break;
-
         case READ_PV_USER_DATA_ATOM_FAILED:
             aEventCode = PVMFMP4FFParserErrPVUserDataAtomReadFailed;
             break;

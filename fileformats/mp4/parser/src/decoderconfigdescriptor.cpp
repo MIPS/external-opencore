@@ -79,10 +79,6 @@ DecoderConfigDescriptor::DecoderConfigDescriptor(MP4_FF_FILE *fp)
                     {
                         PV_MP4_FF_NEW(fp->auditCB, H263DecoderSpecificInfo, (fp), _pdecSpecificInfo);
                     }
-                    else if (_objectTypeIndication == AMR_AUDIO)
-                    {
-                        PV_MP4_FF_NEW(fp->auditCB, AMRDecoderSpecificInfo, (fp), _pdecSpecificInfo);
-                    }
                     else if (_objectTypeIndication == QCELP_MP4)
                     {
                         PV_MP4_FF_NEW(fp->auditCB, DecoderSpecificInfo, (fp), _pdecSpecificInfo);

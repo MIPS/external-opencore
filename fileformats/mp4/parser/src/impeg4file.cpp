@@ -189,7 +189,6 @@ IMpeg4File::IsXXXable(OSCL_wString& filename,
             else if (majorBrand == BRAND_ISOM)  *pMajorBrand = EISOM;
             else if (majorBrand == BRAND_MP41)  *pMajorBrand = EMP41;
             else if (majorBrand == BRAND_MP42)  *pMajorBrand = EMP42;
-            else if (majorBrand == WMF_BRAND)   *pMajorBrand = EWMF;
             // else .. set to ENoFileType above
 
             Oscl_Vector<uint32, OsclMemAllocator> *compatibleBrandArray =
@@ -209,7 +208,6 @@ IMpeg4File::IsXXXable(OSCL_wString& filename,
                     else if (compatibleBrand == BRAND_ISOM)     *pCompatibleBrands |= EISOM;
                     else if (compatibleBrand == BRAND_MP41)     *pCompatibleBrands |= EMP41;
                     else if (compatibleBrand == BRAND_MP42)     *pCompatibleBrands |= EMP42;
-                    else if (compatibleBrand == WMF_BRAND)      *pCompatibleBrands |= EWMF;
                 }
             }
         }//end of get file type
@@ -365,7 +363,6 @@ IMpeg4File::IsXXXable(MP4_FF_FILE_REFERENCE fileRef,
             else if (majorBrand == BRAND_ISOM)  *pMajorBrand = EISOM;
             else if (majorBrand == BRAND_MP41)  *pMajorBrand = EMP41;
             else if (majorBrand == BRAND_MP42)  *pMajorBrand = EMP42;
-            else if (majorBrand == WMF_BRAND)   *pMajorBrand = EWMF;
 
 
             Oscl_Vector<uint32, OsclMemAllocator> *compatibleBrandArray =
@@ -386,7 +383,6 @@ IMpeg4File::IsXXXable(MP4_FF_FILE_REFERENCE fileRef,
                     else if (compatibleBrand == BRAND_ISOM)     *pCompatibleBrands |= EISOM;
                     else if (compatibleBrand == BRAND_MP41)     *pCompatibleBrands |= EMP41;
                     else if (compatibleBrand == BRAND_MP42)     *pCompatibleBrands |= EMP42;
-                    else if (compatibleBrand == WMF_BRAND)      *pCompatibleBrands |= EWMF;
                 }
             }
         }//end of get file type

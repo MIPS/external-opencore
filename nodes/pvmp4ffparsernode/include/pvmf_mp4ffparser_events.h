@@ -279,16 +279,6 @@ typedef enum
     PVMFMP4FFParserErrRequirementsAtomReadFailed,
 
     /**
-     When MP4 FF reports error READ_WMF_SET_MEDIA_ATOM_FAILED
-    **/
-    PVMFMP4FFParserErrWMFSetMediaAtomReadFailed,
-
-    /**
-     When MP4 FF reports error READ_WMF_SET_SESSION_ATOM_FAILED
-    **/
-    PVMFMP4FFParserErrWMFSetSessionAtomReadFailed,
-
-    /**
      When MP4 FF reports error READ_PV_CONTENT_TYPE_ATOM_FAILED
     **/
     PVMFMP4FFParserErrPVContentTypeAtomReadFailed,

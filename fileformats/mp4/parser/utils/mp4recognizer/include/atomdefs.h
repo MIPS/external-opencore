@@ -218,7 +218,6 @@ const uint32    MPEG4_EXTENSION_DESCRIPTORS_BOX = FourCharConstToUint32('m', '4'
 const uint32  PIXELASPECTRATIO_BOX = FourCharConstToUint32('p', 'a', 's', 'p');
 
 
-const uint32    WMF_BRAND = FourCharConstToUint32('w', 'm', 'f', ' ');
 const uint32    BRAND_3GPP4 = FourCharConstToUint32('3', 'g', 'p', '4');
 const uint32    MOBILE_MP4 = FourCharConstToUint32('m', 'm', 'p', '4');
 const uint32    BRAND_3GPP5 = FourCharConstToUint32('3', 'g', 'p', '5');
@@ -415,7 +414,6 @@ typedef enum
     EMP41         = 0x0020,
     EMP42         = 0x0040,
     EMMP4         = 0x0100,
-    EWMF          = 0x0200,
     EUNKNOWN_TYPE = 0x8000
 } FILE_TYPE_MASKS;
 
@@ -436,7 +434,6 @@ typedef enum
 
 typedef enum
 {
-    AMR_AUDIO   = 0xd0,
     QCELP_MP4   = 0xE1,
     MPEG4_AUDIO = 0x40,
     MPEG2_AUDIO_LC = 0x67,
@@ -505,3 +502,4 @@ typedef enum
 #define MAX_GENRE_ID_IN_ID3_TABLE 147
 
 #endif //ATOMDEFS_H_INCLUDED
+

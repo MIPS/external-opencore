@@ -265,10 +265,6 @@ Mpeg4File::Mpeg4File(MP4_FF_FILE *fp,
 
                 switch (majorBrand)
                 {
-                    case WMF_BRAND:
-                        majorBrandInfo |= EWMF;
-                        break;
-
                     case BRAND_3GPP4:
                         majorBrandInfo |= E3GP4;
                         break;
@@ -309,10 +305,6 @@ Mpeg4File::Mpeg4File(MP4_FF_FILE *fp,
 
                         switch (compatibleBrand)
                         {
-                            case WMF_BRAND:
-                                compatibleBrandInfo |= EWMF;
-                                break;
-
                             case BRAND_3GPP4:
                                 compatibleBrandInfo |= E3GP4;
                                 break;
