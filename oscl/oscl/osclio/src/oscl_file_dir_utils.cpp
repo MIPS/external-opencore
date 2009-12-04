@@ -116,8 +116,16 @@ OSCL_EXPORT_REF OSCL_FILEMGMT_ERR_TYPE oscl_statfs(OSCL_FSSTAT *stats, const cha
 
 OSCL_EXPORT_REF OSCL_FILEMGMT_ERR_TYPE oscl_statfs(OSCL_FSSTAT *stats, const oscl_wchar *path)
 {
+    oscl_wchar* pMyPath;
+    oscl_wchar myPathCurrDir[2] = {'.', 0};
+
+    //if path is blank, pass "."
+    if ((path[0] == 0))
+        pMyPath = myPathCurrDir;
+    else
+        pMyPath = (oscl_wchar*)path;
     char convpathname[OSCL_IO_FILENAME_MAXLEN];
-    if (0 == oscl_UnicodeToUTF8(path, oscl_strlen(path), convpathname, OSCL_IO_FILENAME_MAXLEN) &&
+    if (0 == oscl_UnicodeToUTF8(pMyPath, oscl_strlen(pMyPath), convpathname, OSCL_IO_FILENAME_MAXLEN) &&
             oscl_strlen(path) != 0
        )
     {
