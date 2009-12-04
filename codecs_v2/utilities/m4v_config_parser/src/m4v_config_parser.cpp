@@ -162,6 +162,8 @@ OSCL_EXPORT_REF int16 ParseM4VFSI(uint8* buffer, uint32 length,  M4VConfigInfo* 
     int16 iErrorStat;
     uint32 codeword;
     int32 time_increment_resolution, nbits_time_increment;
+    uint32 video_object_layer_verid = 1; //Default
+    uint32 estimation_method = 0; //Default
     int32 i, j;
 
     oscl_memset(iM4VConfigInfo, 0, sizeof(M4VConfigInfo));
@@ -203,6 +205,21 @@ OSCL_EXPORT_REF int16 ParseM4VFSI(uint8* buffer, uint32 length,  M4VConfigInfo* 
                 iM4VConfigInfo->iProfileLevel =  SIMPLE_LEVEL3;
                 break;
             }
+            case 0x10: /* SIMPLE_SCALABLE_LEVEL0 */
+            {
+                iM4VConfigInfo->iProfileLevel =  SIMPLE_SCALABLE_LEVEL0;
+                break;
+            }
+            case 0x11: /* SIMPLE_SCALABLE_LEVEL1 */
+            {
+                iM4VConfigInfo->iProfileLevel =  SIMPLE_SCALABLE_LEVEL1;
+                break;
+            }
+            case 0x12: /* SIMPLE_SCALABLE_LEVEL2 */
+            {
+                iM4VConfigInfo->iProfileLevel =  SIMPLE_SCALABLE_LEVEL2;
+                break;
+            }
             case 0x21: /* CP_LVL1 */
             {
                 iM4VConfigInfo->iProfileLevel =  CORE_LEVEL1;
@@ -211,6 +228,51 @@ OSCL_EXPORT_REF int16 ParseM4VFSI(uint8* buffer, uint32 length,  M4VConfigInfo* 
             case 0x22: /* CP_LVL2 */
             {
                 iM4VConfigInfo->iProfileLevel =  CORE_LEVEL2;
+                break;
+            }
+            case 0xA1: /* CORE_SCALABLE_LEVEL1 */
+            {
+                iM4VConfigInfo->iProfileLevel =  CORE_SCALABLE_LEVEL1;
+                break;
+            }
+            case 0xA2: /* CORE_SCALABLE_LEVEL2 */
+            {
+                iM4VConfigInfo->iProfileLevel =  CORE_SCALABLE_LEVEL2;
+                break;
+            }
+            case 0xA3: /* CORE_SCALABLE_LEVEL3 */
+            {
+                iM4VConfigInfo->iProfileLevel =  CORE_SCALABLE_LEVEL3;
+                break;
+            }
+            case 0xF0: /* ADV_SIMPLE_LEVEL0 */
+            {
+                iM4VConfigInfo->iProfileLevel =  ADV_SIMPLE_LEVEL0;
+                break;
+            }
+            case 0xF1: /* ADV_SIMPLE_LEVEL1 */
+            {
+                iM4VConfigInfo->iProfileLevel =  ADV_SIMPLE_LEVEL1;
+                break;
+            }
+            case 0xF2: /* ADV_SIMPLE_LEVEL2 */
+            {
+                iM4VConfigInfo->iProfileLevel =  ADV_SIMPLE_LEVEL2;
+                break;
+            }
+            case 0xF3: /* ADV_SIMPLE_LEVEL3 */
+            {
+                iM4VConfigInfo->iProfileLevel =  ADV_SIMPLE_LEVEL3;
+                break;
+            }
+            case 0xF4: /* ADV_SIMPLE_LEVEL4 */
+            {
+                iM4VConfigInfo->iProfileLevel =  ADV_SIMPLE_LEVEL4;
+                break;
+            }
+            case 0xF5: /* ADV_SIMPLE_LEVEL5 */
+            {
+                iM4VConfigInfo->iProfileLevel =  ADV_SIMPLE_LEVEL5;
                 break;
             }
             default:
@@ -334,29 +396,26 @@ decode_vol:
 
         //Video Object Type Indication
         ReadBits(psBits, 8, &codeword);
-        if (codeword != 1)
-        {
-            return MP4_INVALID_VOL_PARAM;
-        }
 
         // is_object_layer_identifier
         ReadBits(psBits, 1, &codeword);
-
         if (codeword)
         {
+            //video_object_layer_verid
             ReadBits(psBits, 4, &codeword);
+            video_object_layer_verid = codeword;
+            //video_object_layer_priority
             ReadBits(psBits, 3, &codeword);
         }
 
         // aspect ratio
         ReadBits(psBits, 4, &codeword);
-
         if (codeword == 0xF)
         {
             // Extended Parameter
-            /* width */
+            /* par_width */
             ReadBits(psBits, 8, &codeword);
-            /* height */
+            /* par_height */
             ReadBits(psBits, 8, &codeword);
         }
 
@@ -364,20 +423,17 @@ decode_vol:
         ReadBits(psBits, 1, &codeword);
         if (codeword)
         {
+            //chroma_format
             ReadBits(psBits, 2, &codeword);
             if (codeword != 1)
             {
                 return MP4_INVALID_VOL_PARAM;
             }
 
+            //low_delay
             ReadBits(psBits, 1, &codeword);
 
-            // if this bit is set to 0, there are B-VOPs */
-            /*if (!codeword)
-            {
-                return MP4_INVALID_VOL_PARAM;
-            }*/
-
+            //vbv_parameters
             ReadBits(psBits, 1, &codeword);
             if (codeword)   /* if (vbv_parameters) {}, page 36 */
             {
@@ -395,6 +451,7 @@ decode_vol:
                     return MP4_INVALID_VOL_PARAM;
                 }
 
+                //15 + 1 + 3
                 ReadBits(psBits, 19, &codeword);
                 if (!(codeword & 0x8))
                 {
@@ -420,6 +477,7 @@ decode_vol:
 
         // video_object_layer_shape
         ReadBits(psBits, 2, &codeword);
+        /* video_object_layer_shape is RECTANGULAR */
         if (codeword != 0)
         {
             return MP4_INVALID_VOL_PARAM;
@@ -459,7 +517,6 @@ decode_vol:
             ReadBits(psBits, nbits_time_increment, &codeword);
         }
 
-        /* video_object_layer_shape is RECTANGULAR */
         //Marker bit
         ReadBits(psBits, 1, &codeword);
         if (codeword != 1)
@@ -495,32 +552,124 @@ decode_vol:
         ReadBits(psBits, 1, &codeword);
         if (codeword != 1) return MP4_INVALID_VOL_PARAM;
 
-        //sprite_enable
-        ReadBits(psBits, 1, &codeword);
-        if (codeword != 0) return MP4_INVALID_VOL_PARAM;
+        if (video_object_layer_verid == 1)
+        {
+            //sprite_enable
+            ReadBits(psBits, 1, &codeword);
+            if (codeword != 0) return MP4_INVALID_VOL_PARAM;
+        }
+        else
+        {
+            //sprite_enable
+            ReadBits(psBits, 2, &codeword);
+            if (codeword != 0) return MP4_INVALID_VOL_PARAM;
+        }
 
         //not_8_bit
         ReadBits(psBits, 1, &codeword);
-        if (codeword != 0) return MP4_INVALID_VOL_PARAM;
+        if (codeword)
+        {
+            //quant_precision
+            ReadBits(psBits, 4, &codeword);
+            //bits_per_pixel
+            ReadBits(psBits, 4, &codeword);
+        }
 
         /* video_object_layer_shape is not GRAY_SCALE  */
+
         //quant_type
         ReadBits(psBits, 1, &codeword);
         if (codeword != 0) //quant_type = 1
         {
             ReadBits(psBits, 1, &codeword); //load_intra_quant_mat
-            if (codeword) return MP4_INVALID_VOL_PARAM; // No support for user defined matrix.
+            if (codeword)
+            {
+                /* intra_quant_mat (8*64 bits) */
+                i = 0;
+                do
+                {
+                    ReadBits(psBits, 8, &codeword);
+                }
+                while ((codeword != 0) && (++i < 64));
+            }
 
             ReadBits(psBits, 1, &codeword); //load_nonintra_quant_mat
-            if (codeword) return MP4_INVALID_VOL_PARAM; // No support for user defined matrix.
+            if (codeword)
+            {
+                /* nonintra_quant_mat (8*64 bits) */
+                i = 0;
+                do
+                {
+                    ReadBits(psBits, 8, &codeword);
+                }
+                while ((codeword != 0) && (++i < 64));
+            }
 
         }
+
+        if (video_object_layer_verid != 1)
+        {
+            //quarter_sample
+            ReadBits(psBits, 1, &codeword);
+            if (codeword) return MP4_INVALID_VOL_PARAM;
+        }
+
 
         //complexity_estimation_disable
         ReadBits(psBits, 1, &codeword);
         if (!codeword)
         {
-            return MP4_INVALID_VOL_PARAM;
+            //estimation_method
+            ReadBits(psBits, 2, &codeword);
+            estimation_method = codeword;
+
+            if (estimation_method < 2)
+            {
+                // shape_complexity_estimation_disable
+                ReadBits(psBits, 1, &codeword);
+                if (codeword == 0)
+                {
+                    return MP4_INVALID_VOL_PARAM;
+                }
+                // texture_complexity_estimation_set_1_disable
+                ReadBits(psBits, 1, &codeword);
+                if (codeword == 0)
+                {
+                    ReadBits(psBits, 4, &codeword);
+                }
+
+                //Marker bit
+                ReadBits(psBits, 1, &codeword);
+                if (codeword != 1) return MP4_INVALID_VOL_PARAM;
+
+                // texture_complexity_estimation_set_2_disable
+                ReadBits(psBits, 1, &codeword);
+                if (codeword == 0)
+                {
+                    ReadBits(psBits, 4, &codeword);
+                }
+
+                // motion_compensation_complexity_disable
+                ReadBits(psBits, 1, &codeword);
+                if (codeword == 0)
+                {
+                    ReadBits(psBits, 6, &codeword);
+                }
+
+                //Marker bit
+                ReadBits(psBits, 1, &codeword);
+                if (codeword != 1) return MP4_INVALID_VOL_PARAM;
+
+                if (estimation_method == 1)
+                {   // version2_complexity_estimation_disable
+                    ReadBits(psBits, 1, &codeword);
+                    if (codeword == 0)
+                    {
+                        return MP4_INVALID_VOL_PARAM;
+                    }
+                }
+            }
+
         }
 
         //resync_marker_disable
@@ -546,9 +695,43 @@ decode_vol:
             iM4VConfigInfo->iDataPartitioning = false;
         }
 
+        if (video_object_layer_verid != 1)
+        {
+            // newpred_enable
+            ReadBits(psBits, 1, &codeword);
+            if (codeword) return MP4_INVALID_VOL_PARAM;
+
+            // reduced_resolution_vop
+            ReadBits(psBits, 1, &codeword);
+            if (codeword) return MP4_INVALID_VOL_PARAM;
+
+        }
+
         //scalability
         ReadBits(psBits, 1, &codeword);
-        if (codeword) return MP4_INVALID_VOL_PARAM;
+        if (codeword)
+        {
+            //hierarchy_type
+            ReadBits(psBits, 1, &codeword);
+            if (!codeword) return MP4_INVALID_VOL_PARAM;
+
+            // ref_layer_id (4 bits)
+            ReadBits(psBits, 4, &codeword);
+
+            //ref_layer_sampling_direc
+            ReadBits(psBits, 1, &codeword);
+            if (codeword) return MP4_INVALID_VOL_PARAM;
+
+            /* hor_sampling_factor_n (5 bits) */
+            /* hor_sampling_factor_m (5 bits) */
+            /* ver_sampling_factor_n (5 bits) */
+            /* ver_sampling_factor_m (5 bits) */
+            ReadBits(psBits, 20, &codeword);
+
+            //enhancement_type
+            ReadBits(psBits, 1, &codeword);
+            if (codeword) return MP4_INVALID_VOL_PARAM;
+        }
 
     }
     else

@@ -2687,6 +2687,36 @@ bool PVMFOMXEncNode::SetMP4EncoderParameters()
                     Mpeg4Type.eLevel = OMX_VIDEO_MPEG4Level3;
                     break;
 
+                case ADV_SIMPLE_LEVEL0:
+                    Mpeg4Type.eProfile = OMX_VIDEO_MPEG4ProfileAdvancedSimple;
+                    Mpeg4Type.eLevel = OMX_VIDEO_MPEG4Level0;
+                    break;
+
+                case ADV_SIMPLE_LEVEL1:
+                    Mpeg4Type.eProfile = OMX_VIDEO_MPEG4ProfileAdvancedSimple;
+                    Mpeg4Type.eLevel = OMX_VIDEO_MPEG4Level1;
+                    break;
+
+                case ADV_SIMPLE_LEVEL2:
+                    Mpeg4Type.eProfile = OMX_VIDEO_MPEG4ProfileAdvancedSimple;
+                    Mpeg4Type.eLevel = OMX_VIDEO_MPEG4Level2;
+                    break;
+
+                case ADV_SIMPLE_LEVEL3:
+                    Mpeg4Type.eProfile = OMX_VIDEO_MPEG4ProfileAdvancedSimple;
+                    Mpeg4Type.eLevel = OMX_VIDEO_MPEG4Level3;
+                    break;
+
+                case ADV_SIMPLE_LEVEL4:
+                    Mpeg4Type.eProfile = OMX_VIDEO_MPEG4ProfileAdvancedSimple;
+                    Mpeg4Type.eLevel = OMX_VIDEO_MPEG4Level4;
+                    break;
+
+                case ADV_SIMPLE_LEVEL5:
+                    Mpeg4Type.eProfile = OMX_VIDEO_MPEG4ProfileAdvancedSimple;
+                    Mpeg4Type.eLevel = OMX_VIDEO_MPEG4Level5;
+                    break;
+
             }
         }
     }
