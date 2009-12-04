@@ -26,7 +26,7 @@ LOCAL_WHOLE_STATIC_LIBRARIES := \
 LOCAL_WHOLE_STATIC_LIBRARIES +=  libandroidpv
 
 LOCAL_MODULE := libopencore_player
-\nifeq ($(PLATFORM_VERSION),1.5)
+ifeq ($(PLATFORM_VERSION),1.5)
     LOCAL_SHARED_LIBRARIES :=  libutils libcutils libui libhardware libandroid_runtime libdrm1 libmedia libsgl libvorbisidec libsonivox liblog libicuuc
 else ifeq ($(PLATFORM_VERSION),1.6)
     LOCAL_SHARED_LIBRARIES :=  libutils libcutils libui libhardware libandroid_runtime libdrm1 libmedia libsgl libvorbisidec libsonivox liblog libicuuc

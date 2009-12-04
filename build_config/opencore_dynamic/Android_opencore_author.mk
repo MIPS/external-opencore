@@ -10,7 +10,7 @@ LOCAL_WHOLE_STATIC_LIBRARIES := \
 LOCAL_WHOLE_STATIC_LIBRARIES +=  libandroidpvauthor
 
 LOCAL_MODULE := libopencore_author
-\nifeq ($(PLATFORM_VERSION),1.5)
+ifeq ($(PLATFORM_VERSION),1.5)
     LOCAL_SHARED_LIBRARIES :=  libutils libcutils libui libandroid_runtime libmedia liblog libicuuc
 else ifeq ($(PLATFORM_VERSION),1.6)
     LOCAL_SHARED_LIBRARIES :=  libutils libcutils libui libandroid_runtime libmedia liblog libicuuc

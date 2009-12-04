@@ -108,7 +108,7 @@ Android_$1.mk: FORCE
 	$$(quiet) echo "" >> $$@
 	$$(quiet) echo "LOCAL_MODULE := lib$1" >> $$@
 	$$(quiet) $$(call is_prelinking_allowed,$$($1_PRELINK),$$@)
-	$$(quiet) echo "\nifeq ($$(esc_dollar)(PLATFORM_VERSION),1.5)" >> $$@
+	$$(quiet) echo "ifeq ($$(esc_dollar)(PLATFORM_VERSION),1.5)" >> $$@
 	$$(quiet) $$(call conditional_extra_sharedlib_list, $$(EXTRA_SHARED_LIBRARIES_$1_1.5),$$@)
 	$$(quiet) echo "else ifeq ($$(esc_dollar)(PLATFORM_VERSION),1.6)" >> $$@
 	$$(quiet) $$(call conditional_extra_sharedlib_list, $$(EXTRA_SHARED_LIBRARIES_$1_1.5),$$@)
