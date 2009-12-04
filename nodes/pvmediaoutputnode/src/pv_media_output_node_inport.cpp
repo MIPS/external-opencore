@@ -1714,11 +1714,6 @@ void PVMediaOutputNodePort::Run()
                                      msgStreamId,
                                      IncomingMsgQueueSize()));
 
-            uint32 msgClipId = iCurrentMediaMsg->getClipID();
-            uint8 localbuffer[8];
-            oscl_memcpy(localbuffer, &msgStreamId, sizeof(uint32));
-            oscl_memcpy(&localbuffer[4], &msgClipId, sizeof(uint32));
-            iNode->ReportInfoEvent(PVMFInfoStartOfData, (OsclAny*)localbuffer);
             iNode->ReportBOS();
             iCurrentMediaMsg.Unbind();
             iFragIndex = 0;
@@ -1806,7 +1801,11 @@ void PVMediaOutputNodePort::Run()
                 PVMF_MOPORT_LOGDATAPATH((0, "PVMediaOutputNodePort::Run: PVMFInfoStartOfData - Fmt=%s",
                                          iSinkFormatString.get_str()));
                 uint32 iStreamID = iRecentStreamID;
-                iNode->ReportInfoEvent(PVMFInfoStartOfData, (OsclAny*)&iStreamID);
+                uint32 msgClipId = iCurrentMediaMsg->getClipID();
+                uint8 localbuffer[8];
+                oscl_memcpy(localbuffer, &iStreamID, sizeof(uint32));
+                oscl_memcpy(&localbuffer[4], &msgClipId, sizeof(uint32));
+                iNode->ReportInfoEvent(PVMFInfoStartOfData, (OsclAny*)localbuffer);
                 iSendStartOfDataEvent = false;
             }
 
@@ -1894,13 +1893,7 @@ void PVMediaOutputNodePort::HandlePortActivity(const PVMFPortActivity& aActivity
                                                      msgStreamId,
                                                      IncomingMsgQueueSize()));
 
-                            uint32 msgClipId = peekMsgPtr->getClipID();
-                            uint8 localbuffer[8];
-                            oscl_memcpy(localbuffer, &msgStreamId, sizeof(uint32));
-                            oscl_memcpy(&localbuffer[4], &msgClipId, sizeof(uint32));
-                            iNode->ReportInfoEvent(PVMFInfoStartOfData, (OsclAny*)localbuffer);
                             iNode->ReportBOS();
-                            iSendStartOfDataEvent = false;
                             iCurrentMediaMsg.Unbind();
                             iFragIndex = 0;
                         }
@@ -1973,7 +1966,11 @@ void PVMediaOutputNodePort::HandlePortActivity(const PVMFPortActivity& aActivity
                             PVMF_MOPORT_LOGDATAPATH((0, "PVMediaOutputNodePort::HPA: PVMFInfoStartOfData - Fmt=%s",
                                                      iSinkFormatString.get_str()));
                             uint32 iStreamID = iRecentStreamID;
-                            iNode->ReportInfoEvent(PVMFInfoStartOfData, (OsclAny*)&iStreamID);
+                            uint32 msgClipId = peekMsgPtr->getClipID();
+                            uint8 localbuffer[8];
+                            oscl_memcpy(localbuffer, &iStreamID, sizeof(uint32));
+                            oscl_memcpy(&localbuffer[4], &msgClipId, sizeof(uint32));
+                            iNode->ReportInfoEvent(PVMFInfoStartOfData, (OsclAny*)localbuffer);
                             iSendStartOfDataEvent = false;
                             // Now check if the media msg is EOS notification OR media data.
                             // If EOS then need to do writeComplete for EOS without sending it downstream
