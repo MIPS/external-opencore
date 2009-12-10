@@ -1523,9 +1523,10 @@ PVMediaOutputNodePort::CheckMediaTimeStamp(uint32& aDelta)
 
         iClock->GetCurrentTime32(clock_msec32, overflowFlag, PVMF_MEDIA_CLOCK_MSEC);
 
+        uint32 duration = iCurrentMediaMsg->getDuration();
 
         uint32 clock_adjforearlymargin = clock_msec32 + iEarlyMargin;
-        uint32 ts_adjforlatemargin = aTimeStamp + iLateMargin;
+        uint32 ts_adjforlatemargin = aTimeStamp + iLateMargin + duration;
 
         if ((clock_adjforearlymargin - aTimeStamp) > WRAP_THRESHOLD)
         {
