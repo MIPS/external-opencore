@@ -189,6 +189,8 @@ OMX_ERRORTYPE CallbackFillBufferDoneEnc(OMX_OUT OMX_HANDLETYPE aComponent,
 //Default values for number of Input/Output buffers. If the component needs more than this, it will be
 // negotiated. If the component does not need more than this number, the default is used
 #define NUMBER_INPUT_BUFFER 5
+// NUMBER_OUTPUT_BUFFER is being used in Mp4 Composer node for File-Writer Thread Queue.
+// Need to update the same #define in pvmp4ffcn_node.cpp if updated here.
 #define NUMBER_OUTPUT_BUFFER 9
 
 // for AMR encoder

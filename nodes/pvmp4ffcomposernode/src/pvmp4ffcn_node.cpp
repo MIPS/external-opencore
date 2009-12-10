@@ -19,13 +19,15 @@
  * @file pvmp4ffcn_node.cpp
  * @brief Node for PV MPEG4 file format composer
  */
-#undef ANDROID
 #ifdef ANDROID
 // #define LOG_NDEBUG 0
 #define LOG_TAG "PvMp4Composer"
 #include <utils/Log.h>
 #include <utils/Errors.h>
 #include <utils/threads.h>
+// NUMBER_OUTPUT_BUFFER is number of output buffers in encoder node, pvmf_omx_enc_node.h
+// Need to change encoder node also if updated here.
+#define NUMBER_OUTPUT_BUFFER 9
 #endif // ANDROID
 
 #ifndef PVMP4FFCN_NODE_H_INCLUDED
@@ -124,8 +126,8 @@ class FragmentWriter: public Thread
         // @return The result of the *previous* fragment written. Since the call
         //         is asynch we cannot wait.
         PVMFStatus enqueueMemFragToTrack(Oscl_Vector<OsclMemoryFragment, OsclMemAllocator> aFrame,
-                                         OsclRefCounterMemFrag& aMemFrag, PVMFFormatType aFormat, uint32 aSeqNum,
-                                         uint32& aTimestamp, int32 aTrackId, PVMp4FFComposerPort *aPort)
+                                         PVMFFormatType aFormat, uint32 aSeqNum, uint32& aTimestamp,
+                                         int32 aTrackId, PVMp4FFComposerPort *aPort, uint32 aSampleDuration)
         {
             if (mExitRequested) return PVMFErrCancelled;
             Mutex::Autolock lock(mRequestMutex);
@@ -146,7 +148,7 @@ class FragmentWriter: public Thread
                 return mPrevWriteStatus;
             }
 
-            mLast->set(aFrame, aMemFrag, aFormat, aTimestamp, aTrackId, aPort);
+            mLast->set(aFrame, aFormat, aSeqNum, aTimestamp, aTrackId, aPort, aSampleDuration);
             incrPendingRequests();
 
             mRequestCv.signal();
@@ -159,7 +161,6 @@ class FragmentWriter: public Thread
         // Must match the number of buffers allocated in the decoder.
         static const size_t kCapacity = NUMBER_OUTPUT_BUFFER;
         static const size_t kWarningThreshold = kCapacity * 3 / 4; // Warn at 75%
-        static const OsclRefCounterMemFrag kEmptyFrag;
         // Flush blocks for 2 seconds max.
         static const size_t kMaxFlushAttempts = 10;
         static const int kFlushSleepMicros = 200 * 1000;
@@ -167,25 +168,25 @@ class FragmentWriter: public Thread
         struct Request
         {
             void set(Oscl_Vector<OsclMemoryFragment, OsclMemAllocator> aFrame,
-                     OsclRefCounterMemFrag& aMemFrag, PVMFFormatType aFormat, uint32 aSeqNum,
-                     uint32 aTimestamp, int32 aTrackId, PVMp4FFComposerPort *aPort)
+                     PVMFFormatType aFormat, uint32 aSeqNum, uint32 aTimestamp,
+                     int32 aTrackId, PVMp4FFComposerPort *aPort, uint32 aSampleDuration)
             {
                 mFrame = aFrame;
-                mFrag = aMemFrag;
                 mFormat = aFormat;
                 mSeqNum = aSeqNum;
                 mTimestamp = aTimestamp;
                 mTrackId = aTrackId;
                 mPort = aPort;
+                mSampleDuration = aSampleDuration;
             }
 
             Oscl_Vector<OsclMemoryFragment, OsclMemAllocator> mFrame;
-            OsclRefCounterMemFrag mFrag;
             PVMFFormatType mFormat;
             uint32 mSeqNum;
             uint32 mTimestamp;
             uint32 mTrackId;
             PVMp4FFComposerPort *mPort;
+            uint32 mSampleDuration;
         };
 
         void incrPendingRequests()
@@ -198,10 +199,6 @@ class FragmentWriter: public Thread
         void decrPendingRequests()
         {
             mFirst->mFrame.clear();
-            // Release the memory fragment tracked using a refcount
-            // class. Need to assign an empty frag to release the memory
-            // fragment. We cannot wait for the array to wrap around.
-            mFirst->mFrag = kEmptyFrag;  // FIXME: This assignement to decr the ref count is ugly.
             ++mFirst;
             if (mEnd == mFirst) mFirst = mBuffer;
             --mSize;
@@ -242,8 +239,8 @@ class FragmentWriter: public Thread
                 // AddMemFragToTrack, which may last a long time, because
                 // we are the only thread accessing mFirst.
                 mPrevWriteStatus = mComposer->AddSampleToTrack(
-                                       mFirst->mFrame, mFirst->mFrag, mFirst->mFormat, mFirst->mSeqNum,
-                                       mFirst->mTimestamp, mFirst->mTrackId, mFirst->mPort);
+                                       mFirst->mFrame, mFirst->mFormat, mFirst->mSeqNum, mFirst->mTimestamp,
+                                       mFirst->mTrackId, mFirst->mPort, mFirst->mSampleDuration);
 
                 mRequestMutex.lock();
                 decrPendingRequests();
@@ -270,7 +267,6 @@ class FragmentWriter: public Thread
         // Unlike exitPending(), stays to true once exit has been called.
         bool mExitRequested;
 };
-const OsclRefCounterMemFrag FragmentWriter::kEmptyFrag;
 }
 #endif // ANDROID
 
@@ -2414,8 +2410,8 @@ PVMFStatus PVMp4FFComposerNode::ProcessIncomingMsg(PVMFPortInterface* aPort)
             {
                 // TODO: We are passing port and port->GetFormat(), should pass port only.
                 status = iFragmentWriter->enqueueMemFragToTrack(
-                             pFrame, memFrag, port->GetFormat(), mediaDataPtr->getSeqNum(),
-                             timestamp, trackId, (PVMp4FFComposerPort*)aPort);
+                             pFrame, port->GetFormat(), mediaDataPtr->getSeqNum(),
+                             timestamp, trackId, (PVMp4FFComposerPort*)aPort, mediaDataPtr->getDuration());
             }
             else if (!iMaxReachedReported)
             {
