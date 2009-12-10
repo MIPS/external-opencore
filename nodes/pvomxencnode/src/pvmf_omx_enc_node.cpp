@@ -2420,7 +2420,6 @@ bool PVMFOMXEncNode::NegotiateVideoComponentParameters()
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                         (0, "PVMFOMXEncNode-%s::NegotiateVideoComponentParameters() Problem getting OMX_IndexConfigCommonRotate param ", iNodeTypeId));
-        return false;
     }
 
     //Set the OMX_CONFIG_ROTATIONTYPE parameters
@@ -2430,7 +2429,6 @@ bool PVMFOMXEncNode::NegotiateVideoComponentParameters()
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                         (0, "PVMFOMXEncNode-%s::NegotiateVideoComponentParameters() Problem setting OMX_IndexConfigCommonRotate param ", iNodeTypeId));
-        return false;
     }
 
     //OMX_VIDEO_PARAM_BITRATETYPE Settings
