@@ -14,7 +14,6 @@ INCSRCDIR = ../../src
 SRCS =  oscl_errno.cpp \
 	oscl_error.cpp \
 	oscl_error_imp_jumps.cpp \
-	oscl_mempool_allocator.cpp \
 	oscl_error_trapcleanup.cpp \
 	oscl_heapbase.cpp
 
@@ -26,7 +25,6 @@ HDRS =  oscl_errno.h \
 	oscl_error_imp_fatalerror.h \
 	oscl_error_imp.h \
 	oscl_error_imp_jumps.h \
-	oscl_mempool_allocator.h \
 	oscl_error_trapcleanup.h \
 	oscl_exception.h \
 	oscl_heapbase.h \

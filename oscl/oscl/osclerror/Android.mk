@@ -5,7 +5,6 @@ LOCAL_SRC_FILES := \
 	src/oscl_errno.cpp \
  	src/oscl_error.cpp \
  	src/oscl_error_imp_jumps.cpp \
- 	src/oscl_mempool_allocator.cpp \
  	src/oscl_error_trapcleanup.cpp \
  	src/oscl_heapbase.cpp
 
@@ -35,7 +34,6 @@ LOCAL_COPY_HEADERS := \
  	src/oscl_error_imp_fatalerror.h \
  	src/oscl_error_imp.h \
  	src/oscl_error_imp_jumps.h \
- 	src/oscl_mempool_allocator.h \
  	src/oscl_error_trapcleanup.h \
  	src/oscl_exception.h \
  	src/oscl_heapbase.h \
