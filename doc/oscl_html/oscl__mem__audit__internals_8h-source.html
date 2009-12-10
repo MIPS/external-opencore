@@ -77,8 +77,8 @@
 00080         <a class="code" href="structMM__AllocBlockHdr.html#m1">size</a> |= <a class="code" href="group__osclmemory.html#a85">ALLOC_NODE_FLAG</a>;
 00081     };
 00082 
-<a name="l00083"></a><a class="code" href="structMM__AllocBlockHdr.html#a2">00083</a>     <a class="code" href="structMM__AllocBlockHdr.html#a2">MM_AllocBlockHdr</a>(): <a class="code" href="structMM__AllocBlockHdr.html#m0">pNode</a>(0), <a class="code" href="structMM__AllocBlockHdr.html#m1">size</a>(0), <a class="code" href="structMM__AllocBlockHdr.html#m2">pRootNode</a>(0) {};
-<a name="l00084"></a><a class="code" href="structMM__AllocBlockHdr.html#a3">00084</a>     <a class="code" href="structMM__AllocBlockHdr.html#a2">MM_AllocBlockHdr</a>(<span class="keywordtype">void</span>* ptr, uint32 inSize): <a class="code" href="structMM__AllocBlockHdr.html#m0">pNode</a>(ptr), <a class="code" href="structMM__AllocBlockHdr.html#m1">size</a>(inSize) {};
+<a name="l00083"></a><a class="code" href="structMM__AllocBlockHdr.html#a2">00083</a>     <a class="code" href="structMM__AllocBlockHdr.html#a2">MM_AllocBlockHdr</a>(): <a class="code" href="structMM__AllocBlockHdr.html#m0">pNode</a>(0), <a class="code" href="structMM__AllocBlockHdr.html#m1">size</a>(0), <a class="code" href="structMM__AllocBlockHdr.html#m2">pRootNode</a>(0), <a class="code" href="structMM__AllocBlockHdr.html#m3">pad</a>(0) {};
+<a name="l00084"></a><a class="code" href="structMM__AllocBlockHdr.html#a3">00084</a>     <a class="code" href="structMM__AllocBlockHdr.html#a2">MM_AllocBlockHdr</a>(<span class="keywordtype">void</span>* ptr, uint32 inSize): <a class="code" href="structMM__AllocBlockHdr.html#m0">pNode</a>(ptr), <a class="code" href="structMM__AllocBlockHdr.html#m1">size</a>(inSize), <a class="code" href="structMM__AllocBlockHdr.html#m2">pRootNode</a>(0), <a class="code" href="structMM__AllocBlockHdr.html#m3">pad</a>(0) {};
 00085 };
 00086 
 00087 <span class="comment">// actually set the value here.</span>
@@ -123,7 +123,7 @@
 00126 <span class="preprocessor">#endif</span>
 00127 <span class="preprocessor"></span>
 </pre></div><hr size="1"><img src="pvlogo_small.jpg"><address style="align: right;"><small>OSCL API</small>
-<address style="align: left;"><small>Posting Version: CORE_8.003.1.1 </small>
+<address style="align: left;"><small>Posting Version: CORE_8.101.1.1 </small>
 </small></address>
 </body>
 </html>
