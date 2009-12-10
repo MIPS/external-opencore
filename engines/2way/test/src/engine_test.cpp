@@ -38,7 +38,6 @@ void engine_test::reset()
 
 void engine_test::create_comm()
 {
-#ifndef NO_2WAY_324
     /*!
 
       Step 4a: Create Communication
@@ -50,12 +49,10 @@ void engine_test::create_comm()
     iCommServerIOControl = PvmiMIOCommLoopbackFactory::Create(iCommSettings);
     bool enableBitstreamLogging = true;
     iCommServer = PVCommsIONodeFactory::Create(iCommServerIOControl, enableBitstreamLogging);
-#endif
 }
 
 void engine_test::destroy_comm()
 {
-#ifndef NO_2WAY_324
     if (iCommServer)
     {
         PVCommsIONodeFactory::Delete(iCommServer);
@@ -67,7 +64,6 @@ void engine_test::destroy_comm()
         PvmiMIOCommLoopbackFactory::Delete(iCommServerIOControl);
         iCommServerIOControl = NULL;
     }
-#endif
 
 }
 

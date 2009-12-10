@@ -97,8 +97,8 @@ struct MM_AllocBlockHdr
         size |= ALLOC_NODE_FLAG;
     };
 
-    MM_AllocBlockHdr(): pNode(0), size(0), pRootNode(0) {};
-    MM_AllocBlockHdr(void* ptr, uint32 inSize): pNode(ptr), size(inSize) {};
+    MM_AllocBlockHdr(): pNode(0), size(0), pRootNode(0), pad(0) {};
+    MM_AllocBlockHdr(void* ptr, uint32 inSize): pNode(ptr), size(inSize), pRootNode(0), pad(0) {};
 };
 
 // actually set the value here.

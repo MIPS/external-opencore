@@ -2434,6 +2434,9 @@ bool PVMFOMXEncNode::NegotiateVideoComponentParameters()
     }
 
     //OMX_VIDEO_PARAM_BITRATETYPE Settings
+    // OMX_GetParameter takes an input/output variable so everything needs to be
+    // initialized.
+    oscl_memset(&BitRateType, 0, sizeof(BitRateType));
     CONFIG_SIZE_AND_VERSION(BitRateType);
 
     BitRateType.nPortIndex = iOutputPortIndex;
@@ -10856,6 +10859,9 @@ bool PVMFOMXEncNode::CheckComponentCapabilities(PVMFFormatType* aOutFormat)
 
     // GET CAPABILITY FLAGS FROM PV COMPONENT, IF this fails, use defaults
     PV_OMXComponentCapabilityFlagsType Cap_flags;
+    // have to initialize ComponentParameterStructure- Msg is an In/Out variable
+    oscl_memset(&Cap_flags, 0, sizeof(Cap_flags));
+
     err = OMX_GetParameter(iOMXEncoder, (OMX_INDEXTYPE) PV_OMX_COMPONENT_CAPABILITY_TYPE_INDEX, &Cap_flags);
     if (err != OMX_ErrorNone)
     {

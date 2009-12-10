@@ -41,7 +41,8 @@ void test_base::test()
 {
     PV2WayUtil::OutputInfo("\n-------- Start %s test --------\n", iTestName.get_cstr());
     PV2WayUtil::OutputInfo("\n** Test Number: %d. ** \n", iTestNum);
-    PV2WayUtil::OutputInfo("\nSETTINGS:\nProxy %d", iUseProxy);
+    PV2WayUtil::OutputInfo("\nSETTINGS:\nProxy %d\nConnection Duration: %d\nMax Test Time: %d",
+                           iUseProxy, iTimeConnection, iMaxTestDuration);
     iSourceAndSinks->PrintFormatTypes();
     PV2WayUtil::OutputInfo("\n----------------------------------\n");
     int error = 0;
@@ -118,10 +119,12 @@ void test_base::CreateH324Component(bool aCreateH324)
     /*!
 
       Step 4b: Create Component
-      First step in creating h324m ocmponent- querying for the TSC node using the PVH324MConfigUuid UUID.
+      First step in creating h324m ocmponent- querying for the TSC node
+      using the PVH324MConfigUuid UUID.
     */
     // get TSC node
-    iQueryInterfaceCmdId = terminal->QueryInterface(PVH324MConfigUuid, iTempH324MConfigIterface);
+    iQueryInterfaceCmdId = terminal->QueryInterface(PVH324MConfigUuid,
+                           iTempH324MConfigIterface);
 
 }
 
@@ -646,7 +649,7 @@ void test_base::HandleInformationalEvent(const PVAsyncInformationalEvent& aEvent
                     if (iAudioAddSourceId)
                     {
                         iAudioSrcChannelId = channel_id;
-                        PV2WayUtil::OutputInfo("Audio\n");
+                        PV2WayUtil::OutputInfo("Audio");
                     }
                     else
                     {
@@ -663,7 +666,7 @@ void test_base::HandleInformationalEvent(const PVAsyncInformationalEvent& aEvent
                     if (iVideoAddSourceId)
                     {
                         iVideoSrcChannelId = channel_id;
-                        PV2WayUtil::OutputInfo("Video\n");
+                        PV2WayUtil::OutputInfo("Video");
                     }
                     else
                     {

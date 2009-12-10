@@ -205,13 +205,17 @@ PVMFMediaData::createMediaData(OsclSharedPtr<PVMFMediaDataImpl>& in_impl_ptr,
     {
         uint aligned_refcnt_size = oscl_mem_aligned_size(sizeof(OsclRefCounterDA));
         uint aligned_cleanup_size = oscl_mem_aligned_size(sizeof(MediaDataCleanupDA));
-        my_ptr = (uint8*) gen_alloc->ALLOCATE(aligned_refcnt_size +
-                                              aligned_cleanup_size +
-                                              aligned_media_data_size +
-                                              sizeof(PVMFMediaMsgHeader));
+
+        uint totalSize = aligned_refcnt_size +
+                         aligned_cleanup_size +
+                         aligned_media_data_size +
+                         sizeof(PVMFMediaMsgHeader);
+        my_ptr = (uint8*) gen_alloc->ALLOCATE(totalSize);
 
         //not allocators leave, so check for NULL ptr
         if (my_ptr == NULL) return shared_media_data;
+
+        oscl_memset(my_ptr, 0, totalSize);
 
         MediaDataCleanupDA *my_cleanup = OSCL_PLACEMENT_NEW(my_ptr + aligned_refcnt_size, MediaDataCleanupDA(gen_alloc));
         my_refcnt = OSCL_PLACEMENT_NEW(my_ptr, OsclRefCounterDA(my_ptr, my_cleanup));

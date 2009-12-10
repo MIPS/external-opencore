@@ -1457,6 +1457,7 @@ PVMFStatus PvmiMIOFileInput::DoInit()
             return PVMFErrNoMemory;
         }
 
+        oscl_memset(fileData, 0, sizeof(fileData));
         // Read the whole file to data buffer then go back to front
         iInputFile.Read((OsclAny*)fileData, sizeof(uint8), fileSize);
         iInputFile.Seek(fileStart, Oscl_File::SEEKSET);
@@ -1675,6 +1676,41 @@ PVMFStatus PvmiMIOFileInput::DoStop()
     return PVMFSuccess;
 }
 
+int32 PvmiMIOFileInput::GetFrameSize(int32 aIndex)
+{
+    if (aIndex < 0)
+        return 0;
+    uint32 num = OSCL_STATIC_CAST(int32, aIndex);
+    if (num < iFrameSizeVector.size())
+    {
+        return iFrameSizeVector[num];
+    }
+    else
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_WARNING,
+                        (0, "PvmiMIOFileInput::GetFrameSize: Attempting to read FrameSize Vector with invalid index.  Returning 0."));
+    }
+    return 0;
+}
+
+int32 PvmiMIOFileInput::GetTimeStamp(int32 aIndex)
+{
+    if (aIndex < 0)
+        return 0;
+    uint32 num = OSCL_STATIC_CAST(uint32, aIndex);
+    if (num < iTimeStampVector.size())
+    {
+        return iTimeStampVector[num];
+    }
+    else
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_WARNING,
+                        (0, "PvmiMIOFileInput::DoRead: Attempting to read TimeStamp Vector with invalid index"));
+    }
+    return 0;
+}
+
+
 ////////////////////////////////////////////////////////////////////////////
 PVMFStatus PvmiMIOFileInput::DoRead()
 {
@@ -1695,24 +1731,34 @@ PVMFStatus PvmiMIOFileInput::DoRead()
     uint8* data = NULL;
     uint32 writeAsyncID = 0;
 
+    int32 index = -1;
+    if (iTotalNumFrames > 0)
+    {
+        index = iDataEventCounter % iTotalNumFrames;
+    }
+    else
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_WARNING,
+                        (0, "PvmiMIOFileInput::DoRead: iTotalNumFrames is 0!"));
+    }
     //Find the frame...
     if ((iSettings.iMediaFormat == PVMF_MIME_M4V) || (iSettings.iMediaFormat == PVMF_MIME_ISO_AVC_SAMPLE_FORMAT))
     {
-        bytesToRead = iFrameSizeVector[iDataEventCounter % iTotalNumFrames];
-        iReadTimeStamp = iTimeStampVector[iDataEventCounter % iTotalNumFrames];
+        bytesToRead = GetFrameSize(index);
+        iReadTimeStamp = GetTimeStamp(index);
         ++iDataEventCounter;
     }
     else if (iSettings.iMediaFormat == PVMF_MIME_H2631998 ||
              iSettings.iMediaFormat == PVMF_MIME_H2632000)
     {
-        bytesToRead = iFrameSizeVector[iDataEventCounter % iTotalNumFrames];
+        bytesToRead = GetFrameSize(index);
         iReadTimeStamp = (uint32)(iDataEventCounter * 1000 / iSettings.iFrameRate);
         ++iDataEventCounter;
     }
     else if (iSettings.iMediaFormat == PVMF_MIME_3GPP_TIMEDTEXT)
     {
-        bytesToRead = iFrameSizeVector[iDataEventCounter % iTotalNumFrames];
-        uint32 ts = iTimeStampVector[iDataEventCounter % iTotalNumFrames];
+        bytesToRead = GetFrameSize(index);
+        uint32 ts = GetTimeStamp(index);
         if ((iDataEventCounter % iTotalNumFrames) == 0)
         {
             ++iCount;
@@ -1731,8 +1777,8 @@ PVMFStatus PvmiMIOFileInput::DoRead()
     }
     else if (iSettings.iMediaFormat == PVMF_MIME_MPEG4_AUDIO)
     {
-        bytesToRead = iFrameSizeVector[iDataEventCounter % iTotalNumFrames];
-        iReadTimeStamp = iTimeStampVector[iDataEventCounter % iTotalNumFrames];
+        bytesToRead = GetFrameSize(index);
+        iReadTimeStamp = GetTimeStamp(index);
         ++iDataEventCounter;
     }
     else if (iSettings.iMediaFormat == PVMF_MIME_AMR_IF2 ||
@@ -1742,7 +1788,7 @@ PVMFStatus PvmiMIOFileInput::DoRead()
              iSettings.iMediaFormat == PVMF_MIME_ADIF ||
              iSettings.iMediaFormat == PVMF_MIME_MP3)
     {
-        bytesToRead = iFrameSizeVector[iDataEventCounter % iTotalNumFrames];
+        bytesToRead = GetFrameSize(index);
         iReadTimeStamp = iTimeStamp;
         iTimeStamp += iMilliSecondsPerDataEvent;
         ++iDataEventCounter;
@@ -1750,13 +1796,13 @@ PVMFStatus PvmiMIOFileInput::DoRead()
     else if (iSettings.iMediaFormat == PVMF_MIME_YUV420 ||
              iSettings.iMediaFormat == PVMF_MIME_RGB16)
     {
-        bytesToRead = iFrameSizeVector[0];
+        bytesToRead = GetFrameSize(0);
         iReadTimeStamp = (uint32)(iDataEventCounter * 1000 / iSettings.iFrameRate);
         ++iDataEventCounter;
     }
     else if (iSettings.iMediaFormat == PVMF_MIME_PCM16)
     {
-        bytesToRead = iFrameSizeVector[0];
+        bytesToRead = GetFrameSize(0);
         float chunkrate = (float)(1000 / AMR_FRAME_DELAY) / iSettings.iNum20msFramesPerChunk;
         iReadTimeStamp = (uint32)(iDataEventCounter * 1000 / chunkrate);
         ++iDataEventCounter;
@@ -1857,11 +1903,9 @@ PVMFStatus PvmiMIOFileInput::DoRead()
                 data = NULL;
 
                 PvmiMediaXferHeader data_hdr;
+                oscl_memset(&data_hdr, 0, sizeof(data_hdr));
                 data_hdr.seq_num = iDataEventCounter - 1;
                 data_hdr.timestamp = iReadTimeStamp;
-                data_hdr.flags = 0;
-                data_hdr.duration = 0;
-                data_hdr.stream_id = 0;
                 bytesToRead = 0;
 
                 //send EOS information to MIO Node
@@ -1907,11 +1951,10 @@ PVMFStatus PvmiMIOFileInput::DoRead()
         }
         // send data to Peer & store the id
         PvmiMediaXferHeader data_hdr;
+        oscl_memset(&data_hdr, 0, sizeof(data_hdr));
         data_hdr.seq_num = iDataEventCounter - 1;
         data_hdr.timestamp = iReadTimeStamp;
-        data_hdr.flags = 0;
-        data_hdr.duration = 0;
-        data_hdr.stream_id = 0;
+
         if (iSettings.iMediaFormat == PVMF_MIME_3GPP_TIMEDTEXT)
         {
             data_hdr.flags |= PVMI_MEDIAXFER_MEDIA_DATA_FLAG_DURATION_AVAILABLE_BIT;

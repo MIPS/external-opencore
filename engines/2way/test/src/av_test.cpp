@@ -34,6 +34,7 @@ void av_test::DoCancel()
 void av_test::AllNodesAdded()
 {
     test_is_true(true);
+    PV2WayUtil::OutputInfo("\nStarting timer \n");
     LetConnectionRun();
 }
 

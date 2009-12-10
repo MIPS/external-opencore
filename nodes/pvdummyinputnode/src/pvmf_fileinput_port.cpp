@@ -33,6 +33,8 @@
 #include "pvmf_dummy_fileinput_node.h"
 #endif
 
+#include "pvmi_config_and_capability_utils.h"
+
 #define LOG_STACK_TRACE(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, m);
 #define LOG_DEBUG(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG, m);
 #define LOG_ERR(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_REL,iLogger,PVLOGMSG_ERR,m);
@@ -71,7 +73,10 @@ void PVMFFileDummyInputPort::Construct()
 ////////////////////////////////////////////////////////////////////////////
 PVMFFileDummyInputPort::~PVMFFileDummyInputPort()
 {
-    Disconnect();
+    if (iConnectedPort)
+    {
+        Disconnect();
+    }
     ClearMsgQueues();
 
     if (iTrackConfigFI)
@@ -202,7 +207,7 @@ OSCL_EXPORT_REF PVMFStatus PVMFFileDummyInputPort::releaseParameters(PvmiMIOSess
 
     if (parameters)
     {
-        iAlloc.deallocate((OsclAny*)parameters->key);
+        iAlloc.deallocate((OsclAny*)parameters);
         return PVMFSuccess;
     }
     else
@@ -352,7 +357,7 @@ PVMFStatus PVMFFileDummyInputPort::AllocateKvp(PvmiKvp*& aKvp, PvmiKeyType aKey,
     for (i = 0; i < aNumParams; i++)
     {
         aKvp[i].key = (char*)buf;
-        oscl_strncpy(aKvp[i].key, aKey, oscl_strlen(aKvp[i].key));
+        oscl_strncpy(aKvp[i].key, aKey, keyLen);
         buf += oscl_strlen(aKvp[i].key);
     }
 
@@ -372,9 +377,10 @@ PVMFStatus PVMFFileDummyInputPort::VerifyAndSetParameter(PvmiKvp* aKvp, bool aSe
 
     PVMFDummyFileInputNode* node = (PVMFDummyFileInputNode*)iPortActivityHandler;
 
-    if (pv_mime_strcmp(aKvp->key, OUTPUT_FORMATS_VALTYPE) == 0)
+    if (pv_mime_strcmp(aKvp->key, OUTPUT_FORMATS_VALTYPE) == 0 ||
+            pv_mime_strcmp(aKvp->key, PVMF_FILE_OUTPUT_PORT_INPUT_FORMATS_VALTYPE) == 0)
     {
-        if (aKvp->value.pChar_value == node->iSettings.iMediaFormat.getMIMEStrPtr())
+        if (pv_mime_strcmp(aKvp->value.pChar_value, node->iSettings.iMediaFormat.getMIMEStrPtr()) == 0)
         {
             if (aSetParam)
                 iFormat = aKvp->value.pChar_value;

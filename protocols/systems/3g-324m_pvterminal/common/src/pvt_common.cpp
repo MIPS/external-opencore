@@ -805,7 +805,7 @@ OSCL_EXPORT_REF uint32 GetPriorityIndexForPVMFFormatType(PVMFFormatType aFormatT
 
 OSCL_EXPORT_REF bool IsFormatType(const PvmiKvp& aKvp)
 {
-    if ((pv_mime_strcmp(aKvp.key, "x-pvmf/port/formattype;valtype=char*") == 0) ||
+    if ((pv_mime_strcmp(aKvp.key, PVMF_FILE_OUTPUT_PORT_INPUT_FORMATS_VALTYPE) == 0) ||
             (pv_mime_strcmp(aKvp.key, INPUT_FORMATS_VALTYPE) == 0) ||
             (pv_mime_strcmp(aKvp.key, OUTPUT_FORMATS_VALTYPE) == 0))
     {

@@ -22,10 +22,8 @@
 #include "oscl_scheduler.h"
 #include "pv_2way_engine_factory.h"
 #include "pvmf_fileoutput_factory.h"
-#ifndef NO_2WAY_324
 #include "pv_comms_io_node_factory.h"
 #include "pvmi_mio_comm_loopback_factory.h"
-#endif
 #include "pv_2way_interface.h"
 #include "pvmi_mio_fileinput.h"
 
@@ -223,10 +221,8 @@ class engine_handler : public OsclTimerObject,
         PVMFNodeInterface* iCommServer;
         CommServerType iCommServerType;
         PV2Way324ConnectOptions iConnectOptions;
-#ifndef NO_2WAY_324
         PvmiMIOControl* iCommServerIOControl;
         PvmiMIOCommLoopbackSettings iCommSettings;
-#endif
         PV2Way324InitInfo iSdkInitInfo;
 
         bool engineExited;

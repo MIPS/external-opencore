@@ -232,6 +232,9 @@ class PvmiMIOFileInput
         PVMFStatus RetrieveNALType();
 
     private:
+        int32 GetFrameSize(int32 index);
+        int32 GetTimeStamp(int32 index);
+
         void Run();
         void ConstructL(const PvmiMIOFileInputSettings& aSettings);
 

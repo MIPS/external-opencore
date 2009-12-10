@@ -40,10 +40,8 @@
 #include "pv_engine_observer_message.h"
 #include "tsc_h324m_config_interface.h"
 
-#ifndef NO_2WAY_324
 #include "pv_comms_io_node_factory.h"
 #include "pvmi_mio_comm_loopback_factory.h"
-#endif
 
 #ifndef PV_2WAY_SOURCE_AND_SINKS_BASE_H_INCLUDED
 #include "pv_2way_source_and_sinks_base.h"
@@ -100,9 +98,7 @@ class engine_test : public test_case,
                 iMaxRuns(aMaxRuns),
                 iCurrentRun(0),
                 iCommServer(NULL),
-#ifndef NO_2WAY_324
                 iCommServerIOControl(NULL),
-#endif
                 iGetSessionParamsId(0),
                 iDuplicatesStarted(false),
                 terminal(NULL),
@@ -254,10 +250,8 @@ class engine_test : public test_case,
         int iMaxRuns;
         int iCurrentRun;
         PVMFNodeInterface* iCommServer;
-#ifndef NO_2WAY_324
         PvmiMIOControl* iCommServerIOControl;
         PvmiMIOCommLoopbackSettings iCommSettings;
-#endif
         PV2Way324ConnectOptions iConnectOptions;
         //CPV2WaySIPConnectInfo iSIPConnectOptions;
         PV2Way324InitInfo iSdkInitInfo;

@@ -49,6 +49,17 @@
 /** Structure containing statistics of a port */
 struct PvmfPortBaseImplStats
 {
+    PvmfPortBaseImplStats()
+    {
+        iOutgoingMsgQueued = 0;
+        iOutgoingMsgSent = 0;
+        iOutgoingMsgDiscarded = 0;
+        iOutgoingQueueBusy = 0;
+        iConnectedPortBusy = 0;
+        iIncomingMsgRecv = 0;
+        iIncomingMsgConsumed = 0;
+        iIncomingQueueBusy = 0;
+    }
     uint32 iOutgoingMsgQueued;      /**< Number of outgoing messages queued */
     uint32 iOutgoingMsgSent;        /**< Number of outgoing messages sent */
     uint32 iOutgoingMsgDiscarded;   /**< Number of outgoing messages discarded */

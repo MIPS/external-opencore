@@ -172,6 +172,7 @@ OSCL_EXPORT_REF PvmfPortBaseImpl::PvmfPortBaseImpl(int32 aTag, PVMFPortActivityH
     iIncomingQueue.Construct(DEFAULT_DATA_QUEUE_CAPACITY, DEFAULT_DATA_QUEUE_CAPACITY, DEFAULT_READY_TO_RECEIVE_THRESHOLD_PERCENT);
     iOutgoingQueue.Construct(DEFAULT_DATA_QUEUE_CAPACITY, DEFAULT_DATA_QUEUE_CAPACITY, DEFAULT_READY_TO_RECEIVE_THRESHOLD_PERCENT);
     SetName(name);
+    oscl_memset(&iStats, 0, sizeof(PvmfPortBaseImplStats));
 }
 
 ////////////////////////////////////////////////////////////////////////////
@@ -193,6 +194,7 @@ OSCL_EXPORT_REF PvmfPortBaseImpl::PvmfPortBaseImpl(int32 aTag
     iIncomingQueue.Construct(aInCapacity, aInReserve, aInThreshold);
     iOutgoingQueue.Construct(aOutCapacity, aOutReserve, aOutThreshold);
     SetName(name);
+    oscl_memset(&iStats, 0, sizeof(PvmfPortBaseImplStats));
 }
 
 ////////////////////////////////////////////////////////////////////////////

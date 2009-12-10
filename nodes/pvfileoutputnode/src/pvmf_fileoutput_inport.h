@@ -55,9 +55,6 @@ class PVMFFileOutputNode;
 //Default vector reserve size
 #define PVMF_FILE_OUTPUT_NODE_PORT_VECTOR_RESERVE 10
 
-// Capability mime strings
-#define PVMF_FILE_OUTPUT_PORT_INPUT_FORMATS "x-pvmf/file/encode/input_formats"
-#define PVMF_FILE_OUTPUT_PORT_INPUT_FORMATS_VALTYPE "x-pvmf/port/formattype;valtype=char*"
 
 class PVMFFileOutputInPort
         : public PvmfPortBaseImpl

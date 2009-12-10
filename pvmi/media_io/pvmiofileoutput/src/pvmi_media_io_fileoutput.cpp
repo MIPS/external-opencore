@@ -159,6 +159,11 @@ void PVRefFileOutput::initData()
     iVideoWidthValid = false;
     iVideoDisplayHeightValid = false;
     iVideoDisplayWidthValid = false;
+    iVideoDisplayHeight = 0;
+    iVideoDisplayWidth = 0;
+
+    iNumberOfBuffers = 0;
+    iBufferSize = 0;
 
     iCommandCounter = 0;
     iLogger = NULL;

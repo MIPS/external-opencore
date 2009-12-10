@@ -97,9 +97,7 @@ engine_handler::engine_handler() : OsclTimerObject(OsclActiveObject::EPriorityNo
         iTestSettings(NULL),
         iCommServer(NULL),
         iCommServerType(NO_SERVER_TYPE_SET),
-#ifndef NO_2WAY_324
         iCommServerIOControl(NULL),
-#endif
         engineExited(false),
         iH324ConfigInterface(NULL),
         iStdErrAppender(NULL),
@@ -279,14 +277,12 @@ void engine_handler::DeleteCommServer()
                 OSCL_DELETE(iCommServer);
                 break;
             case PVMF_LOOPBACK_COMM_SERVER:
-#ifndef NO_2WAY_324
                 PVCommsIONodeFactory::Delete(iCommServer);
                 if (iCommServerIOControl)
                 {
                     PvmiMIOCommLoopbackFactory::Delete(iCommServerIOControl);
                     iCommServerIOControl = NULL;
                 }
-#endif
                 break;
             case SOCKET_COMM_SERVER:
                 iTwoWaySocket.DeleteCommServer();
@@ -702,13 +698,11 @@ void engine_handler::CreateComms()
     }
     else
     {
-#ifndef NO_2WAY_324
         iCommSettings.iMediaFormat = PVMF_MIME_H223;
         iCommSettings.iTestObserver = NULL;
         iCommServerIOControl = PvmiMIOCommLoopbackFactory::Create(iCommSettings);
         bool enableBitstreamLogging = true;
         iCommServer = PVCommsIONodeFactory::Create(iCommServerIOControl, enableBitstreamLogging);
-#endif
         iCommServerType = PVMF_LOOPBACK_COMM_SERVER;
     }
 

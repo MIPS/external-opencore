@@ -91,7 +91,22 @@ OSCL_EXPORT_REF TSC_324m::TSC_324m(TPVLoopbackMode aLoopbackMode)
         iIncomingSrpPort(NULL),
         iTscSrpBuffer(NULL),
         iLogger(NULL),
+        iEndSessionTimeout(DEFAULT_END_SESSION_TIMEOUT),
+        iStopCmd(NULL),
+        iT401(T401_DEFAULT),
+        iN100(N100_DEFAULT),
+        iN401(N401_DEFAULT),
+        iMultiplexingDelayMs(0),
+        iInLogicalChannelBufferingMs(0),
+        iOutLogicalChannelBufferingMs(0),
         iTSC_324mObserver(NULL),
+        iNumRtdRequests(0),
+        iRtdMin(TSC_BIG_UINT32),
+        iRtdMax(0),
+        iRtdAve(0),
+        iEnableWnsrp(false),
+        iInitialized(false),
+        iInitializedComponent(false),
         iTSCcomponent(NULL),
         iTSCblc(iTSCstatemanager),
         iTSClc(iTSCstatemanager),
@@ -102,6 +117,7 @@ OSCL_EXPORT_REF TSC_324m::TSC_324m(TPVLoopbackMode aLoopbackMode)
                            iTSCblc,
                            iTSCclc,
                            iTSCmt),
+        iClock(NULL),
         iReferenceCount(1)
 {
     iLogger = PVLogger::GetLoggerObject("3g324m.h245user");
@@ -227,8 +243,6 @@ void TSC_324m::initVarsSession()
     Cleanup();
 
     iH223Level = TSC_H223_LEVEL_DEFAULT;
-
-    iMuxTableUpdateRequired = false;
 
     if (iSuppInfo)
     {
@@ -574,7 +588,6 @@ TSC_324m::Connect(uint16 info_len, uint8* info_buf)
                     (0, "TSC_324m::Connect"));
     TPVStatusCode ret = EPVT_Pending;
 
-    iMuxTableUpdateRequired = false;
     iStopCmd = NULL;
     iTerminalStatus = Phase0_Idle;
 

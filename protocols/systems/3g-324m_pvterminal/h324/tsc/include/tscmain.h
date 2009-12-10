@@ -655,10 +655,8 @@ class TSC_324m : public OsclActiveObject,
         Oscl_Vector<H223ChannelParam*, PVMFTscAlloc> iIncomingChannels;
         /* Pending OLCs:  This includes pending and established uni- and bi- directional, incoming and outgoing OLCs. */
         PVLogger *iLogger;
-        bool iMuxTableUpdateRequired;
         uint32 iEndSessionTimeout;
         Tsc324mNodeCommand *iStopCmd;
-        OsclAny* iStopContext;
         /* Timer/counter values */
         H245TimerValues iTimerValues;
         uint32 iT401; /* SRP */
