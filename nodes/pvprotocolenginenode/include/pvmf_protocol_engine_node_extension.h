@@ -169,6 +169,11 @@ class PVMFProtocolEngineNodeExtensionInterface : public PVInterface
          */
         virtual void DisableHttpHeadRequest(const bool aDisableHeadRequest = true) = 0;
 
+        /**
+         * Retrieve maximum total clip bitrate(video+audio)
+         */
+        virtual uint32 GetMaxTotalClipBitrate() = 0;
+
 };
 
 #define PVMF_PROTOCOL_ENGINE_MSHTTP_STREAMING_EXTENSION_MIMETYPE "pvxxx/PVMFProtocolEngineNod/MSHTTPStreamingExtensionInterface"

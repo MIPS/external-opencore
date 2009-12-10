@@ -456,6 +456,33 @@ OSCL_EXPORT_REF void ProtocolContainer::setClipDuration(const uint32 aClipDurati
     if (iDownloadProgess) iDownloadProgess->setClipDuration(aClipDurationMsec);
 }
 
+OSCL_EXPORT_REF bool ProtocolContainer::getBufferForRequest(PVMFSharedMediaDataPtr &aMediaData)
+{
+    return iNodeOutput->getBuffer(aMediaData);
+}
+
+OSCL_EXPORT_REF void ProtocolContainer::protocolRequestAvailable(uint32 aRequestType)
+{
+    uint32 aOutputType;
+    if (aRequestType == ProtocolRequestType_Logging)
+    {
+        aOutputType = NodeOutputType_InputPortForLogging;
+    }
+    else
+    {
+        aOutputType = NodeOutputType_InputPortForData;
+    }
+
+    iNodeOutput->flushData(aOutputType);
+}
+
+OSCL_EXPORT_REF bool ProtocolContainer::handleFirstPacketAvailable(PVProtocolEngineNodeInternalEvent &aEvent, PVProtocolEngineNodeInternalEventHandler *aEventHandler)
+{
+    OSCL_UNUSED_ARG(aEvent);
+    OSCL_UNUSED_ARG(aEventHandler);
+    return true;
+}
+
 
 ////////////////////////////////////////////////////////////////////////////////////
 //////  PVMFProtocolEngineNodeOutput implementation

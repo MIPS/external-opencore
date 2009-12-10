@@ -44,6 +44,10 @@
 #include "pvmf_protocol_engine_node_rtmp_streaming_container_factory.h"
 #endif
 
+#if(BUILD_SMOOTHSTREAMING_PLUGIN)
+#include "pvmf_protocol_engine_node_smooth_streaming_container_factory.h"
+#endif
+
 
 #ifdef USE_LOADABLE_MODULES
 #include "oscl_shared_library.h"
@@ -113,6 +117,14 @@ PVMFProtocolEngineNodeRegistry::PVMFProtocolEngineNodeRegistry() : iTypeVecIndex
     aContainerInfo.iProtocolEngineContainerUUID = KPVMFProtocolEngineNodeRTMPStreamingUuid;
     aContainerInfo.iProtocolEngineContainerCreateFunc = PVMFProtocolEngineNodeRTMPStreamingContainerFactory::Create;
     aContainerInfo.iProtocolEngineContainerReleaseFunc = PVMFProtocolEngineNodeRTMPStreamingContainerFactory::Delete;
+    iTypeVec.push_back(aContainerInfo);
+#endif
+
+#if(BUILD_SMOOTHSTREAMING_PLUGIN)
+    aContainerInfo.iSourceType = PVMF_MIME_DATA_SOURCE_SMOOTH_STREAMING_URL;
+    aContainerInfo.iProtocolEngineContainerUUID = KPVMFProtocolEngineNodeSmoothStreamingUuid;
+    aContainerInfo.iProtocolEngineContainerCreateFunc = PVMFProtocolEngineNodeSmoothStreamingContainerFactory::Create;
+    aContainerInfo.iProtocolEngineContainerReleaseFunc = PVMFProtocolEngineNodeSmoothStreamingContainerFactory::Delete;
     iTypeVec.push_back(aContainerInfo);
 #endif
 

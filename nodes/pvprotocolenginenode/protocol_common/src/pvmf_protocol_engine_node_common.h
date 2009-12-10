@@ -302,7 +302,8 @@ class ProtocolContainerObserver
         virtual void CompletePendingCmd(int32 status) = 0;
         virtual void CompleteInputCmd(PVMFProtocolEngineNodeCommand& aCmd, int32 status) = 0;
         virtual void ErasePendingCmd(PVMFProtocolEngineNodeCommand *aCmd) = 0;
-        virtual void ReportEvent(PVMFEventType aEventType, OsclAny* aEventData = NULL, const int32 aEventCode = 0, OsclAny* aEventLocalBuffer = NULL, const size_t aEventLocalBufferSize = 0) = 0;
+        virtual void ReportEvent(PVMFEventType aEventType, OsclAny* aEventData = NULL, const int32 aEventCode = 0, OsclAny* aEventLocalBuffer = NULL, const uint32 aEventLocalBufferSize = 0) = 0;
+        virtual void NewIncomingMessage(PVMFSharedMediaMsgPtr& aMsg) = 0;
 };
 
 
@@ -502,6 +503,15 @@ class ProtocolContainer
         {
             OSCL_UNUSED_ARG(aForceSocketReconnect);
         }
+
+        OSCL_IMPORT_REF virtual bool getBufferForRequest(PVMFSharedMediaDataPtr &aMediaData);
+        OSCL_IMPORT_REF virtual void protocolRequestAvailable(uint32 aRequestType);
+        virtual uint32 getMaxTotalClipBitrate()
+        {
+            return 0;
+        }
+
+        OSCL_IMPORT_REF virtual bool handleFirstPacketAvailable(PVProtocolEngineNodeInternalEvent &aEvent, PVProtocolEngineNodeInternalEventHandler *aEventHandler);
 
     protected:
         OSCL_IMPORT_REF virtual PVMFStatus initImpl();
@@ -1156,7 +1166,8 @@ enum DownloadControlSupportObjectType
     DownloadControlSupportObjectType_SDPInfoContainer,
     DownloadControlSupportObjectType_DownloadProgress,
     DownloadControlSupportObjectType_OutputObject,
-    DownloadControlSupportObjectType_MetaDataObject
+    DownloadControlSupportObjectType_MetaDataObject,
+    DownloadControlSupportObjectType_ManifestFileContainer
 };
 
 // The intent of introducing this download ocntrol interface is to make streaming counterpart as a NULL object,
@@ -1202,11 +1213,15 @@ class DownloadProgressInterface
     public:
         virtual void setSupportObject(OsclAny *aDLSupportObject, DownloadControlSupportObjectType aType) = 0;
 
-        // updata download clock and download progress
+        // update download clock and download progress
         virtual bool update(const bool aDownloadComplete = false) = 0;
 
         // return true for the new download progress
         virtual bool getNewProgressPercent(uint32 &aProgressPercent) = 0;
+
+        // accept progress percent from outside, either serves as the starting point, or the calculation may
+        // be better from outside
+        virtual void setNewProgressPercent(const uint32 aProgressPercent) = 0;
 
         // return duration for auto-resume decision
         virtual void setClipDuration(const uint32 aClipDurationMsec) = 0;
@@ -1237,7 +1252,7 @@ class EventReporterObserver
 {
     public:
         virtual ~EventReporterObserver() {};
-        virtual void ReportEvent(PVMFEventType aEventType, OsclAny* aEventData = NULL, const int32 aEventCode = 0, OsclAny* aEventLocalBuffer = NULL, const size_t aEventLocalBufferSize = 0) = 0;
+        virtual void ReportEvent(PVMFEventType aEventType, OsclAny* aEventData = NULL, const int32 aEventCode = 0, OsclAny* aEventLocalBuffer = NULL, const uint32 aEventLocalBufferSize = 0) = 0;
         virtual void NotifyContentTooLarge() = 0;
         virtual uint32 GetObserverState() = 0;
 };

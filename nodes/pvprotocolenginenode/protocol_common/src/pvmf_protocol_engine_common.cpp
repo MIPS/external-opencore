@@ -87,7 +87,7 @@ OSCL_EXPORT_REF bool INetURI::setURI(OSCL_wString &aUri, const bool aRedirectURI
     return true;
 }
 
-OSCL_EXPORT_REF bool INetURI::getHostAndPort(OSCL_String &aSerAdd, int32 &aSerPort)
+OSCL_EXPORT_REF bool INetURI::getHostAndPort(OSCL_String &aSerAdd, uint32 &aSerPort)
 {
     if (iURI.get_size() == 0) return false;
     if (iHostName.get_size() == 0)
@@ -99,7 +99,7 @@ OSCL_EXPORT_REF bool INetURI::getHostAndPort(OSCL_String &aSerAdd, int32 &aSerPo
     return true;
 }
 
-bool INetURI::parseURL(OSCL_String &aUrl8, OSCL_String &aSerAdd, int32 &aSerPort)
+bool INetURI::parseURL(OSCL_String &aUrl8, OSCL_String &aSerAdd, uint32 &aSerPort)
 {
     OSCL_HeapString<OsclMemAllocator> tmpUrl8(aUrl8);
 

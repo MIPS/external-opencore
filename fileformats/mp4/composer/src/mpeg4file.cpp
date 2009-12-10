@@ -1417,8 +1417,10 @@ PVA_FF_Mpeg4File::renderToFile(PVA_FF_UNICODE_STRING_PARAM filename)
         }
 
         // Render mfra always for _oLiveMovieFragmentEnabled
-        if (_oLiveMovieFragmentEnabled)
-            _pMfraAtom->renderToFileStream(&fp);
+        // Disable this for now. Make sure that there is at least
+        // one entry added before rendering to a file.
+        //if (_oLiveMovieFragmentEnabled)
+        //    _pMfraAtom->renderToFileStream(&fp);
 
         fp._filePtr->Flush();
 

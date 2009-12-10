@@ -668,7 +668,7 @@ OSCL_EXPORT_REF bool pvDownloadControl::checkSendingNotification(const bool aDow
     return true;
 }
 
-void pvDownloadControl::updateFileSize()
+OSCL_EXPORT_REF void pvDownloadControl::updateFileSize()
 {
     if (iProtocol)
     {
@@ -1333,7 +1333,7 @@ void downloadEventReporter::sendBufferStatusEventBody(const bool aForceToSend)
 
     if ((status || aForceToSend))
     {
-        reportBufferStatusEvent(aProgessPercent);
+        if (allowSameDownloadPercentReport(aProgessPercent, iPrevDownloadProgress)) reportBufferStatusEvent(aProgessPercent);
         iPrevDownloadProgress = aProgessPercent;
         if (iPrevDownloadProgress < 100) iNodeTimer->start(BUFFER_STATUS_TIMER_ID);
     }
@@ -1538,7 +1538,10 @@ OSCL_EXPORT_REF int32 downloadEventReporter::isDownloadFileTruncated(const uint3
     {
         // short-cut: for resume download, if previous download is complete download, then return 0 (no truncation)
         if (!iCfgFileContainer->getCfgFile()->IsNewSession() && downloadStatus == PROCESS_SUCCESS_END_OF_MESSAGE) return 0;
-        if (currDownloadSize < contentLength) return 2;
+        if (currDownloadSize < contentLength)
+        {
+            return 2;
+        }
     }
 
     // 2. no content length case : download size > maximum file size (storage size)

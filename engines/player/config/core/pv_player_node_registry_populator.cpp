@@ -413,6 +413,7 @@ void PVPlayerRegistryPopulator::RegisterAllNodes(PVPlayerNodeRegistryInterface* 
     nodeinfo.iInputTypes.push_back(PVMF_MIME_DATA_SOURCE_HTTP_URL);
     nodeinfo.iInputTypes.push_back(PVMF_MIME_DATA_SOURCE_SHOUTCAST_URL);
     nodeinfo.iInputTypes.push_back(PVMF_MIME_DATA_SOURCE_RTMP_STREAMING_URL);
+    nodeinfo.iInputTypes.push_back(PVMF_MIME_DATA_SOURCE_SMOOTH_STREAMING_URL);
     nodeinfo.iInputTypes.push_back(PVMF_MIME_DATA_SOURCE_PVX_FILE);
     nodeinfo.iInputTypes.push_back(PVMF_MIME_PLSFF);
 #if PVPLAYERENGINE_SUPPORT_DTCP

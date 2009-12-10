@@ -429,7 +429,8 @@ PVMFStatus PVMFDownloadManagerNode::SetSourceInitializationData(OSCL_wString& aS
 
     if (aSourceFormat == PVMF_MIME_DATA_SOURCE_HTTP_URL ||
             aSourceFormat == PVMF_MIME_DATA_SOURCE_RTMP_STREAMING_URL ||
-            aSourceFormat == PVMF_MIME_DATA_SOURCE_DTCP_URL)
+            aSourceFormat == PVMF_MIME_DATA_SOURCE_DTCP_URL ||
+            aSourceFormat == PVMF_MIME_DATA_SOURCE_SMOOTH_STREAMING_URL)
     {
         if (!iSourceData)
         {
@@ -812,7 +813,8 @@ void PVMFDownloadManagerNode::AudioSinkEvent(PVMFStatus aEvent, uint32 aStreamId
 PVMFDownloadManagerSubNodeContainer& PVMFDownloadManagerNode::TrackSelectNode()
 {
     //Decide which sub-node is supporting track selection.
-    if (iSourceFormat == PVMF_MIME_DATA_SOURCE_PVX_FILE)
+    if (iSourceFormat == PVMF_MIME_DATA_SOURCE_PVX_FILE ||
+            iSourceFormat == PVMF_MIME_DATA_SOURCE_SMOOTH_STREAMING_URL)
     {
         //for pvx file, the PE node may or may not do track selection.
         //the final decision isn't available until PE node prepare is done
@@ -1312,7 +1314,8 @@ void PVMFDownloadManagerNode::ContinueFromDownloadTrackSelectionPoint()
     if (iPlaybackMode != EDownloadOnly)
     {
         //do recognizer sequence if needed.
-        if (iSourceFormat == PVMF_MIME_DATA_SOURCE_PVX_FILE)
+        if (iSourceFormat == PVMF_MIME_DATA_SOURCE_PVX_FILE ||
+                iSourceFormat == PVMF_MIME_DATA_SOURCE_SMOOTH_STREAMING_URL)
         {
             //PXV is always assumed to be MP4
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0,
@@ -1347,7 +1350,8 @@ void PVMFDownloadManagerNode::ContinueFromDownloadTrackSelectionPoint()
 
         //if this is PVX, we need to wait on movie atom before we can
         //init parser.
-        if (iSourceFormat == PVMF_MIME_DATA_SOURCE_PVX_FILE)
+        if (iSourceFormat == PVMF_MIME_DATA_SOURCE_PVX_FILE ||
+                iSourceFormat == PVMF_MIME_DATA_SOURCE_SMOOTH_STREAMING_URL)
         {
             if (iMovieAtomComplete || iDownloadComplete)
             {
@@ -1880,6 +1884,15 @@ PVMFStatus PVMFDownloadManagerSubNodeContainer::IssueCommand(int32 aCmd)
                     {
                         // let the parser know this is PVX format.
                         PVMFFormatType fmt = PVMF_MIME_DATA_SOURCE_PVX_FILE;
+                        (DataSourceInit())->SetSourceInitializationData(iContainer->iDownloadFileName
+                                , fmt
+                                , (OsclAny*)&iContainer->iLocalDataSource
+                                , 0);
+                    }
+                    else if (iContainer->iSourceFormat == PVMF_MIME_DATA_SOURCE_SMOOTH_STREAMING_URL)
+                    {
+                        // let the parser know this is PVX format.
+                        PVMFFormatType fmt = PVMF_MIME_DATA_SOURCE_SMOOTH_STREAMING_URL;
                         (DataSourceInit())->SetSourceInitializationData(iContainer->iDownloadFileName
                                 , fmt
                                 , (OsclAny*)&iContainer->iLocalDataSource

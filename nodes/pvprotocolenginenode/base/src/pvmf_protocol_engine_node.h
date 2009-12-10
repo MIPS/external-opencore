@@ -194,6 +194,11 @@ class PVMFProtocolEngineNode :  public PVMFNodeInterface,
         {
             if (iInterfacingObjectContainer) iInterfacingObjectContainer->setHttpHeadRequestDisabled(aDisableHeadRequest);
         }
+
+        uint32 GetMaxTotalClipBitrate()
+        {
+            return iProtocolContainer->getMaxTotalClipBitrate();
+        }
         bool GetASFHeader(Oscl_Vector<OsclRefCounterMemFrag, OsclMemAllocator> &aHeader)
         {
             return iProtocol->getHeader(aHeader);
@@ -312,6 +317,7 @@ class PVMFProtocolEngineNode :  public PVMFNodeInterface,
         inline bool ReadyToProcessInputData();
         void UpdateTimersInProcessIncomingMsg(const bool aEOSMsg, PVMFPortInterface* aPort);
         void UpdateTimersInProcessOutgoingMsg(const bool isMediaData, PVMFPortInterface* aPort);
+        PVMFStatus RetrieveIncomingMsg(INPUT_DATA_QUEUE* aDataQueue, PVMFPortInterface* aPort);
 
         //Command processing
         PVMFCommandId QueueCommandL(PVMFProtocolEngineNodeCommand&);
@@ -375,7 +381,7 @@ class PVMFProtocolEngineNode :  public PVMFNodeInterface,
         bool QueueOutgoingMsgSentComplete(PVMFProtocolEnginePort *aPort, PVMFSharedMediaMsgPtr &aMsg, const PVMFStatus aStatus);
 
         // From EventReporterObserver
-        void ReportEvent(PVMFEventType aEventType, OsclAny* aEventData = NULL, const int32 aEventCode = 0, OsclAny* aEventLocalBuffer = NULL, const size_t aEventLocalBufferSize = 0);
+        void ReportEvent(PVMFEventType aEventType, OsclAny* aEventData = NULL, const int32 aEventCode = 0, OsclAny* aEventLocalBuffer = NULL, const uint32 aEventLocalBufferSize = 0);
         void NotifyContentTooLarge();
 
         // From ProtocolContainerObserver
@@ -391,6 +397,7 @@ class PVMFProtocolEngineNode :  public PVMFNodeInterface,
         void CompletePendingCmd(int32 status);
         void CompleteInputCmd(PVMFProtocolEngineNodeCommand& aCmd, int32 status);
         void ErasePendingCmd(PVMFProtocolEngineNodeCommand *aCmd);
+        void NewIncomingMessage(PVMFSharedMediaMsgPtr& aMsg);
 
         // Internal methods
         bool HandleProcessingState();
@@ -464,9 +471,6 @@ class PVMFProtocolEngineNode :  public PVMFNodeInterface,
         // download progress
         DownloadProgressInterface *iDownloadProgess;
 
-        // fasttrack only
-        SDPInfoContainer *iSDPInfo;
-
         // user agent field
         UserAgentField *iUserAgentField;
 
@@ -489,7 +493,7 @@ class PVMFProtocolEngineNode :  public PVMFNodeInterface,
 
         // Vector of ports contained in this node
         PVMFPortVector<PVMFProtocolEnginePort, PVMFProtocolEngineNodeAllocator> iPortVector;
-        PVMFProtocolEnginePort *iPortInForData, *iPortInForLogging, *iPortOut;
+        PVMFProtocolEnginePort *iPortInForData, *iPortInForData2, *iPortInForLogging, *iPortOut;
         friend class PVMFProtocolEnginePort;
 
         PVMFProtocolEngineNodeCmdQ iInputCommands;

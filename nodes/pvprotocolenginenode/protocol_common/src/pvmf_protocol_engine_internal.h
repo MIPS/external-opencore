@@ -131,6 +131,7 @@ enum ProtocolType
 #define NUM_FASTTRACK_DOWNLOAD_STATE    2
 #define NUM_MS_STREAMING_STATE          5
 #define NUM_RTMP_STREAMING_STATE        11
+#define NUM_SMOOTH_STREAMING_STATE      2
 #define MAX_NUM_RUNTIME_MS_STREAMING_STATE 16
 #define DEFAULT_VECTOR_RESERVE_NUMBER   4
 #define DEFAULT_CLIENT_GUID             _STRLIT_CHAR("{70CD3310-1598-CE7E-919A-456A4E6E26A0}")
@@ -487,7 +488,11 @@ class INetURI
         {
             return iHostName;
         }
-        OSCL_IMPORT_REF bool getHostAndPort(OSCL_String &aSerAdd, int32 &aSerPort);
+        uint32 getHostPort() const
+        {
+            return iHostPort;
+        }
+        OSCL_IMPORT_REF bool getHostAndPort(OSCL_String &aSerAdd, uint32 &aSerPort);
         bool empty()
         {
             return (iURI.get_size() == 0);
@@ -495,7 +500,7 @@ class INetURI
         bool isGoodUri()
         {
             OSCL_HeapString<OsclMemAllocator> tmpUrl8;
-            int32 port;
+            uint32 port;
             return getHostAndPort(tmpUrl8, port);
         }
         bool isUseAbsoluteURI() const
@@ -529,12 +534,12 @@ class INetURI
         }
 
     private:
-        bool parseURL(OSCL_String &aUrl8, OSCL_String &aSerAdd, int32 &aSerPort);
+        bool parseURL(OSCL_String &aUrl8, OSCL_String &aSerAdd, uint32 &aSerPort);
 
     private:
         OSCL_HeapString<OsclMemAllocator> iURI;
         OSCL_HeapString<OsclMemAllocator> iHostName;
-        int32 iHostPort;
+        uint32 iHostPort;
         bool iUseRelativeURI;
         bool iRedirectURI;
 };

@@ -191,7 +191,7 @@ class progressiveStreamingEventReporter : public downloadEventReporter
         }
 
         // in case of progressive streaming, add buffer fullness information into buffer status report
-        OSCL_IMPORT_REF void reportBufferStatusEvent(int aDownloadPercent);
+        OSCL_IMPORT_REF void reportBufferStatusEvent(const uint32 aDownloadPercent);
         // called by reportBufferStatusEvent
         uint32 getBufferFullness();
 };

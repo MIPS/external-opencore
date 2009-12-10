@@ -532,6 +532,7 @@ class PVMFMP4FFParserNode
         uint32 iLastNPTCalcInConvertSizeToTime;
         uint32 iFileSizeLastConvertedToTime;
         bool iFastTrackSession;
+        bool iSmoothStreamingSession;
 
         /* External PseudoStreaming related */
         bool iExternalDownload;

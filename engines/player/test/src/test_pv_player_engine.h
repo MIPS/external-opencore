@@ -795,6 +795,12 @@ class pvplayer_engine_test : public test_case,
             * Output (partially) downloaded media file and YUV and PCM data files from Playback.
             */
             ProgDownloadPlayRepositionDuringDownloadTest, //118
+            /**
+            * @test (119) Progressive Download Play until EOS using Smooth Streaming Test.
+            * Input smooth streaming http url to a progressively downloadable mp4 file.
+            * Output (partially) downloaded media file and YUV and PCM data files from Playback.
+            */
+            ProgDownloadPlayUtilEOSUsingSmoothStreamingTest, //119
 
             LastDownloadTest, //placeholder
 

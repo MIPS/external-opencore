@@ -20,7 +20,7 @@
 
 #define PVDLCONFIGFILE_VECTOR_RESERVE_NUMBER    4
 #define PVDLCONFIGFILE_TEMPORARY_BUFFER_SIZE    4096
-#define PVDLCONFIGFILE_FIXED_HEADER_SIZE        120 // 116+4
+#define PVDLCONFIGFILE_FIXED_HEADER_SIZE        124 // 120+4
 #define PVDLCONFIGFILE_FILE_CACHE_BUFFER_SIZE   1024
 
 
@@ -32,6 +32,7 @@ OSCL_EXPORT_REF PVDlCfgFile::PVDlCfgFile()
         , iOverallFileSize(0)
         , iCurrentFileSize(0)
         , iHasContentLength(1)
+        , iDownloadComplete(0)
         , iConnectTimeout(0)
         , iSendTimeout(0)
         , iRecvTimeout(0)
@@ -109,6 +110,11 @@ OSCL_EXPORT_REF bool PVDlCfgFile::IsFastTrack(void)
 OSCL_EXPORT_REF void PVDlCfgFile::SetDonwloadComplete(void)
 {
     iFlag   |=  0x2;
+}
+
+OSCL_EXPORT_REF bool PVDlCfgFile::IsDonwloadComplete(void)
+{
+    return ((iFlag >> 1) & 1);
 }
 
 OSCL_EXPORT_REF void PVDlCfgFile::SetPlaybackMode(TPVDLPlaybackMode aPlaybackMode)
@@ -388,6 +394,8 @@ OSCL_EXPORT_REF int32 PVDlCfgFile::LoadConfig(void)
         }
         // for content-length flag
         iHasContentLength = *tmpPtr++;
+        // for download flag
+        iDownloadComplete = *tmpPtr++;
 
         iConnectTimeout = *tmpPtr++;
         iSendTimeout = *tmpPtr++;
@@ -603,6 +611,7 @@ void PVDlCfgFile::composeFixedHeader(uint8 *aBuf)
     *tmpPtr++ =     iCurrentFileSize;
     // flag of whether to have content length for the previous download
     *tmpPtr++ =     iHasContentLength;
+    *tmpPtr++ =     iDownloadComplete;
 
     *tmpPtr++ =     iConnectTimeout;
     *tmpPtr++ =     iSendTimeout;

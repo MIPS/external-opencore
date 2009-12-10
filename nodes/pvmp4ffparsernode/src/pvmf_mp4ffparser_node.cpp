@@ -111,6 +111,7 @@ PVMFMP4FFParserNode::PVMFMP4FFParserNode(int32 aPriority) :
     iDownloadComplete          = false;
     iProgressivelyPlayable  = false;
     iFastTrackSession          = false;
+    iSmoothStreamingSession = false;
 
     iLastNPTCalcInConvertSizeToTime = 0;
     iFileSizeLastConvertedToTime = 0;
@@ -406,6 +407,11 @@ PVMFStatus PVMFMP4FFParserNode::SetSourceInitializationData(OSCL_wString& aSourc
     if (inputFormatType == PVMF_MIME_DATA_SOURCE_PVX_FILE)
     {
         iFastTrackSession = true;
+        inputFormatType = PVMF_MIME_MPEG4FF;
+    }
+    else if (inputFormatType == PVMF_MIME_DATA_SOURCE_SMOOTH_STREAMING_URL)
+    {
+        iSmoothStreamingSession = true;
         inputFormatType = PVMF_MIME_MPEG4FF;
     }
 
@@ -2101,8 +2107,10 @@ PVMFStatus PVMFMP4FFParserNode::DoPrepare()
                 {
                     download_progress_interface->requestResumeNotification(ts, iDownloadComplete);
                 }
+                PVMF_MP4FFPARSERNODE_LOGDATATRAFFIC((0, "PVMFMP4FFParserNode::DoPrepare - Holding off on Prepare Complete because of Insufficient Downloaded Data"));
                 autopaused = true;
-                PVMF_MP4FFPARSERNODE_LOGDATATRAFFIC((0, "PVMFMP4FFParserNode::DoPrepare() - Auto Pause Triggered, TS = %d", ts));
+                iUnderFlowEventReported = true;
+                return PVMFPending;
             }
         }
     }
@@ -4327,7 +4335,7 @@ bool PVMFMP4FFParserNode::RetrieveTrackData(PVMP4FFNodeTrackPortInfo& aTrackPort
             uint32 currentFileSize = 0;
             iMP4FileHandle->GetCurrentFileSize(currentFileSize);
             PVMF_MP4FFPARSERNODE_LOGDATATRAFFIC((0, "PVMFMP4FFParserNode::RetrieveTrackData() - Auto Pause Triggered, TS = %d, FileSize=%d",
-                                                 aTrackPortInfo.iTimestamp, currentFileSize));
+                                                 Oscl_Int64_Utils::get_uint64_lower32(aTrackPortInfo.iTimestamp), currentFileSize));
 
             // check if content is poorly interleaved only for PS
             // After repositioning, parser will get INSUFFICIENT_DATA immediately and then the poorlyinterleavedcontent event logic will be excercised.
@@ -4375,7 +4383,7 @@ bool PVMFMP4FFParserNode::RetrieveTrackData(PVMP4FFNodeTrackPortInfo& aTrackPort
                                 PVUuid erruuid = PVMFFileFormatEventTypesUUID;
                                 int32 errcode = PVMFFFErrFileRead;
                                 ReportMP4FFParserErrorEvent(PVMFErrResource, NULL, &erruuid, &errcode);
-                                PVMF_MP4FFPARSERNODE_LOGERROR((0, "PVMFMP4FFParserNode::RetrieveTrackData - getOffsetByTime Failed - TrackId=%d, TS=%d",  iNodeTrackPortList[i].iTrackId, info[numSamples-1].ts));
+                                PVMF_MP4FFPARSERNODE_LOGERROR((0, "PVMFMP4FFParserNode::RetrieveTrackData - getOffsetByTime Failed - TrackId=%d, TS=%d",  iNodeTrackPortList[i].iTrackId, Oscl_Int64_Utils::get_uint64_lower32(info[numSamples-1].ts)));
                                 OSCL_FREE(info);
                                 OSCL_FREE(trackOffset);
                                 return false;
@@ -5298,6 +5306,7 @@ void PVMFMP4FFParserNode::CleanupFileSource()
     iProgressivelyPlayable = false;
     iCPMSequenceInProgress = false;
     iFastTrackSession = false;
+    iSmoothStreamingSession = false;
     iProtectedFile = false;
     iExternalDownload = false;
     iThumbNailMode = false;
@@ -5510,8 +5519,16 @@ void PVMFMP4FFParserNode::playResumeNotification(bool aDownloadComplete)
 
         PVMF_MP4FFPARSERNODE_LOGDATATRAFFIC((0, "PVMFMP4FFParserNode::playResumeNotification() - Auto Resume Triggered, FileSize = %d, NPT = %d", iFileSizeLastConvertedToTime, iLastNPTCalcInConvertSizeToTime));
         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFMP4FFParserNode::playResumeNotification() Sending PVMFInfoDataReady event"));
-        // Schedule AO to run again
-        Reschedule();
+        if (iCurrentCommand.iCmd == PVMF_GENERIC_NODE_PREPARE)
+        {
+            CommandComplete(iCurrentCommand, PVMFSuccess);
+            iUnderFlowEventReported = false;
+        }
+        else
+        {
+            // Schedule AO to run again
+            Reschedule();
+        }
     }
     else if (iCurrentCommand.iCmd == PVMF_GENERIC_NODE_INIT)
     {
@@ -6800,7 +6817,7 @@ PVMFStatus PVMFMP4FFParserNode::GetFileOffsetForAutoResume(uint32& aOffset, bool
 
             if (retVal != EVERYTHING_FINE)
             {
-                PVMF_MP4FFPARSERNODE_LOGERROR((0, "PVMFMP4FFParserNode::GetFileOffsetForAutoResume2 - getOffsetByTime Failed - TrackId=%d, TS=%d, RetVal=%d",  it->iTrackId, ts, retVal));
+                PVMF_MP4FFPARSERNODE_LOGERROR((0, "PVMFMP4FFParserNode::GetFileOffsetForAutoResume2 - getOffsetByTime Failed - TrackId=%d, TS=%d, RetVal=%d",  it->iTrackId, Oscl_Int64_Utils::get_uint64_lower32(ts), retVal));
                 return PVMFFailure;
             }
 
@@ -6828,7 +6845,7 @@ PVMFStatus PVMFMP4FFParserNode::GetFileOffsetForAutoResume(uint32& aOffset, PVMP
 
     if (retVal != EVERYTHING_FINE)
     {
-        PVMF_MP4FFPARSERNODE_LOGERROR((0, "PVMFMP4FFParserNode::GetFileOffsetForAutoResume by port - getOffsetByTime Failed - TrackId=%d, TS=%d, RetVal=%d",  aInfo->iTrackId, ts, retVal));
+        PVMF_MP4FFPARSERNODE_LOGERROR((0, "PVMFMP4FFParserNode::GetFileOffsetForAutoResume by port - getOffsetByTime Failed - TrackId=%d, TS=%d, RetVal=%d",  aInfo->iTrackId, Oscl_Int64_Utils::get_uint64_lower32(ts), retVal));
         return PVMFFailure;
     }
 
@@ -7066,7 +7083,7 @@ PVMFMP4FFParserNode::PassDatastreamReadCapacityObserver(PVMFDataStreamReadCapaci
 
 PVMFStatus PVMFMP4FFParserNode::CheckForMP4HeaderAvailability()
 {
-    if (iFastTrackSession == true) return PVMFSuccess;
+    if (iFastTrackSession == true || iSmoothStreamingSession == true) return PVMFSuccess;
 
     if (iDataStreamInterface != NULL)
     {
@@ -8055,7 +8072,7 @@ PVMFStatus PVMFMP4FFParserNode::FindBestThumbnailKeyFrame(uint32 aId, uint32& aK
         trackduration = iMP4FileHandle->getTrackMediaDuration(aId);
         samplecount = iMP4FileHandle->getSampleCountInTrack(aId);
 
-        PVMF_MP4FFPARSERNODE_LOGDATATRAFFIC((0, "PVMFMP4FFParserNode:FindBestThumbnailKeyFrame - TrackDuration=%2d", trackduration));
+        PVMF_MP4FFPARSERNODE_LOGDATATRAFFIC((0, "PVMFMP4FFParserNode:FindBestThumbnailKeyFrame - TrackDuration=%2d", Oscl_Int64_Utils::get_uint64_lower32(trackduration)));
         PVMF_MP4FFPARSERNODE_LOGDATATRAFFIC((0, "PVMFMP4FFParserNode:FindBestThumbnailKeyFrame - TotalNumSamples=%d", samplecount));
         PVMF_MP4FFPARSERNODE_LOGDATATRAFFIC((0, "PVMFMP4FFParserNode:FindBestThumbnailKeyFrame - BitRate=%d", (uint32)iMP4FileHandle->getTrackAverageBitrate(aId)));
 

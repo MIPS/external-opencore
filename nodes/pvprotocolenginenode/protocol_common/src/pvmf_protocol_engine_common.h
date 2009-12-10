@@ -507,7 +507,6 @@ class HttpBasedProtocol : public ProtocolStateObserver,
         {
             // change to the next protocol state and notify the user that data processing at the current state is completely done
             if (iObserver) iObserver->ProtocolStateComplete(aInfo);
-            //if(isSuccess) iCurrState = getNextState();
         }
         virtual void OutputDataAvailable(OUTPUT_DATA_QUEUE &aOutputQueue, ProtocolEngineOutputDataSideInfo &aSideInfo)
         {

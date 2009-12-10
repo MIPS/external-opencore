@@ -62,7 +62,7 @@ class PVDlCfgFile
         OSCL_IMPORT_REF bool IsFastTrack(void);
 
         OSCL_IMPORT_REF void SetDonwloadComplete(void);
-        OSCL_IMPORT_REF bool IsDownloadComplete(void);
+        OSCL_IMPORT_REF bool IsDonwloadComplete(void);
 
         enum TPVDLPlaybackMode
         {
@@ -149,11 +149,11 @@ class PVDlCfgFile
             return iRangeStartTime;
         };
 
-        void SetSelectedFastTracks(Oscl_Vector<int32, OsclMemAllocator>& aSelectedTrackIDs)
+        void SetSelectedTracks(Oscl_Vector<int32, OsclMemAllocator>& aSelectedTrackIDs)
         {
             iSelectedTrackIDs = aSelectedTrackIDs;
         }
-        Oscl_Vector<int32, OsclMemAllocator>& GetSelectedFastTracks(void)
+        Oscl_Vector<int32, OsclMemAllocator>& GetSelectedTracks(void)
         {
             return iSelectedTrackIDs;
         }
@@ -299,6 +299,15 @@ class PVDlCfgFile
             iHasContentLength = (uint32)aHasContentLength;
         }
 
+        bool IsDownloadComplete() const
+        {
+            return (iDownloadComplete > 0);
+        }
+        void setDownloadCompleteFlag(const bool aDownloadComplete = true)
+        {
+            iDownloadComplete = (uint32)aDownloadComplete;
+        }
+
         void SetExtensionHeaderKey(OSCL_String &aKey)
         {
             OSCL_HeapString<OsclMemAllocator> fieldKey(aKey);
@@ -379,6 +388,8 @@ class PVDlCfgFile
         //flag of whether to have content length for the previous download
         // boolean variable, but intentionally choose uint32 instead of bool, for consistency with other variables
         uint32 iHasContentLength;
+        // flag of whether download is complete
+        uint32 iDownloadComplete;
 
         int32 iConnectTimeout;
         int32 iSendTimeout;

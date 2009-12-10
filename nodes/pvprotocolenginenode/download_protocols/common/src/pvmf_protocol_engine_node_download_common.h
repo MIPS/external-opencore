@@ -300,6 +300,7 @@ class pvDownloadControl : public DownloadControlInterface
 
         // set file size to parser node for the new API, setFileSize()
         OSCL_IMPORT_REF virtual void setFileSize(const uint32 aFileSize);
+        OSCL_IMPORT_REF virtual void updateFileSize();
         OSCL_IMPORT_REF bool getPlaybackTimeFromEngineClock(uint32 &aPlaybackTime);
         virtual void setProtocolInfo()
         {
@@ -307,7 +308,6 @@ class pvDownloadControl : public DownloadControlInterface
         }
 
     private:
-        void updateFileSize();
         OSCL_IMPORT_REF void clearBody();
 
 
@@ -367,6 +367,11 @@ class DownloadProgress : public DownloadProgressInterface
 
         // return true for the new download progress
         OSCL_IMPORT_REF bool getNewProgressPercent(uint32 &aProgressPercent);
+
+        void setNewProgressPercent(const uint32 aProgressPercent)
+        {
+            OSCL_UNUSED_ARG(aProgressPercent);
+        }
 
         // return duration regardless of the difference between progressive download and fasttrack download
         void setClipDuration(const uint32 aClipDurationMsec)
@@ -563,6 +568,12 @@ class downloadEventReporter : public EventReporter
         // will be overriden in case of PS
         // called by sendBufferStatusEventBody()
         OSCL_IMPORT_REF virtual void reportBufferStatusEvent(const uint32 aDownloadPercent);
+        virtual bool allowSameDownloadPercentReport(const uint32 aCurrDownloadPercent, const uint32 aPrevDownloadPercent)
+        {
+            OSCL_UNUSED_ARG(aCurrDownloadPercent);
+            OSCL_UNUSED_ARG(aPrevDownloadPercent);
+            return true;
+        }
 
     protected:
         bool iSendBufferStartInfoEvent;

@@ -135,6 +135,9 @@
 //#define DEFAULT_RTMPSTREAMING_URL "rtmpt://172.16.2.228/vod/sample"
 #define DEFAULT_RTMPSTREAMING_URL "rtmpt://172.16.2.228/vod/YT005_nbc_TheOffice_mod_by_flvcheck"
 
+#define DEFAULT_SMOOTHSTREAMING_URL "http://wms2008.pv.com:8080/SSContent/BendIt2/BendIt_5min.ism/Manifest"
+
+
 extern FILE* file;
 
 
@@ -1735,7 +1738,12 @@ void pvplayer_async_test_3gppdlnormal::CreateDataSource()
     default_source += DEFAULTSOURCEFILENAME;
     if (url == default_source)
     {
-        if (iPlayStopPlay)
+        if (iFileType == PVMF_MIME_DATA_SOURCE_SMOOTH_STREAMING_URL)
+        {
+            fprintf(file, "Setting source to %s\n", DEFAULT_SMOOTHSTREAMING_URL);
+            url = DEFAULT_SMOOTHSTREAMING_URL;
+        }
+        else if (iPlayStopPlay)
         {//use slow download simulator so we test stop during download.
             fprintf(file, "Setting source to %s\n", DEFAULT_3GPPDL_URL_SLOW);
             url = DEFAULT_3GPPDL_URL_SLOW;
@@ -1760,6 +1768,10 @@ void pvplayer_async_test_3gppdlnormal::CreateDataSource()
     {
         iDataSource->SetDataSourceFormatType(PVMF_MIME_DATA_SOURCE_MS_HTTP_STREAMING_URL);
         iDataSource->SetAlternateSourceFormatType(PVMF_MIME_DATA_SOURCE_HTTP_URL);
+    }
+    else if (iFileType == PVMF_MIME_DATA_SOURCE_SMOOTH_STREAMING_URL)
+    {
+        iDataSource->SetDataSourceFormatType(PVMF_MIME_DATA_SOURCE_SMOOTH_STREAMING_URL);
     }
     else
     {

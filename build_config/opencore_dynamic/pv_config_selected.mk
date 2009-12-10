@@ -307,6 +307,7 @@ realmedia_payload_lib=n
 rtprtcp_lib=m
 pv324m_lib=m
 pv_rtmp_parcom_lib=n
+pv_smooth_streaming_lib=n
 pv324m_common_headers_lib=m
 pvgeneraltools_lib=m
 
@@ -470,6 +471,7 @@ pvwmdrm_lib=n
 #
 pvwmdrmmd_lib=n
 
+pvtinyxml_lib=n
 pvdivxdrm_lib=n
 pvdivxdrm_oem_settings_lib=n
 

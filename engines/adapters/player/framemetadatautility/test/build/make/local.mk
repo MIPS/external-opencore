@@ -73,7 +73,10 @@ LIBS :=  pvframemetadatautility \
         pvrtsp_cli_eng_playlist_node \
         protocolenginenode \
         pv_http_parcom \
-		pv_rtmp_parcom \
+	pv_rtmp_parcom \
+	pv_smooth_streaming \
+	pvtinyxml \
+	pvmp4ffcomposer \
         pvsocketnode \
         pvrtppacketsourcenode \
         rtppayloadparser \
