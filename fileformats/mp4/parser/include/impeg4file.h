@@ -128,6 +128,9 @@ class IMpeg4File : public ISucceedFail
 
         // META DATA APIS
 
+        // from 'ftyp' atom
+        virtual uint32 getCompatibiltyMajorBrand() = 0;
+
         // From Movie
         virtual int32 getNumTracks() = 0;
         virtual int32 getTrackIDList(uint32 *ids, int size) = 0;
@@ -408,6 +411,8 @@ class IMpeg4File : public ISucceedFail
         virtual OSCL_wHeapString<OsclMemAllocator> getITunesWriter() const = 0;
         virtual uint16 getITunesTotalTracks() const = 0;
         virtual PvmfApicStruct* getITunesImageData() const = 0;
+        virtual uint16 getITunesThisDiskNo() const = 0;
+        virtual uint16 getITunesTotalDisks() const = 0;
 
         virtual bool IsMovieFragmentsPresent() const = 0;
         // retrieve gapless metadata
