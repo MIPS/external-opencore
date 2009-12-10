@@ -52,11 +52,12 @@ void PVMediaOutputNodePort::LogMediaDataInfo(const char* msg, PVMFSharedMediaDat
         return;
     }
     LOGDATAPATH(
-        (0, "MOUT %s %s MediaData SeqNum %d, SId %d, TS %d"
+        (0, "MOUT %s %s MediaData SeqNum %d, SId %d, ClipId %d, TS %d"
          , PortName()
          , msg
          , mediaData->getSeqNum()
          , mediaData->getStreamID()
+         , mediaData->getClipID()
          , mediaData->getTimestamp()
         ));
 }
@@ -73,12 +74,13 @@ void PVMediaOutputNodePort::LogMediaDataInfo(const char* msg, PVMFSharedMediaDat
         return;
     }
     LOGDATAPATH(
-        (0, "MOUT %s %s, Write Id %d, MediaData SeqNum %d, SId %d, TS %d, Cleanup Q-depth %d"
+        (0, "MOUT %s %s, Write Id %d, MediaData SeqNum %d, SId %d, ClipId %d, TS %d, Cleanup Q-depth %d"
          , PortName()
          , msg
          , cmdid
          , mediaData->getSeqNum()
          , mediaData->getStreamID()
+         , mediaData->getClipID()
          , mediaData->getTimestamp()
          , qdepth
         ));
@@ -153,6 +155,7 @@ PVMediaOutputNodePort::PVMediaOutputNodePort(PVMediaOutputNode* aNode)
 
     iSkipTimestamp = 0;
     iRecentStreamID = 0;
+    iRecentClipID = 0;
     iSendStartOfDataEvent = false;
 
     iFrameStepMode = false;
@@ -745,6 +748,7 @@ void PVMediaOutputNodePort::writeComplete(PVMFStatus status, PVMFCommandId aCmdI
                     oscl_memcpy(localbuffer, &EosStreamID, sizeof(uint32));
                     oscl_memcpy(&localbuffer[4], &clipID, sizeof(uint32));
                     iNode->ReportInfoEvent(PVMFInfoEndOfData, (OsclAny*)&localbuffer);
+                    PVMF_MOPORT_LOGDATAPATH((0, "PVMediaOutputNodePort::writeComplete PVMFInfoEndOfData sent with StreamID %d ClipID %d", EosStreamID, clipID));
                 }
                 else
                 {
@@ -1307,7 +1311,7 @@ void PVMediaOutputNodePort::SendEndOfData()
 
     uint32 eosseqnum = iCurrentMediaMsg->getSeqNum();
     uint32 eostimestamp = iCurrentMediaMsg->getTimestamp();
-    uint32 clipid = iCurrentMediaMsg->getClipID();
+    uint32 clipId = iCurrentMediaMsg->getClipID();
 
     iWriteState = EWriteBusy;
 
@@ -1328,7 +1332,7 @@ void PVMediaOutputNodePort::SendEndOfData()
     //we report PVMFInfoEndOfData with the poped streamid.
     //This logic depends on Mio comp. process data(at least eos msg) in a sequencial style.
     iEosStreamIDVec.push_front(EosStreamId);
-    iClipIDVec.push_front(clipid);
+    iClipIDVec.push_front(clipId);
 
     OSCL_TRY(err,
              cmdId = iMediaTransfer->writeAsync(PVMI_MEDIAXFER_FMT_TYPE_NOTIFICATION,  /*format_type*/
@@ -1413,6 +1417,7 @@ void PVMediaOutputNodePort::SendEndOfData()
                 iNode->ReportInfoEvent(PVMFInfoEndOfData, (OsclAny*)&localbuffer);
                 iEosStreamIDVec.pop_back();
                 iClipIDVec.pop_back();
+                PVMF_MOPORT_LOGDATAPATH((0, "PVMediaOutputNodePort::SendEndOfData Send PVMFInfoEndOfData with StreamID=%d, ClipID=%d", EosStreamID, msgClipId));
             }
             else
             {
@@ -1705,18 +1710,29 @@ void PVMediaOutputNodePort::Run()
         {
             uint32 msgStreamId = iCurrentMediaMsg->getStreamID();
             iBOSStreamIDVec.push_back(msgStreamId);
+            iRecentClipID = iCurrentMediaMsg->getClipID();
 
-            PVMF_MOPORT_LOGREPOS((0, "PVMediaOutputNodePort::Run: BOS Recvd - Fmt=%s, TS=%d, StreamID=%d, Qs=%d",
+            PVMF_MOPORT_LOGREPOS((0, "PVMediaOutputNodePort::Run: BOS Recvd - Fmt=%s, TS=%d, ClipID=%d, StreamID=%d, Qs=%d",
                                   iSinkFormatString.get_str(),
                                   iCurrentMediaMsg->getTimestamp(),
                                   msgStreamId,
+                                  iRecentClipID,
                                   IncomingMsgQueueSize()));
 
-            PVMF_MOPORT_LOGDATAPATH((0, "PVMediaOutputNodePort::Run: BOS Recvd - Fmt=%s, TS=%d, StreamID=%d, Qs=%d",
+            PVMF_MOPORT_LOGDATAPATH((0, "PVMediaOutputNodePort::Run: BOS Recvd - Fmt=%s, TS=%d, ClipID=%d, StreamID=%d, Qs=%d",
                                      iSinkFormatString.get_str(),
                                      iCurrentMediaMsg->getTimestamp(),
                                      msgStreamId,
+                                     iRecentClipID,
                                      IncomingMsgQueueSize()));
+
+            if (iSendStartOfDataEvent != true)
+            {
+                // This means that the BOS is not part of repositioning,
+                // but instead is from clip transition. So, send the
+                // PVMFInfoStartOfData right away.
+                SendStartOfDataEvent(msgStreamId, iRecentClipID);
+            }
 
             iNode->ReportBOS();
             iCurrentMediaMsg.Unbind();
@@ -1730,28 +1746,32 @@ void PVMediaOutputNodePort::Run()
             //will be dropped. There is no need for any additional checks. Just dequeue and toss
             if (iCurrentMediaMsg->getFormatID() == PVMF_MEDIA_CMD_EOS_FORMAT_ID)
             {
-                PVMF_MOPORT_LOGREPOS((0, "PVMediaOutputNodePort::Run: EOSSkip - StreamId=%d, Seq=%d, TS=%d, Fmt=%s",
+                PVMF_MOPORT_LOGREPOS((0, "PVMediaOutputNodePort::Run: EOSSkip - StreamId=%d, ClipID=%d, Seq=%d, TS=%d, Fmt=%s",
                                       iCurrentMediaMsg->getStreamID(),
+                                      iCurrentMediaMsg->getClipID(),
                                       iCurrentMediaMsg->getSeqNum(),
                                       iCurrentMediaMsg->getTimestamp(),
                                       iSinkFormatString.get_str()));
 
-                PVMF_MOPORT_LOGDATAPATH((0, "PVMediaOutputNodePort::Run: EOSSkip - StreamId=%d, Seq=%d, TS=%d, Fmt=%s",
+                PVMF_MOPORT_LOGDATAPATH((0, "PVMediaOutputNodePort::Run: EOSSkip - StreamId=%d, ClipID=%d, Seq=%d, TS=%d, Fmt=%s",
                                          iCurrentMediaMsg->getStreamID(),
+                                         iCurrentMediaMsg->getClipID(),
                                          iCurrentMediaMsg->getSeqNum(),
                                          iCurrentMediaMsg->getTimestamp(),
                                          iSinkFormatString.get_str()));
             }
             else
             {
-                PVMF_MOPORT_LOGREPOS((0, "PVMediaOutputNodePort::Run: MsgSkip - StreamId=%d, Seq=%d, TS=%d, Fmt=%s",
+                PVMF_MOPORT_LOGREPOS((0, "PVMediaOutputNodePort::Run: MsgSkip - StreamId=%d, ClipID=%d, Seq=%d, TS=%d, Fmt=%s",
                                       iCurrentMediaMsg->getStreamID(),
+                                      iCurrentMediaMsg->getClipID(),
                                       iCurrentMediaMsg->getSeqNum(),
                                       iCurrentMediaMsg->getTimestamp(),
                                       iSinkFormatString.get_str()));
 
-                PVMF_MOPORT_LOGDATAPATH((0, "PVMediaOutputNodePort::Run: MsgSkip - StreamId=%d, Seq=%d, TS=%d, Fmt=%s",
+                PVMF_MOPORT_LOGDATAPATH((0, "PVMediaOutputNodePort::Run: MsgSkip - StreamId=%d, ClipID=%d, Seq=%d, TS=%d, Fmt=%s",
                                          iCurrentMediaMsg->getStreamID(),
+                                         iCurrentMediaMsg->getClipID(),
                                          iCurrentMediaMsg->getSeqNum(),
                                          iCurrentMediaMsg->getTimestamp(),
                                          iSinkFormatString.get_str()));
@@ -1768,8 +1788,9 @@ void PVMediaOutputNodePort::Run()
                 //logging
                 if (iCurrentMediaMsg->getFormatID() == PVMF_MEDIA_CMD_EOS_FORMAT_ID)
                 {
-                    PVMF_MOPORT_LOGDATAPATH((0, "PVMediaOutputNodePort::Run - EOS Recvd - StreamID=%d, Seq=%d, TS=%d, Fmt=%s, Qs=%d",
+                    PVMF_MOPORT_LOGDATAPATH((0, "PVMediaOutputNodePort::Run - EOS Recvd - StreamID=%d, ClipID=%d, Seq=%d, TS=%d, Fmt=%s, Qs=%d",
                                              iCurrentMediaMsg->getStreamID(),
+                                             iCurrentMediaMsg->getClipID(),
                                              iCurrentMediaMsg->getSeqNum(),
                                              iCurrentMediaMsg->getTimestamp(),
                                              iSinkFormatString.get_str(),
@@ -1786,7 +1807,8 @@ void PVMediaOutputNodePort::Run()
                 else if (iCurrentMediaMsg->getFormatID() < PVMF_MEDIA_CMD_FORMAT_IDS_START)
                 {
                     iTotalFrames++;
-                    PVMF_MOPORT_LOGDATAPATH((0, "PVMediaOutputNodePort::Run - MediaMsg Recvd - Seq=%d, TS=%d, Fmt=%s, Qs=%d, Dur=%d",
+                    PVMF_MOPORT_LOGDATAPATH((0, "PVMediaOutputNodePort::Run - MediaMsg Recvd - ClipID=%d, Seq=%d, TS=%d, Fmt=%s, Qs=%d, Dur=%d",
+                                             iCurrentMediaMsg->getClipID(),
                                              iCurrentMediaMsg->getSeqNum(),
                                              iCurrentMediaMsg->getTimestamp(),
                                              iSinkFormatString.get_str(),
@@ -1800,17 +1822,7 @@ void PVMediaOutputNodePort::Run()
                 //implies that we are attempting to process the first media msg during
                 //after skip, a mediamsg whose timestamp is equal to or greater than
                 //iSkipTimestamp
-                PVMF_MOPORT_LOGREPOS((0, "PVMediaOutputNodePort::Run: PVMFInfoStartOfData - Fmt=%s",
-                                      iSinkFormatString.get_str()));
-                PVMF_MOPORT_LOGDATAPATH((0, "PVMediaOutputNodePort::Run: PVMFInfoStartOfData - Fmt=%s",
-                                         iSinkFormatString.get_str()));
-                uint32 iStreamID = iRecentStreamID;
-                uint32 msgClipId = iCurrentMediaMsg->getClipID();
-                uint8 localbuffer[8];
-                oscl_memcpy(localbuffer, &iStreamID, sizeof(uint32));
-                oscl_memcpy(&localbuffer[4], &msgClipId, sizeof(uint32));
-                iNode->ReportInfoEvent(PVMFInfoStartOfData, (OsclAny*)localbuffer);
-                iSendStartOfDataEvent = false;
+                SendStartOfDataEvent(iCurrentMediaMsg->getStreamID(), iRecentClipID);
             }
 
             // We need to check for valid CurrentMediaMsg because it is possible that SendData has been
@@ -1884,18 +1896,29 @@ void PVMediaOutputNodePort::HandlePortActivity(const PVMFPortActivity& aActivity
                         {
                             uint32 msgStreamId = peekMsgPtr->getStreamID();
                             iBOSStreamIDVec.push_back(msgStreamId);
+                            iRecentClipID = peekMsgPtr->getClipID();
 
-                            PVMF_MOPORT_LOGREPOS((0, "PVMediaOutputNodePort::HPA: BOS Recvd - Fmt=%s, TS=%d, StreamID=%d, Qs=%d",
+                            PVMF_MOPORT_LOGREPOS((0, "PVMediaOutputNodePort::HPA: BOS Recvd - Fmt=%s, TS=%d, StreamID=%d, ClipID=%d, Qs=%d",
                                                   iSinkFormatString.get_str(),
                                                   peekMsgPtr->getTimestamp(),
                                                   msgStreamId,
+                                                  iRecentClipID,
                                                   IncomingMsgQueueSize()));
 
-                            PVMF_MOPORT_LOGDATAPATH((0, "PVMediaOutputNodePort::HPA: BOS Recvd - Fmt=%s, TS=%d, StreamID=%d, Qs=%d",
+                            PVMF_MOPORT_LOGDATAPATH((0, "PVMediaOutputNodePort::HPA: BOS Recvd - Fmt=%s, TS=%d, StreamID=%d, ClipID=%d, Qs=%d",
                                                      iSinkFormatString.get_str(),
                                                      peekMsgPtr->getTimestamp(),
                                                      msgStreamId,
+                                                     iRecentClipID,
                                                      IncomingMsgQueueSize()));
+
+                            if (iSendStartOfDataEvent != true)
+                            {
+                                // This means that the BOS is not part of repositioning,
+                                // but instead is from clip transition. So, send the
+                                // PVMFInfoStartOfData right away.
+                                SendStartOfDataEvent(msgStreamId, iRecentClipID);
+                            }
 
                             iNode->ReportBOS();
                             iCurrentMediaMsg.Unbind();
@@ -1969,13 +1992,9 @@ void PVMediaOutputNodePort::HandlePortActivity(const PVMFPortActivity& aActivity
                                                   iSinkFormatString.get_str()));
                             PVMF_MOPORT_LOGDATAPATH((0, "PVMediaOutputNodePort::HPA: PVMFInfoStartOfData - Fmt=%s",
                                                      iSinkFormatString.get_str()));
-                            uint32 iStreamID = iRecentStreamID;
-                            uint32 msgClipId = peekMsgPtr->getClipID();
-                            uint8 localbuffer[8];
-                            oscl_memcpy(localbuffer, &iStreamID, sizeof(uint32));
-                            oscl_memcpy(&localbuffer[4], &msgClipId, sizeof(uint32));
-                            iNode->ReportInfoEvent(PVMFInfoStartOfData, (OsclAny*)localbuffer);
-                            iSendStartOfDataEvent = false;
+
+                            SendStartOfDataEvent(iRecentStreamID, iRecentClipID);
+
                             // Now check if the media msg is EOS notification OR media data.
                             // If EOS then need to do writeComplete for EOS without sending it downstream
                             // This will happen in cases where the media output node is waiting on configuration,
@@ -2044,8 +2063,9 @@ void PVMediaOutputNodePort::HandlePortActivity(const PVMFPortActivity& aActivity
                             {
                                 if (iCurrentMediaMsg->getFormatID() == PVMF_MEDIA_CMD_EOS_FORMAT_ID)
                                 {
-                                    PVMF_MOPORT_LOGDATAPATH((0, "PVMediaOutputNodePort::HPA - EOS Recvd - StreamID=%d, Seq=%d, TS=%d, Fmt=%s, Qs=%d",
+                                    PVMF_MOPORT_LOGDATAPATH((0, "PVMediaOutputNodePort::HPA - EOS Recvd - StreamID=%d, ClipID=%d, Seq=%d, TS=%d, Fmt=%s, Qs=%d",
                                                              iCurrentMediaMsg->getStreamID(),
+                                                             iCurrentMediaMsg->getClipID(),
                                                              iCurrentMediaMsg->getSeqNum(),
                                                              iCurrentMediaMsg->getTimestamp(),
                                                              iSinkFormatString.get_str(),
@@ -2062,7 +2082,8 @@ void PVMediaOutputNodePort::HandlePortActivity(const PVMFPortActivity& aActivity
                                 else if (iCurrentMediaMsg->getFormatID() < PVMF_MEDIA_CMD_FORMAT_IDS_START)
                                 {
                                     iTotalFrames++;
-                                    PVMF_MOPORT_LOGDATAPATH((0, "PVMediaOutputNodePort::HPA - MediaMsg Recvd - Seq=%d, TS=%d, Fmt=%s, Qs=%d, Dur=%d",
+                                    PVMF_MOPORT_LOGDATAPATH((0, "PVMediaOutputNodePort::HPA - MediaMsg Recvd - ClipID=%d, Seq=%d, TS=%d, Fmt=%s, Qs=%d, Dur=%d",
+                                                             iCurrentMediaMsg->getClipID(),
                                                              iCurrentMediaMsg->getSeqNum(),
                                                              iCurrentMediaMsg->getTimestamp(),
                                                              iSinkFormatString.get_str(),
@@ -2929,3 +2950,18 @@ int32 PVMediaOutputNodePort::WriteDataToMIO(int32 &aCmdId, PvmiMediaXferHeader &
                                                         (OsclAny*) & iWriteAsyncContext););
     return leavecode;
 }
+
+void PVMediaOutputNodePort::SendStartOfDataEvent(uint32 streamID, uint32 clipID)
+{
+    PVMF_MOPORT_LOGREPOS((0, "PVMediaOutputNodePort::SendStartOfDataEvent - PVMFInfoStartOfData Fmt=%s StreamID=%d clipID=%d",
+                          iSinkFormatString.get_str(), streamID, clipID));
+    PVMF_MOPORT_LOGDATAPATH((0, "PVMediaOutputNodePort::SendStartOfDataEvent - PVMFInfoStartOfData Fmt=%s StreamID=%d clipID=%d",
+                             iSinkFormatString.get_str(), streamID, clipID));
+    uint8 localbuffer[8];
+    oscl_memcpy(localbuffer, &streamID, sizeof(uint32));
+    oscl_memcpy(&localbuffer[4], &clipID, sizeof(uint32));
+    iNode->ReportInfoEvent(PVMFInfoStartOfData, (OsclAny*)localbuffer);
+    iSendStartOfDataEvent = false;
+}
+
+

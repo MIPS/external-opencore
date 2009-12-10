@@ -299,7 +299,10 @@ class PVMediaOutputNodePort
         Oscl_Vector<uint32, OsclMemAllocator> iClipIDVec;
         uint32 iSkipTimestamp;
         bool iSendStartOfDataEvent;
+        uint32 iRecentClipID;
         bool DataToSkip(PVMFSharedMediaMsgPtr& aMsg);
+        void SendStartOfDataEvent(uint32 streamId, uint32 clipID);
+
 
         //frame step related
         bool iFrameStepMode;

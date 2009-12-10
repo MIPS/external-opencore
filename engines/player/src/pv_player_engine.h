@@ -1622,6 +1622,8 @@ class PVPlayerEngine
         uint32 iClipsCompleted;
         uint32 iClipsCorrupted;
 
+        uint32 iCurrentPlaybackClipId;
+
         //CPM related - As of today we use this instance of CPM in QueryInterface calls only
         //outside of this engine has no interactions with CPM.
         PVMFCPM* iCPM;

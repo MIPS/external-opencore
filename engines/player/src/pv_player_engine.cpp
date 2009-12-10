@@ -110,6 +110,8 @@ PVPlayerEngine* PVPlayerEngine::New(PVCommandStatusObserver* aCmdStatusObserver,
 
 PVPlayerEngine::~PVPlayerEngine()
 {
+    iCurrentPlaybackClipId = 0xFFFFFFFF;
+
     Cancel();
 
     if (iCPM)
@@ -1168,7 +1170,8 @@ PVPlayerEngine::PVPlayerEngine() :
         iPlaybackPositionMode(PVPPBPOS_MODE_UNKNOWN),
         iOverflowFlag(false),
         iClipsCompleted(0),
-        iClipsCorrupted(0)
+        iClipsCorrupted(0),
+        iCurrentPlaybackClipId(0xFFFFFFFF)
 {
     iCurrentBeginPosition.iIndeterminate = true;
     iCurrentEndPosition.iIndeterminate = true;
@@ -16805,7 +16808,13 @@ void PVPlayerEngine::HandleSinkNodeInfoEvent(const PVMFAsyncEvent& aEvent, int32
             {
                 --iNumPVMFInfoStartOfDataPending;
             }
-            IssueSourceNodeAudioSinkEvent(aEvent);
+
+            uint32 clipId = *(data + 1);
+            if (iCurrentPlaybackClipId != clipId)
+            {
+                // only during clip transition
+                IssueSourceNodeAudioSinkEvent(aEvent);
+            }
 
             if ((iNumPendingSkipCompleteEvent == 0) && (iNumPVMFInfoStartOfDataPending == 0))
             {
@@ -17817,6 +17826,7 @@ void PVPlayerEngine::IssueSourceNodeAudioSinkEvent(const PVMFAsyncEvent& aEvent)
                 {
                     if (iNumPVMFInfoStartOfDataPending == 0)
                     {
+                        iCurrentPlaybackClipId = clipId;
                         SendInformationalEvent(PVPlayerInfoClipPlaybackStarted, NULL, aEvent.GetEventData(), localbuffer, 8);
                     }
                 }
