@@ -1671,14 +1671,7 @@ class PVPlayerWatchdogTimer : public OsclTimerObject
         void setTimerDuration(uint32 aTimerDuration)
         {
             Cancel();
-            if (aTimerDuration == 0)
-            {
-                iTimerDuration = PVPLAYERENGINE_DEFAULT_WATCHDOGTIMER_INTERVAL;
-            }
-            else
-            {
-                iTimerDuration = aTimerDuration;
-            }
+            iTimerDuration = (aTimerDuration > PVPLAYERENGINE_DEFAULT_WATCHDOGTIMER_INTERVAL) ? aTimerDuration : PVPLAYERENGINE_DEFAULT_WATCHDOGTIMER_INTERVAL;
         }
 
         uint32 getTimerDurationInMS()
