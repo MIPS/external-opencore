@@ -282,6 +282,7 @@
 /*----------------------------------------------------------------------------
 ; FUNCTION CODE
 ----------------------------------------------------------------------------*/
+
 Int huffdecode(
     Int           id_syn_ele,
     BITS          *pInputStream,
@@ -292,11 +293,12 @@ Int huffdecode(
     /*----------------------------------------------------------------------------
     ; Define all local variables
     ----------------------------------------------------------------------------*/
-    Int      ch;
-    Int      common_window;
+    Int      ch = LEFT;
+    Int      common_window = 0;
     Int      hasmask;
     Int      status   = SUCCESS;
     Int      num_channels = 0;
+    Int      tag;
     MC_Info  *pMcInfo;
 
     per_chan_share_w_fxpCoef *pChLeftShare;  /* Helper pointer */
@@ -305,13 +307,10 @@ Int huffdecode(
     ; Function body here
     ----------------------------------------------------------------------------*/
 
-    get9_n_lessbits(
-        LEN_TAG,
-        pInputStream);
+    tag = get9_n_lessbits(LEN_TAG, pInputStream);
 
     /* suppose an un-supported id_syn_ele will never be passed */
 
-    common_window = 0;
 
     if (id_syn_ele == ID_CPE)
     {
@@ -347,12 +346,55 @@ Int huffdecode(
     {
         if (id_syn_ele == ID_SCE)
         {
+            if ((pVars->current_program < 0) && (pVars->bno <= 1))   /* No program config available */
+            {
+                /*
+                 *  Acquire tags for single or dual mono channel only during first frame
+                 *  pMcInfo->ch_info[0].tag was init to 0 and used here as index for dual-mono channels
+                 */
 
-            num_channels = 1;
-            pVars->hasmask = 0;
+                pVars->prog_config.front.ele_tag[ pMcInfo->ch_info[0].tag] = tag;
+                pMcInfo->ch_info[0].tag += 1;  /* set index to next dual-mono, if exist */
+
+                ch = (tag == pVars->prog_config.front.ele_tag[0]) ? LEFT : RIGHT;  /* Assign only L and R channel */
+                num_channels = ch + 1;
+                pVars->hasmask = 0;
+
+                /* Set number of channels 1 mono, 2 dual-mono */
+                pMcInfo->nch = (pMcInfo->nch > num_channels) ? pMcInfo->nch : num_channels;
+                pVars->prog_config.front.num_ele = pMcInfo->nch;
+
+                if (pMcInfo->ch_info[0].tag == 2)   /* limit to only 2 channel */
+                {
+                    pVars->current_program = 0;  /* lock tag acquisition */
+                }
+            }
+            else
+            {
+                if ((tag == pVars->prog_config.front.ele_tag[0]) ||
+                        (tag == pVars->prog_config.front.ele_tag[1]))
+                {
+                    ch = (tag == pVars->prog_config.front.ele_tag[0]) ? LEFT : RIGHT;  /* Assign only L and R channel */
+                    num_channels = ch + 1;
+                    pVars->hasmask = 0;
+                }
+                else
+                {
+                    status = 1; /* ERROR == incorrect tag identifying dual-mono channel  */
+                }
+
+                pMcInfo->nch = pVars->prog_config.front.num_ele;
+            }
+
+            if ((pMcInfo->nch > 1) && (pMcInfo->psPresentFlag))
+            {
+                status = 1; /* ERROR == No eAAC+ for dual-mono  */
+            }
+
         }
         else if (id_syn_ele == ID_CPE)
         {
+
             pChLeftShare = pChVars[LEFT]->pShareWfxpCoef;
             pChRightShare = pChVars[RIGHT]->pShareWfxpCoef;
             num_channels = 2;
@@ -408,7 +450,7 @@ Int huffdecode(
 
     } /* if (status) */
 
-    ch = 0;
+
     while ((ch < num_channels) && (status == SUCCESS))
     {
         pChLeftShare = pChVars[ch]->pShareWfxpCoef;

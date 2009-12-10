@@ -529,19 +529,17 @@ OSCL_EXPORT_REF Int PVMP4AudioDecodeFrame(
             case ID_SCE:        /* single channel */
             case ID_CPE:        /* channel pair */
                 empty_frame = FALSE;
-                status =
-                    huffdecode(
-                        id_syn_ele,
-                        &(pVars->inputStream),
-                        pVars,
-                        pChVars);
+                status = huffdecode(id_syn_ele,
+                                    &(pVars->inputStream),
+                                    pVars,
+                                    pChVars);
 
 #ifdef AAC_PLUS
                 if (id_syn_ele == ID_SCE)
                 {
                     sbrBitStream->sbrElement[sbrBitStream->NrElements].ElementID = SBR_ID_SCE;
                 }
-                else if (id_syn_ele == ID_CPE)
+                else
                 {
                     sbrBitStream->sbrElement[sbrBitStream->NrElements].ElementID = SBR_ID_CPE;
                 }
@@ -663,9 +661,6 @@ OSCL_EXPORT_REF Int PVMP4AudioDecodeFrame(
     }
 #endif
 
-
-
-
     /*
      * Signal processing section.
      */
@@ -689,6 +684,27 @@ OSCL_EXPORT_REF Int PVMP4AudioDecodeFrame(
             pChVars[LEFT]->fxpCoef,
             pChLeftShare->qFormat,
             &(pVars->pns_cur_noise_state));
+
+        /*
+         *  For dual-mono clips, process second channel as well
+         */
+
+        if ((pMC_Info->ch_info[0].cpe == ID_SCE) && (pMC_Info->nch > 1))
+        {
+            pFrameInfo = pVars->winmap[pChVars[RIGHT]->wnd];
+
+            pns_left(
+                pFrameInfo,
+                pChRightShare->group,
+                pChRightShare->cb_map,
+                pChRightShare->factors,
+                pChRightShare->lt_status.sfb_prediction_used,
+                pChRightShare->lt_status.ltp_data_present,
+                pChVars[RIGHT]->fxpCoef,
+                pChRightShare->qFormat,
+                &(pVars->pns_cur_noise_state));
+        }
+
 
         /*
          * apply_ms_synt can only be ran for common windows.
@@ -717,12 +733,11 @@ OSCL_EXPORT_REF Int PVMP4AudioDecodeFrame(
             pFrameInfo = pVars->winmap[pChVars[ch]->wnd];
 
             /*
-             * Note: This MP4 library assumes that if there are two channels,
-             * then the second channel is right AND it was a coupled channel,
-             * therefore there is no need to check the "is_cpe" flag.
+             *  Apply right channel properties only if channel is stereo
+             *  avoid for dual-mono cases
              */
 
-            if (ch > 0)
+            if ((ch > 0) && (pMC_Info->ch_info[0].cpe == ID_CPE))
             {
                 pns_intensity_right(
                     pVars->hasmask,

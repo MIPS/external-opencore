@@ -81,7 +81,7 @@ typedef struct
     /*    int cc_dom[CChans];*/ /* coupling channel domain */
     /*    int cc_ind[CChans];*/ /* independently switched coupling channel flag */
     /* #endif */
-    Char *fext;     /* filename extension */
+//    Char *fext;     /* filename extension */
 
 } Ch_Info;
 

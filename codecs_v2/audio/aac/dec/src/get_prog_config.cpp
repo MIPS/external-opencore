@@ -530,10 +530,7 @@ Int get_prog_config(
 
     if (flag != FALSE)
     {
-        temp =
-            get9_n_lessbits(
-                LEN_TAG,
-                pInputStream);
+        temp = get9_n_lessbits(LEN_TAG, pInputStream);
 
         pScratchPCE->mono_mix.ele_tag = temp;
 
@@ -680,6 +677,23 @@ Int get_prog_config(
                 pVars->prog_config.front.ele_is_cpe[0],
                 pVars->winmap,
                 pVars->SFBWidth128);
+
+        /*
+         *  Check that dual-mono does not carry more than 2 tracks, otherwise flag an non-supported error
+         */
+        if ((pVars->prog_config.front.num_ele > 2) && !(pVars->prog_config.front.ele_is_cpe[0]))
+        {
+            status = 1;
+        }
+
+        /*
+         *  Check that stereo does not carry more than 1 track, otherwise flag an non-supported error
+         */
+        if ((pVars->prog_config.front.num_ele > 1) && (pVars->prog_config.front.ele_is_cpe[0]))
+        {
+            status = 1;
+        }
+
 
     } /* end if (tag == pVars->current_program) */
 
