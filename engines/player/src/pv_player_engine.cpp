@@ -442,6 +442,8 @@ PVCommandId PVPlayerEngine::ReleaseMetadataValues(Oscl_Vector<PvmiKvp, OsclMemAl
 
     param.pOsclAny_value = (OsclAny*) & aValueList;
     paramvec.push_back(param);
+    param.uint32_value = aClipIndex;
+    paramvec.push_back(param);
 
     return AddCommandToQueue(PVP_ENGINE_COMMAND_RELEASE_METADATA_VALUE, (OsclAny*)aContextData, &paramvec);
 }
@@ -5302,8 +5304,9 @@ PVMFStatus PVPlayerEngine::DoReleaseMetadataValues(PVPlayerEngineCommand& aCmd)
     }
 
     iGetMetadataValuesParam.iValueList = (Oscl_Vector<PvmiKvp, OsclMemAllocator>*)(aCmd.GetParam(0).pOsclAny_value);
+    iGetMetadataValuesParam.iClipIndex = aCmd.GetParam(1).uint32_value;
 
-    if (iGetMetadataValuesParam.iValueList == NULL)
+    if (iGetMetadataValuesParam.iValueList == NULL || iGetMetadataValuesParam.iClipIndex < 0)
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::DoReleaseMetadataValues() Passed in parameter invalid."));
         return PVMFErrArgument;
@@ -5314,8 +5317,11 @@ PVMFStatus PVPlayerEngine::DoReleaseMetadataValues(PVPlayerEngineCommand& aCmd)
     {
         PVMFMetadataExtensionInterface* mdif = iMetadataIFList[iMetadataValueReleaseList[0].iMetadataIFListIndex].iInterface;
         OSCL_ASSERT(mdif != NULL);
-        mdif->ReleaseNodeMetadataValues(*(iGetMetadataValuesParam.iValueList), iMetadataValueReleaseList[0].iStartIndex, iMetadataValueReleaseList[0].iEndIndex);
-        iMetadataValueReleaseList.erase(iMetadataValueReleaseList.begin());
+        if (PVMFSuccess == mdif->SetMetadataClipIndex(iGetMetadataKeysParam.iClipIndex))
+        {
+            mdif->ReleaseNodeMetadataValues(*(iGetMetadataValuesParam.iValueList), iMetadataValueReleaseList[0].iStartIndex, iMetadataValueReleaseList[0].iEndIndex);
+            iMetadataValueReleaseList.erase(iMetadataValueReleaseList.begin());
+        }
     }
 
     iReleaseMetadataValuesPending = false;
