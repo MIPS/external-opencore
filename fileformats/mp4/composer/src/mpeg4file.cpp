@@ -405,14 +405,25 @@ PVA_FF_Mpeg4File::setOutputFileHandle(MP4_AUTHOR_FF_FILE_HANDLE outputFileHandle
 }
 
 uint32
-PVA_FF_Mpeg4File::addTrack(int32 mediaType, PVA_FF_MP4_CODEC_TYPE codecType, uint8 profile,
-                           uint8 profileComp, uint8 level)
+PVA_FF_Mpeg4File::addTrack(int32 mediaType, PVA_FF_MP4_CODEC_TYPE codecType, uint32 aTrackId,
+                           uint8 profile, uint8 profileComp, uint8 level)
 {
     uint32 TrackID = 0;
     PVA_FF_TrackAtom *pmediatrack = NULL;
     _codecType = codecType;
     PVA_FF_MediaDataAtom *mda = NULL;
     PVA_FF_InterLeaveBuffer *pInterLeaveBuffer = NULL;
+
+    // if aTrackId is specified, make sure a track with the same ID doesn't exist already
+    if (aTrackId != 0)
+    {
+        // How do we fail this method? Returning zero may be interpreted by the caller
+        // as a successful operation
+        if (_pmovieAtom->IsTrackIdInUse(aTrackId))
+            return 0;
+    }
+
+
     if (!_oInterLeaveEnabled)
     {
         PVA_FF_UNICODE_STRING_PARAM emptyString = PVA_FF_UNICODE_HEAP_STRING(_STRLIT_WCHAR(""));
@@ -436,12 +447,24 @@ PVA_FF_Mpeg4File::addTrack(int32 mediaType, PVA_FF_MP4_CODEC_TYPE codecType, uin
     if (_oLiveMovieFragmentEnabled)
         fbVersion = 1;
 
+    uint32 newtrack_Id;
+    if (aTrackId != 0)
+    {
+        newtrack_Id = aTrackId;
+        // notify the movie header atom of the next track Id to use if this is
+        // not specified in subsequent calls to this method.
+        _pmovieAtom->getMutableMovieHeaderAtom().setNextTrackID(aTrackId + 1);
+    }
+    else
+    {
+        newtrack_Id = _pmovieAtom->getMutableMovieHeaderAtom().findNextTrackID();
+    }
 
     if ((uint32) mediaType == MEDIA_TYPE_AUDIO)
     {
         // Create default audio track and add it to moov atom
         PV_MP4_FF_NEW(fp->auditCB, PVA_FF_TrackAtom, (MEDIA_TYPE_AUDIO,
-                      _pmovieAtom->getMutableMovieHeaderAtom().findNextTrackID(),
+                      newtrack_Id,
                       fbVersion,
                       _fileAuthoringFlags,
                       codecType,
@@ -499,7 +522,7 @@ PVA_FF_Mpeg4File::addTrack(int32 mediaType, PVA_FF_MP4_CODEC_TYPE codecType, uin
 
         // Create default video track and add it to moov atom
         PV_MP4_FF_NEW(fp->auditCB, PVA_FF_TrackAtom, (MEDIA_TYPE_VISUAL,
-                      _pmovieAtom->getMutableMovieHeaderAtom().findNextTrackID(),
+                      newtrack_Id,
                       fbVersion,
                       _fileAuthoringFlags,
                       codecType,
@@ -536,7 +559,7 @@ PVA_FF_Mpeg4File::addTrack(int32 mediaType, PVA_FF_MP4_CODEC_TYPE codecType, uin
         }
         // Create default video track and add it to moov atom
         PV_MP4_FF_NEW(fp->auditCB, PVA_FF_TrackAtom, (MEDIA_TYPE_TEXT,
-                      _pmovieAtom->getMutableMovieHeaderAtom().findNextTrackID(),
+                      newtrack_Id,
                       fbVersion,
                       _fileAuthoringFlags,
                       codecType,

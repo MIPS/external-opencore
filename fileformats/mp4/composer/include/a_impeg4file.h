@@ -398,6 +398,7 @@ class PVA_FF_IMpeg4File
 
         virtual uint32  addTrack(int32 mediaType,
                                  PVA_FF_MP4_CODEC_TYPE codecType,
+                                 uint32 aTrackId = 0,
                                  uint8 profile = 1,
                                  uint8 profileComp = 0xFF,
                                  uint8 level = 0xFF) = 0;

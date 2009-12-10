@@ -87,6 +87,7 @@ class PVA_FF_MovieHeaderAtom : public PVA_FF_FullAtom
         // TrackID
         uint32 getNextTrackID() const;
         uint32 findNextTrackID();
+        void setNextTrackID(uint32 aTrackId);
 
         virtual void recomputeSize();
 

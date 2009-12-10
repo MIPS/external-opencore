@@ -93,6 +93,9 @@ class PVA_FF_MovieAtom : public PVA_FF_Atom
         }
         PVA_FF_TrackAtom *getMpeg4Track(int32 index);
 
+        // Verify that aTrackId is not used already by an existing track
+        bool IsTrackIdInUse(uint32 aTrackId);
+
         // Return a pointer to a track with ES_ID value of esid
         //PVA_FF_TrackAtom *getTrackWithESID(uint32 esid) const;
 

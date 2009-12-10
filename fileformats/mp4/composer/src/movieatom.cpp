@@ -179,6 +179,23 @@ PVA_FF_MovieAtom::addTrackAtom(PVA_FF_TrackAtom *a)
 
 }
 
+bool
+PVA_FF_MovieAtom::IsTrackIdInUse(uint32 aTrackId)
+{
+    if (_pMediaTrackVec != NULL)
+    {
+        for (uint32 i = 0; i < _pMediaTrackVec->size(); ++i)
+        {
+            PVA_FF_TrackHeaderAtom* ptkhdr = (*_pMediaTrackVec)[i]->getTrackHeaderAtomPtr();
+
+            if (aTrackId == ptkhdr->getTrackID())
+                return true;
+        }
+    }
+
+    return false;
+}
+
 void
 PVA_FF_MovieAtom::setTargetBitrate(uint32 trackID, uint32 avgBitRate, uint32 maxBitRate, uint32 bufferSizeDB)
 {

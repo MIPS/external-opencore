@@ -107,6 +107,14 @@ PVA_FF_MovieHeaderAtom::findNextTrackID()
 }
 
 void
+PVA_FF_MovieHeaderAtom::setNextTrackID(uint32 aTrackId)
+{
+    // this function must be called when the next value of _nextTrackID must start
+    // from a particular value
+    _nextTrackID = aTrackId;
+}
+
+void
 PVA_FF_MovieHeaderAtom::addSample(uint32 ts)
 {
     // Need to verify that this fp in the movie timescale
