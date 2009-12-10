@@ -38,7 +38,7 @@
 #endif
 #define PVMF_LICENSE_CONTEXT_DATA_UUID PVUuid(0x13f2d930,0x8f58,0x11de,0x8a,0x39,0x08,0x00,0x20,0x0c,0x9a,0x66)
 #define PVMF_DOMAIN_LICENSE_CONTEXT_DATA_UUID PVUuid(0x574a8890,0x8f58,0x11de,0x8a,0x39,0x08,0x00,0x20,0x0c,0x9a,0x66)
-
+#define PVMF_HEADER_LICENSE_CONTEXT_DATA_UUID PVUuid(0x15806e40,0xcfa7,0x11de,0x8a,0x39,0x08,0x00,0x20,0x0c,0x9a,0x66)
 
 class PVMFDomainLicenseDataSource : public PVInterface
 {
@@ -86,15 +86,71 @@ class PVMFDomainLicenseDataSource : public PVInterface
             }
         }
 
-        PVMFCPMDomainJoinData iDomainJoinData;
+        PVMFCPMDomainId iDomainId;
     private:
         void MyCopy(const PVMFDomainLicenseDataSource& aSrc)
         {
-            iDomainJoinData = aSrc.iDomainJoinData;
+            iDomainId = aSrc.iDomainId;
         };
 
         int32 iRefCounter;
 
+};
+
+class PVMFHeaderLicenseDataSource : public PVInterface
+{
+    public:
+        PVMFHeaderLicenseDataSource()
+        {
+            iRefCounter = 0;
+        };
+
+        PVMFHeaderLicenseDataSource(const PVMFHeaderLicenseDataSource& aSrc) : PVInterface(aSrc)
+        {
+            iRefCounter = 0;
+            MyCopy(aSrc);
+        };
+
+        PVMFHeaderLicenseDataSource& operator=(const PVMFHeaderLicenseDataSource& aSrc)
+        {
+            if (&aSrc != this)
+            {
+                MyCopy(aSrc);
+            }
+            return *this;
+        };
+
+        /* From PVInterface */
+        void addRef()
+        {
+            iRefCounter++;
+        }
+        void removeRef()
+        {
+            iRefCounter--;
+        }
+        bool queryInterface(const PVUuid& uuid, PVInterface*& iface)
+        {
+            if (uuid == PVUuid(PVMF_HEADER_LICENSE_CONTEXT_DATA_UUID))
+            {
+                iface = this;
+                return true;
+            }
+            else
+            {
+                iface = NULL;
+                return false;
+            }
+        }
+
+        OSCL_wHeapString<OsclMemAllocator> iHeader;
+    private:
+        void MyCopy(const PVMFHeaderLicenseDataSource& aSrc)
+        {
+            iHeader = aSrc.iHeader;
+        };
+
+        int32 iRefCounter;
 };
 
 class PVMFLicenseContextData : public PVInterface
@@ -104,6 +160,7 @@ class PVMFLicenseContextData : public PVInterface
         {
             iRefCounter = 0;
             iDomainLicenseContextValid = false;
+            iHeaderLicenseContextValid = false;
         };
 
         PVMFLicenseContextData(const PVMFLicenseContextData& aSrc) : PVInterface(aSrc)
@@ -145,6 +202,14 @@ class PVMFLicenseContextData : public PVInterface
                     return true;
                 }
             }
+            else if (uuid == PVUuid(PVMF_HEADER_LICENSE_CONTEXT_DATA_UUID))
+            {
+                if (iHeaderLicenseContextValid == true)
+                {
+                    iface = &iPVMFHeaderLicenseDataSource;
+                    return true;
+                }
+            }
             iface = NULL;
             return false;
         }
@@ -161,19 +226,35 @@ class PVMFLicenseContextData : public PVInterface
         {
             return iDomainLicenseContextValid ? &iPVMFDomainLicenseDataSource : NULL;
         }
+        void EnableHeaderLicenseContext()
+        {
+            iHeaderLicenseContextValid = true;
+        }
+        void DisableHeaderLicenseContext()
+        {
+            iHeaderLicenseContextValid = false;
+        }
+        PVMFHeaderLicenseDataSource* HeaderLicense()
+        {
+            return iHeaderLicenseContextValid ? &iPVMFHeaderLicenseDataSource : NULL;
+        }
+        OSCL_HeapString<OsclMemAllocator> iCustomData;
     private:
         int32 iRefCounter;
         bool iDomainLicenseContextValid;
+        bool iHeaderLicenseContextValid;
 
         PVMFDomainLicenseDataSource iPVMFDomainLicenseDataSource;
+        PVMFHeaderLicenseDataSource iPVMFHeaderLicenseDataSource;
 
         void MyCopy(const PVMFLicenseContextData& aSrc)
         {
             iDomainLicenseContextValid = aSrc.iDomainLicenseContextValid;
-
+            iHeaderLicenseContextValid = aSrc.iHeaderLicenseContextValid;
             iPVMFDomainLicenseDataSource = aSrc.iPVMFDomainLicenseDataSource;
+            iPVMFHeaderLicenseDataSource = aSrc.iPVMFHeaderLicenseDataSource;
+            iCustomData = aSrc.iCustomData;
         };
 };
 
 #endif //PVMF_LICENSE_CONTEXT_DATA_H_INCLUDED
-

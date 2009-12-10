@@ -25,47 +25,36 @@
 #include "oscl_types.h"
 #endif
 
+#define PVMF_CPM_METER_ID_SIZE  16
+
 //A class to hold a metering ID.
 class PVMFCPMMeterId
 {
     public:
-        PVMFCPMMeterId(): iData(NULL), iDataLen(0)
-        {}
-
-        PVMFCPMMeterId(const PVMFCPMMeterId& aVal)
+        PVMFCPMMeterId()
         {
-            iData = NULL;
-            iDataLen = 0;
-            Set(aVal);
+            oscl_memset(data, NULL, PVMF_CPM_METER_ID_SIZE);
+        }
+        PVMFCPMMeterId(const PVMFCPMMeterId &aId)
+        {
+            Set((uint8*)aId.data);
         }
 
-        ~PVMFCPMMeterId()
+        PVMFCPMMeterId operator=(const PVMFCPMMeterId &aId)
         {
-            if (iData)
-                OSCL_FREE(iData);
-            iData = NULL;
+            Set((uint8*)aId.data);
+            return *this;
         }
 
-        void Set(uint8* aData, uint32 aDataLen)
+        void Set(uint8 *aData)
         {
-            if (iData)
-                OSCL_FREE(iData);
-            iData = NULL;
-            if (aDataLen)
+            if (aData)
             {
-                iData = (uint8*)OSCL_MALLOC(aDataLen);
-                if (iData)
-                    oscl_memcpy(iData, aData, aDataLen);
-                iDataLen = aDataLen;
+                oscl_memcpy(data, aData, PVMF_CPM_METER_ID_SIZE);
             }
         }
-        void Set(const PVMFCPMMeterId& aId)
-        {
-            Set(aId.iData, aId.iDataLen);
-        }
 
-        uint8* iData;
-        uint32 iDataLen;
+        uint8 data [PVMF_CPM_METER_ID_SIZE];
 };
 
 //A class to hold information about a metering certificate
@@ -90,15 +79,16 @@ class PVMFCPMMeterCertInfo
         void Clear()
         {
             iValid = false;
-            iMeterId.Set(NULL, 0);
             iIsV2 = false;
+            iURL = _STRLIT_WCHAR("");
+            oscl_memset(iMeterId.data, NULL, sizeof(iMeterId.data));
         }
         void Set(const PVMFCPMMeterCertInfo& aInfo)
         {
             iValid = aInfo.iValid;
             if (iValid)
             {
-                iMeterId.Set(aInfo.iMeterId);
+                iMeterId = aInfo.iMeterId;
                 iURL = aInfo.iURL;
                 iIsV2 = aInfo.iIsV2;
             }
@@ -168,6 +158,33 @@ class PVMFCPMMeterStatus
         }
 };
 
+class PVMFCPMMeteringData
+{
+    public:
+        PVMFCPMMeteringData()
+        {
+            /*
+            ** Default value of iMaxDataSize is zero, which instructs client to submit entire metering
+            ** data in one http message.
+            */
+            iMaxDataSize = 0;
+        }
+
+        //URL from where metering certificate can be obtained
+        OSCL_HeapString<OsclMemAllocator> iMeteringCertServerUrl;
+
+        //Metering ID of the service
+        PVMFCPMMeterId iMID;
+
+        //Maximum size of metering packets that the client should send to the server.
+        uint32 iMaxDataSize;
+
+        //CustomData string to be sent to the server with Metering challenge. It may be blank.
+        OSCL_HeapString<OsclMemAllocator> iMeteringCustomData;
+
+        //CustomData string to be sent to the server with Meter Cert challenge. It may be blank.
+        OSCL_HeapString<OsclMemAllocator> iMeterCertCustomData;
+};
 
 #endif //PVMF_CPMPLUGIN_METERING_INTERFACE_TYPES_H_INCLUDED
 

@@ -24,7 +24,8 @@ HDRS := pvmf_cpmplugin_access_interface.h \
 	pvmf_cpmplugin_license_interface_types.h \
 	pvmf_cpmplugin_domain_interface_types.h \
 	pvmf_cpmplugin_interface.h \
-	pvmf_cpmplugin_decryption_context.h
+	pvmf_cpmplugin_decryption_context.h \
+	pvmf_cpmplugin_web_initiator_types.h
  
 include $(MK)/library.mk
 install:: headers-install

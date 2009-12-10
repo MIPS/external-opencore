@@ -114,7 +114,7 @@ class PVMFCPMPluginLicenseManagerInterface : public PVInterface
          * @param [in] aCountRemaining: For counted licenses, update only those that have
          *    less than the specified number of play counts remaining.  To update all counted
          *    licenses regardless of the counts remaining, use (-1).
-         * @param [in] aCustomData, aCustomDataSize: Optional opaque data for additional inputs.
+         * @param [in] aCustomData: Opaque data for additional inputs. Can be blank.
          * @param [in] aTimeoutMsec: Optional timeout in milliseconds
          *    for each server communication.  Use -1 to indicate infinite wait.
          * @param [in] aContextData: Optional caller data to accompany the
@@ -123,16 +123,15 @@ class PVMFCPMPluginLicenseManagerInterface : public PVInterface
          * @returns A unique command id for asynchronous completion.
          */
         virtual PVMFCommandId UpdateLicenses(
-            PVMFSessionId aSessionId
-            , int32& aLastLicenseProcessed
-            , uint32 aStartingIndex = 0
-                                      , int32 aMaxNumberOfLicenses = (-1)
-                                                                     , int32 aHoursRemaining = (-1)
-                                                                                               , int32 aCountRemaining = (-1)
-                                                                                                                         , OsclAny* aCustomData = NULL
-                                                                                                                                                  , uint32 aCustomDataSize = 0
-                                                                                                                                                                             , int32 aTimeoutMsec = (-1)
-                                                                                                                                                                                                    , OsclAny* aContext = NULL) = 0;
+            PVMFSessionId aSessionId,
+            const OSCL_String& aCustomData,
+            int32& aLastLicenseProcessed,
+            uint32 aStartingIndex = 0,
+            int32 aMaxNumberOfLicenses = (-1),
+            int32 aHoursRemaining = (-1),
+            int32 aCountRemaining = (-1),
+            int32 aTimeoutMsec = (-1),
+            OsclAny* aContext = NULL) = 0;
 
         /**
          * Method to get the status of an ongoing or recently completed

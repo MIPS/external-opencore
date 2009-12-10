@@ -139,7 +139,6 @@ class PVMFCPMPluginLicenseInterface : public PVInterface
                                          uint32 aDataSize = 0,
                                          int32 aTimeoutMsec = (-1),
                                          OsclAny* aContext = NULL) = 0;
-
         /**
          * Method to join a domain
          *

@@ -48,6 +48,16 @@ class PVMFCPMDomainId
             iAccountId = aVal.iAccountId;
             iRevision = aVal.iRevision;
         }
+        PVMFCPMDomainId & operator=(const PVMFCPMDomainId& aSrc)
+        {
+            if (&aSrc != this)
+            {
+                iServiceId = aSrc.iServiceId;
+                iAccountId = aSrc.iAccountId;
+                iRevision = aSrc.iRevision;
+            }
+            return *this;
+        };
 
         PVUuid iServiceId;
         PVUuid iAccountId;
@@ -59,11 +69,7 @@ class PVMFCPMDomainJoinData
 {
     public:
         PVMFCPMDomainJoinData()
-                : iDomainUrl(NULL)
-                , iFlags(0)
-                , iFriendlyName(NULL)
-                , iCustomData(NULL)
-                , iCustomDataLen(0)
+                : iFlags(0)
         {}
 
         PVMFCPMDomainJoinData & operator=(const PVMFCPMDomainJoinData& aSrc)
@@ -75,21 +81,21 @@ class PVMFCPMDomainJoinData
                 iDomainId      = aSrc.iDomainId;
                 iFriendlyName  = aSrc.iFriendlyName;
                 iCustomData    = aSrc.iCustomData;
-                iCustomDataLen = aSrc.iCustomDataLen;
             }
             return *this;
         };
 
-        OSCL_String* iDomainUrl;    //the domain server URL
+        OSCL_HeapString<OsclMemAllocator> iDomainUrl;    //the domain server URL
 
         uint32 iFlags;              //Flag that indicates the type of custom data.
 
         PVMFCPMDomainId iDomainId;  //Domain ID to be registered with the server.
 
-        OSCL_String* iFriendlyName; //Pointer to the friendly name. Can be NULL.
+        OSCL_HeapString<OsclMemAllocator> iFriendlyName; //Friendly name.
 
-        uint8* iCustomData;         //Optional custom data.  Can be NULL
-        uint32 iCustomDataLen;      //length of the custom data in bytes.
+        //Custom data to be sent to the server.
+        //The format of the custom data is based on the value of iFlags. It may be blank.
+        OSCL_HeapString<OsclMemAllocator> iCustomData;
 };
 
 //Data associated with a Domain Leave request
@@ -97,24 +103,18 @@ class PVMFCPMDomainLeaveData
 {
     public:
         PVMFCPMDomainLeaveData()
-                : iDomainUrl(NULL)
-                , iFlags(0)
-                , iCustomData(NULL)
-                , iCustomDataLen(0)
+                : iFlags(0)
         {}
 
-        OSCL_String* iDomainUrl;    //Domain URL.
+        OSCL_HeapString<OsclMemAllocator> iDomainUrl;    //Domain URL.
 
         uint32 iFlags;              //Flag that indicates the type of custom data.
 
         PVMFCPMDomainId iDomainId;  //Domain ID to be unregistered with the server.
 
-        uint8* iCustomData;         //Pointer to a buffer that contains the custom data
-        //sent to the server. The format of the custom data
-        //is based on the value of iFlags. It may be NULL.
-
-        uint32 iCustomDataLen;      //Size (in bytes) of the custom data buffer.
-        //It must be 0 if iCustomData is NULL.
+        //Custom data to be sent to the server.
+        //The format of the custom data is based on the value of iFlags. It may be blank.
+        OSCL_HeapString<OsclMemAllocator> iCustomData;
 };
 
 //Data output by GetDomain request.

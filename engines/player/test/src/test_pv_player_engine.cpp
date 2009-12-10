@@ -3613,7 +3613,7 @@ void pvplayer_engine_test::test()
                 fprintf(file, "PlayReady CPM tests not enabled\n");
                 break;
 
-            case DLA_OpenPlayStop_PlayReadyCPMTest_v4_WMA:
+            case DLA_OpenPlayUntilEOS_PlayReadyCPMTest_v4_WMA:
                 fprintf(file, "PlayReady CPM tests not enabled\n");
                 break;
 
@@ -3735,6 +3735,26 @@ void pvplayer_engine_test::test()
                 break;
 
             case LicenseCountVerification_PlayReadyCPMTest:
+                fprintf(file, "PlayReady CPM tests not enabled\n");
+                break;
+
+            case WebInitiatorParsing_PlayReadyCPMTest:
+                fprintf(file, "PlayReady CPM tests not enabled\n");
+                break;
+
+            case WebInitiatorLicAcq_PlayReadyCPMTest:
+                fprintf(file, "PlayReady CPM tests not enabled\n");
+                break;
+
+            case WebInitiatorLicAcqDomainBound_PlayReadyCPMTest:
+                fprintf(file, "PlayReady CPM tests not enabled\n");
+                break;
+
+            case WebInitiatorMetering_PlayReadyCPMTest:
+                fprintf(file, "PlayReady CPM tests not enabled\n");
+                break;
+
+            case WebInitiatorJoinAndLeaveDomain_PlayReadyCPMTest:
                 fprintf(file, "PlayReady CPM tests not enabled\n");
                 break;
 
@@ -6198,25 +6218,25 @@ void pvplayer_engine_test::test()
             }
             break;
 
-            case DLA_PDL_OpenPlayUntilEOS_PlayreadyCPMTest_v4_WMV:
+            case DLA_PDL_OpenPlayStop_PlayreadyCPMTest_v4_WMV:
             {
                 fprintf(file, "PlayReady Streaming tests not enabled\n");
             }
             break;
 
-            case DLA_PDL_OpenPlayUntilEOS_PlayreadyCPMTest_v4_AAC:
+            case DLA_PDL_OpenPlayStop_PlayreadyCPMTest_v4_AAC:
             {
                 fprintf(file, "PlayReady Streaming tests not enabled\n");
             }
             break;
 
-            case DLA_PDL_OpenPlayUntilEOS_PlayreadyCPMTest_v4_H264:
+            case DLA_PDL_OpenPlayStop_PlayreadyCPMTest_v4_H264:
             {
                 fprintf(file, "PlayReady Streaming tests not enabled\n");
             }
             break;
 
-            case DLA_PDL_OpenPlayUntilEOS_PlayreadyCPMTest_v4_H264_AAC:
+            case DLA_PDL_OpenPlayStop_PlayreadyCPMTest_v4_H264_AAC:
             {
                 fprintf(file, "PlayReady Streaming tests not enabled\n");
             }
@@ -6228,25 +6248,25 @@ void pvplayer_engine_test::test()
             }
             break;
 
-            case DLA_PPB_OpenPlayUntilEOS_PlayreadyCPMTest_v4_WMV:
+            case DLA_PPB_OpenPlayStop_PlayreadyCPMTest_v4_WMV:
             {
                 fprintf(file, "PlayReady Streaming tests not enabled\n");
             }
             break;
 
-            case DLA_PPB_OpenPlayUntilEOS_PlayreadyCPMTest_v4_AAC:
+            case DLA_PPB_OpenPlayStop_PlayreadyCPMTest_v4_AAC:
             {
                 fprintf(file, "PlayReady Streaming tests not enabled\n");
             }
             break;
 
-            case DLA_PPB_OpenPlayUntilEOS_PlayreadyCPMTest_v4_H264:
+            case DLA_PPB_OpenPlayStop_PlayreadyCPMTest_v4_H264:
             {
                 fprintf(file, "PlayReady Streaming tests not enabled\n");
             }
             break;
 
-            case DLA_PPB_OpenPlayUntilEOS_PlayreadyCPMTest_v4_H264_AAC:
+            case DLA_PPB_OpenPlayStop_PlayreadyCPMTest_v4_H264_AAC:
             {
                 fprintf(file, "PlayReady Streaming tests not enabled\n");
             }

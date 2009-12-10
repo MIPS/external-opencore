@@ -265,18 +265,16 @@ Error when a license server reports that the device is not part of the domain.
 */
 const PVMFStatus PVMFErrDrmDomainNotAMember = (-51);
 /*
-... this range reserved for future DRM-related errors
-*/
-/*
 Error due to device currently not activated for drm-protected content playback
 */
 const PVMFStatus PVMFErrDrmDeviceNotActivated = (-52);
-
+/*
+... this range reserved for future DRM-related errors
+*/
 /*
 DRM Operational Error not otherwise specified
 */
 const PVMFStatus PVMFErrDrmOperationFailed = (-81);
-
 /*
 Error returned when the video container is not valid for progressive playback.
 */
