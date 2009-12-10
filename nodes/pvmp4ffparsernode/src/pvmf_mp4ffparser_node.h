@@ -582,9 +582,6 @@ class PVMFMP4FFParserNode
         int32 iPlayBackDirection;
         int32 iStartForNextTSSearch;
         int32 iPrevSampleTS;
-        bool iParseAudioDuringFF;
-        bool iParseAudioDuringREW;
-        bool iParseVideoOnly;
         bool iOpenFileOncePerTrack;
         int32 iDataRate;
         int32 minFileOffsetTrackID;
@@ -592,6 +589,12 @@ class PVMFMP4FFParserNode
         //This will hold the total number of ID3 specific values present in the value list
         uint32 iTotalID3MetaDataTagInValueList;
 
+        //TrickPlayMode related
+        void EnableAllNonVideotracks();
+        void DisableAllNonVideotracks();
+        bool iIsAudioOnly;
+        bool iDisableAudioInTrickMode;
+        bool iParseVideoOnly;
 };
 
 

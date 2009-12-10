@@ -61,12 +61,12 @@ PVMFMP4FFParserNode::PVMFMP4FFParserNode(int32 aPriority) :
         iBackwardReposFlag(false), /* To avoid backwardlooping :: A flag to remember backward repositioning */
         iForwardReposFlag(false),
         iPlayBackDirection(PVMF_DATA_SOURCE_DIRECTION_FORWARD),
-        iParseAudioDuringFF(false),
-        iParseAudioDuringREW(false),
-        iParseVideoOnly(false),
         iOpenFileOncePerTrack(true),
         iDataRate(NORMAL_PLAYRATE),
-        minFileOffsetTrackID(0)
+        minFileOffsetTrackID(0),
+        iIsAudioOnly(false),
+        iDisableAudioInTrickMode(false),
+        iParseVideoOnly(false)
 {
     iClientPlayBackClock = NULL;
     iClockNotificationsInf = NULL;
@@ -1626,7 +1626,17 @@ PVMFStatus PVMFMP4FFParserNode::DoRequestPort(PVMFPortInterface*& aPort)
 
     iNodeTrackPortList.push_back(trackportinfo);
     aPort = outport;
-
+    //Check if all the tracks are audio only
+    iIsAudioOnly = true;
+    int32 maxtrack = iNodeTrackPortList.size();
+    for (int32 i = 0; i < maxtrack; i++)
+    {
+        if (iMP4FileHandle->getTrackMediaType(iNodeTrackPortList[i].iTrackId) != MEDIA_TYPE_AUDIO)
+        {
+            iIsAudioOnly = false;
+            break;
+        }
+    }
     return PVMFSuccess;
 }
 
@@ -2129,8 +2139,7 @@ PVMFStatus PVMFMP4FFParserNode::DoStop()
 
     // reset direction rate state variables
     iPlayBackDirection = PVMF_DATA_SOURCE_DIRECTION_FORWARD;
-    iParseAudioDuringFF = false;
-    iParseAudioDuringREW = false;
+    iDisableAudioInTrickMode = false;
     iParseVideoOnly = false;
     iDataRate = NORMAL_PLAYRATE;
 
@@ -2211,8 +2220,7 @@ PVMFStatus PVMFMP4FFParserNode::DoReset()
 
     // reset direction rate state variables
     iPlayBackDirection = PVMF_DATA_SOURCE_DIRECTION_FORWARD;
-    iParseAudioDuringFF = false;
-    iParseAudioDuringREW = false;
+    iDisableAudioInTrickMode = false;
     iParseVideoOnly = false;
     iDataRate = NORMAL_PLAYRATE;
 
@@ -2853,6 +2861,17 @@ PVMFStatus PVMFMP4FFParserNode::DoSetDataSourcePosition()
                              iNodeTrackPortList[i].iTargetNPTInMediaTimeScale));
         }
     }
+    if (!iIsAudioOnly)
+    {
+        if (((iDataRate == NORMAL_PLAYRATE) && (iPlayBackDirection == PVMF_DATA_SOURCE_DIRECTION_FORWARD)) || !iDisableAudioInTrickMode)
+        {
+            EnableAllNonVideotracks();
+        }
+        else
+        {
+            DisableAllNonVideotracks();
+        }
+    }
 
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
                     (0, "PVMFMP4FFParserNode::DoSetDataSourcePosition: targetNPT=%d, actualNPT=%d, actualTS=%d",
@@ -2999,24 +3018,17 @@ PVMFStatus PVMFMP4FFParserNode::DoSetDataSourceRate()
             return PVMFErrNotSupported;
         }
     }
-
-    // if we are going ff to normal or vice versa, we need to set the node to disable non-video
-    if (!iParseAudioDuringFF && (iDataRate != rate) && (PVMF_DATA_SOURCE_DIRECTION_FORWARD == iPlayBackDirection))
+    if (!iIsAudioOnly)
     {
-        // coming to normal rate?
-        if (rate == NORMAL_PLAYRATE)
+        if (((rate == NORMAL_PLAYRATE) && (iPlayBackDirection == PVMF_DATA_SOURCE_DIRECTION_FORWARD)) || !iDisableAudioInTrickMode)
         {
-            iParseVideoOnly = false;
+            EnableAllNonVideotracks();
         }
-        // switching to FF or rew?
         else
         {
-            // since we know ff will not have audio, just disable audio now.
-            // If it is going to REW, DoSetDataSourceDirection will modify it there
-            iParseVideoOnly = true;
+            DisableAllNonVideotracks();
         }
     }
-
 
     iDataRate = rate;
 
@@ -3106,8 +3118,6 @@ PVMFStatus PVMFMP4FFParserNode::DoSetDataSourceDirection()
         // if switching back to forward at 100000, make sure everything is set to parse
         // othrewise check what ff should be for non-video tracks and set it
 
-        iParseVideoOnly = ((iDataRate == NORMAL_PLAYRATE) || iParseAudioDuringFF) ? false : true;
-
         actualNPT32 = 0x7FFFFFFF;
         for (i = 0; i < iNodeTrackPortList.size(); i++)
         {
@@ -3125,8 +3135,6 @@ PVMFStatus PVMFMP4FFParserNode::DoSetDataSourceDirection()
     }
     else if (PVMF_DATA_SOURCE_DIRECTION_REVERSE == direction)
     {
-        iParseVideoOnly = iParseAudioDuringREW ? false : true;
-
         actualNPT32 = 0;
         for (i = 0; i < iNodeTrackPortList.size(); i++)
         {
@@ -3810,30 +3818,36 @@ bool PVMFMP4FFParserNode::RetrieveTrackData(PVMP4FFNodeTrackPortInfo& aTrackPort
             return false;
         }
     }
-    else if ((PVMF_DATA_SOURCE_DIRECTION_REVERSE == iPlayBackDirection) &&
-             (iMP4FileHandle->getTrackMediaType(aTrackPortInfo.iTrackId) == MEDIA_TYPE_VISUAL))
+    else if (PVMF_DATA_SOURCE_DIRECTION_REVERSE == iPlayBackDirection)
     {
-        uint32 numSamples = 1;
-        uint32 keySampleNumber;
-        if (aTrackPortInfo.iFirstFrameAfterRepositioning)
+        if (iMP4FileHandle->getTrackMediaType(aTrackPortInfo.iTrackId) == MEDIA_TYPE_VISUAL)
         {
-            iPrevSampleTS = iMP4FileHandle->getMediaTimestampForCurrentSample(trackid);
-            retval = iMP4FileHandle->getPrevKeyMediaSample(iPrevSampleTS, keySampleNumber, trackid,
-                     &numSamples, &iGau);
-            iStartForNextTSSearch = iMP4FileHandle->getMediaTimestampForCurrentSample(trackid) - 2 * iGau.info[0].ts_delta;
-        }
-        else
-        {
-            if (iStartForNextTSSearch <= 0)
+            uint32 numSamples = 1;
+            uint32 keySampleNumber;
+            if (aTrackPortInfo.iFirstFrameAfterRepositioning)
             {
-                retval = END_OF_TRACK;
-            }
-            else
-            {
-                retval = iMP4FileHandle->getPrevKeyMediaSample(iStartForNextTSSearch, keySampleNumber, trackid,
+                iPrevSampleTS = iMP4FileHandle->getMediaTimestampForCurrentSample(trackid);
+                retval = iMP4FileHandle->getPrevKeyMediaSample(iPrevSampleTS, keySampleNumber, trackid,
                          &numSamples, &iGau);
                 iStartForNextTSSearch = iMP4FileHandle->getMediaTimestampForCurrentSample(trackid) - 2 * iGau.info[0].ts_delta;
             }
+            else
+            {
+                if (iStartForNextTSSearch <= 0)
+                {
+                    retval = END_OF_TRACK;
+                }
+                else
+                {
+                    retval = iMP4FileHandle->getPrevKeyMediaSample(iStartForNextTSSearch, keySampleNumber, trackid,
+                             &numSamples, &iGau);
+                    iStartForNextTSSearch = iMP4FileHandle->getMediaTimestampForCurrentSample(trackid) - 2 * iGau.info[0].ts_delta;
+                }
+            }
+        }
+        else
+        {
+            retval = END_OF_TRACK;
         }
 
     }
@@ -8280,13 +8294,38 @@ bool PVMFMP4FFParserNode::SendBeginOfClipCommand(PVMP4FFNodeTrackPortInfo& aTrac
     return true;
 }
 
+void PVMFMP4FFParserNode::EnableAllNonVideotracks()
+{
+    PVMF_MP4FFPARSERNODE_LOGERROR((0, "PVMFMP4FFParserNode::DnableAllNonVideotracks IN"));
+    int32 maxtrack = iNodeTrackPortList.size();
+    iParseVideoOnly = false;
+    for (int32 i = 0; i < maxtrack; i++)
+    {
+        if ((iMP4FileHandle->getTrackMediaType(iNodeTrackPortList[i].iTrackId) != MEDIA_TYPE_VISUAL) &&
+                ((iNodeTrackPortList[i].iState == PVMP4FFNodeTrackPortInfo::TRACKSTATE_ENDOFTRACK) ||
+                 (iNodeTrackPortList[i].iState == PVMP4FFNodeTrackPortInfo::TRACKSTATE_SEND_ENDOFTRACK)))
+        {
+            if (iNodeTrackPortList[i].iState == PVMP4FFNodeTrackPortInfo::TRACKSTATE_ENDOFTRACK)
+            {
+                iNodeTrackPortList[i].iSendBOS = true;
+            }
+            iNodeTrackPortList[i].iState = PVMP4FFNodeTrackPortInfo::TRACKSTATE_TRANSMITTING_GETDATA;
+        }
+    }
+}
 
-
-
-
-
-
-
-
+void PVMFMP4FFParserNode::DisableAllNonVideotracks()
+{
+    PVMF_MP4FFPARSERNODE_LOGERROR((0, "PVMFMP4FFParserNode::DisableAllNonVideotracks IN"));
+    iParseVideoOnly = true;
+    int32 maxtrack = iNodeTrackPortList.size();
+    for (int32 i = 0; i < maxtrack; i++)
+    {
+        if (iMP4FileHandle->getTrackMediaType(iNodeTrackPortList[i].iTrackId) != MEDIA_TYPE_VISUAL)
+        {
+            iNodeTrackPortList[i].iState = PVMP4FFNodeTrackPortInfo::TRACKSTATE_SEND_ENDOFTRACK;
+        }
+    }
+}
 
 

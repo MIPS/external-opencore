@@ -841,6 +841,10 @@ SampleTableAtom::getPrevKeyMediaSample(uint64 inputtimestamp, uint32 &aKeySample
         return PV_ERROR;
     }
 
+    if (_psyncSampleAtom == NULL)
+    {
+        return END_OF_TRACK;
+    }
     // Get sample number at timestamp
     _ptimeToSampleAtom->GetSampleNumberFromTimestamp(inputtimestamp, _currentPlaybackSampleNumber);
     // Go for composition offset adjustment.
@@ -851,14 +855,11 @@ SampleTableAtom::getPrevKeyMediaSample(uint64 inputtimestamp, uint32 &aKeySample
     // first I-frame sample that follows ts
     // Need to check syncSampleAtom for this - if not present, all samples are synch samples
     // (i.e. all audio samples are synch samples)
-    if (_psyncSampleAtom  != NULL)
+    MP4_ERROR_CODE  errCode =
+        getSyncSampleAtom()->getSyncSampleBefore(_currentPlaybackSampleNumber, _currentPlaybackSampleNumber);
+    if (errCode != EVERYTHING_FINE)
     {
-        MP4_ERROR_CODE  errCode =
-            getSyncSampleAtom()->getSyncSampleBefore(_currentPlaybackSampleNumber, _currentPlaybackSampleNumber);
-        if (errCode != EVERYTHING_FINE)
-        {
-            return errCode;
-        }
+        return errCode;
     }
 
     aKeySampleNum = _currentPlaybackSampleNumber;
@@ -1033,7 +1034,7 @@ SampleTableAtom::getPrevKeyMediaSample(uint64 inputtimestamp, uint32 &aKeySample
         _currChunkOffset = sampleSizeOffset;
     }
     int32 retVal = getNextNSamples(_currentPlaybackSampleNumber, n, pgau);
-    MP4_ERROR_CODE errCode = (MP4_ERROR_CODE)retVal;
+    errCode = (MP4_ERROR_CODE)retVal;
     return errCode;
 }
 

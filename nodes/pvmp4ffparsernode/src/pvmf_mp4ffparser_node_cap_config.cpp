@@ -524,7 +524,7 @@ void PVMFMP4FFParserNode::setParametersSync(PvmiMIOSession aSession, PvmiKvp* aP
                         return;
                     }
                 }
-                else if (pv_mime_strcmp(compstr, _STRLIT_CHAR("parser/ff_noaudio")) >= 0)
+                else if (pv_mime_strcmp(compstr, _STRLIT_CHAR("parser/disable-audio-in-trick-mode")) >= 0)
                 {
                     // Make sure its a bool value
                     PvmiKvpValueType keyvaltype = GetValTypeFromKeyString(aParameters[paramind].key);
@@ -532,23 +532,11 @@ void PVMFMP4FFParserNode::setParametersSync(PvmiMIOSession aSession, PvmiKvp* aP
                     {
                         aRet_kvp = &aParameters[paramind];
                         PVMF_MP4FFPARSERNODE_LOGINFO((0, "PVMFMP4FFParserNode::setParametersSync Setting "
-                                                      "ff_noaudio valtype error"));
+                                                      "disable-audio-in-trick-mode valtype error"));
                         return;
                     }
-                    iParseAudioDuringFF = aParameters[paramind].value.bool_value;
-                }
-                else if (pv_mime_strcmp(compstr, _STRLIT_CHAR("parser/rew_noaudio")) >= 0)
-                {
-                    // Make sure its a bool value
-                    PvmiKvpValueType keyvaltype = GetValTypeFromKeyString(aParameters[paramind].key);
-                    if (PVMI_KVPVALTYPE_BOOL != keyvaltype)
-                    {
-                        aRet_kvp = &aParameters[paramind];
-                        PVMF_MP4FFPARSERNODE_LOGINFO((0, "PVMFMP4FFParserNode::setParametersSync Setting "
-                                                      "ff_noaudio valtype error"));
-                        return;
-                    }
-                    iParseAudioDuringREW = aParameters[paramind].value.bool_value;
+
+                    iDisableAudioInTrickMode = aParameters[paramind].value.bool_value;
                 }
                 else if (pv_mime_strcmp(compstr, _STRLIT_CHAR("parser/mp4ff-open-file-once-per-track")) >= 0)
                 {
@@ -558,7 +546,7 @@ void PVMFMP4FFParserNode::setParametersSync(PvmiMIOSession aSession, PvmiKvp* aP
                     {
                         aRet_kvp = &aParameters[paramind];
                         PVMF_MP4FFPARSERNODE_LOGINFO((0, "PVMFMP4FFParserNode::setParametersSync Setting "
-                                                      "ff_noaudio valtype error"));
+                                                      "mp4ff-open-file-once-per-track valtype error"));
                         return;
                     }
                     iOpenFileOncePerTrack = aParameters[paramind].value.bool_value;
