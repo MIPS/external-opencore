@@ -9020,6 +9020,9 @@ OSCL_EXPORT_REF bool PVMFOMXEncNode::GetVolHeader(OsclRefCounterMemFrag& aVolHea
 ////////////////////////////////////////////////////////////////////////////
 OSCL_EXPORT_REF bool PVMFOMXEncNode::RequestIFrame()
 {
+    OMX_ERRORTYPE Err = OMX_ErrorNone;
+    OMX_CONFIG_INTRAREFRESHVOPTYPE IntraRefreshVOPParam;
+
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                     (0, "PVMFOMXEncNode-%s::RequestIFrame", iNodeTypeId));
 
@@ -9032,6 +9035,27 @@ OSCL_EXPORT_REF bool PVMFOMXEncNode::RequestIFrame()
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
                             (0, "PVMFOMXEncNode-%s::RequestIFrame: Error - Wrong state", iNodeTypeId));
             return false;
+    }
+
+    //OMX_CONFIG_INTRAREFRESHVOPTYPE Settings
+    CONFIG_SIZE_AND_VERSION(IntraRefreshVOPParam);
+    IntraRefreshVOPParam.nPortIndex = iOutputPortIndex;
+
+    Err = OMX_GetConfig(iOMXEncoder, OMX_IndexConfigVideoIntraVOPRefresh, &IntraRefreshVOPParam);
+    if (OMX_ErrorNone != Err)
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                        (0, "PVMFOMXEncNode-%s::RequestIFrame Parameter Invalid OMX_IndexConfigVideoIntraVOPRefresh from OMX_GetConfig", iNodeTypeId));
+    }
+
+    IntraRefreshVOPParam.nPortIndex = iOutputPortIndex;
+    IntraRefreshVOPParam.IntraRefreshVOP = OMX_TRUE;
+
+    Err = OMX_SetConfig(iOMXEncoder, OMX_IndexConfigVideoIntraVOPRefresh, &IntraRefreshVOPParam);
+    if (OMX_ErrorNone != Err)
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                        (0, "PVMFOMXEncNode-%s::RequestIFrame Parameter Invalid OMX_IndexConfigVideoIntraVOPRefresh from OMX_SetConfig", iNodeTypeId));
     }
 
     return true;
