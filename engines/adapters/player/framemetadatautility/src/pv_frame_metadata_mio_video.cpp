@@ -1228,6 +1228,10 @@ void PVFMVideoMIO::setParametersSync(PvmiMIOSession aSession, PvmiKvp* aParamete
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                             (0, "PVFMVideoMIO::setParametersSync() Video Display Width, Value %d", iVideoDisplayWidth));
 
+            iVideoSubFormat = (PVMFFormatType)yuvInfo->video_format;
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                            (0, "PVFMVideoMIO::setParametersSync() Video SubFormat Key, Value %s", iVideoSubFormat.getMIMEStrPtr()));
+
             iNumberOfBuffers = (int32)yuvInfo->num_buffers;
             iNumberOfBuffersValid = true;
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
