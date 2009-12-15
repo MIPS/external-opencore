@@ -31,6 +31,8 @@
 #include "cpm.h"
 #endif
 
+#define  MINIMUM_SIZE_REQUIRED_TO_READ_MAJOR_BRAND 12
+
 class MP4FileRecognizer
 {
 

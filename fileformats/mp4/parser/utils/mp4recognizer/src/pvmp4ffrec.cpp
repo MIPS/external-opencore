@@ -59,6 +59,21 @@ OSCL_EXPORT_REF bool MP4FileRecognizer::IsMP4File(OSCL_wString& filename,
 
         if (atomType != UNKNOWN_ATOM)
         {
+            if (atomType == FILE_TYPE_ATOM)
+            {
+                uint32 majorBrand;
+
+                if (atomSize >= MINIMUM_SIZE_REQUIRED_TO_READ_MAJOR_BRAND)
+                {
+                    AtomUtils::read32(fp, majorBrand);
+                }
+
+                if (majorBrand == BRAND_ODCF)
+                {
+                    //This is an OMA2 DCF File.
+                    break;
+                }
+            }
             oReturn = true;
             break;
         }
@@ -111,6 +126,21 @@ OSCL_EXPORT_REF bool MP4FileRecognizer::IsMP4File(MP4_FF_FILE_REFERENCE filePtr)
 
         if (atomType != UNKNOWN_ATOM)
         {
+            if (atomType == FILE_TYPE_ATOM)
+            {
+                uint32 majorBrand;
+
+                if (atomSize >= MINIMUM_SIZE_REQUIRED_TO_READ_MAJOR_BRAND)
+                {
+                    AtomUtils::read32(fp, majorBrand);
+                }
+
+                if (majorBrand == BRAND_ODCF)
+                {
+                    //This is an OMA2 DCF File.
+                    break;
+                }
+            }
             oReturn = true;
             break;
         }
@@ -170,6 +200,21 @@ OSCL_EXPORT_REF bool MP4FileRecognizer::IsMP4File(PVMFCPMPluginAccessInterfaceFa
 
         if (atomType != UNKNOWN_ATOM)
         {
+            if (atomType == FILE_TYPE_ATOM)
+            {
+                uint32 majorBrand;
+
+                if (atomSize >= MINIMUM_SIZE_REQUIRED_TO_READ_MAJOR_BRAND)
+                {
+                    AtomUtils::read32(fp, majorBrand);
+                }
+
+                if (majorBrand == BRAND_ODCF)
+                {
+                    //This is an OMA2 DCF File.
+                    break;
+                }
+            }
             oReturn = true;
             break;
         }

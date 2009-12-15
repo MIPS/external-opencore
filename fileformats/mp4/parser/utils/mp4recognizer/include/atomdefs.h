@@ -226,6 +226,7 @@ const uint32    BRAND_3GR6 = FourCharConstToUint32('3', 'g', 'r', '6');
 const uint32    BRAND_MP41 = FourCharConstToUint32('m', 'p', '4', '1');
 const uint32    BRAND_MP42 = FourCharConstToUint32('m', 'p', '4', '2');
 const uint32    BRAND_ISOM = FourCharConstToUint32('i', 's', 'o', 'm');
+const uint32    BRAND_ODCF = FourCharConstToUint32('o', 'd', 'c', 'f');
 
 
 /* OMA2 DRM Atoms */
