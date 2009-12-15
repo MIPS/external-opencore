@@ -368,6 +368,7 @@ OMX_ERRORTYPE OpenmaxAvcAO::ConstructComponent(OMX_PTR pAppData, OMX_PTR pProxy)
     oscl_strncpy((OMX_STRING)iComponentRole, (OMX_STRING)"video_decoder.avc", OMX_MAX_STRINGNAME_SIZE);
 
     iDecodeReturn = OMX_FALSE;
+    iFlushOutputStatus = OMX_TRUE;
 
     if (ipAvcDec)
     {
@@ -915,7 +916,6 @@ void OpenmaxAvcAO::DecodeWithMarker()
     ComponentPortType*  pOutPort = ipPorts[OMX_PORT_OUTPUTPORT_INDEX];
 
     OMX_BOOL                MarkerFlag = OMX_TRUE;
-    OMX_BOOL                Status;
     OMX_BOOL                ResizeNeeded = OMX_FALSE;
 
     OMX_U32 CurrWidth =  ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->PortParam.format.video.nFrameWidth;
@@ -1134,7 +1134,7 @@ void OpenmaxAvcAO::DecodeWithMarker()
          * input buffers to decode, send the callback to the client*/
         if (OMX_TRUE == iEndofStream)
         {
-            if (!iDecodeReturn)
+            if (!iFlushOutputStatus)
             {
                 // this is the very last buffer to be sent out.
                 // it is empty - and has EOS flag attached to it
@@ -1150,6 +1150,7 @@ void OpenmaxAvcAO::DecodeWithMarker()
 
                 iNewInBufferRequired = OMX_TRUE;
                 iEndofStream = OMX_FALSE;
+                iFlushOutputStatus = OMX_TRUE;
 
                 // in this case - simply return the available ipOutputBuffer
                 // there is no need for involving decoder and ipOutputBufferForRendering - since this
@@ -1165,14 +1166,14 @@ void OpenmaxAvcAO::DecodeWithMarker()
 
                 return;
             }
-            else if (iDecodeReturn)
+            else if (iFlushOutputStatus)
             {
                 // flush output buffer
                 ipOutputBufferForRendering = NULL;
 
-                Status = ipAvcDec->FlushOutput_OMX(&ipOutputBufferForRendering);
+                iFlushOutputStatus = ipAvcDec->FlushOutput_OMX(&ipOutputBufferForRendering);
 
-                if (OMX_FALSE != Status)
+                if (OMX_FALSE != iFlushOutputStatus)
                 {
                     // this is the case where Flush succeeded (i.e. there is one output
                     // buffer left)
@@ -1200,7 +1201,6 @@ void OpenmaxAvcAO::DecodeWithMarker()
                 {
                     // this is the case where no output buffers can be flushed.
                     // spin the AO once again to send the empty output buffer with EOS attached to it
-                    iDecodeReturn = OMX_FALSE;
                     RunIfNotReady();
                 }
             }

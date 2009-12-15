@@ -90,7 +90,8 @@ class OpenmaxAvcAO : public OmxComponentVideo
     private:
 
         AvcDecoder_OMX* ipAvcDec;
-        OMX_BOOL                iDecodeReturn;
+        OMX_BOOL        iDecodeReturn;
+        OMX_BOOL        iFlushOutputStatus;
 
         // variables for "frame" mode i.e. iOMXComponentNeedsFullAVCFrames is turned on
         OMX_U32 iNALSizeArray[MAX_NAL_PER_FRAME]; // 100 should be more than enough NALs per frame
