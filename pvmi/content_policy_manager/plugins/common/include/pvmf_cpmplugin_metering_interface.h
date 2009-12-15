@@ -124,6 +124,33 @@ class PVMFCPMPluginMeteringInterface : public PVInterface
         virtual PVMFStatus GetMeteringStatus(
             PVMFCPMMeterStatus& aStatus) = 0;
 
+        /**
+         * Method deletes a metering certificate from the metering certificate
+         * store.
+         *
+         * @param [in] aMeteringData: PVMFCPMMeteringData structure containing
+         *    data related to this metering request.
+         * @param [out] aErrCode: Error code
+         *
+         * @returns A unique command id for asynchronous completion.
+         */
+        virtual PVMFCommandId DeleteMeterCertificate(
+            const PVMFCPMMeteringData& aMeteringData,
+            uint32& aErrCode) = 0;
+
+        /**
+         * Method invalidates a metering certificate in a metering certificate context.
+         * store.
+         *
+         * @param [in] aMeteringData: PVMFCPMMeteringData structure containing
+         *    data related to this metering request.
+         * @param [out] aErrCode: Error code.
+         *
+         * @returns A unique command id for asynchronous completion.
+         */
+        virtual PVMFCommandId InvalidateMeterCertificate(
+            const PVMFCPMMeteringData& aMeteringData,
+            uint32& aErrCode) = 0;
 };
 
 #endif //PVMF_CPMPLUGIN_DOMAIN_INTERFACE_H_INCLUDED
