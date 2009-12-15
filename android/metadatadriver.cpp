@@ -30,8 +30,7 @@ using namespace android;
 
 // Limit max size of album art to 3M
 // If album art exceeds the max, dont truncate, return nothing.
-const char* MetadataDriver::ALBUM_ART_KEY = "graphic;maxsize=3000000;truncate=false";
-
+const char* MetadataDriver::ALBUM_ART_KEY = "graphic;format=APIC";
 const char* MetadataDriver::METADATA_KEYS[NUM_METADATA_KEYS] = {
         "track-info/track-number",
         "album",
@@ -337,7 +336,8 @@ status_t MetadataDriver::doExtractAlbumArt()
             if (PVMI_KVPVALTYPE_KSV == GetValTypeFromKeyString(mMetadataValueList[i].key)) {
                 const char* embeddedKey = "graphic;format=APIC;valtype=ksv";
                 const char* externalKey = "graphic;valtype=char*";
-                if (strstr(mMetadataValueList[i].key, embeddedKey) && mMetadataValueList[i].value.key_specific_value) {
+                const char* reqsizekey = "reqsize";
+                if (strstr(mMetadataValueList[i].key, embeddedKey) && mMetadataValueList[i].value.key_specific_value && !strstr(mMetadataValueList[i].key, reqsizekey)) {
                     // Embedded album art.
                     status = extractEmbeddedAlbumArt(((PvmfApicStruct*)mMetadataValueList[i].value.key_specific_value));
                 } else if (strstr(mMetadataValueList[i].key, externalKey)) {
@@ -638,6 +638,15 @@ void MetadataDriver::handleGetMetadataValues()
     mNumMetadataValues = 0;
     mMetadataValueList.clear();
     trimKeys();  // Switch to use actual supported key list.
+    const char* album_3000000_key = "graphic;format=APIC;maxsize=3000000";
+    const char* album_key = "graphic;format=APIC";
+    for (uint32 i = 0, n = mActualMetadataKeyList.size(); i < n; ++i) {
+         if (strcasestr(mActualMetadataKeyList[i].get_cstr(), album_key)) {
+             mActualMetadataKeyList[i].set(album_3000000_key, oscl_strlen(album_3000000_key));
+             LOGV("handleGetMetadataValues: album art key: %s", mActualMetadataKeyList[i].get_cstr());
+             break;
+         }
+    }
     OSCL_TRY(error, mCmdId = mUtil->GetMetadataValues(mActualMetadataKeyList, 0, -1, mNumMetadataValues, mMetadataValueList, (OsclAny*)&mContextObject));
     OSCL_FIRST_CATCH_ANY(error, handleCommandFailure());
 }

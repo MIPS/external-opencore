@@ -18,6 +18,7 @@
 
 
 #include <media/mediascanner.h>
+#include <private/media/VideoFrame.h>
 #include <stdio.h>
 
 
@@ -839,6 +840,32 @@ static char* extractM4AAlbumArt(int fd)
     return result;
 }
 
+static char* extractASFAlbumArt(int fd)
+{
+    struct stat asfbuf;
+    char *data = NULL;
+    sp<MediaMetadataRetriever> retriever = new MediaMetadataRetriever();
+    if ((retriever == NULL) && (0 != (fstat(fd,&asfbuf)))) {
+        return data;
+    }
+    retriever->setMode( 1 /*MediaMetadataRetriever.MODE_GET_METADATA_ONLY*/);
+    status_t status = retriever->setDataSource(fd,0,asfbuf.st_size);
+    if (status == NO_ERROR) {
+        sp<IMemory> bitmap = retriever->extractAlbumArt();
+        if (bitmap != NULL) {
+            MediaAlbumArt *albumArtCopy = static_cast<MediaAlbumArt *>(bitmap->pointer());
+            data = (char*)malloc(albumArtCopy->mSize + 4);
+            if (data && albumArtCopy->mData) {
+                long *len = (long*)data;
+                *len = albumArtCopy->mSize;
+                albumArtCopy->mData = (uint8_t *)albumArtCopy + sizeof(MediaAlbumArt);
+                memcpy(data + 4, (const char*)albumArtCopy->mData, *len);
+            }
+        }
+    }
+    retriever->disconnect();
+    return data;
+}
 
 char* MediaScanner::extractAlbumArt(int fd)
 {
@@ -855,7 +882,10 @@ char* MediaScanner::extractAlbumArt(int fd)
                 // some kind of mpeg 4 stream
                 lseek(fd, 0, SEEK_SET);
                 albumArtData = extractM4AAlbumArt(fd);
-            } else {
+            }else if (ident == 0x11CF668E) {
+                lseek(fd, 0, SEEK_SET);
+                albumArtData = extractASFAlbumArt(fd);
+            }else {
                 // might be mp3
                 albumArtData = extractMP3AlbumArt(fd);
             }
