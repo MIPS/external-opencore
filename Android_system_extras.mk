@@ -2,7 +2,7 @@
 LOCAL_LDLIBS := -lpthread
 
 ifeq ($(TARGET_OS)-$(TARGET_SIMULATOR),linux-true)
-LOCAL_LDLIBS += -ldl
+LOCAL_LDLIBS += -ldl -lrt
 endif
 ifneq ($(TARGET_SIMULATOR),true)
 LOCAL_SHARED_LIBRARIES += libdl
