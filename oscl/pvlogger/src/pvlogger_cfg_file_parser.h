@@ -129,7 +129,7 @@ class PVLoggerCfgFileParser
         // LogCfgElement                                                STRUCT
         //======================================================================
         //
-        typedef struct LogCfgElement
+        struct LogCfgElement
         {
             LogCfgElement
             (
