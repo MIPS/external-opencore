@@ -544,7 +544,11 @@ static PVMFStatus parseASF(const char *filename, MediaScannerClient& client)
     value = retriever->extractMetadata(METADATA_KEY_CD_TRACK_NUMBER);
     if (value)
         client.addStringTag("track-info/track-number", value);
-
+    value = retriever->extractMetadata(METADATA_KEY_DURATION);
+    if (value) {
+        client.addStringTag("duration",value);
+        LOGE("Duration Value %s for \n",value);
+    }
     retriever->disconnect();
     return PVMFSuccess;
 }
