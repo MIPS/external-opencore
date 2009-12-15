@@ -1602,14 +1602,14 @@ PVMFStatus PVMediaOutputNode::SendMioRequest(PVMediaOutputNodeCmd& aCmd, EMioReq
     //save media io request.
     iMediaIORequest = aRequest;
 
-    PVMFStatus status;
+    PVMFStatus status = PVMFPending;
+    int32 err = OsclErrGeneral;
 
     //Issue the command to the MIO.
     switch (aRequest)
     {
         case EQueryCapability:
         {
-            int32 err ;
             iMIOConfigPVI = NULL;
             OSCL_TRY(err,
                      iMediaIOCmdId = iMIOControl->QueryInterface(PVMI_CAPABILITY_AND_CONFIG_PVUUID,
@@ -1623,16 +1623,11 @@ PVMFStatus PVMediaOutputNode::SendMioRequest(PVMediaOutputNodeCmd& aCmd, EMioReq
                 aCmd.iEventCode = PVMFMoutNodeErr_MediaIOQueryCapConfigInterface;
                 status = PVMFFailure;
             }
-            else
-            {
-                status = PVMFPending;
-            }
         }
         break;
 
         case EQueryClockExtension:
         {
-            int32 err ;
             iMIOClockExtensionPVI = NULL;
             OSCL_TRY(err,
                      iMediaIOCmdId = iMIOControl->QueryInterface(PvmiClockExtensionInterfaceUuid,
@@ -1646,23 +1641,20 @@ PVMFStatus PVMediaOutputNode::SendMioRequest(PVMediaOutputNodeCmd& aCmd, EMioReq
                 //this interface is optional so ignore the error
                 status = PVMFSuccess;
             }
-            else
-            {
-                status = PVMFPending;
-            }
         }
         break;
 
         case EInit:
         {
-            int32 err = OsclErrNone;
             PvmiMediaTransfer* mediaTransfer = NULL;
             if (iInPortVector.size() > 0)
             {
                 mediaTransfer = iInPortVector[0]->getMediaTransfer();
             }
-
-            OSCL_TRY(err, iMediaIOCmdId = iMIOControl->Init(););
+            if (mediaTransfer != NULL)
+            {
+                OSCL_TRY(err, iMediaIOCmdId = iMIOControl->Init(););
+            }
             if ((err != OsclErrNone))
             {
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
@@ -1670,17 +1662,11 @@ PVMFStatus PVMediaOutputNode::SendMioRequest(PVMediaOutputNodeCmd& aCmd, EMioReq
                 aCmd.iEventCode = PVMFMoutNodeErr_MediaIOInit;
                 status = PVMFFailure;
             }
-            else
-            {
-                status = PVMFPending;
-            }
         }
         break;
 
         case EStart:
         {
-
-            int32 err = OsclErrNone;
             PvmiMediaTransfer* mediaTransfer = NULL;
             if (iInPortVector.size() > 0)
             {
@@ -1690,23 +1676,18 @@ PVMFStatus PVMediaOutputNode::SendMioRequest(PVMediaOutputNodeCmd& aCmd, EMioReq
             {
                 OSCL_TRY(err, iMediaIOCmdId = iMIOControl->Start(););
             }
-            if ((err != OsclErrNone) || (mediaTransfer == NULL))
+            if (err != OsclErrNone)
             {
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
                                 (0, "PVMediaOutputNode::SendMioRequest: Error - iMIOControl->Start failed"));
                 aCmd.iEventCode = PVMFMoutNodeErr_MediaIOStart;
                 status = PVMFFailure;
             }
-            else
-            {
-                status = PVMFPending;
-            }
         }
         break;
 
         case EPause:
         {
-            int32 err = OsclErrNone;
             PvmiMediaTransfer* mediaTransfer = NULL;
             if (iInPortVector.size() > 0)
             {
@@ -1716,24 +1697,18 @@ PVMFStatus PVMediaOutputNode::SendMioRequest(PVMediaOutputNodeCmd& aCmd, EMioReq
             {
                 OSCL_TRY(err, iMediaIOCmdId = iMIOControl->Pause(););
             }
-            if ((err != OsclErrNone) || (mediaTransfer == NULL))
+            if (err != OsclErrNone)
             {
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
                                 (0, "PVMediaOutputNode::SendMioRequest: Error - iMIOControl->Pause failed"));
                 aCmd.iEventCode = PVMFMoutNodeErr_MediaIOPause;
                 status = PVMFFailure;
             }
-            else
-            {
-                status = PVMFPending;
-            }
         }
         break;
 
         case EStop:
         {
-
-            int32 err = OsclErrNone;
             PvmiMediaTransfer* mediaTransfer = NULL;
             if (iInPortVector.size() > 0)
             {
@@ -1750,23 +1725,18 @@ PVMFStatus PVMediaOutputNode::SendMioRequest(PVMediaOutputNodeCmd& aCmd, EMioReq
             {
                 OSCL_TRY(err, iMediaIOCmdId = iMIOControl->Stop(););
             }
-            if ((err != OsclErrNone) || (mediaTransfer == NULL))
+            if (err != OsclErrNone)
             {
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
                                 (0, "PVMediaOutputNode::SendMioRequest: Error - iMIOControl->Stop failed"));
                 aCmd.iEventCode = PVMFMoutNodeErr_MediaIOStop;
                 status = PVMFFailure;
             }
-            else
-            {
-                status = PVMFPending;
-            }
         }
         break;
 
         case EDiscard:
         {
-            int32 err = OsclErrNone;
             PvmiMediaTransfer* mediaTransfer = NULL;
             if (iInPortVector.size() > 0)
             {
@@ -1782,23 +1752,18 @@ PVMFStatus PVMediaOutputNode::SendMioRequest(PVMediaOutputNodeCmd& aCmd, EMioReq
                                 (0, "PVMediaOutputNode::SendMioRequest(EDiscard): skipTimestamp=%d", resumeTimestamp));
                 OSCL_TRY(err, iMediaIOCmdId = iMIOControl->DiscardData(resumeTimestamp););
             }
-            if ((err != OsclErrNone) || (mediaTransfer == NULL))
+            if (err != OsclErrNone)
             {
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
                                 (0, "PVMediaOutputNode::SendMioRequest: Error - iMIOControl->DiscardData failed"));
                 aCmd.iEventCode = PVMFMoutNodeErr_MediaIODiscardData;
                 status = PVMFFailure;
             }
-            else
-            {
-                status = PVMFPending;
-            }
         }
         break;
 
         case EReset:
         {
-            int32 err ;
             OSCL_TRY(err, iMediaIOCmdId = iMIOControl->Reset(););
             if (err != OsclErrNone)
             {
@@ -1806,10 +1771,6 @@ PVMFStatus PVMediaOutputNode::SendMioRequest(PVMediaOutputNodeCmd& aCmd, EMioReq
                                 (0, "PVMediaOutputNode::SendMioRequest: Error - iMIOControl->Reset failed"));
                 aCmd.iEventCode = PVMFMoutNodeErr_MediaIOReset;
                 status = PVMFFailure;
-            }
-            else
-            {
-                status = PVMFPending;
             }
         }
         break;

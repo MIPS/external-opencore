@@ -1139,13 +1139,13 @@ void pvplayer_async_test_printmetadata::PrintMetadataInfo()
                 if ((int32)StartIndex == iCodecSpecificInfoAudioIndex)
                 {
                     fprintf(iTestMsgOutputFile, "Value %d:\n", (i + 1));
-                    fprintf(iTestMsgOutputFile, "   Key string: %s\n", iMetadataValueList[sCSI[jj].MetadataKeyIndex].key);
+                    fprintf(iTestMsgOutputFile, "   Key string: %s\n", iMetadataValueList[i].key);
                     PrintCodecSpecificInfo(iMetadataValueList[i].value.pChar_value, INDEX_CODEC_SPECIFIC_INFO_AUDIO);
                 }
                 else if ((int32)StartIndex == iCodecSpecificInfoVideoIndex)
                 {
                     fprintf(iTestMsgOutputFile, "Value %d:\n", (i + 1));
-                    fprintf(iTestMsgOutputFile, "   Key string: %s\n", iMetadataValueList[sCSI[jj].MetadataKeyIndex].key);
+                    fprintf(iTestMsgOutputFile, "   Key string: %s\n", iMetadataValueList[i].key);
                     PrintCodecSpecificInfo(iMetadataValueList[i].value.pChar_value, INDEX_CODEC_SPECIFIC_INFO_VIDEO);
                 }
             }
