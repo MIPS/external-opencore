@@ -439,6 +439,7 @@ OSCL_EXPORT_REF PVMFOMXBaseDecNode::PVMFOMXBaseDecNode(int32 aPriority, const ch
     iOMXComponentInputBufferSize = 0;
     iNumInputBuffers = 0;
     iInputBufferAlignment = 0;
+    iNumOutstandingInputBuffers = 0;
 
     iDoNotSendOutputBuffersDownstreamFlag = false;
     iDoNotSaveInputBuffersFlag = false;

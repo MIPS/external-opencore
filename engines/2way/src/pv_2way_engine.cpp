@@ -4034,21 +4034,38 @@ void CPV324m2Way::InternalError()
     switch (iState)
     {
         case EDisconnecting:
-            iAudioDecDatapath->TSCPortClosed();
-            iAudioEncDatapath->TSCPortClosed();
-            iVideoDecDatapath->TSCPortClosed();
-            iVideoEncDatapath->TSCPortClosed();
+        case EConnecting:
+        case EConnected:
+            if (iAudioDecDatapath)
+            {
+                iAudioDecDatapath->TSCPortClosed();
+            }
+            if (iAudioEncDatapath)
+            {
+                iAudioEncDatapath->TSCPortClosed();
+            }
+            if (iVideoDecDatapath)
+            {
+                iVideoDecDatapath->TSCPortClosed();
+            }
+            if (iVideoEncDatapath)
+            {
+                iVideoEncDatapath->TSCPortClosed();
+            }
 
+            break;
+
+        default:
+            break;
+    }
+    switch (iState)
+    {
+        case EDisconnecting:
             CheckState();
             break;
 
         case EConnecting:
         case EConnected:
-            iAudioDecDatapath->TSCPortClosed();
-            iAudioEncDatapath->TSCPortClosed();
-            iVideoDecDatapath->TSCPortClosed();
-            iVideoEncDatapath->TSCPortClosed();
-
             InitiateDisconnect();
             break;
 

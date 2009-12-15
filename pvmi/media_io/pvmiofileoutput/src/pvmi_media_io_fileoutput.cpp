@@ -66,6 +66,7 @@ OSCL_EXPORT_REF PVRefFileOutput::PVRefFileOutput(const OSCL_wString& aFileName, 
     initData();
     iLogStrings = logStrings;
     iMediaType = MEDIATYPE_UNKNOWN;
+    iCompressedMedia = false;
 }
 
 
