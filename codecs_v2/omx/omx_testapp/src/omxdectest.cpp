@@ -5800,7 +5800,7 @@ AVCOMX_Status AVCBitstreamObject::GetNextFullNAL(OMX_U8** aNalBuffer, OMX_S32* a
 }
 
 AVCOMX_Status AVCBitstreamObject::AVCAnnexBGetNALUnit(uint8 *bitstream, uint8 **nal_unit,
-        int *size)
+        int32 *size)
 {
     int i, j, FoundStartCode = 0;
     int end;

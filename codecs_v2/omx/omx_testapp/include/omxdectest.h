@@ -566,7 +566,7 @@ class AVCBitstreamObject
 
         //! most important function to get next NAL data plus NAL size, also serves as the callback function of videoCtrl
         AVCOMX_Status GetNextFullNAL(OMX_U8** aNalBuffer, OMX_S32* aNalSize);
-        AVCOMX_Status AVCAnnexBGetNALUnit(uint8 *bitstream, uint8 **nal_unit, int *size);
+        AVCOMX_Status AVCAnnexBGetNALUnit(uint8 *bitstream, uint8 **nal_unit, int32 *size);
 
         void    ResetInputStream();
 
