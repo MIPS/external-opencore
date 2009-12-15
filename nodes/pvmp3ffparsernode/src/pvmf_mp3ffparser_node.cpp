@@ -2822,9 +2822,16 @@ OSCL_EXPORT_REF void PVMFCPMContainerMp3::CPMCommandCompleted(const PVMFCmdResp&
                 iContainer->Push(iContainer->iCPMContainer,
                                  PVMFSubNodeContainerBaseMp3::ECPMCheckUsage);
             }
-            CommandDone(status,
-                        aResponse.GetEventExtensionInterface(),
-                        aResponse.GetEventData());
+            if (status != PVMFPending)
+            {
+                CommandDone(status,
+                            aResponse.GetEventExtensionInterface(),
+                            aResponse.GetEventData());
+            }
+            else
+            {
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iContainer->iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFCPMContainerMp3::CPMCommandCompleted - pending for more data "));
+            }
         }
         else
         {
