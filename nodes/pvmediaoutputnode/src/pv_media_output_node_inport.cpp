@@ -1869,7 +1869,7 @@ void PVMediaOutputNodePort::HandlePortActivity(const PVMFPortActivity& aActivity
             break;
 
         case PVMF_PORT_ACTIVITY_INCOMING_MSG:
-            if (IncomingMsgQueueSize() > 0 && (iCurrentMediaMsg.GetRep() == NULL))
+            if (IncomingMsgQueueSize() > 0)
             {
                 PVMFSharedMediaMsgPtr peekMsgPtr;
                 bool oBos = false;
