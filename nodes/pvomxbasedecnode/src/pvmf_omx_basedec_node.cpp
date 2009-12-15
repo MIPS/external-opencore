@@ -1003,6 +1003,7 @@ PVMFStatus PVMFOMXBaseDecNode::HandleProcessingState()
                                     (0, "%s::HandleProcessingState() Decoder initialization failed", iName.Str()));
                     ReportErrorEvent(PVMFErrResourceConfiguration);
                     ChangeNodeState(EPVMFNodeError);
+                    status = PVMFFailure;
                     break;
                 }
 
