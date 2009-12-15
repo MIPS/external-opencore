@@ -130,14 +130,16 @@ OSCL_EXPORT_REF PVMFNodeInterfaceImpl::~PVMFNodeInterfaceImpl()
 OSCL_EXPORT_REF PVMFStatus PVMFNodeInterfaceImpl::ThreadLogon()
 {
     PVMF_NODEINTERFACE_IMPL_LOGSTACKTRACE((0, "%s::ThreadLogon() In", iNodeName.Str()));
-    if (!IsAdded())
-    {
-        AddToScheduler();
-    }
+
     if (iInterfaceState != EPVMFNodeCreated)
     {
         PVMF_NODEINTERFACE_IMPL_LOGSTACKTRACE((0, "%s::ThreadLogon() Failed", iNodeName.Str()));
         return PVMFErrInvalidState;
+    }
+
+    if (!IsAdded())
+    {
+        AddToScheduler();
     }
 
     SetState(EPVMFNodeIdle);
@@ -149,16 +151,18 @@ OSCL_EXPORT_REF PVMFStatus PVMFNodeInterfaceImpl::ThreadLogon()
 OSCL_EXPORT_REF PVMFStatus PVMFNodeInterfaceImpl::ThreadLogoff()
 {
     PVMF_NODEINTERFACE_IMPL_LOGSTACKTRACE((0, "%s::ThreadLogoff() In", iNodeName.Str()));
-    if (IsAdded())
-    {
-        RemoveFromScheduler();
-    }
 
     if (iInterfaceState != EPVMFNodeIdle)
     {
         PVMF_NODEINTERFACE_IMPL_LOGSTACKTRACE((0, "%s::ThreadLogoff() Failed", iNodeName.Str()));
         return PVMFErrInvalidState;
     }
+
+    if (IsAdded())
+    {
+        RemoveFromScheduler();
+    }
+
     SetState(EPVMFNodeCreated);
     PVMF_NODEINTERFACE_IMPL_LOGSTACKTRACE((0, "%s::ThreadLogoff() Out", iNodeName.Str()));
     return PVMFSuccess;
