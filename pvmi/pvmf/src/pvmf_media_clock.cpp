@@ -67,9 +67,8 @@ void PVMFMediaClock::CleanCallbackInfImplObjects()
             (iMediaClockSetCallbackObjects[ii]->iNotificationInterfaceDestroyedCallback)->NotificationsInterfaceDestroyed();
         }
         OSCL_DELETE(iMediaClockSetCallbackObjects[ii]);
-        iMediaClockSetCallbackObjects.erase(&iMediaClockSetCallbackObjects[ii]);
     }
-
+    iMediaClockSetCallbackObjects.clear();
     iHighestLatency = 0;
 }
 

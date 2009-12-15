@@ -25,7 +25,6 @@
 class PV2WayMediaInputMIONodeFactory: public HeapBase, public PV2WayMIONodeFactory
 {
     public:
-        OSCL_IMPORT_REF void Release();
         PV2WayMediaInputMIONodeFactory() {};
         virtual ~PV2WayMediaInputMIONodeFactory() {};
         OSCL_IMPORT_REF virtual PVMFNodeInterface* Create(PvmiMIOFileInputSettings& aFileSettings);
@@ -34,6 +33,9 @@ class PV2WayMediaInputMIONodeFactory: public HeapBase, public PV2WayMIONodeFacto
         PvmiMIOControl* iMediaControl;
         int CreateMedia(PvmiMIOFileInputSettings& aFileSettings);
         void DeleteMedia();
+
+        // from PV2WayMIONodeFactory
+        void Release();
 };
 
 

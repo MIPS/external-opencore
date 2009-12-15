@@ -218,6 +218,7 @@ class PVMediaOutputNodePort
             return iMediaTransfer;
         }
     private:
+        void CleanupClock();
         void Run();
         bool peekHead(PVMFSharedMediaMsgPtr& dataPtr, bool& bBos);
         PVMFStatus ConfigMIO(PvmiKvp* aParameters, PvmiKvp* &aRetParameters);

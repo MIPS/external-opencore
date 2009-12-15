@@ -620,6 +620,18 @@ TPVStatusCode CPVH223Multiplex::GetAdaptationLayer(OsclSharedPtr<AdaptationLayer
     return EPVT_Success;
 }
 
+void CPVH223Multiplex::SetClock(PVMFMediaClock* aClock)
+{
+    iClock = aClock;
+
+    for (unsigned lcnindex = 0; lcnindex < iIncomingChannels.size(); lcnindex++)
+    {
+        iIncomingChannels[lcnindex]->SetClock(aClock);
+    }
+
+}
+
+
 TPVStatusCode CPVH223Multiplex::OpenChannel(TPVDirection direction,
         TPVChannelId channel_id,
         H223ChannelParam* h223params)

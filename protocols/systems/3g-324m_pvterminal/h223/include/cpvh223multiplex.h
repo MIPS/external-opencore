@@ -159,10 +159,7 @@ class CPVH223Multiplex :  public LowerLayerObserver,
         /* set count of stuffing frames needed to detect a level */
         void SetLevelCheckCount(uint16 aCount);
 
-        void SetClock(PVMFMediaClock* aClock)
-        {
-            iClock = aClock;
-        }
+        void SetClock(PVMFMediaClock* aClock);
         void SetMultiplexingDelayMs(uint16 aDelay);
         void SetLogicalChannelBufferingMs(uint32 aInBufferingMs,
                                           uint32 aOutBufferingMs);

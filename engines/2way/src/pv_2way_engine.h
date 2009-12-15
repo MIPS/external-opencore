@@ -74,10 +74,8 @@
 
 
 // COMM and Stack related
-#ifndef NO_2WAY_324
 #ifndef TSCMAIN_H_INCLUDED // Gkl
 #include "tscmain.h"
-#endif
 #endif
 
 #define MAX_TX_AUDIO_CODECS_SUPPORTED 2
@@ -698,9 +696,7 @@ class CPV324m2Way : OsclActiveObject,
         public PVMFNodeErrorEventObserver,
         public MPV2WayNodeCommandObserver,
         public MPV2WayNodeConfigurationObserver,
-#ifndef NO_2WAY_324
         public TSCObserver,
-#endif
         public OsclTimerObserver,
         public PV2WayTestExtensionInterface
 {
@@ -771,9 +767,7 @@ class CPV324m2Way : OsclActiveObject,
         void TimeoutOccurred(int32 timerID, int32 timeoutInfo);
         CPV2WayDataChannelDatapath *GetDataPath(PV2WayDirection Direction, PVTrackId TrackId);
 
-#ifndef NO_2WAY_324
         bool AllChannelsOpened();
-#endif
         bool Supports(PVMFNodeCapability &capability, PVMFFormatType aFormat, bool isInput = true);
 #ifdef MEM_TRACK
         void MemStats();
@@ -958,6 +952,14 @@ class CPV324m2Way : OsclActiveObject,
                                     TPVChannelId aId,
                                     PVCodecType_t aCodec,
                                     uint8* fsi, uint32 fsi_len);
+
+        void StartClock();
+        void StartTscClock();
+        int32 SkipMediaData(PvmfNodesSyncControlInterface& aNodeSyncCtrl,
+                            TPV2WayNode* aNode,
+                            TPV2WayNodeCmdInfo& aInfo);
+
+
 #ifdef PV_USE_DSP_AMR_CODECS
         void InitializeDsp();
         void ReleaseDsp();
@@ -1065,7 +1067,6 @@ class CPV324m2Way : OsclActiveObject,
         OsclTimer<OsclMemAllocator>* iRemoteDisconnectTimer;
         bool isIFrameReqTimerActive;
 
-#ifndef NO_2WAY_324
         Oscl_Vector<H324ChannelParameters, PVMFTscAlloc> iIncomingChannelParams;
         Oscl_Map < PVMFFormatType, FormatCapabilityInfo,
         OsclMemAllocator, pvmf_format_type_key_compare_class > iIncomingAudioCodecs;
@@ -1100,7 +1101,6 @@ class CPV324m2Way : OsclActiveObject,
         int32 iIncomingVideoTrackTag;
         int32 iOutgoingAudioTrackTag;
         int32 iOutgoingVideoTrackTag;
-#endif
         PVUuid iVideoEncPVUuid;
         PVUuid iAudioEncPVUuid;
         PVMFCommandId iVideoEncQueryIntCmdId;
@@ -1117,6 +1117,7 @@ class CPV324m2Way : OsclActiveObject,
 
         /* Common clock to be shared with nodes that support the PvmfNodesSyncControlInterface interface */
         PVMFMediaClock iClock;
+        PVMFMediaClock iMuxClock;
         PVMFTimebase_Tickcount iTickCountTimeBase;
 
         friend class CPV2WayCmdControlDatapath;

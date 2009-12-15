@@ -353,7 +353,6 @@ TPVStatusCode TSC_324m::InitTsc()
 
     iTSCcapability.SetMembers(iTSCcomponent);
     iTSCmt.SetMembers(iH245, iH223, iTSCcomponent);
-    iH223->SetClock(iClock);
     iH223->Open();
 
     // set direct connection to MSD SE
@@ -636,7 +635,6 @@ TSC_324m::Connect(uint16 info_len, uint8* info_buf)
     iH223->SetMultiplexingDelayMs((uint16)iMultiplexingDelayMs);
     iH223->SetLogicalChannelBufferingMs(iInLogicalChannelBufferingMs,
                                         iOutLogicalChannelBufferingMs);
-    iH223->SetClock(iClock);
 
     S_H223LogicalChannelParameters lcnParams;
     lcnParams.segmentableFlag = true;
@@ -668,6 +666,15 @@ TSC_324m::Connect(uint16 info_len, uint8* info_buf)
 OSCL_EXPORT_REF void TSC_324m::SetClock(PVMFMediaClock* aClock)
 {
     iClock = aClock;
+    if (iH223)
+    {
+        iH223->SetClock(iClock);
+    }
+    else
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
+                        (0, "TSC_324m::SetClock could not set iH223 clock."));
+    }
 }
 
 void TSC_324m::DataReceptionStart()
@@ -2310,22 +2317,6 @@ void TSC_324m::SendVideoTemporalSpatialTradeoffIndication(TPVChannelId aLogicalC
                    aTradeoff);
 }
 
-void TSC_324m::SetDatapathLatency(TPVDirection aDir, PVMFPortInterface* aPort,
-                                  uint32 aLatency)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                    (0, "TSC_324m::SetDatapathLatency aDir=%d, aPort=%x, aLatency=%d", aDir, aPort, aLatency));
-    OSCL_UNUSED_ARG(aDir);
-    H223LogicalChannel* lcn = OSCL_STATIC_CAST(H223LogicalChannel* , aPort);
-    if (lcn == NULL)
-    {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_WARNING,
-                        (0, "TSC_324m::SetDatapathLatency WARNING lcn==NULL"));
-        return;
-    }
-
-    lcn->SetDatapathLatency(aLatency);
-}
 
 void TSC_324m::SendSkewIndication(TPVChannelId aLogicalChannel1,
                                   TPVChannelId aLogicalChannel2,

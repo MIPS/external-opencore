@@ -204,21 +204,14 @@ PVMediaOutputNodePort::~PVMediaOutputNodePort()
         OSCL_TRY(err, iMediaTransfer->cancelAllCommands(););
         ClearCleanupQueue();
     }
-    if (iClock != NULL)
-    {
-        if (iClockNotificationsInf != NULL)
-        {
-            iClockNotificationsInf->RemoveClockObserver(*this);
-            iClockNotificationsInf->RemoveClockStateObserver(*this);
-            iClock->DestroyMediaClockNotificationsInterface(iClockNotificationsInf);
-            iClockNotificationsInf = NULL;
-        }
-    }
+    CleanupClock();
+
     // we need to clear the activity handler, since otherwise the PvmfPortBaseImpl destructor
     // ends up calling back onto our HandlePortActivity method, which no longer exists because
     // this objects's destructor has already been called.
     SetActivityHandler(NULL);
 }
+
 
 ////////////////////////////////////////////////////////////////////////////
 PVMFStatus PVMediaOutputNodePort::Configure(OSCL_String& fmtstr)
@@ -343,17 +336,7 @@ void PVMediaOutputNodePort::CleanupMediaTransfer()
                             );
         iMediaTransfer = NULL;
     }
-    if (iClock != NULL)
-    {
-        if (iClockNotificationsInf != NULL)
-        {
-            iClockNotificationsInf->RemoveClockObserver(*this);
-            iClockNotificationsInf->RemoveClockStateObserver(*this);
-            iClock->DestroyMediaClockNotificationsInterface(iClockNotificationsInf);
-        }
-        iClockNotificationsInf = NULL;
-        iClock = NULL;
-    }
+    CleanupClock();
     if (iCurrentMediaMsg.GetRep() != NULL)
     {
         iCurrentMediaMsg.Unbind();
@@ -512,6 +495,20 @@ void PVMediaOutputNodePort::SetMIOComponentConfigStatus(bool aStatus)
     ProcessIncomingMessageIfPossible();
 }
 
+void PVMediaOutputNodePort::CleanupClock()
+{
+    if (iClock != NULL)
+    {
+        if (iClockNotificationsInf != NULL)
+        {
+            iClockNotificationsInf->RemoveClockObserver(*this);
+            iClockNotificationsInf->RemoveClockStateObserver(*this);
+            iClock->DestroyMediaClockNotificationsInterface(iClockNotificationsInf);
+            iClockNotificationsInf = NULL;
+        }
+    }
+    iClock = NULL;
+}
 
 ////////////////////////////////////////////////////////////////////////////
 //for sync control interface
@@ -519,6 +516,7 @@ PVMFStatus PVMediaOutputNodePort::SetClock(PVMFMediaClock* aClock)
 {
     if (NULL == aClock)
     {
+        CleanupClock();
         return PVMFErrArgument;
     }
     iClock = aClock;
@@ -1000,6 +998,7 @@ void PVMediaOutputNodePort::SendData()
 //send data to the MIO componenent.
 {
     const int32 toleranceWndForCallback = 0;
+
     if (iCurrentMediaMsg->getFormatID() == PVMF_MEDIA_CMD_EOS_FORMAT_ID)
     {
         if (oActiveMediaOutputComp)

@@ -461,8 +461,6 @@ uint32 TSC_324m::SkewIndicationRecv(PS_ControlMsgHeader  pReceiveInf)
         return iTerminalStatus;
     }
 
-    channel->SetTimestampOffset(skew);
-
     return iTerminalStatus;
 }
 

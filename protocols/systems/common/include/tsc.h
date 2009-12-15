@@ -106,7 +106,6 @@ class TSC : public PVInterface
         virtual void ResetStats() = 0;
         virtual void LogStats(TPVDirection dir) = 0;
         virtual LogicalChannelInfo* GetLogicalChannelInfo(PVMFPortInterface& port) = 0;
-        virtual void SetDatapathLatency(TPVDirection aDir, PVMFPortInterface* aPort, uint32 aLatency) = 0;
         virtual void SetSkewReference(PVMFPortInterface* aPort, PVMFPortInterface* aReferencePort) = 0;
 
     protected:

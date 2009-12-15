@@ -315,7 +315,6 @@ class TSC_324m : public OsclActiveObject,
         const uint8* GetFormatSpecificInfo(PVMFPortInterface* port, uint32* len);
         TPVStatusCode RequestMaxMuxPduSize(unsigned aPduSize);
         OSCL_IMPORT_REF TPVStatusCode SetTerminalType(uint8 aTType);
-        void SetDatapathLatency(TPVDirection aDir, PVMFPortInterface* aPort, uint32 aLatency);
         void SetSkewReference(PVMFPortInterface* aPort, PVMFPortInterface* aReferencePort);
         OSCL_IMPORT_REF void SetMultiplexingDelayMs(uint16 aDelay);
 

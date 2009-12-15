@@ -65,9 +65,7 @@
 
 #include "oscl_dll.h"
 
-#ifndef NO_2WAY_324
 #include "tsc_h324m_config_interface.h"
-#endif
 
 
 #include "pvmf_nodes_sync_control.h"
@@ -106,8 +104,8 @@ const uint32 resume_timestamp = 0;
 #define STREAMID 0
 #define PBPOSITION_CONTINUOUS false
 //Early and late margins for audio and video frames
-#define SYNC_EARLY_MARGIN 100
-#define SYNC_LATE_MARGIN 100
+#define SYNC_EARLY_MARGIN 1000000 // 10s
+#define SYNC_LATE_MARGIN 1000000 // 10s
 
 //Preferred codecs
 #define VIDEO_CODEC_MPEG4 1
@@ -252,12 +250,10 @@ CPV324m2Way::CPV324m2Way() :
         iEndSessionTimer(NULL),
         iRemoteDisconnectTimer(NULL),
         isIFrameReqTimerActive(false),
-#ifndef NO_2WAY_324
         iIncomingAudioTrackTag(INVALID_TRACK_ID),
         iIncomingVideoTrackTag(INVALID_TRACK_ID),
         iOutgoingAudioTrackTag(INVALID_TRACK_ID),
         iOutgoingVideoTrackTag(INVALID_TRACK_ID),
-#endif
         iVideoEncQueryIntCmdId(-1),
 
         iTSCInterface(NULL),
@@ -316,7 +312,6 @@ CPV324m2Way::~CPV324m2Way()
 
 
     iFormatCapability.clear();
-    iClock.Stop();
     iSinkNodeList.clear();
     ClearVideoEncNode();
 
@@ -463,13 +458,11 @@ void CPV324m2Way::PreInit()
 
             if (iTerminalType == PV_324M)
             {
-#ifndef NO_2WAY_324
                 iTscNode = TPV2WayNode(OSCL_NEW(TSC_324m, (PV_LOOPBACK_MUX)));
                 iTSC324mInterface = (TSC_324m *)iTscNode.iNode;
                 iTSCInterface = (TSC *)iTSC324mInterface;
                 // Create the list of stack supported formats
                 GetStackSupportedFormats();
-#endif
             }
 
             if (((PVMFNodeInterface *)iTscNode) == NULL)
@@ -536,7 +529,6 @@ PVCommandId CPV324m2Way::Init(PV2WayInitInfo& aInitInfo,
             InitiateSession(iTscNode);
 
             ((TSC_324m*)(iTscNode.iNode))->SetMultiplexingDelayMs(0);
-            ((TSC_324m*)(iTscNode.iNode))->SetClock(&iClock);
 
             if (AllocNodes())
             {
@@ -1233,6 +1225,7 @@ void CPV324m2Way::DoAddVideoParserNode(CPVDatapathNode& datapathnode,
                     (0, "CPV324m2Way::DoAddVideoParserNode - done\n"));
 }
 
+
 void CPV324m2Way::DoAddDataSinkNodeForH263_M4V(TPV2WayNode& aNode,
         CPVDatapathNode& datapathnode,
         CPV2WayDecDataChannelDatapath* datapath)
@@ -1508,6 +1501,17 @@ PVCommandId CPV324m2Way::RemoveDataSink(PVMFNodeInterface& aDataSink,
                      aContextData));
 
 
+    if (iClock.GetState() == PVMFMediaClock::RUNNING)
+    {
+        // stop clock and cleanup
+        iClock.Stop();
+    }
+    if (iMuxClock.GetState() == PVMFMediaClock::RUNNING)
+    {
+        // stop clock and cleanup
+        iMuxClock.Stop();
+    }
+
     switch (iState)
     {
         case EIdle:
@@ -1527,6 +1531,49 @@ PVCommandId CPV324m2Way::RemoveDataSink(PVMFNodeInterface& aDataSink,
                     (0, "CPV324m2Way::RemoveDataSink - done\n"));
 
     return DoRemoveDataSourceSink(aDataSink, aContextData);
+}
+
+void CPV324m2Way::StartClock()
+{
+    /* set clock to 0 and start */
+    uint32 startTime = 0;
+    bool overflowFlag = false;
+
+    if (!iClock.SetStartTime32(startTime, PVMF_MEDIA_CLOCK_MSEC, overflowFlag))
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_ERR,
+                        (0, "CPV324m2Way::Connect: unable to set clock time\n"));
+        OSCL_LEAVE(PVMFFailure);
+    }
+    iClock.Start();
+    if (iMuxClock.GetState() != PVMFMediaClock::RUNNING)
+    {
+        StartTscClock();
+    }
+
+}
+
+void CPV324m2Way::StartTscClock()
+{
+    /* set clock to 0 and start */
+    uint32 startTime = 0;
+    bool overflowFlag = false;
+
+
+    if (!iAudioDecDatapath && !iVideoDecDatapath)
+    {
+
+        if (!iMuxClock.SetStartTime32(startTime, PVMF_MEDIA_CLOCK_MSEC, overflowFlag))
+        {
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_ERR,
+                            (0, "CPV324m2Way::Connect: unable to set clock time\n"));
+            OSCL_LEAVE(PVMFFailure);
+        }
+        iMuxClock.Start();
+        ((TSC_324m*)(iTscNode.iNode))->SetClock(&iMuxClock);
+
+    }
+
 }
 
 PVCommandId CPV324m2Way::Connect(const PV2WayConnectOptions& aOptions,
@@ -1553,17 +1600,6 @@ PVCommandId CPV324m2Way::Connect(const PV2WayConnectOptions& aOptions,
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_INFO,
                         (0, "CPV324m2Way::ConnectL cmd already sent out\n"));
         OSCL_LEAVE(PVMFErrBusy);
-    }
-
-    /* set clock to 0 and start */
-    uint32 startTime = 0;
-    bool overflowFlag = false;
-
-    if (!iClock.SetStartTime32(startTime, PVMF_MEDIA_CLOCK_MSEC, overflowFlag))
-    {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_ERR,
-                        (0, "CPV324m2Way::Connect: unable to set clock time\n"));
-        OSCL_LEAVE(PVMFFailure);
     }
 
     switch (iState)
@@ -2882,6 +2918,12 @@ void CPV324m2Way::ConstructL(PVMFNodeInterface* aTsc,
                         (0, "CPV324m2Way::ConstructL: unable to initialize clock\n"));
         OSCL_LEAVE(PVMFFailure);
     }
+    if (!iMuxClock.SetClockTimebase(iTickCountTimeBase))
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_ERR,
+                        (0, "CPV324m2Way::ConstructL: unable to initialize clock\n"));
+        OSCL_LEAVE(PVMFFailure);
+    }
 
     FormatCapabilityInfo inFormat;
     inFormat.dir = INCOMING;
@@ -2964,13 +3006,13 @@ void CPV324m2Way::SetDefaults()
     uint32 i = 0;
     SetState(EIdle);
 
-
     if (iVideoParserNode.iNode)
     {
         iVideoParserNode.iNode->ThreadLogoff();
         OSCL_DELETE(iVideoParserNode.iNode);
         iVideoParserNode.Clear();
     }
+
 
     if (iVideoDecNode.iNode)
     {
@@ -3032,6 +3074,7 @@ void CPV324m2Way::SetDefaults()
 
     /* Stop the clock */
     iClock.Stop();
+    iMuxClock.Stop();
 
     /* Delete the list of sink/source nodes */
     for (i = 0; i < iSourceNodes.size(); i++)
@@ -3170,6 +3213,11 @@ void CPV324m2Way::Run()
                         else if (datapath == iVideoDecDatapath)
                             RemoveVideoDecPath();
                         break;
+                    }
+                    if (iClock.GetState() != PVMFMediaClock::RUNNING)
+                    {
+                        // start clock close to when we expect to get data
+                        StartClock();
                     }
 
                     if (!datapath->IsSkipComplete())
@@ -3765,7 +3813,6 @@ PVMFStatus CPV324m2Way::ConfigureNode(CPVDatapathNode *aNode)
                             (0, "CPV324m2Way::ConfigureNode - done\n"));
             return PVMFPending;
         }
-#ifndef NO_2WAY_324
         if (iTerminalType == PV_324M)
         {
             OsclAny * tempInterface = NULL;
@@ -3819,7 +3866,6 @@ PVMFStatus CPV324m2Way::ConfigureNode(CPVDatapathNode *aNode)
                 }
             }
         }
-#endif
         if (ptr)
         {
             ptr->SetNumLayers(1);
@@ -4196,7 +4242,6 @@ PVMFStatus CPV324m2Way::EstablishChannel(TPVDirection aDir,
             codec_list = &iIncomingVideoCodecs;
         }
         app_format_for_engine_format = &iAppFormatForEngineFormatIncoming;
-        iClock.Start();
     }
 
     else
@@ -4328,6 +4373,7 @@ TPVStatusCode CPV324m2Way::IncomingChannel(TPVChannelId aId,
     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                     (0, "CPV324m2Way::IncomingChannel channel id=%d, codec %d\n",
                      aId, aCodec));
+    StartTscClock();
     return EstablishChannel(INCOMING, aId, aCodec, aFormatSpecificInfo, aFormatSpecificInfoLen);
 }
 
@@ -4851,16 +4897,31 @@ PVMFCommandId CPV324m2Way::SendNodeCmdL(PV2WayNodeCmdType aCmd,
                     {
                         //Pause the clock, since this gives a chance to register
                         // the clock observer notifications
-                        iClock.Pause();
-                        ptr->SetClock(&iClock);
-                        ptr->SetMargins(SYNC_EARLY_MARGIN, SYNC_LATE_MARGIN);
-                        OSCL_TRY(error, id =
-                                     ptr->SkipMediaData(aNode->iSessionId,
-                                                        resume_timestamp, STREAMID, false,
-                                                        (OsclAny *) & info->context));
-                        //Re-start the clock, since by now, the sink node and MIO component
-                        // would've registered itself as the clock observer
-                        iClock.Start();
+                        bool pauseAndResume = false;
+
+                        if (iClock.GetState() == PVMFMediaClock::RUNNING)
+                        {
+                            pauseAndResume = true;
+                            iClock.Pause();
+                        }
+                        bool pauseAndResumeMux = false;
+                        if (iMuxClock.GetState() == PVMFMediaClock::RUNNING)
+                        {
+                            pauseAndResumeMux = true;
+                            iMuxClock.Pause();
+                        }
+                        id = SkipMediaData(*ptr, aNode, *info);
+                        if (pauseAndResume)
+                        {
+                            //Re-start the clock, since by now, the sink node and MIO component
+                            // would've registered itself as the clock observer
+                            // but only if the clock was already started.
+                            iClock.Start();
+                        }
+                        if (pauseAndResumeMux)
+                        {
+                            iMuxClock.Start();
+                        }
                     }
                     else
                     {
@@ -4893,6 +4954,21 @@ PVMFCommandId CPV324m2Way::SendNodeCmdL(PV2WayNodeCmdType aCmd,
     iPendingNodeCmdInfo.push_back(info);
     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                     (0, "CPV324m2Way::SendNodeCmdL - done\n"));
+    return id;
+}
+
+int32 CPV324m2Way::SkipMediaData(PvmfNodesSyncControlInterface& aNodeSyncCtrl,
+                                 TPV2WayNode* aNode,
+                                 TPV2WayNodeCmdInfo& ainfo)
+{
+    int32 error = 0;
+    int32 id = 0;
+    aNodeSyncCtrl.SetClock(&iClock);
+    aNodeSyncCtrl.SetMargins(SYNC_EARLY_MARGIN, SYNC_LATE_MARGIN);
+    OSCL_TRY(error, id =
+                 aNodeSyncCtrl.SkipMediaData(aNode->iSessionId,
+                                             resume_timestamp, STREAMID, false,
+                                             (OsclAny *) & ainfo.context));
     return id;
 }
 
@@ -5236,7 +5312,6 @@ int32 CPV324m2Way::GetStackNodePortTag(TPV2WayPortTagType tagType)
     return -1;
 }
 
-#ifndef NO_2WAY_324
 
 bool CPV324m2Way::AllChannelsOpened()
 {
@@ -5254,7 +5329,6 @@ bool CPV324m2Way::AllChannelsOpened()
     return retval;
 }
 
-#endif //NO_2WAY_324
 
 void CPV324m2Way::ConvertMapToVector(Oscl_Map < PVMFFormatType,
                                      FormatCapabilityInfo,
@@ -5411,12 +5485,14 @@ void CPV324m2Way::AddVideoDecoderNode(uint8* aFormatSpecificInfo, uint32 aFormat
     OSCL_FIRST_CATCH_ANY(error, PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger,
                          PVLOGMSG_ERR, (0, "CPV324m2Way::AddVideoDecoderNode unable to allocate video decoder node\n")));
 
+
     OSCL_TRY(error, iVideoParserNode = TPV2WayNode(PVMFVideoParserNode::Create(aFormatSpecificInfo, aFormatSpecificInfoLen)););
     OSCL_FIRST_CATCH_ANY(error, PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger,
                          PVLOGMSG_ERR, (0, "CPV324m2Way::AddVideoDecoderNode unable to allocate video parser node\n")));
 
     InitiateSession(iVideoDecNode);
     InitiateSession(iVideoParserNode);
+
     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                     (0, "CPV324m2Way::AddVideoDecoderNode - done\n"));
 }

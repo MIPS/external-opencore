@@ -91,7 +91,7 @@ OSCL_EXPORT_REF PVMFNodeInterface* PV2WayMediaOutputMIONodeFactory::Create(PvmiM
     return mioNode;
 }
 
-OSCL_EXPORT_REF void PV2WayMediaOutputMIONodeFactory::Release()
+void PV2WayMediaOutputMIONodeFactory::Release()
 {
     delete this;
 }
