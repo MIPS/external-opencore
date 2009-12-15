@@ -14,6 +14,7 @@ INCSRCDIR := ../../include
 
 SRCS := pv_frame_metadata_utility.cpp \
         pv_frame_metadata_factory.cpp \
+        pv_frame_metadata_mio.cpp \
         pv_frame_metadata_mio_video.cpp \
         pv_frame_metadata_mio_audio.cpp \
         ../config/common/pv_frame_metadata_mio_video_config.cpp

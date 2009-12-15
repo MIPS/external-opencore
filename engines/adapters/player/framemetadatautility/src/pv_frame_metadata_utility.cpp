@@ -60,34 +60,9 @@ PVFrameAndMetadataUtility* PVFrameAndMetadataUtility::New(char *aOutputFormatMIM
     return util;
 }
 
-
-PVFrameAndMetadataUtility::~PVFrameAndMetadataUtility()
+void PVFrameAndMetadataUtility::CleanupSourceAndSinks()
 {
-    Cancel();
-
-    if (!iPendingCmds.empty())
-    {
-        iPendingCmds.pop();
-    }
-
-    if (iPlayer != NULL)
-    {
-        PVPlayerFactory::DeletePlayer(iPlayer);
-        iPlayer = NULL;
-    }
-
-    if (iVideoFrameBufferMemPool)
-    {
-        iVideoFrameBufferMemPool->removeRef();
-        iVideoFrameBufferMemPool = NULL;
-    }
-
-    // Shutdown and destroy the timer
-    if (iTimeoutTimer)
-    {
-        iTimeoutTimer->Clear();
-    }
-    // Memoryleak
+    // Cleanup the video data sink
     iVideoDataSink.SetDataSinkNode(NULL);
     if (iVideoNode)
     {
@@ -114,6 +89,36 @@ PVFrameAndMetadataUtility::~PVFrameAndMetadataUtility()
     // Remove the data source handle
     iDataSource = NULL;
     iSourceIntent = 0;
+
+    // Cancel any pending timers
+    if (iTimeoutTimer)
+    {
+        iTimeoutTimer->Clear();
+    }
+}
+
+PVFrameAndMetadataUtility::~PVFrameAndMetadataUtility()
+{
+    Cancel();
+
+    if (!iPendingCmds.empty())
+    {
+        iPendingCmds.pop();
+    }
+
+    if (iPlayer != NULL)
+    {
+        PVPlayerFactory::DeletePlayer(iPlayer);
+        iPlayer = NULL;
+    }
+
+    if (iVideoFrameBufferMemPool)
+    {
+        iVideoFrameBufferMemPool->removeRef();
+        iVideoFrameBufferMemPool = NULL;
+    }
+
+    CleanupSourceAndSinks();
 
     OSCL_DELETE(iTimeoutTimer);
 }
@@ -298,7 +303,7 @@ void PVFrameAndMetadataUtility::setParametersSync(PvmiMIOSession aSession, PvmiK
 
     PVFMUtilityCommand cmd(PVFM_UTILITY_COMMAND_SET_PARAMETERS, -1, NULL, &paramvec);
 
-    DoCapConfigSetParameters(cmd, true);
+    DoCapConfigSetParameters(cmd);
 }
 
 
@@ -401,7 +406,6 @@ PVFrameAndMetadataUtility::PVFrameAndMetadataUtility() :
         iFrameReceived(false),
         iPlayerStartCompleted(false),
         iAPICmdStatus(PVMFSuccess),
-        iAPICmdErrMsg(NULL),
         iTimeoutTimer(NULL),
         iErrorHandlingWaitTime(PVFMUTIL_ERRORHANDLINGTIMEOUT_VALUE),
         iFrameReadyWaitTime(PVFMUTIL_FRAMEREADYTIMEOUT_VALUE_DEFAULT),
@@ -416,6 +420,7 @@ PVFrameAndMetadataUtility::PVFrameAndMetadataUtility() :
 #endif
     iPlayerCapConfigIF = NULL;
     iPlayerCapConfigIFPVI = NULL;
+    iNumPendingPlayerCommands = 0;
 }
 
 
@@ -465,7 +470,6 @@ void PVFrameAndMetadataUtility::Construct(char *aOutputFormatMIMEType, PVCommand
 void PVFrameAndMetadataUtility::Run()
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFrameAndMetadataUtility::Run() In"));
-    int32 leavecode = 0;
 
     if (iErrorHandlingInUtilityAO)
     {
@@ -477,53 +481,17 @@ void PVFrameAndMetadataUtility::Run()
         {
             iAPICmdStatus = retval;
         }
-        // Cleanup the video data sink
-        iVideoDataSink.SetDataSinkNode(NULL);
-        if (iVideoNode)
-        {
-            PVMediaOutputNodeFactory::DeleteMediaOutputNode(iVideoNode);
-            iVideoNode = NULL;
-        }
-        if (iVideoMIO)
-        {
-            OSCL_DELETE(iVideoMIO);
-            iVideoMIO = NULL;
-        }
-        // Cleanup the audio data sink
-        iAudioDataSink.SetDataSinkNode(NULL);
-        if (iAudioNode)
-        {
-            PVMediaOutputNodeFactory::DeleteMediaOutputNode(iAudioNode);
-            iAudioNode = NULL;
-        }
-        if (iAudioMIO)
-        {
-            OSCL_DELETE(iAudioMIO);
-            iAudioMIO = NULL;
-        }
-        // Remove the data source handle
-        iDataSource = NULL;
-        iSourceIntent = 0;
 
-        // Cancel any pending timers
-        if (iTimeoutTimer)
-        {
-            iTimeoutTimer->Clear();
-        }
+        CleanupSourceAndSinks();
 
         SetUtilityState(PVFM_UTILITY_STATE_IDLE);
 
         // Complete any command if waiting to be completed
         if (iCurrentCmd.empty() == false)
         {
-            UtilityCommandCompleted(iCurrentCmd[0].GetCmdId(), iCurrentCmd[0].GetContext(), iAPICmdStatus, OSCL_STATIC_CAST(PVInterface*, iAPICmdErrMsg));
+            UtilityCommandCompleted(iCurrentCmd[0].GetCmdId(), iCurrentCmd[0].GetContext(), iAPICmdStatus);
         }
         iAPICmdStatus = PVMFSuccess;
-        if (iAPICmdErrMsg)
-        {
-            iAPICmdErrMsg->removeRef();
-            iAPICmdErrMsg = NULL;
-        }
     }
 
     // Check if CancelAll() request was made
@@ -548,13 +516,7 @@ void PVFrameAndMetadataUtility::Run()
         iPendingCmds.pop();
 
         // Put in on the current command queue
-        leavecode = 0;
-        OSCL_TRY(leavecode, iCurrentCmd.push_front(cmd));
-        OSCL_FIRST_CATCH_ANY(leavecode,
-                             PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVFrameAndMetadataUtility::Run() Command could not be pushed onto iCurrentCmd vector"));
-                             UtilityCommandCompleted(cmd.GetCmdId(), cmd.GetContext(), PVMFErrNoMemory);
-                             OSCL_ASSERT(false);
-                             return;);
+        iCurrentCmd.push_front(cmd);
 
         // Process the command according to the cmd type
         PVMFStatus cmdstatus = PVMFSuccess;
@@ -584,10 +546,6 @@ void PVFrameAndMetadataUtility::Run()
                 cmdstatus = DoGetMetadataValues(cmd);
                 break;
 
-            case PVFM_UTILITY_COMMAND_SET_PARAMETERS:
-                cmdstatus = DoCapConfigSetParameters(cmd, false);
-                break;
-
             case PVFM_UTILITY_COMMAND_GET_FRAME_USER_BUFFER:
             case PVFM_UTILITY_COMMAND_GET_FRAME_UTILITY_BUFFER:
                 cmdstatus = DoGetFrame(cmd);
@@ -601,22 +559,7 @@ void PVFrameAndMetadataUtility::Run()
                 cmdstatus = DoRemoveDataSource(cmd);
                 break;
 
-            case PVFM_UTILITY_COMMAND_CANCEL_ALL_COMMANDS:
-                // CancelAll() should not be handled here
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVFrameAndMetadataUtility::Run() CancelAllCommands should be not handled in here. Asserting."));
-                OSCL_ASSERT(false);
-                // Just handle as "not supported"
-                cmdstatus = PVMFErrNotSupported;
-                break;
-
             case PVFM_UTILITY_COMMAND_HANDLE_PLAYER_ERROR:
-                // Internal command so should not be handled here
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVFrameAndMetadataUtility::Run() Internal error handling command should be not handled in here. Asserting."));
-                OSCL_ASSERT(false);
-                // Just handle as "not supported"
-                cmdstatus = PVMFErrNotSupported;
-                break;
-
             default:
                 cmdstatus = PVMFErrNotSupported;
                 break;
@@ -636,6 +579,8 @@ void PVFrameAndMetadataUtility::Run()
 void PVFrameAndMetadataUtility::CommandCompleted(const PVCmdResponse& aResponse)
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFrameAndMetadataUtility::CommandCompleted() In"));
+
+    iNumPendingPlayerCommands--;
 
     // Check if a cancel command on player engine completed
     int32* context_int32 = (int32*)(aResponse.GetContext());
@@ -662,72 +607,37 @@ void PVFrameAndMetadataUtility::CommandCompleted(const PVCmdResponse& aResponse)
     // Ignore other player command completion if cancelling
     if (!iCmdToCancel.empty())
     {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFrameAndMetadataUtility::CommandCompleted() Player command completion ignored due to cancel process"));
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                        (0, "PVFrameAndMetadataUtility::CommandCompleted() Player command completion ignored due to cancel process"));
         iUtilityContext.iCmdType = -1;
         return;
     }
 
+    if (iAPICmdStatus == PVMFSuccess)
+    {
+        iAPICmdStatus = aResponse.GetCmdStatus();
+    }
     // Process normal player engine command completions
-    if (aResponse.GetContext() == (OsclAny*)&iUtilityContext)
+    if ((aResponse.GetContext() == (OsclAny*)&iUtilityContext) && (iNumPendingPlayerCommands == 0))
     {
         PVFMUtilityContext* context = (PVFMUtilityContext*)(aResponse.GetContext());
         switch (context->iCmdType)
         {
             case PVFM_CMD_PlayerQueryUUID:
-                HandlePlayerQueryUUID(*context, aResponse);
-                break;
-
             case PVFM_CMD_PlayerQueryInterface:
             case PVFM_CMD_PlayerQueryCapConfigInterface:
-                HandlePlayerQueryInterface(*context, aResponse);
+                HandleCommandComplete(*context, aResponse);
                 break;
 
-            case PVFM_CMD_ADSPlayerAddDataSource:
-                HandleADSPlayerAddDataSource(*context, aResponse);
+            case PVFM_CMD_AddDataSource:
+            case PVFM_CMD_RemoveDataSource:
+                HandleDataSourceCommand(*context, aResponse);
                 break;
 
-            case PVFM_CMD_ADSPlayerInit:
-                HandleADSPlayerInit(*context, aResponse);
-                break;
-
-            case PVFM_CMD_ADSPlayerAddVideoDataSink:
-                HandleADSPlayerAddVideoDataSink(*context, aResponse);
-                break;
-
-            case PVFM_CMD_ADSPlayerAddAudioDataSink:
-                HandleADSPlayerAddAudioDataSink(*context, aResponse);
-                break;
-
-            case PVFM_CMD_ADSPlayerPrepare:
-                HandleADSPlayerPrepare(*context, aResponse);
-                break;
-
-            case PVFM_CMD_ADSPlayerStart:
-                HandleADSPlayerStart(*context, aResponse);
-                break;
-
-            case PVFM_CMD_ADSPlayerPause:
-                HandleADSPlayerPause(*context, aResponse);
-                break;
-
-            case PVFM_CMD_PlayerGetMetadataKeys:
-                HandlePlayerGetMetadataKeys(*context, aResponse);
-                break;
-
-            case PVFM_CMD_PlayerGetMetadataValues:
-                HandlePlayerGetMetadataValues(*context, aResponse);
-                break;
-
+            case PVFM_CMD_GetMetadataKeys:
+            case PVFM_CMD_GetMetadataValues:
             case PVFM_CMD_PlayerSetParametersSync:
-                HandlePlayerSetParametersSync(*context, aResponse);
-                break;
-
-            case PVFM_CMD_GFPlayerStopFromPaused:
-                HandleGFPlayerStopFromPaused(*context, aResponse);
-                break;
-
-            case PVFM_CMD_GFPlayerPrepare:
-                HandleGFPlayerPrepare(*context, aResponse);
+                HandleCommandComplete2(*context, aResponse);
                 break;
 
             case PVFM_CMD_GFPlayerStart:
@@ -736,26 +646,6 @@ void PVFrameAndMetadataUtility::CommandCompleted(const PVCmdResponse& aResponse)
 
             case PVFM_CMD_GFPlayerPause:
                 HandleGFPlayerPause(*context, aResponse);
-                break;
-
-            case PVFM_CMD_RDSPlayerStopFromPaused:
-                HandleRDSPlayerStopFromPaused(*context, aResponse);
-                break;
-
-            case PVFM_CMD_RDSPlayerRemoveVideoDataSink:
-                HandleRDSPlayerRemoveVideoDataSink(*context, aResponse);
-                break;
-
-            case PVFM_CMD_RDSPlayerRemoveAudioDataSink:
-                HandleRDSPlayerRemoveAudioDataSink(*context, aResponse);
-                break;
-
-            case PVFM_CMD_RDSPlayerReset:
-                HandleRDSPlayerReset(*context, aResponse);
-                break;
-
-            case PVFM_CMD_RDSPlayerRemoveDataSource:
-                HandleRDSPlayerRemoveDataSource(*context, aResponse);
                 break;
 
             default:
@@ -789,23 +679,7 @@ void PVFrameAndMetadataUtility::HandleErrorEvent(const PVAsyncErrorEvent& aEvent
                 PVFMUtilityCommand errorcmd(PVFM_UTILITY_COMMAND_HANDLE_PLAYER_ERROR, -1, NULL, NULL, false);
                 iCurrentCmd.push_front(errorcmd);
             }
-
-            // Wait for error handling to complete
-            PVMFErrorInfoMessageInterface* nextmsg = NULL;
-            if (aEvent.GetEventExtensionInterface())
-            {
-                nextmsg = GetErrorInfoMessageInterface(*(aEvent.GetEventExtensionInterface()));
-            }
-            PVMFBasicErrorInfoMessage* errmsg = NULL;
-            errmsg = CreateBasicErrInfoMessage(nextmsg);
-
             iAPICmdStatus = (PVMFStatus)(aEvent.GetEventType());
-            if (iAPICmdErrMsg)
-            {
-                iAPICmdErrMsg->removeRef();
-                iAPICmdErrMsg = NULL;
-            }
-            iAPICmdErrMsg = errmsg;
 
             // Start a timer just in case the player does not report error handling complete
             iTimeoutTimer->Request(PVFMUTIL_TIMERID_PLAYERERRORTIMEOUT, 0, iErrorHandlingWaitTime, this, false);
@@ -890,12 +764,6 @@ void PVFrameAndMetadataUtility::HandleInformationalEvent(const PVAsyncInformatio
                                 iAPICmdStatus = PVMFSuccess;
                             }
 
-                            if (iAPICmdErrMsg)
-                            {
-                                iAPICmdErrMsg->removeRef();
-                                iAPICmdErrMsg = NULL;
-                            }
-
                             // Cleanup the video data sink
                             iVideoDataSink.SetDataSinkNode(NULL);
                             if (iVideoNode)
@@ -931,34 +799,7 @@ void PVFrameAndMetadataUtility::HandleInformationalEvent(const PVAsyncInformatio
                     // Player went back to idle state so change utility's state to idle as well
                     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFrameAndMetadataUtility::HandleInformationalEvent() Player went back to idle so set utility to idle."));
 
-                    // Cleanup the video data sink
-                    iVideoDataSink.SetDataSinkNode(NULL);
-                    if (iVideoNode)
-                    {
-                        PVMediaOutputNodeFactory::DeleteMediaOutputNode(iVideoNode);
-                        iVideoNode = NULL;
-                    }
-                    if (iVideoMIO)
-                    {
-                        OSCL_DELETE(iVideoMIO);
-                        iVideoMIO = NULL;
-                    }
-                    // Cleanup the audio data sink
-                    iAudioDataSink.SetDataSinkNode(NULL);
-                    if (iAudioNode)
-                    {
-                        PVMediaOutputNodeFactory::DeleteMediaOutputNode(iAudioNode);
-                        iAudioNode = NULL;
-                    }
-                    if (iAudioMIO)
-                    {
-                        OSCL_DELETE(iAudioMIO);
-                        iAudioMIO = NULL;
-                    }
-                    // Remove the data source handle
-                    iDataSource = NULL;
-                    iSourceIntent = 0;
-
+                    CleanupSourceAndSinks();
                     SetUtilityState(PVFM_UTILITY_STATE_IDLE);
                 }
                 break;
@@ -978,14 +819,9 @@ void PVFrameAndMetadataUtility::HandleInformationalEvent(const PVAsyncInformatio
         // Report the command as failed if command completion was pending
         if (iCurrentCmd.empty() == false)
         {
-            UtilityCommandCompleted(iCurrentCmd[0].GetCmdId(), iCurrentCmd[0].GetContext(), iAPICmdStatus, OSCL_STATIC_CAST(PVInterface*, iAPICmdErrMsg));
+            UtilityCommandCompleted(iCurrentCmd[0].GetCmdId(), iCurrentCmd[0].GetContext(), iAPICmdStatus);
         }
         iAPICmdStatus = PVMFSuccess;
-        if (iAPICmdErrMsg)
-        {
-            iAPICmdErrMsg->removeRef();
-            iAPICmdErrMsg = NULL;
-        }
     }
     else if (aEvent.GetEventType() == PVMFInfoEndOfData)
     {
@@ -1035,22 +871,6 @@ void PVFrameAndMetadataUtility::HandleFrameReadyEvent(PVMFStatus aEventStatus)
                 iVideoFrameBufferMemPool->deallocate(iCurrentVideoFrameBuffer);
                 iCurrentVideoFrameBuffer = NULL;
             }
-
-            PVUuid puuid = PVFrameAndMetadataErrorInfoEventTypesUUID;
-            PVMFBasicErrorInfoMessage* errmsg = NULL;
-            int32 leavecode = 0;
-            OSCL_TRY(leavecode, errmsg = OSCL_NEW(PVMFBasicErrorInfoMessage, (PVFMErrMIOComponent, puuid, NULL)));
-            OSCL_FIRST_CATCH_ANY(leavecode,
-                                 PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVFrameAndMetadataUtility::HandleFrameReadyEvent() Instantiation of error msg did a leave!"));
-                                 errmsg = NULL;
-                                );
-
-            if (iAPICmdErrMsg)
-            {
-                iAPICmdErrMsg->removeRef();
-                iAPICmdErrMsg = NULL;
-            }
-            iAPICmdErrMsg = errmsg;
         }
         else
         {
@@ -1060,20 +880,12 @@ void PVFrameAndMetadataUtility::HandleFrameReadyEvent(PVMFStatus aEventStatus)
             uint32 fh = 0;
             uint32 dw = 0;
             uint32 dh = 0;
-            if (iVideoMIO->GetFrameProperties(fw, fh, dw, dh) == PVMFSuccess)
-            {
-                iVideoFrameBufferProp->iFrameWidth = fw;
-                iVideoFrameBufferProp->iFrameHeight = fh;
-                iVideoFrameBufferProp->iDisplayWidth = dw;
-                iVideoFrameBufferProp->iDisplayHeight = dh;
-            }
-            else
-            {
-                iVideoFrameBufferProp->iFrameWidth = 0;
-                iVideoFrameBufferProp->iFrameHeight = 0;
-                iVideoFrameBufferProp->iDisplayWidth = 0;
-                iVideoFrameBufferProp->iDisplayHeight = 0;
-            }
+
+            iVideoMIO->GetFrameProperties(fw, fh, dw, dh);
+            iVideoFrameBufferProp->iFrameWidth = fw;
+            iVideoFrameBufferProp->iFrameHeight = fh;
+            iVideoFrameBufferProp->iDisplayWidth = dw;
+            iVideoFrameBufferProp->iDisplayHeight = dh;
         }
 
         // Initiate pause on player if start already completed
@@ -1093,14 +905,8 @@ void PVFrameAndMetadataUtility::HandleFrameReadyEvent(PVMFStatus aEventStatus)
                     }
                 }
 
-                UtilityCommandCompleted(iCurrentCmd[0].GetCmdId(), iCurrentCmd[0].GetContext(), iAPICmdStatus, OSCL_STATIC_CAST(PVInterface*, iAPICmdErrMsg));
-
+                UtilityCommandCompleted(iCurrentCmd[0].GetCmdId(), iCurrentCmd[0].GetContext(), iAPICmdStatus);
                 iAPICmdStatus = PVMFSuccess;
-                if (iAPICmdErrMsg)
-                {
-                    iAPICmdErrMsg->removeRef();
-                    iAPICmdErrMsg = NULL;
-                }
             }
             else if (retval != PVMFSuccess)
             {
@@ -1182,13 +988,8 @@ void PVFrameAndMetadataUtility::TimeoutOccurred(int32 timerID, int32 /*timeoutIn
 
         // Report the command as failed
         OSCL_ASSERT(iCurrentCmd.empty() == false);
-        UtilityCommandCompleted(iCurrentCmd[0].GetCmdId(), iCurrentCmd[0].GetContext(), iAPICmdStatus, OSCL_STATIC_CAST(PVInterface*, iAPICmdErrMsg));
+        UtilityCommandCompleted(iCurrentCmd[0].GetCmdId(), iCurrentCmd[0].GetContext(), iAPICmdStatus);
         iAPICmdStatus = PVMFSuccess;
-        if (iAPICmdErrMsg)
-        {
-            iAPICmdErrMsg->removeRef();
-            iAPICmdErrMsg = NULL;
-        }
     }
     else if (timerID == PVFMUTIL_TIMERID_FRAMEREADYTIMEOUT)
     {
@@ -1204,37 +1005,15 @@ void PVFrameAndMetadataUtility::TimeoutOccurred(int32 timerID, int32 /*timeoutIn
             iCurrentVideoFrameBuffer = NULL;
         }
 
-        // Create an error message
-        PVUuid puuid = PVFrameAndMetadataErrorInfoEventTypesUUID;
-        PVMFBasicErrorInfoMessage* errmsg = NULL;
-        int32 leavecode = 0;
-        OSCL_TRY(leavecode, errmsg = OSCL_NEW(PVMFBasicErrorInfoMessage, (PVFMErrMIOComponent, puuid, NULL)));
-        OSCL_FIRST_CATCH_ANY(leavecode,
-                             PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVFrameAndMetadataUtility::TimeoutOccurred() Instantiation of error msg did a leave!"));
-                             errmsg = NULL;
-                            );
-
         iAPICmdStatus = PVMFErrTimeout;
-        if (iAPICmdErrMsg)
-        {
-            iAPICmdErrMsg->removeRef();
-            iAPICmdErrMsg = NULL;
-        }
-        iAPICmdErrMsg = errmsg;
 
         // Timer is started after player start completes so initiate pause on player
         PVMFStatus retval = DoGFPlayerPause(iCurrentCmd[0].GetCmdId(), iCurrentCmd[0].GetContext());
         if (retval == PVMFErrInvalidState)
         {
             // Playback already paused so GetFrame() command completed
-            UtilityCommandCompleted(iCurrentCmd[0].GetCmdId(), iCurrentCmd[0].GetContext(), iAPICmdStatus, OSCL_STATIC_CAST(PVInterface*, iAPICmdErrMsg));
-
+            UtilityCommandCompleted(iCurrentCmd[0].GetCmdId(), iCurrentCmd[0].GetContext(), iAPICmdStatus);
             iAPICmdStatus = PVMFSuccess;
-            if (iAPICmdErrMsg)
-            {
-                iAPICmdErrMsg->removeRef();
-                iAPICmdErrMsg = NULL;
-            }
         }
         else if (retval != PVMFSuccess)
         {
@@ -1344,15 +1123,9 @@ PVFrameAndMetadataState PVFrameAndMetadataUtility::GetUtilityState(void)
 
         case PVFM_UTILITY_STATE_HANDLINGERROR:
         case PVFM_UTILITY_STATE_ERROR:
-            return PVFM_STATE_ERROR;
-
         default:
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVFrameAndMetadataUtility::GetUtilityState() Unknown utility state. Asserting"));
-            OSCL_ASSERT(false);
-            break;
+            return PVFM_STATE_ERROR;
     }
-
-    return PVFM_STATE_ERROR;
 }
 
 
@@ -1428,6 +1201,7 @@ void PVFrameAndMetadataUtility::DoCancelCommandBeingProcessed()
                                      OSCL_ASSERT(false);
                                      iCmdToCancel.clear();
                                      UtilityCommandCompleted(iCurrentCmd[0].GetCmdId(), iCurrentCmd[0].GetContext(), PVMFSuccess));
+                iNumPendingPlayerCommands++;
             }
             else
             {
@@ -1480,34 +1254,15 @@ PVMFStatus PVFrameAndMetadataUtility::DoQueryUUID(PVFMUtilityCommand& aCmd)
         return PVMFErrArgument;
     }
 
-    // For now, no extension interface available from utility
-
     // Call QueryUUID() on the player
-    PVMFStatus cmdstatus = DoPlayerQueryUUID(aCmd.GetCmdId(), aCmd.GetContext(), *mimetype, *uuidvec, exactmatch);
-
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFrameAndMetadataUtility::DoQueryUUID() Out"));
-    return cmdstatus;
-}
-
-
-PVMFStatus PVFrameAndMetadataUtility::DoPlayerQueryUUID(PVCommandId aCmdId, OsclAny* aCmdContext,
-        PvmfMimeString& aMIMEType, Oscl_Vector<PVUuid, OsclMemAllocator>& aUUIDVec, bool aExactMatch)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFrameAndMetadataUtility::DoPlayerQueryUUID() In"));
-
-    iUtilityContext.iCmdId = aCmdId;
-    iUtilityContext.iCmdContext = aCmdContext;
+    iUtilityContext.iCmdId = aCmd.GetCmdId();
+    iUtilityContext.iCmdContext = aCmd.GetContext();
     iUtilityContext.iCmdType = PVFM_CMD_PlayerQueryUUID;
-    int32 leavecode = 0;
-    OSCL_ASSERT(iPlayer != NULL);
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iPerfLogger, PVLOGMSG_NOTICE,
-                    (0, "PVFrameAndMetadataUtility::QueryUUID Called Tick=%d", OsclTickCount::TickCount()));
-    OSCL_TRY(leavecode, iPlayer->QueryUUID(aMIMEType, aUUIDVec, aExactMatch, (const OsclAny*)&iUtilityContext));
-    OSCL_FIRST_CATCH_ANY(leavecode,
-                         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVFrameAndMetadataUtility::DoPlayerQueryUUID() QueryUUID() on player did a leave!"));
-                         return PVMFFailure;);
 
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFrameAndMetadataUtility::DoPlayerQueryUUID() Out"));
+    OSCL_ASSERT(iPlayer != NULL);
+    iPlayer->QueryUUID(*mimetype, *uuidvec, exactmatch, (const OsclAny*)&iUtilityContext);
+    iNumPendingPlayerCommands++;
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFrameAndMetadataUtility::DoQueryUUID() Out"));
     return PVMFSuccess;
 }
 
@@ -1526,10 +1281,9 @@ PVMFStatus PVFrameAndMetadataUtility::DoQueryInterface(PVFMUtilityCommand& aCmd)
     if (ifptr == NULL)
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVFrameAndMetadataUtility::DoQueryInterface() Passed in parameter invalid."));
-        return PVMFErrArgument;
+        cmdstatus = PVMFErrArgument;
     }
-
-    if (queryInterface(iPlayerQueryIFUUID, *ifptr, cmdid, context) == false)
+    else if (queryInterface(iPlayerQueryIFUUID, *ifptr, cmdid, context) == false)
     {
         cmdstatus = PVMFErrNotSupported;
     }
@@ -1541,6 +1295,7 @@ PVMFStatus PVFrameAndMetadataUtility::DoQueryInterface(PVFMUtilityCommand& aCmd)
 bool PVFrameAndMetadataUtility::queryInterface(const PVUuid& uuid, PVInterface*& iface, PVCommandId cmdid, OsclAny* context)
 {
     bool status = true;
+    PVMFStatus cmdstatus;
 
     if (uuid == PVMI_CAPABILITY_AND_CONFIG_PVUUID)
     {
@@ -1548,18 +1303,16 @@ bool PVFrameAndMetadataUtility::queryInterface(const PVUuid& uuid, PVInterface*&
         iface = OSCL_STATIC_CAST(PVInterface*, capconfigiface);
 
         // Call QueryInterface() on the player too in case of usage using setParametersSync()
-        PVMFStatus cmdstatus = DoPlayerQueryInterface(cmdid, context, iPlayerQueryIFUUID, iPlayerCapConfigIFPVI);
-
-        if (PVMFSuccess != cmdstatus)
-            status = false;
+        cmdstatus = DoPlayerQueryInterface(cmdid, context, iPlayerQueryIFUUID, iPlayerCapConfigIFPVI);
     }
     else
     {
         // Call QueryInterface() on the player
-        PVMFStatus cmdstatus = DoPlayerQueryInterface(cmdid, context, iPlayerQueryIFUUID, (PVInterface*&)iface);
-        if (PVMFSuccess != cmdstatus)
-            status = false;
+        cmdstatus = DoPlayerQueryInterface(cmdid, context, iPlayerQueryIFUUID, (PVInterface*&)iface);
     }
+
+    if (PVMFSuccess != cmdstatus)
+        status = false;
     return status;
 }
 
@@ -1576,15 +1329,10 @@ PVMFStatus PVFrameAndMetadataUtility::DoPlayerQueryInterface(PVCommandId aCmdId,
     {
         iUtilityContext.iCmdType = PVFM_CMD_PlayerQueryCapConfigInterface;
     }
-    int32 leavecode = 0;
-    OSCL_ASSERT(iPlayer != NULL);
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iPerfLogger, PVLOGMSG_NOTICE,
-                    (0, "PVFrameAndMetadataUtility::QueryInterface Called Tick=%d", OsclTickCount::TickCount()));
-    OSCL_TRY(leavecode, iPlayer->QueryInterface(aUuid, aInterfacePtr, (const OsclAny*)&iUtilityContext));
-    OSCL_FIRST_CATCH_ANY(leavecode,
-                         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVFrameAndMetadataUtility::DoPlayerQueryInterface() QueryInterface() on player did a leave!"));
-                         return PVMFFailure;);
 
+    OSCL_ASSERT(iPlayer != NULL);
+    iPlayer->QueryInterface(aUuid, aInterfacePtr, (const OsclAny*)&iUtilityContext);
+    iNumPendingPlayerCommands++;
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFrameAndMetadataUtility::DoPlayerQueryInterface() Out"));
     return PVMFSuccess;
 }
@@ -1630,6 +1378,8 @@ PVMFStatus PVFrameAndMetadataUtility::DoAddDataSource(PVFMUtilityCommand& aCmd)
         return PVMFErrArgument;
     }
 
+    CleanupSourceAndSinks();
+
     // Save the data source
     iDataSource = (PVPlayerDataSource*)(aCmd.GetParam(0).pOsclAny_value);
     PVInterface* pvInterface = OSCL_STATIC_CAST(PVInterface*, (iDataSource->GetDataSourceContextData()));
@@ -1662,183 +1412,57 @@ PVMFStatus PVFrameAndMetadataUtility::DoAddDataSource(PVFMUtilityCommand& aCmd)
             }
         }
     }
+
     // Initiate the player setup sequence
-    PVMFStatus cmdstatus = DoADSPlayerAddDataSource(aCmd.GetCmdId(), aCmd.GetContext());
+    iUtilityContext.iCmdId = aCmd.GetCmdId();
+    iUtilityContext.iCmdContext = aCmd.GetContext();
+    iUtilityContext.iCmdType = PVFM_CMD_AddDataSource;
 
+    // AddDataSource
+    iPlayer->AddDataSource(*iDataSource, (const OsclAny*)&iUtilityContext);
+    iNumPendingPlayerCommands++;
 
-    if (cmdstatus == PVMFSuccess)
+    // Init
+    iPlayer->Init((const OsclAny*)&iUtilityContext);
+    iNumPendingPlayerCommands++;
+
+    if (iSourceIntent != BITMASK_PVMF_SOURCE_INTENT_GETMETADATA)
     {
-        SetUtilityState(PVFM_UTILITY_STATE_INITIALIZING);
+        int32 leavecode = 0;
+        // Setup the video MIO
+        OSCL_TRY(leavecode, iVideoMIO = OSCL_NEW(PVFMVideoMIO, ());
+                 iVideoNode = PVMediaOutputNodeFactory::CreateMediaOutputNode(iVideoMIO));
+        OSCL_FIRST_CATCH_ANY(leavecode, return PVMFErrNoMemory;);
+
+        iVideoDataSink.SetDataSinkNode(iVideoNode);
+        iVideoDataSink.SetDataSinkFormatType(PVMF_MIME_YUV420);
+        iVideoMIO->setThumbnailDimensions(iThumbnailWidth, iThumbnailHeight);
+
+        iPlayer->AddDataSink(iVideoDataSink, (const OsclAny*)&iUtilityContext);
+        iNumPendingPlayerCommands++;
+
+        // Setup the audio MIO
+        OSCL_TRY(leavecode, iAudioMIO = OSCL_NEW(PVFMAudioMIO, ());
+                 iAudioNode = PVMediaOutputNodeFactory::CreateMediaOutputNode(iAudioMIO));
+        OSCL_FIRST_CATCH_ANY(leavecode, return PVMFErrNoMemory;);
+        iAudioDataSink.SetDataSinkNode(iAudioNode);
+        iAudioDataSink.SetDataSinkFormatType(PVMF_MIME_PCM16);
+
+        iPlayer->AddDataSink(iAudioDataSink, (const OsclAny*)&iUtilityContext);
+        iNumPendingPlayerCommands++;
+
+
+        // Prepare
+        iPlayer->Prepare((const OsclAny*)&iUtilityContext);
+        iNumPendingPlayerCommands++;
+
     }
 
+    SetUtilityState(PVFM_UTILITY_STATE_INITIALIZING);
+
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFrameAndMetadataUtility::DoAddDataSource() Out"));
-    return cmdstatus;
-}
-
-
-PVMFStatus PVFrameAndMetadataUtility::DoADSPlayerAddDataSource(PVCommandId aCmdId, OsclAny* aCmdContext)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFrameAndMetadataUtility::DoADSPlayerAddDataSource() In"));
-
-    iUtilityContext.iCmdId = aCmdId;
-    iUtilityContext.iCmdContext = aCmdContext;
-    iUtilityContext.iCmdType = PVFM_CMD_ADSPlayerAddDataSource;
-    int32 leavecode = 0;
-
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iPerfLogger, PVLOGMSG_NOTICE,
-                    (0, "PVFrameAndMetadataUtility::PlayerADS called Tick=%d", OsclTickCount::TickCount()));
-
-    OSCL_TRY(leavecode, iPlayer->AddDataSource(*iDataSource, (const OsclAny*)&iUtilityContext));
-    OSCL_FIRST_CATCH_ANY(leavecode,
-                         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVFrameAndMetadataUtility::DoADSPlayerAddDataSource() AddDataSource() on player did a leave!"));
-                         return PVMFFailure;);
-
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFrameAndMetadataUtility::DoADSPlayerAddDataSource() Out"));
     return PVMFSuccess;
 }
-
-
-PVMFStatus PVFrameAndMetadataUtility::DoADSPlayerInit(PVCommandId aCmdId, OsclAny* aCmdContext)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFrameAndMetadataUtility::DoADSPlayerInit() In"));
-
-    iUtilityContext.iCmdId = aCmdId;
-    iUtilityContext.iCmdContext = aCmdContext;
-    iUtilityContext.iCmdType = PVFM_CMD_ADSPlayerInit;
-    int32 leavecode = 0;
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iPerfLogger, PVLOGMSG_NOTICE,
-                    (0, "PVFrameAndMetadataUtility::PlayerInit() called Tick=%d", OsclTickCount::TickCount()));
-    OSCL_TRY(leavecode, iPlayer->Init((const OsclAny*)&iUtilityContext));
-    OSCL_FIRST_CATCH_ANY(leavecode,
-                         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVFrameAndMetadataUtility::DoADSPlayerInit() Init() on player did a leave!"));
-                         return PVMFFailure;);
-
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFrameAndMetadataUtility::DoADSPlayerInit() Out"));
-    return PVMFSuccess;
-}
-
-
-PVMFStatus PVFrameAndMetadataUtility::DoADSPlayerAddVideoDataSink(PVCommandId aCmdId, OsclAny* aCmdContext)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFrameAndMetadataUtility::DoADSPlayerAddVideoDataSink() In"));
-
-    int32 leavecode = 0;
-    OSCL_TRY(leavecode, iVideoMIO = OSCL_NEW(PVFMVideoMIO, ());
-             iVideoNode = PVMediaOutputNodeFactory::CreateMediaOutputNode(iVideoMIO));
-    OSCL_FIRST_CATCH_ANY(leavecode,
-                         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVFrameAndMetadataUtility::DoADSPlayerAddVideoDataSink() Instantiation of MIO component and node for frame retrieval did a leave!"));
-                         return PVMFErrNoMemory;
-                        );
-    iVideoDataSink.SetDataSinkNode(iVideoNode);
-    iVideoDataSink.SetDataSinkFormatType(PVMF_MIME_YUV420);
-    iVideoMIO->setThumbnailDimensions(iThumbnailWidth, iThumbnailHeight);
-
-    iUtilityContext.iCmdId = aCmdId;
-    iUtilityContext.iCmdContext = aCmdContext;
-    iUtilityContext.iCmdType = PVFM_CMD_ADSPlayerAddVideoDataSink;
-
-    leavecode = 0;
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iPerfLogger, PVLOGMSG_NOTICE,
-                    (0, "PVFrameAndMetadataUtility::PlayerAddVideoSink Called Tick=%d", OsclTickCount::TickCount()));
-
-    OSCL_TRY(leavecode, iPlayer->AddDataSink(iVideoDataSink, (const OsclAny*)&iUtilityContext));
-    OSCL_FIRST_CATCH_ANY(leavecode,
-                         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVFrameAndMetadataUtility::DoADSPlayerAddVideoDataSink() AddDataSink() on player did a leave!"));
-                         return PVMFFailure;);
-
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFrameAndMetadataUtility::DoADSPlayerAddVideoDataSink() Out"));
-    return PVMFSuccess;
-}
-
-PVMFStatus PVFrameAndMetadataUtility::DoADSPlayerAddAudioDataSink(PVCommandId aCmdId, OsclAny* aCmdContext)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFrameAndMetadataUtility::DoADSPlayerAddAudioDataSink() In"));
-
-    int32 leavecode = 0;
-    OSCL_TRY(leavecode, iAudioMIO = OSCL_NEW(PVFMAudioMIO, ());
-             iAudioNode = PVMediaOutputNodeFactory::CreateMediaOutputNode(iAudioMIO));
-    OSCL_FIRST_CATCH_ANY(leavecode,
-                         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVFrameAndMetadataUtility::DoADSPlayerAddAudioDataSink() Instantiation of Audio MIO component and node for frame retrieval did a leave!"));
-                         return PVMFErrNoMemory;
-                        );
-    iAudioDataSink.SetDataSinkNode(iAudioNode);
-    iAudioDataSink.SetDataSinkFormatType(PVMF_MIME_PCM16);
-
-    iUtilityContext.iCmdId = aCmdId;
-    iUtilityContext.iCmdContext = aCmdContext;
-    iUtilityContext.iCmdType = PVFM_CMD_ADSPlayerAddAudioDataSink;
-
-    leavecode = 0;
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iPerfLogger, PVLOGMSG_NOTICE,
-                    (0, "PVFrameAndMetadataUtility::PlayerAddAudioSink Called Tick=%d", OsclTickCount::TickCount()));
-    OSCL_TRY(leavecode, iPlayer->AddDataSink(iAudioDataSink, (const OsclAny*)&iUtilityContext));
-    OSCL_FIRST_CATCH_ANY(leavecode,
-                         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVFrameAndMetadataUtility::DoADSPlayerAddAudioDataSink() AddDataSink() on player did a leave!"));
-                         return PVMFFailure;);
-
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFrameAndMetadataUtility::DoADSPlayerAddAudioDataSink() Out"));
-    return PVMFSuccess;
-}
-
-PVMFStatus PVFrameAndMetadataUtility::DoADSPlayerPrepare(PVCommandId aCmdId, OsclAny* aCmdContext)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFrameAndMetadataUtility::DoADSPlayerPrepare() In"));
-
-    iUtilityContext.iCmdId = aCmdId;
-    iUtilityContext.iCmdContext = aCmdContext;
-    iUtilityContext.iCmdType = PVFM_CMD_ADSPlayerPrepare;
-    int32 leavecode = 0;
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iPerfLogger, PVLOGMSG_NOTICE,
-                    (0, "PVFrameAndMetadataUtility::PlayerPrepare Called Tick=%d", OsclTickCount::TickCount()));
-    OSCL_TRY(leavecode, iPlayer->Prepare((const OsclAny*)&iUtilityContext));
-    OSCL_FIRST_CATCH_ANY(leavecode,
-                         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVFrameAndMetadataUtility::DoADSPlayerPrepare() Prepare() on player did a leave!"));
-                         return PVMFFailure;);
-
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFrameAndMetadataUtility::DoADSPlayerPrepare() Out"));
-    return PVMFSuccess;
-}
-
-
-PVMFStatus PVFrameAndMetadataUtility::DoADSPlayerStart(PVCommandId aCmdId, OsclAny* aCmdContext)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFrameAndMetadataUtility::DoADSPlayerStart() In"));
-
-    iUtilityContext.iCmdId = aCmdId;
-    iUtilityContext.iCmdContext = aCmdContext;
-    iUtilityContext.iCmdType = PVFM_CMD_ADSPlayerStart;
-    int32 leavecode = 0;
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iPerfLogger, PVLOGMSG_NOTICE,
-                    (0, "PVFrameAndMetadataUtility::PlayerStart Called Tick=%d", OsclTickCount::TickCount()));
-    OSCL_TRY(leavecode, iPlayer->Start((const OsclAny*)&iUtilityContext));
-    OSCL_FIRST_CATCH_ANY(leavecode,
-                         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVFrameAndMetadataUtility::DoADSPlayerStart() Start() on player did a leave!"));
-                         return PVMFFailure;);
-
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFrameAndMetadataUtility::DoADSPlayerStart() Out"));
-    return PVMFSuccess;
-}
-
-
-PVMFStatus PVFrameAndMetadataUtility::DoADSPlayerPause(PVCommandId aCmdId, OsclAny* aCmdContext)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFrameAndMetadataUtility::DoADSPlayerPause() In"));
-
-    iUtilityContext.iCmdId = aCmdId;
-    iUtilityContext.iCmdContext = aCmdContext;
-    iUtilityContext.iCmdType = PVFM_CMD_ADSPlayerPause;
-    int32 leavecode = 0;
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iPerfLogger, PVLOGMSG_NOTICE,
-                    (0, "PVFrameAndMetadataUtility::PlayerPause Called Tick=%d", OsclTickCount::TickCount()));
-    OSCL_TRY(leavecode, iPlayer->Pause((const OsclAny*)&iUtilityContext));
-    OSCL_FIRST_CATCH_ANY(leavecode,
-                         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVFrameAndMetadataUtility::DoADSPlayerPause() Pause() on player did a leave!"));
-                         return PVMFFailure;);
-
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFrameAndMetadataUtility::DoADSPlayerPause() Out"));
-    return PVMFSuccess;
-}
-
 
 PVMFStatus PVFrameAndMetadataUtility::DoGetMetadataKeys(PVFMUtilityCommand& aCmd)
 {
@@ -1855,47 +1479,23 @@ PVMFStatus PVFrameAndMetadataUtility::DoGetMetadataKeys(PVFMUtilityCommand& aCmd
     int32 maxkeyentries = aCmd.GetParam(2).int32_value;
     char* querykey = aCmd.GetParam(3).pChar_value;
 
-    if (keylist == NULL)
+    if (keylist == NULL || maxkeyentries < -1 || maxkeyentries == 0 || startingkeyindex < 0)
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVFrameAndMetadataUtility::DoGetMetadataKeys() Passed in parameter invalid."));
         return PVMFErrArgument;
     }
 
-    if (maxkeyentries < -1 || maxkeyentries == 0 || startingkeyindex < 0)
-    {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVFrameAndMetadataUtility::DoGetMetadataKeys() Passed in parameter invalid."));
-        return PVMFErrArgument;
-    }
+    iUtilityContext.iCmdId = aCmd.GetCmdId();
+    iUtilityContext.iCmdContext = aCmd.GetContext();
+    iUtilityContext.iCmdType = PVFM_CMD_GetMetadataKeys;
 
-    // Call player engine API to retrieve metadata keys
-    PVMFStatus cmdstatus = DoPlayerGetMetadataKeys(aCmd.GetCmdId(), aCmd.GetContext(), *keylist, startingkeyindex, maxkeyentries, querykey);
+    OSCL_ASSERT(iPlayer != NULL);
+    iPlayer->GetMetadataKeys(*keylist, startingkeyindex, maxkeyentries, querykey, (const OsclAny*)&iUtilityContext);
+    iNumPendingPlayerCommands++;
 
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFrameAndMetadataUtility::DoGetMetadataKeys() Out"));
-    return cmdstatus;
-}
-
-
-PVMFStatus PVFrameAndMetadataUtility::DoPlayerGetMetadataKeys(PVCommandId aCmdId, OsclAny* aCmdContext,
-        PVPMetadataList& aKeyList, int32 aStartingIndex, int32 aMaxEntries, char* aQueryKey)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFrameAndMetadataUtility::DoPlayerGetMetadataKeys() In"));
-
-    iUtilityContext.iCmdId = aCmdId;
-    iUtilityContext.iCmdContext = aCmdContext;
-    iUtilityContext.iCmdType = PVFM_CMD_PlayerGetMetadataKeys;
-    int32 leavecode = 0;
-    OSCL_ASSERT(iPlayer != NULL);
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iPerfLogger, PVLOGMSG_NOTICE,
-                    (0, "PVFrameAndMetadataUtility::PlayerGetMetaDataKeys Called Tick=%d", OsclTickCount::TickCount()));
-    OSCL_TRY(leavecode, iPlayer->GetMetadataKeys(aKeyList, aStartingIndex, aMaxEntries, aQueryKey, (const OsclAny*)&iUtilityContext));
-    OSCL_FIRST_CATCH_ANY(leavecode,
-                         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVFrameAndMetadataUtility::DoPlayerGetMetadataKeys() GetMetadataKeys() on player did a leave!"));
-                         return PVMFFailure;);
-
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFrameAndMetadataUtility::DoPlayerGetMetadataKeys() Out"));
     return PVMFSuccess;
 }
-
 
 PVMFStatus PVFrameAndMetadataUtility::DoGetMetadataValues(PVFMUtilityCommand& aCmd)
 {
@@ -1913,49 +1513,26 @@ PVMFStatus PVFrameAndMetadataUtility::DoGetMetadataValues(PVFMUtilityCommand& aC
     int32* numavailablevalues = (int32*)(aCmd.GetParam(3).pOsclAny_value);
     Oscl_Vector<PvmiKvp, OsclMemAllocator>* valuelist = (Oscl_Vector<PvmiKvp, OsclMemAllocator>*)(aCmd.GetParam(4).pOsclAny_value);
 
-    if (keylist == NULL || valuelist == NULL || numavailablevalues == NULL)
+    if (keylist == NULL || valuelist == NULL || numavailablevalues == NULL ||
+            maxvalueentries < -1 || maxvalueentries == 0 || startingvalueindex < 0)
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVFrameAndMetadataUtility::DoGetMetadataValues() Passed in parameter invalid."));
         return PVMFErrArgument;
     }
 
-    if (maxvalueentries < -1 || maxvalueentries == 0 || startingvalueindex < 0)
-    {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVFrameAndMetadataUtility::DoGetMetadataValues() Passed in parameter invalid."));
-        return PVMFErrArgument;
-    }
+    iUtilityContext.iCmdId = aCmd.GetCmdId();
+    iUtilityContext.iCmdContext = aCmd.GetContext();
+    iUtilityContext.iCmdType = PVFM_CMD_GetMetadataValues;
 
-    // Call the player engine API to retrieve metadata values
-    PVMFStatus cmdstatus = DoPlayerGetMetadataValues(aCmd.GetCmdId(), aCmd.GetContext(), *keylist, startingvalueindex, maxvalueentries, *numavailablevalues, *valuelist);
+    OSCL_ASSERT(iPlayer != NULL);
+    iPlayer->GetMetadataValues(*keylist, startingvalueindex, maxvalueentries, *numavailablevalues, *valuelist, (const OsclAny*)&iUtilityContext);
+    iNumPendingPlayerCommands++;
 
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFrameAndMetadataUtility::DoGetMetadataValues() Out"));
-    return cmdstatus;
-}
-
-
-PVMFStatus PVFrameAndMetadataUtility::DoPlayerGetMetadataValues(PVCommandId aCmdId, OsclAny* aCmdContext,
-        PVPMetadataList& aKeyList, int32 aStartingValueIndex, int32 aMaxValueEntries,
-        int32& aNumAvailableValueEntries, Oscl_Vector<PvmiKvp, OsclMemAllocator>& aValueList)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFrameAndMetadataUtility::DoPlayerGetMetadataValues() In"));
-
-    iUtilityContext.iCmdId = aCmdId;
-    iUtilityContext.iCmdContext = aCmdContext;
-    iUtilityContext.iCmdType = PVFM_CMD_PlayerGetMetadataValues;
-    int32 leavecode = 0;
-    OSCL_ASSERT(iPlayer != NULL);
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iPerfLogger, PVLOGMSG_NOTICE,
-                    (0, "PVFrameAndMetadataUtility::PlayerGetMetaDataValues Called Tick=%d", OsclTickCount::TickCount()));
-    OSCL_TRY(leavecode, iPlayer->GetMetadataValues(aKeyList, aStartingValueIndex, aMaxValueEntries, aNumAvailableValueEntries, aValueList, (const OsclAny*)&iUtilityContext));
-    OSCL_FIRST_CATCH_ANY(leavecode,
-                         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVFrameAndMetadataUtility::DoPlayerGetMetadataValues() GetMetadataValues() on player did a leave!"));
-                         return PVMFFailure;);
-
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFrameAndMetadataUtility::DoPlayerGetMetadataValues() Out"));
     return PVMFSuccess;
 }
 
-PVMFStatus PVFrameAndMetadataUtility::DoCapConfigSetParameters(PVFMUtilityCommand& aCmd, bool aSyncCmd)
+PVMFStatus PVFrameAndMetadataUtility::DoCapConfigSetParameters(PVFMUtilityCommand& aCmd)
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFrameAndMetadataUtility::DoCapConfigSetParameters() In"));
 
@@ -2023,12 +1600,6 @@ PVMFStatus PVFrameAndMetadataUtility::DoCapConfigSetParameters(PVFMUtilityComman
                 return cmdstatus;
             }
         }
-    }
-
-    if (!aSyncCmd)
-    {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFrameAndMetadataUtility::DoCapConfigSetParameters() - Queuing up CommandComplete for a ASync command"));
-        UtilityCommandCompleted(aCmd.GetCmdId(), aCmd.GetContext(), PVMFSuccess);
     }
 
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFrameAndMetadataUtility::DoCapConfigSetParameters() Out"));
@@ -2109,6 +1680,11 @@ bool PVFrameAndMetadataUtility::HasVideo()
 
 PVMFStatus PVFrameAndMetadataUtility::DoGetFrame(PVFMUtilityCommand& aCmd)
 {
+    if (!HasVideo())
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVFrameAndMetadataUtility::DoGetFrame() -- No video frame present"));
+        return PVMFFailure;
+    }
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFrameAndMetadataUtility::DoGetFrame() In"));
 
     /*
@@ -2196,28 +1772,38 @@ PVMFStatus PVFrameAndMetadataUtility::DoGetFrame(PVFMUtilityCommand& aCmd)
     PVMFStatus retval = iPlayer->GetPVPlayerStateSync(playerstate);
     if (retval == PVMFSuccess)
     {
-        if (playerstate == PVP_STATE_INITIALIZED)
+        if (playerstate == PVP_STATE_PREPARED)
         {
             // Start playback
-            retval = DoGFPlayerPrepare(aCmd.GetCmdId(), aCmd.GetContext());
+            retval = DoGFPlayerStart(aCmd.GetCmdId(), aCmd.GetContext(), false);
         }
         else if (playerstate == PVP_STATE_PAUSED)
         {
-            if (!HasVideo())
-            {
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVFrameAndMetadataUtility::DoGetFrame() No video present"));
-                return PVMFFailure;
-            }
-            // Stop first to return to initialized state
-            retval = DoGFPlayerStopFromPaused(aCmd.GetCmdId(), aCmd.GetContext());
+            iUtilityContext.iCmdId = aCmd.GetCmdId();
+            iUtilityContext.iCmdContext = aCmd.GetContext();
+            iUtilityContext.iCmdType = PVFM_CMD_GFPlayerSetPlaybackRange;
+            PVPPlaybackPosition begin, end;
+            begin.iIndeterminate = false;
+            begin.iPosUnit = PVPPBPOSUNIT_SEC;
+            begin.iPosValue.sec_value = 0;
+            begin.iMode = PVPPBPOS_MODE_NOW;
+            end.iIndeterminate = true;
+            iPlayer->SetPlaybackRange(begin, end, false, (const OsclAny*)&iUtilityContext);
+            iNumPendingPlayerCommands++;
+            retval = DoGFPlayerStart(aCmd.GetCmdId(), aCmd.GetContext(), true);
         }
         else
         {
-            // Player engine should not be in any other state
-            // Report as underlying resource error
             OSCL_ASSERT(false);
             retval = PVMFErrResource;
         }
+    }
+    else
+    {
+        // Player engine should not be in any other state
+        // Report as underlying resource error
+        OSCL_ASSERT(false);
+        retval = PVMFErrResource;
     }
 
     if (retval != PVMFSuccess && aCmd.GetCmdType() == PVFM_UTILITY_COMMAND_GET_FRAME_UTILITY_BUFFER && iCurrentVideoFrameBuffer)
@@ -2230,29 +1816,9 @@ PVMFStatus PVFrameAndMetadataUtility::DoGetFrame(PVFMUtilityCommand& aCmd)
 }
 
 
-PVMFStatus PVFrameAndMetadataUtility::DoGFPlayerStopFromPaused(PVCommandId aCmdId, OsclAny* aCmdContext)
+PVMFStatus PVFrameAndMetadataUtility::DoGFPlayerStart(PVCommandId aCmdId, OsclAny* aCmdContext, bool aResume)
 {
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFrameAndMetadataUtility::DoGFPlayerStopFromPaused() In"));
-
-    iUtilityContext.iCmdId = aCmdId;
-    iUtilityContext.iCmdContext = aCmdContext;
-    iUtilityContext.iCmdType = PVFM_CMD_GFPlayerStopFromPaused;
-    int32 leavecode = 0;
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iPerfLogger, PVLOGMSG_NOTICE,
-                    (0, "PVFrameAndMetadataUtility::PlayerStop Called Tick=%d", OsclTickCount::TickCount()));
-    OSCL_TRY(leavecode, iPlayer->Stop((const OsclAny*)&iUtilityContext));
-    OSCL_FIRST_CATCH_ANY(leavecode,
-                         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVFrameAndMetadataUtility::DoGFPlayerStopFromPaused() Stop() on player did a leave!"));
-                         return PVMFFailure;);
-
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFrameAndMetadataUtility::DoGFPlayerStopFromPaused() Out"));
-    return PVMFSuccess;
-}
-
-
-PVMFStatus PVFrameAndMetadataUtility::DoGFPlayerPrepare(PVCommandId aCmdId, OsclAny* aCmdContext)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFrameAndMetadataUtility::DoGFPlayerPrepare() In"));
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFrameAndMetadataUtility::DoGFPlayerStart() In"));
 
     // Assert if the frame retrieval variables are not set yet
     OSCL_ASSERT(iVideoFrameSelector != NULL);
@@ -2281,51 +1847,33 @@ PVMFStatus PVFrameAndMetadataUtility::DoGFPlayerPrepare(PVCommandId aCmdId, Oscl
     }
     else
     {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVFrameAndMetadataUtility::DoGFPlayerPrepare() Unsupported frame selection method."));
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVFrameAndMetadataUtility::DoGFPlayerStart() Unsupported frame selection method."));
         retval = PVMFErrNotSupported;
     }
 
-    if (retval != PVMFPending)
+    if (retval != PVMFSuccess)
     {
-        OSCL_ASSERT(retval != PVMFSuccess);
         return retval;
     }
 
     iUtilityContext.iCmdId = aCmdId;
     iUtilityContext.iCmdContext = aCmdContext;
-    iUtilityContext.iCmdType = PVFM_CMD_GFPlayerPrepare;
-    int32 leavecode = 0;
+    iUtilityContext.iCmdType = PVFM_CMD_GFPlayerStart;
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iPerfLogger, PVLOGMSG_NOTICE,
-                    (0, "PVFrameAndMetadataUtility::PlayerPrepare Called Tick=%d", OsclTickCount::TickCount()));
-    OSCL_TRY(leavecode, iPlayer->Prepare((const OsclAny*)&iUtilityContext));
-    OSCL_FIRST_CATCH_ANY(leavecode,
-                         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVFrameAndMetadataUtility::DoGFPlayerPrepare() Prepare() on player did a leave!"));
-                         return PVMFFailure;);
+                    (0, "PVFrameAndMetadataUtility::DoGFPlayerstart Called Tick=%d", OsclTickCount::TickCount()));
+    if (aResume)
+    {
+        iPlayer->Resume((const OsclAny*)&iUtilityContext);
+    }
+    else
+    {
+        iPlayer->Start((const OsclAny*)&iUtilityContext);
+    }
+    iNumPendingPlayerCommands++;
 
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFrameAndMetadataUtility::DoGFPlayerPrepare() Out"));
     return PVMFSuccess;
 }
-
-
-PVMFStatus PVFrameAndMetadataUtility::DoGFPlayerStart(PVCommandId aCmdId, OsclAny* aCmdContext)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFrameAndMetadataUtility::DoGFPlayerStart() In"));
-
-    iUtilityContext.iCmdId = aCmdId;
-    iUtilityContext.iCmdContext = aCmdContext;
-    iUtilityContext.iCmdType = PVFM_CMD_GFPlayerStart;
-    int32 leavecode = 0;
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iPerfLogger, PVLOGMSG_NOTICE,
-                    (0, "PVFrameAndMetadataUtility::PlayerStart Called Tick=%d", OsclTickCount::TickCount()));
-    OSCL_TRY(leavecode, iPlayer->Start((const OsclAny*)&iUtilityContext));
-    OSCL_FIRST_CATCH_ANY(leavecode,
-                         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVFrameAndMetadataUtility::DoGFPlayerStart() Start() on player did a leave!"));
-                         return PVMFFailure;);
-
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFrameAndMetadataUtility::DoGFPlayerStart() Out"));
-    return PVMFSuccess;
-}
-
 
 PVMFStatus PVFrameAndMetadataUtility::DoGFPlayerPause(PVCommandId aCmdId, OsclAny* aCmdContext)
 {
@@ -2353,6 +1901,7 @@ PVMFStatus PVFrameAndMetadataUtility::DoGFPlayerPause(PVCommandId aCmdId, OsclAn
                          PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVFrameAndMetadataUtility::DoGFPlayerPause() Pause() on player did a leave!"));
                          return PVMFFailure;);
 
+    iNumPendingPlayerCommands++;
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFrameAndMetadataUtility::DoGFPlayerPause() Out"));
     return PVMFSuccess;
 }
@@ -2407,54 +1956,29 @@ PVMFStatus PVFrameAndMetadataUtility::DoRemoveDataSource(PVFMUtilityCommand& aCm
     PVMFStatus pretval = iPlayer->GetPVPlayerStateSync(playerstate);
     if (pretval == PVMFSuccess)
     {
-        if (playerstate == PVP_STATE_INITIALIZED)
-        {
-            // Start with remove data sink
-            if (iVideoNode && iVideoMIO)
-            {
-                cmdstatus = DoRDSPlayerRemoveVideoDataSink(aCmd.GetCmdId(), aCmd.GetContext());
-            }
-            else if (iAudioNode && iAudioMIO)
-            {
-                cmdstatus = DoRDSPlayerRemoveAudioDataSink(aCmd.GetCmdId(), aCmd.GetContext());
-            }
-            else
-            {
-                cmdstatus = DoRDSPlayerReset(aCmd.GetCmdId(), aCmd.GetContext());
-            }
-        }
-        else if (playerstate == PVP_STATE_PAUSED || playerstate == PVP_STATE_STARTED || playerstate == PVP_STATE_PREPARED)
-        {
-            // Stop first to return to initialized state
-            cmdstatus = DoRDSPlayerStop(aCmd.GetCmdId(), aCmd.GetContext());
-        }
-        else if (playerstate == PVP_STATE_IDLE)
-        {
-            // Call RemoveDataSource() on player
-            cmdstatus = DoRDSPlayerRemoveDataSource(aCmd.GetCmdId(), aCmd.GetContext());
-            if (cmdstatus != PVMFSuccess)
-            {
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVFrameAndMetadataUtility::DoRemoveDataSource: RemoveDataSource on player failed. Report command as failed"));
+        // Call Reset on player
+        iUtilityContext.iCmdId = aCmd.GetCmdId();
+        iUtilityContext.iCmdContext = aCmd.GetContext();
+        iUtilityContext.iCmdType = PVFM_CMD_RemoveDataSource;
+        iPlayer->Reset((const OsclAny*)&iUtilityContext);
+        iNumPendingPlayerCommands++;
 
-                iAPICmdStatus = cmdstatus;
-                if (iAPICmdErrMsg)
-                {
-                    iAPICmdErrMsg->removeRef();
-                    iAPICmdErrMsg = NULL;
-                }
-                // Need to shutdown/restart player and cleanup in utility's AO
-                OSCL_ASSERT(iErrorHandlingInUtilityAO == false);
-                iErrorHandlingInUtilityAO = true;
-                RunIfNotReady();
-            }
-        }
-        else
+        // Start with removing data sinks
+        if (iVideoNode && iVideoMIO)
         {
-            // Player engine should not be in any other state
-            // Report as underlying resource error
-            OSCL_ASSERT(false);
-            cmdstatus = PVMFErrResource;
+            iPlayer->RemoveDataSink(iVideoDataSink, (const OsclAny*)&iUtilityContext);
+            iNumPendingPlayerCommands++;
         }
+        if (iAudioNode && iAudioMIO)
+        {
+            iPlayer->RemoveDataSink(iAudioDataSink, (const OsclAny*)&iUtilityContext);
+            iNumPendingPlayerCommands++;
+        }
+
+        // Call RemoveDataSource() on player
+        iPlayer->RemoveDataSource(*iDataSource, (const OsclAny*)&iUtilityContext);
+        iNumPendingPlayerCommands++;
+        cmdstatus = PVMFSuccess;
     }
     else
     {
@@ -2470,105 +1994,6 @@ PVMFStatus PVFrameAndMetadataUtility::DoRemoveDataSource(PVFMUtilityCommand& aCm
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFrameAndMetadataUtility::DoRemoveDataSource() Out"));
     return cmdstatus;
 }
-
-
-PVMFStatus PVFrameAndMetadataUtility::DoRDSPlayerStop(PVCommandId aCmdId, OsclAny* aCmdContext)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFrameAndMetadataUtility::DoRDSPlayerStop In"));
-
-    iUtilityContext.iCmdId = aCmdId;
-    iUtilityContext.iCmdContext = aCmdContext;
-    iUtilityContext.iCmdType = PVFM_CMD_RDSPlayerStopFromPaused;
-    int32 leavecode = 0;
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iPerfLogger, PVLOGMSG_NOTICE,
-                    (0, "PVFrameAndMetadataUtility::RDSPlayerStop Called Tick=%d", OsclTickCount::TickCount()));
-    OSCL_TRY(leavecode, iPlayer->Stop((const OsclAny*)&iUtilityContext));
-    OSCL_FIRST_CATCH_ANY(leavecode,
-                         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVFrameAndMetadataUtility::DoRDSPlayerStop Stop() on player did a leave!"));
-                         return PVMFFailure;);
-
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFrameAndMetadataUtility::DoRDSPlayerStop Out"));
-    return PVMFSuccess;
-}
-
-
-PVMFStatus PVFrameAndMetadataUtility::DoRDSPlayerRemoveVideoDataSink(PVCommandId aCmdId, OsclAny* aCmdContext)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFrameAndMetadataUtility::DoRDSPlayerRemoveVideoDataSink() In"));
-
-    iUtilityContext.iCmdId = aCmdId;
-    iUtilityContext.iCmdContext = aCmdContext;
-    iUtilityContext.iCmdType = PVFM_CMD_RDSPlayerRemoveVideoDataSink;
-    int32 leavecode = 0;
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iPerfLogger, PVLOGMSG_NOTICE,
-                    (0, "PVFrameAndMetadataUtility::RDSPlayerRemoveVideoSink Called Tick=%d", OsclTickCount::TickCount()));
-    OSCL_TRY(leavecode, iPlayer->RemoveDataSink(iVideoDataSink, (const OsclAny*)&iUtilityContext));
-    OSCL_FIRST_CATCH_ANY(leavecode,
-                         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVFrameAndMetadataUtility::DoRDSPlayerRemoveVideoDataSink() RemoveDataSink() on player did a leave!"));
-                         return PVMFFailure;);
-
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFrameAndMetadataUtility::DoRDSPlayerRemoveVideoDataSink() Out"));
-    return PVMFSuccess;
-}
-
-PVMFStatus PVFrameAndMetadataUtility::DoRDSPlayerRemoveAudioDataSink(PVCommandId aCmdId, OsclAny* aCmdContext)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFrameAndMetadataUtility::DoRDSPlayerRemoveAudioDataSink() In"));
-
-    iUtilityContext.iCmdId = aCmdId;
-    iUtilityContext.iCmdContext = aCmdContext;
-    iUtilityContext.iCmdType = PVFM_CMD_RDSPlayerRemoveAudioDataSink;
-    int32 leavecode = 0;
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iPerfLogger, PVLOGMSG_NOTICE,
-                    (0, "PVFrameAndMetadataUtility::RDSPlayerRemoveAudioSink Called Tick=%d", OsclTickCount::TickCount()));
-    OSCL_TRY(leavecode, iPlayer->RemoveDataSink(iAudioDataSink, (const OsclAny*)&iUtilityContext));
-    OSCL_FIRST_CATCH_ANY(leavecode,
-                         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVFrameAndMetadataUtility::DoRDSPlayerRemoveAudioDataSink() RemoveDataSink() on player did a leave!"));
-                         return PVMFFailure;);
-
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFrameAndMetadataUtility::DoRDSPlayerRemoveAudioDataSink() Out"));
-    return PVMFSuccess;
-}
-
-PVMFStatus PVFrameAndMetadataUtility::DoRDSPlayerReset(PVCommandId aCmdId, OsclAny* aCmdContext)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFrameAndMetadataUtility::DoRDSPlayerReset() In"));
-
-    iUtilityContext.iCmdId = aCmdId;
-    iUtilityContext.iCmdContext = aCmdContext;
-    iUtilityContext.iCmdType = PVFM_CMD_RDSPlayerReset;
-    int32 leavecode = 0;
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iPerfLogger, PVLOGMSG_NOTICE,
-                    (0, "PVFrameAndMetadataUtility::RDSPlayerReset Called Tick=%d", OsclTickCount::TickCount()));
-    OSCL_TRY(leavecode, iPlayer->Reset((const OsclAny*)&iUtilityContext));
-    OSCL_FIRST_CATCH_ANY(leavecode,
-                         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVFrameAndMetadataUtility::DoRDSPlayerReset() Reset() on player did a leave!"));
-                         return PVMFFailure;);
-
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFrameAndMetadataUtility::DoRDSPlayerReset() Out"));
-    return PVMFSuccess;
-}
-
-
-PVMFStatus PVFrameAndMetadataUtility::DoRDSPlayerRemoveDataSource(PVCommandId aCmdId, OsclAny* aCmdContext)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFrameAndMetadataUtility::DoRDSPlayerRemoveDataSource() In"));
-
-    iUtilityContext.iCmdId = aCmdId;
-    iUtilityContext.iCmdContext = aCmdContext;
-    iUtilityContext.iCmdType = PVFM_CMD_RDSPlayerRemoveDataSource;
-    int32 leavecode = 0;
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iPerfLogger, PVLOGMSG_NOTICE,
-                    (0, "PVFrameAndMetadataUtility::RDSPlayerRemoveDataSource Called Tick=%d", OsclTickCount::TickCount()));
-    OSCL_TRY(leavecode, iPlayer->RemoveDataSource(*iDataSource, (const OsclAny*)&iUtilityContext));
-    OSCL_FIRST_CATCH_ANY(leavecode,
-                         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVFrameAndMetadataUtility::DoRDSPlayerRemoveDataSource() RemoveDataSource() on player did a leave!"));
-                         return PVMFFailure;);
-
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFrameAndMetadataUtility::DoRDSPlayerRemoveDataSource() Out"));
-    return PVMFSuccess;
-}
-
 
 PVMFStatus PVFrameAndMetadataUtility::DoPlayerShutdownRestart(void)
 {
@@ -2599,131 +2024,52 @@ PVMFStatus PVFrameAndMetadataUtility::DoPlayerShutdownRestart(void)
     return PVMFSuccess;
 }
 
-
-void PVFrameAndMetadataUtility::HandlePlayerQueryUUID(PVFMUtilityContext& aUtilContext, const PVCmdResponse& aCmdResp)
+void PVFrameAndMetadataUtility::HandleCommandComplete(PVFMUtilityContext& aUtilContext, const PVCmdResponse& aCmdResp)
 {
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFrameAndMetadataUtility::HandlePlayerQueryUUID() In"));
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFrameAndMetadataUtility::HandleCommandComplete() In"));
 
-    aUtilContext.iCmdType = -1;
-
-    switch (aCmdResp.GetCmdStatus())
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iPerfLogger, PVLOGMSG_NOTICE,
+                    (0, "PVFrameAndMetadataUtility::HandleCommandComplete() Command(id=%d) complete with status %d Tick=%d", aUtilContext.iCmdId, iAPICmdStatus, OsclTickCount::TickCount()));
+    if (iAPICmdStatus == PVMFSuccess)
     {
-        case PVMFSuccess:
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iPerfLogger, PVLOGMSG_NOTICE,
-                            (0, "PVFrameAndMetadataUtility::PlayerQueryUUID completed successfully Tick=%d", OsclTickCount::TickCount()));
-            // Report QueryUUID() command as succesfully complete
-            UtilityCommandCompleted(aUtilContext.iCmdId, aUtilContext.iCmdContext, PVMFSuccess);
-            break;
-
-        default:
-        {
-            PVMFErrorInfoMessageInterface* nextmsg = NULL;
-            if (aCmdResp.GetEventExtensionInterface())
-            {
-                nextmsg = GetErrorInfoMessageInterface(*(aCmdResp.GetEventExtensionInterface()));
-            }
-            PVMFBasicErrorInfoMessage* errmsg = NULL;
-            errmsg = CreateBasicErrInfoMessage(nextmsg);
-
-            UtilityCommandCompleted(aUtilContext.iCmdId, aUtilContext.iCmdContext, aCmdResp.GetCmdStatus(), OSCL_STATIC_CAST(PVInterface*, errmsg));
-            if (errmsg)
-            {
-                errmsg->removeRef();
-            }
-        }
-        break;
+        if (aUtilContext.iCmdType == PVFM_CMD_PlayerQueryCapConfigInterface)
+            iPlayerCapConfigIF = OSCL_STATIC_CAST(PvmiCapabilityAndConfig*, iPlayerCapConfigIFPVI);
     }
-
+    UtilityCommandCompleted(aUtilContext.iCmdId, aUtilContext.iCmdContext, iAPICmdStatus);
+    iAPICmdStatus = PVMFSuccess;
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFrameAndMetadataUtility::HandlePlayerQueryUUID() Out"));
 }
 
-
-void PVFrameAndMetadataUtility::HandlePlayerQueryInterface(PVFMUtilityContext& aUtilContext, const PVCmdResponse& aCmdResp)
+void PVFrameAndMetadataUtility::HandleDataSourceCommand(PVFMUtilityContext& aUtilContext, const PVCmdResponse& aCmdResp)
 {
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFrameAndMetadataUtility::HandlePlayerQueryInterface() In"));
-
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFrameAndMetadataUtility::HandleDataSourceCommand() In"));
     switch (aCmdResp.GetCmdStatus())
     {
         case PVMFSuccess:
+            if (aUtilContext.iCmdType == PVFM_CMD_AddDataSource)
+            {
+                SetUtilityState(PVFM_UTILITY_STATE_INITIALIZED);
+            }
+            else
+            {
+                SetUtilityState(PVFM_UTILITY_STATE_IDLE);
+                iDataSource = NULL;
+                iSourceIntent = 0;
+            }
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iPerfLogger, PVLOGMSG_NOTICE,
-                            (0, "PVFrameAndMetadataUtility::PlayerQueryInterface completed successfully Tick=%d", OsclTickCount::TickCount()));
-            if (aUtilContext.iCmdType == PVFM_CMD_PlayerQueryCapConfigInterface)
-                iPlayerCapConfigIF = OSCL_STATIC_CAST(PvmiCapabilityAndConfig*, iPlayerCapConfigIFPVI);
-            // Report QueryInterface() command as succesfully complete
+                            (0, "PVFrameAndMetadataUtility::HandleDataSourceCommand completed sucessfully Tick=%d", OsclTickCount::TickCount()));
+
             UtilityCommandCompleted(aUtilContext.iCmdId, aUtilContext.iCmdContext, PVMFSuccess);
             break;
 
         default:
         {
-            PVMFErrorInfoMessageInterface* nextmsg = NULL;
-            if (aCmdResp.GetEventExtensionInterface())
+            if (aUtilContext.iCmdType == PVFM_CMD_RemoveDataSource)
             {
-                nextmsg = GetErrorInfoMessageInterface(*(aCmdResp.GetEventExtensionInterface()));
+                SetUtilityState(PVFM_UTILITY_STATE_IDLE);
+                iDataSource = NULL;
+                iSourceIntent = 0;
             }
-            PVMFBasicErrorInfoMessage* errmsg = NULL;
-            errmsg = CreateBasicErrInfoMessage(nextmsg);
-
-            UtilityCommandCompleted(aUtilContext.iCmdId, aUtilContext.iCmdContext, aCmdResp.GetCmdStatus(), OSCL_STATIC_CAST(PVInterface*, errmsg));
-            if (errmsg)
-            {
-                errmsg->removeRef();
-            }
-        }
-        break;
-    }
-
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFrameAndMetadataUtility::HandlePlayerQueryInterface() Out"));
-}
-
-
-void PVFrameAndMetadataUtility::HandleADSPlayerAddDataSource(PVFMUtilityContext& aUtilContext, const PVCmdResponse& aCmdResp)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFrameAndMetadataUtility::HandleADSPlayerAddDataSource() In"));
-
-    aUtilContext.iCmdType = -1;
-
-    PVMFStatus cmdstatus = PVMFFailure;
-
-    switch (aCmdResp.GetCmdStatus())
-    {
-        case PVMFSuccess:
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iPerfLogger, PVLOGMSG_NOTICE,
-                            (0, "PVFrameAndMetadataUtility::PlayerADS completed successfully Tick=%d", OsclTickCount::TickCount()));
-            // Call Init() on player
-            cmdstatus = DoADSPlayerInit(aUtilContext.iCmdId, aUtilContext.iCmdContext);
-            if (cmdstatus != PVMFSuccess)
-            {
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVFrameAndMetadataUtility::HandleADSPlayerAddDataSource() Init on player failed. Report command as failed"));
-                iAPICmdStatus = cmdstatus;
-                if (iAPICmdErrMsg)
-                {
-                    iAPICmdErrMsg->removeRef();
-                    iAPICmdErrMsg = NULL;
-                }
-                // Need to shutdown/restart player and cleanup in utility's AO
-                OSCL_ASSERT(iErrorHandlingInUtilityAO == false);
-                iErrorHandlingInUtilityAO = true;
-                RunIfNotReady();
-            }
-            break;
-
-        default:
-        {
-            PVMFErrorInfoMessageInterface* nextmsg = NULL;
-            if (aCmdResp.GetEventExtensionInterface())
-            {
-                nextmsg = GetErrorInfoMessageInterface(*(aCmdResp.GetEventExtensionInterface()));
-            }
-            PVMFBasicErrorInfoMessage* errmsg = NULL;
-            errmsg = CreateBasicErrInfoMessage(nextmsg);
-
-            iAPICmdStatus = aCmdResp.GetCmdStatus();
-            if (iAPICmdErrMsg)
-            {
-                iAPICmdErrMsg->removeRef();
-                iAPICmdErrMsg = NULL;
-            }
-            iAPICmdErrMsg = errmsg;
 
             // Check if player is handling the error
             PVPlayerState playerstate;
@@ -2745,902 +2091,47 @@ void PVFrameAndMetadataUtility::HandleADSPlayerAddDataSource(PVFMUtilityContext&
         break;
     }
 
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFrameAndMetadataUtility::HandleADSPlayerAddDataSource() Out"));
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFrameAndMetadataUtility::HandleDataSourceCommand() Out"));
 }
 
-
-void PVFrameAndMetadataUtility::HandleADSPlayerInit(PVFMUtilityContext& aUtilContext, const PVCmdResponse& aCmdResp)
+void PVFrameAndMetadataUtility::HandleCommandComplete2(PVFMUtilityContext& aUtilContext, const PVCmdResponse& aCmdResp)
 {
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFrameAndMetadataUtility::HandleADSPlayerInit() In"));
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFrameAndMetadataUtility::HandleCommandComplete2() In"));
 
-    aUtilContext.iCmdType = -1;
-
-    PVMFStatus cmdstatus = PVMFFailure;
-
-    switch (aCmdResp.GetCmdStatus())
-    {
-        case PVMFSuccess:
-        {
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iPerfLogger, PVLOGMSG_NOTICE,
-                            (0, "PVFrameAndMetadataUtility::PlayerInit completed successfully Tick=%d", OsclTickCount::TickCount()));
-
-            if (iMode == PV_FRAME_METADATA_INTERFACE_MODE_SOURCE_METADATA_ONLY)
-            {
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_INFO, (0, "PVFrameAndMetadataUtility::HandleADSPlayerInit - ADS Complete"));
-                // Utility's AddDataSource() successfully completed
-                SetUtilityState(PVFM_UTILITY_STATE_INITIALIZED);
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iPerfLogger, PVLOGMSG_NOTICE,
-                                (0, "PVFrameAndMetadataUtility::AddDataSource completed sucessfully Tick=%d", OsclTickCount::TickCount()));
-
-                UtilityCommandCompleted(aUtilContext.iCmdId, aUtilContext.iCmdContext, PVMFSuccess);
-            }
-            else if (iLocalDataSource != NULL)
-            {
-                if (iSourceIntent == BITMASK_PVMF_SOURCE_INTENT_GETMETADATA)
-                {
-                    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_INFO, (0, "PVFrameAndMetadataUtility::HandleADSPlayerInit - ADS Complete"));
-                    // Utility's AddDataSource() successfully completed
-                    SetUtilityState(PVFM_UTILITY_STATE_INITIALIZED);
-                    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iPerfLogger, PVLOGMSG_NOTICE,
-                                    (0, "PVFrameAndMetadataUtility::AddDataSource completed sucessfully Tick=%d", OsclTickCount::TickCount()));
-
-                    UtilityCommandCompleted(aUtilContext.iCmdId, aUtilContext.iCmdContext, PVMFSuccess);
-                }
-                else
-                {
-                    // Call AddDataSink() on player
-                    cmdstatus = DoADSPlayerAddVideoDataSink(aUtilContext.iCmdId, aUtilContext.iCmdContext);
-                    if (cmdstatus != PVMFSuccess)
-                    {
-                        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVFrameAndMetadataUtility::HandleADSPlayerInit() AddDataSink on player failed. Report command as failed"));
-                        iAPICmdStatus = aCmdResp.GetCmdStatus();
-                        if (iAPICmdErrMsg)
-                        {
-                            iAPICmdErrMsg->removeRef();
-                            iAPICmdErrMsg = NULL;
-                        }
-                        // Need to shutdown/restart player and cleanup in utility's AO
-                        OSCL_ASSERT(iErrorHandlingInUtilityAO == false);
-                        iErrorHandlingInUtilityAO = true;
-                        RunIfNotReady();
-                    }
-                }
-
-            }
-            else
-            {
-                // Call AddDataSink() on player
-                cmdstatus = DoADSPlayerAddVideoDataSink(aUtilContext.iCmdId, aUtilContext.iCmdContext);
-                if (cmdstatus != PVMFSuccess)
-                {
-                    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVFrameAndMetadataUtility::HandleADSPlayerInit() AddDataSink on player failed. Report command as failed"));
-                    iAPICmdStatus = aCmdResp.GetCmdStatus();
-                    if (iAPICmdErrMsg)
-                    {
-                        iAPICmdErrMsg->removeRef();
-                        iAPICmdErrMsg = NULL;
-                    }
-                    // Need to shutdown/restart player and cleanup in utility's AO
-                    OSCL_ASSERT(iErrorHandlingInUtilityAO == false);
-                    iErrorHandlingInUtilityAO = true;
-                    RunIfNotReady();
-                }
-            }
-
-        }
-        break;
-
-        default:
-        {
-            PVMFErrorInfoMessageInterface* nextmsg = NULL;
-            if (aCmdResp.GetEventExtensionInterface())
-            {
-                nextmsg = GetErrorInfoMessageInterface(*(aCmdResp.GetEventExtensionInterface()));
-            }
-            PVMFBasicErrorInfoMessage* errmsg = NULL;
-            errmsg = CreateBasicErrInfoMessage(nextmsg);
-
-            iAPICmdStatus = aCmdResp.GetCmdStatus();
-            if (iAPICmdErrMsg)
-            {
-                iAPICmdErrMsg->removeRef();
-                iAPICmdErrMsg = NULL;
-            }
-            iAPICmdErrMsg = errmsg;
-
-            // Check if player is handling the error
-            PVPlayerState playerstate;
-            PVMFStatus pretval = iPlayer->GetPVPlayerStateSync(playerstate);
-            if (pretval == PVMFSuccess && playerstate == PVP_STATE_ERROR)
-            {
-                // Wait for error handling to complete
-                // Start a timer just in case the player does not report error handling complete
-                iTimeoutTimer->Request(PVFMUTIL_TIMERID_PLAYERERRORTIMEOUT, 0, iErrorHandlingWaitTime, this, false);
-            }
-            else
-            {
-                // Need to shutdown/restart player and cleanup in utility's AO
-                OSCL_ASSERT(iErrorHandlingInUtilityAO == false);
-                iErrorHandlingInUtilityAO = true;
-                RunIfNotReady();
-            }
-        }
-        break;
-    }
-
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFrameAndMetadataUtility::HandleADSPlayerInit() Out"));
-}
-
-void PVFrameAndMetadataUtility::HandleADSPlayerAddVideoDataSink(PVFMUtilityContext& aUtilContext, const PVCmdResponse& aCmdResp)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFrameAndMetadataUtility::HandleADSPlayerAddVideoDataSink() In"));
-
+    iAPICmdStatus = aCmdResp.GetCmdStatus();
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iPerfLogger, PVLOGMSG_NOTICE,
+                    (0, "PVFrameAndMetadataUtility::HandleCommandComplete2() Command(id=%d) complete with status %d Tick=%d", aUtilContext.iCmdId, iAPICmdStatus, OsclTickCount::TickCount()));
     aUtilContext.iCmdType = -1;
 
     switch (aCmdResp.GetCmdStatus())
     {
         case PVMFSuccess:
-        {
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iPerfLogger, PVLOGMSG_NOTICE,
-                            (0, "PVFrameAndMetadataUtility::PlayerAddVideoDataSink completed successfully Tick=%d", OsclTickCount::TickCount()));
-            if (iMode == PV_FRAME_METADATA_INTERFACE_MODE_SOURCE_METADATA_AND_THUMBNAIL)
-            {
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_INFO, (0, "PVFrameAndMetadataUtility::HandleADSPlayerAddVideoDataSink - ADS Complete"));
-                // Utility's AddDataSource() successfully completed
-                SetUtilityState(PVFM_UTILITY_STATE_INITIALIZED);
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iPerfLogger, PVLOGMSG_NOTICE,
-                                (0, "PVFrameAndMetadataUtility::AddDataSource completed sucessfully Tick=%d", OsclTickCount::TickCount()));
-
-                UtilityCommandCompleted(aUtilContext.iCmdId, aUtilContext.iCmdContext, PVMFSuccess);
-            }
-            else
-            {
-                // Add Audio data sink
-                PVMFStatus cmdstatus = DoADSPlayerAddAudioDataSink(aUtilContext.iCmdId, aUtilContext.iCmdContext);
-                if (cmdstatus != PVMFSuccess)
-                {
-                    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVFrameAndMetadataUtility::HandleADSPlayerAddVideoDataSink() AddAudioDataSink on player failed. Report command as failed"));
-                    iAPICmdStatus = aCmdResp.GetCmdStatus();
-                    if (iAPICmdErrMsg)
-                    {
-                        iAPICmdErrMsg->removeRef();
-                        iAPICmdErrMsg = NULL;
-                    }
-                    // Need to shutdown/restart player and cleanup in utility's AO
-                    OSCL_ASSERT(iErrorHandlingInUtilityAO == false);
-                    iErrorHandlingInUtilityAO = true;
-                    RunIfNotReady();
-                }
-            }
-        }
-        break;
-
-        default:
-        {
-            PVMFErrorInfoMessageInterface* nextmsg = NULL;
-            if (aCmdResp.GetEventExtensionInterface())
-            {
-                nextmsg = GetErrorInfoMessageInterface(*(aCmdResp.GetEventExtensionInterface()));
-            }
-
-            PVMFBasicErrorInfoMessage* errmsg = NULL;
-            errmsg = CreateBasicErrInfoMessage(nextmsg);
-
-            iAPICmdStatus = aCmdResp.GetCmdStatus();
-            if (iAPICmdErrMsg)
-            {
-                iAPICmdErrMsg->removeRef();
-                iAPICmdErrMsg = NULL;
-            }
-            iAPICmdErrMsg = errmsg;
-
-            // Check if player is handling the error
-            PVPlayerState playerstate;
-            PVMFStatus pretval = iPlayer->GetPVPlayerStateSync(playerstate);
-            if (pretval == PVMFSuccess && playerstate == PVP_STATE_ERROR)
-            {
-                // Wait for error handling to complete
-                // Start a timer just in case the player does not report error handling complete
-                iTimeoutTimer->Request(PVFMUTIL_TIMERID_PLAYERERRORTIMEOUT, 0, iErrorHandlingWaitTime, this, false);
-            }
-            else
-            {
-                // Need to shutdown/restart player and cleanup in utility's AO
-                OSCL_ASSERT(iErrorHandlingInUtilityAO == false);
-                iErrorHandlingInUtilityAO = true;
-                RunIfNotReady();
-            }
-        }
-        break;
-    }
-
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFrameAndMetadataUtility::HandleADSPlayerAddVideoDataSink() Out"));
-}
-
-void PVFrameAndMetadataUtility::HandleADSPlayerAddAudioDataSink(PVFMUtilityContext& aUtilContext, const PVCmdResponse& aCmdResp)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFrameAndMetadataUtility::HandleADSPlayerAddAudioDataSink() In"));
-
-    aUtilContext.iCmdType = -1;
-
-    switch (aCmdResp.GetCmdStatus())
-    {
-        case PVMFSuccess:
-        {
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iPerfLogger, PVLOGMSG_NOTICE,
-                            (0, "PVFrameAndMetadataUtility::PlayerAddAudioDataSink completed successfully Tick=%d", OsclTickCount::TickCount()));
-            // Call Prepare() on player
-            PVMFStatus cmdstatus = DoADSPlayerPrepare(aUtilContext.iCmdId, aUtilContext.iCmdContext);
-            if (cmdstatus != PVMFSuccess)
-            {
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVFrameAndMetadataUtility::HandleADSPlayerAddAudioDataSink() Prepare on player failed. Report command as failed"));
-                iAPICmdStatus = aCmdResp.GetCmdStatus();
-                if (iAPICmdErrMsg)
-                {
-                    iAPICmdErrMsg->removeRef();
-                    iAPICmdErrMsg = NULL;
-                }
-                // Need to shutdown/restart player and cleanup in utility's AO
-                OSCL_ASSERT(iErrorHandlingInUtilityAO == false);
-                iErrorHandlingInUtilityAO = true;
-                RunIfNotReady();
-            }
-        }
-        break;
-
-        default:
-        {
-            PVMFErrorInfoMessageInterface* nextmsg = NULL;
-            if (aCmdResp.GetEventExtensionInterface())
-            {
-                nextmsg = GetErrorInfoMessageInterface(*(aCmdResp.GetEventExtensionInterface()));
-            }
-
-            PVMFBasicErrorInfoMessage* errmsg = NULL;
-            errmsg = CreateBasicErrInfoMessage(nextmsg);
-
-            iAPICmdStatus = aCmdResp.GetCmdStatus();
-            if (iAPICmdErrMsg)
-            {
-                iAPICmdErrMsg->removeRef();
-                iAPICmdErrMsg = NULL;
-            }
-            iAPICmdErrMsg = errmsg;
-
-            // Check if player is handling the error
-            PVPlayerState playerstate;
-            PVMFStatus pretval = iPlayer->GetPVPlayerStateSync(playerstate);
-            if (pretval == PVMFSuccess && playerstate == PVP_STATE_ERROR)
-            {
-                // Wait for error handling to complete
-                // Start a timer just in case the player does not report error handling complete
-                iTimeoutTimer->Request(PVFMUTIL_TIMERID_PLAYERERRORTIMEOUT, 0, iErrorHandlingWaitTime, this, false);
-            }
-            else
-            {
-                // Need to shutdown/restart player and cleanup in utility's AO
-                OSCL_ASSERT(iErrorHandlingInUtilityAO == false);
-                iErrorHandlingInUtilityAO = true;
-                RunIfNotReady();
-            }
-        }
-        break;
-    }
-
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFrameAndMetadataUtility::HandleADSPlayerAddVideoDataSink() Out"));
-}
-
-
-void PVFrameAndMetadataUtility::HandleADSPlayerPrepare(PVFMUtilityContext& aUtilContext, const PVCmdResponse& aCmdResp)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFrameAndMetadataUtility::HandleADSPlayerPrepare() In"));
-
-    aUtilContext.iCmdType = -1;
-
-    PVMFStatus cmdstatus = PVMFFailure;
-
-    switch (aCmdResp.GetCmdStatus())
-    {
-        case PVMFSuccess:
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iPerfLogger, PVLOGMSG_NOTICE,
-                            (0, "PVFrameAndMetadataUtility::PlayerPrepare completed successfully Tick=%d", OsclTickCount::TickCount()));
-            // Call Start() on player
-            cmdstatus = DoADSPlayerStart(aUtilContext.iCmdId, aUtilContext.iCmdContext);
-            if (cmdstatus != PVMFSuccess)
-            {
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVFrameAndMetadataUtility::HandleADSPlayerPrepare() Start on player failed. Report command as failed"));
-                iAPICmdStatus = aCmdResp.GetCmdStatus();
-                if (iAPICmdErrMsg)
-                {
-                    iAPICmdErrMsg->removeRef();
-                    iAPICmdErrMsg = NULL;
-                }
-                // Need to shutdown/restart player and cleanup in utility's AO
-                OSCL_ASSERT(iErrorHandlingInUtilityAO == false);
-                iErrorHandlingInUtilityAO = true;
-                RunIfNotReady();
-            }
-            break;
-
-        default:
-        {
-            // If the player engine is in initialized state, complete AddDataSource()
-            // command with success here. User can still retrieve metadata
-            PVPlayerState pstate;
-            PVMFStatus playerretval = iPlayer->GetPVPlayerStateSync(pstate);
-            if (playerretval == PVMFSuccess && pstate == PVP_STATE_INITIALIZED)
-            {
-                // Utility's AddDataSource() successfully completed
-                SetUtilityState(PVFM_UTILITY_STATE_INITIALIZED);
-                UtilityCommandCompleted(aUtilContext.iCmdId, aUtilContext.iCmdContext, PVMFSuccess);
-                break;
-            }
-
-            // Else fall through to the error handling in the default case since fatal error
-            PVMFErrorInfoMessageInterface* nextmsg = NULL;
-            if (aCmdResp.GetEventExtensionInterface())
-            {
-                nextmsg = GetErrorInfoMessageInterface(*(aCmdResp.GetEventExtensionInterface()));
-            }
-            PVMFBasicErrorInfoMessage* errmsg = NULL;
-            errmsg = CreateBasicErrInfoMessage(nextmsg);
-
-            iAPICmdStatus = aCmdResp.GetCmdStatus();
-            if (iAPICmdErrMsg)
-            {
-                iAPICmdErrMsg->removeRef();
-                iAPICmdErrMsg = NULL;
-            }
-            iAPICmdErrMsg = errmsg;
-
-            // Check if player is handling the error
-            PVPlayerState playerstate;
-            PVMFStatus pretval = iPlayer->GetPVPlayerStateSync(playerstate);
-            if (pretval == PVMFSuccess && playerstate == PVP_STATE_ERROR)
-            {
-                // Wait for error handling to complete
-                // Start a timer just in case the player does not report error handling complete
-                iTimeoutTimer->Request(PVFMUTIL_TIMERID_PLAYERERRORTIMEOUT, 0, iErrorHandlingWaitTime, this, false);
-            }
-            else
-            {
-                // Need to shutdown/restart player and cleanup in utility's AO
-                OSCL_ASSERT(iErrorHandlingInUtilityAO == false);
-                iErrorHandlingInUtilityAO = true;
-                RunIfNotReady();
-            }
-        }
-        break;
-    }
-
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFrameAndMetadataUtility::HandleADSPlayerPrepare() Out"));
-}
-
-
-void PVFrameAndMetadataUtility::HandleADSPlayerStart(PVFMUtilityContext& aUtilContext, const PVCmdResponse& aCmdResp)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFrameAndMetadataUtility::HandleADSPlayerStart() In"));
-
-    aUtilContext.iCmdType = -1;
-
-    PVMFStatus cmdstatus = PVMFFailure;
-
-    switch (aCmdResp.GetCmdStatus())
-    {
-        case PVMFSuccess:
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iPerfLogger, PVLOGMSG_NOTICE,
-                            (0, "PVFrameAndMetadataUtility::PlayerStart completed successfully Tick=%d", OsclTickCount::TickCount()));
-            // Call Pause() on player
-            cmdstatus = DoADSPlayerPause(aUtilContext.iCmdId, aUtilContext.iCmdContext);
-            if (cmdstatus != PVMFSuccess)
-            {
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVFrameAndMetadataUtility::HandleADSPlayerStart() Start on player failed. Report command as failed"));
-                iAPICmdStatus = aCmdResp.GetCmdStatus();
-                if (iAPICmdErrMsg)
-                {
-                    iAPICmdErrMsg->removeRef();
-                    iAPICmdErrMsg = NULL;
-                }
-                // Need to shutdown/restart player and cleanup in utility's AO
-                OSCL_ASSERT(iErrorHandlingInUtilityAO == false);
-                iErrorHandlingInUtilityAO = true;
-                RunIfNotReady();
-            }
-            break;
-
-        default:
-        {
-            PVMFErrorInfoMessageInterface* nextmsg = NULL;
-            if (aCmdResp.GetEventExtensionInterface())
-            {
-                nextmsg = GetErrorInfoMessageInterface(*(aCmdResp.GetEventExtensionInterface()));
-            }
-            PVMFBasicErrorInfoMessage* errmsg = NULL;
-            errmsg = CreateBasicErrInfoMessage(nextmsg);
-
-            iAPICmdStatus = aCmdResp.GetCmdStatus();
-            if (iAPICmdErrMsg)
-            {
-                iAPICmdErrMsg->removeRef();
-                iAPICmdErrMsg = NULL;
-            }
-            iAPICmdErrMsg = errmsg;
-
-            // Check if player is handling the error
-            PVPlayerState playerstate;
-            PVMFStatus pretval = iPlayer->GetPVPlayerStateSync(playerstate);
-            if (pretval == PVMFSuccess && playerstate == PVP_STATE_ERROR)
-            {
-                // Wait for error handling to complete
-                // Start a timer just in case the player does not report error handling complete
-                iTimeoutTimer->Request(PVFMUTIL_TIMERID_PLAYERERRORTIMEOUT, 0, iErrorHandlingWaitTime, this, false);
-            }
-            else
-            {
-                // Need to shutdown/restart player and cleanup in utility's AO
-                OSCL_ASSERT(iErrorHandlingInUtilityAO == false);
-                iErrorHandlingInUtilityAO = true;
-                RunIfNotReady();
-            }
-        }
-        break;
-    }
-
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFrameAndMetadataUtility::HandleADSPlayerStart() Out"));
-}
-
-
-void PVFrameAndMetadataUtility::HandleADSPlayerPause(PVFMUtilityContext& aUtilContext, const PVCmdResponse& aCmdResp)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFrameAndMetadataUtility::HandleADSPlayerPause() In"));
-
-    aUtilContext.iCmdType = -1;
-
-    switch (aCmdResp.GetCmdStatus())
-    {
-        case PVMFSuccess:
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iPerfLogger, PVLOGMSG_NOTICE,
-                            (0, "PVFrameAndMetadataUtility::PlayerPause completed successfully Tick=%d", OsclTickCount::TickCount()));
-            // Utility's AddDataSource() successfully completed
-            SetUtilityState(PVFM_UTILITY_STATE_INITIALIZED);
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iPerfLogger, PVLOGMSG_NOTICE,
-                            (0, "PVFrameAndMetadataUtility::AddDataSource completed sucessfully Tick=%d", OsclTickCount::TickCount()));
-
             UtilityCommandCompleted(aUtilContext.iCmdId, aUtilContext.iCmdContext, PVMFSuccess);
             break;
 
         default:
         {
-            PVMFErrorInfoMessageInterface* nextmsg = NULL;
-            if (aCmdResp.GetEventExtensionInterface())
-            {
-                nextmsg = GetErrorInfoMessageInterface(*(aCmdResp.GetEventExtensionInterface()));
-            }
-            PVMFBasicErrorInfoMessage* errmsg = NULL;
-            errmsg = CreateBasicErrInfoMessage(nextmsg);
-
-            iAPICmdStatus = aCmdResp.GetCmdStatus();
-            if (iAPICmdErrMsg)
-            {
-                iAPICmdErrMsg->removeRef();
-                iAPICmdErrMsg = NULL;
-            }
-            iAPICmdErrMsg = errmsg;
-
-            // Check if player is handling the error
-            PVPlayerState playerstate;
-            PVMFStatus pretval = iPlayer->GetPVPlayerStateSync(playerstate);
-            if (pretval == PVMFSuccess && playerstate == PVP_STATE_ERROR)
-            {
-                // Wait for error handling to complete
-                // Start a timer just in case the player does not report error handling complete
-                iTimeoutTimer->Request(PVFMUTIL_TIMERID_PLAYERERRORTIMEOUT, 0, iErrorHandlingWaitTime, this, false);
-            }
-            else
-            {
-                // Need to shutdown/restart player and cleanup in utility's AO
-                OSCL_ASSERT(iErrorHandlingInUtilityAO == false);
-                iErrorHandlingInUtilityAO = true;
-                RunIfNotReady();
-            }
-        }
-        break;
-    }
-
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFrameAndMetadataUtility::HandleADSPlayerPause() Out"));
-}
-
-
-void PVFrameAndMetadataUtility::HandlePlayerGetMetadataKeys(PVFMUtilityContext& aUtilContext, const PVCmdResponse& aCmdResp)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFrameAndMetadataUtility::HandlePlayerGetMetadataKeys() In"));
-
-    aUtilContext.iCmdType = -1;
-
-    switch (aCmdResp.GetCmdStatus())
-    {
-        case PVMFSuccess:
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iPerfLogger, PVLOGMSG_NOTICE,
-                            (0, "PVFrameAndMetadataUtility::PlayerGetMetadataKeys completed successfully Tick=%d", OsclTickCount::TickCount()));
-
-            // Report GetMetadataKeys() command as succesfully complete
-            UtilityCommandCompleted(aUtilContext.iCmdId, aUtilContext.iCmdContext, PVMFSuccess);
-            break;
-
-        default:
-        {
-            PVMFErrorInfoMessageInterface* nextmsg = NULL;
-            if (aCmdResp.GetEventExtensionInterface())
-            {
-                nextmsg = GetErrorInfoMessageInterface(*(aCmdResp.GetEventExtensionInterface()));
-            }
-            PVMFBasicErrorInfoMessage* errmsg = NULL;
-            errmsg = CreateBasicErrInfoMessage(nextmsg);
-
             // Check if player is handling the error
             PVPlayerState playerstate;
             PVMFStatus pretval = iPlayer->GetPVPlayerStateSync(playerstate);
             if (pretval == PVMFSuccess && playerstate == PVP_STATE_ERROR)
             {
                 // Yes so wait for error handling to complete
-                iAPICmdStatus = aCmdResp.GetCmdStatus();
-                if (iAPICmdErrMsg)
-                {
-                    iAPICmdErrMsg->removeRef();
-                    iAPICmdErrMsg = NULL;
-                }
-                iAPICmdErrMsg = errmsg;
                 // Start a timer just in case the player does not report error handling complete
                 iTimeoutTimer->Request(PVFMUTIL_TIMERID_PLAYERERRORTIMEOUT, 0, iErrorHandlingWaitTime, this, false);
             }
             else
             {
                 // Report the command as failed
-                UtilityCommandCompleted(aUtilContext.iCmdId, aUtilContext.iCmdContext, aCmdResp.GetCmdStatus(), OSCL_STATIC_CAST(PVInterface*, errmsg));
-                if (errmsg)
-                {
-                    errmsg->removeRef();
-                }
-            }
-        }
-        break;
-    }
-
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFrameAndMetadataUtility::HandlePlayerGetMetadataKeys() Out"));
-}
-
-
-void PVFrameAndMetadataUtility::HandlePlayerGetMetadataValues(PVFMUtilityContext& aUtilContext, const PVCmdResponse& aCmdResp)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFrameAndMetadataUtility::HandlePlayerGetMetadataValues() In"));
-
-    aUtilContext.iCmdType = -1;
-
-    switch (aCmdResp.GetCmdStatus())
-    {
-        case PVMFSuccess:
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iPerfLogger, PVLOGMSG_NOTICE,
-                            (0, "PVFrameAndMetadataUtility::PlayerGetMetadataValues completed successfully Tick=%d", OsclTickCount::TickCount()));
-            // Report GetMetadataValues() command as succesfully complete
-            UtilityCommandCompleted(aUtilContext.iCmdId, aUtilContext.iCmdContext, PVMFSuccess);
-            break;
-
-        default:
-        {
-            PVMFErrorInfoMessageInterface* nextmsg = NULL;
-            if (aCmdResp.GetEventExtensionInterface())
-            {
-                nextmsg = GetErrorInfoMessageInterface(*(aCmdResp.GetEventExtensionInterface()));
-            }
-            PVMFBasicErrorInfoMessage* errmsg = NULL;
-            errmsg = CreateBasicErrInfoMessage(nextmsg);
-
-            // Check if player is handling the error
-            PVPlayerState playerstate;
-            PVMFStatus pretval = iPlayer->GetPVPlayerStateSync(playerstate);
-            if (pretval == PVMFSuccess && playerstate == PVP_STATE_ERROR)
-            {
-                // Yes so wait for error handling to complete
-                iAPICmdStatus = aCmdResp.GetCmdStatus();
-                if (iAPICmdErrMsg)
-                {
-                    iAPICmdErrMsg->removeRef();
-                    iAPICmdErrMsg = NULL;
-                }
-                iAPICmdErrMsg = errmsg;
-                // Start a timer just in case the player does not report error handling complete
-                iTimeoutTimer->Request(PVFMUTIL_TIMERID_PLAYERERRORTIMEOUT, 0, iErrorHandlingWaitTime, this, false);
-            }
-            else
-            {
-                // Report the command as failed
-                UtilityCommandCompleted(aUtilContext.iCmdId, aUtilContext.iCmdContext, aCmdResp.GetCmdStatus(), OSCL_STATIC_CAST(PVInterface*, errmsg));
-                if (errmsg)
-                {
-                    errmsg->removeRef();
-                }
-            }
-        }
-        break;
-    }
-
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFrameAndMetadataUtility::HandlePlayerGetMetadataValues() Out"));
-}
-
-void PVFrameAndMetadataUtility::HandlePlayerSetParametersSync(PVFMUtilityContext& aUtilContext, const PVCmdResponse& aCmdResp)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFrameAndMetadataUtility::HandlePlayerSetParametersSync() In"));
-
-    aUtilContext.iCmdType = -1;
-
-    switch (aCmdResp.GetCmdStatus())
-    {
-        case PVMFSuccess:
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iPerfLogger, PVLOGMSG_NOTICE,
-                            (0, "PVFrameAndMetadataUtility::PlayerSetParametersSync completed successfully Tick=%d", OsclTickCount::TickCount()));
-            // Report SetParametersSync() command as succesfully complete
-            UtilityCommandCompleted(aUtilContext.iCmdId, aUtilContext.iCmdContext, PVMFSuccess);
-            break;
-
-        default:
-        {
-            PVMFErrorInfoMessageInterface* nextmsg = NULL;
-            if (aCmdResp.GetEventExtensionInterface())
-            {
-                nextmsg = GetErrorInfoMessageInterface(*(aCmdResp.GetEventExtensionInterface()));
-            }
-            PVMFBasicErrorInfoMessage* errmsg = NULL;
-            errmsg = CreateBasicErrInfoMessage(nextmsg);
-
-            // Check if player is handling the error
-            PVPlayerState playerstate;
-            PVMFStatus pretval = iPlayer->GetPVPlayerStateSync(playerstate);
-            if (pretval == PVMFSuccess && playerstate == PVP_STATE_ERROR)
-            {
-                // Yes so wait for error handling to complete
-                iAPICmdStatus = aCmdResp.GetCmdStatus();
-                if (iAPICmdErrMsg)
-                {
-                    iAPICmdErrMsg->removeRef();
-                    iAPICmdErrMsg = NULL;
-                }
-                iAPICmdErrMsg = errmsg;
-                // Start a timer just in case the player does not report error handling complete
-                iTimeoutTimer->Request(PVFMUTIL_TIMERID_PLAYERERRORTIMEOUT, 0, iErrorHandlingWaitTime, this, false);
-            }
-            else
-            {
-                // Report the command as failed
-                UtilityCommandCompleted(aUtilContext.iCmdId, aUtilContext.iCmdContext, aCmdResp.GetCmdStatus(), OSCL_STATIC_CAST(PVInterface*, errmsg));
-                if (errmsg)
-                {
-                    errmsg->removeRef();
-                }
-            }
-        }
-        break;
-    }
-
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFrameAndMetadataUtility::HandlePlayerSetParametersSync() Out"));
-}
-
-void PVFrameAndMetadataUtility::HandleGFPlayerStopFromPaused(PVFMUtilityContext& aUtilContext, const PVCmdResponse& aCmdResp)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFrameAndMetadataUtility::HandleGFPlayerStopFromPaused() In"));
-
-    aUtilContext.iCmdType = -1;
-
-    switch (aCmdResp.GetCmdStatus())
-    {
-        case PVMFSuccess:
-        {
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iPerfLogger, PVLOGMSG_NOTICE,
-                            (0, "PVFrameAndMetadataUtility::GFPlayerStopFromPaused completed successfully Tick=%d", OsclTickCount::TickCount()));
-
-            iPlayerStartCompleted = false;
-
-            // Call DoPrepare() on player
-            PVMFStatus cmdstatus = DoGFPlayerPrepare(aUtilContext.iCmdId, aUtilContext.iCmdContext);
-            if (cmdstatus != PVMFSuccess)
-            {
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVFrameAndMetadataUtility::HandleGFPlayerStopFromPaused() Prepare on player failed. Report command as failed"));
-
-                // Check if video frame buffer was allocated from utility's memory pool
-                OSCL_ASSERT(iCurrentCmd.empty() == false);
-                OSCL_ASSERT(iCurrentVideoFrameBuffer != NULL);
-                if (iCurrentCmd[0].GetCmdType() == PVFM_UTILITY_COMMAND_GET_FRAME_UTILITY_BUFFER && iCurrentVideoFrameBuffer)
-                {
-                    // Return the buffer if allocated from utility's mempool
-                    iVideoFrameBufferMemPool->deallocate(iCurrentVideoFrameBuffer);
-                    iCurrentVideoFrameBuffer = NULL;
-                }
-
-                iAPICmdStatus = cmdstatus;
-                if (iAPICmdErrMsg)
-                {
-                    iAPICmdErrMsg->removeRef();
-                    iAPICmdErrMsg = NULL;
-                }
-                // Need to shutdown/restart player and cleanup in utility's AO
-                OSCL_ASSERT(iErrorHandlingInUtilityAO == false);
-                iErrorHandlingInUtilityAO = true;
-                RunIfNotReady();
-            }
-        }
-        break;
-
-        default:
-        {
-            // Check if video frame buffer was allocated from utility's memory pool
-            OSCL_ASSERT(iCurrentCmd.empty() == false);
-            OSCL_ASSERT(iCurrentVideoFrameBuffer != NULL);
-            if (iCurrentCmd[0].GetCmdType() == PVFM_UTILITY_COMMAND_GET_FRAME_UTILITY_BUFFER && iCurrentVideoFrameBuffer)
-            {
-                // Return the buffer if allocated from utility's mempool
-                iVideoFrameBufferMemPool->deallocate(iCurrentVideoFrameBuffer);
-                iCurrentVideoFrameBuffer = NULL;
-            }
-            PVMFErrorInfoMessageInterface* nextmsg = NULL;
-            if (aCmdResp.GetEventExtensionInterface())
-            {
-                nextmsg = GetErrorInfoMessageInterface(*(aCmdResp.GetEventExtensionInterface()));
-            }
-            PVMFBasicErrorInfoMessage* errmsg = NULL;
-            errmsg = CreateBasicErrInfoMessage(nextmsg);
-
-            iAPICmdStatus = aCmdResp.GetCmdStatus();
-            if (iAPICmdErrMsg)
-            {
-                iAPICmdErrMsg->removeRef();
-                iAPICmdErrMsg = NULL;
-            }
-            iAPICmdErrMsg = errmsg;
-
-            // Check if player is handling the error
-            PVPlayerState playerstate;
-            PVMFStatus pretval = iPlayer->GetPVPlayerStateSync(playerstate);
-            if (pretval == PVMFSuccess && playerstate == PVP_STATE_ERROR)
-            {
-                // Yes so wait for error handling to complete
-                // Start a timer just in case the player does not report error handling complete
-                iTimeoutTimer->Request(PVFMUTIL_TIMERID_PLAYERERRORTIMEOUT, 0, iErrorHandlingWaitTime, this, false);
-            }
-            else if (pretval == PVMFSuccess && playerstate == PVP_STATE_INITIALIZED)
-            {
-                SetUtilityState(PVFM_UTILITY_STATE_INITIALIZED);
-
-                // Report the command as failed
-                UtilityCommandCompleted(aUtilContext.iCmdId, aUtilContext.iCmdContext, iAPICmdStatus, OSCL_STATIC_CAST(PVInterface*, iAPICmdErrMsg));
+                UtilityCommandCompleted(aUtilContext.iCmdId, aUtilContext.iCmdContext, aCmdResp.GetCmdStatus());
                 iAPICmdStatus = PVMFSuccess;
-                if (iAPICmdErrMsg)
-                {
-                    iAPICmdErrMsg->removeRef();
-                    iAPICmdErrMsg = NULL;
-                }
-            }
-            else
-            {
-                // Need to shutdown/restart player and cleanup in utility's AO
-                OSCL_ASSERT(iErrorHandlingInUtilityAO == false);
-                iErrorHandlingInUtilityAO = true;
-                RunIfNotReady();
             }
         }
         break;
     }
 
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFrameAndMetadataUtility::HandleGFPlayerStopFromPaused() Out"));
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFrameAndMetadataUtility::HandleCommandComplete2() Out"));
 }
-
-
-void PVFrameAndMetadataUtility::HandleGFPlayerPrepare(PVFMUtilityContext& aUtilContext, const PVCmdResponse& aCmdResp)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFrameAndMetadataUtility::HandleGFPlayerPrepare() In"));
-
-    aUtilContext.iCmdType = -1;
-
-    PVMFStatus cmdstatus = PVMFFailure;
-
-    switch (aCmdResp.GetCmdStatus())
-    {
-        case PVMFSuccess:
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iPerfLogger, PVLOGMSG_NOTICE,
-                            (0, "PVFrameAndMetadataUtility::GFPlayerPrepare completed successfully Tick=%d", OsclTickCount::TickCount()));
-            // Call Start() on player
-            iPlayerStartCompleted = false;
-            cmdstatus = DoGFPlayerStart(aUtilContext.iCmdId, aUtilContext.iCmdContext);
-            if ((cmdstatus != PVMFSuccess) || (!HasVideo()))
-            {
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVFrameAndMetadataUtility::HandleGFPlayerPrepare() Prepare on player failed. Report command as failed"));
-                // Cancel the frame retrieval
-                iVideoMIO->CancelGetFrame();
-                if (iCurrentCmd[0].GetCmdType() == PVFM_UTILITY_COMMAND_GET_FRAME_UTILITY_BUFFER && iCurrentVideoFrameBuffer)
-                {
-                    // Return the buffer if allocated from utility's mempool
-                    iVideoFrameBufferMemPool->deallocate(iCurrentVideoFrameBuffer);
-                    iCurrentVideoFrameBuffer = NULL;
-                }
-
-                iAPICmdStatus = cmdstatus;
-                if (iAPICmdErrMsg)
-                {
-                    iAPICmdErrMsg->removeRef();
-                    iAPICmdErrMsg = NULL;
-                }
-                // Need to shutdown/restart player and cleanup in utility's AO
-                OSCL_ASSERT(iErrorHandlingInUtilityAO == false);
-                iErrorHandlingInUtilityAO = true;
-                RunIfNotReady();
-            }
-            break;
-
-        default:
-        {
-            // Cancel the frame retrieval
-            iVideoMIO->CancelGetFrame();
-            if (iCurrentCmd[0].GetCmdType() == PVFM_UTILITY_COMMAND_GET_FRAME_UTILITY_BUFFER && iCurrentVideoFrameBuffer)
-            {
-                // Return the buffer if allocated from utility's mempool
-                iVideoFrameBufferMemPool->deallocate(iCurrentVideoFrameBuffer);
-                iCurrentVideoFrameBuffer = NULL;
-            }
-            PVFMErrorEventType errCode = PVFMErrPlayerEngine;
-            if (aCmdResp.GetCmdStatus() == PVMFErrResourceConfiguration)
-            {
-                errCode = PVFMErrNoVideoTrack;
-            }
-
-            PVMFErrorInfoMessageInterface* nextmsg = NULL;
-            if (aCmdResp.GetEventExtensionInterface())
-            {
-                nextmsg = GetErrorInfoMessageInterface(*(aCmdResp.GetEventExtensionInterface()));
-            }
-            PVMFBasicErrorInfoMessage* errmsg = NULL;
-            errmsg = CreateBasicErrInfoMessage(nextmsg, errCode);
-
-            iAPICmdStatus = aCmdResp.GetCmdStatus();
-            if (iAPICmdErrMsg)
-            {
-                iAPICmdErrMsg->removeRef();
-                iAPICmdErrMsg = NULL;
-            }
-            iAPICmdErrMsg = errmsg;
-
-            // Check if player is handling the error
-            PVPlayerState playerstate;
-            PVMFStatus pretval = iPlayer->GetPVPlayerStateSync(playerstate);
-            if (pretval == PVMFSuccess && playerstate == PVP_STATE_ERROR)
-            {
-                // Wait for error handling to complete
-                // Start a timer just in case the player does not report error handling complete
-                iTimeoutTimer->Request(PVFMUTIL_TIMERID_PLAYERERRORTIMEOUT, 0, iErrorHandlingWaitTime, this, false);
-            }
-            else if (aCmdResp.GetCmdStatus() == PVMFErrResourceConfiguration)
-            {
-                // Track selection in player engine failed since there is no video track.
-                // Complete GetFrame() with not supported for this source
-                UtilityCommandCompleted(iCurrentCmd[0].GetCmdId(), iCurrentCmd[0].GetContext(), PVMFErrNotSupported, OSCL_STATIC_CAST(PVInterface*, iAPICmdErrMsg));
-                iAPICmdStatus = PVMFSuccess;
-                if (iAPICmdErrMsg)
-                {
-                    iAPICmdErrMsg->removeRef();
-                    iAPICmdErrMsg = NULL;
-                }
-            }
-            else
-            {
-                // Need to shutdown/restart player and cleanup in utility's AO
-                OSCL_ASSERT(iErrorHandlingInUtilityAO == false);
-                iErrorHandlingInUtilityAO = true;
-                RunIfNotReady();
-            }
-        }
-        break;
-    }
-
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFrameAndMetadataUtility::HandleGFPlayerPrepare() Out"));
-}
-
 
 void PVFrameAndMetadataUtility::HandleGFPlayerStart(PVFMUtilityContext& aUtilContext, const PVCmdResponse& aCmdResp)
 {
@@ -3672,14 +2163,8 @@ void PVFrameAndMetadataUtility::HandleGFPlayerStart(PVFMUtilityContext& aUtilCon
                         }
                     }
 
-                    UtilityCommandCompleted(aUtilContext.iCmdId, aUtilContext.iCmdContext, iAPICmdStatus, OSCL_STATIC_CAST(PVInterface*, iAPICmdErrMsg));
-
+                    UtilityCommandCompleted(aUtilContext.iCmdId, aUtilContext.iCmdContext, iAPICmdStatus);
                     iAPICmdStatus = PVMFSuccess;
-                    if (iAPICmdErrMsg)
-                    {
-                        iAPICmdErrMsg->removeRef();
-                        iAPICmdErrMsg = NULL;
-                    }
                 }
                 else if (retval != PVMFSuccess)
                 {
@@ -3691,13 +2176,7 @@ void PVFrameAndMetadataUtility::HandleGFPlayerStart(PVFMUtilityContext& aUtilCon
                         iVideoFrameBufferMemPool->deallocate(iCurrentVideoFrameBuffer);
                         iCurrentVideoFrameBuffer = NULL;
                     }
-
                     iAPICmdStatus = retval;
-                    if (iAPICmdErrMsg)
-                    {
-                        iAPICmdErrMsg->removeRef();
-                        iAPICmdErrMsg = NULL;
-                    }
 
                     // Need to shutdown/restart player and cleanup in utility's AO
                     OSCL_ASSERT(iErrorHandlingInUtilityAO == false);
@@ -3724,22 +2203,7 @@ void PVFrameAndMetadataUtility::HandleGFPlayerStart(PVFMUtilityContext& aUtilCon
                 iVideoFrameBufferMemPool->deallocate(iCurrentVideoFrameBuffer);
                 iCurrentVideoFrameBuffer = NULL;
             }
-
-            PVMFErrorInfoMessageInterface* nextmsg = NULL;
-            if (aCmdResp.GetEventExtensionInterface())
-            {
-                nextmsg = GetErrorInfoMessageInterface(*(aCmdResp.GetEventExtensionInterface()));
-            }
-            PVMFBasicErrorInfoMessage* errmsg = NULL;
-            errmsg = CreateBasicErrInfoMessage(nextmsg);
-
             iAPICmdStatus = aCmdResp.GetCmdStatus();
-            if (iAPICmdErrMsg)
-            {
-                iAPICmdErrMsg->removeRef();
-                iAPICmdErrMsg = NULL;
-            }
-            iAPICmdErrMsg = errmsg;
 
             // Check if player is handling the error
             PVPlayerState playerstate;
@@ -3791,14 +2255,8 @@ void PVFrameAndMetadataUtility::HandleGFPlayerPause(PVFMUtilityContext& aUtilCon
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iPerfLogger, PVLOGMSG_NOTICE,
                             (0, "PVFrameAndMetadataUtility::GetFrame() completed successfully Tick=%d", OsclTickCount::TickCount()));
 
-            UtilityCommandCompleted(aUtilContext.iCmdId, aUtilContext.iCmdContext, iAPICmdStatus, OSCL_STATIC_CAST(PVInterface*, iAPICmdErrMsg));
-
+            UtilityCommandCompleted(aUtilContext.iCmdId, aUtilContext.iCmdContext, iAPICmdStatus);
             iAPICmdStatus = PVMFSuccess;
-            if (iAPICmdErrMsg)
-            {
-                iAPICmdErrMsg->removeRef();
-                iAPICmdErrMsg = NULL;
-            }
             break;
 
         default:
@@ -3810,15 +2268,6 @@ void PVFrameAndMetadataUtility::HandleGFPlayerPause(PVFMUtilityContext& aUtilCon
                 iCurrentVideoFrameBuffer = NULL;
             }
 
-            PVMFErrorInfoMessageInterface* nextmsg = NULL;
-            if (aCmdResp.GetEventExtensionInterface())
-            {
-                nextmsg = GetErrorInfoMessageInterface(*(aCmdResp.GetEventExtensionInterface()));
-            }
-
-            PVMFBasicErrorInfoMessage* errmsg = NULL;
-            errmsg = CreateBasicErrInfoMessage(nextmsg);
-
             // Check if player is handling the error
             PVPlayerState playerstate;
             PVMFStatus pretval = iPlayer->GetPVPlayerStateSync(playerstate);
@@ -3829,12 +2278,6 @@ void PVFrameAndMetadataUtility::HandleGFPlayerPause(PVFMUtilityContext& aUtilCon
                 {
                     // Use the player error only if there is no existing error (from frame retrieval)
                     iAPICmdStatus = aCmdResp.GetCmdStatus();
-                    if (iAPICmdErrMsg)
-                    {
-                        iAPICmdErrMsg->removeRef();
-                        iAPICmdErrMsg = NULL;
-                    }
-                    iAPICmdErrMsg = errmsg;
                 }
                 // Start a timer just in case the player does not report error handling complete
                 iTimeoutTimer->Request(PVFMUTIL_TIMERID_PLAYERERRORTIMEOUT, 0, iErrorHandlingWaitTime, this, false);
@@ -3846,32 +2289,17 @@ void PVFrameAndMetadataUtility::HandleGFPlayerPause(PVFMUtilityContext& aUtilCon
                 // Report the command as failed
                 if (iAPICmdStatus == PVMFSuccess)
                 {
-                    UtilityCommandCompleted(aUtilContext.iCmdId, aUtilContext.iCmdContext, aCmdResp.GetCmdStatus(), OSCL_STATIC_CAST(PVInterface*, errmsg));
-                    if (errmsg)
-                    {
-                        errmsg->removeRef();
-                    }
+                    UtilityCommandCompleted(aUtilContext.iCmdId, aUtilContext.iCmdContext, aCmdResp.GetCmdStatus());
                 }
                 else
                 {
-                    UtilityCommandCompleted(aUtilContext.iCmdId, aUtilContext.iCmdContext, iAPICmdStatus, OSCL_STATIC_CAST(PVInterface*, iAPICmdErrMsg));
+                    UtilityCommandCompleted(aUtilContext.iCmdId, aUtilContext.iCmdContext, iAPICmdStatus);
                     iAPICmdStatus = PVMFSuccess;
-                    if (iAPICmdErrMsg)
-                    {
-                        iAPICmdErrMsg->removeRef();
-                        iAPICmdErrMsg = NULL;
-                    }
                 }
             }
             else
             {
                 iAPICmdStatus = aCmdResp.GetCmdStatus();
-                if (iAPICmdErrMsg)
-                {
-                    iAPICmdErrMsg->removeRef();
-                    iAPICmdErrMsg = NULL;
-                }
-                iAPICmdErrMsg = errmsg;
                 // Need to shutdown/restart player and cleanup in utility's AO
                 OSCL_ASSERT(iErrorHandlingInUtilityAO == false);
                 iErrorHandlingInUtilityAO = true;
@@ -3882,496 +2310,6 @@ void PVFrameAndMetadataUtility::HandleGFPlayerPause(PVFMUtilityContext& aUtilCon
     }
 
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFrameAndMetadataUtility::HandleGFPlayerPause() Out"));
-}
-
-
-void PVFrameAndMetadataUtility::HandleRDSPlayerStopFromPaused(PVFMUtilityContext& aUtilContext, const PVCmdResponse& aCmdResp)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFrameAndMetadataUtility::HandleRDSPlayerStopFromPaused() In"));
-
-    aUtilContext.iCmdType = -1;
-
-    switch (aCmdResp.GetCmdStatus())
-    {
-        case PVMFSuccess:
-        {
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iPerfLogger, PVLOGMSG_NOTICE,
-                            (0, "PVFrameAndMetadataUtility::RDSPlayerStopFromPaused completed successfully Tick=%d", OsclTickCount::TickCount()));
-            // Call RemoveDataSink() on player
-            PVMFStatus cmdstatus = DoRDSPlayerRemoveVideoDataSink(aUtilContext.iCmdId, aUtilContext.iCmdContext);
-            if (cmdstatus != PVMFSuccess)
-            {
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVFrameAndMetadataUtility::HandleRDSPlayerStopFromPaused() RemoveDataSink on player failed. Report command as failed"));
-                iAPICmdStatus = cmdstatus;
-                if (iAPICmdErrMsg)
-                {
-                    iAPICmdErrMsg->removeRef();
-                    iAPICmdErrMsg = NULL;
-                }
-                // Need to shutdown/restart player and cleanup in utility's AO
-                OSCL_ASSERT(iErrorHandlingInUtilityAO == false);
-                iErrorHandlingInUtilityAO = true;
-                RunIfNotReady();
-            }
-        }
-        break;
-
-        default:
-        {
-            PVMFErrorInfoMessageInterface* nextmsg = NULL;
-            if (aCmdResp.GetEventExtensionInterface())
-            {
-                nextmsg = GetErrorInfoMessageInterface(*(aCmdResp.GetEventExtensionInterface()));
-            }
-            PVMFBasicErrorInfoMessage* errmsg = NULL;
-            errmsg = CreateBasicErrInfoMessage(nextmsg);
-
-            iAPICmdStatus = aCmdResp.GetCmdStatus();
-            if (iAPICmdErrMsg)
-            {
-                iAPICmdErrMsg->removeRef();
-                iAPICmdErrMsg = NULL;
-            }
-            iAPICmdErrMsg = errmsg;
-
-            // Check if player is handling the error
-            PVPlayerState playerstate;
-            PVMFStatus pretval = iPlayer->GetPVPlayerStateSync(playerstate);
-            if (pretval == PVMFSuccess && playerstate == PVP_STATE_ERROR)
-            {
-                // Yes so wait for error handling to complete
-                // Start a timer just in case the player does not report error handling complete
-                iTimeoutTimer->Request(PVFMUTIL_TIMERID_PLAYERERRORTIMEOUT, 0, iErrorHandlingWaitTime, this, false);
-            }
-            else if (pretval == PVMFSuccess && playerstate == PVP_STATE_INITIALIZED)
-            {
-                SetUtilityState(PVFM_UTILITY_STATE_INITIALIZED);
-
-                // Report the command as failed
-                UtilityCommandCompleted(aUtilContext.iCmdId, aUtilContext.iCmdContext, iAPICmdStatus, OSCL_STATIC_CAST(PVInterface*, iAPICmdErrMsg));
-                iAPICmdStatus = PVMFSuccess;
-                if (iAPICmdErrMsg)
-                {
-                    iAPICmdErrMsg->removeRef();
-                    iAPICmdErrMsg = NULL;
-                }
-            }
-            else
-            {
-                // Need to shutdown/restart player and cleanup in utility's AO
-                OSCL_ASSERT(iErrorHandlingInUtilityAO == false);
-                iErrorHandlingInUtilityAO = true;
-                RunIfNotReady();
-            }
-        }
-        break;
-    }
-
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFrameAndMetadataUtility::HandleRDSPlayerStopFromPaused() Out"));
-}
-
-void PVFrameAndMetadataUtility::HandleRDSPlayerRemoveVideoDataSink(PVFMUtilityContext& aUtilContext, const PVCmdResponse& aCmdResp)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFrameAndMetadataUtility:HandleRDSPlayerRemoveVideoDataSink() In"));
-
-    aUtilContext.iCmdType = -1;
-
-    PVMFStatus cmdstatus = PVMFFailure;
-
-    switch (aCmdResp.GetCmdStatus())
-    {
-        case PVMFSuccess:
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iPerfLogger, PVLOGMSG_NOTICE,
-                            (0, "PVFrameAndMetadataUtility::RDSPlayerRemoveVideoDataSink completed successfully Tick=%d", OsclTickCount::TickCount()));
-            // Cleanup the data sink
-            iVideoDataSink.SetDataSinkNode(NULL);
-            if (iVideoNode)
-            {
-                PVMediaOutputNodeFactory::DeleteMediaOutputNode(iVideoNode);
-                iVideoNode = NULL;
-            }
-            if (iVideoMIO)
-            {
-                OSCL_DELETE(iVideoMIO);
-                iVideoMIO = NULL;
-            }
-
-            // Call Remove audio data sink on player.
-            if (iAudioNode && iAudioMIO)
-            {
-                cmdstatus = DoRDSPlayerRemoveAudioDataSink(aUtilContext.iCmdId, aUtilContext.iCmdContext);
-            }
-            else
-            {
-                // Audio sink not available so go to player reset
-                cmdstatus = DoRDSPlayerReset(aUtilContext.iCmdId, aUtilContext.iCmdContext);
-            }
-            if (cmdstatus != PVMFSuccess)
-            {
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVFrameAndMetadataUtility::HandleRDSPlayerRemoveVideoDataSink() RemoveAudioDataSink on player failed. Report command as failed"));
-                iAPICmdStatus = cmdstatus;
-                if (iAPICmdErrMsg)
-                {
-                    iAPICmdErrMsg->removeRef();
-                    iAPICmdErrMsg = NULL;
-                }
-                // Need to shutdown/restart player and cleanup in utility's AO
-                OSCL_ASSERT(iErrorHandlingInUtilityAO == false);
-                iErrorHandlingInUtilityAO = true;
-                RunIfNotReady();
-            }
-            break;
-
-        default:
-        {
-            // Cleanup the data sink
-            iVideoDataSink.SetDataSinkNode(NULL);
-            if (iVideoNode)
-            {
-                PVMediaOutputNodeFactory::DeleteMediaOutputNode(iVideoNode);
-                iVideoNode = NULL;
-            }
-            if (iVideoMIO)
-            {
-                OSCL_DELETE(iVideoMIO);
-                iVideoMIO = NULL;
-            }
-            PVMFErrorInfoMessageInterface* nextmsg = NULL;
-            if (aCmdResp.GetEventExtensionInterface())
-            {
-                nextmsg = GetErrorInfoMessageInterface(*(aCmdResp.GetEventExtensionInterface()));
-            }
-            PVMFBasicErrorInfoMessage* errmsg = NULL;
-            errmsg = CreateBasicErrInfoMessage(nextmsg);
-
-            iAPICmdStatus = aCmdResp.GetCmdStatus();
-            if (iAPICmdErrMsg)
-            {
-                iAPICmdErrMsg->removeRef();
-                iAPICmdErrMsg = NULL;
-            }
-            iAPICmdErrMsg = errmsg;
-
-            // Check if player is handling the error
-            PVPlayerState playerstate;
-            PVMFStatus pretval = iPlayer->GetPVPlayerStateSync(playerstate);
-            if (pretval == PVMFSuccess && playerstate == PVP_STATE_ERROR)
-            {
-                // Wait for error handling to complete
-                // Start a timer just in case the player does not report error handling complete
-                iTimeoutTimer->Request(PVFMUTIL_TIMERID_PLAYERERRORTIMEOUT, 0, iErrorHandlingWaitTime, this, false);
-            }
-            else if (pretval == PVMFSuccess && playerstate == PVP_STATE_INITIALIZED)
-            {
-                // Call Reset() on player
-                cmdstatus = DoRDSPlayerReset(aUtilContext.iCmdId, aUtilContext.iCmdContext);
-                if (cmdstatus != PVMFSuccess)
-                {
-                    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVFrameAndMetadataUtility::HandleRDSPlayerRemoveVideoDataSink() Reset on player failed. Report command as failed"));
-                    iAPICmdStatus = cmdstatus;
-                    if (iAPICmdErrMsg)
-                    {
-                        iAPICmdErrMsg->removeRef();
-                        iAPICmdErrMsg = NULL;
-                    }
-                    // Need to shutdown/restart player and cleanup in utility's AO
-                    OSCL_ASSERT(iErrorHandlingInUtilityAO == false);
-                    iErrorHandlingInUtilityAO = true;
-                    RunIfNotReady();
-                }
-            }
-            else
-            {
-                // Need to shutdown/restart player and cleanup in utility's AO
-                OSCL_ASSERT(iErrorHandlingInUtilityAO == false);
-                iErrorHandlingInUtilityAO = true;
-                RunIfNotReady();
-            }
-        }
-        break;
-    }
-
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFrameAndMetadataUtility::HandleRDSPlayerRemoveVideoDataSink() Out"));
-}
-
-void PVFrameAndMetadataUtility::HandleRDSPlayerRemoveAudioDataSink(PVFMUtilityContext& aUtilContext, const PVCmdResponse& aCmdResp)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFrameAndMetadataUtility::HandleRDSPlayerRemoveAudioDataSink() In"));
-
-    aUtilContext.iCmdType = -1;
-
-    PVMFStatus cmdstatus = PVMFFailure;
-
-    switch (aCmdResp.GetCmdStatus())
-    {
-        case PVMFSuccess:
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iPerfLogger, PVLOGMSG_NOTICE,
-                            (0, "PVFrameAndMetadataUtility::RDSPlayerRemoveAudioDataSink completed successfully Tick=%d", OsclTickCount::TickCount()));
-            // Cleanup the data sink
-            iAudioDataSink.SetDataSinkNode(NULL);
-            if (iAudioNode)
-            {
-                PVMediaOutputNodeFactory::DeleteMediaOutputNode(iAudioNode);
-                iAudioNode = NULL;
-            }
-            if (iAudioMIO)
-            {
-                OSCL_DELETE(iAudioMIO);
-                iAudioMIO = NULL;
-            }
-
-            // Call Reset() on player
-            cmdstatus = DoRDSPlayerReset(aUtilContext.iCmdId, aUtilContext.iCmdContext);
-            if (cmdstatus != PVMFSuccess)
-            {
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVFrameAndMetadataUtility::HandleRDSPlayerRemoveAudioDataSink() Reset on player failed. Report command as failed"));
-                iAPICmdStatus = cmdstatus;
-                if (iAPICmdErrMsg)
-                {
-                    iAPICmdErrMsg->removeRef();
-                    iAPICmdErrMsg = NULL;
-                }
-                // Need to shutdown/restart player and cleanup in utility's AO
-                OSCL_ASSERT(iErrorHandlingInUtilityAO == false);
-                iErrorHandlingInUtilityAO = true;
-                RunIfNotReady();
-            }
-            break;
-
-        default:
-        {
-            // Cleanup the data sink
-            iAudioDataSink.SetDataSinkNode(NULL);
-            if (iAudioNode)
-            {
-                PVMediaOutputNodeFactory::DeleteMediaOutputNode(iAudioNode);
-                iAudioNode = NULL;
-            }
-            if (iAudioMIO)
-            {
-                OSCL_DELETE(iAudioMIO);
-                iAudioMIO = NULL;
-            }
-            PVMFErrorInfoMessageInterface* nextmsg = NULL;
-            if (aCmdResp.GetEventExtensionInterface())
-            {
-                nextmsg = GetErrorInfoMessageInterface(*(aCmdResp.GetEventExtensionInterface()));
-            }
-            PVMFBasicErrorInfoMessage* errmsg = NULL;
-            errmsg = CreateBasicErrInfoMessage(nextmsg);
-
-            iAPICmdStatus = aCmdResp.GetCmdStatus();
-            if (iAPICmdErrMsg)
-            {
-                iAPICmdErrMsg->removeRef();
-                iAPICmdErrMsg = NULL;
-            }
-            iAPICmdErrMsg = errmsg;
-
-            // Check if player is handling the error
-            PVPlayerState playerstate;
-            PVMFStatus pretval = iPlayer->GetPVPlayerStateSync(playerstate);
-            if (pretval == PVMFSuccess && playerstate == PVP_STATE_ERROR)
-            {
-                // Wait for error handling to complete
-                // Start a timer just in case the player does not report error handling complete
-                iTimeoutTimer->Request(PVFMUTIL_TIMERID_PLAYERERRORTIMEOUT, 0, iErrorHandlingWaitTime, this, false);
-            }
-            else if (pretval == PVMFSuccess && playerstate == PVP_STATE_INITIALIZED)
-            {
-                // Call Reset() on player
-                cmdstatus = DoRDSPlayerReset(aUtilContext.iCmdId, aUtilContext.iCmdContext);
-                if (cmdstatus != PVMFSuccess)
-                {
-                    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVFrameAndMetadataUtility::HandleRDSPlayerRemoveAudioDataSink() Reset on player failed. Report command as failed"));
-                    iAPICmdStatus = cmdstatus;
-                    if (iAPICmdErrMsg)
-                    {
-                        iAPICmdErrMsg->removeRef();
-                        iAPICmdErrMsg = NULL;
-                    }
-                    // Need to shutdown/restart player and cleanup in utility's AO
-                    OSCL_ASSERT(iErrorHandlingInUtilityAO == false);
-                    iErrorHandlingInUtilityAO = true;
-                    RunIfNotReady();
-                }
-            }
-            else
-            {
-                // Need to shutdown/restart player and cleanup in utility's AO
-                OSCL_ASSERT(iErrorHandlingInUtilityAO == false);
-                iErrorHandlingInUtilityAO = true;
-                RunIfNotReady();
-            }
-        }
-        break;
-    }
-
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFrameAndMetadataUtility::HandleRDSPlayerRemoveAudioDataSink() Out"));
-}
-
-
-void PVFrameAndMetadataUtility::HandleRDSPlayerReset(PVFMUtilityContext& aUtilContext, const PVCmdResponse& aCmdResp)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFrameAndMetadataUtility::HandleRDSPlayerReset() In"));
-
-    aUtilContext.iCmdType = -1;
-
-    PVMFStatus cmdstatus = PVMFFailure;
-
-    switch (aCmdResp.GetCmdStatus())
-    {
-        case PVMFSuccess:
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iPerfLogger, PVLOGMSG_NOTICE,
-                            (0, "PVFrameAndMetadataUtility::RDSPlayerReset completed successfully Tick=%d", OsclTickCount::TickCount()));
-            // Call RemoveDataSource() on player
-            cmdstatus = DoRDSPlayerRemoveDataSource(aUtilContext.iCmdId, aUtilContext.iCmdContext);
-            if (cmdstatus != PVMFSuccess)
-            {
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVFrameAndMetadataUtility::HandleRDSPlayerReset() RemoveDataSource on player failed. Report command as failed"));
-
-                iAPICmdStatus = cmdstatus;
-                if (iAPICmdErrMsg)
-                {
-                    iAPICmdErrMsg->removeRef();
-                    iAPICmdErrMsg = NULL;
-                }
-                // Need to shutdown/restart player and cleanup in utility's AO
-                OSCL_ASSERT(iErrorHandlingInUtilityAO == false);
-                iErrorHandlingInUtilityAO = true;
-                RunIfNotReady();
-            }
-            break;
-
-        default:
-        {
-            PVMFErrorInfoMessageInterface* nextmsg = NULL;
-            if (aCmdResp.GetEventExtensionInterface())
-            {
-                nextmsg = GetErrorInfoMessageInterface(*(aCmdResp.GetEventExtensionInterface()));
-            }
-            PVMFBasicErrorInfoMessage* errmsg = NULL;
-            errmsg = CreateBasicErrInfoMessage(nextmsg);
-
-            iAPICmdStatus = aCmdResp.GetCmdStatus();
-            if (iAPICmdErrMsg)
-            {
-                iAPICmdErrMsg->removeRef();
-                iAPICmdErrMsg = NULL;
-            }
-            iAPICmdErrMsg = errmsg;
-
-            // Check if player is handling the error
-            PVPlayerState playerstate;
-            PVMFStatus pretval = iPlayer->GetPVPlayerStateSync(playerstate);
-            if (pretval == PVMFSuccess && playerstate == PVP_STATE_ERROR)
-            {
-                // Wait for error handling to complete
-                // Start a timer just in case the player does not report error handling complete
-                iTimeoutTimer->Request(PVFMUTIL_TIMERID_PLAYERERRORTIMEOUT, 0, iErrorHandlingWaitTime, this, false);
-            }
-            else if (pretval == PVMFSuccess && playerstate == PVP_STATE_IDLE)
-            {
-                // Call RemoveDataSource() on player
-                cmdstatus = DoRDSPlayerRemoveDataSource(aUtilContext.iCmdId, aUtilContext.iCmdContext);
-                if (cmdstatus != PVMFSuccess)
-                {
-                    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVFrameAndMetadataUtility::HandleRDSPlayerReset() RemoveDataSource on player failed. Report command as failed"));
-                    iAPICmdStatus = cmdstatus;
-                    if (iAPICmdErrMsg)
-                    {
-                        iAPICmdErrMsg->removeRef();
-                        iAPICmdErrMsg = NULL;
-                    }
-                    // Need to shutdown/restart player and cleanup in utility's AO
-                    OSCL_ASSERT(iErrorHandlingInUtilityAO == false);
-                    iErrorHandlingInUtilityAO = true;
-                    RunIfNotReady();
-                }
-            }
-            else
-            {
-                // Need to shutdown/restart player and cleanup in utility's AO
-                OSCL_ASSERT(iErrorHandlingInUtilityAO == false);
-                iErrorHandlingInUtilityAO = true;
-                RunIfNotReady();
-            }
-        }
-        break;
-    }
-
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFrameAndMetadataUtility::HandleRDSPlayerReset() Out"));
-}
-
-
-void PVFrameAndMetadataUtility::HandleRDSPlayerRemoveDataSource(PVFMUtilityContext& aUtilContext, const PVCmdResponse& aCmdResp)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFrameAndMetadataUtility::HandleRDSPlayerRemoveDataSource() In"));
-
-    aUtilContext.iCmdType = -1;
-
-    switch (aCmdResp.GetCmdStatus())
-    {
-        case PVMFSuccess:
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iPerfLogger, PVLOGMSG_NOTICE,
-                            (0, "PVFrameAndMetadataUtility::RDSPlayerRemoveDataSource completed successfully Tick=%d", OsclTickCount::TickCount()));
-            // Utility's RemoveDataSource() successfully completed
-            SetUtilityState(PVFM_UTILITY_STATE_IDLE);
-            iDataSource = NULL;
-            iSourceIntent = 0;
-
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iPerfLogger, PVLOGMSG_NOTICE,
-                            (0, "PVFrameAndMetadataUtility::RemoveDataSource() completed successfully Tick=%d", OsclTickCount::TickCount()));
-
-            UtilityCommandCompleted(aUtilContext.iCmdId, aUtilContext.iCmdContext, PVMFSuccess);
-            break;
-
-        default:
-        {
-            // Even if the player RemoveDataSource fails,
-            // set the data source handle to NULL and change to idle state
-            SetUtilityState(PVFM_UTILITY_STATE_IDLE);
-            iDataSource = NULL;
-            iSourceIntent = 0;
-
-            PVMFErrorInfoMessageInterface* nextmsg = NULL;
-            if (aCmdResp.GetEventExtensionInterface())
-            {
-                nextmsg = GetErrorInfoMessageInterface(*(aCmdResp.GetEventExtensionInterface()));
-            }
-
-            PVMFBasicErrorInfoMessage* errmsg = NULL;
-            errmsg = CreateBasicErrInfoMessage(nextmsg);
-
-            iAPICmdStatus = aCmdResp.GetCmdStatus();
-            if (iAPICmdErrMsg)
-            {
-                iAPICmdErrMsg->removeRef();
-                iAPICmdErrMsg = NULL;
-            }
-            iAPICmdErrMsg = errmsg;
-
-            // Check if player is handling the error
-            PVPlayerState playerstate;
-            PVMFStatus pretval = iPlayer->GetPVPlayerStateSync(playerstate);
-            if (pretval == PVMFSuccess && playerstate == PVP_STATE_ERROR)
-            {
-                // Wait for error handling to complete
-                // Start a timer just in case the player does not report error handling complete
-                iTimeoutTimer->Request(PVFMUTIL_TIMERID_PLAYERERRORTIMEOUT, 0, iErrorHandlingWaitTime, this, false);
-            }
-            else
-            {
-                // Need to shutdown/restart player and cleanup in utility's AO
-                OSCL_ASSERT(iErrorHandlingInUtilityAO == false);
-                iErrorHandlingInUtilityAO = true;
-                RunIfNotReady();
-            }
-        }
-        break;
-    }
-
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFrameAndMetadataUtility::HandleRDSPlayerRemoveDataSource() Out"));
 }
 
 void PVFrameAndMetadataUtility::SetThumbnailDimensions(uint32 aWidth, uint32 aHeight)
@@ -4386,28 +2324,4 @@ void PVFrameAndMetadataUtility::GetThumbnailDimensions(uint32 &aWidth, uint32 &a
     aHeight = iThumbnailHeight;
 }
 
-PVMFErrorInfoMessageInterface* PVFrameAndMetadataUtility::GetErrorInfoMessageInterface(PVInterface& aInterface)
-{
-    PVInterface* temp = NULL;
-    if (aInterface.queryInterface(PVMFErrorInfoMessageInterfaceUUID, temp))
-    {
-        PVMFErrorInfoMessageInterface* extiface = OSCL_STATIC_CAST(PVMFErrorInfoMessageInterface*, temp);
-        return extiface;
-    }
-    else
-    {
-        return NULL;
-    }
-}
 
-PVMFBasicErrorInfoMessage* PVFrameAndMetadataUtility::CreateBasicErrInfoMessage(PVMFErrorInfoMessageInterface* nextmsg, PVFMErrorEventType aErrEvent)
-{
-    PVUuid puuid = PVFrameAndMetadataErrorInfoEventTypesUUID;
-    PVMFBasicErrorInfoMessage* errmsg = NULL;
-    int32 leavecode = OsclErrNone;
-    OSCL_TRY(leavecode, errmsg = OSCL_NEW(PVMFBasicErrorInfoMessage, (aErrEvent, puuid, nextmsg)));
-    OSCL_FIRST_CATCH_ANY(leavecode,
-                         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVFrameAndMetadataUtility::CreateBasicErrInfoMessage() Instantiation of error msg did a leave!"));
-                         errmsg = NULL;);
-    return errmsg;
-}

@@ -22,7 +22,7 @@
 #include "cczoomrotationbase.h"
 
 PVFMVideoMIO::PVFMVideoMIO() :
-        OsclTimerObject(OsclActiveObject::EPriorityNominal, "PVFMVideoMIO")
+        PVFMMIO()
 {
     InitData();
 }
@@ -36,8 +36,6 @@ void PVFMVideoMIO::InitData()
     iVideoWidthValid = false;
     iVideoDisplayHeightValid = false;
     iVideoDisplayWidthValid = false;
-    iIsMIOConfigured = false;
-    iWriteBusy = false;
     iVideoHeight = 0;
     iVideoWidth = 0;
     iVideoDisplayHeight = 0;
@@ -49,15 +47,6 @@ void PVFMVideoMIO::InitData()
 
     iColorConverter = NULL;
     iCCRGBFormatType = PVMF_MIME_FORMAT_UNKNOWN;
-
-    iCommandCounter = 0;
-    iLogger = NULL;
-    iCommandResponseQueue.reserve(5);
-    iWriteResponseQueue.reserve(5);
-    iObserver = NULL;
-    iLogger = NULL;
-    iPeer = NULL;
-    iState = STATE_IDLE;
 
     iFrameRetrievalInfo.iRetrievalRequested = false;
     iFrameRetrievalInfo.iGetFrameObserver = NULL;
@@ -79,12 +68,14 @@ void PVFMVideoMIO::InitData()
     iInputFormatCapability.push_back(PVMF_MIME_RGB24);
 
     iYUV422toYUV420ColorConvert = NULL;
+
+    PVFMMIO::InitData();
 }
 
 
 void PVFMVideoMIO::ResetData()
 {
-    Cleanup();
+    PVFMMIO::Cleanup();
 
     // Reset all the received media parameters.
     iVideoFormat = PVMF_MIME_FORMAT_UNKNOWN;
@@ -97,36 +88,11 @@ void PVFMVideoMIO::ResetData()
     iVideoWidth = 0;
     iVideoDisplayHeight = 0;
     iVideoDisplayWidth = 0;
-    iIsMIOConfigured = false;
-    iWriteBusy = false;
 }
-
-
-void PVFMVideoMIO::Cleanup()
-{
-    while (!iCommandResponseQueue.empty())
-    {
-        if (iObserver)
-        {
-            iObserver->RequestCompleted(PVMFCmdResp(iCommandResponseQueue[0].iCmdId, iCommandResponseQueue[0].iContext, iCommandResponseQueue[0].iStatus));
-        }
-        iCommandResponseQueue.erase(&iCommandResponseQueue[0]);
-    }
-
-    while (!iWriteResponseQueue.empty())
-    {
-        if (iPeer)
-        {
-            iPeer->writeComplete(iWriteResponseQueue[0].iStatus, iWriteResponseQueue[0].iCmdId, (OsclAny*)iWriteResponseQueue[0].iContext);
-        }
-        iWriteResponseQueue.erase(&iWriteResponseQueue[0]);
-    }
-}
-
 
 PVFMVideoMIO::~PVFMVideoMIO()
 {
-    Cleanup();
+    PVFMMIO::Cleanup();
 
     if (iColorConverter)
     {
@@ -174,7 +140,7 @@ PVMFStatus PVFMVideoMIO::GetFrameByFrameNumber(uint32 aFrameIndex, uint8* aFrame
     iFrameRetrievalInfo.iStartingTSSet = false;
     iFrameRetrievalInfo.iStartingTS = 0;
 
-    return PVMFPending;
+    return PVMFSuccess;
 }
 
 
@@ -207,7 +173,7 @@ PVMFStatus PVFMVideoMIO::GetFrameByTimeoffset(uint32 aTimeOffset, uint8* aFrameB
     iFrameRetrievalInfo.iStartingTSSet = false;
     iFrameRetrievalInfo.iStartingTS = 0;
 
-    return PVMFPending;
+    return PVMFSuccess;
 }
 
 
@@ -238,396 +204,7 @@ PVMFStatus PVFMVideoMIO::GetFrameProperties(uint32& aFrameWidth, uint32& aFrameH
     return PVMFSuccess;
 }
 
-
-PVMFStatus PVFMVideoMIO::connect(PvmiMIOSession& aSession, PvmiMIOObserver* aObserver)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFMVideoMIO::connect() called"));
-
-    // Currently supports only one session
-    OSCL_UNUSED_ARG(aSession);
-
-    if (iObserver)
-    {
-        return PVMFFailure;
-    }
-
-    iObserver = aObserver;
-    return PVMFSuccess;
-}
-
-
-PVMFStatus PVFMVideoMIO::disconnect(PvmiMIOSession aSession)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFMVideoMIO::disconnect() called"));
-
-    // Currently supports only one session
-    OSCL_UNUSED_ARG(aSession);
-
-    iObserver = NULL;
-    return PVMFSuccess;
-}
-
-
-PvmiMediaTransfer* PVFMVideoMIO::createMediaTransfer(PvmiMIOSession& aSession, PvmiKvp* read_formats, int32 read_flags,
-        PvmiKvp* write_formats, int32 write_flags)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFMVideoMIO::createMediaTransfer() called"));
-
-    OSCL_UNUSED_ARG(aSession);
-    OSCL_UNUSED_ARG(read_formats);
-    OSCL_UNUSED_ARG(read_flags);
-    OSCL_UNUSED_ARG(write_formats);
-    OSCL_UNUSED_ARG(write_flags);
-
-    return (PvmiMediaTransfer*)this;
-}
-
-
-void PVFMVideoMIO::QueueCommandResponse(CommandResponse& aResp)
-{
-    // Queue a command response and schedule processing
-    iCommandResponseQueue.push_back(aResp);
-
-    // Cancel any timer delay so the command response will happen ASAP.
-    if (IsBusy())
-    {
-        Cancel();
-    }
-
-    RunIfNotReady();
-}
-
-
-PVMFCommandId PVFMVideoMIO::QueryUUID(const PvmfMimeString& aMimeType, Oscl_Vector<PVUuid, OsclMemAllocator>& aUuids,
-                                      bool aExactUuidsOnly, const OsclAny* aContext)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFMVideoMIO::QueryUUID() called"));
-
-    OSCL_UNUSED_ARG(aMimeType);
-    OSCL_UNUSED_ARG(aExactUuidsOnly);
-
-    PVMFCommandId cmdid = iCommandCounter++;
-
-    PVMFStatus status = PVMFFailure;
-    int32 err ;
-    OSCL_TRY(err,
-             aUuids.push_back(PVMI_CAPABILITY_AND_CONFIG_PVUUID);
-             PVUuid uuid;
-             iActiveTiming.queryUuid(uuid);
-             aUuids.push_back(uuid);
-            );
-
-    if (err == OsclErrNone)
-    {
-        status = PVMFSuccess;
-    }
-
-    CommandResponse resp(status, cmdid, aContext);
-    QueueCommandResponse(resp);
-    return cmdid;
-}
-
-
-PVMFCommandId PVFMVideoMIO::QueryInterface(const PVUuid& aUuid, PVInterface*& aInterfacePtr, const OsclAny* aContext)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFMVideoMIO::QueryInterface() called"));
-
-    PVMFCommandId cmdid = iCommandCounter++;
-
-    PVMFStatus status = PVMFFailure;
-    if (aUuid == PVMI_CAPABILITY_AND_CONFIG_PVUUID)
-    {
-        PvmiCapabilityAndConfig* myInterface = OSCL_STATIC_CAST(PvmiCapabilityAndConfig*, this);
-        aInterfacePtr = OSCL_STATIC_CAST(PVInterface*, myInterface);
-        status = PVMFSuccess;
-    }
-    else if (aUuid == PvmiClockExtensionInterfaceUuid)
-    {
-        PvmiClockExtensionInterface* myInterface = OSCL_STATIC_CAST(PvmiClockExtensionInterface*, &iActiveTiming);
-        aInterfacePtr = OSCL_STATIC_CAST(PVInterface*, myInterface);
-        status = PVMFSuccess;
-        iActiveTiming.addRef();
-    }
-    else
-    {
-        status = PVMFFailure;
-    }
-
-    CommandResponse resp(status, cmdid, aContext);
-    QueueCommandResponse(resp);
-    return cmdid;
-}
-
-
-void PVFMVideoMIO::deleteMediaTransfer(PvmiMIOSession& aSession, PvmiMediaTransfer* media_transfer)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFMVideoMIO::deleteMediaTransfer() called"));
-
-    OSCL_UNUSED_ARG(aSession);
-    OSCL_UNUSED_ARG(media_transfer);
-
-    // This class is implementing the media transfer, so no cleanup is needed
-}
-
-
-PVMFCommandId PVFMVideoMIO::Init(const OsclAny* aContext)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFMVideoMIO::Init() called"));
-
-    PVMFCommandId cmdid = iCommandCounter++;
-
-    PVMFStatus status = PVMFFailure;
-
-    switch (iState)
-    {
-        case STATE_LOGGED_ON:
-            status = PVMFSuccess;
-            iState = STATE_INITIALIZED;
-            break;
-
-        default:
-            status = PVMFErrInvalidState;
-            break;
-    }
-
-    CommandResponse resp(status, cmdid, aContext);
-    QueueCommandResponse(resp);
-    return cmdid;
-}
-
-PVMFCommandId PVFMVideoMIO::Reset(const OsclAny* aContext)
-{
-    ResetData();
-
-    PVMFCommandId cmdid = iCommandCounter++;
-    PVMFStatus status = PVMFSuccess;
-
-    CommandResponse resp(status, cmdid, aContext);
-    QueueCommandResponse(resp);
-    return cmdid;
-}
-
-PVMFCommandId PVFMVideoMIO::Start(const OsclAny* aContext)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFMVideoMIO::Start() called"));
-
-    PVMFCommandId cmdid = iCommandCounter++;
-
-    PVMFStatus status = PVMFFailure;
-
-    switch (iState)
-    {
-        case STATE_INITIALIZED:
-        case STATE_PAUSED:
-            iState = STATE_STARTED;
-            status = PVMFSuccess;
-            if (iPeer && iWriteBusy)
-            {
-                iWriteBusy = false;
-                iPeer->statusUpdate(PVMI_MEDIAXFER_STATUS_WRITE);
-            }
-            break;
-
-        default:
-            status = PVMFErrInvalidState;
-            break;
-    }
-
-    CommandResponse resp(status, cmdid, aContext);
-    QueueCommandResponse(resp);
-    return cmdid;
-}
-
-
-PVMFCommandId PVFMVideoMIO::Pause(const OsclAny* aContext)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFMVideoMIO::Pause() called"));
-
-    PVMFCommandId cmdid = iCommandCounter++;
-
-    PVMFStatus status = PVMFFailure;
-
-    switch (iState)
-    {
-        case STATE_STARTED:
-            iState = STATE_PAUSED;
-            status = PVMFSuccess;
-            break;
-
-        default:
-            status = PVMFErrInvalidState;
-            break;
-    }
-
-    CommandResponse resp(status, cmdid, aContext);
-    QueueCommandResponse(resp);
-    return cmdid;
-}
-
-
-PVMFCommandId PVFMVideoMIO::Flush(const OsclAny* aContext)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFMVideoMIO::Flush() called"));
-
-    PVMFCommandId cmdid = iCommandCounter++;
-
-    PVMFStatus status = PVMFFailure;
-
-    switch (iState)
-    {
-        case STATE_STARTED:
-            iState = STATE_INITIALIZED;
-            status = PVMFSuccess;
-            break;
-
-        default:
-            status = PVMFErrInvalidState;
-            break;
-    }
-
-    CommandResponse resp(status, cmdid, aContext);
-    QueueCommandResponse(resp);
-    return cmdid;
-}
-
-
-PVMFCommandId PVFMVideoMIO::DiscardData(const OsclAny* aContext)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFMVideoMIO::DiscardData() called"));
-
-    PVMFCommandId cmdid = iCommandCounter++;
-
-    // This component doesn't buffer data, so there's nothing needed here.
-    PVMFStatus status = PVMFSuccess;
-
-    CommandResponse resp(status, cmdid, aContext);
-    QueueCommandResponse(resp);
-    return cmdid;
-}
-
 //////////////////////////////////////////////////////////////////////////////////
-PVMFCommandId PVFMVideoMIO::DiscardData(PVMFTimestamp aTimestamp, const OsclAny* aContext)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFMVideoMIO::DiscardData(timestamp,context) called"));
-
-    OSCL_UNUSED_ARG(aTimestamp);
-    return DiscardData(aContext);
-}
-
-
-PVMFCommandId PVFMVideoMIO::Stop(const OsclAny* aContext)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFMVideoMIO::Stop() called"));
-
-    PVMFCommandId cmdid = iCommandCounter++;
-
-    PVMFStatus status = PVMFFailure;
-
-    switch (iState)
-    {
-        case STATE_STARTED:
-        case STATE_PAUSED:
-            iState = STATE_INITIALIZED;
-            status = PVMFSuccess;
-            break;
-
-        default:
-            status = PVMFErrInvalidState;
-            break;
-    }
-
-    CommandResponse resp(status, cmdid, aContext);
-    QueueCommandResponse(resp);
-    return cmdid;
-}
-
-
-PVMFCommandId PVFMVideoMIO::CancelAllCommands(const OsclAny* aContext)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFMVideoMIO::CancelAllCommands() called"));
-
-    PVMFCommandId cmdid = iCommandCounter++;
-
-    // Commands are executed immediately upon being received, so it isn't really possible to cancel them.
-
-    PVMFStatus status = PVMFSuccess;
-
-    CommandResponse resp(status, cmdid, aContext);
-    QueueCommandResponse(resp);
-    return cmdid;
-}
-
-
-PVMFCommandId PVFMVideoMIO::CancelCommand(PVMFCommandId aCmdId, const OsclAny* aContext)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFMVideoMIO::CancelCommand() called"));
-
-    PVMFCommandId cmdid = iCommandCounter++;
-
-    // Commands are executed immediately upon being received, so it isn't really possible to cancel them.
-
-    // See if the response is still queued.
-    PVMFStatus status = PVMFFailure;
-    for (uint32 i = 0; i < iCommandResponseQueue.size(); i++)
-    {
-        if (iCommandResponseQueue[i].iCmdId == aCmdId)
-        {
-            status = PVMFSuccess;
-            break;
-        }
-    }
-
-    CommandResponse resp(status, cmdid, aContext);
-    QueueCommandResponse(resp);
-    return cmdid;
-}
-
-
-void PVFMVideoMIO::ThreadLogon()
-{
-    if (iState == STATE_IDLE)
-    {
-        iLogger = PVLogger::GetLoggerObject("PVFMVideoMIO");
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFMVideoMIO::ThreadLogon() called"));
-        AddToScheduler();
-        iState = STATE_LOGGED_ON;
-    }
-}
-
-
-void PVFMVideoMIO::ThreadLogoff()
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFMVideoMIO::ThreadLogoff() called"));
-
-    if (iState != STATE_IDLE)
-    {
-        RemoveFromScheduler();
-        iLogger = NULL;
-        iState = STATE_IDLE;
-    }
-}
-
-
-void PVFMVideoMIO::setPeer(PvmiMediaTransfer* aPeer)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFMVideoMIO::setPeer() called"));
-
-    // Set the observer
-    iPeer = aPeer;
-}
-
-
-void PVFMVideoMIO::useMemoryAllocators(OsclMemAllocator* write_alloc)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFMVideoMIO::useMemoryAllocators() called"));
-
-    OSCL_UNUSED_ARG(write_alloc);
-
-    // Not supported.
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_INFO, (0, "PVFMVideoMIO::useMemoryAllocators() NOT SUPPORTED"));
-}
-
-
 PVMFCommandId PVFMVideoMIO::writeAsync(uint8 aFormatType, int32 aFormatIndex, uint8* aData, uint32 aDataLen,
                                        const PvmiMediaXferHeader& data_header_info, OsclAny* aContext)
 {
@@ -753,28 +330,13 @@ PVMFCommandId PVFMVideoMIO::writeAsync(uint8 aFormatType, int32 aFormatIndex, ui
                                     iVideoDisplayHeight = ((iVideoDisplayHeight + 1) & (~1));
                                 }
 
-                                if (iFrameRetrievalInfo.iUseFrameIndex == true &&
-                                        iFrameRetrievalInfo.iReceivedFrameCount > iFrameRetrievalInfo.iFrameIndex)
-                                {
-                                    PVMFStatus evstatus = PVMFFailure;
-                                    // Copy the frame data
-                                    evstatus = CopyVideoFrameData(aData, aDataLen, iVideoFormat,
-                                                                  iFrameRetrievalInfo.iFrameBuffer, *(iFrameRetrievalInfo.iBufferSize), iFrameRetrievalInfo.iFrameFormatType,
-                                                                  iVideoWidth, iVideoHeight, iVideoDisplayWidth, iVideoDisplayHeight);
-
-                                    iFrameRetrievalInfo.iRetrievalRequested = false;
-                                    iFrameRetrievalInfo.iUseFrameIndex = false;
-                                    iFrameRetrievalInfo.iUseTimeOffset = false;
-
-                                    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFMVideoMIO::writeAsync() Retrieved requested frame by frame index(%d) Status %d", iFrameRetrievalInfo.iFrameIndex, evstatus));
-                                    iFrameRetrievalInfo.iGetFrameObserver->HandleFrameReadyEvent(evstatus);
-                                }
-                                else if (iFrameRetrievalInfo.iUseTimeOffset == true &&
+                                if ((iFrameRetrievalInfo.iUseFrameIndex == true &&
+                                        iFrameRetrievalInfo.iReceivedFrameCount > iFrameRetrievalInfo.iFrameIndex) ||
+                                        (iFrameRetrievalInfo.iUseTimeOffset == true &&
                                          iFrameRetrievalInfo.iStartingTSSet == true &&
-                                         (data_header_info.timestamp - iFrameRetrievalInfo.iStartingTS) >= iFrameRetrievalInfo.iTimeOffset)
+                                         (data_header_info.timestamp - iFrameRetrievalInfo.iStartingTS) >= iFrameRetrievalInfo.iTimeOffset))
                                 {
                                     PVMFStatus evstatus = PVMFFailure;
-
                                     // Copy the frame data
                                     evstatus = CopyVideoFrameData(aData, aDataLen, iVideoFormat,
                                                                   iFrameRetrievalInfo.iFrameBuffer, *(iFrameRetrievalInfo.iBufferSize), iFrameRetrievalInfo.iFrameFormatType,
@@ -784,7 +346,7 @@ PVMFCommandId PVFMVideoMIO::writeAsync(uint8 aFormatType, int32 aFormatIndex, ui
                                     iFrameRetrievalInfo.iUseFrameIndex = false;
                                     iFrameRetrievalInfo.iUseTimeOffset = false;
 
-                                    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFMVideoMIO::writeAsync() Retrieved requested frame by time(%d) Actual TS %d Status %d", iFrameRetrievalInfo.iTimeOffset, data_header_info.timestamp, evstatus));
+                                    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFMVideoMIO::writeAsync() Retrieved requested frame Status %d", evstatus));
                                     iFrameRetrievalInfo.iGetFrameObserver->HandleFrameReadyEvent(evstatus);
                                 }
                             }
@@ -974,109 +536,6 @@ PVMFStatus PVFMVideoMIO::CopyVideoFrameData(uint8* aSrcBuffer, uint32 aSrcSize, 
 }
 
 
-void PVFMVideoMIO::writeComplete(PVMFStatus aStatus, PVMFCommandId write_cmd_id, OsclAny* aContext)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFMVideoMIO::writeComplete() called"));
-
-    OSCL_UNUSED_ARG(aStatus);
-    OSCL_UNUSED_ARG(write_cmd_id);
-    OSCL_UNUSED_ARG(aContext);
-
-    // Won't be called since this component is a sink.
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_INFO, (0, "PVFMVideoMIO::writeComplete() Should not be called since this MIO is a sink"));
-}
-
-
-PVMFCommandId PVFMVideoMIO::readAsync(uint8* data, uint32 max_data_len, OsclAny* aContext, int32* formats, uint16 num_formats)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFMVideoMIO::readAsync() called"));
-
-    OSCL_UNUSED_ARG(data);
-    OSCL_UNUSED_ARG(max_data_len);
-    OSCL_UNUSED_ARG(aContext);
-    OSCL_UNUSED_ARG(formats);
-    OSCL_UNUSED_ARG(num_formats);
-
-    // Read not supported.
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_INFO, (0, "PVFMVideoMIO::readAsync() NOT SUPPORTED"));
-    OsclError::Leave(OsclErrNotSupported);
-    return -1;
-}
-
-
-void PVFMVideoMIO::readComplete(PVMFStatus aStatus, PVMFCommandId read_cmd_id, int32 format_index,
-                                const PvmiMediaXferHeader& data_header_info, OsclAny* aContext)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFMVideoMIO::readComplete() called"));
-
-    OSCL_UNUSED_ARG(aStatus);
-    OSCL_UNUSED_ARG(read_cmd_id);
-    OSCL_UNUSED_ARG(format_index);
-    OSCL_UNUSED_ARG(data_header_info);
-    OSCL_UNUSED_ARG(aContext);
-
-    // Won't be called since this component is a sink.
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_INFO, (0, "PVFMVideoMIO::readComplete() Should not be called since this MIO is a sink"));
-}
-
-
-void PVFMVideoMIO::statusUpdate(uint32 status_flags)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFMVideoMIO::statusUpdate() called"));
-
-    OSCL_UNUSED_ARG(status_flags);
-
-    // Won't be called since this component is a sink.
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_INFO, (0, "PVFMVideoMIO::statusUpdate() Should not be called since this MIO is a sink"));
-}
-
-
-void PVFMVideoMIO::cancelCommand(PVMFCommandId  command_id)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFMVideoMIO::cancelCommand() called"));
-
-    // The purpose of this API is to cancel a writeAsync command and report completion ASAP.
-
-    // In this implementation, the write commands are executed immediately when received so it isn't
-    // really possible to cancel. Just report completion immediately.
-
-    for (uint32 i = 0; i < iWriteResponseQueue.size(); i++)
-    {
-        if (iWriteResponseQueue[i].iCmdId == command_id)
-        {
-            //report completion
-            if (iPeer)
-            {
-                iPeer->writeComplete(iWriteResponseQueue[i].iStatus, iWriteResponseQueue[i].iCmdId, (OsclAny*)iWriteResponseQueue[i].iContext);
-            }
-            iWriteResponseQueue.erase(&iWriteResponseQueue[i]);
-            break;
-        }
-    }
-}
-
-
-void PVFMVideoMIO::cancelAllCommands()
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFMVideoMIO::cancelAllCommands() called"));
-
-    // The purpose of this API is to cancel all writeAsync commands and report completion ASAP.
-
-    // In this implementaiton, the write commands are executed immediately when received so it isn't
-    // really possible to cancel. Just report completion immediately.
-
-    for (uint32 i = 0; i < iWriteResponseQueue.size(); i++)
-    {
-        //report completion
-        if (iPeer)
-        {
-            iPeer->writeComplete(iWriteResponseQueue[i].iStatus, iWriteResponseQueue[i].iCmdId, (OsclAny*)iWriteResponseQueue[i].iContext);
-        }
-        iWriteResponseQueue.erase(&iWriteResponseQueue[i]);
-    }
-}
-
-
 PVMFStatus PVFMVideoMIO::getParametersSync(PvmiMIOSession aSession, PvmiKeyType aIdentifier, PvmiKvp*& aParameters,
         int& num_parameter_elements, PvmiCapabilityContext aContext)
 {
@@ -1120,23 +579,6 @@ PVMFStatus PVFMVideoMIO::getParametersSync(PvmiMIOSession aSession, PvmiKeyType 
     }
 
     // Other queries are not currently supported so report as unrecognized key.
-    return PVMFFailure;
-}
-
-
-PVMFStatus PVFMVideoMIO::releaseParameters(PvmiMIOSession aSession, PvmiKvp* aParameters, int num_elements)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFMVideoMIO::releaseParameters() called"));
-
-    OSCL_UNUSED_ARG(aSession);
-    OSCL_UNUSED_ARG(num_elements);
-
-    // Release parameters that were allocated by this component.
-    if (aParameters)
-    {
-        oscl_free(aParameters);
-        return PVMFSuccess;
-    }
     return PVMFFailure;
 }
 
@@ -1245,20 +687,6 @@ void PVFMVideoMIO::setParametersSync(PvmiMIOSession aSession, PvmiKvp* aParamete
         }
         else
         {
-            if (iVideoWidthValid && iVideoHeightValid && iVideoDisplayHeightValid && iVideoDisplayHeightValid && !iIsMIOConfigured)
-            {
-                if (iObserver)
-                {
-                    iIsMIOConfigured = true;
-                    iObserver->ReportInfoEvent(PVMFMIOConfigurationComplete);
-                    if (iPeer && iWriteBusy)
-                    {
-                        iWriteBusy = false;
-                        iPeer->statusUpdate(PVMI_MEDIAXFER_STATUS_WRITE);
-                    }
-                }
-            }
-
             // If we get here the key is unrecognized.
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFMVideoMIO::setParametersSync() Error, unrecognized key "));
 
@@ -1283,107 +711,9 @@ void PVFMVideoMIO::setParametersSync(PvmiMIOSession aSession, PvmiKvp* aParamete
 }
 
 
-PVMFStatus PVFMVideoMIO::verifyParametersSync(PvmiMIOSession aSession, PvmiKvp* aParameters, int num_elements)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFMVideoMIO::verifyParametersSync() called"));
-
-    OSCL_UNUSED_ARG(aSession);
-
-    // Go through each parameter
-    for (int32 paramind = 0; paramind < num_elements; ++paramind)
-    {
-        // Retrieve the first component from the key string
-        char* compstr = NULL;
-        pv_mime_string_extract_type(0, aParameters[paramind].key, compstr);
-
-        if (pv_mime_strcmp(compstr, _STRLIT_CHAR("x-pvmf/media/format-type")) == 0)
-        {
-            //This component supports only uncompressed formats
-            Oscl_Vector<PVMFFormatType, OsclMemAllocator>::iterator it;
-            for (it = iInputFormatCapability.begin(); it != iInputFormatCapability.end(); it++)
-            {
-                if (pv_mime_strcmp(aParameters[paramind].value.pChar_value, it->getMIMEStrPtr()) == 0)
-                {
-                    return PVMFSuccess;
-                }
-            }
-            // Not found on the list of supported input formats
-            return PVMFErrNotSupported;
-        }
-    }
-    // For all other parameters return success.
-    return PVMFSuccess;
-}
-
-
-//
-// For active timing support
-//
-PVMFStatus PVFMVideoMIOActiveTimingSupport::SetClock(PVMFMediaClock *clockVal)
-{
-    iClock = clockVal;
-    return PVMFSuccess;
-}
-
-
-void PVFMVideoMIOActiveTimingSupport::addRef()
-{
-}
-
-
-void PVFMVideoMIOActiveTimingSupport::removeRef()
-{
-}
-
-
-bool PVFMVideoMIOActiveTimingSupport::queryInterface(const PVUuid& aUuid, PVInterface*& aInterface)
-{
-    aInterface = NULL;
-    PVUuid uuid;
-    queryUuid(uuid);
-    if (uuid == aUuid)
-    {
-        PvmiClockExtensionInterface* myInterface = OSCL_STATIC_CAST(PvmiClockExtensionInterface*, this);
-        aInterface = OSCL_STATIC_CAST(PVInterface*, myInterface);
-        return true;
-    }
-    return false;
-}
-
-
-void PVFMVideoMIOActiveTimingSupport::queryUuid(PVUuid& uuid)
-{
-    uuid = PvmiClockExtensionInterfaceUuid;
-}
-
-
 //
 // Private section
 //
-void PVFMVideoMIO::Run()
-{
-    // Send async command responses
-    while (!iCommandResponseQueue.empty())
-    {
-        if (iObserver)
-        {
-            iObserver->RequestCompleted(PVMFCmdResp(iCommandResponseQueue[0].iCmdId, iCommandResponseQueue[0].iContext, iCommandResponseQueue[0].iStatus));
-        }
-        iCommandResponseQueue.erase(&iCommandResponseQueue[0]);
-    }
-
-    // Send async write completion
-    while (!iWriteResponseQueue.empty())
-    {
-        // Report write complete
-        if (iPeer)
-        {
-            iPeer->writeComplete(iWriteResponseQueue[0].iStatus, iWriteResponseQueue[0].iCmdId, (OsclAny*)iWriteResponseQueue[0].iContext);
-        }
-        iWriteResponseQueue.erase(&iWriteResponseQueue[0]);
-    }
-}
-
 static inline void* byteOffset(void* p, uint32 offset)
 {
     return (void*)((uint8*)p + offset);

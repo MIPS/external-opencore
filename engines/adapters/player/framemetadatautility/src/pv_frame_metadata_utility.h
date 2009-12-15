@@ -67,10 +67,6 @@
 #include "pvmf_meta_data_types.h"
 #endif
 
-#ifndef PVMF_BASIC_ERRORINFOMESSAGE_H_INCLUDED
-#include "pvmf_basic_errorinfomessage.h"
-#endif
-
 #ifndef PV_PLAYER_DATASINKPVMFNODE_H_INCLUDED
 #include "pv_player_datasinkpvmfnode.h"
 #endif
@@ -440,8 +436,7 @@ class PVFrameAndMetadataUtility
         void setParametersSync(PvmiMIOSession aSession, PvmiKvp* aParameters, int aNumElements, PvmiKvp* &aRetKVP);
 
     private:
-        PVMFBasicErrorInfoMessage* CreateBasicErrInfoMessage(PVMFErrorInfoMessageInterface* nextmsg, PVFMErrorEventType aErrEvent = PVFMErrPlayerEngine);
-
+        void CleanupSourceAndSinks();
         PVFrameAndMetadataUtility();
         void Construct(char *aOutputFormatMIMEType,
                        PVCommandStatusObserver *aCmdObserver,
@@ -510,42 +505,18 @@ class PVFrameAndMetadataUtility
         bool queryInterface(const PVUuid& uuid, PVInterface*& iface, PVCommandId cmdid, OsclAny* context);
 
         PVMFStatus DoGetState(PVFMUtilityCommand& aCmd, bool aSyncCmd = false);
-
         PVMFStatus DoAddDataSource(PVFMUtilityCommand& aCmd);
-        PVMFStatus DoADSPlayerAddDataSource(PVCommandId aCmdId, OsclAny* aCmdContext);
-        PVMFStatus DoADSPlayerInit(PVCommandId aCmdId, OsclAny* aCmdContext);
-        PVMFStatus DoADSPlayerAddVideoDataSink(PVCommandId aCmdId, OsclAny* aCmdContext);
-        PVMFStatus DoADSPlayerAddAudioDataSink(PVCommandId aCmdId, OsclAny* aCmdContext);
-        PVMFStatus DoADSPlayerPrepare(PVCommandId aCmdId, OsclAny* aCmdContext);
-        PVMFStatus DoADSPlayerStart(PVCommandId aCmdId, OsclAny* aCmdContext);
-        PVMFStatus DoADSPlayerPause(PVCommandId aCmdId, OsclAny* aCmdContext);
-
         PVMFStatus DoGetMetadataKeys(PVFMUtilityCommand& aCmd);
-        PVMFStatus DoPlayerGetMetadataKeys(PVCommandId aCmdId, OsclAny* aCmdContext,
-                                           PVPMetadataList& aKeyList, int32 aStartingIndex, int32 aMaxEntries, char* aQueryKey);
-
         PVMFStatus DoGetMetadataValues(PVFMUtilityCommand& aCmd);
-        PVMFStatus DoPlayerGetMetadataValues(PVCommandId aCmdId, OsclAny* aCmdContext,
-                                             PVPMetadataList& aKeyList, int32 aStartingValueIndex, int32 aMaxValueEntries,
-                                             int32& aNumAvailableValueEntries, Oscl_Vector<PvmiKvp, OsclMemAllocator>& aValueList);
-        PVMFStatus DoCapConfigSetParameters(PVFMUtilityCommand& aCmd, bool aSyncCmd);
+        PVMFStatus DoCapConfigSetParameters(PVFMUtilityCommand& aCmd);
         PVMFStatus DoVerifyAndSetFMUParameter(PvmiKvp& aParameter, bool aSetParam);
         PVMFStatus DoPlayerSetParametersSync(PVCommandId aCmdId, OsclAny* aCmdContext, PvmiKvp* aParameters, int aNumElements, PvmiKvp* &aRetKVP);
         bool HasVideo();
         PVMFStatus DoGetFrame(PVFMUtilityCommand& aCmd);
-        PVMFStatus DoGFPlayerStopFromPaused(PVCommandId aCmdId, OsclAny* aCmdContext);
-        PVMFStatus DoGFPlayerPrepare(PVCommandId aCmdId, OsclAny* aCmdContext);
-        PVMFStatus DoGFPlayerStart(PVCommandId aCmdId, OsclAny* aCmdContext);
+        PVMFStatus DoGFPlayerStart(PVCommandId aCmdId, OsclAny* aCmdContext, bool aResume);
         PVMFStatus DoGFPlayerPause(PVCommandId aCmdId, OsclAny* aCmdContext);
-
         PVMFStatus DoReturnBuffer(PVFMUtilityCommand& aCmd);
-
         PVMFStatus DoRemoveDataSource(PVFMUtilityCommand& aCmd);
-        PVMFStatus DoRDSPlayerStop(PVCommandId aCmdId, OsclAny* aCmdContext);
-        PVMFStatus DoRDSPlayerRemoveVideoDataSink(PVCommandId aCmdId, OsclAny* aCmdContext);
-        PVMFStatus DoRDSPlayerRemoveAudioDataSink(PVCommandId aCmdId, OsclAny* aCmdContext);
-        PVMFStatus DoRDSPlayerReset(PVCommandId aCmdId, OsclAny* aCmdContext);
-        PVMFStatus DoRDSPlayerRemoveDataSource(PVCommandId aCmdId, OsclAny* aCmdContext);
 
         PVMFStatus DoPlayerShutdownRestart(void);
 
@@ -554,53 +525,23 @@ class PVFrameAndMetadataUtility
             // Player commands
             PVFM_CMD_PlayerQueryUUID,
             PVFM_CMD_PlayerQueryInterface,
-            PVFM_CMD_ADSPlayerAddDataSource,
-            PVFM_CMD_ADSPlayerInit,
-            PVFM_CMD_ADSPlayerAddVideoDataSink,
-            PVFM_CMD_ADSPlayerAddAudioDataSink,
-            PVFM_CMD_ADSPlayerPrepare,
-            PVFM_CMD_ADSPlayerStart,
-            PVFM_CMD_ADSPlayerPause,
-            PVFM_CMD_PlayerGetMetadataKeys,
-            PVFM_CMD_PlayerGetMetadataValues,
+            PVFM_CMD_AddDataSource,
+            PVFM_CMD_GetMetadataKeys,
+            PVFM_CMD_GetMetadataValues,
             PVFM_CMD_PlayerSetParametersSync,
-            PVFM_CMD_GFPlayerStopFromPaused,
-            PVFM_CMD_GFPlayerPrepare,
+            PVFM_CMD_GFPlayerSetPlaybackRange,
             PVFM_CMD_GFPlayerStart,
             PVFM_CMD_GFPlayerPause,
-            PVFM_CMD_RDSPlayerStopFromPaused,
-            PVFM_CMD_RDSPlayerRemoveVideoDataSink,
-            PVFM_CMD_RDSPlayerRemoveAudioDataSink,
-            PVFM_CMD_RDSPlayerReset,
-            PVFM_CMD_RDSPlayerRemoveDataSource,
+            PVFM_CMD_RemoveDataSource,
             PVFM_CMD_PlayerQueryCapConfigInterface
         };
 
         // Player command completion handling
-        void HandlePlayerQueryUUID(PVFMUtilityContext& aUtilContext, const PVCmdResponse& aCmdResp);
-        void HandlePlayerQueryInterface(PVFMUtilityContext& aUtilContext, const PVCmdResponse& aCmdResp);
-        void HandleADSPlayerAddDataSource(PVFMUtilityContext& aUtilContext, const PVCmdResponse& aCmdResp);
-        void HandleADSPlayerInit(PVFMUtilityContext& aUtilContext, const PVCmdResponse& aCmdResp);
-        void HandleADSPlayerAddVideoDataSink(PVFMUtilityContext& aUtilContext, const PVCmdResponse& aCmdResp);
-        void HandleADSPlayerAddAudioDataSink(PVFMUtilityContext& aUtilContext, const PVCmdResponse& aCmdResp);
-        void HandleADSPlayerPrepare(PVFMUtilityContext& aUtilContext, const PVCmdResponse& aCmdResp);
-        void HandleADSPlayerStart(PVFMUtilityContext& aUtilContext, const PVCmdResponse& aCmdResp);
-        void HandleADSPlayerPause(PVFMUtilityContext& aUtilContext, const PVCmdResponse& aCmdResp);
-        void HandlePlayerGetMetadataKeys(PVFMUtilityContext& aUtilContext, const PVCmdResponse& aCmdResp);
-        void HandlePlayerGetMetadataValues(PVFMUtilityContext& aUtilContext, const PVCmdResponse& aCmdResp);
-        void HandlePlayerSetParametersSync(PVFMUtilityContext& aUtilContext, const PVCmdResponse& aCmdResp);
-        void HandleGFPlayerStopFromPaused(PVFMUtilityContext& aUtilContext, const PVCmdResponse& aCmdResp);
-        void HandleGFPlayerPrepare(PVFMUtilityContext& aUtilContext, const PVCmdResponse& aCmdResp);
+        void HandleCommandComplete(PVFMUtilityContext& aUtilContext, const PVCmdResponse& aCmdResp);
+        void HandleDataSourceCommand(PVFMUtilityContext& aUtilContext, const PVCmdResponse& aCmdResp);
+        void HandleCommandComplete2(PVFMUtilityContext& aUtilContext, const PVCmdResponse& aCmdResp);
         void HandleGFPlayerStart(PVFMUtilityContext& aUtilContext, const PVCmdResponse& aCmdResp);
         void HandleGFPlayerPause(PVFMUtilityContext& aUtilContext, const PVCmdResponse& aCmdResp);
-        void HandleRDSPlayerStopFromPaused(PVFMUtilityContext& aUtilContext, const PVCmdResponse& aCmdResp);
-        void HandleRDSPlayerRemoveVideoDataSink(PVFMUtilityContext& aUtilContext, const PVCmdResponse& aCmdResp);
-        void HandleRDSPlayerRemoveAudioDataSink(PVFMUtilityContext& aUtilContext, const PVCmdResponse& aCmdResp);
-        void HandleRDSPlayerReset(PVFMUtilityContext& aUtilContext, const PVCmdResponse& aCmdResp);
-        void HandleRDSPlayerRemoveDataSource(PVFMUtilityContext& aUtilContext, const PVCmdResponse& aCmdResp);
-
-        // Utility function to retrieve player specific error/info
-        PVMFErrorInfoMessageInterface* GetErrorInfoMessageInterface(PVInterface& aInterface);
 
         // Player engine instance handle
         PVPlayerInterface* iPlayer;
@@ -655,7 +596,6 @@ class PVFrameAndMetadataUtility
 
         // Hold command status info when error occurs
         PVMFStatus iAPICmdStatus;
-        PVMFErrorInfoMessageInterface* iAPICmdErrMsg;
 
         // OsclTimer for timeouts
         OsclTimer<OsclMemAllocator>* iTimeoutTimer;
@@ -664,6 +604,8 @@ class PVFrameAndMetadataUtility
 
         uint32 iThumbnailWidth;
         uint32 iThumbnailHeight;
+
+        int32 iNumPendingPlayerCommands;
 };
 
 #endif // PV_FRAME_METADATA_UTILITY_H_INCLUDED

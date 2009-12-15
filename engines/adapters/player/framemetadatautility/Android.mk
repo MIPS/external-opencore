@@ -4,6 +4,7 @@ include $(CLEAR_VARS)
 LOCAL_SRC_FILES := \
 	src/pv_frame_metadata_utility.cpp \
  	src/pv_frame_metadata_factory.cpp \
+ 	src/pv_frame_metadata_mio.cpp \
  	src/pv_frame_metadata_mio_video.cpp \
  	src/pv_frame_metadata_mio_audio.cpp \
  	src/../config/common/pv_frame_metadata_mio_video_config.cpp
