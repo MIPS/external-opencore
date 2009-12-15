@@ -160,6 +160,11 @@ void FindSourceFile(cmd_line* command_line, OSCL_HeapString<OsclMemAllocator>& a
         {
             aInputFileFormatType = PVMF_MIME_MPEG4FF;
         }
+        // RM file
+        else  if (oscl_strstr(aFileNameInfo.get_cstr(), ".rm") != NULL || oscl_strstr(aFileNameInfo.get_cstr(), ".RM") != NULL)
+        {
+            aInputFileFormatType = PVMF_MIME_RMFF;
+        }
         // ASF file
         else  if (oscl_strstr(aFileNameInfo.get_cstr(), ".asf") != NULL || oscl_strstr(aFileNameInfo.get_cstr(), ".ASF") != NULL ||
                   oscl_strstr(aFileNameInfo.get_cstr(), ".wma") != NULL || oscl_strstr(aFileNameInfo.get_cstr(), ".WMA") != NULL ||

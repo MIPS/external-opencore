@@ -1953,6 +1953,15 @@ OSCL_EXPORT_REF bool PVMFOMXBaseDecNode::SendInputBufferToOMXComponent()
     }// end of if/else (iOMXSUpportsPartialFrames)
 
 
+    if (0 == iDataIn->getNumFragments())
+    {
+        //This is a corrupt media message, drop it
+        iDataIn.Unbind();
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
+                        (0, "%s::SendInputBufferToOMXComponent() Corrupt Media Message with 0 Number of Fragments", iName.Str()));
+        return false;
+    }
+
     if ((((PVMFOMXDecPort*)iInPort)->iFormat == PVMF_MIME_H264_VIDEO_RAW) &&
             !(iOMXComponentUsesFullAVCFrames && iOMXComponentUsesNALStartCodes) &&
             (iCurrFragNum == 0))
@@ -2137,6 +2146,27 @@ OSCL_EXPORT_REF bool PVMFOMXBaseDecNode::SendInputBufferToOMXComponent()
         OsclRefCounterMemFrag frag;
         iDataIn->getMediaFragment(iCurrFragNum, frag);
 
+        //Verify whether the memory fragment is valid or not
+        if (NULL == (uint8 *)frag.getMemFragPtr())
+        {
+            iCurrFragNum++;
+            iIsNewDataFragment = true; // done with this fragment. Get a new one
+
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                            (0, "%s::SendInputBufferToOMXComponent() - Invalid fragment of size %d, TS=%d", iName.Str(), frag.getMemFragSize(), iInTimestamp));
+
+            if (iCurrFragNum == iDataIn->getNumFragments())
+            {
+                iDataIn.Unbind();
+                break;
+            }
+
+            //We want to continue with the same input buffer
+            iObtainNewInputBuffer = false;
+            continue;
+        }
+
+
         // To add robustness to 3gpp playback of AVC file, we don't allow in-band SPS/PPS
         // If there's one, it's likely that this is a corrupted NAL
         if (((PVMFOMXDecPort*)iInPort)->iFormat == PVMF_MIME_H264_VIDEO_MP4)
@@ -2154,8 +2184,11 @@ OSCL_EXPORT_REF bool PVMFOMXBaseDecNode::SendInputBufferToOMXComponent()
                 if (iCurrFragNum == iDataIn->getNumFragments())
                 {
                     iDataIn.Unbind();
+                    break;
                 }
 
+                //We want to continue with the same input buffer
+                iObtainNewInputBuffer = false;
                 continue;
             }
         }
