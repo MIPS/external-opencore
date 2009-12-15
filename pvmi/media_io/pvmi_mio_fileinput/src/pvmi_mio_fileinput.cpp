@@ -16,9 +16,9 @@
  * -------------------------------------------------------------------
  */
 /**
-* @file pvmi_mio_fileinput.cpp
-* @brief PV Media IO interface implementation using file input
-*/
+ * @file pvmi_mio_fileinput.cpp
+ * @brief PV Media IO interface implementation using file input
+ */
 
 #ifndef OSCL_BASE_H_INCLUDED
 #include "oscl_base.h"
@@ -890,28 +890,28 @@ PVMFStatus PvmiMIOFileInput::DoInit()
     iTimeStampVector.reserve(2500);
 
     /*
-    * For some of the compressed formats we expect a log file to be present.
-    * The syntax of the logfile is as follows:
-    *********************************************************
-    unsigned int(32) total_num_samples;
-    unsigned int(32) avg_bitrate; // could be 0 if not available
-    unsigned int(32) timescale; //this is the timescale of all sample timestamps below
-    unsigned int(32) max_sample_size; // could be 0 if not available
-    unsigned int(32) config_size; //could be 0 for streams that have no config, say AMR
-    unsigned int(32) height; //zero if it is audio stream
-    unsigned int(32) width; //zero if it is audio stream
-    unsigned int(32) frame_rate; //zero if audio stream
-    for (j=0; j < total_num_samples; j++)
-    {
-    unsigned int(32) sample_length_in_bytes;
-    unsigned int(32) sample_timestamp;
-    }
-    *********************************************************
-    * for some others like AMR & AMR-WB we do not need log files
-    * For M4V and H263, log file is optional. Author unit test will
-    * always use one, but there could be other test apps that use
-    * this media input comp that may not pass the log file.
-    */
+     * For some of the compressed formats we expect a log file to be present.
+     * The syntax of the logfile is as follows:
+     *********************************************************
+       unsigned int(32) total_num_samples;
+       unsigned int(32) avg_bitrate; // could be 0 if not available
+       unsigned int(32) timescale; //this is the timescale of all sample timestamps below
+       unsigned int(32) max_sample_size; // could be 0 if not available
+       unsigned int(32) config_size; //could be 0 for streams that have no config, say AMR
+       unsigned int(32) height; //zero if it is audio stream
+       unsigned int(32) width; //zero if it is audio stream
+       unsigned int(32) frame_rate; //zero if audio stream
+       for (j=0; j < total_num_samples; j++)
+       {
+           unsigned int(32) sample_length_in_bytes;
+           unsigned int(32) sample_timestamp;
+       }
+     *********************************************************
+     * for some others like AMR & AMR-WB we do not need log files
+     * For M4V and H263, log file is optional. Author unit test will
+     * always use one, but there could be other test apps that use
+     * this media input comp that may not pass the log file.
+     */
     if (iSettings.iMediaFormat == PVMF_MIME_ISO_AVC_SAMPLE_FORMAT)
     {
         // Validate settings - even when using logfile we assume the test app
@@ -1107,77 +1107,6 @@ PVMFStatus PvmiMIOFileInput::DoInit()
                 iLogFile.Close();
                 iFileOpened_log = false;
             }
-        }
-    }
-    else if (iSettings.iMediaFormat == PVMF_MIME_H264_VIDEO_RAW)
-    {
-        // Validate settings - even when using logfile we assume the test app
-        // has parsed the log file to populate iSettings correcrtly
-        if (iSettings.iFrameHeight <= 0 || iSettings.iFrameWidth <= 0 ||
-                iSettings.iFrameRate <= 0 || iSettings.iTimescale <= 0)
-        {
-            CloseInputFile();
-            return PVMFErrArgument;
-        }
-
-        iStreamDuration = 0;
-        iTotalNumFrames = 0;
-        if (iSettings.iFrameRate != 0)
-        {
-            iMilliSecondsPerDataEvent = (int32)(1000 / iSettings.iFrameRate);
-        }
-        iMicroSecondsPerDataEvent = iMilliSecondsPerDataEvent * 1000;
-        if (!iFsOpened_log)
-        {
-            if (iFs_log.Connect() != 0)
-                return PVMFFailure;
-            iFsOpened_log = true;
-        }
-        if (iFileOpened_log ||
-                0 != iLogFile.Open(iSettings.iVideoLogFileName.get_cstr(), Oscl_File::MODE_READ | Oscl_File::MODE_BINARY, iFs_log))
-        {
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
-                            (0, "PvmiMIOFileInput::DoInit: Error - iLogFile.Open failed"));
-            //try to parse the bitstream to locate frame boundaries
-            int32  frameSize;
-            uint32 bytesProcessed;
-            uint8* fileData = NULL;
-            uint8* currentFrame;
-            fileData = (uint8*)iAlloc.allocate(fileSize);
-            if (!fileData)
-            {
-                CloseInputFile();
-                return PVMFErrNoMemory;
-            }
-
-            // Read the whole file to data buffer then go back to front
-            iInputFile.Read((OsclAny*)fileData, sizeof(uint8), fileSize);
-            iInputFile.Seek(fileStart, Oscl_File::SEEKSET);
-
-            // Get ready to search for frame sizes
-            iFrameSizeVector.reserve(200);
-            currentFrame = fileData;
-            bytesProcessed = 0;
-            while (bytesProcessed < fileSize)
-            {
-
-                frameSize = GetNextNALSize(currentFrame, fileSize - bytesProcessed); // get the size of next NAL (including 4 bytes of sync word)
-
-                // don't skip over the sync word, since that is part of the RAW format
-
-                if ((uint32)frameSize > maxFrameSize)
-                    maxFrameSize = frameSize;
-
-                iFrameSizeVector.push_back(frameSize);
-                currentFrame += frameSize; // move ptr to beginning of next NAL
-                bytesProcessed += frameSize;
-
-                ++iTotalNumFrames;
-
-
-            }
-            iAlloc.deallocate((OsclAny*)fileData);
-            iStreamDuration = iTotalNumFrames * (iMicroSecondsPerDataEvent / 1000); //in msec
         }
     }
     else if (iSettings.iMediaFormat == PVMF_MIME_H2631998 ||
@@ -1878,21 +1807,6 @@ PVMFStatus PvmiMIOFileInput::DoRead()
         iReadTimeStamp = (uint32)(iDataEventCounter * 1000 / chunkrate);
         ++iDataEventCounter;
     }
-    else if (iSettings.iMediaFormat == PVMF_MIME_H264_VIDEO_RAW)
-    {
-        if (iDataEventCounter)
-        {
-            bytesToRead = iFrameSizeVector[iDataEventCounter % iTotalNumFrames];
-            iReadTimeStamp = (uint32)(iDataEventCounter * 1000 / iSettings.iFrameRate);
-        }
-        else
-        {
-            bytesToRead = iFrameSizeVector[0] + iFrameSizeVector[1];
-            ++iDataEventCounter;
-            iReadTimeStamp = 0;
-        }
-        ++iDataEventCounter;
-    }
     else
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
@@ -2229,33 +2143,6 @@ int32 PvmiMIOFileInput::GetIETFFrameSize(uint8 aFrameType,
     }
     return -1;
 }
-
-//////////////////////////////////////////////////////////////////////////////////
-
-uint32 PvmiMIOFileInput::GetNextNALSize(uint8 *video_buffer, uint32 bytes_left)
-{
-    // locate the next sync word 0x 00 00 00 01
-    // for the case of very last NAL, we compare the bytes_left
-    video_buffer++;
-
-    // clarity over efficiency !
-    uint32 size = 0;
-    while (true)
-    {
-        size++;
-        if (((video_buffer[0] == 0) &&
-                (video_buffer[1] == 0) &&
-                (video_buffer[2] == 0) &&
-                (video_buffer[3] == 1)) ||
-                (size >= bytes_left))
-            break;
-
-        video_buffer++;
-    }
-
-    return size;
-}
-
 
 //////////////////////////////////////////////////////////////////////////////////
 int32 PvmiMIOFileInput::LocateM4VFrameHeader(uint8* video_buffer, int32 vop_size)
@@ -2890,7 +2777,7 @@ PVMFStatus PvmiMIOFileInput::RetrieveNALType()
 
 PVMFStatus PvmiMIOFileInput::RetrieveFSI(uint32 fsi_size)
 {
-    if ((iSettings.iMediaFormat != PVMF_MIME_M4V) && (iSettings.iMediaFormat != PVMF_MIME_H264_VIDEO_RAW))
+    if (iSettings.iMediaFormat != PVMF_MIME_M4V)
     {
         return PVMFFailure;
     }
@@ -2945,18 +2832,8 @@ PVMFStatus PvmiMIOFileInput::RetrieveFSI(uint32 fsi_size)
         return PVMFFailure;
     }
 
-    if (iSettings.iMediaFormat == PVMF_MIME_M4V)
-    {
-        // Anything before the first frame is assumed to be FSI
-        iFormatSpecificInfoSize = LocateM4VFrameHeader(fileData, fsi_size);
-    }
-    else
-    {
-        // two first frames include SPS and PPS
-        iFormatSpecificInfoSize = GetNextNALSize(fileData, fsi_size);
-        iFormatSpecificInfoSize += GetNextNALSize(fileData + iFormatSpecificInfoSize, fsi_size - iFormatSpecificInfoSize);
-    }
-
+    // Anything before the first frame is assumed to be FSI
+    iFormatSpecificInfoSize = LocateM4VFrameHeader(fileData, fsi_size);
 
     if (iFormatSpecificInfoSize == 0)
     {

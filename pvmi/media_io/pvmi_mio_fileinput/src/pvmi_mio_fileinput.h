@@ -248,7 +248,6 @@ class PvmiMIOFileInput
         PVMFStatus DoFlush();
         PVMFStatus DoStop();
         PVMFStatus DoRead();
-        uint32 GetNextNALSize(uint8 *video_buffer, uint32 bytes_left);
         int32 LocateM4VFrameHeader(uint8* video_buffer, int32 vop_size);
         int32 LocateH263FrameHeader(uint8* video_buffer, int32 vop_size);
         int32 GetIF2FrameSize(uint8 aFrameType);
