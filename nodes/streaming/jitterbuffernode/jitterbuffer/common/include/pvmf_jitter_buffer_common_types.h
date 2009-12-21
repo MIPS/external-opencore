@@ -186,12 +186,12 @@ class PVMFJitterBufferConstructParams
             return irJBEventNotifier;
         }
 
-        PVMFJitterBufferObserver* const GetJBObserver() const
+        PVMFJitterBufferObserver* GetJBObserver() const
         {
             return ipObserver;
         }
 
-        OsclAny* const  GetContextData() const
+        OsclAny* GetContextData() const
         {
             return ipContextData;
         }
