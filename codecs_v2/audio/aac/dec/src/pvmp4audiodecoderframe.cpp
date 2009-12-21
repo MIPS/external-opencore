@@ -557,24 +557,30 @@ OSCL_EXPORT_REF Int PVMP4AudioDecodeFrame(
                  * If a PCE is encountered during the first 2 frames,
                  * it will be read and accepted
                  * if its tag matches the first, with no error checking
-                 * (inside of get_prog_config)
+                 * (inside of get_prog_config). Redundant PCE will be accepted too
                  */
 
-                if (pVars->bno <= 1)
-                {
-                    status = get_prog_config(pVars,
-                                             &(pVars->scratch.scratch_prog_config));
-                }
-                else
+
+                status = get_prog_config(pVars,
+                                         &(pVars->scratch.scratch_prog_config));
+
+                if (status != SUCCESS)
                 {
                     status = MP4AUDEC_INVALID_FRAME;
                 }
+
                 break;
 
             case ID_FIL:        /* fill element */
 #ifdef AAC_PLUS
-                get_sbr_bitstream(sbrBitStream, &pVars->inputStream);
-
+                if (pExt->aacPlusEnabled == true)
+                {
+                    get_sbr_bitstream(sbrBitStream, &pVars->inputStream);
+                }
+                else
+                {
+                    getfill(&pVars->inputStream);
+                }
 #else
                 getfill(&pVars->inputStream);
 #endif
@@ -640,7 +646,22 @@ OSCL_EXPORT_REF Int PVMP4AudioDecodeFrame(
         /* for every core SCE or CPE there must be an SBR element, otherwise sths. wrong */
         if (sbrBitStream->NrElements != sbrBitStream->NrElementsCore)
         {
-            status = MP4AUDEC_INVALID_FRAME;
+            if ((pVars->bno <= 1) && (pExt->aacPlusEnabled == true))
+            {
+                /*
+                 *  Mismatch information indicate a problem on stream
+                 *  then default back to AAC
+                 */
+                pVars->mc_info.audioObjectType = MP4AUDIO_AAC_LC;
+                pVars->mc_info.ExtendedAudioObjectType = MP4AUDIO_AAC_LC;
+
+                PVMP4AudioDecoderDisableAacPlus(pExt, pMem);
+            }
+            else
+            {
+                status = MP4AUDEC_INVALID_FRAME;
+            }
+
         }
 
         if (pExt->aacPlusEnabled == false)
@@ -660,6 +681,9 @@ OSCL_EXPORT_REF Int PVMP4AudioDecodeFrame(
         }
     }
 #endif
+
+
+
 
     /*
      * Signal processing section.

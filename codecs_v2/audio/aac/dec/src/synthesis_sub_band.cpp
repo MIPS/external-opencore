@@ -134,7 +134,7 @@ __inline Int16 negate16(Int16 sample)
     __asm
     {
         mov   a, sample, asl#15
-        eor   b, b, b
+        eor   b, a, a
         qdsub  a, b, a
         mov   sample, a, asr#16
     }
@@ -195,7 +195,6 @@ static inline  Int16 negate16(Int16 sample)
 
     asm volatile(
         "mov   %0, %0, asl #15\n\t"
-        "eor   %1, %1, %1\n\t"
         "qdsub %0, %1, %0\n\t"
         "mov   %0, %0, asr#16"
     : "+r"(ra), "+r"(rb));

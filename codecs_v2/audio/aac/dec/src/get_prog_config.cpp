@@ -443,12 +443,22 @@ Int get_prog_config(
             LEN_SAMP_IDX,
             pInputStream);
 
-    if (!pVars->adif_test && pScratchPCE->sampling_rate_idx != pVars->prog_config.sampling_rate_idx)
+    if (!pVars->adif_test && (pScratchPCE->sampling_rate_idx != pVars->prog_config.sampling_rate_idx))
     {
-        /* rewind the pointer as implicit channel configuration maybe the case */
-        pInputStream->usedBits -= (LEN_TAG + LEN_PROFILE + LEN_SAMP_IDX);
+#ifdef AAC_PLUS
+        /*
+         *  PCE carries the baseline frequency, if SBR or PS are used, the frequencies will not match
+         *  so check for this unique case, and let decoding continue if this is a redundant PCE
+         */
+        if ((pScratchPCE->sampling_rate_idx != (pVars->prog_config.sampling_rate_idx + 3)) ||
+                (pVars->mc_info.upsamplingFactor != 2))
+#endif
+        {
+            /* rewind the pointer as implicit channel configuration maybe the case */
+            pInputStream->usedBits -= (LEN_TAG + LEN_PROFILE + LEN_SAMP_IDX);
 
-        return (1); /*  mismatch cannot happen */
+            return (1); /*  mismatch cannot happen */
+        }
     }
 
 
@@ -657,15 +667,24 @@ Int get_prog_config(
          *    zero.
          * 2) A PCE has been sent by the encoder with a tag that matches the
          *    the first one sent. It will then be re-read. No encoder found
-         *    thus far re-sends a PCE, when looking at ADIF files.
          *
          * Regardless, the temporary PCE will now be copied into the
          * the one official program configuration.
          */
-        pv_memcpy(
-            &pVars->prog_config,
-            pScratchPCE,
-            sizeof(ProgConfig));
+
+        if (pVars->prog_config.file_is_adts == TRUE)
+        {
+            /*
+             *  Keep adts setting in case of a redundant PCE (only applicable when
+             *  using aac-lib own adts parser)
+             */
+            pScratchPCE->file_is_adts = pVars->prog_config.file_is_adts;
+            pScratchPCE->headerless_frames = pVars->prog_config.headerless_frames;
+        }
+
+        pv_memcpy(&pVars->prog_config,
+                  pScratchPCE,
+                  sizeof(ProgConfig));
 
         /* enter configuration into MC_Info structure */
         status =

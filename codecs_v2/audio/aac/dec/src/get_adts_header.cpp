@@ -428,11 +428,6 @@ Int get_adts_header(
                 continue;  /* No sync word could be validated, keep searching initial sync word */
             }
 
-
-            /* Denotes whether a CRC check should be performed  1 == NO, 0 == YES */
-            pVars->prog_config.CRC_absent  =
-                ((UInt)(*(pSyncword) >> (LENGTH_FIXED_HEADER - LENGTH_SYNCWORD))) & 1;
-
             /*
             * All the unread bits in adts_header reside in the lower
             * 16-bits at this point.  Perform a typecast for faster
@@ -622,6 +617,11 @@ Int get_adts_header(
      * to Variable Bit Rate (VBR) encoders.
      */
     pVars->prog_config.buffer_fullness = (lower_16 >> 2) & 0x7FF;
+
+
+    /* Denotes whether a CRC check should be performed  1 == NO, 0 == YES */
+    pVars->prog_config.CRC_absent  =
+        ((UInt)(*(pSyncword) >> (LENGTH_FIXED_HEADER - LENGTH_SYNCWORD))) & 1;
 
     /*
      * headerless_frames indicates the number of

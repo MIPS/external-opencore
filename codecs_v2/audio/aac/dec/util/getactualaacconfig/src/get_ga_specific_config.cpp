@@ -328,6 +328,7 @@ Int get_GA_specific_config(
                 pVars->prog_config.front.ele_is_cpe[0] = 0; /* default to mono  */
                 pVars->mc_info.nch = 1;
                 pVars->prog_config.front.ele_tag[0] = 0;
+                pVars->mc_info.audioObjectType = audioObjectType;
 
                 status = SUCCESS;
             }
