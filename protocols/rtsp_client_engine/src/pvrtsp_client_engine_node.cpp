@@ -1351,6 +1351,7 @@ OSCL_EXPORT_REF PVMFStatus PVRTSPEngineNode::DispatchCommand(PVRTSPEngineCommand
             {
                 //setup the timer for sending keep-alive
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_INFO, (0, "PVRTSPEngineNode::DispatchCommand() start keep-alive timer %d. Ln %d", TIMEOUT_KEEPALIVE, __LINE__));
+                iWatchdogTimer->Cancel(REQ_TIMER_KEEPALIVE_ID);
                 iWatchdogTimer->Request(REQ_TIMER_KEEPALIVE_ID, 0, TIMEOUT_KEEPALIVE);
 
                 ChangeExternalState(EPVMFNodePaused);
@@ -3549,6 +3550,7 @@ OSCL_EXPORT_REF PVMFStatus PVRTSPEngineNode::processIncomingMessage(RTSPIncoming
                     ((bKeepAliveInPlay) && (iState == PVRTSP_ENGINE_NODE_STATE_PLAY_DONE)))
             {
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_INFO, (0, "PVRTSPEngineNode::processIncomingMessage() start keep-alive timer %d. Ln %d", TIMEOUT_KEEPALIVE, __LINE__));
+                iWatchdogTimer->Cancel(REQ_TIMER_KEEPALIVE_ID);
                 iWatchdogTimer->Request(REQ_TIMER_KEEPALIVE_ID, 0, TIMEOUT_KEEPALIVE);
             }
         }
