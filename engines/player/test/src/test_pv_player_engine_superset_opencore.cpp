@@ -32,6 +32,7 @@
 #include "test_pv_player_engine_testset_cpmdlapassthru.cpp"
 #include "test_pv_player_engine_apptrackselection.cpp"
 #include "test_pv_player_engine_testset_multicpm.cpp"
+#include "test_pv_player_engine_testset_playlist.cpp"
 
 // END FILE
 

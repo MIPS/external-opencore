@@ -39,7 +39,8 @@ SRCS := test_pv_player_engine.cpp \
         test_pv_player_engine_testset11.cpp \
         test_pv_player_engine_testset12.cpp \
         test_pv_player_engine_testset13.cpp \
-        test_pv_player_engine_testset_cpmdlapassthru.cpp
+        test_pv_player_engine_testset_cpmdlapassthru.cpp \
+		test_pv_player_engine_testset_playlist.cpp
 
 
 LIBS := unit_test opencore_player opencore_common opencore_net_support

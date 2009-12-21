@@ -23,6 +23,10 @@
 #include "test_pv_player_engine_testset1.h"
 #endif
 
+#ifndef TEST_PV_PLAYER_ENGINE_TESTSET_PLAYLIST_H_INCLUDED
+#include "test_pv_player_engine_testset_playlist.h"
+#endif
+
 #ifndef TEST_PV_PLAYER_ENGINE_TESTSET7_H_INCLUDED
 #include "test_pv_player_engine_testset7.h"
 #endif
@@ -1472,6 +1476,10 @@ void FindLoggerNode(cmd_line* command_line, int32& lognode, FILE* aFile)
         else if (oscl_strcmp(iSourceFind, "-logshout") == 0)
         {
             lognode = 19;   //shoutcast playback log only
+        }
+        else if (oscl_strcmp(iSourceFind, "-loggapless") == 0)
+        {
+            lognode = 20;   //gapless playback log only
         }
     }
 
@@ -3545,6 +3553,119 @@ void pvplayer_engine_test::test()
 #endif
             }
             break;
+
+            // testcases with full playlist
+            case FullPlaylistPlayTillEndOfListTest:
+                iCurrentTest = new pvplayer_async_test_playlist_playback(testparam);
+                break;
+            case FullPlaylistSkipToLastTrackTest:
+                iCurrentTest = new pvplayer_async_test_playlist_seek_skip(testparam, SkipFwdLastTrackTest);
+                break;
+            case FullPlaylistSkipBeyondLastTrackTest:
+                iCurrentTest = new pvplayer_async_test_playlist_seek_skip(testparam, SkipFwdBeyondListTest);
+                break;
+            case FullPlaylistSkipToNextTrackEOTTest:
+                iCurrentTest = new pvplayer_async_test_playlist_seek_skip(testparam, SkipFwdOneTrackTest);
+                break;
+            case FullPlaylistSkipToPrevTrackTest:
+                iCurrentTest = new pvplayer_async_test_playlist_seek_skip(testparam, SkipBwdOneTrackTest);
+                break;
+            case FullPlaylistInvalidClipAtNextIndexTest:
+                iCurrentTest = new pvplayer_async_test_playlist_playback(testparam, false, true, 2/*NumInvalidClips*/, 2/*InvalidClipsAtIndex*/);
+                break;
+            case FullPlaylistGetMetadataASAPTest:
+                iCurrentTest = new pvplayer_async_test_playlist_playback(testparam, false, false, 0, 0, true);
+                break;
+            case FullPlaylistInvalidClipsAtBeginingTest:
+                iCurrentTest = new pvplayer_async_test_playlist_playback(testparam, false, true, 3/*NumInvalidClips*/, 0/*InvalidClipsAtIndex*/);
+                break;
+            case FullPlaylistPlaySeekYSecInClipXTest:
+                iCurrentTest = new pvplayer_async_test_playlist_seek_skip(testparam, SkipFwdAndSeekTest, false, 3, -1, true, 2000);
+                break;
+            case FullPlaylistSkipToCurrentTrackTest:
+                iCurrentTest = new pvplayer_async_test_playlist_seek_skip(testparam, SkipToCurrentTrackTest);
+                break;
+            case FullPlaylistUnknownMimeTypeTest:
+                iCurrentTest = new pvplayer_async_test_playlist_playback(testparam, false, false, -1, -1, false, true /*UnknwonMimeTypeTest*/);
+                break;
+            case FullPlaylistInvalidMimeTypeTest:
+                iCurrentTest = new pvplayer_async_test_playlist_playback(testparam, false, false, -1, -1, false, false, true /*InvalidMimeTypeTest*/);
+                break;
+            case FullPlaylistSeekBeyondCurrentClipDurationTest:
+                iCurrentTest = new pvplayer_async_test_playlist_seek_skip(testparam, SeekBeyondClipDurationTest);
+                break;
+            case FullPlaylistSeekInCurrentTrackTest:
+                iCurrentTest = new pvplayer_async_test_playlist_seek_skip(testparam, SeekInCurrentTrackTest);
+                break;
+
+                // testcases with partial playlist, to exercise UpdateDataSource()
+            case PartialPlaylistPlayTillEndOfListTest:
+                iCurrentTest = new pvplayer_async_test_playlist_playback(testparam, true);
+                break;
+            case PartialPlaylistSkipToLastTrackTest:
+                iCurrentTest = new pvplayer_async_test_playlist_seek_skip(testparam, SkipFwdLastTrackTest, true);
+                break;
+            case PartialPlaylistSkipBeyondLastTrackTest:
+                iCurrentTest = new pvplayer_async_test_playlist_seek_skip(testparam, SkipFwdBeyondListTest, true);
+                break;
+            case PartialPlaylistSkipToNextTrackEOTTest:
+                iCurrentTest = new pvplayer_async_test_playlist_seek_skip(testparam, SkipFwdOneTrackTest, true);
+                break;
+            case PartialPlaylistSkipToPrevTrackTest:
+                iCurrentTest = new pvplayer_async_test_playlist_seek_skip(testparam, SkipBwdOneTrackTest, true);
+                break;
+            case PartialPlaylistInvalidClipAtNextIndexTest:
+                iCurrentTest = new pvplayer_async_test_playlist_playback(testparam, true, true, 2/*NumInvalidClips*/, 2/*InvalidClipsAtIndex*/);
+                break;
+            case PartialPlaylistGetMetadataASAPTest:
+                iCurrentTest = new pvplayer_async_test_playlist_playback(testparam, true, false, 0, 0, true);
+                break;
+            case PartialPlaylistInvalidClipsAtBeginingTest:
+                iCurrentTest = new pvplayer_async_test_playlist_playback(testparam, true, true, 3/*NumInvalidClips*/, 0/*InvalidClipsAtIndex*/);
+                break;
+            case PartialPlaylistPlaySeekYSecInClipXTest:
+                iCurrentTest = new pvplayer_async_test_playlist_seek_skip(testparam, SkipFwdAndSeekTest, true, 3, -1, true, 2000);
+                break;
+            case PartialPlaylistSkipToCurrentTrackTest:
+                iCurrentTest = new pvplayer_async_test_playlist_seek_skip(testparam, SkipToCurrentTrackTest, true/*TestUpdateDataSource*/);
+                break;
+            case PartialPlaylistUnknownMimeTypeTest:
+                iCurrentTest = new pvplayer_async_test_playlist_playback(testparam, true/*TestUpdateDataSource*/, false, -1, -1, false, true /*UnknwonMimeTypeTest*/);
+                break;
+            case PartialPlaylistInvalidMimeTypeTest:
+                iCurrentTest = new pvplayer_async_test_playlist_playback(testparam, true/*TestUpdateDataSource*/, false, -1, -1, false, false, true /*InvalidMimeTypeTest*/);
+                break;
+            case PartialPlaylistSeekBeyondCurrentClipDurationTest:
+                iCurrentTest = new pvplayer_async_test_playlist_seek_skip(testparam, SeekBeyondClipDurationTest, true);
+                break;
+            case PartialPlaylistSeekInCurrentTrackTest:
+                iCurrentTest = new pvplayer_async_test_playlist_seek_skip(testparam, SeekInCurrentTrackTest, true);
+                break;
+            case PartialPlaylistReplaceTrackTest:
+                iCurrentTest = new pvplayer_async_test_playlist_playback(testparam, true, false, 0, 0, false, false, false, true /*ReplaceTrackTest*/);
+                break;
+
+                // gapless PCM validation testcases
+            case GaplessValidateiTunesMP3:
+                iCurrentTest = new pvplayer_async_test_validate_gapless(testparam, GAPLESS_FORMAT_ITUNES_MP3);
+                break;
+            case GaplessValidateLAMEMP3:
+                iCurrentTest = new pvplayer_async_test_validate_gapless(testparam, GAPLESS_FORMAT_LAME_MP3);
+                break;
+            case GaplessValidateiTunesAAC:
+                iCurrentTest = new pvplayer_async_test_validate_gapless(testparam, GAPLESS_FORMAT_ITUNES_AAC);
+                break;
+            case GaplessValidateiTunesMP3Playlist:
+                iCurrentTest = new pvplayer_async_test_playlist_playback(testparam, false, false, 0, 0, false, false, false, false, GAPLESS_FORMAT_ITUNES_MP3);
+                break;
+            case GaplessValidateLAMEMP3Playlist:
+                iCurrentTest = new pvplayer_async_test_playlist_playback(testparam, false, false, 0, 0, false, false, false, false, GAPLESS_FORMAT_LAME_MP3);
+                break;
+            case GaplessValidateiTunesAACPlaylist:
+                fprintf(file, "GaplessValidateiTunesAACPlaylist not enabled\n");
+                //@disabled iCurrentTest = new pvplayer_async_test_playlist_playback(testparam, false, false, 0, 0, false, false, false, false, GAPLESS_FORMAT_ITUNES_AAC);
+                break;
+
             case CleanDrmData_JanusCPMTest:
                 fprintf(file, "Janus CPM tests not enabled\n");
                 break;
@@ -7733,7 +7854,7 @@ void pvplayer_engine_test::SetupLoggerScheduler()
         case 3: //-logclock
         {
             // Log clock only
-            PVLogger *clocknode = PVLogger::GetLoggerObject("clock");
+            PVLogger *clocknode = PVLogger::GetLoggerObject("PVMFMediaClock");
             clocknode->AddAppender(appenderPtr);
             clocknode->SetLogLevel(PVLOGMSG_DEBUG);
         }
@@ -8004,6 +8125,15 @@ void pvplayer_engine_test::SetupLoggerScheduler()
             loggernode->AddAppender(appenderPtr);
             loggernode->SetLogLevel(PVLOGMSG_DEBUG);
             */
+        }
+        break;
+        case 20://-loggapless
+        {
+            // Log gapless playback
+            PVLogger *loggernode;
+            loggernode = PVLogger::GetLoggerObject("gapless");
+            loggernode->AddAppender(appenderPtr);
+            loggernode->SetLogLevel(PVLOGMSG_DEBUG);
         }
         break;
         default:

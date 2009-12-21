@@ -14,7 +14,8 @@ LOCAL_SRC_FILES := \
  	src/test_pv_player_engine_testset11.cpp \
  	src/test_pv_player_engine_testset12.cpp \
  	src/test_pv_player_engine_testset13.cpp \
- 	src/test_pv_player_engine_testset_cpmdlapassthru.cpp
+ 	src/test_pv_player_engine_testset_cpmdlapassthru.cpp \
+ 	src/test_pv_player_engine_testset_playlist.cpp
 
 
 LOCAL_MODULE := pvplayer_engine_test

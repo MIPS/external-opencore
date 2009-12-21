@@ -179,6 +179,7 @@ typedef enum
     STATE_CREATE,
     STATE_QUERYINTERFACE,
     STATE_ADDDATASOURCE,
+    STATE_UPDATEDATASOURCE,
     STATE_CONFIGPARAMS,
     STATE_INIT,
     STATE_QUERYLICENSEACQIF,
@@ -982,6 +983,57 @@ class pvplayer_engine_test : public test_case,
             //this range reserved for future multiple instance tests.
             LastMultipleInstanceTest = 325,//placeholder
 
+            /**
+             * Playlist and gapless playback related test cases
+             * The playlist and gapless features in core are currently not fully working
+             * These test cases currently fail.
+             */
+            // start playback with a fully populated playlist
+            FullPlaylistPlayTillEndOfListTest = 400,            // playback should done for complete playlist
+            FullPlaylistSkipToLastTrackTest, //401              // last clip should be played back, then EndOfData should be reported
+            FullPlaylistSkipBeyondLastTrackTest, //402          // skip to last track + 1 index, should report Error and EndOfData
+            FullPlaylistSkipToNextTrackEOTTest, //403           // skip to current clip index + 1, while playing current clip index + 2, set clip end time
+            FullPlaylistSkipToPrevTrackTest, //404              // skip to current clip index - 1, should playback remaining clips in list
+            FullPlaylistInvalidClipAtNextIndexTest, //405       // skip should happen to next valid clip in the list.
+            FullPlaylistGetMetadataASAPTest, //406              // metadata should be returned for all clips one-by-one
+            FullPlaylistInvalidClipsAtBeginingTest, //407       // skip should happen to first valid clip in the list.
+            FullPlaylistPlaySeekYSecInClipXTest, //408          // skip to Clip X and start playback from Y seconds in the clip.
+            FullPlaylistSkipToCurrentTrackTest, //409           // skip should be successful, playback should begin from 0 ts for current clip
+            FullPlaylistUnknownMimeTypeTest, //410              // normal playback should happen for this clip list
+            FullPlaylistInvalidMimeTypeTest, //411              // clips with invalid mime type should be skipped over
+            FullPlaylistSeekBeyondCurrentClipDurationTest, //412
+            FullPlaylistSeekInCurrentTrackTest, //413           // seek should be successful in current clip
+
+            // start playback with a partial playlist and populate the rest of the playlist during playback
+            PartialPlaylistPlayTillEndOfListTest = 420,         // playback should done for complete playlist
+            PartialPlaylistSkipToLastTrackTest, //421           // last clip should be played back, then EndOfData should be reported
+            PartialPlaylistSkipBeyondLastTrackTest, //422       // skip to last track + 1 index, should report Error and EndOfData
+            PartialPlaylistSkipToNextTrackEOTTest, //423        // skip to current clip index + 1, while playing current clip index + 2, set clip end time
+            PartialPlaylistSkipToPrevTrackTest, //424           // skip to current clip index - 1, should playback remaining clips in list
+            PartialPlaylistInvalidClipAtNextIndexTest, //425    // skip should happen to next valid clip in the list.
+            PartialPlaylistGetMetadataASAPTest, //426           // metadata should be returned for all clips one-by-one
+            PartialPlaylistInvalidClipsAtBeginingTest, //427    // skip should happen to first valid clip in the list.
+            PartialPlaylistPlaySeekYSecInClipXTest, //428       // skip to Clip X and start playback from Y seconds in the clip.
+            PartialPlaylistSkipToCurrentTrackTest, //429        // skip should be successful, playback should begin from 0 ts for current clip
+            PartialPlaylistUnknownMimeTypeTest,  //430          // normal playback should happen for this clip list
+            PartialPlaylistInvalidMimeTypeTest, //431           // clips with invalid mime type should be skipped over
+            PartialPlaylistSeekBeyondCurrentClipDurationTest,//432
+            PartialPlaylistSeekInCurrentTrackTest, //433        // seek should be successful in current clip
+            PartialPlaylistReplaceTrackTest, //434              // replace track in playlist before (success) and after (failure) initialization
+
+            LastPlaylistTest = 439, // placeholder
+
+            // gapless PCM validation test cases
+            GaplessValidateiTunesMP3 = 450,                     // plays default gapless iTunes MP3 clip and check output PCM size
+            GaplessValidateLAMEMP3, // 451                      // plays default gapless LAME MP3 clip and check output PCM size
+            GaplessValidateiTunesAAC, // 452                    // plays default gapless iTunes AAC clip and check output PCM size
+            GaplessValidateiTunesMP3Playlist, // 453            // plays default gapless iTunes MP3 playlist and check output PCM size
+            GaplessValidateLAMEMP3Playlist, // 454              // plays default gapless LAME MP3 playlist and check output PCM size
+            GaplessValidateiTunesAACPlaylist, // 455            // plays default gapless iTunes AAC playlist and check output PCM size
+
+            LastGaplessTest = 460, // placeholder
+
+
             FirstProjTest = 700, // placeholder
             // Project specific unit tests should have numbers 701 to 799
             LastProjTest = 799,
@@ -1022,6 +1074,7 @@ class pvplayer_engine_test : public test_case,
              */
             MultiProcessExternalDownloadPlayUntilEOSTest = 806,
             PlayUntilEOSUsingExternalFileHandleTest = 807,
+
 
             StreamingOpenPlayUntilEOSTest = 851,//851
             StreamingOpenPlayPausePlayUntilEOSTest,//852
