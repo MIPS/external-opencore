@@ -46,7 +46,6 @@ class ShareParams
         OSCL_IMPORT_REF static void Destroy();
         uint32 iAudioTS;
         uint32 iVideoTS;
-        bool   iUncompressed;
         bool   iCompressed;
 
         LipSyncNotifyTSObserver* iObserver;
@@ -57,7 +56,6 @@ class ShareParams
 
             iAudioTS = 0;
             iVideoTS = 0;
-            iUncompressed = false;
             iCompressed = false;
 
         };

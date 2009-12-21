@@ -104,16 +104,16 @@ class PvmiMIOFileInputCmd
             iData1 = NULL;
         }
 
-        PvmiMIOFileInputCmd(const PvmiMIOFileInputCmd& aCmd)
+        PvmiMIOFileInputCmd(const PvmiMIOFileInputCmd& arCmd)
         {
-            Copy(aCmd);
+            Copy(arCmd);
         }
 
         ~PvmiMIOFileInputCmd() {}
 
-        PvmiMIOFileInputCmd& operator=(const PvmiMIOFileInputCmd& aCmd)
+        PvmiMIOFileInputCmd& operator=(const PvmiMIOFileInputCmd& arCmd)
         {
-            Copy(aCmd);
+            Copy(arCmd);
             return (*this);
         }
 
@@ -124,12 +124,12 @@ class PvmiMIOFileInputCmd
 
     private:
 
-        void Copy(const PvmiMIOFileInputCmd& aCmd)
+        void Copy(const PvmiMIOFileInputCmd& arCmd)
         {
-            iId = aCmd.iId;
-            iType = aCmd.iType;
-            iContext = aCmd.iContext;
-            iData1 = aCmd.iData1;
+            iId = arCmd.iId;
+            iType = arCmd.iType;
+            iContext = arCmd.iContext;
+            iData1 = arCmd.iData1;
         }
 };
 
@@ -143,11 +143,11 @@ class PvmiMIOFileInputMediaData
             iNotification = false;
         }
 
-        PvmiMIOFileInputMediaData(const PvmiMIOFileInputMediaData& aData)
+        PvmiMIOFileInputMediaData(const PvmiMIOFileInputMediaData& arData)
         {
-            iId = aData.iId;
-            iData = aData.iData;
-            iNotification = aData.iNotification;
+            iId = arData.iId;
+            iData = arData.iData;
+            iNotification = arData.iNotification;
         }
 
         PVMFCommandId iId;
@@ -163,65 +163,65 @@ class PvmiMIOFileInput
 
 {
     public:
-        PvmiMIOFileInput(const PvmiMIOFileInputSettings& aSettings);
+        PvmiMIOFileInput(const PvmiMIOFileInputSettings& arSettings);
         virtual ~PvmiMIOFileInput();
 
         // Pure virtuals from PvmiMIOControl
-        OSCL_IMPORT_REF PVMFStatus connect(PvmiMIOSession& aSession, PvmiMIOObserver* aObserver);
-        OSCL_IMPORT_REF PVMFStatus disconnect(PvmiMIOSession aSession);
-        OSCL_IMPORT_REF PvmiMediaTransfer* createMediaTransfer(PvmiMIOSession& aSession,
+        OSCL_IMPORT_REF PVMFStatus connect(PvmiMIOSession& arSession, PvmiMIOObserver* apObserver);
+        OSCL_IMPORT_REF PVMFStatus disconnect(PvmiMIOSession arSession);
+        OSCL_IMPORT_REF PvmiMediaTransfer* createMediaTransfer(PvmiMIOSession& arSession,
                 PvmiKvp* read_formats = NULL,
                 int32 read_flags = 0,
                 PvmiKvp* write_formats = NULL,
                 int32 write_flags = 0);
-        OSCL_IMPORT_REF void deleteMediaTransfer(PvmiMIOSession& aSession,
-                PvmiMediaTransfer* media_transfer);
-        OSCL_IMPORT_REF PVMFCommandId QueryUUID(const PvmfMimeString& aMimeType,
-                                                Oscl_Vector<PVUuid, OsclMemAllocator>& aUuids,
+        OSCL_IMPORT_REF void deleteMediaTransfer(PvmiMIOSession& arSession,
+                PvmiMediaTransfer* pMediaTransfer);
+        OSCL_IMPORT_REF PVMFCommandId QueryUUID(const PvmfMimeString& arMimeType,
+                                                Oscl_Vector<PVUuid, OsclMemAllocator>& arUuids,
                                                 bool aExactUuidsOnly = false,
-                                                const OsclAny* aContext = NULL);
-        OSCL_IMPORT_REF PVMFCommandId QueryInterface(const PVUuid& aUuid,
+                                                const OsclAny* apContext = NULL);
+        OSCL_IMPORT_REF PVMFCommandId QueryInterface(const PVUuid& arUuid,
                 PVInterface*& aInterfacePtr,
-                const OsclAny* aContext = NULL);
-        OSCL_IMPORT_REF PVMFCommandId Init(const OsclAny* aContext = NULL);
-        OSCL_IMPORT_REF PVMFCommandId Start(const OsclAny* aContext = NULL);
-        OSCL_IMPORT_REF PVMFCommandId Reset(const OsclAny* aContext = NULL);
-        OSCL_IMPORT_REF PVMFCommandId Pause(const OsclAny* aContext = NULL);
-        OSCL_IMPORT_REF PVMFCommandId Flush(const OsclAny* aContext = NULL);
-        OSCL_IMPORT_REF PVMFCommandId DiscardData(PVMFTimestamp aTimestamp, const OsclAny* aContext = NULL);
-        OSCL_IMPORT_REF PVMFCommandId DiscardData(const OsclAny* aContext = NULL);
-        OSCL_IMPORT_REF PVMFCommandId Stop(const OsclAny* aContext = NULL);
-        OSCL_IMPORT_REF PVMFCommandId CancelCommand(PVMFCommandId aCmdId, const OsclAny* aContext = NULL);
-        OSCL_IMPORT_REF PVMFCommandId CancelAllCommands(const OsclAny* aContext = NULL);
+                const OsclAny* apContext = NULL);
+        OSCL_IMPORT_REF PVMFCommandId Init(const OsclAny* apContext = NULL);
+        OSCL_IMPORT_REF PVMFCommandId Start(const OsclAny* apContext = NULL);
+        OSCL_IMPORT_REF PVMFCommandId Reset(const OsclAny* apContext = NULL);
+        OSCL_IMPORT_REF PVMFCommandId Pause(const OsclAny* apContext = NULL);
+        OSCL_IMPORT_REF PVMFCommandId Flush(const OsclAny* apContext = NULL);
+        OSCL_IMPORT_REF PVMFCommandId DiscardData(PVMFTimestamp aTimestamp, const OsclAny* apContext = NULL);
+        OSCL_IMPORT_REF PVMFCommandId DiscardData(const OsclAny* apContext = NULL);
+        OSCL_IMPORT_REF PVMFCommandId Stop(const OsclAny* apContext = NULL);
+        OSCL_IMPORT_REF PVMFCommandId CancelCommand(PVMFCommandId aCmdId, const OsclAny* apContext = NULL);
+        OSCL_IMPORT_REF PVMFCommandId CancelAllCommands(const OsclAny* apContext = NULL);
         OSCL_IMPORT_REF void ThreadLogon();
         OSCL_IMPORT_REF void ThreadLogoff();
 
         // Pure virtuals from PvmiMediaTransfer
-        OSCL_IMPORT_REF void setPeer(PvmiMediaTransfer* aPeer);
-        OSCL_IMPORT_REF void useMemoryAllocators(OsclMemAllocator* write_alloc = NULL);
+        OSCL_IMPORT_REF void setPeer(PvmiMediaTransfer* apPeer);
+        OSCL_IMPORT_REF void useMemoryAllocators(OsclMemAllocator* apWriteAlloc = NULL);
         OSCL_IMPORT_REF PVMFCommandId writeAsync(uint8 format_type, int32 format_index,
-                uint8* data, uint32 data_len,
-                const PvmiMediaXferHeader& data_header_info,
-                OsclAny* aContext = NULL);
+                uint8* pdata, uint32 data_len,
+                const PvmiMediaXferHeader& arDataHeaderInfo,
+                OsclAny* apContext = NULL);
         OSCL_IMPORT_REF void writeComplete(PVMFStatus aStatus, PVMFCommandId write_cmd_id,
                                            OsclAny* aContext);
-        OSCL_IMPORT_REF PVMFCommandId readAsync(uint8* data, uint32 max_data_len, OsclAny* aContext = NULL,
-                                                int32* formats = NULL, uint16 num_formats = 0);
+        OSCL_IMPORT_REF PVMFCommandId readAsync(uint8* pdata, uint32 max_data_len, OsclAny* apContext = NULL,
+                                                int32* pformats = NULL, uint16 num_formats = 0);
         OSCL_IMPORT_REF void readComplete(PVMFStatus aStatus, PVMFCommandId read_cmd_id,
                                           int32 format_index,
                                           const PvmiMediaXferHeader& data_header_info,
-                                          OsclAny* aContext);
+                                          OsclAny* apContext);
         OSCL_IMPORT_REF void statusUpdate(uint32 status_flags);
         OSCL_IMPORT_REF void cancelCommand(PVMFCommandId aCmdId);
         OSCL_IMPORT_REF void cancelAllCommands();
 
         // from PvmiCapabilityAndConfig
         OSCL_IMPORT_REF PVMFStatus getParametersSync(PvmiMIOSession aSession, PvmiKeyType aIdentifier,
-                PvmiKvp*& aParameters, int& num_parameter_elements,
+                PvmiKvp*& aParameters, int& arNumParameterElements,
                 PvmiCapabilityContext aContext);
-        OSCL_IMPORT_REF PVMFStatus releaseParameters(PvmiMIOSession aSession, PvmiKvp* aParameters,
+        OSCL_IMPORT_REF PVMFStatus releaseParameters(PvmiMIOSession aSession, PvmiKvp* apParameters,
                 int num_elements);
-        OSCL_IMPORT_REF void setParametersSync(PvmiMIOSession aSession, PvmiKvp* aParameters,
+        OSCL_IMPORT_REF void setParametersSync(PvmiMIOSession aSession, PvmiKvp* apParameters,
                                                int num_elements, PvmiKvp * & aRet_kvp);
         OSCL_IMPORT_REF uint32 GetStreamDuration();
         OSCL_IMPORT_REF void SetAuthoringDuration(uint32);
@@ -232,15 +232,17 @@ class PvmiMIOFileInput
         PVMFStatus RetrieveNALType();
 
     private:
-        int32 GetFrameSize(int32 index);
-        int32 GetTimeStamp(int32 index);
+        int32 GetFrameSize(int32 aIndex);
+        int32 GetTimeStamp(int32 aIndex);
 
         void Run();
-        void ConstructL(const PvmiMIOFileInputSettings& aSettings);
+        void ConstructL(const PvmiMIOFileInputSettings& arSettings);
 
-        PVMFCommandId AddCmdToQueue(PvmiMIOFileInputCmdType aType, const OsclAny* aContext, OsclAny* aData1 = NULL);
+        PVMFCommandId AddCmdToQueue(PvmiMIOFileInputCmdType aType,
+                                    const OsclAny* apContext, OsclAny* apData1 = NULL);
         void AddDataEventToQueue(uint32 aMicroSecondsToEvent);
-        void DoRequestCompleted(const PvmiMIOFileInputCmd& aCmd, PVMFStatus aStatus, OsclAny* aEventData = NULL);
+        void DoRequestCompleted(const PvmiMIOFileInputCmd& arCmd,
+                                PVMFStatus aStatus, OsclAny* apEventData = NULL);
         PVMFStatus DoInit();
         PVMFStatus DoStart();
         PVMFStatus DoReset();
@@ -248,9 +250,9 @@ class PvmiMIOFileInput
         PVMFStatus DoFlush();
         PVMFStatus DoStop();
         PVMFStatus DoRead();
-        uint32 GetNextNALSize(uint8 *video_buffer, uint32 bytes_left);
-        int32 LocateM4VFrameHeader(uint8* video_buffer, int32 vop_size);
-        int32 LocateH263FrameHeader(uint8* video_buffer, int32 vop_size);
+        uint32 GetNextNALSize(uint8* pVideoBuffer, uint32 bytes_left);
+        int32 LocateM4VFrameHeader(uint8*pVideoBuffer, int32 vop_size);
+        int32 LocateH263FrameHeader(uint8* pVideoBuffer, int32 vop_size);
         int32 GetIF2FrameSize(uint8 aFrameType);
         int32 GetIETFFrameSize(uint8 aFrameType, PVMFFormatType aFormat);
 
@@ -275,10 +277,10 @@ class PvmiMIOFileInput
          * @param aSetParam If true, set the value of parameter corresponding to the key.
          * @return PVMFSuccess if parameter is supported, else PVMFFailure
          */
-        PVMFStatus VerifyAndSetParameter(PvmiKvp* aKvp, bool aSetParam = false);
+        PVMFStatus VerifyAndSetParameter(PvmiKvp* apKvp, bool aSetParam = false);
 
 
-        bool DecoderInfo(char* buffer, char* bufferEnd, char* res, uint32 resSize);
+        bool DecoderInfo(char* pbuffer, char* pbufferEnd, char* pres, uint32 resSize);
         uint8* AllocateMemPool(OsclMemPoolFixedChunkAllocator*&, uint32, int32&);
         int32 WriteAsyncDataHdr(uint32&, PvmiMediaTransfer*&, uint32&, PvmiMediaXferHeader&);
 

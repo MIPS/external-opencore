@@ -20,12 +20,12 @@
 #include "pv_2way_interface.h"
 #include "pv_2way_media.h"
 #include "pvmf_media_input_node_factory.h"
-#include "lipsync_dummy_input_mio.h"
-#include "lipsync_dummy_settings.h"
+#include "dummy_input_mio.h"
+#include "dummy_settings.h"
 
-int PV2WayDummyInputMIONodeFactory::CreateMedia(LipSyncDummyMIOSettings& aSettings)
+int PV2WayDummyInputMIONodeFactory::CreateMedia(DummyMIOSettings& aSettings)
 {
-    iMediaControl = OSCL_NEW(LipSyncDummyInputMIO, (aSettings));
+    iMediaControl = OSCL_NEW(DummyInputMIO, (aSettings));
     return PVMFSuccess;
 }
 
@@ -42,7 +42,8 @@ OSCL_EXPORT_REF void PV2WayDummyInputMIONodeFactory::Delete(PVMFNodeInterface** 
     *aMioNode = NULL;
 }
 
-OSCL_EXPORT_REF PVMFNodeInterface* PV2WayDummyInputMIONodeFactory::Create(LipSyncDummyMIOSettings& aSettings)
+OSCL_EXPORT_REF PVMFNodeInterface* PV2WayDummyInputMIONodeFactory::Create(
+    DummyMIOSettings& aSettings)
 {
     CreateMedia(aSettings);
     PVMFNodeInterface* mioNode = NULL;

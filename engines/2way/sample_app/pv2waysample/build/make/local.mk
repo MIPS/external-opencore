@@ -22,15 +22,22 @@ XINCDIRS +=  ../../src ../../include \
 SRCDIR := ../../src
 INCSRCDIR := ../../include
 
-SRCS := ../../../test/src/lipsync_dummy_input_mio.cpp \
-        ../../../test/src/lipsync_dummy_output_mio.cpp \
-	pv_2way_media_input_mio_node_factory.cpp \
-	pv_2way_media_output_mio_node_factory.cpp \
+
+SRCS :=	\
+	lipsync_dummy_input_mio.cpp \
+	lipsync_dummy_output_mio.cpp \
+	dummy_input_mio.cpp \
+	dummy_output_mio.cpp \
+	pv_2way_lipsync_input_mio_node_factory.cpp \
+	pv_2way_lipsync_output_mio_node_factory.cpp \
 	pv_2way_dummy_input_mio_node_factory.cpp \
 	pv_2way_dummy_output_mio_node_factory.cpp \
+	pv_2way_media_input_mio_node_factory.cpp \
+	pv_2way_media_output_mio_node_factory.cpp \
 	pv_2way_source_and_sinks_base.cpp \
 	pv_2way_source_and_sinks_file.cpp \
 	pv_2way_source_and_sinks_dummy.cpp \
+	pv_2way_source_and_sinks_lipsync.cpp \
 	pv_2way_source_and_sinks_perf_test.cpp \
 	pv_2way_media.cpp \
 	pv_2way_mio.cpp \
@@ -54,9 +61,12 @@ HDRS := pv_2way_codecspecifier.h \
 	pv_2way_media_output_mio_node_factory.h \
 	pv_2way_dummy_input_mio_node_factory.h \
 	pv_2way_dummy_output_mio_node_factory.h \
+	pv_2way_lipsync_input_mio_node_factory.h \
+	pv_2way_lipsync_output_mio_node_factory.h \
 	pv_2way_source_and_sinks_base.h \
 	pv_2way_source_and_sinks_file.h \
 	pv_2way_source_and_sinks_dummy.h \
+	pv_2way_source_and_sinks_lipsync.h \
 	pv_2way_mio.h \
 	pv_2way_mio_node_factory.h \
 	twowaysocket.h \

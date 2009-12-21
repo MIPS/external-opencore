@@ -18,9 +18,18 @@
 #ifndef PV_2WAY_DUMMY_OUTPUT_MIO_NODE_FACTORY_H_INCLUDED
 #define PV_2WAY_DUMMY_OUTPUT_MIO_NODE_FACTORY_H_INCLUDED
 
+#ifndef PVMF_NODE_INTERFACE_H_INCLUDED
 #include "pvmf_node_interface.h"
+#endif
+
+#ifndef PV_2WAY_MIO_NODE_FACTORY_H_INCLUDED
 #include "pv_2way_mio_node_factory.h"
-#include "lipsync_dummy_settings.h"
+#endif
+
+#ifndef DUMMY_SETTINGS_H_INCLUDED
+#include "dummy_settings.h"
+#endif
+
 class PvmiMIOControl;
 
 class PV2WayDummyOutputMIONodeFactory : public HeapBase, public PV2WayMIONodeFactory
@@ -32,11 +41,11 @@ class PV2WayDummyOutputMIONodeFactory : public HeapBase, public PV2WayMIONodeFac
         }
         PV2WayDummyOutputMIONodeFactory() {};
         virtual ~PV2WayDummyOutputMIONodeFactory() {};
-        OSCL_IMPORT_REF virtual PVMFNodeInterface* Create(LipSyncDummyMIOSettings& aSettings);
+        OSCL_IMPORT_REF virtual PVMFNodeInterface* Create(DummyMIOSettings& aSettings);
         OSCL_IMPORT_REF virtual void Delete(PVMFNodeInterface** mioNode);
-    private:
+    protected:
         PvmiMIOControl* iMediaControl;
-        int CreateMedia(LipSyncDummyMIOSettings& aSettings);
+        virtual int CreateMedia(DummyMIOSettings& aSettings);
         void DeleteMedia();
 };
 

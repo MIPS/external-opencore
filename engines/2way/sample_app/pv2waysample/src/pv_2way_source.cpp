@@ -56,7 +56,7 @@ int PV2WaySource::AddCodec(PVMFFileInputSettings& aFileSettings)
     return 0;
 }
 
-int PV2WaySource::AddCodec(LipSyncDummyMIOSettings& aSettings)
+int PV2WaySource::AddCodec(DummyMIOSettings& aSettings)
 {
     AddFormat(aSettings);
     if (pv_mime_strcmp(aSettings.iMediaFormat.getMIMEStrPtr(), PVMF_MIME_M4V) == 0)

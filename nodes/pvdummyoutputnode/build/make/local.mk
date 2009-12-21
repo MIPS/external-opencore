@@ -24,7 +24,9 @@ SRCS := pvmf_dummy_fileoutput_inport.cpp \
 	pvmf_dummy_fileoutput_node_cap_config.cpp
 
 HDRS := pvmf_dummy_fileoutput_config.h\
-	pvmf_dummy_fileoutput_factory.h
+	pvmf_dummy_fileoutput_factory.h \
+	../src/pvmf_dummy_fileoutput_node.h \
+	../src/pvmf_dummy_fileoutput_inport.h
 
 
 include $(MK)/library.mk

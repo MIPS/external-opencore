@@ -15,8 +15,8 @@
  * and limitations under the License.
  * -------------------------------------------------------------------
  */
-#ifndef LIPSYNC_DUMMY_OUTPUT_MIO_H_INCLUDED
-#define LIPSYNC_DUMMY_OUTPUT_MIO_H_INCLUDED
+#ifndef DUMMY_OUTPUT_MIO_H_INCLUDED
+#define DUMMY_OUTPUT_MIO_H_INCLUDED
 
 #ifndef PVMI_MEDIA_TRANSFER_H_INCLUDED
 #include "pvmi_media_transfer.h"
@@ -50,15 +50,13 @@
 #include "pvmi_media_io_clock_extension.h"
 #endif
 
-#ifndef LIPSYNC_DUMMY_SETTINGS_H_INCLUDED
-#include "lipsync_dummy_settings.h"
+#ifndef DUMMY_SETTINGS_H_INCLUDED
+#include "dummy_settings.h"
 #endif
-#ifndef LIPSYNC_MIO_OBSERVER_H_INCLUDED
-#include "lipsync_mio_observer.h"
+#ifndef DUMMY_MIO_OBSERVER_H_INCLUDED
+#include "dummy_mio_observer.h"
 #endif
-#ifndef LIPSYNC_SINGLETON_OBJECT_H_INCLUDED
-#include "lipsync_singleton_object.h"
-#endif
+
 #ifndef OSCL_MAP_H_INCLUDED
 #include "oscl_map.h"
 #endif
@@ -70,28 +68,26 @@ typedef enum
 } TestMIOStates;
 
 //This class implements the test audio MIO needed for the MOutNode test harness
-class LipSyncDummyOutputMIO : public OsclActiveObject
+class DummyOutputMIO : public OsclActiveObject
         , public PvmiMIOControl
         , public PvmiMediaTransfer
         , public PvmiCapabilityAndConfig
-        , public PvmiClockExtensionInterface
-        , public LipSyncNotifyTSObserver
 {
     public:
 
-        LipSyncDummyOutputMIO(const LipSyncDummyMIOSettings& aSettings);
-        ~LipSyncDummyOutputMIO();
+        DummyOutputMIO(const DummyMIOSettings& aSettings);
+        ~DummyOutputMIO();
 
         // APIs from PvmiMIOControl
 
-        PVMFStatus connect(PvmiMIOSession& aSession, PvmiMIOObserver* aObserver);
+        virtual PVMFStatus connect(PvmiMIOSession& aSession, PvmiMIOObserver* aObserver);
 
         PVMFStatus disconnect(PvmiMIOSession aSession);
 
-        PVMFCommandId QueryUUID(const PvmfMimeString& aMimeType, Oscl_Vector<PVUuid, OsclMemAllocator>& aUuids,
-                                bool aExactUuidsOnly = false, const OsclAny* aContext = NULL);
+        virtual PVMFCommandId QueryUUID(const PvmfMimeString& aMimeType, Oscl_Vector<PVUuid, OsclMemAllocator>& aUuids,
+                                        bool aExactUuidsOnly = false, const OsclAny* aContext = NULL);
 
-        PVMFCommandId QueryInterface(const PVUuid& aUuid, PVInterface*& aInterfacePtr, const OsclAny* aContext = NULL);
+        virtual PVMFCommandId QueryInterface(const PVUuid& aUuid, PVInterface*& aInterfacePtr, const OsclAny* aContext = NULL);
 
         PvmiMediaTransfer* createMediaTransfer(PvmiMIOSession& aSession, PvmiKvp* read_formats = NULL, int32 read_flags = 0,
                                                PvmiKvp* write_formats = NULL, int32 write_flags = 0);
@@ -122,7 +118,6 @@ class LipSyncDummyOutputMIO : public OsclActiveObject
 
         void ThreadLogoff();
 
-        Oscl_Map<uint32, uint32, OsclMemAllocator> iCompareTS;
 
         // APIs from PvmiMediaTransfer
 
@@ -130,10 +125,10 @@ class LipSyncDummyOutputMIO : public OsclActiveObject
 
         void useMemoryAllocators(OsclMemAllocator* write_alloc = NULL);
 
-        PVMFCommandId writeAsync(uint8 format_type, int32 format_index,
-                                 uint8* data, uint32 data_len,
-                                 const PvmiMediaXferHeader& data_header_info,
-                                 OsclAny* aContext = NULL);
+        virtual PVMFCommandId writeAsync(uint8 format_type, int32 format_index,
+                                         uint8* data, uint32 data_len,
+                                         const PvmiMediaXferHeader& data_header_info,
+                                         OsclAny* aContext = NULL);
 
         void writeComplete(PVMFStatus aStatus,
                            PVMFCommandId  write_cmd_id,
@@ -159,7 +154,7 @@ class LipSyncDummyOutputMIO : public OsclActiveObject
         PVMFStatus getParametersSync(PvmiMIOSession aSession, PvmiKeyType aIdentifier,
                                      PvmiKvp*& aParameters, int& num_parameter_elements, PvmiCapabilityContext aContext);
 
-        PVMFStatus releaseParameters(PvmiMIOSession aSession, PvmiKvp* aParameters, int num_elements);
+        virtual PVMFStatus releaseParameters(PvmiMIOSession aSession, PvmiKvp* aParameters, int num_elements);
 
         void createContext(PvmiMIOSession aSession, PvmiCapabilityContext& aContext);
 
@@ -182,21 +177,13 @@ class LipSyncDummyOutputMIO : public OsclActiveObject
         * From PVInterface
         * see base-class for more information
         */
-        bool queryInterface(const PVUuid& uuid, PVInterface*& iface);
+        virtual bool queryInterface(const PVUuid& uuid, PVInterface*& iface);
 
-        /**
-        * From PvmiClockExtensionInterface
-        * see base-class for more information
-        */
-        PVMFStatus SetClock(PVMFMediaClock* aClockVal);
-
-        void addRef();
-
-        void removeRef();
 
         //LipSyncNotifyTSObserver
-        void MIOFramesTimeStamps(bool aIsAudio, uint32 aOrigTS, uint32 aRenderTS);
-    private:
+//        void MIOFramesTimeStamps(bool aIsAudio, uint32 aOrigTS, uint32 aRenderTS);
+    protected:
+        virtual void DealWithData(PVMFTimestamp aTimestamp, uint8* aData, uint32 aDataLen);
 
         //from OsclActiveObject
         void Run();
@@ -206,11 +193,10 @@ class LipSyncDummyOutputMIO : public OsclActiveObject
 
         bool iIsMIOConfigured;
 
-        uint32 iTestCaseID;
         PvmiMediaTransfer* iPeer;
 
         PvmiMIOObserver* iObserver;
-        LipSyncDummyMIOObserver* iMIOObserver;
+        DummyMIOObserver* iMIOObserver;
         PVLogger* iLogger;
 
         uint32 iCommandCounter;
@@ -226,6 +212,21 @@ class LipSyncDummyOutputMIO : public OsclActiveObject
         } ControlStates;
         ControlStates iState;
 
+
+        //Config Parameters
+//        int32 iBitsPerSample;
+//        int32 iNumChannels;
+//        int32 iSamplingRate;
+
+//        bool iSamplingRateSet;
+//        bool iNumChannelsSet;
+//        bool iBitsPerSampleSet;
+        bool iIsAudioMIO;
+        bool iIsVideoMIO;
+        bool iIsCompressed;
+        DummyMIOSettings iSettings;
+
+        // private:
         //Control command handling.
         class CommandResponse
         {
@@ -238,30 +239,13 @@ class LipSyncDummyOutputMIO : public OsclActiveObject
                 PVMFCommandId iCmdId;
                 const OsclAny* iContext;
         };
+        void QueueCommandResponse(CommandResponse&);
+
+
         //a queue of pending commands.
         Oscl_Vector<CommandResponse, OsclMemAllocator> iCommandPendingQueue;
         //a queue of completed commands.
         Oscl_Vector<CommandResponse, OsclMemAllocator> iCommandResponseQueue;
-        void QueueCommandResponse(CommandResponse&);
 
-        //Config Parameters
-        OSCL_HeapString<OsclMemAllocator> iAudioFormatString;
-        PVMFFormatType iAudioFormat;
-        int32 iBitsPerSample;
-        int32 iNumChannels;
-        int32 iSamplingRate;
-
-        PVMFCommandId iStartCmdID;
-        const OsclAny* iStartCmdContext;
-        bool iSamplingRateSet;
-        bool iNumChannelsSet;
-        bool iBitsPerSampleSet;
-        uint32 iTimeSimulatorCtr;
-        PVMFMediaClock* iRenderClock;
-        bool iIsAudioMIO;
-        bool iIsVideoMIO;
-        bool iIsCompressed;
-        LipSyncDummyMIOSettings iSettings;
-        ShareParams* iParams;
 };
 #endif

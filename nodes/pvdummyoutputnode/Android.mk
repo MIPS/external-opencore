@@ -29,6 +29,8 @@ LOCAL_COPY_HEADERS_TO := $(PV_COPY_HEADERS_TO)
 
 LOCAL_COPY_HEADERS := \
 	include/pvmf_dummy_fileoutput_config.h \
- 	include/pvmf_dummy_fileoutput_factory.h
+ 	include/pvmf_dummy_fileoutput_factory.h \
+ 	include/../src/pvmf_dummy_fileoutput_node.h \
+ 	include/../src/pvmf_dummy_fileoutput_inport.h
 
 include $(BUILD_STATIC_LIBRARY)

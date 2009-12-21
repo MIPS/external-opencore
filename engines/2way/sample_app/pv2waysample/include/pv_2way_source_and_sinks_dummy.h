@@ -44,6 +44,7 @@
 #include "pv_2way_dummy_output_mio_node_factory.h"
 #endif
 
+
 class PV2WayDummySourceAndSinks : public PV2WaySourceAndSinksBase
 {
     public:
@@ -52,7 +53,7 @@ class PV2WayDummySourceAndSinks : public PV2WaySourceAndSinksBase
 
         OSCL_IMPORT_REF int AddPreferredCodec(TPVDirection aDir,
                                               PV2WayMediaType aMediaType,
-                                              LipSyncDummyMIOSettings& aFileSettings);
+                                              DummyMIOSettings& aFileSettings);
 
         OSCL_IMPORT_REF PVMFNodeInterface* CreateMIONode(CodecSpecifier* aformat, TPVDirection adir);
         OSCL_IMPORT_REF void DeleteMIONode(CodecSpecifier* aformat,
@@ -67,12 +68,12 @@ class PV2WayDummySourceAndSinks : public PV2WaySourceAndSinksBase
             va_start(ap, str);
             vprintf(str, ap);
             va_end(ap);
-        }
+        };
 
-        PV2WayDummyInputMIONodeFactory iDummyMioAudioInputFactory;
-        PV2WayDummyOutputMIONodeFactory iDummyMioAudioOutputFactory;
-        PV2WayDummyInputMIONodeFactory iDummyMioVideoInputFactory;
-        PV2WayDummyOutputMIONodeFactory iDummyMioVideoOutputFactory;
+        PV2WayDummyInputMIONodeFactory* iDummyMioAudioInputFactory;
+        PV2WayDummyInputMIONodeFactory* iDummyMioVideoInputFactory;
+        PV2WayDummyOutputMIONodeFactory* iDummyMioAudioOutputFactory;
+        PV2WayDummyOutputMIONodeFactory* iDummyMioVideoOutputFactory;
 };
 
 #endif

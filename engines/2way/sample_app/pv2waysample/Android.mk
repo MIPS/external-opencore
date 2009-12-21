@@ -2,15 +2,20 @@ LOCAL_PATH := $(call my-dir)
 include $(CLEAR_VARS)
 
 LOCAL_SRC_FILES := \
-	src/../../../test/src/lipsync_dummy_input_mio.cpp \
- 	src/../../../test/src/lipsync_dummy_output_mio.cpp \
- 	src/pv_2way_media_input_mio_node_factory.cpp \
- 	src/pv_2way_media_output_mio_node_factory.cpp \
+	src/lipsync_dummy_input_mio.cpp \
+ 	src/lipsync_dummy_output_mio.cpp \
+ 	src/dummy_input_mio.cpp \
+ 	src/dummy_output_mio.cpp \
+ 	src/pv_2way_lipsync_input_mio_node_factory.cpp \
+ 	src/pv_2way_lipsync_output_mio_node_factory.cpp \
  	src/pv_2way_dummy_input_mio_node_factory.cpp \
  	src/pv_2way_dummy_output_mio_node_factory.cpp \
+ 	src/pv_2way_media_input_mio_node_factory.cpp \
+ 	src/pv_2way_media_output_mio_node_factory.cpp \
  	src/pv_2way_source_and_sinks_base.cpp \
  	src/pv_2way_source_and_sinks_file.cpp \
  	src/pv_2way_source_and_sinks_dummy.cpp \
+ 	src/pv_2way_source_and_sinks_lipsync.cpp \
  	src/pv_2way_source_and_sinks_perf_test.cpp \
  	src/pv_2way_media.cpp \
  	src/pv_2way_mio.cpp \
@@ -49,9 +54,12 @@ LOCAL_COPY_HEADERS := \
  	include/pv_2way_media_output_mio_node_factory.h \
  	include/pv_2way_dummy_input_mio_node_factory.h \
  	include/pv_2way_dummy_output_mio_node_factory.h \
+ 	include/pv_2way_lipsync_input_mio_node_factory.h \
+ 	include/pv_2way_lipsync_output_mio_node_factory.h \
  	include/pv_2way_source_and_sinks_base.h \
  	include/pv_2way_source_and_sinks_file.h \
  	include/pv_2way_source_and_sinks_dummy.h \
+ 	include/pv_2way_source_and_sinks_lipsync.h \
  	include/pv_2way_mio.h \
  	include/pv_2way_mio_node_factory.h \
  	include/twowaysocket.h \

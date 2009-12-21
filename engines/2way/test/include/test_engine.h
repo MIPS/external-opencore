@@ -41,16 +41,14 @@
 #include "tsc_h324m_config_interface.h"
 #include "engine_test.h"
 #include "pv_2way_source_and_sinks_file.h"
-#include "pv_2way_source_and_sinks_dummy.h"
 #include "lipsync_dummy_output_mio.h"
 #include "lipsync_dummy_input_mio.h"
 
-#ifndef NO_2WAY_324
 #include "pv_comms_io_node_factory.h"
 #include "pvmi_mio_comm_loopback_factory.h"
-#endif
 
 #include "test_codecs.h"
+#include "pv_2way_source_and_sinks_dummy.h"
 
 
 #ifndef PV2WAY_FILE_NAMES_H_INCLUDED
@@ -62,32 +60,49 @@ class engine_test_suite : public test_case
 {
     public:
         engine_test_suite();
-        PV2WaySourceAndSinksFile* CreateSourceAndSinks(engine_test* test,
-                const char* const aAudSrcFormatType,
+        ~engine_test_suite();
+        PV2WaySourceAndSinksFile* CreateSourceAndSinks(engine_test* apTest,
+                const char* const apAudSrcFormatType,
                 const char* const aAudSinkFormatType,
-                const char* const aVidSrcFormatType,
-                const char* const aVidSinkFormatType);
-        PV2WayDummySourceAndSinks* CreateLipSyncSourceAndSinks(engine_test* test,
-                const char* const aAudSrcFormatType,
-                const char* const aAudSinkFormatType,
-                const char* const aVidSrcFormatType,
-                const char* const aVidSinkFormatType);
+                const char* const apVidSrcFormatType,
+                const char* const apVidSinkFormatType);
+        PV2WayDummySourceAndSinks* CreateLipSyncSourceAndSinks(engine_test* apTest,
+                const char* const apAudSrcFormatType,
+                const char* const apAudSinkFormatType,
+                const char* const apVidSrcFormatType,
+                const char* const apVidSinkFormatType);
+        PV2WayDummySourceAndSinks* CreateDummySourceAndSinks(engine_test* apTest,
+                const char* const apAudSrcFormatType,
+                const char* const apAudSinkFormatType,
+                const char* const apVidSrcFormatType,
+                const char* const apVidSinkFormatType);
 #ifndef LIP_SYNC_TESTING
         bool proxy_tests(const bool aProxy);
         bool proxy_tests1(const bool aProxy);
         bool proxy_tests2(const bool aProxy);
         bool proxy_tests3(const bool aProxy);
         bool proxy_tests5(const bool aProxy);
+        bool proxy_tests6(const bool aProxy);
 #else
+
         bool proxy_tests4(const bool aProxy);
 #endif
-        ~engine_test_suite();
 
     private:
-        TestCodecs codecs;
+
+        void AddIncomingAudioCodecUsingFile(PV2WaySourceAndSinksFile* apSourceAndSinks,
+                                            const char* const apFormatType);
+        void AddOutgoingAudioCodecUsingFile(PV2WaySourceAndSinksFile* aSourceAndSinks,
+                                            const char* const apFormatType);
+        void AddIncomingVideoCodecUsingFile(PV2WaySourceAndSinksFile* apSourceAndSinks,
+                                            const char* const apFormatType);
+        void AddOutgoingVideoCodecUsingFile(PV2WaySourceAndSinksFile* apSourceAndSinks,
+                                            const char* const apFormatType);
+
 #ifdef LIP_SYNC_TESTING
         void AddLipSyncTests(const bool aProxy, int32 firstTest, int32 lastTest);
 #else
+        void AddReceiveDataTests(const bool aProxy, int32 firstTest, int32 lastTest);
         void AddSetupTests(const bool aProxy, int32 firstTest, int32 lastTest);
         void AddAudioTests(const bool aProxy, int32 firstTest, int32 lastTest);
         void AddVideoTests(const bool aProxy, int32 firstTest, int32 lastTest);
@@ -97,9 +112,10 @@ class engine_test_suite : public test_case
         void AddNegotiatedFormatsTests(const bool aProxy, int32 firstTest, int32 lastTest);
 #endif
         void play_from_file_tests(const bool aProxy,
-                                  const OSCL_wString& aFilename,
+                                  const OSCL_wString& arFilename,
                                   const bool aHasAudio,
                                   const bool aHasVideo);
+        TestCodecs iCodecs;
 };
 
 

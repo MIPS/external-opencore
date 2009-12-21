@@ -22,6 +22,10 @@
 #include "test_utility.h"
 #endif
 
+#define AUDIO_SAMPLE_RATE 50
+#define VIDEO_FRAME_RATE 10
+#define NUMB_AUD_FRAMES  5
+
 class TestCodecs
 {
     public:
@@ -52,8 +56,9 @@ class TestCodecs
             PV2WayUtil::OutputInfo("\nERROR!!!! Could not locate file %s!!!!\n\n", filename);
             return false;
         }
-        bool setvalues()
+        bool SetValues()
         {
+            SetLipsyncFileSettings();
 
             // create the audio source
             iAudioSourceFileSettings.iMediaFormat = PVMF_MIME_AMR_IF2;
@@ -159,7 +164,20 @@ class TestCodecs
             iVideoSinkM4VFileSettings.iFileName = VIDEO_SINK_M4V_FILENAME;
             iVideoSinkM4VFileSettings.iMediaFormat = PVMF_MIME_M4V;
             return true;
-        }
+        };
+
+
+        void SetLipsyncFileSettings()
+        {
+            iLipSyncAudioSinkSettings.iMediaFormat = PVMF_MIME_PCM16;
+            iLipSyncAudioSourceSettings.iMediaFormat = PVMF_MIME_AMR_IF2;
+            //spacing of 20ms between 2 consecutive audio frames
+            iLipSyncAudioSourceSettings.iAudioFrameRate = AUDIO_SAMPLE_RATE;
+            //spacing of 100ms between 2 consecutive video frames
+            iLipSyncVideoSourceSettings.iVideoFrameRate = VIDEO_FRAME_RATE;
+            iLipSyncAudioSourceSettings.iNumofAudioFrame = NUMB_AUD_FRAMES;
+        };
+
 
         PvmiMIOFileInputSettings iAudioSourceRawFileSettings;
         PvmiMIOFileInputSettings iAudioSource2FileSettings;
@@ -178,10 +196,16 @@ class TestCodecs
         PvmiMIOFileInputSettings iVideoSinkH263FileSettings;
         PvmiMIOFileInputSettings iVideoSinkM4VFileSettings;
 
-        LipSyncDummyMIOSettings iDummyAudioSourceSettings;
-        LipSyncDummyMIOSettings iDummyAudioSinkSettings;
-        LipSyncDummyMIOSettings iDummyVideoSourceSettings;
-        LipSyncDummyMIOSettings iDummyVideoSinkSettings;
+        DummyMIOSettings iLipSyncAudioSourceSettings;
+        DummyMIOSettings iLipSyncAudioSinkSettings;
+        DummyMIOSettings iLipSyncVideoSourceSettings;
+        DummyMIOSettings iLipSyncVideoSinkSettings;
+
+
 };
+
+
+
+
 
 #endif

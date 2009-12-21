@@ -122,7 +122,6 @@ class PVMFDummyFileInputNode : public PVMFNodeInterface,
         OSCL_IMPORT_REF bool queryInterface(const PVUuid& uuid, PVInterface*& iface);
         OSCL_IMPORT_REF bool GetBitstreamConfig(OsclRefCounterMemFrag& aConfig);
 
-
     private: // private member functions
 
         //from OsclActiveObject

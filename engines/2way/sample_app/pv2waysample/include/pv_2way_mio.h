@@ -49,7 +49,7 @@
 #endif
 
 
-class LipSyncDummyMIOSettings;
+class DummyMIOSettings;
 
 #define TITLE_LENGTH   300
 #define FILENAME_LEN   255
@@ -174,13 +174,13 @@ class PV2WayMIO
         virtual OSCL_IMPORT_REF int AddCodec(PVMFFormatType aFormat);
         virtual OSCL_IMPORT_REF int AddCodec(PvmiMIOFileInputSettings& aFileSettings) = 0;
         virtual OSCL_IMPORT_REF int AddCodec(PVMFFileInputSettings& aFileSettings) = 0;
-        virtual OSCL_IMPORT_REF int AddCodec(LipSyncDummyMIOSettings& aSettings) = 0;
+        virtual OSCL_IMPORT_REF int AddCodec(DummyMIOSettings& aSettings) = 0;
 
         OSCL_IMPORT_REF void ClearCodecs();
         OSCL_IMPORT_REF int AddFormat(PVMFFormatType aFormat);
         OSCL_IMPORT_REF int AddFormat(PvmiMIOFileInputSettings& format);
         OSCL_IMPORT_REF int AddFormat(PVMFFileInputSettings& format);
-        OSCL_IMPORT_REF int AddFormat(LipSyncDummyMIOSettings& format);
+        OSCL_IMPORT_REF int AddFormat(DummyMIOSettings& format);
         PVMFFormatType& GetSelectedFormat()
         {
             return iMySelectedFormat;

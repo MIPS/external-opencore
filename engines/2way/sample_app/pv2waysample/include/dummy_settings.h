@@ -15,23 +15,23 @@
  * and limitations under the License.
  * -------------------------------------------------------------------
  */
-
-#ifndef PV_2WAY_LIPSYNC_DUMMY_SETTINGS_H_INCLUDED
-#define PV_2WAY_LIPSYNC_DUMMY_SETTINGS_H_INCLUDED
+#ifndef DUMMY_SETTINGS_H_INCLUDED
+#define DUMMY_SETTINGS_H_INCLUDED
 
 #ifndef PVMF_FORMAT_TYPE_H_INCLUDED
 #include "pvmf_format_type.h"
 #endif
-#ifndef LIPSYNC_MIO_OBSERVER_H_INCLUDED
-#include "lipsync_mio_observer.h"
+
+#ifndef DUMMY_MIO_OBSERVER_H_INCLUDED
+#include "dummy_mio_observer.h"
 #endif
 /**
  * Contains information for setting values for dummy input & output MIOs
  */
-class LipSyncDummyMIOSettings
+class DummyMIOSettings
 {
     public:
-        LipSyncDummyMIOSettings()
+        DummyMIOSettings()
         {
             iMediaFormat = PVMF_MIME_FORMAT_UNKNOWN;
             iDummyMIOObserver = NULL;
@@ -40,7 +40,7 @@ class LipSyncDummyMIOSettings
             iNumofAudioFrame = 0;
         }
 
-        LipSyncDummyMIOSettings(const LipSyncDummyMIOSettings& aSettings)
+        DummyMIOSettings(const DummyMIOSettings& aSettings)
         {
             iMediaFormat = aSettings.iMediaFormat;
             iDummyMIOObserver = aSettings.iDummyMIOObserver;
@@ -49,7 +49,7 @@ class LipSyncDummyMIOSettings
             iNumofAudioFrame = aSettings.iNumofAudioFrame;
         }
 
-        ~LipSyncDummyMIOSettings()
+        ~DummyMIOSettings()
         {
             iMediaFormat = PVMF_MIME_FORMAT_UNKNOWN;
             iDummyMIOObserver = NULL;
@@ -62,7 +62,7 @@ class LipSyncDummyMIOSettings
         uint32 iAudioFrameRate;
         uint32 iVideoFrameRate;
         uint32 iNumofAudioFrame;
-        LipSyncDummyMIOObserver* iDummyMIOObserver;
+        DummyMIOObserver* iDummyMIOObserver;
 };
 #endif
 

@@ -24,14 +24,18 @@
 class pause_resume_test : public av_test
 {
     public:
-        pause_resume_test(bool aAudioPauseSourceSide = false, uint32 aAudioSourcePauseTime = 0,
-                          uint32 aAudioSourceResumeTime = 0, bool aAudioPauseSinkSide = false,
+        pause_resume_test(bool aAudioPauseSourceSide = false,
+                          uint32 aAudioSourcePauseTime = 0, uint32 aAudioSourceResumeTime = 0,
+                          bool aAudioPauseSinkSide = false,
                           uint32 aAudioSinkPauseTime = 0, uint32 aAudioSinkResumeTime = 0,
-                          bool aVideoPauseSourceSide = false, uint32 aVideoSourcePauseTime = 0,
-                          uint32 aVideoSourceResumeTime = 0, bool aVideoPauseSinkSide = false,
+                          bool aVideoPauseSourceSide = false,
+                          uint32 aVideoSourcePauseTime = 0, uint32 aVideoSourceResumeTime = 0,
+                          bool aVideoPauseSinkSide = false,
                           uint32 aVideoSinkPauseTime = 0, uint32 aVideoSinkResumeTime = 0,
-                          bool aUseProxy = false)
-                : av_test(aUseProxy),
+                          bool aUseProxy = false,
+                          uint32 aTimeConnection = TEST_DURATION,
+                          uint32 aMaxTestDuration = MAX_TEST_DURATION)
+                : av_test(aUseProxy, aTimeConnection, aMaxTestDuration),
                 iAudioSourceSide(aAudioPauseSourceSide),
                 iAudioSinkSide(aAudioPauseSinkSide),
                 iVideoSourceSide(aVideoPauseSourceSide),
@@ -57,6 +61,15 @@ class pause_resume_test : public av_test
                 aCmdId(0)
 
         {
+            uint32 totalTime = aAudioSourcePauseTime + aAudioSourceResumeTime +
+                               aAudioSinkPauseTime + aAudioSinkResumeTime +
+                               aVideoSourcePauseTime + aVideoSourceResumeTime +
+                               aVideoSinkPauseTime + aVideoSinkResumeTime;
+
+            if (totalTime > aMaxTestDuration)
+            {
+                iMaxTestDuration = aMaxTestDuration + totalTime;
+            }
             iUsingAudio = true;
             iTestName = _STRLIT_CHAR("Pause Resume");
 

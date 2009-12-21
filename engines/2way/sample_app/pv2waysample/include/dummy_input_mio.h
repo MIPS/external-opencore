@@ -15,8 +15,8 @@
  * and limitations under the License.
  * -------------------------------------------------------------------
  */
-#ifndef LIPSYNC_DUMMY_INPUT_MIO_H_INCLUDED
-#define LIPSYNC_DUMMY_INPUT_MIO_H_INCLUDED
+#ifndef DUMMY_INPUT_MIO_H_INCLUDED
+#define DUMMY_INPUT_MIO_H_INCLUDED
 
 #ifndef PVMI_MEDIA_TRANSFER_H_INCLUDED
 #include "pvmi_media_transfer.h"
@@ -54,12 +54,12 @@
 #include "oscl_mem_mempool.h"
 #endif
 
-#ifndef PVMI_MEDIA_IO_CLOCK_EXTENSION_H_INCLUDED
-#include "pvmi_media_io_clock_extension.h"
+#ifndef PVMF_FORMAT_TYPE_H_INCLUDED
+#include "pvmf_format_type.h"
 #endif
 
-#ifndef LIPSYNC_DUMMY_SETTINGS_H_INCLUDED
-#include "lipsync_dummy_settings.h"
+#ifndef DUMMY_SETTINGS_H_INCLUDED
+#include "dummy_settings.h"
 #endif
 
 
@@ -78,16 +78,16 @@ typedef enum
     RESET,
     CMD_DATA_EVENT,
     INVALID
-} LipSyncDummyInputMIOCmdType;
+} DummyInputMIOCmdType;
 
 
 /**
  * Class containing information for a command or data event
  */
-class LipSyncDummyInputMIOCmd
+class DummyInputMIOCmd
 {
     public:
-        LipSyncDummyInputMIOCmd()
+        DummyInputMIOCmd()
         {
             iId = 0;
             iType = INVALID;
@@ -95,28 +95,28 @@ class LipSyncDummyInputMIOCmd
             iData1 = NULL;
         }
 
-        LipSyncDummyInputMIOCmd(const LipSyncDummyInputMIOCmd& aCmd)
+        DummyInputMIOCmd(const DummyInputMIOCmd& aCmd)
         {
             Copy(aCmd);
         }
 
-        ~LipSyncDummyInputMIOCmd() {}
+        ~DummyInputMIOCmd() {}
 
-        LipSyncDummyInputMIOCmd& operator=(const LipSyncDummyInputMIOCmd& aCmd)
+        DummyInputMIOCmd& operator=(const DummyInputMIOCmd& aCmd)
         {
             Copy(aCmd);
             return (*this);
         }
 
         PVMFCommandId iId; /** ID assigned to this command */
-        int32 iType;  /** LipSyncDummyInputMIOCmdType value */
+        int32 iType;  /** DummyInputMIOCmdType value */
         OsclAny* iContext;  /** Other data associated with this command */
         OsclAny* iData1;  /** Other data associated with this command */
 
 
     private:
 
-        void Copy(const LipSyncDummyInputMIOCmd& aCmd)
+        void Copy(const DummyInputMIOCmd& aCmd)
         {
             iId = aCmd.iId;
             iType = aCmd.iType;
@@ -126,15 +126,15 @@ class LipSyncDummyInputMIOCmd
 };
 
 //This class implements the Dummy input MIO component
-class LipSyncDummyInputMIO : public OsclTimerObject
+class DummyInputMIO : public OsclTimerObject
         , public PvmiMIOControl
         , public PvmiMediaTransfer
         , public PvmiCapabilityAndConfig
 {
     public:
 
-        LipSyncDummyInputMIO(const LipSyncDummyMIOSettings& aSettings);
-        ~LipSyncDummyInputMIO();
+        DummyInputMIO(const DummyMIOSettings& aSettings);
+        ~DummyInputMIO();
 
         // APIs from PvmiMIOControl
 
@@ -172,7 +172,7 @@ class LipSyncDummyInputMIO : public OsclTimerObject
 
         PVMFCommandId CancelCommand(PVMFCommandId aCmdId, const OsclAny* aContext = NULL);
 
-        void ThreadLogon();
+        virtual void ThreadLogon();
 
         void ThreadLogoff();
 
@@ -232,34 +232,34 @@ class LipSyncDummyInputMIO : public OsclTimerObject
 
         PVMFStatus verifyParametersSync(PvmiMIOSession aSession, PvmiKvp* aParameters, int num_elements);
 
+    protected:
+        virtual void AdditionalGenerateAudioFrameStep(PVMFFormatType aFormat = PVMF_MIME_FORMAT_UNKNOWN)
+        {}
+        virtual void AdditionalGenerateVideoFrameStep(PVMFFormatType aFormat)
+        {}
 
-    private:
+        PVMFStatus WriteDataToPeer(uint8* data, uint32& bytesToRead);
+        bool IsSupported(bool aIsAudio, PVMFFormatType type);
 
         //from OsclActiveObject
         void Run();
 
-        PVMFCommandId AddCmdToQueue(LipSyncDummyInputMIOCmdType aType, const OsclAny* aContext, OsclAny* aData1 = NULL);
+        PVMFCommandId AddCmdToQueue(DummyInputMIOCmdType aType, const OsclAny* aContext, OsclAny* aData1 = NULL);
         void AddDataEventToQueue(uint32 aMicroSecondsToEvent);
-        void DoRequestCompleted(const LipSyncDummyInputMIOCmd& aCmd, PVMFStatus aStatus, OsclAny* aEventData = NULL);
+        void DoRequestCompleted(const DummyInputMIOCmd& aCmd, PVMFStatus aStatus, OsclAny* aEventData = NULL);
         PVMFStatus DoInit();
         PVMFStatus DoStart();
         PVMFStatus DoReset();
         PVMFStatus DoPause();
         PVMFStatus DoFlush();
-        PVMFStatus DoStop();
+        virtual PVMFStatus DoStop();
         void AddMarkerInfo(uint8* aData);
-        void CalculateRMSInfo(uint32 VideoData, uint32 AudioData);
-        void GenerateAudioFrame(uint8* aData);
-        void GenerateVideoFrame(uint8* aData);
+        PVMFStatus GenerateAudioFrame();
+        PVMFStatus GenerateVideoFrame();
         void ProcessAudioFrame(uint32 aCurrentTime, uint32 aInterval);
         void ProcessVideoFrame(uint32 aCurrentTime, uint32 aInterval);
         void ProcessVideoFrame();
-        int32 WriteAsyncCall(int32 &error, uint8* data, uint32 &BytesToRead, PvmiMediaXferHeader& data_hdr, uint32 &writeAsyncID);
-        PvmiMediaTransfer* iPeer;
-
-        PvmiMIOObserver* iObserver;
-
-        PVLogger* iLogger;
+        int32 WriteAsyncCall(uint8* data, uint32 &BytesToRead, PvmiMediaXferHeader& data_hdr, uint32 &writeAsyncID);
 
         /**
          * Allocate a specified number of key-value pairs and set the keys
@@ -305,12 +305,16 @@ class LipSyncDummyInputMIO : public OsclTimerObject
                 bool iNotification;
         };
 
+        PvmiMediaTransfer* iPeer;
+
+        PVLogger* iLogger;
+
         // Command queue
         uint32 iCmdIdCounter;
-        Oscl_Vector<LipSyncDummyInputMIOCmd, OsclMemAllocator> iCmdQueue;
+        Oscl_Vector<DummyInputMIOCmd, OsclMemAllocator> iCmdQueue;
 
         // State machine
-        enum LipSyncDummyInputMIOState
+        enum DummyInputMIOState
         {
             STATE_IDLE,
             STATE_INITIALIZED,
@@ -327,29 +331,16 @@ class LipSyncDummyInputMIO : public OsclTimerObject
         OsclMemPoolFixedChunkAllocator* iMediaBufferMemPool;
         bool iAudioMIO;
         bool iVideoMIO;
-        LipSyncDummyInputMIOState iState;
+        DummyInputMIOState iState;
         bool iThreadLoggedOn;
         uint32 iSeqNumCounter;
         uint32 iTimestamp;
         PVMFFormatType iFormat;
-        bool iCompressed;
-        int32 iMicroSecondsPerDataEvent;
-        LipSyncDummyMIOSettings iSettings;
+        DummyMIOSettings iSettings;
         uint32 iVideoMicroSecondsPerDataEvent;
         uint32 iAudioMicroSecondsPerDataEvent;
-        PVMFTimestamp iPrevTS;
-        PVMFTimestamp iCurrentTS;
         bool iAudioOnlyOnce;
         bool iVideoOnlyOnce;
-        PVMFTimebase_Tickcount timebase;
-        ShareParams* iParams;
-        PVMFMediaClock iClock;
 
-        uint32 iAudioTimeStamp;
-        uint32 iVideoTimeStamp;
-        uint32 iCount;
-        int32  iDiffVidAudTS;
-        int32  iSqrVidAudTS;
-        int32  iRtMnSq;
 };
 #endif

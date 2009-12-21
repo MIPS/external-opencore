@@ -561,7 +561,7 @@ PVMFStatus H223OutgoingChannel::CompletePdu()
 
 
 #ifdef LIP_SYNC_TESTING
-    if (iParams->iUncompressed == true)
+    if (iParams->iCompressed == false)
     {
         AppendLipSyncTS();
     }
@@ -1645,7 +1645,7 @@ PVMFStatus H223IncomingChannel::AlDispatch()
 
     PVMFFormatType mediaType = GetFormatType();
 #ifdef LIP_SYNC_TESTING
-    if ((mediaType.isVideo() && iParam->iUncompressed == true))
+    if ((mediaType.isVideo() && iParam->iCompressed == false))
     {
         ExtractTimestamp();
     }
@@ -2251,7 +2251,7 @@ void H223IncomingChannel::SetSampleTimestamps(PVMFTimestamp& aTSOffset)
 
      ***************************************************************************************************/
 
-    if ((g_CheckSampleTime != g_RecTimeStamp) && (iParam->iUncompressed == true))
+    if ((g_CheckSampleTime != g_RecTimeStamp) && (iParam->iCompressed == false))
     {
         g_CheckSampleTime = g_RecTimeStamp;
         g_Checkcount++;

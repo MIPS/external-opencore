@@ -33,8 +33,6 @@ SRCS := main.cpp \
         pv_2way_console_source_and_sinks.cpp \
         console_engine_handler.cpp \
 	../../pv2waysample/src/testcaseparser.cpp \
-	../../../test/src/lipsync_dummy_input_mio.cpp \
-	../../../test/src/lipsync_dummy_output_mio.cpp \
 	../../../../../protocols/systems/tools/general/common/src/test_utility.cpp  
 
 SRCS += $(EXTRA_SRCS)

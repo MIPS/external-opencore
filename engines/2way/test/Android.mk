@@ -19,9 +19,8 @@ LOCAL_SRC_FILES := \
  	src/video_only_test.cpp \
  	src/user_input_test.cpp \
  	src/basic_lipsync_test.cpp \
- 	src/lipsync_dummy_input_mio.cpp \
- 	src/lipsync_dummy_output_mio.cpp \
- 	src/pause_resume_test.cpp
+ 	src/pause_resume_test.cpp \
+ 	src/receive_data_test.cpp
 
 
 LOCAL_MODULE := pv2way_engine_test

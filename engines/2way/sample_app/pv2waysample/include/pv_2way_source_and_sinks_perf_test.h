@@ -41,11 +41,17 @@
 #define AUDIO_SOURCE_FILENAME_FOR_PERF _STRLIT("data/audio_in.amr")
 #define VIDEO_SOURCE_FILENAME_FOR_PERF _STRLIT("data/video_in.h263")
 
+#ifndef PVMF_DUMMY_FILEOUTPUT_NODE_H_INCLUDED
+#include "pvmf_dummy_fileoutput_node.h"
+#endif
+#ifndef PVMF_DUMMY_FILEINPUT_NODE_H_INCLUDED
+#include "pvmf_dummy_fileinput_node.h"
+#endif
 
 class PV2WaySourceAndSinksPerfTest : public PV2WaySourceAndSinksBase
 {
     public:
-        OSCL_IMPORT_REF PV2WaySourceAndSinksPerfTest(PV2Way324InitInfo& aSdkInitInfo);
+        OSCL_IMPORT_REF PV2WaySourceAndSinksPerfTest(PV2Way324InitInfo& arSdkInitInfo);
         virtual OSCL_IMPORT_REF ~PV2WaySourceAndSinksPerfTest();
 
 
@@ -55,31 +61,34 @@ class PV2WaySourceAndSinksPerfTest : public PV2WaySourceAndSinksBase
                                            TPVDirection adir,
                                            PVMFNodeInterface** aMioNode);
 
-        OSCL_IMPORT_REF int SetPerfFileSettings();
-
         OSCL_IMPORT_REF int AddPreferredCodec(TPVDirection aDir,
                                               PV2WayMediaType aMediaType,
                                               PVMFFormatType aFormat)
         {
             return 0;
         }
+        OSCL_EXPORT_REF int AddPreferredCodec(TPVDirection aDir,
+                                              PV2WayMediaType aMediaType,
+                                              PVMFFileInputSettings& arFileSettings);
+
         OSCL_IMPORT_REF int AddPreferredCodec(TPVDirection aDir,
                                               PV2WayMediaType aMediaType,
-                                              PvmiMIOFileInputSettings& aFileSettings)
+                                              PvmiMIOFileInputSettings& arFileSettings)
         {
             return 0;
         }
 
-
     protected:
-        void OutputInfo(const char * str, ...)
+        void OutputInfo(PVLogger::log_level_type aLogLevel, const char * str, ...)
         {
+            OSCL_UNUSED_ARG(aLogLevel);
             // output to screen everything in formatted string
             va_list ap;
             va_start(ap, str);
             vprintf(str, ap);
             va_end(ap);
         }
+
 };
 
 

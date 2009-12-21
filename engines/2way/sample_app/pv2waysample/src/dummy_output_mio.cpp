@@ -15,11 +15,10 @@
  * and limitations under the License.
  * -------------------------------------------------------------------
  */
-#include "lipsync_dummy_output_mio.h"
+#include "dummy_output_mio.h"
 #include "pv_mime_string_utils.h"
 
-const uint32 KNumMsgBeforeFlowControl = 25;
-
+//#include "test_utility.h"
 
 #define LIPSYNCDUMMYOUTPUTMIO_LOGERROR(m)       PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG,iLogger,PVLOGMSG_ERR,m);
 #define LIPSYNCDUMMYOUTPUTMIO_LOGWARNING(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG,iLogger,PVLOGMSG_WARNING,m);
@@ -27,45 +26,36 @@ const uint32 KNumMsgBeforeFlowControl = 25;
 #define LIPSYNCDUMMYOUTPUTMIO_LOGDEBUG(m)       PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG,iLogger,PVLOGMSG_DEBUG,m);
 
 
-LipSyncDummyOutputMIO::LipSyncDummyOutputMIO(const LipSyncDummyMIOSettings& aSettings)
+DummyOutputMIO::DummyOutputMIO(const DummyMIOSettings& aSettings)
         : OsclActiveObject(OsclActiveObject::EPriorityNominal, aSettings.iMediaFormat.isAudio() ? "LipSyncDummyAudioOutputMIO" : "LipSyncDummyVideoOutputMIO")
 {
-    iNumChannels = 0;//no default
-    iSamplingRate = 0;//no default
-    iBitsPerSample = 0;//no default
-    iAudioFormat = PVMF_MIME_FORMAT_UNKNOWN;//no default
-    iSamplingRateSet = false;
-    iNumChannelsSet = false;
-    iBitsPerSampleSet = false;
     iObserver = NULL;
     iCommandCounter = 0;
-    iLogger = NULL;
     iCommandPendingQueue.reserve(1);
     iCommandResponseQueue.reserve(5);
-    iPeer = NULL;
     iState = STATE_IDLE;
     iIsMIOConfigured = false;
     iSettings = aSettings;
-    iIsAudioMIO = false;
-    iIsVideoMIO = false;
-    iIsCompressed = false;
+    iIsAudioMIO = iSettings.iMediaFormat.isAudio();
+    iIsVideoMIO = iSettings.iMediaFormat.isVideo();
+    iIsCompressed = iSettings.iMediaFormat.isCompressed();
+    iMIOObserver = iSettings.iDummyMIOObserver;
+    iLogger = PVLogger::GetLoggerObject("DummyOutputMIO");
+
+    iPeer = NULL;
+
+    iMIOObserver = NULL;
 
 }
-void LipSyncDummyOutputMIO::ResetData()
-//reset all data from this session so that a new clip can be played.
+void DummyOutputMIO::ResetData()
 {
+//reset all data from this session so that a new clip can be played.
     Cleanup();
 
-    //reset all the audio parameters.
-    iAudioFormatString = "";
-    iAudioFormat = PVMF_MIME_FORMAT_UNKNOWN;//no default
-    iSamplingRateSet = false;
-    iNumChannelsSet = false;
-    iBitsPerSampleSet = false;
     iIsMIOConfigured = false;
 }
 
-PVMFCommandId LipSyncDummyOutputMIO::Reset(const OsclAny* aContext)
+PVMFCommandId DummyOutputMIO::Reset(const OsclAny* aContext)
 {
     // Reset all data from this session
     ResetData();
@@ -77,7 +67,7 @@ PVMFCommandId LipSyncDummyOutputMIO::Reset(const OsclAny* aContext)
     return cmdid;
 }
 
-void LipSyncDummyOutputMIO::Cleanup()
+void DummyOutputMIO::Cleanup()
 {
     // Send any pending command responses.
     while (!iCommandPendingQueue.empty())
@@ -106,39 +96,37 @@ void LipSyncDummyOutputMIO::Cleanup()
     }
 }
 
-LipSyncDummyOutputMIO::~LipSyncDummyOutputMIO()
+DummyOutputMIO::~DummyOutputMIO()
 {
     Cleanup();
     // release semaphore
 }
 
-PVMFStatus LipSyncDummyOutputMIO::connect(PvmiMIOSession& aSession, PvmiMIOObserver* aObserver)
+PVMFStatus DummyOutputMIO::connect(PvmiMIOSession& aSession, PvmiMIOObserver* aObserver)
 {
     OSCL_UNUSED_ARG(aSession);
 
     // Currently supports only one session
     if (iObserver)
     {
-        LIPSYNCDUMMYOUTPUTMIO_LOGERROR((0, "LipSyncDummyOutputMIO::connect Session already exists. Can only support one session"));
+        LIPSYNCDUMMYOUTPUTMIO_LOGERROR((0, "DummyOutputMIO::connect Session already exists. Can only support one session"));
         return PVMFErrAlreadyExists;
     }
 
     iObserver = aObserver;
 
-    iParams = ShareParams::Instance();
-    iParams->iObserver = this;
     return PVMFSuccess;
 }
 
 
-PVMFStatus LipSyncDummyOutputMIO::disconnect(PvmiMIOSession aSession)
+PVMFStatus DummyOutputMIO::disconnect(PvmiMIOSession aSession)
 {
     OSCL_UNUSED_ARG(aSession);
 
     // Currently supports only one session
     if (iObserver == NULL)
     {
-        LIPSYNCDUMMYOUTPUTMIO_LOGERROR((0, "LipSyncDummyOutputMIO::disconnect No session to disconnect"));
+        LIPSYNCDUMMYOUTPUTMIO_LOGERROR((0, "DummyOutputMIO::disconnect No session to disconnect"));
         return PVMFErrArgument;
     }
     iObserver = NULL;
@@ -146,7 +134,7 @@ PVMFStatus LipSyncDummyOutputMIO::disconnect(PvmiMIOSession aSession)
 }
 
 
-PvmiMediaTransfer* LipSyncDummyOutputMIO::createMediaTransfer(
+PvmiMediaTransfer* DummyOutputMIO::createMediaTransfer(
     PvmiMIOSession& aSession,
     PvmiKvp* read_formats, int32 read_flags,
     PvmiKvp* write_formats, int32 write_flags)
@@ -155,10 +143,10 @@ PvmiMediaTransfer* LipSyncDummyOutputMIO::createMediaTransfer(
 }
 
 
-void LipSyncDummyOutputMIO::QueueCommandResponse(CommandResponse& aResp)
+void DummyOutputMIO::QueueCommandResponse(CommandResponse& aResp)
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                    (0, "LipSyncDummyOutputMIO::QueueCommandResponse(), aResp.CmdId is %d ", aResp.iCmdId));
+                    (0, "DummyOutputMIO::QueueCommandResponse(), aResp.CmdId is %d ", aResp.iCmdId));
     //queue a command response and schedule processing.
     iCommandResponseQueue.push_back(aResp);
 
@@ -169,12 +157,12 @@ void LipSyncDummyOutputMIO::QueueCommandResponse(CommandResponse& aResp)
         PendComplete(OSCL_REQUEST_ERR_NONE);
 }
 
-PVMFCommandId LipSyncDummyOutputMIO::QueryUUID(const PvmfMimeString& aMimeType,
-        Oscl_Vector<PVUuid, OsclMemAllocator>& aUuids,
-        bool aExactUuidsOnly,
-        const OsclAny* aContext)
+PVMFCommandId DummyOutputMIO::QueryUUID(const PvmfMimeString& aMimeType,
+                                        Oscl_Vector<PVUuid, OsclMemAllocator>& aUuids,
+                                        bool aExactUuidsOnly,
+                                        const OsclAny* aContext)
 {
-    LIPSYNCDUMMYOUTPUTMIO_LOGDEBUG((0, "LipSyncDummyOutputMIO::QueryUUID()"));
+    LIPSYNCDUMMYOUTPUTMIO_LOGDEBUG((0, "DummyOutputMIO::QueryUUID()"));
 
     OSCL_UNUSED_ARG(aMimeType);
     OSCL_UNUSED_ARG(aExactUuidsOnly);
@@ -183,18 +171,17 @@ PVMFCommandId LipSyncDummyOutputMIO::QueryUUID(const PvmfMimeString& aMimeType,
 
     PVMFStatus status = PVMFSuccess;
     aUuids.push_back(PVMI_CAPABILITY_AND_CONFIG_PVUUID);
-    aUuids.push_back(PvmiClockExtensionInterfaceUuid);
 
     CommandResponse resp(status, cmdid, aContext);
     QueueCommandResponse(resp);
     return cmdid;
 }
 
-PVMFCommandId LipSyncDummyOutputMIO::QueryInterface(const PVUuid& aUuid,
+PVMFCommandId DummyOutputMIO::QueryInterface(const PVUuid& aUuid,
         PVInterface*& aInterfacePtr,
         const OsclAny* aContext)
 {
-    LIPSYNCDUMMYOUTPUTMIO_LOGDEBUG((0, "LipSyncDummyOutputMIO::QueryInterface()"));
+    LIPSYNCDUMMYOUTPUTMIO_LOGDEBUG((0, "DummyOutputMIO::QueryInterface()"));
 
     PVMFCommandId cmdid = iCommandCounter++;
 
@@ -204,12 +191,6 @@ PVMFCommandId LipSyncDummyOutputMIO::QueryInterface(const PVUuid& aUuid,
         PvmiCapabilityAndConfig* myInterface = OSCL_STATIC_CAST(PvmiCapabilityAndConfig*, this);
         aInterfacePtr = OSCL_STATIC_CAST(PVInterface*, myInterface);
         status = PVMFSuccess;
-    }
-    else if ((aUuid == PvmiClockExtensionInterfaceUuid) && (iIsAudioMIO))
-    {
-        PvmiClockExtensionInterface* myInterface = OSCL_STATIC_CAST(PvmiClockExtensionInterface*, this);
-        aInterfacePtr = OSCL_STATIC_CAST(PVInterface*, myInterface);
-        status = true;
     }
     else
     {
@@ -222,19 +203,13 @@ PVMFCommandId LipSyncDummyOutputMIO::QueryInterface(const PVUuid& aUuid,
 }
 
 
-bool LipSyncDummyOutputMIO::queryInterface(const PVUuid& aUuid, PVInterface*& aInterfacePtr)
+bool DummyOutputMIO::queryInterface(const PVUuid& aUuid, PVInterface*& aInterfacePtr)
 {
     aInterfacePtr = NULL;
     bool status = false;
     if (aUuid == PVMI_CAPABILITY_AND_CONFIG_PVUUID)
     {
         PvmiCapabilityAndConfig* myInterface = OSCL_STATIC_CAST(PvmiCapabilityAndConfig*, this);
-        aInterfacePtr = OSCL_STATIC_CAST(PVInterface*, myInterface);
-        status = true;
-    }
-    else if ((aUuid == PvmiClockExtensionInterfaceUuid) && (iIsAudioMIO))
-    {
-        PvmiClockExtensionInterface* myInterface = OSCL_STATIC_CAST(PvmiClockExtensionInterface*, this);
         aInterfacePtr = OSCL_STATIC_CAST(PVInterface*, myInterface);
         status = true;
     }
@@ -246,23 +221,9 @@ bool LipSyncDummyOutputMIO::queryInterface(const PVUuid& aUuid, PVInterface*& aI
     return status;
 }
 
-PVMFStatus LipSyncDummyOutputMIO::SetClock(PVMFMediaClock* aClockVal)
-{
-    iRenderClock = aClockVal;
-    return PVMFSuccess;
-}
 
-void LipSyncDummyOutputMIO::addRef()
-{
-    // nothing to do...
-}
 
-void LipSyncDummyOutputMIO::removeRef()
-{
-    // nothing to do...
-}
-
-void LipSyncDummyOutputMIO::deleteMediaTransfer(
+void DummyOutputMIO::deleteMediaTransfer(
     PvmiMIOSession& aSession,
     PvmiMediaTransfer* media_transfer)
 {
@@ -270,9 +231,9 @@ void LipSyncDummyOutputMIO::deleteMediaTransfer(
 }
 
 
-PVMFCommandId LipSyncDummyOutputMIO::Init(const OsclAny* aContext)
+PVMFCommandId DummyOutputMIO::Init(const OsclAny* aContext)
 {
-    LIPSYNCDUMMYOUTPUTMIO_LOGDEBUG((0, "LipSyncDummyOutputMIO::Init()"));
+    LIPSYNCDUMMYOUTPUTMIO_LOGDEBUG((0, "DummyOutputMIO::Init()"));
 
     PVMFCommandId cmdid = iCommandCounter++;
 
@@ -299,7 +260,7 @@ PVMFCommandId LipSyncDummyOutputMIO::Init(const OsclAny* aContext)
 }
 
 
-PVMFCommandId LipSyncDummyOutputMIO::Start(const OsclAny* aContext)
+PVMFCommandId DummyOutputMIO::Start(const OsclAny* aContext)
 {
     LIPSYNCDUMMYOUTPUTMIO_LOGDEBUG((0, "LIPSYNCDUMMYOUTPUTMIO::Start()"));
 
@@ -333,10 +294,10 @@ PVMFCommandId LipSyncDummyOutputMIO::Start(const OsclAny* aContext)
     return cmdid;
 }
 
-PVMFCommandId LipSyncDummyOutputMIO::Pause(const OsclAny* aContext)
+PVMFCommandId DummyOutputMIO::Pause(const OsclAny* aContext)
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                    (0, "LipSyncDummyOutputMIO::Pause() "));
+                    (0, "DummyOutputMIO::Pause() "));
 
     PVMFCommandId cmdid = iCommandCounter++;
 
@@ -364,10 +325,10 @@ PVMFCommandId LipSyncDummyOutputMIO::Pause(const OsclAny* aContext)
     return cmdid;
 }
 
-PVMFCommandId LipSyncDummyOutputMIO::Flush(const OsclAny* aContext)
+PVMFCommandId DummyOutputMIO::Flush(const OsclAny* aContext)
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                    (0, "LipSyncDummyOutputMIO::Flush() "));
+                    (0, "DummyOutputMIO::Flush() "));
 
     PVMFCommandId cmdid = iCommandCounter++;
 
@@ -402,15 +363,15 @@ PVMFCommandId LipSyncDummyOutputMIO::Flush(const OsclAny* aContext)
     return cmdid;
 }
 
-PVMFCommandId LipSyncDummyOutputMIO::DiscardData(const OsclAny* aContext)
+PVMFCommandId DummyOutputMIO::DiscardData(const OsclAny* aContext)
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                    (0, "LipSyncDummyOutputMIO::DiscardData() "));
+                    (0, "DummyOutputMIO::DiscardData() "));
 
     PVMFCommandId cmdid = iCommandCounter++;
 
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                    (0, "LipSyncDummyOutputMIO::DiscardData, CmdId is %d ", cmdid));
+                    (0, "DummyOutputMIO::DiscardData, CmdId is %d ", cmdid));
 
     PVMFStatus status;
     status = PVMFSuccess;
@@ -420,24 +381,17 @@ PVMFCommandId LipSyncDummyOutputMIO::DiscardData(const OsclAny* aContext)
     return cmdid;
 }
 
-PVMFCommandId LipSyncDummyOutputMIO::DiscardData(PVMFTimestamp aTimestamp, const OsclAny* aContext)
+PVMFCommandId DummyOutputMIO::DiscardData(PVMFTimestamp aTimestamp, const OsclAny* aContext)
 {
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "LipSyncDummyOutputMIO::DiscardData() called"));
-
-    PVMFCommandId cmdid = iCommandCounter++;
-
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                    (0, "LipSyncDummyOutputMIO::DiscardData with TS, CmdId is %d ", cmdid));
-
-    CommandResponse resp(PVMFSuccess, cmdid, aContext);
-    QueueCommandResponse(resp);
-    return cmdid;
+                    (0, "DummyOutputMIO::DiscardData() with TS"));
+    return DiscardData(aContext);
 }
 
-PVMFCommandId LipSyncDummyOutputMIO::Stop(const OsclAny* aContext)
+PVMFCommandId DummyOutputMIO::Stop(const OsclAny* aContext)
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                    (0, "LipSyncDummyOutputMIO::Stop() "));
+                    (0, "DummyOutputMIO::Stop() "));
 
 
     PVMFCommandId cmdid = iCommandCounter++;
@@ -464,10 +418,10 @@ PVMFCommandId LipSyncDummyOutputMIO::Stop(const OsclAny* aContext)
     return cmdid;
 }
 
-PVMFCommandId LipSyncDummyOutputMIO::CancelAllCommands(const OsclAny* aContext)
+PVMFCommandId DummyOutputMIO::CancelAllCommands(const OsclAny* aContext)
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                    (0, "LipSyncDummyOutputMIO::CancelAllCommands() "));
+                    (0, "DummyOutputMIO::CancelAllCommands() "));
 
     PVMFCommandId cmdid = iCommandCounter++;
 
@@ -485,10 +439,10 @@ PVMFCommandId LipSyncDummyOutputMIO::CancelAllCommands(const OsclAny* aContext)
     return cmdid;
 }
 
-PVMFCommandId LipSyncDummyOutputMIO::CancelCommand(PVMFCommandId aCmdId, const OsclAny* aContext)
+PVMFCommandId DummyOutputMIO::CancelCommand(PVMFCommandId aCmdId, const OsclAny* aContext)
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                    (0, "LipSyncDummyOutputMIO::CancelCommand() "));
+                    (0, "DummyOutputMIO::CancelCommand() "));
 
     PVMFCommandId cmdid = iCommandCounter++;
 
@@ -510,28 +464,25 @@ PVMFCommandId LipSyncDummyOutputMIO::CancelCommand(PVMFCommandId aCmdId, const O
     return cmdid;
 }
 
-void LipSyncDummyOutputMIO::ThreadLogon()
+void DummyOutputMIO::ThreadLogon()
 {
     if (iState == STATE_IDLE)
     {
-        iLogger = PVLogger::GetLoggerObject("LipSyncDummyOutputMIO");
         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                        (0, "LipSyncDummyOutputMIO::ThreadLogon() "));
+                        (0, "DummyOutputMIO::ThreadLogon() "));
         AddToScheduler();
         iState = STATE_LOGGED_ON;
-        iIsAudioMIO = iSettings.iMediaFormat.isAudio();
-        iIsVideoMIO = iSettings.iMediaFormat.isVideo();
         iIsCompressed = iSettings.iMediaFormat.isCompressed();
         iMIOObserver = iSettings.iDummyMIOObserver;
     }
 }
 
-void LipSyncDummyOutputMIO::ThreadLogoff()
+void DummyOutputMIO::ThreadLogoff()
 {
     if (iState != STATE_IDLE)
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                        (0, "LipSyncDummyOutputMIO::ThreadLogoff() "));
+                        (0, "DummyOutputMIO::ThreadLogoff() "));
         iLogger = NULL;
         RemoveFromScheduler();
         iState = STATE_IDLE;
@@ -540,7 +491,7 @@ void LipSyncDummyOutputMIO::ThreadLogoff()
     }
 }
 
-void LipSyncDummyOutputMIO::Run()
+void DummyOutputMIO::Run()
 {
 
     //send command responses
@@ -569,19 +520,35 @@ void LipSyncDummyOutputMIO::Run()
     }
 }
 
-void LipSyncDummyOutputMIO::setPeer(PvmiMediaTransfer* aPeer)
-{
-    // Set the observer
-    iPeer = aPeer;
-}
 
 
-void LipSyncDummyOutputMIO::useMemoryAllocators(OsclMemAllocator* write_alloc)
+void DummyOutputMIO::useMemoryAllocators(OsclMemAllocator* write_alloc)
 {
     //not supported-- ignore
 }
 
-PVMFCommandId LipSyncDummyOutputMIO::writeAsync(
+
+void DummyOutputMIO::DealWithData(PVMFTimestamp aTimestamp, uint8* aData, uint32 aDataLen)
+{
+    if (iMIOObserver)
+    {
+        if (iIsAudioMIO)
+        {
+            iMIOObserver->MIOFramesUpdate(true, aDataLen, 0);
+        }
+        else if (iIsVideoMIO)
+        {
+            iMIOObserver->MIOFramesUpdate(false, aDataLen, 0);
+        }
+        else
+        {
+            // temp
+            printf("ERROR!!! Neither AUDIO NOR VIDEO\n");
+        }
+    }
+}
+
+PVMFCommandId DummyOutputMIO::writeAsync(
     uint8 aFormatType, int32 aFormatIndex,
     uint8* aData, uint32 aDataLen,
     const PvmiMediaXferHeader& data_header_info,
@@ -601,57 +568,15 @@ PVMFCommandId LipSyncDummyOutputMIO::writeAsync(
     PVMFTimestamp aTimestamp = data_header_info.timestamp;
 
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                    (0, "LipSyncDummyOutputMIO::writeAsync() seqnum %d ts %d context %d", data_header_info.seq_num, aTimestamp, aContext));
+                    (0, "DummyOutputMIO::writeAsync() seqnum %d ts %d context %d", data_header_info.seq_num, aTimestamp, aContext));
 
     PVMFCommandId cmdid = iCommandCounter++;
 
     if (IsAdded() && !IsBusy())
         PendForExec();
 
+    DealWithData(aTimestamp, aData, aDataLen);
 
-    if (iMIOObserver)
-    {
-        uint32 origTS = 0;
-        if (iIsAudioMIO && iIsCompressed)
-        {
-            oscl_memcpy((char *)&origTS, aData, sizeof(origTS));
-            iMIOObserver->MIOFramesTSUpdate(true, (PVMFTimestamp)origTS);
-        }
-        else if (iIsVideoMIO && iIsCompressed)
-        {
-            oscl_memcpy((char *)&origTS, aData + 4, sizeof(origTS));
-            iMIOObserver->MIOFramesTSUpdate(false, (PVMFTimestamp)origTS);
-
-        }
-        else if (iIsVideoMIO && !iIsCompressed)
-        {
-
-            Oscl_Map<uint32, uint32, OsclMemAllocator>::iterator it;
-            it = iCompareTS.find(aTimestamp);
-            if (!(it == iCompareTS.end()))
-            {
-                origTS = (((*it).second));
-            }
-            iMIOObserver->MIOFramesTSUpdate(false, (PVMFTimestamp)origTS);
-        }
-    }
-
-    if (iIsAudioMIO)
-    {
-        uint32 timebfAdjust = 0;
-        bool flag = false;
-        uint32 currentTimeBase32 = 0;
-        bool overflowFlag = false;
-        uint32 timeVal = Oscl_Int64_Utils::get_uint64_lower32(aTimestamp);
-        iRenderClock->GetCurrentTime32(timebfAdjust, flag, PVMF_MEDIA_CLOCK_MSEC, currentTimeBase32);
-
-        // Adjust the render-clock to accurately represent this.
-        PVMFMediaClockAdjustTimeStatus retVal;
-        retVal = iRenderClock->AdjustClockTime32(timebfAdjust,
-                 currentTimeBase32,
-                 timeVal,
-                 PVMF_MEDIA_CLOCK_MSEC, overflowFlag);
-    }
     if (iPeer)
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_INFO,
@@ -667,16 +592,16 @@ PVMFCommandId LipSyncDummyOutputMIO::writeAsync(
 
 
 
-void LipSyncDummyOutputMIO::writeComplete(PVMFStatus aStatus,
-        PVMFCommandId write_cmd_id,
-        OsclAny* aContext)
+void DummyOutputMIO::writeComplete(PVMFStatus aStatus,
+                                   PVMFCommandId write_cmd_id,
+                                   OsclAny* aContext)
 {
     //won't be called since this component is a sink.
 }
 
 
 
-PVMFCommandId LipSyncDummyOutputMIO::readAsync(
+PVMFCommandId DummyOutputMIO::readAsync(
     uint8* data, uint32 max_data_len,
     OsclAny* aContext,
     int32* formats, uint16 num_formats)
@@ -687,7 +612,7 @@ PVMFCommandId LipSyncDummyOutputMIO::readAsync(
 }
 
 
-void LipSyncDummyOutputMIO::readComplete(
+void DummyOutputMIO::readComplete(
     PVMFStatus aStatus,
     PVMFCommandId read_cmd_id,
     int32 format_index,
@@ -697,7 +622,7 @@ void LipSyncDummyOutputMIO::readComplete(
     //won't be called since this component is a sink.
 }
 
-void LipSyncDummyOutputMIO::statusUpdate(uint32 status_flags)
+void DummyOutputMIO::statusUpdate(uint32 status_flags)
 {
     //resume data transfer
     if (iPeer)
@@ -707,19 +632,19 @@ void LipSyncDummyOutputMIO::statusUpdate(uint32 status_flags)
 }
 
 
-void LipSyncDummyOutputMIO::cancelCommand(PVMFCommandId aCmdId)
+void DummyOutputMIO::cancelCommand(PVMFCommandId aCmdId)
 {
     //the purpose of this API is to cancel a writeAsync command and report
     //completion ASAP.
 }
 
 // lower-case cancel all commands for the node's ports only. not the engine commands
-void LipSyncDummyOutputMIO::cancelAllCommands()
+void DummyOutputMIO::cancelAllCommands()
 {
 }
 
 
-void LipSyncDummyOutputMIO::setObserver(PvmiConfigAndCapabilityCmdObserver* aObserver)
+void DummyOutputMIO::setObserver(PvmiConfigAndCapabilityCmdObserver* aObserver)
 {
     OSCL_UNUSED_ARG(aObserver);
     //not needed since this component only supports synchronous capability & config
@@ -727,7 +652,7 @@ void LipSyncDummyOutputMIO::setObserver(PvmiConfigAndCapabilityCmdObserver* aObs
 }
 
 
-PVMFStatus LipSyncDummyOutputMIO::releaseParameters(PvmiMIOSession aSession, PvmiKvp* aParameters, int num_elements)
+PVMFStatus DummyOutputMIO::releaseParameters(PvmiMIOSession aSession, PvmiKvp* aParameters, int num_elements)
 {
     OSCL_UNUSED_ARG(aSession);
 
@@ -744,29 +669,29 @@ PVMFStatus LipSyncDummyOutputMIO::releaseParameters(PvmiMIOSession aSession, Pvm
     return PVMFFailure;
 }
 
-void LipSyncDummyOutputMIO::createContext(PvmiMIOSession session, PvmiCapabilityContext& context)
+void DummyOutputMIO::createContext(PvmiMIOSession session, PvmiCapabilityContext& context)
 {
     OsclError::Leave(OsclErrNotSupported);
 }
 
-void LipSyncDummyOutputMIO::setContextParameters(PvmiMIOSession session, PvmiCapabilityContext& context,
+void DummyOutputMIO::setContextParameters(PvmiMIOSession session, PvmiCapabilityContext& context,
         PvmiKvp* parameters, int num_parameter_elements)
 {
     OsclError::Leave(OsclErrNotSupported);
 }
 
 
-void LipSyncDummyOutputMIO::DeleteContext(PvmiMIOSession session,
-        PvmiCapabilityContext& context)
+void DummyOutputMIO::DeleteContext(PvmiMIOSession session,
+                                   PvmiCapabilityContext& context)
 {
     OsclError::Leave(OsclErrNotSupported);
 }
 
 
-void LipSyncDummyOutputMIO::setParametersSync(PvmiMIOSession aSession,
-        PvmiKvp* aParameters,
-        int num_elements,
-        PvmiKvp*& aRet_kvp)
+void DummyOutputMIO::setParametersSync(PvmiMIOSession aSession,
+                                       PvmiKvp* aParameters,
+                                       int num_elements,
+                                       PvmiKvp*& aRet_kvp)
 {
     OSCL_UNUSED_ARG(aSession);
 
@@ -840,7 +765,7 @@ void LipSyncDummyOutputMIO::setParametersSync(PvmiMIOSession aSession,
 }
 
 
-PVMFCommandId LipSyncDummyOutputMIO::setParametersAsync(PvmiMIOSession session,
+PVMFCommandId DummyOutputMIO::setParametersAsync(PvmiMIOSession session,
         PvmiKvp* parameters,
         int num_elements,
         PvmiKvp*& ret_kvp,
@@ -851,20 +776,25 @@ PVMFCommandId LipSyncDummyOutputMIO::setParametersAsync(PvmiMIOSession session,
 }
 
 
-uint32 LipSyncDummyOutputMIO::getCapabilityMetric(PvmiMIOSession session)
+uint32 DummyOutputMIO::getCapabilityMetric(PvmiMIOSession session)
 {
     return 0;
 }
 
 
-PVMFStatus LipSyncDummyOutputMIO::verifyParametersSync(PvmiMIOSession session,
+PVMFStatus DummyOutputMIO::verifyParametersSync(PvmiMIOSession session,
         PvmiKvp* parameters, int num_elements)
 {
     return PVMFSuccess; // no restrictions on playback settings always return OK
 }
+////////////////////////////////////////////////////////////////////////////
+void DummyOutputMIO::setPeer(PvmiMediaTransfer* aPeer)
+{
+    iPeer = aPeer;
+}
 
 
-PVMFStatus LipSyncDummyOutputMIO::getParametersSync(PvmiMIOSession aSession,
+PVMFStatus DummyOutputMIO::getParametersSync(PvmiMIOSession aSession,
         PvmiKeyType aIdentifier,
         PvmiKvp*& aParameters,
         int& num_parameter_elements,
@@ -978,17 +908,6 @@ PVMFStatus LipSyncDummyOutputMIO::getParametersSync(PvmiMIOSession aSession,
     return PVMFFailure;
 
 }
-void LipSyncDummyOutputMIO::MIOFramesTimeStamps(bool aIsAudio, uint32 aOrigTS, uint32 aRenderTS)
-{
-    if (aIsAudio)
-    {
-        /* Currently we are doing for video case TS .Need to develop audio case also */
 
 
-    }
-    else
-    {
-        iCompareTS[aRenderTS] = aOrigTS;
 
-    }
-}

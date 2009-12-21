@@ -81,7 +81,7 @@ void basic_lipsync_test::TimeoutOccurred(int32 timerID, int32 timeoutInfo)
     }
 }
 
-void basic_lipsync_test::MIOFramesTSUpdate(bool aIsAudio, uint32 aRenderTS)
+void basic_lipsync_test::MIOFramesUpdate(bool aIsAudio, uint32 aBytes, uint32 aRenderTS)
 {
 
     if (aIsAudio)

@@ -35,7 +35,7 @@
 
 #include "pvmf_fileinput_settings.h"
 #include "pvmi_mio_fileinput_factory.h"
-#include "lipsync_dummy_settings.h"
+#include "dummy_settings.h"
 //
 
 
@@ -121,7 +121,7 @@ class DummyMIOCodecSpecifier : public CodecSpecifier
 {
         // this class is for Lipsync test-case framework
     public:
-        DummyMIOCodecSpecifier(LipSyncDummyMIOSettings& aFormat):
+        DummyMIOCodecSpecifier(DummyMIOSettings& aFormat):
                 iFormat(aFormat)
         {
             iType = EPVDummyMIO;
@@ -130,7 +130,7 @@ class DummyMIOCodecSpecifier : public CodecSpecifier
         {
             return CompareFormat(format, iFormat.iMediaFormat.getMIMEStrPtr());
         };
-        LipSyncDummyMIOSettings GetSpecifierType()
+        DummyMIOSettings GetSpecifierType()
         {
             return iFormat;
         }
@@ -139,7 +139,7 @@ class DummyMIOCodecSpecifier : public CodecSpecifier
             return iFormat.iMediaFormat;
         };
     private:
-        LipSyncDummyMIOSettings iFormat;
+        DummyMIOSettings iFormat;
 };
 
 #endif

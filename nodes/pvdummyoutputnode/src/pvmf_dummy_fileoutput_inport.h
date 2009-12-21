@@ -52,10 +52,7 @@ class PVMFDummyFileOutputNode;
 //Default vector reserve size
 #define PVMF_FILE_OUTPUT_NODE_PORT_VECTOR_RESERVE 10
 
-// Capability mime strings
-#define PVMF_FILE_OUTPUT_PORT_INPUT_FORMATS "x-pvmf/file/encode/input_formats"
-//#define PVMF_FILE_OUTPUT_PORT_INPUT_FORMATS_VALTYPE "x-pvmf/file/encode/input_formats;valtype=int32"
-#define PVMF_FILE_OUTPUT_PORT_INPUT_FORMATS_VALTYPE "x-pvmf/port/formattype;valtype=char*"
+
 
 #define PVMF_MAX_CMDID_CNTR 0x7FFFFFFF
 #define PVMF_MAX_TIME_STAMP 0xFFFFFFFF

@@ -15,13 +15,22 @@
  * and limitations under the License.
  * -------------------------------------------------------------------
  */
-#ifndef PV_PLAYER_SDKINFO_H_INCLUDED
-#define PV_PLAYER_SDKINFO_H_INCLUDED
+#ifndef PV_2WAY_LIPSYNC_OUTPUT_MIO_NODE_FACTORY_H_INCLUDED
+#define PV_2WAY_LIPSYNC_OUTPUT_MIO_NODE_FACTORY_H_INCLUDED
 
-// This header file is automatically generated at build-time
-// *** OFFICIAL RELEASE INFO -- Will not auto update
 
-#define PVPLAYER_ENGINE_SDKINFO_LABEL "1148092"
-#define PVPLAYER_ENGINE_SDKINFO_DATE 0x20091217
 
-#endif //PV_PLAYER_SDKINFO_H_INCLUDED
+#ifndef PV_2WAY_DUMMY_OUTPUT_MIO_NODE_FACTORY_H_INCLUDED
+#include "pv_2way_dummy_output_mio_node_factory.h"
+#endif
+
+class PV2WayLipSyncOutputMIONodeFactory: public PV2WayDummyOutputMIONodeFactory
+{
+    public:
+        PV2WayLipSyncOutputMIONodeFactory() {};
+        virtual ~PV2WayLipSyncOutputMIONodeFactory() {};
+    private:
+        int CreateMedia(DummyMIOSettings& aSettings);
+};
+
+#endif

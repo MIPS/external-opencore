@@ -6,8 +6,6 @@ LOCAL_SRC_FILES := \
  	src/pv_2way_console_source_and_sinks.cpp \
  	src/console_engine_handler.cpp \
  	src/../../pv2waysample/src/testcaseparser.cpp \
- 	src/../../../test/src/lipsync_dummy_input_mio.cpp \
- 	src/../../../test/src/lipsync_dummy_output_mio.cpp \
  	src/../../../../../protocols/systems/tools/general/common/src/test_utility.cpp \
  	src/kbhit.cpp
 

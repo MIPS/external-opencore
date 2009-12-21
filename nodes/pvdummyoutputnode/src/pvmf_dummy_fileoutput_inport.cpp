@@ -34,6 +34,30 @@
 #define LOG_ERR(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_REL,iLogger,PVLOGMSG_ERR,m);
 
 ////////////////////////////////////////////////////////////////////////////
+PVMFDummyFileOutputInPort::PVMFDummyFileOutputInPort(int32 aTag
+        , PVMFNodeInterface* aNode)
+        : PvmfPortBaseImpl(aTag, aNode, 0, 0, 0, 0, 0, 0, "PVFileOPPortIn"),
+        OsclTimerObject(OsclActiveObject::EPriorityNominal, "PVMFDummyFileOutputInPort"),
+        iDataQueue(this, &iSyncUtil),
+        iNode(NULL),
+        iSkipMediaDataPending(false),
+        iSkipMediaDataCmdId(0),
+        iSkipMediaDataContext(NULL),
+        iExtensionRefCount(0),
+        iState(PORT_STATE_BUFFERING),
+        iFormat(PVMF_MIME_FORMAT_UNKNOWN),
+        iSkipAlreadyComplete(false),
+        iSkipResumeTimestamp(0),
+        iLastDataTimestampSet(false),
+        iLastDataTimestamp(0)
+{
+    ConstructL(aNode);
+#if (PVMF_PORT_BASE_IMPL_STATS)
+    oscl_memset((void*)&(PvmfPortBaseImpl::iStats), 0, sizeof(PvmfPortBaseImplStats));
+#endif
+}
+
+////////////////////////////////////////////////////////////////////////////
 PVMFDummyFileOutputInPort::~PVMFDummyFileOutputInPort()
 {
     Disconnect();
@@ -438,29 +462,6 @@ OSCL_EXPORT_REF PVMFStatus PVMFDummyFileOutputInPort::verifyParametersSync(PvmiM
     return status;
 }
 
-////////////////////////////////////////////////////////////////////////////
-PVMFDummyFileOutputInPort::PVMFDummyFileOutputInPort(int32 aTag
-        , PVMFNodeInterface* aNode)
-        : PvmfPortBaseImpl(aTag, aNode, 0, 0, 0, 0, 0, 0, "PVFileOPPortIn"),
-        OsclTimerObject(OsclActiveObject::EPriorityNominal, "PVMFDummyFileOutputInPort"),
-        iDataQueue(this, &iSyncUtil),
-        iNode(NULL),
-        iSkipMediaDataPending(false),
-        iSkipMediaDataCmdId(0),
-        iSkipMediaDataContext(NULL),
-        iExtensionRefCount(0),
-        iState(PORT_STATE_BUFFERING),
-        iFormat(PVMF_MIME_FORMAT_UNKNOWN),
-        iSkipAlreadyComplete(false),
-        iSkipResumeTimestamp(0),
-        iLastDataTimestampSet(false),
-        iLastDataTimestamp(0)
-{
-    ConstructL(aNode);
-#if (PVMF_PORT_BASE_IMPL_STATS)
-    oscl_memset((void*)&(PvmfPortBaseImpl::iStats), 0, sizeof(PvmfPortBaseImplStats));
-#endif
-}
 
 ////////////////////////////////////////////////////////////////////////////
 void PVMFDummyFileOutputInPort::ConstructL(PVMFNodeInterface* aContainerNode)

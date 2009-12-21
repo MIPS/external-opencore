@@ -20,19 +20,10 @@
  * @brief Sample PVMF Port implementation
  */
 
-#ifndef PVMF_FILEINPUT_PORT_H_INCLUDED
 #include "pvmf_fileinput_port.h"
-#endif
-#ifndef OSCL_MEM_BASIC_FUNCTIONS_H
 #include "oscl_mem_basic_functions.h"
-#endif
-#ifndef OSCL_MIME_STRING_UTILS_H
 #include "pv_mime_string_utils.h"
-#endif
-#ifndef PVMF_DUMMY_FILEINPUT_NODE_H_INCLUDED
 #include "pvmf_dummy_fileinput_node.h"
-#endif
-
 #include "pvmi_config_and_capability_utils.h"
 
 #define LOG_STACK_TRACE(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, m);

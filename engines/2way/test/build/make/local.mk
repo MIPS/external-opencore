@@ -13,7 +13,7 @@ endif
 
 include $(LOCAL_PATH)/2way_$(HOST_ARCH).mk
 
-
+XCPPFLAGS += $(LIP_SYNC_ENABLED)
 
 SRCDIR := ../../src
 INCSRCDIR := ../../include 
@@ -42,9 +42,8 @@ SRCS_324 = av_test.cpp \
 	video_only_test.cpp \
 	user_input_test.cpp \
 	basic_lipsync_test.cpp \
-	lipsync_dummy_input_mio.cpp \
-	lipsync_dummy_output_mio.cpp \
-	pause_resume_test.cpp
+	pause_resume_test.cpp \
+        receive_data_test.cpp
 
 SRCS += $(SRCS_324)
 

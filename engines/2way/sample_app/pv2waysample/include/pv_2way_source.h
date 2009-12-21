@@ -42,7 +42,7 @@ class PV2WaySource : public PV2WayMIO
 
         int AddCodec(PvmiMIOFileInputSettings& aFileSettings);
         int AddCodec(PVMFFileInputSettings& aFileSettings);
-        int AddCodec(LipSyncDummyMIOSettings& aSettings);
+        int AddCodec(DummyMIOSettings& aSettings);
 
     protected:
 

@@ -15,13 +15,18 @@
  * and limitations under the License.
  * -------------------------------------------------------------------
  */
-#ifndef PV_PLAYER_SDKINFO_H_INCLUDED
-#define PV_PLAYER_SDKINFO_H_INCLUDED
 
-// This header file is automatically generated at build-time
-// *** OFFICIAL RELEASE INFO -- Will not auto update
+#include "pv_2way_lipsync_input_mio_node_factory.h"
+#include "lipsync_dummy_input_mio.h"
+#include "dummy_settings.h"
 
-#define PVPLAYER_ENGINE_SDKINFO_LABEL "1148092"
-#define PVPLAYER_ENGINE_SDKINFO_DATE 0x20091217
+int PV2WayLipSyncInputMIONodeFactory::CreateMedia(DummyMIOSettings& aSettings)
+{
+    iMediaControl = OSCL_NEW(LipSyncDummyInputMIO, (aSettings));
+    return PVMFSuccess;
+}
 
-#endif //PV_PLAYER_SDKINFO_H_INCLUDED
+
+
+
+

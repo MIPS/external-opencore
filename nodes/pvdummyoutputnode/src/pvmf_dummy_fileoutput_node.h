@@ -387,9 +387,12 @@ class PVMFDummyFileOutputNode
             return 0;
         }
 
+
         /** Clear all pending port activity after max file size or duration is reached. */
         void ClearPendingPortActivity();
 
+        // this mutex is used to lock all of the data between uses between threads.
+        OsclMutex iReadDataLock;
         // Queue of commands
         PVMFCommandId iCmdIdCounter;
 

@@ -33,10 +33,9 @@
 
 
 
-OSCL_EXPORT_REF PV2WaySourceAndSinksPerfTest::PV2WaySourceAndSinksPerfTest(PV2Way324InitInfo& aSdkInitInfo) :
-        PV2WaySourceAndSinksBase(aSdkInitInfo)
+OSCL_EXPORT_REF PV2WaySourceAndSinksPerfTest::PV2WaySourceAndSinksPerfTest(PV2Way324InitInfo& arSdkInitInfo) :
+        PV2WaySourceAndSinksBase(arSdkInitInfo)
 {
-    SetPerfFileSettings();
 }
 
 
@@ -58,11 +57,11 @@ OSCL_EXPORT_REF PVMFNodeInterface* PV2WaySourceAndSinksPerfTest::CreateMIONode(C
         if (adir == INCOMING)
         {
             PVMFFormatType fileSettings = PV2WayMedia::GetMediaFormat(perfFileSettings.iFileName.get_cstr());
-            return PVMFDummyFileOutputNodeFactory::CreateDummyFileOutput(perfFileSettings.iFileName, fileSettings);
+            mioNode = PVMFDummyFileOutputNodeFactory::CreateDummyFileOutput(perfFileSettings.iFileName, fileSettings);
         }
         else if (adir == OUTGOING)
         {
-            return PVMFDummyFileInputNodeFactory::CreateDummyFileInputNode(&perfFileSettings);
+            mioNode = PVMFDummyFileInputNodeFactory::CreateDummyFileInputNode(&perfFileSettings);
         }
     }
     return mioNode;
@@ -96,44 +95,19 @@ OSCL_EXPORT_REF void PV2WaySourceAndSinksPerfTest::DeleteMIONode(CodecSpecifier*
     *aMioNode = NULL;
 }
 
-OSCL_EXPORT_REF int PV2WaySourceAndSinksPerfTest::SetPerfFileSettings()
+OSCL_EXPORT_REF int PV2WaySourceAndSinksPerfTest::AddPreferredCodec(TPVDirection aDir,
+        PV2WayMediaType aMediaType,
+        PVMFFileInputSettings& arFileSettings)
 {
-    PVMFFileInputSettings audioSourceFileSettings;
-    audioSourceFileSettings.iMediaFormat = PVMF_MIME_AMR_IF2;
-    audioSourceFileSettings.iLoopInputFile = true;
-    audioSourceFileSettings.iFileName = AUDIO_SOURCE_FILENAME_FOR_PERF;
-    audioSourceFileSettings.iSamplingFrequency = 8000;
-    audioSourceFileSettings.iNumChannels = 1;
-    audioSourceFileSettings.iFrameRateSimulation = true;
-    iAudioSource->AddCodec(audioSourceFileSettings);
+    PV2WayMIO* mio = GetMIO(aDir, aMediaType);
+    if (mio)
 
-    // create audio sink for performance testing
-    PVMFFileInputSettings audioSinkFileSettings;
-    audioSinkFileSettings.iFileName = AUDIO_SINK_FILENAME;
-    audioSinkFileSettings.iMediaFormat = PVMF_MIME_AMR_IF2;
-    iAudioSink->AddCodec(audioSinkFileSettings);
-
-    // create the video source for performance testing
-    PVMFFileInputSettings videoSourceFileSettings;
-    videoSourceFileSettings.iMediaFormat = PVMF_MIME_H2632000; // console was: PVMF_MIME_H263
-    videoSourceFileSettings.iLoopInputFile = true;
-    videoSourceFileSettings.iFileName = VIDEO_SOURCE_FILENAME_FOR_PERF;
-    videoSourceFileSettings.iTimescale = VIDEO_TIMESCALE;
-    videoSourceFileSettings.iFrameHeight = VIDEO_FRAMEHEIGHT;
-    videoSourceFileSettings.iFrameWidth = VIDEO_FRAMEWIDTH;
-    videoSourceFileSettings.iFrameRate = VIDEO_FRAMERATE;
-    videoSourceFileSettings.iFrameRateSimulation = true;
-    iVideoSource->AddCodec(videoSourceFileSettings);
-
-    // create the video sink for performance testing
-    PVMFFileInputSettings videoSinkFileSettings;
-    videoSinkFileSettings.iFileName = VIDEO_SINK_FILENAME;
-    videoSinkFileSettings.iMediaFormat = PVMF_MIME_H2632000;
-    iVideoSink->AddCodec(videoSinkFileSettings);
-
-    return PVMFSuccess;
+    {
+        mio->AddCodec(arFileSettings);
+        return 0;
+    }
+    OutputInfo(PVLOGMSG_ERR, "PV2WaySourceAndSinksPerfTest::AddPreferredCodec: Error!  No MIO of given dir, type");
+    return -1;
 }
-
-
 
 

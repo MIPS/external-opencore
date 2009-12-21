@@ -15,13 +15,19 @@
  * and limitations under the License.
  * -------------------------------------------------------------------
  */
-#ifndef PV_PLAYER_SDKINFO_H_INCLUDED
-#define PV_PLAYER_SDKINFO_H_INCLUDED
+#ifndef DUMMY_MIO_OBSERVER_H_INCLUDED
+#define DUMMY_MIO_OBSERVER_H_INCLUDED
+// An observer to the MIO which would be implemented by the test case in order
+// to receive updates for some specific tests...
+class DummyMIOObserver
+{
+    public:
+        virtual ~DummyMIOObserver() {};
+        /*
+         * Signals an update in the status of the MIO.
+         */
+        virtual void MIOFramesUpdate(bool aIsAudio, uint32 aBytes, uint32 aTS) = 0;
+};
 
-// This header file is automatically generated at build-time
-// *** OFFICIAL RELEASE INFO -- Will not auto update
+#endif
 
-#define PVPLAYER_ENGINE_SDKINFO_LABEL "1148092"
-#define PVPLAYER_ENGINE_SDKINFO_DATE 0x20091217
-
-#endif //PV_PLAYER_SDKINFO_H_INCLUDED

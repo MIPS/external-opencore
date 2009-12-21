@@ -22,18 +22,35 @@
 #include "pvmf_media_input_node_factory.h"
 
 OSCL_EXPORT_REF PV2WayDummySourceAndSinks::PV2WayDummySourceAndSinks(PV2Way324InitInfo& aSdkInitInfo) :
-        PV2WaySourceAndSinksBase(aSdkInitInfo)
+        PV2WaySourceAndSinksBase(aSdkInitInfo),
+        iDummyMioAudioInputFactory(NULL),
+        iDummyMioVideoInputFactory(NULL),
+        iDummyMioAudioOutputFactory(NULL),
+        iDummyMioVideoOutputFactory(NULL)
 {
+    iDummyMioAudioInputFactory = OSCL_NEW(PV2WayDummyInputMIONodeFactory, ());
+    iDummyMioVideoInputFactory = OSCL_NEW(PV2WayDummyInputMIONodeFactory, ());
+    iDummyMioAudioOutputFactory = OSCL_NEW(PV2WayDummyOutputMIONodeFactory, ());
+    iDummyMioVideoOutputFactory = OSCL_NEW(PV2WayDummyOutputMIONodeFactory, ());
 }
 
 OSCL_EXPORT_REF PV2WayDummySourceAndSinks::~PV2WayDummySourceAndSinks()
 {
     Cleanup();
+    OSCL_DELETE(iDummyMioAudioInputFactory);
+    OSCL_DELETE(iDummyMioAudioOutputFactory);
+    OSCL_DELETE(iDummyMioVideoInputFactory);
+    OSCL_DELETE(iDummyMioVideoOutputFactory);
+    iDummyMioAudioInputFactory = NULL;
+    iDummyMioAudioOutputFactory = NULL;
+    iDummyMioVideoInputFactory = NULL;
+    iDummyMioVideoOutputFactory = NULL;
 }
+
 
 OSCL_EXPORT_REF int PV2WayDummySourceAndSinks::AddPreferredCodec(TPVDirection aDir,
         PV2WayMediaType aMediaType,
-        LipSyncDummyMIOSettings& aSettings)
+        DummyMIOSettings& aSettings)
 {
     PV2WayMIO* mio = GetMIO(aDir, aMediaType);
     if (mio)
@@ -46,7 +63,6 @@ OSCL_EXPORT_REF int PV2WayDummySourceAndSinks::AddPreferredCodec(TPVDirection aD
     return -1;
 }
 
-
 OSCL_EXPORT_REF PVMFNodeInterface* PV2WayDummySourceAndSinks::CreateMIONode(CodecSpecifier* aformat,
         TPVDirection adir)
 {
@@ -55,27 +71,27 @@ OSCL_EXPORT_REF PVMFNodeInterface* PV2WayDummySourceAndSinks::CreateMIONode(Code
     if (aformat->GetType() == EPVDummyMIO)
     {
         DummyMIOCodecSpecifier* temp = OSCL_REINTERPRET_CAST(DummyMIOCodecSpecifier*, aformat);
-        LipSyncDummyMIOSettings fileSettings = temp->GetSpecifierType();
+        DummyMIOSettings fileSettings = temp->GetSpecifierType();
         if (adir == INCOMING)
         {
-            if (format.isAudio())
+            if (format.isAudio() && iDummyMioAudioOutputFactory)
             {
-                mioNode = iDummyMioAudioOutputFactory.Create(fileSettings);
+                mioNode = iDummyMioAudioOutputFactory->Create(fileSettings);
             }
-            else if (format.isVideo())
+            else if (format.isVideo() && iDummyMioVideoOutputFactory)
             {
-                mioNode = iDummyMioVideoOutputFactory.Create(fileSettings);
+                mioNode = iDummyMioVideoOutputFactory->Create(fileSettings);
             }
         }
         else if (adir == OUTGOING)
         {
-            if (format.isAudio())
+            if (format.isAudio() && iDummyMioAudioInputFactory)
             {
-                mioNode = iDummyMioAudioInputFactory.Create(fileSettings);
+                mioNode = iDummyMioAudioInputFactory->Create(fileSettings);
             }
-            else if (format.isVideo())
+            else if (format.isVideo() && iDummyMioVideoInputFactory)
             {
-                mioNode = iDummyMioVideoInputFactory.Create(fileSettings);
+                mioNode = iDummyMioVideoInputFactory->Create(fileSettings);
             }
         }
     }
@@ -100,24 +116,24 @@ OSCL_EXPORT_REF void PV2WayDummySourceAndSinks::DeleteMIONode(CodecSpecifier* af
     {
         if (adir == INCOMING)
         {
-            if (format.isAudio())
+            if (format.isAudio() && iDummyMioAudioOutputFactory)
             {
-                iDummyMioAudioOutputFactory.Delete(aMioNode);
+                iDummyMioAudioOutputFactory->Delete(aMioNode);
             }
-            else if (format.isVideo())
+            else if (format.isVideo() && iDummyMioVideoOutputFactory)
             {
-                iDummyMioVideoOutputFactory.Delete(aMioNode);
+                iDummyMioVideoOutputFactory->Delete(aMioNode);
             }
         }
         else if (adir == OUTGOING)
         {
-            if (format.isAudio())
+            if (format.isAudio() && iDummyMioAudioInputFactory)
             {
-                iDummyMioAudioInputFactory.Delete(aMioNode);
+                iDummyMioAudioInputFactory->Delete(aMioNode);
             }
-            else if (format.isVideo())
+            else if (format.isVideo() && iDummyMioVideoInputFactory)
             {
-                iDummyMioVideoInputFactory.Delete(aMioNode);
+                iDummyMioVideoInputFactory->Delete(aMioNode);
             }
         }
     }

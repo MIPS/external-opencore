@@ -207,17 +207,13 @@ OSCL_EXPORT_REF void PV2WayMIO::Closed()
     {
         iChannelId = iNextChannelId;
         iNextChannelId = 0;
-        //iObserver->Initialize(iMyType, iMyDir);
-        //Create();
         Add();
     }
 }
 
 OSCL_EXPORT_REF void PV2WayMIO::RemoveCompleted(const PVCmdResponse& aResponse)
 {
-#ifndef PERF_TEST
     Delete();
-#endif
     iRemoveId = -1;
     iRemoving = false;
 }
@@ -317,7 +313,7 @@ OSCL_EXPORT_REF int PV2WayMIO::AddFormat(PVMFFormatType aformat)
     return 0;
 }
 
-OSCL_EXPORT_REF int PV2WayMIO::AddFormat(LipSyncDummyMIOSettings& aformat)
+OSCL_EXPORT_REF int PV2WayMIO::AddFormat(DummyMIOSettings& aformat)
 {
     CodecSpecifier* temp = OSCL_NEW(DummyMIOCodecSpecifier, (aformat));
     iFormatsMap[temp->GetFormat()] = temp;

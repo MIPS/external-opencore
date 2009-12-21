@@ -15,30 +15,15 @@
  * and limitations under the License.
  * -------------------------------------------------------------------
  */
-#ifndef PVMF_DUMMY_FILEINPUT_NODE_H_INCLUDED
+
 #include "pvmf_dummy_fileinput_node.h"
-#endif
-#ifndef PVMF_FILEINPUT_NODE_INTERNAL_H_INCLUDED
 #include "pvmf_fileinput_node_internal.h"
-#endif
-#ifndef PVLOGGER_H_INCLUDED
 #include "pvlogger.h"
-#endif
-#ifndef PVMF_COMMON_AUDIO_DECNODE_H_INCLUDE
 #include "pvmf_common_audio_decnode.h"
-#endif
-#ifndef PVMF_VIDEO_H_INCLUDED
 #include "pvmf_video.h"
-#endif
-#ifndef OSCL_DLL_H_INCLUDED
 #include "oscl_dll.h"
-#endif
-#ifndef PVMF_VIDEO_H_INCLUDED
 #include "pvmf_video.h"
-#endif
-#ifndef PVMF_DUMMY_FILEINPUT_NODE_FACTORY_H_INCLUDED
 #include "pvmf_dummy_fileinput_node_factory.h"
-#endif
 #include "pvmf_media_cmd.h"
 #include "pvmf_media_msg_format_ids.h"
 
@@ -1076,7 +1061,6 @@ void PVMFDummyFileInputNode::HandlePortActivity(const PVMFPortActivity &aActivit
     //figures out whether we need to queue a processing event
     //for the AO, and/or report a node event to the observer.
 
-    //int32 err = 0;
     switch (aActivity.iType)
     {
         case PVMF_PORT_ACTIVITY_CREATED:
@@ -1202,11 +1186,16 @@ void PVMFDummyFileInputNode::Run()
             if (!iPortVector[0]->IsOutgoingQueueBusy())
             {
                 PVMFStatus status = SendNewMediaMessage();
-                if (status == PVMFSuccess)
+                if (status == PVMFSuccess || status == PVMFErrNoMemory)
                 {
                     //Re-schedule if not end of file.
                     RunIfNotReady(iTSForRunIfInactive);
                     return;
+                }
+                else if (iEndOfFileReached)
+                {
+                    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
+                                    (0, "PVMFDummyFileInputNode::SendNewMediaMessage: End of file reached. "));
                 }
             }
         }
@@ -1412,8 +1401,10 @@ PVMFStatus PVMFDummyFileInputNode::Initialize()
 
     }
     else
+    {
         CloseInputFile();
-    return PVMFErrArgument;
+        return PVMFErrArgument;
+    }
 
     iDataEventCounter = 0;
     CloseInputFile();
@@ -1535,12 +1526,20 @@ PVMFStatus PVMFDummyFileInputNode::GenerateMediaMessage(PVMFSharedMediaMsgPtr& a
     //uint32 len = iInputFile.Read(refCtrMemFrag.getMemFragPtr(), sizeof(uint8), bytesToRead );
     if (iSettings.iMediaFormat == PVMF_MIME_H2632000)
     {
+        if (iVideoData == 0)
+        {
+            iEndOfFileReached = true;
+        }
         oscl_memcpy(refCtrMemFrag.getMemFragPtr(), iVideoData, sizeof(iVideoData));
         // update the filled length of the fragment
         mediaData->setMediaFragFilledLen(0, sizeof(iVideoData));
     }
     else
     {
+        if (iAudioData == 0)
+        {
+            iEndOfFileReached = true;
+        }
         oscl_memcpy(refCtrMemFrag.getMemFragPtr(), iAudioData, sizeof(iAudioData));
         // update the filled length of the fragment
         mediaData->setMediaFragFilledLen(0, sizeof(iAudioData));

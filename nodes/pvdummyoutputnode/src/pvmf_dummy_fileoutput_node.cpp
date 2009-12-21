@@ -918,6 +918,7 @@ PVMFStatus PVMFDummyFileOutputNode::ProcessIncomingMsg(PVMFPortInterface* aPort)
     uint32 dropped;
     uint32 skipped;
     status = ((PVMFDummyFileOutputInPort*)aPort)->iDataQueue.QueueMediaData(msg, &dropped, &skipped);
+
     if (dropped > 0)
     {
         PVMFNodeInterface::ReportInfoEvent(PVMFInfoDataDiscarded);
@@ -932,6 +933,7 @@ PVMFStatus PVMFDummyFileOutputNode::ProcessIncomingMsg(PVMFPortInterface* aPort)
         return PVMFSuccess;
     }
 }
+
 
 bool PVMFDummyFileOutputNode::ProcessCommand(PVMFDummyFileOutputNodeCommand& aCmd)
 {
