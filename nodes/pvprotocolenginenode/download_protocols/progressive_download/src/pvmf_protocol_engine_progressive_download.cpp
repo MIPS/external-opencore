@@ -52,7 +52,8 @@ OSCL_EXPORT_REF bool ProgressiveDownloadState_HEAD::setHeaderFields()
 
 OSCL_EXPORT_REF int32 ProgressiveDownloadState_HEAD::checkParsingStatus(int32 parsingStatus)
 {
-    if (parsingStatus == HttpParsingBasicObject::PARSE_SUCCESS_END_OF_INPUT && iParser->isHttpHeaderParsed() && !is1xxResponse())
+    if ((parsingStatus == HttpParsingBasicObject::PARSE_SUCCESS_END_OF_INPUT || parsingStatus == HttpParsingBasicObject::PARSE_NEED_MORE_DATA)
+            && iParser->isHttpHeaderParsed() && !is1xxResponse())
         return PROCESS_SUCCESS_END_OF_MESSAGE;
 
     return ProtocolState::checkParsingStatus(parsingStatus);
