@@ -445,6 +445,7 @@ class MP3Parser
         uint32 iLocalFileSize;
         uint32 iFileSizeFromExternalSource;
         uint32 iInitSearchFileSize;
+        uint32 iMinBytesRequiredForInit;
         bool iLocalFileSizeSet;
         PVFile * fp;
         MediaClockConverter iClockConverter;

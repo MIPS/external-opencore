@@ -20,7 +20,6 @@
 #define LOGINFO(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_MLDBG,iLogger,PVLOGMSG_INFO,m);
 
 // constructor
-
 PVMFMP3FFParserNode::PVMFMP3FFParserNode(int32 aPriority)
         : PVMFNodeInterfaceImpl(aPriority, "PVMFMP3FFParserNode"),
         iParseStatus(false),
@@ -313,7 +312,6 @@ PVMFStatus PVMFMP3FFParserNode::DoQueryUuid()
 }
 
 // CommandHandler for Query Interface
-
 PVMFStatus PVMFMP3FFParserNode::DoQueryInterface()
 {
     // This node supports Query Interface from any state
@@ -892,29 +890,6 @@ void PVMFMP3FFParserNode::Run()
             LOGINFO((0, "PVMFMP3FFParserNode::Run() CheckForMP3HeaderAvailability() succeeded"));
             // complete init command
             CompleteInit(cmdStatus);
-        }
-        else if (PVMFErrUnderflow == cmdStatus)
-        {
-            if (iMP3File)
-            {
-                bool nextBytes = true;
-                uint32 currCapacity = 0;
-                uint32 minBytesRequired = iMP3File->GetMinBytesRequired(nextBytes);
-                // CheckForMP3HeaderAvailability has failed because of underflow.
-                // parser needs more bytes to do parsing and verification of the clip.
-                PvmiDataStreamStatus status = iDataStreamInterface->QueryReadCapacity(iDataStreamSessionID,
-                                              currCapacity);
-
-                if (PVDS_SUCCESS == status && currCapacity < minBytesRequired + iMP3MetaDataSize)
-                {
-                    // Request for read capacity notification was issued
-                    iRequestReadCapacityNotificationID =
-                        iDataStreamInterface->RequestReadCapacityNotification(iDataStreamSessionID,
-                                *this,
-                                iMP3MetaDataSize + minBytesRequired);
-                }
-            }
-            LOGINFO((0, "PVMFMP3FFParserNode::Run() CheckForMP3HeaderAvailability() failed %d", cmdStatus));
         }
         else if (PVMFFailure == cmdStatus)
         {
@@ -3062,16 +3037,20 @@ PVMFStatus PVMFMP3FFParserNode::CheckForMP3HeaderAvailability()
         }
     }
 
+    uint32 currCapacity = 0;
+    uint32 minBytesRequired = 0;
+
+    // in local playback these variables will not be used.
+    OSCL_UNUSED_ARG(currCapacity);
+    OSCL_UNUSED_ARG(minBytesRequired);
+
     if (iDataStreamInterface != NULL)
     {
-        uint32 minBytesRequired = 0;
         minBytesRequired = iMP3File->GetMinBytesRequired();
-
         /*
          * First check if we have minimum number of bytes to recognize
          * the file and determine the header size.
          */
-        uint32 currCapacity = 0;
         PvmiDataStreamStatus status = iDataStreamInterface->QueryReadCapacity(iDataStreamSessionID,
                                       currCapacity);
 
@@ -3115,8 +3094,34 @@ PVMFStatus PVMFMP3FFParserNode::CheckForMP3HeaderAvailability()
             }
         }
     }
-    PVMFStatus status = ParseFile();
-    return status;
+    PVMFStatus retVal = ParseFile();
+    // parse file failed because of lack of available data
+    // if there's lack of data request more data
+    if (NULL != iDataStreamInterface)
+    {
+        if (PVMFErrUnderflow == retVal)
+        {
+            minBytesRequired = iMP3File->GetMinBytesRequired();
+            /*
+             * First check if we have minimum number of bytes to recognize
+             * the file and determine the header size.
+             */
+            if (currCapacity < minBytesRequired)
+            {
+                iRequestReadCapacityNotificationID =
+                    iDataStreamInterface->RequestReadCapacityNotification(iDataStreamSessionID,
+                            *this,
+                            minBytesRequired);
+                return PVMFPending;
+            }
+            else
+            {
+                // data read capacity notification failed.
+                return PVMFFailure;
+            }
+        }
+    }
+    return retVal;
 }
 
 void PVMFMP3FFParserNode::GetCPMMetaDataKeys()

@@ -334,6 +334,9 @@ MP3Parser::MP3Parser(PVFile* aFileHandle)
     iClipDurationFromRandomScan = 0;
     iClipDurationFromMetadata = 0;
 
+    //minimum bytes required for init
+    iMinBytesRequiredForInit = KMAX_MP3FRAME_LENGTH_IN_BYTES;
+
     iSamplesPerFrame = 0;
     iSamplingRate = 0;
 
@@ -385,6 +388,7 @@ MP3Parser::~MP3Parser()
     iLocalFileSize = 0;
     iLocalFileSize = false;
     iInitSearchFileSize = 0;
+    iMinBytesRequiredForInit = 0;
     iCurrFrameNumber = 0;
     iNumberOfFrames = 0;
     ConfigSize = 0;
@@ -510,6 +514,11 @@ MP3ErrorType MP3Parser::ParseMP3File(PVFile * fpUsed, bool aEnableCRC)
     err = mp3FindSync(StartOffset, seekOffset, fp);
     if (err != MP3_SUCCESS)
     {
+        if (err == MP3_INSUFFICIENT_DATA)
+        {
+            iMinBytesRequiredForInit += KMAX_MP3FRAME_LENGTH_IN_BYTES;
+        }
+
         // in eof scenario parser reports eof error to the user
         // eof will be reported in case when no valid sync
         // word is find in the maximum specified search limit
@@ -1575,7 +1584,7 @@ MP3ErrorType MP3Parser::GetMetadataSize(uint32 &aMetadataSize)
  ***********************************************************************/
 uint32 MP3Parser::GetMinBytesRequired(bool aNextBytes)
 {
-    uint32 minBytes = KMAX_MP3FRAME_LENGTH_IN_BYTES;
+    uint32 minBytes = iMinBytesRequiredForInit;
     if (aNextBytes && fp)
     {
         // case where parse file has failed due to lack of data
