@@ -1228,6 +1228,9 @@ void PVPlayerEngine::Construct(PVCommandStatusObserver* aCmdStatusObserver,
 
     iCPM = NULL;
 
+    iSourceDurationVector.reserve(5);
+    iSourceDurationVector.clear();
+
     AddToScheduler();
 
     // Retrieve the logger object
@@ -3205,7 +3208,7 @@ void PVPlayerEngine::GetPlaybackClockPosition(PVPPlaybackPosition& aClockPos)
 {
     aClockPos.iIndeterminate = false;
 
-    int32 nptcurpos;
+    uint32 nptcurpos;
 
     if (!iChangeDirectionNPT.iIndeterminate)
     {
@@ -3217,14 +3220,11 @@ void PVPlayerEngine::GetPlaybackClockPosition(PVPPlaybackPosition& aClockPos)
     else
     {
         // Get current playback clock position
-        iPlaybackClock.GetNPTClockPosition((uint32&)nptcurpos);
-    }
-    if (nptcurpos < 0)
-    {
-        nptcurpos = 0;
+        iPlaybackClock.GetNPTClockPosition(nptcurpos);
     }
 
-    if (ConvertFromMillisec((uint32)nptcurpos, aClockPos) != PVMFSuccess)
+    nptcurpos = (nptcurpos > iSourceDurationInMS) ? iSourceDurationInMS : nptcurpos;
+    if (ConvertFromMillisec(nptcurpos, aClockPos) != PVMFSuccess)
     {
         // Other position units are not supported yet
         aClockPos.iIndeterminate = true;
@@ -9688,6 +9688,8 @@ PVMFStatus PVPlayerEngine::RemoveDataSourceSync(PVPlayerDataSource &aSrc)
     iMetadataIFList.clear();
 
     iDataSource = NULL;
+
+    iSourceDurationVector.clear();
 
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVPlayerEngine::RemoveDataSourceSync() Out"));
     return PVMFSuccess;
@@ -16689,8 +16691,8 @@ void PVPlayerEngine::HandleSourceNodeInfoEvent(const PVMFAsyncEvent& aEvent)
                 eventMsg->GetCodeUUID(infoCode, eventuuid);
                 if (eventuuid == infomsguuid)
                 {
-                    iSourceDurationInMS = eventMsg->GetDuration();
-                    iSourceDurationAvailable = true;
+                    UpdateSourceDurationVector(aEvent.GetLocalBuffer(), eventMsg->GetDuration());
+                    UpdateCurrentClipSourceDuration();
                     SendInformationalEvent(aEvent.GetEventType(), infoExtInterface, aEvent.GetEventData(), aEvent.GetLocalBuffer(), aEvent.GetLocalBufferSize());
                 }
             }
@@ -17833,6 +17835,7 @@ void PVPlayerEngine::IssueSourceNodeAudioSinkEvent(const PVMFAsyncEvent& aEvent)
                     if (iNumPVMFInfoStartOfDataPending == 0)
                     {
                         iCurrentPlaybackClipId = clipId;
+                        UpdateCurrentClipSourceDuration();
                         SendInformationalEvent(PVPlayerInfoClipPlaybackStarted, NULL, aEvent.GetEventData(), localbuffer, 8);
                     }
                 }
@@ -17955,6 +17958,58 @@ PVMFStatus PVPlayerEngine::TryDecNodeVerifyParameterSync(PVPlayerEngineTrackSele
 
     return status;
 }
+
+
+void PVPlayerEngine::UpdateSourceDurationVector(uint8* localBuffer, uint32 duration)
+{
+    uint32 clipId = 0;
+    if (localBuffer)
+    {
+        clipId = *(uint32*)localBuffer;
+    }
+    // Find the clipId in the vector.
+    // If found, update the duration.
+    // Else, add a new element.
+    bool updated = false;
+    Oscl_Vector<SourceDuration, OsclMemAllocator>::iterator it;
+    for (it = iSourceDurationVector.begin(); it != iSourceDurationVector.end(); it++)
+    {
+        if (it->iClipId == clipId)
+        {
+            it->iSourceDuration = duration;
+            updated = true;
+            break;
+        }
+    }
+    if (!updated)
+    {
+        SourceDuration sd;
+        sd.iClipId = clipId;
+        sd.iSourceDuration = duration;
+        iSourceDurationVector.push_back(sd);
+    }
+}
+
+void PVPlayerEngine::UpdateCurrentClipSourceDuration()
+{
+    // Find iCurrentPlaybackClipId in the vector.
+    // If found, set iSourceDurationInMS.
+    //      and, set iSourceDurationAvailable to true.
+    // Else, set iSourceDurationAvailable to false.
+    iSourceDurationAvailable = false;
+    Oscl_Vector<SourceDuration, OsclMemAllocator>::iterator it;
+    for (it = iSourceDurationVector.begin(); it != iSourceDurationVector.end(); it++)
+    {
+        if (it->iClipId == iCurrentPlaybackClipId)
+        {
+            iSourceDurationInMS = it->iSourceDuration;
+            iSourceDurationAvailable = true;
+            break;
+        }
+    }
+}
+
+
 // END FILE
 
 

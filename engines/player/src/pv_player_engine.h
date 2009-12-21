@@ -1484,6 +1484,9 @@ class PVPlayerEngine
 
         PVMFStatus NotifyDecNodeAboutComponentPreferences(PVPlayerEngineTrackSelection &aTrackSelection, PVMFTrackInfo* aTrack);
         PVMFStatus TryDecNodeVerifyParameterSync(PVPlayerEngineTrackSelection &aTrackSelection, PvmiKvp *kvp);
+
+        void UpdateSourceDurationVector(uint8* localBuffer, uint32 duration);
+        void UpdateCurrentClipSourceDuration();
         // Handle to the logger node
         PVLogger* iLogger;
         PVLogger* iReposLogger;
@@ -1555,6 +1558,12 @@ class PVPlayerEngine
         // Variables to store the source data duration
         bool iSourceDurationAvailable;
         uint32 iSourceDurationInMS;
+        struct SourceDuration
+        {
+            uint32 iSourceDuration;
+            uint32 iClipId;
+        };
+        Oscl_Vector<SourceDuration, OsclMemAllocator> iSourceDurationVector;
         PVMFMetadataList iSourceDurationKeyList;
         Oscl_Vector<PvmiKvp, OsclMemAllocator> iSourceDurationValueList;
 
