@@ -97,7 +97,7 @@ class PVMFCPMLicenseStatus
         uint32 iLastLeaveResponseResult;
 
         // The URL to which the registration call should be made.
-        OSCL_HeapString<OsclMemAllocator> iRedirectURL;
+        OSCL_HeapString<OsclMemAllocator> iServerRedirectURL;
 
         bool iAccountIdReceived;
         // The account Id required for registration.
@@ -124,7 +124,7 @@ class PVMFCPMLicenseStatus
             iLastLeaveURL = "";
             iNumLeaveChallengesSent = iNumLeaveResponsesReceived = iLastLeaveResponseResult = 0;
 
-            iRedirectURL = "";
+            iServerRedirectURL = "";
 
             iAccountIdReceived = false;
             iAccountId = EMPTY_UUID;
@@ -153,7 +153,7 @@ class PVMFCPMLicenseStatus
             iNumLeaveChallengesSent = aStatus.iNumLeaveChallengesSent;
             iNumLeaveResponsesReceived = aStatus.iNumLeaveResponsesReceived;
             iLastLeaveResponseResult = aStatus.iLastLeaveResponseResult;
-            iRedirectURL = aStatus.iRedirectURL;
+            iServerRedirectURL = aStatus.iServerRedirectURL;
             iAccountIdReceived = aStatus.iAccountIdReceived;
             iAccountId = aStatus.iAccountId;
             iServiceIdReceived = aStatus.iServiceIdReceived;
