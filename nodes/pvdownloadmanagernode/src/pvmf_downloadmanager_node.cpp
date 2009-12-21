@@ -45,7 +45,6 @@ static const DownloadManagerKeyStringData DownloadManagerConfig_BaseKeys[] =
     {"user-agent", PVMI_KVPTYPE_VALUE, PVMI_KVPVALTYPE_WCHARPTR},
     {"http-version", PVMI_KVPTYPE_VALUE, PVMI_KVPVALTYPE_UINT32},
     {"http-timeout", PVMI_KVPTYPE_VALUE, PVMI_KVPVALTYPE_UINT32},
-    {"download-progress-info", PVMI_KVPTYPE_VALUE, PVMI_KVPVALTYPE_CHARPTR},
     {"protocol-extension-header", PVMI_KVPTYPE_VALUE, PVMI_KVPVALTYPE_CHARPTR},
     {"num-redirect-attempts", PVMI_KVPTYPE_VALUE, PVMI_KVPVALTYPE_UINT32},
     {"http-header-request-disabled", PVMI_KVPTYPE_VALUE, PVMI_KVPVALTYPE_BOOL},
@@ -62,7 +61,6 @@ enum BaseKeys_IndexMapType
     BASEKEY_SESSION_CONTROLLER_USER_AGENT = 0,
     BASEKEY_SESSION_CONTROLLER_HTTP_VERSION,
     BASEKEY_SESSION_CONTROLLER_HTTP_TIMEOUT,
-    BASEKEY_SESSION_CONTROLLER_DOWNLOAD_PROGRESS_INFO,
     BASEKEY_SESSION_CONTROLLER_PROTOCOL_EXTENSION_HEADER,
     BASEKEY_SESSION_CONTROLLER_NUM_REDIRECT_ATTEMPTS,
     BASEKEY_SESSION_CONTROLLER_NUM_HTTP_HEADER_REQUEST_DISABLED,
@@ -3263,15 +3261,6 @@ void PVMFDownloadManagerNode::setParametersSync(PvmiMIOSession aSession, PvmiKvp
                         uint32 httpTimeout;
                         httpTimeout = aParameters[paramind].value.uint32_value;
                         (iProtocolEngineNode.ProtocolEngineExtension())->SetNetworkTimeout(httpTimeout);
-                    }
-                    break;
-                    case BASEKEY_SESSION_CONTROLLER_DOWNLOAD_PROGRESS_INFO:
-                    {
-                        OSCL_HeapString<OsclMemAllocator> downloadProgressInfo;
-                        downloadProgressInfo = aParameters[paramind].value.pChar_value;
-                        DownloadProgressMode aMode = DownloadProgressMode_TimeBased;
-                        if (IsByteBasedDownloadProgress(downloadProgressInfo)) aMode = DownloadProgressMode_ByteBased;
-                        (iProtocolEngineNode.ProtocolEngineExtension())->SetDownloadProgressMode(aMode);
                     }
                     break;
                     case BASEKEY_SESSION_CONTROLLER_PROTOCOL_EXTENSION_HEADER:

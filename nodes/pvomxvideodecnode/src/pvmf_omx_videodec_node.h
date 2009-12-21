@@ -152,11 +152,7 @@ class PVMFOMXVideoDecNode: public PVMFOMXBaseDecNode
         void DoCapConfigSetParameters(PvmiKvp* aParameters, int aNumElements, PvmiKvp* &aRetKVP);
         PVMFStatus DoCapConfigVerifyParameters(PvmiKvp* aParameters, int aNumElements);
         PVMFStatus DoGetVideoDecNodeParameter(PvmiKvp*& aParameters, int& aNumParamElements, int32 aIndex, PvmiKvpAttr reqattr);
-        PVMFStatus DoGetH263DecoderParameter(PvmiKvp*& aParameters, int& aNumParamElements, int32 aIndex, PvmiKvpAttr reqattr);
-        PVMFStatus DoGetM4VDecoderParameter(PvmiKvp*& aParameters, int& aNumParamElements, int32 aIndex, PvmiKvpAttr reqattr);
         PVMFStatus DoVerifyAndSetVideoDecNodeParameter(PvmiKvp& aParameter, bool aSetParam);
-        PVMFStatus DoVerifyAndSetH263DecoderParameter(PvmiKvp& aParameter, bool aSetParam);
-        PVMFStatus DoVerifyAndSetM4VDecoderParameter(PvmiKvp& aParameter, bool aSetParam);
 
         PVMFStatus GetProfileAndLevel(PVMF_MPEGVideoProfileType& aProfile, PVMF_MPEGVideoLevelType& aLevel);
         int32 GetNAL_OMXNode(uint8** bitstream, uint32* size);

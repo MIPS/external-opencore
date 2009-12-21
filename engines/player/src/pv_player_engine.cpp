@@ -10477,112 +10477,29 @@ PVMFStatus PVPlayerEngine::DoCapConfigGetParametersSync(PvmiKeyType aIdentifier,
                 // Go through each engine component string at 3rd level
                 if (pv_mime_strcmp(compstr, (char*)(PVPlayerConfigBaseKeys[engcomp3ind].iString)) >= 0)
                 {
-                    if (engcomp3ind == PRODUCTINFO)
+                    if (compcount == 3)
                     {
-                        // "x-pvmf/player/productinfo"
-                        if (compcount == 3)
+                        // Determine what is requested
+                        PvmiKvpAttr reqattr = GetAttrTypeFromKeyString(aIdentifier);
+                        if (reqattr == PVMI_KVPATTR_UNKNOWN)
                         {
-                            // Return list of product info. Ignore the
-                            // attribute since capability is only allowed
-
-                            // Allocate memory for the KVP list
-                            aParameters = (PvmiKvp*)oscl_malloc(PVPLAYERCONFIG_PRODINFO_NUMKEYS * sizeof(PvmiKvp));
-                            if (aParameters == NULL)
-                            {
-                                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::DoCapConfigGetParametersSync() Memory allocation for KVP failed"));
-                                return PVMFErrNoMemory;
-                            }
-                            oscl_memset(aParameters, 0, PVPLAYERCONFIG_PRODINFO_NUMKEYS*sizeof(PvmiKvp));
-                            // Allocate memory for the key strings in each KVP
-                            PvmiKeyType memblock = (PvmiKeyType)oscl_malloc(PVPLAYERCONFIG_PRODINFO_NUMKEYS * PVPLAYERCONFIG_KEYSTRING_SIZE * sizeof(char));
-                            if (memblock == NULL)
-                            {
-                                oscl_free(aParameters);
-                                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::DoCapConfigGetParametersSync() Memory allocation for key string failed"));
-                                return PVMFErrNoMemory;
-                            }
-                            oscl_strset(memblock, 0, PVPLAYERCONFIG_PRODINFO_NUMKEYS*PVPLAYERCONFIG_KEYSTRING_SIZE*sizeof(char));
-                            // Assign the key string buffer to each KVP
-                            int32 j;
-                            for (j = 0; j < PVPLAYERCONFIG_PRODINFO_NUMKEYS; ++j)
-                            {
-                                aParameters[j].key = memblock + (j * PVPLAYERCONFIG_KEYSTRING_SIZE);
-                            }
-                            // Copy the requested info
-                            for (j = 0; j < PVPLAYERCONFIG_PRODINFO_NUMKEYS; ++j)
-                            {
-                                oscl_strncat(aParameters[j].key, _STRLIT_CHAR("x-pvmf/player/productinfo/"), 26);
-                                oscl_strncat(aParameters[j].key, PVPlayerConfigProdInfoKeys[j].iString, oscl_strlen(PVPlayerConfigProdInfoKeys[j].iString));
-                                oscl_strncat(aParameters[j].key, _STRLIT_CHAR(";type=value;valtype=char*"), 25);
-                                aParameters[j].key[PVPLAYERCONFIG_KEYSTRING_SIZE-1] = 0;
-                            }
-
-                            aNumParamElements = PVPLAYERCONFIG_PRODINFO_NUMKEYS;
+                            reqattr = PVMI_KVPATTR_CUR;
                         }
-                        else if (compcount == 4)
+
+                        // Return the requested info
+                        PVMFStatus retval = DoGetPlayerParameter(aParameters, aNumParamElements, engcomp3ind, reqattr);
+                        if (retval != PVMFSuccess)
                         {
-                            // Retrieve the fourth component from the key string
-                            pv_mime_string_extract_type(3, aIdentifier, compstr);
-
-                            for (int32 engcomp4ind = 0; engcomp4ind < PVPLAYERCONFIG_PRODINFO_NUMKEYS; ++engcomp4ind)
-                            {
-                                if (pv_mime_strcmp(compstr, (char*)(PVPlayerConfigProdInfoKeys[engcomp4ind].iString)) >= 0)
-                                {
-                                    // Determine what is requested
-                                    PvmiKvpAttr reqattr = GetAttrTypeFromKeyString(aIdentifier);
-                                    if (reqattr == PVMI_KVPATTR_UNKNOWN)
-                                    {
-                                        // Default is current setting
-                                        reqattr = PVMI_KVPATTR_CUR;
-                                    }
-
-                                    // Return the requested info
-                                    PVMFStatus retval = DoGetPlayerProductInfoParameter(aParameters, aNumParamElements, engcomp4ind, reqattr);
-                                    if (retval != PVMFSuccess)
-                                    {
-                                        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::DoCapConfigGetParametersSync() Retrieving product info failed"));
-                                        return retval;
-                                    }
-
-                                    // Break out of the for(engcomp4ind) loop
-                                    break;
-                                }
-                            }
-                        }
-                        else
-                        {
-                            // Right now engine doesn't support more than 4 components
-                            // so error out
-                            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::DoCapConfigGetParametersSync() Unsupported key"));
-                            return PVMFErrArgument;
+                            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::DoCapConfigGetParametersSync() Retrieving player parameter failed"));
+                            return retval;
                         }
                     }
                     else
                     {
-                        if (compcount == 3)
-                        {
-                            // Determine what is requested
-                            PvmiKvpAttr reqattr = GetAttrTypeFromKeyString(aIdentifier);
-                            if (reqattr == PVMI_KVPATTR_UNKNOWN)
-                            {
-                                reqattr = PVMI_KVPATTR_CUR;
-                            }
-
-                            // Return the requested info
-                            PVMFStatus retval = DoGetPlayerParameter(aParameters, aNumParamElements, engcomp3ind, reqattr);
-                            if (retval != PVMFSuccess)
-                            {
-                                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::DoCapConfigGetParametersSync() Retrieving player parameter failed"));
-                                return retval;
-                            }
-                        }
-                        else
-                        {
-                            // Right now engine doesn't support more than 3 components
-                            // for this sub-key string so error out
-                            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::DoCapConfigGetParametersSync() Unsupported key"));
-                            return PVMFErrArgument;
-                        }
+                        // Right now engine doesn't support more than 3 components
+                        // for this sub-key string so error out
+                        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::DoCapConfigGetParametersSync() Unsupported key"));
+                        return PVMFErrArgument;
                     }
 
                     // Breakout of the for(engcomp3ind) loop
@@ -10816,21 +10733,9 @@ PVMFStatus PVPlayerEngine::DoCapConfigSetParameters(PVPlayerEngineCommand& aCmd,
                     return retval;
                 }
             }
-            else if (compcount == 4)
-            {
-                // Only product info keys have four components
-                // Verify and set the passed-in product info setting
-                PVMFStatus retval = DoVerifyAndSetPlayerProductInfoParameter(paramkvp[paramind], true);
-                if (retval != PVMFSuccess)
-                {
-                    *retkvp = &paramkvp[paramind];
-                    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::DoCapConfigSetParameters() Setting parameter %d failed", paramind));
-                    return retval;
-                }
-            }
             else
             {
-                // Do not support more than 4 components right now
+                // Do not support more than 3 components right now
                 *retkvp = &paramkvp[paramind];
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::DoCapConfigSetParameters() Unsupported key"));
                 return PVMFErrArgument;
@@ -10940,20 +10845,9 @@ PVMFStatus PVPlayerEngine::DoCapConfigVerifyParameters(PvmiKvp* aParameters, int
                     return retval;
                 }
             }
-            else if (compcount == 4)
-            {
-                // Only product info keys have four components
-                // Verify the passed-in product info setting
-                PVMFStatus retval = DoVerifyAndSetPlayerProductInfoParameter(aParameters[paramind], false);
-                if (retval != PVMFSuccess)
-                {
-                    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::DoCapConfigVerifyParameters() Verifying parameter %d failed", paramind));
-                    return retval;
-                }
-            }
             else
             {
-                // Do not support more than 4 components right now
+                // Do not support more than 3 components right now
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::DoCapConfigVerifyParameters() Unsupported key"));
                 return PVMFErrArgument;
             }
@@ -11169,34 +11063,6 @@ PVMFStatus PVPlayerEngine::DoGetPlayerParameter(PvmiKvp*& aParameters, int& aNum
             }
             break;
 
-        case ENDTIMECHECK_INTERVAL: // "endtimecheck_interval"
-            if (reqattr == PVMI_KVPATTR_CUR)
-            {
-                // Return current value
-                aParameters[0].value.uint32_value = iEndTimeCheckInterval;
-            }
-            else if (reqattr == PVMI_KVPATTR_DEF)
-            {
-                // Return default
-                aParameters[0].value.uint32_value = PVPLAYERENGINE_CONFIG_ENDTIMECHECKINTERVAL_DEF;
-            }
-            else
-            {
-                // Return capability
-                range_uint32* rui32 = (range_uint32*)oscl_malloc(sizeof(range_uint32));
-                if (rui32 == NULL)
-                {
-                    oscl_free(aParameters[0].key);
-                    oscl_free(aParameters);
-                    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::DoGetPlayerParameter() Memory allocation for range uint32 failed"));
-                    return PVMFErrNoMemory;
-                }
-                rui32->min = PVPLAYERENGINE_CONFIG_ENDTIMECHECKINTERVAL_MIN;
-                rui32->max = PVPLAYERENGINE_CONFIG_ENDTIMECHECKINTERVAL_MAX;
-                aParameters[0].value.key_specific_value = (void*)rui32;
-            }
-            break;
-
         case SEEKTOSYNCPOINT:   // "seektosyncpoint"
             if (reqattr == PVMI_KVPATTR_CUR)
             {
@@ -11314,62 +11180,6 @@ PVMFStatus PVPlayerEngine::DoGetPlayerParameter(PvmiKvp*& aParameters, int& aNum
         }
         break;
 
-        case NODECMD_TIMEOUT:   // "nodecmd_timeout"
-            if (reqattr == PVMI_KVPATTR_CUR)
-            {
-                // Return current value
-                aParameters[0].value.uint32_value = iNodeCmdTimeout;
-            }
-            else if (reqattr == PVMI_KVPATTR_DEF)
-            {
-                // Return default
-                aParameters[0].value.uint32_value = PVPLAYERENGINE_CONFIG_NODECMDTIMEOUT_DEF;
-            }
-            else
-            {
-                // Return capability
-                range_uint32* rui32 = (range_uint32*)oscl_malloc(sizeof(range_uint32));
-                if (rui32 == NULL)
-                {
-                    oscl_free(aParameters[0].key);
-                    oscl_free(aParameters);
-                    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::DoGetPlayerParameter() Memory allocation for range uint32 failed"));
-                    return PVMFErrNoMemory;
-                }
-                rui32->min = PVPLAYERENGINE_CONFIG_NODECMDTIMEOUT_MIN;
-                rui32->max = PVPLAYERENGINE_CONFIG_NODECMDTIMEOUT_MAX;
-                aParameters[0].value.key_specific_value = (void*)rui32;
-            }
-            break;
-
-        case NODEDATAQUEIUING_TIMEOUT:  // "nodedataqueuing_timeout"
-            if (reqattr == PVMI_KVPATTR_CUR)
-            {
-                // Return current value
-                aParameters[0].value.uint32_value = iNodeDataQueuingTimeout;
-            }
-            else if (reqattr == PVMI_KVPATTR_DEF)
-            {
-                // Return default
-                aParameters[0].value.uint32_value = PVPLAYERENGINE_CONFIG_NODEDATAQUEUINGTIMEOUT_DEF;
-            }
-            else
-            {
-                // Return capability
-                range_uint32* rui32 = (range_uint32*)oscl_malloc(sizeof(range_uint32));
-                if (rui32 == NULL)
-                {
-                    oscl_free(aParameters[0].key);
-                    oscl_free(aParameters);
-                    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::DoGetPlayerParameter() Memory allocation for range uint32"));
-                    return PVMFErrNoMemory;
-                }
-                rui32->min = PVPLAYERENGINE_CONFIG_NODEDATAQUEUINGTIMEOUT_MIN;
-                rui32->max = PVPLAYERENGINE_CONFIG_NODEDATAQUEUINGTIMEOUT_MAX;
-                aParameters[0].value.key_specific_value = (void*)rui32;
-            }
-            break;
-
         case PBPOS_ENABLE:  // "pbpos_enable"
             if (reqattr == PVMI_KVPATTR_CUR)
             {
@@ -11419,307 +11229,6 @@ PVMFStatus PVPlayerEngine::DoGetPlayerParameter(PvmiKvp*& aParameters, int& aNum
     return PVMFSuccess;
 }
 
-
-PVMFStatus PVPlayerEngine::DoGetPlayerProductInfoParameter(PvmiKvp*& aParameters, int& aNumParamElements, int32 aIndex, PvmiKvpAttr reqattr)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVPlayerEngine::DoGetPlayerProductInfoParameter() In"));
-
-    aNumParamElements = 0;
-
-    // Allocate memory for the KVP
-    aParameters = (PvmiKvp*)oscl_malloc(sizeof(PvmiKvp));
-    if (aParameters == NULL)
-    {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::DoGetPlayerProductInfoParameter() Memory allocation for KVP failed"));
-        return PVMFErrNoMemory;
-    }
-    oscl_memset(aParameters, 0, sizeof(PvmiKvp));
-    // Allocate memory for the key string in KVP
-    PvmiKeyType memblock = (PvmiKeyType)oscl_malloc(PVPLAYERCONFIG_KEYSTRING_SIZE * sizeof(char));
-    if (memblock == NULL)
-    {
-        oscl_free(aParameters);
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::DoGetPlayerProductInfoParameter() Memory allocation for key string"));
-        return PVMFErrNoMemory;
-    }
-    oscl_strset(memblock, 0, PVPLAYERCONFIG_KEYSTRING_SIZE*sizeof(char));
-    // Assign the key string buffer to KVP
-    aParameters[0].key = memblock;
-
-    // Copy the key string
-    oscl_strncat(aParameters[0].key, _STRLIT_CHAR("x-pvmf/player/productinfo/"), 26);
-    oscl_strncat(aParameters[0].key, PVPlayerConfigProdInfoKeys[aIndex].iString, oscl_strlen(PVPlayerConfigProdInfoKeys[aIndex].iString));
-    oscl_strncat(aParameters[0].key, _STRLIT_CHAR(";type=value;valtype=char*"), 25);
-    aParameters[0].key[PVPLAYERCONFIG_KEYSTRING_SIZE-1] = 0;
-
-    // Copy the requested info
-    switch (aIndex)
-    {
-        case PRODUCTNAME: // "productname"
-            if (reqattr == PVMI_KVPATTR_CUR)
-            {
-                // Return current value
-                // Allocate memory for the string
-                char* curstr = (char*)oscl_malloc(iProdInfoProdName.get_size() + 1);
-                if (curstr == NULL)
-                {
-                    oscl_free(aParameters[0].key);
-                    oscl_free(aParameters);
-                    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::DoGetPlayerProductInfoParameter() Memory allocation for char* string failed"));
-                    return PVMFErrNoMemory;
-                }
-                oscl_strset(curstr, 0, iProdInfoProdName.get_size() + 1);
-                // Copy and set
-                oscl_strncpy(curstr, iProdInfoProdName.get_cstr(), iProdInfoProdName.get_size());
-                aParameters[0].value.pChar_value = curstr;
-                aParameters[0].length = iProdInfoProdName.get_size();
-                aParameters[0].capacity = iProdInfoProdName.get_size() + 1;
-            }
-            else if (reqattr == PVMI_KVPATTR_DEF)
-            {
-                // Return default
-                // Allocate memory for the string
-                int32 defstrlen = oscl_strlen(PVPLAYERENGINE_PRODINFO_PRODNAME_STRING);
-                char* defstr = (char*)oscl_malloc((defstrlen + 1) * sizeof(char));
-                if (defstr == NULL)
-                {
-                    oscl_free(aParameters[0].key);
-                    oscl_free(aParameters);
-                    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::DoGetPlayerProductInfoParameter() Memory allocation for char* string failed"));
-                    return PVMFErrNoMemory;
-                }
-                // Copy and set
-                oscl_strncpy(defstr, _STRLIT_CHAR(PVPLAYERENGINE_PRODINFO_PRODNAME_STRING), defstrlen);
-                defstr[defstrlen] = 0;
-                aParameters[0].value.pChar_value = defstr;
-                aParameters[0].capacity = defstrlen + 1;
-                aParameters[0].length = defstrlen;
-            }
-            else
-            {
-                // Return capability
-                // Empty string
-                aParameters[0].value.pChar_value = NULL;
-                aParameters[0].capacity = 0;
-                aParameters[0].length = 0;
-            }
-            break;
-
-        case PARTNUMBER: // "partnumber"
-            if (reqattr == PVMI_KVPATTR_CUR)
-            {
-                // Return current value
-                // Allocate memory for the string
-                char* curstr = (char*)oscl_malloc(iProdInfoPartNum.get_size() + 1);
-                if (curstr == NULL)
-                {
-                    oscl_free(aParameters[0].key);
-                    oscl_free(aParameters);
-                    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::DoGetPlayerProductInfoParameter() Memory allocation for char* string failed"));
-                    return PVMFErrNoMemory;
-                }
-                oscl_strset(curstr, 0, iProdInfoPartNum.get_size() + 1);
-                // Copy and set
-                oscl_strncpy(curstr, iProdInfoPartNum.get_cstr(), iProdInfoPartNum.get_size());
-                aParameters[0].value.pChar_value = curstr;
-                aParameters[0].length = iProdInfoPartNum.get_size();
-                aParameters[0].capacity = iProdInfoPartNum.get_size() + 1;
-            }
-            else if (reqattr == PVMI_KVPATTR_DEF)
-            {
-                // Return default
-                // Allocate memory for the string
-                int32 defstrlen = oscl_strlen(PVPLAYERENGINE_PRODINFO_PARTNUM_STRING);
-                char* defstr = (char*)oscl_malloc((defstrlen + 1) * sizeof(char));
-                if (defstr == NULL)
-                {
-                    oscl_free(aParameters[0].key);
-                    oscl_free(aParameters);
-                    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::DoGetPlayerProductInfoParameter() Memory allocation for char* string failed"));
-                    return PVMFErrNoMemory;
-                }
-                // Copy and set
-                oscl_strncpy(defstr, _STRLIT_CHAR(PVPLAYERENGINE_PRODINFO_PARTNUM_STRING), defstrlen);
-                defstr[defstrlen] = 0;
-                aParameters[0].value.pChar_value = defstr;
-                aParameters[0].capacity = defstrlen + 1;
-                aParameters[0].length = defstrlen;
-            }
-            else
-            {
-                // Return capability
-                // Empty string
-                aParameters[0].value.pChar_value = NULL;
-                aParameters[0].capacity = 0;
-                aParameters[0].length = 0;
-            }
-            break;
-
-        case HARDWAREPLATFORM: // "hardwareplatform"
-            if (reqattr == PVMI_KVPATTR_CUR)
-            {
-                // Return current value
-                // Allocate memory for the string
-                char* curstr = (char*)oscl_malloc(iProdInfoHWPlatform.get_size() + 1);
-                if (curstr == NULL)
-                {
-                    oscl_free(aParameters[0].key);
-                    oscl_free(aParameters);
-                    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::DoGetPlayerProductInfoParameter() Memory allocation for char* string failed"));
-                    return PVMFErrNoMemory;
-                }
-                oscl_strset(curstr, 0, iProdInfoHWPlatform.get_size() + 1);
-                // Copy and set
-                oscl_strncpy(curstr, iProdInfoHWPlatform.get_cstr(), iProdInfoHWPlatform.get_size());
-                aParameters[0].value.pChar_value = curstr;
-                aParameters[0].length = iProdInfoHWPlatform.get_size();
-                aParameters[0].capacity = iProdInfoHWPlatform.get_size() + 1;
-            }
-            else if (reqattr == PVMI_KVPATTR_DEF)
-            {
-                // Return default
-                // Allocate memory for the string
-                int32 defstrlen = oscl_strlen(PVPLAYERENGINE_PRODINFO_HWPLATFORM_STRING);
-                char* defstr = (char*)oscl_malloc((defstrlen + 1) * sizeof(char));
-                if (defstr == NULL)
-                {
-                    oscl_free(aParameters[0].key);
-                    oscl_free(aParameters);
-                    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::DoGetPlayerProductInfoParameter() Memory allocation for char* string failed"));
-                    return PVMFErrNoMemory;
-                }
-                // Copy and set
-                oscl_strncpy(defstr, _STRLIT_CHAR(PVPLAYERENGINE_PRODINFO_HWPLATFORM_STRING), defstrlen);
-                defstr[defstrlen] = 0;
-                aParameters[0].value.pChar_value = defstr;
-                aParameters[0].capacity = defstrlen + 1;
-                aParameters[0].length = defstrlen;
-            }
-            else
-            {
-                // Return capability
-                // Empty string
-                aParameters[0].value.pChar_value = NULL;
-                aParameters[0].capacity = 0;
-                aParameters[0].length = 0;
-            }
-            break;
-
-        case SOFTWAREPLATFORM: // "softwareplatform"
-            if (reqattr == PVMI_KVPATTR_CUR)
-            {
-                // Return current value
-                // Allocate memory for the string
-                char* curstr = (char*)oscl_malloc(iProdInfoSWPlatform.get_size() + 1);
-                if (curstr == NULL)
-                {
-                    oscl_free(aParameters[0].key);
-                    oscl_free(aParameters);
-                    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::DoGetPlayerProductInfoParameter() Memory allocation for char* string failed"));
-                    return PVMFErrNoMemory;
-                }
-                oscl_strset(curstr, 0, iProdInfoSWPlatform.get_size() + 1);
-                // Copy and set
-                oscl_strncpy(curstr, iProdInfoSWPlatform.get_cstr(), iProdInfoSWPlatform.get_size());
-                aParameters[0].value.pChar_value = curstr;
-                aParameters[0].length = iProdInfoSWPlatform.get_size();
-                aParameters[0].capacity = iProdInfoSWPlatform.get_size() + 1;
-            }
-            else if (reqattr == PVMI_KVPATTR_DEF)
-            {
-                // Return default
-                // Allocate memory for the string
-                int32 defstrlen = oscl_strlen(PVPLAYERENGINE_PRODINFO_SWPLATFORM_STRING);
-                char* defstr = (char*)oscl_malloc((defstrlen + 1) * sizeof(char));
-                if (defstr == NULL)
-                {
-                    oscl_free(aParameters[0].key);
-                    oscl_free(aParameters);
-                    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::DoGetPlayerProductInfoParameter() Memory allocation for char* string failed"));
-                    return PVMFErrNoMemory;
-                }
-                // Copy and set
-                oscl_strncpy(defstr, _STRLIT_CHAR(PVPLAYERENGINE_PRODINFO_SWPLATFORM_STRING), defstrlen);
-                defstr[defstrlen] = 0;
-                aParameters[0].value.pChar_value = defstr;
-                aParameters[0].capacity = defstrlen + 1;
-                aParameters[0].length = defstrlen;
-            }
-            else
-            {
-                // Return capability
-                // Empty string
-                aParameters[0].value.pChar_value = NULL;
-                aParameters[0].capacity = 0;
-                aParameters[0].length = 0;
-            }
-            break;
-
-        case DEVICE: // "device"
-            if (reqattr == PVMI_KVPATTR_CUR)
-            {
-                // Return current value
-                // Allocate memory for the string
-                char* curstr = (char*)oscl_malloc(iProdInfoDevice.get_size() + 1);
-                if (curstr == NULL)
-                {
-                    oscl_free(aParameters[0].key);
-                    oscl_free(aParameters);
-                    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::DoGetPlayerProductInfoParameter() Memory allocation for char* string failed"));
-                    return PVMFErrNoMemory;
-                }
-                oscl_strset(curstr, 0, iProdInfoDevice.get_size() + 1);
-                // Copy and set
-                oscl_strncpy(curstr, iProdInfoPartNum.get_cstr(), iProdInfoDevice.get_size());
-                aParameters[0].value.pChar_value = curstr;
-                aParameters[0].length = iProdInfoDevice.get_size();
-                aParameters[0].capacity = iProdInfoDevice.get_size() + 1;
-            }
-            else if (reqattr == PVMI_KVPATTR_DEF)
-            {
-                // Return default
-                // Allocate memory for the string
-                int32 defstrlen = oscl_strlen(PVPLAYERENGINE_PRODINFO_DEVICE_STRING);
-                char* defstr = (char*)oscl_malloc((defstrlen + 1) * sizeof(char));
-                if (defstr == NULL)
-                {
-                    oscl_free(aParameters[0].key);
-                    oscl_free(aParameters);
-                    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::DoGetPlayerProductInfoParameter() Memory allocation for char* string failed"));
-                    return PVMFErrNoMemory;
-                }
-                // Copy and set
-                oscl_strncpy(defstr, _STRLIT_CHAR(PVPLAYERENGINE_PRODINFO_DEVICE_STRING), defstrlen);
-                defstr[defstrlen] = 0;
-                aParameters[0].value.pChar_value = defstr;
-                aParameters[0].capacity = defstrlen + 1;
-                aParameters[0].length = defstrlen;
-            }
-            else
-            {
-                // Return capability
-                // Empty string
-                aParameters[0].value.pChar_value = NULL;
-                aParameters[0].capacity = 0;
-                aParameters[0].length = 0;
-            }
-            break;
-
-        default:
-            // Invalid index
-            oscl_free(aParameters[0].key);
-            oscl_free(aParameters);
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::DoGetPlayerProductInfoParameter() Invalid index for product info"));
-            return PVMFErrArgument;
-    }
-
-    aNumParamElements = 1;
-
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVPlayerEngine::DoGetPlayerProductInfoParameter() Out"));
-    return PVMFSuccess;
-}
-
-
 PVMFStatus PVPlayerEngine::DoVerifyAndSetPlayerParameter(PvmiKvp& aParameter, bool aSetParam)
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVPlayerEngine::DoVerifyAndSetPlayerParameter() In"));
@@ -11746,9 +11255,9 @@ PVMFStatus PVPlayerEngine::DoVerifyAndSetPlayerParameter(PvmiKvp& aParameter, bo
         }
     }
 
-    if (engcomp3ind >= PVPLAYERCONFIG_BASE_NUMKEYS || engcomp3ind == PRODUCTINFO)
+    if (engcomp3ind >= PVPLAYERCONFIG_BASE_NUMKEYS)
     {
-        // Match couldn't be found or non-leaf node ("productinfo") specified
+        // Match couldn't be found
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::DoVerifyAndSetPlayerParameter() Unsupported key or non-leaf node"));
         return PVMFErrArgument;
     }
@@ -11816,21 +11325,6 @@ PVMFStatus PVPlayerEngine::DoVerifyAndSetPlayerParameter(PvmiKvp& aParameter, bo
             }
             break;
 
-        case ENDTIMECHECK_INTERVAL: // "endtimecheck_interval"
-            // Check if within range
-            if (aParameter.value.uint32_value < PVPLAYERENGINE_CONFIG_ENDTIMECHECKINTERVAL_MIN ||
-                    aParameter.value.uint32_value > PVPLAYERENGINE_CONFIG_ENDTIMECHECKINTERVAL_MAX)
-            {
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::DoVerifyAndSetPlayerParameter() Invalid value for endtimecheck_interval"));
-                return PVMFErrArgument;
-            }
-            // Change the config if to set
-            if (aSetParam)
-            {
-                iEndTimeCheckInterval = aParameter.value.uint32_value;
-            }
-            break;
-
         case SEEKTOSYNCPOINT: // "seektosyncpoint"
             // Nothing to validate since it is boolean
             // Change the config if to set
@@ -11892,36 +11386,6 @@ PVMFStatus PVPlayerEngine::DoVerifyAndSetPlayerParameter(PvmiKvp& aParameter, bo
         }
         break;
 
-        case NODECMD_TIMEOUT: // "nodecmd_timeout"
-            // Check if within range
-            if (aParameter.value.uint32_value < PVPLAYERENGINE_CONFIG_NODECMDTIMEOUT_MIN ||
-                    aParameter.value.uint32_value > PVPLAYERENGINE_CONFIG_NODECMDTIMEOUT_MAX)
-            {
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::DoVerifyAndSetPlayerParameter() Invalid value for ndoecmd_timeout"));
-                return PVMFErrArgument;
-            }
-            // Change the config if to set
-            if (aSetParam)
-            {
-                iNodeCmdTimeout = aParameter.value.uint32_value;
-            }
-            break;
-
-        case NODEDATAQUEIUING_TIMEOUT: // "nodedataqueuing_timeout"
-            // Check if within range
-            if (aParameter.value.uint32_value < PVPLAYERENGINE_CONFIG_NODEDATAQUEUINGTIMEOUT_MIN ||
-                    aParameter.value.uint32_value > PVPLAYERENGINE_CONFIG_NODEDATAQUEUINGTIMEOUT_MAX)
-            {
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::DoVerifyAndSetPlayerParameter() Invalid value for nodedataqueuing_timeout"));
-                return PVMFErrArgument;
-            }
-            // Change the config if to set
-            if (aSetParam)
-            {
-                iNodeDataQueuingTimeout = aParameter.value.uint32_value;
-            }
-            break;
-
         case PBPOS_ENABLE: // "pbpos_enable"
             // Nothing to validate since it is boolean
             // Change the config if to set
@@ -11963,128 +11427,6 @@ PVMFStatus PVPlayerEngine::DoVerifyAndSetPlayerParameter(PvmiKvp& aParameter, bo
     }
 
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVPlayerEngine::DoVerifyAndSetPlayerParameter() Out"));
-    return PVMFSuccess;
-}
-
-
-PVMFStatus PVPlayerEngine::DoVerifyAndSetPlayerProductInfoParameter(PvmiKvp& aParameter, bool aSetParam)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVPlayerEngine::DoVerifyAndSetPlayerProductInfoParameter() In"));
-
-    // Determine the valtype
-    PvmiKvpValueType keyvaltype = GetValTypeFromKeyString(aParameter.key);
-    if (keyvaltype == PVMI_KVPVALTYPE_UNKNOWN)
-    {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::DoVerifyAndSetPlayerProductInfoParameter() Valtype unknown"));
-        return PVMFErrArgument;
-    }
-    // Retrieve the 4th component from the key string
-    char* compstr = NULL;
-    pv_mime_string_extract_type(3, aParameter.key, compstr);
-
-    int32 engcomp4ind = 0;
-    for (engcomp4ind = 0; engcomp4ind < PVPLAYERCONFIG_PRODINFO_NUMKEYS; ++engcomp4ind)
-    {
-        // Go through each engine component string at 4th level
-        if (pv_mime_strcmp(compstr, (char*)(PVPlayerConfigProdInfoKeys[engcomp4ind].iString)) >= 0)
-        {
-            // Break out of the for loop
-            break;
-        }
-    }
-
-    if (engcomp4ind >= PVPLAYERCONFIG_PRODINFO_NUMKEYS)
-    {
-        // Match couldn't be found
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::DoVerifyAndSetPlayerProductInfoParameter() Unsupported key"));
-        return PVMFErrArgument;
-    }
-
-    // Verify the valtype
-    if (keyvaltype != PVPlayerConfigProdInfoKeys[engcomp4ind].iValueType)
-    {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::DoVerifyAndSetPlayerProductInfoParameter() Valtype does not match for key"));
-        return PVMFErrArgument;
-    }
-
-    switch (engcomp4ind)
-    {
-        case PRODUCTNAME: // "productname"
-            // Check if within range
-            if (aParameter.value.pChar_value == NULL)
-            {
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::DoVerifyAndSetPlayerProductInfoParameter() char* string for productname is NULL"));
-                return PVMFErrArgument;
-            }
-            // Change the config if to set
-            if (aSetParam)
-            {
-                iProdInfoProdName = aParameter.value.pChar_value;
-            }
-            break;
-
-        case PARTNUMBER: // "partnumber"
-            // Check if within range
-            if (aParameter.value.pChar_value == NULL)
-            {
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::DoVerifyAndSetPlayerProductInfoParameter() char* string for productname is NULL"));
-                return PVMFErrArgument;
-            }
-            // Change the config if to set
-            if (aSetParam)
-            {
-                iProdInfoPartNum = aParameter.value.pChar_value;
-            }
-            break;
-
-        case HARDWAREPLATFORM: // "hardwareplatform"
-            // Check if within range
-            if (aParameter.value.pChar_value == NULL)
-            {
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::DoVerifyAndSetPlayerProductInfoParameter() char* string for productname is NULL"));
-                return PVMFErrArgument;
-            }
-            // Change the config if to set
-            if (aSetParam)
-            {
-                iProdInfoHWPlatform = aParameter.value.pChar_value;
-            }
-            break;
-
-        case SOFTWAREPLATFORM: // "softwareplatform"
-            // Check if within range
-            if (aParameter.value.pChar_value == NULL)
-            {
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::DoVerifyAndSetPlayerProductInfoParameter() char* string for productname is NULL"));
-                return PVMFErrArgument;
-            }
-            // Change the config if to set
-            if (aSetParam)
-            {
-                iProdInfoSWPlatform = aParameter.value.pChar_value;
-            }
-            break;
-
-        case DEVICE: // "device"
-            // Check if within range
-            if (aParameter.value.pChar_value == NULL)
-            {
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::DoVerifyAndSetPlayerProductInfoParameter() char* string for productname is NULL"));
-                return PVMFErrArgument;
-            }
-            // Change the config if to set
-            if (aSetParam)
-            {
-                iProdInfoDevice = aParameter.value.pChar_value;
-            }
-            break;
-
-        default:
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::DoVerifyAndSetPlayerProductInfoParameter() Invalid index for product info"));
-            return PVMFErrArgument;
-    }
-
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVPlayerEngine::DoVerifyAndSetPlayerProductInfoParameter() Out"));
     return PVMFSuccess;
 }
 

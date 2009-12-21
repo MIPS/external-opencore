@@ -358,21 +358,6 @@ void pvplayer_async_test_downloadbase::Run()
                                  RunIfNotReady();
                                  return);
 
-            // download progress in percentage of time downloaded
-            if (iRepositionDuringDownload)
-            {
-                //Requesting buffering status in time percentage by setting key "x-pvmf/net/download-progress-info;valtype=char*"
-                //We will get notified about buffering status event in HandleInformationalEvent and issue seek requests based
-                //on this time percentage,
-
-                char tmp;
-                iKeyStringSetAsync = _STRLIT_CHAR("x-pvmf/net/download-progress-info;valtype=char*");
-                iKVPSetAsync.key = iKeyStringSetAsync.get_str();
-                iKVPSetAsync.value.pChar_value = &tmp;
-                iErrorKVP = NULL;
-                OSCL_TRY(error, iPlayerCapConfigIF->setParametersSync(NULL, &iKVPSetAsync, 1, iErrorKVP));
-                OSCL_FIRST_CATCH_ANY(error, PVPATB_TEST_IS_TRUE(false); iState = STATE_CLEANUPANDCOMPLETE; RunIfNotReady(); return);
-            }
             // set extension header
             // set arbitrary extension headers all together
             PvmiKvp kvpheader[3];

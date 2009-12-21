@@ -565,21 +565,18 @@ struct PVPlayerKeyStringData
 
 
 // Key string info at the base level ("x-pvmf/player/")
-#define PVPLAYERCONFIG_BASE_NUMKEYS 14
+#define PVPLAYERCONFIG_BASE_NUMKEYS 11
 const PVPlayerKeyStringData PVPlayerConfigBaseKeys[PVPLAYERCONFIG_BASE_NUMKEYS] =
 {
     {"pbpos_units", PVMI_KVPTYPE_VALUE, PVMI_KVPVALTYPE_CHARPTR},
     {"pbpos_interval", PVMI_KVPTYPE_VALUE, PVMI_KVPVALTYPE_UINT32},
-    {"endtimecheck_interval", PVMI_KVPTYPE_VALUE, PVMI_KVPVALTYPE_UINT32},
     {"seektosyncpoint", PVMI_KVPTYPE_VALUE, PVMI_KVPVALTYPE_BOOL},
     {"skiptorequestedpos", PVMI_KVPTYPE_VALUE, PVMI_KVPVALTYPE_BOOL},
     {"syncpointseekwindow", PVMI_KVPTYPE_VALUE, PVMI_KVPVALTYPE_UINT32},
     {"syncmargin_video", PVMI_KVPTYPE_VALUE, PVMI_KVPVALTYPE_RANGE_INT32},
     {"syncmargin_audio", PVMI_KVPTYPE_VALUE, PVMI_KVPVALTYPE_RANGE_INT32},
     {"syncmargin_text", PVMI_KVPTYPE_VALUE, PVMI_KVPVALTYPE_RANGE_INT32},
-    {"nodecmd_timeout", PVMI_KVPTYPE_VALUE, PVMI_KVPVALTYPE_UINT32},
     {"nodedataqueuing_timeout", PVMI_KVPTYPE_VALUE, PVMI_KVPVALTYPE_UINT32},
-    {"productinfo", PVMI_KVPTYPE_AGGREGATE, PVMI_KVPVALTYPE_KSV},
     {"pbpos_enable", PVMI_KVPTYPE_VALUE, PVMI_KVPVALTYPE_BOOL},
     {"silenceinsertion_enable", PVMI_KVPTYPE_VALUE, PVMI_KVPVALTYPE_BOOL}
 };
@@ -588,38 +585,15 @@ enum PlayerConfigBaseKeys_IndexMap
 {
     PBPOS_UNITS = 0,
     PBPOS_INTERVAL,
-    ENDTIMECHECK_INTERVAL,
     SEEKTOSYNCPOINT,
     SKIPTOREQUESTEDPOSITION,
     SYNCPOINTSEEKWINDOW,
     SYNCMARGIN_VIDEO,
     SYNCMARGIN_AUDIO,
     SYNCMARGIN_TEXT,
-    NODECMD_TIMEOUT,
     NODEDATAQUEIUING_TIMEOUT,
-    PRODUCTINFO,
     PBPOS_ENABLE,
     SILENCEINSERTION_ENABLE
-};
-
-// Key string info at the productinfo level ("x-pvmf/player/productinfo/")
-#define PVPLAYERCONFIG_PRODINFO_NUMKEYS 5
-const PVPlayerKeyStringData PVPlayerConfigProdInfoKeys[PVPLAYERCONFIG_PRODINFO_NUMKEYS] =
-{
-    {"productname", PVMI_KVPTYPE_VALUE, PVMI_KVPVALTYPE_CHARPTR},
-    {"partnumber", PVMI_KVPTYPE_VALUE, PVMI_KVPVALTYPE_CHARPTR},
-    {"hardwareplatform", PVMI_KVPTYPE_VALUE, PVMI_KVPVALTYPE_CHARPTR},
-    {"softwareplatform", PVMI_KVPTYPE_VALUE, PVMI_KVPVALTYPE_CHARPTR},
-    {"device", PVMI_KVPTYPE_VALUE, PVMI_KVPVALTYPE_CHARPTR}
-};
-
-enum ProductInfoKeys_IndexMap
-{
-    PRODUCTNAME = 0,
-    PARTNUMBER,
-    HARDWAREPLATFORM,
-    SOFTWAREPLATFORM,
-    DEVICE
 };
 
 // Player engine's timebase with rate change capability
@@ -1195,9 +1169,7 @@ class PVPlayerEngine
         PVMFStatus DoCapConfigSetParameters(PVPlayerEngineCommand& aCmd, bool aSyncCmd = false);
         PVMFStatus DoCapConfigVerifyParameters(PvmiKvp* aParameters, int aNumElements);
         PVMFStatus DoGetPlayerParameter(PvmiKvp*& aParameters, int& aNumParamElements, int32 aIndex, PvmiKvpAttr reqattr);
-        PVMFStatus DoGetPlayerProductInfoParameter(PvmiKvp*& aParameters, int& aNumParamElements, int32 aIndex, PvmiKvpAttr reqattr);
         PVMFStatus DoVerifyAndSetPlayerParameter(PvmiKvp& aParameter, bool aSetParam);
-        PVMFStatus DoVerifyAndSetPlayerProductInfoParameter(PvmiKvp& aParameter, bool aSetParam);
         PVMFStatus DoSetConfigSyncMargin(int32 aEarlyMargin, int32 aLateMargin, int32 aMediaType);
         int32 iCapConfigContext;
 

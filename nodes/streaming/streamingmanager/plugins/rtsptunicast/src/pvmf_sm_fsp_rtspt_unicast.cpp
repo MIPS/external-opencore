@@ -2128,86 +2128,6 @@ PVMFStatus PVMFSMRTSPTUnicastNode::GetConfigParameter(PvmiKvp*& aParameters,
             }
         }
         break;
-        case BASEKEY_JITTERBUFFER_NUMRESIZE:
-            if (reqattr == PVMI_KVPATTR_CUR)
-            {
-                // Return current value
-                uint32 numResize, resizeSize;
-                PVMFSMFSPChildNodeContainer* iJitterBufferNodeContainer =
-                    getChildNodeContainer(PVMF_SM_FSP_JITTER_BUFFER_NODE);
-                OSCL_ASSERT(iJitterBufferNodeContainer);
-                if (!iJitterBufferNodeContainer)
-                    return PVMFFailure;
-                PVMFJitterBufferExtensionInterface* jbExtIntf =
-                    (PVMFJitterBufferExtensionInterface*)iJitterBufferNodeContainer->iExtensions[0];
-                OSCL_ASSERT(jbExtIntf);
-                if (!jbExtIntf)
-                    return PVMFFailure;
-                jbExtIntf->GetSharedBufferResizeParams(numResize, resizeSize);
-                aParameters[0].value.uint32_value = numResize;
-            }
-            else if (reqattr == PVMI_KVPATTR_DEF)
-            {
-                // Return default
-                aParameters[0].value.uint32_value = DEFAULT_MAX_NUM_SOCKETMEMPOOL_RESIZES;
-            }
-            else
-            {
-                // Return capability
-                range_uint32* rui32 = (range_uint32*)oscl_malloc(sizeof(range_uint32));
-                if (rui32 == NULL)
-                {
-                    oscl_free(aParameters[0].key);
-                    oscl_free(aParameters);
-                    PVMF_SM_RTSPT_LOGERROR((0, "PVMFSMRTSPTUnicastNode::GetConfigParameter() "
-                                            "Memory allocation for range uint32 failed"));
-                    return PVMFErrNoMemory;
-                }
-                rui32->min = MIN_NUM_SOCKETMEMPOOL_RESIZES;
-                rui32->max = MAX_NUM_SOCKETMEMPOOL_RESIZES;
-                aParameters[0].value.key_specific_value = (void*)rui32;
-            }
-            break;
-        case BASEKEY_JITTERBUFFER_RESIZESIZE:
-            if (reqattr == PVMI_KVPATTR_CUR)
-            {
-                // Return current value
-                uint32 numResize, resizeSize;
-                PVMFSMFSPChildNodeContainer* iJitterBufferNodeContainer =
-                    getChildNodeContainer(PVMF_SM_FSP_JITTER_BUFFER_NODE);
-                OSCL_ASSERT(iJitterBufferNodeContainer);
-                if (!iJitterBufferNodeContainer)
-                    return PVMFFailure;
-                PVMFJitterBufferExtensionInterface* jbExtIntf =
-                    (PVMFJitterBufferExtensionInterface*)iJitterBufferNodeContainer->iExtensions[0];
-                OSCL_ASSERT(jbExtIntf);
-                if (!jbExtIntf)
-                    return PVMFFailure;
-                jbExtIntf->GetSharedBufferResizeParams(numResize, resizeSize);
-                aParameters[0].value.uint32_value = resizeSize;
-            }
-            else if (reqattr == PVMI_KVPATTR_DEF)
-            {
-                // Return default
-                aParameters[0].value.uint32_value = DEFAULT_MAX_SOCKETMEMPOOL_RESIZELEN_INPUT_PORT;
-            }
-            else
-            {
-                // Return capability
-                range_uint32* rui32 = (range_uint32*)oscl_malloc(sizeof(range_uint32));
-                if (rui32 == NULL)
-                {
-                    oscl_free(aParameters[0].key);
-                    oscl_free(aParameters);
-                    PVMF_SM_RTSPT_LOGERROR((0, "PVMFSMRTSPTUnicastNode::GetConfigParameter() "
-                                            "Memory allocation for range uint32 failed"));
-                    return PVMFErrNoMemory;
-                }
-                rui32->min = MIN_SOCKETMEMPOOL_RESIZELEN_INPUT_PORT;
-                rui32->max = MAX_SOCKETMEMPOOL_RESIZELEN_INPUT_PORT;
-                aParameters[0].value.key_specific_value = (void*)rui32;
-            }
-            break;
         case BASEKEY_JITTERBUFFER_MAX_INACTIVITY_DURATION:
             if (reqattr == PVMI_KVPATTR_CUR)
             {
@@ -2739,48 +2659,6 @@ PVMFStatus PVMFSMRTSPTUnicastNode::VerifyAndSetConfigParameter(int index, PvmiKv
             {
                 // pass the value on to the jitter buffer node
                 jbExtIntf->setJitterBufferRebufferingThresholdInMilliSeconds(aParameter.value.uint32_value);
-            }
-        }
-        break;
-        case BASEKEY_JITTERBUFFER_NUMRESIZE:
-        {
-            if (set)
-            {
-                // retrieve and update
-                uint32 numResize, resizeSize;
-                PVMFSMFSPChildNodeContainer* iJitterBufferNodeContainer =
-                    getChildNodeContainer(PVMF_SM_FSP_JITTER_BUFFER_NODE);
-                OSCL_ASSERT(iJitterBufferNodeContainer);
-                if (!iJitterBufferNodeContainer)
-                    return PVMFFailure;
-                PVMFJitterBufferExtensionInterface* jbExtIntf =
-                    (PVMFJitterBufferExtensionInterface*)iJitterBufferNodeContainer->iExtensions[0];
-                OSCL_ASSERT(jbExtIntf);
-                if (!jbExtIntf)
-                    return PVMFFailure;
-                jbExtIntf->GetSharedBufferResizeParams(numResize, resizeSize);
-                jbExtIntf->SetSharedBufferResizeParams(aParameter.value.uint32_value, resizeSize);
-            }
-        }
-        break;
-        case BASEKEY_JITTERBUFFER_RESIZESIZE:
-        {
-            if (set)
-            {
-                // retrieve and update
-                uint32 numResize, resizeSize;
-                PVMFSMFSPChildNodeContainer* iJitterBufferNodeContainer =
-                    getChildNodeContainer(PVMF_SM_FSP_JITTER_BUFFER_NODE);
-                OSCL_ASSERT(iJitterBufferNodeContainer);
-                if (!iJitterBufferNodeContainer)
-                    return PVMFFailure;
-                PVMFJitterBufferExtensionInterface* jbExtIntf =
-                    (PVMFJitterBufferExtensionInterface*)iJitterBufferNodeContainer->iExtensions[0];
-                OSCL_ASSERT(jbExtIntf);
-                if (!jbExtIntf)
-                    return PVMFFailure;
-                jbExtIntf->GetSharedBufferResizeParams(numResize, resizeSize);
-                jbExtIntf->SetSharedBufferResizeParams(numResize, aParameter.value.uint32_value);
             }
         }
         break;

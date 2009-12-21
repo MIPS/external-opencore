@@ -35,8 +35,6 @@ struct StreamingManagerKeyStringData
 static const StreamingManagerKeyStringData StreamingManagerConfig_BaseKeys[] =
 {
     {"delay", PVMI_KVPTYPE_VALUE, PVMI_KVPVALTYPE_UINT32},
-    {"jitterBufferNumResize", PVMI_KVPTYPE_VALUE, PVMI_KVPVALTYPE_UINT32},
-    {"jitterBufferResizeSize", PVMI_KVPTYPE_VALUE, PVMI_KVPVALTYPE_UINT32},
     {"jitterbuffer-inactivity-duration", PVMI_KVPTYPE_VALUE, PVMI_KVPVALTYPE_UINT32},
     {"user-agent", PVMI_KVPTYPE_VALUE, PVMI_KVPVALTYPE_WCHARPTR},
     {"keep-alive-interval", PVMI_KVPTYPE_VALUE, PVMI_KVPVALTYPE_UINT32},
@@ -54,8 +52,6 @@ static const uint StreamingManagerConfig_NumBaseKeys =
 enum BaseKeys_IndexMapType
 {
     BASEKEY_DELAY = 0,
-    BASEKEY_JITTERBUFFER_NUMRESIZE,
-    BASEKEY_JITTERBUFFER_RESIZESIZE,
     BASEKEY_JITTERBUFFER_MAX_INACTIVITY_DURATION,
     BASEKEY_SESSION_CONTROLLER_USER_AGENT,
     BASEKEY_SESSION_CONTROLLER_KEEP_ALIVE_INTERVAL,

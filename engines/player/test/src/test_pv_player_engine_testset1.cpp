@@ -15427,26 +15427,7 @@ void pvplayer_async_test_capconfigiftest::Run()
             querykey = _STRLIT_CHAR("x-pvmf/player;attr=cap");
             iPlayerCapConfigIF->getParametersSync(NULL, querykey.get_str(), retparam, retnumparam, NULL);
             // Just check the number of returned entries
-            if (retparam != NULL && retnumparam == 14)
-            {
-                PVPATB_TEST_IS_TRUE(true);
-
-                if (iPlayerCapConfigIF->releaseParameters(NULL, retparam, retnumparam) != PVMFSuccess)
-                {
-                    PVPATB_TEST_IS_TRUE(false);
-                }
-            }
-            else
-            {
-                PVPATB_TEST_IS_TRUE(false);
-            }
-
-            retparam = NULL;
-            retnumparam = 0;
-            querykey = _STRLIT_CHAR("x-pvmf/player/productinfo;attr=cap");
-            iPlayerCapConfigIF->getParametersSync(NULL, querykey.get_str(), retparam, retnumparam, NULL);
-            // Just check the number of returned entries
-            if (retparam != NULL && retnumparam == 5)
+            if (retparam != NULL && retnumparam == 11)
             {
                 PVPATB_TEST_IS_TRUE(true);
 
@@ -15461,23 +15442,17 @@ void pvplayer_async_test_capconfigiftest::Run()
             }
 
             // Set up KVPs for verify, set, and get
-            PvmiKvp paramkvp[3];
-            OSCL_StackString<64> paramkey1(_STRLIT_CHAR("x-pvmf/player/endtimecheck_interval;valtype=uint32"));
-            OSCL_StackString<64> paramkey2(_STRLIT_CHAR("x-pvmf/player/nodecmd_timeout;valtype=uint32"));
-            OSCL_StackString<64> paramkey3(_STRLIT_CHAR("x-pvmf/player/silenceinsertion_enable;valtype=bool"));
+            PvmiKvp paramkvp[1];
+            OSCL_StackString<64> paramkey1(_STRLIT_CHAR("x-pvmf/player/silenceinsertion_enable;valtype=bool"));
             paramkvp[0].key = paramkey1.get_str();
-            paramkvp[0].value.uint32_value = 2000;
-            paramkvp[1].key = paramkey2.get_str();
-            paramkvp[1].value.uint32_value = 4421;
-            paramkvp[2].key = paramkey3.get_str();
-            paramkvp[2].value.bool_value = false;
+            paramkvp[0].value.bool_value = false;
 
             // Verify the new settings
-            if (iPlayerCapConfigIF->verifyParametersSync(NULL, paramkvp, 3) == PVMFSuccess)
+            if (iPlayerCapConfigIF->verifyParametersSync(NULL, paramkvp, 1) == PVMFSuccess)
             {
                 // Set the new settings
                 iErrorKVP = NULL;
-                iPlayerCapConfigIF->setParametersSync(NULL, paramkvp, 3, iErrorKVP);
+                iPlayerCapConfigIF->setParametersSync(NULL, paramkvp, 1, iErrorKVP);
                 if (iErrorKVP == NULL)
                 {
                     // Check by calling get
@@ -15487,43 +15462,7 @@ void pvplayer_async_test_capconfigiftest::Run()
                     iPlayerCapConfigIF->getParametersSync(NULL, paramkey1.get_str(), retparam, retnumparam, NULL);
                     if (retparam != NULL && retnumparam == 1)
                     {
-                        PVPATB_TEST_IS_TRUE(retparam->value.uint32_value == paramkvp[0].value.uint32_value);
-
-                        if (iPlayerCapConfigIF->releaseParameters(NULL, retparam, retnumparam) != PVMFSuccess)
-                        {
-                            PVPATB_TEST_IS_TRUE(false);
-                        }
-                    }
-                    else
-                    {
-                        PVPATB_TEST_IS_TRUE(false);
-                    }
-
-                    retparam = NULL;
-                    retnumparam = 0;
-                    paramkey2 += _STRLIT_CHAR(";attr=cur");
-                    iPlayerCapConfigIF->getParametersSync(NULL, paramkey2.get_str(), retparam, retnumparam, NULL);
-                    if (retparam != NULL && retnumparam == 1)
-                    {
-                        PVPATB_TEST_IS_TRUE(retparam->value.uint32_value == paramkvp[1].value.uint32_value);
-
-                        if (iPlayerCapConfigIF->releaseParameters(NULL, retparam, retnumparam) != PVMFSuccess)
-                        {
-                            PVPATB_TEST_IS_TRUE(false);
-                        }
-                    }
-                    else
-                    {
-                        PVPATB_TEST_IS_TRUE(false);
-                    }
-
-                    retparam = NULL;
-                    retnumparam = 0;
-                    paramkey3 += _STRLIT_CHAR(";attr=cur");
-                    iPlayerCapConfigIF->getParametersSync(NULL, paramkey3.get_str(), retparam, retnumparam, NULL);
-                    if (retparam != NULL && retnumparam == 1)
-                    {
-                        PVPATB_TEST_IS_TRUE(retparam->value.bool_value == paramkvp[2].value.bool_value);
+                        PVPATB_TEST_IS_TRUE(retparam->value.bool_value == paramkvp[0].value.bool_value);
 
                         if (iPlayerCapConfigIF->releaseParameters(NULL, retparam, retnumparam) != PVMFSuccess)
                         {
@@ -15607,23 +15546,17 @@ void pvplayer_async_test_capconfigiftest::Run()
         case STATE_CAPCONFIG3:
         {
             // Set up KVPs for verify, set, and get
-            PvmiKvp paramkvp[3];
-            OSCL_StackString<64> paramkey1(_STRLIT_CHAR("x-pvmf/player/endtimecheck_interval;valtype=uint32"));
-            OSCL_StackString<64> paramkey2(_STRLIT_CHAR("x-pvmf/player/nodecmd_timeout;valtype=uint32"));
-            OSCL_StackString<64> paramkey3(_STRLIT_CHAR("x-pvmf/player/silenceinsertion_enable;valtype=bool"));
+            PvmiKvp paramkvp[1];
+            OSCL_StackString<64> paramkey1(_STRLIT_CHAR("x-pvmf/player/silenceinsertion_enable;valtype=bool"));
             paramkvp[0].key = paramkey1.get_str();
-            paramkvp[0].value.uint32_value = 2000;
-            paramkvp[1].key = paramkey2.get_str();
-            paramkvp[1].value.uint32_value = 4421;
-            paramkvp[2].key = paramkey3.get_str();
-            paramkvp[2].value.bool_value = false;
+            paramkvp[0].value.bool_value = false;
 
             // Verify the new settings
-            if (iPlayerCapConfigIF->verifyParametersSync(NULL, paramkvp, 3) == PVMFSuccess)
+            if (iPlayerCapConfigIF->verifyParametersSync(NULL, paramkvp, 1) == PVMFSuccess)
             {
                 // Set the new settings
                 iErrorKVP = NULL;
-                iPlayerCapConfigIF->setParametersSync(NULL, paramkvp, 3, iErrorKVP);
+                iPlayerCapConfigIF->setParametersSync(NULL, paramkvp, 1, iErrorKVP);
                 if (iErrorKVP == NULL)
                 {
                     // Check by calling get
@@ -15633,43 +15566,7 @@ void pvplayer_async_test_capconfigiftest::Run()
                     iPlayerCapConfigIF->getParametersSync(NULL, paramkey1.get_str(), retparam, retnumparam, NULL);
                     if (retparam != NULL && retnumparam == 1)
                     {
-                        PVPATB_TEST_IS_TRUE(retparam->value.uint32_value == paramkvp[0].value.uint32_value);
-
-                        if (iPlayerCapConfigIF->releaseParameters(NULL, retparam, retnumparam) != PVMFSuccess)
-                        {
-                            PVPATB_TEST_IS_TRUE(false);
-                        }
-                    }
-                    else
-                    {
-                        PVPATB_TEST_IS_TRUE(false);
-                    }
-
-                    retparam = NULL;
-                    retnumparam = 0;
-                    paramkey2 += _STRLIT_CHAR(";attr=cur");
-                    iPlayerCapConfigIF->getParametersSync(NULL, paramkey2.get_str(), retparam, retnumparam, NULL);
-                    if (retparam != NULL && retnumparam == 1)
-                    {
-                        PVPATB_TEST_IS_TRUE(retparam->value.uint32_value == paramkvp[1].value.uint32_value);
-
-                        if (iPlayerCapConfigIF->releaseParameters(NULL, retparam, retnumparam) != PVMFSuccess)
-                        {
-                            PVPATB_TEST_IS_TRUE(false);
-                        }
-                    }
-                    else
-                    {
-                        PVPATB_TEST_IS_TRUE(false);
-                    }
-
-                    retparam = NULL;
-                    retnumparam = 0;
-                    paramkey3 += _STRLIT_CHAR(";attr=cur");
-                    iPlayerCapConfigIF->getParametersSync(NULL, paramkey3.get_str(), retparam, retnumparam, NULL);
-                    if (retparam != NULL && retnumparam == 1)
-                    {
-                        PVPATB_TEST_IS_TRUE(retparam->value.bool_value == paramkvp[2].value.bool_value);
+                        PVPATB_TEST_IS_TRUE(retparam->value.bool_value == paramkvp[0].value.bool_value);
 
                         if (iPlayerCapConfigIF->releaseParameters(NULL, retparam, retnumparam) != PVMFSuccess)
                         {
