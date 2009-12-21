@@ -121,6 +121,7 @@ const uint32 PACKETVIDEO_FOURCC = FourCharConstToUint32('p', 'v', 'm', 'm');
 
 
 const uint32    MOVIE_ATOM = FourCharConstToUint32('m', 'o', 'o', 'v');
+const uint32    UUID_ATOM = FourCharConstToUint32('u', 'u', 'i', 'd');
 const uint32    MOVIE_HEADER_ATOM = FourCharConstToUint32('m', 'v', 'h', 'd');
 const uint32    TRACK_ATOM = FourCharConstToUint32('t', 'r', 'a', 'k');
 const uint32    ESD_ATOM = FourCharConstToUint32('e', 's', 'd', 's');

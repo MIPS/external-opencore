@@ -15,13 +15,29 @@
  * and limitations under the License.
  * -------------------------------------------------------------------
  */
-#ifndef PV_PLAYER_SDKINFO_H_INCLUDED
-#define PV_PLAYER_SDKINFO_H_INCLUDED
+/*
+    This PVA_FF_ExtendedAtom Class adds support for uuid atom types as per ISO 14496-12 spec.
+*/
 
-// This header file is automatically generated at build-time
-// *** OFFICIAL RELEASE INFO -- Will not auto update
+#ifndef __ExtendedAtom_H__
+#define __ExtendedAtom_H__
 
-#define PVPLAYER_ENGINE_SDKINFO_LABEL "1147770"
-#define PVPLAYER_ENGINE_SDKINFO_DATE 0x20091217
+#include "atom.h"
+#include "atomutils.h"
 
-#endif //PV_PLAYER_SDKINFO_H_INCLUDED
+#define EXTENDED_ATOM_UUID_LENGTH 16
+
+class PVA_FF_ExtendedAtom : public PVA_FF_Atom
+{
+    public:
+        PVA_FF_ExtendedAtom(uint8 aUuid[EXTENDED_ATOM_UUID_LENGTH]); // Constructor
+
+        virtual uint32 getDefaultSize() const;
+
+        virtual bool renderAtomBaseMembers(MP4_AUTHOR_FF_FILE_IO_WRAP *fp) const;
+
+    protected:
+        uint8 uuid[EXTENDED_ATOM_UUID_LENGTH];
+};
+
+#endif

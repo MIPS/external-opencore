@@ -15,13 +15,37 @@
  * and limitations under the License.
  * -------------------------------------------------------------------
  */
-#ifndef PV_PLAYER_SDKINFO_H_INCLUDED
-#define PV_PLAYER_SDKINFO_H_INCLUDED
 
-// This header file is automatically generated at build-time
-// *** OFFICIAL RELEASE INFO -- Will not auto update
+#define IMPLEMENT_WMFSetSessionAtom
 
-#define PVPLAYER_ENGINE_SDKINFO_LABEL "1147770"
-#define PVPLAYER_ENGINE_SDKINFO_DATE 0x20091217
+#include "extendedatom.h"
+#include "a_atomdefs.h"
 
-#endif //PV_PLAYER_SDKINFO_H_INCLUDED
+PVA_FF_ExtendedAtom::PVA_FF_ExtendedAtom(uint8 aUuid[EXTENDED_ATOM_UUID_LENGTH])
+        :   PVA_FF_Atom(UUID_ATOM)
+{
+    oscl_memcpy(uuid, aUuid, EXTENDED_ATOM_UUID_LENGTH);
+}
+
+
+bool
+PVA_FF_ExtendedAtom::renderAtomBaseMembers(MP4_AUTHOR_FF_FILE_IO_WRAP *fp) const
+{
+    // Render PVA_FF_Atom type and size
+    if (!PVA_FF_Atom::renderAtomBaseMembers(fp))
+    {
+        return false;
+    }
+
+    if (!PVA_FF_AtomUtils::renderByteData(fp, EXTENDED_ATOM_UUID_LENGTH, (uint8*)uuid))
+    {
+        return false;
+    }
+
+    return true;
+}
+
+uint32 PVA_FF_ExtendedAtom::getDefaultSize() const
+{
+    return PVA_FF_Atom::getDefaultSize() + EXTENDED_ATOM_UUID_LENGTH;
+}
