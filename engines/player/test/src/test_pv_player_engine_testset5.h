@@ -597,6 +597,8 @@ class pvplayer_async_test_ppb_base : public pvplayer_async_test_base
                 , iPlayUntilEOS(false)
                 , iShortPauseResume(false)
                 , iLongPauseResume(false)
+                , iSeekAfterResume(false)
+                , iHeadRequestEnable(false)
                 , iSeekAfterStart(false)
                 , iSeekBeforeStart(false)
                 , iTwice(false)
@@ -740,6 +742,18 @@ class pvplayer_async_test_ppb_base : public pvplayer_async_test_base
             iLongPauseResume = true;
         }
         bool iLongPauseResume;
+
+        void enableSeekAfterResume()
+        {
+            iSeekAfterResume = true;
+        }
+        bool iSeekAfterResume;
+
+        void enableHeadRequest()
+        {
+            iHeadRequestEnable = true;
+        }
+        bool iHeadRequestEnable;
 
         void enableSeekAfterStart()
         {

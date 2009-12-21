@@ -3358,7 +3358,10 @@ void pvplayer_async_test_ppb_base::Run()
             // enable or disable HEAD request
             iKeyStringSetAsync = _STRLIT_CHAR("x-pvmf/net/http-header-request-disabled;valtype=bool");
             iKVPSetAsync.key = iKeyStringSetAsync.get_str();
-            iKVPSetAsync.value.bool_value = true;
+            if (iHeadRequestEnable)
+                iKVPSetAsync.value.bool_value = false;
+            else
+                iKVPSetAsync.value.bool_value = true;
             iErrorKVP = NULL;
             OSCL_TRY(error, iPlayerCapConfigIF->setParametersSync(NULL, &iKVPSetAsync, 1, iErrorKVP));
             OSCL_FIRST_CATCH_ANY(error, PVPATB_TEST_IS_TRUE(false); iState = STATE_CLEANUPANDCOMPLETE; RunIfNotReady(); return);
@@ -4152,6 +4155,11 @@ void pvplayer_async_test_ppb_base::CommandCompleted(const PVCmdResponse& aRespon
                         // play for 10 more sec
                         RunIfNotReady(10*1000*1000);
                     }
+                }
+                else if (iSeekAfterResume)
+                {
+                    iState = STATE_SETPLAYBACKRANGE;
+                    RunIfNotReady(5*1000*1000);
                 }
                 else
                 {

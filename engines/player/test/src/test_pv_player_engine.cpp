@@ -3396,6 +3396,18 @@ void pvplayer_engine_test::test()
                 ((pvplayer_async_test_ppb_normal*)iCurrentTest)->iTestCaseName = _STRLIT_CHAR("MP4 Progressive Playback To EOS Stop and Play Again");
                 break;
 
+            case ProgPlaybackMP4StartPauseResumeSeekStopTest:
+                testparam.iFileType = PVMF_MIME_MPEG4FF;
+                iCurrentTest = new pvplayer_async_test_ppb_normal(testparam);
+                ((pvplayer_async_test_ppb_normal*)iCurrentTest)->enableShortPauseResume();
+                ((pvplayer_async_test_ppb_normal*)iCurrentTest)->enableSeekAfterResume();
+                ((pvplayer_async_test_ppb_normal*)iCurrentTest)->enableHeadRequest();
+                ((pvplayer_async_test_ppb_normal*)iCurrentTest)->useLongClip();
+                ((pvplayer_async_test_ppb_normal*)iCurrentTest)->iTestCaseName = _STRLIT_CHAR("MP4 Progressive Playback Start Pause Resume Seek Stop");
+                ((pvplayer_async_test_ppb_normal*)iCurrentTest)->SetVerifyNumBufferingCompleteEvent();
+                break;
+
+
             case ShoutcastPlayback5MinuteTest:
                 testparam.iFileType = PVMF_MIME_DATA_SOURCE_SHOUTCAST_URL;
                 iCurrentTest = new pvplayer_async_test_ppb_normal(testparam);

@@ -889,6 +889,13 @@ class pvplayer_engine_test : public test_case,
             * Output YUV and PCM data files from Playback.
             */
             ProgPlaybackMP4EOSStopPlayAgainTest, //161
+            /**
+            * @test (162) Progressive Playback Start-Pause-Resume-Seek-Stop Test
+            * Input http url to a progressively downloadable MP4 or MP3 file.
+            * Default url is an http url to an MP4 file.
+            * Output YUV and PCM data files from Playback.
+            */
+            ProgPlaybackMP4StartPauseResumeSeekStopTest, //162
 
             LastProgressivePlaybackTest, //placeholder
 
