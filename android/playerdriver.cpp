@@ -599,7 +599,7 @@ void PlayerDriver::handleInit(PlayerInit* command)
         PvmiKvp iKVPSetAsync;
         iKVPSetAsync.key = _STRLIT_CHAR("x-pvmf/net/user-agent;valtype=wchar*");
         // The CORE and OpenCORE versions are set and maintained by PV
-        OSCL_wHeapString<OsclMemAllocator> userAgent = _STRLIT_WCHAR("CORE/8.102.1.1 OpenCORE/2.07 (Linux;Android ");
+        OSCL_wHeapString<OsclMemAllocator> userAgent = _STRLIT_WCHAR("CORE/8.103.1.1 OpenCORE/2.07 (Linux;Android ");
 
 #if (PROPERTY_VALUE_MAX < 8)
 #error "PROPERTY_VALUE_MAX must be at least 8"
