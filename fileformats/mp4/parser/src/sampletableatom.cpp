@@ -2236,7 +2236,7 @@ int32 SampleTableAtom::getCttsOffsetForSampleNumberGet(uint32 sampleNumber)
     if (NULL != _pcompositionOffsetAtom)
     {
         MP4_ERROR_CODE errCode = _pcompositionOffsetAtom->GetTimeOffsetForSampleNumberGet(sampleNumber, tempCompositionOffset);
-        if (EVERYTHING_FINE != errCode)
+        if (EVERYTHING_FINE == errCode)
         {
             PVMF_MP4FFPARSER_LOGMEDIASAMPELSTATEVARIABLES((0, "SampleTableAtom::getCttsOffsetForSampleNumberGet- CTTS(%d) = %d", sampleNumber, tempCompositionOffset));
             return tempCompositionOffset;
@@ -2628,7 +2628,8 @@ SampleTableAtom::getNextNSamples(uint32 startSampleNum,
             currticks = OsclTickCount::TickCount();
             StartTime = OsclTickCount::TicksToMsec(currticks);
 #endif
-            pgau->info[s].ts = currTSBase + getCttsOffsetForSampleNumberGet(j);
+            pgau->info[s].ctts_offset = getCttsOffsetForSampleNumberGet(j);
+            pgau->info[s].ts = currTSBase + pgau->info[s].ctts_offset;
 #if (PVLOGGER_INST_LEVEL > PVLOGMSG_INST_LLDBG)
             currticks = OsclTickCount::TickCount();
             EndTime = OsclTickCount::TicksToMsec(currticks);
@@ -2786,7 +2787,6 @@ SampleTableAtom::getNextNSamples(uint32 startSampleNum,
             *n = 0;
             for (uint32 i = 0; i < pgau->numMediaSamples; i++)
             {
-                pgau->info[i].len         = 0;
                 pgau->info[i].ts          = 0;
                 pgau->info[i].sample_info = 0;
             }
@@ -3100,7 +3100,8 @@ SampleTableAtom::peekNextNSamples(uint32 startSampleNum,
         //SET THE META INFO HERE
         mInfo[i].len = tempSize;
         mInfo[i].ts_delta = tsDelta;
-        mInfo[i].ts = currTSBase + getCttsOffsetForSampleNumberPeek(sampleNum);
+        mInfo[i].ctts_offset = getCttsOffsetForSampleNumberPeek(sampleNum);
+        mInfo[i].ts = currTSBase + mInfo[i].ctts_offset;
         currTSBase += tsDelta;
 
         PVMF_MP4FFPARSER_LOGMEDIASAMPELSTATEVARIABLES((0, "SampleTableAtom::peekNextNSamples- mInfo[%d].len =%d", i, mInfo[i].len));
