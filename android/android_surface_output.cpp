@@ -621,13 +621,10 @@ PVMFCommandId AndroidSurfaceOutput::writeAsync(uint8 aFormatType, int32 aFormatI
                     }
                     else
                     {
-
-                        //printf("V WriteAsync { seq=%d, ts=%d }\n", data_header_info.seq_num, data_header_info.timestamp);
-
                         // Call playback to send data to IVA for Color Convert
                         status = writeFrameBuf(aData, aDataLen, data_header_info);
 
-                        PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_ERR,
+                        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
                                         (0, "AndroidSurfaceOutput::writeAsync: Playback Progress - frame %d", iFrameNumber++));
                     }
                     break;
