@@ -926,7 +926,8 @@ void TSC_324m::Handle(PS_ControlMsgHeader msg)
     /* Event Receive; a non blocking call */
     EventNo = Tsc_EventReceive(msg);
 
-    for (Cnt = 0; iDispatchTable[Cnt].Module != NULL; Cnt++)
+    Cnt = 0;
+    while (iDispatchTable[Cnt].Module)
     {
         if (iDispatchTable[Cnt].Status == iTerminalStatus && iDispatchTable[Cnt].Event == EventNo)
         {
@@ -935,6 +936,7 @@ void TSC_324m::Handle(PS_ControlMsgHeader msg)
             (this->*func_ptr)(msg);
             break;
         }
+        Cnt++;
     }
     if (!handled)
     {
