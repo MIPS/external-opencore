@@ -284,7 +284,7 @@ class MediaAtom : public Atom
             }
         }
 
-        MP4_ERROR_CODE getSampleSizeAt(int32 sampleNum, uint32 aSampleSize)
+        MP4_ERROR_CODE getSampleSizeAt(int32 sampleNum, uint32& aSampleSize)
         {
             if (_pmediaInformation != NULL)
             {
