@@ -1009,9 +1009,10 @@ PVMFStatus PVMFOMXAudioDecNode::HandlePortReEnable()
     }
 
     // if the callback that the port was re-enabled has not arrived yet, wait for it
-    // if it has arrived, it will set the state to either PortReconfig or to ReadyToDecode
+    // if it has arrived, it will set the state to either PortReconfig or to ReadyToDecode or InitDecoder (if more init buffers need to be sent)
     if (iProcessingState != EPVMFOMXBaseDecNodeProcessingState_PortReconfig &&
-            iProcessingState != EPVMFOMXBaseDecNodeProcessingState_ReadyToDecode)
+            iProcessingState != EPVMFOMXBaseDecNodeProcessingState_ReadyToDecode &&
+            iProcessingState != EPVMFOMXBaseDecNodeProcessingState_InitDecoder)
         iProcessingState = EPVMFOMXBaseDecNodeProcessingState_WaitForPortEnable;
 
     return PVMFSuccess; // allow rescheduling of the node
@@ -1851,14 +1852,14 @@ bool PVMFOMXAudioDecNode::GetSetCodecSpecificInfo()
 }
 
 /////////////////////////////////////////////////////////////////////////////
-bool PVMFOMXAudioDecNode::InitDecoder(PVMFSharedMediaDataPtr& DataIn)
+PVMFStatus PVMFOMXAudioDecNode::InitDecoder(PVMFSharedMediaDataPtr& DataIn)
 {
 
     OsclRefCounterMemFrag DataFrag;
     OsclRefCounterMemFrag refCtrMemFragOut;
     uint8* initbuffer = NULL;
     uint32 initbufsize = 0;
-
+    PVMFStatus status = PVMFSuccess;
 
     // NOTE: the component may not start decoding without providing the Output buffer to it,
     //      here, we're sending input/config buffers.
@@ -1876,7 +1877,7 @@ bool PVMFOMXAudioDecNode::InitDecoder(PVMFSharedMediaDataPtr& DataIn)
         {
             PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
                             (0, "PVMFOMXAudioDecNode::InitDecoder() Error - LATM config buffer not present"));
-            return false;
+            return PVMFFailure;
         }
     }
     else if (((PVMFOMXDecPort*)iInPort)->iFormat ==  PVMF_MIME_MPEG4_AUDIO ||
@@ -1904,7 +1905,7 @@ bool PVMFOMXAudioDecNode::InitDecoder(PVMFSharedMediaDataPtr& DataIn)
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
                                 (0, "PVMFOMXAudioDecNode::InitDecoder() Error in creating AAC Codec Config data"));
 
-                return false;
+                return PVMFFailure;
             }
 
             initbuffer  = &iAACConfigData[0];
@@ -1939,18 +1940,22 @@ bool PVMFOMXAudioDecNode::InitDecoder(PVMFSharedMediaDataPtr& DataIn)
     {
 
 
-        if (!SendConfigBufferToOMXComponent(initbuffer, initbufsize))
+        status = SendConfigBufferToOMXComponent(initbuffer, initbufsize);
+        if (status != PVMFSuccess)
         {
             PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
                             (0, "PVMFOMXAudioDecNode::InitDecoder() Error in processing config buffer"));
-            return false;
+            iIsThereMoreConfigDataToBeSent = true; // this means that we may not have buffers available to send,
+            return status;
         }
 
         // set the flag requiring config data processing by the component
         iIsConfigDataProcessingCompletionNeeded = true;
+        iConfigDataBuffersOutstanding++;
+        iIsThereMoreConfigDataToBeSent = false;
     }
 
-    return true;
+    return PVMFSuccess;
 }
 
 

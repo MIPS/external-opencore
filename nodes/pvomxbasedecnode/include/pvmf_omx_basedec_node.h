@@ -319,7 +319,7 @@ class PVMFOMXBaseDecNode: public PVMFNodeInterfaceImpl
         PVMFStatus HandleProcessingState();
         virtual PVMFStatus HandlePortReEnable() = 0;
 
-        virtual bool InitDecoder(PVMFSharedMediaDataPtr&) = 0;
+        virtual PVMFStatus InitDecoder(PVMFSharedMediaDataPtr&) = 0;
 
         OSCL_IMPORT_REF OsclAny* AllocateKVPKeyArray(int32& aLeaveCode, PvmiKvpValueType aValueType, int32 aNumElements);
         int32 PushKVPKey(OSCL_HeapString<OsclMemAllocator>& aString, PVMFMetadataList* aKeyList)
@@ -382,7 +382,7 @@ class PVMFOMXBaseDecNode: public PVMFNodeInterfaceImpl
         bool SendOutputBufferToOMXComponent();
         OSCL_IMPORT_REF bool SendInputBufferToOMXComponent();
 
-        OSCL_IMPORT_REF bool SendConfigBufferToOMXComponent(uint8 *initbuffer, uint32 initbufsize);
+        OSCL_IMPORT_REF PVMFStatus SendConfigBufferToOMXComponent(uint8 *initbuffer, uint32 initbufsize);
         bool SendEOSBufferToOMXComponent();
 
         bool HandleRepositioning(void);
@@ -480,8 +480,13 @@ class PVMFOMXBaseDecNode: public PVMFNodeInterfaceImpl
         bool iDoNotSaveInputBuffersFlag;
 
         // flag that requires the component to process config data (and report port settings changed event)
-        // or return the config buffer before we dequeue any other data (BOS, EOS etc.)
+        // or return the config buffer before we can dequeue BOS - which can cause a omx port flush
+        // and flush out the config data from the component.
         bool iIsConfigDataProcessingCompletionNeeded;
+        bool iIsThereMoreConfigDataToBeSent;
+        uint32 iConfigDataBytesProcessed; // variable that is used in case SPS/PPS NALs cannot be sent in one shot due to lack of buffers
+        uint32 iConfigDataBuffersOutstanding; // variable to keep track of number of config buffers (to finally resume normal processing once all config buffers come back)
+
 
         // flag to prevent freeing buffers twice
         bool iInputBuffersFreed;

@@ -493,9 +493,10 @@ PVMFStatus PVMFOMXVideoDecNode::HandlePortReEnable()
     }
 
     // if the callback that the port was re-enabled has not arrived yet, wait for it
-    // if it has arrived, it will set the state to either PortReconfig or to ReadyToDecode
+    // if it has arrived, it will set the state to either PortReconfig or to ReadyToDecode or InitDecoder (if more init buffers need to be sent)
     if (iProcessingState != EPVMFOMXBaseDecNodeProcessingState_PortReconfig &&
-            iProcessingState != EPVMFOMXBaseDecNodeProcessingState_ReadyToDecode)
+            iProcessingState != EPVMFOMXBaseDecNodeProcessingState_ReadyToDecode &&
+            iProcessingState != EPVMFOMXBaseDecNodeProcessingState_InitDecoder)
         iProcessingState = EPVMFOMXBaseDecNodeProcessingState_WaitForPortEnable;
 
     return PVMFSuccess; // allow rescheduling of the node
@@ -1120,22 +1121,21 @@ bool PVMFOMXVideoDecNode::NegotiateComponentParameters(OMX_PTR aOutputParameters
 
 
 /////////////////////////////////////////////////////////////////////////////
-bool PVMFOMXVideoDecNode::InitDecoder(PVMFSharedMediaDataPtr& DataIn)
+PVMFStatus PVMFOMXVideoDecNode::InitDecoder(PVMFSharedMediaDataPtr& DataIn)
 {
     OSCL_UNUSED_ARG(DataIn);
 
-    uint32 length = 0, size = 0;
+    uint32 nal_length = 0, size = 0;
     uint8 *tmp_ptr;
     PVMFFormatType Format = PVMF_MIME_FORMAT_UNKNOWN;
-
-    OsclRefCounterMemFrag DataFrag;
-    OsclRefCounterMemFrag refCtrMemFragOut;
+    PVMFStatus status = PVMFSuccess;
+    uint8* initbuffer = ((PVMFOMXDecPort*)iInPort)->getTrackConfig();
+    int32 initbufsize = (int32)((PVMFOMXDecPort*)iInPort)->getTrackConfigSize();
 
 
 
     // NOTE: the component may not start decoding without providing the Output buffer to it,
-    //      here, we're sending input/config buffers.
-    //      Then, we'll go to ReadyToDecode state and send output as well
+    //      here, we're sending input/config buffers. Output buffers are sent as well outside this method.
 
     if (iInPort != NULL)
     {
@@ -1144,77 +1144,97 @@ bool PVMFOMXVideoDecNode::InitDecoder(PVMFSharedMediaDataPtr& DataIn)
     if (Format == PVMF_MIME_H264_VIDEO ||
             Format == PVMF_MIME_H264_VIDEO_MP4)
     {
-        uint8* initbuffer = ((PVMFOMXDecPort*)iInPort)->getTrackConfig();
-        int32 initbufsize = (int32)((PVMFOMXDecPort*)iInPort)->getTrackConfigSize();
 
         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFOMXVideoDecNode::InitDecoder() for H264 Decoder. Initialization data Size %d.", initbufsize));
 
-        if (initbufsize > 0)
+        if ((initbufsize > 0) && (iConfigDataBytesProcessed < (uint8)initbufsize))
         {
 
+
+            // this flag may be reset right away, but we may end-up running out of buffers
+            iIsThereMoreConfigDataToBeSent = true;
+
             // there may be more than 1 NAL in config info in format specific data memfragment (SPS, PPS)
-            tmp_ptr = initbuffer;
+            tmp_ptr = initbuffer + iConfigDataBytesProcessed;
             do
             {
-                length = (uint32)(((uint16)tmp_ptr[1] << 8) | tmp_ptr[0]);
-                size += (length + 2);
-                if (size > (uint8)initbufsize)
+                // config data for H264 through OMX dec node port is in format - 2 byte interleaved nal length
+                nal_length = (uint32)(((uint16)tmp_ptr[1] << 8) | tmp_ptr[0]);
+                tmp_ptr += 2; // skip 2 byte NAL length
+
+                // just to make sure we're not out of bounds
+                if ((nal_length + iConfigDataBytesProcessed + 2) > (uint8)initbufsize)
                     break;
-                tmp_ptr += 2;
 
-
-                if (!SendConfigBufferToOMXComponent(tmp_ptr, length))
+                status = SendConfigBufferToOMXComponent(tmp_ptr, nal_length);
+                if (status != PVMFSuccess)
                 {
                     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                                    (0, "PVMFOMXVideoDecNode::InitDecoder() Error in processing config buffer"));
-                    return false;
+                                    (0, "PVMFOMXVideoDecNode::InitDecoder() Cannot process config buffers - possibly out of input buffers due to large number of SPS or PPS NALs"));
+                    return status;
 
                 }
 
-                tmp_ptr += length;
+                // after at least one buffer is sent, set the flag requiring config data processing by the component
+                iIsConfigDataProcessingCompletionNeeded = true;
+
+                iConfigDataBuffersOutstanding++;
+                iConfigDataBytesProcessed += (nal_length + 2); // account for 2 byte NAL size
+                tmp_ptr += nal_length;
 
             }
-            while (size < (uint8)initbufsize);
+            while (iConfigDataBytesProcessed < (uint8)initbufsize);
 
-            // set the flag requiring config data processing by the component
-            iIsConfigDataProcessingCompletionNeeded = true;
+            // at this point, we've sent all there is to be sent
+            iIsThereMoreConfigDataToBeSent = false;
+
         }
     }
     else if (Format == PVMF_MIME_H264_VIDEO_RAW)
     {
-        uint8* initbuffer = ((PVMFOMXDecPort*)iInPort)->getTrackConfig();
-        int32 initbufsize = (int32)((PVMFOMXDecPort*)iInPort)->getTrackConfigSize();
 
         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFOMXVideoDecNode::InitDecoder() for H264 Decoder. Initialization data Size %d.", initbufsize));
 
-        if (initbufsize > 0)
+        if ((initbufsize > 0)  && (iConfigDataBytesProcessed < (uint8)initbufsize))
         {
+
+
+            // this flag may be reset right away, but we may end-up running out of buffers and come back here
+            iIsThereMoreConfigDataToBeSent = true;
+
             uint32 sc_size = 0;
 
             // there may be more than 1 NAL in config info in format specific data memfragment (SPS, PPS)
-            tmp_ptr = initbuffer;
-            size = initbufsize;
+            tmp_ptr = initbuffer + iConfigDataBytesProcessed;
+            size = initbufsize - iConfigDataBytesProcessed;
             do
             {
                 sc_size = (uint32)tmp_ptr;
-                length = GetNAL_OMXNode(&tmp_ptr, &size);
+                nal_length = GetNAL_OMXNode(&tmp_ptr, &size);
                 sc_size = (uint32)tmp_ptr - sc_size;
 
                 // send ptr to beginning of start code rather than beginning of NAL
-                if (!SendConfigBufferToOMXComponent(tmp_ptr - sc_size, length + sc_size))
+                status = SendConfigBufferToOMXComponent(tmp_ptr - sc_size, nal_length + sc_size);
+                if (status != PVMFSuccess)
                 {
                     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                                    (0, "PVMFOMXVideoDecNode::InitDecoder() Error in processing config buffer"));
-                    return false;
+                                    (0, "PVMFOMXVideoDecNode::InitDecoder() Problem in processing config buffer - possibly out of input buffers for SPS PPS NALs"));
+                    return status;
 
                 }
 
-                tmp_ptr += length;
+                // set the flag requiring config data processing by the component
+                iIsConfigDataProcessingCompletionNeeded = true;
+
+                iConfigDataBuffersOutstanding++;
+                tmp_ptr += nal_length;
+                iConfigDataBytesProcessed += (nal_length + sc_size);
             }
             while (size);
 
-            // set the flag requiring config data processing by the component
-            iIsConfigDataProcessingCompletionNeeded = true;
+            // at this point, we've sent all there is to be sent
+            iIsThereMoreConfigDataToBeSent = false;
+
         }
     }
     else if (Format == PVMF_MIME_M4V ||
@@ -1222,38 +1242,37 @@ bool PVMFOMXVideoDecNode::InitDecoder(PVMFSharedMediaDataPtr& DataIn)
              Format == PVMF_MIME_H2632000 ||
              Format == PVMF_MIME_REAL_VIDEO)
     {
-        uint8* initbuffer = ((PVMFOMXDecPort*)iInPort)->getTrackConfig();
-        int32 initbufsize = (int32)((PVMFOMXDecPort*)iInPort)->getTrackConfigSize();
 
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFOMXVideoDecNode::InitDecoder() for H263 Decoder. Initialization data Size %d.", initbufsize));
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFOMXVideoDecNode::InitDecoder() for MPEG4 Decoder. Initialization data Size %d.", initbufsize));
 
         // for H263, the initbufsize is 0, and initbuf= NULL. Config is done after 1st frame of data
         if (initbufsize > 0)
         {
 
-            if (!SendConfigBufferToOMXComponent(initbuffer, initbufsize))
+
+            status = SendConfigBufferToOMXComponent(initbuffer, initbufsize);
+            if (status != PVMFSuccess)
             {
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
                                 (0, "PVMFOMXVideoDecNode::InitDecoder() Error in processing config buffer"));
-                return false;
+                iIsThereMoreConfigDataToBeSent = true;
+                return status;
             }
+
+            iConfigDataBuffersOutstanding++;
             // set the flag requiring config data processing by the component
             iIsConfigDataProcessingCompletionNeeded = true;
+            // at this point, we've sent all there is to be sent
+            iIsThereMoreConfigDataToBeSent = false;
 
         }
     }
     else if (Format == PVMF_MIME_WMV)
     {
-        uint8* initbuffer = ((PVMFOMXDecPort*)iInPort)->getTrackConfig();
-        int32 initbufsize = (int32)((PVMFOMXDecPort*)iInPort)->getTrackConfigSize();
 
         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFOMXVideoDecNode::InitDecoder() for WMV Decoder. Initialization data Size %d.", initbufsize));
 
-        OMX_PARAM_COMPONENTROLETYPE RoleParam;
-
-        CONFIG_SIZE_AND_VERSION(RoleParam);
-
-        if (initbufsize > 0)
+        if ((initbufsize > 0)  && (iConfigDataBytesProcessed < (uint8)initbufsize))
         {
             if (iIsVC1)
             {
@@ -1261,22 +1280,29 @@ bool PVMFOMXVideoDecNode::InitDecoder(PVMFSharedMediaDataPtr& DataIn)
                 if (!ConvertASFConfigInfoToVC1AndSend(initbuffer, initbufsize))
                 {
                     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                                    (0, "PVMFOMXVideoDecNode::InitDecoder() Error in processing seq header"));
-                    return false;
+                                    (0, "PVMFOMXVideoDecNode::InitDecoder() Error in processing seq header for VC1"));
+                    return PVMFFailure;
                 }
+                // iConfigDataBuffersOutstanding was incremented inside the above method
             }
             else
             {
-                if (!SendConfigBufferToOMXComponent(initbuffer, initbufsize))
+                status = SendConfigBufferToOMXComponent(initbuffer, initbufsize);
+                if (status != PVMFSuccess)
                 {
                     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                                    (0, "PVMFOMXVideoDecNode::InitDecoder() Error in processing config buffer"));
-                    return false;
+                                    (0, "PVMFOMXVideoDecNode::InitDecoder() Error in processing config buffer for WMV"));
+
+                    iIsThereMoreConfigDataToBeSent = true;
+                    return status;
                 }
+                iConfigDataBuffersOutstanding++;
             }
 
             // set the flag requiring config data processing by the component
             iIsConfigDataProcessingCompletionNeeded = true;
+            // at this point, we've sent all there is to be sent
+            iIsThereMoreConfigDataToBeSent = false;
         }
     }
     else
@@ -1284,13 +1310,13 @@ bool PVMFOMXVideoDecNode::InitDecoder(PVMFSharedMediaDataPtr& DataIn)
         // Unknown codec type
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
                         (0, "PVMFOMXVideoDecNode::InitDecoder() Unknown codec type"));
-        return false;
+        return PVMFFailure;
     }
 
     //Varibles initialization
     //sendFsi = true;
 
-    return true;
+    return PVMFSuccess;
 }
 
 #define GetUnalignedDword( pb, dw ) \
@@ -1319,6 +1345,7 @@ bool PVMFOMXVideoDecNode::InitDecoder(PVMFSharedMediaDataPtr& DataIn)
 
 bool PVMFOMXVideoDecNode::ConvertASFConfigInfoToVC1AndSend(uint8* initbuffer, int32 initbufsize)
 {
+    PVMFStatus status = PVMFSuccess;
     uint8 *pData;
     uint32 dwdat;
     uint32 temp;
@@ -1369,12 +1396,16 @@ bool PVMFOMXVideoDecNode::ConvertASFConfigInfoToVC1AndSend(uint8* initbuffer, in
             vc1_buf[7] = hrd_rate; /* write STRUCT_B (HRD_RATE) */
             vc1_buf[8] = 0xFFFFFFFF; /* write STRUCT_B (FRAME_RATE)  unknown*/
 
-            if (!SendConfigBufferToOMXComponent((uint8*)(&vc1_buf[0]), 36))
+            status = SendConfigBufferToOMXComponent((uint8*)(&vc1_buf[0]), 36);
+            if (status != PVMFSuccess)
             {
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
                                 (0, "PVMFOMXVideoDecNode::ConvertASFConfigInfoToVC1AndSend() Error in processing config buffer"));
+                iIsThereMoreConfigDataToBeSent = true;
                 return false;
             }
+            iConfigDataBuffersOutstanding++;
+            iIsThereMoreConfigDataToBeSent = false;
 
         }
         break;
@@ -1399,12 +1430,15 @@ bool PVMFOMXVideoDecNode::ConvertASFConfigInfoToVC1AndSend(uint8* initbuffer, in
             if (size)
             {
                 /* send sequence start code */
-                if (!SendConfigBufferToOMXComponent(initbuffer + 52, size))
+                status = SendConfigBufferToOMXComponent(initbuffer + 52, size);
+                if (status != PVMFSuccess)
                 {
                     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
                                     (0, "PVMFOMXVideoDecNode::ConvertASFConfigInfoToVC1AndSend() Error in processing seq header"));
                     return false;
                 }
+                iConfigDataBuffersOutstanding++;
+
             }
             else
             {
@@ -1416,12 +1450,14 @@ bool PVMFOMXVideoDecNode::ConvertASFConfigInfoToVC1AndSend(uint8* initbuffer, in
             if (initbufsize - 52 - size) // size of entry point SC
             {
                 /* send entry point start code */
-                if (!SendConfigBufferToOMXComponent(initbuffer + 52 + size, initbufsize - 52 - size))
+                status = SendConfigBufferToOMXComponent(initbuffer + 52 + size, initbufsize - 52 - size);
+                if (status != PVMFSuccess)
                 {
                     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
                                     (0, "PVMFOMXVideoDecNode::ConvertASFConfigInfoToVC1AndSend() Error in processing seq header"));
                     return false;
                 }
+                iConfigDataBuffersOutstanding++;
             }
             else  // if not present, shall we generate it ?
             {

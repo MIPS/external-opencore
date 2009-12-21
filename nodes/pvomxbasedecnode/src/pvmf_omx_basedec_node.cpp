@@ -445,6 +445,9 @@ OSCL_EXPORT_REF PVMFOMXBaseDecNode::PVMFOMXBaseDecNode(int32 aPriority, const ch
     iDoNotSaveInputBuffersFlag = false;
 
     iIsConfigDataProcessingCompletionNeeded = false;
+    iIsThereMoreConfigDataToBeSent = false;
+    iConfigDataBytesProcessed = 0; // init this variable that may be needed for SPS/PPS processing
+    iConfigDataBuffersOutstanding = 0;
 
     iOutputBuffersFreed = true;// buffers have not been created yet, so they can be considered freed
     iInputBuffersFreed = true;
@@ -589,14 +592,12 @@ OSCL_EXPORT_REF void PVMFOMXBaseDecNode::Run()
         // However, do not accept any input if
         // a) EOS needs to be processed
         // b) if 1 BOS has been processed and repositioning request (port flush) has been sent already, or
-        // c) if we're waiting for the component to process config data
-        // d) if repositioning is in progress
+        // c) if repositioning is in progress
         // If any of the above conditions are met - potentially getting & processing another BOS or EOS may be problematic
         if (iInPort && (iInPort->IncomingMsgQueueSize() > 0) && (iDataIn.GetRep() == NULL) &&
                 (!iEndOfDataReached) &&
                 (!iDynamicReconfigInProgress) &&
-                (!iIsRepositioningRequestSentToComponent) &&
-                (!iIsConfigDataProcessingCompletionNeeded)
+                (!iIsRepositioningRequestSentToComponent)
            )
 
         {
@@ -626,6 +627,7 @@ OSCL_EXPORT_REF void PVMFOMXBaseDecNode::Run()
         }
         // If in init or ready to decode state, process data in the input port if there is input available and input buffers are present
         // (note: at EOS, iDataIn will not be available)
+        // Note: as long as there is more config data to be sent, iDataIn will be != NULL
 
         if ((iDataIn.GetRep() != NULL) ||
                 ((iNumOutstandingOutputBuffers < iNumOutputBuffers) &&
@@ -659,7 +661,6 @@ OSCL_EXPORT_REF void PVMFOMXBaseDecNode::Run()
             (((iInPort->IncomingMsgQueueSize() > 0) || (iDataIn.GetRep() != NULL)) && (iNumOutstandingInputBuffers < iNumInputBuffers))
             && (!iEndOfDataReached)
             && (iResetMsgSent == false)
-            && (!iIsConfigDataProcessingCompletionNeeded)
           );
 #if (PVLOGGER_INST_LEVEL >= PVLOGMSG_INST_PROF)
     uint32 endticks = OsclTickCount::TickCount();
@@ -996,24 +997,6 @@ PVMFStatus PVMFOMXBaseDecNode::HandleProcessingState()
             // do init only if input data is available
             if (iDataIn.GetRep() != NULL)
             {
-                if (!InitDecoder(iDataIn))
-                {
-                    // Decoder initialization failed. Fatal error
-                    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                                    (0, "%s::HandleProcessingState() Decoder initialization failed", iName.Str()));
-                    ReportErrorEvent(PVMFErrResourceConfiguration);
-                    ChangeNodeState(EPVMFNodeError);
-                    status = PVMFFailure;
-                    break;
-                }
-
-                // if a callback already happened, continue to decoding. If not, wait
-                // it is also possible that port settings changed event may occur.
-                //DV: temp
-                //if(iProcessingState != EPVMFOMXBaseDecNodeProcessingState_ReadyToDecode)
-                //  iProcessingState = EPVMFOMXBaseDecNodeProcessingState_WaitForInitCompletion;
-
-                iProcessingState = EPVMFOMXBaseDecNodeProcessingState_ReadyToDecode;
                 // send output buffers to enable the component to start processing
                 while (iNumOutstandingOutputBuffers < iNumOutputBuffers)
                 {
@@ -1023,6 +1006,41 @@ PVMFStatus PVMFOMXBaseDecNode::HandleProcessingState()
                         break;
 
                 }
+
+                // try to send config buffers to the component.
+                // this should succeed, but for a large number of SPS/PPS in AVC, we may
+                // run out of buffers and would need to try this several times.
+                status = InitDecoder(iDataIn);
+                if (status != PVMFSuccess)
+                {
+                    if (status != PVMFErrNoMemory)
+                    {
+                        // Decoder initialization failed. Fatal error
+                        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
+                                        (0, "%s::HandleProcessingState() Decoder initialization failed", iName.Str()));
+                        ReportErrorEvent(PVMFErrResourceConfiguration);
+                        ChangeNodeState(EPVMFNodeError);
+                        status = PVMFFailure;
+                        break;
+                    }
+                    else
+                    {
+                        // we just ran out of input buffers.
+                        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
+                                        (0, "%s::HandleProcessingState() Decoder initialization - ran out of input buffers. Continue when buffers are available", iName.Str()));
+                        status = PVMFPending;
+                        break;
+                    }
+                }
+
+                // if a callback already happened, continue to decoding. If not, wait
+                // it is also possible that port settings changed event may occur.
+                //DV: temp
+                //if(iProcessingState != EPVMFOMXBaseDecNodeProcessingState_ReadyToDecode)
+                //  iProcessingState = EPVMFOMXBaseDecNodeProcessingState_WaitForInitCompletion;
+
+                iProcessingState = EPVMFOMXBaseDecNodeProcessingState_ReadyToDecode;
+
                 // spin once to send output buffers
                 Reschedule();
                 status = PVMFSuccess; // allow rescheduling
@@ -2676,7 +2694,7 @@ OSCL_EXPORT_REF bool PVMFOMXBaseDecNode::AppendExtraDataToBuffer(InputBufCtrlStr
 }
 
 /////////////////////////////////////////////////////////////////////////////
-OSCL_EXPORT_REF bool PVMFOMXBaseDecNode::SendConfigBufferToOMXComponent(uint8 *initbuffer, uint32 initbufsize)
+OSCL_EXPORT_REF PVMFStatus PVMFOMXBaseDecNode::SendConfigBufferToOMXComponent(uint8 *initbuffer, uint32 initbufsize)
 
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
@@ -2693,9 +2711,10 @@ OSCL_EXPORT_REF bool PVMFOMXBaseDecNode::SendConfigBufferToOMXComponent(uint8 *i
     if (OsclErrNone != errcode)
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                        (0, "%s::SendConfigBufferToOMXComponent() Input buffer mempool problem -unexpected at init", iName.Str()));
+                        (0, "%s::SendConfigBufferToOMXComponent() Input buffer mempool out of buffers -unexpected at init - but possible for multiple SPS PPS NAL", iName.Str()));
+        // if this happens - we'll wait for buffers to come back and send more config data later
 
-        return false;
+        return PVMFErrNoMemory;
     }
 
     // Got a buffer OK
@@ -2715,7 +2734,7 @@ OSCL_EXPORT_REF bool PVMFOMXBaseDecNode::SendConfigBufferToOMXComponent(uint8 *i
     }
 
     if ((ii == iNumInputBuffers) || (input_buf == NULL))
-        return false;
+        return PVMFFailure; // something is wrong - this should not happen
 
     input_buf->pBufHdr->nFilledLen = 0; //init this to 0
 
@@ -2852,7 +2871,7 @@ OSCL_EXPORT_REF bool PVMFOMXBaseDecNode::SendConfigBufferToOMXComponent(uint8 *i
             PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
                             (0, "%s::SendConfigBufferToOMXComponent() Config buffer too large problem -unexpected at init", iName.Str()));
 
-            return false;
+            return PVMFFailure;
         }
 
     }
@@ -2888,7 +2907,7 @@ OSCL_EXPORT_REF bool PVMFOMXBaseDecNode::SendConfigBufferToOMXComponent(uint8 *i
 
     OMX_EmptyThisBuffer(iOMXDecoder, input_buf->pBufHdr);
 
-    return true;
+    return PVMFSuccess;
 
 }
 
@@ -3492,7 +3511,9 @@ OSCL_EXPORT_REF void PVMFOMXBaseDecNode::HandleComponentStateChange(OMX_U32 deco
             // reset the flag requiring config data processing by the component (even if it has been set previously) -
             // when we next send config data (if a data format requires it) - we may set this flag to true
             iIsConfigDataProcessingCompletionNeeded = false;
-
+            iIsThereMoreConfigDataToBeSent = false;
+            iConfigDataBuffersOutstanding = 0; // no need to keep track of this any more
+            iConfigDataBytesProcessed = 0;
 
             if (PVMF_GENERIC_NODE_PREPARE == iCurrentCommand.iCmd)
             {
@@ -3556,18 +3577,21 @@ OSCL_EXPORT_REF void PVMFOMXBaseDecNode::HandleComponentStateChange(OMX_U32 deco
 
             // if we are paused, we won't start until the node gets DoStart command.
             //  in this case, we are ready to start sending buffers
+            // if the processing state was not pausing, leave the state as it was (continue port reconfiguration after going out of pause)
+
             if (iProcessingState == EPVMFOMXBaseDecNodeProcessingState_Pausing)
+            {
                 iProcessingState = EPVMFOMXBaseDecNodeProcessingState_ReadyToDecode;
+                // we need to send more config buffers
+                if (iIsThereMoreConfigDataToBeSent)
+                {
+                    iProcessingState = EPVMFOMXBaseDecNodeProcessingState_InitDecoder;
+                }
+            }
 
             //  This state can be reached going from OMX_Executing-> OMX_Pause
             if (PVMF_GENERIC_NODE_PAUSE == iCurrentCommand.iCmd)
             {
-
-                // if we are paused, we won't start until the node gets DoStart command.
-                //  in this case, we are ready to start sending buffers
-                if (iProcessingState == EPVMFOMXBaseDecNodeProcessingState_Pausing)
-                    iProcessingState = EPVMFOMXBaseDecNodeProcessingState_ReadyToDecode;
-                // if the processing state was not pausing, leave the state as it was (continue port reconfiguration)
 
 
                 SetState(EPVMFNodePaused);
@@ -3587,9 +3611,16 @@ OSCL_EXPORT_REF void PVMFOMXBaseDecNode::HandleComponentStateChange(OMX_U32 deco
             //  this state can be reached only going from OMX_Idle ->OMX_Loaded (stopped to reset)
             //
 
+            // reset the flag requiring config data processing by the component (even if it has been set previously) -
+            // when we next send config data (if a data format requires it) - we may set this flag to true
+            iIsConfigDataProcessingCompletionNeeded = false;
+            iIsThereMoreConfigDataToBeSent = false;
+            iConfigDataBuffersOutstanding = 0; // no need to keep track of this any more
+            iConfigDataBytesProcessed = 0;
+
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                             (0, "%s::HandleComponentStateChange: OMX_StateLoaded reached", iName.Str()));
-            //Check if command's responce is pending
+            //Check if command's response is pending
             if (PVMF_GENERIC_NODE_RESET == iCurrentCommand.iCmd)
             {
 
@@ -3610,6 +3641,22 @@ OSCL_EXPORT_REF void PVMFOMXBaseDecNode::HandleComponentStateChange(OMX_U32 deco
 
                 // Reset the metadata key list
                 iAvailableMetadataKeys.clear();
+
+
+                iEndOfDataReached = false;
+                iIsEOSSentToComponent = false;
+                iIsEOSReceivedFromComponent = false;
+
+                if (iOMXComponentUsesFullAVCFrames)
+                {
+                    iNALCount = 0;
+                    oscl_memset(iNALSizeArray, 0, sizeof(uint32) * MAX_NAL_PER_FRAME); // 100 is max number of NALs
+                }
+
+                // reset dynamic port reconfig flags - no point continuing with port reconfig
+                // if we start again - we'll have to do prepare and send new config etc.
+                iSecondPortReportedChange = false;
+                iDynamicReconfigInProgress = false;
 
 
                 iProcessingState = EPVMFOMXBaseDecNodeProcessingState_Idle;
@@ -3737,11 +3784,20 @@ OMX_ERRORTYPE PVMFOMXBaseDecNode::EmptyBufferDoneProcessing(OMX_OUT OMX_HANDLETY
     // address of the mempool buffer (so that it can be released)
     InputBufCtrlStruct *pContext = (InputBufCtrlStruct *)(aBuffer->pAppPrivate);
 
-    // reset the flag requiring config data processing by the component
-    // getting even one input buffer back means that component has consumed config data if it were present
-    iIsConfigDataProcessingCompletionNeeded = false;
+    if (iConfigDataBuffersOutstanding > 0)
+    {
+        iConfigDataBuffersOutstanding--;
 
+        // it's possible there are many config buffers. We shouldn't re-enable processing until
+        // all config buffers have been sent and processed
+        if ((iConfigDataBuffersOutstanding == 0) && (!iIsThereMoreConfigDataToBeSent))
+        {
+            // reset the flag requiring config data processing by the component
+            iIsConfigDataProcessingCompletionNeeded = false;
+            iConfigDataBytesProcessed = 0;
 
+        }
+    }
 
     // if a buffer is not empty, log a msg, but release anyway
     if ((aBuffer->nFilledLen > 0) && (iDoNotSaveInputBuffersFlag == false))
@@ -4458,6 +4514,9 @@ OSCL_EXPORT_REF PVMFStatus PVMFOMXBaseDecNode::DoPrepare()
     // reset the flag requiring config data processing by the component (even if it has been set previously) -
     // when we send config data (if a data format requires it) - we may set this flag to true
     iIsConfigDataProcessingCompletionNeeded = false;
+    iIsThereMoreConfigDataToBeSent = false;
+    iConfigDataBuffersOutstanding = 0;
+    iConfigDataBytesProcessed = 0;
 
     if (status == OMX_TRUE)
     {
@@ -4768,7 +4827,8 @@ OSCL_EXPORT_REF PVMFStatus PVMFOMXBaseDecNode::DoStop()
         // prevent the node from sending more buffers etc.
         // if port reconfiguration is in process, let the state remain one of the port config states
         //  if there is a start command, we can do it seemlessly (by continuing the port reconfig)
-        if (iProcessingState == EPVMFOMXBaseDecNodeProcessingState_ReadyToDecode)
+        if ((iProcessingState == EPVMFOMXBaseDecNodeProcessingState_ReadyToDecode) ||
+                (iProcessingState == EPVMFOMXBaseDecNodeProcessingState_InitDecoder))
             iProcessingState = EPVMFOMXBaseDecNodeProcessingState_Stopping;
 
         // indicate that stop cmd was sent
@@ -4837,7 +4897,8 @@ OSCL_EXPORT_REF PVMFStatus PVMFOMXBaseDecNode::DoPause()
         // prevent the node from sending more buffers etc.
         // if port reconfiguration is in process, let the state remain one of the port config states
         //  if there is a start command, we can do it seemlessly (by continuing the port reconfig)
-        if (iProcessingState == EPVMFOMXBaseDecNodeProcessingState_ReadyToDecode)
+        if ((iProcessingState == EPVMFOMXBaseDecNodeProcessingState_ReadyToDecode) ||
+                (iProcessingState == EPVMFOMXBaseDecNodeProcessingState_InitDecoder))
             iProcessingState = EPVMFOMXBaseDecNodeProcessingState_Pausing;
 
         // indicate that pause cmd was sent
@@ -4941,6 +5002,12 @@ OSCL_EXPORT_REF PVMFStatus PVMFOMXBaseDecNode::DoReset()
 
                 // Reset the metadata key list
                 iAvailableMetadataKeys.clear();
+
+                // clear the flags requiring codec config processing completion
+                iIsConfigDataProcessingCompletionNeeded = false;
+                iIsThereMoreConfigDataToBeSent = false;
+                iConfigDataBytesProcessed = 0; // init this variable that may be needed for SPS/PPS processing
+                iConfigDataBuffersOutstanding = 0;
 
                 iEndOfDataReached = false;
                 iIsEOSSentToComponent = false;
@@ -5063,6 +5130,8 @@ OSCL_EXPORT_REF PVMFStatus PVMFOMXBaseDecNode::DoReset()
                 iEOCReceived = false;
                 iBOCReceived = false;
 
+
+
                 // also, perform Port deletion when the component replies with the command
                 // complete, not right here
             } // end of if(iResetMsgSent)
@@ -5128,7 +5197,8 @@ OSCL_EXPORT_REF PVMFStatus PVMFOMXBaseDecNode::DoReset()
                 // prevent the node from sending more buffers etc.
                 // if port reconfiguration is in process, let the state remain one of the port config states
                 //  if there is a start command, we can do it seemlessly (by continuing the port reconfig)
-                if (iProcessingState == EPVMFOMXBaseDecNodeProcessingState_ReadyToDecode)
+                if ((iProcessingState == EPVMFOMXBaseDecNodeProcessingState_ReadyToDecode) ||
+                        (iProcessingState == EPVMFOMXBaseDecNodeProcessingState_InitDecoder))
                     iProcessingState = EPVMFOMXBaseDecNodeProcessingState_Stopping;
             }
             return PVMFPending;
@@ -5158,6 +5228,12 @@ OSCL_EXPORT_REF PVMFStatus PVMFOMXBaseDecNode::DoReset()
     }
 
     iDataIn.Unbind();
+
+
+    iIsConfigDataProcessingCompletionNeeded = false;
+    iIsThereMoreConfigDataToBeSent = false;
+    iConfigDataBytesProcessed = 0; // init this variable that may be needed for SPS/PPS processing
+    iConfigDataBuffersOutstanding = 0;
 
 
     // Reset the metadata key list
@@ -5316,6 +5392,10 @@ OSCL_EXPORT_REF void PVMFOMXBaseDecNode::HandlePortActivity(const PVMFPortActivi
             if (iProcessingState == EPVMFOMXBaseDecNodeProcessingState_WaitForOutgoingQueue)
             {
                 iProcessingState = EPVMFOMXBaseDecNodeProcessingState_ReadyToDecode;
+                // if we need to complete sending config buffers
+                if (iIsThereMoreConfigDataToBeSent)
+                    iProcessingState = EPVMFOMXBaseDecNodeProcessingState_InitDecoder;
+
                 Reschedule();
             }
             break;
@@ -5427,6 +5507,13 @@ bool PVMFOMXBaseDecNode::HandleRepositioning()
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                     (0, "%s::HandleRepositioning() IN", iName.Str()));
 
+
+    if (iIsConfigDataProcessingCompletionNeeded)
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                        (0, "%s::HandleRepositioning() Cannot perform repositioning until component processes the config data", iName.Str()));
+        return false;
+    }
 
     // 1) Send Flush command to component for both input and output ports
     // 2) "Wait" until component flushes both ports
@@ -5786,6 +5873,10 @@ OMX_ERRORTYPE PVMFOMXBaseDecNode::EventHandlerProcessing(OMX_OUT OMX_HANDLETYPE 
                         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
                                         (0, "%s::EventHandlerProcessing: OMX_CommandPortEnable - completed on port %d, resuming normal data flow", iName.Str(), aData2));
                         iProcessingState = EPVMFOMXBaseDecNodeProcessingState_ReadyToDecode;
+
+                        if (iIsThereMoreConfigDataToBeSent)
+                            iProcessingState = EPVMFOMXBaseDecNodeProcessingState_InitDecoder;
+
                         iDynamicReconfigInProgress = false;
                         // in case pause or stop command was sent to component
                         // change processing state (because the node might otherwise
@@ -5880,9 +5971,6 @@ OMX_ERRORTYPE PVMFOMXBaseDecNode::EventHandlerProcessing(OMX_OUT OMX_HANDLETYPE 
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                             (0, "%s::EventHandlerProcessing: OMX_EventPortSettingsChanged returned from OMX component", iName.Str()));
 
-            // reset the flag requiring config data processing by the component
-            // getting port settings changed event means that component must have consumed config data if it were present
-            iIsConfigDataProcessingCompletionNeeded = false;
 
             // Recompute iSamplesPerFrame
             iComputeSamplesPerFrame = true;
