@@ -101,15 +101,32 @@ class PVMFCPMPluginMeteringInterface : public PVInterface
             OsclAny* aContextData = NULL) = 0;
 
         /**
-         * Method to get a list of all MIDs in the current meter cert store.
+         * Method to get count of meter certificates present in the store.
          *
-         * @param [out] aMeterCertList: List of all MIDs.
-         * @param [out] aErrCode: Error code
+         * @param [out] aCount: Number of meter certs present.
+         * @param [out] aErrCode: WMDRM error code in case an error occurred.
          *
          * @returns: PVMFSuccess or an error.
          */
-        virtual PVMFStatus GetMeterCertMIDList(
-            Oscl_Vector<PVMFCPMMeterId, OsclMemAllocator>& aMeterCertList,
+        virtual PVMFStatus GetMeterCertCount(
+            uint32& aCount
+            , uint32& errcode) = 0;
+
+        /**
+         * Method to get MID of a meter cert present in the store.
+         *
+         * @param [in] aIndex: Zero-based index of the desired meter cert.
+         *                     Meter cert count can be obtained using GetMeterCertCount().
+         *
+         * @param [out] aMID: MID of the meter cert at index aIndex.
+         *
+         * @param [out] errcode: error code in case of failure.
+         *
+         * @returns PVMFSuccess or an error.
+         */
+        virtual PVMFStatus GetMeterCertID(
+            uint32 aIndex,
+            PVMFCPMMeterId &aMID,
             uint32& aErrCode) = 0;
 
         /**
