@@ -171,6 +171,13 @@ Y1VY0U=n
 Y0VY1U=n
 
 
+#
+# choose the RGB format
+#
+CC_RGB=y
+CC_BGR=n
+
+
 
 
 #

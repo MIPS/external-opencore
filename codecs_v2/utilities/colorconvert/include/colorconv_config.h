@@ -19,17 +19,27 @@
 #ifndef COLORCONV_CONFIG_H_INCLUDED
 #define COLORCONV_CONFIG_H_INCLUDED
 
+#ifndef OSCL_BASE_H_INCLUDED
+#include "oscl_base.h"
+#endif
+
 /** For scaling support, define CCSCALING to 1, else set it to 0 */
 #define CCSCALING   1
 
 /** For rotation support, define CCROTATE to 1, else set it to 0  */
 #define CCROTATE    1
 
-/** To specify RGB format. define RGB_FORMAT to 1. For, BGR format, set it to 0 */
-#define RGB_FORMAT  0
-
 /* If the target supports preload (PLD), define SUPPORT_ARM_PLD, else don't define it */
 //#define SUPPORT_ARM_PLD
+
+/** To specify RGB format. define RGB to 1. For, BGR format, define BGR to 1 */
+
+#if CC_RGB
+#define RGB_FORMAT  1
+#endif
+#if CC_BGR
+#define RGB_FORMAT  0
+#endif
 
 /********************************************************************************************
  For YUV422 to YUV420 conversion, the Input YUV422 data can be in three forms:-

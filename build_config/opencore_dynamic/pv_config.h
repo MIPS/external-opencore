@@ -188,6 +188,13 @@
 #define Y0VY1U 0
 
 
+//
+// choose the RGB format
+//
+#define CC_RGB 1
+#define CC_BGR 0
+
+
 
 
 //
@@ -1099,7 +1106,7 @@
 #define BUILD_RTMPSTREAMING_PLUGIN 0
 #define aacdecnode_m_lib ""
 #define pvmediainputnode_y_lib ""
-#define omx_aac_component_m_mk "/codecs_v2/omx/omx_aac/build/make_multithreaded"
+#define pvasfffrecognizer_m_lib ""
 #define omx_ra_component_m_mk ""
 #define BUILD_STATIC_MSHTTP_ASF 0
 #define pv_aac_dec_y_lib ""
@@ -1203,7 +1210,6 @@
 #define pvdownloadmanagernode_m_mk "/nodes/pvdownloadmanagernode/build/make"
 #define pviptransport_m_mk ""
 #define pvmediaoutputnode_y_mk ""
-#define pvjitterbufferrtp_m_mk "/nodes/streaming/jitterbuffernode/jitterbuffer/rtp/build/make"
 #define MODS_omx_aacdec_sharedlibrary "-lomx_sharedlibrary -lopencore_common"
 #define LIBS_packetsources_static "n"
 #define pvstreamingmanagernode_m_lib "-lpvstreamingmanagernode"
@@ -1345,7 +1351,7 @@
 #define SOLIBDIRS_pvasfcommon " "
 #define pvomxvideodecnode_y_mk ""
 #define pvmediadatastruct_y_mk ""
-#define pvasfffrecognizer_m_lib ""
+#define omx_aac_component_m_mk "/codecs_v2/omx/omx_aac/build/make_multithreaded"
 #define pvplayreadyplugin_m_mk ""
 #define protocolenginenode_download_common_mk "/nodes/pvprotocolenginenode/download_protocols/common/build/make"
 #define pvrmffrecognizer_y_mk ""
@@ -1585,6 +1591,7 @@
 #define pvflvffparsernode_m_lib ""
 #define pvmp4ffcomposernodeopencore_y_lib ""
 #define scsp_y_mk ""
+#define pvjitterbufferrtp_m_mk "/nodes/streaming/jitterbuffernode/jitterbuffer/rtp/build/make"
 #define pvplayreadyutility_m_mk ""
 #define pventropysrc_y_lib ""
 #define pvvideoencnode_y_mk ""
