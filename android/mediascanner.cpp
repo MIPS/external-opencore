@@ -559,37 +559,39 @@ status_t MediaScanner::processFile(const char *path, const char* mimeType, Media
     status_t result;
     int error = 0;
     InitializeForThread();
-    
+	
     OSCL_TRY(error,
-            client.setLocale(mLocale);
-            client.beginFile();
-            
-            //LOGD("processFile %s mimeType: %s\n", path, mimeType);
-            const char* extension = strrchr(path, '.');
+        client.setLocale(mLocale);
+        client.beginFile();
 
-            if (extension && strcasecmp(extension, ".mp3") == 0) {
-                result = parseMP3(path, client);
-            } else if (extension &&
-                (strcasecmp(extension, ".mp4") == 0 || strcasecmp(extension, ".m4a") == 0 ||
-                 strcasecmp(extension, ".3gp") == 0 || strcasecmp(extension, ".3gpp") == 0 ||
-                 strcasecmp(extension, ".3g2") == 0 || strcasecmp(extension, ".3gpp2") == 0)) {
-                result = parseMP4(path, client);
-            } else if (extension && strcasecmp(extension, ".ogg") == 0) {
-                result = parseOgg(path, client);
-            } else if (extension &&
-                ( strcasecmp(extension, ".mid") == 0 || strcasecmp(extension, ".smf") == 0
-                || strcasecmp(extension, ".imy") == 0)) {
-                result = parseMidi(path, client);
-            } else if (extension &&
-                (strcasecmp(extension, ".wma") == 0 || strcasecmp(extension, ".wmv") == 0 ||
-                     strcasecmp(extension, ".asf") == 0 )) { 
-                    result = parseASF(path, client);   
-            } else {
-                result = PVMFFailure;
-            }
+        //LOGD("processFile %s mimeType: %s\n", path, mimeType);
+        const char* extension = strrchr(path, '.');
+
+        if (extension && strcasecmp(extension, ".mp3") == 0) {
+            result = parseMP3(path, client);
+        } else if (extension &&
+            (strcasecmp(extension, ".mp4") == 0 || strcasecmp(extension, ".m4a") == 0 ||
+             strcasecmp(extension, ".3gp") == 0 || strcasecmp(extension, ".3gpp") == 0 ||
+             strcasecmp(extension, ".3g2") == 0 || strcasecmp(extension, ".3gpp2") == 0)) {
+            result = parseMP4(path, client);
+        } else if (extension && strcasecmp(extension, ".ogg") == 0) {
+            result = parseOgg(path, client);
+        } else if (extension &&
+            (strcasecmp(extension, ".mid") == 0 || strcasecmp(extension, ".smf") == 0 || 
+             strcasecmp(extension, ".imy") == 0)) {
+            result = parseMidi(path, client);
+        } else if (extension &&
+            (strcasecmp(extension, ".wma") == 0 || strcasecmp(extension, ".wmv") == 0 ||
+             strcasecmp(extension, ".asf") == 0 || strcasecmp(extension, ".aac") == 0 || 
+             strcasecmp(extension, ".amr") == 0 || strcasecmp(extension, ".wav") == 0 ||
+             strcasecmp(extension, ".awb") == 0)) { 
+            result = parseASF(path, client);   
+        } else {
+            result = PVMFFailure;
+        }
             client.endFile();
-            );
-    
+        );
+
     OSCL_FIRST_CATCH_ANY( error,LOGV("OSCL_LEAVE happened in processFile Exit with failure");return PVMFFailure);
     return result;
 }
