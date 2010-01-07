@@ -6,10 +6,6 @@ include $(MK)/clear.mk
 
 TARGET := omx_m4venc_component_lib
 
-
-
-OPTIMIZE_FOR_PERFORMANCE_OVER_SIZE := true
-
 XINCDIRS += \
   ../../../../../extern_libs_v2/khronos/openmax/include \
   ../../../../video/m4v_h263/enc/src \

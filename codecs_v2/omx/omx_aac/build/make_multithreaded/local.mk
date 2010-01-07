@@ -14,10 +14,6 @@ XINCDIRS += \
     ../../../../audio/aac/dec/src \
     ../../../../audio/aac/dec/include
 
-
-
-OPTIMIZE_FOR_PERFORMANCE_OVER_SIZE := true
-
 SRCDIR := ../../src
 INCSRCDIR := ../../include
 

@@ -6,8 +6,6 @@ include $(MK)/clear.mk
 
 TARGET := omx_mastercore_lib
 
-OPTIMIZE_FOR_PERFORMANCE_OVER_SIZE := true
-
 XINCDIRS += \
          ../../../omx_common/include \
 	 ../../../../../extern_libs_v2/khronos/openmax/include 

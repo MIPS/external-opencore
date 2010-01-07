@@ -6,6 +6,8 @@ include $(MK)/clear.mk
 
 TARGET := pvrgb12toyuv420
 
+OPTIMIZE_FOR_PERFORMANCE_OVER_SIZE := true
+
 SRCDIR := ../../src
 
 

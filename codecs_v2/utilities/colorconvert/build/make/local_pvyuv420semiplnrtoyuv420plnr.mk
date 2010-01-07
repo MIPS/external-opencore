@@ -6,6 +6,8 @@ include $(MK)/clear.mk
 
 TARGET := pvyuv420semiplnrtoyuv420plnr
 
+OPTIMIZE_FOR_PERFORMANCE_OVER_SIZE := true
+
 SRCDIR := ../../src
 
 

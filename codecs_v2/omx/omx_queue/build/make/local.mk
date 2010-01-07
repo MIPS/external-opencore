@@ -6,9 +6,6 @@ include $(MK)/clear.mk
 
 TARGET := omx_queue_lib
 
-
-OPTIMIZE_FOR_PERFORMANCE_OVER_SIZE := true
-
 XINCDIRS += \
   ../../../../../extern_libs_v2/khronos/openmax/include \
   ../../../../../pvmi/pvmf/include 

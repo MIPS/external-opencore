@@ -6,10 +6,6 @@ include $(MK)/clear.mk
 
 TARGET := omx_avcenc_component_lib
 
-
-
-OPTIMIZE_FOR_PERFORMANCE_OVER_SIZE := true
-
 XINCDIRS += \
   ../../../../../extern_libs_v2/khronos/openmax/include \
   ../../../../video/avc_h264/enc/src \
