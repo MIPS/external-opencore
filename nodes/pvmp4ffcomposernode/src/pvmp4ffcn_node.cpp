@@ -2391,7 +2391,7 @@ PVMFStatus PVMp4FFComposerNode::ProcessIncomingMsg(PVMFPortInterface* aPort)
             }
             //sometimes encoders / compressed media input components do not set this bit
             //so check anyway
-            if (IsRandomAccessPoint(port, pFrame))
+            else if (IsRandomAccessPoint(port, pFrame))
             {
                 iSyncSample = 1;
             }
