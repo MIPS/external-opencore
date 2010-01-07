@@ -3459,7 +3459,7 @@ PVMFStatus PVMFMP3FFParserNode::SetupParserObject()
         if (leavecode)
         {
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                            (0, "PVMFMP3FFParserNode::DoInit() Duration Scan is disabled. DurationCalcAO not created"));
+                            (0, "PVMFMP3FFParserNode::SetupParserObject() Duration Scan is disabled. DurationCalcAO not created"));
         }
 
         if (iDurationCalcAO)

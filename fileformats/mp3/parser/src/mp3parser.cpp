@@ -347,8 +347,8 @@ MP3Parser::MP3Parser(PVFile* aFileHandle)
     iTOCFilledCount = 0;
     iScanTimestamp = 0;
     iBinWidth = 0;
-    iMaxTOCFillStepsPerBin = 1; // This is factor which doubles after every compcation algorithm
-    // since during compaction the binWidth doubles. This factor will tell
+    iMaxTOCFillStepsPerBin = 1; // This is the factor which doubles after every compaction algorithm
+    // since after every compaction the binwidth doubles. This factor will tell
     // the parser when to fill the bin, which means after how many scans.
     // This starts with 1, meaning that before first compaction, for
     // every scan fill the bin.
@@ -1450,9 +1450,9 @@ int32 MP3Parser::ConvertSizeToTime(uint32 aFileSize, uint32& aNPTInMS)
         fileSize -= ID3_V1_TAG_SIZE;
     }
 
-    if (iAvgBitrateInbps > 0)
+    if (iAvgBitrateInbpsFromRandomScan > 0)
     {
-        duration = (uint32)((OsclFloat)(fileSize * 8000.00f / iAvgBitrateInbps));
+        duration = (uint32)((OsclFloat)(fileSize * 8000.00f / iAvgBitrateInbpsFromRandomScan));
         aNPTInMS = duration;
         return 0;
     }
@@ -1543,9 +1543,21 @@ uint32 MP3Parser::GetDuration(bool aMetadataDuration)
                 clipDuration = 0;
             }
         }
-        if (clipDuration == 0 && MP3_SUCCESS == EstimateDurationFromExternalFileSize(clipDuration))
+
+        if (iFileSizeFromExternalSource > 0)
         {
-            clipDuration = iClipDurationFromEstimation;
+            if ((clipDuration == 0) && (MP3_SUCCESS == GetDurationFromRandomScan(clipDuration)))
+            {
+                iClipDurationInMsec = clipDuration;
+            }
+            else if (clipDuration == 0 && MP3_SUCCESS == EstimateDurationFromExternalFileSize(clipDuration))
+            {
+                // This would mean that getting duration from RandomScan Failed
+                // Set the averageBitrate from Random scan to the AvgBitrate here since former
+                // will be used to calculate seek points during repostion.
+                iAvgBitrateInbpsFromRandomScan = iAvgBitrateInbps;
+                clipDuration = iClipDurationFromEstimation;
+            }
         }
     }
     iClipDurationInMsec = clipDuration;
@@ -2045,20 +2057,13 @@ uint32 MP3Parser::SeekPointFromTimestamp(uint32 &timestamp)
          * calculated on the basis of average bit rate
          **/
         int32 avgBR = 0;
-        if (fp->GetFileBufferingCapacity() > 0)
+        if (iDurationScanComplete && (iAvgBitrateInbpsFromCompleteScan > 0))
         {
-            avgBR = iAvgBitrateInbps;
+            avgBR = iAvgBitrateInbpsFromCompleteScan;
         }
         else
         {
-            if (iDurationScanComplete && (iAvgBitrateInbpsFromCompleteScan > 0))
-            {
-                avgBR = iAvgBitrateInbpsFromCompleteScan;
-            }
-            else
-            {
-                avgBR = iAvgBitrateInbpsFromRandomScan;
-            }
+            avgBR = iAvgBitrateInbpsFromRandomScan;
         }
         seekPoint = (uint32)((OsclFloat)(avgBR * (OsclFloat)timestamp) / 8000.0f);
     }
@@ -2917,7 +2922,7 @@ MP3ErrorType MP3Parser::EstimateDurationFromExternalFileSize(uint32 &aClipDurati
         return MP3_SUCCESS;
     }
 
-    if (iFileSizeFromExternalSource <= 0 || iMP3ConfigInfo.FrameLengthInBytes <= 0)
+    if (iMP3ConfigInfo.FrameLengthInBytes <= 0)
     {
         aClipDuration = 0;
         return MP3_ERROR_UNKNOWN;
@@ -3007,7 +3012,20 @@ MP3ErrorType MP3Parser::GetDurationFromRandomScan(uint32 &aClipDuration)
     status = ComputeDurationFromNRandomFrames(fp);
     if (MP3_ERROR_UNKNOWN != status)
     {
-        uint32 fileSz = iLocalFileSize - StartOffset;
+        uint32 fileSz = 0;
+        if (fp->GetFileBufferingCapacity() > 0)
+        {
+            fileSz = iFileSizeFromExternalSource - StartOffset;
+        }
+        else
+        {
+            fileSz = iLocalFileSize - StartOffset;
+        }
+        if (iId3TagParser.IsID3V1Present())
+        {
+            // id3v1.x tags are 128 bytes long
+            fileSz -= ID3_V1_TAG_SIZE;
+        }
         iClipDurationFromRandomScan = (uint32)(fileSz * 8000.00f / iAvgBitrateInbpsFromRandomScan);
         aClipDuration = iClipDurationFromRandomScan;
     }
@@ -3033,7 +3051,7 @@ MP3ErrorType MP3Parser::ComputeDurationFromNRandomFrames(PVFile * fpUsed, int32 
     int32 avgBitRate = 0;
     int32 framecount = 0;
     uint32 randomByteOffset = 0;
-    int32 audioDataSize = 0;
+    uint32 audioDataSize = 0;
     MP3HeaderType mp3HeaderInfo;
     MP3ConfigInfoType mp3ConfigInfo;
     MP3ErrorType err = MP3_SUCCESS;
@@ -3042,9 +3060,26 @@ MP3ErrorType MP3Parser::ComputeDurationFromNRandomFrames(PVFile * fpUsed, int32 
     oscl_memset(&mp3HeaderInfo, 0, sizeof(mp3HeaderInfo));
 
     // try to fetch file size
-    if (iLocalFileSizeSet)
+    if (fpUsed->GetFileBufferingCapacity() > 0)
+    {
+        bool ret = fpUsed->GetRemainingBytes(audioDataSize);
+        if (ret == false)
+        {
+            audioDataSize = iInitSearchFileSize;
+        }
+    }
+    else if (iLocalFileSizeSet)
     {
         audioDataSize = iLocalFileSize;
+    }
+    else
+    {
+        audioDataSize = iInitSearchFileSize;
+    }
+
+    if (audioDataSize == 0)
+    {
+        return MP3_ERROR_UNKNOWN;
     }
 
     audioDataSize -= StartOffset;
