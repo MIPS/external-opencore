@@ -14,7 +14,12 @@ The following are the steps involved:
 This will build all the required libraries in
     <opencore>/build_config/opencore_dynamic/build/installed_lib/linux
 and the executables in 
-    <opencore>/build_config/opencore_dynamic/build/bin/linux.
+    <opencore>/build_config/opencore_dynamic/build/bin/linux
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Q. How to build OpenCORE unit tests for Android emulator/device?
+A. export BUILD_PV_TEST_APPS=1 before building the SDK.
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -28,13 +33,18 @@ On host PC:
     make run_pe_test TEST_ARGS="<test_args>"
 
 To see a list of valid <test_args>:
-        make run_pe_test TEST_ARGS="-help"
+    make run_pe_test TEST_ARGS="-help"
 
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Q. How to run the pv2way engine unit tests?
+Q. How to build 2way for Android emulator/device?
+A. export BUILD_PV_2WAY=1 before building the SDK.
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Q. How to run the 2way engine unit tests?
 A. On Android emulator/device:
-    adb push <opencore>/extlibs/opencore/engines/2way/sample_app\data/ /sdcard
+    adb push <opencore>/engines/2way/sample_app/data/ /sdcard
     adb shell "cd /sdcard; pv2way_engine_test <test_args>"
 
 On host PC:
@@ -42,7 +52,7 @@ On host PC:
     make run_2way_test TEST_ARGS="<test_args>"
 
 To see a list of valid <test_args>:
-        make run_pe_test TEST_ARGS="-help"
+    make run_2way_test TEST_ARGS="-help"
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -56,6 +66,6 @@ On host PC:
     make run_ae_test TEST_ARGS="<test_args>"
 
 To see a list of valid <test_args>:
-        make run_pe_test TEST_ARGS="-help"
+    make run_ae_test TEST_ARGS="-help"
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
