@@ -32,8 +32,6 @@
 #include "osclconfig_time.h"
 #endif
 
-#define PV_USE_CLOCKGETTIME 1
-
 
 /************************
 * in each the following routines, there must be an valid clause
@@ -48,7 +46,6 @@
 
 OSCL_COND_EXPORT_REF OSCL_INLINE uint32 OsclTickCount::TickCount()
 {
-#if   PV_USE_CLOCKGETTIME
 #define ROLLBACK_THRESHOLD 0x80000000
     // lock this function against other threads changing the static variables
     // ignore return value and error code
@@ -78,47 +75,28 @@ OSCL_COND_EXPORT_REF OSCL_INLINE uint32 OsclTickCount::TickCount()
 
     return clk_val;
 
-#else
-#error No definition for OsclTickCount::TickCount
-#endif
 }
 
 // how many ticks per second
 OSCL_COND_EXPORT_REF OSCL_INLINE uint32 OsclTickCount::TickCountFrequency()
 {
-#if   PV_USE_CLOCKGETTIME
     return 1000;
-#else
-#error No definition for OsclTickCount::TickCountFrequency
-#endif
 }
 
 // how many microseconds per tick
 OSCL_COND_EXPORT_REF OSCL_INLINE uint32 OsclTickCount::TickCountPeriod()
 {
-#if   PV_USE_CLOCKGETTIME
     return 1000;
-#else
-#error No definition for OsclTickCount::TickCountPeriod
-#endif
 }
 
 OSCL_COND_EXPORT_REF OSCL_INLINE uint32 OsclTickCount::TicksToMsec(uint32 ticks)
 {
-#if   PV_USE_CLOCKGETTIME
     return ticks;
-#else
-#error No definition for OsclTickCount::TicksToMsec
-#endif
 }
 
 OSCL_COND_EXPORT_REF OSCL_INLINE uint32 OsclTickCount::MsecToTicks(uint32 msec)
 {
-#if   PV_USE_CLOCKGETTIME
     return msec;
-#else
-#error No definition for OsclTickCount::msectoticks
-#endif
 }
 
 
