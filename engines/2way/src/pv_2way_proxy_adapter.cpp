@@ -46,6 +46,13 @@ void PVCmnAsyncEventMsg::Set(const PVAsyncInformationalEvent& aEvent, PVEventTyp
 {
     iEventType = aType;
     iEventData = aPtr;
+
+    if (iEventExtInterface)
+    {
+        iEventExtInterface->removeRef();
+        iEventExtInterface = NULL;
+    }
+
     iEventExtInterface = aEvent.GetEventExtensionInterface();
     if (iEventExtInterface)
     {
