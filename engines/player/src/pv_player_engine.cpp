@@ -16171,20 +16171,25 @@ void PVPlayerEngine::HandleSinkNodeInfoEvent(const PVMFAsyncEvent& aEvent, int32
                 IssueSourceNodeAudioSinkEvent(aEvent);
             }
 
-            if ((iNumPendingSkipCompleteEvent == 0) && (iNumPVMFInfoStartOfDataPending == 0))
+            if (iNumPVMFInfoStartOfDataPending == 0)
             {
-                if (iWatchDogTimer->IsBusy())
+                iCurrentPlaybackClipId = clipId;
+                UpdateCurrentClipSourceDuration();
+                if (iNumPendingSkipCompleteEvent == 0)
                 {
-                    iWatchDogTimer->Cancel();
-                }
-                //check engine internal state here prior to starting the clock
-                //this is to make sure that we do not start the clock in case engine is still
-                //auto-paused (think usecase: auto-pause, setplaybackrange, auto-resume)
-                if (iState == PVP_ENGINE_STATE_STARTED)
-                {
-                    // start the clock only if engine is in started state
-                    StartPlaybackClock();
-                    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iReposLogger, PVLOGMSG_INFO, (0, "PVPlayerEngine::HandleSinkNodeInfoEvent() - PlayClock Started"));
+                    if (iWatchDogTimer->IsBusy())
+                    {
+                        iWatchDogTimer->Cancel();
+                    }
+                    //check engine internal state here prior to starting the clock
+                    //this is to make sure that we do not start the clock in case engine is still
+                    //auto-paused (think usecase: auto-pause, setplaybackrange, auto-resume)
+                    if (iState == PVP_ENGINE_STATE_STARTED)
+                    {
+                        // start the clock only if engine is in started state
+                        StartPlaybackClock();
+                        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iReposLogger, PVLOGMSG_INFO, (0, "PVPlayerEngine::HandleSinkNodeInfoEvent() - PlayClock Started"));
+                    }
                 }
             }
             //else it could mean duplicate or old PVMFInfoStartOfData, ignore both
@@ -17181,8 +17186,6 @@ void PVPlayerEngine::IssueSourceNodeAudioSinkEvent(const PVMFAsyncEvent& aEvent)
                 {
                     if (iNumPVMFInfoStartOfDataPending == 0)
                     {
-                        iCurrentPlaybackClipId = clipId;
-                        UpdateCurrentClipSourceDuration();
                         SendInformationalEvent(PVPlayerInfoClipPlaybackStarted, NULL, aEvent.GetEventData(), localbuffer, 8);
                     }
                 }
