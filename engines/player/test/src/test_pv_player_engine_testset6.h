@@ -507,6 +507,7 @@ class pvplayer_async_test_streaming_bitstream_switch: public pvplayer_async_test
                 , iMIOFileOutVideo(NULL)
                 , iMIOFileOutAudio(NULL)
                 , iCurrentCmdId(0)
+                , iSessionDuration(0)
                 , iStreamDataSource(NULL)
         {
             iVideoSinkFormatType = aVideoSinkFormat;

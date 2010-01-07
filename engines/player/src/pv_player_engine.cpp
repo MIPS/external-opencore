@@ -12144,6 +12144,7 @@ void PVPlayerEngine::HandleSourceNodeGetDurationValue(PVPlayerEngineContext& aNo
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_INFO, (0, "PVPlayerEngine::HandleSourceNodeGetDurationValue() Duration in millisec is %d",
                             iSourceDurationInMS));
             iSourceDurationAvailable = true;
+            UpdateSourceDurationVector((uint8*)&iClipsCompleted, iSourceDurationInMS);
         }
         break;
 

@@ -2544,7 +2544,7 @@ void pvplayer_async_test_streamingopenplaystop::PrintMetadataInfo()
 
         fprintf(iTestMsgOutputFile, "   Length:%d  Capacity:%d\n", iMetadataValueList[i].length, iMetadataValueList[i].capacity);
 
-        if ((oscl_strstr(iMetadataValueList[i].key, "duration")) && iSessionDuration == 0)
+        if ((oscl_strstr(iMetadataValueList[i].key, "duration;valtype=uint32")) && iSessionDuration == 0)
         {
             iSessionDuration = iMetadataValueList[i].value.uint32_value;
 
@@ -5355,7 +5355,7 @@ void pvplayer_async_test_streaming_bitstream_switch::PrintMetadataInfo()
 
         fprintf(iTestMsgOutputFile, "   Length:%d  Capacity:%d\n", iMetadataValueList[i].length, iMetadataValueList[i].capacity);
 
-        if ((oscl_strstr(iMetadataValueList[i].key, "duration")) && iSessionDuration == 0)
+        if ((oscl_strstr(iMetadataValueList[i].key, "duration;valtype=uint32")) && iSessionDuration == 0)
         {
             iSessionDuration = iMetadataValueList[i].value.uint32_value;
 
@@ -7003,7 +7003,7 @@ void pvplayer_async_test_dvbh_streamingopenplaystop::PrintMetadataInfo(void)
 
         fprintf(iTestMsgOutputFile, "   Length:%d  Capacity:%d\n", iMetadataValueList[i].length, iMetadataValueList[i].capacity);
 
-        if ((oscl_strstr(iMetadataValueList[i].key, "duration")) && iSessionDuration == 0)
+        if ((oscl_strstr(iMetadataValueList[i].key, "duration;valtype=uint32")) && iSessionDuration == 0)
         {
             iSessionDuration = iMetadataValueList[i].value.uint32_value;
 
@@ -8792,7 +8792,7 @@ void pvplayer_async_test_streamingopenplaystoppreparelaystop::PrintMetadataInfo(
 
         fprintf(iTestMsgOutputFile, "   Length:%d  Capacity:%d\n", iMetadataValueList[i].length, iMetadataValueList[i].capacity);
 
-        if ((oscl_strstr(iMetadataValueList[i].key, "duration")) && iSessionDuration == 0)
+        if ((oscl_strstr(iMetadataValueList[i].key, "duration;valtype=uint32")) && iSessionDuration == 0)
         {
             iSessionDuration = iMetadataValueList[i].value.uint32_value;
 
