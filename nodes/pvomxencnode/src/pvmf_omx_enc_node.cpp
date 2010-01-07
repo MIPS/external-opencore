@@ -5584,8 +5584,9 @@ OMX_ERRORTYPE PVMFOMXEncNode::FillBufferDoneProcAVC(OMX_OUT OMX_HANDLETYPE aComp
 
     uint32 bufLen = (uint32) aBuffer->nFilledLen;
 
-    // in case of avc mp4, need to save sps/pps sequences
-    if ((iOutFormat == PVMF_MIME_H264_VIDEO_MP4) && (!iSpsPpsSequenceOver))
+    // in case of avc mp4 and avc raw, need to save sps/pps sequences
+    if (((iOutFormat == PVMF_MIME_H264_VIDEO_MP4) || (iOutFormat == PVMF_MIME_H264_VIDEO_RAW))
+            && (!iSpsPpsSequenceOver))
     {
         /* iFirstNALStartCodeSize has been pre-calculated in CheckComponentCapabilities( ) such that
         it is set to 2 and 4 for iOMXComponentUsesInterleaved2BNALSizes and iOMXComponentUsesInterleaved4BNALSizes */
@@ -5609,42 +5610,71 @@ OMX_ERRORTYPE PVMFOMXEncNode::FillBufferDoneProcAVC(OMX_OUT OMX_HANDLETYPE aComp
 
         if (nal_type == 0x07) // SPS type NAL
         {
+            //Insert NAL start codes for SPS/PPS NAL's in iParamSet buffer
+
             // can the SPS fit into the buffer
-            if (bufLen <= (capacity - length))
+            if ((bufLen + 4) <= (capacity - length))
             {
-                iSPSs[iNumSPSs].ptr = destptr;
+                //iSPS pointer should not conatin the start code
+                iSPSs[iNumSPSs].ptr = destptr + 4;
                 iSPSs[iNumSPSs++].len = bufLen;
 
+                *destptr++ = 0x00;
+                *destptr++ = 0x00;
+                *destptr++ = 0x00;
+                *destptr++ = 0x01;
                 oscl_memcpy(destptr, pBufdata, bufLen); // copy SPS into iParamSet memfragment
-                length += bufLen;
+
+                length += bufLen + 4;
                 iParamSet.getMemFrag().len = length; // update length
             }
+            else
+            {
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                                (0, "PVMFOMXEncNode-%s::FillBufferDoneProcessing: Error No space left in iParamSet memfragment to copy SPS NAL - releasing the buffer", iNodeTypeId));
+            }
 
-
-            // release the OMX buffer
-            iOutBufMemoryPool->deallocate(pContext->pMemPoolEntry);
-            return OMX_ErrorNone;
+            //Do not return for h264 raw format, as we have to send sps/pps inband
+            if (iOutFormat == PVMF_MIME_H264_VIDEO_MP4)
+            {
+                // release the OMX buffer
+                iOutBufMemoryPool->deallocate(pContext->pMemPoolEntry);
+                return OMX_ErrorNone;
+            }
         }
         else if (nal_type == 0x08) // PPS type NAL
         {
+            //Insert NAL start codes for SPS/PPS NAL's in iParamSet buffer
 
             // can the PPS fit into the buffer?
-            if (bufLen <= (capacity - length))
+            if ((bufLen + 4) <= (capacity - length))
             {
-
-                iPPSs[iNumPPSs].ptr = destptr;
+                //iPPS pointer should not conatin the start code
+                iPPSs[iNumPPSs].ptr = destptr + 4;
                 iPPSs[iNumPPSs++].len = bufLen;
 
+                *destptr++ = 0x00;
+                *destptr++ = 0x00;
+                *destptr++ = 0x00;
+                *destptr++ = 0x01;
                 oscl_memcpy(destptr, pBufdata, bufLen); // copy PPS into iParamSet memfragment
-                length += bufLen;
+
+                length += bufLen + 4;
                 iParamSet.getMemFrag().len = length; // update length
-
-
+            }
+            else
+            {
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                                (0, "PVMFOMXEncNode-%s::FillBufferDoneProcessing: Error No space left in iParamSet memfragment to copy PPS NAL - releasing the buffer", iNodeTypeId));
             }
 
-            // release the OMX buffer
-            iOutBufMemoryPool->deallocate(pContext->pMemPoolEntry);
-            return OMX_ErrorNone;
+            //Do not return for h264 raw format, as we have to send sps/pps inband
+            if (iOutFormat == PVMF_MIME_H264_VIDEO_MP4)
+            {
+                // release the OMX buffer
+                iOutBufMemoryPool->deallocate(pContext->pMemPoolEntry);
+                return OMX_ErrorNone;
+            }
         }
         else
         {
@@ -5655,10 +5685,11 @@ OMX_ERRORTYPE PVMFOMXEncNode::FillBufferDoneProcAVC(OMX_OUT OMX_HANDLETYPE aComp
             // this is neither SPS nor PPS
             // stop recording SPS/PPS
             iSpsPpsSequenceOver = true;
-            iFirstNAL = true; // set indicator of first NAL
+
             // send out SPS/PPS recorded so far
-            if (((PVMFOMXEncPort*)iOutPort))
+            if (((PVMFOMXEncPort*)iOutPort) && (iOutFormat == PVMF_MIME_H264_VIDEO_MP4))
             {
+                iFirstNAL = true; // set indicator of first NAL only for H264_MP4 format
                 ((PVMFOMXEncPort*)iOutPort)->SendSPS_PPS(iSPSs, iNumSPSs, iPPSs, iNumPPSs);
             }
         }
@@ -8964,10 +8995,22 @@ OSCL_EXPORT_REF bool PVMFOMXEncNode::SetRVLC(bool aRVLC)
 }
 
 ////////////////////////////////////////////////////////////////////////////
+//Stub GetVolHeader Function for PvMp4H263EncExtensionInterface
 OSCL_EXPORT_REF bool PVMFOMXEncNode::GetVolHeader(OsclRefCounterMemFrag& aVolHeader)
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                    (0, "PVMFOMXEncNode-%s::GetVolHeader", iNodeTypeId));
+                    (0, "PVMFOMXEncNode-%s::GetVolHeader Error, This API is no longer supported, Use GetParametersSync with PVMF_FORMAT_SPECIFIC_INFO_KEY", iNodeTypeId));
+
+    return false;
+}
+
+
+////////////////////////////////////////////////////////////////////////////
+//GetVolHeader Function to be used internally by the OMX Encoder Port
+OSCL_EXPORT_REF bool PVMFOMXEncNode::GetVolHeaderForPort(OsclRefCounterMemFrag& aVolHeader)
+{
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "PVMFOMXEncNode-%s::GetVolHeaderForPort", iNodeTypeId));
 
 #ifdef _TEST_AE_ERROR_HANDLING
     if (iErrorConfigHeader)
@@ -8985,14 +9028,14 @@ OSCL_EXPORT_REF bool PVMFOMXEncNode::GetVolHeader(OsclRefCounterMemFrag& aVolHea
 
         default:
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
-                            (0, "PVMFOMXEncNode-%s::GetVolHeader: Error - Wrong state", iNodeTypeId));
+                            (0, "PVMFOMXEncNode-%s::GetVolHeaderForPort: Error - Wrong state", iNodeTypeId));
             return false;
     }
 
     if (iOutFormat != PVMF_MIME_M4V)
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
-                        (0, "PVMFOMXEncNode-%s::GetVolHeader: Error - VOL header only for M4V encode", iNodeTypeId));
+                        (0, "PVMFOMXEncNode-%s::GetVolHeaderForPort: Error - VOL header only for M4V encode", iNodeTypeId));
         return false;
     }
 
@@ -9211,49 +9254,13 @@ PVMFStatus PVMFOMXEncNode::SetCodecType(PVMFFormatType aCodec)
 }
 
 ////////////////////////////////////////////////////////////////////////////
+//Stub SetFSIParam Function for PvMp4H263EncExtensionInterface
 OSCL_EXPORT_REF bool PVMFOMXEncNode::SetFSIParam(uint8* aFSIBuff, int aFSIBuffLength)
 {
-    switch (iInterfaceState)
-    {
-        case EPVMFNodeCreated:
-        case EPVMFNodeIdle:
-        case EPVMFNodeInitialized:
-            break;
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "PVMFOMXEncNode-%s::SetFSIParam Error, This API is no longer supported, Use SetParametersSync with PVMF_FORMAT_SPECIFIC_INFO_KEY", iNodeTypeId));
 
-        default:
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
-                            (0, "PVMFOMXEncNode-%s::SetFSIParam: Error- ERROR STATE", iNodeTypeId));
-            return false;
-    }
-
-    if (aFSIBuff == NULL)
-    {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
-                        (0, "PVMFOMXEncNode-%s::SetFSIParam: aFSIBuff is NULL", iNodeTypeId));
-    }
-
-    //Check. If its already available, free it.
-    if (iVideoEncodeParam.iFSIBuff)
-    {
-        oscl_free(iVideoEncodeParam.iFSIBuff);
-        iVideoEncodeParam.iFSIBuff = NULL;
-    }
-    // Allocating FSI Buffer
-    if (aFSIBuffLength != 0)
-    {
-        iVideoEncodeParam.iFSIBuff = (uint8*) oscl_malloc(sizeof(uint8) * aFSIBuffLength);
-        if (iVideoEncodeParam.iFSIBuff == NULL)
-        {
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
-                            (0, "PVMFOMXEncNode-%s::SetFSIParam: Error- FSI Buffer NOT allocated", iNodeTypeId));
-            return false;
-        }
-        oscl_memcpy(iVideoEncodeParam.iFSIBuff, aFSIBuff, aFSIBuffLength);
-    }
-
-    iVideoEncodeParam.iFSIBuffLength = aFSIBuffLength;
-
-    return true;
+    return false;
 }
 
 
@@ -10089,6 +10096,61 @@ void PVMFOMXEncNode::DoCapConfigSetParameters(PvmiKvp* aParameters, int aNumElem
         pv_mime_string_extract_type(0, aParameters[paramind].key, compstr);
 
 
+        // find out if the format specific key is used for the query
+        if (pv_mime_strcmp(aParameters[paramind].key, PVMF_FORMAT_SPECIFIC_INFO_KEY) == 0)
+        {
+            // set the mime type if audio format is being used
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                            (0, "PVMFOMXEncNode-%s::DoCapConfigSetParameters() Set FSI Info\n", iNodeTypeId));
+
+            if ((EPVMFNodeCreated == iInterfaceState) || (EPVMFNodeIdle == iInterfaceState) || (EPVMFNodeInitialized == iInterfaceState))
+            {
+                int32 FSIBuffLength = aParameters[paramind].capacity;
+                uint8* FSIBuff = (uint8*) aParameters[paramind].value.key_specific_value;
+
+                if (NULL == FSIBuff)
+                {
+                    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
+                                    (0, "PVMFOMXEncNode-%s::DoCapConfigSetParameters: Key Specifiv Value is NULL", iNodeTypeId));
+                    aRetKVP = &aParameters[paramind];
+                    continue;
+                }
+
+                //Check. If its already available, free it.
+                if (iVideoEncodeParam.iFSIBuff)
+                {
+                    oscl_free(iVideoEncodeParam.iFSIBuff);
+                    iVideoEncodeParam.iFSIBuff = NULL;
+                }
+
+                // Allocating FSI Buffer
+                if (0 != FSIBuffLength)
+                {
+                    iVideoEncodeParam.iFSIBuff = (uint8*) oscl_malloc(sizeof(uint8) * FSIBuffLength);
+                    if (iVideoEncodeParam.iFSIBuff == NULL)
+                    {
+                        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
+                                        (0, "PVMFOMXEncNode-%s::DoCapConfigSetParameters: Error- FSI Buffer NOT allocated", iNodeTypeId));
+                        aRetKVP = &aParameters[paramind];
+                        continue;
+                    }
+                    oscl_memcpy(iVideoEncodeParam.iFSIBuff, FSIBuff, FSIBuffLength);
+                }
+
+                iVideoEncodeParam.iFSIBuffLength = FSIBuffLength;
+            }
+            else
+            {
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
+                                (0, "PVMFOMXEncNode-%s::DoCapConfigSetParameters: Error- ERROR STATE", iNodeTypeId));
+                aRetKVP = &aParameters[paramind];
+            }
+
+            // skip to the next parameter
+            continue;
+        }
+
+
         if ((
                     (pv_mime_strcmp(compstr, _STRLIT_CHAR("x-pvmf/encoder/video")) < 0) &&
                     (pv_mime_strcmp(compstr, _STRLIT_CHAR("x-pvmf/encoder/audio")) < 0)
@@ -10146,6 +10208,7 @@ PVMFStatus PVMFOMXEncNode::DoCapConfigGetParametersSync(PvmiKeyType aIdentifier,
     // Initialize the output parameters
     aNumParamElements = 0;
     aParameters = NULL;
+    PVMFStatus status = PVMFFailure;
 
     // Count the number of components and parameters in the key
     int compcount = pv_mime_string_compcnt(aIdentifier);
@@ -10153,57 +10216,125 @@ PVMFStatus PVMFOMXEncNode::DoCapConfigGetParametersSync(PvmiKeyType aIdentifier,
     char* compstr = NULL;
     pv_mime_string_extract_type(0, aIdentifier, compstr);
 
-    if ((
-                (pv_mime_strcmp(compstr, _STRLIT_CHAR("x-pvmf/encoder/video")) < 0) &&
-                (pv_mime_strcmp(compstr, _STRLIT_CHAR("x-pvmf/encoder/audio")) < 0)
-            ) || (compcount < 4))
+    if (pv_mime_strcmp(aIdentifier, PVMF_FORMAT_SPECIFIC_INFO_KEY) == 0)
     {
-        // First 3 components should be "x-pvmf/encoder/video" or  "x-pvmf/encoder/audio" and there must
-        // be at least 4 components
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVMFOMXEncNode-%s::DoCapConfigGetParametersSync() Invalid key string", iNodeTypeId));
-        return PVMFErrNotSupported;
-    }
-
-    // check if audio parameters are asked from video enc instance or vice versa
-    if (((pv_mime_strcmp(compstr, _STRLIT_CHAR("x-pvmf/encoder/video")) > 0) && (iInFormat == PVMF_MIME_PCM16)) ||
-            ((pv_mime_strcmp(compstr, _STRLIT_CHAR("x-pvmf/encoder/audio")) > 0) && (iInFormat != PVMF_MIME_PCM16))
-       )
-    {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVMFOMXEncNode-%s::DoCapConfigGetParameters() Unsupported key", iNodeTypeId));
-        return PVMFErrNotSupported;
-    }
-
-    // Retrieve the fourth component from the key string
-    pv_mime_string_extract_type(3, aIdentifier, compstr);
-
-    for (int32 enccomp4ind = 0; enccomp4ind < PVOMXENCNODECONFIG_BASE_NUMKEYS; ++enccomp4ind)
-    {
-        // Go through each video enc component string at 4th level
-        if (pv_mime_strcmp(compstr, (char*)(PVOMXEncNodeConfigBaseKeys[enccomp4ind].iString)) >= 0)
+#ifdef _TEST_AE_ERROR_HANDLING
+        if (iErrorConfigHeader)
         {
-            if (4 == compcount)
-            {
-                // Determine what is requested
-                PvmiKvpAttr reqattr = GetAttrTypeFromKeyString(aIdentifier);
-                if (PVMI_KVPATTR_UNKNOWN == reqattr)
-                {
-                    reqattr = PVMI_KVPATTR_CUR;
-                }
+            iInterfaceState = EPVMFNodeError;
+        }
+#endif
+        if ((EPVMFNodeInitialized == iInterfaceState) || (EPVMFNodePrepared == iInterfaceState)
+                || (EPVMFNodeStarted == iInterfaceState) || (EPVMFNodePaused == iInterfaceState))
+        {
+            uint8 *ptr;
+            uint32 BufferSize;
 
-                // Return the requested info
-                PVMFStatus retval = GetConfigParameter(aParameters, aNumParamElements, enccomp4ind, reqattr);
-                if (PVMFSuccess != retval)
+            if (iOutFormat == PVMF_MIME_M4V)
+            {
+                ptr = (uint8*) iVolHeader.getMemFragPtr();
+                BufferSize = iVolHeader.getMemFragSize();
+
+                // Not sure if we still need this.
+                //If data partioning mode
+                if (iVideoEncodeParam.iDataPartitioning == true)
                 {
-                    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVMFOMXEncNode-%s::DoCapConfigGetParametersSync() Retrieving video enc node parameter failed", iNodeTypeId));
-                    return retval;
+                    ptr[iVolHeader.getMemFragSize() - 1] = 0x8F;
                 }
+                //else combined mode
+                else
+                {
+                    ptr[iVolHeader.getMemFragSize() - 1] = 0x1F;
+                }
+            }
+            else if (iOutFormat == PVMF_MIME_H264_VIDEO_RAW || iOutFormat == PVMF_MIME_H264_VIDEO_MP4)
+            {
+                ptr = (uint8*) iParamSet.getMemFragPtr();
+                BufferSize = iParamSet.getMemFragSize();
             }
             else
             {
-                // Right now videoenc node doesn't support more than 4 components
-                // for this sub-key string so error out
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVMFOMXEncNode-%s::DoCapConfigGetParametersSync() Unsupported key", iNodeTypeId));
-                return PVMFErrNotSupported;
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
+                                (0, "PVMFOMXEncNode-%s::DoCapConfigGetParametersSync: Error - Format not supported for this api", iNodeTypeId));
+                return false;
+            }
+
+            aNumParamElements = 1;
+            status = AllocateKvp(aParameters, (PvmiKeyType)PVMF_FORMAT_SPECIFIC_INFO_KEY, aNumParamElements);
+            if (status != PVMFSuccess)
+            {
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVMFOMXEncNode-%s::DoCapConfigGetParametersSync() Error - AllocateKvp failed. status=%d", iNodeTypeId, status));
+                return status;
+            }
+            else
+            {
+                aParameters[0].value.key_specific_value = ptr;
+                aParameters[0].capacity = BufferSize;
+                aParameters[0].length = BufferSize;
+            }
+        }
+        else
+        {
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
+                            (0, "PVMFOMXEncNode-%s::DoCapConfigGetParametersSync: Error - Wrong state", iNodeTypeId));
+            return false;
+        }
+    }
+    else
+    {
+
+        if ((
+                    (pv_mime_strcmp(compstr, _STRLIT_CHAR("x-pvmf/encoder/video")) < 0) &&
+                    (pv_mime_strcmp(compstr, _STRLIT_CHAR("x-pvmf/encoder/audio")) < 0)
+                ) || (compcount < 4))
+        {
+            // First 3 components should be "x-pvmf/encoder/video" or  "x-pvmf/encoder/audio" and there must
+            // be at least 4 components
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVMFOMXEncNode-%s::DoCapConfigGetParametersSync() Invalid key string", iNodeTypeId));
+            return PVMFErrNotSupported;
+        }
+
+        // check if audio parameters are asked from video enc instance or vice versa
+        if (((pv_mime_strcmp(compstr, _STRLIT_CHAR("x-pvmf/encoder/video")) > 0) && (iInFormat == PVMF_MIME_PCM16)) ||
+                ((pv_mime_strcmp(compstr, _STRLIT_CHAR("x-pvmf/encoder/audio")) > 0) && (iInFormat != PVMF_MIME_PCM16))
+           )
+        {
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVMFOMXEncNode-%s::DoCapConfigGetParameters() Unsupported key", iNodeTypeId));
+            return PVMFErrNotSupported;
+        }
+
+        // Retrieve the fourth component from the key string
+        pv_mime_string_extract_type(3, aIdentifier, compstr);
+
+        for (int32 enccomp4ind = 0; enccomp4ind < PVOMXENCNODECONFIG_BASE_NUMKEYS; ++enccomp4ind)
+        {
+            // Go through each video enc component string at 4th level
+            if (pv_mime_strcmp(compstr, (char*)(PVOMXEncNodeConfigBaseKeys[enccomp4ind].iString)) >= 0)
+            {
+                if (4 == compcount)
+                {
+                    // Determine what is requested
+                    PvmiKvpAttr reqattr = GetAttrTypeFromKeyString(aIdentifier);
+                    if (PVMI_KVPATTR_UNKNOWN == reqattr)
+                    {
+                        reqattr = PVMI_KVPATTR_CUR;
+                    }
+
+                    // Return the requested info
+                    PVMFStatus retval = GetConfigParameter(aParameters, aNumParamElements, enccomp4ind, reqattr);
+                    if (PVMFSuccess != retval)
+                    {
+                        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVMFOMXEncNode-%s::DoCapConfigGetParametersSync() Retrieving video enc node parameter failed", iNodeTypeId));
+                        return retval;
+                    }
+                }
+                else
+                {
+                    // Right now videoenc node doesn't support more than 4 components
+                    // for this sub-key string so error out
+                    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVMFOMXEncNode-%s::DoCapConfigGetParametersSync() Unsupported key", iNodeTypeId));
+                    return PVMFErrNotSupported;
+                }
             }
         }
     }
@@ -10219,6 +10350,45 @@ PVMFStatus PVMFOMXEncNode::DoCapConfigGetParametersSync(PvmiKeyType aIdentifier,
     {
         return PVMFSuccess;
     }
+}
+
+////////////////////////////////////////////////////////////////////////////
+PVMFStatus PVMFOMXEncNode::AllocateKvp(PvmiKvp*& aKvp, PvmiKeyType aKey, int32 aNumParams)
+{
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFOMXEncNode-%s::AllocateKvp()", iNodeTypeId));
+
+    uint8* buf = NULL;
+    uint32 keyLen = oscl_strlen(aKey) + 1;
+    int32 err = 0;
+
+    OSCL_TRY(err,
+             buf = (uint8*)iAlloc.allocate(aNumParams * (sizeof(PvmiKvp) + keyLen));
+             if (!buf)
+             OSCL_LEAVE(OsclErrNoMemory);
+            );
+    OSCL_FIRST_CATCH_ANY(err,
+                         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR, (0, "PVMFOMXEncNode-%s::AllocateKvp: Error - kvp allocation failed", iNodeTypeId));
+                         return PVMFErrNoMemory;
+                        );
+
+    int32 i = 0;
+    PvmiKvp* curKvp = aKvp = new(buf) PvmiKvp;
+    buf += sizeof(PvmiKvp);
+    for (i = 1; i < aNumParams; i++)
+    {
+        curKvp += i;
+        curKvp = new(buf) PvmiKvp;
+        buf += sizeof(PvmiKvp);
+    }
+
+    for (i = 0; i < aNumParams; i++)
+    {
+        aKvp[i].key = (char*)buf;
+        oscl_strncpy(aKvp[i].key, aKey, keyLen);
+        buf += keyLen;
+    }
+
+    return PVMFSuccess;
 }
 
 //PVMFStatus PVMFOMXEncNode::releaseParameters(PvmiMIOSession aSession, PvmiKvp* aParameters, int aNumElements)
@@ -10238,6 +10408,20 @@ PVMFStatus PVMFOMXEncNode::DoCapConfigReleaseParameters(PvmiKvp* aParameters, in
     // Retrieve the first component from the key string
     char* compstr = NULL;
     pv_mime_string_extract_type(0, aParameters[0].key, compstr);
+
+    if (pv_mime_strcmp(compstr, _STRLIT_CHAR(PVMF_FORMAT_SPECIFIC_INFO_KEY)) == 0)
+    {
+        if (aParameters)
+        {
+            iAlloc.deallocate((OsclAny*)aParameters);
+            aParameters = NULL;
+            return PVMFSuccess;
+        }
+        else
+        {
+            return PVMFFailure;
+        }
+    }
 
     if ((
                 (pv_mime_strcmp(compstr, _STRLIT_CHAR("x-pvmf/encoder/video")) < 0) &&

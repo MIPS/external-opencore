@@ -1020,7 +1020,7 @@ class PVMFOMXEncNode
         OSCL_IMPORT_REF bool SetSceneDetection(bool aSCD);
         OSCL_IMPORT_REF bool SetCodec(PVMFFormatType aCodec);
 
-
+        OSCL_IMPORT_REF bool GetVolHeaderForPort(OsclRefCounterMemFrag& aVolHeader);
 
         PVMFStatus SetCodecType(PVMFFormatType aCodec);
 
@@ -1149,8 +1149,7 @@ class PVMFOMXEncNode
         PVMFStatus VerifyAndSetConfigParameter(PvmiKvp& aParameter, bool aSetParam);
 
         PVMFStatus GetProfileAndLevel(PVMF_MPEGVideoProfileType& aProfile, PVMF_MPEGVideoLevelType& aLevel);
-
-
+        PVMFStatus AllocateKvp(PvmiKvp*& aKvp, PvmiKeyType aKey, int32 aNumParams);
 
         void freechunkavailable(OsclAny*);
 

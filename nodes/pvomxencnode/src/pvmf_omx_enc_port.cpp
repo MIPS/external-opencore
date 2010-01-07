@@ -703,7 +703,7 @@ PVMFStatus PVMFOMXEncPort::GetOutputParametersSync(PvmiKeyType identifier, PvmiK
         else
         {
             OsclRefCounterMemFrag refMemFrag;
-            if (iOMXNode->GetVolHeader(refMemFrag))
+            if (iOMXNode->GetVolHeaderForPort(refMemFrag))
             {
                 parameters[0].value.key_specific_value = refMemFrag.getMemFragPtr();
                 parameters[0].capacity = refMemFrag.getMemFragSize();
