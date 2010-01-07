@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -418,7 +418,6 @@ class PVMFDownloadDataSourceContainer
     public:
         bool iHasDataSource;                                    // true means the constainer is already filled in the data source
         bool iIsNewSession;                                     // true if the downloading a new file, false if keep downloading a partial downloading file
-        uint32 iByteSeekMode;                                 // 1 if byte-seek supported by server, 0 if not supported, 2 if value is not set by App or server not DMS.
         uint32 iMaxFileSize;                                    // the max size of the file.
         uint32 iPlaybackControl;                                // correspond to PVMFDownloadDataSourceHTTP::TPVPlaybackControl, PVMFSourceContextDataDownloadHTTP::TPVPlaybackControl
         OSCL_wHeapString<OsclMemAllocator> iConfigFileName;     // download config file

@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -463,12 +463,6 @@ class ProtocolContainer
             return false;
         }
         virtual bool completeRepositionRequest()
-        {
-            return false;
-        }
-        /* for completing the start command after Pause/Resume in case of PPB,
-           when byte-seek is enabled inside the PE node */
-        virtual bool completeStartCmd()
         {
             return false;
         }
@@ -1533,7 +1527,6 @@ class InterfacingObjectContainer
         {
             iDisableHeadRequest = aDisableHeadRequest;
         }
-
         bool getHttpHeadRequestDisabled() const
         {
             return iDisableHeadRequest;

@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -639,8 +639,6 @@ class PVMFDownloadManagerNode
 
         bool iInitFailedLicenseRequired; //set when PVMFErrDrmLicenseNotFound failed
 
-        ByteSeekMode iContextDataByteSeek;
-
         void ContinueInitAfterTrackSelectDecision();
         void ContinueFromDownloadTrackSelectionPoint();
         void ContinueAfterMovieAtom();
@@ -697,8 +695,6 @@ class PVMFDownloadManagerNode
 
         friend class PVMFDownloadManagerCPMContainer;
         PVMFDownloadManagerCPMContainer iCPMNode;
-
-        bool httpHeaderRequestDisabled;
 };
 
 ///////////////////////////////////////////////////////////////////////////////

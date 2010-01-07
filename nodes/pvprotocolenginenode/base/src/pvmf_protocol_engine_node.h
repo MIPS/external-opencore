@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -198,16 +198,6 @@ class PVMFProtocolEngineNode :  public PVMFNodeInterface,
         uint32 GetMaxTotalClipBitrate()
         {
             return iProtocolContainer->getMaxTotalClipBitrate();
-        }
-
-        void SetByteSeekMode(const ByteSeekMode aByteSeekMode = BYTE_SEEK_UNSUPPORTED)
-        {
-            if (iProtocol) iProtocol->setByteSeekMode(aByteSeekMode);
-        }
-        uint32 GetByteSeekMode()
-        {
-            if (iProtocol) return iProtocol->getByteSeekMode();
-            else return BYTE_SEEK_NOTSET;
         }
         bool GetASFHeader(Oscl_Vector<OsclRefCounterMemFrag, OsclMemAllocator> &aHeader)
         {

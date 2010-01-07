@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,13 +52,6 @@ class PVMFCPMPluginAccessInterfaceFactory;
 #define BITMASK_PVMF_SOURCE_INTENT_PREVIEW                          0x00000004
 #define BITMASK_PVMF_SOURCE_INTENT_THUMBNAILS                       0x00000008
 #define BITMASK_PVMF_SOURCE_INTENT_SUPPRESS_REMOTE_NOTIFICATIONS    0x00000010
-
-enum ByteSeekMode
-{
-    BYTE_SEEK_UNSUPPORTED = 0,
-    BYTE_SEEK_SUPPORTED,
-    BYTE_SEEK_NOTSET
-};
 
 class PVMFSourceContextDataCommon : public PVInterface
 {
@@ -236,7 +229,6 @@ class PVMFSourceContextDataDownloadHTTP : public PVInterface
             bIsNewSession = true;
             iMaxFileSize = 0;
             iMaxHttpHeaderFieldSize = 0x7fffffff;
-            iByteSeekMode = BYTE_SEEK_NOTSET;  // By default set to enum value: BYTE_SEEK_NOTSET
         };
 
         PVMFSourceContextDataDownloadHTTP(const PVMFSourceContextDataDownloadHTTP& aSrc) : PVInterface(aSrc)
@@ -287,11 +279,6 @@ class PVMFSourceContextDataDownloadHTTP : public PVInterface
         int32   iProxyPort;                 //HTTP proxy port
         int32 iMaxHttpHeaderFieldSize;     //HTTP header field size, in DLNA PPB size is 998
 
-        ByteSeekMode iByteSeekMode;             /* param to determine byte-seek support for PPB, by default set to enum value: BYTE_SEEK_NOTSET if
-                                               App doesn't set any value inside context data, set to enum value: BYTE_SEEK_SUPPORTED if byte-seek
-                                               supported, set to enum value: BYTE_SEEK_UNSUPPORTED if byte-seek not supported */
-
-
         typedef enum        // For Download only
         {
             ENoPlayback         = 0,
@@ -319,7 +306,6 @@ class PVMFSourceContextDataDownloadHTTP : public PVInterface
             iUserID             = aSrc.iUserID;
             iUserPasswd         = aSrc.iUserPasswd;
             iMaxHttpHeaderFieldSize = aSrc.iMaxHttpHeaderFieldSize;
-            iByteSeekMode       = aSrc.iByteSeekMode;
         };
 };
 

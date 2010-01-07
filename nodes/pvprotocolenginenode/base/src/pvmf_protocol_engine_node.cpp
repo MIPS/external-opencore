@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1724,11 +1724,6 @@ PVMFStatus PVMFProtocolEngineNode::PostProcessForMsgSentSuccess(PVMFPortInterfac
         LOGINFODATAPATH((0, "PVMFProtocolEngineNode::PostProcessForMsgSentSuccess() Send() SUCCESS: SOCKET CONNECT SENT! SEQNUM= %d, MsgID=%d, port=0x%x", aMsg->getSeqNum(), aMsg->getFormatID(), aPort));
         bool status = iProtocolContainer->completeRepositionRequest();
         if (status) LOGINFODATAPATH((0, "PVMFProtocolEngineNode::PostProcessForMsgSentSuccess() Send() SOCKET CONNECT cmd SUCCESS: complete data stream reposition request"));
-
-        /* Complete the start command of PE node issued after it was paused, during PPB
-           when byte-seek is enabled inside the PE node.*/
-        bool retval = iProtocolContainer->completeStartCmd();
-        if (retval) LOGINFODATAPATH((0, "PVMFProtocolEngineNode::PostProcessForMsgSentSuccess() Send() SOCKET CONNECT cmd SUCCESS: complete data stream start request"));
     }
     else
     {
@@ -3390,3 +3385,6 @@ bool OutgoingMsgSentSuccessHandler::handle(PVProtocolEngineNodeInternalEvent &aE
 
     return retVal;
 }
+
+
+

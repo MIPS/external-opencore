@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -590,8 +590,6 @@ class PVMFMP3FFParserNode : public PVMFNodeInterfaceImpl,
         friend class PVMFCPMContainerMp3;
         friend class PVMFMP3FFParserPort;
         friend class PVMp3DurationCalculator;
-
-        bool iIsByteSeekNotSupported;
 };
 
 #endif // PVMF_MP3FFPARSER_NODE_H_INCLUDED
