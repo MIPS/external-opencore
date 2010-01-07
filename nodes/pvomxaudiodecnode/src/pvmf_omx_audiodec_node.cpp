@@ -2348,6 +2348,35 @@ PVMFStatus PVMFOMXAudioDecNode::DoGetNodeMetadataKey()
         return PVMFErrArgument;
     }
 
+    // Update the available metadata keys
+    iAvailableMetadataKeys.clear();
+    int32 leavecode = OsclErrNone;
+    leavecode = PushKVPKey(PVOMXAUDIODECMETADATA_CODECINFO_AUDIO_FORMAT_KEY, iAvailableMetadataKeys);
+    if (OsclErrNone != leavecode)
+    {
+        return PVMFErrNoMemory;
+    }
+
+    if (iNumberOfAudioChannels > 0)
+    {
+        leavecode = OsclErrNone;
+        leavecode = PushKVPKey(PVOMXAUDIODECMETADATA_CODECINFO_AUDIO_CHANNELS_KEY, iAvailableMetadataKeys);
+        if (OsclErrNone != leavecode)
+        {
+            return PVMFErrNoMemory;
+        }
+    }
+
+    if (iPCMSamplingRate > 0)
+    {
+        leavecode = OsclErrNone;
+        leavecode = PushKVPKey(PVOMXAUDIODECMETADATA_CODECINFO_AUDIO_SAMPLERATE_KEY, iAvailableMetadataKeys);
+        if (OsclErrNone != leavecode)
+        {
+            return PVMFErrNoMemory;
+        }
+    }
+
     if ((starting_index > (iAvailableMetadataKeys.size() - 1)) || max_entries == 0)
     {
         // Invalid starting index and/or max entries
@@ -2357,7 +2386,6 @@ PVMFStatus PVMFOMXAudioDecNode::DoGetNodeMetadataKey()
     // Copy the requested keys
     uint32 num_entries = 0;
     int32 num_added = 0;
-    int32 leavecode = OsclErrNone;
     for (uint32 lcv = 0; lcv < iAvailableMetadataKeys.size(); lcv++)
     {
         if (query_key == NULL)
@@ -2391,6 +2419,7 @@ PVMFStatus PVMFOMXAudioDecNode::DoGetNodeMetadataKey()
                     leavecode = PushKVPKey(iAvailableMetadataKeys[lcv], keylistptr);
                     if (OsclErrNone != leavecode)
                     {
+                        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVMFOMXAudioDecNode::DoGetNodeMetadataKey() Memory allocation failure when copying metadata key"));
                         return PVMFErrNoMemory;
                     }
 
@@ -2856,6 +2885,23 @@ PVMFStatus PVMFOMXAudioDecNode::DeleteLATMParser()
 uint32 PVMFOMXAudioDecNode::GetNumMetadataKeys(char* aQueryKeyString)
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFOMXAudioDecNode::GetNumMetadataKeys() called"));
+
+    // Update the available metadata keys
+    iAvailableMetadataKeys.clear();
+    int32 errcode = OsclErrNone;
+    OSCL_TRY(errcode, iAvailableMetadataKeys.push_back(PVOMXAUDIODECMETADATA_CODECINFO_AUDIO_FORMAT_KEY));
+
+    if (iNumberOfAudioChannels > 0)
+    {
+        errcode = OsclErrNone;
+        OSCL_TRY(errcode, iAvailableMetadataKeys.push_back(PVOMXAUDIODECMETADATA_CODECINFO_AUDIO_CHANNELS_KEY));
+    }
+
+    if (iPCMSamplingRate > 0)
+    {
+        errcode = OsclErrNone;
+        OSCL_TRY(errcode, iAvailableMetadataKeys.push_back(PVOMXAUDIODECMETADATA_CODECINFO_AUDIO_SAMPLERATE_KEY));
+    }
 
     uint32 num_entries = 0;
 
