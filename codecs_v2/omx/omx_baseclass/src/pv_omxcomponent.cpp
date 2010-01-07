@@ -32,7 +32,12 @@ OSCL_EXPORT_REF OmxComponentBase::OmxComponentBase() :
     ipAppPriv = NULL;
     iNumAvailableOutputBuffers = 0;
 
+#if (PROXY_INTERFACE==0) || (PV_OMX_LOGGER_OUTPUT)
     iLogger = PVLogger::GetLoggerObject("OmxComponentBase");
+#else
+    iLogger = NULL;
+#endif
+
     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE, (0, "OmxComponentBase : constructed"));
 
 #if PROFILING_ON

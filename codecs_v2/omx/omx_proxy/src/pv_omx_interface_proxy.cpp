@@ -657,20 +657,11 @@ TOsclThreadFuncRet OSCL_THREAD_DECL pvproxythreadmain_omx(TOsclThreadFuncArg *aP
     //proxy->iPVApp.CreateLoggerAppenders();
     //proxy->iLogger=PVLogger::GetLoggerObject("");
 
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, proxy->iLogger, PVLOGMSG_NOTICE, (0, "PVPROXY:Proxy Thread 0x%x Entry...", OsclExecScheduler::GetId()));
 
 
     int32 leave;
     OSCL_TRY(leave, proxy->InThread(););
 
-    if (leave != OsclErrNone)
-    {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, proxy->iLogger, PVLOGMSG_ERR, (0, "PVPROXY:Proxy Thread 0x%x Exit: Leave Reason %d", OsclExecScheduler::GetId(), leave));
-    }
-    else
-    {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, proxy->iLogger, PVLOGMSG_NOTICE, (0, "PVPROXY:Proxy Thread 0x%x Exit: Normal", OsclExecScheduler::GetId()));
-    }
 
     proxy->iThreadCreatedSem.Signal(); // signal to let the app thread run just in case
 
@@ -678,7 +669,7 @@ TOsclThreadFuncRet OSCL_THREAD_DECL pvproxythreadmain_omx(TOsclThreadFuncArg *aP
     PVLogger::Cleanup();
 
     OsclMem::Cleanup();
-    proxy->iLogger = NULL;
+
     OsclErrorTrap::Cleanup();
     OsclBase::Cleanup();
 
