@@ -53,7 +53,7 @@ PVA_FF_ExtendedFullAtom::renderAtomBaseMembers(MP4_AUTHOR_FF_FILE_IO_WRAP *fp) c
     return true;
 }
 
-uint32 PVA_FF_ExtendedAtom::getDefaultSize() const
+uint32 PVA_FF_ExtendedFullAtom::getDefaultSize() const
 {
     return PVA_FF_ExtendedAtom::getDefaultSize() + 4;
 }
