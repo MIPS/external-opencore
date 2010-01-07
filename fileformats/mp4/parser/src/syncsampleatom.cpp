@@ -173,8 +173,17 @@ SyncSampleAtom::getSyncSampleBefore(uint32 sampleNum, uint32& aSyncSampleBefore)
     //the nearest I frame before sampleNum
     if (sync > sampleNum)
     {
-        count = count - 2;
-        sync = _psampleNumbers[count] - 1;
+        if (count < 2)
+        {
+            // It will only happen if the 1st frame is not key frame, and the seek point is
+            // earlier than the 1st key frame. For such case, just seek back to the 1st frame.
+            sync = 0;
+        }
+        else
+        {
+            count = count - 2;
+            sync = _psampleNumbers[count] - 1;
+        }
     }
     aSyncSampleBefore = sync;
     return EVERYTHING_FINE;
