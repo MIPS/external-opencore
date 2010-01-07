@@ -452,7 +452,7 @@ MP3ErrorType MP3Parser::ParseMP3File(PVFile * fpUsed, bool aEnableCRC)
     // SAVE THE CURRENT FILE POSITION
     errCode = MP3Utils::SeektoOffset(fp, 0, Oscl_File::SEEKSET);
     // try to retrieve the file size
-    if (fp->GetCPM() == NULL && MP3Utils::getCurrentFileSize(fp, iLocalFileSize))
+    if (fp->GetFileBufferingCapacity() == 0 && MP3Utils::getCurrentFileSize(fp, iLocalFileSize))
     {
         iLocalFileSizeSet = true;
         iInitSearchFileSize = OSCL_MIN(iInitSearchFileSize, iLocalFileSize);
@@ -811,7 +811,7 @@ MP3ErrorType MP3Parser::ScanMP3File(PVFile * fpUsed, uint32 aFramesToScan)
 
         if (fpUsed->Read(pFrameHeader, 1, MP3_FRAME_HEADER_SIZE) != MP3_FRAME_HEADER_SIZE)
         {
-            if (fpUsed->GetCPM() == NULL)
+            if (fpUsed->GetFileBufferingCapacity() == 0)
             {
                 iDurationScanComplete = true;
             }
@@ -1480,7 +1480,7 @@ uint32 MP3Parser::GetDuration(bool aMetadataDuration)
     uint32 clipDuration = 0;
 
     // local clip playback
-    if (!fp->GetCPM())
+    if (0 == fp->GetFileBufferingCapacity())
     {
         // if scanning is complete, send the clip duration from scan
         // else if vbri/xing headers exist send duration from that
@@ -1907,7 +1907,7 @@ uint32  MP3Parser::SeekToTimestamp(uint32 timestampInMsec)
 {
     uint32 SeekPosition = 0;
     SeekPosition = SeekPointFromTimestamp(timestampInMsec);
-    if (!((!fp->GetCPM()) && (SeekPosition == iLocalFileSize) && (timestampInMsec == iClipDurationInMsec)))
+    if (!((0 == fp->GetFileBufferingCapacity()) && (SeekPosition == iLocalFileSize) && (timestampInMsec == iClipDurationInMsec)))
     {
         SeekPosition += StartOffset;
     }
@@ -2045,7 +2045,7 @@ uint32 MP3Parser::SeekPointFromTimestamp(uint32 &timestamp)
          * calculated on the basis of average bit rate
          **/
         int32 avgBR = 0;
-        if (fp->GetCPM())
+        if (fp->GetFileBufferingCapacity() > 0)
         {
             avgBR = iAvgBitrateInbps;
         }
@@ -2069,7 +2069,7 @@ uint32 MP3Parser::SeekPointFromTimestamp(uint32 &timestamp)
     * Since in PD/PS scenarios we might not be having enough data to find the seek point
     * We can find the seek point when we are resuming the playback
     **/
-    if (seekPoint > 0 && !fp->GetCPM())
+    if (seekPoint > 0 && 0 == fp->GetFileBufferingCapacity())
     {
         // seek to the reposition point location
         MP3Utils::SeektoOffset(fp, seekPoint + StartOffset, Oscl_File::SEEKSET);
@@ -2147,7 +2147,7 @@ MP3ErrorType MP3Parser::mp3FindSync(uint32 seekPoint, uint32 &syncOffset, PVFile
     syncOffset = 0;
     iMaxSyncBufferSize = 627;   /* default for 192 kbps, 44.1 kHz */
 
-    if (aFile->GetCPM() != NULL)
+    if (aFile->GetFileBufferingCapacity() > 0)
     {
         iLocalFileSizeSet = (int32)MP3Utils::getCurrentFileSize(aFile, iLocalFileSize);
     }
