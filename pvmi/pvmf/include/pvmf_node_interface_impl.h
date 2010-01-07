@@ -54,6 +54,10 @@
 #include "oscl_mem_audit.h"
 #endif
 
+#ifndef PVMF_DATA_SOURCE_PLAYBACK_CONTROL_H_INCLUDED
+#include "pvmf_data_source_playback_control.h"
+#endif
+
 /* Default vector reserve size */
 #define PVMF_NODE_VECTOR_RESERVE 10
 /* Starting value for command IDs  */
@@ -161,6 +165,22 @@ class PVMFNodeCommand: public PVMFNodeCommandBase
             aParameters = (PvmiKvp*)iParam2;
             num_elements = (int)iParam3;
             ppRet_kvp = (PvmiKvp**)iParam4;
+        }
+
+        // Constructor and parser for SetDataSourcePosition
+        void Construct(PVMFSessionId aSessionId, int32 cmd, PVMFDataSourcePositionParams* aPVMFDataSourcePositionParams,
+                       const OsclAny*aContext)
+        {
+            PVMFNodeCommandBase::Construct(aSessionId, cmd, aContext);
+            iParam1 = (OsclAny*)aPVMFDataSourcePositionParams;
+            iParam2 = NULL;
+            iParam3 = NULL;
+            iParam4 = NULL;
+            iParam5 = NULL;
+        }
+        void Parse(PVMFDataSourcePositionParams*& aPVMFDataSourcePositionParams)
+        {
+            aPVMFDataSourcePositionParams = (PVMFDataSourcePositionParams*)iParam1;
         }
 
         // Constructor and parser for QueryDataSourcePosition
@@ -411,8 +431,8 @@ class PVMFNodeInterfaceImpl : public PVMFNodeInterface,
 
     protected:
         // protected routines
-        OSCL_IMPORT_REF bool SendEndOfTrackCommand(PVMFPortInterface* aPort, int32 aStreamID, PVMFTimestamp aTimestamp, int32 aSeqNum, uint32 aDuration = PVMF_DEFAULT_TRACK_DURATION);
-        OSCL_IMPORT_REF bool SendBeginOfMediaStreamCommand(PVMFPortInterface* aPort, int32 aStreamID, PVMFTimestamp aTimestamp);
+        OSCL_IMPORT_REF bool SendEndOfTrackCommand(PVMFPortInterface* aPort, int32 aStreamID, PVMFTimestamp aTimestamp, uint32 aSeqNum, uint32 aClipIndex = 0, uint32 aDuration = PVMF_DEFAULT_TRACK_DURATION);
+        OSCL_IMPORT_REF bool SendBeginOfMediaStreamCommand(PVMFPortInterface* aPort, int32 aStreamID, PVMFTimestamp aTimestamp,  uint32 aSeqNum = 0, uint32 aClipIndex = 0);
         OSCL_IMPORT_REF void CommandComplete(PVMFNodeCommand& aCmd, PVMFStatus aStatus,
                                              PVInterface* aExtMsg = NULL, OsclAny* aEventData = NULL, PVUuid* aEventUUID = NULL, int32* aEventCode = NULL);
 

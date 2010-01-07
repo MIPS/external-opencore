@@ -603,11 +603,12 @@ void PvmfPortBaseImpl::LogMediaMsgInfo(PVMFSharedMediaMsgPtr aMediaMsg, const ch
         case PVMF_MEDIA_CMD_BOS_FORMAT_ID:
         {
             LOGDATAPATH(
-                (0, "PORT %s %s MediaCmd FmtId %s, SeqNum %d, SId %d, TS %d, Q-depth %d/%d", iPortName.get_cstr()
+                (0, "PORT %s %s MediaCmd FmtId %s, SeqNum %d, SId %d, ClipID %d, TS %d, Q-depth %d/%d", iPortName.get_cstr()
                  , msg
                  , "BOS"
                  , aMediaMsg->getSeqNum()
                  , aMediaMsg->getStreamID()
+                 , aMediaMsg->getClipID()
                  , aMediaMsg->getTimestamp()
                  , q.iQ.size()
                  , q.iCapacity
@@ -617,11 +618,42 @@ void PvmfPortBaseImpl::LogMediaMsgInfo(PVMFSharedMediaMsgPtr aMediaMsg, const ch
         case PVMF_MEDIA_CMD_EOS_FORMAT_ID:
         {
             LOGDATAPATH(
-                (0, "PORT %s %s MediaCmd FmtId %s, SeqNum %d, SId %d, TS %d, Q-depth %d/%d", iPortName.get_cstr()
+                (0, "PORT %s %s MediaCmd FmtId %s, SeqNum %d, SId %d, ClipID %d, TS %d, Q-depth %d/%d", iPortName.get_cstr()
                  , msg
                  , "EOS"
                  , aMediaMsg->getSeqNum()
                  , aMediaMsg->getStreamID()
+                 , aMediaMsg->getClipID()
+                 , aMediaMsg->getTimestamp()
+                 , q.iQ.size()
+                 , q.iCapacity
+                ));
+        }
+        break;
+        case PVMF_MEDIA_CMD_BOC_FORMAT_ID:
+        {
+            LOGDATAPATH(
+                (0, "PORT %s %s MediaCmd FmtId %s, SeqNum %d, SId %d, ClipID %d, TS %d, Q-depth %d/%d", iPortName.get_cstr()
+                 , msg
+                 , "BOC"
+                 , aMediaMsg->getSeqNum()
+                 , aMediaMsg->getStreamID()
+                 , aMediaMsg->getClipID()
+                 , aMediaMsg->getTimestamp()
+                 , q.iQ.size()
+                 , q.iCapacity
+                ));
+        }
+        break;
+        case PVMF_MEDIA_CMD_EOC_FORMAT_ID:
+        {
+            LOGDATAPATH(
+                (0, "PORT %s %s MediaCmd FmtId %s, SeqNum %d, SId %d, ClipID %d, TS %d, Q-depth %d/%d", iPortName.get_cstr()
+                 , msg
+                 , "EOC"
+                 , aMediaMsg->getSeqNum()
+                 , aMediaMsg->getStreamID()
+                 , aMediaMsg->getClipID()
                  , aMediaMsg->getTimestamp()
                  , q.iQ.size()
                  , q.iCapacity
@@ -646,11 +678,12 @@ void PvmfPortBaseImpl::LogMediaMsgInfo(PVMFSharedMediaMsgPtr aMediaMsg, const ch
         default:
         {
             LOGDATAPATH(
-                (0, "PORT %s %s MediaCmd FmtId %d, SeqNum %d, SId %d, TS %d, Q-depth %d/%d", iPortName.get_cstr()
+                (0, "PORT %s %s MediaCmd FmtId %d, SeqNum %d, SId %d, ClipID %d, TS %d, Q-depth %d/%d", iPortName.get_cstr()
                  , msg
                  , aMediaMsg->getFormatID()
                  , aMediaMsg->getSeqNum()
                  , aMediaMsg->getStreamID()
+                 , aMediaMsg->getClipID()
                  , aMediaMsg->getTimestamp()
                  , q.iQ.size()
                  , q.iCapacity
@@ -671,14 +704,57 @@ OSCL_EXPORT_REF void PvmfPortBaseImpl::LogMediaMsgInfo(PVMFSharedMediaMsgPtr aMe
 
     switch (aMediaMsg->getFormatID())
     {
+        case PVMF_MEDIA_CMD_BOS_FORMAT_ID:
+        {
+            LOGDATAPATH(
+                (0, "PORT %s %s MediaCmd FmtId %s, SeqNum %d, SId %d, ClipID %d, TS %d, Q-depth %d/%d", iPortName.get_cstr()
+                 , msg
+                 , "BOS"
+                 , aMediaMsg->getSeqNum()
+                 , aMediaMsg->getStreamID()
+                 , aMediaMsg->getClipID()
+                 , aMediaMsg->getTimestamp()
+                 , qsize
+                ));
+        }
+        break;
         case PVMF_MEDIA_CMD_EOS_FORMAT_ID:
         {
             LOGDATAPATH(
-                (0, "PORT %s %s MediaCmd FmtId %s, SeqNum %d, SId %d, TS %d, Q-depth %d/%d", iPortName.get_cstr()
+                (0, "PORT %s %s MediaCmd FmtId %s, SeqNum %d, SId %d, ClipID %d, TS %d, Q-depth %d/%d", iPortName.get_cstr()
                  , msg
                  , "EOS"
                  , aMediaMsg->getSeqNum()
                  , aMediaMsg->getStreamID()
+                 , aMediaMsg->getClipID()
+                 , aMediaMsg->getTimestamp()
+                 , qsize
+                ));
+        }
+        break;
+        case PVMF_MEDIA_CMD_BOC_FORMAT_ID:
+        {
+            LOGDATAPATH(
+                (0, "PORT %s %s MediaCmd FmtId %s, SeqNum %d, SId %d, ClipID %d, TS %d, Q-depth %d/%d", iPortName.get_cstr()
+                 , msg
+                 , "BOC"
+                 , aMediaMsg->getSeqNum()
+                 , aMediaMsg->getStreamID()
+                 , aMediaMsg->getClipID()
+                 , aMediaMsg->getTimestamp()
+                 , qsize
+                ));
+        }
+        break;
+        case PVMF_MEDIA_CMD_EOC_FORMAT_ID:
+        {
+            LOGDATAPATH(
+                (0, "PORT %s %s MediaCmd FmtId %s, SeqNum %d, SId %d, ClipID %d, TS %d, Q-depth %d/%d", iPortName.get_cstr()
+                 , msg
+                 , "EOC"
+                 , aMediaMsg->getSeqNum()
+                 , aMediaMsg->getStreamID()
+                 , aMediaMsg->getClipID()
                  , aMediaMsg->getTimestamp()
                  , qsize
                 ));
@@ -701,11 +777,12 @@ OSCL_EXPORT_REF void PvmfPortBaseImpl::LogMediaMsgInfo(PVMFSharedMediaMsgPtr aMe
         default:
         {
             LOGDATAPATH(
-                (0, "PORT %s %s MediaCmd FmtId %d, SeqNum %d, SId %d, TS %d, Q-depth %d/%d", iPortName.get_cstr()
+                (0, "PORT %s %s MediaCmd FmtId %d, SeqNum %d, SId %d, ClipID %d, TS %d, Q-depth %d/%d", iPortName.get_cstr()
                  , msg
                  , aMediaMsg->getFormatID()
                  , aMediaMsg->getSeqNum()
                  , aMediaMsg->getStreamID()
+                 , aMediaMsg->getClipID()
                  , aMediaMsg->getTimestamp()
                  , qsize
                 ));

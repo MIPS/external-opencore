@@ -11,6 +11,7 @@ INCSRCDIR := ../../include
 SRCS := \
     pvmf_basic_errorinfomessage.cpp \
     pvmf_duration_infomessage.cpp \
+    pvmf_event_handling.cpp \
     pvmf_format_type.cpp \
     pvmf_media_clock.cpp \
     pvmf_media_cmd.cpp \
@@ -27,8 +28,7 @@ SRCS := \
     pvmf_sync_util.cpp \
     pvmf_timestamp.cpp \
     pvmi_config_and_capability_utils.cpp \
-    pvmi_kvp_util.cpp \
-    pvmf_event_handling.cpp
+    pvmi_kvp_util.cpp
 
 HDRS :=  \
     pv_interface.h \
@@ -65,6 +65,7 @@ HDRS :=  \
     pvmf_resizable_simple_mediamsg.h \
     pvmf_return_codes.h \
     pvmf_simple_media_buffer.h \
+    pvmf_source_node_utils.h \
     pvmf_sync_util_data_queue.h \
     pvmf_sync_util.h \
     pvmf_timedtext.h \

@@ -468,9 +468,9 @@ OSCL_EXPORT_REF void PVMFNodeInterfaceImpl::ReportInfoEvent(PVMFAsyncEvent &aEve
     }
 }
 
-OSCL_EXPORT_REF bool PVMFNodeInterfaceImpl::SendEndOfTrackCommand(PVMFPortInterface* aPort, int32 aStreamID, PVMFTimestamp aTimestamp, int32 aSeqNum, uint32 aDuration)
+OSCL_EXPORT_REF bool PVMFNodeInterfaceImpl::SendEndOfTrackCommand(PVMFPortInterface* aPort, int32 aStreamID, PVMFTimestamp aTimestamp, uint32 aSeqNum, uint32 aClipIndex, uint32 aDuration)
 {
-    PVMF_NODEINTERFACE_IMPL_LOGSTACKTRACE((0, "%s::SendEndOfTrackCommand StreamID %d In", iNodeName.Str(), iStreamID));
+    PVMF_NODEINTERFACE_IMPL_LOGSTACKTRACE((0, "%s::SendEndOfTrackCommand StreamID %d In ClipIndex %d", iNodeName.Str(), iStreamID, aClipIndex));
 
     PVMFSharedMediaCmdPtr sharedMediaCmdPtr = PVMFMediaCmd::createMediaCmd();
     // set format id
@@ -481,6 +481,8 @@ OSCL_EXPORT_REF bool PVMFNodeInterfaceImpl::SendEndOfTrackCommand(PVMFPortInterf
     sharedMediaCmdPtr->setTimestamp(aTimestamp);
     // set sequence number
     sharedMediaCmdPtr->setSeqNum(aSeqNum);
+    // Set current playback clip id
+    sharedMediaCmdPtr->setClipID(aClipIndex);
 
     //EOS timestamp(aTrackPortInfo.iTimestamp)is considered while deciding the iResumeTimeStamp in the mediaoutput node
     //therefore its length should also be considered while making decision to forward or drop the packet
@@ -505,16 +507,18 @@ OSCL_EXPORT_REF bool PVMFNodeInterfaceImpl::SendEndOfTrackCommand(PVMFPortInterf
     return true;
 }
 
-OSCL_EXPORT_REF bool PVMFNodeInterfaceImpl::SendBeginOfMediaStreamCommand(PVMFPortInterface* aPort, int32 aStreamID, PVMFTimestamp aTimestamp)
+OSCL_EXPORT_REF bool PVMFNodeInterfaceImpl::SendBeginOfMediaStreamCommand(PVMFPortInterface* aPort, int32 aStreamID, PVMFTimestamp aTimestamp, uint32 aSeqNum, uint32 aClipIndex)
 {
-    PVMF_NODEINTERFACE_IMPL_LOGSTACKTRACE((0, "%s::SendBeginOfMediaStreamCommand StreamID %d In", iNodeName.Str(), iStreamID));
+    PVMF_NODEINTERFACE_IMPL_LOGSTACKTRACE((0, "%s::SendBeginOfMediaStreamCommand StreamID %d ClipIndex %d In", iNodeName.Str(), iStreamID, aClipIndex));
     PVMFSharedMediaCmdPtr sharedMediaCmdPtr = PVMFMediaCmd::createMediaCmd();
     // set format id
     sharedMediaCmdPtr->setFormatID(PVMF_MEDIA_CMD_BOS_FORMAT_ID);
     // set timestamp
     sharedMediaCmdPtr->setTimestamp(aTimestamp);
     // set sequence number
-    sharedMediaCmdPtr->setSeqNum(0);
+    sharedMediaCmdPtr->setSeqNum(aSeqNum);
+    // Set current playback clip id
+    sharedMediaCmdPtr->setClipID(aClipIndex);
 
     PVMFSharedMediaMsgPtr mediaMsgOut;
     convertToPVMFMediaCmdMsg(mediaMsgOut, sharedMediaCmdPtr);

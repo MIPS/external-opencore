@@ -4,6 +4,7 @@ include $(CLEAR_VARS)
 LOCAL_SRC_FILES := \
 	src/pvmf_basic_errorinfomessage.cpp \
  	src/pvmf_duration_infomessage.cpp \
+ 	src/pvmf_event_handling.cpp \
  	src/pvmf_format_type.cpp \
  	src/pvmf_media_clock.cpp \
  	src/pvmf_media_cmd.cpp \
@@ -20,8 +21,7 @@ LOCAL_SRC_FILES := \
  	src/pvmf_sync_util.cpp \
  	src/pvmf_timestamp.cpp \
  	src/pvmi_config_and_capability_utils.cpp \
- 	src/pvmi_kvp_util.cpp \
- 	src/pvmf_event_handling.cpp
+ 	src/pvmi_kvp_util.cpp
 
 
 LOCAL_MODULE := libpvmf
@@ -75,6 +75,7 @@ LOCAL_COPY_HEADERS := \
  	include/pvmf_resizable_simple_mediamsg.h \
  	include/pvmf_return_codes.h \
  	include/pvmf_simple_media_buffer.h \
+ 	include/pvmf_source_node_utils.h \
  	include/pvmf_sync_util_data_queue.h \
  	include/pvmf_sync_util.h \
  	include/pvmf_timedtext.h \
