@@ -35,6 +35,7 @@ OSCL_EXPORT_REF bool PVMFFormatType::isCompressed() const
             (pv_mime_strcmp(iMimeStr.c_str(), PVMF_MIME_ULAW) == 0) ||
             (pv_mime_strcmp(iMimeStr.c_str(), PVMF_MIME_ALAW) == 0) ||
             (pv_mime_strcmp(iMimeStr.c_str(), PVMF_MIME_YUV420) == 0) ||
+            (pv_mime_strcmp(iMimeStr.c_str(), PVMF_MIME_YUV420_SEMIPLANAR) == 0) ||
             (pv_mime_strcmp(iMimeStr.c_str(), PVMF_MIME_YUV422) == 0) ||
             (pv_mime_strcmp(iMimeStr.c_str(), PVMF_MIME_YUV422_INTERLEAVED_UYVY) == 0) ||
             (pv_mime_strcmp(iMimeStr.c_str(), PVMF_MIME_YUV422_INTERLEAVED_YUYV) == 0) ||
@@ -93,6 +94,7 @@ OSCL_EXPORT_REF bool PVMFFormatType::isVideo() const
 
     //PV internal video media types
     if ((pv_mime_strcmp(iMimeStr.c_str(), PVMF_MIME_YUV420) == 0) ||
+            (pv_mime_strcmp(iMimeStr.c_str(), PVMF_MIME_YUV420_SEMIPLANAR) == 0) ||
             (pv_mime_strcmp(iMimeStr.c_str(), PVMF_MIME_YUV422) == 0) ||
             (pv_mime_strcmp(iMimeStr.c_str(), PVMF_MIME_YUV422_INTERLEAVED_UYVY) == 0) ||
             (pv_mime_strcmp(iMimeStr.c_str(), PVMF_MIME_YUV422_INTERLEAVED_YUYV) == 0) ||

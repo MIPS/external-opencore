@@ -1517,7 +1517,8 @@ PVMFStatus PvmiMIOFileInput::DoInit()
         if (iSettings.iTimescale != 0)
             iStreamDuration = trackDuration / iSettings.iTimescale * 1000; //in msec
     }
-    else if (iSettings.iMediaFormat == PVMF_MIME_YUV420)
+    else if ((iSettings.iMediaFormat == PVMF_MIME_YUV420) ||
+             (iSettings.iMediaFormat == PVMF_MIME_YUV420_SEMIPLANAR))
     {
         // Set bytes per frame
         maxFrameSize = (uint32)(iSettings.iFrameHeight * iSettings.iFrameWidth * 3 / 2);
@@ -1911,6 +1912,7 @@ PVMFStatus PvmiMIOFileInput::DoRead()
         ++iDataEventCounter;
     }
     else if (iSettings.iMediaFormat == PVMF_MIME_YUV420 ||
+             iSettings.iMediaFormat == PVMF_MIME_YUV420_SEMIPLANAR ||
              iSettings.iMediaFormat == PVMF_MIME_RGB16)
     {
         bytesToRead = GetFrameSize(0);

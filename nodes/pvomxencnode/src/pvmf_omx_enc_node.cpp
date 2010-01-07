@@ -724,6 +724,7 @@ PVMFOMXEncNode::PVMFOMXEncNode(int32 aPriority) :
              iCapability.iInputFormatCapability.push_back(PVMF_MIME_YUV422);
              iCapability.iInputFormatCapability.push_back(PVMF_MIME_YUV422_INTERLEAVED_UYVY);
              iCapability.iInputFormatCapability.push_back(PVMF_MIME_YUV422_INTERLEAVED_YUYV);
+             iCapability.iInputFormatCapability.push_back(PVMF_MIME_YUV420_SEMIPLANAR);
              iCapability.iInputFormatCapability.push_back(PVMF_MIME_RGB24);
              iCapability.iInputFormatCapability.push_back(PVMF_MIME_RGB12);
 
@@ -2114,6 +2115,11 @@ bool PVMFOMXEncNode::NegotiateVideoComponentParameters()
     {
         DesiredPortColorFormat = OMX_COLOR_FormatYCbYCr;
     }
+    else if (iInFormat == PVMF_MIME_YUV420_SEMIPLANAR)
+    {
+        DesiredPortColorFormat = OMX_COLOR_FormatYUV420SemiPlanar;
+
+    }
     else
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
@@ -2198,6 +2204,11 @@ bool PVMFOMXEncNode::NegotiateVideoComponentParameters()
     {
         iOMXComponentInputBufferSize = iVideoInputFormat.iFrameWidth * iVideoInputFormat.iFrameHeight * 2;
         iParamPort.format.video.eColorFormat = OMX_COLOR_FormatYCbYCr;
+    }
+    else if (iInFormat == PVMF_MIME_YUV420_SEMIPLANAR)
+    {
+        iOMXComponentInputBufferSize = (iVideoInputFormat.iFrameWidth * iVideoInputFormat.iFrameHeight * 3) >> 1;
+        iParamPort.format.video.eColorFormat = OMX_COLOR_FormatYUV420SemiPlanar;
     }
     else
     {
