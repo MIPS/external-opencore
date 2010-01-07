@@ -2406,12 +2406,10 @@ PVMFStatus PVMFMP4FFParserNode::DoSetDataSourcePosition()
             {
                 /*This means engine is trying to start the playback session at a non-zero NPT.
                 In case of PPB, this is not possible if server does not support byte-seek. */
-                PVMF_BASE_NODE_ARRAY_DELETE(trackList);
                 return PVMFFailure;
             }
             else
             {
-                PVMF_BASE_NODE_ARRAY_DELETE(trackList);
                 return PVMFErrNotSupported;
             }
         }
@@ -2419,10 +2417,7 @@ PVMFStatus PVMFMP4FFParserNode::DoSetDataSourcePosition()
         if (iDataStreamInterface->QueryBufferingCapacity() == 0)
         {
             if (!iDownloadComplete)
-            {
-                PVMF_BASE_NODE_ARRAY_DELETE(trackList);
                 return PVMFErrNotSupported;
-            }
         }
     }
 
@@ -2702,7 +2697,6 @@ PVMFStatus PVMFMP4FFParserNode::DoSetDataSourcePosition()
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
                         (0, "PVMFMP4FFParserNode::DoSetDataSourcePosition() Memory alloc for array to keep the timestamp of the samples failed"));
-        PVMF_BASE_NODE_ARRAY_DELETE(trackList);
         OSCL_FREE(trackTSAfterRepo);
         trackTSAfterRepo = NULL;
         OSCL_FREE(retValPerTrack);
