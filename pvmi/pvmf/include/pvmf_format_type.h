@@ -138,8 +138,10 @@ typedef OSCL_String PvmfMimeString;
 
 #define PVMF_MIME_VP6 "video/x-vp6"
 
-
 #define PVMF_MIME_WMV        "video/x-ms-wmv"
+
+#define PVMF_MIME_VC1        "video/vc1"
+
 // RV8, RV0
 #define PVMF_MIME_REAL_VIDEO          "video/vnd.rn-realvideo"
 

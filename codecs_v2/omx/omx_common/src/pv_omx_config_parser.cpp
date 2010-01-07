@@ -121,7 +121,7 @@ OSCL_EXPORT_REF OMX_BOOL OMXConfigParser(
             }
             else if (0 == oscl_strcmp(pInputs->cComponentRole, (OMX_STRING)"video_decoder.vc1"))
             {
-                aInputs.iMimeType = PVMF_MIME_WMV;
+                aInputs.iMimeType = PVMF_MIME_VC1;
 
             }
             else if (0 == oscl_strcmp(pInputs->cComponentRole, (OMX_STRING)"video_decoder.avc"))

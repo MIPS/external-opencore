@@ -139,7 +139,7 @@ OSCL_EXPORT_REF int16 pv_video_config_parser(pvVideoConfigParserInputs *aInputs,
         aOutputs->profile = (uint32)profile_idc;
         aOutputs->level = (uint32) level_idc;
     }
-    else if (aInputs->iMimeType == PVMF_MIME_WMV) //wmv
+    else if (aInputs->iMimeType == PVMF_MIME_WMV || aInputs->iMimeType == PVMF_MIME_VC1) //wmv or vc1
     {
         uint32 dwdat;
         uint16 wdat;
@@ -178,18 +178,31 @@ OSCL_EXPORT_REF int16 pv_video_config_parser(pvVideoConfigParserInputs *aInputs,
         // in case of WMV store "Compression Type as Level"
         aOutputs->level = NewCompression;
 
-        if (NewCompression != FOURCC_WMV1 &&
-                NewCompression != FOURCC_WMV2 &&
-                NewCompression != FOURCC_WMV3 &&
-                NewCompression != FOURCC_WVC1 &&
-                NewCompression != FOURCC_WMVA &&
-                NewCompression != FOURCC_MP42 &&
-                NewCompression != FOURCC_MP43 &&
-                NewCompression != FOURCC_mp42 &&
-                NewCompression != FOURCC_mp43 &&
-                NewCompression != FOURCC_MP4S)
+        if (aInputs->iMimeType == PVMF_MIME_VC1)
         {
-            return -1;
+            if (NewCompression != FOURCC_WMV3 &&
+                    NewCompression != FOURCC_WVC1 &&
+                    NewCompression != FOURCC_WMVA)
+            {
+                return -1;
+            }
+
+        }
+        else
+        {
+            if (NewCompression != FOURCC_WMV1 &&
+                    NewCompression != FOURCC_WMV2 &&
+                    NewCompression != FOURCC_WMV3 &&
+                    NewCompression != FOURCC_WVC1 &&
+                    NewCompression != FOURCC_WMVA &&
+                    NewCompression != FOURCC_MP42 &&
+                    NewCompression != FOURCC_MP43 &&
+                    NewCompression != FOURCC_mp42 &&
+                    NewCompression != FOURCC_mp43 &&
+                    NewCompression != FOURCC_MP4S)
+            {
+                return -1;
+            }
         }
         // get profile etc.
         // Check sequence header
