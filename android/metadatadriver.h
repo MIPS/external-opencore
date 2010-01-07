@@ -19,6 +19,7 @@
 #define ANDROID_METADATADRIVER_H
 
 #include <media/mediametadataretriever.h>
+#include <cutils/properties.h>
 
 #include "pv_frame_metadata_interface.h"
 #include "pv_frame_metadata_factory.h"
@@ -38,6 +39,7 @@
 #include "cczoomrotation16.h"  // for color converter
 #include "OMX_Core.h"
 #include "pv_omxcore.h"
+#include "pv_player_track_selection_interface.h"
 
 #define BEST_THUMBNAIL_MODE 1
 
@@ -49,6 +51,15 @@ namespace android {
 
 class VideoFrame;
 class MediaAlbumArt;
+
+class MyTrackSelectionHelper: public PVMFTrackSelectionHelper
+{
+public:
+    MyTrackSelectionHelper(){}; // Do nothing;
+    ~MyTrackSelectionHelper(){}; // Do nothing;
+    PVMFStatus SelectTracks(const PVMFMediaPresentationInfo& aPlayableList, PVMFMediaPresentationInfo& aPreferenceList);
+    PVMFStatus ReleasePreferenceList(PVMFMediaPresentationInfo& aPreferenceList);
+};
 
 class MetadataDriver:
 public OsclActiveObject,
@@ -83,10 +94,10 @@ public:
     // Returns OK if no operation failed; otherwise, it returns UNKNOWN_ERROR.
     status_t setDataSource(const char* srcUrl);
 
-    // This call may be time consuming.          
-    // Returns OK if no operation failed; otherwise, it returns UNKNOWN_ERROR.       
-    // The caller _retains_ ownership of "fd".       
-    status_t setDataSourceFd(int fd, int64_t offset, int64_t length);        
+    // This call may be time consuming.
+    // Returns OK if no operation failed; otherwise, it returns UNKNOWN_ERROR.
+    // The caller _retains_ ownership of "fd".
+    status_t setDataSourceFd(int fd, int64_t offset, int64_t length);
 
     // Captures a representative frame. Returns NULL if failure.
     VideoFrame *captureFrame();
@@ -113,6 +124,7 @@ private:
     // value of mMode.
     enum MetadataDriverState {
         STATE_CREATE,
+        STATE_QUERY_TRACK_SELECTION_HELPER,
         STATE_ADD_DATA_SOURCE,
         STATE_GET_METADATA_KEYS,        // Optional.
         STATE_GET_METADATA_VALUES,      // Depends on STATE_GET_METADATA_KEYS.
@@ -141,6 +153,7 @@ private:
     bool isCommandSuccessful(const PVCmdResponse& aResponse) const;
     void handleCommandFailure();
     void handleCreate();
+    void handleQueryTrackSelectionHelper();
     void handleCleanUp();
     void handleAddDataSource();
     void handleRemoveDataSource();
@@ -152,7 +165,7 @@ private:
     status_t extractMetadata(const char* key, char* value, uint32 valueLength);
     static int startDriverThread(void *cookie);
     int retrieverThread();
-    void closeSharedFdIfNecessary(); 
+    void closeSharedFdIfNecessary();
 
     OsclSemaphore* mSyncSem;
 
@@ -189,10 +202,13 @@ private:
     // get these out of mMetadataValueList
     char mMetadataValues[NUM_METADATA_KEYS][MAX_METADATA_STRING_LENGTH];
     MediaAlbumArt *mMediaAlbumArt;
-         
-    // If sourcing from a file descriptor, this holds a dup of it to prevent         
-    // it from going away while we pass around the sharedfd: URI.        
-    int mSharedFd; 
+
+    // If sourcing from a file descriptor, this holds a dup of it to prevent
+    // it from going away while we pass around the sharedfd: URI.
+    int mSharedFd;
+    // Track selection helper
+    PVPlayerTrackSelectionInterface* mTrackSelectionInterface;
+    MyTrackSelectionHelper mTrackSelectionHelper;
 };
 
 }; // namespace android

@@ -23,6 +23,7 @@
 #include <media/thread_init.h>
 #include <core/SkBitmap.h>
 #include <private/media/VideoFrame.h>
+#include "pvmf_media_presentation_info.h"
 
 #include "metadatadriver.h"
 
@@ -83,6 +84,7 @@ MetadataDriver::MetadataDriver(uint32 mode): OsclActiveObject(OsclActiveObject::
     for (uint32 i = 0; i < NUM_METADATA_KEYS; ++i) {
         mMetadataValues[i][0] = '\0';
     }
+    mTrackSelectionInterface = NULL;
     LOGV("constructor: Mode (%d).", mMode);
 }
 
@@ -322,7 +324,7 @@ status_t MetadataDriver::extractExternalAlbumArt(const char* url)
     LOGV("extractExternalAlbumArt: External graphic or album art is found: %s.", url);
     delete mMediaAlbumArt;
     mMediaAlbumArt = new MediaAlbumArt(url);
-    return (mMediaAlbumArt && mMediaAlbumArt->mSize > 0)? OK: BAD_VALUE; 
+    return (mMediaAlbumArt && mMediaAlbumArt->mSize > 0)? OK: BAD_VALUE;
 }
 
 // Finds the first album art and extract it.
@@ -524,9 +526,26 @@ void MetadataDriver::handleCreate()
     if (error || mUtil->SetMode(PV_FRAME_METADATA_INTERFACE_MODE_SOURCE_METADATA_AND_THUMBNAIL) != PVMFSuccess) {
         handleCommandFailure();
     } else {
-        mState = STATE_ADD_DATA_SOURCE;
+        char value[PROPERTY_VALUE_MAX] = {"0"};
+        property_get("media.prioritize_sw_over_hw_codecs_for_thumbnails", value, "0");
+        if (1 == atoi(value)) {
+            mState = STATE_QUERY_TRACK_SELECTION_HELPER;
+        } else {
+            mState = STATE_ADD_DATA_SOURCE;
+        }
         RunIfNotReady();
     }
+}
+
+void MetadataDriver::handleQueryTrackSelectionHelper()
+{
+    LOGV("handleQueryTrackSelectionHelper()");
+    int error = 0;
+
+    OSCL_TRY(error, mUtil->QueryInterface(PVPlayerTrackSelectionInterfaceUuid,
+                                          (PVInterface*&)mTrackSelectionInterface,
+                                          (OsclAny*)&mContextObject));
+    OSCL_FIRST_CATCH_ANY(error, handleCommandFailure());
 }
 
 // Create a data source and add it.
@@ -658,6 +677,9 @@ void MetadataDriver::Run()
         case STATE_CREATE:
             handleCreate();
             break;
+        case STATE_QUERY_TRACK_SELECTION_HELPER:
+            handleQueryTrackSelectionHelper();
+            break;
         case STATE_ADD_DATA_SOURCE:
             handleAddDataSource();
             break;
@@ -714,6 +736,12 @@ void MetadataDriver::CommandCompleted(const PVCmdResponse& aResponse)
     }
 
     switch(mState) {
+        case STATE_QUERY_TRACK_SELECTION_HELPER:
+            if (mTrackSelectionInterface) {
+                mTrackSelectionInterface->RegisterHelperObject(&mTrackSelectionHelper);
+            }
+            mState = STATE_ADD_DATA_SOURCE;
+            break;
         case STATE_ADD_DATA_SOURCE:
             if (mMode & GET_METADATA_ONLY) {
                 mState = STATE_GET_METADATA_KEYS;
@@ -888,6 +916,72 @@ const char* PVMetadataRetriever::extractMetadata(int keyCode)
         return NULL;
     }
     return mMetadataDriver->extractMetadata(keyCode);
+}
+
+PVMFStatus MyTrackSelectionHelper::SelectTracks(const PVMFMediaPresentationInfo& aPlayableList, PVMFMediaPresentationInfo& aPreferenceList)
+{
+    OMXDecComponentItem* OMX_Comp_item = NULL;
+    // Add all video tracks to the selection list first.
+    for (uint32 j = 0; j < aPlayableList.getNumTracks(); j++){
+        PVMFTrackInfo* curtrack = aPlayableList.getTrackInfo(j);
+        PVMFFormatType Format = curtrack->getTrackMimeType().get_str();
+        if (Format.isVideo()){
+            Oscl_Vector<OMXDecComponentItem, OsclMemAllocator> *pOMXcomponentList = curtrack->getOMXComponentSupportingTheTrackVec();
+            Oscl_Vector<OMXDecComponentItem, OsclMemAllocator> SortedOMXcomponentList;
+            if (pOMXcomponentList){
+                for (uint32 ii=0; ii< pOMXcomponentList->size(); ii++){
+                    OMX_Comp_item = curtrack->getOMXComponent(ii);
+                    if (OMX_Comp_item){
+                        if (0 == oscl_strncmp(OMX_Comp_item->getOMXComponentName().get_str(),
+                                     "OMX.PV", oscl_strlen("OMX.PV"))){
+                            // Push the PV items to the front of the list
+                            SortedOMXcomponentList.push_front(*OMX_Comp_item);
+                        }
+                        else{
+                            // Push all others to the back
+                            SortedOMXcomponentList.push_back(*OMX_Comp_item);
+                        }
+                    }
+                }
+
+                // Clear the current list.
+                pOMXcomponentList->clear();
+
+                // Replace with our sorted one
+                for (uint32 ii = 0; ii < SortedOMXcomponentList.size(); ii++){
+                   curtrack->addOMXComponentSupportingTheTrack(SortedOMXcomponentList[ii]);
+                }
+
+                aPreferenceList.addTrackInfo(*curtrack);
+
+            } // end  if (pOMXcomponentList)
+
+        } // end isVideo()
+
+    } // end of first loop to search for video tracks
+
+    // Then add all the other tracks (audio and text)
+    for (uint32 j = 0; j < aPlayableList.getNumTracks(); j++){
+        PVMFTrackInfo* curtrack = aPlayableList.getTrackInfo(j);
+        PVMFFormatType Format = curtrack->getTrackMimeType().get_str();
+
+        if (Format.isAudio()){
+            aPreferenceList.addTrackInfo(*curtrack);
+        }
+
+        if (Format.isText()){
+            aPreferenceList.addTrackInfo(*curtrack);
+        }
+    }
+    return PVMFSuccess;
+}
+
+
+PVMFStatus MyTrackSelectionHelper::ReleasePreferenceList(PVMFMediaPresentationInfo& aPreferenceList)
+{
+    LOGE("MyTrackSelectionHelper::ReleasePreferenceList() called");
+    aPreferenceList.Reset();
+    return PVMFSuccess;
 }
 
 };  // android
