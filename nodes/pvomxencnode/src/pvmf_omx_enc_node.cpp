@@ -2494,29 +2494,6 @@ bool PVMFOMXEncNode::NegotiateVideoComponentParameters()
                         (0, "PVMFOMXEncNode-%s::SetMP4EncoderParameters Parameter Invalid OMX_IndexParamVideoBitrate", iNodeTypeId));
     }
 
-    // set Max Bit rate for VBR
-    if (setMaxBitrate == true)
-    {
-        if (iVideoEncodeParam.iMaxBitRate[0] == 0) // set to default for now.
-        {
-            iVideoEncodeParam.iMaxBitRate[0] = DEFAULT_MAXBITRATE_AVGBITRATE_RATIO * iVideoEncodeParam.iBitRate[0];
-        }
-
-        CONFIG_SIZE_AND_VERSION(BitRateType);
-
-        BitRateType.nPortIndex = iOutputPortIndex;
-        BitRateType.eControlRate = OMX_Video_ControlRateMax;
-        BitRateType.nTargetBitrate = iVideoEncodeParam.iMaxBitRate[0];
-
-        Err = OMX_SetParameter(iOMXEncoder, OMX_IndexParamVideoBitrate, &BitRateType);
-
-        if (OMX_ErrorNone != Err)
-        {
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                            (0, "PVMFOMXEncNode-%s::SetMP4EncoderParameters Parameter Invalid OMX_IndexParamVideoBitrate", iNodeTypeId));
-        }
-    }
-
     if (iVideoEncodeParam.iMaxBitRate[0] < iVideoEncodeParam.iBitRate[0]) // check validity
     {
         iVideoEncodeParam.iMaxBitRate[0] = iVideoEncodeParam.iBitRate[0];
