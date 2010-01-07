@@ -244,9 +244,6 @@ OSCL_EXPORT_REF int16 pv_video_config_parser(pvVideoConfigParserInputs *aInputs,
 
                 NewProfile = (NewSeqHeader & 0xC0) >> 6; // 0 - simple , 1- main, 3 - complex, 2-forbidden
 
-                if (NewProfile == WMV3_PC_PROFILE)
-                    return -1;
-
                 YUV411flag = (NewSeqHeader & 0x20) >> 5;
                 Spriteflag = (NewSeqHeader & 0x10) >> 4;
                 if ((YUV411flag != 0) || (Spriteflag != 0))
