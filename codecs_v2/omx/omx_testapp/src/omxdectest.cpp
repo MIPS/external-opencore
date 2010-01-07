@@ -2691,7 +2691,7 @@ OMX_ERRORTYPE OmxComponentDecTest::GetInputFrameRvRa()
     OMX_U32 ReadCount;
     OMX_U32 TempSize;
     OMX_BOOL MarkerBit = OMX_FALSE;
-    uint32 TimeStamp;
+    uint32 TimeStamp = 0;
 
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "OmxComponentDecTest::GetInputFrameRvRa() - IN"));
 

@@ -4236,6 +4236,12 @@ bool PVMFOMXEncNode::SendEOSBufferToOMXComponent()
 
 }
 
+int32 encNodeCustomTry(OsclAny* &apB, OsclMemPoolFixedChunkAllocator* &aInBufMemoryPool, uint32 &aInputAllocSize)
+{
+    int32 errcode = 0;
+    OSCL_TRY(errcode, apB = (OsclAny *) aInBufMemoryPool->allocate(aInputAllocSize));
+    return errcode;
+}
 
 bool PVMFOMXEncNode::SendInputBufferToOMXComponent()
 {
@@ -4255,7 +4261,7 @@ bool PVMFOMXEncNode::SendInputBufferToOMXComponent()
         // try to get input buffer header
 
         OsclAny *pB = NULL;
-        OSCL_TRY(errcode, pB = (OsclAny *) iInBufMemoryPool->allocate(iInputAllocSize));
+        errcode = encNodeCustomTry(pB, iInBufMemoryPool, iInputAllocSize);
 
         if (errcode != 0)
         {

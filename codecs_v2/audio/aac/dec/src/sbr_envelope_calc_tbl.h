@@ -54,9 +54,6 @@ extern const Int16 rP_LCx[512];
 
 #ifdef HQ_SBR
 
-
-extern const Int32 fir_table[5][5];
-
 extern const Int32 rPxx[512];
 
 #endif
