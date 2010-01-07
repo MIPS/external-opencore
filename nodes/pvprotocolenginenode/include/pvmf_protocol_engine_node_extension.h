@@ -48,6 +48,8 @@
 #include "pvmf_port_interface.h"
 #endif
 
+#include "pvmf_source_context_data.h"
+
 // default number of redirect trials
 #define PVPROTOCOLENGINE_DEFAULT_NUMBER_OF_REDIRECT_TRIALS 10
 #define PVPROTOCOLENGINE_DEFAULT_MAXIMUM_ASF_HEADER_SIZE 262144 // 256K
@@ -76,6 +78,8 @@ enum DownloadProgressMode
     DownloadProgressMode_TimeBased = 0,
     DownloadProgressMode_ByteBased
 };
+
+
 
 /**
  * PVMFProtocolEngineNodeExtensionInterface allows a client to do exercise extended functions
@@ -173,6 +177,21 @@ class PVMFProtocolEngineNodeExtensionInterface : public PVInterface
          * Retrieve maximum total clip bitrate(video+audio)
          */
         virtual uint32 GetMaxTotalClipBitrate() = 0;
+
+        /**
+         * Set the byte-seek param inside the PE node from the DM node.
+         *
+         * @param aByteSeekEnable, specifies the byte-seek param.
+         */
+        virtual void SetByteSeekMode(const ByteSeekMode aByteSeekMode = BYTE_SEEK_UNSUPPORTED) = 0;
+
+        /**
+         * Retrieves the byte-seek param from the PE node.
+         *
+         * @return 1 when byte-seek param enabled inside the PE node.
+         * 0 when byte-seek param disabled inside the PE node.
+         */
+        virtual uint32 GetByteSeekMode() = 0;
 
 };
 

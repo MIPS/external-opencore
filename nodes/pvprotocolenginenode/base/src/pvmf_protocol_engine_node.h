@@ -199,6 +199,16 @@ class PVMFProtocolEngineNode :  public PVMFNodeInterface,
         {
             return iProtocolContainer->getMaxTotalClipBitrate();
         }
+
+        void SetByteSeekMode(const ByteSeekMode aByteSeekMode = BYTE_SEEK_UNSUPPORTED)
+        {
+            if (iProtocol) iProtocol->setByteSeekMode(aByteSeekMode);
+        }
+        uint32 GetByteSeekMode()
+        {
+            if (iProtocol) return iProtocol->getByteSeekMode();
+            else return BYTE_SEEK_NOTSET;
+        }
         bool GetASFHeader(Oscl_Vector<OsclRefCounterMemFrag, OsclMemAllocator> &aHeader)
         {
             return iProtocol->getHeader(aHeader);

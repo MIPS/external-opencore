@@ -34,7 +34,9 @@ class ProgressiveStreamingContainer : public ProgressiveDownloadContainer
         OSCL_IMPORT_REF PVMFStatus doStop();
         OSCL_IMPORT_REF PVMFStatus doSeek(PVMFProtocolEngineNodeCommand& aCmd);
         OSCL_IMPORT_REF bool completeRepositionRequest();
+        OSCL_IMPORT_REF bool completeStartCmd();
         OSCL_IMPORT_REF bool doInfoUpdate(const uint32 downloadStatus);
+        OSCL_IMPORT_REF virtual bool downloadUpdateForHttpHeaderAvailable();
         void enableInfoUpdate(const bool aEnabled = true)
         {
             iEnableInfoUpdate = aEnabled;
@@ -42,6 +44,7 @@ class ProgressiveStreamingContainer : public ProgressiveDownloadContainer
 
         // constructor
         OSCL_IMPORT_REF ProgressiveStreamingContainer(PVMFProtocolEngineNode *aNode = NULL);
+        OSCL_IMPORT_REF virtual bool doPause();
 
     protected:
         // called by DoSeek()
@@ -55,6 +58,7 @@ class ProgressiveStreamingContainer : public ProgressiveDownloadContainer
 
     private:
         void moveToStartedState();
+        bool iStartAfterPause;
 };
 
 
@@ -130,6 +134,11 @@ class progressiveStreamingControl : public progressiveDownloadControl
 
         // constructor
         OSCL_IMPORT_REF progressiveStreamingControl();
+
+    private:
+        void setProtocolInfo();
+        bool iSetProtocolInfo;
+        Oscl_Vector<PvmiKvp*, OsclMemAllocator> iInfoKvpVec;
 };
 
 ////////////////////////////////////////////////////////////////////////////////////

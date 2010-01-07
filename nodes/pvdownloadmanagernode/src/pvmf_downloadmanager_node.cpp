@@ -479,6 +479,8 @@ PVMFStatus PVMFDownloadManagerNode::SetSourceInitializationData(OSCL_wString& aS
                 //extract the download file name from the opaque data.
                 iDownloadFileName = data->iDownloadFileName;
 
+                iContextDataByteSeek = data->iByteSeekMode;
+
                 //extract the playback mode
                 switch (data->iPlaybackControl)
                 {
@@ -1575,6 +1577,10 @@ PVMFStatus PVMFDownloadManagerNode::ScheduleSubNodeCommands()
             //Start or re-start parser node (unless download-only)
             if (iFormatParserNode.iNode)
                 Push(iFormatParserNode, PVMFDownloadManagerSubNodeContainerBase::EStart);
+            // Start the PE node after it was paused for PPB, in case when byte-seek is not disabled.
+            if (((iProtocolEngineNode.ProtocolEngineExtension())->GetByteSeekMode() != BYTE_SEEK_UNSUPPORTED)
+                    && (iProtocolEngineNode.iNode->GetState() == EPVMFNodePaused) && (iPlaybackMode == EPlaybackOnly) && (!iDownloadComplete))
+                Push(iProtocolEngineNode, PVMFDownloadManagerSubNodeContainerBase::EStart);
             break;
 
         case PVMF_GENERIC_NODE_STOP:
@@ -1596,6 +1602,10 @@ PVMFStatus PVMFDownloadManagerNode::ScheduleSubNodeCommands()
             //note: pause/resume download is not supported.
             if (iFormatParserNode.iNode)
                 Push(iFormatParserNode, PVMFDownloadManagerSubNodeContainerBase::EPause);
+            // Pause the PE node when engine is Paused, in case of PPB when byte-seek is not disabled.
+            if (((iProtocolEngineNode.ProtocolEngineExtension())->GetByteSeekMode() != BYTE_SEEK_UNSUPPORTED) &&
+                    (iPlaybackMode == EPlaybackOnly) && (!iDownloadComplete))
+                Push(iProtocolEngineNode, PVMFDownloadManagerSubNodeContainerBase::EPause);
             break;
 
         case PVMF_GENERIC_NODE_RESET:
@@ -3300,8 +3310,23 @@ void PVMFDownloadManagerNode::setParametersSync(PvmiMIOSession aSession, PvmiKvp
 
                     case BASEKEY_SESSION_CONTROLLER_NUM_HTTP_HEADER_REQUEST_DISABLED:
                     {
-                        bool httpHeaderRequestDisabled = aParameters[paramind].value.bool_value;
+                        httpHeaderRequestDisabled = aParameters[paramind].value.bool_value;
                         (iProtocolEngineNode.ProtocolEngineExtension())->DisableHttpHeadRequest(httpHeaderRequestDisabled);
+
+                        /* During PPB, in case when HEAD request is disabled and App doesn't set byte-seek
+                           param in context data, then simply set the byte-seek param as disabled inside PE node.
+                           Else, set byte-seek same as the value inside context data.*/
+                        if (iPlaybackMode == EPlaybackOnly)
+                        {
+                            if ((httpHeaderRequestDisabled == true) && (iContextDataByteSeek == BYTE_SEEK_NOTSET))
+                            {
+                                (iProtocolEngineNode.ProtocolEngineExtension())->SetByteSeekMode(BYTE_SEEK_UNSUPPORTED);
+                            }
+                            else
+                            {
+                                (iProtocolEngineNode.ProtocolEngineExtension())->SetByteSeekMode(iContextDataByteSeek);
+                            }
+                        }
                     }
                     break;
 

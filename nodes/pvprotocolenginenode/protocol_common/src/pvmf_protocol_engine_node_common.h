@@ -466,6 +466,12 @@ class ProtocolContainer
         {
             return false;
         }
+        /* for completing the start command after Pause/Resume in case of PPB,
+           when byte-seek is enabled inside the PE node */
+        virtual bool completeStartCmd()
+        {
+            return false;
+        }
         virtual void checkSendResumeNotification()
         {
             ;
@@ -1527,6 +1533,7 @@ class InterfacingObjectContainer
         {
             iDisableHeadRequest = aDisableHeadRequest;
         }
+
         bool getHttpHeadRequestDisabled() const
         {
             return iDisableHeadRequest;

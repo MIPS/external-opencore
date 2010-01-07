@@ -64,6 +64,7 @@ PVMFMP3FFParserNode::PVMFMP3FFParserNode(int32 aPriority)
     iDurationCalcAO = NULL;
     iUseCPMPluginRegistry = false;
     iSourceContextDataValid = false;
+    iIsByteSeekNotSupported = false;
 
     int32 err;
 
@@ -1021,12 +1022,25 @@ int32 PVMFMP3FFParserNode::convertSizeToTime(uint32 aFileSize, uint32& aNPTInMS)
 }
 bool PVMFMP3FFParserNode::setProtocolInfo(Oscl_Vector<PvmiKvp*, OsclMemAllocator>& aInfoKvpVec)
 {
-#if PV_HAS_SHOUTCAST_SUPPORT_ENABLED
-
     if (aInfoKvpVec.empty())
     {
         return false;
     }
+    for (uint32 j = 0; j < aInfoKvpVec.size(); j++)
+    {
+        if (!aInfoKvpVec[j])
+        {
+            return false;
+        }
+
+        if (oscl_strstr(aInfoKvpVec[j]->key, PROGRESSIVE_STREAMING_IS_BYTE_SEEK_NOT_SUPPORTED_STRING))
+        {
+            iIsByteSeekNotSupported = aInfoKvpVec[j]->value.bool_value; // value set only for byte-seek unsupported mode during PPB.
+        }
+    }
+
+#if PV_HAS_SHOUTCAST_SUPPORT_ENABLED
+
     for (uint32 i = 0; i < aInfoKvpVec.size(); i++)
     {
         if (!aInfoKvpVec[i])
@@ -1046,8 +1060,6 @@ bool PVMFMP3FFParserNode::setProtocolInfo(Oscl_Vector<PvmiKvp*, OsclMemAllocator
         {
         }
     }
-#else
-    OSCL_UNUSED_ARG(aInfoKvpVec);
 #endif
 
     return true;
@@ -2264,6 +2276,34 @@ PVMFStatus PVMFMP3FFParserNode::DoSetDataSourcePosition()
     iCurrentCommand.PVMFNodeCommand::Parse(targetNPT, actualNPT,
                                            actualMediaDataTS, seektosyncpoint,
                                            streamID);
+
+    /* Check for repositioning request support in case of PPB/PDL.
+       In PPB, Seek is not permitted in case when byte-seek is disabled
+       In PDL, Seek is not permitted in case when content download is incomplete. */
+    if ((targetNPT != 0) && (iDataStreamInterface != NULL))
+    {
+        if ((iDataStreamInterface->QueryBufferingCapacity() != 0)
+                && (iIsByteSeekNotSupported == true))
+        {
+            if (iInterfaceState == EPVMFNodePrepared)
+            {
+                /*This means engine is trying to start the playback session at a non-zero NPT.
+                In case of PPB, this is not possible if server does not support byte-seek. */
+                return PVMFFailure;
+            }
+            else
+            {
+                return PVMFErrNotSupported;
+            }
+        }
+
+        if (iDataStreamInterface->QueryBufferingCapacity() == 0)
+        {
+            if (!iDownloadComplete)
+                return PVMFErrNotSupported;
+        }
+    }
+
 
     iStreamID = streamID;
     iTrack.iSendBOS = true;

@@ -28,7 +28,7 @@
 //////  ProgressiveStreamingContainer implementation
 ////////////////////////////////////////////////////////////////////////////////////
 OSCL_EXPORT_REF ProgressiveStreamingContainer::ProgressiveStreamingContainer(PVMFProtocolEngineNode *aNode) :
-        ProgressiveDownloadContainer(aNode), iEnableInfoUpdate(true)
+        ProgressiveDownloadContainer(aNode), iEnableInfoUpdate(true), iStartAfterPause(false)
 {
     ;
 }
@@ -141,6 +141,28 @@ OSCL_EXPORT_REF bool ProgressiveStreamingContainer::completeRepositionRequest()
     return true;
 }
 
+OSCL_EXPORT_REF bool ProgressiveStreamingContainer::completeStartCmd()
+{
+    PVMFProtocolEngineNodeCommand *pCmd = iObserver->FindPendingCmd(PVMF_GENERIC_NODE_START);
+    if (pCmd == NULL) return false;
+
+    // During PPB when byte-seek enabled inside PE node, if the current pending Start command was issued after Pause, then complete the pending command.
+    if ((iProtocol->getByteSeekMode() == BYTE_SEEK_SUPPORTED) && (iDownloadSource->iPlaybackControl == PVMFSourceContextDataDownloadHTTP::ENoSaveToFile)
+            && (iStartAfterPause == true))
+    {
+        iObserver->CompletePendingCmd(PVMFSuccess);
+        iObserver->SetObserverState((uint32)EPVMFNodeStarted);
+        iStartAfterPause = false;
+        return true;
+    }
+    return false;
+}
+
+OSCL_EXPORT_REF bool ProgressiveStreamingContainer::downloadUpdateForHttpHeaderAvailable()
+{
+    return iProtocol->updateSeekMode();
+}
+
 void ProgressiveStreamingContainer::moveToStartedState()
 {
     DownloadContainer::setEventReporterSupportObjects();
@@ -183,6 +205,20 @@ OSCL_EXPORT_REF bool ProgressiveStreamingContainer::doInfoUpdate(const uint32 do
     // For pending reposition request, don't do auto-resume checking
     if (!iEnableInfoUpdate) return true;
     return DownloadContainer::doInfoUpdate(downloadStatus);
+}
+
+OSCL_EXPORT_REF bool ProgressiveStreamingContainer::doPause()
+{
+    // Pause the PE node alongwith disconnection with the server, in case of PPB when byte-seek param is enabled inside PE node.
+    if ((iDownloadSource->iPlaybackControl == PVMFSourceContextDataDownloadHTTP::ENoSaveToFile)
+            && (iProtocol->getByteSeekMode() == BYTE_SEEK_SUPPORTED))
+    {
+        // Disconnection caused with the server
+        ProtocolContainer::sendSocketDisconnectCmd();
+
+        iStartAfterPause = true;
+    }
+    return true;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////
@@ -368,7 +404,7 @@ OSCL_EXPORT_REF bool pvProgressiveStreamingOutput::seekDataStream(const uint32 a
 ////////////////////////////////////////////////////////////////////////////////////
 //////  progressiveStreamingControl implementation
 ////////////////////////////////////////////////////////////////////////////////////
-OSCL_EXPORT_REF progressiveStreamingControl::progressiveStreamingControl() : progressiveDownloadControl()
+OSCL_EXPORT_REF progressiveStreamingControl::progressiveStreamingControl() : progressiveDownloadControl(), iSetProtocolInfo(false)
 {
     ;
 }
@@ -394,6 +430,33 @@ OSCL_EXPORT_REF void progressiveStreamingControl::clearPerRequest()
     iSendDownloadCompleteNotification = false;
 }
 
+void progressiveStreamingControl::setProtocolInfo()
+{
+    if (iSetProtocolInfo) return;
+    if (!iProgDownloadSI || !iProtocol) return;
+
+    iInfoKvpVec.clear();
+
+    bool aIsByteSeekNotSupported;
+    ByteSeekMode aByteSeekMode = iProtocol->getByteSeekMode();
+
+    if (aByteSeekMode == BYTE_SEEK_UNSUPPORTED)
+    {
+        aIsByteSeekNotSupported = true;
+    }
+    else
+        return;
+
+    // byte seek mode
+    PvmiKvp byteSeekModeKVP;
+    OSCL_StackString<256> byteSeekModeKVPString = _STRLIT_CHAR("x-pvmf/net/is-byte-seek-not-supported;valtype=bool");
+    byteSeekModeKVP.key = byteSeekModeKVPString.get_str();
+    byteSeekModeKVP.value.bool_value = aIsByteSeekNotSupported;
+    iInfoKvpVec.push_back(&byteSeekModeKVP);
+
+    iProgDownloadSI->setProtocolInfo(iInfoKvpVec);
+    iSetProtocolInfo = true;
+}
 
 ////////////////////////////////////////////////////////////////////////////////////
 //////  ProgressiveStreamingProgress implementation

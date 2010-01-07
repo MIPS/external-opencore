@@ -40,6 +40,9 @@
 #define PVMF_DOWNLOAD_PROGRESS_INTERFACE_MIMETYPE "x-pvmf/pvmf/download/progress"
 #define PVMF_DOWNLOAD_PROGRESS_INTERFACE_UUID PVUuid(0x01da7746, 0x7d6b, 0x4673, 0xb9, 0x0c, 0x63, 0x2c, 0x82, 0xdd, 0x33, 0xad)
 
+// For byte-seek support during PPB
+#define PROGRESSIVE_STREAMING_IS_BYTE_SEEK_NOT_SUPPORTED_STRING "x-pvmf/net/is-byte-seek-not-supported"
+
 class PVMFMP4ProgDownloadSupportInterface;
 class PVMFFormatProgDownloadSupportInterface;
 

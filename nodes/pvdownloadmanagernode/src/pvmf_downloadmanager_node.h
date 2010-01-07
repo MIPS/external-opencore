@@ -639,6 +639,8 @@ class PVMFDownloadManagerNode
 
         bool iInitFailedLicenseRequired; //set when PVMFErrDrmLicenseNotFound failed
 
+        ByteSeekMode iContextDataByteSeek;
+
         void ContinueInitAfterTrackSelectDecision();
         void ContinueFromDownloadTrackSelectionPoint();
         void ContinueAfterMovieAtom();
@@ -695,6 +697,8 @@ class PVMFDownloadManagerNode
 
         friend class PVMFDownloadManagerCPMContainer;
         PVMFDownloadManagerCPMContainer iCPMNode;
+
+        bool httpHeaderRequestDisabled;
 };
 
 ///////////////////////////////////////////////////////////////////////////////

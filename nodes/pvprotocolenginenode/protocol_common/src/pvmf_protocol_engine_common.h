@@ -355,6 +355,15 @@ class ProtocolState : public HttpParsingBasicObjectObserver,
 
         void storeRedirectUrl(int32 errorCode);
 
+        void setByteSeekMode(ByteSeekMode aByteSeekMode = BYTE_SEEK_NOTSET)
+        {
+            iByteSeekMode = aByteSeekMode;
+        }
+        ByteSeekMode getByteSeekMode()
+        {
+            return iByteSeekMode;
+        }
+
     protected:
         // From HttpParsingBasicObjectObserver
         virtual int32 OutputDataAvailable(OUTPUT_DATA_QUEUE *aOutputQueue, const bool isHttpHeader)
@@ -458,6 +467,8 @@ class ProtocolState : public HttpParsingBasicObjectObserver,
         int32 base64enc(char *data, char *out);
 
         OSCL_IMPORT_REF void deleteRedirectComposer();
+
+        ByteSeekMode iByteSeekMode;
 
     protected:
         // http composer and parser should be life-time long, shouldn't be affected by state transition.
@@ -730,6 +741,31 @@ class HttpBasedProtocol : public ProtocolStateObserver,
         {
             ;
         }
+
+        HTTPComposer *getComposer()
+        {
+            return iComposer;
+        }
+
+        HttpParsingBasicObject *getHttpParsingBasicObject()
+        {
+            return iParser;
+        }
+
+        void setByteSeekMode(ByteSeekMode aByteSeekMode = BYTE_SEEK_NOTSET)
+        {
+            iCurrState->setByteSeekMode(aByteSeekMode);
+            ProtocolState *state = NULL;
+            // set byte-seek mode for all the protocol states.
+            while ((state = getNextState()) != iCurrState) state->setByteSeekMode(aByteSeekMode);
+        }
+
+        ByteSeekMode getByteSeekMode()
+        {
+            return iCurrState->getByteSeekMode();
+        }
+
+        bool updateSeekMode();
 
     protected:
         virtual ProtocolState* getNextState() = 0;
