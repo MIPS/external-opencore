@@ -16033,7 +16033,12 @@ void PVPlayerEngine::HandleSourceNodeInfoEvent(const PVMFAsyncEvent& aEvent)
                 eventMsg->GetCodeUUID(infoCode, eventuuid);
                 if (eventuuid == infomsguuid)
                 {
-                    UpdateSourceDurationVector(aEvent.GetLocalBuffer(), eventMsg->GetDuration());
+                    uint8* localBuf = NULL;
+                    if (aEvent.GetLocalBufferSize() > 0)
+                    {
+                        localBuf = aEvent.GetLocalBuffer();
+                    }
+                    UpdateSourceDurationVector(localBuf, eventMsg->GetDuration());
                     UpdateCurrentClipSourceDuration();
                     SendInformationalEvent(aEvent.GetEventType(), infoExtInterface, aEvent.GetEventData(), aEvent.GetLocalBuffer(), aEvent.GetLocalBufferSize());
                 }

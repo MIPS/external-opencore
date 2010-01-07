@@ -303,6 +303,10 @@ class PVMFAsyncEvent : public PVMFEventBase
 
                 oscl_memcpy(iLocalBuffer, aLocalBuffer, iLocalBufferSize);
             }
+            else
+            {
+                oscl_memset(iLocalBuffer, 0, PVMF_ASYNC_EVENT_LOCAL_BUF_SIZE);
+            }
             iEventDataLengthAvailable = false;
             iEventDataLength = 0;
         }
@@ -347,6 +351,10 @@ class PVMFAsyncEvent : public PVMFEventBase
                 }
 
                 oscl_memcpy(iLocalBuffer, aLocalBuffer, iLocalBufferSize);
+            }
+            else
+            {
+                oscl_memset(iLocalBuffer, 0, PVMF_ASYNC_EVENT_LOCAL_BUF_SIZE);
             }
             iEventDataLengthAvailable = false;
             iEventDataLength = 0;
