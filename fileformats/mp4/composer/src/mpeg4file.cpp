@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -181,6 +181,11 @@ PVA_FF_Mpeg4File::~PVA_FF_Mpeg4File()
         PV_MP4_FF_DELETE(NULL, PVA_FF_FileTypeAtom, _pFileTypeAtom);
     }
 
+    if (_oPIFFMode == true)
+    {
+        PV_MP4_FF_DELETE(NULL, PVA_FF_PSSHAtom, _pPSSHAtom);
+    }
+
     if (_aFs)
     {
         PVA_FF_AtomUtils::closeFileSession(OSCL_STATIC_CAST(Oscl_FileServer*, _aFs));
@@ -238,6 +243,9 @@ PVA_FF_Mpeg4File::init(int32 mediaType,
 
     _puserDataAtom      = NULL;
     _pFileTypeAtom      = NULL;
+
+    // PIFF related
+    _pPSSHAtom          = NULL;
 
     _initialUserDataSize     = 0;
 
@@ -297,6 +305,12 @@ PVA_FF_Mpeg4File::init(int32 mediaType,
         _oLiveMovieFragmentEnabled = true;
     }
 
+    _oPIFFMode = false;
+    if ((fileAuthoringFlags & PVMP4FF_PIFF_MODE) == PVMP4FF_PIFF_MODE)
+    {
+        _oPIFFMode = true;
+    }
+
     // Create user data atom
     PV_MP4_FF_NEW(fp->auditCB, PVA_FF_UserDataAtom, (), _puserDataAtom);
 
@@ -317,6 +331,12 @@ PVA_FF_Mpeg4File::init(int32 mediaType,
 
     // Create miscellaneous vector of atoms
     PV_MP4_FF_NEW(fp->auditCB, PVA_FF_MediaDataAtomVecType, (), _pmediaDataAtomVec);
+
+    // Create PSSH box only when the authoring mode is PIFF
+    if (_oPIFFMode)
+    {
+        PV_MP4_FF_NEW(fp->auditCB, PVA_FF_PSSHAtom, (), _pPSSHAtom);
+    }
 
     _pparent = NULL;
 
@@ -1096,6 +1116,24 @@ PVA_FF_Mpeg4File::setDecoderSpecificInfo(uint8 * header, int32 size, int32 track
             PV_MP4_FF_DELETE(NULL, PVA_FF_DecoderSpecificInfo, pinfo);
         }
     }
+}
+
+bool PVA_FF_Mpeg4File::setPSSHInfo(uint32 systemidlen, uint8* systemid, uint32 datalen, uint8* data)
+{
+    OsclMemoryFragment systemidfrag;
+    systemidfrag.len = systemidlen;
+    systemidfrag.ptr = systemid;
+
+    if (! _pPSSHAtom->setSystemId(systemidfrag))
+        return false;
+
+    if (! _pPSSHAtom->setData(data, datalen))
+        return false;
+
+    // add the pssh atom to the movie atom
+    _pmovieAtom->addPSSHAtom(_pPSSHAtom);
+
+    return true;
 }
 
 void

@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +16,12 @@
  * -------------------------------------------------------------------
  */
 
-#define IMPLEMENT_WMFSetSessionAtom
+#define IMPLEMENT_ExtendedAtom
 
 #include "extendedatom.h"
 #include "a_atomdefs.h"
 
-PVA_FF_ExtendedAtom::PVA_FF_ExtendedAtom(uint8 aUuid[EXTENDED_ATOM_UUID_LENGTH])
+PVA_FF_ExtendedAtom::PVA_FF_ExtendedAtom(const uint8 aUuid[EXTENDED_ATOM_UUID_LENGTH])
         :   PVA_FF_Atom(UUID_ATOM)
 {
     oscl_memcpy(uuid, aUuid, EXTENDED_ATOM_UUID_LENGTH);

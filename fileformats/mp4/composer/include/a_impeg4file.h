@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -116,7 +116,8 @@ class PVMP4FFComposerAudioEncodeParams
 //b3 is set - Do not use temp files while authoring
 //b6 is set - Movie fragment mode
 //b7 is set - Live movie fragment mode
-//b8-b31 - Reserved for future use
+//b8 is set - PIFF mode
+//b9-b31 - Reserved for future use
 
 /**
  * This mode authors non Progressive Downloadable output files using temp files
@@ -154,7 +155,12 @@ class PVMP4FFComposerAudioEncodeParams
 
 // live movie fragment mode
 // For authoring open-ended sessions for live streaming
+// Implies movie fragment mode
 #define PVMP4FF_LIVE_MOVIE_FRAGMENT_MODE 0x00000061
+
+// PIFF Mode.
+// Implies live movie fragment mode
+#define PVMP4FF_PIFF_MODE 0x000000E1
 
 
 class PVA_FF_IMpeg4File
@@ -447,6 +453,9 @@ class PVA_FF_IMpeg4File
         // movie fragment random access samples
         virtual void addMovieFragmentRandAccessEntry(uint32 trackId, uint64 time, uint64 moofOffset,  uint32 trafNumber,
                 uint32 trunNumber,  uint32 sampleNumber) = 0;
+
+        // PIFF specific APIs
+        virtual bool setPSSHInfo(uint32 systemidlen, uint8* systemid, uint32 datalen, uint8* data) = 0;
 
         OSCL_IMPORT_REF static void DestroyMP4FileObject(PVA_FF_IMpeg4File* aMP4FileObject);
 };

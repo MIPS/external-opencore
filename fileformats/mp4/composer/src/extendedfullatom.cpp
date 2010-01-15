@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +16,12 @@
  * -------------------------------------------------------------------
  */
 
-#define IMPLEMENT_WMFSetSessionAtom
+#define IMPLEMENT_ExtendedFullAtom
 
 #include "extendedfullatom.h"
 #include "a_atomdefs.h"
 
-PVA_FF_ExtendedFullAtom::PVA_FF_ExtendedFullAtom(uint8 aUuid[16], uint8 version, uint32 flags)
+PVA_FF_ExtendedFullAtom::PVA_FF_ExtendedFullAtom(const uint8 aUuid[16], uint8 version, uint32 flags)
         :   PVA_FF_ExtendedAtom(aUuid)
 {
     _version = version;
@@ -55,6 +55,7 @@ PVA_FF_ExtendedFullAtom::renderAtomBaseMembers(MP4_AUTHOR_FF_FILE_IO_WRAP *fp) c
 
 uint32 PVA_FF_ExtendedFullAtom::getDefaultSize() const
 {
+    // default size plus version and flags info
     return PVA_FF_ExtendedAtom::getDefaultSize() + 4;
 }
 

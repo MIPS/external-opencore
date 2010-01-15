@@ -20,6 +20,9 @@ SRCS := amrdecoderspecificinfo3gpp.cpp \
 	amrsampleentry.cpp \
     assetinfoatoms.cpp \
 	atom.cpp \
+	extendedatom.cpp \
+	extendedfullatom.cpp \
+	psshatom.cpp \
 	atomutils.cpp \
 	audiosampleentry.cpp \
 	avcconfiguration.cpp \

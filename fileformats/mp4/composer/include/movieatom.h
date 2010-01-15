@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,6 +45,8 @@
 #ifndef PVMI_KVP_H_INCLUDED
 #include "pvmi_kvp.h"
 #endif
+
+#include "psshatom.h"
 
 
 class PVA_FF_MovieAtom : public PVA_FF_Atom
@@ -92,6 +94,13 @@ class PVA_FF_MovieAtom : public PVA_FF_Atom
             return *_pmpeg4TrackVec;
         }
         PVA_FF_TrackAtom *getMpeg4Track(int32 index);
+
+        // PIFF specific
+        void addPSSHAtom(PVA_FF_PSSHAtom* psshatom)
+        {
+            _pPSSHAtom = psshatom;
+            _pPSSHAtom->recomputeSize();
+        }
 
         // Verify that aTrackId is not used already by an existing track
         bool IsTrackIdInUse(uint32 aTrackId);
@@ -374,6 +383,10 @@ class PVA_FF_MovieAtom : public PVA_FF_Atom
         PVA_FF_MovieExtendsAtom             *_pMovieExtendsAtom;
         bool                                _oMovieFragmentEnabled;
         bool                                _oLiveMovieFragmentEnabled;
+
+        // PIFF Related
+        bool                                _oPIFFMode;
+        PVA_FF_PSSHAtom                     *_pPSSHAtom;
 };
 
 

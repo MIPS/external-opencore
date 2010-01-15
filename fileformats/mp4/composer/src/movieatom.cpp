@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,6 +51,9 @@ PVA_FF_MovieAtom::PVA_FF_MovieAtom(uint32 fileAuthoringFlags)
     _pAssetInfoKeyAlbumAtom         = NULL;
     _pAssetInfoKeyRecordingYearAtom = NULL;
 
+    // PIFF related
+    _pPSSHAtom                      = NULL;
+
     _oMovieFragmentEnabled = false;
     _pMovieExtendsAtom = NULL;
     //Movie Fragment : Enable movie fragment mode and create movie extends atom
@@ -68,6 +71,12 @@ PVA_FF_MovieAtom::PVA_FF_MovieAtom(uint32 fileAuthoringFlags)
     if ((fileAuthoringFlags & PVMP4FF_LIVE_MOVIE_FRAGMENT_MODE) == PVMP4FF_LIVE_MOVIE_FRAGMENT_MODE)
     {
         _oLiveMovieFragmentEnabled = true;
+    }
+
+    _oPIFFMode = false;
+    if ((fileAuthoringFlags & PVMP4FF_PIFF_MODE) == PVMP4FF_PIFF_MODE)
+    {
+        _oPIFFMode = true;
     }
 
     // Use version 1 of the FullBox spec only when PVMP4FF_LIVE_MOVIE_FRAGMENT_MODE is enabled
@@ -121,7 +130,6 @@ PVA_FF_MovieAtom::~PVA_FF_MovieAtom()
     {
         PV_MP4_FF_DELETE(NULL, PVA_FF_MovieExtendsAtom, _pMovieExtendsAtom);
     }
-
 }
 
 // Add a new PVA_FF_TrackAtom to this container
@@ -259,6 +267,9 @@ PVA_FF_MovieAtom::recomputeSize()
 
     size += _pmovieHeaderAtom->getSize();
 
+    if (_oPIFFMode && (_pPSSHAtom != NULL))
+        size += _pPSSHAtom->getSize();
+
     if (_puserDataAtom != NULL)
     {
 
@@ -361,6 +372,17 @@ PVA_FF_MovieAtom::renderToFileStream(MP4_AUTHOR_FF_FILE_IO_WRAP *fp)
         return false;
     }
     rendered += _pmovieHeaderAtom->getSize();
+
+
+    if (_oPIFFMode)
+    {
+        if (!_pPSSHAtom->renderToFileStream(fp))
+            return false;
+
+        rendered += _pPSSHAtom->getSize();
+    }
+
+
     {
         if (_puserDataAtom != NULL)
         {

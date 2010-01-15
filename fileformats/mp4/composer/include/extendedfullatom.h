@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,7 @@ class PVA_FF_ExtendedFullAtom : public PVA_FF_ExtendedAtom
 {
 
     public:
-        PVA_FF_ExtendedFullAtom(uint8 aUuid[EXTENDED_ATOM_UUID_LENGTH],
+        PVA_FF_ExtendedFullAtom(const uint8 aUuid[EXTENDED_ATOM_UUID_LENGTH],
                                 uint8 version, uint32 flags); // Constructor
 
         // No "set" methods as they get set directly in the constructor

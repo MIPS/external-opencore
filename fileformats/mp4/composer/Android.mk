@@ -6,6 +6,9 @@ LOCAL_SRC_FILES := \
  	src/amrsampleentry.cpp \
  	src/assetinfoatoms.cpp \
  	src/atom.cpp \
+ 	src/extendedatom.cpp \
+ 	src/extendedfullatom.cpp \
+ 	src/psshatom.cpp \
  	src/atomutils.cpp \
  	src/audiosampleentry.cpp \
  	src/avcconfiguration.cpp \

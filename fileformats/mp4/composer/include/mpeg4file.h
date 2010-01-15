@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -269,6 +269,9 @@ class PVA_FF_Mpeg4File : public PVA_FF_IMpeg4File, public PVA_FF_Parentable
         void addMovieFragmentRandAccessEntry(uint32 trackId, uint64 time, uint64 moofOffset,
                                              uint32 trafNumber, uint32 trunNumber,  uint32 sampleNumber);
 
+        // PIFF specific APIs
+        bool setPSSHInfo(uint32 systemidlen, uint8* systemid, uint32 datalen, uint8* data);
+
         bool renderMoovAtom();
         bool renderMovieFragments();
 
@@ -392,6 +395,11 @@ class PVA_FF_Mpeg4File : public PVA_FF_IMpeg4File, public PVA_FF_Parentable
         bool   _oMovieAtomUpfront;
         bool   _oLiveMovieFragmentEnabled;
         uint32 _interLeaveDuration; // Always in milliseconds
+
+        // PIFF Related
+        bool                                _oPIFFMode;
+        PVA_FF_PSSHAtom                     *_pPSSHAtom;
+
 
 
         bool   _oAuthorASSETINFOAtoms;
