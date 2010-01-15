@@ -16,31 +16,32 @@
 <tr><td nowrap align=right valign=top>virtual PVMFCommandId&nbsp;</td><td valign=bottom><a class="el" href="classH324MConfigInterface.html#a2">SetMaxSduSize</a> (TPVAdaptationLayer aLayer, int32 aSize, OsclAny *aContextData=NULL)=0</td></tr>
 <tr><td nowrap align=right valign=top>virtual PVMFCommandId&nbsp;</td><td valign=bottom><a class="el" href="classH324MConfigInterface.html#a3">SetMaxSduSizeR</a> (TPVAdaptationLayer aLayer, int32 aSize, OsclAny *aContextData=NULL)=0</td></tr>
 <tr><td nowrap align=right valign=top>virtual PVMFCommandId&nbsp;</td><td valign=bottom><a class="el" href="classH324MConfigInterface.html#a4">SetCodecPreference</a> (Oscl_Vector&lt; PVMFFormatType, OsclMemAllocator &gt; &amp;aIncomingAudio, Oscl_Vector&lt; PVMFFormatType, OsclMemAllocator &gt; &amp;aIncomingVideo, Oscl_Vector&lt; PVMFFormatType, OsclMemAllocator &gt; &amp;aOutGoingAudio, Oscl_Vector&lt; PVMFFormatType, OsclMemAllocator &gt; &amp;aOutGoingVideo, OsclAny *aContextData=NULL)=0</td></tr>
-<tr><td nowrap align=right valign=top>virtual PVMFCommandId&nbsp;</td><td valign=bottom><a class="el" href="classH324MConfigInterface.html#a5">SetAl2SequenceNumbers</a> (int32 aSeqNumWidth, OsclAny *aContextData=NULL)=0</td></tr>
-<tr><td nowrap align=right valign=top>virtual PVMFCommandId&nbsp;</td><td valign=bottom><a class="el" href="classH324MConfigInterface.html#a6">SetAl3ControlFieldOctets</a> (int32 aCfo, OsclAny *aContextData=NULL)=0</td></tr>
-<tr><td nowrap align=right valign=top>virtual PVMFCommandId&nbsp;</td><td valign=bottom><a class="el" href="classH324MConfigInterface.html#a7">SetMaxPduSize</a> (int32 aMaxPduSize, OsclAny *aContextData=NULL)=0</td></tr>
-<tr><td nowrap align=right valign=top>virtual PVMFCommandId&nbsp;</td><td valign=bottom><a class="el" href="classH324MConfigInterface.html#a8">SetTerminalType</a> (uint8 aTerminalType, OsclAny *aContextData=NULL)=0</td></tr>
-<tr><td nowrap align=right valign=top>virtual PVMFCommandId&nbsp;</td><td valign=bottom><a class="el" href="classH324MConfigInterface.html#a9">SetALConfiguration</a> (<a class="el" href="pv__2way__basic__types_8h.html#a47">TPVMediaType_t</a> aMediaType, TPVAdaptationLayer aLayer, bool aAllow, bool aUse=true, OsclAny *aContextData=NULL)=0</td></tr>
-<tr><td nowrap align=right valign=top>virtual PVMFCommandId&nbsp;</td><td valign=bottom><a class="el" href="classH324MConfigInterface.html#a10">SendRme</a> (OsclAny *aContextData=NULL)=0</td></tr>
-<tr><td nowrap align=right valign=top>virtual PVMFCommandId&nbsp;</td><td valign=bottom><a class="el" href="classH324MConfigInterface.html#a11">SetMaxMuxPduSize</a> (int32 aRequestMaxMuxPduSize, OsclAny *aContextData=NULL)=0</td></tr>
-<tr><td nowrap align=right valign=top>virtual PVMFCommandId&nbsp;</td><td valign=bottom><a class="el" href="classH324MConfigInterface.html#a12">SetMaxMuxCcsrlSduSize</a> (int32 aMaxCcsrlSduSize, OsclAny *aContextData=NULL)=0</td></tr>
-<tr><td nowrap align=right valign=top>virtual PVMFCommandId&nbsp;</td><td valign=bottom><a class="el" href="classH324MConfigInterface.html#a13">FastUpdate</a> (PVMFNodeInterface &amp;aTrack, OsclAny *aContextData=NULL)=0</td></tr>
-<tr><td nowrap align=right valign=top>virtual PVMFCommandId&nbsp;</td><td valign=bottom><a class="el" href="classH324MConfigInterface.html#a14">SendRtd</a> (OsclAny *aContextData=NULL)=0</td></tr>
-<tr><td nowrap align=right valign=top>virtual PVMFCommandId&nbsp;</td><td valign=bottom><a class="el" href="classH324MConfigInterface.html#a15">SetVendor</a> (uint8 cc, uint8 ext, uint32 mc, const uint8 *aProduct, uint16 aProductLen, const uint8 *aVersion, uint16 aVersionLen, OsclAny *aContextData=NULL)=0</td></tr>
-<tr><td nowrap align=right valign=top>virtual PVMFCommandId&nbsp;</td><td valign=bottom><a class="el" href="classH324MConfigInterface.html#a16">SendEndSession</a> (OsclAny *aContextData=NULL)=0</td></tr>
-<tr><td nowrap align=right valign=top>virtual PVMFCommandId&nbsp;</td><td valign=bottom><a class="el" href="classH324MConfigInterface.html#a17">SetEndSessionTimeout</a> (uint32 aTimeout, OsclAny *aContextData=NULL)=0</td></tr>
-<tr><td nowrap align=right valign=top>virtual PVMFCommandId&nbsp;</td><td valign=bottom><a class="el" href="classH324MConfigInterface.html#a18">SetTimerCounter</a> (TPVH324TimerCounter aTimerCounter, uint8 aSeries, uint32 aSeriesOffset, uint32 aValue, OsclAny *aContextData=NULL)=0</td></tr>
-<tr><td nowrap align=right valign=top>virtual PVMFCommandId&nbsp;</td><td valign=bottom><a class="el" href="classH324MConfigInterface.html#a19">SetVideoResolutions</a> (<a class="el" href="pv__2way__basic__types_8h.html#a46">TPVDirection</a> aDirection, Oscl_Vector&lt; PVMFVideoResolutionRange, OsclMemAllocator &gt; &amp;aResolutions, OsclAny *aContextData=NULL)=0</td></tr>
-<tr><td nowrap align=right valign=top>virtual PVMFCommandId&nbsp;</td><td valign=bottom><a class="el" href="classH324MConfigInterface.html#a20">SendVendorId</a> (OsclAny *aContextData=NULL)=0</td></tr>
-<tr><td nowrap align=right valign=top>virtual PVMFCommandId&nbsp;</td><td valign=bottom><a class="el" href="classH324MConfigInterface.html#a21">SendVideoTemporalSpatialTradeoffCommand</a> (TPVChannelId aLogicalChannel, uint8 aTradeoff, OsclAny *aContextData=NULL)=0</td></tr>
-<tr><td nowrap align=right valign=top>virtual PVMFCommandId&nbsp;</td><td valign=bottom><a class="el" href="classH324MConfigInterface.html#a22">SendVideoTemporalSpatialTradeoffIndication</a> (TPVChannelId aLogicalChannel, uint8 aTradeoff, OsclAny *aContextData=NULL)=0</td></tr>
-<tr><td nowrap align=right valign=top>virtual PVMFCommandId&nbsp;</td><td valign=bottom><a class="el" href="classH324MConfigInterface.html#a23">SendSkewIndication</a> (TPVChannelId aLogicalChannel1, TPVChannelId aLogicalChannel2, uint16 aSkew, OsclAny *aContextData=NULL)=0</td></tr>
-<tr><td nowrap align=right valign=top>virtual PVMFCommandId&nbsp;</td><td valign=bottom><a class="el" href="classH324MConfigInterface.html#a24">SetLogicalChannelBufferingMs</a> (uint32 aInBufferingMs, uint32 aOutBufferingMs, OsclAny *aContextData=NULL)=0</td></tr>
-<tr><td nowrap align=right valign=top>virtual PVMFCommandId&nbsp;</td><td valign=bottom><a class="el" href="classH324MConfigInterface.html#a25">SendUserInput</a> (CPVUserInput *user_input, OsclAny *aContextData=NULL)=0</td></tr>
-<tr><td nowrap align=right valign=top>virtual PVMFCommandId&nbsp;</td><td valign=bottom><a class="el" href="classH324MConfigInterface.html#a26">SetWnsrp</a> (const bool aEnableWnsrp, OsclAny *aContextData=NULL)=0</td></tr>
+<tr><td nowrap align=right valign=top>virtual PVMFCommandId&nbsp;</td><td valign=bottom><a class="el" href="classH324MConfigInterface.html#a5">SetFormatSpecificInfo</a> (PVMFFormatType aMediaFormat, const uint8 *apFormatSpecificInfo, uint32 aFormatSpecificInfoLen, OsclAny *aContextData=NULL)=0</td></tr>
+<tr><td nowrap align=right valign=top>virtual PVMFCommandId&nbsp;</td><td valign=bottom><a class="el" href="classH324MConfigInterface.html#a6">SetAl2SequenceNumbers</a> (int32 aSeqNumWidth, OsclAny *aContextData=NULL)=0</td></tr>
+<tr><td nowrap align=right valign=top>virtual PVMFCommandId&nbsp;</td><td valign=bottom><a class="el" href="classH324MConfigInterface.html#a7">SetAl3ControlFieldOctets</a> (int32 aCfo, OsclAny *aContextData=NULL)=0</td></tr>
+<tr><td nowrap align=right valign=top>virtual PVMFCommandId&nbsp;</td><td valign=bottom><a class="el" href="classH324MConfigInterface.html#a8">SetMaxPduSize</a> (int32 aMaxPduSize, OsclAny *aContextData=NULL)=0</td></tr>
+<tr><td nowrap align=right valign=top>virtual PVMFCommandId&nbsp;</td><td valign=bottom><a class="el" href="classH324MConfigInterface.html#a9">SetTerminalType</a> (uint8 aTerminalType, OsclAny *aContextData=NULL)=0</td></tr>
+<tr><td nowrap align=right valign=top>virtual PVMFCommandId&nbsp;</td><td valign=bottom><a class="el" href="classH324MConfigInterface.html#a10">SetALConfiguration</a> (<a class="el" href="pv__2way__basic__types_8h.html#a47">TPVMediaType_t</a> aMediaType, TPVAdaptationLayer aLayer, bool aAllow, bool aUse=true, OsclAny *aContextData=NULL)=0</td></tr>
+<tr><td nowrap align=right valign=top>virtual PVMFCommandId&nbsp;</td><td valign=bottom><a class="el" href="classH324MConfigInterface.html#a11">SendRme</a> (OsclAny *aContextData=NULL)=0</td></tr>
+<tr><td nowrap align=right valign=top>virtual PVMFCommandId&nbsp;</td><td valign=bottom><a class="el" href="classH324MConfigInterface.html#a12">SetMaxMuxPduSize</a> (int32 aRequestMaxMuxPduSize, OsclAny *aContextData=NULL)=0</td></tr>
+<tr><td nowrap align=right valign=top>virtual PVMFCommandId&nbsp;</td><td valign=bottom><a class="el" href="classH324MConfigInterface.html#a13">SetMaxMuxCcsrlSduSize</a> (int32 aMaxCcsrlSduSize, OsclAny *aContextData=NULL)=0</td></tr>
+<tr><td nowrap align=right valign=top>virtual PVMFCommandId&nbsp;</td><td valign=bottom><a class="el" href="classH324MConfigInterface.html#a14">FastUpdate</a> (PVMFNodeInterface &amp;aTrack, OsclAny *aContextData=NULL)=0</td></tr>
+<tr><td nowrap align=right valign=top>virtual PVMFCommandId&nbsp;</td><td valign=bottom><a class="el" href="classH324MConfigInterface.html#a15">SendRtd</a> (OsclAny *aContextData=NULL)=0</td></tr>
+<tr><td nowrap align=right valign=top>virtual PVMFCommandId&nbsp;</td><td valign=bottom><a class="el" href="classH324MConfigInterface.html#a16">SetVendor</a> (uint8 cc, uint8 ext, uint32 mc, const uint8 *aProduct, uint16 aProductLen, const uint8 *aVersion, uint16 aVersionLen, OsclAny *aContextData=NULL)=0</td></tr>
+<tr><td nowrap align=right valign=top>virtual PVMFCommandId&nbsp;</td><td valign=bottom><a class="el" href="classH324MConfigInterface.html#a17">SendEndSession</a> (OsclAny *aContextData=NULL)=0</td></tr>
+<tr><td nowrap align=right valign=top>virtual PVMFCommandId&nbsp;</td><td valign=bottom><a class="el" href="classH324MConfigInterface.html#a18">SetEndSessionTimeout</a> (uint32 aTimeout, OsclAny *aContextData=NULL)=0</td></tr>
+<tr><td nowrap align=right valign=top>virtual PVMFCommandId&nbsp;</td><td valign=bottom><a class="el" href="classH324MConfigInterface.html#a19">SetTimerCounter</a> (TPVH324TimerCounter aTimerCounter, uint8 aSeries, uint32 aSeriesOffset, uint32 aValue, OsclAny *aContextData=NULL)=0</td></tr>
+<tr><td nowrap align=right valign=top>virtual PVMFCommandId&nbsp;</td><td valign=bottom><a class="el" href="classH324MConfigInterface.html#a20">SetVideoResolutions</a> (<a class="el" href="pv__2way__basic__types_8h.html#a46">TPVDirection</a> aDirection, Oscl_Vector&lt; PVMFVideoResolutionRange, OsclMemAllocator &gt; &amp;aResolutions, OsclAny *aContextData=NULL)=0</td></tr>
+<tr><td nowrap align=right valign=top>virtual PVMFCommandId&nbsp;</td><td valign=bottom><a class="el" href="classH324MConfigInterface.html#a21">SendVendorId</a> (OsclAny *aContextData=NULL)=0</td></tr>
+<tr><td nowrap align=right valign=top>virtual PVMFCommandId&nbsp;</td><td valign=bottom><a class="el" href="classH324MConfigInterface.html#a22">SendVideoTemporalSpatialTradeoffCommand</a> (TPVChannelId aLogicalChannel, uint8 aTradeoff, OsclAny *aContextData=NULL)=0</td></tr>
+<tr><td nowrap align=right valign=top>virtual PVMFCommandId&nbsp;</td><td valign=bottom><a class="el" href="classH324MConfigInterface.html#a23">SendVideoTemporalSpatialTradeoffIndication</a> (TPVChannelId aLogicalChannel, uint8 aTradeoff, OsclAny *aContextData=NULL)=0</td></tr>
+<tr><td nowrap align=right valign=top>virtual PVMFCommandId&nbsp;</td><td valign=bottom><a class="el" href="classH324MConfigInterface.html#a24">SendSkewIndication</a> (TPVChannelId aLogicalChannel1, TPVChannelId aLogicalChannel2, uint16 aSkew, OsclAny *aContextData=NULL)=0</td></tr>
+<tr><td nowrap align=right valign=top>virtual PVMFCommandId&nbsp;</td><td valign=bottom><a class="el" href="classH324MConfigInterface.html#a25">SetLogicalChannelBufferingMs</a> (uint32 aInBufferingMs, uint32 aOutBufferingMs, OsclAny *aContextData=NULL)=0</td></tr>
+<tr><td nowrap align=right valign=top>virtual PVMFCommandId&nbsp;</td><td valign=bottom><a class="el" href="classH324MConfigInterface.html#a26">SendUserInput</a> (CPVUserInput *user_input, OsclAny *aContextData=NULL)=0</td></tr>
+<tr><td nowrap align=right valign=top>virtual PVMFCommandId&nbsp;</td><td valign=bottom><a class="el" href="classH324MConfigInterface.html#a27">SetWnsrp</a> (const bool aEnableWnsrp, OsclAny *aContextData=NULL)=0</td></tr>
 </table>
 <hr><h2>Member Function Documentation</h2>
-<a name="a13" doxytag="H324MConfigInterface::FastUpdate"></a><p>
+<a name="a14" doxytag="H324MConfigInterface::FastUpdate"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -86,7 +87,7 @@ The identifier for the track </td></tr>
 A unique command id for asynchronous completion </dl>    </td>
   </tr>
 </table>
-<a name="a16" doxytag="H324MConfigInterface::SendEndSession"></a><p>
+<a name="a17" doxytag="H324MConfigInterface::SendEndSession"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -121,7 +122,7 @@ Optional opaque data that will be passed back to the user with the command respo
 A unique command id for asynchronous completion </dl>    </td>
   </tr>
 </table>
-<a name="a10" doxytag="H324MConfigInterface::SendRme"></a><p>
+<a name="a11" doxytag="H324MConfigInterface::SendRme"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -158,7 +159,7 @@ Optional opaque data that will be passed back to the user with the command respo
 A unique command id for asynchronous completion </dl>    </td>
   </tr>
 </table>
-<a name="a14" doxytag="H324MConfigInterface::SendRtd"></a><p>
+<a name="a15" doxytag="H324MConfigInterface::SendRtd"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -193,7 +194,7 @@ Optional opaque data that will be passed back to the user with the command respo
 A unique command id for asynchronous completion </dl>    </td>
   </tr>
 </table>
-<a name="a23" doxytag="H324MConfigInterface::SendSkewIndication"></a><p>
+<a name="a24" doxytag="H324MConfigInterface::SendSkewIndication"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -243,7 +244,7 @@ A unique command id for asynchronous completion </dl>    </td>
 This API allows the user to send a SkewIndication to the peer. Skew is measured in milliseconds, and indicates the maximum number of milliseconds that the data on logicalChannel2 is delayed from the data on logicalChannel1 as delivered to the network transport.     </td>
   </tr>
 </table>
-<a name="a25" doxytag="H324MConfigInterface::SendUserInput"></a><p>
+<a name="a26" doxytag="H324MConfigInterface::SendUserInput"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -289,7 +290,7 @@ Optional opaque data that will be passed back to the user with the command respo
 A unique command id for asynchronous completion </dl>    </td>
   </tr>
 </table>
-<a name="a20" doxytag="H324MConfigInterface::SendVendorId"></a><p>
+<a name="a21" doxytag="H324MConfigInterface::SendVendorId"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -318,7 +319,7 @@ A unique command id for asynchronous completion </dl>    </td>
 This API allows the user to send the vendor id info to the peer. Note: Calling this API during call-setup negotiations can affect the time for call-setup adversely.     </td>
   </tr>
 </table>
-<a name="a21" doxytag="H324MConfigInterface::SendVideoTemporalSpatialTradeoffCommand"></a><p>
+<a name="a22" doxytag="H324MConfigInterface::SendVideoTemporalSpatialTradeoffCommand"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -362,7 +363,7 @@ This API allows the user to send the vendor id info to the peer. Note: Calling t
 This API allows the user to send a videoTemporalSpatialTradeOff command to the peer. It is a request to the remote encoder to adjust its encoding in accordance with the tradeoff value. A value of 0 indicates a high spatial resolution and a value of 31 indicates a high frame rate. The values from 0 to 31 indicate monotonically a higher frame rate. Actual values do not correspond to precise values of spatial resolution or frame rate.     </td>
   </tr>
 </table>
-<a name="a22" doxytag="H324MConfigInterface::SendVideoTemporalSpatialTradeoffIndication"></a><p>
+<a name="a23" doxytag="H324MConfigInterface::SendVideoTemporalSpatialTradeoffIndication"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -406,7 +407,7 @@ This API allows the user to send a videoTemporalSpatialTradeOff command to the p
 This API allows the user to send a videoTemporalSpatialTradeOff command to the peer. It is an indication to the remote decoder that the local encoder has adjusted its encoding parameters according to the tradeoff value. A value of 0 indicates a high spatial resolution and a value of 31 indicates a high frame rate. The values from 0 to 31 indicate monotonically a higher frame rate. Actual values do not correspond to precise values of spatial resolution or frame rate.     </td>
   </tr>
 </table>
-<a name="a5" doxytag="H324MConfigInterface::SetAl2SequenceNumbers"></a><p>
+<a name="a6" doxytag="H324MConfigInterface::SetAl2SequenceNumbers"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -452,7 +453,7 @@ Optional opaque data that will be passed back to the user with the command respo
 A unique command id for asynchronous completion </dl>    </td>
   </tr>
 </table>
-<a name="a6" doxytag="H324MConfigInterface::SetAl3ControlFieldOctets"></a><p>
+<a name="a7" doxytag="H324MConfigInterface::SetAl3ControlFieldOctets"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -498,7 +499,7 @@ Optional opaque data that will be passed back to the user with the command respo
 A unique command id for asynchronous completion </dl>    </td>
   </tr>
 </table>
-<a name="a9" doxytag="H324MConfigInterface::SetALConfiguration"></a><p>
+<a name="a10" doxytag="H324MConfigInterface::SetALConfiguration"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -638,7 +639,7 @@ Optional opaque data that will be passed back to the user with the command respo
 A unique command id for asynchronous completion </dl>    </td>
   </tr>
 </table>
-<a name="a17" doxytag="H324MConfigInterface::SetEndSessionTimeout"></a><p>
+<a name="a18" doxytag="H324MConfigInterface::SetEndSessionTimeout"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -684,7 +685,69 @@ Optional opaque data that will be passed back to the user with the command respo
 A unique command id for asynchronous completion </dl>    </td>
   </tr>
 </table>
-<a name="a24" doxytag="H324MConfigInterface::SetLogicalChannelBufferingMs"></a><p>
+<a name="a5" doxytag="H324MConfigInterface::SetFormatSpecificInfo"></a><p>
+<table width="100%" cellpadding="2" cellspacing="0" border="0">
+  <tr>
+    <td class="md">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> virtual PVMFCommandId H324MConfigInterface::SetFormatSpecificInfo </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top">PVMFFormatType&nbsp;</td>
+          <td class="mdname" nowrap>&nbsp; <em>aMediaFormat</em>, </td>
+        </tr>
+        <tr>
+          <td></td>
+          <td></td>
+          <td class="md" nowrap>const uint8 *&nbsp;</td>
+          <td class="mdname" nowrap>&nbsp; <em>apFormatSpecificInfo</em>, </td>
+        </tr>
+        <tr>
+          <td></td>
+          <td></td>
+          <td class="md" nowrap>uint32&nbsp;</td>
+          <td class="mdname" nowrap>&nbsp; <em>aFormatSpecificInfoLen</em>, </td>
+        </tr>
+        <tr>
+          <td></td>
+          <td></td>
+          <td class="md" nowrap>OsclAny *&nbsp;</td>
+          <td class="mdname" nowrap>&nbsp; <em>aContextData</em> = NULL</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="md">)&nbsp;</td>
+          <td class="md" colspan="2"><code> [pure virtual]</code></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+This API allows the user to specify the format specific info for supported media encoders.<dl compact><dt><b>Parameters: </b></dt><dd>
+<table border=0 cellspacing=2 cellpadding=0>
+<tr><td valign=top><em>aMediaFormat</em>&nbsp;</td><td>
+The outgoing media format </td></tr>
+<tr><td valign=top><em>apFormatSpecificInfo</em>&nbsp;</td><td>
+The format specific info </td></tr>
+<tr><td valign=top><em>aOutgoingAudio</em>&nbsp;</td><td>
+The length of the format specific info in bytes </td></tr>
+<tr><td valign=top><em>aContextData</em>&nbsp;</td><td>
+Optional opaque data that will be passed back to the user with the command response </td></tr>
+</table>
+</dl><dl compact><dt><b>Returns: </b></dt><dd>
+A unique command id for asynchronous completion </dl>    </td>
+  </tr>
+</table>
+<a name="a25" doxytag="H324MConfigInterface::SetLogicalChannelBufferingMs"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -737,7 +800,7 @@ Optional opaque data that will be passed back to the user with the command respo
 </dl>    </td>
   </tr>
 </table>
-<a name="a12" doxytag="H324MConfigInterface::SetMaxMuxCcsrlSduSize"></a><p>
+<a name="a13" doxytag="H324MConfigInterface::SetMaxMuxCcsrlSduSize"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -783,7 +846,7 @@ Optional opaque data that will be passed back to the user with the command respo
 A unique command id for asynchronous completion </dl>    </td>
   </tr>
 </table>
-<a name="a11" doxytag="H324MConfigInterface::SetMaxMuxPduSize"></a><p>
+<a name="a12" doxytag="H324MConfigInterface::SetMaxMuxPduSize"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -829,7 +892,7 @@ Optional opaque data that will be passed back to the user with the command respo
 A unique command id for asynchronous completion </dl>    </td>
   </tr>
 </table>
-<a name="a7" doxytag="H324MConfigInterface::SetMaxPduSize"></a><p>
+<a name="a8" doxytag="H324MConfigInterface::SetMaxPduSize"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -1063,7 +1126,7 @@ the observer for command status and for unsolicited informational events </td></
 </dl>    </td>
   </tr>
 </table>
-<a name="a8" doxytag="H324MConfigInterface::SetTerminalType"></a><p>
+<a name="a9" doxytag="H324MConfigInterface::SetTerminalType"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -1109,7 +1172,7 @@ Optional opaque data that will be passed back to the user with the command respo
 A unique command id for asynchronous completion </dl>    </td>
   </tr>
 </table>
-<a name="a18" doxytag="H324MConfigInterface::SetTimerCounter"></a><p>
+<a name="a19" doxytag="H324MConfigInterface::SetTimerCounter"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -1178,7 +1241,7 @@ Optional opaque data that will be passed back to the user with the command respo
 </dl>    </td>
   </tr>
 </table>
-<a name="a15" doxytag="H324MConfigInterface::SetVendor"></a><p>
+<a name="a16" doxytag="H324MConfigInterface::SetVendor"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -1268,7 +1331,7 @@ Optional opaque data that will be passed back to the user with the command respo
 A unique command id for asynchronous completion </dl>    </td>
   </tr>
 </table>
-<a name="a19" doxytag="H324MConfigInterface::SetVideoResolutions"></a><p>
+<a name="a20" doxytag="H324MConfigInterface::SetVideoResolutions"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -1321,7 +1384,7 @@ Optional opaque data that will be passed back to the user with the command respo
 </dl>    </td>
   </tr>
 </table>
-<a name="a26" doxytag="H324MConfigInterface::SetWnsrp"></a><p>
+<a name="a27" doxytag="H324MConfigInterface::SetWnsrp"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -1370,7 +1433,7 @@ A unique command id for asynchronous completion </dl>    </td>
 <hr>The documentation for this class was generated from the following file:<ul>
 <li><a class="el" href="tsc__h324m__config__interface_8h-source.html">tsc_h324m_config_interface.h</a></ul>
 <hr size="1"><img src="pvlogo_small.jpg"><address style="align: right;"><small>PV2Way Engine</small>
-<address style="align: left;"><small>Posting Version: CORE_8.105.1.1 </small>
+<address style="align: left;"><small>Posting Version: CORE_8.107.1.1 </small>
 </small></address>
 </body>
 </html>

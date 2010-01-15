@@ -194,7 +194,7 @@
 <a name="l00196"></a><a class="code" href="classBufFragGroup.html#b1">00196</a>         <a class="code" href="classBufFragStatusClass.html#s8">BufFragStatusClass::status_t</a> <a class="code" href="classBufFragGroup.html#b1">AddFragment</a>(<span class="keyword">const</span> <a class="code" href="classBufferFragment.html">BufferFragment</a>&amp; frag, <a class="code" href="classBufferState.html">BufferState</a>* in_buffer_state,
 00197                 int32 location_offset = max_frags)
 00198         {
-00199             <span class="keywordflow">if</span> (<a class="code" href="classBufFragGroup.html#n3">num_fragments</a> &gt; max_frags)
+00199             <span class="keywordflow">if</span> (<a class="code" href="classBufFragGroup.html#n3">num_fragments</a> &gt;= max_frags)
 00200             {
 00201                 <span class="keywordflow">return</span> <a class="code" href="classBufFragStatusClass.html#s8s1">BufFragStatusClass::TOO_MANY_FRAGS</a>;
 00202             }
@@ -376,7 +376,7 @@
 00378                 int32 location_offset)
 00379         {
 00380 
-00381             <span class="keywordflow">if</span> (this-&gt;<a class="code" href="classBufFragGroup.html#n3">num_fragments</a> &gt; max_frags)
+00381             <span class="keywordflow">if</span> (this-&gt;<a class="code" href="classBufFragGroup.html#n3">num_fragments</a> &gt;= max_frags)
 00382             {
 00383                 <span class="keywordflow">return</span> <a class="code" href="classBufFragStatusClass.html#s8s1">MediaStatusClass::TOO_MANY_FRAGS</a>;
 00384             }
@@ -436,7 +436,7 @@
 00438 <span class="preprocessor">#endif</span>
 00439 <span class="preprocessor"></span>
 </pre></div><hr size="1"><img src="pvlogo_small.jpg"><address style="align: right;"><small>OSCL API</small>
-<address style="align: left;"><small>Posting Version: CORE_8.105.1.1 </small>
+<address style="align: left;"><small>Posting Version: CORE_8.107.1.1 </small>
 </small></address>
 </body>
 </html>
