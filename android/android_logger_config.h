@@ -191,7 +191,7 @@ private:
             iLoggerString = NULL;
             iLogLevel = 8;
         }
-        char *iLoggerString;
+        const char *iLoggerString;
         int8 iLogLevel;
     };
     bool iLogFileRead;

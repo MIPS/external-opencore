@@ -648,15 +648,15 @@ PVMFStatus AndroidCameraInput::getParametersSync(PvmiMIOSession session,
     if (!pv_mime_strcmp(identifier, OUTPUT_FORMATS_CAP_QUERY) ||
         !pv_mime_strcmp(identifier, OUTPUT_FORMATS_CUR_QUERY)) {
         num_params = 1;
-        status = AllocateKvp(params, OUTPUT_FORMATS_VALTYPE, num_params);
+        status = AllocateKvp(params, (PvmiKeyType)OUTPUT_FORMATS_VALTYPE, num_params);
         if (status != PVMFSuccess) {
-            LOGE("AllocateKvp failed for OUTPUT_FORMATS_VALTYP");
+            LOGE("AllocateKvp failed for OUTPUT_FORMATS_VALTYPE");
             return status;
         }
-        params[0].value.pChar_value = ANDROID_VIDEO_FORMAT;
+        params[0].value.pChar_value = (char*)ANDROID_VIDEO_FORMAT;
     } else if (!pv_mime_strcmp(identifier, VIDEO_OUTPUT_WIDTH_CUR_QUERY)) {
         num_params = 1;
-        status = AllocateKvp(params, VIDEO_OUTPUT_WIDTH_CUR_VALUE, num_params);
+        status = AllocateKvp(params, (PvmiKeyType)VIDEO_OUTPUT_WIDTH_CUR_VALUE, num_params);
         if (status != PVMFSuccess) {
             LOGE("AllocateKvp failed for VIDEO_OUTPUT_WIDTH_CUR_VALUE");
             return status;
@@ -664,7 +664,7 @@ PVMFStatus AndroidCameraInput::getParametersSync(PvmiMIOSession session,
         params[0].value.uint32_value = mFrameWidth;
     } else if (!pv_mime_strcmp(identifier, VIDEO_OUTPUT_HEIGHT_CUR_QUERY)) {
         num_params = 1;
-        status = AllocateKvp(params, VIDEO_OUTPUT_HEIGHT_CUR_VALUE, num_params);
+        status = AllocateKvp(params, (PvmiKeyType)VIDEO_OUTPUT_HEIGHT_CUR_VALUE, num_params);
         if (status != PVMFSuccess) {
             LOGE("AllocateKvp failed for VIDEO_OUTPUT_HEIGHT_CUR_VALUE");
             return status;
@@ -672,8 +672,7 @@ PVMFStatus AndroidCameraInput::getParametersSync(PvmiMIOSession session,
         params[0].value.uint32_value = mFrameHeight;
     } else if (!pv_mime_strcmp(identifier, VIDEO_OUTPUT_FRAME_RATE_CUR_QUERY)) {
         num_params = 1;
-        status = AllocateKvp(params,
-            VIDEO_OUTPUT_FRAME_RATE_CUR_VALUE, num_params);
+        status = AllocateKvp(params, (PvmiKeyType)VIDEO_OUTPUT_FRAME_RATE_CUR_VALUE, num_params);
         if (status != PVMFSuccess) {
             LOGE("AllocateKvp failed for VIDEO_OUTPUT_FRAME_RATE_CUR_VALUE");
             return status;
@@ -681,7 +680,7 @@ PVMFStatus AndroidCameraInput::getParametersSync(PvmiMIOSession session,
         params[0].value.float_value = mFrameRate;
     } else if (!pv_mime_strcmp(identifier, OUTPUT_TIMESCALE_CUR_QUERY)) {
         num_params = 1;
-        status = AllocateKvp(params, OUTPUT_TIMESCALE_CUR_VALUE, num_params);
+        status = AllocateKvp(params, (PvmiKeyType)OUTPUT_TIMESCALE_CUR_VALUE, num_params);
         if (status != PVMFSuccess) {
             LOGE("AllocateKvp failed for OUTPUT_TIMESCALE_CUR_VALUE");
             return status;

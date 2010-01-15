@@ -9,9 +9,6 @@ LOCAL_SRC_FILES := \
 	android_audio_input_threadsafe_callbacks.cpp \
 	../thread_init.cpp \
 
-# board-specific configuration
-LOCAL_CFLAGS += $(BOARD_OPENCORE_FLAGS)
-
 LOCAL_C_INCLUDES := $(PV_INCLUDES) \
 	$(PV_TOP)/engines/common/include \
 	$(PV_TOP)/codecs_v2/omx/omx_common/include \
