@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -92,6 +92,8 @@ OSCL_EXPORT_REF void AVCConfigurationBox::PopulateAVCConfigurationFields(uint8* 
 
     typeSpecificStream.Attach((void *)(AVCConfigBuffer), size);
 
+    const uint8* pAVCConfigBufferInput = AVCConfigBuffer;
+
     if ((size > 0) && (AVCConfigBuffer != NULL))
     {
         typeSpecificStream >> _configurationVersion;
@@ -132,7 +134,7 @@ OSCL_EXPORT_REF void AVCConfigurationBox::PopulateAVCConfigurationFields(uint8* 
             _totalSeqParameterSetLength += parameterSetLen;
 
             ParameterSet *paramSet = NULL;
-            PV_MP4_FF_NEW(NULL, ParameterSet, (parameterSetLen, &(*AVCConfigBuffer)), paramSet);
+            PV_MP4_FF_NEW(NULL, ParameterSet, (parameterSetLen, AVCConfigBuffer), paramSet);
 
             AVCConfigBuffer = AVCConfigBuffer + parameterSetLen;
 
@@ -146,19 +148,28 @@ OSCL_EXPORT_REF void AVCConfigurationBox::PopulateAVCConfigurationFields(uint8* 
 
         }
 
-        typeSpecificStream.Attach((void *)(AVCConfigBuffer), size);
+        const uint32 ppsBlockOffset = (AVCConfigBuffer - pAVCConfigBufferInput);
+        int32 typeSpecificStreamSz = size - ppsBlockOffset;
+        OSCL_ASSERT(typeSpecificStreamSz > 0);
+        typeSpecificStream.Attach((void *)(AVCConfigBuffer), (size - ppsBlockOffset));
         typeSpecificStream >> _numPictureParameterSets;
         AVCConfigBuffer = AVCConfigBuffer + 1;
-
-        for (i = 0; i < _numPictureParameterSets; i++)
+        typeSpecificStreamSz -= 1;
+        for (i = 0; ((i < _numPictureParameterSets) && (typeSpecificStreamSz > 0)); i++)
         {
             typeSpecificStream >> parameterSetLen;
-            AVCConfigBuffer = AVCConfigBuffer + 2;
 
+            AVCConfigBuffer = AVCConfigBuffer + 2;
             _totalPicutureParameterSetLength += parameterSetLen;
 
             ParameterSet *paramSet = NULL;
-            PV_MP4_FF_NEW(NULL, ParameterSet, (parameterSetLen, &(*AVCConfigBuffer)), paramSet);
+            PV_MP4_FF_NEW(NULL, ParameterSet, (parameterSetLen, AVCConfigBuffer), paramSet);
+            AVCConfigBuffer = AVCConfigBuffer + parameterSetLen;
+            typeSpecificStreamSz -= (2 + parameterSetLen);
+
+            if (typeSpecificStreamSz > 0)
+                typeSpecificStream.Attach((void *)(AVCConfigBuffer), typeSpecificStreamSz);
+
 
             if (!(paramSet->getSuccess()))
             {
