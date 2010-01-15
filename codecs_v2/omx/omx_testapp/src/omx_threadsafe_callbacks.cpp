@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,8 +57,8 @@ OsclReturnCode OmxEventHandlerThreadSafeCallbackAO::ProcessEvent(OsclAny* EventD
     // In this case, ProcessEvent calls the method of the primary test AO to process the Event
     if (iObserver != NULL)
     {
-        OmxDecTestBase* ptr = (OmxDecTestBase*) iObserver;
 #if PROXY_INTERFACE
+        OmxDecTestBase* ptr = (OmxDecTestBase*) iObserver;
         ptr->ProcessCallbackEventHandler(EventData);
 #endif
     }
@@ -204,8 +204,8 @@ OsclReturnCode OmxEmptyBufferDoneThreadSafeCallbackAO::ProcessEvent(OsclAny* Eve
     // In this case, ProcessEvent calls the method of the primary test AO to process the Event
     if (iObserver != NULL)
     {
-        OmxDecTestBase* ptr = (OmxDecTestBase*) iObserver;
 #if PROXY_INTERFACE
+        OmxDecTestBase* ptr = (OmxDecTestBase*) iObserver;
         ptr->ProcessCallbackEmptyBufferDone(EventData);
 #endif
     }
@@ -347,8 +347,8 @@ OsclReturnCode OmxFillBufferDoneThreadSafeCallbackAO::ProcessEvent(OsclAny* Even
     // In this case, ProcessEvent calls the method of the primary test AO to process the Event
     if (iObserver != NULL)
     {
-        OmxDecTestBase* ptr = (OmxDecTestBase*) iObserver;
 #if PROXY_INTERFACE
+        OmxDecTestBase* ptr = (OmxDecTestBase*) iObserver;
         ptr->ProcessCallbackFillBufferDone(EventData);
 #endif
     }

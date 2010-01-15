@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1160,6 +1160,25 @@ OMX_ERRORTYPE OmxComponentAvcEncAO::ComponentDeInit()
         Status = ipAvcEncoderObject->AvcEncDeinit();
         iCodecReady = OMX_FALSE;
     }
+
+#if PROFILING_ON
+
+    OMX_U32 FrameRate =  0;
+    if (ipAvcEncoderObject->iProfileStats.iDuration > 0)
+    {
+        FrameRate = (OMX_U32)(((OsclFloat) ipAvcEncoderObject->iProfileStats.iNumFramesEncoded * 1000) / (ipAvcEncoderObject->iProfileStats.iDuration / 1000)) * 100;
+    }
+
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_PROF, iDiagnosticsLogger, PVLOGMSG_INFO, (0, "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@"));
+
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_PROF, iDiagnosticsLogger, PVLOGMSG_INFO, (0, "OmxComponentAvcEncAO - Encoding Time (ms), excluding color conversion = %d", OsclTickCount::TicksToMsec(ipAvcEncoderObject->iProfileStats.iTotalEncTime)));
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_PROF, iDiagnosticsLogger, PVLOGMSG_INFO, (0, "OmxComponentAvcEncAO - Time Spent in Color Conversion (ms) = %d", OsclTickCount::TicksToMsec(ipAvcEncoderObject->iProfileStats.iColorConversionTime)));
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_PROF, iDiagnosticsLogger, PVLOGMSG_INFO, (0, "OmxComponentAvcEncAO - Total Frames Sent for Encoding = %d", ipAvcEncoderObject->iProfileStats.iTotalNumFrames));
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_PROF, iDiagnosticsLogger, PVLOGMSG_INFO, (0, "OmxComponentAvcEncAO - Number of Encoded Frames = %d", ipAvcEncoderObject->iProfileStats.iNumFramesEncoded));
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_PROF, iDiagnosticsLogger, PVLOGMSG_INFO, (0, "OmxComponentAvcEncAO - Frame Rate (Multiplied with 100 for keeping 2 decimal points accuracy) = %d", FrameRate));
+
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_PROF, iDiagnosticsLogger, PVLOGMSG_INFO, (0, "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@"));
+#endif
 
     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE, (0, "OmxComponentAvcEncAO : ComponentDeInit OUT"));
 

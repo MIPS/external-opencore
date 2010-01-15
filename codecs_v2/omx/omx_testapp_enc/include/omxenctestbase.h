@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -104,6 +104,10 @@ class CallbackParentInt
         OmxEncEmptyBufferDoneThreadSafeCallbackAO* ipThreadSafeHandlerEmptyBufferDone;
         OmxEncFillBufferDoneThreadSafeCallbackAO*  ipThreadSafeHandlerFillBufferDone;
 #else
+        virtual ~CallbackParentInt()
+        {
+        }
+
         virtual OMX_ERRORTYPE EventHandler(OMX_OUT OMX_HANDLETYPE aComponent,
                                            OMX_OUT OMX_PTR aAppData,
                                            OMX_OUT OMX_EVENTTYPE aEvent,

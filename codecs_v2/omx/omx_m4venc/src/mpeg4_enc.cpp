@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,10 @@
 
 #include "mpeg4_enc.h"
 #include "oscl_mem.h"
+
+#if PROFILING_ON
+#include "oscl_tickcount.h"
+#endif
 
 #define MAX_SUPPORTED_LAYER 1
 
@@ -44,7 +48,9 @@ Mpeg4Encoder_OMX::Mpeg4Encoder_OMX()
     oscl_memcpy(iVolHeader, (OsclAny*)DEFAULT_VOL_HEADER, DEFAULT_VOL_HEADER_LENGTH);
     iVolHeaderSize = DEFAULT_VOL_HEADER_LENGTH;
 
-
+#if PROFILING_ON
+    oscl_memset(&iProfileStats, 0, sizeof(PVEncNodeStats));
+#endif
 
 }
 
@@ -753,6 +759,9 @@ OMX_BOOL Mpeg4Encoder_OMX::Mp4EncodeVideo(OMX_U8*    aOutBuffer,
     {
         Size = *aOutputLength;
 
+#if PROFILING_ON
+        OMX_U32 Start = OsclTickCount::TickCount();
+#endif
         if (iVideoFormat == OMX_COLOR_FormatYUV420Planar)
         {
             if (iYUVIn) /* iSrcWidth or iSrcHeight is not multiple of 16 */
@@ -779,6 +788,16 @@ OMX_BOOL Mpeg4Encoder_OMX::Mp4EncodeVideo(OMX_U8*    aOutBuffer,
             iVideoIn = iYUVIn;
         }
 
+#if PROFILING_ON
+        //End ticks for color conversion time
+        OMX_U32 Stop = OsclTickCount::TickCount();
+        iProfileStats.iColorConversionTime += (Stop - Start);
+
+        //Start ticks for encoding time
+        ++iProfileStats.iTotalNumFrames;
+        OMX_U32 StartTime = OsclTickCount::TickCount();
+#endif
+
         /* with backward-P or B-Vop this timestamp must be re-ordered */
         *aOutTimeStamp = aInTimeStamp;
 
@@ -793,6 +812,16 @@ OMX_BOOL Mpeg4Encoder_OMX::Mp4EncodeVideo(OMX_U8*    aOutBuffer,
                                     &modTime, (UChar*)aOutBuffer,
                                     &Size, &nLayer);
 
+#if PROFILING_ON
+        OMX_U32 EndTime = OsclTickCount::TickCount();
+        iProfileStats.iTotalEncTime += (EndTime - StartTime);
+
+        if ((PV_TRUE == status) && (Size > 0))
+        {
+            ++iProfileStats.iNumFramesEncoded;
+            iProfileStats.iDuration = vid_out.timestamp;
+        }
+#endif
 
         if (status == PV_TRUE)
         {

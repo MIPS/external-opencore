@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,6 +51,9 @@
 #include "oscl_int64_utils.h"
 #endif
 
+#ifndef PV_OMXDEFS_H_INCLUDED
+#include "pv_omxdefs.h"
+#endif
 
 const uint32 DEFAULT_VOL_HEADER_LENGTH = 28;
 
@@ -97,6 +100,19 @@ class Mpeg4Encoder_OMX
 
         OMX_ERRORTYPE Mp4EncDeinit();
 
+#if PROFILING_ON
+        // Profile Statistics
+        struct PVEncNodeStats
+        {
+            OMX_U32 iTotalNumFrames;
+            OMX_U32 iNumFramesEncoded;
+            OMX_U32 iDuration;  //in milli seconds
+            OMX_U32 iTotalEncTime;
+            OMX_U32 iColorConversionTime;
+        };
+
+        PVEncNodeStats iProfileStats;
+#endif
 
 
     private:

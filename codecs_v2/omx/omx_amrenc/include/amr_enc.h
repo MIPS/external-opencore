@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,7 +34,9 @@
 #include "pvmf_format_type.h"
 #endif
 
-
+#ifndef PV_OMXDEFS_H_INCLUDED
+#include "pv_omxdefs.h"
+#endif
 
 // frame length is 20 milliseconds i.e. 20000 omx ticks/microseconds
 #define AMR_FRAME_LENGTH_IN_TIMESTAMP 20000
@@ -61,9 +63,16 @@ class OmxAmrEncoder
                                 OMX_TICKS aInTimeStamp,
                                 OMX_TICKS* aOutTimeStamp);
 
+#if PROFILING_ON
+        // Profile Statistics
+        struct PVEncNodeStats
+        {
+            OMX_U32 iNumPCMSamplesEncoded;
+            OMX_U32 iTotalEncTime;
+        };
 
-
-
+        PVEncNodeStats iProfileStats;
+#endif
 
     private:
 

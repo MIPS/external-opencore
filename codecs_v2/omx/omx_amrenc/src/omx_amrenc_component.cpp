@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -694,6 +694,16 @@ OMX_ERRORTYPE OmxComponentAmrEncoderAO::ComponentDeInit()
         ipAmrEnc->AmrEncDeinit();
         iCodecReady = OMX_FALSE;
     }
+
+#if PROFILING_ON
+
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_PROF, iDiagnosticsLogger, PVLOGMSG_INFO, (0, "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@"));
+
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_PROF, iDiagnosticsLogger, PVLOGMSG_INFO, (0, "OmxComponentAmrEncoderAO - Encoding Time (ms) = %d", OsclTickCount::TicksToMsec(ipAmrEnc->iProfileStats.iTotalEncTime)));
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_PROF, iDiagnosticsLogger, PVLOGMSG_INFO, (0, "OmxComponentAmrEncoderAO - Total Number of PCM Samples Encoded = %u", ipAmrEnc->iProfileStats.iNumPCMSamplesEncoded));
+
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_PROF, iDiagnosticsLogger, PVLOGMSG_INFO, (0, "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@"));
+#endif
 
     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE, (0, "OmxComponentAmrEncoderAO : ComponentDeInit OUT"));
 

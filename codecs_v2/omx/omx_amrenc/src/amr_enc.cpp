@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,9 @@
 
 #include "amr_enc.h"
 
+#if PROFILING_ON
+#include "oscl_tickcount.h"
+#endif
 
 OmxAmrEncoder::OmxAmrEncoder()
 {
@@ -39,6 +42,10 @@ OmxAmrEncoder::OmxAmrEncoder()
     iMaxInputSize                = 0;
 
     iAmrInitFlag = 0;
+
+#if PROFILING_ON
+    oscl_memset(&iProfileStats, 0, sizeof(PVEncNodeStats));
+#endif
 }
 
 
@@ -215,9 +222,17 @@ OMX_BOOL OmxAmrEncoder::AmrEncodeFrame(OMX_U8*    aOutputBuffer,
     StreamInput.iStopTime     = StreamInput.iStartTime + AMR_FRAME_LENGTH_IN_TIMESTAMP * InputFrameNum;
     iNextStartTime            = StreamInput.iStopTime; // for the next encoding
 
+#if PROFILING_ON
+    OMX_U32 Start = OsclTickCount::TickCount();
+#endif
+
     // Do encoding at one time for multiple frame input
     if (ipGsmEncoder->Encode(StreamInput, StreamOutput) < 0 || StreamOutput.iNumSampleFrames != InputFrameNum)
     {
+#if PROFILING_ON
+        OMX_U32 Stop = OsclTickCount::TickCount();
+        iProfileStats.iTotalEncTime += (Stop - Start);
+#endif
         return OMX_FALSE;
     }
 
@@ -239,6 +254,11 @@ OMX_BOOL OmxAmrEncoder::AmrEncodeFrame(OMX_U8*    aOutputBuffer,
         *aOutputLength += StreamOutput.iSampleFrameSize[ii];
     }
 
+#if PROFILING_ON
+    OMX_U32 Stop = OsclTickCount::TickCount();
+    iProfileStats.iTotalEncTime += (Stop - Start);
+    iProfileStats.iNumPCMSamplesEncoded += (StreamInput.iSampleLength >> 1);
+#endif
 
     *aOutTimeStamp = StreamInput.iStartTime;
 

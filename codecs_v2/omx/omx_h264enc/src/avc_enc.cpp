@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,9 @@
 
 #include "avc_enc.h"
 
+#if PROFILING_ON
+#include "oscl_tickcount.h"
+#endif
 
 #define MAX_SUPPORTED_LAYER 1
 
@@ -104,6 +107,10 @@ AvcEncoder_OMX::AvcEncoder_OMX()
     iFramePtr = NULL;
     iDPB = NULL;
     iFrameUsed = NULL;
+
+#if PROFILING_ON
+    oscl_memset(&iProfileStats, 0, sizeof(PVEncNodeStats));
+#endif
 }
 
 
@@ -561,6 +568,10 @@ AVCEnc_Status AvcEncoder_OMX::AvcEncodeSendInput(OMX_U8*    aInBuffer,
 {
     AVCEnc_Status AvcStatus;
 
+#if PROFILING_ON
+    OMX_U32 Start = OsclTickCount::TickCount();
+#endif
+
     if (OMX_COLOR_FormatYUV420Planar == iVideoFormat)
     {
         /* Input Buffer Size Check
@@ -637,6 +648,16 @@ AVCEnc_Status AvcEncoder_OMX::AvcEncodeSendInput(OMX_U8*    aInBuffer,
         iVideoIn = iYUVIn;
     }
 
+#if PROFILING_ON
+    //End ticks for color conversion time
+    OMX_U32 Stop = OsclTickCount::TickCount();
+    iProfileStats.iColorConversionTime += (Stop - Start);
+
+    //Start ticks for encoding time
+    ++iProfileStats.iTotalNumFrames;
+    OMX_U32 StartTime = OsclTickCount::TickCount();
+#endif
+
     /* assign with backward-P or B-Vop this timestamp must be re-ordered */
     // Encoder uses 32 bit timestamps internally - keep track of 64 bit value as well
     iTimeStamp = Oscl_Int64_Utils::get_uint64_lower32(aInTimeStamp / 1000); //timestamp in millisec
@@ -651,6 +672,11 @@ AVCEnc_Status AvcEncoder_OMX::AvcEncodeSendInput(OMX_U8*    aInBuffer,
     iVidIn.disp_order = iDispOrd;
 
     AvcStatus = PVAVCEncSetInput(&iAvcHandle, &iVidIn);
+
+#if PROFILING_ON
+    OMX_U32 EndTime = OsclTickCount::TickCount();
+    iProfileStats.iTotalEncTime += (EndTime - StartTime);
+#endif
 
     if (AVCENC_SUCCESS == AvcStatus)
     {
@@ -735,7 +761,21 @@ AVCEnc_Status AvcEncoder_OMX::AvcEncodeVideo(OMX_U8* aOutBuffer,
     {
         Size = *aOutputLength;
 
+#if PROFILING_ON
+        OMX_U32 Start = OsclTickCount::TickCount();
+#endif
         AvcStatus = PVAVCEncodeNAL(&iAvcHandle, (uint8*)aOutBuffer, &Size, &NALType);
+
+#if PROFILING_ON
+        OMX_U32 Stop = OsclTickCount::TickCount();
+        iProfileStats.iTotalEncTime += (Stop - Start);
+
+        if (AVCENC_PICTURE_READY == AvcStatus)
+        {
+            ++iProfileStats.iNumFramesEncoded;
+            iProfileStats.iDuration = iTimeStamp64;
+        }
+#endif
 
         if (AVCENC_SUCCESS == AvcStatus)
         {
