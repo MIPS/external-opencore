@@ -550,6 +550,16 @@ class H223IncomingChannel : public H223LogicalChannel
 
         PVMFStatus SendBeginOfStreamMediaCommand();
 
+        /**
+         * Add audio media data queue and smoothens timestamps
+         * and send oldest audio frame to the output port
+         *
+         * @param aMediaDataPtr
+         *
+         * @returns PVMFStatus
+         **/
+        PVMFStatus SendAudioFrame(PVMFSharedMediaDataPtr aMediaDataPtr);
+
         void SetSampleTimestamps(PVMFTimestamp& aTSOffset);
         PVMFBufferPoolAllocator iMemFragmentAlloc;
         OsclMemPoolFixedChunkAllocator* iMediaMsgMemoryPool;
@@ -584,6 +594,14 @@ class H223IncomingChannel : public H223LogicalChannel
         OsclMemPoolResizableAllocator*  ipVideoFrameReszMemPool;
         PVMFResizableSimpleMediaMsgAlloc*  ipVideoFrameAlloc;
         OsclMemPoolFixedChunkAllocator *   ipVideoDataMemPool;
+        // small queue for audio that is needed to smoothen the timestamps
+        Oscl_Vector<PVMFSharedMediaDataPtr, OsclMemAllocator> iAudioDataQueue;
+
+        // a timestamp from last audio frame sent to output port
+        PVMFTimestamp iLastAudioTS;
+
+        // frame number for audio frame
+        uint32 iAudioFrameNum;
 };
 
 class MuxSduData

@@ -74,6 +74,12 @@
 #define H264_START_BYTE_3 0x00
 #define H264_LAST_START_BYTE 0x01
 
+// audio timestamp smoothing constants
+static const uint16 AMR_FRAME_SIZE_MS = 20; // amr frame size in milliseconds
+static const uint16 AMR_JITTER = 80; // maximum jitter allocated in timestamps
+static const uint16 AMR_QUEUE_SIZE = 5; // number of frames used to smoothen timestamps
+static const uint16 AMR_SID_SIZE = 6; // amr SID_UPDATE frame size in bytes
+
 #ifdef LIP_SYNC_TESTING
 /***********************Outgoing side********************/
 uint32  g_Checkcount = 0;
@@ -1501,7 +1507,9 @@ H223IncomingChannel::H223IncomingChannel(TPVChannelId num,
         iMax_Chunk_Size(0),
         ipVideoFrameReszMemPool(NULL),
         ipVideoFrameAlloc(NULL),
-        ipVideoDataMemPool(NULL)
+        ipVideoDataMemPool(NULL),
+        iLastAudioTS(0),
+        iAudioFrameNum(0)
 {
 #ifdef LIP_SYNC_TESTING
     iParam = ShareParams::Instance();
@@ -1519,6 +1527,8 @@ H223IncomingChannel::H223IncomingChannel(TPVChannelId num,
 
 H223IncomingChannel::~H223IncomingChannel()
 {
+    iAudioDataQueue.clear();
+
     Flush();
     OsclRefCounterMemFrag frag;
     iAlPduFrag = frag;
@@ -2559,8 +2569,6 @@ PVMFStatus H223IncomingChannel::DispatchOutgoingMsg(PVMFSharedMediaDataPtr aMedi
     OsclSharedPtr<PVMFMediaMsg> mediaMsg;
     PVMFStatus status = PVMFSuccess;
 
-
-
     if (iMediaType.isVideo())
     {
 
@@ -2605,49 +2613,37 @@ PVMFStatus H223IncomingChannel::DispatchOutgoingMsg(PVMFSharedMediaDataPtr aMedi
 
             }
 
-
-
             iVideoFrame->getMediaFragment(0, curVideoFrag);
             oscl_memcpy((uint8 *)curVideoFrag.getMemFragPtr() + iVideoFrame->getFilledSize(), memFrag.getMemFragPtr(), memFrag.getMemFragSize());
             iVideoFrame->setMediaFragFilledLen(0, iVideoFrame->getFilledSize() + memFrag.getMemFragSize());
-
         }
 
     }
-    else
+    else if (iMediaType.isAudio())
     {
-        // for audio data
-        aMediaData->setMarkerInfo(PVMF_MEDIA_DATA_MARKER_INFO_M_BIT);
-#ifdef LIP_SYNC_TESTING
-        g_IncmAudioTS = aMediaData->getTimestamp();
-        CalculateRMSInfo(g_IncmVideoTS, g_IncmAudioTS);
-#endif
+        if (PVMFSuccess != SendAudioFrame(aMediaData))
+        {
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_INFO,
+                            (0, "H223IncomingChannel::DispatchOutgoingMsg - Sending audio failed, clearing queue"));
+            iAudioDataQueue.clear();
+        }
     }
-
-
-
-    if (IsConnected() && !iMediaType.isVideo())
+    else if (IsConnected())
     {
+        // control
         convertToPVMFMediaMsg(mediaMsg, aMediaData);
         PVMFStatus dispatch_status = QueueOutgoingMsg(mediaMsg);
         if (dispatch_status != PVMFSuccess)
         {
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_WARNING, (0, "H223IncomingChannel::DispatchOutgoingMsg Failed to queue outgoing media message lcn=%d, status=%d", lcn, dispatch_status));
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_WARNING, (0, "H223IncomingChannel::DispatchOutgoingMsg Failed to queue outgoing control message lcn=%d, status=%d", lcn, dispatch_status));
             status = dispatch_status;
 
         }
-
-
-
     }
-    if (!IsConnected())
+    else
     {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_WARNING, (0, "H223IncomingChannel::DispatchOutgoingMsg  lcn=%d Queue not connected Dropping frame for audio", lcn));
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_WARNING, (0, "H223IncomingChannel::DispatchOutgoingMsg  lcn=%d Queue not connected", lcn));
     }
-
-
-
-
 
     return status;
 }
@@ -2855,4 +2851,102 @@ PVMFStatus H223IncomingChannel::CallSendVideoFrame(PVMFSharedMediaDataPtr aMedia
     return status;
 }
 
+PVMFStatus H223IncomingChannel::SendAudioFrame(PVMFSharedMediaDataPtr aMediaDataPtr)
+{
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223IncomingChannel::SendAudioFrame"));
+
+    int32 err = 0;
+
+    // push a new frame to queue
+    OSCL_TRY(err, iAudioDataQueue.push_back(aMediaDataPtr));
+    OSCL_FIRST_CATCH_ANY(err,
+                         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
+                                         (0, "H223IncomingChannel::SendAudioFrame - Error - No Memory"));
+                         return PVMFErrNoMemory;
+                        );
+
+    // we keep small buffer filled so we can have more accurate estimation of timestamps
+    // following is based on a fact that we are always receiving data late.
+    // we compare the current frame and the last frame from the buffer and select TS that is smaller
+
+    uint16 dataQueueSize = OSCL_STATIC_CAST(uint16, iAudioDataQueue.size());
+    uint16 dataQueueLimit = AMR_QUEUE_SIZE;
+
+    PVMFSharedMediaDataPtr back = iAudioDataQueue.back();
+
+    // check if last frame in queue is sid frame
+    // if it is, send all data from queue
+    if (back->getFilledSize() <= AMR_SID_SIZE)
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_INFO, (0, "H223IncomingChannel::SendAudioFrame - SID frame detected"));
+        dataQueueLimit = 1;
+    }
+
+    while (dataQueueSize >= dataQueueLimit)
+    {
+        PVMFSharedMediaDataPtr front = iAudioDataQueue.front();
+
+        // get the smallest from ts and future timestamp
+        // this will remove possible delay of current ts
+        uint16 size = dataQueueSize * AMR_FRAME_SIZE_MS;
+        PVMFTimestamp fts = front->getTimestamp();
+        PVMFTimestamp bts = back->getTimestamp();
+
+        // select the smallest time stamp as time stamp is never early
+        PVMFTimestamp ts = OSCL_MIN(fts, (PVMFTimestamp)(bts - size));
+
+        // look if last timestamp send to playback is higher than the one we have now
+        if (iLastAudioTS)
+        {
+            ts = OSCL_MAX(ts, iLastAudioTS + AMR_FRAME_SIZE_MS);
+        }
+
+        // look that the timestamp that we have estimated is not late compared original ts.
+        // we allow quite much jitter, so that we do not remove data and afterwards need to add it back.
+        // it is also more likely to receive less than 50 frame/s than over 50fps.
+        if (ts > (fts + AMR_JITTER))
+        {
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_INFO, (0, "H223IncomingChannel::RemoveAudioFrame, size(%d) origTS(%d) TS(%d)\n", iAudioDataQueue[0]->getFilledSize(), fts, ts));
+            // remove this frame
+            iAudioDataQueue[0].Unbind();
+            iAudioDataQueue.erase(iAudioDataQueue.begin());
+        }
+        else
+        {
+            // send frame
+
+            // smoothen the time stamp
+            ts = ts - ts % AMR_FRAME_SIZE_MS;
+
+            // sending frame here.
+            OsclSharedPtr<PVMFMediaMsg> mediaMsg;
+
+            // set length, marker, timestamp for new media message
+            iAudioDataQueue[0]->setMarkerInfo(PVMF_MEDIA_DATA_MARKER_INFO_M_BIT);
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_INFO, (0, "H223IncomingChannel::SendAudioFrame, size(%d) origTS(%d) TS(%d)\n", iAudioDataQueue[0]->getFilledSize(), fts, ts));
+
+            iAudioDataQueue[0]->setTimestamp(ts);
+            iAudioDataQueue[0]->setSeqNum(++iAudioFrameNum);
+            convertToPVMFMediaMsg(mediaMsg, iAudioDataQueue[0]);
+
+            // send message
+            QueueOutgoingMsg(mediaMsg);
+
+#ifdef LIP_SYNC_TESTING
+            g_IncmAudioTS = ts;
+            CalculateRMSInfo(g_IncmVideoTS, g_IncmAudioTS);
+#endif
+
+            // update the last timestamp variable
+            iLastAudioTS = ts;
+
+            // remove data from queue
+            iAudioDataQueue[0].Unbind();
+            iAudioDataQueue.erase(iAudioDataQueue.begin());
+        }
+        dataQueueSize = iAudioDataQueue.size();
+    }
+
+    return PVMFSuccess;
+}
 
