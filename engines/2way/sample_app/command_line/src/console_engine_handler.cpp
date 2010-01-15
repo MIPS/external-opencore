@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -640,18 +640,22 @@ void engine_handler::CommandCompleted(const PVCmdResponse& aResponse)
     else if (iRemoveAudioSinkID == cmdId)
     {
         PV2WayUtil::OutputInfo("\nRemoved Audio Sink.\n");
+        iSourceAndSinks->CommandCompleted(aResponse);
     }
     else if (iRemoveAudioSourceID == cmdId)
     {
         PV2WayUtil::OutputInfo("\nRemoved Audio Source.\n");
+        iSourceAndSinks->CommandCompleted(aResponse);
     }
     else if (iRemoveVideoSinkID == cmdId)
     {
         PV2WayUtil::OutputInfo("\nRemoved Video Sink.\n");
+        iSourceAndSinks->CommandCompleted(aResponse);
     }
     else if (iRemoveVideoSourceID == cmdId)
     {
         PV2WayUtil::OutputInfo("\nRemoved Video Source.\n");
+        iSourceAndSinks->CommandCompleted(aResponse);
     }
     else
     {

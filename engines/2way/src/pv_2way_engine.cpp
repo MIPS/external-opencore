@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1542,7 +1542,7 @@ void CPV324m2Way::StartClock()
     if (!iClock.SetStartTime32(startTime, PVMF_MEDIA_CLOCK_MSEC, overflowFlag))
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_ERR,
-                        (0, "CPV324m2Way::Connect: unable to set clock time\n"));
+                        (0, "CPV324m2Way::StartClock: unable to set clock time\n"));
         OSCL_LEAVE(PVMFFailure);
     }
     iClock.Start();

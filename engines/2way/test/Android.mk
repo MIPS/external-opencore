@@ -16,6 +16,7 @@ LOCAL_SRC_FILES := \
  	src/connect_cancel_test.cpp \
  	src/connect_test.cpp \
  	src/audio_only_test.cpp \
+ 	src/reconnect_test.cpp \
  	src/video_only_test.cpp \
  	src/user_input_test.cpp \
  	src/basic_lipsync_test.cpp \

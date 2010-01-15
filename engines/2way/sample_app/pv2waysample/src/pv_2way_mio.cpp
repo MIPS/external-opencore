@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -72,6 +72,7 @@ OSCL_EXPORT_REF PV2WayMIO::PV2WayMIO(Oscl_Vector<PVMFFormatType, OsclMemAllocato
 OSCL_EXPORT_REF PV2WayMIO::~PV2WayMIO()
 {
     Delete();
+    ClearCodecs();
 }
 
 OSCL_EXPORT_REF void PV2WayMIO::Delete()
@@ -82,13 +83,11 @@ OSCL_EXPORT_REF void PV2WayMIO::Delete()
         iObserver->DeleteMIONode(iSelectedCodec, iMyDir, &iMioNode);
     }
     iMioNode = NULL;
-    ClearCodecs();
 }
 
 
 OSCL_EXPORT_REF void PV2WayMIO::ResetCompleted()
 {
-    iAdded = false;
 }
 
 OSCL_EXPORT_REF void PV2WayMIO::AddCompleted(const PVCmdResponse& aResponse)

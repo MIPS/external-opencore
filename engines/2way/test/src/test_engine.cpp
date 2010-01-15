@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,6 +36,7 @@
 #include "oscl_mem_audit.h"
 #include "pv_2way_mio.h"
 #include "pause_resume_test.h"
+#include "reconnect_test.h"
 
 
 #include "tsc_h324m_config_interface.h"
@@ -1074,6 +1075,20 @@ void engine_test_suite::AddReceiveDataTests(const bool aProxy, int32 firstTest, 
 
 }
 
+
+void engine_test_suite::AddReconnectTests(const bool aProxy, int32 firstTest, int32 lastTest)
+{
+    if (inRange(firstTest, lastTest))
+    {
+        test_base* pTemp = OSCL_NEW(reconnect_test, (aProxy, TEST_DURATION, MAX_TEST_DURATION * 20));
+        PV2WaySourceAndSinksFile* pSourceAndSinks = CreateSourceAndSinks(pTemp, PVMF_MIME_AMR_IF2,
+                PVMF_MIME_AMR_IF2, PVMF_MIME_YUV420, PVMF_MIME_YUV420);
+
+        pTemp->AddSourceAndSinks(pSourceAndSinks);
+        adopt_test_case(pTemp);
+    }
+}
+
 #endif
 
 #ifdef LIP_SYNC_TESTING
@@ -1255,6 +1270,12 @@ bool engine_test_suite::proxy_tests6(const bool aProxy)
     AddReceiveDataTests(aProxy, firstTest, lastTest);
 
     ///////////////////////////////////////////////////////////////////////////
+
+    ///////////////////////////////////////////////////////////////////////////////
+    ///////     Reconnect tests                    ///////////////////////////////
+
+    PV2WayUtil::OutputInfo("Add Reconnect tests\n");
+    AddReconnectTests(aProxy, firstTest, lastTest);
     return true;
 }
 
@@ -1600,6 +1621,7 @@ int start_test()
         temp = start_test5(TestResult);
         if (temp != 0)
             result = temp;
+
         temp = start_test6(TestResult);
         if (temp != 0)
             result = temp;

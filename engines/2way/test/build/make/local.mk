@@ -39,6 +39,7 @@ SRCS_324 = av_test.cpp \
 	connect_cancel_test.cpp \
 	connect_test.cpp \
 	audio_only_test.cpp \
+	reconnect_test.cpp \
 	video_only_test.cpp \
 	user_input_test.cpp \
 	basic_lipsync_test.cpp \

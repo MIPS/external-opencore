@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -518,6 +518,21 @@ OSCL_EXPORT_REF void PVCommsIONode::RequestCompleted(const PVMFCmdResp& aRespons
                 else
                 {
                     iMediaIOState = MIO_STATE_INITIALIZED;
+                }
+                break;
+
+            case EReset:
+                if (aResponse.GetCmdStatus() != PVMFSuccess)
+                {
+                    cmd.iEventCode = PVCommsIONodeErr_MediaIOReset;
+                }
+                else if (ReRunCommandForNextMIO(cmd))
+                {
+                    return;
+                }
+                else
+                {
+                    iMediaIOState = MIO_STATE_IDLE;
                 }
                 break;
 
@@ -1204,7 +1219,10 @@ PVMFStatus PVCommsIONode::DoPause(PVCommsIONodeCmd& aCmd)
 ////////////////////////////////////////////////////////////////////////////
 PVMFStatus PVCommsIONode::DoReset(PVCommsIONodeCmd& aCmd)
 {
-    OSCL_UNUSED_ARG(aCmd);
+    if (aCmd.iControlContext == NULL)
+        GetNextContextInSequence(aCmd);
+
+    PVMFStatus status = SendMioRequest(aCmd, EReset);
 
     switch (iInterfaceState)
     {
@@ -1222,15 +1240,14 @@ PVMFStatus PVCommsIONode::DoReset(PVCommsIONodeCmd& aCmd)
 
             //logoff & go back to Created state.
             SetState(EPVMFNodeIdle);
-
-            return PVMFSuccess;
         }
         break;
 
         default:
-            return PVMFErrInvalidState;
+            status = PVMFErrInvalidState;
             break;
     }
+    return status;
 }
 
 ////////////////////////////////////////////////////////////////////////////
@@ -1334,7 +1351,7 @@ PVMFStatus PVCommsIONode::SendMioRequest(PVCommsIONodeCmd& aCmd, EMioRequest aRe
             if (err != OsclErrNone)
             {
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
-                                (0, "PVCommsIONode::DoInit: Error - iMediaIOControl->QueryInterface failed"));
+                                (0, "PVCommsIONode::SendMioRequest: Error - iMediaIOControl->QueryInterface failed"));
                 aCmd.iEventCode = PVCommsIONodeErr_MediaIOQueryCapConfigInterface;
                 status = PVMFFailure;
             }
@@ -1360,7 +1377,7 @@ PVMFStatus PVCommsIONode::SendMioRequest(PVCommsIONodeCmd& aCmd, EMioRequest aRe
             if (err != OsclErrNone)
             {
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
-                                (0, "PVCommsIONode::DoInit: Error - iMediaIOControl->Init failed"));
+                                (0, "PVCommsIONode::SendMioRequest: Error - iMediaIOControl->Init failed"));
                 aCmd.iEventCode = PVCommsIONodeErr_MediaIOInit;
                 status = PVMFFailure;
             }
@@ -1387,7 +1404,7 @@ PVMFStatus PVCommsIONode::SendMioRequest(PVCommsIONodeCmd& aCmd, EMioRequest aRe
             if (err != OsclErrNone)
             {
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
-                                (0, "PVCommsIONode::DoInit: Error - iMediaIOControl->Start failed"));
+                                (0, "PVCommsIONode::SendMioRequest: Error - iMediaIOControl->Start failed"));
                 aCmd.iEventCode = PVCommsIONodeErr_MediaIOStart;
                 status = PVMFFailure;
             }
@@ -1413,7 +1430,7 @@ PVMFStatus PVCommsIONode::SendMioRequest(PVCommsIONodeCmd& aCmd, EMioRequest aRe
             if (err != OsclErrNone)
             {
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
-                                (0, "PVCommsIONode::DoInit: Error - iMediaIOControl->Pause failed"));
+                                (0, "PVCommsIONode::SendMioRequest: Error - iMediaIOControl->Pause failed"));
                 aCmd.iEventCode = PVCommsIONodeErr_MediaIOPause;
                 status = PVMFFailure;
             }
@@ -1440,7 +1457,7 @@ PVMFStatus PVCommsIONode::SendMioRequest(PVCommsIONodeCmd& aCmd, EMioRequest aRe
             if (err != OsclErrNone)
             {
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
-                                (0, "PVCommsIONode::DoInit: Error - iMediaIOControl->Stop failed"));
+                                (0, "PVCommsIONode::SendMioRequest: Error - iMediaIOControl->Stop failed"));
                 aCmd.iEventCode = PVCommsIONodeErr_MediaIOStop;
                 status = PVMFFailure;
             }
@@ -1451,6 +1468,31 @@ PVMFStatus PVCommsIONode::SendMioRequest(PVCommsIONodeCmd& aCmd, EMioRequest aRe
         }
         break;
 
+        case EReset:
+        {
+            if (iMediaIOState != MIO_STATE_PAUSED && iMediaIOState != MIO_STATE_INITIALIZED)
+            {
+                aCmd.iEventCode = PVCommsIONodeErr_MediaIOWrongState;
+                status = PVMFFailure;
+                break;
+            }
+
+            int32 err ;
+            OSCL_TRY(err, iMediaIOCmdId = aCmd.iControlContext->iControl->Reset(););
+
+            if (err != OsclErrNone)
+            {
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
+                                (0, "PVCommsIONode::SendMioRequest: Error - iMediaIOControl->Reset failed"));
+                aCmd.iEventCode = PVCommsIONodeErr_MediaIOReset;
+                status = PVMFFailure;
+            }
+            else
+            {
+                status = PVMFPending;
+            }
+        }
+        break;
         default:
             Assert(false);//unrecognized command.
             status = PVMFFailure;

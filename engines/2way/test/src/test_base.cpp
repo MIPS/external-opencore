@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -242,6 +242,7 @@ void test_base::CancelCmdCompleted()
 void test_base::RstCmdCompleted()
 {
     PV2WayUtil::OutputInfo("\nRst Completed \n");
+    iSourceAndSinks->CloseSourceAndSinks();
     cleanup();
     CancelTimers();
 
@@ -473,6 +474,7 @@ void test_base::CommandCompleted(const PVCmdResponse& aResponse)
         {
             AudioAddSinkFailed();
         }
+        iSourceAndSinks->CommandCompleted(aResponse);
     }
     else if (iAudioAddSourceId == cmdId)
     {
@@ -484,15 +486,18 @@ void test_base::CommandCompleted(const PVCmdResponse& aResponse)
         {
             AudioAddSourceFailed();
         }
+        iSourceAndSinks->CommandCompleted(aResponse);
     }
 
     else if (iAudioRemoveSourceId == cmdId)
     {
         AudioRemoveSourceCompleted();
+        iSourceAndSinks->CommandCompleted(aResponse);
     }
     else if (iAudioRemoveSinkId == cmdId)
     {
         AudioRemoveSinkCompleted();
+        iSourceAndSinks->CommandCompleted(aResponse);
     }
     else if (iVideoAddSinkId == cmdId)
     {
@@ -504,6 +509,7 @@ void test_base::CommandCompleted(const PVCmdResponse& aResponse)
         {
             VideoAddSinkFailed();
         }
+        iSourceAndSinks->CommandCompleted(aResponse);
     }
     else if (iVideoAddSourceId == cmdId)
     {
@@ -515,14 +521,17 @@ void test_base::CommandCompleted(const PVCmdResponse& aResponse)
         {
             VideoAddSourceFailed();
         }
+        iSourceAndSinks->CommandCompleted(aResponse);
     }
     else if (iVideoRemoveSourceId == cmdId)
     {
         VideoRemoveSourceCompleted();
+        iSourceAndSinks->CommandCompleted(aResponse);
     }
     else if (iVideoRemoveSinkId == cmdId)
     {
         VideoRemoveSinkCompleted();
+        iSourceAndSinks->CommandCompleted(aResponse);
     }
     else if (iCancelCmdId == cmdId)
     {
