@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -684,8 +684,8 @@ OSCL_EXPORT_REF OMX_ERRORTYPE OMX_MasterSetupTunnel(
     OMX_IN  OMX_U32 nPortInput)
 {
     OMX_ERRORTYPE Status;
-    OMX_U32 RegIndex1;
-    OMX_U32 RegIndex2;
+    OMX_U32 RegIndex1 = 0;
+    OMX_U32 RegIndex2 = 0;
 
     int32 error;
     // no need to lock - a different instance/thread does not affect the global array searches in this thread
