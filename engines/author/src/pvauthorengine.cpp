@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1520,6 +1520,8 @@ void PVAuthorEngine::ResetNodeContainers()
         iComposerNodes[0]->iExtensionUuids.clear();
         iComposerNodes[0]->iInputPorts.clear();
         iComposerNodes[0]->iOutputPorts.clear();
+        if (iComposerNodes[0]->iNodeCapConfigIF)
+            iComposerNodes[0]->iNodeCapConfigIF->removeRef();
         DeallocateNodeContainer(iComposerNodes, node);
         PVAuthorEngineNodeFactoryUtility::Delete(uuid, node);
 

@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,7 +33,7 @@
 
 ////////////////////////////////////////////////////////////////////////////
 PVMFFileOutputNode::PVMFFileOutputNode(int32 aPriority)
-        : OsclActiveObject(aPriority, "PVMFFileOutputNode")
+        : PVMFNodeInterfaceImpl(aPriority, "PVMFFileOutputNode")
         , iCmdIdCounter(0)
         , iInPort(NULL)
         , iFileHandle(NULL)
@@ -41,7 +41,6 @@ PVMFFileOutputNode::PVMFFileOutputNode(int32 aPriority)
         , iFirstMediaData(false)
         , iLogger(NULL)
         , iFormat(PVMF_MIME_FORMAT_UNKNOWN)
-        , iExtensionRefCount(0)
         , iMaxFileSizeEnabled(false)
         , iMaxDurationEnabled(false)
         , iMaxFileSize(0)
@@ -61,50 +60,33 @@ PVMFFileOutputNode::PVMFFileOutputNode(int32 aPriority)
     int32 err;
     OSCL_TRY(err,
 
-             //Create the input command queue.  Use a reserve to avoid lots of
-             //dynamic memory allocation.
-             iInputCommands.Construct(PVMF_FILE_OUTPUT_NODE_COMMAND_ID_START, PVMF_FILE_OUTPUT_NODE_COMMAND_VECTOR_RESERVE);
-
-             //Create the "current command" queue.  It will only contain one
-             //command at a time, so use a reserve of 1.
-             iCurrentCommand.Construct(0, 1);
-
              //Create the port vector.
              iPortVector.Construct(PVMF_FILE_OUTPUT_NODE_PORT_VECTOR_RESERVE);
 
              //Set the node capability data.
              //This node can support an unlimited number of ports.
-             iCapability.iCanSupportMultipleInputPorts = false;
-             iCapability.iCanSupportMultipleOutputPorts = false;
-             iCapability.iHasMaxNumberOfPorts = true;
-             iCapability.iMaxNumberOfPorts = 1;
+             iNodeCapability.iCanSupportMultipleInputPorts = false;
+             iNodeCapability.iCanSupportMultipleOutputPorts = false;
+             iNodeCapability.iHasMaxNumberOfPorts = true;
+             iNodeCapability.iMaxNumberOfPorts = 1;
             );
 
     if (err != OsclErrNone)
     {
         //if a leave happened, cleanup and re-throw the error
-        iInputCommands.clear();
-        iCurrentCommand.clear();
         iPortVector.clear();
-        iCapability.iInputFormatCapability.clear();
-        iCapability.iOutputFormatCapability.clear();
-        OSCL_CLEANUP_BASE_CLASS(PVMFNodeInterface);
-        OSCL_CLEANUP_BASE_CLASS(OsclActiveObject);
+        iNodeCapability.iInputFormatCapability.clear();
+        iNodeCapability.iOutputFormatCapability.clear();
+        OSCL_CLEANUP_BASE_CLASS(PVMFNodeInterfaceImpl);
         OSCL_LEAVE(err);
     }
-    ChangeNodeState(EPVMFNodeCreated);
+
+    iLogger = PVLogger::GetLoggerObject("PVMFFileOutputNode");
 }
 
 ////////////////////////////////////////////////////////////////////////////
 PVMFFileOutputNode::~PVMFFileOutputNode()
 {
-    //thread logoff
-    if (IsAdded())
-        RemoveFromScheduler();
-
-    //Cleanup allocated interfaces
-
-
     //Cleanup allocated ports
     if (iInPort)
     {
@@ -112,69 +94,20 @@ PVMFFileOutputNode::~PVMFFileOutputNode()
         iInPort = NULL;
     }
 
-    //Cleanup commands
-    //The command queues are self-deleting, but we want to
-    //notify the observer of unprocessed commands.
-    while (!iCurrentCommand.empty())
-    {
-        CommandComplete(iCurrentCommand, iCurrentCommand.front(), PVMFFailure);
-    }
-    while (!iInputCommands.empty())
-    {
-        CommandComplete(iInputCommands, iInputCommands.front(), PVMFFailure);
-    }
-
     //cleanup port activity events
     iPortActivityQueue.clear();
-
 
     if (iAlloc)
     {
         OSCL_DELETE(iAlloc);
     }
+    iLogger = NULL;
 }
 
 ////////////////////////////////////////////////////////////////////////////
 void PVMFFileOutputNode::ConstructL()
 {
     iAlloc = (Oscl_DefAlloc*)(new PVMFFileOutputAlloc());
-}
-
-////////////////////////////////////////////////////////////////////////////
-PVMFStatus PVMFFileOutputNode::ThreadLogon()
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_MLDBG, iLogger, PVLOGMSG_INFO, (0, "PVMFFileOutputNode:ThreadLogon"));
-
-    switch (iInterfaceState)
-    {
-        case EPVMFNodeCreated:
-            if (!IsAdded())
-                AddToScheduler();
-            iLogger = PVLogger::GetLoggerObject("PVMFFileOutputNode");
-            SetState(EPVMFNodeIdle);
-            return PVMFSuccess;
-        default:
-            return PVMFErrInvalidState;
-    }
-}
-
-////////////////////////////////////////////////////////////////////////////
-PVMFStatus PVMFFileOutputNode::ThreadLogoff()
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_MLDBG, iLogger, PVLOGMSG_INFO, (0, "PVMFFileOutputNode:ThreadLogoff"));
-
-    switch (iInterfaceState)
-    {
-        case EPVMFNodeIdle:
-            if (IsAdded())
-                RemoveFromScheduler();
-            iLogger = NULL;
-            SetState(EPVMFNodeCreated);
-            return PVMFSuccess;
-
-        default:
-            return PVMFErrInvalidState;
-    }
 }
 
 ////////////////////////////////////////////////////////////////////////////
@@ -190,100 +123,38 @@ void PVMFFileOutputNode::CloseOutputFile()
 }
 
 ////////////////////////////////////////////////////////////////////////////
-PVMFCommandId PVMFFileOutputNode::Init(PVMFSessionId s, const OsclAny* aContext)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_MLDBG, iLogger, PVLOGMSG_INFO, (0, "PVMFFileOutputNode:Init"));
-    PVMFFileOutputNodeCommand cmd;
-    cmd.PVMFFileOutputNodeCommandBase::Construct(s, PVMF_GENERIC_NODE_INIT, aContext);
-    return QueueCommandL(cmd);
-}
-
-////////////////////////////////////////////////////////////////////////////
-PVMFCommandId PVMFFileOutputNode::Prepare(PVMFSessionId s, const OsclAny* aContext)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_MLDBG, iLogger, PVLOGMSG_INFO, (0, "PVMFFileOutputNode:Prepare"));
-    PVMFFileOutputNodeCommand cmd;
-    cmd.PVMFFileOutputNodeCommandBase::Construct(s, PVMF_GENERIC_NODE_PREPARE, aContext);
-    return QueueCommandL(cmd);
-}
 
 ////////////////////////////////////////////////////////////////////////////
 PVMFStatus PVMFFileOutputNode::GetCapability(PVMFNodeCapability& aNodeCapability)
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_MLDBG, iLogger, PVLOGMSG_INFO, (0, "PVMFFileOutputNode:GetCapability"));
-    iCapability.iInputFormatCapability.clear();
+    iNodeCapability.iInputFormatCapability.clear();
 
     if (iFormat != PVMF_MIME_FORMAT_UNKNOWN)
     {
         // Format is already set, so return only that one
-        iCapability.iInputFormatCapability.push_back(iFormat);
+        iNodeCapability.iInputFormatCapability.push_back(iFormat);
     }
     else
     {
-        iCapability.iInputFormatCapability.push_back(PVMF_MIME_AMR_IETF);
-        iCapability.iInputFormatCapability.push_back(PVMF_MIME_AMRWB_IETF);
-        iCapability.iInputFormatCapability.push_back(PVMF_MIME_M4V);
-        iCapability.iInputFormatCapability.push_back(PVMF_MIME_PCM8);
-        iCapability.iInputFormatCapability.push_back(PVMF_MIME_PCM16);
-        iCapability.iInputFormatCapability.push_back(PVMF_MIME_YUV420);
-        iCapability.iInputFormatCapability.push_back(PVMF_MIME_ADTS);
-        iCapability.iInputFormatCapability.push_back(PVMF_MIME_H2631998);
-        iCapability.iInputFormatCapability.push_back(PVMF_MIME_H2632000);
-        iCapability.iInputFormatCapability.push_back(PVMF_MIME_H264_VIDEO_RAW);
-        iCapability.iInputFormatCapability.push_back(PVMF_MIME_H264_VIDEO_MP4);
-        iCapability.iInputFormatCapability.push_back(PVMF_MIME_H264_VIDEO);
-        iCapability.iInputFormatCapability.push_back(PVMF_MIME_PCM);
-        iCapability.iInputFormatCapability.push_back(PVMF_MIME_3GPP_TIMEDTEXT);
+        iNodeCapability.iInputFormatCapability.push_back(PVMF_MIME_AMR_IETF);
+        iNodeCapability.iInputFormatCapability.push_back(PVMF_MIME_AMRWB_IETF);
+        iNodeCapability.iInputFormatCapability.push_back(PVMF_MIME_M4V);
+        iNodeCapability.iInputFormatCapability.push_back(PVMF_MIME_PCM8);
+        iNodeCapability.iInputFormatCapability.push_back(PVMF_MIME_PCM16);
+        iNodeCapability.iInputFormatCapability.push_back(PVMF_MIME_YUV420);
+        iNodeCapability.iInputFormatCapability.push_back(PVMF_MIME_ADTS);
+        iNodeCapability.iInputFormatCapability.push_back(PVMF_MIME_H2631998);
+        iNodeCapability.iInputFormatCapability.push_back(PVMF_MIME_H2632000);
+        iNodeCapability.iInputFormatCapability.push_back(PVMF_MIME_H264_VIDEO_RAW);
+        iNodeCapability.iInputFormatCapability.push_back(PVMF_MIME_H264_VIDEO_MP4);
+        iNodeCapability.iInputFormatCapability.push_back(PVMF_MIME_H264_VIDEO);
+        iNodeCapability.iInputFormatCapability.push_back(PVMF_MIME_PCM);
+        iNodeCapability.iInputFormatCapability.push_back(PVMF_MIME_3GPP_TIMEDTEXT);
     }
-    aNodeCapability = iCapability;
+    aNodeCapability = iNodeCapability;
     return PVMFSuccess;
 }
-
-
-////////////////////////////////////////////////////////////////////////////
-PVMFCommandId PVMFFileOutputNode::QueryUUID(PVMFSessionId s, const PvmfMimeString& aMimeType,
-        Oscl_Vector<PVUuid, OsclMemAllocator>& aUuids,
-        bool aExactUuidsOnly,
-        const OsclAny* aContext)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_MLDBG, iLogger, PVLOGMSG_INFO, (0, "PVMFFileOutputNode:QueryUUID"));
-
-    PVMFFileOutputNodeCommand cmd;
-    cmd.PVMFFileOutputNodeCommandBase::Construct(s, PVMF_GENERIC_NODE_QUERYUUID, aMimeType, aUuids, aExactUuidsOnly, aContext);
-    return QueueCommandL(cmd);
-}
-
-////////////////////////////////////////////////////////////////////////////
-PVMFCommandId PVMFFileOutputNode::QueryInterface(PVMFSessionId s, const PVUuid& aUuid,
-        PVInterface*& aInterfacePtr,
-        const OsclAny* aContext)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_MLDBG, iLogger, PVLOGMSG_INFO, (0, "PVMFFileOutputNode:QueryInterface"));
-
-    PVMFFileOutputNodeCommand cmd;
-    cmd.PVMFFileOutputNodeCommandBase::Construct(s, PVMF_GENERIC_NODE_QUERYINTERFACE, aUuid, aInterfacePtr, aContext);
-    return QueueCommandL(cmd);
-}
-
-////////////////////////////////////////////////////////////////////////////
-PVMFCommandId PVMFFileOutputNode::RequestPort(PVMFSessionId s, int32 aPortTag, const PvmfMimeString* aPortConfig, const OsclAny* aContext)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_MLDBG, iLogger, PVLOGMSG_INFO, (0, "PVMFFileOutputNode:RequestPort"));
-    PVMFFileOutputNodeCommand cmd;
-    cmd.PVMFFileOutputNodeCommandBase::Construct(s, PVMF_GENERIC_NODE_REQUESTPORT, aPortTag, aPortConfig, aContext);
-    return QueueCommandL(cmd);
-}
-
-
-////////////////////////////////////////////////////////////////////////////
-PVMFCommandId PVMFFileOutputNode::ReleasePort(PVMFSessionId s, PVMFPortInterface& aPort, const OsclAny* aContext)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_MLDBG, iLogger, PVLOGMSG_INFO, (0, "PVMFFileOutputNode:ReleasePort"));
-    PVMFFileOutputNodeCommand cmd;
-    cmd.PVMFFileOutputNodeCommandBase::Construct(s, PVMF_GENERIC_NODE_RELEASEPORT, aPort, aContext);
-    return QueueCommandL(cmd);
-}
-
 
 ////////////////////////////////////////////////////////////////////////////
 PVMFPortIter* PVMFFileOutputNode::GetPorts(const PVMFPortFilter* aFilter)
@@ -293,79 +164,6 @@ PVMFPortIter* PVMFFileOutputNode::GetPorts(const PVMFPortFilter* aFilter)
     OSCL_UNUSED_ARG(aFilter);//port filter is not implemented.
     iPortVector.Reset();
     return &iPortVector;
-}
-
-
-////////////////////////////////////////////////////////////////////////////
-PVMFCommandId PVMFFileOutputNode::Start(PVMFSessionId s, const OsclAny* aContext)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_MLDBG, iLogger, PVLOGMSG_INFO, (0, "PVMFFileOutputNode:Start"));
-    PVMFFileOutputNodeCommand cmd;
-    cmd.PVMFFileOutputNodeCommandBase::Construct(s, PVMF_GENERIC_NODE_START, aContext);
-    return QueueCommandL(cmd);
-}
-
-
-
-////////////////////////////////////////////////////////////////////////////
-PVMFCommandId PVMFFileOutputNode::Stop(PVMFSessionId s, const OsclAny* aContext)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_MLDBG, iLogger, PVLOGMSG_INFO, (0, "PVMFFileOutputNode:Stop"));
-    PVMFFileOutputNodeCommand cmd;
-    cmd.PVMFFileOutputNodeCommandBase::Construct(s, PVMF_GENERIC_NODE_STOP, aContext);
-    return QueueCommandL(cmd);
-}
-
-////////////////////////////////////////////////////////////////////////////
-/**
-//Queue an asynchronous node command
-*/
-PVMFCommandId PVMFFileOutputNode::Flush(PVMFSessionId s, const OsclAny* aContext)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_MLDBG, iLogger, PVLOGMSG_INFO, (0, "PVMFFileOutputNode:Flush"));
-    PVMFFileOutputNodeCommand cmd;
-    cmd.PVMFFileOutputNodeCommandBase::Construct(s, PVMF_GENERIC_NODE_FLUSH, aContext);
-    return QueueCommandL(cmd);
-}
-
-////////////////////////////////////////////////////////////////////////////
-PVMFCommandId PVMFFileOutputNode::Pause(PVMFSessionId s, const OsclAny* aContext)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_MLDBG, iLogger, PVLOGMSG_INFO, (0, "PVMFFileOutputNode:Pause"));
-    PVMFFileOutputNodeCommand cmd;
-    cmd.PVMFFileOutputNodeCommandBase::Construct(s, PVMF_GENERIC_NODE_PAUSE, aContext);
-    return QueueCommandL(cmd);
-}
-
-
-////////////////////////////////////////////////////////////////////////////
-PVMFCommandId PVMFFileOutputNode::Reset(PVMFSessionId s, const OsclAny* aContext)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_MLDBG, iLogger, PVLOGMSG_INFO, (0, "PVMFFileOutputNode:Reset"));
-    PVMFFileOutputNodeCommand cmd;
-    cmd.PVMFFileOutputNodeCommandBase::Construct(s, PVMF_GENERIC_NODE_RESET, aContext);
-    return QueueCommandL(cmd);
-}
-
-
-////////////////////////////////////////////////////////////////////////////
-PVMFCommandId PVMFFileOutputNode::CancelAllCommands(PVMFSessionId s, const OsclAny* aContext)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_MLDBG, iLogger, PVLOGMSG_INFO, (0, "PVMFFileOutputNode:CancelAllCommands"));
-    PVMFFileOutputNodeCommand cmd;
-    cmd.PVMFFileOutputNodeCommandBase::Construct(s, PVMF_GENERIC_NODE_CANCELALLCOMMANDS, aContext);
-    return QueueCommandL(cmd);
-}
-
-
-
-////////////////////////////////////////////////////////////////////////////
-PVMFCommandId PVMFFileOutputNode::CancelCommand(PVMFSessionId s, PVMFCommandId aCmdId, const OsclAny* aContext)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_MLDBG, iLogger, PVLOGMSG_INFO, (0, "PVMFFileOutputNode:CancelCommand"));
-    PVMFFileOutputNodeCommand cmd;
-    cmd.PVMFFileOutputNodeCommandBase::Construct(s, PVMF_GENERIC_NODE_CANCELCOMMAND, aCmdId, aContext);
-    return QueueCommandL(cmd);
 }
 
 ////////////////////////////////////////////////////////////////////////////
@@ -402,14 +200,12 @@ bool PVMFFileOutputNode::queryInterface(const PVUuid& uuid, PVInterface*& iface)
         iface = OSCL_STATIC_CAST(PVInterface*, myInterface);
         ++iExtensionRefCount;
     }
-
     else if (uuid == PVMI_CAPABILITY_AND_CONFIG_PVUUID)
     {
         PvmiCapabilityAndConfig* myInterface = OSCL_STATIC_CAST(PvmiCapabilityAndConfig*, this);
         iface = OSCL_STATIC_CAST(PVInterface*, myInterface);
         ++iExtensionRefCount;
     }
-
     else
     {
         iface = NULL;
@@ -649,7 +445,7 @@ void PVMFFileOutputNode::Run()
 {
     if (!iInputCommands.empty())
     {
-        if (ProcessCommand(iInputCommands.front()))
+        if (ProcessCommand())
         {
             //note: need to check the state before re-scheduling
             //since the node could have been reset in the ProcessCommand
@@ -662,7 +458,7 @@ void PVMFFileOutputNode::Run()
 
     // Process port activity
     if (!iPortActivityQueue.empty()
-            && (iInterfaceState == EPVMFNodeStarted || FlushPending()))
+            && (iInterfaceState == EPVMFNodeStarted || IsFlushPending()))
     {
         // If the port activity cannot be processed because a port is
         // busy, discard the activity and continue to process the next
@@ -673,18 +469,18 @@ void PVMFFileOutputNode::Run()
                 break; //processed a port
         }
         //Re-schedule
-        RunIfNotReady();
+        Reschedule();
         return;
     }
 
     //If we get here we did not process any ports or commands.
     //Check for completion of a flush command...
-    if (FlushPending()
+    if (IsFlushPending()
             && iPortActivityQueue.empty())
     {
         SetState(EPVMFNodePrepared);
         iInPort->ResumeInput();
-        CommandComplete(iCurrentCommand, iCurrentCommand.front(), PVMFSuccess);
+        CommandComplete(iCurrentCommand, PVMFSuccess);
         RunIfNotReady();
     }
 }
@@ -1014,7 +810,7 @@ PVMFStatus PVMFFileOutputNode::CheckMaxFileSize(uint32 aFrameSize)
         if ((iFileSize + aFrameSize) >= iMaxFileSize)
         {
             // Change state to initialized
-            ChangeNodeState(EPVMFNodeInitialized);
+            SetState(EPVMFNodeInitialized);
 
             // Clear all pending port activity
             ClearPendingPortActivity();
@@ -1037,7 +833,7 @@ PVMFStatus PVMFFileOutputNode::CheckMaxDuration(uint32 aTimestamp)
         if (aTimestamp >= iMaxDuration)
         {
             // Change state to initialized
-            ChangeNodeState(EPVMFNodeInitialized);
+            SetState(EPVMFNodeInitialized);
 
             // Clear all pending port activity
             ClearPendingPortActivity();
@@ -1127,46 +923,13 @@ PVMFStatus PVMFFileOutputNode::WriteData(OsclRefCounterMemFrag aMemFrag, uint32 
 void PVMFFileOutputNode::ClearPendingPortActivity()
 {
     // index starts at 1 because the current command (i.e. iCmdQueue[0]) will be erased inside Run
-    while (!iInputCommands.empty())
+    PVMFNodeCommand Cmd;
+    while (iInputCommands.size() > 0)
     {
-        CommandComplete(iInputCommands, iInputCommands.front(), PVMFFailure);
+        iInputCommands.GetFrontAndErase(Cmd);
+        CommandComplete(Cmd, PVMFErrCancelled);
     }
 }
-
-void PVMFFileOutputNode::ChangeNodeState(TPVMFNodeInterfaceState aNewState)
-{
-    iInterfaceState = aNewState;
-}
-
-/***********************************/
-void PVMFFileOutputNode::CommandComplete(PVMFFileOutputNodeCmdQ& aCmdQ, PVMFFileOutputNodeCommand& aCmd, PVMFStatus aStatus, OsclAny* aEventData)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_MLDBG, iLogger, PVLOGMSG_INFO, (0, "PVMFFileOutputNode:CommandComplete Id %d Cmd %d Status %d Context %d Data %d"
-                    , aCmd.iId, aCmd.iCmd, aStatus, aCmd.iContext, aEventData));
-
-    //create response
-    PVMFCmdResp resp(aCmd.iId, aCmd.iContext, aStatus, aEventData);
-    PVMFSessionId session = aCmd.iSession;
-
-    //Erase the command from the queue.
-    aCmdQ.Erase(&aCmd);
-
-    //Report completion to the session observer.
-    ReportCmdCompleteEvent(session, resp);
-}
-
-PVMFCommandId PVMFFileOutputNode::QueueCommandL(PVMFFileOutputNodeCommand& aCmd)
-{
-    PVMFCommandId id;
-
-    id = iInputCommands.AddL(aCmd);
-
-    //wakeup the AO
-    RunIfNotReady();
-
-    return id;
-}
-
 
 /////////////////////////////////////////////////////
 bool PVMFFileOutputNode::ProcessPortActivity()
@@ -1264,94 +1027,15 @@ PVMFStatus PVMFFileOutputNode::ProcessIncomingMsg(PVMFPortInterface* aPort)
     }
 }
 
-bool PVMFFileOutputNode::ProcessCommand(PVMFFileOutputNodeCommand& aCmd)
-{
-    //normally this node will not start processing one command
-    //until the prior one is finished.  However, a hi priority
-    //command such as Cancel must be able to interrupt a command
-    //in progress.
-    if (!iCurrentCommand.empty() && !aCmd.hipri())
-        return false;
 
-    switch (aCmd.iCmd)
-    {
-        case PVMF_GENERIC_NODE_QUERYUUID:
-            DoQueryUuid(aCmd);
-            break;
-
-        case PVMF_GENERIC_NODE_QUERYINTERFACE:
-            DoQueryInterface(aCmd);
-            break;
-
-        case PVMF_GENERIC_NODE_REQUESTPORT:
-            DoRequestPort(aCmd);
-            break;
-
-        case PVMF_GENERIC_NODE_RELEASEPORT:
-            DoReleasePort(aCmd);
-            break;
-
-        case PVMF_GENERIC_NODE_INIT:
-            DoInit(aCmd);
-            break;
-
-        case PVMF_GENERIC_NODE_PREPARE:
-            DoPrepare(aCmd);
-            break;
-
-        case PVMF_GENERIC_NODE_START:
-            DoStart(aCmd);
-            break;
-
-        case PVMF_GENERIC_NODE_STOP:
-            DoStop(aCmd);
-            break;
-
-        case PVMF_GENERIC_NODE_FLUSH:
-            DoFlush(aCmd);
-            break;
-
-        case PVMF_GENERIC_NODE_PAUSE:
-            DoPause(aCmd);
-            break;
-
-        case PVMF_GENERIC_NODE_RESET:
-            DoReset(aCmd);
-            break;
-
-        case PVMF_GENERIC_NODE_CANCELALLCOMMANDS:
-            DoCancelAllCommands(aCmd);
-            break;
-
-        case PVMF_GENERIC_NODE_CANCELCOMMAND:
-            DoCancelCommand(aCmd);
-            break;
-
-        default://unknown command type
-            CommandComplete(iInputCommands, aCmd, PVMFFailure);
-            break;
-    }
-
-    return true;
-}
-
-/**
-//A routine to tell if a flush operation is in progress.
-*/
-bool PVMFFileOutputNode::FlushPending()
-{
-    return (iCurrentCommand.size() > 0
-            && iCurrentCommand.front().iCmd == PVMF_GENERIC_NODE_FLUSH);
-}
-
-void PVMFFileOutputNode::DoQueryUuid(PVMFFileOutputNodeCommand& aCmd)
+PVMFStatus PVMFFileOutputNode::DoQueryUuid()
 {
     //This node supports Query UUID from any state
 
     OSCL_String* mimetype;
     Oscl_Vector<PVUuid, OsclMemAllocator> *uuidvec;
     bool exactmatch;
-    aCmd.PVMFFileOutputNodeCommandBase::Parse(mimetype, uuidvec, exactmatch);
+    iCurrentCommand.PVMFNodeCommandBase::Parse(mimetype, uuidvec, exactmatch);
 
     //Try to match the input mimetype against any of
     //the custom interfaces for this node
@@ -1366,216 +1050,101 @@ void PVMFFileOutputNode::DoQueryUuid(PVMFFileOutputNodeCommand& aCmd)
         uuidvec->push_back(PvmfComposerSizeAndDurationUuid);
         uuidvec->push_back(PvmfNodesSyncControlUuid);
     }
-    CommandComplete(iInputCommands, aCmd, PVMFSuccess);
+    return PVMFSuccess;
 }
 
-void PVMFFileOutputNode::DoQueryInterface(PVMFFileOutputNodeCommand&  aCmd)
+PVMFStatus PVMFFileOutputNode::DoQueryInterface()
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                     (0, "PVMFFileOutputNode::DoQueryInterface"));
 
     PVUuid* uuid;
     PVInterface** ptr;
-    aCmd.PVMFFileOutputNodeCommandBase::Parse(uuid, ptr);
+    iCurrentCommand.PVMFNodeCommandBase::Parse(uuid, ptr);
 
     if (queryInterface(*uuid, *ptr))
     {
-        CommandComplete(iInputCommands, aCmd, PVMFSuccess);
+        return PVMFSuccess;
     }
     else
     {
-        CommandComplete(iInputCommands, aCmd, PVMFFailure);
+        return PVMFFailure;
     }
 }
 
-void PVMFFileOutputNode::DoInit(PVMFFileOutputNodeCommand& aCmd)
+PVMFStatus PVMFFileOutputNode::DoInit()
 {
-    PVMFStatus iRet = PVMFSuccess;
-    switch (iInterfaceState)
-    {
-        case EPVMFNodeIdle:
-            //this node doesn't need to do anything to get ready
-            //to start.
-            SetState(EPVMFNodeInitialized);
-            break;
-        case EPVMFNodeInitialized:
-            break;
-        default:
-            iRet = PVMFErrInvalidState;
-            break;
-    }
-    CommandComplete(iInputCommands, aCmd, iRet);
+    return PVMFSuccess;
 }
 
-/**
-//Called by the command handler AO to do the node Prepare
-*/
-void PVMFFileOutputNode::DoPrepare(PVMFFileOutputNodeCommand& aCmd)
+PVMFStatus PVMFFileOutputNode::DoStart()
 {
-    PVMFStatus iRet = PVMFSuccess;
-    switch (iInterfaceState)
+    if (!iClock)
     {
-        case EPVMFNodeInitialized:
-            //this node doesn't need to do anything to get ready
-            //to start.
-            SetState(EPVMFNodePrepared);
-            break;
-        case EPVMFNodePrepared:
-            break;
-        default:
-            iRet = PVMFErrInvalidState;
-            break;
+        // If not using sync clock, start processing incoming data
+        ((PVMFFileOutputInPort*)iInPort)->Start();
     }
-    CommandComplete(iInputCommands, aCmd, iRet);
-}
-
-void PVMFFileOutputNode::DoStart(PVMFFileOutputNodeCommand& aCmd)
-{
-    PVMFStatus status = PVMFSuccess;
-    switch (iInterfaceState)
+    if (!iFileOpened)
     {
-        case EPVMFNodePrepared:
-        case EPVMFNodePaused:
+        if (iFs.Connect() != 0)
         {
-            if (!iClock)
-            {
-                // If not using sync clock, start processing incoming data
-                ((PVMFFileOutputInPort*)iInPort)->Start();
-            }
-            if (!iFileOpened)
-            {
-                if (iFs.Connect() != 0)
-                {
-                    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
-                                    (0, "PVMFFileOutputNode::DoStart: iFs.Connect Error."));
-                    status = PVMFErrNoResources;
-                    break;
-                }
-
-                if (0 != iOutputFile.Open(iOutputFileName.get_cstr(), Oscl_File::MODE_READWRITE | Oscl_File::MODE_BINARY, iFs))
-                {
-                    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
-                                    (0, "PVMFFileOutputNode::DoStart: iOutputFile.Open Error."));
-                    status = PVMFErrNoResources;
-                    break;
-                }
-
-                iFileOpened = 1;
-
-                iFirstMediaData = true;
-            }
-            SetState(EPVMFNodeStarted);
-
-            break;
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
+                            (0, "PVMFFileOutputNode::DoStart: iFs.Connect Error."));
+            return PVMFErrNoResources;
         }
-        case EPVMFNodeStarted:
-            status = PVMFSuccess;
-            break;
-        default:
-            status = PVMFErrInvalidState;
-            break;
-    }
 
-    CommandComplete(iInputCommands, aCmd, status);
-}
-
-void PVMFFileOutputNode::DoStop(PVMFFileOutputNodeCommand& aCmd)
-{
-    switch (iInterfaceState)
-    {
-        case EPVMFNodeStarted:
-        case EPVMFNodePaused:
-            // Stop data source
-            if (iInPort)
-            {
-
-                ((PVMFFileOutputInPort*)iInPort)->Stop();
-                CloseOutputFile();
-            }
-
-            // Clear queued messages in ports
-            uint32 i;
-            for (i = 0; i < iPortVector.size(); i++)
-                iPortVector[i]->ClearMsgQueues();
-
-            // Clear scheduled port activities
-            iPortActivityQueue.clear();
-
-            //transition to Initialized state
-            SetState(EPVMFNodePrepared);
-            CommandComplete(iInputCommands, aCmd, PVMFSuccess);
-            break;
-        case EPVMFNodePrepared:
-            CommandComplete(iInputCommands, aCmd, PVMFSuccess);
-            break;
-        default:
-            CommandComplete(iInputCommands, aCmd, PVMFErrInvalidState);
-            break;
-    }
-}
-
-void PVMFFileOutputNode::DoFlush(PVMFFileOutputNodeCommand& aCmd)
-{
-    switch (iInterfaceState)
-    {
-        case EPVMFNodeStarted:
-        case EPVMFNodePaused:
-            //the flush is asynchronous.  move the command from
-            //the input command queue to the current command, where
-            //it will remain until the flush completes.
-            int32 err;
-            OSCL_TRY(err, iCurrentCommand.StoreL(aCmd););
-            if (err != OsclErrNone)
-            {
-                CommandComplete(iInputCommands, aCmd, PVMFErrNoMemory);
-                return;
-            }
-            iInputCommands.Erase(&aCmd);
-
-            //Notify all ports to suspend their input
-            {
-                for (uint32 i = 0; i < iPortVector.size(); i++)
-                    iPortVector[i]->SuspendInput();
-            }
-
-            // Stop data source
-            break;
-
-        default:
-            CommandComplete(iInputCommands, aCmd, PVMFErrInvalidState);
-            break;
-    }
-}
-
-void PVMFFileOutputNode::DoPause(PVMFFileOutputNodeCommand& aCmd)
-{
-    switch (iInterfaceState)
-    {
-        case EPVMFNodeStarted:
+        if (0 != iOutputFile.Open(iOutputFileName.get_cstr(), Oscl_File::MODE_READWRITE | Oscl_File::MODE_BINARY, iFs))
         {
-            // Pause data source
-            if (!iClock)
-            {
-                // If not using sync clock, pause processing of incoming data
-                ((PVMFFileOutputInPort*)iInPort)->Pause();
-            }
-
-            SetState(EPVMFNodePaused);
-            CommandComplete(iInputCommands, aCmd, PVMFSuccess);
-            break;
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
+                            (0, "PVMFFileOutputNode::DoStart: iOutputFile.Open Error."));
+            return PVMFErrNoResources;
         }
-        case EPVMFNodePaused:
-        {
-            CommandComplete(iInputCommands, aCmd, PVMFSuccess);
-        }
-        break;
-        default:
-            CommandComplete(iInputCommands, aCmd, PVMFErrInvalidState);
-            break;
+        iFileOpened = 1;
+        iFirstMediaData = true;
     }
+    return PVMFSuccess;
 }
 
-void PVMFFileOutputNode::DoReset(PVMFFileOutputNodeCommand& aCmd)
+PVMFStatus PVMFFileOutputNode::DoStop()
+{
+    // Stop data source
+    if (iInPort)
+    {
+        ((PVMFFileOutputInPort*)iInPort)->Stop();
+        CloseOutputFile();
+    }
+
+    // Clear queued messages in ports
+    for (uint32 i = 0; i < iPortVector.size(); i++)
+        iPortVector[i]->ClearMsgQueues();
+
+    // Clear scheduled port activities
+    iPortActivityQueue.clear();
+    return PVMFSuccess;
+}
+
+PVMFStatus PVMFFileOutputNode::DoFlush()
+{
+    //Notify all ports to suspend their input
+    {
+        for (uint32 i = 0; i < iPortVector.size(); i++)
+            iPortVector[i]->SuspendInput();
+    }
+    return PVMFPending;
+}
+
+PVMFStatus PVMFFileOutputNode::DoPause()
+{
+    // Pause data source
+    if (!iClock)
+    {
+        // If not using sync clock, pause processing of incoming data
+        ((PVMFFileOutputInPort*)iInPort)->Pause();
+    }
+    return PVMFSuccess;
+}
+
+PVMFStatus PVMFFileOutputNode::DoReset()
 {
     if (IsAdded())
     {
@@ -1584,19 +1153,13 @@ void PVMFFileOutputNode::DoReset(PVMFFileOutputNodeCommand& aCmd)
             OSCL_DELETE(((PVMFFileOutputInPort*)iInPort));
             iInPort = NULL;
         }
-
-        //logoff & go back to Created state.
-        SetState(EPVMFNodeIdle);
-        CommandComplete(iInputCommands, aCmd, PVMFSuccess);
+        return PVMFSuccess;
     }
-    else
-    {
-        OSCL_LEAVE(OsclErrInvalidState);
-    }
+    OSCL_LEAVE(OsclErrInvalidState);
+    return PVMFErrInvalidState;  // to avoid compile warning
 }
 
-
-void PVMFFileOutputNode::DoRequestPort(PVMFFileOutputNodeCommand& aCmd)
+PVMFStatus PVMFFileOutputNode::DoRequestPort(PVMFPortInterface*& aPort)
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                     (0, "PVMFFileOutputNode::DoRequestPort"));
@@ -1606,26 +1169,21 @@ void PVMFFileOutputNode::DoRequestPort(PVMFFileOutputNodeCommand& aCmd)
     int32 tag;
     OSCL_String* portconfig;
 
-    aCmd.PVMFFileOutputNodeCommandBase::Parse(tag, portconfig);
+    iCurrentCommand.PVMFNodeCommandBase::Parse(tag, portconfig);
 
     //validate the tag...
-    switch (tag)
+    if (tag != PVMF_FILE_OUTPUT_NODE_PORT_TYPE_SINK)
     {
-        case PVMF_FILE_OUTPUT_NODE_PORT_TYPE_SINK:
-            break;
-        default:
-            //bad port tag
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
-                            (0, "PVMFFileOutputNode::DoRequestPort: Error - Invalid port tag"));
-            CommandComplete(iInputCommands, aCmd, PVMFFailure);
-            return;
+        //bad port tag
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
+                        (0, "PVMFFileOutputNode::DoRequestPort: Error - Invalid port tag"));
+        return PVMFFailure;
     }
 
     if (iInPort)
     {
         // it's been taken for now, so reject this request
-        CommandComplete(iInputCommands, aCmd, PVMFFailure);
-        return;
+        return PVMFFailure;
     }
 
     // Create and configure output port
@@ -1641,8 +1199,7 @@ void PVMFFileOutputNode::DoRequestPort(PVMFFileOutputNodeCommand& aCmd)
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_ERR,
                         (0, "PVMFFileOutputNode::DoRequestPort: Error - Format not supported (format was preset)"));
-        CommandComplete(iInputCommands, aCmd, PVMFErrArgument);
-        return;
+        return PVMFErrArgument;
     }
 
     OSCL_TRY(err, iInPort = OSCL_NEW(PVMFFileOutputInPort, (tag, this)););
@@ -1650,8 +1207,7 @@ void PVMFFileOutputNode::DoRequestPort(PVMFFileOutputNodeCommand& aCmd)
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_ERR,
                         (0, "PVMFFileOutputNode::DoRequestPort: Error - PVMFFileOutputInPort::Create() failed"));
-        CommandComplete(iInputCommands, aCmd, PVMFErrNoMemory);
-        return;
+        return PVMFErrNoMemory;
     }
 
     ((PVMFFileOutputInPort*)iInPort)->SetClock(iClock);
@@ -1670,10 +1226,11 @@ void PVMFFileOutputNode::DoRequestPort(PVMFFileOutputNodeCommand& aCmd)
     }
 
     //Return the port pointer to the caller.
-    CommandComplete(iInputCommands, aCmd, PVMFSuccess, (OsclAny*)iInPort);
+    aPort = iInPort;
+    return PVMFSuccess;
 }
 
-void PVMFFileOutputNode::DoReleasePort(PVMFFileOutputNodeCommand& aCmd)
+PVMFStatus PVMFFileOutputNode::DoReleasePort()
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                     (0, "PVMFFileOutputNode::DoReleasePort"));
@@ -1682,65 +1239,21 @@ void PVMFFileOutputNode::DoReleasePort(PVMFFileOutputNodeCommand& aCmd)
     {
         OSCL_DELETE(((PVMFFileOutputInPort*)iInPort));
         iInPort = NULL;
-        CommandComplete(iInputCommands, aCmd, PVMFSuccess);
-        return;
+        return PVMFSuccess;
     }
-    CommandComplete(iInputCommands, aCmd, PVMFFailure);
+    return PVMFFailure;
 }
 
-void PVMFFileOutputNode::DoCancelAllCommands(PVMFFileOutputNodeCommand& aCmd)
+PVMFStatus PVMFFileOutputNode::CancelCurrentCommand()
 {
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                    (0, "PVMFFileOutputNode::DoCancelAllCommands"));
-    //first cancel the current command if any
-    {
-        while (!iCurrentCommand.empty())
-            CommandComplete(iCurrentCommand, iCurrentCommand[0], PVMFErrCancelled);
-    }
-
-    //next cancel all queued commands
-    {
-        //start at element 1 since this cancel command is element 0.
-        while (iInputCommands.size() > 1)
-            CommandComplete(iInputCommands, iInputCommands[1], PVMFErrCancelled);
-    }
-
-    //finally, report cancel complete.
-    CommandComplete(iInputCommands, aCmd, PVMFSuccess);
+    CommandComplete(iCurrentCommand, PVMFErrCancelled);
+    return PVMFSuccess;
 }
 
-void PVMFFileOutputNode::DoCancelCommand(PVMFFileOutputNodeCommand& aCmd)
+PVMFStatus PVMFFileOutputNode::HandleExtensionAPICommands()
 {
-    //extract the command ID from the parameters.
-    PVMFCommandId id;
-    aCmd.PVMFFileOutputNodeCommandBase::Parse(id);
-
-    //first check "current" command if any
-    {
-        PVMFFileOutputNodeCommand* cmd = iCurrentCommand.FindById(id);
-        if (cmd)
-        {
-            //cancel the queued command
-            CommandComplete(iCurrentCommand, *cmd, PVMFErrCancelled);
-            //report cancel success
-            CommandComplete(iInputCommands, aCmd, PVMFSuccess);
-            return;
-        }
-    }
-
-    //next check input queue.
-    {
-        //start at element 1 since this cancel command is element 0.
-        PVMFFileOutputNodeCommand* cmd = iInputCommands.FindById(id, 1);
-        if (cmd)
-        {
-            //cancel the queued command
-            CommandComplete(iInputCommands, *cmd, PVMFErrCancelled);
-            //report cancel success
-            CommandComplete(iInputCommands, aCmd, PVMFSuccess);
-            return;
-        }
-    }
-    //if we get here the command isn't queued so the cancel fails.
-    CommandComplete(iInputCommands, aCmd, PVMFFailure);
+    OSCL_ASSERT(false);
+    return PVMFErrNotSupported;
 }
+
+

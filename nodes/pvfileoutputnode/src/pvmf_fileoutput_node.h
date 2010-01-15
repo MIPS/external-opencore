@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,8 +56,8 @@
 #ifndef PVMF_MEDIA_DATA_H_INCLUDED
 #include "pvmf_media_data.h"
 #endif
-#ifndef PVMF_NODE_INTERFACE_H_INCLUDED
-#include "pvmf_node_interface.h"
+#ifndef PVMF_NODE_INTERFACE_IMPL_H_INCLUDED
+#include "pvmf_node_interface_impl.h"
 #endif
 #ifndef PVMF_FILEOUTPUT_CONFIG_H_INCLUDED
 #include "pvmf_fileoutput_config.h"
@@ -103,12 +103,6 @@ class PVMFFileOutputAlloc : public Oscl_DefAlloc
 };
 
 ////////////////////////////////////////////////////////////////////////////
-//Default vector reserve size
-#define PVMF_FILE_OUTPUT_NODE_COMMAND_VECTOR_RESERVE 10
-
-//Starting value for command IDs
-#define PVMF_FILE_OUTPUT_NODE_COMMAND_ID_START 6000
-
 //memory allocator type for this node.
 typedef OsclMemAllocator PVMFFileOutputNodeAllocator;
 
@@ -116,53 +110,13 @@ typedef OsclMemAllocator PVMFFileOutputNodeAllocator;
 class PVMFFileOutputInPort;
 class PVLogger;
 
-//Node command type.
-typedef PVMFGenericNodeCommand<PVMFFileOutputNodeAllocator> PVMFFileOutputNodeCommandBase;
-class PVMFFileOutputNodeCommand: public PVMFFileOutputNodeCommandBase
-{
-    public:
-        //constructor for Custom2 command
-        void Construct(PVMFSessionId s, int32 cmd, int32 arg1, int32 arg2, int32& arg3, const OsclAny*aContext)
-        {
-            PVMFFileOutputNodeCommandBase::Construct(s, cmd, aContext);
-            iParam1 = (OsclAny*)arg1;
-            iParam2 = (OsclAny*)arg2;
-            iParam3 = (OsclAny*) & arg3;
-        }
-        void Parse(int32&arg1, int32&arg2, int32*&arg3)
-        {
-            arg1 = (int32)iParam1;
-            arg2 = (int32)iParam2;
-            arg3 = (int32*)iParam3;
-        }
-
-        enum PVFileOutputNodeCmdType
-        {
-            PVFILEOUTPUT_NODE_CMD_QUERYUUID,
-            PVFILEOUTPUT_NODE_CMD_QUERYINTERFACE,
-            PVFILEOUTPUT_NODE_CMD_INIT,
-            PVFILEOUTPUT_NODE_CMD_REQUESTPORT,
-            PVFILEOUTPUT_NODE_CMD_START,
-            PVFILEOUTPUT_NODE_CMD_PAUSE,
-            PVFILEOUTPUT_NODE_CMD_STOP,
-            PVFILEOUTPUT_NODE_CMD_RELEASEPORT,
-            PVFILEOUTPUT_NODE_CMD_RESET,
-            PVFILEOUTPUT_NODE_CMD_CANCELCMD,
-            PVFILEOUTPUT_NODE_CMD_CANCELALL,
-            PVFILEOUTPUT_NODE_CMD_SKIPMEDIADATA,
-            PVFILEOUTPUT_NODE_CMD_INVALID
-        };
-};
-//Command queue type
-typedef PVMFNodeCommandQueue<PVMFFileOutputNodeCommand, PVMFFileOutputNodeAllocator> PVMFFileOutputNodeCmdQ;
-
 //Mimetypes for the custom interface
 #define PVMF_FILE_OUTPUT_NODE_CUSTOM1_MIMETYPE "pvxxx/FileOutputNode/Custom1"
 #define PVMF_FILE_OUTPUT_NODE_MIMETYPE "pvxxx/FileOutputNode"
 #define PVMF_BASEMIMETYPE "pvxxx"
 
 ////////////////////////////////////////////////////////////////////////////
-class PVMFFileOutputNode :  public OsclActiveObject, public PVMFNodeInterface,
+class PVMFFileOutputNode :  public PVMFNodeInterfaceImpl,
         public PvmfFileOutputNodeConfigInterface,
         public PvmfComposerSizeAndDurationInterface,
         public PvmfNodesSyncControlInterface,
@@ -172,42 +126,16 @@ class PVMFFileOutputNode :  public OsclActiveObject, public PVMFNodeInterface,
         PVMFFileOutputNode(int32 aPriority);
         ~PVMFFileOutputNode();
 
-        // Virtual functions of PVMFNodeInterface
-        PVMFStatus ThreadLogon();
-        PVMFStatus ThreadLogoff();
         PVMFStatus GetCapability(PVMFNodeCapability& aNodeCapability);
         PVMFPortIter* GetPorts(const PVMFPortFilter* aFilter = NULL);
-        PVMFCommandId QueryUUID(PVMFSessionId, const PvmfMimeString& aMimeType,
-                                Oscl_Vector<PVUuid, PVMFFileOutputNodeAllocator>& aUuids,
-                                bool aExactUuidsOnly = false,
-                                const OsclAny* aContext = NULL);
-        PVMFCommandId QueryInterface(PVMFSessionId, const PVUuid& aUuid,
-                                     PVInterface*& aInterfacePtr,
-                                     const OsclAny* aContext = NULL);
 
-        PVMFCommandId RequestPort(PVMFSessionId aSession
-                                  , int32 aPortTag
-                                  , const PvmfMimeString* aPortConfig = NULL
-                                                                        , const OsclAny* aContext = NULL);
-
-        PVMFCommandId ReleasePort(PVMFSessionId, PVMFPortInterface& aPort, const OsclAny* aContext = NULL);
-        PVMFCommandId Init(PVMFSessionId, const OsclAny* aContext = NULL);
-        PVMFCommandId Prepare(PVMFSessionId, const OsclAny* aContext = NULL);
-        PVMFCommandId Start(PVMFSessionId, const OsclAny* aContext = NULL);
-        PVMFCommandId Stop(PVMFSessionId, const OsclAny* aContext = NULL);
-        PVMFCommandId Flush(PVMFSessionId, const OsclAny* aContext = NULL);
-        PVMFCommandId Pause(PVMFSessionId, const OsclAny* aContext = NULL);
-        PVMFCommandId Reset(PVMFSessionId, const OsclAny* aContext = NULL);
-        PVMFCommandId CancelAllCommands(PVMFSessionId, const OsclAny* aContextData = NULL);
-        PVMFCommandId CancelCommand(PVMFSessionId, PVMFCommandId aCmdId, const OsclAny* aContextData = NULL);
+        //from PVMFPortActivityHandler
+        void HandlePortActivity(const PVMFPortActivity& aActivity);
 
         // Pure virtual from PvInterface
         void addRef();
         void removeRef();
         bool queryInterface(const PVUuid& uuid, PVInterface*& iface);
-
-        //from PVMFPortActivityHandler
-        void HandlePortActivity(const PVMFPortActivity& aActivity);
 
         // Pure virtual from PvmfFileOutputNodeConfigInterface
         PVMFStatus SetOutputFileName(const OSCL_wString& aFileName);
@@ -262,9 +190,6 @@ class PVMFFileOutputNode :  public OsclActiveObject, public PVMFNodeInterface,
         void ConstructL();
         void Run();
 
-        void CommandComplete(PVMFFileOutputNodeCmdQ&, PVMFFileOutputNodeCommand&, PVMFStatus, OsclAny* aData = NULL);
-
-        PVMFCommandId QueueCommandL(PVMFFileOutputNodeCommand& aCmd);
         /**
          * Process a port activity. This method is called by Run to process a port activity.
          *
@@ -272,27 +197,21 @@ class PVMFFileOutputNode :  public OsclActiveObject, public PVMFNodeInterface,
         bool ProcessPortActivity();
         void QueuePortActivity(const PVMFPortActivity &aActivity);
 
-        bool ProcessCommand(PVMFFileOutputNodeCommand&);
-        bool FlushPending();
-
         //Command handlers.
-        void DoReset(PVMFFileOutputNodeCommand&);
-        void DoQueryUuid(PVMFFileOutputNodeCommand&);
-        void DoQueryInterface(PVMFFileOutputNodeCommand&);
-        void DoRequestPort(PVMFFileOutputNodeCommand&);
-        void DoReleasePort(PVMFFileOutputNodeCommand&);
-        void DoInit(PVMFFileOutputNodeCommand&);
-        void DoPrepare(PVMFFileOutputNodeCommand&);
-        void DoStart(PVMFFileOutputNodeCommand&);
-        void DoStop(PVMFFileOutputNodeCommand&);
-        void DoFlush(PVMFFileOutputNodeCommand&);
-        void DoPause(PVMFFileOutputNodeCommand&);
-        void DoCancelAllCommands(PVMFFileOutputNodeCommand&);
-        void DoCancelCommand(PVMFFileOutputNodeCommand&);
-
+        PVMFStatus DoReset();
+        PVMFStatus DoQueryUuid();
+        PVMFStatus DoQueryInterface();
+        PVMFStatus DoRequestPort(PVMFPortInterface*&);
+        PVMFStatus DoReleasePort();
+        PVMFStatus DoInit();
+        PVMFStatus DoStart();
+        PVMFStatus DoStop();
+        PVMFStatus DoFlush();
+        PVMFStatus DoPause();
+        PVMFStatus CancelCurrentCommand();
+        PVMFStatus HandleExtensionAPICommands();
 
         void CloseOutputFile();
-        void ChangeNodeState(TPVMFNodeInterfaceState aNewState);
 
         // Handle command and data events
         PVMFStatus ProcessIncomingData(PVMFSharedMediaDataPtr aMediaData);
@@ -389,12 +308,6 @@ class PVMFFileOutputNode :  public OsclActiveObject, public PVMFNodeInterface,
         PVLogger* iLogger;
 
         PVMFFormatType iFormat;
-
-        uint32 iExtensionRefCount;
-        PVMFNodeCapability iCapability;
-
-        PVMFFileOutputNodeCmdQ iInputCommands;
-        PVMFFileOutputNodeCmdQ iCurrentCommand;
 
         PVMFPortVector<PVMFFileOutputInPort, PVMFFileOutputNodeAllocator> iPortVector;
         Oscl_Vector<PVMFPortActivity, PVMFFileOutputNodeAllocator> iPortActivityQueue;
