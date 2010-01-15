@@ -267,7 +267,6 @@ pvpvrnode_lib=n
 pvcommsionode_lib=m
 pvclientserversocketnode_lib=m
 pvloopbacknode_lib=m
-pvvideoparsernode_lib=m
 pvdummyinputnode_lib=m
 pvdummyoutputnode_lib=m
 pvdivxffparsernode_lib=n

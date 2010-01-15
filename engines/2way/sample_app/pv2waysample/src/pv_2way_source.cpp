@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,9 +23,9 @@
 #include "pv_2way_media.h"
 #include "pv_mime_string_utils.h"
 
-
 int PV2WaySource::AddCodec(PvmiMIOFileInputSettings& aFileSettings)
 {
+    int error = 0;
     if (aFileSettings.iMediaFormat == PVMF_MIME_FORMAT_UNKNOWN)
     {
         aFileSettings.iMediaFormat = PV2WayMedia::GetMediaFormat(aFileSettings.iFileName.get_cstr());
@@ -36,33 +36,20 @@ int PV2WaySource::AddCodec(PvmiMIOFileInputSettings& aFileSettings)
     if (!parser.ParseConFile(aFileSettings))
         return -1;
 #endif
-    AddFormat(aFileSettings);
-    if (pv_mime_strcmp(aFileSettings.iMediaFormat.getMIMEStrPtr(), PVMF_MIME_M4V) == 0)
-    {
-        // add this explicitly so an additional YUV will be added
-        PV2WayMIO::AddCodec(PVMFFormatType(PVMF_MIME_YUV420));
-    }
-    return 0;
+    OSCL_TRY(error, AddFormat(aFileSettings));
+    return error;
 }
 
 int PV2WaySource::AddCodec(PVMFFileInputSettings& aFileSettings)
 {
-    AddFormat(aFileSettings);
-    if (pv_mime_strcmp(aFileSettings.iMediaFormat.getMIMEStrPtr(), PVMF_MIME_M4V) == 0)
-    {
-        // add this explicitly so an additional YUV will be added
-        PV2WayMIO::AddCodec(PVMFFormatType(PVMF_MIME_YUV420));
-    }
-    return 0;
+    int error = 0;
+    OSCL_TRY(error, AddFormat(aFileSettings));
+    return error;
 }
 
 int PV2WaySource::AddCodec(DummyMIOSettings& aSettings)
 {
-    AddFormat(aSettings);
-    if (pv_mime_strcmp(aSettings.iMediaFormat.getMIMEStrPtr(), PVMF_MIME_M4V) == 0)
-    {
-        // add this explicitly so an additional YUV will be added
-        PV2WayMIO::AddCodec(PVMFFormatType(PVMF_MIME_YUV420));
-    }
-    return 0;
+    int error = 0;
+    OSCL_TRY(error, AddFormat(aSettings));
+    return error;
 }

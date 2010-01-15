@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -232,8 +232,7 @@ void TSC_324m::initVarsSession()
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                     (0, "TSC_324m::initVarsSession"));
-    iTerminalStatus = Phase0_Idle;      /* Terminal Status */
-
+    SetTerminalStatus(Phase0_Idle); /* Terminal Status */
 
     iDisconnectInitiator = EPVT_NONE;
     iConnectFailReason = EPVT_Failed;
@@ -588,7 +587,7 @@ TSC_324m::Connect(uint16 info_len, uint8* info_buf)
     TPVStatusCode ret = EPVT_Pending;
 
     iStopCmd = NULL;
-    iTerminalStatus = Phase0_Idle;
+    SetTerminalStatus(Phase0_Idle);
 
     iTSCmt.ClearVars();
 
@@ -657,7 +656,7 @@ TSC_324m::Connect(uint16 info_len, uint8* info_buf)
     // Reset global states (RAN-MS)
     iTSCstatemanager.StateInitialize();    // Reset call-setup states
 
-    iTerminalStatus = PhaseD_CSUP;
+    SetTerminalStatus(PhaseD_CSUP);
 
     iTSCcomponent->Connect2();
     return ret;
@@ -741,7 +740,7 @@ void TSC_324m::MuxCloseComplete()
                     (0, "TSC_324m: Mux close complete - status(%d).", iTerminalStatus));
 
     /* All logical channels closed */
-    iTerminalStatus = PhaseF_End;
+    SetTerminalStatus(PhaseF_End);
 
     iH245->Reset();
     // set direct connection to MSD SE
@@ -886,7 +885,7 @@ TPVStatusCode TSC_324m::Abort()
     iSrp->SrpStop();
 
     /* All logical channels closed */
-    iTerminalStatus = PhaseF_End;
+    SetTerminalStatus(PhaseF_End);
 
     iH245->Reset();
     // set direct connection to MSD SE
@@ -929,7 +928,7 @@ void TSC_324m::Handle(PS_ControlMsgHeader msg)
     Cnt = 0;
     while (iDispatchTable[Cnt].Module)
     {
-        if (iDispatchTable[Cnt].Status == iTerminalStatus && iDispatchTable[Cnt].Event == EventNo)
+        if (iDispatchTable[Cnt].Status == GetTerminalStatus() && iDispatchTable[Cnt].Event == EventNo)
         {
             func_ptr = iDispatchTable[Cnt].Module;
             handled = true;
@@ -989,7 +988,7 @@ TPVStatusCode TSC_324m::RequestFrameUpdate(PVMFPortInterface* port)
 
 TPVStatusCode TSC_324m::RequestMaxMuxPduSize(unsigned aPduSize)
 {
-    if ((iTerminalStatus != PhaseD_CSUP) && (iTerminalStatus != PhaseE_Comm))
+    if ((GetTerminalStatus() != PhaseD_CSUP) && (GetTerminalStatus() != PhaseE_Comm))
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                         (0, "TSC_324m: ERROR - RequestMaxMuxPduSize - invalid state(%d)",
@@ -1448,7 +1447,7 @@ OSCL_EXPORT_REF  PVMFCommandId TSC_324m::Start(PVMFSessionId aSession, const Osc
 
     iTSCcomponent->Start();
 
-    if (iInterfaceState != EPVMFNodePrepared || iTerminalStatus != Phase0_Idle)
+    if (iInterfaceState != EPVMFNodePrepared || GetTerminalStatus() != Phase0_Idle)
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_WARNING,
                         (0, "TSC_324m::Start Init Invalid state iInterfaceState=%d, iTerminalStatus=%d",
@@ -1557,7 +1556,7 @@ void TSC_324m::DoStop(Tsc324mNodeCommand& cmd)
         iTSCcomponent->StartDisconnect(true);
     }
 
-    iTerminalStatus = PhaseF_Clc;
+    SetTerminalStatus(PhaseF_Clc);
     Disconnect();
 
     if (iNumRtdRequests)
@@ -2295,7 +2294,7 @@ void TSC_324m::SendVideoTemporalSpatialTradeoffCommand(TPVChannelId aLogicalChan
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                     (0, "TSC_324m::SendVideoTemporalSpatialTradeoffCommand aLogicalChannel=%d, aTradeoff=%d", aLogicalChannel, aTradeoff));
-    if (iTerminalStatus != PhaseE_Comm)
+    if (GetTerminalStatus() != PhaseE_Comm)
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                         (0, "TSC_324m::SendVideoTemporalSpatialTradeoffCommand Ignoring due to invalid state."));
@@ -2309,7 +2308,7 @@ void TSC_324m::SendVideoTemporalSpatialTradeoffIndication(TPVChannelId aLogicalC
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                     (0, "TSC_324m::SendVideoTemporalSpatialTradeoffIndication aLogicalChannel=%d, aTradeoff=%d", aLogicalChannel, aTradeoff));
-    if (iTerminalStatus != PhaseE_Comm)
+    if (GetTerminalStatus() != PhaseE_Comm)
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                         (0, "TSC_324m::SendVideoTemporalSpatialTradeoffIndication Ignoring due to invalid state."));
@@ -2327,7 +2326,7 @@ void TSC_324m::SendSkewIndication(TPVChannelId aLogicalChannel1,
     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                     (0, "TSC_324m::SendSkewIndication aLogicalChannel1=%d, aLogicalChannel2=%d, aSkew=%d",
                      aLogicalChannel1, aLogicalChannel2, aSkew));
-    if (iTerminalStatus != PhaseE_Comm)
+    if (GetTerminalStatus() != PhaseE_Comm)
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                         (0, "TSC_324m::SendSkewIndication Ignoring due to invalid state."));
@@ -2481,6 +2480,68 @@ void TSC_324m::StopSrp()
         iIncomingSrpPort->Disconnect();
 }
 
+#ifndef PVLOGGER_ENABLE
+void TSC_324m::SetTerminalStatus(uint32 aStatus)
+{
+    iTerminalStatus = aStatus;
+}
+#else
+void TSC_324m::SetTerminalStatus(uint32 aStatus)
+{
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "TSC_324m::SetTerminalStatus(%d)", aStatus));
+
+    if (aStatus != iTerminalStatus)
+    {
+        uint32 status[2] = {iTerminalStatus, aStatus};
+        const char *statusString[2];
+        for (int16 index = 0; index < 2; index++)
+        {
+            switch (status[index])
+            {
+                case Phase0_Idle:
+                    statusString[index] = "Phase0_Idle";
+                    break;
+                case PhaseA:
+                    statusString[index] = "PhaseA";
+                    break;
+                case PhaseB:
+                    statusString[index] = "PhaseB";
+                    break;
+                case PhaseC:
+                    statusString[index] = "PhaseC";
+                    break;
+                case PhaseD_CSUP:
+                    statusString[index] = "PhaseD_CSUP";
+                    break;
+                case PhaseE_Comm:
+                    statusString[index] = "PhaseE_Comm";
+                    break;
+                case PhaseF_Clc:
+                    statusString[index] = "PhaseF_Clc";
+                    break;
+                case PhaseF_End:
+                    statusString[index] = "PhaseF_End";
+                    break;
+                case PhaseG_Dis:
+                    statusString[index] = "PhaseG_Dis";
+                    break;
+            }
+        }
+
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_INFO,
+                        (0, "TSC_324m::SetTerminalStatus - Change from (%s) to (%s)", statusString[0], statusString[1]));
+    }
+
+    iTerminalStatus = aStatus;
+}
+#endif
+uint32 TSC_324m::GetTerminalStatus()
+{
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "TSC_324m::GetTerminalStatus(%d)", iTerminalStatus));
+    return iTerminalStatus;
+}
 
 OSCL_EXPORT_REF void TSC_324m::GetChannelFormatAndCapabilities(TPVDirection dir,
         Oscl_Vector<FormatCapabilityInfo, OsclMemAllocator>& formats)

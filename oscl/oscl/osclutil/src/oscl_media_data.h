@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -213,7 +213,7 @@ template <class ChainClass, uint32 max_frags> class BufFragGroup
         BufFragStatusClass::status_t AddFragment(const BufferFragment& frag, BufferState* in_buffer_state,
                 int32 location_offset = max_frags)
         {
-            if (num_fragments > max_frags)
+            if (num_fragments >= max_frags)
             {
                 return BufFragStatusClass::TOO_MANY_FRAGS;
             }
@@ -395,7 +395,7 @@ template <class ChainClass, uint32 max_frags, uint32 local_bufsize> class MediaD
                 int32 location_offset)
         {
 
-            if (this->num_fragments > max_frags)
+            if (this->num_fragments >= max_frags)
             {
                 return MediaStatusClass::TOO_MANY_FRAGS;
             }

@@ -143,6 +143,7 @@ void engine_test_suite::AddOutgoingVideoCodecUsingFile(PV2WaySourceAndSinksFile*
     else if (oscl_strncmp(PVMF_MIME_M4V, apVidSrcFormatType, oscl_strlen(PVMF_MIME_M4V)) == 0)
     {
         apSourceAndSinks->AddPreferredCodec(OUTGOING, PV_VIDEO, iCodecs.iVideoSourceM4VFileSettings);
+        apSourceAndSinks->AddPreferredCodec(OUTGOING, PV_VIDEO, iCodecs.iVideoSourceH263FileSettings);
     }
 }
 
@@ -161,6 +162,7 @@ void engine_test_suite::AddIncomingVideoCodecUsingFile(PV2WaySourceAndSinksFile*
     else if (oscl_strncmp(PVMF_MIME_M4V, apVidSinkFormatType, oscl_strlen(PVMF_MIME_M4V)) == 0)
     {
         apSourceAndSinks->AddPreferredCodec(INCOMING, PV_VIDEO, iCodecs.iVideoSinkM4VFileSettings);
+        apSourceAndSinks->AddPreferredCodec(INCOMING, PV_VIDEO, iCodecs.iVideoSinkH263FileSettings);
     }
 }
 

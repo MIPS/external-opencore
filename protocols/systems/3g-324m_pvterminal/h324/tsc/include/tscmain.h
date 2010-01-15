@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -127,7 +127,7 @@ class SimpleStackElement;
 #define PV_TSC_MAX_COMMAND_ID 65535
 #define TSC_SE_TIMEOUT_DEFAULT 30
 #define T401_DEFAULT 8
-#define N401_DEFAULT 100
+#define N401_DEFAULT 10
 
 #define FIRST_MUX_ENTRY_NUMBER TSC_FM_MAX_MTE+1
 #define LAST_MUX_ENTRY_NUMBER 14
@@ -329,6 +329,10 @@ class TSC_324m : public OsclActiveObject,
 
         /* H245Observer virtuals */
         void Handle(PS_ControlMsgHeader msg);
+        bool TerminalConnected()
+        {
+            return !((iTerminalStatus == PhaseF_Clc) | (iTerminalStatus == PhaseF_End) | (iTerminalStatus == PhaseG_Dis));
+        }
 
         // MSD User
         MSD *Msd;
@@ -357,6 +361,7 @@ class TSC_324m : public OsclActiveObject,
         {
             if (iObserver)
             {
+                SetTerminalStatus(PhaseF_Clc);
                 StopData();
                 iObserver->InternalError();
             }
@@ -548,6 +553,8 @@ class TSC_324m : public OsclActiveObject,
         void IgnoreH245Callbacks();
         void ConfigureSrp(TPVH223Level aLevel);
         void StopSrp();
+        void SetTerminalStatus(uint32 aStatus);
+        uint32 GetTerminalStatus();
 
 #ifdef MEM_TRACK
         void MemStats();

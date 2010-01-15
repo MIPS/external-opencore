@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -305,7 +305,6 @@ void TscSrpBuffer::TimeoutOccurred(int32 timerID, int32 timeoutInfo)
         iNumMsgs = 0;
         iTxData.Unbind();
         iLLPortOut->QueueOutgoingMsg(msg);
-        iLLPortOut->Send();
     }
     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                     (0, "TscSrpBuffer::TimeoutOccurred- done"));

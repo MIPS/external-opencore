@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -82,14 +82,14 @@ void TSC_324m::CETransferIndication(OsclSharedPtr<S_TerminalCapabilitySet> tcs)
     ////////////////////////
     // State = Call Setup
     ////////////////////////
-    if (iTerminalStatus == PhaseD_CSUP)
+    if (GetTerminalStatus() == PhaseD_CSUP)
     {
         // TRANSFER.response(CE) Primitive Send
         if (Ce) Ce->TransferResponse();
 
         ExtractTcsParameters(tcs);
 
-        iTSCcomponent->CETransferIndication(tcs, iTerminalStatus);
+        iTSCcomponent->CETransferIndication(tcs, GetTerminalStatus());
 
         if (iTSCcomponent->GetVideoLayer() == 0)
         {
@@ -121,9 +121,9 @@ void TSC_324m::CETransferIndication(OsclSharedPtr<S_TerminalCapabilitySet> tcs)
     //////////////////////////////////
     // State = Ongoing Communication
     //////////////////////////////////
-    else if (iTerminalStatus == PhaseE_Comm)
+    else if (GetTerminalStatus() == PhaseE_Comm)
     {
-        iTSCcomponent->CETransferIndication(tcs, iTerminalStatus);
+        iTSCcomponent->CETransferIndication(tcs, GetTerminalStatus());
         if (Ce) Ce->TransferResponse();
     }
     else
@@ -143,7 +143,7 @@ void TSC_324m::CETransferConfirm()
     ////////////////////////
     // State = Call Setup
     ////////////////////////
-    if (iTerminalStatus == PhaseD_CSUP || iTerminalStatus == PhaseE_Comm)
+    if (GetTerminalStatus() == PhaseD_CSUP || GetTerminalStatus() == PhaseE_Comm)
     {
         iTSCstatemanager.WriteState(TSC_CE_SEND, COMPLETE);
     }
@@ -184,7 +184,7 @@ void TSC_324m::CERejectIndication(CESource source, CECause cause, CEDirection di
     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                     (0, "TSC_324m: CE Reject Indication received."));
 
-    if (iTerminalStatus == PhaseD_CSUP || iTerminalStatus == PhaseE_Comm)
+    if (GetTerminalStatus() == PhaseD_CSUP || GetTerminalStatus() == PhaseE_Comm)
     {
         if (direction == CE_OUTGOING)
         {

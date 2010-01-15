@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -95,14 +95,14 @@ uint32 TSC_324m::SessionClose_Comm()
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                     (0, "TSC_324m: SessionClose_Comm ... Start.\n"));
-    iTerminalStatus = PhaseF_End;
+    SetTerminalStatus(PhaseF_End);
     StopData();
     iTSCcomponent->CloseChannels();
     /* Primitive Send */
     EndSessionCommand();
     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                     (0, "TSC_324m: EndSession complete.\n"));
-    return(iTerminalStatus);
+    return(GetTerminalStatus());
 }
 
 // =============================================================
@@ -114,11 +114,11 @@ uint32 TSC_324m::SessionClose_CSUP()
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                     (0, "TSC_324m::SessionClose_CSUP"));
-    iTerminalStatus = PhaseF_End;
+    SetTerminalStatus(PhaseF_End);
     SignalCsupComplete(PVMFFailure);
     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                     (0, "TSC_324m: EndSession complete."));
-    return(iTerminalStatus);
+    return(GetTerminalStatus());
 }
 
 
@@ -360,7 +360,7 @@ uint32 TSC_324m::MuxTableTransferIndication(PS_ControlMsgHeader  pReceiveInf)
                 {
                     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_WARNING,
                                     (0, "TSC_324m::MuxTableTransferIndication Error - Failed to lookup logical channel 0"));
-                    return iTerminalStatus;
+                    return GetTerminalStatus();
                 }
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                                 (0, "TSC_324m::Status04Event22 Received new descriptor for mux entry 15.  Done."));
@@ -411,7 +411,7 @@ OsclAny TSC_324m::SignalCsupComplete(PVMFStatus status)
     // update the node state
     if (status == PVMFSuccess)
     {
-        iTerminalStatus = PhaseE_Comm;
+        SetTerminalStatus(PhaseE_Comm);
     }
 }
 
@@ -852,12 +852,12 @@ uint32 TSC_324m::MiscCmdRecv(PS_ControlMsgHeader  pReceiveInf)
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                         (0, "TSC_324m: MiscCmdRecv - Received videoFastUpdatePicture, lcn(%d)\n",
                          mc->logicalChannelNumber));
-        if (iTerminalStatus != PhaseE_Comm)
+        if (GetTerminalStatus() != PhaseE_Comm)
         {
             PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                             (0, "TSC_324m: MiscCmdRecv Error - invalid state(%d)",
                              iTerminalStatus));
-            return iTerminalStatus;
+            return GetTerminalStatus();
         }
         H223OutgoingChannelPtr lcn;
         PVMFStatus aStatus = iH223->GetOutgoingChannel(mc->logicalChannelNumber,
@@ -867,7 +867,7 @@ uint32 TSC_324m::MiscCmdRecv(PS_ControlMsgHeader  pReceiveInf)
             PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                             (0, "TSC_324m::MiscCmdRecv Error - Request I-Frame for invalid channel ID=%d",
                              mc->logicalChannelNumber));
-            return iTerminalStatus;
+            return GetTerminalStatus();
         }
         if (iObserver) iObserver->RequestFrameUpdate(lcn);
     }
@@ -876,12 +876,12 @@ uint32 TSC_324m::MiscCmdRecv(PS_ControlMsgHeader  pReceiveInf)
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                         (0, "TSC_324m: MiscCmdRecv - Received videoTemporalSpatialTradeOff lcn(%d), value(%d)",
                          mc->logicalChannelNumber, mc->mcType.videoTemporalSpatialTradeOff));
-        if (iTerminalStatus != PhaseE_Comm)
+        if (GetTerminalStatus() != PhaseE_Comm)
         {
             PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                             (0, "TSC_324m: MiscCmdRecv Error - invalid state(%d)",
                              iTerminalStatus));
-            return iTerminalStatus;
+            return GetTerminalStatus();
         }
         if (iTSC_324mObserver)
         {
@@ -902,7 +902,7 @@ uint32 TSC_324m::MiscCmdRecv(PS_ControlMsgHeader  pReceiveInf)
                              mc->mcType.maxH223MUXPDUsize, ret));
         }
     }
-    return(iTerminalStatus);
+    return GetTerminalStatus();
 }
 
 //===============================================================
@@ -951,6 +951,7 @@ uint32 TSC_324m::EndSessionRecv(PS_ControlMsgHeader  pReceiveInf)
                             (0, "TSC_324m::EndSessionRecv Ignoring end session due to invalid state(%d)",
                              iInterfaceState));
     }
+    SetTerminalStatus(PhaseF_Clc); // set this here so that no more data is send to peer.
     StopData();
     iTSCcomponent->CloseChannels();
     return PhaseF_End;
@@ -1096,3 +1097,5 @@ CPvtTerminalCapability* TSC_324m::GetRemoteCapability()
 {
     return iTSCcapability.GetRemoteCapability();
 }
+
+

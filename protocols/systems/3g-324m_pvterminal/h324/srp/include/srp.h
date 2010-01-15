@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -474,7 +474,6 @@ class SRP : public OsclTimerObserver
                 PVMFSharedMediaMsgPtr mediaMsg;
                 convertToPVMFMediaMsg(mediaMsg, pPkt);
                 iLLPortOut->QueueOutgoingMsg(mediaMsg);
-                iLLPortOut->Send();
             }
         }
         void UpperLayerTx(PVMFSharedMediaDataPtr pPkt)
@@ -486,7 +485,6 @@ class SRP : public OsclTimerObserver
                 PVMFSharedMediaMsgPtr mediaMsg;
                 convertToPVMFMediaMsg(mediaMsg, pPkt);
                 iULPortOut->QueueOutgoingMsg(mediaMsg);
-                iULPortOut->Send();
             }
         }
 

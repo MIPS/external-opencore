@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -154,7 +154,7 @@ uint32 TSC_324m::VendorIdRecv(PS_ControlMsgHeader  pReceiveInf)
             PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                             (0, "TSC_324m:VendorIdRecv - Error - invalid length(%d)\n",
                              pVendorIdentification->vendor.object->size));
-            return iTerminalStatus;
+            return GetTerminalStatus();
         }
     }
     else if (pVendorIdentification->vendor.index == 1) // H221NonStandard
@@ -169,7 +169,7 @@ uint32 TSC_324m::VendorIdRecv(PS_ControlMsgHeader  pReceiveInf)
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                         (0, "TSC_324m:VendorIdRecv - Error - invalid index(%d)\n",
                          pVendorIdentification->vendor.index));
-        return iTerminalStatus;
+        return GetTerminalStatus();
     }
     if (pVendorIdentification->option_of_productNumber)
     {
@@ -207,7 +207,7 @@ uint32 TSC_324m::VendorIdRecv(PS_ControlMsgHeader  pReceiveInf)
         iTSC_324mObserver->IncomingVendorId(iVendorR, iProductNumberR,
                                             (uint16)iProductNumberLenR, iVersionNumberR, (uint16)iVersionNumberLenR);
     }
-    return iTerminalStatus;
+    return GetTerminalStatus();
 }
 
 
@@ -320,7 +320,7 @@ uint32 TSC_324m::UserInputIndicationRecv(PS_ControlMsgHeader  pReceiveInf)
         OSCL_DELETE(uii);
     }
 
-    return iTerminalStatus;
+    return GetTerminalStatus();
 }
 
 void TSC_324m::IndicationMisc(TIndicationMisc type,
@@ -395,7 +395,7 @@ uint32 TSC_324m::MiscIndicationRecv(PS_ControlMsgHeader  pReceiveInf)
                             (0, "TSC_324m::MiscIndicationRecv Indication not handled"));
             break;
     }
-    return iTerminalStatus;
+    return GetTerminalStatus();
 }
 
 uint32 TSC_324m::SkewIndicationRecv(PS_ControlMsgHeader  pReceiveInf)
@@ -421,14 +421,13 @@ uint32 TSC_324m::SkewIndicationRecv(PS_ControlMsgHeader  pReceiveInf)
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_WARNING,
                         (0, "TSC_324m::SkewIndicationRecv Established incoming audio lcn not found"));
-        return iTerminalStatus ;
+        return GetTerminalStatus() ;
     }
     if (indication->logicalChannelNumber2 != olcparam->GetChannelId())
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_WARNING,
                         (0, "TSC_324m::SkewIndicationRecv indication->logicalChannelNumber2=%d != audio lcn id=%d",
                          indication->logicalChannelNumber2, olcparam->GetChannelId()));
-        //return iTerminalStatus ;
     }
 
     olcparam = iTSCcomponent->FindOlc(INCOMING, PV_VIDEO, OLC_ESTABLISHED);
@@ -436,14 +435,13 @@ uint32 TSC_324m::SkewIndicationRecv(PS_ControlMsgHeader  pReceiveInf)
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_WARNING,
                         (0, "TSC_324m::SkewIndicationRecv Established incoming video lcn not found"));
-        return iTerminalStatus ;
+        return GetTerminalStatus() ;
     }
     if (indication->logicalChannelNumber1 != olcparam->GetChannelId())
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_WARNING,
                         (0, "TSC_324m::SkewIndicationRecv indication->logicalChannelNumber1=%d != video lcn id=%d",
                          indication->logicalChannelNumber1, olcparam->GetChannelId()));
-        //return iTerminalStatus ;
     }
 
     if (iTSC_324mObserver)
@@ -458,10 +456,10 @@ uint32 TSC_324m::SkewIndicationRecv(PS_ControlMsgHeader  pReceiveInf)
     if (retVal != PVMFSuccess)
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_WARNING, (0, "TSC_324m::SkewIndicationRecv Error - Failed to lookup logical channel %d", indication->logicalChannelNumber1));
-        return iTerminalStatus;
+        return GetTerminalStatus();
     }
 
-    return iTerminalStatus;
+    return GetTerminalStatus();
 }
 
 void TSC_324m::SendFunctionNotSupportedIndication(uint16 cause,
@@ -491,7 +489,7 @@ uint32 TSC_324m::FunctionNotSupportedIndicationReceived(PS_ControlMsgHeader  pRe
     OSCL_UNUSED_ARG(pReceiveInf);
     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                     (0, "TSC_324m::FunctionNotSupportedIndicationReceived"));
-    return iTerminalStatus;
+    return GetTerminalStatus();
 }
 
 uint32 TSC_324m::FlowControlIndicationReceived(PS_ControlMsgHeader  pReceiveInf)
@@ -499,6 +497,6 @@ uint32 TSC_324m::FlowControlIndicationReceived(PS_ControlMsgHeader  pReceiveInf)
     OSCL_UNUSED_ARG(pReceiveInf);
     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                     (0, "TSC_324m::FlowControlIndicationReceived"));
-    return iTerminalStatus;
+    return GetTerminalStatus();
 }
 

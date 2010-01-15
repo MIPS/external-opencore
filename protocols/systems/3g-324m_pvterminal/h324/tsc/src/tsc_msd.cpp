@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -64,7 +64,7 @@ void TSC_324m::MSDDetermineConfirm(MSDStatus type)
     iTSCstatemanager.WriteState(TSC_MSD_DECISION, (type == MSD_MASTER) ?
                                 MASTER : SLAVE);
     iTSCstatemanager.WriteState(TSC_MSD, COMPLETE);
-    if (iTerminalStatus == PhaseD_CSUP)
+    if (GetTerminalStatus() == PhaseD_CSUP)
     {
         if (iTSCstatemanager.ReadState(TSC_CE_RECEIVE) == COMPLETE)
         {

@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,6 +47,7 @@ class H245Observer
     public:
         virtual ~H245Observer() {}
         virtual void Handle(PS_ControlMsgHeader msg) = 0;
+        virtual bool TerminalConnected() = 0;
 };
 
 class H245 : public Layer, public PacketInput, public PacketOutput
@@ -139,6 +140,13 @@ class H245 : public Layer, public PacketInput, public PacketOutput
         // Send a message to H.245 SE layer (normally from Tsc).
         void DispatchControlMessage(PS_ControlMsgHeader msg)
         {
+            if (Observer)
+            {
+                if (!Observer->TerminalConnected())
+                {
+                    return;
+                }
+            }
             MySe.InformationRecv((PS_InfHeader)msg);
         }
 

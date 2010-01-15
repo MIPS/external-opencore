@@ -287,36 +287,73 @@ void PV2WayMIO::ParseResponse(const PVAsyncInformationalEvent& aEvent,
     aMedia_type = aEvent.GetLocalBuffer()[0];
 }
 
+void ReleaseCodecSpecifier(OsclAny *apCodecSpecifier)
+{
+    CodecSpecifier* pCodecSpecifier = OSCL_STATIC_CAST(CodecSpecifier*, apCodecSpecifier);
+    OSCL_DELETE(pCodecSpecifier);
+}
+
 OSCL_EXPORT_REF int PV2WayMIO::AddFormat(PvmiMIOFileInputSettings& aformat)
 {
     CodecSpecifier* temp = OSCL_NEW(MIOFileCodecSpecifier, (aformat));
+    OSCL_TRAPSTACK_PUSH(OsclTrapItem(ReleaseCodecSpecifier, temp));
     PVMFFormatType format = temp->GetFormat();
+    if (FormatInList(format))
+    {
+        OSCL_TRAPSTACK_POPDEALLOC(); // remove and dealloc temp variable
+        return PVMFErrAlreadyExists;
+    }
     iFormatsMap[format] = temp;
-    iFormats->push_back(temp->GetFormat());
+    iFormats->push_back(format);
+    OSCL_TRAPSTACK_POP(); // remove temp variable
     return 0;
 }
 
 OSCL_EXPORT_REF int PV2WayMIO::AddFormat(PVMFFileInputSettings& aformat)
 {
     CodecSpecifier* temp = OSCL_NEW(FileCodecSpecifier, (aformat));
-    iFormatsMap[temp->GetFormat()] = temp;
-    iFormats->push_back(temp->GetFormat());
+    OSCL_TRAPSTACK_PUSH(OsclTrapItem(ReleaseCodecSpecifier, temp));
+    PVMFFormatType format = temp->GetFormat();
+    if (FormatInList(format))
+    {
+        OSCL_TRAPSTACK_POPDEALLOC(); // temp;
+        return PVMFErrAlreadyExists;
+    }
+    iFormatsMap[format] = temp;
+    iFormats->push_back(format);
+    OSCL_TRAPSTACK_POP(); // temp;
     return 0;
 }
 
 OSCL_EXPORT_REF int PV2WayMIO::AddFormat(PVMFFormatType aformat)
 {
     CodecSpecifier* temp = OSCL_NEW(CharCodecSpecifier, (aformat));
-    iFormatsMap[temp->GetFormat()] = temp;
-    iFormats->push_back(temp->GetFormat());
+    OSCL_TRAPSTACK_PUSH(OsclTrapItem(ReleaseCodecSpecifier, temp));
+    PVMFFormatType format = temp->GetFormat();
+    if (FormatInList(format))
+    {
+        OSCL_TRAPSTACK_POPDEALLOC(); // temp;
+        return PVMFErrAlreadyExists;
+    }
+    iFormatsMap[format] = temp;
+    iFormats->push_back(format);
+    OSCL_TRAPSTACK_POP(); // temp;
     return 0;
 }
 
 OSCL_EXPORT_REF int PV2WayMIO::AddFormat(DummyMIOSettings& aformat)
 {
     CodecSpecifier* temp = OSCL_NEW(DummyMIOCodecSpecifier, (aformat));
-    iFormatsMap[temp->GetFormat()] = temp;
-    iFormats->push_back(temp->GetFormat());
+    OSCL_TRAPSTACK_PUSH(OsclTrapItem(ReleaseCodecSpecifier, temp));
+    PVMFFormatType format = temp->GetFormat();
+    if (FormatInList(format))
+    {
+        OSCL_TRAPSTACK_POPDEALLOC(); // temp;
+        return PVMFErrAlreadyExists;
+    }
+    iFormatsMap[format] = temp;
+    iFormats->push_back(format);
+    OSCL_TRAPSTACK_POP(); // temp;
     return 0;
 }
 
@@ -373,7 +410,9 @@ CodecSpecifier* PV2WayMIO::FormatMatchesCapabilities(const PVAsyncInformationalE
 
 OSCL_EXPORT_REF int PV2WayMIO::AddCodec(PVMFFormatType aFormat)
 {
-    return AddFormat(aFormat);
+    int error = 0;
+    OSCL_TRY(error, AddFormat(aFormat));
+    return error;
 }
 
 OSCL_EXPORT_REF void PV2WayMIO::ClearCodecs()

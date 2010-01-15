@@ -75,6 +75,9 @@ void test_base::Run()
       Step 12: Cleanup
       Step 12d: Delete terminal
     */
+
+    cleanup();
+
     if (terminal)
     {
         if (iUseProxy)
@@ -199,7 +202,8 @@ void test_base::InitFailed()
 {
     PV2WayUtil::OutputInfo("\n*************** Test FAILED: InitFailed *************** \n");
     CancelTimers();
-    RunIfNotReady();
+    test_is_true(false);
+    disconnect();
 }
 
 void test_base::InitCancelled()
