@@ -5,8 +5,9 @@
 
 #include "binder/Parcel.h"
 #include "extension_handler_registry.h"
+#include "oscl_linked_list.h"
 using namespace android;
-
+class IDispatch;
 
 class PVPlayerExtensionHandler
 {
@@ -57,6 +58,8 @@ private:
         EXTN_HANDLER_CMD_RELEASE_EXTN_IFACE = 2,
         EXTN_HANDLER_CMD_LAST
     };
+    // List of extension instances required for ensuring the cleanup of extensions
+    Oscl_Linked_List<IDispatch*, OsclMemAllocator> iExtensionInstancesList;
 };
 
 

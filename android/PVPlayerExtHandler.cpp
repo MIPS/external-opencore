@@ -26,6 +26,16 @@ PVPlayerExtensionHandler::PVPlayerExtensionHandler(const PlayerDriver& pd)
 PVPlayerExtensionHandler::~PVPlayerExtensionHandler()
 {
     LOGV("PVPlayerExtensionHandler::~PVPlayerExtensionHandler");
+    // cleanup left over extension instances to avoid memory leak
+    IDispatch* extensionInstance = NULL;
+    while (1 == iExtensionInstancesList.dequeue_element(extensionInstance)) {
+        LOGV("~PVPlayerExtensionHandler delete extensionInstance=%p",extensionInstance);
+         if (extensionInstance) {
+             delete extensionInstance;
+             extensionInstance = NULL;
+         }
+     }
+
     PVPlayerExtnPopulator::depopulate(mPVPlayerExtnIfaceRegistry);
 }
 
@@ -34,12 +44,13 @@ status_t PVPlayerExtensionHandler::queryExtnIface(const Parcel& data, Parcel& re
     String16 iface= data.readString16();
     IDispatch* extPtr = NULL;
     extPtr = mPVPlayerExtnIfaceRegistry.createExtension(iface,*this);
-    if(extPtr){
+    if (extPtr){
         LOGV("PVPlayerExtensionHandler::queryExtnIface extIface=%d",(int32_t)extPtr);
         status_t status = reply.writeInt32(NO_ERROR);
-        if(NO_ERROR != status){
+        if (NO_ERROR != status){
             return INVALID_OPERATION;
         }
+        iExtensionInstancesList.add_element(extPtr);
         return reply.writeInt32((int32_t)extPtr);
     } else {
         return reply.writeInt32(NAME_NOT_FOUND);
@@ -55,7 +66,7 @@ status_t PVPlayerExtensionHandler::callPlayerExtension(PlayerExtensionCommand* c
         case EXTN_HANDLER_CMD_QUERY_EXTN_IFACE: {
             LOGV("callPlayerExtension EXTN_HANDLER_CMD_QUERY_EXTN_IFACE ");
             status = queryExtnIface(request , reply);
-            if(NO_ERROR != status) {
+            if (NO_ERROR != status) {
                 getPlayerDriver().commandFailed((PlayerCommand*)cmd);
             } else {
                 FinishSyncCommand((PlayerCommand*)cmd);
@@ -66,7 +77,7 @@ status_t PVPlayerExtensionHandler::callPlayerExtension(PlayerExtensionCommand* c
             LOGV("callPlayerExtension EXTN_HANDLER_CMD_EXTN_API_CALL");
             //Extract the handle
             IDispatch* extIface = (IDispatch*)request.readInt32();
-            if(extIface){
+            if (extIface){
                 LOGV("callPlayerExtension extIface=%d",(int)extIface);
                 //invoke the requested API
                 return extIface->invoke(request,reply,cmd);
@@ -80,8 +91,8 @@ status_t PVPlayerExtensionHandler::callPlayerExtension(PlayerExtensionCommand* c
             LOGV("callPlayerExtension EXTN_HANDLER_CMD_RELEASE_EXTN_IFACE");
             //Extract the handle
             IDispatch* extIface = (IDispatch*)request.readInt32();
-            if(extIface) {
-                LOGV("callPlayerExtension extIface=%d",(int)extIface);
+            if (extIface && (1 == iExtensionInstancesList.remove_element(extIface))) {
+                LOGV("callPlayerExtension Release extIface=%d",(int)extIface);
                 //Release Extension
                 delete extIface; 
                 status = reply.writeInt32(NO_ERROR);
