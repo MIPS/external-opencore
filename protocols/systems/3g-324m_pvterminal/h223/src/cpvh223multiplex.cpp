@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1510,7 +1510,9 @@ void CPVH223Multiplex::CalculateSkew(int alcn, bool aCheckAudVid, int aTimestamp
         else
         {
             iRtMnSqCalc = (int32)sqrt(iSqrCalVidAudTS / iTotalCountOut);
-            iObserver->SkewDetected(iVidlcn, iAudlcn, iRtMnSqCalc);
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                            (0, "CPVH223Multiplex::CalculateSkew Skew of outgoing media iRtMnSqCalc=%d", iRtMnSqCalc));
+            //iObserver->SkewDetected(iVidlcn, iAudlcn, iRtMnSqCalc);
 
         }
     }
