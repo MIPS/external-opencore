@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,9 @@
 #include "oscl_stdstring.h"
 #include "oscl_base.h"
 #include "control_msg_hdr.h"
+#ifndef PVT_COMMON_H_INCLUDED
 #include "pvt_common.h"
+#endif
 #include "oscl_mem.h"
 
 class CPVChannelParam : public HeapBase, public CPVTrackInfo

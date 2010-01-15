@@ -1130,10 +1130,10 @@ void printBuffer(PVLogger* logger,
     OSCL_DEFAULT_FREE(cpysave);
 }
 
-uint32 GetFormatSpecificInfo(PS_DataType dataType,
+uint16 GetFormatSpecificInfo(PS_DataType dataType,
                              uint8*& fsi)
 {
-    uint32 size = 0;
+    uint16 size = 0;
     PS_GenericParameter parameter_list = NULL, parameter = NULL;
     PS_OCTETSTRING config = NULL;
     unsigned ret = 0;
@@ -1161,7 +1161,7 @@ uint32 GetFormatSpecificInfo(PS_DataType dataType,
     if (size == 0 || parameter_list == NULL)
         return ret;
 
-    for (uint32 ii = 0; ii < size; ++ii)
+    for (uint16 ii = 0; ii < size; ++ii)
     {
         parameter = parameter_list + ii;
         if ((parameter->parameterIdentifier.index == 0) &&  // standard

@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -141,6 +141,8 @@ class TSC_component : public OsclTimerObserver,
                                         Oscl_Vector<PVMFFormatType, OsclMemAllocator>& aIncomingVideo,
                                         Oscl_Vector<PVMFFormatType, OsclMemAllocator>& aOutgoingAudio,
                                         Oscl_Vector<PVMFFormatType, OsclMemAllocator>& aOutgoingVideo);
+        void SetEncoderFormatSpecificInfo(PVMFFormatType aMediaFormat, const uint8* apFormatSpecificInfo,
+                                          uint32 aFormatSpecificInfoLen);
         virtual uint32 LcEtbCfm(PS_ControlMsgHeader pReceiveInf);
         unsigned GetOutgoingBitrate(PVCodecType_t codecType);
         void GetChannelFormatAndCapabilities(TPVDirection dir,
@@ -270,13 +272,15 @@ class TSC_component : public OsclTimerObserver,
             OSCL_UNUSED_ARG(lcn);
             return true;
         };
-        virtual PS_DataType GetOutgoingDataType(PVCodecType_t codecType,
-                                                uint32 bitrate);
+        virtual PS_DataType GetOutgoingDataType(PVCodecType_t aCodecType,
+                                                uint32 aBitrate);
 
         OlcParam* OpenOutgoingChannel(PVCodecType_t codec,
                                       PS_AdaptationLayerType adaptation_layer,
                                       PS_DataType pDataTypeRvs = NULL,
                                       PS_H223LogicalChannelParameters pH223ParamsRvs = NULL);
+
+        virtual uint32 GetDefaultEncoderConfig(PVCodecType_t aEncoder, uint8** appFsi);
 
         OlcList iOlcs;
 

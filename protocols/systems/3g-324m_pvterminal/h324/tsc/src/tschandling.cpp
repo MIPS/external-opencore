@@ -1098,4 +1098,25 @@ CPvtTerminalCapability* TSC_324m::GetRemoteCapability()
     return iTSCcapability.GetRemoteCapability();
 }
 
+CPvtMediaCapability* TSC_324m::GetRemoteCodecCapability(FormatCapabilityInfo aFormatCapabilityInfo)
+{
+    CPvtMediaCapability* pMediaCapability = NULL;
+    CPvtTerminalCapability* pRemoteCaps = GetRemoteCapability();
+
+    if (pRemoteCaps)
+    {
+        for (uint16 i = 0; i < pRemoteCaps->GetNumCapabilityItems(); i++)
+        {
+            pMediaCapability =
+                pRemoteCaps->GetCapabilityItem(i);
+            if (pMediaCapability->GetFormatType() == aFormatCapabilityInfo.format)
+            {
+                return pMediaCapability;
+                break;
+            }
+        }
+    }
+
+    return NULL;
+}
 

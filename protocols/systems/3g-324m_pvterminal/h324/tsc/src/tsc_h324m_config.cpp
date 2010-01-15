@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ enum PVH234MessageType
     PVT_H324_COMMAND_SET_MAX_SDU_SIZE,
     PVT_H324_COMMAND_SET_MAX_SDU_SIZE_R,
     PVT_H324_COMMAND_SET_CODEC_PREFERENCE,
+    PVT_H324_COMMAND_SET_FORMAT_SPECIFIC_INFO,
     PVT_H324_COMMAND_SEND_RME,
     PVT_H324_COMMAND_SET_AL2_SEQ_NUM,
     PVT_H324_COMMAND_SET_CONTROL_FIELD_OCTETS,
@@ -160,6 +161,41 @@ class PVH324MessageSetCodecPreference : public CPVH324InterfaceCmdMessage
         Oscl_Vector<PVMFFormatType, OsclMemAllocator>iIncomingVideo;
         Oscl_Vector<PVMFFormatType, OsclMemAllocator>iOutgoingAudio;
         Oscl_Vector<PVMFFormatType, OsclMemAllocator>iOutgoingVideo;
+};
+
+class PVH324MessageSetFormatSpecificInfo : public CPVH324InterfaceCmdMessage
+{
+    public:
+        PVH324MessageSetFormatSpecificInfo(PVMFFormatType aMediaFormat, OsclAny* aContextData, TPVCmnCommandId aId)
+                : CPVH324InterfaceCmdMessage(PVT_H324_COMMAND_SET_FORMAT_SPECIFIC_INFO, aContextData, aId)
+                , iMediaFormat(aMediaFormat)
+                , ipFormatSpecificInfo(NULL)
+                , iFormatSpecificInfoLen(0)
+        {}
+
+        ~PVH324MessageSetFormatSpecificInfo()
+        {
+            if (ipFormatSpecificInfo)
+                OSCL_DEFAULT_FREE(ipFormatSpecificInfo);
+        }
+
+        bool SetFormatSpecificInfo(const uint8* apFormatSpecificInfo, uint32 aFormatSpecificInfoLen)
+        {
+            if (ipFormatSpecificInfo) OSCL_DEFAULT_FREE(ipFormatSpecificInfo);
+            ipFormatSpecificInfo = NULL;
+            iFormatSpecificInfoLen = 0;
+            ipFormatSpecificInfo = (uint8*)OSCL_DEFAULT_MALLOC(aFormatSpecificInfoLen);
+            if (ipFormatSpecificInfo)
+            {
+                iFormatSpecificInfoLen = aFormatSpecificInfoLen;
+                oscl_memcpy(ipFormatSpecificInfo, apFormatSpecificInfo, iFormatSpecificInfoLen);
+            }
+            return (ipFormatSpecificInfo) ? true : false;
+        }
+
+        PVMFFormatType iMediaFormat;
+        uint8* ipFormatSpecificInfo;
+        uint32 iFormatSpecificInfoLen;
 };
 
 class PVH324MessageSendRme : public CPVH324InterfaceCmdMessage
@@ -524,6 +560,9 @@ class PVH324MessageUtils
                 case PVT_H324_COMMAND_SET_CODEC_PREFERENCE:
                     OSCL_DELETE((PVH324MessageSetCodecPreference*)aCmd);
                     break;
+                case PVT_H324_COMMAND_SET_FORMAT_SPECIFIC_INFO:
+                    OSCL_DELETE((PVH324MessageSetFormatSpecificInfo*)aCmd);
+                    break;
                 case PVT_H324_COMMAND_SEND_RME:
                     OSCL_DELETE((PVH324MessageSendRme*)aCmd);
                     break;
@@ -674,6 +713,15 @@ PVMFCommandId H324MConfig::SetCodecPreference(Oscl_Vector<PVMFFormatType, OsclMe
 {
     OSCL_UNUSED_ARG(aContextData);
     iH324M->SetCodecPreference(aIncomingAudio, aIncomingVideo, aOutgoingAudio, aOutgoingVideo);
+    SendCmdResponse(iCommandId, aContextData, PVMFSuccess);
+    return iCommandId++;
+};
+
+PVMFCommandId H324MConfig::SetFormatSpecificInfo(PVMFFormatType aMediaFormat, const uint8* apFormatSpecificInfo,
+        uint32 aFormatSpecificInfoLen, OsclAny* aContextData)
+{
+    OSCL_UNUSED_ARG(aContextData);
+    iH324M->SetFormatSpecificInfo(aMediaFormat, apFormatSpecificInfo, aFormatSpecificInfoLen);
     SendCmdResponse(iCommandId, aContextData, PVMFSuccess);
     return iCommandId++;
 };
@@ -1167,6 +1215,18 @@ PVMFCommandId H324MConfigProxied::SetCodecPreference(Oscl_Vector<PVMFFormatType,
     return iCommandId++;
 }
 
+PVMFCommandId H324MConfigProxied::SetFormatSpecificInfo(PVMFFormatType aMediaFormat, const uint8* apFormatSpecificInfo,
+        uint32 aFormatSpecificInfoLen, OsclAny* aContextData)
+{
+    PVH324MessageSetFormatSpecificInfo *cmd = NULL;
+    cmd = OSCL_NEW(PVH324MessageSetFormatSpecificInfo, (aMediaFormat, aContextData, iCommandId));
+    cmd->SetFormatSpecificInfo(apFormatSpecificInfo,  aFormatSpecificInfoLen);
+    int32 error = 0;
+    OSCL_TRY(error, iMainProxy->SendCommand(iProxyId, cmd));
+    OSCL_FIRST_CATCH_ANY(error, PVH324MessageUtils::DestroyMessage(cmd););
+    return iCommandId++;
+};
+
 PVMFCommandId H324MConfigProxied::SetAl2SequenceNumbers(int32 aSeqNumWidth, OsclAny* aContextData)
 {
     PVH324MessageSetAl2SequenceNumbers *cmd = NULL;
@@ -1511,6 +1571,24 @@ void H324MConfigProxied::HandleCommand(TPVProxyMsgId aMsgId, OsclAny *aMsg)
                 }
             }
             break;
+        case PVT_H324_COMMAND_SET_FORMAT_SPECIFIC_INFO:
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLoggerServer, PVLOGMSG_STACK_TRACE,
+                            (0, "H324MConfigProxied::HandleCommand - Set Format Specific Info"));
+            {
+                PVH324MessageSetFormatSpecificInfo* msg = OSCL_STATIC_CAST(PVH324MessageSetFormatSpecificInfo*, aMsg);
+                if (msg)
+                {
+                    commandId = iH324MConfigIF->SetFormatSpecificInfo(msg->iMediaFormat, msg->ipFormatSpecificInfo,
+                                msg->iFormatSpecificInfoLen, (CPVCmnInterfaceCmdMessage*)aMsg);
+                }
+                else
+                {
+                    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLoggerServer, PVLOGMSG_STACK_TRACE,
+                                    (0, "H324MConfigProxied::HandleCommand - Failed to cast"));
+                }
+            }
+            break;
+
         case PVT_H324_COMMAND_SEND_RME:
             PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLoggerServer, PVLOGMSG_STACK_TRACE,
                             (0, "H324MConfigProxied::HandleCommand - Send RME"));

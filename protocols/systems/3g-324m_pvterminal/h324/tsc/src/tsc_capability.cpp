@@ -138,7 +138,7 @@ uint32 TSC_capability::GetRemoteBitrate(PVCodecType_t codec_type)
     {
         if (iRemoteCapability->GetCapabilityItem(i)->GetFormatType() == PVCodecTypeToPVMFFormatType(codec_type))
         {
-            uint32 br = iRemoteCapability->GetCapabilityItem(i)->GetBitrate();
+            uint32 br = iRemoteCapability->GetCapabilityItem(i)->GetBitrate() * 100;
             return br;
         }
     }

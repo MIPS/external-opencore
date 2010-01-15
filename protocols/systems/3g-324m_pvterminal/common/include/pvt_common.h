@@ -138,6 +138,7 @@ const int KPVDefaultFrameRate = 5;   // frames/s
 const int KPVDefaultIFrameInterval = 10000;  // s
 const int KPVDefaultIFrameRequestInterval = 10000;  // s
 
+#define PV2WAY_MAX_FSI_SIZE 64
 
 typedef bool TPVRemoteTerminalType; /* same = true, other = false */
 
@@ -864,7 +865,7 @@ class FormatCapabilityInfo
                 min_sample_size(0),
                 max_sample_size(0),
                 capabilities(1),
-                fsi(NULL), fsi_len(0) {}
+                iFsiLen(0) {}
         FormatCapabilityInfo(PVMFFormatType aFormat,
                              TPVDirection aDir,
                              uint32 aCapabilities)
@@ -874,15 +875,32 @@ class FormatCapabilityInfo
                 min_sample_size(0),
                 max_sample_size(0),
                 capabilities(aCapabilities),
-                fsi(NULL), fsi_len(0) {}
-        ~FormatCapabilityInfo()
+                iFsiLen(0) {}
+
+        PVMFStatus SetFormatSpecificInfo(const uint8* apFormatSpecificInfo, uint32 aFormatSpecificInfoLen)
         {
-            if (fsi)
+            if (aFormatSpecificInfoLen > PV2WAY_MAX_FSI_SIZE)
             {
-                OSCL_DEFAULT_FREE(fsi);
-                fsi = NULL;
+                return PVMFFailure;
+            }
+            oscl_memcpy(iFsi, apFormatSpecificInfo, aFormatSpecificInfoLen);
+            iFsiLen = aFormatSpecificInfoLen;
+            return PVMFSuccess;
+        }
+
+        void GetFormatSpecificInfo(uint8** appFormatSpecificInfo, uint32 &aFormatSpecificInfoLen)
+        {
+            *appFormatSpecificInfo = NULL;
+            aFormatSpecificInfoLen = 0;
+
+            if (iFsiLen)
+            {
+                *appFormatSpecificInfo = iFsi;
+                aFormatSpecificInfoLen = iFsiLen;
             }
         }
+
+    public:
         TPVChannelId id;
         PVMFFormatType format;
         TPVDirection dir;
@@ -890,10 +908,13 @@ class FormatCapabilityInfo
         uint32 min_sample_size;
         uint32 max_sample_size;
         uint32 capabilities; // additional capabilities
-        uint8* fsi;
-        uint32 fsi_len;
+
         /* Enum for Priority */
         TPVPriority iPriority;
+
+    protected:
+        uint8 iFsi[PV2WAY_MAX_FSI_SIZE];
+        uint32 iFsiLen;
 };
 
 typedef Oscl_Vector<FormatCapabilityInfo, OsclMemAllocator> FormatCapabilityInfoVector;
@@ -901,7 +922,7 @@ typedef Oscl_Vector<FormatCapabilityInfo, OsclMemAllocator> FormatCapabilityInfo
 class H324ChannelParameters
 {
     public:
-        OSCL_IMPORT_REF H324ChannelParameters(TPVDirection dir, unsigned bandwidth);
+        OSCL_IMPORT_REF H324ChannelParameters(unsigned bandwidth);
         OSCL_IMPORT_REF H324ChannelParameters(const H324ChannelParameters& that);
         OSCL_IMPORT_REF ~H324ChannelParameters();
         OSCL_IMPORT_REF void SetCodecs(Oscl_Vector<FormatCapabilityInfo, OsclMemAllocator>& codecs);

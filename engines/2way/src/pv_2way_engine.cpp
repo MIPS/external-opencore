@@ -312,7 +312,7 @@ CPV324m2Way::~CPV324m2Way()
 
     iFormatCapability.clear();
     iSinkNodeList.clear();
-    ClearVideoEncNode();
+    ClearVideoEncoderNode();
 
 
     iReadDataLock.Lock();
@@ -378,10 +378,10 @@ CPV324m2Way::~CPV324m2Way()
                     (0, "CPV324m2Way::~CPV324m2Way - done\n"));
 }
 
-void CPV324m2Way::ClearVideoEncNode()
+void CPV324m2Way::ClearVideoEncoderNode()
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                    (0, "CPV324m2Way::ClearVideoEncNode\n"));
+                    (0, "CPV324m2Way::ClearVideoEncoderNode\n"));
     PVMFNodeInterface * nodeIFace = (PVMFNodeInterface *)iVideoEncNode;
     if (nodeIFace)
     {
@@ -401,7 +401,7 @@ void CPV324m2Way::ClearVideoEncNode()
         iVideoEncNodeInterface.Reset();
     }
     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                    (0, "CPV324m2Way::ClearVideoEncNode -done\n"));
+                    (0, "CPV324m2Way::ClearVideoEncoderNode -done\n"));
 }
 
 PVCommandId CPV324m2Way::GetSDKInfo(PVSDKInfo &aSDKInfo, OsclAny* aContextData)
@@ -2223,7 +2223,6 @@ void CPV324m2Way::HandleVideoEncNodeCmd(PV2WayNodeCmdType aType,
                 if (aResponse.GetCmdStatus() == PVMFSuccess)
                 {
                     iVideoEncNodeInterface.iState = PV2WayNodeInterface::HasInterface;
-                    // Set the FormatSpecificInfo if available
                 }
                 else
                 {
@@ -2231,6 +2230,11 @@ void CPV324m2Way::HandleVideoEncNodeCmd(PV2WayNodeCmdType aType,
                     SetState(EResetting);
                 }
 
+            }
+            else if (aResponse.GetCmdId() == iOmxEncQueryIntCmdId)
+            {
+                ipEncNodeCapabilityAndConfig = (PvmiCapabilityAndConfig*)ipEncNodeCapConfigInterface;
+                ipEncNodeCapConfigInterface = NULL;
             }
             CheckState();
             break;
@@ -2992,8 +2996,6 @@ void CPV324m2Way::SetDefaults()
     uint32 i = 0;
     SetState(EIdle);
 
-
-
     if (iVideoDecNode.iNode)
     {
         iVideoDecNode.iNode->ThreadLogoff();
@@ -3038,7 +3040,7 @@ void CPV324m2Way::SetDefaults()
         iAudioEncNodeInterface.Reset();
     }
 
-    ClearVideoEncNode();
+    ClearVideoEncoderNode();
 
     if (iCommNode.iNode)
     {
@@ -3768,130 +3770,11 @@ PVMFStatus CPV324m2Way::ConfigureNode(CPVDatapathNode *aNode)
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_INFO, (0, "CPV324m2Way::ConfigureNode configuring video enc node\n"));
 
-        // check if tsc port is already there
-        if (aNode->iOutputPort.iPortPair->iDestPort.GetStatus() != EHasPort)
-        {
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_INFO,
-                            (0, "CPV324m2Way::ConfigureNode waiting for tsc port to determine video codec type.\n"));
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                            (0, "CPV324m2Way::ConfigureNode - done\n"));
-            return PVMFPending;
-        }
-
-        PVMp4H263EncExtensionInterface *ptr =
-            (PVMp4H263EncExtensionInterface *) iVideoEncNodeInterface.iInterface;
-
-        if (!ptr)
-        {
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_WARNING,
-                            (0, "CPV324m2Way::ConfigureNode video extension interface missing.\n"));
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                            (0, "CPV324m2Way::ConfigureNode - done\n"));
-            return PVMFFailure;
-        }
-
-        PVMFPortInterface* pPort = aNode->iOutputPort.iPortPair->iDestPort.GetPort();
-
-        if (!pPort)
-        {
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_WARNING,
-                            (0, "CPV324m2Way::ConfigureNode port interface missing.\n"));
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                            (0, "CPV324m2Way::ConfigureNode - done\n"));
-            return PVMFFailure;
-        }
-
-        // Get default settings for video encoder
-        uint32 bitrate_bps_100 = VIDEO_ENCODER_BITRATE / 100;
-        PVMFVideoResolution aVideoResolution(VIDEO_ENCODER_WIDTH,
-                                             VIDEO_ENCODER_HEIGHT);
-        double aFrameRate = VIDEO_ENCODER_FRAME_RATE;
-
-        LogicalChannelInfo* lcn_info = NULL;
-
-
-        // If remote had defined setting for video, then get those.
-        if (iTerminalType == PV_324M)
-        {
-            OsclAny * tempInterface = NULL;
-            pPort->QueryInterface(PVH324MLogicalChannelInfoUuid, tempInterface);
-            lcn_info = OSCL_STATIC_CAST(LogicalChannelInfo*, tempInterface);
-            if (lcn_info == NULL)
-            {
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_WARNING,
-                                (0, "CPV324m2Way::ConfigureNode lcn missing.\n"));
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                                (0, "CPV324m2Way::ConfigureNode - done\n"));
-                return PVMFFailure;
-            }
-            PVMFFormatType aFormatType = lcn_info->GetFormatType();
-
-            if (iTSC324mInterface != NULL)
-            {
-                CPvtTerminalCapability* remote_caps = iTSC324mInterface->GetRemoteCapability();
-
-                if (remote_caps)
-                {
-                    for (uint16 i = 0; i < remote_caps->GetNumCapabilityItems(); i++)
-                    {
-                        CPvtMediaCapability * RemoteCapItem =
-                            remote_caps->GetCapabilityItem(i);
-                        if (RemoteCapItem->GetFormatType() == aFormatType)
-                        {
-                            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_INFO,
-                                            (0, "CPV324m2Way::ConfigureNode Found codec match for bitrate - capability(%d), default(%d)", remote_caps->GetCapabilityItem(i)->GetBitrate(), bitrate_bps_100));
-                            if (RemoteCapItem->GetBitrate() < bitrate_bps_100)
-                            {
-                                bitrate_bps_100 = RemoteCapItem->GetBitrate();
-                            }
-
-                            PVMFVideoResolution *video_resolution;
-                            uint32 frame_rate;
-                            video_resolution = ((CPvtVideoCapability*)RemoteCapItem)->GetMaxResolution(frame_rate);
-                            if ((video_resolution->width < aVideoResolution.width) &&
-                                    (video_resolution->height <  aVideoResolution.height))
-                            {
-                                aVideoResolution.width = video_resolution->width;
-                                aVideoResolution.height = video_resolution->height;
-
-                            }
-
-                            if (frame_rate < aFrameRate)
-                                aFrameRate = frame_rate;
-
-                            break;
-                        }
-                    }
-                }
-            }
-        }
-
-        // give settings to encoder using video extension interface
-
-        ptr->SetNumLayers(1);
-        ptr->SetOutputBitRate(0, bitrate_bps_100*100);
-        ptr->SetOutputFrameSize(0, aVideoResolution.width, aVideoResolution.height);
-        ptr->SetOutputFrameRate(0, (float)aFrameRate);
-
-        ptr->SetSegmentTargetSize(0, VIDEO_ENCODER_SEGMENT_SIZE);
-        ptr->SetRateControlType(0, VIDEO_ENCODER_RATE_CONTROL);
-        ptr->SetDataPartitioning(VIDEO_ENCODER_DATA_PARTITIONING);
-        ptr->SetRVLC(VIDEO_ENCODER_RVLC);
-        ptr->SetIFrameInterval(VIDEO_ENCODER_I_FRAME_INTERVAL);
-
-        // if FSI is found, pass it to video extension interface
-        uint32 len = 0;
-        const uint8* pFsi = iTSC324mInterface->GetFormatSpecificInfo(pPort, &len);
-        if (pFsi && len)
-        {
-            OSCL_STATIC_CAST(PVMp4H263EncExtensionInterface *,
-                             iVideoEncNodeInterface.iInterface)->SetFSIParam(OSCL_STATIC_CAST(uint8*, pFsi), len);
-        }
+        PVMFStatus status = ConfigureVideoEncoderNode();
 
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                         (0, "CPV324m2Way::ConfigureNode - done\n"));
-        return PVMFSuccess;
-
+        return status;
     }
     else if (node == iVideoDecNode.iNode)
     {
@@ -4288,7 +4171,7 @@ PVMFStatus CPV324m2Way::EstablishChannel(TPVDirection aDir,
             }
             else if (media_type == PV_VIDEO)
             {
-                AddVideoDecoderNode(aFormatSpecificInfo, aFormatSpecificInfoLen);
+                AddVideoDecoderNode();
             }
         }
         else
@@ -5187,17 +5070,17 @@ void CPV324m2Way::SetPreferredCodecs(PV2WayInitInfo& aInitInfo)
     // now that iIncomingVideoCodecs, etc are selected (codecs the stack, engine and app want)
     // take those values and add them to the iIncomingChannelParams, iOutgoingChannelParams
     // so the channel will know which formats are acceptable.
-    H324ChannelParameters inDtmfParams(INCOMING, 0);
+    H324ChannelParameters inDtmfParams(0);
     inDtmfParams.SetCodecs(iIncomingUserInputFormats);
 
     //Set incoming channel capabilities.
     // TBD: Incoming capabilities need to be queried from the registry and passed to the stack
-    H324ChannelParameters inAudioChannelParams(INCOMING, MAX_AUDIO_BITRATE);
+    H324ChannelParameters inAudioChannelParams(MAX_AUDIO_BITRATE);
     // add iIncomingAudioCodecs members into iFormatCapability
     ConvertMapToVector(iIncomingAudioCodecs, iFormatCapability);
     inAudioChannelParams.SetCodecs(iFormatCapability);
 
-    H324ChannelParameters inVideoChannelParams(INCOMING, MAX_VIDEO_BITRATE);
+    H324ChannelParameters inVideoChannelParams(MAX_VIDEO_BITRATE);
     ConvertMapToVector(iIncomingVideoCodecs, iFormatCapability);
     inVideoChannelParams.SetCodecs(iFormatCapability);
 
@@ -5207,11 +5090,11 @@ void CPV324m2Way::SetPreferredCodecs(PV2WayInitInfo& aInitInfo)
 
 
     //Set outgoing channel capabilities.
-    H324ChannelParameters outAudioChannelParams(OUTGOING, MAX_AUDIO_BITRATE);
+    H324ChannelParameters outAudioChannelParams(MAX_AUDIO_BITRATE);
     ConvertMapToVector(iOutgoingAudioCodecs, iFormatCapability);
     outAudioChannelParams.SetCodecs(iFormatCapability);
 
-    H324ChannelParameters outVideoChannelParams(OUTGOING, MAX_VIDEO_BITRATE);
+    H324ChannelParameters outVideoChannelParams(MAX_VIDEO_BITRATE);
     ConvertMapToVector(iOutgoingVideoCodecs, iFormatCapability);
     outVideoChannelParams.SetCodecs(iFormatCapability);
 
@@ -5384,6 +5267,22 @@ void CPV324m2Way::AddVideoEncoderNode()
                              return;);
 
         iVideoEncNodeInterface.iState = PV2WayNodeInterface::QueryInterface;
+
+        queryParam.iInterfacePtr = &ipEncNodeCapConfigInterface;
+        queryParam.iUuid = (PVUuid *) & iCapConfigPVUuid;
+
+        iOmxEncQueryIntCmdId = -1;
+        ipEncNodeCapConfigInterface = NULL;
+
+        OSCL_TRY(error, iOmxEncQueryIntCmdId = SendNodeCmdL(PV2WAY_NODE_CMD_QUERY_INTERFACE,
+                                               &iVideoEncNode, this, &queryParam));
+        OSCL_FIRST_CATCH_ANY(error,
+                             PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
+                                             (0, "CPV324m2Way::AddVideoEncoderNode unable to query for video encoder c&c interface!\n"));
+                             ipEncNodeCapabilityAndConfig = NULL;
+                             return;);
+
+
     }
 
     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
@@ -5455,7 +5354,7 @@ void CPV324m2Way::AddAudioEncoderNode()
                     (0, "CPV324m2Way::AddAudioEncoderNode - done\n"));
 
 }
-void CPV324m2Way::AddVideoDecoderNode(uint8* aFormatSpecificInfo, uint32 aFormatSpecificInfoLen)
+void CPV324m2Way::AddVideoDecoderNode()
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                     (0, "CPV324m2Way::AddVideoDecoderNode\n"));
@@ -5515,6 +5414,91 @@ void CPV324m2Way::AddAudioDecoderNode()
     InitiateSession(iAudioDecNode);
     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                     (0, "CPV324m2Way::AddAudioDecoderNode - done\n"));
+}
+
+PVMFStatus CPV324m2Way::ConfigureVideoEncoderNode()
+{
+    CPvtVideoCapability* pMediaCapability = NULL;
+    Oscl_Vector<FormatCapabilityInfo, OsclMemAllocator> formats;
+    PVMFVideoResolution* pVideoResolution = NULL;
+    uint32 framerate = 0;
+    uint32 bitrate = 0;
+    uint32 fsiSize = 0;
+    uint8* fsi = NULL;
+
+    PVMFFormatType formatType = iVideoEncDatapath->GetFormat();
+
+    // Get default settings for video encoder
+    iTSC324mInterface->GetChannelFormatAndCapabilities(OUTGOING, formats);
+
+    for (uint16 index = 0; index < formats.size(); index++)
+    {
+        if (formatType == formats[index].format)
+        {
+            bitrate = formats[index].bitrate;
+            formats[index].GetFormatSpecificInfo(&fsi, fsiSize);
+            pMediaCapability = OSCL_STATIC_CAST(CPvtVideoCapability*, iTSC324mInterface->GetRemoteCodecCapability(formats[index]));
+            framerate = pMediaCapability->iFrameRate;
+            pVideoResolution = pMediaCapability->iVideoResolution;
+        }
+    }
+
+    if (!bitrate)
+    {
+        // makes no sense to continue if bitrate is zero
+        return PVMFFailure;
+    }
+
+    PVMp4H263EncExtensionInterface *ptr =
+        (PVMp4H263EncExtensionInterface *) iVideoEncNodeInterface.iInterface;
+
+    if (ptr)
+    {
+        // give settings to encoder using video extension interface
+        ptr->SetNumLayers(1);
+        ptr->SetOutputBitRate(0, bitrate);
+        ptr->SetOutputFrameSize(0, pVideoResolution->width, pVideoResolution->height);
+        ptr->SetOutputFrameRate(0, OSCL_STATIC_CAST(OsclFloat, framerate));
+
+        ptr->SetSegmentTargetSize(0, VIDEO_ENCODER_SEGMENT_SIZE);
+        ptr->SetRateControlType(0, VIDEO_ENCODER_RATE_CONTROL);
+        ptr->SetDataPartitioning(VIDEO_ENCODER_DATA_PARTITIONING);
+        ptr->SetRVLC(VIDEO_ENCODER_RVLC);
+        ptr->SetIFrameInterval(VIDEO_ENCODER_I_FRAME_INTERVAL);
+    }
+
+
+
+    if (fsiSize)
+    {
+        OsclMemAllocator alloc;
+
+        PvmiKvp kvp;
+        kvp.length = oscl_strlen(PVMF_FORMAT_SPECIFIC_INFO_KEY) + 1;
+        kvp.key = (PvmiKeyType)alloc.ALLOCATE(kvp.length);
+
+        oscl_strncpy(kvp.key, PVMF_FORMAT_SPECIFIC_INFO_KEY, kvp.length);
+
+        kvp.value.key_specific_value = (OsclAny*)fsi;
+        kvp.capacity = fsiSize;
+
+        PvmiKvp* retKvp = NULL; // for return value
+        int32 err1;
+
+        OSCL_TRY(err1, ipEncNodeCapabilityAndConfig->setParametersSync(NULL, &kvp, 1, retKvp););
+
+        alloc.deallocate((OsclAny*)(kvp.key));
+
+        if ((retKvp != NULL) || (err1 != OsclErrNone))
+        {
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_ERR,
+                            (0, "CPV324m2Way::ConfigureNode: Error - Configuring enc node via cap-config IF failed"));
+
+
+            return PVMFFailure;
+        }
+    }
+    return PVMFSuccess;
 }
 
 #ifdef MEM_TRACK

@@ -393,6 +393,7 @@ class TSC_324m : public OsclActiveObject,
                                                 Oscl_Vector<PVMFFormatType, OsclMemAllocator>& aIncomingVideo,
                                                 Oscl_Vector<PVMFFormatType, OsclMemAllocator>& aOutGoingAudio,
                                                 Oscl_Vector<PVMFFormatType, OsclMemAllocator>& aOutGoingVideo);
+        OSCL_IMPORT_REF void SetFormatSpecificInfo(PVMFFormatType aMediaFormat, const uint8* apFormatSpecificInfo, uint32 aFormatSpecificInfoLen);
         OSCL_IMPORT_REF void SetAl2Sn(int width);
         OSCL_IMPORT_REF void SetAl3ControlFieldOctets(unsigned cfo);
         OSCL_IMPORT_REF void SetMaxOutgoingPduSize(uint16 size);
@@ -430,6 +431,16 @@ class TSC_324m : public OsclActiveObject,
         void CmdMisc(TCmdMisc type, TPVChannelId channelId, uint32 param = 0);
 
         CPvtTerminalCapability* GetRemoteCapability();
+
+        /**
+         * Get codec capabiltity for remote codec
+         *
+         * @param aFormatCapabilityInfo a format capabitity of the wanted codec
+         *
+         * @returns A pointer to a CPvtMediaCapability
+         **/
+        CPvtMediaCapability* GetRemoteCodecCapability(FormatCapabilityInfo aFormatCapabilityInfo);
+
         OSCL_IMPORT_REF void SetClock(PVMFMediaClock* aClock);
         OSCL_IMPORT_REF void SetMioLatency(int32 aLatency, bool aAudio);
 

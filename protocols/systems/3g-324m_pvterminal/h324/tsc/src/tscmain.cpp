@@ -2027,6 +2027,14 @@ OSCL_EXPORT_REF void TSC_324m::SetCodecPreference(Oscl_Vector<PVMFFormatType, Os
     iTSCcomponent->SetChannelConfigPreference(aIncomingAudio, aIncomingVideo, aOutgoingAudio, aOutgoingVideo);
 }
 
+OSCL_EXPORT_REF void TSC_324m::SetFormatSpecificInfo(PVMFFormatType aMediaFormat, const uint8* apFormatSpecificInfo,
+        uint32 aFormatSpecificInfoLen)
+{
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "TSC_324m::SetFormatSpecificInfo\n"));
+    iTSCcomponent->SetEncoderFormatSpecificInfo(aMediaFormat, apFormatSpecificInfo, aFormatSpecificInfoLen);
+}
+
 OSCL_EXPORT_REF void TSC_324m::SetAl2Sn(int width)
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,

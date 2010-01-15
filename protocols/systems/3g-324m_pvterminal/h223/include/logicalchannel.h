@@ -380,8 +380,11 @@ class H223OutgoingChannel : public H223LogicalChannel
         PVMFStatus VerifyAndSetParameter(PvmiKvp* aKvp, bool aSetParam);
 
         PVMFStatus NegotiateInputSettings(PvmiCapabilityAndConfig* config);
-        PVMFStatus NegotiateFSISettings(PvmiCapabilityAndConfig* config);
-        PVMFStatus ReceivedFSIFromPeer(PvmiKvp* kvp);
+
+        PVLOGGER_LOG_USE_ONLY(
+            PVMFStatus TestFsi(OsclRefCounterMemFrag aMemFrag);
+            uint32 iFsiTestIndex;
+        )
 
         OsclMemPoolFixedChunkAllocator* iMediaMsgMemoryPool;
         OsclMemPoolFixedChunkAllocator* iMediaDataEntryAlloc;

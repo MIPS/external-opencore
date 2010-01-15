@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -156,6 +156,23 @@ class H324MConfigInterface : public PVInterface
                 Oscl_Vector<PVMFFormatType, OsclMemAllocator>& aIncomingVideo,
                 Oscl_Vector<PVMFFormatType, OsclMemAllocator>& aOutGoingAudio,
                 Oscl_Vector<PVMFFormatType, OsclMemAllocator>& aOutGoingVideo,
+                OsclAny* aContextData = NULL) = 0;
+
+        /**
+         * This API allows the user to specify the format specific info for supported media encoders.
+         *
+         * @param aMediaFormat
+         *          The outgoing media format
+         * @param apFormatSpecificInfo
+         *          The format specific info
+         * @param aOutgoingAudio
+         *          The length of the format specific info in bytes
+         * @param aContextData
+         *         Optional opaque data that will be passed back to the user with the command response
+         * @returns A unique command id for asynchronous completion
+         **/
+        virtual PVMFCommandId SetFormatSpecificInfo(PVMFFormatType aMediaFormat,
+                const uint8* apFormatSpecificInfo, uint32 aFormatSpecificInfoLen,
                 OsclAny* aContextData = NULL) = 0;
 
         /**

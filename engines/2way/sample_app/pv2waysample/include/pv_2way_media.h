@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,8 @@
 //
 ////////////////////////////////////////////////////////////////////////////
 
+#define MAX_FSI_SIZE 64
+
 #include "pvmf_format_type.h"
 
 void ConvertToLowerCase(char *aString);
@@ -37,7 +39,19 @@ class PV2WayMedia
         ~PV2WayMedia();
 
         static PVMFFormatType GetMediaFormat(const oscl_wchar* aFileName);
-//        static PVMFFormatType GetMediaFormat(const char* aFileName);
+
+        /**
+         * Reads Format Specific Info from compressed video file
+         *
+         * @param apFileName the file path and name.
+         * @param apFsi the buffer where FSI is read. Size of this buffer should be at least MAX_FSI_SIZE in bytes
+         * @param arFsiLen the size of read FSI is returned here
+         * @param arFormatType the format type found from the file name is returned here
+         *
+         * @returns void
+         **/
+        static void ReadFsi(const char* apFileName, uint8* apFsi, uint16& arFsiLen, PVMFFormatType& arFormatType);
+
     private:
 
 };

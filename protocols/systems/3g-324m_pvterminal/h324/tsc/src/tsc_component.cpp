@@ -1199,13 +1199,19 @@ PVMFStatus TSC_component::VerifyReverseParameters(PS_ForwardReverseParam forRevP
             PVCodecType_t codec_type_outgoing = PVMFFormatTypeToPVCodecType((*formats)[m].format);
             if (codec_type_outgoing != codec)
                 continue;
-            if ((*formats)[m].fsi == NULL || (*formats)[m].fsi_len == 0)
+
+            uint32 fsiLen = 0;
+            uint8* fsi = NULL;
+
+            (*formats)[m].GetFormatSpecificInfo(&fsi, fsiLen);
+
+            if ((fsi == NULL) | (fsiLen == 0))
             {
                 // There are no FSI restrictions
                 return PVMFSuccess;
             }
-            if (decodeConfigInfoSzOblc == (*formats)[m].fsi_len &&
-                    oscl_memcmp(decodeConfigInfoOblc, (*formats)[m].fsi, decodeConfigInfoSzOblc) == 0)
+            if ((decodeConfigInfoSzOblc == fsiLen) &&
+                    (oscl_memcmp(decodeConfigInfoOblc, fsi, decodeConfigInfoSzOblc) == 0))
             {
                 return PVMFSuccess;
             }
@@ -1266,6 +1272,18 @@ PVMFStatus TSC_component::ValidateOlcsWithTcs()
     return status;
 }
 
+void ReleaseDataType(OsclAny *apDataType)
+{
+    PS_DataType pDataType = OSCL_STATIC_CAST(PS_DataType, apDataType);
+    OSCL_DELETE(pDataType);
+}
+
+void ReleaseH223LogicalChannelParameters(OsclAny *apDataType)
+{
+    PS_H223LogicalChannelParameters* pParameters = OSCL_STATIC_CAST(PS_H223LogicalChannelParameters*, apDataType);
+    OSCL_DELETE(pParameters);
+}
+
 OsclAny TSC_component::TcsMsdComplete()
 {
     ClipCodecs(iRemoteTcs);
@@ -1280,7 +1298,7 @@ OsclAny TSC_component::TcsMsdComplete()
 
     //Oscl_Vector<OlcParam*, OsclMemAllocator> olc_list;
     CPVMultiplexEntryDescriptorVector* pDescriptors = OSCL_NEW(CPVMultiplexEntryDescriptorVector, ());
-    OsclError::PushL(pDescriptors);
+    OSCL_TRAPSTACK_PUSH(pDescriptors);
 
     // start OLCs
     for (unsigned olcnum = 0; olcnum < iOutgoingChannelConfig->size(); olcnum++)
@@ -1318,22 +1336,41 @@ OsclAny TSC_component::TcsMsdComplete()
             incoming_codec = iOutCodecList[index]->codec;
             pDataTypeRvs = GetOutgoingDataType(incoming_codec,
                                                GetOutgoingBitrate(incoming_codec));
+            OSCL_TRAPSTACK_PUSH(OsclTrapItem(ReleaseDataType, pDataTypeRvs));
             pH223ParamsRvs = GetH223LogicalChannelParameters((uint8)IndexForAdaptationLayer(PVT_AL3),
                              iTSCcapability.IsSegmentable(INCOMING, media_type),
                              iAl3ControlFieldOctets);
+            OSCL_TRAPSTACK_PUSH(OsclTrapItem(ReleaseH223LogicalChannelParameters, pH223ParamsRvs));
         }
 
         OlcParam* olc_param = OpenOutgoingChannel(iOutCodecList[index]->codec,
                               al_type, pDataTypeRvs, pH223ParamsRvs);
+
+        if (PV_VIDEO == media_type)
+        {
+            // update used fsi parameters to out codec list.
+            uint8* fsi;
+            uint32 fsiSize;
+
+            fsiSize = olc_param->GetForwardParams()->GetFormatSpecificInfo(fsi);
+            VideoCodecCapabilityInfo* videoCodecCapabilityInfo = OSCL_STATIC_CAST(VideoCodecCapabilityInfo*, iOutCodecList[index]);
+            if (videoCodecCapabilityInfo->codec_specific_info)
+            {
+                OSCL_DELETE(videoCodecCapabilityInfo->codec_specific_info);
+            }
+            videoCodecCapabilityInfo->codec_specific_info = (uint8*)OSCL_DEFAULT_MALLOC(fsiSize);
+            videoCodecCapabilityInfo->codec_specific_info_len = fsiSize;
+        }
+
         if (pH223ParamsRvs)
         {
             Delete_H223LogicalChannelParameters(pH223ParamsRvs);
-            OSCL_DEFAULT_FREE(pH223ParamsRvs);
+            OSCL_TRAPSTACK_POPDEALLOC(); // pH223ParamsRvs
         }
         if (pDataTypeRvs)
         {
             Delete_DataType(pDataTypeRvs);
-            OSCL_DEFAULT_FREE(pDataTypeRvs);
+            OSCL_TRAPSTACK_POPDEALLOC(); // pDataTypeRvs
         }
         Delete_AdaptationLayerType(al_type);
         OSCL_DEFAULT_FREE(al_type);
@@ -1347,7 +1384,7 @@ OsclAny TSC_component::TcsMsdComplete()
     iUseAl1Video = true;
     iUseAl2Video = true;
     iUseAl3Video = true;
-    OsclError::PopDealloc(); // pDescriptors
+    OSCL_TRAPSTACK_POPDEALLOC(); // pDescriptors
 #ifdef MEM_TRACK
     printf("\n Memory Stats After TcsMsdComplete");
     MemStats();
@@ -1500,6 +1537,35 @@ void TSC_component::SetChannelConfigPreference(Oscl_Vector<PVMFFormatType, OsclM
     }
 }
 
+void TSC_component::SetEncoderFormatSpecificInfo(PVMFFormatType aMediaFormat, const uint8* apFormatSpecificInfo,
+        uint32 aFormatSpecificInfoLen)
+{
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "TSC_component::SetEncoderFormatSpecificInfo\n"));
+    if (iOutgoingChannelConfig)
+    {
+        for (unsigned n = 0; n < iOutgoingChannelConfig->size(); n++)
+        {
+            Oscl_Vector<FormatCapabilityInfo, OsclMemAllocator>* codecs =
+                (*iOutgoingChannelConfig)[n].GetCodecs();
+
+            if (!codecs)
+            {
+                continue;
+            }
+            for (unsigned k = 0; k < codecs->size(); k++)
+            {
+                if ((*codecs)[k].format == aMediaFormat)
+                {
+                    ((*codecs)[k]).SetFormatSpecificInfo(apFormatSpecificInfo, aFormatSpecificInfoLen);
+                    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_INFO, (0, "TSC_component::SetFormatSpecificInfo Outgoing format=%s, size %d", aMediaFormat.getMIMEStrPtr(), aFormatSpecificInfoLen));
+                }
+            }
+        }
+    }
+
+}
+
 /*****************************************************************************/
 /*  function name        : Status04Event10           E_PtvId_Lc_Etb_Cfm  */
 /*  function outline     : Status04/Event10 procedure                        */
@@ -1587,11 +1653,20 @@ void TSC_component::GetChannelFormatAndCapabilities(TPVDirection dir,
         {
             param = olc->GetReverseParams();
         }
+        if (param == NULL) continue;
+
+        PS_DataType dataType = param->GetDataType();
+
         FormatCapabilityInfo fci;
         fci.id = param->GetChannelId();
         fci.dir = dir;
-        fci.format = PVCodecTypeToPVMFFormatType(param->GetMediaParam()->GetCodecType());
+        fci.format = PVCodecTypeToPVMFFormatType(::GetCodecType(dataType));
         fci.bitrate = param->GetBitrate();
+
+        uint8* fsi = NULL;
+        uint16 fsiSize = 0;
+        fsiSize = ::GetFormatSpecificInfo(dataType, fsi);
+        fci.SetFormatSpecificInfo(fsi, fsiSize);
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                         (0, "TSC_component::GetChannelFormatAndCapabilities Adding(%d,%d,%s,%d) to list",
                          fci.dir, fci.id, fci.format.getMIMEStrPtr(), fci.bitrate));
@@ -2506,12 +2581,50 @@ void TSC_component::OpenPort(TPVDirection dir, TPVChannelId lcn, H223ChannelPara
 }
 
 
-PS_DataType TSC_component::GetOutgoingDataType(PVCodecType_t codecType,
-        uint32 bitrate)
+PS_DataType TSC_component::GetOutgoingDataType(PVCodecType_t aCodecType,
+        uint32 aBitrate)
 {
-    uint8* csi = NULL;
-    uint16 csi_len = 0;
-    return iTSCcapability.GetOutgoingDataType(codecType, bitrate, csi_len, csi);
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "TSC_component::GetOutgoingDataType codec type(%d), bitrate(%d)",
+                     aCodecType, aBitrate));
+    uint32 fsiLen = 0;
+    uint8* pFsi = NULL;
+
+    PVMFFormatType formatType = PVCodecTypeToPVMFFormatType(aCodecType);
+    if (!iOutgoingChannelConfig || !iOutgoingChannelConfig->size())
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_WARNING,
+                        (0, "TSC_component::GetOutgoingDataType outgoing channel config not found."));
+    }
+    else
+    {
+        for (unsigned n = 0; n < iOutgoingChannelConfig->size(); n++)
+        {
+            Oscl_Vector<FormatCapabilityInfo, OsclMemAllocator>* codecs =
+                (*iOutgoingChannelConfig)[n].GetCodecs();
+
+            if (!codecs)
+            {
+                continue;
+            }
+            for (unsigned k = 0; k < codecs->size(); k++)
+            {
+                if ((*codecs)[k].format == formatType)
+                {
+                    ((*codecs)[k]).GetFormatSpecificInfo(&pFsi, fsiLen);
+                    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_INFO, (0, "TSC_component::GetOutgoingDataType Outgoing format(%s) spesific info(%d)", formatType.getMIMEStrPtr(), fsiLen));
+                    if (!fsiLen)
+                    {
+                        fsiLen = GetDefaultEncoderConfig(aCodecType, &pFsi);
+                        // update default info to FormatCapabilityInfo
+                        ((*codecs)[k]).SetFormatSpecificInfo(pFsi, fsiLen);
+                    }
+                }
+            }
+        }
+    }
+
+    return iTSCcapability.GetOutgoingDataType(aCodecType, aBitrate, fsiLen, pFsi);
 }
 
 OlcParam* TSC_component::OpenOutgoingChannel(PVCodecType_t out_codec_type,
@@ -2554,22 +2667,17 @@ OlcParam* TSC_component::OpenOutgoingChannel(PVCodecType_t out_codec_type,
             PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                             (0, "TSC_component::OpenOutgoingChannel in codec type != out codec type"));
         }
-        if (!CodecRequiresFsi(out_codec_type))
-        {
-            iTSCblc.BlcEtbReq(channel_id, pDataType, pH223Params,
-                              pDataTypeRvs, pH223ParamsRvs);
-        }
+
+        iTSCblc.BlcEtbReq(channel_id, pDataType, pH223Params,
+                          pDataTypeRvs, pH223ParamsRvs);
+
         ret = iOlcs.AppendOlc(OUTGOING, channel_id, pDataType, pH223Params,
                               CHANNEL_ID_UNKNOWN, pDataTypeRvs,
                               pH223ParamsRvs);
     }
     else
     {
-        if (!CodecRequiresFsi(out_codec_type))
-        {
-            iTSClc.LcEtbReq(channel_id, pDataType, pH223Params);
-        }
-
+        iTSClc.LcEtbReq(channel_id, pDataType, pH223Params);
         ret = iOlcs.AppendOlc(OUTGOING, channel_id, pDataType, pH223Params);
     }
 
@@ -2584,7 +2692,7 @@ OlcParam* TSC_component::OpenOutgoingChannel(PVCodecType_t out_codec_type,
     }
     // Notify outgoing channel
     iTSCObserver->OutgoingChannelEstablished(ret->GetChannelId(), out_codec_type,
-            NULL, 0); /* FSI will be generated by video source/encoder */
+            NULL, 0);
 
     Delete_DataType(pDataType);
     OSCL_DEFAULT_FREE(pDataType);
@@ -2637,4 +2745,37 @@ void TSC_component::MemStats()
 #endif
 }
 #endif
+
+/* FSI for Mpeg-4 */
+#define MPEG4_FSI_LEN 28
+const uint8 MPEG4_FSI[MPEG4_FSI_LEN] =
+    {0x00, 0x00, 0x01, 0xb0, 0x08, 0x00, 0x00, 0x01, 0xb5, 0x09, 0x00, 0x00, 0x01, 0x00,
+     0x00, 0x00, 0x01, 0x20, 0x00, 0x84, 0x5d, 0x4c, 0x28, 0x2c, 0x20, 0x90, 0xa2, 0x8f
+    };
+
+/* FSI for H.264 */
+#define H264_FSI_LEN 25
+const uint8 H264_FSI[H264_FSI_LEN] =
+    {0x00, 0x00, 0x00, 0x01, 0x27, 0x42, 0xa0, 0x0a, 0x95, 0xa0, 0xb1, 0x3a, 0x01, 0xe1, 0x10, 0x8d, 0x40, 0x00, 0x00, 0x00, 0x01, 0x28, 0xce, 0x06, 0x6a};
+
+
+uint32 TSC_component::GetDefaultEncoderConfig(PVCodecType_t aEncoder, uint8** appFsi)
+{
+    uint32 fsiLen = 0;
+    *appFsi = NULL;
+
+    if (aEncoder == PV_VID_TYPE_MPEG4)
+    {
+        *appFsi = (uint8*)MPEG4_FSI;
+        fsiLen = MPEG4_FSI_LEN;
+    }
+    else if (aEncoder == PV_VID_TYPE_H264)
+    {
+        *appFsi = (uint8*)H264_FSI;
+        fsiLen = H264_FSI_LEN;
+    }
+
+    return fsiLen;
+}
+
 

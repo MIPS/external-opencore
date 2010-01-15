@@ -788,7 +788,7 @@ class CPV324m2Way : OsclActiveObject,
     private:
         CPV324m2Way();
         ~CPV324m2Way();
-        void ClearVideoEncNode();
+
         void ConstructL(PVMFNodeInterface* aTsc,
                         TPVTerminalType aType,
                         PVCommandStatusObserver* aCmdStatusObserver,
@@ -934,8 +934,18 @@ class CPV324m2Way : OsclActiveObject,
 
         void AddVideoEncoderNode();
         void AddAudioEncoderNode();
-        void AddVideoDecoderNode(uint8* aFormatSpecificInfo, uint32 aFormatSpecificInfoLen);
+        void AddVideoDecoderNode();
         void AddAudioDecoderNode();
+
+        /**
+         * This funtion configures the video encoder node.
+         * Setting for the video encoder are fetched from the channel.
+         *
+         * @return PVMFStatus returns PVMFSuccess if succesful.
+         **/
+        PVMFStatus ConfigureVideoEncoderNode();
+
+        void ClearVideoEncoderNode();
 
         bool AllocNodes();
 
@@ -1099,8 +1109,10 @@ class CPV324m2Way : OsclActiveObject,
         int32 iOutgoingAudioTrackTag;
         int32 iOutgoingVideoTrackTag;
         PVUuid iVideoEncPVUuid;
+        PVUuid iVideoEncCCPVUudd;
         PVUuid iAudioEncPVUuid;
         PVMFCommandId iVideoEncQueryIntCmdId;
+        PVMFCommandId iOmxEncQueryIntCmdId;
 
         typedef enum
         {
@@ -1143,6 +1155,10 @@ class CPV324m2Way : OsclActiveObject,
         // and also locked when attempting to read the data through the
         // test interface (which will be another thread)
         OsclMutex iReadDataLock;
+
+        // interface for omx enc node capability and config
+        PvmiCapabilityAndConfig* ipEncNodeCapabilityAndConfig;
+        PVInterface* ipEncNodeCapConfigInterface;
 
 };
 

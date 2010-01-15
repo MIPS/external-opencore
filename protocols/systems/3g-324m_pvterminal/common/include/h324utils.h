@@ -23,7 +23,9 @@
 #include "pvlogger.h"
 #endif
 
+#ifndef PVT_COMMON_H_INCLUDED
 #include "pvt_common.h"
+#endif
 
 #define MAX_NUM_SIMULTANEOUS_CAPABILITIES 31
 #define MAX_CONFIG_INFO_SIZE 128
@@ -99,7 +101,7 @@ PVCodecType_t GetUiCodecTypeFrom245Index(int32 index);
 void GetCodecInfo(PS_Capability capability, CodecCapabilityInfo& info);
 ErrorProtectionLevel_t GetEpl(uint16 al_index);
 void printBuffer(PVLogger* logger, const uint8* buffer, uint16 len);
-uint32 GetFormatSpecificInfo(PS_DataType pDataType, uint8*& fsi);
+uint16 GetFormatSpecificInfo(PS_DataType pDataType, uint8*& fsi);
 PS_Capability LookupCapability(PS_TerminalCapabilitySet pTcs, uint16 cap_entry_num);
 bool IsTransmitOnlyAltCapSet(PS_TerminalCapabilitySet pTcs, PS_AlternativeCapabilitySet pAltCapSet);
 PVMFStatus VerifyCodecs(PS_TerminalCapabilitySet pTcs,

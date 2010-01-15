@@ -270,6 +270,9 @@ H223OutgoingChannel::H223OutgoingChannel(TPVChannelId num,
     iMuxingStarted = false;
     iWaitForRandomAccessPoint = false;
     iBufferSizeMs = DEF_OUTGOING_CHANNEL_BUFFER_SIZE_MS;
+    PVLOGGER_LOG_USE_ONLY(
+        iFsiTestIndex = 0;
+    )
 
 }
 
@@ -375,11 +378,14 @@ PVMFStatus H223OutgoingChannel::PutData(PVMFSharedMediaMsgPtr media_msg)
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223OutgoingChannel::PutData lcn=%d, size=%d, ts=%d", lcn, mediaData->getFilledSize(), mediaData->getTimestamp()));
     }
 
-    // Check for FormatSpecificInfo.  Sending FSI with data is being obsoleted, but there is no harm in leaving this in for now.
+    // Check for FSI so that it can be send with data
     if (mediaData->getFormatSpecificInfo(iFsiFrag) && iFsiFrag.getMemFragPtr() && iFsiFrag.getMemFragSize())
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223OutgoingChannel::PutData Received Format Specific Info, len=%d", iFsiFrag.getMemFragSize()));
-        iObserver->ReceivedFormatSpecificInfo(lcn, (uint8*)iFsiFrag.getMemFragPtr(), iFsiFrag.getMemFragSize());
+        PVLOGGER_LOG_USE_ONLY(
+
+            TestFsi(iFsiFrag);
+        )
     }
 
     if (IsSegmentable() && iWaitForRandomAccessPoint)
@@ -584,6 +590,19 @@ OsclSharedPtr<PVMFMediaDataImpl> H223OutgoingChannel::StartAlPdu()
 
 PVMFStatus H223OutgoingChannel::CompletePdu()
 {
+
+    PVLOGGER_LOG_USE_ONLY(
+        if (iNumPacketsIn < 4)
+{
+    for (uint16 index = 0; index < iCurPdu->getNumFragments(); index++)
+        {
+            OsclRefCounterMemFrag memFrag;
+            iCurPdu->getMediaFragment(index, memFrag);
+            TestFsi(memFrag);
+        }
+    }
+    )
+
     PVMFStatus status = iAl->CompletePacket(iCurPdu);
     if (status != PVMFSuccess)
     {
@@ -598,7 +617,6 @@ PVMFStatus H223OutgoingChannel::CompletePdu()
         AppendLipSyncTS();
     }
 #endif
-
 
     // Add it to the outgoing queue
     status = AppendOutgoingPkt(iCurPdu, iCurPduTimestamp);
@@ -620,6 +638,9 @@ PVMFStatus H223OutgoingChannel::AppendOutgoingPkt(OsclSharedPtr<PVMFMediaDataImp
     {
         return PVMFErrNoMemory;
     }
+
+    OsclRefCounterMemFrag frag;
+    mediaData->getFormatSpecificInfo(frag);
 
     mediaData->setTimestamp(timestamp);
     if (fsi)
@@ -669,7 +690,9 @@ bool H223OutgoingChannel::GetNextPacket(PVMFSharedMediaDataPtr& aMediaData, PVMF
 {
 
     if (!iMuxingStarted && aStatus == PVMFSuccess)
+    {
         iMuxingStarted = true;
+    }
 
     if (lastMediaData == NULL)
     {
@@ -856,99 +879,6 @@ OSCL_EXPORT_REF PVMFStatus H223OutgoingChannel::PeerConnect(PVMFPortInterface* a
     return status;
 }
 
-PVMFStatus H223OutgoingChannel::NegotiateFSISettings(PvmiCapabilityAndConfig* aConfig)
-{
-    PvmiKvp* pKvp = NULL;
-    int numParams = 0;
-    // Preconfigured FSI
-    uint8* pc_fsi = NULL;
-    unsigned pc_fsilen = ::GetFormatSpecificInfo(iDataType, pc_fsi);
-    if (pc_fsilen && pc_fsi)
-    {
-        /*
-         * Create PvmiKvp for capability settings
-         */
-        OsclMemAllocator alloc;
-        PvmiKvp kvp;
-        kvp.key = NULL;
-        kvp.length = oscl_strlen(PVMF_FORMAT_SPECIFIC_INFO_KEY) + 1; // +1 for \0
-        kvp.key = (PvmiKeyType)alloc.ALLOCATE(kvp.length);
-        if (kvp.key == NULL)
-        {
-            return PVMFFailure;
-        }
-        oscl_strncpy(kvp.key, PVMF_FORMAT_SPECIFIC_INFO_KEY, kvp.length);
-
-        kvp.value.key_specific_value = (OsclAny*)pc_fsi;
-        kvp.capacity = pc_fsilen;
-        kvp.length = pc_fsilen;
-
-        PvmiKvp* retKvp = NULL; // for return value
-        int32 err;
-        OSCL_TRY(err, aConfig->setParametersSync(NULL, &kvp, 1, retKvp););
-        alloc.deallocate((OsclAny*)(kvp.key));
-        if (err)
-        {
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223OutgoingChannel::NegotiateFSISettings, Failed to set FSI on peer, err=%d", err));
-        }
-        else
-        {
-            // Temp change to return success. Enc node does not support setting FSI yet.  This will cause port connect to fail.
-            return PVMFSuccess;
-        }
-    }
-
-    // No preconfigured FSI.  In this case try to get the FSI from the peer.
-    PVMFStatus status = aConfig->getParametersSync(NULL, (PvmiKeyType)PVMF_FORMAT_SPECIFIC_INFO_KEY, pKvp, numParams, NULL);
-
-    // clean variables if getParametersSync did not do it.
-    if (PVMFSuccess != status)
-    {
-        pKvp = NULL;
-        numParams = 0;
-    }
-    // Even if we do not get FSI from peer port, we should still define empty FSI so that we can go forward with channel opening.
-    ReceivedFSIFromPeer(pKvp);
-    aConfig->releaseParameters(NULL, pKvp, numParams);
-
-    return status;
-
-}
-
-PVMFStatus H223OutgoingChannel::ReceivedFSIFromPeer(PvmiKvp* pKvp)
-{
-    // Store FSI for later use if we have one
-    // Send FSI to observer (even if it is empty one)
-    if (pKvp)
-    {
-        // Create mem frag for VOL header
-        OsclRefCounter* my_refcnt;
-        OsclMemAllocDestructDealloc<uint8> my_alloc;
-        uint aligned_refcnt_size = oscl_mem_aligned_size(sizeof(OsclRefCounterSA< OsclMemAllocDestructDealloc<uint8> >));
-        uint8* my_ptr = (uint8*) my_alloc.allocate(aligned_refcnt_size + pKvp->length);
-        my_refcnt = OSCL_PLACEMENT_NEW(my_ptr, OsclRefCounterSA< OsclMemAllocDestructDealloc<uint8> >(my_ptr));
-        my_ptr += aligned_refcnt_size;
-
-        oscl_memcpy(my_ptr, pKvp->value.key_specific_value, pKvp->length);
-
-        OsclMemoryFragment memfrag;
-        memfrag.len = pKvp->length;
-        memfrag.ptr = my_ptr;
-
-        OsclRefCounterMemFrag configinfo(memfrag, my_refcnt, pKvp->length);
-        iFsiFrag = configinfo;
-
-        SetFormatSpecificInfo((uint8*)pKvp->value.key_specific_value, pKvp->length);
-
-        iObserver->ReceivedFormatSpecificInfo(lcn, (uint8*)pKvp->value.key_specific_value, pKvp->length);
-    }
-    else
-    {
-        iObserver->ReceivedFormatSpecificInfo(lcn, NULL, 0);
-    }
-    return PVMFSuccess;
-}
-
 PVMFStatus H223OutgoingChannel::NegotiateInputSettings(PvmiCapabilityAndConfig* aConfig)
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223OutgoingChannel::NegotiateInputSettings, aConfig=%x", aConfig));
@@ -990,137 +920,7 @@ PVMFStatus H223OutgoingChannel::NegotiateInputSettings(PvmiCapabilityAndConfig* 
     aConfig->releaseParameters(NULL, kvp, numParams);
     kvp = NULL;
     numParams = 0;
-
-
-    if (iMediaType.isVideo())
-    {
-        // frame width negotiations
-        uint32 width = GetVideoFrameSize(iDataType, true);
-        status = aConfig->getParametersSync(NULL, (PvmiKeyType)VIDEO_OUTPUT_WIDTH_CAP_QUERY, kvp, numParams, NULL);
-        if (status != PVMFSuccess || numParams != 1)
-        {
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "H223OutgoingChannel::NegotiateInputSettings: Error - config->getParametersSync(cap width) failed"));
-            // do not report error for now as enc nodes dont implemlement some parameters
-
-        }
-        else
-        {
-            if (kvp[0].value.uint32_value > width)
-            {
-                OsclMemAllocator alloc;
-                PvmiKvp kvp;
-                kvp.key = NULL;
-                kvp.length = oscl_strlen(VIDEO_OUTPUT_WIDTH_CUR_QUERY) + 1; // +1 for \0
-                kvp.key = (PvmiKeyType)alloc.ALLOCATE(kvp.length);
-                if (kvp.key == NULL)
-                {
-                    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "H223OutgoingChannel::NegotiateInputSettings: Error - alloc failed for VIDEO_OUTPUT_WIDTH_CUR_QUERY kvp "));
-                    return PVMFErrNoMemory;
-                }
-                oscl_strncpy(kvp.key, VIDEO_OUTPUT_WIDTH_CUR_QUERY, kvp.length);
-                kvp.value.uint32_value = width;
-
-                if (PVMFSuccess != setConfigParametersSync(&kvp, aConfig))
-                {
-                    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "H223OutgoingChannel::NegotiateInputSettings, Error:  setConfigParametersSync width failed"));
-                    //dont return PVMFFailure for now ;
-                }
-
-
-                alloc.deallocate((OsclAny*)(kvp.key));
-
-            }
-            aConfig->releaseParameters(NULL, kvp, numParams);
-        }
-
-        kvp = NULL;
-        numParams = 0;
-
-
-
-        // frame height negotiations
-        uint32 height = GetVideoFrameSize(iDataType, false);
-        status = aConfig->getParametersSync(NULL, (PvmiKeyType)VIDEO_OUTPUT_HEIGHT_CAP_QUERY, kvp, numParams, NULL);
-        if (status != PVMFSuccess || numParams != 1)
-        {
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "H223OutgoingChannel::NegotiateInputSettings: Error - config->getParametersSync(cap height) failed"));
-            // do not report error for now as enc nodes dont implemlement some parameters
-
-        }
-        else
-        {
-            if (kvp[0].value.uint32_value > height)
-            {
-                OsclMemAllocator alloc;
-                PvmiKvp kvp;
-                kvp.key = NULL;
-                kvp.length = oscl_strlen(VIDEO_OUTPUT_HEIGHT_CUR_QUERY) + 1; // +1 for \0
-                kvp.key = (PvmiKeyType)alloc.ALLOCATE(kvp.length);
-                if (kvp.key == NULL)
-                {
-                    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "H223OutgoingChannel::NegotiateInputSettings: Error - alloc failed for VIDEO_OUTPUT_HEIGHT_CUR_QUERY kvp "));
-                    return PVMFErrNoMemory;
-                }
-                oscl_strncpy(kvp.key, VIDEO_OUTPUT_HEIGHT_CUR_QUERY, kvp.length);
-                kvp.value.uint32_value = height;
-
-                if (PVMFSuccess != setConfigParametersSync(&kvp, aConfig))
-                {
-                    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "H223OutgoingChannel::NegotiateInputSettings, Error:  setConfigParametersSync height failed"));
-                    //dont return PVMFFailure for now;
-                }
-                alloc.deallocate((OsclAny*)(kvp.key));
-
-            }
-            aConfig->releaseParameters(NULL, kvp, numParams);
-        }
-
-        kvp = NULL;
-        numParams = 0;
-
-        // frame rate negotiations
-        uint32 framerate = GetMaxFrameRate(iDataType);
-        // VIDEO_OUTPUT_FRAME_RATE_CAP_QUERY not available
-        status = aConfig->getParametersSync(NULL, (PvmiKeyType)VIDEO_OUTPUT_FRAME_RATE_CUR_QUERY, kvp, numParams, NULL);
-        if (status != PVMFSuccess || numParams != 1)
-        {
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "H223OutgoingChannel::NegotiateInputSettings: Error - config->getParametersSync(cap frame rate failed"));
-            // do not report error for now as enc nodes dont implemlement some parameters
-
-        }
-        else
-        {
-            if (kvp[0].value.float_value > framerate)
-            {
-                OsclMemAllocator alloc;
-                PvmiKvp kvp;
-                kvp.key = NULL;
-                kvp.length = oscl_strlen(VIDEO_OUTPUT_FRAME_RATE_CUR_QUERY) + 1; // +1 for \0
-                kvp.key = (PvmiKeyType)alloc.ALLOCATE(kvp.length);
-                if (kvp.key == NULL)
-                {
-                    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "H223OutgoingChannel::NegotiateInputSettings: Error - alloc failed for VIDEO_OUTPUT_FRAME_RATE_CUR_QUERY kvp "));
-                    return PVMFErrNoMemory;
-                }
-                oscl_strncpy(kvp.key, VIDEO_OUTPUT_FRAME_RATE_CUR_QUERY, kvp.length);
-                kvp.value.float_value = (float)framerate;
-
-                if (PVMFSuccess != setConfigParametersSync(&kvp, aConfig))
-                {
-                    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "H223OutgoingChannel::NegotiateInputSettings, Error:  setConfigParametersSync frame rate failed"));
-                    //dont return PVMFFailure for now ;
-                }
-                alloc.deallocate((OsclAny*)(kvp.key));
-
-            }
-            aConfig->releaseParameters(NULL, kvp, numParams);
-        }
-
-        kvp = NULL;
-        numParams = 0;
-    }
-
-    return NegotiateFSISettings(aConfig);
+    return PVMFSuccess;
 }
 ////////////////////////////////////////////////////////////////////////////
 //                  PvmiCapabilityAndConfig
@@ -1240,8 +1040,7 @@ OSCL_EXPORT_REF void H223OutgoingChannel::setParametersSync(PvmiMIOSession sessi
         {
             PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_WARNING, (0, "H223OutgoingChannel::setParametersSync: Error - VerifiyAndSetParameter failed on parameter #%d", i));
             ret_kvp = &(parameters[i]);
-            /* Silently ignore unrecognized codecs untill CapEx is supported by peer */
-            //OSCL_LEAVE(OsclErrArgument);
+            OSCL_LEAVE(OsclErrArgument);
         }
     }
 }
@@ -1273,11 +1072,6 @@ PVMFStatus H223OutgoingChannel::VerifyAndSetParameter(PvmiKvp* aKvp, bool aSetPa
             return PVMFErrNotSupported;
         }
     }
-    else if (pv_mime_strcmp(aKvp->key, PVMF_FORMAT_SPECIFIC_INFO_KEY) == 0)
-    {
-        ReceivedFSIFromPeer(aKvp);
-    }
-
     return PVMFSuccess;
 }
 
@@ -1378,6 +1172,47 @@ void H223OutgoingChannel::HandlePortActivity(const PVMFPortActivity &aActivity)
 
     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223OutgoingChannel::HandlePortActivity - out"));
 }
+
+PVLOGGER_LOG_USE_ONLY(
+    PVMFStatus H223OutgoingChannel::TestFsi(OsclRefCounterMemFrag aMemFrag)
+{
+    // get fsi
+    uint8* pFsi = NULL;
+    uint32 fsiLen = ::GetFormatSpecificInfo(iDataType, pFsi);
+
+    if (iFsiTestIndex >= fsiLen)
+    {
+        return PVMFFailure;
+    }
+
+    // get ptr and size
+    uint32 memFragSize = aMemFrag.getMemFragSize();
+
+    // check if this is valid data
+    if (memFragSize <= 1)
+    {
+        return PVMFFailure;
+    }
+
+    uint8* pMemFrag = OSCL_STATIC_CAST(uint8*, aMemFrag.getMemFragPtr());
+
+    uint16 compSize = OSCL_MIN(fsiLen - iFsiTestIndex, memFragSize);
+
+    // compare and print result if error found
+    if (fsiLen && oscl_memcmp(pMemFrag, &pFsi[iFsiTestIndex], compSize))
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "H223OutgoingChannel::TestFsi Format Specific Info conflict"));
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223OutgoingChannel::TestFsi FSI BS"));
+        for (int ii = 0; ii < compSize; ii++)
+        {
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223OutgoingChannel::TestFsi %#x %#x", pFsi[iFsiTestIndex + ii], pMemFrag[ii]));
+        }
+
+    }
+    iFsiTestIndex += compSize;
+    return PVMFSuccess;
+}
+)
 
 OSCL_EXPORT_REF PVMFStatus H223OutgoingControlChannel::PeerConnect(PVMFPortInterface* aPort)
 {
@@ -2806,7 +2641,6 @@ PVMFStatus H223IncomingChannel::SendVideoFrame(PVMFSharedMediaDataPtr aMediaData
             PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_WARNING, (0, "H223IncomingChannel::SendVideoFrame Failed to queue outgoing media message lcn=%d, status=%d", lcn, dispatch_status));
 
         }
-
 #ifdef LIP_SYNC_TESTING
         g_IncmVideoTS = iVideoFrame->getTimestamp();
         CalculateRMSInfo(g_IncmVideoTS, g_IncmAudioTS);

@@ -596,14 +596,12 @@ OSCL_EXPORT_REF PV2WayMediaType GetMediaType(PVCodecType_t codec)
     return media_type;
 }
 
-OSCL_EXPORT_REF H324ChannelParameters::H324ChannelParameters(TPVDirection dir, unsigned bandwidth)
+OSCL_EXPORT_REF H324ChannelParameters::H324ChannelParameters(unsigned bandwidth)
         : iCodecs(NULL)
 {
     iBandwidth = bandwidth;
     typedef Oscl_Vector<FormatCapabilityInfo, OsclMemAllocator> codecsType;
     iCodecs = OSCL_NEW(codecsType, ());
-    FormatCapabilityInfo codec_info;
-    codec_info.dir = dir;
 }
 
 OSCL_EXPORT_REF H324ChannelParameters::H324ChannelParameters(const H324ChannelParameters& that)

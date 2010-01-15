@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,10 @@
 #define _h223_H
 
 #include "oscl_types.h"
+
+#ifndef PVT_COMMON_H_INCLUDED
 #include "pvt_common.h"
+#endif
 
 #ifdef __cplusplus
 extern "C"

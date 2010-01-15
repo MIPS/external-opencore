@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,6 +59,8 @@ class H324MConfig : public OsclActiveObject,
                                          Oscl_Vector<PVMFFormatType, OsclMemAllocator>& aOutGoingAudio,
                                          Oscl_Vector<PVMFFormatType, OsclMemAllocator>& aOutGoingVideo,
                                          OsclAny* aContextData = NULL);
+        PVMFCommandId SetFormatSpecificInfo(PVMFFormatType aMediaFormat, const uint8* apFormatSpecificInfo,
+                                            uint32 aFormatSpecificInfoLen, OsclAny* aContextData = NULL);
         PVMFCommandId SetAl2SequenceNumbers(int32 aSeqNumWidth, OsclAny* aContextData = NULL);
         PVMFCommandId SetAl3ControlFieldOctets(int32 aCfo, OsclAny* aContextData = NULL);
         PVMFCommandId SetOutoingPduType(TPVH223MuxPduType aOutgoingPduType, OsclAny* aContextData = NULL);
@@ -154,6 +156,8 @@ class H324MConfigProxied :
                                          Oscl_Vector<PVMFFormatType, OsclMemAllocator>& aOutGoingAudio,
                                          Oscl_Vector<PVMFFormatType, OsclMemAllocator>& aOutGoingVideo,
                                          OsclAny* aContextData = NULL);
+        PVMFCommandId SetFormatSpecificInfo(PVMFFormatType aMediaFormat, const uint8* apFormatSpecificInfo,
+                                            uint32 aFormatSpecificInfoLen, OsclAny* aContextData = NULL);
         PVMFCommandId SetAl2SequenceNumbers(int32 aSeqNumWidth, OsclAny* aContextData = NULL);
         PVMFCommandId SetAl3ControlFieldOctets(int32 aCfo, OsclAny* aContextData = NULL);
         PVMFCommandId SetMaxPduSize(int32 aMaxPduSize, OsclAny* aContextData = NULL);
