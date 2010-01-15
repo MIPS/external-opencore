@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -558,6 +558,9 @@ class PvmfAssetInfo3GPPLocationStruct
 
 // Key to configure the Number of frames required in a Media msg
 #define PVMF_NUM_DECODED_FRAMES_CONFIG_KEY "x-pvmf/audio/render/num_decoded_frames;valtype=uint32"
+
+//Key for smooth streaming
+#define PVSMOOTHSTREAMING_TOTAL_NUM_MOOFS_KEY _STRLIT_CHAR("x-pvmf/net/ms-smooth-streaming-total-number-of-movie-fragments;valtype=uint32")
 
 // Keys for media output components -- Video
 //

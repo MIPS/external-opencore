@@ -41,6 +41,7 @@
 #define PVMF_MP4_MIME_FORMAT_VIDEO_UNKNOWN  "x-pvmf/video/unknown"
 #define PVMF_MP4_MIME_FORMAT_UNKNOWN        "x-pvmf/unknown-media/unknown"
 
+
 // Read Each Track Individually
 #define TRACK_NO_PER_RESET_PLAYBACK_CALL 1
 #define MAX_TRACK_NO 256
@@ -66,7 +67,8 @@ PVMFMP4FFParserNode::PVMFMP4FFParserNode(int32 aPriority) :
         iParseVideoOnly(false),
         iOpenFileOncePerTrack(true),
         iDataRate(NORMAL_PLAYRATE),
-        minFileOffsetTrackID(0)
+        minFileOffsetTrackID(0),
+        iTotalMoofFrags(0)
 {
     iClientPlayBackClock = NULL;
     iClockNotificationsInf = NULL;
@@ -1943,6 +1945,7 @@ bool PVMFMP4FFParserNode::ParseMP4File(PVMFNodeCommand& aCmd, PVMFStatus& aStatu
         aStatus = PVMFCmdCompleted;
         return oRet;
     }
+    iMP4FileHandle->SetMoofAtomsCnt(iTotalMoofFrags);
     if (iExternalDownload == true)
     {
         oRet = iMP4FileHandle->CreateDataStreamSessionForExternalDownload(iFilename, dsFactory,
@@ -2268,7 +2271,7 @@ PVMFStatus PVMFMP4FFParserNode::CompleteReset()
     }
     autopaused = false;
     iDownloadFileSize = 0;
-
+    iTotalMoofFrags = 0;
     ReleaseAllPorts();
     CleanupFileSource();
     iSelectedTrackInfoList.clear();
@@ -4249,7 +4252,7 @@ bool PVMFMP4FFParserNode::RetrieveTrackData(PVMP4FFNodeTrackPortInfo& aTrackPort
 
         //for logging
         MediaClockConverter mcc(iMP4FileHandle->getTrackMediaTimescale(aTrackPortInfo.iTrackId));
-        mcc.update_clock(iGau.info[0].ts);
+        mcc.set_clock(iGau.info[0].ts, 0);
 
         PVMF_MP4FFPARSERNODE_LOGDATATRAFFIC((0, "PVMFMP4FFParserNode::RetrieveTrackData - Mime=%s, TrackID=%d, Size=%d, NPT=%d, MediaTS=%d, SEQNUM=%d, DUR=%d, Marker=0x%x", aTrackPortInfo.iMimeType.get_cstr(), aTrackPortInfo.iTrackId, actualdatasize, mcc.get_converted_ts(1000), timestamp, aTrackPortInfo.iSeqNum, tsDelta, markerInfo));
 
@@ -8284,13 +8287,21 @@ bool PVMFMP4FFParserNode::SendBeginOfClipCommand(PVMP4FFNodeTrackPortInfo& aTrac
     return true;
 }
 
-
-
-
-
-
-
-
-
-
-
+bool PVMFMP4FFParserNode::setProtocolInfo(Oscl_Vector<PvmiKvp*, OsclMemAllocator>& aInfoKvpVec)
+{
+    if (aInfoKvpVec.empty())
+    {
+        return false;
+    }
+    for (uint32 i = 0; i < aInfoKvpVec.size(); i++)
+    {
+        if ((aInfoKvpVec[i]) && (aInfoKvpVec[i]->key))
+        {
+            if (oscl_strstr(aInfoKvpVec[i]->key, PVSMOOTHSTREAMING_TOTAL_NUM_MOOFS_KEY))
+            {
+                iTotalMoofFrags = aInfoKvpVec[i]->value.uint32_value;
+            }
+        }
+    }
+    return true;
+}

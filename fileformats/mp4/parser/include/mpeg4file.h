@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1296,6 +1296,26 @@ class Mpeg4File : public IMpeg4File, public Parentable
         // For DRM Atom.
         bool IsTFRAPresentForTrack(uint32 TrackId, bool oVideoAudioTextTrack);
 
+        bool MoreMoofAtomsExpected(uint32 aSeqNumNextMoofToBeParsed) const
+        {
+            //This API is called when there is no data to parse a valid box in MP4FF
+            //By this time aSeqNumNextMoofToBeParsed would be pointing to next
+            //expected moof's seqnum.
+            //Let us suppose file has 300 moofs, and parser lib already has
+            //instantiated last moof. In that case aSeqNumNextMoofToBeParsed = 301
+            //and we should return false.
+            //However, if MP4FF has parsed 299 atoms, then query would be for seq num
+            //300 and we should return true.
+            bool retval = false;
+            if (aSeqNumNextMoofToBeParsed &&
+                    (aSeqNumNextMoofToBeParsed <= iTotalMoofAtmsCnt))
+            {
+                retval = true;
+            }
+            PVMF_MP4FFPARSER_LOGMEDIASAMPELSTATEVARIABLES((0, "Mpeg4File::MoreMoofAtomsExpected - aSeqNumNextMoofToBeParsed %u iTotalMoofAtmsCnt %u retval %d Size %d SeqNum %u", aSeqNumNextMoofToBeParsed, iTotalMoofAtmsCnt, retval, _pMovieFragmentAtomVec->size(), (uint32)_pMovieFragmentAtomVec->back()->getSequenceNumber()));
+            return retval;
+        }
+
         /*
         This function has been modified to check the entry count in TFRA for all tracks are equal.
         The code change is under macro DISABLE_REPOS_ON_CLIPS_HAVING_UNEQUAL_TFRA_ENTRY_COUNT
@@ -1325,6 +1345,7 @@ class Mpeg4File : public IMpeg4File, public Parentable
                 OsclFileHandle* aHandle,
                 Oscl_FileServer* aFileServSession);
         void DestroyDataStreamForExternalDownload();
+        virtual void SetMoofAtomsCnt(const uint32 aMoofAtmsCnt);
 
         MP4_FF_FILE * _fp;
     private:
@@ -1492,7 +1513,7 @@ class Mpeg4File : public IMpeg4File, public Parentable
         uint32 numLyricist;
         uint32 numComposer;
         uint32 numVersion;
-
+        uint32 iTotalMoofAtmsCnt;
 };
 
 #endif // MPEG4FILE_H_INCLUDED

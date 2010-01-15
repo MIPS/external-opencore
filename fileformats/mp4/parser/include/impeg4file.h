@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -450,7 +450,7 @@ class IMpeg4File : public ISucceedFail
                                              int32 &aNumentriesadded, uint32 &aID3ValueCount) = 0;
         virtual PVMFStatus ReleaseMetadataValue(PvmiKvp& aValueKVP) = 0;
         virtual PVMFStatus InitMetaData(PVMFMetadataList* aAvailableMetadataKeys) = 0;
-
+        virtual void SetMoofAtomsCnt(const uint32 aMoofAtmsCnt) = 0;
 
 };
 

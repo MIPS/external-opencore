@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -115,6 +115,7 @@ Mpeg4File::Mpeg4File(MP4_FF_FILE *fp,
     numLyricist = 0;
     numComposer = 0;
     numVersion = 0;
+    iTotalMoofAtmsCnt = 0; //Zero is a chosen to be sentinal because 0 is invalid value if mvex atom is present.
     // Create miscellaneous vector of atoms
     PV_MP4_FF_NEW(fp->auditCB, trackAtomVecType, (), _pTrackAtomVec);
     PV_MP4_FF_NEW(fp->auditCB, movieFragmentAtomVecType, (), _pMovieFragmentAtomVec);
@@ -2332,9 +2333,23 @@ int32 Mpeg4File::getNextBundledAccessUnits(const uint32 trackID,
                 if (return1 == END_OF_TRACK)
                 {
                     *n = totalSampleRead;
-                    _movieFragmentIdx[moofIdx] = 0;
+                    if (!MoreMoofAtomsExpected(_movieFragmentSeqIdx[moofIdx]))
+                    {
+                        _movieFragmentIdx[moofIdx] = 0;
+                    }
+                    else
+                    {
+                        //We have run out of moofs and theres no data to be parsed
+                        if (totalSampleRead == 0)
+                        {
+                            return1 = INSUFFICIENT_DATA;
+                        }
+                        else
+                        {
+                            return1 = EVERYTHING_FINE;
+                        }
+                    }
                     return return1;
-
                 }
             }
             else
@@ -2461,7 +2476,14 @@ int32 Mpeg4File::getNextBundledAccessUnits(const uint32 trackID,
                                     else
                                     {
                                         // We have run out of MOOF atoms so report insufficient data.
-                                        return  INSUFFICIENT_DATA;
+                                        if (totalSampleRead == 0)
+                                        {
+                                            return  INSUFFICIENT_DATA;
+                                        }
+                                        else
+                                        {
+                                            return EVERYTHING_FINE;
+                                        }
                                     }
                                 }
 
@@ -2563,7 +2585,7 @@ int32 Mpeg4File::getNextBundledAccessUnits(const uint32 trackID,
                             }
                             break;
                         }
-                        else if (!moofParsingCompleted)
+                        else
                         {
                             if (currMoofNum != (uint32) _pMovieFragmentAtom->getSequenceNumber())
                             {
@@ -2627,7 +2649,9 @@ int32 Mpeg4File::getNextBundledAccessUnits(const uint32 trackID,
                     MovieFragmentAtom *pMovieFragmentAtom = NULL;
 
                     if (movieFragmentIdx < _pMovieFragmentAtomVec->size())
+                    {
                         pMovieFragmentAtom = (*_pMovieFragmentAtomVec)[movieFragmentIdx];
+                    }
 
                     if (pMovieFragmentAtom != NULL)
                     {
@@ -2640,7 +2664,6 @@ int32 Mpeg4File::getNextBundledAccessUnits(const uint32 trackID,
                                 if (trackfragment->getTrackId() == trackID)
                                 {
                                     return1 = pMovieFragmentAtom->getNextBundledAccessUnits(trackID, n, totalSampleRead, pgau);
-                                    PVMF_MP4FFPARSER_LOGMEDIASAMPELSTATEVARIABLES((0, "Mpeg4File::getNextBundledAccessUnits return %d", return1));
                                     totalSampleRead += *n;
                                     if (return1 != END_OF_TRACK)
                                     {
@@ -2676,9 +2699,24 @@ int32 Mpeg4File::getNextBundledAccessUnits(const uint32 trackID,
                                     }
                                     else
                                     {
-                                        return END_OF_TRACK;
+                                        if (!MoreMoofAtomsExpected(_movieFragmentSeqIdx[moofIdx]))
+                                        {
+                                            return END_OF_TRACK;
+                                        }
+                                        else
+                                        {
+                                            //We have run out of moofs and theres no data to be parsed
+                                            *n = totalSampleRead;
+                                            if (totalSampleRead == 0)
+                                            {
+                                                return INSUFFICIENT_DATA;
+                                            }
+                                            else
+                                            {
+                                                return EVERYTHING_FINE;
+                                            }
+                                        }
                                     }
-
                                 }
                                 else
                                 {
@@ -2714,7 +2752,23 @@ int32 Mpeg4File::getNextBundledAccessUnits(const uint32 trackID,
                                 }
                                 else
                                 {
-                                    return END_OF_TRACK;
+                                    if (MoreMoofAtomsExpected(_movieFragmentSeqIdx[moofIdx]))
+                                    {
+                                        //We have run out of moofs and theres no data to be parsed
+                                        *n = totalSampleRead;
+                                        if (totalSampleRead == 0)
+                                        {
+                                            return INSUFFICIENT_DATA;
+                                        }
+                                        else
+                                        {
+                                            return EVERYTHING_FINE;
+                                        }
+                                    }
+                                    else
+                                    {
+                                        return END_OF_TRACK;
+                                    }
                                 }
 
                             }
@@ -2747,12 +2801,48 @@ int32 Mpeg4File::getNextBundledAccessUnits(const uint32 trackID,
                         }
                         else if (oAllMoofParsed)
                         {
-                            _movieFragmentIdx[moofIdx]++;
-                            _movieFragmentSeqIdx[moofIdx]++;
+                            if (MoreMoofAtomsExpected(_movieFragmentSeqIdx[moofIdx]))
+                            {
+                                //We have run out of moofs and theres no data to be parsed
+                                *n = totalSampleRead;
+                                if (totalSampleRead == 0)
+                                {
+                                    return INSUFFICIENT_DATA;
+                                }
+                                else
+                                {
+                                    return EVERYTHING_FINE;
+                                }
+                            }
+                            else
+                            {
+                                PVMF_MP4FFPARSER_LOGMEDIASAMPELSTATEVARIABLES((0, "Mpeg4File::getNextBundledAccessUnits return END_OF_TRACK"));
+                                return END_OF_TRACK;
+                            }
                         }
 
                     }
                 }
+            }
+        }
+        if (END_OF_TRACK == ret)
+        {
+            if (MoreMoofAtomsExpected(_movieFragmentSeqIdx[moofIdx]))
+            {
+                //We have run out of moofs and theres no data to be parsed
+                *n = totalSampleRead;
+                if (totalSampleRead == 0)
+                {
+                    ret = INSUFFICIENT_DATA;
+                }
+                else
+                {
+                    ret = EVERYTHING_FINE;
+                }
+            }
+            else
+            {
+                ret = END_OF_TRACK;
             }
         }
         return ret;
@@ -3859,6 +3949,7 @@ uint32 Mpeg4File::resetPlayback(uint32 time, uint16 numTracks, uint32 *trackList
                         }
                     }
 
+
                 }
 
                 if (_pmovieAtom != NULL)
@@ -4237,8 +4328,23 @@ int32 Mpeg4File::peekNextBundledAccessUnits(const uint32 trackID,
                 if (return1 == END_OF_TRACK)
                 {
                     *n = totalSampleRead;
-                    _peekMovieFragmentIdx[moofIdx] = 0;
-                    _peekMovieFragmentSeqIdx[moofIdx] = 1;
+                    if (!MoreMoofAtomsExpected(_movieFragmentSeqIdx[moofIdx]))
+                    {
+                        _peekMovieFragmentIdx[moofIdx] = 0;
+                        _peekMovieFragmentSeqIdx[moofIdx] = 1;
+                    }
+                    else
+                    {
+                        //We have run out of moofs and theres no data to be parsed
+                        if (*n == 0)
+                        {
+                            return1 = INSUFFICIENT_DATA;
+                        }
+                        else
+                        {
+                            return1 = EVERYTHING_FINE;
+                        }
+                    }
                     return return1;
                 }
             }
@@ -4277,7 +4383,14 @@ int32 Mpeg4File::peekNextBundledAccessUnits(const uint32 trackID,
                             if ((currPos + atomSize) > fileSize)
                             {
                                 AtomUtils::seekFromStart(_movieFragmentFilePtr, currPos);
-                                return  INSUFFICIENT_DATA;
+                                if (*n == 0)
+                                {
+                                    return  INSUFFICIENT_DATA;
+                                }
+                                else
+                                {
+                                    return EVERYTHING_FINE;
+                                }
                             }
                             if (atomType == MOVIE_FRAGMENT_ATOM)
                             {
@@ -4414,6 +4527,21 @@ int32 Mpeg4File::peekNextBundledAccessUnits(const uint32 trackID,
                     }
                     _peekMovieFragmentIdx[moofIdx]++;
 
+                }
+            }
+        }
+        if (END_OF_TRACK == ret)
+        {
+            if (MoreMoofAtomsExpected(_movieFragmentSeqIdx[moofIdx]))
+            {
+                //We have run out of moofs and theres no data to be parsed
+                if (*n == 0)
+                {
+                    ret = INSUFFICIENT_DATA;
+                }
+                else
+                {
+                    ret = EVERYTHING_FINE;
                 }
             }
         }
@@ -8475,10 +8603,9 @@ void Mpeg4File::DeleteAPICStruct(PvmfApicStruct*& aAPICStruct)
     aAPICStruct = NULL;
 }
 
+void Mpeg4File::SetMoofAtomsCnt(const uint32 aMoofAtmsCnt)
+{
 
-
-
-
-
-
+    iTotalMoofAtmsCnt = aMoofAtmsCnt;
+}
 

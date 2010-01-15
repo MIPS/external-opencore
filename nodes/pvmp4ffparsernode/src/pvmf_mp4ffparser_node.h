@@ -281,6 +281,7 @@ class PVMFMP4FFParserNode
         void setDownloadProgressInterface(PVMFDownloadProgressInterface*);
         void playResumeNotification(bool aDownloadComplete);
         void notifyDownloadComplete();
+        virtual bool setProtocolInfo(Oscl_Vector<PvmiKvp*, OsclMemAllocator>& aInfoKvpVec);
 
         // From OsclTimer
         void TimeoutOccurred(int32 timerID, int32 timeoutInfo);
@@ -588,10 +589,10 @@ class PVMFMP4FFParserNode
         bool iOpenFileOncePerTrack;
         int32 iDataRate;
         int32 minFileOffsetTrackID;
+        uint32 iTotalMoofFrags;
         PVMFMetadataList iAvailableMetadataKeys;
         //This will hold the total number of ID3 specific values present in the value list
         uint32 iTotalID3MetaDataTagInValueList;
-
 };
 
 
