@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -95,6 +95,10 @@ PVMFFormatType PV2WayMedia::GetMediaFormat(const oscl_wchar* aFileName)
     {
         inputFileFormatType = PVMF_MIME_H2632000;
 
+    }
+    else if (oscl_strncmp(extn, ".h264", count) == 0)
+    {
+        inputFileFormatType = PVMF_MIME_H264_VIDEO_RAW;
     }
     else if (oscl_strncmp(extn, ".yuv420", count) == 0)
     {

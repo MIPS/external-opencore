@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -99,7 +99,7 @@ PVCodecType_t GetUiCodecTypeFrom245Index(int32 index);
 void GetCodecInfo(PS_Capability capability, CodecCapabilityInfo& info);
 ErrorProtectionLevel_t GetEpl(uint16 al_index);
 void printBuffer(PVLogger* logger, const uint8* buffer, uint16 len);
-unsigned GetFormatSpecificInfo(PS_DataType pDataType, uint8*& fsi);
+uint32 GetFormatSpecificInfo(PS_DataType pDataType, uint8*& fsi);
 PS_Capability LookupCapability(PS_TerminalCapabilitySet pTcs, uint16 cap_entry_num);
 bool IsTransmitOnlyAltCapSet(PS_TerminalCapabilitySet pTcs, PS_AlternativeCapabilitySet pAltCapSet);
 PVMFStatus VerifyCodecs(PS_TerminalCapabilitySet pTcs,
@@ -127,7 +127,9 @@ void FillG723Capability(PS_G7231 g723caps);
 CodecCapabilityInfo* GetCodecCapabilityInfo(PS_G7231 capability);
 void FillAmrCapability(PS_GenericCapability amrCaps);
 CodecCapabilityInfo* GetCodecCapabilityInfoAmr(PS_GenericCapability capability);
+void FillH264Capability(VideoCodecCapabilityInfo& video_codec_info, PS_GenericCapability h264caps, bool includeCsi);
 CodecCapabilityInfo* GetCodecCapabilityInfoAvc(PS_GenericCapability capability);
+void ParseH264Capability(PS_GenericCapability h264caps, CPvtAvcCapability& h264Capability);
 void FillM4vCapability(VideoCodecCapabilityInfo& video_codec_info, PS_GenericCapability m4vcaps);
 CodecCapabilityInfo* GetCodecCapabilityInfoMpeg4(PS_GenericCapability capability);
 void FillUserInputCapability(CodecCapabilityInfo& codec_info, PS_UserInputCapability userinputCaps);
@@ -140,7 +142,16 @@ unsigned GetMaxFrameRate_AVC(PS_GenericCapability avcCaps);
 unsigned GetMaxBitrate(PS_DataType pDataType);
 unsigned GetVideoFrameSize(PS_DataType pDataType, bool width);
 unsigned GetVideoFrameSize_H263(PS_H263VideoCapability h263caps, bool width);
-unsigned GetVideoFrameSize_M4V(PS_GenericCapability m4vcaps , bool width);
+unsigned GetVideoFrameSize_M4V(PS_GenericCapability m4vcaps, bool width);
+
+/**
+  * Get video size from H.264 capability
+  *
+  * @param aAvcCaps H.264 generic capability struct
+  * @param aWidth   If true will function will return width of video frame, if false it returns height.
+  * @returns width or height of video frame size depending on aWidth param.
+  **/
+unsigned GetVideoFrameSize_AVC(PS_GenericCapability aAvcCaps, bool aWidth);
 
 bool FindCodecForMediaType(PV2WayMediaType media, Oscl_Vector<CodecCapabilityInfo*, OsclMemAllocator>&list, int* index);
 bool IsSupported(Oscl_Vector<H324ChannelParameters, PVMFTscAlloc>& list, PV2WayMediaType media, CodecCapabilityInfo& codec_info, int*index);

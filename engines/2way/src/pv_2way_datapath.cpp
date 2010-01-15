@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -195,13 +195,6 @@ bool CPV2WayDatapath::Close()
     uint32 i;
     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "CPV2WayDatapath::Close path type %d, state %d\n", iType, iState));
 
-    if (iFsi)
-    {
-        OSCL_DEFAULT_FREE(iFsi);
-        iFsi = NULL;
-    }
-    iFsiLen = 0;
-
     switch (iState)
     {
         default:
@@ -301,8 +294,6 @@ void CPV2WayDatapath::ConstructL()
     iPortPairList.reserve(MAX_DATAPATH_NODES);
     iParentPathList.reserve(MAX_PARENT_PATHS);
     iDependentPathList.reserve(MAX_DEPENDENT_PATHS);
-    iFsi = NULL;
-    iFsiLen = 0;
 }
 
 void CPV2WayDatapath::SetState(TPV2WayDatapathState aState)
@@ -838,7 +829,7 @@ void CPV2WayDatapath::CheckOpen()
 
                 if (checkPort)
                 {
-                    switch (CheckConfig(EConfigBeforeStart, iNodeList[i]))
+                    switch (CheckConfig(EConfigBeforePrepare, iNodeList[i]))
                     {
                         case PVMFPending:
                             continue;
@@ -1542,26 +1533,6 @@ PVMFFormatType CPV2WayDatapath::GetPortFormatType(PVMFPortInterface &aPort,
     }
 
     return format_datapath_media_type;
-}
-
-void CPV2WayDatapath::SetFormatSpecificInfo(uint8* fsi, uint16 fsi_len)
-{
-    if (iFsi)
-    {
-        OSCL_DEFAULT_FREE(iFsi);
-        iFsi = NULL;
-        iFsiLen = 0;
-    }
-    iFsi = (uint8*)OSCL_DEFAULT_MALLOC(fsi_len);
-    iFsiLen = fsi_len;
-    oscl_memcpy(iFsi, fsi, iFsiLen);
-}
-
-
-uint8* CPV2WayDatapath::GetFormatSpecificInfo(uint32* len)
-{
-    *len = iFsiLen;
-    return iFsi;
 }
 
 void CPV2WayDatapath::SetSourceSinkFormat(PVMFFormatType aFormatType)

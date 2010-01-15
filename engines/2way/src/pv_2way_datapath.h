@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -255,12 +255,6 @@ class CPV2WayDatapath : public HeapBase, public MPV2WayNodeCommandObserver
 
         virtual ~CPV2WayDatapath()
         {
-            if (iFsi)
-            {
-                OSCL_DEFAULT_FREE(iFsi);
-                iFsi = NULL;
-                iFsiLen = 0;
-            }
             iReadSourceSinkFormatLock.Close();
         };
 
@@ -298,8 +292,7 @@ class CPV2WayDatapath : public HeapBase, public MPV2WayNodeCommandObserver
         void CommandHandler(PV2WayNodeCmdType aType, const PVMFCmdResp& aResponse);
 
         void CheckPath();
-        void SetFormatSpecificInfo(uint8* fsi, uint16 fsi_len);
-        uint8* GetFormatSpecificInfo(uint32* len);
+
         void SetSourceSinkFormat(PVMFFormatType aFormatType);
         PVMFFormatType GetSourceSinkFormat() const;
     protected:
@@ -392,9 +385,7 @@ class CPV2WayDatapath : public HeapBase, public MPV2WayNodeCommandObserver
         Oscl_Vector<CPV2WayDatapath *, BasicAlloc> iParentPathList;
         //List of datapaths that depend on this datapath
         Oscl_Vector<CPV2WayDatapath *, BasicAlloc> iDependentPathList;
-        // Format specific info associated with this datapath
-        uint8* iFsi;
-        uint32 iFsiLen;
+
         bool iEnginePausedOnce;
 };
 

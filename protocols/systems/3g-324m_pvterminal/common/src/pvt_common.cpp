@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -438,6 +438,9 @@ OSCL_EXPORT_REF PVMFFormatType PVCodecTypeToPVMFFormatType(PVCodecType_t aCodecT
         case PV_VID_TYPE_MPEG4:
             aFormatType = PVMF_MIME_M4V;
             break;
+        case PV_VID_TYPE_H264:
+            aFormatType = PVMF_MIME_H264_VIDEO_RAW;
+            break;
         default:
             break;
     }
@@ -463,6 +466,10 @@ OSCL_EXPORT_REF PVCodecType_t PVMFFormatTypeToPVCodecType(PVMFFormatType aFormat
     else if (aFormatType == PVMF_MIME_M4V)
     {
         aCodecType = PV_VID_TYPE_MPEG4;
+    }
+    else if (aFormatType == PVMF_MIME_H264_VIDEO_RAW)
+    {
+        aCodecType = PV_VID_TYPE_H264;
     }
     else if (aFormatType == PVMF_MIME_USERINPUT_BASIC_STRING)
     {
@@ -574,6 +581,7 @@ OSCL_EXPORT_REF PV2WayMediaType GetMediaType(PVCodecType_t codec)
             break;
         case PV_VID_TYPE_H263:
         case PV_VID_TYPE_MPEG4:
+        case PV_VID_TYPE_H264:
             media_type = PV_VIDEO;
             break;
         case PV_UI_BASIC_STRING:
@@ -780,6 +788,7 @@ OSCL_EXPORT_REF bool CodecRequiresFsi(PVCodecType_t codec)
     switch (codec)
     {
         case PV_VID_TYPE_MPEG4:
+        case PV_VID_TYPE_H264:
             ret = true;
             break;
         default:
@@ -795,10 +804,12 @@ OSCL_EXPORT_REF uint32 GetPriorityIndexForPVMFFormatType(PVMFFormatType aFormatT
 {
     if (aFormatType == PVMF_MIME_AMR_IF2)
         return PV2WAY_ENGINE_PRIORITY_INDEX_FOR_FORMAT_TYPE_START;
-    else if (aFormatType == PVMF_MIME_M4V)
+    else if (aFormatType == PVMF_MIME_H264_VIDEO_RAW)
         return PV2WAY_ENGINE_PRIORITY_INDEX_FOR_FORMAT_TYPE_START + 1;
-    else if (aFormatType == PVMF_MIME_H2632000)
+    else if (aFormatType == PVMF_MIME_M4V)
         return PV2WAY_ENGINE_PRIORITY_INDEX_FOR_FORMAT_TYPE_START + 2;
+    else if (aFormatType == PVMF_MIME_H2632000)
+        return PV2WAY_ENGINE_PRIORITY_INDEX_FOR_FORMAT_TYPE_START + 3;
     else
         return PV2WAY_ENGINE_PRIORITY_INDEX_FOR_FORMAT_TYPE_END;
 }

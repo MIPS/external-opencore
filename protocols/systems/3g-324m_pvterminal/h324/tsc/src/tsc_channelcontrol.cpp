@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,17 +45,12 @@ TSC_channelcontrol::TSC_channelcontrol(OlcList& aOlcs,
         iTSCclc(aTSCclc),
         iTSCcomponent(aTSCcomponent)
 {
-    iTSCcomponent->addRef();
     iLogger = PVLogger::GetLoggerObject("3g324m.h245user");
 };
 
 
 void TSC_channelcontrol::Reset()
 {
-    if (iTSCcomponent)
-    {
-        iTSCcomponent->removeRef();
-    }
     iTSCcomponent = NULL;
 }
 

@@ -75,8 +75,6 @@
 #include "pvmi_config_and_capability_utils.h"
 #endif
 
-
-
 #define INVALID_MUX_CODE 0xFF
 #define DEF_NUM_MEDIA_DATA 100
 #define SKEW_CHECK_INTERVAL 2000
@@ -145,6 +143,7 @@ class H223LogicalChannel : public PvmfPortBaseImpl,
 
         /* allocate resources in this function */
         virtual void Init() = 0;
+        virtual TPVDirection GetDirection() = 0;
 
         // LogicalChannelInfo virtuals
         TPVChannelId GetLogicalChannelNumber()
@@ -214,7 +213,7 @@ class H223LogicalChannel : public PvmfPortBaseImpl,
         virtual void Resume();
 
         // Set format specific information
-        PVMFStatus SetFormatSpecificInfo(uint8* info, uint16 info_len);
+        PVMFStatus SetFormatSpecificInfo(uint8* info, uint32 info_len);
 
         void SetTimestampOffset(uint32 offset)
         {
@@ -266,14 +265,12 @@ class H223LogicalChannel : public PvmfPortBaseImpl,
         OsclMemAllocator iKvpMemAlloc;
         uint32 iNumMediaData;
         uint32 iMaxSduSize;
-        bool iSendFormatSpecificInfo;
         uint32 iDatapathLatency;
         PVMFFormatType iMediaType;
         bool iPaused;
         PVMFMediaClock* iClock;
         int32 iAudioLatency;
         int32 iVideoLatency;
-
 };
 
 /* For outgoing A/V/C ( to be muxed) */
@@ -425,7 +422,6 @@ class H223OutgoingChannel : public H223LogicalChannel
         bool iWaitForRandomAccessPoint;
         uint32 iBufferSizeMs;
         OsclRefCounterMemFrag iFsiFrag;
-
 };
 
 

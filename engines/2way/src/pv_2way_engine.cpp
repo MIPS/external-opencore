@@ -73,6 +73,10 @@
 
 #include "pvmi_config_and_capability.h"
 
+#ifndef PVT_COMMON_H
+#include "pvt_common.h"
+#endif
+
 
 #ifdef MEM_TRACK
 #include "oscl_mem.h"
@@ -107,12 +111,11 @@ const uint32 resume_timestamp = 0;
 #define SYNC_LATE_MARGIN 1000000 // 10s
 
 //Preferred codecs
-#define VIDEO_CODEC_MPEG4 1
-#define VIDEO_CODEC_H263 2
-#define AUDIO_CODEC_GSM 3
-#define AUDIO_CODEC_G723 4
-#define PREFERRED_VIDEO_CODEC VIDEO_CODEC_MPEG4
-#define PREFERRED_AUDIO_CODEC AUDIO_CODEC_GSM
+#define VIDEO_CODEC_H264 1
+#define VIDEO_CODEC_MPEG4 2
+#define VIDEO_CODEC_H263 3
+#define AUDIO_CODEC_GSM 4
+#define AUDIO_CODEC_G723 5
 
 const uint32 KSamplingRate  = 8000;
 const uint32 KBitsPerSample = 16;
@@ -260,8 +263,6 @@ CPV324m2Way::CPV324m2Way() :
         iPendingTscReset(-1),
         iPendingAudioEncReset(-1),
         iPendingVideoEncReset(-1),
-        iAudioDatapathLatency(0),
-        iVideoDatapathLatency(0),
         iReferenceCount(1)
 {
     iLogger = PVLogger::GetLoggerObject("2wayEngine");
@@ -275,7 +276,6 @@ CPV324m2Way::CPV324m2Way() :
     iAudioEncPVUuid = PVAMREncExtensionUUID;
 #endif
 
-    iAddDataSourceVideoCmd = NULL;
 #ifdef PV2WAY_USE_OMX
     OMX_MasterInit();
 #endif // PV2WAY_USE_OMX
@@ -879,17 +879,8 @@ void CPV324m2Way::DoAddDataSource(TPV2WayNode& aNode,
             //Add tsc node to datapath
             DoAddDataSourceTscNode(datapathnode, datapath, cmd);
 
-            // Check if FSI exists and Extension Interface is queried
-            uint32 fsi_len = 0;
-            if (datapath->GetFormatSpecificInfo(&fsi_len) &&
-                    iVideoEncNodeInterface.iState == PV2WayNodeInterface::NoInterface)
-            {
-                iAddDataSourceVideoCmd = cmd;
-            }
-            else
-            {
-                datapath->SetCmd(cmd);
-            }
+            datapath->SetCmd(cmd);
+
         }
         else
         {
@@ -901,7 +892,8 @@ void CPV324m2Way::DoAddDataSource(TPV2WayNode& aNode,
 
     else if ((datapath->GetSourceSinkFormat() == PVMF_MIME_H2632000) ||
              (datapath->GetSourceSinkFormat() == PVMF_MIME_H2631998) ||
-             (datapath->GetSourceSinkFormat() == PVMF_MIME_M4V))
+             (datapath->GetSourceSinkFormat() == PVMF_MIME_M4V)  ||
+             (datapath->GetSourceSinkFormat() == PVMF_MIME_H264_VIDEO_RAW))
     {
         // video media type
         if (datapath->GetState() == EClosed)
@@ -1219,6 +1211,31 @@ void CPV324m2Way::DoAddDataSinkNodeForH263_M4V(TPV2WayNode& aNode,
                     (0, "CPV324m2Way::DoAddDataSinkNodeForH263_M4V - done\n"));
 }
 
+void CPV324m2Way::DoAddDataSinkNodeForAVC(TPV2WayNode& arNode,
+        CPVDatapathNode& arDatapathnode,
+        CPV2WayDecDataChannelDatapath* apDatapath)
+{
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "CPV324m2Way::DoAddDataSinkNodeForAVC"));
+    //Add sink node to datapath
+    TPV2WayNode* pSinkNode = &arNode;
+    arDatapathnode.iNode.iNode = pSinkNode->iNode;
+    arDatapathnode.iNode.iSessionId = pSinkNode->iSessionId;
+    arDatapathnode.iConfigure = NULL;
+    arDatapathnode.iCanNodePause = false;
+    arDatapathnode.iLoggoffOnReset = true;
+    arDatapathnode.iIgnoreNodeState = false;
+    arDatapathnode.iInputPort.iRequestPortState = EPVMFNodeInitialized;
+    arDatapathnode.iInputPort.iPortSetType = EConnectedPortFormat;
+    arDatapathnode.iInputPort.iFormatType = PVMF_MIME_FORMAT_UNKNOWN;
+    arDatapathnode.iInputPort.iPortTag = PV2WAY_IN_PORT;
+    arDatapathnode.iOutputPort.iFormatType = PVMF_MIME_FORMAT_UNKNOWN;
+    arDatapathnode.iOutputPort.iPortTag = PV2WAY_UNKNOWN_PORT;
+    apDatapath->AddNode(arDatapathnode);
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "CPV324m2Way::DoAddDataSinkNodeForAVC - done\n"));
+}
+
 
 void CPV324m2Way::DoAddDataSinkGeneric(TPV2WayNode& aNode,
                                        CPVDatapathNode& datapathnode,
@@ -1253,7 +1270,8 @@ void CPV324m2Way::DoAddVideoDecNode(CPVDatapathNode& datapathnode,
     if (iVideoDecNode)
     {
         datapathnode.iNode = iVideoDecNode;
-        datapathnode.iConfigure = NULL;
+        datapathnode.iConfigure = this;
+        datapathnode.iConfigTime = EConfigBeforeStart;
         datapathnode.iCanNodePause = true;
         datapathnode.iIgnoreNodeState = false;
         datapathnode.iInputPort.iRequestPortState = EPVMFNodeInitialized;
@@ -1360,7 +1378,8 @@ void CPV324m2Way::DoAddDataSink(TPV2WayNode& aNode,
     }
 
     if ((datapath->GetSourceSinkFormat() == PVMF_MIME_H2632000) ||
-            (datapath->GetSourceSinkFormat() == PVMF_MIME_M4V))
+            (datapath->GetSourceSinkFormat() == PVMF_MIME_M4V)  ||
+            (datapath->GetSourceSinkFormat() == PVMF_MIME_H264_VIDEO_RAW))
     {
         if (datapath)
         {
@@ -1372,9 +1391,16 @@ void CPV324m2Way::DoAddDataSink(TPV2WayNode& aNode,
                 //Add tsc node to datapath
                 DoAddDataSinkTscNode(datapathnode, datapath, cmd);
 
-                //Add sink node to datapath
-                DoAddDataSinkNodeForH263_M4V(aNode, datapathnode, datapath);
 
+                //Add sink node to datapath
+                if (datapath->GetSourceSinkFormat() != PVMF_MIME_H264_VIDEO_RAW)
+                {
+                    DoAddDataSinkNodeForH263_M4V(aNode, datapathnode, datapath);
+                }
+                else
+                {
+                    DoAddDataSinkNodeForAVC(aNode, datapathnode, datapath);
+                }
                 datapath->SetCmd(cmd);
                 datapath->SetChannelId(cmd->iPvtCmdData);
             }
@@ -2163,6 +2189,16 @@ void CPV324m2Way::HandleVideoDecNodeCmd(PV2WayNodeCmdType aType,
 {
     OSCL_UNUSED_ARG(aType);
     OSCL_UNUSED_ARG(aResponse);
+
+    if (iVideoDecDatapath)
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE,
+                        (0, "CPV324m2Way::HandleVideoDecNodeCmd type %d, video dec path state %d\n",
+                         aType, iVideoDecDatapath->GetState()));
+    }
+
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "CPV324m2Way::HandleVideoDecNodeCmd - done\n"));
 }
 
 void CPV324m2Way::HandleVideoEncNodeCmd(PV2WayNodeCmdType aType,
@@ -2188,18 +2224,6 @@ void CPV324m2Way::HandleVideoEncNodeCmd(PV2WayNodeCmdType aType,
                 {
                     iVideoEncNodeInterface.iState = PV2WayNodeInterface::HasInterface;
                     // Set the FormatSpecificInfo if available
-                    uint32 fsi_len = 0;
-                    uint8* fsi = iVideoEncDatapath->GetFormatSpecificInfo(&fsi_len);
-                    if (fsi && fsi_len && iVideoEncNodeInterface.iInterface)
-                    {
-                        OSCL_STATIC_CAST(PVMp4H263EncExtensionInterface *,
-                                         iVideoEncNodeInterface.iInterface)->SetFSIParam(fsi, fsi_len);
-                        if (iAddDataSourceVideoCmd)
-                        {
-                            iVideoEncDatapath->SetCmd(iAddDataSourceVideoCmd);
-                            iAddDataSourceVideoCmd = NULL;
-                        }
-                    }
                 }
                 else
                 {
@@ -2208,7 +2232,6 @@ void CPV324m2Way::HandleVideoEncNodeCmd(PV2WayNodeCmdType aType,
                 }
 
             }
-
             CheckState();
             break;
 
@@ -3051,7 +3074,7 @@ void CPV324m2Way::SetDefaults()
     }
     iSinkNodes.clear();
     iSinkNodes.destroy();
-    iAddDataSourceVideoCmd = NULL;
+
     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                     (0, "CPV324m2Way::SetDefaults - done\n"));
     return;
@@ -3745,18 +3768,7 @@ PVMFStatus CPV324m2Way::ConfigureNode(CPVDatapathNode *aNode)
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_INFO, (0, "CPV324m2Way::ConfigureNode configuring video enc node\n"));
 
-
-        PVMp4H263EncExtensionInterface *ptr =
-            (PVMp4H263EncExtensionInterface *) iVideoEncNodeInterface.iInterface;
-
-
-        uint32 bitrate_bps_100 = VIDEO_ENCODER_BITRATE / 100;
-        PVMFVideoResolution aVideoResolution(VIDEO_ENCODER_WIDTH,
-                                             VIDEO_ENCODER_HEIGHT);
-        double aFrameRate = VIDEO_ENCODER_FRAME_RATE;
-
-        LogicalChannelInfo* lcn_info = NULL;
-
+        // check if tsc port is already there
         if (aNode->iOutputPort.iPortPair->iDestPort.GetStatus() != EHasPort)
         {
             PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_INFO,
@@ -3765,14 +3777,49 @@ PVMFStatus CPV324m2Way::ConfigureNode(CPVDatapathNode *aNode)
                             (0, "CPV324m2Way::ConfigureNode - done\n"));
             return PVMFPending;
         }
+
+        PVMp4H263EncExtensionInterface *ptr =
+            (PVMp4H263EncExtensionInterface *) iVideoEncNodeInterface.iInterface;
+
+        if (!ptr)
+        {
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_WARNING,
+                            (0, "CPV324m2Way::ConfigureNode video extension interface missing.\n"));
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                            (0, "CPV324m2Way::ConfigureNode - done\n"));
+            return PVMFFailure;
+        }
+
+        PVMFPortInterface* pPort = aNode->iOutputPort.iPortPair->iDestPort.GetPort();
+
+        if (!pPort)
+        {
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_WARNING,
+                            (0, "CPV324m2Way::ConfigureNode port interface missing.\n"));
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                            (0, "CPV324m2Way::ConfigureNode - done\n"));
+            return PVMFFailure;
+        }
+
+        // Get default settings for video encoder
+        uint32 bitrate_bps_100 = VIDEO_ENCODER_BITRATE / 100;
+        PVMFVideoResolution aVideoResolution(VIDEO_ENCODER_WIDTH,
+                                             VIDEO_ENCODER_HEIGHT);
+        double aFrameRate = VIDEO_ENCODER_FRAME_RATE;
+
+        LogicalChannelInfo* lcn_info = NULL;
+
+
+        // If remote had defined setting for video, then get those.
         if (iTerminalType == PV_324M)
         {
             OsclAny * tempInterface = NULL;
-            aNode->iOutputPort.iPortPair->iDestPort.GetPort()->QueryInterface(
-                PVH324MLogicalChannelInfoUuid, tempInterface);
+            pPort->QueryInterface(PVH324MLogicalChannelInfoUuid, tempInterface);
             lcn_info = OSCL_STATIC_CAST(LogicalChannelInfo*, tempInterface);
             if (lcn_info == NULL)
             {
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_WARNING,
+                                (0, "CPV324m2Way::ConfigureNode lcn missing.\n"));
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                                 (0, "CPV324m2Way::ConfigureNode - done\n"));
                 return PVMFFailure;
@@ -3818,19 +3865,29 @@ PVMFStatus CPV324m2Way::ConfigureNode(CPVDatapathNode *aNode)
                 }
             }
         }
-        if (ptr)
-        {
-            ptr->SetNumLayers(1);
-            ptr->SetOutputBitRate(0, bitrate_bps_100*100);
-            ptr->SetOutputFrameSize(0, aVideoResolution.width, aVideoResolution.height);
-            ptr->SetOutputFrameRate(0, (float)aFrameRate);
 
-            ptr->SetSegmentTargetSize(0, VIDEO_ENCODER_SEGMENT_SIZE);
-            ptr->SetRateControlType(0, VIDEO_ENCODER_RATE_CONTROL);
-            ptr->SetDataPartitioning(VIDEO_ENCODER_DATA_PARTITIONING);
-            ptr->SetRVLC(VIDEO_ENCODER_RVLC);
-            ptr->SetIFrameInterval(VIDEO_ENCODER_I_FRAME_INTERVAL);
+        // give settings to encoder using video extension interface
+
+        ptr->SetNumLayers(1);
+        ptr->SetOutputBitRate(0, bitrate_bps_100*100);
+        ptr->SetOutputFrameSize(0, aVideoResolution.width, aVideoResolution.height);
+        ptr->SetOutputFrameRate(0, (float)aFrameRate);
+
+        ptr->SetSegmentTargetSize(0, VIDEO_ENCODER_SEGMENT_SIZE);
+        ptr->SetRateControlType(0, VIDEO_ENCODER_RATE_CONTROL);
+        ptr->SetDataPartitioning(VIDEO_ENCODER_DATA_PARTITIONING);
+        ptr->SetRVLC(VIDEO_ENCODER_RVLC);
+        ptr->SetIFrameInterval(VIDEO_ENCODER_I_FRAME_INTERVAL);
+
+        // if FSI is found, pass it to video extension interface
+        uint32 len = 0;
+        const uint8* pFsi = iTSC324mInterface->GetFormatSpecificInfo(pPort, &len);
+        if (pFsi && len)
+        {
+            OSCL_STATIC_CAST(PVMp4H263EncExtensionInterface *,
+                             iVideoEncNodeInterface.iInterface)->SetFSIParam(OSCL_STATIC_CAST(uint8*, pFsi), len);
         }
+
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                         (0, "CPV324m2Way::ConfigureNode - done\n"));
         return PVMFSuccess;
@@ -3840,6 +3897,7 @@ PVMFStatus CPV324m2Way::ConfigureNode(CPVDatapathNode *aNode)
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_INFO,
                         (0, "CPV324m2Way::ConfigureNode configuring video dec node\n"));
+
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                         (0, "CPV324m2Way::ConfigureNode - done\n"));
         return PVMFSuccess;
@@ -4164,10 +4222,6 @@ PVMFStatus CPV324m2Way::EstablishChannel(TPVDirection aDir,
                                     aFormatType, this);
 
             }
-            uint32 audioLatency = LookupMioLatency(PVCodecTypeToPVMFFormatType(aCodec), true);
-            ((TSC_324m*)(iTscNode.iNode))->SetMioLatency((audioLatency + iAudioDatapathLatency), true);
-
-
             datapath = iAudioDecDatapath;
             codec_list = &iIncomingAudioCodecs;
         }
@@ -4177,12 +4231,6 @@ PVMFStatus CPV324m2Way::EstablishChannel(TPVDirection aDir,
             {
                 iVideoDecDatapath = CPV2WayDecDataChannelDatapath::NewL(iLogger, aFormatType, this);
             }
-            iVideoDecDatapath->SetFormatSpecificInfo(aFormatSpecificInfo, (uint16)aFormatSpecificInfoLen);
-
-            uint32 videoLatency = LookupMioLatency(PVCodecTypeToPVMFFormatType(aCodec), false);
-            ((TSC_324m*)(iTscNode.iNode))->SetMioLatency((videoLatency + iVideoDatapathLatency), false);
-
-
             datapath = iVideoDecDatapath;
             codec_list = &iIncomingVideoCodecs;
         }
@@ -4208,7 +4256,6 @@ PVMFStatus CPV324m2Way::EstablishChannel(TPVDirection aDir,
             {
                 iVideoEncDatapath = CPV2WayEncDataChannelDatapath::NewL(iLogger, aFormatType, this);
             }
-            iVideoEncDatapath->SetFormatSpecificInfo(aFormatSpecificInfo, (uint16)aFormatSpecificInfoLen);
 
             datapath = iVideoEncDatapath;
             codec_list = &iOutgoingVideoCodecs;
@@ -5470,68 +5517,6 @@ void CPV324m2Way::AddAudioDecoderNode()
                     (0, "CPV324m2Way::AddAudioDecoderNode - done\n"));
 }
 
-void CPV324m2Way::RegisterMioLatency(const char* aMimeStr,
-                                     bool aAudio,
-                                     PVMFFormatType aFmtType)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                    (0, "CPV324m2Way::RegisterMioLatency\n"));
-    uint32 latencyVal = 0;
-    if (aMimeStr != NULL)
-    {
-        const char* latencyStr = oscl_strstr(aMimeStr, "latency");
-        if (latencyStr != NULL)
-        {
-            const char* latVal = oscl_strstr(latencyStr, "=");
-            if (latVal != NULL)
-            {
-                latVal += 1;
-                PV_atoi(latVal, 'd', latencyVal);
-            }
-        }
-    }
-    if (aAudio)
-    {
-        iAudioLatency[(char*)aFmtType.getMIMEStrPtr()] = latencyVal;
-    }
-    else
-    {
-        iVideoLatency[(char*)aFmtType.getMIMEStrPtr()] = latencyVal;
-    }
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                    (0, "CPV324m2Way::RegisterMioLatency - done\n"));
-}
-
-uint32 CPV324m2Way::LookupMioLatency(PVMFFormatType aFmtType,
-                                     bool aAudio)
-{
-    Oscl_Map<char*, uint32, OsclMemAllocator>::iterator it;
-    if (aAudio)
-    {
-        it = iAudioLatency.find((char*)(aFmtType.getMIMEStrPtr()));
-        if (!(it == iAudioLatency.end()))
-        {
-            return (((*it).second));
-        }
-        else
-        {
-            return 0; //if no latency is specified, then default is 0
-        }
-    }
-    else
-    {
-        it = iVideoLatency.find((char*)aFmtType.getMIMEStrPtr());
-        if (!(it == iVideoLatency.end()))
-        {
-            return (((*it).second));
-        }
-        else
-        {
-            return 0; //if no latency is specified, then default is 0
-        }
-    }
-}
-
 #ifdef MEM_TRACK
 void CPV324m2Way::MemStats()
 {
@@ -5563,13 +5548,16 @@ bool CPV324m2Way::IsSupported(const PVMFFormatType& aInputFmtType, const PVMFFor
 {
     if (aInputFmtType == PVMF_MIME_AMR_IF2)
     {
-        if ((aOutputFmtType == PVMF_MIME_PCM8) || (aOutputFmtType == PVMF_MIME_PCM16))
+        if ((aOutputFmtType == PVMF_MIME_PCM8) ||
+                (aOutputFmtType == PVMF_MIME_PCM16))
         {
             return true;
         }
         return false;
     }
-    else if ((aInputFmtType ==  PVMF_MIME_M4V) || (aInputFmtType ==  PVMF_MIME_H2632000))
+    else if ((aInputFmtType ==  PVMF_MIME_M4V) ||
+             (aInputFmtType ==  PVMF_MIME_H2632000) ||
+             (aInputFmtType ==  PVMF_MIME_H264_VIDEO_RAW))
     {
         if (aOutputFmtType == PVMF_MIME_YUV420)
         {
@@ -5577,7 +5565,8 @@ bool CPV324m2Way::IsSupported(const PVMFFormatType& aInputFmtType, const PVMFFor
         }
         return false;
     }
-    else if ((aInputFmtType ==  PVMF_MIME_PCM8) || (aInputFmtType ==  PVMF_MIME_PCM16))
+    else if ((aInputFmtType ==  PVMF_MIME_PCM8) ||
+             (aInputFmtType ==  PVMF_MIME_PCM16))
     {
         if (aOutputFmtType == PVMF_MIME_AMR_IF2)
         {
@@ -5587,7 +5576,9 @@ bool CPV324m2Way::IsSupported(const PVMFFormatType& aInputFmtType, const PVMFFor
     }
     else if ((aInputFmtType ==  PVMF_MIME_YUV420))
     {
-        if (aOutputFmtType == PVMF_MIME_M4V || aOutputFmtType == PVMF_MIME_H2632000)
+        if (aOutputFmtType == PVMF_MIME_M4V ||
+                aOutputFmtType == PVMF_MIME_H2632000 ||
+                (aOutputFmtType ==  PVMF_MIME_H264_VIDEO_RAW))
         {
             return true;
         }
@@ -5608,6 +5599,7 @@ void CPV324m2Way::GetStackSupportedFormats()
     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                     (0, "CPV324m2Way::GetStackSupportedFormats\n"));
     iStackSupportedFormats[PVMF_MIME_AMR_IF2] = OSCL_NEW(CPvtAudioCapability, (PVMF_MIME_AMR_IF2, MAX_AMR_BITRATE));
+    iStackSupportedFormats[PVMF_MIME_H264_VIDEO_RAW] = OSCL_NEW(CPvtAvcCapability, (MAX_VIDEO_BITRATE));
     iStackSupportedFormats[PVMF_MIME_M4V] = OSCL_NEW(CPvtMpeg4Capability, (MAX_VIDEO_BITRATE));
     iStackSupportedFormats[PVMF_MIME_H2632000] = OSCL_NEW(CPvtH263Capability, (MAX_VIDEO_BITRATE));
     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
@@ -5736,7 +5728,6 @@ void CPV324m2Way::DoSelectFormat(TPVDirection aDir,
     // the engine can convert using a conversion node (ENG)
     (*the_app_map)[aFormatType] = aFormatTypeApp;
 
-    RegisterMioLatency(aFormatStr, true, aFormatType);
     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                     (0, "CPV324m2Way::DoSelectFormat - done\n"));
 

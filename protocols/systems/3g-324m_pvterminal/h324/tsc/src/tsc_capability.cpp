@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,39 @@
 
 #include "tsc_statemanager.h"
 #include "tsc_component.h"
+
+/*
+ * ITU-T H.241 (05/2006), 8.3 H.264 capabilities
+ * "GenericCapability/0.0.8.241.0.0.1", "ITU-T Rec. H.241 H.264 Video Capabilities"
+ * "GenericCapability/0.0.8.241.0.0.1/collapsing/41", "Profile"
+ * "GenericCapability/0.0.8.241.0.0.1/collapsing/42", "Level"
+ * "GenericCapability/0.0.8.241.0.0.1/collapsing/3" , "CustomMaxMBPS"
+ * "GenericCapability/0.0.8.241.0.0.1/collapsing/4" , "CustomMaxFS"
+ * "GenericCapability/0.0.8.241.0.0.1/collapsing/5" , "CustomMaxDPB"
+ * "GenericCapability/0.0.8.241.0.0.1/collapsing/6" , "CustomMaxBRandCPB"
+ * "GenericCapability/0.0.8.241.0.0.1/collapsing/7" , "MaxStaticMBPS"
+ * "GenericCapability/0.0.8.241.0.0.1/collapsing/8" , "max-rcmd-nal-unit-size"
+ * "GenericCapability/0.0.8.241.0.0.1/collapsing/9" , "max-nal-unit-size"
+ * "GenericCapability/0.0.8.241.0.0.1/collapsing/10", "SampleAspectRatiosSupported"
+ * "GenericCapability/0.0.8.241.0.0.1/collapsing/11", "AdditionalModesSupported"
+ * "GenericCapability/0.0.8.241.0.0.1/collapsing/12", "AdditionalDisplayCapabilities"
+ *
+ * TS 26.111  H.264
+ * "GenericCapability/0.0.8.241.0.0.1/nonCollapsing/43" , "DecoderConfigurationInformation"
+ * "GenericCapability/0.0.8.241.0.0.1/collapsing/44" , "AcceptRedundantSlices"
+ * "GenericCapability/0.0.8.241.0.0.1/collapsing/45" , "NalAlignedMode"
+ * "GenericCapability/0.0.8.241.0.0.1/collapsing/46" , "ProfileIOP"
+ */
+#define PV_H264_CAPABILITY_DCI 43
+#define PV_H264_CAPABILITY_PROFILE 41
+#define PV_H264_CAPABILITY_LEVEL 42
+#define PV_H264_CAPABILITY_CUSTOMMAXMBPS 3
+#define PV_H264_CAPABILITY_CUSTOMMAXFS 4
+#define PV_H264_CAPABILITY_CUSTOMMAXDPB 5
+#define PV_H264_CAPABILITY_CUSTOMMAXBRANDCPB 6
+#define PV_H264_CAPABILITY_MAXSTATICMBPS 7
+#define PV_H264_CAPABILITY_MAX_RCMD_NAL_UNIT_SIZE 8
+#define PV_H264_CAPABILITY_MAX_NAL_UNIT_SIZE 9
 
 TSC_capability::~TSC_capability()
 {
@@ -118,35 +151,138 @@ void TSC_capability::ExtractTcsParameters(PS_VideoCapability pVideo, CPvtH263Cap
     if (pVideo->h263VideoCapability->option_of_sqcifMPI)
     {
         iTcsIn_H263_sqcifMPI = pVideo->h263VideoCapability->sqcifMPI;
-        aMedia_capability->SetMaxResolution(128, 96, frame_rate);
-
+        aMedia_capability->SetMaxResolution(PVMF_RESOLUTION_SQCIF, frame_rate);
     }
     if (pVideo->h263VideoCapability->option_of_qcifMPI)
     {
         iTcsIn_H263_qcifMPI = pVideo->h263VideoCapability->qcifMPI;
-        aMedia_capability->SetMaxResolution(176, 144, frame_rate);
+        aMedia_capability->SetMaxResolution(PVMF_RESOLUTION_QCIF, frame_rate);
     }
     if (pVideo->h263VideoCapability->option_of_cifMPI)
     {
         iTcsIn_H263_cifMPI = pVideo->h263VideoCapability->cifMPI;
-        aMedia_capability->SetMaxResolution(352, 288, frame_rate);
+        aMedia_capability->SetMaxResolution(PVMF_RESOLUTION_CIF, frame_rate);
     }
     if (pVideo->h263VideoCapability->option_of_cif4MPI)
     {
         iTcsIn_H263_4cifMPI = pVideo->h263VideoCapability->cif4MPI;
-        aMedia_capability->SetMaxResolution(704, 576, frame_rate);
+        aMedia_capability->SetMaxResolution(PVMF_RESOLUTION_4CIF, frame_rate);
     }
     if (pVideo->h263VideoCapability->option_of_cif16MPI)
     {
         iTcsIn_H263_16cifMPI = pVideo->h263VideoCapability->cif16MPI;
-        aMedia_capability->SetMaxResolution(1408, 1192, frame_rate);
+        aMedia_capability->SetMaxResolution(PVMF_RESOLUTION_16CIF, frame_rate);
     }
 }
 
 void TSC_capability::ExtractTcsParameters(PS_VideoCapability pVideo, CPvtMpeg4Capability *aMedia_capability)
 {
     int frame_rate = GetMaxFrameRate_M4V(pVideo->genericVideoCapability);
-    aMedia_capability->SetMaxResolution(176, 144, frame_rate);
+    aMedia_capability->SetMaxResolution(PVMF_RESOLUTION_QCIF, frame_rate);
+}
+
+void TSC_capability::ExtractTcsParameters(PS_VideoCapability apVideo, CPvtAvcCapability* apMediaCapability)
+{
+
+    PS_GenericParameter pGenericParameters = NULL;
+    unsigned sizeOfGenericParameters = 0;
+    unsigned paramNum = 0;
+    PS_GenericCapability pH264caps = apVideo->genericVideoCapability;
+
+    int frameRate = GetMaxFrameRate_AVC(apVideo->genericVideoCapability);
+    apMediaCapability->SetMaxResolution(PVMF_RESOLUTION_QCIF, frameRate);
+
+    if (pH264caps->option_of_nonCollapsing)
+    {
+        pGenericParameters = pH264caps->nonCollapsing;
+        sizeOfGenericParameters = pH264caps->size_of_nonCollapsing;
+    }
+    for (paramNum = 0; paramNum < sizeOfGenericParameters; paramNum++)
+    {
+        if (pGenericParameters[paramNum].parameterIdentifier.index != 0)
+            continue;
+        if (pGenericParameters[paramNum].parameterIdentifier.standard == PV_H264_CAPABILITY_DCI)  /* DCI */
+        {
+            apMediaCapability->iDecoderConfig = (uint8*)OSCL_DEFAULT_MALLOC(pGenericParameters[paramNum].parameterValue.octetString->size);
+            if (apMediaCapability->iDecoderConfig)
+            {
+                apMediaCapability->iDecoderConfigLen = pGenericParameters[paramNum].parameterValue.octetString->size;
+                oscl_memcpy(apMediaCapability->iDecoderConfig, pGenericParameters[paramNum].parameterValue.octetString->data, apMediaCapability->iDecoderConfigLen);
+            }
+            break;
+        }
+    }
+    pGenericParameters = NULL;
+    sizeOfGenericParameters = 0;
+
+    if (pH264caps->option_of_collapsing)
+    {
+        pGenericParameters = pH264caps->collapsing;
+        sizeOfGenericParameters = pH264caps->size_of_collapsing;
+    }
+
+    for (paramNum = 0; paramNum < sizeOfGenericParameters; paramNum++)
+    {
+        if (pGenericParameters[paramNum].parameterIdentifier.index != 0)
+            continue;
+        if (pGenericParameters[paramNum].parameterIdentifier.standard == PV_H264_CAPABILITY_PROFILE)  /* Profile */
+        {
+            apMediaCapability->iProfile = pGenericParameters[paramNum].parameterValue.booleanArray;
+        }
+        else if (pGenericParameters[paramNum].parameterIdentifier.standard == PV_H264_CAPABILITY_LEVEL)  /* Level */
+        {
+            apMediaCapability->iLevel = pGenericParameters[paramNum].parameterValue.unsignedMin;
+        }
+        else if (pGenericParameters[paramNum].parameterIdentifier.standard == PV_H264_CAPABILITY_CUSTOMMAXMBPS)  /* CustomMaxMBPS */
+        {
+            apMediaCapability->iCustomMaxMBPS = pGenericParameters[paramNum].parameterValue.unsignedMin;
+        }
+        else if (pGenericParameters[paramNum].parameterIdentifier.standard == PV_H264_CAPABILITY_CUSTOMMAXFS)  /* CustomMaxFS */
+        {
+            apMediaCapability->iCustomMaxFS = pGenericParameters[paramNum].parameterValue.unsignedMin;
+        }
+        else if (pGenericParameters[paramNum].parameterIdentifier.standard == PV_H264_CAPABILITY_CUSTOMMAXDPB)  /* CustomMaxDPB */
+        {
+            apMediaCapability->iCustomMaxDPB = pGenericParameters[paramNum].parameterValue.unsignedMin;
+        }
+        else if (pGenericParameters[paramNum].parameterIdentifier.standard == PV_H264_CAPABILITY_CUSTOMMAXBRANDCPB)  /* CustomMaxBRandCPB */
+        {
+            apMediaCapability->iCustomMaxBRandCPB = pGenericParameters[paramNum].parameterValue.unsignedMin;
+        }
+        else if (pGenericParameters[paramNum].parameterIdentifier.standard == PV_H264_CAPABILITY_MAXSTATICMBPS)  /* MaxStaticMBPS */
+        {
+            apMediaCapability->iMaxStaticMBPS = pGenericParameters[paramNum].parameterValue.unsignedMin;
+        }
+        else if (pGenericParameters[paramNum].parameterIdentifier.standard == PV_H264_CAPABILITY_MAX_RCMD_NAL_UNIT_SIZE)  /* max-rcmd-nal-unit-size */
+        {
+            apMediaCapability->iMaxRcmdNalUnitSize = pGenericParameters[paramNum].parameterValue.unsigned32Min;
+        }
+        else if (pGenericParameters[paramNum].parameterIdentifier.standard == PV_H264_CAPABILITY_MAX_NAL_UNIT_SIZE)  /* max-nal-unit-size */
+        {
+            apMediaCapability->iMaxNalUnitSize = pGenericParameters[paramNum].parameterValue.unsigned32Min;
+        }
+    }
+
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "TSC_capability::ExtractTcsParameters H264 Capability:"));
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "Profile=%d,Level=%d,DCI Length=%d",
+                     apMediaCapability->iProfile,
+                     apMediaCapability->iLevel,
+                     apMediaCapability->iDecoderConfigLen));
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "CustomMaxMBPS=%d,CustomMaxFS=%d,CustomMaxDPB=%d",
+                     apMediaCapability->iCustomMaxMBPS,
+                     apMediaCapability->iCustomMaxFS,
+                     apMediaCapability->iCustomMaxDPB));
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "CustomMaxBRandCPB=%d,MaxStaticMBPS=%d",
+                     apMediaCapability->iCustomMaxBRandCPB,
+                     apMediaCapability->iMaxStaticMBPS));
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "max-rcmd-nal-unit-size=%d,max-nal-unit-size=%d",
+                     apMediaCapability->iMaxRcmdNalUnitSize,
+                     apMediaCapability->iMaxNalUnitSize));
 }
 
 ////////////////////////////////////////////////////////////////////////////
@@ -170,22 +306,22 @@ void TSC_capability::ParseTcsCapabilities(S_Capability &aCapability, Oscl_Vector
     {
         case 1: // ReceiveVideo
             PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                            (0, "TSC_capability: Remote video caps ReceiveVideo\n"));
+                            (0, "TSC_capability: Remote caps ReceiveVideo\n"));
             pVideo = aCapability.receiveVideoCapability;
             break;
         case 3: // ReceiveAndTransmitVideo
             PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                            (0, "TSC_capability: Remote video caps ReceiveAndTransmitVideo\n"));
+                            (0, "TSC_capability: Remote caps ReceiveAndTransmitVideo\n"));
             pVideo = aCapability.receiveAndTransmitVideoCapability;
             break;
         case 4:
             PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                            (0, "TSC_capability: Remote video caps ReceiveAudio\n"));
+                            (0, "TSC_capability: Remote caps ReceiveAudio\n"));
             pAudio = aCapability.receiveAudioCapability;
             break;
         case 6:
             PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                            (0, "TSC_capability: Remote video caps ReceiveAndTransmitAudio\n"));
+                            (0, "TSC_capability: Remote caps ReceiveAndTransmitAudio\n"));
             pAudio = aCapability.receiveAndTransmitAudioCapability;
             break;
         case 15:
@@ -234,6 +370,13 @@ void TSC_capability::ParseTcsCapabilities(S_Capability &aCapability, Oscl_Vector
             media_capability->iBitrate = pVideo->genericVideoCapability->maxBitRate;
             ExtractTcsParameters(pVideo, (CPvtMpeg4Capability*)media_capability);
             ((CPvtMpeg4Capability*)media_capability)->iGenericCapability = pVideo->genericVideoCapability;
+            aMedia_capability.push_back(media_capability);
+        }
+        else if (format_type == PVMF_MIME_H264_VIDEO_RAW)
+        {
+            media_capability = new CPvtAvcCapability();
+            media_capability->iBitrate = pVideo->genericVideoCapability->maxBitRate;
+            ExtractTcsParameters(pVideo, (CPvtAvcCapability*)media_capability);
             aMedia_capability.push_back(media_capability);
         }
     }
@@ -473,6 +616,35 @@ PS_DataType TSC_capability::GetOutgoingDataType(PVCodecType_t codecType,
 
             genericCap->option_of_nonCollapsingRaw = false;
             genericCap->option_of_transport = false;
+        }
+        break;
+        case PV_VID_TYPE_H264:
+        {
+            VideoCodecCapabilityInfo h264_info;
+            h264_info.codec = PV_VID_TYPE_H264;
+            h264_info.dir = OUTGOING;
+            h264_info.max_bitrate = bitrate * 100;
+            if (csi && csi_len)
+            {
+                h264_info.codec_specific_info_len = csi_len;
+                h264_info.codec_specific_info = (uint8*)OSCL_DEFAULT_MALLOC(h264_info.codec_specific_info_len);
+                oscl_memcpy(h264_info.codec_specific_info, csi, csi_len);
+            }
+            else
+            {
+                h264_info.codec_specific_info = (uint8*)OSCL_DEFAULT_MALLOC(PV2WAY_FILLER_FSI_LEN);
+                SetFillerFsi(h264_info.codec_specific_info, PV2WAY_FILLER_FSI_LEN);
+                h264_info.codec_specific_info_len = PV2WAY_FILLER_FSI_LEN;
+            }
+
+            pDataType->index = 2;
+            pDataType->videoData = (PS_VideoCapability) OSCL_DEFAULT_MALLOC(sizeof(S_VideoCapability));
+            oscl_memset(pDataType->videoData, 0, sizeof(S_VideoCapability));
+            pDataType->videoData->index = 5;
+            pDataType->videoData->genericVideoCapability =
+                (PS_GenericCapability) OSCL_DEFAULT_MALLOC(sizeof(S_GenericCapability));
+            oscl_memset(pDataType->videoData->genericVideoCapability, 0, sizeof(S_GenericCapability));
+            FillH264Capability(h264_info, pDataType->videoData->genericVideoCapability, true);
         }
         break;
         default:
@@ -1059,7 +1231,27 @@ TSC_capability::GetDataType(PVCodecType_t codecType,
             genericCap->option_of_transport = false;
         }
         break;
-
+        case PV_VID_TYPE_H264:
+        {
+            VideoCodecCapabilityInfo h264_info;
+            h264_info.codec = PV_VID_TYPE_H264;
+            h264_info.dir = OUTGOING;
+            h264_info.codec_specific_info_len = dci_len;
+            if (dci_len)
+            {
+                h264_info.codec_specific_info = (uint8*)OSCL_DEFAULT_MALLOC(MAX_CONFIG_INFO_SIZE);
+                oscl_memcpy(h264_info.codec_specific_info, dci, dci_len);
+            }
+            pDataType->index = 2;
+            pDataType->videoData = (PS_VideoCapability) OSCL_DEFAULT_MALLOC(sizeof(S_VideoCapability));
+            oscl_memset(pDataType->videoData, 0, sizeof(S_VideoCapability));
+            pDataType->videoData->index = 5;
+            pDataType->videoData->genericVideoCapability =
+                (PS_GenericCapability) OSCL_DEFAULT_MALLOC(sizeof(S_GenericCapability));
+            oscl_memset(pDataType->videoData->genericVideoCapability, 0, sizeof(S_GenericCapability));
+            FillH264Capability(h264_info, pDataType->videoData->genericVideoCapability, true);
+        }
+        break;
         default:
             /* NULL data type */
             pDataType->index = 1;

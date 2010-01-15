@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -390,6 +390,15 @@ bool TSC_component::CEStart()
             }
             info->codec = codec_type;
             info->dir = dir;
+            // get max bitrate from codec, if it is not available get it from channel
+            if ((*codecs)[m].bitrate)
+            {
+                info->max_bitrate = (*codecs)[m].bitrate;
+            }
+            else
+            {
+                info->max_bitrate = (*iIncomingChannelConfig)[n].GetBandwidth();
+            }
             incoming_codecs.push_back(info);
         }
     }
@@ -855,7 +864,7 @@ uint32 TSC_component::LcEtbIdc(PS_ControlMsgHeader  pReceiveInf)
     }
 
     uint8* fsi = NULL;
-    uint32 fsi_len = ::GetFormatSpecificInfo(pDataType, fsi);
+    uint32 fsi_len = ::GetFormatSpecificInfo(&(pLcParam->forwardLogicalChannelParameters.dataType), fsi);
     iTSCObserver->IncomingChannel(OpenLcn, incoming_codec_type, fsi, fsi_len);
 
     // ESTABLISH.response(LC) Primitive Send

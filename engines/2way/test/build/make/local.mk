@@ -69,6 +69,9 @@ END_LIBS = pvdummyinputnode pvdummyoutputnode \
    pvamrwbdecoder \
    pvmp4decoder \
    pvm4vencoder \
+   pvavcdecoder \
+   pvavch264enc \
+   pv_avc_common_lib \
    pvcommsionode \
    pvgendatastruct \
    pvgeneraltools \
@@ -97,6 +100,8 @@ LIBS = \
    omx_amr_component_lib \
    omx_amrenc_component_lib \
    omx_m4venc_component_lib \
+   omx_avc_component_lib \
+   omx_avcenc_component_lib \
    omx_baseclass_lib \
    m4v_config \
    pvomx_proxy_lib \
@@ -119,6 +124,8 @@ FULL_LIBS =  opencore_2way \
    omx_common_lib \
    omx_m4v_component_lib \
    omx_m4venc_component_lib \
+   omx_avc_component_lib \
+   omx_avcenc_component_lib \
    omx_baseclass_lib \
    pvomx_proxy_lib \
    omx_queue_lib \

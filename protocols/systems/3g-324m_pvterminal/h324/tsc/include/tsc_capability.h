@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -91,6 +91,7 @@ class TSC_capability
         }
         void ExtractTcsParameters(PS_VideoCapability apVideo, CPvtH263Capability *aMedia_capability);
         void ExtractTcsParameters(PS_VideoCapability pVideo, CPvtMpeg4Capability *aMedia_capability);
+        void ExtractTcsParameters(PS_VideoCapability apVideo, CPvtAvcCapability *apMedia_capability);
         void ParseTcsCapabilities(S_Capability &aCapability, Oscl_Vector<CPvtMediaCapability*, OsclMemAllocator> &aMedia_capability, uint32 userInputCapabilities, S_UserInputCapability *aUserInputCapability);
         bool IsSegmentable(TPVDirection direction, PV2WayMediaType media_type);
 

@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,10 @@
 #include "oscl_map.h"
 
 #define PV_H245_VERSION 0x0A // 10
+#define PV_H245_SPEC_NUMBER 245
+#define PV_H241_SPEC_NUMBER 241
+#define PV_H245_H263VIDEOCAPABILITY 3
+#define PV_H245_GENERICCAPABILITY 5
 
 OSCL_DLL_ENTRY_POINT_DEFAULT()
 static const uint32 g_num_ones[] =
@@ -91,13 +95,25 @@ PVCodecType_t GetVidCodecTypeFromCapabilityIdentifier(S_CapabilityIdentifierStan
             identifier.spec_type != 0 ||
             identifier.series_letter != 8)
         return PV_CODEC_TYPE_NONE;
-    if (identifier.spec_number == 245)
+    if (identifier.spec_number == PV_H245_SPEC_NUMBER)
     {
         if (identifier.data[0] == 1 && // generic capabilty
                 identifier.data[1] == 0 && // video
                 identifier.data[2] == 0) // 14496-2
         {
             return PV_VID_TYPE_MPEG4;
+        }
+    }
+    else if (identifier.spec_number == PV_H241_SPEC_NUMBER)
+    {
+        // H.241 - H.264 Capability Identifier
+        // {itu-t(0) recommendation(0) h(8) 241 specificVideoCodecCapabilities(0) h264(0)
+        // generic-capabilities(1)}
+        if (identifier.data[0] == 0 && /* specificVideoCodecCapabilities */
+                identifier.data[1] == 0 && /* h264 */
+                identifier.data[2] == 1)  /* generic capability */
+        {
+            return PV_VID_TYPE_H264;
         }
     }
     return PV_CODEC_TYPE_NONE;
@@ -365,7 +381,7 @@ void FillVideoCapability(VideoCodecCapabilityInfo& video_codec_info,
     switch (video_codec_info.codec)
     {
         case PV_VID_TYPE_H263:
-            video_capability->index = 3;
+            video_capability->index = PV_H245_H263VIDEOCAPABILITY;
             video_capability->h263VideoCapability =
                 (PS_H263VideoCapability)OSCL_DEFAULT_MALLOC(
                     sizeof(S_H263VideoCapability));
@@ -375,7 +391,7 @@ void FillVideoCapability(VideoCodecCapabilityInfo& video_codec_info,
                                video_capability->h263VideoCapability);
             break;
         case PV_VID_TYPE_MPEG4:
-            video_capability->index = 5;
+            video_capability->index = PV_H245_GENERICCAPABILITY;
             video_capability->genericVideoCapability =
                 (PS_GenericCapability)OSCL_DEFAULT_MALLOC(
                     sizeof(S_GenericCapability));
@@ -383,6 +399,12 @@ void FillVideoCapability(VideoCodecCapabilityInfo& video_codec_info,
                         0, sizeof(S_GenericCapability));
             FillM4vCapability(video_codec_info,
                               video_capability->genericVideoCapability);
+            break;
+        case PV_VID_TYPE_H264:
+            video_capability->index = PV_H245_GENERICCAPABILITY;
+            video_capability->genericVideoCapability = (PS_GenericCapability)OSCL_DEFAULT_MALLOC(sizeof(S_GenericCapability));
+            oscl_memset(video_capability->genericVideoCapability, 0, sizeof(S_GenericCapability));
+            FillH264Capability(video_codec_info, video_capability->genericVideoCapability, false);
             break;
         default:
             break;
@@ -393,9 +415,9 @@ CodecCapabilityInfo* GetCodecCapabilityInfo(PS_VideoCapability capability)
 {
     switch (capability->index)
     {
-        case 3:
+        case PV_H245_H263VIDEOCAPABILITY:
             return GetCodecCapabilityInfo(capability->h263VideoCapability);
-        case 5:
+        case PV_H245_GENERICCAPABILITY:
             return GetCodecCapabilityInfo(capability->genericVideoCapability);
         default:
             break;
@@ -418,16 +440,203 @@ CodecCapabilityInfo* GetCodecCapabilityInfo(PS_GenericCapability capability)
     {
         case PV_VID_TYPE_MPEG4:
             return GetCodecCapabilityInfoMpeg4(capability);
+        case PV_VID_TYPE_H264:
+            return GetCodecCapabilityInfoAvc(capability);
         default:
             break;
     }
     return NULL;
 }
 
+void FillH264Capability(VideoCodecCapabilityInfo& video_codec_info, PS_GenericCapability h264caps, bool includeCsi)
+{
+    /* x15 is a set of 2 GenericParameter(s) */
+    uint16 num_generic_parameters = 2;
+    PS_GenericParameter x15 = (PS_GenericParameter)OSCL_DEFAULT_MALLOC(num_generic_parameters * sizeof(S_GenericParameter));
+    oscl_memset(x15, 0, num_generic_parameters*sizeof(S_GenericParameter));
+
+    /* x13 is a GenericCapability (SEQUENCE) */
+    PS_CapabilityIdentifier x14 = &h264caps->capabilityIdentifier;
+    h264caps->option_of_maxBitRate = ON;
+    h264caps->maxBitRate = video_codec_info.max_bitrate / 100;
+    h264caps->option_of_collapsing = ON;
+    h264caps->option_of_nonCollapsing = OFF;
+    h264caps->option_of_nonCollapsingRaw = OFF;
+    h264caps->option_of_transport = OFF;
+    h264caps->size_of_collapsing = num_generic_parameters;
+    h264caps->collapsing = x15;
+
+    /* x14 is a CapabilityIdentifier (CHOICE) */
+    x14->index = 0;
+
+    /*  itu-t(0) recommendation(0) h(8) h241(241) specificVideoCodecCapabilities(0) h264(0) generic-capabilities(1) */
+    /* Numbers to be encoded: 0,0,8,241,0,0,1 */
+    PS_OBJECTIDENT objident = (PS_OBJECTIDENT)OSCL_DEFAULT_MALLOC(sizeof(S_OBJECTIDENT));
+    oscl_memset(objident, 0, sizeof(S_OBJECTIDENT));
+    x14->standard = objident;
+    x14->standard->size = 7;
+    x14->standard->data = (uint8*)OSCL_DEFAULT_MALLOC(x14->standard->size);
+    x14->standard->data[0] = 0x00; // 40*first(0)+second(0)=0
+    x14->standard->data[1] = 0x08; // h
+    x14->standard->data[2] = 0x81; // 241 == 11110001, ENCODING == 10000001 01110001 = 0x81 0x71
+    x14->standard->data[3] = 0x71;
+    x14->standard->data[4] = 0x00; // specificVideoCodecCapabilities
+    x14->standard->data[5] = 0x00; // h264
+    x14->standard->data[6] = 0x01; // generic-capabilities
+
+    /* x15[0] is a GenericParameter (SEQUENCE) */
+    PS_ParameterIdentifier x16 = &x15[0].parameterIdentifier;
+    PS_ParameterValue x17 = &x15[0].parameterValue;
+    x15[0].option_of_supersedes = OFF;
+
+    /* x15[1] is a GenericParameter (SEQUENCE) */
+    PS_ParameterIdentifier x18 = &x15[1].parameterIdentifier;
+    PS_ParameterValue x19 = &x15[1].parameterValue;
+    x15[1].option_of_supersedes = OFF;
+
+    /* x16 is a ParameterIdentifier (CHOICE) -- Profile */
+    x16->index = 0;
+    x16->standard = 41;
+
+    /* x17 is a ParameterValue (CHOICE) -- Profile */
+    x17->index = 1;
+    x17->booleanArray = 64;
+
+    /* x18 is a ParameterIdentifier (CHOICE) - Level */
+    x18->index = 0;
+    x18->standard = 42;
+
+    /* x19 is a ParameterValue (CHOICE) -Level */
+    x19->index = 2;
+    x19->unsignedMin = 15;
+
+    if (!includeCsi)
+        return;
+
+    x15 = (PS_GenericParameter)OSCL_DEFAULT_MALLOC(sizeof(S_GenericParameter));
+    oscl_memset(x15, 0, sizeof(S_GenericParameter));
+
+    h264caps->option_of_nonCollapsing = ON;
+    h264caps->size_of_nonCollapsing = 1;
+    h264caps->nonCollapsing = x15;
+
+    /* x15[0] is a GenericParameter (SEQUENCE) */
+    PS_ParameterIdentifier x20 = &x15[0].parameterIdentifier;
+    PS_ParameterValue x21 = &x15[0].parameterValue;
+    x15[0].option_of_supersedes = OFF;
+
+    /* x20 is a ParameterIdentifier (CHOICE) - decoderConfigInfo */
+    x20->index = 0;
+    x20->standard = 43;
+
+    /* x21 is a ParameterValue (CHOICE)  - decoderConfigInfo*/
+    x21->index = 6;
+    x21->octetString = (PS_OCTETSTRING) OSCL_DEFAULT_MALLOC(sizeof(S_OCTETSTRING));
+    x21->octetString->data = (uint8*)OSCL_DEFAULT_MALLOC(video_codec_info.codec_specific_info_len);
+    x21->octetString->size = video_codec_info.codec_specific_info_len;
+    oscl_memcpy(x21->octetString->data, video_codec_info.codec_specific_info, video_codec_info.codec_specific_info_len);
+}
+
+CodecCapabilityInfo* GetCodecCapabilityInfoAvc(PS_GenericCapability h264caps)
+{
+    VideoCodecCapabilityInfo* cci = new VideoCodecCapabilityInfo();
+    OSCL_TRAPSTACK_PUSH(cci);
+
+    cci->codec = PV_VID_TYPE_H264;
+    cci->max_bitrate = h264caps->maxBitRate;
+
+    CPvtAvcCapability avcCapability;
+    ParseH264Capability(h264caps, avcCapability);
+    if (avcCapability.iDecoderConfigLen &&
+            avcCapability.iDecoderConfigLen < MAX_H264_FORMAT_SPECIFIC_INFO_LEN &&
+            avcCapability.iDecoderConfig)
+    {
+        cci->codec_specific_info_len = avcCapability.iDecoderConfigLen;
+        cci->codec_specific_info = (uint8*)OSCL_DEFAULT_MALLOC(cci->codec_specific_info_len);
+        if (cci->codec_specific_info)
+        {
+            oscl_memcpy(cci->codec_specific_info, avcCapability.iDecoderConfig, cci->codec_specific_info_len);
+        }
+    }
+    OSCL_TRAPSTACK_POP(); //cci
+    return cci;
+}
+
+void ParseH264Capability(PS_GenericCapability h264caps, CPvtAvcCapability& h264Capability)
+{
+    PS_GenericParameter generic_parameters = NULL;
+    unsigned size_of_generic_parameters = 0;
+    unsigned param_num = 0;
+
+    if (h264caps->option_of_nonCollapsing)
+    {
+        generic_parameters = h264caps->nonCollapsing;
+        size_of_generic_parameters = h264caps->size_of_nonCollapsing;
+    }
+    for (param_num = 0; param_num < size_of_generic_parameters; param_num++)
+    {
+        if (generic_parameters[param_num].parameterIdentifier.index != 0)
+            continue;
+        if (generic_parameters[param_num].parameterIdentifier.standard == 43)  /* DCI */
+        {
+            h264Capability.iDecoderConfig = (uint8*)OSCL_DEFAULT_MALLOC(generic_parameters[param_num].parameterValue.octetString->size);
+            if (h264Capability.iDecoderConfig)
+            {
+                h264Capability.iDecoderConfigLen = generic_parameters[param_num].parameterValue.octetString->size;
+                oscl_memcpy(h264Capability.iDecoderConfig, generic_parameters[param_num].parameterValue.octetString->data, h264Capability.iDecoderConfigLen);
+            }
+            break;
+        }
+    }
+    generic_parameters = NULL;
+    size_of_generic_parameters = 0;
+
+    if (h264caps->option_of_collapsing)
+    {
+        generic_parameters = h264caps->collapsing;
+        size_of_generic_parameters = h264caps->size_of_collapsing;
+    }
+
+    for (param_num = 0; param_num < size_of_generic_parameters; param_num++)
+    {
+        switch (generic_parameters[param_num].parameterIdentifier.index)
+        {
+            case 41:/* Profile */
+                h264Capability.iProfile = generic_parameters[param_num].parameterValue.booleanArray;
+                break;
+            case 42:  /* Level */
+                h264Capability.iLevel = generic_parameters[param_num].parameterValue.unsignedMin;
+                break;
+            case 3:  /* CustomMaxMBPS */
+                h264Capability.iCustomMaxMBPS = generic_parameters[param_num].parameterValue.unsignedMin;
+                break;
+            case 4:  /* CustomMaxFS */
+                h264Capability.iCustomMaxFS = generic_parameters[param_num].parameterValue.unsignedMin;
+                break;
+            case 5:  /* CustomMaxDPB */
+                h264Capability.iCustomMaxDPB = generic_parameters[param_num].parameterValue.unsignedMin;
+                break;
+            case 6:  /* CustomMaxBRandCPB */
+                h264Capability.iCustomMaxBRandCPB = generic_parameters[param_num].parameterValue.unsignedMin;
+                break;
+            case 7:  /* MaxStaticMBPS */
+                h264Capability.iMaxStaticMBPS = generic_parameters[param_num].parameterValue.unsignedMin;
+                break;
+            case 8:  /* max-rcmd-nal-unit-size */
+                h264Capability.iMaxRcmdNalUnitSize = generic_parameters[param_num].parameterValue.unsigned32Min;
+                break;
+            case 9:  /* max-nal-unit-size */
+                h264Capability.iMaxNalUnitSize = generic_parameters[param_num].parameterValue.unsigned32Min;
+                break;
+            default:/* Profile */
+                break;
+        }
+    }
+}
+
 void FillM4vCapability(VideoCodecCapabilityInfo& video_codec_info,
                        PS_GenericCapability m4vcaps)
 {
-    OSCL_UNUSED_ARG(video_codec_info);
     // x15 is a set of 1 GenericParameter(s)
     unsigned num_generic_parameters = 1;
     PS_GenericParameter x15 = (PS_GenericParameter)OSCL_DEFAULT_MALLOC(num_generic_parameters *
@@ -437,7 +646,7 @@ void FillM4vCapability(VideoCodecCapabilityInfo& video_codec_info,
     // x13 is a GenericCapability (SEQUENCE)
     PS_CapabilityIdentifier x14 = &m4vcaps->capabilityIdentifier;
     m4vcaps->option_of_maxBitRate = ON;
-    m4vcaps->maxBitRate = 521;
+    m4vcaps->maxBitRate = video_codec_info.max_bitrate / 100;
     m4vcaps->option_of_collapsing = OFF;
     m4vcaps->option_of_nonCollapsing = ON;
     m4vcaps->size_of_nonCollapsing = 1;
@@ -516,7 +725,7 @@ void FillH263Capability(VideoCodecCapabilityInfo& video_codec_info,
         h263caps->option_of_cif16MPI = ON;
         h263caps->cif16MPI = 2;
     }
-    h263caps->maxBitRate = 521;
+    h263caps->maxBitRate = video_codec_info.max_bitrate / 100;
     h263caps->unrestrictedVector = OFF;
     h263caps->arithmeticCoding = OFF;
     h263caps->advancedPrediction = OFF;
@@ -795,11 +1004,11 @@ PVCodecType_t GetCodecType(PS_DataType pDataType)
     }
     else if (pDataType->index == 2)
     {  // videoData
-        if (pDataType->videoData->index == 3)
+        if (pDataType->videoData->index == PV_H245_H263VIDEOCAPABILITY)
         {  // H263VideoCapability
             codecIndex = PV_VID_TYPE_H263;
         }
-        else if (pDataType->videoData->index == 5)
+        else if (pDataType->videoData->index == PV_H245_GENERICCAPABILITY)
         {  // GenericVideoCapability
             codecIndex = GetVidCodecTypeFromVideoCapability(pDataType->videoData);
         }
@@ -921,8 +1130,8 @@ void printBuffer(PVLogger* logger,
     OSCL_DEFAULT_FREE(cpysave);
 }
 
-unsigned GetFormatSpecificInfo(PS_DataType dataType,
-                               uint8*& fsi)
+uint32 GetFormatSpecificInfo(PS_DataType dataType,
+                             uint8*& fsi)
 {
     uint32 size = 0;
     PS_GenericParameter parameter_list = NULL, parameter = NULL;
@@ -932,7 +1141,7 @@ unsigned GetFormatSpecificInfo(PS_DataType dataType,
 
     if (!dataType ||
             (dataType->index != 2) ||               // videoData
-            (dataType->videoData->index != 5))  // genericVideoCapability
+            (dataType->videoData->index != PV_H245_GENERICCAPABILITY))  // genericVideoCapability
         return ret;
 
     if (dataType->videoData->genericVideoCapability->option_of_nonCollapsing)
@@ -1390,6 +1599,8 @@ unsigned GetMaxFrameRate(PS_DataType pDataType)
         case PV_VID_TYPE_MPEG4:
             return GetMaxFrameRate_M4V(
                        pDataType->videoData->genericVideoCapability);
+        case PV_VID_TYPE_H264:
+            return GetMaxFrameRate_AVC(pDataType->videoData->genericVideoCapability);
         case PV_AUD_TYPE_GSM:
             return 50;
         case PV_AUD_TYPE_G723:
@@ -1410,6 +1621,9 @@ unsigned GetVideoFrameSize(PS_DataType pDataType, bool width)
             return GetVideoFrameSize_H263(pDataType->videoData->h263VideoCapability, width);
         case PV_VID_TYPE_MPEG4:
             return GetVideoFrameSize_M4V(
+                       pDataType->videoData->genericVideoCapability, width);
+        case PV_VID_TYPE_H264:
+            return GetVideoFrameSize_AVC(
                        pDataType->videoData->genericVideoCapability, width);
         case PV_AUD_TYPE_GSM:
             return 0;
@@ -1489,6 +1703,11 @@ unsigned GetMaxFrameRate_M4V(PS_GenericCapability m4vcaps)
     return 15;
 }
 
+unsigned GetMaxFrameRate_AVC(PS_GenericCapability avcCaps)
+{
+    OSCL_UNUSED_ARG(avcCaps);
+    return 15;
+}
 unsigned GetVideoFrameSize_H263(PS_H263VideoCapability h263caps, bool width)
 {
     unsigned frame_width = 0;
@@ -1526,10 +1745,23 @@ unsigned GetVideoFrameSize_H263(PS_H263VideoCapability h263caps, bool width)
 
 }
 
-unsigned GetVideoFrameSize_M4V(PS_GenericCapability m4vcaps , bool width)
+unsigned GetVideoFrameSize_M4V(PS_GenericCapability m4vcaps, bool width)
 {
     OSCL_UNUSED_ARG(m4vcaps);
     if (width == true)
+    {
+        return 176;
+    }
+    else
+    {
+        return 144;
+    }
+}
+
+unsigned GetVideoFrameSize_AVC(PS_GenericCapability aAvcCaps, bool aWidth)
+{
+    OSCL_UNUSED_ARG(aAvcCaps);
+    if (aWidth == true)
     {
         return 176;
     }
@@ -1679,11 +1911,22 @@ CodecCapabilityInfo* IsSupported(CodecCapabilityInfo* codecInfo,
 PVMFStatus SetFormatSpecificInfo(PS_DataType pDataType, uint8* fsi, uint32 fsi_len)
 {
     PVCodecType_t codec_type = GetCodecType(pDataType);
-    if (codec_type != PV_VID_TYPE_MPEG4)
+    uint32 nonCollapsingIndex = 0;
+
+    if (codec_type == PV_VID_TYPE_MPEG4)
+    {
+        nonCollapsingIndex = 2;
+    }
+    else if (codec_type == PV_VID_TYPE_H264)
+    {
+        nonCollapsingIndex = 0;
+    }
+    else
     {
         return PVMFFailure;
     }
-    PS_OCTETSTRING octet_string = pDataType->videoData->genericVideoCapability->nonCollapsing[2].parameterValue.octetString;
+
+    PS_OCTETSTRING octet_string = pDataType->videoData->genericVideoCapability->nonCollapsing[nonCollapsingIndex].parameterValue.octetString;
     OSCL_ASSERT(octet_string != NULL);
     if (octet_string->data)
     {
@@ -1695,7 +1938,7 @@ PVMFStatus SetFormatSpecificInfo(PS_DataType pDataType, uint8* fsi, uint32 fsi_l
     oscl_memcpy(octet_string->data,
                 fsi,
                 fsi_len);
-    octet_string->size = fsi_len;
+    octet_string->size = (uint16)fsi_len;
     return PVMFSuccess;
 }
 

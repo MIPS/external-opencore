@@ -163,6 +163,7 @@ typedef enum
     EPV2WayVideoOut
 } TPV2WayPortTagType;
 
+
 /**
  * TPV2WayCommandType enum
  *
@@ -896,6 +897,9 @@ class CPV324m2Way : OsclActiveObject,
         void DoAddDataSinkNodeForH263_M4V(TPV2WayNode& aNode,
                                           CPVDatapathNode& datapathnode,
                                           CPV2WayDecDataChannelDatapath* datapath);
+        void DoAddDataSinkNodeForAVC(TPV2WayNode& arNode,
+                                     CPVDatapathNode& arDatapathnode,
+                                     CPV2WayDecDataChannelDatapath* apDatapath);
         void DoAddDataSinkGeneric(TPV2WayNode& aNode,
                                   CPVDatapathNode& datapathnode,
                                   CPV2WayDecDataChannelDatapath* datapath);
@@ -932,8 +936,6 @@ class CPV324m2Way : OsclActiveObject,
         void AddAudioEncoderNode();
         void AddVideoDecoderNode(uint8* aFormatSpecificInfo, uint32 aFormatSpecificInfoLen);
         void AddAudioDecoderNode();
-        void RegisterMioLatency(const char* aMimeStr, bool aAudio, PVMFFormatType aFmtType);
-        uint32 LookupMioLatency(PVMFFormatType aFmtType, bool aAudio);
 
         bool AllocNodes();
 
@@ -1075,9 +1077,6 @@ class CPV324m2Way : OsclActiveObject,
         Oscl_Map < PVMFFormatType, FormatCapabilityInfo,
         OsclMemAllocator, pvmf_format_type_key_compare_class > iOutgoingVideoCodecs;
 
-        Oscl_Map<char*, uint32, OsclMemAllocator> iAudioLatency;
-        Oscl_Map<char*, uint32, OsclMemAllocator> iVideoLatency;
-
         Oscl_Vector<FormatCapabilityInfo, OsclMemAllocator> iFormatCapability;
 
         /* A list of formats supported by the stack in a certain order of priority.  This list should ideally come from the stack but
@@ -1133,8 +1132,6 @@ class CPV324m2Way : OsclActiveObject,
         int32 iPendingTscReset;
         int32 iPendingAudioEncReset;
         int32 iPendingVideoEncReset;
-        int32 iAudioDatapathLatency;
-        int32 iVideoDatapathLatency;
 
         /* The AddDataSource command for video will be pending untill the extension interface for the encoder is queried and the
             encoder is configured */

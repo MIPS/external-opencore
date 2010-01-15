@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -403,8 +403,16 @@ class CPvtVideoCapability : public CPvtMediaCapability
 {
     public:
         CPvtVideoCapability(PVMFFormatType format_type, uint32 bitrate = 0, bool aMandatory = false)
-                : CPvtMediaCapability(format_type, bitrate, aMandatory) {}
-        virtual ~CPvtVideoCapability() {    }
+                : CPvtMediaCapability(format_type, bitrate, aMandatory)
+        {
+            iVideoResolution = OSCL_NEW(PVMFVideoResolution, (0, 0));
+            iFrameRate = 0;
+        }
+        ~CPvtVideoCapability()
+        {
+            if (iVideoResolution)
+                OSCL_DELETE(iVideoResolution);
+        }
         PVMFFormatType GetFormatType()const
         {
             return iFormatType;
@@ -413,10 +421,20 @@ class CPvtVideoCapability : public CPvtMediaCapability
         {
             return iBitrate;
         }
-        virtual PVMFVideoResolution* GetMaxResolution(uint32& frame_rate) = 0;
-        virtual void SetMaxResolution(uint32 width, uint32 height, uint32 frame_rate) = 0;
+        PVMFVideoResolution* GetMaxResolution(uint32& aFrameRate)
+        {
+            aFrameRate = iFrameRate;
+            return iVideoResolution;
+        }
+        void SetMaxResolution(PVMFVideoResolution aVideoResolution, uint32 aFrameRate)
+        {
+            *iVideoResolution = aVideoResolution;
+            iFrameRate = aFrameRate;
+        }
         virtual uint16 Getfsi(uint8*& aDecoderConfig) = 0;
 
+        PVMFVideoResolution *iVideoResolution;
+        uint32 iFrameRate;
 
 };
 
@@ -428,10 +446,7 @@ class CPvtMpeg4Capability : public CPvtVideoCapability
             iProfile = -1;
             iLevel = -1;
             iDecoderConfigLen = 0;
-            iVideoResolution = OSCL_NEW(PVMFVideoResolution, (0, 0));
             iGenericCapability = NULL;
-            iFrameRate = 0;
-
         }
         ~CPvtMpeg4Capability()
         {
@@ -439,24 +454,6 @@ class CPvtMpeg4Capability : public CPvtVideoCapability
             {
                 OSCL_DEFAULT_FREE(iDecoderConfig);
             }
-            if (iVideoResolution)
-            {
-                OSCL_DELETE(iVideoResolution);
-                iVideoResolution = NULL;
-            }
-        }
-
-        void SetMaxResolution(uint32 width, uint32 height, uint32 frame_rate)
-        {
-            iVideoResolution->width = (uint16)width;
-            iVideoResolution->height = (uint16)height;
-            iFrameRate = frame_rate;
-        }
-
-        PVMFVideoResolution* GetMaxResolution(uint32& frame_rate)
-        {
-            frame_rate = iFrameRate;
-            return iVideoResolution;
         }
 
         uint16 Getfsi(uint8*& aDecoderConfig)
@@ -465,15 +462,13 @@ class CPvtMpeg4Capability : public CPvtVideoCapability
             return iDecoderConfigLen;
         }
 
-
-
         int32 iProfile;
         int32 iLevel;
         uint8* iDecoderConfig;
         uint16 iDecoderConfigLen;
         PS_GenericCapability iGenericCapability;
-        PVMFVideoResolution *iVideoResolution;
-        uint32 iFrameRate;
+
+
 };
 
 class CPvtH263Capability : public CPvtVideoCapability
@@ -481,43 +476,64 @@ class CPvtH263Capability : public CPvtVideoCapability
     public:
         CPvtH263Capability(uint32 bitrate = 0) : CPvtVideoCapability(PVMF_MIME_H2632000, bitrate, true)
         {
-            iVideoResolution = OSCL_NEW(PVMFVideoResolution, (0, 0));
             iH263VideoCapability = NULL;
-            iFrameRate = 0;
         }
         ~CPvtH263Capability()
         {
-            if (iVideoResolution)
-                OSCL_DELETE(iVideoResolution);
-        }
-
-
-        void SetMaxResolution(uint32 width, uint32 height, uint32 frame_rate)
-        {
-            iVideoResolution->width = (uint16)width;
-            iVideoResolution->height = (uint16)height;
-            iFrameRate = frame_rate;
 
         }
 
-        PVMFVideoResolution* GetMaxResolution(uint32& frame_rate)
-        {
-
-            frame_rate = iFrameRate;
-            return iVideoResolution;
-        }
         uint16 Getfsi(uint8*& aDecoderConfig)
         {
             OSCL_UNUSED_ARG(aDecoderConfig);
             return 0;
         }
 
-
-        PVMFVideoResolution *iVideoResolution;
-        uint32 iFrameRate;
         PS_H263VideoCapability iH263VideoCapability;
 };
 
+class CPvtAvcCapability : public CPvtVideoCapability
+{
+    public:
+        CPvtAvcCapability(uint32 bitrate = 0) : CPvtVideoCapability(PVMF_MIME_H264_VIDEO_RAW, bitrate, false), iDecoderConfig(NULL)
+        {
+            iProfile = -1;
+            iLevel = -1;
+            iCustomMaxMBPS = -1;
+            iCustomMaxFS = -1;
+            iCustomMaxDPB = -1;
+            iCustomMaxBRandCPB = -1;
+            iMaxStaticMBPS = -1;
+            iMaxRcmdNalUnitSize = 0;
+            iMaxNalUnitSize = 0;
+            iDecoderConfigLen = 0;
+        }
+        ~CPvtAvcCapability()
+        {
+            if (iDecoderConfig)
+            {
+                OSCL_DEFAULT_FREE(iDecoderConfig);
+            }
+        }
+
+        uint16 Getfsi(uint8*& aDecoderConfig)
+        {
+            aDecoderConfig = iDecoderConfig;
+            return iDecoderConfigLen;
+        }
+
+        int32 iProfile;
+        int32 iLevel;
+        int32 iCustomMaxMBPS;
+        int32 iCustomMaxFS;
+        int32 iCustomMaxDPB;
+        int32 iCustomMaxBRandCPB;
+        int32 iMaxStaticMBPS;
+        uint32 iMaxRcmdNalUnitSize;
+        uint32 iMaxNalUnitSize;
+        uint8* iDecoderConfig;
+        uint16 iDecoderConfigLen;
+};
 
 class CPvtTerminalCapability
 {
