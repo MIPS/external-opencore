@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -268,6 +268,10 @@ const PVMFStatus PVMFErrDrmDomainNotAMember = (-51);
 Error due to device currently not activated for drm-protected content playback
 */
 const PVMFStatus PVMFErrDrmDeviceNotActivated = (-52);
+/*
+Service specific server error.
+*/
+const PVMFStatus PVMFErrDrmServerServiceSpecific = (-53);
 /*
 ... this range reserved for future DRM-related errors
 */

@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -3746,6 +3746,10 @@ void pvplayer_engine_test::test()
                 fprintf(file, "PlayReady CPM tests not enabled\n");
                 break;
 
+            case NonSilentLicAcquire_LUIUrlRetrieval_PlayReadyCPMTest:
+                fprintf(file, "PlayReady CPM tests not enabled\n");
+                break;
+
             case DLA_OpenPlayStop_PlayReadyCPMTest_zero_http_redirect:
                 fprintf(file, "PlayReady CPM tests not enabled\n");
                 break;
@@ -3872,6 +3876,10 @@ void pvplayer_engine_test::test()
                 break;
 
             case DLA_CancelJoinDomain_PlayReadyCPMTest:
+                fprintf(file, "PlayReady CPM tests not enabled\n");
+                break;
+
+            case LUIUrlParsing_PlayReadyCPMTest:
                 fprintf(file, "PlayReady CPM tests not enabled\n");
                 break;
 
