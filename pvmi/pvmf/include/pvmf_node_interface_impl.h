@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -433,8 +433,8 @@ class PVMFNodeInterfaceImpl : public PVMFNodeInterface,
         // protected routines
         OSCL_IMPORT_REF bool SendEndOfTrackCommand(PVMFPortInterface* aPort, int32 aStreamID, PVMFTimestamp aTimestamp, uint32 aSeqNum, uint32 aClipIndex = 0, uint32 aDuration = PVMF_DEFAULT_TRACK_DURATION);
         OSCL_IMPORT_REF bool SendBeginOfMediaStreamCommand(PVMFPortInterface* aPort, int32 aStreamID, PVMFTimestamp aTimestamp,  uint32 aSeqNum = 0, uint32 aClipIndex = 0);
-        OSCL_IMPORT_REF void CommandComplete(PVMFNodeCommand& aCmd, PVMFStatus aStatus,
-                                             PVInterface* aExtMsg = NULL, OsclAny* aEventData = NULL, PVUuid* aEventUUID = NULL, int32* aEventCode = NULL);
+        OSCL_IMPORT_REF virtual void CommandComplete(PVMFNodeCommand& aCmd, PVMFStatus aStatus,
+                PVInterface* aExtMsg = NULL, OsclAny* aEventData = NULL, PVUuid* aEventUUID = NULL, int32* aEventCode = NULL);
 
         // command dispatcher routiness
         OSCL_IMPORT_REF bool ProcessCommand();

@@ -356,11 +356,6 @@ bool PVMFDownloadManagerNode::queryInterface(const PVUuid& uuid, PVInterface*& i
         return false;
     }
 
-    // PVMFCPMPluginLicenseInterface does not belong to this node
-    if (uuid != PVMFCPMPluginLicenseInterfaceUuid)
-    {
-        ++iExtensionRefCount;
-    }
     return true;
 }
 
@@ -1023,7 +1018,7 @@ void PVMFDownloadManagerNode::Run()
 
 
 void PVMFDownloadManagerNode::CommandComplete(PVMFNodeCommand& aCmd, PVMFStatus aStatus,
-        PVInterface*aExtMsg, OsclAny* aEventData)
+        PVInterface* aExtMsg, OsclAny* aEventData, PVUuid* aEventUUID, int32* aEventCode)
 {
 
     //if the command failed or was cancelled there may be un-processed sub-node commands, so clear the vector now.
@@ -1049,6 +1044,18 @@ void PVMFDownloadManagerNode::CommandComplete(PVMFNodeCommand& aCmd, PVMFStatus 
             iParserInitAfterMovieAtom = false;
             iParserPrepareAfterMovieAtom = false;
         }
+    }
+
+
+    // add ref count only when queryInterface is successful
+    if (aCmd.iCmd == PVMF_GENERIC_NODE_QUERYINTERFACE && PVMFSuccess == aStatus)
+    {
+        PVUuid* uuid = NULL;
+        PVInterface** ptr = NULL;
+        iCurrentCommand.PVMFNodeCommandBase::Parse(uuid, ptr);
+        // PVMFCPMPluginLicenseInterface does not belong to this node
+        if (PVMFCPMPluginLicenseInterfaceUuid != *uuid)
+            addRef();
     }
 
     // Base node's CommandComplete() notifies the observer(s)

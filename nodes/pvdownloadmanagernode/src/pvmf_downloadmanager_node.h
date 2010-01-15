@@ -517,7 +517,8 @@ class PVMFDownloadManagerNode
         // from OsclTimerObject
         virtual void Run();
 
-        void CommandComplete(PVMFNodeCommand& aCmd, PVMFStatus , PVInterface*, OsclAny*);
+        void CommandComplete(PVMFNodeCommand& aCmd, PVMFStatus aStatus, PVInterface* aExtMsg, OsclAny* aEventData,
+                             PVUuid* aEventUUID = NULL, int32* aEventCode = NULL);
 
         // Event reporting
 
