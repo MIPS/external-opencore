@@ -1724,64 +1724,43 @@ BEGIN:
     // correct number of bytes in this frame.
     currentFilePosn = MP3Utils::getCurrentFilePosition(fp);
 
-    // If content length is known (non-0), avoid reading beyond EOF
     uint32 contentLength = MP3FileIO::getContentLength(fp);
-    if (0 != contentLength)
+
+    uint32 seekOffset = 0;
+
+    /*
+     *  Find and validate whole frame (sync word and raw bitstream)
+     */
+
+    MP3ErrorType err = mp3FindSync(currentFilePosn, seekOffset, fp);
+
+    if (err == MP3_SUCCESS)
     {
-        // check for reading beyond EOF
-        if ((currentFilePosn + MP3_FRAME_HEADER_SIZE) >= contentLength)
+        currentFilePosn += seekOffset;
+
+        if (0 != contentLength)
         {
-            return MP3_END_OF_FILE;
+            // if content length is known, check for reading beyond EOF
+            if ((currentFilePosn + MP3_FRAME_HEADER_SIZE) >= contentLength)
+            {
+                return MP3_END_OF_FILE;
+            }
+        }
+
+        if (!MP3FileIO::readByteData(fp, MP3_FRAME_HEADER_SIZE, buf))
+        {
+            return MP3_INSUFFICIENT_DATA;
+        }
+
+        mp3Header = SwapFileToHostByteOrderInt32(buf);
+        if (! GetMP3Header(mp3Header, mp3HeaderInfo))
+        {
+            return MP3_FILE_HDR_READ_ERR;
         }
     }
-
-    if (!MP3FileIO::readByteData(fp, MP3_FRAME_HEADER_SIZE, buf))
+    else
     {
-        return MP3_INSUFFICIENT_DATA;
-    }
-
-    // Convert the File Byte Order to Host Memory Byte Order
-    // for 32 bit integers
-    mp3Header = SwapFileToHostByteOrderInt32(buf);
-
-    // Adjust the buffer write location in preparation for
-    // the next read
-    if (! GetMP3Header(mp3Header, mp3HeaderInfo))
-    {
-        // ////////////////////////////////////////////////////////////////////////////
-        // If we don't find a valid MP3 Marker point we will attempt recovery.
-        uint32 seekOffset = 0;
-        MP3Utils::SeektoOffset(fp, 0 - MP3_FRAME_HEADER_SIZE, Oscl_File::SEEKCUR);
-        MP3ErrorType err = mp3FindSync(currentFilePosn, seekOffset, fp);
-
-        if (err == MP3_SUCCESS)
-        {
-            currentFilePosn += seekOffset;
-
-            if (0 != contentLength)
-            {
-                // if content length is known, check for reading beyond EOF
-                if ((currentFilePosn + MP3_FRAME_HEADER_SIZE) >= contentLength)
-                {
-                    return MP3_END_OF_FILE;
-                }
-            }
-
-            if (!MP3FileIO::readByteData(fp, MP3_FRAME_HEADER_SIZE, buf))
-            {
-                return MP3_INSUFFICIENT_DATA;
-            }
-
-            mp3Header = SwapFileToHostByteOrderInt32(buf);
-            if (! GetMP3Header(mp3Header, mp3HeaderInfo))
-            {
-                return MP3_FILE_HDR_READ_ERR;
-            }
-        }
-        else
-        {
-            return err;
-        }
+        return err;
     }
 
     buf += MP3_FRAME_HEADER_SIZE;
@@ -1795,7 +1774,7 @@ BEGIN:
     int32 revSeek = 0 - MP3_FRAME_HEADER_SIZE;
     mp3FrameSizeInBytes = mp3CDInfo.FrameLengthInBytes;
 
-    MP3ErrorType err = MP3Utils::SeektoOffset(fp, revSeek, Oscl_File::SEEKCUR);
+    err = MP3Utils::SeektoOffset(fp, revSeek, Oscl_File::SEEKCUR);
     if (MP3_SUCCESS != err)
     {
         iCurrFrameNumber--;

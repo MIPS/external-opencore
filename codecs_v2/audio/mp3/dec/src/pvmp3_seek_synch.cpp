@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -181,10 +181,10 @@ ERROR_CODE pvmp3_frame_synch(tPVMP3DecoderExternal *pExt,
                 numBytes++;
             }
 
-            if (numBytes > (int32)pVars->inputStream.inputBufferCurrentLength)
+            if (((pVars->inputStream.usedBits << 3) + numBytes) > pVars->inputStream.inputBufferCurrentLength)
             {
                 /* frame should account for padding and 2 bytes to check sync */
-                pExt->CurrentFrameLength = numBytes + 3;
+                pExt->CurrentFrameLength = (pVars->inputStream.usedBits << 3) + numBytes + 3;
                 return (SYNCH_LOST_ERROR);
             }
             else if (numBytes == (int32)pVars->inputStream.inputBufferCurrentLength)
