@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -498,6 +498,22 @@ PVMFStatus PVMFRecognizerRegistryImpl::ResetPluginParamsPerRecognizeCmd()
     return status;
 }
 
+PVMFStatus PVMFRecognizerRegistryImpl::GetRequestReadCapacityNotificationID(uint32 aMaxSize, uint32 aCapacity)
+{
+    int32 errcode = 0;
+    OSCL_TRY(errcode,
+             iRequestReadCapacityNotificationID =
+                 iDataStream->RequestReadCapacityNotification(iDataStreamSessionID,
+                         *this,
+                         aMaxSize);
+            );
+    OSCL_FIRST_CATCH_ANY(errcode,
+                         LOGERROR((0, "PVMFRecognizerRegistryImpl::CheckForDataAvailability - RequestReadCapacityNotification Failed"));
+                         return PVMFFailure);
+    LOGINFO((0, "PVMFRecognizerRegistryImpl::CheckForDataAvailability - DSRequest - MaxSize=%d, Capacity=%d",
+             aMaxSize, aCapacity));
+    return PVMFSuccess;
+}
 
 PVMFStatus PVMFRecognizerRegistryImpl::CheckForDataAvailability()
 {
@@ -525,19 +541,10 @@ PVMFStatus PVMFRecognizerRegistryImpl::CheckForDataAvailability()
                 }
                 else
                 {
-                    int32 errcode = 0;
-                    OSCL_TRY(errcode,
-                             iRequestReadCapacityNotificationID =
-                                 iDataStream->RequestReadCapacityNotification(iDataStreamSessionID,
-                                         *this,
-                                         maxSize);
-                            );
-                    OSCL_FIRST_CATCH_ANY(errcode,
-                                         LOGERROR((0, "PVMFRecognizerRegistryImpl::CheckForDataAvailability - RequestReadCapacityNotification Failed"));
-                                         return PVMFFailure);
-
-                    LOGINFO((0, "PVMFRecognizerRegistryImpl::CheckForDataAvailability - DSRequest - MaxSize=%d, Capacity=%d",
-                             maxSize, capacity));
+                    if (GetRequestReadCapacityNotificationID(maxSize, capacity) != PVMFSuccess)
+                    {
+                        return PVMFFailure;
+                    }
                     retval = PVMFPending;
                 }
             }
