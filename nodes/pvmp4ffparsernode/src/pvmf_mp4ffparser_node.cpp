@@ -6588,6 +6588,10 @@ void PVMFMP4FFParserNode::CPMCommandCompleted(const PVMFCmdResp& aResponse)
         if (CheckForMP4HeaderAvailability() != PVMFPending)
         {
             CompleteInit(iCurrentCommand);
+            if (IsCommandInProgress(iCancelCommand))
+            {
+                CommandComplete(iCancelCommand, PVMFSuccess);
+            }
         }
         return;
     }
