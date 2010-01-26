@@ -9,6 +9,14 @@ LOCAL_SRC_FILES := \
 	android_audio_input_threadsafe_callbacks.cpp \
 	../thread_init.cpp \
 
+ifeq ($(PLATFORM_VERSION),1.5)
+else ifeq ($(PLATFORM_VERSION),1.6)
+else
+    ifeq ($(PV_WERROR),1)
+        LOCAL_CFLAGS := -Wno-psabi
+    endif
+endif
+
 LOCAL_C_INCLUDES := $(PV_INCLUDES) \
 	$(PV_TOP)/engines/common/include \
 	$(PV_TOP)/codecs_v2/omx/omx_common/include \

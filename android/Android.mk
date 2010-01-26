@@ -15,6 +15,14 @@ LOCAL_SRC_FILES := \
 	extension_handler_registry.cpp \
 	PVPlayerExtHandler.cpp
 
+ifeq ($(PLATFORM_VERSION),1.5)
+else ifeq ($(PLATFORM_VERSION),1.6)
+else
+    ifeq ($(PV_WERROR),1)
+        LOCAL_CFLAGS := -Wno-psabi
+    endif
+endif
+
 LOCAL_C_INCLUDES := $(PV_INCLUDES) \
 	$(PV_TOP)/engines/common/include \
 	$(PV_TOP)/fileformats/mp4/parser/include \

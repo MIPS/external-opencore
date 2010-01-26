@@ -552,7 +552,7 @@ static PVMFStatus parseASF(const char *filename, MediaScannerClient& client)
 
 status_t MediaScanner::processFile(const char *path, const char* mimeType, MediaScannerClient& client)
 {
-    status_t result;
+    status_t result = PVMFSuccess;
     int error = 0;
     InitializeForThread();
 	

@@ -105,7 +105,7 @@ bool AndroidSurfaceOutput::checkVideoParameterFlags()
  * playback, we hold the last frame which is used by SurfaceFlinger
  * to composite the final output.
  */
-void AndroidSurfaceOutput::processWriteResponseQueue(int numFramesToHold)
+void AndroidSurfaceOutput::processWriteResponseQueue(uint32 numFramesToHold)
 {
     LOGV("processWriteResponseQueue: queued = %d, numFramesToHold = %d",
          iWriteResponseQueue.size(), numFramesToHold);

@@ -653,13 +653,13 @@ void AuthorDriver::handleSetOutputFile(set_output_file_command *ac)
         PvmfFileOutputNodeConfigInterface *config = OSCL_DYNAMIC_CAST(PvmfFileOutputNodeConfigInterface*, mComposerConfig);
         if (!config) goto exit;
 
-        ret = config->SetOutputFileDescriptor(&OsclFileHandle(ifpOutput));
+        ret = config->SetOutputFileDescriptor((OsclFileHandle *) ifpOutput);
     }  else if((OUTPUT_FORMAT_THREE_GPP == mOutputFormat) || (OUTPUT_FORMAT_MPEG_4 == mOutputFormat)){
         PVMp4FFCNClipConfigInterface *config = OSCL_DYNAMIC_CAST(PVMp4FFCNClipConfigInterface*, mComposerConfig);
         if (!config) goto exit;
 
         config->SetPresentationTimescale(1000);
-        ret = config->SetOutputFileDescriptor(&OsclFileHandle(ifpOutput));
+        ret = config->SetOutputFileDescriptor((OsclFileHandle *) ifpOutput);
     }
 
 

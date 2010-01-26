@@ -124,7 +124,7 @@ class AndroidSurfaceOutput :    public OsclTimerObject
 
         void deleteMediaTransfer(PvmiMIOSession& aSession, PvmiMediaTransfer* media_transfer);
 
-        void processWriteResponseQueue(int numFramesToHold);
+        void processWriteResponseQueue(uint32 numFramesToHold);
 
         PVMFCommandId Init(const OsclAny* aContext = NULL);
 
