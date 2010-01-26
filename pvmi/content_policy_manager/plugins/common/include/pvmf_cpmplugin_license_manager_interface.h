@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,6 +39,7 @@
 #include "pvmf_return_codes.h"
 #include "pvmf_event_handling.h"
 #include "pvmf_cpmplugin_license_manager_interface_types.h"
+#include "pvmf_cpmplugin_domain_interface_types.h"
 
 #define PVMF_CPMPLUGIN_LICENSE_MANAGER_INTERFACE_MIMETYPE "pvxxx/pvmf/cpm/plugin/license_manager_interface"
 #define PVMFCPMPluginLicenseManagerInterfaceUuid PVUuid(0x05b8186a,0xc2b1,0x11db,0x83,0x14,0x08,0x00,0x20,0x0c,0x9a,0x66)
@@ -93,57 +94,29 @@ class PVMFCPMPluginLicenseManagerInterface : public PVInterface
                                             , OsclAny* aContext = NULL) = 0;
 
         /**
-         * Method to update current licenses by requesting new licenses
-         * from the server.  When the number of licenses is large, the update can be done
-         * in multiple calls by using the aStartingIndex and aMaxNumberofLicenses parameters
-         * to control the range of licenses updated.  The "hours remaining" and "count remaining"
-         * parameters can be used to control how time and count-based licenses are updated.
+         * Method to retrieve the list of licenses that are pending expiry and need to
+         * be updated/renewed from the server. This method gives greater control to the
+         * application, since it gives greater flexibility and control of updating licenses
+         * that it deems necessary.
          *
-         * To get status during or after this operation, use GetLicenseUpdateStatus.
-         * To interrupt and cancel the sequence, use the plugin CancelCommand API.
-         *
-         * @param [in] aSessionId: The assigned plugin session ID to use for this request
-         * @param [out] aLastLicenseProcessed: The 0-based index of the last license processed
-         *   by the request.
-         * @param [in] aStartingIndex: The 0-based index of the first license to process.
-         * @param [in] aMaxNumberOfLicenses: The maximum number of licenses to update in this
-         *   request.  To update all licenses, use (-1).
-         * @param [in] aHoursRemaining: For time-based licenses, update only those that have
-         *    less than the specified value of hours remaining.  To update all time-based
-         *    licenses regardless of the time remaining, use (-1).
-         * @param [in] aCountRemaining: For counted licenses, update only those that have
-         *    less than the specified number of play counts remaining.  To update all counted
+         * @param [out] aSyncList: A vector that would contain the list of licenses based on the
+         *    filtering criteria below.
+         * @param [out] aErrCode: error code in case of failure.
+         * @param [in] aMaxRemainingCount: For counted licenses, retrieve only those that have
+         *    less than the specified number of play counts remaining.  To retrieve all counted
          *    licenses regardless of the counts remaining, use (-1).
-         * @param [in] aCustomData: Opaque data for additional inputs. Can be blank.
-         * @param [in] aTimeoutMsec: Optional timeout in milliseconds
-         *    for each server communication.  Use -1 to indicate infinite wait.
-         * @param [in] aContextData: Optional caller data to accompany the
-         *   request.  The value will be included in the completion callback.
+         * @param [in] aMaxRemainingHours: For time-based licenses, retrieve only those that have
+         *    less than the specified value of hours remaining.  To retrieve all time-based
+         *    licenses regardless of the time remaining, use (-1).
          *
-         * @returns A unique command id for asynchronous completion.
+         * @returns: PVMFSuccess if licenses are available, an error otherwise.
          */
-        virtual PVMFCommandId UpdateLicenses(
-            PVMFSessionId aSessionId,
-            const OSCL_String& aCustomData,
-            int32& aLastLicenseProcessed,
-            uint32 aStartingIndex = 0,
-            int32 aMaxNumberOfLicenses = (-1),
-            int32 aHoursRemaining = (-1),
-            int32 aCountRemaining = (-1),
-            int32 aTimeoutMsec = (-1),
-            OsclAny* aContext = NULL) = 0;
 
-        /**
-         * Method to get the status of an ongoing or recently completed
-         * license update sequence.
-         *
-         * @param [out] aStatus: meter status output
-         *
-         * @returns: PVMFSuccess if meter status is available, an error
-         *   otherwise.
-         */
-        virtual PVMFStatus GetLicenseUpdateStatus(
-            PVMFCPMLicenseUpdateStatus& aStatus) = 0;
+        virtual PVMFStatus GetLicenseSyncList(
+            Oscl_Vector<PVMFCPMContentId, OsclMemAllocator> &aSyncList
+            , uint32& aErrCode
+            , int32 aMaxRemainingCount = -1
+                                         , int32 aMaxRemainingHours = -1) = 0;
 
 };
 

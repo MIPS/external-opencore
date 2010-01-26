@@ -273,6 +273,34 @@ Service specific server error.
 */
 const PVMFStatus PVMFErrDrmServerServiceSpecific = (-53);
 /*
+An internal server error occurred.
+*/
+const PVMFStatus PVMFErrDrmServerInternalError = (-54);
+/*
+The device limit for the domain has been reached.
+*/
+const PVMFStatus PVMFErrDrmServerDeviceLimitReached = (-55);
+/*
+The metering identifier is unknown.
+*/
+const PVMFStatus PVMFErrDrmServerUnknownMeteringID = (-56);
+/*
+The computer limit for the domain has been reached.
+*/
+const PVMFStatus PVMFErrDrmServerComputerLimitReached = (-57);
+/*
+The protocol version specified was not supported by the server.
+*/
+const PVMFStatus PVMFErrDrmServerProtocolVersionMismatch = (-58);
+/*
+The account identifier is unknown.
+*/
+const PVMFStatus PVMFErrDrmServerUnknownAccountID = (-59);
+/*
+The account identifier is unknown.
+*/
+const PVMFStatus PVMFErrDrmServerProtocolRedirect = (-60);
+/*
 ... this range reserved for future DRM-related errors
 */
 /*
