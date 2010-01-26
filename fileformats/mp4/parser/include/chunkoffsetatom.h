@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,6 @@
 #ifndef CHUNKOFFSETATOM_H_INCLUDED
 #define CHUNKOFFSETATOM_H_INCLUDED
 
-#define PV_ERROR -1
 
 #ifndef OSCL_FILE_IO_H_INCLUDED
 #include "oscl_file_io.h"
@@ -50,7 +49,7 @@ class ChunkOffsetAtom : public FullAtom
 
         // Getting first chunk offset values
         MP4_ERROR_CODE getChunkOffsetAt(int32 index, uint32& aChunkOffset) ;
-        int32 getChunkClosestToOffset(uint32 offSet, int32& index);
+        MP4_ERROR_CODE getChunkClosestToOffset(uint32 offSet, int32& index);
 
 
     private:

@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -165,7 +165,7 @@ class SampleTableAtom : public Atom
         uint64 resetPlayBackbyTime(uint64 time, bool oDependsOn);
         uint64 queryRepositionTime(uint64 time, bool oDependsOn, bool bBeforeRequestedTime);
 
-        int32 IsResetNeeded(uint64 time);
+        MP4_ERROR_CODE IsResetNeeded(uint64 time);
 
         MP4_ERROR_CODE getTimestampForSampleNumber(uint32 sampleNumber, uint64& aTimeStamp);
         int32 getCttsOffsetForSampleNumber(uint32 sampleNumber);
@@ -355,7 +355,7 @@ class SampleTableAtom : public Atom
         }
 
         // Returns next video frame
-        int32 getNextSample(uint8 *buf, uint32 &size, uint32 &index, uint32 &SampleOffset);
+        MP4_ERROR_CODE getNextSample(uint8 *buf, uint32 &size, uint32 &index, uint32 &SampleOffset);
 
         int32 getMediaSample(uint32 sampleNumber, uint8 *buf, uint32 &size, uint32 &index, uint32 &SampleOffset);
 
@@ -364,8 +364,8 @@ class SampleTableAtom : public Atom
 
         MP4_ERROR_CODE getKeyMediaSampleNumAt(uint32 aKeySampleNum,
                                               GAU    *pgau);
-        int32 getPrevKeyMediaSample(uint64 inputtimestamp, uint32 &aKeySampleNum, uint32 *n, GAU    *pgau);
-        int32 getNextKeyMediaSample(uint64 inputtimestamp, uint32 &aKeySampleNum, uint32 *n, GAU    *pgau);
+        MP4_ERROR_CODE getPrevKeyMediaSample(uint64 inputtimestamp, uint32 &aKeySampleNum, uint32 *n, GAU    *pgau);
+        MP4_ERROR_CODE getNextKeyMediaSample(uint64 inputtimestamp, uint32 &aKeySampleNum, uint32 *n, GAU    *pgau);
 
         // Returns the timestamp (in milliseconds) for the last sample returned
         // This is mainly to be used when seeking in the bitstream - you request a frame at timestamp
@@ -400,27 +400,26 @@ class SampleTableAtom : public Atom
             _trackStartTSOffset = ts;
         }
 
-        int32 updateFileSize(uint32 filesize);
+        MP4_ERROR_CODE updateFileSize(uint32 filesize);
 
         uint32 getSampleDescriptionIndex()
         {
             return _SDIndex;
         }
 
-        int32 getNextBundledAccessUnits(uint32 *n,
-                                        GAU    *pgau);
+        MP4_ERROR_CODE getNextBundledAccessUnits(uint32 *n, GAU    *pgau);
 
-        int32 peekNextBundledAccessUnits(uint32 *n,
-                                         MediaMetaInfo *mInfo);
+        MP4_ERROR_CODE peekNextBundledAccessUnits(uint32 *n,
+                MediaMetaInfo *mInfo);
 
-        int32 getNextNSamples(uint32 startSampleNum,
-                              uint32 *n,
-                              GAU *pgau);
+        MP4_ERROR_CODE getNextNSamples(uint32 startSampleNum,
+                                       uint32 *n,
+                                       GAU *pgau);
 
 
-        int32 peekNextNSamples(uint32 startSampleNum,
-                               uint32 *n,
-                               MediaMetaInfo    *mInfo);
+        MP4_ERROR_CODE peekNextNSamples(uint32 startSampleNum,
+                                        uint32 *n,
+                                        MediaMetaInfo    *mInfo);
 
         uint32 getSampleCount()
         {
@@ -474,7 +473,7 @@ class SampleTableAtom : public Atom
             }
         }
 
-        int32 getOffsetByTime(uint64 ts, uint32* sampleFileOffset);
+        MP4_ERROR_CODE getOffsetByTime(uint64 ts, uint32* sampleFileOffset);
 
         int32 getNumAMRFramesPerSample()
         {
@@ -518,7 +517,7 @@ class SampleTableAtom : public Atom
             return _oMultipleSampleDescription;
         }
 
-        int32 getSample(uint32 sampleNum, uint8 *buf, uint32 &size, uint32 &index, uint32 &SampleOffset);
+        MP4_ERROR_CODE getSample(uint32 sampleNum, uint8 *buf, uint32 &size, uint32 &index, uint32 &SampleOffset);
         int32 getTimestampForRandomAccessPointsBeforeAfter(uint64 ts, uint64 *tsBuf, uint32* numBuf,
                 uint32& numsamplestoget,
                 uint32 howManyKeySamples);

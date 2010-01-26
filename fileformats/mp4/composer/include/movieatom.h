@@ -24,7 +24,6 @@
 #ifndef __MovieAtom_H__
 #define __MovieAtom_H__
 
-#define PV_ERROR -1
 
 #include "atom.h"
 

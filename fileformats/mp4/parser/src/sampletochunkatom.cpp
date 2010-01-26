@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -341,12 +341,12 @@ SampleToChunkAtom::~SampleToChunkAtom()
 }
 
 // Returns the chunk number of the first chunk in run[index]
-int32
-SampleToChunkAtom::getFirstChunkAt(uint32 index)
+MP4_ERROR_CODE
+SampleToChunkAtom::getFirstChunkAt(uint32 index, int32& pos)
 {
     if (_pfirstChunkVec == NULL)
     {
-        return PV_ERROR;
+        return READ_SAMPLE_TO_CHUNK_ATOM_FAILED;
     }
     if (index < _entryCount)
     {
@@ -354,22 +354,23 @@ SampleToChunkAtom::getFirstChunkAt(uint32 index)
         {
             CheckAndParseEntry(index);
         }
-        return (_pfirstChunkVec[index%_stbl_buff_size]);
+        pos = (_pfirstChunkVec[index%_stbl_buff_size]);
+        return EVERYTHING_FINE;
     }
     else
     {
         PVMF_MP4FFPARSER_LOGERROR((0, "ERROR =>SampleToChunkAtom::getFirstChunkAt index = %d", index));
-        return PV_ERROR;
+        return READ_SAMPLE_TO_CHUNK_ATOM_FAILED;
     }
 }
 
 // Returns the samples per chunk of all the chunks in run[index]
-int32
-SampleToChunkAtom::getSamplesPerChunkAt(uint32 index)
+MP4_ERROR_CODE
+SampleToChunkAtom::getSamplesPerChunkAt(uint32 index, int32& SamplesPerChunk)
 {
     if (_psamplesPerChunkVec == NULL)
     {
-        return PV_ERROR;
+        return READ_SAMPLE_TO_CHUNK_ATOM_FAILED;
     }
     if (index < _entryCount)
     {
@@ -377,44 +378,46 @@ SampleToChunkAtom::getSamplesPerChunkAt(uint32 index)
         {
             CheckAndParseEntry(index);
         }
-        return (_psamplesPerChunkVec[index%_stbl_buff_size]);
+        SamplesPerChunk = (_psamplesPerChunkVec[index%_stbl_buff_size]);
+        return EVERYTHING_FINE;
     }
     else
     {
         PVMF_MP4FFPARSER_LOGERROR((0, "ERROR =>SampleToChunkAtom::getSamplesPerChunkAt index = %d", index));
-        return PV_ERROR;
+        return READ_SAMPLE_TO_CHUNK_ATOM_FAILED;
     }
 
 }
 
 // Returns the samples description index for the samples in all the chunks in run[index]
-uint32
-SampleToChunkAtom::getSDIndex() const
+MP4_ERROR_CODE
+SampleToChunkAtom::getSDIndex(uint32& SDIndex) const
 {
     if (_psampleDescriptionIndexVec == NULL)
     {
-        return (uint32)PV_ERROR;
+        return READ_SAMPLE_TO_CHUNK_ATOM_FAILED;
     }
 
     if (_Index < _entryCount)
     {
-        return (_psampleDescriptionIndexVec[_Index%_stbl_buff_size]);
+        SDIndex = (_psampleDescriptionIndexVec[_Index%_stbl_buff_size]);
+        return EVERYTHING_FINE;
     }
     else
     {
         PVMF_MP4FFPARSER_LOGERROR((0, "ERROR=>SampleToChunkAtom::getSDIndex"));
-        return (uint32) PV_ERROR;
+        return READ_SAMPLE_TO_CHUNK_ATOM_FAILED;
     }
 }
 
 // Returns the chunk number for the given sample number
-uint32
-SampleToChunkAtom::getChunkNumberForSampleGet(uint32 sampleNum)
+MP4_ERROR_CODE
+SampleToChunkAtom::getChunkNumberForSampleGet(uint32 sampleNum, uint32& ChunkNumber)
 {
     if ((_pfirstChunkVec == NULL) ||
             (_psamplesPerChunkVec == NULL))
     {
-        return (uint32)PV_ERROR;
+        return READ_SAMPLE_TO_CHUNK_ATOM_FAILED;
     }
 
     if (_parsing_mode == 1)
@@ -424,7 +427,8 @@ SampleToChunkAtom::getChunkNumberForSampleGet(uint32 sampleNum)
 
     if (sampleNum < _currGetSampleCount)
     {
-        return (_currGetChunk);
+        ChunkNumber = _currGetChunk;
+        return EVERYTHING_FINE;
     }
     else if (_numGetChunksInRun > 1)
     {
@@ -444,12 +448,13 @@ SampleToChunkAtom::getChunkNumberForSampleGet(uint32 sampleNum)
 
         if (sampleNum < _currGetSampleCount)
         {
-            return (_currGetChunk);
+            ChunkNumber = _currGetChunk;
+            return EVERYTHING_FINE;
         }
         else
         {
             PVMF_MP4FFPARSER_LOGERROR((0, "ERROR=>SampleToChunkAtom::getChunkNumberForSampleGet sampleNum= %d", sampleNum));
-            return (uint32)PV_ERROR;
+            return READ_SAMPLE_TO_CHUNK_ATOM_FAILED;
         }
     }
     else if (_numGetChunksInRun <= 1)
@@ -483,12 +488,13 @@ SampleToChunkAtom::getChunkNumberForSampleGet(uint32 sampleNum)
 
             if (sampleNum < _currGetSampleCount)
             {
-                return (_currGetChunk);
+                ChunkNumber = _currGetChunk;
+                return EVERYTHING_FINE;
             }
             else
             {
                 PVMF_MP4FFPARSER_LOGERROR((0, "ERROR=>SampleToChunkAtom::getChunkNumberForSampleGet sampleNum= %d", sampleNum));
-                return (uint32)PV_ERROR;
+                return READ_SAMPLE_TO_CHUNK_ATOM_FAILED;
             }
         }
         else if (_majorGetIndex == (int32)(_entryCount - 1))
@@ -515,32 +521,33 @@ SampleToChunkAtom::getChunkNumberForSampleGet(uint32 sampleNum)
 
             if (sampleNum < _currGetSampleCount)
             {
-                return (_currGetChunk);
+                ChunkNumber = _currGetChunk;
+                return EVERYTHING_FINE;
             }
             else
             {
                 PVMF_MP4FFPARSER_LOGERROR((0, "ERROR=>SampleToChunkAtom::getChunkNumberForSampleGet sampleNum= %d", sampleNum));
-                return (uint32)PV_ERROR;
+                return READ_SAMPLE_TO_CHUNK_ATOM_FAILED;
             }
         }
         else
         {
             PVMF_MP4FFPARSER_LOGERROR((0, "ERROR=>SampleToChunkAtom::getChunkNumberForSampleGet _majorGetIndex = %d _entryCount= %d", _majorGetIndex, _entryCount));
-            return (uint32)PV_ERROR;
+            return READ_SAMPLE_TO_CHUNK_ATOM_FAILED;
         }
     }
 
-    return (uint32)PV_ERROR; // Should never get here
+    return READ_SAMPLE_TO_CHUNK_ATOM_FAILED; // Should never get here
 }
 
 // Returns the chunk number for the given sample number
-uint32
-SampleToChunkAtom::getChunkNumberForSample(uint32 sampleNum)
+MP4_ERROR_CODE
+SampleToChunkAtom::getChunkNumberForSample(uint32 sampleNum, uint32& ChunkNumber)
 {
     if ((_pfirstChunkVec == NULL) ||
             (_psamplesPerChunkVec == NULL))
     {
-        return (uint32)PV_ERROR;
+        return READ_SAMPLE_TO_CHUNK_ATOM_FAILED;
     }
 
     uint32 sampleCount = 0;
@@ -581,7 +588,8 @@ SampleToChunkAtom::getChunkNumberForSample(uint32 sampleNum)
                     if (sampleNum < sampleCount)
                     { // Found specific chunk
                         _Index = i;
-                        return chunkNum + j; // Return jth chunk in run
+                        ChunkNumber = chunkNum + j; // Return jth chunk in run
+                        return EVERYTHING_FINE;
                     }
                 }
             }
@@ -598,16 +606,17 @@ SampleToChunkAtom::getChunkNumberForSample(uint32 sampleNum)
                 {
                     // Found specific chunk
                     _Index = i;
-                    return chunkNum + k; // Return ith chunk in run
+                    ChunkNumber =  chunkNum + k; // Return ith chunk in run
                     // Since we do not actually know how many chunk are in this last run,
                     // the chunkNum that is returned may not be a valid chunk!
                     // This is handled in the exception handling in the chunkOffset atom
+                    return EVERYTHING_FINE;
                 }
                 k++;
             }
         }
     }
-    return (uint32)PV_ERROR; // Should never get here
+    return READ_SAMPLE_TO_CHUNK_ATOM_FAILED; // Should never get here
 }
 
 
@@ -616,13 +625,13 @@ SampleToChunkAtom::getChunkNumberForSample(uint32 sampleNum)
 // chunks (i.e. don't know how many chunks in last run) this method may return a
 // sample number that is not valid.  This should be taken care of in the exception
 // handling in the chunkoffset and samplesize atoms
-uint32
-SampleToChunkAtom::getFirstSampleNumInChunk(uint32 chunkNum)
+MP4_ERROR_CODE
+SampleToChunkAtom::getFirstSampleNumInChunk(uint32 chunkNum, uint32& SampleNum)
 {
     if ((_pfirstChunkVec == NULL) ||
             (_psamplesPerChunkVec == NULL))
     {
-        return (uint32)PV_ERROR;
+        return READ_SAMPLE_TO_CHUNK_ATOM_FAILED; // Error condition
     }
 
     uint32 firstChunkCurrentRun = 0; // chunk number of first chunk in this run
@@ -661,12 +670,14 @@ SampleToChunkAtom::getFirstSampleNumInChunk(uint32 chunkNum)
             uint32 sampleOffset = chunkOffset * samplesPerChunk;
             firstSample += sampleOffset;
 
-            return firstSample;
+            SampleNum = firstSample;
+            return EVERYTHING_FINE;
         }
         else if (chunkNum == firstChunkCurrentRun)
         {
             // Requested chunk is first in this run
-            return firstSample; // Return first sample in this run
+            SampleNum = firstSample; // Return first sample in this run
+            return EVERYTHING_FINE;
         }
         else
         {
@@ -698,20 +709,21 @@ SampleToChunkAtom::getFirstSampleNumInChunk(uint32 chunkNum)
                 uint32 sampleOffset = chunkOffset * samplesPerChunk;
                 firstSample += sampleOffset;
 
-                return firstSample;
+                SampleNum = firstSample;
+                return EVERYTHING_FINE;
             }
         }
     }
 
-    return 0; // Error condition
+    return READ_SAMPLE_TO_CHUNK_ATOM_FAILED; // Error condition
 }
 
-uint32
-SampleToChunkAtom::getNumChunksInRunofChunks(uint32 chunk)
+MP4_ERROR_CODE
+SampleToChunkAtom::getNumChunksInRunofChunks(uint32 chunk, uint32& NumChunks)
 {
     if (_pfirstChunkVec == NULL)
     {
-        return (uint32)PV_ERROR;
+        return READ_SAMPLE_TO_CHUNK_ATOM_FAILED;
     }
 
     if ((chunk + 1) < _entryCount)
@@ -735,31 +747,34 @@ SampleToChunkAtom::getNumChunksInRunofChunks(uint32 chunk)
                     CheckAndParseEntry(i + 1);
                 }
                 uint32 nextChunkNum = _pfirstChunkVec[(int32)((i+1)%_stbl_buff_size)];
-                return(nextChunkNum - chunkNum);
+                NumChunks = (nextChunkNum - chunkNum);
+                return EVERYTHING_FINE;
             }
             else if (_pfirstChunkVec[(i%_stbl_buff_size)] > chunk)
             {
-                return(_pfirstChunkVec[(i%_stbl_buff_size)] - chunk);
+                NumChunks = (_pfirstChunkVec[(i%_stbl_buff_size)] - chunk);
+                return EVERYTHING_FINE;
             }
         }
     }
     else
     {
-        return (1);
+        NumChunks = 1;
+        return EVERYTHING_FINE;
     }
 
-    return (uint32)PV_ERROR;
+    return READ_SAMPLE_TO_CHUNK_ATOM_FAILED;
 }
 
-uint32
-SampleToChunkAtom::getSamplesPerChunkCorrespondingToSample(uint32 sampleNum)
+MP4_ERROR_CODE
+SampleToChunkAtom::getSamplesPerChunkCorrespondingToSample(uint32 sampleNum, uint32& SamplesPerChunk)
 {
     uint32 sampleCount = 0;
 
     if ((_pfirstChunkVec == NULL) ||
             (_psamplesPerChunkVec == NULL))
     {
-        return (uint32)PV_ERROR;
+        return READ_SAMPLE_TO_CHUNK_ATOM_FAILED;
     }
 
     for (uint32 i = 0; i < _entryCount; i++)
@@ -798,7 +813,8 @@ SampleToChunkAtom::getSamplesPerChunkCorrespondingToSample(uint32 sampleNum)
                     sampleCount += samplesPerChunkInRun; //  samples for jth chunk
                     if (sampleNum < sampleCount)
                     { // Found specific chunk
-                        return (samplesPerChunkInRun);
+                        SamplesPerChunk = (samplesPerChunkInRun);
+                        return EVERYTHING_FINE;
                     }
                 }
             }
@@ -815,78 +831,82 @@ SampleToChunkAtom::getSamplesPerChunkCorrespondingToSample(uint32 sampleNum)
                 sampleCount += samplesPerChunkInRun;
                 if (sampleNum < sampleCount)
                 { // Found specific chunk
-                    return (samplesPerChunkInRun);
+                    SamplesPerChunk = (samplesPerChunkInRun);
                     // Since we do not actually know how many chunk are in this last run,
                     // the chunkNum that is returned may not be a valid chunk!
                     // This is handled in the exception handling in the chunkOffset atom
+                    return EVERYTHING_FINE;
                 }
                 k++;
             }
         }
     }
-    return 0; // Should never get here
+    return READ_SAMPLE_TO_CHUNK_ATOM_FAILED; // Should never get here
 }
 
 
 // Returns the chunk number for the given sample number
-uint32
-SampleToChunkAtom::getSDIndexPeek() const
+MP4_ERROR_CODE
+SampleToChunkAtom::getSDIndexPeek(uint32 &SDIndex) const
 {
     if (_psampleDescriptionIndexVec == NULL)
     {
-        return (uint32)PV_ERROR;
+        return READ_SAMPLE_TO_CHUNK_ATOM_FAILED;
     }
 
     if (_currPeekSDI != 0)
     {
-        return (_currPeekSDI);
+        SDIndex = (_currPeekSDI);
+        return EVERYTHING_FINE;
     }
     else
     {
         PVMF_MP4FFPARSER_LOGERROR((0, "ERROR=>SampleToChunkAtom::getSDIndexPeek _currPeekSDI = %d", _currPeekSDI));
-        return (uint32) PV_ERROR;
+        return READ_SAMPLE_TO_CHUNK_ATOM_FAILED;
     }
 }
-uint32
-SampleToChunkAtom::getSDIndexGet() const
+MP4_ERROR_CODE
+SampleToChunkAtom::getSDIndexGet(uint32 &SDIndex) const
 {
     if (_psampleDescriptionIndexVec == NULL)
     {
-        return (uint32)PV_ERROR;
+        return READ_SAMPLE_TO_CHUNK_ATOM_FAILED;
     }
 
     if (_currGetSDI != 0)
     {
-        return (_currGetSDI);
+        SDIndex = (_currGetSDI);
+        return EVERYTHING_FINE;
     }
     else
     {
         PVMF_MP4FFPARSER_LOGERROR((0, "ERROR=>SampleToChunkAtom::getSDIndexGet _currGetSDI = %d", _currGetSDI));
-        return (uint32) PV_ERROR;
+        return READ_SAMPLE_TO_CHUNK_ATOM_FAILED;
     }
 }
 
 
-uint32
-SampleToChunkAtom::getFirstSampleNumInChunkGet() const
+MP4_ERROR_CODE
+SampleToChunkAtom::getFirstSampleNumInChunkGet(uint32& SampleNum) const
 {
     if ((_pfirstChunkVec == NULL) ||
             (_psamplesPerChunkVec == NULL))
     {
-        return (uint32)PV_ERROR;
+        return READ_SAMPLE_TO_CHUNK_ATOM_FAILED;
     }
 
-    return (_firstGetSampleInCurrChunk);
+    SampleNum = (_firstGetSampleInCurrChunk);
+    return EVERYTHING_FINE;
 }
 
 
-uint32
-SampleToChunkAtom::getChunkNumberForSamplePeek(uint32 sampleNum)
+MP4_ERROR_CODE
+SampleToChunkAtom::getChunkNumberForSamplePeek(uint32 sampleNum, uint32& ChunkNumber)
 {
     if ((_pfirstChunkVec == NULL) ||
             (_psamplesPerChunkVec == NULL))
     {
-        return (uint32)PV_ERROR;
+        return READ_SAMPLE_TO_CHUNK_ATOM_FAILED;
     }
     if (_parsing_mode == 1)
     {
@@ -895,7 +915,8 @@ SampleToChunkAtom::getChunkNumberForSamplePeek(uint32 sampleNum)
 
     if (sampleNum < _currPeekSampleCount)
     {
-        return (_currPeekChunk);
+        ChunkNumber = _currPeekChunk;
+        return EVERYTHING_FINE;
     }
     else if (_numPeekChunksInRun > 1)
     {
@@ -916,12 +937,13 @@ SampleToChunkAtom::getChunkNumberForSamplePeek(uint32 sampleNum)
 
         if (sampleNum < _currPeekSampleCount)
         {
-            return (_currPeekChunk);
+            ChunkNumber = _currPeekChunk;
+            return EVERYTHING_FINE;
         }
         else
         {
             PVMF_MP4FFPARSER_LOGERROR((0, "ERROR=>SampleToChunkAtom::getChunkNumberForSamplePeek sampleNum = %d", sampleNum));
-            return (uint32)PV_ERROR;
+            return READ_SAMPLE_TO_CHUNK_ATOM_FAILED;
         }
     }
     else if (_numPeekChunksInRun <= 1)
@@ -956,12 +978,13 @@ SampleToChunkAtom::getChunkNumberForSamplePeek(uint32 sampleNum)
 
             if (sampleNum < _currPeekSampleCount)
             {
-                return (_currPeekChunk);
+                ChunkNumber = _currPeekChunk;
+                return EVERYTHING_FINE;
             }
             else
             {
                 PVMF_MP4FFPARSER_LOGERROR((0, "ERROR=>SampleToChunkAtom::getChunkNumberForSamplePeek sampleNum = %d", sampleNum));
-                return (uint32)PV_ERROR;
+                return READ_SAMPLE_TO_CHUNK_ATOM_FAILED;
             }
         }
         else if (_majorPeekIndex == (int32)(_entryCount - 1))
@@ -987,64 +1010,68 @@ SampleToChunkAtom::getChunkNumberForSamplePeek(uint32 sampleNum)
 
             if (sampleNum < _currPeekSampleCount)
             {
-                return (_currPeekChunk);
+                ChunkNumber = _currPeekChunk;
+                return EVERYTHING_FINE;
             }
             else
             {
                 PVMF_MP4FFPARSER_LOGERROR((0, "ERROR=>SampleToChunkAtom::getChunkNumberForSamplePeek sampleNum = %d", sampleNum));
-                return (uint32)PV_ERROR;
+                return READ_SAMPLE_TO_CHUNK_ATOM_FAILED;
             }
         }
         else
         {
-            return (uint32)PV_ERROR;
+            return READ_SAMPLE_TO_CHUNK_ATOM_FAILED;
         }
     }
 
-    return (uint32)PV_ERROR; // Should never get here
+    return READ_SAMPLE_TO_CHUNK_ATOM_FAILED; // Should never get here
 }
-uint32
-SampleToChunkAtom::getNumChunksInRunofChunksGet() const
+MP4_ERROR_CODE
+SampleToChunkAtom::getNumChunksInRunofChunksGet(uint32& numChunksInRun) const
 {
     if (_pfirstChunkVec == NULL)
     {
-        return (uint32)PV_ERROR;
+        return READ_SAMPLE_TO_CHUNK_ATOM_FAILED;
     }
 
     if (_numChunksInRun != 0)
     {
-        return (_numChunksInRun);
+        numChunksInRun = _numChunksInRun;
+        return EVERYTHING_FINE;
     }
-    return (uint32)PV_ERROR;
+    return READ_SAMPLE_TO_CHUNK_ATOM_FAILED;
 }
 
-uint32
-SampleToChunkAtom::getSamplesPerChunkCorrespondingToSampleGet() const
+MP4_ERROR_CODE
+SampleToChunkAtom::getSamplesPerChunkCorrespondingToSampleGet(uint32& SamplesPerChunk) const
 {
 
     if ((_pfirstChunkVec == NULL) ||
             (_psamplesPerChunkVec == NULL))
     {
-        return (uint32)PV_ERROR;
+        return READ_SAMPLE_TO_CHUNK_ATOM_FAILED;
     }
 
     if (_numGetSamplesPerChunk != 0)
     {
-        return (_numGetSamplesPerChunk);
+        SamplesPerChunk = _numGetSamplesPerChunk;
+        return EVERYTHING_FINE;
     }
 
-    return 0; // Should never get here
+    return READ_SAMPLE_TO_CHUNK_ATOM_FAILED; // Should never get here
 }
-uint32
-SampleToChunkAtom::getFirstSampleNumInChunkPeek() const
+MP4_ERROR_CODE
+SampleToChunkAtom::getFirstSampleNumInChunkPeek(uint32& SampleNum) const
 {
     if ((_pfirstChunkVec == NULL) ||
             (_psamplesPerChunkVec == NULL))
     {
-        return (uint32)PV_ERROR;
+        return READ_SAMPLE_TO_CHUNK_ATOM_FAILED;
     }
 
-    return (_firstPeekSampleInCurrChunk);
+    SampleNum = (_firstPeekSampleInCurrChunk);
+    return EVERYTHING_FINE;
 }
 
 int32
@@ -1091,7 +1118,7 @@ SampleToChunkAtom::resetStateVariables(uint32 sampleNum)
     if ((_pfirstChunkVec == NULL) ||
             (_psamplesPerChunkVec == NULL))
     {
-        return PV_ERROR;
+        return DEFAULT_ERROR;
     }
 
     uint32 sampleCount = 0;
@@ -1183,7 +1210,7 @@ SampleToChunkAtom::resetStateVariables(uint32 sampleNum)
         }
     }
 
-    return PV_ERROR; // Should never get here
+    return DEFAULT_ERROR; // Should never get here
 
 END_OF_RESET:
     {

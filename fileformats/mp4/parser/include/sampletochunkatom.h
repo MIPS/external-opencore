@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,6 @@
 #ifndef SAMPLETOCHUNKATOM_H_INCLUDED
 #define SAMPLETOCHUNKATOM_H_INCLUDED
 
-#define PV_ERROR -1
 
 #ifndef OSCL_FILE_IO_H_INCLUDED
 #include "oscl_file_io.h"
@@ -57,17 +56,17 @@ class SampleToChunkAtom : public FullAtom
             return _currentChunkNumber++;
         }
 
-        int32 getFirstChunkAt(uint32 index);
-        int32 getSamplesPerChunkAt(uint32 index) ;
+        MP4_ERROR_CODE getFirstChunkAt(uint32 index, int32& pos);
+        MP4_ERROR_CODE getSamplesPerChunkAt(uint32 index, int32& SamplesPerChunk);
 
-        uint32 getSDIndex() const;
+        MP4_ERROR_CODE getSDIndex(uint32& SDIndex) const;
         // Returns the chunk number for the given sample number
-        uint32 getChunkNumberForSample(uint32 sampleNum);
-        uint32 getChunkNumberForSampleGet(uint32 sampleNum);
+        MP4_ERROR_CODE getChunkNumberForSample(uint32 sampleNum, uint32& ChunkNumber);
+        MP4_ERROR_CODE getChunkNumberForSampleGet(uint32 sampleNum, uint32& ChunkNumber);
 
         // Returns the number of the first sample in chunk number 'chunk'
-        uint32 getFirstSampleNumInChunk(uint32 chunkNum) ;
-        uint32 getFirstSampleNumInChunkPeek() const;
+        MP4_ERROR_CODE getFirstSampleNumInChunk(uint32 chunkNum, uint32& SampleNum) ;
+        MP4_ERROR_CODE getFirstSampleNumInChunkPeek(uint32& SampleNum) const;
 
         int32 getMaxNumSamlplesPerChunk()
         {
@@ -86,16 +85,16 @@ class SampleToChunkAtom : public FullAtom
             _maxChunkDataSize = max;
         }
 
-        uint32 getNumChunksInRunofChunks(uint32 chunk) ;
-        uint32 getSamplesPerChunkCorrespondingToSample(uint32 sampleNum) ;
-        uint32 getSamplesPerChunkCorrespondingToSampleGet() const;
+        MP4_ERROR_CODE getNumChunksInRunofChunks(uint32 chunk, uint32& NumChunks);
+        MP4_ERROR_CODE getSamplesPerChunkCorrespondingToSample(uint32 sampleNum, uint32& SamplesPerChunk);
+        MP4_ERROR_CODE getSamplesPerChunkCorrespondingToSampleGet(uint32& SamplesPerChunk) const;
         int32 resetStateVariables();
         int32 resetStateVariables(uint32 sampleNum);
-        uint32 getFirstSampleNumInChunkGet() const;
-        uint32 getChunkNumberForSamplePeek(uint32 sampleNum);
-        uint32 getNumChunksInRunofChunksGet() const;
-        uint32 getSDIndexPeek() const;
-        uint32 getSDIndexGet() const;
+        MP4_ERROR_CODE getFirstSampleNumInChunkGet(uint32& SampleNum) const;
+        MP4_ERROR_CODE getChunkNumberForSamplePeek(uint32 sampleNum, uint32& ChunkNumber);
+        MP4_ERROR_CODE getNumChunksInRunofChunksGet(uint32& numChunksInRun) const;
+        MP4_ERROR_CODE getSDIndexPeek(uint32& SDIndex) const;
+        MP4_ERROR_CODE getSDIndexGet(uint32& SDIndex) const;
         int32 resetPeekwithGet();
         uint32 getCurrPeekSampleCount()
         {

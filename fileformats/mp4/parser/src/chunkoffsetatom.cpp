@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -274,14 +274,14 @@ ChunkOffsetAtom::getChunkOffsetAt(int32 index, uint32& aChunkOffset)
     }
 }
 
-int32
+MP4_ERROR_CODE
 ChunkOffsetAtom::getChunkClosestToOffset(uint32 offSet, int32& index)
 {
     index = -1;
 
     if (_pchunkOffsets == NULL)
     {
-        return PV_ERROR;
+        return DEFAULT_ERROR;
     }
 
     uint32 prevIndex = 0;
