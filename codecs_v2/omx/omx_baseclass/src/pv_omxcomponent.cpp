@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -4365,6 +4365,7 @@ OSCL_EXPORT_REF OMX_ERRORTYPE OmxComponentVideo::SetParameter(
     OMX_VIDEO_PARAM_WMVTYPE*     pVideoWmv;
     OMX_VIDEO_PARAM_AVCTYPE*     pVideoAvc;
     OMX_VIDEO_PARAM_RVTYPE*      pVideoRv;
+    OMX_PARAM_DEBLOCKINGTYPE*    pDeBlocking;
 
     //Video encoder configuration parameters
     OMX_CONFIG_ROTATIONTYPE*             pVideoRotation;
@@ -4744,6 +4745,20 @@ OSCL_EXPORT_REF OMX_ERRORTYPE OmxComponentVideo::SetParameter(
         }
         break;
 
+        case OMX_IndexParamCommonDeblocking:
+        {
+            pDeBlocking = (OMX_PARAM_DEBLOCKINGTYPE*) ComponentParameterStructure;
+            PortIndex = pDeBlocking->nPortIndex;
+            /*Check Structure Header and verify component state*/
+            ErrorType = ParameterSanityCheck(hComponent, PortIndex, pDeBlocking, sizeof(OMX_PARAM_DEBLOCKINGTYPE));
+            if (ErrorType != OMX_ErrorNone)
+            {
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE, (0, "OmxComponentVideo : SetParameter error param check failed"));
+                return ErrorType;
+            }
+            oscl_memcpy(&ipPorts[PortIndex]->VideoDeBlocking, pDeBlocking, sizeof(OMX_PARAM_DEBLOCKINGTYPE));
+        }
+        break;
 
         default:
         {

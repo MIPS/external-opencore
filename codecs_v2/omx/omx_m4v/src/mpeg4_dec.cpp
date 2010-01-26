@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -84,7 +84,7 @@ OMX_ERRORTYPE Mpeg4Decoder_OMX::Mp4DecInit()
 /*Decode routine */
 OMX_BOOL Mpeg4Decoder_OMX::Mp4DecodeVideo(OMX_BUFFERHEADERTYPE* aOutBuffer, OMX_U32* aOutputLength,
         OMX_U8** aInputBuf, OMX_U32* aInBufSize,
-        OMX_PARAM_PORTDEFINITIONTYPE* aPortParam,
+        OMX_PARAM_PORTDEFINITIONTYPE* aPortParam, OMX_BOOL aDeBlocking,
         OMX_S32* aFrameCount, OMX_BOOL aMarkerFlag, OMX_BOOL *aResizeFlag)
 {
     OMX_BOOL Status = OMX_TRUE;
@@ -114,7 +114,7 @@ OMX_BOOL Mpeg4Decoder_OMX::Mp4DecodeVideo(OMX_BUFFERHEADERTYPE* aOutBuffer, OMX_
         }
 
         if (PV_TRUE != InitializeVideoDecode(&iDisplay_Width, &iDisplay_Height,
-                                             aInputBuf, (OMX_S32*)aInBufSize, MPEG4_MODE))
+                                             aInputBuf, (OMX_S32*)aInBufSize, MPEG4_MODE, aDeBlocking))
             return OMX_FALSE;
 
         Mpeg4InitCompleteFlag = OMX_TRUE;
@@ -287,7 +287,7 @@ OMX_BOOL Mpeg4Decoder_OMX::Mp4DecodeVideo(OMX_BUFFERHEADERTYPE* aOutBuffer, OMX_
 }
 
 OMX_S32 Mpeg4Decoder_OMX::InitializeVideoDecode(
-    OMX_S32* aWidth, OMX_S32* aHeight, OMX_U8** aBuffer, OMX_S32* aSize, OMX_S32 mode)
+    OMX_S32* aWidth, OMX_S32* aHeight, OMX_U8** aBuffer, OMX_S32* aSize, OMX_S32 mode, OMX_BOOL aDeBlocking)
 {
     OMX_S32 OK = PV_TRUE;
     CodecMode = MPEG4_MODE;
@@ -311,7 +311,14 @@ OMX_S32 Mpeg4Decoder_OMX::InitializeVideoDecode(
             *aHeight = PVH263DEFAULTHEIGHT;
         }
 
-        PVSetPostProcType(&VideoCtrl, 0);
+        if (OMX_TRUE == aDeBlocking)
+        {
+            PVSetPostProcType(&VideoCtrl, PV_DEBLOCK);
+        }
+        else
+        {
+            PVSetPostProcType(&VideoCtrl, 0);
+        }
 
         return PV_TRUE;
     }

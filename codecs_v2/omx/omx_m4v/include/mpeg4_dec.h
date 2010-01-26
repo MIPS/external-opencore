@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,7 +42,8 @@ class Mpeg4Decoder_OMX
         Mpeg4Decoder_OMX(class OmxComponentBase *pComp);
 
         OMX_S32 InitializeVideoDecode(OMX_S32* aWidth, OMX_S32* aHeight,
-                                      OMX_U8** aBuffer, OMX_S32* aSize, OMX_S32 mode);
+                                      OMX_U8** aBuffer, OMX_S32* aSize, OMX_S32 mode,
+                                      OMX_BOOL aDeBlocking);
 
         OMX_ERRORTYPE Mp4DecInit();
 
@@ -50,6 +51,7 @@ class Mpeg4Decoder_OMX
         OMX_BOOL Mp4DecodeVideo(OMX_BUFFERHEADERTYPE* aOutBuffer, OMX_U32* aOutputLength,
                                 OMX_U8** aInputBuf, OMX_U32* aInBufSize,
                                 OMX_PARAM_PORTDEFINITIONTYPE* aPortParam,
+                                OMX_BOOL aDeBlocking,
                                 OMX_S32* aFrameCount, OMX_BOOL aMarkerFlag, OMX_BOOL *aResizeFlag);
 
         OMX_ERRORTYPE Mp4DecDeinit();

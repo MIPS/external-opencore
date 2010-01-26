@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -419,6 +419,11 @@ OMX_ERRORTYPE OpenmaxMpeg4AO::ConstructComponent(OMX_PTR pAppData, OMX_PTR pProx
     pOutPort->VideoParam[0].eColorFormat = OMX_COLOR_FormatYUV420Planar;
 
 
+    //OMX_PARAM_DEBLOCKINGTYPE settings of the mpeg4/h263 output port
+    SetHeader(&pOutPort->VideoDeBlocking, sizeof(OMX_PARAM_DEBLOCKINGTYPE));
+    pOutPort->VideoDeBlocking.nPortIndex = OMX_PORT_OUTPUTPORT_INDEX;
+    pOutPort->VideoDeBlocking.bDeblocking = OMX_FALSE;    //Keep deblocking off by default
+
     iUseExtTimestamp = OMX_TRUE;
 
 
@@ -626,6 +631,7 @@ void OpenmaxMpeg4AO::DecodeWithoutMarker()
                        &(pTempInBuffer),
                        &TempInLength,
                        &(ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->PortParam),
+                       ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->VideoDeBlocking.bDeblocking,
                        &iFrameCount,
                        MarkerFlag,
                        &ResizeNeeded);
@@ -845,6 +851,7 @@ void OpenmaxMpeg4AO::DecodeWithMarker()
                            &(ipFrameDecodeBuffer),
                            &(iInputCurrLength),
                            &(ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->PortParam),
+                           ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->VideoDeBlocking.bDeblocking,
                            &iFrameCount,
                            MarkerFlag,
                            &ResizeNeeded);
@@ -1049,9 +1056,10 @@ OMX_ERRORTYPE OpenmaxMpeg4AO::ComponentInit()
         {
             OMX_S32 Width, Height, Size = 0;
             OMX_U8* Buff = NULL;
+            OMX_BOOL DeBlocking = OMX_FALSE;
 
             //Pass dummy pointers during initializations
-            if (OMX_TRUE != ipMpegDecoderObject->InitializeVideoDecode(&Width, &Height, &Buff, &Size, iDecMode))
+            if (OMX_TRUE != ipMpegDecoderObject->InitializeVideoDecode(&Width, &Height, &Buff, &Size, iDecMode, DeBlocking))
             {
                 Status = OMX_ErrorInsufficientResources;
             }

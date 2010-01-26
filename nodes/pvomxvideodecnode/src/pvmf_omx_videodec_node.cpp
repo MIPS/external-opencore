@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1060,19 +1060,28 @@ bool PVMFOMXVideoDecNode::NegotiateComponentParameters(OMX_PTR aOutputParameters
     if ((iOMXVideoCompressionFormat == OMX_VIDEO_CodingMPEG4) ||
             (iOMXVideoCompressionFormat == OMX_VIDEO_CodingH263))
     {
-        // Enable deblocking for these two video types
-        OMX_PARAM_DEBLOCKINGTYPE DeBlock;
-        CONFIG_SIZE_AND_VERSION(DeBlock);
-
-        DeBlock.nPortIndex = iOutputPortIndex;
-        DeBlock.bDeblocking = OMX_TRUE;
-
-        Err = OMX_SetParameter(iOMXDecoder, OMX_IndexParamCommonDeblocking, &DeBlock);
-        if (Err != OMX_ErrorNone)
+        if (iNodeConfig.iPostProcessingEnable)
         {
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                            (0, "PVMFOMXVideoDecNode::NegotiateComponentParameters() Problem setting deblocking flag"));
-            // Dont return false in this case.  If enabling DeBlocking fails, just continue.
+            // Disable/Enable deblocking for mpeg4/h263 video types
+            OMX_PARAM_DEBLOCKINGTYPE DeBlock;
+            CONFIG_SIZE_AND_VERSION(DeBlock);
+
+            DeBlock.nPortIndex = iOutputPortIndex;
+            DeBlock.bDeblocking = OMX_FALSE;
+
+            if (1 == iNodeConfig.iPostProcessingMode)   //1 (deblock)
+            {
+                DeBlock.bDeblocking = OMX_TRUE;
+            }
+
+
+            Err = OMX_SetParameter(iOMXDecoder, OMX_IndexParamCommonDeblocking, &DeBlock);
+            if (Err != OMX_ErrorNone)
+            {
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                                (0, "PVMFOMXVideoDecNode::NegotiateComponentParameters() Problem setting deblocking flag"));
+                // Dont return false in this case.  If enabling DeBlocking fails, just continue.
+            }
         }
     }
 
@@ -3547,11 +3556,10 @@ PVMFStatus PVMFOMXVideoDecNode::DoVerifyAndSetVideoDecNodeParameter(PvmiKvp& aPa
             if (aSetParam)
             {
                 iNodeConfig.iPostProcessingMode = aParameter.value.uint32_value;
-                if (iNodeConfig.iPostProcessingEnable && iOMXDecoder)
-                {
-                    // Don't do anything yet: Need to communicate post-processing to decoder
-                    //iVideoDecoder->SetPostProcType(iNodeConfig.iPostProcessingMode);
-                }
+                // Don't do anything yet: DeBlocking Type of Post-processing will be communicated
+                // to decoder later at the time of NegotiateComponentParameters()
+                // Note: Setting of this Kvp through OMX can only happen before the beginning of decoding.
+                // If the kvp is set after decoding has already begun, then it won't be passed to the decoder.
             }
             break;
 

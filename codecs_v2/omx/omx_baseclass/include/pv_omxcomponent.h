@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -190,6 +190,7 @@ typedef struct ComponentPortType
     OMX_VIDEO_PARAM_MOTIONVECTORTYPE    VideoMotionVector;
     OMX_VIDEO_PARAM_INTRAREFRESHTYPE    VideoIntraRefresh;
     OMX_VIDEO_PARAM_AVCSLICEFMO         AvcSliceFMO;
+    OMX_PARAM_DEBLOCKINGTYPE            VideoDeBlocking;
 
     OMX_CONFIG_FRAMERATETYPE            VideoConfigFrameRateType;
     OMX_VIDEO_CONFIG_BITRATETYPE        VideoConfigBitRateType;
