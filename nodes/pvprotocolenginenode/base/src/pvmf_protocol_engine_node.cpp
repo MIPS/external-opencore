@@ -1051,7 +1051,18 @@ PVMFStatus PVMFProtocolEngineNode::DoSeek(PVMFProtocolEngineNodeCommand& aCmd)
 */
 PVMFStatus PVMFProtocolEngineNode::DoBitsteamSwitch(PVMFProtocolEngineNodeCommand& aCmd)
 {
-    return iProtocolContainer->doBitstreamSwitch(aCmd);
+    int32 status = iProtocolContainer->doBitstreamSwitch(aCmd);
+    if (status == PVProtocolEngineNodeErrorProcessingFailure_BitStreamSwitchAfterEOD)
+    {
+        //Since PE node already received $E, So return failure and set appropriate extention error code.
+        //When SM node finds this extention error, it will ignore the failure.
+        PVUuid uuid = PVProtocolEngineNodeErrorEventTypesUUID;
+        int32 errorCode = PVProtocolEngineNodeErrorProcessingFailure_BitStreamSwitchAfterEOD;
+        int32 status = PVMFFailure;
+        PVInterface* extmsg = NULL;
+        CommandComplete(iInputCommands, aCmd, status, NULL, &uuid, &errorCode, 0, extmsg);
+    }
+    return status;
 }
 
 PVMFStatus PVMFProtocolEngineNode::DoReposition(PVMFProtocolEngineNodeCommand& aCmd)
