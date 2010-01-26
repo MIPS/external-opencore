@@ -972,7 +972,7 @@ PVCommandId CPV324m2Way::DoRemoveDataSourceSink(PVMFNodeInterface& aEndPt,
     CPV2WayDataChannelDatapath *datapath = NULL;
     TPV2WayCmdInfo *cmd = GetCmdInfoL();
 
-    if ((iVideoEncDatapath) && iVideoEncDatapath->IsNodeInDatapath(&aEndPt))
+    if ((iVideoEncDatapath != NULL) && iVideoEncDatapath->IsNodeInDatapath(&aEndPt))
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE,
                         (0, "CPV324m2Way::RemoveDataSource remove video source, state %d\n",
@@ -980,7 +980,7 @@ PVCommandId CPV324m2Way::DoRemoveDataSourceSink(PVMFNodeInterface& aEndPt,
         datapath = iVideoEncDatapath;
         cmd->type = PVT_COMMAND_REMOVE_DATA_SOURCE;
     }
-    else if ((iAudioEncDatapath) && iAudioEncDatapath->IsNodeInDatapath(&aEndPt))
+    else if ((iAudioEncDatapath != NULL) && iAudioEncDatapath->IsNodeInDatapath(&aEndPt))
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE,
                         (0, "CPV324m2Way::RemoveDataSource remove audio source, state %d\n",
@@ -988,7 +988,7 @@ PVCommandId CPV324m2Way::DoRemoveDataSourceSink(PVMFNodeInterface& aEndPt,
         datapath = iAudioEncDatapath;
         cmd->type = PVT_COMMAND_REMOVE_DATA_SOURCE;
     }
-    else if ((iVideoDecDatapath) && iVideoDecDatapath->IsNodeInDatapath(&aEndPt))
+    else if ((iVideoDecDatapath != NULL) && iVideoDecDatapath->IsNodeInDatapath(&aEndPt))
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE,
                         (0, "CPV324m2Way::RemoveDataSink remove video sink, state %d\n",
@@ -996,7 +996,7 @@ PVCommandId CPV324m2Way::DoRemoveDataSourceSink(PVMFNodeInterface& aEndPt,
         datapath = iVideoDecDatapath;
         cmd->type = PVT_COMMAND_REMOVE_DATA_SINK;
     }
-    else if ((iAudioDecDatapath) && iAudioDecDatapath->IsNodeInDatapath(&aEndPt))
+    else if ((iAudioDecDatapath != NULL) && iAudioDecDatapath->IsNodeInDatapath(&aEndPt))
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_INFO,
                         (0, "CPV324m2Way::RemoveDataSink remove audio sink, state %d\n",
@@ -3512,12 +3512,12 @@ void CPV324m2Way::HandleNodeInformationalEvent(const PVMFAsyncEvent& aEvent)
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_INFO,
                         (0, "CPV324m2Way::HandleNodeInformationalEvent video encoder node\n"));
     }
-    else if (iAudioEncDatapath && iAudioEncDatapath->IsNodeInDatapath((PVMFNodeInterface *) aEvent.GetContext()))
+    else if ((iAudioEncDatapath != NULL) && iAudioEncDatapath->IsNodeInDatapath((PVMFNodeInterface *) aEvent.GetContext()))
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_INFO,
                         (0, "CPV324m2Way::HandleNodeInformationalEvent audio enc datapath\n"));
     }
-    else if (iAudioDecDatapath && iAudioDecDatapath->IsNodeInDatapath((PVMFNodeInterface *) aEvent.GetContext()))
+    else if ((iAudioDecDatapath != NULL) && iAudioDecDatapath->IsNodeInDatapath((PVMFNodeInterface *) aEvent.GetContext()))
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_INFO,
                         (0, "CPV324m2Way::HandleNodeInformationalEvent audio dec datapath\n"));
@@ -3600,19 +3600,19 @@ void CPV324m2Way::HandleNodeErrorEvent(const PVMFAsyncEvent& aEvent)
                 break;
         }
     }
-    else if (iVideoEncDatapath->IsNodeInDatapath((PVMFNodeInterface *) aEvent.GetContext()))
+    else if ((iVideoEncDatapath != NULL) && iVideoEncDatapath->IsNodeInDatapath((PVMFNodeInterface *) aEvent.GetContext()))
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_INFO,
                         (0, "CPV324m2Way::HandleNodeErrorEvent video enc datapath\n"));
         iVideoEncDatapath->SetCmd(NULL);
     }
-    else if (iVideoDecDatapath->IsNodeInDatapath((PVMFNodeInterface *) aEvent.GetContext()))
+    else if ((iVideoDecDatapath != NULL) && iVideoDecDatapath->IsNodeInDatapath((PVMFNodeInterface *) aEvent.GetContext()))
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_INFO,
                         (0, "CPV324m2Way::HandleNodeErrorEvent video dec datapath\n"));
         iVideoDecDatapath->SetCmd(NULL);
     }
-    else if (iAudioEncDatapath->IsNodeInDatapath((PVMFNodeInterface *) aEvent.GetContext()))
+    else if ((iAudioEncDatapath != NULL) && iAudioEncDatapath->IsNodeInDatapath((PVMFNodeInterface *) aEvent.GetContext()))
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_INFO,
                         (0, "CPV324m2Way::HandleNodeErrorEvent audio enc datapath\n"));
@@ -3645,7 +3645,7 @@ void CPV324m2Way::HandleNodeErrorEvent(const PVMFAsyncEvent& aEvent)
         iAudioEncDatapath->SetCmd(NULL);
 #endif
     }
-    else if (iAudioDecDatapath->IsNodeInDatapath((PVMFNodeInterface *) aEvent.GetContext()))
+    else if ((iAudioDecDatapath != NULL) && iAudioDecDatapath->IsNodeInDatapath((PVMFNodeInterface *) aEvent.GetContext()))
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_INFO,
                         (0, "CPV324m2Way::HandleNodeErrorEvent audio dec datapath\n"));
