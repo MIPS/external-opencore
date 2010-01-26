@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -139,9 +139,6 @@ extern "C"
     }
 
 
-
-
-
     __inline  Int32 cmplx_mul32_by_16(Int32 x, const Int32 y, Int32 exp_jw)
     {
         Int32  rTmp0 = (Int16)(exp_jw >> 16);
@@ -265,8 +262,6 @@ extern "C"
     {
         return (Int32)(((int64)(a) * b) >> 14);
     }
-
-
 
 #endif
 

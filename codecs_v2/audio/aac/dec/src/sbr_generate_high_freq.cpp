@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -932,8 +932,6 @@ void high_freq_generation(Int32 sourceBufferReal[][32],
     Int32  loBand;
     Int32  j;
 
-
-
     int64 tmp;
 
     bwIndex = 0;
@@ -1009,9 +1007,6 @@ void high_freq_generation(Int32 sourceBufferReal[][32],
             }
 
         }
-
-
-
         else
         {
             i = startSample + slopeLength;

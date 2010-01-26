@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -67,7 +67,6 @@ typedef float OsclFloat;
 #ifndef OSCL_INT64_TYPES_DEFINED
 //use native type
 typedef OSCL_NATIVE_INT64_TYPE int64;
-//use native type
 typedef OSCL_NATIVE_UINT64_TYPE uint64;
 #define OSCL_INT64_TYPES_DEFINED
 #endif

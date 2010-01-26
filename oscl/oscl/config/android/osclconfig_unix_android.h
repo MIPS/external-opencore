@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -67,8 +67,6 @@
 #define OSCL_HAS_SYMBIAN_SUPPORT            0
 
 // 64-bit int
-#define OSCL_HAS_NATIVE_INT64_TYPE 1
-#define OSCL_HAS_NATIVE_UINT64_TYPE 1
 #define OSCL_NATIVE_INT64_TYPE     int64_t
 #define OSCL_NATIVE_UINT64_TYPE    uint64_t
 #define INT64(x) x##LL

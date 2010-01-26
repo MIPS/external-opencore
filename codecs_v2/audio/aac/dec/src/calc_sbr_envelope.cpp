@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1481,8 +1481,6 @@ void energy_estimation_LC(Int32 *aBufR,
                           Int32 c,
                           Int32 ui2)
 {
-
-
     Int32  aux1;
     Int32  aux2;
     Int32  l;
@@ -1550,10 +1548,6 @@ void energy_estimation_LC(Int32 *aBufR,
         nrg_est_man[c] = 0;
         nrg_est_exp[c] = -100;
     }
-
-
-
-
 
 }
 
@@ -2101,8 +2095,6 @@ void energy_estimation(Int32 *aBufR,
     Int32  aux2;
     Int32  l;
 
-
-
     int64 nrg_h = 0;
     Int32 tmp1;
     Int32 tmp2;
@@ -2182,10 +2174,6 @@ void energy_estimation(Int32 *aBufR,
 
 
 }
-
-
-
-
 
 #endif
 

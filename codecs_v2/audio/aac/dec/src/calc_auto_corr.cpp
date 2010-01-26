@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -121,7 +121,6 @@ Copyright (c) ISO/IEC 2002.
 /*----------------------------------------------------------------------------
 ; FUNCTION CODE
 ----------------------------------------------------------------------------*/
-
 
 
 void calc_auto_corr_LC(struct ACORR_COEFS *ac,
@@ -399,10 +398,6 @@ void calc_auto_corr(struct ACORR_COEFS *ac,
 }
 
 #endif
-
-
-
-
 
 #endif
 

@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -215,18 +215,6 @@ Otherwise it should be set to 0.
 #endif
 
 /**
-\def When OSCL_HAS_GLOBAL_VARIABLE_SUPPORT is 0, OSCL_HAS_PARTIAL_GLOBAL_VARIABLE_SUPPORT
-macro should be set to 1 if the target platform allows global variable definitions within
-the Oscl base library.
-Otherwise it should be set to 0.
-*/
-#if !(OSCL_HAS_GLOBAL_VARIABLE_SUPPORT)
-#ifndef OSCL_HAS_PARTIAL_GLOBAL_VARIABLE_SUPPORT
-#error "ERROR: OSCL_HAS_PARTIAL_GLOBAL_VARIABLE_SUPPORT has to be defined to either 1 or 0."
-#endif
-#endif
-
-/**
 Note: only one byte order mode can be defined per platform.
 */
 #if (OSCL_BYTE_ORDER_LITTLE_ENDIAN) && (OSCL_BYTE_ORDER_BIG_ENDIAN)
@@ -243,83 +231,51 @@ Otherwise it should be set to 0.
 #endif
 
 /**
-\def OSCL_HAS_NATIVE_INT64_TYPE has to be defined to either 1 or 0.
-*/
-#ifndef OSCL_HAS_NATIVE_INT64_TYPE
-#error "ERROR: OSCL_HAS_NATIVE_INT64_TYPE has to be defined to either 1 or 0."
-#endif
-
-/**
-\def OSCL_HAS_NATIVE_UINT64_TYPE has to be defined to either 1 or 0.
-*/
-#ifndef OSCL_HAS_NATIVE_UINT64_TYPE
-#error "ERROR: OSCL_HAS_NATIVE_UINT64_TYPE has to be defined to either 1 or 0."
-#endif
-
-/**
-\def When OSCL_HAS_NATIVE_INT64_TYPE is 1,
-OSCL_NATIVE_INT64_TYPE has to be defined to the native
+\def OSCL_NATIVE_INT64_TYPE has to be defined to the native
 signed 64-bit integer type.
 */
-#if OSCL_HAS_NATIVE_INT64_TYPE
 #ifndef OSCL_NATIVE_INT64_TYPE
 #error "ERROR: OSCL_NATIVE_INT64_TYPE has to be defined."
 #endif
-#endif
 
 /**
-\def When OSCL_HAS_NATIVE_UINT64_TYPE is 1,
-OSCL_NATIVE_UINT64_TYPE has to be defined to the native
+\def OSCL_NATIVE_UINT64_TYPE has to be defined to the native
 unsigned 64-bit integer type.
 */
-#if OSCL_HAS_NATIVE_UINT64_TYPE
 #ifndef OSCL_NATIVE_UINT64_TYPE
 #error "ERROR: OSCL_NATIVE_UINT64_TYPE has to be defined."
 #endif
-#endif
 
 /**
-\def When OSCL_HAS_NATIVE_INT64_TYPE is 1,
-INT64(x) has to be defined to the expression for a signed
+\def INT64(x) has to be defined to the expression for a signed
 64-bit literal.
 */
-#if OSCL_HAS_NATIVE_INT64_TYPE
 #ifndef INT64
 #error "ERROR: INT64(x) has to be defined."
 #endif
-#endif
 
 /**
-\def When OSCL_HAS_NATIVE_UINT64_TYPE is 1,
-INT64(x) has to be defined to the expression for a signed
+\def UINT64(x) has to be defined to the expression for an unsigned
 64-bit literal.
 */
-#if OSCL_HAS_NATIVE_UINT64_TYPE
 #ifndef UINT64
 #error "ERROR: UINT64(x) has to be defined."
 #endif
-#endif
 
 /**
-\def When OSCL_HAS_NATIVE_INT64_TYPE is 1,
-INT64_HILO(high,low) has to be defined to an expression
+\def INT64_HILO(high,low) has to be defined to an expression
 to create a signed 64-bit integer from 2 32-bit integers.
 */
-#if OSCL_HAS_NATIVE_INT64_TYPE
 #ifndef INT64_HILO
 #error "ERROR: INT64_HILO(high,low) has to be defined."
 #endif
-#endif
 
 /**
-\def When OSCL_HAS_NATIVE_UINT64_TYPE is 1,
-UINT64_HILO(high,low) has to be defined to an expression
+\def UINT64_HILO(high,low) has to be defined to an expression
 to create an unsigned 64-bit integer from 2 32-bit integers.
 */
-#if OSCL_HAS_NATIVE_UINT64_TYPE
 #ifndef UINT64_HILO
 #error "ERROR: UINT64_HILO(high,low) has to be defined."
-#endif
 #endif
 
 /**
