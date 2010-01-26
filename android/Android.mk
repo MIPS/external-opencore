@@ -23,6 +23,10 @@ else
     endif
 endif
 
+ifeq ($(PV_WERROR),1)
+ LOCAL_CFLAGS += -Werror
+endif
+
 LOCAL_C_INCLUDES := $(PV_INCLUDES) \
 	$(PV_TOP)/engines/common/include \
 	$(PV_TOP)/fileformats/mp4/parser/include \
