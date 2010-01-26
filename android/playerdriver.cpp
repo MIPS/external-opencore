@@ -1297,6 +1297,7 @@ void PlayerDriver::HandleInformationalEvent(const PVAsyncInformationalEvent& aEv
         case PVMFInfoContentType:
         case PVMFInfoUnderflow:
         case PVMFInfoDataDiscarded:
+        case PVMFInfoActualPlaybackPosition:
             break;
 
         default:
@@ -1577,6 +1578,7 @@ status_t PVPlayer::getDuration(int *msec)
 {
     status_t ret = mPlayerDriver->enqueueCommand(new PlayerGetDuration(msec,0,0));
     if (ret == NO_ERROR) mDuration = *msec;
+    LOGI("duration = %d",mDuration);
     return ret;
 }
 

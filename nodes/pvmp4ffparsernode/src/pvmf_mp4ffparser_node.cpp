@@ -4661,7 +4661,7 @@ bool PVMFMP4FFParserNode::GenerateAACFrameFrags(PVMP4FFNodeTrackPortInfo& aTrack
     OsclBinIStreamBigEndian sampleStream;
     sampleStream.Attach(memFragIn.getMemFrag().ptr, memFragIn.getMemFrag().len);
 
-    PVMF_MP4FFPARSERNODE_LOGERROR((0, "PVMFMP4FFParserNode::GenerateAACFrameFrags - SeqNum=%d, samplesize=%d, TS=%d, PTR=0x%x, RC=%d", aTrackPortInfo.iMediaData->getSeqNum(), samplesize, aTrackPortInfo.iMediaData->getTimestamp(), sample, memFragIn.getRefCounter()->getCount()));
+    PVMF_MP4FFPARSERNODE_LOGDATATRAFFIC((0, "PVMFMP4FFParserNode::GenerateAACFrameFrags - SeqNum=%d, samplesize=%d, TS=%d, PTR=0x%x, RC=%d", aTrackPortInfo.iMediaData->getSeqNum(), samplesize, aTrackPortInfo.iMediaData->getTimestamp(), sample, memFragIn.getRefCounter()->getCount()));
 
     MediaMetaInfo *iInfo = NULL;
     bool appended_data = false;

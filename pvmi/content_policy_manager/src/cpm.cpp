@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1456,7 +1456,7 @@ void PVMFCPMImpl::DoRegisterContent(PVMFCPMCommand& aCmd)
         }
         else
         {
-            PVMF_CPM_LOGERROR((0, "PVMFCPMImpl::DoRegisterContent - PopulateListOfActivePlugIns Failed"));
+            PVMF_CPM_LOGINFOHI((0, "PVMFCPMImpl::DoRegisterContent - PopulateListOfActivePlugIns Failed"));
             CommandComplete(iInputCommands, aCmd, status);
         }
     }
