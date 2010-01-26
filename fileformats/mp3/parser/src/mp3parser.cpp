@@ -2061,9 +2061,16 @@ uint32 MP3Parser::SeekPointFromTimestamp(uint32 &timestamp)
         {
             avgBR = iAvgBitrateInbpsFromCompleteScan;
         }
-        else
+        else if (iAvgBitrateInbpsFromRandomScan > 0)
         {
             avgBR = iAvgBitrateInbpsFromRandomScan;
+        }
+        else
+        {
+            // For cases where AvgBitrate from Random Scan is not set for PS/PDL
+            // use-cases, waiting for File Size from External Source, use Avgbitrate
+            // calculated from the 1st Mp3 sample for any seek requests.
+            avgBR = iAvgBitrateInbps;
         }
         seekPoint = (uint32)((OsclFloat)(avgBR * (OsclFloat)timestamp) / 8000.0f);
     }
