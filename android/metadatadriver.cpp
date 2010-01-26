@@ -71,9 +71,6 @@ MetadataDriver::MetadataDriver(uint32 mode): OsclActiveObject(OsclActiveObject::
     mMode = mode;
     mUtil = NULL;
     mDataSource = NULL;
-#if BEST_THUMBNAIL_MODE
-    mLocalDataSource = NULL;
-#endif
     mSourceContextData = NULL;
     mCmdId = 0;
     mContextObjectRefValue = 0x5C7A; // Some random number
@@ -418,13 +415,8 @@ status_t MetadataDriver::doSetDataSource(const char* dataSrcUrl)
 {
     LOGV("doSetDataSource");
     if (mMode & GET_FRAME_ONLY) {
-#if BEST_THUMBNAIL_MODE
         mFrameSelector.iSelectionMethod = PVFrameSelector::SPECIFIC_FRAME;
         mFrameSelector.iFrameInfo.iTimeOffsetMilliSec = 0;
-#else
-        mFrameSelector.iSelectionMethod=PVFrameSelector::SPECIFIC_FRAME;
-        mFrameSelector.iFrameInfo.iFrameIndex=0;
-#endif
     }
     mDataSourceUrl = dataSrcUrl;
 
@@ -560,22 +552,9 @@ void MetadataDriver::handleAddDataSource()
     oscl_UTF8ToUnicode(mDataSourceUrl, oscl_strlen(mDataSourceUrl), tmpWCharBuf, sizeof(tmpWCharBuf));
     wFileName.set(tmpWCharBuf, oscl_strlen(tmpWCharBuf));
     if (mDataSource) {
-        mDataSource->SetDataSourceURL(wFileName);
-        mDataSource->SetDataSourceFormatType((char*)PVMF_MIME_FORMAT_UNKNOWN);
-        mLocalDataSource = new PVMFLocalDataSource();
-        mLocalDataSource->iIntent = 0;
-        if (mMode & GET_METADATA_ONLY) {
-            mLocalDataSource->iIntent |= BITMASK_PVMF_SOURCE_INTENT_GETMETADATA;
-        }
-        if (mMode & GET_FRAME_ONLY) {
-#if BEST_THUMBNAIL_MODE
-            // Set the intent to thumbnails.
-            mLocalDataSource->iIntent |= BITMASK_PVMF_SOURCE_INTENT_THUMBNAILS;
-#else
-            mLocalDataSource->iIntent = BITMASK_PVMF_SOURCE_INTENT_GETMETADATA;
-#endif
-        }
-        mDataSource->SetDataSourceContextData((OsclAny*)mLocalDataSource);
+        mSourceContextData = new PVMFSourceContextData();
+        mSourceContextData->EnableCommonSourceContext();
+        PVMFSourceContextDataCommon* commonContext = mSourceContextData->CommonData();
         int fd;
         long long offset;
         long long len;
@@ -584,13 +563,19 @@ void MetadataDriver::handleAddDataSource()
             lseek64(fd, offset, SEEK_CUR);
             TOsclFileHandle fh = fdopen(fd,"rb");
             OsclFileHandle* sourcehandle = new OsclFileHandle(fh);
-            delete mSourceContextData;
-            mSourceContextData = new PVMFSourceContextData();
-            mSourceContextData->EnableCommonSourceContext();
-            PVMFSourceContextDataCommon* commonContext = mSourceContextData->CommonData();
             commonContext->iFileHandle = sourcehandle;
-            mDataSource->SetDataSourceContextData((OsclAny*)mSourceContextData);
+        } else {
+            mDataSource->SetDataSourceURL(wFileName);
         }
+        commonContext->iIntent = 0;
+        if (mMode & GET_METADATA_ONLY) {
+            commonContext->iIntent |= BITMASK_PVMF_SOURCE_INTENT_GETMETADATA;
+        }
+        if (mMode & GET_FRAME_ONLY) {
+            commonContext->iIntent |= BITMASK_PVMF_SOURCE_INTENT_THUMBNAILS;
+        }
+        mDataSource->SetDataSourceFormatType((char*)PVMF_MIME_FORMAT_UNKNOWN);
+        mDataSource->SetDataSourceContextData((OsclAny*)mSourceContextData);
         OSCL_TRY(error, mCmdId = mUtil->AddDataSource(*mDataSource, (OsclAny*)&mContextObject));
         OSCL_FIRST_CATCH_ANY(error, handleCommandFailure());
     }
@@ -613,10 +598,6 @@ void MetadataDriver::handleCleanUp()
         PVFrameAndMetadataFactory::DeleteFrameAndMetadataUtility(mUtil);
         mUtil = NULL;
     }
-#if BEST_THUMBNAIL_MODE
-    delete mLocalDataSource;
-    mLocalDataSource = NULL;
-#endif
     delete mDataSource;
     mDataSource = NULL;
 

@@ -41,12 +41,6 @@
 #include "pv_omxcore.h"
 #include "pv_player_track_selection_interface.h"
 
-#define BEST_THUMBNAIL_MODE 1
-
-#if BEST_THUMBNAIL_MODE
-#include "pvmf_local_data_source.h"
-#endif
-
 namespace android {
 
 class VideoFrame;
@@ -179,9 +173,6 @@ private:
 
     // Required for setting/removing data source
     PVPlayerDataSourceURL *mDataSource;
-#if BEST_THUMBNAIL_MODE
-    PVMFLocalDataSource* mLocalDataSource;
-#endif
     PVMFSourceContextData *mSourceContextData;
     const char* mDataSourceUrl;
 
