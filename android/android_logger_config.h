@@ -24,8 +24,6 @@
 
 #define MAX_STRING_LEN  255
 
-FILE *file;
-
 class PVLoggerConfigFile{
 /** By default:
  *    - An Instrumentation level (defined by PVLOGGER_INST_LEVEL in external/opencore/oscl/oscl/config/android/osclconfig.h) is set to 1. 
