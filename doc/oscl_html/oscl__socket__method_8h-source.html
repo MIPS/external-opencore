@@ -168,18 +168,20 @@
 00169     <span class="comment">//cancel the timeout if any</span>
 00170     <a class="code" href="classOsclSocketMethod.html#a2">Abort</a>();
 00171     <span class="comment">//cancel the request to the socket server.</span>
-00172     <a class="code" href="classOsclSocketMethod.html#n0">iSocketRequestAO</a>-&gt;<a class="code" href="classOsclSocketRequestAO.html#b7">DoCancel</a>();
-00173 }
-00174 
-<a name="l00175"></a><a class="code" href="classOsclSocketMethod.html#b2">00175</a> <span class="keyword">inline</span> <span class="keywordtype">void</span> <a class="code" href="classOsclSocketMethod.html#b2">OsclSocketMethod::MethodDone</a>()
-00176 {
-00177     <a class="code" href="classOsclSocketMethod.html#n0">iSocketRequestAO</a>-&gt;<a class="code" href="classOsclSocketRequestAO.html#b4">Abort</a>();
-00178 }
-00179 
-00180 <span class="preprocessor">#endif</span>
-00181 <span class="preprocessor"></span>
+00172     <span class="keywordflow">if</span> (iSocketRequestAO)
+00173         <a class="code" href="classOsclSocketMethod.html#n0">iSocketRequestAO</a>-&gt;<a class="code" href="classOsclSocketRequestAO.html#b7">DoCancel</a>();
+00174 }
+00175 
+<a name="l00176"></a><a class="code" href="classOsclSocketMethod.html#b2">00176</a> <span class="keyword">inline</span> <span class="keywordtype">void</span> <a class="code" href="classOsclSocketMethod.html#b2">OsclSocketMethod::MethodDone</a>()
+00177 {
+00178     <span class="keywordflow">if</span> (iSocketRequestAO)
+00179         <a class="code" href="classOsclSocketMethod.html#n0">iSocketRequestAO</a>-&gt;<a class="code" href="classOsclSocketRequestAO.html#b4">Abort</a>();
+00180 }
+00181 
+00182 <span class="preprocessor">#endif</span>
+00183 <span class="preprocessor"></span>
 </pre></div><hr size="1"><img src="pvlogo_small.jpg"><address style="align: right;"><small>OSCL API</small>
-<address style="align: left;"><small>Posting Version: CORE_8.107.1.1 </small>
+<address style="align: left;"><small>Posting Version: CORE_8.500.1.1_RC2 </small>
 </small></address>
 </body>
 </html>

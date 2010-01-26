@@ -21,7 +21,7 @@
 <tr><td nowrap align=right valign=top>virtual PVMFCommandId&nbsp;</td><td valign=bottom><a class="el" href="classH324MConfigInterface.html#a7">SetAl3ControlFieldOctets</a> (int32 aCfo, OsclAny *aContextData=NULL)=0</td></tr>
 <tr><td nowrap align=right valign=top>virtual PVMFCommandId&nbsp;</td><td valign=bottom><a class="el" href="classH324MConfigInterface.html#a8">SetMaxPduSize</a> (int32 aMaxPduSize, OsclAny *aContextData=NULL)=0</td></tr>
 <tr><td nowrap align=right valign=top>virtual PVMFCommandId&nbsp;</td><td valign=bottom><a class="el" href="classH324MConfigInterface.html#a9">SetTerminalType</a> (uint8 aTerminalType, OsclAny *aContextData=NULL)=0</td></tr>
-<tr><td nowrap align=right valign=top>virtual PVMFCommandId&nbsp;</td><td valign=bottom><a class="el" href="classH324MConfigInterface.html#a10">SetALConfiguration</a> (<a class="el" href="pv__2way__basic__types_8h.html#a47">TPVMediaType_t</a> aMediaType, TPVAdaptationLayer aLayer, bool aAllow, bool aUse=true, OsclAny *aContextData=NULL)=0</td></tr>
+<tr><td nowrap align=right valign=top>virtual PVMFCommandId&nbsp;</td><td valign=bottom><a class="el" href="classH324MConfigInterface.html#a10">SetALConfiguration</a> (<a class="el" href="pv__2way__basic__types_8h.html#a48">TPVMediaType_t</a> aMediaType, TPVAdaptationLayer aLayer, bool aAllow, bool aUse=true, OsclAny *aContextData=NULL)=0</td></tr>
 <tr><td nowrap align=right valign=top>virtual PVMFCommandId&nbsp;</td><td valign=bottom><a class="el" href="classH324MConfigInterface.html#a11">SendRme</a> (OsclAny *aContextData=NULL)=0</td></tr>
 <tr><td nowrap align=right valign=top>virtual PVMFCommandId&nbsp;</td><td valign=bottom><a class="el" href="classH324MConfigInterface.html#a12">SetMaxMuxPduSize</a> (int32 aRequestMaxMuxPduSize, OsclAny *aContextData=NULL)=0</td></tr>
 <tr><td nowrap align=right valign=top>virtual PVMFCommandId&nbsp;</td><td valign=bottom><a class="el" href="classH324MConfigInterface.html#a13">SetMaxMuxCcsrlSduSize</a> (int32 aMaxCcsrlSduSize, OsclAny *aContextData=NULL)=0</td></tr>
@@ -31,7 +31,7 @@
 <tr><td nowrap align=right valign=top>virtual PVMFCommandId&nbsp;</td><td valign=bottom><a class="el" href="classH324MConfigInterface.html#a17">SendEndSession</a> (OsclAny *aContextData=NULL)=0</td></tr>
 <tr><td nowrap align=right valign=top>virtual PVMFCommandId&nbsp;</td><td valign=bottom><a class="el" href="classH324MConfigInterface.html#a18">SetEndSessionTimeout</a> (uint32 aTimeout, OsclAny *aContextData=NULL)=0</td></tr>
 <tr><td nowrap align=right valign=top>virtual PVMFCommandId&nbsp;</td><td valign=bottom><a class="el" href="classH324MConfigInterface.html#a19">SetTimerCounter</a> (TPVH324TimerCounter aTimerCounter, uint8 aSeries, uint32 aSeriesOffset, uint32 aValue, OsclAny *aContextData=NULL)=0</td></tr>
-<tr><td nowrap align=right valign=top>virtual PVMFCommandId&nbsp;</td><td valign=bottom><a class="el" href="classH324MConfigInterface.html#a20">SetVideoResolutions</a> (<a class="el" href="pv__2way__basic__types_8h.html#a46">TPVDirection</a> aDirection, Oscl_Vector&lt; PVMFVideoResolutionRange, OsclMemAllocator &gt; &amp;aResolutions, OsclAny *aContextData=NULL)=0</td></tr>
+<tr><td nowrap align=right valign=top>virtual PVMFCommandId&nbsp;</td><td valign=bottom><a class="el" href="classH324MConfigInterface.html#a20">SetVideoResolutions</a> (<a class="el" href="pv__2way__basic__types_8h.html#a47">TPVDirection</a> aDirection, Oscl_Vector&lt; PVMFVideoResolutionRange, OsclMemAllocator &gt; &amp;aResolutions, OsclAny *aContextData=NULL)=0</td></tr>
 <tr><td nowrap align=right valign=top>virtual PVMFCommandId&nbsp;</td><td valign=bottom><a class="el" href="classH324MConfigInterface.html#a21">SendVendorId</a> (OsclAny *aContextData=NULL)=0</td></tr>
 <tr><td nowrap align=right valign=top>virtual PVMFCommandId&nbsp;</td><td valign=bottom><a class="el" href="classH324MConfigInterface.html#a22">SendVideoTemporalSpatialTradeoffCommand</a> (TPVChannelId aLogicalChannel, uint8 aTradeoff, OsclAny *aContextData=NULL)=0</td></tr>
 <tr><td nowrap align=right valign=top>virtual PVMFCommandId&nbsp;</td><td valign=bottom><a class="el" href="classH324MConfigInterface.html#a23">SendVideoTemporalSpatialTradeoffIndication</a> (TPVChannelId aLogicalChannel, uint8 aTradeoff, OsclAny *aContextData=NULL)=0</td></tr>
@@ -507,7 +507,7 @@ A unique command id for asynchronous completion </dl>    </td>
         <tr>
           <td class="md" nowrap valign="top"> virtual PVMFCommandId H324MConfigInterface::SetALConfiguration </td>
           <td class="md" valign="top">(&nbsp;</td>
-          <td class="md" nowrap valign="top"><a class="el" href="pv__2way__basic__types_8h.html#a47">TPVMediaType_t</a>&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="pv__2way__basic__types_8h.html#a48">TPVMediaType_t</a>&nbsp;</td>
           <td class="mdname" nowrap>&nbsp; <em>aMediaType</em>, </td>
         </tr>
         <tr>
@@ -1339,7 +1339,7 @@ A unique command id for asynchronous completion </dl>    </td>
         <tr>
           <td class="md" nowrap valign="top"> virtual PVMFCommandId H324MConfigInterface::SetVideoResolutions </td>
           <td class="md" valign="top">(&nbsp;</td>
-          <td class="md" nowrap valign="top"><a class="el" href="pv__2way__basic__types_8h.html#a46">TPVDirection</a>&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="pv__2way__basic__types_8h.html#a47">TPVDirection</a>&nbsp;</td>
           <td class="mdname" nowrap>&nbsp; <em>aDirection</em>, </td>
         </tr>
         <tr>
@@ -1433,7 +1433,7 @@ A unique command id for asynchronous completion </dl>    </td>
 <hr>The documentation for this class was generated from the following file:<ul>
 <li><a class="el" href="tsc__h324m__config__interface_8h-source.html">tsc_h324m_config_interface.h</a></ul>
 <hr size="1"><img src="pvlogo_small.jpg"><address style="align: right;"><small>PV2Way Engine</small>
-<address style="align: left;"><small>Posting Version: CORE_8.107.1.1 </small>
+<address style="align: left;"><small>Posting Version: CORE_8.500.1.1_RC2 </small>
 </small></address>
 </body>
 </html>

@@ -33,32 +33,30 @@
 <tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="osclconfig__unix__common_8h.html#a9">OSCL_HAS_MSWIN_SUPPORT</a>&nbsp;&nbsp;&nbsp;0</td></tr>
 <tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="osclconfig__unix__common_8h.html#a10">OSCL_HAS_MSWIN_PARTIAL_SUPPORT</a>&nbsp;&nbsp;&nbsp;0</td></tr>
 <tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="osclconfig__unix__common_8h.html#a11">OSCL_HAS_SYMBIAN_SUPPORT</a>&nbsp;&nbsp;&nbsp;0</td></tr>
-<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="osclconfig__unix__common_8h.html#a12">OSCL_HAS_NATIVE_INT64_TYPE</a>&nbsp;&nbsp;&nbsp;1</td></tr>
-<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="osclconfig__unix__common_8h.html#a13">OSCL_HAS_NATIVE_UINT64_TYPE</a>&nbsp;&nbsp;&nbsp;1</td></tr>
-<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="osclconfig__unix__common_8h.html#a14">OSCL_NATIVE_INT64_TYPE</a>&nbsp;&nbsp;&nbsp;int64_t</td></tr>
-<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="osclconfig__unix__common_8h.html#a15">OSCL_NATIVE_UINT64_TYPE</a>&nbsp;&nbsp;&nbsp;uint64_t</td></tr>
-<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="osclconfig__unix__common_8h.html#a16">INT64</a>(x)&nbsp;&nbsp;&nbsp;x##LL</td></tr>
-<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="osclconfig__unix__common_8h.html#a17">UINT64</a>(x)&nbsp;&nbsp;&nbsp;x##ULL</td></tr>
-<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="osclconfig__unix__common_8h.html#a18">INT64_HILO</a>(high, low)&nbsp;&nbsp;&nbsp;((((high##LL))&lt;&lt;32)|low)</td></tr>
-<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="osclconfig__unix__common_8h.html#a19">UINT64_HILO</a>(high, low)&nbsp;&nbsp;&nbsp;((((high##ULL))&lt;&lt;32)|low)</td></tr>
-<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="osclconfig__unix__common_8h.html#a20">OSCL_HAS_UNICODE_SUPPORT</a>&nbsp;&nbsp;&nbsp;1</td></tr>
-<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="osclconfig__unix__common_8h.html#a21">OSCL_NATIVE_WCHAR_TYPE</a>&nbsp;&nbsp;&nbsp;wchar_t</td></tr>
-<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="osclconfig__unix__common_8h.html#a22">_STRLIT</a>(x)&nbsp;&nbsp;&nbsp;L ## x</td></tr>
-<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="osclconfig__unix__common_8h.html#a23">_STRLIT_CHAR</a>(x)&nbsp;&nbsp;&nbsp;x</td></tr>
-<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="osclconfig__unix__common_8h.html#a24">_STRLIT_WCHAR</a>(x)&nbsp;&nbsp;&nbsp;L ## x</td></tr>
-<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="osclconfig__unix__common_8h.html#a25">OSCL_HAS_TLS_SUPPORT</a>&nbsp;&nbsp;&nbsp;1</td></tr>
-<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="osclconfig__unix__common_8h.html#a26">OSCL_TLS_IS_KEYED</a>&nbsp;&nbsp;&nbsp;1</td></tr>
-<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="osclconfig__unix__common_8h.html#a27">OSCL_TLS_KEY_CREATE_FUNC</a>(key)&nbsp;&nbsp;&nbsp;(pthread_key_create(&amp;key,NULL)==0)</td></tr>
-<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="osclconfig__unix__common_8h.html#a28">OSCL_TLS_KEY_DELETE_FUNC</a>(key)&nbsp;&nbsp;&nbsp;pthread_key_delete(key)</td></tr>
-<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="osclconfig__unix__common_8h.html#a29">OSCL_TLS_STORE_FUNC</a>(key, ptr)&nbsp;&nbsp;&nbsp;(pthread_setspecific(key,(const void*)ptr)==0)</td></tr>
-<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="osclconfig__unix__common_8h.html#a30">OSCL_TLS_GET_FUNC</a>(key)&nbsp;&nbsp;&nbsp;pthread_getspecific(key)</td></tr>
-<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="osclconfig__unix__common_8h.html#a31">OSCL_HAS_BASIC_LOCK</a>&nbsp;&nbsp;&nbsp;1</td></tr>
+<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="osclconfig__unix__common_8h.html#a12">OSCL_NATIVE_INT64_TYPE</a>&nbsp;&nbsp;&nbsp;int64_t</td></tr>
+<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="osclconfig__unix__common_8h.html#a13">OSCL_NATIVE_UINT64_TYPE</a>&nbsp;&nbsp;&nbsp;uint64_t</td></tr>
+<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="osclconfig__unix__common_8h.html#a14">INT64</a>(x)&nbsp;&nbsp;&nbsp;x##LL</td></tr>
+<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="osclconfig__unix__common_8h.html#a15">UINT64</a>(x)&nbsp;&nbsp;&nbsp;x##ULL</td></tr>
+<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="osclconfig__unix__common_8h.html#a16">INT64_HILO</a>(high, low)&nbsp;&nbsp;&nbsp;((((high##LL))&lt;&lt;32)|low)</td></tr>
+<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="osclconfig__unix__common_8h.html#a17">UINT64_HILO</a>(high, low)&nbsp;&nbsp;&nbsp;((((high##ULL))&lt;&lt;32)|low)</td></tr>
+<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="osclconfig__unix__common_8h.html#a18">OSCL_HAS_UNICODE_SUPPORT</a>&nbsp;&nbsp;&nbsp;1</td></tr>
+<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="osclconfig__unix__common_8h.html#a19">OSCL_NATIVE_WCHAR_TYPE</a>&nbsp;&nbsp;&nbsp;wchar_t</td></tr>
+<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="osclconfig__unix__common_8h.html#a20">_STRLIT</a>(x)&nbsp;&nbsp;&nbsp;L ## x</td></tr>
+<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="osclconfig__unix__common_8h.html#a21">_STRLIT_CHAR</a>(x)&nbsp;&nbsp;&nbsp;x</td></tr>
+<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="osclconfig__unix__common_8h.html#a22">_STRLIT_WCHAR</a>(x)&nbsp;&nbsp;&nbsp;L ## x</td></tr>
+<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="osclconfig__unix__common_8h.html#a23">OSCL_HAS_TLS_SUPPORT</a>&nbsp;&nbsp;&nbsp;1</td></tr>
+<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="osclconfig__unix__common_8h.html#a24">OSCL_TLS_IS_KEYED</a>&nbsp;&nbsp;&nbsp;1</td></tr>
+<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="osclconfig__unix__common_8h.html#a25">OSCL_TLS_KEY_CREATE_FUNC</a>(key)&nbsp;&nbsp;&nbsp;(pthread_key_create(&amp;key,NULL)==0)</td></tr>
+<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="osclconfig__unix__common_8h.html#a26">OSCL_TLS_KEY_DELETE_FUNC</a>(key)&nbsp;&nbsp;&nbsp;pthread_key_delete(key)</td></tr>
+<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="osclconfig__unix__common_8h.html#a27">OSCL_TLS_STORE_FUNC</a>(key, ptr)&nbsp;&nbsp;&nbsp;(pthread_setspecific(key,(const void*)ptr)==0)</td></tr>
+<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="osclconfig__unix__common_8h.html#a28">OSCL_TLS_GET_FUNC</a>(key)&nbsp;&nbsp;&nbsp;pthread_getspecific(key)</td></tr>
+<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="osclconfig__unix__common_8h.html#a29">OSCL_HAS_BASIC_LOCK</a>&nbsp;&nbsp;&nbsp;1</td></tr>
 <tr><td colspan=2><br><h2>Typedefs</h2></td></tr>
-<tr><td nowrap align=right valign=top>typedef pthread_key_t&nbsp;</td><td valign=bottom><a class="el" href="osclconfig__unix__common_8h.html#a32">TOsclTlsKey</a></td></tr>
-<tr><td nowrap align=right valign=top>typedef pthread_mutex_t&nbsp;</td><td valign=bottom><a class="el" href="osclconfig__unix__common_8h.html#a33">TOsclBasicLockObject</a></td></tr>
+<tr><td nowrap align=right valign=top>typedef pthread_key_t&nbsp;</td><td valign=bottom><a class="el" href="osclconfig__unix__common_8h.html#a30">TOsclTlsKey</a></td></tr>
+<tr><td nowrap align=right valign=top>typedef pthread_mutex_t&nbsp;</td><td valign=bottom><a class="el" href="osclconfig__unix__common_8h.html#a31">TOsclBasicLockObject</a></td></tr>
 </table>
 <hr><h2>Define Documentation</h2>
-<a name="a22" doxytag="osclconfig_unix_common.h::_STRLIT"></a><p>
+<a name="a20" doxytag="osclconfig_unix_common.h::_STRLIT"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -85,7 +83,7 @@
     </td>
   </tr>
 </table>
-<a name="a23" doxytag="osclconfig_unix_common.h::_STRLIT_CHAR"></a><p>
+<a name="a21" doxytag="osclconfig_unix_common.h::_STRLIT_CHAR"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -112,7 +110,7 @@
     </td>
   </tr>
 </table>
-<a name="a24" doxytag="osclconfig_unix_common.h::_STRLIT_WCHAR"></a><p>
+<a name="a22" doxytag="osclconfig_unix_common.h::_STRLIT_WCHAR"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -139,7 +137,7 @@
     </td>
   </tr>
 </table>
-<a name="a16" doxytag="osclconfig_unix_common.h::INT64"></a><p>
+<a name="a14" doxytag="osclconfig_unix_common.h::INT64"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -166,7 +164,7 @@
     </td>
   </tr>
 </table>
-<a name="a18" doxytag="osclconfig_unix_common.h::INT64_HILO"></a><p>
+<a name="a16" doxytag="osclconfig_unix_common.h::INT64_HILO"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -328,7 +326,7 @@
     </td>
   </tr>
 </table>
-<a name="a31" doxytag="osclconfig_unix_common.h::OSCL_HAS_BASIC_LOCK"></a><p>
+<a name="a29" doxytag="osclconfig_unix_common.h::OSCL_HAS_BASIC_LOCK"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -416,50 +414,6 @@
     </td>
   </tr>
 </table>
-<a name="a12" doxytag="osclconfig_unix_common.h::OSCL_HAS_NATIVE_INT64_TYPE"></a><p>
-<table width="100%" cellpadding="2" cellspacing="0" border="0">
-  <tr>
-    <td class="md">
-      <table cellpadding="0" cellspacing="0" border="0">
-        <tr>
-          <td class="md" nowrap valign="top"> #define OSCL_HAS_NATIVE_INT64_TYPE&nbsp;&nbsp;&nbsp;1
-      </table>
-    </td>
-  </tr>
-</table>
-<table cellspacing=5 cellpadding=0 border=0>
-  <tr>
-    <td>
-      &nbsp;
-    </td>
-    <td>
-
-<p>
-    </td>
-  </tr>
-</table>
-<a name="a13" doxytag="osclconfig_unix_common.h::OSCL_HAS_NATIVE_UINT64_TYPE"></a><p>
-<table width="100%" cellpadding="2" cellspacing="0" border="0">
-  <tr>
-    <td class="md">
-      <table cellpadding="0" cellspacing="0" border="0">
-        <tr>
-          <td class="md" nowrap valign="top"> #define OSCL_HAS_NATIVE_UINT64_TYPE&nbsp;&nbsp;&nbsp;1
-      </table>
-    </td>
-  </tr>
-</table>
-<table cellspacing=5 cellpadding=0 border=0>
-  <tr>
-    <td>
-      &nbsp;
-    </td>
-    <td>
-
-<p>
-    </td>
-  </tr>
-</table>
 <a name="a11" doxytag="osclconfig_unix_common.h::OSCL_HAS_SYMBIAN_SUPPORT"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
@@ -482,7 +436,7 @@
     </td>
   </tr>
 </table>
-<a name="a25" doxytag="osclconfig_unix_common.h::OSCL_HAS_TLS_SUPPORT"></a><p>
+<a name="a23" doxytag="osclconfig_unix_common.h::OSCL_HAS_TLS_SUPPORT"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -504,7 +458,7 @@
     </td>
   </tr>
 </table>
-<a name="a20" doxytag="osclconfig_unix_common.h::OSCL_HAS_UNICODE_SUPPORT"></a><p>
+<a name="a18" doxytag="osclconfig_unix_common.h::OSCL_HAS_UNICODE_SUPPORT"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -570,7 +524,7 @@
     </td>
   </tr>
 </table>
-<a name="a14" doxytag="osclconfig_unix_common.h::OSCL_NATIVE_INT64_TYPE"></a><p>
+<a name="a12" doxytag="osclconfig_unix_common.h::OSCL_NATIVE_INT64_TYPE"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -592,7 +546,7 @@
     </td>
   </tr>
 </table>
-<a name="a15" doxytag="osclconfig_unix_common.h::OSCL_NATIVE_UINT64_TYPE"></a><p>
+<a name="a13" doxytag="osclconfig_unix_common.h::OSCL_NATIVE_UINT64_TYPE"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -614,7 +568,7 @@
     </td>
   </tr>
 </table>
-<a name="a21" doxytag="osclconfig_unix_common.h::OSCL_NATIVE_WCHAR_TYPE"></a><p>
+<a name="a19" doxytag="osclconfig_unix_common.h::OSCL_NATIVE_WCHAR_TYPE"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -636,7 +590,7 @@
     </td>
   </tr>
 </table>
-<a name="a30" doxytag="osclconfig_unix_common.h::OSCL_TLS_GET_FUNC"></a><p>
+<a name="a28" doxytag="osclconfig_unix_common.h::OSCL_TLS_GET_FUNC"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -663,7 +617,7 @@
     </td>
   </tr>
 </table>
-<a name="a26" doxytag="osclconfig_unix_common.h::OSCL_TLS_IS_KEYED"></a><p>
+<a name="a24" doxytag="osclconfig_unix_common.h::OSCL_TLS_IS_KEYED"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -685,7 +639,7 @@
     </td>
   </tr>
 </table>
-<a name="a27" doxytag="osclconfig_unix_common.h::OSCL_TLS_KEY_CREATE_FUNC"></a><p>
+<a name="a25" doxytag="osclconfig_unix_common.h::OSCL_TLS_KEY_CREATE_FUNC"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -712,7 +666,7 @@
     </td>
   </tr>
 </table>
-<a name="a28" doxytag="osclconfig_unix_common.h::OSCL_TLS_KEY_DELETE_FUNC"></a><p>
+<a name="a26" doxytag="osclconfig_unix_common.h::OSCL_TLS_KEY_DELETE_FUNC"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -739,7 +693,7 @@
     </td>
   </tr>
 </table>
-<a name="a29" doxytag="osclconfig_unix_common.h::OSCL_TLS_STORE_FUNC"></a><p>
+<a name="a27" doxytag="osclconfig_unix_common.h::OSCL_TLS_STORE_FUNC"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -769,7 +723,7 @@
     </td>
   </tr>
 </table>
-<a name="a17" doxytag="osclconfig_unix_common.h::UINT64"></a><p>
+<a name="a15" doxytag="osclconfig_unix_common.h::UINT64"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -796,7 +750,7 @@
     </td>
   </tr>
 </table>
-<a name="a19" doxytag="osclconfig_unix_common.h::UINT64_HILO"></a><p>
+<a name="a17" doxytag="osclconfig_unix_common.h::UINT64_HILO"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -827,7 +781,7 @@
   </tr>
 </table>
 <hr><h2>Typedef Documentation</h2>
-<a name="a33" doxytag="osclconfig_unix_common.h::TOsclBasicLockObject"></a><p>
+<a name="a31" doxytag="osclconfig_unix_common.h::TOsclBasicLockObject"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -849,7 +803,7 @@
     </td>
   </tr>
 </table>
-<a name="a32" doxytag="osclconfig_unix_common.h::TOsclTlsKey"></a><p>
+<a name="a30" doxytag="osclconfig_unix_common.h::TOsclTlsKey"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -872,7 +826,7 @@
   </tr>
 </table>
 <hr size="1"><img src="pvlogo_small.jpg"><address style="align: right;"><small>OSCL API</small>
-<address style="align: left;"><small>Posting Version: CORE_8.107.1.1 </small>
+<address style="align: left;"><small>Posting Version: CORE_8.500.1.1_RC2 </small>
 </small></address>
 </body>
 </html>

@@ -41,40 +41,39 @@
 00050 <span class="preprocessor">#ifndef OSCL_INT64_TYPES_DEFINED</span>
 00051 <span class="preprocessor"></span><span class="comment">//use native type</span>
 <a name="l00052"></a><a class="code" href="group__osclbase.html#a32">00052</a> <span class="keyword">typedef</span> OSCL_NATIVE_INT64_TYPE <a class="code" href="group__osclbase.html#a32">int64</a>;
-00053 <span class="comment">//use native type</span>
-<a name="l00054"></a><a class="code" href="group__osclbase.html#a33">00054</a> <span class="keyword">typedef</span> OSCL_NATIVE_UINT64_TYPE <a class="code" href="group__osclbase.html#a33">uint64</a>;
-00055 <span class="preprocessor">#define OSCL_INT64_TYPES_DEFINED</span>
-00056 <span class="preprocessor"></span><span class="preprocessor">#endif</span>
-00057 <span class="preprocessor"></span>
-00058 <span class="comment">// define OSCL_WCHAR</span>
-<a name="l00059"></a><a class="code" href="group__osclbase.html#a34">00059</a> <span class="keyword">typedef</span> OSCL_NATIVE_WCHAR_TYPE <a class="code" href="group__osclbase.html#a34">oscl_wchar</a>;
-00060 
-<a name="l00062"></a><a class="code" href="group__osclbase.html#a35">00062</a> <span class="keyword">typedef</span> <a class="code" href="group__osclbase.html#a34">oscl_wchar</a> <a class="code" href="group__osclbase.html#a35">OSCL_TCHAR</a>;
-00063 
-00064 <span class="comment">// The definition of the MemoryFragment will probably</span>
-00065 <span class="comment">// be OS-dependant since the goal is to allow this data</span>
-00066 <span class="comment">// structure to be passed directly to I/O routines that take</span>
-00067 <span class="comment">// scatter/gather arrays.</span>
-00068 <span class="preprocessor">#if ( OSCL_MEMFRAG_PTR_BEFORE_LEN )</span>
-00069 <span class="preprocessor"></span>
-00070 <span class="keyword">struct </span><a class="code" href="structOsclMemoryFragment.html">OsclMemoryFragment</a>
-00071 {
-00072     <span class="keywordtype">void</span> *<a class="code" href="structOsclMemoryFragment.html#m1">ptr</a>;
-00073     uint32 <a class="code" href="structOsclMemoryFragment.html#m0">len</a>;
-00074 };
-00075 
-00076 <span class="preprocessor">#else</span>
-<a name="l00077"></a><a class="code" href="structOsclMemoryFragment.html">00077</a> <span class="preprocessor"></span><span class="keyword">struct </span><a class="code" href="structOsclMemoryFragment.html">OsclMemoryFragment</a>
-00078 {
-<a name="l00079"></a><a class="code" href="structOsclMemoryFragment.html#m0">00079</a>     uint32 <a class="code" href="structOsclMemoryFragment.html#m0">len</a>;
-<a name="l00080"></a><a class="code" href="structOsclMemoryFragment.html#m1">00080</a>     <span class="keywordtype">void</span> *<a class="code" href="structOsclMemoryFragment.html#m1">ptr</a>;
-00081 };
-00082 <span class="preprocessor">#endif</span>
-00083 <span class="preprocessor"></span>
-00084 
-00088 <span class="preprocessor">#endif  // OSCL_TYPES_H_INCLUDED</span>
+<a name="l00053"></a><a class="code" href="group__osclbase.html#a33">00053</a> <span class="keyword">typedef</span> OSCL_NATIVE_UINT64_TYPE <a class="code" href="group__osclbase.html#a33">uint64</a>;
+00054 <span class="preprocessor">#define OSCL_INT64_TYPES_DEFINED</span>
+00055 <span class="preprocessor"></span><span class="preprocessor">#endif</span>
+00056 <span class="preprocessor"></span>
+00057 <span class="comment">// define OSCL_WCHAR</span>
+<a name="l00058"></a><a class="code" href="group__osclbase.html#a34">00058</a> <span class="keyword">typedef</span> OSCL_NATIVE_WCHAR_TYPE <a class="code" href="group__osclbase.html#a34">oscl_wchar</a>;
+00059 
+<a name="l00061"></a><a class="code" href="group__osclbase.html#a35">00061</a> <span class="keyword">typedef</span> <a class="code" href="group__osclbase.html#a34">oscl_wchar</a> <a class="code" href="group__osclbase.html#a35">OSCL_TCHAR</a>;
+00062 
+00063 <span class="comment">// The definition of the MemoryFragment will probably</span>
+00064 <span class="comment">// be OS-dependant since the goal is to allow this data</span>
+00065 <span class="comment">// structure to be passed directly to I/O routines that take</span>
+00066 <span class="comment">// scatter/gather arrays.</span>
+00067 <span class="preprocessor">#if ( OSCL_MEMFRAG_PTR_BEFORE_LEN )</span>
+00068 <span class="preprocessor"></span>
+00069 <span class="keyword">struct </span><a class="code" href="structOsclMemoryFragment.html">OsclMemoryFragment</a>
+00070 {
+00071     <span class="keywordtype">void</span> *<a class="code" href="structOsclMemoryFragment.html#m1">ptr</a>;
+00072     uint32 <a class="code" href="structOsclMemoryFragment.html#m0">len</a>;
+00073 };
+00074 
+00075 <span class="preprocessor">#else</span>
+<a name="l00076"></a><a class="code" href="structOsclMemoryFragment.html">00076</a> <span class="preprocessor"></span><span class="keyword">struct </span><a class="code" href="structOsclMemoryFragment.html">OsclMemoryFragment</a>
+00077 {
+<a name="l00078"></a><a class="code" href="structOsclMemoryFragment.html#m0">00078</a>     uint32 <a class="code" href="structOsclMemoryFragment.html#m0">len</a>;
+<a name="l00079"></a><a class="code" href="structOsclMemoryFragment.html#m1">00079</a>     <span class="keywordtype">void</span> *<a class="code" href="structOsclMemoryFragment.html#m1">ptr</a>;
+00080 };
+00081 <span class="preprocessor">#endif</span>
+00082 <span class="preprocessor"></span>
+00083 
+00087 <span class="preprocessor">#endif  // OSCL_TYPES_H_INCLUDED</span>
 </pre></div><hr size="1"><img src="pvlogo_small.jpg"><address style="align: right;"><small>OSCL API</small>
-<address style="align: left;"><small>Posting Version: CORE_8.107.1.1 </small>
+<address style="align: left;"><small>Posting Version: CORE_8.500.1.1_RC2 </small>
 </small></address>
 </body>
 </html>
