@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -82,7 +82,7 @@ static const char PVAACMETADATA_UNKNOWN[] = "unknown";
 #define PVMF_AAC_PARSER_NODE_MAX_CPM_METADATA_KEYS 256
 // Temporary until actual max track data size if used.
 #define MAX_PORTS           2
-#define NUM_AAC_FRAMES      1
+#define NUM_AAC_RAW_STREAMS      1
 
 // using asf specific values until aac specific are known
 #define AAC_MIN_DATA_SIZE_FOR_RECOGNITION  512

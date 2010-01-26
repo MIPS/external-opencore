@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -554,7 +554,7 @@ PVMFStatus PVMFAACFFParserNode::RetrieveMediaSample(PVAACFFNodeTrackPortInfo* aT
 
     Oscl_Vector<uint32, OsclMemAllocator> payloadSizeVec;
 
-    uint32 numsamples = NUM_AAC_FRAMES;
+    uint32 numsamples = NUM_AAC_RAW_STREAMS;
     // Set up the GAU structure
     GAU gau;
     gau.numMediaSamples = numsamples;

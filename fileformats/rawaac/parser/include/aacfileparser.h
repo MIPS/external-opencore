@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -86,6 +86,7 @@
 #define AAC_DECODER_INPUT_BUFF_SIZE     1536 // 6144 (bits) * 2 (channels) / 8 (bits per byte)
 #define AAC_ADIF_IDENTIFIER_LEN     4
 #define AAC_ADIF_IDENTIFIER         "ADIF"
+#define MAX_NUM_RAW_BLOCKS_PER_ADTS_HEADER    4
 
 
 //  ADTS sync  parameters

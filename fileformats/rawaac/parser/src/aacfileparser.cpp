@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1648,7 +1648,7 @@ OSCL_EXPORT_REF bool CAACFileParser::InitAACFile(CAACFileParams& aParams,
             // fully go through each frame to calculate duration
             int32 status = AACBitstreamObject::EVERYTHING_OK;
             int32 frame_size = 0;
-            int32 numBlocks;
+            int32 numRawBlocks;
 
 
             uint8 *maxAACFrameBuffer = OSCL_ARRAY_NEW(uint8, MAX_AAC_FRAME_SIZE); // MAX_AAC_FRAME_SIZE=8192
@@ -1665,7 +1665,7 @@ OSCL_EXPORT_REF bool CAACFileParser::InitAACFile(CAACFileParams& aParams,
             while (status == AACBitstreamObject::EVERYTHING_OK)
             {
                 // get the next frame
-                status = ipBSO->getNextFrameInfo(frame_size, numBlocks);
+                status = ipBSO->getNextFrameInfo(frame_size, numRawBlocks);
                 if (status == AACBitstreamObject::END_OF_FILE || status == AACBitstreamObject::INSUFFICIENT_DATA)
                 {
                     break;
@@ -1678,7 +1678,7 @@ OSCL_EXPORT_REF bool CAACFileParser::InitAACFile(CAACFileParams& aParams,
                     if (status == AACBitstreamObject::EVERYTHING_OK)
                     {
                         // calulate the number of frames
-                        iAACDuration ++;
+                        iAACDuration += numRawBlocks;
 
                         // set up the table for randow positioning
                         int32 frame_length = frame_size + ADTS_HEADER_LENGTH + (ipBSO->isCRCEnabled() ? 2 : 0);
@@ -2122,13 +2122,13 @@ CAACFileParser::GetNextBundledAccessUnits(uint32 *aNumSamples,
         uint8* pTempGau = (uint8 *)aGau->buf.fragments[0].ptr;
         uint32 gauBufferSize = aGau->buf.fragments[0].len;
         uint32 i, bytesReadInGau = 0, numSamplesRead = 0;
-        int32 frame_size = 0, numBlocks;
+        int32 frame_size = 0, numRawBlocks;
         int32 prev_iTotalNumFramesRead = iTotalNumFramesRead; // BX
 
         for (i = 0; i < *aNumSamples && !iEndOfFileReached; i++)
         {
             // get the frame size and number of data blocks
-            returnValue = ipBSO->getNextFrameInfo(frame_size, numBlocks);
+            returnValue = ipBSO->getNextFrameInfo(frame_size, numRawBlocks);
             PVMF_AACPARSER_LOGDIAGNOSTICS((0, "CAACFileParser::GetNextBundledAccessUnits - frame_size=%d", frame_size));
             if (returnValue == AACBitstreamObject::END_OF_FILE)
             {
@@ -2145,7 +2145,7 @@ CAACFileParser::GetNextBundledAccessUnits(uint32 *aNumSamples,
                 // Check whether the gau buffer will be overflow or the requested number
                 // of samples will be met
                 if (bytesReadInGau + frame_size >= gauBufferSize ||
-                        numSamplesRead + numBlocks > *aNumSamples)
+                        numSamplesRead + numRawBlocks > MAX_NUM_RAW_BLOCKS_PER_ADTS_HEADER)
                     break;
 
                 // At this point, we can get the next frame
@@ -2163,7 +2163,7 @@ CAACFileParser::GetNextBundledAccessUnits(uint32 *aNumSamples,
                     bytesReadInGau += frame_size;
                     aGau->info[i].len = frame_size + hdrSize;
                     aGau->info[i].ts  = (int32)(((OsclFloat)(iTotalNumFramesRead++) * 1024000.0) / (OsclFloat)iAACSampleFrequency); // BX
-                    numSamplesRead += numBlocks;
+                    numSamplesRead += numRawBlocks;
                 }
                 else if (returnValue == AACBitstreamObject::INSUFFICIENT_DATA)
                 {
