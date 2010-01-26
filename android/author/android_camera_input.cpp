@@ -534,20 +534,33 @@ void AndroidCameraInput::SendEvent(PVMFEventCategory aCategory,
         return;
     }
 
+    sendEventToPeer(PVMI_MEDIAXFER_FMT_TYPE_NOTIFICATION,
+                    formatIndex,
+                    (uint8*)asyncEvent,
+                    sizeof(PVMFAsyncEvent),
+                    mediaXferHeader,
+                    /* Pass asyncEvent as context for deallocate in writeComplete*/
+                    (OsclAny*)asyncEvent);
+}
+
+void AndroidCameraInput::sendEventToPeer(uint8 format_type, int32 format_index,
+                                         uint8* data, uint32 data_len,
+                                         const PvmiMediaXferHeader& data_header_info,
+                                         OsclAny* context)
+{
     int32 err = 0;
     OSCL_TRY(err,
-             iPeer->writeAsync(PVMI_MEDIAXFER_FMT_TYPE_NOTIFICATION,
-                               formatIndex,
-                               (uint8*)asyncEvent,
-                               sizeof(PVMFAsyncEvent),
-                               mediaXferHeader,
-                               /* Pass asyncEvent as context for deallocate in writeComplete*/
-                               (OsclAny*)asyncEvent);
+             iPeer->writeAsync(format_type,
+                               format_index,
+                               data,
+                               data_len,
+                               data_header_info,
+                               context);
             );
 
     if (err != OsclErrNone)
     {
-        LOGE("AndroidCameraInput::SendEvent: Error - writeAsync failed. err=%x", err);
+        LOGE("AndroidCameraInputListener::sendEventToPeer: Error - writeAsync failed. err=%x", err);
         return;
     }
 }

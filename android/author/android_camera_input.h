@@ -357,6 +357,12 @@ private:
      */
     PVMFStatus VerifyAndSetParameter(PvmiKvp* aKvp, bool aSetParam=false);
 
+    // Send the info/error event to peer using a OSCL_TRY()
+    void sendEventToPeer(uint8 format_type, int32 format_index,
+                         uint8* data, uint32 data_len,
+                         const PvmiMediaXferHeader& data_header_info,
+                         OsclAny* context);
+
     // Command queue
     uint32 iCmdIdCounter;
     Oscl_Vector<AndroidCameraInputCmd, OsclMemAllocator> iCmdQueue;
