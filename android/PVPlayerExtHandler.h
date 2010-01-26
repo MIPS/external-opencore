@@ -44,6 +44,7 @@ public:
     // access to playerdriver and its fields
     PlayerDriver& getPlayerDriver() { return const_cast<PlayerDriver &>(mPlayerDriver); }
     PVPlayerInterface* getPlayer() { return mPlayerDriver.mPlayer; }
+    PvmiCapabilityAndConfig* getCapConfig() { return mPlayerDriver.mPlayerCapConfig; }
     void FinishSyncCommand(PlayerCommand* cmd){(const_cast<PlayerDriver &> (mPlayerDriver)).FinishSyncCommand(cmd);}
     // returns true if aCmd was handled by an extension or false to request default completion
     virtual bool commandCompleted( PlayerExtensionCommand* cmd, const PVCmdResponse &resp );
