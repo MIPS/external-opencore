@@ -1801,6 +1801,79 @@ void FindXmlResultsFile(cmd_line* command_line, OSCL_HeapString<OsclMemAllocator
     }
 }
 
+void FindMaxTestTimeTimerTimeout(cmd_line* command_line, uint32& maxTestTime, FILE* aFile)
+{
+    int iFileArgument = 0;
+    bool iFileFound = false;
+    bool cmdline_iswchar = command_line->is_wchar();
+
+    int count = command_line->get_count();
+
+    // Search for the argument
+    // Go through each argument
+    for (int iFileSearch = 0; iFileSearch < count; iFileSearch++)
+    {
+        char argstr[128];
+        // Convert to UTF8 if necessary
+        if (cmdline_iswchar)
+        {
+            oscl_wchar* argwstr = NULL;
+            command_line->get_arg(iFileSearch, argwstr);
+            oscl_UnicodeToUTF8(argwstr, oscl_strlen(argwstr), argstr, 128);
+            argstr[127] = '\0';
+        }
+        else
+        {
+            char* tmpstr = NULL;
+            command_line->get_arg(iFileSearch, tmpstr);
+            int32 tmpstrlen = oscl_strlen(tmpstr) + 1;
+            if (tmpstrlen > 128)
+            {
+                tmpstrlen = 128;
+            }
+            oscl_strncpy(argstr, tmpstr, tmpstrlen);
+            argstr[tmpstrlen-1] = '\0';
+        }
+
+        // Do the string compare
+        if (oscl_strcmp(argstr, "-help") == 0)
+        {
+            fprintf(aFile, "Maximum test time option.  Default is no maximum test time.\n");
+            fprintf(aFile, "  -maxtesttime seconds\n");
+            fprintf(aFile, "   Specify a maximum time for each test to run in seconds.  If exceeded, a test summary for the hung test is printed and an assert is triggered.\n");
+        }
+        else if (oscl_strcmp(argstr, "-maxtesttime") == 0)
+        {
+            iFileFound = true;
+            iFileArgument = ++iFileSearch;
+            break;
+        }
+    }
+
+
+    if (iFileFound)
+    {
+        char * maxTestTimeStr;
+        // Convert to UTF8 if necessary
+        if (cmdline_iswchar)
+        {
+            oscl_wchar* cmd;
+            command_line->get_arg(iFileArgument, cmd);
+            char tmpstr[256];
+            oscl_UnicodeToUTF8(cmd, oscl_strlen(cmd), tmpstr, 256);
+            tmpstr[255] = '\0';
+            maxTestTimeStr = tmpstr;
+        }
+        else
+        {
+            char* cmdlinefilename = NULL;
+            command_line->get_arg(iFileArgument, cmdlinefilename);
+            maxTestTimeStr = cmdlinefilename;
+        }
+        PV_atoi(maxTestTimeStr, '0', maxTestTime);
+    }
+}
+
 void WriteInitialXmlSummary(OSCL_HeapString<OsclMemAllocator> &xmlresultsfile)
 {
     // Only print an xml summary if requested.
@@ -1964,7 +2037,8 @@ int CreateTestSuiteAndRun(char *aFileName,
                           OSCL_HeapString<OsclMemAllocator> &afilenameinfo,
                           CmdLinePopulator<char> *aasciiCmdLinePopulator,
                           CmdLinePopulator<oscl_wchar> *awcharCmdLinePopulator,
-                          test_result *atestResult)
+                          test_result *atestResult,
+                          uint32 aMaxTestTimeTimerTimeout)
 {
     pvplayer_engine_test_suite *engine_tests = NULL;
     engine_tests = new pvplayer_engine_test_suite(aFileName,
@@ -1983,7 +2057,8 @@ int CreateTestSuiteAndRun(char *aFileName,
             aFileFormatType,
             aProxyEnabled,
             aDownloadRateInKbps,
-            aSplitLogFile);
+            aSplitLogFile,
+            aMaxTestTimeTimerTimeout);
     if (engine_tests)
     {
         //Set the Initial timer
@@ -2129,6 +2204,9 @@ int _local_main(FILE *filehandle, cmd_line *command_line, bool& aPrintDetailedMe
     FindXmlResultsFile(command_line, xmlresultsfile, file);
     WriteInitialXmlSummary(xmlresultsfile);
 
+    uint32 maxTestTimeTimerTimeout = 0;
+    FindMaxTestTimeTimerTimeout(command_line, maxTestTimeTimerTimeout, file);
+
     if (true == bHelp)
         return 0;
 
@@ -2162,7 +2240,8 @@ int _local_main(FILE *filehandle, cmd_line *command_line, bool& aPrintDetailedMe
                                        filenameinfo,
                                        asciiCmdLinePopulator,
                                        wcharCmdLinePopulator,
-                                       testResult);
+                                       testResult,
+                                       maxTestTimeTimerTimeout);
     }
     else
     {
@@ -2193,7 +2272,8 @@ int _local_main(FILE *filehandle, cmd_line *command_line, bool& aPrintDetailedMe
                                                filenameinfo,
                                                asciiCmdLinePopulator,
                                                wcharCmdLinePopulator,
-                                               testResult);
+                                               testResult,
+                                               maxTestTimeTimerTimeout);
 
             //if for some reason something fails, we need to store the value
             //and send a notification
@@ -2231,7 +2311,8 @@ pvplayer_engine_test_suite::pvplayer_engine_test_suite(char *aFileName,
         int32 aFileFormatType,
         bool aProxyEnabled,
         uint32 aDownloadRateInKbps,
-        bool aSplitLogFile): test_case()
+        bool aSplitLogFile,
+        uint32 aMaxTestTimeTimerTimeout): test_case()
 {
     adopt_test_case(new pvplayer_engine_test(aFileName,
                     aFileType,
@@ -2249,7 +2330,8 @@ pvplayer_engine_test_suite::pvplayer_engine_test_suite(char *aFileName,
                     aFileFormatType,
                     aProxyEnabled,
                     aDownloadRateInKbps,
-                    aSplitLogFile));
+                    aSplitLogFile,
+                    aMaxTestTimeTimerTimeout));
 }
 
 
@@ -2270,7 +2352,8 @@ pvplayer_engine_test::pvplayer_engine_test(char *aFileName,
         int32 aFileFormatType,
         bool aProxyEnabled,
         uint32 aDownloadRateInKbps,
-        bool aSplitLogFile)
+        bool aSplitLogFile,
+        uint32 aMaxTestTimeTimerTimeout)
 {
     iFileName = aFileName;
     iFileType = aFileType;
@@ -2288,6 +2371,7 @@ pvplayer_engine_test::pvplayer_engine_test(char *aFileName,
     iLogFile = aLogFile;
     iLogMem = aLogMem;
     iSplitLogFile = aSplitLogFile;
+    iMaxTestTimeTimerTimeout = aMaxTestTimeTimerTimeout;
     iTotalAlloc = 0;
     iTotalBytes = 0;
     iAllocFails = 0;
@@ -2295,6 +2379,7 @@ pvplayer_engine_test::pvplayer_engine_test(char *aFileName,
     iProxyEnabled = aProxyEnabled;
     iFileFormatType = aFileFormatType;
     iDownloadRateInKbps = aDownloadRateInKbps;
+    iTimer = NULL;
 
 #ifdef BUILD_N_ARM
     OMX_Init(CONFIG_FILE_NAME);
@@ -2522,6 +2607,45 @@ void pvplayer_engine_test::TestCompleted(test_case &tc)
     }
 }
 
+
+void pvplayer_engine_test::TimeoutOccurred(int32 timerID, int32 timeoutInfo)
+{
+    if (timerID == MAX_TEST_TIME_TIMER)
+    {
+        if (iCurrentTest != NULL)
+        {
+            fprintf(file, "Maximum test time timer timed out after %d seconds while running test #%d!\n",
+                    timeoutInfo, iCurrentTestNumber);
+
+            // Mark a test failure
+            iCurrentTest->test_is_true_stub(false, false, __FILE__, __LINE__);
+
+            // Mark the test as completed -- this will print a test summary for
+            // the currently running test.
+            TestCompleted(*iCurrentTest);
+
+        }
+        else
+        {
+            fprintf(file, "Maximum test time timer timed out after %d seconds.\n",
+                    timeoutInfo);
+        }
+
+        // The maximum time given for a test to finish has been exceeded.
+        // Use an assert to halt the running test.  Ideally, we would halt
+        // the running test and continue on to any additional tests,
+        // however it is almost impossible to fully cleanup the test
+        // environment if the running test has hung.
+        OSCL_ASSERT(false);
+    }
+    else
+    {
+        // An unknown timer timed out.  Print a short message and assert to
+        // raise awareness of a possible coding error.
+        fprintf(file, "Unknown timer timeout: timerID = %d, timeoutInfo = %d.\n", timerID, timeoutInfo);
+        OSCL_ASSERT(false);
+    }
+}
 
 void pvplayer_engine_test::test()
 {
@@ -7664,6 +7788,23 @@ void pvplayer_engine_test::test()
                 fprintf(file, "Input File: %s\n", iCurrentTest->iFileName);
                 // Start the test
                 iCurrentTest->StartTest();
+
+                // If a test timeout was enabled...
+                if (iMaxTestTimeTimerTimeout != 0)
+                {
+                    // Cleaning up the scheduler removes the timer's internal
+                    // callback from the scheduler and causes errors if the timer is re-used.
+                    // To workaround this, delete and re-create the timer before use.
+                    OSCL_DELETE(iTimer);
+                    iTimer = OSCL_NEW(OsclTimer<OsclMemAllocator>, ("EngineUnitTests"));
+                    iTimer->SetObserver(this);
+
+                    // Schedule a timeout for the maximum test time.
+                    // TimeoutOccurred() is called if a timeout is exceeded.
+                    iTimer->Request(MAX_TEST_TIME_TIMER, iMaxTestTimeTimerTimeout, iMaxTestTimeTimerTimeout);
+                    fprintf(file, "Started maximum test time timer for %d seconds.\n", iMaxTestTimeTimerTimeout);
+                }
+
                 // Start the scheduler so the test case would run
 #if USE_NATIVE_SCHEDULER
                 // Have PV scheduler use the scheduler native to the system
@@ -7690,6 +7831,11 @@ void pvplayer_engine_test::test()
                 bLoggerSetup = false;
             }
         }
+    }
+    if (iTimer)
+    {
+        OSCL_DELETE(iTimer);
+        iTimer = NULL;
     }
 }
 

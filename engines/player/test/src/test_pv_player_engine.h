@@ -78,6 +78,10 @@
 #include "oscl_string_utils.h"
 #endif
 
+#ifndef OSCL_TIMER_H_INCLUDED
+#include "oscl_timer.h"
+#endif
+
 class PVTest
 {
     public:
@@ -128,7 +132,8 @@ class pvplayer_engine_test_suite : public test_case
             int32 aFileFormatType,
             bool  aProxyEnabled,
             uint32 aDownloadRateInKbps,
-            bool aSplitLogFile
+            bool aSplitLogFile,
+            uint32 aMaxTestTimeTimerTimeout
         );
 };
 
@@ -280,6 +285,7 @@ class pvplayer_async_test_base : public OsclTimerObject,
             iContextObjectRefValue = 0x5C7A; // some random number
             iContextObject = iContextObjectRefValue;
 
+
             iMioFactory = PVPlayerTestMioFactory::Create();
             OSCL_ASSERT(iMioFactory);
         }
@@ -382,7 +388,8 @@ class pvplayer_async_test_base : public OsclTimerObject,
 
 // test_base-based class which will run async tests on pvPlayer engine
 class pvplayer_engine_test : public test_case,
-        public pvplayer_async_test_observer
+        public pvplayer_async_test_observer,
+        public OsclTimerObserver
 {
     public:
         pvplayer_engine_test(char *aFileName,
@@ -401,7 +408,8 @@ class pvplayer_engine_test : public test_case,
                              int32 aFileFormatType,
                              bool aProxyEnabled,
                              uint32 aDownloadRateInKbps,
-                             bool aSplitLogFile);
+                             bool aSplitLogFile,
+                             uint32 aMaxTestTimeTimerTimeout);
         ~pvplayer_engine_test();
 
         // Note: for command line options to work, the local tests need to be 0-99,
@@ -2674,6 +2682,11 @@ class pvplayer_engine_test : public test_case,
             BeyondLastTest = 9999 //placeholder
         };
 
+        enum PVPlayerEngineTestTimers
+        {
+            MAX_TEST_TIME_TIMER
+        };
+
         // From test_case
         virtual void test();
 
@@ -2684,6 +2697,8 @@ class pvplayer_engine_test : public test_case,
         bool ValidateTestCase(int& aCurrentTestCaseNumber);
 
         void SetupLoggerScheduler();
+
+        virtual void TimeoutOccurred(int32 timerID, int32 timeoutInfo);
 
     private:
         const char *iFileName;
@@ -2722,6 +2737,8 @@ class pvplayer_engine_test : public test_case,
         int32 iFileFormatType;
 
         uint32 iDownloadRateInKbps;
+        uint32 iMaxTestTimeTimerTimeout;
+        OsclTimer<OsclMemAllocator> *iTimer;
 };
 
 /**
