@@ -238,10 +238,9 @@ class pvDownloadControl : public DownloadControlInterface
                 const uint32 aFileSize);
 
         // update duration by new playback rate, called by checkAutoResumeAlgoWithConstraint
-        virtual bool checkNewDuration(const uint32 aCurrDurationMsec, uint32 &aNewDurationMsec)
+        virtual uint32 checkNewDuration(const uint32 aCurrDurationMsec)
         {
-            aNewDurationMsec = aCurrDurationMsec;
-            return true;
+            return (uint32)aCurrDurationMsec;
         }
 
         // called by checkAutoResumeAlgoWithConstraint()
@@ -269,20 +268,6 @@ class pvDownloadControl : public DownloadControlInterface
             return false;
         }
 
-        // adding buffer constraint for the algo, i.e. if buffer constraint meets (or buffer overflows), auto-resume should kick off.
-        virtual bool isOutputBufferOverflow()
-        {
-            return false;
-        }
-
-        // handle overflow issue: // result = x*1000/y
-        OSCL_IMPORT_REF uint32 divisionInMilliSec(const uint32 x, const uint32 y);
-
-    protected:
-        // called by checkResumeNotification()
-        OSCL_IMPORT_REF bool checkSendingNotification(const bool aDownloadComplete = false);
-
-        // called by isResumePlayback()
         // with contraint: file size and clip duration are both available
         OSCL_IMPORT_REF bool checkAutoResumeAlgoWithConstraint(const uint32 aDownloadRate,
                 const uint32 aRemainingDownloadSize,
@@ -290,13 +275,33 @@ class pvDownloadControl : public DownloadControlInterface
                 const uint32 aFileSize);
 
         // use fixed-point calculation to replace the float-point calculation: aRemainingDLSize<0.0009*aDownloadRate*aRemainingPlaybackTime
-        OSCL_IMPORT_REF bool approveAutoResumeDecision(const uint32 aRemainingDLSize,
+        OSCL_IMPORT_REF virtual bool approveAutoResumeDecision(const uint32 aRemainingDLSize,
                 const uint32 aDownloadRate,
                 const uint32 aRemainingPlaybackTime);
 
         // old algorithm
         OSCL_IMPORT_REF bool isResumePlaybackWithOldAlg(const uint32 aDownloadRate,
                 const uint32 aRemainingDownloadSize);
+
+        virtual bool canRunAutoResumeAlgoWithConstraint(const uint32 aDurationMsec,
+                const uint32 aFileSize)
+        {
+            return (aDurationMsec > 0 && aFileSize > 0);
+        }
+
+
+        // adding buffer constraint for the algo, i.e. if buffer constraint meets (or buffer overflows), auto-resume should kick off.
+        virtual bool isOutputBufferOverflow()
+        {
+            return false;
+        }
+
+
+        // handle overflow issue: // result = x*1000/y
+        OSCL_IMPORT_REF uint32 divisionInMilliSec(const uint32 x, const uint32 y);
+
+        // called by checkResumeNotification()
+        OSCL_IMPORT_REF bool checkSendingNotification(const bool aDownloadComplete = false);
 
         // set file size to parser node for the new API, setFileSize()
         OSCL_IMPORT_REF virtual void setFileSize(const uint32 aFileSize);

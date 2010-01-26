@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -507,7 +507,7 @@ class INetURI
         {
             return !iUseRelativeURI;
         }
-        void setUsAbsoluteURI()
+        void setUseAbsoluteURI()
         {
             iUseRelativeURI = false;
         }
@@ -517,7 +517,7 @@ class INetURI
         }
 
         // constructor
-        INetURI() : iHostPort(DEFAULT_HTTP_PORT_NUMBER), iUseRelativeURI(true), iRedirectURI(false)
+        INetURI() : iHostPort(DEFAULT_HTTP_PORT_NUMBER), iUseRelativeURI(false), iRedirectURI(false)
         {
             ;
         }

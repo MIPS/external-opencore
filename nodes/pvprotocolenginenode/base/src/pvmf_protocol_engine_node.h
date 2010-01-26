@@ -312,7 +312,7 @@ class PVMFProtocolEngineNode :  public PVMFNodeInterface,
         }
         bool ReadyToProcessInputLoggingPort()
         {
-            return (iPortInForLogging && iPortInForData->IncomingMsgQueueSize() > 0);
+            return (iPortInForLogging && iPortInForLogging->IncomingMsgQueueSize() > 0);
         }
         inline bool ReadyToProcessInputData();
         void UpdateTimersInProcessIncomingMsg(const bool aEOSMsg, PVMFPortInterface* aPort);

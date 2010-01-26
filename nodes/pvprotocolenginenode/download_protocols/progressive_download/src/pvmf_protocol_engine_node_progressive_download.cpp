@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -187,9 +187,9 @@ OSCL_EXPORT_REF bool progressiveDownloadControl::isBufferingEnoughTime(const uin
     return false;
 }
 
-OSCL_EXPORT_REF bool progressiveDownloadControl::checkNewDuration(const uint32 aCurrDurationMsec, uint32 &aNewDurationMsec)
+OSCL_EXPORT_REF uint32 progressiveDownloadControl::checkNewDuration(const uint32 aCurrDurationMsec)
 {
-    aNewDurationMsec = aCurrDurationMsec;
+    uint32 newDurationMsec = aCurrDurationMsec;
     if (aCurrDurationMsec > 0 && iClipByterate == 0)
     {
         if (iFileSize > 0) iClipByterate = divisionInMilliSec(iFileSize, aCurrDurationMsec);
@@ -200,10 +200,10 @@ OSCL_EXPORT_REF bool progressiveDownloadControl::checkNewDuration(const uint32 a
         if (iPlaybackByteRate > iClipByterate)
         {
             uint32 averPlaybackRate = (iClipByterate + iPlaybackByteRate) / 2;
-            aNewDurationMsec = divisionInMilliSec(iFileSize, averPlaybackRate); // aFileSize/averPlaybackRate*1000
+            newDurationMsec = divisionInMilliSec(iFileSize, averPlaybackRate); // aFileSize/averPlaybackRate*1000
         }
     }
-    return true;
+    return newDurationMsec;
 }
 
 OSCL_EXPORT_REF bool progressiveDownloadControl::approveAutoResumeDecisionShortCut(const uint32 aCurrDownloadSize,

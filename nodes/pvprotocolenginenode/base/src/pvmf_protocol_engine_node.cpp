@@ -1051,18 +1051,7 @@ PVMFStatus PVMFProtocolEngineNode::DoSeek(PVMFProtocolEngineNodeCommand& aCmd)
 */
 PVMFStatus PVMFProtocolEngineNode::DoBitsteamSwitch(PVMFProtocolEngineNodeCommand& aCmd)
 {
-    int32 status = iProtocolContainer->doBitstreamSwitch(aCmd);
-    if (status == PVProtocolEngineNodeErrorProcessingFailure_BitStreamSwitchAfterEOD)
-    {
-        //Since PE node already received $E, So return failure and set appropriate extention error code.
-        //When SM node finds this extention error, it will ignore the failure.
-        PVUuid uuid = PVProtocolEngineNodeErrorEventTypesUUID;
-        int32 errorCode = PVProtocolEngineNodeErrorProcessingFailure_BitStreamSwitchAfterEOD;
-        int32 status = PVMFFailure;
-        PVInterface* extmsg = NULL;
-        CommandComplete(iInputCommands, aCmd, status, NULL, &uuid, &errorCode, 0, extmsg);
-    }
-    return status;
+    return iProtocolContainer->doBitstreamSwitch(aCmd);
 }
 
 PVMFStatus PVMFProtocolEngineNode::DoReposition(PVMFProtocolEngineNodeCommand& aCmd)
@@ -2275,8 +2264,8 @@ bool PVMFProtocolEngineNode::CheckUsingProxy(OSCL_String &aPortConfig)
     uint32 aProxyPort = 0;
     OSCL_HeapString<OsclMemAllocator> aProxyName;
     if (!getProxy(aProxyName, aProxyPort)) return false;
-    iInterfacingObjectContainer->getURIObject().setUsAbsoluteURI();
-    iInterfacingObjectContainer->getLoggingURIObject().setUsAbsoluteURI();
+    iInterfacingObjectContainer->getURIObject().setUseAbsoluteURI();
+    iInterfacingObjectContainer->getLoggingURIObject().setUseAbsoluteURI();
     return ComposeSocketConfig(aProxyName, aProxyPort, aPortConfig);
 }
 

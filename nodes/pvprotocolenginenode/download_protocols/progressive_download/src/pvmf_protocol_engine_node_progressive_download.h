@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -86,7 +86,7 @@ class progressiveDownloadControl : public pvDownloadControl
                 const uint32 aNPTInMS = 0xFFFFFFFF);
 
         // update duration by new playback rate, called by checkAutoResumeAlgoWithConstraint
-        OSCL_IMPORT_REF bool checkNewDuration(const uint32 aCurrDurationMsec, uint32 &aNewDurationMsec);
+        OSCL_IMPORT_REF uint32 checkNewDuration(const uint32 aCurrDurationMsec);
 
         // extra 4 sec buffering time
         OSCL_IMPORT_REF bool approveAutoResumeDecisionShortCut(const uint32 aCurrDownloadSize,

@@ -749,12 +749,7 @@ OSCL_EXPORT_REF bool pvDownloadControl::isResumePlayback(const uint32 aDownloadR
     // check the pre-conditins including initial download time/size for download rate estimation purpose
     if (!isDlAlgoPreConditionMet(aDownloadRate, iClipDurationMsec, aCurrDownloadSize, aFileSize)) return false;
 
-    // get the playback clock time
-    if (iClipDurationMsec > 0 && aFileSize > 0)
-    {
-        return checkAutoResumeAlgoWithConstraint(aDownloadRate, aFileSize - aCurrDownloadSize, iClipDurationMsec, aFileSize);
-    }
-
+    if (checkAutoResumeAlgoWithConstraint(aDownloadRate, aFileSize - aCurrDownloadSize, iClipDurationMsec, aFileSize)) return true;
     return checkAutoResumeAlgoNoConstraint(aCurrDownloadSize, aFileSize, iClipDurationMsec);
 }
 
@@ -790,6 +785,8 @@ OSCL_EXPORT_REF bool pvDownloadControl::checkAutoResumeAlgoWithConstraint(const 
         const uint32 aDurationMsec,
         const uint32 aFileSize)
 {
+    if (!canRunAutoResumeAlgoWithConstraint(aDurationMsec, aFileSize)) return false;
+
     // get the playback clock time
     uint32 playbackTimeMec32 = 0;
     if (!getPlaybackTimeFromEngineClock(playbackTimeMec32)) return false;
@@ -799,8 +796,7 @@ OSCL_EXPORT_REF bool pvDownloadControl::checkAutoResumeAlgoWithConstraint(const 
     // the basic algorithm is, remaining download time (remaining download size/download rate) <
     //                         remaining playback time (duration - current playback time) * 0.9
 
-    uint32 newDurationMsec = aDurationMsec;
-    if (!checkNewDuration(aDurationMsec, newDurationMsec)) return false;
+    uint32 newDurationMsec = checkNewDuration(aDurationMsec);
     uint32 playbackRemainingTimeMsec = newDurationMsec - playbackTimeMec32;
     // 4sec buffering time
     if (approveAutoResumeDecisionShortCut(aFileSize - aRemainingDownloadSize, newDurationMsec, playbackTimeMec32, playbackRemainingTimeMsec))
