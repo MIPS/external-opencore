@@ -799,6 +799,11 @@ void TSC_324m::MuxErrorOccurred(TPVDirection direction,
         }
     }
 
+    if ((component == PV_MUX_COMPONENT_MUX) & (error == PV2WayDisconnectError))
+    {
+        TransmissionFailure();
+    }
+
     PVMFAsyncEvent aEvent(PVMFInfoEvent, error, this, NULL);
     uint8* buf = aEvent.GetLocalBuffer();
     buf[0] = (uint8)PV_H324COMPONENT_H223;

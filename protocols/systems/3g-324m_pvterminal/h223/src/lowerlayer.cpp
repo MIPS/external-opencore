@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,13 +25,17 @@
 #include "level2.h"
 
 #define PV_H223_MAIN_TIMER_ID 0
+#define PV_H223_DISCONNECT_TIMER_ID 1
+
 #define H223_MIN_SAMPLE_INTERVAL 20
+
 #if defined(__WINS__) || defined(WIN32)
 #define TIMER_RES 100
 #else
 #define TIMER_RES 40
 #endif
 #define H223_MIN_TIMER_RESOLUTION 20
+#define PV_H223_DISCONNECT_TIMER_TIMEOUT 6 //seconds
 #define H223_LEVEL_DEFAULT H223_LEVEL2
 
 #define H223_INITIAL_STUFFING_SEND_CNT 3
@@ -56,6 +60,7 @@ H223LowerLayer::H223LowerLayer(int32 aPortTag, TPVLoopbackMode aLoopbackMode)
         iPduSize(H223_DEFAULT_PDU_SIZE),
         iStuffingSize(0),
         iTimer("H223LL"),
+        iDisconnectTimerCycles((1000 / TIMER_RES) * PV_H223_DISCONNECT_TIMER_TIMEOUT),
         iLoopbackMode(aLoopbackMode),
         iTimerCnt(0),
         iBytesSent(0),
@@ -180,9 +185,12 @@ TPVStatusCode H223LowerLayer::Start(H223PduParcomSharedPtr aParcom)
     }
 
     /* Start timer */
-    iTimer.SetFrequency(1000 / iMinTimerResolution);
+    uint32 frequency = 1000 / iMinTimerResolution;
+    iDisconnectTimerCycles = PV_H223_DISCONNECT_TIMER_TIMEOUT * frequency;
+    iTimer.SetFrequency(frequency);
     iTimer.SetObserver(this);
     iTimer.Request(PV_H223_MAIN_TIMER_ID, PV_H223_MAIN_TIMER_ID , 1, this, 1);
+    iTimer.Request(PV_H223_DISCONNECT_TIMER_ID, iNumBytesRx , iDisconnectTimerCycles, this, 0);
 
     iState = 1;
     iSkipLevelCheck = false;
@@ -297,11 +305,25 @@ PVMFStatus H223LowerLayer::CompletePacket(OsclSharedPtr<PVMFMediaDataImpl>& pack
 
 void H223LowerLayer::TimeoutOccurred(int32 timerID, int32 timeoutInfo)
 {
-    OSCL_UNUSED_ARG(timerID);
-    OSCL_UNUSED_ARG(timeoutInfo);
-    if (PVMFSuccess != Mux())
+    switch (timerID)
     {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223LowerLayer::TimeoutOccurred - Memory allocation failed on Mux()\n"));
+        case PV_H223_MAIN_TIMER_ID:
+            if (PVMFSuccess != Mux())
+            {
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223LowerLayer::TimeoutOccurred - Memory allocation failed on Mux()\n"));
+            }
+            break;
+        case PV_H223_DISCONNECT_TIMER_ID:
+            if (timeoutInfo != ((int32)iNumBytesRx))
+            {
+                iTimer.Request(PV_H223_DISCONNECT_TIMER_ID, iNumBytesRx , iDisconnectTimerCycles, this, 0);
+            }
+            else
+            {
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "H223LowerLayer::TimeoutOccurred - Remote Disconnected?"));
+                iObserver->LowerLayerError(INCOMING, PV2WayDisconnectError);
+            }
+            break;
     }
 }
 
@@ -540,7 +562,7 @@ void H223LowerLayer::PacketIn(PVMFSharedMediaDataPtr aMediaData)
     for (uint16 frag_num = 0; frag_num < aMediaData->getNumFragments(); frag_num++)
     {
         aMediaData->getMediaFragment(frag_num, refCtrMemFrag);
-        PV_STAT_INCR(iNumBytesRx, (refCtrMemFrag.getMemFragSize()))
+        iNumBytesRx += refCtrMemFrag.getMemFragSize();
         if (refCtrMemFrag.getMemFragSize() > iDemuxBufferSize)
         {
             if (cur_size)

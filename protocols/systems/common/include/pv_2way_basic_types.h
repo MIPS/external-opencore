@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,6 +47,8 @@
 const int PV2WayErrorStatusStart = (-10500);
 /** There was an error dispatching muxed data to the downstream node **/
 const int PV2WayDispatchError = PV2WayErrorStatusStart - 1;
+/** The peer disconnected without endsession command **/
+const int PV2WayDisconnectError = PV2WayErrorStatusStart - 2;
 /** The request was rejected by the peer **/
 const int PV2WayErrorRejected = PV2WayErrorStatusStart - 5;
 /** Signals replacement of an existing resource **/

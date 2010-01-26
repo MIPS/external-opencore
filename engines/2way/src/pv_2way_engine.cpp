@@ -3296,6 +3296,7 @@ void CPV324m2Way::Run()
 
                 case PVT_INDICATION_DISCONNECT:
                     iMuxDatapath->ResetDatapath();
+                    iCommNode.iNode->ThreadLogoff();
                     iCommNode.Clear();
                     break;
 
