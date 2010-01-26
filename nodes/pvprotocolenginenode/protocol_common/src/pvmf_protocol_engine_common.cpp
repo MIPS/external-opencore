@@ -201,10 +201,12 @@ OSCL_EXPORT_REF int32 HttpParsingBasicObject::parseResponse(INPUT_DATA_QUEUE &aD
             else if (iHttpHeaderParsed && size > 0)
             {
                 iTotalDLHttpBodySize += size;
+                iTotalHttpStreamingSize += size;
                 if (iLatestMediaDataTimestamp < mediaData->getTimestamp()) iLatestMediaDataTimestamp = mediaData->getTimestamp();
 
                 // update BandWidthEstimationInfo
                 iBWEstInfo.update(mediaData, iHttpHeaderParsed);
+                PVMF_PROTOCOL_ENGINE_LOGERRINFODATAPATH((0, "HttpParsingBasicObject::parseResponse() 1:streaming currentSize = %d, 2:download Size = %d", iTotalHttpStreamingSize, iTotalDLHttpBodySize));
                 PVMF_PROTOCOL_ENGINE_LOGERRINFODATAPATH((0, "HttpParsingBasicObject::parseResponse() file size = %d, download size = %d, curr_size = %d, new download size = %d",
                                                         iContentInfo.iContentLength, iTotalDLHttpBodySize, size, iBWEstInfo.iTotalSizePerRequest));
             }

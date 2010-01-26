@@ -3215,7 +3215,7 @@ bool MainDataFlowHandler::dataFlowContinue(const int32 aStatus)
 
 inline bool MainDataFlowHandler::isReadyGotoNextState(const int32 aStatus)
 {
-    return (aStatus == PROCESS_SUCCESS_END_OF_MESSAGE &&
+    return (((aStatus == PROCESS_SUCCESS_END_OF_MESSAGE) || (aStatus == PROCESS_SUCCESS_END_OF_MESSAGE_TRUNCATED)) &&
             !iNode->iInterfacingObjectContainer->isWholeSessionDone() &&
             iNode->iInterfaceState != EPVMFNodePaused);
 }
