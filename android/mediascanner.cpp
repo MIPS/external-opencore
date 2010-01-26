@@ -82,8 +82,9 @@ MediaScanner::~MediaScanner()
     free(mLocale);
 }
 
-static PVMFStatus parseMP3(const char *filename, MediaScannerClient& client)
+static PVMFStatus parseID3Tag(const char *filename, MediaScannerClient& client)
 {
+    // This method parses the ID3 tags in a source file.
     PVID3ParCom pvId3Param;
     PVFile fileHandle;
     Oscl_FileServer iFs;
@@ -563,8 +564,10 @@ status_t MediaScanner::processFile(const char *path, const char* mimeType, Media
         //LOGD("processFile %s mimeType: %s\n", path, mimeType);
         const char* extension = strrchr(path, '.');
 
-        if (extension && strcasecmp(extension, ".mp3") == 0) {
-            result = parseMP3(path, client);
+        if (extension &&
+           (strcasecmp(extension, ".mp3") == 0 || strcasecmp(extension, ".aac") == 0)) {
+            // Both mp3 and aac files use ID3 tags to hold metadata
+            result = parseID3Tag(path, client);
         } else if (extension &&
             (strcasecmp(extension, ".mp4") == 0 || strcasecmp(extension, ".m4a") == 0 ||
              strcasecmp(extension, ".3gp") == 0 || strcasecmp(extension, ".3gpp") == 0 ||
@@ -578,9 +581,8 @@ status_t MediaScanner::processFile(const char *path, const char* mimeType, Media
             result = parseMidi(path, client);
         } else if (extension &&
             (strcasecmp(extension, ".wma") == 0 || strcasecmp(extension, ".wmv") == 0 ||
-             strcasecmp(extension, ".asf") == 0 || strcasecmp(extension, ".aac") == 0 || 
-             strcasecmp(extension, ".amr") == 0 || strcasecmp(extension, ".wav") == 0 ||
-             strcasecmp(extension, ".awb") == 0)) { 
+             strcasecmp(extension, ".asf") == 0 || strcasecmp(extension, ".amr") == 0 || 
+             strcasecmp(extension, ".wav") == 0 || strcasecmp(extension, ".awb") == 0)) {
             result = parseASF(path, client);   
         } else {
             result = PVMFFailure;
