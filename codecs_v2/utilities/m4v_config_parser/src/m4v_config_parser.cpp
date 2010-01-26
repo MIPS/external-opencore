@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -990,7 +990,7 @@ int16 FlushBits(
     uint8 *bits;
     uint32 dataBitPos = pStream->dataBitPos;
     uint32 bitPos = pStream->bitPos;
-    uint32 dataBytePos;
+    uint32 dataBytePos, byteLeft;
 
 
     if ((dataBitPos + ucNBits) > (uint32)(pStream->numBytes << 3))
@@ -1002,9 +1002,26 @@ int16 FlushBits(
     if (bitPos > 32)
     {
         dataBytePos = dataBitPos >> 3;    /* Byte Aligned Position */
+        byteLeft = pStream->numBytes - dataBytePos; // Byte Lefts
         bitPos = dataBitPos & 7; /* update bit position */
         bits = &pStream->data[dataBytePos];
-        pStream->bitBuf = (bits[0] << 24) | (bits[1] << 16) | (bits[2] << 8) | bits[3];
+        if (byteLeft > 3)
+        {
+            pStream->bitBuf = (bits[0] << 24) | (bits[1] << 16) | (bits[2] << 8) | bits[3];
+        }
+        else
+        {
+            uint32 lShift = 24;
+            uint32 tmpBuff = 0;
+            while (byteLeft)
+            {
+                tmpBuff |= (*bits << lShift);
+                bits++;
+                byteLeft--;
+                lShift -= 8;
+            }
+            pStream->bitBuf = tmpBuff;
+        }
     }
 
     pStream->dataBitPos = dataBitPos;
@@ -1022,8 +1039,7 @@ int16 ReadBits(
     uint8 *bits;
     uint32 dataBitPos = pStream->dataBitPos;
     uint32 bitPos = pStream->bitPos;
-    uint32 dataBytePos;
-
+    uint32 dataBytePos, byteLeft;
 
     if ((dataBitPos + ucNBits) > (pStream->numBytes << 3))
     {
@@ -1036,9 +1052,26 @@ int16 ReadBits(
     if (ucNBits > (32 - bitPos))    /* not enough bits */
     {
         dataBytePos = dataBitPos >> 3;    /* Byte Aligned Position */
+        byteLeft = pStream->numBytes - dataBytePos; // Byte Lefts
         bitPos = dataBitPos & 7; /* update bit position */
         bits = &pStream->data[dataBytePos];
-        pStream->bitBuf = (bits[0] << 24) | (bits[1] << 16) | (bits[2] << 8) | bits[3];
+        if (byteLeft > 3)
+        {
+            pStream->bitBuf = (bits[0] << 24) | (bits[1] << 16) | (bits[2] << 8) | bits[3];
+        }
+        else
+        {
+            uint32 lShift = 24;
+            uint32 tmpBuff = 0;
+            while (byteLeft)
+            {
+                tmpBuff |= (*bits << lShift);
+                bits++;
+                byteLeft--;
+                lShift -= 8;
+            }
+            pStream->bitBuf = tmpBuff;
+        }
     }
 
     pStream->dataBitPos += ucNBits;
@@ -1059,7 +1092,7 @@ int16 ByteAlign(
     uint32 dataBitPos = pStream->dataBitPos;
     uint32 bitPos = pStream->bitPos;
     uint32 dataBytePos;
-    uint32 leftBits;
+    uint32 leftBits, byteLeft;
 
     leftBits =  8 - (dataBitPos & 0x7);
     if (leftBits == 8)
@@ -1076,12 +1109,29 @@ int16 ByteAlign(
         bitPos += leftBits;
     }
 
-
     if (bitPos > 32)
     {
         dataBytePos = dataBitPos >> 3;    /* Byte Aligned Position */
         bits = &pStream->data[dataBytePos];
-        pStream->bitBuf = (bits[0] << 24) | (bits[1] << 16) | (bits[2] << 8) | bits[3];
+
+        byteLeft = pStream->numBytes - dataBytePos; // Byte Lefts
+        if (byteLeft > 3)
+        {
+            pStream->bitBuf = (bits[0] << 24) | (bits[1] << 16) | (bits[2] << 8) | bits[3];
+        }
+        else
+        {
+            uint32 lShift = 24;
+            uint32 tmpBuff = 0;
+            while (byteLeft)
+            {
+                tmpBuff |= (*bits << lShift);
+                bits++;
+                byteLeft--;
+                lShift -= 8;
+            }
+            pStream->bitBuf = tmpBuff;
+        }
     }
 
     pStream->dataBitPos = dataBitPos;
