@@ -3200,7 +3200,7 @@ void pvplayer_engine_test::test()
                 break;
 
             case SetPlaybackAfterPrepare:
-
+            case SetPlaybackBeforePrepare:
                 iCurrentTest = new pvplayer_async_test_setplaybackafterprepare(testparam);
                 break;
 

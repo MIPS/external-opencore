@@ -16240,6 +16240,25 @@ void pvplayer_async_test_setplaybackafterprepare::Run()
                 }
                 iDataSource->SetDataSourceContextData((OsclAny*)iSourceContextData);
             }
+            else if ((iFileType == PVMF_MIME_DATA_SOURCE_RTSP_URL)
+                     || (iFileType == PVMF_MIME_DATA_SOURCE_SDP_FILE)
+                     || (iFileType == PVMF_MIME_DATA_SOURCE_RTSP_TUNNELLING))
+            {
+                iSourceContextData = new PVMFSourceContextData();
+                iSourceContextData->EnableCommonSourceContext();
+                iSourceContextData->EnableStreamingSourceContext();
+
+                PVInterface* sourceContext = NULL;
+                PVUuid streamingContextUuid(PVMF_SOURCE_CONTEXT_DATA_STREAMING_UUID);
+                if (iSourceContextData->queryInterface(streamingContextUuid, sourceContext))
+                {
+                    PVMFSourceContextDataStreaming* streamingContext =
+                        OSCL_STATIC_CAST(PVMFSourceContextDataStreaming*, sourceContext);
+                    streamingContext->iStreamStatsLoggingURL = wFileName;
+                }
+                iDataSource->SetDataSourceContextData((OsclAny*)iSourceContextData);
+            }
+
             iDataSource->SetDataSourceURL(wFileName);
             iDataSource->SetDataSourceFormatType(fileType);
 
@@ -16535,7 +16554,14 @@ void pvplayer_async_test_setplaybackafterprepare::CommandCompleted(const PVCmdRe
         case STATE_ADDDATASINK_TEXT:
             if (aResponse.GetCmdStatus() == PVMFSuccess)
             {
-                iState = STATE_PREPARE;
+                if (iTestNumber == pvplayer_engine_test::SetPlaybackAfterPrepare)
+                {
+                    iState = STATE_PREPARE;
+                }
+                else if (iTestNumber == pvplayer_engine_test::SetPlaybackBeforePrepare)
+                {
+                    iState = STATE_SETPLAYBACKRANGE;
+                }
                 RunIfNotReady();
             }
             else
@@ -16550,37 +16576,55 @@ void pvplayer_async_test_setplaybackafterprepare::CommandCompleted(const PVCmdRe
         case STATE_PREPARE:
             if (aResponse.GetCmdStatus() == PVMFSuccess)
             {
-                iState = STATE_SETPLAYBACKRANGE;
-                RunIfNotReady();
+                if (iTestNumber == pvplayer_engine_test::SetPlaybackAfterPrepare)
+                {
+                    iState = STATE_SETPLAYBACKRANGE;
+                }
+                else if (iTestNumber == pvplayer_engine_test::SetPlaybackBeforePrepare)
+                {
+                    iState = STATE_START;
+                }
             }
             else
             {
                 // Prepare failed
                 PVPATB_TEST_IS_TRUE(false);
                 iState = STATE_CLEANUPANDCOMPLETE;
-                RunIfNotReady();
             }
+            RunIfNotReady();
             break;
 
         case STATE_SETPLAYBACKRANGE:
             if (aResponse.GetCmdStatus() == PVMFSuccess)
             {
-                iState = STATE_START;
-                RunIfNotReady();
+                if (iTestNumber == pvplayer_engine_test::SetPlaybackAfterPrepare)
+                {
+                    iState = STATE_START;
+                }
+                else if (iTestNumber == pvplayer_engine_test::SetPlaybackBeforePrepare)
+                {
+                    iState = STATE_PREPARE;
+                }
             }
             else if (aResponse.GetCmdStatus() == PVMFErrNotSupported)
             {
                 fprintf(file, " SetPlaybackRange not supported \n");
-                iState = STATE_START;
-                RunIfNotReady();
+                if (iTestNumber == pvplayer_engine_test::SetPlaybackAfterPrepare)
+                {
+                    iState = STATE_START;
+                }
+                else if (iTestNumber == pvplayer_engine_test::SetPlaybackBeforePrepare)
+                {
+                    iState = STATE_PREPARE;
+                }
             }
             else
             {
-                // Stop failed
+                // Set playback range failed
                 PVPATB_TEST_IS_TRUE(false);
                 iState = STATE_CLEANUPANDCOMPLETE;
-                RunIfNotReady();
             }
+            RunIfNotReady();
             break;
 
         case STATE_START:
@@ -16602,7 +16646,7 @@ void pvplayer_async_test_setplaybackafterprepare::CommandCompleted(const PVCmdRe
             if (aResponse.GetCmdStatus() == PVMFSuccess)
             {
                 iState = STATE_REMOVEDATASINK_VIDEO;
-                RunIfNotReady(3000000);
+                RunIfNotReady();
             }
             else
             {
@@ -16788,6 +16832,7 @@ void pvplayer_async_test_setplaybackafterprepare::HandleInformationalEvent(const
         }
     }
 }
+
 
 //
 // pvplayer_async_test_multipauseseekresume section

@@ -3229,7 +3229,7 @@ PVMFStatus PVMFSMRTSPUnicastNode::GetMediaPresentationInfo(PVMFMediaPresentation
 
     sessionRange->convertToMilliSec(sessionStartTime, sessionStopTime);
 
-    int32 duration_msec = (sessionStopTime - sessionStartTime);
+    int32 duration_msec = sessionStopTime;
 
     uint64 duration64;
     Oscl_Int64_Utils::set_uint64(duration64, 0, (uint32)duration_msec);
@@ -3670,7 +3670,7 @@ void PVMFSMRTSPUnicastNode::DoSetDataSourcePosition(PVMFSMFSPBaseNodeCommand& aC
              *    to get the start media TS to set its playback clock
              *  - Engine is trying to do a play with a non-zero start offset
              */
-            if (iRepositionRequestedStartNPTInMS < iSessionStopTime && iRepositionRequestedStartNPTInMS != iSessionStartTime)
+            if (iRepositionRequestedStartNPTInMS < iSessionStopTime && iRepositionRequestedStartNPTInMS > iSessionStartTime)
             {
                 // we need to use part of the logic of repositioning to start
                 // streaming from a non-zero offset. Enabled only for 3gpp streaming
@@ -3687,6 +3687,7 @@ void PVMFSMRTSPUnicastNode::DoSetDataSourcePosition(PVMFSMFSPBaseNodeCommand& aC
                 return;
             }
 
+            *iActualRepositionStartNPTInMSPtr = iSessionStartTime;
             GetActualMediaTSAfterSeek();
             PVMF_SM_RTSP_LOG_COMMAND_SEQ((0, "PVMFSMRTSPUnicastNode::SetDataSourcePosition() - CmdComplete"));
             CommandComplete(iInputCommands, aCmd, PVMFSuccess);
@@ -4803,7 +4804,7 @@ PVMFStatus PVMFSMRTSPUnicastNode::InitMetaData()
             uint32 duration = 0;
             if (sessionStopTime > sessionStartTime && sessionStartTime >= 0)
             {
-                duration = (uint32)(sessionStopTime - sessionStartTime);
+                duration = (uint32)(sessionStopTime);
             }
             Oscl_Int64_Utils::set_uint64(iMetaDataInfo->iSessionDuration, 0, duration);
             iMetaDataInfo->iSessionDurationTimeScale = 1000;

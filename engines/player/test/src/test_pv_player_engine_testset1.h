@@ -2705,7 +2705,14 @@ class pvplayer_async_test_setplaybackafterprepare : public pvplayer_async_test_b
                 , iCurrentCmdId(0)
                 , iSourceContextData(NULL)
         {
-            iTestCaseName = _STRLIT_CHAR("SetPlaybackRange After Prepare");
+            if (iTestNumber == pvplayer_engine_test::SetPlaybackAfterPrepare)
+            {
+                iTestCaseName = _STRLIT_CHAR("SetPlaybackRange After Prepare");
+            }
+            else if (iTestNumber == pvplayer_engine_test::SetPlaybackBeforePrepare)
+            {
+                iTestCaseName = _STRLIT_CHAR("SetPlaybackRange Before Prepare");
+            }
         }
 
         ~pvplayer_async_test_setplaybackafterprepare() {}
@@ -2761,6 +2768,7 @@ class pvplayer_async_test_setplaybackafterprepare : public pvplayer_async_test_b
         oscl_wchar output[512];
         PVMFSourceContextData* iSourceContextData;
 };
+
 
 /*!
  *  A test case to test if the player engine can handle multiple pause seek resume during playback
