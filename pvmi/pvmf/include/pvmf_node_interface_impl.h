@@ -313,6 +313,21 @@ class PVMFNodeCommand: public PVMFNodeCommandBase
             aTimeoutMsec = (int32)iParam4;
         }
 
+        // constructor for Custom2 commands
+        void Construct(PVMFSessionId s, int32 cmd, int32 arg1, int32 arg2, int32& arg3, const OsclAny*aContext)
+        {
+            PVMFNodeCommandBase::Construct(s, cmd, aContext);
+            iParam1 = (OsclAny*)arg1;
+            iParam2 = (OsclAny*)arg2;
+            iParam3 = (OsclAny*) & arg3;
+        }
+        void Parse(int32&arg1, int32&arg2, int32*&arg3)
+        {
+            arg1 = (int32)iParam1;
+            arg2 = (int32)iParam2;
+            arg3 = (int32*)iParam3;
+        }
+
         //need to overload the base Destroy routine to cleanup metadata key.
         void Destroy()
         {
