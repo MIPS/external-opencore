@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,8 +43,14 @@ PVA_FF_SampleTableAtom::PVA_FF_SampleTableAtom(uint32 mediaType,
         _oInterLeaveMode = true;
     }
 
+    bool isprotected = false;
+    if ((fileAuthoringFlags & PVMP4FF_PIFF_MODE) == PVMP4FF_PIFF_MODE)
+    {
+        isprotected = true;
+    }
+
     PV_MP4_FF_NEW(fp->auditCB, PVA_FF_TimeToSampleAtom, (mediaType), _ptimeToSampleAtom);
-    PV_MP4_FF_NEW(fp->auditCB, PVA_FF_SampleDescriptionAtom, (mediaType, codecType, protocol, profile, profileComp, level), _psampleDescriptionAtom);
+    PV_MP4_FF_NEW(fp->auditCB, PVA_FF_SampleDescriptionAtom, (mediaType, codecType, isprotected, protocol, profile, profileComp, level), _psampleDescriptionAtom);
     PV_MP4_FF_NEW(fp->auditCB, PVA_FF_SampleSizeAtom, (mediaType), _psampleSizeAtom);
     PV_MP4_FF_NEW(fp->auditCB, PVA_FF_SampleToChunkAtom, (mediaType, fileAuthoringFlags), _psampleToChunkAtom);
     PV_MP4_FF_NEW(fp->auditCB, PVA_FF_ChunkOffsetAtom, (mediaType, fileAuthoringFlags), _pchunkOffsetAtom);

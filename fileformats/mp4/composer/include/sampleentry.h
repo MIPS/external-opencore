@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,13 +26,15 @@
 
 #include "fullatom.h"
 #include "esdescriptor.h"
+#include "a_atomdefs.h"
+
 
 
 class PVA_FF_SampleEntry : public PVA_FF_Atom
 {
 
     public:
-        PVA_FF_SampleEntry(uint32 format); // Constructor
+        PVA_FF_SampleEntry(uint32 format, uint32 mediaType); // Constructor
         virtual ~PVA_FF_SampleEntry();
 
         // Member gets and sets
@@ -66,10 +68,34 @@ class PVA_FF_SampleEntry : public PVA_FF_Atom
             OSCL_UNUSED_ARG(esid);
         };
 
+        uint32 getOriginalFormat()
+        {
+            return _originalFormat;
+        }
+
+        void setProtected()
+        {
+            if (_mediaType == MEDIA_TYPE_VISUAL)
+            {
+                _type = PROTECTED_VIDEO_SAMPLE_ENTRY;
+            }
+            else if (_mediaType == MEDIA_TYPE_AUDIO)
+            {
+                _type = PROTECTED_AUDIO_SAMPLE_ENTRY;
+            }
+            else if (_mediaType == MEDIA_TYPE_TEXT)
+            {
+                _type = PROTECTED_TEXT_SAMPLE_ENTRY;
+            }
+        }
+
+
     protected:
         // Reserved constants
         uint8 _reserved[6];
         uint16 _dataReferenceIndex;
+        uint32 _mediaType;
+        uint32 _originalFormat;
 
 };
 

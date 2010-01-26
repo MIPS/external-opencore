@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,12 +32,15 @@
 #include "decoderspecificinfo.h"
 
 
+class PVA_FF_ProtectionSchemeInfoAtom;
+
 class PVA_FF_SampleDescriptionAtom : public PVA_FF_FullAtom
 {
 
     public:
         PVA_FF_SampleDescriptionAtom(uint32 mediaType,
                                      PVA_FF_MP4_CODEC_TYPE codecType,
+                                     bool isprotected = false,
                                      uint32 protocol = 0,
                                      uint8 profile = 1,
                                      uint8 profileComp = 0xFF,
@@ -126,7 +129,10 @@ class PVA_FF_SampleDescriptionAtom : public PVA_FF_FullAtom
         uint32 _handlerType; // Do NOT render this member or use it in a size calc
         Oscl_Vector<PVA_FF_SampleEntry*, OsclMemAllocator> *_psampleEntryVec; // Careful with vector access and cleanup!
 
+        PVA_FF_ProtectionSchemeInfoAtom* _schemeInfoAtom;
+
         int32 _mediaType;
+        bool _isprotected;
         int32 _currAudioBitrate;
         PVA_FF_MP4_CODEC_TYPE _codecType;
 

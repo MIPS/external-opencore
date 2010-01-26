@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,10 +27,9 @@
 
 
 // Constructor
-PVA_FF_SampleEntry::PVA_FF_SampleEntry(uint32 format)
-        : PVA_FF_Atom(format)
+PVA_FF_SampleEntry::PVA_FF_SampleEntry(uint32 format, uint32 mediaType)
+        : PVA_FF_Atom(format), _mediaType(mediaType), _originalFormat(format)
 {
-
     _reserved[0] = 0;
     _reserved[1] = 0;
     _reserved[2] = 0;

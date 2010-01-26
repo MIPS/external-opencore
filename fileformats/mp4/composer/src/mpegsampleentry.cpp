@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,7 @@
 
 // Constructor
 PVA_FF_MpegSampleEntry::PVA_FF_MpegSampleEntry(int32 mediaType)
-        : PVA_FF_SampleEntry(MPEG_SAMPLE_ENTRY)
+        : PVA_FF_SampleEntry(MPEG_SAMPLE_ENTRY, MEDIA_TYPE_UNKNOWN)
 {
     // codecType fp hard coded to ZERO intentionally as PVA_FF_MpegSampleEntry fp called for
     // non-media samples ONLY.

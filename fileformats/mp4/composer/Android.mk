@@ -54,6 +54,7 @@ LOCAL_SRC_FILES := \
  	src/slconfigdescriptor.cpp \
  	src/soundmediaheaderatom.cpp \
  	src/syncsampleatom.cpp \
+ 	src/schemeinfoatom.cpp \
  	src/timetosampleatom.cpp \
  	src/trackatom.cpp \
  	src/trackheaderatom.cpp \

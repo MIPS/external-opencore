@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@
 
 // Constructor
 PVA_FF_AVCSampleEntry::PVA_FF_AVCSampleEntry(uint8 profile, uint8 profileComp, uint8 level)
-        : PVA_FF_SampleEntry(AVC_SAMPLE_ENTRY)
+        : PVA_FF_SampleEntry(AVC_SAMPLE_ENTRY, MEDIA_TYPE_VISUAL)
         , _pMpeg4BitrateAtom(NULL)
 {
     init(profile, profileComp, level);

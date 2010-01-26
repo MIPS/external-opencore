@@ -68,6 +68,7 @@ SRCS := amrdecoderspecificinfo3gpp.cpp \
 	slconfigdescriptor.cpp \
 	soundmediaheaderatom.cpp \
 	syncsampleatom.cpp \
+	schemeinfoatom.cpp \
 	timetosampleatom.cpp \
 	trackatom.cpp \
 	trackheaderatom.cpp \

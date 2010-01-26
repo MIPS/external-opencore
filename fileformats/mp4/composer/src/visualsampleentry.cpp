@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,7 @@
 
 // Constructor
 PVA_FF_VisualSampleEntry::PVA_FF_VisualSampleEntry(PVA_FF_MP4_CODEC_TYPE codecType)
-        : PVA_FF_SampleEntry(VIDEO_SAMPLE_ENTRY)
+        : PVA_FF_SampleEntry(VIDEO_SAMPLE_ENTRY, MEDIA_TYPE_VISUAL)
 {
     PV_MP4_FF_NEW(fp->auditCB, PVA_FF_ESDAtom, (MEDIA_TYPE_VISUAL, codecType), _pes);
 

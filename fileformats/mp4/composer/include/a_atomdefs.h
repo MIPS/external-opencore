@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -163,6 +163,14 @@ const uint32    MEDIA_TYPE_TEXT = FourCharConstToUint32('t', 'e', 'x', 't');
 const uint32    MPEG_SAMPLE_ENTRY = FourCharConstToUint32('m', 'p', '4', 's');
 const uint32    AUDIO_SAMPLE_ENTRY = FourCharConstToUint32('m', 'p', '4', 'a');
 const uint32    VIDEO_SAMPLE_ENTRY = FourCharConstToUint32('m', 'p', '4', 'v');
+
+const uint32    PROTECTED_VIDEO_SAMPLE_ENTRY    = FourCharConstToUint32('e', 'n', 'c', 'v');
+const uint32    PROTECTED_AUDIO_SAMPLE_ENTRY    = FourCharConstToUint32('e', 'n', 'c', 'a');
+const uint32    PROTECTED_TEXT_SAMPLE_ENTRY     = FourCharConstToUint32('e', 'n', 'c', 't');
+const uint32    PROTECTED_SYSTEM_SAMPLE_ENTRY   = FourCharConstToUint32('e', 'n', 'c', 's');
+
+const uint32    PROTECTION_SCHEME_INFO_ATOM     = FourCharConstToUint32('s', 'i', 'n', 'f');
+const uint32    ORIGINAL_FORMAT_ATOM            = FourCharConstToUint32('f', 'r', 'm', 'a');
 
 const uint32    FILE_TYPE_ATOM = FourCharConstToUint32('f', 't', 'y', 'p');
 const uint32    BRAND_ISOM = FourCharConstToUint32('i', 's', 'o', 'm');

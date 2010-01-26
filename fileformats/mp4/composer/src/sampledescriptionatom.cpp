@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,6 +34,8 @@
 #include "h263sampleentry.h"
 #include "avcsampleentry.h"
 #include "textsampleentry.h"
+#include "schemeinfoatom.h"
+
 
 //common to both AMR and AMR-WB
 const int32 AMRModeSetMask[16] =
@@ -49,12 +51,13 @@ typedef Oscl_Vector<uint32, OsclMemAllocator> PVA_FF_SampleEntryTypeVecType;
 
 // Constructor
 PVA_FF_SampleDescriptionAtom::PVA_FF_SampleDescriptionAtom(uint32 mediaType, PVA_FF_MP4_CODEC_TYPE codecType,
-        uint32 protocol, uint8 profile,
+        bool isprotected, uint32 protocol, uint8 profile,
         uint8 profileComp, uint8 level)
         : PVA_FF_FullAtom(SAMPLE_DESCRIPTION_ATOM, (uint8)0, (uint32)0),
-        _mediaType(mediaType)
+        _mediaType(mediaType), _isprotected(isprotected)
 {
     _codecType = codecType;
+    _schemeInfoAtom = NULL;
     init(mediaType, protocol, profile, profileComp, level);
     recomputeSize();
 }
@@ -152,6 +155,14 @@ PVA_FF_SampleDescriptionAtom::init(int32 mediaType, uint32 protocol, uint8 profi
         }
         break;
     }
+
+    if ((_isprotected) && (entry != NULL))
+    {
+        entry->setProtected();
+        PV_MP4_FF_NEW(fp->auditCB, PVA_FF_ProtectionSchemeInfoAtom, (entry->getOriginalFormat()), _schemeInfoAtom);
+    }
+
+
     OSCL_UNUSED_ARG(protocol);
 }
 
@@ -221,6 +232,11 @@ PVA_FF_SampleDescriptionAtom::~PVA_FF_SampleDescriptionAtom()
     if (_psampleEntryTypeVec != NULL)
     {
         PV_MP4_FF_TEMPLATED_DELETE(NULL, PVA_FF_SampleEntryTypeVecType, Oscl_Vector, _psampleEntryTypeVec);
+    }
+
+    if (_isprotected)
+    {
+        PV_MP4_FF_DELETE(NULL, PVA_FF_ProtectionSchemeInfoAtom, _schemeInfoAtom);
     }
 
 }
@@ -744,6 +760,14 @@ PVA_FF_SampleDescriptionAtom::renderToFileStream(MP4_AUTHOR_FF_FILE_IO_WRAP *fp)
         rendered += (*_psampleEntryVec)[i]->getSize();
     }
 
+    if (_isprotected)
+    {
+        if (!_schemeInfoAtom->renderToFileStream(fp))
+            return false;
+
+        rendered += _schemeInfoAtom->getSize();
+    }
+
     return true;
 }
 
@@ -760,6 +784,9 @@ PVA_FF_SampleDescriptionAtom::recomputeSize()
             size += (*_psampleEntryVec)[i]->getSize();
         }
     }
+
+    if ((_isprotected) && (_schemeInfoAtom != NULL))
+        size += _schemeInfoAtom->getSize();
 
     _size = size;
 
