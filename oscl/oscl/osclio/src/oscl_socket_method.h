@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -186,12 +186,14 @@ inline void OsclSocketMethod::CancelMethod()
     //cancel the timeout if any
     Abort();
     //cancel the request to the socket server.
-    iSocketRequestAO->DoCancel();
+    if (iSocketRequestAO)
+        iSocketRequestAO->DoCancel();
 }
 
 inline void OsclSocketMethod::MethodDone()
 {
-    iSocketRequestAO->Abort();
+    if (iSocketRequestAO)
+        iSocketRequestAO->Abort();
 }
 
 #endif
