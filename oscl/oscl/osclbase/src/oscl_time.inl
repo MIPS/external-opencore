@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -458,6 +458,8 @@ OSCL_COND_EXPORT_REF OSCL_INLINE TimeValue::TimeValue(const ISO8601timeStrBuf ti
         ts.tv_sec += timeStruct.tm_gmtoff;
     }
 }
+
+
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 OSCL_COND_EXPORT_REF OSCL_INLINE TimeValue::TimeValue(OsclBasicDateTimeStruct ints)
