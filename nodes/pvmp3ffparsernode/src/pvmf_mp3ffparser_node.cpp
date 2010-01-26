@@ -105,7 +105,7 @@ void PVMFMP3FFParserNode::Construct()
     //Max depth is the max number of sub-node commands for any one node command.
     //Init command may take up to 9
     iSubNodeCmdVec.reserve(9);
-    iLogger = PVLogger::GetLoggerObject("PVFMP3FFParserNode");
+    iLogger = PVLogger::GetLoggerObject("PVMFMP3FFParserNode");
 }
 
 // Destructor
@@ -1131,6 +1131,7 @@ bool PVMFMP3FFParserNode::HandleTrackState()
                 {
                     return true;
                 }
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_NOTICE, (0, "PVMFMP3FFParserNode::HandleTrackState() BOS sent TS %d StreamID %d", timestamp, iStreamID));
                 iTrack.iSendBOS = false;
             }
             // First, grab some data from the core mp3 ff parser library
@@ -1165,14 +1166,14 @@ bool PVMFMP3FFParserNode::HandleTrackState()
                 {
                     return true;
                 }
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_NOTICE, (0, "PVMFMP3FFParserNode::HandleTrackState() BOS sent TS %d StreamID %d", timestamp, iStreamID));
                 iTrack.iSendBOS = false;
             }
 
-            timestamp += iTrack.timestamp_offset;
             if (SendEndOfTrackCommand(iTrack.iPort, iStreamID, timestamp, iTrack.iSeqNum++))
             {
                 // EOS command sent successfully
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_NOTICE, (0, "PVMFMP3FFParserNode::HandleTrackState() EOS media command sent successfully"));
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_NOTICE, (0, "PVMFMP3FFParserNode::HandleTrackState() EOS sent TS %d StreamID %d", timestamp, iStreamID));
                 iTrack.iState = PVMP3FFNodeTrackPortInfo::TRACKSTATE_ENDOFTRACK;
                 ReportInfoEvent(PVMFInfoEndOfData);
             }
@@ -2288,7 +2289,7 @@ PVMFStatus PVMFMP3FFParserNode::DoSetDataSourcePosition()
     }
     // get the clock offset
     iTrack.iClockConverter->update_clock(iMP3File->GetTimestampForCurrentSample());
-    iTrack.timestamp_offset += iTrack.iClockConverter->get_converted_ts(COMMON_PLAYBACK_CLOCK_TIMESCALE);
+    iTrack.timestamp_offset = iTrack.iClockConverter->get_converted_ts(COMMON_PLAYBACK_CLOCK_TIMESCALE);
     // Set the timestamp
     *actualMediaDataTS = iTrack.timestamp_offset;
     // See if targetNPT is greater or equal to clip duration
@@ -2299,8 +2300,6 @@ PVMFStatus PVMFMP3FFParserNode::DoSetDataSourcePosition()
         iTrack.iState = PVMP3FFNodeTrackPortInfo::TRACKSTATE_SEND_ENDOFTRACK;
         iMP3File->SeekToTimestamp(0);
         *actualNPT = duration;
-        iTrack.iClockConverter->set_clock_other_timescale(*actualNPT, COMMON_PLAYBACK_CLOCK_TIMESCALE);
-        iTrack.timestamp_offset -= *actualNPT;
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
                         (0, "PVMFMP3FFParserNode::DoSetDataSourcePosition: targetNPT=%d, actualNPT=%d, actualMediaTS=%d",
                          targetNPT, *actualNPT, *actualMediaDataTS));
@@ -2322,8 +2321,6 @@ PVMFStatus PVMFMP3FFParserNode::DoSetDataSourcePosition()
     if (duration > 0 && *actualNPT == duration)
     {
         // this means there was no data to render after the seek so just send End of Track
-        iTrack.iClockConverter->set_clock_other_timescale(*actualNPT, COMMON_PLAYBACK_CLOCK_TIMESCALE);
-        iTrack.timestamp_offset -= *actualNPT;
         iTrack.iState = PVMP3FFNodeTrackPortInfo::TRACKSTATE_SEND_ENDOFTRACK;
         return PVMFSuccess;
     }
