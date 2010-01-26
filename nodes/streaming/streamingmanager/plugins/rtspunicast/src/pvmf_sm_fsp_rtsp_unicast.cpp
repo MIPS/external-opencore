@@ -4302,7 +4302,7 @@ void PVMFSMRTSPUnicastNode::HandleRTSPSessionControllerCommandCompleted(const PV
             // In case of 3GPP FCS with switch SDP available or in case of 202 response processing, all the information
             // needed to transition to the next clip is available in the FCS response.
             // There is no need to wait for an entity body (and thus the event PVMFInfoPlayListClipTransition).
-            if (iPVMFDataSourcePositionParamsPtr->iMode == 3)
+            if (iPVMFDataSourcePositionParamsPtr->iMode == PVMF_SET_DATA_SOURCE_POSITION_MODE_3GPP_FCS)
             {
                 // If switch SDP is not available locally and not processing 202 response,
                 // wait for entity body processing.
@@ -6319,7 +6319,7 @@ void PVMFSMRTSPUnicastNode::DoSetDataSourcePositionPlayList(PVMFSMFSPBaseNodeCom
     iPlaylistSwitchMode = iPVMFDataSourcePositionParamsPtr->iMode;
 
     iStreamID = iPVMFDataSourcePositionParamsPtr->iStreamID;
-    if (iPVMFDataSourcePositionParamsPtr->iMode == 3)
+    if (iPVMFDataSourcePositionParamsPtr->iMode == PVMF_SET_DATA_SOURCE_POSITION_MODE_3GPP_FCS)
     {
         jbExtIntf->SendBOSMessage(iStreamID);
     }
@@ -6374,9 +6374,9 @@ void PVMFSMRTSPUnicastNode::DoSetDataSourcePositionPlayList(PVMFSMFSPBaseNodeCom
         iRepositioning = true;
 
         /* Put the jitter buffer into a state of transition - only if the playlist switch mode is 0*/
-        if ((iPVMFDataSourcePositionParamsPtr->iMode == 3) ||
-                (iPVMFDataSourcePositionParamsPtr->iMode == 0) ||
-                (iPVMFDataSourcePositionParamsPtr->iMode == -1))
+        if ((iPVMFDataSourcePositionParamsPtr->iMode == PVMF_SET_DATA_SOURCE_POSITION_MODE_3GPP_FCS) ||
+                (iPVMFDataSourcePositionParamsPtr->iMode == PVMF_SET_DATA_SOURCE_POSITION_MODE_NOW) ||
+                (iPVMFDataSourcePositionParamsPtr->iMode == PVMF_SET_DATA_SOURCE_POSITION_MODE_UNKNOWN))
         {
             PVMFSMFSPChildNodeContainer* iJitterBufferNodeContainer =
                 getChildNodeContainer(PVMF_SM_FSP_JITTER_BUFFER_NODE);
