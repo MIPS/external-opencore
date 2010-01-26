@@ -517,7 +517,7 @@ class INetURI
         }
 
         // constructor
-        INetURI() : iHostPort(DEFAULT_HTTP_PORT_NUMBER), iUseRelativeURI(false), iRedirectURI(false)
+        INetURI() : iHostPort(DEFAULT_HTTP_PORT_NUMBER), iUseRelativeURI(true), iRedirectURI(false)
         {
             ;
         }
