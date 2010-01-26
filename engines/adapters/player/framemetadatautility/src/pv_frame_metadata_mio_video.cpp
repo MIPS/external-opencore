@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -710,6 +710,28 @@ void PVFMVideoMIO::setParametersSync(PvmiMIOSession aSession, PvmiKvp* aParamete
     }
 }
 
+PVMFCommandId PVFMVideoMIO::QueryInterface(const PVUuid& aUuid, PVInterface*& aInterfacePtr, const OsclAny* aContext)
+{
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFMVideoMIO::QueryInterface() called"));
+
+    PVMFCommandId cmdid = iCommandCounter++;
+
+    PVMFStatus status = PVMFFailure;
+    if (aUuid == PVMI_CAPABILITY_AND_CONFIG_PVUUID)
+    {
+        PvmiCapabilityAndConfig* myInterface = OSCL_STATIC_CAST(PvmiCapabilityAndConfig*, this);
+        aInterfacePtr = OSCL_STATIC_CAST(PVInterface*, myInterface);
+        status = PVMFSuccess;
+    }
+    else
+    {
+        status = PVMFFailure;
+    }
+
+    CommandResponse resp(status, cmdid, aContext);
+    QueueCommandResponse(resp);
+    return cmdid;
+}
 
 //
 // Private section
