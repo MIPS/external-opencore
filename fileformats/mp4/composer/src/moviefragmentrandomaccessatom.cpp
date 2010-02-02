@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -104,6 +104,17 @@ PVA_FF_MovieFragmentRandomAccessAtom::addSampleEntry(uint32 trackId, uint64 time
 
 }
 
+bool
+PVA_FF_MovieFragmentRandomAccessAtom::hasSampleEntries()
+{
+    for (uint32 ii = 0; ii < _pTfraList->size(); ii++)
+    {
+        if (((*_pTfraList)[ii])->getEntryCount() > 0)
+            return true;
+    }
+
+    return false;
+}
 
 // update moof offset of current moof atom by the given offset for all TFRA atoms
 void

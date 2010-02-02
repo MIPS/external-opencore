@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,6 +37,8 @@ class PVA_FF_MovieFragmentRandomAccessAtom : public PVA_FF_Atom
         void    addTrackFragmentRandomAccessAtom(uint32 trackId);
 
         PVA_FF_TfraAtom*    getTfraAtom(uint32 trackId);
+
+        bool    hasSampleEntries();
 
         void    addSampleEntry(uint32 trackId, uint64 time, uint64 moofOffset,
                                uint32 trafNumber, uint32 trunNumber,
