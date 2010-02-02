@@ -205,6 +205,16 @@ OSCL_EXPORT_REF int16 ParseM4VFSI(uint8* buffer, uint32 length,  M4VConfigInfo* 
                 iM4VConfigInfo->iProfileLevel =  SIMPLE_LEVEL3;
                 break;
             }
+            case 0x04: /* SP_LVL4A */
+            {
+                iM4VConfigInfo->iProfileLevel =  SIMPLE_LEVEL4A;
+                break;
+            }
+            case 0x05: /* SP_LVL5 */
+            {
+                iM4VConfigInfo->iProfileLevel =  SIMPLE_LEVEL5;
+                break;
+            }
             case 0x10: /* SIMPLE_SCALABLE_LEVEL0 */
             {
                 iM4VConfigInfo->iProfileLevel =  SIMPLE_SCALABLE_LEVEL0;
@@ -275,9 +285,10 @@ OSCL_EXPORT_REF int16 ParseM4VFSI(uint8* buffer, uint32 length,  M4VConfigInfo* 
                 iM4VConfigInfo->iProfileLevel =  ADV_SIMPLE_LEVEL5;
                 break;
             }
-            default:
+            default: // tolerate bad VOL, just set it to max one encode can encode.
             {
-                return MP4_INVALID_VOL_PARAM;
+                iM4VConfigInfo->iProfileLevel = SIMPLE_LEVEL5;
+                break;
             }
         }
 
@@ -1109,6 +1120,7 @@ int16 ByteAlign(
         bitPos += leftBits;
     }
 
+
     if (bitPos > 32)
     {
         dataBytePos = dataBitPos >> 3;    /* Byte Aligned Position */
@@ -1806,6 +1818,5 @@ void Parser_EBSPtoRBSP(uint8 *nal_unit, int32 *size)
 
     *size = j;
 }
-
 
 

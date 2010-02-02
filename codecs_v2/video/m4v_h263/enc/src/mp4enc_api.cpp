@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,60 +61,61 @@ const static Int mpeg_nqmat_def[64]  =
 
 /* Profiles and levels */
 /* Simple profile(level 0-3) and Core profile (level 1-2) */
-/* {SPL0, SPL1, SPL2, SPL3, CPL1, CPL2, CPL2, CPL2} , SPL0: Simple Profile@Level0, CPL1: Core Profile@Level1, the last two are redundant for easy table manipulation */
-const static Int profile_level_code[8] =
+/* {SPL0, SPL1, SPL2, SPL3, SPL4a, SPL5, CPL1, CPL2} , SPL0: Simple Profile@Level0, CPL1: Core Profile@Level1 */
+const static Int profile_level_code[MAX_BASE_PROFILE+1] =
 {
-    0x08, 0x01, 0x02, 0x03, 0x21, 0x22, 0x22, 0x22
+    0x08, 0x01, 0x02, 0x03, 0x04, 0x05, 0x21, 0x22
 };
 
-const static Int profile_level_max_bitrate[8] =
+const static Int profile_level_max_bitrate[MAX_BASE_PROFILE+1] =
 {
-    64000, 64000, 128000, 384000, 384000, 2000000, 2000000, 2000000
+    64000, 64000, 128000, 384000, 4000000, 8000000, 384000, 2000000
 };
 
-const static Int profile_level_max_packet_size[8] =
+const static Int profile_level_max_packet_size[MAX_BASE_PROFILE+1] =
 {
-    2048, 2048, 4096, 8192, 4096, 8192, 8192, 8192
+    2048, 2048, 4096, 8192, 16384, 16384, 4096, 8192
 };
 
-const static Int profile_level_max_mbsPerSec[8] =
+const static Int profile_level_max_mbsPerSec[MAX_BASE_PROFILE+1] =
 {
-    1485, 1485, 5940, 11880, 5940, 23760, 23760, 23760
+    1485, 1485, 5940, 11880, 36000, 40500, 5940, 23760
 };
 
-const static Int profile_level_max_VBV_size[8] =
+const static Int profile_level_max_VBV_size[MAX_BASE_PROFILE+1] =
 {
-    163840, 163840, 655360, 655360, 262144, 1310720, 1310720, 1310720
+    163840, 163840, 655360, 655360, 1310720, 1835008, 262144, 1310720
 };
 
 
+/* Scalable profiles for nLayers = 2 */
 /* Simple scalable profile (level 0-2) and Core scalable profile (level 1-3) */
-/* {SSPL0, SSPL1, SSPL2, SSPL2, CSPL1, CSPL2, CSPL3, CSPL3} , SSPL0: Simple Scalable Profile@Level0, CSPL1: Core Scalable Profile@Level1, the fourth is redundant for easy table manipulation */
+/* {SSPL0, SSPL1, SSPL2, CSPL1, CSPL2, CSPL3} , SSPL0: Simple Scalable Profile@Level0, CSPL1: Core Scalable Profile@Level1, the fourth is redundant for easy table manipulation */
 
-const static Int scalable_profile_level_code[8] =
+const static Int scalable_profile_level_code[MAX_SCALABLE_PROFILE - MAX_BASE_PROFILE] =
 {
-    0x10, 0x11, 0x12, 0x12, 0xA1, 0xA2, 0xA3, 0xA3
+    0x10, 0x11, 0x12, 0xA1, 0xA2, 0xA3
 };
 
-const static Int scalable_profile_level_max_bitrate[8] =
+const static Int scalable_profile_level_max_bitrate[MAX_SCALABLE_PROFILE - MAX_BASE_PROFILE] =
 {
-    128000, 128000, 256000, 256000, 768000, 1500000, 4000000, 4000000
+    128000, 128000, 256000, 768000, 1500000, 4000000
 };
 
 /* in bits */
-const static Int scalable_profile_level_max_packet_size[8] =
+const static Int scalable_profile_level_max_packet_size[MAX_SCALABLE_PROFILE - MAX_BASE_PROFILE] =
 {
-    2048, 2048, 4096, 4096, 4096, 4096, 16384, 16384
+    2048, 2048, 4096, 4096, 4096, 16384
 };
 
-const static Int scalable_profile_level_max_mbsPerSec[8] =
+const static Int scalable_profile_level_max_mbsPerSec[MAX_SCALABLE_PROFILE - MAX_BASE_PROFILE] =
 {
-    1485, 7425, 23760, 23760, 14850, 29700, 120960, 120960
+    1485, 7425, 23760, 14850, 29700, 120960
 };
 
-const static Int scalable_profile_level_max_VBV_size[8] =
+const static Int scalable_profile_level_max_VBV_size[MAX_SCALABLE_PROFILE - MAX_BASE_PROFILE] =
 {
-    163840, 655360, 655360, 655360, 1048576, 1310720, 1310720, 1310720
+    163840, 655360, 655360, 1048576, 1310720, 1310720
 };
 
 
@@ -236,7 +237,7 @@ OSCL_EXPORT_REF Bool    PVInitVideoEncoder(VideoEncControls *encoderControl, Vid
     encParams->nLayers = encOption->numLayers;
 
     /* Check whether the input packetsize is valid (Note: put code here (before any memory allocation) in order to avoid memory leak */
-    if ((Int)profile_level < (Int)(SIMPLE_SCALABLE_PROFILE_LEVEL0))  /* non-scalable profile */
+    if ((Int)profile_level <= (Int)(MAX_BASE_PROFILE))  /* non-scalable profile */
     {
         profile_level_table = (Int *)profile_level_max_packet_size;
         profile_table_index = (Int)profile_level;
@@ -251,7 +252,7 @@ OSCL_EXPORT_REF Bool    PVInitVideoEncoder(VideoEncControls *encoderControl, Vid
     else   /* scalable profile */
     {
         profile_level_table = (Int *)scalable_profile_level_max_packet_size;
-        profile_table_index = (Int)profile_level - (Int)(SIMPLE_SCALABLE_PROFILE_LEVEL0);
+        profile_table_index = (Int)profile_level - (Int)(MAX_BASE_PROFILE) - 1;
         if (encParams->nLayers < 2)
         {
             goto CLEAN_UP;
@@ -2052,7 +2053,7 @@ OSCL_EXPORT_REF Bool PVGetMPEG4ProfileLevelID(VideoEncControls *encCtrl, Int *pr
 
     if (nLayer == 0)
     {
-        for (i = 0; i < 8; i++)
+        for (i = 0; i < MAX_BASE_PROFILE + 1; i++)
         {
             if (video->encParams->ProfileLevel[0] == profile_level_code[i])
             {
@@ -2063,14 +2064,14 @@ OSCL_EXPORT_REF Bool PVGetMPEG4ProfileLevelID(VideoEncControls *encCtrl, Int *pr
     }
     else
     {
-        for (i = 0; i < 8; i++)
+        for (i = 0; i < MAX_SCALABLE_PROFILE - MAX_BASE_PROFILE; i++)
         {
-            if (video->encParams->ProfileLevel[0] == scalable_profile_level_code[i])
+            if (video->encParams->ProfileLevel[1] == scalable_profile_level_code[i])
             {
                 break;
             }
         }
-        *profile_level = i + SIMPLE_SCALABLE_PROFILE_LEVEL0;
+        *profile_level = i + MAX_BASE_PROFILE + 1;
     }
 
     return true;
@@ -3031,17 +3032,17 @@ Bool SetProfile_BufferSize(VideoEncData *video, float delay, Int bInitialized)
     base_VBV_size       = PV_MAX(base_VBV_size, MIN_BUFF);
 
     /* if the buffer is larger than maximum buffer size, we'll clip it */
-    if (base_VBV_size > profile_level_max_VBV_size[5])
-        base_VBV_size = profile_level_max_VBV_size[5];
-
+    if (base_VBV_size > profile_level_max_VBV_size[SIMPLE_PROFILE_LEVEL5])
+        base_VBV_size = profile_level_max_VBV_size[SIMPLE_PROFILE_LEVEL5];
 
     /* Check if the buffer exceeds the maximum buffer size given the maximum profile and level */
     if (nLayers == 1 && base_VBV_size > profile_level_max_VBV_size[index])
         return FALSE;
 
 
-    if (nLayers == 2)
+    if (nLayers == 2) /* check both enhanced and base layer */
     {
+
         total_bitrate       = video->encParams->LayerBitRate[1];
         if (video->encParams->LayerMaxBitRate[1] != 0)
         {
@@ -3072,9 +3073,9 @@ Bool SetProfile_BufferSize(VideoEncData *video, float delay, Int bInitialized)
         total_VBV_size      = base_VBV_size + enhance_VBV_size;
 
         /* if the buffer is larger than maximum buffer size, we'll clip it */
-        if (total_VBV_size > scalable_profile_level_max_VBV_size[6])
+        if (total_VBV_size > scalable_profile_level_max_VBV_size[CORE_SCALABLE_PROFILE_LEVEL3 - MAX_BASE_PROFILE - 1])
         {
-            total_VBV_size = scalable_profile_level_max_VBV_size[6];
+            total_VBV_size = scalable_profile_level_max_VBV_size[CORE_SCALABLE_PROFILE_LEVEL3 - MAX_BASE_PROFILE - 1];
             enhance_VBV_size = total_VBV_size - base_VBV_size;
         }
 
@@ -3097,6 +3098,7 @@ Bool SetProfile_BufferSize(VideoEncData *video, float delay, Int bInitialized)
     /* Profile @ level determination */
     if (nLayers == 1)
     {
+        /* check other parameters */
         /* BASE ONLY : Simple Profile(SP) Or Core Profile(CP) */
         if (base_bitrate     > profile_level_max_bitrate[index]     ||
                 base_packet_size > profile_level_max_packet_size[index] ||
@@ -3106,6 +3108,7 @@ Bool SetProfile_BufferSize(VideoEncData *video, float delay, Int bInitialized)
             return PV_FALSE; /* Beyond the bound of Core Profile @ Level2 */
 
         /* For H263/Short header, determine k*16384 */
+        /* This part only applies to Short header mode, but not H.263 */
         width16  = ((video->encParams->LayerWidth[0] + 15) >> 4) << 4;
         height16 = ((video->encParams->LayerHeight[0] + 15) >> 4) << 4;
         if (video->encParams->H263_Enabled)
@@ -3122,9 +3125,9 @@ Bool SetProfile_BufferSize(VideoEncData *video, float delay, Int bInitialized)
 
             video->encParams->maxFrameSize  = k * 16384;
 
-            /* Make sure the buffer size is limited to the top profile and level: the Core profile and level 2 */
-            if (base_VBV_size > (Int)(k*16384 + 4*(float)profile_level_max_bitrate[5]*1001.0 / 30000.0))
-                base_VBV_size = (Int)(k * 16384 + 4 * (float)profile_level_max_bitrate[5] * 1001.0 / 30000.0);
+            /* Make sure the buffer size is limited to the top profile and level: the SPL5 */
+            if (base_VBV_size > (Int)(k*16384 + 4*(float)profile_level_max_bitrate[SIMPLE_PROFILE_LEVEL5]*1001.0 / 30000.0))
+                base_VBV_size = (Int)(k * 16384 + 4 * (float)profile_level_max_bitrate[SIMPLE_PROFILE_LEVEL5] * 1001.0 / 30000.0);
 
             if (base_VBV_size > (Int)(k*16384 + 4*(float)profile_level_max_bitrate[index]*1001.0 / 30000.0))
                 return PV_FALSE;
@@ -3134,17 +3137,18 @@ Bool SetProfile_BufferSize(VideoEncData *video, float delay, Int bInitialized)
         if (!video->encParams->H263_Enabled &&
                 (video->encParams->IntraDCVlcThr != 0 || video->encParams->SearchRange > 16))
         {
-            lowest_level = 1; /* cannot allow SPL0 */
+            lowest_level = SIMPLE_PROFILE_LEVEL1; /* cannot allow SPL0 */
         }
         else
         {
-            lowest_level = 0; /* SPL0 */
+            lowest_level = SIMPLE_PROFILE_LEVEL0; /* SPL0 */
         }
 
         for (i = lowest_level; i <= index; i++)
         {
-            if (i != 4 && /* skip Core Profile@Level1 because the parameters in it are smaller than those in Simple Profile@Level3 */
-                    base_bitrate     <= profile_level_max_bitrate[i]     &&
+            /* Since CPL1 is smaller than SPL4A, SPL5, this search favors Simple Profile.  */
+
+            if (base_bitrate     <= profile_level_max_bitrate[i]     &&
                     base_packet_size <= profile_level_max_packet_size[i] &&
                     base_MBsPerSec   <= profile_level_max_mbsPerSec[i]   &&
                     base_VBV_size    <= (video->encParams->H263_Enabled ? (Int)(k*16384 + 4*(float)profile_level_max_bitrate[i]*1001.0 / 30000.0) :
@@ -3187,10 +3191,10 @@ Bool SetProfile_BufferSize(VideoEncData *video, float delay, Int bInitialized)
             return PV_FALSE; /* Beyond given profile and level */
 
         /* One-time check: Simple Scalable Profile or Core Scalable Profile */
-        if (total_bitrate       <= scalable_profile_level_max_bitrate[2]        &&
-                total_packet_size   <= scalable_profile_level_max_packet_size[2]    &&
-                total_MBsPerSec     <= scalable_profile_level_max_mbsPerSec[2]      &&
-                total_VBV_size      <= scalable_profile_level_max_VBV_size[2])
+        if (total_bitrate       <= scalable_profile_level_max_bitrate[CORE_SCALABLE_PROFILE_LEVEL1 - MAX_BASE_PROFILE - 1]        &&
+                total_packet_size   <= scalable_profile_level_max_packet_size[CORE_SCALABLE_PROFILE_LEVEL1 - MAX_BASE_PROFILE - 1]    &&
+                total_MBsPerSec     <= scalable_profile_level_max_mbsPerSec[CORE_SCALABLE_PROFILE_LEVEL1 - MAX_BASE_PROFILE - 1]      &&
+                total_VBV_size      <= scalable_profile_level_max_VBV_size[CORE_SCALABLE_PROFILE_LEVEL1 - MAX_BASE_PROFILE - 1])
 
         {
             start = 0;
@@ -3199,7 +3203,7 @@ Bool SetProfile_BufferSize(VideoEncData *video, float delay, Int bInitialized)
 
         else
         {
-            start = 4;
+            start = CORE_SCALABLE_PROFILE_LEVEL1 - MAX_BASE_PROFILE - 1;
             end = index;
         }
 
@@ -3216,7 +3220,7 @@ Bool SetProfile_BufferSize(VideoEncData *video, float delay, Int bInitialized)
         }
         if (i > end) return PV_FALSE;
 
-        /* Search the base profile */
+        /* Search for matching base profile */
         if (i == 0)
         {
             j = 0;
@@ -3224,7 +3228,18 @@ Bool SetProfile_BufferSize(VideoEncData *video, float delay, Int bInitialized)
         }
         else        bFound = 0;
 
-        for (j = start; !bFound && j <= i; j++)
+        if (i >= CORE_SCALABLE_PROFILE_LEVEL1 - MAX_BASE_PROFILE - 1)
+        {
+            start = CORE_PROFILE_LEVEL1;  /* range for CORE PROFILE  */
+            end = CORE_PROFILE_LEVEL2;
+        }
+        else
+        {
+            start = SIMPLE_PROFILE_LEVEL0;  /* range for SIMPLE PROFILE */
+            end = SIMPLE_PROFILE_LEVEL5;
+        }
+
+        for (j = start; !bFound && j <= end; j++)
         {
             if (base_bitrate        <= profile_level_max_bitrate[j]      &&
                     base_packet_size    <= profile_level_max_packet_size[j]  &&

@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -119,15 +119,16 @@ enum TPVM4VProfileLevel
     ECVEI_SIMPLE_LEVEL1,
     ECVEI_SIMPLE_LEVEL2,
     ECVEI_SIMPLE_LEVEL3,
+    ECVEI_SIMPLE_LEVEL4A,
+    ECVEI_SIMPLE_LEVEL5,
     ECVEI_CORE_LEVEL1,
     ECVEI_CORE_LEVEL2,
 
     /* Scalable profile */
-    ECVEI_SIMPLE_SCALABLE_LEVEL0 = 6,
+    ECVEI_SIMPLE_SCALABLE_LEVEL0,
     ECVEI_SIMPLE_SCALABLE_LEVEL1,
     ECVEI_SIMPLE_SCALABLE_LEVEL2,
-
-    ECVEI_CORE_SCALABLE_LEVEL1 = 10,
+    ECVEI_CORE_SCALABLE_LEVEL1,
     ECVEI_CORE_SCALABLE_LEVEL2,
     ECVEI_CORE_SCALABLE_LEVEL3
 };

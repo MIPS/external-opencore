@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -2637,6 +2637,16 @@ bool PVMFOMXEncNode::SetMP4EncoderParameters()
                     Mpeg4Type.eLevel = OMX_VIDEO_MPEG4Level3;
                     break;
 
+                case SIMPLE_LEVEL4A:
+                    Mpeg4Type.eProfile = OMX_VIDEO_MPEG4ProfileSimple;
+                    Mpeg4Type.eLevel = OMX_VIDEO_MPEG4Level4a;
+                    break;
+
+                case SIMPLE_LEVEL5:
+                    Mpeg4Type.eProfile = OMX_VIDEO_MPEG4ProfileSimple;
+                    Mpeg4Type.eLevel = OMX_VIDEO_MPEG4Level5;
+                    break;
+
                 case CORE_LEVEL1:
                     Mpeg4Type.eProfile = OMX_VIDEO_MPEG4ProfileCore;
                     Mpeg4Type.eLevel = OMX_VIDEO_MPEG4Level1;
@@ -2746,6 +2756,16 @@ bool PVMFOMXEncNode::SetMP4EncoderParameters()
                 Mpeg4Type.eLevel = OMX_VIDEO_MPEG4Level3;
                 break;
 
+            case EI_SIMPLE_LEVEL4A:
+                Mpeg4Type.eProfile = OMX_VIDEO_MPEG4ProfileSimple;
+                Mpeg4Type.eLevel = OMX_VIDEO_MPEG4Level4a;
+                break;
+
+            case EI_SIMPLE_LEVEL5:
+                Mpeg4Type.eProfile = OMX_VIDEO_MPEG4ProfileSimple;
+                Mpeg4Type.eLevel = OMX_VIDEO_MPEG4Level5;
+                break;
+
             case EI_CORE_LEVEL1:
                 Mpeg4Type.eProfile = OMX_VIDEO_MPEG4ProfileCore;
                 Mpeg4Type.eLevel = OMX_VIDEO_MPEG4Level1;
@@ -2820,71 +2840,6 @@ bool PVMFOMXEncNode::SetMP4EncoderParameters()
     Mpeg4Type.nMaxPacketSize = iVideoEncodeParam.iPacketSize;
     Mpeg4Type.nHeaderExtension = 0;
     Mpeg4Type.bReversibleVLC = ((iVideoEncodeParam.iRVLCEnable == true) ? OMX_TRUE : OMX_FALSE);
-
-    switch (iVideoEncodeParam.iProfileLevel)
-    {
-
-        case EI_SIMPLE_LEVEL0:
-            Mpeg4Type.eProfile = OMX_VIDEO_MPEG4ProfileSimple;
-            Mpeg4Type.eLevel = OMX_VIDEO_MPEG4Level0;
-            break;
-
-        case EI_SIMPLE_LEVEL1:
-            Mpeg4Type.eProfile = OMX_VIDEO_MPEG4ProfileSimple;
-            Mpeg4Type.eLevel = OMX_VIDEO_MPEG4Level1;
-            break;
-
-        case EI_SIMPLE_LEVEL2:
-            Mpeg4Type.eProfile = OMX_VIDEO_MPEG4ProfileSimple;
-            Mpeg4Type.eLevel = OMX_VIDEO_MPEG4Level2;
-            break;
-
-        case EI_SIMPLE_LEVEL3:
-            Mpeg4Type.eProfile = OMX_VIDEO_MPEG4ProfileSimple;
-            Mpeg4Type.eLevel = OMX_VIDEO_MPEG4Level3;
-            break;
-
-        case EI_CORE_LEVEL1:
-            Mpeg4Type.eProfile = OMX_VIDEO_MPEG4ProfileCore;
-            Mpeg4Type.eLevel = OMX_VIDEO_MPEG4Level1;
-            break;
-
-        case EI_CORE_LEVEL2:
-            Mpeg4Type.eProfile = OMX_VIDEO_MPEG4ProfileCore;
-            Mpeg4Type.eLevel = OMX_VIDEO_MPEG4Level2;
-            break;
-
-        case EI_SIMPLE_SCALABLE_LEVEL0:
-            Mpeg4Type.eProfile = OMX_VIDEO_MPEG4ProfileSimpleScalable;
-            Mpeg4Type.eLevel = OMX_VIDEO_MPEG4Level0;
-            break;
-
-        case EI_SIMPLE_SCALABLE_LEVEL1:
-            Mpeg4Type.eProfile = OMX_VIDEO_MPEG4ProfileSimpleScalable;
-            Mpeg4Type.eLevel = OMX_VIDEO_MPEG4Level1;
-            break;
-
-        case EI_SIMPLE_SCALABLE_LEVEL2:
-            Mpeg4Type.eProfile = OMX_VIDEO_MPEG4ProfileSimpleScalable;
-            Mpeg4Type.eLevel = OMX_VIDEO_MPEG4Level2;
-            break;
-
-        case EI_CORE_SCALABLE_LEVEL1:
-            Mpeg4Type.eProfile = OMX_VIDEO_MPEG4ProfileCoreScalable;
-            Mpeg4Type.eLevel = OMX_VIDEO_MPEG4Level1;
-            break;
-
-        case EI_CORE_SCALABLE_LEVEL2:
-            Mpeg4Type.eProfile = OMX_VIDEO_MPEG4ProfileCoreScalable;
-            Mpeg4Type.eLevel = OMX_VIDEO_MPEG4Level2;
-            break;
-
-        case EI_CORE_SCALABLE_LEVEL3:
-            Mpeg4Type.eProfile = OMX_VIDEO_MPEG4ProfileCoreScalable;
-            Mpeg4Type.eLevel = OMX_VIDEO_MPEG4Level3;
-            break;
-
-    }
 
     Err = OMX_SetParameter(iOMXEncoder, OMX_IndexParamVideoMpeg4, &Mpeg4Type);
     if (OMX_ErrorNone != Err)

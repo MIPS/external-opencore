@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -386,15 +386,17 @@ enum EncM4VProfileLevel
     EI_SIMPLE_LEVEL1,
     EI_SIMPLE_LEVEL2,
     EI_SIMPLE_LEVEL3,
+    EI_SIMPLE_LEVEL4A,
+    EI_SIMPLE_LEVEL5,
     EI_CORE_LEVEL1,
     EI_CORE_LEVEL2,
 
     /* Scalable profile */
-    EI_SIMPLE_SCALABLE_LEVEL0 = 6,
+    EI_SIMPLE_SCALABLE_LEVEL0,
     EI_SIMPLE_SCALABLE_LEVEL1,
     EI_SIMPLE_SCALABLE_LEVEL2,
 
-    EI_CORE_SCALABLE_LEVEL1 = 10,
+    EI_CORE_SCALABLE_LEVEL1,
     EI_CORE_SCALABLE_LEVEL2,
     EI_CORE_SCALABLE_LEVEL3
 };

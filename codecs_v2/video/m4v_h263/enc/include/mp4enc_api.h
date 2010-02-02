@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -75,7 +75,7 @@ typedef enum
 } ParamEncMode;
 
 
-/* {SPL0, SPL1, SPL2, SPL3, CPL1, CPL2, CPL2, CPL2} , SPL0: Simple Profile@Level0 , CPL1: Core Profile@Level1 */
+/* {SPL0, SPL1, SPL2, SPL3, SPL4a, SPL5, CPL1, CPL2, CPL2, CPL2} , SPL0: Simple Profile@Level0 , CPL1: Core Profile@Level1 */
 /* {SSPL0, SSPL1, SSPL2, SSPL2, CSPL1, CSPL2, CSPL3, CSPL3} , SSPL0: Simple Scalable Profile@Level0, CPL1: Core Scalable Profile@Level1 */
 
 typedef enum
@@ -85,17 +85,20 @@ typedef enum
     SIMPLE_PROFILE_LEVEL1,
     SIMPLE_PROFILE_LEVEL2,
     SIMPLE_PROFILE_LEVEL3,
+    SIMPLE_PROFILE_LEVEL4A,
+    SIMPLE_PROFILE_LEVEL5,
     CORE_PROFILE_LEVEL1,
     CORE_PROFILE_LEVEL2,
+    MAX_BASE_PROFILE = CORE_PROFILE_LEVEL2,
 
     /* Scalable profile */
-    SIMPLE_SCALABLE_PROFILE_LEVEL0 = 6,
+    SIMPLE_SCALABLE_PROFILE_LEVEL0 = MAX_BASE_PROFILE + 1,
     SIMPLE_SCALABLE_PROFILE_LEVEL1,
     SIMPLE_SCALABLE_PROFILE_LEVEL2,
-
-    CORE_SCALABLE_PROFILE_LEVEL1 = 10,
+    CORE_SCALABLE_PROFILE_LEVEL1,
     CORE_SCALABLE_PROFILE_LEVEL2,
-    CORE_SCALABLE_PROFILE_LEVEL3
+    CORE_SCALABLE_PROFILE_LEVEL3,
+    MAX_SCALABLE_PROFILE = CORE_SCALABLE_PROFILE_LEVEL3
 
 } ProfileLevelType;
 

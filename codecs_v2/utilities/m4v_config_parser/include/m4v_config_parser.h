@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,19 +56,21 @@ enum M4VProfileLevel
     SIMPLE_LEVEL1,
     SIMPLE_LEVEL2,
     SIMPLE_LEVEL3,
+    SIMPLE_LEVEL4A,
+    SIMPLE_LEVEL5,
     CORE_LEVEL1,
     CORE_LEVEL2,
 
     /* Scalable profile */
-    SIMPLE_SCALABLE_LEVEL0 = 6,
+    SIMPLE_SCALABLE_LEVEL0,
     SIMPLE_SCALABLE_LEVEL1,
     SIMPLE_SCALABLE_LEVEL2,
 
-    CORE_SCALABLE_LEVEL1 = 10,
+    CORE_SCALABLE_LEVEL1,
     CORE_SCALABLE_LEVEL2,
     CORE_SCALABLE_LEVEL3,
 
-    ADV_SIMPLE_LEVEL0 = 20,
+    ADV_SIMPLE_LEVEL0,
     ADV_SIMPLE_LEVEL1,
     ADV_SIMPLE_LEVEL2,
     ADV_SIMPLE_LEVEL3,
