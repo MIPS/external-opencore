@@ -426,6 +426,25 @@ class H324MConfigInterface : public PVInterface
                 uint8 aTradeoff, OsclAny* aContextData = NULL) = 0;
 
         /**
+        * This API allows the user to send a logicalChannelActive indication to the peer.
+        * It is an indication to the peer that the channel that was paused and
+        * for which it received logicalChannelInactive indication is now ready to send data
+        * on the channel defined by Logical channel Id
+        *
+        **/
+        virtual PVMFCommandId SendLogicalChannelActiveIndication(TPVChannelId aLogicalChannel,
+                OsclAny* aContextData = NULL) = 0;
+
+        /**
+        * This API allows the user to send a logicalChannelInactive indication to the peer.
+        * It is an indication to the peer that the channel has been paused the channel and will
+        * not send any data on the channel defined by Logical channel Id
+        *
+        **/
+        virtual PVMFCommandId SendLogicalChannelInactiveIndication(TPVChannelId aLogicalChannel,
+                OsclAny* aContextData = NULL) = 0;
+
+        /**
         * This API allows the user to send a SkewIndication to the peer.
         * Skew is measured in milliseconds, and indicates the maximum number of milliseconds that the data on
         * logicalChannel2 is delayed from the data on logicalChannel1 as delivered to the network transport.
@@ -540,7 +559,20 @@ enum PVH324MIndicationType
     * All values are in network byte order.
     *
     **/
-    PV_INDICATION_SKEW
+    PV_INDICATION_SKEW,
+    /**
+    * Indicates a Active Logical Channel message from the remote terminal.  The first two bytes of the
+    * local buffer encode the logical channel number in network byte order.
+    *
+    **/
+    PV_INDICATION_LOGICAL_CHANNEL_ACTIVE,
+    /**
+    * Indicates a Inactive Logical Channel message from the remote terminal.  The first two bytes of the
+    * local buffer encode the logical channel number in network byte order.
+    *
+    **/
+    PV_INDICATION_LOGICAL_CHANNEL_INACTIVE
+
 };
 /**
 Extension interface to indicate reverse logical channel parameters to the user of the stack node

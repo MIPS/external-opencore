@@ -358,7 +358,8 @@ class TPV2WayCmdInfo : public TPV2WayNotificationInfo
                 status(PVMFSuccess),
                 responseData(NULL),
                 responseDataSize(0),
-                iPvtCmdData(0)
+                iPvtCmdData(0),
+                iPvtCmdDataExt(0)
         {};
 
         ~TPV2WayCmdInfo() {};
@@ -372,6 +373,7 @@ class TPV2WayCmdInfo : public TPV2WayNotificationInfo
             responseData = NULL;
             responseDataSize = 0;
             iPvtCmdData = 0;
+            iPvtCmdDataExt = 0;
         }
 
         TPV2WayCommandType type;
@@ -381,6 +383,7 @@ class TPV2WayCmdInfo : public TPV2WayNotificationInfo
         void* responseData;
         int32 responseDataSize;
         uint32 iPvtCmdData;
+        uint32 iPvtCmdDataExt;
 };
 
 class TPV2WayEventInfo : public TPV2WayNotificationInfo
@@ -830,6 +833,16 @@ class CPV324m2Way : OsclActiveObject,
         void GenerateIFrame(PVMFPortInterface *aPort);
         void RequestRemoteIFrame(PVMFPortInterface *aPort);
 
+        /**
+         * Allows setting pause/resume to logical channel.
+         *
+         * @param apPort Port that defines the logical channel
+         * @param aPause true channel is to be paused, false if resumed
+         *
+         * @return void
+         **/
+        void SetChannelPause(PVMFPortInterface *apPort, bool aPause);
+
         TPV2WayCmdInfo *GetCmdInfoL();
         void FreeCmdInfo(TPV2WayCmdInfo *info);
 
@@ -938,7 +951,7 @@ class CPV324m2Way : OsclActiveObject,
         void AddAudioDecoderNode();
 
         /**
-         * This funtion configures the video encoder node.
+         * This function configures the video encoder node.
          * Setting for the video encoder are fetched from the channel.
          *
          * @return PVMFStatus returns PVMFSuccess if succesful.
@@ -968,7 +981,6 @@ class CPV324m2Way : OsclActiveObject,
         int32 SkipMediaData(PvmfNodesSyncControlInterface& aNodeSyncCtrl,
                             TPV2WayNode* aNode,
                             TPV2WayNodeCmdInfo& aInfo);
-
 
 #ifdef PV_USE_DSP_AMR_CODECS
         void InitializeDsp();
@@ -1159,7 +1171,6 @@ class CPV324m2Way : OsclActiveObject,
         // interface for omx enc node capability and config
         PvmiCapabilityAndConfig* ipEncNodeCapabilityAndConfig;
         PVInterface* ipEncNodeCapConfigInterface;
-
 };
 
 #endif

@@ -91,6 +91,10 @@ class H324MConfig : public OsclActiveObject,
                 OsclAny* aContextData = NULL);
         PVMFCommandId SendVideoTemporalSpatialTradeoffIndication(TPVChannelId aLogicalChannel, uint8 aTradeoff,
                 OsclAny* aContextData = NULL);
+        PVMFCommandId SendLogicalChannelActiveIndication(TPVChannelId aLogicalChannel,
+                OsclAny* aContextData = NULL);
+        PVMFCommandId SendLogicalChannelInactiveIndication(TPVChannelId aLogicalChannel,
+                OsclAny* aContextData = NULL);
         PVMFCommandId SendSkewIndication(TPVChannelId aLogicalChannel1, TPVChannelId aLogicalChannel2, uint16 aSkew,
                                          OsclAny* aContextData = NULL);
         PVMFCommandId SetLogicalChannelBufferingMs(uint32 aInBufferingMs,
@@ -113,6 +117,8 @@ class H324MConfig : public OsclActiveObject,
         void UserInputCapability(int formats);
         void VideoSpatialTemporalTradeoffCommandReceived(TPVChannelId id, uint8 tradeoff);
         void VideoSpatialTemporalTradeoffIndicationReceived(TPVChannelId id, uint8 tradeoff);
+        void LogicalChannelActiveIndicationReceived(TPVChannelId id);
+        void LogicalChannelInactiveIndicationReceived(TPVChannelId id);
         void SkewIndicationReceived(TPVChannelId lcn1, TPVChannelId lcn2, uint16 skew);
     private:
         void Run();
@@ -186,6 +192,10 @@ class H324MConfigProxied :
         PVMFCommandId SendVideoTemporalSpatialTradeoffCommand(TPVChannelId aLogicalChannel, uint8 aTradeoff,
                 OsclAny* aContextData = NULL);
         PVMFCommandId SendVideoTemporalSpatialTradeoffIndication(TPVChannelId aLogicalChannel, uint8 aTradeoff,
+                OsclAny* aContextData = NULL);
+        PVMFCommandId SendLogicalChannelActiveIndication(TPVChannelId aLogicalChannel,
+                OsclAny* aContextData = NULL);
+        PVMFCommandId SendLogicalChannelInactiveIndication(TPVChannelId aLogicalChannel,
                 OsclAny* aContextData = NULL);
         PVMFCommandId SendSkewIndication(TPVChannelId aLogicalChannel1, TPVChannelId aLogicalChannel2, uint16 aSkew,
                                          OsclAny* aContextData = NULL);

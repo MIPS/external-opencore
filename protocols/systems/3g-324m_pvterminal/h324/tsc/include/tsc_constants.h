@@ -18,8 +18,6 @@
 #ifndef TSC_CONSTANTS_H_INCLUDED
 #define TSC_CONSTANTS_H_INCLUDED
 
-#define TSC_INCOMING_CHANNEL_MASK (1<<16)
-
 typedef enum _status
 {
     Phase0_Idle = 1 ,

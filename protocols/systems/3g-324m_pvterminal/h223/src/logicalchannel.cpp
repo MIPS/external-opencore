@@ -79,6 +79,11 @@ static const uint16 AMR_FRAME_SIZE_MS = 20; // amr frame size in milliseconds
 static const uint16 AMR_JITTER = 80; // maximum jitter allocated in timestamps
 static const uint16 AMR_QUEUE_SIZE = 5; // number of frames used to smoothen timestamps
 static const uint16 AMR_SID_SIZE = 6; // amr SID_UPDATE frame size in bytes
+static const uint16 AMR_SID_UPDATE = 8; // sid update should happen in every 8 frame (3GPP TS 26.093)
+static const uint16 AMR_NODATA_SIZE = 1; // amr SID_UPDATE frame size in bytes
+static const uint32 AMR_TIMER_FREQUENCY = AMR_FRAME_SIZE_MS * AMR_SID_UPDATE * 1000; // dtx timer frequency in microseconds
+static const int32 AMR_TIMER_ID = 0; // dtx timer id
+static const uint8 AMR_NO_DATA = 15; // NO_DATA frame type
 
 #ifdef LIP_SYNC_TESTING
 /***********************Outgoing side********************/
@@ -167,7 +172,7 @@ void H223LogicalChannel::Init()
 
 PVMFStatus H223LogicalChannel::SetFormatSpecificInfo(uint8* info, uint32 info_len)
 {
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223LogicalChannel::SetFormatSpecificInfo lcn=%d, info_len=%d, info=%x", lcn, info_len, info));
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223LogicalChannel(%d)::SetFormatSpecificInfo info_len=%d, info=%x", lcn, info_len, info));
     if (iFormatSpecificInfo)
     {
         oscl_free(iFormatSpecificInfo);
@@ -188,7 +193,7 @@ const uint8* H223LogicalChannel::GetFormatSpecificInfo(uint32* info_len)
 {
     if (info_len == NULL)
     {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223LogicalChannel::GetFormatSpecificInfo ERROR info_len==NULL"));
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223LogicalChannel(%d)::GetFormatSpecificInfo ERROR info_len==NULL", lcn));
         return NULL;
     }
     *info_len = iFormatSpecificInfoLen;
@@ -215,10 +220,17 @@ OSCL_EXPORT_REF void H223LogicalChannel::QueryInterface(const PVUuid& aUuid, Osc
 
 void H223LogicalChannel::Pause()
 {
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223OutgoingChannel::Pause lcn=%d", lcn));
+    if (iPaused)
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223LogicalChannel(d%)::Pause - Already paused", lcn));
+        return;
+    }
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223LogicalChannel(d%)::Pause", lcn));
+
     iPaused = true;
     // flush any pending media data
     Flush();
+
 }
 
 void H223LogicalChannel::Resume()
@@ -245,8 +257,8 @@ H223OutgoingChannel::H223OutgoingChannel(TPVChannelId num,
     iOutgoingVideoLogger = PVLogger::GetLoggerObject("datapath.outgoing.video.h223.lcn");
     iOutgoingAudioLogger = PVLogger::GetLoggerObject("datapath.outgoing.audio.h223.lcn");
 
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223OutgoingChannel::H223OutgoingChannel - num(%d),segmentable(%d)", num, segmentable));
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223OutgoingChannel::H223OutgoingChannel - AL SDU size(%d), hdr(%d), trlr(%d)", iAl->GetSduSize(), iAl->GetHdrSz(), iAl->GetTrlrSz()));
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223OutgoingChannel::H223OutgoingChannel(%d) - num(%d),segmentable(%d)", lcn , num, segmentable));
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223OutgoingChannel::H223OutgoingChannel(%d) - AL SDU size(%d), hdr(%d), trlr(%d)", lcn , iAl->GetSduSize(), iAl->GetHdrSz(), iAl->GetTrlrSz()));
     ResetStats();
     lastMediaData = NULL;
 
@@ -323,16 +335,16 @@ void H223OutgoingChannel::BufferMedia(uint16 aMs)
 {
     if (iBufferSizeMs && aMs > iBufferSizeMs)
     {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223OutgoingChannel::BufferMedia ERROR buffer interval=%d > buffer size=%d", aMs, iBufferSizeMs));
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223OutgoingChannel(%d)::BufferMedia ERROR buffer interval=%d > buffer size=%d", lcn , aMs, iBufferSizeMs));
     }
     iSetBufferMediaMs = iBufferMediaMs = aMs;
     iSetBufferMediaBytes = iBufferMediaBytes = ((iBufferSizeMs * iBitrate + 4000) / 8000);
-    //PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0,"H223OutgoingChannel::BufferMedia ms=%d,bytes=%d", iBufferMediaMs,iBufferMediaBytes));
+    //PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0,"H223OutgoingChannel(%d)::BufferMedia ms=%d,bytes=%d",lcn, iBufferMediaMs,iBufferMediaBytes));
 }
 
 void H223OutgoingChannel::Resume()
 {
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223OutgoingChannel::Resume lcn=%d", lcn));
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223OutgoingChannel(%d)::Resume", lcn));
     H223LogicalChannel::Resume();
     iPaused = false;
     // start muxing on a random access point
@@ -341,7 +353,7 @@ void H223OutgoingChannel::Resume()
 
 void H223OutgoingChannel::SetBufferSizeMs(uint32 buffer_size_ms)
 {
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223OutgoingLogicalChannel::SetBufferSizeMs buffer_size_ms=%d", buffer_size_ms));
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223OutgoingLogicalChannel(%d)::SetBufferSizeMs buffer_size_ms=%d", lcn, buffer_size_ms));
     iBufferSizeMs = buffer_size_ms;
 }
 
@@ -366,22 +378,17 @@ PVMFStatus H223OutgoingChannel::PutData(PVMFSharedMediaMsgPtr media_msg)
     TimeValue timenow;
     if (iMediaType.isCompressed() && iMediaType.isAudio())
     {
-        PVMF_OUTGOING_AUDIO_LOGDATATRAFFIC((0, "Outgoing audio frames received. Stats: Entry time=%ud, lcn=%d, size=%d", timenow.to_msec(), lcn, mediaData->getFilledSize()));
+        PVMF_OUTGOING_AUDIO_LOGDATATRAFFIC((0, "Outgoing audio frames received. Stats: Entry time=%u, ts=%u, lcn=%d, size=%d", timenow.to_msec(), mediaData->getTimestamp(), lcn, mediaData->getFilledSize()));
     }
     else if (iMediaType.isCompressed() && iMediaType.isVideo())
     {
-        PVMF_OUTGOING_VIDEO_LOGDATATRAFFIC((0, "Outgoing video frames received.Stats: Entry time=%ud, lcn=%d, size=%d", timenow.to_msec(), lcn, mediaData->getFilledSize()));
-    }
-
-    if (iNumPacketsIn % 20 == 0)
-    {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223OutgoingChannel::PutData lcn=%d, size=%d, ts=%d", lcn, mediaData->getFilledSize(), mediaData->getTimestamp()));
+        PVMF_OUTGOING_VIDEO_LOGDATATRAFFIC((0, "Outgoing video frames received.Stats: Entry time=%u, ts=%u, lcn=%d, size=%d", timenow.to_msec(), mediaData->getTimestamp(), lcn, mediaData->getFilledSize()));
     }
 
     // Check for FSI so that it can be send with data
     if (mediaData->getFormatSpecificInfo(iFsiFrag) && iFsiFrag.getMemFragPtr() && iFsiFrag.getMemFragSize())
     {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223OutgoingChannel::PutData Received Format Specific Info, len=%d", iFsiFrag.getMemFragSize()));
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223OutgoingChannel(%d)::PutData Received Format Specific Info, len=%d", lcn, iFsiFrag.getMemFragSize()));
         PVLOGGER_LOG_USE_ONLY(
 
             TestFsi(iFsiFrag);
@@ -392,15 +399,15 @@ PVMFStatus H223OutgoingChannel::PutData(PVMFSharedMediaMsgPtr media_msg)
     {
         if ((mediaData->getMarkerInfo()&PVMF_MEDIA_DATA_MARKER_INFO_RANDOM_ACCESS_POINT_BIT) == 0)
         {
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223OutgoingChannel::PutData Not random access point.  Dropping media data."));
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223OutgoingChannel(%d)::PutData Not random access point.  Dropping media data.", lcn));
             return PVMFErrInvalidState;
         }
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223OutgoingChannel::PutData Found random access point."));
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223OutgoingChannel(%d)::PutData Found random access point.", lcn));
         iWaitForRandomAccessPoint = false;
     }
     else if (iNumPendingPdus == (iNumMediaData - 1))
     {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223OutgoingChannel::PutData - ERROR Overflow, iNumPendingPdus=%u", iNumPendingPdus));
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223OutgoingChannel(%d)::PutData - ERROR Overflow, iNumPendingPdus=%u", lcn, iNumPendingPdus));
         return PVMFErrOverflow;
     }
 
@@ -418,7 +425,7 @@ PVMFStatus H223OutgoingChannel::PutData(PVMFSharedMediaMsgPtr media_msg)
 
     if ((mediaData->getNumFragments() + num_frags_required + iNumPendingPdus) >= (iNumMediaData - 1))
     {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223OutgoingChannel::PutData - ERROR Overflow, iNumPendingPdus=%u, num_frags_required=%d,iNumMediaData=%d", iNumPendingPdus, num_frags_required, iNumMediaData));
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223OutgoingChannel(%d)::PutData - ERROR Overflow, iNumPendingPdus=%u, num_frags_required=%d,iNumMediaData=%d", lcn, iNumPendingPdus, num_frags_required, iNumMediaData));
         Flush();
         /* Start re-buffering */
         BufferMedia((uint16)iSetBufferMediaMs);
@@ -431,7 +438,7 @@ PVMFStatus H223OutgoingChannel::PutData(PVMFSharedMediaMsgPtr media_msg)
     {
         if (true != FragmentPacket(mediaData, fragmentedMediaData))
         {
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223OutgoingChannel::PutData - Memory allocation failure on Fragment\n"));
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223OutgoingChannel(%d)::PutData - Memory allocation failure on Fragment\n", lcn));
             return PVMFErrOverflow;
         }
     }
@@ -445,7 +452,7 @@ PVMFStatus H223OutgoingChannel::PutData(PVMFSharedMediaMsgPtr media_msg)
         {
             if (PVMFSuccess != CompletePdu())
             {
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223OutgoingChannel::PutData - Memory allocation failure on CompletePdu\n"));
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223OutgoingChannel(%d)::PutData - Memory allocation failure on CompletePdu\n", lcn));
                 return PVMFErrOverflow;
             }
             if (iMediaType.isCompressed() && iMediaType.isAudio())
@@ -461,12 +468,12 @@ PVMFStatus H223OutgoingChannel::PutData(PVMFSharedMediaMsgPtr media_msg)
     }
     if (sdu_size == 0)
     {
-        //PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0,"H223OutgoingChannel::PutData Sdu size == 0"));
+        //PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0,"H223OutgoingChannel(%d)::PutData Sdu size == 0", lcn));
         iCurPdu = StartAlPdu();
         if (!iCurPdu)
         {
             PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                            (0, "H223OutgoingChannel::PutData - Memory allocation failure on StartAlPdu\n"));
+                            (0, "H223OutgoingChannel(%d)::PutData - Memory allocation failure on StartAlPdu\n", lcn));
             return PVMFErrOverflow;
         }
 
@@ -490,7 +497,7 @@ PVMFStatus H223OutgoingChannel::PutData(PVMFSharedMediaMsgPtr media_msg)
         {
             if (PVMFSuccess != CompletePdu())
             {
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223OutgoingChannel::PutData - Memory allocation failure on CompletePdu\n"));
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223OutgoingChannel(%d)::PutData - Memory allocation failure on CompletePdu\n", lcn));
                 return PVMFErrOverflow;
             }
             if (iMediaType.isCompressed() && iMediaType.isAudio())
@@ -508,7 +515,7 @@ PVMFStatus H223OutgoingChannel::PutData(PVMFSharedMediaMsgPtr media_msg)
             if (!iCurPdu)
             {
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                                (0, "H223OutgoingChannel::PutData - Memory allocation failure on StartAlPdu\n"));
+                                (0, "H223OutgoingChannel(%d)::PutData - Memory allocation failure on StartAlPdu\n", lcn));
                 return PVMFErrOverflow;
             }
         }
@@ -606,7 +613,7 @@ PVMFStatus H223OutgoingChannel::CompletePdu()
     PVMFStatus status = iAl->CompletePacket(iCurPdu);
     if (status != PVMFSuccess)
     {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223OutgoingChannel::CompletePdu Memory allocation failedlcn=%d, CompletePacket status=%d", lcn, status));
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223OutgoingChannel(%d)::CompletePdu Memory allocation failed, CompletePacket status=%d", lcn, status));
         return status;
     }
 
@@ -639,9 +646,6 @@ PVMFStatus H223OutgoingChannel::AppendOutgoingPkt(OsclSharedPtr<PVMFMediaDataImp
         return PVMFErrNoMemory;
     }
 
-    OsclRefCounterMemFrag frag;
-    mediaData->getFormatSpecificInfo(frag);
-
     mediaData->setTimestamp(timestamp);
     if (fsi)
     {
@@ -670,7 +674,7 @@ PVMFStatus H223OutgoingChannel::AppendOutgoingPkt(OsclSharedPtr<PVMFMediaDataImp
     /* Adjust buffering parameters */
     if (iBufferMediaMs)
     {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223OutgoingChannel::AppendOutgoingPkt lcn=%d, last ts=%d,cur ts=%d", lcn, lastTS, timestamp));
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223OutgoingChannel(%d)::AppendOutgoingPkt last ts=%d,cur ts=%d", lcn, lastTS, timestamp));
         /* Compute delta_t from last media data */
         int32 delta_t = timestamp - lastTS;
         if (delta_t < 0)
@@ -700,14 +704,14 @@ bool H223OutgoingChannel::GetNextPacket(PVMFSharedMediaDataPtr& aMediaData, PVMF
     }
     if ((aStatus == PVMFSuccess) && iPaused)
     {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223OutgoingChannel::GetNextPacket Logical channel %d paused.", lcn));
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223OutgoingChannel(%d)::GetNextPacket Logical channel paused.", lcn));
         return false;
 
     }
     if ((aStatus == PVMFSuccess) && iBufferMediaMs && iBufferMediaBytes)
     {
         /* Still buffering */
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223OutgoingChannel::GetNextPacket Buffering lcn=%d, ms left=%d", lcn, iBufferMediaMs));
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223OutgoingChannel(%d)::GetNextPacket Buffering ms left=%d", lcn, iBufferMediaMs));
         return false;
     }
 
@@ -743,7 +747,7 @@ OsclAny H223OutgoingChannel::ReleasePacket(PVMFSharedMediaDataPtr& aMediaData)
 
 OsclAny H223OutgoingChannel::Flush()
 {
-    //PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0,"H223OutgoingChannel::Flush\n"));
+    //PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0,"H223OutgoingChannel(%d)::Flush\n", lcn));
 
     PVMFSharedMediaDataPtr aMediaData;
 
@@ -798,11 +802,11 @@ OsclAny H223OutgoingChannel::LogStats()
 
 OSCL_EXPORT_REF PVMFStatus H223OutgoingChannel::Connect(PVMFPortInterface* aPort)
 {
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223OutgoingChannel::Connect, aPort=%x", aPort));
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223OutgoingChannel(%d)::Connect, aPort=%x", lcn, aPort));
 
     if (iConnectedPort)
     {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223OutgoingChannel::Connect Error: Already connected"));
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223OutgoingChannel(%d)::Connect Error: Already connected", lcn));
         return PVMFFailure;
     }
 
@@ -813,7 +817,7 @@ OSCL_EXPORT_REF PVMFStatus H223OutgoingChannel::Connect(PVMFPortInterface* aPort
     config = OSCL_STATIC_CAST(PvmiCapabilityAndConfig*, tempInterface);
     if (!config)
     {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223OutgoingChannel::Connect: Error - Peer port does not support capability interface"));
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223OutgoingChannel(%d)::Connect: Error - Peer port does not support capability interface", lcn));
         return PVMFFailure;
     }
 
@@ -821,14 +825,14 @@ OSCL_EXPORT_REF PVMFStatus H223OutgoingChannel::Connect(PVMFPortInterface* aPort
 
     if (status != PVMFSuccess)
     {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223OutgoingChannel::Connect: Error - Settings negotiation failed. status=%d", status));
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223OutgoingChannel(%d)::Connect: Error - Settings negotiation failed. status=%d", lcn, status));
         return status;
     }
 
     //Automatically connect the peer.
     if ((status = aPort->PeerConnect(this)) != PVMFSuccess)
     {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223OutgoingChannel::Connect: Error - Peer Connect failed. status=%d", status));
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223OutgoingChannel(%d)::Connect: Error - Peer Connect failed. status=%d", lcn, status));
         return status;
     }
 
@@ -840,15 +844,15 @@ OSCL_EXPORT_REF PVMFStatus H223OutgoingChannel::Connect(PVMFPortInterface* aPort
 OSCL_EXPORT_REF PVMFStatus H223OutgoingChannel::PeerConnect(PVMFPortInterface* aPort)
 {
 
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223OutgoingChannel::PeerConnect aPort=0x%x", this, aPort));
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223OutgoingChannel(%d)::PeerConnect aPort=0x%x", lcn, this, aPort));
     if (!aPort)
     {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "0x%x H223OutgoingChannel::PeerConnect: Error - Connecting to invalid port", this));
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "0x%x H223OutgoingChannel(%d)::PeerConnect: Error - Connecting to invalid port", lcn, this));
         return PVMFErrArgument;
     }
     if (iConnectedPort)
     {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "0x%x H223OutgoingChannel::PeerConnect: Error - Already connected", this));
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "0x%x H223OutgoingChannel(%d)::PeerConnect: Error - Already connected", lcn, this));
         return PVMFFailure;
     }
 
@@ -856,7 +860,7 @@ OSCL_EXPORT_REF PVMFStatus H223OutgoingChannel::PeerConnect(PVMFPortInterface* a
     aPort->QueryInterface(PVMI_CAPABILITY_AND_CONFIG_PVUUID, config);
     if (!config)
     {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "H223OutgoingChannel::PeerConnect: Error - Peer port does not support capability interface"));
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "H223OutgoingChannel(%d)::PeerConnect: Error - Peer port does not support capability interface", lcn));
         return PVMFFailure;
     }
 
@@ -867,7 +871,7 @@ OSCL_EXPORT_REF PVMFStatus H223OutgoingChannel::PeerConnect(PVMFPortInterface* a
 
     if (status != PVMFSuccess)
     {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "H223OutgoingChannel::PeerConnect: Error - Settings negotiation failed. status=%d", status));
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "H223OutgoingChannel(%d)::PeerConnect: Error - Settings negotiation failed. status=%d", lcn, status));
         // Ignore errors for now
         status = PVMFSuccess;
     }
@@ -881,7 +885,7 @@ OSCL_EXPORT_REF PVMFStatus H223OutgoingChannel::PeerConnect(PVMFPortInterface* a
 
 PVMFStatus H223OutgoingChannel::NegotiateInputSettings(PvmiCapabilityAndConfig* aConfig)
 {
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223OutgoingChannel::NegotiateInputSettings, aConfig=%x", aConfig));
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223OutgoingChannel(%d)::NegotiateInputSettings, aConfig=%x", lcn, aConfig));
 
     PvmiKvp* kvp = NULL;
     int numParams = 0;
@@ -893,7 +897,7 @@ PVMFStatus H223OutgoingChannel::NegotiateInputSettings(PvmiCapabilityAndConfig* 
                         kvp, numParams, NULL);
     if (status != PVMFSuccess || numParams == 0)
     {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "H223OutgoingChannel::NegotiateInputSettings, Error:  getParametersSync failed.  status=%d", status));
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "H223OutgoingChannel(%d)::NegotiateInputSettings, Error:  getParametersSync failed.  status=%d", lcn, status));
         return status;
     }
 
@@ -909,7 +913,7 @@ PVMFStatus H223OutgoingChannel::NegotiateInputSettings(PvmiCapabilityAndConfig* 
 
     if (!selectedKvp)
     {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "H223OutgoingChannel::NegotiateInputSettings, Error:  Input format not supported by peer"));
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "H223OutgoingChannel(%d)::NegotiateInputSettings, Error:  Input format not supported by peer", lcn));
         return PVMFFailure;
     }
     if (PVMFSuccess != setConfigParametersSync(selectedKvp, aConfig))
@@ -939,7 +943,7 @@ OSCL_EXPORT_REF PVMFStatus H223OutgoingChannel::getParametersSync(PvmiMIOSession
         int& num_parameter_elements,
         PvmiCapabilityContext context)
 {
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223OutgoingChannel::getParametersSync"));
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223OutgoingChannel(%d)::getParametersSync", lcn));
     OSCL_UNUSED_ARG(session);
     OSCL_UNUSED_ARG(context);
 
@@ -954,7 +958,7 @@ OSCL_EXPORT_REF PVMFStatus H223OutgoingChannel::getParametersSync(PvmiMIOSession
                                         num_parameter_elements);
         if (status != PVMFSuccess)
         {
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_WARNING, (0, "H223OutgoingChannel::getParametersSync: Error - AllocateKvp failed. status=%d", status));
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_WARNING, (0, "H223OutgoingChannel(%d)::getParametersSync: Error - AllocateKvp failed. status=%d", lcn, status));
             return status;
         }
         PVCodecType_t codec_type = GetCodecType(iDataType);
@@ -1038,7 +1042,7 @@ OSCL_EXPORT_REF void H223OutgoingChannel::setParametersSync(PvmiMIOSession sessi
         status = VerifyAndSetParameter(&(parameters[i]), true);
         if (status != PVMFSuccess)
         {
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_WARNING, (0, "H223OutgoingChannel::setParametersSync: Error - VerifiyAndSetParameter failed on parameter #%d", i));
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_WARNING, (0, "H223OutgoingChannel(%d)::setParametersSync: Error - VerifiyAndSetParameter failed on parameter #%d", lcn, i));
             ret_kvp = &(parameters[i]);
             OSCL_LEAVE(OsclErrArgument);
         }
@@ -1048,17 +1052,17 @@ OSCL_EXPORT_REF void H223OutgoingChannel::setParametersSync(PvmiMIOSession sessi
 PVMFStatus H223OutgoingChannel::VerifyAndSetParameter(PvmiKvp* aKvp, bool aSetParam)
 {
     OSCL_UNUSED_ARG(aSetParam);
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_WARNING, (0, "H223OutgoingChannel::VerifyAndSetParameter: aKvp=0x%x, aSetParam=%d", aKvp, aSetParam));
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_WARNING, (0, "H223OutgoingChannel(%d)::VerifyAndSetParameter: aKvp=0x%x, aSetParam=%d", lcn, aKvp, aSetParam));
 
     if (!aKvp)
     {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_WARNING, (0, "H223OutgoingChannel::VerifyAndSetParameter: Error - Invalid key-value pair"));
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_WARNING, (0, "H223OutgoingChannel(%d)::VerifyAndSetParameter: Error - Invalid key-value pair", lcn));
         return PVMFFailure;
     }
 
     if (iDataType == NULL)
     {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_WARNING, (0, "H223OutgoingChannel::VerifyAndSetParameter: Error - DataType == NULL"));
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_WARNING, (0, "H223OutgoingChannel(%d)::VerifyAndSetParameter: Error - DataType == NULL", lcn));
         return PVMFErrNotSupported;
     }
 
@@ -1068,7 +1072,7 @@ PVMFStatus H223OutgoingChannel::VerifyAndSetParameter(PvmiKvp* aKvp, bool aSetPa
         PVMFFormatType lcn_format_type = PVCodecTypeToPVMFFormatType(codec_type);
         if (pv_mime_strcmp(lcn_format_type.getMIMEStrPtr(), aKvp->value.pChar_value) != 0)
         {
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_WARNING, (0, "H223OutgoingChannel::VerifyAndSetParameter: Error - Input format %s not supported", aKvp->value.pChar_value));
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_WARNING, (0, "H223OutgoingChannel(%d)::VerifyAndSetParameter: Error - Input format %s not supported", lcn, aKvp->value.pChar_value));
             return PVMFErrNotSupported;
         }
     }
@@ -1112,42 +1116,42 @@ OSCL_EXPORT_REF PVMFStatus H223OutgoingChannel::verifyParametersSync(PvmiMIOSess
 
 void H223OutgoingChannel::HandlePortActivity(const PVMFPortActivity &aActivity)
 {
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223OutgoingChannel::HandlePortActivity(%d) lcn(%d)", aActivity.iType, lcn));
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223OutgoingChannel(%d)::HandlePortActivity(%d)", lcn, aActivity.iType));
 
     switch (aActivity.iType)
     {
         case PVMF_PORT_ACTIVITY_CREATED:
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_DEBUG, (0, "H223OutgoingChannel::HandlePortActivity created"));
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_DEBUG, (0, "H223OutgoingChannel(%d)::HandlePortActivity created", lcn));
             return;
         case PVMF_PORT_ACTIVITY_DELETED:
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_DEBUG, (0, "H223OutgoingChannel::HandlePortActivity deleted"));
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_DEBUG, (0, "H223OutgoingChannel(%d)::HandlePortActivity deleted", lcn));
             return;
         case PVMF_PORT_ACTIVITY_CONNECT:
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_DEBUG, (0, "H223OutgoingChannel::HandlePortActivity connect"));
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_DEBUG, (0, "H223OutgoingChannel(%d)::HandlePortActivity connect", lcn));
             return;
         case PVMF_PORT_ACTIVITY_DISCONNECT:
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_DEBUG, (0, "H223OutgoingChannel::HandlePortActivity disconnect"));
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_DEBUG, (0, "H223OutgoingChannel(%d)::HandlePortActivity disconnect", lcn));
             return;
         case PVMF_PORT_ACTIVITY_OUTGOING_MSG:
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_DEBUG, (0, "H223OutgoingChannel::HandlePortActivity outgoing msg"));
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_DEBUG, (0, "H223OutgoingChannel(%d)::HandlePortActivity outgoing msg", lcn));
             return;
         case PVMF_PORT_ACTIVITY_INCOMING_MSG:
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_DEBUG, (0, "H223OutgoingChannel::HandlePortActivity incoming msg"));
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_DEBUG, (0, "H223OutgoingChannel(%d)::HandlePortActivity incoming msg", lcn));
             break;
         case PVMF_PORT_ACTIVITY_OUTGOING_QUEUE_BUSY:
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_DEBUG, (0, "H223OutgoingChannel::HandlePortActivity outgoing queue busy"));
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_DEBUG, (0, "H223OutgoingChannel(%d)::HandlePortActivity outgoing queue busy", lcn));
             return;
         case PVMF_PORT_ACTIVITY_OUTGOING_QUEUE_READY:
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_DEBUG, (0, "H223OutgoingChannel::HandlePortActivity outgoing queue ready"));
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_DEBUG, (0, "H223OutgoingChannel(%d)::HandlePortActivity outgoing queue ready", lcn));
             return;
         case PVMF_PORT_ACTIVITY_CONNECTED_PORT_BUSY:
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_DEBUG, (0, "H223OutgoingChannel::HandlePortActivity connected port busy"));
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_DEBUG, (0, "H223OutgoingChannel(%d)::HandlePortActivity connected port busy", lcn));
             return;
         case PVMF_PORT_ACTIVITY_CONNECTED_PORT_READY:
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_DEBUG, (0, "H223OutgoingChannel::HandlePortActivity connected port ready"));
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_DEBUG, (0, "H223OutgoingChannel(%d)::HandlePortActivity connected port ready", lcn));
             break;
         case PVMF_PORT_ACTIVITY_ERROR:
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "H223OutgoingChannel::HandlePortActivity error"));
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "H223OutgoingChannel(%d)::HandlePortActivity error", lcn));
             return;
     }
 
@@ -1165,12 +1169,12 @@ void H223OutgoingChannel::HandlePortActivity(const PVMFPortActivity &aActivity)
         }
         else
         {
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_WARNING, (0, "H223OutgoingChannel::HandlePortActivity Failed to DeQueue incoming message: %d", aStatus));
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_WARNING, (0, "H223OutgoingChannel(%d)::HandlePortActivity Failed to DeQueue incoming message: %d", lcn, aStatus));
             break;
         }
     }
 
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223OutgoingChannel::HandlePortActivity - out"));
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223OutgoingChannel(%d)::HandlePortActivity - out", lcn));
 }
 
 PVLOGGER_LOG_USE_ONLY(
@@ -1196,16 +1200,16 @@ PVLOGGER_LOG_USE_ONLY(
 
     uint8* pMemFrag = OSCL_STATIC_CAST(uint8*, aMemFrag.getMemFragPtr());
 
-    uint16 compSize = OSCL_MIN(fsiLen - iFsiTestIndex, memFragSize);
+    uint16 compSize = OSCL_STATIC_CAST(uint16, OSCL_MIN(fsiLen - iFsiTestIndex, memFragSize));
 
     // compare and print result if error found
     if (fsiLen && oscl_memcmp(pMemFrag, &pFsi[iFsiTestIndex], compSize))
     {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "H223OutgoingChannel::TestFsi Format Specific Info conflict"));
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223OutgoingChannel::TestFsi FSI BS"));
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "H223OutgoingChannel(%d)::TestFsi Format Specific Info conflict", lcn));
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223OutgoingChannel(%d)::TestFsi FSI BS", lcn));
         for (int ii = 0; ii < compSize; ii++)
         {
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223OutgoingChannel::TestFsi %#x %#x", pFsi[iFsiTestIndex + ii], pMemFrag[ii]));
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223OutgoingChannel(%d)::TestFsi %#x %#x", lcn, pFsi[iFsiTestIndex + ii], pMemFrag[ii]));
         }
 
     }
@@ -1216,15 +1220,15 @@ PVLOGGER_LOG_USE_ONLY(
 
 OSCL_EXPORT_REF PVMFStatus H223OutgoingControlChannel::PeerConnect(PVMFPortInterface* aPort)
 {
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223OutgoingControlChannel::PeerConnect aPort=0x%x", this, aPort));
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223OutgoingControlChannel(%d)::PeerConnect aPort=0x%x", lcn, this, aPort));
     if (!aPort)
     {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "0x%x H223OutgoingControlChannel::PeerConnect: Error - Connecting to invalid port", this));
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "0x%x H223OutgoingControlChannel(%d)::PeerConnect: Error - Connecting to invalid port", lcn, this));
         return PVMFErrArgument;
     }
     if (iConnectedPort)
     {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "0x%x H223OutgoingControlChannel::PeerConnect: Error - Already connected", this));
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "0x%x H223OutgoingControlChannel(%d)::PeerConnect: Error - Already connected", lcn, this));
         return PVMFFailure;
     }
 
@@ -1236,7 +1240,7 @@ OSCL_EXPORT_REF PVMFStatus H223OutgoingControlChannel::PeerConnect(PVMFPortInter
 }
 PVMFStatus H223OutgoingControlChannel::PutData(PVMFSharedMediaMsgPtr aMsg)
 {
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223OutgoingControlChannel::PutData - iNumPendingPdus=%u,iNumMediaData=%u\n", iNumPendingPdus, iNumMediaData));
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223OutgoingControlChannel(%d)::PutData - iNumPendingPdus=%u,iNumMediaData=%u\n", lcn, iNumPendingPdus, iNumMediaData));
 
     PVMFSharedMediaDataPtr mediaData;
     convertToPVMFMediaData(mediaData, aMsg);
@@ -1251,7 +1255,7 @@ PVMFStatus H223OutgoingControlChannel::PutData(PVMFSharedMediaMsgPtr aMsg)
 
     if (!pdu)
     {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223OutgoingControlChannel::PutData - Memory allocation failure on iMediaFragGroupAlloc->allocate\n"));
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223OutgoingControlChannel(%d)::PutData - Memory allocation failure on iMediaFragGroupAlloc->allocate\n", lcn));
         return PVMFErrNoMemory;
     }
 
@@ -1267,7 +1271,7 @@ PVMFStatus H223OutgoingControlChannel::PutData(PVMFSharedMediaMsgPtr aMsg)
     PVMFStatus status = iAl->CompletePacket(pdu);
     if (status != PVMFSuccess)
     {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223OutgoingControlChannel::PutData - Memory allocation failure on iAl->CompletePacket()"));
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223OutgoingControlChannel(%d)::PutData - Memory allocation failure on iAl->CompletePacket()", lcn));
         return status;
     }
 
@@ -1276,16 +1280,10 @@ PVMFStatus H223OutgoingControlChannel::PutData(PVMFSharedMediaMsgPtr aMsg)
     // Add it to the outgoing queue
     if (PVMFSuccess != AppendOutgoingPkt(pdu, timenow.to_msec(), (fsi_available ? &fsi : NULL)))
     {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223OutgoingControlChannel::PutData - Memory allocation failure on AppendOutgoingPkt()"));
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223OutgoingControlChannel(%d)::PutData - Memory allocation failure on AppendOutgoingPkt()", lcn));
         return PVMFErrNoMemory;
     }
     return PVMFSuccess;
-}
-
-void H223LogicalChannel::SetDatapathLatency(uint32 aLatency)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223LogicalChannel::SetDatapathLatency lcn=%d, aLatency=%d", lcn, aLatency));
-    iDatapathLatency = aLatency;
 }
 
 PVMFStatus H223LogicalChannel::setConfigParametersSync(PvmiKvp* selectedKvp,
@@ -1299,7 +1297,7 @@ PVMFStatus H223LogicalChannel::setConfigParametersSync(PvmiKvp* selectedKvp,
     {
         OSCL_TRY(err, aConfig->setParametersSync(NULL, selectedKvp, 1, retKvp););
         OSCL_FIRST_CATCH_ANY(err,
-                             PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223OutgoingChannel::setConfigParametersSync, Error:  setParametersSync failed, err=%d", err));
+                             PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223OutgoingChannel(%d)::setConfigParametersSync, Error:  setParametersSync failed, err=%d", lcn, err));
                              return PVMFFailure;
                             );
     }
@@ -1309,13 +1307,13 @@ PVMFStatus H223LogicalChannel::setConfigParametersSync(PvmiKvp* selectedKvp,
         OSCL_TRY(err, aConfig->setParametersSync(NULL, selectedKvp, 1, retKvp););
         if (err)
         {
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223IncomingChannel::setConfigParametersSync, Error:  setParametersSync failed for pChar value, trying uint32, err=%d", err));
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223IncomingChannel(%d)::setConfigParametersSync, Error:  setParametersSync failed for pChar value, trying uint32, err=%d", lcn, err));
             selectedKvp->value.pChar_value = OSCL_STATIC_CAST(mbchar*, lcn_format_type.getMIMEStrPtr());
             err = 0;
             OSCL_TRY(err, aConfig->setParametersSync(NULL, selectedKvp, 1, retKvp););
             if (err)
             {
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223IncomingChannel::setConfigParametersSync, Error:  setParametersSync failed, err=%d", err));
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223IncomingChannel(%d)::setConfigParametersSync, Error:  setParametersSync failed, err=%d", lcn, err));
                 return PVMFFailure;
             }
         }
@@ -1337,14 +1335,15 @@ H223IncomingChannel::H223IncomingChannel(TPVChannelId num,
         iMediaDataAlloc(&iMemAlloc),
         iPduSize(al->GetPduSize()),
         iCurPduSize(0),
-        iRenderingSkew(0),
         iVideoFrameNum(0),
         iMax_Chunk_Size(0),
         ipVideoFrameReszMemPool(NULL),
         ipVideoFrameAlloc(NULL),
         ipVideoDataMemPool(NULL),
         iLastAudioTS(0),
-        iAudioFrameNum(0)
+        iAudioFrameNum(0),
+        ipAudioDtxTimer(NULL),
+        iBosMessageSent(false)
 {
 #ifdef LIP_SYNC_TESTING
     iParam = ShareParams::Instance();
@@ -1362,6 +1361,14 @@ H223IncomingChannel::H223IncomingChannel(TPVChannelId num,
 
 H223IncomingChannel::~H223IncomingChannel()
 {
+    // clean audio dtx timer
+    if (ipAudioDtxTimer)
+    {
+        ipAudioDtxTimer->Cancel(AMR_TIMER_ID);
+        ipAudioDtxTimer->Clear();
+        OSCL_DELETE(ipAudioDtxTimer);
+    }
+
     iAudioDataQueue.clear();
 
     Flush();
@@ -1400,7 +1407,7 @@ H223IncomingChannel::~H223IncomingChannel()
 void H223IncomingChannel::Init()
 {
     OsclSharedPtr<PVMFMediaDataImpl> tempImpl;
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223IncomingChannel::Init"));
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223IncomingChannel(%d)::Init"));
     H223LogicalChannel::Init();
 
     int bitrate = (GetBitrate() > 0) ? GetBitrate() : DEF_CHANNEL_BITRATE;
@@ -1450,7 +1457,7 @@ void H223IncomingChannel::Init()
         tempImpl = ipVideoFrameAlloc->allocate(MAX_VIDEO_FRAME_PARSE_SIZE);
         if (!tempImpl)
         {
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_WARNING, (0, "H223IncomingChannel::Init(), tempImpl Allocation failed\n"));
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_WARNING, (0, "H223IncomingChannel(%d)::Init(), tempImpl Allocation failed\n", lcn));
             OSCL_LEAVE(PVMFErrNoMemory);
         }
 
@@ -1458,6 +1465,21 @@ void H223IncomingChannel::Init()
         if (iVideoFrame.GetRep() == NULL)
         {
             OSCL_LEAVE(PVMFErrNoMemory);
+        }
+    }
+    else if (iMediaType.isAudio())
+    {
+        PVMFStatus err = PVMFNotSet;
+        typedef OsclTimer<OsclMemAllocator> timerType;
+        OSCL_TRY(err, ipAudioDtxTimer = OSCL_NEW(timerType, ("IncomingChannelDTXTimer")););
+        // only log the error, we can do without the timer if
+        OSCL_FIRST_CATCH_ANY(err,
+                             PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "H223IncomingChannel(%d)::Init(), Error:  IncomingChannelDTXTimer allocation failed, err=%d", lcn, err));
+                            );
+        if (ipAudioDtxTimer)
+        {
+            ipAudioDtxTimer->SetExactFrequency(AMR_TIMER_FREQUENCY);
+            ipAudioDtxTimer->SetObserver(this);
         }
     }
 
@@ -1543,7 +1565,7 @@ uint32 H223IncomingChannel::CopyToCurrentFrag(uint8* buf, uint16 len)
     PVLOGGER_LOG_USE_ONLY(
         if (iAlPduMediaData->getFilledSize() > iPduSize)
 {
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223IncomingChannel::CopyToCurrentFrag WARNING current pdu size=%d > iPduSize=%d", iAlPduMediaData->getFilledSize(), iPduSize));
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223IncomingChannel(%d)::CopyToCurrentFrag WARNING current pdu size=%d > iPduSize=%d", lcn, iAlPduMediaData->getFilledSize(), iPduSize));
     }
     );
     return num_bytes_copied;
@@ -1554,7 +1576,7 @@ void H223IncomingChannel::PreAlPduData()
 {
     if (iPaused)
     {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223IncomingChannel::PreAlPduData Logical channel paused.  Dropping media data."));
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223IncomingChannel(%d)::PreAlPduData Logical channel paused.  Dropping media data.", lcn));
         return;
     }
 }
@@ -1568,11 +1590,9 @@ PVMFStatus H223IncomingChannel::AlPduData(uint8* buf, uint16 len)
 
     if (iAlPduMediaData.GetRep() == NULL || iAlPduMediaData->getFilledSize() == 0)
     {
-        bool overflow = false;
-        if (lcn != 0 && iClock)
+        if (lcn != 0)
         {
-            // not the control channel
-            iClock->GetCurrentTime32(iCurTimestamp, overflow, PVMF_MEDIA_CLOCK_MSEC);
+            UpdateCurrentTimestamp();
         }
     }
     uint32 copied = CopyAlPduData(buf, len);
@@ -1581,19 +1601,19 @@ PVMFStatus H223IncomingChannel::AlPduData(uint8* buf, uint16 len)
 
 PVMFStatus H223IncomingChannel::AlDispatch()
 {
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223IncomingChannel::AlDispatch lcn=%d, iCurPduSize=%d, sn=%d", lcn, iCurPduSize, iNumSdusIn));
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223IncomingChannel(%d)::AlDispatch, iCurPduSize=%d, sn=%d", lcn, iCurPduSize, iNumSdusIn));
     IncomingALPduInfo info;
 
     if (iPaused)
     {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223IncomingChannel::AlDispatch Logical channel paused."));
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223IncomingChannel(%d)::AlDispatch Logical channel paused.", lcn));
         return PVMFFailure;
     }
 
     /*  Nothing to dispatch */
     if (!iAlPduMediaData.GetRep())
     {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223IncomingChannel::AlDispatch Nothing to dispatch."));
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223IncomingChannel(%d)::AlDispatch Nothing to dispatch.", lcn));
         ResetAlPdu();
         return PVMFSuccess;
     }
@@ -1617,7 +1637,7 @@ PVMFStatus H223IncomingChannel::AlDispatch()
     int32 len = info.sdu_size;
     if (len <= 0)
     {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223IncomingChannel::AlDispatch Empty SDU lcn=%d, len=%d", lcn, len));
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223IncomingChannel(%d)::AlDispatch Empty SDU len=%d", lcn, len));
         ResetAlPdu();
         return PVMFErrCorrupt;
     }
@@ -1631,7 +1651,7 @@ PVMFStatus H223IncomingChannel::AlDispatch()
     if (info.crc_error)
     {
         errorsFlag |= PVMF_MEDIA_DATA_BIT_ERRORS;
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_WARNING, (0, "H223IncomingChannel::AlDispatch CRC error lcn=%d, size=%d", lcn, len));
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_WARNING, (0, "H223IncomingChannel(%d)::AlDispatch CRC error size=%d", lcn, len));
         status =  PVMFErrCorrupt;
     }
     else
@@ -1641,7 +1661,7 @@ PVMFStatus H223IncomingChannel::AlDispatch()
     if (info.seq_num_error)
     {
         errorsFlag |= PVMF_MEDIA_DATA_PACKET_LOSS;
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_WARNING, (0, "H223IncomingChannel::AlDispatch Sequence number error lcn=%d, size=%d", lcn, len));
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_WARNING, (0, "H223IncomingChannel(%d)::AlDispatch Sequence number error size=%d", lcn, len));
         status = PVMFErrCorrupt;
     }
 
@@ -1651,10 +1671,7 @@ PVMFStatus H223IncomingChannel::AlDispatch()
         return PVMFErrNoMemory;
     }
 
-
-    PVMFTimestamp baseTimestamp = 0;
-    SetSampleTimestamps(baseTimestamp);
-    aMediaData->setTimestamp(baseTimestamp);
+    aMediaData->setTimestamp(iCurTimestamp);
     aMediaData->setSeqNum(info.seq_num);
     iAlPduMediaData->setErrorsFlag(errorsFlag);
     status = DispatchOutgoingMsg(aMediaData);
@@ -1666,19 +1683,21 @@ PVMFStatus H223IncomingChannel::AlDispatch()
 
 OsclAny H223IncomingChannel::Flush()
 {
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223IncomingChannel(%d)::Flush()", lcn));
+
     PV_STAT_INCR(iNumBytesFlushed, (iAlPduFragPos - (uint8*)iAlPduFrag.getMemFragPtr()))
     PV_STAT_INCR_COND(iNumAbort, 1, (iAlPduFragPos - (uint8*)iAlPduFrag.getMemFragPtr()))
     iVideoFrame.Unbind();
     ResetAlPdu();
-
+    iAudioDataQueue.clear();
 }
 
 PVMFStatus H223IncomingChannel::Connect(PVMFPortInterface* aPort)
 {
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223IncomingChannel::Connect lcn(%d)\n", lcn));
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223IncomingChannel(%d)::Connect", lcn));
     if (iConnectedPort)
     {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223IncomingChannel::Connect Error: Already connected"));
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223IncomingChannel(%d)::Connect Error: Already connected", lcn));
         return PVMFFailure;
     }
 
@@ -1689,7 +1708,7 @@ PVMFStatus H223IncomingChannel::Connect(PVMFPortInterface* aPort)
     config = OSCL_STATIC_CAST(PvmiCapabilityAndConfig*, tempInterface);
     if (!config)
     {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223IncomingChannel::Connect: Error - Peer port does not support capability interface"));
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223IncomingChannel(%d)::Connect: Error - Peer port does not support capability interface", lcn));
         return PVMFFailure;
     }
 
@@ -1697,7 +1716,7 @@ PVMFStatus H223IncomingChannel::Connect(PVMFPortInterface* aPort)
 
     if (status != PVMFSuccess)
     {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223IncomingChannel::Connect: Error - Settings negotiation failed. status=%d", status));
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223IncomingChannel(%d)::Connect: Error - Settings negotiation failed. status=%d", lcn, status));
         return status;
     }
 
@@ -1706,14 +1725,14 @@ PVMFStatus H223IncomingChannel::Connect(PVMFPortInterface* aPort)
         if (!(pvmiSetPortFormatSpecificInfoSync(OSCL_STATIC_CAST(PvmiCapabilityAndConfig*, config), PVMF_FORMAT_SPECIFIC_INFO_KEY)))
         {
             PVLOGGER_LOGMSG(PVLOGMSG_INST_MLDBG, iLogger, PVLOGMSG_INFO
-                            , (0, "H223IncomingChannel::Connect: Error - Unable To Send Format Specific Info To Peer"));
+                            , (0, "H223IncomingChannel(%d)::Connect: Error - Unable To Send Format Specific Info To Peer", lcn));
             return PVMFFailure;
         }
     }
     //Automatically connect the peer.
     if ((status = aPort->PeerConnect(this)) != PVMFSuccess)
     {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223IncomingChannel::Connect: Error - Peer Connect failed. status=%d", status));
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223IncomingChannel(%d)::Connect: Error - Peer Connect failed. status=%d", lcn, status));
         return status;
     }
 
@@ -1726,13 +1745,36 @@ PVMFStatus H223IncomingChannel::Connect(PVMFPortInterface* aPort)
 
     if (status != PVMFSuccess)
     {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223IncomingChannel::Connect: Failed to send BOS message status=%d", status));
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223IncomingChannel(%d)::Connect: Failed to send BOS message status=%d", lcn, status));
         return status;
     }
 
     PortActivity(PVMF_PORT_ACTIVITY_CONNECT);
 
     return PVMFSuccess;
+}
+
+void H223IncomingChannel::Pause()
+{
+    if (iPaused)
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_INFO, (0, "H223IncomingChannel(%d)::Pause - Already paused", lcn));
+        return;
+    }
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_INFO, (0, "H223IncomingChannel(%d)::Pause", lcn));
+    H223LogicalChannel::Pause();
+    iBosMessageSent = false;
+}
+
+void H223IncomingChannel::Resume()
+{
+    if (!iPaused)
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_INFO, (0, "H223IncomingChannel(%d)::Resume - Already resumed", lcn));
+    }
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_INFO, (0, "H223IncomingChannel(%d)::Resume", lcn));
+    H223LogicalChannel::Resume();
+    SendBeginOfStreamMediaCommand();
 }
 
 OsclAny H223IncomingChannel::ResetStats()
@@ -1766,7 +1808,7 @@ MuxSduData::MuxSduData()
 }
 PVMFStatus H223IncomingChannel::NegotiateOutputSettings(PvmiCapabilityAndConfig* aConfig)
 {
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223IncomingChannel::NegotiateInputSettings, aConfig=%x", aConfig));
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223IncomingChannel(%d)::NegotiateInputSettings, aConfig=%x", lcn, aConfig));
 
     PvmiKvp* kvp = NULL;
     int numParams = 0;
@@ -1786,7 +1828,7 @@ PVMFStatus H223IncomingChannel::NegotiateOutputSettings(PvmiCapabilityAndConfig*
 
     if (status != PVMFSuccess || numParams == 0)
     {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223IncomingChannel::NegotiateInputSettings, Error:  getParametersSync failed.  status=%d", status));
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223IncomingChannel(%d)::NegotiateInputSettings, Error:  getParametersSync failed.  status=%d", lcn, status));
 
         return PVMFSuccess;
     }
@@ -1803,7 +1845,7 @@ PVMFStatus H223IncomingChannel::NegotiateOutputSettings(PvmiCapabilityAndConfig*
 
     if (!selectedKvp)
     {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223IncomingChannel::NegotiateInputSettings, Error:  Input format not supported by peer"));
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223IncomingChannel(%d)::NegotiateInputSettings, Error:  Input format not supported by peer", lcn));
         return PVMFFailure;
     }
 
@@ -1841,7 +1883,7 @@ OSCL_EXPORT_REF PVMFStatus H223IncomingChannel::getParametersSync(PvmiMIOSession
         int& num_parameter_elements,
         PvmiCapabilityContext context)
 {
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223IncomingChannel::getParametersSync"));
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223IncomingChannel(%d)::getParametersSync", lcn));
     OSCL_UNUSED_ARG(session);
     OSCL_UNUSED_ARG(context);
 
@@ -1857,7 +1899,7 @@ OSCL_EXPORT_REF PVMFStatus H223IncomingChannel::getParametersSync(PvmiMIOSession
                                         num_parameter_elements);
         if (status != PVMFSuccess)
         {
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_WARNING, (0, "H223IncomingChannel::getParametersSync: Error - AllocateKvp failed. status=%d", status));
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_WARNING, (0, "H223IncomingChannel(%d)::getParametersSync: Error - AllocateKvp failed. status=%d", lcn, status));
             return status;
         }
         PVCodecType_t codec_type = GetCodecType(iDataType);
@@ -1943,7 +1985,7 @@ OSCL_EXPORT_REF void H223IncomingChannel::setParametersSync(PvmiMIOSession sessi
         status = VerifyAndSetParameter(&(parameters[i]), true);
         if (status != PVMFSuccess)
         {
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_WARNING, (0, "H223IncomingChannel::setParametersSync: Error - VerifiyAndSetParameter failed on parameter #%d", i));
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_WARNING, (0, "H223IncomingChannel(%d)::setParametersSync: Error - VerifiyAndSetParameter failed on parameter #%d", lcn, i));
             ret_kvp = &(parameters[i]);
             /* Silently ignore unrecognized codecs untill CapEx is supported by peer */
             //OSCL_LEAVE(OsclErrArgument);
@@ -1954,17 +1996,17 @@ OSCL_EXPORT_REF void H223IncomingChannel::setParametersSync(PvmiMIOSession sessi
 PVMFStatus H223IncomingChannel::VerifyAndSetParameter(PvmiKvp* aKvp, bool aSetParam)
 {
     OSCL_UNUSED_ARG(aSetParam);
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_WARNING, (0, "H223IncomingChannel::VerifyAndSetParameter: aKvp=0x%x, aSetParam=%d", aKvp, aSetParam));
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_WARNING, (0, "H223IncomingChannel(%d)::VerifyAndSetParameter: aKvp=0x%x, aSetParam=%d", lcn, aKvp, aSetParam));
 
     if (!aKvp)
     {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_WARNING, (0, "H223IncomingChannel::VerifyAndSetParameter: Error - Invalid key-value pair"));
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_WARNING, (0, "H223IncomingChannel(%d)::VerifyAndSetParameter: Error - Invalid key-value pair", lcn));
         return PVMFFailure;
     }
 
     if (iDataType == NULL)
     {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_WARNING, (0, "H223IncomingChannel::VerifyAndSetParameter: Error - DataType == NULL"));
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_WARNING, (0, "H223IncomingChannel(%d)::VerifyAndSetParameter: Error - DataType == NULL", lcn));
         return PVMFErrNotSupported;
     }
 
@@ -1974,7 +2016,7 @@ PVMFStatus H223IncomingChannel::VerifyAndSetParameter(PvmiKvp* aKvp, bool aSetPa
         PVMFFormatType lcn_format_type = PVCodecTypeToPVMFFormatType(codec_type);
         if (lcn_format_type != aKvp->value.pChar_value)
         {
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_WARNING, (0, "H223IncomingChannel::VerifyAndSetParameter: Error - Output format %s not supported", aKvp->value.pChar_value));
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_WARNING, (0, "H223IncomingChannel(%d)::VerifyAndSetParameter: Error - Output format %s not supported", lcn, aKvp->value.pChar_value));
             return PVMFErrNotSupported;
         }
     }
@@ -2022,7 +2064,7 @@ void H223IncomingChannel::HandlePortActivity(const PVMFPortActivity &aActivity)
     if (aActivity.iType != PVMF_PORT_ACTIVITY_OUTGOING_MSG &&
             aActivity.iType != PVMF_PORT_ACTIVITY_CONNECTED_PORT_READY)
     {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223IncomingChannel::HandlePortActivity Unhandled port activity: %d", aActivity.iType));
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223IncomingChannel(%d)::HandlePortActivity Unhandled port activity: %d", lcn, aActivity.iType));
         return;
     }
     PVMFStatus aStatus;
@@ -2032,7 +2074,7 @@ void H223IncomingChannel::HandlePortActivity(const PVMFPortActivity &aActivity)
         aStatus = Send();
         if (aStatus != PVMFSuccess)
         {
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_WARNING, (0, "H223IncomingChannel::HandlePortActivity Failed to DeQueue incoming message: %d", aStatus));
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_WARNING, (0, "H223IncomingChannel(%d)::HandlePortActivity Failed to DeQueue incoming message: %d", lcn, aStatus));
             break;
         }
     }
@@ -2058,61 +2100,12 @@ PVMFStatus H223IncomingChannel::SendBeginOfStreamMediaCommand()
     {
         // Output queue is busy, so wait for the output queue being ready
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_WARNING,
-                        (0, "H223IncomingChannel::SendBeginOfMediaStreamCommand: Outgoing queue busy. "));
+                        (0, "H223IncomingChannel(%d)::SendBeginOfMediaStreamCommand: Outgoing queue busy. ", lcn));
         return status;
     }
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223IncomingChannel::SendBeginOfMediaStreamCommand() BOS Sent StreamId %d ", streamID));
+    iBosMessageSent = true;
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223IncomingChannel(%d)::SendBeginOfMediaStreamCommand() BOS Sent StreamId %d ", lcn, streamID));
     return status;
-}
-
-void H223IncomingChannel::SetSampleTimestamps(PVMFTimestamp& aTSOffset)
-{
-    iRenderingSkew = iAudioLatency - iVideoLatency;
-    uint32 skewDelta = 0;
-    if (iRenderingSkew >= (int32)iIncomingSkew)
-    {
-        skewDelta = iRenderingSkew - iIncomingSkew;
-        if (iMediaType.isCompressed() && iMediaType.isAudio())
-        {
-            aTSOffset = (PVMFTimestamp)(iAudioLatency);
-        }
-        else if (iMediaType.isCompressed() && iMediaType.isVideo())
-        {
-            aTSOffset = (PVMFTimestamp)(iVideoLatency + skewDelta + PARSING_JITTER_DURATION);
-        }
-    }
-    else if (iRenderingSkew < (int32)iIncomingSkew)
-    {
-        skewDelta = iIncomingSkew - iRenderingSkew;
-        if (iMediaType.isCompressed() && iMediaType.isAudio())
-        {
-            aTSOffset = (PVMFTimestamp)(iAudioLatency + skewDelta);
-        }
-        else if (iMediaType.isCompressed() && iMediaType.isVideo())
-        {
-            aTSOffset = (PVMFTimestamp)(iVideoLatency + PARSING_JITTER_DURATION);
-        }
-    }
-
-#ifdef LIP_SYNC_TESTING
-
-    /**************************************************************************************************
-       this is the check, to get unique sample TS on dummy output node side.So for this purpose, we are
-       checking the original video TS with the previous TS.If this condition is true then only we are
-       modifying the value of aTSOffset.
-
-     ***************************************************************************************************/
-
-    if ((g_CheckSampleTime != g_RecTimeStamp) && (iParam->iCompressed == false))
-    {
-        g_CheckSampleTime = g_RecTimeStamp;
-        g_Checkcount++;
-        aTSOffset += g_Checkcount;
-
-    }
-#endif
-
-    aTSOffset += iCurTimestamp;
 }
 
 /* *****************************************************************************************************
@@ -2218,7 +2211,7 @@ void H223IncomingChannel::CalculateRMSInfo(uint32 aVideoData, uint32 aAudioData)
         if (g_TotalCountIncm == 0)
         {
             PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                            (0, "Not be able to calculate RMS because Total count value is zero  TotalCount=%d", g_TotalCountIncm));
+                            (0, "Not be able to calculate RMS because Total count value is zero  TotalCount=%d", lcn, g_TotalCountIncm));
 
         }
         else
@@ -2420,7 +2413,7 @@ PVMFStatus H223IncomingChannel::DispatchOutgoingMsg(PVMFSharedMediaDataPtr aMedi
 
         if (CheckFrameBoundary((uint8 *)memFrag.getMemFragPtr(), memFrag.getMemFragSize(), aMediaData->getErrorsFlag()))
         {
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_DEBUG, (0, "H223IncomingChannel::::DispatchOutgoingMsg, frame found\n"));
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_DEBUG, (0, "H223IncomingChannel(%d)::::DispatchOutgoingMsg, frame found\n", lcn));
             //If buffer exists then send it.
             if (iVideoFrame.GetRep())
             {
@@ -2436,7 +2429,7 @@ PVMFStatus H223IncomingChannel::DispatchOutgoingMsg(PVMFSharedMediaDataPtr aMedi
             aMediaData->getMediaFragment(i, memFrag);
 
 
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_DEBUG, (0, "H223IncomingChannel::::DispatchOutgoingMsg, frag size %d, idx %d\n", memFrag.getMemFragSize(), i));
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_DEBUG, (0, "H223IncomingChannel(%d)::::DispatchOutgoingMsg, frag size %d, idx %d\n", lcn, memFrag.getMemFragSize(), i));
 
 
 
@@ -2444,7 +2437,7 @@ PVMFStatus H223IncomingChannel::DispatchOutgoingMsg(PVMFSharedMediaDataPtr aMedi
             if (memFrag.getMemFragSize() > iVideoFrame->getCapacity() - iVideoFrame->getFilledSize())
             {
                 CallSendVideoFrame(aMediaData);
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "H223IncomingChannel::::DispatchOutgoingMsg, frag cannot fit into video buffer\n"));
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "H223IncomingChannel(%d)::::DispatchOutgoingMsg, frag cannot fit into video buffer\n", lcn));
 
             }
 
@@ -2459,7 +2452,7 @@ PVMFStatus H223IncomingChannel::DispatchOutgoingMsg(PVMFSharedMediaDataPtr aMedi
         if (PVMFSuccess != SendAudioFrame(aMediaData))
         {
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_INFO,
-                            (0, "H223IncomingChannel::DispatchOutgoingMsg - Sending audio failed, clearing queue"));
+                            (0, "H223IncomingChannel(%d)::DispatchOutgoingMsg - Sending audio failed, clearing queue", lcn));
             iAudioDataQueue.clear();
         }
     }
@@ -2470,14 +2463,14 @@ PVMFStatus H223IncomingChannel::DispatchOutgoingMsg(PVMFSharedMediaDataPtr aMedi
         PVMFStatus dispatch_status = QueueOutgoingMsg(mediaMsg);
         if (dispatch_status != PVMFSuccess)
         {
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_WARNING, (0, "H223IncomingChannel::DispatchOutgoingMsg Failed to queue outgoing control message lcn=%d, status=%d", lcn, dispatch_status));
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_WARNING, (0, "H223IncomingChannel(%d)::DispatchOutgoingMsg Failed to queue outgoing control message status=%d", lcn, dispatch_status));
             status = dispatch_status;
 
         }
     }
     else
     {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_WARNING, (0, "H223IncomingChannel::DispatchOutgoingMsg  lcn=%d Queue not connected", lcn));
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_WARNING, (0, "H223IncomingChannel(%d)::DispatchOutgoingMsg Queue not connected", lcn));
     }
 
     return status;
@@ -2634,22 +2627,14 @@ PVMFStatus H223IncomingChannel::SendVideoFrame(PVMFSharedMediaDataPtr aMediaData
 
     if (IsConnected())
     {
-        convertToPVMFMediaMsg(mediaMsg, iVideoFrame);
-        PVMFStatus dispatch_status = QueueOutgoingMsg(mediaMsg);
-        if (dispatch_status != PVMFSuccess)
-        {
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_WARNING, (0, "H223IncomingChannel::SendVideoFrame Failed to queue outgoing media message lcn=%d, status=%d", lcn, dispatch_status));
+        DispatchMessage(iVideoFrame);
 
-        }
 #ifdef LIP_SYNC_TESTING
         g_IncmVideoTS = iVideoFrame->getTimestamp();
         CalculateRMSInfo(g_IncmVideoTS, g_IncmAudioTS);
 #endif
-
         iVideoFrame.Unbind();
     }
-
-
 
     ipVideoFrameAlloc->ResizeMemoryFragment(mediaDataImpl);
     uint32 MediaMsgAllocOverhead = ipVideoFrameAlloc->GetMediaMsgAllocationOverheadBytes();
@@ -2658,14 +2643,14 @@ PVMFStatus H223IncomingChannel::SendVideoFrame(PVMFSharedMediaDataPtr aMediaData
     tempImpl = ipVideoFrameAlloc->allocate(iMax_Chunk_Size);
     if (!tempImpl)
     {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_WARNING, (0, "H223IncomingChannel::SendVideoFrame , Max_Chunk_size Allocation failed\n"));
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_WARNING, (0, "H223IncomingChannel(%d)::SendVideoFrame , Max_Chunk_size Allocation failed\n", lcn));
         iVideoFrame.Unbind();
 
     }
 
     OSCL_TRY(err, iVideoFrame = PVMFMediaData::createMediaData(tempImpl, ipVideoDataMemPool););
     OSCL_FIRST_CATCH_ANY(err,
-                         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223IncomingChannel::::SendVideoFrame, Error:  createMediaData failed, err=%d", err));
+                         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223IncomingChannel(%d)::SendVideoFrame, Error:  createMediaData failed, err=%d", lcn, err));
                          return PVMFFailure;
                         );
 
@@ -2679,7 +2664,7 @@ PVMFStatus H223IncomingChannel::CallSendVideoFrame(PVMFSharedMediaDataPtr aMedia
     int32 err = 0;
     OSCL_TRY(err, status = SendVideoFrame(aMediaData););
     OSCL_FIRST_CATCH_ANY(err,
-                         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223IncomingChannel::::DispatchOutgoingMsg, Error:  SendVideoFrame failed, err=%d", err));
+                         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223IncomingChannel(%d)::DispatchOutgoingMsg, Error:  SendVideoFrame failed, err=%d", lcn, err));
                          return PVMFFailure;
                         );
     return status;
@@ -2687,17 +2672,25 @@ PVMFStatus H223IncomingChannel::CallSendVideoFrame(PVMFSharedMediaDataPtr aMedia
 
 PVMFStatus H223IncomingChannel::SendAudioFrame(PVMFSharedMediaDataPtr aMediaDataPtr)
 {
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223IncomingChannel::SendAudioFrame"));
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223IncomingChannel(%d)::SendAudioFrame", lcn));
 
     int32 err = 0;
 
-    // push a new frame to queue
-    OSCL_TRY(err, iAudioDataQueue.push_back(aMediaDataPtr));
-    OSCL_FIRST_CATCH_ANY(err,
-                         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
-                                         (0, "H223IncomingChannel::SendAudioFrame - Error - No Memory"));
-                         return PVMFErrNoMemory;
-                        );
+    if (ipAudioDtxTimer)
+    {
+        ipAudioDtxTimer->Cancel(AMR_TIMER_ID);
+    }
+
+    if (aMediaDataPtr)
+    {
+        // push a new frame to queue
+        OSCL_TRY(err, iAudioDataQueue.push_back(aMediaDataPtr));
+        OSCL_FIRST_CATCH_ANY(err,
+                             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
+                                             (0, "H223IncomingChannel(%d)::SendAudioFrame - Error - No Memory", lcn));
+                             return PVMFErrNoMemory;
+                            );
+    }
 
     // we keep small buffer filled so we can have more accurate estimation of timestamps
     // following is based on a fact that we are always receiving data late.
@@ -2712,7 +2705,13 @@ PVMFStatus H223IncomingChannel::SendAudioFrame(PVMFSharedMediaDataPtr aMediaData
     // if it is, send all data from queue
     if (back->getFilledSize() <= AMR_SID_SIZE)
     {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_INFO, (0, "H223IncomingChannel::SendAudioFrame - SID frame detected"));
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_DEBUG, (0, "H223IncomingChannel(%d)::SendAudioFrame - SID frame detected", lcn));
+        dataQueueLimit = 1;
+    }
+
+    if (!aMediaDataPtr)
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_DEBUG, (0, "H223IncomingChannel(%d)::SendAudioFrame - Flushing", lcn));
         dataQueueLimit = 1;
     }
 
@@ -2722,7 +2721,7 @@ PVMFStatus H223IncomingChannel::SendAudioFrame(PVMFSharedMediaDataPtr aMediaData
 
         // get the smallest from ts and future timestamp
         // this will remove possible delay of current ts
-        uint16 size = dataQueueSize * AMR_FRAME_SIZE_MS;
+        uint16 size = OSCL_STATIC_CAST(uint16, dataQueueSize * AMR_FRAME_SIZE_MS);
         PVMFTimestamp fts = front->getTimestamp();
         PVMFTimestamp bts = back->getTimestamp();
 
@@ -2740,9 +2739,8 @@ PVMFStatus H223IncomingChannel::SendAudioFrame(PVMFSharedMediaDataPtr aMediaData
         // it is also more likely to receive less than 50 frame/s than over 50fps.
         if (ts > (fts + AMR_JITTER))
         {
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_INFO, (0, "H223IncomingChannel::RemoveAudioFrame, size(%d) origTS(%d) TS(%d)\n", iAudioDataQueue[0]->getFilledSize(), fts, ts));
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_INFO, (0, "H223IncomingChannel(%d)::RemoveAudioFrame, size(%d) origTS(%d) TS(%d)\n", lcn, iAudioDataQueue[0]->getFilledSize(), fts, ts));
             // remove this frame
-            iAudioDataQueue[0].Unbind();
             iAudioDataQueue.erase(iAudioDataQueue.begin());
         }
         else
@@ -2752,19 +2750,14 @@ PVMFStatus H223IncomingChannel::SendAudioFrame(PVMFSharedMediaDataPtr aMediaData
             // smoothen the time stamp
             ts = ts - ts % AMR_FRAME_SIZE_MS;
 
-            // sending frame here.
-            OsclSharedPtr<PVMFMediaMsg> mediaMsg;
-
             // set length, marker, timestamp for new media message
             iAudioDataQueue[0]->setMarkerInfo(PVMF_MEDIA_DATA_MARKER_INFO_M_BIT);
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_INFO, (0, "H223IncomingChannel::SendAudioFrame, size(%d) origTS(%d) TS(%d)\n", iAudioDataQueue[0]->getFilledSize(), fts, ts));
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_INFO, (0, "H223IncomingChannel(%d)::SendAudioFrame, size(%d) origTS(%d) TS(%d)\n", lcn, iAudioDataQueue[0]->getFilledSize(), fts, ts));
 
             iAudioDataQueue[0]->setTimestamp(ts);
             iAudioDataQueue[0]->setSeqNum(++iAudioFrameNum);
-            convertToPVMFMediaMsg(mediaMsg, iAudioDataQueue[0]);
 
-            // send message
-            QueueOutgoingMsg(mediaMsg);
+            DispatchMessage(iAudioDataQueue[0]);
 
 #ifdef LIP_SYNC_TESTING
             g_IncmAudioTS = ts;
@@ -2775,12 +2768,158 @@ PVMFStatus H223IncomingChannel::SendAudioFrame(PVMFSharedMediaDataPtr aMediaData
             iLastAudioTS = ts;
 
             // remove data from queue
-            iAudioDataQueue[0].Unbind();
             iAudioDataQueue.erase(iAudioDataQueue.begin());
         }
-        dataQueueSize = iAudioDataQueue.size();
+        dataQueueSize = OSCL_STATIC_CAST(uint16, iAudioDataQueue.size());
+    }
+
+    if (ipAudioDtxTimer)
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_DEBUG, (0, "H223IncomingChannel(%d)::SendAudioFrame - Start new timer for ts(%d)", lcn, iCurTimestamp));
+        ipAudioDtxTimer->Request(AMR_TIMER_ID, OSCL_STATIC_CAST(int32, iCurTimestamp), 1, this);
     }
 
     return PVMFSuccess;
 }
 
+void H223IncomingChannel::TimeoutOccurred(int32 aTimerID, int32 aTimeoutInfo)
+{
+    OSCL_UNUSED_ARG(aTimerID);
+
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223IncomingChannel(%d)::TimeoutOccurred, TimerId(%d) TimeoutInfo(%d)", lcn, aTimerID, aTimeoutInfo));
+
+    uint32 timeout = OSCL_STATIC_CAST(uint32, aTimeoutInfo);
+    // if not no audio is sent during timeout we have problems receiving new data
+    if (timeout == iCurTimestamp)
+    {
+        // if we have data in buffer
+        if (iAudioDataQueue.size())
+        {
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_DEBUG, (0, "H223IncomingChannel(%d)::TimeoutOccurred - Flush audio", lcn));
+            PVMFSharedMediaDataPtr mediaData;
+
+            if (iPaused) return;
+
+            SendAudioFrame(mediaData);
+        }
+        else
+        {
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_DEBUG, (0, "H223IncomingChannel(%d)::TimeoutOccurred - Create no data", lcn));
+
+            if (!iPaused)
+            {
+                int leavecode = 0;
+                PVMFSharedMediaDataPtr mediaData;
+                if (CreateNoDataAudioFrame(mediaData))
+                {
+                    // don't let this leave as mediaData would be leaked
+                    OSCL_TRY(leavecode, SendAudioFrame(mediaData););
+                    OSCL_FIRST_CATCH_ANY(leavecode,
+                                         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "H223IncomingChannel(%d)::TimeoutOccurred, Error:  SendAudioFrame failed, err=%d", lcn, leavecode));
+                                        );
+                }
+            }
+        }
+    }
+}
+
+void H223IncomingChannel::UpdateCurrentTimestamp()
+{
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223IncomingChannel(%d)::UpdateTimestamp", lcn));
+    if (!iClock)
+    {
+        return;
+    }
+
+    bool overflow = false;
+    PVMFTimestamp timestamp;
+
+    // get the current time
+    iClock->GetCurrentTime32(timestamp, overflow, PVMF_MEDIA_CLOCK_MSEC);
+
+    if (overflow)
+    {
+        // we need to clean the queue and send a new bos message as previous clock value was higher than the new one
+        // best way is to do this is to do pause/resume
+        Pause();
+        Resume();
+    }
+
+    // make sure that the new timestamp is not the same as previous one
+    iCurTimestamp = (iCurTimestamp < timestamp) ? timestamp : iCurTimestamp + 1;
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_DEBUG, (0, "H223IncomingChannel(%d)::UpdateCurrentTimestamp - update current ts(%u)", lcn, iCurTimestamp));
+}
+
+PVMFStatus H223IncomingChannel::DispatchMessage(PVMFSharedMediaDataPtr& arMediaDataPtr)
+{
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223IncomingChannel(%d)::DispatchMessage", lcn));
+
+    PVMFStatus dispatchStatus = PVMFNotSet;
+    OsclSharedPtr<PVMFMediaMsg> mediaMsg;
+
+    // convert to media message
+    convertToPVMFMediaMsg(mediaMsg, arMediaDataPtr);
+
+    // send media message if bos message is already sent
+    if (IsResumable())
+    {
+        dispatchStatus = QueueOutgoingMsg(mediaMsg);
+    }
+    else
+    {
+        dispatchStatus = PVMFErrInvalidState;
+    }
+
+    if (dispatchStatus != PVMFSuccess)
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_WARNING,
+                        (0, "H223IncomingChannel(%d)::DispatchMessage Failed to queue outgoing media message status=%d", lcn, dispatchStatus));
+    }
+    return dispatchStatus;
+}
+
+bool H223IncomingChannel::IsResumable()
+{
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223IncomingChannel(%d)::IsResumable", lcn));
+    // Bos message is needed at the beginning of stream
+    // It is also needed in reposition, like in the case of pause
+    // Only if bos message is sent media message can be send to port
+    return (iBosMessageSent || (SendBeginOfStreamMediaCommand() == PVMFSuccess));
+}
+
+PVMFStatus H223IncomingChannel::CreateNoDataAudioFrame(PVMFSharedMediaDataPtr &arMediaDataPtr)
+{
+    int leavecode = 0;
+
+    // Create new media data buffer
+    OsclSharedPtr<PVMFMediaDataImpl> mediaDataImpl = iMediaFragGroupAlloc->allocate();
+
+    // set no data frame as payload
+    OsclRefCounterMemFrag memFrag;
+
+    OSCL_TRY(leavecode, memFrag = iMemFragmentAlloc.get());
+    OSCL_FIRST_CATCH_ANY(leavecode,
+                         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "H223IncomingChannel(%d)::TimeoutOccurred, Error: Mem frag alloc leaved, err=%d", lcn, leavecode));
+                         return PVMFErrNoMemory;
+                        );
+    if (memFrag.getMemFragPtr() == NULL)
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "H223IncomingChannel(%d)::TimeoutOccurred, Error: Mem frag alloc failed", lcn));
+        return PVMFErrNoMemory;
+    }
+    *((uint8*)memFrag.getMemFragPtr()) = AMR_NO_DATA;
+    memFrag.getMemFrag().len = AMR_NODATA_SIZE;
+
+    mediaDataImpl->appendMediaFragment(memFrag); // this does not leave
+
+    OSCL_TRY(leavecode, arMediaDataPtr = PVMFMediaData::createMediaData(mediaDataImpl, iMediaMsgMemoryPool););
+    OSCL_FIRST_CATCH_ANY(leavecode,
+                         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "H223IncomingChannel(%d)::TimeoutOccurred, Error: Create Media Data, err=%d", lcn, leavecode));
+                         return PVMFErrNoMemory;
+                        );
+
+    // set timestamp for no data
+    UpdateCurrentTimestamp();
+    arMediaDataPtr->setTimestamp(iCurTimestamp);
+    return PVMFSuccess;
+}

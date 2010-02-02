@@ -1750,7 +1750,7 @@ PVMFStatus PvmiMIOFileInput::DoStart()
     }
 
     iStartTime.set_to_current_time();
-    iStartTimestamp = 0;
+    iStartTimestamp = iReadTimeStamp;
 
     AddDataEventToQueue(0);
     return PVMFSuccess;
@@ -1853,8 +1853,9 @@ PVMFStatus PvmiMIOFileInput::DoRead()
     {
         index = iDataEventCounter % iTotalNumFrames;
     }
-    else
+    else if (iSettings.iMediaFormat != PVMF_MIME_PCM16) // pcm data is read in fixed sized chunks, no warning required
     {
+
         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_WARNING,
                         (0, "PvmiMIOFileInput::DoRead: iTotalNumFrames is 0!"));
     }

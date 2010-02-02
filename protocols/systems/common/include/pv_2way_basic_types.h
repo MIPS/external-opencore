@@ -211,16 +211,18 @@ enum TPVTIndicationType
      **/
     PVT_INDICATION_CLOSE_TRACK,
     /**
-     * Indicates that the remote terminal has paused an incoming track.  Any media sink
+     * Indicates that local terminal has paused an incoming track. Any media sink
      * associated with this will be stopped.
-     *
+     * The first octet of the local buffer indicates the direction of the track.
+     * The second and third octets indicates the track id.
      **/
 
     PVT_INDICATION_PAUSE_TRACK,
     /**
-     * Indicates that the remote terminal has resumed an incoming track.  Any media sink
+     * Indicates that local terminal has resumed an incoming track. Any media sink
      * associated with this will be restarted.
-     *
+     * The first octet of the local buffer indicates the direction of the track.
+     * The second and third octets indicates the track id.
      **/
     PVT_INDICATION_RESUME_TRACK,
     /**

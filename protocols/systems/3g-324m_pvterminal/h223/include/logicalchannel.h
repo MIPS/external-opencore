@@ -75,6 +75,10 @@
 #include "pvmi_config_and_capability_utils.h"
 #endif
 
+#ifndef OSCL_TIMER_H_INCLUDED
+#include "oscl_timer.h"
+#endif
+
 #define INVALID_MUX_CODE 0xFF
 #define DEF_NUM_MEDIA_DATA 100
 #define SKEW_CHECK_INTERVAL 2000
@@ -214,12 +218,6 @@ class H223LogicalChannel : public PvmfPortBaseImpl,
 
         // Set format specific information
         PVMFStatus SetFormatSpecificInfo(uint8* info, uint32 info_len);
-
-        void SetTimestampOffset(uint32 offset)
-        {
-            iIncomingSkew = offset;
-        }
-        void SetDatapathLatency(uint32 aLatency);
 
         void SetClock(PVMFMediaClock* aClock)
         {
@@ -448,7 +446,7 @@ class H223OutgoingControlChannel : public H223OutgoingChannel
 
 #define NUM_INCOMING_SDU_BUFFERS 8
 /* For incoming (from the remote terminal) A/V/C */
-class H223IncomingChannel : public H223LogicalChannel
+class H223IncomingChannel : public H223LogicalChannel, public OsclTimerObserver
 {
     public:
         H223IncomingChannel(TPVChannelId num,
@@ -461,6 +459,9 @@ class H223IncomingChannel : public H223LogicalChannel
                             uint32 num_media_data);
         ~H223IncomingChannel();
         void Init();
+
+        // from OsclTimerObserver
+        void TimeoutOccurred(int32 aTimerID, int32 aTimeoutInfo);
 
         TPVDirection GetDirection()
         {
@@ -513,6 +514,9 @@ class H223IncomingChannel : public H223LogicalChannel
         // overload Connect to send out format specific info if available
         PVMFStatus Connect(PVMFPortInterface* aPort);
 
+        // H223LogicalChannel
+        void Pause();
+        void Resume();
 
         // Implement pure virtuals from PvmiCapabilityAndConfig interface
         OSCL_IMPORT_REF void setObserver(PvmiConfigAndCapabilityCmdObserver* aObserver);
@@ -556,6 +560,7 @@ class H223IncomingChannel : public H223LogicalChannel
         /**
          * Add audio media data queue and smoothens timestamps
          * and send oldest audio frame to the output port
+         * If aMediaDataPtr is null queue is flushed
          *
          * @param aMediaDataPtr
          *
@@ -563,7 +568,39 @@ class H223IncomingChannel : public H223LogicalChannel
          **/
         PVMFStatus SendAudioFrame(PVMFSharedMediaDataPtr aMediaDataPtr);
 
-        void SetSampleTimestamps(PVMFTimestamp& aTSOffset);
+        /**
+         * Gets current time and puts it into timestamp (iCurTimestamp)
+         *
+         * @returns void
+         **/
+        void UpdateCurrentTimestamp();
+
+        /**
+         * Dispatch media data to outgoing port if bos message is already sent.
+         *
+         * @param arMediaDataPtr media data
+         *
+         * @returns PVMFStatus PVMFSuccess if succesful
+         **/
+        PVMFStatus DispatchMessage(PVMFSharedMediaDataPtr& arMediaDataPtr);
+
+        /**
+         * Check if bos message is already sent.
+         * Tries to send bos message if sent.
+         *
+         * @returns bool true if bos was sent.
+         **/
+        bool IsResumable();
+
+        /**
+         * Creates audio NO_DATA frame
+         *
+         * @param PVMFSharedMediaDataPtr media data pointer to NO_DATA frame
+         *
+         * @returns PVMFStatus PVMFSuccess if succesful
+         **/
+        PVMFStatus CreateNoDataAudioFrame(PVMFSharedMediaDataPtr &arMediaDataPtr);
+
         PVMFBufferPoolAllocator iMemFragmentAlloc;
         OsclMemPoolFixedChunkAllocator* iMediaMsgMemoryPool;
         PVMFMediaFragGroupCombinedAlloc<OsclMemAllocator>* iMediaFragGroupAlloc;
@@ -590,7 +627,6 @@ class H223IncomingChannel : public H223LogicalChannel
         friend class TSC_324m;
         PVLogger* iIncomingAudioLogger;
         PVLogger* iIncomingVideoLogger;
-        int32 iRenderingSkew;
         uint32 iVideoFrameNum;
         uint32 iMax_Chunk_Size;
         PVMFSharedMediaDataPtr iVideoFrame;
@@ -605,6 +641,12 @@ class H223IncomingChannel : public H223LogicalChannel
 
         // frame number for audio frame
         uint32 iAudioFrameNum;
+
+        // timer to be used to detect missing audio frames
+        OsclTimer<OsclMemAllocator>* ipAudioDtxTimer;
+
+        // bos message is needed when playing is started.
+        bool iBosMessageSent;
 };
 
 class MuxSduData

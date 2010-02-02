@@ -132,7 +132,6 @@ class SimpleStackElement;
 #define FIRST_MUX_ENTRY_NUMBER TSC_FM_MAX_MTE+1
 #define LAST_MUX_ENTRY_NUMBER 14
 #define TSC_WNSRP_MUX_ENTRY_NUMBER 15
-#define TSC_INCOMING_CHANNEL_MASK (1<<16)
 
 
 /*---------------------------------------------------------------------------*/
@@ -157,6 +156,8 @@ class TSC_324mObserver
         virtual void UserInputCapability(int formats) = 0;
         virtual void VideoSpatialTemporalTradeoffCommandReceived(TPVChannelId id, uint8 tradeoff) = 0;
         virtual void VideoSpatialTemporalTradeoffIndicationReceived(TPVChannelId id, uint8 tradeoff) = 0;
+        virtual void LogicalChannelActiveIndicationReceived(TPVChannelId id) = 0;
+        virtual void LogicalChannelInactiveIndicationReceived(TPVChannelId id) = 0;
         virtual void SkewIndicationReceived(TPVChannelId lcn1, TPVChannelId lcn2, uint16 skew) = 0;
 };
 
@@ -419,6 +420,8 @@ class TSC_324m : public OsclActiveObject,
         void Tsc_IdcVi(void);
         void SendVideoTemporalSpatialTradeoffCommand(TPVChannelId aLogicalChannel, uint8 aTradeoff);
         void SendVideoTemporalSpatialTradeoffIndication(TPVChannelId aLogicalChannel, uint8 aTradeoff);
+        void SendLogicalChannelActiveIndication(TPVChannelId aLogicalChannel);
+        void SendLogicalChannelInactiveIndication(TPVChannelId aLogicalChannel);
         void SendSkewIndication(TPVChannelId aLogicalChannel1, TPVChannelId aLogicalChannel2, uint16 aSkew);
         OSCL_IMPORT_REF void  SetLogicalChannelBufferingMs(uint32 aInBufferingMs,
                 uint32 aOutBufferingMs);
@@ -443,6 +446,17 @@ class TSC_324m : public OsclActiveObject,
 
         OSCL_IMPORT_REF void SetClock(PVMFMediaClock* aClock);
         OSCL_IMPORT_REF void SetMioLatency(int32 aLatency, bool aAudio);
+
+        /**
+         * Pauses/Resumes the logical channels
+         * For outgoing channel an indincation is send to peer about the channel status.
+         *
+         * @param apPort port of the channel to be paused/resumed
+         * @param aPause true is pause, false is resume
+         *
+         * @returns TPVStatusCode Fails if channel is not found
+         **/
+        TPVStatusCode SetLogicalChannelPause(TPVChannelId aChannelId, TPVDirection aDir, bool aPause);
 
     private:
         void Cleanup();
@@ -553,7 +567,16 @@ class TSC_324m : public OsclActiveObject,
         // H.245 Miscellaneous Indications
         typedef enum _TIndicationMisc
         {
-            EVideoTemporalSpatialTradeOffIdc,
+            ELogicalChannelActiveIdc = 0,
+            ELogicalChannelInactiveIdc,
+            EMultipointConference,
+            ECancelMultipointConference,
+            EMultipointZeroComm,
+            ECancelMultipointZeroComm,
+            EMultipointSecondaryStatus,
+            ECancelMultipointSecondaryStatus,
+            EVideoIndicateReadyToActivate,
+            EVideoTemporalSpatialTradeOffIdc
         } TIndicationMisc;
         void IndicationMisc(TIndicationMisc type, TPVChannelId channelId, uint32 param = 0, OsclAny* param1 = NULL);
         void Tsc_IdcSkew(TPVChannelId lcn1, TPVChannelId lcn2, uint16 skew);

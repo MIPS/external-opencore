@@ -49,7 +49,9 @@ enum PVH234MessageType
     PVT_H324_COMMAND_SET_FAST_CSUP_OPTIONS,
     PVT_H324_COMMAND_SET_LOGICAL_CHANNEL_BUFFERING_MS,
     PVT_H324_COMMAND_SEND_USER_INPUT,
-    PVT_H324_COMMAND_SET_WNSRP
+    PVT_H324_COMMAND_SET_WNSRP,
+    PVT_H324_COMMAND_SEND_LOGICAL_CHANNEL_ACTIVE_INDICATION,
+    PVT_H324_COMMAND_SEND_LOGICAL_CHANNEL_INACTIVE_INDICATION
 };
 
 class CPVH324InterfaceCmdMessage : public CPVCmnInterfaceCmdMessage
@@ -462,6 +464,30 @@ class PVH324MessageSendVideoSpatialTemporalTradeoffIndication : public CPVH324In
         uint8 iTradeoff;
 };
 
+class PVH324MessageSendLogicalChannelActiveIndication : public CPVH324InterfaceCmdMessage
+{
+    public:
+        PVH324MessageSendLogicalChannelActiveIndication(TPVChannelId aLogicalChannel,
+                OsclAny* aContextData,
+                TPVCmnCommandId aId)
+                : CPVH324InterfaceCmdMessage(PVT_H324_COMMAND_SEND_LOGICAL_CHANNEL_ACTIVE_INDICATION, aContextData, aId),
+                iLogicalChannel(aLogicalChannel)
+        {}
+        TPVChannelId iLogicalChannel;
+};
+
+class PVH324MessageSendLogicalChannelInactiveIndication : public CPVH324InterfaceCmdMessage
+{
+    public:
+        PVH324MessageSendLogicalChannelInactiveIndication(TPVChannelId aLogicalChannel,
+                OsclAny* aContextData,
+                TPVCmnCommandId aId)
+                : CPVH324InterfaceCmdMessage(PVT_H324_COMMAND_SEND_LOGICAL_CHANNEL_INACTIVE_INDICATION, aContextData, aId),
+                iLogicalChannel(aLogicalChannel)
+        {}
+        TPVChannelId iLogicalChannel;
+};
+
 class PVH324MessageSendSkewIndication : public CPVH324InterfaceCmdMessage
 {
     public:
@@ -614,6 +640,12 @@ class PVH324MessageUtils
                 case PVT_H324_COMMAND_SEND_VIDEO_SPATIAL_TEMPORAL_TRADEOFF_INDICATION:
                     OSCL_DELETE((PVH324MessageSendVideoSpatialTemporalTradeoffIndication*)aCmd);
                     break;
+                case PVT_H324_COMMAND_SEND_LOGICAL_CHANNEL_ACTIVE_INDICATION:
+                    OSCL_DELETE((PVH324MessageSendLogicalChannelActiveIndication*)aCmd);
+                    break;
+                case PVT_H324_COMMAND_SEND_LOGICAL_CHANNEL_INACTIVE_INDICATION:
+                    OSCL_DELETE((PVH324MessageSendLogicalChannelInactiveIndication*)aCmd);
+                    break;
                 case PVT_H324_COMMAND_SEND_SKEW_INDICATION:
                     OSCL_DELETE((PVH324MessageSendSkewIndication*)aCmd);
                     break;
@@ -683,7 +715,6 @@ void H324MConfig::Run()
 
 PVMFCommandId H324MConfig::SetMultiplexLevel(TPVH223Level aLevel, OsclAny* aContextData)
 {
-    OSCL_UNUSED_ARG(aContextData);
     iH324M->SetMultiplexLevel(aLevel);
     SendCmdResponse(iCommandId, aContextData, PVMFSuccess);
     return iCommandId++;
@@ -691,7 +722,6 @@ PVMFCommandId H324MConfig::SetMultiplexLevel(TPVH223Level aLevel, OsclAny* aCont
 
 PVMFCommandId H324MConfig::SetMaxSduSize(TPVAdaptationLayer aLayer, int32 aSize, OsclAny* aContextData)
 {
-    OSCL_UNUSED_ARG(aContextData);
     iH324M->SetSduSize(OUTGOING, (uint16)aSize, aLayer);
     SendCmdResponse(iCommandId, aContextData, PVMFSuccess);
     return iCommandId++;
@@ -699,7 +729,6 @@ PVMFCommandId H324MConfig::SetMaxSduSize(TPVAdaptationLayer aLayer, int32 aSize,
 
 PVMFCommandId H324MConfig::SetMaxSduSizeR(TPVAdaptationLayer aLayer, int32 aSize, OsclAny* aContextData)
 {
-    OSCL_UNUSED_ARG(aContextData);
     iH324M->SetSduSize(INCOMING, (uint16)aSize, aLayer);
     SendCmdResponse(iCommandId, aContextData, PVMFSuccess);
     return iCommandId++;
@@ -711,7 +740,6 @@ PVMFCommandId H324MConfig::SetCodecPreference(Oscl_Vector<PVMFFormatType, OsclMe
         Oscl_Vector<PVMFFormatType, OsclMemAllocator>& aOutgoingVideo,
         OsclAny* aContextData)
 {
-    OSCL_UNUSED_ARG(aContextData);
     iH324M->SetCodecPreference(aIncomingAudio, aIncomingVideo, aOutgoingAudio, aOutgoingVideo);
     SendCmdResponse(iCommandId, aContextData, PVMFSuccess);
     return iCommandId++;
@@ -720,7 +748,6 @@ PVMFCommandId H324MConfig::SetCodecPreference(Oscl_Vector<PVMFFormatType, OsclMe
 PVMFCommandId H324MConfig::SetFormatSpecificInfo(PVMFFormatType aMediaFormat, const uint8* apFormatSpecificInfo,
         uint32 aFormatSpecificInfoLen, OsclAny* aContextData)
 {
-    OSCL_UNUSED_ARG(aContextData);
     iH324M->SetFormatSpecificInfo(aMediaFormat, apFormatSpecificInfo, aFormatSpecificInfoLen);
     SendCmdResponse(iCommandId, aContextData, PVMFSuccess);
     return iCommandId++;
@@ -728,7 +755,6 @@ PVMFCommandId H324MConfig::SetFormatSpecificInfo(PVMFFormatType aMediaFormat, co
 
 PVMFCommandId H324MConfig::SetAl2SequenceNumbers(int32 aSeqNumWidth, OsclAny* aContextData)
 {
-    OSCL_UNUSED_ARG(aContextData);
     iH324M->SetAl2Sn(aSeqNumWidth);
     SendCmdResponse(iCommandId, aContextData, PVMFSuccess);
     return iCommandId++;
@@ -736,7 +762,6 @@ PVMFCommandId H324MConfig::SetAl2SequenceNumbers(int32 aSeqNumWidth, OsclAny* aC
 
 PVMFCommandId H324MConfig::SetAl3ControlFieldOctets(int32 aCfo, OsclAny* aContextData)
 {
-    OSCL_UNUSED_ARG(aContextData);
     iH324M->SetAl3ControlFieldOctets(aCfo);
     SendCmdResponse(iCommandId, aContextData, PVMFSuccess);
     return iCommandId++;
@@ -744,7 +769,6 @@ PVMFCommandId H324MConfig::SetAl3ControlFieldOctets(int32 aCfo, OsclAny* aContex
 
 PVMFCommandId H324MConfig::SetOutoingPduType(TPVH223MuxPduType aOutgoingPduType, OsclAny* aContextData)
 {
-    OSCL_UNUSED_ARG(aContextData);
     iH324M->SetMaxOutgoingPduSize((uint16)aOutgoingPduType);
     SendCmdResponse(iCommandId, aContextData, PVMFSuccess);
     return iCommandId++;
@@ -752,7 +776,6 @@ PVMFCommandId H324MConfig::SetOutoingPduType(TPVH223MuxPduType aOutgoingPduType,
 
 PVMFCommandId H324MConfig::SetMaxPduSize(int32 aMaxPduSize, OsclAny* aContextData)
 {
-    OSCL_UNUSED_ARG(aContextData);
     iH324M->SetMaxMuxPduSize((uint16)aMaxPduSize);
     SendCmdResponse(iCommandId, aContextData, PVMFSuccess);
     return iCommandId++;
@@ -760,7 +783,6 @@ PVMFCommandId H324MConfig::SetMaxPduSize(int32 aMaxPduSize, OsclAny* aContextDat
 
 PVMFCommandId H324MConfig::SetTerminalType(uint8 aTerminalType, OsclAny* aContextData)
 {
-    OSCL_UNUSED_ARG(aContextData);
     iH324M->SetTerminalType(aTerminalType);
     SendCmdResponse(iCommandId, aContextData, PVMFSuccess);
     return iCommandId++;
@@ -769,7 +791,6 @@ PVMFCommandId H324MConfig::SetTerminalType(uint8 aTerminalType, OsclAny* aContex
 PVMFCommandId H324MConfig::SetALConfiguration(TPVMediaType_t aMediaType, TPVAdaptationLayer aLayer,
         bool aAllow, bool aUse, OsclAny* aContextData)
 {
-    OSCL_UNUSED_ARG(aContextData);
     iH324M->SetAlConfig(aMediaType, aLayer, aAllow, aUse);
     SendCmdResponse(iCommandId, aContextData, PVMFSuccess);
     return iCommandId++;
@@ -777,7 +798,6 @@ PVMFCommandId H324MConfig::SetALConfiguration(TPVMediaType_t aMediaType, TPVAdap
 
 PVMFCommandId H324MConfig::SendRme(OsclAny* aContextData)
 {
-    OSCL_UNUSED_ARG(aContextData);
     iH324M->RmeSendReq();
     SendCmdResponse(iCommandId, aContextData, PVMFSuccess);
     return iCommandId++;
@@ -786,7 +806,6 @@ PVMFCommandId H324MConfig::SendRme(OsclAny* aContextData)
 
 PVMFCommandId H324MConfig::SetMaxMuxPduSize(int32 aRequestMaxMuxPduSize, OsclAny* aContextData)
 {
-    OSCL_UNUSED_ARG(aContextData);
     iH324M->SetMaxMuxPduSize((uint16)aRequestMaxMuxPduSize);
     SendCmdResponse(iCommandId, aContextData, PVMFSuccess);
     return iCommandId++;
@@ -794,7 +813,6 @@ PVMFCommandId H324MConfig::SetMaxMuxPduSize(int32 aRequestMaxMuxPduSize, OsclAny
 
 PVMFCommandId H324MConfig::SetMaxMuxCcsrlSduSize(int32 aMaxCcsrlSduSize, OsclAny* aContextData)
 {
-    OSCL_UNUSED_ARG(aContextData);
     iH324M->SetMaxCcsrlSduSize(aMaxCcsrlSduSize);
     SendCmdResponse(iCommandId, aContextData, PVMFSuccess);
     return iCommandId++;
@@ -803,14 +821,12 @@ PVMFCommandId H324MConfig::SetMaxMuxCcsrlSduSize(int32 aMaxCcsrlSduSize, OsclAny
 PVMFCommandId H324MConfig::FastUpdate(PVMFNodeInterface& aTrack, OsclAny* aContextData)
 {
     OSCL_UNUSED_ARG(aTrack);
-    OSCL_UNUSED_ARG(aContextData);
     SendCmdResponse(iCommandId, aContextData, PVMFSuccess);
     return iCommandId++;
 };
 
 PVMFCommandId H324MConfig::SendRtd(OsclAny* aContextData)
 {
-    OSCL_UNUSED_ARG(aContextData);
     iH324M->RtdTrfReq();
     SendCmdResponse(iCommandId, aContextData, PVMFSuccess);
     return iCommandId++;
@@ -821,8 +837,6 @@ PVMFCommandId H324MConfig::SetVendor(uint8 aCc, uint8 aExt, uint32 aMc,
                                      const uint8* aVersion, uint16 aVersionLen,
                                      OsclAny* aContextData)
 {
-    OSCL_UNUSED_ARG(aContextData);
-
     TPVH245Vendor* h245vendor = OSCL_NEW(TPVVendorH221NonStandard,
                                          (aCc, aExt, aMc));
     iH324M->SetVendorIdInfo(h245vendor,
@@ -835,7 +849,6 @@ PVMFCommandId H324MConfig::SetVendor(uint8 aCc, uint8 aExt, uint32 aMc,
 
 PVMFCommandId H324MConfig::SendEndSession(OsclAny* aContextData)
 {
-    OSCL_UNUSED_ARG(aContextData);
     iH324M->EndSessionCommand();
     SendCmdResponse(iCommandId, aContextData, PVMFSuccess);
     return iCommandId++;
@@ -843,7 +856,6 @@ PVMFCommandId H324MConfig::SendEndSession(OsclAny* aContextData)
 
 PVMFCommandId H324MConfig::SetEndSessionTimeout(uint32 aTimeout, OsclAny* aContextData)
 {
-    OSCL_UNUSED_ARG(aContextData);
     iH324M->SetEndSessionTimeout(aTimeout);
     SendCmdResponse(iCommandId, aContextData, PVMFSuccess);
     return iCommandId++;
@@ -854,7 +866,6 @@ PVMFCommandId H324MConfig::SetTimerCounter(TPVH324TimerCounter aTimerCounter,
         uint32 aValue,
         OsclAny* aContextData)
 {
-    OSCL_UNUSED_ARG(aContextData);
     iH324M->SetTimerCounter(aTimerCounter, aSeries, aSeriesOffset, aValue);
     SendCmdResponse(iCommandId, aContextData, PVMFSuccess);
     return iCommandId++;
@@ -864,7 +875,6 @@ PVMFCommandId H324MConfig::SetVideoResolutions(TPVDirection aDirection,
         Oscl_Vector<PVMFVideoResolutionRange, OsclMemAllocator>& aResolutions,
         OsclAny* aContextData)
 {
-    OSCL_UNUSED_ARG(aContextData);
     iH324M->SetVideoResolutions(aDirection, aResolutions);
     SendCmdResponse(iCommandId, aContextData, PVMFSuccess);
     return iCommandId++;
@@ -872,7 +882,6 @@ PVMFCommandId H324MConfig::SetVideoResolutions(TPVDirection aDirection,
 
 PVMFCommandId H324MConfig::SendVendorId(OsclAny* aContextData)
 {
-    OSCL_UNUSED_ARG(aContextData);
     iH324M->Tsc_IdcVi();
     SendCmdResponse(iCommandId, aContextData, PVMFSuccess);
     return iCommandId++;
@@ -881,7 +890,6 @@ PVMFCommandId H324MConfig::SendVendorId(OsclAny* aContextData)
 PVMFCommandId H324MConfig::SendVideoTemporalSpatialTradeoffCommand(TPVChannelId aLogicalChannel, uint8 aTradeoff,
         OsclAny* aContextData)
 {
-    OSCL_UNUSED_ARG(aContextData);
     iH324M->SendVideoTemporalSpatialTradeoffCommand(aLogicalChannel, aTradeoff);
     SendCmdResponse(iCommandId, aContextData, PVMFSuccess);
     return iCommandId++;
@@ -890,8 +898,24 @@ PVMFCommandId H324MConfig::SendVideoTemporalSpatialTradeoffCommand(TPVChannelId 
 PVMFCommandId H324MConfig::SendVideoTemporalSpatialTradeoffIndication(TPVChannelId aLogicalChannel, uint8 aTradeoff,
         OsclAny* aContextData)
 {
-    OSCL_UNUSED_ARG(aContextData);
     iH324M->SendVideoTemporalSpatialTradeoffIndication(aLogicalChannel, aTradeoff);
+    SendCmdResponse(iCommandId, aContextData, PVMFSuccess);
+    return iCommandId++;
+}
+
+PVMFCommandId H324MConfig::SendLogicalChannelActiveIndication(TPVChannelId aLogicalChannel,
+        OsclAny* aContextData)
+{
+    iH324M->SendLogicalChannelActiveIndication(aLogicalChannel);
+    SendCmdResponse(iCommandId, aContextData, PVMFSuccess);
+    return iCommandId++;
+}
+
+
+PVMFCommandId H324MConfig::SendLogicalChannelInactiveIndication(TPVChannelId aLogicalChannel,
+        OsclAny* aContextData)
+{
+    iH324M->SendLogicalChannelInactiveIndication(aLogicalChannel);
     SendCmdResponse(iCommandId, aContextData, PVMFSuccess);
     return iCommandId++;
 }
@@ -899,7 +923,6 @@ PVMFCommandId H324MConfig::SendVideoTemporalSpatialTradeoffIndication(TPVChannel
 PVMFCommandId H324MConfig::SendSkewIndication(TPVChannelId aLogicalChannel1, TPVChannelId aLogicalChannel2, uint16 aSkew,
         OsclAny* aContextData)
 {
-    OSCL_UNUSED_ARG(aContextData);
     iH324M->SendSkewIndication(aLogicalChannel1, aLogicalChannel2, aSkew);
     SendCmdResponse(iCommandId, aContextData, PVMFSuccess);
     return iCommandId++;
@@ -911,7 +934,6 @@ H324MConfig::SetLogicalChannelBufferingMs(uint32 aInBufferingMs,
         uint32 aOutBufferingMs,
         OsclAny* aContextData)
 {
-    OSCL_UNUSED_ARG(aContextData);
     iH324M->SetLogicalChannelBufferingMs(aInBufferingMs, aOutBufferingMs);
     SendCmdResponse(iCommandId, aContextData, PVMFSuccess);
     return iCommandId++;
@@ -921,7 +943,6 @@ PVMFCommandId
 H324MConfig::SendUserInput(CPVUserInput* aUserInput,
                            OsclAny* aContextData)
 {
-    OSCL_UNUSED_ARG(aContextData);
     switch (aUserInput->GetType())
     {
         case EAlphanumeric:
@@ -958,7 +979,6 @@ H324MConfig::SendUserInput(CPVUserInput* aUserInput,
 PVMFCommandId H324MConfig::SetWnsrp(const bool aEnableWnsrp,
                                     OsclAny* aContextData)
 {
-    OSCL_UNUSED_ARG(aContextData);
     iH324M->SetWnsrp(aEnableWnsrp);
     SendCmdResponse(iCommandId, aContextData, PVMFSuccess);
     return iCommandId++;
@@ -1072,6 +1092,26 @@ void H324MConfig::VideoSpatialTemporalTradeoffIndicationReceived(TPVChannelId id
     event.GetLocalBuffer()[0] = (uint8)((id >> 8) & 0xFF);
     event.GetLocalBuffer()[1] = (uint8)(id & 0xFF);
     event.GetLocalBuffer()[2] = (uint8) tradeoff;
+    SendAsyncEvent(event);
+}
+
+
+void H324MConfig::LogicalChannelActiveIndicationReceived(TPVChannelId id)
+{
+    PVMFAsyncEvent event(PVMFInfoEvent, PV_INDICATION_LOGICAL_CHANNEL_ACTIVE, NULL, NULL);
+    oscl_memset(event.GetLocalBuffer(), 0, PVMF_ASYNC_EVENT_LOCAL_BUF_SIZE);
+    event.GetLocalBuffer()[0] = (uint8)((id >> 8) & 0xFF);
+    event.GetLocalBuffer()[1] = (uint8)(id & 0xFF);
+    SendAsyncEvent(event);
+}
+
+
+void H324MConfig::LogicalChannelInactiveIndicationReceived(TPVChannelId id)
+{
+    PVMFAsyncEvent event(PVMFInfoEvent, PV_INDICATION_LOGICAL_CHANNEL_INACTIVE, NULL, NULL);
+    oscl_memset(event.GetLocalBuffer(), 0, PVMF_ASYNC_EVENT_LOCAL_BUF_SIZE);
+    event.GetLocalBuffer()[0] = (uint8)((id >> 8) & 0xFF);
+    event.GetLocalBuffer()[1] = (uint8)(id & 0xFF);
     SendAsyncEvent(event);
 }
 
@@ -1417,6 +1457,30 @@ PVMFCommandId H324MConfigProxied::SendVideoTemporalSpatialTradeoffIndication(TPV
     OSCL_FIRST_CATCH_ANY(error, PVH324MessageUtils::DestroyMessage(cmd););
     return iCommandId++;
 }
+
+PVMFCommandId H324MConfigProxied::SendLogicalChannelActiveIndication(TPVChannelId aLogicalChannel,
+        OsclAny* aContextData)
+{
+    PVH324MessageSendLogicalChannelActiveIndication *cmd = NULL;
+    cmd = OSCL_NEW(PVH324MessageSendLogicalChannelActiveIndication, (aLogicalChannel, aContextData, iCommandId));
+    int32 error = 0;
+    OSCL_TRY(error, iMainProxy->SendCommand(iProxyId, cmd));
+    OSCL_FIRST_CATCH_ANY(error, PVH324MessageUtils::DestroyMessage(cmd););
+    return iCommandId++;
+}
+
+
+PVMFCommandId H324MConfigProxied::SendLogicalChannelInactiveIndication(TPVChannelId aLogicalChannel,
+        OsclAny* aContextData)
+{
+    PVH324MessageSendLogicalChannelInactiveIndication *cmd = NULL;
+    cmd = OSCL_NEW(PVH324MessageSendLogicalChannelInactiveIndication, (aLogicalChannel, aContextData, iCommandId));
+    int32 error = 0;
+    OSCL_TRY(error, iMainProxy->SendCommand(iProxyId, cmd));
+    OSCL_FIRST_CATCH_ANY(error, PVH324MessageUtils::DestroyMessage(cmd););
+    return iCommandId++;
+}
+
 
 PVMFCommandId H324MConfigProxied::SendSkewIndication(TPVChannelId aLogicalChannel1, TPVChannelId aLogicalChannel2, uint16 aSkew,
         OsclAny* aContextData)
@@ -1844,6 +1908,44 @@ void H324MConfigProxied::HandleCommand(TPVProxyMsgId aMsgId, OsclAny *aMsg)
                 }
             }
             break;
+        case PVT_H324_COMMAND_SEND_LOGICAL_CHANNEL_ACTIVE_INDICATION:
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLoggerServer, PVLOGMSG_STACK_TRACE,
+                            (0, "H324MConfigProxied::HandleCommand - Logical Channel Active indication"));
+            {
+                PVH324MessageSendLogicalChannelActiveIndication* msg =
+                    OSCL_STATIC_CAST(PVH324MessageSendLogicalChannelActiveIndication*, aMsg);
+                if (msg)
+                {
+                    commandId = iH324MConfigIF->SendLogicalChannelActiveIndication(msg->iLogicalChannel, (CPVCmnInterfaceCmdMessage*)aMsg);
+                }
+                else
+                {
+                    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLoggerServer, PVLOGMSG_STACK_TRACE,
+                                    (0, "H324MConfigProxied::HandleCommand - Failed to cast"));
+                }
+            }
+            break;
+
+        case PVT_H324_COMMAND_SEND_LOGICAL_CHANNEL_INACTIVE_INDICATION:
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLoggerServer, PVLOGMSG_STACK_TRACE,
+                            (0, "H324MConfigProxied::HandleCommand - Logical Channel inactive indication"));
+            {
+                PVH324MessageSendLogicalChannelInactiveIndication* msg =
+                    OSCL_STATIC_CAST(PVH324MessageSendLogicalChannelInactiveIndication*, aMsg);
+                if (msg)
+                {
+                    commandId = iH324MConfigIF->SendLogicalChannelInactiveIndication(msg->iLogicalChannel, (CPVCmnInterfaceCmdMessage*)aMsg);
+                }
+                else
+                {
+                    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLoggerServer, PVLOGMSG_STACK_TRACE,
+                                    (0, "H324MConfigProxied::HandleCommand - Failed to cast"));
+                }
+            }
+            break;
+
+
+
         case PVT_H324_COMMAND_SEND_VENDOR_ID:
             PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLoggerServer, PVLOGMSG_STACK_TRACE,
                             (0, "H324MConfigProxied::HandleCommand - Send vendor id"));

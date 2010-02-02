@@ -341,8 +341,16 @@ void TSC_324m::IndicationMisc(TIndicationMisc type,
     {
         case EVideoTemporalSpatialTradeOffIdc:
             miscellaneousIndication.logicalChannelNumber = (uint16)channelId;
-            miscellaneousIndication.miType.index = 9;
+            miscellaneousIndication.miType.index = EVideoTemporalSpatialTradeOffIdc;
             miscellaneousIndication.miType.videoTemporalSpatialTradeOff = (uint8)param;
+            break;
+        case ELogicalChannelActiveIdc:
+            miscellaneousIndication.logicalChannelNumber = (uint16)channelId;
+            miscellaneousIndication.miType.index = ELogicalChannelActiveIdc;
+            break;
+        case ELogicalChannelInactiveIdc:
+            miscellaneousIndication.logicalChannelNumber = (uint16)channelId;
+            miscellaneousIndication.miType.index = ELogicalChannelInactiveIdc;
             break;
         default:
             return;
@@ -380,6 +388,22 @@ uint32 TSC_324m::MiscIndicationRecv(PS_ControlMsgHeader  pReceiveInf)
                      indication->logicalChannelNumber, indication->miType.index));
     switch (indication->miType.index)
     {
+        case 0:
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                            (0, "TSC_324m::MiscIndicationRecv LogicalChannelActive"));
+            if (iTSC_324mObserver)
+            {
+                iTSC_324mObserver->LogicalChannelActiveIndicationReceived(indication->logicalChannelNumber);
+            }
+            break;
+        case 1:
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                            (0, "TSC_324m::MiscIndicationRecv LogicalChannelInactive"));
+            if (iTSC_324mObserver)
+            {
+                iTSC_324mObserver->LogicalChannelInactiveIndicationReceived(indication->logicalChannelNumber);
+            }
+            break;
         case 9:
             PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                             (0, "TSC_324m::MiscIndicationRecv videoSpatialTemporalTradeoff(%d)",

@@ -1222,7 +1222,7 @@ void CPV324m2Way::DoAddDataSinkNodeForAVC(TPV2WayNode& arNode,
     arDatapathnode.iNode.iNode = pSinkNode->iNode;
     arDatapathnode.iNode.iSessionId = pSinkNode->iSessionId;
     arDatapathnode.iConfigure = NULL;
-    arDatapathnode.iCanNodePause = false;
+    arDatapathnode.iCanNodePause = true;
     arDatapathnode.iLoggoffOnReset = true;
     arDatapathnode.iIgnoreNodeState = false;
     arDatapathnode.iInputPort.iRequestPortState = EPVMFNodeInitialized;
@@ -2537,7 +2537,14 @@ PVCommandId CPV324m2Way::Pause(PV2WayDirection aDirection,
             //State check okay.
             break;
     }
-    datapath = GetDataPath(aDirection, aTrackId);
+
+    datapath = GetDataPath(aDirection, aTrackId & 0xFF);
+    if (!datapath)
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
+                        (0, "CPV324m2Way::Pause - invalid datapath, aDirection(%d) aTrackId(%d)", aDirection, aTrackId));
+        OSCL_LEAVE(PVMFErrInvalidState);
+    }
 
     switch (datapath->GetState())
     {
@@ -2546,6 +2553,8 @@ PVCommandId CPV324m2Way::Pause(PV2WayDirection aDirection,
             cmd->type = PVT_COMMAND_PAUSE;
             cmd->id = iCommandId;
             cmd->contextData = aContextData;
+            cmd->iPvtCmdData = aTrackId;
+            cmd->iPvtCmdDataExt = aDirection;
             datapath->SetCmd(cmd);
             break;
 
@@ -2554,6 +2563,8 @@ PVCommandId CPV324m2Way::Pause(PV2WayDirection aDirection,
             cmd->type = PVT_COMMAND_PAUSE;
             cmd->id = iCommandId;
             cmd->contextData = aContextData;
+            cmd->iPvtCmdData = aTrackId ;
+            cmd->iPvtCmdDataExt = aDirection;
             cmd->status = PVMFSuccess;
             Dispatch(cmd);
             break;
@@ -2598,6 +2609,13 @@ PVCommandId CPV324m2Way::Resume(PV2WayDirection aDirection,
 
     datapath = GetDataPath(aDirection, aTrackId);
 
+    if (!datapath)
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
+                        (0, "CPV324m2Way::Resume - invalid datapath, aDirection(%d) aTrackId(%d)", aDirection, aTrackId));
+        OSCL_LEAVE(PVMFErrInvalidState);
+    }
+
     switch (datapath->GetState())
     {
         case EPaused:
@@ -2605,6 +2623,8 @@ PVCommandId CPV324m2Way::Resume(PV2WayDirection aDirection,
             cmd->type = PVT_COMMAND_RESUME;
             cmd->id = iCommandId;
             cmd->contextData = aContextData;
+            cmd->iPvtCmdData = aTrackId;
+            cmd->iPvtCmdDataExt = aDirection;
             datapath->SetCmd(cmd);
             break;
 
@@ -2613,6 +2633,8 @@ PVCommandId CPV324m2Way::Resume(PV2WayDirection aDirection,
             cmd->type = PVT_COMMAND_RESUME;
             cmd->id = iCommandId;
             cmd->contextData = aContextData;
+            cmd->iPvtCmdData = aTrackId;
+            cmd->iPvtCmdDataExt = aDirection;
             cmd->status = PVMFSuccess;
             Dispatch(cmd);
             break;
@@ -2630,7 +2652,6 @@ PVCommandId CPV324m2Way::Resume(PV2WayDirection aDirection,
 
     return iCommandId++;
 }
-
 
 PVCommandId CPV324m2Way::SetLogAppender(const char * aTag,
                                         OsclSharedPtr<PVLoggerAppender>& aAppender,
@@ -3143,6 +3164,47 @@ void CPV324m2Way::Run()
                     }
                     break;
 
+                case PVT_COMMAND_PAUSE:
+                case PVT_COMMAND_RESUME:
+                {
+                    PV2WayDirection direction = OSCL_STATIC_CAST(PV2WayDirection, cmd->iPvtCmdDataExt);
+                    PVMFStatus status = PVMFSuccess;
+                    bool pause = (cmd->type == PVT_COMMAND_PAUSE);
+                    TPVChannelId channelId = OSCL_STATIC_CAST(TPVChannelId, cmd->iPvtCmdData);
+
+                    if (direction == OUTGOING)  //If outgoing channel
+                    {
+                        status = iTSC324mInterface->SetLogicalChannelPause(channelId, direction, pause);
+                        if (status != PVMFSuccess)
+                        {
+                            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_WARNING,
+                                            (0, "CPV324m2Way::Run Failed to set Pause to %d in Channel Id %d", pause, channelId));
+                        }
+                    }
+                    if (status == PVMFSuccess)
+                    {
+                        // send pause indication to observer
+                        event = GetEventInfoL();
+                        if (!event)
+                        {
+                            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
+                                            (0, "CPV324m2Way::Run() unable to notify app about pause state!\n"));
+                            return;
+                        }
+                        event->type = (pause) ? PVT_INDICATION_PAUSE_TRACK : PVT_INDICATION_RESUME_TRACK;
+
+                        oscl_memset(event->localBuffer, 0, PV_COMMON_ASYNC_EVENT_LOCAL_BUF_SIZE);
+                        // direction is set to first byte inside indications local buffer
+                        // channel id is set to second and third byte
+                        event->localBuffer[0] = (uint8)(direction & 0xFF);
+                        event->localBuffer[1] = (uint8)((channelId >> 8) & 0xFF);
+                        event->localBuffer[2] = (uint8)(channelId & 0xFF);
+                        event->localBufferSize = 3;
+                        Dispatch(event);
+                    }
+                }
+                break;
+
                 case PVT_COMMAND_DISCONNECT:
                     iMuxDatapath->ResetDatapath();
                     iCommNode.iNode->ThreadLogoff();
@@ -3527,6 +3589,20 @@ void CPV324m2Way::HandleNodeInformationalEvent(const PVMFAsyncEvent& aEvent)
         {
             PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_INFO,
                             (0, "CPV324m2Way::HandleNodeInformationalEvent audio dec datapath PVMFInfoStartOfData received, Clock started\n"));
+        }
+        else if (event == PVMFInfoStateChanged)
+        {
+            // Pause/resume has to be done here and not in run as decoder needs to be started before
+            // channel is resumed. Otherwise the sending of bos message will fail.
+
+            // interface state is written into pointer???
+            // so pointer int* needs to casted to int
+            int nodeInterfaceState = OSCL_STATIC_CAST(int, OSCL_STATIC_CAST(int*, aEvent.GetEventData()));
+            bool pause = (nodeInterfaceState == EPVMFNodePaused);
+            if (iTSC324mInterface && (pause || (nodeInterfaceState == EPVMFNodeStarted)))
+            {
+                iTSC324mInterface->SetLogicalChannelPause(iAudioDecDatapath->GetChannelId(), INCOMING, pause);
+            }
         }
     }
     else if ((iVideoEncDatapath != NULL) &&

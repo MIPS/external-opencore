@@ -687,8 +687,7 @@ void TSC_component::SetAl2Sn(int width)
 /*****************************************************************************/
 uint32 TSC_component::LcEtbIdc(PS_ControlMsgHeader  pReceiveInf)
 {
-    TPVChannelId OpenLcn = (TPVChannelId)pReceiveInf->InfSupplement1 +
-                           TSC_INCOMING_CHANNEL_MASK;
+    TPVChannelId OpenLcn = (TPVChannelId)pReceiveInf->InfSupplement1;
     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                     (0, "TSC_component::LcEtbIdc lcn(%d)", OpenLcn));
     PS_ForwardReverseParam pLcParam = (PS_ForwardReverseParam) pReceiveInf->pParameter;
@@ -920,7 +919,7 @@ uint32 TSC_component::OpenLogicalChannel(TPVChannelId OpenLcn,
 /*****************************************************************************/
 uint32 TSC_component::BlcEtbIdc(PS_ControlMsgHeader  pReceiveInf)
 {
-    TPVChannelId OpenLcnB = pReceiveInf->InfSupplement1 + TSC_INCOMING_CHANNEL_MASK; /* incoming lcn */
+    TPVChannelId OpenLcnB = pReceiveInf->InfSupplement1; /* incoming lcn */
     TPVChannelId OpenLcnF = CHANNEL_ID_UNKNOWN; /* outgoing lcn */
     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                     (0, "TSC_component::BlcEtbIdc lcn(%d)", OpenLcnB));
@@ -1734,7 +1733,7 @@ OsclAny TSC_component::AcceptBLCRequest(TPVChannelId OpenLcnF,
     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                     (0, "TSC: AcceptBLCRequest reverse(%d), forward(%d)\n", OpenLcnB, OpenLcnF));
     /* RvsParameters are okay; accept the OLC */
-    iTSCblc.BlcEtbRps(OpenLcnB - TSC_INCOMING_CHANNEL_MASK, OpenLcnF);
+    iTSCblc.BlcEtbRps(OpenLcnB, OpenLcnF);
     // Open the incoming and outgoing logical channels in the mux
     OlcParam* param = OpenLogicalChannel(INCOMING,
                                          OpenLcnB,
@@ -1779,8 +1778,7 @@ uint32 TSC_component::LcRlsIdc(PS_ControlMsgHeader  pReceiveInf)
     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                     (0, "TSC_component::LcRlsIdc dir(%d), lcn(%d).",
                      dir, pReceiveInf->InfSupplement1));
-    TPVChannelId lcn = (dir == INCOMING) ? (TPVChannelId)(pReceiveInf->InfSupplement1 +
-                       TSC_INCOMING_CHANNEL_MASK) : (TPVChannelId)pReceiveInf->InfSupplement1;
+    TPVChannelId lcn = (TPVChannelId)(pReceiveInf->InfSupplement1);
     PS_SourceCause_LcBlc sourceCause = (PS_SourceCause_LcBlc)pReceiveInf->pParameter;
     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                     (0, "TSC_component::LcRlsIdc sourceCause(%x), cause index(%d)",
@@ -1841,7 +1839,6 @@ uint32 TSC_component::BlcRlsIdc(PS_ControlMsgHeader  pReceiveInf)
     if (pReceiveInf->Dir == S_ControlMsgHeader::INCOMING)
     {
         dir = INCOMING;
-        lcn += TSC_INCOMING_CHANNEL_MASK;
     }
 
     PVMFStatus status = PVMFSuccess;
@@ -1891,10 +1888,6 @@ uint32 TSC_component::BlcRlsIdc(PS_ControlMsgHeader  pReceiveInf)
                 }
             }
         }
-    }
-    else if (dir == INCOMING)
-    {
-        lcn += TSC_INCOMING_CHANNEL_MASK;
     }
     ChannelReleased(dir, lcn, status);
 
@@ -2234,7 +2227,7 @@ uint32 TSC_component::Status08Event19(PS_ControlMsgHeader pReceiveInf)
 /*****************************************************************************/
 uint32 TSC_component::BlcEtbCfm(PS_ControlMsgHeader pReceiveInf)
 {
-    TPVChannelId incoming_lcn = pReceiveInf->InfSupplement2 + TSC_INCOMING_CHANNEL_MASK;
+    TPVChannelId incoming_lcn = pReceiveInf->InfSupplement2;
     OlcParam* olc_param = iOlcs.FindOlcGivenChannel(OUTGOING, pReceiveInf->InfSupplement1);
     if (olc_param == NULL)
     {
@@ -2279,7 +2272,7 @@ uint32 TSC_component::BlcEtbCfm2(PS_ControlMsgHeader  pReceiveInf)
                     (0, "TSC_component::BlcEtbCfm2 forward(%d), reverse(%d))\n",
                      pReceiveInf->InfSupplement1, pReceiveInf->InfSupplement2));
     OlcParam* olc_param = iOlcs.FindOlcGivenChannel(INCOMING,
-                          pReceiveInf->InfSupplement1 + TSC_INCOMING_CHANNEL_MASK);
+                          pReceiveInf->InfSupplement1);
     if (olc_param == NULL)
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,

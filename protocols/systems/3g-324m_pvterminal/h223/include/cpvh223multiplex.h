@@ -131,6 +131,19 @@ class CPVH223Multiplex :  public LowerLayerObserver,
         TPVStatusCode CloseChannel(TPVDirection direction, TPVChannelId channel_id);
         PVMFStatus GetOutgoingChannel(TPVChannelId id, H223OutgoingChannelPtr& channel);
         PVMFStatus GetIncomingChannel(TPVChannelId id, H223IncomingChannelPtr& channel);
+
+        /**
+         * Get pointer to logical channel
+         *
+         * @param aDirection Incoming/outgoing channel
+         * @param aChannelId Channel id of the wanted channel
+         * @param appChannel Pointer to logical channel pointer
+         *
+         * @returns PVMFStatus PVMFSuccess if succesful
+         **/
+        PVMFStatus GetLogicalChannel(TPVDirection aDirection,
+                                     TPVChannelId aChannelId,
+                                     H223LogicalChannel** apChannel);
         TPVStatusCode StopChannel(TPVDirection /*direction*/, TPVChannelId /*channel_id*/);
         TPVStatusCode FlushChannel(TPVDirection /*direction*/, TPVChannelId /*channel_id*/);
         bool IsValid(TPVDirection /*direction*/, TPVChannelId /*channel_id*/)

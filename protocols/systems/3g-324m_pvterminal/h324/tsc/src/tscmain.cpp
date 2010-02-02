@@ -991,6 +991,39 @@ TPVStatusCode TSC_324m::RequestFrameUpdate(PVMFPortInterface* port)
     return EPVT_Success;
 }
 
+PVMFStatus TSC_324m::SetLogicalChannelPause(TPVChannelId aChannelId, TPVDirection aDir, bool aPause)
+{
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "TSC_324m::SetPause ChannelId(%d), Direction(%d), Pause(%d)", aChannelId, aDir, aPause));
+
+    H223LogicalChannel* pChannel = NULL;
+
+    if (iH223->GetLogicalChannel(aDir, aChannelId, &pChannel) != PVMFSuccess)
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
+                        (0, "TSC_324m::SetPause ChannelId(%d), Could not find the channel, Direction(%d)", aChannelId, aDir));
+    }
+
+    if (aPause)
+    {
+        pChannel->Pause();
+        if (aDir == OUTGOING)
+        {
+            SendLogicalChannelInactiveIndication(aChannelId);
+        }
+    }
+    else
+    {
+        pChannel->Resume();
+        if (aDir == OUTGOING)
+        {
+            SendLogicalChannelActiveIndication(aChannelId);
+        }
+    }
+
+    return PVMFSuccess;
+}
+
 TPVStatusCode TSC_324m::RequestMaxMuxPduSize(unsigned aPduSize)
 {
     if ((GetTerminalStatus() != PhaseD_CSUP) && (GetTerminalStatus() != PhaseE_Comm))
@@ -2329,6 +2362,34 @@ void TSC_324m::SendVideoTemporalSpatialTradeoffIndication(TPVChannelId aLogicalC
     }
     IndicationMisc(EVideoTemporalSpatialTradeOffIdc, aLogicalChannel,
                    aTradeoff);
+}
+
+void TSC_324m::SendLogicalChannelActiveIndication(TPVChannelId aLogicalChannel)
+{
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "TSC_324m::SendLogicalChannelActiveIndication aLogicalChannel=%d", aLogicalChannel));
+    if (iTerminalStatus != PhaseE_Comm)
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                        (0, "TSC_324m::SendLogicalChannelActiveIndication Ignoring due to invalid state."));
+        return;
+    }
+    uint32 tradeoff = 0; // dummy tradeoff just for fullfiling the argument list
+    IndicationMisc(ELogicalChannelActiveIdc, aLogicalChannel, tradeoff);
+}
+
+void TSC_324m::SendLogicalChannelInactiveIndication(TPVChannelId aLogicalChannel)
+{
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "TSC_324m::SendLogicalChannelInactiveIndication aLogicalChannel=%d", aLogicalChannel));
+    if (iTerminalStatus != PhaseE_Comm)
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                        (0, "TSC_324m::SendLogicalChannelInactiveIndication Ignoring due to invalid state."));
+        return;
+    }
+    uint32 tradeoff = 0; // dummy tradeoff just for fullfiling the argument list
+    IndicationMisc(ELogicalChannelInactiveIdc, aLogicalChannel, tradeoff);
 }
 
 

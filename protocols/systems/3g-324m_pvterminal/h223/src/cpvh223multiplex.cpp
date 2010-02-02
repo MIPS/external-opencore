@@ -602,6 +602,50 @@ PVMFStatus CPVH223Multiplex::GetIncomingChannel(TPVChannelId id, H223IncomingCha
     return PVMFErrArgument;
 }
 
+PVMFStatus CPVH223Multiplex::GetLogicalChannel(TPVDirection aDirection,
+        TPVChannelId aChannelId,
+        H223LogicalChannel** appChannel)
+{
+    *appChannel = NULL;
+    if (aDirection == OUTGOING)
+    {
+        H223OutgoingChannelPtr pOutgoingChannel;
+        if (GetOutgoingChannel(aChannelId, pOutgoingChannel) != PVMFSuccess)
+        {
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
+                            (0, "CPVH223Multiplex::GetLogicalChannel - Error: id(%d)", aChannelId));
+            return PVMFErrArgument;
+        }
+        *appChannel = OSCL_STATIC_CAST(H223LogicalChannel*, pOutgoingChannel);
+    }
+    else if (aDirection == INCOMING)
+    {
+        H223IncomingChannelPtr pIncomingChannel;
+        if (GetIncomingChannel(aChannelId, pIncomingChannel) != PVMFSuccess)
+        {
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
+                            (0, "CPVH223Multiplex::GetLogicalChannel - Error: id(%d)", aChannelId));
+            return PVMFErrArgument;
+        }
+        *appChannel = OSCL_STATIC_CAST(H223LogicalChannel*, pIncomingChannel);
+    }
+    else
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
+                        (0, "CPVH223Multiplex::GetLogicalChannel - Error: direction"));
+        return PVMFErrArgument;
+    }
+
+    if (*appChannel == NULL)
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
+                        (0, "CPVH223Multiplex::GetLogicalChannel - Error: Null port"));
+        return PVMFErrArgument;
+    }
+
+    return PVMFSuccess;
+}
+
 TPVStatusCode CPVH223Multiplex::GetAdaptationLayer(OsclSharedPtr<AdaptationLayer> &al,
         TPVDirection aDirection,
         PS_H223LogicalChannelParameters aH223lcnParams,
