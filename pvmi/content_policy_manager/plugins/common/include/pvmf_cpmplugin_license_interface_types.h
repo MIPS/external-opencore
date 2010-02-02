@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,23 +21,15 @@
 #ifndef OSCL_BASE_H_INCLUDED
 #include "oscl_base.h"
 #endif
-#ifndef OSCL_TYPES_H_INCLUDED
-#include "oscl_types.h"
+#ifndef OSCL_STRING_CONTAINERS_H_INCLUDED
+#include "oscl_string_containers.h"
 #endif
-#ifndef OSCL_VECTOR_H_INCLUDED
-#include "oscl_vector.h"
+#ifndef OSCL_MEM_H_INCLUDED
+#include "oscl_mem.h"
 #endif
-#ifndef OSCL_STRING_H_INCLUDED
-#include "oscl_string.h"
-#endif
-#ifndef PV_INTERFACE_H_INCLUDED
-#include "pv_interface.h"
-#endif
-#include "pvmf_return_codes.h"
-#include "pvmf_event_handling.h"
-#include "pvmf_cpmplugin_domain_interface_types.h"
 
-//A class to hold detailed license status information
+//A class to hold detailed status information on communication with license servers.
+// This information is primarily for debugging.
 class PVMFCPMLicenseStatus
 {
     public:
@@ -54,10 +46,6 @@ class PVMFCPMLicenseStatus
                 , iNumLeaveChallengesSent(0)
                 , iNumLeaveResponsesReceived(0)
                 , iLastLeaveResponseResult(0)
-                , iAccountIdReceived(false)
-                , iAccountId(EMPTY_UUID)
-                , iServiceIdReceived(false)
-                , iServiceId(EMPTY_UUID)
                 , iLastErrorResult(0)
         {}
 
@@ -96,20 +84,7 @@ class PVMFCPMLicenseStatus
         // The result of the last LeaveDomain response received.
         uint32 iLastLeaveResponseResult;
 
-        // The URL to which the registration call should be made.
-        OSCL_HeapString<OsclMemAllocator> iServerRedirectURL;
-
-        bool iAccountIdReceived;
-        // The account Id required for registration.
-        PVUuid iAccountId;
-
-        bool iServiceIdReceived;
-        // The service Id required for registration.
-        PVUuid iServiceId;
-
-        // Custom data sent by the server
-        OSCL_HeapString<OsclMemAllocator> iCustomData;
-
+        // Last overall error result
         uint32 iLastErrorResult;
 
         void Clear()
@@ -123,16 +98,6 @@ class PVMFCPMLicenseStatus
 
             iLastLeaveURL = "";
             iNumLeaveChallengesSent = iNumLeaveResponsesReceived = iLastLeaveResponseResult = 0;
-
-            iServerRedirectURL = "";
-
-            iAccountIdReceived = false;
-            iAccountId = EMPTY_UUID;
-
-            iServiceIdReceived = false;
-            iServiceId = EMPTY_UUID;
-
-            iCustomData = "";
 
             iLastErrorResult = 0;
         }
@@ -153,12 +118,6 @@ class PVMFCPMLicenseStatus
             iNumLeaveChallengesSent = aStatus.iNumLeaveChallengesSent;
             iNumLeaveResponsesReceived = aStatus.iNumLeaveResponsesReceived;
             iLastLeaveResponseResult = aStatus.iLastLeaveResponseResult;
-            iServerRedirectURL = aStatus.iServerRedirectURL;
-            iAccountIdReceived = aStatus.iAccountIdReceived;
-            iAccountId = aStatus.iAccountId;
-            iServiceIdReceived = aStatus.iServiceIdReceived;
-            iServiceId = aStatus.iServiceId;
-            iCustomData = aStatus.iCustomData;
             iLastErrorResult = aStatus.iLastErrorResult;
         }
 };

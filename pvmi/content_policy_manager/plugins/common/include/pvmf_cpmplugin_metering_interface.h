@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,28 +50,6 @@
 class PVMFCPMPluginMeteringInterface : public PVInterface
 {
     public:
-        /**
-         * Method to save a V2 (XML) meter certificate in the store.
-         * This method is intended to be used in scenarios where
-         * it is not possible to obtain the metering certificate
-         * directly from the server.
-         *
-         * @param [in] aSessionId: The observer session Id.
-         * @param [in] aMeterCert: The meter certificate data as a wide-string.
-         * @param [out] optional output metering ID
-         * @param [in] aTimeoutMsec: Optional timeout in milliseconds
-         *    for each server communication.  Use -1 to indicate infinite wait.
-         * @param [in] aContextData: Optional user data that will be returned
-         *    in the command completion callback.
-         *
-         * @returns A unique command id for asynchronous completion.
-         */
-        virtual PVMFCommandId UpdateMeterCertificate(
-            PVMFSessionId aSessionId,
-            OSCL_wString& aMeterCert,
-            PVMFCPMMeterId* aMeterId = NULL,
-            int32 aTimeoutMsec = (-1),
-            OsclAny* aContextData = NULL) = 0;
 
         /**
          * Method to report metering data for a specific Meter ID.
@@ -108,7 +86,7 @@ class PVMFCPMPluginMeteringInterface : public PVInterface
          *
          * @returns: PVMFSuccess or an error.
          */
-        virtual PVMFStatus GetMeterCertCount(
+        virtual PVMFStatus GetMeterIDCount(
             uint32& aCount
             , uint32& errcode) = 0;
 
@@ -124,7 +102,7 @@ class PVMFCPMPluginMeteringInterface : public PVInterface
          *
          * @returns PVMFSuccess or an error.
          */
-        virtual PVMFStatus GetMeterCertID(
+        virtual PVMFStatus GetMeterID(
             uint32 aIndex,
             PVMFCPMMeterId &aMID,
             uint32& aErrCode) = 0;
@@ -149,10 +127,10 @@ class PVMFCPMPluginMeteringInterface : public PVInterface
          *    data related to this metering request.
          * @param [out] aErrCode: Error code
          *
-         * @returns A unique command id for asynchronous completion.
+         * @returns PVMFSuccess or error
          */
-        virtual PVMFCommandId DeleteMeterCertificate(
-            const PVMFCPMMeteringData& aMeteringData,
+        virtual PVMFStatus DeleteMeterCertificate(
+            const PVMFCPMMeterId& aMeteringData,
             uint32& aErrCode) = 0;
 
         /**
@@ -163,10 +141,10 @@ class PVMFCPMPluginMeteringInterface : public PVInterface
          *    data related to this metering request.
          * @param [out] aErrCode: Error code.
          *
-         * @returns A unique command id for asynchronous completion.
+         * @returns PVMFSuccess or error
          */
-        virtual PVMFCommandId InvalidateMeterCertificate(
-            const PVMFCPMMeteringData& aMeteringData,
+        virtual PVMFStatus InvalidateMeterCertificate(
+            const PVMFCPMMeterId& aMeteringData,
             uint32& aErrCode) = 0;
 };
 

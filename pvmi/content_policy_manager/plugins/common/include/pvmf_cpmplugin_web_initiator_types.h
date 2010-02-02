@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,18 +15,14 @@
  * and limitations under the License.
  * -------------------------------------------------------------------
  */
-#ifndef PVMF_CPMPLUGIN_LICENSE_ACQUIRE_INITIATOR_TYPES_H_INCLUDED
-#define PVMF_CPMPLUGIN_LICENSE_ACQUIRE_INITIATOR_TYPES_H_INCLUDED
+#ifndef PVMF_CPMPLUGIN_WEB_INITIATOR_TYPES_H_INCLUDED
+#define PVMF_CPMPLUGIN_WEB_INITIATOR_TYPES_H_INCLUDED
+
+#include "oscl_base.h"
+#include "oscl_string_containers.h"
+#include "oscl_mem.h"
 
 //Web-initiator types
-enum PVMFCpmInitiatorType
-{
-    PVMF_CPM_INITIATOR_UNKNOWN            = 0,
-    PVMF_CPM_INITIATOR_JOINDOMAIN         = 1,
-    PVMF_CPM_INITIATOR_LEAVEDOMAIN        = 2,
-    PVMF_CPM_INITIATOR_LICENSEACQUISITION = 3,
-    PVMF_CPM_INITIATOR_METERING           = 4
-};
 
 /* This class holds data parsed from a lic-acquire web initiator. This data can be
 ** used for license acquisition.

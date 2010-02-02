@@ -52,46 +52,39 @@ class PVMFCPMPluginLicenseManagerInterface : public PVInterface
     public:
 
         /**
-         * Method to clean license store
+         * Method to perform license store maintenance.
          *
-         * @param [in] The assigned plugin session ID to use for this request
+         * @param [out] Additional error code
          * @param [in] Optional opaque data associated with the request.
          * @param [in] Size of the optional opaque data.
-         * @param [in] aContextData: optional caller data to accompany the
-         *   request.  The value will be included in the completion callback.
          *
-         * @returns A unique command id for asynchronous completion.
+         * @returns PVMFSuccess or an error
          */
-        virtual PVMFCommandId CleanLicenseStore(PVMFSessionId aSessionId
-                                                , OsclAny* aData = NULL
-                                                                   , uint32 aDataSize = 0
-                                                                                        , OsclAny* aContext = NULL) = 0;
+        virtual PVMFStatus LicenseStoreMaintenance(uint32 &aErrCode, OsclAny* aData = NULL
+                , uint32 aDataSize = 0) = 0;
 
         /**
          * Method to get the status of an ongoing or recently completed
-         * clean license store command.
+         * LicenseStoreMaintenance command.
          *
          * @param [out] aStatus: clean store status output
          *
          * @returns: PVMFSuccess if status is available, an error
          *   otherwise.
          */
-        virtual PVMFStatus GetCleanLicenseStoreStatus(
-            PVMFCPMCleanLicenseStoreStatus& aStatus) = 0;
+        virtual PVMFStatus GetLicenseStoreMaintenanceStatus(
+            PVMFCPMLicenseStoreMaintenanceStatus& aStatus) = 0;
 
         /**
          * Method to delete a license from the store
          *
-         * @param [in] The assigned plugin session ID to use for this request
-         * @param [in] PVMFCPMContentId: content ID data blob.
-         * @param [in] aContextData: optional caller data to accompany the
-         *   request.  The value will be included in the completion callback.
+         * @param [in] content ID
+         * @param [out] aErrcode: additional error code
          *
-         * @returns A unique command id for asynchronous completion.
+         * @returns PVMFSuccess or an error
          */
-        virtual PVMFCommandId DeleteLicense(PVMFSessionId aSessionId
-                                            , const PVMFCPMContentId& aContentId
-                                            , OsclAny* aContext = NULL) = 0;
+        virtual PVMFStatus DeleteLicense(const OSCL_String& aContentID
+                                         , uint32 &aErrcode) = 0;
 
         /**
          * Method to retrieve the list of licenses that are pending expiry and need to

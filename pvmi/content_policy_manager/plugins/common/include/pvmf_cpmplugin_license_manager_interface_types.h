@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -159,10 +159,10 @@ class PVMFCPMLicenseUpdateStatus
 };
 
 //A class to hold license cleanup status
-class PVMFCPMCleanLicenseStoreStatus
+class PVMFCPMLicenseStoreMaintenanceStatus
 {
     public:
-        PVMFCPMCleanLicenseStoreStatus():
+        PVMFCPMLicenseStoreMaintenanceStatus():
                 iLicensesProcessed(0)
                 , iTotalLicenses(0)
         {}
@@ -178,7 +178,7 @@ class PVMFCPMCleanLicenseStoreStatus
             iLicensesProcessed = 0;
             iTotalLicenses = 0;
         }
-        void Set(const PVMFCPMCleanLicenseStoreStatus& aStatus)
+        void Set(const PVMFCPMLicenseStoreMaintenanceStatus& aStatus)
         {
             iLicensesProcessed = aStatus.iLicensesProcessed;
             iTotalLicenses = aStatus.iTotalLicenses;

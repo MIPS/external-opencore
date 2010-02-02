@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -129,7 +129,7 @@ class PVPlayerLicenseAcquisitionInterface : public PVInterface
 
         /**
          * Method to get detailed status on an ongoing or recently completed
-         * license acquisition.
+         * license acquisition.  This information is primarily for test & validation.
          */
         virtual PVMFStatus GetLicenseStatus(PVMFCPMLicenseStatus& aStatus) = 0;
 

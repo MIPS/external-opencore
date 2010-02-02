@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -133,6 +133,8 @@ class PVCmdResponse : public PVMFCmdResp
             PVInterface* tmpface = (PVInterface*)GetEventExtensionInterface();
             if (tmpface)
             {
+                if (tmpface->queryInterface(auuid, aface))
+                    return PVMFSuccess;
                 PVInterface* errMsg = NULL;
                 if (tmpface->queryInterface(PVMFErrorInfoMessageInterfaceUUID, errMsg))
                 {
