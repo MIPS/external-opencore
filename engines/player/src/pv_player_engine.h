@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1604,6 +1604,7 @@ class PVPlayerEngine
         uint32 iClipsCorrupted;
 
         uint32 iCurrentPlaybackClipId;
+        uint32 iNumClipsQueued;
 
         //CPM related - As of today we use this instance of CPM in QueryInterface calls only
         //outside of this engine has no interactions with CPM.

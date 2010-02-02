@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1760,6 +1760,38 @@ void PVMediaOutputNodePort::Run()
                                          iCurrentMediaMsg->getTimestamp(),
                                          iSinkFormatString.get_str()));
             }
+            else if (iCurrentMediaMsg->getFormatID() == PVMF_MEDIA_CMD_EOC_FORMAT_ID)
+            {
+                PVMF_MOPORT_LOGREPOS((0, "PVMediaOutputNodePort::Run: EOCSkip - StreamId=%d, ClipID=%d, Seq=%d, TS=%d, Fmt=%s",
+                                      iCurrentMediaMsg->getStreamID(),
+                                      iCurrentMediaMsg->getClipID(),
+                                      iCurrentMediaMsg->getSeqNum(),
+                                      iCurrentMediaMsg->getTimestamp(),
+                                      iSinkFormatString.get_str()));
+
+                PVMF_MOPORT_LOGDATAPATH((0, "PVMediaOutputNodePort::Run: EOCSkip - StreamId=%d, ClipID=%d, Seq=%d, TS=%d, Fmt=%s",
+                                         iCurrentMediaMsg->getStreamID(),
+                                         iCurrentMediaMsg->getClipID(),
+                                         iCurrentMediaMsg->getSeqNum(),
+                                         iCurrentMediaMsg->getTimestamp(),
+                                         iSinkFormatString.get_str()));
+            }
+            else if (iCurrentMediaMsg->getFormatID() == PVMF_MEDIA_CMD_BOC_FORMAT_ID)
+            {
+                PVMF_MOPORT_LOGREPOS((0, "PVMediaOutputNodePort::Run: BOCSkip - StreamId=%d, ClipID=%d, Seq=%d, TS=%d, Fmt=%s",
+                                      iCurrentMediaMsg->getStreamID(),
+                                      iCurrentMediaMsg->getClipID(),
+                                      iCurrentMediaMsg->getSeqNum(),
+                                      iCurrentMediaMsg->getTimestamp(),
+                                      iSinkFormatString.get_str()));
+
+                PVMF_MOPORT_LOGDATAPATH((0, "PVMediaOutputNodePort::Run: BOCSkip - StreamId=%d, ClipID=%d, Seq=%d, TS=%d, Fmt=%s",
+                                         iCurrentMediaMsg->getStreamID(),
+                                         iCurrentMediaMsg->getClipID(),
+                                         iCurrentMediaMsg->getSeqNum(),
+                                         iCurrentMediaMsg->getTimestamp(),
+                                         iSinkFormatString.get_str()));
+            }
             else
             {
                 PVMF_MOPORT_LOGREPOS((0, "PVMediaOutputNodePort::Run: MsgSkip - StreamId=%d, ClipID=%d, Seq=%d, TS=%d, Fmt=%s",
@@ -1789,6 +1821,26 @@ void PVMediaOutputNodePort::Run()
                 if (iCurrentMediaMsg->getFormatID() == PVMF_MEDIA_CMD_EOS_FORMAT_ID)
                 {
                     PVMF_MOPORT_LOGDATAPATH((0, "PVMediaOutputNodePort::Run - EOS Recvd - StreamID=%d, ClipID=%d, Seq=%d, TS=%d, Fmt=%s, Qs=%d",
+                                             iCurrentMediaMsg->getStreamID(),
+                                             iCurrentMediaMsg->getClipID(),
+                                             iCurrentMediaMsg->getSeqNum(),
+                                             iCurrentMediaMsg->getTimestamp(),
+                                             iSinkFormatString.get_str(),
+                                             IncomingMsgQueueSize()));
+                }
+                else if (iCurrentMediaMsg->getFormatID() == PVMF_MEDIA_CMD_EOC_FORMAT_ID)
+                {
+                    PVMF_MOPORT_LOGDATAPATH((0, "PVMediaOutputNodePort::Run - EOC Recvd - StreamID=%d, ClipID=%d, Seq=%d, TS=%d, Fmt=%s, Qs=%d",
+                                             iCurrentMediaMsg->getStreamID(),
+                                             iCurrentMediaMsg->getClipID(),
+                                             iCurrentMediaMsg->getSeqNum(),
+                                             iCurrentMediaMsg->getTimestamp(),
+                                             iSinkFormatString.get_str(),
+                                             IncomingMsgQueueSize()));
+                }
+                else if (iCurrentMediaMsg->getFormatID() == PVMF_MEDIA_CMD_BOC_FORMAT_ID)
+                {
+                    PVMF_MOPORT_LOGDATAPATH((0, "PVMediaOutputNodePort::Run - BOC Recvd - StreamID=%d, ClipID=%d, Seq=%d, TS=%d, Fmt=%s, Qs=%d",
                                              iCurrentMediaMsg->getStreamID(),
                                              iCurrentMediaMsg->getClipID(),
                                              iCurrentMediaMsg->getSeqNum(),
@@ -1955,6 +2007,34 @@ void PVMediaOutputNodePort::HandlePortActivity(const PVMFPortActivity& aActivity
                                                          iCurrentMediaMsg->getTimestamp(),
                                                          iSinkFormatString.get_str()));
                             }
+                            else if (iCurrentMediaMsg->getFormatID() == PVMF_MEDIA_CMD_EOC_FORMAT_ID)
+                            {
+                                PVMF_MOPORT_LOGREPOS((0, "PVMediaOutputNodePort::HPA: EOCSkip - StreamId=%d, Seq=%d, TS=%d, Fmt=%s",
+                                                      iCurrentMediaMsg->getStreamID(),
+                                                      iCurrentMediaMsg->getSeqNum(),
+                                                      iCurrentMediaMsg->getTimestamp(),
+                                                      iSinkFormatString.get_str()));
+
+                                PVMF_MOPORT_LOGDATAPATH((0, "PVMediaOutputNodePort::HPA: EOCSkip - StreamId=%d, Seq=%d, TS=%d, Fmt=%s",
+                                                         iCurrentMediaMsg->getStreamID(),
+                                                         iCurrentMediaMsg->getSeqNum(),
+                                                         iCurrentMediaMsg->getTimestamp(),
+                                                         iSinkFormatString.get_str()));
+                            }
+                            else if (iCurrentMediaMsg->getFormatID() == PVMF_MEDIA_CMD_BOC_FORMAT_ID)
+                            {
+                                PVMF_MOPORT_LOGREPOS((0, "PVMediaOutputNodePort::HPA: BOCSkip - StreamId=%d, Seq=%d, TS=%d, Fmt=%s",
+                                                      iCurrentMediaMsg->getStreamID(),
+                                                      iCurrentMediaMsg->getSeqNum(),
+                                                      iCurrentMediaMsg->getTimestamp(),
+                                                      iSinkFormatString.get_str()));
+
+                                PVMF_MOPORT_LOGDATAPATH((0, "PVMediaOutputNodePort::HPA: BOCSkip - StreamId=%d, Seq=%d, TS=%d, Fmt=%s",
+                                                         iCurrentMediaMsg->getStreamID(),
+                                                         iCurrentMediaMsg->getSeqNum(),
+                                                         iCurrentMediaMsg->getTimestamp(),
+                                                         iSinkFormatString.get_str()));
+                            }
                             else
                             {
                                 PVMF_MOPORT_LOGREPOS((0, "PVMediaOutputNodePort::HPA: MsgSkip - StreamId=%d, Seq=%d, TS=%d, Fmt=%s, Qs=%d",
@@ -2064,6 +2144,26 @@ void PVMediaOutputNodePort::HandlePortActivity(const PVMFPortActivity& aActivity
                                 if (iCurrentMediaMsg->getFormatID() == PVMF_MEDIA_CMD_EOS_FORMAT_ID)
                                 {
                                     PVMF_MOPORT_LOGDATAPATH((0, "PVMediaOutputNodePort::HPA - EOS Recvd - StreamID=%d, ClipID=%d, Seq=%d, TS=%d, Fmt=%s, Qs=%d",
+                                                             iCurrentMediaMsg->getStreamID(),
+                                                             iCurrentMediaMsg->getClipID(),
+                                                             iCurrentMediaMsg->getSeqNum(),
+                                                             iCurrentMediaMsg->getTimestamp(),
+                                                             iSinkFormatString.get_str(),
+                                                             IncomingMsgQueueSize()));
+                                }
+                                else if (iCurrentMediaMsg->getFormatID() == PVMF_MEDIA_CMD_EOC_FORMAT_ID)
+                                {
+                                    PVMF_MOPORT_LOGDATAPATH((0, "PVMediaOutputNodePort::HPA - EOC Recvd - StreamID=%d, ClipID=%d, Seq=%d, TS=%d, Fmt=%s, Qs=%d",
+                                                             iCurrentMediaMsg->getStreamID(),
+                                                             iCurrentMediaMsg->getClipID(),
+                                                             iCurrentMediaMsg->getSeqNum(),
+                                                             iCurrentMediaMsg->getTimestamp(),
+                                                             iSinkFormatString.get_str(),
+                                                             IncomingMsgQueueSize()));
+                                }
+                                else if (iCurrentMediaMsg->getFormatID() == PVMF_MEDIA_CMD_BOC_FORMAT_ID)
+                                {
+                                    PVMF_MOPORT_LOGDATAPATH((0, "PVMediaOutputNodePort::HPA - BOC Recvd - StreamID=%d, ClipID=%d, Seq=%d, TS=%d, Fmt=%s, Qs=%d",
                                                              iCurrentMediaMsg->getStreamID(),
                                                              iCurrentMediaMsg->getClipID(),
                                                              iCurrentMediaMsg->getSeqNum(),
@@ -2721,7 +2821,9 @@ bool PVMediaOutputNodePort::DataToSkip(PVMFSharedMediaMsgPtr& aMsg)
     //would not pass the stream id check above. If we get this far
     //it means that the EOS belong to the current stream id and its
     //timestamp does not really matter.
-    if (aMsg->getFormatID() != PVMF_MEDIA_CMD_EOS_FORMAT_ID)
+    if (aMsg->getFormatID() != PVMF_MEDIA_CMD_EOS_FORMAT_ID &&
+            aMsg->getFormatID() != PVMF_MEDIA_CMD_EOC_FORMAT_ID &&
+            aMsg->getFormatID() != PVMF_MEDIA_CMD_BOC_FORMAT_ID)
     {
         //if we get here it means that the msg belong to current or a
         //future media stream. check against skip timestamp if we are

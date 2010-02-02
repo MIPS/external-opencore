@@ -306,6 +306,10 @@ static uint16 SwapFileToHostByteOrderInt16(uint8 * pBuf2)
  ***********************************************************************/
 MP3Parser::MP3Parser(PVFile* aFileHandle)
 {
+    iPaddingFrames = 0;
+    iPaddingBufferSizeInBytes = 0;
+    iPaddingFrameBuffer = NULL;
+
     fp = aFileHandle;
     // initialize all member variables
     iLocalFileSize = 0;
@@ -336,6 +340,7 @@ MP3Parser::MP3Parser(PVFile* aFileHandle)
 
     //minimum bytes required for init
     iMinBytesRequiredForInit = KMAX_MP3FRAME_LENGTH_IN_BYTES;
+    iFirstFrameAfterReposition = true;
 
     iSamplesPerFrame = 0;
     iSamplingRate = 0;
@@ -380,6 +385,14 @@ MP3Parser::MP3Parser(PVFile* aFileHandle)
  ***********************************************************************/
 MP3Parser::~MP3Parser()
 {
+    iFirstFrameAfterReposition = false;
+    iPaddingFrames = 0;
+    if (iPaddingFrameBuffer)
+    {
+        OSCL_ARRAY_DELETE(iPaddingFrameBuffer);
+        iPaddingFrameBuffer = NULL;
+    }
+
     // The File Pointer is only used. FileHandles are opened and closed
     // as required.
     fp = NULL;
@@ -393,6 +406,8 @@ MP3Parser::~MP3Parser()
     iNumberOfFrames = 0;
     ConfigSize = 0;
     StartOffset = 0;
+    iMinBytesRequiredForInit = 0;
+
     if (iVbriHeader.TOC != NULL)
         OSCL_ARRAY_DELETE(iVbriHeader.TOC);
     if (pSyncBuffer)
@@ -518,7 +533,6 @@ MP3ErrorType MP3Parser::ParseMP3File(PVFile * fpUsed, bool aEnableCRC)
         {
             iMinBytesRequiredForInit += KMAX_MP3FRAME_LENGTH_IN_BYTES;
         }
-
         // in eof scenario parser reports eof error to the user
         // eof will be reported in case when no valid sync
         // word is find in the maximum specified search limit
@@ -606,6 +620,13 @@ MP3ErrorType MP3Parser::ParseMP3File(PVFile * fpUsed, bool aEnableCRC)
             mp3Type = EVBRIType;
             iLocalFileSize = iVbriHeader.bytes;
             OSCL_ARRAY_DELETE(tempBuf);
+
+            // this frame is a Vbri header, the MP3 media data should start after this frame
+            // position the file pointer to skip over this frame
+            // SeekToTimestamp will do that too
+            iSkipHeaderFrame = true;
+            revSeek += iMP3ConfigInfo.FrameLengthInBytes;
+
         }
     }
     else
@@ -723,6 +744,17 @@ MP3ErrorType MP3Parser::ParseMP3File(PVFile * fpUsed, bool aEnableCRC)
         uint64 totalSamples = iGaplessMetadata.GetEncoderDelay() + iGaplessMetadata.GetZeroPadding() + iGaplessMetadata.GetOriginalStreamLength();
         uint64 totalFrames = totalSamples / iSamplesPerFrame;
         iGaplessMetadata.SetTotalFrames(totalFrames);
+
+        if (iGaplessMetadata.GetZeroPadding() > 0)
+        {
+            uint32 paddingSamples = iGaplessMetadata.GetZeroPadding();
+            iPaddingFrames = iGaplessMetadata.GetZeroPadding() / iSamplesPerFrame;
+            if (paddingSamples % iSamplesPerFrame)
+            {
+                iPaddingFrames++;
+            }
+            iPaddingBufferSizeInBytes = iPaddingFrames * 2884;//GetMaximumDecodeBufferSize();
+        }
     }
     iAvgBitrateInbps = iMP3ConfigInfo.BitRate;
     // Set the position to the position of the first MP3 frame
@@ -732,6 +764,8 @@ MP3ErrorType MP3Parser::ParseMP3File(PVFile * fpUsed, bool aEnableCRC)
         return errCode;
     }
     iCurrFrameNumber = 0;
+    //reset minimum bytes required for init
+    iMinBytesRequiredForInit = KMAX_MP3FRAME_LENGTH_IN_BYTES;
     return MP3_SUCCESS;
 }
 
@@ -1613,13 +1647,14 @@ uint32 MP3Parser::GetMinBytesRequired(bool aNextBytes)
  * RETURN VALUE:
  * SIDE EFFECTS:
  ***********************************************************************/
-int32 MP3Parser::GetNextBundledAccessUnits(uint32 *n, GAU *pgau, MP3ErrorType &error)
+int32 MP3Parser::GetNextBundledAccessUnits(uint32 *n, GAU *pgau, MP3ErrorType &error, int32& aEOCFrameIndex, int32 &aFramesToFollowEOC)
 {
     uint32 nBytesRead = 0;
     uint32 framets = 0;
     uint32 frameDuration = 0;
     uint32 nBytesReadTotal = 0;
-    int32  i;
+    int32 numFrames = (int32) * n;
+    int32 framesRead = 0;
     error = MP3_ERROR_UNKNOWN;
     if ((pgau == NULL) || (pgau->buf.num_fragments > 1)
             || (n == NULL))
@@ -1627,11 +1662,53 @@ int32 MP3Parser::GetNextBundledAccessUnits(uint32 *n, GAU *pgau, MP3ErrorType &e
         return 0;
     }
 
-    uint8 * pOutputBuffer = (uint8 *)pgau->buf.fragments[0].ptr;
-    int32 iLength = pgau->buf.fragments[0].len;
-    for (i = 0; (i < (int32)*n) && (iLength > 0); i++)
+    // reset the padding buffer
+    if (iFirstFrameAfterReposition)
     {
-        pgau->numMediaSamples = i;
+        // reset first frame flag
+        iFirstFrameAfterReposition = false;
+        if (iPaddingFrameBuffer)
+        {
+            // clear previous buffers, if any
+            OSCL_ARRAY_DELETE(iPaddingFrameBuffer);
+            iPaddingFrameBuffer = NULL;
+        }
+    }
+
+    // there might be frames that were already read to prevent reading beyond
+    // file pointer, pick up these frames first
+    uint8 * pOutputBuffer = (uint8 *)pgau->buf.fragments[0].ptr;
+    if (iPaddingFrames > 0 && iCurrFrameNumber > 0 && !iFirstFrameAfterReposition)
+    {
+        for (int index = 0; index < iPaddingFrames; index++)
+        {
+            if (iGau.info[index].len > 0)
+            {
+                nBytesRead += iGau.info[index].len;
+                pgau->info[index].ts = iGau.info[index].ts;
+                pgau->info[index].ts_delta = iGau.info[index].ts_delta;
+                pgau->info[index].len = iGau.info[index].len;
+                framesRead++;
+            }
+        }
+        // first move padding frames to input buffer
+        oscl_memcpy(pOutputBuffer, iGau.buf.fragments[0].ptr, nBytesRead);
+        // move the output buffer ptr
+        pOutputBuffer += nBytesRead;
+        // number of bytes read
+        nBytesReadTotal += nBytesRead;
+        // number of frames read
+        *n = framesRead;
+        // current frame number
+        iCurrFrameNumber += framesRead;
+        pgau->frameNum = iCurrFrameNumber - framesRead + 1;
+    }
+
+    // read remaining frames as per request
+    int32 iLength = pgau->buf.fragments[0].len;
+    for (; (framesRead < numFrames) && (iLength > 0); framesRead++)
+    {
+        pgau->numMediaSamples = framesRead;
 
         error = GetNextMediaSample(pOutputBuffer, iLength, nBytesRead, framets, frameDuration);
         if ((error == MP3_SUCCESS))
@@ -1639,11 +1716,11 @@ int32 MP3Parser::GetNextBundledAccessUnits(uint32 *n, GAU *pgau, MP3ErrorType &e
             if (nBytesRead > 0)
             {
                 // Frame was read successfully
-                pgau->info[i].len = nBytesRead;
-                pgau->info[i].ts  = framets;
-                pgau->info[i].ts_delta = frameDuration;
+                pgau->info[framesRead].len = nBytesRead;
+                pgau->info[framesRead].ts  = framets;
+                pgau->info[framesRead].ts_delta = frameDuration;
 
-                if (0 == i)
+                if (framesRead == 0)
                 {
                     // first frame in the GAU, rturn the frame number (1 based)
                     pgau->frameNum = iCurrFrameNumber;
@@ -1653,6 +1730,13 @@ int32 MP3Parser::GetNextBundledAccessUnits(uint32 *n, GAU *pgau, MP3ErrorType &e
         else
         {
             // Read failure
+            if (framesRead >= iPaddingFrames)
+            {
+                // index in the current request for frames.
+                aEOCFrameIndex = framesRead - iPaddingFrames;
+                // number of frames available in buffer
+                aFramesToFollowEOC = iPaddingFrames;
+            }
             break;
         }
 
@@ -1660,7 +1744,79 @@ int32 MP3Parser::GetNextBundledAccessUnits(uint32 *n, GAU *pgau, MP3ErrorType &e
         pOutputBuffer += nBytesRead;
         nBytesReadTotal += nBytesRead;
     }
-    *n = i;
+
+    // read extra frames to accomodate for padding samples
+    // extra frame can only be read when previous read was successful
+    if (iPaddingFrames > 0 && error == MP3_SUCCESS)
+    {
+        if (!iPaddingFrameBuffer)
+        {
+            iPaddingFrameBuffer = OSCL_ARRAY_NEW(uint8, iPaddingBufferSizeInBytes);
+        }
+
+        if (iPaddingFrameBuffer)
+        {
+            oscl_memset(iPaddingFrameBuffer, 0, iPaddingBufferSizeInBytes);
+            uint8* buffer = iPaddingFrameBuffer;
+            uint32 length = iPaddingBufferSizeInBytes;
+            uint32 bytesRead = 0;
+            uint32 frameTS = 0;
+            uint32 frameDur = 0;
+            MP3ErrorType err = MP3_ERROR_UNKNOWN;
+
+            iGau.numMediaSamples = iPaddingFrames;
+            iGau.buf.num_fragments = 1;
+            iGau.buf.buf_states[0] = NULL;
+            iGau.buf.fragments[0].ptr = iPaddingFrameBuffer;
+            iGau.buf.fragments[0].len = iPaddingBufferSizeInBytes;
+            iGau.frameNum = 0;
+
+            for (int index = 0; index < iPaddingFrames; index++)
+            {
+                iGau.info[index].len = 0;
+                iGau.info[index].ts = 0;
+                iGau.info[index].ts_delta = 0;
+            }
+
+            //lets read the padding frames in advance
+            int32 j = 0;
+            for (j = 0; (j < iPaddingFrames) && (length > 0); j++)
+            {
+                err = GetNextMediaSample(buffer, length, bytesRead, frameTS, frameDur);
+
+                if ((err == MP3_SUCCESS))
+                {
+                    if (bytesRead > 0)
+                    {
+                        // Frame was read successfully
+                        iGau.info[j].len = bytesRead;
+                        iGau.info[j].ts  = frameTS;
+                        iGau.info[j].ts_delta = frameDur;
+                    }
+                }
+                else
+                {
+                    // Read failure
+                    // index in the current request for frames.
+                    aEOCFrameIndex = framesRead + j - iPaddingFrames;
+                    // number of frames available in buffer
+                    aFramesToFollowEOC = iPaddingFrames;
+                    break;
+                }
+                length -= bytesRead;
+                buffer += bytesRead;
+            }
+            iCurrFrameNumber = iCurrFrameNumber - j;
+        }
+    }
+    *n = framesRead;
+
+    int32 dumpedbytes = 0;
+    for (int index = 0; index < iPaddingFrames; index++)
+    {
+        dumpedbytes += iGau.info[index].len;
+    }
+
     return nBytesReadTotal;
 }
 /***********************************************************************
@@ -1930,6 +2086,7 @@ uint32  MP3Parser::SeekToTimestamp(uint32 timestampInMsec)
         SeekPosition += iMP3ConfigInfo.FrameLengthInBytes;
     }
     fp->Seek(SeekPosition, Oscl_File::SEEKSET);
+    iFirstFrameAfterReposition = true;
     return timestampInMsec;
 }
 

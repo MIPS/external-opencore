@@ -18,18 +18,20 @@
 #include "pvmf_mp3ffparser_node.h"
 
 #define LOGINFO(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_MLDBG,iLogger,PVLOGMSG_INFO,m);
+#define LOGGAPLESSINFO(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG,iGaplessLogger,PVLOGMSG_INFO,m);
 
 // constructor
 PVMFMP3FFParserNode::PVMFMP3FFParserNode(int32 aPriority)
         : PVMFNodeInterfaceImpl(aPriority, "PVMFMP3FFParserNode"),
-        iParseStatus(false),
         iSourceURLSet(false),
-        iMP3File(NULL),
+        iInitNextClip(false),
         iConfigOk(0),
         iMaxFrameSize(PVMP3FF_DEFAULT_MAX_FRAMESIZE),
         iMP3FormatBitrate(0),
         iLogger(NULL),
-        iSendDecodeFormatSpecificInfo(true)
+        iGaplessLogger(NULL),
+        iSendDecodeFormatSpecificInfo(true),
+        iCurrSampleDuration(0)
 {
 #if PV_HAS_SHOUTCAST_SUPPORT_ENABLED
     iMetadataBuf = NULL;
@@ -40,6 +42,14 @@ PVMFMP3FFParserNode::PVMFMP3FFParserNode(int32 aPriority)
     iClipByteRate = 0;
     iMetadataInterval = 0;
 #endif
+
+    iNumClipsInPlayList = 0;
+    iPlaybackClipIndex = -1;
+    iClipIndexForMetadata = -1;
+    iPlaylistRepositioning = false;
+    iNextInitializedClipIndex = -1;
+    iPlaylistExhausted = false;
+
     iOutPort = NULL;
     iCPMContainer.iCPMLicenseInterface = NULL;
     iCPMContainer.iCPMLicenseInterfacePVI = NULL;
@@ -50,7 +60,6 @@ PVMFMP3FFParserNode::PVMFMP3FFParserNode(int32 aPriority)
     iCPMCloseSessionCmdId = 0;
     iCPMResetCmdId = 0;
     oWaitingOnLicense  = false;
-    iFileHandle = NULL;
     iAutoPaused = false;
     iDownloadProgressInterface = NULL;
     iDataStreamFactory         = NULL;
@@ -63,10 +72,8 @@ PVMFMP3FFParserNode::PVMFMP3FFParserNode(int32 aPriority)
     iCheckForMP3HeaderDuringInit = false;
     iDurationCalcAO = NULL;
     iUseCPMPluginRegistry = false;
-    iSourceContextDataValid = false;
 
     int32 err;
-
     OSCL_TRY(err,
              // Set the node capability data.
              // This node can support an unlimited number of ports.
@@ -105,7 +112,10 @@ void PVMFMP3FFParserNode::Construct()
     //Max depth is the max number of sub-node commands for any one node command.
     //Init command may take up to 9
     iSubNodeCmdVec.reserve(9);
+    // initialize clip information vector
+    iClipInfoList.reserve(PVMF_MP3_MAX_NUM_TRACKS_GAPLESS);
     iLogger = PVLogger::GetLoggerObject("PVMFMP3FFParserNode");
+    iGaplessLogger = PVLogger::GetLoggerObject("sourcenode.gapless");
 }
 
 // Destructor
@@ -158,7 +168,13 @@ PVMFStatus PVMFMP3FFParserNode::HandleExtensionAPICommands()
     switch (iCurrentCommand.iCmd)
     {
         case PVMF_GENERIC_NODE_SET_DATASOURCE_POSITION:
-            status = DoSetDataSourcePosition();
+            if (iPlaylistRepositioning)
+            {
+                iPlaylistRepositioning = false;
+                status = DoSetDataSourcePositionPlaylist();
+            }
+            else
+                status = DoSetDataSourcePosition();
             break;
         case PVMF_GENERIC_NODE_QUERY_DATASOURCE_POSITION:
             status = DoQueryDataSourcePosition();
@@ -398,10 +414,17 @@ PVMFStatus PVMFMP3FFParserNode::DoRequestPort(PVMFPortInterface*&aPort)
              mediadatamempool = OSCL_NEW(PVMFMemPoolFixedChunkAllocator,
                                          ("Mp3FFPar", PVMP3FF_MEDIADATA_CHUNKS_IN_POOL,
                                           PVMP3FF_MEDIADATA_CHUNKSIZE));
-             clockconv = OSCL_NEW(MediaClockConverter, (iMP3File->GetTimescale()));
+             if (iPlaybackParserObj)
+{
+    clockconv = OSCL_NEW(MediaClockConverter, (iPlaybackParserObj->GetTimescale()));
+    }
             ); // Try block end
 
-    if (err != 0 || trackdatamempool == NULL || mediadataimplalloc == NULL || mediadatamempool == NULL || clockconv == NULL)
+    if (err != OsclErrNone ||
+            NULL == trackdatamempool ||
+            NULL == mediadataimplalloc ||
+            NULL == mediadatamempool ||
+            NULL == clockconv)
     {
         if (clockconv)
         {
@@ -481,7 +504,31 @@ PVMFStatus PVMFMP3FFParserNode::DoInit()
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                     (0, "PVMFMP3FFParserNode::DoInit() In"));
 
-    PVMFStatus status;
+    PVMFStatus status = PVMFSuccess;
+    PVMFDataStreamFactory* dsFactory = NULL;
+    // Process Init according to the Node State
+    if (iPlaybackClipIndex == -1)
+    {
+        // Instantiate the IMpeg3File object, this class represents the mp3ff library
+        dsFactory = iCPMContainer.iCPMContentAccessFactory;
+        if ((dsFactory == NULL) && (iDataStreamFactory != NULL))
+        {
+#if PV_HAS_SHOUTCAST_SUPPORT_ENABLED
+            if (GetClipFormatTypeAt(iPlaybackClipIndex) == PVMF_MIME_DATA_SOURCE_SHOUTCAST_URL && iSCSPFactory != NULL && iSCSP != NULL)
+            {
+
+                dsFactory = iSCSPFactory;
+                iSCSP->RequestMetadataUpdates(iDataStreamSessionID, *this, iMetadataBufSize, iMetadataBuf);
+            }
+            else
+            {
+                dsFactory = iDataStreamFactory;
+            }
+#else
+            dsFactory = iDataStreamFactory;
+#endif
+        }
+    }
 
     if (iUseCPMPluginRegistry)
     {
@@ -493,16 +540,16 @@ PVMFStatus PVMFMP3FFParserNode::DoInit()
         else
         {
             Push(iCPMContainer, PVMFSubNodeContainerBaseMp3::ECPMApproveUsage);
+            Push(iCPMContainer, PVMFSubNodeContainerBaseMp3::ECPMCheckUsage);
         }
-
         status = PVMFPending;
     }
     else
     {
-        status = CheckForMP3HeaderAvailability();
+        status = InitNextValidClipInPlaylist(0, dsFactory);
         if (PVMFSuccess == status)
         {
-            LOGINFO((0, "PVMFMP3FFParserNode::Run() CheckForMP3HeaderAvailability() succeeded"));
+            LOGINFO((0, "PVMFMP3FFParserNode::DoInit() CheckForMP3HeaderAvailability() succeeded"));
         }
     }
     return status;
@@ -540,25 +587,6 @@ PVMFStatus PVMFMP3FFParserNode::DoPrepare()
             // Data is not available, autopause the track.
             iAutoPaused = true;
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG, (0, "PVMFMP3FFParserNode::DoPrepare() - Auto Pause Triggered, TS = %d", ts));
-        }
-    }
-    else
-    {
-        // enable the duration scanner for local playback only
-        if (!iDurationCalcAO)
-        {
-            int32 leavecode = 0;
-            OSCL_TRY(leavecode, iDurationCalcAO = OSCL_NEW(PVMp3DurationCalculator,
-                                                  (OsclActiveObject::EPriorityIdle, iMP3File, this)));
-            if (leavecode || !iDurationCalcAO)
-            {
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                                (0, "PVMFMP3FFParserNode::DoInit() Duration Scan is disabled. DurationCalcAO not created"));
-            }
-            else
-            {
-                iDurationCalcAO->ScheduleAO();
-            }
         }
     }
     return PVMFSuccess;
@@ -599,10 +627,13 @@ PVMFStatus PVMFMP3FFParserNode::DoStop()
         iOutPort->ClearMsgQueues();
     }
     // Position the parser to beginning of file
-    iMP3File->SeekToTimestamp(0);
+    if (iPlaybackParserObj)
+    {
+        iPlaybackParserObj->SeekToTimestamp(0);
+    }
     // reset the track
     ResetTrack();
-
+    iInitNextClip = false;
     iFileSizeRecvd = false;
     iDownloadComplete = false;
     if (iDurationCalcAO)
@@ -624,6 +655,7 @@ PVMFStatus PVMFMP3FFParserNode::DoFlush()
     {
         iOutPort->SuspendInput();
     }
+
 
     // reset the track
     ResetTrack();
@@ -665,13 +697,14 @@ PVMFStatus PVMFMP3FFParserNode::CompleteGetMetadataKeys()
 
     iCurrentCommand.PVMFNodeCommand::Parse(keylistptr, starting_index, max_entries, query_key);
     // Check parameters
-    if (keylistptr == NULL || !iMP3File)
+    if (keylistptr == NULL || NULL == iMetadataParserObj)
     {
         // The list pointer is invalid
         return PVMFErrArgument;
     }
     // The underlying mp3 ff library will fill in the keys.
-    iMP3File->GetMetadataKeys(*keylistptr, starting_index, max_entries, query_key);
+    iMetadataParserObj->GetMetadataKeys(*keylistptr, starting_index, max_entries, query_key);
+
 
     /* Copy the requested keys */
     uint32 num_entries = 0;
@@ -746,7 +779,9 @@ PVMFStatus PVMFMP3FFParserNode::DoGetNodeMetadataValues()
                                            starting_index,
                                            max_entries);
 
-    if (iMP3File == NULL || keylistptr_in == NULL || valuelistptr == NULL)
+    if (NULL == iMetadataParserObj ||
+            NULL == keylistptr_in ||
+            NULL == valuelistptr)
     {
         // The list pointer is invalid, or we cannot access the mp3 ff library.
         return PVMFFailure;
@@ -763,13 +798,13 @@ PVMFStatus PVMFMP3FFParserNode::DoGetNodeMetadataValues()
             //key list from MP3 FF lib first
             int32 max = 0x7FFFFFFF;
             char* query = NULL;
-            iMP3File->GetMetadataKeys(completeKeyList, 0, max, query);
+            iMetadataParserObj->GetMetadataKeys(completeKeyList, 0, max, query);
             keylistptr = &completeKeyList;
         }
     }
 
     // The underlying mp3 ff library will fill in the values.
-    PVMFStatus status = iMP3File->GetMetadataValues(*keylistptr, *valuelistptr, starting_index, max_entries);
+    PVMFStatus status = iMetadataParserObj->GetMetadataValues(*keylistptr, *valuelistptr, starting_index, max_entries);
 
     iMP3ParserNodeMetadataValueCount = (*valuelistptr).size();
 
@@ -864,7 +899,7 @@ PVMFStatus PVMFMP3FFParserNode::ProcessOutgoingMsg(PVMFPortInterface* aPort)
         // Port was busy
         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
                         (0, "PVMFMP3FFParserNode::ProcessOutgoingMsg: \
-                        Connected port goes into busy state"));
+                         Connected port goes into busy state"));
     }
     return status;
 }
@@ -884,12 +919,23 @@ void PVMFMP3FFParserNode::Run()
     {
         // Read capacity notification was delivered
         iCheckForMP3HeaderDuringInit = false;
-        PVMFStatus cmdStatus = CheckForMP3HeaderAvailability();
+        IMpeg3File* parserObj = GetParserObjAtIndex(0);
+        // this condition would occur only for network playback
+        // PS/PD is only supported for clip index 0
+        if (NULL == parserObj)
+        {
+            CompleteInit(PVMFFailure);
+        }
+
+        PVMFStatus cmdStatus = CheckForMP3HeaderAvailability(0);
         if (PVMFSuccess == cmdStatus)
         {
             LOGINFO((0, "PVMFMP3FFParserNode::Run() CheckForMP3HeaderAvailability() succeeded"));
             // complete init command
             CompleteInit(cmdStatus);
+
+            iPlaybackClipIndex = 0;
+            iPlaybackParserObj = parserObj;
         }
         else if (PVMFFailure == cmdStatus)
         {
@@ -968,7 +1014,7 @@ void PVMFMP3FFParserNode::PassDatastreamFactory(PVMFDataStreamFactory& aFactory,
         iDataStreamFactory = &aFactory;
 
 #if PV_HAS_SHOUTCAST_SUPPORT_ENABLED
-        if (iSourceFormat == PVMF_MIME_DATA_SOURCE_SHOUTCAST_URL)
+        if (GetClipFormatTypeAt(iPlaybackClipIndex) == PVMF_MIME_DATA_SOURCE_SHOUTCAST_URL)
         {
             iSCSPFactory = OSCL_NEW(PVMFShoutcastStreamParserFactory, (&aFactory, iMetadataInterval));
 
@@ -1017,8 +1063,13 @@ int32 PVMFMP3FFParserNode::convertSizeToTime(uint32 aFileSize, uint32& aNPTInMS)
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                     (0, "PVMFMP3FFParserNode::ConvertSizeToTime() aFileSize=%d, aNPTInMS=%d", aFileSize, aNPTInMS));
 
-    return iMP3File->ConvertSizeToTime(aFileSize, aNPTInMS);
+    if (iPlaybackParserObj)
+    {
+        return iPlaybackParserObj->ConvertSizeToTime(aFileSize, aNPTInMS);
+    }
+    return -1;
 }
+
 bool PVMFMP3FFParserNode::setProtocolInfo(Oscl_Vector<PvmiKvp*, OsclMemAllocator>& aInfoKvpVec)
 {
 #if PV_HAS_SHOUTCAST_SUPPORT_ENABLED
@@ -1122,12 +1173,15 @@ bool PVMFMP3FFParserNode::HandleTrackState()
             iTrack.iState = PVMP3FFNodeTrackPortInfo::TRACKSTATE_TRANSMITTING_GETDATA;
             // Continue on to retrieve and send the first frame
         case PVMP3FFNodeTrackPortInfo::TRACKSTATE_TRANSMITTING_GETDATA:
+        {
             // Check if node needs to send BOS
             if (iTrack.iSendBOS)
             {
                 // Send BOS downstream on all available tracks
                 uint32 timestamp = iTrack.timestamp_offset;
-                if (!SendBeginOfMediaStreamCommand(iTrack.iPort, iStreamID, timestamp))
+                timestamp += iCurrSampleDuration;
+
+                if (!SendBeginOfMediaStreamCommand(iTrack.iPort, iStreamID, timestamp, iTrack.iSeqNum++, iPlaybackClipIndex))
                 {
                     return true;
                 }
@@ -1139,15 +1193,18 @@ bool PVMFMP3FFParserNode::HandleTrackState()
             {
                 // If it returns false, break out of the switch and return false,
                 // this means node doesn't need to be run again in the current state.
-                if (iTrack.iState == PVMP3FFNodeTrackPortInfo::TRACKSTATE_SEND_ENDOFTRACK)
+                // unless we need to send end of track, beginning of clip and end of clip commands
+                if ((iTrack.iState == PVMP3FFNodeTrackPortInfo::TRACKSTATE_SEND_ENDOFTRACK) ||
+                        (iTrack.iState == PVMP3FFNodeTrackPortInfo::TRACKSTATE_TRANSMITTING_SENDBOC) ||
+                        (iTrack.iState == PVMP3FFNodeTrackPortInfo::TRACKSTATE_TRANSMITTING_SENDEOC))
                 {
                     Reschedule();
                 }
                 break;
             }
-            iSendDecodeFormatSpecificInfo = true;
             iTrack.iState = PVMP3FFNodeTrackPortInfo::TRACKSTATE_TRANSMITTING_SENDDATA;
             // Continue to send data
+        }
         case PVMP3FFNodeTrackPortInfo::TRACKSTATE_TRANSMITTING_SENDDATA:
             if (SendTrackData(iTrack))
             {
@@ -1157,12 +1214,30 @@ bool PVMFMP3FFParserNode::HandleTrackState()
             break;
         case PVMP3FFNodeTrackPortInfo::TRACKSTATE_SEND_ENDOFTRACK:
         {
-            uint32 timestamp = iTrack.timestamp_offset;
+            uint32 timestamp = 0;
+            if (iPlaybackClipIndex < (int32)(iNumClipsInPlayList - 1))
+            {
+                iInitNextClip = true;
+            }
+
+            // lets initialize the next clip in queue.
+            if (iInitNextClip)
+            {
+                PVMFStatus status = InitNextValidClipInPlaylist();
+                if (status != PVMFSuccess)
+                {
+                    iInitNextClip = false;
+                }
+            }
+
             // Check if node needs to send BOS
             if (iTrack.iSendBOS)
             {
+                timestamp = iTrack.timestamp_offset;
+                timestamp += iCurrSampleDuration;
+
                 // Send BOS downstream on all available tracks
-                if (!SendBeginOfMediaStreamCommand(iTrack.iPort, iStreamID, timestamp))
+                if (!SendBeginOfMediaStreamCommand(iTrack.iPort, iStreamID, timestamp, iTrack.iSeqNum++, iPlaybackClipIndex))
                 {
                     return true;
                 }
@@ -1170,12 +1245,35 @@ bool PVMFMP3FFParserNode::HandleTrackState()
                 iTrack.iSendBOS = false;
             }
 
-            if (SendEndOfTrackCommand(iTrack.iPort, iStreamID, timestamp, iTrack.iSeqNum++))
+            timestamp = iTrack.timestamp_offset;
+            timestamp += iCurrSampleDuration;
+            if (SendEndOfTrackCommand(iTrack.iPort, iStreamID, timestamp, iTrack.iSeqNum++, iPlaybackClipIndex))
             {
                 // EOS command sent successfully
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_NOTICE, (0, "PVMFMP3FFParserNode::HandleTrackState() EOS sent TS %d StreamID %d", timestamp, iStreamID));
                 iTrack.iState = PVMP3FFNodeTrackPortInfo::TRACKSTATE_ENDOFTRACK;
-                ReportInfoEvent(PVMFInfoEndOfData);
+                ReportInfoEvent(PVMFInfoEndOfData, (OsclAny*) &iPlaybackClipIndex);
+
+                // if there are more clips to playback?
+                if (iPlaybackClipIndex < (int32)(iNumClipsInPlayList - 1) && !iPlaylistExhausted && iNextInitializedClipIndex >= 0)
+                {
+                    // start sending out data from next clip immediately
+                    IMpeg3File* parserObj = GetParserObjAtIndex(iNextInitializedClipIndex);
+                    if (iNumClipsInPlayList > 1 &&
+                            iNextInitializedClipIndex < (int32)iNumClipsInPlayList && // iNextInitializedClip index is within the clip list
+                            NULL != parserObj) //next clip has been intialized successfully
+                    {
+                        iPlaybackClipIndex = iNextInitializedClipIndex; // pick up the next clip in list
+                        iPlaybackParserObj = parserObj;
+                        iTrack.iSendBOS = true;
+                        iTrack.iState = PVMP3FFNodeTrackPortInfo::TRACKSTATE_TRANSMITTING_GETDATA;
+                        uint32 timestamp = iTrack.iClockConverter->get_converted_ts(COMMON_PLAYBACK_CLOCK_TIMESCALE);
+                        iTrack.timestamp_offset += timestamp;
+                        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_NOTICE, (0, "PVMFMP3FFParserNode::HandleTrackState() TimeStampOffset [%d]", iTrack.timestamp_offset));
+                        iTrack.iClockConverter->set_clock((uint32)0, (uint32)0);
+                        Reschedule();
+                    }
+                }
             }
             else
             {
@@ -1186,6 +1284,52 @@ bool PVMFMP3FFParserNode::HandleTrackState()
             }
         }
         break;
+
+        case PVMP3FFNodeTrackPortInfo::TRACKSTATE_TRANSMITTING_SENDBOC:
+            // need to send BOC
+            // then followed by data
+            if (iClipInfoList[iPlaybackClipIndex].iClipInfo.iSendBOC &&
+                    iClipInfoList[iPlaybackClipIndex].iClipInfo.iHasBOCFrame)
+            {
+                // send BOC downstream
+                if (!SendBeginOfClipCommand(iTrack))
+                {
+                    // try again
+                    return true;
+                }
+            }
+            // may need to send EOC as well
+            if (iClipInfoList[iPlaybackClipIndex].iClipInfo.iSendEOC &&
+                    iClipInfoList[iPlaybackClipIndex].iClipInfo.iHasEOCFrame)
+            {
+                iTrack.iState = PVMP3FFNodeTrackPortInfo::TRACKSTATE_TRANSMITTING_SENDEOC;
+            }
+            // falling through
+        case PVMP3FFNodeTrackPortInfo::TRACKSTATE_TRANSMITTING_SENDEOC:
+
+            // need to send EOC
+            // then followed by data
+            if (iClipInfoList[iPlaybackClipIndex].iClipInfo.iSendEOC &&
+                    iClipInfoList[iPlaybackClipIndex].iClipInfo.iHasEOCFrame)
+            {
+                // send EOC downstream
+                if (!SendEndOfClipCommand(iTrack))
+                {
+                    // try again
+                    return true;
+                }
+            }
+
+            // send data
+            iTrack.iState = PVMP3FFNodeTrackPortInfo::TRACKSTATE_TRANSMITTING_SENDDATA;
+
+            if (SendTrackData(iTrack))
+            {
+                iTrack.iState = PVMP3FFNodeTrackPortInfo::TRACKSTATE_TRANSMITTING_GETDATA;
+                ret_status = true;
+            }
+            break;
+
         case PVMP3FFNodeTrackPortInfo::TRACKSTATE_TRACKDATAPOOLEMPTY:
         case PVMP3FFNodeTrackPortInfo::TRACKSTATE_MEDIADATAPOOLEMPTY:
         case PVMP3FFNodeTrackPortInfo::TRACKSTATE_INITIALIZED:
@@ -1203,19 +1347,28 @@ bool PVMFMP3FFParserNode::HandleTrackState()
 
 bool PVMFMP3FFParserNode::RetrieveTrackData(PVMP3FFNodeTrackPortInfo& aTrackPortInfo)
 {
+    // parser object is null, assert here
+    OSCL_ASSERT(NULL != iPlaybackParserObj);
     // Parsing is successful, we must have estimated the duration by now.
     // Pass the duration to download progress interface
-    if (iDownloadProgressInterface && iFileSizeRecvd && iFileSize > 0)
+    if (iDownloadProgressInterface && iFileSizeRecvd &&
+            iFileSize > 0 && NULL != iPlaybackParserObj)
     {
-        iMP3File->SetFileSize(iFileSize);
-        uint32 durationInMsec = iMP3File->GetDuration();
+        iPlaybackParserObj->SetFileSize(iFileSize);
+        uint32 durationInMsec = iPlaybackParserObj->GetDuration();
         if (durationInMsec > 0)
         {
             iDownloadProgressInterface->setClipDuration(durationInMsec);
             int32 leavecode = 0;
             PVMFDurationInfoMessage* eventMsg = NULL;
             OSCL_TRY(leavecode, eventMsg = OSCL_NEW(PVMFDurationInfoMessage, (durationInMsec)));
-            ReportInfoEvent(PVMFInfoDurationAvailable, NULL, OSCL_STATIC_CAST(PVInterface*, eventMsg));
+
+            uint8 localbuffer[4];
+            oscl_memcpy(localbuffer, &iPlaybackClipIndex, sizeof(uint32));
+            PVMFAsyncEvent asyncevent(PVMFInfoEvent, PVMFInfoDurationAvailable, NULL, OSCL_STATIC_CAST(PVInterface*, eventMsg), NULL, localbuffer, 4);
+
+            ReportInfoEvent(asyncevent);
+
             if (eventMsg)
             {
                 eventMsg->removeRef();
@@ -1308,16 +1461,34 @@ bool PVMFMP3FFParserNode::RetrieveTrackData(PVMP3FFNodeTrackPortInfo& aTrackPort
     gau.buf.fragments[0].len = refCtrMemFragOut.getCapacity();
     gau.frameNum = 0;
 
+    int32 eocFrameIndex = -1;
+    int32 framesToFollowEOC = -1;
     // Mp3FF ErrorCode
     MP3ErrorType error = MP3_SUCCESS;
     // Grab data from the mp3 ff parser library
-    int32 retval = iMP3File->GetNextBundledAccessUnits(&numsamples, &gau, error);
+    int32 retval = iPlaybackParserObj->GetNextBundledAccessUnits(&numsamples, &gau, error, eocFrameIndex, framesToFollowEOC);
 
     // Determine actual size of the retrieved data by summing each sample length in GAU
+    // Check if the frame contains encoder delay or zero padding
     uint32 actualdatasize = 0;
+    iCurrSampleDuration = 0;
     for (uint32 index = 0; index < numsamples; ++index)
     {
         actualdatasize += gau.info[index].len;
+        iCurrSampleDuration += gau.info[index].ts_delta;
+
+        if ((gau.frameNum + index) == iClipInfoList[iPlaybackClipIndex].iClipInfo.iFrameBOC)
+        {
+            iClipInfoList[iPlaybackClipIndex].iClipInfo.iHasBOCFrame = true;
+        }
+
+        if (eocFrameIndex >= 0 && eocFrameIndex == (int32) index)
+        {
+            iClipInfoList[iPlaybackClipIndex].iClipInfo.iFirstFrameEOC = gau.frameNum + eocFrameIndex;
+            iClipInfoList[iPlaybackClipIndex].iClipInfo.iFramesToFollowEOC = framesToFollowEOC;
+
+            iClipInfoList[iPlaybackClipIndex].iClipInfo.iHasEOCFrame = true;
+        }
     }
 
     if (retval > 0)
@@ -1353,10 +1524,8 @@ bool PVMFMP3FFParserNode::RetrieveTrackData(PVMP3FFNodeTrackPortInfo& aTrackPort
         }
         mediaDataImplOut->setMarkerInfo(markerInfo);
 
-
         // Save the media data in the trackport info
         aTrackPortInfo.iMediaData = mediadataout;
-
         // Retrieve timestamp and convert to milliseconds
         aTrackPortInfo.iClockConverter->update_clock(gau.info[0].ts);
         uint32 timestamp = aTrackPortInfo.iClockConverter->get_converted_ts(COMMON_PLAYBACK_CLOCK_TIMESCALE);
@@ -1365,11 +1534,41 @@ bool PVMFMP3FFParserNode::RetrieveTrackData(PVMP3FFNodeTrackPortInfo& aTrackPort
         // Set the media data timestamp
         aTrackPortInfo.iMediaData->setTimestamp(timestamp);
 
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
+                        (0, "PVMFMP3FFParserNode::RetrieveTrackData Seq=%d, TS=%d", aTrackPortInfo.iSeqNum, timestamp));
+
+        // if gapless, check if BOC and/or EOC has to be sent
+        // if the whole clip fits inside the frag, both BOC and EOC have to be sent
+        if (iClipInfoList[iPlaybackClipIndex].iClipInfo.iSendBOC && iClipInfoList[iPlaybackClipIndex].iClipInfo.iHasBOCFrame)
+        {
+            // first frame and gapless
+            // send BOC msg downstream
+            if (!SendBeginOfClipCommand(aTrackPortInfo))
+            {
+                // failed to send BOC
+                // data is already in aTrackPortInfo.iMediaData
+                iTrack.iState = PVMP3FFNodeTrackPortInfo::TRACKSTATE_TRANSMITTING_SENDBOC;
+                return false;
+            }
+        }
+
         // Set msg sequence number and stream id
         aTrackPortInfo.iMediaData->setSeqNum(aTrackPortInfo.iSeqNum++);
         aTrackPortInfo.iMediaData->setStreamID(iStreamID);
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
-                        (0, "PVMFMP3FFParserNode::RetrieveTrackData Seq=%d, TS=%d", aTrackPortInfo.iSeqNum, timestamp));
+
+        if (iClipInfoList[iPlaybackClipIndex].iClipInfo.iSendEOC && iClipInfoList[iPlaybackClipIndex].iClipInfo.iHasEOCFrame)
+        {
+            // first frame containing zero padding and gapless
+            // send EOC msg downstream
+            if (!SendEndOfClipCommand(aTrackPortInfo))
+            {
+                // failed to send EOC
+                // data is already in aTrackPortInfo.iMediaData
+                iTrack.iState = PVMP3FFNodeTrackPortInfo::TRACKSTATE_TRANSMITTING_SENDEOC;
+                return false;
+            }
+        }
+
         if (error == MP3_INSUFFICIENT_DATA && !iDownloadProgressInterface)
         {
             //parser reported underflow during local playback session
@@ -1410,14 +1609,14 @@ bool PVMFMP3FFParserNode::RetrieveTrackData(PVMP3FFNodeTrackPortInfo& aTrackPort
                 }
                 // ffparser ran out of data, need to request a call back from DPI
                 // when data beyond current timestamp is downloaded
-                uint32 timeStamp = iMP3File->GetTimestampForCurrentSample();
+                uint32 timeStamp = iPlaybackParserObj->GetTimestampForCurrentSample();
                 iDownloadProgressInterface->requestResumeNotification(timeStamp, iDownloadComplete);
                 // Change track state to Autopause and set iAutopause
                 aTrackPortInfo.iState = PVMP3FFNodeTrackPortInfo::TRACKSTATE_DOWNLOAD_AUTOPAUSE;
                 iAutoPaused = true;
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                                 (0, "PVMFMP3FFParserNode::RetrieveTrackData() \
-                                Auto pause Triggered"));
+                                 Auto pause Triggered"));
                 return false;
             }
             else
@@ -1440,14 +1639,14 @@ bool PVMFMP3FFParserNode::RetrieveTrackData(PVMP3FFNodeTrackPortInfo& aTrackPort
             {
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE,
                                 (0, "PVMFMP3FFParserNode::RetrieveTrackData() \
-                                Clip format not identified by parser %d", error));
+                                 Clip format not identified by parser %d", error));
                 errCode = PVMFErrNotSupported;
             }
             else
             {
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE,
                                 (0, "PVMFMP3FFParserNode::RetrieveTrackData() \
-                                Unknown error code reported err code  %d", error));
+                                 Unknown error code reported err code  %d", error));
             }
             aTrackPortInfo.iState = PVMP3FFNodeTrackPortInfo::TRACKSTATE_SEND_ENDOFTRACK;
             ReportErrorEvent(errCode);
@@ -1457,9 +1656,7 @@ bool PVMFMP3FFParserNode::RetrieveTrackData(PVMP3FFNodeTrackPortInfo& aTrackPort
     return true;
 }
 
-/**
- * Send track data to output port
- */
+// Send track data to output port
 bool PVMFMP3FFParserNode::SendTrackData(PVMP3FFNodeTrackPortInfo& aTrackPortInfo)
 {
     // Send frame to downstream node via port
@@ -1513,9 +1710,10 @@ bool PVMFMP3FFParserNode::HandleOutgoingQueueReady(PVMFPortInterface* aPortInter
 /**
  * Parse the File
  */
-PVMFStatus PVMFMP3FFParserNode::ParseFile()
+PVMFStatus PVMFMP3FFParserNode::ParseFile(uint32 aClipIndex)
 {
-    if (!iSourceURLSet)
+    IMpeg3File* parserObj = GetParserObjAtIndex(aClipIndex);
+    if (!iSourceURLSet || NULL == parserObj)
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                         (0, "PVMFMP3FFParserNode::ParseFile() SourceURL not set"));
@@ -1523,7 +1721,7 @@ PVMFStatus PVMFMP3FFParserNode::ParseFile()
         return PVMFFailure;
     }
 
-    MP3ErrorType mp3Err = iMP3File->ParseMp3File();
+    MP3ErrorType mp3Err = parserObj->ParseMp3File();
 
     if (mp3Err == MP3_INSUFFICIENT_DATA)
     {
@@ -1532,30 +1730,28 @@ PVMFStatus PVMFMP3FFParserNode::ParseFile()
     else if (mp3Err == MP3_END_OF_FILE ||
              mp3Err != MP3_SUCCESS)
     {
-        SetState(EPVMFNodeError);
-        ReportErrorEvent(PVMFErrResource);
         return PVMFFailure;
     }
 
     // Find out what the largest frame in the file is. This information is used
     // when allocating the buffers in DoRequestPort().
-    iMaxFrameSize = iMP3File->GetMaxBufferSizeDB();
+    iMaxFrameSize = parserObj->GetMaxBufferSizeDB();
     if (iMaxFrameSize <= 0)
     {
         iMaxFrameSize = PVMP3FF_DEFAULT_MAX_FRAMESIZE;
         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_INFO,
                         (0, "PVMFMP3FFParserNode::ParseFile() Mp3FF \
-                        MaxFrameSize %d", iMaxFrameSize));
+                         MaxFrameSize %d", iMaxFrameSize));
     }
 
     // get config Details from mp3ff
     MP3ContentFormatType mp3format;
-    iConfigOk = iMP3File->GetConfigDetails(mp3format);
+    iConfigOk = parserObj->GetConfigDetails(mp3format);
     if (!iConfigOk)
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_INFO,
                         (0, "PVMFMP3FFParserNode::ParseFile() Mp3FF \
-                        Config Not returned", iMaxFrameSize));
+                         Config Not returned", iMaxFrameSize));
 
     }
     else
@@ -1581,7 +1777,7 @@ void PVMFMP3FFParserNode::ResetTrack()
 #if PV_HAS_SHOUTCAST_SUPPORT_ENABLED
     // if this is shoutcast session,
     // reset the stream and read pointers
-    if ((iSourceFormat == PVMF_MIME_DATA_SOURCE_SHOUTCAST_URL) && (iSCSPFactory != NULL))
+    if ((GetClipFormatTypeAt(iPlaybackClipIndex) == PVMF_MIME_DATA_SOURCE_SHOUTCAST_URL) && (iSCSPFactory != NULL))
     {
         iSCSPFactory->ResetShoutcastStream();
     }
@@ -1646,11 +1842,30 @@ void PVMFMP3FFParserNode::CleanupFileSource()
         iDurationCalcAO = NULL;
     }
 
-    if (iMP3File)
+    while (!iClipInfoList.empty())
     {
-        OSCL_DELETE(iMP3File);
-        iMP3File = NULL;
+        // delete file handle, if any
+        PVMFMp3ClipInfo& clipInfo = iClipInfoList.back();
+        OsclFileHandle* fileHandle = clipInfo.iClipInfo.GetFileHandle();
+        if (fileHandle)
+        {
+            OSCL_DELETE(fileHandle);
+            fileHandle = NULL;
+        }
+
+        // delete file parser object, if any
+        if (clipInfo.iParserObj)
+        {
+            bool cleanParserAtLastIndex = true;
+            ReleaseMP3FileParser(iClipInfoList.size() - 1, cleanParserAtLastIndex);
+        }
+        // clear the vector element
+        iClipInfoList.pop_back();
     }
+
+    iPlaybackParserObj = NULL;
+    iMetadataParserObj = NULL;
+    iPlaylistExhausted = false;
 
     if (iDataStreamInterface != NULL)
     {
@@ -1694,19 +1909,13 @@ void PVMFMP3FFParserNode::CleanupFileSource()
         iDataStreamFactory = NULL;
     }
     iMP3ParserNodeMetadataValueCount = 0;
-
-    iCPMSourceData.iFileHandle = NULL;
-
-    if (iFileHandle)
-    {
-        OSCL_DELETE(iFileHandle);
-        iFileHandle = NULL;
-    }
     iSourceURLSet = false;
+
     oWaitingOnLicense = false;
     iDownloadComplete = false;
     iUseCPMPluginRegistry = false;
-    iSourceContextDataValid = false;
+
+    iInitNextClip = false;
 }
 
 /**
@@ -1829,13 +2038,7 @@ PVMFStatus PVMFMP3FFParserNode::SetSourceInitializationData(OSCL_wString& aSourc
         uint32 aClipIndex,
         PVMFFormatTypeDRMInfo aType)
 {
-    OSCL_UNUSED_ARG(aClipIndex);
-    // Initialize the Source data
-    if (iSourceURLSet)
-    {
-        CleanupFileSource();
-    }
-
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_NOTICE, (0, "PVMFMP3FFParserNode::SetSourceInitializationData() In ClipIndex [%d] iPlaybackClipIndex %d", aClipIndex, iPlaybackClipIndex));
     if (aType != PVMF_FORMAT_TYPE_CONNECT_UNPROTECTED)
     {
         iUseCPMPluginRegistry = true;
@@ -1845,16 +2048,86 @@ PVMFStatus PVMFMP3FFParserNode::SetSourceInitializationData(OSCL_wString& aSourc
         iUseCPMPluginRegistry = false;
     }
 
-    if (aSourceFormat != PVMF_MIME_MP3FF &&
-            aSourceFormat != PVMF_MIME_DATA_SOURCE_SHOUTCAST_URL)
+    // updates cant be accepted for currently playing back clip
+    if ((int32)aClipIndex == iPlaybackClipIndex)
+        return PVMFErrAlreadyExists;
+
+    PVMFMp3ClipInfo mp3clipInfo;
+    // initiliaze parser object as null
+    mp3clipInfo.iParserObj = NULL;
+
+    PVMFSourceClipInfo info;
+    bool updateExistingClip = false;
+    // if the clip was already initialized no updates can be excepted
+    // for this .
+    // if there were no updates in existing data, treat this as no-op success
+    // else update the existing clip info data.
+    uint32 index = 0;
+    for (index = 0; index < iClipInfoList.size(); index++)
     {
-        // Node doesnt support any other format than MP3/Shoutcast stream
-        return PVMFFailure;
+        if (iClipInfoList[index].iClipInfo.GetClipIndex() == aClipIndex)
+        {
+            if (iClipInfoList[index].iClipInfo.iIsInitialized)
+            {
+                if (false == ValidateSourceInitializationParams(aSourceURL, aSourceFormat, aClipIndex, iClipInfoList[index].iClipInfo))
+                {
+                    // clip is already initialized, updates cant be accepted now.
+                    return PVMFErrAlreadyExists;
+                }
+                // this would mean that we there was no update for this track hence mark it as a no-op
+                return PVMFSuccess;
+            }
+            updateExistingClip = true;
+            break;
+        }
     }
 
-    iSourceFormat = aSourceFormat;
-    iSourceURL = aSourceURL;
+    // intialize clip info
+    info.SetSourceURL(aSourceURL);
+    info.SetClipIndex(aClipIndex);
+    info.SetFormatType(aSourceFormat);
+    info.SetFileHandle(NULL); //initialize file handle
+
+    if (iPlaybackClipIndex == -1 && aClipIndex == 0)
+    {
+        // either information is recieved for the first time for zeroth index
+        // of zeroth index is being updated again first same index is being updated
+        CleanupFileSource();
+    }
+
+    if (aClipIndex == 0)
+    {
+        // check if earlier mime type was correct, if it was, ignore this update
+        if (aSourceFormat == PVMF_MIME_FORMAT_UNKNOWN &&
+                iClipInfoList[index].iClipInfo.GetFormatType() == PVMF_MIME_MP3FF)
+        {
+            // same url is being updated, dont update the format type.
+            info.SetFormatType(iClipInfoList[index].iClipInfo.GetFormatType());
+        }
+        else
+        {
+            // for clip index == 0 only mp3 and shoutcast url mime types are
+            // supported by this node
+            if (aSourceFormat != PVMF_MIME_MP3FF &&
+                    aSourceFormat != PVMF_MIME_DATA_SOURCE_SHOUTCAST_URL)
+            {
+                // Node doesnt support any other format than MP3/Shoutcast stream
+                return PVMFErrNotSupported;
+            }
+        }
+    }
+    else
+    {
+        // for clip index > 0 only mp3 and unknown mime types are supported by this node
+        if (aSourceFormat != PVMF_MIME_MP3FF &&
+                aSourceFormat != PVMF_MIME_FORMAT_UNKNOWN)
+        {
+            return PVMFErrNotSupported;
+        }
+    }
+
     iSourceURLSet = true;
+
     if (aSourceData)
     {
         PVInterface* pvInterface = OSCL_STATIC_CAST(PVInterface*, aSourceData);
@@ -1866,11 +2139,12 @@ PVMFStatus PVMFMP3FFParserNode::SetSourceInitializationData(OSCL_wString& aSourc
             PVMFLocalDataSource* opaqueData = OSCL_STATIC_CAST(PVMFLocalDataSource*, localDataSrc);
             if (opaqueData->iFileHandle)
             {
-                iFileHandle = OSCL_NEW(OsclFileHandle, (*(opaqueData->iFileHandle)));
-                iCPMSourceData.iFileHandle = iFileHandle;
+                OsclFileHandle* fileHandle = OSCL_NEW(OsclFileHandle, (*(opaqueData->iFileHandle)));
+                info.SetFileHandle(fileHandle);
+                info.iCPMSourceData.iFileHandle = fileHandle;
             }
-            iCPMSourceData.iPreviewMode = opaqueData->iPreviewMode;
-            iCPMSourceData.iIntent = opaqueData->iIntent;
+            info.iCPMSourceData.iPreviewMode = opaqueData->iPreviewMode;
+            info.iCPMSourceData.iIntent = opaqueData->iIntent;
             if (opaqueData->iContentAccessFactory != NULL)
             {
                 //Cannot have both plugin usage and a datastream factory
@@ -1890,24 +2164,61 @@ PVMFStatus PVMFMP3FFParserNode::SetSourceInitializationData(OSCL_wString& aSourc
                     PVMFSourceContextDataCommon* cContext = OSCL_STATIC_CAST(
                                                                 PVMFSourceContextDataCommon*,
                                                                 commonDataContext);
+                    OsclFileHandle* fileHandle = NULL;
                     if (cContext->iFileHandle)
                     {
-                        iFileHandle = OSCL_NEW(OsclFileHandle, (*(cContext->iFileHandle)));
+                        fileHandle = OSCL_NEW(OsclFileHandle, (*(cContext->iFileHandle)));
                     }
+                    info.SetFileHandle(fileHandle);
                     if (cContext->iContentAccessFactory != NULL)
                     {
                         //Cannot have both plugin usage and a datastream factory
                         return PVMFErrArgument;
                     }
+
                     PVMFSourceContextData* sContext = OSCL_STATIC_CAST(
                                                           PVMFSourceContextData*,
                                                           sourceDataContext);
-                    iSourceContextData = *sContext;
-                    iSourceContextDataValid = true;
+
+                    info.iSourceContextData = *sContext;
+                    info.iSourceContextDataValid = true;
                 }
             }
         }
     }
+    if (updateExistingClip)
+    {
+        iClipInfoList[aClipIndex].iClipInfo = info;
+    }
+    else
+    {
+        mp3clipInfo.iClipInfo = info;
+        iClipInfoList.push_back(mp3clipInfo);
+        iNumClipsInPlayList++;
+    }
+
+    // this is a new clip addition request but the existing clip list has exhausted
+    // need to wake up source node.
+    if (!updateExistingClip && iPlaylistExhausted)
+    {
+        if (iInterfaceState == EPVMFNodeStarted &&
+                PVMFSuccess == InitNextValidClipInPlaylist(aClipIndex))
+        {
+            iTrack.iState = PVMP3FFNodeTrackPortInfo::TRACKSTATE_TRANSMITTING_GETDATA;
+            iPlaybackClipIndex = iNextInitializedClipIndex;
+            iPlaybackParserObj = GetParserObjAtIndex(iNextInitializedClipIndex);
+            iTrack.iSendBOS = true;
+            uint32 timestamp = iTrack.iClockConverter->get_converted_ts(COMMON_PLAYBACK_CLOCK_TIMESCALE);
+            iTrack.timestamp_offset += timestamp;
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_NOTICE, (0, "PVMFMP3FFParserNode::HandleTrackState() TimeStampOffset [%d]", iTrack.timestamp_offset));
+            iTrack.iClockConverter->set_clock((uint32)0, (uint32)0);
+            RunIfNotReady();
+            return PVMFSuccess;
+        }
+        return PVMFFailure;
+    }
+
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_NOTICE, (0, "PVMFMP3FFParserNode::SetSourceInitializationData() Out ClipIndex [%d]", aClipIndex));
     return PVMFSuccess;
 }
 
@@ -1923,6 +2234,28 @@ PVMFStatus PVMFMP3FFParserNode::SetEstimatedServerClock(PVMFMediaClock* aClientC
     return PVMFSuccess;
 }
 
+void PVMFMP3FFParserNode::AudioSinkEvent(PVMFStatus aEvent, uint32 aClipIndex)
+{
+    if (aEvent == PVMFInfoEndOfData)
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                        (0, "PVMFMP3FFParserNode::AudioSinkEvent() EOS ClipIndex %d", aClipIndex));
+
+        ReleaseMP3FileParser(aClipIndex);
+    }
+    else if (aEvent == PVMFInfoStartOfData)
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                        (0, "PVMFMP3FFParserNode::AudioSinkEvent() BOS ClipIndex %d", aClipIndex));
+    }
+    else
+    {
+        // unknown event, log it
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                        (0, "PVMFMP3FFParserNode::AudioSinkEvent() unknown event %d ClipIndex %d", aEvent, aClipIndex));
+    }
+}
+
 /**
  * From PVMFTrackSelectionExtensionInterface
  */
@@ -1930,13 +2263,18 @@ PVMFStatus PVMFMP3FFParserNode::GetMediaPresentationInfo(PVMFMediaPresentationIn
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                     (0, "PVMFMP3FFParserNode::GetMediaPresentationInfo() In"));
-    if (!iMP3File)
-    {
-        return PVMFFailure;
-    }
-    aInfo.setDurationValue(iMP3File->GetDuration());
 
-    int32 iNumTracks = iMP3File->GetNumTracks();
+    if (NULL == iPlaybackParserObj || iPlaybackClipIndex == -1)
+    {
+        iPlaybackClipIndex = -1;
+        PVMFStatus status = InitNextValidClipInPlaylist();
+        if (status != PVMFSuccess)
+            return status;
+    }
+
+    aInfo.setDurationValue(iPlaybackParserObj->GetDuration());
+    int32 iNumTracks = iPlaybackParserObj->GetNumTracks();
+
     if (iNumTracks <= 0)
     {
         // Number of tracks is null
@@ -1960,12 +2298,11 @@ PVMFStatus PVMFMP3FFParserNode::GetMediaPresentationInfo(PVMFMediaPresentationIn
         tmpTrackInfo.setTrackBitRate(aBitRate);
         // config info
         MP3ContentFormatType mp3Config;
-        if (!iMP3File->GetConfigDetails(mp3Config))
+        if (!iPlaybackParserObj->GetConfigDetails(mp3Config))
         {
             // mp3 config not available
             return PVMFFailure;
         }
-
         if (!CreateFormatSpecificInfo(mp3Config.NumberOfChannels, mp3Config.SamplingRate))
         {
             return PVMFFailure;
@@ -1973,10 +2310,10 @@ PVMFStatus PVMFMP3FFParserNode::GetMediaPresentationInfo(PVMFMediaPresentationIn
 
         tmpTrackInfo.setTrackConfigInfo(iDecodeFormatSpecificInfo);
         // timescale
-        uint64 timescale = (uint64)iMP3File->GetTimescale();
+        uint64 timescale = (uint64)iPlaybackParserObj->GetTimescale();
         tmpTrackInfo.setTrackDurationTimeScale(timescale);
         // in movie timescale
-        uint32 trackDuration = iMP3File->GetDuration();
+        uint32 trackDuration = iPlaybackParserObj->GetDuration();
         tmpTrackInfo.setTrackDurationValue(trackDuration);
         // mime type
         OSCL_FastString mime_type = _STRLIT_CHAR(PVMF_MIME_MP3);
@@ -2027,10 +2364,12 @@ PVMFStatus PVMFMP3FFParserNode::SelectTracks(PVMFMediaPresentationInfo& aInfo)
 uint32 PVMFMP3FFParserNode::GetNumMetadataKeys(char* aQueryString)
 {
     uint32 num_entries = 0;
-    if (iMP3File)
+    if (NULL == iMetadataParserObj)
     {
-        num_entries = iMP3File->GetNumMetadataKeys(aQueryString);
+        return num_entries;
     }
+
+    num_entries = iMetadataParserObj->GetNumMetadataKeys(aQueryString);
 
     if (iCPMContainer.iCPMMetaDataExtensionInterface != NULL)
     {
@@ -2043,10 +2382,12 @@ uint32 PVMFMP3FFParserNode::GetNumMetadataKeys(char* aQueryString)
 uint32 PVMFMP3FFParserNode::GetNumMetadataValues(PVMFMetadataList& aKeyList)
 {
     uint32 numvalentries = 0;
-    if (iMP3File)
+    if (NULL == iMetadataParserObj)
     {
-        numvalentries = iMP3File->GetNumMetadataValues(aKeyList);
+        return numvalentries;
     }
+
+    numvalentries = iMetadataParserObj->GetNumMetadataValues(aKeyList);
 
     if (iCPMContainer.iCPMMetaDataExtensionInterface != NULL)
     {
@@ -2054,6 +2395,19 @@ uint32 PVMFMP3FFParserNode::GetNumMetadataValues(PVMFMetadataList& aKeyList)
             iCPMContainer.iCPMMetaDataExtensionInterface->GetNumMetadataValues(aKeyList);
     }
     return numvalentries;
+}
+
+/**
+ * From PVMFMetadataExtensionInterface
+ * Set metadata clip index
+ */
+PVMFStatus PVMFMP3FFParserNode::SetMetadataClipIndex(uint32 aClipNum)
+{
+    iClipIndexForMetadata = aClipNum;
+    iMetadataParserObj = GetParserObjAtIndex(aClipNum);
+    if (iMetadataParserObj)
+        return PVMFSuccess;
+    return PVMFFailure;
 }
 
 /**
@@ -2122,11 +2476,11 @@ PVMFStatus PVMFMP3FFParserNode::ReleaseNodeMetadataValues(Oscl_Vector<PvmiKvp, O
         uint32 start, uint32 end)
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFMP3FFParserNode::ReleaseNodeMetadataValues() In"));
-    if (iMP3File == NULL)
+    if (!iMetadataParserObj)
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
                         (0, "PVMFMP3FFParserNode::ReleaseNodeMetadataValues() \
-                       MP3 file not parsed yet"));
+                         Invalid parser object"));
         return PVMFFailure;
     }
 
@@ -2136,14 +2490,14 @@ PVMFStatus PVMFMP3FFParserNode::ReleaseNodeMetadataValues(Oscl_Vector<PvmiKvp, O
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
                         (0, "PVMFMP3FFParserNode::ReleaseNodeMetadataValues() \
-                        Invalid start/end index"));
+                         Invalid start/end index"));
         return PVMFErrArgument;
     }
 
     // Go through the specified values and free it
     for (uint32 i = start; i < end; i++)
     {
-        iMP3File->ReleaseMetadataValue(aValueList[i]);
+        iMetadataParserObj->ReleaseMetadataValue(aValueList[i]);
     }
     return PVMFSuccess;
 }
@@ -2169,6 +2523,26 @@ PVMFCommandId PVMFMP3FFParserNode::SetDataSourcePosition(PVMFSessionId aSessionI
                                    &aActualMediaDataTS, aSeekToSyncPoint,
                                    aStreamID, aContext);
     return QueueCommandL(cmd);
+}
+
+/**
+ * From PvmfDataSourcePlaybackControlInterface
+ * Queue an asynchronous node command for SetDataSourcePosition
+ */
+PVMFCommandId PVMFMP3FFParserNode::SetDataSourcePosition(PVMFSessionId aSessionId,
+        PVMFDataSourcePositionParams& aPVMFDataSourcePositionParams,
+        OsclAny* aContext)
+{
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "PVMFMP3FFParserNode::SetDataSourcePosition()"));
+    PVMFNodeCommand cmd;
+    cmd.PVMFNodeCommand::Construct(aSessionId,
+                                   PVMF_GENERIC_NODE_SET_DATASOURCE_POSITION,
+                                   &aPVMFDataSourcePositionParams, aContext);
+
+    iPlaylistRepositioning = true;
+    return QueueCommandL(cmd);
+
 }
 
 /**
@@ -2225,7 +2599,7 @@ PVMFCommandId PVMFMP3FFParserNode::SetDataSourceRate(PVMFSessionId aSessionId,
         OsclAny* aContext)
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                    (0, "PVMFMP3FFParserNode::SetDataSourcePosition()"));
+                    (0, "PVMFMP3FFParserNode::SetDataSourceRate()"));
     PVMFNodeCommand cmd;
     cmd.PVMFNodeCommand::Construct(aSessionId,
                                    PVMF_GENERIC_NODE_SET_DATASOURCE_RATE,
@@ -2250,23 +2624,126 @@ PVMFStatus PVMFMP3FFParserNode::DoSetDataSourceRate()
  */
 PVMFStatus PVMFMP3FFParserNode::DoSetDataSourcePosition()
 {
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFMP3FFParserNode::DoSetDataSourcePosition() In"));
     uint32 targetNPT = 0;
     uint32* actualNPT = NULL;
     uint32* actualMediaDataTS = NULL;
     bool seektosyncpoint = false;
     uint32 streamID = 0;
 
+    iCurrentCommand.PVMFNodeCommand::Parse(targetNPT, actualNPT,
+                                           actualMediaDataTS, seektosyncpoint,
+                                           streamID);
+
+    PVMFStatus status = SetPlaybackStartupTime(targetNPT, actualNPT, actualMediaDataTS, seektosyncpoint, streamID, iPlaybackClipIndex);
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFMP3FFParserNode::DoSetDataSourcePosition() Out Status %d", status));
+    return status;
+}
+
+/**
+ * Command Handler for SetDataSourcePosition
+ */
+PVMFStatus PVMFMP3FFParserNode::DoSetDataSourcePositionPlaylist()
+{
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVMFMP3FFParserNode::DoSetDataSourcePositionPlaylist() In"));
+
+    PVMFDataSourcePositionParams* aReposParams;
+    uint32 targetNPT = 0;
+    uint32 *actualNPT = NULL;
+    uint32 *actualMediaDataTS = NULL;
+    bool seekToSyncPoint = false;
+    uint32 streamID = 0;
+    int32 reposIndex = -1;
+    iMetadataParserObj = NULL;
+
+    iPlaylistExhausted = false;
+
+    iCurrentCommand.PVMFNodeCommand::Parse(aReposParams);
+
+    // check for availability of clip index in the clip list.
+    for (uint32 index = 0; index < iClipInfoList.size(); index++)
+    {
+        if (aReposParams->iPlayElementIndex == (int32) iClipInfoList[index].iClipInfo.GetClipIndex())
+        {
+            reposIndex = (int32) index;
+            break;
+        }
+    }
+
+    // reposition index wasnt found in the list.
+    if (reposIndex < 0)
+    {
+        return PVMFErrArgument;
+    }
+
+    iTrack.iSendBOS = true;
+    iTrack.iFirstFrame = true;
+    streamID = aReposParams->iStreamID;
+    seekToSyncPoint = aReposParams->iSeekToSyncPoint;
+    targetNPT = aReposParams->iTargetNPT; // target npt in msec
+    actualMediaDataTS = &aReposParams->iActualMediaDataTS;
+    actualNPT = &aReposParams->iActualNPT;
+
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVMFMP3FFParserNode::DoSetDataSourcePositionPlaylist() ClipIndex[%d]", aReposParams->iPlayElementIndex));
+
+    PVMFStatus status = PVMFSuccess;
+    // reposition is causing track skipping
+    // release currently used mp3 parser object
+    if (iPlaybackClipIndex != reposIndex &&
+            NULL != iPlaybackParserObj)
+    {
+        // release preexisting parser objects
+        for (uint32 index = 0; index < iClipInfoList.size(); index++)
+        {
+            ReleaseMP3FileParser(index);
+        }
+
+        status = InitNextValidClipInPlaylist(reposIndex);
+
+        if (PVMFSuccess != status)
+        {
+            iTrack.iState = PVMP3FFNodeTrackPortInfo::TRACKSTATE_SEND_ENDOFTRACK;
+            iPlaybackClipIndex = iNumClipsInPlayList;
+            Reschedule();
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVMFMP3FFParserNode::DoSetDataSourcePositionPlaylist() Failed Status [%d]", status));
+            return status;
+        }
+    }
+
+    status = SetPlaybackStartupTime(targetNPT, actualNPT, actualMediaDataTS, seekToSyncPoint, streamID, reposIndex);
+    if (status == PVMFSuccess)
+    {
+        // update playback clip index, as clip to which skip was issued might be corrupt.
+        iPlaybackClipIndex = iNextInitializedClipIndex;
+        iPlaybackParserObj = GetParserObjAtIndex(iNextInitializedClipIndex);
+    }
+
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFMP3FFParserNode::DoSetDataSourcePositionPlaylist() Out Status %d", status));
+    return status;
+}
+
+PVMFStatus PVMFMP3FFParserNode::SetPlaybackStartupTime(uint32& aTargetNPT,
+        uint32* aActualNPT,
+        uint32* aActualMediaDataTS,
+        bool aSeektosyncpoint,
+        uint32 aStreamID,
+        int32 reposIndex)
+{
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFMP3FFParserNode::SetPlaybackStartupTimeStamp() In"));
+
+    IMpeg3File* parserObj = GetParserObjAtIndex(reposIndex);
+    if (NULL == parserObj)
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFMP3FFParserNode::SetPlaybackStartupTimeStamp() Failed, Parser not created!"));
+        return PVMFFailure;
+    }
     // if progressive streaming, reset download complete flag
     if ((NULL != iDataStreamInterface) && (0 != iDataStreamInterface->QueryBufferingCapacity()))
     {
         iDownloadComplete = false;
     }
 
-    iCurrentCommand.PVMFNodeCommand::Parse(targetNPT, actualNPT,
-                                           actualMediaDataTS, seektosyncpoint,
-                                           streamID);
-
-    iStreamID = streamID;
+    iStreamID = aStreamID;
     iTrack.iSendBOS = true;
     iTrack.iFirstFrame = true;
 
@@ -2277,35 +2754,36 @@ PVMFStatus PVMFMP3FFParserNode::DoSetDataSourcePosition()
         uint32 dltime = 0;
         iDownloadProgressClock->GetCurrentTime32(dltime, tmpbool, PVMF_MEDIA_CLOCK_MSEC);
         // Check if the requested time is past the downloaded clip
-        if (targetNPT >= dltime)
+        if (aTargetNPT >= dltime)
         {
             // For now, fail in this case. In future, we want to reposition to valid location.
             PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                            (0, "PVMFMP3FFParserNode::DoSetDataSourcePosition() \
-                            Positioning past the amount downloaded so return as \
-                            argument error"));
+                            (0, "PVMFMP3FFParserNode::SetPlaybackStartupTimeStamp() \
+                             Positioning past the amount downloaded so return as \
+                             argument error"));
             return PVMFErrArgument;
         }
     }
     // get the clock offset
-    iTrack.iClockConverter->update_clock(iMP3File->GetTimestampForCurrentSample());
+    iTrack.iClockConverter->update_clock(parserObj->GetTimestampForCurrentSample());
     iTrack.timestamp_offset = iTrack.iClockConverter->get_converted_ts(COMMON_PLAYBACK_CLOCK_TIMESCALE);
     // Set the timestamp
-    *actualMediaDataTS = iTrack.timestamp_offset;
+    *aActualMediaDataTS = iTrack.timestamp_offset;
     // See if targetNPT is greater or equal to clip duration
-    uint32 duration = iMP3File->GetDuration();
-    if (duration > 0 && targetNPT >= duration)
+    uint32 duration = parserObj->GetDuration();
+    if (duration > 0 && aTargetNPT >= duration)
     {
         // report End of Stream on the track and reset the track to zero.
         iTrack.iState = PVMP3FFNodeTrackPortInfo::TRACKSTATE_SEND_ENDOFTRACK;
-        iMP3File->SeekToTimestamp(0);
-        *actualNPT = duration;
+        parserObj->SeekToTimestamp(0);
+        *aActualNPT = duration;
+
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                        (0, "PVMFMP3FFParserNode::DoSetDataSourcePosition: targetNPT=%d, actualNPT=%d, actualMediaTS=%d",
-                         targetNPT, *actualNPT, *actualMediaDataTS));
+                        (0, "PVMFMP3FFParserNode::SetPlaybackStartupTimeStamp: targetNPT=%d, actualNPT=%d, actualMediaTS=%d",
+                         aTargetNPT, *aActualNPT, *aActualMediaDataTS));
         if (iAutoPaused)
         {
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVMFMP3FFParserNode::DoSetDataSourcePosition Track Autopaused"));
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVMFMP3FFParserNode::SetPlaybackStartupTimeStamp Track Autopaused"));
             iAutoPaused = false;
             if (iDownloadProgressInterface != NULL)
             {
@@ -2316,22 +2794,21 @@ PVMFStatus PVMFMP3FFParserNode::DoSetDataSourcePosition()
     }
     // Seek to the next NPT
     // MP3 FF seeks to the beginning if the requested time is past the end of clip
-    *actualNPT = iMP3File->SeekToTimestamp(targetNPT);
-
-    if (duration > 0 && *actualNPT == duration)
+    *aActualNPT = parserObj->SeekToTimestamp(aTargetNPT);
+    if (duration > 0 && *aActualNPT == duration)
     {
         // this means there was no data to render after the seek so just send End of Track
         iTrack.iState = PVMP3FFNodeTrackPortInfo::TRACKSTATE_SEND_ENDOFTRACK;
         return PVMFSuccess;
     }
 
-    iTrack.iClockConverter->set_clock_other_timescale(*actualNPT, COMMON_PLAYBACK_CLOCK_TIMESCALE);
-    iTrack.timestamp_offset -= *actualNPT;
+    iTrack.iClockConverter->set_clock_other_timescale(*aActualNPT, COMMON_PLAYBACK_CLOCK_TIMESCALE);
+    iTrack.timestamp_offset -= *aActualNPT;
 
     // Reposition has occured, so reset the track state
     if (iAutoPaused)
     {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVMFMP3FFParserNode::DoSetDataSourcePosition Track Autopaused"));
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVMFMP3FFParserNode::SetPlaybackStartupTimeStamp Track Autopaused"));
         iAutoPaused = false;
         if (iDownloadProgressInterface != NULL)
         {
@@ -2341,8 +2818,8 @@ PVMFStatus PVMFMP3FFParserNode::DoSetDataSourcePosition()
     iTrack.iState = PVMP3FFNodeTrackPortInfo::TRACKSTATE_TRANSMITTING_GETDATA;
 
     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                    (0, "PVMFMP3FFParserNode::DoSetDataSourcePosition: targetNPT=%d, actualNPT=%d, actualMediaTS=%d",
-                     targetNPT, *actualNPT, *actualMediaDataTS));
+                    (0, "PVMFMP3FFParserNode::SetPlaybackStartupTimeStamp: targetNPT=%d, actualNPT=%d, actualMediaTS=%d",
+                     aTargetNPT, *aActualNPT, *aActualMediaDataTS));
     return PVMFSuccess;
 }
 
@@ -2356,7 +2833,7 @@ PVMFStatus PVMFMP3FFParserNode::DoQueryDataSourcePosition()
     bool seektosyncpoint = false;
 
     iCurrentCommand.PVMFNodeCommand::Parse(targetNPT, actualNPT, seektosyncpoint);
-    if (actualNPT == NULL)
+    if (NULL == actualNPT || NULL == iPlaybackParserObj)
     {
         return PVMFErrArgument;
     }
@@ -2377,13 +2854,13 @@ PVMFStatus PVMFMP3FFParserNode::DoQueryDataSourcePosition()
     // Determine the actual NPT without actually repositioning
     // MP3 FF goes to the beginning if the requested time is past the end of clip
     *actualNPT = targetNPT;
-    uint32 duration = iMP3File->GetDuration();
+    uint32 duration = iPlaybackParserObj->GetDuration();
     if (duration > 0 && targetNPT >= duration)
     {
         // return without any call on parser library.
         return PVMFSuccess;
     }
-    iMP3File->SeekPointFromTimestamp(*actualNPT);
+    iPlaybackParserObj->SeekPointFromTimestamp(*actualNPT);
     return PVMFSuccess;
 }
 
@@ -2486,6 +2963,7 @@ PVMFStatus PVMFCPMContainerMp3::CreateUsageKeys()
 
 void PVMFCPMContainerMp3::CleanUsageKeys()
 {
+    //cleanup usage keys
 
     if (iRequestedUsage.key)
     {
@@ -2576,7 +3054,7 @@ PVMFStatus PVMFCPMContainerMp3::IssueCommand(int32 aCmd)
                 iCPM = NULL;
 
                 //treat it as unprotected content.
-                PVMFStatus status = iContainer->CheckForMP3HeaderAvailability();
+                PVMFStatus status = iContainer->InitNextValidClipInPlaylist();
                 return status;
             }
             else
@@ -2603,19 +3081,19 @@ PVMFStatus PVMFCPMContainerMp3::IssueCommand(int32 aCmd)
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iContainer->iLogger, PVLOGMSG_STACK_TRACE,
                             (0, "PVMFCPMContainerMp3::IssueCommand Calling RegisterContent"));
             iCmdState = EBusy;
-            if (iContainer->iSourceContextDataValid == true)
+            if (iContainer->IsValidContextData(iContainer->GetCurrentClipIndex()) == true)
             {
                 iCmdId = iCPM->RegisterContent(iSessionId,
-                                               iContainer->iSourceURL,
-                                               iContainer->iSourceFormat,
-                                               (OsclAny*) & iContainer->iSourceContextData);
+                                               iContainer->GetClipURLAt(iContainer->GetCurrentClipIndex() + 1),
+                                               iContainer->GetClipFormatTypeAt(iContainer->GetCurrentClipIndex() + 1),
+                                               (OsclAny*) & iContainer->GetSourceContextDataAt(iContainer->GetCurrentClipIndex() + 1));
             }
             else
             {
                 iCmdId = iCPM->RegisterContent(iSessionId,
-                                               iContainer->iSourceURL,
-                                               iContainer->iSourceFormat,
-                                               (OsclAny*) & iContainer->iCPMSourceData);
+                                               iContainer->GetClipURLAt(iContainer->GetCurrentClipIndex() + 1),
+                                               iContainer->GetClipFormatTypeAt(iContainer->GetCurrentClipIndex() + 1),
+                                               (OsclAny*) & iContainer->GetCPMSourceDataAt(iContainer->GetCurrentClipIndex() + 1));
             }
             return PVMFPending;
 
@@ -2641,12 +3119,10 @@ PVMFStatus PVMFCPMContainerMp3::IssueCommand(int32 aCmd)
                                 (0, "PVMFCPMContainerMp3::IssueCommand Calling ApproveUsage"));
 
                 //Create the usage keys
+                status = CreateUsageKeys();
+                if (status != PVMFSuccess)
                 {
-                    status = CreateUsageKeys();
-                    if (status != PVMFSuccess)
-                    {
-                        return status;
-                    }
+                    return status;
                 }
                 iCPM->GetContentAccessFactory(iSessionId, iCPMContentAccessFactory);
 
@@ -2666,7 +3142,7 @@ PVMFStatus PVMFCPMContainerMp3::IssueCommand(int32 aCmd)
             else
             {
                 /* Unsupported format - use it as unprotected content */
-                status = iContainer->CheckForMP3HeaderAvailability();
+                status = iContainer->InitNextValidClipInPlaylist();
             }
             return status;
         }
@@ -2690,11 +3166,11 @@ PVMFStatus PVMFCPMContainerMp3::IssueCommand(int32 aCmd)
                 {
                     return PVMFFailure;//unexpected, since ApproveUsage succeeded.
                 }
-                status = iContainer->CheckForMP3HeaderAvailability();
+                status = iContainer->InitNextValidClipInPlaylist();
             }
             return status;
         }
-
+        break;
 
         case ECPMUsageComplete:
             if ((iCPMContentType == PVMF_CPM_FORMAT_OMA1) ||
@@ -2768,7 +3244,7 @@ OSCL_EXPORT_REF void PVMFCPMContainerMp3::CPMCommandCompleted(const PVMFCmdResp&
             {
                 //if CPM comes back as PVMFErrNotSupported then by pass rest of the CPM
                 //sequence. Fake success here so that node doesnt treat this as an error
-                status = iContainer->CheckForMP3HeaderAvailability();
+                status = iContainer->InitNextValidClipInPlaylist();
                 if (status == PVMFPending)
                 {
                     return;
@@ -3018,20 +3494,15 @@ void PVMFMP3FFParserNode::DataStreamErrorEvent(const PVMFAsyncEvent& aEvent)
     OSCL_ASSERT(false);
 }
 
-PVMFStatus PVMFMP3FFParserNode::CheckForMP3HeaderAvailability()
+PVMFStatus PVMFMP3FFParserNode::CheckForMP3HeaderAvailability(int32 aClipIndex)
 {
-
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                     (0, "PVMFMP3FFParserNode::CheckForMP3HeaderAvailability In"));
-    if (iMP3File == NULL)
+
+    IMpeg3File* parserObj = GetParserObjAtIndex(aClipIndex);
+    if (NULL == parserObj)
     {
-        PVMFStatus retval = SetupParserObject();
-        if (retval != PVMFSuccess)
-        {
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                            (0, "PVMFMP3FFParserNode::CheckForMP3HeaderAvailability setup parser object failed."));
-            return retval;
-        }
+        return PVMFFailure;
     }
 
     uint32 currCapacity = 0;
@@ -3043,7 +3514,7 @@ PVMFStatus PVMFMP3FFParserNode::CheckForMP3HeaderAvailability()
 
     if (iDataStreamInterface != NULL)
     {
-        minBytesRequired = iMP3File->GetMinBytesRequired();
+        minBytesRequired = parserObj->GetMinBytesRequired();
         /*
          * First check if we have minimum number of bytes to recognize
          * the file and determine the header size.
@@ -3061,28 +3532,20 @@ PVMFStatus PVMFMP3FFParserNode::CheckForMP3HeaderAvailability()
         }
 
         MP3ErrorType retCode = MP3_ERROR_UNKNOWN;
-        if (iMP3File)
+        if (GetClipFormatTypeAt(iPlaybackClipIndex) != PVMF_MIME_DATA_SOURCE_SHOUTCAST_URL)
         {
-
-            if (iSourceFormat != PVMF_MIME_DATA_SOURCE_SHOUTCAST_URL)
+            retCode = parserObj->GetMetadataSize(iMP3MetaDataSize);
+            if (retCode == MP3_SUCCESS)
             {
-                retCode = iMP3File->GetMetadataSize(iMP3MetaDataSize);
-                if (retCode == MP3_SUCCESS)
+                /* Fetch the id3 tag size, if any and make it persistent in cache*/
+                iDataStreamInterface->MakePersistent(0, iMP3MetaDataSize);
+                if (currCapacity < iMP3MetaDataSize)
                 {
-                    /* Fetch the id3 tag size, if any and make it persistent in cache*/
-                    iDataStreamInterface->MakePersistent(0, iMP3MetaDataSize);
-                    if (currCapacity < iMP3MetaDataSize)
-                    {
-                        iRequestReadCapacityNotificationID =
-                            iDataStreamInterface->RequestReadCapacityNotification(iDataStreamSessionID,
-                                    *this,
-                                    iMP3MetaDataSize + minBytesRequired);
-                        return PVMFPending;
-                    }
-                }
-                else
-                {
-                    iDataStreamInterface->MakePersistent(0, 0);
+                    iRequestReadCapacityNotificationID =
+                        iDataStreamInterface->RequestReadCapacityNotification(iDataStreamSessionID,
+                                *this,
+                                iMP3MetaDataSize + minBytesRequired);
+                    return PVMFPending;
                 }
             }
             else
@@ -3090,25 +3553,28 @@ PVMFStatus PVMFMP3FFParserNode::CheckForMP3HeaderAvailability()
                 iDataStreamInterface->MakePersistent(0, 0);
             }
         }
+        else
+        {
+            iDataStreamInterface->MakePersistent(0, 0);
+        }
     }
-    PVMFStatus retVal = ParseFile();
+
+    PVMFStatus retVal = ParseFile(aClipIndex);
     // parse file failed because of lack of available data
     // if there's lack of data request more data
     if (NULL != iDataStreamInterface)
     {
-        if (PVMFErrUnderflow == retVal)
+        if (retVal == PVMFErrUnderflow)
         {
-            minBytesRequired = iMP3File->GetMinBytesRequired();
-            /*
-             * First check if we have minimum number of bytes to recognize
-             * the file and determine the header size.
-             */
+            minBytesRequired = parserObj->GetMinBytesRequired();
+            // available data wasnt sufficient to get to first valid audio frame
+            // get more data
             if (currCapacity < minBytesRequired)
             {
                 iRequestReadCapacityNotificationID =
                     iDataStreamInterface->RequestReadCapacityNotification(iDataStreamSessionID,
                             *this,
-                            minBytesRequired);
+                            iMP3MetaDataSize + minBytesRequired);
                 return PVMFPending;
             }
             else
@@ -3118,6 +3584,12 @@ PVMFStatus PVMFMP3FFParserNode::CheckForMP3HeaderAvailability()
             }
         }
     }
+    // if local playback, retrieve gapless metadata if present
+    if (NULL == iDataStreamInterface)
+    {
+        GetGaplessMetadata(aClipIndex);
+    }
+
     return retVal;
 }
 
@@ -3142,7 +3614,8 @@ bool PVMFCPMContainerMp3::GetCPMMetaDataExtensionInterface()
     iCPMMetaDataExtensionInterface = OSCL_STATIC_CAST(PVMFMetadataExtensionInterface*, temp);
     return retVal;
 }
-PVMp3DurationCalculator::PVMp3DurationCalculator(int32 aPriority, IMpeg3File* aMP3File, PVMFNodeInterface* aNode, bool aScanEnabled):
+
+PVMp3DurationCalculator::PVMp3DurationCalculator(int32 aPriority, IMpeg3File* aMP3File, PVMFMP3FFParserNode* aNode, bool aScanEnabled):
         OsclTimerObject(aPriority, "PVMp3DurationCalculator"), iNode(aNode)
 {
     iErrorCode = MP3_SUCCESS;
@@ -3153,6 +3626,20 @@ PVMp3DurationCalculator::PVMp3DurationCalculator(int32 aPriority, IMpeg3File* aM
     {
         AddToScheduler();
     }
+    iClipIndex = 0;
+}
+
+
+void PVMp3DurationCalculator::SetParserObj(IMpeg3File* aMP3File)
+{
+    iMP3File = aMP3File;
+    iErrorCode = MP3_SUCCESS; // reset error code for new parser
+    iScanComplete = false;
+}
+
+void PVMp3DurationCalculator::SetClipIndex(uint32 aClipIndex)
+{
+    iClipIndex = aClipIndex;
 }
 
 PVMp3DurationCalculator::~PVMp3DurationCalculator()
@@ -3174,8 +3661,8 @@ void PVMp3DurationCalculator::ScheduleAO()
 
 void PVMp3DurationCalculator::Run()
 {
-    // dont do the duration calculation scan in case of PS/PD or the file pointer is NULL
-    if (((PVMFMP3FFParserNode*)iNode)->iDownloadProgressInterface || iMP3File == NULL)
+    // dont do the duration calculation scan in case of PS/PD
+    if (iNode->iDownloadProgressInterface)
     {
         return;
     }
@@ -3188,7 +3675,11 @@ void PVMp3DurationCalculator::Run()
         int32 leavecode = 0;
         PVMFDurationInfoMessage* eventmsg = NULL;
         OSCL_TRY(leavecode, eventmsg = OSCL_NEW(PVMFDurationInfoMessage, (durationInMsec)));
-        ((PVMFMP3FFParserNode*)iNode)->ReportInfoEvent(PVMFInfoDurationAvailable, NULL, OSCL_STATIC_CAST(PVInterface*, eventmsg));
+
+        uint8 localbuffer[4];
+        oscl_memcpy(localbuffer, &iClipIndex, sizeof(uint32));
+        PVMFAsyncEvent asyncevent(PVMFInfoEvent, PVMFInfoDurationAvailable, NULL, OSCL_STATIC_CAST(PVInterface*, eventmsg), NULL, localbuffer, 4);
+        iNode->ReportInfoEvent(asyncevent);
         if (eventmsg)
         {
             eventmsg->removeRef();
@@ -3202,7 +3693,10 @@ void PVMp3DurationCalculator::Run()
         int32 leavecode = 0;
         PVMFDurationInfoMessage* eventmsg = NULL;
         OSCL_TRY(leavecode, eventmsg = OSCL_NEW(PVMFDurationInfoMessage, (durationInMsec)));
-        ((PVMFMP3FFParserNode*)iNode)->ReportInfoEvent(PVMFInfoDurationAvailable, NULL, OSCL_STATIC_CAST(PVInterface*, eventmsg));
+        uint8 localbuffer[4];
+        oscl_memcpy(localbuffer, &iClipIndex, sizeof(uint32));
+        PVMFAsyncEvent asyncevent(PVMFInfoEvent, PVMFInfoDurationAvailable, NULL, OSCL_STATIC_CAST(PVInterface*, eventmsg), NULL, localbuffer, 4);
+        iNode->ReportInfoEvent(asyncevent);
         if (eventmsg)
         {
             eventmsg->removeRef();
@@ -3218,22 +3712,67 @@ void PVMp3DurationCalculator::Run()
         return;
     }
 
-    if (!(((PVMFMP3FFParserNode*)iNode)->iTrack.iSendBOS))
+    if (!(iNode->iTrack.iSendBOS))
     {
         // Start the scan only when we have send first audio sample
         iErrorCode = iMP3File->ScanMP3File(PVMF3FF_DEFAULT_NUM_OF_FRAMES * 5);
     }
 }
 
-PVMFStatus PVMFMP3FFParserNode::CreateMP3FileObject(MP3ErrorType &aSuccess, PVMFCPMPluginAccessInterfaceFactory*aCPM)
+PVMFStatus PVMFMP3FFParserNode::ConstructMP3FileParser(MP3ErrorType &aSuccess, int32 aClipIndex, PVMFCPMPluginAccessInterfaceFactory* aCPM)
 {
     int32 leavecode = 0;
-    OSCL_TRY(leavecode, iMP3File = OSCL_NEW(IMpeg3File,
-                                            (iSourceURL, aSuccess,
-                                             &iFileServer, aCPM,
-                                             iFileHandle, false)));
+    IMpeg3File* mp3file = NULL;
+    PVMFStatus status = PVMFFailure;
+    OSCL_TRY(leavecode, mp3file = OSCL_NEW(IMpeg3File,
+                                           (iClipInfoList[aClipIndex].iClipInfo.GetSourceURL(), aSuccess,
+                                            &iFileServer, aCPM,
+                                            iClipInfoList[aClipIndex].iClipInfo.GetFileHandle(), false)));
+
     OSCL_FIRST_CATCH_ANY(leavecode, return PVMFErrNoMemory);
-    return PVMFSuccess;
+    if (aSuccess == MP3_SUCCESS)
+    {
+        iClipInfoList[aClipIndex].iParserObj = mp3file;
+        status = PVMFSuccess;
+
+    }
+    else
+    {
+        // clean up the parser object
+        OSCL_DELETE(mp3file);
+        mp3file = NULL;
+    }
+
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVMFMP3FFParserNode::ConstructMP3FileParser() ClipIndex[%d]", aClipIndex));
+    return status;
+}
+
+
+PVMFStatus PVMFMP3FFParserNode::ReleaseMP3FileParser(int32 aClipIndex, bool cleanParserAtLastIndex)
+{
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVMFMP3FFParserNode::ReleaseMP3FileParser() ClipIndex[%d]", aClipIndex));
+    // dont clean up parser object at last index in the list, unless it is requested
+    if (aClipIndex >= 0 && (iNumClipsInPlayList > 1 || cleanParserAtLastIndex))
+    {
+        IMpeg3File* parserObj = GetParserObjAtIndex(aClipIndex);
+        if (NULL != parserObj)
+        {
+            if (parserObj == iMetadataParserObj)
+            {
+                iMetadataParserObj = NULL;
+            }
+            OSCL_DELETE(parserObj);
+            parserObj = NULL;
+            iClipInfoList[aClipIndex].iParserObj = NULL;
+        }
+
+        if ((uint32) aClipIndex == iClipInfoList.size() - 1)
+        {
+            iPlaybackParserObj = NULL;
+        }
+        return PVMFSuccess;
+    }
+    return PVMFFailure;
 }
 
 PVMFStatus PVMFMP3FFParserNode::PushBackCPMMetadataKeys(PVMFMetadataList *&aKeyListPtr, uint32 aLcv)
@@ -3260,7 +3799,16 @@ void PVMFMP3FFParserNode::MetadataUpdated(uint32 aMetadataSize)
     // create a info msg
     OSCL_TRY(leavecode, eventMsg = OSCL_NEW(PVMFMetadataInfoMessage, (iMetadataVector)));
     // report the info msg to observer
-    ReportInfoEvent(PVMFInfoMetadataAvailable, NULL, OSCL_STATIC_CAST(PVInterface*, eventMsg));
+    uint8 localbuffer[4];
+    oscl_memcpy(localbuffer, &iPlaybackClipIndex, sizeof(uint32));
+    PVMFAsyncEvent asyncevent(PVMFInfoEvent, PVMFInfoMetadataAvailable, NULL, OSCL_STATIC_CAST(PVInterface*, eventMsg), NULL, localbuffer, 4);
+
+    ReportInfoEvent(asyncevent);
+
+    if (eventMsg)
+    {
+        eventMsg->removeRef();
+    }
 
     uint32 i = 0;
     //cleanup the metadata vector
@@ -3367,64 +3915,409 @@ PVMFStatus PVMFMP3FFParserNode::ParseShoutcastMetadata(char* aMetadataBuf, uint3
 }
 #endif //PV_HAS_SHOUTCAST_SUPPORT_ENABLED
 
-PVMFStatus PVMFMP3FFParserNode::SetupParserObject()
+uint32 PVMFMP3FFParserNode::GetCurrentClipIndex()
 {
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                    (0, "PVMFMP3FFParserNode:SetupParserObject() In"));
+    return iPlaybackClipIndex;
+}
 
-    if (iMP3File == NULL)
+OSCL_wHeapString<OsclMemAllocator>& PVMFMP3FFParserNode::GetClipURLAt(uint32 aClipIndex)
+{
+    return iClipInfoList[aClipIndex].iClipInfo.GetSourceURL();
+}
+
+PVMFFormatType& PVMFMP3FFParserNode::GetClipFormatTypeAt(uint32 aClipIndex)
+{
+    return iClipInfoList[aClipIndex].iClipInfo.GetFormatType();
+}
+
+PVMFSourceContextData& PVMFMP3FFParserNode::GetSourceContextDataAt(uint32 aClipIndex)
+{
+    return iClipInfoList[aClipIndex].iClipInfo.iSourceContextData;
+}
+
+bool PVMFMP3FFParserNode::IsValidContextData(uint32 aClipIndex)
+{
+    return iClipInfoList[aClipIndex].iClipInfo.iSourceContextDataValid;
+}
+
+PVMFLocalDataSource& PVMFMP3FFParserNode::GetCPMSourceDataAt(uint32 aClipIndex)
+{
+    return iClipInfoList[aClipIndex].iClipInfo.iCPMSourceData;
+}
+
+PVMFStatus PVMFMP3FFParserNode::InitNextValidClipInPlaylist(int32 aSkipToTrack, PVMFDataStreamFactory* aDataStreamFactory)
+{
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_NOTICE, (0, "PVMFMP3FFParserNode::InitNextValidClipInPlaylist In"));
+    PVMFStatus status = PVMFFailure;
+    MP3ErrorType bSuccess = MP3_SUCCESS;
+    int32 clipIndex = -1;
+
+    // reposition has occured, track needs to be changed to skipped location
+    if (aSkipToTrack < 0)
     {
-        // Instantiate the IMpeg3File object, this class represents the mp3ff library
-        MP3ErrorType bSuccess = MP3_SUCCESS;
+        // skip to next track
+        clipIndex = (-1 == iPlaybackClipIndex) ? 0 : iPlaybackClipIndex + 1;
+    }
+    else
+    {
+        // skip to requested track
+        clipIndex = aSkipToTrack;
+    }
 
-        PVMFDataStreamFactory* dsFactory = iCPMContainer.iCPMContentAccessFactory;
-        if ((dsFactory == NULL) && (iDataStreamFactory != NULL))
+    while (PVMFSuccess != status && clipIndex <= (int32)(iNumClipsInPlayList - 1))
+    {
+        PVMFStatus returncode = ConstructMP3FileParser(bSuccess, clipIndex, aDataStreamFactory);
+        IMpeg3File* parserObj = GetParserObjAtIndex(clipIndex);
+
+        if (PVMFSuccess != returncode ||
+                NULL == parserObj ||
+                MP3_SUCCESS != bSuccess)
         {
-#if PV_HAS_SHOUTCAST_SUPPORT_ENABLED
-            if (iSourceFormat == PVMF_MIME_DATA_SOURCE_SHOUTCAST_URL && iSCSPFactory != NULL && iSCSP != NULL)
+            if (iNumClipsInPlayList == 1)
             {
-                dsFactory = iSCSPFactory;
-                iSCSP->RequestMetadataUpdates(iDataStreamSessionID, *this, iMetadataBufSize, iMetadataBuf);
+                // playback cant proceed if there's only one clip in the list
+                // else skip shall happen to next clip.
+                SetState(EPVMFNodeError);
+                return PVMFErrResource;
             }
             else
             {
-                dsFactory = iDataStreamFactory;
+                uint8 localbuffer[4];
+                oscl_memcpy(localbuffer, &clipIndex, sizeof(uint32));
+                PVMFAsyncEvent asyncevent(PVMFInfoEvent, PVMFInfoClipCorrupted, NULL, OSCL_STATIC_CAST(PVInterface*, NULL), NULL, localbuffer, 4);
+                ReportInfoEvent(asyncevent);
+                clipIndex++; // index for next clip
+                continue;
             }
-#else
-            dsFactory = iDataStreamFactory;
-#endif
         }
 
-        // Try block start
-        PVMFStatus returncode = CreateMP3FileObject(bSuccess, dsFactory);
-        // Try block end
-
-        if ((returncode != PVMFSuccess) || !iMP3File || (bSuccess != MP3_SUCCESS))
+        status = CheckForMP3HeaderAvailability(clipIndex);
+        uint32 metadataindex = clipIndex;
+        if (status == PVMFSuccess)
         {
-            // creation of IMpeg3File object failed or resulted in error
-            SetState(EPVMFNodeError);
-            return PVMFErrResource;
+            // report the info msg to observer
+            uint8 localbuffer[4];
+            oscl_memcpy(localbuffer, &metadataindex, sizeof(uint32));
+            PVMFAsyncEvent asyncevent(PVMFInfoEvent, PVMFInfoMetadataAvailable, NULL, OSCL_STATIC_CAST(PVInterface*, NULL), NULL, localbuffer, 4);
+
+            ReportInfoEvent(asyncevent);
+
+            iNextInitializedClipIndex = iClipInfoList[clipIndex].iClipInfo.GetClipIndex();
+            if (iPlaybackClipIndex == -1)
+            {
+                // set first valid clip in list
+                iPlaybackClipIndex = iClipIndexForMetadata = iNextInitializedClipIndex;
+                iPlaybackParserObj = iMetadataParserObj = parserObj;
+            }
+
+            if (OsclErrNone == AllocateDurationCalculator())
+            {
+                if (iDurationCalcAO)
+                {
+                    iDurationCalcAO->SetParserObj(parserObj);
+                    iDurationCalcAO->SetClipIndex(iNextInitializedClipIndex);
+                    iDurationCalcAO->ScheduleAO();
+                }
+            }
+
+            iClipInfoList[clipIndex].iClipInfo.iIsInitialized = true;
+        }
+        else if (status == PVMFPending)
+        {
+            return PVMFPending;
+        }
+        else
+        {
+            ReleaseMP3FileParser(clipIndex);
+
+            uint8 localbuffer[4];
+            oscl_memcpy(localbuffer, &clipIndex, sizeof(uint32));
+            PVMFAsyncEvent asyncevent(PVMFInfoEvent, PVMFInfoClipCorrupted, NULL, OSCL_STATIC_CAST(PVInterface*, NULL), NULL, localbuffer, 4);
+
+            ReportInfoEvent(asyncevent);
+            clipIndex++; // index for next clip
         }
     }
 
-    // enable the duration scanner for local playback only
+    if (status != PVMFSuccess && clipIndex >= (int32)iNumClipsInPlayList)
+    {
+        // no more valid clips are found
+        // clip list has exhausted, dont accept more playlist updates
+        iPlaylistExhausted = true;
+    }
+    iInitNextClip = false;
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_NOTICE, (0, "PVMFMP3FFParserNode::InitNextValidClipInPlaylist Out Initialized Index [%d]", iNextInitializedClipIndex));
+    return status;
+}
+
+
+void PVMFMP3FFParserNode::GetGaplessMetadata(int32 aClipIndex)
+{
+    // retrieve gapless metadata if present
+    // do it only once per clip
+
+    IMpeg3File* mp3File = iClipInfoList[aClipIndex].iParserObj;
+    if (iClipInfoList[aClipIndex].iParserObj != NULL)
+    {
+        iClipInfoList[aClipIndex].iClipInfo.iGaplessInfoAvailable = mp3File->GetGaplessMetadata(iClipInfoList[aClipIndex].iClipInfo.iGaplessMetadata);
+
+        if (iClipInfoList[aClipIndex].iClipInfo.iGaplessInfoAvailable)
+        {
+            // check encoder delay
+            uint32 delay = iClipInfoList[aClipIndex].iClipInfo.iGaplessMetadata.GetEncoderDelay();
+            if (0 != delay)
+            {
+                // frame numbers from the parser are 1 based
+                iClipInfoList[aClipIndex].iClipInfo.iFrameBOC = 1;
+                iClipInfoList[aClipIndex].iClipInfo.iSendBOC = true;
+
+                // create format specific info for BOC
+                // uint32 - number of samples to skip
+                // allocate memory for BOC specific info and ref counter
+                OsclMemoryFragment frag;
+                frag.ptr = NULL;
+                frag.len = sizeof(BOCInfo);
+                uint refCounterSize = oscl_mem_aligned_size(sizeof(OsclRefCounterDA));
+                uint8* memBuffer = (uint8*)iClipInfoList[aClipIndex].iClipInfo.iBOCFormatSpecificInfoAlloc.ALLOCATE(refCounterSize + frag.len);
+                if (!memBuffer)
+                {
+                    // failure while allocating memory buffer
+                    iClipInfoList[aClipIndex].iClipInfo.iSendBOC = false;
+                }
+
+                oscl_memset(memBuffer, 0, refCounterSize + frag.len);
+                // create ref counter
+                OsclRefCounter* refCounter = new(memBuffer) OsclRefCounterDA(memBuffer,
+                        (OsclDestructDealloc*)&iClipInfoList[aClipIndex].iClipInfo.iBOCFormatSpecificInfoAlloc);
+                memBuffer += refCounterSize;
+                // create BOC info
+                frag.ptr = (OsclAny*)(new(memBuffer) BOCInfo);
+                ((BOCInfo*)frag.ptr)->samplesToSkip = delay;
+
+                // store info in a ref counter memfrag
+                // how do we make sure that we are not doing this more than once?
+                iClipInfoList[aClipIndex].iClipInfo.iBOCFormatSpecificInfo = OsclRefCounterMemFrag(frag, refCounter, sizeof(struct BOCInfo));
+            }
+
+            // check zero padding
+            uint32 padding = iClipInfoList[aClipIndex].iClipInfo.iGaplessMetadata.GetZeroPadding();
+            if (0 != padding)
+            {
+                // calculate frame number of the first frame of EOC
+                uint64 total = iClipInfoList[aClipIndex].iClipInfo.iGaplessMetadata.GetTotalFrames();
+                uint32 spf = iClipInfoList[aClipIndex].iClipInfo.iGaplessMetadata.GetSamplesPerFrame();
+                uint32 frames = padding / spf;
+                if (padding % spf)
+                {
+                    frames++;
+                }
+                // frame numbers from the parser are 1 based
+                iClipInfoList[aClipIndex].iClipInfo.iFirstFrameEOC = total - frames + 1;
+                iClipInfoList[aClipIndex].iClipInfo.iSendEOC = true;
+
+                // create format specific info for EOC
+                // uint32 - number of samples to skip
+                // allocate memory for BOC specific info and ref counter
+                OsclMemoryFragment frag;
+                frag.ptr = NULL;
+                frag.len = sizeof(EOCInfo);
+                uint refCounterSize = oscl_mem_aligned_size(sizeof(OsclRefCounterDA));
+                uint8* memBuffer = (uint8*)iClipInfoList[aClipIndex].iClipInfo.iBOCFormatSpecificInfoAlloc.ALLOCATE(refCounterSize + frag.len);
+                if (!memBuffer)
+                {
+                    // failure while allocating memory buffer
+                    iClipInfoList[aClipIndex].iClipInfo.iSendEOC = false;
+                }
+
+                oscl_memset(memBuffer, 0, refCounterSize + frag.len);
+                // create ref counter
+                OsclRefCounter* refCounter = new(memBuffer) OsclRefCounterDA(memBuffer,
+                        (OsclDestructDealloc*)&iClipInfoList[aClipIndex].iClipInfo.iEOCFormatSpecificInfoAlloc);
+                memBuffer += refCounterSize;
+                // create EOC info
+                frag.ptr = (OsclAny*)(new(memBuffer) EOCInfo);
+                // but we don't know how many frames will be following this msg yet!!!
+                ((EOCInfo*)frag.ptr)->framesToFollow = 0;
+                ((EOCInfo*)frag.ptr)->samplesToSkip = padding;
+
+                // store info in a ref counter memfrag
+                // how do we make sure that we are not doing this more than once?
+                iClipInfoList[aClipIndex].iClipInfo.iEOCFormatSpecificInfo = OsclRefCounterMemFrag(frag, refCounter, sizeof(EOCInfo));
+            }
+
+            // log the gapless metadata
+            LOGGAPLESSINFO((0, "PVMFMP3FFParserNode::GetGaplessMetadata() clip index %d, encoder delay %d samples, zero padding %d samples, original length %d%d samples, samples per frame %d, total frames %d%d, part of gapless album %d",
+                            aClipIndex, delay, padding, (uint32)(iClipInfoList[aClipIndex].iClipInfo.iGaplessMetadata.GetOriginalStreamLength() >> 32), (uint32)(iClipInfoList[aClipIndex].iClipInfo.iGaplessMetadata.GetOriginalStreamLength() & 0xFFFFFFFF),
+                            iClipInfoList[aClipIndex].iClipInfo.iGaplessMetadata.GetSamplesPerFrame(), (uint32)(iClipInfoList[aClipIndex].iClipInfo.iGaplessMetadata.GetTotalFrames() >> 32),
+                            (uint32)(iClipInfoList[aClipIndex].iClipInfo.iGaplessMetadata.GetTotalFrames() & 0xFFFFFFFF), iClipInfoList[aClipIndex].iClipInfo.iGaplessMetadata.GetPartOfGaplessAlbum()));
+        }
+        else
+        {
+            LOGGAPLESSINFO((0, "PVMFMP3FFParserNode::GetGaplessMetadata() clip index %d, no gapless metadata found", aClipIndex));
+        }
+    }
+}
+
+
+/**
+ * Send BOC command to output port
+ */
+bool PVMFMP3FFParserNode::SendBeginOfClipCommand(PVMP3FFNodeTrackPortInfo& aTrackPortInfo)
+{
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "PVMFMP3FFParserNode::SendBeginOfClipCommand() In"));
+
+    // Create media command
+    PVMFSharedMediaCmdPtr sharedMediaCmdPtr = PVMFMediaCmd::createMediaCmd();
+
+    // Set command id to BOC
+    sharedMediaCmdPtr->setFormatID(PVMF_MEDIA_CMD_BOC_FORMAT_ID);
+    // Retrieve timestamp and convert to milliseconds
+    uint32 timestamp = aTrackPortInfo.iClockConverter->get_converted_ts(COMMON_PLAYBACK_CLOCK_TIMESCALE);
+    timestamp += aTrackPortInfo.timestamp_offset;
+    timestamp += iCurrSampleDuration;
+    // Set the timestamp
+    sharedMediaCmdPtr->setTimestamp(timestamp);
+    // Set the sequence number
+    sharedMediaCmdPtr->setSeqNum(aTrackPortInfo.iSeqNum++);
+    // set stream id
+    sharedMediaCmdPtr->setStreamID(iStreamID);
+
+    // set format specific info
+    sharedMediaCmdPtr->setFormatSpecificInfo(iClipInfoList[iPlaybackClipIndex].iClipInfo.iBOCFormatSpecificInfo);
+
+    // Convert media command to media message
+    PVMFSharedMediaMsgPtr mediaMsgOut;
+    convertToPVMFMediaCmdMsg(mediaMsgOut, sharedMediaCmdPtr);
+
+    // Queue media msg to output pout
+    if (aTrackPortInfo.iPort->QueueOutgoingMsg(mediaMsgOut) != PVMFSuccess)
+    {
+        // Output queue is busy, so wait for the output queue being ready
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
+                        (0, "PVMFMP3FFParserNode::SendBeginOfClipCommand: Outgoing queue busy. "));
+        return false;
+    }
+
+    // BOC was sent successfully
+    iClipInfoList[iPlaybackClipIndex].iClipInfo.iHasBOCFrame = false;
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "PVMFMP3FFParserNode::SendBeginOfClipCommand() Out"));
+    return true;
+}
+
+/**
+ * Send EOC command to output port
+ */
+bool PVMFMP3FFParserNode::SendEndOfClipCommand(PVMP3FFNodeTrackPortInfo& aTrackPortInfo)
+{
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "PVMFMP3FFParserNode::SendEndOfClipCommand() In"));
+
+    // Create media command
+    PVMFSharedMediaCmdPtr sharedMediaCmdPtr = PVMFMediaCmd::createMediaCmd();
+
+    // Set command id to EOC
+    sharedMediaCmdPtr->setFormatID(PVMF_MEDIA_CMD_EOC_FORMAT_ID);
+    // Retrieve media data timestamp
+    uint32 timestamp = aTrackPortInfo.iClockConverter->get_converted_ts(COMMON_PLAYBACK_CLOCK_TIMESCALE);
+    timestamp += aTrackPortInfo.timestamp_offset;
+    //@todo timestamp += iCurrSampleDuration;
+    // Set the timestamp
+    sharedMediaCmdPtr->setTimestamp(timestamp);
+    // Set the duration
+    sharedMediaCmdPtr->setDuration(0);
+    // Set the sequence number
+    sharedMediaCmdPtr->setSeqNum(aTrackPortInfo.iSeqNum++);
+    // set stream id
+    sharedMediaCmdPtr->setStreamID(iStreamID);
+    // set format specific info
+
+    struct EOCInfo* fragPtr = (struct EOCInfo*)iClipInfoList[iPlaybackClipIndex].iClipInfo.iEOCFormatSpecificInfo.getMemFragPtr();
+    fragPtr->framesToFollow = iClipInfoList[iPlaybackClipIndex].iClipInfo.iFramesToFollowEOC;
+
+    // fill in the number of frames to follow
+    sharedMediaCmdPtr->setFormatSpecificInfo(iClipInfoList[iPlaybackClipIndex].iClipInfo.iEOCFormatSpecificInfo);
+
+    // Convert media command to media message
+    PVMFSharedMediaMsgPtr mediaMsgOut;
+    convertToPVMFMediaCmdMsg(mediaMsgOut, sharedMediaCmdPtr);
+
+    // Queue media msg to output pout
+    if (aTrackPortInfo.iPort->QueueOutgoingMsg(mediaMsgOut) != PVMFSuccess)
+    {
+        // Output queue is busy, so wait for the output queue being ready
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
+                        (0, "PVMFMP3FFParserNode::SendEndOfClipCommand: Outgoing queue busy. "));
+        return false;
+    }
+
+    // EOC was sent successfully
+    iClipInfoList[iPlaybackClipIndex].iClipInfo.iHasEOCFrame = false;
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "PVMFMP3FFParserNode::SendEndOfClipCommand() Out"));
+    return true;
+}
+
+
+/**
+ * Adjust for the dropped frames for gapless playback
+ */
+uint32 PVMFMP3FFParserNode::GetGaplessDuration(PVMP3FFNodeTrackPortInfo& aTrackPortInfo)
+{
+    if (iPlaybackParserObj)
+    {
+        uint32 durationInMsec = iPlaybackParserObj->GetDuration();
+        MP3ContentFormatType mp3Config;
+
+        if (iPlaybackParserObj->GetConfigDetails(mp3Config) && (mp3Config.SamplingRate != 0))
+        {
+            uint32 droppedSamples = iClipInfoList[iPlaybackClipIndex].iClipInfo.iGaplessMetadata.GetEncoderDelay() + iClipInfoList[iPlaybackClipIndex].iClipInfo.iGaplessMetadata.GetZeroPadding();
+            uint32 droppedMsec = (droppedSamples * 1000) / mp3Config.SamplingRate;
+            durationInMsec = (durationInMsec > droppedMsec) ? (durationInMsec - droppedMsec) : 0;
+        }
+        return durationInMsec;
+    }
+    return 0;
+}
+
+bool PVMFMP3FFParserNode::ValidateSourceInitializationParams(OSCL_wString& aSourceURL,
+        PVMFFormatType& aSourceFormat,
+        uint32 aClipIndex,
+        PVMFSourceClipInfo aClipInfo)
+{
+    if (aClipInfo.GetFormatType() != aSourceFormat)
+    {
+        return true;
+    }
+
+    if (aClipInfo.GetClipIndex() != aClipIndex)
+    {
+        return true;
+    }
+
+    int32 res = oscl_strncmp(aSourceURL.get_cstr(), aClipInfo.GetSourceURL().get_cstr(), oscl_strlen(aSourceURL.get_cstr()));
+    if (res != 0)
+    {
+        return true;
+    }
+
+    return false;
+}
+
+int32 PVMFMP3FFParserNode::AllocateDurationCalculator()
+{
+    int32 leavecode = OsclErrNone;
     if (!iDataStreamFactory && !iDurationCalcAO)
     {
-        int32 leavecode = 0;
         OSCL_TRY(leavecode, iDurationCalcAO = OSCL_NEW(PVMp3DurationCalculator,
-                                              (OsclActiveObject::EPriorityIdle, iMP3File, this)));
+                                              (OsclActiveObject::EPriorityIdle, NULL, this)));
         if (leavecode)
         {
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                            (0, "PVMFMP3FFParserNode::SetupParserObject() Duration Scan is disabled. DurationCalcAO not created"));
-        }
-
-        if (iDurationCalcAO)
-        {
-            iDurationCalcAO->ScheduleAO();
+                            (0, "PVMFMP3FFParserNode::AllocateDurationCalculator() Duration Scan is disabled. DurationCalcAO not created"));
         }
     }
-    return PVMFSuccess;
+    return leavecode;
 }
-
 

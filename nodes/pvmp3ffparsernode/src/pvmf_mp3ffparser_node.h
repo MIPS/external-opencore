@@ -33,7 +33,11 @@
 #ifndef PVMF_MP3DEC_DEFS_H_INCLUDED
 #include "pvmf_mp3ffparser_defs.h"
 #endif
-#ifndef PVMF_FFPARSERNODE_PORT_H_INCLUDED
+#ifndef PVMF_SOURCE_NODE_UTILS_H_INCLUDED
+#include "pvmf_source_node_utils.h"
+#endif
+
+#ifndef PVMF_MP3FFPARSER_OUTPORT_H_INCLUDED
 #include "pvmf_mp3ffparser_outport.h"
 #endif
 
@@ -89,6 +93,29 @@
 #ifndef PVMI_DATASTREAMUSER_INTERFACE_H_INCLUDED
 #include "pvmi_datastreamuser_interface.h"
 #endif
+#ifndef PVMF_MEDIA_MSG_FORMAT_IDS_H_INCLUDED
+#include "pvmf_media_msg_format_ids.h"
+#endif
+
+#define PVMF_MP3_PARSER_NODE_MAX_CPM_METADATA_KEYS 256
+//gapless
+#define PVMF_MP3_MAX_NUM_TRACKS_GAPLESS 10
+
+
+/**
+* Container for the CPM object
+*/
+#ifndef CPM_H_INCLUDED
+#include "cpm.h"
+#endif
+
+#ifndef PVMF_COMMON_AUDIO_DECNODE_H_INCLUDE
+#include "pvmf_common_audio_decnode.h"
+#endif
+
+// Forward declaration
+class PVMFMP3FFParserNode;
+class MediaClockConverter;
 
 class PVMFSubNodeContainerBaseMp3
 {
@@ -216,6 +243,8 @@ class PVMP3FFNodeTrackPortInfo
             TRACKSTATE_TRANSMITTING_GETDATA,
             TRACKSTATE_TRANSMITTING_SENDDATA,
             TRACKSTATE_TRANSMITTING_SENDBOS,
+            TRACKSTATE_TRANSMITTING_SENDBOC,
+            TRACKSTATE_TRANSMITTING_SENDEOC,
             TRACKSTATE_SEND_ENDOFTRACK,
             TRACKSTATE_TRACKDATAPOOLEMPTY,
             TRACKSTATE_MEDIADATAPOOLEMPTY,
@@ -292,8 +321,20 @@ class PVMP3FFNodeTrackPortInfo
         bool iSendBOS;
         // Random access point idenfier
         bool iFirstFrame;
+
 };  // end class PVMP3FFNodeTrackPortInfo
 
+//Forward Declarations
+class IMpeg3File;
+class PVLogger;
+class PVMFSourceClipInfo;
+
+/*structure to store clip information and associated parser object with it*/
+typedef struct
+{
+    IMpeg3File* iParserObj;
+    PVMFSourceClipInfo iClipInfo;
+} PVMFMp3ClipInfo;
 /*
 * The class PVMp3DurationCalculator is the external interface for calculating
 * the clip duration as a background AO.
@@ -301,18 +342,21 @@ class PVMP3FFNodeTrackPortInfo
 class PVMp3DurationCalculator : public OsclTimerObject
 {
     public:
-        PVMp3DurationCalculator(int32 aPriority, IMpeg3File* aMP3File, PVMFNodeInterface* aNode, bool aScanEnabled = true);
+        PVMp3DurationCalculator(int32 aPriority, IMpeg3File* aMP3File, PVMFMP3FFParserNode* aNode, bool aScanEnabled = true);
         ~PVMp3DurationCalculator();
         void Run();
         void ScheduleAO();
+        void SetParserObj(IMpeg3File* aMP3File);
+        void SetClipIndex(uint32 aClipIndex);
     private:
         PVFile* iFile;
         bool iScanComplete;
         bool iScanEnabled;
         MP3ErrorType iErrorCode;
         IMpeg3File* iMP3File;
-        PVMFNodeInterface* iNode;
+        PVMFMP3FFParserNode* iNode;
         uint32 totalticks;
+        uint32 iClipIndex;
 };
 
 /*
@@ -347,17 +391,11 @@ class PVMFMP3FFParserNode : public PVMFNodeInterfaceImpl,
         void addRef();
         void removeRef();
         bool queryInterface(const PVUuid& uuid, PVInterface *& iface);
-        void AudioSinkEvent(PVMFStatus aEvent, uint32 aStreamId)
-        {
-            OSCL_UNUSED_ARG(aEvent);
-            OSCL_UNUSED_ARG(aStreamId);
-            //ignore
-        }
-        PVMFStatus SetSourceInitializationData(OSCL_wString& aSourceURL, PVMFFormatType& aSourceFormat,
-                                               OsclAny* aSourceData, uint32 aClipIndex = 0,
-                                               PVMFFormatTypeDRMInfo aType = PVMF_FORMAT_TYPE_CONNECT_DRM_INFO_UNKNOWN);
+
+        PVMFStatus SetSourceInitializationData(OSCL_wString& aSourceURL, PVMFFormatType& aSourceFormat, OsclAny* aSourceData, uint32 aClipIndex, PVMFFormatTypeDRMInfo aType = PVMF_FORMAT_TYPE_CONNECT_DRM_INFO_UNKNOWN);
         PVMFStatus SetClientPlayBackClock(PVMFMediaClock* aClientClock);
         PVMFStatus SetEstimatedServerClock(PVMFMediaClock* aClientClock);
+        void AudioSinkEvent(PVMFStatus aEvent, uint32 aClipIndex);
 
         //From PVMFTrackSelectionExtensionInterface
         PVMFStatus GetMediaPresentationInfo(PVMFMediaPresentationInfo& aInfo);
@@ -368,10 +406,7 @@ class PVMFMP3FFParserNode : public PVMFNodeInterfaceImpl,
         void MetadataUpdated(uint32 aMetadataSize);
 #endif
         // From PVMFMetadataExtensionInterface
-        PVMFStatus SetMetadataClipIndex(uint32 aClipIndex)
-        {
-            return (aClipIndex == 0) ? PVMFSuccess : PVMFErrArgument;
-        }
+        PVMFStatus SetMetadataClipIndex(uint32 aClipNum);
         uint32 GetNumMetadataKeys(char* aQueryKeyString = NULL);
         uint32 GetNumMetadataValues(PVMFMetadataList& aKeyList);
         PVMFCommandId GetNodeMetadataKeys(PVMFSessionId aSessionId, PVMFMetadataList& aKeyList,
@@ -388,6 +423,10 @@ class PVMFMP3FFParserNode : public PVMFNodeInterfaceImpl,
                 PVMFTimestamp& aActualMediaDataTS,
                 bool aSeekToSyncPoint = true,
                 uint32 aStreamID = 0,
+                OsclAny* aContext = NULL);
+
+        virtual PVMFCommandId SetDataSourcePosition(PVMFSessionId aSessionId,
+                PVMFDataSourcePositionParams& aPVMFDataSourcePositionParams,
                 OsclAny* aContext = NULL);
 
         virtual PVMFCommandId QueryDataSourcePosition(PVMFSessionId aSessionId,
@@ -426,19 +465,23 @@ class PVMFMP3FFParserNode : public PVMFNodeInterfaceImpl,
 
         void PassDatastreamReadCapacityObserver(PVMFDataStreamReadCapacityObserver* aObserver);
 
-
-    protected:
-        PVMFCPMContainerMp3 iCPMContainer;
+        // retrieves the current playback clip index
+        uint32 GetCurrentClipIndex();
+        OSCL_wHeapString<OsclMemAllocator>& GetClipURLAt(uint32 aClipIndex);
+        PVMFFormatType& GetClipFormatTypeAt(uint32 aClipIndex);
+        PVMFSourceContextData& GetSourceContextDataAt(uint32 aClipIndex);
+        bool IsValidContextData(uint32 aClipIndex);
+        PVMFLocalDataSource& GetCPMSourceDataAt(uint32 aClipIndex);
 
     private:
-        void Push(PVMFSubNodeContainerBaseMp3&, PVMFSubNodeContainerBaseMp3::CmdType);
-
-        PVMFStatus CheckForMP3HeaderAvailability();
+        int32 AllocateDurationCalculator();
+        PVMFStatus CheckForMP3HeaderAvailability(int32 aClipIndex);
         PVMFStatus GetFileOffsetForAutoResume(uint32& aOffset, PVMP3FFNodeTrackPortInfo* aTrackPortInfo);
 
 #if PV_HAS_SHOUTCAST_SUPPORT_ENABLED
         PVMFStatus ParseShoutcastMetadata(char* aMetadataBuf, uint32 aMetadataSize, Oscl_Vector<PvmiKvp, OsclMemAllocator>& aKvpVector);
 #endif
+        void GetGaplessMetadata(int32 aClipIndex);
 
         void Construct();
 
@@ -471,15 +514,27 @@ class PVMFMP3FFParserNode : public PVMFNodeInterfaceImpl,
         PVMFStatus DoGetNodeMetadataValues();
         PVMFStatus DoSetDataSourceRate();
         PVMFStatus DoSetDataSourcePosition();
+        PVMFStatus DoSetDataSourcePositionPlaylist();
         PVMFStatus DoQueryDataSourcePosition();
+
+        PVMFStatus SetPlaybackStartupTime(uint32& aTargetNPT,
+                                          uint32* aActualNPT,
+                                          uint32* aActualMediaDataTS,
+                                          bool aSeektosyncpoint,
+                                          uint32 aStreamID,
+                                          int32 reposIndex);
 
         bool HandleTrackState();
         bool RetrieveTrackData(PVMP3FFNodeTrackPortInfo& aTrackPortInfo);
         bool SendTrackData(PVMP3FFNodeTrackPortInfo& aTrackPortInfo);
 
         int32 FindTrackID(PVMFFormatType aFormatType);
-        PVMFStatus ParseFile();
+        PVMFStatus ParseFile(uint32 aParserIndex);
         bool CreateFormatSpecificInfo(uint32 numChannels, uint32 samplingRate);
+
+        bool SendBeginOfClipCommand(PVMP3FFNodeTrackPortInfo& aTrackPortInfo);
+        bool SendEndOfClipCommand(PVMP3FFNodeTrackPortInfo& aTrackPortInfo);
+        uint32 GetGaplessDuration(PVMP3FFNodeTrackPortInfo& aTrackPortInfo);
 
         void ResetTrack();
         void ReleaseTrack();
@@ -498,9 +553,27 @@ class PVMFMP3FFParserNode : public PVMFNodeInterfaceImpl,
         void DataStreamCommandCompleted(const PVMFCmdResp& aResponse);
         void DataStreamInformationalEvent(const PVMFAsyncEvent& aEvent);
         void DataStreamErrorEvent(const PVMFAsyncEvent& aEvent);
-        PVMFStatus CreateMP3FileObject(MP3ErrorType &aSuccess, PVMFCPMPluginAccessInterfaceFactory*aCPM);
-        PVMFStatus SetupParserObject();
         PVMFStatus PushBackCPMMetadataKeys(PVMFMetadataList *&aKeyListPtr, uint32 aLcv);
+
+        // create parser objects for gapless
+        PVMFStatus ConstructMP3FileParser(MP3ErrorType &aSuccess, int32 aClipIndex, PVMFCPMPluginAccessInterfaceFactory* aCPM = NULL);
+        PVMFStatus ReleaseMP3FileParser(int32 aClipIndex, bool aCleanupLastIndex = false);
+        PVMFStatus InitNextValidClipInPlaylist(int32 aSkipToTrack = -1, PVMFDataStreamFactory* aDataStreamFactory = NULL);
+        IMpeg3File* GetParserObjAtIndex(int32 aClipIndex = -1)
+        {
+            if (aClipIndex < 0)
+                return NULL;
+            return iClipInfoList[aClipIndex].iParserObj;
+        }
+
+        bool ValidateSourceInitializationParams(OSCL_wString& aSourceURL,
+                                                PVMFFormatType& aSourceFormat,
+                                                uint32 aClipIndex,
+                                                PVMFSourceClipInfo aClipInfo);
+    protected:
+        void Push(PVMFSubNodeContainerBaseMp3&, PVMFSubNodeContainerBaseMp3::CmdType);
+        PVMFCPMContainerMp3 iCPMContainer;
+
 
 // private member variables
 
@@ -520,18 +593,23 @@ class PVMFMP3FFParserNode : public PVMFNodeInterfaceImpl,
         // All one port is required as we support only one track
         PVMFMP3FFParserPort* iOutPort;
 
-        // Parse status
-        bool iParseStatus;
-
-        OSCL_wHeapString<OsclMemAllocator> iSourceURL;
+        /* gapless related */
+        // playlist/clip-indexes
+        uint32 iNumClipsInPlayList;
+        int32 iPlaybackClipIndex;
+        bool iPlaylistRepositioning;
+        int32 iClipIndexForMetadata;
         bool iSourceURLSet;
-        PVMFFormatType iSourceFormat;
-        PVMFSourceContextData iSourceContextData;
-        bool iSourceContextDataValid;
-        OsclFileHandle* iFileHandle;
-        PVMFLocalDataSource iCPMSourceData;
+        bool iInitNextClip;
+        int32 iNextInitializedClipIndex;
+        bool iPlaylistExhausted;
+
+        Oscl_Vector<PVMFMp3ClipInfo, OsclMemAllocator> iClipInfoList;
+        IMpeg3File* iPlaybackParserObj;
+        IMpeg3File* iMetadataParserObj;
+
         Oscl_FileServer iFileServer;
-        IMpeg3File* iMP3File;
+
         uint32 iConfigOk;
         int iMaxFrameSize;
         PVMP3FFNodeTrackPortInfo iTrack; //The track that this node is streaming. Current assumption is one track supported per node.
@@ -540,6 +618,7 @@ class PVMFMP3FFParserNode : public PVMFNodeInterfaceImpl,
         uint32 iFileSize;
         // Logger
         PVLogger *iLogger;
+        PVLogger *iGaplessLogger;
 
         // Channel sample info stored in a OsclRefCounterMemFrag
         OsclMemAllocDestructDealloc<uint8> iDecodeFormatSpecificInfoAlloc;
@@ -547,6 +626,7 @@ class PVMFMP3FFParserNode : public PVMFNodeInterfaceImpl,
         bool iSendDecodeFormatSpecificInfo;
 
         /* These vars are used for the prog. download to auto pause*/
+        uint32 iCurrSampleDuration;
         OsclSharedPtr<PVMFMediaClock> iDownloadProgressClock;
         PVMFDownloadProgressInterface* iDownloadProgressInterface;
         bool iAutoPaused;

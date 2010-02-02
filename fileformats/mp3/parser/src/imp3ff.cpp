@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -345,11 +345,11 @@ OSCL_EXPORT_REF uint32 IMpeg3File::ResetPlayback(uint32 time)
     }
 }
 
-OSCL_EXPORT_REF int32 IMpeg3File::GetNextBundledAccessUnits(uint32 *n, GAU *pgau, MP3ErrorType &err)
+OSCL_EXPORT_REF int32 IMpeg3File::GetNextBundledAccessUnits(uint32 *n, GAU *pgau, MP3ErrorType &err, int32 &aEOCFrameIndex, int32 &aFramesToFollowEOC)
 {
     if (pMP3Parser != NULL)
     {
-        return pMP3Parser->GetNextBundledAccessUnits(n, pgau, err);
+        return pMP3Parser->GetNextBundledAccessUnits(n, pgau, err, aEOCFrameIndex, aFramesToFollowEOC);
     }
     else
     {

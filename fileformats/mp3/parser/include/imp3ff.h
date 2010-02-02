@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -205,7 +205,7 @@ class IMpeg3File
         * @param pgau Frame information structure of type GAU
         * @returns Result of operation: 1=success; 0=fail
         */
-        OSCL_IMPORT_REF int32  GetNextBundledAccessUnits(uint32 *n, GAU *pgau, MP3ErrorType &err);
+        OSCL_IMPORT_REF int32  GetNextBundledAccessUnits(uint32 *n, GAU *pgau, MP3ErrorType &err, int32 &aEOCFrameIndex, int32 &aFramesToFollowEOC);
 
         /**
         * @brief Attempts to peek into the number of audio frames specified by n

@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -233,7 +233,7 @@ class MP3Parser
         * @param pgau Pointer to data read
         * @returns Number of bytes read
         */
-        int32   GetNextBundledAccessUnits(uint32 *n, GAU *pgau, MP3ErrorType &err);
+        int32   GetNextBundledAccessUnits(uint32 *n, GAU *pgau, MP3ErrorType &err, int32 &aEOCFrameIndex, int32 &aFramesToFollowEOC);
 
         /**
         * @brief Peeks into the next MP3 frames specified by n.
@@ -415,6 +415,15 @@ class MP3Parser
 
 
     private:
+        // buffer to hold padding frames (in surplus to data requested)
+        uint8* iPaddingFrameBuffer;
+        // buffer size requeired for padding frames
+        int32 iPaddingBufferSizeInBytes;
+        // number of padding frames
+        int32 iPaddingFrames;
+        // Gau structure to hold information about padding frames length, timestamp etc.
+        GAU iGau;
+
         MP3ErrorType ScanMP3File(PVFile* fpUsed);
         MP3ErrorType GetDurationFromVBRIHeader(uint32 &aDuration);
         MP3ErrorType GetDurationFromRandomScan(uint32 &aDuration);
@@ -446,6 +455,7 @@ class MP3Parser
         uint32 iFileSizeFromExternalSource;
         uint32 iInitSearchFileSize;
         uint32 iMinBytesRequiredForInit;
+        bool iFirstFrameAfterReposition;
         bool iLocalFileSizeSet;
         PVFile * fp;
         MediaClockConverter iClockConverter;

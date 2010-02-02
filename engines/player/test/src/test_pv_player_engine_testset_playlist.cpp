@@ -2259,7 +2259,7 @@ void pvplayer_async_test_playlist_seek_skip::Run()
 
             iNumClipsAdded = clipsAdded;
             fprintf(iTestMsgOutputFile, "Calling AddDataSource...\n");
-            OSCL_TRY(error, iCurrentCmdId = iPlayer->AddDataSource(*iDataSource, (OsclAny*) & iContextObject));
+            error = AddDataSource();
             OSCL_FIRST_CATCH_ANY(error, PVPATB_TEST_IS_TRUE(false); iState = STATE_CLEANUPANDCOMPLETE; RunIfNotReady());
         }
 
@@ -2523,7 +2523,12 @@ void pvplayer_async_test_playlist_seek_skip::Run()
     }
 }
 
-
+int32 pvplayer_async_test_playlist_seek_skip::AddDataSource()
+{
+    int32 error = OsclErrNone;
+    OSCL_TRY(error, iCurrentCmdId = iPlayer->AddDataSource(*iDataSource, (OsclAny*) & iContextObject));
+    return error;
+}
 void pvplayer_async_test_playlist_seek_skip::CommandCompleted(const PVCmdResponse& aResponse)
 {
     if (aResponse.GetCmdId() != iCurrentCmdId)

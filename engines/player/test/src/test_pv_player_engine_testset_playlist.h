@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1000,6 +1000,7 @@ class pvplayer_async_test_playlist_seek_skip : public pvplayer_async_test_base
             }
         }
 
+        int32 AddDataSource();
         void StartTest();
         void Run();
 

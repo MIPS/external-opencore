@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1173,7 +1173,8 @@ PVPlayerEngine::PVPlayerEngine() :
         iOverflowFlag(false),
         iClipsCompleted(0),
         iClipsCorrupted(0),
-        iCurrentPlaybackClipId(0xFFFFFFFF)
+        iCurrentPlaybackClipId(0xFFFFFFFF),
+        iNumClipsQueued(0)
 {
     iCurrentBeginPosition.iIndeterminate = true;
     iCurrentEndPosition.iIndeterminate = true;
@@ -4486,6 +4487,8 @@ PVMFStatus PVPlayerEngine::DoGetPVPlayerState(PVPlayerEngineCommand& aCmd, bool 
 
 PVMFStatus PVPlayerEngine::DoAddDataSource(PVPlayerEngineCommand& aCmd)
 {
+    // reset number of queued clips
+    iNumClipsQueued = 0;
     PVLOGGER_LOGMSG(PVLOGMSG_INST_PROF, iPerfLogger, PVLOGMSG_NOTICE,
                     (0, "PVPlayerEngine::DoAddDataSource() Tick=%d", OsclTickCount::TickCount()));
 
@@ -4603,11 +4606,15 @@ PVMFStatus PVPlayerEngine::DoAddDataSource(PVPlayerEngineCommand& aCmd)
 
 PVMFStatus PVPlayerEngine::DoUpdateDataSource(PVPlayerEngineCommand& aCmd)
 {
+    // reset number of queued clips
+    iNumClipsQueued = 0;
     PVLOGGER_LOGMSG(PVLOGMSG_INST_PROF, iPerfLogger, PVLOGMSG_INFO,
                     (0, "PVPlayerEngine::DoUpdateDataSource() Tick=%d", OsclTickCount::TickCount()));
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVPlayerEngine::DoUpdateDataSource() In"));
 
     PVMFStatus retval = PVMFFailure;
+    PVMFStatus status =  PVMFSuccess;
+
     for (uint32 clipIndex = 0; clipIndex < iDataSource->GetNumClips(); clipIndex++)
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG, (0, "PVPlayerEngine::DoUpdateDataSource() - Set index of current clip to %d", clipIndex));
@@ -4640,14 +4647,29 @@ PVMFStatus PVPlayerEngine::DoUpdateDataSource(PVPlayerEngineCommand& aCmd)
         retval = iSourceNodeInitIF->SetSourceInitializationData(sourceURL, srcFormatType,
                  iDataSource->GetDataSourceContextData(),
                  clipIndex);
-        if (retval != PVMFSuccess)
+
+        if (retval == PVMFSuccess || retval == PVMFErrAlreadyExists)
         {
-            if (retval == PVMFErrArgument)
+            iNumClipsQueued++;
+        }
+        else
+        {
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::DoUpdateDataSource() SetSourceInitializationData failed errCode %d", retval));
+            if (retval == PVMFErrNotSupported)
             {
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::DoUpdateDataSource() SetSourceInitializationData failed"));
-                retval = PVMFFailure;
+                status =  PVMFFailure;
+                // dont ignore update failure for clips index == 0
+                if (clipIndex == 0)
+                {
+                    return PVMFFailure;
+                }
             }
         }
+    }
+
+    if (status != PVMFSuccess)
+    {
+        return status;
     }
 
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVPlayerEngine::DoUpdateDataSource() Out"));
@@ -4875,18 +4897,22 @@ PVMFStatus PVPlayerEngine::DoSourceNodeQueryTrackSelIF(PVCommandId aCmdId, OsclA
                 retval = iSourceNodeInitIF->SetSourceInitializationData(sourceURL, iSourceFormatType, iDataSource->GetDataSourceContextData(), clipIndex);
             }
 
-            if (retval != PVMFSuccess)
+            if (retval == PVMFSuccess || retval == PVMFErrAlreadyExists)
             {
-                if (retval == PVMFErrArgument)
+                iNumClipsQueued++;
+            }
+            else
+            {
+                if (retval == PVMFErrNotSupported)
                 {
-                    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::DoSourceNodeQueryTrackSelIF() SetSourceInitializationData failed"));
-                    return PVMFFailure;
+                    // dont ignore update failure for clips index == 0
+                    if (clipIndex == 0)
+                    {
+                        return PVMFFailure;
+                    }
                 }
-                // ignore source initialization for clips index > 0
-                if (clipIndex == 0)
-                {
-                    return PVMFFailure;
-                }
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::DoSourceNodeQueryTrackSelIF() SetSourceInitializationData failed errcode %d", retval));
+
             }
         }
         // Set Playback Clock
@@ -10354,6 +10380,7 @@ void PVPlayerEngine::DoSourceNodeCleanup(void)
     iPlaybackPausedDueToEndOfTimeReached = false;
     iClipsCompleted = 0;
     iClipsCorrupted = 0;
+    iNumClipsQueued = 0;
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVPlayerEngine::DoSourceNodeCleanup() Out"));
 }
 
@@ -16225,15 +16252,9 @@ void PVPlayerEngine::HandleSinkNodeInfoEvent(const PVMFAsyncEvent& aEvent, int32
                     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
                                     (0, "PVPlayerEngine::HandleSinkNodeInfoEvent() - iClipsCompleted = %d, totalnumclips = %d", iClipsCompleted, iDataSource->GetNumClips()));
 
-                    uint32 *data = (uint32*) aEvent.GetEventData();
-                    // get clip id for which eos is received
-                    uint32 clipId = *(data + 1);
-
                     // scenarios where playlist playback is considered complete.
-                    // - If the PVMFInfoEndOfData is received for last clip in the list i.e. (ClipIndex+1)
-                    // - If sum of number of clips played back and corrupted clips in list equates to total clips in list.
-                    if ((iDataSource->GetNumClips() == clipId + 1) ||
-                            (iDataSource->GetNumClips() == iClipsCompleted + iClipsCorrupted))
+                    // If sum of number of clips played back and corrupted clips in list equates to total clips queued to Source Node.
+                    if ((iNumClipsQueued == iClipsCompleted + iClipsCorrupted))
                     {
                         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVPlayerEngine::HandleSinkNodeInfoEvent() Issue Pause due to end of clip"));
                         AddCommandToQueue(PVP_ENGINE_COMMAND_PAUSE_DUE_TO_ENDOFCLIP, NULL, NULL, NULL, false);

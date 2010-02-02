@@ -1000,9 +1000,7 @@ class pvplayer_engine_test : public test_case,
             LastMultipleInstanceTest = 325,//placeholder
 
             /**
-             * Playlist and gapless playback related test cases
-             * The playlist and gapless features in core are currently not fully working
-             * These test cases currently fail.
+             * Playlist related test cases
              */
             // start playback with a fully populated playlist
             FullPlaylistPlayTillEndOfListTest = 400,            // playback should done for complete playlist
@@ -1039,7 +1037,8 @@ class pvplayer_engine_test : public test_case,
 
             LastPlaylistTest = 439, // placeholder
 
-            // gapless PCM validation test cases
+
+            // gapless validation test cases
             GaplessValidateiTunesMP3 = 450,                     // plays default gapless iTunes MP3 clip and check output PCM size
             GaplessValidateLAMEMP3, // 451                      // plays default gapless LAME MP3 clip and check output PCM size
             GaplessValidateiTunesAAC, // 452                    // plays default gapless iTunes AAC clip and check output PCM size
