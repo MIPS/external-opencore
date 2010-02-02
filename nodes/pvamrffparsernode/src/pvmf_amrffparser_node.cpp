@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -963,6 +963,13 @@ PVMFStatus PVMFAMRFFParserNode::DoQueryInterface()
 PVMFStatus PVMFAMRFFParserNode::DoInit()
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFAMRFFParserNode::DoInitNode() In"));
+
+    if (EPVMFNodeInitialized == iInterfaceState)
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                        (0, "PVMFAMRFFParserNode::DoInit() already in Initialized state"));
+        return PVMFSuccess;
+    }
 
     if (iCPM)
     {

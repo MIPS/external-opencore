@@ -668,6 +668,12 @@ PVMFStatus PVMFAACFFParserNode::DoInit()
 {
     PVMF_AACPARSERNODE_LOGSTACKTRACE((0, "PVMFAACParserNode::DoInit() Called"));
 
+    if (EPVMFNodeInitialized == iInterfaceState)
+    {
+        PVMF_AACPARSERNODE_LOGINFOHI((0, "PVMFAACFFParserNode::DoInit() already in Initialized state"));
+        return PVMFSuccess;
+    }
+
     if (iCPM)
     {
         /*

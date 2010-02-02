@@ -504,6 +504,13 @@ PVMFStatus PVMFMP3FFParserNode::DoInit()
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                     (0, "PVMFMP3FFParserNode::DoInit() In"));
 
+    if (EPVMFNodeInitialized == iInterfaceState)
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                        (0, "PVMFMP3FFParserNode::DoInit() already in Initialized state"));
+        return PVMFSuccess;
+    }
+
     PVMFStatus status = PVMFSuccess;
     PVMFDataStreamFactory* dsFactory = NULL;
     // Process Init according to the Node State
@@ -561,6 +568,13 @@ PVMFStatus PVMFMP3FFParserNode::DoPrepare()
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                     (0, "PVMFMP3FFParserNode::DoPrepare() In"));
 
+    if (EPVMFNodePrepared == iInterfaceState)
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                        (0, "PVMFMP3FFParserNode::DoPrepare() already in Prepared state"));
+        return PVMFSuccess;
+    }
+
     // If this is an PDL session request callback from ProgressInterface when data with
     // ts TimeStamp is downloaded, DPI shall callback the node once data is downloaded
     if ((iDownloadProgressInterface != NULL) &&
@@ -597,6 +611,13 @@ PVMFStatus PVMFMP3FFParserNode::DoStart()
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                     (0, "PVMFMP3FFParserNode::DoStart() In"));
+
+    if (EPVMFNodeStarted == iInterfaceState)
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                        (0, "PVMFMP3FFParserNode::DoStart() already in Started state"));
+        return PVMFSuccess;
+    }
 
     // Process Start according to the Node State
     if (iInterfaceState == EPVMFNodePaused)

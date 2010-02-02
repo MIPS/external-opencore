@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -686,7 +686,8 @@ OSCL_EXPORT_REF bool PVMFNodeInterfaceImpl::ProcessCommand()
 
             case PVMF_GENERIC_NODE_INIT:
             {
-                if (iInterfaceState == EPVMFNodeIdle)
+                if (iInterfaceState == EPVMFNodeIdle ||
+                        iInterfaceState == EPVMFNodeInitialized)
                 {
                     status = DoInit();
                 }
@@ -695,7 +696,8 @@ OSCL_EXPORT_REF bool PVMFNodeInterfaceImpl::ProcessCommand()
 
             case PVMF_GENERIC_NODE_PREPARE:
             {
-                if (iInterfaceState == EPVMFNodeInitialized)
+                if (iInterfaceState == EPVMFNodeInitialized ||
+                        iInterfaceState == EPVMFNodePrepared)
                 {
                     status = DoPrepare();
                 }
@@ -705,7 +707,8 @@ OSCL_EXPORT_REF bool PVMFNodeInterfaceImpl::ProcessCommand()
             case PVMF_GENERIC_NODE_START:
             {
                 if (iInterfaceState == EPVMFNodePrepared ||
-                        iInterfaceState == EPVMFNodePaused)
+                        iInterfaceState == EPVMFNodePaused ||
+                        iInterfaceState == EPVMFNodeStarted)
                 {
                     // if node is started, it needs to be scheduled to run
                     // so that it can start sending out/accepting data.
@@ -736,7 +739,8 @@ OSCL_EXPORT_REF bool PVMFNodeInterfaceImpl::ProcessCommand()
 
             case PVMF_GENERIC_NODE_PAUSE:
             {
-                if (iInterfaceState == EPVMFNodeStarted)
+                if (iInterfaceState == EPVMFNodeStarted ||
+                        iInterfaceState == EPVMFNodePaused)
                 {
                     status = DoPause();
                 }

@@ -1842,6 +1842,12 @@ PVMFStatus PVMFMP4FFParserNode::DoInit()
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFMP4FFParserNode::DoInit() In"));
 
+    if (EPVMFNodeInitialized == iInterfaceState)
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFMP4FFParserNode::DoInit() already in Initialized state"));
+        return PVMFSuccess;
+    }
+
     if (iCPM)
     {
         /*
@@ -2049,6 +2055,12 @@ PVMFStatus PVMFMP4FFParserNode::DoPrepare()
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFMP4FFParserNode::DoPrepareNode() In"));
 
+    if (EPVMFNodePrepared == iInterfaceState)
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFMP4FFParserNode::DoPrepare() already in Prepared state"));
+        return PVMFSuccess;
+    }
+
     /* Do initial buffering in case of PDL / FT  or in case of External Download */
     if ((iExternalDownload == true) && (iDownloadComplete == false) && (iMP4FileHandle != NULL))
     {
@@ -2159,6 +2171,12 @@ PVMFStatus PVMFMP4FFParserNode::DoStop()
 PVMFStatus PVMFMP4FFParserNode::DoPause()
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFMP4FFParserNode::DoPauseNode() In"));
+
+    if (EPVMFNodePaused == iInterfaceState)
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFMP4FFParserNode::DoPause() already in Paused state"));
+        return PVMFSuccess;
+    }
 
     if (!iUnderFlowEventReported && iExternalDownload)
     {

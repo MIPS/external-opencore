@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -4053,6 +4053,13 @@ OSCL_EXPORT_REF PVMFStatus PVMFOMXBaseDecNode::DoInit()
 /////////////////////////////////////////////////////////////////////////////
 OSCL_EXPORT_REF PVMFStatus PVMFOMXBaseDecNode::DoPrepare()
 {
+    if (EPVMFNodePrepared == iInterfaceState)
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                        (0, "PVMFOMXBaseDecNode::DoPrepare() already in Prepared state"));
+        return PVMFSuccess;
+    }
+
     OMX_ERRORTYPE err = OMX_ErrorNone;
     Oscl_Vector<OMX_STRING, OsclMemAllocator> roles;
 
@@ -4680,6 +4687,13 @@ OSCL_EXPORT_REF PVMFStatus PVMFOMXBaseDecNode::DoStart()
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "%s::DoStart() In", iName.Str()));
 
+    if (EPVMFNodeStarted == iInterfaceState)
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                        (0, "PVMFOMXBaseDecNode::DoStart() already in Started state"));
+        return PVMFSuccess;
+    }
+
     iDiagnosticsLogged = false;
 
     PVMFStatus status = PVMFPending;
@@ -4873,6 +4887,13 @@ OSCL_EXPORT_REF PVMFStatus PVMFOMXBaseDecNode::DoPause()
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "%s::DoPause() In", iName.Str()));
 
+    if (EPVMFNodePaused == iInterfaceState)
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                        (0, "PVMFOMXBaseDecNode::DoPause() already in Paused state"));
+        return PVMFSuccess;
+    }
+
     OMX_ERRORTYPE  err;
     OMX_STATETYPE sState;
 
@@ -4933,11 +4954,11 @@ OSCL_EXPORT_REF PVMFStatus PVMFOMXBaseDecNode::DoPause()
 OSCL_EXPORT_REF PVMFStatus PVMFOMXBaseDecNode::DoReset()
 {
 
-    OMX_ERRORTYPE  err;
-    OMX_STATETYPE sState;
-
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                     (0, "%s::DoReset() In", iName.Str()));
+
+    OMX_ERRORTYPE  err;
+    OMX_STATETYPE sState;
 
     LogDiagnostics();
 

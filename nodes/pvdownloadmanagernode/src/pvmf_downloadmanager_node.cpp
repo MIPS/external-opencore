@@ -1214,8 +1214,7 @@ PVMFStatus PVMFDownloadManagerNode::DoReleasePort()
 PVMFStatus PVMFDownloadManagerNode::DoInit()
 {
     //Start executing a node command
-
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFDownloadManagerNode::DoInitNode() In"));
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFDownloadManagerNode::DoInit() In"));
 
     return ScheduleSubNodeCommands();
 }
@@ -1223,8 +1222,7 @@ PVMFStatus PVMFDownloadManagerNode::DoInit()
 PVMFStatus PVMFDownloadManagerNode::DoPrepare()
 {
     //Start executing a node command
-
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFDownloadManagerNode::DoPrepareNode() In"));
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFDownloadManagerNode::DoPrepare() In"));
 
     return ScheduleSubNodeCommands();
 }
@@ -1232,8 +1230,7 @@ PVMFStatus PVMFDownloadManagerNode::DoPrepare()
 PVMFStatus PVMFDownloadManagerNode::DoStart()
 {
     //Start executing a node command
-
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFDownloadManagerNode::DoStartNode() In"));
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFDownloadManagerNode::DoStart() In"));
 
     return ScheduleSubNodeCommands();
 }
@@ -1242,7 +1239,7 @@ PVMFStatus PVMFDownloadManagerNode::DoStop()
 {
     //Start executing a node command
 
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFDownloadManagerNode::DoStopNode() In"));
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFDownloadManagerNode::DoStop() In"));
 
     return ScheduleSubNodeCommands();
 }
@@ -1251,7 +1248,7 @@ PVMFStatus PVMFDownloadManagerNode::DoFlush()
 {
     //Start executing a node command
 
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFDownloadManagerNode::DoFlushNode() In"));
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFDownloadManagerNode::DoFlush() In"));
 
     return ScheduleSubNodeCommands();
 }
@@ -1259,14 +1256,14 @@ PVMFStatus PVMFDownloadManagerNode::DoFlush()
 PVMFStatus PVMFDownloadManagerNode::DoPause()
 {
     //Start executing a node command
-
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFDownloadManagerNode::DoPauseNode() In"));
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFDownloadManagerNode::DoPause() In"));
 
     return ScheduleSubNodeCommands();
 }
 
 PVMFStatus PVMFDownloadManagerNode::DoReset()
 {
+
     //remove the clock observer
     if (iPlayBackClock != NULL)
     {
@@ -1468,6 +1465,13 @@ PVMFStatus PVMFDownloadManagerNode::ScheduleSubNodeCommands()
         break;
 
         case PVMF_GENERIC_NODE_INIT:
+
+            if (EPVMFNodeInitialized == iInterfaceState)
+            {
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFDownloadManagerNode::ScheduleSubNodeCommands() already in Initialized state"));
+                return PVMFSuccess;
+            }
+
             //check for second "Init" command after a license acquire.
             if (iInitFailedLicenseRequired)
             {
@@ -1536,6 +1540,13 @@ PVMFStatus PVMFDownloadManagerNode::ScheduleSubNodeCommands()
             break;
 
         case PVMF_GENERIC_NODE_PREPARE:
+
+            if (EPVMFNodePrepared == iInterfaceState)
+            {
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFDownloadManagerNode::ScheduleSubNodeCommands() already in Prepared state"));
+                return PVMFSuccess;
+            }
+
             //if protocol engine node did track selection, then we need to continue
             //to the file parse stage here.  Otherwise it was already done in the Init.
             if (TrackSelectNode().iType == PVMFDownloadManagerSubNodeContainerBase::EProtocolEngine)
@@ -1573,6 +1584,13 @@ PVMFStatus PVMFDownloadManagerNode::ScheduleSubNodeCommands()
             break;
 
         case PVMF_GENERIC_NODE_START:
+
+            if (EPVMFNodeStarted == iInterfaceState)
+            {
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFDownloadManagerNode::ScheduleSubNodeCommands() already in Started state"));
+                return PVMFSuccess;
+            }
+
             //Re-start socket node & PE node in case they were stopped by a prior
             //stop command.
             if (iSocketNode.iNode->GetState() == EPVMFNodePrepared)
@@ -1600,6 +1618,13 @@ PVMFStatus PVMFDownloadManagerNode::ScheduleSubNodeCommands()
             break;
 
         case PVMF_GENERIC_NODE_PAUSE:
+
+            if (EPVMFNodePaused == iInterfaceState)
+            {
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFDownloadManagerNode::ScheduleSubNodeCommands() already in Paused state"));
+                return PVMFSuccess;
+            }
+
             //note: pause/resume download is not supported.
             if (iFormatParserNode.iNode)
                 Push(iFormatParserNode, PVMFDownloadManagerSubNodeContainerBase::EPause);

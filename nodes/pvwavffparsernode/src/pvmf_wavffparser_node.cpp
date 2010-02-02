@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -684,7 +684,13 @@ PVMFStatus PVMFWAVFFParserNode::DoQueryInterface()
 
 PVMFStatus PVMFWAVFFParserNode::DoInit()
 {
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFWAVFFParserNode::DoInitNode() In"));
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFWAVFFParserNode::DoInit() In"));
+
+    if (EPVMFNodeInitialized == iInterfaceState)
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFWAVFFParserNode::DoInit() already in Initialized state"));
+        return PVMFSuccess;
+    }
 
     if (iWAVParser != NULL)
     {

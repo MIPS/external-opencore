@@ -1079,6 +1079,13 @@ PVMFStatus PVMFFileOutputNode::DoInit()
 
 PVMFStatus PVMFFileOutputNode::DoStart()
 {
+
+    if (EPVMFNodeStarted == iInterfaceState)
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFFileOutputNode::DoStart() already in Started state"));
+        return PVMFSuccess;
+    }
+
     if (!iClock)
     {
         // If not using sync clock, start processing incoming data
@@ -1135,6 +1142,13 @@ PVMFStatus PVMFFileOutputNode::DoFlush()
 
 PVMFStatus PVMFFileOutputNode::DoPause()
 {
+
+    if (EPVMFNodePaused == iInterfaceState)
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFFileOutputNode::DoPause() already in Paused state"));
+        return PVMFSuccess;
+    }
+
     // Pause data source
     if (!iClock)
     {
@@ -1146,6 +1160,7 @@ PVMFStatus PVMFFileOutputNode::DoPause()
 
 PVMFStatus PVMFFileOutputNode::DoReset()
 {
+
     if (IsAdded())
     {
         if (iInPort)
