@@ -2253,42 +2253,43 @@ class pvplayer_engine_test : public test_case,
             DLA_LicenseUpdateExpired_PlayReadyCPMTest,//1435
             NonSilentLicAcquire_LUIUrlRetrieval_PlayReadyCPMTest,//1436
             LUIUrlParsing_PlayReadyCPMTest, //1437
+            FindKID_In_Header_PlayReadyCPMTest,//1438
 
             //Utility Web-initiator tests
-            WebInitiatorParsing_PlayReadyCPMTest, //1438
-            WebInitiatorLicAcq_PlayReadyCPMTest, //1439
-            WebInitiatorLicAcqDomainBound_PlayReadyCPMTest, //1440
-            WebInitiatorMetering_PlayReadyCPMTest, //1441
-            WebInitiatorJoinAndLeaveDomain_PlayReadyCPMTest, //1442
+            WebInitiatorParsing_PlayReadyCPMTest, //1439
+            WebInitiatorLicAcq_PlayReadyCPMTest, //1440
+            WebInitiatorLicAcqDomainBound_PlayReadyCPMTest, //1441
+            WebInitiatorMetering_PlayReadyCPMTest, //1442
+            WebInitiatorJoinAndLeaveDomain_PlayReadyCPMTest, //1443
 
 
             //PlayReady Cancel tests
-            DLA_CancelAcquireLicense_PlayReadyCPMTest_v2_Content,//1443
-            DLA_CancelJoinDomain_PlayReadyCPMTest, //1444
+            DLA_CancelAcquireLicense_PlayReadyCPMTest_v2_Content,//1444
+            DLA_CancelJoinDomain_PlayReadyCPMTest, //1445
 
             //PlayReady streaming tests.
-            DLA_StreamingOpenPlayUntilEOST_PlayReadyCPMTest,//1445
-            DLA_StreamingOpenPlayPausePlayUntilEOS_PlayReadyCPMTest,//1446
-            DLA_StreamingOpenPlaySeekPlayUntilEOS_PlayReadyCPMTest,//1447
-            DLA_StreamingMultiplePlayUntilEOS_PlayReadyCPMTest,//1448
-            DLA_StreamingCancelAcquireLicense_PlayReadyCPMTest,//1449
-            DLA_StreamingProtocolRollOverTest_PlayReadyCPMTest,//1450
-            DLA_StreamingProtocolRollOverTestWithUnknownURLType_PlayReadyCPMTest,//1451
-            DLA_PDL_OpenPlayUntilEOS_PlayreadyCPMTest_v4_WMA,//1452
-            DLA_PDL_OpenPlayStop_PlayreadyCPMTest_v4_WMV,//1453
-            DLA_PDL_OpenPlayStop_PlayreadyCPMTest_v4_AAC,//1454
-            DLA_PDL_OpenPlayStop_PlayreadyCPMTest_v4_H264,//1455
-            DLA_PDL_OpenPlayStop_PlayreadyCPMTest_v4_H264_AAC,//1456
+            DLA_StreamingOpenPlayUntilEOST_PlayReadyCPMTest,//1446
+            DLA_StreamingOpenPlayPausePlayUntilEOS_PlayReadyCPMTest,//1447
+            DLA_StreamingOpenPlaySeekPlayUntilEOS_PlayReadyCPMTest,//1448
+            DLA_StreamingMultiplePlayUntilEOS_PlayReadyCPMTest,//1449
+            DLA_StreamingCancelAcquireLicense_PlayReadyCPMTest,//1450
+            DLA_StreamingProtocolRollOverTest_PlayReadyCPMTest,//1451
+            DLA_StreamingProtocolRollOverTestWithUnknownURLType_PlayReadyCPMTest,//1452
+            DLA_PDL_OpenPlayUntilEOS_PlayreadyCPMTest_v4_WMA,//1453
+            DLA_PDL_OpenPlayStop_PlayreadyCPMTest_v4_WMV,//1454
+            DLA_PDL_OpenPlayStop_PlayreadyCPMTest_v4_AAC,//1455
+            DLA_PDL_OpenPlayStop_PlayreadyCPMTest_v4_H264,//1456
+            DLA_PDL_OpenPlayStop_PlayreadyCPMTest_v4_H264_AAC,//1457
 
-            DLA_PPB_OpenPlayUntilEOS_PlayreadyCPMTest_v4_WMA,//1457
-            DLA_PPB_OpenPlayStop_PlayreadyCPMTest_v4_WMV,//1458
-            DLA_PPB_OpenPlayStop_PlayreadyCPMTest_v4_AAC,//1459
-            DLA_PPB_OpenPlayStop_PlayreadyCPMTest_v4_H264,//1460
-            DLA_PPB_OpenPlayStop_PlayreadyCPMTest_v4_H264_AAC,//1461
+            DLA_PPB_OpenPlayUntilEOS_PlayreadyCPMTest_v4_WMA,//1458
+            DLA_PPB_OpenPlayStop_PlayreadyCPMTest_v4_WMV,//1459
+            DLA_PPB_OpenPlayStop_PlayreadyCPMTest_v4_AAC,//1460
+            DLA_PPB_OpenPlayStop_PlayreadyCPMTest_v4_H264,//1461
+            DLA_PPB_OpenPlayStop_PlayreadyCPMTest_v4_H264_AAC,//1462
 
             //Miscellaneous tests
-            ContentHeaderRetrieval_PlayReadyCPMTest, //1462
-            LicenseCountVerification_PlayReadyCPMTest, //1463
+            ContentHeaderRetrieval_PlayReadyCPMTest, //1463
+            LicenseCountVerification_PlayReadyCPMTest, //1464
 
             //RESERVED FOR FUTURE PLAYREADY CPM TESTS.
             LastPlayReadyCPMTest = 1599,//placeholder

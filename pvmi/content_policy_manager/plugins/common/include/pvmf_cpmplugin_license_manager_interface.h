@@ -118,6 +118,16 @@ class PVMFCPMPluginLicenseManagerInterface : public PVInterface
             , int32 aMaxRemainingCount = -1
                                          , int32 aMaxRemainingHours = -1) = 0;
 
+        /**
+         * Method to delete all stored licenses for streaming content.
+         *
+         * @param [out] errcode: error code in case of failure.
+         * @returns: PVMFSuccess if separate store for streaming licenses is available,
+         * an error otherwise.
+         */
+
+        virtual PVMFStatus PurgeStreamingLicenses(
+            uint32& errcode) = 0;
 };
 
 

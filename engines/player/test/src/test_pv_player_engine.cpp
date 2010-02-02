@@ -4007,6 +4007,10 @@ void pvplayer_engine_test::test()
                 fprintf(file, "PlayReady CPM tests not enabled\n");
                 break;
 
+            case FindKID_In_Header_PlayReadyCPMTest:
+                fprintf(file, "PlayReady CPM tests not enabled\n");
+                break;
+
             case ContentHeaderRetrieval_PlayReadyCPMTest:
                 fprintf(file, "PlayReady CPM tests not enabled\n");
                 break;
