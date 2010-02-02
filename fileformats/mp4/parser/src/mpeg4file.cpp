@@ -393,9 +393,21 @@ Mpeg4File::Mpeg4File(MP4_FF_FILE *fp,
                         _mp4ErrorCode = MEMORY_ALLOCATION_FAILED;
                         return;
                     }
-                    _movieFragmentFilePtr = OSCL_PLACEMENT_NEW(ptr, MP4_FF_FILE(*fp));
-                    _movieFragmentFilePtr ->_pvfile.Copy(fp->_pvfile);
+                    _movieFragmentFilePtr = OSCL_PLACEMENT_NEW(ptr, MP4_FF_FILE());
+                    _movieFragmentFilePtr->_fileServSession = fp->_fileServSession;
                     _movieFragmentFilePtr ->_pvfile.SetCPM(fp->_pvfile.GetCPM());
+                    _movieFragmentFilePtr ->_pvfile.SetFileHandle(fp->_pvfile.iFileHandle);
+
+                    if (AtomUtils::OpenMP4File(filename,
+                                               Oscl_File::MODE_READ | Oscl_File::MODE_BINARY,
+                                               _movieFragmentFilePtr) != 0)
+                    {
+                        _success = false;
+                        _mp4ErrorCode = FILE_OPEN_FAILED;
+                    }
+
+
+                    _movieFragmentFilePtr ->_fileSize = fp->_fileSize;
                 }
                 count -= _pmovieAtom->getSize();
                 _scalability = _pmovieAtom->getScalability();
