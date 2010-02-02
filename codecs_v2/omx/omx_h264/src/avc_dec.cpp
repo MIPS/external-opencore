@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -257,7 +257,7 @@ OMX_ERRORTYPE AvcDecoder_OMX::AvcDecInit_OMX()
     pCleanObject = OSCL_NEW(AVCCleanupObject_OMX, (&AvcHandle));
 
     iAvcActiveFlag = OMX_FALSE;
-    iSkipToIDR = OMX_TRUE;
+    iSkipToIDR = OMX_FALSE;
 
     return OMX_ErrorNone;
 }
