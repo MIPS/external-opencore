@@ -420,9 +420,9 @@ Indicates the start of unsolicited closure of an incoming/outgoing track. The PV
 <tr><td valign=top><em><a name="a50a41" doxytag="PVT_INDICATION_CLOSE_TRACK"></a><em>PVT_INDICATION_CLOSE_TRACK</em></em>&nbsp;</td><td>
 Indicates an unsolicited closure of an incoming/outgoing track. Any media sink/source associated with this will be stopped and returned to the application. The first octet of the local buffer indicates the media type of the track. The second octet indicates the direction. The third octet indicates whether there is a replacement for this track available. If true, the application may add data source/sink for this track again. </td></tr>
 <tr><td valign=top><em><a name="a50a42" doxytag="PVT_INDICATION_PAUSE_TRACK"></a><em>PVT_INDICATION_PAUSE_TRACK</em></em>&nbsp;</td><td>
-Indicates that the remote terminal has paused an incoming track. Any media sink associated with this will be stopped. </td></tr>
+Indicates that local terminal has paused an incoming track. Any media sink associated with this will be stopped. The first octet of the local buffer indicates the direction of the track. The second and third octets indicates the track id. </td></tr>
 <tr><td valign=top><em><a name="a50a43" doxytag="PVT_INDICATION_RESUME_TRACK"></a><em>PVT_INDICATION_RESUME_TRACK</em></em>&nbsp;</td><td>
-Indicates that the remote terminal has resumed an incoming track. Any media sink associated with this will be restarted. </td></tr>
+Indicates that local terminal has resumed an incoming track. Any media sink associated with this will be restarted. The first octet of the local buffer indicates the direction of the track. The second and third octets indicates the track id. </td></tr>
 <tr><td valign=top><em><a name="a50a44" doxytag="PVT_INDICATION_INTERNAL_ERROR"></a><em>PVT_INDICATION_INTERNAL_ERROR</em></em>&nbsp;</td><td>
 Indicates an internal error in the pv2way engine. The derived class provides further information about the actual error. </td></tr>
 </table>
@@ -542,7 +542,7 @@ Signals replacement of an existing resource *     </td>
   </tr>
 </table>
 <hr size="1"><img src="pvlogo_small.jpg"><address style="align: right;"><small>PV2Way Engine</small>
-<address style="align: left;"><small>Posting Version: CORE_8.500.1.1_RC2 </small>
+<address style="align: left;"><small>Posting Version: CORE_8.500.1.1_RC3 </small>
 </small></address>
 </body>
 </html>

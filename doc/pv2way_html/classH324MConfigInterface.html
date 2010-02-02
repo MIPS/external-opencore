@@ -35,10 +35,12 @@
 <tr><td nowrap align=right valign=top>virtual PVMFCommandId&nbsp;</td><td valign=bottom><a class="el" href="classH324MConfigInterface.html#a21">SendVendorId</a> (OsclAny *aContextData=NULL)=0</td></tr>
 <tr><td nowrap align=right valign=top>virtual PVMFCommandId&nbsp;</td><td valign=bottom><a class="el" href="classH324MConfigInterface.html#a22">SendVideoTemporalSpatialTradeoffCommand</a> (TPVChannelId aLogicalChannel, uint8 aTradeoff, OsclAny *aContextData=NULL)=0</td></tr>
 <tr><td nowrap align=right valign=top>virtual PVMFCommandId&nbsp;</td><td valign=bottom><a class="el" href="classH324MConfigInterface.html#a23">SendVideoTemporalSpatialTradeoffIndication</a> (TPVChannelId aLogicalChannel, uint8 aTradeoff, OsclAny *aContextData=NULL)=0</td></tr>
-<tr><td nowrap align=right valign=top>virtual PVMFCommandId&nbsp;</td><td valign=bottom><a class="el" href="classH324MConfigInterface.html#a24">SendSkewIndication</a> (TPVChannelId aLogicalChannel1, TPVChannelId aLogicalChannel2, uint16 aSkew, OsclAny *aContextData=NULL)=0</td></tr>
-<tr><td nowrap align=right valign=top>virtual PVMFCommandId&nbsp;</td><td valign=bottom><a class="el" href="classH324MConfigInterface.html#a25">SetLogicalChannelBufferingMs</a> (uint32 aInBufferingMs, uint32 aOutBufferingMs, OsclAny *aContextData=NULL)=0</td></tr>
-<tr><td nowrap align=right valign=top>virtual PVMFCommandId&nbsp;</td><td valign=bottom><a class="el" href="classH324MConfigInterface.html#a26">SendUserInput</a> (CPVUserInput *user_input, OsclAny *aContextData=NULL)=0</td></tr>
-<tr><td nowrap align=right valign=top>virtual PVMFCommandId&nbsp;</td><td valign=bottom><a class="el" href="classH324MConfigInterface.html#a27">SetWnsrp</a> (const bool aEnableWnsrp, OsclAny *aContextData=NULL)=0</td></tr>
+<tr><td nowrap align=right valign=top>virtual PVMFCommandId&nbsp;</td><td valign=bottom><a class="el" href="classH324MConfigInterface.html#a24">SendLogicalChannelActiveIndication</a> (TPVChannelId aLogicalChannel, OsclAny *aContextData=NULL)=0</td></tr>
+<tr><td nowrap align=right valign=top>virtual PVMFCommandId&nbsp;</td><td valign=bottom><a class="el" href="classH324MConfigInterface.html#a25">SendLogicalChannelInactiveIndication</a> (TPVChannelId aLogicalChannel, OsclAny *aContextData=NULL)=0</td></tr>
+<tr><td nowrap align=right valign=top>virtual PVMFCommandId&nbsp;</td><td valign=bottom><a class="el" href="classH324MConfigInterface.html#a26">SendSkewIndication</a> (TPVChannelId aLogicalChannel1, TPVChannelId aLogicalChannel2, uint16 aSkew, OsclAny *aContextData=NULL)=0</td></tr>
+<tr><td nowrap align=right valign=top>virtual PVMFCommandId&nbsp;</td><td valign=bottom><a class="el" href="classH324MConfigInterface.html#a27">SetLogicalChannelBufferingMs</a> (uint32 aInBufferingMs, uint32 aOutBufferingMs, OsclAny *aContextData=NULL)=0</td></tr>
+<tr><td nowrap align=right valign=top>virtual PVMFCommandId&nbsp;</td><td valign=bottom><a class="el" href="classH324MConfigInterface.html#a28">SendUserInput</a> (CPVUserInput *user_input, OsclAny *aContextData=NULL)=0</td></tr>
+<tr><td nowrap align=right valign=top>virtual PVMFCommandId&nbsp;</td><td valign=bottom><a class="el" href="classH324MConfigInterface.html#a29">SetWnsrp</a> (const bool aEnableWnsrp, OsclAny *aContextData=NULL)=0</td></tr>
 </table>
 <hr><h2>Member Function Documentation</h2>
 <a name="a14" doxytag="H324MConfigInterface::FastUpdate"></a><p>
@@ -122,6 +124,82 @@ Optional opaque data that will be passed back to the user with the command respo
 A unique command id for asynchronous completion </dl>    </td>
   </tr>
 </table>
+<a name="a24" doxytag="H324MConfigInterface::SendLogicalChannelActiveIndication"></a><p>
+<table width="100%" cellpadding="2" cellspacing="0" border="0">
+  <tr>
+    <td class="md">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> virtual PVMFCommandId H324MConfigInterface::SendLogicalChannelActiveIndication </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top">TPVChannelId&nbsp;</td>
+          <td class="mdname" nowrap>&nbsp; <em>aLogicalChannel</em>, </td>
+        </tr>
+        <tr>
+          <td></td>
+          <td></td>
+          <td class="md" nowrap>OsclAny *&nbsp;</td>
+          <td class="mdname" nowrap>&nbsp; <em>aContextData</em> = NULL</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="md">)&nbsp;</td>
+          <td class="md" colspan="2"><code> [pure virtual]</code></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+This API allows the user to send a logicalChannelActive indication to the peer. It is an indication to the peer that the channel that was paused and for which it received logicalChannelInactive indication is now ready to send data on the channel defined by Logical channel Id     </td>
+  </tr>
+</table>
+<a name="a25" doxytag="H324MConfigInterface::SendLogicalChannelInactiveIndication"></a><p>
+<table width="100%" cellpadding="2" cellspacing="0" border="0">
+  <tr>
+    <td class="md">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> virtual PVMFCommandId H324MConfigInterface::SendLogicalChannelInactiveIndication </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top">TPVChannelId&nbsp;</td>
+          <td class="mdname" nowrap>&nbsp; <em>aLogicalChannel</em>, </td>
+        </tr>
+        <tr>
+          <td></td>
+          <td></td>
+          <td class="md" nowrap>OsclAny *&nbsp;</td>
+          <td class="mdname" nowrap>&nbsp; <em>aContextData</em> = NULL</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="md">)&nbsp;</td>
+          <td class="md" colspan="2"><code> [pure virtual]</code></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+This API allows the user to send a logicalChannelInactive indication to the peer. It is an indication to the peer that the channel has been paused the channel and will not send any data on the channel defined by Logical channel Id     </td>
+  </tr>
+</table>
 <a name="a11" doxytag="H324MConfigInterface::SendRme"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
@@ -194,7 +272,7 @@ Optional opaque data that will be passed back to the user with the command respo
 A unique command id for asynchronous completion </dl>    </td>
   </tr>
 </table>
-<a name="a24" doxytag="H324MConfigInterface::SendSkewIndication"></a><p>
+<a name="a26" doxytag="H324MConfigInterface::SendSkewIndication"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -244,7 +322,7 @@ A unique command id for asynchronous completion </dl>    </td>
 This API allows the user to send a SkewIndication to the peer. Skew is measured in milliseconds, and indicates the maximum number of milliseconds that the data on logicalChannel2 is delayed from the data on logicalChannel1 as delivered to the network transport.     </td>
   </tr>
 </table>
-<a name="a26" doxytag="H324MConfigInterface::SendUserInput"></a><p>
+<a name="a28" doxytag="H324MConfigInterface::SendUserInput"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -747,7 +825,7 @@ Optional opaque data that will be passed back to the user with the command respo
 A unique command id for asynchronous completion </dl>    </td>
   </tr>
 </table>
-<a name="a25" doxytag="H324MConfigInterface::SetLogicalChannelBufferingMs"></a><p>
+<a name="a27" doxytag="H324MConfigInterface::SetLogicalChannelBufferingMs"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -1384,7 +1462,7 @@ Optional opaque data that will be passed back to the user with the command respo
 </dl>    </td>
   </tr>
 </table>
-<a name="a27" doxytag="H324MConfigInterface::SetWnsrp"></a><p>
+<a name="a29" doxytag="H324MConfigInterface::SetWnsrp"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -1433,7 +1511,7 @@ A unique command id for asynchronous completion </dl>    </td>
 <hr>The documentation for this class was generated from the following file:<ul>
 <li><a class="el" href="tsc__h324m__config__interface_8h-source.html">tsc_h324m_config_interface.h</a></ul>
 <hr size="1"><img src="pvlogo_small.jpg"><address style="align: right;"><small>PV2Way Engine</small>
-<address style="align: left;"><small>Posting Version: CORE_8.500.1.1_RC2 </small>
+<address style="align: left;"><small>Posting Version: CORE_8.500.1.1_RC3 </small>
 </small></address>
 </body>
 </html>
