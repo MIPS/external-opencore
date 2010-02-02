@@ -559,8 +559,8 @@ OSCL_EXPORT_REF void PVMFOMXBaseDecNode::Run()
         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG, (0, "%s::Run() - Input commands empty", iName.Str()));
     }
 
-    if (((!IsCommandInProgress(iCancelCommand)) && (iInterfaceState != EPVMFNodeStarted)) ||
-            ((PVMF_GENERIC_NODE_START == iCurrentCommand.iCmd) && (iInterfaceState != EPVMFNodeStarted)))
+    // prevent further processing of input/output if the node is not in the Started state (i.e. component is in executing state)
+    if ((IsCommandInProgress(iCancelCommand)) || (iInterfaceState != EPVMFNodeStarted))
     {
         // rescheduling because of input data will be handled in Command Processing Part
         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG, (0, "%s::Run() - Node not in Started state yet", iName.Str()));

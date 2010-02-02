@@ -992,8 +992,7 @@ void PVMFOMXEncNode::Run()
         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG, (0, "PVMFOMXEncNode-%s::Run() - Input commands empty", iNodeTypeId));
     }
 
-    if (((iCurrentCommand.size() == 0) && (iInterfaceState != EPVMFNodeStarted)) ||
-            ((iCurrentCommand.size() > 0) && (iCurrentCommand.front().iCmd == PVMFOMXEncNodeCommand::PVOMXENC_NODE_CMD_START) && (iInterfaceState != EPVMFNodeStarted)))
+    if (iInterfaceState != EPVMFNodeStarted)
     {
         // rescheduling because of input data will be handled in Command Processing Part
         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG, (0, "PVMFOMXEncNode-%s::Run() - Node not in Started state yet", iNodeTypeId));
