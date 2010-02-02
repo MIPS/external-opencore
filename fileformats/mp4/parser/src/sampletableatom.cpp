@@ -1087,18 +1087,12 @@ SampleTableAtom::getPrevKeyMediaSample(uint64 inputtimestamp, uint32 &aKeySample
 }
 
 MP4_ERROR_CODE
-SampleTableAtom::getNextKeyMediaSample(uint64 inputtimestamp, uint32 &aKeySampleNum, uint32 *n, GAU    *pgau)
+SampleTableAtom::getNextKeyMediaSample(uint32 &aKeySampleNum, uint32 *n, GAU  *pgau)
 {
     if (_ptimeToSampleAtom  == NULL)
     {
         return DEFAULT_ERROR;
     }
-
-    // Get sample number at timestamp
-    _ptimeToSampleAtom->GetSampleNumberFromTimestamp(inputtimestamp, _currentPlaybackSampleNumber);
-    // Go far composition offset adjustment.
-    _currentPlaybackSampleNumber =
-        getSampleNumberAdjustedWithCTTS(inputtimestamp, _currentPlaybackSampleNumber);
 
     // Check if sample is an I-frame.  If not, need to find the sample number of the
     // first I-frame sample that follows ts
@@ -1111,7 +1105,7 @@ SampleTableAtom::getNextKeyMediaSample(uint64 inputtimestamp, uint32 &aKeySample
     }
     if (errCode != EVERYTHING_FINE)
     {
-        return errCode;
+        return END_OF_TRACK;
     }
 
     aKeySampleNum = _currentPlaybackSampleNumber;

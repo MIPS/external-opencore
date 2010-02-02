@@ -2970,7 +2970,11 @@ void pvplayer_engine_test::test()
                 break;
 
             case SetPlaybackRate2X:
-                iCurrentTest = new pvplayer_async_test_setplaybackrate2X(testparam);
+                iCurrentTest = new pvplayer_async_test_setplaybackrate2X(testparam, false);
+                break;
+
+            case SetPlaybackRate2XWithIFrameModePlybk:
+                iCurrentTest = new pvplayer_async_test_setplaybackrate2X(testparam, true);
                 break;
 
             case SetPlaybackRateFifth:

@@ -629,6 +629,9 @@ class PvmfAssetInfo3GPPLocationStruct
 #define PVMF_AUDIO_GETVOLUME    "x-pvmf/audio/render/getvolume;valtype=uint32"
 #define PVMF_AUDIO_MUTE         "x-pvmf/audio/render/mute;valtype=bool"
 
+
+#define PVMF_IFRAME_ONLY_RENDERING_MODE         "x-pvmf/parser/enable-I-frame-playback-mode;valtype=bool"
+
 #endif // PVMI_KVP_H_INCLUDED
 
 

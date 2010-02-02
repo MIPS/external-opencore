@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -140,8 +140,7 @@ class TrackAtom : public Atom
             return _pmediaAtom->getPrevKeyMediaSample(inputtimestamp, aKeySampleNum, n, pgau);
         }
 
-        int32 getNextKeyMediaSample(uint64 inputtimestamp,
-                                    uint32 &aKeySampleNum,
+        int32 getNextKeyMediaSample(uint32 &aKeySampleNum,
                                     uint32 *n,
                                     GAU    *pgau)
         {
@@ -149,7 +148,7 @@ class TrackAtom : public Atom
             {
                 return READ_MEDIA_ATOM_FAILED;
             }
-            return _pmediaAtom->getNextKeyMediaSample(inputtimestamp, aKeySampleNum, n, pgau);
+            return _pmediaAtom->getNextKeyMediaSample(aKeySampleNum, n, pgau);
         }
 
 

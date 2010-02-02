@@ -365,7 +365,7 @@ class SampleTableAtom : public Atom
         MP4_ERROR_CODE getKeyMediaSampleNumAt(uint32 aKeySampleNum,
                                               GAU    *pgau);
         MP4_ERROR_CODE getPrevKeyMediaSample(uint64 inputtimestamp, uint32 &aKeySampleNum, uint32 *n, GAU    *pgau);
-        MP4_ERROR_CODE getNextKeyMediaSample(uint64 inputtimestamp, uint32 &aKeySampleNum, uint32 *n, GAU    *pgau);
+        MP4_ERROR_CODE getNextKeyMediaSample(uint32 &aKeySampleNum, uint32 *n, GAU    *pgau);
 
         // Returns the timestamp (in milliseconds) for the last sample returned
         // This is mainly to be used when seeking in the bitstream - you request a frame at timestamp

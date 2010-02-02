@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -218,8 +218,7 @@ class MediaInformationAtom : public Atom
             return _psampleTableAtom->getPrevKeyMediaSample(inputtimestamp, aKeySampleNum, n, pgau);
         }
 
-        int32 getNextKeyMediaSample(uint64 inputtimestamp,
-                                    uint32 &aKeySampleNum,
+        int32 getNextKeyMediaSample(uint32 &aKeySampleNum,
                                     uint32 *n,
                                     GAU    *pgau)
         {
@@ -227,7 +226,7 @@ class MediaInformationAtom : public Atom
             {
                 return READ_SAMPLE_TABLE_ATOM_FAILED;
             }
-            return _psampleTableAtom->getNextKeyMediaSample(inputtimestamp, aKeySampleNum, n, pgau);
+            return _psampleTableAtom->getNextKeyMediaSample(aKeySampleNum, n, pgau);
         }
 
         int32 getMediaSample(uint32 sampleNumber, uint8 *buf, uint32 &size, uint32 &index, uint32 &SampleOffset)

@@ -138,8 +138,7 @@ class MovieAtom : public Atom
                                     uint32 id,
                                     uint32 *n,
                                     GAU    *pgau);
-        int32 getNextKeyMediaSample(uint64 inputtimestamp,
-                                    uint32 &aKeySampleNum,
+        int32 getNextKeyMediaSample(uint32 &aKeySampleNum,
                                     uint32 id,
                                     uint32 *n,
                                     GAU    *pgau);

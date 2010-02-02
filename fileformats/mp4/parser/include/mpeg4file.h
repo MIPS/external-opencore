@@ -165,8 +165,7 @@ class Mpeg4File : public IMpeg4File, public Parentable
             return _pmovieAtom->getPrevKeyMediaSample(inputtimestamp, aKeySampleNum, id, n, pgau);
         }
 
-        int32 getNextKeyMediaSample(uint64 inputtimestamp,
-                                    uint32 &aKeySampleNum,
+        int32 getNextKeyMediaSample(uint32 &aKeySampleNum,
                                     uint32 id,
                                     uint32 *n,
                                     GAU    *pgau)
@@ -175,7 +174,7 @@ class Mpeg4File : public IMpeg4File, public Parentable
             {
                 return READ_MOVIE_ATOM_FAILED;
             }
-            return _pmovieAtom->getNextKeyMediaSample(inputtimestamp, aKeySampleNum, id, n, pgau);
+            return _pmovieAtom->getNextKeyMediaSample(aKeySampleNum, id, n, pgau);
         }
 
         int32 getMediaSample(uint32 id, uint32 sampleNumber, uint8 *buf, uint32 &size, uint32 &index, uint32 &SampleOffset)

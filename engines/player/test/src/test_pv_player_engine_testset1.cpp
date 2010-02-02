@@ -11996,9 +11996,22 @@ void pvplayer_async_test_setplaybackrate2X::Run()
             }
             else
             {
-                iState = STATE_ADDDATASOURCE;
+                if (iIFrameModePlybkEnabled)
+                    iState = STATE_QUERYINTERFACE;
+                else
+                    iState = STATE_ADDDATASOURCE;
+
                 RunIfNotReady();
             }
+        }
+        break;
+
+
+        case STATE_QUERYINTERFACE:
+        {
+            PVUuid capconfigifuuid = PVMI_CAPABILITY_AND_CONFIG_PVUUID;
+            OSCL_TRY(error, iCurrentCmdId = iPlayer->QueryInterface(capconfigifuuid, (PVInterface*&)iPlayerCapConfigIF, (OsclAny*) & iContextObject));
+            OSCL_FIRST_CATCH_ANY(error, PVPATB_TEST_IS_TRUE(false); iState = STATE_CLEANUPANDCOMPLETE; RunIfNotReady());
         }
         break;
 
@@ -12007,10 +12020,13 @@ void pvplayer_async_test_setplaybackrate2X::Run()
             iDataSource = new PVPlayerDataSourceURL;
 
             OSCL_wHeapString<OsclMemAllocator> sourcefile = SOURCENAME_PREPEND_WSTRING;
+
             sourcefile += _STRLIT_WCHAR("test_reposition.mp4");
+            iDataSource->SetDataSourceFormatType(PVMF_MIME_MPEG4FF);
+
+
             iDataSource->SetDataSourceURL(sourcefile);
 
-            iDataSource->SetDataSourceFormatType(PVMF_MIME_MPEG4FF);
             OSCL_TRY(error, iCurrentCmdId = iPlayer->AddDataSource(*iDataSource, (OsclAny*) & iContextObject));
             OSCL_FIRST_CATCH_ANY(error, PVPATB_TEST_IS_TRUE(false); iState = STATE_CLEANUPANDCOMPLETE; RunIfNotReady());
         }
@@ -12185,6 +12201,7 @@ void pvplayer_async_test_setplaybackrate2X::CommandCompleted(const PVCmdResponse
         case STATE_ADDDATASOURCE:
             if (aResponse.GetCmdStatus() == PVMFSuccess)
             {
+
                 iState = STATE_INIT;
                 RunIfNotReady();
             }
@@ -12200,6 +12217,16 @@ void pvplayer_async_test_setplaybackrate2X::CommandCompleted(const PVCmdResponse
         case STATE_INIT:
             if (aResponse.GetCmdStatus() == PVMFSuccess)
             {
+                if (iIFrameModePlybkEnabled)
+                {
+                    PvmiKvp paramkvp;
+                    OSCL_StackString<64> paramkey2(_STRLIT_CHAR(PVMF_IFRAME_ONLY_RENDERING_MODE));
+                    paramkvp.key = paramkey2.get_str();
+                    paramkvp.value.bool_value = true;
+                    // Set the new settings
+                    iErrorKVP = NULL;
+                    iPlayerCapConfigIF->setParametersSync(NULL, &paramkvp, 1, iErrorKVP);
+                }
                 iState = STATE_ADDDATASINK_VIDEO;
                 RunIfNotReady();
             }
@@ -12208,6 +12235,16 @@ void pvplayer_async_test_setplaybackrate2X::CommandCompleted(const PVCmdResponse
                 // Init failed
                 PVPATB_TEST_IS_TRUE(false);
                 iState = STATE_CLEANUPANDCOMPLETE;
+                RunIfNotReady();
+            }
+            break;
+
+        case STATE_QUERYINTERFACE:
+            if (aResponse.GetCmdStatus() == PVMFSuccess)
+            {
+
+
+                iState = STATE_ADDDATASOURCE;
                 RunIfNotReady();
             }
             break;
@@ -12245,6 +12282,7 @@ void pvplayer_async_test_setplaybackrate2X::CommandCompleted(const PVCmdResponse
         case STATE_PREPARE:
             if (aResponse.GetCmdStatus() == PVMFSuccess)
             {
+
                 iState = STATE_SETPLAYBACKRATE;
                 RunIfNotReady();
             }
@@ -12275,6 +12313,7 @@ void pvplayer_async_test_setplaybackrate2X::CommandCompleted(const PVCmdResponse
         case STATE_START:
             if (aResponse.GetCmdStatus() == PVMFSuccess)
             {
+
                 iState = STATE_STOP;
                 RunIfNotReady(15000000);
             }

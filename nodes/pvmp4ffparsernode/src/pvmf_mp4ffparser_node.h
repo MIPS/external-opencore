@@ -147,7 +147,8 @@ enum BaseKeys_SelectionType
 {
     INVALID = 0,
     NET,
-    FILE_IO
+    FILE_IO,
+    PARSER
 };
 
 #define PVMFFFPARSERNODE_MAX_NUM_TRACKS 6
@@ -587,6 +588,7 @@ class PVMFMP4FFParserNode
         bool iParseAudioDuringREW;
         bool iParseVideoOnly;
         bool iOpenFileOncePerTrack;
+        bool iIFrameOnlyFwdPlayback;
         int32 iDataRate;
         int32 minFileOffsetTrackID;
         uint32 iTotalMoofFrags;

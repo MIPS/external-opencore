@@ -66,6 +66,7 @@ PVMFMP4FFParserNode::PVMFMP4FFParserNode(int32 aPriority) :
         iParseAudioDuringREW(false),
         iParseVideoOnly(false),
         iOpenFileOncePerTrack(true),
+        iIFrameOnlyFwdPlayback(false),
         iDataRate(NORMAL_PLAYRATE),
         minFileOffsetTrackID(0),
         iTotalMoofFrags(0)
@@ -3775,7 +3776,7 @@ bool PVMFMP4FFParserNode::RetrieveTrackData(PVMP4FFNodeTrackPortInfo& aTrackPort
     uint32 StartTime = OsclTickCount::TicksToMsec(currticks);
 
     // Retrieve the data from the parser
-    int32 retval;
+    int32 retval = PVMFFailure;
     if (iThumbNailMode)
     {
         if (aTrackPortInfo.iThumbSampleDone == false)
@@ -3858,6 +3859,19 @@ bool PVMFMP4FFParserNode::RetrieveTrackData(PVMP4FFNodeTrackPortInfo& aTrackPort
         }
 
     }
+    else  if ((iMP4FileHandle->getTrackMediaType(aTrackPortInfo.iTrackId) == MEDIA_TYPE_VISUAL)
+              && (iIFrameOnlyFwdPlayback))
+    {
+        if (PVMF_DATA_SOURCE_DIRECTION_FORWARD == iPlayBackDirection)
+        {
+            iPrevSampleTS = iMP4FileHandle->getMediaTimestampForCurrentSample(trackid);
+            uint32 numSamples = 1;
+            uint32 keySampleNumber;
+            retval = iMP4FileHandle->getNextKeyMediaSample(keySampleNumber, trackid,
+                     &numSamples, &iGau);
+
+        }
+    }
     else
     {
         retval = iMP4FileHandle->getNextBundledAccessUnits(trackid, &numsamples, &iGau);
@@ -3938,9 +3952,20 @@ bool PVMFMP4FFParserNode::RetrieveTrackData(PVMP4FFNodeTrackPortInfo& aTrackPort
                 aTrackPortInfo.iTargetNPTInMediaTimeScale = 0x7FFFFFFF;
             }
         }
+        else if ((PVMF_DATA_SOURCE_DIRECTION_FORWARD == iPlayBackDirection) && (iIFrameOnlyFwdPlayback))
+        {
+            if (iMP4FileHandle->getTrackMediaType(aTrackPortInfo.iTrackId) == MEDIA_TYPE_VISUAL)
+            {
+                tsDelta += iGau.info[0].ts - iPrevSampleTS;
+                if (0 == tsDelta)
+                    tsDelta += iGau.info[i].ts_delta;
+
+            }
+        }
         else
         {
             tsDelta += iGau.info[i].ts_delta;
+
             //@FIXME" cttsOffset is being saved does not work if we read more than one video frame
             //at a time
             cttsOffset += iGau.info[i].ctts_offset;
@@ -4629,7 +4654,7 @@ bool PVMFMP4FFParserNode::SendTrackData(PVMP4FFNodeTrackPortInfo& aTrackPortInfo
     }
 
     // if going reverse, dump all non-video data.
-    if (iParseVideoOnly && (iMP4FileHandle->getTrackMediaType(aTrackPortInfo.iTrackId) != MEDIA_TYPE_VISUAL))
+    if ((iParseVideoOnly || iIFrameOnlyFwdPlayback) && (iMP4FileHandle->getTrackMediaType(aTrackPortInfo.iTrackId) != MEDIA_TYPE_VISUAL))
     {
         // Don't need the ref to iMediaData so unbind it
         aTrackPortInfo.iState = PVMP4FFNodeTrackPortInfo::TRACKSTATE_SEND_ENDOFTRACK;

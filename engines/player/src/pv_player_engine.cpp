@@ -805,6 +805,12 @@ void PVPlayerEngine::setParametersSync(PvmiMIOSession aSession, PvmiKvp* aParame
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVPlayerEngine::setParametersSync()"));
     OSCL_UNUSED_ARG(aSession);
 
+    if (oscl_strcmp(aParameters->key, PVMF_IFRAME_ONLY_RENDERING_MODE) == 0)
+    {
+        if ((iState != PVP_ENGINE_STATE_INITIALIZED) && (iState != PVP_ENGINE_STATE_PREPARED))
+            return;
+    }
+
     // Save the parameters in an engine command object
     Oscl_Vector<PVPlayerEngineCommandParamUnion, OsclMemAllocator> paramvec;
     paramvec.reserve(3);
@@ -7404,6 +7410,7 @@ PVMFStatus PVPlayerEngine::DoSourceNodeTrackSelection(PVCommandId /*aCmdId*/, Os
 
 PVMFStatus PVPlayerEngine::DoTrackSelection(bool oPopulatePlayableListOnly, bool oUsePreferenceList)
 {
+
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVPlayerEngine::DoTrackSelection() In"));
 
     if (iSourceNodeTrackSelIF == NULL)

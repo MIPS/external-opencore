@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,12 +59,21 @@ static const MP4ParserNodeKeyStringData MP4ParserNodeConfig_Net_Keys[] =
     {"delay", PVMI_KVPTYPE_VALUE, PVMI_KVPVALTYPE_UINT32}
 };
 
+static const MP4ParserNodeKeyStringData MP4ParserNodeConfig_Parser_Keys[] =
+{
+    {"enable-I-frame-playback-mode", PVMI_KVPTYPE_VALUE, PVMI_KVPVALTYPE_BOOL},
+};
+
 static const uint MP4ParserNodeConfig_Num_FileIO_Keys =
     (sizeof(MP4ParserNodeConfig_FileIO_Keys) /
      sizeof(MP4ParserNodeKeyStringData));
 
 static const uint MP4ParserNodeConfig_Num_Net_Keys =
     (sizeof(MP4ParserNodeConfig_Net_Keys) /
+     sizeof(MP4ParserNodeKeyStringData));
+
+static const uint MP4ParserNodeConfig_Num_Parser_Keys =
+    (sizeof(MP4ParserNodeConfig_Parser_Keys) /
      sizeof(MP4ParserNodeKeyStringData));
 
 
@@ -83,7 +92,10 @@ enum BaseNetKeys_IndexMapType
     DELAY = 0
 };
 
-
+enum BaseParserKeys_IndexMapType
+{
+    ENABLE_I_FRAME_PLAYBACK_MODE = 0,
+};
 
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -92,6 +104,8 @@ PVMFStatus PVMFMP4FFParserNode::getParametersSync(
     PvmiKvp*& aParameters, int& aNumParamElements,
     PvmiCapabilityContext aContext)
 {
+
+
     OSCL_UNUSED_ARG(aSession);
     OSCL_UNUSED_ARG(aContext);
 
@@ -126,10 +140,22 @@ PVMFStatus PVMFMP4FFParserNode::getParametersSync(
             // Check if it is key string for streaming
             if (pv_mime_strcmp(compstr, _STRLIT_CHAR("net")) < 0)
             {
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVMFMP4FFParserNode::getParametersSync() Unsupported key"));
-                return PVMFFailure;
+
+                if (pv_mime_strcmp(compstr, _STRLIT_CHAR("parser")) < 0)
+                {
+                    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVMFMP4FFParserNode::getParametersSync() Unsupported key"));
+                    return PVMFFailure;
+                }
+                else
+                {
+
+                    iBaseKey = PARSER;
+                }
             }
-            iBaseKey = NET;
+            else
+            {
+                iBaseKey = NET;
+            }
         }
     }
     else
@@ -153,6 +179,7 @@ PVMFStatus PVMFMP4FFParserNode::getParametersSync(
         uint i;
         for (i = 0; i < MP4ParserNodeConfig_Num_FileIO_Keys; i++)
         {
+
             if (pv_mime_strcmp(compstr, (char*)(MP4ParserNodeConfig_FileIO_Keys[i].iString)) >= 0)
             {
                 break;
@@ -173,6 +200,43 @@ PVMFStatus PVMFMP4FFParserNode::getParametersSync(
                                           "Retrieving mp4 parser node parameter failed"));
             return retval;
         }
+    }
+    else if ((iBaseKey == PARSER) && (compcount == 3))
+    {
+        pv_mime_string_extract_type(2, aIdentifier, compstr);
+
+        // Determine what is requested
+        PvmiKvpAttr reqattr = GetAttrTypeFromKeyString(aIdentifier);
+        if (reqattr == PVMI_KVPATTR_UNKNOWN)
+        {
+            reqattr = PVMI_KVPATTR_CUR;
+        }
+        int32 i;
+        for (i = 0; i < (int32)MP4ParserNodeConfig_Num_Parser_Keys; i++)
+        {
+            if (pv_mime_strcmp(compstr, (char*)(MP4ParserNodeConfig_Parser_Keys[i].iString)) >= 0)
+            {
+                break;
+            }
+        }
+
+        if (i == (int32)MP4ParserNodeConfig_Num_Parser_Keys)
+        {
+            // no match found
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
+                            (0, "PVMFMP4FFParserNode::getParametersSync() Unsupported key"));
+            return PVMFErrNoMemory;
+        }
+
+        PVMFStatus retval = GetConfigParameter(aParameters, aNumParamElements, i, reqattr);
+        if (retval != PVMFSuccess)
+        {
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
+                            (0, "PVMFMP4FFParserNode::getParametersSync() "
+                             "Retrieving streaming manager parameter failed"));
+            return retval;
+        }
+
     }
     else if ((iBaseKey == NET) && ((compcount == 2) || (compcount == 3)))
     {
@@ -323,38 +387,8 @@ PVMFStatus PVMFMP4FFParserNode::releaseParameters(PvmiMIOSession aSession,
 
     pv_mime_string_extract_type(0, aParameters[0].key, compstr);
 
-    BaseKeys_SelectionType basekey = INVALID;
-
-    if ((pv_mime_strcmp(compstr, _STRLIT_CHAR("fileio")) < 0) || compcount < 2)
-    {
-        if ((pv_mime_strcmp(compstr, _STRLIT_CHAR("x-pvmf")) < 0) || compcount < 2)
-        {
-            // First component should be "fileio" or "x-pvmf" and there must
-            // be at least two components to go past fileio and x-pvmf
-            PVMF_MP4FFPARSERNODE_LOGINFO((0, "PVMFMP4FFParserNode::getParametersSync() Invalid key string"));
-            return PVMFErrArgument;
-        }
-        else
-        {
-            // Retrieve the second component from the key string
-            pv_mime_string_extract_type(1, aParameters[0].key, compstr);
-
-            // Check if it is key string for streaming
-            if (pv_mime_strcmp(compstr, _STRLIT_CHAR("net")) < 0)
-            {
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVMFMP4FFParserNode::getParametersSync() Unsupported key"));
-                return PVMFErrArgument;
-            }
-            basekey = NET;
-        }
-    }
-    else
-    {
-        //Since the key string matches that of fileio
-        basekey = FILE_IO;
-    }
-
-    pv_mime_string_extract_type(0, aParameters[0].key, compstr);
+    if ((compcount < 2) || ((pv_mime_strcmp(compstr, _STRLIT_CHAR("fileio")) < 0) && (pv_mime_strcmp(compstr, _STRLIT_CHAR("x-pvmf")) < 0)))
+        return PVMFErrArgument;
 
     //It does not effect in releasing memory what are the base keys either fileio or x-pvmf.
     if ((pv_mime_strcmp(compstr, _STRLIT_CHAR("fileio")) >= 0) || (pv_mime_strcmp(compstr, _STRLIT_CHAR("x-pvmf")) >= 0))
@@ -562,6 +596,20 @@ void PVMFMP4FFParserNode::setParametersSync(PvmiMIOSession aSession, PvmiKvp* aP
                         return;
                     }
                     iOpenFileOncePerTrack = aParameters[paramind].value.bool_value;
+                }
+                else if (pv_mime_strcmp(compstr, _STRLIT_CHAR("parser/enable-I-frame-playback-mode")) >= 0)
+                {
+                    // Make sure its a bool value
+                    PvmiKvpValueType keyvaltype = GetValTypeFromKeyString(aParameters[paramind].key);
+                    if (PVMI_KVPVALTYPE_BOOL != keyvaltype)
+                    {
+                        aRet_kvp = &aParameters[paramind];
+                        PVMF_MP4FFPARSERNODE_LOGINFO((0, "PVMFMP4FFParserNode::setParametersSync Setting "
+                                                      "x-pvmf/parser/enable-I-frame-playback-mode valtype error"));
+                        return;
+                    }
+                    iIFrameOnlyFwdPlayback = aParameters[paramind].value.bool_value;
+                    iStartForNextTSSearch = 0;
                 }
 
                 else
@@ -987,6 +1035,23 @@ PVMFStatus PVMFMP4FFParserNode::GetConfigParameter(PvmiKvp*& aParameters,
                 PVMF_MP4FFPARSERNODE_LOGINFO((0, "PVPlayerEngine::DoGetPlayerParameter() Invalid index to player parameter"));
                 return PVMFErrArgument;
         }
+    }
+    else if (iBaseKey == PARSER)
+    {
+        oscl_strncat(aParameters[0].key, _STRLIT_CHAR("x-pvmf/parser/"), 14);
+        oscl_strncat(aParameters[0].key, MP4ParserNodeConfig_Parser_Keys[aIndex].iString,
+                     oscl_strlen(MP4ParserNodeConfig_Parser_Keys[aIndex].iString));
+        oscl_strncat(aParameters[0].key, _STRLIT_CHAR(";type=value;valtype="), 20);
+        if (MP4ParserNodeConfig_Parser_Keys[aIndex].iValueType == PVMI_KVPVALTYPE_BOOL)
+        {
+            oscl_strncat(aParameters[0].key,
+                         _STRLIT_CHAR(PVMI_KVPVALTYPE_BOOL_STRING),
+                         oscl_strlen(PVMI_KVPVALTYPE_BOOL_STRING));
+
+            aParameters[0].value.bool_value = iIFrameOnlyFwdPlayback ;
+
+        }
+        aParameters[0].key[MP4CONFIG_KEYSTRING_SIZE-1] = 0;
     }
 
     aNumParamElements = 1;

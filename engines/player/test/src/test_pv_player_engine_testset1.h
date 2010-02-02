@@ -2001,7 +2001,7 @@ class pvplayer_async_test_tracklevelinfo : public pvplayer_async_test_base
 class pvplayer_async_test_setplaybackrate2X : public pvplayer_async_test_base
 {
     public:
-        pvplayer_async_test_setplaybackrate2X(PVPlayerAsyncTestParam aTestParam):
+        pvplayer_async_test_setplaybackrate2X(PVPlayerAsyncTestParam aTestParam, bool aIFrameModePlybkEnabled = false):
                 pvplayer_async_test_base(aTestParam)
                 , iPlayer(NULL)
                 , iDataSource(NULL)
@@ -2013,7 +2013,13 @@ class pvplayer_async_test_setplaybackrate2X : public pvplayer_async_test_base
                 , iMIOFileOutAudio(NULL)
                 , iCurrentCmdId(0)
         {
-            iTestCaseName = _STRLIT_CHAR("SetPlaybackRate 2X");
+            iIFrameModePlybkEnabled = aIFrameModePlybkEnabled;
+
+            if (iIFrameModePlybkEnabled == false)
+                iTestCaseName = _STRLIT_CHAR("SetPlaybackRate 2X");
+            else
+                iTestCaseName = _STRLIT_CHAR("SetPlaybackRate 2X With IFrameModePlybkEnabled");
+
         }
 
         ~pvplayer_async_test_setplaybackrate2X() {}
@@ -2028,6 +2034,7 @@ class pvplayer_async_test_setplaybackrate2X : public pvplayer_async_test_base
         enum PVTestState
         {
             STATE_CREATE,
+            STATE_QUERYINTERFACE,
             STATE_ADDDATASOURCE,
             STATE_INIT,
             STATE_ADDDATASINK_VIDEO,
@@ -2054,6 +2061,10 @@ class pvplayer_async_test_setplaybackrate2X : public pvplayer_async_test_base
         PVMFNodeInterface* iIONodeAudio;
         PvmiMIOControl* iMIOFileOutAudio;
         PVCommandId iCurrentCmdId;
+
+        PvmiCapabilityAndConfig* iPlayerCapConfigIF;
+        PvmiKvp* iErrorKVP;
+        bool iIFrameModePlybkEnabled;
 };
 
 

@@ -113,8 +113,7 @@ class IMpeg4File : public ISucceedFail
                                             uint32 id,
                                             uint32 *n,
                                             GAU    *pgau) = 0;
-        virtual int32 getNextKeyMediaSample(uint64 inputtimestamp,
-                                            uint32 &aKeySampleNum,
+        virtual int32 getNextKeyMediaSample(uint32 &aKeySampleNum,
                                             uint32 id,
                                             uint32 *n,
                                             GAU    *pgau) = 0;
