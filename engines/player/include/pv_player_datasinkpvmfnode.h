@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,17 +25,12 @@
 class PVPlayerDataSinkPVMFNode : public PVPlayerDataSink
 {
     public:
-        PVPlayerDataSinkPVMFNode() : iFormatType(PVMF_MIME_FORMAT_UNKNOWN), iNode(NULL), iEmptyString(NULL) {};
+        PVPlayerDataSinkPVMFNode() : iNode(NULL), iEmptyString(NULL) {};
         ~PVPlayerDataSinkPVMFNode() {};
 
         PVPDataSinkType GetDataSinkType()
         {
             return PVP_DATASINKTYPE_SINKNODE;
-        }
-
-        PVMFFormatType GetDataSinkFormatType()
-        {
-            return iFormatType;
         }
 
         OSCL_wString& GetDataSinkFilename()
@@ -48,18 +43,12 @@ class PVPlayerDataSinkPVMFNode : public PVPlayerDataSink
             return iNode;
         }
 
-        void SetDataSinkFormatType(PVMFFormatType aFormatType)
-        {
-            iFormatType = aFormatType;
-        }
-
         void SetDataSinkNode(PVMFNodeInterface* aNode)
         {
             iNode = aNode;
         }
 
     private:
-        PVMFFormatType iFormatType;
         PVMFNodeInterface* iNode;
         OSCL_wStackString<1> iEmptyString;
 };

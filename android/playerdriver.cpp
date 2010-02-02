@@ -662,7 +662,6 @@ void PlayerDriver::handleSetVideoSurface(PlayerSetVideoSurface* command)
     mVideoSink = new PVPlayerDataSinkPVMFNode;
 
     ((PVPlayerDataSinkPVMFNode *)mVideoSink)->SetDataSinkNode(mVideoNode);
-    ((PVPlayerDataSinkPVMFNode *)mVideoSink)->SetDataSinkFormatType((char*)PVMF_MIME_YUV420);
 
     OSCL_TRY(error, mPlayer->AddDataSink(*mVideoSink, command));
     OSCL_FIRST_CATCH_ANY(error, commandFailed(command));
@@ -684,7 +683,6 @@ void PlayerDriver::handleSetAudioSink(PlayerSetAudioSink* command)
     mAudioSink = new PVPlayerDataSinkPVMFNode;
 
     ((PVPlayerDataSinkPVMFNode *)mAudioSink)->SetDataSinkNode(mAudioNode);
-    ((PVPlayerDataSinkPVMFNode *)mAudioSink)->SetDataSinkFormatType((char*)PVMF_MIME_PCM16);
 
     OSCL_TRY(error, mPlayer->AddDataSink(*mAudioSink, command));
     OSCL_FIRST_CATCH_ANY(error, commandFailed(command));

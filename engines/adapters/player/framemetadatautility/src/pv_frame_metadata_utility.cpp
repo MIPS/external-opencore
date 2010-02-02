@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1435,7 +1435,6 @@ PVMFStatus PVFrameAndMetadataUtility::DoAddDataSource(PVFMUtilityCommand& aCmd)
         OSCL_FIRST_CATCH_ANY(leavecode, return PVMFErrNoMemory;);
 
         iVideoDataSink.SetDataSinkNode(iVideoNode);
-        iVideoDataSink.SetDataSinkFormatType(PVMF_MIME_YUV420);
         iVideoMIO->setThumbnailDimensions(iThumbnailWidth, iThumbnailHeight);
 
         iPlayer->AddDataSink(iVideoDataSink, (const OsclAny*)&iUtilityContext);
@@ -1446,7 +1445,6 @@ PVMFStatus PVFrameAndMetadataUtility::DoAddDataSource(PVFMUtilityCommand& aCmd)
                  iAudioNode = PVMediaOutputNodeFactory::CreateMediaOutputNode(iAudioMIO));
         OSCL_FIRST_CATCH_ANY(leavecode, return PVMFErrNoMemory;);
         iAudioDataSink.SetDataSinkNode(iAudioNode);
-        iAudioDataSink.SetDataSinkFormatType(PVMF_MIME_PCM16);
 
         iPlayer->AddDataSink(iAudioDataSink, (const OsclAny*)&iUtilityContext);
         iNumPendingPlayerCommands++;

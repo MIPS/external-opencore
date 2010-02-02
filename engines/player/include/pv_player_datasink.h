@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -70,13 +70,6 @@ class PVPlayerDataSink
          * @returns The PVPlayer data sink type
          **/
         virtual PVPDataSinkType GetDataSinkType() = 0;
-
-        /**
-         * Returns this data sink instance's format type
-         *
-         * @returns The format type
-         **/
-        virtual PVMFFormatType GetDataSinkFormatType() = 0;
 
         /**
          * Returns the filename for the data sink
