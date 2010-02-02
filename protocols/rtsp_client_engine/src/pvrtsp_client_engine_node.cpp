@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -3470,11 +3470,24 @@ OSCL_EXPORT_REF PVMFStatus PVRTSPEngineNode::processIncomingMessage(RTSPIncoming
                     {
                         int sdp_track_id = iSessionInfo.iSelectedStream[i].iSDPStreamId;
                         //simplified check here.
-                        if (NULL == oscl_strstr((iSessionInfo.iSDPinfo->getMediaInfoBasedOnID(sdp_track_id))->getControlURL(), url_temp))
+                        if (oscl_strncmp((iSessionInfo.iSDPinfo->getMediaInfoBasedOnID(sdp_track_id))->getControlURL(), "rtspt", oscl_strlen("rtspt")))
                         {
-                            if (NULL == oscl_strstr(url_temp, (iSessionInfo.iSDPinfo->getMediaInfoBasedOnID(sdp_track_id))->getControlURL()))
+                            if (NULL == oscl_strstr((iSessionInfo.iSDPinfo->getMediaInfoBasedOnID(sdp_track_id))->getControlURL(), url_temp))
                             {
-                                continue;
+                                if (NULL == oscl_strstr(url_temp, (iSessionInfo.iSDPinfo->getMediaInfoBasedOnID(sdp_track_id))->getControlURL()))
+                                {
+                                    continue;
+                                }
+                            }
+                        }
+                        else
+                        {
+                            if (NULL == oscl_strstr((iSessionInfo.iSDPinfo->getMediaInfoBasedOnID(sdp_track_id))->getControlURL(), url_temp + oscl_strlen("rtsp")))
+                            {
+                                if (NULL == oscl_strstr(url_temp, (iSessionInfo.iSDPinfo->getMediaInfoBasedOnID(sdp_track_id))->getControlURL() + oscl_strlen("rtspt")))
+                                {
+                                    continue;
+                                }
                             }
                         }
                         iSessionInfo.iSelectedStream[i].seqIsSet = rtpinfo->seqIsSet;
@@ -3482,6 +3495,7 @@ OSCL_EXPORT_REF PVMFStatus PVRTSPEngineNode::processIncomingMessage(RTSPIncoming
                         iSessionInfo.iSelectedStream[i].rtptimeIsSet = rtpinfo->rtptimeIsSet;
                         iSessionInfo.iSelectedStream[i].rtptime = rtpinfo->rtptime;
                         iSessionInfo.iSelectedStream[i].iSerIpAddr.Set(iSessionInfo.iSrvAdd.ipAddr.Str());
+                        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR, (0, "PVRTSPEngineNode::processIncomingMessage() track #: %d seq %d", idx,  rtpinfo->seq));
                     }
                 }
 
