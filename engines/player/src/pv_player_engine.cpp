@@ -8129,7 +8129,10 @@ PVMFStatus PVPlayerEngine::DoSinkDecCleanupSourcePrepare(PVCommandId aCmdId, Osc
                         OSCL_ASSERT(false);
                     }
                     if (iDatapathList[j].iSinkNodeCapConfigIF)
+                    {
+                        iDatapathList[j].iSinkNodeCapConfigIF->removeRef();
                         iDatapathList[j].iSinkNodeCapConfigIF = NULL;
+                    }
                     if (iDatapathList[j].iDataSink->GetDataSinkType() == PVP_DATASINKTYPE_FILENAME)
                     {
                         PVFileOutputNodeFactory::DeleteFileOutput(iDatapathList[j].iSinkNode);
@@ -8171,7 +8174,16 @@ PVMFStatus PVPlayerEngine::DoSinkDecCleanupSourcePrepare(PVCommandId aCmdId, Osc
                     OSCL_ASSERT(false);
                 }
                 if (iDatapathList[i].iSinkNodeCapConfigIF)
+                {
+                    iDatapathList[i].iSinkNodeCapConfigIF->removeRef();
                     iDatapathList[i].iSinkNodeCapConfigIF = NULL;
+                }
+                if (iDatapathList[i].iSinkNodeSyncCtrlIF)
+                {
+                    iDatapathList[i].iSinkNodeSyncCtrlIF->removeRef();
+                    iDatapathList[i].iSinkNodeSyncCtrlIF = NULL;
+                }
+
                 if (iDatapathList[i].iDataSink->GetDataSinkType() == PVP_DATASINKTYPE_FILENAME)
                 {
                     PVFileOutputNodeFactory::DeleteFileOutput(iDatapathList[i].iSinkNode);
@@ -10136,6 +10148,7 @@ void PVPlayerEngine::DoEngineDatapathTeardown(PVPlayerEngineDatapath& aDatapath)
         // Remove cap-config IF if available
         if (aDatapath.iSinkNodeCapConfigIF)
         {
+            aDatapath.iSinkNodeCapConfigIF->removeRef();
             aDatapath.iSinkNodeCapConfigIF = NULL;
         }
 
