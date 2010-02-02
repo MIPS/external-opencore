@@ -125,6 +125,7 @@ MetadataDriver::~MetadataDriver()
     mVideoFrame = NULL;
     delete mMediaAlbumArt;
     mMediaAlbumArt = NULL;
+    mSyncSem->Close();
     delete mSyncSem;
     mSyncSem = NULL;
 
