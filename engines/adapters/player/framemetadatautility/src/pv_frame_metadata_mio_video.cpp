@@ -284,7 +284,7 @@ PVMFCommandId PVFMVideoMIO::writeAsync(uint8 aFormatType, int32 aFormatIndex, ui
                     // Data contains the media bitstream.
 
                     // Verify the state
-                    if (iState != STATE_STARTED)
+                    if ((iState != STATE_STARTED) || (!iFrameRetrievalInfo.iRetrievalRequested))
                     {
                         PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_ERR, (0, "PVFMVideoMIO::writeAsync: Error - Invalid state"));
                         iWriteBusy = true;
@@ -293,19 +293,16 @@ PVMFCommandId PVFMVideoMIO::writeAsync(uint8 aFormatType, int32 aFormatIndex, ui
                     }
                     else
                     {
-                        if (iFrameRetrievalInfo.iRetrievalRequested)
+                        if (iFrameRetrievalInfo.iUseFrameIndex)
                         {
-                            if (iFrameRetrievalInfo.iUseFrameIndex)
-                            {
-                                ++iFrameRetrievalInfo.iReceivedFrameCount;
-                                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFMVideoMIO::writeAsync() Received frames %d", iFrameRetrievalInfo.iReceivedFrameCount));
-                            }
-                            else if (iFrameRetrievalInfo.iUseTimeOffset && iFrameRetrievalInfo.iStartingTSSet == false)
-                            {
-                                iFrameRetrievalInfo.iStartingTSSet = true;
-                                iFrameRetrievalInfo.iStartingTS = data_header_info.timestamp;
-                                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFMVideoMIO::writeAsync() Starting timestamp set %d", iFrameRetrievalInfo.iStartingTS));
-                            }
+                            ++iFrameRetrievalInfo.iReceivedFrameCount;
+                            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFMVideoMIO::writeAsync() Received frames %d", iFrameRetrievalInfo.iReceivedFrameCount));
+                        }
+                        else if (iFrameRetrievalInfo.iUseTimeOffset && iFrameRetrievalInfo.iStartingTSSet == false)
+                        {
+                            iFrameRetrievalInfo.iStartingTSSet = true;
+                            iFrameRetrievalInfo.iStartingTS = data_header_info.timestamp;
+                            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFMVideoMIO::writeAsync() Starting timestamp set %d", iFrameRetrievalInfo.iStartingTS));
                         }
 
                         if (aDataLen > 0)
@@ -708,29 +705,6 @@ void PVFMVideoMIO::setParametersSync(PvmiMIOSession aSession, PvmiKvp* aParamete
             }
         }
     }
-}
-
-PVMFCommandId PVFMVideoMIO::QueryInterface(const PVUuid& aUuid, PVInterface*& aInterfacePtr, const OsclAny* aContext)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFMVideoMIO::QueryInterface() called"));
-
-    PVMFCommandId cmdid = iCommandCounter++;
-
-    PVMFStatus status = PVMFFailure;
-    if (aUuid == PVMI_CAPABILITY_AND_CONFIG_PVUUID)
-    {
-        PvmiCapabilityAndConfig* myInterface = OSCL_STATIC_CAST(PvmiCapabilityAndConfig*, this);
-        aInterfacePtr = OSCL_STATIC_CAST(PVInterface*, myInterface);
-        status = PVMFSuccess;
-    }
-    else
-    {
-        status = PVMFFailure;
-    }
-
-    CommandResponse resp(status, cmdid, aContext);
-    QueueCommandResponse(resp);
-    return cmdid;
 }
 
 //

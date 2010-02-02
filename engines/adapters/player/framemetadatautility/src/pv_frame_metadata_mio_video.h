@@ -53,9 +53,6 @@ class PVFMVideoMIO
         PVMFStatus CancelGetFrame(void);
         PVMFStatus GetFrameProperties(uint32& aFrameWidth, uint32& aFrameHeight, uint32& aDisplayWidth, uint32& aDisplayHeight);
 
-        // From PvmiMIOControl
-        PVMFCommandId QueryInterface(const PVUuid& aUuid, PVInterface*& aInterfacePtr, const OsclAny* aContext = NULL);
-
         // From PvmiCapabilityAndConfig
         PVMFStatus getParametersSync(PvmiMIOSession aSession, PvmiKeyType aIdentifier, PvmiKvp*& aParameters,
                                      int& num_parameter_elements, PvmiCapabilityContext aContext);
