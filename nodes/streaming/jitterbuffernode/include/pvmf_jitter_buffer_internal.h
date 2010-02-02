@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,59 +54,6 @@
 #define PVMF_JBNODE_LOG_RTCP_DATAPATH(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG,ipDataPathLoggerRTCP,PVLOGMSG_ERR,m);
 #define PVMF_JBNODE_LOG_EVENTS_CLOCK(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_MLDBG,ipJBEventsClockLogger ,PVLOGMSG_INFO,m);
 #define PVMF_JBNODE_LOG_RTCP_AVSYNC(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG,ipRTCPAVSyncLogger,PVLOGMSG_INFO,m);
-
-#define PVMF_JITTER_BUFFER_NEW(auditCB,T,params,ptr)\
-{\
-ptr = OSCL_NEW(T,params);\
-}
-
-#define PVMF_JITTER_BUFFER_DELETE(auditCB,T,ptr)\
-{\
-OSCL_DELETE(ptr);\
-}
-
-#define PVMF_JITTER_BUFFER_TEMPLATED_DELETE(auditCB, T, Tsimple, ptr)\
-{\
-OSCL_DELETE(ptr);\
-}
-
-//Default vector reserve size
-#define PVMF_JITTER_BUFFER_VECTOR_RESERVE 10
-
-//Starting value for command IDs
-#define PVMF_JITTER_BUFFER_NODE_COMMAND_ID_START 10000
-
-#define PVMF_JITTER_BUFFER_INTERNAL_CMDQ_SIZE 20
-
-//Node command type.
-typedef PVMFGenericNodeCommand<OsclMemAllocator> PVMFJitterBufferNodeCommandBase;
-
-class PVMFJitterBufferNodeCommand : public PVMFJitterBufferNodeCommandBase
-{
-    public:
-        void Construct(PVMFSessionId s,
-                       int32 cmd,
-                       int32 arg1,
-                       int32 arg2,
-                       int32& arg3,
-                       const OsclAny*aContext)
-        {
-            PVMFJitterBufferNodeCommandBase::Construct(s, cmd, aContext);
-            iParam1 = (OsclAny*)arg1;
-            iParam2 = (OsclAny*)arg2;
-            iParam3 = (OsclAny*) & arg3;
-        };
-
-        void Parse(int32&arg1, int32&arg2, int32*&arg3)
-        {
-            arg1 = (int32)iParam1;
-            arg2 = (int32)iParam2;
-            arg3 = (int32*)iParam3;
-        };
-};
-
-//Command queue type
-typedef PVMFNodeCommandQueue<PVMFJitterBufferNodeCommand, OsclMemAllocator> PVMFJitterBufferNodeCmdQ;
 
 typedef struct tagPVMFJBCommandContext
 {

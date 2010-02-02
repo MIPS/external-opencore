@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,26 +17,9 @@
  */
 #ifndef PVMF_JITTER_BUFFER_NODE_H_INCLUDED
 #define PVMF_JITTER_BUFFER_NODE_H_INCLUDED
-#ifndef OSCL_EXCLUSIVE_PTR_H_INCLUDED
-#include "oscl_exclusive_ptr.h"
-#endif
-#ifndef PVMF_MEDIA_CLOCK_H_INCLUDED
-#include "pvmf_media_clock.h"
-#endif
-#ifndef OSCL_TIMER_H_INCLUDED
-#include "oscl_timer.h"
-#endif
-#ifndef PVLOGGER_H_INCLUDED
-#include "pvlogger.h"
-#endif
-#ifndef PVMF_NODE_INTERFACE_H_INCLUDED
-#include "pvmf_node_interface.h"
-#endif
-#ifdef PVMF_NODE_UTILS_H_INCLUDED
-#include "pvmf_node_utils.h"
-#endif
-#ifndef OSCL_SCHEDULER_AO_H_INCLUDED
-#include "oscl_scheduler_ao.h"
+
+#ifndef PVMF_NODE_INTERFACE_IMPL_H_INCLUDED
+#include "pvmf_node_interface_impl.h"
 #endif
 #ifndef PVMF_JITTER_BUFFER_PORT_H_INCLUDED
 #include "pvmf_jitter_buffer_port.h"
@@ -55,31 +38,9 @@
 #include "pvmf_jb_jitterbuffermisc.h"
 #endif
 
-#ifndef PVMF_MEDIA_CMD_H_INCLUDED
-#include "pvmf_media_cmd.h"
-#endif
-
 ///////////////////////////////////////////////
 //IDs for all of the asynchronous node commands.
 ///////////////////////////////////////////////
-enum TPVMFJitterBufferNodeCommand
-{
-    PVMF_JITTER_BUFFER_NODE_QUERYUUID,
-    PVMF_JITTER_BUFFER_NODE_QUERYINTERFACE,
-    PVMF_JITTER_BUFFER_NODE_REQUESTPORT,
-    PVMF_JITTER_BUFFER_NODE_RELEASEPORT,
-    PVMF_JITTER_BUFFER_NODE_INIT,
-    PVMF_JITTER_BUFFER_NODE_PREPARE,
-    PVMF_JITTER_BUFFER_NODE_START,
-    PVMF_JITTER_BUFFER_NODE_STOP,
-    PVMF_JITTER_BUFFER_NODE_FLUSH,
-    PVMF_JITTER_BUFFER_NODE_PAUSE,
-    PVMF_JITTER_BUFFER_NODE_RESET,
-    PVMF_JITTER_BUFFER_NODE_CANCELALLCOMMANDS,
-    PVMF_JITTER_BUFFER_NODE_CANCELCOMMAND,
-    /* add jitter buffer node specific commands here */
-    PVMF_JITTER_BUFFER_NODE_COMMAND_LAST
-};
 
 enum PVMFStreamType
 {
@@ -97,8 +58,7 @@ class PVMFJitterBufferConstructParams;
 class JitterBufferFactory;
 
 class PVMFJitterBufferNode : public PVInterface,
-        public PVMFNodeInterface,
-        public OsclActiveObject,
+        public PVMFNodeInterfaceImpl,
         public PVMFJitterBufferObserver,
         public PVMFJitterBufferMiscObserver,
         public PVMFJBEventNotifierObserver,
@@ -118,45 +78,8 @@ class PVMFJitterBufferNode : public PVInterface,
         virtual bool queryInterface(const PVUuid& uuid, PVInterface*& iface);
 
         //Overrides from PVMFNodeInterface
-        OSCL_IMPORT_REF PVMFStatus ThreadLogon();
-        OSCL_IMPORT_REF PVMFStatus ThreadLogoff();
-        OSCL_IMPORT_REF PVMFStatus GetCapability(PVMFNodeCapability& aNodeCapability);
         OSCL_IMPORT_REF PVMFPortIter* GetPorts(const PVMFPortFilter* aFilter = NULL);
-        OSCL_IMPORT_REF PVMFCommandId QueryUUID(PVMFSessionId,
-                                                const PvmfMimeString& aMimeType,
-                                                Oscl_Vector< PVUuid, OsclMemAllocator >& aUuids,
-                                                bool aExactUuidsOnly = false,
-                                                const OsclAny* aContext = NULL);
-        OSCL_IMPORT_REF PVMFCommandId QueryInterface(PVMFSessionId,
-                const PVUuid& aUuid,
-                PVInterface*& aInterfacePtr,
-                const OsclAny* aContext = NULL);
-        OSCL_IMPORT_REF PVMFCommandId RequestPort(PVMFSessionId,
-                int32 aPortTag,
-                const PvmfMimeString* aPortConfig = NULL,
-                const OsclAny* aContext = NULL);
-        OSCL_IMPORT_REF PVMFCommandId ReleasePort(PVMFSessionId,
-                PVMFPortInterface& aPort,
-                const OsclAny* aContext = NULL);
-        OSCL_IMPORT_REF PVMFCommandId Init(PVMFSessionId,
-                                           const OsclAny* aContext = NULL);
-        OSCL_IMPORT_REF PVMFCommandId Prepare(PVMFSessionId aSession,
-                                              const OsclAny* aContext = NULL);
-        OSCL_IMPORT_REF PVMFCommandId Start(PVMFSessionId,
-                                            const OsclAny* aContext = NULL);
-        OSCL_IMPORT_REF PVMFCommandId Stop(PVMFSessionId,
-                                           const OsclAny* aContext = NULL);
-        OSCL_IMPORT_REF PVMFCommandId Flush(PVMFSessionId,
-                                            const OsclAny* aContext = NULL);
-        OSCL_IMPORT_REF PVMFCommandId Pause(PVMFSessionId,
-                                            const OsclAny* aContext = NULL);
-        OSCL_IMPORT_REF PVMFCommandId Reset(PVMFSessionId,
-                                            const OsclAny* aContext = NULL);
-        OSCL_IMPORT_REF PVMFCommandId CancelAllCommands(PVMFSessionId,
-                const OsclAny* aContextData = NULL);
-        OSCL_IMPORT_REF PVMFCommandId CancelCommand(PVMFSessionId,
-                PVMFCommandId aCmdId,
-                const OsclAny* aContextData = NULL);
+
         void HandlePortActivity(const PVMFPortActivity& aActivity);   //from PVMFPortActivityHandler
 
         //Overrides from PVMFJitterBufferObserver
@@ -284,20 +207,21 @@ class PVMFJitterBufferNode : public PVInterface,
         bool PrepareForPlaylistSwitch();
 
         //Async command handling functions
-        void DoQueryUuid(PVMFJitterBufferNodeCommand&);
-        void DoQueryInterface(PVMFJitterBufferNodeCommand&);
-        void DoRequestPort(PVMFJitterBufferNodeCommand&);
-        void DoReleasePort(PVMFJitterBufferNodeCommand&);
-        void DoInit(PVMFJitterBufferNodeCommand&);
-        void DoPrepare(PVMFJitterBufferNodeCommand& aCmd);
-        void CompletePrepare();
-        void CancelPrepare();
-        void DoStart(PVMFJitterBufferNodeCommand&);
+        PVMFStatus DoQueryUuid();
+        PVMFStatus DoQueryInterface();
+        PVMFStatus DoRequestPort(PVMFPortInterface* &aPort);
+        PVMFStatus DoReleasePort();
+        PVMFStatus DoInit();
+        PVMFStatus DoPrepare();
+        PVMFStatus DoStart();
         void CompleteStart();
-        void CancelStart();
+        PVMFStatus DoStop();
+        PVMFStatus DoPause();
+        PVMFStatus DoReset();
+        PVMFStatus CancelCurrentCommand();
+        PVMFStatus HandleExtensionAPICommands();
 
         //Utility functions
-        void Construct();
         void ResetNodeParams(bool aReleaseMemory = true);
         bool ProcessPortActivity(PVMFJitterBufferPortParams*);
         PVMFStatus ProcessIncomingMsg(PVMFJitterBufferPortParams*);
@@ -310,35 +234,10 @@ class PVMFJitterBufferNode : public PVInterface,
         bool getPortContainer(PVMFPortInterface* aPort,
                               PVMFJitterBufferPortParams*& aPortParams);
 
+        void CommandComplete(PVMFNodeCommand& aCmd, PVMFStatus aStatus, PVInterface* aExtMsg = NULL,
+                             OsclAny* aData = NULL, PVUuid* aEventUUID = NULL, int32* aEventCode = NULL);
 
-        PVMFCommandId QueueCommandL(PVMFJitterBufferNodeCommand&);
-        void MoveCmdToCurrentQueue(PVMFJitterBufferNodeCommand& aCmd);
-        bool ProcessCommand(PVMFJitterBufferNodeCommand&);
-        void CommandComplete(PVMFJitterBufferNodeCmdQ&,
-                             PVMFJitterBufferNodeCommand&,
-                             PVMFStatus,
-                             OsclAny* aData = NULL,
-                             PVUuid* aEventUUID = NULL,
-                             int32* aEventCode = NULL);
-        void CommandComplete(PVMFJitterBufferNodeCommand&,
-                             PVMFStatus,
-                             OsclAny* aData = NULL,
-                             PVUuid* aEventUUID = NULL,
-                             int32* aEventCode = NULL);
-        void InternalCommandComplete(PVMFJitterBufferNodeCmdQ&,
-                                     PVMFJitterBufferNodeCommand&,
-                                     PVMFStatus aStatus,
-                                     OsclAny* aEventData = NULL);
         PVMFJBCommandContext* RequestNewInternalCmd();
-
-        void DoStop(PVMFJitterBufferNodeCommand&);
-        void DoFlush(PVMFJitterBufferNodeCommand&);
-        bool FlushPending();
-
-        void DoPause(PVMFJitterBufferNodeCommand&);
-        void DoReset(PVMFJitterBufferNodeCommand&);
-        void DoCancelAllCommands(PVMFJitterBufferNodeCommand&);
-        void DoCancelCommand(PVMFJitterBufferNodeCommand&);
 
         void ReportErrorEvent(PVMFEventType aEventType,
                               OsclAny* aEventData = NULL,
@@ -348,7 +247,6 @@ class PVMFJitterBufferNode : public PVInterface,
                              OsclAny* aEventData = NULL,
                              PVUuid* aEventUUID = NULL,
                              int32* aEventCode = NULL);
-        void SetState(TPVMFNodeInterfaceState);
 
         void CleanUp();
 
@@ -465,9 +363,6 @@ class PVMFJitterBufferNode : public PVInterface,
 
         /* Bitstream thinning releated */
         void UpdateRebufferingStats(PVMFEventType aEventType);
-        PVMFNodeCapability iCapability;
-        PVMFJitterBufferNodeCmdQ iInputCommands;
-        PVMFJitterBufferNodeCmdQ iCurrentCommand;
         PVMFPortVector<PVMFJitterBufferPort, OsclMemAllocator> iPortVector;
         Oscl_Vector<PVMFJitterBufferPortParams*, OsclMemAllocator> iPortParamsQueue;
         Oscl_Vector<PVMFPortActivity, OsclMemAllocator> iPortActivityQueue;
