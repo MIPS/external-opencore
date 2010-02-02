@@ -15,6 +15,8 @@ SHARED_PRE_LDFLAGS ?= -shared -Wl,-Bsymbolic -Wl,--allow-multiple-definition -Wl
 SHARED_POST_LDFLAGS ?= -Wl,-no-whole-archive -Wl,--no-undefined $(SYSLIBS)
 SONAME_ARG := -Wl,-h,
 
+BINDING := -Wl,-rpath-link=$(BUILD_ROOT)/installed_lib/$(HOST_ARCH)
+
 STRIP_FLAGS := --strip-unneeded
 AR_ARGS := rl # make sure to leave a space at the end
 
