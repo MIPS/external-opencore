@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -5959,13 +5959,9 @@ void pvplayer_async_test_mediaionode_repositionconfig::Run()
     int error = 0;
 
     PvmiKvp* retkvp = NULL;
-    PvmiKvp paramkvp[3];
-    OSCL_StackString<64> paramkey1(_STRLIT_CHAR("x-pvmf/player/seektosyncpoint;valtype=bool"));
-    paramkvp[0].key = paramkey1.get_str();
+    PvmiKvp paramkvp[1];
     OSCL_StackString<64> paramkey2(_STRLIT_CHAR("x-pvmf/player/syncpointseekwindow;valtype=uint32"));
-    paramkvp[1].key = paramkey2.get_str();
-    OSCL_StackString<64> paramkey3(_STRLIT_CHAR("x-pvmf/player/skiptorequestedpos;valtype=bool"));
-    paramkvp[2].key = paramkey3.get_str();
+    paramkvp[0].key = paramkey2.get_str();
 
     switch (iState)
     {
@@ -6084,14 +6080,10 @@ void pvplayer_async_test_mediaionode_repositionconfig::Run()
 
         case STATE_SETPLAYBACKRANGE1:
         {
-            paramkvp[0].value.bool_value = true;
-            paramkvp[1].value.uint32_value = 0;
-            paramkvp[2].value.bool_value = false;
-            fprintf(iTestMsgOutputFile, "***seektosyncpoint=%d, syncpointseekwindow=%d, skiptorequestedpos=%d\n",
-                    paramkvp[0].value.bool_value,
-                    paramkvp[1].value.uint32_value,
-                    paramkvp[2].value.bool_value);
-            iPlayerCapConfigIF->setParametersSync(NULL, paramkvp, 3, retkvp);
+            paramkvp[0].value.uint32_value = 0;
+            fprintf(iTestMsgOutputFile, "***seektosyncpoint=true, syncpointseekwindow=%d, skiptorequestedpos=false\n",
+                    paramkvp[0].value.uint32_value);
+            iPlayerCapConfigIF->setParametersSync(NULL, paramkvp, 1, retkvp);
             PVPATB_TEST_IS_TRUE(retkvp == NULL);
 
             PVPPlaybackPosition start, end;
@@ -6101,7 +6093,7 @@ void pvplayer_async_test_mediaionode_repositionconfig::Run()
             start.iPosValue.sec_value = 10;
             end.iIndeterminate = true;
             fprintf(iTestMsgOutputFile, "***Set PlayBackRange_1 - TargetNPT=%d secs\n", start.iPosValue.sec_value);
-            OSCL_TRY(error, iCurrentCmdId = iPlayer->SetPlaybackRange(start, end, false, (OsclAny*) & iContextObject));
+            OSCL_TRY(error, iCurrentCmdId = iPlayer->SetPlaybackRange(start, end, false, (OsclAny*) & iContextObject, false, true));
             OSCL_FIRST_CATCH_ANY(error, PVPATB_TEST_IS_TRUE(false); iState = STATE_CLEANUPANDCOMPLETE; RunIfNotReady());
         }
         break;
@@ -6138,14 +6130,10 @@ void pvplayer_async_test_mediaionode_repositionconfig::Run()
 
         case STATE_SETPLAYBACKRANGE3:
         {
-            paramkvp[0].value.bool_value = true;
-            paramkvp[1].value.uint32_value = 1000;
-            paramkvp[2].value.bool_value = false;
-            fprintf(iTestMsgOutputFile, "***seektosyncpoint=%d, syncpointseekwindow=%d, skiptorequestedpos=%d\n",
-                    paramkvp[0].value.bool_value,
-                    paramkvp[1].value.uint32_value,
-                    paramkvp[2].value.bool_value);
-            iPlayerCapConfigIF->setParametersSync(NULL, paramkvp, 3, retkvp);
+            paramkvp[0].value.uint32_value = 1000;
+            fprintf(iTestMsgOutputFile, "***seektosyncpoint=true, syncpointseekwindow=%d, skiptorequestedpos=false\n",
+                    paramkvp[0].value.uint32_value);
+            iPlayerCapConfigIF->setParametersSync(NULL, paramkvp, 1, retkvp);
             PVPATB_TEST_IS_TRUE(retkvp == NULL);
 
             PVPPlaybackPosition start, end;
@@ -6155,21 +6143,17 @@ void pvplayer_async_test_mediaionode_repositionconfig::Run()
             start.iPosValue.sec_value = 20;
             end.iIndeterminate = true;
             fprintf(iTestMsgOutputFile, "***Set PlayBackRange_3 - TargetNPT=%d secs\n", start.iPosValue.sec_value);
-            OSCL_TRY(error, iCurrentCmdId = iPlayer->SetPlaybackRange(start, end, false, (OsclAny*) & iContextObject));
+            OSCL_TRY(error, iCurrentCmdId = iPlayer->SetPlaybackRange(start, end, false, (OsclAny*) & iContextObject, false, true));
             OSCL_FIRST_CATCH_ANY(error, PVPATB_TEST_IS_TRUE(false); iState = STATE_CLEANUPANDCOMPLETE; RunIfNotReady());
         }
         break;
 
         case STATE_SETPLAYBACKRANGE4:
         {
-            paramkvp[0].value.bool_value = true;
-            paramkvp[1].value.uint32_value = 1000;
-            paramkvp[2].value.bool_value = true;
-            fprintf(iTestMsgOutputFile, "***seektosyncpoint=%d, syncpointseekwindow=%d, skiptorequestedpos=%d\n",
-                    paramkvp[0].value.bool_value,
-                    paramkvp[1].value.uint32_value,
-                    paramkvp[2].value.bool_value);
-            iPlayerCapConfigIF->setParametersSync(NULL, paramkvp, 3, retkvp);
+            paramkvp[0].value.uint32_value = 1000;
+            fprintf(iTestMsgOutputFile, "***seektosyncpoint=true, syncpointseekwindow=%d, skiptorequestedpos=true\n",
+                    paramkvp[0].value.uint32_value);
+            iPlayerCapConfigIF->setParametersSync(NULL, paramkvp, 1, retkvp);
             PVPATB_TEST_IS_TRUE(retkvp == NULL);
 
             PVPPlaybackPosition start, end;
@@ -6186,14 +6170,10 @@ void pvplayer_async_test_mediaionode_repositionconfig::Run()
 
         case STATE_SETPLAYBACKRANGE5:
         {
-            paramkvp[0].value.bool_value = false;
-            paramkvp[1].value.uint32_value = 0;
-            paramkvp[2].value.bool_value = false;
-            fprintf(iTestMsgOutputFile, "***seektosyncpoint=%d, syncpointseekwindow=%d, skiptorequestedpos=%d\n",
-                    paramkvp[0].value.bool_value,
-                    paramkvp[1].value.uint32_value,
-                    paramkvp[2].value.bool_value);
-            iPlayerCapConfigIF->setParametersSync(NULL, paramkvp, 3, retkvp);
+            paramkvp[0].value.uint32_value = 0;
+            fprintf(iTestMsgOutputFile, "***seektosyncpoint=false, syncpointseekwindow=%d, skiptorequestedpos=false\n",
+                    paramkvp[0].value.uint32_value);
+            iPlayerCapConfigIF->setParametersSync(NULL, paramkvp, 1, retkvp);
             PVPATB_TEST_IS_TRUE(retkvp == NULL);
 
             PVPPlaybackPosition start, end;
@@ -6203,21 +6183,17 @@ void pvplayer_async_test_mediaionode_repositionconfig::Run()
             start.iPosValue.sec_value = 20;
             end.iIndeterminate = true;
             fprintf(iTestMsgOutputFile, "***Set PlayBackRange_5 - TargetNPT=%d secs\n", start.iPosValue.sec_value);
-            OSCL_TRY(error, iCurrentCmdId = iPlayer->SetPlaybackRange(start, end, false, (OsclAny*) & iContextObject));
+            OSCL_TRY(error, iCurrentCmdId = iPlayer->SetPlaybackRange(start, end, false, (OsclAny*) & iContextObject, false, false));
             OSCL_FIRST_CATCH_ANY(error, PVPATB_TEST_IS_TRUE(false); iState = STATE_CLEANUPANDCOMPLETE; RunIfNotReady());
         }
         break;
 
         case STATE_SETPLAYBACKRANGE6:
         {
-            paramkvp[0].value.bool_value = false;
-            paramkvp[1].value.uint32_value = 0;
-            paramkvp[2].value.bool_value = true;
-            fprintf(iTestMsgOutputFile, "***seektosyncpoint=%d, syncpointseekwindow=%d, skiptorequestedpos=%d\n",
-                    paramkvp[0].value.bool_value,
-                    paramkvp[1].value.uint32_value,
-                    paramkvp[2].value.bool_value);
-            iPlayerCapConfigIF->setParametersSync(NULL, paramkvp, 3, retkvp);
+            paramkvp[0].value.uint32_value = 0;
+            fprintf(iTestMsgOutputFile, "***seektosyncpoint=false, syncpointseekwindow=%d, skiptorequestedpos=true\n",
+                    paramkvp[0].value.uint32_value);
+            iPlayerCapConfigIF->setParametersSync(NULL, paramkvp, 1, retkvp);
             PVPATB_TEST_IS_TRUE(retkvp == NULL);
 
             PVPPlaybackPosition start, end;
@@ -6227,21 +6203,17 @@ void pvplayer_async_test_mediaionode_repositionconfig::Run()
             start.iPosValue.sec_value = 20;
             end.iIndeterminate = true;
             fprintf(iTestMsgOutputFile, "***Set PlayBackRange_6 - TargetNPT=%d secs\n", start.iPosValue.sec_value);
-            OSCL_TRY(error, iCurrentCmdId = iPlayer->SetPlaybackRange(start, end, false, (OsclAny*) & iContextObject));
+            OSCL_TRY(error, iCurrentCmdId = iPlayer->SetPlaybackRange(start, end, false, (OsclAny*) & iContextObject, true, false));
             OSCL_FIRST_CATCH_ANY(error, PVPATB_TEST_IS_TRUE(false); iState = STATE_CLEANUPANDCOMPLETE; RunIfNotReady());
         }
         break;
 
         case STATE_SETPLAYBACKRANGE7:
         {
-            paramkvp[0].value.bool_value = true;
-            paramkvp[1].value.uint32_value = 100;
-            paramkvp[2].value.bool_value = false;
-            fprintf(iTestMsgOutputFile, "***seektosyncpoint=%d, syncpointseekwindow=%d, skiptorequestedpos=%d\n",
-                    paramkvp[0].value.bool_value,
-                    paramkvp[1].value.uint32_value,
-                    paramkvp[2].value.bool_value);
-            iPlayerCapConfigIF->setParametersSync(NULL, paramkvp, 3, retkvp);
+            paramkvp[0].value.uint32_value = 100;
+            fprintf(iTestMsgOutputFile, "***seektosyncpoint=true, syncpointseekwindow=%d, skiptorequestedpos=false\n",
+                    paramkvp[0].value.uint32_value);
+            iPlayerCapConfigIF->setParametersSync(NULL, paramkvp, 1, retkvp);
             PVPATB_TEST_IS_TRUE(retkvp == NULL);
 
             PVPPlaybackPosition start, end;
@@ -6251,7 +6223,7 @@ void pvplayer_async_test_mediaionode_repositionconfig::Run()
             start.iPosValue.sec_value = 30;
             end.iIndeterminate = true;
             fprintf(iTestMsgOutputFile, "***Set PlayBackRange_7 - TargetNPT=%d secs\n", start.iPosValue.sec_value);
-            OSCL_TRY(error, iCurrentCmdId = iPlayer->SetPlaybackRange(start, end, false, (OsclAny*) & iContextObject));
+            OSCL_TRY(error, iCurrentCmdId = iPlayer->SetPlaybackRange(start, end, false, (OsclAny*) & iContextObject, false, true));
             OSCL_FIRST_CATCH_ANY(error, PVPATB_TEST_IS_TRUE(false); iState = STATE_CLEANUPANDCOMPLETE; RunIfNotReady());
         }
         break;

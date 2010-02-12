@@ -290,6 +290,7 @@ class PVMediaOutputNodePort
         PVMFMediaOutputNodePortMediaTimeStatus CheckMediaTimeStamp(uint32& aDelta);
         PVMFMediaOutputNodePortMediaTimeStatus CheckMediaFrameStep();
         uint32 iRecentStreamID;
+        bool iSendOneFrameAfterSkip;
 
         //iEosStreamIDVec is used as a FIFO to store the steamids of eos sent to mio comp.
         //streamid is pushed in at front when call writeasync(eos) to mio comp.
@@ -303,7 +304,6 @@ class PVMediaOutputNodePort
         uint32 iRecentClipID;
         bool DataToSkip(PVMFSharedMediaMsgPtr& aMsg);
         void SendStartOfDataEvent(uint32 streamId, uint32 clipID);
-
 
         //frame step related
         bool iFrameStepMode;

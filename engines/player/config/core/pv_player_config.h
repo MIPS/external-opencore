@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,9 +45,6 @@
 // Min-Max
 #define PVPLAYERENGINE_CONFIG_ENDTIMECHECKINTERVAL_MIN 200
 #define PVPLAYERENGINE_CONFIG_ENDTIMECHECKINTERVAL_MAX 5000
-
-// Seek to sync point when repositioning
-#define PVPLAYERENGINE_CONFIG_SEEKTOSYNCPOINT_DEF true
 
 // Whether to render skipped data or not when repositioning
 #define PVPLAYERENGINE_CONFIG_RENDERSKIPPED_DEF false

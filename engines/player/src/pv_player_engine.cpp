@@ -461,7 +461,8 @@ PVCommandId PVPlayerEngine::AddDataSink(PVPlayerDataSink& aDataSink, const OsclA
 }
 
 
-PVCommandId PVPlayerEngine::SetPlaybackRange(PVPPlaybackPosition aBeginPos, PVPPlaybackPosition aEndPos, bool aQueueRange, const OsclAny* aContextData)
+PVCommandId PVPlayerEngine::SetPlaybackRange(PVPPlaybackPosition aBeginPos, PVPPlaybackPosition aEndPos, bool aQueueRange, const OsclAny* aContextData,
+        bool aSkipToRequestedPosition, bool aSeekToSyncPoint)
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVPlayerEngine::SetPlaybackRange()"));
     PVPPlaybackPosition curpos;
@@ -499,7 +500,7 @@ PVCommandId PVPlayerEngine::SetPlaybackRange(PVPPlaybackPosition aBeginPos, PVPP
     iPlaybackPositionMode = aBeginPos.iMode;
     GetPlaybackClockPosition(curpos);
     Oscl_Vector<PVPlayerEngineCommandParamUnion, OsclMemAllocator> paramvec;
-    paramvec.reserve(3);
+    paramvec.reserve(5);
     paramvec.clear();
     PVPlayerEngineCommandParamUnion param;
     param.playbackpos_value = aBeginPos;
@@ -507,6 +508,10 @@ PVCommandId PVPlayerEngine::SetPlaybackRange(PVPPlaybackPosition aBeginPos, PVPP
     param.playbackpos_value = aEndPos;
     paramvec.push_back(param);
     param.bool_value = aQueueRange;
+    paramvec.push_back(param);
+    param.bool_value = aSkipToRequestedPosition;
+    paramvec.push_back(param);
+    param.bool_value = aSeekToSyncPoint;
     paramvec.push_back(param);
     if (!iOverflowFlag)
     {
@@ -1158,8 +1163,8 @@ PVPlayerEngine::PVPlayerEngine() :
         iPBPosStatusUnit(PVPLAYERENGINE_CONFIG_PBPOSSTATUSUNIT_DEF),
         iPBPosStatusInterval(PVPLAYERENGINE_CONFIG_PBPOSSTATUSINTERVAL_DEF),
         iEndTimeCheckInterval(PVPLAYERENGINE_CONFIG_ENDTIMECHECKINTERVAL_DEF),
-        iSeekToSyncPoint(PVPLAYERENGINE_CONFIG_SEEKTOSYNCPOINT_DEF),
-        iSkipToRequestedPosition(PVPLAYERENGINE_CONFIG_SKIPTOREQUESTEDPOS_DEF),
+        iSeekToSyncPoint(true),
+        iSkipToRequestedPosition(true),
         iBackwardRepos(false),
         iSyncPointSeekWindow(PVPLAYERENGINE_CONFIG_SEEKTOSYNCPOINTWINDOW_DEF),
         iNodeCmdTimeout(PVPLAYERENGINE_CONFIG_NODECMDTIMEOUT_DEF),
@@ -1337,6 +1342,11 @@ void PVPlayerEngine::Run()
     // OR
     // if current command being processed is prepare, need to call
     // DoPrepare again because of track selection
+    // OR
+    // for commands SetPlaybackRange, Resume, or Pause that immediately
+    // follow a SetPlaybackRange command, we would want to wait till
+    // the PVMFInfoStartOfData events are received for all the tracks.
+    // So, we donot process the command immediately and get rescheduled.
     if (!iCurrentCmd.empty())
     {
         if ((iCurrentCmd[0].GetCmdType() == PVP_ENGINE_COMMAND_RESET) ||
@@ -1361,6 +1371,39 @@ void PVPlayerEngine::Run()
         else if (iCurrentCmd[0].GetCmdType() == PVP_ENGINE_COMMAND_PREPARE)
         {
             PVMFStatus cmdstatus = DoPrepare(iCurrentCmd[0]);
+
+            if (cmdstatus != PVMFSuccess && cmdstatus != PVMFPending)
+            {
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::Run() Command failed CmdId %d Status %d",
+                                iCurrentCmd[0].GetCmdId(), cmdstatus));
+                EngineCommandCompleted(iCurrentCmd[0].GetCmdId(), iCurrentCmd[0].GetContext(), cmdstatus);
+            }
+        }
+        else if (iCurrentCmd[0].GetCmdType() == PVP_ENGINE_COMMAND_RESUME)
+        {
+            PVMFStatus cmdstatus = DoResume(iCurrentCmd[0]);
+
+            if (cmdstatus != PVMFSuccess && cmdstatus != PVMFPending)
+            {
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::Run() Command failed CmdId %d Status %d",
+                                iCurrentCmd[0].GetCmdId(), cmdstatus));
+                EngineCommandCompleted(iCurrentCmd[0].GetCmdId(), iCurrentCmd[0].GetContext(), cmdstatus);
+            }
+        }
+        else if (iCurrentCmd[0].GetCmdType() == PVP_ENGINE_COMMAND_SET_PLAYBACK_RANGE)
+        {
+            PVMFStatus cmdstatus = DoSetPlaybackRange(iCurrentCmd[0]);
+
+            if (cmdstatus != PVMFSuccess && cmdstatus != PVMFPending)
+            {
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::Run() Command failed CmdId %d Status %d",
+                                iCurrentCmd[0].GetCmdId(), cmdstatus));
+                EngineCommandCompleted(iCurrentCmd[0].GetCmdId(), iCurrentCmd[0].GetContext(), cmdstatus);
+            }
+        }
+        else if (iCurrentCmd[0].GetCmdType() == PVP_ENGINE_COMMAND_PAUSE)
+        {
+            PVMFStatus cmdstatus = DoPause(iCurrentCmd[0]);
 
             if (cmdstatus != PVMFSuccess && cmdstatus != PVMFPending)
             {
@@ -1436,17 +1479,7 @@ void PVPlayerEngine::Run()
                 }
                 // roll over failed
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::Run() DoSourceNodeRollOver Failed, go in error handling"));
-                bool ehPending = CheckForPendingErrorHandlingCmd();
-                if (ehPending)
-                {
-                    // there should be no error handling queued.
-                    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::Run() Already EH pending, should never happen"));
-                    return;
-                }
-                // go in error handling
-                iCommandCompleteStatusInErrorHandling = status;
-                iCommandCompleteErrMsgInErrorHandling = NULL;
-                AddCommandToQueue(PVP_ENGINE_COMMAND_ERROR_HANDLING_INIT, NULL, NULL, NULL, false);
+                AddErrorHandlingCmd(PVP_ENGINE_COMMAND_ERROR_HANDLING_INIT, status, NULL);
                 iRollOverState = RollOverStateIdle;
                 return;
             }
@@ -2417,6 +2450,10 @@ void PVPlayerEngine::NodeCommandCompleted(const PVMFCmdResp& aResponse)
                 case PVP_ENGINE_STATE_RESUMING:
                     switch (nodecontext->iCmdType)
                     {
+                        case PVP_CMD_SourceNodeStart:
+                            HandleSourceNodeStart(*nodecontext, aResponse);
+                            break;
+
                         case PVP_CMD_SourceNodeQueryDataSourcePosition:
                             HandleSourceNodeQueryDataSourcePosition(*nodecontext, aResponse);
                             break;
@@ -2429,13 +2466,28 @@ void PVPlayerEngine::NodeCommandCompleted(const PVMFCmdResp& aResponse)
                             HandleSourceNodeSetDataSourceDirection(*nodecontext, aResponse);
                             break;
 
+                        default:
+                            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
+                                            (0, "PVPlayerEngine::NodeCommandCompleted() Invalid source node command type in PVP_ENGINE_STATE_RESUMING. Asserting"));
+                            OSCL_ASSERT(false);
+                            break;
+                    }
+                    break;
+
+                case PVP_ENGINE_STATE_PAUSED:
+                    switch (nodecontext->iCmdType)
+                    {
                         case PVP_CMD_SourceNodeStart:
-                            HandleSourceNodeResume(*nodecontext, aResponse);
+                            HandleSourceNodeStart(*nodecontext, aResponse);
+                            break;
+
+                        case PVP_CMD_SourceNodePause:
+                            HandleSourceNodePause(*nodecontext, aResponse);
                             break;
 
                         default:
                             PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                                            (0, "PVPlayerEngine::NodeCommandCompleted() Invalid source node command type in PVP_ENGINE_STATE_RESUMING. Asserting"));
+                                            (0, "PVPlayerEngine::NodeCommandCompleted() Invalid source node command type in PVP_ENGINE_STATE_PAUSED. Asserting"));
                             OSCL_ASSERT(false);
                             break;
                     }
@@ -2681,9 +2733,24 @@ void PVPlayerEngine::HandlePlayerDatapathEvent(int32 /*aDatapathEvent*/, PVMFSta
                 break;
         }
     }
-    else if (iState == PVP_ENGINE_STATE_PAUSING)
+    else if ((iState == PVP_ENGINE_STATE_PAUSING)
+             || (iState == PVP_ENGINE_STATE_PAUSED))
     {
-        HandleDatapathPause(*datapathcontext, aEventStatus, aCmdResp);
+        switch (datapathcontext->iCmdType)
+        {
+            case PVP_CMD_DPPause:
+                HandleDatapathPause(*datapathcontext, aEventStatus, aCmdResp);
+                break;
+
+            case PVP_CMD_DPStart:
+                HandleDatapathResume(*datapathcontext, aEventStatus, aCmdResp);
+                break;
+
+            default:
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
+                                (0, "PVPlayerEngine::HandlePlayerDatapathEvent() Invalid datapath command type in PVP_ENGINE_STATE_PAUSING of PVP_ENGINE_STATE_PAUSED."));
+                break;
+        }
     }
     else if (iState == PVP_ENGINE_STATE_RESUMING)
     {
@@ -2898,21 +2965,7 @@ void PVPlayerEngine::RecognizeCompleted(PVMFFormatType aSourceFormatType, OsclAn
 
     if (retval != PVMFSuccess)
     {
-        bool ehPending = CheckForPendingErrorHandlingCmd();
-        if (ehPending)
-        {
-            // there should be no error handling queued.
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::RecognizeCompleted() Already EH pending, should never happen"));
-            return;
-        }
-        else
-        {
-            // Queue up Error Handling
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::RecognizeCompleted() DoSetupSourceNode failed, Add EH command"));
-            iCommandCompleteStatusInErrorHandling = retval;
-            iCommandCompleteErrMsgInErrorHandling = NULL;
-            AddCommandToQueue(PVP_ENGINE_COMMAND_ERROR_HANDLING_ADD_DATA_SOURCE, NULL, NULL, NULL, false);
-        }
+        AddErrorHandlingCmd(PVP_ENGINE_COMMAND_ERROR_HANDLING_ADD_DATA_SOURCE, retval, NULL);
         return;
     }
 }
@@ -3837,7 +3890,6 @@ void PVPlayerEngine::DoCancelAllCommands(PVPlayerEngineCommand& aCmd)
     OSCL_ASSERT(iCmdToCancel.empty() == true);
 
     // While AcquireLicense and CancelAcquireLicense is processing, CancelAllCommands is prohibited.
-    // @TODO : Should CancelAllCommands be prohibited for JoinDomain?
     if (!iCmdToDlaCancel.empty() ||
             (!iCurrentCmd.empty() &&
              (iCurrentCmd[0].GetCmdType() == PVP_ENGINE_COMMAND_CANCEL_ACQUIRE_LICENSE ||
@@ -4587,19 +4639,7 @@ PVMFStatus PVPlayerEngine::DoAddDataSource(PVPlayerEngineCommand& aCmd)
 
         if (retval != PVMFSuccess)
         {
-            bool ehPending = CheckForPendingErrorHandlingCmd();
-            if (ehPending)
-            {
-                // there should be no error handling queued.
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::DoAddDataSource() Already EH pending, should never happen"));
-                return PVMFPending;
-            }
-            // Queue up Error Handling
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::DoAddDataSource() DoSetupSourceNode failed, Add EH command"));
-            iCommandCompleteStatusInErrorHandling = retval;
-            iCommandCompleteErrMsgInErrorHandling = NULL;
-            AddCommandToQueue(PVP_ENGINE_COMMAND_ERROR_HANDLING_ADD_DATA_SOURCE, NULL, NULL, NULL, false);
-            return PVMFPending;
+            return AddErrorHandlingCmd(PVP_ENGINE_COMMAND_ERROR_HANDLING_ADD_DATA_SOURCE, retval, NULL);
         }
     }
 
@@ -5394,18 +5434,7 @@ PVMFStatus PVPlayerEngine::DoInit(PVPlayerEngineCommand& aCmd)
     }
     else
     {
-        bool ehPending = CheckForPendingErrorHandlingCmd();
-        if (ehPending)
-        {
-            // there should be no error handling queued.
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::DoInit() Already EH pending, should never happen"));
-            return PVMFPending;
-        }
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::DoInit() DoSourceNodeInit failed, Add EH command"));
-        iCommandCompleteStatusInErrorHandling = retval;
-        iCommandCompleteErrMsgInErrorHandling = NULL;
-        AddCommandToQueue(PVP_ENGINE_COMMAND_ERROR_HANDLING_INIT, NULL, NULL, NULL, false);
-        return PVMFPending;
+        return AddErrorHandlingCmd(PVP_ENGINE_COMMAND_ERROR_HANDLING_INIT, retval, NULL);
     }
 }
 
@@ -5827,10 +5856,18 @@ PVMFStatus PVPlayerEngine::DoSetPlaybackRange(PVPlayerEngineCommand& aCmd)
 
     PVMFStatus retval;
 
-    if (GetPVPlayerState() == PVP_STATE_ERROR)
+    if ((GetPVPlayerState() == PVP_STATE_ERROR) ||
+            (iDataSource == NULL))
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::DoSetPlaybackRange() Wrong engine state"));
         return PVMFErrInvalidState;
+    }
+
+    if (((iNumPVMFInfoStartOfDataPending > 0) || (iNumPendingDatapathCmd > 0))
+            && (iState == PVP_ENGINE_STATE_PAUSED))
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG, (0, "PVPlayerEngine::DoSetPlaybackRange() Pending PVMFInfoStartOfData events or datapath commands"));
+        return PVMFPending;
     }
 
     if (aCmd.GetParam(2).bool_value)
@@ -5873,6 +5910,9 @@ PVMFStatus PVPlayerEngine::DoSetPlaybackRange(PVPlayerEngineCommand& aCmd)
         // Reset the paused-due-to-EOT flag
         iPlaybackPausedDueToEndOfTimeReached = false;
     }
+
+    iSkipToRequestedPosition = aCmd.GetParam(3).bool_value;
+    iSeekToSyncPoint = aCmd.GetParam(4).bool_value;
 
     // Change the begin position
     iCurrentBeginPosition = aCmd.GetParam(0).playbackpos_value;
@@ -6024,9 +6064,7 @@ PVMFStatus PVPlayerEngine::UpdateCurrentBeginPosition(PVPPlaybackPosition& aBegi
                     return retval;
                 }
 
-                iChangePlaybackPositionWhenResuming = true;
-
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVPlayerEngine::UpdateCurrentBeginPosition() Saving requested begin position(%d ms) for resume", timems));
+                retval = DoChangePlaybackPosition(aCmd.GetCmdId(), aCmd.GetContext());
             }
         }
         break;
@@ -6275,6 +6313,13 @@ PVMFStatus PVPlayerEngine::DoSinkNodeSkipMediaDataDuringPlayback(PVCommandId aCm
         }
 
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::DoSinkNodeSkipMediaDataDuringPlayback() Skip on sink nodes failed"));
+    }
+
+    // If the nodes are paused, then start them
+    // Usecase: Start -- Pause -- SetPlaybackRange -- Resume
+    if (GetPVPlayerState() == PVP_STATE_PAUSED)
+    {
+        return DoSourceNodeStart(aCmdId, aCmdContext);
     }
     return retval;
 }
@@ -6762,18 +6807,7 @@ PVMFStatus PVPlayerEngine::DoPrepare(PVPlayerEngineCommand& aCmd)
         cmdstatus = DoSinkNodeQueryInterfaceMandatory(aCmd.GetCmdId(), aCmd.GetContext());
         if (cmdstatus != PVMFSuccess)
         {
-            bool ehPending = CheckForPendingErrorHandlingCmd();
-            if (ehPending)
-            {
-                // there should be no error handling queued.
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::DoPrepare() Already EH pending, should never happen"));
-                return PVMFPending;
-            }
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::DoPrepare() DoSinkNodeQueryInterfaceMandatory: failed, Add EH command"));
-            iCommandCompleteStatusInErrorHandling = cmdstatus;
-            iCommandCompleteErrMsgInErrorHandling = NULL;
-            AddCommandToQueue(PVP_ENGINE_COMMAND_ERROR_HANDLING_PREPARE, NULL, NULL, NULL, false);
-            return PVMFPending;
+            return AddErrorHandlingCmd(PVP_ENGINE_COMMAND_ERROR_HANDLING_PREPARE, cmdstatus, NULL);
         }
     }
     else if (iState == PVP_ENGINE_STATE_TRACK_SELECTION_1_DONE)
@@ -6784,18 +6818,7 @@ PVMFStatus PVPlayerEngine::DoPrepare(PVPlayerEngineCommand& aCmd)
         cmdstatus = DoSinkNodeTrackSelection(aCmd.GetCmdId(), aCmd.GetContext());
         if (cmdstatus != PVMFSuccess)
         {
-            bool ehPending = CheckForPendingErrorHandlingCmd();
-            if (ehPending)
-            {
-                // there should be no error handling queued.
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::DoPrepare() Already EH pending, should never happen"));
-                return PVMFPending;
-            }
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::DoPrepare() DoSinkNodeTrackSelection: failed, Add EH command"));
-            iCommandCompleteStatusInErrorHandling = cmdstatus;
-            iCommandCompleteErrMsgInErrorHandling = NULL;
-            AddCommandToQueue(PVP_ENGINE_COMMAND_ERROR_HANDLING_PREPARE, NULL, NULL, NULL, false);
-            return PVMFPending;
+            return AddErrorHandlingCmd(PVP_ENGINE_COMMAND_ERROR_HANDLING_PREPARE, cmdstatus, NULL);
         }
 
         // For the tracks which cannot be played by Sink nodes only, we need to instantiate decoder nodes.
@@ -6803,18 +6826,7 @@ PVMFStatus PVPlayerEngine::DoPrepare(PVPlayerEngineCommand& aCmd)
         cmdstatus = DoDecNodeQueryCapConfigIF(aCmd.GetCmdId(), aCmd.GetContext());
         if (cmdstatus != PVMFSuccess)
         {
-            bool ehPending = CheckForPendingErrorHandlingCmd();
-            if (ehPending)
-            {
-                // there should be no error handling queued.
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::DoPrepare() Already EH pending, should never happen"));
-                return PVMFPending;
-            }
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::DoPrepare() DoDecNodeQueryCapConfigIF: failed, Add EH command"));
-            iCommandCompleteStatusInErrorHandling = cmdstatus;
-            iCommandCompleteErrMsgInErrorHandling = NULL;
-            AddCommandToQueue(PVP_ENGINE_COMMAND_ERROR_HANDLING_PREPARE, NULL, NULL, NULL, false);
-            return PVMFPending;
+            return AddErrorHandlingCmd(PVP_ENGINE_COMMAND_ERROR_HANDLING_PREPARE, cmdstatus, NULL);
         }
     }
     else if (iState == PVP_ENGINE_STATE_TRACK_SELECTION_2_DONE)
@@ -6824,35 +6836,13 @@ PVMFStatus PVPlayerEngine::DoPrepare(PVPlayerEngineCommand& aCmd)
         cmdstatus = DoSourceNodeTrackSelection(aCmd.GetCmdId(), aCmd.GetContext());
         if (cmdstatus != PVMFSuccess)
         {
-            bool ehPending = CheckForPendingErrorHandlingCmd();
-            if (ehPending)
-            {
-                // there should be no error handling queued.
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::DoPrepare() Already EH pending, should never happen"));
-                return PVMFPending;
-            }
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::DoPrepare() DoSourceNodeTrackSelection: failed, Add EH command"));
-            iCommandCompleteStatusInErrorHandling = cmdstatus;
-            iCommandCompleteErrMsgInErrorHandling = NULL;
-            AddCommandToQueue(PVP_ENGINE_COMMAND_ERROR_HANDLING_PREPARE, NULL, NULL, NULL, false);
-            return PVMFPending;
+            return AddErrorHandlingCmd(PVP_ENGINE_COMMAND_ERROR_HANDLING_PREPARE, cmdstatus, NULL);
         }
         // Reset all the sink and decoder nodes.
         cmdstatus = DoSinkNodeDecNodeReset(aCmd.GetCmdId(), aCmd.GetContext());
         if (cmdstatus != PVMFSuccess)
         {
-            bool ehPending = CheckForPendingErrorHandlingCmd();
-            if (ehPending)
-            {
-                // there should be no error handling queued.
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::DoPrepare() Already EH pending, should never happen"));
-                return PVMFPending;
-            }
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::DoPrepare() DoSinkNodeDecNodeReset: failed, Add EH command"));
-            iCommandCompleteStatusInErrorHandling = cmdstatus;
-            iCommandCompleteErrMsgInErrorHandling = NULL;
-            AddCommandToQueue(PVP_ENGINE_COMMAND_ERROR_HANDLING_PREPARE, NULL, NULL, NULL, false);
-            return PVMFPending;
+            return AddErrorHandlingCmd(PVP_ENGINE_COMMAND_ERROR_HANDLING_PREPARE, cmdstatus, NULL);
         }
     }
     else if (iState == PVP_ENGINE_STATE_TRACK_SELECTION_3_DONE)
@@ -6862,18 +6852,7 @@ PVMFStatus PVPlayerEngine::DoPrepare(PVPlayerEngineCommand& aCmd)
         cmdstatus = DoSinkDecCleanupSourcePrepare(aCmd.GetCmdId(), aCmd.GetContext());
         if (cmdstatus != PVMFSuccess)
         {
-            bool ehPending = CheckForPendingErrorHandlingCmd();
-            if (ehPending)
-            {
-                // there should be no error handling queued.
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::DoPrepare() Already EH pending, should never happen"));
-                return PVMFPending;
-            }
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::DoPrepare() DoDecNodeCleanup: failed, Add EH command"));
-            iCommandCompleteStatusInErrorHandling = cmdstatus;
-            iCommandCompleteErrMsgInErrorHandling = NULL;
-            AddCommandToQueue(PVP_ENGINE_COMMAND_ERROR_HANDLING_PREPARE, NULL, NULL, NULL, false);
-            return PVMFPending;
+            return AddErrorHandlingCmd(PVP_ENGINE_COMMAND_ERROR_HANDLING_PREPARE, cmdstatus, NULL);
         }
     }
 
@@ -8263,28 +8242,9 @@ PVMFStatus PVPlayerEngine::DoSinkDecCleanupSourcePrepare(PVCommandId aCmdId, Osc
         // Prepare the source node
         cmdstatus = DoSourceNodePrepare(aCmdId, aCmdContext);
     }
-    if (cmdstatus != PVMFSuccess)
-    {
-        bool ehPending = CheckForPendingErrorHandlingCmd();
-        if (ehPending)
-        {
-            // there should be no error handling queued.
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::DoSinkDecCleanupSourcePrepare() Already EH pending, should never happen"));
-            return PVMFPending;
-        }
-        else
-        {
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                            (0, "PVPlayerEngine::DoSinkDecCleanupSourcePrepare() DoSourceNodePrepare failed, Add EH command"));
-            iCommandCompleteErrMsgInErrorHandling = NULL;
-            iCommandCompleteStatusInErrorHandling = cmdstatus;
-            AddCommandToQueue(PVP_ENGINE_COMMAND_ERROR_HANDLING_PREPARE, NULL, NULL, NULL, false);
-        }
-        return PVMFFailure;
-    }
 
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVPlayerEngine::DoSinkDecCleanupSourcePrepare() Out"));
-    return PVMFSuccess;
+    return cmdstatus;
 }
 
 PVMFStatus PVPlayerEngine::DoSourceNodePrepare(PVCommandId aCmdId, OsclAny* aCmdContext)
@@ -9055,6 +9015,7 @@ PVMFStatus PVPlayerEngine::DoPause(PVPlayerEngineCommand& aCmd)
                             (0, "PVPlayerEngine::DoPause - Pause after setplayback, Cancelling Watchdog timer, iNumPVMFInfoStartOfDataPending=%d", iNumPVMFInfoStartOfDataPending));
             iWatchDogTimer->Cancel();
         }
+        return PVMFPending;
     }
 
     // Pause the clock and notify sinks if not auto-paused
@@ -9073,46 +9034,14 @@ PVMFStatus PVPlayerEngine::DoPause(PVPlayerEngineCommand& aCmd)
         }
     }
 
-    PVMFStatus retval = PVMFErrNotSupported;
-
     // Issue pause to all active datapaths
     iNumPendingDatapathCmd = 0;
 
-    for (i = 0; i < iDatapathList.size(); ++i)
-    {
-        if (iDatapathList[i].iDatapath)
-        {
-            if (iState == PVP_ENGINE_STATE_AUTO_PAUSED)
-            {
-                // Since sinks are already paused in auto-pause state, skip pausing the sink in the datapath
-                retval = DoDatapathPause(iDatapathList[i], aCmd.GetCmdId(), aCmd.GetContext(), true);
-            }
-            else
-            {
-                // Pause all nodes in the datapath
-                retval = DoDatapathPause(iDatapathList[i], aCmd.GetCmdId(), aCmd.GetContext(), false);
-            }
+    PVMFStatus retval = DoPauseDatapath(aCmd.GetCmdId(), aCmd.GetContext());
 
-            if (retval == PVMFSuccess)
-            {
-                ++iNumPendingDatapathCmd;
-            }
-            else
-            {
-                bool ehPending = CheckForPendingErrorHandlingCmd();
-                if (ehPending)
-                {
-                    // there should be no error handling queued.
-                    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::DoPause() Already EH pending, should never happen"));
-                    return PVMFPending;
-                }
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::DoPause() DoDatapathPause Failed, Add EH command"));
-                iCommandCompleteStatusInErrorHandling = retval;
-                iCommandCompleteErrMsgInErrorHandling = NULL;
-                AddCommandToQueue(PVP_ENGINE_COMMAND_ERROR_HANDLING_PAUSE, NULL, NULL, NULL, false);
-                return PVMFPending;
-            }
-        }
+    if (retval == PVMFPending)
+    {
+        return PVMFPending;
     }
 
     if (iNumPendingDatapathCmd == 0)
@@ -9123,18 +9052,7 @@ PVMFStatus PVPlayerEngine::DoPause(PVPlayerEngineCommand& aCmd)
 
     if (retval != PVMFSuccess)
     {
-        bool ehPending = CheckForPendingErrorHandlingCmd();
-        if (ehPending)
-        {
-            // there should be no error handling queued.
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::DoPause() Already EH pending, should never happen"));
-            return PVMFPending;
-        }
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::DoPause() Pausing datapath and source node failed, Add EH command"));
-        iCommandCompleteStatusInErrorHandling = retval;
-        iCommandCompleteErrMsgInErrorHandling = NULL;
-        AddCommandToQueue(PVP_ENGINE_COMMAND_ERROR_HANDLING_PAUSE, NULL, NULL, NULL, false);
-        return PVMFPending;
+        return AddErrorHandlingCmd(PVP_ENGINE_COMMAND_ERROR_HANDLING_PAUSE, retval, NULL);
     }
 
     // TEMP Until queued playback range is available
@@ -9169,6 +9087,7 @@ PVMFStatus PVPlayerEngine::DoDatapathPause(PVPlayerEngineDatapath& aDatapath, PV
     PVMFStatus retval = aDatapath.iDatapath->Pause((OsclAny*)context, aSinkPaused);
     if (retval != PVMFSuccess)
     {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::DoDatapathPause() - Datapath pause failed"));
         FreeEngineContext(context);
     }
 
@@ -9188,7 +9107,7 @@ PVMFStatus PVPlayerEngine::DoSourceNodePause(PVCommandId aCmdId, OsclAny* aCmdCo
     }
 
     // Pause the source node
-    PVPlayerEngineContext* context = AllocateEngineContext(NULL, iSourceNode, NULL, aCmdId, aCmdContext, -1);
+    PVPlayerEngineContext* context = AllocateEngineContext(NULL, iSourceNode, NULL, aCmdId, aCmdContext, PVP_CMD_SourceNodePause);
 
     PVMFCommandId cmdid = -1;
     int32 leavecode = 0;
@@ -9231,6 +9150,12 @@ PVMFStatus PVPlayerEngine::DoResume(PVPlayerEngineCommand& aCmd)
         return PVMFErrInvalidState;
     }
 
+    if ((iNumPVMFInfoStartOfDataPending > 0) || (iNumPendingDatapathCmd > 0))
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG, (0, "PVPlayerEngine::DoResume() Pending PVMFInfoStartOfData events"));
+        return PVMFPending;
+    }
+
     PVMFStatus retval;
     if (iChangePlaybackPositionWhenResuming)
     {
@@ -9267,18 +9192,7 @@ PVMFStatus PVPlayerEngine::DoResume(PVPlayerEngineCommand& aCmd)
 
     if (retval != PVMFSuccess)
     {
-        bool ehPending = CheckForPendingErrorHandlingCmd();
-        if (ehPending)
-        {
-            // there should be no error handling queued.
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::DoResume() Already EH pending, should never happen"));
-            return PVMFPending;
-        }
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::DoResume() Resuming source node or changing position failed, Add EH command"));
-        iCommandCompleteStatusInErrorHandling = retval;
-        iCommandCompleteErrMsgInErrorHandling = NULL;
-        AddCommandToQueue(PVP_ENGINE_COMMAND_ERROR_HANDLING_RESUME, NULL, NULL, NULL, false);
-        return PVMFPending;
+        return AddErrorHandlingCmd(PVP_ENGINE_COMMAND_ERROR_HANDLING_RESUME, retval, NULL);
     }
 
     SetEngineState(PVP_ENGINE_STATE_RESUMING);
@@ -9426,19 +9340,7 @@ PVMFStatus PVPlayerEngine::DoStop(PVPlayerEngineCommand& aCmd)
 
     if (retval != PVMFSuccess)
     {
-        bool ehPending = CheckForPendingErrorHandlingCmd();
-        if (ehPending)
-        {
-            // there should be no error handling queued.
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::DoStop() Already EH pending, should never happen"));
-            return PVMFPending;
-        }
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::DoStop() source node failed, go in Error handling, Add EH command"));
-        iCommandCompleteStatusInErrorHandling = retval;
-        iCommandCompleteErrMsgInErrorHandling = NULL;
-
-        AddCommandToQueue(PVP_ENGINE_COMMAND_ERROR_HANDLING_STOP, NULL, NULL, NULL, false);
-        return PVMFPending;
+        return AddErrorHandlingCmd(PVP_ENGINE_COMMAND_ERROR_HANDLING_STOP, retval, NULL);
     }
 
     SetEngineState(PVP_ENGINE_STATE_STOPPING);
@@ -11108,42 +11010,6 @@ PVMFStatus PVPlayerEngine::DoGetPlayerParameter(PvmiKvp*& aParameters, int& aNum
             }
             break;
 
-        case SEEKTOSYNCPOINT:   // "seektosyncpoint"
-            if (reqattr == PVMI_KVPATTR_CUR)
-            {
-                // Return current value
-                aParameters[0].value.bool_value = iSeekToSyncPoint;
-            }
-            else if (reqattr == PVMI_KVPATTR_DEF)
-            {
-                // Return default
-                aParameters[0].value.bool_value = PVPLAYERENGINE_CONFIG_SEEKTOSYNCPOINT_DEF;
-            }
-            else
-            {
-                // Return capability
-                // Bool so no capability
-            }
-            break;
-
-        case SKIPTOREQUESTEDPOSITION:   // "skiptorequestedpos"
-            if (reqattr == PVMI_KVPATTR_CUR)
-            {
-                // Return current value
-                aParameters[0].value.bool_value = iSkipToRequestedPosition;
-            }
-            else if (reqattr == PVMI_KVPATTR_DEF)
-            {
-                // Return default
-                aParameters[0].value.bool_value = PVPLAYERENGINE_CONFIG_SKIPTOREQUESTEDPOS_DEF;
-            }
-            else
-            {
-                // Return capability
-                // Bool so no capability
-            }
-            break;
-
         case SYNCPOINTSEEKWINDOW:   // "syncpointseekwindow"
             if (reqattr == PVMI_KVPATTR_CUR)
             {
@@ -11370,23 +11236,6 @@ PVMFStatus PVPlayerEngine::DoVerifyAndSetPlayerParameter(PvmiKvp& aParameter, bo
             }
             break;
 
-        case SEEKTOSYNCPOINT: // "seektosyncpoint"
-            // Nothing to validate since it is boolean
-            // Change the config if to set
-            if (aSetParam)
-            {
-                iSeekToSyncPoint = aParameter.value.bool_value;
-            }
-            break;
-
-        case SKIPTOREQUESTEDPOSITION: // "skiptorequestedpos"
-            // Nothing to validate since it is boolean
-            // Change the config if to set
-            if (aSetParam)
-            {
-                iSkipToRequestedPosition = aParameter.value.bool_value;
-            }
-            break;
 
         case SYNCPOINTSEEKWINDOW: // "syncpointseekwindow"
             // Check if within range
@@ -12446,21 +12295,7 @@ void PVPlayerEngine::HandleSinkNodeQueryInterfaceMandatory(PVPlayerEngineContext
         PVMFStatus cmdstatus = DoSinkNodeInit(aNodeContext.iCmdId, aNodeContext.iCmdContext);
         if (cmdstatus != PVMFSuccess)
         {
-            bool ehPending = CheckForPendingErrorHandlingCmd();
-            if (ehPending)
-            {
-                // there should be no error handling queued.
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::HandleSinkNodeQueryInterfaceMandatory() Already EH pending, should never happen"));
-                return;
-            }
-            else
-            {
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                                (0, "PVPlayerEngine::HandleSinkNodeQueryInterfaceMandatory() DoSinkNodeInit failed, Add EH Command"));
-                iCommandCompleteStatusInErrorHandling = cmdstatus;
-                iCommandCompleteErrMsgInErrorHandling = NULL;
-                AddCommandToQueue(PVP_ENGINE_COMMAND_ERROR_HANDLING_PREPARE, NULL, NULL, NULL, false);
-            }
+            AddErrorHandlingCmd(PVP_ENGINE_COMMAND_ERROR_HANDLING_PREPARE, cmdstatus, NULL);
         }
     }
 
@@ -12477,29 +12312,15 @@ void PVPlayerEngine::HandleSinkNodeInit(PVPlayerEngineContext& aNodeContext, con
 
     if (aNodeResp.GetCmdStatus() != PVMFSuccess)
     {
-        bool ehPending = CheckForPendingErrorHandlingCmd();
-        if (ehPending)
+        PVMFErrorInfoMessageInterface* nextmsg = NULL;
+        if (aNodeResp.GetEventExtensionInterface())
         {
-            // there should be no error handling queued.
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::HandleSinkNodeInit() Already EH pending, should never happen"));
-            return;
+            nextmsg = GetErrorInfoMessageInterface(*(aNodeResp.GetEventExtensionInterface()));
         }
-        else
-        {
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                            (0, "PVPlayerEngine::HandleSinkNodeInit() cmd response is failure, Add EH Command"));
-            PVMFErrorInfoMessageInterface* nextmsg = NULL;
-            if (aNodeResp.GetEventExtensionInterface())
-            {
-                nextmsg = GetErrorInfoMessageInterface(*(aNodeResp.GetEventExtensionInterface()));
-            }
-
-            PVUuid puuid = PVPlayerErrorInfoEventTypesUUID;
-            iCommandCompleteErrMsgInErrorHandling = OSCL_NEW(PVMFBasicErrorInfoMessage, (PVPlayerErrSinkInit, puuid, nextmsg));
-            iCommandCompleteStatusInErrorHandling = aNodeResp.GetCmdStatus();
-            AddCommandToQueue(PVP_ENGINE_COMMAND_ERROR_HANDLING_PREPARE, NULL, NULL, NULL, false);
-            return;
-        }
+        PVUuid puuid = PVPlayerErrorInfoEventTypesUUID;
+        PVMFBasicErrorInfoMessage *errMsg = OSCL_NEW(PVMFBasicErrorInfoMessage, (PVPlayerErrSinkInit, puuid, nextmsg));
+        AddErrorHandlingCmd(PVP_ENGINE_COMMAND_ERROR_HANDLING_PREPARE, aNodeResp.GetCmdStatus(), errMsg);
+        return;
     }
 
     // Decrement the pending counter and go to next step if 0.
@@ -12584,21 +12405,7 @@ void PVPlayerEngine::HandleDecNodeQueryCapConfigIF(PVPlayerEngineContext& aNodeC
         PVMFStatus cmdstatus = DoDecNodeInit(aNodeContext.iCmdId, aNodeContext.iCmdContext);
         if (cmdstatus != PVMFSuccess)
         {
-            bool ehPending = CheckForPendingErrorHandlingCmd();
-            if (ehPending)
-            {
-                // there should be no error handling queued.
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::HandleDecNodeQueryCapConfigIF() Already EH pending, should never happen"));
-                return;
-            }
-            else
-            {
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                                (0, "PVPlayerEngine::HandleDecNodeQueryCapConfigIF() DoDecNodeInit failed, Add EH Command"));
-                iCommandCompleteStatusInErrorHandling = cmdstatus;
-                iCommandCompleteErrMsgInErrorHandling = NULL;
-                AddCommandToQueue(PVP_ENGINE_COMMAND_ERROR_HANDLING_PREPARE, NULL, NULL, NULL, false);
-            }
+            AddErrorHandlingCmd(PVP_ENGINE_COMMAND_ERROR_HANDLING_PREPARE, cmdstatus, NULL);
         }
     }
 
@@ -12615,29 +12422,16 @@ void PVPlayerEngine::HandleDecNodeInit(PVPlayerEngineContext& aNodeContext, cons
 
     if (aNodeResp.GetCmdStatus() != PVMFSuccess)
     {
-        bool ehPending = CheckForPendingErrorHandlingCmd();
-        if (ehPending)
+        PVMFErrorInfoMessageInterface* nextmsg = NULL;
+        if (aNodeResp.GetEventExtensionInterface())
         {
-            // there should be no error handling queued.
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::HandleDecNodeInit() Already EH pending, should never happen"));
-            return;
+            nextmsg = GetErrorInfoMessageInterface(*(aNodeResp.GetEventExtensionInterface()));
         }
-        else
-        {
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                            (0, "PVPlayerEngine::HandleDecNodeInit() cmd response is failure, Add EH Command"));
-            PVMFErrorInfoMessageInterface* nextmsg = NULL;
-            if (aNodeResp.GetEventExtensionInterface())
-            {
-                nextmsg = GetErrorInfoMessageInterface(*(aNodeResp.GetEventExtensionInterface()));
-            }
 
-            PVUuid puuid = PVPlayerErrorInfoEventTypesUUID;
-            iCommandCompleteErrMsgInErrorHandling = OSCL_NEW(PVMFBasicErrorInfoMessage, (PVPlayerErrDatapath, puuid, nextmsg));
-            iCommandCompleteStatusInErrorHandling = aNodeResp.GetCmdStatus();
-            AddCommandToQueue(PVP_ENGINE_COMMAND_ERROR_HANDLING_PREPARE, NULL, NULL, NULL, false);
-            return;
-        }
+        PVUuid puuid = PVPlayerErrorInfoEventTypesUUID;
+        PVMFBasicErrorInfoMessage *errMsg = OSCL_NEW(PVMFBasicErrorInfoMessage, (PVPlayerErrDatapath, puuid, nextmsg));
+        AddErrorHandlingCmd(PVP_ENGINE_COMMAND_ERROR_HANDLING_PREPARE, aNodeResp.GetCmdStatus(), errMsg);
+        return;
     }
 
     // Decrement the pending counter and go to next step if 0.
@@ -12717,21 +12511,7 @@ void PVPlayerEngine::HandleSourceNodePrepare(PVPlayerEngineContext& aNodeContext
                     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::HandleSourceNodePrepare() No datapath could be setup. Asserting"));
                     OSCL_ASSERT(false);
                 }
-                bool ehPending = CheckForPendingErrorHandlingCmd();
-                if (ehPending)
-                {
-                    // there should be no error handling queued.
-                    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::HandleSourceNodePrepare() Already EH pending, should never happen"));
-                    return;
-                }
-                else
-                {
-                    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                                    (0, "PVPlayerEngine::HandleSourceNodePrepare() Report command as failed, Add EH Command"));
-                    iCommandCompleteStatusInErrorHandling = cmdstatus;
-                    iCommandCompleteErrMsgInErrorHandling = NULL;
-                    AddCommandToQueue(PVP_ENGINE_COMMAND_ERROR_HANDLING_PREPARE, NULL, NULL, NULL, false);
-                }
+                AddErrorHandlingCmd(PVP_ENGINE_COMMAND_ERROR_HANDLING_PREPARE, cmdstatus, NULL);
             }
         }
         break;
@@ -12740,13 +12520,6 @@ void PVPlayerEngine::HandleSourceNodePrepare(PVPlayerEngineContext& aNodeContext
         {
             PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
                             (0, "PVPlayerEngine::HandleSourceNodePrepare() failed, Add EH Command"));
-            bool ehPending = CheckForPendingErrorHandlingCmd();
-            if (ehPending)
-            {
-                // there should be no error handling queued.
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::HandleSourceNodePrepare() Already EH pending, should never happen"));
-                return;
-            }
             PVMFErrorInfoMessageInterface* nextmsg = NULL;
             if (aNodeResp.GetEventExtensionInterface())
             {
@@ -12754,10 +12527,8 @@ void PVPlayerEngine::HandleSourceNodePrepare(PVPlayerEngineContext& aNodeContext
             }
 
             PVUuid puuid = PVPlayerErrorInfoEventTypesUUID;
-            iCommandCompleteErrMsgInErrorHandling = OSCL_NEW(PVMFBasicErrorInfoMessage, (PVPlayerErrSourceFatal, puuid, nextmsg));
-            iCommandCompleteStatusInErrorHandling = aNodeResp.GetCmdStatus();
-
-            AddCommandToQueue(PVP_ENGINE_COMMAND_ERROR_HANDLING_PREPARE, NULL, NULL, NULL, false);
+            PVMFBasicErrorInfoMessage *errMsg = OSCL_NEW(PVMFBasicErrorInfoMessage, (PVPlayerErrSourceFatal, puuid, nextmsg));
+            AddErrorHandlingCmd(PVP_ENGINE_COMMAND_ERROR_HANDLING_PREPARE, aNodeResp.GetCmdStatus(), errMsg);
         }
         break;
     }
@@ -12812,19 +12583,7 @@ void PVPlayerEngine::HandleSinkNodeQueryInterfaceOptional(PVPlayerEngineContext&
         {
             PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
                             (0, "PVPlayerEngine::HandleSinkNodeQueryInterfaceOptional() Report command as failed, Add EH Command"));
-            bool ehPending = CheckForPendingErrorHandlingCmd();
-            if (ehPending)
-            {
-                // there should be no error handling queued.
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::HandleSinkNodeQueryInterfaceOptional() Already EH pending, should never happen"));
-                return;
-            }
-            else
-            {
-                iCommandCompleteStatusInErrorHandling = cmdstatus;
-                iCommandCompleteErrMsgInErrorHandling = NULL;
-                AddCommandToQueue(PVP_ENGINE_COMMAND_ERROR_HANDLING_PREPARE, NULL, NULL, NULL, false);
-            }
+            AddErrorHandlingCmd(PVP_ENGINE_COMMAND_ERROR_HANDLING_PREPARE, cmdstatus, NULL);
         }
     }
 
@@ -12949,19 +12708,7 @@ void PVPlayerEngine::HandleDecNodeQueryInterfaceOptional(PVPlayerEngineContext& 
         {
             PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
                             (0, "PVPlayerEngine::HandleDecNodeQueryInterfaceOptional() Report command as failed, Add EH command"));
-            bool ehPending = CheckForPendingErrorHandlingCmd();
-            if (ehPending)
-            {
-                // there should be no error handling queued.
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::HandleDecNodeQueryInterfaceOptional() Already EH pending, should never happen"));
-                return;
-            }
-            else
-            {
-                iCommandCompleteStatusInErrorHandling = cmdstatus;
-                iCommandCompleteErrMsgInErrorHandling = NULL;
-                AddCommandToQueue(PVP_ENGINE_COMMAND_ERROR_HANDLING_PREPARE, NULL, NULL, NULL, false);
-            }
+            AddErrorHandlingCmd(PVP_ENGINE_COMMAND_ERROR_HANDLING_PREPARE, cmdstatus, NULL);
         }
     }
 
@@ -12983,13 +12730,6 @@ void PVPlayerEngine::HandleSourceNodeQueryDataSourcePosition(PVPlayerEngineConte
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
                         (0, "PVPlayerEngine::HandleSourceNodeQueryDataSourcePosition() QueryDataSourcePosition failed, Add EH command"));
-        bool ehPending = CheckForPendingErrorHandlingCmd();
-        if (ehPending)
-        {
-            // there should be no error handling queued.
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::HandleSourceNodePause() Already EH pending, should never happen"));
-            return;
-        }
         PVMFErrorInfoMessageInterface* nextmsg = NULL;
         if (aNodeResp.GetEventExtensionInterface())
         {
@@ -12997,13 +12737,11 @@ void PVPlayerEngine::HandleSourceNodeQueryDataSourcePosition(PVPlayerEngineConte
         }
 
         PVUuid puuid = PVPlayerErrorInfoEventTypesUUID;
-        iCommandCompleteErrMsgInErrorHandling = OSCL_NEW(PVMFBasicErrorInfoMessage, (PVPlayerErrSourceFatal, puuid, nextmsg));
-        iCommandCompleteStatusInErrorHandling = aNodeResp.GetCmdStatus();
-
+        PVMFBasicErrorInfoMessage *errMsg = OSCL_NEW(PVMFBasicErrorInfoMessage, (PVPlayerErrSourceFatal, puuid, nextmsg));
         if (iState == PVP_ENGINE_STATE_PREPARING)
-            AddCommandToQueue(PVP_ENGINE_COMMAND_ERROR_HANDLING_PREPARE, NULL, NULL, NULL, false);
+            AddErrorHandlingCmd(PVP_ENGINE_COMMAND_ERROR_HANDLING_PREPARE, aNodeResp.GetCmdStatus(), errMsg);
         else if (iState == PVP_ENGINE_STATE_RESUMING)
-            AddCommandToQueue(PVP_ENGINE_COMMAND_ERROR_HANDLING_RESUME, NULL, NULL, NULL, false);
+            AddErrorHandlingCmd(PVP_ENGINE_COMMAND_ERROR_HANDLING_RESUME, aNodeResp.GetCmdStatus(), errMsg);
         return;
     }
     else
@@ -13105,22 +12843,10 @@ void PVPlayerEngine::HandleSourceNodeQueryDataSourcePosition(PVPlayerEngineConte
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
                         (0, "PVPlayerEngine::HandleSourceNodeQueryDataSourcePosition() Report command as failed, Add EH command"));
-        bool ehPending = CheckForPendingErrorHandlingCmd();
-        if (ehPending)
-        {
-            // there should be no error handling queued.
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::HandleSourceNodeQueryDataSourcePosition() Already EH pending, should never happen"));
-            return;
-        }
-        else
-        {
-            iCommandCompleteStatusInErrorHandling = retval;
-            iCommandCompleteErrMsgInErrorHandling = NULL;
-            if (iState == PVP_ENGINE_STATE_PREPARING)
-                AddCommandToQueue(PVP_ENGINE_COMMAND_ERROR_HANDLING_PREPARE, NULL, NULL, NULL, false);
-            else if (iState == PVP_ENGINE_STATE_RESUMING)
-                AddCommandToQueue(PVP_ENGINE_COMMAND_ERROR_HANDLING_RESUME, NULL, NULL, NULL, false);
-        }
+        if (iState == PVP_ENGINE_STATE_PREPARING)
+            AddErrorHandlingCmd(PVP_ENGINE_COMMAND_ERROR_HANDLING_PREPARE, retval, NULL);
+        else if (iState == PVP_ENGINE_STATE_RESUMING)
+            AddErrorHandlingCmd(PVP_ENGINE_COMMAND_ERROR_HANDLING_RESUME, retval, NULL);
     }
 
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVPlayerEngine::HandleSourceNodeQueryDataSourcePosition() Out"));
@@ -13269,27 +12995,18 @@ void PVPlayerEngine::HandleSourceNodeSetDataSourcePosition(PVPlayerEngineContext
         {
             PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
                             (0, "PVPlayerEngine::HandleSourceNodeSetDataSourcePosition() failed, Add EH command"));
-            bool ehPending = CheckForPendingErrorHandlingCmd();
-            if (ehPending)
-            {
-                // there should be no error handling queued.
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::HandleSourceNodeSetDataSourcePosition() Already EH pending, should never happen"));
-                return;
-            }
             PVMFErrorInfoMessageInterface* nextmsg = NULL;
             if (aNodeResp.GetEventExtensionInterface())
             {
                 nextmsg = GetErrorInfoMessageInterface(*(aNodeResp.GetEventExtensionInterface()));
             }
-
             PVUuid puuid = PVPlayerErrorInfoEventTypesUUID;
-            iCommandCompleteErrMsgInErrorHandling = OSCL_NEW(PVMFBasicErrorInfoMessage, (PVPlayerErrSourceFatal, puuid, nextmsg));
-            iCommandCompleteStatusInErrorHandling = aNodeResp.GetCmdStatus();
+            PVMFBasicErrorInfoMessage* errMsg = OSCL_NEW(PVMFBasicErrorInfoMessage, (PVPlayerErrSourceFatal, puuid, nextmsg));
 
             if (iState == PVP_ENGINE_STATE_PREPARING)
-                AddCommandToQueue(PVP_ENGINE_COMMAND_ERROR_HANDLING_PREPARE, NULL, NULL, NULL, false);
+                AddErrorHandlingCmd(PVP_ENGINE_COMMAND_ERROR_HANDLING_PREPARE, aNodeResp.GetCmdStatus(), errMsg);
             else if (iState == PVP_ENGINE_STATE_RESUMING)
-                AddCommandToQueue(PVP_ENGINE_COMMAND_ERROR_HANDLING_RESUME, NULL, NULL, NULL, false);
+                AddErrorHandlingCmd(PVP_ENGINE_COMMAND_ERROR_HANDLING_RESUME, aNodeResp.GetCmdStatus(), errMsg);
 
             return;
         }
@@ -13308,22 +13025,10 @@ void PVPlayerEngine::HandleSourceNodeSetDataSourcePosition(PVPlayerEngineContext
     if (cmdstatus != PVMFSuccess)
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::HandleSourceNodeSetDataSourcePosition() Report command as failed, Add EH command"));
-        bool ehPending = CheckForPendingErrorHandlingCmd();
-        if (ehPending)
-        {
-            // there should be no error handling queued.
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::HandleSourceNodeSetDataSourcePosition() Already EH pending, should never happen"));
-            return;
-        }
-        else
-        {
-            iCommandCompleteStatusInErrorHandling = cmdstatus;
-            iCommandCompleteErrMsgInErrorHandling = NULL;
-            if (iState == PVP_ENGINE_STATE_PREPARING)
-                AddCommandToQueue(PVP_ENGINE_COMMAND_ERROR_HANDLING_PREPARE, NULL, NULL, NULL, false);
-            else if (iState == PVP_ENGINE_STATE_RESUMING)
-                AddCommandToQueue(PVP_ENGINE_COMMAND_ERROR_HANDLING_RESUME, NULL, NULL, NULL, false);
-        }
+        if (iState == PVP_ENGINE_STATE_PREPARING)
+            AddErrorHandlingCmd(PVP_ENGINE_COMMAND_ERROR_HANDLING_PREPARE, cmdstatus, NULL);
+        else if (iState == PVP_ENGINE_STATE_RESUMING)
+            AddErrorHandlingCmd(PVP_ENGINE_COMMAND_ERROR_HANDLING_RESUME, cmdstatus, NULL);
     }
 
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVPlayerEngine::HandleSourceNodeSetDataSourcePosition() Out"));
@@ -13399,13 +13104,6 @@ void PVPlayerEngine::HandleSourceNodeSetDataSourceDirection(PVPlayerEngineContex
             {
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
                                 (0, "PVPlayerEngine::HandleSourceNodeSetDataSourceDirection() failed, Add EH command"));
-                bool ehPending = CheckForPendingErrorHandlingCmd();
-                if (ehPending)
-                {
-                    // there should be no error handling queued.
-                    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::HandleSourceNodeSetDataSourceDirection() Already EH pending, should never happen"));
-                    return;
-                }
                 PVMFErrorInfoMessageInterface* nextmsg = NULL;
                 if (aNodeResp.GetEventExtensionInterface())
                 {
@@ -13413,9 +13111,8 @@ void PVPlayerEngine::HandleSourceNodeSetDataSourceDirection(PVPlayerEngineContex
                 }
 
                 PVUuid puuid = PVPlayerErrorInfoEventTypesUUID;
-                iCommandCompleteErrMsgInErrorHandling = OSCL_NEW(PVMFBasicErrorInfoMessage, (PVPlayerErrSourceFatal, puuid, nextmsg));
-                iCommandCompleteStatusInErrorHandling = aNodeResp.GetCmdStatus();
-                AddCommandToQueue(PVP_ENGINE_COMMAND_ERROR_HANDLING_RESUME, NULL, NULL, NULL, false);
+                PVMFBasicErrorInfoMessage *errMsg = OSCL_NEW(PVMFBasicErrorInfoMessage, (PVPlayerErrSourceFatal, puuid, nextmsg));
+                AddErrorHandlingCmd(PVP_ENGINE_COMMAND_ERROR_HANDLING_RESUME, aNodeResp.GetCmdStatus(), errMsg);
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVPlayerEngine::HandleSourceNodeSetDataSourceDirection() Out"));
                 return;
             }
@@ -13437,19 +13134,7 @@ void PVPlayerEngine::HandleSourceNodeSetDataSourceDirection(PVPlayerEngineContex
         {
             PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
                             (0, "PVPlayerEngine::HandleSourceNodeSetDataSourcePosition() Report command as failed, Add EH command"));
-            bool ehPending = CheckForPendingErrorHandlingCmd();
-            if (ehPending)
-            {
-                // there should be no error handling queued.
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::HandleSourceNodeSetDataSourceDirection() Already EH pending, should never happen"));
-                return;
-            }
-            else
-            {
-                iCommandCompleteStatusInErrorHandling = cmdstatus;
-                iCommandCompleteErrMsgInErrorHandling = NULL;
-                AddCommandToQueue(PVP_ENGINE_COMMAND_ERROR_HANDLING_RESUME, NULL, NULL, NULL, false);
-            }
+            AddErrorHandlingCmd(PVP_ENGINE_COMMAND_ERROR_HANDLING_RESUME, cmdstatus, NULL);
         }
     }
     else
@@ -13472,13 +13157,6 @@ void PVPlayerEngine::HandleSourceNodeSetDataSourceDirection(PVPlayerEngineContex
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
                                 (0, "PVPlayerEngine::HandleSourceNodeSetDataSourceDirection() failed, Add EH command"));
                 // Initiate error handling
-                bool ehPending = CheckForPendingErrorHandlingCmd();
-                if (ehPending)
-                {
-                    // there should be no error handling queued.
-                    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::HandleSourceNodeSetDataSourceDirection() Already EH pending, should never happen"));
-                    return;
-                }
                 PVMFErrorInfoMessageInterface* nextmsg = NULL;
                 if (aNodeResp.GetEventExtensionInterface())
                 {
@@ -13486,9 +13164,8 @@ void PVPlayerEngine::HandleSourceNodeSetDataSourceDirection(PVPlayerEngineContex
                 }
 
                 PVUuid puuid = PVPlayerErrorInfoEventTypesUUID;
-                iCommandCompleteErrMsgInErrorHandling = OSCL_NEW(PVMFBasicErrorInfoMessage, (PVPlayerErrSourceFatal, puuid, nextmsg));
-                iCommandCompleteStatusInErrorHandling = aNodeResp.GetCmdStatus();
-                AddCommandToQueue(PVP_ENGINE_COMMAND_ERROR_HANDLING_SET_PLAYBACK_RATE, NULL, NULL, NULL, false);
+                PVMFBasicErrorInfoMessage *errMsg = OSCL_NEW(PVMFBasicErrorInfoMessage, (PVPlayerErrSourceFatal, puuid, nextmsg));
+                AddErrorHandlingCmd(PVP_ENGINE_COMMAND_ERROR_HANDLING_SET_PLAYBACK_RATE, aNodeResp.GetCmdStatus(), errMsg);
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVPlayerEngine::HandleSourceNodeSetDataSourceDirection() Out"));
                 return;
             }
@@ -13569,94 +13246,6 @@ void PVPlayerEngine::HandleSourceNodeSetDataSourceDirection(PVPlayerEngineContex
     }
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVPlayerEngine::HandleSourceNodeSetDataSourceDirection() Out"));
 }
-
-void PVPlayerEngine::HandleSourceNodeStart(PVPlayerEngineContext& aNodeContext, const PVMFCmdResp& aNodeResp)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_PROF, iPerfLogger, PVLOGMSG_INFO,
-                    (0, "PVPlayerEngine::HandleSourceNodeStart() Tick=%d", OsclTickCount::TickCount()));
-
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVPlayerEngine::HandleSourceNodeStart() In"));
-
-    PVMFStatus cmdstatus = PVMFErrNotSupported;
-
-    switch (aNodeResp.GetCmdStatus())
-    {
-        case PVMFSuccess:
-        {
-            // Issue Skip on Sink Node and Start on datapaths back to back. This is done to make sure that
-            // sink node is started only after discarding the data from an earlier stream.
-            cmdstatus = DoSinkNodeSkipMediaData(aNodeContext.iCmdId, false, PVP_CMD_SinkNodeSkipMediaData, aNodeContext.iCmdContext);
-            if (cmdstatus != PVMFSuccess)
-            {
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::HandleSourceNodeStart() Skip of sink node did a leave, asserting"));
-                OSCL_ASSERT(false);
-            }
-
-            // Start the available datapaths
-            iNumPendingDatapathCmd = 0;
-            for (uint32 i = 0; i < iDatapathList.size(); ++i)
-            {
-                if (iDatapathList[i].iDatapath)
-                {
-                    PVMFStatus retval = DoDatapathStart(iDatapathList[i], aNodeContext.iCmdId, aNodeContext.iCmdContext);
-                    if (retval == PVMFSuccess)
-                    {
-                        ++iNumPendingDatapathCmd;
-                        cmdstatus = PVMFSuccess;
-                    }
-                    else
-                    {
-                        cmdstatus = retval;
-                        break;
-                    }
-                }
-            }
-            if (iNumPendingDatapathCmd == 0)
-            {
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                                (0, "PVPlayerEngine:HandleSourceNodeStart() DoDatapathStart failed, Add EH command"));
-                bool ehPending = CheckForPendingErrorHandlingCmd();
-                if (ehPending)
-                {
-                    // there should be no error handling queued.
-                    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine:HandleSourceNodeStart() Already EH pending, should never happen"));
-                    return;
-                }
-                iCommandCompleteStatusInErrorHandling = cmdstatus;
-                iCommandCompleteErrMsgInErrorHandling = NULL;
-                AddCommandToQueue(PVP_ENGINE_COMMAND_ERROR_HANDLING_PREPARE, NULL, NULL, NULL, false);
-            }
-        }
-        break;
-
-        default:
-        {
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                            (0, "PVPlayerEngine:HandleSourceNodeStart() failed, Add EH command"));
-            bool ehPending = CheckForPendingErrorHandlingCmd();
-            if (ehPending)
-            {
-                // there should be no error handling queued.
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine:HandleSourceNodeStart() Already EH pending, should never happen"));
-                return;
-            }
-            PVMFErrorInfoMessageInterface* nextmsg = NULL;
-            if (aNodeResp.GetEventExtensionInterface())
-            {
-                nextmsg = GetErrorInfoMessageInterface(*(aNodeResp.GetEventExtensionInterface()));
-            }
-
-            PVUuid puuid = PVPlayerErrorInfoEventTypesUUID;
-            iCommandCompleteErrMsgInErrorHandling = OSCL_NEW(PVMFBasicErrorInfoMessage, (PVPlayerErrSourceFatal, puuid, nextmsg));
-            iCommandCompleteStatusInErrorHandling = aNodeResp.GetCmdStatus();
-            AddCommandToQueue(PVP_ENGINE_COMMAND_ERROR_HANDLING_PREPARE, NULL, NULL, NULL, false);
-        }
-        break;
-    }
-
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVPlayerEngine::HandleSourceNodeStart() Out"));
-}
-
 
 void PVPlayerEngine::HandleSinkNodeSkipMediaData(PVPlayerEngineContext& aNodeContext, const PVMFCmdResp& aNodeResp)
 {
@@ -14039,7 +13628,12 @@ void PVPlayerEngine::HandleSourceNodeSetDataSourcePositionDuringPlayback(PVPlaye
             --iStreamID;
 
             // For non-fatal error, continue playback by resuming the clock
-            StartPlaybackClock();
+            // Do not start the clock for the usecase: Prepare - SetPlaybackRange - Start
+            if ((GetPVPlayerState() == PVP_STATE_STARTED) &&
+                    (iNumPVMFInfoStartOfDataPending == 0))
+            {
+                StartPlaybackClock();
+            }
             // Complete the SetPlaybackRange() command as notsupported / failed
             EngineCommandCompleted(aNodeContext.iCmdId, aNodeContext.iCmdContext, aNodeResp.GetCmdStatus());
         }
@@ -14047,24 +13641,14 @@ void PVPlayerEngine::HandleSourceNodeSetDataSourcePositionDuringPlayback(PVPlaye
         {
             PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
                             (0, "PVPlayerEngine::HandleSourceNodeSetDataSourcePositionDuringPlayback() failed, Add EH command"));
-            bool ehPending = CheckForPendingErrorHandlingCmd();
-            if (ehPending)
-            {
-                // there should be no error handling queued.
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                                (0, "PVPlayerEngine::HandleSourceNodeSetDataSourcePositionDuringPlayback() Already EH pending, should never happen"));
-                return;
-            }
             PVMFErrorInfoMessageInterface* nextmsg = NULL;
             if (aNodeResp.GetEventExtensionInterface())
             {
                 nextmsg = GetErrorInfoMessageInterface(*(aNodeResp.GetEventExtensionInterface()));
             }
-
             PVUuid puuid = PVPlayerErrorInfoEventTypesUUID;
-            iCommandCompleteErrMsgInErrorHandling = OSCL_NEW(PVMFBasicErrorInfoMessage, (PVPlayerErrSourceFatal, puuid, nextmsg));
-            iCommandCompleteStatusInErrorHandling = aNodeResp.GetCmdStatus();
-            AddCommandToQueue(PVP_ENGINE_COMMAND_ERROR_HANDLING_SET_PLAYBACK_RANGE, NULL, NULL, NULL, false);
+            PVMFBasicErrorInfoMessage *errMsg = OSCL_NEW(PVMFBasicErrorInfoMessage, (PVPlayerErrSourceFatal, puuid, nextmsg));
+            AddErrorHandlingCmd(PVP_ENGINE_COMMAND_ERROR_HANDLING_SET_PLAYBACK_RANGE, aNodeResp.GetCmdStatus(), errMsg);
         }
         return;
     }
@@ -14297,7 +13881,7 @@ void PVPlayerEngine::HandleSinkNodeSkipMediaDataDuringPlayback(PVPlayerEngineCon
         SendInformationalEvent(PVMFInfoActualPlaybackPosition, OSCL_STATIC_CAST(PVInterface*, infomsg), (OsclAny*)&actualPlaybackPosition);
         infomsg->removeRef();
 
-        // Complete the SetPlaybackRange() or SetPlaybackRate()
+        // Complete SetPlaybackRange() or SetPlaybackRate()
         EngineCommandCompleted(aNodeContext.iCmdId, aNodeContext.iCmdContext, PVMFSuccess);
     }
 
@@ -14309,9 +13893,11 @@ void PVPlayerEngine::HandleSinkNodeSkipMediaDataDuringPlayback(PVPlayerEngineCon
         }
         // we have received all the bos event for
         // playback hasnt started yet
-
-        StartPlaybackClock();
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iReposLogger, PVLOGMSG_INFO, (0, "PVPlayerEngine::HandleSinkNodeSkipMediaDataDuringPlayback - PlayClock Started"));
+        if (GetPVPlayerState() != PVP_STATE_PAUSED)
+        {
+            StartPlaybackClock();
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iReposLogger, PVLOGMSG_INFO, (0, "PVPlayerEngine::HandleSinkNodeSkipMediaDataDuringPlayback - PlayClock Started"));
+        }
     }
 
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVPlayerEngine::HandleSinkNodeSkipMediaDataDuringPlayback() Out"));
@@ -14326,9 +13912,18 @@ void PVPlayerEngine::HandleSourceNodePause(PVPlayerEngineContext& aNodeContext, 
     {
         case PVMFSuccess:
         {
-            // Pause command is complete
-            SetEngineState(PVP_ENGINE_STATE_PAUSED);
-            EngineCommandCompleted(aNodeContext.iCmdId, aNodeContext.iCmdContext, PVMFSuccess);
+            if (iState != PVP_ENGINE_STATE_PAUSED)
+            {
+                // Pause command is complete
+                SetEngineState(PVP_ENGINE_STATE_PAUSED);
+                EngineCommandCompleted(aNodeContext.iCmdId, aNodeContext.iCmdContext, PVMFSuccess);
+            }
+            else
+            {
+                // This is needed to process Stop or Resume or SetPlaybackRange or Pause queued
+                // immediately after SetPlaybackRange
+                RunIfNotReady();
+            }
         }
         break;
 
@@ -14336,24 +13931,15 @@ void PVPlayerEngine::HandleSourceNodePause(PVPlayerEngineContext& aNodeContext, 
         {
             PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
                             (0, "PVPlayerEngine::HandleSourceNodePause() failed, Add EH command"));
-            bool ehPending = CheckForPendingErrorHandlingCmd();
-            if (ehPending)
-            {
-                // there should be no error handling queued.
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::HandleSourceNodePause() Already EH pending, should never happen"));
-                return;
-            }
             PVMFErrorInfoMessageInterface* nextmsg = NULL;
             if (aNodeResp.GetEventExtensionInterface())
             {
                 nextmsg = GetErrorInfoMessageInterface(*(aNodeResp.GetEventExtensionInterface()));
             }
-
             PVUuid puuid = PVPlayerErrorInfoEventTypesUUID;
-            iCommandCompleteErrMsgInErrorHandling = OSCL_NEW(PVMFBasicErrorInfoMessage, (PVPlayerErrSourceFatal, puuid, nextmsg));
-            iCommandCompleteStatusInErrorHandling = aNodeResp.GetCmdStatus();
+            PVMFBasicErrorInfoMessage *errMsg = OSCL_NEW(PVMFBasicErrorInfoMessage, (PVPlayerErrSourceFatal, puuid, nextmsg));
 
-            AddCommandToQueue(PVP_ENGINE_COMMAND_ERROR_HANDLING_PAUSE, NULL, NULL, NULL, false);
+            AddErrorHandlingCmd(PVP_ENGINE_COMMAND_ERROR_HANDLING_PAUSE, aNodeResp.GetCmdStatus(), errMsg);
         }
         break;
     }
@@ -14362,9 +13948,9 @@ void PVPlayerEngine::HandleSourceNodePause(PVPlayerEngineContext& aNodeContext, 
 }
 
 
-void PVPlayerEngine::HandleSourceNodeResume(PVPlayerEngineContext& aNodeContext, const PVMFCmdResp& aNodeResp)
+void PVPlayerEngine::HandleSourceNodeStart(PVPlayerEngineContext& aNodeContext, const PVMFCmdResp& aNodeResp)
 {
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVPlayerEngine::HandleSourceNodeResume() In"));
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVPlayerEngine::HandleSourceNodeStart() In"));
 
     PVMFStatus cmdstatus = PVMFErrNotSupported;
 
@@ -14374,12 +13960,12 @@ void PVPlayerEngine::HandleSourceNodeResume(PVPlayerEngineContext& aNodeContext,
         {
             // Issue Skip on Sink Node and Start on datapaths back to back. This is done to make sure that
             // sink node is started only after discarding the data from an earlier stream.
-            if (iChangePlaybackPositionWhenResuming || iChangePlaybackDirectionWhenResuming)
+            if (iChangePlaybackPositionWhenResuming || iChangePlaybackDirectionWhenResuming || (iState == PVP_ENGINE_STATE_PREPARING))
             {
                 PVMFStatus cmdstatus = DoSinkNodeSkipMediaData(aNodeContext.iCmdId, false, PVP_CMD_SinkNodeSkipMediaData, aNodeContext.iCmdContext);
                 if (cmdstatus != PVMFSuccess)
                 {
-                    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::HandleSourceNodeResume() Skip of sink node did a leave, asserting"));
+                    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::HandleSourceNodeStart() Skip of sink node did a leave, asserting"));
                     OSCL_ASSERT(false);
                 }
             }
@@ -14405,48 +13991,43 @@ void PVPlayerEngine::HandleSourceNodeResume(PVPlayerEngineContext& aNodeContext,
 
             if (iNumPendingDatapathCmd == 0)
             {
-                bool ehPending = CheckForPendingErrorHandlingCmd();
-                if (ehPending)
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::HandleSourceNodeStart() Report command as failed, Add EH command"));
+                if (iState == PVP_ENGINE_STATE_PREPARING)
                 {
-                    // there should be no error handling queued.
-                    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::HandleSourceNodeResume() Already EH pending, should never happen"));
-                    return;
+                    AddErrorHandlingCmd(PVP_ENGINE_COMMAND_ERROR_HANDLING_PREPARE, cmdstatus, NULL);
                 }
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::HandleSourceNodeResume() Report command as failed, Add EH command"));
-                iCommandCompleteStatusInErrorHandling = cmdstatus;
-                iCommandCompleteErrMsgInErrorHandling = NULL;
-                AddCommandToQueue(PVP_ENGINE_COMMAND_ERROR_HANDLING_RESUME, NULL, NULL, NULL, false);
+                else
+                {
+                    AddErrorHandlingCmd(PVP_ENGINE_COMMAND_ERROR_HANDLING_RESUME, cmdstatus, NULL);
+                }
             }
         }
         break;
 
         default:
         {
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::HandleSourceNodeResume() failed, Add EH command"));
-            bool ehPending = CheckForPendingErrorHandlingCmd();
-            if (ehPending)
-            {
-                // there should be no error handling queued.
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::HandleSourceNodeResume() Already EH pending, should never happen"));
-                return;
-            }
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::HandleSourceNodeStart() failed, Add EH command"));
             cmdstatus = aNodeResp.GetCmdStatus();
             PVMFErrorInfoMessageInterface* nextmsg = NULL;
             if (aNodeResp.GetEventExtensionInterface())
             {
                 nextmsg = GetErrorInfoMessageInterface(*(aNodeResp.GetEventExtensionInterface()));
             }
-
             PVUuid puuid = PVPlayerErrorInfoEventTypesUUID;
-            iCommandCompleteErrMsgInErrorHandling = OSCL_NEW(PVMFBasicErrorInfoMessage, (PVPlayerErrSourceFatal, puuid, nextmsg));
-            iCommandCompleteStatusInErrorHandling = cmdstatus;
-
-            AddCommandToQueue(PVP_ENGINE_COMMAND_ERROR_HANDLING_RESUME, NULL, NULL, NULL, false);
+            PVMFBasicErrorInfoMessage *errMsg = OSCL_NEW(PVMFBasicErrorInfoMessage, (PVPlayerErrSourceFatal, puuid, nextmsg));
+            if (iState == PVP_ENGINE_STATE_PREPARING)
+            {
+                AddErrorHandlingCmd(PVP_ENGINE_COMMAND_ERROR_HANDLING_PREPARE, cmdstatus, errMsg);
+            }
+            else
+            {
+                AddErrorHandlingCmd(PVP_ENGINE_COMMAND_ERROR_HANDLING_RESUME, cmdstatus, errMsg);
+            }
         }
         break;
     }
 
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVPlayerEngine::HandleSourceNodeResume() Out"));
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVPlayerEngine::HandleSourceNodeStart() Out"));
 }
 
 
@@ -14483,18 +14064,7 @@ void PVPlayerEngine::HandleSourceNodeStop(PVPlayerEngineContext& aNodeContext, c
 
         if (iNumPendingDatapathCmd == 0)
         {
-            bool ehPending = CheckForPendingErrorHandlingCmd();
-            if (ehPending)
-            {
-                // there should be no error handling queued.
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::HandleSourceNodeStop() Already EH pending, should never happen"));
-                return;
-            }
-            // No active datapath to shutdown - not possible in stop
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::HandleSourceNodeStop() Datapath Teardown failed, Add EH command"));
-            iCommandCompleteErrMsgInErrorHandling = NULL;
-            iCommandCompleteStatusInErrorHandling = cmdstatus;
-            AddCommandToQueue(PVP_ENGINE_COMMAND_ERROR_HANDLING_STOP, NULL, NULL, NULL, false);
+            AddErrorHandlingCmd(PVP_ENGINE_COMMAND_ERROR_HANDLING_STOP, cmdstatus, NULL);
         }
         break;
 
@@ -14502,25 +14072,16 @@ void PVPlayerEngine::HandleSourceNodeStop(PVPlayerEngineContext& aNodeContext, c
         {
             PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
                             (0, "PVPlayerEngine::HandleSourceNodeStop() Source node stop failed, go in error handling, Add EH command"));
-            bool ehPending = CheckForPendingErrorHandlingCmd();
-            if (ehPending)
-            {
-                // there should be no error handling queued.
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::HandleSourceNodeStop() Already EH pending, should never happen"));
-                return;
-            }
             cmdstatus = aNodeResp.GetCmdStatus();
             PVMFErrorInfoMessageInterface* nextmsg = NULL;
             if (aNodeResp.GetEventExtensionInterface())
             {
                 nextmsg = GetErrorInfoMessageInterface(*(aNodeResp.GetEventExtensionInterface()));
             }
-
             PVUuid puuid = PVPlayerErrorInfoEventTypesUUID;
-            iCommandCompleteErrMsgInErrorHandling = OSCL_NEW(PVMFBasicErrorInfoMessage, (PVPlayerErrSourceFatal, puuid, nextmsg));
-            iCommandCompleteStatusInErrorHandling = cmdstatus;
+            PVMFBasicErrorInfoMessage *errMsg = OSCL_NEW(PVMFBasicErrorInfoMessage, (PVPlayerErrSourceFatal, puuid, nextmsg));
 
-            AddCommandToQueue(PVP_ENGINE_COMMAND_ERROR_HANDLING_STOP, NULL, NULL, NULL, false);
+            AddErrorHandlingCmd(PVP_ENGINE_COMMAND_ERROR_HANDLING_STOP, cmdstatus, errMsg);
         }
         break;
     }
@@ -14694,11 +14255,9 @@ void PVPlayerEngine::HandleSinkNodePause(PVPlayerEngineContext& aNodeContext, co
             {
                 nextmsg = GetErrorInfoMessageInterface(*(aNodeResp.GetEventExtensionInterface()));
             }
-
             PVUuid puuid = PVPlayerErrorInfoEventTypesUUID;
-            iCommandCompleteErrMsgInErrorHandling = OSCL_NEW(PVMFBasicErrorInfoMessage, (PVPlayerErrSinkFatal, puuid, nextmsg));
-            iCommandCompleteStatusInErrorHandling = aNodeResp.GetCmdStatus();
-            AddCommandToQueue(PVP_ENGINE_COMMAND_ERROR_HANDLING_PAUSE, NULL, NULL, NULL, false);
+            PVMFBasicErrorInfoMessage *errMsg = OSCL_NEW(PVMFBasicErrorInfoMessage, (PVPlayerErrSinkFatal, puuid, nextmsg));
+            AddErrorHandlingCmd(PVP_ENGINE_COMMAND_ERROR_HANDLING_PAUSE, aNodeResp.GetCmdStatus(), errMsg);
         }
 
         return;
@@ -14741,11 +14300,9 @@ void PVPlayerEngine::HandleSinkNodeResume(PVPlayerEngineContext& aNodeContext, c
             {
                 nextmsg = GetErrorInfoMessageInterface(*(aNodeResp.GetEventExtensionInterface()));
             }
-
             PVUuid puuid = PVPlayerErrorInfoEventTypesUUID;
-            iCommandCompleteErrMsgInErrorHandling = OSCL_NEW(PVMFBasicErrorInfoMessage, (PVPlayerErrSinkFatal, puuid, nextmsg));
-            iCommandCompleteStatusInErrorHandling = aNodeResp.GetCmdStatus();
-            AddCommandToQueue(PVP_ENGINE_COMMAND_ERROR_HANDLING_RESUME, NULL, NULL, NULL, false);
+            PVMFBasicErrorInfoMessage *errMsg = OSCL_NEW(PVMFBasicErrorInfoMessage, (PVPlayerErrSinkFatal, puuid, nextmsg));
+            AddErrorHandlingCmd(PVP_ENGINE_COMMAND_ERROR_HANDLING_RESUME, aNodeResp.GetCmdStatus(), errMsg);
         }
         return;
     }
@@ -14926,11 +14483,9 @@ void PVPlayerEngine::HandleDatapathPrepare(PVPlayerEngineContext& aDatapathConte
                     nextmsg = GetErrorInfoMessageInterface(*(aCmdResp->GetEventExtensionInterface()));
                 }
             }
-
             PVUuid puuid = PVPlayerErrorInfoEventTypesUUID;
-            iCommandCompleteErrMsgInErrorHandling = OSCL_NEW(PVMFBasicErrorInfoMessage, (PVPlayerErrDatapathFatal, puuid, nextmsg));
-            iCommandCompleteStatusInErrorHandling = aDatapathStatus;
-            AddCommandToQueue(PVP_ENGINE_COMMAND_ERROR_HANDLING_PREPARE, NULL, NULL, NULL, false);
+            PVMFBasicErrorInfoMessage *errMsg = OSCL_NEW(PVMFBasicErrorInfoMessage, (PVPlayerErrDatapathFatal, puuid, nextmsg));
+            AddErrorHandlingCmd(PVP_ENGINE_COMMAND_ERROR_HANDLING_PREPARE, aDatapathStatus, errMsg);
         }
         return;
     }
@@ -14948,19 +14503,7 @@ void PVPlayerEngine::HandleDatapathPrepare(PVPlayerEngineContext& aDatapathConte
         if (cmdstatus != PVMFSuccess)
         {
             PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::HandleDatapathPrepare() Report command as failed, Add EH command"));
-            bool ehPending = CheckForPendingErrorHandlingCmd();
-            if (ehPending)
-            {
-                // there should be no error handling queued.
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::HandleDatapathPrepare() Already EH pending, should never happen"));
-                return;
-            }
-            else
-            {
-                iCommandCompleteStatusInErrorHandling = cmdstatus;
-                iCommandCompleteErrMsgInErrorHandling = NULL;
-                AddCommandToQueue(PVP_ENGINE_COMMAND_ERROR_HANDLING_PREPARE, NULL, NULL, NULL, false);
-            }
+            AddErrorHandlingCmd(PVP_ENGINE_COMMAND_ERROR_HANDLING_PREPARE, cmdstatus, NULL);
         }
     }
 
@@ -14981,32 +14524,17 @@ void PVPlayerEngine::HandleDatapathStart(PVPlayerEngineContext& aDatapathContext
 
     if (aDatapathStatus != PVMFSuccess)
     {
-        bool ehPending = CheckForPendingErrorHandlingCmd();
-        if (ehPending)
+        PVMFErrorInfoMessageInterface* nextmsg = NULL;
+        if (aCmdResp)
         {
-            // there should be no error handling queued.
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::HandleDatapathStart() Already EH pending, should never happen"));
-            return;
-        }
-        else
-        {
-            // Cancel any pending node/datapath commands
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                            (0, "PVPlayerEngine::HandleDatapathStart() In %s Failed, Add EH command", aDatapathContext.iEngineDatapath->iTrackInfo->getTrackMimeType().get_cstr()));
-            PVMFErrorInfoMessageInterface* nextmsg = NULL;
-            if (aCmdResp)
+            if (aCmdResp->GetEventExtensionInterface())
             {
-                if (aCmdResp->GetEventExtensionInterface())
-                {
-                    nextmsg = GetErrorInfoMessageInterface(*(aCmdResp->GetEventExtensionInterface()));
-                }
+                nextmsg = GetErrorInfoMessageInterface(*(aCmdResp->GetEventExtensionInterface()));
             }
-
-            PVUuid puuid = PVPlayerErrorInfoEventTypesUUID;
-            iCommandCompleteErrMsgInErrorHandling = OSCL_NEW(PVMFBasicErrorInfoMessage, (PVPlayerErrDatapathFatal, puuid, nextmsg));
-            iCommandCompleteStatusInErrorHandling = aDatapathStatus;
-            AddCommandToQueue(PVP_ENGINE_COMMAND_ERROR_HANDLING_PREPARE, NULL, NULL, NULL, false);
         }
+        PVUuid puuid = PVPlayerErrorInfoEventTypesUUID;
+        PVMFBasicErrorInfoMessage *errMsg = OSCL_NEW(PVMFBasicErrorInfoMessage, (PVPlayerErrDatapathFatal, puuid, nextmsg));
+        AddErrorHandlingCmd(PVP_ENGINE_COMMAND_ERROR_HANDLING_PREPARE, aDatapathStatus, errMsg);
         return;
     }
 
@@ -15075,32 +14603,18 @@ void PVPlayerEngine::HandleDatapathPause(PVPlayerEngineContext& aDatapathContext
 
     if (aDatapathStatus != PVMFSuccess)
     {
-        bool ehPending = CheckForPendingErrorHandlingCmd();
-        if (ehPending)
+        PVMFErrorInfoMessageInterface* nextmsg = NULL;
+        if (aCmdResp)
         {
-            // there should be no error handling queued.
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::HandleDatapathPause() Already EH pending, should never happen"));
-            return;
-        }
-        else
-        {
-            // Cancel any pending node/datapath commands
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                            (0, "PVPlayerEngine::HandleDatapathPause() In %s Failed, Add EH command", aDatapathContext.iEngineDatapath->iTrackInfo->getTrackMimeType().get_cstr()));
-            PVMFErrorInfoMessageInterface* nextmsg = NULL;
-            if (aCmdResp)
+            if (aCmdResp->GetEventExtensionInterface())
             {
-                if (aCmdResp->GetEventExtensionInterface())
-                {
-                    nextmsg = GetErrorInfoMessageInterface(*(aCmdResp->GetEventExtensionInterface()));
-                }
+                nextmsg = GetErrorInfoMessageInterface(*(aCmdResp->GetEventExtensionInterface()));
             }
-
-            PVUuid puuid = PVPlayerErrorInfoEventTypesUUID;
-            iCommandCompleteErrMsgInErrorHandling = OSCL_NEW(PVMFBasicErrorInfoMessage, (PVPlayerErrDatapathFatal, puuid, nextmsg));
-            iCommandCompleteStatusInErrorHandling = aDatapathStatus;
-            AddCommandToQueue(PVP_ENGINE_COMMAND_ERROR_HANDLING_PAUSE, NULL, NULL, NULL, false);
         }
+
+        PVUuid puuid = PVPlayerErrorInfoEventTypesUUID;
+        PVMFBasicErrorInfoMessage *errMsg = OSCL_NEW(PVMFBasicErrorInfoMessage, (PVPlayerErrDatapathFatal, puuid, nextmsg));
+        AddErrorHandlingCmd(PVP_ENGINE_COMMAND_ERROR_HANDLING_PAUSE, aDatapathStatus, errMsg);
         return;
     }
 
@@ -15111,20 +14625,7 @@ void PVPlayerEngine::HandleDatapathPause(PVPlayerEngineContext& aDatapathContext
 
         if (cmdstatus != PVMFSuccess)
         {
-            bool ehPending = CheckForPendingErrorHandlingCmd();
-            if (ehPending)
-            {
-                // there should be no error handling queued.
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::HandleDatapathPause() Already EH pending, should never happen"));
-                return;
-            }
-            else
-            {
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::HandleDatapathPause() Report command as failed, Add EH command"));
-                iCommandCompleteStatusInErrorHandling = cmdstatus;
-                iCommandCompleteErrMsgInErrorHandling = NULL;
-                AddCommandToQueue(PVP_ENGINE_COMMAND_ERROR_HANDLING_PAUSE, NULL, NULL, NULL, false);
-            }
+            AddErrorHandlingCmd(PVP_ENGINE_COMMAND_ERROR_HANDLING_PAUSE, cmdstatus, NULL);
         }
     }
 
@@ -15145,31 +14646,18 @@ void PVPlayerEngine::HandleDatapathResume(PVPlayerEngineContext& aDatapathContex
 
     if (aDatapathStatus != PVMFSuccess)
     {
-        bool ehPending = CheckForPendingErrorHandlingCmd();
-        if (ehPending)
+        PVMFErrorInfoMessageInterface* nextmsg = NULL;
+        if (aCmdResp)
         {
-            // there should be no error handling queued.
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::HandleDatapathResume() Already EH pending, should never happen"));
-            return;
-        }
-        else
-        {
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                            (0, "PVPlayerEngine::HandleDatapathResume() In %s Failed, Add EH command", aDatapathContext.iEngineDatapath->iTrackInfo->getTrackMimeType().get_cstr()));
-            PVMFErrorInfoMessageInterface* nextmsg = NULL;
-            if (aCmdResp)
+            if (aCmdResp->GetEventExtensionInterface())
             {
-                if (aCmdResp->GetEventExtensionInterface())
-                {
-                    nextmsg = GetErrorInfoMessageInterface(*(aCmdResp->GetEventExtensionInterface()));
-                }
+                nextmsg = GetErrorInfoMessageInterface(*(aCmdResp->GetEventExtensionInterface()));
             }
-
-            PVUuid puuid = PVPlayerErrorInfoEventTypesUUID;
-            iCommandCompleteErrMsgInErrorHandling = OSCL_NEW(PVMFBasicErrorInfoMessage, (PVPlayerErrDatapathFatal, puuid, nextmsg));
-            iCommandCompleteStatusInErrorHandling = aDatapathStatus;
-            AddCommandToQueue(PVP_ENGINE_COMMAND_ERROR_HANDLING_STOP, NULL, NULL, NULL, false);
         }
+
+        PVUuid puuid = PVPlayerErrorInfoEventTypesUUID;
+        PVMFBasicErrorInfoMessage *errMsg = OSCL_NEW(PVMFBasicErrorInfoMessage, (PVPlayerErrDatapathFatal, puuid, nextmsg));
+        AddErrorHandlingCmd(PVP_ENGINE_COMMAND_ERROR_HANDLING_STOP, aDatapathStatus, errMsg);
         return;
     }
 
@@ -15230,11 +14718,16 @@ void PVPlayerEngine::HandleDatapathResume(PVPlayerEngineContext& aDatapathContex
             PVMFBasicErrorInfoMessage* infomsg = OSCL_NEW(PVMFBasicErrorInfoMessage, (PVPlayerInfoPlaybackFromBeginTime, puuid, NULL));
             SendInformationalEvent(PVMFInfoActualPlaybackPosition, OSCL_STATIC_CAST(PVInterface*, infomsg), (OsclAny*)&actualPlaybackPosition);
             infomsg->removeRef();
+            SetEngineState(PVP_ENGINE_STATE_STARTED);
+
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::HandleDatapathResume() Report command as completed"));
+            EngineCommandCompleted(aDatapathContext.iCmdId, aDatapathContext.iCmdContext, PVMFSuccess);
         }
-        else
+        else if ((iState == PVP_ENGINE_STATE_RESUMING) ||
+                 (iState == PVP_ENGINE_STATE_AUTO_RESUMING))
         {
             // Resume the playback clock - only if we have come out of any previous auto pause, if any
-            if (iPlaybackClock.GetState() == PVMFMediaClock::PAUSED)
+            if (iPlaybackClock.GetState() != PVMFMediaClock::RUNNING)
             {
                 StartPlaybackClock();
 
@@ -15276,14 +14769,16 @@ void PVPlayerEngine::HandleDatapathResume(PVPlayerEngineContext& aDatapathContex
                 iPollingCheckTimer->Cancel(PVPLAYERENGINE_TIMERID_ENDTIMECHECK);
                 iPollingCheckTimer->Request(PVPLAYERENGINE_TIMERID_ENDTIMECHECK, 0, checkcycle, this, true);
             }
+            SetEngineState(PVP_ENGINE_STATE_STARTED);
+
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::HandleDatapathResume() Report command as completed"));
+            EngineCommandCompleted(aDatapathContext.iCmdId, aDatapathContext.iCmdContext, PVMFSuccess);
         }
-
-        SetEngineState(PVP_ENGINE_STATE_STARTED);
-
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::HandleDatapathResume() Report command as completed"));
-        EngineCommandCompleted(aDatapathContext.iCmdId, aDatapathContext.iCmdContext, PVMFSuccess);
     }
-
+    else
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG, (0, "PVPlayerEngine::HandleDatapathResume() - %d pending datapath commands", iNumPendingDatapathCmd));
+    }
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVPlayerEngine::HandleDatapathResume() Out"));
 }
 
@@ -15301,31 +14796,18 @@ void PVPlayerEngine::HandleDatapathStop(PVPlayerEngineContext& aDatapathContext,
 
     if (aDatapathStatus != PVMFSuccess)
     {
-        bool ehPending = CheckForPendingErrorHandlingCmd();
-        if (ehPending)
+        PVMFErrorInfoMessageInterface* nextmsg = NULL;
+        if (aCmdResp)
         {
-            // there should be no error handling queued.
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::HandleDatapathStop() Already EH pending, should never happen"));
-            return;
-        }
-        else
-        {
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                            (0, "PVPlayerEngine::HandleDatapathStop() In %s Failed, Add EH command", aDatapathContext.iEngineDatapath->iTrackInfo->getTrackMimeType().get_cstr()));
-            PVMFErrorInfoMessageInterface* nextmsg = NULL;
-            if (aCmdResp)
+            if (aCmdResp->GetEventExtensionInterface())
             {
-                if (aCmdResp->GetEventExtensionInterface())
-                {
-                    nextmsg = GetErrorInfoMessageInterface(*(aCmdResp->GetEventExtensionInterface()));
-                }
+                nextmsg = GetErrorInfoMessageInterface(*(aCmdResp->GetEventExtensionInterface()));
             }
-
-            PVUuid puuid = PVPlayerErrorInfoEventTypesUUID;
-            iCommandCompleteErrMsgInErrorHandling = OSCL_NEW(PVMFBasicErrorInfoMessage, (PVPlayerErrDatapathFatal, puuid, nextmsg));
-            iCommandCompleteStatusInErrorHandling = aDatapathStatus;
-            AddCommandToQueue(PVP_ENGINE_COMMAND_ERROR_HANDLING_STOP, NULL, NULL, NULL, false);
         }
+
+        PVUuid puuid = PVPlayerErrorInfoEventTypesUUID;
+        PVMFBasicErrorInfoMessage *errMsg = OSCL_NEW(PVMFBasicErrorInfoMessage, (PVPlayerErrDatapathFatal, puuid, nextmsg));
+        AddErrorHandlingCmd(PVP_ENGINE_COMMAND_ERROR_HANDLING_STOP, aDatapathStatus, errMsg);
         return;
     }
 
@@ -15336,20 +14818,7 @@ void PVPlayerEngine::HandleDatapathStop(PVPlayerEngineContext& aDatapathContext,
 
         if (cmdstatus != PVMFSuccess)
         {
-            bool ehPending = CheckForPendingErrorHandlingCmd();
-            if (ehPending)
-            {
-                // there should be no error handling queued.
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::HandleDatapathStop() Already EH pending, should never happen"));
-                return;
-            }
-            else
-            {
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::HandleDatapathStop() Report command as failed, Add EH command"));
-                iCommandCompleteErrMsgInErrorHandling = NULL;
-                iCommandCompleteStatusInErrorHandling = cmdstatus;
-                AddCommandToQueue(PVP_ENGINE_COMMAND_ERROR_HANDLING_STOP, NULL, NULL, NULL, false);
-            }
+            AddErrorHandlingCmd(PVP_ENGINE_COMMAND_ERROR_HANDLING_STOP, cmdstatus, NULL);
         }
     }
 
@@ -15376,31 +14845,18 @@ void PVPlayerEngine::HandleDatapathTeardown(PVPlayerEngineContext& aDatapathCont
 
         default:
         {
-            bool ehPending = CheckForPendingErrorHandlingCmd();
-            if (ehPending)
+            PVMFErrorInfoMessageInterface* nextmsg = NULL;
+            if (aCmdResp)
             {
-                // there should be no error handling queued.
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::HandleDatapathTeardown() Already EH pending, should never happen"));
-                return;
-            }
-            else
-            {
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                                (0, "PVPlayerEngine::HandleDatapathTeardown() In %s Failed, Add EH command", aDatapathContext.iEngineDatapath->iTrackInfo->getTrackMimeType().get_cstr()));
-                PVMFErrorInfoMessageInterface* nextmsg = NULL;
-                if (aCmdResp)
+                if (aCmdResp->GetEventExtensionInterface())
                 {
-                    if (aCmdResp->GetEventExtensionInterface())
-                    {
-                        nextmsg = GetErrorInfoMessageInterface(*(aCmdResp->GetEventExtensionInterface()));
-                    }
+                    nextmsg = GetErrorInfoMessageInterface(*(aCmdResp->GetEventExtensionInterface()));
                 }
-
-                PVUuid puuid = PVPlayerErrorInfoEventTypesUUID;
-                iCommandCompleteErrMsgInErrorHandling = OSCL_NEW(PVMFBasicErrorInfoMessage, (PVPlayerErrDatapathFatal, puuid, nextmsg));
-                iCommandCompleteStatusInErrorHandling = aDatapathStatus;
-                AddCommandToQueue(PVP_ENGINE_COMMAND_ERROR_HANDLING_STOP, NULL, NULL, NULL, false);
             }
+
+            PVUuid puuid = PVPlayerErrorInfoEventTypesUUID;
+            PVMFBasicErrorInfoMessage *errMsg = OSCL_NEW(PVMFBasicErrorInfoMessage, (PVPlayerErrDatapathFatal, puuid, nextmsg));
+            AddErrorHandlingCmd(PVP_ENGINE_COMMAND_ERROR_HANDLING_STOP, aDatapathStatus, errMsg);
             return;
         }
     }
@@ -15500,8 +14956,9 @@ void PVPlayerEngine::HandleSourceNodeErrorEvent(const PVMFAsyncEvent& aEvent)
         }
     }
 
+    int32 code;
+    bool handleError = false;
     PVMFEventType event = aEvent.GetEventType();
-
     switch (event)
     {
         case PVMFErrCorrupt:
@@ -15511,34 +14968,8 @@ void PVPlayerEngine::HandleSourceNodeErrorEvent(const PVMFAsyncEvent& aEvent)
         {
             PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
                             (0, "PVPlayerEngine::HandleSourceNodeErrorEvent() Sending PVPlayerErrSourceMediaData for error event %d, Add EH command if not present", event));
-            bool ehPending = CheckForPendingErrorHandlingCmd();
-            if (ehPending)
-            {
-                // there should be no error handling queued.
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::HandleSourceNodeErrorEvent() Already EH pending, should never happen"));
-                return;
-            }
-            else
-            {
-                PVMFErrorInfoMessageInterface* nextmsg = NULL;
-                if (aEvent.GetEventExtensionInterface() != NULL)
-                {
-                    nextmsg = GetErrorInfoMessageInterface(*(aEvent.GetEventExtensionInterface()));
-                }
-                PVUuid puuid = PVPlayerErrorInfoEventTypesUUID;
-                iCommandCompleteErrMsgInErrorHandling = OSCL_NEW(PVMFBasicErrorInfoMessage, (PVPlayerErrSourceMediaData, puuid, nextmsg));
-                iCommandCompleteStatusInErrorHandling = event;
-                AddCommandToQueue(PVP_ENGINE_COMMAND_ERROR_HANDLING_GENERAL, NULL, NULL, NULL, false);
-                if (iCurrentCmd.empty())
-                {
-                    // this error was received when no cmd was being processed so send the error event from here
-                    SendErrorEvent(iCommandCompleteStatusInErrorHandling,
-                                   OSCL_STATIC_CAST(PVInterface*, iCommandCompleteErrMsgInErrorHandling),
-                                   aEvent.GetEventData(), aEvent.GetLocalBuffer(), aEvent.GetLocalBufferSize());
-                    iCommandCompleteErrMsgInErrorHandling->removeRef();
-                    iCommandCompleteErrMsgInErrorHandling = NULL;
-                }
-            }
+            code = PVPlayerErrSourceMediaData;
+            handleError = true;
         }
         break;
 
@@ -15546,34 +14977,8 @@ void PVPlayerEngine::HandleSourceNodeErrorEvent(const PVMFAsyncEvent& aEvent)
         {
             PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
                             (0, "PVPlayerEngine::HandleSourceNodeErrorEvent() Sending PVPlayerErrSourceMediaDataUnavailable for error event %d, Add EH command if not present", event));
-            bool ehPending = CheckForPendingErrorHandlingCmd();
-            if (ehPending)
-            {
-                // there should be no error handling queued.
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::HandleSourceNodeErrorEvent() Already EH pending, should never happen"));
-                return;
-            }
-            else
-            {
-                PVMFErrorInfoMessageInterface* nextmsg = NULL;
-                if (aEvent.GetEventExtensionInterface() != NULL)
-                {
-                    nextmsg = GetErrorInfoMessageInterface(*(aEvent.GetEventExtensionInterface()));
-                }
-                PVUuid puuid = PVPlayerErrorInfoEventTypesUUID;
-                iCommandCompleteErrMsgInErrorHandling = OSCL_NEW(PVMFBasicErrorInfoMessage, (PVPlayerErrSourceMediaDataUnavailable, puuid, nextmsg));
-                iCommandCompleteStatusInErrorHandling = event;
-                AddCommandToQueue(PVP_ENGINE_COMMAND_ERROR_HANDLING_GENERAL, NULL, NULL, NULL, false);
-                if (iCurrentCmd.empty())
-                {
-                    // this error was received when no cmd was being processed so send the error event from here
-                    SendErrorEvent(iCommandCompleteStatusInErrorHandling,
-                                   OSCL_STATIC_CAST(PVInterface*, iCommandCompleteErrMsgInErrorHandling),
-                                   aEvent.GetEventData(), aEvent.GetLocalBuffer(), aEvent.GetLocalBufferSize());
-                    iCommandCompleteErrMsgInErrorHandling->removeRef();
-                    iCommandCompleteErrMsgInErrorHandling = NULL;
-                }
-            }
+            code = PVPlayerErrSourceMediaDataUnavailable;
+            handleError = true;
         }
         break;
 
@@ -15585,34 +14990,8 @@ void PVPlayerEngine::HandleSourceNodeErrorEvent(const PVMFAsyncEvent& aEvent)
         {
             PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
                             (0, "PVPlayerEngine::HandleSourceNodeErrorEvent() Sending PVPlayerErrSourceFatal for error event %d, Add EH command if not present", event));
-            bool ehPending = CheckForPendingErrorHandlingCmd();
-            if (ehPending)
-            {
-                // there should be no error handling queued.
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::HandleSourceNodeErrorEvent() Already EH pending, should never happen"));
-                return;
-            }
-            else
-            {
-                PVMFErrorInfoMessageInterface* nextmsg = NULL;
-                if (aEvent.GetEventExtensionInterface() != NULL)
-                {
-                    nextmsg = GetErrorInfoMessageInterface(*(aEvent.GetEventExtensionInterface()));
-                }
-                PVUuid puuid = PVPlayerErrorInfoEventTypesUUID;
-                iCommandCompleteErrMsgInErrorHandling = OSCL_NEW(PVMFBasicErrorInfoMessage, (PVPlayerErrSourceFatal, puuid, nextmsg));
-                iCommandCompleteStatusInErrorHandling = event;
-                AddCommandToQueue(PVP_ENGINE_COMMAND_ERROR_HANDLING_GENERAL, NULL, NULL, NULL, false);
-                if (iCurrentCmd.empty())
-                {
-                    // this error was received when no cmd was being processed so send the error event from here
-                    SendErrorEvent(iCommandCompleteStatusInErrorHandling,
-                                   OSCL_STATIC_CAST(PVInterface*, iCommandCompleteErrMsgInErrorHandling),
-                                   aEvent.GetEventData(), aEvent.GetLocalBuffer(), aEvent.GetLocalBufferSize());
-                    iCommandCompleteErrMsgInErrorHandling->removeRef();
-                    iCommandCompleteErrMsgInErrorHandling = NULL;
-                }
-            }
+            code = PVPlayerErrSourceFatal;
+            handleError = true;
         }
         break;
 
@@ -15622,6 +15001,26 @@ void PVPlayerEngine::HandleSourceNodeErrorEvent(const PVMFAsyncEvent& aEvent)
             break;
     }
 
+    if (handleError)
+    {
+        PVMFErrorInfoMessageInterface* nextmsg = NULL;
+        if (aEvent.GetEventExtensionInterface() != NULL)
+        {
+            nextmsg = GetErrorInfoMessageInterface(*(aEvent.GetEventExtensionInterface()));
+        }
+        PVUuid puuid = PVPlayerErrorInfoEventTypesUUID;
+        PVMFBasicErrorInfoMessage* errMsg = OSCL_NEW(PVMFBasicErrorInfoMessage, (code, puuid, nextmsg));
+        AddErrorHandlingCmd(PVP_ENGINE_COMMAND_ERROR_HANDLING_GENERAL, event, errMsg);
+        if (iCurrentCmd.empty())
+        {
+            // this error was received when no cmd was being processed so send the error event from here
+            SendErrorEvent(event,
+                           OSCL_STATIC_CAST(PVInterface*, errMsg),
+                           aEvent.GetEventData(), aEvent.GetLocalBuffer(), aEvent.GetLocalBufferSize());
+            errMsg->removeRef();
+            iCommandCompleteErrMsgInErrorHandling = NULL;
+        }
+    }
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVPlayerEngine::HandleSourceNodeErrorEvent() Out"));
 }
 
@@ -15641,8 +15040,9 @@ void PVPlayerEngine::HandleDecNodeErrorEvent(const PVMFAsyncEvent& aEvent, int32
         return;
     }
 
+    int32 code;
+    bool handleError = false;
     PVMFEventType event = aEvent.GetEventType();
-
     switch (event)
     {
         case PVMFErrCorrupt:
@@ -15652,34 +15052,8 @@ void PVPlayerEngine::HandleDecNodeErrorEvent(const PVMFAsyncEvent& aEvent, int32
         {
             PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
                             (0, "PVPlayerEngine::HandleDecNodeErrorEvent() Sending PVPlayerErrDatapathMediaData for error event %d, Add EH command if not present", event));
-            bool ehPending = CheckForPendingErrorHandlingCmd();
-            if (ehPending)
-            {
-                // there should be no error handling queued.
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::HandleDecNodeErrorEvent() Already EH pending, should never happen"));
-                return;
-            }
-            else
-            {
-                PVMFErrorInfoMessageInterface* nextmsg = NULL;
-                if (aEvent.GetEventExtensionInterface() != NULL)
-                {
-                    nextmsg = GetErrorInfoMessageInterface(*(aEvent.GetEventExtensionInterface()));
-                }
-                PVUuid puuid = PVPlayerErrorInfoEventTypesUUID;
-                iCommandCompleteErrMsgInErrorHandling = OSCL_NEW(PVMFBasicErrorInfoMessage, (PVPlayerErrDatapathMediaData, puuid, nextmsg));
-                iCommandCompleteStatusInErrorHandling = event;
-                AddCommandToQueue(PVP_ENGINE_COMMAND_ERROR_HANDLING_GENERAL, NULL, NULL, NULL, false);
-                if (iCurrentCmd.empty())
-                {
-                    // this error was received when no cmd was being processed so send the error event from here
-                    SendErrorEvent(iCommandCompleteStatusInErrorHandling,
-                                   OSCL_STATIC_CAST(PVInterface*, iCommandCompleteErrMsgInErrorHandling),
-                                   aEvent.GetEventData(), aEvent.GetLocalBuffer(), aEvent.GetLocalBufferSize());
-                    iCommandCompleteErrMsgInErrorHandling->removeRef();
-                    iCommandCompleteErrMsgInErrorHandling = NULL;
-                }
-            }
+            code = PVPlayerErrDatapathMediaData;
+            handleError = true;
         }
         break;
 
@@ -15691,34 +15065,8 @@ void PVPlayerEngine::HandleDecNodeErrorEvent(const PVMFAsyncEvent& aEvent, int32
         {
             PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
                             (0, "PVPlayerEngine::HandleDecNodeErrorEvent() Sending PVPlayerErrDatapathFatal for error event %d, Add EH command if not present", event));
-            bool ehPending = CheckForPendingErrorHandlingCmd();
-            if (ehPending)
-            {
-                // there should be no error handling queued.
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::HandleDecNodeErrorEvent() Already EH pending, should never happen"));
-                return;
-            }
-            else
-            {
-                PVMFErrorInfoMessageInterface* nextmsg = NULL;
-                if (aEvent.GetEventExtensionInterface() != NULL)
-                {
-                    nextmsg = GetErrorInfoMessageInterface(*(aEvent.GetEventExtensionInterface()));
-                }
-                PVUuid puuid = PVPlayerErrorInfoEventTypesUUID;
-                iCommandCompleteErrMsgInErrorHandling = OSCL_NEW(PVMFBasicErrorInfoMessage, (PVPlayerErrDatapathFatal, puuid, nextmsg));
-                iCommandCompleteStatusInErrorHandling = event;
-                AddCommandToQueue(PVP_ENGINE_COMMAND_ERROR_HANDLING_GENERAL, NULL, NULL, NULL, false);
-                if (iCurrentCmd.empty())
-                {
-                    // this error was received when no cmd was being processed so send the error event from here
-                    SendErrorEvent(iCommandCompleteStatusInErrorHandling,
-                                   OSCL_STATIC_CAST(PVInterface*, iCommandCompleteErrMsgInErrorHandling),
-                                   aEvent.GetEventData(), aEvent.GetLocalBuffer(), aEvent.GetLocalBufferSize());
-                    iCommandCompleteErrMsgInErrorHandling->removeRef();
-                    iCommandCompleteErrMsgInErrorHandling = NULL;
-                }
-            }
+            code = PVPlayerErrDatapathFatal;
+            handleError = true;
         }
         break;
 
@@ -15728,6 +15076,26 @@ void PVPlayerEngine::HandleDecNodeErrorEvent(const PVMFAsyncEvent& aEvent, int32
             break;
     }
 
+    if (handleError)
+    {
+        PVMFErrorInfoMessageInterface* nextmsg = NULL;
+        if (aEvent.GetEventExtensionInterface() != NULL)
+        {
+            nextmsg = GetErrorInfoMessageInterface(*(aEvent.GetEventExtensionInterface()));
+        }
+        PVUuid puuid = PVPlayerErrorInfoEventTypesUUID;
+        PVMFBasicErrorInfoMessage* errMsg = OSCL_NEW(PVMFBasicErrorInfoMessage, (code, puuid, nextmsg));
+        AddErrorHandlingCmd(PVP_ENGINE_COMMAND_ERROR_HANDLING_GENERAL, event, errMsg);
+        if (iCurrentCmd.empty())
+        {
+            // this error was received when no cmd was being processed so send the error event from here
+            SendErrorEvent(event,
+                           OSCL_STATIC_CAST(PVInterface*, errMsg),
+                           aEvent.GetEventData(), aEvent.GetLocalBuffer(), aEvent.GetLocalBufferSize());
+            errMsg->removeRef();
+            iCommandCompleteErrMsgInErrorHandling = NULL;
+        }
+    }
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVPlayerEngine::HandleDecNodeErrorEvent() Out"));
 }
 
@@ -15747,8 +15115,9 @@ void PVPlayerEngine::HandleSinkNodeErrorEvent(const PVMFAsyncEvent& aEvent, int3
         return;
     }
 
+    int32 code;
+    bool handleError = false;
     PVMFEventType event = aEvent.GetEventType();
-
     switch (event)
     {
         case PVMFErrCorrupt:
@@ -15758,34 +15127,8 @@ void PVPlayerEngine::HandleSinkNodeErrorEvent(const PVMFAsyncEvent& aEvent, int3
         {
             PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
                             (0, "PVPlayerEngine::HandleSinkNodeErrorEvent() Sending PVPlayerErrDatapathMediaData for error event %d, Add EH command if not present", event));
-            bool ehPending = CheckForPendingErrorHandlingCmd();
-            if (ehPending)
-            {
-                // there should be no error handling queued.
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::HandleSinkNodeErrorEvent() Already EH pending, should never happen"));
-                return;
-            }
-            else
-            {
-                PVMFErrorInfoMessageInterface* nextmsg = NULL;
-                if (aEvent.GetEventExtensionInterface() != NULL)
-                {
-                    nextmsg = GetErrorInfoMessageInterface(*(aEvent.GetEventExtensionInterface()));
-                }
-                PVUuid puuid = PVPlayerErrorInfoEventTypesUUID;
-                iCommandCompleteErrMsgInErrorHandling = OSCL_NEW(PVMFBasicErrorInfoMessage, (PVPlayerErrSinkMediaData, puuid, nextmsg));
-                iCommandCompleteStatusInErrorHandling = event;
-                AddCommandToQueue(PVP_ENGINE_COMMAND_ERROR_HANDLING_GENERAL, NULL, NULL, NULL, false);
-                if (iCurrentCmd.empty())
-                {
-                    // this error was received when no cmd was being processed so send the error event from here
-                    SendErrorEvent(iCommandCompleteStatusInErrorHandling,
-                                   OSCL_STATIC_CAST(PVInterface*, iCommandCompleteErrMsgInErrorHandling),
-                                   aEvent.GetEventData(), aEvent.GetLocalBuffer(), aEvent.GetLocalBufferSize());
-                    iCommandCompleteErrMsgInErrorHandling->removeRef();
-                    iCommandCompleteErrMsgInErrorHandling = NULL;
-                }
-            }
+            code = PVPlayerErrSinkMediaData;
+            handleError = true;
         }
         break;
 
@@ -15797,34 +15140,8 @@ void PVPlayerEngine::HandleSinkNodeErrorEvent(const PVMFAsyncEvent& aEvent, int3
         {
             PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
                             (0, "PVPlayerEngine::HandleSinkNodeErrorEvent() Sending PVPlayerErrSinkFatal for error event %d, Add EH command if not present", event));
-            bool ehPending = CheckForPendingErrorHandlingCmd();
-            if (ehPending)
-            {
-                // there should be no error handling queued.
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::HandleSinkNodeErrorEvent() Already EH pending, should never happen"));
-                return;
-            }
-            else
-            {
-                PVMFErrorInfoMessageInterface* nextmsg = NULL;
-                if (aEvent.GetEventExtensionInterface() != NULL)
-                {
-                    nextmsg = GetErrorInfoMessageInterface(*(aEvent.GetEventExtensionInterface()));
-                }
-                PVUuid puuid = PVPlayerErrorInfoEventTypesUUID;
-                iCommandCompleteErrMsgInErrorHandling = OSCL_NEW(PVMFBasicErrorInfoMessage, (PVPlayerErrSinkFatal, puuid, nextmsg));
-                iCommandCompleteStatusInErrorHandling = event;
-                AddCommandToQueue(PVP_ENGINE_COMMAND_ERROR_HANDLING_GENERAL, NULL, NULL, NULL, false);
-                if (iCurrentCmd.empty())
-                {
-                    // this error was received when no cmd was being processed so send the error event from here
-                    SendErrorEvent(iCommandCompleteStatusInErrorHandling,
-                                   OSCL_STATIC_CAST(PVInterface*, iCommandCompleteErrMsgInErrorHandling),
-                                   aEvent.GetEventData(), aEvent.GetLocalBuffer(), aEvent.GetLocalBufferSize());
-                    iCommandCompleteErrMsgInErrorHandling->removeRef();
-                    iCommandCompleteErrMsgInErrorHandling = NULL;
-                }
-            }
+            code = PVPlayerErrSinkFatal;
+            handleError = true;
         }
         break;
 
@@ -15834,6 +15151,26 @@ void PVPlayerEngine::HandleSinkNodeErrorEvent(const PVMFAsyncEvent& aEvent, int3
             break;
     }
 
+    if (handleError)
+    {
+        PVMFErrorInfoMessageInterface* nextmsg = NULL;
+        if (aEvent.GetEventExtensionInterface() != NULL)
+        {
+            nextmsg = GetErrorInfoMessageInterface(*(aEvent.GetEventExtensionInterface()));
+        }
+        PVUuid puuid = PVPlayerErrorInfoEventTypesUUID;
+        PVMFBasicErrorInfoMessage* errMsg = OSCL_NEW(PVMFBasicErrorInfoMessage, (code, puuid, nextmsg));
+        AddErrorHandlingCmd(PVP_ENGINE_COMMAND_ERROR_HANDLING_GENERAL, event, errMsg);
+        if (iCurrentCmd.empty())
+        {
+            // this error was received when no cmd was being processed so send the error event from here
+            SendErrorEvent(event,
+                           OSCL_STATIC_CAST(PVInterface*, errMsg),
+                           aEvent.GetEventData(), aEvent.GetLocalBuffer(), aEvent.GetLocalBufferSize());
+            errMsg->removeRef();
+            iCommandCompleteErrMsgInErrorHandling = NULL;
+        }
+    }
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVPlayerEngine::HandleSinkNodeErrorEvent() Out"));
 }
 
@@ -15980,7 +15317,8 @@ void PVPlayerEngine::HandleSourceNodeInfoEvent(const PVMFAsyncEvent& aEvent)
 
             // if no resume in the queue and no resume in progress, add one
             if ((! removeCmdFromQ(iCurrentCmd, PVP_ENGINE_COMMAND_RESUME_DUE_TO_BUFFER_DATAREADY, false))
-                    && (! removeCmdFromQ(iPendingCmds, PVP_ENGINE_COMMAND_RESUME_DUE_TO_BUFFER_DATAREADY, false)))
+                    && (! removeCmdFromQ(iPendingCmds, PVP_ENGINE_COMMAND_RESUME_DUE_TO_BUFFER_DATAREADY, false))
+                    && (iState != PVP_ENGINE_STATE_PAUSED))
             {
                 AddCommandToQueue(PVP_ENGINE_COMMAND_RESUME_DUE_TO_BUFFER_DATAREADY, NULL, NULL, NULL, false);
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVPlayerEngine::HandleSourceNodeInfoEvent() Received source data ready event, issue auto-resume command"));
@@ -16235,6 +15573,21 @@ void PVPlayerEngine::HandleSinkNodeInfoEvent(const PVMFAsyncEvent& aEvent, int32
                         // start the clock only if engine is in started state
                         StartPlaybackClock();
                         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iReposLogger, PVLOGMSG_INFO, (0, "PVPlayerEngine::HandleSinkNodeInfoEvent() - PlayClock Started"));
+                        // Process any pending command
+                        RunIfNotReady();
+                    }
+                    else if (iState == PVP_ENGINE_STATE_PAUSED)
+                    {
+                        // Skip is complete and data is ready
+                        // Now, pause the nodes
+                        // @TODO - Check if there is a resume command already queued in.
+                        //         If so, complete the current SetPlaybackRange command,
+                        //         and in DoResume() ignore the "invalid state".
+                        PVMFStatus retval =  DoPauseDatapath(iCurrentCmd[0].GetCmdId(), iCurrentCmd[0].GetContext());
+                        if (retval != PVMFSuccess)
+                        {
+                            AddErrorHandlingCmd(PVP_ENGINE_COMMAND_ERROR_HANDLING_SET_PLAYBACK_RANGE, retval, NULL);
+                        }
                     }
                 }
             }
@@ -16259,6 +15612,10 @@ void PVPlayerEngine::HandleSinkNodeInfoEvent(const PVMFAsyncEvent& aEvent, int32
                 break;
             }
 
+            if (iNumPVMFInfoStartOfDataPending)
+            {
+                iNumPVMFInfoStartOfDataPending--;
+            }
             if (iDatapathList[aDatapathIndex].iDatapath && iDatapathList[aDatapathIndex].iEndOfDataReceived == false)
             {
                 iDatapathList[aDatapathIndex].iEndOfDataReceived = true;
@@ -16274,8 +15631,11 @@ void PVPlayerEngine::HandleSinkNodeInfoEvent(const PVMFAsyncEvent& aEvent, int32
                     // If sum of number of clips played back and corrupted clips in list equates to total clips queued to Source Node.
                     if ((iNumClipsQueued == iClipsCompleted + iClipsCorrupted))
                     {
-                        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVPlayerEngine::HandleSinkNodeInfoEvent() Issue Pause due to end of clip"));
-                        AddCommandToQueue(PVP_ENGINE_COMMAND_PAUSE_DUE_TO_ENDOFCLIP, NULL, NULL, NULL, false);
+                        if (iState != PVP_ENGINE_STATE_PAUSING)
+                        {
+                            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_INFO, (0, "PVPlayerEngine::HandleSinkNodeInfoEvent() Issue Pause due to end of clip"));
+                            AddCommandToQueue(PVP_ENGINE_COMMAND_PAUSE_DUE_TO_ENDOFCLIP, NULL, NULL, NULL, false);
+                        }
                     }
                     else
                     {
@@ -17399,6 +16759,57 @@ void PVPlayerEngine::UpdateCurrentClipSourceDuration()
     }
 }
 
+PVMFStatus PVPlayerEngine::DoPauseDatapath(PVCommandId cmdId, OsclAny* context)
+{
+    PVMFStatus retval = PVMFSuccess;
+
+    for (uint32 i = 0; i < iDatapathList.size(); ++i)
+    {
+        if (iDatapathList[i].iDatapath)
+        {
+            if (iState == PVP_ENGINE_STATE_AUTO_PAUSED)
+            {
+                // Since sinks are already paused in auto-pause state, skip pausing the sink in the datapath
+                retval = DoDatapathPause(iDatapathList[i], cmdId, context, true);
+            }
+            else
+            {
+                // Pause all nodes in the datapath
+                retval = DoDatapathPause(iDatapathList[i], cmdId, context, false);
+            }
+
+            if (retval == PVMFSuccess)
+            {
+                ++iNumPendingDatapathCmd;
+            }
+            else
+            {
+                return AddErrorHandlingCmd(PVP_ENGINE_COMMAND_ERROR_HANDLING_PAUSE, retval, NULL);
+            }
+        }
+    }
+    return retval;
+}
+
+PVMFStatus PVPlayerEngine::AddErrorHandlingCmd(int32 aCmdType, PVMFStatus aErrStatus, PVMFBasicErrorInfoMessage* aErrMsg)
+{
+    bool ehPending = CheckForPendingErrorHandlingCmd();
+    if (ehPending)
+    {
+        // there should be no error handling queued.
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "Pending EH command, should never happen"));
+        if (aErrMsg)
+        {
+            aErrMsg->removeRef();
+        }
+        return PVMFPending;
+    }
+    // go in error handling
+    iCommandCompleteStatusInErrorHandling = aErrStatus;
+    iCommandCompleteErrMsgInErrorHandling = aErrMsg;
+    AddCommandToQueue(aCmdType, NULL, NULL, NULL, false);
+    return PVMFPending;
+}
 
 // END FILE
 

@@ -565,13 +565,11 @@ struct PVPlayerKeyStringData
 
 
 // Key string info at the base level ("x-pvmf/player/")
-#define PVPLAYERCONFIG_BASE_NUMKEYS 11
+#define PVPLAYERCONFIG_BASE_NUMKEYS 9
 const PVPlayerKeyStringData PVPlayerConfigBaseKeys[PVPLAYERCONFIG_BASE_NUMKEYS] =
 {
     {"pbpos_units", PVMI_KVPTYPE_VALUE, PVMI_KVPVALTYPE_CHARPTR},
     {"pbpos_interval", PVMI_KVPTYPE_VALUE, PVMI_KVPVALTYPE_UINT32},
-    {"seektosyncpoint", PVMI_KVPTYPE_VALUE, PVMI_KVPVALTYPE_BOOL},
-    {"skiptorequestedpos", PVMI_KVPTYPE_VALUE, PVMI_KVPVALTYPE_BOOL},
     {"syncpointseekwindow", PVMI_KVPTYPE_VALUE, PVMI_KVPVALTYPE_UINT32},
     {"syncmargin_video", PVMI_KVPTYPE_VALUE, PVMI_KVPVALTYPE_RANGE_INT32},
     {"syncmargin_audio", PVMI_KVPTYPE_VALUE, PVMI_KVPVALTYPE_RANGE_INT32},
@@ -585,8 +583,6 @@ enum PlayerConfigBaseKeys_IndexMap
 {
     PBPOS_UNITS = 0,
     PBPOS_INTERVAL,
-    SEEKTOSYNCPOINT,
-    SKIPTOREQUESTEDPOSITION,
     SYNCPOINTSEEKWINDOW,
     SYNCMARGIN_VIDEO,
     SYNCMARGIN_AUDIO,
@@ -905,7 +901,7 @@ class PVPlayerEngine
         PVCommandId GetMetadataValues(PVPMetadataList& aKeyList, int32 aStartingValueIndex, int32 aMaxValueEntries, int32& aNumAvailableValueEntries, Oscl_Vector<PvmiKvp, OsclMemAllocator>& aValueList, const OsclAny* aContextData = NULL, bool aMetadataValuesCopiedInCallBack = true, uint32 aClipIndex = 0);
         PVCommandId ReleaseMetadataValues(Oscl_Vector<PvmiKvp, OsclMemAllocator>& aValueList, const OsclAny* aContextData = NULL, uint32 aClipIndex = 0);
         PVCommandId AddDataSink(PVPlayerDataSink& aDataSink, const OsclAny* aContextData = NULL);
-        PVCommandId SetPlaybackRange(PVPPlaybackPosition aBeginPos, PVPPlaybackPosition aEndPos, bool aQueueRange, const OsclAny* aContextData = NULL);
+        PVCommandId SetPlaybackRange(PVPPlaybackPosition aBeginPos, PVPPlaybackPosition aEndPos, bool aQueueRange, const OsclAny* aContextData = NULL, bool aSkipToRequestedPosition = true, bool aSeekToSyncPoint = true);
         PVCommandId GetPlaybackRange(PVPPlaybackPosition &aBeginPos, PVPPlaybackPosition &aEndPos, bool aQueued, const OsclAny* aContextData = NULL);
         PVCommandId GetCurrentPosition(PVPPlaybackPosition &aPos, const OsclAny* aContextData = NULL);
         PVMFStatus GetCurrentPositionSync(PVPPlaybackPosition &aPos);
@@ -997,6 +993,7 @@ class PVPlayerEngine
 
         // For checking of any pending error handling cmd in the queue
         bool CheckForPendingErrorHandlingCmd();
+        PVMFStatus AddErrorHandlingCmd(int32 aCmdType, PVMFStatus aErrStatus, PVMFBasicErrorInfoMessage* aErrMsg);
 
         // From PVPlayerRecognizerRegistryObserver
         void RecognizeCompleted(PVMFFormatType aSourceFormatType, OsclAny* aContext);
@@ -1312,6 +1309,7 @@ class PVPlayerEngine
             PVP_CMD_SourceNodeGetDurationValue,
             PVP_CMD_SourceNodeSetDataSourceRate,
             PVP_CMD_SourceNodePrepare,
+            PVP_CMD_SourceNodePause,
             PVP_CMD_SinkNodeQuerySyncCtrlIF,
             PVP_CMD_SinkNodeQueryMetadataIF,
             PVP_CMD_SinkNodeQueryCapConfigIF,
@@ -1349,6 +1347,12 @@ class PVPlayerEngine
             PVP_CMD_SourceNodeRollOver
         };
 
+        PVMFStatus DoSinkNodeChangeClockRate();
+        PVMFStatus DoSinkPlaybackDirectionChange();
+        PVMFStatus UpdateCurrentDirection(PVMFCommandId, OsclAny*);
+        void UpdateTimebaseAndRate();
+        void UpdateDirection(PVMFTimestamp, PVMFTimestamp, PVPPlaybackPosition&);
+
         // Node command handling functions
         void HandleSourceNodeQueryInitIF(PVPlayerEngineContext& aNodeContext, const PVMFCmdResp& aNodeResp);
         void HandleSourceNodeQueryTrackSelIF(PVPlayerEngineContext& aNodeContext, const PVMFCmdResp& aNodeResp);
@@ -1356,39 +1360,30 @@ class PVPlayerEngine
         void HandleSourceNodeQueryCPMLicenseInterface(PVPlayerEngineContext& aNodeContext, const PVMFCmdResp& aNodeResp);
         void HandleSourceNodeInit(PVPlayerEngineContext& aNodeContext, const PVMFCmdResp& aNodeResp);
         void HandleSourceNodeGetDurationValue(PVPlayerEngineContext& aNodeContext, const PVMFCmdResp& aNodeResp);
-
         void HandleSourceNodeSetDataSourceRate(PVPlayerEngineContext& aNodeContext, const PVMFCmdResp& aNodeResp);
-        PVMFStatus DoSinkNodeChangeClockRate();
-        PVMFStatus DoSinkPlaybackDirectionChange();
-        PVMFStatus UpdateCurrentDirection(PVMFCommandId, OsclAny*);
-        void UpdateTimebaseAndRate();
-        void UpdateDirection(PVMFTimestamp, PVMFTimestamp, PVPPlaybackPosition&);
         void HandleSourceNodePrepare(PVPlayerEngineContext& aNodeContext, const PVMFCmdResp& aNodeResp);
-        void HandleSinkNodeQueryInterfaceOptional(PVPlayerEngineContext& aNodeContext, const PVMFCmdResp& aNodeResp);
-        void HandleDecNodeQueryInterfaceOptional(PVPlayerEngineContext& aNodeContext, const PVMFCmdResp& aNodeResp);
         void HandleSourceNodeQueryDataSourcePosition(PVPlayerEngineContext& aNodeContext, const PVMFCmdResp& aNodeResp);
         void HandleSourceNodeSetDataSourcePosition(PVPlayerEngineContext& aNodeContext, const PVMFCmdResp& aNodeResp);
         void HandleSourceNodeSetDataSourceDirection(PVPlayerEngineContext& aNodeContext, const PVMFCmdResp& aNodeResp);
         void HandleSourceNodeStart(PVPlayerEngineContext& aNodeContext, const PVMFCmdResp& aNodeResp);
-        void HandleSinkNodeSkipMediaData(PVPlayerEngineContext& aNodeContext, const PVMFCmdResp& aNodeResp);
-
         void HandleSourceNodeQueryDataSourcePositionDuringPlayback(PVPlayerEngineContext& aNodeContext, const PVMFCmdResp& aNodeResp);
         void HandleSourceNodeSetDataSourcePositionDuringPlayback(PVPlayerEngineContext& aNodeContext, const PVMFCmdResp& aNodeResp);
-        void HandleSinkNodeSkipMediaDataDuringPlayback(PVPlayerEngineContext& aNodeContext, const PVMFCmdResp& aNodeResp);
-
         void HandleSourceNodePause(PVPlayerEngineContext& aNodeContext, const PVMFCmdResp& aNodeResp);
-        void HandleSourceNodeResume(PVPlayerEngineContext& aNodeContext, const PVMFCmdResp& aNodeResp);
         void HandleSourceNodeStop(PVPlayerEngineContext& aNodeContext, const PVMFCmdResp& aNodeResp);
         void HandleSourceNodeReset(PVPlayerEngineContext& aNodeContext, const PVMFCmdResp& aNodeResp);
 
+        void HandleSinkNodeQueryInterfaceOptional(PVPlayerEngineContext& aNodeContext, const PVMFCmdResp& aNodeResp);
+        void HandleSinkNodeSkipMediaData(PVPlayerEngineContext& aNodeContext, const PVMFCmdResp& aNodeResp);
+        void HandleSinkNodeSkipMediaDataDuringPlayback(PVPlayerEngineContext& aNodeContext, const PVMFCmdResp& aNodeResp);
         void HandleSinkNodePause(PVPlayerEngineContext& aNodeContext, const PVMFCmdResp& aNodeResp);
         void HandleSinkNodeResume(PVPlayerEngineContext& aNodeContext, const PVMFCmdResp& aNodeResp);
         void HandleSinkNodeReset(PVPlayerEngineContext& aNodeContext, const PVMFCmdResp& aNodeResp);
-        void HandleDecNodeReset(PVPlayerEngineContext& aNodeContext, const PVMFCmdResp& aNodeResp);
-
         void HandleSinkNodeQueryInterfaceMandatory(PVPlayerEngineContext& aNodeContext, const PVMFCmdResp& aNodeResp);
         void HandleSinkNodeInit(PVPlayerEngineContext& aNodeContext, const PVMFCmdResp& aNodeResp);
+
+        void HandleDecNodeQueryInterfaceOptional(PVPlayerEngineContext& aNodeContext, const PVMFCmdResp& aNodeResp);
         void HandleDecNodeQueryCapConfigIF(PVPlayerEngineContext& aNodeContext, const PVMFCmdResp& aNodeResp);
+        void HandleDecNodeReset(PVPlayerEngineContext& aNodeContext, const PVMFCmdResp& aNodeResp);
         void HandleDecNodeInit(PVPlayerEngineContext& aNodeContext, const PVMFCmdResp& aNodeResp);
 
         void HandleSinkNodeDecNodeReset(PVPlayerEngineContext& aNodeContext, const PVMFCmdResp& aNodeResp);
@@ -1459,6 +1454,8 @@ class PVPlayerEngine
 
         void UpdateSourceDurationVector(uint8* localBuffer, uint32 duration);
         void UpdateCurrentClipSourceDuration();
+        PVMFStatus DoPauseDatapath(PVMFCommandId aCmdId, OsclAny* aCmdContext);
+
         // Handle to the logger node
         PVLogger* iLogger;
         PVLogger* iReposLogger;

@@ -867,7 +867,7 @@ void PVMediaOutputNodePort::statusUpdate(uint32 status_flags)
             // Allow data to be processed if possible
             ProcessIncomingMessageIfPossible();
 
-            if (oProcessIncomingMessage == true)
+            if (oProcessIncomingMessage || iSendOneFrameAfterSkip)
             {
                 if (iCurrentMediaMsg.GetRep() != NULL)
                 {
@@ -1290,6 +1290,7 @@ void PVMediaOutputNodePort::SendMediaData()
                 //waiting on async write complete in which case media msg has been pushed into the cleanup queue
                 iCurrentMediaMsg.Unbind();
                 iFragIndex = 0;
+                iSendOneFrameAfterSkip = false;
             }
             iWriteState = EWriteOK;
         }
@@ -1527,7 +1528,19 @@ PVMediaOutputNodePort::CheckMediaTimeStamp(uint32& aDelta)
         uint32 clock_adjforearlymargin = clock_msec32 + iEarlyMargin;
         uint32 ts_adjforlatemargin = aTimeStamp + iLateMargin + duration;
 
-        if ((clock_adjforearlymargin - aTimeStamp) > WRAP_THRESHOLD)
+        if (iSendOneFrameAfterSkip)
+        {
+            PVMF_MOPORT_LOGREPOS((0, "PVMediaOutputNodePort::CheckMediaTimeStamp - Fmt=%s, First frame after repositioning",
+                                  iSinkFormatString.get_str()));
+            PVMF_MOPORT_LOGDATAPATH((0, "PVMediaOutputNodePort::CheckMediaTimeStamp - OnTime - Fmt=%s, Seq=%d, Ts=%d, Clock=%d",
+                                     iSinkFormatString.get_str(),
+                                     iCurrentMediaMsg->getSeqNum(),
+                                     aTimeStamp,
+                                     clock_msec32));
+            iConsecutiveFramesDropped = 0;
+            return PVMF_MEDIAOUTPUTNODEPORT_MEDIA_ON_TIME;
+        }
+        else if ((clock_adjforearlymargin - aTimeStamp) > WRAP_THRESHOLD)
         {
             // This condition indicates that the timestamp is ahead of the adjusted playback clock
             // Note that since the computation is based on 32-bit values, it has a limitation that
@@ -1869,11 +1882,14 @@ void PVMediaOutputNodePort::Run()
                 }
             }
 
-            if ((iSendStartOfDataEvent == true) && oMIOComponentConfigured)
+            if ((iSendStartOfDataEvent == true) && oMIOComponentConfigured && (iSendOneFrameAfterSkip == false))
             {
-                //implies that we are attempting to process the first media msg during
-                //after skip, a mediamsg whose timestamp is equal to or greater than
-                //iSkipTimestamp
+                // Implies that we are attempting to process the first media msg during
+                // after skip, a mediamsg whose timestamp is equal to or greater than
+                // iSkipTimestamp.
+                // By checking against iSendOneFrameAfterSkip, we are making sure that for
+                // video tracks, the PVMFInfoStartOfData event is sent "after" the first
+                // frame is rendered.
                 SendStartOfDataEvent(iCurrentMediaMsg->getStreamID(), iRecentClipID);
             }
 
@@ -1881,7 +1897,7 @@ void PVMediaOutputNodePort::Run()
             // called from ClockStateUpdated when all tracks report InfoStartofData and Engine starts the clock
             // If dequeued data has already been sent, we cant send that data again, it will crash
             // so just return and AO will be scheduled again for next data.
-            if ((oProcessIncomingMessage == true) && (iCurrentMediaMsg.GetRep() != NULL))
+            if ((oProcessIncomingMessage || iSendOneFrameAfterSkip) && (iCurrentMediaMsg.GetRep() != NULL))
             {
                 SendData();
             }
@@ -2068,12 +2084,15 @@ void PVMediaOutputNodePort::HandlePortActivity(const PVMFPortActivity& aActivity
                             //implies that we are attempting to process the first media msg during
                             //after skip, a mediamsg whose timestamp is equal to or greater than
                             //iSkipTimestamp
-                            PVMF_MOPORT_LOGREPOS((0, "PVMediaOutputNodePort::HPA: PVMFInfoStartOfData - Fmt=%s",
-                                                  iSinkFormatString.get_str()));
-                            PVMF_MOPORT_LOGDATAPATH((0, "PVMediaOutputNodePort::HPA: PVMFInfoStartOfData - Fmt=%s",
-                                                     iSinkFormatString.get_str()));
+                            if (iSendOneFrameAfterSkip == false)
+                            {
+                                PVMF_MOPORT_LOGREPOS((0, "PVMediaOutputNodePort::HPA: PVMFInfoStartOfData - Fmt=%s",
+                                                      iSinkFormatString.get_str()));
+                                PVMF_MOPORT_LOGDATAPATH((0, "PVMediaOutputNodePort::HPA: PVMFInfoStartOfData - Fmt=%s",
+                                                         iSinkFormatString.get_str()));
 
-                            SendStartOfDataEvent(iRecentStreamID, iRecentClipID);
+                                SendStartOfDataEvent(iRecentStreamID, iRecentClipID);
+                            }
 
                             // Now check if the media msg is EOS notification OR media data.
                             // If EOS then need to do writeComplete for EOS without sending it downstream
@@ -2110,6 +2129,13 @@ void PVMediaOutputNodePort::HandlePortActivity(const PVMFPortActivity& aActivity
                                                                  iSinkFormatString.get_str(),
                                                                  IncomingMsgQueueSize()));
 
+                                        if (iSendStartOfDataEvent == true)
+                                        {
+                                            // We need to send this PVMFInfoStartOfData event for a usecase
+                                            // when a EOS immediately follows a BOS for a video track so that
+                                            // the engine is not kept waiting for the StartOfData event.
+                                            SendStartOfDataEvent(iRecentStreamID, iRecentClipID);
+                                        }
                                         uint32 eosStreamId = iCurrentMediaMsg->getStreamID();
                                         uint32 msgClipId = iCurrentMediaMsg->getClipID();
                                         uint8 localbuffer[8];
@@ -2129,7 +2155,7 @@ void PVMediaOutputNodePort::HandlePortActivity(const PVMFPortActivity& aActivity
                                 }
                             }
                         }
-                        if (oProcessIncomingMessage)
+                        if (oProcessIncomingMessage || iSendOneFrameAfterSkip)
                         {
                             //we are starting to process a new media msg
                             if ((iCurrentMediaMsg.GetRep() != NULL) ||
@@ -2725,6 +2751,8 @@ void PVMediaOutputNodePort::SetSkipTimeStamp(uint32 aSkipTS,
     iSkipTimestamp = aSkipTS;
     iRecentStreamID = aStreamID;
     iSendStartOfDataEvent = true;
+    // Send one frame of video for display after a seek.
+    iSendOneFrameAfterSkip = (iSinkFormat.isVideo());
     if (oClockCallBackPending)
     {
         iClockNotificationsInf->CancelCallback(iDelayEarlyFrameCallBkId, false);

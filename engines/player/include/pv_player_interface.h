@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -507,11 +507,21 @@ class PVPlayerInterface
          *         new playback range right away (Reset/false)
          * @param aContextData
          *         Optional opaque data that will be passed back to the user with the command response
+         * @param aSkipToRequestedPosition
+         *         Boolean value to indicate whether or not the display should start exactly from the requested position
+         *         Default is set to 'true'.
+         * @param aSeekToSyncPoint
+         *         Boolean value to indicate whether or not the source should seek to a sync point.
+         *           true  - Means that the decoder will be fed from a key-frame thereby promising that there are no artefacts
+         *           false - Means that the decoder will be fed the nearest frame from the requested seek point, which can be
+         *                   a non-sync frame, with a possibility of causing artefacts
+         *         Default is set to 'true'
          * @leave This method can leave with one of the following error codes
          *         OsclErrInvalidState if invoked in the incorrect state
          * @returns A unique command id for asynchronous completion
          **/
-        virtual PVCommandId SetPlaybackRange(PVPPlaybackPosition aBeginPos, PVPPlaybackPosition aEndPos, bool aQueueRange, const OsclAny* aContextData = NULL) = 0;
+        virtual PVCommandId SetPlaybackRange(PVPPlaybackPosition aBeginPos, PVPPlaybackPosition aEndPos, bool aQueueRange, const OsclAny* aContextData = NULL,
+                                             bool aSkipToRequestedPosition = true, bool aSeekToSyncPoint = true) = 0;
 
         /**
          * This function retrieves the playback range information for the current or queued playback range.
