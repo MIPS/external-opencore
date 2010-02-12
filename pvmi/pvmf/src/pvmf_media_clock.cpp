@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1606,14 +1606,17 @@ OSCL_EXPORT_REF PVMFStatus PVMFMediaClock::GetNPTClockPosition(
         return PVMFErrOverflow;
     }
 
+    int32 currentposition;
     if (iIsNPTPlayBackDirectionBackwards)
     {
-        aCurrentPosition = iStartNPT - (currentTime - iStartMediaClockTS);
+        currentposition = iStartNPT - (currentTime - iStartMediaClockTS);
     }
     else
     {
-        aCurrentPosition = iStartNPT + (currentTime - iStartMediaClockTS);
+        currentposition = iStartNPT + (currentTime - iStartMediaClockTS);
     }
+    aCurrentPosition = (currentposition > 0) ? (uint32)currentposition : 0;
+
     return PVMFSuccess;
 }
 
@@ -1934,6 +1937,16 @@ OSCL_EXPORT_REF PVMFMediaClockNotificationsInterfaceImpl::PVMFMediaClockNotifica
 OSCL_EXPORT_REF PVMFMediaClockNotificationsInterfaceImpl::~PVMFMediaClockNotificationsInterfaceImpl()
 {
     //check if vectors need to be destroyed
+}
+
+OSCL_EXPORT_REF void PVMFMediaClockNotificationsInterfaceImpl::SetLatency(
+    /*IN*/ uint32 aLatency)
+{
+    iLatency = aLatency;
+    if (iContainer)
+    {
+        iContainer->UpdateHighestLatency(iLatency);
+    }
 }
 
 OSCL_EXPORT_REF PVMFStatus PVMFMediaClockNotificationsInterfaceImpl::SetCallbackAbsoluteTime(

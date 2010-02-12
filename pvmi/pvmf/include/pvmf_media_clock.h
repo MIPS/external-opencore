@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -450,6 +450,21 @@ class PVMFMediaClockNotificationsInterface
 
         /*!*********************************************************************
          **
+         ** Function:    SetLatency
+         **
+         ** Synopsis:   Set the latency
+         **
+         ** Arguments :
+         ** @param      [aLatency]      -- The latency associated with the particular observer
+         **
+         ** Notes:
+         **
+         **********************************************************************/
+        virtual OSCL_IMPORT_REF void SetLatency(
+            /*IN*/  uint32 aLatency) = 0;
+
+        /*!*********************************************************************
+         **
          ** Function:    SetCallbackAbsoluteTime
          **
          ** Synopsis:   Set a callback timer specifying an absolute time in clock for timer expiry.
@@ -732,6 +747,21 @@ class PVMFMediaClockNotificationsImplInterface
 
         /*!*********************************************************************
          **
+         ** Function:    SetLatency
+         **
+         ** Synopsis:   Set the latency.
+         **
+         ** Arguments :
+         ** @param      [aLatency]      -- The latency associated with the particular observer
+         **
+         ** Notes:
+         **
+         **********************************************************************/
+        virtual OSCL_IMPORT_REF void SetLatency(
+            /*IN*/  uint32 aLatency) = 0;
+
+        /*!*********************************************************************
+         **
          ** Function:    SetCallbackAbsoluteTime
          **
          ** Synopsis:   Set a callback timer specifying an absolute time in clock for timer expiry.
@@ -965,6 +995,10 @@ class PVMFMediaClockNPTClockPositionAccessInterface: public PVInterface
         *   @return PVMFSuccess/PVMFErrArgument. PVMFErrArgument is returned when there is
         *           overflow i.e. 32 bit aCurrentPosition is not enough to store current NPT
         *           clock value or if there is an internal overflow.
+        *           The valid NPT range is only half the range of the 32-bit unsigned integer.
+        *           For msec reslution, this should be sufficient for use-cases of interest
+        *           (that allows for 24+ days of duration). Any value outside the range
+        *           [0, 2^31] should be considered invalid.
         */
         virtual PVMFStatus GetNPTClockPosition(
             /*OUT*/ uint32& aCurrentPosition) = 0;
@@ -1030,6 +1064,9 @@ class PVMFMediaClockNotificationsInterfaceImpl: public PVMFMediaClockNotificatio
         OSCL_IMPORT_REF ~PVMFMediaClockNotificationsInterfaceImpl();
 
         //From PVMFMediaClockNotificationsInterface
+
+        OSCL_IMPORT_REF void SetLatency(
+            /*IN*/  uint32 aLatency);
 
         OSCL_IMPORT_REF PVMFStatus SetCallbackAbsoluteTime(
             /*IN*/  uint32 aAbsoluteTime,
@@ -1330,6 +1367,11 @@ class PVMFMediaClock :  public OsclTimerObject,
             OSCL_UNUSED_ARG(aObserver);
         }
 
+        void SetLatency(
+            /*IN*/  uint32 aLatency)
+        {/*Dummy function*/
+            OSCL_UNUSED_ARG(aLatency);
+        }
 
         PVMFStatus SetCallbackAbsoluteTime(
             /*IN*/  uint32 aAbsoluteTime,

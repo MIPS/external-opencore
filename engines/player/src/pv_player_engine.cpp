@@ -1127,7 +1127,6 @@ PVPlayerEngine::PVPlayerEngine() :
         iClockNotificationsInf(NULL),
         iPlayStatusCallbackTimerID(0),
         iPlayStatusCallbackTimerMarginWindow(0),
-        iCurrCallbackTimerLatency(0),
         iPlaybackClockRate(100000),
         iOutsideTimebase(NULL),
         iPlaybackClockRate_New(100000),
@@ -1250,8 +1249,7 @@ void PVPlayerEngine::Construct(PVCommandStatusObserver* aCmdStatusObserver,
     uint32 starttime = 0;
     bool overflow = 0;
     iPlaybackClock.SetStartTime32(starttime, PVMF_MEDIA_CLOCK_MSEC, overflow);
-    iPlaybackClock.ConstructMediaClockNotificationsInterface(iClockNotificationsInf, *this,
-            iCurrCallbackTimerLatency);
+    iPlaybackClock.ConstructMediaClockNotificationsInterface(iClockNotificationsInf, *this);
 
     // Initialize the OSCL timer for polling checks
     iPollingCheckTimer = OSCL_NEW(OsclTimer<OsclMemAllocator>, ("playerengine_pollingcheck"));

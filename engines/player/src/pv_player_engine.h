@@ -1478,7 +1478,6 @@ class PVPlayerEngine
         uint32 iPlayStatusCallbackTimerMarginWindow;
 
 
-        uint32 iCurrCallbackTimerLatency;
         int32 iPlaybackClockRate;//always >=0
         PVMFTimebase* iOutsideTimebase;
         int32 iPlaybackClockRate_New;

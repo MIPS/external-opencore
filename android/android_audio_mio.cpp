@@ -698,6 +698,14 @@ OSCL_EXPORT_REF PVMFStatus AndroidAudioMIOActiveTimingSupport::SetClock(PVMFMedi
     LOGV("ATS :: SetClock in");
     iClock = clockVal;
 
+    if (iClock)
+    {
+        PVMFStatus ret = iClock->ConstructMediaClockNotificationsInterface(iClockNotificationsInf, *this);
+        if (iClockNotificationsInf && (PVMFSuccess == ret))
+        {
+            iClockNotificationsInf->SetClockStateObserver(*this);
+        }
+    }
     return PVMFSuccess;
 }
 
@@ -827,18 +835,14 @@ void AndroidAudioMIOActiveTimingSupport::setDriverLatency(uint32 latency)
 {
     LOGV("ATS :: setDriverLatency in");
     iDriverLatency = latency;
-    if (iClock)
+    if (iClockNotificationsInf)
     {
-        LOGV("register latency to media clock and set clockobserver");
-        PVMFStatus ret = iClock->ConstructMediaClockNotificationsInterface(iClockNotificationsInf, *this, latency);
-        if (iClockNotificationsInf && (PVMFSuccess == ret))
-        {
-            iClockNotificationsInf->SetClockStateObserver(*this);
-        }
-        else
-        {
-            LOGE("latency could NOT be set !! set it later ");
-        }
+        LOGV("register latency to media clock");
+        iClockNotificationsInf->SetLatency(latency);
+    }
+    else
+    {
+        LOGE("latency could NOT be set !! set it later ");
     }
     LOGV("ATS :: setDriverLatency out");
 }
