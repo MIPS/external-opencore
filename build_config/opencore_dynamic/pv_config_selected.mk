@@ -118,6 +118,7 @@ omx_baseclass_lib=m
 pv_aac_dec_lib=m
 pv_aac_enc_lib=n
 getactualaacconfig_lib=m
+getaacaudioinfo_lib=n
 pv_amr_nb_common_lib=m
 pvdecoder_gsmamr_lib=m
 pvencoder_gsmamr_lib=m

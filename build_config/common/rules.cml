@@ -95,7 +95,7 @@ derive SOLIBS_pv from (LIBS_oscl_shared.
                        pvdecoder_gsmamr_m_lib.pvencoder_gsmamr_m_lib.pv_amr_nb_common_lib_m_lib.pvamrwbdecoder_m_lib.
                        pvavcdecoder_m_lib.pv_avc_common_lib_m_lib.pvavch264enc_m_lib.
                        rvdecoder_m_lib.pvmp4decoder_m_lib.pvm4vencoder_m_lib.wmvdecoder_m_lib.pv_aac_enc_m_lib.
-                       getactualaacconfig_m_lib.colorconvert_m_lib.m4v_config_m_lib.pv_config_parser_m_lib.
+                       getactualaacconfig_m_lib.getaacaudioinfo_m_lib.colorconvert_m_lib.m4v_config_m_lib.pv_config_parser_m_lib.
                        LIBS_omxdec_shared.LIBS_omxjoint_shared.
                        threadsafe_callback_ao_m_lib.pvmediadatastruct_m_lib.pvmimeutils_m_lib.pvgendatastruct_m_lib.
                        pvmf_m_lib.cpm_m_lib.pvmiofileoutput_m_lib.
@@ -122,7 +122,7 @@ derive SOLIBDIRS_pv from (LIBDIR_oscl_shared.
                        pvdecoder_gsmamr_m_mk.pvencoder_gsmamr_m_mk.pv_amr_nb_common_lib_m_mk.pvamrwbdecoder_m_mk.
                        pvavcdecoder_m_mk.pv_avc_common_lib_m_mk.pvavch264enc_m_mk.
                        rvdecoder_m_mk.pvmp4decoder_m_mk.pvm4vencoder_m_mk.wmvdecoder_m_mk.pv_aac_enc_m_mk.
-                       getactualaacconfig_m_mk.colorconvert_m_mk.m4v_config_m_mk.pv_config_parser_m_mk.
+                       getactualaacconfig_m_mk.getaacaudioinfo_m_mk.colorconvert_m_mk.m4v_config_m_mk.pv_config_parser_m_mk.
                        LIBDIR_omxdec_shared.LIBDIR_omxjoint_shared.
                        threadsafe_callback_ao_m_mk.pvmediadatastruct_m_mk.pvmimeutils_m_mk.pvgendatastruct_m_mk.
                        pvmf_m_mk.cpm_m_mk.pvmiofileoutput_m_mk.
@@ -250,7 +250,7 @@ derive SOLIBDIRS_opencore_common from (LIBDIR_oscl_shared.
                        omx_aacenc_component_imp_m_mk.
                        omx_m4venc_component_imp_m_mk.
                        omx_avcenc_component_imp_m_mk.
-		       gsm_amr_headers_m_mk.pv_avc_common_lib_m_mk.pv_amr_nb_common_lib_m_mk.
+                       gsm_amr_headers_m_mk.pv_avc_common_lib_m_mk.pv_amr_nb_common_lib_m_mk.
                        pvgsmamrparser_m_mk.
                        getactualaacconfig_m_mk.
                        m4v_config_m_mk.pv_config_parser_m_mk.
@@ -631,8 +631,8 @@ derive SOLIBDIRS_pvdtcp_mbds from pvdtcp_mbds_m_mk.pvdtcp_mbds_so_m_mk
 derive MODS_pvdtcp_mbds from "-lopencore_download -lopencore_common"
 
 derive pvmp4tu_so_name from pvmp4tu_lib==m ? "pvmp4tu" : ""
-derive SOLIBS_pvmp4tu from pvmp4tu_m_lib
-derive SOLIBDIRS_pvmp4tu from pvmp4tu_m_mk
+derive SOLIBS_pvmp4tu from pvmp4tu_m_lib.getaacaudioinfo_m_lib
+derive SOLIBDIRS_pvmp4tu from pvmp4tu_m_mk.getaacaudioinfo_m_mk
 derive MODS_pvmp4tu from "-lopencore_common -lopencore_player -lopencore_author"
 
 

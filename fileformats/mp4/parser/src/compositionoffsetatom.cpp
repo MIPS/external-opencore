@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -533,11 +533,10 @@ MP4_ERROR_CODE CompositionOffsetAtom::GetTimeOffsetFromMT(uint32 aSampleNum, uin
 
 MP4_ERROR_CODE CompositionOffsetAtom::GetTimeOffsetForSampleNumber(uint32 aSampleNum, uint32& aTimeOffset)
 {
-    uint32 currSample = 0;
-    uint32 currEC = 0;
-    MP4_ERROR_CODE retval = DEFAULT_ERROR;
-    if (iMarkerTableCreation == true)
+    if (true == iMarkerTableCreation)
     {
+        uint32 currSample = 0;
+        uint32 currEC = 0;
         uint32 MT_EC = aSampleNum / (MT_SAMPLECOUNT_INCREMENT - 1); //where MT_SAMPLECOUNT_INCREMENT is the granuality of sample separation in Marker Table
 
         if (MT_EC > ((_iTotalNumSamplesInTrack / MT_SAMPLECOUNT_INCREMENT) - 1))
@@ -562,39 +561,33 @@ MP4_ERROR_CODE CompositionOffsetAtom::GetTimeOffsetForSampleNumber(uint32 aSampl
         currEC = MT_EntryCount[MT_EC];
 
         GetTimeOffsetFromMT(aSampleNum, currEC, currSample, aTimeOffset);
-        retval = EVERYTHING_FINE;
+        return EVERYTHING_FINE;
     }
-    else
+
+    if (0 == _psampleOffsetVec || 0 == _psampleCountVec || 0 == _entryCount)
+        return DEFAULT_ERROR;
+
+    uint32 sampleCount = 0;
+
+    for (uint32 i = 0; i < _entryCount; ++i)
     {
-        if ((_psampleOffsetVec == NULL) ||
-                (_psampleCountVec == NULL) ||
-                (_entryCount == 0))
+        if (1 == _parsing_mode)
+            CheckAndParseEntry(i);
+
+        if (aSampleNum >= (sampleCount + _psampleCountVec[i%_stbl_buff_size]))
         {
-            return retval;
+            sampleCount += _psampleCountVec[i%_stbl_buff_size];
+            continue;
         }
 
-        uint32 sampleCount = 0;
+        // sample at 'aSampleNum' is within current vector element
 
-        for (uint32 i = 0; i < _entryCount; i++)
-        {
-            if (_parsing_mode == 1)
-                CheckAndParseEntry(i);
-
-            if (aSampleNum < (sampleCount + _psampleCountVec[i%_stbl_buff_size]))
-            { // Sample aSampleNum within current entry
-
-                PVMF_MP4FFPARSER_LOGMEDIASAMPELSTATEVARIABLES((0, "CompositionOffsetAtom::getTimestampForSampleaSampleNumber- Time StampOffset = %d", _psampleOffsetVec[i%_stbl_buff_size]));
-                aTimeOffset = _psampleOffsetVec[i%_stbl_buff_size];
-                retval = EVERYTHING_FINE;
-                break;
-            }
-            else
-            {
-                sampleCount += _psampleCountVec[i%_stbl_buff_size];
-            }
-        }
+        PVMF_MP4FFPARSER_LOGMEDIASAMPELSTATEVARIABLES((0, "CompositionOffsetAtom::getTimestampForSampleaSampleNumber- Time StampOffset = %d", _psampleOffsetVec[i%_stbl_buff_size]));
+        aTimeOffset = _psampleOffsetVec[i%_stbl_buff_size];
+        return EVERYTHING_FINE;
     }
-    return retval;
+
+    return DEFAULT_ERROR;
 }
 
 MP4_ERROR_CODE CompositionOffsetAtom::ResetStateVariables()
