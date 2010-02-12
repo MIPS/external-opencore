@@ -1152,6 +1152,28 @@ void pvplayer_async_test_playlist_playback::Run()
         }
         break;
 
+        case STATE_ADDDATASINK_VIDEO:
+        {
+            iVideoSinkFileName = OUTPUTNAME_PREPEND_WSTRING;
+            iVideoSinkFileName += _STRLIT_WCHAR("test_playlist_");
+            iVideoSinkFileName += iSinkFileNameSubString;
+            if (iCompressedVideo)
+            {
+                iVideoSinkFileName += _STRLIT_WCHAR("compressed_");
+            }
+            iVideoSinkFileName += _STRLIT_WCHAR("_video.dat");
+
+            iMIOFileOutVideo = iMioFactory->CreateVideoOutput((OsclAny*) & iVideoSinkFileName, MEDIATYPE_VIDEO, iCompressedVideo);
+            iIONodeVideo = PVMediaOutputNodeFactory::CreateMediaOutputNode(iMIOFileOutVideo);
+            iDataSinkVideo = new PVPlayerDataSinkPVMFNode;
+            ((PVPlayerDataSinkPVMFNode*)iDataSinkVideo)->SetDataSinkNode(iIONodeVideo);
+
+            fprintf(iTestMsgOutputFile, "Adding Videoo Sink...\n");
+            OSCL_TRY(error, iCurrentCmdId = iPlayer->AddDataSink(*iDataSinkVideo, (OsclAny*) & iContextObject));
+            OSCL_FIRST_CATCH_ANY(error, PVPATB_TEST_IS_TRUE(false); iState = STATE_CLEANUPANDCOMPLETE; RunIfNotReady());
+        }
+        break;
+
         case STATE_PREPARE:
         {
             fprintf(iTestMsgOutputFile, "Calling Prepare...\n");
@@ -1264,6 +1286,14 @@ void pvplayer_async_test_playlist_playback::Run()
         }
         break;
 
+        case STATE_REMOVEDATASINK_VIDEO:
+        {
+            fprintf(iTestMsgOutputFile, "Removing Video Sink...\n");
+            OSCL_TRY(error, iCurrentCmdId = iPlayer->RemoveDataSink(*iDataSinkVideo, (OsclAny*) & iContextObject));
+            OSCL_FIRST_CATCH_ANY(error, PVPATB_TEST_IS_TRUE(false); iState = STATE_CLEANUPANDCOMPLETE; RunIfNotReady());
+        }
+        break;
+
         case STATE_RESET:
         {
             fprintf(iTestMsgOutputFile, "Calling Reset...\n");
@@ -1294,8 +1324,17 @@ void pvplayer_async_test_playlist_playback::Run()
             delete iDataSinkAudio;
             iDataSinkAudio = NULL;
 
+            delete iDataSinkVideo;
+            iDataSinkVideo = NULL;
+
+            PVMediaOutputNodeFactory::DeleteMediaOutputNode(iIONodeVideo);
+            iIONodeVideo = NULL;
+
             PVMediaOutputNodeFactory::DeleteMediaOutputNode(iIONodeAudio);
             iIONodeAudio = NULL;
+
+            iMioFactory->DestroyVideoOutput(iMIOFileOutVideo);
+            iMIOFileOutVideo = NULL;
 
             iMioFactory->DestroyAudioOutput(iMIOFileOutAudio);
             iMIOFileOutAudio = NULL;
@@ -1503,6 +1542,29 @@ void pvplayer_async_test_playlist_playback::CommandCompleted(const PVCmdResponse
             if (PVMFSuccess == aResponse.GetCmdStatus())
             {
                 fprintf(iTestMsgOutputFile, "...Add Audio Sink Complete\n");
+                if (iFileType != PVMF_MIME_MP3FF)
+                {
+                    iState = STATE_ADDDATASINK_VIDEO;
+                }
+                else
+                {
+                    iState = STATE_PREPARE;
+                }
+                RunIfNotReady();
+            }
+            else
+            {
+                // AddDataSink failed
+                PVPATB_TEST_IS_TRUE(false);
+                iState = STATE_CLEANUPANDCOMPLETE;
+                RunIfNotReady();
+            }
+            break;
+
+        case STATE_ADDDATASINK_VIDEO:
+            if (PVMFSuccess == aResponse.GetCmdStatus())
+            {
+                fprintf(iTestMsgOutputFile, "...Add Video Sink Complete\n");
                 iState = STATE_PREPARE;
                 RunIfNotReady();
             }
@@ -1626,6 +1688,30 @@ void pvplayer_async_test_playlist_playback::CommandCompleted(const PVCmdResponse
             if (PVMFSuccess == aResponse.GetCmdStatus())
             {
                 fprintf(iTestMsgOutputFile, "...Remove Audio Sink Complete\n");
+
+                if (iFileType != PVMF_MIME_MP3FF)
+                {
+                    iState = STATE_REMOVEDATASINK_VIDEO;
+                }
+                else
+                {
+                    iState = STATE_RESET;
+                }
+                RunIfNotReady();
+            }
+            else
+            {
+                // RemoveDataSink failed
+                PVPATB_TEST_IS_TRUE(false);
+                iState = STATE_RESET;
+                RunIfNotReady();
+            }
+            break;
+
+        case STATE_REMOVEDATASINK_VIDEO:
+            if (PVMFSuccess == aResponse.GetCmdStatus())
+            {
+                fprintf(iTestMsgOutputFile, "...Remove Video Sink Complete\n");
                 iState = STATE_RESET;
                 RunIfNotReady();
             }
@@ -1844,9 +1930,12 @@ void pvplayer_async_test_playlist_playback::HandleInformationalEvent(const PVAsy
         case PVMFInfoClipCorrupted:
         {
             iCorruptedClipsIdentified++;
+
+            uint32 *clipId = (uint32*) aEvent.GetLocalBuffer();
+            fprintf(iTestMsgOutputFile, "***** PVMFInfoClipCorrupted received for clip index %d\n", *clipId);
+
             if (iNumInvalidClips > 0)
             {
-                uint32 *clipId = (uint32*) aEvent.GetLocalBuffer();
 
                 // index for first corrupted clip
                 uint32 startIndex = iInvalidClipAtIndex;
@@ -1862,7 +1951,6 @@ void pvplayer_async_test_playlist_playback::HandleInformationalEvent(const PVAsy
                 {
                     PVPATB_TEST_IS_TRUE(false);
                 }
-                fprintf(iTestMsgOutputFile, "***** PVMFInfoClipCorrupted received for clip index %d\n", *clipId);
 
                 bool added = AddEventToSequence(iResultingEvents, PL_CLIP_CORRUPT_EVENT, *clipId, PL_GENERATE_TIMESTAMP, 0, iTestMsgOutputFile);
                 if (!added)
@@ -2296,6 +2384,29 @@ void pvplayer_async_test_playlist_seek_skip::Run()
         }
         break;
 
+        case STATE_ADDDATASINK_VIDEO:
+        {
+            OSCL_wHeapString<OsclMemAllocator> sinkfilename;
+            sinkfilename = OUTPUTNAME_PREPEND_WSTRING;
+            sinkfilename += _STRLIT_WCHAR("test_playlist_playback");
+            sinkfilename += iSinkFileNameSubString;
+            if (iCompressedVideo)
+            {
+                sinkfilename += _STRLIT_WCHAR("compressed_");
+            }
+            sinkfilename += _STRLIT_WCHAR("_video.dat");
+
+            iMIOFileOutVideo = iMioFactory->CreateVideoOutput((OsclAny*) & sinkfilename, MEDIATYPE_VIDEO, iCompressedVideo);
+            iIONodeVideo = PVMediaOutputNodeFactory::CreateMediaOutputNode(iMIOFileOutVideo);
+            iDataSinkVideo = new PVPlayerDataSinkPVMFNode;
+            ((PVPlayerDataSinkPVMFNode*)iDataSinkVideo)->SetDataSinkNode(iIONodeVideo);
+
+            fprintf(iTestMsgOutputFile, "Adding Video Sink...\n");
+            OSCL_TRY(error, iCurrentCmdId = iPlayer->AddDataSink(*iDataSinkVideo, (OsclAny*) & iContextObject));
+            OSCL_FIRST_CATCH_ANY(error, PVPATB_TEST_IS_TRUE(false); iState = STATE_CLEANUPANDCOMPLETE; RunIfNotReady());
+        }
+        break;
+
         case STATE_PREPARE:
         {
             fprintf(iTestMsgOutputFile, "Calling Prepare...\n");
@@ -2475,6 +2586,14 @@ void pvplayer_async_test_playlist_seek_skip::Run()
         }
         break;
 
+        case STATE_REMOVEDATASINK_VIDEO:
+        {
+            fprintf(iTestMsgOutputFile, "Removing Video Sink...\n");
+            OSCL_TRY(error, iCurrentCmdId = iPlayer->RemoveDataSink(*iDataSinkVideo, (OsclAny*) & iContextObject));
+            OSCL_FIRST_CATCH_ANY(error, PVPATB_TEST_IS_TRUE(false); iState = STATE_CLEANUPANDCOMPLETE; RunIfNotReady());
+        }
+        break;
+
         case STATE_RESET:
         {
             fprintf(iTestMsgOutputFile, "Calling Reset...\n");
@@ -2505,11 +2624,20 @@ void pvplayer_async_test_playlist_seek_skip::Run()
             delete iDataSinkAudio;
             iDataSinkAudio = NULL;
 
+            delete iDataSinkVideo;
+            iDataSinkVideo = NULL;
+
             PVMediaOutputNodeFactory::DeleteMediaOutputNode(iIONodeAudio);
             iIONodeAudio = NULL;
 
+            PVMediaOutputNodeFactory::DeleteMediaOutputNode(iIONodeVideo);
+            iIONodeVideo = NULL;
+
             iMioFactory->DestroyAudioOutput(iMIOFileOutAudio);
             iMIOFileOutAudio = NULL;
+
+            iMioFactory->DestroyAudioOutput(iMIOFileOutVideo);
+            iMIOFileOutVideo = NULL;
 
             ValidateEvents();
 
@@ -2602,6 +2730,30 @@ void pvplayer_async_test_playlist_seek_skip::CommandCompleted(const PVCmdRespons
             if (PVMFSuccess == aResponse.GetCmdStatus())
             {
                 fprintf(iTestMsgOutputFile, "...Add Audio Sink Complete\n");
+
+                if (iFileType != PVMF_MIME_MP3FF)
+                {
+                    iState = STATE_ADDDATASINK_VIDEO;
+                }
+                else
+                {
+                    iState = STATE_PREPARE;
+                }
+                RunIfNotReady();
+            }
+            else
+            {
+                // AddDataSink failed
+                PVPATB_TEST_IS_TRUE(false);
+                iState = STATE_CLEANUPANDCOMPLETE;
+                RunIfNotReady();
+            }
+            break;
+
+        case STATE_ADDDATASINK_VIDEO:
+            if (PVMFSuccess == aResponse.GetCmdStatus())
+            {
+                fprintf(iTestMsgOutputFile, "...Add Video Sink Complete\n");
                 iState = STATE_PREPARE;
                 RunIfNotReady();
             }
@@ -2810,6 +2962,29 @@ void pvplayer_async_test_playlist_seek_skip::CommandCompleted(const PVCmdRespons
             if (PVMFSuccess == aResponse.GetCmdStatus())
             {
                 fprintf(iTestMsgOutputFile, "...Remove Audio Sink Complete\n");
+                if (iFileType != PVMF_MIME_MP3FF)
+                {
+                    iState = STATE_REMOVEDATASINK_VIDEO;
+                }
+                else
+                {
+                    iState = STATE_RESET;
+                }
+                RunIfNotReady();
+            }
+            else
+            {
+                // RemoveDataSink failed
+                PVPATB_TEST_IS_TRUE(false);
+                iState = STATE_RESET;
+                RunIfNotReady();
+            }
+            break;
+
+        case STATE_REMOVEDATASINK_VIDEO:
+            if (PVMFSuccess == aResponse.GetCmdStatus())
+            {
+                fprintf(iTestMsgOutputFile, "...Remove Video Sink Complete\n");
                 iState = STATE_RESET;
                 RunIfNotReady();
             }

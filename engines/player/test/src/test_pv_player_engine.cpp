@@ -3802,8 +3802,7 @@ void pvplayer_engine_test::test()
                 iCurrentTest = new pvplayer_async_test_playlist_playback(testparam, false, false, 0, 0, false, false, false, false, GAPLESS_FORMAT_LAME_MP3);
                 break;
             case GaplessValidateiTunesAACPlaylist:
-                fprintf(file, "GaplessValidateiTunesAACPlaylist not enabled\n");
-                //@disabled iCurrentTest = new pvplayer_async_test_playlist_playback(testparam, false, false, 0, 0, false, false, false, false, GAPLESS_FORMAT_ITUNES_AAC);
+                iCurrentTest = new pvplayer_async_test_playlist_playback(testparam, false, false, 0, 0, false, false, false, false, GAPLESS_FORMAT_ITUNES_AAC);
                 break;
 
             case CleanDrmData_JanusCPMTest:

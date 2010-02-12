@@ -204,6 +204,9 @@ class pvplayer_async_test_playlist_playback : public pvplayer_async_test_base
                 , iDataSinkAudio(NULL)
                 , iMIOFileOutAudio(NULL)
                 , iIONodeAudio(NULL)
+                , iDataSinkVideo(NULL)
+                , iMIOFileOutVideo(NULL)
+                , iIONodeVideo(NULL)
                 , iCurrentCmdId(0)
                 , iSourceContextData(NULL)
                 , iNumEOSReceived(0)
@@ -481,6 +484,10 @@ class pvplayer_async_test_playlist_playback : public pvplayer_async_test_base
         PvmiMIOControl* iMIOFileOutAudio;
         PVMFNodeInterface* iIONodeAudio;
 
+        PVPlayerDataSink* iDataSinkVideo;
+        PvmiMIOControl* iMIOFileOutVideo;
+        PVMFNodeInterface* iIONodeVideo;
+
         PVCommandId iCurrentCmdId;
         PVMFSourceContextData* iSourceContextData;
         uint32 iNumEOSReceived;
@@ -537,6 +544,7 @@ class pvplayer_async_test_playlist_playback : public pvplayer_async_test_base
         uint32 iReferencePCMFileSize;
         GaplessMetadataFormat iGaplessFormat;
         OSCL_wHeapString<OsclMemAllocator> iAudioSinkFileName;
+        OSCL_wHeapString<OsclMemAllocator> iVideoSinkFileName;
 };
 
 
@@ -586,6 +594,9 @@ class pvplayer_async_test_playlist_seek_skip : public pvplayer_async_test_base
                 , iDataSinkAudio(NULL)
                 , iIONodeAudio(NULL)
                 , iMIOFileOutAudio(NULL)
+                , iDataSinkVideo(NULL)
+                , iIONodeVideo(NULL)
+                , iMIOFileOutVideo(NULL)
                 , iCurrentCmdId(0)
                 , iSourceContextData(NULL)
                 , iNumEOSReceived(0)
@@ -1019,6 +1030,9 @@ class pvplayer_async_test_playlist_seek_skip : public pvplayer_async_test_base
         PVPlayerDataSink* iDataSinkAudio;
         PVMFNodeInterface* iIONodeAudio;
         PvmiMIOControl* iMIOFileOutAudio;
+        PVPlayerDataSink* iDataSinkVideo;
+        PVMFNodeInterface* iIONodeVideo;
+        PvmiMIOControl* iMIOFileOutVideo;
 
         PVCommandId iCurrentCmdId;
         PVMFSourceContextData* iSourceContextData;

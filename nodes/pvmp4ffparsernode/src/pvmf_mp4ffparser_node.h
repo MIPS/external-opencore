@@ -110,6 +110,10 @@
 #include "pvmf_data_source_direction_control.h"
 #endif
 
+#ifndef PVMF_SOURCE_NODE_UTILS_H_INCLUDED
+#include "pvmf_source_node_utils.h"
+#endif
+
 /**
 * Node command handling
 */
@@ -127,6 +131,9 @@ class PVMFMP4ParserNodeLoggerDestructDealloc : public OsclDestructDealloc
         }
 };
 
+//gapless
+#define PVMF_MP4_MAX_NUM_TRACKS_GAPLESS 10
+
 #define PVMF_MP4FFPARSERNODE_UNDERFLOW_STATUS_TIMER_ID 1
 
 #define PVMF_MP4FFPARSERNODE_MAX_CPM_METADATA_KEYS 256
@@ -142,6 +149,14 @@ class PVMFMP4FFParserOutPort;
 class PVMFMP4FFPortIter;
 class PVLogger;
 class PVMFMediaClock;
+class PVMFSourceClipInfo;
+
+/*structure to store clip information and associated parser object with it*/
+typedef struct
+{
+    IMpeg4File* iParserObj;
+    PVMFSourceClipInfo iClipInfo;
+} PVMFMp4ClipInfo;
 
 enum BaseKeys_SelectionType
 {
@@ -210,12 +225,7 @@ class PVMFMP4FFParserNode
         PVMFPortIter* GetPorts(const PVMFPortFilter* aFilter = NULL);
 
         // From PVMFDataSourceInitializationExtensionInterface
-        void AudioSinkEvent(PVMFStatus aEvent, uint32 aStreamId)
-        {
-            OSCL_UNUSED_ARG(aEvent);
-            OSCL_UNUSED_ARG(aStreamId);
-            //ignore
-        }
+        void AudioSinkEvent(PVMFStatus aEvent, uint32 aStreamId);
         PVMFStatus SetSourceInitializationData(OSCL_wString& aSourceURL, PVMFFormatType& aSourceFormat, OsclAny* aSourceData,
                                                uint32 aClipIndex = 0, PVMFFormatTypeDRMInfo aType = PVMF_FORMAT_TYPE_CONNECT_DRM_INFO_UNKNOWN);
         PVMFStatus SetClientPlayBackClock(PVMFMediaClock* aClientClock);
@@ -226,10 +236,7 @@ class PVMFMP4FFParserNode
         PVMFStatus SelectTracks(PVMFMediaPresentationInfo& aInfo);
 
         // From PVMFMetadataExtensionInterface
-        PVMFStatus SetMetadataClipIndex(uint32 aClipIndex)
-        {
-            return (aClipIndex == 0) ? PVMFSuccess : PVMFErrArgument;
-        }
+        PVMFStatus SetMetadataClipIndex(uint32 aClipIndex);
         uint32 GetNumMetadataKeys(char* aQueryKeyString = NULL);
         uint32 GetNumMetadataValues(PVMFMetadataList& aKeyList);
 
@@ -243,6 +250,7 @@ class PVMFMP4FFParserNode
         // From PvmfDataSourcePlaybackControlInterface
         PVMFCommandId SetDataSourcePosition(PVMFSessionId aSessionId, PVMFTimestamp aTargetNPT, PVMFTimestamp& aActualNPT,
                                             PVMFTimestamp& aActualMediaDataTS, bool aSeekToSyncPoint = true, uint32 aStreamID = 0, OsclAny* aContext = NULL);
+        PVMFCommandId SetDataSourcePosition(PVMFSessionId aSessionId, PVMFDataSourcePositionParams& aPVMFDataSourcePositionParams, OsclAny* aContext = NULL);
         PVMFCommandId QueryDataSourcePosition(PVMFSessionId aSessionId, PVMFTimestamp aTargetNPT, PVMFTimestamp& aActualNPT,
                                               bool aSeekToSyncPoint = true, OsclAny* aContext = NULL);
         PVMFCommandId QueryDataSourcePosition(PVMFSessionId aSessionId, PVMFTimestamp aTargetNPT,
@@ -291,6 +299,15 @@ class PVMFMP4FFParserNode
         void ClockStateUpdated();
         void NotificationsInterfaceDestroyed();
 
+        // retrieves the current playback clip index
+        uint32 GetCurrentClipIndex();
+        OSCL_wHeapString<OsclMemAllocator>& GetClipURLAt(uint32 aClipIndex);
+        PVMFFormatType& GetClipFormatTypeAt(uint32 aClipIndex);
+        PVMFSourceContextData& GetSourceContextDataAt(uint32 aClipIndex);
+        bool IsValidContextData(uint32 aClipIndex);
+        PVMFLocalDataSource& GetCPMSourceDataAt(uint32 aClipIndex);
+        uint32 GetCPMSourceDataIntentAt(uint32 aClipIndex);
+
     private:
         // from OsclTimerObject
         void Run();
@@ -310,8 +327,7 @@ class PVMFMP4FFParserNode
         PVMFStatus DoReleasePort();
 
         PVMFStatus DoInit();
-        bool ParseMP4File(PVMFNodeCommand& aCmd, PVMFStatus& aStatus);
-        PVMFStatus InitMetaData();
+        PVMFStatus InitMetaData(uint32 aParserIndex = 0);
         PVMFStatus InitImotionMetaData();
         uint32 CountImotionMetaDataKeys();
         int32 CountMetaDataKeys();
@@ -338,21 +354,28 @@ class PVMFMP4FFParserNode
         void CompleteGetMetaDataValues();
         int32 AddToValueList(Oscl_Vector<PvmiKvp, OsclMemAllocator>& aValueList, PvmiKvp& aNewValue);
 
-        PVMFStatus GetVideoFrameWidth(uint32 aId, int32& aWidth, int32& aDisplayWidth);
-        PVMFStatus GetVideoFrameHeight(uint32 aId, int32& aHeight, int32& aDisplayHeight);
+        PVMFStatus GetVideoFrameWidth(uint32 aClipIndex, uint32 aId, int32& aWidth, int32& aDisplayWidth);
+        PVMFStatus GetVideoFrameHeight(uint32 aClipIndex, uint32 aId, int32& aHeight, int32& aDisplayHeight);
         int32 FindVideoWidth(uint32 aId);
         int32 FindVideoHeight(uint32 aId);
         int32 FindVideoDisplayWidth(uint32 aId);
         int32 FindVideoDisplayHeight(uint32 aId);
-        PVMFStatus PopulateVideoDimensions(uint32 aId);
+        PVMFStatus PopulateVideoDimensions(uint32 aClipIndex, uint32 aId);
         PVMFStatus FindBestThumbnailKeyFrame(uint32 aId, uint32& aKeyFrameNum);
 
         // For data source position extension interface
         PVMFStatus DoSetDataSourcePosition();
+        PVMFStatus DoSetDataSourcePositionPlaylist();
         PVMFStatus DoQueryDataSourcePosition();
         PVMFStatus DoSetDataSourceRate();
-
         PVMFStatus DoSetDataSourceDirection();
+
+        PVMFStatus SetPlaybackStartupTime(uint32& aTargetNPT,
+                                          uint32* aActualNPT,
+                                          uint32* aActualMediaDataTS,
+                                          bool aSeektosyncpoint,
+                                          uint32 aStreamID,
+                                          int32 reposIndex);
 
         void HandleTrackState();
         bool RetrieveTrackConfigInfo(uint32 aTrackId,
@@ -398,19 +421,42 @@ class PVMFMP4FFParserNode
         uint32 GetAudioSampleRate(uint32 aId);
         uint32 GetAudioBitsPerSample(uint32 aId);
 
+        // create parser objects for gapless
+        PVMFStatus ConstructMP4FileParser(PVMFStatus* aStatus, int32 aClipIndex, PVMFCPMPluginAccessInterfaceFactory* aCPMFactory);
+        PVMFStatus ReleaseMP4FileParser(int32 aClipIndex);
+        PVMFStatus InitNextValidClipInPlaylist(PVMFStatus* aStatus = NULL, int32 aSkipToTrack = -1, PVMFDataStreamFactory* aDataStreamFactory = NULL);
+        IMpeg4File* GetParserObjAtIndex(int32 aClipIndex = -1);
+
+        bool ValidateSourceInitializationParams(OSCL_wString& aSourceURL,
+                                                PVMFFormatType& aSourceFormat,
+                                                uint32 aClipIndex,
+                                                PVMFSourceClipInfo aClipInfo);
+
+        // gapless related
+        // playlist/clip-indexes
+        uint32 iNumClipsInPlayList;
+        int32 iPlaybackClipIndex;
+        int32 iLastPlayingClipIndex;
+        bool iPlaylistRepositioning;
+        int32 iClipIndexForMetadata;
+        bool iSourceURLSet;
+        bool iInitNextClip;
+        int32 iNextInitializedClipIndex;
+        bool iPlaylistExhausted;
+        bool iUpdateExistingClip;
+
+        Oscl_Vector<PVMFMp4ClipInfo, OsclMemAllocator> iClipInfoList;
+        IMpeg4File* iPlaybackParserObj;
+        IMpeg4File* iMetadataParserObj;
+        bool iFirstClipNonAudioOnly;
 
         OSCL_wHeapString<OsclMemAllocator> iFilename;
-        PVMFFormatType iSourceFormat;
         PVMFMediaClock* iClientPlayBackClock;
         PVMFMediaClockNotificationsInterface *iClockNotificationsInf;
         bool iUseCPMPluginRegistry;
-        PVMFLocalDataSource iCPMSourceData;
-        PVMFSourceContextData iSourceContextData;
-        OsclFileHandle* iFileHandle;
         Oscl_FileServer iFileServer;
         uint32 iParsingMode;
         bool iProtectedFile;
-        IMpeg4File* iMP4FileHandle;
         uint32 iMP4ParserNodeMetadataValueCount;
         Oscl_Vector<OSCL_HeapString<OsclMemAllocator>, OsclMemAllocator> iCPMMetadataKeys;
         Oscl_Vector<PVMP4FFNodeTrackPortInfo, OsclMemAllocator> iNodeTrackPortList;
@@ -449,7 +495,6 @@ class PVMFMP4FFParserNode
         bool iThumbNailMode;
 
         // Content Policy Manager related
-        bool iSourceContextDataValid;
         bool iPreviewMode;
         PVMFCPM* iCPM;
         PVMFSessionId iCPMSessionID;
@@ -501,7 +546,7 @@ class PVMFMP4FFParserNode
          */
         Oscl_Vector<PVMP4FFNodeTrackOMA2DRMInfo, OsclMemAllocator> iOMA2DRMInfoVec;
         PVMP4FFNodeTrackOMA2DRMInfo* LookUpOMA2TrackInfoForTrack(uint32 aTrackID);
-        PVMFStatus InitOMA2DRMInfo();
+        PVMFStatus InitOMA2DRMInfo(uint32 aParserIndex);
         void PopulateOMA2DRMInfo(PVMP4FFNodeTrackOMA2DRMInfo* aInfo);
         PVMFStatus CheckForOMA2AuthorizationComplete(PVMP4FFNodeTrackOMA2DRMInfo*& aInfo);
         void OMA2TrackAuthorizationComplete();
@@ -516,10 +561,10 @@ class PVMFMP4FFParserNode
 
         PVMFStatus CheckForMP4HeaderAvailability();
         int32 CreateErrorInfoMsg(PVMFBasicErrorInfoMessage** aErrorMsg, PVUuid aEventUUID, int32 aEventCode);
-        void CreateDurationInfoMsg(uint32 adurationms);
+        void CreateDurationInfoMsg(uint32 adurationms, uint32 &aClipIndex);
         PVMFStatus PushValueToList(Oscl_Vector<OSCL_HeapString<OsclMemAllocator>, OsclMemAllocator> &aRefMetadataKeys,
                                    PVMFMetadataList *&aKeyListPtr, uint32 aLcv);
-        void GetGaplessMetadata(PVMP4FFNodeTrackPortInfo& aInfo);
+        void GetGaplessMetadata(int32 aClipIndex);
         bool SendBeginOfClipCommand(PVMP4FFNodeTrackPortInfo& aTrackPortInfo);
         bool SendEndOfClipCommand(PVMP4FFNodeTrackPortInfo& aTrackPortInfo);
 

@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -83,9 +83,9 @@ uint32 PVMFMP4FFParserNode::GetNumMetadataValues(PVMFMetadataList& aKeyList)
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFMP4FFParserNode::GetNumMetadataValues() called"));
     uint32 numvalentries = 0;
-    if (iMP4FileHandle)
+    if (iMetadataParserObj)
     {
-        numvalentries = iMP4FileHandle->GetNumMetadataValues(aKeyList);
+        numvalentries = iMetadataParserObj->GetNumMetadataValues(aKeyList);
     }
 
     if (iCPMMetaDataExtensionInterface != NULL)
@@ -96,6 +96,15 @@ uint32 PVMFMP4FFParserNode::GetNumMetadataValues(PVMFMetadataList& aKeyList)
     return numvalentries;
 }
 
+PVMFStatus PVMFMP4FFParserNode::SetMetadataClipIndex(uint32 aClipNum)
+{
+    iClipIndexForMetadata = aClipNum;
+    iMetadataParserObj = GetParserObjAtIndex(aClipNum);
+    if (iMetadataParserObj)
+        return PVMFSuccess;
+    iMetadataParserObj = NULL;
+    return PVMFFailure;
+}
 
 PVMFCommandId PVMFMP4FFParserNode::GetNodeMetadataKeys(PVMFSessionId aSessionId, PVMFMetadataList& aKeyList, uint32 starting_index, int32 max_entries, char* query_key, const OsclAny* aContext)
 {
@@ -132,7 +141,7 @@ PVMFStatus PVMFMP4FFParserNode::ReleaseNodeMetadataValues(Oscl_Vector<PvmiKvp, O
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFMP4FFParserNode::ReleaseNodeMetadataValues() called"));
 
-    if (iMP4FileHandle == NULL)
+    if (iMetadataParserObj == NULL)
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
                         (0, "PVMFMP4FFParserNode::ReleaseNodeMetadataValues() \
@@ -161,7 +170,7 @@ PVMFStatus PVMFMP4FFParserNode::ReleaseNodeMetadataValues(Oscl_Vector<PvmiKvp, O
     // Go through the specified values and free it
     for (uint32 i = start; i < end; i++)
     {
-        iMP4FileHandle->ReleaseMetadataValue(aValueList[i]);
+        iMetadataParserObj->ReleaseMetadataValue(aValueList[i]);
     }
     return PVMFSuccess;
 }
@@ -179,7 +188,7 @@ PVMFMP4FFParserNode::DoGetNodeMetadataKeys()
         GetCPMMetaDataKeys();
         return PVMFPending;
     }
-    if (iMP4FileHandle == NULL)
+    if (iMetadataParserObj == NULL)
     {
         return PVMFErrInvalidState;
     }
@@ -320,7 +329,7 @@ PVMFStatus PVMFMP4FFParserNode::DoGetNodeMetadataValues()
                                            starting_index,
                                            max_entries);
 
-    if (iMP4FileHandle == NULL || keylistptr_in == NULL || valuelistptr == NULL)
+    if (iMetadataParserObj == NULL || keylistptr_in == NULL || valuelistptr == NULL)
     {
         // The list pointer is invalid, or we cannot access the mp4 ff library.
         return PVMFFailure;
@@ -345,7 +354,7 @@ PVMFStatus PVMFMP4FFParserNode::DoGetNodeMetadataValues()
 
     // The underlying mp4 ff library will fill in the values.
     iTotalID3MetaDataTagInValueList = 0;
-    PVMFStatus status = iMP4FileHandle->GetMetadataValues(*keylistptr, *valuelistptr,
+    PVMFStatus status = iMetadataParserObj->GetMetadataValues(*keylistptr, *valuelistptr,
                         starting_index, max_entries,
                         numentriesadded,
                         iTotalID3MetaDataTagInValueList);
@@ -363,14 +372,14 @@ PVMFStatus PVMFMP4FFParserNode::DoGetNodeMetadataValues()
     // Retrieve the track ID list.
     OsclExclusiveArrayPtr<uint32> trackidlistexclusiveptr;
     uint32* trackidlist = NULL;
-    uint32 numTracks = (uint32)(iMP4FileHandle->getNumTracks());
+    uint32 numTracks = (uint32)(iMetadataParserObj->getNumTracks());
     status = CreateNewArray(&trackidlist, numTracks);
     if (PVMFErrNoMemory == status)
     {
         return PVMFErrNoMemory;
     }
     oscl_memset(trackidlist, 0, sizeof(uint32)*(numTracks));
-    iMP4FileHandle->getTrackIDList(trackidlist, numTracks);
+    iMetadataParserObj->getTrackIDList(trackidlist, numTracks);
     trackidlistexclusiveptr.set(trackidlist);
 
     for (lcv = 0; lcv < numKeys; lcv++)
@@ -390,7 +399,7 @@ PVMFStatus PVMFMP4FFParserNode::DoGetNodeMetadataValues()
 
             // Determine the index requested. Default to all tracks
             // Check if the file has at least one track
-            int32 numtracks = iMP4FileHandle->getNumTracks();
+            int32 numtracks = iMetadataParserObj->getNumTracks();
             if (numtracks <= 0)
             {
                 break;
@@ -481,7 +490,7 @@ PVMFStatus PVMFMP4FFParserNode::DoGetNodeMetadataValues()
             /* Create a value entry if past the starting index */
             if (numvalentries > (uint32)starting_index)
             {
-                uint64 duration64 = iMP4FileHandle->getMovieDuration();
+                uint64 duration64 = iMetadataParserObj->getMovieDuration();
                 uint32 duration = Oscl_Int64_Utils::get_uint64_lower32(duration64);
                 bool random_access_denied = false;
                 if (duration > 0)
@@ -493,7 +502,7 @@ PVMFStatus PVMFMP4FFParserNode::DoGetNodeMetadataValues()
                     random_access_denied = true;
                 }
 
-                if (iMP4FileHandle->IsMovieFragmentsPresent())
+                if (iMetadataParserObj->IsMovieFragmentsPresent())
                 {
                     if (iDataStreamInterface != NULL)
                         random_access_denied = true;
@@ -509,7 +518,7 @@ PVMFStatus PVMFMP4FFParserNode::DoGetNodeMetadataValues()
                             trackList[i] = iNodeTrackPortList[i].iTrackId;
                         }
 
-                        if (!iMP4FileHandle->IsTFRAPresentForAllTrack(numTracks, trackList))
+                        if (!iMetadataParserObj->IsTFRAPresentForAllTrack(numTracks, trackList))
                             random_access_denied = true;
 
                         OSCL_ARRAY_DELETE(trackList);
@@ -571,7 +580,7 @@ PVMFStatus PVMFMP4FFParserNode::DoGetNodeMetadataValues()
 
             // Determine the index requested. Default to all tracks
             // Check if the file has at least one track
-            int32 numtracks = iMP4FileHandle->getNumTracks();
+            int32 numtracks = iMetadataParserObj->getNumTracks();
             if (numtracks <= 0)
             {
                 break;
@@ -597,7 +606,7 @@ PVMFStatus PVMFMP4FFParserNode::DoGetNodeMetadataValues()
                 PvmiKvp trackkvp;
                 trackkvp.key = NULL;
 
-                if (iMP4FileHandle->getTrackMediaType(trackidlist[i]) == MEDIA_TYPE_VISUAL)
+                if (iMetadataParserObj->getTrackMediaType(trackidlist[i]) == MEDIA_TYPE_VISUAL)
                 {
                     // Increment the counter for the number of values found so far
                     numvalentries++;
@@ -648,7 +657,7 @@ PVMFStatus PVMFMP4FFParserNode::DoGetNodeMetadataValues()
 
             // Determine the index requested. Default to all tracks
             // Check if the file has at least one track
-            int32 numtracks = iMP4FileHandle->getNumTracks();
+            int32 numtracks = iMetadataParserObj->getNumTracks();
             if (numtracks <= 0)
             {
                 break;
@@ -674,7 +683,7 @@ PVMFStatus PVMFMP4FFParserNode::DoGetNodeMetadataValues()
                 PvmiKvp trackkvp;
                 trackkvp.key = NULL;
 
-                if (iMP4FileHandle->getTrackMediaType(trackidlist[i]) == MEDIA_TYPE_VISUAL)
+                if (iMetadataParserObj->getTrackMediaType(trackidlist[i]) == MEDIA_TYPE_VISUAL)
                 {
                     // Increment the counter for the number of values found so far
                     numvalentries++;
@@ -725,7 +734,7 @@ PVMFStatus PVMFMP4FFParserNode::DoGetNodeMetadataValues()
 
             // Determine the index requested. Default to all tracks
             // Check if the file has at least one track
-            int32 numtracks = iMP4FileHandle->getNumTracks();
+            int32 numtracks = iMetadataParserObj->getNumTracks();
             if (numtracks <= 0)
             {
                 break;
@@ -751,7 +760,7 @@ PVMFStatus PVMFMP4FFParserNode::DoGetNodeMetadataValues()
                 PvmiKvp trackkvp;
                 trackkvp.key = NULL;
 
-                if (iMP4FileHandle->getTrackMediaType(trackidlist[i]) == MEDIA_TYPE_AUDIO)
+                if (iMetadataParserObj->getTrackMediaType(trackidlist[i]) == MEDIA_TYPE_AUDIO)
                 {
                     // Increment the counter for the number of values found so far
                     numvalentries++;
@@ -800,7 +809,7 @@ PVMFStatus PVMFMP4FFParserNode::DoGetNodeMetadataValues()
         {
             // Determine the index requested. Default to all tracks
             // Check if the file has at least one track
-            int32 numtracks = iMP4FileHandle->getNumTracks();
+            int32 numtracks = iMetadataParserObj->getNumTracks();
             if (numtracks <= 0)
             {
                 break;
@@ -826,7 +835,7 @@ PVMFStatus PVMFMP4FFParserNode::DoGetNodeMetadataValues()
                 PvmiKvp trackkvp;
                 trackkvp.key = NULL;
 
-                if (iMP4FileHandle->getTrackMediaType(trackidlist[i]) == MEDIA_TYPE_AUDIO)
+                if (iMetadataParserObj->getTrackMediaType(trackidlist[i]) == MEDIA_TYPE_AUDIO)
                 {
                     // Increment the counter for the number of values found so far
                     numvalentries++;
@@ -875,7 +884,7 @@ PVMFStatus PVMFMP4FFParserNode::DoGetNodeMetadataValues()
         {
             // Determine the index requested. Default to all tracks
             // Check if the file has at least one track
-            int32 numtracks = iMP4FileHandle->getNumTracks();
+            int32 numtracks = iMetadataParserObj->getNumTracks();
             if (numtracks <= 0)
             {
                 break;
@@ -901,7 +910,7 @@ PVMFStatus PVMFMP4FFParserNode::DoGetNodeMetadataValues()
                 PvmiKvp trackkvp;
                 trackkvp.key = NULL;
 
-                if (iMP4FileHandle->getTrackMediaType(trackidlist[i]) == MEDIA_TYPE_AUDIO)
+                if (iMetadataParserObj->getTrackMediaType(trackidlist[i]) == MEDIA_TYPE_AUDIO)
                 {
                     // Increment the counter for the number of values found so far
                     numvalentries++;
@@ -1037,31 +1046,39 @@ int32 PVMFMP4FFParserNode::AddToValueList(Oscl_Vector<PvmiKvp, OsclMemAllocator>
 }
 
 
-void PVMFMP4FFParserNode::CreateDurationInfoMsg(uint32 adurationms)
+void PVMFMP4FFParserNode::CreateDurationInfoMsg(uint32 adurationms, uint32 &aClipIndex)
 {
     int32 leavecode = 0;
     PVMFDurationInfoMessage* eventmsg = NULL;
     OSCL_TRY(leavecode, eventmsg = OSCL_NEW(PVMFDurationInfoMessage, (adurationms)));
-    PVMFNodeInterface::ReportInfoEvent(PVMFInfoDurationAvailable, NULL, OSCL_STATIC_CAST(PVInterface*, eventmsg));
+    uint8 localbuffer[4];
+    oscl_memcpy(localbuffer, &aClipIndex, sizeof(uint32));
+    PVMFAsyncEvent asyncevent(PVMFInfoEvent, PVMFInfoDurationAvailable, NULL, OSCL_STATIC_CAST(PVInterface*, eventmsg), NULL, localbuffer, 4);
+    ReportInfoEvent(asyncevent);
     if (eventmsg)
     {
         eventmsg->removeRef();
     }
 }
 
-PVMFStatus PVMFMP4FFParserNode::InitMetaData()
+PVMFStatus PVMFMP4FFParserNode::InitMetaData(uint32 aParserIndex)
 {
-    if (iMP4FileHandle)
+    IMpeg4File* parserObj = GetParserObjAtIndex(aParserIndex);
+    if (parserObj)
     {
         int32 leavecode = 0;
         OSCL_TRY(leavecode, iAvailableMetadataKeys.reserve(NUMMETADATAKEYS));
-        iMP4FileHandle->InitMetaData(&iAvailableMetadataKeys);
+        parserObj->InitMetaData(&iAvailableMetadataKeys);
+    }
+    else
+    {
+        return PVMFFailure;
     }
 
-    int32 iNumTracks = iMP4FileHandle->getNumTracks();
+    int32 iNumTracks = parserObj->getNumTracks();
     uint32 iIdList[16];
 
-    if (iNumTracks != iMP4FileHandle->getTrackIDList(iIdList, iNumTracks))
+    if (iNumTracks != parserObj->getTrackIDList(iIdList, iNumTracks))
     {
         return PVMFFailure;
     }
@@ -1071,13 +1088,13 @@ PVMFStatus PVMFMP4FFParserNode::InitMetaData()
 
         OSCL_HeapString<OsclMemAllocator> trackMIMEType;
 
-        iMP4FileHandle->getTrackMIMEType(trackID, (OSCL_String&)trackMIMEType);
+        parserObj->getTrackMIMEType(trackID, (OSCL_String&)trackMIMEType);
 
         if ((oscl_strncmp(trackMIMEType.get_str(), PVMF_MIME_M4V, oscl_strlen(PVMF_MIME_M4V)) == 0) ||
                 (oscl_strncmp(trackMIMEType.get_str(), PVMF_MIME_H2632000, oscl_strlen(PVMF_MIME_H2632000)) == 0) ||
                 (oscl_strncmp(trackMIMEType.get_str(), PVMF_MIME_H264_VIDEO_MP4, oscl_strlen(PVMF_MIME_H264_VIDEO_MP4)) == 0))
         {
-            if (PVMFSuccess == PopulateVideoDimensions(trackID))
+            if (PVMFSuccess == PopulateVideoDimensions(aParserIndex, trackID))
             {
                 //track id is a one based index
                 char indexparam[18];
@@ -1090,13 +1107,13 @@ PVMFStatus PVMFMP4FFParserNode::InitMetaData()
         }
     }
 
-    if (iMP4FileHandle->getMovieDuration() > (uint64)0)
+    if (parserObj->getMovieDuration() > (uint64)0)
     {
         // Intimate the Duration info available to the engine through Informational Event.
-        uint64 duration64 = iMP4FileHandle->getMovieDuration();
+        uint64 duration64 = parserObj->getMovieDuration();
         uint32 durationms = 0;
         uint32 duration = durationms = Oscl_Int64_Utils::get_uint64_lower32(duration64);
-        uint32 timescale = iMP4FileHandle->getMovieTimescale();
+        uint32 timescale = parserObj->getMovieTimescale();
         if (timescale > 0 && timescale != 1000)
         {
             // Convert to milliseconds
@@ -1104,26 +1121,20 @@ PVMFStatus PVMFMP4FFParserNode::InitMetaData()
             mcc.set_clock(duration64, 0);
             duration = durationms = mcc.get_converted_ts(1000);
         }
-        CreateDurationInfoMsg(durationms);
+        CreateDurationInfoMsg(durationms, aParserIndex);
     }
 
     //set clip duration on download progress interface
     //applicable to PDL sessions
+    MediaClockConverter mcc(parserObj->getMovieTimescale());
+    mcc.set_clock(parserObj->getMovieDuration(), 0);
+    uint32 moviedurationInMS = mcc.get_converted_ts(1000);
+    if ((download_progress_interface != NULL) && (moviedurationInMS != 0))
     {
-        if (iMP4FileHandle != NULL)
-        {
-            MediaClockConverter mcc(iMP4FileHandle->getMovieTimescale());
-            mcc.set_clock(iMP4FileHandle->getMovieDuration(), 0);
-            uint32 moviedurationInMS = mcc.get_converted_ts(1000);
-            if ((download_progress_interface != NULL) && (moviedurationInMS != 0))
-            {
-                download_progress_interface->setClipDuration(OSCL_CONST_CAST(uint32, moviedurationInMS));
-            }
-        }
+        download_progress_interface->setClipDuration(OSCL_CONST_CAST(uint32, moviedurationInMS));
     }
 
     return PVMFSuccess;
-
 }
 
 void PVMFMP4FFParserNode::PushToAvailableMetadataKeysList(const char* aKeystr, char* aOptionalParam)
@@ -1193,37 +1204,46 @@ PVMFStatus PVMFMP4FFParserNode::PushValueToList(Oscl_Vector<OSCL_HeapString<Oscl
     return PVMFSuccess;
 }
 
-void PVMFMP4FFParserNode::GetGaplessMetadata(PVMP4FFNodeTrackPortInfo& aInfo)
+
+void PVMFMP4FFParserNode::GetGaplessMetadata(int32 aClipIndex)
 {
+    // only do this for clips with a single AAC audio track
+    if ((iNodeTrackPortList.size() != 1) || (iNodeTrackPortList[0].iFormatType != PVMF_MIME_MPEG4_AUDIO))
+    {
+        return;
+    }
+
     // retrieve gapless metadata if present
     // do it only once per clip
-    if (iMP4FileHandle && !aInfo.iGaplessInfoAvailable)
+    IMpeg4File* mp4File = iClipInfoList[aClipIndex].iParserObj;
+    if (mp4File != NULL)
     {
-        aInfo.iGaplessInfoAvailable = iMP4FileHandle->getITunesGaplessMetadata(aInfo.iGaplessMetadata);
+        iClipInfoList[aClipIndex].iClipInfo.iGaplessInfoAvailable = mp4File->getITunesGaplessMetadata(iClipInfoList[aClipIndex].iClipInfo.iGaplessMetadata);
 
-        if (aInfo.iGaplessInfoAvailable)
+        if (iClipInfoList[aClipIndex].iClipInfo.iGaplessInfoAvailable)
         {
             // need to add the sample per frame and total frames here
             // AAC = 1024 samples per frame
             // AAC+ and EAAC+ = 2048 samples per frame
-            uint32 totalFrames = iMP4FileHandle->getSampleCountInTrack(aInfo.iTrackId);
-            uint64 totalSamples = aInfo.iGaplessMetadata.GetZeroPadding() + aInfo.iGaplessMetadata.GetEncoderDelay() +
-                                  aInfo.iGaplessMetadata.GetOriginalStreamLength();
+            uint32 totalFrames = mp4File->getSampleCountInTrack(iNodeTrackPortList[0].iTrackId);
+            uint64 totalSamples = iClipInfoList[aClipIndex].iClipInfo.iGaplessMetadata.GetZeroPadding() +
+                                  iClipInfoList[aClipIndex].iClipInfo.iGaplessMetadata.GetEncoderDelay() +
+                                  iClipInfoList[aClipIndex].iClipInfo.iGaplessMetadata.GetOriginalStreamLength();
             uint32 sfp = totalSamples / totalFrames;
 
             // total frames include the encoder delay and zero padding
             // we can probably find out the samples per frame from the decoder,
             // for now, this may be adequate
-            aInfo.iGaplessMetadata.SetTotalFrames(totalFrames);
-            aInfo.iGaplessMetadata.SetSamplesPerFrame(sfp);
+            iClipInfoList[aClipIndex].iClipInfo.iGaplessMetadata.SetTotalFrames(totalFrames);
+            iClipInfoList[aClipIndex].iClipInfo.iGaplessMetadata.SetSamplesPerFrame(sfp);
 
             // check encoder delay
-            uint32 delay = aInfo.iGaplessMetadata.GetEncoderDelay();
+            uint32 delay = iClipInfoList[aClipIndex].iClipInfo.iGaplessMetadata.GetEncoderDelay();
             if (0 != delay)
             {
                 // frame numbers from the parser are 0 based
-                aInfo.iFrameBOC = 0;
-                aInfo.iSendBOC = true;
+                iClipInfoList[aClipIndex].iClipInfo.iFrameBOC = 0;
+                iClipInfoList[aClipIndex].iClipInfo.iSendBOC = true;
 
                 // create format specific info for BOC
                 // uint32 - number of samples to skip
@@ -1232,17 +1252,17 @@ void PVMFMP4FFParserNode::GetGaplessMetadata(PVMP4FFNodeTrackPortInfo& aInfo)
                 frag.ptr = NULL;
                 frag.len = sizeof(BOCInfo);
                 uint refCounterSize = oscl_mem_aligned_size(sizeof(OsclRefCounterDA));
-                uint8* memBuffer = (uint8*)aInfo.iBOCFormatSpecificInfoAlloc.ALLOCATE(refCounterSize + frag.len);
+                uint8* memBuffer = (uint8*)iClipInfoList[aClipIndex].iClipInfo.iBOCFormatSpecificInfoAlloc.ALLOCATE(refCounterSize + frag.len);
                 if (!memBuffer)
                 {
                     // failure while allocating memory buffer
-                    aInfo.iSendBOC = false;
+                    iClipInfoList[aClipIndex].iClipInfo.iSendBOC = false;
                 }
 
                 oscl_memset(memBuffer, 0, refCounterSize + frag.len);
                 // create ref counter
                 OsclRefCounter* refCounter = new(memBuffer) OsclRefCounterDA(memBuffer,
-                        (OsclDestructDealloc*)&aInfo.iBOCFormatSpecificInfoAlloc);
+                        (OsclDestructDealloc*)&iClipInfoList[aClipIndex].iClipInfo.iBOCFormatSpecificInfoAlloc);
                 memBuffer += refCounterSize;
                 // create BOC info
                 frag.ptr = (OsclAny*)(new(memBuffer) BOCInfo);
@@ -1250,26 +1270,26 @@ void PVMFMP4FFParserNode::GetGaplessMetadata(PVMP4FFNodeTrackPortInfo& aInfo)
 
                 // store info in a ref counter memfrag
                 // how do we make sure that we are not doing this more than once?
-                aInfo.iBOCFormatSpecificInfo = OsclRefCounterMemFrag(frag, refCounter, sizeof(struct BOCInfo));
+                iClipInfoList[aClipIndex].iClipInfo.iBOCFormatSpecificInfo = OsclRefCounterMemFrag(frag, refCounter, sizeof(struct BOCInfo));
             }
 
             // check zero padding
-            uint32 padding = aInfo.iGaplessMetadata.GetZeroPadding();
+            uint32 padding = iClipInfoList[aClipIndex].iClipInfo.iGaplessMetadata.GetZeroPadding();
             if (0 != padding)
             {
                 // calculate frame number of the first frame of EOC
-                uint32 spf = aInfo.iGaplessMetadata.GetSamplesPerFrame();
+                uint32 spf = iClipInfoList[aClipIndex].iClipInfo.iGaplessMetadata.GetSamplesPerFrame();
                 if (0 != spf)
                 {
-                    uint64 total = aInfo.iGaplessMetadata.GetTotalFrames();
+                    uint64 total = iClipInfoList[aClipIndex].iClipInfo.iGaplessMetadata.GetTotalFrames();
                     uint32 frames = padding / spf;
                     if (padding % spf)
                     {
                         frames++;
                     }
                     // frame numbers from the parser are 0 based
-                    aInfo.iFirstFrameEOC = total - frames;
-                    aInfo.iSendEOC = true;
+                    iClipInfoList[aClipIndex].iClipInfo.iFirstFrameEOC = total - frames;
+                    iClipInfoList[aClipIndex].iClipInfo.iSendEOC = true;
 
                     // create format specific info for EOC
                     // uint32 - number of samples to skip
@@ -1278,17 +1298,17 @@ void PVMFMP4FFParserNode::GetGaplessMetadata(PVMP4FFNodeTrackPortInfo& aInfo)
                     frag.ptr = NULL;
                     frag.len = sizeof(EOCInfo);
                     uint refCounterSize = oscl_mem_aligned_size(sizeof(OsclRefCounterDA));
-                    uint8* memBuffer = (uint8*)aInfo.iBOCFormatSpecificInfoAlloc.ALLOCATE(refCounterSize + frag.len);
+                    uint8* memBuffer = (uint8*)iClipInfoList[aClipIndex].iClipInfo.iBOCFormatSpecificInfoAlloc.ALLOCATE(refCounterSize + frag.len);
                     if (!memBuffer)
                     {
                         // failure while allocating memory buffer
-                        aInfo.iSendEOC = false;
+                        iClipInfoList[aClipIndex].iClipInfo.iSendEOC = false;
                     }
 
                     oscl_memset(memBuffer, 0, refCounterSize + frag.len);
                     // create ref counter
                     OsclRefCounter* refCounter = new(memBuffer) OsclRefCounterDA(memBuffer,
-                            (OsclDestructDealloc*)&aInfo.iEOCFormatSpecificInfoAlloc);
+                            (OsclDestructDealloc*)&iClipInfoList[aClipIndex].iClipInfo.iEOCFormatSpecificInfoAlloc);
                     memBuffer += refCounterSize;
                     // create EOC info
                     frag.ptr = (OsclAny*)(new(memBuffer) EOCInfo);
@@ -1298,15 +1318,18 @@ void PVMFMP4FFParserNode::GetGaplessMetadata(PVMP4FFNodeTrackPortInfo& aInfo)
 
                     // store info in a ref counter memfrag
                     // how do we make sure that we are not doing this more than once?
-                    aInfo.iEOCFormatSpecificInfo = OsclRefCounterMemFrag(frag, refCounter, sizeof(EOCInfo));
+                    iClipInfoList[aClipIndex].iClipInfo.iEOCFormatSpecificInfo = OsclRefCounterMemFrag(frag, refCounter, sizeof(EOCInfo));
                 }
             }
 
             // log the gapless metadata
             LOGGAPLESSINFO((0, "PVMFMP4FFParserNode::GetGaplessMetadata() encoder delay %d samples, zero padding %d samples, original length %d%d samples, samples per frame %d, total frames %d%d, part of gapless album %d",
-                            delay, padding, (uint32)(aInfo.iGaplessMetadata.GetOriginalStreamLength() >> 32), (uint32)(aInfo.iGaplessMetadata.GetOriginalStreamLength() & 0xFFFFFFFF),
-                            aInfo.iGaplessMetadata.GetSamplesPerFrame(), (uint32)(aInfo.iGaplessMetadata.GetTotalFrames() >> 32), (uint32)(aInfo.iGaplessMetadata.GetTotalFrames() & 0xFFFFFFFF),
-                            aInfo.iGaplessMetadata.GetPartOfGaplessAlbum()));
+                            delay, padding, (uint32)(iClipInfoList[aClipIndex].iClipInfo.iGaplessMetadata.GetOriginalStreamLength() >> 32),
+                            (uint32)(iClipInfoList[aClipIndex].iClipInfo.iGaplessMetadata.GetOriginalStreamLength() & 0xFFFFFFFF),
+                            iClipInfoList[aClipIndex].iClipInfo.iGaplessMetadata.GetSamplesPerFrame(),
+                            (uint32)(iClipInfoList[aClipIndex].iClipInfo.iGaplessMetadata.GetTotalFrames() >> 32),
+                            (uint32)(iClipInfoList[aClipIndex].iClipInfo.iGaplessMetadata.GetTotalFrames() & 0xFFFFFFFF),
+                            iClipInfoList[aClipIndex].iClipInfo.iGaplessMetadata.GetPartOfGaplessAlbum()));
         }
         else
         {
@@ -1318,12 +1341,18 @@ void PVMFMP4FFParserNode::GetGaplessMetadata(PVMP4FFNodeTrackPortInfo& aInfo)
 
 // adjust for gapless playback duration
 // return agjusted duration in milliseconds
+// this method is not being called now, it may need some attention when is
 uint32 PVMFMP4FFParserNode::GetGaplessDuration(PVMP4FFNodeTrackPortInfo& aInfo)
 {
+    if (iPlaybackParserObj == NULL)
+    {
+        return 0;
+    }
+
     uint32 durationMs = 0;
-    uint64 duration64 = iMP4FileHandle->getTrackMediaDuration(aInfo.iTrackId);
+    uint64 duration64 = iPlaybackParserObj->getTrackMediaDuration(aInfo.iTrackId);
     uint32 duration = durationMs = Oscl_Int64_Utils::get_uint64_lower32(duration64);
-    uint32 timescale = iMP4FileHandle->getTrackMediaTimescale(aInfo.iTrackId);
+    uint32 timescale = iPlaybackParserObj->getTrackMediaTimescale(aInfo.iTrackId);
     if (timescale > 0 && timescale != 1000)
     {
         // Convert to milliseconds
@@ -1332,10 +1361,11 @@ uint32 PVMFMP4FFParserNode::GetGaplessDuration(PVMP4FFNodeTrackPortInfo& aInfo)
         durationMs = mcc.get_converted_ts(1000);
     }
 
-    if (aInfo.iGaplessInfoAvailable)
+    if (iClipInfoList[iPlaybackClipIndex].iClipInfo.iGaplessInfoAvailable)
     {
         // subtract the encoder delay and zero padding
-        uint32 droppedSamples = aInfo.iGaplessMetadata.GetEncoderDelay() + aInfo.iGaplessMetadata.GetZeroPadding();
+        uint32 droppedSamples = iClipInfoList[iPlaybackClipIndex].iClipInfo.iGaplessMetadata.GetEncoderDelay() +
+                                iClipInfoList[iPlaybackClipIndex].iClipInfo.iGaplessMetadata.GetZeroPadding();
         uint32 samplingRate = GetAudioSampleRate(aInfo.iTrackId);
         uint32 droppedMs = 0;
         if (0 != samplingRate)
@@ -1348,6 +1378,7 @@ uint32 PVMFMP4FFParserNode::GetGaplessDuration(PVMP4FFNodeTrackPortInfo& aInfo)
     return durationMs;
 }
 
+
 uint32 PVMFMP4FFParserNode::GetNumAudioChannels(uint32 aId)
 {
     uint32 num_channels = 0;
@@ -1356,7 +1387,7 @@ uint32 PVMFMP4FFParserNode::GetNumAudioChannels(uint32 aId)
     uint32 samplesPerFrame;
 
     OSCL_HeapString<OsclMemAllocator> trackMIMEType;
-    iMP4FileHandle->getTrackMIMEType(aId, trackMIMEType);
+    iMetadataParserObj->getTrackMIMEType(aId, trackMIMEType);
 
     if ((oscl_strncmp(trackMIMEType.get_str(), PVMF_MIME_AMR, oscl_strlen(PVMF_MIME_AMR)) == 0) ||
             (oscl_strncmp(trackMIMEType.get_str(), PVMF_MIME_AMR_IETF, oscl_strlen(PVMF_MIME_AMR_IETF)) == 0) ||
@@ -1368,12 +1399,12 @@ uint32 PVMFMP4FFParserNode::GetNumAudioChannels(uint32 aId)
     else if (oscl_strncmp(trackMIMEType.get_str(), PVMF_MIME_MPEG4_AUDIO, oscl_strlen(PVMF_MIME_MPEG4_AUDIO)) == 0)
     {
         int32 specinfosize =
-            (int32)(iMP4FileHandle->getTrackDecoderSpecificInfoSize(aId));
+            (int32)(iMetadataParserObj->getTrackDecoderSpecificInfoSize(aId));
         if (specinfosize != 0)
         {
             // Retrieve the decoder specific info from file parser
             uint8* specinfoptr =
-                iMP4FileHandle->getTrackDecoderSpecificInfoContent(aId);
+                iMetadataParserObj->getTrackDecoderSpecificInfoContent(aId);
 
             GetActualAacConfig(specinfoptr,
                                &audioObjectType,
@@ -1403,7 +1434,7 @@ uint32 PVMFMP4FFParserNode::GetAudioSampleRate(uint32 aId)
         };
 
     OSCL_HeapString<OsclMemAllocator> trackMIMEType;
-    iMP4FileHandle->getTrackMIMEType(aId, trackMIMEType);
+    iMetadataParserObj->getTrackMIMEType(aId, trackMIMEType);
 
     if ((oscl_strncmp(trackMIMEType.get_str(), PVMF_MIME_AMR, oscl_strlen(PVMF_MIME_AMR)) == 0) ||
             (oscl_strncmp(trackMIMEType.get_str(), PVMF_MIME_AMR_IETF, oscl_strlen(PVMF_MIME_AMR_IETF)) == 0))
@@ -1419,12 +1450,12 @@ uint32 PVMFMP4FFParserNode::GetAudioSampleRate(uint32 aId)
     else if (oscl_strncmp(trackMIMEType.get_str(), PVMF_MIME_MPEG4_AUDIO, oscl_strlen(PVMF_MIME_MPEG4_AUDIO)) == 0)
     {
         int32 specinfosize =
-            (int32)(iMP4FileHandle->getTrackDecoderSpecificInfoSize(aId));
+            (int32)(iMetadataParserObj->getTrackDecoderSpecificInfoSize(aId));
         if (specinfosize != 0)
         {
             // Retrieve the decoder specific info from file parser
             uint8* specinfoptr =
-                iMP4FileHandle->getTrackDecoderSpecificInfoContent(aId);
+                iMetadataParserObj->getTrackDecoderSpecificInfoContent(aId);
 
             GetActualAacConfig(specinfoptr,
                                &audioObjectType,
