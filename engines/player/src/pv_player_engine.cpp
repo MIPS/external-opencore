@@ -5871,7 +5871,7 @@ PVMFStatus PVPlayerEngine::DoSetPlaybackRange(PVPlayerEngineCommand& aCmd)
     }
 
     if (((iNumPVMFInfoStartOfDataPending > 0) || (iNumPendingDatapathCmd > 0))
-            && (iState == PVP_ENGINE_STATE_PAUSED))
+            && ((iState == PVP_ENGINE_STATE_PAUSED) || (iState == PVP_ENGINE_STATE_STARTED)))
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG, (0, "PVPlayerEngine::DoSetPlaybackRange() Pending PVMFInfoStartOfData events or datapath commands"));
         return PVMFPending;
