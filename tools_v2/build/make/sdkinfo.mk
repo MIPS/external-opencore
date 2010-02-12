@@ -151,6 +151,15 @@ ifneq ($(strip $(basis_stream)),)
   endif
 endif
 
+# If the environment variables ACCUREV_STREAM and ACCUREV_TRANSACTION are set, use those in the file.
+ifneq ($(strip $(ACCUREV_STREAM)),)
+  stream_name := $(ACCUREV_STREAM)
+endif
+
+ifneq ($(strip $(ACCUREV_TRANSACTION)),)
+  transaction_id := $(ACCUREV_TRANSACTION)
+endif
+
 ifeq ($(strip $(transaction_id)),)
     sdkinfo := null
 else
