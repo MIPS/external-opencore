@@ -133,7 +133,8 @@ class pvplayer_engine_test_suite : public test_case
             bool  aProxyEnabled,
             uint32 aDownloadRateInKbps,
             bool aSplitLogFile,
-            uint32 aMaxTestTimeTimerTimeout
+            uint32 aMaxTestTimeTimerTimeout,
+            bool aRunPRUtilityNoSchedulerTC
         );
 };
 
@@ -409,7 +410,8 @@ class pvplayer_engine_test : public test_case,
                              bool aProxyEnabled,
                              uint32 aDownloadRateInKbps,
                              bool aSplitLogFile,
-                             uint32 aMaxTestTimeTimerTimeout);
+                             uint32 aMaxTestTimeTimerTimeout,
+                             bool aRunPRUtilityNoSchedulerTC);
         ~pvplayer_engine_test();
 
         // Note: for command line options to work, the local tests need to be 0-99,
@@ -2223,6 +2225,12 @@ class pvplayer_engine_test : public test_case,
             ApplicationInvolvedTrackSelectionTestTextOnly = 1307,
             ApplicationInvolvedTrackSelectionTestNoTracks = 1308,
 
+            /*PlayReady Tests 1400-1599. Playready player tests are from 1400-1499.
+             *PlayReady utility tests are from 1500-1599.
+            */
+
+            //Playready player tests 1400-1499
+
             //Metadata Query tests
             DLA_QueryEngine_PlayReadyCPMTest_v2_WMA = 1400,
             DLA_QueryEngine_PlayReadyCPMTest_v4_WMA,//1401
@@ -2254,62 +2262,63 @@ class pvplayer_engine_test : public test_case,
             DLA_OpenPlayStop_PlayReadyCPMTest_v4_WMA_domain_offline,//1423
             DLA_OpenPlayStop_PlayReadyCPMTest_v4_WMA_MissingServiceIdInContentHeader,//1424
 
-            //PlayReady utility tests
-            DLA_JoinDomain_PlayReadyCPMTest,//1425
-            DLA_LeaveDomain_PlayReadyCPMTest,//1426
-            DLA_DeleteLicense_PlayReadyCPMTest_v2_Content,//1427
-            DLA_DeleteLicense_PlayReadyCPMTest_v4_Content,//1428
-            DLA_MeteringByMID_PlayReadyCPMTest,//1429
-            DLA_MeteringAll_PlayReadyCPMTest,//1430
-            DLA_Metering_DeleteCert_PlayReadyCPMTest,//1431
-            DLA_Metering_InvalidateCert_PlayReadyCPMTest,//1432
-            DLA_MeteringByMeterURL_PlayReadyCPMTest,//1433
-            DLA_LicenseUpdateAll_PlayReadyCPMTest,//1434
-            DLA_LicenseUpdateExpired_PlayReadyCPMTest,//1435
-            NonSilentLicAcquire_LUIUrlRetrieval_PlayReadyCPMTest,//1436
-            LUIUrlParsing_PlayReadyCPMTest, //1437
-            FindKID_In_Header_PlayReadyCPMTest,//1438
-
-            //Utility Web-initiator tests
-            WebInitiatorParsing_PlayReadyCPMTest, //1439
-            WebInitiatorLicAcq_PlayReadyCPMTest, //1440
-            WebInitiatorLicAcqDomainBound_PlayReadyCPMTest, //1441
-            WebInitiatorMetering_PlayReadyCPMTest, //1442
-            WebInitiatorJoinAndLeaveDomain_PlayReadyCPMTest, //1443
-
-
             //PlayReady Cancel tests
-            DLA_CancelAcquireLicense_PlayReadyCPMTest_v2_Content,//1444
-            DLA_CancelJoinDomain_PlayReadyCPMTest, //1445
+            DLA_CancelAcquireLicense_PlayReadyCPMTest_v2_Content,//1425
+            DLA_CancelJoinDomain_PlayReadyCPMTest, //1426
 
             //PlayReady streaming tests.
-            DLA_StreamingOpenPlayUntilEOST_PlayReadyCPMTest,//1446
-            DLA_StreamingOpenPlayPausePlayUntilEOS_PlayReadyCPMTest,//1447
-            DLA_StreamingOpenPlaySeekPlayUntilEOS_PlayReadyCPMTest,//1448
-            DLA_StreamingMultiplePlayUntilEOS_PlayReadyCPMTest,//1449
-            DLA_StreamingCancelAcquireLicense_PlayReadyCPMTest,//1450
-            DLA_StreamingProtocolRollOverTest_PlayReadyCPMTest,//1451
-            DLA_StreamingProtocolRollOverTestWithUnknownURLType_PlayReadyCPMTest,//1452
-            DLA_PDL_OpenPlayUntilEOS_PlayreadyCPMTest_v4_WMA,//1453
-            DLA_PDL_OpenPlayStop_PlayreadyCPMTest_v4_WMV,//1454
-            DLA_PDL_OpenPlayStop_PlayreadyCPMTest_v4_AAC,//1455
-            DLA_PDL_OpenPlayStop_PlayreadyCPMTest_v4_H264,//1456
-            DLA_PDL_OpenPlayStop_PlayreadyCPMTest_v4_H264_AAC,//1457
+            DLA_StreamingOpenPlayUntilEOST_PlayReadyCPMTest,//1427
+            DLA_StreamingOpenPlayPausePlayUntilEOS_PlayReadyCPMTest,//1428
+            DLA_StreamingOpenPlaySeekPlayUntilEOS_PlayReadyCPMTest,//1429
+            DLA_StreamingMultiplePlayUntilEOS_PlayReadyCPMTest,//1430
+            DLA_StreamingCancelAcquireLicense_PlayReadyCPMTest,//1431
+            DLA_StreamingProtocolRollOverTest_PlayReadyCPMTest,//1432
+            DLA_StreamingProtocolRollOverTestWithUnknownURLType_PlayReadyCPMTest,//1433
+            DLA_PDL_OpenPlayUntilEOS_PlayreadyCPMTest_v4_WMA,//1434
+            DLA_PDL_OpenPlayStop_PlayreadyCPMTest_v4_WMV,//1435
+            DLA_PDL_OpenPlayStop_PlayreadyCPMTest_v4_AAC,//1436
+            DLA_PDL_OpenPlayStop_PlayreadyCPMTest_v4_H264,//1437
+            DLA_PDL_OpenPlayStop_PlayreadyCPMTest_v4_H264_AAC,//1438
 
-            DLA_PPB_OpenPlayUntilEOS_PlayreadyCPMTest_v4_WMA,//1458
-            DLA_PPB_OpenPlayStop_PlayreadyCPMTest_v4_WMV,//1459
-            DLA_PPB_OpenPlayStop_PlayreadyCPMTest_v4_AAC,//1460
-            DLA_PPB_OpenPlayStop_PlayreadyCPMTest_v4_H264,//1461
-            DLA_PPB_OpenPlayStop_PlayreadyCPMTest_v4_H264_AAC,//1462
+            DLA_PPB_OpenPlayUntilEOS_PlayreadyCPMTest_v4_WMA,//1439
+            DLA_PPB_OpenPlayStop_PlayreadyCPMTest_v4_WMV,//1440
+            DLA_PPB_OpenPlayStop_PlayreadyCPMTest_v4_AAC,//1441
+            DLA_PPB_OpenPlayStop_PlayreadyCPMTest_v4_H264,//1442
+            DLA_PPB_OpenPlayStop_PlayreadyCPMTest_v4_H264_AAC,//1443
 
             //Miscellaneous tests
-            ContentHeaderRetrieval_PlayReadyCPMTest, //1463
-            LicenseCountVerification_PlayReadyCPMTest, //1464
+            LicenseCountVerification_PlayReadyCPMTest, //1444
+
+            //PlayReady utility tests 1500-1599
+
+            //Misc utility tests
+            DLA_JoinDomain_PlayReadyCPMTest = 1500,
+            DLA_LeaveDomain_PlayReadyCPMTest,//1501
+            DLA_DeleteLicense_PlayReadyCPMTest_v2_Content,//1502
+            DLA_DeleteLicense_PlayReadyCPMTest_v4_Content,//1503
+            DLA_MeteringByMID_PlayReadyCPMTest,//1504
+            DLA_MeteringAll_PlayReadyCPMTest,//1505
+            DLA_Metering_DeleteCert_PlayReadyCPMTest,//1506
+            DLA_Metering_InvalidateCert_PlayReadyCPMTest,//1507
+            DLA_MeteringByMeterURL_PlayReadyCPMTest,//1508
+            DLA_LicenseUpdateAll_PlayReadyCPMTest,//1509
+            DLA_LicenseUpdateExpired_PlayReadyCPMTest,//1510
+            NonSilentLicAcquire_LUIUrlRetrieval_PlayReadyCPMTest,//1511
+            LUIUrlParsing_PlayReadyCPMTest, //1512
+            FindKID_In_Header_PlayReadyCPMTest,//1513
+            ContentHeaderRetrieval_PlayReadyCPMTest,//1514
+
+            //Utility Web-initiator tests
+            WebInitiatorParsing_PlayReadyCPMTest, //1515
+            WebInitiatorLicAcq_PlayReadyCPMTest, //1516
+            WebInitiatorLicAcqDomainBound_PlayReadyCPMTest, //1517
+            WebInitiatorMetering_PlayReadyCPMTest, //1518
+            WebInitiatorJoinAndLeaveDomain_PlayReadyCPMTest, //1519
 
             //RESERVED FOR FUTURE PLAYREADY CPM TESTS.
             LastPlayReadyCPMTest = 1599,//placeholder
-
             //End PLAYREADY CPM TESTS.
+
             /*
              * Note: Starting PVR tests from 1600 since the number of tests exceed the range
              * from 895 and 900 (the earlier location of the tests)
@@ -2753,6 +2762,7 @@ class pvplayer_engine_test : public test_case,
 
         uint32 iDownloadRateInKbps;
         uint32 iMaxTestTimeTimerTimeout;
+        bool iRunPRUtilityNoSchedulerTC;
         OsclTimer<OsclMemAllocator> *iTimer;
 };
 

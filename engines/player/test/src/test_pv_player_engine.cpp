@@ -1642,7 +1642,54 @@ void FindLogMem(cmd_line* command_line, int32& logmem, FILE* aFile)
         iSourceFind = NULL;
     }
 }
+void FindPRUtilityNoSchedulerTCFlag(cmd_line* command_line, bool& aRunPRUtilityNoSchedulerTCFlag, FILE *aFile)
+{
+    aRunPRUtilityNoSchedulerTCFlag = false;
 
+    bool cmdline_iswchar = command_line->is_wchar();
+
+    int count = command_line->get_count();
+
+    // Search for the "-proxy" argument
+    char *iSourceFind = NULL;
+    if (cmdline_iswchar)
+    {
+        iSourceFind = new char[256];
+    }
+
+    // Go through each argument
+    for (int iTestSearch = 0; iTestSearch < count; iTestSearch++)
+    {
+        // Convert to UTF8 if necessary
+        if (cmdline_iswchar)
+        {
+            OSCL_TCHAR* cmd = NULL;
+            command_line->get_arg(iTestSearch, cmd);
+            oscl_UnicodeToUTF8(cmd, oscl_strlen(cmd), iSourceFind, 256);
+        }
+        else
+        {
+            iSourceFind = NULL;
+            command_line->get_arg(iTestSearch, iSourceFind);
+        }
+        // Do the string compare
+        if (oscl_strcmp(iSourceFind, "-help") == 0)
+        {
+            bHelp = true;
+            fprintf(aFile, "   Run no-scheduler version PlayReady utility test case also\n");
+            fprintf(aFile, "  -runprmultithread\n");
+        }
+        else if (oscl_strcmp(iSourceFind, "-runprmultithread") == 0)
+        {
+            aRunPRUtilityNoSchedulerTCFlag = true;
+        }
+    }
+    if (cmdline_iswchar)
+    {
+        delete[] iSourceFind;
+        iSourceFind = NULL;
+    }
+}
 //Find if -proxy and -downloadrate present in cmd line params
 void FindProxyEnabled(cmd_line* command_line, bool& aProxyEnabled, FILE *aFile, uint32& aDownloadRateInKbps)
 {
@@ -2038,7 +2085,8 @@ int CreateTestSuiteAndRun(char *aFileName,
                           CmdLinePopulator<char> *aasciiCmdLinePopulator,
                           CmdLinePopulator<oscl_wchar> *awcharCmdLinePopulator,
                           test_result *atestResult,
-                          uint32 aMaxTestTimeTimerTimeout)
+                          uint32 aMaxTestTimeTimerTimeout,
+                          bool aRunPRUtilityNoSchedulerTC)
 {
     pvplayer_engine_test_suite *engine_tests = NULL;
     engine_tests = new pvplayer_engine_test_suite(aFileName,
@@ -2058,7 +2106,8 @@ int CreateTestSuiteAndRun(char *aFileName,
             aProxyEnabled,
             aDownloadRateInKbps,
             aSplitLogFile,
-            aMaxTestTimeTimerTimeout);
+            aMaxTestTimeTimerTimeout,
+            aRunPRUtilityNoSchedulerTC);
     if (engine_tests)
     {
         //Set the Initial timer
@@ -2207,6 +2256,9 @@ int _local_main(FILE *filehandle, cmd_line *command_line, bool& aPrintDetailedMe
     uint32 maxTestTimeTimerTimeout = 0;
     FindMaxTestTimeTimerTimeout(command_line, maxTestTimeTimerTimeout, file);
 
+    bool runPRUtilityNoSchedulerTCFlag = false;
+    FindPRUtilityNoSchedulerTCFlag(command_line, runPRUtilityNoSchedulerTCFlag, file);
+
     if (true == bHelp)
         return 0;
 
@@ -2241,7 +2293,8 @@ int _local_main(FILE *filehandle, cmd_line *command_line, bool& aPrintDetailedMe
                                        asciiCmdLinePopulator,
                                        wcharCmdLinePopulator,
                                        testResult,
-                                       maxTestTimeTimerTimeout);
+                                       maxTestTimeTimerTimeout,
+                                       runPRUtilityNoSchedulerTCFlag);
     }
     else
     {
@@ -2273,7 +2326,8 @@ int _local_main(FILE *filehandle, cmd_line *command_line, bool& aPrintDetailedMe
                                                asciiCmdLinePopulator,
                                                wcharCmdLinePopulator,
                                                testResult,
-                                               maxTestTimeTimerTimeout);
+                                               maxTestTimeTimerTimeout,
+                                               runPRUtilityNoSchedulerTCFlag);
 
             //if for some reason something fails, we need to store the value
             //and send a notification
@@ -2312,7 +2366,8 @@ pvplayer_engine_test_suite::pvplayer_engine_test_suite(char *aFileName,
         bool aProxyEnabled,
         uint32 aDownloadRateInKbps,
         bool aSplitLogFile,
-        uint32 aMaxTestTimeTimerTimeout): test_case()
+        uint32 aMaxTestTimeTimerTimeout,
+        bool aRunPRUtilityNoSchedulerTC): test_case()
 {
     adopt_test_case(new pvplayer_engine_test(aFileName,
                     aFileType,
@@ -2331,7 +2386,8 @@ pvplayer_engine_test_suite::pvplayer_engine_test_suite(char *aFileName,
                     aProxyEnabled,
                     aDownloadRateInKbps,
                     aSplitLogFile,
-                    aMaxTestTimeTimerTimeout));
+                    aMaxTestTimeTimerTimeout,
+                    aRunPRUtilityNoSchedulerTC));
 }
 
 
@@ -2353,7 +2409,8 @@ pvplayer_engine_test::pvplayer_engine_test(char *aFileName,
         bool aProxyEnabled,
         uint32 aDownloadRateInKbps,
         bool aSplitLogFile,
-        uint32 aMaxTestTimeTimerTimeout)
+        uint32 aMaxTestTimeTimerTimeout,
+        bool aRunPRUtilityNoSchedulerTC)
 {
     iFileName = aFileName;
     iFileType = aFileType;
@@ -2379,6 +2436,7 @@ pvplayer_engine_test::pvplayer_engine_test(char *aFileName,
     iProxyEnabled = aProxyEnabled;
     iFileFormatType = aFileFormatType;
     iDownloadRateInKbps = aDownloadRateInKbps;
+    iRunPRUtilityNoSchedulerTC = aRunPRUtilityNoSchedulerTC;
     iTimer = NULL;
 
 #ifdef BUILD_N_ARM

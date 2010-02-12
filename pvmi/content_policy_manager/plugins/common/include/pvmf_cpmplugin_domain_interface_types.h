@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -124,6 +124,16 @@ class PVMFCPMDomainCertData
         PVMFCPMDomainId iDomainId;//Domain ID
 
         OSCL_HeapString<OsclMemAllocator> iUrl;//a URL in the domain cert.  Not used currently.
+
+        PVMFCPMDomainCertData & operator=(const PVMFCPMDomainCertData& aSrc)
+        {
+            if (&aSrc != this)
+            {
+                iDomainId = aSrc.iDomainId;
+                iUrl = aSrc.iUrl;
+            }
+            return *this;
+        }
 };
 
 

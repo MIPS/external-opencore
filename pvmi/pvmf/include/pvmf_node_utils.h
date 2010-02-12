@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -450,7 +450,9 @@ class PVMFGenericNodeCommand
 };
 
 /**
-//A command queue with a built-in command ID generator.
+//A command queue with a built-in command ID generator. User has the option of
+    not using internal command ID generator. This can be done by supplying external ID to
+    AddL() routine.
 */
 template<class Command, class Alloc>
 class PVMFNodeCommandQueue
@@ -485,9 +487,13 @@ class PVMFNodeCommandQueue
             iVec.erase(elem);
         }
 
-        int32 AddL(vec_element &elem)
+        int32 AddL(vec_element &elem, int32 aId = -1)
         {//add an element with a new ID
-            elem.iId = iCommandCounter++;
+            if (aId != -1)
+                elem.iId = aId;
+            else
+                elem.iId = iCommandCounter++;
+
             if (elem.hipri())
                 iVec.push_front(elem);
             else
