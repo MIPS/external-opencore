@@ -4656,6 +4656,12 @@ PVMFStatus PVPlayerEngine::DoUpdateDataSource(PVPlayerEngineCommand& aCmd)
                     (0, "PVPlayerEngine::DoUpdateDataSource() Tick=%d", OsclTickCount::TickCount()));
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVPlayerEngine::DoUpdateDataSource() In"));
 
+    if (iDataSource == NULL)
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_PROF, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::DoUpdateDataSource() Wrong engine state"));
+        return PVMFErrInvalidState;
+    }
+
     PVMFStatus retval = PVMFFailure;
     PVMFStatus status =  PVMFSuccess;
 

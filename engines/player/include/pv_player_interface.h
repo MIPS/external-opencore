@@ -348,9 +348,6 @@ class PVPlayerInterface
          * @param aContextData
          *          Optional opaque data that will be passed back to the user with the command response
          * @leave   This method can leave with one of the following error codes
-         *          OsclErrNotSupported if the format of the source is incompatible with what the SDK can handle
-         *          OsclErrInvalidState if invoked in the incorrect state, such as after initialization
-         *          of the selected track has already begin.
          *          OsclErrNoMemory if the SDK failed to allocate memory during this operation
          * @return A unique command id for asynchronous completion
          */
