@@ -1501,6 +1501,16 @@ PVCommandId CPV324m2Way::RemoveDataSink(PVMFNodeInterface& aDataSink,
         iMuxClock.Stop();
     }
 
+    // Before removing the sink node, remove reference for PvmfNodesSyncControlInterface
+    for (uint32 ii = 0; ii < iSinkNodeList.size(); ii++)
+    {
+        if (iSinkNodeList[ii].iNodeInterface.iInterface)
+        {
+            iSinkNodeList[ii].iNodeInterface.iInterface->removeRef();
+            iSinkNodeList[ii].iNodeInterface.iInterface = NULL;
+        }
+    }
+
     switch (iState)
     {
         case EIdle:

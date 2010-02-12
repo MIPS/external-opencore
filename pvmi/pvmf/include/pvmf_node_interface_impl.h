@@ -367,6 +367,26 @@ class PVMFNodeCommand: public PVMFNodeCommandBase
             aDataStreamCmdId = (PvmiDataStreamCommandId)iParam4;
         }
 
+        // Constructor and parser for SkipMediaData
+        void Construct(PVMFSessionId s, int32 aCmd,
+                       PVMFTimestamp aResumeTimestamp, uint32 aStreamID,
+                       bool aPlayBackPositionContinuous, const OsclAny* aContext)
+        {
+            iSession = s;
+            iCmd = aCmd;
+            iContext = aContext;
+            iParam1 = (OsclAny*)aResumeTimestamp;
+            iParam2 = (OsclAny*)aPlayBackPositionContinuous;
+            iParam3 = (OsclAny*)aStreamID;
+        }
+
+        void Parse(PVMFTimestamp& aResumeTimestamp, bool& aPlayBackPositionContinuous, uint32& aStreamID)
+        {
+            aResumeTimestamp = (PVMFTimestamp)iParam1;
+            aPlayBackPositionContinuous = (iParam2) ? true : false;
+            aStreamID = (uint32)iParam3;
+        }
+
         //need to overload the base Destroy routine to cleanup metadata key.
         void Destroy()
         {

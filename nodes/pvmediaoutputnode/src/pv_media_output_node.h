@@ -23,134 +23,76 @@
 #ifndef PV_MEDIA_OUTPUT_NODE_H_INCLUDED
 #define PV_MEDIA_OUTPUT_NODE_H_INCLUDED
 
-#ifndef OSCL_BASE_H_INCLUDED
-#include "oscl_base.h"
+#ifndef PVMF_NODE_INTERFACE_IMPL_H_INCLUDED
+#include "pvmf_node_interface_impl.h"
 #endif
-#ifndef OSCL_SCHEDULER_AO_H_INCLUDED
-#include "oscl_scheduler_ao.h"
-#endif
-#ifndef OSCL_PRIQUEUE_H_INCLUDED
-#include "oscl_priqueue.h"
-#endif
-#ifndef PVLOGGER_H_INCLUDED
-#include "pvlogger.h"
-#endif
-#ifndef PVMF_RETURN_CODES_H_INCLUDED
-#include "pvmf_return_codes.h"
-#endif
-#ifndef PVMF_NODE_INTERFACE_H_INCLUDED
-#include "pvmf_node_interface.h"
-#endif
-#ifndef PVMF_NODE_UTILS_H_INCLUDED
-#include "pvmf_node_utils.h"
-#endif
+
 #ifndef PVMF_PORT_INTERFACE_H_INCLUDED
 #include "pvmf_port_interface.h"
 #endif
+
 #ifndef PVMI_MIO_CONTROL_H_INCLUDED
 #include "pvmi_mio_control.h"
 #endif
-#ifndef PVMI_MEDIA_IO_OBSERVER_H_INCLUDED
-#include "pvmi_media_io_observer.h"
-#endif
+
 #ifndef PVMI_CONFIG_AND_CAPABILITY_BASE_H_INCLUDED
 #include "pvmi_config_and_capability_base.h"
 #endif
-#ifndef PVMF_NODES_SYNC_CONTROL_H_INCLUDED
-#include "pvmf_nodes_sync_control.h"
-#endif
+
 #ifndef PV_MEDIA_OUTPUT_NODE_INPORT_H_INCLUDED
 #include "pv_media_output_node_inport.h"
 #endif
+
 #ifndef PV_MEDIA_OUTPUT_NODE_EVENTS_H_INCLUDED
 #include "pv_media_output_node_events.h"
 #endif
+
 #ifndef PVMI_MEDIA_IO_CLOCK_EXTENSION_H_INCLUDED
 #include "pvmi_media_io_clock_extension.h"
 #endif
 
-/** Port tags.  For now engine must use these directly since
-* port tag query is not yet implemented
-*/
+#ifndef PV_MEDIA_OUTPUT_NODE_FACTORY_H_INCLUDED
+#include "pv_media_output_node_factory.h"
+#endif
+
+#ifndef OSCL_DLL_H_INCLUDED
+#include "oscl_dll.h"
+#endif
+
+// Define entry point for this DLL
+OSCL_DLL_ENTRY_POINT_DEFAULT()
+
+// Macros for calling PVLogger
+#define LOGREPOS(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG,iReposLogger,PVLOGMSG_INFO,m);
+#define LOGERROR(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_REL,iLogger,PVLOGMSG_ERR,m);
+#define LOGINFOHI(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG,iLogger,PVLOGMSG_INFO,m);
+#define LOGINFOMED(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_MLDBG,iLogger,PVLOGMSG_INFO,m);
+#define LOGINFOLOW(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG,iLogger,PVLOGMSG_INFO,m);
+#define LOGINFO(m) LOGINFOMED(m)
+#define LOGDIAGNOSTICS(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_PROF,iDiagnosticsLogger,PVLOGMSG_INFO,m);
+
+//this should always be 1. set this to zero if
+//you want to bypass avsync (typically used in
+//case one wants to decode and render ASAP)
+#define PVMF_MEDIA_OUTPUT_NODE_ENABLE_AV_SYNC 1
+
+
+// Port tags.  For now engine must use these directly since
+// port tag query is not yet implemented
 enum PVMediaOutputNodePortTags
 {
     PVMF_MEDIAIO_NODE_INPUT_PORT_TAG = 0
 };
 
-
-/**
- * Command queue for internal use in the node
- */
-
-//command type enums.  This node has one extra async command.
+//This node has one extra async command.
 enum PVMediaOutputNodeCmdType
 {
     PVMF_MEDIAOUTPUTNODE_SKIPMEDIADATA = PVMF_GENERIC_NODE_COMMAND_LAST
 };
 
-//command class
-class PVMediaOutputNodeCmd: public PVMFGenericNodeCommand<OsclMemAllocator>
-{
-    public:
-        //for SkipMediaData
-        void Construct(PVMFSessionId s, int32 aCmd
-                       , PVMFTimestamp aResumeTimestamp
-                       , uint32 aStreamID
-                       , bool aPlayBackPositionContinuous
-                       , const OsclAny* aContext)
-        {
-            iSession = s;
-            iCmd = aCmd;
-            iContext = aContext;
-            iParam1 = (OsclAny*)aResumeTimestamp;
-            iParam2 = (OsclAny*)aPlayBackPositionContinuous;
-            iParam3 = (OsclAny*)aStreamID;
-            iEventCode = PVMFMoutNodeErr_First;
-        }
-        void Parse(PVMFTimestamp& aResumeTimestamp
-                   , bool& aPlayBackPositionContinuous
-                   , uint32& aStreamID)
-        {
-            aResumeTimestamp = (PVMFTimestamp)iParam1;
-            aPlayBackPositionContinuous = (iParam2) ? true : false;
-            aStreamID = (uint32)iParam3;
-        }
-        //this holds an event code associated with the command status
-        PVMFStatus iEventCode;
-
-        //need to override base construct routine due to additional parameter.
-        void BaseConstruct(PVMFSessionId s, int32 aCmd, const OsclAny* aContext)
-        {
-            PVMFGenericNodeCommand<OsclMemAllocator>::BaseConstruct(s, aCmd, aContext);
-            iEventCode = PVMFMoutNodeErr_First;
-        }
-        //need to override base copy routine due to additional parameter
-        void Copy(PVMediaOutputNodeCmd& aCmd)
-        {
-            PVMFGenericNodeCommand<OsclMemAllocator>::Copy(aCmd);
-            iEventCode = aCmd.iEventCode;
-        }
-        bool caninterrupt()
-        {   //this routine identifies commands that can interrupt current command.
-            return (iCmd == PVMF_GENERIC_NODE_CANCELALLCOMMANDS
-                    || iCmd == PVMF_GENERIC_NODE_CANCELCOMMAND);
-        }
-
-};
-//define a synonym for the base class.
-//a typedef creates compiler warnings so use #define
-#define PVMediaOutputNodeCmdBase PVMFGenericNodeCommand<OsclMemAllocator>
-
-//command queue type
-typedef PVMFNodeCommandQueue<PVMediaOutputNodeCmd, OsclMemAllocator> PVMediaOutputNodeCmdQ;
-
-
-/**
- * class PVMediaOutputNode is a node wrapper around the io interface
- */
+// class PVMediaOutputNode is a node wrapper around the io interface
 class PVMediaOutputNode
-        : public OsclActiveObject
-        , public PVMFNodeInterface
+        : public PVMFNodeInterfaceImpl
         , public PvmiMIOObserver
         , public PvmfNodesSyncControlInterface
         , public PvmiCapabilityAndConfigBase
@@ -165,41 +107,7 @@ class PVMediaOutputNode
         OSCL_IMPORT_REF PVMFStatus ThreadLogoff();
         OSCL_IMPORT_REF PVMFStatus GetCapability(PVMFNodeCapability& aNodeCapability);
         OSCL_IMPORT_REF PVMFPortIter* GetPorts(const PVMFPortFilter* aFilter = NULL);
-        OSCL_IMPORT_REF PVMFCommandId QueryUUID(PVMFSessionId aSession
-                                                , const PvmfMimeString& aMimeType
-                                                , Oscl_Vector<PVUuid, OsclMemAllocator>& aUuids
-                                                , bool aExactUuidsOnly = false
-                                                                         , const OsclAny* aContext = NULL) ;
-        OSCL_IMPORT_REF PVMFCommandId QueryInterface(PVMFSessionId aSession
-                , const PVUuid& aUuid
-                , PVInterface*& aInterfacePtr
-                , const OsclAny* aContext = NULL) ;
-        OSCL_IMPORT_REF PVMFCommandId RequestPort(PVMFSessionId aSession
-                , int32 aPortTag
-                , const PvmfMimeString* aPortConfig = NULL
-                                                      , const OsclAny* aContext = NULL);
-        OSCL_IMPORT_REF PVMFCommandId ReleasePort(PVMFSessionId aSession
-                , PVMFPortInterface& aPort
-                , const OsclAny* aContext = NULL);
-        OSCL_IMPORT_REF PVMFCommandId Init(PVMFSessionId aSession
-                                           , const OsclAny* aContext = NULL);
-        OSCL_IMPORT_REF PVMFCommandId Prepare(PVMFSessionId aSession
-                                              , const OsclAny* aContext = NULL);
-        OSCL_IMPORT_REF PVMFCommandId Start(PVMFSessionId aSession
-                                            , const OsclAny* aContext = NULL);
-        OSCL_IMPORT_REF PVMFCommandId Stop(PVMFSessionId aSession
-                                           , const OsclAny* aContext = NULL);
-        OSCL_IMPORT_REF PVMFCommandId Flush(PVMFSessionId aSession
-                                            , const OsclAny* aContext = NULL);
-        OSCL_IMPORT_REF PVMFCommandId Pause(PVMFSessionId aSession
-                                            , const OsclAny* aContext = NULL);
-        OSCL_IMPORT_REF PVMFCommandId Reset(PVMFSessionId aSession
-                                            , const OsclAny* aContext = NULL);
-        OSCL_IMPORT_REF PVMFCommandId CancelAllCommands(PVMFSessionId aSession
-                , const OsclAny* aContextData = NULL) ;
-        OSCL_IMPORT_REF PVMFCommandId CancelCommand(PVMFSessionId aSession
-                , PVMFCommandId aCmdId
-                , const OsclAny* aContextData = NULL) ;
+
         void HandlePortActivity(const PVMFPortActivity& aActivity)
         {
             OSCL_UNUSED_ARG(aActivity);
@@ -258,29 +166,27 @@ class PVMediaOutputNode
         void Run();
 
         //Command processing
-        PVMFCommandId QueueCommandL(PVMediaOutputNodeCmd&);
-        void ProcessCommand();
-        void CommandComplete(PVMediaOutputNodeCmdQ& aCmdQ, PVMediaOutputNodeCmd& aCmd, PVMFStatus aStatus, OsclAny*aEventData = NULL);
-        PVMediaOutputNodeCmdQ iInputCommands;
-        PVMediaOutputNodeCmdQ iCurrentCommand;
-        PVMediaOutputNodeCmdQ iCancelCommand;
+        void CommandComplete(PVMFNodeCommand& aCmd, PVMFStatus aStatus, OsclAny*aEventData = NULL);
 
-        //generic node Command handlers.
-        PVMFStatus DoReset(PVMediaOutputNodeCmd&);
-        PVMFStatus DoQueryUuid(PVMediaOutputNodeCmd&);
-        PVMFStatus DoQueryInterface(PVMediaOutputNodeCmd&);
-        PVMFStatus DoRequestPort(PVMediaOutputNodeCmd&, OsclAny*&);
-        PVMFStatus DoReleasePort(PVMediaOutputNodeCmd&);
-        PVMFStatus DoInit(PVMediaOutputNodeCmd&);
-        PVMFStatus DoPrepare(PVMediaOutputNodeCmd&);
-        PVMFStatus DoStart(PVMediaOutputNodeCmd&);
-        PVMFStatus DoStop(PVMediaOutputNodeCmd&);
-        PVMFStatus DoFlush(PVMediaOutputNodeCmd&);
-        PVMFStatus DoPause(PVMediaOutputNodeCmd&);
-        PVMFStatus DoCancelAllCommands(PVMediaOutputNodeCmd&);
-        PVMFStatus DoCancelCommand(PVMediaOutputNodeCmd&);
+        //Command dispatchers
+        PVMFStatus HandleExtensionAPICommands();
+        PVMFStatus CancelCurrentCommand();
+
+        //Command handlers for PVMFNodeInterface APIs.
+        PVMFStatus DoReset();
+        PVMFStatus DoQueryUuid();
+        PVMFStatus DoQueryInterface();
+        PVMFStatus DoRequestPort(PVMFPortInterface*& aPort);
+        PVMFStatus DoReleasePort();
+        PVMFStatus DoInit();
+        PVMFStatus DoPrepare();
+        PVMFStatus DoStart();
+        PVMFStatus DoStop();
+        PVMFStatus DoFlush();
+        PVMFStatus DoPause();
+
         //extra command handlers.
-        PVMFStatus DoSkipMediaData(PVMediaOutputNodeCmd&);
+        PVMFStatus DoSkipMediaData();
         void CompleteSkipMediaData();
 
         // Event reporting
@@ -295,10 +201,6 @@ class PVMediaOutputNode
         {
             PVMFNodeInterface::ReportInfoEvent(aEvent);
         }
-        void SetState(TPVMFNodeInterfaceState);
-
-        //node capability.
-        PVMFNodeCapability iCapability;
 
         // Media IO control
         PvmiMIOControl* iMIOControl;
@@ -330,8 +232,8 @@ class PVMediaOutputNode
         PVMFCommandId iMediaIOCmdId;
         PVMFCommandId iMediaIOCancelCmdId;
         bool iMediaIOCancelPending;
-        PVMFStatus SendMioRequest(PVMediaOutputNodeCmd& aCmd, EMioRequest);
-        PVMFStatus CancelMioRequest(PVMediaOutputNodeCmd& aCmd);
+        PVMFStatus SendMioRequest(EMioRequest);
+        PVMFStatus CancelMioRequest();
 
         // Ports
         PVMFPortVector<PVMediaOutputNodePort, OsclMemAllocator> iInPortVector;
@@ -350,9 +252,6 @@ class PVMediaOutputNode
         bool iDiagnosticsLogged;
         void LogDiagnostics();
 
-        // Extension reference counter
-        uint32 iExtensionRefCount;
-
         // Counter for number of callbacks for skip media data completion
         bool SkipMediaDataComplete();
 
@@ -364,12 +263,12 @@ class PVMediaOutputNode
 
         uint32 iRecentBOSStreamID;
         PVMFStatus CheckForBOS();
+
+        //Holds an event code associated with the command status
+        PVMFStatus iEventCode;
 };
 
 
 #endif // PVMI_IO_INTERFACE_NODE_H_INCLUDED
-
-
-
 
 
