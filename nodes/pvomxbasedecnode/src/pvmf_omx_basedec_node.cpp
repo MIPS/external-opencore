@@ -503,6 +503,15 @@ OSCL_EXPORT_REF PVMFOMXBaseDecNode::PVMFOMXBaseDecNode(int32 aPriority, const ch
     iOMXPreferredComponentOrderVec.clear();
 
     iComputeSamplesPerFrame = true;
+
+    //key frame detection
+    iCheckForKeyFrame = true;
+    iSkipFrameCount = 0;
+    iSkippingNonKeyFrames = true;
+    iPVVideoFrameParserInput.SeqHeaderInfo = NULL;
+
+
+
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -609,6 +618,7 @@ OSCL_EXPORT_REF void PVMFOMXBaseDecNode::Run()
                 return;
             }
         }
+
 
         if (iSendBOS)
         {
@@ -1991,6 +2001,28 @@ OSCL_EXPORT_REF bool PVMFOMXBaseDecNode::SendInputBufferToOMXComponent()
         }
     }
 
+    if (iNodeConfig.iKeyFrameOnlyMode || (iSkipFrameCount < iNodeConfig.iSkipNUntilKeyFrame))
+    {
+        if (PVMFSuccess != SkipNonKeyFrames())
+        {
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
+                            (0, "%s::SendInputBufferToOMXComponent() Frame detection failure - corrupt bitstream", iName.Str()));
+
+            // Errors from corrupt bitstream are reported as info events
+            ReportInfoEvent(PVMFInfoProcessingFailure, NULL);
+
+            return false;
+        }
+
+        if (iSkippingNonKeyFrames)
+        {
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
+                            (0, "%s::SendInputBufferToOMXComponent() Skipped non-keyframe", iName.Str()));
+
+            return true;
+        }
+    }
+
     InputBufCtrlStruct *input_buf = NULL;
     OsclAny *pB = NULL;
     int32 errcode = OsclErrNone;
@@ -2210,6 +2242,7 @@ OSCL_EXPORT_REF bool PVMFOMXBaseDecNode::SendInputBufferToOMXComponent()
                 continue;
             }
         }
+
 
         if (iOMXComponentSupportsMovableInputBuffers)
         {
@@ -2587,6 +2620,7 @@ OSCL_EXPORT_REF bool PVMFOMXBaseDecNode::SendInputBufferToOMXComponent()
                         DropCurrentBufferUnderConstruction();
                     }
                 }
+
 
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                                 (0, "%s::SendInputBufferToOMXComponent()  - Sending Buffer 0x%x to OMX Component MARKER field set to %x, TS=%d, Ticks=%L", iName.Str(), input_buf->pBufHdr->pBuffer, input_buf->pBufHdr->nFlags, iInTimestamp, iOMXTicksTimestamp));
@@ -4607,6 +4641,34 @@ OSCL_EXPORT_REF PVMFStatus PVMFOMXBaseDecNode::DoPrepare()
         iSetMarkerBitForEveryFrag = false;
     }
 
+    // FOR WMV, fill in the sequence header information that may be needed by the key-frame only mode
+    if (format == PVMF_MIME_WMV)
+    {
+
+        pv_get_wmv_seq_hdr_info((uint8*)((PVMFOMXDecPort*)iInPort)->iTrackConfig, (int)((PVMFOMXDecPort*)iInPort)->iTrackConfigSize, &iWmvSeqHeaderInfo);
+
+    }
+    if (iNodeConfig.iKeyFrameOnlyMode || iNodeConfig.iSkipNUntilKeyFrame)
+    {
+        if (pv_frametype_parser_format_supported(((PVMFOMXDecPort*)iInPort)->iFormat))
+        {
+            iCheckForKeyFrame = true;
+            iSkippingNonKeyFrames = true;
+            iSkipFrameCount = 0;
+        }
+        else
+        {
+            // format not supported, disable
+            iNodeConfig.iKeyFrameOnlyMode = false;
+            iNodeConfig.iSkipNUntilKeyFrame = 0;
+            iSkipFrameCount = 0;
+            iCheckForKeyFrame = true;
+            iSkippingNonKeyFrames = false;
+        }
+    }
+
+
+
 
     // Init Decoder
     iCurrentDecoderState = OMX_StateLoaded;
@@ -5576,6 +5638,27 @@ bool PVMFOMXBaseDecNode::HandleRepositioning()
         iIsOutputPortFlushed = false;
         iDoNotSendOutputBuffersDownstreamFlag = true;
 
+        // make sure that if we reposition that we wait until a keyframe if necessary
+        if (iNodeConfig.iKeyFrameOnlyMode || iNodeConfig.iSkipNUntilKeyFrame)
+        {
+            if (pv_frametype_parser_format_supported(((PVMFOMXDecPort*)iInPort)->iFormat))
+            {
+                iCheckForKeyFrame = true;
+                iSkipFrameCount = 0;
+                iSkippingNonKeyFrames = true;
+            }
+            else
+            {
+                // format not supported, disable
+                iNodeConfig.iKeyFrameOnlyMode = false;
+                iNodeConfig.iSkipNUntilKeyFrame = 0;
+                iSkipFrameCount = 0;
+                iCheckForKeyFrame = true;
+                iSkippingNonKeyFrames = false;
+            }
+        }
+
+
         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                         (0, "%s::HandleRepositioning() Sending Flush command to component", iName.Str()));
 
@@ -6239,5 +6322,15 @@ OSCL_EXPORT_REF bool PVMFOMXBaseDecNode::CreateAACConfigDataFromASF(uint8 *inptr
 OSCL_EXPORT_REF void PVMFOMXBaseDecNode::AllocatePvmiKey(PvmiKeyType* KvpKey, OsclMemAllocator* alloc, int32 KeyLength)
 {
     *KvpKey = (PvmiKeyType)(*alloc).ALLOCATE(KeyLength);
+}
+
+OSCL_EXPORT_REF PVMFStatus PVMFOMXBaseDecNode::SkipNonKeyFrames()
+{
+    // this should only called by the video dec node
+    iSkippingNonKeyFrames = false;
+
+    OSCL_ASSERT(false);
+
+    return PVMFErrNotSupported;
 }
 

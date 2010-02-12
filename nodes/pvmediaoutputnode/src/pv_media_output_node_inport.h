@@ -76,7 +76,8 @@ enum PVMFMediaOutputNodePortMediaTimeStatus
     PVMF_MEDIAOUTPUTNODEPORT_MEDIA_EARLY
 };
 
-#define THRESHOLD_FOR_DROPPED_VIDEO_FRAMES 120
+#define MEDIAOUTPUTNODE_CONFIG_THRESHOLD_FOR_DROPPED_VIDEO_FRAMES 120
+
 
 class PVMediaOutputNodePort
         : public OsclTimerObject
@@ -217,6 +218,9 @@ class PVMediaOutputNodePort
         {
             return iMediaTransfer;
         }
+
+        void ResetConsecutiveFramesDropped();
+
     private:
         void CleanupClock();
         void Run();

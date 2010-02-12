@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -145,6 +145,7 @@ OSCL_EXPORT_REF int16 pv_video_config_parser(pvVideoConfigParserInputs *aInputs,
         uint16 wdat;
         uint8 bdat;
         uint8 *pData = aInputs->inPtr;
+
 
         LoadDWORD(dwdat, pData); // Window width
         LoadDWORD(dwdat, pData); // Window height

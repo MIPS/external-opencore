@@ -15466,7 +15466,8 @@ void pvplayer_async_test_capconfigiftest::Run()
             querykey = _STRLIT_CHAR("x-pvmf/player;attr=cap");
             iPlayerCapConfigIF->getParametersSync(NULL, querykey.get_str(), retparam, retnumparam, NULL);
             // Just check the number of returned entries
-            if (retparam != NULL && retnumparam == 9)
+            // NOTE: retnumparam must be equal to the  PVPLAYERCONFIG_BASE_NUMKEYS value
+            if (retparam != NULL && retnumparam == 10)
             {
                 PVPATB_TEST_IS_TRUE(true);
 
@@ -15756,7 +15757,8 @@ void pvplayer_async_test_capconfigiftest::Run()
                 OSCL_StackString<64> querykey(_STRLIT_CHAR("x-pvmf/video/decoder;attr=cap"));
                 iPlayerCapConfigIF->getParametersSync(NULL, querykey.get_str(), retparam, retnumparam, NULL);
                 // Just check the number of returned entries
-                if (retparam != NULL && retnumparam == 6)
+                // NOTE: retnumparam must be equal to the PVOMXVIDEODECNODECONFIG_BASE_NUMKEYS value
+                if (retparam != NULL && retnumparam == 8)
                 {
                     PVPATB_TEST_IS_TRUE(true);
 

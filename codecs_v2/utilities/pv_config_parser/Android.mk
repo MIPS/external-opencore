@@ -3,7 +3,9 @@ include $(CLEAR_VARS)
 
 LOCAL_SRC_FILES := \
 	src/pv_video_config_parser.cpp \
- 	src/pv_audio_config_parser.cpp
+ 	src/pv_audio_config_parser.cpp \
+ 	src/pv_frametype_parser.cpp \
+ 	src/pv_config_bitstream.cpp
 
 
 LOCAL_MODULE := libpv_config_parser
@@ -25,6 +27,8 @@ LOCAL_COPY_HEADERS_TO := $(PV_COPY_HEADERS_TO)
 
 LOCAL_COPY_HEADERS := \
 	include/pv_video_config_parser.h \
- 	include/pv_audio_config_parser.h
+ 	include/pv_audio_config_parser.h \
+ 	include/pv_frametype_parser.h \
+ 	include/pv_config_bitstream.h
 
 include $(BUILD_STATIC_LIBRARY)

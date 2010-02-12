@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -267,6 +267,17 @@ OSCL_EXPORT_REF void PVMFOMXDecPort::setParametersSync(PvmiMIOSession aSession,
         oscl_memcpy(iTrackConfig, aParameters->value.key_specific_value, iTrackConfigSize);
         return;
     }
+    else if (aParameters && pv_mime_strcmp(aParameters->key, PVMF_DECODER_KEY_FRAME_ONLY_MODE_KEY) == 0)
+    {
+        iOMXNode->SetKeyFrameOnlyModeFlag(aParameters->value.bool_value);
+        return;
+    }
+    else if (aParameters && pv_mime_strcmp(aParameters->key, PVMF_SKIP_N_UNTIL_KEY_FRAME_KEY) == 0)
+    {
+        iOMXNode->SetSkipNUntilKeyFrame(aParameters->value.uint32_value);
+        return;
+    }
+
     // call the base class function
     PvmiCapabilityAndConfigPortFormatImpl::setParametersSync(aSession, aParameters, num_elements, aRet_kvp);
 

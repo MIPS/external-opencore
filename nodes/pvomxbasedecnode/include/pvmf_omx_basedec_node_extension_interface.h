@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,18 @@ struct PVMFOMXBaseDecNodeConfig
     int32 iPostProcessingMode;
     bool iDropFrame;
     PVMFFormatType iMimeType;
+    bool iKeyFrameOnlyMode;
+    uint32 iSkipNUntilKeyFrame;
+
+    PVMFOMXBaseDecNodeConfig()
+    {
+        iPostProcessingEnable = false;
+        iPostProcessingMode = 0;
+        iDropFrame = false;
+        iMimeType = PVMF_MIME_FORMAT_UNKNOWN;
+        iKeyFrameOnlyMode = false;
+        iSkipNUntilKeyFrame = 0;
+    };
 };
 
 //Mimetype and Uuid for the custom interface

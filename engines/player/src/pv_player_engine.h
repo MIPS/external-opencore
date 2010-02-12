@@ -565,7 +565,7 @@ struct PVPlayerKeyStringData
 
 
 // Key string info at the base level ("x-pvmf/player/")
-#define PVPLAYERCONFIG_BASE_NUMKEYS 9
+#define PVPLAYERCONFIG_BASE_NUMKEYS 10
 const PVPlayerKeyStringData PVPlayerConfigBaseKeys[PVPLAYERCONFIG_BASE_NUMKEYS] =
 {
     {"pbpos_units", PVMI_KVPTYPE_VALUE, PVMI_KVPVALTYPE_CHARPTR},
@@ -576,7 +576,9 @@ const PVPlayerKeyStringData PVPlayerConfigBaseKeys[PVPLAYERCONFIG_BASE_NUMKEYS] 
     {"syncmargin_text", PVMI_KVPTYPE_VALUE, PVMI_KVPVALTYPE_RANGE_INT32},
     {"nodedataqueuing_timeout", PVMI_KVPTYPE_VALUE, PVMI_KVPVALTYPE_UINT32},
     {"pbpos_enable", PVMI_KVPTYPE_VALUE, PVMI_KVPVALTYPE_BOOL},
-    {"silenceinsertion_enable", PVMI_KVPTYPE_VALUE, PVMI_KVPVALTYPE_BOOL}
+    {"silenceinsertion_enable", PVMI_KVPTYPE_VALUE, PVMI_KVPVALTYPE_BOOL},
+    {"gracefuldegradation_enable", PVMI_KVPTYPE_VALUE, PVMI_KVPVALTYPE_BOOL}
+
 };
 
 enum PlayerConfigBaseKeys_IndexMap
@@ -589,7 +591,8 @@ enum PlayerConfigBaseKeys_IndexMap
     SYNCMARGIN_TEXT,
     NODEDATAQUEIUING_TIMEOUT,
     PBPOS_ENABLE,
-    SILENCEINSERTION_ENABLE
+    SILENCEINSERTION_ENABLE,
+    GRACEFULDEGRADATION_ENABLE
 };
 
 // Player engine's timebase with rate change capability
@@ -1554,6 +1557,7 @@ class PVPlayerEngine
         uint32 iNodeCmdTimeout;
         uint32 iNodeDataQueuingTimeout;
         bool iSilenceInsertionEnable;
+        bool iGracefulDegradationEnable;
         OSCL_HeapString<OsclMemAllocator> iProdInfoProdName;
         OSCL_HeapString<OsclMemAllocator> iProdInfoPartNum;
         OSCL_HeapString<OsclMemAllocator> iProdInfoHWPlatform;

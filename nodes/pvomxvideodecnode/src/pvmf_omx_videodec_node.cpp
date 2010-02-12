@@ -33,6 +33,8 @@
 #define PVOMXVIDEODECNODE_CONFIG_POSTPROCENABLE_DEF false
 #define PVOMXVIDEODECNODE_CONFIG_POSTPROCTYPE_DEF 0  // 0 (nopostproc),1(deblock),3(deblock&&dering)
 #define PVOMXVIDEODECNODE_CONFIG_DROPFRAMEENABLE_DEF false
+#define PVOMXVIDEODECNODE_CONFIG_KEYFRAMEONLYMODE_DEF false
+#define PVOMXVIDEODECNODE_CONFIG_SKIPNUNTILKEYFRAME_DEF 0
 // H263 default settings
 #define PVOMXVIDEODECNODE_CONFIG_H263MAXBITSTREAMFRAMESIZE_DEF 40000
 #define PVOMXVIDEODECNODE_CONFIG_H263MAXBITSTREAMFRAMESIZE_MIN 20000
@@ -104,6 +106,8 @@ PVMFOMXVideoDecNode::PVMFOMXVideoDecNode(int32 aPriority) :
     iNodeConfig.iPostProcessingMode = PVOMXVIDEODECNODE_CONFIG_POSTPROCTYPE_DEF;
     iNodeConfig.iDropFrame = PVOMXVIDEODECNODE_CONFIG_DROPFRAMEENABLE_DEF;
     iNodeConfig.iMimeType = PVMF_MIME_FORMAT_UNKNOWN;
+    iNodeConfig.iKeyFrameOnlyMode = PVOMXVIDEODECNODE_CONFIG_KEYFRAMEONLYMODE_DEF;
+    iNodeConfig.iSkipNUntilKeyFrame = PVOMXVIDEODECNODE_CONFIG_SKIPNUNTILKEYFRAME_DEF;
 
     // Get logger objects
     iLogger = PVLogger::GetLoggerObject("PVMFOMXVideoDecNode");
@@ -685,7 +689,6 @@ bool PVMFOMXVideoDecNode::NegotiateComponentParameters(OMX_PTR aOutputParameters
         iYUVWidth =  iParamPort.format.video.nFrameWidth;
         iYUVHeight = iParamPort.format.video.nFrameHeight;
     }
-
 
     // Send the parameters right away to allow the OMX component to re-calculate the buffer size
     // based on the new width and height that was just provided
@@ -2909,7 +2912,9 @@ PVMFStatus PVMFOMXVideoDecNode::DoCapConfigGetParametersSync(PvmiKeyType aIdenti
                 else if ((vdeccomp4ind == 0) || // "postproc_enable",
                          (vdeccomp4ind == 1) || // "postproc_type"
                          (vdeccomp4ind == 2) || // "dropframe_enable"
-                         (vdeccomp4ind == 5)    // "format_type"
+                         (vdeccomp4ind == 5) || // "format_type"
+                         (vdeccomp4ind == 6) || // "key_frame_only_mode"
+                         (vdeccomp4ind == 7)    // "skip_n_until_key_frame"
                         )
                 {
                     if (compcount == 4)
@@ -3485,6 +3490,34 @@ PVMFStatus PVMFOMXVideoDecNode::DoGetVideoDecNodeParameter(PvmiKvp*& aParameters
 
             break;
 
+        case 6: // "key_frame_only_mode"
+            if (reqattr == PVMI_KVPATTR_CUR)
+            {
+                // Return current value
+                aParameters[0].value.bool_value = iNodeConfig.iKeyFrameOnlyMode;
+            }
+            else if (reqattr == PVMI_KVPATTR_DEF)
+            {
+                // Return default
+                aParameters[0].value.bool_value = PVOMXVIDEODECNODE_CONFIG_KEYFRAMEONLYMODE_DEF;
+            }
+
+            break;
+
+        case 7: // "skip_n_until_key_frame_mode"
+            if (reqattr == PVMI_KVPATTR_CUR)
+            {
+                // Return current value
+                aParameters[0].value.uint32_value = iNodeConfig.iSkipNUntilKeyFrame;
+            }
+            else if (reqattr == PVMI_KVPATTR_DEF)
+            {
+                // Return default
+                aParameters[0].value.bool_value = PVOMXVIDEODECNODE_CONFIG_SKIPNUNTILKEYFRAME_DEF;
+            }
+
+            break;
+
         default:
             // Invalid index
             oscl_free(aParameters[0].key);
@@ -3592,6 +3625,22 @@ PVMFStatus PVMFOMXVideoDecNode::DoVerifyAndSetVideoDecNodeParameter(PvmiKvp& aPa
                 }
 
                 iNodeConfig.iMimeType = aParameter.value.pChar_value;
+            }
+            break;
+
+        case 6: // "key_frame_only_mode"
+            // Change the config if to set
+            if (aSetParam)
+            {
+                SetKeyFrameOnlyModeFlag(aParameter.value.bool_value);
+            }
+            break;
+
+        case 7: // "skip_n_until_key_frame"
+            // Change the config if to set
+            if (aSetParam)
+            {
+                SetSkipNUntilKeyFrame(aParameter.value.uint32_value);
             }
             break;
 
@@ -3791,7 +3840,6 @@ bool PVMFOMXVideoDecNode::ParseAndReWrapH264RAW(PVMFSharedMediaDataPtr& aMediaDa
 
                 return false;
             }
-
             memFrag.ptr = temp_ptr;
             memFrag.len = nal_len + sc_size;
         }
@@ -3817,4 +3865,137 @@ bool PVMFOMXVideoDecNode::ParseAndReWrapH264RAW(PVMFSharedMediaDataPtr& aMediaDa
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFOMXVideoDecNode::ParseAndReWrapH264RAW() Out"));
 
     return true;
+}
+
+
+PVMFStatus PVMFOMXVideoDecNode::SkipNonKeyFrames()
+{
+    PVMFStatus status = PVMFSuccess;
+
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "PVMFOMXVideoDecNode::SkipNonKeyFrames()"));
+
+    // iKeyFrameOnlyModeFlag and iSkipNUntilKeyFrameFlag shouldn't be set if it's not these formats
+    OSCL_ASSERT(((PVMFOMXDecPort*)iInPort)->iFormat ==  PVMF_MIME_H264_VIDEO ||
+                ((PVMFOMXDecPort*)iInPort)->iFormat == PVMF_MIME_H264_VIDEO_MP4 ||
+                ((PVMFOMXDecPort*)iInPort)->iFormat == PVMF_MIME_H264_VIDEO_RAW ||
+                ((PVMFOMXDecPort*)iInPort)->iFormat ==  PVMF_MIME_M4V ||
+                ((PVMFOMXDecPort*)iInPort)->iFormat ==  PVMF_MIME_H2631998 ||
+                ((PVMFOMXDecPort*)iInPort)->iFormat == PVMF_MIME_H2632000 ||
+                ((PVMFOMXDecPort*)iInPort)->iFormat ==  PVMF_MIME_WMV);
+
+    if ((iDataIn->getSeqNum() - iInPacketSeqNum) > 1)
+    {
+
+        // if there was packet loss, we don't know if we're on a frame (or NAL) boundary
+        // and the frame detection would be unreliable.  skip frames until a reliable check point is available
+        iCheckForKeyFrame = false;
+        iSkippingNonKeyFrames = true;
+    }
+
+    if (iCheckForKeyFrame)
+    {
+        pvVideoGetFrameTypeParserOutputs output;
+
+        // if there are multipe fragments, get the 1st one
+        // get a memfrag from the message
+
+        OsclRefCounterMemFrag frag;
+        iDataIn->getMediaFragment(0, frag);
+        iPVVideoFrameParserInput.inBuf = (uint8 *)frag.getMemFragPtr();
+        iPVVideoFrameParserInput.inBufSize = frag.getMemFragSize();
+        iPVVideoFrameParserInput.iMimeType = ((PVMFOMXDecPort*)iInPort)->iFormat;
+
+        if (iPVVideoFrameParserInput.iMimeType ==  PVMF_MIME_WMV)
+        {
+            iPVVideoFrameParserInput.SeqHeaderInfo = &iWmvSeqHeaderInfo;
+            status = pv_detect_keyframe(&iPVVideoFrameParserInput, &output);
+        }
+        else
+        {
+            status = pv_detect_keyframe(&iPVVideoFrameParserInput, &output);
+        }
+
+        if (status != PVMFSuccess)
+        {
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                            (0, "PVMFOMXVideoDecNode::SkipNonKeyFrames() - Error in detecting frame type"));
+
+            // remember the sequence number & timestamp so that we have reference
+            iInPacketSeqNum = iDataIn->getSeqNum();
+            iInTimestamp = iDataIn->getTimestamp();
+
+            // drop this message
+            iDataIn.Unbind();
+
+            return status;
+        }
+
+        if ((!output.isKeyFrame) && iNodeConfig.iKeyFrameOnlyMode)
+        {
+            iSkippingNonKeyFrames = true;
+        }
+        else if (iNodeConfig.iSkipNUntilKeyFrame)
+        {
+            if ((!output.isKeyFrame) && (iSkipFrameCount < iNodeConfig.iSkipNUntilKeyFrame))
+            {
+                iSkipFrameCount++;
+                iSkippingNonKeyFrames = true;
+            }
+            else
+            {
+                iSkipFrameCount = iNodeConfig.iSkipNUntilKeyFrame; // we found a keyframe, so stop checking
+                iSkippingNonKeyFrames = false;
+            }
+        }
+        else
+        {
+            iSkippingNonKeyFrames = false;
+        }
+    }
+
+    // determine if we should check for key frame on the next message
+    if (iDataIn->getMarkerInfo() & PVMF_MEDIA_DATA_MARKER_INFO_M_BIT)
+    {
+        // check for keyframes on frame boundaries
+        iCheckForKeyFrame = true;
+    }
+    else if ((iDataIn->getSeqNum() - iInPacketSeqNum) > 1)
+    {
+        // if there is packet loss, we should be skipping frames right now and are waiting for the next boundary
+        // to be able to check for key frames.  In H264, NAL boundaries are appropriate places to do so as well.
+        if (((PVMFOMXDecPort*)iInPort)->iFormat ==  PVMF_MIME_H264_VIDEO ||
+                ((PVMFOMXDecPort*)iInPort)->iFormat == PVMF_MIME_H264_VIDEO_MP4 ||
+                ((PVMFOMXDecPort*)iInPort)->iFormat == PVMF_MIME_H264_VIDEO_RAW)
+        {
+            if (iDataIn->getMarkerInfo() & PVMF_MEDIA_DATA_MARKER_INFO_END_OF_NAL_BIT)
+            {
+                iCheckForKeyFrame = true;
+            }
+            else
+            {
+                iCheckForKeyFrame = false;
+            }
+        }
+
+    }
+    else
+    {
+        iCheckForKeyFrame = false;
+    }
+
+    if (iSkippingNonKeyFrames)
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                        (0, "PVMFOMXVideoDecNode::SkipNonKeyFrames() - skipped non key frame"));
+
+        // remember the sequence number & timestamp so that we have reference
+        iInPacketSeqNum = iDataIn->getSeqNum();
+        iInTimestamp = iDataIn->getTimestamp();
+
+        // drop this message
+        iDataIn.Unbind();
+    }
+
+    return status;
 }

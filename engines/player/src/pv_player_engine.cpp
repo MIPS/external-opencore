@@ -1170,6 +1170,7 @@ PVPlayerEngine::PVPlayerEngine() :
         iNodeCmdTimeout(PVPLAYERENGINE_CONFIG_NODECMDTIMEOUT_DEF),
         iNodeDataQueuingTimeout(PVPLAYERENGINE_CONFIG_NODEDATAQUEUINGTIMEOUT_DEF),
         iSilenceInsertionEnable(true),
+        iGracefulDegradationEnable(PVPLAYERENGINE_CONFIG_GRACEFULDEGRADATIONENABLE_DEF),
         iProdInfoProdName(_STRLIT_CHAR(PVPLAYERENGINE_PRODINFO_PRODNAME_STRING)),
         iProdInfoPartNum(_STRLIT_CHAR(PVPLAYERENGINE_PRODINFO_PARTNUM_STRING)),
         iProdInfoHWPlatform(_STRLIT_CHAR(PVPLAYERENGINE_PRODINFO_HWPLATFORM_STRING)),
@@ -11132,6 +11133,26 @@ PVMFStatus PVPlayerEngine::DoGetPlayerParameter(PvmiKvp*& aParameters, int& aNum
                 // Bool so no capability
             }
             break;
+
+
+        case GRACEFULDEGRADATION_ENABLE: // "gracefuldegradation_enable"
+            if (reqattr == PVMI_KVPATTR_CUR)
+            {
+                // Return current value
+                aParameters[0].value.bool_value = iGracefulDegradationEnable;
+            }
+            else if (reqattr == PVMI_KVPATTR_DEF)
+            {
+                // Return default
+                aParameters[0].value.bool_value = PVPLAYERENGINE_CONFIG_GRACEFULDEGRADATIONENABLE_DEF;
+            }
+            else
+            {
+                // Return capability
+                // Bool so no capability
+            }
+            break;
+
         default:
             // Invalid index
             oscl_free(aParameters[0].key);
@@ -11318,6 +11339,17 @@ PVMFStatus PVPlayerEngine::DoVerifyAndSetPlayerParameter(PvmiKvp& aParameter, bo
             {
                 iSilenceInsertionEnable = aParameter.value.bool_value;
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG, (0, "PVPlayerEngine::DoVerifyAndSetPlayerParameter() iSilenceInsertionEnable set to %d", iSilenceInsertionEnable));
+            }
+            break;
+
+        case GRACEFULDEGRADATION_ENABLE: // "gracefuldegradation_enable"
+            // Nothing to validate since it is boolean
+            // Change the config if to set
+            if (aSetParam)
+            {
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG, (0, "PVPlayerEngine::DoVerifyAndSetPlayerParameter() gracefuldegradation_enable set to %d", iGracefulDegradationEnable));
+
+                iGracefulDegradationEnable = aParameter.value.bool_value;
             }
             break;
 
@@ -15670,6 +15702,24 @@ void PVPlayerEngine::HandleSinkNodeInfoEvent(const PVMFAsyncEvent& aEvent, int32
         case PVMFInfoVideoTrackFallingBehind:
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVPlayerEngine::HandleSinkNodeInfoEvent() PVMFInfoVideoTrackFallingBehind event received"));
             SendInformationalEvent(event, NULL, aEvent.GetEventData(), aEvent.GetLocalBuffer(), aEvent.GetLocalBufferSize());
+            if (iGracefulDegradationEnable &&
+                    (iDatapathList[aDatapathIndex].iDecNodeCapConfigIF != NULL))
+            {
+                PvmiKvp kvpparam;
+                PvmiKvp* retkvp = NULL;
+                OSCL_StackString<64> kvpparamkey;
+
+                kvpparamkey = _STRLIT_CHAR(PVMF_DECODER_KEY_FRAME_ONLY_MODE_KEY);
+                kvpparam.value.bool_value = true;
+
+                kvpparam.key = kvpparamkey.get_str();
+                iDatapathList[aDatapathIndex].iDecNodeCapConfigIF->setParametersSync(NULL, &kvpparam, 1, retkvp);
+
+                if (retkvp != NULL)
+                {
+                    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_NOTICE, (0, "PVPlayerEngine::HandleSinkNodeInfoEvent() Configuring dec node for player use via cap-config IF failed"));
+                }
+            }
             break;
 
         default:

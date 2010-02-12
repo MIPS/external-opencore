@@ -1601,7 +1601,7 @@ PVMediaOutputNodePort::CheckMediaTimeStamp(uint32& aDelta)
             iConsecutiveFramesDropped++;
             if (iMediaType == PVMF_MEDIA_UNCOMPRESSED_VIDEO)
             {
-                if ((iConsecutiveFramesDropped >= THRESHOLD_FOR_DROPPED_VIDEO_FRAMES) && (iLateFrameEventSent == false))
+                if ((iConsecutiveFramesDropped >= MEDIAOUTPUTNODE_CONFIG_THRESHOLD_FOR_DROPPED_VIDEO_FRAMES) && (iLateFrameEventSent == false))
                 {
                     iLateFrameEventSent = true;
                     iNode->ReportInfoEvent(PVMFInfoVideoTrackFallingBehind, (OsclAny*)NULL);
@@ -3092,6 +3092,12 @@ void PVMediaOutputNodePort::SendStartOfDataEvent(uint32 streamID, uint32 clipID)
     oscl_memcpy(&localbuffer[4], &clipID, sizeof(uint32));
     iNode->ReportInfoEvent(PVMFInfoStartOfData, (OsclAny*)localbuffer);
     iSendStartOfDataEvent = false;
+}
+
+void PVMediaOutputNodePort::ResetConsecutiveFramesDropped()
+{
+    iConsecutiveFramesDropped = 0;
+    iLateFrameEventSent = false;
 }
 
 

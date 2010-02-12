@@ -31,9 +31,14 @@ SRCDIR := ../../src
 INCSRCDIR := ../../include
 
 SRCS := pv_video_config_parser.cpp \
-	pv_audio_config_parser.cpp
+        pv_audio_config_parser.cpp \
+        pv_frametype_parser.cpp \
+        pv_config_bitstream.cpp
 
 HDRS := pv_video_config_parser.h \
-	pv_audio_config_parser.h
+        pv_audio_config_parser.h \
+        pv_frametype_parser.h \
+        pv_config_bitstream.h
+
 
 include $(MK)/library.mk

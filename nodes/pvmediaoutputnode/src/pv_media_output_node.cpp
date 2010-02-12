@@ -797,6 +797,8 @@ PVMFStatus PVMediaOutputNode::DoStart()
     iInPortVector[0]->iFramesDropped = 0;
     iInPortVector[0]->iTotalFrames = 0;
 
+    iInPortVector[0]->ResetConsecutiveFramesDropped();
+
     //Start the MIO
 
     return SendMioRequest(EStart);

@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -76,6 +76,9 @@
 #endif
 #ifndef PV_OMX_CONFIG_PARSER_H_INCLUDED
 #include "pv_omx_config_parser.h"
+#endif
+#ifndef PV_VIDEO_FRAMETYPE_PARSER_H_INCLUDED
+#include "pv_frametype_parser.h"
 #endif
 
 #define MAX_NAL_PER_FRAME 100
@@ -288,6 +291,34 @@ class PVMFOMXBaseDecNode: public PVMFNodeInterfaceImpl
         bool IsComponentMultiThreaded()
         {
             return iIsOMXComponentMultiThreaded;
+        };
+
+        void SetKeyFrameOnlyModeFlag(bool flag)
+        {
+            if (flag)
+            {
+                // only enable flag if format is supported
+                iNodeConfig.iKeyFrameOnlyMode = pv_frametype_parser_format_supported(((PVMFOMXDecPort*)iInPort)->iFormat);
+            }
+            else
+            {
+                iNodeConfig.iKeyFrameOnlyMode = false;
+            }
+        };
+
+        void SetSkipNUntilKeyFrame(uint32 no_of_frame)
+        {
+            // only set for supported video formats
+            if ((true == pv_frametype_parser_format_supported(((PVMFOMXDecPort*)iInPort)->iFormat)) &&
+                    (0 < no_of_frame))
+            {
+                iNodeConfig.iSkipNUntilKeyFrame = no_of_frame;
+            }
+            else
+            {
+                // if no_of_frame is 0 or format is not supported, then disable flag
+                iNodeConfig.iSkipNUntilKeyFrame = 0;
+            }
         };
 
         // From PvmiCapabilityAndConfig
@@ -506,6 +537,8 @@ class PVMFOMXBaseDecNode: public PVMFNodeInterfaceImpl
         OSCL_IMPORT_REF void DropCurrentBufferUnderConstruction();
         OSCL_IMPORT_REF void SendIncompleteBufferUnderConstruction();
 
+        OSCL_IMPORT_REF virtual PVMFStatus SkipNonKeyFrames();
+
         // input data info
         uint32 iCurrFragNum;
         uint32 iCodecSeqNum;    // sequence number tracking
@@ -700,6 +733,13 @@ class PVMFOMXBaseDecNode: public PVMFNodeInterfaceImpl
         Oscl_Vector<OMX_STRING, OsclMemAllocator> iOMXPreferredComponentOrderVec;
 
         bool iComputeSamplesPerFrame;
+
+        // key frame detection and skipping related
+        bool iCheckForKeyFrame;
+        uint32 iSkipFrameCount;
+        bool iSkippingNonKeyFrames;
+        pvVideoGetFrameTypeParserInputs iPVVideoFrameParserInput;
+        WmvSeqheaderInfo iWmvSeqHeaderInfo;
 
     private:
         OSCL_IMPORT_REF PVMFStatus HandleExtensionAPICommands();

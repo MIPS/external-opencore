@@ -76,6 +76,11 @@
 #define PVPLAYERENGINE_CONFIG_NODEDATAQUEUINGTIMEOUT_MIN 1000
 #define PVPLAYERENGINE_CONFIG_NODEDATAQUEUINGTIMEOUT_MAX 300000
 
+// Enable Graceful Degradation mode, in which if enough consecutive frames are dropped due
+// to being "late", the player will signal the decoder node to decode a less quality ("degraded")
+// output in order to keep up.
+#define PVPLAYERENGINE_CONFIG_GRACEFULDEGRADATIONENABLE_DEF true
+
 // Product name info string
 #define PVPLAYERENGINE_PRODINFO_PRODNAME_STRING "pvPlayer v4.0"
 // Part number info string

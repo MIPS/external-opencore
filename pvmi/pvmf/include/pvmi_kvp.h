@@ -629,6 +629,13 @@ class PvmfAssetInfo3GPPLocationStruct
 #define PVMF_AUDIO_SETVOLUME    "x-pvmf/audio/render/setvolume;valtype=uint32"
 #define PVMF_AUDIO_GETVOLUME    "x-pvmf/audio/render/getvolume;valtype=uint32"
 #define PVMF_AUDIO_MUTE         "x-pvmf/audio/render/mute;valtype=bool"
+// key for setting key frame only mode
+#define PVMF_DECODER_KEY_FRAME_ONLY_MODE_KEY "x-pvmf/video/decoder/key_frame_only_mode;valtype=bool"
+
+// key for setting skip n until key frame mode
+#define PVMF_SKIP_N_UNTIL_KEY_FRAME_KEY "x-pvmf/video/decoder/skip_n_until_key_frame;valtype=uint32"
+
+
 
 
 #define PVMF_IFRAME_ONLY_RENDERING_MODE         "x-pvmf/parser/enable-I-frame-playback-mode;valtype=bool"

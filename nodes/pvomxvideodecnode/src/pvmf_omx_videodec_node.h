@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,7 +40,7 @@
 #define PVOMXVIDEODECNODECONFIG_KEYSTRING_SIZE 128
 
 // Key string info at the base level ("x-pvmf/video/decoder")
-#define PVOMXVIDEODECNODECONFIG_BASE_NUMKEYS 6
+#define PVOMXVIDEODECNODECONFIG_BASE_NUMKEYS 8
 const PVOMXBaseDecNodeKeyStringData PVOMXVideoDecNodeConfigBaseKeys[PVOMXVIDEODECNODECONFIG_BASE_NUMKEYS] =
 {
     {"postproc_enable", PVMI_KVPTYPE_VALUE, PVMI_KVPVALTYPE_BOOL},
@@ -48,7 +48,9 @@ const PVOMXBaseDecNodeKeyStringData PVOMXVideoDecNodeConfigBaseKeys[PVOMXVIDEODE
     {"dropframe_enable", PVMI_KVPTYPE_VALUE, PVMI_KVPVALTYPE_BOOL},
     {"h263", PVMI_KVPTYPE_AGGREGATE, PVMI_KVPVALTYPE_KSV},
     {"m4v", PVMI_KVPTYPE_AGGREGATE, PVMI_KVPVALTYPE_KSV},
-    {"format-type", PVMI_KVPTYPE_VALUE, PVMI_KVPVALTYPE_CHARPTR}
+    {"format-type", PVMI_KVPTYPE_VALUE, PVMI_KVPVALTYPE_CHARPTR},
+    {"key_frame_only_mode", PVMI_KVPTYPE_VALUE, PVMI_KVPVALTYPE_BOOL},
+    {"skip_n_until_key_frame", PVMI_KVPTYPE_VALUE, PVMI_KVPVALTYPE_UINT32}
 };
 
 // Key string info at the h263 level ("x-pvmf/video/decoder/h263")
@@ -160,6 +162,8 @@ class PVMFOMXVideoDecNode: public PVMFOMXBaseDecNode
 
         bool ConvertASFConfigInfoToVC1AndSend(uint8* initbuffer, int32 initbufsize);
 
+
+        PVMFStatus SkipNonKeyFrames();
 
         OMX_COLOR_FORMATTYPE iOMXVideoColorFormat;
         OMX_VIDEO_CODINGTYPE iOMXVideoCompressionFormat;
