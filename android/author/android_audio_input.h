@@ -53,6 +53,9 @@
 #ifndef ANDROID_AUDIO_INPUT_THREADSAFE_CALLBACK_AO_H_INCLUDED
 #include "android_audio_input_threadsafe_callbacks.h"
 #endif
+#ifndef PVMF_MEDIA_CLOCK_H_INCLUDED
+#include "pvmf_media_clock.h"
+#endif
 
 #include <utils/RefBase.h>
 
@@ -198,11 +201,12 @@ public:
 };
 
 
-class AndroidAudioInput : public OsclTimerObject,
-    public PvmiMIOControl,
-    public PvmiMediaTransfer,
-    public PvmiCapabilityAndConfig,
-    public RefBase
+class AndroidAudioInput : public OsclTimerObject
+    ,public PvmiMIOControl
+    ,public PvmiMediaTransfer
+    ,public PvmiCapabilityAndConfig
+    ,public RefBase
+    ,public PVMFMediaClockStateObserver
 {
 public:
     AndroidAudioInput(uint32 audioSource);
@@ -295,6 +299,10 @@ public:
                    OsclAny* aEventData = NULL,
                    int32* aEventCode = NULL);
 
+    /* From PVMFMediaClockStateObserver and its base*/
+    void ClockStateUpdated();
+    void NotificationsInterfaceDestroyed();
+
 private:
     AndroidAudioInput();
     void Run();
@@ -346,6 +354,7 @@ private:
                            uint8* data, uint32 data_len,
                            const PvmiMediaXferHeader& data_header_info,
                            OsclAny* context);
+    void RemoveDestroyClockStateObs();
 
     // Command queue
     uint32 iCmdIdCounter;
@@ -451,6 +460,19 @@ private:
     Condition *iAudioThreadStartCV;
     volatile status_t iAudioThreadStartResult;
     volatile bool iAudioThreadStarted;
+
+    PVMFMediaClock *iAuthorClock;
+    PVMFMediaClockNotificationsInterface *iClockNotificationsInf;
+
+    // These variables tracks whether or not first audio frame was received.
+    // This is needed to start the clock since the time origin is synced to the
+    // first audio sample.
+    volatile bool iFirstFrameReceived;
+    volatile PVMFTimestamp iFirstFrameTs;
+
+    // This stores the Start cmd when Audio MIO is waiting for
+    // first audio frame to be received from the device.
+    AndroidAudioInputCmd iStartCmd;
 };
 
 }; // namespace android

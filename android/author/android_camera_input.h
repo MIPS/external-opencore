@@ -51,6 +51,9 @@
 #ifndef PVMF_SIMPLE_MEDIA_BUFFER_H_INCLUDED
 #include "pvmf_simple_media_buffer.h"
 #endif
+#ifndef PVMF_MEDIA_CLOCK_H_INCLUDED
+#include "pvmf_media_clock.h"
+#endif
 
 using namespace android;
 
@@ -180,10 +183,11 @@ private:
 };
 
 class AndroidCameraInput
-    : public OsclTimerObject,
-      public PvmiMIOControl,
-      public PvmiMediaTransfer,
-      public PvmiCapabilityAndConfig
+    : public OsclTimerObject
+      ,public PvmiMIOControl
+      ,public PvmiMediaTransfer
+      ,public PvmiCapabilityAndConfig
+      ,public PVMFMediaClockStateObserver
 {
 public:
     AndroidCameraInput();
@@ -313,6 +317,10 @@ public:
                    OsclAny* aEventData = NULL,
                    int32* aEventCode = NULL);
 
+    /* From PVMFMediaClockStateObserver and its base*/
+    void ClockStateUpdated();
+    void NotificationsInterfaceDestroyed();
+
 private:
     // release all queued recording frames that have not been
     // given the chance to be sent out.
@@ -362,6 +370,7 @@ private:
                          uint8* data, uint32 data_len,
                          const PvmiMediaXferHeader& data_header_info,
                          OsclAny* context);
+    void RemoveDestroyClockObs();
 
     // Command queue
     uint32 iCmdIdCounter;
@@ -376,7 +385,6 @@ private:
     bool iThreadLoggedOn;
 
     int32 iDataEventCounter;
-    int32 iStartTickCount;
 
     // Timing
     int32 iMilliSecondsPerDataEvent;
@@ -430,6 +438,10 @@ private:
     enum WriteState {EWriteBusy, EWriteOK};
     WriteState iWriteState;
 
+    PVMFMediaClock *iAuthorClock;
+    PVMFMediaClockNotificationsInterface *iClockNotificationsInf;
+
+    uint32 iAudioFirstFrameTs;
 };
 
 #endif // ANDROID_CAMERA_INPUT_H_INCLUDED
