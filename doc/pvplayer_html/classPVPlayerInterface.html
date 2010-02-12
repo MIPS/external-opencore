@@ -30,7 +30,7 @@
 <tr><td nowrap align=right valign=top>virtual PVCommandId&nbsp;</td><td valign=bottom><a class="el" href="classPVPlayerInterface.html#a16">GetMetadataValues</a> (PVPMetadataList &amp;aKeyList, int32 aStartingValueIndex, int32 aMaxValueEntries, int32 &amp;aNumAvailableValueEntries, Oscl_Vector&lt; PvmiKvp, OsclMemAllocator &gt; &amp;aValueList, const OsclAny *aContextData=NULL, bool aMetadataValuesCopiedInCallBack=true, uint32 aClipIndex=0)=0</td></tr>
 <tr><td nowrap align=right valign=top>virtual PVCommandId&nbsp;</td><td valign=bottom><a class="el" href="classPVPlayerInterface.html#a17">ReleaseMetadataValues</a> (Oscl_Vector&lt; PvmiKvp, OsclMemAllocator &gt; &amp;aValueList, const OsclAny *aContextData=NULL, uint32 aClipIndex=0)=0</td></tr>
 <tr><td nowrap align=right valign=top>virtual PVCommandId&nbsp;</td><td valign=bottom><a class="el" href="classPVPlayerInterface.html#a18">AddDataSink</a> (PVPlayerDataSink &amp;aDataSink, const OsclAny *aContextData=NULL)=0</td></tr>
-<tr><td nowrap align=right valign=top>virtual PVCommandId&nbsp;</td><td valign=bottom><a class="el" href="classPVPlayerInterface.html#a19">SetPlaybackRange</a> (PVPPlaybackPosition aBeginPos, PVPPlaybackPosition aEndPos, bool aQueueRange, const OsclAny *aContextData=NULL)=0</td></tr>
+<tr><td nowrap align=right valign=top>virtual PVCommandId&nbsp;</td><td valign=bottom><a class="el" href="classPVPlayerInterface.html#a19">SetPlaybackRange</a> (PVPPlaybackPosition aBeginPos, PVPPlaybackPosition aEndPos, bool aQueueRange, const OsclAny *aContextData=NULL, bool aSkipToRequestedPosition=true, bool aSeekToSyncPoint=true)=0</td></tr>
 <tr><td nowrap align=right valign=top>virtual PVCommandId&nbsp;</td><td valign=bottom><a class="el" href="classPVPlayerInterface.html#a20">GetPlaybackRange</a> (PVPPlaybackPosition &amp;aBeginPos, PVPPlaybackPosition &amp;aEndPos, bool aQueued, const OsclAny *aContextData=NULL)=0</td></tr>
 <tr><td nowrap align=right valign=top>virtual PVCommandId&nbsp;</td><td valign=bottom><a class="el" href="classPVPlayerInterface.html#a21">GetCurrentPosition</a> (PVPPlaybackPosition &amp;aPos, const OsclAny *aContextData=NULL)=0</td></tr>
 <tr><td nowrap align=right valign=top>virtual PVCommandId&nbsp;</td><td valign=bottom><a class="el" href="classPVPlayerInterface.html#a22">SetPlaybackRate</a> (int32 aRate, PVMFTimebase *aTimebase=NULL, const OsclAny *aContextData=NULL)=0</td></tr>
@@ -1556,7 +1556,19 @@ A unique command ID for asynchronous completion </dl>    </td>
           <td></td>
           <td></td>
           <td class="md" nowrap>const OsclAny *&nbsp;</td>
-          <td class="mdname" nowrap>&nbsp; <em>aContextData</em> = NULL</td>
+          <td class="mdname" nowrap>&nbsp; <em>aContextData</em> = NULL, </td>
+        </tr>
+        <tr>
+          <td></td>
+          <td></td>
+          <td class="md" nowrap>bool&nbsp;</td>
+          <td class="mdname" nowrap>&nbsp; <em>aSkipToRequestedPosition</em> = true, </td>
+        </tr>
+        <tr>
+          <td></td>
+          <td></td>
+          <td class="md" nowrap>bool&nbsp;</td>
+          <td class="mdname" nowrap>&nbsp; <em>aSeekToSyncPoint</em> = true</td>
         </tr>
         <tr>
           <td></td>
@@ -1585,7 +1597,11 @@ Ending position for the new playback range. </td></tr>
 <tr><td valign=top><em>aQueueRange</em>&nbsp;</td><td>
 Input flag to tell pvPlayer to queue the new playback range (Set/true) or use the new playback range right away (Reset/false) </td></tr>
 <tr><td valign=top><em>aContextData</em>&nbsp;</td><td>
-Optional opaque data that will be passed back to the user with the command response @leave This method can leave with one of the following error codes OsclErrInvalidState if invoked in the incorrect state </td></tr>
+Optional opaque data that will be passed back to the user with the command response </td></tr>
+<tr><td valign=top><em>aSkipToRequestedPosition</em>&nbsp;</td><td>
+Boolean value to indicate whether or not the display should start exactly from the requested position Default is set to 'true'. </td></tr>
+<tr><td valign=top><em>aSeekToSyncPoint</em>&nbsp;</td><td>
+Boolean value to indicate whether or not the source should seek to a sync point. true - Means that the decoder will be fed from a key-frame thereby promising that there are no artefacts false - Means that the decoder will be fed the nearest frame from the requested seek point, which can be a non-sync frame, with a possibility of causing artefacts Default is set to 'true' @leave This method can leave with one of the following error codes OsclErrInvalidState if invoked in the incorrect state </td></tr>
 </table>
 </dl><dl compact><dt><b>Returns: </b></dt><dd>
 A unique command id for asynchronous completion </dl>    </td>
@@ -1755,7 +1771,7 @@ This function allows extending or updating a track list during playback. Changes
 <tr><td valign=top><em>aDataSource</em>&nbsp;</td><td>
 aDataSource contains an updated version of the data source previously provided in AddDataSource command. The updated data source can contain modifications to existing clips in the list, or new clips added to the end of the list. This API cannot be used to update data for clips that have already been initialized, or to delete clips from the clip list. </td></tr>
 <tr><td valign=top><em>aContextData</em>&nbsp;</td><td>
-Optional opaque data that will be passed back to the user with the command response @leave This method can leave with one of the following error codes OsclErrNotSupported if the format of the source is incompatible with what the SDK can handle OsclErrInvalidState if invoked in the incorrect state, such as after initialization of the selected track has already begin. OsclErrNoMemory if the SDK failed to allocate memory during this operation </td></tr>
+Optional opaque data that will be passed back to the user with the command response @leave This method can leave with one of the following error codes OsclErrNoMemory if the SDK failed to allocate memory during this operation </td></tr>
 </table>
 </dl><dl compact><dt><b>Returns: </b></dt><dd>
 A unique command id for asynchronous completion </dl>    </td>
@@ -1764,7 +1780,7 @@ A unique command id for asynchronous completion </dl>    </td>
 <hr>The documentation for this class was generated from the following file:<ul>
 <li><a class="el" href="pv__player__interface_8h-source.html">pv_player_interface.h</a></ul>
 <hr size="1"><img src="pvlogo_small.jpg"><address style="align: right;"><small>PV Player Engine</small>
-<address style="align: left;"><small>Posting Version: CORE_8.500.1.1_RC3 </small>
+<address style="align: left;"><small>Posting Version: CORE_8.500.1.1_RC4 </small>
 </small></address>
 </body>
 </html>
