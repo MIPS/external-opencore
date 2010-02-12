@@ -51,6 +51,12 @@ PVA_FF_MovieAtom::PVA_FF_MovieAtom(uint32 fileAuthoringFlags)
     _pAssetInfoKeyAlbumAtom         = NULL;
     _pAssetInfoKeyRecordingYearAtom = NULL;
 
+    _puserDataAtom = NULL;
+
+    //External user data atom related
+    _userDataAtomSize = 0;
+    _pUserDataAtomBuffer = NULL;
+
     // PIFF related
     _pPSSHAtom                      = NULL;
 
@@ -79,6 +85,12 @@ PVA_FF_MovieAtom::PVA_FF_MovieAtom(uint32 fileAuthoringFlags)
         _oPIFFMode = true;
     }
 
+    _oExternalUserDataAtomEnabled = false;
+    if ((fileAuthoringFlags & PVMP4FF_USE_EXTN_UDTA) == PVMP4FF_USE_EXTN_UDTA)
+    {
+        _oExternalUserDataAtomEnabled = true;
+    }
+
     // Use version 1 of the FullBox spec only when PVMP4FF_LIVE_MOVIE_FRAGMENT_MODE is enabled
     uint8 movieHeaderVersion = 0;
     if (_oLiveMovieFragmentEnabled)
@@ -89,9 +101,13 @@ PVA_FF_MovieAtom::PVA_FF_MovieAtom(uint32 fileAuthoringFlags)
     PV_MP4_FF_NEW(fp->auditCB, PVA_FF_TrackAtomVecType, (), _pMediaTrackVec);
     PV_MP4_FF_NEW(fp->auditCB, PVA_FF_TrackAtomVecType, (), _pmpeg4TrackVec);
 
-    // Create user data atom
-    PV_MP4_FF_NEW(fp->auditCB, PVA_FF_UserDataAtom, (), _puserDataAtom);
-    _puserDataAtom->setParent(this);
+
+    if (_oExternalUserDataAtomEnabled == false)
+    {
+        // Create user data atom
+        PV_MP4_FF_NEW(fp->auditCB, PVA_FF_UserDataAtom, (), _puserDataAtom);
+        _puserDataAtom->setParent(this);
+    }
 
     setTimeScale(DEFAULT_PRESENTATION_TIMESCALE); // Set default value for timescale
 
@@ -279,6 +295,10 @@ PVA_FF_MovieAtom::recomputeSize()
             size += _puserDataAtom->getSize();
         }
     }
+    else if (_oExternalUserDataAtomEnabled && (_puserDataAtom == NULL))
+    {
+        size += _userDataAtomSize;
+    }
 
     if (_pMediaTrackVec != NULL)
     {
@@ -396,6 +416,10 @@ PVA_FF_MovieAtom::renderToFileStream(MP4_AUTHOR_FF_FILE_IO_WRAP *fp)
                     return false;
                 }
             }
+        }
+        else if ((_oExternalUserDataAtomEnabled) && (_userDataAtomSize > 0) && (_pUserDataAtomBuffer))
+        {
+            PVA_FF_AtomUtils::renderByteData(fp, _userDataAtomSize, _pUserDataAtomBuffer);
         }
     }
     // Render the object descriptor
@@ -752,3 +776,14 @@ PVA_FF_MovieAtom::writeMaxSampleSize(MP4_AUTHOR_FF_FILE_IO_WRAP *_afp)
         }
     }
 }
+
+void
+PVA_FF_MovieAtom::setUserDataInfo(uint32 size, uint8* buff)
+{
+    _userDataAtomSize = size;
+    _pUserDataAtomBuffer = buff;
+
+
+}
+
+

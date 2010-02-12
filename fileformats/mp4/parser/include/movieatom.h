@@ -471,6 +471,8 @@ class MovieAtom : public Atom
 
         uint16 getID3V2LangCode() ;
 
+        MP4_ERROR_CODE GetUserDataAtomInfo(uint32 &atomSize, uint32 &atomPointer);
+
         bool IsID3V2Present()
         {
             if (_pMetaDataAtom)
@@ -837,6 +839,10 @@ class MovieAtom : public Atom
         ObjectDescriptorAtom  *_pobjectDescriptorAtom;
         UserDataAtom          *_pUserDataAtom;
         MetaDataAtom    *_pMetaDataAtom;
+
+
+        uint32 iUserDataAtomSize;
+        uint32 iUserDataAtomOffset;
 
 
         MovieExtendsAtom      *_pMovieExtendsAtom;

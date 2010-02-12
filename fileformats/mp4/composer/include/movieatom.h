@@ -352,6 +352,7 @@ class PVA_FF_MovieAtom : public PVA_FF_Atom
         void    writeMovieFragmentDuration(MP4_AUTHOR_FF_FILE_IO_WRAP* fp);
         void    SetMaxSampleSize(uint32, uint32);
         void    writeMaxSampleSize(MP4_AUTHOR_FF_FILE_IO_WRAP*);
+        void setUserDataInfo(uint32 size, uint8* buff);
     private:
         virtual void recomputeSize();
 
@@ -386,6 +387,11 @@ class PVA_FF_MovieAtom : public PVA_FF_Atom
         // PIFF Related
         bool                                _oPIFFMode;
         PVA_FF_PSSHAtom                     *_pPSSHAtom;
+
+        bool _oExternalUserDataAtomEnabled;
+
+        uint32 _userDataAtomSize;
+        uint8 *_pUserDataAtomBuffer;
 };
 
 

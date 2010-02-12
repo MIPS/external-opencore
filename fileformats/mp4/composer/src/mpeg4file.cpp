@@ -311,6 +311,8 @@ PVA_FF_Mpeg4File::init(int32 mediaType,
         _oPIFFMode = true;
     }
 
+
+
     // Create user data atom
     PV_MP4_FF_NEW(fp->auditCB, PVA_FF_UserDataAtom, (), _puserDataAtom);
 
@@ -318,6 +320,7 @@ PVA_FF_Mpeg4File::init(int32 mediaType,
 
     // Create the moov atom
     PV_MP4_FF_NEW(fp->auditCB, PVA_FF_MovieAtom, (fileAuthoringFlags), _pmovieAtom);
+
 
     // Movie fragment atom vectors initialised
     if (_oMovieFragmentEnabled)
@@ -3265,6 +3268,13 @@ PVA_FF_Mpeg4File::setAudioEncodeParams(uint32 trackId,
         trackAtom->setAudioEncodeParams(audioParams);
 
     return;
+}
+
+void
+PVA_FF_Mpeg4File::setUserDataInfo(uint32 size, uint8* buff)
+{
+    if (_pmovieAtom)
+        _pmovieAtom->setUserDataInfo(size, buff);
 }
 
 

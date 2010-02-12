@@ -214,6 +214,10 @@ class Mpeg4File : public IMpeg4File, public Parentable
         MP4_ERROR_CODE getTimestampForSampleNumber(uint32 id, uint32 sampleNumber, uint64& aTimeStamp);
         MP4_ERROR_CODE getSampleSizeAt(uint32 id, int32 sampleNum, uint32& aSampleSize) ;
 
+
+        // Fetch the user data atom related info...
+        MP4_ERROR_CODE GetUserDataAtomInfo(uint32 &atomSize, uint32 &atomPointer);
+
         virtual DecoderSpecificInfo* getTrackDecoderSpecificInfoAtSDI(uint32 trackID, uint32 index);
 
         virtual void resetPlayback();
@@ -1514,6 +1518,7 @@ class Mpeg4File : public IMpeg4File, public Parentable
         uint32 numComposer;
         uint32 numVersion;
         uint32 iTotalMoofAtmsCnt;
+
 };
 
 #endif // MPEG4FILE_H_INCLUDED

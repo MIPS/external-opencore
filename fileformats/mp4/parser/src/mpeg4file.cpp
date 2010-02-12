@@ -117,6 +117,8 @@ Mpeg4File::Mpeg4File(MP4_FF_FILE *fp,
     numVersion = 0;
     iTotalMoofAtmsCnt = 0; //Zero is a chosen to be sentinal because 0 is invalid value if mvex atom is present.
     // Create miscellaneous vector of atoms
+
+
     PV_MP4_FF_NEW(fp->auditCB, trackAtomVecType, (), _pTrackAtomVec);
     PV_MP4_FF_NEW(fp->auditCB, movieFragmentAtomVecType, (), _pMovieFragmentAtomVec);
     PV_MP4_FF_NEW(fp->auditCB, movieFragmentOffsetVecType, (), _pMoofOffsetVec);
@@ -158,6 +160,7 @@ Mpeg4File::Mpeg4File(MP4_FF_FILE *fp,
         uint32 atomSize = 0;
 
         AtomUtils::getNextAtomType(fp, atomSize, atomType);
+
 
         if ((atomType == SKIP_ATOM)
                 || (atomType == FREE_SPACE_ATOM)
@@ -363,8 +366,7 @@ Mpeg4File::Mpeg4File(MP4_FF_FILE *fp,
                                _oPVContent,
                                _oPVContentDownloadable,
                                parsingMode,
-                               aOpenFileOncePerTrack
-                              ),
+                               aOpenFileOncePerTrack),
                               _pmovieAtom);
 
                 if (!_pmovieAtom->MP4Success())
@@ -8663,6 +8665,14 @@ void Mpeg4File::SetMoofAtomsCnt(const uint32 aMoofAtmsCnt)
 {
 
     iTotalMoofAtmsCnt = aMoofAtmsCnt;
+}
+
+MP4_ERROR_CODE Mpeg4File::GetUserDataAtomInfo(uint32 &atomSize, uint32 &atomPointer)
+{
+    if (_pmovieAtom)
+        return _pmovieAtom->GetUserDataAtomInfo(atomSize, atomPointer);
+
+    return DEFAULT_ERROR;
 }
 
 void Mpeg4File::SetMoofInfo(uint32 aTrackId, uint32 aIndex, uint64 aMoofOffset, uint64 aMoofTimestamp)

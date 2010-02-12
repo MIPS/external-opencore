@@ -451,6 +451,7 @@ class IMpeg4File : public ISucceedFail
         virtual PVMFStatus InitMetaData(PVMFMetadataList* aAvailableMetadataKeys) = 0;
         virtual void SetMoofAtomsCnt(const uint32 aMoofAtmsCnt) = 0;
         virtual void SetMoofInfo(uint32 aTrackId, uint32 aIndex, uint64 aMoofOffset, uint64 aMoofTimestamp) = 0;
+        virtual MP4_ERROR_CODE GetUserDataAtomInfo(uint32 &atomSize, uint32 &atomPointer) = 0;
 
 };
 

@@ -212,6 +212,7 @@ class PVA_FF_Mpeg4File : public PVA_FF_IMpeg4File, public PVA_FF_Parentable
         {
             _pmovieAtom->setMaxBufferSizeDB(trackID, max);
         }
+        void setUserDataInfo(uint32 size, uint8* buff);
 
         bool addMultipleAccessUnitsToTrack(uint32 trackID, GAU *pgau);
 
@@ -395,6 +396,7 @@ class PVA_FF_Mpeg4File : public PVA_FF_IMpeg4File, public PVA_FF_Parentable
         bool   _oMovieAtomUpfront;
         bool   _oLiveMovieFragmentEnabled;
         uint32 _interLeaveDuration; // Always in milliseconds
+
 
         // PIFF Related
         bool                                _oPIFFMode;

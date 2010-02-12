@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -94,7 +94,11 @@ OSCL_EXPORT_REF  IMpeg4File *IMpeg4File::readMP4File(OSCL_wString& aFilename,
     {
         if (mp4 != NULL)
         {
-            if (!mp4->IsMovieFragmentsPresent())
+            if (mp4->IsMovieFragmentsPresent() && !aParsingMode)
+            {
+                return mp4;
+            }
+            else
             {
                 if (fp->IsOpen())
                     AtomUtils::CloseMP4File(fp);

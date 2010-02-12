@@ -56,6 +56,8 @@ OSCL_EXPORT_REF MovieAtom::MovieAtom(MP4_FF_FILE *fp,
     _pobjectDescriptorAtom = NULL;
     _pUserDataAtom = NULL;
     _pMetaDataAtom = NULL;
+    iUserDataAtomSize = 0;
+    iUserDataAtomOffset = 0;
     _pMovieExtendsAtom = NULL;
     _isMovieFragmentPresent = false;
     _oVideoTrackPresent = false;
@@ -110,6 +112,8 @@ OSCL_EXPORT_REF MovieAtom::MovieAtom(MP4_FF_FILE *fp,
                     {
                         _pUserDataAtom->setParent(this);
                         count -= _pUserDataAtom->getSize();
+                        iUserDataAtomSize = atomSize;
+                        iUserDataAtomOffset = currPtr;
                     }
                 }
                 else
@@ -473,6 +477,7 @@ int32 MovieAtom::getNextKeyMediaSample(uint32 &aKeySampleNum,
     nReturn =  track->getNextKeyMediaSample(aKeySampleNum, n, pgau);
     return nReturn;
 }
+
 
 int32 MovieAtom::getNextMediaSample(uint32 id, uint8 *buf, uint32 &size, uint32 &index, uint32 &SampleOffset)
 {
@@ -2233,5 +2238,17 @@ int32 MovieAtom::getTimestampForRandomAccessPointsBeforeAfter(uint32 id, uint64 
         return 0;
     }
 
+}
+
+MP4_ERROR_CODE MovieAtom::GetUserDataAtomInfo(uint32 &atomSize, uint32 &atomPointer)
+{
+    if (iUserDataAtomSize && iUserDataAtomOffset)
+    {
+        atomSize = iUserDataAtomSize;
+        atomPointer = iUserDataAtomOffset;
+        return EVERYTHING_FINE;
+    }
+    else
+        return DEFAULT_ERROR;
 }
 

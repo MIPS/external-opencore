@@ -131,6 +131,12 @@ class PVMP4FFComposerAudioEncodeParams
 
 #define PVMP4FF_SET_META_DATA_UPFRONT_MODE  0x00000002
 
+/** This mode expects user of composer library to provide 'udta' atom info (atom size and data)
+* from outside using API setUserDataInfo, MP4 composer will not contruct any new udta atom and
+* write 'udta' as is which privided in API setUserDataInfo
+*/
+#define PVMP4FF_USE_EXTN_UDTA 0x00000100
+
 /**
  * This mode authors 3GPP Progressive Downloadable output files:
  * Meta Data is upfront.
@@ -458,6 +464,9 @@ class PVA_FF_IMpeg4File
         virtual bool setPSSHInfo(uint32 systemidlen, uint8* systemid, uint32 datalen, uint8* data) = 0;
 
         OSCL_IMPORT_REF static void DestroyMP4FileObject(PVA_FF_IMpeg4File* aMP4FileObject);
+
+
+        virtual void setUserDataInfo(uint32 size, uint8 *buff_ptr) = 0;
 };
 
 #endif
