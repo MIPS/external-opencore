@@ -37,6 +37,7 @@
 
 #include "oscl_exclusive_ptr.h"
 
+
 #define PVMF_MP4_MIME_FORMAT_AUDIO_UNKNOWN  "x-pvmf/audio/unknown"
 #define PVMF_MP4_MIME_FORMAT_VIDEO_UNKNOWN  "x-pvmf/video/unknown"
 #define PVMF_MP4_MIME_FORMAT_UNKNOWN        "x-pvmf/unknown-media/unknown"
@@ -49,6 +50,7 @@
 #define DEFAULTLEVEL    0
 
 #define MILLISECOND_TIMESCALE 1000
+#define DEFAULT_VECTOR_RESERVE_NUM 16
 
 static const uint32 MAX32BITUINT = 0xFFFFFFFF;
 
@@ -203,6 +205,7 @@ PVMFMP4FFParserNode::PVMFMP4FFParserNode(int32 aPriority) :
 
              iUnderFlowCheckTimer->SetObserver(this);
              iUnderFlowCheckTimer->SetFrequency(PVMP4FF_UNDERFLOW_STATUS_EVENT_FREQUENCY);
+             iMoofInfoUpdateVec.reserve(DEFAULT_VECTOR_RESERVE_NUM);
             );
 
     iPortIter = PVMF_BASE_NODE_NEW(PVMFMP4FFPortIter, (iNodeTrackPortList));
@@ -8645,16 +8648,43 @@ bool PVMFMP4FFParserNode::setProtocolInfo(Oscl_Vector<PvmiKvp*, OsclMemAllocator
     {
         return false;
     }
-    for (uint32 i = 0; i < aInfoKvpVec.size(); i++)
-    {
-        if ((aInfoKvpVec[i]) && (aInfoKvpVec[i]->key))
+
+    int32 err = 0;
+    // catch the vector push_back() exception
+    OSCL_TRY(err,
+             PVMFMP4MfraInfoUpdate mfra;
+             for (uint32 i = 0; i < aInfoKvpVec.size(); i++)
+{
+    if ((aInfoKvpVec[i]) && (aInfoKvpVec[i]->key))
         {
             if (oscl_strstr(aInfoKvpVec[i]->key, PVSMOOTHSTREAMING_TOTAL_NUM_MOOFS_KEY))
             {
                 iTotalMoofFrags = aInfoKvpVec[i]->value.uint32_value;
             }
+            else if (oscl_strstr(aInfoKvpVec[i]->key, PVSMOOTHSTREAMING_MOOF_MFRA_INFO_UPDATE_KEY))
+            {
+                mfra = *((PVMFMP4MfraInfoUpdate*)aInfoKvpVec[i]->value.key_specific_value);
+            }
         }
     }
+
+    // push to vector in case of mp4 library object is not instantiated
+    if (mfra.isInfoValid()) iMoofInfoUpdateVec.push_back(mfra);
+
+            );
+    if (err) return false;
+
+    if (iPlaybackParserObj)
+    {
+        while (!iMoofInfoUpdateVec.empty())
+        {
+            PVMFMP4MfraInfoUpdate moofInfo(iMoofInfoUpdateVec.front());
+            iPlaybackParserObj->SetMoofInfo(moofInfo.iMoofTrackID,
+                                            moofInfo.iMoofIndex, moofInfo.iMoofOffset, moofInfo.iMoofTime);
+            iMoofInfoUpdateVec.erase(iMoofInfoUpdateVec.begin());
+        }
+    }
+
     return true;
 }
 

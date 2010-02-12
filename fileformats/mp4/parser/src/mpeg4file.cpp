@@ -418,6 +418,16 @@ Mpeg4File::Mpeg4File(MP4_FF_FILE *fp,
                     if (_isMovieFragmentsPresent)
                     {
                         parseMFRA();
+
+                        if (!oMfraFound)
+                        {
+                            // mfra not found neither at the beginning
+                            // nor the end of the file. Continue searching
+                            // it.
+                            continue;
+                        }
+
+
                     }
                     break;
                 }
@@ -473,6 +483,10 @@ Mpeg4File::Mpeg4File(MP4_FF_FILE *fp,
             count -= pMovieFragmentRandomAccessAtom->getSize();
             _pMovieFragmentRandomAccessAtomVec->push_back(pMovieFragmentRandomAccessAtom);
             oMfraFound = true;
+
+            // Exit the loop at this point since the movie atom has already been parsed
+            if ((_pmovieAtom != NULL) && (_parsing_mode != 0))
+                break;
         }
         else
         {
@@ -4208,6 +4222,10 @@ int32 Mpeg4File::parseMFRA()
     uint32 ret = 0;
     uint32 fileSize = 0;
     uint32 MfraStartOffset = 0;
+
+    // save the start search point
+    uint32 startpoint =  AtomUtils::getCurrentFilePosition(_movieFragmentFilePtr);
+
     AtomUtils::getCurrentFileSize(_movieFragmentFilePtr, fileSize);
     AtomUtils::seekFromStart(_movieFragmentFilePtr, fileSize);
     AtomUtils::rewindFilePointerByN(_movieFragmentFilePtr, 16);
@@ -4252,6 +4270,10 @@ int32 Mpeg4File::parseMFRA()
             oMfraFound = true;
         }
     }
+
+    // return to the start point when the mfra atom is not found
+    if (!oMfraFound)
+        AtomUtils::seekFromStart(_movieFragmentFilePtr, startpoint);
 
     return ret;
 
@@ -4368,6 +4390,9 @@ int32 Mpeg4File::peekNextBundledAccessUnits(const uint32 trackID,
                     uint32 moofIndex = 0;
                     bool moofToBeParsed = false;
 
+                    PVMF_MP4FFPARSER_LOGMEDIASAMPELSTATEVARIABLES((0, "1.) moofIndex=%d, moofToBeParsed=%d, sizeAtomVec=%d",
+                            moofIndex, moofToBeParsed, _pMovieFragmentAtomVec->size()));
+
                     if (_pMovieFragmentAtomVec->size() > _peekMovieFragmentIdx[moofIdx])
                     {
                         MovieFragmentAtom *pMovieFragmentAtom = NULL;
@@ -4378,6 +4403,11 @@ int32 Mpeg4File::peekNextBundledAccessUnits(const uint32 trackID,
                             moofIndex = _peekMovieFragmentIdx[moofIdx];
                         }
                     }
+
+
+                    PVMF_MP4FFPARSER_LOGMEDIASAMPELSTATEVARIABLES((0, "2.) moofIndex=%d, moofToBeParsed=%d, sizeAtomVec=%d",
+                            moofIndex, moofToBeParsed, _pMovieFragmentAtomVec->size()));
+
                     if ((_pMovieFragmentAtomVec->size() <= _peekMovieFragmentIdx[moofIdx]) || moofToBeParsed)
                     {
                         uint32 fileSize = 0;
@@ -4386,12 +4416,19 @@ int32 Mpeg4File::peekNextBundledAccessUnits(const uint32 trackID,
                         uint32 filePointer = AtomUtils::getCurrentFilePosition(_movieFragmentFilePtr);
                         int32 count = fileSize - filePointer;// -DEFAULT_ATOM_SIZE;
 
+                        PVMF_MP4FFPARSER_LOGMEDIASAMPELSTATEVARIABLES((0, "filePointer=%d, fileSize=%d, count=%d",
+                                filePointer, fileSize, count));
+
                         while (count > 0)
                         {
                             uint32 atomType = UNKNOWN_ATOM;
                             uint32 atomSize = 0;
                             uint32 currPos = AtomUtils::getCurrentFilePosition(_movieFragmentFilePtr);
                             AtomUtils::getNextAtomType(_movieFragmentFilePtr, atomSize, atomType);
+
+                            PVMF_MP4FFPARSER_LOGMEDIASAMPELSTATEVARIABLES((0, "atomType=%d, atomSize=%d, currPos=%d",
+                                    atomType, atomSize, currPos));
+
                             if ((currPos + atomSize) > fileSize)
                             {
                                 AtomUtils::seekFromStart(_movieFragmentFilePtr, currPos);
@@ -4406,8 +4443,11 @@ int32 Mpeg4File::peekNextBundledAccessUnits(const uint32 trackID,
                             }
                             if (atomType == MOVIE_FRAGMENT_ATOM)
                             {
+
                                 uint32 moofStartOffset = AtomUtils::getCurrentFilePosition(_movieFragmentFilePtr);
                                 moofStartOffset -= DEFAULT_ATOM_SIZE;
+
+                                PVMF_MP4FFPARSER_LOGMEDIASAMPELSTATEVARIABLES((0, "atomType=MovieFrgment, moofStart=%d", moofStartOffset));
 
                                 parseMoofCompletely = true;
 
@@ -4470,6 +4510,7 @@ int32 Mpeg4File::peekNextBundledAccessUnits(const uint32 trackID,
                                     count -= atomSize;
                                     atomSize -= DEFAULT_ATOM_SIZE;
                                     AtomUtils::seekFromCurrPos(_movieFragmentFilePtr, atomSize);
+                                    PVMF_MP4FFPARSER_LOGMEDIASAMPELSTATEVARIABLES((0, "atomType=MediaData"));
                                 }
                             }
 
@@ -4480,6 +4521,9 @@ int32 Mpeg4File::peekNextBundledAccessUnits(const uint32 trackID,
                                     count -= atomSize;
                                     atomSize -= DEFAULT_ATOM_SIZE;
                                     AtomUtils::seekFromCurrPos(_movieFragmentFilePtr, atomSize);
+                                    _ptrMoofEnds = AtomUtils::getCurrentFilePosition(_movieFragmentFilePtr);
+                                    PVMF_MP4FFPARSER_LOGMEDIASAMPELSTATEVARIABLES((0, "atomType=other, atomSize=%d, count=%d",
+                                            atomSize, count));
                                 }
                                 break;
                             }
@@ -8619,5 +8663,21 @@ void Mpeg4File::SetMoofAtomsCnt(const uint32 aMoofAtmsCnt)
 {
 
     iTotalMoofAtmsCnt = aMoofAtmsCnt;
+}
+
+void Mpeg4File::SetMoofInfo(uint32 aTrackId, uint32 aIndex, uint64 aMoofOffset, uint64 aMoofTimestamp)
+{
+    if (_isMovieFragmentsPresent)
+    {
+        if (_pMovieFragmentRandomAccessAtomVec != NULL)
+        { // Only one mfra possible in a clip so this loop will run only once
+            for (uint32 idx = 0; idx < _pMovieFragmentRandomAccessAtomVec->size(); idx++)
+            {
+                MovieFragmentRandomAccessAtom *pMovieFragmentRandomAccessAtom = (*_pMovieFragmentRandomAccessAtomVec)[idx];
+                pMovieFragmentRandomAccessAtom->updateMfraEntry(aTrackId, aIndex, aMoofOffset, aMoofTimestamp);
+            }
+
+        }
+    }
 }
 

@@ -450,6 +450,7 @@ class IMpeg4File : public ISucceedFail
         virtual PVMFStatus ReleaseMetadataValue(PvmiKvp& aValueKVP) = 0;
         virtual PVMFStatus InitMetaData(PVMFMetadataList* aAvailableMetadataKeys) = 0;
         virtual void SetMoofAtomsCnt(const uint32 aMoofAtmsCnt) = 0;
+        virtual void SetMoofInfo(uint32 aTrackId, uint32 aIndex, uint64 aMoofOffset, uint64 aMoofTimestamp) = 0;
 
 };
 

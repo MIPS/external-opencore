@@ -504,9 +504,6 @@ PVMFStatus PVMFMP4FFParserNode::DoGetNodeMetadataValues()
 
                 if (iMetadataParserObj->IsMovieFragmentsPresent())
                 {
-                    if (iDataStreamInterface != NULL)
-                        random_access_denied = true;
-
                     uint32* trackList = NULL;
                     uint32 numTracks = iNodeTrackPortList.size();
                     CreateNewArray(&trackList, numTracks);

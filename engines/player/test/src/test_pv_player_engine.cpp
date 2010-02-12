@@ -3426,9 +3426,20 @@ void pvplayer_engine_test::test()
                 ((pvplayer_async_test_3gppdlnormal_dlthenplay*)iCurrentTest)->enableReposDuringDownload();
                 break;
 
+
             case ProgDownloadPlayUtilEOSUsingSmoothStreamingTest:
                 fprintf(file, "Prog download using smooth streaming tests not enabled\n");
                 break;
+
+            case ProgDownloadDownloadThenPlayRepositionUsingSmoothStreamingTest:
+                fprintf(file, "Prog Download using smooth streaming tests not enabled\n");
+                break;
+
+            case ProgDownloadPlayRepositionDuringDownloadUsingSmoothStreamingTest:
+                fprintf(file, "Prog Download tests not enabled\n");
+                break;
+
+
 
             case ProgPlaybackMP4UntilEOSTest:
                 testparam.iFileType = PVMF_MIME_MPEG4FF;

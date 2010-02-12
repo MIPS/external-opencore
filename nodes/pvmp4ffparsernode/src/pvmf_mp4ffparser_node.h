@@ -114,6 +114,9 @@
 #include "pvmf_source_node_utils.h"
 #endif
 
+#ifndef PVMF_MP4FF_MFRA_INFO_UPDATE_H_INCLUDED
+#include "pvmf_mp4_mfra_info_update.h"
+#endif
 /**
 * Node command handling
 */
@@ -164,6 +167,41 @@ enum BaseKeys_SelectionType
     NET,
     FILE_IO,
     PARSER
+};
+
+struct MoofInfoUpdate
+{
+    uint32 iMoofTrackID;
+    uint32 iMoofIndex;
+    uint64 iMoofTime;
+    uint64 iMoofOffset;
+
+    // contructor
+    MoofInfoUpdate() : iMoofTrackID(0), iMoofIndex(0), iMoofTime(0), iMoofOffset(0)
+    {
+    }
+
+    // copy constructor
+    MoofInfoUpdate(const MoofInfoUpdate& x)
+    {
+        iMoofTrackID = x.iMoofTrackID;
+        iMoofIndex   = x.iMoofIndex;
+        iMoofTime    = x.iMoofTime;
+        iMoofOffset  = x.iMoofOffset;
+    }
+
+    bool isInfoValid()
+    {
+        return (iMoofTrackID > 0 && iMoofOffset > 0);
+    }
+
+    void clear()
+    {
+        iMoofTrackID = 0;
+        iMoofIndex   = 0;
+        iMoofTime    = 0;
+        iMoofOffset  = 0;
+    }
 };
 
 #define PVMFFFPARSERNODE_MAX_NUM_TRACKS 6
@@ -640,6 +678,8 @@ class PVMFMP4FFParserNode
         PVMFMetadataList iAvailableMetadataKeys;
         //This will hold the total number of ID3 specific values present in the value list
         uint32 iTotalID3MetaDataTagInValueList;
+
+        Oscl_Vector<PVMFMP4MfraInfoUpdate, OsclMemAllocator> iMoofInfoUpdateVec;
 };
 
 

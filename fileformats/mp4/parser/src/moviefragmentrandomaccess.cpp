@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -155,6 +155,34 @@ bool MovieFragmentRandomAccessAtom::IsTFRAPresentForTrack(uint32 trackID, bool o
     return false;
 
 }
+
+void MovieFragmentRandomAccessAtom::updateMfraEntry(uint32 aTrackId, uint32 aIndex, uint64 aMoofOffset, uint64 aMoofTimestamp)
+{
+    if (_pTrackFragmentRandomAccessAtomVec != NULL)
+    {
+        uint32 num_tfra = _pTrackFragmentRandomAccessAtomVec->size();
+        for (uint32 idx = 0; idx < num_tfra; idx++)
+        {
+            TrackFragmentRandomAccessAtom *tfraAtom = (*_pTrackFragmentRandomAccessAtomVec)[idx];
+            if ((tfraAtom != NULL) && (tfraAtom->getTrackID() == aTrackId))
+            {
+                // Get the entries vector to update the entry corresponding to aIndex
+                Oscl_Vector<TFRAEntries*, OsclMemAllocator>* entryVector = tfraAtom->getTrackFragmentRandomAccessEntries();
+                if ((entryVector != NULL) && (entryVector->size() > aIndex))
+                {
+                    TFRAEntries* entry = (*entryVector)[aIndex];
+                    if (entry != NULL)
+                    {
+                        entry->SetMoofOffset64(aMoofOffset);
+                        entry->SetTime64(aMoofTimestamp);
+                        return;
+                    }
+                }
+            }
+        }
+    }
+}
+
 int32 MovieFragmentRandomAccessAtom::getSyncSampleInfoClosestToTime(uint32 trackID, uint64 &time, uint32 &moof_offset,
         uint32 &traf_number, uint32 &trun_number,
         uint32 &sample_num)

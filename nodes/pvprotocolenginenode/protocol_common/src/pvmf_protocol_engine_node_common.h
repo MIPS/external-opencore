@@ -1194,7 +1194,8 @@ class DownloadControlInterface
 
         // for progressive playback repositioning
         virtual void clearPerRequest() = 0;
-        virtual bool isDownloadCompletedPerRequest() = 0;
+
+        virtual void updateProtocolInfo(OsclAny *aProtocolInfo) = 0;
 
         // destructor
         virtual ~DownloadControlInterface()

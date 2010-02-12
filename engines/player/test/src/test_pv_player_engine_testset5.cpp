@@ -1928,8 +1928,16 @@ void pvplayer_async_test_3gppdlnormal_dlthenplay::CreateDataSource()
     default_source += DEFAULTSOURCEFILENAME;
     if (url == default_source)
     {
-        fprintf(file, "Setting source to %s\n", DEFAULT_3GPPDL_URL);
-        url = DEFAULT_3GPPDL_URL;
+        if (iFileType == PVMF_MIME_DATA_SOURCE_SMOOTH_STREAMING_URL)
+        {
+            fprintf(file, "Setting source to %s\n", DEFAULT_SMOOTHSTREAMING_URL);
+            url = DEFAULT_SMOOTHSTREAMING_URL;
+        }
+        else
+        {
+            fprintf(file, "Setting source to %s\n", DEFAULT_3GPPDL_URL);
+            url = DEFAULT_3GPPDL_URL;
+        }
     }
     oscl_wchar wbuf[2];
     wbuf[1] = '\0';
@@ -1940,7 +1948,14 @@ void pvplayer_async_test_3gppdlnormal_dlthenplay::CreateDataSource()
     }
     iDataSource = new PVPlayerDataSourceURL;
     iDataSource->SetDataSourceURL(iDownloadURL);
-    iDataSource->SetDataSourceFormatType(PVMF_MIME_DATA_SOURCE_HTTP_URL);
+    if (iFileType == PVMF_MIME_DATA_SOURCE_SMOOTH_STREAMING_URL)
+    {
+        iDataSource->SetDataSourceFormatType(PVMF_MIME_DATA_SOURCE_SMOOTH_STREAMING_URL);
+    }
+    else
+    {
+        iDataSource->SetDataSourceFormatType(PVMF_MIME_DATA_SOURCE_HTTP_URL);
+    }
 
     iDownloadFilename = OUTPUTNAME_PREPEND_WSTRING;
     iDownloadFilename += _STRLIT_WCHAR("test_3gppdownload_dlthenplay.loc");

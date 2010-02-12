@@ -813,6 +813,19 @@ class pvplayer_engine_test : public test_case,
             * Output (partially) downloaded media file and YUV and PCM data files from Playback.
             */
             ProgDownloadPlayUtilEOSUsingSmoothStreamingTest, //119
+            /**
+            * @test (120) Progressive Download Then Play Reposition using Smooth Streaming Test.
+            * Input smooth streaming http url to a progressively downloadable file.
+            * Output (partially) downloaded media file and YUV and PCM data files from Playback.
+            */
+            ProgDownloadDownloadThenPlayRepositionUsingSmoothStreamingTest,//120
+            /**
+            * @test (121) Progressive Download Play-Reposition During Download using Smooth Streaming Test.
+            * Input smooth streaming http url to a progressively downloadable file.
+            * Output (partially) downloaded media file and YUV and PCM data files from Playback.
+            */
+            ProgDownloadPlayRepositionDuringDownloadUsingSmoothStreamingTest, //121
+
 
             LastDownloadTest, //placeholder
 

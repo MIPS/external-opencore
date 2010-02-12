@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -976,9 +976,10 @@ PVMFFileBufferWriteDataStreamImpl::Write(PvmiDataStreamSession aSessionID,
 
     uint32 result = iFileObject->Write(buffer, size, numelements);
     Flush(0);
+
     iFileNumBytes += (size * numelements);
 
-//  LOGDEBUG((0,"PVMFFileBufferWriteDataStreamImpl::Write returning %d",result));
+    LOGDEBUG((0, "PVMFFileBufferWriteDataStreamImpl::Write returning %d, iFileNumBytes=%d", result, iFileNumBytes));
     numelements = result;
 
     // Loop through the iReadNotifications for a Read Notification
@@ -1050,6 +1051,44 @@ PVMFFileBufferWriteDataStreamImpl::Write(PvmiDataStreamSession aSessionID,
 
     return PVDS_SUCCESS;
 }
+
+OSCL_EXPORT_REF PvmiDataStreamStatus
+PVMFFileBufferWriteDataStreamImpl::WriteAtOffset(PvmiDataStreamSession aSessionID,
+        uint8* aBuffer,
+        uint32 aSize,
+        uint32& aNumElements,
+        uint32 aOffset)
+{
+    if ((!iFileObject) || (aSessionID != 0))
+    {
+        // No iFileObject or valid write session to work with, return failure
+        return PVDS_FAILURE;
+    }
+
+    // save the current position
+    uint32 currentPos = GetCurrentPointerPosition(aSessionID);
+
+    // Now, seek to the desired point
+    PvmiDataStreamStatus ret = Seek(aSessionID, aOffset, PVDS_SEEK_SET);
+    if (ret != PVDS_SUCCESS)
+        return ret;
+
+    uint32 result = iFileObject->Write(aBuffer, aSize, aNumElements);
+    Flush(0);
+
+    aNumElements = result;
+    uint32 maxOffsetWritten = aOffset + (aSize * aNumElements);
+
+    // Only update with the num bytes written beyond the current file size
+    if (maxOffsetWritten > (uint32)iFileNumBytes)
+        iFileNumBytes += maxOffsetWritten - iFileNumBytes;
+
+    // seek to the previous position
+    ret = Seek(aSessionID, currentPos, PVDS_SEEK_SET);
+
+    return ret;
+}
+
 
 OSCL_EXPORT_REF PvmiDataStreamStatus
 PVMFFileBufferWriteDataStreamImpl::Seek(PvmiDataStreamSession aSessionID,

@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -82,6 +82,20 @@ class TFRAEntries
         {
             return _sample_number;
         }
+
+        // Add APIs to update _time64 and _moof_offset64.
+        // They're required for out-of-band updates for
+        // streaming mp4 files with movie fragments
+        void SetTime64(uint64 aTime)
+        {
+            _time64 = aTime;
+        }
+
+        void SetMoofOffset64(uint64 aMoofOffset)
+        {
+            _moof_offset64 = aMoofOffset;
+        }
+
 
     private:
         uint32 _version;

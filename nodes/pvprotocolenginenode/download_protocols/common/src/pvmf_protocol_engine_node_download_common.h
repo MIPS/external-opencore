@@ -203,10 +203,10 @@ class pvDownloadControl : public DownloadControlInterface
         {
             ;
         }
-        // checks if download has completed
-        bool isDownloadCompletedPerRequest()
+
+        virtual void updateProtocolInfo(OsclAny *aProtocolInfo)
         {
-            return iDownloadComplete;
+            OSCL_UNUSED_ARG(aProtocolInfo);
         }
 
     protected:

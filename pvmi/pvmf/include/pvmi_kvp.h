@@ -561,6 +561,7 @@ class PvmfAssetInfo3GPPLocationStruct
 
 //Key for smooth streaming
 #define PVSMOOTHSTREAMING_TOTAL_NUM_MOOFS_KEY _STRLIT_CHAR("x-pvmf/net/ms-smooth-streaming-total-number-of-movie-fragments;valtype=uint32")
+#define PVSMOOTHSTREAMING_MOOF_MFRA_INFO_UPDATE_KEY _STRLIT_CHAR("x-pvmf/net/ms-smooth-streaming-moof-info-update;valtype=key_specific_value")
 
 // Keys for media output components -- Video
 //

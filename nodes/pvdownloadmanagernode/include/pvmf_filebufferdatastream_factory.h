@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -332,6 +332,12 @@ class PVMFFileBufferWriteDataStreamImpl : public PVMIDataStreamSyncInterface
         PvmiDataStreamStatus Write(PvmiDataStreamSession aSessionID,
                                    OsclRefCounterMemFrag* frag,
                                    uint32& aNumElements);
+
+        OSCL_IMPORT_REF PvmiDataStreamStatus WriteAtOffset(PvmiDataStreamSession aSessionID,
+                uint8* aBuffer,
+                uint32 aSize,
+                uint32& aNumElements,
+                uint32 aOffset);
 
         OSCL_IMPORT_REF
         PvmiDataStreamStatus Seek(PvmiDataStreamSession aSessionID,

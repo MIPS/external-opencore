@@ -46,6 +46,7 @@ LOCAL_COPY_HEADERS := \
  	include/pvmfamrencnode_extension.h \
  	include/pvmp4h263encextension.h \
  	include/pvmf_format_progdownload_support_extension.h \
- 	include/pvmf_license_context_data.h
+ 	include/pvmf_license_context_data.h \
+ 	include/pvmf_mp4_mfra_info_update.h
 
 include $(BUILD_COPY_HEADERS)

@@ -387,8 +387,8 @@ OSCL_EXPORT_REF uint32 pvHttpDownloadOutput::writeToDataStream(OUTPUT_DATA_QUEUE
         totalFragSize += fragSize;
     }
 
-    LOGINFODATAPATH((0, "pvHttpDownloadOutput::writeToDataStream() SIZE= %d , SEQNUM=%d", totalFragSize, iCounter++));
     iCurrTotalOutputSize += totalFragSize;
+    LOGINFODATAPATH((0, "pvHttpDownloadOutput::writeToDataStream() SIZE= %d , SEQNUM=%d, TOTAL=%d", totalFragSize, iCounter++, iCurrTotalOutputSize));
     return totalFragSize;
 }
 

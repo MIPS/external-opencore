@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -357,6 +357,38 @@ class PVMIDataStreamSyncInterface : public PVInterface
                                            uint8* aBuffer,
                                            uint32 aSize,
                                            uint32& aNumElements) = 0;
+
+        /**
+        * Writes from the buffer to the data stream a maximum of 'numelements'
+        * of size 'size' at an offset 'aOffset'.
+        *
+        * @param aSessionID the session identifier of the stream
+        * @param buffer pointer to buffer of type uint8*
+        * @param size   element size in bytes
+        * @param numelements max number of elements to write
+        * @param aOffset Offset relative to the beginning of the data stream
+        *                at which data should be written
+        *
+        * The number of full elements actually written, which
+        * may be less than count if an error occurs or if the end
+        * of the file is encountered before reaching count. Also
+        * if non-blocking mode is used it may return a smaller count.
+        * The return status will indicate the cause of the error.
+        */
+        virtual PvmiDataStreamStatus WriteAtOffset(PvmiDataStreamSession aSessionID,
+                uint8* aBuffer,
+                uint32 aSize,
+                uint32& aNumElements,
+                uint32 aOffset)
+        {
+            OSCL_UNUSED_ARG(aSessionID);
+            OSCL_UNUSED_ARG(aBuffer);
+            OSCL_UNUSED_ARG(aSize);
+            OSCL_UNUSED_ARG(aNumElements);
+            OSCL_UNUSED_ARG(aOffset);
+            return PVDS_NOT_SUPPORTED;
+        }
+
 
         /**
         * Seek operation

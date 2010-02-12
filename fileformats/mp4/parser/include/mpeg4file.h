@@ -1345,6 +1345,7 @@ class Mpeg4File : public IMpeg4File, public Parentable
                 Oscl_FileServer* aFileServSession);
         void DestroyDataStreamForExternalDownload();
         virtual void SetMoofAtomsCnt(const uint32 aMoofAtmsCnt);
+        void SetMoofInfo(uint32 aTrackId, uint32 aIndex, uint64 aMoofOffset, uint64 aMoofTimestamp);
 
         MP4_FF_FILE * _fp;
     private:

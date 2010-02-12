@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -65,6 +65,13 @@ class MovieFragmentRandomAccessAtom : public Atom
         *  tracks are equal.
         */
         bool IsTFRAPresentForTrack(uint32 trackID, bool  oVideoAudioTextTrack);
+
+        /**
+        This function will update the time and moof_offset value of the entry on index aIndex corresponding to the track aTrackId
+        */
+        void updateMfraEntry(uint32 aTrackId, uint32 aIndex, uint64 aMoofOffset, uint64 aMoofTimestamp);
+
+
 #if (DISABLE_REPOS_ON_CLIPS_HAVING_UNEQUAL_TFRA_ENTRY_COUNT)
         int32 oVideoAudioTextTrackTfraCount;
 #endif // DISABLE_REPOS_ON_CLIPS_HAVING_UNEQUAL_TFRA_ENTRY_COUNT
