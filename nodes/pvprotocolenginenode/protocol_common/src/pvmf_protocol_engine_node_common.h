@@ -52,6 +52,9 @@
 #ifndef OSCL_TIMER_H_INCLUDED
 #include "oscl_timer.h"
 #endif
+#ifndef PVMF_NODE_INTERFACE_H_INCLUDED
+#include "pvmf_node_interface_impl.h"
+#endif
 #ifndef PVMF_PROTOCOL_ENGINE_COMMON_H_INCLUDED
 #include "pvmf_protocol_engine_common.h"
 #endif
@@ -128,88 +131,6 @@ enum PVMFProtocolEngineNodeState
     // to EPVMFNodeStarted
     PVMFProtocolEngineNodeState_BeingStarted = EPVMFNodeLastState,
 };
-
-
-//Node command type.
-#define PVMFProtocolEngineNodeCommandBase PVMFGenericNodeCommand<PVMFProtocolEngineNodeAllocator> // to remove warning on symbian build
-class PVMFProtocolEngineNodeCommand: public PVMFProtocolEngineNodeCommandBase
-{
-    public:
-        //constructor for Custom2 command
-        void Construct(PVMFSessionId s, int32 cmd, int32 arg1, int32 arg2, int32& arg3, const OsclAny*aContext)
-        {
-            PVMFProtocolEngineNodeCommandBase::Construct(s, cmd, aContext);
-            iParam1 = (OsclAny*)arg1;
-            iParam2 = (OsclAny*)arg2;
-            iParam3 = (OsclAny*) & arg3;
-        }
-        void Parse(int32&arg1, int32&arg2, int32*&arg3)
-        {
-            arg1 = (int32)iParam1;
-            arg2 = (int32)iParam2;
-            arg3 = (int32*)iParam3;
-        }
-
-        // Constructor and parser for seek and bitstreamSwitch
-        void Construct(PVMFSessionId s, int32 cmd,
-                       uint64 aNPTInMS,
-                       uint32& aFirstSeqNumAfterChange,
-                       OsclAny* aContext)
-        {
-            PVMFProtocolEngineNodeCommandBase::Construct(s, cmd, aContext);
-            iNPTInMS = aNPTInMS;
-            iParam2 = (OsclAny*) & aFirstSeqNumAfterChange;
-        }
-
-        void Parse(uint64& aNPTInMS, uint32*& aFirstSeqNumAfterChange)
-        {
-            aNPTInMS = iNPTInMS;
-            aFirstSeqNumAfterChange = (uint32*)iParam2;
-        }
-
-        // constructor and parser for data stream request, especially reposition request
-        void Construct(PVMFSessionId s, int32 cmd,
-                       PvmiDataStreamSession aSessionID,
-                       PvmiDataStreamRequest aRequestID,
-                       OsclAny* aRequestData,
-                       PvmiDataStreamCommandId aDataStreamCmdId,
-                       OsclAny* aContext)
-        {
-            PVMFProtocolEngineNodeCommandBase::Construct(s, cmd, aContext);
-            iParam1 = (OsclAny*)aSessionID;
-            iParam2 = (OsclAny*)((uint32)aRequestID);
-            iParam3 = aRequestData;
-            iParam4 = (OsclAny*)aDataStreamCmdId;
-        }
-
-        void Parse(PvmiDataStreamSession& aSessionID, PvmiDataStreamRequest& aRequestID,
-                   OsclAny*& aRequestData, PvmiDataStreamCommandId &aDataStreamCmdId)
-        {
-            aSessionID   = (PvmiDataStreamSession)iParam1;
-            aRequestData = iParam3;
-            aDataStreamCmdId = (PvmiDataStreamCommandId)iParam4;
-            uint32 requestIDNum = (uint32)iParam2;
-            aRequestID   = (PvmiDataStreamRequest)requestIDNum;
-        }
-
-        void Parse(OsclAny*& aRequestData)
-        {
-            aRequestData = iParam3;
-        }
-
-        void Parse(OsclAny*& aRequestData, PvmiDataStreamCommandId &aDataStreamCmdId)
-        {
-            aRequestData = iParam3;
-            aDataStreamCmdId = (PvmiDataStreamCommandId)iParam4;
-        }
-
-    private:
-        uint64 iNPTInMS;
-};
-
-
-//Command queue type
-typedef PVMFNodeCommandQueue<PVMFProtocolEngineNodeCommand, PVMFProtocolEngineNodeAllocator> PVMFProtocolEngineNodeCmdQ;
 
 typedef Oscl_Vector<PVMFSharedMediaMsgPtr, PVMFProtocolEngineNodeAllocator> INPUT_DATA_QUEUE;
 typedef Oscl_Vector<OsclRefCounterMemFrag, PVMFProtocolEngineNodeAllocator> OUTPUT_DATA_QUEUE;
@@ -298,10 +219,8 @@ class ProtocolContainerObserver
         virtual void RecheduleDataFlow() = 0;
         virtual void SendManualResumeNotificationEvent() = 0;
         virtual bool IsRepositionCmdPending() = 0;
-        virtual PVMFProtocolEngineNodeCommand* FindPendingCmd(int32 aCmdId) = 0;
-        virtual void CompletePendingCmd(int32 status) = 0;
-        virtual void CompleteInputCmd(PVMFProtocolEngineNodeCommand& aCmd, int32 status) = 0;
-        virtual void ErasePendingCmd(PVMFProtocolEngineNodeCommand *aCmd) = 0;
+        virtual PVMFNodeCommand* FindPendingCmd(int32 aCmdId) = 0;
+        virtual void CompletePendingCmd(PVMFStatus aStatus) = 0;
         virtual void ReportEvent(PVMFEventType aEventType, OsclAny* aEventData = NULL, const int32 aEventCode = 0, OsclAny* aEventLocalBuffer = NULL, const uint32 aEventLocalBufferSize = 0) = 0;
         virtual void NewIncomingMessage(PVMFSharedMediaMsgPtr& aMsg) = 0;
 };
@@ -354,12 +273,12 @@ class ProtocolContainer
             OSCL_UNUSED_ARG(downloadStatus);    // for now, used for download only, report event and update download control
             return true;
         }
-        virtual PVMFStatus doSeek(PVMFProtocolEngineNodeCommand& aCmd)
+        virtual PVMFStatus doSeek(PVMFNodeCommand& aCmd)
         {
             OSCL_UNUSED_ARG(aCmd);
             return PVMFSuccess;
         }
-        virtual PVMFStatus doBitstreamSwitch(PVMFProtocolEngineNodeCommand& aCmd)
+        virtual PVMFStatus doBitstreamSwitch(PVMFNodeCommand& aCmd)
         {
             OSCL_UNUSED_ARG(aCmd);
             return PVMFSuccess;
@@ -1528,6 +1447,7 @@ class InterfacingObjectContainer
         {
             iDisableHeadRequest = aDisableHeadRequest;
         }
+
         bool getHttpHeadRequestDisabled() const
         {
             return iDisableHeadRequest;

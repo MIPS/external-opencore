@@ -32,7 +32,7 @@ class ProgressiveStreamingContainer : public ProgressiveDownloadContainer
     public:
         OSCL_IMPORT_REF virtual bool createProtocolObjects();
         OSCL_IMPORT_REF PVMFStatus doStop();
-        OSCL_IMPORT_REF PVMFStatus doSeek(PVMFProtocolEngineNodeCommand& aCmd);
+        OSCL_IMPORT_REF PVMFStatus doSeek(PVMFNodeCommand& aCmd);
         OSCL_IMPORT_REF bool completeRepositionRequest();
         OSCL_IMPORT_REF bool doInfoUpdate(const uint32 downloadStatus);
         void enableInfoUpdate(const bool aEnabled = true)
@@ -45,7 +45,7 @@ class ProgressiveStreamingContainer : public ProgressiveDownloadContainer
 
     protected:
         // called by DoSeek()
-        OSCL_IMPORT_REF uint32 getSeekOffset(PVMFProtocolEngineNodeCommand& aCmd);
+        OSCL_IMPORT_REF uint32 getSeekOffset(PVMFNodeCommand& aCmd);
         OSCL_IMPORT_REF PVMFStatus doSeekBody(uint32 aNewOffset);
         OSCL_IMPORT_REF void updateDownloadControl(const bool isDownloadComplete = false);
         OSCL_IMPORT_REF bool needToCheckResumeNotificationMaually();

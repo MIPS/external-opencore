@@ -1790,12 +1790,12 @@ bool PVMFJitterBufferNode::CheckForPortActivityQueues()
 
 void PVMFJitterBufferNode::CommandComplete(PVMFNodeCommand& aCmd, PVMFStatus aStatus,
         PVInterface* aExtMsg, OsclAny* aEventData, PVUuid* aEventUUID,
-        int32* aEventCode)
+        int32* aEventCode, int32 aEventDataLen)
 {
     PVMF_JBNODE_LOGINFO((0, "JitterBufferNode:CommandComplete Id %d Cmd %d Status %d Context %d Data %d"
                          , aCmd.iId, aCmd.iCmd, aStatus, aCmd.iContext, aEventData));
 
-    PVMFNodeInterfaceImpl::CommandComplete(aCmd, aStatus, aExtMsg, aEventData, aEventUUID, aEventCode);
+    PVMFNodeInterfaceImpl::CommandComplete(aCmd, aStatus, aExtMsg, aEventData, aEventUUID, aEventCode, aEventDataLen);
     /*
      * Transition to error state in case of select errors only, viz.
      * PVMFFailure, PVMFErrNoMemory, PVMFErrNoResources

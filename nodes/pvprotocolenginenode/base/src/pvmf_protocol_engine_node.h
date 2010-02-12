@@ -20,7 +20,7 @@
 #define PVMF_PROTOCOLENGINE_NODE_H_INCLUDED
 
 #ifndef PVMF_NODE_INTERFACE_H_INCLUDED
-#include "pvmf_node_interface.h"
+#include "pvmf_node_interface_impl.h"
 #endif
 
 #ifndef PVMF_NODE_UTILS_H_INCLUDED
@@ -104,8 +104,7 @@ class SDPInfoContainer;
 class AutoCleanup;
 class PVMFProtocolEngineNodeErrorRedirect;
 
-class PVMFProtocolEngineNode :  public PVMFNodeInterface,
-        public OsclTimerObject,
+class PVMFProtocolEngineNode :  public PVMFNodeInterfaceImpl,
         public PVMFDataSourceInitializationExtensionInterface,
         public PVMIDatastreamuserInterface,
         public PVMFProtocolEngineNodeExtensionInterface,
@@ -125,28 +124,7 @@ class PVMFProtocolEngineNode :  public PVMFNodeInterface,
         virtual ~PVMFProtocolEngineNode();
 
         // From PVMFNodeInterface
-        PVMFStatus ThreadLogon();
-        PVMFStatus ThreadLogoff();
-        PVMFStatus GetCapability(PVMFNodeCapability& aNodeCapability);
         PVMFPortIter* GetPorts(const PVMFPortFilter* aFilter = NULL);
-        PVMFCommandId QueryUUID(PVMFSessionId, const PvmfMimeString& aMimeType,
-                                Oscl_Vector<PVUuid, PVMFProtocolEngineNodeAllocator>& aUuids,
-                                bool aExactUuidsOnly = false,
-                                const OsclAny* aContext = NULL);
-        PVMFCommandId QueryInterface(PVMFSessionId, const PVUuid& aUuid,
-                                     PVInterface*& aInterfacePtr,
-                                     const OsclAny* aContext = NULL);
-        PVMFCommandId RequestPort(PVMFSessionId, int32 aPortTag, const PvmfMimeString* aPortConfig = NULL, const OsclAny* aContext = NULL);
-        PVMFCommandId ReleasePort(PVMFSessionId, PVMFPortInterface& aPort, const OsclAny* aContext = NULL);
-        PVMFCommandId Init(PVMFSessionId, const OsclAny* aContext = NULL);
-        PVMFCommandId Prepare(PVMFSessionId, const OsclAny* aContext = NULL);
-        PVMFCommandId Start(PVMFSessionId, const OsclAny* aContext = NULL);
-        PVMFCommandId Stop(PVMFSessionId, const OsclAny* aContext = NULL);
-        PVMFCommandId Flush(PVMFSessionId, const OsclAny* aContext = NULL);
-        PVMFCommandId Pause(PVMFSessionId, const OsclAny* aContext = NULL);
-        PVMFCommandId Reset(PVMFSessionId, const OsclAny* aContext = NULL);
-        PVMFCommandId CancelAllCommands(PVMFSessionId, const OsclAny* aContextData = NULL);
-        PVMFCommandId CancelCommand(PVMFSessionId, PVMFCommandId aCmdId, const OsclAny* aContextData = NULL);
 
         //From PVMFDataSourceInitializationExtensionInterface
         void addRef();
@@ -199,6 +177,7 @@ class PVMFProtocolEngineNode :  public PVMFNodeInterface,
         {
             return iProtocolContainer->getMaxTotalClipBitrate();
         }
+
         bool GetASFHeader(Oscl_Vector<OsclRefCounterMemFrag, OsclMemAllocator> &aHeader)
         {
             return iProtocol->getHeader(aHeader);
@@ -320,39 +299,37 @@ class PVMFProtocolEngineNode :  public PVMFNodeInterface,
         PVMFStatus RetrieveIncomingMsg(INPUT_DATA_QUEUE* aDataQueue, PVMFPortInterface* aPort);
 
         //Command processing
-        PVMFCommandId QueueCommandL(PVMFProtocolEngineNodeCommand&);
-        bool ProcessCommand(PVMFProtocolEngineNodeCommand&);
-        void CommandComplete(PVMFProtocolEngineNodeCmdQ&,
-                             PVMFProtocolEngineNodeCommand&,
-                             PVMFStatus, OsclAny* aData = NULL,
+        void CommandComplete(PVMFNodeCommand&,
+                             PVMFStatus aStatus,
+                             PVInterface* extmsg = NULL,
+                             OsclAny* aEventData = NULL,
                              PVUuid* aEventUUID = NULL,
                              int32* aEventCode = NULL,
-                             int32 aEventDataLen = 0,
-                             PVInterface* extmsg = NULL);
-        int32 HandleCommandComplete(PVMFProtocolEngineNodeCmdQ& aCmdQ,
-                                    PVMFProtocolEngineNodeCommand& aCmd,
-                                    int32 aStatus);
-        PVMFProtocolEngineNodeCommand* FindCmd(PVMFProtocolEngineNodeCmdQ &aCmdQueue, int32 aCmdId);
+                             int32 aEventDataLen = 0
+                            );
+        int32 HandleCommandComplete(PVMFNodeCommand& aCmd, int32 aStatus);
+        PVMFNodeCommand* FindCmd(PVMFNodeCmdQ &aCmdQueue, int32 aCmdtype);
         bool FlushPending();
 
         //Command handlers.
-        PVMFStatus DoReset(PVMFProtocolEngineNodeCommand&);
-        PVMFStatus DoRequestPort(PVMFProtocolEngineNodeCommand&);
-        PVMFStatus DoReleasePort(PVMFProtocolEngineNodeCommand&);
-        PVMFStatus DoQueryUuid(PVMFProtocolEngineNodeCommand&);
-        PVMFStatus DoQueryInterface(PVMFProtocolEngineNodeCommand&);
-        PVMFStatus DoInit(PVMFProtocolEngineNodeCommand&);
-        PVMFStatus DoPrepare(PVMFProtocolEngineNodeCommand&);
-        PVMFStatus DoStart(PVMFProtocolEngineNodeCommand&);
-        PVMFStatus DoStop(PVMFProtocolEngineNodeCommand&);
-        PVMFStatus DoFlush(PVMFProtocolEngineNodeCommand&);
-        PVMFStatus DoPause(PVMFProtocolEngineNodeCommand&);
-        PVMFStatus DoCancelAllCommands(PVMFProtocolEngineNodeCommand&);
-        PVMFStatus DoCancelCommand(PVMFProtocolEngineNodeCommand&);
-        PVMFStatus DoSeek(PVMFProtocolEngineNodeCommand&);
-        PVMFStatus DoBitsteamSwitch(PVMFProtocolEngineNodeCommand&);
-        PVMFStatus DoReposition(PVMFProtocolEngineNodeCommand&);
-        bool CheckAvailabilityOfDoStart(PVMFProtocolEngineNodeCommand& aCmd); // called in DoStart() only
+        PVMFStatus DoReset();
+        PVMFStatus DoRequestPort(PVMFPortInterface*& aPort);
+        PVMFStatus DoReleasePort();
+        PVMFStatus DoQueryUuid();
+        PVMFStatus DoQueryInterface();
+        PVMFStatus DoInit();
+        PVMFStatus DoPrepare();
+        PVMFStatus DoStart();
+        PVMFStatus DoStop();
+        PVMFStatus DoFlush();
+        PVMFStatus DoPause();
+        PVMFStatus DoSeek();
+        PVMFStatus DoBitsteamSwitch();
+        PVMFStatus DoReposition();
+        PVMFStatus CancelCurrentCommand();
+        PVMFStatus HandleExtensionAPICommands();
+
+        bool CheckAvailabilityOfDoStart(); // called in DoStart() only
         inline bool IsDataFlowEventAlreadyInQueue();
         void PassInObjects(); // called by DoInit()
 
@@ -362,7 +339,6 @@ class PVMFProtocolEngineNode :  public PVMFNodeInterface,
         // Event reporting
         void ReportInfoEvent(PVMFEventType aEventType, OsclAny* aEventData = NULL, const int32 aEventCode = 0, OsclAny* aEventLocalBuffer = NULL, const uint32 aEventLocalBufferSize = 0);
         void ReportErrorEvent(PVMFEventType aEventType, OsclAny* aEventData = NULL, const int32 aEventCode = 0, int32 aEventDataLen = 0, PVInterface* extmsg = NULL);
-        void SetState(TPVMFNodeInterfaceState);
 
         // From OsclTimerObserver
         void TimeoutOccurred(int32 timerID, int32 timeoutInfo);
@@ -393,10 +369,8 @@ class PVMFProtocolEngineNode :  public PVMFNodeInterface,
         void RecheduleDataFlow();
         void SendManualResumeNotificationEvent();
         bool IsRepositionCmdPending();
-        PVMFProtocolEngineNodeCommand* FindPendingCmd(int32 aCmdId);
-        void CompletePendingCmd(int32 status);
-        void CompleteInputCmd(PVMFProtocolEngineNodeCommand& aCmd, int32 status);
-        void ErasePendingCmd(PVMFProtocolEngineNodeCommand *aCmd);
+        PVMFNodeCommand* FindPendingCmd(int32 aCmdtype);
+        void CompletePendingCmd(PVMFStatus aStatus);
         void NewIncomingMessage(PVMFSharedMediaMsgPtr& aMsg);
 
         // Internal methods
@@ -432,6 +406,8 @@ class PVMFProtocolEngineNode :  public PVMFNodeInterface,
         void GetObjects();
 
     private:
+        uint64 iNPTInMS;
+
         int32 iStatusCode; // work as a global variable
         PVProtocolEngineNodePrcoessingState iProcessingState;
 
@@ -496,9 +472,6 @@ class PVMFProtocolEngineNode :  public PVMFNodeInterface,
         PVMFProtocolEnginePort *iPortInForData, *iPortInForData2, *iPortInForLogging, *iPortOut;
         friend class PVMFProtocolEnginePort;
 
-        PVMFProtocolEngineNodeCmdQ iInputCommands;
-        PVMFProtocolEngineNodeCmdQ iCurrentCommand;
-        PVMFNodeCapability iCapability;
         PVMFCommandId iCurrentCmdId;
         PVMFPortInterface* iCmdRespPort;
 
@@ -506,7 +479,6 @@ class PVMFProtocolEngineNode :  public PVMFNodeInterface,
         PVLogger* iDataPathLogger;
         PVLogger* iClockLogger;
 
-        int32 iExtensionRefCount;
         PvmiDataStreamCommandId iCurrentDataStreamCmdId;
 };
 

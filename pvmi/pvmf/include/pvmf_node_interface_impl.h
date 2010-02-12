@@ -58,6 +58,10 @@
 #include "pvmf_data_source_playback_control.h"
 #endif
 
+#ifndef PVMI_DATA_STREAM_INTERFACE_H_INCLUDED
+#include "pvmi_data_stream_interface.h"
+#endif
+
 /* Default vector reserve size */
 #define PVMF_NODE_VECTOR_RESERVE 10
 /* Starting value for command IDs  */
@@ -96,7 +100,8 @@ class PVMFNodeCommand: public PVMFNodeCommandBase
                 iParam4 = str.ALLOC_AND_CONSTRUCT(aQueryKey);
             }
         }
-        void Parse(PVMFMetadataList*& MetaDataListPtr, uint32 &aStartingIndex, int32 &aMaxEntries, char*& aQueryKey)
+        void Parse(PVMFMetadataList*& MetaDataListPtr, uint32 &aStartingIndex, int32 &aMaxEntries,
+                   char*& aQueryKey)
         {
             MetaDataListPtr = (PVMFMetadataList*)iParam1;
             aStartingIndex = (uint32)iParam2;
@@ -110,7 +115,8 @@ class PVMFNodeCommand: public PVMFNodeCommandBase
         }
 
         // Constructor and parser for GetNodeMetadataValue
-        void Construct(PVMFSessionId s, int32 cmd, PVMFMetadataList& aKeyList, Oscl_Vector<PvmiKvp, OsclMemAllocator>& aValueList, uint32 aStartIndex, int32 aMaxEntries, const OsclAny* aContext)
+        void Construct(PVMFSessionId s, int32 cmd, PVMFMetadataList& aKeyList, Oscl_Vector < PvmiKvp,
+                       OsclMemAllocator > & aValueList, uint32 aStartIndex, int32 aMaxEntries, const OsclAny* aContext)
         {
             PVMFNodeCommandBase::Construct(s, cmd, aContext);
             iParam1 = (OsclAny*) & aKeyList;
@@ -119,7 +125,8 @@ class PVMFNodeCommand: public PVMFNodeCommandBase
             iParam4 = (OsclAny*)aMaxEntries;
 
         }
-        void Parse(PVMFMetadataList* &aKeyList, Oscl_Vector<PvmiKvp, OsclMemAllocator>* &aValueList, uint32 &aStartingIndex, int32 &aMaxEntries)
+        void Parse(PVMFMetadataList* &aKeyList, Oscl_Vector<PvmiKvp, OsclMemAllocator>* &aValueList,
+                   uint32 &aStartingIndex, int32 &aMaxEntries)
         {
             aKeyList = (PVMFMetadataList*)iParam1;
             aValueList = (Oscl_Vector<PvmiKvp, OsclMemAllocator>*)iParam2;
@@ -128,8 +135,8 @@ class PVMFNodeCommand: public PVMFNodeCommandBase
         }
 
         // Constructor and parser for SetDataSourcePosition
-        void Construct(PVMFSessionId s, int32 cmd, PVMFTimestamp aTargetNPT, PVMFTimestamp* aActualNPT, PVMFTimestamp* aActualMediaDataTS,
-                       bool aSeekToSyncPoint, uint32 aStreamID, const OsclAny*aContext)
+        void Construct(PVMFSessionId s, int32 cmd, PVMFTimestamp aTargetNPT, PVMFTimestamp* aActualNPT,
+                       PVMFTimestamp* aActualMediaDataTS, bool aSeekToSyncPoint, uint32 aStreamID, const OsclAny*aContext)
         {
             PVMFNodeCommandBase::Construct(s, cmd, aContext);
             iParam1 = (OsclAny*)aTargetNPT;
@@ -138,7 +145,8 @@ class PVMFNodeCommand: public PVMFNodeCommandBase
             iParam4 = (OsclAny*)aSeekToSyncPoint;
             iParam5 = (OsclAny*)aStreamID;
         }
-        void Parse(PVMFTimestamp& aTargetNPT, PVMFTimestamp* &aActualNPT, PVMFTimestamp* &aActualMediaDataTS, bool& aSeekToSyncPoint, uint32& aStreamID)
+        void Parse(PVMFTimestamp& aTargetNPT, PVMFTimestamp* &aActualNPT, PVMFTimestamp* &aActualMediaDataTS,
+                   bool& aSeekToSyncPoint, uint32& aStreamID)
         {
             aTargetNPT = (PVMFTimestamp)iParam1;
             aActualNPT = (PVMFTimestamp*)iParam2;
@@ -148,9 +156,8 @@ class PVMFNodeCommand: public PVMFNodeCommandBase
         }
 
         /* Constructor and parser for setParametersAsync */
-        void Construct(PVMFSessionId s, int32 cmd, PvmiMIOSession aSession,
-                       PvmiKvp* aParameters, int num_elements,
-                       PvmiKvp*& aRet_kvp, OsclAny* aContext)
+        void Construct(PVMFSessionId s, int32 cmd, PvmiMIOSession aSession, PvmiKvp* aParameters,
+                       int num_elements, PvmiKvp*& aRet_kvp, OsclAny* aContext)
         {
             PVMFNodeCommandBase::Construct(s, cmd, aContext);
             iParam1 = (OsclAny*)aSession;
@@ -184,7 +191,8 @@ class PVMFNodeCommand: public PVMFNodeCommandBase
         }
 
         // Constructor and parser for QueryDataSourcePosition
-        void Construct(PVMFSessionId s, int32 cmd, PVMFTimestamp aTargetNPT, PVMFTimestamp* aActualNPT, bool aSeekToSyncPoint, const OsclAny*aContext)
+        void Construct(PVMFSessionId s, int32 cmd, PVMFTimestamp aTargetNPT, PVMFTimestamp* aActualNPT,
+                       bool aSeekToSyncPoint, const OsclAny*aContext)
         {
             PVMFNodeCommandBase::Construct(s, cmd, aContext);
             iParam1 = (OsclAny*)aTargetNPT;
@@ -232,10 +240,8 @@ class PVMFNodeCommand: public PVMFNodeCommandBase
             iParam4 = (OsclAny*)aTimebase;
             iParam5 = NULL;
         }
-        void Parse(int32& aDirection,
-                   PVMFTimestamp*& aActualNPT,
-                   PVMFTimestamp*& aActualMediaDataTS,
-                   PVMFTimebase*& aTimebase)
+        void Parse(int32& aDirection, PVMFTimestamp*& aActualNPT,
+                   PVMFTimestamp*& aActualMediaDataTS, PVMFTimebase*& aTimebase)
         {
             aDirection = (int32)iParam1;
             aActualNPT = (PVMFTimestamp*)iParam2;
@@ -260,13 +266,8 @@ class PVMFNodeCommand: public PVMFNodeCommandBase
         }
 
         // Constructor and parser for GetLicenseW
-        void Construct(PVMFSessionId s,
-                       int32 cmd,
-                       OSCL_wString& aContentName,
-                       OsclAny* aLicenseData,
-                       uint32 aDataSize,
-                       int32 aTimeoutMsec,
-                       OsclAny* aContext)
+        void Construct(PVMFSessionId s, int32 cmd, OSCL_wString& aContentName, OsclAny* aLicenseData,
+                       uint32 aDataSize, int32 aTimeoutMsec, OsclAny* aContext)
         {
             PVMFNodeCommandBase::Construct(s, cmd, aContext);
             iParam1 = (OsclAny*) & aContentName;
@@ -275,10 +276,7 @@ class PVMFNodeCommand: public PVMFNodeCommandBase
             iParam4 = (OsclAny*)aTimeoutMsec;
             iParam5 = NULL;
         }
-        void Parse(OSCL_wString*& aContentName,
-                   OsclAny*& aLicenseData,
-                   uint32& aDataSize,
-                   int32& aTimeoutMsec)
+        void Parse(OSCL_wString*& aContentName, OsclAny*& aLicenseData, uint32& aDataSize, int32& aTimeoutMsec)
         {
             aContentName = (OSCL_wString*)iParam1;
             aLicenseData = (PVMFTimestamp*)iParam2;
@@ -287,13 +285,8 @@ class PVMFNodeCommand: public PVMFNodeCommandBase
         }
 
         // Constructor and parser for GetLicense
-        void Construct(PVMFSessionId s,
-                       int32 cmd,
-                       OSCL_String& aContentName,
-                       OsclAny* aLicenseData,
-                       uint32 aDataSize,
-                       int32 aTimeoutMsec,
-                       OsclAny* aContext)
+        void Construct(PVMFSessionId s, int32 cmd, OSCL_String& aContentName, OsclAny* aLicenseData,
+                       uint32 aDataSize, int32 aTimeoutMsec, OsclAny* aContext)
         {
             PVMFNodeCommandBase::Construct(s, cmd, aContext);
             iParam1 = (OsclAny*) & aContentName;
@@ -302,10 +295,7 @@ class PVMFNodeCommand: public PVMFNodeCommandBase
             iParam4 = (OsclAny*)aTimeoutMsec;
             iParam5 = NULL;
         }
-        void Parse(OSCL_String*& aContentName,
-                   OsclAny*& aLicenseData,
-                   uint32& aDataSize,
-                   int32& aTimeoutMsec)
+        void Parse(OSCL_String*& aContentName, OsclAny*& aLicenseData, uint32& aDataSize, int32& aTimeoutMsec)
         {
             aContentName = (OSCL_String*)iParam1;
             aLicenseData = (PVMFTimestamp*)iParam2;
@@ -313,7 +303,7 @@ class PVMFNodeCommand: public PVMFNodeCommandBase
             aTimeoutMsec = (int32)iParam4;
         }
 
-        // constructor for Custom2 commands
+        //constructor for Custom2 command
         void Construct(PVMFSessionId s, int32 cmd, int32 arg1, int32 arg2, int32& arg3, const OsclAny*aContext)
         {
             PVMFNodeCommandBase::Construct(s, cmd, aContext);
@@ -321,11 +311,60 @@ class PVMFNodeCommand: public PVMFNodeCommandBase
             iParam2 = (OsclAny*)arg2;
             iParam3 = (OsclAny*) & arg3;
         }
+
         void Parse(int32&arg1, int32&arg2, int32*&arg3)
         {
             arg1 = (int32)iParam1;
             arg2 = (int32)iParam2;
             arg3 = (int32*)iParam3;
+        }
+
+        // Constructor and parser for seek and bitstreamSwitch
+        void Construct(PVMFSessionId s, int32 cmd, uint64& aNPTInMS,
+                       uint32& aFirstSeqNumAfterChange, OsclAny* aContext)
+        {
+            PVMFNodeCommandBase::Construct(s, cmd, aContext);
+            iParam1 = (OsclAny*) & aNPTInMS;
+            iParam2 = (OsclAny*) & aFirstSeqNumAfterChange;
+        }
+
+        void Parse(uint64& aNPTInMS, uint32*& aFirstSeqNumAfterChange)
+        {
+            aNPTInMS = *((uint64*)iParam1);
+            aFirstSeqNumAfterChange = (uint32*)iParam2;
+        }
+
+        // constructor and parser for data stream request, especially reposition request
+        void Construct(PVMFSessionId s, int32 cmd, PvmiDataStreamSession aSessionID,
+                       PvmiDataStreamRequest aRequestID, OsclAny* aRequestData,
+                       PvmiDataStreamCommandId aDataStreamCmdId, OsclAny* aContext)
+        {
+            PVMFNodeCommandBase::Construct(s, cmd, aContext);
+            iParam1 = (OsclAny*)aSessionID;
+            iParam2 = (OsclAny*)((uint32)aRequestID);
+            iParam3 = aRequestData;
+            iParam4 = (OsclAny*)aDataStreamCmdId;
+        }
+
+        void Parse(PvmiDataStreamSession& aSessionID, PvmiDataStreamRequest& aRequestID,
+                   OsclAny*& aRequestData, PvmiDataStreamCommandId &aDataStreamCmdId)
+        {
+            aSessionID   = (PvmiDataStreamSession)iParam1;
+            aRequestData = iParam3;
+            aDataStreamCmdId = (PvmiDataStreamCommandId)iParam4;
+            uint32 requestIDNum = (uint32)iParam2;
+            aRequestID   = (PvmiDataStreamRequest)requestIDNum;
+        }
+
+        void Parse(OsclAny*& aRequestData)
+        {
+            aRequestData = iParam3;
+        }
+
+        void Parse(OsclAny*& aRequestData, PvmiDataStreamCommandId &aDataStreamCmdId)
+        {
+            aRequestData = iParam3;
+            aDataStreamCmdId = (PvmiDataStreamCommandId)iParam4;
         }
 
         //need to overload the base Destroy routine to cleanup metadata key.
@@ -410,27 +449,19 @@ class PVMFNodeInterfaceImpl : public PVMFNodeInterface,
         OSCL_IMPORT_REF virtual PVMFCommandId ReleasePort(PVMFSessionId aSession,
                 PVMFPortInterface& aPort,
                 const OsclAny* aContext = NULL);
-        OSCL_IMPORT_REF virtual PVMFCommandId Init(PVMFSessionId aSession,
-                const OsclAny* aContext = NULL);
-        OSCL_IMPORT_REF virtual PVMFCommandId Prepare(PVMFSessionId aSession,
-                const OsclAny* aContext = NULL);
-        OSCL_IMPORT_REF virtual PVMFCommandId Start(PVMFSessionId aSession,
-                const OsclAny* aContext = NULL);
-        OSCL_IMPORT_REF virtual PVMFCommandId Stop(PVMFSessionId aSession,
-                const OsclAny* aContext = NULL);
-        OSCL_IMPORT_REF virtual PVMFCommandId Flush(PVMFSessionId aSession,
-                const OsclAny* aContext = NULL);
-        OSCL_IMPORT_REF virtual PVMFCommandId Pause(PVMFSessionId aSession,
-                const OsclAny* aContext = NULL);
-        OSCL_IMPORT_REF virtual PVMFCommandId Reset(PVMFSessionId aSession,
-                const OsclAny* aContext = NULL);
+        OSCL_IMPORT_REF virtual PVMFCommandId Init(PVMFSessionId aSession, const OsclAny* aContext = NULL);
+        OSCL_IMPORT_REF virtual PVMFCommandId Prepare(PVMFSessionId aSession, const OsclAny* aContext = NULL);
+        OSCL_IMPORT_REF virtual PVMFCommandId Start(PVMFSessionId aSession, const OsclAny* aContext = NULL);
+        OSCL_IMPORT_REF virtual PVMFCommandId Stop(PVMFSessionId aSession, const OsclAny* aContext = NULL);
+        OSCL_IMPORT_REF virtual PVMFCommandId Flush(PVMFSessionId aSession, const OsclAny* aContext = NULL);
+        OSCL_IMPORT_REF virtual PVMFCommandId Pause(PVMFSessionId aSession, const OsclAny* aContext = NULL);
+        OSCL_IMPORT_REF virtual PVMFCommandId Reset(PVMFSessionId aSession, const OsclAny* aContext = NULL);
         OSCL_IMPORT_REF virtual PVMFCommandId CancelAllCommands(PVMFSessionId aSession,
                 const OsclAny* aContextData = NULL);
-        OSCL_IMPORT_REF virtual PVMFCommandId CancelCommand(PVMFSessionId aSession,
-                PVMFCommandId aCmdId,
+        OSCL_IMPORT_REF virtual PVMFCommandId CancelCommand(PVMFSessionId aSession, PVMFCommandId aCmdId,
                 const OsclAny* aContextData = NULL);
-        OSCL_IMPORT_REF virtual void HandlePortActivity(const PVMFPortActivity& aActivity);
 
+        OSCL_IMPORT_REF virtual void HandlePortActivity(const PVMFPortActivity& aActivity);
         OSCL_IMPORT_REF PVMFCommandId QueueCommandL(PVMFNodeCommand& aCmd);
 
         OSCL_IMPORT_REF void SetState(TPVMFNodeInterfaceState);
@@ -443,13 +474,12 @@ class PVMFNodeInterfaceImpl : public PVMFNodeInterface,
         OSCL_IMPORT_REF virtual void ReportInfoEvent(PVMFAsyncEvent&aEvent);
         OSCL_IMPORT_REF virtual void Reschedule();
 
-
     protected:
         // protected routines
         OSCL_IMPORT_REF bool SendEndOfTrackCommand(PVMFPortInterface* aPort, int32 aStreamID, PVMFTimestamp aTimestamp, uint32 aSeqNum, uint32 aClipIndex = 0, uint32 aDuration = PVMF_DEFAULT_TRACK_DURATION);
         OSCL_IMPORT_REF bool SendBeginOfMediaStreamCommand(PVMFPortInterface* aPort, int32 aStreamID, PVMFTimestamp aTimestamp,  uint32 aSeqNum = 0, uint32 aClipIndex = 0);
         OSCL_IMPORT_REF virtual void CommandComplete(PVMFNodeCommand& aCmd, PVMFStatus aStatus,
-                PVInterface* aExtMsg = NULL, OsclAny* aEventData = NULL, PVUuid* aEventUUID = NULL, int32* aEventCode = NULL);
+                PVInterface* aExtMsg = NULL, OsclAny* aEventData = NULL, PVUuid* aEventUUID = NULL, int32* aEventCode = NULL, int32 aEventDataLen = 0);
 
         // command dispatcher routiness
         OSCL_IMPORT_REF bool ProcessCommand();

@@ -18,6 +18,7 @@
 #include "pvmf_protocol_engine_node_download_common.h"
 #include "pvmf_protocolengine_node_tunables.h"
 #include "pvmf_protocol_engine_command_format_ids.h"
+#include "pvmf_download_progress_interface.h"
 
 
 ////////////////////////////////////////////////////////////////////////////////////
@@ -567,7 +568,11 @@ OSCL_EXPORT_REF void pvDownloadControl::setSupportObject(OsclAny *aDLSupportObje
         case DownloadControlSupportObjectType_ProgressInterface:
         {
             PVMFDownloadProgressInterface *aProgDownload = (PVMFDownloadProgressInterface *)aDLSupportObject;
-            if (iProgDownloadSI) iProgDownloadSI->setDownloadProgressInterface(aProgDownload);
+            if (iProgDownloadSI)
+            {
+                aProgDownload->addRef();
+                iProgDownloadSI->setDownloadProgressInterface(aProgDownload);
+            }
             break;
         }
         case DownloadControlSupportObjectType_EnginePlaybackClock:

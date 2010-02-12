@@ -36,7 +36,8 @@
 */
 
 PVMFProtocolEngineNode::PVMFProtocolEngineNode(int32 aPriority) :
-        OsclTimerObject(aPriority, "PVMFProtocolEngineNode"),
+        PVMFNodeInterfaceImpl(aPriority, "PVMFProtocolEngineNode"),
+        iNPTInMS(0),
         iStatusCode(0),
         iProcessingState(ProcessingState_Idle),
         iInterfacingObjectContainer(NULL),
@@ -62,29 +63,21 @@ PVMFProtocolEngineNode::PVMFProtocolEngineNode(int32 aPriority) :
         iLogger(NULL),
         iDataPathLogger(NULL),
         iClockLogger(NULL),
-        iExtensionRefCount(0),
         iCurrentDataStreamCmdId(0)
+
 {
     int32 err = 0;
     OSCL_TRY(err,
-             //Create the input command queue.  Use a reserve to avoid lots of
-             //dynamic memory allocation.
-             iInputCommands.Construct(PVMF_PROTOCOLENGINE_NODE_COMMAND_ID_START, PVMF_PROTOCOLENGINE_NODE_COMMAND_VECTOR_RESERVE);
-
-             //Create the "current command" queue.  It will only contain one
-             //command at a time, so use a reserve of 1.
-             iCurrentCommand.Construct(0, 1);
-
              //Create the port vector.
              iPortVector.Construct(PVMF_PROTOCOLENGINE_NODE_PORT_VECTOR_RESERVE);
 
              //Set the node capability data.
              //This node can support an unlimited number of ports.
-             iCapability.iCanSupportMultipleInputPorts = false;
-             iCapability.iCanSupportMultipleOutputPorts = false;
-             iCapability.iHasMaxNumberOfPorts = false;
-             iCapability.iMaxNumberOfPorts = 0;//no maximum
-             iCapability.iInputFormatCapability.push_back(PVMF_MIME_INET_TCP);
+             iNodeCapability.iCanSupportMultipleInputPorts = false;
+             iNodeCapability.iCanSupportMultipleOutputPorts = false;
+             iNodeCapability.iHasMaxNumberOfPorts = false;
+             iNodeCapability.iMaxNumberOfPorts = 0;//no maximum
+             iNodeCapability.iInputFormatCapability.push_back(PVMF_MIME_INET_TCP);
 
              // create the internal data queue
              iDataInQueue.reserve(PVPROTOCOLENGINE_RESERVED_NUMBER_OF_FRAMES);
@@ -94,39 +87,27 @@ PVMFProtocolEngineNode::PVMFProtocolEngineNode(int32 aPriority) :
     if (err)
     {
         //if a leave happened, cleanup and re-throw the error
-        iInputCommands.clear();
-        iCurrentCommand.clear();
         iPortVector.clear();
-        iCapability.iInputFormatCapability.clear();
-        iCapability.iOutputFormatCapability.clear();
+        iNodeCapability.iInputFormatCapability.clear();
+        iNodeCapability.iOutputFormatCapability.clear();
         iDataInQueue.clear();
         iInternalEventQueue.clear();
-        OSCL_CLEANUP_BASE_CLASS(PVMFNodeInterface);
-        OSCL_CLEANUP_BASE_CLASS(OsclTimerObject);
+        OSCL_CLEANUP_BASE_CLASS(PVMFNodeInterfaceImpl);
         OSCL_LEAVE(err);
     }
 
     for (uint32 i = 0; i < EVENT_HANDLER_TOTAL; i++) iEventHandlers[i] = NULL;
+
+    iLogger = PVLogger::GetLoggerObject("PVMFProtocolEngineNode");
+    iDataPathLogger = PVLogger::GetLoggerObject(NODEDATAPATHLOGGER_TAG);
+    iClockLogger = PVLogger::GetLoggerObject("clock");
 }
 
 PVMFProtocolEngineNode::~PVMFProtocolEngineNode()
 {
-    //thread logoff
-    if (IsAdded()) RemoveFromScheduler();
-
-
-    //Cleanup commands
-    //The command queues are self-deleting, but we want to
-    //notify the observer of unprocessed commands.
-    while (!iCurrentCommand.empty())
-    {
-        CommandComplete(iCurrentCommand, iCurrentCommand.front(), PVMFFailure);
-    }
-
-    while (!iInputCommands.empty())
-    {
-        CommandComplete(iInputCommands, iInputCommands.front(), PVMFFailure);
-    }
+    iLogger = NULL;
+    iDataPathLogger = NULL;
+    iClockLogger = NULL;
 
     Clear(true);
 }
@@ -137,55 +118,6 @@ PVMFProtocolEngineNode::~PVMFProtocolEngineNode()
 //////////////////////////////////////////////////
 */
 
-
-PVMFStatus PVMFProtocolEngineNode::ThreadLogon()
-{
-    LOGINFO((0, "PVMFProtocolEngineNode::ThreadLogon()"));
-    switch (iInterfaceState)
-    {
-        case EPVMFNodeCreated:
-            if (!IsAdded()) AddToScheduler();
-            iLogger = PVLogger::GetLoggerObject("PVMFProtocolEngineNode");
-            iDataPathLogger = PVLogger::GetLoggerObject(NODEDATAPATHLOGGER_TAG);
-            iClockLogger = PVLogger::GetLoggerObject("clock");
-            SetState(EPVMFNodeIdle);
-            return PVMFSuccess;
-
-        default:
-            return PVMFErrInvalidState;
-    }
-}
-
-
-PVMFStatus PVMFProtocolEngineNode::ThreadLogoff()
-{
-    LOGINFO((0, "PVMFProtocolEngineNode::ThreadLogoff()"));
-    switch (iInterfaceState)
-    {
-        case EPVMFNodeIdle:
-            if (IsAdded()) RemoveFromScheduler();
-
-            iLogger = NULL;
-            iDataPathLogger = NULL;
-            iClockLogger = NULL;
-            SetState(EPVMFNodeCreated);
-            return PVMFSuccess;
-
-        default:
-            return PVMFErrInvalidState;
-    }
-}
-
-
-PVMFStatus PVMFProtocolEngineNode::GetCapability(PVMFNodeCapability& aNodeCapability)
-{
-    OSCL_UNUSED_ARG(aNodeCapability);
-    LOGINFO((0, "PVMFProtocolEngineNode::GetCapability()"));
-    //aNodeCapability=iCapability;
-    return PVMFSuccess;
-}
-
-
 PVMFPortIter* PVMFProtocolEngineNode::GetPorts(const PVMFPortFilter* aFilter)
 {
     LOGINFO((0, "PVMFProtocolEngineNode::GetPorts()"));
@@ -194,143 +126,20 @@ PVMFPortIter* PVMFProtocolEngineNode::GetPorts(const PVMFPortFilter* aFilter)
     return &iPortVector;
 }
 
-
-PVMFCommandId PVMFProtocolEngineNode::QueryUUID(PVMFSessionId s, const PvmfMimeString& aMimeType,
-        Oscl_Vector<PVUuid, PVMFProtocolEngineNodeAllocator>& aUuids,
-        bool aExactUuidsOnly, const OsclAny* aContext)
-{
-    LOGINFO((0, "PVMFProtocolEngineNode::QueryUUID()"));
-    PVMFProtocolEngineNodeCommand cmd;
-    cmd.PVMFProtocolEngineNodeCommandBase::Construct(s, PVMF_GENERIC_NODE_QUERYUUID, aMimeType, aUuids, aExactUuidsOnly, aContext);
-    return QueueCommandL(cmd);
-}
-
-
-PVMFCommandId PVMFProtocolEngineNode::QueryInterface(PVMFSessionId s, const PVUuid& aUuid, PVInterface*& aInterfacePtr, const OsclAny* aContext)
-{
-    LOGINFO((0, "PVMFProtocolEngineNode::QueryInterface()"));
-    PVMFProtocolEngineNodeCommand cmd;
-    cmd.PVMFProtocolEngineNodeCommandBase::Construct(s, PVMF_GENERIC_NODE_QUERYINTERFACE, aUuid, aInterfacePtr, aContext);
-    return QueueCommandL(cmd);
-}
-
-
-PVMFCommandId PVMFProtocolEngineNode::RequestPort(PVMFSessionId s, int32 aPortTag, const PvmfMimeString* aPortConfig, const OsclAny* aContext)
-{
-    OSCL_UNUSED_ARG(aPortConfig);
-    LOGINFO((0, "PVMFProtocolEngineNode::RequestPort()"));
-    PVMFProtocolEngineNodeCommand cmd;
-    cmd.PVMFProtocolEngineNodeCommandBase::Construct(s, PVMF_GENERIC_NODE_REQUESTPORT, aPortTag, aContext);
-    return QueueCommandL(cmd);
-}
-
-
-PVMFCommandId PVMFProtocolEngineNode::ReleasePort(PVMFSessionId s, PVMFPortInterface& aPort, const OsclAny* aContext)
-{
-    LOGINFO((0, "PVMFProtocolEngineNode::ReleasePort()"));
-    PVMFProtocolEngineNodeCommand cmd;
-    cmd.PVMFProtocolEngineNodeCommandBase::Construct(s, PVMF_GENERIC_NODE_RELEASEPORT, aPort, aContext);
-    return QueueCommandL(cmd);
-}
-
-
-PVMFCommandId PVMFProtocolEngineNode::Init(PVMFSessionId s, const OsclAny* aContext)
-{
-    LOGINFO((0, "PVMFProtocolEngineNode::Init()"));
-    PVMFProtocolEngineNodeCommand cmd;
-    cmd.PVMFProtocolEngineNodeCommandBase::Construct(s, PVMF_GENERIC_NODE_INIT, aContext);
-    return QueueCommandL(cmd);
-}
-
-
-PVMFCommandId PVMFProtocolEngineNode::Prepare(PVMFSessionId s, const OsclAny* aContext)
-{
-    LOGINFO((0, "PVMFProtocolEngineNode::Prepare()"));
-    PVMFProtocolEngineNodeCommand cmd;
-    cmd.PVMFProtocolEngineNodeCommandBase::Construct(s, PVMF_GENERIC_NODE_PREPARE, aContext);
-    return QueueCommandL(cmd);
-}
-
-
-PVMFCommandId PVMFProtocolEngineNode::Start(PVMFSessionId s, const OsclAny* aContext)
-{
-    LOGINFO((0, "PVMFProtocolEngineNode::Start()"));
-
-    PVMFProtocolEngineNodeCommand cmd;
-    cmd.PVMFProtocolEngineNodeCommandBase::Construct(s, PVMF_GENERIC_NODE_START, aContext);
-    return QueueCommandL(cmd);
-}
-
-
-PVMFCommandId PVMFProtocolEngineNode::Stop(PVMFSessionId s, const OsclAny* aContext)
-{
-    LOGINFO((0, "PVMFProtocolEngineNode::Stop()"));
-
-    PVMFProtocolEngineNodeCommand cmd;
-    cmd.PVMFProtocolEngineNodeCommandBase::Construct(s, PVMF_GENERIC_NODE_STOP, aContext);
-    return QueueCommandL(cmd);
-}
-
-
-PVMFCommandId PVMFProtocolEngineNode::Flush(PVMFSessionId s, const OsclAny* aContext)
-{
-    LOGINFO((0, "PVMFProtocolEngineNode::Flush()"));
-    PVMFProtocolEngineNodeCommand cmd;
-    cmd.PVMFProtocolEngineNodeCommandBase::Construct(s, PVMF_GENERIC_NODE_FLUSH, aContext);
-    return QueueCommandL(cmd);
-}
-
-
-PVMFCommandId PVMFProtocolEngineNode::Pause(PVMFSessionId s, const OsclAny* aContext)
-{
-    LOGINFO((0, "PVMFProtocolEngineNode::Pause()"));
-
-    PVMFProtocolEngineNodeCommand cmd;
-    cmd.PVMFProtocolEngineNodeCommandBase::Construct(s, PVMF_GENERIC_NODE_PAUSE, aContext);
-    return QueueCommandL(cmd);
-}
-
-
-PVMFCommandId PVMFProtocolEngineNode::Reset(PVMFSessionId s, const OsclAny* aContext)
-{
-    LOGINFO((0, "PVMFProtocolEngineNode::Reset()"));
-    PVMFProtocolEngineNodeCommand cmd;
-    cmd.PVMFProtocolEngineNodeCommandBase::Construct(s, PVMF_GENERIC_NODE_RESET, aContext);
-    return QueueCommandL(cmd);
-}
-
-
-PVMFCommandId PVMFProtocolEngineNode::CancelAllCommands(PVMFSessionId s, const OsclAny* aContext)
-{
-    LOGINFO((0, "PVMFProtocolEngineNode::CancelAllCommands()"));
-    PVMFProtocolEngineNodeCommand cmd;
-    cmd.PVMFProtocolEngineNodeCommandBase::Construct(s, PVMF_GENERIC_NODE_CANCELALLCOMMANDS, aContext);
-    return QueueCommandL(cmd);
-}
-
-
-PVMFCommandId PVMFProtocolEngineNode::CancelCommand(PVMFSessionId s, PVMFCommandId aCmdId, const OsclAny* aContext)
-{
-    LOGINFO((0, "PVMFProtocolEngineNode::CancelCommand()"));
-    PVMFProtocolEngineNodeCommand cmd;
-    cmd.PVMFProtocolEngineNodeCommandBase::Construct(s, PVMF_GENERIC_NODE_CANCELCOMMAND, aCmdId, aContext);
-    return QueueCommandL(cmd);
-}
-
-
 PVMFCommandId PVMFProtocolEngineNode::Seek(PVMFSessionId aSessionId, uint64 aNPTInMS, uint32& aFirstSeqNumAfterSeek, OsclAny* aContext)
 {
     LOGINFO((0, "PVMFProtocolEngineNode::Seek()"));
-    PVMFProtocolEngineNodeCommand cmd;
-    cmd.PVMFProtocolEngineNodeCommand::Construct(aSessionId, PVPROTOCOLENGINE_NODE_CMD_SEEK, aNPTInMS, aFirstSeqNumAfterSeek, aContext);
+    iNPTInMS = aNPTInMS;
+    PVMFNodeCommand cmd;
+    cmd.PVMFNodeCommand::Construct(aSessionId, PVPROTOCOLENGINE_NODE_CMD_SEEK, iNPTInMS, aFirstSeqNumAfterSeek, aContext);
     return QueueCommandL(cmd);
 }
 
 PVMFCommandId PVMFProtocolEngineNode::BitstreamSwitch(PVMFSessionId aSessionId, uint64 aNPTInMS, uint32& aFirstSeqNumAfterSwitch, OsclAny* aContext)
 {
     LOGINFO((0, "PVMFProtocolEngineNode::BitstreamSwitch()"));
-    PVMFProtocolEngineNodeCommand cmd;
-    cmd.PVMFProtocolEngineNodeCommand::Construct(aSessionId, PVPROTOCOLENGINE_NODE_CMD_BITSTREAM_SWITCH, aNPTInMS, aFirstSeqNumAfterSwitch, aContext);
+    PVMFNodeCommand cmd;
+    cmd.PVMFNodeCommand::Construct(aSessionId, PVPROTOCOLENGINE_NODE_CMD_BITSTREAM_SWITCH, aNPTInMS, aFirstSeqNumAfterSwitch, aContext);
     return QueueCommandL(cmd);
 }
 
@@ -348,9 +157,9 @@ PvmiDataStreamCommandId PVMFProtocolEngineNode::DataStreamRequest(PvmiDataStream
         return 0;
     }
 
-    PVMFProtocolEngineNodeCommand cmd; // internal command, use 0 as session id.
-    cmd.PVMFProtocolEngineNodeCommand::Construct((PVMFSessionId)0, PVPROTOCOLENGINE_NODE_CMD_DATASTREAM_REQUEST_REPOSITION,
-            aSessionID, aRequestID, aRequestData, iCurrentDataStreamCmdId, aContextData);
+    PVMFNodeCommand cmd; // internal command, use 0 as session id.
+    cmd.PVMFNodeCommand::Construct((PVMFSessionId)0, PVPROTOCOLENGINE_NODE_CMD_DATASTREAM_REQUEST_REPOSITION,
+                                   aSessionID, aRequestID, aRequestData, iCurrentDataStreamCmdId, aContextData);
     QueueCommandL(cmd);
     return iCurrentDataStreamCmdId++;
 }
@@ -380,8 +189,10 @@ PvmiDataStreamStatus PVMFProtocolEngineNode::DataStreamRequestSync(PvmiDataStrea
 
 bool PVMFProtocolEngineNode::IsRepositioningRequestPending()
 {
-    PVMFProtocolEngineNodeCommand *pInputCmd   = FindCmd(iInputCommands, PVPROTOCOLENGINE_NODE_CMD_DATASTREAM_REQUEST_REPOSITION);
-    PVMFProtocolEngineNodeCommand *pPendingCmd = FindCmd(iCurrentCommand, PVPROTOCOLENGINE_NODE_CMD_DATASTREAM_REQUEST_REPOSITION);
+    PVMFNodeCommand *pInputCmd   = FindCmd(iInputCommands, PVPROTOCOLENGINE_NODE_CMD_DATASTREAM_REQUEST_REPOSITION);
+    PVMFNodeCommand *pPendingCmd = NULL;
+    if (iCurrentCommand.iCmd == PVPROTOCOLENGINE_NODE_CMD_DATASTREAM_REQUEST_REPOSITION)
+        pPendingCmd = &iCurrentCommand;
 
     return (pInputCmd || pPendingCmd);
 }
@@ -446,150 +257,53 @@ bool PVMFProtocolEngineNode::queryInterface(const PVUuid& uuid, PVInterface*& if
     return false;
 }
 
-/**
-//This routine is called by various command APIs to queue an
-//asynchronous command for processing by the command handler AO.
-//This function may leave if the command can't be queued due to
-//memory allocation failure.
-*/
-PVMFCommandId PVMFProtocolEngineNode::QueueCommandL(PVMFProtocolEngineNodeCommand& aCmd)
-{
-    PVMFCommandId id = iInputCommands.AddL(aCmd);
-
-    //wakeup the AO
-    RunIfNotReady();
-    return id;
-}
-
-PVMFProtocolEngineNodeCommand* PVMFProtocolEngineNode::FindCmd(PVMFProtocolEngineNodeCmdQ &aCmdQueue, int32 aCmdId)
+PVMFNodeCommand* PVMFProtocolEngineNode::FindCmd(PVMFNodeCmdQ &aCmdQueue, int32 aCmdtype)
 {
     for (uint32 i = 0; i < aCmdQueue.size(); i++)
     {
-        if (aCmdQueue[i].iCmd == aCmdId) return &aCmdQueue[i];
+        if (aCmdQueue[i].iCmd == aCmdtype) return &aCmdQueue[i];
     }
     return NULL;
 }
 
-/**
-/////////////////////////////////////////////////////
-// Asynchronous Command processing routines.
-// These routines are all called under the AO.
-/////////////////////////////////////////////////////
-*/
-
-/**
-//Called by the command handler AO to process a command from
-//the input queue.
-//Return true if a command was processed, false if the command
-//processor is busy and can't process another command now.
-*/
-bool PVMFProtocolEngineNode::ProcessCommand(PVMFProtocolEngineNodeCommand& aCmd)
+// to process cmds that are not in ProcessCommand()
+PVMFStatus PVMFProtocolEngineNode::HandleExtensionAPICommands()
 {
-    //normally this node will not start processing one command
-    //until the prior one is finished.  However, a hi priority
-    //command such as Cancel must be able to interrupt a command
-    //in progress.
-    if (!iCurrentCommand.empty() && !aCmd.hipri())
+    PVMFStatus status = PVMFFailure;
+
+    switch (iCurrentCommand.iCmd)
     {
-        return false; // keep waiting
-    }
-
-    PVMFStatus cmdStatus;
-    switch (aCmd.iCmd)
-    {
-        case PVMF_GENERIC_NODE_REQUESTPORT:
-            cmdStatus = DoRequestPort(aCmd);
-            break;
-
-        case PVMF_GENERIC_NODE_RELEASEPORT:
-            cmdStatus = DoReleasePort(aCmd);
-            break;
-
-        case PVMF_GENERIC_NODE_QUERYUUID:
-            cmdStatus = DoQueryUuid(aCmd);
-            break;
-
-        case PVMF_GENERIC_NODE_QUERYINTERFACE:
-            cmdStatus = DoQueryInterface(aCmd);
-            break;
-
-        case PVMF_GENERIC_NODE_INIT:
-            cmdStatus = DoInit(aCmd);
-            break;
-
-        case PVMF_GENERIC_NODE_PREPARE:
-            cmdStatus = DoPrepare(aCmd);
-            break;
-
-        case PVMF_GENERIC_NODE_START:
-            cmdStatus = DoStart(aCmd);
-            break;
-
-        case PVMF_GENERIC_NODE_STOP:
-            cmdStatus = DoStop(aCmd);
-            break;
-
-        case PVMF_GENERIC_NODE_FLUSH:
-            cmdStatus = DoFlush(aCmd);
-            break;
-
-        case PVMF_GENERIC_NODE_PAUSE:
-            cmdStatus = DoPause(aCmd);
-            break;
-
-        case PVMF_GENERIC_NODE_RESET:
-            cmdStatus = DoReset(aCmd);
-            break;
-
-        case PVMF_GENERIC_NODE_CANCELALLCOMMANDS:
-            cmdStatus = DoCancelAllCommands(aCmd);
-            break;
-
-        case PVMF_GENERIC_NODE_CANCELCOMMAND:
-            cmdStatus = DoCancelCommand(aCmd);
-            break;
-
         case PVPROTOCOLENGINE_NODE_CMD_SEEK:
-            cmdStatus = DoSeek(aCmd);
+            status = DoSeek();
             break;
 
         case PVPROTOCOLENGINE_NODE_CMD_BITSTREAM_SWITCH:
-            cmdStatus = DoBitsteamSwitch(aCmd);
+            status = DoBitsteamSwitch();
             break;
 
         case PVPROTOCOLENGINE_NODE_CMD_DATASTREAM_REQUEST_REPOSITION:
-            cmdStatus = DoReposition(aCmd);
+            status = DoReposition();
             break;
 
-        default://unknown command type. Assert and treat as not supported error
+        default:
+            //unknown command type
+            CommandComplete(iCurrentCommand, PVMFErrNotSupported);
+            status = PVMFCmdCompleted;
             OSCL_ASSERT(false);
-            CommandComplete(iInputCommands, aCmd, PVMFErrNotSupported);
-            cmdStatus = PVMFErrNotSupported;
             break;
     }
-
-    //If completion is pending, move the command from the input queue to the current command.
-    //This is necessary since the input queue could get rearranged by new commands coming in.
-    if (cmdStatus == PVMFPending)
-    {
-        iCurrentCommand.StoreL(aCmd);
-        iInputCommands.Erase(&aCmd);
-    }
-
-    return true;
+    return status;
 }
 
 /**
 //The various command handlers call this when a command is complete.
 */
-int32 PVMFProtocolEngineNode::HandleCommandComplete(PVMFProtocolEngineNodeCmdQ& aCmdQ,
-        PVMFProtocolEngineNodeCommand& aCmd,
-        int32 aStatus)
+int32 PVMFProtocolEngineNode::HandleCommandComplete(PVMFNodeCommand& aCmd, int32 aStatus)
 {
     if (aStatus == PVMFPending) return PVMFPending;
     if (aStatus > 0 || IsPVMFErrCode(aStatus))
     {
-        CommandComplete(aCmdQ, aCmd, aStatus); // no extension error code in case of error
+        CommandComplete(aCmd, aStatus); // no extension error code in case of error
         return aStatus;
     }
 
@@ -597,22 +311,17 @@ int32 PVMFProtocolEngineNode::HandleCommandComplete(PVMFProtocolEngineNodeCmdQ& 
     PVUuid uuid = PVProtocolEngineNodeErrorEventTypesUUID;
     // Check for error code for not enough disk space
     int32 pvmfReturnCode = PVMFFailure;
-    if (aStatus == PROCESS_DATA_STREAM_OPEN_FAILURE) pvmfReturnCode = PVMFErrResource;
+    if (aStatus == PROCESS_DATA_STREAM_OPEN_FAILURE)  pvmfReturnCode = PVMFErrResource;
+
     int32 errorCode = (int32)PVProtocolEngineNodeErrorProcessingFailure - (PROCESS_ERROR_FIRST - aStatus);
-    CommandComplete(aCmdQ, aCmd, pvmfReturnCode, NULL, &uuid, &errorCode);
+    CommandComplete(aCmd, pvmfReturnCode, NULL, NULL, &uuid, &errorCode);
     return pvmfReturnCode;
 }
 
 
-void PVMFProtocolEngineNode::CommandComplete(PVMFProtocolEngineNodeCmdQ& aCmdQ,
-        PVMFProtocolEngineNodeCommand& aCmd,
-        PVMFStatus aStatus,
-        OsclAny* aEventData,
-        PVUuid* aEventUUID,
-        int32* aEventCode,
-        int32 aEventDataLen,
-        PVInterface* extmsg)
-
+void PVMFProtocolEngineNode::CommandComplete(PVMFNodeCommand& aCmd, PVMFStatus aStatus, PVInterface* extmsg,
+        OsclAny* aEventData, PVUuid* aEventUUID, int32* aEventCode,
+        int32 aEventDataLen)
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFProtocolEngineNode:CommandComplete Id %d Cmd %d Status %d Context %d Data %d"
                     , aCmd.iId, aCmd.iCmd, aStatus, aCmd.iContext, aEventData));
@@ -620,57 +329,34 @@ void PVMFProtocolEngineNode::CommandComplete(PVMFProtocolEngineNodeCmdQ& aCmdQ,
     if (aStatus == PVMFErrRedirect)
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFProtocolEngineNode:CommandComplete Redirect"));
-        aEventData = 0;
+        aEventData    = 0;
         aEventDataLen = 0;
-    }
-    else if (aEventUUID && aEventCode)
-    {
-        PVMFBasicErrorInfoMessage* errormsg = NULL;
-        errormsg = OSCL_NEW(PVMFBasicErrorInfoMessage, (*aEventCode, *aEventUUID, NULL));
-        extmsg = OSCL_STATIC_CAST(PVInterface*, errormsg);
+        // to avoid re-creation of error msg
+        aEventUUID    = 0;
+        aEventCode    = 0;
     }
 
-    //create response
-    PVMFCmdResp resp(aCmd.iId, aCmd.iContext, aStatus, extmsg, aEventData);
-    if (aEventDataLen != 0)
-    {
-        resp.SetEventDataLen(aEventDataLen);
-    }
-
-    PVMFSessionId session = aCmd.iSession;
-
-    //Erase the command from the queue.
-    aCmdQ.Erase(&aCmd);
-
-    //Report completion to the session observer.
-    ReportCmdCompleteEvent(session, resp);
-
-    if (extmsg) extmsg->removeRef();
+    // base node's CommandComplete()
+    PVMFNodeInterfaceImpl::CommandComplete(aCmd, aStatus, extmsg, aEventData, aEventUUID, aEventCode, aEventDataLen);
 }
-
 
 /**
 //Called by the command handler AO to do the node Reset.
 */
-PVMFStatus PVMFProtocolEngineNode::DoReset(PVMFProtocolEngineNodeCommand& aCmd)
+PVMFStatus PVMFProtocolEngineNode::DoReset()
 {
     LOGINFO((0, "PVMFProtocolEngineNode::DoReset()"));
 
     // Allow a reset on ANY state.
     ResetClear(true); // true means deleting the relevant objects
 
-    // Logoff and go back to Created state.
-    SetState(EPVMFNodeIdle);
-    PVMFStatus  status = ThreadLogoff();
-    CommandComplete(iInputCommands, aCmd, status);
-    return status;
+    return PVMFSuccess;
 }
-
 
 /**
 //Called by the command handler AO to do the port request
 */
-PVMFStatus PVMFProtocolEngineNode::DoRequestPort(PVMFProtocolEngineNodeCommand& aCmd)
+PVMFStatus PVMFProtocolEngineNode::DoRequestPort(PVMFPortInterface*& aPort)
 {
     LOGINFO((0, "PVMFProtocolEngineNode::DoRequestPort()"));
 
@@ -679,7 +365,7 @@ PVMFStatus PVMFProtocolEngineNode::DoRequestPort(PVMFProtocolEngineNodeCommand& 
     //retrieve port tag.
     int32 tag;
     OSCL_String* mimetype;
-    aCmd.PVMFProtocolEngineNodeCommandBase::Parse(tag, mimetype);
+    iCurrentCommand.PVMFNodeCommandBase::Parse(tag, mimetype);
 
     //(mimetype is not used on this node)
 
@@ -696,7 +382,6 @@ PVMFStatus PVMFProtocolEngineNode::DoRequestPort(PVMFProtocolEngineNodeCommand& 
             //bad port tag
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
                             (0, "PVMFProtocolEngineNode::DoRequestPort: Error - Invalid port tag"));
-            CommandComplete(iInputCommands, aCmd, PVMFFailure);
             return PVMFFailure;
         }
         // break;   This statement was removed to avoid compiler warning for Unreachable Code
@@ -710,12 +395,11 @@ PVMFStatus PVMFProtocolEngineNode::DoRequestPort(PVMFProtocolEngineNodeCommand& 
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
                         (0, "PVMFProtocolEngineNode::DoRequestPort: Error - iPortVector Out of memory"));
-        CommandComplete(iInputCommands, aCmd, PVMFErrNoMemory);
         return PVMFErrNoMemory;
     }
 
     //create base port with default settings...
-    PVMFProtocolEnginePort*port = NULL;
+    PVMFProtocolEnginePort* port = NULL;
     switch (tag)
     {
         case PVMF_PROTOCOLENGINENODE_PORT_TYPE_INPUT:
@@ -751,20 +435,19 @@ PVMFStatus PVMFProtocolEngineNode::DoRequestPort(PVMFProtocolEngineNodeCommand& 
     if (err != OsclErrNone)
     {
         iPortInForData = iPortInForLogging = iPortOut = NULL;
-        OSCL_DELETE(port);
-        CommandComplete(iInputCommands, aCmd, PVMFErrNoMemory);
+        PVMF_BASE_NODE_DELETE(port);
         return PVMFErrNoMemory;
     }
 
     //Return the port pointer to the caller.
-    CommandComplete(iInputCommands, aCmd, PVMFSuccess, (OsclAny*)port, 0, 0, sizeof(PVMFProtocolEnginePort));
-    return PVMFSuccess;
+    CommandComplete(iCurrentCommand, PVMFSuccess, NULL, (OsclAny*)port, 0, 0, sizeof(PVMFProtocolEnginePort));
+    return PVMFCmdCompleted;
 }
 
 /**
 //Called by the command handler AO to do the port release
 */
-PVMFStatus PVMFProtocolEngineNode::DoReleasePort(PVMFProtocolEngineNodeCommand& aCmd)
+PVMFStatus PVMFProtocolEngineNode::DoReleasePort()
 {
     LOGINFO((0, "PVMFProtocolEngineNode::DoReleasePort()"));
 
@@ -773,7 +456,7 @@ PVMFStatus PVMFProtocolEngineNode::DoReleasePort(PVMFProtocolEngineNodeCommand& 
 
     //Find the port in the port vector
     PVMFPortInterface* p = NULL;
-    aCmd.PVMFProtocolEngineNodeCommandBase::Parse(p);
+    iCurrentCommand.PVMFNodeCommandBase::Parse(p);
 
     PVMFProtocolEnginePort* port = (PVMFProtocolEnginePort*)p;
 
@@ -783,9 +466,9 @@ PVMFStatus PVMFProtocolEngineNode::DoReleasePort(PVMFProtocolEngineNodeCommand& 
     PVMFProtocolEnginePort** portPtr = iPortVector.FindByValue(port);
     if (portPtr)
     {
-        if (*portPtr == iPortInForData)     iPortInForData = NULL;
-        if (*portPtr == iPortInForLogging)  iPortInForLogging = NULL;
-        if (*portPtr == iPortOut)           iPortOut = NULL;
+        if (*portPtr == iPortInForData)    iPortInForData = NULL;
+        if (*portPtr == iPortInForLogging) iPortInForLogging = NULL;
+        if (*portPtr == iPortOut)          iPortOut = NULL;
 
         Clear(true);
 
@@ -799,12 +482,11 @@ PVMFStatus PVMFProtocolEngineNode::DoReleasePort(PVMFProtocolEngineNodeCommand& 
         status = PVMFErrArgument;
     }
 
-    CommandComplete(iInputCommands, aCmd, status);
     return status;
 }
 
 
-PVMFStatus PVMFProtocolEngineNode::DoQueryUuid(PVMFProtocolEngineNodeCommand& aCmd)
+PVMFStatus PVMFProtocolEngineNode::DoQueryUuid()
 {
     LOGINFO((0, "PVMFProtocolEngineNode::DoQueryUuid()"));
 
@@ -812,7 +494,7 @@ PVMFStatus PVMFProtocolEngineNode::DoQueryUuid(PVMFProtocolEngineNodeCommand& aC
     OSCL_String* mimetype;
     Oscl_Vector<PVUuid, OsclMemAllocator> *uuidvec;
     bool exactmatch;
-    aCmd.PVMFProtocolEngineNodeCommandBase::Parse(mimetype, uuidvec, exactmatch);
+    iCurrentCommand.PVMFNodeCommandBase::Parse(mimetype, uuidvec, exactmatch);
 
     //TODO: Try to match the input mimetype against any of
     //the custom interfaces for this node
@@ -829,18 +511,18 @@ PVMFStatus PVMFProtocolEngineNode::DoQueryUuid(PVMFProtocolEngineNodeCommand& aC
     PVUuid uuid6(PVMF_TRACK_SELECTION_INTERFACE_UUID);
     uuidvec->push_back(uuid6);
 
-    CommandComplete(iInputCommands, aCmd, PVMFSuccess);
     return PVMFSuccess;
 }
 
 
-PVMFStatus PVMFProtocolEngineNode::DoQueryInterface(PVMFProtocolEngineNodeCommand&  aCmd)
+PVMFStatus PVMFProtocolEngineNode::DoQueryInterface()
 {
     LOGINFO((0, "PVMFProtocolEngineNode::DoQueryInterface()"));
 
     PVUuid* uuid;
     PVInterface** ptr;
-    aCmd.PVMFProtocolEngineNodeCommandBase::Parse(uuid, ptr);
+    iCurrentCommand.PVMFNodeCommandBase::Parse(uuid, ptr);
+
     PVMFStatus status = PVMFSuccess;
     if (!queryInterface(*uuid, *ptr))
     {
@@ -849,7 +531,6 @@ PVMFStatus PVMFProtocolEngineNode::DoQueryInterface(PVMFProtocolEngineNodeComman
         status = PVMFFailure;
     }
 
-    CommandComplete(iInputCommands, aCmd, status);
     return status;
 }
 
@@ -857,26 +538,28 @@ PVMFStatus PVMFProtocolEngineNode::DoQueryInterface(PVMFProtocolEngineNodeComman
 /**
 //Called by the command handler AO to do the node Init
 */
-PVMFStatus PVMFProtocolEngineNode::DoInit(PVMFProtocolEngineNodeCommand& aCmd)
+PVMFStatus PVMFProtocolEngineNode::DoInit()
 {
     LOGINFO((0, "PVMFProtocolEngineNode::DoInit()"));
 
+    if (EPVMFNodeInitialized == iInterfaceState)
+    {
+        LOGINFO((0, "PVMFProtocolEngineNode::DoInit() Already in Initialized state"));
+        return PVMFSuccess;
+    }
     PVMFStatus status = PVMFSuccess;
     // exceptional cases
     if (!iProtocolContainer) status = PVMFFailure;
-    if (iInterfaceState != EPVMFNodeIdle) status = PVMFErrInvalidState;
     PassInObjects();
 
     // normal case
-    if (iInterfaceState == EPVMFNodeIdle && iProtocolContainer)
+    if (iProtocolContainer)
     {
         // do init, if init is async call, then return PVMFPending
-        if ((status = iProtocolContainer->doInit()) == PVMFSuccess)
-        {
-            SetState(EPVMFNodeInitialized);
-        }
+        status = iProtocolContainer->doInit();
     }
-    return HandleCommandComplete(iInputCommands, aCmd, status);
+    HandleCommandComplete(iCurrentCommand, status);
+    return PVMFCmdCompleted;
 }
 
 void PVMFProtocolEngineNode::PassInObjects()
@@ -891,51 +574,55 @@ void PVMFProtocolEngineNode::PassInObjects()
 /**
 //Called by the command handler AO to do the node Prepare
 */
-PVMFStatus PVMFProtocolEngineNode::DoPrepare(PVMFProtocolEngineNodeCommand& aCmd)
+PVMFStatus PVMFProtocolEngineNode::DoPrepare()
 {
     LOGINFO((0, "PVMFProtocolEngineNode::DoPrepare()"));
+    if (EPVMFNodePrepared == iInterfaceState)
+    {
+        LOGINFO((0, "PVMFProtocolEngineNode::DoPrepare() Already in Prepared state"));
+        return PVMFSuccess;
+    }
     if (!iProtocolContainer)    return PVMFFailure;
 
-    PVMFStatus status = PVMFSuccess; //PVMFPending;
     PassInObjects();
-    switch (iInterfaceState)
-    {
-        case EPVMFNodeInitialized:
-        {
-            status = iProtocolContainer->doPrepare();
-            if (status == PVMFSuccess) SetState(EPVMFNodePrepared);
-            break;
-        }
-        default:
-            status = PVMFErrInvalidState;
-            break;
-    }
 
-    return HandleCommandComplete(iInputCommands, aCmd, status);
+    PVMFStatus status = iProtocolContainer->doPrepare();
+
+    HandleCommandComplete(iCurrentCommand, status);
+    return PVMFCmdCompleted;
 }
 
 
 /**
 //Called by the command handler AO to do the node Start
 */
-PVMFStatus PVMFProtocolEngineNode::DoStart(PVMFProtocolEngineNodeCommand& aCmd)
+PVMFStatus PVMFProtocolEngineNode::DoStart()
 {
     LOGINFO((0, "PVMFProtocolEngineNode::DoStart()"));
+
+    if (EPVMFNodeStarted == iInterfaceState)
+    {
+        LOGINFO((0, "PVMFProtocolEngineNode::DoStart() Already in Started state"));
+        return PVMFSuccess;
+    }
+
     LOGINFODATAPATH((0, "PVMFProtocolEngineNode::DoStart() : Start command gets called and executed, iInterfaceState=%d, currSocketConnection=%d",
                      (int32)iInterfaceState, (uint32)iInterfacingObjectContainer->isSocketConnectionUp()));
 
     // check if download/streaming is done, if it is done, no need to start/resume download/streaming
-    if (CheckAvailabilityOfDoStart(aCmd)) return PVMFSuccess;
+    if (iInterfacingObjectContainer->isDownloadStreamingDone())
+        return PVMFSuccess;
 
     PVMFStatus status = PVMFSuccess;
     iProcessingState = ProcessingState_NormalDataflow;
     iInterfacingObjectContainer->setInputDataUnwanted(false);
+
     switch (iInterfaceState)
     {
         case EPVMFNodePrepared:
         {
-            int32 status = iProtocolContainer->doPreStart();
-            if (status == PROCESS_SUCCESS)
+            int32 retVal = iProtocolContainer->doPreStart();
+            if (retVal == PROCESS_SUCCESS)
             {
                 // do socket reconnect for init->start, prepare->start and stop->start
                 // for pause->start, no need. For seek, no start command is issued. doseek() will
@@ -945,10 +632,9 @@ PVMFStatus PVMFProtocolEngineNode::DoStart(PVMFProtocolEngineNodeCommand& aCmd)
                 // Transition to BeingStarted
                 // intentionally set node state as this node internal state to ignore any left-over messages from POST port from previous stop or EOS handling
                 SetState((TPVMFNodeInterfaceState)PVMFProtocolEngineNodeState_BeingStarted);
-
-                return PVMFPending;
+                status = PVMFPending;
             }
-            else if (status == PROCESS_SUCCESS_END_OF_MESSAGE)
+            else if (retVal == PROCESS_SUCCESS_END_OF_MESSAGE)
             {
                 status = PVMFSuccess;
             }
@@ -956,8 +642,8 @@ PVMFStatus PVMFProtocolEngineNode::DoStart(PVMFProtocolEngineNodeCommand& aCmd)
             {
                 status = PVMFFailure;
             }
-            break;
         }
+        break;
 
         case EPVMFNodePaused:
         {
@@ -968,277 +654,116 @@ PVMFStatus PVMFProtocolEngineNode::DoStart(PVMFProtocolEngineNodeCommand& aCmd)
 
             iProtocol->resume();
             iProtocolContainer->startDataFlowByCommand();
-            return PVMFPending;
-
-            // break;   This statement was removed to avoid compiler warning for Unreachable Code
+            status = PVMFPending;
         }
-
-        /*
-         * If the node is already started just return success - multiple starts can happen with
-         * flow control (auto-pause / auto-resume) scenarios
-         */
-        case EPVMFNodeStarted:
-            status = PVMFSuccess;
-            break;
+        break;
 
         default:
-            status = PVMFErrInvalidState;
             break;
     }
 
-    CommandComplete(iInputCommands, aCmd, status);
     return status;
-}
-
-bool PVMFProtocolEngineNode::CheckAvailabilityOfDoStart(PVMFProtocolEngineNodeCommand& aCmd)
-{
-    // check if download/streaming is done, if it is done, no need to start/resume download/streaming
-    if (iInterfacingObjectContainer->isDownloadStreamingDone())
-    {
-        SetState(EPVMFNodeStarted);
-        CommandComplete(iInputCommands, aCmd, PVMFSuccess);
-        return true;
-    }
-    return false;
 }
 
 /**
 //Called by the command handler AO to do the node Pause
 */
-PVMFStatus PVMFProtocolEngineNode::DoPause(PVMFProtocolEngineNodeCommand& aCmd)
+PVMFStatus PVMFProtocolEngineNode::DoPause()
 {
     LOGINFO((0, "PVMFProtocolEngineNode::DoPause()"));
-    LOGINFODATAPATH((0, "PVMFProtocolEngineNode::DoPause() : Pause command gets called and executed, iInterfaceState=%d", (int32)iInterfaceState));
 
-    PVMFStatus status = PVMFSuccess;
-    switch (iInterfaceState)
+    if (EPVMFNodePaused == iInterfaceState)
     {
-        case EPVMFNodeStarted:
-        {
-            TPVMFNodeInterfaceState prevState = iInterfaceState;
-            SetState(EPVMFNodePaused);
-            if (!iProtocolContainer->doPause())
-            {
-                SetState(prevState);
-                status = PVMFFailure;
-            }
-        }
-        break;
-
-        case EPVMFNodePaused:
-            status = PVMFSuccess;
-
-        default:
-            status = PVMFErrInvalidState;
-            break;
+        LOGINFO((0, "PVMFProtocolEngineNode::DoPause() Already in Paused state"));
+        return PVMFSuccess;
     }
 
-    CommandComplete(iInputCommands, aCmd, status);
-    return status;
+    LOGINFODATAPATH((0, "PVMFProtocolEngineNode::DoPause() : Pause command gets called and executed, iInterfaceState=%d", (int32)iInterfaceState));
+
+    if (!iProtocolContainer->doPause())
+    {
+        return PVMFFailure;
+    }
+
+    return PVMFSuccess;
 }
 
 /**
 //Called by the command handler AO to do the node Seek
 */
-PVMFStatus PVMFProtocolEngineNode::DoSeek(PVMFProtocolEngineNodeCommand& aCmd)
+PVMFStatus PVMFProtocolEngineNode::DoSeek()
 {
-    return iProtocolContainer->doSeek(aCmd);
+    return iProtocolContainer->doSeek(iCurrentCommand);
 }
 
 
 /**
 //Called by the command handler AO to do the node BitstreamSwitch
 */
-PVMFStatus PVMFProtocolEngineNode::DoBitsteamSwitch(PVMFProtocolEngineNodeCommand& aCmd)
+PVMFStatus PVMFProtocolEngineNode::DoBitsteamSwitch()
 {
-    return iProtocolContainer->doBitstreamSwitch(aCmd);
+    return iProtocolContainer->doBitstreamSwitch(iCurrentCommand);
 }
 
-PVMFStatus PVMFProtocolEngineNode::DoReposition(PVMFProtocolEngineNodeCommand& aCmd)
+PVMFStatus PVMFProtocolEngineNode::DoReposition()
 {
     for (uint32 i = 0; i < iInternalEventQueue.size(); i++)
     {
         if ((uint32)iInternalEventQueue[i].iEventId == (uint32)PVProtocolEngineNodeInternalEventType_EndOfProcessing)
             iInternalEventQueue.erase(&iInternalEventQueue[i]);
     }
-    return iProtocolContainer->doSeek(aCmd);
+    return iProtocolContainer->doSeek(iCurrentCommand);
 }
 
 /**
 //Called by the command handler AO to do the node Stop
 */
-PVMFStatus PVMFProtocolEngineNode::DoStop(PVMFProtocolEngineNodeCommand& aCmd)
+PVMFStatus PVMFProtocolEngineNode::DoStop()
 {
     LOGINFO((0, "PVMFProtocolEngineNode::DoStop()"));
     LOGINFODATAPATH((0, "PVMFProtocolEngineNode::Stop() : Stop command gets called, iInterfaceState=%d", (int32)iInterfaceState));
 
     PVMFStatus status = PVMFSuccess;
-    switch (iInterfaceState)
+    status = iProtocolContainer->doStop();
+    if (status == PVMFSuccess)
     {
-        case EPVMFNodeStarted:
-        case EPVMFNodePaused:
-
-            status = iProtocolContainer->doStop();
-            if (status == PVMFPending) return PVMFPending;
-            if (status == PVMFSuccess)
-            {
-
-                StopClear();
-                // Transition to Prepared state
-                SetState(EPVMFNodePrepared);
-            }
-            break;
-
-        case EPVMFNodeError:
-            SetState(EPVMFNodePrepared);
-            break;
-
-        default:
-            status = PVMFErrInvalidState;
-            break;
+        StopClear();
+        // command is already completed
+        status = PVMFCmdCompleted;
     }
 
-    CommandComplete(iInputCommands, aCmd, status);
     return status;
 }
 
 /**
 //Called by the command handler AO to do the node Flush
 */
-PVMFStatus PVMFProtocolEngineNode::DoFlush(PVMFProtocolEngineNodeCommand& aCmd)
+PVMFStatus PVMFProtocolEngineNode::DoFlush()
 {
     LOGINFO((0, "PVMFProtocolEngineNode::DoFlush()"));
 
-    switch (iInterfaceState)
+    //Notify all ports to suspend their input
+    for (uint32 i = 0; i < iPortVector.size(); i++)
     {
-        case EPVMFNodeStarted:
-        case EPVMFNodePaused:
-        {
-            //the flush is asynchronous. Move the command from
-            //the input command queue to the current command, where
-            //it will remain until the flush completes.
-            int32 err;
-            OSCL_TRY(err, iCurrentCommand.StoreL(aCmd););
-            if (err != OsclErrNone)
-            {
-                CommandComplete(iInputCommands, aCmd, PVMFErrNoMemory);
-                return PVMFErrNoMemory;
-            }
-            iInputCommands.Erase(&aCmd);
-
-            //Notify all ports to suspend their input
-            for (uint32 i = 0; i < iPortVector.size(); i++)
-            {
-                iPortVector[i]->SuspendInput();
-            }
-        }
-
-        break;
-
-        default:
-            CommandComplete(iInputCommands, aCmd, PVMFErrInvalidState);
-            return PVMFErrInvalidState;
-            // break;   This statement was removed to avoid compiler warning for Unreachable Code
+        iPortVector[i]->SuspendInput();
     }
     return PVMFSuccess;
 }
 
-/**
-//A routine to tell if a flush operation is in progress.
-*/
-bool PVMFProtocolEngineNode::FlushPending()
+
+PVMFStatus PVMFProtocolEngineNode::CancelCurrentCommand()
 {
-    return (iCurrentCommand.size() > 0 &&
-            iCurrentCommand.front().iCmd == PVMF_GENERIC_NODE_FLUSH);
-}
+    CancelClear();
+    CommandComplete(iCurrentCommand, PVMFErrCancelled);
 
-
-/**
-//Called by the command handler AO to do the Cancel All
-*/
-PVMFStatus PVMFProtocolEngineNode::DoCancelAllCommands(PVMFProtocolEngineNodeCommand& aCmd)
-{
-    LOGINFO((0, "PVMFProtocolEngineNode::DoCancelAllCommands()"));
-
-    //first cancel the current command if any
-    while (!iCurrentCommand.empty())
-    {
-        CancelClear();
-        CommandComplete(iCurrentCommand, iCurrentCommand[0], PVMFErrCancelled);
-    }
-
-    //next cancel all queued commands
-    //start at element 1 since this cancel command is element 0.
-    while (iInputCommands.size() > 1)
-    {
-        CancelClear();
-        CommandComplete(iInputCommands, iInputCommands[1], PVMFErrCancelled);
-    }
-
-    //finally, report cancel complete.
-    CommandComplete(iInputCommands, aCmd, PVMFSuccess);
     if (iInterfacingObjectContainer) iInterfacingObjectContainer->setCancelCmdHappened();
     if (iInterfacingObjectContainer) iInterfacingObjectContainer->setInputDataUnwanted();
     return PVMFSuccess;
 }
 
-/**
-//Called by the command handler AO to do the Cancel single command
-*/
-PVMFStatus PVMFProtocolEngineNode::DoCancelCommand(PVMFProtocolEngineNodeCommand& aCmd)
-{
-    LOGINFO((0, "PVMFProtocolEngineNode::DoCancelCommand()"));
-
-    //extract the command ID from the parameters.
-    PVMFCommandId id;
-    aCmd.PVMFProtocolEngineNodeCommandBase::Parse(id);
-    if (iInterfacingObjectContainer) iInterfacingObjectContainer->setInputDataUnwanted();
-
-    // first check "current" command if any, and check the input queue starting
-    // at element 1 since this cancel command is element 0.
-    PVMFProtocolEngineNodeCommand* cmd = iCurrentCommand.FindById(id);
-    if (cmd)
-    {
-        CancelClear();
-        //cancel the queued command
-        CommandComplete(iCurrentCommand, *cmd, PVMFErrCancelled);
-        //report cancel success
-        CommandComplete(iInputCommands, aCmd, PVMFSuccess);
-        return PVMFSuccess;
-    }
-
-    //next check input queue.
-    //start at element 1 since this cancel command is element 0.
-    cmd = iInputCommands.FindById(id, 1);
-    if (cmd)
-    {
-        CancelClear();
-        //cancel the queued command
-        CommandComplete(iInputCommands, *cmd, PVMFErrCancelled);
-        //report cancel success
-        CommandComplete(iInputCommands, aCmd, PVMFSuccess);
-        return PVMFSuccess;
-    }
-
-    //at this point, nothing needs to be cancelled and thus report cancel complete
-    CommandComplete(iInputCommands, aCmd, PVMFSuccess);
-    // set cancel cmd happened flag for stop command processing
-    if (iInterfacingObjectContainer) iInterfacingObjectContainer->setCancelCmdHappened();
-    if (iInterfacingObjectContainer) iInterfacingObjectContainer->setInputDataUnwanted();
-    return PVMFSuccess;
-}
-
-
-/////////////////////////////////////////////////////
-// Event reporting routines.
-/////////////////////////////////////////////////////
-void PVMFProtocolEngineNode::SetState(TPVMFNodeInterfaceState s)
-{
-    LOGINFO((0, "PVMFProtocolEngineNode::SetState() %d", s));
-    PVMFNodeInterface::SetState(s);
-}
-
-void PVMFProtocolEngineNode::ReportInfoEvent(PVMFEventType aEventType, OsclAny* aEventData, const int32 aEventCode, OsclAny* aEventLocalBuffer, const uint32 aEventLocalBufferSize)
+void PVMFProtocolEngineNode::ReportInfoEvent(PVMFEventType aEventType, OsclAny* aEventData,
+        const int32 aEventCode, OsclAny* aEventLocalBuffer,
+        const uint32 aEventLocalBufferSize)
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFProtocolEngineNode:NodeInfoEvent Type %d Data %d",
                     aEventType, aEventData));
@@ -1246,24 +771,19 @@ void PVMFProtocolEngineNode::ReportInfoEvent(PVMFEventType aEventType, OsclAny* 
     if (aEventCode == 0)
     {
         //report basic event, no extended event
-        PVMFNodeInterface::ReportInfoEvent(aEventType, aEventData);
+        PVMFNodeInterfaceImpl::ReportInfoEvent(aEventType, aEventData);
     }
     else
     {
         //report extended event.
         PVUuid uuid = PVMFPROTOCOLENGINENODEInfoEventTypesUUID;
-        PVMFBasicErrorInfoMessage *msg = OSCL_NEW(PVMFBasicErrorInfoMessage, (aEventCode, uuid, NULL));
+        PVMFBasicErrorInfoMessage *msg = PVMF_BASE_NODE_NEW(PVMFBasicErrorInfoMessage, (aEventCode, uuid, NULL));
 
-        PVMFAsyncEvent event(PVMFInfoEvent,
-                             aEventType,
-                             NULL, //context
-                             msg,
-                             aEventData,
-                             (uint8*)aEventLocalBuffer,
-                             aEventLocalBufferSize);
+        PVMFAsyncEvent event(PVMFInfoEvent, aEventType, NULL, msg, aEventData,
+                             (uint8*)aEventLocalBuffer, aEventLocalBufferSize);
 
         //report to the session observers.
-        PVMFNodeInterface::ReportInfoEvent(event);
+        PVMFNodeInterfaceImpl::ReportInfoEvent(event);
 
         //remove the ref to the extended response
         if (msg) msg->removeRef();
@@ -1289,22 +809,16 @@ void PVMFProtocolEngineNode::ReportErrorEvent(PVMFEventType aEventType,
         PVMFBasicErrorInfoMessage*msg  = NULL;
         // extended error event with aEventCode
         PVUuid uuid = PVProtocolEngineNodeErrorEventTypesUUID;
-        msg = OSCL_NEW(PVMFBasicErrorInfoMessage, (aEventCode, uuid, NULL));
+        msg = PVMF_BASE_NODE_NEW(PVMFBasicErrorInfoMessage, (aEventCode, uuid, NULL));
         extmsg = OSCL_STATIC_CAST(PVInterface*, msg);
     }
 
-    PVMFAsyncEvent event(PVMFErrorEvent,
-                         aEventType,
-                         NULL, // context
-                         extmsg,
-                         aEventData,
-                         NULL,
-                         0);
+    PVMFAsyncEvent event(PVMFErrorEvent, aEventType, NULL, extmsg, aEventData, NULL, 0);
 
     if (aEventDataLen != 0)
         event.SetEventDataLen(aEventDataLen);
 
-    PVMFNodeInterface::ReportErrorEvent(event);
+    PVMFNodeInterfaceImpl::ReportErrorEvent(event);
     if (extmsg) extmsg->removeRef();
 }
 
@@ -1768,7 +1282,7 @@ void PVMFProtocolEngineNode::UpdateTimersInProcessOutgoingMsg(const bool isMedia
 void PVMFProtocolEngineNode::Run()
 {
     //Process commands.
-    if (!iInputCommands.empty() && ProcessCommand(iInputCommands.front()))
+    if (!iInputCommands.empty() && ProcessCommand())
     {
         //note: need to check the state before re-scheduling
         //since the node could have been reset in the ProcessCommand call.
@@ -1778,7 +1292,7 @@ void PVMFProtocolEngineNode::Run()
 
     // Process data, higher priority than port processing
     // Do this last after handling all node command and port activity but before checking if flush is complete
-    if (!FlushPending())
+    if (!IsFlushPending())
     {
         bool statusStateProcessing = HandleProcessingState();
         bool statusPortActivityProcessing = ProcessPortActivity();
@@ -1796,7 +1310,8 @@ void PVMFProtocolEngineNode::Run()
     }
 
     // final check if there is the input command, but no pending command
-    if (!iInputCommands.empty() && iCurrentCommand.empty()) RunIfNotReady();
+    if (!iInputCommands.empty() && !IsCommandInProgress(iCurrentCommand))
+        RunIfNotReady();
 }
 
 void PVMFProtocolEngineNode::HandleRunFlush()
@@ -1819,7 +1334,7 @@ void PVMFProtocolEngineNode::HandleRunFlush()
     {
         iPortVector[i]->ResumeInput();
     }
-    CommandComplete(iCurrentCommand, iCurrentCommand.front(), PVMFSuccess);
+    CommandComplete(iCurrentCommand, PVMFSuccess);
     RunIfNotReady();
 }
 
@@ -2024,7 +1539,7 @@ bool PVMFProtocolEngineNode::RecheckProtocolObjects(OsclAny* aSourceData, OsclAn
 bool PVMFProtocolEngineNode::CreateRestObjects()
 {
     // create iPortConfigFSInfoAlloc for redirect port config
-    iPortConfigFSInfoAlloc = OSCL_NEW(OsclRefCounterMemFragAlloc, (&iPortConfigMemPool));
+    iPortConfigFSInfoAlloc = PVMF_BASE_NODE_NEW(OsclRefCounterMemFragAlloc, (&iPortConfigMemPool));
     if (!iPortConfigFSInfoAlloc) return false;
 
     // create event handlers
@@ -2035,28 +1550,28 @@ bool PVMFProtocolEngineNode::CreateRestObjects()
 bool PVMFProtocolEngineNode::CreateEventHandlers()
 {
     // use enum PVProtocolEngineNodeInternalEventType to replace hard-coded index
-    iEventHandlers[(uint32)PVProtocolEngineNodeInternalEventType_HttpHeaderAvailable] = OSCL_NEW(HttpHeaderAvailableHandler, (this));
+    iEventHandlers[(uint32)PVProtocolEngineNodeInternalEventType_HttpHeaderAvailable] = PVMF_BASE_NODE_NEW(HttpHeaderAvailableHandler, (this));
     if (!iEventHandlers[(uint32)PVProtocolEngineNodeInternalEventType_HttpHeaderAvailable]) return false;
-    iEventHandlers[(uint32)PVProtocolEngineNodeInternalEventType_FirstPacketAvailable] = OSCL_NEW(FirstPacketAvailableHandler, (this));
+    iEventHandlers[(uint32)PVProtocolEngineNodeInternalEventType_FirstPacketAvailable] = PVMF_BASE_NODE_NEW(FirstPacketAvailableHandler, (this));
     if (!iEventHandlers[(uint32)PVProtocolEngineNodeInternalEventType_FirstPacketAvailable]) return false;
-    iEventHandlers[(uint32)PVProtocolEngineNodeInternalEventType_MetaDataAvailable] = OSCL_NEW(MetaDataAvailableHandler, (this));
+    iEventHandlers[(uint32)PVProtocolEngineNodeInternalEventType_MetaDataAvailable] = PVMF_BASE_NODE_NEW(MetaDataAvailableHandler, (this));
     if (!iEventHandlers[(uint32)PVProtocolEngineNodeInternalEventType_MetaDataAvailable]) return false;
-    iEventHandlers[(uint32)PVProtocolEngineNodeInternalEventType_NormalDataAvailable] = OSCL_NEW(ProtocolEngineDataAvailableHandler, (this));
+    iEventHandlers[(uint32)PVProtocolEngineNodeInternalEventType_NormalDataAvailable] = PVMF_BASE_NODE_NEW(ProtocolEngineDataAvailableHandler, (this));
     if (!iEventHandlers[(uint32)PVProtocolEngineNodeInternalEventType_NormalDataAvailable]) return false;
-    iEventHandlers[(uint32)PVProtocolEngineNodeInternalEventType_ProtocolStateComplete] = OSCL_NEW(ProtocolStateCompleteHandler, (this));
+    iEventHandlers[(uint32)PVProtocolEngineNodeInternalEventType_ProtocolStateComplete] = PVMF_BASE_NODE_NEW(ProtocolStateCompleteHandler, (this));
     if (!iEventHandlers[(uint32)PVProtocolEngineNodeInternalEventType_ProtocolStateComplete]) return false;
-    iEventHandlers[(uint32)PVProtocolEngineNodeInternalEventType_EndOfProcessing] = OSCL_NEW(EndOfDataProcessingHandler, (this));
+    iEventHandlers[(uint32)PVProtocolEngineNodeInternalEventType_EndOfProcessing] = PVMF_BASE_NODE_NEW(EndOfDataProcessingHandler, (this));
     if (!iEventHandlers[(uint32)PVProtocolEngineNodeInternalEventType_EndOfProcessing]) return false;
-    iEventHandlers[(uint32)PVProtocolEngineNodeInternalEventType_ServerResponseError_Bypassing] = OSCL_NEW(ServerResponseErrorBypassingHandler, (this));
+    iEventHandlers[(uint32)PVProtocolEngineNodeInternalEventType_ServerResponseError_Bypassing] = PVMF_BASE_NODE_NEW(ServerResponseErrorBypassingHandler, (this));
     if (!iEventHandlers[(uint32)PVProtocolEngineNodeInternalEventType_ServerResponseError_Bypassing]) return false;
-    iEventHandlers[(uint32)PVProtocolEngineNodeInternalEventType_ProtocolStateError] = OSCL_NEW(ProtocolStateErrorHandler, (this));
+    iEventHandlers[(uint32)PVProtocolEngineNodeInternalEventType_ProtocolStateError] = PVMF_BASE_NODE_NEW(ProtocolStateErrorHandler, (this));
     if (!iEventHandlers[(uint32)PVProtocolEngineNodeInternalEventType_ProtocolStateError]) return false;
-    iEventHandlers[(uint32)PVProtocolEngineNodeInternalEventType_CheckResumeNotificationMaually] = OSCL_NEW(CheckResumeNotificationHandler, (this));
+    iEventHandlers[(uint32)PVProtocolEngineNodeInternalEventType_CheckResumeNotificationMaually] = PVMF_BASE_NODE_NEW(CheckResumeNotificationHandler, (this));
     if (!iEventHandlers[(uint32)PVProtocolEngineNodeInternalEventType_CheckResumeNotificationMaually]) return false;
-    iEventHandlers[(uint32)PVProtocolEngineNodeInternalEventType_OutgoingMsgQueuedAndSentSuccessfully] = OSCL_NEW(OutgoingMsgSentSuccessHandler, (this));
+    iEventHandlers[(uint32)PVProtocolEngineNodeInternalEventType_OutgoingMsgQueuedAndSentSuccessfully] = PVMF_BASE_NODE_NEW(OutgoingMsgSentSuccessHandler, (this));
     if (!iEventHandlers[(uint32)PVProtocolEngineNodeInternalEventType_OutgoingMsgQueuedAndSentSuccessfully]) return false;
 
-    iEventHandlers[EVENT_HANDLER_TOTAL-1] = OSCL_NEW(MainDataFlowHandler, (this));
+    iEventHandlers[EVENT_HANDLER_TOTAL-1] = PVMF_BASE_NODE_NEW(MainDataFlowHandler, (this));
     if (!iEventHandlers[EVENT_HANDLER_TOTAL-1]) return false;
     return true;
 }
@@ -2076,12 +1591,12 @@ void PVMFProtocolEngineNode::DeleteProtocolObjects()
 
 void PVMFProtocolEngineNode::DeleteRestObjects()
 {
-    if (iPortConfigFSInfoAlloc)     OSCL_DELETE(iPortConfigFSInfoAlloc);
+    if (iPortConfigFSInfoAlloc)     PVMF_BASE_NODE_DELETE(iPortConfigFSInfoAlloc);
     iPortConfigFSInfoAlloc = NULL;
 
     for (uint32 i = 0; i < EVENT_HANDLER_TOTAL; i++)
     {
-        if (iEventHandlers[i]) OSCL_DELETE(iEventHandlers[i]);
+        if (iEventHandlers[i]) PVMF_BASE_NODE_DELETE(iEventHandlers[i]);
         iEventHandlers[i] = NULL;
     }
 
@@ -2573,30 +2088,24 @@ void PVMFProtocolEngineNode::SendManualResumeNotificationEvent()
 
 bool PVMFProtocolEngineNode::IsRepositionCmdPending()
 {
-    PVMFProtocolEngineNodeCommand *pInputCmd   = FindCmd(iInputCommands, PVPROTOCOLENGINE_NODE_CMD_DATASTREAM_REQUEST_REPOSITION);
-    PVMFProtocolEngineNodeCommand *pPendingCmd = FindCmd(iCurrentCommand, PVPROTOCOLENGINE_NODE_CMD_DATASTREAM_REQUEST_REPOSITION);
+    PVMFNodeCommand *pInputCmd   = FindCmd(iInputCommands, PVPROTOCOLENGINE_NODE_CMD_DATASTREAM_REQUEST_REPOSITION);
+    PVMFNodeCommand *pPendingCmd = NULL;
+    if (iCurrentCommand.iCmd == PVPROTOCOLENGINE_NODE_CMD_DATASTREAM_REQUEST_REPOSITION)
+        pPendingCmd = &iCurrentCommand;
 
     return (pInputCmd || pPendingCmd);
 }
 
-PVMFProtocolEngineNodeCommand* PVMFProtocolEngineNode::FindPendingCmd(int32 aCmdId)
+PVMFNodeCommand* PVMFProtocolEngineNode::FindPendingCmd(int32 aCmdtype)
 {
-    return FindCmd(iCurrentCommand, aCmdId);
+    if (iCurrentCommand.iCmd == aCmdtype)
+        return &iCurrentCommand;
+    return NULL;
 }
 
-void PVMFProtocolEngineNode::CompletePendingCmd(int32 status)
+void PVMFProtocolEngineNode::CompletePendingCmd(PVMFStatus aStatus)
 {
-    CommandComplete(iCurrentCommand, iCurrentCommand.front(), status);
-}
-
-void PVMFProtocolEngineNode::CompleteInputCmd(PVMFProtocolEngineNodeCommand& aCmd, int32 status)
-{
-    CommandComplete(iInputCommands, aCmd, status);
-}
-
-void PVMFProtocolEngineNode::ErasePendingCmd(PVMFProtocolEngineNodeCommand *aCmd)
-{
-    iCurrentCommand.Erase(aCmd);
+    CommandComplete(iCurrentCommand, aStatus);
 }
 
 void PVMFProtocolEngineNode::NewIncomingMessage(PVMFSharedMediaMsgPtr& aMsg)
@@ -2638,11 +2147,11 @@ PVProtocolEngineNodeInternalEventHandler::PVProtocolEngineNodeInternalEventHandl
 bool PVProtocolEngineNodeInternalEventHandler::completePendingCommandWithError(PVProtocolEngineNodeInternalEvent &aEvent)
 {
     int32 errorCode = (int32)aEvent.iEventInfo;
-    if (iNode->iCurrentCommand.size() > 0)
+    if (iNode->IsCommandInProgress(iNode->iCurrentCommand))
     {
         if (IsPVMFErrCode(errorCode))  // basic error event
         {
-            iNode->CommandComplete(iNode->iCurrentCommand, iNode->iCurrentCommand.front(), errorCode);
+            iNode->CommandComplete(iNode->iCurrentCommand, errorCode);
         }
         else   // extension error event
         {
@@ -2653,7 +2162,8 @@ bool PVProtocolEngineNodeInternalEventHandler::completePendingCommandWithError(P
 
             handleErrResponse(errorCode, errEventData, errEventDataLen, extmsg);
             int32 basePVMFErrorCode = getBasePVMFErrorReturnCode(errorCode);
-            iNode->CommandComplete(iNode->iCurrentCommand, iNode->iCurrentCommand.front(), basePVMFErrorCode, errEventData, &uuid, &errorCode, errEventDataLen, extmsg);
+            iNode->CommandComplete(iNode->iCurrentCommand, basePVMFErrorCode, extmsg, errEventData, &uuid, &errorCode, errEventDataLen);
+            if (extmsg) extmsg->removeRef();
             LOGINFODATAPATH((0, "PVProtocolEngineNodeInternalEventHandler::completePendingCommandWithError(), basePVMFErrorCode=%d, extensionErrorCode=%d",
                              basePVMFErrorCode, errorCode));
         }
@@ -2683,7 +2193,7 @@ bool PVProtocolEngineNodeInternalEventHandler::completePendingCommandWithError(P
 
     if (!iNode->iInputCommands.empty())
     {
-        if (iNode->IsAdded()) iNode->RunIfNotReady();
+        iNode->Reschedule();
     }
 
     return true;
@@ -2788,8 +2298,8 @@ void PVProtocolEngineNodeInternalEventHandler::handleRedirectErrResponse(int32 &
 
 inline bool PVProtocolEngineNodeInternalEventHandler::isCurrEventMatchCurrPendingCommand(uint32 aCurrEventId)
 {
-    if (iNode->iCurrentCommand.empty()) return false;
-    PVMFProtocolEngineNodeCommand& aCmd = iNode->iCurrentCommand.front();
+    if (!iNode->IsCommandInProgress(iNode->iCurrentCommand)) return false;
+    PVMFNodeCommand& aCmd = iNode->iCurrentCommand;
 
     // matching logic for event vs. pending command
     // init or prepare command
@@ -2819,7 +2329,7 @@ inline bool PVProtocolEngineNodeInternalEventHandler::isCurrEventMatchCurrPendin
 // return value: true means completing pending command; false means no matching
 bool PVProtocolEngineNodeInternalEventHandler::completePendingCommand(PVProtocolEngineNodeInternalEvent &aEvent)
 {
-    if (iNode->iCurrentCommand.empty()) return true;
+    //if (!iNode->IsCommandInProgress(iNode->iCurrentCommand)) return true;
 
     if (aEvent.iEventId == PVProtocolEngineNodeInternalEventType_ProtocolStateError)
     {
@@ -2827,7 +2337,7 @@ bool PVProtocolEngineNodeInternalEventHandler::completePendingCommand(PVProtocol
     }
     if (!isCurrEventMatchCurrPendingCommand((uint32)aEvent.iEventId)) return false;
 
-    PVMFProtocolEngineNodeCommand& aCmd = iNode->iCurrentCommand.front();
+    PVMFNodeCommand& aCmd = iNode->iCurrentCommand;
 
     TPVMFNodeInterfaceState state = EPVMFNodeError;
     switch (aCmd.iCmd)
@@ -2849,7 +2359,7 @@ bool PVProtocolEngineNodeInternalEventHandler::completePendingCommand(PVProtocol
             state = EPVMFNodePaused;
             break;
         case PVMF_GENERIC_NODE_RESET:
-            state = EPVMFNodeCreated;
+            state = EPVMFNodeIdle;
             break;
         case PVMF_GENERIC_NODE_CANCELCOMMAND:
         case PVMF_GENERIC_NODE_CANCELALLCOMMANDS:
@@ -2859,7 +2369,7 @@ bool PVProtocolEngineNodeInternalEventHandler::completePendingCommand(PVProtocol
             break;
     }
     iNode->SetState(state);
-    iNode->CommandComplete(iNode->iCurrentCommand, aCmd, PVMFSuccess);
+    iNode->CommandComplete(iNode->iCurrentCommand, PVMFSuccess);
     return true;
 }
 
@@ -2877,10 +2387,8 @@ bool PVProtocolEngineNodeInternalEventHandler::isBeingStopped(const int32 aStatu
 
 inline bool PVProtocolEngineNodeInternalEventHandler::isStopCmdPending()
 {
-    for (uint32 i = 0; i < iNode->iCurrentCommand.size(); i++)
-    {
-        if (iNode->iCurrentCommand[i].iCmd == PVMF_GENERIC_NODE_STOP) return true;
-    }
+    if (iNode->iCurrentCommand.iCmd == PVMF_GENERIC_NODE_STOP)
+        return true;
     return false;
 }
 
@@ -3385,6 +2893,3 @@ bool OutgoingMsgSentSuccessHandler::handle(PVProtocolEngineNodeInternalEvent &aE
 
     return retVal;
 }
-
-
-

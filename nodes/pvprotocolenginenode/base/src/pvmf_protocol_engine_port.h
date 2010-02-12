@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,9 @@
 #ifndef PVLOGGER_H_INCLUDED
 #include "pvlogger.h"
 #endif
+#ifndef PVMF_NODE_INTERFACE_IMPL_H_INCLUDED
+#include "pvmf_node_interface_impl.h"
+#endif
 #ifndef PVMF_PORT_BASE_IMPL_H_INCLUDED
 #include "pvmf_port_base_impl.h"
 #endif
@@ -47,10 +50,10 @@ class PVMFProtocolEnginePort : public PvmfPortBaseImpl,
 {
     public:
         PVMFProtocolEnginePort(int32 aTag,
-                               PVMFNodeInterface* aNode, const char*);
+                               PVMFNodeInterfaceImpl* aNode, const char*);
 
         PVMFProtocolEnginePort(int32 aTag,
-                               PVMFNodeInterface* aNode,
+                               PVMFNodeInterfaceImpl* aNode,
                                uint32 aInCapacity,
                                uint32 aInReserve,
                                uint32 aInThreshold,

@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,21 +22,19 @@
 
 #include "pv_mime_string_utils.h"
 
-#include "pvmf_node_interface.h"
-
 #include "pvmf_protocol_engine_defs.h"
 
 
 
 ////////////////////////////////////////////////////////////////////////////
-PVMFProtocolEnginePort::PVMFProtocolEnginePort(int32 aTag, PVMFNodeInterface* aNode, const char*name)
+PVMFProtocolEnginePort::PVMFProtocolEnginePort(int32 aTag, PVMFNodeInterfaceImpl* aNode, const char*name)
         : PvmfPortBaseImpl(aTag, aNode, name)
 {
     Construct();
 }
 
 ////////////////////////////////////////////////////////////////////////////
-PVMFProtocolEnginePort::PVMFProtocolEnginePort(int32 aTag, PVMFNodeInterface* aNode,
+PVMFProtocolEnginePort::PVMFProtocolEnginePort(int32 aTag, PVMFNodeInterfaceImpl* aNode,
         uint32 aInCapacity,
         uint32 aInReserve,
         uint32 aInThreshold,

@@ -75,7 +75,7 @@ OSCL_EXPORT_REF PVMFStatus ProgressiveStreamingContainer::doStop()
     return PVMFSuccess;
 }
 
-OSCL_EXPORT_REF PVMFStatus ProgressiveStreamingContainer::doSeek(PVMFProtocolEngineNodeCommand& aCmd)
+OSCL_EXPORT_REF PVMFStatus ProgressiveStreamingContainer::doSeek(PVMFNodeCommand& aCmd)
 {
     uint32 newOffset = getSeekOffset(aCmd);
 
@@ -85,11 +85,11 @@ OSCL_EXPORT_REF PVMFStatus ProgressiveStreamingContainer::doSeek(PVMFProtocolEng
     return doSeekBody(newOffset);
 }
 
-OSCL_EXPORT_REF uint32 ProgressiveStreamingContainer::getSeekOffset(PVMFProtocolEngineNodeCommand& aCmd)
+OSCL_EXPORT_REF uint32 ProgressiveStreamingContainer::getSeekOffset(PVMFNodeCommand& aCmd)
 {
     //extract the parameters.
     OsclAny* aRequestData;
-    aCmd.PVMFProtocolEngineNodeCommand::Parse(aRequestData);
+    aCmd.PVMFNodeCommand::Parse(aRequestData);
     uint32 newOffset = (uint32)aRequestData;
     return newOffset;
 }
@@ -114,12 +114,12 @@ OSCL_EXPORT_REF PVMFStatus ProgressiveStreamingContainer::doSeekBody(uint32 aNew
 
 OSCL_EXPORT_REF bool ProgressiveStreamingContainer::completeRepositionRequest()
 {
-    PVMFProtocolEngineNodeCommand *pCmd = iObserver->FindPendingCmd(PVPROTOCOLENGINE_NODE_CMD_DATASTREAM_REQUEST_REPOSITION);
+    PVMFNodeCommand *pCmd = iObserver->FindPendingCmd(PVPROTOCOLENGINE_NODE_CMD_DATASTREAM_REQUEST_REPOSITION);
     if (pCmd == NULL) return false;
 
     OsclAny* aRequestData;
     PvmiDataStreamCommandId aDataStreamCmdId;
-    pCmd->PVMFProtocolEngineNodeCommand::Parse(aRequestData, aDataStreamCmdId);
+    pCmd->PVMFNodeCommand::Parse(aRequestData, aDataStreamCmdId);
 
     // set current file offset to the byte range request offset
     uint32 newOffset = (uint32)(aRequestData);
@@ -135,7 +135,7 @@ OSCL_EXPORT_REF bool ProgressiveStreamingContainer::completeRepositionRequest()
     PVMFCmdResp resp(aDataStreamCmdId, pCmd->iContext, PVMFSuccess, NULL, NULL);
     // Make the Command Complete notification
     iNodeOutput->DataStreamCommandCompleted(resp);
-    iObserver->ErasePendingCmd(pCmd);
+    pCmd->Destroy();
 
     moveToStartedState();
     return true;
@@ -393,7 +393,6 @@ OSCL_EXPORT_REF void progressiveStreamingControl::clearPerRequest()
     iDownloadComplete      = false;
     iSendDownloadCompleteNotification = false;
 }
-
 
 ////////////////////////////////////////////////////////////////////////////////////
 //////  ProgressiveStreamingProgress implementation

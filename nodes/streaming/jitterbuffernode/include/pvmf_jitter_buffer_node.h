@@ -235,7 +235,7 @@ class PVMFJitterBufferNode : public PVInterface,
                               PVMFJitterBufferPortParams*& aPortParams);
 
         void CommandComplete(PVMFNodeCommand& aCmd, PVMFStatus aStatus, PVInterface* aExtMsg = NULL,
-                             OsclAny* aData = NULL, PVUuid* aEventUUID = NULL, int32* aEventCode = NULL);
+                             OsclAny* aData = NULL, PVUuid* aEventUUID = NULL, int32* aEventCode = NULL, int32 aEventDataLen = 0);
 
         PVMFJBCommandContext* RequestNewInternalCmd();
 

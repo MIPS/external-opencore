@@ -538,7 +538,7 @@ OSCL_EXPORT_REF bool PVMFNodeInterfaceImpl::SendBeginOfMediaStreamCommand(PVMFPo
 }
 
 OSCL_EXPORT_REF void PVMFNodeInterfaceImpl::CommandComplete(PVMFNodeCommand& aCmd, PVMFStatus aStatus,
-        PVInterface* aExtMsg, OsclAny* aEventData, PVUuid* aEventUUID, int32* aEventCode)
+        PVInterface* aExtMsg, OsclAny* aEventData, PVUuid* aEventUUID, int32* aEventCode, int32 aEventDataLen)
 {
     PVMF_NODEINTERFACE_IMPL_LOGSTACKTRACE((0, "%s:CommandComplete Id %d Cmd %d Status %d Context %d Data %d"
                                            , iNodeName.Str(), aCmd.iId, aCmd.iCmd, aStatus, aCmd.iContext, aEventData));
@@ -559,9 +559,13 @@ OSCL_EXPORT_REF void PVMFNodeInterfaceImpl::CommandComplete(PVMFNodeCommand& aCm
         extif = aExtMsg;
     }
 
-
     //create response
     PVMFCmdResp resp(aCmd.iId, aCmd.iContext, aStatus, extif, aEventData);
+    // set Event data lenght, if any
+    if (aEventDataLen != 0)
+    {
+        resp.SetEventDataLen(aEventDataLen);
+    }
     PVMFSessionId session = aCmd.iSession;
 
     if (aStatus == PVMFSuccess)
@@ -593,8 +597,8 @@ OSCL_EXPORT_REF void PVMFNodeInterfaceImpl::CommandComplete(PVMFNodeCommand& aCm
     }
     else
     {
-        // Log that the command completion was failed
-        PVMF_NODEINTERFACE_IMPL_INFO((0, "%s::CommandComplete Failed err %d cmd %d", iNodeName.Str(), aStatus, aCmd.iCmd));
+        // Log that the command was failed
+        PVMF_NODEINTERFACE_IMPL_INFO((0, "%s::CommandComplete cmd %d Failed with err %d", iNodeName.Str(), aCmd.iCmd, aStatus));
     }
 
     //Report completion to the session observer.

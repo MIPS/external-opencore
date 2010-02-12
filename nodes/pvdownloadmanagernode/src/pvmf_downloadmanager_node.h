@@ -518,7 +518,7 @@ class PVMFDownloadManagerNode
         virtual void Run();
 
         void CommandComplete(PVMFNodeCommand& aCmd, PVMFStatus aStatus, PVInterface* aExtMsg, OsclAny* aEventData,
-                             PVUuid* aEventUUID = NULL, int32* aEventCode = NULL);
+                             PVUuid* aEventUUID = NULL, int32* aEventCode = NULL, int32 aEventDataLen = 0);
 
         // Event reporting
 

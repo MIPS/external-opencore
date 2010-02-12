@@ -1018,7 +1018,7 @@ void PVMFDownloadManagerNode::Run()
 
 
 void PVMFDownloadManagerNode::CommandComplete(PVMFNodeCommand& aCmd, PVMFStatus aStatus,
-        PVInterface* aExtMsg, OsclAny* aEventData, PVUuid* aEventUUID, int32* aEventCode)
+        PVInterface* aExtMsg, OsclAny* aEventData, PVUuid* aEventUUID, int32* aEventCode, int32 aEventDataLen)
 {
 
     //if the command failed or was cancelled there may be un-processed sub-node commands, so clear the vector now.
