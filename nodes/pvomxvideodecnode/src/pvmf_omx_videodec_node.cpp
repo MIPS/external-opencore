@@ -1500,19 +1500,19 @@ bool PVMFOMXVideoDecNode::QueueOutputBuffer(OsclSharedPtr<PVMFMediaDataImpl> &me
 
     // NOTE: ASSUMPTION IS THAT OUTGOING QUEUE IS BIG ENOUGH TO QUEUE ALL THE OUTPUT BUFFERS
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                    (0, "PVMFOMXVideoDecNode::QueueOutputFrame: In"));
+                    (0, "PVMFOMXVideoDecNode::QueueOutputBuffer: In"));
 
     if (!iOutPort)
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
-                        (0, "PVMFOMXVideoDecNode::QueueOutputFrame() Output Port doesn't exist!!!!!!!!!!"));
+                        (0, "PVMFOMXVideoDecNode::QueueOutputBuffer() Output Port doesn't exist!!!!!!!!!!"));
         return false;
     }
     // First check if we can put outgoing msg. into the queue
     if (iOutPort->IsOutgoingQueueBusy())
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
-                        (0, "PVMFOMXVideoDecNode::QueueOutputFrame() OutgoingQueue is busy"));
+                        (0, "PVMFOMXVideoDecNode::QueueOutputBuffer() OutgoingQueue is busy"));
         return false;
     }
 
@@ -1539,7 +1539,7 @@ bool PVMFOMXVideoDecNode::QueueOutputBuffer(OsclSharedPtr<PVMFMediaDataImpl> &me
             }
 
             // Go further only if the sample timestamp matches with the one in TimeStamp vector queue
-            if (iOutTimeStamp == iTimestampVec.back())
+            if (!(iTimestampVec.empty()) && (iOutTimeStamp == iTimestampVec.back()))
             {
                 uint32 markerInfo = 0;
                 markerInfo |= mediaDataOut->getMarkerInfo();
@@ -1564,7 +1564,7 @@ bool PVMFOMXVideoDecNode::QueueOutputBuffer(OsclSharedPtr<PVMFMediaDataImpl> &me
         // Set sequence number
         mediaDataOut->setSeqNum(iSeqNum++);
 
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iDataPathLogger, PVLOGMSG_INFO, (0, ":PVMFOMXVideoDecNode::QueueOutputFrame(): - SeqNum=%d, TS=%d", iSeqNum, iOutTimeStamp));
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iDataPathLogger, PVLOGMSG_INFO, (0, ":PVMFOMXVideoDecNode::QueueOutputBuffer(): - SeqNum=%d, TS=%d", iSeqNum, iOutTimeStamp));
 
         int fsiErrorCode = 0;
 
@@ -1576,7 +1576,7 @@ bool PVMFOMXVideoDecNode::QueueOutputBuffer(OsclSharedPtr<PVMFMediaDataImpl> &me
             OSCL_TRY(fsiErrorCode, yuvFsiMemfrag = iFsiFragmentAlloc.get(););
 
             OSCL_FIRST_CATCH_ANY(fsiErrorCode, PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
-                                 (0, "PVMFOMXVideoDecNode::RemoveOutputFrame() Failed to allocate memory for  FSI")));
+                                 (0, "PVMFOMXVideoDecNode::QueueOutputBuffer() Failed to allocate memory for  FSI")));
 
             if (fsiErrorCode == 0)
             {
@@ -1615,7 +1615,7 @@ bool PVMFOMXVideoDecNode::QueueOutputBuffer(OsclSharedPtr<PVMFMediaDataImpl> &me
                     if (err != OsclErrNone)
                     {
                         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
-                                        (0, "PVMFOMXVideoDecNode::QueueOutputFrame - Problem to set FSI_YUV key, will try to send ordinary FSI"));
+                                        (0, "PVMFOMXVideoDecNode::QueueOutputBuffer - Problem to set FSI_YUV key, will try to send ordinary FSI"));
 
                         alloc.deallocate((OsclAny*)(KvpKey));
 
@@ -1637,7 +1637,7 @@ bool PVMFOMXVideoDecNode::QueueOutputBuffer(OsclSharedPtr<PVMFMediaDataImpl> &me
                         if (err != OsclErrNone)
                         {
                             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
-                                            (0, "PVMFOMXVideoDecNode::QueueOutputFrame - Problem to set ordinary FSI as well"));
+                                            (0, "PVMFOMXVideoDecNode::QueueOutputBuffer - Problem to set ordinary FSI as well"));
 
                             alloc.deallocate((OsclAny*)(KvpKey));
 
@@ -1656,7 +1656,7 @@ bool PVMFOMXVideoDecNode::QueueOutputBuffer(OsclSharedPtr<PVMFMediaDataImpl> &me
                 else
                 {
                     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
-                                    (0, "PVMFOMXVideoDecNode::QueueOutputFrame - Problem allocating Output FSI"));
+                                    (0, "PVMFOMXVideoDecNode::QueueOutputBuffer - Problem allocating Output FSI"));
                     SetState(EPVMFNodeError);
                     ReportErrorEvent(PVMFErrNoMemory);
                     return false; // this is going to make everything go out of scope
@@ -1665,7 +1665,7 @@ bool PVMFOMXVideoDecNode::QueueOutputBuffer(OsclSharedPtr<PVMFMediaDataImpl> &me
             else
             {
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
-                                (0, "PVMFOMXVideoDecNode::QueueOutputFrame - Problem allocating Output FSI"));
+                                (0, "PVMFOMXVideoDecNode::QueueOutputBuffer - Problem allocating Output FSI"));
                 return false; // this is going to make everything go out of scope
             }
 
@@ -1684,7 +1684,7 @@ bool PVMFOMXVideoDecNode::QueueOutputBuffer(OsclSharedPtr<PVMFMediaDataImpl> &me
             OSCL_TRY(fsiErrorCode, privatedataFsiMemFrag = iPrivateDataFsiFragmentAlloc.get(););
 
             OSCL_FIRST_CATCH_ANY(fsiErrorCode, PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
-                                 (0, "PVMFOMXVideoDecNode::RemoveOutputFrame() Failed to allocate memory for  FSI for private data")));
+                                 (0, "PVMFOMXVideoDecNode::QueueOutputBuffer() Failed to allocate memory for  FSI for private data")));
 
 
             if (fsiErrorCode == 0)
@@ -1697,7 +1697,7 @@ bool PVMFOMXVideoDecNode::QueueOutputBuffer(OsclSharedPtr<PVMFMediaDataImpl> &me
             else
             {
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
-                                (0, "PVMFOMXVideoDecNode::QueueOutputFrame - Problem allocating Output FSI for private data"));
+                                (0, "PVMFOMXVideoDecNode::QueueOutputBuffer - Problem allocating Output FSI for private data"));
                 SetState(EPVMFNodeError);
                 ReportErrorEvent(PVMFErrNoMemory);
                 return false; // this is going to make everything go out of scope
@@ -1714,14 +1714,14 @@ bool PVMFOMXVideoDecNode::QueueOutputBuffer(OsclSharedPtr<PVMFMediaDataImpl> &me
             if (iOutPort && (iOutPort->QueueOutgoingMsg(mediaMsgOut) == PVMFSuccess))
             {
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_INFO,
-                                (0, "PVMFOMXVideoDecNode::QueueOutputFrame(): Queued frame OK "));
+                                (0, "PVMFOMXVideoDecNode::QueueOutputBuffer(): Queued frame OK "));
 
             }
             else
             {
                 // we should not get here because we always check for whether queue is busy or not
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                                (0, "PVMFOMXVideoDecNode::QueueOutputFrame(): Send frame failed"));
+                                (0, "PVMFOMXVideoDecNode::QueueOutputBuffer(): Send frame failed"));
                 return false;
             }
 
@@ -1732,7 +1732,7 @@ bool PVMFOMXVideoDecNode::QueueOutputBuffer(OsclSharedPtr<PVMFMediaDataImpl> &me
     else
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
-                        (0, "PVMFOMXVideoDecNode::QueueOutputFrame() call PVMFMediaData::createMediaData is failed"));
+                        (0, "PVMFOMXVideoDecNode::QueueOutputBuffer() call PVMFMediaData::createMediaData is failed"));
         return false;
     }
 
