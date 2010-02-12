@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -165,6 +165,7 @@ typedef OSCL_String PvmfMimeString;
 #define PVMF_MIME_MIDIFF         "application/x-midi"
 #define PVMF_MIME_AVIFF          "x-pvmf/mux/avi"
 #define PVMF_MIME_DATA_PVRFF     "video/x-pvmf-pvr "
+#define PVMF_MIME_MPEG2FF      "x-pvmf/mux/mpeg2"
 
 // Shoutcast playlist PLS file format
 #define PVMF_MIME_PLSFF          "audio/x-scpls"

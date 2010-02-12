@@ -78,6 +78,8 @@ divxrecognizer_utility_lib=n
 pvflvff_lib=n
 pvrmffrecognizer_utility_lib=n
 flvrecognizer_utility_lib=n
+pvmpeg2ff_lib=n
+mpeg2recognizer_utility_lib=n
 
 
 #
@@ -273,6 +275,7 @@ pvdivxffparsernode_lib=n
 pvstillimagenode_lib=n
 g726decnode_lib=n
 pvflvffparsernode_lib=n
+mpeg2ffparsernode_lib=n
 
 
 #
@@ -332,6 +335,7 @@ pvoma1ffrecognizer_lib=n
 pvasfffrecognizer_lib=n
 pvmp3ffrecognizer_lib=m
 pvmp4ffrecognizer_lib=m
+pvmpeg2ffrecognizer_lib=n
 pvwavffrecognizer_lib=m
 pvrmffrecognizer_lib=n
 pvdivxffrecognizer_lib=n
@@ -415,6 +419,7 @@ BUILD_AAC_DEC_NODE=n
 BUILD_MP3_DEC_NODE=n
 BUILD_RA8_DEC_NODE=n
 BUILD_MP4_FF_PARSER_NODE=n
+BUILD_MPEG2_FF_PARSER_NODE=n
 BUILD_AMR_FF_PARSER_NODE=y
 BUILD_AAC_FF_PARSER_NODE=y
 BUILD_MP3_FF_PARSER_NODE=y
@@ -425,6 +430,7 @@ BUILD_STREAMING_MANAGER_NODE=n
 BUILD_DOWNLOAD_MANAGER_NODE=n
 BUILD_STILL_IMAGE_NODE=n
 BUILD_MP4_FF_REC=n
+BUILD_MPEG2_FF_REC=n
 BUILD_ASF_FF_REC=n
 BUILD_OMA1_FF_REC=n
 BUILD_AAC_FF_REC=y

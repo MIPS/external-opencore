@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,6 +59,9 @@
 #if BUILD_MP4_FF_PARSER_NODE
 #include "pvmf_mp4ffparser_factory.h"
 #endif
+#if BUILD_MPEG2_FF_PARSER_NODE
+#include "pvmf_mpeg2ffparser_factory.h"
+#endif
 #if BUILD_AMR_FF_PARSER_NODE
 #include "pvmf_amrffparser_factory.h"
 #endif
@@ -92,6 +95,9 @@
 // For recognizer registry
 #if BUILD_MP4_FF_REC
 #include "pvmp4ffrec_factory.h"
+#endif
+#if BUILD_MPEG2_FF_REC
+#include "pvmpeg2ffrec_factory.h"
 #endif
 #if BUILD_ASF_FF_REC
 #include "pvasfffrec_factory.h"
@@ -321,6 +327,18 @@ void PVPlayerRegistryPopulator::RegisterAllNodes(PVPlayerNodeRegistryInterface* 
     nodeinfo.iNodeReleaseFunc = PVMFMP4FFParserNodeFactory::DeletePVMFMP4FFParserNode;
     aRegistry->RegisterNode(nodeinfo);
 #endif
+#if BUILD_MPEG2_FF_PARSER_NODE
+    //For PVMFMPEG2FFParserNode
+    nodeinfo.iInputTypes.clear();
+    nodeinfo.iInputTypes.push_back(PVMF_MIME_MPEG2FF);
+    nodeinfo.iNodeUUID = KPVMFMPEG2FFParserNodeUuid;
+    nodeinfo.iOutputType.clear();
+    nodeinfo.iOutputType.push_back(PVMF_MIME_FORMAT_UNKNOWN);
+    nodeinfo.iNodeCreateFunc = PVMFMPEG2FFParserNodeFactory::CreatePVMFMPEG2FFParserNode;
+    nodeinfo.iNodeReleaseFunc = PVMFMPEG2FFParserNodeFactory::DeletePVMFMPEG2FFParserNode;
+    aRegistry->RegisterNode(nodeinfo);
+#endif
+
 #if BUILD_AMR_FF_PARSER_NODE
     //For PVMFAMRFFParserNode
     nodeinfo.iInputTypes.clear();
@@ -479,6 +497,20 @@ void PVPlayerRegistryPopulator::RegisterAllRecognizers(PVPlayerRecognizerRegistr
     else
     {
         OSCL_DELETE(((PVMP4FFRecognizerFactory*)tmpfac));
+        tmpfac = NULL;
+        return;
+    }
+#endif
+#if BUILD_MPEG2_FF_REC
+    tmpfac = OSCL_STATIC_CAST(PVMFRecognizerPluginFactory*, OSCL_NEW(PVMPEG2FFRecognizerFactory, ()));
+    if (PVMFRecognizerRegistry::RegisterPlugin(*tmpfac) == PVMFSuccess)
+    {
+        aRegistry->RegisterRecognizer(tmpfac);
+        nodeList->push_back(tmpfac);
+    }
+    else
+    {
+        OSCL_DELETE(((PVMPEG2FFRecognizerFactory*)tmpfac));
         tmpfac = NULL;
         return;
     }

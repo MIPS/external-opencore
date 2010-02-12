@@ -32,6 +32,7 @@ LIBS :=  pvframemetadatautility \
         pvdownloadmanagernode \
         pvdtcp_mbds_lib \
         pvmp4ffparsernode \
+		pvmpeg2ffparsernode \
 		pvflvffparsernode \
         cpm \
         pvoma1passthruplugin \
@@ -39,6 +40,8 @@ LIBS :=  pvframemetadatautility \
         pvwavffparsernode \
         pvstillimagenode \
         pvmp4ff \
+		pvmpeg2ff \
+		mpeg2recognizer_utility \
 		pvflvff \
         pvmp3ff \
         pvwav \
@@ -126,6 +129,7 @@ LIBS :=  pvframemetadatautility \
         pvmfrecognizer \
         pvasfffrecognizer \
         pvmp4ffrecognizer \
+		pvmpeg2ffrecognizer \
 		pvflvffrecognizer \
         mp4recognizer_utility \
 		flvrecognizer_utility \
