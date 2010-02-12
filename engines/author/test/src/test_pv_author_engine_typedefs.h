@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -87,8 +87,8 @@
 #ifndef XML_TEST_INTERPRETER_H_INCLUDED
 #include "xml_test_interpreter.h"
 #endif
-#ifndef PV_MP4_H263_ENC_EXTENSION_H_INCLUDED
-#include "pvmp4h263encextension.h"
+#ifndef PV_VIDEO_ENCNODE_EXTENSION_H_INCLUDED
+#include "pv_video_encnode_extension.h"
 #endif
 #ifndef PVMP4FFCN_CLIPCONFIG_H_INCLUDED
 #include "pvmp4ffcn_clipconfig.h"

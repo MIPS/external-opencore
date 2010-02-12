@@ -54,8 +54,8 @@
 #include "pvlogger.h"
 #endif
 
-#ifndef PV_MP4_H263_ENC_EXTENSION_H_INCLUDED
-#include "pvmp4h263encextension.h"
+#ifndef PV_VIDEO_ENCNODE_EXTENSION_H_INCLUDED
+#include "pv_video_encnode_extension.h"
 #endif
 
 #ifndef PV_2WAY_TEST_EXTENSION_H_INCLUDED

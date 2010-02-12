@@ -1328,7 +1328,7 @@ void AuthorDriver::CommandCompleted(const PVCmdResponse& aResponse)
         case VIDEO_ENCODER_H263:
         case VIDEO_ENCODER_MPEG_4_SP:
         case VIDEO_ENCODER_H264: {
-            PVMp4H263EncExtensionInterface *config = OSCL_STATIC_CAST(PVMp4H263EncExtensionInterface*,
+            PVVideoEncExtensionInterface *config = OSCL_STATIC_CAST(PVVideoEncExtensionInterface*,
                                                                       mVideoEncoderConfig);
             if (config) {
                 if (mVideo_bitrate_setting == 0) {

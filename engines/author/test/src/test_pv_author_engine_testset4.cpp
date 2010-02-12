@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,8 +31,8 @@
 #include "pvmp4ffcn_clipconfig.h"
 #endif
 
-#ifndef PV_MP4_H263_ENC_EXTENSION_H_INCLUDED
-#include "pvmp4h263encextension.h"
+#ifndef PV_VIDEO_ENCNODE_EXTENSION_H_INCLUDED
+#include "pv_video_encnode_extension.h"
 #endif
 
 #ifndef PVAETEST_NODE_CONFIG_H_INCLUDED
@@ -565,8 +565,8 @@ bool pvauthor_async_compressed_test_errorhandling::ConfigureVideoEncoder()
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                     (0, "pvauthor_async_compressed_test_errorhandling::ConfigureVideoEncoder"));
 
-    PVMp4H263EncExtensionInterface* config;
-    config = OSCL_STATIC_CAST(PVMp4H263EncExtensionInterface*, iVideoEncoderConfig);
+    PVVideoEncExtensionInterface* config;
+    config = OSCL_STATIC_CAST(PVVideoEncExtensionInterface*, iVideoEncoderConfig);
     if (!config)
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,

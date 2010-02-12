@@ -44,7 +44,7 @@ LOCAL_COPY_HEADERS := \
  	include/pvmf_streaming_data_source.h \
  	include/pvmf_audio_encnode_extension.h \
  	include/pvmfamrencnode_extension.h \
- 	include/pvmp4h263encextension.h \
+ 	include/pv_video_encnode_extension.h \
  	include/pvmf_format_progdownload_support_extension.h \
  	include/pvmf_license_context_data.h \
  	include/pvmf_mp4_mfra_info_update.h

@@ -59,7 +59,7 @@
 #include "pvmf_media_input_node_factory.h"
 #include "pvmf_fileoutput_factory.h"
 #include "pvmf_node_interface.h"
-#include "pvmp4h263encextension.h"
+#include "pv_video_encnode_extension.h"
 #include "pvmp4ffcn_clipconfig.h"
 #include "pvmf_fileoutput_config.h"
 #ifndef PVMF_FILEOUTPUT_CONFIG_H_INCLUDED

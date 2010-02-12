@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@
 
 #include "connect_test.h"
 #include "tsc_h324m_config_interface.h"
-#include "pvmp4h263encextension.h"
+#include "pv_video_encnode_extension.h"
 
 
 
@@ -64,7 +64,7 @@ void connect_test::InitSucceeded()
 void connect_test::EncoderIFSucceeded()
 {
     PVUuid mp4h263EncUuid = PVMp4H263EncExtensionUUID;
-    PVMp4H263EncExtensionInterface *ptr = (PVMp4H263EncExtensionInterface *) iMP4H263EncoderInterface;
+    PVVideoEncExtensionInterface *ptr = (PVVideoEncExtensionInterface *) iMP4H263EncoderInterface;
     if (ptr)
     {
         // Default frame rate is 5

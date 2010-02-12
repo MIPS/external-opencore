@@ -44,7 +44,7 @@
 #endif
 
 #include "pvmf_video.h"
-#include "pvmp4h263encextension.h"
+#include "pv_video_encnode_extension.h"
 
 #ifndef PV_ENGINE_OBSERVER_H_INCLUDED
 #include "pv_engine_observer.h"
@@ -1863,7 +1863,7 @@ void CPV324m2Way::CheckConnect()
     if ((iMuxDatapath->GetState() == EOpened) && iIsStackConnected)
     {
         /* Increase video encoder bitrate if required */
-        //  PVMp4H263EncExtensionInterface *ptr = (PVMp4H263EncExtensionInterface *) iVideoEncNodeInterface.iInterface;
+        //  PVVideoEncExtensionInterface *ptr = (PVVideoEncExtensionInterface *) iVideoEncNodeInterface.iInterface;
         //  ptr->SetOutputBitRate(0, VIDEO_ENCODER_BITRATE);
         SetState(EConnected);
 
@@ -2419,7 +2419,7 @@ void CPV324m2Way::GenerateIFrame(PVMFPortInterface *aPort)
                 (iVideoEncDatapath->IsPortInDatapath(aPort)) &&
                 (iVideoEncDatapath->GetState() == EOpened))
         {
-            if (!((PVMp4H263EncExtensionInterface *) iVideoEncNodeInterface.iInterface)->RequestIFrame())
+            if (!((PVVideoEncExtensionInterface *) iVideoEncNodeInterface.iInterface)->RequestIFrame())
             {
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
                                 (0, "CPV324m2Way::GenerateIFrame - unable to generate iframe\n"));
@@ -5536,8 +5536,8 @@ PVMFStatus CPV324m2Way::ConfigureVideoEncoderNode()
         return PVMFFailure;
     }
 
-    PVMp4H263EncExtensionInterface *ptr =
-        (PVMp4H263EncExtensionInterface *) iVideoEncNodeInterface.iInterface;
+    PVVideoEncExtensionInterface *ptr =
+        (PVVideoEncExtensionInterface *) iVideoEncNodeInterface.iInterface;
 
     if (ptr)
     {

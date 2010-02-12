@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +16,11 @@
  * -------------------------------------------------------------------
  */
 /**
- * @file pvmp4h263encextension.h
+ * @file pv_video_encnode_extension.h
  */
 
-#ifndef PV_MP4_H263_ENC_EXTENSION_H_INCLUDED
-#define PV_MP4_H263_ENC_EXTENSION_H_INCLUDED
+#ifndef PV_VIDEO_ENCNODE_EXTENSION_H_INCLUDED
+#define PV_VIDEO_ENCNODE_EXTENSION_H_INCLUDED
 
 #ifndef OSCL_BASE_H_INCLUDED
 #include "oscl_base.h"
@@ -62,7 +62,7 @@ typedef enum
 } PVMFVENRateControlType;
 
 ////////////////////////////////////////////////////////////////////////////
-class PVMp4H263EncExtensionInterface : public PVInterface
+class PVVideoEncExtensionInterface : public PVInterface
 {
     public:
         /** Increment reference counter for this interface. */
@@ -252,9 +252,18 @@ class PVMp4H263EncExtensionInterface : public PVInterface
          */
         virtual bool SetTimeIncRes(int32 aTimeIncRes) = 0;
 
+        /**
+         * Sets H.263 GOB header interval.
+         *
+         * @param aGOBHdrIntvrl is GOB Header Interval value 0 for none,
+         * 1 for every slice, 2 for every other slice,etc.
+         * @return True if successful, else false
+         */
+        virtual bool SetGOBHdrInterval(uint32 aGOBHdrIntrvl) = 0;
+
 
 };
-#endif // PV_MP4_H263_ENC_EXTENSION_H_INCLUDED
+#endif // PV_VIDEO_ENCNODE_EXTENSION_H_INCLUDED
 
 
 

@@ -884,6 +884,7 @@ PVMFOMXEncNode::PVMFOMXEncNode(int32 aPriority) :
     iVideoEncodeParam.iShortHeader = false;
     iVideoEncodeParam.iDataPartitioning = false;
     iVideoEncodeParam.iResyncMarker = true;
+    iVideoEncodeParam.iGOBHdrInterval = 0;  //Default
 
     // set the default rate control type to variable bit rate control
     // since it has better performance
@@ -2984,7 +2985,11 @@ bool PVMFOMXEncNode::SetH263EncoderParameters()
     H263Type.bPLUSPTYPEAllowed = OMX_FALSE;
     H263Type.bForceRoundingTypeToZero = OMX_FALSE;
     H263Type.nPictureHeaderRepetition = 0;
-    H263Type.nGOBHeaderInterval = 0;
+    if (H263Type.nGOBHeaderInterval)
+    {
+        // if non-zero, then overwrite.
+        H263Type.nGOBHeaderInterval = iVideoEncodeParam.iGOBHdrInterval;
+    }
 
     Err = OMX_SetParameter(iOMXEncoder, OMX_IndexParamVideoH263, &H263Type);
     if (OMX_ErrorNone != Err)
@@ -8296,7 +8301,7 @@ void PVMFOMXEncNode::DoQueryInterface(PVMFOMXEncNodeCommand&  aCmd)
     else if (*uuid == PVMp4H263EncExtensionUUID)
     {
         addRef();
-        *ptr = OSCL_STATIC_CAST(PVMp4H263EncExtensionInterface*, this);
+        *ptr = OSCL_STATIC_CAST(PVVideoEncExtensionInterface*, this);
         CommandComplete(iInputCommands, aCmd, PVMFSuccess);
         //iface = OSCL_STATIC_CAST(PVInterface*, myInterface);
 
@@ -8943,7 +8948,7 @@ OSCL_EXPORT_REF bool PVMFOMXEncNode::SetRVLC(bool aRVLC)
 }
 
 ////////////////////////////////////////////////////////////////////////////
-//Stub GetVolHeader Function for PvMp4H263EncExtensionInterface
+//Stub GetVolHeader Function for PVVideoEncExtensionInterface
 OSCL_EXPORT_REF bool PVMFOMXEncNode::GetVolHeader(OsclRefCounterMemFrag& aVolHeader)
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
@@ -9202,7 +9207,7 @@ PVMFStatus PVMFOMXEncNode::SetCodecType(PVMFFormatType aCodec)
 }
 
 ////////////////////////////////////////////////////////////////////////////
-//Stub SetFSIParam Function for PvMp4H263EncExtensionInterface
+//Stub SetFSIParam Function for PVVideoEncExtensionInterface
 OSCL_EXPORT_REF bool PVMFOMXEncNode::SetFSIParam(uint8* aFSIBuff, int aFSIBuffLength)
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
@@ -9278,6 +9283,30 @@ PVMFStatus PVMFOMXEncNode::SetInputFrameRate(OsclFloat aFrameRate)
     iVideoInputFormat.iFrameRate = OSCL_STATIC_CAST(float, aFrameRate);
     iVideoEncodeParam.iNoFrameSkip = iVideoEncodeParam.iNoCurrentSkip = false;
     return true;
+}
+
+////////////////////////////////////////////////////////////////////////////
+OSCL_EXPORT_REF bool PVMFOMXEncNode::SetGOBHdrInterval(uint32 aGOBHdrIntrvl)
+{
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "PVMFOMXEncNode-%s::SetGOBHdrInterval to %d", iNodeTypeId, aGOBHdrIntrvl));
+
+
+    switch (iInterfaceState)
+    {
+        case EPVMFNodeStarted:
+        case EPVMFNodePaused:
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
+                            (0, "PVMFOMXEncEncNode-%s::SetGOBHdrInterval: Error iInterfaceState=%d", iNodeTypeId, iInterfaceState));
+            return false;
+
+        default:
+            break;
+    }
+
+    iVideoEncodeParam.iGOBHdrInterval = aGOBHdrIntrvl;
+    return true;
+
 }
 
 ////////////////////////////////////////////////////////////////////////////

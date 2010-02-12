@@ -34,7 +34,7 @@ HDRS :=  pvmf_common_audio_decnode.h \
 	pvmf_streaming_data_source.h \
 	pvmf_audio_encnode_extension.h \
 	pvmfamrencnode_extension.h \
-	pvmp4h263encextension.h \
+	pv_video_encnode_extension.h \
 	pvmf_format_progdownload_support_extension.h \
 	pvmf_license_context_data.h \
 	pvmf_mp4_mfra_info_update.h

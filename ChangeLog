@@ -420,7 +420,7 @@ firewall packets to the server
 - Clean up warnings and some negotiate parameter changes from omx dec & enc
 test apps
 - Fix valgrind issue reported with android simulator in omx base node
-- Add more supported rate control types in pvmp4h263encextension.h
+- Add more supported rate control types in pv_video_encnode_extension.h
 - Memory leak in player engine test case 807
 - Addressed compiler warnings in PVME
 - nBufferAlignment of OMX_PARAM_PORTDEFINITIONTYPE is initialized to negative

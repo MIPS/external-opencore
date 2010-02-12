@@ -356,7 +356,7 @@ OMX_ERRORTYPE OmxComponentMpeg4EncAO::ConstructComponent(OMX_PTR pAppData, OMX_P
         ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->VideoH263.nAllowedPictureTypes = OMX_VIDEO_PictureTypeI | OMX_VIDEO_PictureTypeP;
         ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->VideoH263.bForceRoundingTypeToZero = OMX_TRUE;
         ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->VideoH263.nPictureHeaderRepetition = 0;
-        ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->VideoH263.nGOBHeaderInterval = 0;
+        ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->VideoH263.nGOBHeaderInterval = 2; //one can change it by SetGOBHdrInterval in pvomxencnode
     }
 
 

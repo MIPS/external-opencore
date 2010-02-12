@@ -81,8 +81,8 @@
 #include "pvmf_omx_enc_node_extension_interface.h"
 #endif
 
-#ifndef PV_MP4_H263_ENC_EXTENSION_H_INCLUDED
-#include "pvmp4h263encextension.h"
+#ifndef PV_VIDEO_ENCNODE_EXTENSION_H_INCLUDED
+#include "pv_video_encnode_extension.h"
 #endif
 
 #ifndef PVMF_AUDIO_ENCNODE_EXTENSION_H_INCLUDED
@@ -649,6 +649,8 @@ typedef struct PV_VideoEncodeParam
     /** Sets the number of ticks in time increment resolution between 2 source frames (equivalent to source frame rate). */
     int32                 iTickPerSrc;
 
+    /** Sets the interval of non-empty GOB headers in units of GOBs */
+    uint32                 iGOBHdrInterval;
 
 } PV_VideoEncodeParam;
 
@@ -889,7 +891,7 @@ class PVMFOMXEncNode
         , public PVMFOMXEncNodeExtensionInterface
         , public PVMFMetadataExtensionInterface
         , public PvmiCapabilityAndConfigBase
-        , public PVMp4H263EncExtensionInterface
+        , public PVVideoEncExtensionInterface
         , public PVAudioEncExtensionInterface
 {
     public:
@@ -1002,7 +1004,7 @@ class PVMFOMXEncNode
         void setParametersSync(PvmiMIOSession aSession, PvmiKvp* aParameters, int aNumElements, PvmiKvp* &aRetKVP);
         PVMFStatus verifyParametersSync(PvmiMIOSession aSession, PvmiKvp* aParameters, int aNumElements);
 
-        // Virtual functions of PVMp4H263EncExtensionInterface
+        // Virtual functions of PVVideoEncExtensionInterface
 //  OSCL_IMPORT_REF void addRef();
 //  OSCL_IMPORT_REF void removeRef();
 //  OSCL_IMPORT_REF bool queryInterface(const PVUuid& uuid, PVInterface*& iface);
@@ -1030,6 +1032,7 @@ class PVMFOMXEncNode
         OSCL_IMPORT_REF bool SetShortHeader(bool aShortHeaderFlag);
         OSCL_IMPORT_REF bool SetResyncMarker(bool aResyncMarkerFlag);
         OSCL_IMPORT_REF bool SetTimeIncRes(int32 aTimeIncRes);
+        OSCL_IMPORT_REF bool SetGOBHdrInterval(uint32 aGOBHdrIntrvl);
 
         // from AudioEncExtensionInterface
         OSCL_IMPORT_REF PVMFStatus SetOutputBitRate(PVMF_GSMAMR_Rate aBitRate);
