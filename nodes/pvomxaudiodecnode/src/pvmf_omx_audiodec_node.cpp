@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1218,7 +1218,15 @@ bool PVMFOMXAudioDecNode::NegotiateComponentParameters(OMX_PTR aOutputParameters
 
     // in case of WMA - config parser decodes config info and produces reliable numchannels and sampling rate
     // set these values now to prevent unnecessary port reconfig
-    if (aInputs.iMimeType == PVMF_MIME_WMA)
+    // in case of AAC formats - config parser produces a potentially correct numchannels and sampling rate
+    // however in case of implicit AAC+ signaling, the sampling rate may change and cause a port reconfig
+    if (aInputs.iMimeType == PVMF_MIME_WMA ||
+            aInputs.iMimeType == PVMF_MIME_MPEG4_AUDIO ||
+            aInputs.iMimeType == PVMF_MIME_3640 ||
+            aInputs.iMimeType == PVMF_MIME_LATM ||
+            aInputs.iMimeType == PVMF_MIME_ADIF ||
+            aInputs.iMimeType == PVMF_MIME_ASF_MPEG4_AUDIO ||
+            aInputs.iMimeType == PVMF_MIME_AAC_SIZEHDR)
     {
         // First get the structure
         OMX_AUDIO_PARAM_PCMMODETYPE Audio_Pcm_Param;
