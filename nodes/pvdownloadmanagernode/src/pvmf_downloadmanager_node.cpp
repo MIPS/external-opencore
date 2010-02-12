@@ -147,9 +147,7 @@ void PVMFDownloadManagerNode::ConstructL()
     iFileBufferDatastreamFactory = NULL;
 #if(PVMF_DOWNLOADMANAGER_SUPPORT_PPB)
     iMemoryBufferDatastreamFactory = NULL;
-#if(PV_HAS_SHOUTCAST_SUPPORT_ENABLED)
     iPLSSessionContextData = NULL;
-#endif//PV_HAS_SHOUTCAST_SUPPORT_ENABLED
 #endif//PVMF_DOWNLOADMANAGER_SUPPORT_PPB
 
     iDownloadFileName = NULL;
@@ -235,13 +233,11 @@ PVMFDownloadManagerNode::~PVMFDownloadManagerNode()
         PVMF_BASE_NODE_DELETE(iMemoryBufferDatastreamFactory);
         iMemoryBufferDatastreamFactory = NULL;
     }
-#if(PV_HAS_SHOUTCAST_SUPPORT_ENABLED)
     if (iPLSSessionContextData != NULL)
     {
         OSCL_DELETE(iPLSSessionContextData);
         iPLSSessionContextData = NULL;
     }
-#endif//PV_HAS_SHOUTCAST_SUPPORT_ENABLED
 #endif//PVMF_DOWNLOADMANAGER_SUPPORT_PPB
 
 }
@@ -369,7 +365,6 @@ PVMFStatus PVMFDownloadManagerNode::SetSourceInitializationData(OSCL_wString& aS
         return PVMFErrArgument; //playlist not supported.
 
 #if(PVMF_DOWNLOADMANAGER_SUPPORT_PPB)
-#if(PV_HAS_SHOUTCAST_SUPPORT_ENABLED)
     if (aSourceFormat == PVMF_MIME_PLSFF)
     {
         // parse the PLS file
@@ -382,16 +377,13 @@ PVMFStatus PVMFDownloadManagerNode::SetSourceInitializationData(OSCL_wString& aS
     }
     else
     {
-#endif //PV_HAS_SHOUTCAST_SUPPORT_ENABLED
 #endif //PVMF_DOWNLOADMANAGER_SUPPORT_PPB
         iSourceURL = aSourceURL;
         iSourceFormat = aSourceFormat;
         iSourceData = aSourceData;
 
 #if(PVMF_DOWNLOADMANAGER_SUPPORT_PPB)
-#if(PV_HAS_SHOUTCAST_SUPPORT_ENABLED)
     }
-#endif //PV_HAS_SHOUTCAST_SUPPORT_ENABLED
 #endif //PVMF_DOWNLOADMANAGER_SUPPORT_PPB
 
     // Pass the source info directly to the protocol engine node.
@@ -3617,7 +3609,6 @@ PVMFStatus PVMFDownloadManagerNode::CancelCurrentCommand()
 }
 
 #if(PVMF_DOWNLOADMANAGER_SUPPORT_PPB)
-#if(PV_HAS_SHOUTCAST_SUPPORT_ENABLED)
 
 // if the a URL is successfully retrieved from the PLS file,
 //   iSourceURL will contain the URL,
@@ -3704,5 +3695,4 @@ PVMFStatus PVMFDownloadManagerNode::ParsePLSFile(OSCL_wString& aPLSFile)
     return PVMFSuccess;
 }
 
-#endif//PV_HAS_SHOUTCAST_SUPPORT_ENABLED
 #endif//PVMF_DOWNLOADMANAGER_SUPPORT_PPB

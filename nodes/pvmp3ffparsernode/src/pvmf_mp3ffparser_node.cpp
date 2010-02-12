@@ -33,7 +33,6 @@ PVMFMP3FFParserNode::PVMFMP3FFParserNode(int32 aPriority)
         iSendDecodeFormatSpecificInfo(true),
         iCurrSampleDuration(0)
 {
-#if PV_HAS_SHOUTCAST_SUPPORT_ENABLED
     iMetadataBuf = NULL;
     iMetadataBufSize = 0;
     iMetadataSize = 0;
@@ -41,7 +40,6 @@ PVMFMP3FFParserNode::PVMFMP3FFParserNode(int32 aPriority)
     iSCSP = NULL;
     iClipByteRate = 0;
     iMetadataInterval = 0;
-#endif
 
     iNumClipsInPlayList = 0;
     iPlaybackClipIndex = -1;
@@ -97,9 +95,7 @@ PVMFMP3FFParserNode::PVMFMP3FFParserNode(int32 aPriority)
         iFileServer.Close();
         OSCL_LEAVE(err);
     }
-#if PV_HAS_SHOUTCAST_SUPPORT_ENABLED
     iMetadataVector.reserve(PVMF_MP3FFPARSER_NODE_METADATA_RESERVE);
-#endif
 }
 
 // Secondary constructor
@@ -146,12 +142,10 @@ PVMFMP3FFParserNode::~PVMFMP3FFParserNode()
         OSCL_ASSERT(0);
     }
 
-#if PV_HAS_SHOUTCAST_SUPPORT_ENABLED
     while (!iMetadataVector.empty())
     {
         iMetadataVector.erase(iMetadataVector.begin());
     }
-#endif
 
     ReleaseTrack();
     // Clean up the file source
@@ -520,7 +514,6 @@ PVMFStatus PVMFMP3FFParserNode::DoInit()
         dsFactory = iCPMContainer.iCPMContentAccessFactory;
         if ((dsFactory == NULL) && (iDataStreamFactory != NULL))
         {
-#if PV_HAS_SHOUTCAST_SUPPORT_ENABLED
             if (GetClipFormatTypeAt(iPlaybackClipIndex) == PVMF_MIME_DATA_SOURCE_SHOUTCAST_URL && iSCSPFactory != NULL && iSCSP != NULL)
             {
 
@@ -531,9 +524,6 @@ PVMFStatus PVMFMP3FFParserNode::DoInit()
             {
                 dsFactory = iDataStreamFactory;
             }
-#else
-            dsFactory = iDataStreamFactory;
-#endif
         }
     }
 
@@ -1034,7 +1024,6 @@ void PVMFMP3FFParserNode::PassDatastreamFactory(PVMFDataStreamFactory& aFactory,
         PVInterface* iFace = NULL;
         iDataStreamFactory = &aFactory;
 
-#if PV_HAS_SHOUTCAST_SUPPORT_ENABLED
         if (GetClipFormatTypeAt(iPlaybackClipIndex) == PVMF_MIME_DATA_SOURCE_SHOUTCAST_URL)
         {
             iSCSPFactory = OSCL_NEW(PVMFShoutcastStreamParserFactory, (&aFactory, iMetadataInterval));
@@ -1057,9 +1046,6 @@ void PVMFMP3FFParserNode::PassDatastreamFactory(PVMFDataStreamFactory& aFactory,
         {
             iFace = iDataStreamFactory->CreatePVMFCPMPluginAccessInterface(uuid);
         }
-#else
-        iFace = iDataStreamFactory->CreatePVMFCPMPluginAccessInterface(uuid);
-#endif
 
         if (iFace != NULL)
         {
@@ -1093,7 +1079,6 @@ int32 PVMFMP3FFParserNode::convertSizeToTime(uint32 aFileSize, uint32& aNPTInMS)
 
 bool PVMFMP3FFParserNode::setProtocolInfo(Oscl_Vector<PvmiKvp*, OsclMemAllocator>& aInfoKvpVec)
 {
-#if PV_HAS_SHOUTCAST_SUPPORT_ENABLED
 
     if (aInfoKvpVec.empty())
     {
@@ -1118,9 +1103,6 @@ bool PVMFMP3FFParserNode::setProtocolInfo(Oscl_Vector<PvmiKvp*, OsclMemAllocator
         {
         }
     }
-#else
-    OSCL_UNUSED_ARG(aInfoKvpVec);
-#endif
 
     return true;
 }
@@ -1795,14 +1777,12 @@ void PVMFMP3FFParserNode::ResetTrack()
     iTrack.iFirstFrame = false;
     iAutoPaused = false;
 
-#if PV_HAS_SHOUTCAST_SUPPORT_ENABLED
     // if this is shoutcast session,
     // reset the stream and read pointers
     if ((GetClipFormatTypeAt(iPlaybackClipIndex) == PVMF_MIME_DATA_SOURCE_SHOUTCAST_URL) && (iSCSPFactory != NULL))
     {
         iSCSPFactory->ResetShoutcastStream();
     }
-#endif
 }
 
 /**
@@ -1893,7 +1873,6 @@ void PVMFMP3FFParserNode::CleanupFileSource()
         PVInterface* iFace = OSCL_STATIC_CAST(PVInterface*, iDataStreamInterface);
         PVUuid uuid = PVMIDataStreamSyncInterfaceUuid;
 
-#if PV_HAS_SHOUTCAST_SUPPORT_ENABLED
         if (iSCSPFactory != NULL)
         {
             iSCSPFactory->DestroyPVMFCPMPluginAccessInterface(uuid, iFace);
@@ -1903,13 +1882,9 @@ void PVMFMP3FFParserNode::CleanupFileSource()
         {
             iDataStreamFactory->DestroyPVMFCPMPluginAccessInterface(uuid, iFace);
         }
-#else
-        iDataStreamFactory->DestroyPVMFCPMPluginAccessInterface(uuid, iFace);
-#endif
         iDataStreamInterface = NULL;
     }
 
-#if PV_HAS_SHOUTCAST_SUPPORT_ENABLED
     if (iSCSPFactory != NULL)
     {
         OSCL_DELETE(iSCSPFactory);
@@ -1922,7 +1897,6 @@ void PVMFMP3FFParserNode::CleanupFileSource()
         iMetadataBufSize = 0;
         iMetadataSize = 0;
     }
-#endif
 
     if (iDataStreamFactory != NULL)
     {
@@ -3804,7 +3778,6 @@ PVMFStatus PVMFMP3FFParserNode::PushBackCPMMetadataKeys(PVMFMetadataList *&aKeyL
     return PVMFSuccess;
 }
 
-#if PV_HAS_SHOUTCAST_SUPPORT_ENABLED
 void PVMFMP3FFParserNode::MetadataUpdated(uint32 aMetadataSize)
 {
     if (!iMetadataVector.empty())
@@ -3934,7 +3907,6 @@ PVMFStatus PVMFMP3FFParserNode::ParseShoutcastMetadata(char* aMetadataBuf, uint3
     }
     return PVMFSuccess;
 }
-#endif //PV_HAS_SHOUTCAST_SUPPORT_ENABLED
 
 uint32 PVMFMP3FFParserNode::GetCurrentClipIndex()
 {

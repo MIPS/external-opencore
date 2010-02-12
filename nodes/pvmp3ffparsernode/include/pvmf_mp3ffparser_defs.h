@@ -35,12 +35,10 @@
 #define PVMF3FF_DEFAULT_NUM_OF_FRAMES       5
 #define PVMF3FF_DURATION_SCAN_AO_DELAY      1000
 
-#if PV_HAS_SHOUTCAST_SUPPORT_ENABLED
 #define PVMF_MP3FFPARSER_NODE_METADATA_RESERVE 2
 #define SHOUTCAST_MEDIA_DATA_LENGTH_STRING "x-pvmf/net/shoutcast-media-data-length"
 #define SHOUTCAST_CLIP_BITRATE_STRING "x-pvmf/net/shoutcast-clip-bitrate"
 #define SHOUTCAST_IS_SHOUTCAST_SESSION_STRING "x-pvmf/net/is-shoutcast-session"
-#endif
 
 /**
  *  Port tags, enumerated list of port tags supported by the node,

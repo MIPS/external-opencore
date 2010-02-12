@@ -42,10 +42,8 @@
 #endif
 
 
-#if PV_HAS_SHOUTCAST_SUPPORT_ENABLED // include scsp only when SHOUTCAST support is enabled
 #ifndef PVMF_SHOUTCAST_STREAM_PARSER_H_INCLUDED
 #include "pvmf_shoutcast_stream_parser.h"
-#endif
 #endif
 
 #ifndef PVMF_DOWNLOAD_PROGRESS_EXTENSION_H
@@ -375,9 +373,7 @@ class PVMFMP3FFParserNode : public PVMFNodeInterfaceImpl,
         public PVMIDatastreamuserInterface,
         public OsclMemPoolResizableAllocatorObserver,
         public PvmfDataSourcePlaybackControlInterface
-#if PV_HAS_SHOUTCAST_SUPPORT_ENABLED
         , public PVMFMetadataUpdatesObserver
-#endif
 {
     public:
         PVMFMP3FFParserNode(int32 aPriority);
@@ -401,10 +397,8 @@ class PVMFMP3FFParserNode : public PVMFNodeInterfaceImpl,
         PVMFStatus GetMediaPresentationInfo(PVMFMediaPresentationInfo& aInfo);
         PVMFStatus SelectTracks(PVMFMediaPresentationInfo& aInfo);
 
-#if PV_HAS_SHOUTCAST_SUPPORT_ENABLED
         //From PVMFMetadataUpdatesObserver
         void MetadataUpdated(uint32 aMetadataSize);
-#endif
         // From PVMFMetadataExtensionInterface
         PVMFStatus SetMetadataClipIndex(uint32 aClipNum);
         uint32 GetNumMetadataKeys(char* aQueryKeyString = NULL);
@@ -478,9 +472,7 @@ class PVMFMP3FFParserNode : public PVMFNodeInterfaceImpl,
         PVMFStatus CheckForMP3HeaderAvailability(int32 aClipIndex);
         PVMFStatus GetFileOffsetForAutoResume(uint32& aOffset, PVMP3FFNodeTrackPortInfo* aTrackPortInfo);
 
-#if PV_HAS_SHOUTCAST_SUPPORT_ENABLED
         PVMFStatus ParseShoutcastMetadata(char* aMetadataBuf, uint32 aMetadataSize, Oscl_Vector<PvmiKvp, OsclMemAllocator>& aKvpVector);
-#endif
         void GetGaplessMetadata(int32 aClipIndex);
 
         void Construct();
@@ -577,7 +569,6 @@ class PVMFMP3FFParserNode : public PVMFNodeInterfaceImpl,
 
 // private member variables
 
-#if PV_HAS_SHOUTCAST_SUPPORT_ENABLED
         // shoutcast related
         int32 iClipByteRate;
         int32 iMetadataBufSize;
@@ -588,7 +579,6 @@ class PVMFMP3FFParserNode : public PVMFNodeInterfaceImpl,
         PVMFShoutcastStreamParserFactory* iSCSPFactory;
         PVMFShoutcastStreamParser* iSCSP;
         uint8 *iMetadataBuf;
-#endif
 
         // All one port is required as we support only one track
         PVMFMP3FFParserPort* iOutPort;
