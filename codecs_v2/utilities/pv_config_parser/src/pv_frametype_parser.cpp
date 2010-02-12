@@ -45,7 +45,7 @@ OSCL_EXPORT_REF PVMFStatus pv_detect_keyframe(pvVideoGetFrameTypeParserInputs *a
 
     PVMFStatus status = PVMFSuccess;
 
-    uint32 code = 0;
+    uint code = 0;
 
     aOutputs->isKeyFrame = false;
 
@@ -74,7 +74,7 @@ OSCL_EXPORT_REF PVMFStatus pv_detect_keyframe(pvVideoGetFrameTypeParserInputs *a
 
         status = PvConfigBitstreamReadBits(bitstream, 2, &code);
 
-        aOutputs->FrameTypeInfo = code; //vop_coding_type means:
+        aOutputs->FrameTypeInfo = (uint32) code; //vop_coding_type means:
 
         if (aOutputs->FrameTypeInfo == 0)
         {
@@ -103,7 +103,8 @@ OSCL_EXPORT_REF PVMFStatus pv_detect_keyframe(pvVideoGetFrameTypeParserInputs *a
         }
 
 
-        status = PVH263DecGetFrameType(bitstream, &aOutputs->FrameTypeInfo);
+        status = PVH263DecGetFrameType(bitstream, &code);
+        aOutputs->FrameTypeInfo = (uint32) code;
         if (aOutputs->FrameTypeInfo == 0)
         {
             aOutputs->isKeyFrame = true;
@@ -224,7 +225,7 @@ enum { NOT_WMV3 = -1, WMV3_SIMPLE_PROFILE, WMV3_MAIN_PROFILE, WMV3_PC_PROFILE, W
 #define SC_ENTRY        0x0E
 
 
-OSCL_IMPORT_REF bool pv_get_wmv_seq_hdr_info(uint8 *bitstream, int size, WmvSeqheaderInfo *wmvseqhdrinfo)
+OSCL_EXPORT_REF bool pv_get_wmv_seq_hdr_info(uint8 *bitstream, int size, WmvSeqheaderInfo *wmvseqhdrinfo)
 {
     uint32 dwdat;
     uint8 bdat;
@@ -335,7 +336,7 @@ OSCL_IMPORT_REF bool pv_get_wmv_seq_hdr_info(uint8 *bitstream, int size, WmvSeqh
 /* @Return   : PVMFSuccess if succeed, PVMFFailure if fail.     */
 /* @Modified :                */
 /* ======================================================================== */
-PVMFStatus PVAVCDecGetNALType(uint8 *bitstream, int32 size,
+PVMFStatus PVAVCDecGetNALType(uint8 *bitstream, int size,
                               int32 *nal_type, int32 *nal_ref_idc)
 {
     int32 forbidden_zero_bit;
@@ -365,7 +366,7 @@ PVMFStatus PVAVCDecGetNALType(uint8 *bitstream, int32 size,
 /* @Modified :                */
 /* ======================================================================== */
 
-PVMFStatus PVH263DecGetFrameType(DecBitstream *bitstream, uint32* code)
+PVMFStatus PVH263DecGetFrameType(DecBitstream *bitstream, uint* code)
 {
 
     PVMFStatus status = PVMFSuccess;
@@ -479,7 +480,7 @@ PVMFStatus PVWMVDecGetFrameType(WmvSeqheaderInfo  *SeqheaderInfo,
 
 {
     uint32 FrameCodingMode = 0xFF;
-    uint32 code = 0;
+    uint code = 0;
 
     PVMFStatus status = PVMFSuccess;
     *aFrameType = WMVUNKNOWNFRAME;

@@ -147,7 +147,7 @@ OSCL_IMPORT_REF bool pv_get_wmv_seq_hdr_info(uint8 *bitstream, int size, WmvSeqh
     \param "nal_unit_type" "Pointer to the return value of nal unit type."
     \return "DEC_SUCCESS if success, DEC_FAIL otherwise."
     */
-PVMFStatus PVAVCDecGetNALType(uint8 *bitstream, int size, int *nal_type, int *nal_ref_idc);
+PVMFStatus PVAVCDecGetNALType(uint8 *bitstream, int size, int32 *nal_type, int32 *nal_ref_idc);
 
 
 /**
