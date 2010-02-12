@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,22 +49,8 @@ OSCL_EXPORT_REF PVMFNodeInterface* PV2WaySourceAndSinksPerfTest::CreateMIONode(C
         TPVDirection adir)
 {
     PVMFNodeInterface* mioNode = NULL;
-    PVMFFormatType format = aformat->GetFormat();
-    if (aformat->GetType() == EPVFileInput)
-    {
-        FileCodecSpecifier* temp = OSCL_REINTERPRET_CAST(FileCodecSpecifier*, aformat);
-        PVMFFileInputSettings perfFileSettings = temp->GetSpecifierType();
-        if (adir == INCOMING)
-        {
-            PVMFFormatType fileSettings = PV2WayMedia::GetMediaFormat(perfFileSettings.iFileName.get_cstr());
-            mioNode = PVMFDummyFileOutputNodeFactory::CreateDummyFileOutput(perfFileSettings.iFileName, fileSettings);
-        }
-        else if (adir == OUTGOING)
-        {
-            mioNode = PVMFDummyFileInputNodeFactory::CreateDummyFileInputNode(&perfFileSettings);
-        }
-    }
     return mioNode;
+
 }
 
 OSCL_EXPORT_REF void PV2WaySourceAndSinksPerfTest::DeleteMIONode(CodecSpecifier* aformat,
@@ -80,18 +66,7 @@ OSCL_EXPORT_REF void PV2WaySourceAndSinksPerfTest::DeleteMIONode(CodecSpecifier*
         }
         return;
     }
-    PVMFFormatType format = aformat->GetFormat();
-    if (aformat->GetType() == EPVFileInput)
-    {
-        if (adir == INCOMING)
-        {
-            PVMFDummyFileOutputNodeFactory::DeleteDummyFileOutput(*aMioNode);
-        }
-        else if (adir == OUTGOING)
-        {
-            PVMFDummyFileInputNodeFactory::DeleteDummyFileInputNode(*aMioNode);
-        }
-    }
+
     *aMioNode = NULL;
 }
 

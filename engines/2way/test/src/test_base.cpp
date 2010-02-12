@@ -66,6 +66,7 @@ void test_base::test()
 
     TestCompleted();
     this->RemoveFromScheduler();
+
 }
 
 void test_base::Run()
@@ -256,6 +257,7 @@ void test_base::RstCmdCompleted()
 void test_base::DisCmdSucceeded()
 {
     reset();
+
 }
 
 void test_base::DisCmdFailed()
@@ -278,16 +280,19 @@ void test_base::AudioAddSourceSucceeded()
 
 void test_base::AudioAddSinkFailed()
 {
+    int error = 1;
     PV2WayUtil::OutputInfo("\n****** Test FAILED: add audio sink failed \n");
     test_is_true(false);
-    disconnect();
+    OSCL_TRY(error, iAudioRemoveSinkId = iSourceAndSinks->RemoveAudioSink());
+
 }
 
 void test_base::AudioAddSourceFailed()
 {
+    int error = 1;
     PV2WayUtil::OutputInfo("\n****** Test FAILED: add audio source failed \n");
     test_is_true(false);
-    disconnect();
+    OSCL_TRY(error, iAudioRemoveSourceId = iSourceAndSinks->RemoveAudioSource());
 }
 
 void test_base::VideoAddSinkSucceeded()
@@ -472,11 +477,15 @@ void test_base::CommandCompleted(const PVCmdResponse& aResponse)
     {
         if (aResponse.GetCmdStatus() == PVMFSuccess)
         {
+
             AudioAddSinkSucceeded();
+
         }
         else
         {
+
             AudioAddSinkFailed();
+
         }
         iSourceAndSinks->CommandCompleted(aResponse);
     }
@@ -484,6 +493,7 @@ void test_base::CommandCompleted(const PVCmdResponse& aResponse)
     {
         if (aResponse.GetCmdStatus() == PVMFSuccess)
         {
+
             AudioAddSourceSucceeded();
         }
         else

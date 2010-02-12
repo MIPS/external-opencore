@@ -37,13 +37,14 @@
 #include "pv_2way_mio.h"
 #include "pause_resume_test.h"
 #include "reconnect_test.h"
+#include "error_check_audio_only_test.h"
 
 
 #include "tsc_h324m_config_interface.h"
 #include "test_utility.h"
 #include "test_codecs.h"
 
-#include "pv_2way_source_and_sinks_perf_test.h"
+
 #include "pv_2way_source_and_sinks_lipsync.h"
 
 
@@ -111,6 +112,7 @@ void engine_test_suite::AddOutgoingAudioCodecUsingFile(PV2WaySourceAndSinksFile*
     {
         apSourceAndSinks->AddPreferredCodec(OUTGOING, PV_AUDIO, iCodecs.iAudioSourceFileSettings);
     }
+
 }
 
 void engine_test_suite::AddIncomingAudioCodecUsingFile(PV2WaySourceAndSinksFile* apSourceAndSinks,
@@ -126,6 +128,7 @@ void engine_test_suite::AddIncomingAudioCodecUsingFile(PV2WaySourceAndSinksFile*
     {
         apSourceAndSinks->AddPreferredCodec(INCOMING, PV_AUDIO, iCodecs.iAudioSinkFileSettings);
     }
+
 }
 
 void engine_test_suite::AddOutgoingVideoCodecUsingFile(PV2WaySourceAndSinksFile* apSourceAndSinks,
@@ -1091,6 +1094,18 @@ void engine_test_suite::AddReconnectTests(const bool aProxy, int32 firstTest, in
     }
 }
 
+void engine_test_suite::AddMiscTests(const bool aProxy, int32 firstTest, int32 lastTest)
+{
+    if (inRange(firstTest, lastTest))
+    {
+        test_base* pTemp = OSCL_NEW(error_check_audio_only_test, (aProxy));
+        PV2WaySourceAndSinksFile* pSourceAndSinks = CreateSourceAndSinks(pTemp, PVMF_MIME_AMR_IF2,
+                PVMF_MIME_AMR_IF2, PVMF_MIME_YUV420, PVMF_MIME_YUV420);
+        pTemp->AddSourceAndSinks(pSourceAndSinks);
+        adopt_test_case(pTemp);
+    }
+
+}
 #endif
 
 #ifdef LIP_SYNC_TESTING
@@ -1281,6 +1296,31 @@ bool engine_test_suite::proxy_tests6(const bool aProxy)
     return true;
 }
 
+bool engine_test_suite::proxy_tests7(const bool aProxy)
+{
+    uint32 firstTest = 0;
+    uint32 lastTest = MAX_324_TEST;
+    bool alltests = false;
+
+    PV2WayUtil::FindTestRange(global_cmd_line, firstTest, lastTest);
+
+    //Basic 2way tests
+    PV2WayUtil::OutputInfo("Perf engine tests.  First: %d Last: %d\n", firstTest, lastTest);
+    if (firstTest == 0 && lastTest == MAX_324_TEST)
+        alltests = true;
+
+    if (!iCodecs.SetValues())
+    {
+        PV2WayUtil::OutputInfo("ERROR! Could not locate all input files.\n");
+        return false;
+    }
+    PV2WayUtil::OutputInfo("Add Misc tests\n");
+    AddMiscTests(aProxy, firstTest, lastTest);
+    return true;
+
+
+
+}
 
 bool engine_test_suite::proxy_tests(const bool aProxy)
 {
@@ -1289,6 +1329,7 @@ bool engine_test_suite::proxy_tests(const bool aProxy)
     proxy_tests3(aProxy);
     proxy_tests5(aProxy);
     proxy_tests6(aProxy);
+    proxy_tests7(aProxy);
     return true;
 }
 #else
@@ -1464,6 +1505,7 @@ int start_test1(test_result *aTestResult)
         result = (the_result.success_count() != the_result.total_test_count());
         aTestResult->add_result(engine_tests->last_result());
     }
+
     OSCL_DELETE(engine_tests);
     return result;
 }
@@ -1564,6 +1606,30 @@ int start_test6(test_result *aTestResult)
     return result;
 }
 
+int start_test7(test_result *aTestResult)
+{
+    int32 leave = 0;
+    int result = 0;
+    engine_test_suite* engine_tests = NULL;
+    engine_tests = OSCL_NEW(engine_test_suite, ());
+    if (engine_tests)
+    {
+        // setting iProxy
+        if (!engine_tests->proxy_tests7(true))
+        {
+            PV2WayUtil::OutputInfo("ERROR - unable to setup tests\n");
+        }
+        OSCL_TRY(leave, engine_tests->run_test());
+        if (leave != 0)
+            PV2WayUtil::OutputInfo("Leave %d\n", leave);
+
+        const test_result the_result = engine_tests->last_result();
+        result = (the_result.success_count() != the_result.total_test_count());
+        aTestResult->add_result(engine_tests->last_result());
+    }
+    OSCL_DELETE(engine_tests);
+    return result;
+}
 #else
 
 int start_test4(test_result *aTestResult)
@@ -1625,6 +1691,9 @@ int start_test()
             result = temp;
 
         temp = start_test6(TestResult);
+        if (temp != 0)
+            result = temp;
+        temp = start_test7(TestResult);
         if (temp != 0)
             result = temp;
     }

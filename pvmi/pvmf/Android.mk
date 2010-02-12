@@ -94,6 +94,7 @@ LOCAL_COPY_HEADERS := \
  	include/pvmi_media_io_clock_extension.h \
  	include/pvmi_media_io_observer.h \
  	include/pvmi_mio_control.h \
- 	include/pvmi_port_config_kvp.h
+ 	include/pvmi_port_config_kvp.h \
+ 	include/pvmf_fileinput_settings.h
 
 include $(BUILD_STATIC_LIBRARY)

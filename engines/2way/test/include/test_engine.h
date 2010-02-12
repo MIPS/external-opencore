@@ -83,6 +83,7 @@ class engine_test_suite : public test_case
         bool proxy_tests3(const bool aProxy);
         bool proxy_tests5(const bool aProxy);
         bool proxy_tests6(const bool aProxy);
+        bool proxy_tests7(const bool aProxy);
 #else
 
         bool proxy_tests4(const bool aProxy);
@@ -102,6 +103,7 @@ class engine_test_suite : public test_case
 #ifdef LIP_SYNC_TESTING
         void AddLipSyncTests(const bool aProxy, int32 firstTest, int32 lastTest);
 #else
+        void AddMiscTests(const bool aProxy, int32 firsttest, int32 lastTest);
         void AddReceiveDataTests(const bool aProxy, int32 firstTest, int32 lastTest);
         void AddReconnectTests(const bool aProxy, int32 firstTest, int32 lastTest);
         void AddSetupTests(const bool aProxy, int32 firstTest, int32 lastTest);

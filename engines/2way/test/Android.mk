@@ -21,7 +21,8 @@ LOCAL_SRC_FILES := \
  	src/user_input_test.cpp \
  	src/basic_lipsync_test.cpp \
  	src/pause_resume_test.cpp \
- 	src/receive_data_test.cpp
+ 	src/receive_data_test.cpp \
+ 	src/error_check_audio_only_test.cpp
 
 
 LOCAL_MODULE := pv2way_engine_test
@@ -37,7 +38,6 @@ LOCAL_C_INCLUDES := \
 	$(PV_TOP)/engines/2way/test/src \
  	$(PV_TOP)/engines/2way/test/include \
  	$(PV_TOP)/engines/2way/sample_app/pv2waysample/include \
- 	$(PV_TOP)/nodes/pvdummyinputnode/include \
  	$(PV_TOP)/protocols/systems/common/include \
  	$(PV_TOP)/engines/2way/include \
  	$(PV_TOP)/protocols/systems/tools/general/common/include \

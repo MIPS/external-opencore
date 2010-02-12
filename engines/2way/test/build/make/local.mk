@@ -18,9 +18,8 @@ XCPPFLAGS += $(LIP_SYNC_ENABLED)
 SRCDIR := ../../src
 INCSRCDIR := ../../include 
 			
-XINCDIRS +=  \
-    ../../../sample_app/pv2waysample/include \
-    ../../../../../nodes/pvdummyinputnode/include \
+XINCDIRS += \
+../../../sample_app/pv2waysample/include \
     ../../../../../protocols/systems/common/include \
     ../../../include \
     ../../../../../protocols/systems/tools/general/common/include 
@@ -44,7 +43,8 @@ SRCS_324 = av_test.cpp \
 	user_input_test.cpp \
 	basic_lipsync_test.cpp \
 	pause_resume_test.cpp \
-        receive_data_test.cpp
+        receive_data_test.cpp \
+		error_check_audio_only_test.cpp
 
 SRCS += $(SRCS_324)
 
@@ -54,8 +54,7 @@ BASE_LIBS = pv2waysample \
    pv2wayengine \
    pv324m 
 
-END_LIBS = pvdummyinputnode pvdummyoutputnode \
-   pvclientserversocketnode \
+END_LIBS =  pvclientserversocketnode \
    pvmediainputnode \
    pvmediaoutputnode \
    pvmiofileinput \

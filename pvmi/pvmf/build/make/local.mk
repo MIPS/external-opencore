@@ -84,6 +84,7 @@ HDRS :=  \
     pvmi_media_io_clock_extension.h \
     pvmi_media_io_observer.h \
     pvmi_mio_control.h \
-    pvmi_port_config_kvp.h
+    pvmi_port_config_kvp.h \
+    pvmf_fileinput_settings.h
 
 include $(MK)/library.mk

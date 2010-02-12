@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -168,7 +168,7 @@ class test_base : public engine_test,
 
 
         void CheckForSucceeded();
-        void CheckForRemoved();
+        virtual void CheckForRemoved();
         // audio
         virtual void AudioAddSinkSucceeded();
         virtual void AudioAddSinkFailed();

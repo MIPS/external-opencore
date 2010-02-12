@@ -16,7 +16,6 @@ LOCAL_SRC_FILES := \
  	src/pv_2way_source_and_sinks_file.cpp \
  	src/pv_2way_source_and_sinks_dummy.cpp \
  	src/pv_2way_source_and_sinks_lipsync.cpp \
- 	src/pv_2way_source_and_sinks_perf_test.cpp \
  	src/pv_2way_media.cpp \
  	src/pv_2way_mio.cpp \
  	src/pv_2way_sink.cpp \

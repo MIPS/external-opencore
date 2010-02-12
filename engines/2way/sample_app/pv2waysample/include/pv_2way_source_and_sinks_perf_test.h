@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,18 +35,10 @@
 #include "pv_2way_h324m_types.h"
 
 #include "pvmf_fileinput_settings.h"
-#include "pvmf_dummy_fileinput_node_factory.h"
-#include "pvmf_dummy_fileoutput_factory.h"
 
 #define AUDIO_SOURCE_FILENAME_FOR_PERF _STRLIT("data/audio_in.amr")
 #define VIDEO_SOURCE_FILENAME_FOR_PERF _STRLIT("data/video_in.h263")
 
-#ifndef PVMF_DUMMY_FILEOUTPUT_NODE_H_INCLUDED
-#include "pvmf_dummy_fileoutput_node.h"
-#endif
-#ifndef PVMF_DUMMY_FILEINPUT_NODE_H_INCLUDED
-#include "pvmf_dummy_fileinput_node.h"
-#endif
 
 class PV2WaySourceAndSinksPerfTest : public PV2WaySourceAndSinksBase
 {
