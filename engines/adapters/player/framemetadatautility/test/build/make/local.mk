@@ -31,17 +31,14 @@ LIBS :=  pvframemetadatautility \
         pvdownloadmanagernode \
         pvdtcp_mbds_lib \
         pvmp4ffparsernode \
-		pvmpeg2ffparsernode \
-		pvflvffparsernode \
+        pvflvffparsernode \
         cpm \
         pvoma1passthruplugin \
         pvaacffparsernode \
         pvwavffparsernode \
         pvstillimagenode \
         pvmp4ff \
-		pvmpeg2ff \
-		mpeg2recognizer_utility \
-		pvflvff \
+        pvflvff \
         pvmp3ff \
         pvwav \
         pvaacparser \
@@ -58,7 +55,7 @@ LIBS :=  pvframemetadatautility \
         pvrtsptunicaststreamingmanager \
         pvrtsptunicastrmstreamingmanager \
         pvrtspunicastwithpvrsm \
-		pvsmpvrfspcommon \
+        pvsmpvrfspcommon \
         pvsmfspcommon \
         pvjitterbuffernode \
         pvjitterbufferasf \
@@ -122,15 +119,14 @@ LIBS :=  pvframemetadatautility \
         pvmfrecognizer \
         pvasfffrecognizer \
         pvmp4ffrecognizer \
-		pvmpeg2ffrecognizer \
-		pvflvffrecognizer \
+        pvflvffrecognizer \
         mp4recognizer_utility \
-		flvrecognizer_utility \
+        flvrecognizer_utility \
         pvmp3ffrecognizer \
         pvrmffrecognizer \
         pvoma1ffrecognizer \
-		pvaacffrecognizer \
-		pvwavffrecognizer \
+        pvaacffrecognizer \
+        pvwavffrecognizer \
         pvfileparserutils \
         omx_rv_component_lib \
         rvdecoder \
@@ -169,7 +165,12 @@ LIBS :=  pvframemetadatautility \
         pv_divxfile_parser \
         pvamrffrecognizer \
         divxrecognizer_utility \
-        pvplsffrecognizer
+        pvplsffrecognizer \
+        pvmpeg2ffparsernode \
+        pvmpeg2ff \
+        pvmpeg2ffrecognizer \
+        mpeg2recognizer_utility
+
 
 SYSLIBS += $(SYS_THREAD_LIB)
 

@@ -259,7 +259,7 @@ pvdivxffparsernode_lib=n
 pvstillimagenode_lib=n
 g726decnode_lib=n
 pvflvffparsernode_lib=n
-mpeg2ffparsernode_lib=n
+pvmpeg2ffparsernode_lib=n
 
 
 #
