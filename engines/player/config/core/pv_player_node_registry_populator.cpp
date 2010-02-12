@@ -24,35 +24,8 @@
 #if BUILD_OMX_AUDIO_DEC_NODE
 #include "pvmf_omx_audiodec_factory.h"
 #endif
-#if BUILD_VIDEO_DEC_NODE
-#include "pvmf_videodec_factory.h"
-#endif
-#if BUILD_AVC_DEC_NODE
-#include "pvmf_avcdec_factory.h"
-#endif
-#if BUILD_WMV_DEC_NODE
-#include "pvmf_wmvdec_factory.h"
-#endif
-#if BUILD_RV_DEC_NODE
-#include "pvmf_rvdec_factory.h"
-#endif
-#if BUILD_WMA_DEC_NODE
-#include "pvmf_wmadec_factory.h"
-#endif
 #if BUILD_G726_DEC_NODE
 #include "pvmf_g726dec_node_factory.h"
-#endif
-#if BUILD_GSMAMR_DEC_NODE
-#include "pvmf_gsmamrdec_factory.h"
-#endif
-#if BUILD_AAC_DEC_NODE
-#include "pvmf_aacdec_factory.h"
-#endif
-#if BUILD_MP3_DEC_NODE
-#include "pvmf_mp3dec_factory.h"
-#endif
-#if BUILD_RA8_DEC_NODE
-#include "pvmf_ra8dec_factory.h"
 #endif
 
 // For parser node registry
@@ -193,65 +166,6 @@ void PVPlayerRegistryPopulator::RegisterAllNodes(PVPlayerNodeRegistryInterface* 
     nodeinfo.iNodeReleaseFunc = PVMFOMXAudioDecNodeFactory::DeletePVMFOMXAudioDecNode;
     aRegistry->RegisterNode(nodeinfo);
 #endif
-#if BUILD_VIDEO_DEC_NODE
-    //For PVMFVideoDecNode
-    nodeinfo.iInputTypes.clear();
-    nodeinfo.iInputTypes.push_back(PVMF_MIME_H2631998);
-    nodeinfo.iInputTypes.push_back(PVMF_MIME_H2632000);
-    nodeinfo.iInputTypes.push_back(PVMF_MIME_M4V);
-    nodeinfo.iNodeUUID = KPVMFVideoDecNodeUuid;
-    nodeinfo.iOutputType.clear();
-    nodeinfo.iOutputType.push_back(PVMF_MIME_YUV420);
-    nodeinfo.iNodeCreateFunc = PVMFVideoDecNodeFactory::CreatePVMFVideoDecNode;
-    nodeinfo.iNodeReleaseFunc = PVMFVideoDecNodeFactory::DeletePVMFVideoDecNode;
-    aRegistry->RegisterNode(nodeinfo);
-#endif
-#if BUILD_AVC_DEC_NODE
-    //For PVMFAVCDecNode
-    nodeinfo.iInputTypes.clear();
-    nodeinfo.iInputTypes.push_back(PVMF_MIME_H264_VIDEO);
-    nodeinfo.iInputTypes.push_back(PVMF_MIME_H264_VIDEO_RAW);
-    nodeinfo.iInputTypes.push_back(PVMF_MIME_H264_VIDEO_MP4);
-    nodeinfo.iNodeUUID = KPVMFAVCDecNodeUuid;
-    nodeinfo.iOutputType.clear();
-    nodeinfo.iOutputType.push_back(PVMF_MIME_YUV420);
-    nodeinfo.iNodeCreateFunc = PVMFAVCDecNodeFactory::CreatePVMFAVCDecNode;
-    nodeinfo.iNodeReleaseFunc = PVMFAVCDecNodeFactory::DeletePVMFAVCDecNode;
-    aRegistry->RegisterNode(nodeinfo);
-#endif
-#if BUILD_WMV_DEC_NODE
-    //For PVMFWmvDecNode
-    nodeinfo.iInputTypes.clear();
-    nodeinfo.iInputTypes.push_back(PVMF_MIME_WMV);
-    nodeinfo.iNodeUUID = KPVMFWmvDecNodeUuid;
-    nodeinfo.iOutputType.clear();
-    nodeinfo.iOutputType.push_back(PVMF_MIME_YUV420);
-    nodeinfo.iNodeCreateFunc = PVMFWmvDecNodeFactory::CreatePVMFWmvDecNode;
-    nodeinfo.iNodeReleaseFunc = PVMFWmvDecNodeFactory::DeletePVMFWmvDecNode;
-    aRegistry->RegisterNode(nodeinfo);
-#endif
-#if BUILD_RV_DEC_NODE
-    //For PVMFRVDecNode
-    nodeinfo.iInputTypes.clear();
-    nodeinfo.iInputTypes.push_back(PVMF_MIME_REAL_VIDEO);
-    nodeinfo.iNodeUUID = KPVMFRvDecNodeUuid;
-    nodeinfo.iOutputType.clear();
-    nodeinfo.iOutputType.push_back(PVMF_MIME_YUV420);
-    nodeinfo.iNodeCreateFunc = PVMFRvDecNodeFactory::CreatePVMFRvDecNode;
-    nodeinfo.iNodeReleaseFunc = PVMFRvDecNodeFactory::DeletePVMFRvDecNode;
-    aRegistry->RegisterNode(nodeinfo);
-#endif
-#if BUILD_WMA_DEC_NODE
-    //For PVMFWmaDecNode
-    nodeinfo.iInputTypes.clear();
-    nodeinfo.iInputTypes.push_back(PVMF_MIME_WMA);
-    nodeinfo.iNodeUUID = KPVMFWMADecNodeUuid;
-    nodeinfo.iOutputType.clear();
-    nodeinfo.iOutputType.push_back(PVMF_MIME_PCM16);
-    nodeinfo.iNodeCreateFunc = PVMFWMADecNodeFactory::CreatePVMFWMADecNode;
-    nodeinfo.iNodeReleaseFunc = PVMFWMADecNodeFactory::DeletePVMFWMADecNode;
-    aRegistry->RegisterNode(nodeinfo);
-#endif
 #if BUILD_G726_DEC_NODE
     //For PVMFG726DecoderNode
     nodeinfo.iInputTypes.clear();
@@ -261,59 +175,6 @@ void PVPlayerRegistryPopulator::RegisterAllNodes(PVPlayerNodeRegistryInterface* 
     nodeinfo.iOutputType.push_back(PVMF_MIME_PCM16);
     nodeinfo.iNodeCreateFunc = PVMFG726DecNodeFactory::Create;
     nodeinfo.iNodeReleaseFunc = PVMFG726DecNodeFactory::Delete;
-    aRegistry->RegisterNode(nodeinfo);
-#endif
-#if BUILD_GSMAMR_DEC_NODE
-    //For PVMFGSMAMRDecNode
-    nodeinfo.iInputTypes.clear();
-    nodeinfo.iInputTypes.push_back(PVMF_MIME_AMR_IETF);
-    nodeinfo.iInputTypes.push_back(PVMF_MIME_AMR);
-    nodeinfo.iInputTypes.push_back(PVMF_MIME_AMRWB_IETF);
-    nodeinfo.iInputTypes.push_back(PVMF_MIME_AMRWB);
-    nodeinfo.iInputTypes.push_back(PVMF_MIME_AMR_IF2);
-    nodeinfo.iNodeUUID = KPVMFGSMAmrNodeUuid;
-    nodeinfo.iOutputType.clear();
-    nodeinfo.iOutputType.push_back(PVMF_MIME_PCM16);
-    nodeinfo.iNodeCreateFunc = PVMFGSMAMRDecNodeFactory::CreatePVMFGSMAMRDecNode;
-    nodeinfo.iNodeReleaseFunc = PVMFGSMAMRDecNodeFactory::DeletePVMFGSMAMRDecNode;
-    aRegistry->RegisterNode(nodeinfo);
-#endif
-#if BUILD_AAC_DEC_NODE
-    //For PVMFAACDecNode
-    nodeinfo.iInputTypes.clear();
-    nodeinfo.iInputTypes.push_back(PVMF_MIME_MPEG4_AUDIO);
-    nodeinfo.iInputTypes.push_back(PVMF_MIME_3640);
-    nodeinfo.iInputTypes.push_back(PVMF_MIME_ADIF);
-    nodeinfo.iInputTypes.push_back(PVMF_MIME_ADTS);
-    nodeinfo.iInputTypes.push_back(PVMF_MIME_LATM);
-    nodeinfo.iInputTypes.push_back(PVMF_MIME_ASF_MPEG4_AUDIO);
-    nodeinfo.iNodeUUID = KPVMFAACDecNodeUuid;
-    nodeinfo.iOutputType.clear();
-    nodeinfo.iOutputType.push_back(PVMF_MIME_PCM16);
-    nodeinfo.iNodeCreateFunc = PVMFAACDecNodeFactory::CreatePVMFAACDecNode;
-    nodeinfo.iNodeReleaseFunc = PVMFAACDecNodeFactory::DeletePVMFAACDecNode;
-    aRegistry->RegisterNode(nodeinfo);
-#endif
-#if BUILD_MP3_DEC_NODE
-    //For PVMFMP3DecNode
-    nodeinfo.iInputTypes.clear();
-    nodeinfo.iInputTypes.push_back(PVMF_MIME_MP3);
-    nodeinfo.iNodeUUID = KPVMFMP3DecNodeUuid;
-    nodeinfo.iOutputType.clear();
-    nodeinfo.iOutputType.push_back(PVMF_MIME_PCM16);
-    nodeinfo.iNodeCreateFunc = PVMFMP3DecNodeFactory::CreatePVMFMP3DecNode;
-    nodeinfo.iNodeReleaseFunc = PVMFMP3DecNodeFactory::DeletePVMFMP3DecNode;
-    aRegistry->RegisterNode(nodeinfo);
-#endif
-#if BUILD_RA8_DEC_NODE
-    //For PVMFRA8DecNode
-    nodeinfo.iInputTypes.clear();
-    nodeinfo.iInputTypes.push_back(PVMF_MIME_REAL_AUDIO);
-    nodeinfo.iNodeUUID = KPVMFRA8NodeUuid;
-    nodeinfo.iOutputType.clear();
-    nodeinfo.iOutputType.push_back(PVMF_MIME_PCM16);
-    nodeinfo.iNodeCreateFunc = PVMFRA8DecNodeFactory::CreatePVMFRA8DecNode;
-    nodeinfo.iNodeReleaseFunc = PVMFRA8DecNodeFactory::DeletePVMFRA8DecNode;
     aRegistry->RegisterNode(nodeinfo);
 #endif
 #if BUILD_MP4_FF_PARSER_NODE

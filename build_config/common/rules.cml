@@ -105,11 +105,11 @@ derive SOLIBS_pv from (LIBS_oscl_shared.
                        pvpvrff_m_lib.pvpvxparser_m_lib.
                        pvmediainputnode_m_lib.pvmediaoutputnode_m_lib.pvfileoutputnode_m_lib.
                        pvgsmamrparser_m_lib.pvamrffparsernode_m_lib.pvamrffrecognizer_m_lib.
-                       pvaacparser_m_lib.pvaacffparsernode_m_lib.aacdecnode_m_lib.pvaacffrecognizer_m_lib.
-                       pvmp3ff_m_lib.mp3decnode_m_lib.pvmp3ffparsernode_m_lib.pvmp3ffrecognizer_m_lib.
-                       pvwmadecnode_m_lib.pvasfffparsernode_m_lib.pvasfffrecognizer_m_lib.
+                       pvaacparser_m_lib.pvaacffparsernode_m_lib.pvaacffrecognizer_m_lib.
+                       pvmp3ff_m_lib.pvmp3ffparsernode_m_lib.pvmp3ffrecognizer_m_lib.
+                       pvasfffparsernode_m_lib.pvasfffrecognizer_m_lib.
                        pvomxvideodecnode_m_lib.pvomxaudiodecnode_m_lib.pvomxbasedecnode_m_lib.
-                       pvrvdecnode_m_lib.pvra8decnode_m_lib.realaudio_deinterleaver_m_lib.
+                       realaudio_deinterleaver_m_lib.
                        pvwavffparsernode_m_lib.pvwavffrecognizer_m_lib.
                        pvpvr_m_lib.pvpvrnode_m_lib.pvrtppacketsourcenode_m_lib.packetsources_default_m_lib.
                        pvmfrecognizer_m_lib.pvmiofileinput_m_lib.pvmioaviwavfileinput_m_lib.
@@ -132,11 +132,11 @@ derive SOLIBDIRS_pv from (LIBDIR_oscl_shared.
                        pvpvrff_m_mk.pvpvxparser_m_mk.
                        pvmediainputnode_m_mk.pvmediaoutputnode_m_mk.pvfileoutputnode_m_mk.
                        pvgsmamrparser_m_mk.pvamrffparsernode_m_mk.pvamrffrecognizer_m_mk.
-                       pvaacparser_m_mk.pvaacffparsernode_m_mk.aacdecnode_m_mk.pvaacffrecognizer_m_mk.
-                       pvmp3ff_m_mk.mp3decnode_m_mk.pvmp3ffparsernode_m_mk.pvmp3ffrecognizer_m_mk.
-                       pvwmadecnode_m_mk.pvasfffparsernode_m_mk.pvasfffrecognizer_m_mk.
+                       pvaacparser_m_mk.pvaacffparsernode_m_mk.pvaacffrecognizer_m_mk.
+                       pvmp3ff_m_mk.pvmp3ffparsernode_m_mk.pvmp3ffrecognizer_m_mk.
+                       pvasfffparsernode_m_mk.pvasfffrecognizer_m_mk.
                        pvomxvideodecnode_m_mk.pvomxaudiodecnode_m_mk.pvomxbasedecnode_m_mk.
-                       pvrvdecnode_m_mk.pvra8decnode_m_mk.realaudio_deinterleaver_m_mk.
+                       realaudio_deinterleaver_m_mk.
                        pvwavffparsernode_m_mk.pvwavffrecognizer_m_mk.
                        pvpvr_m_mk.pvpvrnode_m_mk.pvrtppacketsourcenode_m_mk.packetsources_default_m_mk.
                        pvmfrecognizer_m_mk.pvmiofileinput_m_mk.pvmioaviwavfileinput_m_mk.
@@ -157,11 +157,10 @@ derive SOLIBS_opencore_player from (pv_aac_dec_imp_m_lib.
                        pvamrffparsernode_m_lib.
                        pvamrffrecognizer_m_lib.
                        pvplsffrecognizer_m_lib.
-                       pvmp3ff_m_lib.mp3decnode_m_lib.pvmp3ffparsernode_m_lib.pvmp3ffrecognizer_m_lib.
+                       pvmp3ff_m_lib.pvmp3ffparsernode_m_lib.pvmp3ffrecognizer_m_lib.
                        pvmp4ff_m_lib.pvmp4ffopencore_m_lib.mp4recognizer_utility_m_lib.
-                       pvaacparser_m_lib.pvaacffparsernode_m_lib.aacdecnode_m_lib.pvaacffrecognizer_m_lib.
-                       pvwavffparsernode_m_lib.pvwavffrecognizer_m_lib.pvrvdecnode_m_lib.
-                       pvra8decnode_m_lib.
+                       pvaacparser_m_lib.pvaacffparsernode_m_lib.pvaacffrecognizer_m_lib.
+                       pvwavffparsernode_m_lib.pvwavffrecognizer_m_lib.
                        pvpvrff_m_lib.pvpvr_m_lib.pvpvrnode_m_lib.pvmfrecognizer_m_lib.
                        pvrtppacketsourcenode_m_lib.packetsources_default_m_lib.
                        pvframemetadatautility_m_lib.pvplayer_engine_m_lib)
@@ -174,11 +173,10 @@ derive SOLIBDIRS_opencore_player from (pv_aac_dec_imp_m_mk.
                        pvamrffparsernode_m_mk.
                        pvamrffrecognizer_m_mk.
                        pvplsffrecognizer_m_mk.
-                       pvmp3ff_m_mk.mp3decnode_m_mk.pvmp3ffparsernode_m_mk.pvmp3ffrecognizer_m_mk.
+                       pvmp3ff_m_mk.pvmp3ffparsernode_m_mk.pvmp3ffrecognizer_m_mk.
                        pvmp4ff_m_mk.pvmp4ffopencore_m_mk.mp4recognizer_utility_m_mk.
-                       pvaacparser_m_mk.pvaacffparsernode_m_mk.aacdecnode_m_mk.pvaacffrecognizer_m_mk.
+                       pvaacparser_m_mk.pvaacffparsernode_m_mk.pvaacffrecognizer_m_mk.
                        pvwavffparsernode_m_mk.pvwavffrecognizer_m_mk.
-                       pvrvdecnode_m_mk.pvra8decnode_m_mk.
                        pvpvrff_m_mk.pvpvr_m_mk.pvpvrnode_m_mk.pvmfrecognizer_m_mk.
                        pvrtppacketsourcenode_m_mk.packetsources_default_m_mk.
                        pvframemetadatautility_m_mk.pvplayer_engine_m_mk)

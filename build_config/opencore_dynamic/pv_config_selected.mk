@@ -217,23 +217,6 @@ PVMF_DOWNLOADMANAGER_MAX_BITRATE_FOR_SC=128
 
 
 #
-# Menu for adding NON-OMX Nodes
-#
-aacdecnode_lib=n
-mp3decnode_lib=n
-pvavcdecnode_lib=n
-pvwmadecnode_lib=n
-pvwmvdecnode_lib=n
-gsmamrdecnode_lib=n
-pvvideodecnode_lib=n
-pvrvdecnode_lib=n
-pvra8decnode_lib=n
-pvvideoencnode_lib=n
-pvamrencnode_lib=n
-pvavcencnode_lib=n
-
-
-#
 # Menu for configuring ProtocolEngine
 #
 penode_enabled=m
@@ -409,16 +392,7 @@ PVPLAYERENGINE_SUPPORT_DTCP=y
 #
 BUILD_OMX_VIDEO_DEC_NODE=y
 BUILD_OMX_AUDIO_DEC_NODE=y
-BUILD_VIDEO_DEC_NODE=n
-BUILD_AVC_DEC_NODE=n
-BUILD_WMV_DEC_NODE=n
-BUILD_RV_DEC_NODE=n
-BUILD_WMA_DEC_NODE=n
 BUILD_G726_DEC_NODE=n
-BUILD_GSMAMR_DEC_NODE=n
-BUILD_AAC_DEC_NODE=n
-BUILD_MP3_DEC_NODE=n
-BUILD_RA8_DEC_NODE=n
 BUILD_MP4_FF_PARSER_NODE=n
 BUILD_MPEG2_FF_PARSER_NODE=n
 BUILD_AMR_FF_PARSER_NODE=y

@@ -28,7 +28,6 @@ LIBS :=  pvframemetadatautility \
         pvfileoutputnode \
         pvpvxparser \
         pvmp3ffparsernode \
-        mp3decnode \
         pvdownloadmanagernode \
         pvdtcp_mbds_lib \
         pvmp4ffparsernode \
@@ -51,10 +50,6 @@ LIBS :=  pvframemetadatautility \
         pvomxaudiodecnode \
         pvomxbasedecnode \
         m4v_config \
-        pvvideodecnode \
-        pvavcdecnode \
-        gsmamrdecnode \
-        aacdecnode \
         pvstreamingmanagernode \
         pvrtspbroadcastwithpvrsm \
         pvmshttpstreamingmanager \
@@ -91,7 +86,6 @@ LIBS :=  pvframemetadatautility \
         pvmf \
         pvsdpparser \
         pv_rtsp_parcom \
-        pvwmadecnode \
         omx_common_lib \
         pv_config_parser \
         omx_mp3_component_lib \
@@ -116,7 +110,6 @@ LIBS :=  pvframemetadatautility \
         pvgsmamrparser \
         pvlatmpayloadparser \
         rdt_parser \
-        pvwmvdecnode \
         g726decnode \
         pvg726decoder \
         wmvdecoder \
@@ -140,10 +133,8 @@ LIBS :=  pvframemetadatautility \
 		pvwavffrecognizer \
         pvfileparserutils \
         omx_rv_component_lib \
-        pvrvdecnode \
         rvdecoder \
         omx_ra_component_lib \
-        pvra8decnode \
         pvra8decoder \
         pvrmffparsernode \
         pvrmffparser \
