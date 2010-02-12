@@ -720,7 +720,8 @@ OSCL_EXPORT_REF bool PVMFNodeInterfaceImpl::ProcessCommand()
             case PVMF_GENERIC_NODE_STOP:
             {
                 if (iInterfaceState == EPVMFNodeStarted ||
-                        iInterfaceState == EPVMFNodePaused)
+                        iInterfaceState == EPVMFNodePaused ||
+                        iInterfaceState == EPVMFNodePrepared)
                 {
                     status = DoStop();
                 }

@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,12 +17,6 @@
  */
 #ifndef PVMP4FFCN_TUNABLES_H_INCLUDED
 #define PVMP4FFCN_TUNABLES_H_INCLUDED
-
-//Default NODE COMMAND vector reserve size
-#define PVMF_MP4FFCN_COMMAND_VECTOR_RESERVE 10
-
-//Starting value for command IDs
-#define PVMF_MP4FFCN_COMMAND_ID_START 20000
 
 // Default port vector reserve size
 #define PVMF_MP4FFCN_PORT_VECTOR_RESERVE 1

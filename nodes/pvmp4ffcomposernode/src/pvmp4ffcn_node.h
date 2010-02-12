@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,41 +23,24 @@
 #ifndef PVMP4FFCN_NODE_H_INCLUDED
 #define PVMP4FFCN_NODE_H_INCLUDED
 
-#ifndef OSCL_BASE_H_INCLUDED
-#include "oscl_base.h"
+#ifdef ANDROID
+#include <utils/RefBase.h>
+
+namespace android
+{
+class FragmentWriter;
+}
+
 #endif
-#ifndef OSCLCONFIG_IO_H_INCLUDED
-#include "osclconfig_io.h"
-#endif
-#ifndef OSCL_FILE_IO_H_INCLUDED
-#include "oscl_file_io.h"
-#endif
-#ifndef OSCL_BIN_STREAM_H_INCLUDED
-#include "oscl_bin_stream.h"
-#endif
-#ifndef OSCL_SCHEDULER_AO_H_INCLUDED
-#include "oscl_scheduler_ao.h"
-#endif
-#ifndef PVLOGGER_H_INCLUDED
-#include "pvlogger.h"
-#endif
+
 #ifndef __MEDIA_CLOCK_CONVERTER_H
 #include "media_clock_converter.h"
-#endif
-#ifndef PVMF_FORMAT_TYPE_H_INCLUDED
-#include "pvmf_format_type.h"
-#endif
-#ifndef PVMF_SIMPLE_MEDIA_BUFFER_H_INCLUDED
-#include "pvmf_simple_media_buffer.h"
 #endif
 #ifndef PVMF_MEDIA_DATA_H_INCLUDED
 #include "pvmf_media_data.h"
 #endif
-#ifndef PVMF_NODE_INTERFACE_H_INCLUDED
-#include "pvmf_node_interface.h"
-#endif
-#ifndef PVMF_NODE_UTILS_H_INCLUDED
-#include "pvmf_node_utils.h"
+#ifndef PVMF_NODE_INTERFACE_IMPL_H_INCLUDED
+#include "pvmf_node_interface_impl.h"
 #endif
 #ifndef PVMP4FFCN_TYPES_H_INCLUDED
 #include "pvmp4ffcn_types.h"
@@ -80,48 +63,34 @@
 #ifndef PVMF_MEDIA_MSG_FORMAT_IDS_H_INCLUDED
 #include "pvmf_media_msg_format_ids.h"
 #endif
-#ifndef PVMI_KVP_H_INCLUDED
-#include "pvmi_kvp.h"
+#ifndef OSCL_DLL_H_INCLUDED
+#include "oscl_dll.h"
 #endif
-
-// Forward declaration
-class PVMp4FFComposerPort;
-class PVA_FF_IMpeg4File;
-class PVMP4FFComposerSampleParam;
-class PVA_FF_TextSampleDescInfo;
-
-//memory allocator type for this node.
-typedef OsclMemAllocator PVMp4FFCNAlloc;
-
-/** Node command type */
-typedef PVMFGenericNodeCommand<PVMp4FFCNAlloc> PVMp4FFCNCmd;
-
-/** Command queue type */
-typedef PVMFNodeCommandQueue<PVMp4FFCNCmd, PVMp4FFCNAlloc> PVMp4FFCNCmdQueue;
-
-/** Port vector type */
-typedef PVMFPortVector<PVMp4FFComposerPort, PVMp4FFCNAlloc> PVMp4FFCNPortVector;
-
-#define PROFILING_ON (PVLOGGER_INST_LEVEL >= PVLOGMSG_INST_PROF)
-
+#ifndef OSCL_MEM_BASIC_FUNCTIONS_H
+#include "oscl_mem_basic_functions.h"
+#endif
+#ifndef __A_IMpeg4File_H__
+#include "a_impeg4file.h"
+#endif
+#ifndef __AtomDefs_H__
+#include "a_atomdefs.h"
+#endif
 #ifndef PVMF_MEDIA_CLOCK_H_INCLUDED
 #include "pvmf_media_clock.h"
 #endif
 
-#ifdef ANDROID
-#include <utils/RefBase.h>
+// Forward declaration
+class PVMp4FFComposerPort;
 
-namespace android
-{
-class FragmentWriter;
-}
+//Port vector type
+typedef PVMFPortVector<PVMp4FFComposerPort, OsclMemAllocator> PVMp4FFCNPortVector;
 
-#endif
+#define PROFILING_ON (PVLOGGER_INST_LEVEL >= PVLOGMSG_INST_PROF)
+
 
 ////////////////////////////////////////////////////////////////////////////
 class PVMp4FFComposerNode
-        : public PVMFNodeInterface
-        , public OsclActiveObject
+        : public PVMFNodeInterfaceImpl
         , public PVMp4FFCNTrackConfigInterface
         , public PVMp4FFCNClipConfigInterface
         , public PvmfComposerSizeAndDurationInterface
@@ -131,33 +100,9 @@ class PVMp4FFComposerNode
         PVMp4FFComposerNode(int32 aPriority);
         ~PVMp4FFComposerNode();
 
-        // Pure virtual functions from PVMFNodeInterface
-        OSCL_IMPORT_REF PVMFStatus ThreadLogon();
-        OSCL_IMPORT_REF PVMFStatus ThreadLogoff();
+        // Override virtual functions from PVMFNodeInterfaceImpl
         OSCL_IMPORT_REF PVMFStatus GetCapability(PVMFNodeCapability& aNodeCapability);
         OSCL_IMPORT_REF PVMFPortIter* GetPorts(const PVMFPortFilter* aFilter);
-        OSCL_IMPORT_REF PVMFCommandId QueryUUID(PVMFSessionId aSession, const PvmfMimeString& aMimeType,
-                                                Oscl_Vector<PVUuid, PVMp4FFCNAlloc>& aUuids,
-                                                bool aExactUuidsOnly = false,
-                                                const OsclAny* aContext = NULL);
-        OSCL_IMPORT_REF PVMFCommandId QueryInterface(PVMFSessionId aSession, const PVUuid& aUuid,
-                PVInterface*& aInterfacePtr,
-                const OsclAny* aContext = NULL);
-        OSCL_IMPORT_REF PVMFCommandId RequestPort(PVMFSessionId aSession, int32 aPortTag,
-                const PvmfMimeString* aPortConfig = NULL,
-                const OsclAny* aContext = NULL);
-        OSCL_IMPORT_REF PVMFCommandId ReleasePort(PVMFSessionId aSession, PVMFPortInterface& aPort,
-                const OsclAny* aContext = NULL);
-        OSCL_IMPORT_REF PVMFCommandId Init(PVMFSessionId aSession, const OsclAny* aContext = NULL);
-        OSCL_IMPORT_REF PVMFCommandId Start(PVMFSessionId aSession, const OsclAny* aContext = NULL);
-        OSCL_IMPORT_REF PVMFCommandId Stop(PVMFSessionId aSession, const OsclAny* aContext = NULL);
-        OSCL_IMPORT_REF PVMFCommandId Pause(PVMFSessionId aSession, const OsclAny* aContext = NULL);
-        OSCL_IMPORT_REF PVMFCommandId Flush(PVMFSessionId aSession, const OsclAny* aContext = NULL);
-        OSCL_IMPORT_REF PVMFCommandId Reset(PVMFSessionId aSession, const OsclAny* aContext = NULL);
-        OSCL_EXPORT_REF PVMFCommandId Prepare(PVMFSessionId aSession, const OsclAny* aContext);
-        OSCL_IMPORT_REF PVMFCommandId CancelAllCommands(PVMFSessionId aSession, const OsclAny* aContextData = NULL);
-        OSCL_IMPORT_REF PVMFCommandId CancelCommand(PVMFSessionId aSession, PVMFCommandId aCmdId,
-                const OsclAny* aContextData = NULL);
 
         // Pure virtual from PVInterface
         OSCL_IMPORT_REF void addRef();
@@ -231,35 +176,22 @@ class PVMp4FFComposerNode
         PVMFStatus VerifyAndSetConfigParameter(PvmiKvp& aParameter, bool aSetParam);
 
     private:
-#ifdef ANDROID
-        friend class android::FragmentWriter;  // Access AddSampleToTrack
-#endif
-
         // Pure virtual from OsclActiveObject
         void Run();
 
-        /////////////////////////////////////////////////////
-        //     Command processing routines
-        /////////////////////////////////////////////////////
-        PVMFCommandId QueueCommandL(PVMp4FFCNCmd& aCmd);
-        bool ProcessCommand(PVMp4FFCNCmd& aCmd);
-        void CommandComplete(PVMp4FFCNCmdQueue& aQueue, PVMp4FFCNCmd& aCmd, PVMFStatus aStatus, OsclAny* aData = NULL);
-        void DoQueryUuid(PVMp4FFCNCmd& aCmd);
-        void DoQueryInterface(PVMp4FFCNCmd& aCmd);
-        void DoRequestPort(PVMp4FFCNCmd& aCmd);
-        void DoReleasePort(PVMp4FFCNCmd& aCmd);
-        void DoInit(PVMp4FFCNCmd& aCmd);
-        void DoPrepare(PVMp4FFCNCmd& aCmd);
-        void DoStart(PVMp4FFCNCmd& aCmd);
+        //Command Handlers
+        PVMFStatus DoQueryUuid();
+        PVMFStatus DoQueryInterface();
+        PVMFStatus DoRequestPort(PVMFPortInterface*& aPort);
+        PVMFStatus DoReleasePort();
+        PVMFStatus DoInit();
+        PVMFStatus DoStart();
         PVMFStatus AddTrack(PVMp4FFComposerPort *aPort);
-        void DoStop(PVMp4FFCNCmd& aCmd);
-        void DoFlush(PVMp4FFCNCmd& aCmd);
-        bool IsFlushPending();
-        void FlushComplete();
-        void DoPause(PVMp4FFCNCmd& aCmd);
-        void DoReset(PVMp4FFCNCmd& aCmd);
-        void DoCancelAllCommands(PVMp4FFCNCmd& aCmd);
-        void DoCancelCommand(PVMp4FFCNCmd& aCmd);
+        PVMFStatus DoStop();
+        PVMFStatus DoFlush();
+        bool FlushComplete();
+        PVMFStatus DoPause();
+        PVMFStatus DoReset();
 
         /////////////////////////////////////////////////////
         //      Port activity processing routines
@@ -330,21 +262,15 @@ class PVMp4FFComposerNode
         /** Clear all pending port activity after max file size or duration is reached. */
         void ClearPendingPortActivity();
 
-        /////////////////////////////////////////////////////
-        //      Event reporting routines
-        /////////////////////////////////////////////////////
+        //Event reporting routines
         void ReportErrorEvent(PvmfMp4FFCNError aEventType, OsclAny* aEventData = NULL);
-        void ReportInfoEvent(PVMFEventType aEventType, OsclAny* aEventData = NULL);
-        void SetState(TPVMFNodeInterfaceState);
 
-    private:
+        //Command dispatcher
+        PVMFStatus HandleExtensionAPICommands();
+        PVMFStatus CancelCurrentCommand();
+
         void GenerateDiagnostics(uint32 aTime, uint32 aSize);
         void LogDiagnostics();
-        int32 StoreCurrentCommand(PVMp4FFCNCmdQueue&, PVMp4FFCNCmd&, PVMp4FFCNCmdQueue&);
-
-        // Node command queue
-        PVMp4FFCNCmdQueue iCmdQueue;
-        PVMp4FFCNCmdQueue iCurrentCmd;
 
         // Vector of ports contained in this node
         PVMp4FFCNPortVector iInPorts;
@@ -362,6 +288,8 @@ class PVMp4FFComposerNode
         Oscl_File* iFileObject;
 
 #ifdef ANDROID
+        friend class android::FragmentWriter;  // Access AddSampleToTrack
+
         // Fragment to track writer thread.
         android::sp<android::FragmentWriter> iFragmentWriter;
 

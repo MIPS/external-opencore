@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,11 @@
  * @file pvmp4ffcn_node.cpp
  * @brief Node for PV MPEG4 file format composer
  */
+
+#include "pvmp4ffcn_node.h"
+#include "pvmp4ffcn_factory.h"
+#include "pvmp4ffcn_port.h"
+
 #ifdef ANDROID
 // #define LOG_NDEBUG 0
 #define LOG_TAG "PvMp4Composer"
@@ -28,31 +33,7 @@
 // NUMBER_OUTPUT_BUFFER is number of output buffers in encoder node, pvmf_omx_enc_node.h
 // Need to change encoder node also if updated here.
 #define NUMBER_OUTPUT_BUFFER 9
-#endif // ANDROID
 
-#ifndef PVMP4FFCN_NODE_H_INCLUDED
-#include "pvmp4ffcn_node.h"
-#endif
-#ifndef PVMP4FFCN_FACTORY_H_INCLUDED
-#include "pvmp4ffcn_factory.h"
-#endif
-#ifndef PVMP4FFCN_PORT_H_INCLUDED
-#include "pvmp4ffcn_port.h"
-#endif
-#ifndef OSCL_DLL_H_INCLUDED
-#include "oscl_dll.h"
-#endif
-#ifndef OSCL_MEM_BASIC_FUNCTIONS_H
-#include "oscl_mem_basic_functions.h"
-#endif
-#ifndef __A_IMpeg4File_H__
-#include "a_impeg4file.h"
-#endif
-#ifndef __AtomDefs_H__
-#include "a_atomdefs.h"
-#endif
-
-#ifdef ANDROID
 namespace android
 {
 
@@ -321,7 +302,7 @@ OSCL_EXPORT_REF bool PVMp4FFComposerNodeFactory::DeleteMp4FFComposer(PVMFNodeInt
 
 ////////////////////////////////////////////////////////////////////////////
 PVMp4FFComposerNode::PVMp4FFComposerNode(int32 aPriority)
-        : OsclActiveObject(aPriority, "PVMp4FFComposerNode")
+        : PVMFNodeInterfaceImpl(aPriority, "PVMp4FFComposerNode")
         , iMpeg4File(NULL)
         , iFileType(0)
         , iAuthoringMode(PVMP4FF_3GPP_DOWNLOAD_MODE)
@@ -361,20 +342,12 @@ PVMp4FFComposerNode::PVMp4FFComposerNode(int32 aPriority)
     iDataPathLogger = PVLogger::GetLoggerObject("datapath.sinknode.mp4composer");
     int32 err;
     OSCL_TRY(err,
-             //Create the input command queue.  Use a reserve to avoid lots of
-             //dynamic memory allocation.
-             iCmdQueue.Construct(PVMF_MP4FFCN_COMMAND_ID_START, PVMF_MP4FFCN_COMMAND_VECTOR_RESERVE);
-             iCurrentCmd.Construct(0, 1); // There's only 1 current command
-
-
              //Create the port vector.
              iInPorts.Construct(PVMF_MP4FFCN_PORT_VECTOR_RESERVE);
             );
 
     OSCL_FIRST_CATCH_ANY(err,
                          //if a leave happened, cleanup and re-throw the error
-                         iCmdQueue.clear();
-                         iCurrentCmd.clear();
                          iInPorts.clear();
                          memvector_sps.clear();
                          memvector_pps.clear();
@@ -414,6 +387,10 @@ PVMp4FFComposerNode::PVMp4FFComposerNode(int32 aPriority)
 ////////////////////////////////////////////////////////////////////////////
 PVMp4FFComposerNode::~PVMp4FFComposerNode()
 {
+
+    iLogger = NULL;
+    iDataPathLogger = NULL;
+
     if (!oDiagnosticsLogged)
     {
         LogDiagnostics();
@@ -480,18 +457,7 @@ PVMp4FFComposerNode::~PVMp4FFComposerNode()
         iInPorts.Erase(&iInPorts.front());
 
     }
-    //Cleanup commands
-    //The command queues are self-deleting, but we want to
-    //notify the observer of unprocessed commands.
-    while (!iCmdQueue.empty())
-    {
-        CommandComplete(iCmdQueue, iCmdQueue[0], PVMFFailure);
-    }
 
-    while (!iCurrentCmd.empty())
-    {
-        CommandComplete(iCurrentCmd, iCurrentCmd[0], PVMFFailure);
-    }
     iNodeEndOfDataReached = false;
 
     Cancel();
@@ -505,39 +471,6 @@ PVMp4FFComposerNode::~PVMp4FFComposerNode()
     }
 }
 
-////////////////////////////////////////////////////////////////////////////
-OSCL_EXPORT_REF PVMFStatus PVMp4FFComposerNode::ThreadLogon()
-{
-    switch (iInterfaceState)
-    {
-        case EPVMFNodeCreated:
-            if (!IsAdded())
-                AddToScheduler();
-            SetState(EPVMFNodeIdle);
-            return PVMFSuccess;
-        default:
-            return PVMFErrInvalidState;
-    }
-}
-
-////////////////////////////////////////////////////////////////////////////
-OSCL_EXPORT_REF PVMFStatus PVMp4FFComposerNode::ThreadLogoff()
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_MLDBG, iLogger, PVLOGMSG_INFO, (0, "PVMp4FFComposerNode:ThreadLogoff"));
-    switch (iInterfaceState)
-    {
-        case EPVMFNodeIdle:
-            if (IsAdded())
-                RemoveFromScheduler();
-            iLogger = NULL;
-            iDataPathLogger = NULL;
-            SetState(EPVMFNodeCreated);
-            return PVMFSuccess;
-
-        default:
-            return PVMFErrInvalidState;
-    }
-}
 
 ////////////////////////////////////////////////////////////////////////////
 OSCL_EXPORT_REF PVMFStatus PVMp4FFComposerNode::GetCapability(PVMFNodeCapability& aNodeCapability)
@@ -564,133 +497,6 @@ OSCL_EXPORT_REF PVMFPortIter* PVMp4FFComposerNode::GetPorts(const PVMFPortFilter
     OSCL_UNUSED_ARG(aFilter);
     iInPorts.Reset();
     return &iInPorts;
-}
-
-////////////////////////////////////////////////////////////////////////////
-OSCL_EXPORT_REF PVMFCommandId PVMp4FFComposerNode::QueryUUID(PVMFSessionId aSession, const PvmfMimeString& aMimeType,
-        Oscl_Vector<PVUuid, OsclMemAllocator>& aUuids,
-        bool aExactUuidsOnly, const OsclAny* aContext)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMp4FFComposerNode::QueryUUID"));
-
-    PVMp4FFCNCmd cmd;
-    cmd.Construct(aSession, PVMF_GENERIC_NODE_QUERYUUID, aMimeType, aUuids, aExactUuidsOnly, aContext);
-    return QueueCommandL(cmd);
-}
-
-////////////////////////////////////////////////////////////////////////////
-OSCL_EXPORT_REF PVMFCommandId PVMp4FFComposerNode::QueryInterface(PVMFSessionId aSession, const PVUuid& aUuid,
-        PVInterface*& aInterfacePtr,
-        const OsclAny* aContext)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                    (0, "PVMp4FFComposerNode::QueryInterface"));
-    PVMp4FFCNCmd cmd;
-    cmd.Construct(aSession, PVMF_GENERIC_NODE_QUERYINTERFACE, aUuid, aInterfacePtr, aContext);
-    return QueueCommandL(cmd);
-}
-
-////////////////////////////////////////////////////////////////////////////
-OSCL_EXPORT_REF PVMFCommandId PVMp4FFComposerNode::Init(PVMFSessionId aSession, const OsclAny* aContext)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMp4FFComposerNode::Init"));
-    PVMp4FFCNCmd cmd;
-    cmd.Construct(aSession, PVMF_GENERIC_NODE_INIT, aContext);
-    return QueueCommandL(cmd);
-}
-
-////////////////////////////////////////////////////////////////////////////
-OSCL_EXPORT_REF PVMFCommandId PVMp4FFComposerNode::Prepare(PVMFSessionId aSession, const OsclAny* aContext)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_MLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMp4FFComposerNode::Prepare"));
-    PVMp4FFCNCmd cmd;
-    cmd.Construct(aSession, PVMF_GENERIC_NODE_PREPARE, aContext);
-    return QueueCommandL(cmd);
-}
-
-////////////////////////////////////////////////////////////////////////////
-OSCL_EXPORT_REF PVMFCommandId PVMp4FFComposerNode::RequestPort(PVMFSessionId aSession,
-        int32 aPortTag,
-        const PvmfMimeString* aPortConfig,
-        const OsclAny* aContext)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMp4FFComposerNode::RequestPort"));
-    PVMp4FFCNCmd cmd;
-    cmd.Construct(aSession, PVMF_GENERIC_NODE_REQUESTPORT, aPortTag, aPortConfig, aContext);
-    return QueueCommandL(cmd);
-}
-
-////////////////////////////////////////////////////////////////////////////
-OSCL_EXPORT_REF PVMFCommandId PVMp4FFComposerNode::ReleasePort(PVMFSessionId aSession,
-        PVMFPortInterface& aPort,
-        const OsclAny* aContext)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMp4FFComposerNode::ReleasePort"));
-    PVMp4FFCNCmd cmd;
-    cmd.Construct(aSession, PVMF_GENERIC_NODE_RELEASEPORT, aPort, aContext);
-    return QueueCommandL(cmd);
-}
-
-////////////////////////////////////////////////////////////////////////////
-OSCL_EXPORT_REF PVMFCommandId PVMp4FFComposerNode::Start(PVMFSessionId aSession, const OsclAny* aContext)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMp4FFComposerNode::Start"));
-    PVMp4FFCNCmd cmd;
-    cmd.Construct(aSession, PVMF_GENERIC_NODE_START, aContext);
-    return QueueCommandL(cmd);
-}
-
-////////////////////////////////////////////////////////////////////////////
-OSCL_EXPORT_REF PVMFCommandId PVMp4FFComposerNode::Stop(PVMFSessionId aSession, const OsclAny* aContext)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMp4FFComposerNode::Stop"));
-    PVMp4FFCNCmd cmd;
-    cmd.Construct(aSession, PVMF_GENERIC_NODE_STOP, aContext);
-    return QueueCommandL(cmd);
-}
-
-////////////////////////////////////////////////////////////////////////////
-OSCL_EXPORT_REF PVMFCommandId PVMp4FFComposerNode::Pause(PVMFSessionId aSession, const OsclAny* aContext)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMp4FFComposerNode::Pause"));
-    PVMp4FFCNCmd cmd;
-    cmd.Construct(aSession, PVMF_GENERIC_NODE_PAUSE, aContext);
-    return QueueCommandL(cmd);
-}
-
-OSCL_EXPORT_REF PVMFCommandId PVMp4FFComposerNode::Flush(PVMFSessionId aSession, const OsclAny* aContext)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMp4FFComposerNode::Flush"));
-    PVMp4FFCNCmd cmd;
-    cmd.Construct(aSession, PVMF_GENERIC_NODE_FLUSH, aContext);
-    return QueueCommandL(cmd);
-}
-
-////////////////////////////////////////////////////////////////////////////
-OSCL_EXPORT_REF PVMFCommandId PVMp4FFComposerNode::Reset(PVMFSessionId aSession, const OsclAny* aContext)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMp4FFComposerNode::Reset"));
-    PVMp4FFCNCmd cmd;
-    cmd.Construct(aSession, PVMF_GENERIC_NODE_RESET, aContext);
-    return QueueCommandL(cmd);
-}
-
-////////////////////////////////////////////////////////////////////////////
-OSCL_EXPORT_REF PVMFCommandId PVMp4FFComposerNode::CancelAllCommands(PVMFSessionId aSession, const OsclAny* aContext)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMp4FFComposerNode::CancelAllCommands"));
-    PVMp4FFCNCmd cmd;
-    cmd.Construct(aSession, PVMF_GENERIC_NODE_CANCELALLCOMMANDS, aContext);
-    return QueueCommandL(cmd);
-}
-
-////////////////////////////////////////////////////////////////////////////
-OSCL_EXPORT_REF PVMFCommandId PVMp4FFComposerNode::CancelCommand(PVMFSessionId aSession, PVMFCommandId aCmdId, const OsclAny* aContext)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMp4FFComposerNode::CancelCommand"));
-    PVMp4FFCNCmd cmd;
-    cmd.Construct(aSession, PVMF_GENERIC_NODE_CANCELCOMMAND, aCmdId, aContext);
-    return QueueCommandL(cmd);
 }
 
 ////////////////////////////////////////////////////////////////////////////
@@ -755,6 +561,7 @@ OSCL_EXPORT_REF uint16 PVMp4FFComposerNode::ConvertLangCode(const OSCL_String & 
 
     return lang_code;
 }
+
 /////////////////////////////////////////////////////////////////////////////
 OSCL_EXPORT_REF PVMFStatus PVMp4FFComposerNode::SetOutputFileName(const OSCL_wString& aFileName)
 {
@@ -764,6 +571,7 @@ OSCL_EXPORT_REF PVMFStatus PVMp4FFComposerNode::SetOutputFileName(const OSCL_wSt
     iFileName = aFileName;
     return PVMFSuccess;
 }
+
 //////////////////////////////////////////////////////////////////////////////
 OSCL_EXPORT_REF PVMFStatus PVMp4FFComposerNode::SetOutputFileDescriptor(const OsclFileHandle* aFileHandle)
 {
@@ -789,6 +597,7 @@ OSCL_EXPORT_REF PVMFStatus PVMp4FFComposerNode::SetOutputFileDescriptor(const Os
     }
     return PVMFFailure;
 }
+
 ////////////////////////////////////////////////////////////////////////////
 OSCL_EXPORT_REF PVMFStatus PVMp4FFComposerNode::SetAuthoringMode(PVMp4FFCN_AuthoringMode aAuthoringMode)
 {
@@ -1180,177 +989,62 @@ void PVMp4FFComposerNode::Run()
 {
     LOG_STACK_TRACE((0, "PVMp4FFComposerNode::Run: iInterfaceState=%d", iInterfaceState));
 
-    if (!iCmdQueue.empty())
+    // Check InputCommandQueue, If command present process commands
+
+    if (!iInputCommands.empty())
     {
-        if (ProcessCommand(iCmdQueue.front()))
-        {
-            //note: need to check the state before re-scheduling
-            //since the node could have been reset in the ProcessCommand
-            //call.
-            if (iInterfaceState != EPVMFNodeCreated)
-                RunIfNotReady();
-            return;
-        }
+        ProcessCommand();
     }
 
     LOG_STACK_TRACE((0, "PVMp4FFComposerNode::Run: Out. iInterfaceState=%d", iInterfaceState));
 }
 
-
-////////////////////////////////////////////////////////////////////////////
-//                   Command Processing routines
-////////////////////////////////////////////////////////////////////////////
-PVMFCommandId PVMp4FFComposerNode::QueueCommandL(PVMp4FFCNCmd& aCmd)
-{
-    int32 err = 0;
-    PVMFCommandId id = 0;
-
-    OSCL_TRY(err, id = iCmdQueue.AddL(aCmd););
-    OSCL_FIRST_CATCH_ANY(err,
-                         OSCL_LEAVE(err);
-                         return 0;
-                        );
-
-    // Wakeup the AO
-    RunIfNotReady();
-    return id;
-}
-
-////////////////////////////////////////////////////////////////////////////
-bool PVMp4FFComposerNode::ProcessCommand(PVMp4FFCNCmd& aCmd)
-{
-    //normally this node will not start processing one command
-    //until the prior one is finished.  However, a hi priority
-    //command such as Cancel must be able to interrupt a command
-    //in progress.
-    if (!iCurrentCmd.empty() && !aCmd.hipri())
-        return false;
-
-    switch (aCmd.iCmd)
-    {
-        case PVMF_GENERIC_NODE_QUERYUUID:
-            DoQueryUuid(aCmd);
-            break;
-
-        case PVMF_GENERIC_NODE_QUERYINTERFACE:
-            DoQueryInterface(aCmd);
-            break;
-
-        case PVMF_GENERIC_NODE_REQUESTPORT:
-            DoRequestPort(aCmd);
-            break;
-
-        case PVMF_GENERIC_NODE_RELEASEPORT:
-            DoReleasePort(aCmd);
-            break;
-
-        case PVMF_GENERIC_NODE_INIT:
-            DoInit(aCmd);
-            break;
-
-        case PVMF_GENERIC_NODE_PREPARE:
-            DoPrepare(aCmd);
-            break;
-
-        case PVMF_GENERIC_NODE_START:
-            DoStart(aCmd);
-            break;
-
-        case PVMF_GENERIC_NODE_STOP:
-            DoStop(aCmd);
-            break;
-
-        case PVMF_GENERIC_NODE_FLUSH:
-            DoFlush(aCmd);
-            break;
-
-        case PVMF_GENERIC_NODE_PAUSE:
-            DoPause(aCmd);
-            break;
-
-        case PVMF_GENERIC_NODE_RESET:
-            DoReset(aCmd);
-            break;
-
-        case PVMF_GENERIC_NODE_CANCELALLCOMMANDS:
-            DoCancelAllCommands(aCmd);
-            break;
-
-        case PVMF_GENERIC_NODE_CANCELCOMMAND:
-            DoCancelCommand(aCmd);
-            break;
-
-        default://unknown command type
-            CommandComplete(iCmdQueue, aCmd, PVMFFailure);
-            break;
-    }
-
-    return true;
-}
-
-////////////////////////////////////////////////////////////////////////////
-void PVMp4FFComposerNode::CommandComplete(PVMp4FFCNCmdQueue& aCmdQueue, PVMp4FFCNCmd& aCmd,
-        PVMFStatus aStatus, OsclAny* aEventData)
-{
-    LOG_STACK_TRACE((0, "PVMp4FFComposerNode:CommandComplete: Id %d Cmd %d Status %d Context %d Data %d"
-                     , aCmd.iId, aCmd.iCmd, aStatus, aCmd.iContext, aEventData));
-
-    //create response
-    PVMFCmdResp resp(aCmd.iId, aCmd.iContext, aStatus, aEventData);
-    PVMFSessionId session = aCmd.iSession;
-
-    //Erase the command from the queue.
-    aCmdQueue.Erase(&aCmd);
-
-    //Report completion to the session observer.
-    ReportCmdCompleteEvent(session, resp);
-}
-
 //////////////////////////////////////////////////////////////////////////////////
-void PVMp4FFComposerNode::DoQueryUuid(PVMp4FFCNCmd& aCmd)
+PVMFStatus PVMp4FFComposerNode::DoQueryUuid()
 {
     OSCL_String* mimetype;
     Oscl_Vector<PVUuid, OsclMemAllocator> *uuidvec;
     bool exactmatch;
-    aCmd.Parse(mimetype, uuidvec, exactmatch);
+    iCurrentCommand.PVMFNodeCommandBase::Parse(mimetype, uuidvec, exactmatch);
 
     uuidvec->push_back(KPVMp4FFCNClipConfigUuid);
     uuidvec->push_back(KPVMp4FFCNTrackConfigUuid);
     uuidvec->push_back(PvmfComposerSizeAndDurationUuid);
 
-    CommandComplete(iCmdQueue, aCmd, PVMFSuccess);
+    return PVMFSuccess;
 }
 
 //////////////////////////////////////////////////////////////////////////////////
-void PVMp4FFComposerNode::DoQueryInterface(PVMp4FFCNCmd& aCmd)
+PVMFStatus PVMp4FFComposerNode::DoQueryInterface()
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                     (0, "PVMp4FFComposerNode::DoQueryInterface"));
 
     PVUuid* uuid;
     PVInterface** ptr;
-    aCmd.Parse(uuid, ptr);
+    iCurrentCommand.PVMFNodeCommandBase::Parse(uuid, ptr);
 
     if (queryInterface(*uuid, *ptr))
     {
-        CommandComplete(iCmdQueue, aCmd, PVMFSuccess);
+        return PVMFSuccess;
     }
     else
     {
-        CommandComplete(iCmdQueue, aCmd, PVMFFailure);
+        return PVMFFailure;
     }
 }
 
 
 //////////////////////////////////////////////////////////////////////////////////
-void PVMp4FFComposerNode::DoRequestPort(PVMp4FFCNCmd& aCmd)
+PVMFStatus PVMp4FFComposerNode::DoRequestPort(PVMFPortInterface*& aPort)
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                     (0, "PVMp4FFComposerNode::DoRequestPort() In"));
 
+    aPort = NULL;
     int32 tag;
     OSCL_String* portconfig;
-    aCmd.Parse(tag, portconfig);
+    iCurrentCommand.PVMFNodeCommandBase::Parse(tag, portconfig);
 
     //validate the tag...
     switch (tag)
@@ -1359,8 +1053,7 @@ void PVMp4FFComposerNode::DoRequestPort(PVMp4FFCNCmd& aCmd)
             if (iInPorts.size() >= PVMF_MP4FFCN_MAX_INPUT_PORT)
             {
                 LOG_ERR((0, "PVMp4FFComposerNode::DoRequestPort: Error - Max number of input port already allocated"));
-                CommandComplete(iCmdQueue, aCmd, PVMFFailure);
-                return;
+                return PVMFFailure;
             }
             break;
 
@@ -1368,8 +1061,7 @@ void PVMp4FFComposerNode::DoRequestPort(PVMp4FFCNCmd& aCmd)
             //bad port tag
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
                             (0, "PVMp4FFComposerNode::DoRequestPort: Error - Invalid port tag"));
-            CommandComplete(iCmdQueue, aCmd, PVMFFailure);
-            return;
+            return PVMFFailure;
     }
 
     //Allocate a new port
@@ -1384,8 +1076,7 @@ void PVMp4FFComposerNode::DoRequestPort(PVMp4FFCNCmd& aCmd)
     OSCL_FIRST_CATCH_ANY(err,
                          PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
                                          (0, "PVMp4FFComposerNode::DoRequestPort: Error - iInPorts Out of memory"));
-                         CommandComplete(iCmdQueue, aCmd, PVMFErrNoMemory);
-                         return;
+                         return PVMFErrNoMemory;
                         );
 
     OSCL_StackString<20> portname;
@@ -1413,8 +1104,7 @@ void PVMp4FFComposerNode::DoRequestPort(PVMp4FFCNCmd& aCmd)
         }
         else
         {
-            CommandComplete(iCmdQueue, aCmd, PVMFErrNotSupported);
-            return;
+            return PVMFErrNotSupported;
         }
     }
 
@@ -1422,23 +1112,23 @@ void PVMp4FFComposerNode::DoRequestPort(PVMp4FFCNCmd& aCmd)
     OSCL_TRY(err, iInPorts.AddL(port););
     OSCL_FIRST_CATCH_ANY(err,
                          iInPorts.DestructAndDealloc(port);
-                         CommandComplete(iCmdQueue, aCmd, PVMFErrNoMemory);
-                         return;
+                         return PVMFErrNoMemory;
                         );
 
     // Return the port pointer to the caller.
-    CommandComplete(iCmdQueue, aCmd, PVMFSuccess, (OsclAny*)port);
+    aPort = port;
+    return PVMFSuccess;
 }
 
 //////////////////////////////////////////////////////////////////////////////////
-void PVMp4FFComposerNode::DoReleasePort(PVMp4FFCNCmd& aCmd)
+PVMFStatus PVMp4FFComposerNode::DoReleasePort()
 {
     //Find the port in the port vector
     PVMFPortInterface* p = NULL;
 
     for (uint32 i = 0; i < iInPorts.size(); i++)
     {
-        aCmd.Parse(p);
+        iCurrentCommand.PVMFNodeCommandBase::Parse(p);
 
         PVMp4FFComposerPort* port = (PVMp4FFComposerPort*)p;
 
@@ -1451,170 +1141,126 @@ void PVMp4FFComposerNode::DoReleasePort(PVMp4FFCNCmd& aCmd)
 #ifdef _TEST_AE_ERROR_HANDLING
             if (FAIL_NODE_CMD_RELEASE_PORT == iErrorNodeCmd)
             {
-                CommandComplete(iCmdQueue, aCmd, PVMFFailure);
+                return PVMFFailure;
 
             }
             else
             {
-                CommandComplete(iCmdQueue, aCmd, PVMFSuccess);
+                return PVMFSuccess;
             }
 #else
-            CommandComplete(iCmdQueue, aCmd, PVMFSuccess);
+            return PVMFSuccess;
 #endif
 
         }
         else
         {
             //port not found.
-            CommandComplete(iCmdQueue, aCmd, PVMFFailure);
+            return PVMFFailure;
         }
 
     }
+    return PVMFFailure;
 }
 
 //////////////////////////////////////////////////////////////////////////////////
-void PVMp4FFComposerNode::DoInit(PVMp4FFCNCmd& aCmd)
+PVMFStatus PVMp4FFComposerNode::DoInit()
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMp4FFComposerNode::DoInitNode() In"));
-
-    switch (iInterfaceState)
-    {
-        case EPVMFNodeIdle:
-            // Creation of file format library is done in DoStart. Nothing to do here.
-            SetState(EPVMFNodeInitialized);
-            CommandComplete(iCmdQueue, aCmd, PVMFSuccess);
-            break;
-        case EPVMFNodeInitialized:
-            CommandComplete(iCmdQueue, aCmd, PVMFSuccess);
-            break;
-
-        default:
-            CommandComplete(iCmdQueue, aCmd, PVMFErrInvalidState);
-            break;
-    }
+    return PVMFSuccess;
 }
 
 //////////////////////////////////////////////////////////////////////////////////
-void PVMp4FFComposerNode::DoPrepare(PVMp4FFCNCmd& aCmd)
+PVMFStatus PVMp4FFComposerNode::DoStart()
 {
-    switch (iInterfaceState)
+
+    if (EPVMFNodeStarted == iInterfaceState)
     {
-        case EPVMFNodeInitialized:
-            // Creation of file format library is done in DoStart. Nothing to do here.
-            SetState(EPVMFNodePrepared);
-            CommandComplete(iCmdQueue, aCmd, PVMFSuccess);
-            break;
-        case EPVMFNodePrepared:
-            CommandComplete(iCmdQueue, aCmd, PVMFSuccess);
-            break;
-
-        default:
-            CommandComplete(iCmdQueue, aCmd, PVMFErrInvalidState);
-            break;
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                        (0, "PVMp4FFComposerNode::DoStart() already in Started state"));
+        return PVMFSuccess;
     }
-}
 
-//////////////////////////////////////////////////////////////////////////////////
-void PVMp4FFComposerNode::DoStart(PVMp4FFCNCmd& aCmd)
-{
     PVMFStatus status = PVMFSuccess;
     uint32 i = 0;
 #ifdef _TEST_AE_ERROR_HANDLING
     if (FAIL_NODE_CMD_START == iErrorNodeCmd)
     {
         iInterfaceState = EPVMFNodeError;
+        return PVMFErrInvalidState;
     }
 #endif
-    switch (iInterfaceState)
+    if (EPVMFNodePrepared == iInterfaceState)
     {
-        case EPVMFNodePrepared:
+        iPostfix = _STRLIT("00");
+        iOutputPath = _STRLIT("");
+        int32 pos = 0;
+        for (pos = iFileName.get_size() - 1; pos >= 0; pos--)
         {
-            iPostfix = _STRLIT("00");
-            iOutputPath = _STRLIT("");
-            int32 pos = 0;
-            for (pos = iFileName.get_size() - 1; pos >= 0; pos--)
-            {
-                if (iFileName[pos] == SLASH)
-                    break;
-            }
+            if (iFileName[pos] == SLASH)
+                break;
+        }
 
-            if (pos == -1)
+        if (pos == -1)
+        {
+            iOutputPath = _STRLIT(".");
+        }
+        else
+        {
+            for (i = 0; i <= (uint32) pos; i++)
+                iOutputPath += iFileName[i];
+        }
+
+        iFileType = 0;
+        for (i = 0; i < iInPorts.size(); i++)
+        {
+            if (iInPorts[i]->GetFormat() == PVMF_MIME_H264_VIDEO_MP4 ||
+                    iInPorts[i]->GetFormat() == PVMF_MIME_ISO_AVC_SAMPLE_FORMAT ||
+                    iInPorts[i]->GetFormat() == PVMF_MIME_M4V ||
+                    iInPorts[i]->GetFormat() == PVMF_MIME_H2631998 ||
+                    iInPorts[i]->GetFormat() == PVMF_MIME_H2632000)
             {
-                iOutputPath = _STRLIT(".");
+                iFileType |= FILE_TYPE_VIDEO;
+            }
+            else if (iInPorts[i]->GetFormat() == PVMF_MIME_AMR_IETF ||
+                     iInPorts[i]->GetFormat() == PVMF_MIME_AMRWB_IETF ||
+                     iInPorts[i]->GetFormat() == PVMF_MIME_MPEG4_AUDIO)
+            {
+                iFileType |= FILE_TYPE_AUDIO;
+            }
+            else if (iInPorts[i]->GetFormat() == PVMF_MIME_3GPP_TIMEDTEXT)
+            {
+                iFileType |= FILE_TYPE_TIMED_TEXT;
             }
             else
             {
-                for (i = 0; i <= (uint32) pos; i++)
-                    iOutputPath += iFileName[i];
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_ERR,
+                                (0, "PVMp4FFComposerNode::DoStart: Error - Unsupported format"));
+                return PVMFErrNotSupported;
             }
+        }
 
+        if (iMpeg4File)
+        {
+            LOG_ERR((0, "PVMp4FFComposerNode::DoStart: Error - File format library already exists"));
+            return PVMFFailure;
+        }
 
-
-            iFileType = 0;
-            for (i = 0; i < iInPorts.size(); i++)
-            {
-                if (iInPorts[i]->GetFormat() == PVMF_MIME_H264_VIDEO_MP4 ||
-                        iInPorts[i]->GetFormat() == PVMF_MIME_ISO_AVC_SAMPLE_FORMAT ||
-                        iInPorts[i]->GetFormat() == PVMF_MIME_M4V ||
-                        iInPorts[i]->GetFormat() == PVMF_MIME_H2631998 ||
-                        iInPorts[i]->GetFormat() == PVMF_MIME_H2632000)
-                {
-                    iFileType |= FILE_TYPE_VIDEO;
-                }
-                else if (iInPorts[i]->GetFormat() == PVMF_MIME_AMR_IETF ||
-                         iInPorts[i]->GetFormat() == PVMF_MIME_AMRWB_IETF ||
-                         iInPorts[i]->GetFormat() == PVMF_MIME_MPEG4_AUDIO)
-                {
-                    iFileType |= FILE_TYPE_AUDIO;
-                }
-                else if (iInPorts[i]->GetFormat() == PVMF_MIME_3GPP_TIMEDTEXT)
-                {
-                    iFileType |= FILE_TYPE_TIMED_TEXT;
-                }
-                else
-                {
-                    PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_ERR,
-                                    (0, "PVMp4FFComposerNode::DoStart: Error - Unsupported format"));
-                    return;
-                }
-            }
-
-            if (iMpeg4File)
-            {
-                LOG_ERR((0, "PVMp4FFComposerNode::DoStart: Error - File format library already exists"));
-                CommandComplete(iCmdQueue, aCmd, PVMFFailure);
-                return;
-            }
-
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
-                            (0, "PVMp4FFComposerNode::DoStart: Calling PVA_FF_IMpeg4File::createMP4File(%d,0x%x,%d)",
-                             iFileType, &iFs, iAuthoringMode));
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
+                        (0, "PVMp4FFComposerNode::DoStart: Calling PVA_FF_IMpeg4File::createMP4File(%d,0x%x,%d)",
+                         iFileType, &iFs, iAuthoringMode));
 #ifdef _TEST_AE_ERROR_HANDLING //test case to fail mp4 file parser
-            if (iErrorCreateComposer)
-            {
-                //to fail createMP4File()
-                OSCL_wHeapString<OsclMemAllocator> ErrFileName;
+        if (iErrorCreateComposer)
+        {
+            //to fail createMP4File()
+            OSCL_wHeapString<OsclMemAllocator> ErrFileName;
 
-                iMpeg4File = PVA_FF_IMpeg4File::createMP4File(iFileType, iOutputPath, iPostfix,
-                             (void*) & iFs, iAuthoringMode, ErrFileName, iCacheSize);
+            iMpeg4File = PVA_FF_IMpeg4File::createMP4File(iFileType, iOutputPath, iPostfix,
+                         (void*) & iFs, iAuthoringMode, ErrFileName, iCacheSize);
 
-            }
-            else
-            {
-                if (iFileObject != NULL)
-                {
-                    iMpeg4File = PVA_FF_IMpeg4File::createMP4File(iFileType, iAuthoringMode, iFileObject, iCacheSize);
-
-                }
-                else
-                {
-
-                    iMpeg4File = PVA_FF_IMpeg4File::createMP4File(iFileType, iOutputPath, iPostfix,
-                                 (void*) & iFs, iAuthoringMode, iFileName, iCacheSize);
-
-                }
-            }
-#else
+        }
+        else
+        {
             if (iFileObject != NULL)
             {
                 iMpeg4File = PVA_FF_IMpeg4File::createMP4File(iFileType, iAuthoringMode, iFileObject, iCacheSize);
@@ -1622,89 +1268,91 @@ void PVMp4FFComposerNode::DoStart(PVMp4FFCNCmd& aCmd)
             }
             else
             {
+
                 iMpeg4File = PVA_FF_IMpeg4File::createMP4File(iFileType, iOutputPath, iPostfix,
                              (void*) & iFs, iAuthoringMode, iFileName, iCacheSize);
+
             }
+        }
+#else
+        if (iFileObject != NULL)
+        {
+            iMpeg4File = PVA_FF_IMpeg4File::createMP4File(iFileType, iAuthoringMode, iFileObject, iCacheSize);
+
+        }
+        else
+        {
+            iMpeg4File = PVA_FF_IMpeg4File::createMP4File(iFileType, iOutputPath, iPostfix,
+                         (void*) & iFs, iAuthoringMode, iFileName, iCacheSize);
+        }
 #endif
-            if (!iMpeg4File)
-            {
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_ERR,
-                                (0, "PVMp4FFComposerNode::DoStart: Error - PVA_FF_IMpeg4File::createMP4File failed"));
-                CommandComplete(iCmdQueue, aCmd, PVMFFailure);
-                return;
-            }
-
-            iMpeg4File->setPresentationTimescale(iPresentationTimescale);
-            iMpeg4File->setVersion(iVersion.iDataString, iVersion.iLangCode);
-            iMpeg4File->setTitle(iTitle.iDataString, iTitle.iLangCode);
-            iMpeg4File->setAuthor(iAuthor.iDataString, iAuthor.iLangCode);
-            iMpeg4File->setCopyright(iCopyright.iDataString, iCopyright.iLangCode);
-            iMpeg4File->setDescription(iDescription.iDataString, iDescription.iLangCode);
-            iMpeg4File->setRating(iRating.iDataString, iRating.iLangCode);
-            if (iCreationDate.get_size() > 0)
-            {
-                iMpeg4File->setCreationDate(iCreationDate);
-            }
-            iMpeg4File->setMovieFragmentDuration(iMovieFragmentDuration);
-            iMpeg4File->setAlbumInfo(iAlbumTitle.iDataString, iAlbumTitle.iLangCode);
-            iMpeg4File->setRecordingYear(iRecordingYear);
-
-            iMpeg4File->setPerformer(iPerformer.iDataString, iPerformer.iLangCode);
-            iMpeg4File->setGenre(iGenre.iDataString, iGenre.iLangCode);
-            iMpeg4File->setClassification(iClassification.iDataString, iClassification.iClassificationEntity, iClassification.iClassificationTable, iClassification.iLangCode);
-
-            for (i = 0; i < iKeyWordVector.size() ; i++)
-            {
-                iMpeg4File->setKeyWord(iKeyWordVector[i]->iKeyWordSize, iKeyWordVector[i]->iData_String, iKeyWordVector[i]->iLang_Code);
-            }
-
-            iMpeg4File->setLocationInfo(&iLocationInfo);
-            for (i = 0; i < iInPorts.size(); i++)
-            {
-                status = AddTrack(iInPorts[i]);
-                if (status != PVMFSuccess)
-                {
-                    CommandComplete(iCmdQueue, aCmd, status);
-                    return;
-                }
-            }
-
-            // Check for and set reference tracks after track IDs are assigned
-            PVMp4FFComposerPort* refPort = NULL;
-            for (i = 0; i < iInPorts.size(); i++)
-            {
-                refPort = OSCL_STATIC_CAST(PVMp4FFComposerPort*, iInPorts[i]->GetReferencePort());
-                if (refPort)
-                {
-                    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
-                                    (0, "PVMp4FFComposerNode::DoStart: Calling addTrackReference(%d, %d)",
-                                     iInPorts[i]->GetTrackId(), refPort->GetTrackId()));
-                    iMpeg4File->addTrackReference(iInPorts[i]->GetTrackId(), refPort->GetTrackId());
-                }
-            }
-
-            iMpeg4File->prepareToEncode();
-
-            iInitTSOffset = true;
-            iTSOffset = 0;
-            SetState(EPVMFNodeStarted);
-            break;
+        if (!iMpeg4File)
+        {
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_ERR,
+                            (0, "PVMp4FFComposerNode::DoStart: Error - PVA_FF_IMpeg4File::createMP4File failed"));
+            return PVMFFailure;
         }
 
-        case EPVMFNodePaused:
-            SetState(EPVMFNodeStarted);
-            for (i = 0; i < iInPorts.size(); i++)
-                ((PVMp4FFComposerPort*)iInPorts[i])->ProcessIncomingMsgReady();
-            break;
-        case EPVMFNodeStarted:
-            status = PVMFSuccess;
-            break;
-        default:
-            status = PVMFErrInvalidState;
-            break;
-    }
+        iMpeg4File->setPresentationTimescale(iPresentationTimescale);
+        iMpeg4File->setVersion(iVersion.iDataString, iVersion.iLangCode);
+        iMpeg4File->setTitle(iTitle.iDataString, iTitle.iLangCode);
+        iMpeg4File->setAuthor(iAuthor.iDataString, iAuthor.iLangCode);
+        iMpeg4File->setCopyright(iCopyright.iDataString, iCopyright.iLangCode);
+        iMpeg4File->setDescription(iDescription.iDataString, iDescription.iLangCode);
+        iMpeg4File->setRating(iRating.iDataString, iRating.iLangCode);
+        if (iCreationDate.get_size() > 0)
+        {
+            iMpeg4File->setCreationDate(iCreationDate);
+        }
+        iMpeg4File->setMovieFragmentDuration(iMovieFragmentDuration);
+        iMpeg4File->setAlbumInfo(iAlbumTitle.iDataString, iAlbumTitle.iLangCode);
+        iMpeg4File->setRecordingYear(iRecordingYear);
 
-    CommandComplete(iCmdQueue, aCmd, status);
+        iMpeg4File->setPerformer(iPerformer.iDataString, iPerformer.iLangCode);
+        iMpeg4File->setGenre(iGenre.iDataString, iGenre.iLangCode);
+        iMpeg4File->setClassification(iClassification.iDataString, iClassification.iClassificationEntity, iClassification.iClassificationTable, iClassification.iLangCode);
+
+        for (i = 0; i < iKeyWordVector.size() ; i++)
+        {
+            iMpeg4File->setKeyWord(iKeyWordVector[i]->iKeyWordSize, iKeyWordVector[i]->iData_String, iKeyWordVector[i]->iLang_Code);
+        }
+
+        iMpeg4File->setLocationInfo(&iLocationInfo);
+        for (i = 0; i < iInPorts.size(); i++)
+        {
+            status = AddTrack(iInPorts[i]);
+            if (status != PVMFSuccess)
+            {
+                return status;
+            }
+        }
+
+        // Check for and set reference tracks after track IDs are assigned
+        PVMp4FFComposerPort* refPort = NULL;
+        for (i = 0; i < iInPorts.size(); i++)
+        {
+            refPort = OSCL_STATIC_CAST(PVMp4FFComposerPort*, iInPorts[i]->GetReferencePort());
+            if (refPort)
+            {
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
+                                (0, "PVMp4FFComposerNode::DoStart: Calling addTrackReference(%d, %d)",
+                                 iInPorts[i]->GetTrackId(), refPort->GetTrackId()));
+                iMpeg4File->addTrackReference(iInPorts[i]->GetTrackId(), refPort->GetTrackId());
+            }
+        }
+
+        iMpeg4File->prepareToEncode();
+
+        iInitTSOffset = true;
+        iTSOffset = 0;
+    }
+    else
+    {
+        //Node is in Paused state
+        for (i = 0; i < iInPorts.size(); i++)
+            ((PVMp4FFComposerPort*)iInPorts[i])->ProcessIncomingMsgReady();
+    }
+    return status;
 }
 
 //////////////////////////////////////////////////////////////////////////////////
@@ -1834,9 +1482,8 @@ PVMFStatus PVMp4FFComposerNode::AddTrack(PVMp4FFComposerPort *aPort)
 }
 
 //////////////////////////////////////////////////////////////////////////////////
-void PVMp4FFComposerNode::DoStop(PVMp4FFCNCmd& aCmd)
+PVMFStatus PVMp4FFComposerNode::DoStop()
 {
-    PVMFStatus status = PVMFSuccess;
     if (!oDiagnosticsLogged)
     {
         LogDiagnostics();
@@ -1845,44 +1492,36 @@ void PVMp4FFComposerNode::DoStop(PVMp4FFCNCmd& aCmd)
     if (FAIL_NODE_CMD_STOP == iErrorNodeCmd)
     {
         iInterfaceState = EPVMFNodeError;
+        return PVMFErrInvalidState;
     }
 #endif
-    switch (iInterfaceState)
-    {
-        case EPVMFNodeStarted:
-        case EPVMFNodePaused:
-        {
+
+    if (EPVMFNodePrepared == iInterfaceState)
+        return PVMFSuccess;
+
+    PVMFStatus status = PVMFSuccess;
+
 #ifdef ANDROID
-            iFragmentWriter->flush();
+    iFragmentWriter->flush();
 #endif
-            if (!iNodeEndOfDataReached)
-            {
-                WriteDecoderSpecificInfo();
-                if (iSampleInTrack)
-                {
-                    status = RenderToFile();
-                }
-
-                iSampleInTrack = false;
-            }
-
-            iNodeEndOfDataReached = false;
-            for (uint32 ii = 0; ii < iInPorts.size(); ii++)
-            {
-                iInPorts[ii]->iEndOfDataReached = false;
-            }
+    if (!iNodeEndOfDataReached)
+    {
+        WriteDecoderSpecificInfo();
+        if (iSampleInTrack)
+        {
+            status = RenderToFile();
         }
-        SetState(EPVMFNodePrepared);
-        break;
-        case EPVMFNodePrepared:
-            status = PVMFSuccess;
-            break;
-        default:
-            status = PVMFErrInvalidState;
-            break;
+
+        iSampleInTrack = false;
     }
 
-    CommandComplete(iCmdQueue, aCmd, status);
+    iNodeEndOfDataReached = false;
+    for (uint32 ii = 0; ii < iInPorts.size(); ii++)
+    {
+        iInPorts[ii]->iEndOfDataReached = false;
+    }
+
+    return status;
 }
 
 //////////////////////////////////////////////////////////////////////////////////
@@ -1947,6 +1586,7 @@ void PVMp4FFComposerNode::WriteDecoderSpecificInfo()
         }
     }
 }
+
 //////////////////////////////////////////////////////////////////////////////////
 PVMFStatus PVMp4FFComposerNode::RenderToFile()
 {
@@ -2000,71 +1640,52 @@ PVMFStatus PVMp4FFComposerNode::RenderToFile()
 }
 
 //////////////////////////////////////////////////////////////////////////////////
-void PVMp4FFComposerNode::DoFlush(PVMp4FFCNCmd& aCmd)
+PVMFStatus PVMp4FFComposerNode::DoFlush()
 {
     LOG_STACK_TRACE((0, "PVMp4FFComposerNode::DoFlush() iInterfaceState:%d", iInterfaceState));
 #ifdef _TEST_AE_ERROR_HANDLING
     if (FAIL_NODE_CMD_FLUSH == iErrorNodeCmd)
     {
         iInterfaceState = EPVMFNodeError;
+        return PVMFFailure;
     }
 #endif
-    switch (iInterfaceState)
+
+    uint32 i;
+    bool msgPending;
+    msgPending = false;
+
+    for (i = 0; i < iInPorts.size(); i++)
     {
-        case EPVMFNodeStarted:
-        case EPVMFNodePaused:
-            int32 err;
-            uint32 i;
-            bool msgPending;
-            msgPending = false;
-
-            for (i = 0; i < iInPorts.size(); i++)
-            {
-                if (iInPorts[i]->IncomingMsgQueueSize() > 0)
-                    msgPending = true;
-                iInPorts[i]->SuspendInput();
-                if (iInterfaceState != EPVMFNodeStarted)
-                {
-                    // Port is in idle if node state is not started. Call ProcessIncomingMsgReady
-                    // to wake up port AO
-                    ((PVMp4FFComposerPort*)iInPorts[i])->ProcessIncomingMsgReady();
-                }
-            }
-
-            // Move the command from the input command queue to the current command, where
-            // it will remain until the flush completes.
-            err = StoreCurrentCommand(iCurrentCmd, aCmd, iCmdQueue);
-            if (0 != err)
-                return;
-
-            iCmdQueue.Erase(&aCmd);
-
-            if (!msgPending)
-            {
-                FlushComplete();
-                return;
-            }
-            break;
-
-        default:
-            CommandComplete(iCmdQueue, aCmd, PVMFFailure);
-            break;
+        if (iInPorts[i]->IncomingMsgQueueSize() > 0)
+            msgPending = true;
+        iInPorts[i]->SuspendInput();
+        if (iInterfaceState != EPVMFNodeStarted)
+        {
+            // Port is in idle if node state is not started. Call ProcessIncomingMsgReady
+            // to wake up port AO
+            ((PVMp4FFComposerPort*)iInPorts[i])->ProcessIncomingMsgReady();
+        }
     }
+
+    if (!msgPending)
+    {
+        if (FlushComplete())
+            return PVMFCmdCompleted;
+    }
+
+    // Flush remains pending until it gets complete in FlushComplete
+    return PVMFPending;
 }
 
 ////////////////////////////////////////////////////////////////////////////
-bool PVMp4FFComposerNode::IsFlushPending()
-{
-    return (iCurrentCmd.size() > 0
-            && iCurrentCmd.front().iCmd == PVMF_GENERIC_NODE_FLUSH);
-}
-
-////////////////////////////////////////////////////////////////////////////
-void PVMp4FFComposerNode::FlushComplete()
+bool PVMp4FFComposerNode::FlushComplete()
 {
     LOG_STACK_TRACE((0, "PVMp4FFComposerNode::FlushComplete"));
+
     uint32 i = 0;
     PVMFStatus status = PVMFSuccess;
+
     // Flush is complete only when all queues of all ports are clear.
     // Other wise, just return from this method and wait for FlushComplete
     // from the remaining ports.
@@ -2073,7 +1694,7 @@ void PVMp4FFComposerNode::FlushComplete()
         if (iInPorts[i]->IncomingMsgQueueSize() > 0 ||
                 iInPorts[i]->OutgoingMsgQueueSize() > 0)
         {
-            return;
+            return false;
         }
     }
 #ifdef ANDROID
@@ -2099,50 +1720,31 @@ void PVMp4FFComposerNode::FlushComplete()
         iInPorts[i]->ResumeInput();
 
     SetState(EPVMFNodePrepared);
-    if (!iCurrentCmd.empty())
-    {
-        CommandComplete(iCurrentCmd, iCurrentCmd[0], status);
-    }
 
-    if (!iCmdQueue.empty())
-    {
-        // If command queue is not empty, schedule to process the next command
-        RunIfNotReady();
-    }
+    if (IsFlushPending())
+        CommandComplete(iCurrentCommand, status);
 
-
+    return true;
 }
 
 //////////////////////////////////////////////////////////////////////////////////
-void PVMp4FFComposerNode::DoPause(PVMp4FFCNCmd& aCmd)
+PVMFStatus PVMp4FFComposerNode::DoPause()
 {
-    PVMFStatus status = PVMFSuccess;
-
 #ifdef _TEST_AE_ERROR_HANDLING
     if (FAIL_NODE_CMD_PAUSE == iErrorNodeCmd)
     {
         iInterfaceState = EPVMFNodeError;
+        return PVMFErrInvalidState;
     }
 #endif
-    switch (iInterfaceState)
-    {
-        case EPVMFNodeStarted:
-            SetState(EPVMFNodePaused);
-            break;
-        case EPVMFNodePaused:
-            break;
-        default:
-            status = PVMFErrInvalidState;
-            break;
-    }
 
-    CommandComplete(iCmdQueue, aCmd, status);
+    return PVMFSuccess;
 }
 
 //////////////////////////////////////////////////////////////////////////////////
-void PVMp4FFComposerNode::DoReset(PVMp4FFCNCmd& aCmd)
+PVMFStatus PVMp4FFComposerNode::DoReset()
 {
-    PVMFStatus status = PVMFSuccess;
+    PVMFStatus status = PVMFFailure;
     if (!oDiagnosticsLogged)
     {
         LogDiagnostics();
@@ -2164,8 +1766,6 @@ void PVMp4FFComposerNode::DoReset(PVMp4FFCNCmd& aCmd)
         iInPorts.Reconstruct();
         iNodeEndOfDataReached = false;
 
-        //logoff & go back to Created state.
-        SetState(EPVMFNodeIdle);
         status = PVMFSuccess;
     }
     else
@@ -2173,57 +1773,7 @@ void PVMp4FFComposerNode::DoReset(PVMp4FFCNCmd& aCmd)
         OSCL_LEAVE(OsclErrInvalidState);
     }
 
-    CommandComplete(iCmdQueue, aCmd, status);
-}
-
-//////////////////////////////////////////////////////////////////////////////////
-void PVMp4FFComposerNode::DoCancelAllCommands(PVMp4FFCNCmd& aCmd)
-{
-    //first cancel the current command if any
-    while (!iCurrentCmd.empty())
-        CommandComplete(iCurrentCmd, iCurrentCmd[0], PVMFErrCancelled);
-
-    //next cancel all queued commands
-    //start at element 1 since this cancel command is element 0.
-    while (iCmdQueue.size() > 1)
-        CommandComplete(iCmdQueue, iCmdQueue[1], PVMFErrCancelled);
-
-    //finally, report cancel complete.
-    CommandComplete(iCmdQueue, aCmd, PVMFSuccess);
-}
-
-//////////////////////////////////////////////////////////////////////////////////
-void PVMp4FFComposerNode::DoCancelCommand(PVMp4FFCNCmd& aCmd)
-{
-    //extract the command ID from the parameters.
-    PVMFCommandId id;
-    aCmd.Parse(id);
-
-    //first check "current" command if any
-    PVMp4FFCNCmd* cmd = iCurrentCmd.FindById(id);
-    if (cmd)
-    {
-        //cancel the queued command
-        CommandComplete(iCurrentCmd, *cmd, PVMFErrCancelled);
-        //report cancel success
-        CommandComplete(iCmdQueue, aCmd, PVMFSuccess);
-        return;
-    }
-
-    //next check input queue.
-    //start at element 1 since this cancel command is element 0.
-    cmd = iCmdQueue.FindById(id, 1);
-    if (cmd)
-    {
-        //cancel the queued command
-        CommandComplete(iCmdQueue, *cmd, PVMFErrCancelled);
-        //report cancel success
-        CommandComplete(iCmdQueue, aCmd, PVMFSuccess);
-        return;
-    }
-
-    //if we get here the command isn't queued so the cancel fails.
-    CommandComplete(iCmdQueue, aCmd, PVMFFailure);
+    return status;
 }
 
 //////////////////////////////////////////////////////////////////////////////////
@@ -2907,12 +2457,6 @@ PVMFStatus PVMp4FFComposerNode::CheckMaxDuration(uint32 aTimestamp)
 ////////////////////////////////////////////////////////////////////////////
 //                   Event reporting routines.
 ////////////////////////////////////////////////////////////////////////////
-void PVMp4FFComposerNode::SetState(TPVMFNodeInterfaceState aState)
-{
-    LOG_STACK_TRACE((0, "PVMp4FFComposerNode::SetState: aState=%d", aState));
-    PVMFNodeInterface::SetState(aState);
-}
-
 void PVMp4FFComposerNode::ReportErrorEvent(PvmfMp4FFCNError aErrorEvent, OsclAny* aEventData)
 {
     LOG_ERR((0, "PVMp4FFComposerNode:ReportErrorEvent: aEventType=%d, aEventData=0x%x", aErrorEvent, aEventData));
@@ -2928,12 +2472,6 @@ void PVMp4FFComposerNode::ReportErrorEvent(PvmfMp4FFCNError aErrorEvent, OsclAny
     }
 }
 
-void PVMp4FFComposerNode::ReportInfoEvent(PVMFEventType aEventType, OsclAny* aEventData)
-{
-    LOG_STACK_TRACE((0, "PVMp4FFComposerNode:ReportInfoEvent: aEventType=%d, aEventData=0x%x", aEventType, aEventData));
-    PVMFNodeInterface::ReportInfoEvent(aEventType, aEventData);
-}
-
 void PVMp4FFComposerNode::LogDiagnostics()
 {
     oDiagnosticsLogged = true;
@@ -2941,17 +2479,6 @@ void PVMp4FFComposerNode::LogDiagnostics()
     {
         iInPorts[i]->LogDiagnostics(iDiagnosticsLogger);
     }
-}
-
-int32 PVMp4FFComposerNode::StoreCurrentCommand(PVMp4FFCNCmdQueue& aCurrentCmd, PVMp4FFCNCmd& aCmd, PVMp4FFCNCmdQueue& aCmdQueue)
-{
-    int32 err = 0;
-    OSCL_TRY(err, aCurrentCmd.StoreL(aCmd););
-    OSCL_FIRST_CATCH_ANY(err,
-                         CommandComplete(aCmdQueue, aCmd, PVMFErrNoMemory);
-                         return err;
-                        );
-    return err;
 }
 
 bool PVMp4FFComposerNode::GetAVCNALLength(OsclBinIStreamBigEndian& stream, uint32& lengthSize, int32& len)
@@ -3161,10 +2688,21 @@ void PVMp4FFComposerNode::GetTextSDIndex(uint32 aSampleNum, int32& aIndex)
     }
 }
 
+PVMFStatus PVMp4FFComposerNode::HandleExtensionAPICommands()
+{
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "PVMp4FFComposerNode::HandleExtensionAPICommands - command=%d", iCurrentCommand.iCmd));
+    return PVMFErrNotSupported;
+}
 
-
-
-
-
-
+PVMFStatus PVMp4FFComposerNode::CancelCurrentCommand()
+{
+    // Cancel DoFlush here and return success.
+    if (IsFlushPending())
+    {
+        CommandComplete(iCurrentCommand, PVMFErrCancelled);
+        return PVMFSuccess;
+    }
+    return PVMFPending;//wait on sub-node cancel to complete.
+}
 
