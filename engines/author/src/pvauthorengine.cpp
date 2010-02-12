@@ -1156,7 +1156,7 @@ PVMFStatus PVAuthorEngine::DoAddMediaTrack(PVEngineCommand& aCmd)
     }
 
     bool compressedDataSrc = false;
-    if (IsCompressedFormatDataSource(inputNodeContainer, compressedDataSrc) != PVMFSuccess)
+    if (IsCompressedFormatDataSource(inputNodeContainer, compressedFormatMimeType, compressedDataSrc) != PVMFSuccess)
     {
         LOG_ERR((0, "PVAuthorEngine::DoAddMediaTrack: Error - IsCompressedFormatDataSource() failed"));
         return PVMFFailure;
@@ -1627,7 +1627,7 @@ PVAENodeContainer* PVAuthorEngine::GetNodeContainer(PVAENodeContainerVector& aNo
 }
 
 ////////////////////////////////////////////////////////////////////////////
-PVMFStatus PVAuthorEngine::IsCompressedFormatDataSource(PVAENodeContainer* aDataSrc, bool& aIsCompressedFormat)
+PVMFStatus PVAuthorEngine::IsCompressedFormatDataSource(PVAENodeContainer* aDataSrc, const PvmfMimeString& aMimeString, bool& aIsCompressedFormat)
 {
     LOG_STACK_TRACE((0, "PVAuthorEngine::IsCompressedFormatDataSource"));
 
@@ -1642,7 +1642,8 @@ PVMFStatus PVAuthorEngine::IsCompressedFormatDataSource(PVAENodeContainer* aData
     for (uint32 i = 0; i < capability.iOutputFormatCapability.size(); i++)
     {
         PVMFFormatType format = (capability.iOutputFormatCapability[i]);
-        if (format.isCompressed() || format.isText())
+        if ((format.isCompressed() || format.isText()) &&
+                (pv_mime_strcmp(aMimeString.get_cstr(), format.getMIMEStrPtr()) == 0))
         {
             aIsCompressedFormat = true;
             return PVMFSuccess;
@@ -1741,7 +1742,7 @@ PVMFStatus PVAuthorEngine::GetPvmfFormatString(PvmfMimeString& aMimeType, const 
     }
     else if (aNodeMimeType == KH264EncMimeType)
     {
-        aMimeType = PVMF_MIME_H264_VIDEO_MP4;
+        aMimeType = PVMF_MIME_ISO_AVC_SAMPLE_FORMAT;
     }
     else if (aNodeMimeType == KTextEncMimeType)
     {

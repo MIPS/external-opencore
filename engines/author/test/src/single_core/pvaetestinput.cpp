@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -186,7 +186,7 @@ bool PVAETestInput::CreateMIOInputNode(PVAETestInputType aType, const OSCL_wStri
             {
                 iSettings.iFileName = KH263TestInput;
             }
-            iSettings.iMediaFormat = PVMF_MIME_H2631998;
+            iSettings.iMediaFormat = PVMF_MIME_H2632000;
             iSettings.iLoopInputFile = iAVTConfig.iLoopingEnable;
             iSettings.iTimescale = KVideoTimescale;
             iSettings.iFrameHeight = iAVTConfig.iHeight; //KVideoFrameHeight;
