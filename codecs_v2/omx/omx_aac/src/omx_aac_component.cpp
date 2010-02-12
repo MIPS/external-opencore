@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -813,6 +813,8 @@ OMX_ERRORTYPE OpenmaxAacAO::ComponentInit()
     //aac lib init
     if (!iCodecReady)
     {
+        // note: even if the omx port settings were configured to mono (by the IL client), the decoder will still be
+        // configured to output 2 channels (in case of mono, left & right channels will be the same)
         Status = ipAacDec->AacDecInit(ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->AudioPcmMode.nChannels);
         iCodecReady = OMX_TRUE;
     }

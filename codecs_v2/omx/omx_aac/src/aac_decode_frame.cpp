@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,6 +48,7 @@ OMX_BOOL OmxAacDecoder::AacDecInit(OMX_U32 aDesiredChannels)
 
     oscl_memset(&iExt, 0, sizeof(tPVMP4AudioDecoderExternal));
 
+    aDesiredChannels = 2; // aac decoder outputs 2 channels even in mono case. Keep it that way
     iExt.inputBufferCurrentLength = 0;
     iExt.remainderBits        = 0;      // Not needed anymore.
     iExt.inputBufferMaxLength = PVMP4AUDIODECODER_INBUFSIZE;
