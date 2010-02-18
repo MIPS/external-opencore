@@ -6425,19 +6425,19 @@ bool PVMFMP4FFParserNode::GetCPMContentAccessFactory()
 void PVMFMP4FFParserNode::CPMRegisterContent()
 {
     iCPMSequenceInProgress = true;
-    if (IsValidContextData(iPlaybackClipIndex) == true)
+    if (IsValidContextData(0) == true)
     {
         iCPMRegisterContentCmdId = iCPM->RegisterContent(iCPMSessionID,
-                                   GetClipURLAt(iPlaybackClipIndex + 1),
-                                   GetClipFormatTypeAt(iPlaybackClipIndex + 1),
-                                   (OsclAny*) & GetSourceContextDataAt(iPlaybackClipIndex + 1));
+                                   GetClipURLAt(0),
+                                   GetClipFormatTypeAt(0),
+                                   (OsclAny*) & GetSourceContextDataAt(0));
     }
     else
     {
         iCPMRegisterContentCmdId = iCPM->RegisterContent(iCPMSessionID,
-                                   GetClipURLAt(iPlaybackClipIndex + 1),
-                                   GetClipFormatTypeAt(iPlaybackClipIndex + 1),
-                                   (OsclAny*) & GetCPMSourceDataAt(iPlaybackClipIndex + 1));
+                                   GetClipURLAt(0),
+                                   GetClipFormatTypeAt(0),
+                                   (OsclAny*) & GetCPMSourceDataAt(0));
     }
 }
 

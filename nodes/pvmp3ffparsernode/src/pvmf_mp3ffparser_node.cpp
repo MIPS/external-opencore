@@ -3076,19 +3076,19 @@ PVMFStatus PVMFCPMContainerMp3::IssueCommand(int32 aCmd)
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iContainer->iLogger, PVLOGMSG_STACK_TRACE,
                             (0, "PVMFCPMContainerMp3::IssueCommand Calling RegisterContent"));
             iCmdState = EBusy;
-            if (iContainer->IsValidContextData(iContainer->GetCurrentClipIndex()) == true)
+            if (iContainer->IsValidContextData(0) == true)
             {
                 iCmdId = iCPM->RegisterContent(iSessionId,
-                                               iContainer->GetClipURLAt(iContainer->GetCurrentClipIndex() + 1),
-                                               iContainer->GetClipFormatTypeAt(iContainer->GetCurrentClipIndex() + 1),
-                                               (OsclAny*) & iContainer->GetSourceContextDataAt(iContainer->GetCurrentClipIndex() + 1));
+                                               iContainer->GetClipURLAt(0),
+                                               iContainer->GetClipFormatTypeAt(0),
+                                               (OsclAny*) & iContainer->GetSourceContextDataAt(0));
             }
             else
             {
                 iCmdId = iCPM->RegisterContent(iSessionId,
-                                               iContainer->GetClipURLAt(iContainer->GetCurrentClipIndex() + 1),
-                                               iContainer->GetClipFormatTypeAt(iContainer->GetCurrentClipIndex() + 1),
-                                               (OsclAny*) & iContainer->GetCPMSourceDataAt(iContainer->GetCurrentClipIndex() + 1));
+                                               iContainer->GetClipURLAt(0),
+                                               iContainer->GetClipFormatTypeAt(0),
+                                               (OsclAny*) & iContainer->GetCPMSourceDataAt(0));
             }
             return PVMFPending;
 
