@@ -3468,8 +3468,8 @@ void PVMFMP4FFParserNode::HandleTrackState()
                 if (SendTrackData(iNodeTrackPortList[i]))
                 {
                     iNodeTrackPortList[i].iState = PVMP4FFNodeTrackPortInfo::TRACKSTATE_TRANSMITTING_GETDATA;
-                    Reschedule();
                 }
+                Reschedule();
                 break;
 
             case PVMP4FFNodeTrackPortInfo::TRACKSTATE_SEND_ENDOFTRACK:
