@@ -20,16 +20,16 @@ LOCAL_INCSRCDIR :=  $(abspath $(LOCAL_PATH)/$(INCSRCDIR))
 # See if there are any plugin files to include
 #
 MY_TARGET_PLUGINS := $($(TARGET)_plugins)
-SOLIB_OBJDIR_COMP :=
-SOLIB_TARGET_COMP :=
+AGGREGATE_LIB_OBJDIR_COMP :=
+AGGREGATE_LIB_TARGET_COMP :=
 ifeq ($(DEFAULT_LIBTYPE),shared-archive)
-  ifneq ($(strip $(SOLIB)),)
-    SOLIB_TARGET_COMP :=_$(SOLIB)
-    ifneq ($(strip $($(TARGET)_plugins_$(SOLIB))),)
-      MY_TARGET_PLUGINS := $($(TARGET)_plugins_$(SOLIB))
-      SOLIB_OBJDIR_COMP := /$(SOLIB)
-    endif
+ifneq ($(strip $(AGGREGATE_LIB)),)
+  AGGREGATE_LIB_TARGET_COMP :=_$(AGGREGATE_LIB)
+  ifneq ($(strip $($(TARGET)_plugins_$(AGGREGATE_LIB))),)
+    MY_TARGET_PLUGINS := $($(TARGET)_plugins_$(AGGREGATE_LIB))
+    AGGREGATE_LIB_OBJDIR_COMP := /$(AGGREGATE_LIB)
   endif
+endif
 endif
 
 # $(info plugins to include $(TARGET) = $(MY_TARGET_PLUGINS))
@@ -119,7 +119,7 @@ else
   XCXXFLAGS += $(OPTIMIZE_FOR_PERFORMANCE)
 endif
 
-OBJDIR := $(subst $(SRC_ROOT),$(BUILD_ROOT),$(abspath $(LOCAL_PATH)/$(OUTPUT_DIR_COMPONENT)$(SOLIB_OBJDIR_COMP)/$(OBJSUBDIR)))
+OBJDIR := $(subst $(SRC_ROOT),$(BUILD_ROOT),$(abspath $(LOCAL_PATH)/$(OUTPUT_DIR_COMPONENT)$(AGGREGATE_LIB_OBJDIR_COMP)/$(OBJSUBDIR)))
 
 ifeq ($($(TARGET)_libtype),shared-archive)
   LIBTARGET := $(TARGET:%=$(OBJDIR)/lib%$(TARGET_NAME_SUFFIX).$(LIB_EXT))
@@ -127,7 +127,8 @@ else
   LIBTARGET := $(TARGET:%=$(DESTDIR)/lib%$(TARGET_NAME_SUFFIX).$(LIB_EXT))
 endif
 
-$(TARGET)$(SOLIB_TARGET_COMP)_fullname := $(LIBTARGET)
+
+$(TARGET)$(AGGREGATE_LIB_TARGET_COMP)_fullname := $(LIBTARGET)
 
 #$(info src_root = $(abspath $(SRC_ROOT)))
 #$(info build_root = $(abspath $(BUILD_ROOT)))
@@ -139,7 +140,7 @@ TMPOBJS := $(patsubst %,$$(%_compiled_objs),$(COMPONENT_LIBS))
 $(eval COMPILED_OBJS += $(TMPOBJS))
 
 # save compiled objects in a macro
-$(TARGET)$(SOLIB_TARGET_COMP)_compiled_objs := $(COMPILED_OBJS)
+$(TARGET)$(AGGREGATE_LIB_TARGET_COMP)_compiled_objs := $(COMPILED_OBJS)
 
 ifneq ($(strip $(FORCED_OBJS)),)
  # The point of this dependency is to force object rebuilds when the 

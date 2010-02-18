@@ -280,17 +280,17 @@ endef
 #### End generation of top level makefile #######
 
 
-# loop over all the names in SHARED_LIB_TARGET_LIST and 
+# loop over all the names in AGGREGATE_LIB_TARGET_LIST and 
 #  create the Android makefile name list.
 #  Append top-level Android.mk
 ANDROID_TOPLEVEL_MAKE_NAME := Android.mk
 OPENCORE_CONFIG_MAKE_NAME := Config.mk
 
-# The ANDROID_AGGREGATE_LIB_LIST is built from SHARED_LIB_TARGET_LIST by stripping out those aggregate libraries that end 
+# The ANDROID_AGGREGATE_LIB_LIST is built from AGGREGATE_LIB_TARGET_LIST by stripping out those aggregate libraries that end 
 # up being empty in the Android build.  This typically happens because the library as part of the platform for Android 
 # so we don't need to build our own version.
 ANDROID_AGGREGATE_LIB_LIST :=
-$(strip $(foreach lib,$(SHARED_LIB_TARGET_LIST),$(if $(strip $($(lib)_CUMULATIVE_TARGET_LIST) $(EXTRA_LIBS_$(lib))),$(eval ANDROID_AGGREGATE_LIB_LIST += $(lib)),)))
+$(strip $(foreach lib,$(AGGREGATE_LIB_TARGET_LIST),$(if $(strip $($(lib)_CUMULATIVE_TARGET_LIST) $(EXTRA_LIBS_$(lib))),$(eval ANDROID_AGGREGATE_LIB_LIST += $(lib)),)))
 ANDROID_MAKE_NAMES := $(patsubst %,Android_%.mk,$(ANDROID_AGGREGATE_LIB_LIST)) $(ANDROID_TOPLEVEL_MAKE_NAME) $(OPENCORE_CONFIG_MAKE_NAME)
 
 # player and author need SDK-specific EXTRA_SHARED_LIBRARIES
@@ -305,14 +305,14 @@ $(strip $(foreach lib,$(ANDROID_GENERAL_AGGREGATE_LIB_LIST),$(eval $(call create
 # Need the ability exclude 2way and pvme by default
 2WAY_SHARED_LIB := opencore_2way
 PVME_SHARED_LIB := opencore_pvme
-SHARED_LIB_TARGET_LIST_WO_2WAY := $(strip $(subst $(2WAY_SHARED_LIB),,$(ANDROID_AGGREGATE_LIB_LIST)))
-SHARED_LIB_TARGET_LIST_WO_2WAY_PVME := $(strip $(subst $(PVME_SHARED_LIB),,$(SHARED_LIB_TARGET_LIST_WO_2WAY)))
+AGGREGATE_LIB_TARGET_LIST_WO_2WAY := $(strip $(subst $(2WAY_SHARED_LIB),,$(ANDROID_AGGREGATE_LIB_LIST)))
+AGGREGATE_LIB_TARGET_LIST_WO_2WAY_PVME := $(strip $(subst $(PVME_SHARED_LIB),,$(AGGREGATE_LIB_TARGET_LIST_WO_2WAY)))
 2WAY_TESTAPP := pv2way_engine_test
 PVME_TESTAPP := pvme_test
 TESTAPPS_WO_2WAY := $(strip $(subst $(2WAY_TESTAPP),,$(TESTAPPS)))
 TESTAPPS_WO_2WAY_PVME := $(strip $(subst $(PVME_TESTAPP),,$(TESTAPPS_WO_2WAY)))
 
-$(eval $(call create_toplevel_android_mk,$(ANDROID_TOPLEVEL_MAKE_NAME),$(SHARED_LIB_TARGET_LIST_WO_2WAY_PVME),$(2WAY_SHARED_LIB),$(PVME_SHARED_LIB)))
+$(eval $(call create_toplevel_android_mk,$(ANDROID_TOPLEVEL_MAKE_NAME),$(AGGREGATE_LIB_TARGET_LIST_WO_2WAY_PVME),$(2WAY_SHARED_LIB),$(PVME_SHARED_LIB)))
 $(eval $(call create_opencore_config_mk,$(OPENCORE_CONFIG_MAKE_NAME)))
 
 
@@ -364,22 +364,22 @@ endif
 # $(warning ***** LOCAL_ANDROID_MK_PATH = $(LOCAL_ANDROID_MK_PATH))
 
 
-ifneq ($(strip $(call check_solib_plugins,$($(TARGET)_plugins_$(SOLIB)),$(SOLIB))),)
+ifneq ($(strip $(call check_solib_plugins,$($(TARGET)_plugins_$(AGGREGATE_LIB)),$(AGGREGATE_LIB))),)
 # These rules are to handle cases where we build the same sources into
 # different libraries with the different compile flags.  This support is 
 # hopefully temporary as the sources should really be refactored so the 
 # common part is separated and does not need to be built into multiple libs.
 
-ANDROID_MAKE_NAMES := $(LOCAL_ANDROID_MK_PATH)/Android$(SOLIB_TARGET_COMP).mk
-ANDROID_TMP_LOCAL_SRCDIR := $(patsubst %src,%src$(SOLIB_TARGET_COMP),$(LOCAL_SRCDIR))
-ANDROID_TMP_SRCDIR := $(patsubst %src,%src$(SOLIB_TARGET_COMP),$(SRCDIR))
+ANDROID_MAKE_NAMES := $(LOCAL_ANDROID_MK_PATH)/Android$(AGGREGATE_LIB_TARGET_COMP).mk
+ANDROID_TMP_LOCAL_SRCDIR := $(patsubst %src,%src$(AGGREGATE_LIB_TARGET_COMP),$(LOCAL_SRCDIR))
+ANDROID_TMP_SRCDIR := $(patsubst %src,%src$(AGGREGATE_LIB_TARGET_COMP),$(SRCDIR))
 
 ANDROID_TMP_LOCAL_INC := $(subst $(LOCAL_SRCDIR),$(ANDROID_TMP_LOCAL_SRCDIR),$(LOCAL_TOTAL_INCDIRS))
 ANDROID_TMP_LOCAL_INC := $(subst $(SRC_ROOT),\$$(PV_TOP),$(ANDROID_TMP_LOCAL_INC)) \$$(PV_INCLUDES)
 ANDROID_TMP_ASMDIRS :=   $(subst $(LOCAL_SRCDIR),$(ANDROID_TMP_LOCAL_SRCDIR),$(LOCAL_ASM_INCDIRS))
 ANDROID_TMP_ASMDIRS := $(subst $(SRC_ROOT),\$$(PV_TOP),$(ANDROID_TMP_ASMDIRS))
 
-ANDROID_TMP_TARGET := $(TARGET)$(SOLIB_TARGET_COMP)
+ANDROID_TMP_TARGET := $(TARGET)$(AGGREGATE_LIB_TARGET_COMP)
 
 ifeq ($($(TARGET)_libtype),shared-archive)
 # strip the last word from target and add the new android target
@@ -387,7 +387,7 @@ CUMULATIVE_TARGET_LIST := $(call truncate,$(CUMULATIVE_TARGET_LIST)) $(ANDROID_T
 # must also create a new "fullname" variable because the CML2 template 
 # will use the values in the CUMULATIVE_TARGET_LIST to map to the 
 # "fullname" variables which hold the corresponding library path
-$(ANDROID_TMP_TARGET)$(SOLIB_TARGET_COMP)_fullname := $(LIBTARGET)
+$(ANDROID_TMP_TARGET)$(AGGREGATE_LIB_TARGET_COMP)_fullname := $(LIBTARGET)
 endif
 
 $(ANDROID_MAKE_NAMES): $(ANDROID_TMP_LOCAL_SRCDIR)
