@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -86,6 +86,10 @@
 
 #ifndef OSCL_MIME_STRING_UTILS_H
 #include "pv_mime_string_utils.h"
+#endif
+
+#ifndef PVMF_LOCAL_DATA_SOURCE_H_INCLUDED
+#include "pvmf_local_data_source.h"
 #endif
 
 #ifndef PVMF_SOURCE_CONTEXT_DATA_H_INCLUDED

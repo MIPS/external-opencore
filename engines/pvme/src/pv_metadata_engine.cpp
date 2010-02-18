@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1175,6 +1175,36 @@ PVMFStatus PVMetadataEngine::DoSetSourceInitializationData()
         sourceURL += iDataSource->GetDataSourceURL().get_cstr();
     }
 
+    // If there is source context data, clear the PLAY intent to
+    // avoid consumption of rights for protected content.
+    PVInterface* pvInterface = OSCL_STATIC_CAST(PVInterface*, (iDataSource->GetDataSourceContextData()));
+    if (pvInterface)
+    {
+        PVInterface* localDataSrc = NULL;
+        PVUuid localDataSrcUuid(PVMF_LOCAL_DATASOURCE_UUID);
+        if (pvInterface->queryInterface(localDataSrcUuid, localDataSrc))
+        {
+            PVMFLocalDataSource* opaqueData =
+                OSCL_STATIC_CAST(PVMFLocalDataSource*, localDataSrc);
+            opaqueData->iIntent &= ~(BITMASK_PVMF_SOURCE_INTENT_PLAY);
+        }
+        else
+        {
+            PVInterface* sourceDataContext = NULL;
+            PVInterface* commonDataContext = NULL;
+            PVUuid sourceContextUuid(PVMF_SOURCE_CONTEXT_DATA_UUID);
+            PVUuid commonContextUuid(PVMF_SOURCE_CONTEXT_DATA_COMMON_UUID);
+            if (pvInterface->queryInterface(sourceContextUuid, sourceDataContext))
+            {
+                if (sourceDataContext->queryInterface(commonContextUuid, commonDataContext))
+                {
+                    PVMFSourceContextDataCommon* cContext =
+                        OSCL_STATIC_CAST(PVMFSourceContextDataCommon*, commonDataContext);
+                    cContext->iIntent &= ~(BITMASK_PVMF_SOURCE_INTENT_PLAY);
+                }
+            }
+        }
+    }
     PVMFStatus retval = iSourceNodeInitIF->SetSourceInitializationData(sourceURL, iSourceFormatType, iDataSource->GetDataSourceContextData(), 0);
     if (retval != PVMFSuccess)
     {
