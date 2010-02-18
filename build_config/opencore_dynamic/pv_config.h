@@ -551,6 +551,7 @@
 #define pvmp3ffrecognizer_y_mk ""
 #define WMA_BUILD_CFG_STDPROLBR_ENABLED 0
 #define pvwmdrmoemsettingsinterface_m_mk ""
+#define LIBDIR_pvmi_shared "/pvmi/content_policy_manager/build/make /pvmi/content_policy_manager/plugins/oma1/passthru/build/make  /pvmi/content_policy_manager/plugins/common/build/make      /pvmi/media_io/pvmiofileoutput/build/make /pvmi/media_io/pvmi_mio_fileinput/build/make_pvauthor /pvmi/media_io/pvmi_mio_avi_wav_fileinput/build/make /pvmi/media_io/pvmio_comm_loopback/build/make /pvmi/recognizer/build/make /pvmi/recognizer/plugins/pvaacffrecognizer/build/make /pvmi/recognizer/plugins/pvamrffrecognizer/build/make   /pvmi/recognizer/plugins/pvmp3ffrecognizer/build/make /pvmi/recognizer/plugins/pvmp4ffrecognizer/build/make  /pvmi/recognizer/plugins/pvwavffrecognizer/build/make   /pvmi/recognizer/plugins/pvplsffrecognizer/build/make   /pvmi/pvmf/build/make   "
 #define csprng_y_mk ""
 #define pvdivxffparsernode_y_lib ""
 #define pv_rtmp_parcom_y_lib ""
@@ -871,7 +872,6 @@
 #define SOLIBS_opencore_2way "-lpv2waysample -lpv2wayengine -lpv324m -lpvdummyinputnode -lpvdummyoutputnode -lpvclientserversocketnode -lpvcommsionode -lpvmio_comm_loopback -lpvgeneraltools "
 #define pvrtsp_cli_eng_playlist_node_y_lib ""
 #define MODS_pvprotocolengine_asfstreamingreg "-lopencore_common -lopencore_net_support"
-#define LIBDIR_pvmi_shared "/pvmi/content_policy_manager/build/make /pvmi/content_policy_manager/plugins/oma1/passthru/build/make  /pvmi/content_policy_manager/plugins/common/build/make      /pvmi/media_io/pvmiofileoutput/build/make /pvmi/media_io/pvmi_mio_fileinput/build/make_pvauthor /pvmi/media_io/pvmi_mio_avi_wav_fileinput/build/make /pvmi/media_io/pvmio_comm_loopback/build/make /pvmi/recognizer/build/make /pvmi/recognizer/plugins/pvaacffrecognizer/build/make /pvmi/recognizer/plugins/pvamrffrecognizer/build/make   /pvmi/recognizer/plugins/pvmp3ffrecognizer/build/make /pvmi/recognizer/plugins/pvmp4ffrecognizer/build/make  /pvmi/recognizer/plugins/pvwavffrecognizer/build/make   /pvmi/recognizer/plugins/pvplsffrecognizer/build/make   /pvmi/pvmf/build/make   "
 #define pvtinyxml_y_lib ""
 #define pvamrffrecognizer_y_mk ""
 #define pventropysrc_m_lib ""
@@ -1394,7 +1394,7 @@
 #define SOLIBS_omx_wmadec_sharedlibrary "  "
 #define BUILD_SHOUTCAST_PLUGIN 1
 #define pvdb_recovery_utility_m_mk ""
-#define pvomxaudiodecnode_m_lib "-lpvomxaudiodecnode"
+#define pvfileparserutils_y_lib ""
 #define pv324m_y_lib ""
 #define pvflv_recognizer_so_name ""
 #define unit_test_y_mk "/oscl/unit_test/build/make"
@@ -1656,6 +1656,7 @@
 #define pvmio_comm_loopback_y_mk ""
 #define pvmediaoutputnode_m_lib "-lpvmediaoutputnode"
 #define BUILD_STATIC_RTSPUNICAST 0
+#define pvomxaudiodecnode_m_lib "-lpvomxaudiodecnode"
 #define LIBDIR_audio_static "              "
 #define SOLIBDIRS_pvrtspunicastwithpvr_streamingreg ""
 #define pvra8decoder_m_lib ""
@@ -1893,7 +1894,6 @@
 #define pvsminterface_m_lib "-lpvsminterface"
 #define MODS_omx_amrenc_sharedlibrary "-lomx_sharedlibrary -lopencore_common "
 #define pvmp4ffparsernode_m_lib ""
-#define pvfileparserutils_y_lib ""
 #define MODS_pvmtpip "-lopencore_common -lpvdb -lpvwmdrm"
 #define omx_amr_component_y_lib ""
 #define SOLIBDIRS_pvflv_recognizer "  "

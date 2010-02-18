@@ -745,6 +745,12 @@ void PVRefFileOutput::ThreadLogoff()
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVRefFileOutput::ThreadLogoff() called"));
     if (iState != STATE_IDLE)
     {
+        if (iFileOpened && iLogOutputToFile)
+        {
+            iOutputFile.Flush();
+            iOutputFile.Close();
+        }
+        iFileOpened = false;
         if (iFsConnected)
         {
             iFs.Close();
