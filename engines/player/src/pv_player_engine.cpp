@@ -3774,9 +3774,12 @@ void PVPlayerEngine::EngineCommandCompleted(PVCommandId aId, OsclAny* aContext, 
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::EngineCommandCompleted() iCmdStatusObserver is NULL"));
     }
 
-    if (iRemoveDataSource && iDataSource)
+    if (iRemoveDataSource)
     {
-        RemoveDataSourceSync(*iDataSource);
+        if (iDataSource)
+        {
+            RemoveDataSourceSync(*iDataSource);
+        }
         iRemoveDataSource = false;
     }
 }
