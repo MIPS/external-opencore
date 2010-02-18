@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -543,7 +543,9 @@ void DummyOutputMIO::DealWithData(PVMFTimestamp aTimestamp, uint8* aData, uint32
         else
         {
             // temp
-            printf("ERROR!!! Neither AUDIO NOR VIDEO\n");
+
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_INFO,
+                            (0, "DummyOutputMIO::DealWithData - ERROR!!! Neither AUDIO NOR VIDEO"));
         }
     }
 }
