@@ -124,6 +124,9 @@ PVPlayerEngine::~PVPlayerEngine()
     // Clear the Track selection List
     iTrackSelectionList.clear();
 
+    // Clear the Metadata value release List
+    iMetadataValueReleaseList.clear();
+
     // Remove Stored KVP Values
     DeleteKVPValues();
 
@@ -9553,6 +9556,9 @@ PVMFStatus PVPlayerEngine::DoReset(PVPlayerEngineCommand& aCmd)
 
     // Clear the Track selection List
     iTrackSelectionList.clear();
+
+    //Clear the Metadata value release List
+    iMetadataValueReleaseList.clear();
 
     // Stop the end time check
     if (iEndTimeCheckEnabled)
