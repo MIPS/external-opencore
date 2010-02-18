@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -911,6 +911,7 @@ class PVRTSPEngineNode
                                              PVUuid* aEventUUID = NULL,
                                              int32* aEventCode = NULL);
     private:
+        PVMFStatus MapRTSPCodeToPVMFStatusCode(RTSPStatusCode aStatusCode);
         void MapRTSPCodeToEventCode(RTSPStatusCode aStatusCode,
                                     int32& aEventCode);
         PVMFStatus CancelCurrentOps();
