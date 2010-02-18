@@ -13,18 +13,18 @@
 <tr><td colspan=2><br><h2>Public Methods</h2></td></tr>
 <tr><td nowrap align=right valign=top>OSCL_IMPORT_REF&nbsp;</td><td valign=bottom><a class="el" href="classOsclThread.html#a0">OsclThread</a> ()</td></tr>
 <tr><td nowrap align=right valign=top>OSCL_IMPORT_REF&nbsp;</td><td valign=bottom><a class="el" href="classOsclThread.html#a1">~OsclThread</a> ()</td></tr>
-<tr><td nowrap align=right valign=top>OSCL_IMPORT_REF <a class="el" href="classOsclProcStatus.html#s35">OsclProcStatus::eOsclProcError</a>&nbsp;</td><td valign=bottom><a class="el" href="classOsclThread.html#a2">Create</a> (<a class="el" href="oscl__thread_8h.html#a0">TOsclThreadFuncPtr</a> func, int32 stack_size, <a class="el" href="osclconfig__proc__unix__android_8h.html#a7">TOsclThreadFuncArg</a> argument, <a class="el" href="oscl__thread_8h.html#a10">OsclThread_State</a> state=Start_on_creation, bool oIsJoinable=false)</td></tr>
-<tr><td nowrap align=right valign=top>OSCL_IMPORT_REF <a class="el" href="classOsclProcStatus.html#s35">OsclProcStatus::eOsclProcError</a>&nbsp;</td><td valign=bottom><a class="el" href="classOsclThread.html#a3">GetPriority</a> (<a class="el" href="oscl__thread_8h.html#a11">OsclThreadPriority</a> &amp;refThreadPriority)</td></tr>
-<tr><td nowrap align=right valign=top>OSCL_IMPORT_REF <a class="el" href="classOsclProcStatus.html#s35">OsclProcStatus::eOsclProcError</a>&nbsp;</td><td valign=bottom><a class="el" href="classOsclThread.html#a4">SetPriority</a> (<a class="el" href="oscl__thread_8h.html#a11">OsclThreadPriority</a> ePriority)</td></tr>
+<tr><td nowrap align=right valign=top>OSCL_IMPORT_REF <a class="el" href="classOsclProcStatus.html#s35">OsclProcStatus::eOsclProcError</a>&nbsp;</td><td valign=bottom><a class="el" href="classOsclThread.html#a2">Create</a> (<a class="el" href="oscl__thread_8h.html#a0">TOsclThreadFuncPtr</a> func, int32 stack_size, <a class="el" href="osclconfig__proc__unix__android_8h.html#a7">TOsclThreadFuncArg</a> argument, <a class="el" href="oscl__thread_8h.html#a13">OsclThread_State</a> state=Start_on_creation, bool oIsJoinable=false)</td></tr>
+<tr><td nowrap align=right valign=top>OSCL_IMPORT_REF <a class="el" href="classOsclProcStatus.html#s35">OsclProcStatus::eOsclProcError</a>&nbsp;</td><td valign=bottom><a class="el" href="classOsclThread.html#a3">GetPriority</a> (<a class="el" href="oscl__thread_8h.html#a14">OsclThreadPriority</a> &amp;refThreadPriority)</td></tr>
+<tr><td nowrap align=right valign=top>OSCL_IMPORT_REF <a class="el" href="classOsclProcStatus.html#s35">OsclProcStatus::eOsclProcError</a>&nbsp;</td><td valign=bottom><a class="el" href="classOsclThread.html#a4">SetPriority</a> (<a class="el" href="oscl__thread_8h.html#a14">OsclThreadPriority</a> ePriority)</td></tr>
 <tr><td nowrap align=right valign=top>OSCL_IMPORT_REF <a class="el" href="classOsclProcStatus.html#s35">OsclProcStatus::eOsclProcError</a>&nbsp;</td><td valign=bottom><a class="el" href="classOsclThread.html#a5">Suspend</a> ()</td></tr>
 <tr><td nowrap align=right valign=top>OSCL_IMPORT_REF <a class="el" href="classOsclProcStatus.html#s35">OsclProcStatus::eOsclProcError</a>&nbsp;</td><td valign=bottom><a class="el" href="classOsclThread.html#a6">Resume</a> ()</td></tr>
 <tr><td nowrap align=right valign=top>OSCL_IMPORT_REF <a class="el" href="classOsclProcStatus.html#s35">OsclProcStatus::eOsclProcError</a>&nbsp;</td><td valign=bottom><a class="el" href="classOsclThread.html#a7">Terminate</a> (<a class="el" href="group__osclbase.html#a27">OsclAny</a> *exitcode)</td></tr>
+<tr><td nowrap align=right valign=top>OSCL_IMPORT_REF <a class="el" href="oscl__thread_8h.html#a15">TOsclThreadTerminate</a>&nbsp;</td><td valign=bottom><a class="el" href="classOsclThread.html#a8">CanTerminate</a> ()</td></tr>
 <tr><td colspan=2><br><h2>Static Public Methods</h2></td></tr>
 <tr><td nowrap align=right valign=top>OSCL_IMPORT_REF void&nbsp;</td><td valign=bottom><a class="el" href="classOsclThread.html#d0">Exit</a> (<a class="el" href="group__osclbase.html#a27">OsclAny</a> *exitcode)</td></tr>
-<tr><td nowrap align=right valign=top>OSCL_IMPORT_REF void&nbsp;</td><td valign=bottom><a class="el" href="classOsclThread.html#d1">EnableKill</a> ()</td></tr>
-<tr><td nowrap align=right valign=top>OSCL_IMPORT_REF <a class="el" href="classOsclProcStatus.html#s35">OsclProcStatus::eOsclProcError</a>&nbsp;</td><td valign=bottom><a class="el" href="classOsclThread.html#d2">GetId</a> (<a class="el" href="osclconfig__proc__unix__android_8h.html#a6">TOsclThreadId</a> &amp;refThreadId)</td></tr>
-<tr><td nowrap align=right valign=top>OSCL_IMPORT_REF bool&nbsp;</td><td valign=bottom><a class="el" href="classOsclThread.html#d3">CompareId</a> (<a class="el" href="osclconfig__proc__unix__android_8h.html#a6">TOsclThreadId</a> &amp;t1, <a class="el" href="osclconfig__proc__unix__android_8h.html#a6">TOsclThreadId</a> &amp;t2)</td></tr>
-<tr><td nowrap align=right valign=top>OSCL_IMPORT_REF void&nbsp;</td><td valign=bottom><a class="el" href="classOsclThread.html#d4">SleepMillisec</a> (const int32 msec)</td></tr>
+<tr><td nowrap align=right valign=top>OSCL_IMPORT_REF <a class="el" href="classOsclProcStatus.html#s35">OsclProcStatus::eOsclProcError</a>&nbsp;</td><td valign=bottom><a class="el" href="classOsclThread.html#d1">GetId</a> (<a class="el" href="osclconfig__proc__unix__android_8h.html#a6">TOsclThreadId</a> &amp;refThreadId)</td></tr>
+<tr><td nowrap align=right valign=top>OSCL_IMPORT_REF bool&nbsp;</td><td valign=bottom><a class="el" href="classOsclThread.html#d2">CompareId</a> (<a class="el" href="osclconfig__proc__unix__android_8h.html#a6">TOsclThreadId</a> &amp;t1, <a class="el" href="osclconfig__proc__unix__android_8h.html#a6">TOsclThreadId</a> &amp;t2)</td></tr>
+<tr><td nowrap align=right valign=top>OSCL_IMPORT_REF void&nbsp;</td><td valign=bottom><a class="el" href="classOsclThread.html#d3">SleepMillisec</a> (const int32 msec)</td></tr>
 </table>
 <hr><a name="_details"></a><h2>Detailed Description</h2>
 Thread Class. A subset of Thread APIs. It implements platform independendent APIs for thread creation, exiting, suspend, resume, priority and termination. With the use of proper defines it implements the basic thread festures. It provides an opaque layer through which user doesn't need to worry about OS specific data. 
@@ -87,7 +87,36 @@ Class destructor     </td>
   </tr>
 </table>
 <hr><h2>Member Function Documentation</h2>
-<a name="d3" doxytag="OsclThread::CompareId"></a><p>
+<a name="a8" doxytag="OsclThread::CanTerminate"></a><p>
+<table width="100%" cellpadding="2" cellspacing="0" border="0">
+  <tr>
+    <td class="md">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> OSCL_IMPORT_REF <a class="el" href="oscl__thread_8h.html#a15">TOsclThreadTerminate</a> OsclThread::CanTerminate </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="mdname1" valign="top" nowrap>&nbsp;          </td>
+          <td class="md" valign="top">)&nbsp;</td>
+          <td class="md" nowrap></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+Tell if thread terminate will do join, immediate hard kill, or NOP. <dl compact><dt><b>Returns: </b></dt><dd>
+Terminate behavior. </dl>    </td>
+  </tr>
+</table>
+<a name="d2" doxytag="OsclThread::CompareId"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -157,7 +186,7 @@ true if equal. </dl>    </td>
         <tr>
           <td></td>
           <td></td>
-          <td class="md" nowrap><a class="el" href="oscl__thread_8h.html#a10">OsclThread_State</a>&nbsp;</td>
+          <td class="md" nowrap><a class="el" href="oscl__thread_8h.html#a13">OsclThread_State</a>&nbsp;</td>
           <td class="mdname" nowrap>&nbsp; <em>state</em> = Start_on_creation, </td>
         </tr>
         <tr>
@@ -193,37 +222,6 @@ This routine will create a thread. The thread may be launched immediately or may
 eOsclProcError </dl>    </td>
   </tr>
 </table>
-<a name="d1" doxytag="OsclThread::EnableKill"></a><p>
-<table width="100%" cellpadding="2" cellspacing="0" border="0">
-  <tr>
-    <td class="md">
-      <table cellpadding="0" cellspacing="0" border="0">
-        <tr>
-          <td class="md" nowrap valign="top"> OSCL_IMPORT_REF void OsclThread::EnableKill </td>
-          <td class="md" valign="top">(&nbsp;</td>
-          <td class="mdname1" valign="top" nowrap>&nbsp;          </td>
-          <td class="md" valign="top">)&nbsp;</td>
-          <td class="md" nowrap><code> [static]</code></td>
-        </tr>
-
-      </table>
-    </td>
-  </tr>
-</table>
-<table cellspacing=5 cellpadding=0 border=0>
-  <tr>
-    <td>
-      &nbsp;
-    </td>
-    <td>
-
-<p>
-EnableKill is a static function which can be called by the thread routine in order to enable thread termination without waiting for cancellation points. EnableKill only applies to pthread implementations. For other implementations this function will do nothing.
-<p>
-<dl compact><dt><b>Returns: </b></dt><dd>
-None </dl>    </td>
-  </tr>
-</table>
 <a name="d0" doxytag="OsclThread::Exit"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
@@ -250,7 +248,7 @@ None </dl>    </td>
     <td>
 
 <p>
-Exit is a static function which is used to end the current thread. When called it just ends the execution of the current thread. <dl compact><dt><b>Parameters: </b></dt><dd>
+Exit is a static function which is used to end the current thread. When called it just ends the execution of the current thread. Note: on some platforms this may be a NOP. <dl compact><dt><b>Parameters: </b></dt><dd>
 <table border=0 cellspacing=2 cellpadding=0>
 <tr><td valign=top><em>exitcode</em>&nbsp;</td><td>
 = Exitcode of the thread. This can be used by other threads to know the exit status of this thread. </td></tr>
@@ -259,7 +257,7 @@ Exit is a static function which is used to end the current thread. When called i
 None </dl>    </td>
   </tr>
 </table>
-<a name="d2" doxytag="OsclThread::GetId"></a><p>
+<a name="d1" doxytag="OsclThread::GetId"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -302,7 +300,7 @@ Error code </dl>    </td>
         <tr>
           <td class="md" nowrap valign="top"> OSCL_IMPORT_REF <a class="el" href="classOsclProcStatus.html#s35">OsclProcStatus::eOsclProcError</a> OsclThread::GetPriority </td>
           <td class="md" valign="top">(&nbsp;</td>
-          <td class="md" nowrap valign="top"><a class="el" href="oscl__thread_8h.html#a11">OsclThreadPriority</a> &amp;&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="oscl__thread_8h.html#a14">OsclThreadPriority</a> &amp;&nbsp;</td>
           <td class="mdname1" valign="top" nowrap>&nbsp; <em>refThreadPriority</em>          </td>
           <td class="md" valign="top">)&nbsp;</td>
           <td class="md" nowrap></td>
@@ -371,7 +369,7 @@ Error code Note: this function may not be supported on all platforms, and may re
         <tr>
           <td class="md" nowrap valign="top"> OSCL_IMPORT_REF <a class="el" href="classOsclProcStatus.html#s35">OsclProcStatus::eOsclProcError</a> OsclThread::SetPriority </td>
           <td class="md" valign="top">(&nbsp;</td>
-          <td class="md" nowrap valign="top"><a class="el" href="oscl__thread_8h.html#a11">OsclThreadPriority</a>&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="oscl__thread_8h.html#a14">OsclThreadPriority</a>&nbsp;</td>
           <td class="mdname1" valign="top" nowrap>&nbsp; <em>ePriority</em>          </td>
           <td class="md" valign="top">)&nbsp;</td>
           <td class="md" nowrap></td>
@@ -398,7 +396,7 @@ SetThreadPriority sets the priority of the thread. It takes priority as the inpu
 Error code Note: this function may not be supported on all platforms, and may return NOT_IMPLEMENTED. </dl>    </td>
   </tr>
 </table>
-<a name="d4" doxytag="OsclThread::SleepMillisec"></a><p>
+<a name="d3" doxytag="OsclThread::SleepMillisec"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -494,7 +492,7 @@ Error code Note: this function may not be supported on all platforms, and may re
 <p>
 Terminate a thread other than the calling thread.
 <p>
-Note: for pthread implementations, the Terminate call will block until the thread has terminated. By default, threads will not terminate until a cancellation point is reached. The EnableKill method may be used to override this default behavior and allow immediate termination.<dl compact><dt><b>Parameters: </b></dt><dd>
+This API may have multiple behaviors. It may do a hard kill, a "join" operation, or a do-nothing. Caller can use CanTerminate option to tell the behavior in advance.<dl compact><dt><b>Parameters: </b></dt><dd>
 <table border=0 cellspacing=2 cellpadding=0>
 <tr><td valign=top><em>exitcode</em>&nbsp;</td><td>
 = Exitcode of the thread. </td></tr>
@@ -506,7 +504,7 @@ Error code </dl>    </td>
 <hr>The documentation for this class was generated from the following file:<ul>
 <li><a class="el" href="oscl__thread_8h-source.html">oscl_thread.h</a></ul>
 <hr size="1"><img src="pvlogo_small.jpg"><address style="align: right;"><small>OSCL API</small>
-<address style="align: left;"><small>Posting Version: CORE_8.500.1.1_RC4 </small>
+<address style="align: left;"><small>Posting Version: CORE_8.501.1.1 </small>
 </small></address>
 </body>
 </html>

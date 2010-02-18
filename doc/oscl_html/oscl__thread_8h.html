@@ -18,19 +18,23 @@
 <tr><td colspan=2><br><h2>Typedefs</h2></td></tr>
 <tr><td nowrap align=right valign=top>typedef <a class="el" href="osclconfig__proc__unix__android_8h.html#a8">TOsclThreadFuncRet</a>(OSCL_THREAD_DECL *&nbsp;</td><td valign=bottom><a class="el" href="oscl__thread_8h.html#a0">TOsclThreadFuncPtr</a> )(<a class="el" href="osclconfig__proc__unix__android_8h.html#a7">TOsclThreadFuncArg</a>)</td></tr>
 <tr><td colspan=2><br><h2>Enumerations</h2></td></tr>
-<tr><td nowrap align=right valign=top>enum &nbsp;</td><td valign=bottom><a class="el" href="oscl__thread_8h.html#a10">OsclThread_State</a> { <a class="el" href="oscl__thread_8h.html#a10a1">Start_on_creation</a>, 
-<a class="el" href="oscl__thread_8h.html#a10a2">Suspend_on_creation</a>
+<tr><td nowrap align=right valign=top>enum &nbsp;</td><td valign=bottom><a class="el" href="oscl__thread_8h.html#a13">OsclThread_State</a> { <a class="el" href="oscl__thread_8h.html#a13a1">Start_on_creation</a>, 
+<a class="el" href="oscl__thread_8h.html#a13a2">Suspend_on_creation</a>
  }</td></tr>
-<tr><td nowrap align=right valign=top>enum &nbsp;</td><td valign=bottom><a class="el" href="oscl__thread_8h.html#a11">OsclThreadPriority</a> { <br>
-&nbsp;&nbsp;<a class="el" href="oscl__thread_8h.html#a11a3">ThreadPriorityLowest</a>, 
-<a class="el" href="oscl__thread_8h.html#a11a4">ThreadPriorityLow</a>, 
-<a class="el" href="oscl__thread_8h.html#a11a5">ThreadPriorityBelowNormal</a>, 
-<a class="el" href="oscl__thread_8h.html#a11a6">ThreadPriorityNormal</a>, 
+<tr><td nowrap align=right valign=top>enum &nbsp;</td><td valign=bottom><a class="el" href="oscl__thread_8h.html#a14">OsclThreadPriority</a> { <br>
+&nbsp;&nbsp;<a class="el" href="oscl__thread_8h.html#a14a3">ThreadPriorityLowest</a>, 
+<a class="el" href="oscl__thread_8h.html#a14a4">ThreadPriorityLow</a>, 
+<a class="el" href="oscl__thread_8h.html#a14a5">ThreadPriorityBelowNormal</a>, 
+<a class="el" href="oscl__thread_8h.html#a14a6">ThreadPriorityNormal</a>, 
 <br>
-&nbsp;&nbsp;<a class="el" href="oscl__thread_8h.html#a11a7">ThreadPriorityAboveNormal</a>, 
-<a class="el" href="oscl__thread_8h.html#a11a8">ThreadPriorityHighest</a>, 
-<a class="el" href="oscl__thread_8h.html#a11a9">ThreadPriorityTimeCritical</a>
+&nbsp;&nbsp;<a class="el" href="oscl__thread_8h.html#a14a7">ThreadPriorityAboveNormal</a>, 
+<a class="el" href="oscl__thread_8h.html#a14a8">ThreadPriorityHighest</a>, 
+<a class="el" href="oscl__thread_8h.html#a14a9">ThreadPriorityTimeCritical</a>
 <br>
+ }</td></tr>
+<tr><td nowrap align=right valign=top>enum &nbsp;</td><td valign=bottom><a class="el" href="oscl__thread_8h.html#a15">TOsclThreadTerminate</a> { <a class="el" href="oscl__thread_8h.html#a15a10">EOsclThreadTerminate_Join</a>, 
+<a class="el" href="oscl__thread_8h.html#a15a11">EOsclThreadTerminate_Kill</a>, 
+<a class="el" href="oscl__thread_8h.html#a15a12">EOsclThreadTerminate_NOP</a>
  }</td></tr>
 </table>
 <hr><a name="_details"></a><h2>Detailed Description</h2>
@@ -62,7 +66,7 @@ to three OS LINUX, SYMBIAN, WIN32
   </tr>
 </table>
 <hr><h2>Enumeration Type Documentation</h2>
-<a name="a10" doxytag="oscl_thread.h::OsclThread_State"></a><p>
+<a name="a13" doxytag="oscl_thread.h::OsclThread_State"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -83,16 +87,16 @@ to three OS LINUX, SYMBIAN, WIN32
 <p>
 <dl compact><dt><b>Enumeration values: </b></dt><dd>
 <table border=0 cellspacing=2 cellpadding=0>
-<tr><td valign=top><em><a name="a10a1" doxytag="Start_on_creation"></a><em>Start_on_creation</em></em>&nbsp;</td><td>
+<tr><td valign=top><em><a name="a13a1" doxytag="Start_on_creation"></a><em>Start_on_creation</em></em>&nbsp;</td><td>
 </td></tr>
-<tr><td valign=top><em><a name="a10a2" doxytag="Suspend_on_creation"></a><em>Suspend_on_creation</em></em>&nbsp;</td><td>
+<tr><td valign=top><em><a name="a13a2" doxytag="Suspend_on_creation"></a><em>Suspend_on_creation</em></em>&nbsp;</td><td>
 </td></tr>
 </table>
 </dl>
     </td>
   </tr>
 </table>
-<a name="a11" doxytag="oscl_thread.h::OsclThreadPriority"></a><p>
+<a name="a14" doxytag="oscl_thread.h::OsclThreadPriority"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -113,19 +117,51 @@ to three OS LINUX, SYMBIAN, WIN32
 <p>
 <dl compact><dt><b>Enumeration values: </b></dt><dd>
 <table border=0 cellspacing=2 cellpadding=0>
-<tr><td valign=top><em><a name="a11a3" doxytag="ThreadPriorityLowest"></a><em>ThreadPriorityLowest</em></em>&nbsp;</td><td>
+<tr><td valign=top><em><a name="a14a3" doxytag="ThreadPriorityLowest"></a><em>ThreadPriorityLowest</em></em>&nbsp;</td><td>
 </td></tr>
-<tr><td valign=top><em><a name="a11a4" doxytag="ThreadPriorityLow"></a><em>ThreadPriorityLow</em></em>&nbsp;</td><td>
+<tr><td valign=top><em><a name="a14a4" doxytag="ThreadPriorityLow"></a><em>ThreadPriorityLow</em></em>&nbsp;</td><td>
 </td></tr>
-<tr><td valign=top><em><a name="a11a5" doxytag="ThreadPriorityBelowNormal"></a><em>ThreadPriorityBelowNormal</em></em>&nbsp;</td><td>
+<tr><td valign=top><em><a name="a14a5" doxytag="ThreadPriorityBelowNormal"></a><em>ThreadPriorityBelowNormal</em></em>&nbsp;</td><td>
 </td></tr>
-<tr><td valign=top><em><a name="a11a6" doxytag="ThreadPriorityNormal"></a><em>ThreadPriorityNormal</em></em>&nbsp;</td><td>
+<tr><td valign=top><em><a name="a14a6" doxytag="ThreadPriorityNormal"></a><em>ThreadPriorityNormal</em></em>&nbsp;</td><td>
 </td></tr>
-<tr><td valign=top><em><a name="a11a7" doxytag="ThreadPriorityAboveNormal"></a><em>ThreadPriorityAboveNormal</em></em>&nbsp;</td><td>
+<tr><td valign=top><em><a name="a14a7" doxytag="ThreadPriorityAboveNormal"></a><em>ThreadPriorityAboveNormal</em></em>&nbsp;</td><td>
 </td></tr>
-<tr><td valign=top><em><a name="a11a8" doxytag="ThreadPriorityHighest"></a><em>ThreadPriorityHighest</em></em>&nbsp;</td><td>
+<tr><td valign=top><em><a name="a14a8" doxytag="ThreadPriorityHighest"></a><em>ThreadPriorityHighest</em></em>&nbsp;</td><td>
 </td></tr>
-<tr><td valign=top><em><a name="a11a9" doxytag="ThreadPriorityTimeCritical"></a><em>ThreadPriorityTimeCritical</em></em>&nbsp;</td><td>
+<tr><td valign=top><em><a name="a14a9" doxytag="ThreadPriorityTimeCritical"></a><em>ThreadPriorityTimeCritical</em></em>&nbsp;</td><td>
+</td></tr>
+</table>
+</dl>
+    </td>
+  </tr>
+</table>
+<a name="a15" doxytag="oscl_thread.h::TOsclThreadTerminate"></a><p>
+<table width="100%" cellpadding="2" cellspacing="0" border="0">
+  <tr>
+    <td class="md">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> enum TOsclThreadTerminate
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+<dl compact><dt><b>Enumeration values: </b></dt><dd>
+<table border=0 cellspacing=2 cellpadding=0>
+<tr><td valign=top><em><a name="a15a10" doxytag="EOsclThreadTerminate_Join"></a><em>EOsclThreadTerminate_Join</em></em>&nbsp;</td><td>
+</td></tr>
+<tr><td valign=top><em><a name="a15a11" doxytag="EOsclThreadTerminate_Kill"></a><em>EOsclThreadTerminate_Kill</em></em>&nbsp;</td><td>
+</td></tr>
+<tr><td valign=top><em><a name="a15a12" doxytag="EOsclThreadTerminate_NOP"></a><em>EOsclThreadTerminate_NOP</em></em>&nbsp;</td><td>
 </td></tr>
 </table>
 </dl>
@@ -133,7 +169,7 @@ to three OS LINUX, SYMBIAN, WIN32
   </tr>
 </table>
 <hr size="1"><img src="pvlogo_small.jpg"><address style="align: right;"><small>OSCL API</small>
-<address style="align: left;"><small>Posting Version: CORE_8.500.1.1_RC4 </small>
+<address style="align: left;"><small>Posting Version: CORE_8.501.1.1 </small>
 </small></address>
 </body>
 </html>
