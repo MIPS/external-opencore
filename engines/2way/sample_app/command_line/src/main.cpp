@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@
 #include "kbhit.h"
 #endif
 #define IP_ADDRESS_LENGTH   16
+#define FILE_NAME_MEM_ALLOC  128
 
 engine_handler *main_engine;
 FILE* fileoutput;
@@ -37,6 +38,8 @@ void evaluate_command()
     {
         int c = 0;
         c = getchar();
+
+
         switch (tolower(c))
         {
             case '1':
@@ -143,6 +146,8 @@ void evaluate_command()
             default:
                 break;
         }
+
+
     }
 }
 
@@ -267,70 +272,88 @@ void checkForLeaks()
     }
 #endif
 }
+void test_wrapper()
+{
+
+    OsclErrorTrap::Init();
+    OsclScheduler::Init("PV2WayEngineFactory");
+
+    char* filename = OSCL_ARRAY_NEW(char, FILE_NAME_MEM_ALLOC);
+    OSCL_HeapString<OsclMemAllocator> argument = "-config";
+    char* fname = PV2WayUtil::FindConfigGfc(global_cmd_line, argument);
+    if (fname != NULL)
+    {
+        oscl_memset(filename, 0, FILE_NAME_MEM_ALLOC);
+        oscl_strncpy(filename, fname, oscl_strlen(fname));
+    }
+    //check if config file was found
+    if ((fname == NULL) || (main_engine->ReadConfigFile(filename)))
+    {
+        PV2WayUtil::OutputInfo("config file: %s not found \n", fname);
+    }
+    if (filename != NULL)
+    {
+        OSCL_ARRAY_DELETE(filename);
+        filename = NULL;
+    }
+
+    argument = "-gcftest";
+    filename = OSCL_ARRAY_NEW(char, FILE_NAME_MEM_ALLOC);
+    fname = PV2WayUtil::FindConfigGfc(global_cmd_line, argument);
+    if (fname != NULL)
+    {
+        oscl_memset(filename, 0, FILE_NAME_MEM_ALLOC);
+        oscl_strncpy(filename, fname, oscl_strlen(fname));
+    }
+
+    //check if gfc file was found
+    if ((fname == NULL) || (main_engine->ReadGCFTestFile(filename)))
+    {
+        PV2WayUtil::OutputInfo("gcf file: %s not found \n", fname);
+    }
+    //free memory if allocated
+    if (filename != NULL)
+    {
+        OSCL_ARRAY_DELETE(filename);
+        filename = NULL;
+    }
+
+    int32 leave = 0;
+    OSCL_TRY(leave, main_engine->start());
+    PV2WayUtil::OutputInfo("\nEngine handler exiting. Leave = %d\n", leave);
+
+    OSCL_TRY(leave, OSCL_DELETE(main_engine););
+
+    OsclScheduler::Cleanup();
+    OsclErrorTrap::Cleanup();
+}
 
 int local_main(FILE* filehandle, cmd_line *command_line)
 {
-    OSCL_UNUSED_ARG(command_line);
-//   int result;
+
     global_cmd_line = command_line;
 
     PV2WayUtil::SetFileHandle(filehandle);
 
     CPV2WayEngineFactory::Init();
-    OsclErrorTrap::Init();
-    OsclScheduler::Init("PV2WayEngineFactory");
+
 
     main_engine = OSCL_NEW(engine_handler, ());
 
-    //filename will be pointing to a valid string if -config or -gfctest are present
-    char *filename = NULL;
+    test_wrapper();
 
-    OSCL_HeapString<OsclMemAllocator> argument = "-config";
-    filename = PV2WayUtil::FindConfigGfc(global_cmd_line, argument);
-    //check if config file was found
-    if ((filename == NULL) || (main_engine->ReadConfigFile(filename)))
-    {
-        PV2WayUtil::OutputInfo("config file: %s not found", filename);
-    }
-    //free memory if allocated
-    if (filename != NULL)
-    {
-        OSCL_ARRAY_DELETE(filename);
-        filename = NULL;
-    }
-
-
-    argument = "-gfctest";
-    filename = PV2WayUtil::FindConfigGfc(global_cmd_line, argument);
-    //check if gfc file was found
-    if ((filename == NULL) || (main_engine->ReadGCFTestFile(filename)))
-    {
-        PV2WayUtil::OutputInfo("gfc file: %s not found", filename);
-    }
-    //free memory if allocated
-    if (filename != NULL)
-    {
-        OSCL_ARRAY_DELETE(filename);
-        filename = NULL;
-    }
-
-    // printf("Start 2Way, h for help\n");
-
-    int32 leave = 0;
-
-    OSCL_TRY(leave, main_engine->start());
-
-    PV2WayUtil::OutputInfo("\nEngine handler exiting. Leave = %d\n", leave);
-
-    OSCL_TRY(leave, OSCL_DELETE(main_engine););
-    OsclScheduler::Cleanup();
-    OsclErrorTrap::Cleanup();
     PVLogger::Cleanup();
+
 #if !(OSCL_BYPASS_MEMMGT)
     PV2WayUtil::OutputInfo("\nMemory Stats after engine deletion\n");
     MemoryStats();
     checkForLeaks();
+
 #endif
+
+    CPV2WayEngineFactory::Cleanup();
+
+
     return 0;
 
 }

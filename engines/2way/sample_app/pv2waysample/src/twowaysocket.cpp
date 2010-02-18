@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,6 +51,7 @@ OSCL_EXPORT_REF TwoWaySocket::TwoWaySocket(TwoWaySocketObserver *aObserver) :
 
 OSCL_EXPORT_REF TwoWaySocket::~TwoWaySocket()
 {
+
 }
 
 OSCL_EXPORT_REF void TwoWaySocket::DeleteCommServer()
@@ -233,6 +234,7 @@ void TwoWaySocket::CleanupTcp()
     CloseTcpAccept();
     CloseTcp();
     DeleteTcp();
+    DeleteTcpAccept();
 
     //for socket connection closed
     iCheckConnection = false;
@@ -328,6 +330,7 @@ void TwoWaySocket::HandleSocketEvent(int32 aId,
 
             case EPVSocketAccept:
             {
+
                 iTCPAcceptSocket = iTCPServerSocket->GetAcceptedSocketL(TCPSOCKETACCEPTID);
                 // pass up to observer
                 PVMFNodeInterface* commServer =

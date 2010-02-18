@@ -53,6 +53,7 @@
 #include "main.h"
 
 
+
 // H324 configuration
 #define H223_LEVEL H223_LEVEL2
 #define H223_MAX_AL1_SDU_SIZE 512
@@ -82,12 +83,12 @@
 
 #define DISCONNECT_TIME_FOR_LOOPBACK_CALL 9000000
 #define RUN_IF_NOT_READY_TIME 800000
-
 #define CONFIG_FILE_PATH _STRLIT("")
 
 engine_handler::engine_handler() : OsclTimerObject(OsclActiveObject::EPriorityNominal, "2Way Wins Test"),
         iUseIsdn(false),
         iUseSockets(false),
+        iRunOnce(false),
         iAutomatedCall(false),
         iLoopbackCall(false),
         iDisconnectCall(false),
@@ -125,6 +126,7 @@ engine_handler::engine_handler() : OsclTimerObject(OsclActiveObject::EPriorityNo
         iPv2wayCommConfig(NULL),
         iConfigFilePresent(false),
         iReadyToConnectCommunication(false)
+
 {
 
 
@@ -150,21 +152,12 @@ engine_handler::~engine_handler()
 
     if (iPv2wayCommConfig)
     {
-        if (iPv2wayCommConfig->iAddr)
-        {
-            OSCL_ARRAY_DELETE(iPv2wayCommConfig->iAddr);
-            iPv2wayCommConfig->iAddr = NULL;
-        }
-        if (iPv2wayCommConfig->iCommNode)
-        {
-            OSCL_ARRAY_DELETE(iPv2wayCommConfig->iCommNode);
-            iPv2wayCommConfig->iCommNode = NULL;
-        }
         if (iPv2wayCommConfig->iConnectionType)
         {
             OSCL_ARRAY_DELETE(iPv2wayCommConfig->iConnectionType);
             iPv2wayCommConfig->iConnectionType = NULL;
         }
+
         OSCL_DELETE(iPv2wayCommConfig);
         iPv2wayCommConfig = NULL;
     }
@@ -202,6 +195,7 @@ void engine_handler::CreateComponent()
     {
         PV2WayUtil::OutputInfo("Error in CreateComponent\n");
     }
+
 }
 
 void engine_handler::Init()
@@ -215,6 +209,7 @@ void engine_handler::InitTerminal()
 {
 
     iSourceAndSinks->Init();
+
 
     int32 error = 0;
     OSCL_TRY(error, iInitCmdId = terminal->Init(iSdkInitInfo));
@@ -338,14 +333,43 @@ void engine_handler::Connect()
 
 bool engine_handler::ConnectSocket(bool aIsServer, int aPort, char* aIpAddr)
 {
+    /*Below if condition should be enabled only if there is no prog argument and config file is not present.*/
+    if (!iConfigFilePresent && !iRunOnce)
+    {
+        iRunOnce = true;
+        if (!iReadyToConnectCommunication)
+        {
+            StepsBeforeConnectCommunication();
+            if (aIsServer)
+            {
+
+                iPv2wayCommConfig->iConnectionType = OSCL_ARRAY_NEW(char, oscl_strlen("SERVER") + 1);
+                oscl_strncpy(iPv2wayCommConfig->iConnectionType, "SERVER", oscl_strlen("SERVER") + 1);
+            }
+            else
+            {
+                iPv2wayCommConfig->iConnectionType = OSCL_ARRAY_NEW(char, oscl_strlen("CLIENT") + 1);
+                oscl_strncpy(iPv2wayCommConfig->iConnectionType, "CLIENT", oscl_strlen("CLIENT") + 1);
+
+            }
+            iPv2wayCommConfig->iAddr = aIpAddr;
+            iPv2wayCommConfig->iPort = aPort;
+
+
+        }
+
+    }
     iUseSockets = true;
     return iTwoWaySocket.ConnectSocket(aIsServer, aPort, aIpAddr);
+
 }
 
 void engine_handler::SocketConnected(PVMFNodeInterface* aCommServer)
 {
     iCommServer = aCommServer;
     iCommServerType = SOCKET_COMM_SERVER;
+
+
     InitTerminal();
 }
 
@@ -369,7 +393,9 @@ void engine_handler::Disconnect()
     else
     {
         iSentDisconnectCmd = true;
+
     }
+
 }
 
 void engine_handler::RemoveAudioSink()
@@ -469,6 +495,12 @@ void engine_handler::HandleInformationalEvent(const PVAsyncInformationalEvent& a
 
         case PVT_INDICATION_CLOSING_TRACK:
             iSourceAndSinks->HandleClosingTrack(aEvent);
+            if (!iDisconnectCall)
+            {
+                iSourceAndSinks->RemoveSourceAndSinks();
+                iDisconnectCall = true;
+            }
+
             break;
         case PVT_INDICATION_CLOSE_TRACK:
             iSourceAndSinks->HandleCloseTrack(aEvent);
@@ -543,6 +575,7 @@ void engine_handler::DisconnectCompleted(const PVCmdResponse& aResponse)
     if (PVMFSuccess == aResponse.GetCmdStatus())
     {
         iDisconnected = true;
+
     }
     MemoryStats();
     Reset();
@@ -849,13 +882,17 @@ void engine_handler::StepsBeforeConnectCommunication()
 void engine_handler::StartSocketCommunication()
 {
     int32 portext = 0;
+
     if (iTestSettings->iName)
     {
         sscanf(iTestSettings->iName, "TestCase%d", &portext);
     }
+
     uint32 port = iPv2wayCommConfig->iPort + portext;
 
     ChangeAutomatedCallSetting();
+
+
     if (oscl_strncmp(iPv2wayCommConfig->iConnectionType, "SERVER", oscl_strlen("SERVER")) == 0)
     {
         ConnectSocket(true, port, iPv2wayCommConfig->iAddr);
@@ -870,10 +907,13 @@ void engine_handler::ConfigureTest()
 {
     // evaluate user's input.  this function will call correct function based on
     // what is entered.
+
     if (!iConfigFilePresent)
     {
         evaluate_command();
+
     }
+
     else
     {
         //If comm node is loopback

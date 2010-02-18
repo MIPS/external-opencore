@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -211,6 +211,7 @@ class engine_handler : public OsclTimerObject,
         ///////////////////////////////////////////////////////////////////////
         bool iUseIsdn;
         bool iUseSockets;
+        bool iRunOnce;
         bool iAutomatedCall;
         bool iLoopbackCall;
         bool iDisconnectCall;
