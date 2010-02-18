@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,7 +39,7 @@ to three OS LINUX, SYMBIAN, WIN32
 OSCL_EXPORT_REF OsclThread::OsclThread()
 {
     bCreated = false;
-    iJoined = false;
+    bJoinable = false;
 }
 
 
@@ -77,6 +77,7 @@ OSCL_EXPORT_REF OsclProcStatus::eOsclProcError OsclThread::Create(TOsclThreadFun
     if (function_name == NULL)
         return OsclProcStatus::INVALID_PARAM_ERROR;
 
+
     //Reset thread creation state, since the thread may
     //have exited.
     if (bCreated)
@@ -101,11 +102,12 @@ OSCL_EXPORT_REF OsclProcStatus::eOsclProcError OsclThread::Create(TOsclThreadFun
     if (oIsJoinable)
     {
         detach_ret = pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
-        iJoined = true;
+        bJoinable = true;
     }
     else
     {
         detach_ret = pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
+        bJoinable = false;
     }
     switch (detach_ret)
     {
@@ -133,6 +135,7 @@ OSCL_EXPORT_REF OsclProcStatus::eOsclProcError OsclThread::Create(TOsclThreadFun
             return OsclProcStatus::OTHER_ERROR;
     }
 
+
 }
 
 
@@ -152,11 +155,6 @@ OSCL_EXPORT_REF void OsclThread::Exit(OsclAny* exitcode)
 
 }
 
-OSCL_EXPORT_REF void OsclThread::EnableKill()
-{
-    ; //nothing needed
-
-}
 
 /**
  * OSCL Proc layer function
@@ -169,6 +167,14 @@ OSCL_EXPORT_REF void OsclThread::SleepMillisec(const int32 msec)
     reqt.tv_sec = msec / 1000;
     reqt.tv_nsec = 1000000 * (msec % 1000);
     nanosleep(&reqt, &remt) ;
+
+
+}
+
+OSCL_EXPORT_REF TOsclThreadTerminate OsclThread::CanTerminate()
+{
+
+    return (bJoinable) ? EOsclThreadTerminate_Join : EOsclThreadTerminate_NOP;
 
 }
 
@@ -200,7 +206,7 @@ OSCL_EXPORT_REF OsclProcStatus::eOsclProcError OsclThread::Terminate(OsclAny* os
         OSCL_UNUSED_ARG(oscl_ExitCode);
 
         bCreated = false;
-        if (iJoined)
+        if (bJoinable)
         {
             if (pthread_join(ObjThread, NULL) == 0)
             {
@@ -213,6 +219,7 @@ OSCL_EXPORT_REF OsclProcStatus::eOsclProcError OsclThread::Terminate(OsclAny* os
         }
         return OsclProcStatus::NOT_IMPLEMENTED;
     }
+
 }
 
 
@@ -252,6 +259,7 @@ OSCL_EXPORT_REF OsclProcStatus::eOsclProcError OsclThread::Suspend()
     }
 
 
+
 }
 
 
@@ -288,6 +296,7 @@ OSCL_EXPORT_REF OsclProcStatus::eOsclProcError OsclThread::Resume()
         return OsclProcStatus::NOT_IMPLEMENTED;
 
     }
+
 
 
 }
@@ -400,6 +409,8 @@ OSCL_EXPORT_REF OsclProcStatus::eOsclProcError OsclThread::SetPriority(OsclThrea
     OSCL_UNUSED_ARG(ePriority);
     return OsclProcStatus::NOT_IMPLEMENTED;
 
+
+
 }
 
 
@@ -426,6 +437,8 @@ OSCL_EXPORT_REF OsclProcStatus::eOsclProcError OsclThread::GetId(TOsclThreadId& 
     refThreadId = pthread_self();
 
     return OsclProcStatus::SUCCESS_ERROR;
+
+
 
 
 }

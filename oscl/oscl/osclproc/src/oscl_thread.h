@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -63,6 +63,15 @@ enum OsclThreadPriority
     , ThreadPriorityTimeCritical
 };
 
+// Thread termiante options
+enum TOsclThreadTerminate
+{
+    EOsclThreadTerminate_Join,
+    EOsclThreadTerminate_Kill,
+    EOsclThreadTerminate_NOP
+};
+
+
 //thread function pointer type.
 typedef TOsclThreadFuncRet(OSCL_THREAD_DECL *TOsclThreadFuncPtr)(TOsclThreadFuncArg);
 
@@ -115,30 +124,18 @@ class OsclThread
                 int32 stack_size,
                 TOsclThreadFuncArg argument,
                 OsclThread_State state = Start_on_creation,
-                bool oIsJoinable = false
-                                                             );
+                bool oIsJoinable = false);
 
         /**
          * Exit is a static function which is used to end the current thread. When called it
          * just ends the execution of the current thread.
+         *   Note: on some platforms this may be a NOP.
          * @param
          * exitcode  =  Exitcode of the thread. This can be used by other threads to know the
          *              exit status of this thread.
          * @return None
          */
         OSCL_IMPORT_REF static void Exit(OsclAny* exitcode);
-
-        /**
-         * EnableKill is a static function which can
-         *  be called by the thread routine in order to enable
-         *  thread termination without waiting for cancellation
-         *  points.
-         *  EnableKill only applies to pthread implementations.
-         *  For other implementations this function will do nothing.
-         *
-         * @return None
-         */
-        OSCL_IMPORT_REF static void EnableKill();
 
         /**
          * GetThreadPriority gets the priority of the thread. It takes reference of the input argument
@@ -182,17 +179,21 @@ class OsclThread
         /**
          * Terminate a thread other than the calling thread.
          *
-         * Note: for pthread implementations, the Terminate call will
-         *   block until the thread has terminated.  By default,
-         *   threads will not terminate until a cancellation point
-         *   is reached.  The EnableKill method may be used to override
-         *   this default behavior and allow immediate termination.
+         * This API may have multiple behaviors.  It may do a hard kill,
+         *   a "join" operation, or a do-nothing.  Caller can use CanTerminate
+         *   option to tell the behavior in advance.
          *
          * @param
          * exitcode  =  Exitcode of the thread.
          * @return Error code
          */
         OSCL_IMPORT_REF OsclProcStatus::eOsclProcError Terminate(OsclAny* exitcode);
+
+        /**
+         * Tell if thread terminate will do join, immediate hard kill, or NOP.
+         * @return Terminate behavior.
+         */
+        OSCL_IMPORT_REF TOsclThreadTerminate CanTerminate();
 
 
         /**
@@ -230,12 +231,12 @@ class OsclThread
         TOsclMutexObject mutex;
         TOsclConditionObject  condition;
         uint8 suspend;
+        bool bJoinable;
 
 
 
         TOsclThreadObject ObjThread;
         bool bCreated;
-        bool iJoined;
 };
 
 #endif
