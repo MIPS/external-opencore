@@ -319,6 +319,20 @@ class PVMFNodeCommand: public PVMFNodeCommandBase
             arg3 = (int32*)iParam3;
         }
 
+        void Construct(PVMFSessionId aSession, int32 cmd, uint32 arg1, uint32 arg2, uint8* arg3, const OsclAny* aContext)
+        {
+            PVMFNodeCommandBase::Construct(aSession, cmd, aContext);
+            iParam1 = (OsclAny*) arg1;
+            iParam2 = (OsclAny*) arg2;
+            iParam3 = (OsclAny*) arg3;
+        }
+        void Parse(uint32& arg1, uint32& arg2, uint8*& arg3)
+        {
+            arg1 = (uint32) iParam1;
+            arg2 = (uint32) iParam2;
+            arg3 = (uint8*) iParam3;
+        }
+
         // Constructor and parser for seek and bitstreamSwitch
         void Construct(PVMFSessionId s, int32 cmd, uint64& aNPTInMS,
                        uint32& aFirstSeqNumAfterChange, OsclAny* aContext)
