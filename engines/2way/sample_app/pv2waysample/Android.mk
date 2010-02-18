@@ -37,8 +37,6 @@ LOCAL_C_INCLUDES := \
  	$(PV_TOP)/engines/2way/sample_app/pv2waysample/include \
  	$(PV_TOP)/engines/2way/sample_app/pv2waysample/src \
  	$(PV_TOP)/engines/2way/sample_app/pv2waysample/include \
- 	$(PV_TOP)/nodes/pvdummyinputnode/include \
- 	$(PV_TOP)/nodes/pvdummyoutputnode/include \
  	$(PV_TOP)/protocols/systems/common/include \
  	$(PV_TOP)/nodes/pvclientserversocketnode/include \
  	$(PV_TOP)/engines/2way/test/include \

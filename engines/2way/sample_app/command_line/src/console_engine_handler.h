@@ -40,11 +40,6 @@
 #include "pv_engine_observer_message.h"
 
 
-#ifdef PERF_TEST
-#include "pvmf_fileinput_settings.h"
-#endif
-
-
 #include "twowaysocket.h"
 #include "pv_2way_console_source_and_sinks.h"
 #include "testcaseparser.h"
@@ -99,9 +94,7 @@ class engine_handler : public OsclTimerObject,
         }
         void MemoryStats();
 
-#ifdef PERF_TEST
-        void CheckForLeaks();
-#endif
+
 
 
         bool SetCommServer(bool aCommServer)

@@ -116,7 +116,7 @@ derive SOLIBS_pv from (LIBS_oscl_shared.
                        pvmfrecognizer_m_lib.pvmiofileinput_m_lib.pvmioaviwavfileinput_m_lib.
                        pvframemetadatautility_m_lib.pvplayer_engine_m_lib.pvauthorengine_m_lib.
                        pv2waysample_m_lib.pv324m_m_lib.pv2wayengine_m_lib.
-                       pvdummyinputnode_m_lib.pvdummyoutputnode_m_lib.pvclientserversocketnode_m_lib.
+                       pvclientserversocketnode_m_lib.
                        pvavifileparser_m_lib.pvthreadmessaging_m_lib.pvlatmpayloadparser_m_lib.asfrecognizer_utility_m_lib.scsp_m_lib)
 derive AGGREGATE_LIBDIRS_pv from (LIBDIR_oscl_shared.
                        pvra8decoder_m_mk.pv_aac_dec_m_mk.pvmp3_m_mk.wmadecoder_m_mk.wmavoicedecoder_m_mk.
@@ -143,7 +143,7 @@ derive AGGREGATE_LIBDIRS_pv from (LIBDIR_oscl_shared.
                        pvmfrecognizer_m_mk.pvmiofileinput_m_mk.pvmioaviwavfileinput_m_mk.
                        pvframemetadatautility_m_mk.pvplayer_engine_m_mk.pvauthorengine_m_mk.
                        pv2waysample_m_mk.pv324m_m_mk.pv2wayengine_m_mk.
-                       pvdummyinputnode_m_mk.pvdummyoutputnode_m_mk.pvclientserversocketnode_m_mk.
+                       pvclientserversocketnode_m_mk.
                        pvavifileparser_m_mk.pvthreadmessaging_m_mk.pvlatmpayloadparser_m_mk.asfrecognizer_utility_m_mk.scsp_m_mk)
 derive MODS_pv from ""
 
@@ -198,13 +198,13 @@ derive MODS_opencore_author from "-lopencore_common"
 derive opencore_2way_so_name from pvsplit_so==y ? "opencore_2way" : ""
 derive opencore_2way_aggregate_libtype from pvsplit_so==y ? "shared":"static"
 derive SOLIBS_opencore_2way from (pv2waysample_m_lib.pv2wayengine_m_lib.pv324m_m_lib.                      
-                       pvdummyinputnode_m_lib.pvdummyoutputnode_m_lib.pvclientserversocketnode_m_lib.
+                       pvclientserversocketnode_m_lib.
                        pvcommsionode_m_lib.
                        pvmio_comm_loopback_m_lib.
                        pvgeneraltools_m_lib.
                        unit_test_m_lib)
 derive AGGREGATE_LIBDIRS_opencore_2way from (pv2waysample_m_mk.pv2wayengine_m_mk.pv324m_m_mk.                       
-                       pvdummyinputnode_m_mk.pvdummyoutputnode_m_mk.pvclientserversocketnode_m_mk.
+                       pvclientserversocketnode_m_mk.
                        pvcommsionode_m_mk.
                        pvmio_comm_loopback_m_mk.pv324m_common_headers_m_mk.
                        pvgeneraltools_m_mk.

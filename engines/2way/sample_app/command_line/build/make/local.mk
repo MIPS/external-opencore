@@ -41,7 +41,7 @@ BASE_LIBS = pv2waysample \
 	pv2wayengine \
 	pv324m 
 
-END_LIBS = pvdummyinputnode pvdummyoutputnode \
+END_LIBS = \
 	pvclientserversocketnode \
 	pvfileoutputnode \
 	pvmediainputnode \

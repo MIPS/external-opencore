@@ -12,8 +12,6 @@ TARGET := pv2waysample
 
 
 XINCDIRS +=  ../../src ../../include \
- ../../../../../../nodes/pvdummyinputnode/include \
- ../../../../../../nodes/pvdummyoutputnode/include \
  ../../../../../../protocols/systems/common/include \
  ../../../../../../nodes/pvclientserversocketnode/include \
 ../../../../test/include
