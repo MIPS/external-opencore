@@ -1183,7 +1183,7 @@ class PVPlayerEngine
 
         // Data source, data sink, and nodes
         PVPlayerDataSource* iDataSource;
-
+        bool iRemoveDataSource;
         PVMFFormatType iSourceFormatType;
         PVMFNodeInterface* iSourceNode;
         PVMFSessionId iSourceNodeSessionId;

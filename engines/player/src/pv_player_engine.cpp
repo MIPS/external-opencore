@@ -1098,6 +1098,7 @@ PVPlayerEngine::PVPlayerEngine() :
         iNumPendingDatapathCmd(0),
         iNumPVMFInfoStartOfDataPending(0),
         iDataSource(NULL),
+        iRemoveDataSource(false),
         iSourceFormatType(PVMF_MIME_FORMAT_UNKNOWN),
         iSourceNode(NULL),
         iSourceNodeSessionId(0),
@@ -1361,12 +1362,8 @@ void PVPlayerEngine::Run()
             }
             // First destroy all datapaths.
             DoRemoveAllSinks();
-            // now remove the source node.
-            if (iDataSource)
-            {
-                RemoveDataSourceSync(*iDataSource);
-            }
-
+            // Remove the datasource
+            iRemoveDataSource = true;
             EngineCommandCompleted(iCurrentCmd[0].GetCmdId(), iCurrentCmd[0].GetContext(), PVMFSuccess);
         }
         else if (iCurrentCmd[0].GetCmdType() == PVP_ENGINE_COMMAND_PREPARE)
@@ -3773,6 +3770,12 @@ void PVPlayerEngine::EngineCommandCompleted(PVCommandId aId, OsclAny* aContext, 
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::EngineCommandCompleted() iCmdStatusObserver is NULL"));
     }
+
+    if (iRemoveDataSource && iDataSource)
+    {
+        RemoveDataSourceSync(*iDataSource);
+        iRemoveDataSource = false;
+    }
 }
 
 
@@ -3985,10 +3988,7 @@ void PVPlayerEngine::DoCancelAllCommands(PVPlayerEngineCommand& aCmd)
             }
         }
 
-        if (iDataSource)
-        {
-            RemoveDataSourceSync(*iDataSource);
-        }
+        iRemoveDataSource = true;
         SetEngineState(PVP_ENGINE_STATE_IDLE);
         EngineCommandCompleted(aCmd.GetCmdId(), aCmd.GetContext(), PVMFSuccess);
     }
@@ -9602,20 +9602,14 @@ PVMFStatus PVPlayerEngine::DoReset(PVPlayerEngineCommand& aCmd)
                 }
                 DoRemoveAllSinks();
             }
-            if (iDataSource)
-            {
-                RemoveDataSourceSync(*iDataSource);
-            }
+            iRemoveDataSource = true;
             SetEngineState(PVP_ENGINE_STATE_IDLE);
             EngineCommandCompleted(aCmd.GetCmdId(), aCmd.GetContext(), PVMFSuccess);
         }
     }
     else
     {
-        if (iDataSource)
-        {
-            RemoveDataSourceSync(*iDataSource);
-        }
+        iRemoveDataSource = true;
         SetEngineState(PVP_ENGINE_STATE_IDLE);
         EngineCommandCompleted(aCmd.GetCmdId(), aCmd.GetContext(), PVMFSuccess);
     }
@@ -16430,11 +16424,14 @@ PVMFStatus PVPlayerEngine::DoErrorHandling()
     // Now delete the datapath.
     DoRemoveAllSinks();
 
-    // finally do the source node cleanup
-    if (iDataSource)
-    {
-        RemoveDataSourceSync(*iDataSource);
-    }
+    // Remove the datasource after the command completes.
+    // If there is a command to be completed, it is important to
+    // remove the datasource after the command completes because
+    // the extended error messages still could need access to the
+    // dynamically loadable library's address space which could
+    // contain the virtual table.
+    iRemoveDataSource = true;
+
     // reset all repos related variables
     ResetReposVariables(true);
 
@@ -16460,6 +16457,11 @@ PVMFStatus PVPlayerEngine::DoErrorHandling()
                                    iCurrentCmd[0].GetContext(),
                                    iCommandCompleteStatusInErrorHandling);
         }
+    }
+    else if (iDataSource)
+    {
+        RemoveDataSourceSync(*iDataSource);
+        iRemoveDataSource = false;
     }
 
     // just send the error handling complete event
