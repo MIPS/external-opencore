@@ -111,7 +111,9 @@ Android_$1.mk: FORCE
 	$$(quiet) echo "ifeq ($$(esc_dollar)(PLATFORM_VERSION),1.5)" >> $$@
 	$$(quiet) $$(call conditional_extra_sharedlib_list, $$(EXTRA_SHARED_LIBRARIES_$1_1.5),$$@)
 	$$(quiet) echo "else ifeq ($$(esc_dollar)(PLATFORM_VERSION),1.6)" >> $$@
-	$$(quiet) $$(call conditional_extra_sharedlib_list, $$(EXTRA_SHARED_LIBRARIES_$1_1.5),$$@)
+	$$(quiet) $$(call conditional_extra_sharedlib_list, $$(EXTRA_SHARED_LIBRARIES_$1_1.6),$$@)
+	$$(quiet) echo "else ifeq ($$(esc_dollar)(PLATFORM_VERSION),2.1)" >> $$@
+	$$(quiet) $$(call conditional_extra_sharedlib_list, $$(EXTRA_SHARED_LIBRARIES_$1_2.1),$$@)
 	$$(quiet) echo "else" >> $$@
 	$$(quiet) $$(call conditional_extra_sharedlib_list, $$(EXTRA_SHARED_LIBRARIES_$1),$$@)
 	$$(quiet) echo "endif" >> $$@
@@ -214,6 +216,7 @@ $1: FORCE
 	$$(quiet) echo "  PV_CFLAGS := -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64 -DUSE_CML2_CONFIG" >> $$@
 	$$(quiet) echo "  ifeq ($$(esc_dollar)(PLATFORM_VERSION),1.5)" >> $$@
 	$$(quiet) echo "  else ifeq ($$(esc_dollar)(PLATFORM_VERSION),1.6)" >> $$@
+	$$(quiet) echo "  else ifeq ($$(esc_dollar)(PLATFORM_VERSION),2.1)" >> $$@
 	$$(quiet) echo "  else" >> $$@
 	$$(quiet) echo "    ifeq ($$(esc_dollar)(PV_WERROR),1)" >> $$@
 	$$(quiet) echo "      PV_CFLAGS += -Wno-psabi" >> $$@
@@ -293,13 +296,25 @@ ANDROID_AGGREGATE_LIB_LIST :=
 $(strip $(foreach lib,$(AGGREGATE_LIB_TARGET_LIST),$(if $(strip $($(lib)_CUMULATIVE_TARGET_LIST) $(EXTRA_LIBS_$(lib))),$(eval ANDROID_AGGREGATE_LIB_LIST += $(lib)),)))
 ANDROID_MAKE_NAMES := $(patsubst %,Android_%.mk,$(ANDROID_AGGREGATE_LIB_LIST)) $(ANDROID_TOPLEVEL_MAKE_NAME) $(OPENCORE_CONFIG_MAKE_NAME)
 
-# player and author need SDK-specific EXTRA_SHARED_LIBRARIES
+# player, author, wmdrm, wmdrmservice, and mtpservice need SDK-specific EXTRA_SHARED_LIBRARIES
 AUTHOR_SHARED_LIB := opencore_author
 PLAYER_SHARED_LIB := opencore_player
+WMDRM_SHARED_LIB := pvwmdrm
+WMDRMSERVICE_SHARED_LIB := pvwmdrmservice
+WMDRMOEMSETTINGS_SHARED_LIB := pvwmdrmoemsettings
+MTPSERVICE_SHARED_LIB := pvmtpservice
 ANDROID_GENERAL_AGGREGATE_LIB_LIST := $(strip $(subst $(AUTHOR_SHARED_LIB),,$(ANDROID_AGGREGATE_LIB_LIST)))
 ANDROID_GENERAL_AGGREGATE_LIB_LIST := $(strip $(subst $(PLAYER_SHARED_LIB),,$(ANDROID_GENERAL_AGGREGATE_LIB_LIST)))
+ANDROID_GENERAL_AGGREGATE_LIB_LIST := $(strip $(subst $(WMDRM_SHARED_LIB),,$(ANDROID_GENERAL_AGGREGATE_LIB_LIST)))
+ANDROID_GENERAL_AGGREGATE_LIB_LIST := $(strip $(subst $(WMDRMSERVICE_SHARED_LIB),,$(ANDROID_GENERAL_AGGREGATE_LIB_LIST)))
+ANDROID_GENERAL_AGGREGATE_LIB_LIST := $(strip $(subst $(WMDRMOEMSETTINGS_SHARED_LIB),,$(ANDROID_GENERAL_AGGREGATE_LIB_LIST)))
+ANDROID_GENERAL_AGGREGATE_LIB_LIST := $(strip $(subst $(MTPSERVICE_SHARED_LIB),,$(ANDROID_GENERAL_AGGREGATE_LIB_LIST)))
 $(eval $(call create_sdk_specific_aggregate_lib_android_mk,$(AUTHOR_SHARED_LIB)))
 $(eval $(call create_sdk_specific_aggregate_lib_android_mk,$(PLAYER_SHARED_LIB)))
+$(eval $(call create_sdk_specific_aggregate_lib_android_mk,$(WMDRM_SHARED_LIB)))
+$(eval $(call create_sdk_specific_aggregate_lib_android_mk,$(WMDRMSERVICE_SHARED_LIB)))
+$(eval $(call create_sdk_specific_aggregate_lib_android_mk,$(WMDRMOEMSETTINGS_SHARED_LIB)))
+$(eval $(call create_sdk_specific_aggregate_lib_android_mk,$(MTPSERVICE_SHARED_LIB)))
 $(strip $(foreach lib,$(ANDROID_GENERAL_AGGREGATE_LIB_LIST),$(eval $(call create_aggregate_lib_android_mk,$(lib)))))
 
 # Need the ability exclude 2way and pvme by default

@@ -30,6 +30,8 @@ ifeq ($(PLATFORM_VERSION),1.5)
     LOCAL_SHARED_LIBRARIES :=  libutils libcutils libui libhardware libandroid_runtime libdrm1 libmedia libsgl libvorbisidec libsonivox liblog libicuuc
 else ifeq ($(PLATFORM_VERSION),1.6)
     LOCAL_SHARED_LIBRARIES :=  libutils libcutils libui libhardware libandroid_runtime libdrm1 libmedia libsgl libvorbisidec libsonivox liblog libicuuc
+else ifeq ($(PLATFORM_VERSION),2.1)
+    LOCAL_SHARED_LIBRARIES :=  libutils libcutils libui libhardware libandroid_runtime libdrm1 libmedia libskia libvorbisidec libsonivox liblog libicuuc libbinder
 else
     LOCAL_SHARED_LIBRARIES :=  libutils libcutils libui libhardware libandroid_runtime libdrm1 libmedia libskia libvorbisidec libsonivox liblog libicuuc libbinder
 endif

@@ -1225,13 +1225,18 @@ int AndroidAudioInput::audin_thread_func() {
 
     iAudioThreadStartLock->lock();
 
+    // set microphone input flags to turn on AGC and noise suppression
+    uint32_t flags =    AudioRecord::RECORD_AGC_ENABLE |
+                        AudioRecord::RECORD_NS_ENABLE |
+                        AudioRecord::RECORD_IIR_ENABLE;
+
     LOGV("create AudioRecord %p", this);
     AudioRecord
             * record = new AudioRecord(
                     iAudioSource, iAudioSamplingRate,
                     android::AudioSystem::PCM_16_BIT,
-                    iAudioNumChannels,
-                    4*kBufferSize/iAudioNumChannels/sizeof(int16));
+                    (iAudioNumChannels > 1) ? AudioSystem::CHANNEL_IN_STEREO : AudioSystem::CHANNEL_IN_MONO,
+                    4*kBufferSize/iAudioNumChannels/sizeof(int16), flags);
     LOGV("AudioRecord created %p, this %p", record, this);
 
     status_t res = record->initCheck();
