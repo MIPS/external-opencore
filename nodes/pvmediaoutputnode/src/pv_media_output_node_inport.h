@@ -303,6 +303,15 @@ class PVMediaOutputNodePort
         //This logic depends on Mio comp. process data(at least eos msg) in a sequencial style.
         Oscl_Vector<uint32, OsclMemAllocator> iEosStreamIDVec;
         Oscl_Vector<uint32, OsclMemAllocator> iClipIDVec;
+
+        typedef struct
+        {
+            uint32 clipId;
+            uint32 streamId;
+        } BosTransitionVec;
+        // iBosTransitionVec is used to serialze the StartOfData/EndOfData events
+        // in the case of clip transition.
+        Oscl_Vector<BosTransitionVec, OsclMemAllocator> iBosTransitionVec;
         uint32 iSkipTimestamp;
         bool iSendStartOfDataEvent;
         uint32 iRecentClipID;

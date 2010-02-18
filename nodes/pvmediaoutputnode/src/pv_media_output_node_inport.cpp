@@ -158,6 +158,8 @@ PVMediaOutputNodePort::PVMediaOutputNodePort(PVMediaOutputNode* aNode)
     iRecentClipID = 0;
     iSendStartOfDataEvent = false;
 
+    iSendOneFrameAfterSkip = false;
+
     iFrameStepMode = false;
     iClockFrameCount = 0;
     iSyncFrameCount = 0;
@@ -166,6 +168,7 @@ PVMediaOutputNodePort::PVMediaOutputNodePort(PVMediaOutputNode* aNode)
 
     iEosStreamIDVec.reserve(2);
     iClipIDVec.reserve(2);
+    iBosTransitionVec.reserve(2);
 
     iOsclErrorTrapImp = OsclErrorTrap::GetErrorTrapImp();
     iLogger = PVLogger::GetLoggerObject("PVMediaOutputNodePort");
@@ -753,6 +756,12 @@ void PVMediaOutputNodePort::writeComplete(PVMFStatus status, PVMFCommandId aCmdI
                     PVMF_MOPORT_LOGDATAPATH((0, "PVMediaOutputNodePort::writeComplete EOS media transfer completed but PVMFInfoEndOfData not sent"));
                 }
 
+                if (iBosTransitionVec.size() != 0)
+                {
+                    BosTransitionVec btv = iBosTransitionVec.back();
+                    SendStartOfDataEvent(btv.streamId, btv.clipId);
+                    iBosTransitionVec.pop_back();
+                }
                 iEosStreamIDVec.pop_back();
                 iClipIDVec.pop_back();
             }
@@ -1728,23 +1737,34 @@ void PVMediaOutputNodePort::Run()
             PVMF_MOPORT_LOGREPOS((0, "PVMediaOutputNodePort::Run: BOS Recvd - Fmt=%s, TS=%d, ClipID=%d, StreamID=%d, Qs=%d",
                                   iSinkFormatString.get_str(),
                                   iCurrentMediaMsg->getTimestamp(),
-                                  msgStreamId,
                                   iRecentClipID,
+                                  msgStreamId,
                                   IncomingMsgQueueSize()));
 
             PVMF_MOPORT_LOGDATAPATH((0, "PVMediaOutputNodePort::Run: BOS Recvd - Fmt=%s, TS=%d, ClipID=%d, StreamID=%d, Qs=%d",
                                      iSinkFormatString.get_str(),
                                      iCurrentMediaMsg->getTimestamp(),
-                                     msgStreamId,
                                      iRecentClipID,
+                                     msgStreamId,
                                      IncomingMsgQueueSize()));
 
             if (iSendStartOfDataEvent != true)
             {
                 // This means that the BOS is not part of repositioning,
                 // but instead is from clip transition. So, send the
-                // PVMFInfoStartOfData right away.
-                SendStartOfDataEvent(msgStreamId, iRecentClipID);
+                // PVMFInfoStartOfData right away, or wait for any pending
+                // EOS.
+                if (iEosStreamIDVec.size() == 0)
+                {
+                    SendStartOfDataEvent(msgStreamId, iRecentClipID);
+                }
+                else
+                {
+                    BosTransitionVec btv;
+                    btv.streamId = msgStreamId;
+                    btv.clipId = iRecentClipID;
+                    iBosTransitionVec.push_front(btv);
+                }
             }
 
             iNode->ReportBOS();
@@ -1897,7 +1917,7 @@ void PVMediaOutputNodePort::Run()
             // called from ClockStateUpdated when all tracks report InfoStartofData and Engine starts the clock
             // If dequeued data has already been sent, we cant send that data again, it will crash
             // so just return and AO will be scheduled again for next data.
-            if ((oProcessIncomingMessage || iSendOneFrameAfterSkip) && (iCurrentMediaMsg.GetRep() != NULL))
+            if ((oProcessIncomingMessage || (iSendOneFrameAfterSkip && (iWriteState == EWriteOK))) && (iCurrentMediaMsg.GetRep() != NULL))
             {
                 SendData();
             }
@@ -1984,8 +2004,19 @@ void PVMediaOutputNodePort::HandlePortActivity(const PVMFPortActivity& aActivity
                             {
                                 // This means that the BOS is not part of repositioning,
                                 // but instead is from clip transition. So, send the
-                                // PVMFInfoStartOfData right away.
-                                SendStartOfDataEvent(msgStreamId, iRecentClipID);
+                                // PVMFInfoStartOfData right away, or wait for any pending
+                                // EOS.
+                                if (iEosStreamIDVec.size() == 0)
+                                {
+                                    SendStartOfDataEvent(msgStreamId, iRecentClipID);
+                                }
+                                else
+                                {
+                                    BosTransitionVec btv;
+                                    btv.streamId = msgStreamId;
+                                    btv.clipId = iRecentClipID;
+                                    iBosTransitionVec.push_front(btv);
+                                }
                             }
 
                             iNode->ReportBOS();
@@ -2155,7 +2186,7 @@ void PVMediaOutputNodePort::HandlePortActivity(const PVMFPortActivity& aActivity
                                 }
                             }
                         }
-                        if (oProcessIncomingMessage || iSendOneFrameAfterSkip)
+                        if (oProcessIncomingMessage || (iSendOneFrameAfterSkip && (iWriteState == EWriteOK)))
                         {
                             //we are starting to process a new media msg
                             if ((iCurrentMediaMsg.GetRep() != NULL) ||
