@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1219,8 +1219,6 @@ OMX_ERRORTYPE OmxComponentFactoryDynamicCreate(OMX_OUT OMX_HANDLETYPE* pHandle, 
 {
     OMX_ERRORTYPE returnStatus = OMX_ErrorUndefined;
 
-    //OSCL_StackString<M4V_MAX_LIB_PATH> omxLibName(OMX_M4V_LIB_NAME);
-
     OsclSharedLibrary* lib = NULL;
 
     // If aOmxLib is NULL, this is the first time this method has been called
@@ -1234,21 +1232,21 @@ OMX_ERRORTYPE OmxComponentFactoryDynamicCreate(OMX_OUT OMX_HANDLETYPE* pHandle, 
         lib = (OsclSharedLibrary *) aOmxLib;
     }
 
-    // Keep track of the number of times OmxLib is accessed
-    aRefCount++;
 
     // Load the associated library. If successful, call the corresponding
     // create function located inside the loaded library
-
-    if (OsclLibSuccess == lib->LoadLib())
+    OsclLibStatus loadStatus = OsclLibSuccess;
+    if (aRefCount == 0)
     {
+        loadStatus = lib->LoadLib();
+    }
+    if (loadStatus == OsclLibSuccess)
+    {
+        aRefCount++;
         // look for the interface
-
         OsclAny* interfacePtr = NULL;
         if (OsclLibSuccess == lib->QueryInterface(PV_OMX_SHARED_INTERFACE, (OsclAny*&)interfacePtr))
         {
-
-
             // the interface ptr should be ok, but check just in case
             if (interfacePtr != NULL)
             {
@@ -1278,6 +1276,12 @@ OMX_ERRORTYPE OmxComponentFactoryDynamicCreate(OMX_OUT OMX_HANDLETYPE* pHandle, 
                 }
             }
         }
+    }
+    else
+    {
+        OSCL_DELETE(lib);
+        aOmxLib = NULL;
+        return returnStatus;
     }
 
     // if everything is OK, the AO factory should have returned OMX_ErrorNone
@@ -1344,13 +1348,14 @@ OMX_ERRORTYPE OmxComponentFactoryDynamicDestructor(OMX_IN OMX_HANDLETYPE pHandle
 
     //Whatever the outcome of the interface queries, this needs to be done
     // Finish memory cleanup by closing the shared library and deleting
-    lib->Close();
 
     // If this is the last time to close the library, delete the
     // OsclSharedLibrary object and be sure to set iOmxLib back to NULL
     aRefCount--;
+    OSCL_ASSERT(aRefCount >= 0);
     if (0 == aRefCount)
     {
+        lib->Close();
         OSCL_DELETE(lib);
         aOmxLib = NULL;
     }
