@@ -1464,12 +1464,10 @@ bool PVMFMP3FFParserNode::RetrieveTrackData(PVMP3FFNodeTrackPortInfo& aTrackPort
     gau.buf.fragments[0].len = refCtrMemFragOut.getCapacity();
     gau.frameNum = 0;
 
-    int32 eocFrameIndex = -1;
-    int32 framesToFollowEOC = -1;
     // Mp3FF ErrorCode
     MP3ErrorType error = MP3_SUCCESS;
     // Grab data from the mp3 ff parser library
-    int32 retval = iPlaybackParserObj->GetNextBundledAccessUnits(&numsamples, &gau, error, eocFrameIndex, framesToFollowEOC);
+    int32 retval = iPlaybackParserObj->GetNextBundledAccessUnits(&numsamples, &gau, error);
 
     // Determine actual size of the retrieved data by summing each sample length in GAU
     // Check if the frame contains encoder delay or zero padding
@@ -1484,11 +1482,17 @@ bool PVMFMP3FFParserNode::RetrieveTrackData(PVMP3FFNodeTrackPortInfo& aTrackPort
         {
             iClipInfoList[iPlaybackClipIndex].iClipInfo.iHasBOCFrame = true;
         }
-
-        if (eocFrameIndex >= 0 && eocFrameIndex == (int32) index)
+        if ((gau.frameNum + index) == iClipInfoList[iPlaybackClipIndex].iClipInfo.iFirstFrameEOC)
         {
-            iClipInfoList[iPlaybackClipIndex].iClipInfo.iFirstFrameEOC = gau.frameNum + eocFrameIndex;
-            iClipInfoList[iPlaybackClipIndex].iClipInfo.iFramesToFollowEOC = framesToFollowEOC;
+            // we must calculate this based on the total number of frames since the padding may cross the GAU boundary
+            if (iClipInfoList[iPlaybackClipIndex].iClipInfo.iGaplessInfoAvailable)
+            {
+                iClipInfoList[iPlaybackClipIndex].iClipInfo.iFramesToFollowEOC = iClipInfoList[iPlaybackClipIndex].iClipInfo.iGaplessMetadata.GetTotalFrames() - gau.frameNum + 1;
+            }
+            else
+            {
+                iClipInfoList[iPlaybackClipIndex].iClipInfo.iFramesToFollowEOC = iPlaybackParserObj->GetNumSampleEntries() - gau.frameNum + 1;
+            }
 
             iClipInfoList[iPlaybackClipIndex].iClipInfo.iHasEOCFrame = true;
         }
