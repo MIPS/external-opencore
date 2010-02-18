@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -116,18 +116,6 @@ SyncSampleAtom::getSyncSampleFollowing(uint32 sampleNum, uint32& aSyncSampleFoll
 {
     uint32 sync = 0;
     int32 count = 0;
-    while (sync < sampleNum)
-    {
-        if (count < (int32)_entryCount)
-        {
-            sync = _psampleNumbers[count] - 1;
-            count ++;
-        }
-        else
-        {
-            return DEFAULT_ERROR;
-        }
-    }
 
     // Incase the sampleNum is one of the sync sample the existing sync
     // is same as sampleNum In this way the sample return from getSyncSampleFollowing
@@ -144,6 +132,19 @@ SyncSampleAtom::getSyncSampleFollowing(uint32 sampleNum, uint32& aSyncSampleFoll
         else
         {
             sync = 0;
+        }
+    }
+
+    while (sync < sampleNum)
+    {
+        if (count < (int32)_entryCount)
+        {
+            sync = _psampleNumbers[count] - 1;
+            count++;
+        }
+        else
+        {
+            return DEFAULT_ERROR;
         }
     }
 

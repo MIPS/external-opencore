@@ -12314,8 +12314,9 @@ void pvplayer_async_test_setplaybackrate2X::CommandCompleted(const PVCmdResponse
             if (aResponse.GetCmdStatus() == PVMFSuccess)
             {
 
+                fprintf(iTestMsgOutputFile, "Playback started.\n");
                 iState = STATE_STOP;
-                RunIfNotReady(15000000);
+                RunIfNotReady(20000000);
             }
             else
             {
@@ -12456,6 +12457,30 @@ void pvplayer_async_test_setplaybackrate2X::HandleInformationalEvent(const PVAsy
     {
         iState = STATE_CLEANUPANDCOMPLETE;
         RunIfNotReady();
+    }
+    // Check for stop time reached event
+    if (aEvent.GetEventType() == PVMFInfoEndOfData)
+    {
+        PVInterface* iface = (PVInterface*)(aEvent.GetEventExtensionInterface());
+        if (iface == NULL)
+        {
+            return;
+        }
+        PVUuid infomsguuid = PVMFErrorInfoMessageInterfaceUUID;
+        PVMFErrorInfoMessageInterface* infomsgiface = NULL;
+        if (iface->queryInterface(infomsguuid, (PVInterface*&)infomsgiface) == true)
+        {
+            int32 infocode;
+            PVUuid infouuid;
+            infomsgiface->GetCodeUUID(infocode, infouuid);
+            if ((infouuid == PVPlayerErrorInfoEventTypesUUID) && (infocode == PVPlayerInfoEndOfClipReached))
+            {
+                fprintf(iTestMsgOutputFile, "EOS received. Stopping playback.\n");
+                iState = STATE_STOP;
+                Cancel();
+                RunIfNotReady();
+            }
+        }
     }
 }
 
