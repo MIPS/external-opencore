@@ -1178,6 +1178,7 @@ PVMFStatus PVMFOMXBaseDecNode::HandleProcessingState()
         case EPVMFOMXBaseDecNodeProcessingState_WaitForBufferReturn:
         {
             // as buffers are coming back, Run may be called, wait until all buffers are back, then Free them all
+            OMX_ERRORTYPE err = OMX_ErrorNone;
 
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                             (0, "%s::HandleProcessingState() Port Reconfiguration -> WaitForBufferReturn ", iName.Str()));
@@ -1191,7 +1192,17 @@ PVMFStatus PVMFOMXBaseDecNode::HandleProcessingState()
                                     (0, "%s::HandleProcessingState() Port Reconfiguration -> all output buffers are back, free them", iName.Str()));
 
                     // port reconfiguration is required. Only one port at a time is disabled and then re-enabled after buffer resizing
-                    OMX_SendCommand(iOMXDecoder, OMX_CommandPortDisable, iPortIndexForDynamicReconfig, NULL);
+                    err = OMX_SendCommand(iOMXDecoder, OMX_CommandPortDisable, iPortIndexForDynamicReconfig, NULL);
+                    if (OMX_ErrorNone != err)
+                    {
+                        //Error condition report
+                        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
+                                        (0, "%s::HandleProcessingState (): Port Reconfiguration : Can't send port disable command !", iName.Str()));
+
+                        SetState(EPVMFNodeError);
+                        ReportErrorEvent(PVMFFailure);
+                        return PVMFFailure;
+                    }
 
 
                     if (false == iOutputBuffersFreed)
@@ -1234,7 +1245,17 @@ PVMFStatus PVMFOMXBaseDecNode::HandleProcessingState()
                                     (0, "%s::HandleProcessingState() Port Reconfiguration -> all input buffers are back, free them", iName.Str()));
 
                     // port reconfiguration is required. Only one port at a time is disabled and then re-enabled after buffer resizing
-                    OMX_SendCommand(iOMXDecoder, OMX_CommandPortDisable, iPortIndexForDynamicReconfig, NULL);
+                    err = OMX_SendCommand(iOMXDecoder, OMX_CommandPortDisable, iPortIndexForDynamicReconfig, NULL);
+                    if (OMX_ErrorNone != err)
+                    {
+                        //Error condition report
+                        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
+                                        (0, "%s::HandleProcessingState (): Port Reconfiguration : Can't send port disable command !", iName.Str()));
+
+                        SetState(EPVMFNodeError);
+                        ReportErrorEvent(PVMFFailure);
+                        return PVMFFailure;
+                    }
 
                     if (false == iInputBuffersFreed)
                     {
@@ -1307,6 +1328,8 @@ PVMFStatus PVMFOMXBaseDecNode::HandleProcessingState()
         case EPVMFOMXBaseDecNodeProcessingState_ReadyToDecode:
         {
 
+            OMX_ERRORTYPE err = OMX_ErrorNone;
+
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                             (0, "%s::HandleProcessingState() Ready To Decode start", iName.Str()));
             // In normal data flow and decoding state
@@ -1332,7 +1355,20 @@ PVMFStatus PVMFOMXBaseDecNode::HandleProcessingState()
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
                                 (0, "%s::HandleProcessingState() Sending previous - partially consumed input back to the OMX component", iName.Str()));
 
-                OMX_EmptyThisBuffer(iOMXDecoder, iInputBufferToResendToComponent);
+                err = OMX_EmptyThisBuffer(iOMXDecoder, iInputBufferToResendToComponent);
+                if (OMX_ErrorNone != err)
+                {
+                    //Error condition report, Log the error message and continue processing
+                    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
+                                    (0, "%s::HandleProcessingState () Error sending the previous input buffer", iName.Str()));
+
+                    //Deallocate the memory pool entry as well
+                    InputBufCtrlStruct *pContext = (InputBufCtrlStruct *)(iInputBufferToResendToComponent->pAppPrivate);
+
+                    (pContext->pMediaData).Unbind();
+                    iInBufMemoryPool->deallocate((OsclAny *)(pContext->pMemPoolEntry));
+                }
+
                 iInputBufferToResendToComponent = NULL; // do this only once
             }
             else if ((iNumOutstandingInputBuffers < iNumInputBuffers) && (iDataIn.GetRep() != NULL))
@@ -1452,8 +1488,18 @@ bool PVMFOMXBaseDecNode::SendOutputBufferToOMXComponent()
 
     output_buf->pBufHdr->nFlags = 0; // zero out the flags
 
-    OMX_FillThisBuffer(iOMXDecoder, output_buf->pBufHdr);
+    OMX_ERRORTYPE err = OMX_ErrorNone;
 
+    err = OMX_FillThisBuffer(iOMXDecoder, output_buf->pBufHdr);
+    if (OMX_ErrorNone != err)
+    {
+        //Error condition report
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
+                        (0, "%s::SendOutputBufferToOMXComponent(): Error sending output buffer to the OMX component!", iName.Str()));
+
+        iOutBufMemoryPool->deallocate(output_buf->pMemPoolEntry);
+        return false;
+    }
 
 
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
@@ -1700,8 +1746,22 @@ bool PVMFOMXBaseDecNode::SendEOSBufferToOMXComponent()
     // most importantly, set the EOS flag:
     input_buf->pBufHdr->nFlags |= OMX_BUFFERFLAG_EOS;
 
+    OMX_ERRORTYPE Err = OMX_ErrorNone;
+
     // send buffer to component
-    OMX_EmptyThisBuffer(iOMXDecoder, input_buf->pBufHdr);
+    Err = OMX_EmptyThisBuffer(iOMXDecoder, input_buf->pBufHdr);
+    if (OMX_ErrorNone != Err)
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
+                        (0, "%s::SendEOSBufferToOMXComponent() Error sending EOS marked input buffer to OMX component", iName.Str()));
+
+        // Deallocate the mem pool incase sending buffer to component failed,
+        // as there will not be any EmptyBufferDone callback for this buffer
+        iInBufMemoryPool->deallocate((OsclAny *) input_buf->pMemPoolEntry);
+
+        return false;
+    }
+
 
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                     (0, "%s::SendEOSBufferToOMXComponent() Out", iName.Str()));
@@ -1732,6 +1792,7 @@ OSCL_EXPORT_REF void PVMFOMXBaseDecNode::DropCurrentBufferUnderConstruction()
 // this method is called under certain conditions only if the node is doing partial frame assembly
 OSCL_EXPORT_REF void PVMFOMXBaseDecNode::SendIncompleteBufferUnderConstruction()
 {
+    OMX_ERRORTYPE Err = OMX_ErrorNone;
 
     // this should never be the case, but check anyway
     if (iInputBufferUnderConstruction != NULL)
@@ -1742,8 +1803,17 @@ OSCL_EXPORT_REF void PVMFOMXBaseDecNode::SendIncompleteBufferUnderConstruction()
         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                         (0, "%s::SendIncompleteBufferUnderConstruction()  - Sending Incomplete Buffer 0x%x to OMX Component MARKER field set to %x, TS=%d, Ticks=%L", iName.Str(), iInputBufferUnderConstruction->pBufHdr->pBuffer, iInputBufferUnderConstruction->pBufHdr->nFlags, iInTimestamp, iOMXTicksTimestamp));
 
-        OMX_EmptyThisBuffer(iOMXDecoder, iInputBufferUnderConstruction->pBufHdr);
+        Err = OMX_EmptyThisBuffer(iOMXDecoder, iInputBufferUnderConstruction->pBufHdr);
+        if (OMX_ErrorNone != Err)
+        {
+            //Error Condition, Log the error message and continue processing
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
+                            (0, "%s::SendIncompleteBufferUnderConstruction() Error Sending Incomplete Buffer to OMX component", iName.Str()));
 
+            //Deallocate the memory pool entry as well
+            (iInputBufferUnderConstruction->pMediaData).Unbind();
+            iInBufMemoryPool->deallocate((OsclAny *)(iInputBufferUnderConstruction->pMemPoolEntry));
+        }
 
         iInputBufferUnderConstruction = NULL;
         iObtainNewInputBuffer = true;
@@ -2027,6 +2097,7 @@ OSCL_EXPORT_REF bool PVMFOMXBaseDecNode::SendInputBufferToOMXComponent()
     OsclAny *pB = NULL;
     int32 errcode = OsclErrNone;
     uint32 ii;
+    OMX_ERRORTYPE Err = OMX_ErrorNone;
 
 // NOTE: a) if NAL start codes must be inserted i.e. iOMXComponentUsesNALStartCodess is TRUE, then iOMXComponentSupportsMovableInputBuffers must be set to FALSE.
 //       b) if iOMXComponentSupportsPartialFrames is FALSE, then iOMXComponentSupportsMovableInputBuffers must be FALSE as well
@@ -2625,7 +2696,17 @@ OSCL_EXPORT_REF bool PVMFOMXBaseDecNode::SendInputBufferToOMXComponent()
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                                 (0, "%s::SendInputBufferToOMXComponent()  - Sending Buffer 0x%x to OMX Component MARKER field set to %x, TS=%d, Ticks=%L", iName.Str(), input_buf->pBufHdr->pBuffer, input_buf->pBufHdr->nFlags, iInTimestamp, iOMXTicksTimestamp));
 
-                OMX_EmptyThisBuffer(iOMXDecoder, input_buf->pBufHdr);
+                Err = OMX_EmptyThisBuffer(iOMXDecoder, input_buf->pBufHdr);
+                if (OMX_ErrorNone != Err)
+                {
+                    //Error Condition, Log the error message and continue processing
+                    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
+                                    (0, "%s::SendInputBufferToOMXComponent() Error Sending Input Buffer to OMX Component", iName.Str()));
+
+                    //Deallocate the memory pool entry as well
+                    (input_buf->pMediaData).Unbind();
+                    iInBufMemoryPool->deallocate((OsclAny *)(input_buf->pMemPoolEntry));
+                }
                 iInputBufferUnderConstruction = NULL; // this buffer is gone to OMX component now
             }
         }
@@ -2939,7 +3020,20 @@ OSCL_EXPORT_REF PVMFStatus PVMFOMXBaseDecNode::SendConfigBufferToOMXComponent(ui
     // set buffer flag indicating buffer contains codec config data
     input_buf->pBufHdr->nFlags |= OMX_BUFFERFLAG_CODECCONFIG;
 
-    OMX_EmptyThisBuffer(iOMXDecoder, input_buf->pBufHdr);
+    OMX_ERRORTYPE Err = OMX_ErrorNone;
+
+    Err = OMX_EmptyThisBuffer(iOMXDecoder, input_buf->pBufHdr);
+    if (OMX_ErrorNone != Err)
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
+                        (0, "%s::SendConfigBufferToOMXComponent() Config buffer too large problem -unexpected at init", iName.Str()));
+
+        //Deallocate the memory pool entry as well
+        (input_buf->pMediaData).Unbind();
+        iInBufMemoryPool->deallocate((OsclAny *)(input_buf->pMemPoolEntry));
+
+        return PVMFFailure;
+    }
 
     return PVMFSuccess;
 
@@ -4276,10 +4370,13 @@ OSCL_EXPORT_REF PVMFStatus PVMFOMXBaseDecNode::DoPrepare()
             inputParameters.cComponentRole = *role;
 
             // call once to find out the number of components that can fit the given role and save
-            OMX_MasterGetComponentsOfRole(inputParameters.cComponentRole, &num_comps_for_role[ii], NULL);
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
-                            (0, "%s::DoPrepare(): There are %d components of role %s ", iName.Str(), num_comps_for_role[ii], *role));
-            total_num_comps += num_comps_for_role[ii];
+            err = OMX_MasterGetComponentsOfRole(inputParameters.cComponentRole, &num_comps_for_role[ii], NULL);
+            if (OMX_ErrorNone == err)
+            {
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
+                                (0, "%s::DoPrepare(): There are %d components of role %s ", iName.Str(), num_comps_for_role[ii], *role));
+                total_num_comps += num_comps_for_role[ii];
+            }
         }
     }
 
@@ -4333,14 +4430,17 @@ OSCL_EXPORT_REF PVMFStatus PVMFOMXBaseDecNode::DoPrepare()
         }
         else // No track selection list ...
         {
-            // need to crate the list by calling OMX_MasterGetComponentsOfRole
+            // need to create the list by calling OMX_MasterGetComponentsOfRole
             OMX_U32 cumulative_comps = 0;
             for (ii = 0, role = roles.begin(); role != roles.end(); role++, ii++)
             {
                 OMX_U32 num = 0;
                 // call 2nd time to fill the component names into the array
-                OMX_MasterGetComponentsOfRole((OMX_STRING) *role, &num, (OMX_U8 **) &CompOfRole[cumulative_comps]);
-                cumulative_comps += num_comps_for_role[ii];
+                err = OMX_MasterGetComponentsOfRole((OMX_STRING) * role, &num, (OMX_U8 **) & CompOfRole[cumulative_comps]);
+                if (OMX_ErrorNone == err)
+                {
+                    cumulative_comps += num_comps_for_role[ii];
+                }
             }
         }
 
@@ -4511,7 +4611,13 @@ OSCL_EXPORT_REF PVMFStatus PVMFOMXBaseDecNode::DoPrepare()
             if (!CheckComponentForMultRoles(inputParameters.cComponentName, inputParameters.cComponentRole))
             {
                 // error, free handle and try to find a different component
-                OMX_MasterFreeHandle(iOMXDecoder);
+                err = OMX_MasterFreeHandle(iOMXDecoder);
+                if (OMX_ErrorNone != err)
+                {
+                    //Error condition report
+                    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
+                                    (0, "%s::DoPrepare(): Can't free decoder's handle!", iName.Str()));
+                }
                 iOMXDecoder = NULL;
                 status = OMX_FALSE;
                 continue;
@@ -4520,7 +4626,13 @@ OSCL_EXPORT_REF PVMFStatus PVMFOMXBaseDecNode::DoPrepare()
             if (!CheckComponentCapabilities(&format, outputParameters))
             {
                 // error, free handle and try to find a different component
-                OMX_MasterFreeHandle(iOMXDecoder);
+                err = OMX_MasterFreeHandle(iOMXDecoder);
+                if (OMX_ErrorNone != err)
+                {
+                    //Error condition report
+                    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
+                                    (0, "%s::DoPrepare(): Can't free decoder's handle!", iName.Str()));
+                }
                 iOMXDecoder = NULL;
                 status = OMX_FALSE;
                 continue;
@@ -4544,8 +4656,14 @@ OSCL_EXPORT_REF PVMFStatus PVMFOMXBaseDecNode::DoPrepare()
     } // end of for( total_num_comps )
 
     // whether successful or not, need to free CompOfRoles
-    oscl_free(CompOfRole[0]); // only the 0th block was allocated
-    oscl_free(CompOfRole);
+    if (CompOfRole)
+    {
+        if (CompOfRole[0])
+        {
+            oscl_free(CompOfRole[0]); // only the 0th block was allocated
+        }
+        oscl_free(CompOfRole);
+    }
 
     if (num_comps_for_role)
         oscl_free(num_comps_for_role);

@@ -163,13 +163,23 @@ PVMFOMXVideoDecNode::PVMFOMXVideoDecNode(int32 aPriority) :
 /////////////////////////////////////////////////////////////////////////////
 PVMFStatus PVMFOMXVideoDecNode::HandlePortReEnable()
 {
+    OMX_ERRORTYPE Err = OMX_ErrorNone;
+
     // set the port index so that we get parameters for the proper port
     iParamPort.nPortIndex = iPortIndexForDynamicReconfig;
 
     CONFIG_SIZE_AND_VERSION(iParamPort);
 
     // get new parameters of the port
-    OMX_GetParameter(iOMXDecoder, OMX_IndexParamPortDefinition, &iParamPort);
+    Err = OMX_GetParameter(iOMXDecoder, OMX_IndexParamPortDefinition, &iParamPort);
+    if (OMX_ErrorNone != Err)
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                        (0, "PVMFOMXVideoDecNode::HandlePortReEnable() Problem getting parameters in port %d ", iPortIndexForDynamicReconfig));
+        SetState(EPVMFNodeError);
+        ReportErrorEvent(PVMFErrNoMemory);
+        return false;
+    }
 
     // do not send port reenable command until all the parameters have been set
 
@@ -217,7 +227,6 @@ PVMFStatus PVMFOMXVideoDecNode::HandlePortReEnable()
         iParamPort.nBufferCountActual = iNumOutputBuffers;
         CONFIG_SIZE_AND_VERSION(iParamPort);
 
-        OMX_ERRORTYPE Err = OMX_ErrorNone;
         Err = OMX_SetParameter(iOMXDecoder, OMX_IndexParamPortDefinition, &iParamPort);
         if (Err != OMX_ErrorNone)
         {
@@ -381,7 +390,15 @@ PVMFStatus PVMFOMXVideoDecNode::HandlePortReEnable()
 
         // it is now safe to send command for port reenable
         // send command for port re-enabling (for this to happen, we must first recreate the buffers)
-        OMX_SendCommand(iOMXDecoder, OMX_CommandPortEnable, iPortIndexForDynamicReconfig, NULL);
+        Err = OMX_SendCommand(iOMXDecoder, OMX_CommandPortEnable, iPortIndexForDynamicReconfig, NULL);
+        if (OMX_ErrorNone != Err)
+        {
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                            (0, "PVMFOMXVideoDecNode::HandlePortReEnable() Problem sending port enable command to port %d ", iPortIndexForDynamicReconfig));
+            SetState(EPVMFNodeError);
+            ReportErrorEvent(PVMFErrNoMemory);
+            return false;
+        }
 
 
         /* Allocate output buffers */
@@ -444,7 +461,6 @@ PVMFStatus PVMFOMXVideoDecNode::HandlePortReEnable()
         iParamPort.nBufferCountActual = iNumInputBuffers;
         CONFIG_SIZE_AND_VERSION(iParamPort);
 
-        OMX_ERRORTYPE Err = OMX_ErrorNone;
         Err = OMX_SetParameter(iOMXDecoder, OMX_IndexParamPortDefinition, &iParamPort);
         if (Err != OMX_ErrorNone)
         {
@@ -456,7 +472,15 @@ PVMFStatus PVMFOMXVideoDecNode::HandlePortReEnable()
         }
         // it is now safe to send command for port reenable
         // send command for port re-enabling (for this to happen, we must first recreate the buffers)
-        OMX_SendCommand(iOMXDecoder, OMX_CommandPortEnable, iPortIndexForDynamicReconfig, NULL);
+        Err = OMX_SendCommand(iOMXDecoder, OMX_CommandPortEnable, iPortIndexForDynamicReconfig, NULL);
+        if (OMX_ErrorNone != Err)
+        {
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                            (0, "PVMFOMXVideoDecNode::HandlePortReEnable() Problem sending port enable command to port %d ", iPortIndexForDynamicReconfig));
+            SetState(EPVMFNodeError);
+            ReportErrorEvent(PVMFErrNoMemory);
+            return false;
+        }
 
         /* Allocate input buffers */
         if (!CreateInputMemPool(iNumInputBuffers))
@@ -905,15 +929,16 @@ bool PVMFOMXVideoDecNode::NegotiateComponentParameters(OMX_PTR aOutputParameters
 
                     oscl_strncpy(KvpKey, PVMF_FORMAT_SPECIFIC_INFO_KEY_YUV, KeyLength);
                     int32 err;
+                    bool success = false;
 
-                    OSCL_TRY(err, ((PVMFOMXDecPort*)iOutPort)->pvmiSetPortFormatSpecificInfoSync(yuvFsiMemfrag, KvpKey););
+                    OSCL_TRY(err, success = ((PVMFOMXDecPort*)iOutPort)->pvmiSetPortFormatSpecificInfoSync(yuvFsiMemfrag, KvpKey););
 
                     if (err != OsclErrNone)
                     {
                         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
                                         (0, "PVMFOMXVideoDecNode::NegotiateComponentParameters - Problem to set FSI"));
                     }
-                    else
+                    else if (success)
                     {
                         // the call succeeded - no need to send extra fsi
                         iCompactFSISettingSucceeded = true;
@@ -2615,6 +2640,7 @@ PVMFStatus PVMFOMXVideoDecNode::DoCapConfigGetParametersSync(PvmiKeyType aIdenti
         OMX_U32 ii;
         OMX_U32 *num_comps_for_role = NULL;
         OMX_U32 num_roles = roles.size(); // this is typically 1, but can be more than 1
+        OMX_ERRORTYPE Err = OMX_ErrorNone;
 
         num_comps_for_role = (OMX_U32*) oscl_malloc(num_roles * sizeof(OMX_U32));
         if (num_comps_for_role == NULL)
@@ -2631,9 +2657,11 @@ PVMFStatus PVMFOMXVideoDecNode::DoCapConfigGetParametersSync(PvmiKeyType aIdenti
             aInputParameters.cComponentRole = *role;
 
             // call once to find out the number of components that can fit the given role and save
-            OMX_MasterGetComponentsOfRole(aInputParameters.cComponentRole, &num_comps_for_role[ii], NULL);
-
-            total_num_comps += num_comps_for_role[ii];
+            Err = OMX_MasterGetComponentsOfRole(aInputParameters.cComponentRole, &num_comps_for_role[ii], NULL);
+            if (OMX_ErrorNone == Err)
+            {
+                total_num_comps += num_comps_for_role[ii];
+            }
         }
 
         // do memory and parameter allocation
@@ -2705,33 +2733,36 @@ PVMFStatus PVMFOMXVideoDecNode::DoCapConfigGetParametersSync(PvmiKeyType aIdenti
 
                 // adjust the value of indices
                 // call 2nd time to get the component names
-                OMX_MasterGetComponentsOfRole(aInputParameters.cComponentRole, &num, (OMX_U8 **) &CompOfRole[cumulative_comps]);
+                Err = OMX_MasterGetComponentsOfRole(aInputParameters.cComponentRole, &num, (OMX_U8 **) & CompOfRole[cumulative_comps]);
 
-                for (ii = cumulative_comps; ii < cumulative_comps + num_comps_for_role[jj]; ii++)
+                if (OMX_ErrorNone == Err)
                 {
-                    aInputParameters.cComponentName = CompOfRole[ii];
-                    status = OMX_MasterConfigParser(&aInputParameters, &aOutputParameters);
-                    if (status == OMX_TRUE)
+                    for (ii = cumulative_comps; ii < cumulative_comps + num_comps_for_role[jj]; ii++)
                     {
-                        // component passes the test - write the component name into kvp list
-                        // write the key
-                        aParameters[ii].key = memblock + (aNumParamElements * (sizeof(_STRLIT_CHAR(PVMF_DEC_AVAILABLE_OMX_COMPONENTS_KEY)) + 1) * sizeof(char)) ;
-                        oscl_strncat(aParameters[ii].key, _STRLIT_CHAR(PVMF_DEC_AVAILABLE_OMX_COMPONENTS_KEY), sizeof(_STRLIT_CHAR(PVMF_DEC_AVAILABLE_OMX_COMPONENTS_KEY)));
-                        aParameters[ii].key[sizeof(_STRLIT_CHAR(PVMF_DEC_AVAILABLE_OMX_COMPONENTS_KEY))] = 0; // null terminate
+                        aInputParameters.cComponentName = CompOfRole[ii];
+                        status = OMX_MasterConfigParser(&aInputParameters, &aOutputParameters);
+                        if (status == OMX_TRUE)
+                        {
+                            // component passes the test - write the component name into kvp list
+                            // write the key
+                            aParameters[ii].key = memblock + (aNumParamElements * (sizeof(_STRLIT_CHAR(PVMF_DEC_AVAILABLE_OMX_COMPONENTS_KEY)) + 1) * sizeof(char)) ;
+                            oscl_strncat(aParameters[ii].key, _STRLIT_CHAR(PVMF_DEC_AVAILABLE_OMX_COMPONENTS_KEY), sizeof(_STRLIT_CHAR(PVMF_DEC_AVAILABLE_OMX_COMPONENTS_KEY)));
+                            aParameters[ii].key[sizeof(_STRLIT_CHAR(PVMF_DEC_AVAILABLE_OMX_COMPONENTS_KEY))] = 0; // null terminate
 
-                        // write the length
-                        aParameters[ii].length = PV_OMX_MAX_COMPONENT_NAME_LENGTH;
+                            // write the length
+                            aParameters[ii].length = PV_OMX_MAX_COMPONENT_NAME_LENGTH;
 
-                        aParameters[ii].value.pChar_value = CompOfRole[ii];
-                        aNumParamElements++;
+                            aParameters[ii].value.pChar_value = CompOfRole[ii];
+                            aNumParamElements++;
 
-                        // also record width and height for future reference (query by the player engine)
-                        iNewWidth = aOutputParameters.width;
-                        iNewHeight = aOutputParameters.height;
+                            // also record width and height for future reference (query by the player engine)
+                            iNewWidth = aOutputParameters.width;
+                            iNewHeight = aOutputParameters.height;
 
+                        }
                     }
+                    cumulative_comps += num_comps_for_role[jj];
                 }
-                cumulative_comps += num_comps_for_role[jj];
             }
 
             // free memory for CompOfRole placeholder.
@@ -3294,33 +3325,37 @@ PVMFStatus PVMFOMXVideoDecNode::DoCapConfigVerifyParameters(PvmiKvp* aParameters
                 OMX_STRING *CompOfRole;
                 OMX_U32 ii;
                 Oscl_Vector<OMX_STRING, OsclMemAllocator>::iterator role;
+                OMX_ERRORTYPE Err = OMX_ErrorNone;
 
                 for (role = roles.begin(); role != roles.end(); role++)
                 {
                     // call once to find out the number of components that can fit the role
-                    OMX_MasterGetComponentsOfRole(*role, &num_comps, NULL);
+                    Err = OMX_MasterGetComponentsOfRole(*role, &num_comps, NULL);
 
-                    if (num_comps > 0)
+                    if ((num_comps > 0) && (OMX_ErrorNone == Err))
                     {
                         CompOfRole = (OMX_STRING *)oscl_malloc(num_comps * sizeof(OMX_STRING));
                         for (ii = 0; ii < num_comps; ii++)
                             CompOfRole[ii] = (OMX_STRING) oscl_malloc(PV_OMX_MAX_COMPONENT_NAME_LENGTH * sizeof(OMX_U8));
 
                         // call 2nd time to get the component names
-                        OMX_MasterGetComponentsOfRole(*role, &num_comps, (OMX_U8 **)CompOfRole);
+                        Err = OMX_MasterGetComponentsOfRole(*role, &num_comps, (OMX_U8 **)CompOfRole);
 
-                        for (ii = 0; ii < num_comps; ii++)
+                        if (OMX_ErrorNone == Err)
                         {
-                            aInputParameters.cComponentRole = *role;
-                            aInputParameters.cComponentName = CompOfRole[ii];
-                            status = OMX_MasterConfigParser(&aInputParameters, &aOutputParameters);
-                            if (status == OMX_TRUE)
+                            for (ii = 0; ii < num_comps; ii++)
                             {
-                                break;
-                            }
-                            else
-                            {
-                                status = OMX_FALSE;
+                                aInputParameters.cComponentRole = *role;
+                                aInputParameters.cComponentName = CompOfRole[ii];
+                                status = OMX_MasterConfigParser(&aInputParameters, &aOutputParameters);
+                                if (status == OMX_TRUE)
+                                {
+                                    break;
+                                }
+                                else
+                                {
+                                    status = OMX_FALSE;
+                                }
                             }
                         }
 
