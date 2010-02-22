@@ -2242,10 +2242,13 @@ OSCL_EXPORT_REF bool PVMFOMXBaseDecNode::SendInputBufferToOMXComponent()
             iIsNewDataFragment = true; // done with this fragment. Get a new one
 
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                            (0, "%s::SendInputBufferToOMXComponent() - Invalid fragment of size %d, TS=%d", iName.Str(), frag.getMemFragSize(), iInTimestamp));
+                            (0, "%s::SendInputBufferToOMXComponent() - Invalid fragment with NULL pointer, TS=%d", iName.Str(), iInTimestamp));
 
             if (iCurrFragNum == iDataIn->getNumFragments())
             {
+                // Return the buffer hdr already allocated to the memory pool
+                iInBufMemoryPool->deallocate((OsclAny *) input_buf->pMemPoolEntry);
+
                 iDataIn.Unbind();
                 break;
             }
@@ -2254,7 +2257,6 @@ OSCL_EXPORT_REF bool PVMFOMXBaseDecNode::SendInputBufferToOMXComponent()
             iObtainNewInputBuffer = false;
             continue;
         }
-
 
         // To add robustness to 3gpp playback of AVC file, we don't allow in-band SPS/PPS
         // If there's one, it's likely that this is a corrupted NAL
@@ -2272,6 +2274,8 @@ OSCL_EXPORT_REF bool PVMFOMXBaseDecNode::SendInputBufferToOMXComponent()
 
                 if (iCurrFragNum == iDataIn->getNumFragments())
                 {
+                    // Return the buffer hdr already allocated to the memory pool
+                    iInBufMemoryPool->deallocate((OsclAny *) input_buf->pMemPoolEntry);
                     iDataIn.Unbind();
                     break;
                 }
