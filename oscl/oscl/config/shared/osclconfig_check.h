@@ -168,6 +168,24 @@ Otherwise it should be set to 0.
 #endif
 
 /**
+\def OSCL_HAS_ANDROID_SUPPORT macro should be set to 1 if
+the target platform supports the Android API.
+Otherwise it should be set to 0.
+*/
+#ifndef OSCL_HAS_ANDROID_SUPPORT
+#error "ERROR: OSCL_HAS_ANDROID_SUPPORT has to be defined to either 1 or 0"
+#endif
+
+/**
+\def OSCL_HAS_IPHONE_SUPPORT macro should be set to 1 if
+the target platform supports the iPhone API.
+Otherwise it should be set to 0.
+*/
+#ifndef OSCL_HAS_IPHONE_SUPPORT
+#error "ERROR: OSCL_HAS_IPHONE_SUPPORT has to be defined to either 1 or 0"
+#endif
+
+/**
 \def OSCL_INTEGERS_WORD_ALIGNED macro should be set to 1 if
 the target platform requires integers to be word-aligned in memory.
 Otherwise it should be set to 0.

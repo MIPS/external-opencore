@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +33,8 @@
 #define OSCL_HAS_SYMBIAN_SUPPORT            0
 #define OSCL_HAS_SAVAJE_SUPPORT             0
 #define OSCL_HAS_PV_C_OS_SUPPORT            0
+#define OSCL_HAS_ANDROID_SUPPORT            0
+#define OSCL_HAS_IPHONE_SUPPORT             0
 
 //osclconfig_error
 #define OSCL_HAS_SYMBIAN_ERRORTRAP 0

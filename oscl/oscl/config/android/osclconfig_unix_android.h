@@ -65,6 +65,8 @@
 #define OSCL_HAS_MSWIN_SUPPORT              0
 #define OSCL_HAS_MSWIN_PARTIAL_SUPPORT    0
 #define OSCL_HAS_SYMBIAN_SUPPORT            0
+#define OSCL_HAS_IPHONE_SUPPORT        0
+
 
 // 64-bit int
 #define OSCL_NATIVE_INT64_TYPE     int64_t

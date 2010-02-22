@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,6 +44,9 @@
 #else
 #define OSCL_RELEASE_BUILD 0
 #endif
+
+#define OSCL_HAS_ANDROID_SUPPORT       0
+#define OSCL_HAS_IPHONE_SUPPORT        0
 
 // include common unix definitions
 #include "osclconfig_unix_common.h"
