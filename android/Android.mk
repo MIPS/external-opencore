@@ -18,6 +18,9 @@ LOCAL_SRC_FILES := \
 ifeq ($(PLATFORM_VERSION),1.5)
 else ifeq ($(PLATFORM_VERSION),1.6)
 else ifeq ($(PLATFORM_VERSION),2.1)
+  ifeq ($(PV_WERROR),1)
+    LOCAL_CFLAGS := -Wno-psabi
+  endif
 else
   ifeq ($(PV_WERROR),1)
     LOCAL_CFLAGS := -Wno-psabi

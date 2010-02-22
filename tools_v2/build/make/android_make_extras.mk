@@ -217,6 +217,9 @@ $1: FORCE
 	$$(quiet) echo "  ifeq ($$(esc_dollar)(PLATFORM_VERSION),1.5)" >> $$@
 	$$(quiet) echo "  else ifeq ($$(esc_dollar)(PLATFORM_VERSION),1.6)" >> $$@
 	$$(quiet) echo "  else ifeq ($$(esc_dollar)(PLATFORM_VERSION),2.1)" >> $$@
+	$$(quiet) echo "    ifeq ($$(esc_dollar)(PV_WERROR),1)" >> $$@
+	$$(quiet) echo "      PV_CFLAGS += -Wno-psabi" >> $$@
+	$$(quiet) echo "    endif" >> $$@
 	$$(quiet) echo "  else" >> $$@
 	$$(quiet) echo "    ifeq ($$(esc_dollar)(PV_WERROR),1)" >> $$@
 	$$(quiet) echo "      PV_CFLAGS += -Wno-psabi" >> $$@
