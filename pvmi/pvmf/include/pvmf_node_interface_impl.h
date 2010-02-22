@@ -496,7 +496,8 @@ class PVMFNodeInterfaceImpl : public PVMFNodeInterface,
                 const OsclAny* aContextData = NULL);
 
         OSCL_IMPORT_REF virtual void HandlePortActivity(const PVMFPortActivity& aActivity);
-        OSCL_IMPORT_REF PVMFCommandId QueueCommandL(PVMFNodeCommand& aCmd);
+
+        OSCL_IMPORT_REF virtual PVMFCommandId QueueCommandL(PVMFNodeCommand& aCmd);
 
         OSCL_IMPORT_REF void SetState(TPVMFNodeInterfaceState);
         OSCL_IMPORT_REF TPVMFNodeInterfaceState GetState();

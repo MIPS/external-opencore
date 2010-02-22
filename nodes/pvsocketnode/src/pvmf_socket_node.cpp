@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,15 +17,10 @@
  */
 
 #include "pvmf_socket_node.h"
-#include "oscl_string_utils.h"
-#include "pvmf_basic_errorinfomessage.h"
-#include "pvmf_errorinfomessage_extension.h"
-#include "pvmf_socket_node_events.h"
 #include "oscl_byte_order.h"
 #include "pvmf_protocol_engine_command_format_ids.h"
 #include "pvmf_media_cmd.h"
 #include "pvmf_media_msg_format_ids.h"
-#include "oscl_tickcount.h"
 #include "oscl_rand.h"
 #include "oscl_time.h"
 #include "pvmf_socket_node_tunables.h"
@@ -280,7 +275,7 @@ void SocketPortConfig::CleanupMemPools(Oscl_DefAlloc& aAlloc)
 //////////////////////////////////////////////////
 
 OSCL_EXPORT_REF PVMFSocketNode::PVMFSocketNode(int32 aPriority)
-        : OsclActiveObject(aPriority, "PVMFSocketNode")
+        : PVMFNodeInterfaceImpl(aPriority, "PVMFSocketNode")
         , TIMEOUT_CONNECT(30000)
         , TIMEOUT_SEND(3000)
         , TIMEOUT_SENDTO(3000)
@@ -307,32 +302,21 @@ OSCL_EXPORT_REF PVMFSocketNode::PVMFSocketNode(int32 aPriority)
     iUdpPortRange = 2000;
     int32 err;
     OSCL_TRY(err,
-
-             //Create the input command queue.  Use a reserve to avoid lots of
-             //dynamic memory allocation.
-             iPendingCmdQueue.Construct(PVMF_SOCKET_NODE_COMMAND_ID_START,
-                                        PVMF_SOCKET_NODE_COMMAND_VECTOR_RESERVE);
-
-             //Create the "current command" queue.  It will only contain one
-             //command at a time, so use a reserve of 1.
-             iCurrentCmdQueue.Construct(0, 1);
-             iCancelCmdQueue.Construct(0, 1);
-
              //Create the port vector.
              iPortVector.Construct(PVMF_SOCKET_NODE_PORT_VECTOR_RESERVE);
 
              //Set the node capability data.
              //This node can support an unlimited number of ports.
-             iCapability.iCanSupportMultipleInputPorts = true;
-             iCapability.iCanSupportMultipleOutputPorts = true;
-             iCapability.iHasMaxNumberOfPorts = false;
-             iCapability.iMaxNumberOfPorts = 0;//no maximum
+             iNodeCapability.iCanSupportMultipleInputPorts = true;
+             iNodeCapability.iCanSupportMultipleOutputPorts = true;
+             iNodeCapability.iHasMaxNumberOfPorts = false;
+             iNodeCapability.iMaxNumberOfPorts = 0;//no maximum
 
-             iCapability.iInputFormatCapability.push_back(PVMF_MIME_INET_UDP);
-             iCapability.iInputFormatCapability.push_back(PVMF_MIME_INET_TCP);
+             iNodeCapability.iInputFormatCapability.push_back(PVMF_MIME_INET_UDP);
+             iNodeCapability.iInputFormatCapability.push_back(PVMF_MIME_INET_TCP);
 
-             iCapability.iOutputFormatCapability.push_back(PVMF_MIME_INET_TCP);
-             iCapability.iOutputFormatCapability.push_back(PVMF_MIME_INET_UDP);
+             iNodeCapability.iOutputFormatCapability.push_back(PVMF_MIME_INET_TCP);
+             iNodeCapability.iOutputFormatCapability.push_back(PVMF_MIME_INET_UDP);
 
              iDnsCache.NewL();
 
@@ -341,16 +325,18 @@ OSCL_EXPORT_REF PVMFSocketNode::PVMFSocketNode(int32 aPriority)
     if (err != OsclErrNone)
     {
         //if a leave happened, cleanup and re-throw the error
-        iPendingCmdQueue.clear();
-        iCurrentCmdQueue.clear();
-        iCancelCmdQueue.clear();
         iPortVector.clear();
-        iCapability.iInputFormatCapability.clear();
-        iCapability.iOutputFormatCapability.clear();
-        OSCL_CLEANUP_BASE_CLASS(PVMFNodeInterface);
-        OSCL_CLEANUP_BASE_CLASS(OsclActiveObject);
+        iNodeCapability.iInputFormatCapability.clear();
+        iNodeCapability.iOutputFormatCapability.clear();
+        OSCL_CLEANUP_BASE_CLASS(PVMFNodeInterfaceImpl);
         OSCL_LEAVE(err);
     }
+
+    iLogger = PVLogger::GetLoggerObject("PVMFSocketNode");
+    iDataPathLogger = PVLogger::GetLoggerObject("datapath.socketnode");
+    iDataPathLoggerRTP = PVLogger::GetLoggerObject("datapath.socketnode.rtp");
+    iDataPathLoggerRTCP = PVLogger::GetLoggerObject("datapath.socketnode.rtcp");
+    iOsclErrorTrapImp = OsclErrorTrap::GetErrorTrapImp();
 }
 
 
@@ -358,6 +344,7 @@ OSCL_EXPORT_REF PVMFSocketNode::~PVMFSocketNode()
 {
 #if(ENABLE_SOCKET_NODE_STATS)
     iSocketNodeStats.Log(iPortVector);
+    iSocketNodeStats.Logoff();
 #endif
 
     Cancel();
@@ -377,21 +364,6 @@ OSCL_EXPORT_REF PVMFSocketNode::~PVMFSocketNode()
     CleanupClosedTCPSockets();
     CleanupClosedUDPSockets();
     CleanupClosedDNS();
-    //Cleanup commands
-    //The command queues are self-deleting, but we want to
-    //notify the observer of unprocessed commands.
-    while (!iCurrentCmdQueue.empty())
-    {
-        CommandComplete(iCurrentCmdQueue, iCurrentCmdQueue.front(), PVMFFailure);
-    }
-    while (!iPendingCmdQueue.empty())
-    {
-        CommandComplete(iPendingCmdQueue, iPendingCmdQueue.front(), PVMFFailure);
-    }
-    while (!iCancelCmdQueue.empty())
-    {
-        CommandComplete(iCancelCmdQueue, iCancelCmdQueue.front(), PVMFFailure);
-    }
 
     PVLOGGER_LOGMSG(PVLOGMSG_INST_MLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFSocketNode:~PVMFSocketNode - Going to delete Sock Serv"));
     if (iSockServ)
@@ -404,67 +376,6 @@ OSCL_EXPORT_REF PVMFSocketNode::~PVMFSocketNode()
     PVLOGGER_LOGMSG(PVLOGMSG_INST_MLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFSocketNode:~PVMFSocketNode out"));
 }
 
-
-//Do thread-specific node creation and go to "Idle" state.
-OSCL_EXPORT_REF PVMFStatus PVMFSocketNode::ThreadLogon()
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_MLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFSocketNode:ThreadLogon"));
-
-    switch (iInterfaceState)
-    {
-        case EPVMFNodeCreated:
-            if (!IsAdded())
-                AddToScheduler();
-            iLogger = PVLogger::GetLoggerObject("PVMFSocketNode");
-            iDataPathLogger = PVLogger::GetLoggerObject("datapath.socketnode");
-            iDataPathLoggerRTP = PVLogger::GetLoggerObject("datapath.socketnode.rtp");
-            iDataPathLoggerRTCP = PVLogger::GetLoggerObject("datapath.socketnode.rtcp");
-            iOsclErrorTrapImp = OsclErrorTrap::GetErrorTrapImp();
-            SetState(EPVMFNodeIdle);
-            return PVMFSuccess;
-        default:
-            return PVMFErrInvalidState;
-    }
-}
-
-//Do thread-specific node cleanup and go to "Created" state.
-OSCL_EXPORT_REF PVMFStatus PVMFSocketNode::ThreadLogoff()
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_MLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFSocketNode:ThreadLogoff"));
-
-    switch (iInterfaceState)
-    {
-        case EPVMFNodeIdle:
-        {
-            if (IsAdded())
-                RemoveFromScheduler();
-            iLogger = NULL;
-            iDataPathLogger = NULL;
-            iDataPathLoggerRTP = NULL;
-            iDataPathLoggerRTCP = NULL;
-            iOsclErrorTrapImp = NULL;
-            SetState(EPVMFNodeCreated);
-#if(ENABLE_SOCKET_NODE_STATS)
-            iSocketNodeStats.Logoff();
-#endif
-            return PVMFSuccess;
-        }
-        // break;   This break statement was removed to avoid compiler warning for Unreachable Code
-
-        default:
-            return PVMFErrInvalidState;
-            // break;   This break statement was removed to avoid compiler warning for Unreachable Code
-    }
-}
-
-//retrieve node capabilities.
-OSCL_EXPORT_REF PVMFStatus PVMFSocketNode::GetCapability(PVMFNodeCapability& aNodeCapability)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_MLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFSocketNode:GetCapability"));
-    aNodeCapability = iCapability;
-    return PVMFSuccess;
-}
-
 //retrieve a port iterator.
 OSCL_EXPORT_REF PVMFPortIter* PVMFSocketNode::GetPorts(const PVMFPortFilter* aFilter)
 {
@@ -473,117 +384,6 @@ OSCL_EXPORT_REF PVMFPortIter* PVMFSocketNode::GetPorts(const PVMFPortFilter* aFi
     OSCL_UNUSED_ARG(aFilter);//port filter is not implemented.
     iPortVector.Reset();
     return &iPortVector;
-}
-
-OSCL_EXPORT_REF PVMFCommandId PVMFSocketNode::QueryUUID(PVMFSessionId s, const PvmfMimeString& aMimeType,
-        Oscl_Vector<PVUuid, OsclMemAllocator>& aUuids,
-        bool aExactUuidsOnly,
-        const OsclAny* aContext)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_MLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFSocketNode:QueryUUID"));
-
-    PVMFSocketNodeCommand cmd;
-    cmd.PVMFSocketNodeCommandBase::Construct(s, PVMF_GENERIC_NODE_QUERYUUID, aMimeType, aUuids, aExactUuidsOnly, aContext);
-    return QueueCommandL(cmd);
-}
-
-OSCL_EXPORT_REF PVMFCommandId PVMFSocketNode::QueryInterface(PVMFSessionId s, const PVUuid& aUuid,
-        PVInterface*& aInterfacePtr,
-        const OsclAny* aContext)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_MLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFSocketNode:QueryInterface"));
-
-    PVMFSocketNodeCommand cmd;
-    cmd.PVMFSocketNodeCommandBase::Construct(s, PVMF_GENERIC_NODE_QUERYINTERFACE, aUuid, aInterfacePtr, aContext);
-    return QueueCommandL(cmd);
-}
-
-OSCL_EXPORT_REF PVMFCommandId PVMFSocketNode::RequestPort(PVMFSessionId s, int32 aPortTag, const PvmfMimeString* aPortConfig, const OsclAny* aContext)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_MLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFSocketNode:RequestPort"));
-    PVMFSocketNodeCommand cmd;
-    cmd.PVMFSocketNodeCommandBase::Construct(s, PVMF_GENERIC_NODE_REQUESTPORT, aPortTag, aPortConfig, aContext);
-    return QueueCommandL(cmd);
-}
-
-OSCL_EXPORT_REF PVMFCommandId PVMFSocketNode::ReleasePort(PVMFSessionId s, PVMFPortInterface& aPort, const OsclAny* aContext)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_MLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFSocketNode:ReleasePort"));
-    PVMFSocketNodeCommand cmd;
-    cmd.PVMFSocketNodeCommandBase::Construct(s, PVMF_GENERIC_NODE_RELEASEPORT, aPort, aContext);
-    return QueueCommandL(cmd);
-}
-
-OSCL_EXPORT_REF PVMFCommandId PVMFSocketNode::Init(PVMFSessionId s, const OsclAny* aContext)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_MLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFSocketNode:Init"));
-    PVMFSocketNodeCommand cmd;
-    cmd.PVMFSocketNodeCommandBase::Construct(s, PVMF_GENERIC_NODE_INIT, aContext);
-    return QueueCommandL(cmd);
-}
-
-OSCL_EXPORT_REF PVMFCommandId PVMFSocketNode::Prepare(PVMFSessionId s, const OsclAny* aContext)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_MLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFSocketNode:Init"));
-    PVMFSocketNodeCommand cmd;
-    cmd.PVMFSocketNodeCommandBase::Construct(s, PVMF_GENERIC_NODE_PREPARE, aContext);
-    return QueueCommandL(cmd);
-}
-
-OSCL_EXPORT_REF PVMFCommandId PVMFSocketNode::Start(PVMFSessionId s, const OsclAny* aContext)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_MLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFSocketNode:Start"));
-    PVMFSocketNodeCommand cmd;
-    cmd.PVMFSocketNodeCommandBase::Construct(s, PVMF_GENERIC_NODE_START, aContext);
-    return QueueCommandL(cmd);
-}
-
-OSCL_EXPORT_REF PVMFCommandId PVMFSocketNode::Stop(PVMFSessionId s, const OsclAny* aContext)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_MLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFSocketNode:Stop"));
-    PVMFSocketNodeCommand cmd;
-    cmd.PVMFSocketNodeCommandBase::Construct(s, PVMF_GENERIC_NODE_STOP, aContext);
-    return QueueCommandL(cmd);
-}
-
-OSCL_EXPORT_REF PVMFCommandId PVMFSocketNode::Flush(PVMFSessionId s, const OsclAny* aContext)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_MLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFSocketNode:Flush"));
-    PVMFSocketNodeCommand cmd;
-    cmd.PVMFSocketNodeCommandBase::Construct(s, PVMF_GENERIC_NODE_FLUSH, aContext);
-    return QueueCommandL(cmd);
-}
-
-OSCL_EXPORT_REF PVMFCommandId PVMFSocketNode::Pause(PVMFSessionId s, const OsclAny* aContext)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_MLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFSocketNode:Pause"));
-    PVMFSocketNodeCommand cmd;
-    cmd.PVMFSocketNodeCommandBase::Construct(s, PVMF_GENERIC_NODE_PAUSE, aContext);
-    return QueueCommandL(cmd);
-}
-
-OSCL_EXPORT_REF PVMFCommandId PVMFSocketNode::Reset(PVMFSessionId s, const OsclAny* aContext)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_MLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFSocketNode:Reset"));
-    PVMFSocketNodeCommand cmd;
-    cmd.PVMFSocketNodeCommandBase::Construct(s, PVMF_GENERIC_NODE_RESET, aContext);
-    return QueueCommandL(cmd);
-}
-
-OSCL_EXPORT_REF PVMFCommandId PVMFSocketNode::CancelAllCommands(PVMFSessionId s, const OsclAny* aContext)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_MLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFSocketNode:CancelAllCommands"));
-    PVMFSocketNodeCommand cmd;
-    cmd.PVMFSocketNodeCommandBase::Construct(s, PVMF_GENERIC_NODE_CANCELALLCOMMANDS, aContext);
-    return QueueCommandL(cmd);
-}
-
-OSCL_EXPORT_REF PVMFCommandId PVMFSocketNode::CancelCommand(PVMFSessionId s, PVMFCommandId aCmdId, const OsclAny* aContext)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_MLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFSocketNode:CancelCommand"));
-    PVMFSocketNodeCommand cmd;
-    cmd.PVMFSocketNodeCommandBase::Construct(s, PVMF_GENERIC_NODE_CANCELCOMMAND, aCmdId, aContext);
-    return QueueCommandL(cmd);
 }
 
 //Port activity handler
@@ -2990,11 +2790,10 @@ void PVMFSocketNode::SequenceComplete(SocketPortConfig& aSockConfig, PVMFStatus 
     {
         case EPVSocketPortSequence_RequestPort:
             //may need to complete the node command
-            if (iCurrentCmdQueue.size()
-                    && iCurrentCmdQueue.front().iCmd == PVMF_GENERIC_NODE_REQUESTPORT)
+            if (iCurrentCommand.iCmd == PVMF_GENERIC_NODE_REQUESTPORT)
             {
                 //@TODO would be nice to cleanup the allocated port in case of a failure.
-                CommandComplete(iCurrentCmdQueue, iCurrentCmdQueue.front(), aStatus, iRequestedPort);
+                CommandComplete(iCurrentCommand, aStatus, NULL, iRequestedPort);
             }
             break;
 
@@ -3002,8 +2801,7 @@ void PVMFSocketNode::SequenceComplete(SocketPortConfig& aSockConfig, PVMFStatus 
         case EPVSocketPortSequence_InputDisconnectMsg:
         case EPVSocketPortSequence_InputDataMsg:
             //If we've just completed an input port message, this may complete a node Flush command
-            if (!iCurrentCmdQueue.empty()
-                    && iCurrentCmdQueue.front().iCmd == PVMF_GENERIC_NODE_FLUSH)
+            if (iCurrentCommand.iCmd == PVMF_GENERIC_NODE_FLUSH)
             {
                 //Flush is done when all input ports are empty.
                 for (uint32 i = 0; i < iPortVector.size(); i++)
@@ -3012,7 +2810,7 @@ void PVMFSocketNode::SequenceComplete(SocketPortConfig& aSockConfig, PVMFStatus 
                         return;//keep waiting
                 }
                 //All ports empty-- complete the Flush.
-                CommandComplete(iCurrentCmdQueue, iCurrentCmdQueue.front(), PVMFSuccess);
+                CommandComplete(iCurrentCommand, PVMFSuccess);
             }
             break;
 
@@ -3032,15 +2830,13 @@ void PVMFSocketNode::SequenceComplete(SocketPortConfig& aSockConfig, PVMFStatus 
 
                 //There may be a Reset or CancelAll command waiting on
                 //this to complete.
-                if (!iCurrentCmdQueue.empty()
-                        && iCurrentCmdQueue.front().iCmd == PVMF_GENERIC_NODE_RESET)
+                if (iCurrentCommand.iCmd == PVMF_GENERIC_NODE_RESET)
                 {
-                    CommandComplete(iCurrentCmdQueue, iCurrentCmdQueue.front(), PVMFSuccess);
+                    CommandComplete(iCurrentCommand, PVMFSuccess);
                 }
-                else if (!iCancelCmdQueue.empty()
-                         && iCancelCmdQueue.front().iCmd == PVMF_GENERIC_NODE_CANCELALLCOMMANDS)
+                else if (iCancelCommand.iCmd == PVMF_GENERIC_NODE_CANCELALLCOMMANDS)
                 {
-                    CommandComplete(iCancelCmdQueue, iCancelCmdQueue.front(), PVMFSuccess);
+                    CommandComplete(iCancelCommand, PVMFSuccess);
                 }
                 //ports may be cleaned up now, so exit this routine now to
                 //avoid a crash from further port processing.
@@ -3080,246 +2876,27 @@ void PVMFSocketNode::SequenceComplete(SocketPortConfig& aSockConfig, PVMFStatus 
 // Command Handlers
 //////////////////////////////////////
 
-//See if we can process a new input command right now.
-bool PVMFSocketNode::CanProcessCommand()
-{
-    //We may need to wait on
-    //1) a new command to arrive
-    //2) some prior command to complete
-    //Note: this allows a Cancel to interrupt the current command, but it does
-    //not allow a Cancel to interrupt another cancel.
-    return (!iPendingCmdQueue.empty()
-            && (iCurrentCmdQueue.empty()
-                || (iPendingCmdQueue.front().hipri() && iCancelCmdQueue.empty())));
-}
-
-//Process an input command.
-void PVMFSocketNode::ProcessCommand(PVMFSocketNodeCmdQ& aCmdQ, PVMFSocketNodeCommand& aCmd)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFSocketNodeCommand::ProcessCommand() in"));
-
-    PVMFStatus status = PVMFFailure;
-    iCommandErrorCode = PVMFSocketNodeErrorEventStart; //no error
-
-    if (aCmd.hipri())
-    {
-        //calling logic should prevent multiple cancels in progress.
-        OSCL_ASSERT(iCancelCmdQueue.empty());
-
-        switch (aCmd.iCmd)
-        {
-            case PVMF_GENERIC_NODE_CANCELALLCOMMANDS:
-                status = DoCancelAllCommands(aCmd);
-                break;
-
-            case PVMF_GENERIC_NODE_CANCELCOMMAND:
-                status = DoCancelCommand(aCmd);
-                break;
-
-            default://unknown command type
-                status = PVMFFailure;
-                break;
-        }
-
-        //If the command was not finished in this call, then move it to the
-        //"cancel cmd" queue where it will remain until it is completed.
-        if (status == PVMFPending)
-        {
-            //move the new cmd to the "cancel cmd" queue where it will
-            //remain until complete.
-            int32 err;
-            OSCL_TRY(err, iCancelCmdQueue.StoreL(aCmd););
-
-            //we reserved space in the CancelCmdQueue already, so
-            //it should not be possible to fail here.
-            OSCL_ASSERT(err == OsclErrNone);
-
-            //erase the original command
-            aCmdQ.Erase(&aCmd);
-        }
-        else
-        {
-            CommandComplete(aCmdQ, aCmd, status, NULL);
-        }
-    }
-    else
-    {
-        //calling logic should prevent multiple commands in progress.
-        OSCL_ASSERT(iCurrentCmdQueue.empty());
-
-        OsclAny* eventData = NULL;
-
-        switch (aCmd.iCmd)
-        {
-            case PVMF_GENERIC_NODE_QUERYUUID:
-                status = DoQueryUuid(aCmd);
-                break;
-
-            case PVMF_GENERIC_NODE_QUERYINTERFACE:
-                status = DoQueryInterface(aCmd);
-                break;
-
-            case PVMF_GENERIC_NODE_REQUESTPORT:
-            {
-                iRequestedPort = NULL;
-                status = DoRequestPort(aCmd, iRequestedPort);
-                eventData = iRequestedPort;
-                break;
-            }
-
-            case PVMF_GENERIC_NODE_RELEASEPORT:
-                status = DoReleasePort(aCmd);
-                break;
-
-            case PVMF_GENERIC_NODE_INIT:
-                status = DoInit(aCmd);
-                break;
-
-            case PVMF_GENERIC_NODE_PREPARE:
-                status = DoPrepare(aCmd);
-                if (status == PVMFSuccess)
-                {
-                    ChangeExternalState(EPVMFNodePrepared);
-                }
-                break;
-
-            case PVMF_GENERIC_NODE_START:
-                status = DoStart(aCmd);
-                break;
-
-            case PVMF_GENERIC_NODE_STOP:
-                status = DoStop(aCmd);
-                break;
-
-            case PVMF_GENERIC_NODE_FLUSH:
-                status = DoFlush(aCmd);
-                break;
-
-            case PVMF_GENERIC_NODE_PAUSE:
-                status = DoPause(aCmd);
-                break;
-
-            case PVMF_GENERIC_NODE_RESET:
-                status = DoReset(aCmd);
-                break;
-
-            default://unknown command type
-                status = PVMFFailure;
-                break;
-        }
-
-        //If the command was not finished in this call, then move it to the
-        //"current cmd" queue where it will remain until it is completed.
-        if (status == PVMFPending)
-        {
-            //move the new cmd to the "current cmd" queue where it will
-            //remain until complete.
-            int32 err;
-            OSCL_TRY(err, iCurrentCmdQueue.StoreL(aCmd););
-
-            //we reserved space in the CurrentCmdQueue already, so
-            //it should not be possible to fail here.
-            OSCL_ASSERT(err == OsclErrNone);
-
-            //erase the original command
-            aCmdQ.Erase(&aCmd);
-        }
-        else
-        {
-            CommandComplete(aCmdQ, aCmd, status, eventData);
-        }
-    }
-}
-
 //Called to complete a node command.
-void PVMFSocketNode::CommandComplete(PVMFSocketNodeCmdQ& aCmdQ,
-                                     PVMFSocketNodeCommand& aCmd,
+void PVMFSocketNode::CommandComplete(PVMFNodeCommand& aCmd,
                                      PVMFStatus aStatus,
+                                     PVInterface* aExtMsg,
                                      OsclAny* aEventData,
                                      PVUuid* aEventUUID,
-                                     int32* aEventCode)
+                                     int32* aEventCode,
+                                     int32 aEventDataLen)
 
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_MLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFSocketNode:CommandComplete Id %d Cmd %d Status %d Context %d Data %d"
                     , aCmd.iId, aCmd.iCmd, aStatus, aCmd.iContext, aEventData));
 
-    //See whether command processing was blocked on entry to this routine, so we can
-    //decide later whether it's necessary to trigger the AO to resume processsing.
-    bool canProcess = CanProcessCommand();
-
-    PVMFStatus status = aStatus;
-
-    //do standard state changes & other cmd completion.
-    if (aStatus == PVMFSuccess)
-    {
-        switch (aCmd.iCmd)
-        {
-            case PVMF_GENERIC_NODE_INIT:
-                ChangeExternalState(EPVMFNodeInitialized);
-                break;
-
-            case PVMF_GENERIC_NODE_PREPARE:
-                ChangeExternalState(EPVMFNodePrepared);
-                break;
-
-            case PVMF_GENERIC_NODE_START:
-                ChangeExternalState(EPVMFNodeStarted);
-                break;
-
-            case PVMF_GENERIC_NODE_STOP:
-                ChangeExternalState(EPVMFNodePrepared);
-
-#if(ENABLE_SOCKET_NODE_STATS)
-                //dump the stats.
-                iSocketNodeStats.Log(iPortVector);
-#endif
-                break;
-
-            case PVMF_GENERIC_NODE_PAUSE:
-                ChangeExternalState(EPVMFNodePaused);
-                break;
-
-            case PVMF_GENERIC_NODE_RESET:
-                ChangeExternalState(EPVMFNodeCreated);
-
-                //Complete the reset command.
-                {
-#if(ENABLE_SOCKET_NODE_STATS)
-                    iSocketNodeStats.Log(iPortVector);
-#endif
-                    //cleanup all ports.
-                    CleanupPorts();
-                    //go back to Idle state
-                    iPortVector.Reconstruct();
-                    SetState(EPVMFNodeIdle);
-                }
-                break;
-
-            case PVMF_GENERIC_NODE_CANCELALLCOMMANDS:
-                //Complete the reset command.
-            {
-#if(ENABLE_SOCKET_NODE_STATS)
-                iSocketNodeStats.Log(iPortVector);
-#endif
-                //Since "cancel all" is effectively used as a Reset,
-                //go ahead and cleanup all ports.
-                CleanupPorts();
-            }
-            break;
-            default:
-                break;
-        }
-    }
-
-    //create extended error message if an explicit error was provided in args
+    // check if "command error code" was set.
     PVInterface* extif = NULL;
     PVMFBasicErrorInfoMessage* errormsg = NULL;
-    if (aEventUUID && aEventCode)
+
+    if (aExtMsg)
     {
-        errormsg = OSCL_NEW(PVMFBasicErrorInfoMessage, (*aEventCode, *aEventUUID, NULL));
-        extif = OSCL_STATIC_CAST(PVInterface*, errormsg);
+        extif = aExtMsg;
     }
-    //else if no error input, see if "command error code" was set.
     else if (iCommandErrorCode != PVMFSocketNodeErrorEventStart)
     {
         PVUuid eventuuid = PVMFSocketNodeEventTypeUUID;
@@ -3327,38 +2904,27 @@ void PVMFSocketNode::CommandComplete(PVMFSocketNodeCmdQ& aCmdQ,
         extif = OSCL_STATIC_CAST(PVInterface*, errormsg);
     }
 
-    //create response
-    PVMFCmdResp resp(aCmd.iId, aCmd.iContext, status, extif, aEventData);
-    PVMFSessionId session = aCmd.iSession;
+    PVMFNodeInterfaceImpl::CommandComplete(aCmd, aStatus, extif, aEventData, aEventUUID, aEventCode);
 
-    //Erase the command from the queue.
-    aCmdQ.Erase(&aCmd);
+    iCommandErrorCode = PVMFSocketNodeErrorEventStart;//reset.
 
-    //Report completion to the session observer.
-    ReportCmdCompleteEvent(session, resp);
+    //See if there was a pending cancel waiting on the current command to
+    //complete.
+    if (iCancelCommand.iCmd == PVMF_GENERIC_NODE_CANCELCOMMAND)
+    {
+        CommandComplete(iCancelCommand, PVMFSuccess);
+    }
 
     if (errormsg)
     {
         errormsg->removeRef();
     }
-    iCommandErrorCode = PVMFSocketNodeErrorEventStart;//reset.
-
-    //See if there was a pending cancel waiting on the current command to
-    //complete.
-    if (!iCancelCmdQueue.empty()
-            && iCancelCmdQueue.front().iCmd == PVMF_GENERIC_NODE_CANCELCOMMAND)
-    {
-        CommandComplete(iCancelCmdQueue, iCancelCmdQueue.front(), PVMFSuccess);
-    }
 
     //May need to resume command handling if the AO was blocked
     //waiting on asynchronous command completion, but it's unblocked now.
-    if (!canProcess
-            && CanProcessCommand()
-            && IsAdded())
-    {
-        RunIfNotReady();
-    }
+    if (!iInputCommands.empty())
+        Reschedule();
+
 }
 
 void PVMFSocketNode::ReportErrorEvent(PVMFEventType aEventType,
@@ -3381,12 +2947,12 @@ void PVMFSocketNode::ReportErrorEvent(PVMFEventType aEventType,
                                   aEventData,
                                   NULL,
                                   0);
-        PVMFNodeInterface::ReportErrorEvent(asyncevent);
+        PVMFNodeInterfaceImpl::ReportErrorEvent(asyncevent);
         eventmsg->removeRef();
     }
     else
     {
-        PVMFNodeInterface::ReportErrorEvent(aEventType, aEventData);
+        PVMFNodeInterfaceImpl::ReportErrorEvent(aEventType, aEventData);
     }
 }
 
@@ -3410,56 +2976,53 @@ void PVMFSocketNode::ReportInfoEvent(PVMFEventType aEventType,
                                   aEventData,
                                   NULL,
                                   0);
-        PVMFNodeInterface::ReportInfoEvent(asyncevent);
+        PVMFNodeInterfaceImpl::ReportInfoEvent(asyncevent);
         eventmsg->removeRef();
     }
     else
     {
-        PVMFNodeInterface::ReportInfoEvent(aEventType, aEventData);
+        PVMFNodeInterfaceImpl::ReportInfoEvent(aEventType, aEventData);
     }
 }
 
-PVMFCommandId PVMFSocketNode::QueueCommandL(PVMFSocketNodeCommand& aCmd)
+PVMFCommandId PVMFSocketNode::QueueCommandL(PVMFNodeCommand& aCmd)
 {
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFSocketNode::QueueCommandL()"));
-
 #if(ENABLE_SOCKET_NODE_STATS)
     iSocketNodeStats.iNumQueueNodeCmd++;
 #endif
 
-    PVMFCommandId id;
-
-    id = iPendingCmdQueue.AddL(aCmd);
-
-    //This may be a processing trigger.
-    //Wakeup the AO if needed.
-    if (IsAdded()
-            && CanProcessCommand())
-    {
-        RunIfNotReady();
-    }
-
-    return id;
+    return PVMFNodeInterfaceImpl::QueueCommandL(aCmd);
 }
 
-PVMFStatus PVMFSocketNode::DoReset(PVMFSocketNodeCommand& aCmd)
+PVMFStatus PVMFSocketNode::DoReset()
 {
-    OSCL_UNUSED_ARG(aCmd);
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFSocketNode::DoReset()"));
 
     /* This node allows a reset from any state */
 
-    return DoStopNodeActivity();
+    PVMFStatus status = DoStopNodeActivity();
+    if (status == PVMFSuccess)
+    {
+#if(ENABLE_SOCKET_NODE_STATS)
+        iSocketNodeStats.Log(iPortVector);
+#endif
+        //cleanup all ports.
+        CleanupPorts();
+        //go back to Idle state
+        iPortVector.Reconstruct();
+    }
+
+    return status;
 }
 
-PVMFStatus PVMFSocketNode::DoQueryUuid(PVMFSocketNodeCommand& aCmd)
+PVMFStatus PVMFSocketNode::DoQueryUuid()
 {
     //This node supports Query UUID from any state
 
     OSCL_String* mimetype;
     Oscl_Vector<PVUuid, OsclMemAllocator> *uuidvec;
     bool exactmatch;
-    aCmd.PVMFSocketNodeCommandBase::Parse(mimetype, uuidvec, exactmatch);
+    iCurrentCommand.PVMFNodeCommandBase::Parse(mimetype, uuidvec, exactmatch);
 
     //Try to match the input mimetype against any of
     //the custom interfaces for this node
@@ -3516,14 +3079,14 @@ bool PVMFSocketNode::queryInterface(const PVUuid& uuid, PVInterface*& iface)
     }
 }
 
-PVMFStatus PVMFSocketNode::DoQueryInterface(PVMFSocketNodeCommand&  aCmd)
+PVMFStatus PVMFSocketNode::DoQueryInterface()
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                     (0, "PVMFSocketNode::DoQueryInterface"));
 
     PVUuid* uuid;
     PVInterface** ptr;
-    aCmd.PVMFSocketNodeCommandBase::Parse(uuid, ptr);
+    iCurrentCommand.PVMFNodeCommandBase::Parse(uuid, ptr);
     if (*uuid == PVUuid(PVMF_SOCKET_NODE_EXTENSION_INTERFACE_UUID))
     {
         if (!iExtensionInterface)
@@ -3564,14 +3127,16 @@ PVMFStatus PVMFSocketNode::DoQueryInterface(PVMFSocketNodeCommand&  aCmd)
     }
 }
 
-PVMFStatus PVMFSocketNode::DoRequestPort(PVMFSocketNodeCommand& aCmd, PVMFSocketPort* &aPort)
+PVMFStatus PVMFSocketNode::DoRequestPort(PVMFPortInterface* &aPort)
 {
     PVMF_SOCKETNODE_LOGSTACKTRACE((0, "PVMFSocketNode::DoRequestPort() In"));
+
+    iRequestedPort = NULL;
 
     //retrieve port tag.
     int32 tag;
     OSCL_String* portconfig;
-    aCmd.PVMFSocketNodeCommandBase::Parse(tag, portconfig);
+    iCurrentCommand.PVMFNodeCommandBase::Parse(tag, portconfig);
     //validate the tag...
     switch (tag)
     {
@@ -3605,15 +3170,15 @@ PVMFStatus PVMFSocketNode::DoRequestPort(PVMFSocketNodeCommand& aCmd, PVMFSocket
         {
             //Create a new port with no socket.
 
-            PVMFStatus status = AddPort(tag, aPort);
+            PVMFStatus status = AddPort(tag, iRequestedPort);
             if (status != PVMFSuccess)
                 return status;
 
             //create the socket config
 
             SocketPortConfig* sock_config = OSCL_NEW(SocketPortConfig, ());
-            aPort->iConfig = sock_config;
-            sock_config->iPVMFPort = aPort;
+            iRequestedPort->iConfig = sock_config;
+            sock_config->iPVMFPort = iRequestedPort;
 
             sock_config->iMime = mime;
             sock_config->iContainer = this;
@@ -3651,6 +3216,8 @@ PVMFStatus PVMFSocketNode::DoRequestPort(PVMFSocketNodeCommand& aCmd, PVMFSocket
                 //may need to wait on connect completion here, or else there could
                 //be an error.
             }
+            // assign created port
+            aPort = iRequestedPort;
             return status;
         }
 
@@ -3669,7 +3236,7 @@ PVMFStatus PVMFSocketNode::DoRequestPort(PVMFSocketNodeCommand& aCmd, PVMFSocket
 
             //Allocate a new PVMF port
 
-            PVMFStatus status = AddPort(tag, aPort);
+            PVMFStatus status = AddPort(tag, iRequestedPort);
             if (status == PVMFSuccess)
             {
                 PVMFSocketNodeMemPool* memPool = NULL;
@@ -3687,8 +3254,11 @@ PVMFStatus PVMFSocketNode::DoRequestPort(PVMFSocketNodeCommand& aCmd, PVMFSocket
 
             //move the sock config to the PVMF port vector and link the config
             //back to the port.
-            aPort->iConfig = sockConfig;
-            sockConfig->iPVMFPort = aPort;
+            iRequestedPort->iConfig = sockConfig;
+            sockConfig->iPVMFPort = iRequestedPort;
+
+            // assign created port
+            aPort = iRequestedPort;
 
             return status;
         }
@@ -3698,25 +3268,24 @@ PVMFStatus PVMFSocketNode::DoRequestPort(PVMFSocketNodeCommand& aCmd, PVMFSocket
             return PVMFFailure;
     }
     PVMF_SOCKETNODE_LOGERROR((0, "PVMFSocketNode::DoRequestPort: ERROR - Invalid protocol for port request"));
+
     return PVMFFailure;
 }
 
 //Release ports is a do-nothing for this node.
-PVMFStatus PVMFSocketNode::DoReleasePort(PVMFSocketNodeCommand& aCmd)
+PVMFStatus PVMFSocketNode::DoReleasePort()
 {
-    OSCL_UNUSED_ARG(aCmd);
     return PVMFSuccess;
 }
 
-PVMFStatus PVMFSocketNode::DoInit(PVMFSocketNodeCommand& aCmd)
+PVMFStatus PVMFSocketNode::DoInit()
 {
-    OSCL_UNUSED_ARG(aCmd);
-
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFSocketNode::DoInit() In"));
 
-    if (iInterfaceState != EPVMFNodeIdle)
+    if (EPVMFNodeInitialized == iInterfaceState)
     {
-        return PVMFErrInvalidState;
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFSocketNode::DoInit() Already in Initialized state"));
+        return PVMFSuccess;
     }
 
 #if(ENABLE_SOCKET_NODE_STATS)
@@ -3757,43 +3326,23 @@ PVMFStatus PVMFSocketNode::DoInit(PVMFSocketNodeCommand& aCmd)
     return status;
 }
 
-//Prepare is a do-nothing for this node.
-PVMFStatus PVMFSocketNode::DoPrepare(PVMFSocketNodeCommand& aCmd)
+PVMFStatus PVMFSocketNode::DoStart()
 {
-    OSCL_UNUSED_ARG(aCmd);
-    PVMF_SOCKETNODE_LOGSTACKTRACE((0, "PVMFSocketNode::DoPrepare() In"));
-
-    if (iInterfaceState != EPVMFNodeInitialized)
-    {
-        return PVMFErrInvalidState;
-    }
-    return PVMFSuccess;
-}
-
-PVMFStatus PVMFSocketNode::DoStart(PVMFSocketNodeCommand& aCmd)
-{
-    OSCL_UNUSED_ARG(aCmd);
-
     PVMF_SOCKETNODE_LOGSTACKTRACE((0, "PVMFSocketNode::DoStart() In"));
     /*
      * If the node is already started just return success - multiple starts can happen with
      * flow control (auto-pause / auto-resume) scenarios
      */
-    if (iInterfaceState == EPVMFNodeStarted)
+    if (EPVMFNodeStarted == iInterfaceState)
     {
-        return PVMFSuccess;//already started.
-    }
-
-    if (iInterfaceState != EPVMFNodePrepared &&
-            iInterfaceState != EPVMFNodePaused)
-    {
-        return PVMFErrInvalidState;
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFSocketNode::DoStart() Already in Started state"));
+        return PVMFSuccess;
     }
 
     //We need to update the node state before
     //we can get things going.
     TPVMFNodeInterfaceState curState = iInterfaceState;
-    ChangeExternalState(EPVMFNodeStarted);
+    SetState(EPVMFNodeStarted);
 
     PVMFStatus status = PVMFSuccess;
     for (uint32 i = 0; i < iPortVector.size(); i++)
@@ -3819,7 +3368,7 @@ PVMFStatus PVMFSocketNode::DoStart(PVMFSocketNodeCommand& aCmd)
                 {
                     //fail the command if any individual startups fail.
                     //restore the old node state.
-                    ChangeExternalState(curState);
+                    SetState(curState);
                     break;//out of for loop
                 }
             }
@@ -3828,20 +3377,18 @@ PVMFStatus PVMFSocketNode::DoStart(PVMFSocketNodeCommand& aCmd)
     return status;
 }
 
-PVMFStatus PVMFSocketNode::DoStop(PVMFSocketNodeCommand& aCmd)
+PVMFStatus PVMFSocketNode::DoStop()
 {
-    OSCL_UNUSED_ARG(aCmd);
-
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFSocketNode::DoStop() In"));
-
-    if ((iInterfaceState != EPVMFNodeStarted) && (iInterfaceState != EPVMFNodePaused))
-    {
-        return PVMFErrInvalidState;
-    }
 
     //Stop will essentially just stop the receive operations and input port processing,
     //since those handlers check the node state.  Current operations will not be
     //interrupted.
+
+#if(ENABLE_SOCKET_NODE_STATS)
+    //dump the stats.
+    iSocketNodeStats.Log(iPortVector);
+#endif
     return PVMFSuccess;
 }
 
@@ -3851,6 +3398,7 @@ PVMFStatus PVMFSocketNode::DoStop(PVMFSocketNodeCommand& aCmd)
 //
 //Also update the global "iNumStopNodeActivityPending"
 //with the number of ports that still have operations pending
+
 PVMFStatus PVMFSocketNode::DoStopNodeActivity()
 {
     //note that "iNumStopNodeActivityPending" uses the value (-1) to indicate idle state,
@@ -3885,11 +3433,10 @@ PVMFStatus PVMFSocketNode::DoStopNodeActivity()
                 //if a request port is going on, be sure to complete the command,
                 //although we will interrupt the current processing.
                 if (portConfig->iState.iSequence == EPVSocketPortSequence_RequestPort
-                        && iCurrentCmdQueue.size()
-                        && iCurrentCmdQueue.front().iCmd == PVMF_GENERIC_NODE_REQUESTPORT)
+                        && iCurrentCommand.iCmd == PVMF_GENERIC_NODE_REQUESTPORT)
                 {
                     //@TODO would be nice to cleanup the allocated port in case of a failure.
-                    CommandComplete(iCurrentCmdQueue, iCurrentCmdQueue.front(), PVMFErrCancelled, NULL);
+                    CommandComplete(iCurrentCommand, PVMFErrCancelled);
                 }
                 //for any other sequence, we will just interrupt it with the shutdown.
 
@@ -3917,16 +3464,9 @@ PVMFStatus PVMFSocketNode::DoStopNodeActivity()
 }
 
 //Flush is implemented for this node, but hasn't been tested.
-PVMFStatus PVMFSocketNode::DoFlush(PVMFSocketNodeCommand& aCmd)
+PVMFStatus PVMFSocketNode::DoFlush()
 {
-    OSCL_UNUSED_ARG(aCmd);
-
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFSocketNode::DoFlush() In"));
-
-    if ((iInterfaceState != EPVMFNodeStarted) && (iInterfaceState != EPVMFNodePaused))
-    {
-        return PVMFErrInvalidState;
-    }
 
     //Notify all ports to suspend their input, then
     //wait on completion of processing of current input.
@@ -3947,98 +3487,31 @@ PVMFStatus PVMFSocketNode::DoFlush(PVMFSocketNodeCommand& aCmd)
     return status;
 }
 
-//Pause is a do-nothing for this node.
-PVMFStatus PVMFSocketNode::DoPause(PVMFSocketNodeCommand& aCmd)
+PVMFStatus PVMFSocketNode::CancelCurrentCommand()
 {
-    OSCL_UNUSED_ARG(aCmd);
+    PVMFStatus status = PVMFSuccess;
 
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFSocketNode::DoPause() In"));
+    //wait on current command to complete.  The cancel command
+    //will ultimately be completed in the "CommandComplete" for the current command.
+    status = DoCancelCurrentCommand();
 
-    /*
-     * If the node is already paused just return success - multiple pause can happen with
-     * flow control (auto-pause / auto-resume) scenarios
-     */
-    if (iInterfaceState == EPVMFNodePaused)
+    if (status != PVMFPending || status != PVMFFailure)
     {
+        CommandComplete(iCurrentCommand, PVMFErrCancelled);
         return PVMFSuccess;
     }
-
-    if (iInterfaceState != EPVMFNodeStarted)
+    else
     {
-        return PVMFErrInvalidState;
+        return status;
     }
-
-    return PVMFSuccess;
-}
-
-PVMFStatus PVMFSocketNode::DoCancelCommand(PVMFSocketNodeCommand& aCmd)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFSocketNode::DoCancelCommand() Called"));
-
-    // extract the command ID from the parameters.
-    PVMFCommandId cmdId;
-    aCmd.PVMFSocketNodeCommandBase::Parse(cmdId);
-
-    // first check "current" command if any
-    // it's safe to assume the "current cmd queue" is only 1-deep.
-    if (!iCurrentCmdQueue.empty()
-            && iCurrentCmdQueue.front().iId == cmdId)
-    {
-        return DoCancelCurrentCommand(iCurrentCmdQueue, iCurrentCmdQueue.front());
-        //wait on current command to complete.  The cancel command
-        //will ultimately be completed in the "CommandComplete" for the current command.
-    }
-
-    // next see if the command is still queued in the "pending command queue"
-    {
-        // start at element 1 since this cancel command is element 0
-        PVMFSocketNodeCommand* cmd = iPendingCmdQueue.FindById(cmdId, 1);
-        if (cmd)
-        {
-            // cancel the queued command.  Note this will complete out-of-order.
-            CommandComplete(iPendingCmdQueue, *cmd, PVMFErrCancelled);
-            // no further action is required.
-            return PVMFSuccess;
-        }
-    }
-
-    //this command fails if the given command is not queued or in progress.
-    return PVMFErrArgument;
-}
-
-PVMFStatus PVMFSocketNode::DoCancelAllCommands(PVMFSocketNodeCommand& aCmd)
-{
-    OSCL_UNUSED_ARG(aCmd);
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFSocketNode::DoCancelCommand() IN"));
-
-    //This is not a conventional "cancel all" implementation.
-    //Streaming manager currently expects this call to shutdown all activity.
-    //It would really be more correct to use node Reset for this.
-
-    PVMFStatus status = DoStopNodeActivity();
-
-    //Since node activity is suspended, just go ahead and forcibly cancel any other
-    //pending commands now.  There could be a Reset, a Flush, or a RequestPort
-    //happening.
-    if (!iCurrentCmdQueue.empty())
-        CommandComplete(iCurrentCmdQueue, iCurrentCmdQueue.front(), PVMFErrCancelled);
-
-    //Cancel all other pending commands, except for this one which is
-    //element 0 in the queue
-    for (uint32 i = 1; i < iPendingCmdQueue.size(); i++)
-        CommandComplete(iPendingCmdQueue, iPendingCmdQueue[i], PVMFErrCancelled);
-
-    //May need to wait on completion of StopNodeActivity.
-    return status;
 }
 
 //This routine must cancel the currently executing node command.
 //It only needs to handle those commands that may have asynchronous completion.
-PVMFStatus PVMFSocketNode::DoCancelCurrentCommand(PVMFSocketNodeCmdQ& aCmdQ, PVMFSocketNodeCommand& aCmd)
+PVMFStatus PVMFSocketNode::DoCancelCurrentCommand()
 {
-    OSCL_UNUSED_ARG(aCmdQ);
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFSocketNode::DoCancelCurrentCommand()"));
-    switch (aCmd.iCmd)
+    switch (iCurrentCommand.iCmd)
     {
 
         case PVMF_GENERIC_NODE_REQUESTPORT:
@@ -4085,6 +3558,11 @@ PVMFStatus PVMFSocketNode::DoCancelCurrentCommand(PVMFSocketNodeCmdQ& aCmdQ, PVM
             OSCL_ASSERT(0);
             return PVMFFailure;
     }
+}
+
+PVMFStatus PVMFSocketNode::HandleExtensionAPICommands()
+{
+    return PVMFErrNotSupported;
 }
 
 //////////////////////////////////////
@@ -4537,7 +4015,7 @@ void PVMFSocketNode::CleanupUDP(SocketPortConfig& aSockConfig)
             PVMF_SOCKETNODE_LOGDATATRAFFIC_I((0, "PVMFSocketNode::CleanupTCP - queueing old socket for deletion - SockId=%d, Mime=%s", aSockConfig.iSockId, aSockConfig.iMime.get_str()));
             iClosedUDPSocketVector.push_back(aSockConfig.iUDPSocket);
             aSockConfig.iUDPSocket = NULL;
-            RunIfNotReady();//schedule the AO to delete the socket.
+            Reschedule();//schedule the AO to delete the socket.
         }
         else
         {
@@ -4564,7 +4042,7 @@ void PVMFSocketNode::CleanupDNS(SocketPortConfig& aSockConfig)
             PVMF_SOCKETNODE_LOGDATATRAFFIC_I((0, "PVMFSocketNode::CleanupDNS - queueing old DNS for deletion - SockId=%d, Mime=%s", aSockConfig.iSockId, aSockConfig.iMime.get_str()));
             iClosedDNSVector.push_back(aSockConfig.iDNS);
             aSockConfig.iDNS = NULL;
-            RunIfNotReady();//schedule the AO to delete the object.
+            Reschedule();//schedule the AO to delete the object.
         }
         else
         {
@@ -4963,8 +4441,11 @@ void PVMFSocketNode::Run()
         CleanupClosedDNS();
 
     //Process node commands
-    while (CanProcessCommand())
-        ProcessCommand(iPendingCmdQueue, iPendingCmdQueue.front());
+    if (!iInputCommands.empty())
+    {
+        iCommandErrorCode = PVMFSocketNodeErrorEventStart; //no error
+        ProcessCommand();
+    }
 }
 
 int32 PVMFSocketNode::SocketPlacementNew(PVMFSocketNodeMemPool *& aMemPool, OsclAny *aMemPtr, int32 aMemPoolNumBufs)

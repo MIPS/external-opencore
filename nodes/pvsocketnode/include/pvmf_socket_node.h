@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,48 +18,13 @@
 #ifndef PVMF_SOCKET_NODE_H_INCLUDED
 #define PVMF_SOCKET_NODE_H_INCLUDED
 
-#ifndef OSCL_BASE_H_INCLUDED
-#include "oscl_base.h"
-#endif
-#ifndef OSCLCONFIG_IO_H_INCLUDED
-#include "osclconfig_io.h"
-#endif
-#ifndef OSCL_FILE_IO_H_INCLUDED
-#include "oscl_file_io.h"
-#endif
-#ifndef OSCL_PRIQUEUE_H_INCLUDED
-#include "oscl_priqueue.h"
-#endif
-#ifndef OSCL_SCHEDULER_AO_H_INCLUDED
-#include "oscl_scheduler_ao.h"
-#endif
-#ifndef OSCL_SOCKET_TYPES_H_INCLUDED
-#include "oscl_socket_types.h"
-#endif
-#ifndef OSCL_SOCKET_H_INCLUDED
-#include "oscl_socket.h"
-#endif
 #ifndef OSCL_DNS_H_INCLUDED
 #include "oscl_dns.h"
 #endif
-#include "oscl_tickcount.h"
 #include "oscl_mem_mempool.h"
 
-#ifndef PVMF_FORMAT_TYPE_H_INCLUDED
-#include "pvmf_format_type.h"
-#endif
-#ifndef PVMF_SIMPLE_MEDIA_BUFFER_H_INCLUDED
-#include "pvmf_simple_media_buffer.h"
-#endif
-#ifndef PVMF_MEDIA_DATA_H_INCLUDED
-#include "pvmf_media_data.h"
-#endif
-#ifndef PVMF_NODE_INTERFACE_H_INCLUDED
-#include "pvmf_node_interface.h"
-#endif
-
-#ifndef PVMI_DATA_STREAM_INTERFACE_H_INCLUDED
-#include "pvmi_data_stream_interface.h"
+#ifndef PVMF_NODE_INTERFACE_IMPL_H_INCLUDED
+#include "pvmf_node_interface_impl.h"
 #endif
 
 #include "pvmf_node_utils.h"
@@ -98,14 +63,6 @@
 
 //memory allocator type for this node.
 typedef OsclMemAllocator PVMFSocketNodeAllocator;
-
-//Node command type.
-typedef PVMFGenericNodeCommand<PVMFSocketNodeAllocator> PVMFSocketNodeCommandBase;
-class PVMFSocketNodeCommand: public PVMFSocketNodeCommandBase
-{
-    public:
-
-};
 
 //Default vector reserve size
 #define PVMF_SOCKET_NODE_COMMAND_VECTOR_RESERVE 10
@@ -719,8 +676,7 @@ class PVMFDnsCache
 */
 class PVMFSocketNode
         : public PVInterface
-        , public PVMFNodeInterface
-        , public OsclActiveObject
+        , public PVMFNodeInterfaceImpl
         , public OsclSocketObserver
         , public OsclDNSObserver
 {
@@ -737,33 +693,7 @@ class PVMFSocketNode
         //************ end OsclDNSObserver
 
         //from PVMFNodeInterface
-        OSCL_IMPORT_REF PVMFStatus ThreadLogon();
-        OSCL_IMPORT_REF PVMFStatus ThreadLogoff();
-        OSCL_IMPORT_REF PVMFStatus GetCapability(PVMFNodeCapability& aNodeCapability);
         OSCL_IMPORT_REF PVMFPortIter* GetPorts(const PVMFPortFilter* aFilter = NULL);
-        OSCL_IMPORT_REF PVMFCommandId QueryUUID(PVMFSessionId, const PvmfMimeString& aMimeType,
-                                                Oscl_Vector<PVUuid, PVMFSocketNodeAllocator>& aUuids,
-                                                bool aExactUuidsOnly = false,
-                                                const OsclAny* aContext = NULL);
-        OSCL_IMPORT_REF PVMFCommandId QueryInterface(PVMFSessionId, const PVUuid& aUuid,
-                PVInterface*& aInterfacePtr,
-                const OsclAny* aContext = NULL);
-
-        OSCL_IMPORT_REF PVMFCommandId RequestPort(PVMFSessionId aSession
-                , int32 aPortTag
-                , const PvmfMimeString* aPortConfig = NULL
-                                                      , const OsclAny* aContext = NULL);
-
-        OSCL_IMPORT_REF PVMFCommandId ReleasePort(PVMFSessionId, PVMFPortInterface& aPort, const OsclAny* aContext = NULL);
-        OSCL_IMPORT_REF PVMFCommandId Init(PVMFSessionId, const OsclAny* aContext = NULL);
-        OSCL_IMPORT_REF PVMFCommandId Prepare(PVMFSessionId, const OsclAny* aContext = NULL);
-        OSCL_IMPORT_REF PVMFCommandId Start(PVMFSessionId, const OsclAny* aContext = NULL);
-        OSCL_IMPORT_REF PVMFCommandId Stop(PVMFSessionId, const OsclAny* aContext = NULL);
-        OSCL_IMPORT_REF PVMFCommandId Flush(PVMFSessionId, const OsclAny* aContext = NULL);
-        OSCL_IMPORT_REF PVMFCommandId Pause(PVMFSessionId, const OsclAny* aContext = NULL);
-        OSCL_IMPORT_REF PVMFCommandId Reset(PVMFSessionId, const OsclAny* aContext = NULL);
-        OSCL_IMPORT_REF PVMFCommandId CancelAllCommands(PVMFSessionId, const OsclAny* aContextData = NULL);
-        OSCL_IMPORT_REF PVMFCommandId CancelCommand(PVMFSessionId, PVMFCommandId aCmdId, const OsclAny* aContextData = NULL);
 
         //from PVMFPortActivityHandler
         void HandlePortActivity(const PVMFPortActivity& aActivity);
@@ -803,21 +733,14 @@ class PVMFSocketNode
         /*********************************************
         * Command Processing and Event Notification
         **********************************************/
-        //Command queue type
-        typedef PVMFNodeCommandQueue<PVMFSocketNodeCommand, PVMFSocketNodeAllocator> PVMFSocketNodeCmdQ;
 
-        PVMFSocketNodeCmdQ iPendingCmdQueue;
-        PVMFSocketNodeCmdQ iCurrentCmdQueue;
-        PVMFSocketNodeCmdQ iCancelCmdQueue;
-
-        void MoveCmdToCancelQueue(PVMFSocketNodeCommand& aCmd);
-
-        void CommandComplete(PVMFSocketNodeCmdQ&,
-                             PVMFSocketNodeCommand&,
-                             PVMFStatus,
+        void CommandComplete(PVMFNodeCommand& aCmd,
+                             PVMFStatus aStatus,
+                             PVInterface* aExtMsg = NULL,
                              OsclAny* aData = NULL,
                              PVUuid* aEventUUID = NULL,
-                             int32* aEventCode = NULL);
+                             int32* aEventCode = NULL,
+                             int32 aEventDataLen = 0);
 
         void ReportErrorEvent(PVMFEventType aEventType,
                               OsclAny* aEventData = NULL,
@@ -829,27 +752,22 @@ class PVMFSocketNode
                              PVUuid* aEventUUID = NULL,
                              int32* aEventCode = NULL);
 
-        PVMFCommandId QueueCommandL(PVMFSocketNodeCommand& aCmd);
-
-        bool CanProcessCommand();
-        void ProcessCommand(PVMFSocketNodeCmdQ& aCmdQ, PVMFSocketNodeCommand&);
+        PVMFCommandId QueueCommandL(PVMFNodeCommand& aCmd);
 
         //Command handlers.
-        PVMFStatus DoRequestPort(PVMFSocketNodeCommand& aCmd, PVMFSocketPort* &port);
-        PVMFStatus DoReset(PVMFSocketNodeCommand&);
-        PVMFStatus DoQueryUuid(PVMFSocketNodeCommand&);
-        PVMFStatus DoQueryInterface(PVMFSocketNodeCommand&);
-        PVMFStatus DoReleasePort(PVMFSocketNodeCommand&);
-        PVMFStatus DoInit(PVMFSocketNodeCommand&);
-        PVMFStatus DoPrepare(PVMFSocketNodeCommand&);
-        PVMFStatus DoStart(PVMFSocketNodeCommand&);
-        PVMFStatus DoStop(PVMFSocketNodeCommand&);
-        PVMFStatus DoFlush(PVMFSocketNodeCommand&);
-        PVMFStatus DoPause(PVMFSocketNodeCommand&);
-        PVMFStatus DoCancelAllCommands(PVMFSocketNodeCommand&);
-        PVMFStatus DoCancelCommand(PVMFSocketNodeCommand&);
+        PVMFStatus DoRequestPort(PVMFPortInterface* &port);
+        PVMFStatus DoReset();
+        PVMFStatus DoQueryUuid();
+        PVMFStatus DoQueryInterface();
+        PVMFStatus DoReleasePort();
+        PVMFStatus DoInit();
+        PVMFStatus DoStart();
+        PVMFStatus DoStop();
+        PVMFStatus DoFlush();
 
-        PVMFStatus DoCancelCurrentCommand(PVMFSocketNodeCmdQ& aCmdQ, PVMFSocketNodeCommand& aCmd);
+        PVMFStatus CancelCurrentCommand();
+        PVMFStatus DoCancelCurrentCommand();
+        PVMFStatus HandleExtensionAPICommands();
         PVMFStatus DoStopNodeActivity();
         int32 SocketPlacementNew(PVMFSocketNodeMemPool*&, OsclAny*, int32);
         int32 CreateMediaData(SocketPortConfig&, OsclSharedPtr<PVMFMediaDataImpl>&);
