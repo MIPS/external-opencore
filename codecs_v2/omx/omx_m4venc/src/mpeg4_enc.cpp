@@ -803,7 +803,7 @@ OMX_BOOL Mpeg4Encoder_OMX::Mp4EncodeVideo(OMX_U8*    aOutBuffer,
 
         vid_in.height = ((iSrcHeight + 15) >> 4) << 4;
         vid_in.pitch = ((iSrcWidth + 15) >> 4) << 4;
-        vid_in.timestamp = ((ULong) aInTimeStamp / 1000); //converting microsec to millisec
+        vid_in.timestamp = (ULong)(aInTimeStamp / 1000); //converting microsec to millisec
         vid_in.yChan = (UChar*)iVideoIn;
         vid_in.uChan = (UChar*)(iVideoIn + vid_in.height * vid_in.pitch);
         vid_in.vChan = vid_in.uChan + ((vid_in.height * vid_in.pitch) >> 2);

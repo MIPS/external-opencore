@@ -83,7 +83,7 @@ class OmxAmrEncoder
         //Encoding Settings parameters
 
         int32*           ipSizeArrayForOutputFrames;
-        uint32           iNextStartTime;
+        OMX_TICKS        iNextStartTime;
         uint32           iMaxNumOutputFramesPerBuffer;
         uint32           iOneInputFrameLength;
         uint32           iMaxInputSize;
