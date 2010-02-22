@@ -2423,7 +2423,6 @@ void pvplayer_async_test_playlist_seek_skip::Run()
         }
         break;
 
-
         case STATE_UPDATEDATASOURCE:
         {
             // put more clips in the playlist
@@ -2441,6 +2440,14 @@ void pvplayer_async_test_playlist_seek_skip::Run()
             OSCL_TRY(error, iCurrentCmdId = iPlayer->UpdateDataSource(*iDataSource, (OsclAny*) & iContextObject));
             OSCL_FIRST_CATCH_ANY(error, PVPATB_TEST_IS_TRUE(false); iState = STATE_CLEANUPANDCOMPLETE; RunIfNotReady());
             iNumClipsAdded++;
+        }
+        break;
+
+        case STATE_PAUSE:
+        {
+            fprintf(iTestMsgOutputFile, "Calling Pause...\n");
+            OSCL_TRY(error, iCurrentCmdId = iPlayer->Pause((OsclAny*) & iContextObject));
+            OSCL_FIRST_CATCH_ANY(error, PVPATB_TEST_IS_TRUE(false); iState = STATE_CLEANUPANDCOMPLETE; RunIfNotReady());
         }
         break;
 
@@ -2507,7 +2514,7 @@ void pvplayer_async_test_playlist_seek_skip::Run()
 
                 beginPos.iIndeterminate = false;
                 beginPos.iMode = PVPPBPOS_MODE_NOW;
-                if ((SkipAndSeekFwdNextTrackTest == iWhichTest) || (SkipFwdOneTrackTest == iWhichTest))
+                if ((SkipAndSeekFwdNextTrackTest == iWhichTest) || (SkipFwdOneTrackTest == iWhichTest) || (PauseSkipToNextTrackResumeTest == iWhichTest))
                 {
                     beginPos.iPlayElementIndex = iNumEOSReceived + 1; // skip to next track in the list
                     iForwardSkip = iNumEOSReceived + 1;
@@ -2792,9 +2799,15 @@ void pvplayer_async_test_playlist_seek_skip::CommandCompleted(const PVCmdRespons
                 // Do nothing and wait for EOS event
                 fprintf(iTestMsgOutputFile, "...Start Complete\n");
 
+                if (PauseSkipToNextTrackResumeTest == iWhichTest)
+                {
+                    iState = STATE_PAUSE;
+                    // Play for half the duration and then Skip
+                    RunIfNotReady(iSessionDuration[iCurrentPlaybackClip]*1000 / 2);
+                }
                 // with partial list, wait for more clips to be initialized
                 // with full list, begin skipping, unless it is skipping backward
-                if (!iTestUpdateDataSource && (SkipBwdOneTrackTest != iWhichTest))
+                else if (!iTestUpdateDataSource && (SkipBwdOneTrackTest != iWhichTest))
                 {
                     iState = STATE_SETPLAYBACKRANGE;
                     RunIfNotReady();
@@ -2812,6 +2825,23 @@ void pvplayer_async_test_playlist_seek_skip::CommandCompleted(const PVCmdRespons
             {
                 // Start failed
                 fprintf(iTestMsgOutputFile, "...Start FAILED\n");
+                PVPATB_TEST_IS_TRUE(false);
+                iState = STATE_CLEANUPANDCOMPLETE;
+                RunIfNotReady();
+            }
+            break;
+
+        case STATE_PAUSE:
+            if (PVMFSuccess == aResponse.GetCmdStatus())
+            {
+                fprintf(iTestMsgOutputFile, "...Pause Complete\n");
+                iState = STATE_SETPLAYBACKRANGE;
+                RunIfNotReady(2000*1000); // Wait for 2 seconds
+            }
+            else
+            {
+                // Pause failed
+                fprintf(iTestMsgOutputFile, "...Pause FAILED\n");
                 PVPATB_TEST_IS_TRUE(false);
                 iState = STATE_CLEANUPANDCOMPLETE;
                 RunIfNotReady();
@@ -3165,7 +3195,7 @@ void pvplayer_async_test_playlist_seek_skip::HandleInformationalEvent(const PVAs
                         PVPATB_TEST_IS_TRUE(false);
                     }
                 }
-                else if (SkipFwdOneTrackTest == iWhichTest)
+                else if ((SkipFwdOneTrackTest == iWhichTest) || (PauseSkipToNextTrackResumeTest == iWhichTest))
                 {
                     if (1 == *clipId)
                     {
@@ -3178,7 +3208,7 @@ void pvplayer_async_test_playlist_seek_skip::HandleInformationalEvent(const PVAs
                 }
             }
 
-            if ((SkipFwdOneTrackTest == iWhichTest) && (*clipId == 1))
+            if (((SkipFwdOneTrackTest == iWhichTest) || (PauseSkipToNextTrackResumeTest == iWhichTest)) && (*clipId == 1))
             {
                 // set end of time
                 iSetEOT = true;
@@ -3218,6 +3248,7 @@ void pvplayer_async_test_playlist_seek_skip::HandleInformationalEvent(const PVAs
                     numEOSExpected = 1;
                     break;
                 case SkipFwdOneTrackTest:
+                case PauseSkipToNextTrackResumeTest:
                     numEOSExpected = iNumClipsInPlaylist - 1;
                     break;
                 case SkipBwdOneTrackTest:

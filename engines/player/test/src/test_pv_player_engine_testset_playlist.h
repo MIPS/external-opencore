@@ -123,7 +123,8 @@ typedef enum
     SkipFwdAndSeekTest,
     SkipBwdAndSeekTest,
     SkipToCurrentTrackTest,
-    SeekInCurrentTrackTest
+    SeekInCurrentTrackTest,
+    PauseSkipToNextTrackResumeTest
 } PVSkipAndSeekTest;
 
 typedef enum
@@ -687,6 +688,10 @@ class pvplayer_async_test_playlist_seek_skip : public pvplayer_async_test_base
                     iTestCaseName = _STRLIT_CHAR("Seek in current track test...");
                     iSinkFileNameSubString += _STRLIT_WCHAR("sk_crnt_trk_");
                     break;
+                case PauseSkipToNextTrackResumeTest:
+                    iTestCaseName = _STRLIT_CHAR("Pause, skip to next track, and Resume test...");
+                    iSinkFileNameSubString += _STRLIT_WCHAR("pause_skp_fwd_1_trk_resume_");
+                    break;
                 default:
                     iTestCaseName = _STRLIT_CHAR("Invalid Test Case ID");
                     break;
@@ -808,6 +813,7 @@ class pvplayer_async_test_playlist_seek_skip : public pvplayer_async_test_base
                         }
                         break;
                     case SkipFwdOneTrackTest:
+                    case PauseSkipToNextTrackResumeTest:
                         // same for full and partial
                         // init_0, start_0, init_1, start_1, init_2, end_1, start_2, EOT
                         iExpectedPlaylistEventCounts.init = 3;
@@ -1198,11 +1204,13 @@ class pvplayer_async_test_validate_gapless : public pvplayer_async_test_base
             STATE_ADDDATASINK_AUDIO,
             STATE_PREPARE,
             STATE_START,
+            STATE_PAUSE,
             STATE_EOSNOTREACHED,
             STATE_STOP,
             STATE_REMOVEDATASINK_VIDEO,
             STATE_REMOVEDATASINK_AUDIO,
             STATE_RESET,
+            STATE_RESUME,
             STATE_REMOVEDATASOURCE,
             STATE_CLEANUPANDCOMPLETE
         };

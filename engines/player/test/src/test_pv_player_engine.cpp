@@ -3806,6 +3806,9 @@ void pvplayer_engine_test::test()
             case FullPlaylistSeekInCurrentTrackTest:
                 iCurrentTest = new pvplayer_async_test_playlist_seek_skip(testparam, SeekInCurrentTrackTest);
                 break;
+            case FullPlaylistPauseSkipToNextTrackResumeTest:
+                iCurrentTest = new pvplayer_async_test_playlist_seek_skip(testparam, PauseSkipToNextTrackResumeTest);
+                break;
 
                 // testcases with partial playlist, to exercise UpdateDataSource()
             case PartialPlaylistPlayTillEndOfListTest:

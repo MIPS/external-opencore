@@ -1034,6 +1034,7 @@ class pvplayer_engine_test : public test_case,
             FullPlaylistInvalidMimeTypeTest, //411              // clips with invalid mime type should be skipped over
             FullPlaylistSeekBeyondCurrentClipDurationTest, //412
             FullPlaylistSeekInCurrentTrackTest, //413           // seek should be successful in current clip
+            FullPlaylistPauseSkipToNextTrackResumeTest, //414   // pause, skip to next track, and resume test
 
             // start playback with a partial playlist and populate the rest of the playlist during playback
             PartialPlaylistPlayTillEndOfListTest = 420,         // playback should done for complete playlist
