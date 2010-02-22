@@ -35,6 +35,8 @@ OSCL_EXPORT_REF void PVMFOMXDecPort::Construct()
     iNumFramesConsumed = 0;
     iTrackConfig = NULL;
     iTrackConfigSize = 0;
+    iDspWidth = 0;
+    iDspHeight = 0;
     if ((oscl_strcmp(PortName(), PVMF_OMX_VIDEO_DEC_INPUT_PORT_NAME) == 0) || (oscl_strcmp(PortName(), PVMF_OMX_VIDEO_DEC_OUTPUT_PORT_NAME) == 0))
     {
         PvmiCapabilityAndConfigPortFormatImpl::Construct(
@@ -275,6 +277,20 @@ OSCL_EXPORT_REF void PVMFOMXDecPort::setParametersSync(PvmiMIOSession aSession,
     else if (aParameters && pv_mime_strcmp(aParameters->key, PVMF_SKIP_N_UNTIL_KEY_FRAME_KEY) == 0)
     {
         iOMXNode->SetSkipNUntilKeyFrame(aParameters->value.uint32_value);
+        return;
+    }
+
+    // if port connect needs display width
+    if (aParameters && pv_mime_strcmp(aParameters->key, MOUT_VIDEO_DISPLAY_WIDTH_KEY) == 0)
+    {
+        iDspWidth = aParameters->value.int32_value;
+        return;
+    }
+
+    // if port connect needs display height
+    if (aParameters && pv_mime_strcmp(aParameters->key, MOUT_VIDEO_DISPLAY_HEIGHT_KEY) == 0)
+    {
+        iDspHeight = aParameters->value.int32_value;
         return;
     }
 

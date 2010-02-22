@@ -190,9 +190,22 @@ PVMFStatus PVMFOMXVideoDecNode::HandlePortReEnable()
         // read the alignment
         iOutputBufferAlignment = iParamPort.nBufferAlignment;
 
-        // set the new width / height
-        iYUVWidth =  iParamPort.format.video.nFrameWidth;
-        iYUVHeight = iParamPort.format.video.nFrameHeight;
+        /* Get the display dimensions from mp4ffparser outport */
+        /* This is needed when buffer dimensions are not default QCIF */
+        ((PVMFOMXDecPort*)iInPort)->getDisplayDimension(&iYUVWidth, &iYUVHeight);
+
+        /*
+        ** Check whether display dimensions are valid dimensions.
+        ** If not,then assign the buffer dimensions as display dimensions.
+        */
+        if ((iYUVWidth <= 0) || (iYUVWidth > (int32)iParamPort.format.video.nFrameWidth))
+        {
+            iYUVWidth = iParamPort.format.video.nFrameWidth;
+        }
+        if ((iYUVHeight <= 0) || (iYUVHeight > (int32)iParamPort.format.video.nFrameHeight))
+        {
+            iYUVHeight = iParamPort.format.video.nFrameHeight;
+        }
 
         iOMXComponentOutputBufferSize = iParamPort.nBufferSize;
 
@@ -696,18 +709,30 @@ bool PVMFOMXVideoDecNode::NegotiateComponentParameters(OMX_PTR aOutputParameters
     // 1st frame is decoded, so read them from the output port.
     // otherwise, used Width/Height from the config parser utility
     // set the width/height based on port parameters (this may change during port reconfig)
+
+
+    /* Get the display dimensions from mp4ffparser outport */
+    ((PVMFOMXDecPort*)iInPort)->getDisplayDimension(&iYUVWidth, &iYUVHeight);
+
     if ((pOutputParameters->width != 0) && (pOutputParameters->height != 0) && iInPort && (((PVMFOMXDecPort*)iInPort)->iFormat != PVMF_MIME_H2631998 || ((PVMFOMXDecPort*)iInPort)->iFormat != PVMF_MIME_H2632000))
     {
         // set width and height obtained from config parser in the output port as well
         iParamPort.format.video.nFrameWidth = pOutputParameters->width;
         iParamPort.format.video.nFrameHeight = pOutputParameters->height;
-        iYUVWidth  = pOutputParameters->width;
-        iYUVHeight = pOutputParameters->height;
+
+        if (iYUVWidth == 0 || iYUVHeight == 0)  // this info is not available in fileformat.
+        {
+            iYUVWidth  = pOutputParameters->width;  // take it from config parser
+            iYUVHeight = pOutputParameters->height;
+        }
     }
     else
     {
-        iYUVWidth =  iParamPort.format.video.nFrameWidth;
-        iYUVHeight = iParamPort.format.video.nFrameHeight;
+        if (iYUVWidth == 0 || iYUVHeight == 0)  // this info is not available in fileformat.
+        {
+            iYUVWidth =  iParamPort.format.video.nFrameWidth;  // take the default value from OMX
+            iYUVHeight = iParamPort.format.video.nFrameHeight;
+        }
     }
 
     // Send the parameters right away to allow the OMX component to re-calculate the buffer size
@@ -865,6 +890,19 @@ bool PVMFOMXVideoDecNode::NegotiateComponentParameters(OMX_PTR aOutputParameters
     if (iSliceHeight < iParamPort.format.video.nFrameHeight)
     {
         iSliceHeight = iParamPort.format.video.nFrameHeight;
+    }
+
+    /* This should not happen for default QCIF. If it does, it is a bug in the FF parser width/height.
+    ** Below checks are only to take care for QCIF default size.
+    ** Higher dimensions will always enter checks and PortReEnable state will be called.
+    */
+    if (iYUVWidth > (int32)iStride)
+    {
+        iYUVWidth = (int32)iStride;
+    }
+    if (iYUVHeight > (int32)iSliceHeight)
+    {
+        iYUVHeight = (int32)iSliceHeight;
     }
 
     //Send the FSI information to media output node here

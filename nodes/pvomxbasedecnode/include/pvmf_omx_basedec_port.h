@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -111,6 +111,12 @@ class PVMFOMXDecPort : public PvmfPortBaseImpl
             return iTrackConfig;
         }
 
+        void getDisplayDimension(int32* aDspWdth, int32* aDspHght)
+        {
+            *aDspWdth = iDspWidth;
+            *aDspHght = iDspHeight;
+        }
+
 
 
     private:
@@ -122,6 +128,9 @@ class PVMFOMXDecPort : public PvmfPortBaseImpl
         uint32 iNumFramesConsumed; //number of frames consumed & discarded.
         uint32 iTrackConfigSize;
         uint8* iTrackConfig;
+        int32 iDspWidth;
+        int32 iDspHeight;
+
         friend class PVMFOMXBaseDecNode;
         friend class PVMFOMXVideoDecNode;
         friend class PVMFOMXAudioDecNode;
