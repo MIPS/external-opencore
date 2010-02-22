@@ -812,8 +812,6 @@ PVMFOMXEncNode::PVMFOMXEncNode(int32 aPriority) :
 
 
     iDoNotSendOutputBuffersDownstreamFlag = false;
-    iDoNotSaveInputBuffersFlag = false;
-
 
     iOutputBuffersFreed = true;// buffers have not been created yet, so they can be considered freed
     iInputBuffersFreed = true;
@@ -1198,7 +1196,6 @@ void PVMFOMXEncNode::Run()
 
 
         iDoNotSendOutputBuffersDownstreamFlag = true; // stop sending output buffers downstream
-        iDoNotSaveInputBuffersFlag = true;
 
 
         //Get state of OpenMAX encoder
@@ -1545,11 +1542,7 @@ PVMFStatus PVMFOMXEncNode::HandleProcessingState()
             {
                 iDoNotSendOutputBuffersDownstreamFlag = true;
             }
-            else if (iPortIndexForDynamicReconfig == iInputPortIndex)
-            {
-                iDoNotSaveInputBuffersFlag = true;
 
-            }
             iProcessingState = EPVMFOMXEncNodeProcessingState_WaitForBufferReturn;
 
 
@@ -1795,10 +1788,6 @@ PVMFStatus PVMFOMXEncNode::HandleProcessingState()
                     return PVMFErrNoMemory;
 
                 }
-                // do not drop partially consumed input
-                iDoNotSaveInputBuffersFlag = false;
-
-
             }
 
             // if the callback that the port was re-enabled has not arrived yet, wait for it
@@ -1839,21 +1828,7 @@ PVMFStatus PVMFOMXEncNode::HandleProcessingState()
 
             }
 
-
-            // next, see if partially consumed input buffer needs to be resent back to OMX component
-            // NOTE: it is not allowed that the component returns more than 1 partially consumed input buffers
-            //       i.e. if a partially consumed input buffer is returned, it is assumed that the OMX component
-            //       will be waiting to get data
-
-            if (iInputBufferToResendToComponent != NULL)
-            {
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
-                                (0, "PVMFOMXEncNode-%s::HandleProcessingState() Sending previous - partially consumed input back to the OMX component", iNodeTypeId));
-
-                OMX_EmptyThisBuffer(iOMXEncoder, iInputBufferToResendToComponent);
-                iInputBufferToResendToComponent = NULL; // do this only once
-            }
-            else if ((iNumOutstandingInputBuffers < iNumInputBuffers) && (iDataIn.GetRep() != NULL))
+            if ((iNumOutstandingInputBuffers < iNumInputBuffers) && (iDataIn.GetRep() != NULL))
             {
                 // try to get an input buffer header
                 // and send the input data over to the component
@@ -4603,9 +4578,6 @@ bool PVMFOMXEncNode::CreateInputMemPool(uint32 num_buffers)
     // init the counter
     iNumOutstandingInputBuffers = 0;
 
-    iInputBufferToResendToComponent = NULL; // nothing to resend yet
-
-
     if (in_ctrl_struct_ptr)
     {
         oscl_free(in_ctrl_struct_ptr);
@@ -5401,8 +5373,7 @@ OMX_ERRORTYPE PVMFOMXEncNode::EmptyBufferDoneProcessing(OMX_OUT OMX_HANDLETYPE a
 
 
     // if a buffer is not empty, log a msg, but release anyway
-    if ((aBuffer->nFilledLen > 0) && (iDoNotSaveInputBuffersFlag == false))
-        // if dynamic port reconfig is in progress for input port, don't keep the buffer
+    if (aBuffer->nFilledLen > 0)
     {
 
         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
@@ -5410,9 +5381,6 @@ OMX_ERRORTYPE PVMFOMXEncNode::EmptyBufferDoneProcessing(OMX_OUT OMX_HANDLETYPE a
 
 
     }
-
-    iInputBufferToResendToComponent = NULL;
-
 
     // input buffer is to be released,
     // refcount needs to be decremented (possibly - the input msg associated with the buffer will be unbound)
@@ -6686,8 +6654,6 @@ void PVMFOMXEncNode::DoStart(PVMFOMXEncNodeCommand& aCmd)
                 iDoNotSendOutputBuffersDownstreamFlag = false; // or if output was not being sent downstream due to state changes
                 // re-anable sending output
 
-                iDoNotSaveInputBuffersFlag = false;
-
 
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                                 (0, "PVMFOMXEncNode-%s::DoStart() Changing Component state Idle or Paused->Executing", iNodeTypeId));
@@ -6789,7 +6755,6 @@ void PVMFOMXEncNode::DoStop(PVMFOMXEncNodeCommand& aCmd)
 
 
             iDoNotSendOutputBuffersDownstreamFlag = true; // stop sending output buffers downstream
-            iDoNotSaveInputBuffersFlag = true;
 
 
             //Get state of OpenMAX encoder
@@ -7200,7 +7165,6 @@ void PVMFOMXEncNode::DoReset(PVMFOMXEncNodeCommand& aCmd)
 
 
                         iDoNotSendOutputBuffersDownstreamFlag = true; // stop sending output buffers downstream
-                        iDoNotSaveInputBuffersFlag = true;
 
                         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                                         (0, "PVMFOMXEncNode-%s::DoReset() Changing Component State Executing->Idle or Pause->Idle", iNodeTypeId));

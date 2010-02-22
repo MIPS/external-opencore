@@ -508,8 +508,6 @@ class PVMFOMXBaseDecNode: public PVMFNodeInterfaceImpl
 
         uint32 iNumOutstandingInputBuffers; // number of input buffers in use (i.e. unavailable)
 
-        bool iDoNotSaveInputBuffersFlag;
-
         // flag that requires the component to process config data (and report port settings changed event)
         // or return the config buffer before we can dequeue BOS - which can cause a omx port flush
         // and flush out the config data from the component.
@@ -559,9 +557,6 @@ class PVMFOMXBaseDecNode: public PVMFNodeInterfaceImpl
         uint32 iSecondPortToReconfig;
         bool iPauseCommandWasSentToComponent;
         bool iStopCommandWasSentToComponent;
-
-        OMX_BUFFERHEADERTYPE *iInputBufferToResendToComponent; // ptr to input buffer that is not empty, but that the OMX component returned
-        // we need to resend this same buffer back to the component
 
         ////////////////// OMX COMPONENT CAPABILITY RELATED MEMBERS
         bool iOMXComponentSupportsExternalOutputBufferAlloc;

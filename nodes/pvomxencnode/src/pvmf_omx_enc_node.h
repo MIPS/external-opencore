@@ -1251,8 +1251,6 @@ class PVMFOMXEncNode
 
         uint32 iNumOutstandingInputBuffers; // number of input buffers in use (i.e. unavailable)
 
-        bool iDoNotSaveInputBuffersFlag;
-
         // flag to prevent freeing buffers twice
         bool iInputBuffersFreed;
 
@@ -1279,11 +1277,6 @@ class PVMFOMXEncNode
         bool iSecondPortReportedChange;
         bool iDynamicReconfigInProgress;
         uint32 iSecondPortToReconfig;
-
-
-
-        OMX_BUFFERHEADERTYPE *iInputBufferToResendToComponent; // ptr to input buffer that is not empty, but that the OMX component returned
-        // we need to resend this same buffer back to the component
 
 
         ////////////////// OMX COMPONENT CAPABILITY RELATED MEMBERS

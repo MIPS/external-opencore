@@ -1021,9 +1021,6 @@ PVMFStatus PVMFOMXAudioDecNode::HandlePortReEnable()
             return PVMFErrNoMemory;
 
         }
-        // do not drop partially consumed input
-        iDoNotSaveInputBuffersFlag = false;
-
     }
 
     // if the callback that the port was re-enabled has not arrived yet, wait for it

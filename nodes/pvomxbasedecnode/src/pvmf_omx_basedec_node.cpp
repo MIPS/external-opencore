@@ -442,7 +442,6 @@ OSCL_EXPORT_REF PVMFOMXBaseDecNode::PVMFOMXBaseDecNode(int32 aPriority, const ch
     iNumOutstandingInputBuffers = 0;
 
     iDoNotSendOutputBuffersDownstreamFlag = false;
-    iDoNotSaveInputBuffersFlag = false;
 
     iIsConfigDataProcessingCompletionNeeded = false;
     iIsThereMoreConfigDataToBeSent = false;
@@ -1128,8 +1127,6 @@ PVMFStatus PVMFOMXBaseDecNode::HandleProcessingState()
                 {
                     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                                     (0, "%s::HandleProcessingState() Port Reconfiguration -> Input Port", iName.Str()));
-
-                    iDoNotSaveInputBuffersFlag = true;
                 }
                 else
                 {
@@ -1328,8 +1325,6 @@ PVMFStatus PVMFOMXBaseDecNode::HandleProcessingState()
         case EPVMFOMXBaseDecNodeProcessingState_ReadyToDecode:
         {
 
-            OMX_ERRORTYPE err = OMX_ErrorNone;
-
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                             (0, "%s::HandleProcessingState() Ready To Decode start", iName.Str()));
             // In normal data flow and decoding state
@@ -1344,34 +1339,7 @@ PVMFStatus PVMFOMXBaseDecNode::HandleProcessingState()
 
             }
 
-
-            // next, see if partially consumed input buffer needs to be resent back to OMX component
-            // NOTE: it is not allowed that the component returns more than 1 partially consumed input buffers
-            //       i.e. if a partially consumed input buffer is returned, it is assumed that the OMX component
-            //       will be waiting to get data
-
-            if (iInputBufferToResendToComponent != NULL)
-            {
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
-                                (0, "%s::HandleProcessingState() Sending previous - partially consumed input back to the OMX component", iName.Str()));
-
-                err = OMX_EmptyThisBuffer(iOMXDecoder, iInputBufferToResendToComponent);
-                if (OMX_ErrorNone != err)
-                {
-                    //Error condition report, Log the error message and continue processing
-                    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                                    (0, "%s::HandleProcessingState () Error sending the previous input buffer", iName.Str()));
-
-                    //Deallocate the memory pool entry as well
-                    InputBufCtrlStruct *pContext = (InputBufCtrlStruct *)(iInputBufferToResendToComponent->pAppPrivate);
-
-                    (pContext->pMediaData).Unbind();
-                    iInBufMemoryPool->deallocate((OsclAny *)(pContext->pMemPoolEntry));
-                }
-
-                iInputBufferToResendToComponent = NULL; // do this only once
-            }
-            else if ((iNumOutstandingInputBuffers < iNumInputBuffers) && (iDataIn.GetRep() != NULL))
+            if ((iNumOutstandingInputBuffers < iNumInputBuffers) && (iDataIn.GetRep() != NULL))
             {
                 // try to get an input buffer header
                 // and send the input data over to the component
@@ -3215,9 +3183,6 @@ OSCL_EXPORT_REF bool PVMFOMXBaseDecNode::CreateInputMemPool(uint32 num_buffers)
     // init the counter
     iNumOutstandingInputBuffers = 0;
 
-
-    iInputBufferToResendToComponent = NULL; // nothing to resend yet
-
     // allocate mempool for media data message wrapper
     leavecode = OsclErrNone;
     OSCL_TRY(leavecode, iInputMediaDataMemPool = OSCL_NEW(OsclMemPoolFixedChunkAllocator, (num_buffers, PVOMXBASEDEC_MEDIADATA_CHUNKSIZE)));
@@ -3928,8 +3893,7 @@ OMX_ERRORTYPE PVMFOMXBaseDecNode::EmptyBufferDoneProcessing(OMX_OUT OMX_HANDLETY
     }
 
     // if a buffer is not empty, log a msg, but release anyway
-    if ((aBuffer->nFilledLen > 0) && (iDoNotSaveInputBuffersFlag == false))
-        // if dynamic port reconfig is in progress for input port, don't keep the buffer
+    if (aBuffer->nFilledLen > 0)
     {
 
         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
@@ -3938,8 +3902,6 @@ OMX_ERRORTYPE PVMFOMXBaseDecNode::EmptyBufferDoneProcessing(OMX_OUT OMX_HANDLETY
 
     }
 
-
-    iInputBufferToResendToComponent = NULL;
 
     // input buffer is to be released,
     // refcount needs to be decremented (possibly - the input msg associated with the buffer will be unbound)
@@ -4901,10 +4863,7 @@ OSCL_EXPORT_REF PVMFStatus PVMFOMXBaseDecNode::DoStart()
         {
 
             iDoNotSendOutputBuffersDownstreamFlag = false; // or if output was not being sent downstream due to state changes
-            // re-anable sending output
-
-            iDoNotSaveInputBuffersFlag = false;
-
+            // re-enable sending output
         }
 
         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
@@ -4970,7 +4929,6 @@ OSCL_EXPORT_REF PVMFStatus PVMFOMXBaseDecNode::DoStop()
     iBOCReceived = false;
 
     iDoNotSendOutputBuffersDownstreamFlag = true; // stop sending output buffers downstream
-    iDoNotSaveInputBuffersFlag = true;
 
     //if we're in the middle of a partial frame assembly
     // abandon it and start fresh
@@ -5377,7 +5335,6 @@ OSCL_EXPORT_REF PVMFStatus PVMFOMXBaseDecNode::DoReset()
 
 
                 iDoNotSendOutputBuffersDownstreamFlag = true; // stop sending output buffers downstream
-                iDoNotSaveInputBuffersFlag = true;
 
 
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
