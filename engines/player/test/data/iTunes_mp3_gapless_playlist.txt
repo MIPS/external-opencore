@@ -1,0 +1,6 @@
+[5]
+[gapless\album\iTunes_mp3\iTunes_gapless_track10.mp3]
+[gapless\album\iTunes_mp3\iTunes_gapless_track11.mp3]
+[gapless\album\iTunes_mp3\iTunes_gapless_track12.mp3]
+[gapless\album\iTunes_mp3\iTunes_gapless_track13.mp3]
+[gapless\album\iTunes_mp3\iTunes_gapless_track14.mp3]

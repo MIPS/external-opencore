@@ -1,0 +1,6 @@
+[5]
+[gapless\album\iTunes_aac\iTunes_gapless_track10.m4a]
+[gapless\album\iTunes_aac\iTunes_gapless_track11.m4a]
+[gapless\album\iTunes_aac\iTunes_gapless_track12.m4a]
+[gapless\album\iTunes_aac\iTunes_gapless_track13.m4a]
+[gapless\album\iTunes_aac\iTunes_gapless_track14.m4a]
