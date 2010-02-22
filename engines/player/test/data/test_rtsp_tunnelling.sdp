@@ -1,0 +1,27 @@
+v=0
+o=StreamingServer 3475607475 1266609611000 IN IP4 63.241.39.10
+s=/public/testcontent/pv-amr-122_h263-64.3gp
+u=http:///
+e=admin@
+c=IN IP4 0.0.0.0
+b=AS:88
+t=0 0
+a=control:rtspt://darwinoha.pv.com:554/public/testcontent/pv-amr-122_h263-64.3gp
+a=maxprate:10.000000
+a=range:npt=0-  37.60000
+m=audio 0 RTP/AVP 96
+b=AS:16
+b=TIAS:14
+a=maxprate:10
+a=rtpmap:96 AMR/8000/1
+a=control:rtspt://darwinoha.pv.com:554/public/testcontent/pv-amr-122_h263-64.3gp/trackID=3
+a=fmtp:96 octet-align=1
+m=video 0 RTP/AVP 97
+b=AS:74
+b=TIAS:72
+a=maxprate:9
+a=rtpmap:97 H263-2000/90000
+a=control:rtspt://darwinoha.pv.com:554/public/testcontent/pv-amr-122_h263-64.3gp/trackID=4
+a=cliprect:0,0,144,176
+a=framesize:97 176-144
+a=fmtp:97
