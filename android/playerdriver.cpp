@@ -1617,6 +1617,16 @@ status_t PVPlayer::setLooping(int loop)
     return mPlayerDriver->enqueueCommand(new PlayerSetLoop(loop,0,0));
 }
 
+status_t PVPlayer::invoke(const Parcel& request, Parcel *reply)
+{
+    return INVALID_OPERATION;
+}
+
+status_t PVPlayer::getMetadata(const media::Metadata::Filter& ids,
+                               Parcel *records) {
+    return UNKNOWN_ERROR;
+}
+
 }; // namespace android
 
 
