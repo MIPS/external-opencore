@@ -1048,6 +1048,8 @@ bool PVMFOMXVideoDecNode::NegotiateComponentParameters(OMX_PTR aOutputParameters
                 {
                     ipExternalOutputBufferAllocatorInterface->removeRef();
                     ipExternalOutputBufferAllocatorInterface = NULL;
+                    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_WARNING,
+                                    (0, "PVMFOMXVideoDecNode::NegotiateComponentParameters Warning - problem setting number of buffers/buffer size."));
                 }
                 else
                 {
