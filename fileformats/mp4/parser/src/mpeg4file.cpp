@@ -389,6 +389,14 @@ Mpeg4File::Mpeg4File(MP4_FF_FILE *fp,
                     _pointerMovieAtomEnd =  AtomUtils::getCurrentFilePosition(fp);
                     _ptrMoofEnds = _pointerMovieAtomEnd;
 
+                    if (_pMoofOffsetVec->size() > 0)
+                    {
+                        if (_pointerMovieAtomEnd > (*_pMoofOffsetVec)[0])
+                        {
+                            _ptrMoofEnds = (*_pMoofOffsetVec)[0];
+                        }
+                    }
+
                     OsclAny*ptr = oscl_malloc(sizeof(MP4_FF_FILE));
                     if (ptr == NULL)
                     {
@@ -456,40 +464,60 @@ Mpeg4File::Mpeg4File(MP4_FF_FILE *fp,
             moofStartOffset -= DEFAULT_ATOM_SIZE;
             _pMoofOffsetVec->push_back(moofStartOffset);
 
-            MovieFragmentAtom *pMovieFragmentAtom = NULL;
-            PV_MP4_FF_NEW(fp->auditCB, MovieFragmentAtom, (fp, atomSize, atomType, _pTrackDurationContainer, _pTrackExtendsAtomVec, parseMoofCompletely, moofParsingCompleted, countOfTrunsParsed), pMovieFragmentAtom);
-
-            if (!pMovieFragmentAtom->MP4Success())
+            if (_pmovieAtom == NULL)
             {
-                _success = false;
-                _mp4ErrorCode = pMovieFragmentAtom->GetMP4Error();
-                break;
+                count -= atomSize;
+                atomSize -= DEFAULT_ATOM_SIZE;
+                AtomUtils::seekFromCurrPos(fp, atomSize);
             }
-            pMovieFragmentAtom->setParent(this);
-            count -= pMovieFragmentAtom->getSize();
-            _ptrMoofEnds = AtomUtils::getCurrentFilePosition(fp);
-            _pMovieFragmentAtomVec->push_back(pMovieFragmentAtom);
+            else
+            {
 
+                MovieFragmentAtom *pMovieFragmentAtom = NULL;
+                PV_MP4_FF_NEW(fp->auditCB, MovieFragmentAtom, (fp, atomSize, atomType, _pTrackDurationContainer, _pTrackExtendsAtomVec, parseMoofCompletely, moofParsingCompleted, countOfTrunsParsed), pMovieFragmentAtom);
+
+                if (!pMovieFragmentAtom->MP4Success())
+                {
+                    _success = false;
+                    _mp4ErrorCode = pMovieFragmentAtom->GetMP4Error();
+                    break;
+                }
+                pMovieFragmentAtom->setParent(this);
+                count -= pMovieFragmentAtom->getSize();
+                _ptrMoofEnds = AtomUtils::getCurrentFilePosition(fp);
+                _pMovieFragmentAtomVec->push_back(pMovieFragmentAtom);
+            }
         }
         else if (atomType == MOVIE_FRAGMENT_RANDOM_ACCESS_ATOM)
         {
-            MovieFragmentRandomAccessAtom *pMovieFragmentRandomAccessAtom = NULL;
-            PV_MP4_FF_NEW(fp->auditCB, MovieFragmentRandomAccessAtom, (fp, atomSize, atomType), pMovieFragmentRandomAccessAtom);
-            if (!pMovieFragmentRandomAccessAtom->MP4Success())
+            if (_pmovieAtom == NULL)
             {
-                _success = false;
-                _mp4ErrorCode = pMovieFragmentRandomAccessAtom->GetMP4Error();
-                PV_MP4_FF_DELETE(NULL, MovieFragmentRandomAccessAtom, pMovieFragmentRandomAccessAtom);
-                break;
+                count -= atomSize;
+                atomSize -= DEFAULT_ATOM_SIZE;
+                AtomUtils::seekFromCurrPos(fp, atomSize);
             }
-            pMovieFragmentRandomAccessAtom->setParent(this);
-            count -= pMovieFragmentRandomAccessAtom->getSize();
-            _pMovieFragmentRandomAccessAtomVec->push_back(pMovieFragmentRandomAccessAtom);
-            oMfraFound = true;
+            else
+            {
+                MovieFragmentRandomAccessAtom *pMovieFragmentRandomAccessAtom = NULL;
+                PV_MP4_FF_NEW(fp->auditCB, MovieFragmentRandomAccessAtom, (fp, atomSize, atomType), pMovieFragmentRandomAccessAtom);
+                if (!pMovieFragmentRandomAccessAtom->MP4Success())
+                {
+                    _success = false;
+                    _mp4ErrorCode = pMovieFragmentRandomAccessAtom->GetMP4Error();
+                    PV_MP4_FF_DELETE(NULL, MovieFragmentRandomAccessAtom, pMovieFragmentRandomAccessAtom);
+                    break;
+                }
+                pMovieFragmentRandomAccessAtom->setParent(this);
+                count -= pMovieFragmentRandomAccessAtom->getSize();
+                _pMovieFragmentRandomAccessAtomVec->push_back(pMovieFragmentRandomAccessAtom);
+                oMfraFound = true;
 
-            // Exit the loop at this point since the movie atom has already been parsed
-            if ((_pmovieAtom != NULL) && (_parsing_mode != 0))
-                break;
+                // Exit the loop at this point since the movie atom has already been parsed
+                if ((_pmovieAtom != NULL) && (_parsing_mode != 0))
+                    break;
+            }
+
+
         }
         else
         {
