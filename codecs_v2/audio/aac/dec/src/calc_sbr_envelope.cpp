@@ -1515,7 +1515,10 @@ void energy_estimation_LC(Int32 *aBufR,
         if (tmp2)
         {
             aux2 = pv_normalize(tmp2);
-            aux2 -= 1;                  /*  ensure Q30 */
+            if (aux2)
+            {
+                aux2 -= 1;                  /*  ensure Q30 */
+            }
             nrg_h = (nrg_h << aux2) >> 33;
             tmp2 = (UInt32)(nrg_h);
             nrg_est_exp[c] = 33 - aux2;
@@ -1524,7 +1527,10 @@ void energy_estimation_LC(Int32 *aBufR,
         {
             tmp2 = (UInt32)(nrg_h >> 2);
             aux2 = pv_normalize(tmp2);
-            aux2 -= 1;                  /*  ensure Q30 */
+            if (aux2)
+            {
+                aux2 -= 1;                  /*  ensure Q30 */
+            }
 
             tmp2 = (tmp2 << aux2);
             nrg_est_exp[c] =  -aux2 + 2;
