@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,6 +47,7 @@
 #include "avi_write.h"
 #endif
 
+
 #define TEST_BUFFER_ALLOCATOR 0
 
 #if TEST_BUFFER_ALLOCATOR
@@ -63,6 +64,7 @@ class PVLogger;
 class PVRefFileOutputTestObserver;
 class PVMFMediaClock;
 class PVRefFileOutput;
+
 
 #define DEFAULT_NUM_DECODED_FRAMES_CAPABILITY   6
 
@@ -370,6 +372,8 @@ class PVRefFileOutput
         bool iAudioNumChannelsValid;
         int32 iAudioSamplingRate;
         bool iAudioSamplingRateValid;
+
+        /* SRS WOW HD */
 
         // Video parameters
         OSCL_HeapString<OsclMemAllocator> iVideoFormatString;

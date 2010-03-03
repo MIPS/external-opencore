@@ -1925,6 +1925,7 @@ void PVRefFileOutput::setParametersSync(PvmiMIOSession aSession,
 
     }
 
+
     if ((iVideoFormat == PVMF_MIME_YUV420 || iVideoFormat == PVMF_MIME_YUV422) && (iVideoHeightValid == true && iVideoHeightValid == true && iInitializeAVIDone == false))
     {
         InitializeAVI(iVideoWidth, iVideoHeight);

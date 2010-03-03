@@ -37,6 +37,7 @@
 
 #include <media/AudioTrack.h>
 
+
 using namespace android;
 
 // depth of buffer/command queues in MIO
@@ -631,6 +632,7 @@ void AndroidAudioMIO::setParametersSync(PvmiMIOSession aSession, PvmiKvp* aParam
             return;
         }
     }
+
 
     //LOGV("setParametersSync out");
 }

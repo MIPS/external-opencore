@@ -126,6 +126,7 @@ pvamrwbdecoder_lib=m
 gsm_amr_headers_lib=m
 pvmp3_lib=m
 pvra8decoder_lib=n
+pv_srs_wowhd_lib=n
 wmadecoder_lib=n
 useoldwmadecoder=n
 wma_audio_support=m
