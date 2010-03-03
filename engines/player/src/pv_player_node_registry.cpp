@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,11 +31,6 @@
 #endif //USE_LOADABLE_MODULES
 
 #include "pvmf_omx_videodec_factory.h"
-
-#if BUILD_VIDEO_DEC_NODE
-#include "pvmf_videodec_factory.h"
-#endif
-
 
 void PVPlayerRegistryPopulator::Populate(PVPlayerNodeRegistry& aNode, PVPlayerRecognizerRegistry& aRec)
 {

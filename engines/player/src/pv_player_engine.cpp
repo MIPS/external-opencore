@@ -15580,6 +15580,8 @@ void PVPlayerEngine::HandleSinkNodeInfoEvent(const PVMFAsyncEvent& aEvent, int32
             uint32 streamID = *data;
             if (streamID != iStreamID)
             {
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iReposLogger, PVLOGMSG_INFO,
+                                (0, "PVPlayerEngine::HandleSinkNodeInfoEvent() PVMFInfoStartOfData event received for previous streamId ... Ignoring"));
                 // received StartOfData for previous streamId, ignoring these events
                 break;
             }
