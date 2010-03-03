@@ -541,12 +541,12 @@ class PVH324MessageSendUserInput: public CPVCmnInterfaceCmdMessage
         {
             if (iUserInput)
             {
-                OSCL_DELETE(iUserInput);
+                iUserInput->removeRef();
                 iUserInput = NULL;
             }
             if (input)
             {
-                iUserInput = input->Copy();
+                iUserInput = input;
             }
         }
         CPVUserInput* iUserInput;
@@ -945,7 +945,7 @@ H324MConfig::SendUserInput(CPVUserInput* aUserInput,
 {
     switch (aUserInput->GetType())
     {
-        case EAlphanumeric:
+        case PV_ALPHANUMERIC:
             CPVUserInputAlphanumeric *alpha;
 
             alpha = (CPVUserInputAlphanumeric *) aUserInput;
@@ -960,7 +960,7 @@ H324MConfig::SendUserInput(CPVUserInput* aUserInput,
             iH324M->Tsc_UII_Alphanumeric(alpha->GetInput(), alpha->GetLength());
             break;
 
-        case EDtmf:
+        case PV_DTMF:
             CPVUserInputDtmf *dtmf;
             dtmf = (CPVUserInputDtmf *) aUserInput;
             iH324M->Tsc_UII_DTMF(dtmf->GetInput(), dtmf->GetDuration());
@@ -1040,14 +1040,21 @@ void H324MConfig::SendCmdResponse(PVMFCommandId id, OsclAny* context, PVMFStatus
 
 void H324MConfig::SendAsyncEvent(PVMFAsyncEvent& event)
 {
-    if (iUseAO)
+
+    if (!iUseAO)
     {
-        iPendingEvents.push_back(event);
-        RunIfNotReady();
+        iObserver->H324MConfigHandleInformationalEventL(event);
     }
     else
     {
-        iObserver->H324MConfigHandleInformationalEventL(event);
+        // If message includes inferface addRef is called
+        PVInterface* pInterface = event.GetEventExtensionInterface();
+        if (pInterface)
+        {
+            pInterface->addRef();
+        }
+        iPendingEvents.push_back(event);
+        RunIfNotReady();
     }
 }
 
@@ -1062,9 +1069,12 @@ void H324MConfig::IncomingVendorId(TPVH245Vendor* vendor,
     OSCL_UNUSED_ARG(vn_len);
 }
 
-void H324MConfig::UserInputReceived(CPVUserInput* aUI)
+void H324MConfig::UserInputReceived(CPVUserInput* apUserInput)
 {
-    OSCL_UNUSED_ARG(aUI);
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H324MConfig::UserInputReceived\n"));
+
+    PVMFAsyncEvent event(PVMFInfoEvent, PV_INDICATION_USER_INPUT, NULL, apUserInput, NULL);
+    SendAsyncEvent(event);
 }
 
 void H324MConfig::UserInputCapability(int formats)
@@ -2090,6 +2100,11 @@ void H324MConfigProxied::HandleNotification(TPVProxyMsgId aId, OsclAny *aMsg)
         if (iObserver)
         {
             iObserver->H324MConfigHandleInformationalEventL(*async_event);
+        }
+        PVInterface* pExtensionInterface = async_event->GetEventExtensionInterface();
+        if (pExtensionInterface)
+        {
+            pExtensionInterface->removeRef();
         }
         OSCL_DELETE(async_event);
     }

@@ -40,8 +40,6 @@
 #include "tsc_capability.h"
 #include "tsc_component.h"
 
-#define PV2WAY_DEFAULT_USER_INPUT_CAPABILITY_INDEX 2 /* Index for IA5 string */
-
 //////////////////////////////////////////////////////////////////////////
 // Start the CE process by sending this terminals capabilites to the peer terminal
 //////////////////////////////////////////////////////////////////////////
@@ -242,7 +240,7 @@ void TSC_324m::ExtractTcsParameters(PS_TerminalCapabilitySet pTcs)
 
     iTSCcapability.ResetCapability();
     Oscl_Vector<CPvtMediaCapability*, OsclMemAllocator> capabilityItems;
-    int userInputCapabilities = 0;//1<<PV2WAY_DEFAULT_USER_INPUT_CAPABILITY_INDEX;
+    uint32 userInputCapabilities = 0;
     struct _UserInputCapability *userInputCapability = NULL;
 
     iTSCcomponent->ExtractTcsParameters(pTcs);
@@ -324,9 +322,8 @@ void TSC_324m::ExtractTcsParameters(PS_TerminalCapabilitySet pTcs)
         }
     }
     iTSCcapability.CreateNewCapability(capabilityItems);
-    userInputCapabilities = userInputCapabilities ?
-                            userInputCapabilities : 1 << PV2WAY_DEFAULT_USER_INPUT_CAPABILITY_INDEX;
-    if (iTSC_324mObserver)
+
+    if (iTSC_324mObserver && userInputCapabilities)
     {
         iTSC_324mObserver->UserInputCapability(userInputCapabilities);
     }

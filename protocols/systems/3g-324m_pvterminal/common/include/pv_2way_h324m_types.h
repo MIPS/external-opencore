@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,17 +38,6 @@ typedef enum TPVPostDisconnectOption
     EDisconnectLine,
     EAnalogueTelephony
 } PV2WayPostDisconnectOption;
-
-
-/**
-TPVUserInputType enum
-Enumeration of user input types
-**/
-typedef enum TPVUserInputType
-{
-    EAlphanumeric = 0,
-    EDtmf,
-} PV2WayUserInputType;
 
 /**
  * PV2Way324InitInfo Class
@@ -195,4 +184,227 @@ class PVH223Al3Config : public PVH223AlConfig
         uint32 iControlFieldOctets;
         uint32 iSendBufferSize;
 };
+
+/**
+ * UserInputType enum
+ * Enumeration of user input types
+ **/
+typedef enum UserInputType
+{
+    PV_ALPHANUMERIC = 0,
+    PV_DTMF
+} PV2WayUserInputType;
+
+
+/**
+ * CPVUserInput class
+ * Base class for User Input mesages
+ **/
+class CPVUserInput: public HeapBase, public PVInterface
+{
+    public:
+        /**
+         * Constructor of CPVUserInputDtmf class.
+         *
+         **/
+        OSCL_IMPORT_REF CPVUserInput(): iRefCounter(1) {};
+
+        /**
+         * Virtual destructor
+         **/
+        virtual ~CPVUserInput() {};
+        /**
+         * Virtual function to return the user input type
+         **/
+        virtual UserInputType GetType() = 0;
+
+        // from PVInterface
+        void addRef()
+        {
+            iRefCounter++;
+        }
+
+        void removeRef()
+        {
+            --iRefCounter;
+            if (iRefCounter == 0)
+                OSCL_DELETE(this);
+        }
+
+    private:
+
+        virtual bool queryInterface(const PVUuid& arUuid, PVInterface*& aprInterface)
+        {
+            OSCL_UNUSED_ARG(arUuid);
+            OSCL_UNUSED_ARG(aprInterface);
+            return false;
+        }
+
+        uint32 iRefCounter;
+
+};
+
+/**
+ * CPVUserInputDtmf Class
+ *
+ * CPVUserInputDtmf class contains DTMF signal information from
+ * an H.245 UserInputIndication message.
+ **/
+class CPVUserInputDtmf : public CPVUserInput
+{
+    public:
+        /**
+         * Constructor of CPVUserInputDtmf class.
+         *
+         * @param aInput
+         *         The input DTMF tone.
+         * @param aUpdate
+         *         Indicates if this is an update to a continuing DTMF tone.
+         * @param aDuration
+         *         The duration of the update in milli-seconds.
+         * @leave   This method can leave with one of the following error codes
+         *          KErrNoMemory if the SDK failed to allocate memory during this operation.
+         * @returns void
+         **/
+        OSCL_IMPORT_REF CPVUserInputDtmf(uint8 aInput, bool aUpdate, uint16 aDuration = 0) :
+                iInput(aInput),
+                iIsUpdate(aUpdate),
+                iDuration(aDuration)
+        {};
+
+        /**
+         * Destructor.
+         **/
+        OSCL_IMPORT_REF ~CPVUserInputDtmf() {};
+
+        // from CPVUserInput
+        OSCL_IMPORT_REF UserInputType GetType()
+        {
+            return PV_DTMF;
+        }
+
+        /**
+         * Return the user input DTMF tone
+         *
+         * @returns Returns the input DTMF tone.
+         **/
+        OSCL_IMPORT_REF const uint8 GetInput()
+        {
+            return iInput;
+        }
+
+        /**
+         * Return if the DTMF tone is an update
+         *
+         * @returns Returns if the input DTMF tone is an update.
+         **/
+        OSCL_IMPORT_REF bool IsUpdate()
+        {
+            return iIsUpdate;
+        }
+
+        /**
+         * Return the duration of the update.
+         *
+         * @returns Returns the duration of the update.
+         **/
+        OSCL_IMPORT_REF uint16 GetDuration()
+        {
+            return iDuration;
+        }
+
+    private:
+        /**
+         * Constructor.
+         *
+         * @param aInput
+         *         The input DTMF tone.
+         * @param aUpdate
+         *         Indicates if this is an update to a continuing DTMF tone.
+         * @param aDuration
+         *         The duration of the update in milli-seconds.
+         **/
+        uint8 iInput;
+        bool iIsUpdate;
+        uint16 iDuration;
+};
+
+/**
+ * CPVUserInputAlphanumeric Class
+ *
+ * CPVUserInputAlphanumeric class contains an alphanumeric string from
+ * an H.245 UserInputIndication message.
+ **/
+class CPVUserInputAlphanumeric : public CPVUserInput
+{
+    public:
+        /**
+         * Constructor of CPVUserInputAlphanumeric class.
+         *
+         * @param apInput The input alphanumeric string (T.50 encoded).
+         * @param aLen The lenght of alphanumeric string in bytes
+         * @returns none
+         * @leave  This method can leave with one of the following error codes
+         *         OsclErrGeneral memory copy failed
+         **/
+        OSCL_IMPORT_REF CPVUserInputAlphanumeric(uint8* apInput, uint16 aLen)
+        {
+            if (aLen)
+            {
+                int err;
+                ipInput = OSCL_STATIC_CAST(uint8*, OSCL_MALLOC(aLen));
+                OSCL_TRY(err, oscl_memcpy(ipInput, apInput, aLen));
+                OSCL_FIRST_CATCH_ANY(err,
+                                     OSCL_DELETE(ipInput);
+                                     OSCL_LEAVE(OsclErrGeneral);
+                                    );
+                iLength = aLen;
+            }
+        }
+
+        /**
+         * Destructor.
+         **/
+        OSCL_IMPORT_REF ~CPVUserInputAlphanumeric()
+        {
+            if (ipInput)
+            {
+                OSCL_DELETE(ipInput);
+            }
+        }
+
+        // from CPVUserInput
+        OSCL_IMPORT_REF UserInputType GetType()
+        {
+            return PV_ALPHANUMERIC;
+        }
+
+        /**
+         * Return the user input alphanumeric user input
+         *
+         * @returns Returns pointer to alphanumeric user input.
+         **/
+        OSCL_IMPORT_REF uint8* GetInput()
+        {
+            return ipInput;
+        }
+
+        /**
+         * Return the size of alphanumeric user input
+         *
+         * @returns Returns size of alphanumeric user input.
+         **/
+        OSCL_IMPORT_REF uint16 GetLength()
+        {
+            return iLength;
+        }
+
+    protected:
+        /**
+         * The input alphanumeric string.
+         **/
+        uint8* ipInput;  /* We own the memory*/
+        uint16 iLength; /* length of the string */
+};
+
 #endif

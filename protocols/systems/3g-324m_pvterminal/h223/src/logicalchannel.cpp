@@ -2415,7 +2415,7 @@ PVMFStatus H223IncomingChannel::DispatchOutgoingMsg(PVMFSharedMediaDataPtr aMedi
         {
             PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_DEBUG, (0, "H223IncomingChannel(%d)::::DispatchOutgoingMsg, frame found\n", lcn));
             //If buffer exists then send it.
-            if (iVideoFrame.GetRep())
+            if (iVideoFrame.GetRep() && iVideoFrame->getFilledSize())
             {
                 CallSendVideoFrame(aMediaData);
                 iVideoFrame->setTimestamp(aMediaData->getTimestamp());

@@ -166,81 +166,10 @@ OSCL_EXPORT_REF CPVH263VideoParam::~CPVH263VideoParam()
 
 }
 
-
-
 /* CPVTrackInfo */
 OSCL_EXPORT_REF bool operator==(CPVTrackInfo &a, CPVTrackInfo &b)
 {
     return ((a.GetDirection() == b.GetDirection()) && (a.GetChannelId() == b.GetChannelId()));
-}
-
-/* CPVUserInputDtmf */
-OSCL_EXPORT_REF CPVUserInputDtmf::CPVUserInputDtmf(uint8 input, bool update, uint16 duration)
-{
-    iInput = input;
-    iIsUpdate = update;
-    iDuration = duration;
-}
-
-OSCL_EXPORT_REF TPVUserInputType CPVUserInputDtmf::GetType()
-{
-    return EDtmf;
-}
-
-OSCL_EXPORT_REF uint8 CPVUserInputDtmf::GetInput()
-{
-    return iInput;
-}
-
-OSCL_EXPORT_REF bool CPVUserInputDtmf::IsUpdate()
-{
-    return iIsUpdate;
-}
-
-OSCL_EXPORT_REF uint16 CPVUserInputDtmf::GetDuration()
-{
-    return iDuration;
-}
-OSCL_EXPORT_REF CPVUserInput* CPVUserInputDtmf::Copy()
-{
-    return OSCL_NEW(CPVUserInputDtmf, (iInput, iIsUpdate, iDuration));
-}
-
-/* CPVUserInputAlphanumeric */
-OSCL_EXPORT_REF CPVUserInputAlphanumeric::CPVUserInputAlphanumeric(uint8* input, uint16 len): iInput(NULL), iLength(len)
-{
-    if ((len > 0) && (input != NULL))
-    {
-        iInput = (uint8*) OSCL_DEFAULT_MALLOC(len);
-        oscl_memcpy(iInput, input, len);
-    }
-}
-
-OSCL_EXPORT_REF CPVUserInputAlphanumeric::~CPVUserInputAlphanumeric()
-{
-    if (iInput)
-    {
-        OSCL_DEFAULT_FREE(iInput);
-    }
-}
-
-OSCL_EXPORT_REF TPVUserInputType CPVUserInputAlphanumeric::GetType()
-{
-    return EAlphanumeric ;
-}
-
-OSCL_EXPORT_REF uint8* CPVUserInputAlphanumeric::GetInput()
-{
-    return iInput;
-}
-
-OSCL_EXPORT_REF uint16 CPVUserInputAlphanumeric::GetLength()
-{
-    return iLength;
-}
-OSCL_EXPORT_REF CPVUserInput* CPVUserInputAlphanumeric::Copy()
-{
-    return OSCL_NEW(CPVUserInputAlphanumeric, (iInput, iLength));
 }
 
 /* TPVH245VendorObjectIdentifier */

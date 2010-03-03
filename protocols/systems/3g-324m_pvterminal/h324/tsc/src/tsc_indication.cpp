@@ -285,7 +285,8 @@ void TSC_324m::Tsc_UII_Alphanumeric(const uint8* str, uint16 str_len)
 uint32 TSC_324m::UserInputIndicationRecv(PS_ControlMsgHeader  pReceiveInf)
 {
     PS_UserInputIndication pUserInputIndication  = (PS_UserInputIndication)pReceiveInf->pParameter;
-    CPVUserInput* uii = NULL;
+    void* ptr = NULL;
+    CPVUserInput *pUserInput = NULL;
     uint16 duration = 0;
 
     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
@@ -296,29 +297,38 @@ uint32 TSC_324m::UserInputIndicationRecv(PS_ControlMsgHeader  pReceiveInf)
             PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                             (0, "TSC_324m: User Input Indication Received - alphanumeric size(%d)",
                              pUserInputIndication->alphanumeric->size));
-            uii = OSCL_NEW(CPVUserInputAlphanumeric, (pUserInputIndication->alphanumeric->data,
-                           pUserInputIndication->alphanumeric->size));
+
+            ptr = OSCL_DEFAULT_MALLOC(sizeof(CPVUserInputAlphanumeric));
+            pUserInput = OSCL_PLACEMENT_NEW(ptr, CPVUserInputAlphanumeric(pUserInputIndication->alphanumeric->data,
+                                            pUserInputIndication->alphanumeric->size));
             break;
         case 3: /* signal */
             PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                             (0, "TSC_324m: User Input Indication Received - signal option_of_duration(%d), option_of_signalRtp(%d), signalType(%d)", pUserInputIndication->signal->option_of_duration, pUserInputIndication->signal->option_of_signalRtp, pUserInputIndication->signal->signalType.size));
+
+            ptr = OSCL_DEFAULT_MALLOC(sizeof(CPVUserInputDtmf));
+
             if (pUserInputIndication->signal->option_of_duration)
             {
                 duration = pUserInputIndication->signal->duration;
             }
-            uii = OSCL_NEW(CPVUserInputDtmf, (*pUserInputIndication->signal->signalType.data,
-                                              false, duration));
+            pUserInput = OSCL_PLACEMENT_NEW(ptr, CPVUserInputDtmf(*pUserInputIndication->signal->signalType.data,
+                                            false, duration));
             break;
         default:
             PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                             (0, "TSC_324m: User Input Indication Received - unrecognized type\n"));
+            return GetTerminalStatus();
     }
-    if (uii)
-    {
-        if (iTSC_324mObserver)
-            iTSC_324mObserver->UserInputReceived(uii);
-        OSCL_DELETE(uii);
-    }
+
+    OSCL_TRAPSTACK_PUSH(pUserInput);
+
+    if (iTSC_324mObserver)
+        iTSC_324mObserver->UserInputReceived(pUserInput);
+
+    OSCL_TRAPSTACK_POP(); // pUserInput
+
+    pUserInput->removeRef();
 
     return GetTerminalStatus();
 }

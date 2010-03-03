@@ -152,7 +152,7 @@ class TSC_324mObserver
     public:
         virtual ~TSC_324mObserver() {};
         virtual void IncomingVendorId(TPVH245Vendor* vendor, const uint8* pn, uint16 pn_len, const uint8* vn, uint16 vn_len) = 0;
-        virtual void UserInputReceived(CPVUserInput* aUI) = 0;
+        virtual void UserInputReceived(CPVUserInput* apUserInput) = 0;
         virtual void UserInputCapability(int formats) = 0;
         virtual void VideoSpatialTemporalTradeoffCommandReceived(TPVChannelId id, uint8 tradeoff) = 0;
         virtual void VideoSpatialTemporalTradeoffIndicationReceived(TPVChannelId id, uint8 tradeoff) = 0;

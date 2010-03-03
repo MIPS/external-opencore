@@ -92,7 +92,11 @@ class TSC_capability
         void ExtractTcsParameters(PS_VideoCapability apVideo, CPvtH263Capability *aMedia_capability);
         void ExtractTcsParameters(PS_VideoCapability pVideo, CPvtMpeg4Capability *aMedia_capability);
         void ExtractTcsParameters(PS_VideoCapability apVideo, CPvtAvcCapability *apMedia_capability);
-        void ParseTcsCapabilities(S_Capability &aCapability, Oscl_Vector<CPvtMediaCapability*, OsclMemAllocator> &aMedia_capability, uint32 userInputCapabilities, S_UserInputCapability *aUserInputCapability);
+        void ParseTcsCapabilities(
+            S_Capability& arCapability,
+            Oscl_Vector<CPvtMediaCapability*, OsclMemAllocator>& arMedia_capability,
+            uint32& arUserInputCapabilities,
+            S_UserInputCapability* apUserInputCapability);
         bool IsSegmentable(TPVDirection direction, PV2WayMediaType media_type);
 
         PS_DataType GetOutgoingDataType(PVCodecType_t codecType, uint32 bitrate, uint16 csi_len, uint8* csi);

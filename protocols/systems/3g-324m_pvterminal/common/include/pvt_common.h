@@ -560,62 +560,6 @@ class CPvtTerminalCapability
         Oscl_Vector<CPvtMediaCapability*, OsclMemAllocator> iCapabilityItems;
 };
 
-/**
- CPVUserInput class
-Base class for User Input mesages
-**/
-class CPVUserInput
-{
-    public:
-        /**
-         * Virtual destructor
-         **/
-        virtual ~CPVUserInput() {};
-        /**
-         * Virtual function to return the user input type
-         **/
-        virtual TPVUserInputType GetType() = 0;
-
-        /**
-         * Virtual function to return a copy of self
-         **/
-        virtual CPVUserInput* Copy() = 0;
-};
-class CPVUserInputDtmf : public HeapBase, public CPVUserInput
-{
-    public:
-        OSCL_IMPORT_REF CPVUserInputDtmf(uint8 input, bool update, uint16 duration = 0);
-
-        OSCL_IMPORT_REF TPVUserInputType GetType();
-
-        OSCL_IMPORT_REF uint8 GetInput();
-
-        OSCL_IMPORT_REF bool IsUpdate();
-
-        OSCL_IMPORT_REF uint16 GetDuration();
-
-        OSCL_IMPORT_REF CPVUserInput* Copy();
-    private:
-        uint8 iInput;
-        bool iIsUpdate;
-        uint16 iDuration;
-};
-
-class CPVUserInputAlphanumeric : public HeapBase, public CPVUserInput
-{
-    public:
-        OSCL_IMPORT_REF CPVUserInputAlphanumeric(uint8* input, uint16 len);
-        OSCL_IMPORT_REF ~CPVUserInputAlphanumeric();
-        OSCL_IMPORT_REF TPVUserInputType GetType();
-        OSCL_IMPORT_REF uint8* GetInput();
-        OSCL_IMPORT_REF uint16 GetLength();
-        OSCL_IMPORT_REF CPVUserInput* Copy();
-    protected:
-        uint8* iInput;  /* We own the memory*/
-        uint16 iLength;        /* length of the string */
-};
-
-
 typedef enum
 {
     EObjectIdentifier,

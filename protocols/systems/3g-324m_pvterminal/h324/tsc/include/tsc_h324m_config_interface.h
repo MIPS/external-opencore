@@ -78,7 +78,6 @@ class H324MConfigObserver
         virtual void H324MConfigHandleInformationalEventL(PVMFAsyncEvent& aNotification) = 0;
 };
 
-
 class H324MConfigInterface : public PVInterface
 {
     public:
@@ -165,7 +164,7 @@ class H324MConfigInterface : public PVInterface
          *          The outgoing media format
          * @param apFormatSpecificInfo
          *          The format specific info
-         * @param aOutgoingAudio
+         * @param aFormatSpecificInfoLen
          *          The length of the format specific info in bytes
          * @param aContextData
          *         Optional opaque data that will be passed back to the user with the command response
@@ -541,14 +540,16 @@ enum PVH324MIndicationType
     **/
     PV_INDICATION_VENDOR_ID,
     /**
-    * Indicates the receipt of user input capability from the remote terminal.  The local buffer
-    * contains the indices of the user input formats supported by the peer.
+    * Indicates the receipt of user input capability from the remote terminal. The first byte
+    * in local buffer contains the user input formats supported by the peer.
+    * The least significant stands for basicString, 2nd bit defines support for iA5String,
+    * 3rd for generalString and 4th dtmf.
     *
     **/
     PV_INDICATION_USER_INPUT_CAPABILITY,
     /**
-    * Indicates the receipt of user input from the remote terminal.  The derived class
-    * contains the actual user input sequences received.
+    * Indicates the receipt of user input from the remote terminal. Event extension interface
+    * contains pointer to CPVUserInput that holds the actual user input sequences received.
     *
     **/
     PV_INDICATION_USER_INPUT,
@@ -595,4 +596,5 @@ class H324MReverseParametersExtensionInterface : public PVInterface
         **/
         virtual int32 GetPortTag()const = 0;
 };
+
 #endif

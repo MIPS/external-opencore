@@ -293,7 +293,12 @@ void TSC_capability::ExtractTcsParameters(PS_VideoCapability apVideo, CPvtAvcCap
 //
 ////////////////////////////////////////////////////////////////////////////
 
-void TSC_capability::ParseTcsCapabilities(S_Capability &aCapability, Oscl_Vector<CPvtMediaCapability*, OsclMemAllocator> &aMedia_capability, uint32 aUserInputCapabilities, S_UserInputCapability *aUserInputCapability)
+void TSC_capability::ParseTcsCapabilities(
+    S_Capability& arCapability,
+    Oscl_Vector < CPvtMediaCapability*,
+    OsclMemAllocator > & arMedia_capability,
+    uint32& arUserInputCapabilities,
+    S_UserInputCapability* apUserInputCapability)
 {
     CodecCapabilityInfo codec_info;
     PS_VideoCapability pVideo = NULL;
@@ -302,42 +307,42 @@ void TSC_capability::ParseTcsCapabilities(S_Capability &aCapability, Oscl_Vector
 
     pVideo = NULL;
     pAudio = NULL;
-    switch (aCapability.index)
+    switch (arCapability.index)
     {
         case 1: // ReceiveVideo
             PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                             (0, "TSC_capability: Remote caps ReceiveVideo\n"));
-            pVideo = aCapability.receiveVideoCapability;
+            pVideo = arCapability.receiveVideoCapability;
             break;
         case 3: // ReceiveAndTransmitVideo
             PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                             (0, "TSC_capability: Remote caps ReceiveAndTransmitVideo\n"));
-            pVideo = aCapability.receiveAndTransmitVideoCapability;
+            pVideo = arCapability.receiveAndTransmitVideoCapability;
             break;
         case 4:
             PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                             (0, "TSC_capability: Remote caps ReceiveAudio\n"));
-            pAudio = aCapability.receiveAudioCapability;
+            pAudio = arCapability.receiveAudioCapability;
             break;
         case 6:
             PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                             (0, "TSC_capability: Remote caps ReceiveAndTransmitAudio\n"));
-            pAudio = aCapability.receiveAndTransmitAudioCapability;
+            pAudio = arCapability.receiveAndTransmitAudioCapability;
             break;
         case 15:
             PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                             (0, "TSC_capability: Remote caps receiveUserInputCapability"));
-            aUserInputCapability = aCapability.receiveUserInputCapability;
+            apUserInputCapability = arCapability.receiveUserInputCapability;
             break;
         case 17:
             PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                             (0, "TSC_capability: Remote caps receiveAndTransmitUserInputCapability"));
-            aUserInputCapability = aCapability.receiveAndTransmitUserInputCapability;
+            apUserInputCapability = arCapability.receiveAndTransmitUserInputCapability;
             break;
         default:
             return;
     }
-    GetCodecInfo(&aCapability, codec_info);
+    GetCodecInfo(&arCapability, codec_info);
     if (codec_info.codec == PV_CODEC_TYPE_NONE)
         return;
     format_type = PVCodecTypeToPVMFFormatType(codec_info.codec);
@@ -360,7 +365,7 @@ void TSC_capability::ParseTcsCapabilities(S_Capability &aCapability, Oscl_Vector
             // Extract H263 Parameters
             ExtractTcsParameters(pVideo, (CPvtH263Capability*)media_capability);
             ((CPvtH263Capability *)media_capability)->iH263VideoCapability = pVideo->h263VideoCapability;
-            aMedia_capability.push_back(media_capability);
+            arMedia_capability.push_back(media_capability);
 
         }
         else if (format_type == PVMF_MIME_M4V)
@@ -370,14 +375,14 @@ void TSC_capability::ParseTcsCapabilities(S_Capability &aCapability, Oscl_Vector
             media_capability->iBitrate = pVideo->genericVideoCapability->maxBitRate;
             ExtractTcsParameters(pVideo, (CPvtMpeg4Capability*)media_capability);
             ((CPvtMpeg4Capability*)media_capability)->iGenericCapability = pVideo->genericVideoCapability;
-            aMedia_capability.push_back(media_capability);
+            arMedia_capability.push_back(media_capability);
         }
         else if (format_type == PVMF_MIME_H264_VIDEO_RAW)
         {
             media_capability = new CPvtAvcCapability();
             media_capability->iBitrate = pVideo->genericVideoCapability->maxBitRate;
             ExtractTcsParameters(pVideo, (CPvtAvcCapability*)media_capability);
-            aMedia_capability.push_back(media_capability);
+            arMedia_capability.push_back(media_capability);
         }
     }
     else if (pAudio)
@@ -387,22 +392,22 @@ void TSC_capability::ParseTcsCapabilities(S_Capability &aCapability, Oscl_Vector
         if (pAudio->index == 8)
         {
             media_capability = OSCL_NEW(CPvtAudioCapability, (format_type));
-            aMedia_capability.push_back(media_capability);
+            arMedia_capability.push_back(media_capability);
             media_capability->iBitrate = 64;
         }
         else if (pAudio->index == 20)
         {
             media_capability = OSCL_NEW(CPvtAudioCapability, (format_type));
-            aMedia_capability.push_back(media_capability);
+            arMedia_capability.push_back(media_capability);
             media_capability->iBitrate = pAudio->genericAudioCapability->maxBitRate;
         }
     }
-    else if (aUserInputCapability)
+    else if (apUserInputCapability)
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                         (0, "TSC_capability: Remote caps UI index(%d)\n",
-                         aUserInputCapability->index));
-        aUserInputCapabilities |= (1 << aUserInputCapability->index);
+                         apUserInputCapability->index));
+        arUserInputCapabilities |= (1 << (apUserInputCapability->index - 1));
     }
 
 

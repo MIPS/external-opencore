@@ -113,7 +113,7 @@ class H324MConfig : public OsclActiveObject,
 
         // TSC_324mObserver virtuals
         void IncomingVendorId(TPVH245Vendor* vendor, const uint8* pn, uint16 pn_len, const uint8* vn, uint16 vn_len);
-        void UserInputReceived(CPVUserInput* aUI);
+        void UserInputReceived(CPVUserInput* apUserInput);
         void UserInputCapability(int formats);
         void VideoSpatialTemporalTradeoffCommandReceived(TPVChannelId id, uint8 tradeoff);
         void VideoSpatialTemporalTradeoffIndicationReceived(TPVChannelId id, uint8 tradeoff);
