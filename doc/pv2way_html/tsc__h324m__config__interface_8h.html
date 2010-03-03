@@ -170,9 +170,9 @@ Indicates an incoming request multiplex entry command. </td></tr>
 <tr><td valign=top><em><a name="a15a9" doxytag="PV_INDICATION_VENDOR_ID"></a><em>PV_INDICATION_VENDOR_ID</em></em>&nbsp;</td><td>
 Indicates an incoming vendor id indication message. </td></tr>
 <tr><td valign=top><em><a name="a15a10" doxytag="PV_INDICATION_USER_INPUT_CAPABILITY"></a><em>PV_INDICATION_USER_INPUT_CAPABILITY</em></em>&nbsp;</td><td>
-Indicates the receipt of user input capability from the remote terminal. The local buffer contains the indices of the user input formats supported by the peer. </td></tr>
+Indicates the receipt of user input capability from the remote terminal. The first byte in local buffer contains the user input formats supported by the peer. The least significant stands for basicString, 2nd bit defines support for iA5String, 3rd for generalString and 4th dtmf. </td></tr>
 <tr><td valign=top><em><a name="a15a11" doxytag="PV_INDICATION_USER_INPUT"></a><em>PV_INDICATION_USER_INPUT</em></em>&nbsp;</td><td>
-Indicates the receipt of user input from the remote terminal. The derived class contains the actual user input sequences received. </td></tr>
+Indicates the receipt of user input from the remote terminal. Event extension interface contains pointer to <a class="el" href="classCPVUserInput.html">CPVUserInput</a> that holds the actual user input sequences received. </td></tr>
 <tr><td valign=top><em><a name="a15a12" doxytag="PV_INDICATION_SKEW"></a><em>PV_INDICATION_SKEW</em></em>&nbsp;</td><td>
 Indicates the receipt of a an h223SkewIndication indication from the peer. The first 2 bytes of the event local buffer indicate the first logical channel, the 3rd and 4th bytes the second logical channel and the 5th and 6th bytes the value of the skew in milliseconds. All values are in network byte order. </td></tr>
 <tr><td valign=top><em><a name="a15a13" doxytag="PV_INDICATION_LOGICAL_CHANNEL_ACTIVE"></a><em>PV_INDICATION_LOGICAL_CHANNEL_ACTIVE</em></em>&nbsp;</td><td>
@@ -185,7 +185,7 @@ Indicates a Inactive Logical Channel message from the remote terminal. The first
   </tr>
 </table>
 <hr size="1"><img src="pvlogo_small.jpg"><address style="align: right;"><small>PV2Way Engine</small>
-<address style="align: left;"><small>Posting Version: CORE_8.502.1.1 </small>
+<address style="align: left;"><small>Posting Version: CORE_8.503.1.1 </small>
 </small></address>
 </body>
 </html>

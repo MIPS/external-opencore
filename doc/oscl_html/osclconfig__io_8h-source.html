@@ -60,10 +60,10 @@
 <a name="l00060"></a><a class="code" href="osclconfig__io_8h.html#a12">00060</a> <span class="preprocessor"></span><span class="preprocessor">#define OSCL_HAS_SOCKET_SUPPORT 1</span>
 00061 <span class="preprocessor"></span>
 00062 <span class="comment">//basic socket types</span>
-<a name="l00063"></a><a class="code" href="osclconfig__io_8h.html#a63">00063</a> <span class="keyword">typedef</span> <span class="keywordtype">int</span> <a class="code" href="osclconfig__io_8h.html#a63">TOsclSocket</a>;
-<a name="l00064"></a><a class="code" href="osclconfig__io_8h.html#a64">00064</a> <span class="keyword">typedef</span> <span class="keyword">struct </span>sockaddr_in <a class="code" href="osclconfig__io_8h.html#a64">TOsclSockAddr</a>;
-<a name="l00065"></a><a class="code" href="osclconfig__io_8h.html#a65">00065</a> <span class="keyword">typedef</span> socklen_t <a class="code" href="osclconfig__io_8h.html#a65">TOsclSockAddrLen</a>;
-<a name="l00066"></a><a class="code" href="osclconfig__io_8h.html#a66">00066</a> <span class="keyword">typedef</span> <span class="keyword">struct </span>ip_mreq <a class="code" href="osclconfig__io_8h.html#a66">TIpMReq</a>;
+<a name="l00063"></a><a class="code" href="osclconfig__io_8h.html#a62">00063</a> <span class="keyword">typedef</span> <span class="keywordtype">int</span> <a class="code" href="osclconfig__io_8h.html#a62">TOsclSocket</a>;
+<a name="l00064"></a><a class="code" href="osclconfig__io_8h.html#a63">00064</a> <span class="keyword">typedef</span> <span class="keyword">struct </span>sockaddr_in <a class="code" href="osclconfig__io_8h.html#a63">TOsclSockAddr</a>;
+<a name="l00065"></a><a class="code" href="osclconfig__io_8h.html#a64">00065</a> <span class="keyword">typedef</span> socklen_t <a class="code" href="osclconfig__io_8h.html#a64">TOsclSockAddrLen</a>;
+<a name="l00066"></a><a class="code" href="osclconfig__io_8h.html#a65">00066</a> <span class="keyword">typedef</span> <span class="keyword">struct </span>ip_mreq <a class="code" href="osclconfig__io_8h.html#a65">TIpMReq</a>;
 00067 
 00068 <span class="comment">//Init addr macro, inet_addr returns an uint32</span>
 <a name="l00069"></a><a class="code" href="osclconfig__io_8h.html#a13">00069</a> <span class="preprocessor">#define OsclValidInetAddr(addr) (inet_addr(addr)!=INADDR_NONE)</span>
@@ -209,7 +209,7 @@
 00209 <span class="preprocessor">    ok=true</span>
 00210 <span class="preprocessor"></span>
 00211 <span class="comment">//hostent type</span>
-<a name="l00212"></a><a class="code" href="osclconfig__io_8h.html#a67">00212</a> <span class="keyword">typedef</span> <span class="keyword">struct </span>hostent <a class="code" href="osclconfig__io_8h.html#a67">TOsclHostent</a>;
+<a name="l00212"></a><a class="code" href="osclconfig__io_8h.html#a66">00212</a> <span class="keyword">typedef</span> <span class="keyword">struct </span>hostent <a class="code" href="osclconfig__io_8h.html#a66">TOsclHostent</a>;
 00213 
 00214 <span class="comment">//wrapper for gethostbyname</span>
 <a name="l00215"></a><a class="code" href="osclconfig__io_8h.html#a42">00215</a> <span class="preprocessor">#define OsclGethostbyname(name,hostent,ok,err)\</span>
@@ -281,18 +281,17 @@
 00281 
 00282 <span class="comment">// file IO support</span>
 00283 <span class="preprocessor">#if (OSCL_HAS_LARGE_FILE_SUPPORT)</span>
-<a name="l00284"></a><a class="code" href="osclconfig__io_8h.html#a62">00284</a> <span class="preprocessor"></span><span class="preprocessor">#define _FILE_OFFSET_BITS 64</span>
-<a name="l00285"></a><a class="code" href="osclconfig__io_8h.html#a68">00285</a> <span class="preprocessor"></span><span class="keyword">typedef</span> off_t <a class="code" href="osclconfig__io_8h.html#a68">TOsclFileOffset</a>;
-00286 <span class="preprocessor">#else</span>
-00287 <span class="preprocessor"></span><span class="keyword">typedef</span> int32 <a class="code" href="osclconfig__io_8h.html#a68">TOsclFileOffset</a>;
-00288 <span class="preprocessor">#endif</span>
-00289 <span class="preprocessor"></span>
-00290 <span class="preprocessor">#include "<a class="code" href="osclconfig__io__check_8h.html">osclconfig_io_check.h</a>"</span>
-00291 
-00292 <span class="preprocessor">#endif</span>
-00293 <span class="preprocessor"></span>
+<a name="l00284"></a><a class="code" href="osclconfig__io_8h.html#a67">00284</a> <span class="preprocessor"></span><span class="keyword">typedef</span> off64_t <a class="code" href="osclconfig__io_8h.html#a67">TOsclFileOffset</a>;
+00285 <span class="preprocessor">#else</span>
+00286 <span class="preprocessor"></span><span class="keyword">typedef</span> int32 <a class="code" href="osclconfig__io_8h.html#a67">TOsclFileOffset</a>;
+00287 <span class="preprocessor">#endif</span>
+00288 <span class="preprocessor"></span>
+00289 <span class="preprocessor">#include "<a class="code" href="osclconfig__io__check_8h.html">osclconfig_io_check.h</a>"</span>
+00290 
+00291 <span class="preprocessor">#endif</span>
+00292 <span class="preprocessor"></span>
 </pre></div><hr size="1"><img src="pvlogo_small.jpg"><address style="align: right;"><small>OSCL API</small>
-<address style="align: left;"><small>Posting Version: CORE_8.502.1.1 </small>
+<address style="align: left;"><small>Posting Version: CORE_8.503.1.1 </small>
 </small></address>
 </body>
 </html>

@@ -12,6 +12,9 @@
 <a href="pv__2way__h324m__types_8h-source.html">Go to the source code of this file.</a><table border=0 cellpadding=0 cellspacing=0>
 <tr><td></td></tr>
 <tr><td colspan=2><br><h2>Data Structures</h2></td></tr>
+<tr><td nowrap align=right valign=top>class &nbsp;</td><td valign=bottom><a class="el" href="classCPVUserInput.html">CPVUserInput</a></td></tr>
+<tr><td nowrap align=right valign=top>class &nbsp;</td><td valign=bottom><a class="el" href="classCPVUserInputAlphanumeric.html">CPVUserInputAlphanumeric</a></td></tr>
+<tr><td nowrap align=right valign=top>class &nbsp;</td><td valign=bottom><a class="el" href="classCPVUserInputDtmf.html">CPVUserInputDtmf</a></td></tr>
 <tr><td nowrap align=right valign=top>class &nbsp;</td><td valign=bottom><a class="el" href="classPV2Way324ConnectOptions.html">PV2Way324ConnectOptions</a></td></tr>
 <tr><td nowrap align=right valign=top>class &nbsp;</td><td valign=bottom><a class="el" href="classPV2Way324InitInfo.html">PV2Way324InitInfo</a></td></tr>
 <tr><td nowrap align=right valign=top>class &nbsp;</td><td valign=bottom><a class="el" href="classPVH223Al1Config.html">PVH223Al1Config</a></td></tr>
@@ -23,13 +26,13 @@
 <tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="pv__2way__h324m__types_8h.html#a1">PV_2WAY_MAX_SKEW_MS</a>&nbsp;&nbsp;&nbsp;1000</td></tr>
 <tr><td colspan=2><br><h2>Typedefs</h2></td></tr>
 <tr><td nowrap align=right valign=top>typedef enum <a class="el" href="pv__2way__h324m__types_8h.html#a8">TPVPostDisconnectOption</a>&nbsp;</td><td valign=bottom><a class="el" href="pv__2way__h324m__types_8h.html#a2">PV2WayPostDisconnectOption</a></td></tr>
-<tr><td nowrap align=right valign=top>typedef enum <a class="el" href="pv__2way__h324m__types_8h.html#a9">TPVUserInputType</a>&nbsp;</td><td valign=bottom><a class="el" href="pv__2way__h324m__types_8h.html#a3">PV2WayUserInputType</a></td></tr>
+<tr><td nowrap align=right valign=top>typedef enum <a class="el" href="pv__2way__h324m__types_8h.html#a9">UserInputType</a>&nbsp;</td><td valign=bottom><a class="el" href="pv__2way__h324m__types_8h.html#a3">PV2WayUserInputType</a></td></tr>
 <tr><td colspan=2><br><h2>Enumerations</h2></td></tr>
 <tr><td nowrap align=right valign=top>enum &nbsp;</td><td valign=bottom><a class="el" href="pv__2way__h324m__types_8h.html#a8">TPVPostDisconnectOption</a> { <a class="el" href="pv__2way__h324m__types_8h.html#a8a4">EDisconnectLine</a>, 
 <a class="el" href="pv__2way__h324m__types_8h.html#a8a5">EAnalogueTelephony</a>
  }</td></tr>
-<tr><td nowrap align=right valign=top>enum &nbsp;</td><td valign=bottom><a class="el" href="pv__2way__h324m__types_8h.html#a9">TPVUserInputType</a> { <a class="el" href="pv__2way__h324m__types_8h.html#a9a6">EAlphanumeric</a> =  0, 
-<a class="el" href="pv__2way__h324m__types_8h.html#a9a7">EDtmf</a>
+<tr><td nowrap align=right valign=top>enum &nbsp;</td><td valign=bottom><a class="el" href="pv__2way__h324m__types_8h.html#a9">UserInputType</a> { <a class="el" href="pv__2way__h324m__types_8h.html#a9a6">PV_ALPHANUMERIC</a> =  0, 
+<a class="el" href="pv__2way__h324m__types_8h.html#a9a7">PV_DTMF</a>
  }</td></tr>
 </table>
 <hr><h2>Define Documentation</h2>
@@ -108,7 +111,7 @@ TPVPostDisconnectOption emumerates the mode the peer wants to transition to afte
     <td class="md">
       <table cellpadding="0" cellspacing="0" border="0">
         <tr>
-          <td class="md" nowrap valign="top"> typedef enum <a class="el" href="pv__2way__h324m__types_8h.html#a9">TPVUserInputType</a>  PV2WayUserInputType
+          <td class="md" nowrap valign="top"> typedef enum <a class="el" href="pv__2way__h324m__types_8h.html#a9">UserInputType</a>  PV2WayUserInputType
       </table>
     </td>
   </tr>
@@ -121,7 +124,7 @@ TPVPostDisconnectOption emumerates the mode the peer wants to transition to afte
     <td>
 
 <p>
-TPVUserInputType enum Enumeration of user input types     </td>
+UserInputType enum Enumeration of user input types     </td>
   </tr>
 </table>
 <hr><h2>Enumeration Type Documentation</h2>
@@ -157,13 +160,13 @@ TPVPostDisconnectOption emumerates the mode the peer wants to transition to afte
     </td>
   </tr>
 </table>
-<a name="a9" doxytag="pv_2way_h324m_types.h::TPVUserInputType"></a><p>
+<a name="a9" doxytag="pv_2way_h324m_types.h::UserInputType"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
       <table cellpadding="0" cellspacing="0" border="0">
         <tr>
-          <td class="md" nowrap valign="top"> enum TPVUserInputType
+          <td class="md" nowrap valign="top"> enum UserInputType
       </table>
     </td>
   </tr>
@@ -176,11 +179,11 @@ TPVPostDisconnectOption emumerates the mode the peer wants to transition to afte
     <td>
 
 <p>
-TPVUserInputType enum Enumeration of user input types <dl compact><dt><b>Enumeration values: </b></dt><dd>
+UserInputType enum Enumeration of user input types <dl compact><dt><b>Enumeration values: </b></dt><dd>
 <table border=0 cellspacing=2 cellpadding=0>
-<tr><td valign=top><em><a name="a9a6" doxytag="EAlphanumeric"></a><em>EAlphanumeric</em></em>&nbsp;</td><td>
+<tr><td valign=top><em><a name="a9a6" doxytag="PV_ALPHANUMERIC"></a><em>PV_ALPHANUMERIC</em></em>&nbsp;</td><td>
 </td></tr>
-<tr><td valign=top><em><a name="a9a7" doxytag="EDtmf"></a><em>EDtmf</em></em>&nbsp;</td><td>
+<tr><td valign=top><em><a name="a9a7" doxytag="PV_DTMF"></a><em>PV_DTMF</em></em>&nbsp;</td><td>
 </td></tr>
 </table>
 </dl>
@@ -188,7 +191,7 @@ TPVUserInputType enum Enumeration of user input types <dl compact><dt><b>Enumera
   </tr>
 </table>
 <hr size="1"><img src="pvlogo_small.jpg"><address style="align: right;"><small>PV2Way Engine</small>
-<address style="align: left;"><small>Posting Version: CORE_8.502.1.1 </small>
+<address style="align: left;"><small>Posting Version: CORE_8.503.1.1 </small>
 </small></address>
 </body>
 </html>

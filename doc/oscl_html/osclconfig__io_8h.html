@@ -93,14 +93,13 @@
 <tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="osclconfig__io_8h.html#a59">OSCL_SOCKOPT_IP_ADDMEMBERSHIP</a>&nbsp;&nbsp;&nbsp;IP_ADD_MEMBERSHIP</td></tr>
 <tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="osclconfig__io_8h.html#a60">OSCL_SOCKOPT_IP_TOS</a>&nbsp;&nbsp;&nbsp;IP_TOS</td></tr>
 <tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="osclconfig__io_8h.html#a61">OSCL_SOCKOPT_SOL_REUSEADDR</a>&nbsp;&nbsp;&nbsp;SO_REUSEADDR</td></tr>
-<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="osclconfig__io_8h.html#a62">_FILE_OFFSET_BITS</a>&nbsp;&nbsp;&nbsp;64</td></tr>
 <tr><td colspan=2><br><h2>Typedefs</h2></td></tr>
-<tr><td nowrap align=right valign=top>typedef int&nbsp;</td><td valign=bottom><a class="el" href="osclconfig__io_8h.html#a63">TOsclSocket</a></td></tr>
-<tr><td nowrap align=right valign=top>typedef sockaddr_in&nbsp;</td><td valign=bottom><a class="el" href="osclconfig__io_8h.html#a64">TOsclSockAddr</a></td></tr>
-<tr><td nowrap align=right valign=top>typedef socklen_t&nbsp;</td><td valign=bottom><a class="el" href="osclconfig__io_8h.html#a65">TOsclSockAddrLen</a></td></tr>
-<tr><td nowrap align=right valign=top>typedef ip_mreq&nbsp;</td><td valign=bottom><a class="el" href="osclconfig__io_8h.html#a66">TIpMReq</a></td></tr>
-<tr><td nowrap align=right valign=top>typedef hostent&nbsp;</td><td valign=bottom><a class="el" href="osclconfig__io_8h.html#a67">TOsclHostent</a></td></tr>
-<tr><td nowrap align=right valign=top>typedef off_t&nbsp;</td><td valign=bottom><a class="el" href="osclconfig__io_8h.html#a68">TOsclFileOffset</a></td></tr>
+<tr><td nowrap align=right valign=top>typedef int&nbsp;</td><td valign=bottom><a class="el" href="osclconfig__io_8h.html#a62">TOsclSocket</a></td></tr>
+<tr><td nowrap align=right valign=top>typedef sockaddr_in&nbsp;</td><td valign=bottom><a class="el" href="osclconfig__io_8h.html#a63">TOsclSockAddr</a></td></tr>
+<tr><td nowrap align=right valign=top>typedef socklen_t&nbsp;</td><td valign=bottom><a class="el" href="osclconfig__io_8h.html#a64">TOsclSockAddrLen</a></td></tr>
+<tr><td nowrap align=right valign=top>typedef ip_mreq&nbsp;</td><td valign=bottom><a class="el" href="osclconfig__io_8h.html#a65">TIpMReq</a></td></tr>
+<tr><td nowrap align=right valign=top>typedef hostent&nbsp;</td><td valign=bottom><a class="el" href="osclconfig__io_8h.html#a66">TOsclHostent</a></td></tr>
+<tr><td nowrap align=right valign=top>typedef off64_t&nbsp;</td><td valign=bottom><a class="el" href="osclconfig__io_8h.html#a67">TOsclFileOffset</a></td></tr>
 </table>
 <hr><a name="_details"></a><h2>Detailed Description</h2>
 This file contains common typedefs based on the ANSI C limits.h header.
@@ -108,28 +107,6 @@ This file contains common typedefs based on the ANSI C limits.h header.
  This header file should work for any ANSI C compiler to determine the proper native C types to use for OSCL integer types.
 <p>
 <hr><h2>Define Documentation</h2>
-<a name="a62" doxytag="osclconfig_io.h::_FILE_OFFSET_BITS"></a><p>
-<table width="100%" cellpadding="2" cellspacing="0" border="0">
-  <tr>
-    <td class="md">
-      <table cellpadding="0" cellspacing="0" border="0">
-        <tr>
-          <td class="md" nowrap valign="top"> #define _FILE_OFFSET_BITS&nbsp;&nbsp;&nbsp;64
-      </table>
-    </td>
-  </tr>
-</table>
-<table cellspacing=5 cellpadding=0 border=0>
-  <tr>
-    <td>
-      &nbsp;
-    </td>
-    <td>
-
-<p>
-    </td>
-  </tr>
-</table>
 <a name="a48" doxytag="osclconfig_io.h::OSCL_AF_INET"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
@@ -864,7 +841,7 @@ This file contains common typedefs based on the ANSI C limits.h header.
     <td>
 
 <p>
-<b>Value:</b><div class="fragment"><pre><a class="code" href="osclconfig__io_8h.html#a64">TOsclSockAddr</a>* tmpadr = &amp;addr;\
+<b>Value:</b><div class="fragment"><pre><a class="code" href="osclconfig__io_8h.html#a63">TOsclSockAddr</a>* tmpadr = &amp;addr;\
     sockaddr* sadr = <a class="code" href="group__osclbase.html#a93">OSCL_STATIC_CAST</a>(sockaddr*, tmpadr);\
     ok=(bind(s,sadr,<span class="keyword">sizeof</span>(addr))!=(-1));\
     <span class="keywordflow">if</span> (!ok)err=errno</pre></div>    </td>
@@ -940,7 +917,7 @@ This file contains common typedefs based on the ANSI C limits.h header.
     <td>
 
 <p>
-<b>Value:</b><div class="fragment"><pre><a class="code" href="osclconfig__io_8h.html#a64">TOsclSockAddr</a>* tmpadr = &amp;addr;\
+<b>Value:</b><div class="fragment"><pre><a class="code" href="osclconfig__io_8h.html#a63">TOsclSockAddr</a>* tmpadr = &amp;addr;\
     sockaddr* sadr = <a class="code" href="group__osclbase.html#a93">OSCL_STATIC_CAST</a>(sockaddr*, tmpadr);\
     ok=(connect(s,sadr,<span class="keyword">sizeof</span>(addr))!=(-1));\
     <span class="keywordflow">if</span> (!ok){err=errno;wouldblock=(err==EINPROGRESS);}</pre></div>    </td>
@@ -1608,7 +1585,7 @@ nbytes=recvfrom(s,(<span class="keywordtype">void</span>*)(buf),(size_t)(len),0,
     <td>
 
 <p>
-<b>Value:</b><div class="fragment"><pre><a class="code" href="osclconfig__io_8h.html#a64">TOsclSockAddr</a>* tmpadr = &amp;addr;\
+<b>Value:</b><div class="fragment"><pre><a class="code" href="osclconfig__io_8h.html#a63">TOsclSockAddr</a>* tmpadr = &amp;addr;\
     sockaddr* sadr = <a class="code" href="group__osclbase.html#a93">OSCL_STATIC_CAST</a>(sockaddr*, tmpadr);\
     nbytes=sendto(s,(<span class="keyword">const</span> <span class="keywordtype">void</span>*)(buf),(size_t)(len),0,sadr,(socklen_t)<span class="keyword">sizeof</span>(addr));\
     ok=(nbytes!=(-1));\
@@ -2040,7 +2017,7 @@ nbytes=recvfrom(s,(<span class="keywordtype">void</span>*)(buf),(size_t)(len),0,
   </tr>
 </table>
 <hr><h2>Typedef Documentation</h2>
-<a name="a66" doxytag="osclconfig_io.h::TIpMReq"></a><p>
+<a name="a65" doxytag="osclconfig_io.h::TIpMReq"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -2062,13 +2039,13 @@ nbytes=recvfrom(s,(<span class="keywordtype">void</span>*)(buf),(size_t)(len),0,
     </td>
   </tr>
 </table>
-<a name="a68" doxytag="osclconfig_io.h::TOsclFileOffset"></a><p>
+<a name="a67" doxytag="osclconfig_io.h::TOsclFileOffset"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
       <table cellpadding="0" cellspacing="0" border="0">
         <tr>
-          <td class="md" nowrap valign="top"> typedef off_t TOsclFileOffset
+          <td class="md" nowrap valign="top"> typedef off64_t TOsclFileOffset
       </table>
     </td>
   </tr>
@@ -2084,7 +2061,7 @@ nbytes=recvfrom(s,(<span class="keywordtype">void</span>*)(buf),(size_t)(len),0,
     </td>
   </tr>
 </table>
-<a name="a67" doxytag="osclconfig_io.h::TOsclHostent"></a><p>
+<a name="a66" doxytag="osclconfig_io.h::TOsclHostent"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -2106,7 +2083,7 @@ nbytes=recvfrom(s,(<span class="keywordtype">void</span>*)(buf),(size_t)(len),0,
     </td>
   </tr>
 </table>
-<a name="a64" doxytag="osclconfig_io.h::TOsclSockAddr"></a><p>
+<a name="a63" doxytag="osclconfig_io.h::TOsclSockAddr"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -2128,7 +2105,7 @@ nbytes=recvfrom(s,(<span class="keywordtype">void</span>*)(buf),(size_t)(len),0,
     </td>
   </tr>
 </table>
-<a name="a65" doxytag="osclconfig_io.h::TOsclSockAddrLen"></a><p>
+<a name="a64" doxytag="osclconfig_io.h::TOsclSockAddrLen"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -2150,7 +2127,7 @@ nbytes=recvfrom(s,(<span class="keywordtype">void</span>*)(buf),(size_t)(len),0,
     </td>
   </tr>
 </table>
-<a name="a63" doxytag="osclconfig_io.h::TOsclSocket"></a><p>
+<a name="a62" doxytag="osclconfig_io.h::TOsclSocket"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -2173,7 +2150,7 @@ nbytes=recvfrom(s,(<span class="keywordtype">void</span>*)(buf),(size_t)(len),0,
   </tr>
 </table>
 <hr size="1"><img src="pvlogo_small.jpg"><address style="align: right;"><small>OSCL API</small>
-<address style="align: left;"><small>Posting Version: CORE_8.502.1.1 </small>
+<address style="align: left;"><small>Posting Version: CORE_8.503.1.1 </small>
 </small></address>
 </body>
 </html>

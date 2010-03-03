@@ -39,7 +39,7 @@
 <tr><td nowrap align=right valign=top>virtual PVMFCommandId&nbsp;</td><td valign=bottom><a class="el" href="classH324MConfigInterface.html#a25">SendLogicalChannelInactiveIndication</a> (TPVChannelId aLogicalChannel, OsclAny *aContextData=NULL)=0</td></tr>
 <tr><td nowrap align=right valign=top>virtual PVMFCommandId&nbsp;</td><td valign=bottom><a class="el" href="classH324MConfigInterface.html#a26">SendSkewIndication</a> (TPVChannelId aLogicalChannel1, TPVChannelId aLogicalChannel2, uint16 aSkew, OsclAny *aContextData=NULL)=0</td></tr>
 <tr><td nowrap align=right valign=top>virtual PVMFCommandId&nbsp;</td><td valign=bottom><a class="el" href="classH324MConfigInterface.html#a27">SetLogicalChannelBufferingMs</a> (uint32 aInBufferingMs, uint32 aOutBufferingMs, OsclAny *aContextData=NULL)=0</td></tr>
-<tr><td nowrap align=right valign=top>virtual PVMFCommandId&nbsp;</td><td valign=bottom><a class="el" href="classH324MConfigInterface.html#a28">SendUserInput</a> (CPVUserInput *user_input, OsclAny *aContextData=NULL)=0</td></tr>
+<tr><td nowrap align=right valign=top>virtual PVMFCommandId&nbsp;</td><td valign=bottom><a class="el" href="classH324MConfigInterface.html#a28">SendUserInput</a> (<a class="el" href="classCPVUserInput.html">CPVUserInput</a> *user_input, OsclAny *aContextData=NULL)=0</td></tr>
 <tr><td nowrap align=right valign=top>virtual PVMFCommandId&nbsp;</td><td valign=bottom><a class="el" href="classH324MConfigInterface.html#a29">SetWnsrp</a> (const bool aEnableWnsrp, OsclAny *aContextData=NULL)=0</td></tr>
 </table>
 <hr><h2>Member Function Documentation</h2>
@@ -330,7 +330,7 @@ This API allows the user to send a SkewIndication to the peer. Skew is measured 
         <tr>
           <td class="md" nowrap valign="top"> virtual PVMFCommandId H324MConfigInterface::SendUserInput </td>
           <td class="md" valign="top">(&nbsp;</td>
-          <td class="md" nowrap valign="top">CPVUserInput *&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="classCPVUserInput.html">CPVUserInput</a> *&nbsp;</td>
           <td class="mdname" nowrap>&nbsp; <em>user_input</em>, </td>
         </tr>
         <tr>
@@ -360,7 +360,7 @@ This API allows the user to send a SkewIndication to the peer. Skew is measured 
 Causes the pv2way to send the specified user input to the remote terminal using control channel. The user input can be either DTMF ot Alphanumeric <dl compact><dt><b>Parameters: </b></dt><dd>
 <table border=0 cellspacing=2 cellpadding=0>
 <tr><td valign=top><em>user_input</em>&nbsp;</td><td>
-A pointer to either CPVUserInputDtmf or CPVUserInputAlphanumeric </td></tr>
+A pointer to either <a class="el" href="classCPVUserInputDtmf.html">CPVUserInputDtmf</a> or <a class="el" href="classCPVUserInputAlphanumeric.html">CPVUserInputAlphanumeric</a> </td></tr>
 <tr><td valign=top><em>aContextData</em>&nbsp;</td><td>
 Optional opaque data that will be passed back to the user with the command response</td></tr>
 </table>
@@ -816,7 +816,7 @@ This API allows the user to specify the format specific info for supported media
 The outgoing media format </td></tr>
 <tr><td valign=top><em>apFormatSpecificInfo</em>&nbsp;</td><td>
 The format specific info </td></tr>
-<tr><td valign=top><em>aOutgoingAudio</em>&nbsp;</td><td>
+<tr><td valign=top><em>aFormatSpecificInfoLen</em>&nbsp;</td><td>
 The length of the format specific info in bytes </td></tr>
 <tr><td valign=top><em>aContextData</em>&nbsp;</td><td>
 Optional opaque data that will be passed back to the user with the command response </td></tr>
@@ -1511,7 +1511,7 @@ A unique command id for asynchronous completion </dl>    </td>
 <hr>The documentation for this class was generated from the following file:<ul>
 <li><a class="el" href="tsc__h324m__config__interface_8h-source.html">tsc_h324m_config_interface.h</a></ul>
 <hr size="1"><img src="pvlogo_small.jpg"><address style="align: right;"><small>PV2Way Engine</small>
-<address style="align: left;"><small>Posting Version: CORE_8.502.1.1 </small>
+<address style="align: left;"><small>Posting Version: CORE_8.503.1.1 </small>
 </small></address>
 </body>
 </html>

@@ -67,139 +67,139 @@
 00061         <span class="keyword">virtual</span> <span class="keywordtype">void</span> <a class="code" href="classH324MConfigObserver.html#a2">H324MConfigHandleInformationalEventL</a>(PVMFAsyncEvent&amp; aNotification) = 0;
 00062 };
 00063 
-00064 
-<a name="l00065"></a><a class="code" href="classH324MConfigInterface.html">00065</a> <span class="keyword">class </span><a class="code" href="classH324MConfigInterface.html">H324MConfigInterface</a> : <span class="keyword">public</span> PVInterface
-00066 {
-00067     <span class="keyword">public</span>:
-00074         <span class="keyword">virtual</span> <span class="keywordtype">void</span> <a class="code" href="classH324MConfigInterface.html#a0">SetObserver</a>(<a class="code" href="classH324MConfigObserver.html">H324MConfigObserver</a>* aObserver) = 0;
-00075 
-00087         <span class="keyword">virtual</span> PVMFCommandId <a class="code" href="classH324MConfigInterface.html#a1">SetMultiplexLevel</a>(TPVH223Level aLevel,
-00088                                                 OsclAny* aContextData = NULL) = 0;
-00089 
-00103         <span class="keyword">virtual</span> PVMFCommandId <a class="code" href="classH324MConfigInterface.html#a2">SetMaxSduSize</a>(TPVAdaptationLayer aLayer, int32 aSize,
-00104                                             OsclAny* aContextData = NULL) = 0;
-00119         <span class="keyword">virtual</span> PVMFCommandId <a class="code" href="classH324MConfigInterface.html#a3">SetMaxSduSizeR</a>(TPVAdaptationLayer aLayer,
-00120                                              int32 aSize, OsclAny* aContextData = NULL) = 0;
-00121 
-00138         <span class="keyword">virtual</span> PVMFCommandId <a class="code" href="classH324MConfigInterface.html#a4">SetCodecPreference</a>(Oscl_Vector&lt;PVMFFormatType, OsclMemAllocator&gt;&amp; aIncomingAudio,
-00139                 Oscl_Vector&lt;PVMFFormatType, OsclMemAllocator&gt;&amp; aIncomingVideo,
-00140                 Oscl_Vector&lt;PVMFFormatType, OsclMemAllocator&gt;&amp; aOutGoingAudio,
-00141                 Oscl_Vector&lt;PVMFFormatType, OsclMemAllocator&gt;&amp; aOutGoingVideo,
-00142                 OsclAny* aContextData = NULL) = 0;
-00143 
-00157         <span class="keyword">virtual</span> PVMFCommandId <a class="code" href="classH324MConfigInterface.html#a5">SetFormatSpecificInfo</a>(PVMFFormatType aMediaFormat,
-00158                 <span class="keyword">const</span> uint8* apFormatSpecificInfo, uint32 aFormatSpecificInfoLen,
-00159                 OsclAny* aContextData = NULL) = 0;
-00160 
-00172         <span class="keyword">virtual</span> PVMFCommandId <a class="code" href="classH324MConfigInterface.html#a6">SetAl2SequenceNumbers</a>(int32 aSeqNumWidth,
-00173                 OsclAny* aContextData = NULL) = 0;
-00185         <span class="keyword">virtual</span> PVMFCommandId <a class="code" href="classH324MConfigInterface.html#a7">SetAl3ControlFieldOctets</a>(int32 aCfo,
-00186                 OsclAny* aContextData = NULL) = 0;
-00187 
-00198         <span class="keyword">virtual</span> PVMFCommandId <a class="code" href="classH324MConfigInterface.html#a8">SetMaxPduSize</a>(int32 aMaxPduSize,
-00199                                             OsclAny* aContextData = NULL) = 0;
-00200 
-00210         <span class="keyword">virtual</span> PVMFCommandId <a class="code" href="classH324MConfigInterface.html#a9">SetTerminalType</a>(uint8 aTerminalType,
-00211                                               OsclAny* aContextData = NULL) = 0;
-00224         <span class="keyword">virtual</span> PVMFCommandId <a class="code" href="classH324MConfigInterface.html#a10">SetALConfiguration</a>(<a class="code" href="pv__2way__basic__types_8h.html#a48">TPVMediaType_t</a> aMediaType,
-00225                 TPVAdaptationLayer aLayer,
-00226                 <span class="keywordtype">bool</span> aAllow,
-00227                 <span class="keywordtype">bool</span> aUse = <span class="keyword">true</span>,
-00228                 OsclAny* aContextData = NULL) = 0;
-00229 
-00238         <span class="keyword">virtual</span> PVMFCommandId <a class="code" href="classH324MConfigInterface.html#a11">SendRme</a>(OsclAny* aContextData = NULL) = 0;
-00239 
-00249         <span class="keyword">virtual</span> PVMFCommandId <a class="code" href="classH324MConfigInterface.html#a12">SetMaxMuxPduSize</a>(int32 aRequestMaxMuxPduSize,
-00250                                                OsclAny* aContextData = NULL) = 0;
-00251 
-00260         <span class="keyword">virtual</span> PVMFCommandId <a class="code" href="classH324MConfigInterface.html#a13">SetMaxMuxCcsrlSduSize</a>(int32 aMaxCcsrlSduSize,
-00261                 OsclAny* aContextData = NULL) = 0;
-00262 
-00273         <span class="keyword">virtual</span> PVMFCommandId <a class="code" href="classH324MConfigInterface.html#a14">FastUpdate</a>(PVMFNodeInterface&amp; aTrack,
-00274                                          OsclAny* aContextData = NULL) = 0;
-00275 
-00285         <span class="keyword">virtual</span> PVMFCommandId <a class="code" href="classH324MConfigInterface.html#a15">SendRtd</a>(OsclAny* aContextData = NULL) = 0;
-00286 
-00305         <span class="keyword">virtual</span> PVMFCommandId <a class="code" href="classH324MConfigInterface.html#a16">SetVendor</a>(uint8 cc, uint8 ext, uint32 mc,
-00306                                         <span class="keyword">const</span> uint8* aProduct, uint16 aProductLen,
-00307                                         <span class="keyword">const</span> uint8* aVersion, uint16 aVersionLen,
-00308                                         OsclAny* aContextData = NULL) = 0;
-00309 
-00317         <span class="keyword">virtual</span> PVMFCommandId <a class="code" href="classH324MConfigInterface.html#a17">SendEndSession</a>(OsclAny* aContextData = NULL) = 0;
-00318 
-00327         <span class="keyword">virtual</span> PVMFCommandId <a class="code" href="classH324MConfigInterface.html#a18">SetEndSessionTimeout</a>(uint32 aTimeout,
-00328                 OsclAny* aContextData = NULL) = 0;
-00329 
-00360         <span class="keyword">virtual</span> PVMFCommandId <a class="code" href="classH324MConfigInterface.html#a19">SetTimerCounter</a>(TPVH324TimerCounter aTimerCounter,
-00361                                               uint8 aSeries, uint32 aSeriesOffset,
-00362                                               uint32 aValue,
-00363                                               OsclAny* aContextData = NULL) = 0;
-00364 
-00375         <span class="keyword">virtual</span> PVMFCommandId <a class="code" href="classH324MConfigInterface.html#a20">SetVideoResolutions</a>(<a class="code" href="pv__2way__basic__types_8h.html#a47">TPVDirection</a> aDirection,
-00376                 Oscl_Vector&lt;PVMFVideoResolutionRange, OsclMemAllocator&gt;&amp; aResolutions,
-00377                 OsclAny* aContextData = NULL) = 0;
-00378 
-00385         <span class="keyword">virtual</span> PVMFCommandId <a class="code" href="classH324MConfigInterface.html#a21">SendVendorId</a>(OsclAny* aContextData = NULL) = 0;
-00386 
-00395         <span class="keyword">virtual</span> PVMFCommandId <a class="code" href="classH324MConfigInterface.html#a22">SendVideoTemporalSpatialTradeoffCommand</a>(TPVChannelId aLogicalChannel,
-00396                 uint8 aTradeoff,
-00397                 OsclAny* aContextData = NULL) = 0;
-00398 
-00408         <span class="keyword">virtual</span> PVMFCommandId <a class="code" href="classH324MConfigInterface.html#a23">SendVideoTemporalSpatialTradeoffIndication</a>(TPVChannelId aLogicalChannel,
-00409                 uint8 aTradeoff, OsclAny* aContextData = NULL) = 0;
-00410 
-00418         <span class="keyword">virtual</span> PVMFCommandId <a class="code" href="classH324MConfigInterface.html#a24">SendLogicalChannelActiveIndication</a>(TPVChannelId aLogicalChannel,
-00419                 OsclAny* aContextData = NULL) = 0;
-00420 
-00427         <span class="keyword">virtual</span> PVMFCommandId <a class="code" href="classH324MConfigInterface.html#a25">SendLogicalChannelInactiveIndication</a>(TPVChannelId aLogicalChannel,
-00428                 OsclAny* aContextData = NULL) = 0;
-00429 
-00436         <span class="keyword">virtual</span> PVMFCommandId <a class="code" href="classH324MConfigInterface.html#a26">SendSkewIndication</a>(TPVChannelId aLogicalChannel1, TPVChannelId aLogicalChannel2,
-00437                 uint16 aSkew, OsclAny* aContextData = NULL) = 0;
+<a name="l00064"></a><a class="code" href="classH324MConfigInterface.html">00064</a> <span class="keyword">class </span><a class="code" href="classH324MConfigInterface.html">H324MConfigInterface</a> : <span class="keyword">public</span> PVInterface
+00065 {
+00066     <span class="keyword">public</span>:
+00073         <span class="keyword">virtual</span> <span class="keywordtype">void</span> <a class="code" href="classH324MConfigInterface.html#a0">SetObserver</a>(<a class="code" href="classH324MConfigObserver.html">H324MConfigObserver</a>* aObserver) = 0;
+00074 
+00086         <span class="keyword">virtual</span> PVMFCommandId <a class="code" href="classH324MConfigInterface.html#a1">SetMultiplexLevel</a>(TPVH223Level aLevel,
+00087                                                 OsclAny* aContextData = NULL) = 0;
+00088 
+00102         <span class="keyword">virtual</span> PVMFCommandId <a class="code" href="classH324MConfigInterface.html#a2">SetMaxSduSize</a>(TPVAdaptationLayer aLayer, int32 aSize,
+00103                                             OsclAny* aContextData = NULL) = 0;
+00118         <span class="keyword">virtual</span> PVMFCommandId <a class="code" href="classH324MConfigInterface.html#a3">SetMaxSduSizeR</a>(TPVAdaptationLayer aLayer,
+00119                                              int32 aSize, OsclAny* aContextData = NULL) = 0;
+00120 
+00137         <span class="keyword">virtual</span> PVMFCommandId <a class="code" href="classH324MConfigInterface.html#a4">SetCodecPreference</a>(Oscl_Vector&lt;PVMFFormatType, OsclMemAllocator&gt;&amp; aIncomingAudio,
+00138                 Oscl_Vector&lt;PVMFFormatType, OsclMemAllocator&gt;&amp; aIncomingVideo,
+00139                 Oscl_Vector&lt;PVMFFormatType, OsclMemAllocator&gt;&amp; aOutGoingAudio,
+00140                 Oscl_Vector&lt;PVMFFormatType, OsclMemAllocator&gt;&amp; aOutGoingVideo,
+00141                 OsclAny* aContextData = NULL) = 0;
+00142 
+00156         <span class="keyword">virtual</span> PVMFCommandId <a class="code" href="classH324MConfigInterface.html#a5">SetFormatSpecificInfo</a>(PVMFFormatType aMediaFormat,
+00157                 <span class="keyword">const</span> uint8* apFormatSpecificInfo, uint32 aFormatSpecificInfoLen,
+00158                 OsclAny* aContextData = NULL) = 0;
+00159 
+00171         <span class="keyword">virtual</span> PVMFCommandId <a class="code" href="classH324MConfigInterface.html#a6">SetAl2SequenceNumbers</a>(int32 aSeqNumWidth,
+00172                 OsclAny* aContextData = NULL) = 0;
+00184         <span class="keyword">virtual</span> PVMFCommandId <a class="code" href="classH324MConfigInterface.html#a7">SetAl3ControlFieldOctets</a>(int32 aCfo,
+00185                 OsclAny* aContextData = NULL) = 0;
+00186 
+00197         <span class="keyword">virtual</span> PVMFCommandId <a class="code" href="classH324MConfigInterface.html#a8">SetMaxPduSize</a>(int32 aMaxPduSize,
+00198                                             OsclAny* aContextData = NULL) = 0;
+00199 
+00209         <span class="keyword">virtual</span> PVMFCommandId <a class="code" href="classH324MConfigInterface.html#a9">SetTerminalType</a>(uint8 aTerminalType,
+00210                                               OsclAny* aContextData = NULL) = 0;
+00223         <span class="keyword">virtual</span> PVMFCommandId <a class="code" href="classH324MConfigInterface.html#a10">SetALConfiguration</a>(<a class="code" href="pv__2way__basic__types_8h.html#a48">TPVMediaType_t</a> aMediaType,
+00224                 TPVAdaptationLayer aLayer,
+00225                 <span class="keywordtype">bool</span> aAllow,
+00226                 <span class="keywordtype">bool</span> aUse = <span class="keyword">true</span>,
+00227                 OsclAny* aContextData = NULL) = 0;
+00228 
+00237         <span class="keyword">virtual</span> PVMFCommandId <a class="code" href="classH324MConfigInterface.html#a11">SendRme</a>(OsclAny* aContextData = NULL) = 0;
+00238 
+00248         <span class="keyword">virtual</span> PVMFCommandId <a class="code" href="classH324MConfigInterface.html#a12">SetMaxMuxPduSize</a>(int32 aRequestMaxMuxPduSize,
+00249                                                OsclAny* aContextData = NULL) = 0;
+00250 
+00259         <span class="keyword">virtual</span> PVMFCommandId <a class="code" href="classH324MConfigInterface.html#a13">SetMaxMuxCcsrlSduSize</a>(int32 aMaxCcsrlSduSize,
+00260                 OsclAny* aContextData = NULL) = 0;
+00261 
+00272         <span class="keyword">virtual</span> PVMFCommandId <a class="code" href="classH324MConfigInterface.html#a14">FastUpdate</a>(PVMFNodeInterface&amp; aTrack,
+00273                                          OsclAny* aContextData = NULL) = 0;
+00274 
+00284         <span class="keyword">virtual</span> PVMFCommandId <a class="code" href="classH324MConfigInterface.html#a15">SendRtd</a>(OsclAny* aContextData = NULL) = 0;
+00285 
+00304         <span class="keyword">virtual</span> PVMFCommandId <a class="code" href="classH324MConfigInterface.html#a16">SetVendor</a>(uint8 cc, uint8 ext, uint32 mc,
+00305                                         <span class="keyword">const</span> uint8* aProduct, uint16 aProductLen,
+00306                                         <span class="keyword">const</span> uint8* aVersion, uint16 aVersionLen,
+00307                                         OsclAny* aContextData = NULL) = 0;
+00308 
+00316         <span class="keyword">virtual</span> PVMFCommandId <a class="code" href="classH324MConfigInterface.html#a17">SendEndSession</a>(OsclAny* aContextData = NULL) = 0;
+00317 
+00326         <span class="keyword">virtual</span> PVMFCommandId <a class="code" href="classH324MConfigInterface.html#a18">SetEndSessionTimeout</a>(uint32 aTimeout,
+00327                 OsclAny* aContextData = NULL) = 0;
+00328 
+00359         <span class="keyword">virtual</span> PVMFCommandId <a class="code" href="classH324MConfigInterface.html#a19">SetTimerCounter</a>(TPVH324TimerCounter aTimerCounter,
+00360                                               uint8 aSeries, uint32 aSeriesOffset,
+00361                                               uint32 aValue,
+00362                                               OsclAny* aContextData = NULL) = 0;
+00363 
+00374         <span class="keyword">virtual</span> PVMFCommandId <a class="code" href="classH324MConfigInterface.html#a20">SetVideoResolutions</a>(<a class="code" href="pv__2way__basic__types_8h.html#a47">TPVDirection</a> aDirection,
+00375                 Oscl_Vector&lt;PVMFVideoResolutionRange, OsclMemAllocator&gt;&amp; aResolutions,
+00376                 OsclAny* aContextData = NULL) = 0;
+00377 
+00384         <span class="keyword">virtual</span> PVMFCommandId <a class="code" href="classH324MConfigInterface.html#a21">SendVendorId</a>(OsclAny* aContextData = NULL) = 0;
+00385 
+00394         <span class="keyword">virtual</span> PVMFCommandId <a class="code" href="classH324MConfigInterface.html#a22">SendVideoTemporalSpatialTradeoffCommand</a>(TPVChannelId aLogicalChannel,
+00395                 uint8 aTradeoff,
+00396                 OsclAny* aContextData = NULL) = 0;
+00397 
+00407         <span class="keyword">virtual</span> PVMFCommandId <a class="code" href="classH324MConfigInterface.html#a23">SendVideoTemporalSpatialTradeoffIndication</a>(TPVChannelId aLogicalChannel,
+00408                 uint8 aTradeoff, OsclAny* aContextData = NULL) = 0;
+00409 
+00417         <span class="keyword">virtual</span> PVMFCommandId <a class="code" href="classH324MConfigInterface.html#a24">SendLogicalChannelActiveIndication</a>(TPVChannelId aLogicalChannel,
+00418                 OsclAny* aContextData = NULL) = 0;
+00419 
+00426         <span class="keyword">virtual</span> PVMFCommandId <a class="code" href="classH324MConfigInterface.html#a25">SendLogicalChannelInactiveIndication</a>(TPVChannelId aLogicalChannel,
+00427                 OsclAny* aContextData = NULL) = 0;
+00428 
+00435         <span class="keyword">virtual</span> PVMFCommandId <a class="code" href="classH324MConfigInterface.html#a26">SendSkewIndication</a>(TPVChannelId aLogicalChannel1, TPVChannelId aLogicalChannel2,
+00436                 uint16 aSkew, OsclAny* aContextData = NULL) = 0;
+00437 
 00438 
-00439 
-00450         <span class="keyword">virtual</span> PVMFCommandId
-00451         <a class="code" href="classH324MConfigInterface.html#a27">SetLogicalChannelBufferingMs</a>(uint32 aInBufferingMs,
-00452                                      uint32 aOutBufferingMs,
-00453                                      OsclAny* aContextData = NULL) = 0;
-00454 
-00464         <span class="keyword">virtual</span> PVMFCommandId
-00465         <a class="code" href="classH324MConfigInterface.html#a28">SendUserInput</a>(CPVUserInput* user_input,
-00466                       OsclAny* aContextData = NULL) = 0;
-00467 
-00477         <span class="keyword">virtual</span> PVMFCommandId <a class="code" href="classH324MConfigInterface.html#a29">SetWnsrp</a>(<span class="keyword">const</span> <span class="keywordtype">bool</span> aEnableWnsrp,
-00478                                        OsclAny* aContextData = NULL) = 0;
-00479 
-00480 };
+00449         <span class="keyword">virtual</span> PVMFCommandId
+00450         <a class="code" href="classH324MConfigInterface.html#a27">SetLogicalChannelBufferingMs</a>(uint32 aInBufferingMs,
+00451                                      uint32 aOutBufferingMs,
+00452                                      OsclAny* aContextData = NULL) = 0;
+00453 
+00463         <span class="keyword">virtual</span> PVMFCommandId
+00464         <a class="code" href="classH324MConfigInterface.html#a28">SendUserInput</a>(<a class="code" href="classCPVUserInput.html">CPVUserInput</a>* user_input,
+00465                       OsclAny* aContextData = NULL) = 0;
+00466 
+00476         <span class="keyword">virtual</span> PVMFCommandId <a class="code" href="classH324MConfigInterface.html#a29">SetWnsrp</a>(<span class="keyword">const</span> <span class="keywordtype">bool</span> aEnableWnsrp,
+00477                                        OsclAny* aContextData = NULL) = 0;
+00478 
+00479 };
+00480 
 00481 
-00482 
-<a name="l00489"></a><a class="code" href="tsc__h324m__config__interface_8h.html#a15">00489</a> <span class="keyword">enum</span> <a class="code" href="tsc__h324m__config__interface_8h.html#a15">PVH324MIndicationType</a>
-00490 {
-00497     <a class="code" href="tsc__h324m__config__interface_8h.html#a15a4">PV_INDICATION_VIDEO_SPATIAL_TEMPORAL_TRADEOFF_COMMAND</a>,
-00504     <a class="code" href="tsc__h324m__config__interface_8h.html#a15a5">PV_INDICATION_VIDEO_SPATIAL_TEMPORAL_TRADEOFF_INDICATION</a>,
-00510     <a class="code" href="tsc__h324m__config__interface_8h.html#a15a6">PV_INDICATION_FAST_UPDATE</a>,
-00515     <a class="code" href="tsc__h324m__config__interface_8h.html#a15a7">PV_INDICATION_RTD</a>,
-00520     <a class="code" href="tsc__h324m__config__interface_8h.html#a15a8">PV_INDICATION_RME</a>,
-00525     <a class="code" href="tsc__h324m__config__interface_8h.html#a15a9">PV_INDICATION_VENDOR_ID</a>,
-00531     <a class="code" href="tsc__h324m__config__interface_8h.html#a15a10">PV_INDICATION_USER_INPUT_CAPABILITY</a>,
-00537     <a class="code" href="tsc__h324m__config__interface_8h.html#a15a11">PV_INDICATION_USER_INPUT</a>,
-00545     <a class="code" href="tsc__h324m__config__interface_8h.html#a15a12">PV_INDICATION_SKEW</a>,
-00551     <a class="code" href="tsc__h324m__config__interface_8h.html#a15a13">PV_INDICATION_LOGICAL_CHANNEL_ACTIVE</a>,
-00557     <a class="code" href="tsc__h324m__config__interface_8h.html#a15a14">PV_INDICATION_LOGICAL_CHANNEL_INACTIVE</a>
-00558 
-00559 };
-<a name="l00563"></a><a class="code" href="classH324MReverseParametersExtensionInterface.html">00563</a> <span class="keyword">class </span><a class="code" href="classH324MReverseParametersExtensionInterface.html">H324MReverseParametersExtensionInterface</a> : <span class="keyword">public</span> PVInterface
-00564 {
-00565     <span class="keyword">public</span>:
-00569         <span class="keyword">virtual</span> <span class="keyword">const</span> PvmfMimeString* <a class="code" href="classH324MReverseParametersExtensionInterface.html#a0">GetFormatCapabilities</a>() = 0;
-00570 
-00574         <span class="keyword">virtual</span> <span class="keywordtype">void</span> <a class="code" href="classH324MReverseParametersExtensionInterface.html#a1">SetPortTag</a>(int32 aPortTag) = 0;
-00575 
-00579         <span class="keyword">virtual</span> int32 <a class="code" href="classH324MReverseParametersExtensionInterface.html#a2">GetPortTag</a>()<span class="keyword">const</span> = 0;
-00580 };
-00581 <span class="preprocessor">#endif</span>
+<a name="l00488"></a><a class="code" href="tsc__h324m__config__interface_8h.html#a15">00488</a> <span class="keyword">enum</span> <a class="code" href="tsc__h324m__config__interface_8h.html#a15">PVH324MIndicationType</a>
+00489 {
+00496     <a class="code" href="tsc__h324m__config__interface_8h.html#a15a4">PV_INDICATION_VIDEO_SPATIAL_TEMPORAL_TRADEOFF_COMMAND</a>,
+00503     <a class="code" href="tsc__h324m__config__interface_8h.html#a15a5">PV_INDICATION_VIDEO_SPATIAL_TEMPORAL_TRADEOFF_INDICATION</a>,
+00509     <a class="code" href="tsc__h324m__config__interface_8h.html#a15a6">PV_INDICATION_FAST_UPDATE</a>,
+00514     <a class="code" href="tsc__h324m__config__interface_8h.html#a15a7">PV_INDICATION_RTD</a>,
+00519     <a class="code" href="tsc__h324m__config__interface_8h.html#a15a8">PV_INDICATION_RME</a>,
+00524     <a class="code" href="tsc__h324m__config__interface_8h.html#a15a9">PV_INDICATION_VENDOR_ID</a>,
+00532     <a class="code" href="tsc__h324m__config__interface_8h.html#a15a10">PV_INDICATION_USER_INPUT_CAPABILITY</a>,
+00538     <a class="code" href="tsc__h324m__config__interface_8h.html#a15a11">PV_INDICATION_USER_INPUT</a>,
+00546     <a class="code" href="tsc__h324m__config__interface_8h.html#a15a12">PV_INDICATION_SKEW</a>,
+00552     <a class="code" href="tsc__h324m__config__interface_8h.html#a15a13">PV_INDICATION_LOGICAL_CHANNEL_ACTIVE</a>,
+00558     <a class="code" href="tsc__h324m__config__interface_8h.html#a15a14">PV_INDICATION_LOGICAL_CHANNEL_INACTIVE</a>
+00559 
+00560 };
+<a name="l00564"></a><a class="code" href="classH324MReverseParametersExtensionInterface.html">00564</a> <span class="keyword">class </span><a class="code" href="classH324MReverseParametersExtensionInterface.html">H324MReverseParametersExtensionInterface</a> : <span class="keyword">public</span> PVInterface
+00565 {
+00566     <span class="keyword">public</span>:
+00570         <span class="keyword">virtual</span> <span class="keyword">const</span> PvmfMimeString* <a class="code" href="classH324MReverseParametersExtensionInterface.html#a0">GetFormatCapabilities</a>() = 0;
+00571 
+00575         <span class="keyword">virtual</span> <span class="keywordtype">void</span> <a class="code" href="classH324MReverseParametersExtensionInterface.html#a1">SetPortTag</a>(int32 aPortTag) = 0;
+00576 
+00580         <span class="keyword">virtual</span> int32 <a class="code" href="classH324MReverseParametersExtensionInterface.html#a2">GetPortTag</a>()<span class="keyword">const</span> = 0;
+00581 };
+00582 
+00583 <span class="preprocessor">#endif</span>
 </pre></div><hr size="1"><img src="pvlogo_small.jpg"><address style="align: right;"><small>PV2Way Engine</small>
-<address style="align: left;"><small>Posting Version: CORE_8.502.1.1 </small>
+<address style="align: left;"><small>Posting Version: CORE_8.503.1.1 </small>
 </small></address>
 </body>
 </html>
