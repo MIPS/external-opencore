@@ -94,6 +94,7 @@ class AvcEncoder_OMX
         OMX_BOOL AvcUpdateBitRate(OMX_U32 aEncodedBitRate);
         OMX_BOOL AvcUpdateFrameRate(OMX_U32 aEncodeFramerate);
         OMX_BOOL GetSpsPpsHeaderFlag();
+        OMX_ERRORTYPE AVCOutBufferSize(OMX_U32 *aMaxVideoFrameSize);
 
         /* for avc encoder lib callback functions */
         int     AVC_DPBAlloc(uint frame_size_in_mbs, uint num_buffers);

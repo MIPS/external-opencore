@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -79,6 +79,8 @@ class OmxComponentMpeg4EncAO : public OmxComponentVideo
         OMX_U32           iInternalOutBufFilledLen;
         OMX_TICKS         iOutputTimeStamp;
         OMX_BOOL          iSyncFlag;
+        OMX_U32           iOutputBufferSizeAfterInit;
+        OMX_BOOL          iPortReconfigurationNeeded;
 };
 
 #endif // OMX_MPEG4ENC_COMPONENT_H_INCLUDED

@@ -657,7 +657,18 @@ OMX_BOOL Mpeg4Encoder_OMX::Mp4UpdateFrameRate(OMX_U32 aEncodeFramerate)
 
 }
 
-
+// This function gives the maximum output buffer requirement and
+// can only be called after encoder's initialization
+OMX_ERRORTYPE Mpeg4Encoder_OMX::Mp4OutBufferSize(OMX_U32 *aMaxVideoFrameSize)
+{
+    Int MaxFrameSize = 0;
+    if (PV_TRUE != PVGetMaxVideoFrameSize(&iEncoderControl, &MaxFrameSize))
+    {
+        return OMX_ErrorUndefined;
+    }
+    *aMaxVideoFrameSize = (OMX_U32)MaxFrameSize;
+    return OMX_ErrorNone;
+}
 
 
 /*Encode routine */

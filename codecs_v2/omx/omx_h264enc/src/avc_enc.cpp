@@ -1174,3 +1174,17 @@ OMX_BOOL AvcEncoder_OMX::GetSpsPpsHeaderFlag()
 }
 
 
+// This function gives the maximum output buffer requirement and
+// can only be called after encoder's initialization
+OMX_ERRORTYPE AvcEncoder_OMX::AVCOutBufferSize(OMX_U32 *aMaxVideoFrameSize)
+{
+    int MaxFrameSize = 0;
+    if (AVCENC_SUCCESS != PVAVCEncGetMaxOutputBufferSize(&iAvcHandle, &MaxFrameSize))
+    {
+        return OMX_ErrorUndefined;
+    }
+    *aMaxVideoFrameSize = (OMX_U32)MaxFrameSize;
+    return OMX_ErrorNone;
+}
+
+

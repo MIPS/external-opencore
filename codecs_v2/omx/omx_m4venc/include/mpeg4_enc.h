@@ -100,6 +100,8 @@ class Mpeg4Encoder_OMX
 
         OMX_ERRORTYPE Mp4EncDeinit();
 
+        OMX_ERRORTYPE Mp4OutBufferSize(OMX_U32 *aMaxVideoFrameSize);
+
 #if PROFILING_ON
         // Profile Statistics
         struct PVEncNodeStats

@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -95,6 +95,8 @@ class OmxComponentAvcEncAO : public OmxComponentVideo
         OMX_U32           iNALSizeSum;
         OMX_U32           iNALCount;
         OMX_U32           iSizeOfNALSize;
+        OMX_U32           iOutputBufferSizeAfterInit;
+        OMX_BOOL          iPortReconfigurationNeeded;
 };
 
 #endif // OMX_AVCENC_COMPONENT_H_INCLUDED

@@ -528,6 +528,7 @@ OMX_ERRORTYPE OmxComponentAvcEncAO::ConstructComponent(OMX_PTR pAppData, OMX_PTR
     pOutPort->VideoIFrame.IntraRefreshVOP = OMX_FALSE;
 
     oscl_strncpy((OMX_STRING)iComponentRole, (OMX_STRING)"video_encoder.avc", OMX_MAX_STRINGNAME_SIZE);
+    iOutputBufferSizeAfterInit = OUTPUT_BUFFER_SIZE_AVCENC;
 
 
     //Construct the encoder object
@@ -609,6 +610,27 @@ void OmxComponentAvcEncAO::ProcessData()
 
     if ((!iIsInputBufferEnded) || (iEndofStream))
     {
+        //Send port reconfiguration callback for encoder components if required
+        if (OMX_TRUE == iPortReconfigurationNeeded)
+        {
+            ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->PortParam.nBufferSize = iOutputBufferSizeAfterInit;
+
+            iResizePending = OMX_TRUE;
+
+            (*(ipCallbacks->EventHandler))
+            (pHandle,
+             iCallbackData,
+             OMX_EventPortSettingsChanged, //The command was completed
+             OMX_PORT_OUTPUTPORT_INDEX,
+             0,
+             NULL);
+
+            iPortReconfigurationNeeded = OMX_FALSE;
+
+            return;
+        }
+
+
         //Check whether prev output bufer has been released or not
         if (OMX_TRUE == iNewOutBufRequired)
         {
@@ -933,6 +955,7 @@ OmxComponentAvcEncAO::OmxComponentAvcEncAO()
     iInternalOutBufFilledLen = 0;
     iSyncFlag = OMX_FALSE;
     iBufferOverRun = OMX_FALSE;
+    iPortReconfigurationNeeded = OMX_FALSE;
 
     if (!IsAdded())
     {
@@ -1135,6 +1158,16 @@ OMX_ERRORTYPE OmxComponentAvcEncAO::ComponentInit()
                  ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->VideoBlockMotionSize);
 
     iInputCurrLength = 0;
+
+    //Compute the new output buffer requirement after encoder initialization
+    if (OMX_ErrorNone == Status)
+    {
+        Status = ipAvcEncoderObject->AVCOutBufferSize(&iOutputBufferSizeAfterInit);
+        if (iOutputBufferSizeAfterInit > ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->PortParam.nBufferSize)
+        {
+            iPortReconfigurationNeeded = OMX_TRUE;
+        }
+    }
 
     //Used in dynamic port reconfiguration
     iFrameCount = 0;

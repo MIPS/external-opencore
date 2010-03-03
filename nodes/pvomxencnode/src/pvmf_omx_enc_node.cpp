@@ -1525,26 +1525,93 @@ PVMFStatus PVMFOMXEncNode::HandleProcessingState()
 
     switch (iProcessingState)
     {
-
             // The FOLLOWING 4 states handle Dynamic Port Reconfiguration
         case EPVMFOMXEncNodeProcessingState_PortReconfig:
         {
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                            (0, "PVMFOMXEncNode-%s::HandleProcessingState() Port Reconfiguration -> Sending Port Disable Command", iNodeTypeId));
 
-            // port reconfiguration is required. Only one port at a time is disabled and then re-enabled after buffer resizing
-            OMX_SendCommand(iOMXEncoder, OMX_CommandPortDisable, iPortIndexForDynamicReconfig, NULL);
-            // the port will now start returning outstanding buffers
-            // set the flag to prevent output from going downstream (in case of output port being reconfigd)
-            // set the flag to prevent input from being saved and returned to component (in case of input port being reconfigd)
-            // set the state to wait for port saying it is disabled
-            if (iPortIndexForDynamicReconfig == iOutputPortIndex)
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                            (0, "PVMFOMXEncNode-%s::HandleProcessingState() Port Reconfiguration -> Sending Port Flush Command", iNodeTypeId));
+
+            // Collect all buffers first (before starting the portDisable command)
+            // FIRST send a flush command. This will return all buffers from the component. Any outstanding buffers are in MIO
+            // Then wait for all buffers to come back from MIO. If we haven't sent port disable, we'll be able to process
+            // other commands in the copmponent (such as pause, stop etc.)
+            OMX_ERRORTYPE Err = OMX_ErrorNone;
+            OMX_STATETYPE sState;
+
+            // first check the state (if executing or paused, continue)
+            Err = OMX_GetState(iOMXEncoder, &sState);
+            if (OMX_ErrorNone != Err)
             {
-                iDoNotSendOutputBuffersDownstreamFlag = true;
+                //Error condition report
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
+                                (0, "PVMFOMXEncNode-%s::HandleProcessingState() PortReconfig Can't get State of component - trying to send port flush request!", iNodeTypeId));
+
+                sState = OMX_StateInvalid;
+                ReportErrorEvent(PVMFErrResourceConfiguration);
+                ChangeNodeState(EPVMFNodeError);
+                status = PVMFFailure;
+                break;
             }
 
-            iProcessingState = EPVMFOMXEncNodeProcessingState_WaitForBufferReturn;
+            if ((OMX_StateExecuting != sState) && (OMX_StatePause != sState))
+            {
+                // possibly as a consequence of a previously queued cmd to go to Idle state?
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                                (0, "PVMFOMXEncNode-%s::HandleProcessingState() PortReconfig: Component State is not executing or paused, do not proceed with port flush", iNodeTypeId));
+            }
+            else
+            {
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                                (0, "PVMFOMXEncNode-%s::HandleProcessingState() PortReconfig Sending Flush command to component", iNodeTypeId));
 
+                // the port will now start returning outstanding buffers
+                // set the flag to prevent output from going downstream (in case of output port being reconfigd)
+                // set the flag to prevent input from being saved and returned to component (in case of input port being reconfigd)
+                // set the state to wait for port saying it is disabled
+                if (iPortIndexForDynamicReconfig == iOutputPortIndex)
+                {
+                    iDoNotSendOutputBuffersDownstreamFlag = true;
+                    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                                    (0, "PVMFOMXEncNode-%s::HandleProcessingState() Port Reconfiguration -> Output Port", iNodeTypeId));
+                }
+                else if (iPortIndexForDynamicReconfig == iInputPortIndex)
+                {
+                    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                                    (0, "PVMFOMXEncNode-%s::HandleProcessingState() Port Reconfiguration -> Input Port", iNodeTypeId));
+                }
+                else
+                {
+                    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                                    (0, "PVMFOMXEncNode-%s::HandleProcessingState() Port Reconfiguration -> UNKNOWN PORT", iNodeTypeId));
+
+                    sState = OMX_StateInvalid;
+                    ReportErrorEvent(PVMFErrResourceConfiguration);
+                    ChangeNodeState(EPVMFNodeError);
+                    status = PVMFFailure;
+                    break;
+                }
+
+                // send command to flush appropriate port
+                Err = OMX_SendCommand(iOMXEncoder, OMX_CommandFlush, iPortIndexForDynamicReconfig, NULL);
+                if (OMX_ErrorNone != Err)
+                {
+                    //Error condition report
+                    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
+                                    (0, "PVMFOMXEncNode-%s::HandleProcessingState() PortReconfig : Can't send flush command !", iNodeTypeId));
+
+                    sState = OMX_StateInvalid;
+                    ReportErrorEvent(PVMFErrResourceConfiguration);
+                    ChangeNodeState(EPVMFNodeError);
+                    status = PVMFFailure;
+                    break;
+                }
+            }
+
+            // now sit back and wait for buffers to return
+            // if there is a pause/stop cmd in the meanwhile, component will process it
+            // and the node will end up in pause/stop state (so this internal state does not matter)
+            iProcessingState = EPVMFOMXEncNodeProcessingState_WaitForBufferReturn;
 
             // fall through to the next case to check if all buffers are already back
         }
@@ -1552,9 +1619,11 @@ PVMFStatus PVMFOMXEncNode::HandleProcessingState()
         case EPVMFOMXEncNodeProcessingState_WaitForBufferReturn:
         {
             // as buffers are coming back, Run may be called, wait until all buffers are back, then Free them all
-
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                             (0, "PVMFOMXEncNode-%s::HandleProcessingState() Port Reconfiguration -> WaitForBufferReturn ", iNodeTypeId));
+
+            OMX_ERRORTYPE Err = OMX_ErrorNone;
+
             // check if it's output port being reconfigured
             if (iPortIndexForDynamicReconfig == iOutputPortIndex)
             {
@@ -1563,6 +1632,20 @@ PVMFStatus PVMFOMXEncNode::HandleProcessingState()
                 {
                     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                                     (0, "PVMFOMXEncNode-%s::HandleProcessingState() Port Reconfiguration -> all output buffers are back, free them", iNodeTypeId));
+
+                    // port reconfiguration is required. Only one port at a time is disabled and then re-enabled after buffer resizing
+                    Err = OMX_SendCommand(iOMXEncoder, OMX_CommandPortDisable, iPortIndexForDynamicReconfig, NULL);
+                    if (OMX_ErrorNone != Err)
+                    {
+                        //Error condition report
+                        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
+                                        (0, "PVMFOMXEncNode-%s::HandleProcessingState() Port Reconfiguration : Can't send port disable command !", iNodeTypeId));
+
+                        SetState(EPVMFNodeError);
+                        ReportErrorEvent(PVMFFailure);
+                        return PVMFFailure;
+                    }
+
                     if (false == iOutputBuffersFreed)
                     {
                         if (!FreeBuffersFromComponent(iOutBufMemoryPool, // allocator
@@ -1588,7 +1671,7 @@ PVMFStatus PVMFOMXEncNode::HandleProcessingState()
                     status = PVMFSuccess; // allow rescheduling of the node potentially
                 }
                 else
-                    status = PVMFErrNoMemory; // must wait for buffers to come back. No point in automatic rescheduling
+                    status = PVMFPending; // must wait for buffers to come back. No point in automatic rescheduling
                 // but each buffer will reschedule the node when it comes in
             }
             else
@@ -1598,9 +1681,22 @@ PVMFStatus PVMFOMXEncNode::HandleProcessingState()
                 // if all buffers have returned, free them
                 if (iNumOutstandingInputBuffers == 0)
                 {
-
                     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                                     (0, "PVMFOMXEncNode-%s::HandleProcessingState() Port Reconfiguration -> all input buffers are back, free them", iNodeTypeId));
+
+                    // port reconfiguration is required. Only one port at a time is disabled and then re-enabled after buffer resizing
+                    Err = OMX_SendCommand(iOMXEncoder, OMX_CommandPortDisable, iPortIndexForDynamicReconfig, NULL);
+                    if (OMX_ErrorNone != Err)
+                    {
+                        //Error condition report
+                        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
+                                        (0, "PVMFOMXEncNode-%s::HandleProcessingState() Port Reconfiguration : Can't send port disable command !", iNodeTypeId));
+
+                        SetState(EPVMFNodeError);
+                        ReportErrorEvent(PVMFFailure);
+                        return PVMFFailure;
+                    }
+
                     if (false == iInputBuffersFreed)
                     {
                         if (!FreeBuffersFromComponent(iInBufMemoryPool, // allocator
@@ -1619,6 +1715,7 @@ PVMFStatus PVMFOMXEncNode::HandleProcessingState()
 
                         }
                     }
+
                     // if the callback (that port is disabled) has not arrived yet, wait for it
                     // if it has arrived, it will set the state to PortReEnable
                     if (iProcessingState != EPVMFOMXEncNodeProcessingState_PortReEnable)
@@ -1627,11 +1724,10 @@ PVMFStatus PVMFOMXEncNode::HandleProcessingState()
                     status = PVMFSuccess; // allow rescheduling of the node
                 }
                 else
-                    status = PVMFErrNoMemory; // must wait for buffers to come back. No point in automatic
+                    status = PVMFPending; // must wait for buffers to come back. No point in automatic
                 // rescheduling. Each buffer will reschedule the node
                 // when it comes in
             }
-
 
             // the state will be changed to PortReEnable once we get confirmation that Port was actually disabled
             break;
@@ -1644,7 +1740,7 @@ PVMFStatus PVMFOMXEncNode::HandleProcessingState()
                             (0, "PVMFOMXEncNode-%s::HandleProcessingState() Port Reconfiguration -> wait for port disable callback", iNodeTypeId));
             // do nothing. Just wait for the port to become disabled (we'll get event from component, which will
             // transition the state to PortReEnable
-            status = PVMFErrNoMemory; // prevent Rescheduling the node
+            status = PVMFPending; // prevent Rescheduling the node
             break;
         }
 
@@ -1653,59 +1749,76 @@ PVMFStatus PVMFOMXEncNode::HandleProcessingState()
 
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                             (0, "PVMFOMXEncNode-%s::HandleProcessingState() Port Reconfiguration -> Sending reenable port command", iNodeTypeId));
+
+            OMX_ERRORTYPE Err = OMX_ErrorNone;
+
             // set the port index so that we get parameters for the proper port
             iParamPort.nPortIndex = iPortIndexForDynamicReconfig;
             // iParamPort.nVersion = OMX_VERSION;
 
-            // get new parameters of the port
-            OMX_GetParameter(iOMXEncoder, OMX_IndexParamPortDefinition, &iParamPort);
+            CONFIG_SIZE_AND_VERSION(iParamPort);
 
-            // send command for port re-enabling (for this to happen, we must first recreate the buffers)
-            OMX_SendCommand(iOMXEncoder, OMX_CommandPortEnable, iPortIndexForDynamicReconfig, NULL);
+            // get new parameters of the port
+            Err = OMX_GetParameter(iOMXEncoder, OMX_IndexParamPortDefinition, &iParamPort);
+            if (OMX_ErrorNone != Err)
+            {
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
+                                (0, "PVMFOMXVideoDecNode::HandlePortReEnable() Problem setting parameters in output port %d ", iOutputPortIndex));
+                SetState(EPVMFNodeError);
+                ReportErrorEvent(PVMFFailure);
+                return PVMFFailure;
+            }
+            // do not send port reenable command until all the parameters have been set
 
             // is this output port?
             if (iPortIndexForDynamicReconfig == iOutputPortIndex)
             {
-                iOMXComponentOutputBufferSize = ((iParamPort.format.video.nFrameWidth + 15) & (~15)) * ((iParamPort.format.video.nFrameHeight + 15) & (~15)) * 3 / 2;
-
                 // check the new buffer size
-                if (iInPort)
-                {
-                    if (((PVMFOMXEncPort*)iInPort)->iFormat == PVMF_MIME_H264_VIDEO ||
-                            ((PVMFOMXEncPort*)iInPort)->iFormat == PVMF_MIME_H264_VIDEO_MP4 ||
-                            ((PVMFOMXEncPort*)iInPort)->iFormat == PVMF_MIME_H264_VIDEO_RAW ||
-                            ((PVMFOMXEncPort*)iInPort)->iFormat == PVMF_MIME_M4V ||
-                            ((PVMFOMXEncPort*)iInPort)->iFormat == PVMF_MIME_H2631998 ||
-                            ((PVMFOMXEncPort*)iInPort)->iFormat == PVMF_MIME_H2632000)
-                    {
-                        iOMXComponentOutputBufferSize = ((iParamPort.format.video.nFrameWidth + 15) & (~15)) * ((iParamPort.format.video.nFrameHeight + 15) & (~15)) * 3 / 2;
-                    }
-                    else if (((PVMFOMXEncPort*)iInPort)->iFormat == PVMF_MIME_WMV)
-                    {
-                        // This is a requirement for the WMV encoder that we have currently
-                        iOMXComponentOutputBufferSize = ((iParamPort.format.video.nFrameWidth + 3) & (~3)) * (iParamPort.format.video.nFrameHeight) * 3 / 2;
-                    }
-                    else
-                    {
-                        OSCL_ASSERT(false);
-                    }
-                }
-                // set the new width / height
-                iYUVWidth =  iParamPort.format.video.nFrameWidth;
-                iYUVHeight = iParamPort.format.video.nFrameHeight;
-
-                if (iOMXComponentOutputBufferSize < iParamPort.nBufferSize)
-                    iOMXComponentOutputBufferSize = iParamPort.nBufferSize;
+                iOMXComponentOutputBufferSize = iParamPort.nBufferSize;
 
                 // read the output port buffer alignment requirement
                 iOutputBufferAlignment = iParamPort.nBufferAlignment;
 
-                // do we need to increase the number of buffers?
+                // do we need to change the number of buffers
+                iNumOutputBuffers = iParamPort.nBufferCountActual;
+
+                //check the number
                 if (iNumOutputBuffers < iParamPort.nBufferCountMin)
                     iNumOutputBuffers = iParamPort.nBufferCountMin;
 
+                // set the number ourselves
+                if (iOMXComponentSupportsExternalOutputBufferAlloc && (iParamPort.nBufferCountMin < NUMBER_OUTPUT_BUFFER))
+                {
+                    iNumOutputBuffers = NUMBER_OUTPUT_BUFFER;
+                }
+
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                                 (0, "PVMFOMXEncNode-%s::HandleProcessingState() new output buffers %d, size %d", iNodeTypeId, iNumOutputBuffers, iOMXComponentOutputBufferSize));
+
+                // make sure to set the actual number of buffers (in case the number has changed)
+                iParamPort.nBufferCountActual = iNumOutputBuffers;
+                CONFIG_SIZE_AND_VERSION(iParamPort);
+
+                Err = OMX_SetParameter(iOMXEncoder, OMX_IndexParamPortDefinition, &iParamPort);
+                if (OMX_ErrorNone != Err)
+                {
+                    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
+                                    (0, "PVMFOMXVideoDecNode::HandlePortReEnable() Problem setting parameters in output port %d ", iOutputPortIndex));
+                    SetState(EPVMFNodeError);
+                    ReportErrorEvent(PVMFFailure);
+                    return PVMFFailure;
+                }
+
+                // send command for port re-enabling (for this to happen, we must first recreate the buffers)
+                Err = OMX_SendCommand(iOMXEncoder, OMX_CommandPortEnable, iPortIndexForDynamicReconfig, NULL);
+                if (OMX_ErrorNone != Err)
+                {
+                    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
+                                    (0, "PVMFOMXVideoDecNode::HandlePortReEnable() Problem setting parameters in output port %d ", iOutputPortIndex));
+                    SetState(EPVMFNodeError);
+                    ReportErrorEvent(PVMFFailure);
+                    return PVMFFailure;
+                }
 
                 /* Allocate output buffers */
                 if (!CreateOutMemPool(iNumOutputBuffers))
@@ -1741,22 +1854,57 @@ PVMFStatus PVMFOMXEncNode::HandleProcessingState()
 
                 // do not drop output any more, i.e. enable output to be sent downstream
                 iDoNotSendOutputBuffersDownstreamFlag = false;
-
-
             }
             else
             {
+
                 // this is input port
                 // read the input port buffer alignment requirement
                 iInputBufferAlignment = iParamPort.nBufferAlignment;
-
                 iOMXComponentInputBufferSize = iParamPort.nBufferSize;
+
+                // let the component decide about the number of input buffers
+                iNumInputBuffers = iParamPort.nBufferCountActual;
+
                 // do we need to increase the number of buffers?
                 if (iNumInputBuffers < iParamPort.nBufferCountMin)
                     iNumInputBuffers = iParamPort.nBufferCountMin;
 
+
+                // if component allows us to allocate buffers, we'll decide how many to allocate
+                if (iOMXComponentSupportsExternalInputBufferAlloc && (iParamPort.nBufferCountMin < NUMBER_INPUT_BUFFER))
+                {
+                    // preset the number of input buffers
+                    iNumInputBuffers = NUMBER_INPUT_BUFFER;
+                }
+
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                                 (0, "PVMFOMXEncNode-%s::HandleProcessingState() new buffers %d, size %d", iNodeTypeId, iNumInputBuffers, iOMXComponentInputBufferSize));
+
+                // make sure to set the actual number of buffers (in case the number has changed)
+                iParamPort.nBufferCountActual = iNumInputBuffers;
+                CONFIG_SIZE_AND_VERSION(iParamPort);
+
+                Err = OMX_SetParameter(iOMXEncoder, OMX_IndexParamPortDefinition, &iParamPort);
+                if (OMX_ErrorNone != Err)
+                {
+                    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
+                                    (0, "PVMFOMXVideoDecNode::HandlePortReEnable() Problem setting parameters in input port %d ", iOutputPortIndex));
+                    SetState(EPVMFNodeError);
+                    ReportErrorEvent(PVMFFailure);
+                    return PVMFFailure;
+                }
+
+                // send command for port re-enabling (for this to happen, we must first recreate the buffers)
+                Err = OMX_SendCommand(iOMXEncoder, OMX_CommandPortEnable, iPortIndexForDynamicReconfig, NULL);
+                if (OMX_ErrorNone != Err)
+                {
+                    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
+                                    (0, "PVMFOMXVideoDecNode::HandlePortReEnable() Problem setting parameters in input port %d ", iOutputPortIndex));
+                    SetState(EPVMFNodeError);
+                    ReportErrorEvent(PVMFFailure);
+                    return PVMFFailure;
+                }
 
                 /* Allocate input buffers */
                 if (!CreateInputMemPool(iNumInputBuffers))
@@ -1806,7 +1954,7 @@ PVMFStatus PVMFOMXEncNode::HandleProcessingState()
                             (0, "PVMFOMXEncNode-%s::HandleProcessingState() Port Reconfiguration -> wait for port enable callback", iNodeTypeId));
             // do nothing. Just wait for the port to become enabled (we'll get event from component, which will
             // transition the state to ReadyToEncode
-            status = PVMFErrNoMemory; // prevent ReScheduling
+            status = PVMFPending; // prevent ReScheduling
             break;
         }
 
@@ -4961,9 +5109,13 @@ OMX_ERRORTYPE PVMFOMXEncNode::EventHandlerProcessing(OMX_OUT OMX_HANDLETYPE aCom
                     HandleComponentStateChange(aData2);
                     break;
                 }
-                case OMX_CommandFlush:            //not supported
-                    // nothing to do here yet
+                case OMX_CommandFlush:
+                {
+                    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
+                                    (0, "PVMFOMXEncNode-%s::EventHandlerProcessing: OMX_CommandFlush - completed on port %d", iNodeTypeId, aData2));
+                    RunIfNotReady();
                     break;
+                }
 
                 case OMX_CommandPortDisable:
                 {
@@ -5076,24 +5228,62 @@ OMX_ERRORTYPE PVMFOMXEncNode::EventHandlerProcessing(OMX_OUT OMX_HANDLETYPE aCom
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                             (0, "PVMFOMXEncNode-%s::EventHandlerProcessing: OMX_EventPortSettingsChanged returned from OMX component", iNodeTypeId));
 
-            // first check if dynamic reconfiguration is already in progress,
-            // if so, wait until this is completed, and then initiate the 2nd reconfiguration
-            if (iDynamicReconfigInProgress)
+            //first check how many ports requested dynamic port reconfiguration
+            if (OMX_ALL == aData1)
             {
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                                (0, "PVMFOMXEncNode-%s::EventHandlerProcessing: OMX_EventPortSettingsChanged returned for port %d, dynamic reconfig already in progress", iNodeTypeId, aData1));
+                if (!iDynamicReconfigInProgress)
+                {
+                    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                                    (0, "PVMFOMXEncNode-%s::EventHandlerProcessing: OMX_EventPortSettingsChanged returned for both input and output port %d", iNodeTypeId, aData1));
 
-                iSecondPortToReconfig = aData1;
-                iSecondPortReportedChange = true;
+                    iProcessingState = EPVMFOMXEncNodeProcessingState_PortReconfig;
+                    iPortIndexForDynamicReconfig = iInputPortIndex;
+                    iDynamicReconfigInProgress = true;
+
+                    iSecondPortToReconfig = iOutputPortIndex;
+                    iSecondPortReportedChange = true;
+                }
+                else
+                {
+                    // This is an error case, where we received port settings changed callback for
+                    // both the ports while dynamic port reconfiguration is still in progress for one of them
+                    // We can handle this by setting it to happen at the other port
+
+                    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                                    (0, "PVMFOMXEncNode-%s::EventHandlerProcessing: OMX_EventPortSettingsChanged returned for both the port %d, dynamic reconfig already in progress for port %d", iNodeTypeId, aData1, iPortIndexForDynamicReconfig));
+
+                    if (iInputPortIndex == iPortIndexForDynamicReconfig)
+                    {
+                        iSecondPortToReconfig = iOutputPortIndex;
+                    }
+                    else
+                    {
+                        iSecondPortToReconfig = iInputPortIndex;
+                    }
+                    iSecondPortReportedChange = true;
+                }
             }
             else
             {
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                                (0, "PVMFOMXEncNode-%s::EventHandlerProcessing: OMX_EventPortSettingsChanged returned for port %d", iNodeTypeId, aData1));
+                // first check if dynamic reconfiguration is already in progress,
+                // if so, wait until this is completed, and then initiate the 2nd reconfiguration
+                if (iDynamicReconfigInProgress)
+                {
+                    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                                    (0, "PVMFOMXEncNode-%s::EventHandlerProcessing: OMX_EventPortSettingsChanged returned for port %d, dynamic reconfig already in progress", iNodeTypeId, aData1));
 
-                iProcessingState = EPVMFOMXEncNodeProcessingState_PortReconfig;
-                iPortIndexForDynamicReconfig = aData1;
-                iDynamicReconfigInProgress = true;
+                    iSecondPortToReconfig = aData1;
+                    iSecondPortReportedChange = true;
+                }
+                else
+                {
+                    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                                    (0, "PVMFOMXEncNode-%s::EventHandlerProcessing: OMX_EventPortSettingsChanged returned for port %d", iNodeTypeId, aData1));
+
+                    iProcessingState = EPVMFOMXEncNodeProcessingState_PortReconfig;
+                    iPortIndexForDynamicReconfig = aData1;
+                    iDynamicReconfigInProgress = true;
+                }
             }
 
             RunIfNotReady();
