@@ -77,6 +77,7 @@ MetadataDriver::MetadataDriver(uint32 mode): OsclActiveObject(OsclActiveObject::
     mContextObject = mContextObjectRefValue;
     mMediaAlbumArt = NULL;
     mSharedFd = -1;
+    mSyncSem = NULL;
     mVideoFrame = NULL;
     for (uint32 i = 0; i < NUM_METADATA_KEYS; ++i) {
         mMetadataValues[i][0] = '\0';
@@ -125,9 +126,11 @@ MetadataDriver::~MetadataDriver()
     mVideoFrame = NULL;
     delete mMediaAlbumArt;
     mMediaAlbumArt = NULL;
-    mSyncSem->Close();
-    delete mSyncSem;
-    mSyncSem = NULL;
+    if(mSyncSem != NULL) {
+        mSyncSem->Close();
+        delete mSyncSem;
+        mSyncSem = NULL;
+    }
 
     closeSharedFdIfNecessary();
 }
