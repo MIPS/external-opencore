@@ -427,23 +427,6 @@ typedef enum
     EReleasePort
 } TPV2WayPortStatus;
 
-typedef enum
-{
-    START_FUNCTION,
-    LEAVE_FUNCTION
-} TFunctionLocation;
-
-typedef enum
-{
-    EA_ADD_DATA_SOURCE,
-    EA_REMOVE_DATA_SOURCE,
-    EA_ADD_DATA_SINK,
-    EA_REMOVE_DATA_SINK,
-    EA_PAUSE,
-    EA_RESUME
-
-} PV2WayAction;
-
 class CPV2WayPort
 {
     public:
@@ -730,10 +713,6 @@ class CPV324m2Way : OsclActiveObject,
 
         OSCL_EXPORT_REF static void Delete(CPV324m2Way *aTerminal);
 
-        void LogFunction(const char* aFunctionName,
-                         TFunctionLocation aFunctionLocation, PVMFStatus aStatus = PVMFNotSet);
-
-
         PVCommandId GetSDKInfo(PVSDKInfo &aSDKInfo, OsclAny* aContextData = NULL);
         PVCommandId GetSDKModuleInfo(PVSDKModuleInfo &aSDKModuleInfo, OsclAny* aContextData = NULL);
         PVCommandId Init(PV2WayInitInfo& aInitInfo, OsclAny* aContextData = NULL);
@@ -790,13 +769,7 @@ class CPV324m2Way : OsclActiveObject,
 
         // OsclTimerObserver virtuals
         void TimeoutOccurred(int32 timerID, int32 timeoutInfo);
-        CPV2WayDataChannelDatapath* GetDataPath(PV2WayDirection Direction,
-                                                PVTrackId TrackId);
-        CPV2WayDataChannelDatapath* GetDataPath(PV2WayDirection aDirection,
-                                                PVMFFormatType aFormatType);
-        CPV2WayDataChannelDatapath* GetDataPath(PVMFNodeInterface& aEndPt);
-        CPV2WayDataChannelDatapath* GetDataPath(PV2WayDirection aDirection,
-                                                PV2WayMediaType aMediaType);
+        CPV2WayDataChannelDatapath *GetDataPath(PV2WayDirection Direction, PVTrackId TrackId);
 
         bool AllChannelsOpened();
         bool Supports(PVMFNodeCapability &capability, PVMFFormatType aFormat, bool isInput = true);
@@ -826,15 +799,6 @@ class CPV324m2Way : OsclActiveObject,
                         PVErrorEventObserver *aErrorEventObserver);
         void SetDefaults();
 
-        void CreateTSCNode();
-
-        void SetInitInfo(OsclAny* aContextData);
-        void SetCancelInfo(OsclAny* aContextData);
-        void SetResetInfo(OsclAny* aContextData);
-
-        bool AnyNodeStillAdded(Oscl_Vector<TPV2WayNode*, OsclMemAllocator> aNodes);
-        bool ProperStateForAction(PV2WayAction aAction);
-
         void PreInit();
         // OsclActiveObject virtuals
         void DoCancel();
@@ -846,8 +810,6 @@ class CPV324m2Way : OsclActiveObject,
             iLastState = iState;
             iState = aState;
         }
-        bool ChannelClosed(CPV2WayDataChannelDatapath* aDatapath,
-                           TPVChannelId aId);
 
         void InitiateDisconnect();
         void InitiateReset();
@@ -920,22 +882,6 @@ class CPV324m2Way : OsclActiveObject,
         const char* CanConvertFormat(TPVDirection aDir,
                                      PVMFFormatType aThisFmtType,
                                      Oscl_Vector<PVMFFormatType, OsclMemAllocator>& aThatFormatList);
-        void CreateVideoOutgoingDatapath(TPV2WayCmdInfo* apCmd,
-                                         TPV2WayNode& aNode,
-                                         CPVDatapathNode aDatapathnode,
-                                         CPV2WayDataChannelDatapath* apDatapath);
-        void CreateAudioOutgoingDatapath(TPV2WayCmdInfo* apCmd,
-                                         TPV2WayNode& aNode,
-                                         CPVDatapathNode aDatapathnode,
-                                         CPV2WayDataChannelDatapath* apDatapath);
-        void CreateVideoIncomingDatapath(TPV2WayCmdInfo* apCmd,
-                                         TPV2WayNode& aNode,
-                                         CPVDatapathNode aDatapathnode,
-                                         CPV2WayDataChannelDatapath* apDatapath);
-        void CreateAudioIncomingDatapath(TPV2WayCmdInfo* apCmd,
-                                         TPV2WayNode& aNode,
-                                         CPVDatapathNode aDatapathnode,
-                                         CPV2WayDataChannelDatapath* apDatapath);
 
         void DoSelectFormat(TPVDirection aDir,
                             PVMFFormatType aFormatType,
@@ -946,58 +892,42 @@ class CPV324m2Way : OsclActiveObject,
         void DoAddDataSource(TPV2WayNode& aNode, const PVMFCmdResp& aResponse);
 
         void DoAddDataSourceTscNode(CPVDatapathNode& datapathnode,
-                                    CPV2WayDataChannelDatapath* datapath,
+                                    CPV2WayEncDataChannelDatapath* datapath,
                                     TPV2WayCmdInfo *cmd);
         void DoAddDataSourceNode(TPV2WayNode& aNode,
                                  CPVDatapathNode& datapathnode,
-                                 CPV2WayDataChannelDatapath* datapath);
+                                 CPV2WayEncDataChannelDatapath* datapath);
 
         void DoAddAudioEncNode(CPVDatapathNode& datapathnode,
-                               CPV2WayDataChannelDatapath* datapath);
+                               CPV2WayEncDataChannelDatapath* datapath);
         void DoAddVideoEncNode(CPVDatapathNode& datapathnode,
-                               CPV2WayDataChannelDatapath* datapath);
+                               CPV2WayEncDataChannelDatapath* datapath);
 
         void DoAddDataSink(TPV2WayNode& aNode, const PVMFCmdResp& aResponse);
         void DoAddDataSinkTscNode(CPVDatapathNode& datapathnode,
-                                  CPV2WayDataChannelDatapath* datapath,
+                                  CPV2WayDecDataChannelDatapath* datapath,
                                   TPV2WayCmdInfo *cmd);
         void DoAddDataSinkNodeForH263_M4V(TPV2WayNode& aNode,
                                           CPVDatapathNode& datapathnode,
-                                          CPV2WayDataChannelDatapath* datapath);
+                                          CPV2WayDecDataChannelDatapath* datapath);
         void DoAddDataSinkNodeForAVC(TPV2WayNode& arNode,
                                      CPVDatapathNode& arDatapathnode,
-                                     CPV2WayDataChannelDatapath* datapath);
+                                     CPV2WayDecDataChannelDatapath* apDatapath);
         void DoAddDataSinkGeneric(TPV2WayNode& aNode,
                                   CPVDatapathNode& datapathnode,
-                                  CPV2WayDataChannelDatapath* apDatapath);
+                                  CPV2WayDecDataChannelDatapath* datapath);
         void DoAddVideoDecNode(CPVDatapathNode& datapathnode,
-                               CPV2WayDataChannelDatapath* apDatapath);
+                               CPV2WayDecDataChannelDatapath* datapath);
         void DoAddAudioDecNode(CPVDatapathNode& datapathnode,
-                               CPV2WayDataChannelDatapath* apDatapath);
+                               CPV2WayDecDataChannelDatapath* datapath);
 
         PVCommandId DoRemoveDataSourceSink(PVMFNodeInterface& aEndPt, OsclAny* aContextData);
 
-        bool IsFormatSupported(Oscl_Vector<PVMFFormatType, OsclMemAllocator> aCapability,
-                               CPV2WayDataChannelDatapath& aDatapath);
         bool IsNodeInList(Oscl_Vector<TPV2WayNode*, OsclMemAllocator>& aList, PVMFNodeInterface* aNode);
 
         bool IsSourceNode(PVMFNodeInterface* aNode);
 
         bool IsSinkNode(PVMFNodeInterface* aNode);
-        bool IsDecDatapath(CPV2WayDataChannelDatapath* apDatapath);
-        bool IsEncDatapath(CPV2WayDataChannelDatapath* apDatapath);
-        bool IsVideoDatapath(CPV2WayDataChannelDatapath* apDatapath);
-        bool IsAudioDatapath(CPV2WayDataChannelDatapath* apDatapath);
-        TPV2WayCmdInfo* GetAndSetCmdInfo(TPV2WayCommandType aType,
-                                         PV2WayDirection aDirection,
-                                         PVTrackId aTrackId,
-                                         OsclAny* apContextData);
-        TPV2WayCmdInfo* GetAndSetCmdInfo(TPV2WayCommandType aType,
-                                         PVTrackId aTrackId,
-                                         OsclAny* apContextData);
-        TPV2WayCmdInfo* GetAndSetCmdInfo(TPV2WayCommandType aType,
-                                         OsclAny* apContextData);
-
 
         TPV2WayNode* GetTPV2WayNode(Oscl_Vector<TPV2WayNode*, OsclMemAllocator>& aList, PVMFNodeInterface* aNode);
 
@@ -1029,16 +959,10 @@ class CPV324m2Way : OsclActiveObject,
         PVMFStatus ConfigureVideoEncoderNode();
 
         void ClearVideoEncoderNode();
-        void CloseDatapathTSCPorts();
 
-        void SendClosingTrackIndication(TPV2WayEventInfo* apEvent,
-                                        TPVDirection aDirection,
-                                        TPVChannelId aId);
-        void SendClosedTrackIndication(TPV2WayEventInfo* apEvent,
-                                       TPVDirection aDirection,
-                                       TPVChannelId aId);
+        bool AllocNodes();
 
-        bool GetEventInfo(TPV2WayEventInfo*& aprEvent);
+        bool GetEventInfo(TPV2WayEventInfo*& event);
         static int32 Construct(CPV324m2Way* aRet,
                                PVMFNodeInterface* aTsc,
                                TPVTerminalType aTerminalType,
@@ -1152,6 +1076,9 @@ class CPV324m2Way : OsclActiveObject,
         // Is a cancel pending ?
         TPV2WayCmdInfo *iCancelInfo;
 
+        // Is a get session params call pending ?
+        TPV2WayCmdInfo *iSessionParamsInfo;
+
         PVLogger *iLogger;
 
 
@@ -1229,6 +1156,10 @@ class CPV324m2Way : OsclActiveObject,
         int32 iPendingTscReset;
         int32 iPendingAudioEncReset;
         int32 iPendingVideoEncReset;
+
+        /* The AddDataSource command for video will be pending untill the extension interface for the encoder is queried and the
+            encoder is configured */
+        TPV2WayCmdInfo *iAddDataSourceVideoCmd;
 
         int32 iReferenceCount;
 

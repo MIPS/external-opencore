@@ -48,6 +48,9 @@
 #include "pv_2way_source_and_sinks_lipsync.h"
 
 
+#define AUDIO_FIRST 0
+#define VIDEO_FIRST 1
+
 #define AUD_SRC_PAUSE_DURATION  1
 #define AUD_SRC_RESUME_DURATION 5
 #define AUD_SNK_PAUSE_DURATION   10
