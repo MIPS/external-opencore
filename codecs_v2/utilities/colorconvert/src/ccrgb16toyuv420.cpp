@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -222,6 +222,7 @@ extern "C"
         int32 pitch_dst = param[2];
         int32 pitch_src = param[4];
         uint16 colorkey = param[5];
+        uint32 iBottomUp = param[6];
         uint8 *y_tab = table[0];
         uint8 *cb_tab = table[1];
         uint8 *cr_tab = table[2];
@@ -245,6 +246,12 @@ extern "C"
 
         jlimit = height_dst;
         ilimit = width_dst;
+
+        if (iBottomUp == 1)
+        {
+            inputRGB += (jlimit - 1) * width_dst; // move to last row
+            pitch_src = -pitch_src;
+        }
 
 #define ALPHA 413       // 413  = (int) ((0.0722/0.7152)* (2^12)) for B, 2^12 is for hitting 16bit range for SIMD calculation,
 #define BETA  1218      // 1218 = (int) ((0.2126/0.7152)* (2^12)) for R  5bit B/R => ALPHA and BETA < 2^11
@@ -495,7 +502,7 @@ extern "C"
 // in this overload, yuv420 is the output, rgb16 is input
 int32 CCRGB16toYUV420::Convert(uint8 *rgb16, uint8 **yuv420)
 {
-    uint32 param[6];
+    uint32 param[7];
     uint8 *table[3];
 
     OSCL_ASSERT(rgb16);
@@ -511,6 +518,7 @@ int32 CCRGB16toYUV420::Convert(uint8 *rgb16, uint8 **yuv420)
     param[3] = (uint32) _mDst_mheight;
     param[4] = (uint32) _mSrc_pitch;
     param[5] = (uint32) mColorKey;
+    param[6] = (uint32) iBottomUp;
 
     table[0] = iY_Table;
     table[1] = ipCb_Table;
