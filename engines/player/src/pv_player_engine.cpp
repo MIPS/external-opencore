@@ -5400,7 +5400,7 @@ PVMFStatus PVPlayerEngine::DoReleaseMetadataValues(PVPlayerEngineCommand& aCmd)
     {
         PVMFMetadataExtensionInterface* mdif = iMetadataIFList[iMetadataValueReleaseList[0].iMetadataIFListIndex].iInterface;
         OSCL_ASSERT(mdif != NULL);
-        if (PVMFSuccess == mdif->SetMetadataClipIndex(iGetMetadataKeysParam.iClipIndex))
+        if (PVMFSuccess == mdif->SetMetadataClipIndex(iGetMetadataValuesParam.iClipIndex))
         {
             mdif->ReleaseNodeMetadataValues(*(iGetMetadataValuesParam.iValueList), iMetadataValueReleaseList[0].iStartIndex, iMetadataValueReleaseList[0].iEndIndex);
             iMetadataValueReleaseList.erase(iMetadataValueReleaseList.begin());
