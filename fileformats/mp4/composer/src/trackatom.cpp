@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -123,8 +123,8 @@ PVA_FF_TrackAtom::nextSample(int32 mediaType,
     {
         ts_in_milliseconds = (uint32)((pSampleParam->_timeStamp * 1000.0f) / mediaTimeScale);
 
-        // Add sample to track header so can update its _duration
-        // which is supposed to be in movie time scale
+        // add sample's timestamp to track header which allows it to update
+        // track duration. timetamps are to be in milliseconds timescale.
         _ptrackHeader->addSample(ts_in_milliseconds);
     }
 
@@ -135,8 +135,8 @@ PVA_FF_TrackAtom::nextSample(int32 mediaType,
         {
             PV_MP4_FF_NEW(fp->auditCB, PVA_FF_EditAtom, (), _eList);
             _eList->setParent(this);
-            // edit durations are sposed to be movie time scale
-            _eList->addEmptyEdit(ts_in_milliseconds);
+            // edit durations are in movie timescale
+            _eList->addEmptyEdit((ts_in_milliseconds * _ptrackHeader->getTimeScale()) / 1000);
             _intialTrackTimeOffsetInMilliSeconds = ts_in_milliseconds;
         }
         else
@@ -164,8 +164,8 @@ PVA_FF_TrackAtom::nextTextSample(int32 mediaType,
     {
         ts_in_milliseconds = (uint32)((pSampleParam->_timeStamp * 1000.0f) / mediaTimeScale);
 
-        // Add sample to track header so can update its _duration
-        // which is supposed to be in movie time scale
+        // add sample's timestamp to track header which allows it to update
+        // track duration. timetamps are to be in milliseconds timescale.
         _ptrackHeader->addSample(ts_in_milliseconds, pSampleParam->_sampleDuration);
     }
 
@@ -177,8 +177,8 @@ PVA_FF_TrackAtom::nextTextSample(int32 mediaType,
             PV_MP4_FF_NEW(fp->auditCB, PVA_FF_EditAtom, (), _eList);
 
             _eList->setParent(this);
-            // edit durations are sposed to be movie time scale
-            _eList->addEmptyEdit(ts_in_milliseconds);
+            // edit durations are in movie timescale
+            _eList->addEmptyEdit((ts_in_milliseconds * _ptrackHeader->getTimeScale()) / 1000);
             _intialTrackTimeOffsetInMilliSeconds = ts_in_milliseconds;
         }
         else
