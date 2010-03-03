@@ -216,7 +216,7 @@ class CPVUserInput: public HeapBase, public PVInterface
         /**
          * Virtual function to return the user input type
          **/
-        virtual UserInputType GetType() = 0;
+        virtual PV2WayUserInputType GetType() = 0;
 
         // from PVInterface
         void addRef()
@@ -278,7 +278,7 @@ class CPVUserInputDtmf : public CPVUserInput
         OSCL_IMPORT_REF ~CPVUserInputDtmf() {};
 
         // from CPVUserInput
-        OSCL_IMPORT_REF UserInputType GetType()
+        OSCL_IMPORT_REF PV2WayUserInputType GetType()
         {
             return PV_DTMF;
         }
@@ -288,7 +288,7 @@ class CPVUserInputDtmf : public CPVUserInput
          *
          * @returns Returns the input DTMF tone.
          **/
-        OSCL_IMPORT_REF const uint8 GetInput()
+        OSCL_IMPORT_REF uint8 GetInput()
         {
             return iInput;
         }
@@ -374,7 +374,7 @@ class CPVUserInputAlphanumeric : public CPVUserInput
         }
 
         // from CPVUserInput
-        OSCL_IMPORT_REF UserInputType GetType()
+        OSCL_IMPORT_REF PV2WayUserInputType GetType()
         {
             return PV_ALPHANUMERIC;
         }
