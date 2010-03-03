@@ -7442,11 +7442,11 @@ PVMFStatus PVMFMP4FFParserNode::CheckForMP4HeaderAvailability()
          */
         TOsclFileOffset currCapacity = 0;
         uint32 tempCurrCapacity = 0;
-        iDataStreamInterface->QueryReadCapacity(iDataStreamSessionID,
-                                                tempCurrCapacity);
+        PvmiDataStreamStatus lStatus = iDataStreamInterface->QueryReadCapacity(iDataStreamSessionID,
+                                       tempCurrCapacity);
         currCapacity = (TOsclFileOffset)tempCurrCapacity;
 
-        if (currCapacity <  MP4_MIN_BYTES_FOR_GETTING_MOVIE_HDR_SIZE)
+        if (lStatus != PVDS_END_OF_STREAM && currCapacity <  MP4_MIN_BYTES_FOR_GETTING_MOVIE_HDR_SIZE)
         {
             iRequestReadCapacityNotificationID =
                 iDataStreamInterface->RequestReadCapacityNotification(iDataStreamSessionID,

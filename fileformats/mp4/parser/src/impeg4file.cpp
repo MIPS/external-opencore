@@ -596,7 +596,7 @@ IMpeg4File::GetMetaDataSize(PVMFCPMPluginAccessInterfaceFactory* aCPMAccessFacto
     if (fileSize <= DEFAULT_ATOM_SIZE)
     {
         AtomUtils::CloseMP4File(fp);
-        return INSUFFICIENT_DATA;
+        return DEFAULT_ERROR;
     }
 
     uint32 atomType          = UNKNOWN_ATOM;

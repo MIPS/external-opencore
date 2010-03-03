@@ -569,7 +569,7 @@ Mpeg4File::Mpeg4File(MP4_FF_FILE *fp,
                         for (int32 i = 0; i < numMediaTracks; i++)
                         {
                             int32 retVal = _pmovieAtom->getOffsetByTime(idList[i], 0, &offsetList[i]);
-                            if (EVERYTHING_FINE != retVal)
+                            if (DEFAULT_ERROR == retVal)
                             {
                                 _success = false;
                                 _mp4ErrorCode = retVal;
