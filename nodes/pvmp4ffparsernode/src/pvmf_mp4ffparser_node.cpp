@@ -138,9 +138,7 @@ PVMFMP4FFParserNode::PVMFMP4FFParserNode(int32 aPriority) :
     iCPMLicenseInterfacePVI          = NULL;
     iCPMGetMetaDataKeysCmdId       = 0;
     iCPMGetMetaDataValuesCmdId     = 0;
-    iMP4ParserNodeMetadataValueCount = 0;
     iCPMGetLicenseInterfaceCmdId     = 0;
-    iTotalID3MetaDataTagInValueList = 0;
 
     minTime = 0;
     avgTime = 0;
@@ -197,8 +195,6 @@ PVMFMP4FFParserNode::PVMFMP4FFParserNode(int32 aPriority) :
              iNodeCapability.iOutputFormatCapability.push_back(PVMFFormatType(PVMF_MIME_H2631998));
              iNodeCapability.iOutputFormatCapability.push_back(PVMFFormatType(PVMF_MIME_H2632000));
              iNodeCapability.iOutputFormatCapability.push_back(PVMFFormatType(PVMF_MIME_H264_VIDEO_MP4));
-
-             iAvailableMetadataKeys.clear();
 
              iUnderFlowCheckTimer = PVMF_BASE_NODE_NEW(OsclTimer<OsclMemAllocator>,
                                     ("PVMFMP4FFNodeUnderFlowTimer"));
@@ -419,6 +415,9 @@ PVMFStatus PVMFMP4FFParserNode::SetSourceInitializationData(OSCL_wString& aSourc
     PVMFMp4ClipInfo mp4clipInfo;
     // initiliaze parser object as null
     mp4clipInfo.iParserObj = NULL;
+    mp4clipInfo.iAvailableMetadataKeys.clear();
+    mp4clipInfo.iTotalID3MetaDataTagInValueList = 0;
+    mp4clipInfo.iMetadataValueCount = 0;
 
     PVMFSourceClipInfo info;
     iUpdateExistingClip = false;
@@ -5580,9 +5579,6 @@ void PVMFMP4FFParserNode::RemoveAllCommands()
 
 void PVMFMP4FFParserNode::CleanupFileSource()
 {
-    iAvailableMetadataKeys.clear();
-    iMP4ParserNodeMetadataValueCount = 0;
-    iTotalID3MetaDataTagInValueList = 0;
     iCPMMetadataKeys.clear();
     iVideoDimensionInfoVec.clear();
 
@@ -8910,6 +8906,10 @@ PVMFStatus PVMFMP4FFParserNode::ReleaseMP4FileParser(int32 aClipIndex)
             parserObj = NULL;
             iClipInfoList[aClipIndex].iParserObj = NULL;
         }
+
+        iClipInfoList[aClipIndex].iAvailableMetadataKeys.clear();
+        iClipInfoList[aClipIndex].iTotalID3MetaDataTagInValueList = 0;
+        iClipInfoList[aClipIndex].iMetadataValueCount = 0;
         return status;
     }
 

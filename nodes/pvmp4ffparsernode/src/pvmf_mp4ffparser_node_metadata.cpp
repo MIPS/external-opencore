@@ -53,15 +53,15 @@ uint32 PVMFMP4FFParserNode::GetNumMetadataKeys(char* aQueryKeyString)
     if (aQueryKeyString == NULL)
     {
         // No query key so just return all the available keys
-        num_entries = iAvailableMetadataKeys.size();
+        num_entries = iClipInfoList[iClipIndexForMetadata].iAvailableMetadataKeys.size();
     }
     else
     {
         // Determine the number of metadata keys based on the query key string provided
-        for (uint32 i = 0; i < iAvailableMetadataKeys.size(); i++)
+        for (uint32 i = 0; i < iClipInfoList[iClipIndexForMetadata].iAvailableMetadataKeys.size(); i++)
         {
             // Check if the key matches the query key
-            if (pv_mime_strcmp(iAvailableMetadataKeys[i].get_cstr(), aQueryKeyString) >= 0)
+            if (pv_mime_strcmp(iClipInfoList[iClipIndexForMetadata].iAvailableMetadataKeys[i].get_cstr(), aQueryKeyString) >= 0)
             {
                 num_entries++;
             }
@@ -98,6 +98,8 @@ uint32 PVMFMP4FFParserNode::GetNumMetadataValues(PVMFMetadataList& aKeyList)
 
 PVMFStatus PVMFMP4FFParserNode::SetMetadataClipIndex(uint32 aClipNum)
 {
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFMP4FFParserNode::SetMetadataClipIndex() called clip index=%d", aClipNum));
+
     iClipIndexForMetadata = aClipNum;
     iMetadataParserObj = GetParserObjAtIndex(aClipNum);
     if (iMetadataParserObj)
@@ -149,7 +151,7 @@ PVMFStatus PVMFMP4FFParserNode::ReleaseNodeMetadataValues(Oscl_Vector<PvmiKvp, O
         return PVMFFailure;
     }
 
-    end = OSCL_MIN(aValueList.size(), iMP4ParserNodeMetadataValueCount);
+    end = OSCL_MIN(aValueList.size(), iClipInfoList[iClipIndexForMetadata].iMetadataValueCount);
 
     if (start > end || aValueList.size() == 0)
     {
@@ -162,9 +164,9 @@ PVMFStatus PVMFMP4FFParserNode::ReleaseNodeMetadataValues(Oscl_Vector<PvmiKvp, O
     //First few entries in value list have ID3 specific data. We do not have to release that data
     //as it will be released by ID3Parcom. Hence we need to modify the start value if it is less than
     //iTotalID3MetaDataTagInValueList
-    if (start < iTotalID3MetaDataTagInValueList)
+    if (start < iClipInfoList[iClipIndexForMetadata].iTotalID3MetaDataTagInValueList)
     {
-        start = iTotalID3MetaDataTagInValueList;
+        start = iClipInfoList[iClipIndexForMetadata].iTotalID3MetaDataTagInValueList;
     }
 
     // Go through the specified values and free it
@@ -213,11 +215,15 @@ PVMFStatus PVMFMP4FFParserNode::CompleteGetMetadataKeys()
         return PVMFErrArgument;
     }
 
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "PVMFMP4FFParserNode::CompleteGetMetadataKeys() iAvailableMetadataKeys=%d iCPMMetadataKeys=%d",
+                     iClipInfoList[iClipIndexForMetadata].iAvailableMetadataKeys.size(), iCPMMetadataKeys.size()));
+
     // Copy the requested keys
     uint32 num_entries = 0;
     int32 num_added = 0;
     uint32 lcv = 0;
-    for (lcv = 0; lcv < iAvailableMetadataKeys.size(); lcv++)
+    for (lcv = 0; lcv < iClipInfoList[iClipIndexForMetadata].iAvailableMetadataKeys.size(); lcv++)
     {
         if (query_key == NULL)
         {
@@ -226,7 +232,7 @@ PVMFStatus PVMFMP4FFParserNode::CompleteGetMetadataKeys()
             if (num_entries > starting_index)
             {
                 // Past the starting index so copy the key
-                PVMFStatus status = PushValueToList(iAvailableMetadataKeys, keylistptr, lcv);
+                PVMFStatus status = PushValueToList(iClipInfoList[iClipIndexForMetadata].iAvailableMetadataKeys, keylistptr, lcv);
                 if (PVMFErrNoMemory == status)
                 {
                     return status;
@@ -237,14 +243,14 @@ PVMFStatus PVMFMP4FFParserNode::CompleteGetMetadataKeys()
         else
         {
             // Check if the key matches the query key
-            if (oscl_strstr(iAvailableMetadataKeys[lcv].get_cstr(), query_key) != NULL)
+            if (oscl_strstr(iClipInfoList[iClipIndexForMetadata].iAvailableMetadataKeys[lcv].get_cstr(), query_key) != NULL)
             {
                 // This key is counted
                 ++num_entries;
                 if (num_entries > starting_index)
                 {
                     // Past the starting index so copy the key
-                    PVMFStatus status = PushValueToList(iAvailableMetadataKeys, keylistptr, lcv);
+                    PVMFStatus status = PushValueToList(iClipInfoList[iClipIndexForMetadata].iAvailableMetadataKeys, keylistptr, lcv);
                     if (PVMFErrNoMemory == status)
                     {
                         return status;
@@ -346,25 +352,25 @@ PVMFStatus PVMFMP4FFParserNode::DoGetNodeMetadataValues()
                          oscl_strlen(PVMP4_ALL_METADATA_KEY)) == 0)
         {
             //use the complete metadata key list
-            keylistptr = &iAvailableMetadataKeys;
+            keylistptr = &iClipInfoList[iClipIndexForMetadata].iAvailableMetadataKeys;
         }
     }
 
     uint32 numKeys = keylistptr->size();
 
     // The underlying mp4 ff library will fill in the values.
-    iTotalID3MetaDataTagInValueList = 0;
+    iClipInfoList[iClipIndexForMetadata].iTotalID3MetaDataTagInValueList = 0;
     PVMFStatus status = iMetadataParserObj->GetMetadataValues(*keylistptr, *valuelistptr,
                         starting_index, max_entries,
                         numentriesadded,
-                        iTotalID3MetaDataTagInValueList);
+                        iClipInfoList[iClipIndexForMetadata].iTotalID3MetaDataTagInValueList);
 
     numvalentries = numvalentries + numentriesadded;
 
     if (numvalentries >= (uint32)max_entries)
     {
         //If required number of entries have already been added
-        iMP4ParserNodeMetadataValueCount = (*valuelistptr).size();
+        iClipInfoList[iClipIndexForMetadata].iMetadataValueCount = (*valuelistptr).size();
         return PVMFSuccess;
     }
 
@@ -472,7 +478,7 @@ PVMFStatus PVMFMP4FFParserNode::DoGetNodeMetadataValues()
                         // Check if the max number of value entries were added
                         if (max_entries > 0 && numentriesadded >= max_entries)
                         {
-                            iMP4ParserNodeMetadataValueCount = (*valuelistptr).size();
+                            iClipInfoList[iClipIndexForMetadata].iMetadataValueCount = (*valuelistptr).size();
                             return PVMFSuccess;
                         }
                     }
@@ -640,7 +646,7 @@ PVMFStatus PVMFMP4FFParserNode::DoGetNodeMetadataValues()
                             // Check if the max number of value entries were added
                             if (max_entries > 0 && numentriesadded >= max_entries)
                             {
-                                iMP4ParserNodeMetadataValueCount = (*valuelistptr).size();
+                                iClipInfoList[iClipIndexForMetadata].iMetadataValueCount = (*valuelistptr).size();
                                 return PVMFSuccess;
                             }
                         }
@@ -717,7 +723,7 @@ PVMFStatus PVMFMP4FFParserNode::DoGetNodeMetadataValues()
                             // Check if the max number of value entries were added
                             if (max_entries > 0 && numentriesadded >= max_entries)
                             {
-                                iMP4ParserNodeMetadataValueCount = (*valuelistptr).size();
+                                iClipInfoList[iClipIndexForMetadata].iMetadataValueCount = (*valuelistptr).size();
                                 return PVMFSuccess;
                             }
                         }
@@ -794,7 +800,7 @@ PVMFStatus PVMFMP4FFParserNode::DoGetNodeMetadataValues()
                             // Check if the max number of value entries were added
                             if (max_entries > 0 && numentriesadded >= max_entries)
                             {
-                                iMP4ParserNodeMetadataValueCount = (*valuelistptr).size();
+                                iClipInfoList[iClipIndexForMetadata].iMetadataValueCount = (*valuelistptr).size();
                                 return PVMFSuccess;
                             }
                         }
@@ -869,7 +875,7 @@ PVMFStatus PVMFMP4FFParserNode::DoGetNodeMetadataValues()
                             // Check if the max number of value entries were added
                             if (max_entries > 0 && numentriesadded >= max_entries)
                             {
-                                iMP4ParserNodeMetadataValueCount = (*valuelistptr).size();
+                                iClipInfoList[iClipIndexForMetadata].iMetadataValueCount = (*valuelistptr).size();
                                 return PVMFSuccess;
                             }
                         }
@@ -944,7 +950,7 @@ PVMFStatus PVMFMP4FFParserNode::DoGetNodeMetadataValues()
                             // Check if the max number of value entries were added
                             if (max_entries > 0 && numentriesadded >= max_entries)
                             {
-                                iMP4ParserNodeMetadataValueCount = (*valuelistptr).size();
+                                iClipInfoList[iClipIndexForMetadata].iMetadataValueCount = (*valuelistptr).size();
                                 return PVMFSuccess;
                             }
                         }
@@ -1001,7 +1007,12 @@ PVMFStatus PVMFMP4FFParserNode::DoGetNodeMetadataValues()
         }
     }
 
-    iMP4ParserNodeMetadataValueCount = (*valuelistptr).size();
+    iClipInfoList[iClipIndexForMetadata].iMetadataValueCount = (*valuelistptr).size();
+
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "PVMFMP4FFParserNode::DoGetMetadataValues() iClipIndexForMetadata=%d iMetadataValueCount=%d iTotalID3MetaDataTagInValueList=%d",
+                     iClipIndexForMetadata, iClipInfoList[iClipIndexForMetadata].iMetadataValueCount,
+                     iClipInfoList[iClipIndexForMetadata].iTotalID3MetaDataTagInValueList));
 
     if (iCPMMetaDataExtensionInterface != NULL)
     {
@@ -1064,8 +1075,8 @@ PVMFStatus PVMFMP4FFParserNode::InitMetaData(uint32 aParserIndex)
     if (parserObj)
     {
         int32 leavecode = 0;
-        OSCL_TRY(leavecode, iAvailableMetadataKeys.reserve(NUMMETADATAKEYS));
-        parserObj->InitMetaData(&iAvailableMetadataKeys);
+        OSCL_TRY(leavecode, iClipInfoList[aParserIndex].iAvailableMetadataKeys.reserve(NUMMETADATAKEYS));
+        parserObj->InitMetaData(&iClipInfoList[aParserIndex].iAvailableMetadataKeys);
     }
     else
     {
@@ -1098,8 +1109,8 @@ PVMFStatus PVMFMP4FFParserNode::InitMetaData(uint32 aParserIndex)
                 oscl_snprintf(indexparam, 18, ";index=%d", i);
                 indexparam[17] = '\0';
 
-                PushToAvailableMetadataKeysList(PVMP4METADATA_TRACKINFO_VIDEO_WIDTH_KEY, indexparam);
-                PushToAvailableMetadataKeysList(PVMP4METADATA_TRACKINFO_VIDEO_HEIGHT_KEY, indexparam);
+                PushToAvailableMetadataKeysList(aParserIndex, PVMP4METADATA_TRACKINFO_VIDEO_WIDTH_KEY, indexparam);
+                PushToAvailableMetadataKeysList(aParserIndex, PVMP4METADATA_TRACKINFO_VIDEO_HEIGHT_KEY, indexparam);
             }
         }
     }
@@ -1134,7 +1145,7 @@ PVMFStatus PVMFMP4FFParserNode::InitMetaData(uint32 aParserIndex)
     return PVMFSuccess;
 }
 
-void PVMFMP4FFParserNode::PushToAvailableMetadataKeysList(const char* aKeystr, char* aOptionalParam)
+void PVMFMP4FFParserNode::PushToAvailableMetadataKeysList(uint32 aParserIndex, const char* aKeystr, char* aOptionalParam)
 {
     if (aKeystr == NULL)
     {
@@ -1143,13 +1154,13 @@ void PVMFMP4FFParserNode::PushToAvailableMetadataKeysList(const char* aKeystr, c
 
     if (aOptionalParam)
     {
-        iAvailableMetadataKeys.push_front(aKeystr);
-        iAvailableMetadataKeys[0] += aOptionalParam;
+        iClipInfoList[aParserIndex].iAvailableMetadataKeys.push_front(aKeystr);
+        iClipInfoList[aParserIndex].iAvailableMetadataKeys[0] += aOptionalParam;
     }
 
     else
     {
-        iAvailableMetadataKeys.push_front(aKeystr);
+        iClipInfoList[aParserIndex].iAvailableMetadataKeys.push_front(aKeystr);
     }
 }
 

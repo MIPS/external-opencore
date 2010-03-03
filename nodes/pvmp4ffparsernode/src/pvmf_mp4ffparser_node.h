@@ -159,6 +159,10 @@ typedef struct
 {
     IMpeg4File* iParserObj;
     PVMFSourceClipInfo iClipInfo;
+    PVMFMetadataList iAvailableMetadataKeys;
+    //This will hold the total number of ID3 specific values present in the value list
+    uint32 iTotalID3MetaDataTagInValueList;
+    uint32 iMetadataValueCount;
 } PVMFMp4ClipInfo;
 
 enum BaseKeys_SelectionType
@@ -384,7 +388,7 @@ class PVMFMP4FFParserNode
         PVMFStatus DoGetNodeMetadataKeys();
         PVMFStatus CompleteGetMetadataKeys();
 
-        void PushToAvailableMetadataKeysList(const char* aKeystr, char* aOptionalParam = NULL);
+        void PushToAvailableMetadataKeysList(uint32 aParserIndex, const char* aKeystr, char* aOptionalParam = NULL);
         PVMFStatus GetIndexParamValues(const char* aString, uint32& aStartIndex, uint32& aEndIndex);
         PVMFStatus CreateNewArray(uint32** aTrackidList, uint32 aNumTracks);
 
@@ -495,7 +499,6 @@ class PVMFMP4FFParserNode
         Oscl_FileServer iFileServer;
         uint32 iParsingMode;
         bool iProtectedFile;
-        uint32 iMP4ParserNodeMetadataValueCount;
         Oscl_Vector<OSCL_HeapString<OsclMemAllocator>, OsclMemAllocator> iCPMMetadataKeys;
         Oscl_Vector<PVMP4FFNodeTrackPortInfo, OsclMemAllocator> iNodeTrackPortList;
         Oscl_Vector<PVMFTrackInfo, OsclMemAllocator> iSelectedTrackInfoList;
@@ -675,9 +678,6 @@ class PVMFMP4FFParserNode
         int32 iDataRate;
         int32 minFileOffsetTrackID;
         uint32 iTotalMoofFrags;
-        PVMFMetadataList iAvailableMetadataKeys;
-        //This will hold the total number of ID3 specific values present in the value list
-        uint32 iTotalID3MetaDataTagInValueList;
 
         Oscl_Vector<PVMFMP4MfraInfoUpdate, OsclMemAllocator> iMoofInfoUpdateVec;
 };
