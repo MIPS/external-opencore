@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -196,6 +196,14 @@ OSCL_EXPORT_REF OsclReturnCode ThreadSafeCallbackAO::ReceiveEvent(OsclAny *Event
 {
 
     OsclReturnCode status;
+    OsclProcStatus::eOsclProcError sema_status;
+
+    // Wait on the remote thread control semaphore. If the queue is full, must block and wait
+    // for the AO to dequeue some previous event. If the queue is not full, proceed
+    sema_status = RemoteThreadCtrlSema.Wait();
+    if (sema_status != OsclProcStatus::SUCCESS_ERROR)
+        return OsclFailure;
+
 
     status = Queue(EventData);
 
@@ -274,14 +282,10 @@ OSCL_EXPORT_REF OsclReturnCode ThreadSafeCallbackAO::QueueDeInit()
 /////////////QUEUE ONE ELEMENT //////////////////////
 OSCL_EXPORT_REF OsclReturnCode ThreadSafeCallbackAO::Queue(OsclAny *pData)
 {
-    OsclProcStatus::eOsclProcError sema_status;
 
-    // Wait on the remote thread control semaphore. If the queue is full, must block and wait
-    // for the AO to dequeue some previous event. If the queue is not full, proceed
-    sema_status = RemoteThreadCtrlSema.Wait();
-    if (sema_status != OsclProcStatus::SUCCESS_ERROR)
-        return OsclFailure;
 
+    // NOTE: assumption is made that a semaphore (external to this method) will prevent
+    // queueing an event if the queue is already full
 
     // protect queue access
     Mutex.Lock();

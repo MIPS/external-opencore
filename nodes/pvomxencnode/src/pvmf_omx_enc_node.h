@@ -952,10 +952,7 @@ class PVMFOMXEncNode
         //********** CB Functions to serve OpenMAX Encoder
 
         //Process callback functions. They will be executed in testapp thread context
-        //  These callbacks are used only in the Multithreaded component case
-        OsclReturnCode ProcessCallbackEventHandler_MultiThreaded(OsclAny* P);
-        OsclReturnCode ProcessCallbackEmptyBufferDone_MultiThreaded(OsclAny* P);
-        OsclReturnCode ProcessCallbackFillBufferDone_MultiThreaded(OsclAny* P);
+
 
         //Callback objects - again, these are used only in the case of Multithreaded component
         EventHandlerThreadSafeCallbackAOEnc*     iThreadSafeHandlerEventHandler;

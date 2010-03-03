@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,9 @@ EventHandlerThreadSafeCallbackAO::EventHandlerThreadSafeCallbackAO(void* aObserv
         : ThreadSafeCallbackAO(aObserver, aDepth, aAOname, aPriority)
 {
 
-    iMemoryPool = ThreadSafeMemPoolFixedChunkAllocator::Create(aDepth + 2);
+    // note: by using the semaphore before a chunk is allocated from the mempool and
+    // after the chunk is returned to the mempool, the mempool can be the same size as the q depth
+    iMemoryPool = ThreadSafeMemPoolFixedChunkAllocator::Create(aDepth);
     if (iMemoryPool == NULL)
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger,
@@ -48,8 +50,10 @@ EventHandlerThreadSafeCallbackAO::~EventHandlerThreadSafeCallbackAO()
         iMemoryPool = NULL;
     }
 }
+
 OsclReturnCode EventHandlerThreadSafeCallbackAO::ProcessEvent(OsclAny* EventData)
 {
+    // Note: this method executes in the context of threadsafe AO (in the node thread)
     // In this case, ProcessEvent calls the method of the primary test AO to process the Event
     if (iObserver != NULL)
     {
@@ -57,9 +61,37 @@ OsclReturnCode EventHandlerThreadSafeCallbackAO::ProcessEvent(OsclAny* EventData
 
         if (ptr->IsAdded())
         {
-            ptr->ProcessCallbackEventHandler_MultiThreaded(EventData);
+            // call the node method that processes the callback
+            EventHandlerSpecificData* ED = (EventHandlerSpecificData*) EventData;
+
+            OMX_HANDLETYPE aComponent = ED->hComponent;
+            OMX_PTR aAppData = ED->pAppData;
+            OMX_EVENTTYPE aEvent = ED->eEvent;
+            OMX_U32 aData1 = ED->nData1;
+            OMX_U32 aData2 = ED->nData2;
+            OMX_PTR aEventData = ED->pEventData;
+
+            ptr->EventHandlerProcessing(aComponent, aAppData, aEvent, aData1, aData2, aEventData);
+
         }
     }
+
+    // release the memory back to the mempool after processing the event
+    iMemoryPool->deallocate(EventData);
+
+    // Signal the semaphore that controls the remote thread.
+    // The remote thread might be blocked and waiting for an event to be processed in case the event queue is full
+    // Note: by signaling the semaphore AFTER releasing the memory back to the mempool, there is no
+    // need to allocate more mempool items than the queue depth.
+    OsclProcStatus::eOsclProcError sema_status;
+
+    sema_status = RemoteThreadCtrlSema.Signal();
+    if (sema_status != OsclProcStatus::SUCCESS_ERROR)
+    {
+        return OsclFailure;
+    }
+
+
     return OsclSuccess;
 }
 
@@ -69,6 +101,7 @@ void EventHandlerThreadSafeCallbackAO::Run()
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "EventHandlerThreadSafeCallbackAO::Run() In"));
 
+    // Note: this method executes in the context of threadsafe AO (in the node thread)
     OsclAny *P; // parameter to dequeue
     OsclReturnCode status = OsclSuccess;
 
@@ -110,8 +143,8 @@ void EventHandlerThreadSafeCallbackAO::Run()
 // (i.e. PendForExec control is done in the loop in Run)
 OsclAny* EventHandlerThreadSafeCallbackAO::DeQueue(OsclReturnCode &stat)
 {
+    // Note: this method executes in the context of threadsafe AO (in the node thread)
     OsclAny *pData;
-    OsclProcStatus::eOsclProcError sema_status;
 
     stat = OsclSuccess;
 
@@ -149,19 +182,47 @@ OsclAny* EventHandlerThreadSafeCallbackAO::DeQueue(OsclReturnCode &stat)
     //release queue access
     Mutex.Unlock();
 
-    // Signal the semaphore that controls the remote thread.
-    // The remote thread might be blocked and waiting for an event to be processed in case the event queue is full
-    sema_status = RemoteThreadCtrlSema.Signal();
-    if (sema_status != OsclProcStatus::SUCCESS_ERROR)
-    {
-        stat = OsclFailure;
-        return NULL;
-    }
-
     return pData;
 }
 
+OsclReturnCode EventHandlerThreadSafeCallbackAO::ReceiveEvent(OMX_OUT OMX_HANDLETYPE aComponent,
+        OMX_OUT OMX_PTR aAppData,
+        OMX_OUT OMX_EVENTTYPE aEvent,
+        OMX_OUT OMX_U32 aData1,
+        OMX_OUT OMX_U32 aData2,
+        OMX_OUT OMX_PTR aEventData)
+{
+    // Note: this method executes in the context of remote thread trying to make the callback
+    OsclReturnCode status;
+    OsclProcStatus::eOsclProcError sema_status;
 
+    // Wait on the remote thread control semaphore. If the queue is full, must block and wait
+    // for the AO to dequeue some previous event. If the queue is not full, proceed
+    sema_status = RemoteThreadCtrlSema.Wait();
+    if (sema_status != OsclProcStatus::SUCCESS_ERROR)
+        return OsclFailure;
+
+    // NOTE: the semaphore will prevent the mempool allocate to be used if the queue is full
+
+    // allocate the memory for the callback event specific data
+    EventHandlerSpecificData* ED = (EventHandlerSpecificData*) iMemoryPool->allocate(sizeof(EventHandlerSpecificData));
+
+    // pack the relevant data into the structure
+    ED->hComponent = aComponent;
+    ED->pAppData = aAppData;
+    ED->eEvent = aEvent;
+    ED->nData1 = aData1;
+    ED->nData2 = aData2;
+    ED->pEventData = aEventData;
+
+    // convert the pointer into OsclAny ptr
+    OsclAny* P = (OsclAny*) ED;
+
+    // now , queue the event pointer
+    status = Queue(P);
+
+    return status;
+}
 ////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////
 EmptyBufferDoneThreadSafeCallbackAO::EmptyBufferDoneThreadSafeCallbackAO(void* aObserver,
@@ -171,7 +232,9 @@ EmptyBufferDoneThreadSafeCallbackAO::EmptyBufferDoneThreadSafeCallbackAO(void* a
         : ThreadSafeCallbackAO(aObserver, aDepth, aAOname, aPriority)
 {
 
-    iMemoryPool = ThreadSafeMemPoolFixedChunkAllocator::Create(aDepth + 2);
+    // note: by using the semaphore before a chunk is allocated from the mempool and
+    // after the chunk is returned to the mempool, the mempool can be the same size as the q depth
+    iMemoryPool = ThreadSafeMemPoolFixedChunkAllocator::Create(aDepth);
     if (iMemoryPool == NULL)
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger,
@@ -197,15 +260,42 @@ EmptyBufferDoneThreadSafeCallbackAO::~EmptyBufferDoneThreadSafeCallbackAO()
 }
 OsclReturnCode EmptyBufferDoneThreadSafeCallbackAO::ProcessEvent(OsclAny* EventData)
 {
+    // Note: this method executes in the context of threadsafe AO (in the node thread)
     // In this case, ProcessEvent calls the method of the primary test AO to process the Event
     if (iObserver != NULL)
     {
         PVMFOMXBaseDecNode* ptr = (PVMFOMXBaseDecNode *) iObserver;
         if (ptr->IsAdded())
         {
-            ptr->ProcessCallbackEmptyBufferDone_MultiThreaded(EventData);
+            // re-cast the pointer
+            EmptyBufferDoneSpecificData* ED = (EmptyBufferDoneSpecificData*) EventData;
+
+            OMX_HANDLETYPE aComponent = ED->hComponent;
+            OMX_PTR aAppData = ED->pAppData;
+            OMX_BUFFERHEADERTYPE* aBuffer = ED->pBuffer;
+
+            // call the node method to process the callback
+            ptr->EmptyBufferDoneProcessing(aComponent, aAppData, aBuffer);
+
         }
     }
+
+    // release the memory back to the mempool after processing the event
+    iMemoryPool->deallocate(EventData);
+
+    // Signal the semaphore that controls the remote thread.
+    // The remote thread might be blocked and waiting for an event to be processed in case the event queue is full
+    // Note: by signaling the semaphore AFTER releasing the memory back to the mempool, there is no
+    // need to allocate more mempool items than the queue depth.
+    OsclProcStatus::eOsclProcError sema_status;
+
+    sema_status = RemoteThreadCtrlSema.Signal();
+    if (sema_status != OsclProcStatus::SUCCESS_ERROR)
+    {
+        return OsclFailure;
+    }
+
+
     return OsclSuccess;
 }
 
@@ -213,6 +303,7 @@ OsclReturnCode EmptyBufferDoneThreadSafeCallbackAO::ProcessEvent(OsclAny* EventD
 
 void EmptyBufferDoneThreadSafeCallbackAO::Run()
 {
+    // Note: this method executes in the context of threadsafe AO (in the node thread)
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "EmptyBufferDoneThreadSafeCallbackAO::Run() In"));
 
     OsclAny *P; // parameter to dequeue
@@ -254,9 +345,8 @@ void EmptyBufferDoneThreadSafeCallbackAO::Run()
 // (i.e. PendForExec control is done in the loop in Run)
 OsclAny* EmptyBufferDoneThreadSafeCallbackAO::DeQueue(OsclReturnCode &stat)
 {
+    // Note: this method executes in the context of threadsafe AO (in the node thread)
     OsclAny *pData;
-    OsclProcStatus::eOsclProcError sema_status;
-
     stat = OsclSuccess;
 
     // Protect the queue while accessing it:
@@ -292,20 +382,46 @@ OsclAny* EmptyBufferDoneThreadSafeCallbackAO::DeQueue(OsclReturnCode &stat)
     //release queue access
     Mutex.Unlock();
 
-    // Signal the semaphore that controls the remote thread.
-    // The remote thread might be blocked and waiting for an event to be processed in case the event queue is full
-    sema_status = RemoteThreadCtrlSema.Signal();
-    if (sema_status != OsclProcStatus::SUCCESS_ERROR)
-    {
-        stat = OsclFailure;
-        return NULL;
-    }
 
     return pData;
 }
 
+OsclReturnCode EmptyBufferDoneThreadSafeCallbackAO::ReceiveEvent(OMX_OUT OMX_HANDLETYPE aComponent,
+        OMX_OUT OMX_PTR aAppData,
+        OMX_OUT OMX_BUFFERHEADERTYPE* aBuffer)
+{
+
+    // Note: this method executes in the context of remote thread trying to make the callback
+    OsclReturnCode status;
+    OsclProcStatus::eOsclProcError sema_status;
+
+    // Wait on the remote thread control semaphore. If the queue is full, must block and wait
+    // for the AO to dequeue some previous event. If the queue is not full, proceed
+    sema_status = RemoteThreadCtrlSema.Wait();
+    if (sema_status != OsclProcStatus::SUCCESS_ERROR)
+        return OsclFailure;
+
+    // NOTE: the semaphore will prevent the mempool allocate to be used if the queue is full
 
 
+    // allocate the memory for the callback event specific data
+    EmptyBufferDoneSpecificData* ED = (EmptyBufferDoneSpecificData*) iMemoryPool->allocate(sizeof(EmptyBufferDoneSpecificData));
+
+    // pack the relevant data into the structure
+    ED->hComponent = aComponent;
+    ED->pAppData = aAppData;
+    ED->pBuffer = aBuffer;
+
+    // convert the pointer into OsclAny ptr
+    OsclAny* P = (OsclAny*) ED;
+
+    // now , queue the event pointer
+    status = Queue(P);
+
+    return status;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////
 FillBufferDoneThreadSafeCallbackAO::FillBufferDoneThreadSafeCallbackAO(void* aObserver,
         uint32 aDepth,
@@ -314,7 +430,9 @@ FillBufferDoneThreadSafeCallbackAO::FillBufferDoneThreadSafeCallbackAO(void* aOb
         : ThreadSafeCallbackAO(aObserver, aDepth, aAOname, aPriority)
 {
 
-    iMemoryPool = ThreadSafeMemPoolFixedChunkAllocator::Create(aDepth + 2);
+    // note: by using the semaphore before a chunk is allocated from the mempool and
+    // after the chunk is returned to the mempool, the mempool can be the same size as the q depth
+    iMemoryPool = ThreadSafeMemPoolFixedChunkAllocator::Create(aDepth);
     if (iMemoryPool == NULL)
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger,
@@ -339,15 +457,42 @@ FillBufferDoneThreadSafeCallbackAO::~FillBufferDoneThreadSafeCallbackAO()
 
 OsclReturnCode FillBufferDoneThreadSafeCallbackAO::ProcessEvent(OsclAny* EventData)
 {
+    // Note: this method executes in the context of threadsafe AO (in the node thread)
     // In this case, ProcessEvent calls the method of the primary test AO to process the Event
     if (iObserver != NULL)
     {
         PVMFOMXBaseDecNode* ptr = (PVMFOMXBaseDecNode*) iObserver;
         if (ptr->IsAdded())
         {
-            ptr->ProcessCallbackFillBufferDone_MultiThreaded(EventData);
+            // re-cast the pointer
+            FillBufferDoneSpecificData* ED = (FillBufferDoneSpecificData*) EventData;
+
+            OMX_HANDLETYPE aComponent = ED->hComponent;
+            OMX_PTR aAppData = ED->pAppData;
+            OMX_BUFFERHEADERTYPE* aBuffer = ED->pBuffer;
+
+
+            ptr->FillBufferDoneProcessing(aComponent, aAppData, aBuffer);
+
         }
     }
+
+
+    // release the memory back to the mempool after processing the event
+    iMemoryPool->deallocate(EventData);
+
+    // Signal the semaphore that controls the remote thread.
+    // The remote thread might be blocked and waiting for an event to be processed in case the event queue is full
+    // Note: by signaling the semaphore AFTER releasing the memory back to the mempool, there is no
+    // need to allocate more mempool items than the queue depth.
+    OsclProcStatus::eOsclProcError sema_status;
+
+    sema_status = RemoteThreadCtrlSema.Signal();
+    if (sema_status != OsclProcStatus::SUCCESS_ERROR)
+    {
+        return OsclFailure;
+    }
+
     return OsclSuccess;
 }
 
@@ -355,6 +500,7 @@ OsclReturnCode FillBufferDoneThreadSafeCallbackAO::ProcessEvent(OsclAny* EventDa
 
 void FillBufferDoneThreadSafeCallbackAO::Run()
 {
+    // Note: this method executes in the context of threadsafe AO (in the node thread)
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "FillBufferDoneThreadSafeCallbackAO::Run() In"));
 
     OsclAny *P; // parameter to dequeue
@@ -399,9 +545,8 @@ void FillBufferDoneThreadSafeCallbackAO::Run()
 // (i.e. PendForExec control is done in the loop in Run)
 OsclAny* FillBufferDoneThreadSafeCallbackAO::DeQueue(OsclReturnCode &stat)
 {
+    // Note: this method executes in the context of threadsafe AO (in the node thread)
     OsclAny *pData;
-    OsclProcStatus::eOsclProcError sema_status;
-
     stat = OsclSuccess;
 
     // Protect the queue while accessing it:
@@ -437,14 +582,40 @@ OsclAny* FillBufferDoneThreadSafeCallbackAO::DeQueue(OsclReturnCode &stat)
     //release queue access
     Mutex.Unlock();
 
-    // Signal the semaphore that controls the remote thread.
-    // The remote thread might be blocked and waiting for an event to be processed in case the event queue is full
-    sema_status = RemoteThreadCtrlSema.Signal();
-    if (sema_status != OsclProcStatus::SUCCESS_ERROR)
-    {
-        stat = OsclFailure;
-        return NULL;
-    }
 
     return pData;
 }
+
+OsclReturnCode FillBufferDoneThreadSafeCallbackAO::ReceiveEvent(OMX_OUT OMX_HANDLETYPE aComponent,
+        OMX_OUT OMX_PTR aAppData,
+        OMX_OUT OMX_BUFFERHEADERTYPE* aBuffer)
+{
+
+    // Note: this method executes in the context of remote thread trying to make the callback
+    OsclReturnCode status;
+    OsclProcStatus::eOsclProcError sema_status;
+
+    // Wait on the remote thread control semaphore. If the queue is full, must block and wait
+    // for the AO to dequeue some previous event. If the queue is not full, proceed
+    sema_status = RemoteThreadCtrlSema.Wait();
+    if (sema_status != OsclProcStatus::SUCCESS_ERROR)
+        return OsclFailure;
+
+    // NOTE: the semaphore will prevent the mempool allocate to be used if the queue is full
+
+    // allocate the memory for the callback event specific data
+    FillBufferDoneSpecificData* ED = (FillBufferDoneSpecificData*) iMemoryPool->allocate(sizeof(FillBufferDoneSpecificData));
+
+    // pack the relevant data into the structure
+    ED->hComponent = aComponent;
+    ED->pAppData = aAppData;
+    ED->pBuffer = aBuffer;
+
+    // convert the pointer into OsclAny ptr
+    OsclAny* P = (OsclAny*) ED;
+    // now , queue the event pointer
+    status = Queue(P);
+
+    return status;
+}
+

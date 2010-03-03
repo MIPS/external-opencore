@@ -246,11 +246,7 @@ class PVMFOMXBaseDecNode: public PVMFNodeInterfaceImpl
 
         //********** CB Functions to serve OpenMAX Decoder
 
-        //Process callback functions. They will be executed in testapp thread context
-        //  These callbacks are used only in the Multithreaded component case
-        OSCL_IMPORT_REF OsclReturnCode ProcessCallbackEventHandler_MultiThreaded(OsclAny* P);
-        OSCL_IMPORT_REF OsclReturnCode ProcessCallbackEmptyBufferDone_MultiThreaded(OsclAny* P);
-        OSCL_IMPORT_REF OsclReturnCode ProcessCallbackFillBufferDone_MultiThreaded(OsclAny* P);
+
 
         //Callback objects - again, these are used only in the case of Multithreaded component
         EventHandlerThreadSafeCallbackAO*    iThreadSafeHandlerEventHandler;

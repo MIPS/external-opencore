@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -95,6 +95,13 @@ class EventHandlerThreadSafeCallbackAOEnc : public ThreadSafeCallbackAO
 
         // OVERLOADED ProcessEvent
         OsclReturnCode ProcessEvent(OsclAny* EventData);
+        // "OVERLOADED" ReceiveEvent
+        OsclReturnCode ReceiveEvent(OMX_OUT OMX_HANDLETYPE aComponent,
+                                    OMX_OUT OMX_PTR aAppData,
+                                    OMX_OUT OMX_EVENTTYPE aEvent,
+                                    OMX_OUT OMX_U32 aData1,
+                                    OMX_OUT OMX_U32 aData2,
+                                    OMX_OUT OMX_PTR aEventData);
 
         // overloaded Run and DeQueue to optimize performance (and process more than 1 event per Run)
         virtual void Run();
@@ -119,6 +126,10 @@ class EmptyBufferDoneThreadSafeCallbackAOEnc : public ThreadSafeCallbackAO
 
         // OVERLOADED ProcessEvent
         OsclReturnCode ProcessEvent(OsclAny* EventData);
+        // "OVERLOADED" ReceiveEvent
+        OsclReturnCode ReceiveEvent(OMX_OUT OMX_HANDLETYPE aComponent,
+                                    OMX_OUT OMX_PTR aAppData,
+                                    OMX_OUT OMX_BUFFERHEADERTYPE* aBuffer);
 
         // overloaded Run and DeQueue to optimize performance (and process more than 1 event per Run)
         virtual void Run();
@@ -143,6 +154,11 @@ class FillBufferDoneThreadSafeCallbackAOEnc : public ThreadSafeCallbackAO
 
         // OVERLOADED ProcessEvent
         OsclReturnCode ProcessEvent(OsclAny* EventData);
+        // "OVERLOADED" ReceiveEvent
+        OsclReturnCode ReceiveEvent(OMX_OUT OMX_HANDLETYPE aComponent,
+                                    OMX_OUT OMX_PTR aAppData,
+                                    OMX_OUT OMX_BUFFERHEADERTYPE* aBuffer);
+
         // overloaded Run and DeQueue to optimize performance (and process more than 1 event per Run)
         virtual void Run();
         virtual OsclAny* DeQueue(OsclReturnCode &stat);

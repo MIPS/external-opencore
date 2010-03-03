@@ -54,24 +54,9 @@ OMX_ERRORTYPE CallbackEventHandler(OMX_OUT OMX_HANDLETYPE aComponent,
 
     if (Node->IsComponentMultiThreaded())
     {
-        // allocate the memory for the callback event specific data
-        EventHandlerSpecificData* ED = (EventHandlerSpecificData*) Node->iThreadSafeHandlerEventHandler->iMemoryPool->allocate(sizeof(EventHandlerSpecificData));
 
-        // pack the relevant data into the structure
-        ED->hComponent = aComponent;
-        ED->pAppData = aAppData;
-        ED->eEvent = aEvent;
-        ED->nData1 = aData1;
-        ED->nData2 = aData2;
-        ED->pEventData = aEventData;
-
-        // convert the pointer into OsclAny ptr
-        OsclAny* P = (OsclAny*) ED;
-
-
-        // CALL the generic callback AO API:
-        Node->iThreadSafeHandlerEventHandler->ReceiveEvent(P);
-
+        // CALL the AO API (a semaphore will block the thread if the queue is full)
+        Node->iThreadSafeHandlerEventHandler->ReceiveEvent(aComponent, aAppData, aEvent, aData1, aData2, aEventData);
         return OMX_ErrorNone;
     }
     else
@@ -94,21 +79,8 @@ OMX_ERRORTYPE CallbackEmptyBufferDone(OMX_OUT OMX_HANDLETYPE aComponent,
     PVMFOMXBaseDecNode *Node = (PVMFOMXBaseDecNode *) aAppData;
     if (Node->IsComponentMultiThreaded())
     {
-
-        // allocate the memory for the callback event specific data
-        EmptyBufferDoneSpecificData* ED = (EmptyBufferDoneSpecificData*) Node->iThreadSafeHandlerEmptyBufferDone->iMemoryPool->allocate(sizeof(EmptyBufferDoneSpecificData));
-
-        // pack the relevant data into the structure
-        ED->hComponent = aComponent;
-        ED->pAppData = aAppData;
-        ED->pBuffer = aBuffer;
-
-        // convert the pointer into OsclAny ptr
-        OsclAny* P = (OsclAny*) ED;
-
-        // CALL the generic callback AO API:
-        Node->iThreadSafeHandlerEmptyBufferDone->ReceiveEvent(P);
-
+        // CALL the callback AO API (a semaphore will block the thread if the queue is full)
+        Node->iThreadSafeHandlerEmptyBufferDone->ReceiveEvent(aComponent, aAppData, aBuffer);
         return OMX_ErrorNone;
     }
     else
@@ -129,21 +101,8 @@ OMX_ERRORTYPE CallbackFillBufferDone(OMX_OUT OMX_HANDLETYPE aComponent,
     PVMFOMXBaseDecNode *Node = (PVMFOMXBaseDecNode *) aAppData;
     if (Node->IsComponentMultiThreaded())
     {
-
-        // allocate the memory for the callback event specific data
-        FillBufferDoneSpecificData* ED = (FillBufferDoneSpecificData*) Node->iThreadSafeHandlerFillBufferDone->iMemoryPool->allocate(sizeof(FillBufferDoneSpecificData));
-
-        // pack the relevant data into the structure
-        ED->hComponent = aComponent;
-        ED->pAppData = aAppData;
-        ED->pBuffer = aBuffer;
-
-        // convert the pointer into OsclAny ptr
-        OsclAny* P = (OsclAny*) ED;
-
-        // CALL the generic callback AO API:
-        Node->iThreadSafeHandlerFillBufferDone->ReceiveEvent(P);
-
+        // CALL the callback AO API (a semaphore will block the thread if the queue is full)
+        Node->iThreadSafeHandlerFillBufferDone->ReceiveEvent(aComponent, aAppData, aBuffer);
         return OMX_ErrorNone;
     }
     else
@@ -155,80 +114,6 @@ OMX_ERRORTYPE CallbackFillBufferDone(OMX_OUT OMX_HANDLETYPE aComponent,
 
 }
 
-// Callback processing in multithreaded case - dequeued event - call EventHandlerProcessing
-OSCL_EXPORT_REF OsclReturnCode PVMFOMXBaseDecNode::ProcessCallbackEventHandler_MultiThreaded(OsclAny* P)
-{
-
-    // re-cast the pointer
-
-    EventHandlerSpecificData* ED = (EventHandlerSpecificData*) P;
-
-    OMX_HANDLETYPE aComponent = ED->hComponent;
-    OMX_PTR aAppData = ED->pAppData;
-    OMX_EVENTTYPE aEvent = ED->eEvent;
-    OMX_U32 aData1 = ED->nData1;
-    OMX_U32 aData2 = ED->nData2;
-    OMX_PTR aEventData = ED->pEventData;
-
-
-    EventHandlerProcessing(aComponent, aAppData, aEvent, aData1, aData2, aEventData);
-
-
-    // release the allocated memory when no longer needed
-
-    iThreadSafeHandlerEventHandler->iMemoryPool->deallocate(ED);
-    ED = NULL;
-
-    return OsclSuccess;
-}
-
-
-
-// Callback processing in multithreaded case - dequeued event - call EmptyBufferDoneProcessing
-OSCL_EXPORT_REF OsclReturnCode PVMFOMXBaseDecNode::ProcessCallbackEmptyBufferDone_MultiThreaded(OsclAny* P)
-{
-
-
-    // re-cast the pointer
-    EmptyBufferDoneSpecificData* ED = (EmptyBufferDoneSpecificData*) P;
-
-    OMX_HANDLETYPE aComponent = ED->hComponent;
-    OMX_PTR aAppData = ED->pAppData;
-    OMX_BUFFERHEADERTYPE* aBuffer = ED->pBuffer;
-
-    EmptyBufferDoneProcessing(aComponent, aAppData, aBuffer);
-
-    // release the allocated memory when no longer needed
-
-    iThreadSafeHandlerEmptyBufferDone->iMemoryPool->deallocate(ED);
-    ED = NULL;
-
-    return OsclSuccess;
-}
-
-
-// Callback processing in multithreaded case - dequeued event - call FillBufferDoneProcessing
-OSCL_EXPORT_REF OsclReturnCode PVMFOMXBaseDecNode::ProcessCallbackFillBufferDone_MultiThreaded(OsclAny* P)
-{
-
-    // re-cast the pointer
-    FillBufferDoneSpecificData* ED = (FillBufferDoneSpecificData*) P;
-
-    OMX_HANDLETYPE aComponent = ED->hComponent;
-    OMX_PTR aAppData = ED->pAppData;
-    OMX_BUFFERHEADERTYPE* aBuffer = ED->pBuffer;
-
-
-    FillBufferDoneProcessing(aComponent, aAppData, aBuffer);
-
-
-    // release the allocated memory when no longer needed
-
-    iThreadSafeHandlerFillBufferDone->iMemoryPool->deallocate(ED);
-    ED = NULL;
-
-    return OsclSuccess;
-}
 
 /////////////////////////////////////////////////////////////////////////////
 // Class Destructor
