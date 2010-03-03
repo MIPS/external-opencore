@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -209,18 +209,18 @@ class PVFile
         }
 
         //Access APIs, same functionality as Oscl File I/O.
-        OSCL_IMPORT_REF int32 Seek(int32 offset, Oscl_File::seek_type origin);
-        OSCL_IMPORT_REF int32 Tell();
+        OSCL_IMPORT_REF TOsclFileOffset Seek(TOsclFileOffset offset, Oscl_File::seek_type origin);
+        OSCL_IMPORT_REF TOsclFileOffset Tell();
         OSCL_IMPORT_REF uint32 Read(OsclAny *buffer, uint32 size, uint32 numelements) ;
         OSCL_IMPORT_REF int32 Close();
         OSCL_IMPORT_REF int32 Flush();
         OSCL_IMPORT_REF int32 Open(const oscl_wchar *filename,
                                    uint32 mode,
                                    Oscl_FileServer& fileserv);
-        OSCL_IMPORT_REF bool GetRemainingBytes(uint32& aNumBytes);
+        OSCL_IMPORT_REF bool GetRemainingBytes(TOsclFileOffset& aNumBytes);
 
         OSCL_IMPORT_REF bool RequestReadCapacityNotification(PvmiDataStreamObserver& aObserver,
-                uint32 aCapacity,
+                TOsclFileOffset aCapacity,
                 OsclAny* aContextData = NULL);
 
         OSCL_IMPORT_REF bool CancelNotificationSync();
@@ -239,11 +239,11 @@ class PVFile
         // For memory buffer data stream
         // to trigger a http GET request
         // like a seek but read pointer doesn't change
-        OSCL_IMPORT_REF int32 Skip(int32 offset, Oscl_File::seek_type origin);
+        OSCL_IMPORT_REF int32 Skip(TOsclFileOffset offset, Oscl_File::seek_type origin);
 
         // For memory buffer data stream
         // returns the byte range availabe in the stream cache
-        OSCL_IMPORT_REF void GetCurrentByteRange(uint32& aCurrentFirstByteOffset, uint32& aCurrentLastByteOffset);
+        OSCL_IMPORT_REF void GetCurrentByteRange(TOsclFileOffset& aCurrentFirstByteOffset, TOsclFileOffset& aCurrentLastByteOffset);
         OsclFileHandle* iFileHandle;
 
     private:
@@ -257,7 +257,7 @@ class PVFile
 
         //For the alternate access method-- through an existing file object.
         Oscl_File* iFilePtr;
-        uint32 iFileSize;
+        TOsclFileOffset iFileSize;
         bool iFileSizeAvailable;
         uint32 iRequestReadCapacityNotificationID;
         PVFileCacheParams iOsclFileCacheParams;

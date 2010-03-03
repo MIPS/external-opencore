@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,7 +51,7 @@ MediaDataAtom::MediaDataAtom(MP4_FF_FILE *fp, OSCL_wString& filename)
 
         // Seek past the end of the MEDIA_DATA_ATOM atom
         int32 offset = getSize() - getDefaultSize();
-        int32 filePointer;
+        TOsclFileOffset filePointer;
         filePointer = AtomUtils::getCurrentFilePosition(fp);
 
         if ((filePointer + offset) == fp->_fileSize)

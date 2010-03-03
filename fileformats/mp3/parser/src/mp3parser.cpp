@@ -388,7 +388,6 @@ MP3Parser::~MP3Parser()
     iLocalFileSize = 0;
     iLocalFileSize = false;
     iInitSearchFileSize = 0;
-    iMinBytesRequiredForInit = 0;
     iCurrFrameNumber = 0;
     iNumberOfFrames = 0;
     ConfigSize = 0;
@@ -467,8 +466,10 @@ MP3ErrorType MP3Parser::ParseMP3File(PVFile * fpUsed, bool aEnableCRC)
     if (!iLocalFileSizeSet)
     {
         uint32 remBytes = 0;
-        if (fp->GetRemainingBytes(remBytes))
+        TOsclFileOffset remainingBytes = 0;
+        if (fp->GetRemainingBytes(remainingBytes))
         {
+            remBytes = (uint32)remainingBytes;
             iInitSearchFileSize = OSCL_MIN(iInitSearchFileSize, remBytes);
         }
     }
@@ -797,7 +798,7 @@ MP3ErrorType MP3Parser::ScanMP3File(PVFile * fpUsed, uint32 aFramesToScan)
             {
                 return err;
             }
-            audioOffset = fpUsed->Tell() - StartOffset;
+            audioOffset = (uint32)fpUsed->Tell() - StartOffset;
         }
         iFirstScan = false;
     }
@@ -825,7 +826,7 @@ MP3ErrorType MP3Parser::ScanMP3File(PVFile * fpUsed, uint32 aFramesToScan)
                 iDurationScanComplete = true;
             }
             // update the LastScanPosition
-            iLastScanPosition = fpUsed->Tell() - StartOffset;
+            iLastScanPosition = (uint32)fpUsed->Tell() - StartOffset;
             FillTOCTable(audioOffset, iScanTimestamp);
             iScanTimestamp = iScanTimestamp + frameDur;
             // if BinWidth is zero even after Duration Scan complete then assign it to Total Scanned Timestamp (~ClipDuration)
@@ -849,7 +850,7 @@ MP3ErrorType MP3Parser::ScanMP3File(PVFile * fpUsed, uint32 aFramesToScan)
                 {
                     iDurationScanComplete = true;
                     // update the LastScanPosition
-                    iLastScanPosition = fpUsed->Tell() - StartOffset;
+                    iLastScanPosition = (uint32)fpUsed->Tell() - StartOffset;
                     FillTOCTable(audioOffset, iScanTimestamp);
                     iScanTimestamp = iScanTimestamp + frameDur;
                     // if BinWidth is zero even after Duration Scan complete then assign it to Total Scanned Timestamp (~ClipDuration)
@@ -866,7 +867,7 @@ MP3ErrorType MP3Parser::ScanMP3File(PVFile * fpUsed, uint32 aFramesToScan)
                 {
                     iDurationScanComplete = true;
                     // update the LastScanPosition
-                    iLastScanPosition = fpUsed->Tell() - StartOffset;
+                    iLastScanPosition = (uint32)fpUsed->Tell() - StartOffset;
                     FillTOCTable(audioOffset, iScanTimestamp);
                     iScanTimestamp = iScanTimestamp + frameDur;
                     // if BinWidth is zero even after Duration Scan complete then assign it to Total Scanned Timestamp (~ClipDuration)
@@ -882,7 +883,7 @@ MP3ErrorType MP3Parser::ScanMP3File(PVFile * fpUsed, uint32 aFramesToScan)
             {
                 iDurationScanComplete = true;
                 // update the LastScanPosition
-                iLastScanPosition = fpUsed->Tell() - StartOffset;
+                iLastScanPosition = (uint32)fpUsed->Tell() - StartOffset;
                 FillTOCTable(audioOffset, iScanTimestamp);
                 iScanTimestamp = iScanTimestamp + frameDur;
                 // if BinWidth is zero even after Duration Scan complete then assign it to Total Scanned Timestamp (~ClipDuration)
@@ -899,7 +900,7 @@ MP3ErrorType MP3Parser::ScanMP3File(PVFile * fpUsed, uint32 aFramesToScan)
         {
             iDurationScanComplete = true;
             // update the LastScanPosition
-            iLastScanPosition = fpUsed->Tell() - StartOffset;
+            iLastScanPosition = (uint32)fpUsed->Tell() - StartOffset;
             FillTOCTable(audioOffset, iScanTimestamp);
             iScanTimestamp = iScanTimestamp + frameDur;
             // if BinWidth is zero even after Duration Scan complete then assign it to Total Scanned Timestamp (~ClipDuration)
@@ -914,7 +915,7 @@ MP3ErrorType MP3Parser::ScanMP3File(PVFile * fpUsed, uint32 aFramesToScan)
         MP3Utils::SeektoOffset(fpUsed, mp3ConfigInfo.FrameLengthInBytes - MP3_FRAME_HEADER_SIZE, Oscl_File::SEEKCUR);
         bitrate = mp3ConfigInfo.BitRate;
         frameDur = frameDur + (uint32)((OsclFloat) mp3ConfigInfo.FrameLengthInBytes * 8000.00f / mp3ConfigInfo.BitRate);
-        iLastScanPosition = fpUsed->Tell() - StartOffset;
+        iLastScanPosition = (uint32)fpUsed->Tell() - StartOffset;
         numFrames++;
         iScannedFrameCount++;
 
@@ -1610,7 +1611,7 @@ uint32 MP3Parser::GetMinBytesRequired(bool aNextBytes)
     {
         // case where parse file has failed due to lack of data
         // in that case request next n bytes.
-        minBytes += fp->Tell();
+        minBytes += (uint32)fp->Tell();
     }
     return minBytes;
 }
@@ -2201,7 +2202,7 @@ MP3ErrorType MP3Parser::mp3FindSync(uint32 seekPoint, uint32 &syncOffset, PVFile
         return MP3_ERROR_UNKNOWN;  /* buffer couldn't be allocated */
     }
 
-    seekPoint = aFile->Tell();
+    seekPoint = (uint32)aFile->Tell();
     uint32 i = 0;
     uint32 j = 0;
     uint32 BufferSize = 0;
@@ -2217,9 +2218,11 @@ MP3ErrorType MP3Parser::mp3FindSync(uint32 seekPoint, uint32 &syncOffset, PVFile
     else
     {
         uint32 remBytes = 0;
-        if (aFile->GetRemainingBytes(remBytes))
+        TOsclFileOffset remainingBytes = 0;
+        if (aFile->GetRemainingBytes(remainingBytes))
         {
-            maxSearchOffset = OSCL_MIN(iInitSearchFileSize, aFile->Tell() + remBytes - seekPoint);
+            remBytes = (uint32)remainingBytes;
+            maxSearchOffset = OSCL_MIN(iInitSearchFileSize, (uint32)aFile->Tell() + remBytes - seekPoint);
         }
     }
 
@@ -2576,8 +2579,10 @@ MP3ErrorType MP3Parser::mp3VerifyCRC(MP3HeaderType mp3HdrInfo, MP3ConfigInfoType
 
     // read crc from frame
     uint32 remBytes = 0;
-    if (fp->GetRemainingBytes(remBytes))
+    TOsclFileOffset remainingBytes = 0;
+    if (fp->GetRemainingBytes(remainingBytes))
     {
+        remBytes = (uint32)remainingBytes;
         if (remBytes >= MP3_FRAME_HEADER_SIZE)
         {
             MP3Utils::SeektoOffset(fp, MP3_FRAME_HEADER_SIZE, Oscl_File::SEEKCUR);
@@ -2814,8 +2819,10 @@ MP3ErrorType MP3Parser::IsMp3File(MP3_FF_FILE* aFile, uint32 aInitSearchFileSize
     if (!iLocalFileSizeSet)
     {
         uint32 remBytes = 0;
-        if (fp->GetRemainingBytes(remBytes))
+        TOsclFileOffset remainingBytes = 0;
+        if (fp->GetRemainingBytes(remainingBytes))
         {
+            remBytes = (uint32)remainingBytes;
             iInitSearchFileSize = OSCL_MIN(iInitSearchFileSize, remBytes);
         }
     }
@@ -2870,7 +2877,7 @@ MP3ErrorType MP3Parser::IsMp3File(MP3_FF_FILE* aFile, uint32 aInitSearchFileSize
         }
         else if (errCode == MP3_INSUFFICIENT_DATA)
         {
-            MP3Utils::SeektoOffset(fp, fp->Tell() - StartOffset, Oscl_File::SEEKCUR);
+            MP3Utils::SeektoOffset(fp, (uint32)fp->Tell() - StartOffset, Oscl_File::SEEKCUR);
             return errCode;
         }
         else
@@ -3078,10 +3085,15 @@ MP3ErrorType MP3Parser::ComputeDurationFromNRandomFrames(PVFile * fpUsed, int32 
     // try to fetch file size
     if (fpUsed->GetCPM() != NULL)
     {
-        bool ret = fpUsed->GetRemainingBytes(audioDataSize);
+        TOsclFileOffset remainingBytes = 0;
+        bool ret = fpUsed->GetRemainingBytes(remainingBytes);
         if (ret == false)
         {
             audioDataSize = iInitSearchFileSize;
+        }
+        else
+        {
+            audioDataSize = (uint32)remainingBytes;
         }
     }
     else if (iLocalFileSizeSet)

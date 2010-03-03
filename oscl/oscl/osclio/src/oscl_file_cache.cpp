@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -577,7 +577,7 @@ int32 OsclFileCache::Seek(TOsclFileOffset offset, Oscl_File::seek_type origin)
     if (_curCache->Contains(pos))
     {
         //Seek in cur cache
-        _curCache->currentPos = pos - _curCache->filePosition;
+        _curCache->currentPos = (uint32)(pos - _curCache->filePosition);
     }
     else
     {
@@ -776,7 +776,7 @@ int32 OsclFileCacheBuffer::SetPosition(TOsclFileOffset aNewPos)
     if (Contains(aNewPos))
     {
         //new position is in current usable size
-        currentPos = aNewPos - filePosition;
+        currentPos = (uint32)(aNewPos - filePosition);
         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iContainer->iLogger, PVLOGMSG_DEBUG,
                         (0, "OsclFileCache(0x%x)::SetPosition adjusted position in cache"));
     }
@@ -829,7 +829,7 @@ int32 OsclFileCacheBuffer::SetPosition(TOsclFileOffset aNewPos)
                     else if (Contains(iContainer->_fixedCaches[i].filePosition))
                     {
                         //movable cache overlaps this fixed cache, so reduce its usable size
-                        usableSize = iContainer->_fixedCaches[i].filePosition - filePosition;
+                        usableSize = (uint32)(iContainer->_fixedCaches[i].filePosition - filePosition);
                         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iContainer->iLogger, PVLOGMSG_DEBUG,
                                         (0, "OsclFileCache(0x%x)::SetPosition Movable Cache Overlap, adjusting size cap %d size %d"
                                          , this, (int32)capacity, usableSize));

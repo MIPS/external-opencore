@@ -91,7 +91,7 @@ OSCL_EXPORT_REF MovieAtom::MovieAtom(MP4_FF_FILE *fp,
                 (atomType == META_DATA_ATOM))  &&
                 (count > 0))
         {
-            uint32 currPtr = AtomUtils::getCurrentFilePosition(fp);
+            TOsclFileOffset currPtr = AtomUtils::getCurrentFilePosition(fp);
             AtomUtils::getNextAtomType(fp, atomSize, atomType);
 
             if (atomType == USER_DATA_ATOM)
@@ -103,7 +103,7 @@ OSCL_EXPORT_REF MovieAtom::MovieAtom(MP4_FF_FILE *fp,
                     if (!_pUserDataAtom->MP4Success())
                     {
                         AtomUtils::seekFromStart(fp, currPtr);
-                        AtomUtils::seekFromCurrPos(fp, atomSize);
+                        AtomUtils::seekFromCurrPos(fp, (TOsclFileOffset)atomSize);
                         PV_MP4_FF_DELETE(NULL, UserDataAtom, _pUserDataAtom);
                         _pUserDataAtom = NULL;
                         count -= atomSize;
@@ -291,7 +291,7 @@ OSCL_EXPORT_REF MovieAtom::MovieAtom(MP4_FF_FILE *fp,
                 else
                 {
                     // Read in and add all the track atoms
-                    uint32 currPos = AtomUtils::getCurrentFilePosition(fp);
+                    TOsclFileOffset currPos = AtomUtils::getCurrentFilePosition(fp);
                     PV_MP4_FF_NEW(fp->auditCB,
                                   TrackAtom,
                                   (fp, filename, atomSize,
@@ -404,7 +404,7 @@ uint64 MovieAtom::getTimestampForCurrentSample(uint32 id)
     }
 }
 
-int32 MovieAtom::getOffsetByTime(uint32 id, uint64 ts, uint32* sampleFileOffset)
+int32 MovieAtom::getOffsetByTime(uint32 id, uint64 ts, TOsclFileOffset* sampleFileOffset)
 {
     TrackAtom *track = getTrackForID(id);
     if (track == NULL)
@@ -414,7 +414,7 @@ int32 MovieAtom::getOffsetByTime(uint32 id, uint64 ts, uint32* sampleFileOffset)
     return track->getOffsetByTime(ts, sampleFileOffset);
 }
 
-int32 MovieAtom::getMediaSample(uint32 id, uint32 sampleNumber, uint8 *buf, uint32 &size, uint32 &index, uint32 &SampleOffset)
+int32 MovieAtom::getMediaSample(uint32 id, uint32 sampleNumber, uint8 *buf, uint32 &size, uint32 &index, TOsclFileOffset &SampleOffset)
 {
     int32 nReturn = 0;
 
@@ -478,8 +478,7 @@ int32 MovieAtom::getNextKeyMediaSample(uint32 &aKeySampleNum,
     return nReturn;
 }
 
-
-int32 MovieAtom::getNextMediaSample(uint32 id, uint8 *buf, uint32 &size, uint32 &index, uint32 &SampleOffset)
+int32 MovieAtom::getNextMediaSample(uint32 id, uint8 *buf, uint32 &size, uint32 &index, TOsclFileOffset &SampleOffset)
 {
     int32 nReturn = 0;
 
@@ -1231,7 +1230,7 @@ uint32 MovieAtom::getTrackWholeIDList(uint32 *ids)
 }
 
 
-int32 MovieAtom::updateFileSize(uint32  filesize)
+int32 MovieAtom::updateFileSize(TOsclFileOffset  filesize)
 {
     if (NULL == _ptrackArray)
     {
@@ -2118,7 +2117,7 @@ int32 MovieAtom::getNumAMRFramesPerSample(uint32 trackID)
 
 
 MP4_ERROR_CODE MovieAtom::getMaxTrackTimeStamp(uint32 trackID,
-        uint32 fileSize,
+        TOsclFileOffset fileSize,
         uint64& timeStamp)
 {
     TrackAtom *trackAtom;
@@ -2138,7 +2137,7 @@ MP4_ERROR_CODE MovieAtom::getMaxTrackTimeStamp(uint32 trackID,
 MP4_ERROR_CODE MovieAtom::getSampleNumberClosestToTimeStamp(uint32 trackID,
         uint32 &sampleNumber,
         uint64 timeStamp,
-        uint32 sampleOffset)
+        TOsclFileOffset sampleOffset)
 {
     TrackAtom *trackAtom;
     trackAtom = getTrackForID(trackID);
@@ -2209,7 +2208,7 @@ OSCL_EXPORT_REF bool MovieAtom::isMultipleSampleDescriptionAvailable(uint32 trac
     return 0;
 }
 
-int32 MovieAtom::getTimestampForRandomAccessPoints(uint32 id, uint32 *num, uint64 *tsBuf, uint32* numBuf, uint32* offsetBuf)
+int32 MovieAtom::getTimestampForRandomAccessPoints(uint32 id, uint32 *num, uint64 *tsBuf, uint32* numBuf, TOsclFileOffset* offsetBuf)
 {
     TrackAtom *trackAtom;
     trackAtom = getTrackForID(id);
@@ -2240,7 +2239,7 @@ int32 MovieAtom::getTimestampForRandomAccessPointsBeforeAfter(uint32 id, uint64 
 
 }
 
-MP4_ERROR_CODE MovieAtom::GetUserDataAtomInfo(uint32 &atomSize, uint32 &atomPointer)
+MP4_ERROR_CODE MovieAtom::GetUserDataAtomInfo(uint32 &atomSize, TOsclFileOffset &atomPointer)
 {
     if (iUserDataAtomSize && iUserDataAtomOffset)
     {

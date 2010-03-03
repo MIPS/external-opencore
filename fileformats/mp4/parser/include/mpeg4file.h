@@ -118,7 +118,7 @@ class Mpeg4File : public IMpeg4File, public Parentable
                   bool aOpenFileOncePerTrack = true); // Stream-in Constructor
         virtual ~Mpeg4File();
 
-        int32 updateFileSize(uint32 filesize)
+        int32 updateFileSize(TOsclFileOffset filesize)
         {
             if (_pmovieAtom != NULL)
             {
@@ -127,7 +127,7 @@ class Mpeg4File : public IMpeg4File, public Parentable
             return DEFAULT_ERROR;
         }
 
-        int32 getNextMediaSample(uint32 id, uint8 *buf, uint32 &size, uint32 &index, uint32 &SampleOffset)
+        int32 getNextMediaSample(uint32 id, uint8 *buf, uint32 &size, uint32 &index, TOsclFileOffset &SampleOffset)
         {
             if (_pmovieAtom == NULL)
             {
@@ -177,7 +177,7 @@ class Mpeg4File : public IMpeg4File, public Parentable
             return _pmovieAtom->getNextKeyMediaSample(aKeySampleNum, id, n, pgau);
         }
 
-        int32 getMediaSample(uint32 id, uint32 sampleNumber, uint8 *buf, uint32 &size, uint32 &index, uint32 &SampleOffset)
+        int32 getMediaSample(uint32 id, uint32 sampleNumber, uint8 *buf, uint32 &size, uint32 &index, TOsclFileOffset &SampleOffset)
         {
             if (_pmovieAtom == NULL)
             {
@@ -186,7 +186,7 @@ class Mpeg4File : public IMpeg4File, public Parentable
             return _pmovieAtom->getMediaSample(id, sampleNumber, buf, size, index, SampleOffset);
         }
 
-        int32 getOffsetByTime(uint32 id, uint64 ts, uint32* sampleFileOffset , uint32 jitterbuffertimeinmillisec);
+        int32 getOffsetByTime(uint32 id, uint64 ts, TOsclFileOffset* sampleFileOffset , uint32 jitterbuffertimeinmillisec);
 
 
         uint64 getMediaTimestampForCurrentSample(uint32 id)
@@ -201,7 +201,7 @@ class Mpeg4File : public IMpeg4File, public Parentable
             }
         }
 
-        int32 getTimestampForRandomAccessPoints(uint32 id, uint32 *num, uint64 *tsBuf, uint32* numBuf, uint32 *offsetBuf);
+        int32 getTimestampForRandomAccessPoints(uint32 id, uint32 *num, uint64 *tsBuf, uint32* numBuf, TOsclFileOffset *offsetBuf);
 
         int32 getTimestampForRandomAccessPointsBeforeAfter(uint32 id, uint64 ts, uint64 *tsBuf, uint32* numBuf,
                 uint32& numsamplestoget,
@@ -216,7 +216,7 @@ class Mpeg4File : public IMpeg4File, public Parentable
 
 
         // Fetch the user data atom related info...
-        MP4_ERROR_CODE GetUserDataAtomInfo(uint32 &atomSize, uint32 &atomPointer);
+        MP4_ERROR_CODE GetUserDataAtomInfo(uint32 &atomSize, TOsclFileOffset &atomPointer);
 
         virtual DecoderSpecificInfo* getTrackDecoderSpecificInfoAtSDI(uint32 trackID, uint32 index);
 
@@ -810,7 +810,7 @@ class Mpeg4File : public IMpeg4File, public Parentable
 
 
         MP4_ERROR_CODE getMaxTrackTimeStamp(uint32 trackID,
-                                            uint32 fileSize,
+                                            TOsclFileOffset fileSize,
                                             uint64& timeStamp)
         {
             if (_pmovieAtom != NULL)
@@ -828,7 +828,7 @@ class Mpeg4File : public IMpeg4File, public Parentable
         MP4_ERROR_CODE getSampleNumberClosestToTimeStamp(uint32 trackID,
                 uint32 &sampleNumber,
                 uint64 timeStamp,
-                uint32 sampleOffset = 0)
+                TOsclFileOffset sampleOffset = 0)
         {
             if (_pmovieAtom != NULL)
             {
@@ -880,12 +880,12 @@ class Mpeg4File : public IMpeg4File, public Parentable
         uint8* getTrackLevelOMA2DRMInfo(uint32 trackID);
 
         MP4_ERROR_CODE RequestReadCapacityNotification(PvmiDataStreamObserver& aObserver,
-                uint32 aFileOffset,
+                TOsclFileOffset aFileOffset,
                 OsclAny* aContextData = NULL);
 
         MP4_ERROR_CODE CancelNotificationSync();
 
-        MP4_ERROR_CODE GetCurrentFileSize(uint32& aFileSize);
+        MP4_ERROR_CODE GetCurrentFileSize(TOsclFileOffset& aFileSize);
 
         int32 getTrackTSStartOffset(uint32& aTSOffset, uint32 aTrackID)
         {
@@ -1403,19 +1403,19 @@ class Mpeg4File : public IMpeg4File, public Parentable
         MP4_FF_FILE *_commonFilePtr;
 
         bool _isMovieFragmentsPresent;
-        uint32 _pointerMovieAtomEnd;
+        TOsclFileOffset _pointerMovieAtomEnd;
         MP4_FF_FILE *_movieFragmentFilePtr;
         Oscl_Vector<MovieFragmentAtom*, OsclMemAllocator> *_pMovieFragmentAtomVec;
         Oscl_Vector<MovieFragmentRandomAccessAtom*, OsclMemAllocator> *_pMovieFragmentRandomAccessAtomVec;
         MfraOffsetAtom *_pMfraOffsetAtom;
-        uint32 _ptrMoofEnds;
+        TOsclFileOffset _ptrMoofEnds;
         uint32 _parsing_mode;
         TrackIndexVecType *_moofFragmentIdx;
         uint32 _movieFragmentIdx[256];
         uint32 _peekMovieFragmentIdx[256];
         TrackDurationContainer *_pTrackDurationContainer;
         Oscl_Vector<TrackExtendsAtom*, OsclMemAllocator> *_pTrackExtendsAtomVec;
-        Oscl_Vector<uint32, OsclMemAllocator> *_pMoofOffsetVec;
+        Oscl_Vector<TOsclFileOffset, OsclMemAllocator> *_pMoofOffsetVec;
         void populateTrackDurationVec();
         MP4_FF_FILE tempfptr;
 
@@ -1425,8 +1425,8 @@ class Mpeg4File : public IMpeg4File, public Parentable
         bool moofParsingCompleted;
         uint32 moofType;
         uint32 moofSize;
-        uint32 moofCount;
-        uint32 moofPtrPos;
+        TOsclFileOffset moofCount;
+        TOsclFileOffset moofPtrPos;
         uint32 currMoofNum;
         bool _oVideoTrackPresent;
         uint32 _movieFragmentSeqIdx[256];
@@ -1500,7 +1500,7 @@ class Mpeg4File : public IMpeg4File, public Parentable
         Oscl_Vector<OSCL_wHeapString<OsclMemAllocator>, OsclMemAllocator> versionValues;
         Oscl_Vector<MP4FFParserOriginalCharEnc, OsclMemAllocator> iVersionCharType;
 
-        uint32 _fileSize;
+        TOsclFileOffset _fileSize;
 
         //To maintain the number of these metadata values found
         uint32 numAlbum;

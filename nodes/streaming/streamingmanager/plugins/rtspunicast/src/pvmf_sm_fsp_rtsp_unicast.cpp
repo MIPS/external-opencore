@@ -6629,7 +6629,7 @@ PVMFStatus PVMFSMRTSPUnicastNode::ParseSwitchSDP(OSCL_wString& aClipLocation)
 
     /* Get File Size */
     osclFile.Seek(0, Oscl_File::SEEKEND);
-    int32 fileSize = osclFile.Tell();
+    int32 fileSize = (TOsclFileOffsetInt32)osclFile.Tell();
     osclFile.Seek(0, Oscl_File::SEEKSET);
 
     if (fileSize <= 0)

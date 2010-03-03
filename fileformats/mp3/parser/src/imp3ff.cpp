@@ -1564,10 +1564,10 @@ OSCL_EXPORT_REF MP3ErrorType IMpeg3File::ScanMP3File(uint32 aFramesToScan)
     {
         if (iUseExternalFileHandle)
         {
-            uint32 currPos = iScanFP.Tell();
+            uint32 currPos = (uint32)iScanFP.Tell();
             iScanFP.Seek(iLastScanPos, Oscl_File::SEEKSET);
             errCode = pMP3Parser->ScanMP3File(&iScanFP, aFramesToScan);
-            iLastScanPos = iScanFP.Tell();
+            iLastScanPos = (uint32)iScanFP.Tell();
             iScanFP.Seek(currPos, Oscl_File::SEEKSET);
         }
         else

@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -146,6 +146,7 @@ const uint32    SAMPLE_DESCRIPTION_ATOM = FourCharConstToUint32('s', 't', 's', '
 const uint32    SAMPLE_SIZE_ATOM = FourCharConstToUint32('s', 't', 's', 'z');
 const uint32    SAMPLE_TO_CHUNK_ATOM = FourCharConstToUint32('s', 't', 's', 'c');
 const uint32    CHUNK_OFFSET_ATOM = FourCharConstToUint32('s', 't', 'c', 'o');
+const uint32    CHUNK_LARGE_OFFSET_ATOM = FourCharConstToUint32('c', 'o', '6', '4');
 const uint32    SYNC_SAMPLE_ATOM = FourCharConstToUint32('s', 't', 's', 's');
 const uint32    SHADOW_SYNC_SAMPLE_ATOM = FourCharConstToUint32('s', 't', 's', 'h');
 const uint32    DEGRADATION_PRIORITY_ATOM = FourCharConstToUint32('s', 't', 'd', 'p');

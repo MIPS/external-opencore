@@ -277,7 +277,7 @@ void PVA_FF_AtomUtils::rewindFilePointerByN(MP4_AUTHOR_FF_FILE_IO_WRAP *fp, uint
 
 int32 PVA_FF_AtomUtils::getCurrentFilePosition(MP4_AUTHOR_FF_FILE_IO_WRAP *fp)
 {
-    return (fp->_filePtr->Tell());
+    return (int32)(fp->_filePtr->Tell());
 }
 
 bool

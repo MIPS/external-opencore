@@ -97,7 +97,7 @@ class TrackAtom : public Atom
         index:  An output parameter which is the index of the sample entry to which the returned sample refers.  If zero, will return based on the index set by the previous call to getNextMediaSample().
         return: The size in bytes of the data placed into the provided buffer.  If the buffer is not large enough, the return value is the negative of the size that is needed.
         */
-        int32 getNextMediaSample(uint8 *buf, uint32 &size, uint32 &index, uint32 &SampleOffset)
+        int32 getNextMediaSample(uint8 *buf, uint32 &size, uint32 &index, TOsclFileOffset &SampleOffset)
         {
             if (_pmediaAtom == NULL)
             {
@@ -152,7 +152,7 @@ class TrackAtom : public Atom
         }
 
 
-        int32 getMediaSample(uint32 sampleNumber, uint8 *buf, uint32 &size, uint32 &index, uint32 &SampleOffset)
+        int32 getMediaSample(uint32 sampleNumber, uint8 *buf, uint32 &size, uint32 &index, TOsclFileOffset &SampleOffset)
         {
             if (_pmediaAtom == NULL)
             {
@@ -161,7 +161,7 @@ class TrackAtom : public Atom
             return _pmediaAtom->getMediaSample(sampleNumber, buf, size, index, SampleOffset);
         }
 
-        int32 updateFileSize(uint32 filesize)
+        int32 updateFileSize(TOsclFileOffset filesize)
         {
             if (_pmediaAtom != NULL)
             {
@@ -170,7 +170,7 @@ class TrackAtom : public Atom
             return DEFAULT_ERROR;
         }
 
-        int32 getOffsetByTime(uint64 ts, uint32* sampleFileOffset)
+        int32 getOffsetByTime(uint64 ts, TOsclFileOffset* sampleFileOffset)
         {
             if (_pmediaAtom == NULL)
             {
@@ -659,7 +659,7 @@ class TrackAtom : public Atom
             }
         }
 
-        int32 getTimestampForRandomAccessPoints(uint32 *num, uint64 *tsBuf, uint32* numBuf, uint32* offsetBuf)
+        int32 getTimestampForRandomAccessPoints(uint32 *num, uint64 *tsBuf, uint32* numBuf, TOsclFileOffset* offsetBuf)
         {
             if (_pmediaAtom != NULL)
             {
@@ -697,7 +697,7 @@ class TrackAtom : public Atom
             }
         }
 
-        MP4_ERROR_CODE getMaxTrackTimeStamp(uint32 fileSize, uint64& timeStamp)
+        MP4_ERROR_CODE getMaxTrackTimeStamp(TOsclFileOffset fileSize, uint64& timeStamp)
         {
             if (_pmediaAtom != NULL)
             {
@@ -711,7 +711,7 @@ class TrackAtom : public Atom
 
         MP4_ERROR_CODE getSampleNumberClosestToTimeStamp(uint32 &sampleNumber,
                 uint64 timeStamp,
-                uint32 sampleOffset = 0)
+                TOsclFileOffset sampleOffset = 0)
         {
             if (_pmediaAtom != NULL)
             {

@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -97,7 +97,7 @@ PVLoggerCfgFileParser::Parse
         return false;                                        // indicate failure
     }
 
-    const int32 MAXLENGTH = fh.Size();          // max amount of data to process
+    const int32 MAXLENGTH = (int32)fh.Size();          // max amount of data to process
     uint32 offsetFVL = 0;            // file offset to start of first valid line
     uint32 offsetNUL = 0;       // file offset to start of next unprocessed line
     OsclSharedPtr<PVLoggerAppender> appenderPtr;

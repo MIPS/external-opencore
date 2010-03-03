@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,7 +33,7 @@
 #include "pvmf_cpmplugin_access_interface_factory.h"
 #include "pvmi_data_stream_interface.h"
 
-OSCL_EXPORT_REF int32 PVFile::Seek(int32 offset, Oscl_File::seek_type origin)
+OSCL_EXPORT_REF TOsclFileOffset PVFile::Seek(TOsclFileOffset offset, Oscl_File::seek_type origin)
 {
     if (iFile)
         return iFile->Seek(offset, origin);
@@ -54,23 +54,24 @@ OSCL_EXPORT_REF int32 PVFile::Seek(int32 offset, Oscl_File::seek_type origin)
         {
             seekType = PVDS_SEEK_END;
         }
+        int32 tempOffset = (int32)offset;
         PvmiDataStreamStatus status =
             iDataStreamAccess->Seek(iDataStreamSession,
-                                    offset,
+                                    tempOffset,
                                     seekType);
         if (status == PVDS_SUCCESS) return 0;
     }
     return(-1);//error
 }
 
-OSCL_EXPORT_REF int32 PVFile::Tell()
+OSCL_EXPORT_REF TOsclFileOffset PVFile::Tell()
 {
     if (iFile)
-        return (TOsclFileOffsetInt32)iFile->Tell();
+        return iFile->Tell();
     else if (iFilePtr)
-        return (TOsclFileOffsetInt32)iFilePtr->Tell();
+        return iFilePtr->Tell();
     else if (iDataStreamAccess)
-        return (int32)(iDataStreamAccess->GetCurrentPointerPosition(iDataStreamSession));
+        return (TOsclFileOffset)(iDataStreamAccess->GetCurrentPointerPosition(iDataStreamSession));
     return (-1);//error
 }
 
@@ -249,17 +250,17 @@ OSCL_EXPORT_REF int32 PVFile::Open(const oscl_wchar *filename,
     }
 }
 
-OSCL_EXPORT_REF bool PVFile::GetRemainingBytes(uint32& aNumBytes)
+OSCL_EXPORT_REF bool PVFile::GetRemainingBytes(TOsclFileOffset& aNumBytes)
 {
     bool result = false;
     if (iFile)
     {
-        uint32 currPos = (uint32)(iFile->Tell());
+        TOsclFileOffset currPos = iFile->Tell();
 
         if (iFileSizeAvailable == false)
         {
             iFile->Seek(0, Oscl_File::SEEKEND);
-            iFileSize = (uint32)(iFile->Tell());
+            iFileSize = iFile->Tell();
             iFile->Seek(currPos, Oscl_File::SEEKSET);
             iFileSizeAvailable = true;
         }
@@ -271,12 +272,12 @@ OSCL_EXPORT_REF bool PVFile::GetRemainingBytes(uint32& aNumBytes)
     }
     else if (iFilePtr)
     {
-        uint32 currPos = (uint32)(iFilePtr->Tell());
+        TOsclFileOffset currPos = iFilePtr->Tell();
 
         if (iFileSizeAvailable == false)
         {
             iFilePtr->Seek(currPos, Oscl_File::SEEKSET);
-            iFileSize = (uint32)(iFilePtr->Size());
+            iFileSize = iFilePtr->Size();
             iFileSizeAvailable = true;
         }
         if (currPos <= iFileSize)
@@ -287,8 +288,11 @@ OSCL_EXPORT_REF bool PVFile::GetRemainingBytes(uint32& aNumBytes)
     }
     else if (iDataStreamAccess)
     {
+        uint32 tempNumBytes = 0;
         PvmiDataStreamStatus status =
-            iDataStreamAccess->QueryReadCapacity(iDataStreamSession, aNumBytes);
+            iDataStreamAccess->QueryReadCapacity(iDataStreamSession, tempNumBytes);
+
+        aNumBytes = (TOsclFileOffset)tempNumBytes;
         if ((status == PVDS_SUCCESS) || (status == PVDS_END_OF_STREAM))
         {
             result = true;
@@ -299,9 +303,10 @@ OSCL_EXPORT_REF bool PVFile::GetRemainingBytes(uint32& aNumBytes)
 
 OSCL_EXPORT_REF bool
 PVFile::RequestReadCapacityNotification(PvmiDataStreamObserver& aObserver,
-                                        uint32 aCapacity,
+                                        TOsclFileOffset aCapacity,
                                         OsclAny* aContextData)
 {
+    uint32 tempCapacity = (uint32)aCapacity;
     if (iDataStreamAccess)
     {
         int32 errcode = 0;
@@ -309,7 +314,7 @@ PVFile::RequestReadCapacityNotification(PvmiDataStreamObserver& aObserver,
                  iRequestReadCapacityNotificationID =
                      iDataStreamAccess->RequestReadCapacityNotification(iDataStreamSession,
                              aObserver,
-                             aCapacity,
+                             tempCapacity,
                              aContextData)
                 );
         OSCL_FIRST_CATCH_ANY(errcode, return false);
@@ -377,7 +382,7 @@ PVFile::CancelNotificationSync()
 }
 
 OSCL_EXPORT_REF int32
-PVFile::Skip(int32 offset, Oscl_File::seek_type origin)
+PVFile::Skip(TOsclFileOffset offset, Oscl_File::seek_type origin)
 {
     if (iDataStreamAccess)
     {
@@ -394,8 +399,10 @@ PVFile::Skip(int32 offset, Oscl_File::seek_type origin)
         {
             seekType = PVDS_SKIP_END;
         }
+
+        int32 tempOffset = (int32)offset;
         PvmiDataStreamStatus status = iDataStreamAccess->Seek(iDataStreamSession,
-                                      offset, seekType);
+                                      tempOffset, seekType);
         if (status == PVDS_SUCCESS) return 0;
     }
     return (-1);//error
@@ -403,14 +410,17 @@ PVFile::Skip(int32 offset, Oscl_File::seek_type origin)
 
 
 OSCL_EXPORT_REF void
-PVFile::GetCurrentByteRange(uint32& aCurrentFirstByteOffset, uint32& aCurrentLastByteOffset)
+PVFile::GetCurrentByteRange(TOsclFileOffset& aCurrentFirstByteOffset, TOsclFileOffset& aCurrentLastByteOffset)
 {
     aCurrentFirstByteOffset = 0;
     aCurrentLastByteOffset = 0;
 
     if (iDataStreamAccess)
     {
-        iDataStreamAccess->GetCurrentByteRange(aCurrentFirstByteOffset, aCurrentLastByteOffset);
+        uint32 tempCurrentFirstByte = 0, tempCurrentLastByte = 0;
+        iDataStreamAccess->GetCurrentByteRange(tempCurrentFirstByte, tempCurrentLastByte);
+        aCurrentFirstByteOffset = (TOsclFileOffset)tempCurrentFirstByte;
+        aCurrentLastByteOffset = (TOsclFileOffset)tempCurrentLastByte;
     }
 }
 

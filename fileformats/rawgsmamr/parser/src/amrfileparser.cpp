@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -155,7 +155,7 @@ int32 bitstreamObject::refill()
             return bitstreamObject::MISC_ERROR;
         }
 
-        iFileSize = ipAMRFile->Tell();
+        iFileSize = (int32)ipAMRFile->Tell();
 
         if (iFileSize <= 0)
         {
@@ -405,8 +405,10 @@ bool bitstreamObject::UpdateFileSize()
     if (ipAMRFile != NULL)
     {
         uint32 aRemBytes = 0;
-        if (ipAMRFile->GetRemainingBytes(aRemBytes))
+        TOsclFileOffset remainingBytes = 0;
+        if (ipAMRFile->GetRemainingBytes(remainingBytes))
         {
+            aRemBytes = (uint32)remainingBytes;
             uint32 currPos = (uint32)(ipAMRFile->Tell());
             iFileSize = currPos + aRemBytes;
             return true;

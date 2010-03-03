@@ -38,7 +38,7 @@ class ChunkOffsetAtom : public FullAtom
     public:
         ChunkOffsetAtom(MP4_FF_FILE *fp, uint32 size, uint32 type,
                         OSCL_wString& filename,
-                        uint32 parsingMode);
+                        uint32 parsingMode, bool largeOffsetBoxPresent);
         virtual ~ChunkOffsetAtom();
 
         // Member gets and sets
@@ -48,22 +48,24 @@ class ChunkOffsetAtom : public FullAtom
         }
 
         // Getting first chunk offset values
-        MP4_ERROR_CODE getChunkOffsetAt(int32 index, uint32& aChunkOffset) ;
-        MP4_ERROR_CODE getChunkClosestToOffset(uint32 offSet, int32& index);
+        MP4_ERROR_CODE getChunkOffsetAt(int32 index, uint64& aChunkOffset) ;
+        MP4_ERROR_CODE getChunkClosestToOffset(uint64 offSet, int32& index);
 
 
     private:
         bool ParseEntryUnit(uint32 sample_cnt);
         uint32 _entryCount;
         uint32 *_pchunkOffsets;
+        uint64 *_pchunkOffsets64;
 
         int32 _mediaType;
         uint32 _currentDataOffset;
+        bool _largeOffsetBoxPresent;
         MP4_FF_FILE *_fileptr;
         uint32  _parsed_entry_cnt;
 
         MP4_FF_FILE *_curr_fptr;
-        uint32 *_stbl_fptr_vec;
+        TOsclFileOffset *_stbl_fptr_vec;
         uint32 _stbl_buff_size;
         uint32 _curr_entry_point;
         uint32 _curr_buff_number;

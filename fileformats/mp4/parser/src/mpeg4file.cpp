@@ -56,7 +56,7 @@
 
 typedef Oscl_Vector<TrackAtom*, OsclMemAllocator> trackAtomVecType;
 typedef Oscl_Vector<MovieFragmentAtom*, OsclMemAllocator> movieFragmentAtomVecType;
-typedef Oscl_Vector<uint32, OsclMemAllocator> movieFragmentOffsetVecType;
+typedef Oscl_Vector<TOsclFileOffset, OsclMemAllocator> movieFragmentOffsetVecType;
 typedef Oscl_Vector<TrackDurationInfo*, OsclMemAllocator> trackDurationInfoVecType;
 typedef Oscl_Vector<MovieFragmentRandomAccessAtom*, OsclMemAllocator> movieFragmentRandomAccessAtomVecType;
 
@@ -131,24 +131,23 @@ Mpeg4File::Mpeg4File(MP4_FF_FILE *fp,
 
     _success = true; // Initial state
 
-    int32 fileSize;
-    int32 filePointer;
+    TOsclFileOffset fileSize;
+    TOsclFileOffset filePointer;
     filePointer = AtomUtils::getCurrentFilePosition(fp);
-    uint32 fsize = 0;
-    AtomUtils::getCurrentFileSize(fp, fsize);
-    fileSize = (int32)fsize;
+    AtomUtils::getCurrentFileSize(fp, fileSize);
 
     _oPVContent = false;
     _oPVContentDownloadable = false;
     _commonFilePtr = NULL;
-    _fileSize = fsize;
+    _fileSize = fileSize;
+
     if (!aOpenFileOncePerTrack)
     {
         OsclAny*ptr = oscl_malloc(sizeof(MP4_FF_FILE));
         _fp = OSCL_PLACEMENT_NEW(ptr, MP4_FF_FILE());
         _fp->_pvfile.Copy(fp->_pvfile);
     }
-    int32 count = fileSize - filePointer;// -DEFAULT_ATOM_SIZE;
+    TOsclFileOffset count = (fileSize - filePointer);// -DEFAULT_ATOM_SIZE;
 
     //top level moov, mdat, udat
     while (count > 0)
@@ -375,6 +374,7 @@ Mpeg4File::Mpeg4File(MP4_FF_FILE *fp,
                     _mp4ErrorCode = _pmovieAtom->GetMP4Error();
                     break;
                 }
+
                 _isMovieFragmentsPresent = _pmovieAtom->IsMovieFragmentPresent();
 
                 PV_MP4_FF_NEW(fp->auditCB, TrackIndexVecType, (), _moofFragmentIdx);
@@ -388,6 +388,7 @@ Mpeg4File::Mpeg4File(MP4_FF_FILE *fp,
                     atomSize -= DEFAULT_ATOM_SIZE;
                     _pointerMovieAtomEnd =  AtomUtils::getCurrentFilePosition(fp);
                     _ptrMoofEnds = _pointerMovieAtomEnd;
+
                     OsclAny*ptr = oscl_malloc(sizeof(MP4_FF_FILE));
                     if (ptr == NULL)
                     {
@@ -451,7 +452,7 @@ Mpeg4File::Mpeg4File(MP4_FF_FILE *fp,
         }
         else if (atomType == MOVIE_FRAGMENT_ATOM)
         {
-            uint32 moofStartOffset = AtomUtils::getCurrentFilePosition(fp);
+            TOsclFileOffset moofStartOffset = AtomUtils::getCurrentFilePosition(fp);
             moofStartOffset -= DEFAULT_ATOM_SIZE;
             _pMoofOffsetVec->push_back(moofStartOffset);
 
@@ -468,12 +469,12 @@ Mpeg4File::Mpeg4File(MP4_FF_FILE *fp,
             count -= pMovieFragmentAtom->getSize();
             _ptrMoofEnds = AtomUtils::getCurrentFilePosition(fp);
             _pMovieFragmentAtomVec->push_back(pMovieFragmentAtom);
+
         }
         else if (atomType == MOVIE_FRAGMENT_RANDOM_ACCESS_ATOM)
         {
             MovieFragmentRandomAccessAtom *pMovieFragmentRandomAccessAtom = NULL;
             PV_MP4_FF_NEW(fp->auditCB, MovieFragmentRandomAccessAtom, (fp, atomSize, atomType), pMovieFragmentRandomAccessAtom);
-
             if (!pMovieFragmentRandomAccessAtom->MP4Success())
             {
                 _success = false;
@@ -524,7 +525,7 @@ Mpeg4File::Mpeg4File(MP4_FF_FILE *fp,
                 if (0 != bufferCapacity)
                 {
                     // progressive playback
-                    uint32* offsetList = (uint32 *)oscl_malloc(sizeof(uint32) * numMediaTracks);
+                    TOsclFileOffset* offsetList = (TOsclFileOffset *)oscl_malloc(sizeof(TOsclFileOffset) * numMediaTracks);
                     if (NULL == offsetList)
                     {
                         _success = false;
@@ -559,11 +560,11 @@ Mpeg4File::Mpeg4File(MP4_FF_FILE *fp,
                                     // same as abs()
                                     if (offsetList[i] > offsetList[j])
                                     {
-                                        temp = offsetList[i] - offsetList[j];
+                                        temp = (uint32)(offsetList[i] - offsetList[j]);
                                     }
                                     else
                                     {
-                                        temp = offsetList[j] - offsetList[i];
+                                        temp = (uint32)(offsetList[j] - offsetList[i]);
                                     }
 
                                     if (temp > largest)
@@ -2236,18 +2237,18 @@ uint8* Mpeg4File::getTrackLevelOMA2DRMInfo(uint32 trackID)
 
 MP4_ERROR_CODE
 Mpeg4File::RequestReadCapacityNotification(PvmiDataStreamObserver& aObserver,
-        uint32 aFileOffset,
+        TOsclFileOffset aFileOffset,
         OsclAny* aContextData)
 {
     PVMF_MP4FFPARSER_LOGMEDIASAMPELSTATEVARIABLES((0, "Mpeg4File::RequestReadCapacityNotification In Offset %d", aFileOffset));
-    uint32 capacity = 0;
+    TOsclFileOffset capacity = 0;
     if (_commonFilePtr != NULL)
     {
-        uint32 currSize = 0;
+        TOsclFileOffset currSize = 0;
         GetCurrentFileSize(currSize);
         if (aFileOffset > currSize)
         {
-            uint32 currPos = (uint32)(AtomUtils::getCurrentFilePosition(_commonFilePtr));
+            TOsclFileOffset currPos = AtomUtils::getCurrentFilePosition(_commonFilePtr);
             if (aFileOffset > currPos)
             {
                 capacity = (aFileOffset - currPos);
@@ -2272,7 +2273,7 @@ Mpeg4File::RequestReadCapacityNotification(PvmiDataStreamObserver& aObserver,
 
 
 MP4_ERROR_CODE
-Mpeg4File::GetCurrentFileSize(uint32& aFileSize)
+Mpeg4File::GetCurrentFileSize(TOsclFileOffset& aFileSize)
 {
     aFileSize = 0;
     if (AtomUtils::getCurrentFileSize(_commonFilePtr, aFileSize) == true)
@@ -2415,10 +2416,10 @@ int32 Mpeg4File::getNextBundledAccessUnits(const uint32 trackID,
 
                                     // if moofs are already parsed, so go to the end of MOOF Vector.
 
-                                    uint32 currFilePos = AtomUtils::getCurrentFilePosition(_movieFragmentFilePtr);
+                                    TOsclFileOffset currFilePos = AtomUtils::getCurrentFilePosition(_movieFragmentFilePtr);
                                     if (currFilePos < _ptrMoofEnds)
                                     {
-                                        uint32 offset = (_ptrMoofEnds - currFilePos);
+                                        TOsclFileOffset offset = (_ptrMoofEnds - currFilePos);
                                         AtomUtils::seekFromCurrPos(_movieFragmentFilePtr, offset);
                                     }
                                     else if (currFilePos == _ptrMoofEnds)
@@ -2438,7 +2439,7 @@ int32 Mpeg4File::getNextBundledAccessUnits(const uint32 trackID,
                                         pMovieFragmentAtom = (*_pMovieFragmentAtomVec)[idx];
                                         if (pMovieFragmentAtom == NULL)
                                         {
-                                            uint32 moof_start_offset = (*_pMoofOffsetVec)[idx-1];
+                                            TOsclFileOffset moof_start_offset = (*_pMoofOffsetVec)[idx-1];
                                             AtomUtils::seekFromStart(_movieFragmentFilePtr, moof_start_offset);
                                             uint32 atomType = UNKNOWN_ATOM;
                                             uint32 atomSize = 0;
@@ -2457,7 +2458,7 @@ int32 Mpeg4File::getNextBundledAccessUnits(const uint32 trackID,
                                         pMovieFragmentAtom->resetPlayback();
                                         i++;
                                     }
-                                    uint32 moof_start_offset = (*_pMoofOffsetVec)[idx];
+                                    TOsclFileOffset moof_start_offset = (*_pMoofOffsetVec)[idx];
                                     AtomUtils::seekFromStart(_movieFragmentFilePtr, moof_start_offset);
                                     uint32 atomType = UNKNOWN_ATOM;
                                     uint32 atomSize = 0;
@@ -2471,28 +2472,28 @@ int32 Mpeg4File::getNextBundledAccessUnits(const uint32 trackID,
                                 }
                             }
 
-                            uint32 fileSize = 0;
+                            TOsclFileOffset fileSize = 0;
                             AtomUtils::getCurrentFileSize(_movieFragmentFilePtr, fileSize);
-                            uint32 currFilePos = AtomUtils::getCurrentFilePosition(_movieFragmentFilePtr);
+                            TOsclFileOffset currFilePos = AtomUtils::getCurrentFilePosition(_movieFragmentFilePtr);
                             if (currFilePos < _ptrMoofEnds)
                             {
-                                uint32 offset = (_ptrMoofEnds - currFilePos);
+                                TOsclFileOffset offset = (_ptrMoofEnds - currFilePos);
                                 AtomUtils::seekFromCurrPos(_movieFragmentFilePtr, offset);
                             }
                             else
                             {
                                 AtomUtils::seekFromStart(_movieFragmentFilePtr, _ptrMoofEnds);
                             }
-                            uint32 filePointer = AtomUtils::getCurrentFilePosition(_movieFragmentFilePtr);
-                            int32 count = fileSize - filePointer;// -DEFAULT_ATOM_SIZE;
+                            TOsclFileOffset filePointer = AtomUtils::getCurrentFilePosition(_movieFragmentFilePtr);
+                            TOsclFileOffset count = (fileSize - filePointer);// -DEFAULT_ATOM_SIZE;
 
                             while (count > 0)
                             {
                                 uint32 atomType = UNKNOWN_ATOM;
                                 uint32 atomSize = 0;
-                                uint32 currPos = AtomUtils::getCurrentFilePosition(_movieFragmentFilePtr);
+                                TOsclFileOffset currPos = AtomUtils::getCurrentFilePosition(_movieFragmentFilePtr);
                                 AtomUtils::getNextAtomType(_movieFragmentFilePtr, atomSize, atomType);
-                                if ((currPos + atomSize) > fileSize)
+                                if ((currPos + (TOsclFileOffset)atomSize) > fileSize)
                                 {
                                     AtomUtils::seekFromStart(_movieFragmentFilePtr, currPos);
                                     if (_movieFragmentIdx[moofIdx] < _pMovieFragmentAtomVec->size())
@@ -2517,7 +2518,7 @@ int32 Mpeg4File::getNextBundledAccessUnits(const uint32 trackID,
 
                                 if (atomType == MOVIE_FRAGMENT_ATOM)
                                 {
-                                    uint32 moofStartOffset = AtomUtils::getCurrentFilePosition(_movieFragmentFilePtr);
+                                    TOsclFileOffset moofStartOffset = AtomUtils::getCurrentFilePosition(_movieFragmentFilePtr);
                                     moofStartOffset -= DEFAULT_ATOM_SIZE;
                                     parseMoofCompletely = false;
                                     moofSize = atomSize;
@@ -2620,15 +2621,15 @@ int32 Mpeg4File::getNextBundledAccessUnits(const uint32 trackID,
                                 uint32 size = _pMovieFragmentAtomVec->size();
                                 _pMovieFragmentAtom = (*_pMovieFragmentAtomVec)[size - 1];
                             }
-                            uint32 currPos = AtomUtils::getCurrentFilePosition(_movieFragmentFilePtr);
+                            TOsclFileOffset currPos = AtomUtils::getCurrentFilePosition(_movieFragmentFilePtr);
                             if (currPos > moofPtrPos)
                             {
-                                uint32 offset = (currPos - moofPtrPos);
-                                AtomUtils::seekFromCurrPos(_movieFragmentFilePtr, -((int32)offset));
+                                TOsclFileOffset offset = (currPos - moofPtrPos);
+                                AtomUtils::seekFromCurrPos(_movieFragmentFilePtr, - offset);
                             }
                             else
                             {
-                                uint32 offset = (moofPtrPos - currPos);
+                                TOsclFileOffset offset = (moofPtrPos - currPos);
                                 AtomUtils::seekFromCurrPos(_movieFragmentFilePtr, offset);
                             }
 
@@ -2649,12 +2650,12 @@ int32 Mpeg4File::getNextBundledAccessUnits(const uint32 trackID,
 
                             if (currPos > moofPtrPos)
                             {
-                                uint32 offset = (currPos - moofPtrPos);
+                                TOsclFileOffset offset = (currPos - moofPtrPos);
                                 AtomUtils::seekFromCurrPos(_movieFragmentFilePtr, offset);
                             }
                             else
                             {
-                                uint32 offset = (moofPtrPos - currPos);
+                                TOsclFileOffset offset = (moofPtrPos - currPos);
                                 AtomUtils::seekFromCurrPos(_movieFragmentFilePtr, -((int32)offset));
                             }
 
@@ -2955,7 +2956,7 @@ void Mpeg4File::GetID3MetaData(PvmiKvpSharedPtrVector &id3Frames)
 
 void Mpeg4File::parseID3Header(MP4_FF_FILE *aFile)
 {
-    int32 curpos = AtomUtils::getCurrentFilePosition(aFile);
+    TOsclFileOffset curpos = AtomUtils::getCurrentFilePosition(aFile);
     AtomUtils::seekFromStart(aFile, 0);
     _pID3Parser->ParseID3Tag(&aFile->_pvfile);
     AtomUtils::seekFromStart(aFile, curpos);
@@ -3036,7 +3037,7 @@ MP4_ERROR_CODE Mpeg4File::getKeyMediaSampleNumAt(uint32 aTrackId,
     }
 }
 
-int32 Mpeg4File::getOffsetByTime(uint32 id, uint64 ts, uint32* sampleFileOffset , uint32 jitterbuffertimeinmillisec)
+int32 Mpeg4File::getOffsetByTime(uint32 id, uint64 ts, TOsclFileOffset* sampleFileOffset , uint32 jitterbuffertimeinmillisec)
 {
     int32 ret =  DEFAULT_ERROR;
     uint32 sigmaAtomSize = 0;
@@ -3128,15 +3129,15 @@ int32 Mpeg4File::getOffsetByTime(uint32 id, uint64 ts, uint32* sampleFileOffset 
                         }
                     }
 
-                    uint32 fileSize = 0;
-                    uint32 currfptr = 0;
+                    TOsclFileOffset fileSize = 0;
+                    TOsclFileOffset currfptr = 0;
 
                     AtomUtils::getCurrentFileSize(_movieFragmentFilePtr, fileSize);
                     PVMF_MP4FFPARSER_LOGMEDIASAMPELSTATEVARIABLES((0, "getOffsetByTime::FileSize %d Track ID %d ********@@@@@@@@@@@@@@@@", fileSize, id));
 
                     AtomUtils::seekFromStart(_movieFragmentFilePtr, _ptrMoofEnds);
-                    uint32 filePointer = AtomUtils::getCurrentFilePosition(_movieFragmentFilePtr);
-                    int32 count = fileSize - filePointer;// -DEFAULT_ATOM_SIZE;
+                    TOsclFileOffset filePointer = AtomUtils::getCurrentFilePosition(_movieFragmentFilePtr);
+                    TOsclFileOffset count = (fileSize - filePointer);// -DEFAULT_ATOM_SIZE;
                     PVMF_MP4FFPARSER_LOGMEDIASAMPELSTATEVARIABLES((0, "getOffsetByTime:: TS= %d ********@@@@@@@@@@@@@@@@, count=%d, filePointer=%d", ts, count, filePointer));
 
                     while (count > 0)
@@ -3155,13 +3156,13 @@ int32 Mpeg4File::getOffsetByTime(uint32 id, uint64 ts, uint32* sampleFileOffset 
                         sigmaAtomSize += atomSize;
                         if (atomType == MOVIE_FRAGMENT_ATOM)
                         {
-                            uint32 moofStartOffset = AtomUtils::getCurrentFilePosition(_movieFragmentFilePtr);
+                            TOsclFileOffset moofStartOffset = AtomUtils::getCurrentFilePosition(_movieFragmentFilePtr);
                             moofStartOffset -= DEFAULT_ATOM_SIZE;
                             PVMF_MP4FFPARSER_LOGMEDIASAMPELSTATEVARIABLES((0, "getOffsetByTime:: MovieFragmentAtom moofStartOffset=%d", moofStartOffset));
 
                             moofSize = atomSize;
 
-                            if ((moofStartOffset + atomSize) > fileSize)
+                            if ((moofStartOffset + (TOsclFileOffset)atomSize) > fileSize)
                             {
                                 const uint32 timeScale = _pmovieAtom->getTrackMediaTimescale(id);
                                 if ((timeScale == 0) || (timeScale == 0xFFFFFFFF))
@@ -3174,7 +3175,7 @@ int32 Mpeg4File::getOffsetByTime(uint32 id, uint64 ts, uint32* sampleFileOffset 
                                 uint32 rateOfDataUsageKbPerSec = 0;
                                 if (trackPlayedSoFarInSec != 0)
                                 {
-                                    rateOfDataUsageKbPerSec = fileSize / trackPlayedSoFarInSec;
+                                    rateOfDataUsageKbPerSec = (uint32)(fileSize / trackPlayedSoFarInSec);
                                 }
                                 // estimate data for PVMF_MP4FFPARSER_PSEUDO_STREAMING_DURATION_IN_SEC
                                 uint32 dataNeededAhead = (rateOfDataUsageKbPerSec * jitterbuffertimeinmillisec) / 1000;
@@ -3237,7 +3238,7 @@ int32 Mpeg4File::getOffsetByTime(uint32 id, uint64 ts, uint32* sampleFileOffset 
                             else
                             {
                                 currfptr = AtomUtils::getCurrentFilePosition(_movieFragmentFilePtr);
-                                if ((currfptr + atomSize) > fileSize)
+                                if ((currfptr + (TOsclFileOffset)atomSize) > fileSize)
                                 {
                                     uint32 timeScale = _pmovieAtom->getTrackMediaTimescale(id);
                                     if ((timeScale == 0) || (timeScale == 0xFFFFFFFF))
@@ -3249,7 +3250,7 @@ int32 Mpeg4File::getOffsetByTime(uint32 id, uint64 ts, uint32* sampleFileOffset 
                                     uint32 rateOfDataUsageKbPerSec = 0;
                                     if (trackPlayedSoFarInSec != 0)
                                     {
-                                        rateOfDataUsageKbPerSec = fileSize / trackPlayedSoFarInSec;
+                                        rateOfDataUsageKbPerSec = (uint32)(fileSize / trackPlayedSoFarInSec);
                                     }
 
                                     // estimate data for PVMF_MP4FFPARSER_PSEUDO_STREAMING_DURATION_IN_SEC
@@ -3301,7 +3302,7 @@ int32 Mpeg4File::getOffsetByTime(uint32 id, uint64 ts, uint32* sampleFileOffset 
     }
 }
 
-int32 Mpeg4File::getTimestampForRandomAccessPoints(uint32 id, uint32 *num, uint64 *tsBuf, uint32* numBuf, uint32 *offsetBuf)
+int32 Mpeg4File::getTimestampForRandomAccessPoints(uint32 id, uint32 *num, uint64 *tsBuf, uint32* numBuf, TOsclFileOffset *offsetBuf)
 {
     if (_pmovieAtom != NULL)
     {
@@ -3441,7 +3442,8 @@ uint32 Mpeg4File::resetPlayback(uint32 time, uint16 numTracks, uint32 *trackList
     uint64 convertedTS = 0, returnedTS = 0;
     uint32 timestamp = 0;
 
-    uint32 moof_offset = 0, traf_number = 0, trun_number = 0, sample_num = 0;
+    TOsclFileOffset moof_offset = 0;
+    uint32 traf_number = 0, trun_number = 0, sample_num = 0;
 
     const uint32& trackID = *trackList; //  numTracks is the track index in trackList
     uint32 moofIdx = getIndexForTrackID(trackID);
@@ -3500,7 +3502,7 @@ uint32 Mpeg4File::resetPlayback(uint32 time, uint16 numTracks, uint32 *trackList
 
                         for (uint32 idx = 0; idx < _pMoofOffsetVec->size(); idx++)
                         {
-                            uint32 moof_start_offset = (*_pMoofOffsetVec)[idx];
+                            TOsclFileOffset moof_start_offset = (*_pMoofOffsetVec)[idx];
                             if (moof_start_offset == moof_offset)
                             {
                                 _movieFragmentIdx[moofIdx] = idx;
@@ -3529,12 +3531,12 @@ uint32 Mpeg4File::resetPlayback(uint32 time, uint16 numTracks, uint32 *trackList
                         {
                             if (!oMoofFound)
                             {
-                                uint32 fileSize = 0;
+                                TOsclFileOffset fileSize = 0;
                                 _ptrMoofEnds = moof_offset;
                                 AtomUtils::getCurrentFileSize(_movieFragmentFilePtr, fileSize);
                                 AtomUtils::seekFromStart(_movieFragmentFilePtr, _ptrMoofEnds);
-                                uint32 filePointer = AtomUtils::getCurrentFilePosition(_movieFragmentFilePtr);
-                                int32 count = fileSize - filePointer;// -DEFAULT_ATOM_SIZE;
+                                TOsclFileOffset filePointer = AtomUtils::getCurrentFilePosition(_movieFragmentFilePtr);
+                                TOsclFileOffset count = (fileSize - filePointer);// -DEFAULT_ATOM_SIZE;
 
                                 while (count > 0)
                                 {
@@ -3545,7 +3547,7 @@ uint32 Mpeg4File::resetPlayback(uint32 time, uint16 numTracks, uint32 *trackList
                                     {
                                         parseMoofCompletely = true;
 
-                                        uint32 moofStartOffset = AtomUtils::getCurrentFilePosition(_movieFragmentFilePtr);
+                                        TOsclFileOffset moofStartOffset = AtomUtils::getCurrentFilePosition(_movieFragmentFilePtr);
                                         moofStartOffset -= DEFAULT_ATOM_SIZE;
 
                                         if (moofParsingCompleted)
@@ -3779,7 +3781,7 @@ uint32 Mpeg4File::resetPlayback(uint32 time, uint16 numTracks, uint32 *trackList
                         //
                         for (idx = 0; idx < _pMoofOffsetVec->size(); idx++)
                         {
-                            uint32 moof_start_offset = (*_pMoofOffsetVec)[idx];
+                            TOsclFileOffset moof_start_offset = (*_pMoofOffsetVec)[idx];
                             if (moof_start_offset == moof_offset)
                             {
                                 _movieFragmentIdx[moofIdx] = idx;
@@ -3817,11 +3819,11 @@ uint32 Mpeg4File::resetPlayback(uint32 time, uint16 numTracks, uint32 *trackList
                     if (!oMoofFound)
                     {
                         _ptrMoofEnds = moof_offset;
-                        uint32 fileSize = 0;
+                        TOsclFileOffset fileSize = 0;
                         AtomUtils::getCurrentFileSize(_movieFragmentFilePtr, fileSize);
                         AtomUtils::seekFromStart(_movieFragmentFilePtr, _ptrMoofEnds);
-                        uint32 filePointer = AtomUtils::getCurrentFilePosition(_movieFragmentFilePtr);
-                        int32 count = fileSize - filePointer;// -DEFAULT_ATOM_SIZE;
+                        TOsclFileOffset filePointer = AtomUtils::getCurrentFilePosition(_movieFragmentFilePtr);
+                        TOsclFileOffset count = (fileSize - filePointer);// -DEFAULT_ATOM_SIZE;
 
                         while (count > 0)
                         {
@@ -3830,7 +3832,7 @@ uint32 Mpeg4File::resetPlayback(uint32 time, uint16 numTracks, uint32 *trackList
                             AtomUtils::getNextAtomType(_movieFragmentFilePtr, atomSize, atomType);
                             if (atomType == MOVIE_FRAGMENT_ATOM)
                             {
-                                uint32 moofStartOffset = AtomUtils::getCurrentFilePosition(_movieFragmentFilePtr);
+                                TOsclFileOffset moofStartOffset = AtomUtils::getCurrentFilePosition(_movieFragmentFilePtr);
                                 moofStartOffset -= DEFAULT_ATOM_SIZE;
                                 parseMoofCompletely = true;
 
@@ -4222,11 +4224,11 @@ uint32 Mpeg4File::queryRepositionTime(uint32 time,
 int32 Mpeg4File::parseMFRA()
 {
     uint32 ret = 0;
-    uint32 fileSize = 0;
+    TOsclFileOffset fileSize = 0;
     uint32 MfraStartOffset = 0;
 
     // save the start search point
-    uint32 startpoint =  AtomUtils::getCurrentFilePosition(_movieFragmentFilePtr);
+    TOsclFileOffset startpoint =  AtomUtils::getCurrentFilePosition(_movieFragmentFilePtr);
 
     AtomUtils::getCurrentFileSize(_movieFragmentFilePtr, fileSize);
     AtomUtils::seekFromStart(_movieFragmentFilePtr, fileSize);
@@ -4412,26 +4414,26 @@ int32 Mpeg4File::peekNextBundledAccessUnits(const uint32 trackID,
 
                     if ((_pMovieFragmentAtomVec->size() <= _peekMovieFragmentIdx[moofIdx]) || moofToBeParsed)
                     {
-                        uint32 fileSize = 0;
+                        TOsclFileOffset fileSize = 0;
                         AtomUtils::getCurrentFileSize(_movieFragmentFilePtr, fileSize);
                         AtomUtils::seekFromStart(_movieFragmentFilePtr, _ptrMoofEnds);
-                        uint32 filePointer = AtomUtils::getCurrentFilePosition(_movieFragmentFilePtr);
-                        int32 count = fileSize - filePointer;// -DEFAULT_ATOM_SIZE;
+                        TOsclFileOffset filePointer = AtomUtils::getCurrentFilePosition(_movieFragmentFilePtr);
+                        TOsclFileOffset count = fileSize - filePointer;// -DEFAULT_ATOM_SIZE;
 
                         PVMF_MP4FFPARSER_LOGMEDIASAMPELSTATEVARIABLES((0, "filePointer=%d, fileSize=%d, count=%d",
-                                filePointer, fileSize, count));
+                                (uint32)filePointer, (uint32)fileSize, (uint32)count));
 
                         while (count > 0)
                         {
                             uint32 atomType = UNKNOWN_ATOM;
                             uint32 atomSize = 0;
-                            uint32 currPos = AtomUtils::getCurrentFilePosition(_movieFragmentFilePtr);
+                            TOsclFileOffset currPos = AtomUtils::getCurrentFilePosition(_movieFragmentFilePtr);
                             AtomUtils::getNextAtomType(_movieFragmentFilePtr, atomSize, atomType);
 
                             PVMF_MP4FFPARSER_LOGMEDIASAMPELSTATEVARIABLES((0, "atomType=%d, atomSize=%d, currPos=%d",
                                     atomType, atomSize, currPos));
 
-                            if ((currPos + atomSize) > fileSize)
+                            if ((currPos + (TOsclFileOffset)atomSize) > fileSize)
                             {
                                 AtomUtils::seekFromStart(_movieFragmentFilePtr, currPos);
                                 if (*n == 0)
@@ -4445,8 +4447,7 @@ int32 Mpeg4File::peekNextBundledAccessUnits(const uint32 trackID,
                             }
                             if (atomType == MOVIE_FRAGMENT_ATOM)
                             {
-
-                                uint32 moofStartOffset = AtomUtils::getCurrentFilePosition(_movieFragmentFilePtr);
+                                TOsclFileOffset moofStartOffset = AtomUtils::getCurrentFilePosition(_movieFragmentFilePtr);
                                 moofStartOffset -= DEFAULT_ATOM_SIZE;
 
                                 PVMF_MP4FFPARSER_LOGMEDIASAMPELSTATEVARIABLES((0, "atomType=MovieFrgment, moofStart=%d", moofStartOffset));
@@ -4835,7 +4836,7 @@ bool Mpeg4File::CreateDataStreamSessionForExternalDownload(OSCL_wString& aFilena
             return false;
         }
 
-        uint32 fileSize;
+        TOsclFileOffset fileSize;
         AtomUtils::getCurrentFileSize(_commonFilePtr, fileSize);
         _commonFilePtr->_fileSize = (int32)fileSize;
     }
@@ -8667,7 +8668,7 @@ void Mpeg4File::SetMoofAtomsCnt(const uint32 aMoofAtmsCnt)
     iTotalMoofAtmsCnt = aMoofAtmsCnt;
 }
 
-MP4_ERROR_CODE Mpeg4File::GetUserDataAtomInfo(uint32 &atomSize, uint32 &atomPointer)
+MP4_ERROR_CODE Mpeg4File::GetUserDataAtomInfo(uint32 &atomSize, TOsclFileOffset &atomPointer)
 {
     if (_pmovieAtom)
         return _pmovieAtom->GetUserDataAtomInfo(atomSize, atomPointer);

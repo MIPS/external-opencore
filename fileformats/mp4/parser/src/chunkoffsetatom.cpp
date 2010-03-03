@@ -35,10 +35,11 @@
 // Ctor to create a new ChunkOffsetAtom by reading in from an ifstream
 ChunkOffsetAtom::ChunkOffsetAtom(MP4_FF_FILE *fp, uint32 size, uint32 type,
                                  OSCL_wString& filename,
-                                 uint32 parsingMode)
+                                 uint32 parsingMode, bool largeOffsetBoxPresent)
         : FullAtom(fp, size, type)
 {
     _pchunkOffsets = NULL;
+    _pchunkOffsets64 = NULL;
     _stbl_buff_size = MAX_CACHED_TABLE_ENTRIES_FILE;
     _next_buff_number = 0;
     _curr_buff_number = 0;
@@ -47,6 +48,7 @@ ChunkOffsetAtom::ChunkOffsetAtom(MP4_FF_FILE *fp, uint32 size, uint32 type,
     _parsed_entry_cnt = 0;
     _parsingMode = parsingMode;
     _fileptr = NULL;
+    _largeOffsetBoxPresent = largeOffsetBoxPresent;
 
     if (_success)
     {
@@ -76,7 +78,7 @@ ChunkOffsetAtom::ChunkOffsetAtom(MP4_FF_FILE *fp, uint32 size, uint32 type,
                     {
                         uint32 fptrBuffSize = (_entryCount / _stbl_buff_size) + 1;
 
-                        PV_MP4_FF_ARRAY_NEW(NULL, uint32, (fptrBuffSize), _stbl_fptr_vec);
+                        PV_MP4_FF_ARRAY_NEW(NULL, TOsclFileOffset, (fptrBuffSize), _stbl_fptr_vec);
                         if (_stbl_fptr_vec == NULL)
                         {
                             _success = false;
@@ -84,12 +86,25 @@ ChunkOffsetAtom::ChunkOffsetAtom(MP4_FF_FILE *fp, uint32 size, uint32 type,
                             return;
                         }
 
-                        PV_MP4_FF_ARRAY_NEW(NULL, uint32, (_stbl_buff_size), _pchunkOffsets);
-                        if (_pchunkOffsets == NULL)
+                        if (_largeOffsetBoxPresent)
                         {
-                            _success = false;
-                            _mp4ErrorCode = MEMORY_ALLOCATION_FAILED;
-                            return;
+                            PV_MP4_FF_ARRAY_NEW(NULL, uint64, (_stbl_buff_size), _pchunkOffsets64);
+                            if (_pchunkOffsets64 == NULL)
+                            {
+                                _success = false;
+                                _mp4ErrorCode = MEMORY_ALLOCATION_FAILED;
+                                return;
+                            }
+                        }
+                        else
+                        {
+                            PV_MP4_FF_ARRAY_NEW(NULL, uint32, (_stbl_buff_size), _pchunkOffsets);
+                            if (_pchunkOffsets == NULL)
+                            {
+                                _success = false;
+                                _mp4ErrorCode = MEMORY_ALLOCATION_FAILED;
+                                return;
+                            }
                         }
 
                         {
@@ -114,8 +129,8 @@ ChunkOffsetAtom::ChunkOffsetAtom(MP4_FF_FILE *fp, uint32 size, uint32 type,
 
                             _fileptr->_fileSize = fp->_fileSize;
                         }
-                        int32 _head_offset = AtomUtils::getCurrentFilePosition(fp);
-                        AtomUtils::seekFromCurrPos(fp, dataSize);
+                        TOsclFileOffset _head_offset = AtomUtils::getCurrentFilePosition(fp);
+                        AtomUtils::seekFromCurrPos(fp, (TOsclFileOffset)dataSize);
                         AtomUtils::seekFromStart(_fileptr, _head_offset);
 
                         return;
@@ -133,23 +148,45 @@ ChunkOffsetAtom::ChunkOffsetAtom(MP4_FF_FILE *fp, uint32 size, uint32 type,
                 }
 
                 _parsingMode = 0;
-                PV_MP4_FF_ARRAY_NEW(NULL, uint32, (_entryCount), _pchunkOffsets);
+                if (_largeOffsetBoxPresent)
+                {
+                    PV_MP4_FF_ARRAY_NEW(NULL, uint64, (_entryCount), _pchunkOffsets64);
+                }
+                else
+                {
+                    PV_MP4_FF_ARRAY_NEW(NULL, uint32, (_entryCount), _pchunkOffsets);
+                }
 
-                uint32 offset = 0;
                 for (uint32 i = 0; i < _entryCount; i++)
                 {
-                    if (!AtomUtils::read32(fp, offset))
+                    if (_largeOffsetBoxPresent)
                     {
-                        _success = false;
-                        break;
+                        uint64 offset = 0;
+                        if (!AtomUtils::read64(fp, offset))
+                        {
+                            _success = false;
+                            break;
+                        }
+                        _pchunkOffsets64[i] = offset;
                     }
-                    _pchunkOffsets[i] = offset;
+                    else
+                    {
+                        uint32 offset = 0;
+                        if (!AtomUtils::read32(fp, offset))
+                        {
+                            _success = false;
+                            break;
+                        }
+                        _pchunkOffsets[i] = offset;
+                    }
+
                 }
                 _parsed_entry_cnt = _entryCount;
             }
             else
             {
                 _pchunkOffsets = NULL;
+                _pchunkOffsets64 = NULL;
             }
 
         }
@@ -173,6 +210,11 @@ ChunkOffsetAtom::~ChunkOffsetAtom()
     {
         // Cleanup vector
         PV_MP4_ARRAY_DELETE(NULL, _pchunkOffsets);
+    }
+    if (_pchunkOffsets64 != NULL)
+    {
+        // Cleanup vector
+        PV_MP4_ARRAY_DELETE(NULL, _pchunkOffsets64);
     }
     if (_parsingMode)
     {
@@ -207,23 +249,36 @@ bool ChunkOffsetAtom::ParseEntryUnit(uint32 sample_cnt)
             _curr_buff_number = _parsed_entry_cnt / _stbl_buff_size;
             if (_curr_buff_number  == _next_buff_number)
             {
-                uint32 currFilePointer = AtomUtils::getCurrentFilePosition(_fileptr);
+                TOsclFileOffset currFilePointer = AtomUtils::getCurrentFilePosition(_fileptr);
                 _stbl_fptr_vec[_curr_buff_number] = currFilePointer;
                 _next_buff_number++;
             }
 
             if (!_curr_entry_point)
             {
-                uint32 currFilePointer = _stbl_fptr_vec[_curr_buff_number];
+                TOsclFileOffset currFilePointer = _stbl_fptr_vec[_curr_buff_number];
                 AtomUtils::seekFromStart(_fileptr, currFilePointer);
             }
 
-            uint32 offset = 0;
-            if (!AtomUtils::read32(_fileptr, offset))
+            if (_largeOffsetBoxPresent)
             {
-                return false;
+                uint64 offset = 0;
+                if (!AtomUtils::read64(_fileptr, offset))
+                {
+                    return false;
+                }
+                _pchunkOffsets64[_curr_entry_point] = offset;
             }
-            _pchunkOffsets[_curr_entry_point] = offset;
+            else
+            {
+                uint32 offset = 0;
+                if (!AtomUtils::read32(_fileptr, offset))
+                {
+                    return false;
+                }
+                _pchunkOffsets[_curr_entry_point] = offset;
+            }
+
             _parsed_entry_cnt++;
         }
     }
@@ -234,11 +289,21 @@ bool ChunkOffsetAtom::ParseEntryUnit(uint32 sample_cnt)
 // Returns the chunk offset for the chunk at 'index'
 // In this case, 'index' is the actual chunk number
 MP4_ERROR_CODE
-ChunkOffsetAtom::getChunkOffsetAt(int32 index, uint32& aChunkOffset)
+ChunkOffsetAtom::getChunkOffsetAt(int32 index, uint64& aChunkOffset)
 {
-    if (_pchunkOffsets == NULL)
+    if (_largeOffsetBoxPresent)
     {
-        return DEFAULT_ERROR;
+        if (_pchunkOffsets64 == NULL)
+        {
+            return DEFAULT_ERROR;
+        }
+    }
+    else
+    {
+        if (_pchunkOffsets == NULL)
+        {
+            return DEFAULT_ERROR;
+        }
     }
 
     if (index < (int32)_entryCount)
@@ -259,12 +324,26 @@ ChunkOffsetAtom::getChunkOffsetAt(int32 index, uint32& aChunkOffset)
                         ParseEntryUnit(_parsed_entry_cnt);
                 }
             }
-            aChunkOffset = _pchunkOffsets[index%_stbl_buff_size];
+            if (_largeOffsetBoxPresent)
+            {
+                aChunkOffset = _pchunkOffsets64[index%_stbl_buff_size];
+            }
+            else
+            {
+                aChunkOffset = _pchunkOffsets[index%_stbl_buff_size];
+            }
             return EVERYTHING_FINE;
         }
         else
         {
-            aChunkOffset = _pchunkOffsets[index];
+            if (_largeOffsetBoxPresent)
+            {
+                aChunkOffset = _pchunkOffsets64[index];
+            }
+            else
+            {
+                aChunkOffset = _pchunkOffsets[index];
+            }
             return EVERYTHING_FINE;
         }
     }
@@ -275,13 +354,23 @@ ChunkOffsetAtom::getChunkOffsetAt(int32 index, uint32& aChunkOffset)
 }
 
 MP4_ERROR_CODE
-ChunkOffsetAtom::getChunkClosestToOffset(uint32 offSet, int32& index)
+ChunkOffsetAtom::getChunkClosestToOffset(uint64 offSet, int32& index)
 {
     index = -1;
 
-    if (_pchunkOffsets == NULL)
+    if (_largeOffsetBoxPresent)
     {
-        return DEFAULT_ERROR;
+        if (_pchunkOffsets64 == NULL)
+        {
+            return DEFAULT_ERROR;
+        }
+    }
+    else
+    {
+        if (_pchunkOffsets == NULL)
+        {
+            return DEFAULT_ERROR;
+        }
     }
 
     uint32 prevIndex = 0;
@@ -304,7 +393,18 @@ ChunkOffsetAtom::getChunkClosestToOffset(uint32 offSet, int32& index)
                 }
             }
         }
-        if ((uint32)_pchunkOffsets[i%_stbl_buff_size] < offSet)
+        uint64 chunkOffset;
+
+        if (_largeOffsetBoxPresent)
+        {
+            chunkOffset = _pchunkOffsets64[i%_stbl_buff_size];
+        }
+        else
+        {
+            chunkOffset = _pchunkOffsets[i%_stbl_buff_size];
+        }
+
+        if (chunkOffset < offSet)
         {
             prevIndex = i;
             continue;

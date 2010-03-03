@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -120,7 +120,7 @@ SpeechSampleEntry3GPP2::SpeechSampleEntry3GPP2(MP4_FF_FILE *fp, uint32 size, uin
         SetMimeType(type);
 
         //calculate this in case we need to recover from some parsing errors
-        uint32 end_of_atom = AtomUtils::getCurrentFilePosition(fp) + (size - DEFAULT_ATOM_SIZE);
+        TOsclFileOffset end_of_atom = AtomUtils::getCurrentFilePosition(fp) + (size - DEFAULT_ATOM_SIZE);
 
         uint32 count = DEFAULT_ATOM_SIZE;
         //skip Reserved_6

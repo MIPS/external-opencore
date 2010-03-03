@@ -201,7 +201,7 @@ SampleTableAtom::SampleTableAtom(MP4_FF_FILE *fp,
             }
             else if (atomType == SAMPLE_DESCRIPTION_ATOM)
             {
-                int32 myOffset = AtomUtils::getCurrentFilePosition(fp);
+                TOsclFileOffset myOffset = AtomUtils::getCurrentFilePosition(fp);
                 //"stsd"
                 if (_psampleDescriptionAtom == NULL)
                 {
@@ -252,8 +252,8 @@ SampleTableAtom::SampleTableAtom(MP4_FF_FILE *fp,
                     _oMultipleSampleDescription = true;
                 }
                 atomSize -= DEFAULT_ATOM_SIZE;
-                atomSize += myOffset;
-                AtomUtils::seekFromStart(fp, atomSize);
+                atomSize += (uint32)myOffset;
+                AtomUtils::seekFromStart(fp, (TOsclFileOffset)atomSize);
             }
             else if (atomType == SAMPLE_SIZE_ATOM)
             { //"stsz"
@@ -293,7 +293,23 @@ SampleTableAtom::SampleTableAtom(MP4_FF_FILE *fp,
             else if (atomType == CHUNK_OFFSET_ATOM)
             {
                 //"stco"
-                PV_MP4_FF_NEW(fp->auditCB, ChunkOffsetAtom, (fp, atomSize, atomType, filename, parsingMode), _pchunkOffsetAtom);
+                PV_MP4_FF_NEW(fp->auditCB, ChunkOffsetAtom, (fp, atomSize, atomType, filename, parsingMode, false), _pchunkOffsetAtom);
+
+                // Check for success
+                if (!_pchunkOffsetAtom->MP4Success())
+                {
+                    _success = false;
+                    _mp4ErrorCode = _pchunkOffsetAtom->GetMP4Error();
+                    PVMF_MP4FFPARSER_LOGERROR((0, "ERROR =>SampleTableAtom::Chunk Offset atom failed"));
+                    return;
+                }
+                _pchunkOffsetAtom->setParent(this);
+                count -= _pchunkOffsetAtom->getSize();
+            }
+            else if (atomType == CHUNK_LARGE_OFFSET_ATOM)
+            {
+                //"co64"
+                PV_MP4_FF_NEW(fp->auditCB, ChunkOffsetAtom, (fp, atomSize, atomType, filename, parsingMode, true), _pchunkOffsetAtom);
 
                 // Check for success
                 if (!_pchunkOffsetAtom->MP4Success())
@@ -499,7 +515,7 @@ SampleTableAtom::~SampleTableAtom()
 
 // Returns the specific sample with number 'sampleNum'
 MP4_ERROR_CODE
-SampleTableAtom::getSample(uint32 sampleNum, uint8 *buf, uint32 &size, uint32 &index, uint32 &SampleOffset)
+SampleTableAtom::getSample(uint32 sampleNum, uint8 *buf, uint32 &size, uint32 &index, TOsclFileOffset &SampleOffset)
 {
     if ((_psampleSizeAtom    == NULL) ||
             (_psampleToChunkAtom == NULL) ||
@@ -557,7 +573,7 @@ SampleTableAtom::getSample(uint32 sampleNum, uint8 *buf, uint32 &size, uint32 &i
     }
 
     // Find chunk offset to file
-    uint32 offset;
+    uint64 offset;
     errCode = _pchunkOffsetAtom->getChunkOffsetAt(chunk, offset);
     //uint32 offset to int32, possible error for large files
     if (errCode != EVERYTHING_FINE)
@@ -585,7 +601,7 @@ SampleTableAtom::getSample(uint32 sampleNum, uint8 *buf, uint32 &size, uint32 &i
     }
 
     // Find actual file offset to sample
-    int32 sampleFileOffset = offset + sampleSizeOffset;
+    uint64 sampleFileOffset = offset + sampleSizeOffset;
 
     SampleOffset = sampleFileOffset;
 
@@ -620,7 +636,7 @@ SampleTableAtom::getSample(uint32 sampleNum, uint8 *buf, uint32 &size, uint32 &i
             }
         }
     }
-    if (sampleFileOffset + sampleSize > _fileSize)
+    if ((TOsclFileOffset)(sampleFileOffset + sampleSize) > _fileSize)
     {
         return INSUFFICIENT_DATA;
     }
@@ -631,17 +647,17 @@ SampleTableAtom::getSample(uint32 sampleNum, uint8 *buf, uint32 &size, uint32 &i
         {
             if (sampleNum == 0)
             {
-                AtomUtils::seekFromStart(_pinput, sampleFileOffset);
+                AtomUtils::seekFromStart(_pinput, (TOsclFileOffset)sampleFileOffset);
             }
         }
         else
         {
-            AtomUtils::seekFromStart(_pinput, sampleFileOffset);
+            AtomUtils::seekFromStart(_pinput, (TOsclFileOffset)sampleFileOffset);
         }
     }
     else
     {
-        AtomUtils::seekFromStart(_pinput, sampleFileOffset);
+        AtomUtils::seekFromStart(_pinput, (TOsclFileOffset)sampleFileOffset);
     }
 
     // Read byte data into buffer
@@ -742,7 +758,7 @@ MP4_ERROR_CODE SampleTableAtom::getKeyMediaSampleNumAt(uint32 aKeySampleNum,
         }
 
         // Find chunk offset to file
-        uint32 offset = 0;
+        uint64 offset = 0;
         errCode = _pchunkOffsetAtom->getChunkOffsetAt(chunk, offset);
 
         if (errCode != EVERYTHING_FINE)
@@ -769,7 +785,7 @@ MP4_ERROR_CODE SampleTableAtom::getKeyMediaSampleNumAt(uint32 aKeySampleNum,
         }
 
         // Find actual file offset to sample
-        int32 sampleFileOffset = offset + sampleSizeOffset;
+        uint64 sampleFileOffset = offset + sampleSizeOffset;
 
         if (!_pinput->IsOpen())
         {
@@ -803,12 +819,12 @@ MP4_ERROR_CODE SampleTableAtom::getKeyMediaSampleNumAt(uint32 aKeySampleNum,
             }
         }
 
-        if (sampleFileOffset + sampleSize > _fileSize)
+        if ((TOsclFileOffset)(sampleFileOffset + sampleSize) > _fileSize)
         {
             _currentPlaybackSampleNumber = 0;
             return (READ_FAILED);
         }
-        AtomUtils::seekFromStart(_pinput, sampleFileOffset);
+        AtomUtils::seekFromStart(_pinput, (TOsclFileOffset)sampleFileOffset);
     }
 
     {
@@ -832,7 +848,7 @@ MP4_ERROR_CODE SampleTableAtom::getKeyMediaSampleNumAt(uint32 aKeySampleNum,
         uint32 offsetIntoRunOfChunks =
             (_currentPlaybackSampleNumber - FirstSampleNumInChunk);
 
-        uint32 offset = 0;
+        uint64 offset = 0;
         errCode = _pchunkOffsetAtom->getChunkOffsetAt(chunk, offset);
 
         if (errCode != EVERYTHING_FINE)
@@ -967,7 +983,7 @@ SampleTableAtom::getPrevKeyMediaSample(uint64 inputtimestamp, uint32 &aKeySample
         }
 
         // Find chunk offset to file
-        uint32 offset = 0;
+        uint64 offset = 0;
         errCode = _pchunkOffsetAtom->getChunkOffsetAt(chunk, offset);
 
         //uint32 offset to int32, possible error for large files
@@ -995,7 +1011,7 @@ SampleTableAtom::getPrevKeyMediaSample(uint64 inputtimestamp, uint32 &aKeySample
         }
 
         // Find actual file offset to sample
-        int32 sampleFileOffset = offset + sampleSizeOffset;
+        uint64 sampleFileOffset = offset + sampleSizeOffset;
 
         if (!_pinput->IsOpen())
         {
@@ -1028,12 +1044,12 @@ SampleTableAtom::getPrevKeyMediaSample(uint64 inputtimestamp, uint32 &aKeySample
             }
         }
 
-        if (sampleFileOffset + sampleSize > _fileSize)
+        if ((TOsclFileOffset)(sampleFileOffset + sampleSize) > _fileSize)
         {
             _currentPlaybackSampleNumber = 0;
             return (READ_FAILED);
         }
-        AtomUtils::seekFromStart(_pinput, sampleFileOffset);
+        AtomUtils::seekFromStart(_pinput, (TOsclFileOffset)sampleFileOffset);
     }
 
     {
@@ -1057,7 +1073,7 @@ SampleTableAtom::getPrevKeyMediaSample(uint64 inputtimestamp, uint32 &aKeySample
         uint32 offsetIntoRunOfChunks =
             (_currentPlaybackSampleNumber - FirstSampleNumInChunk);
 
-        uint32 offset = 0;
+        uint64 offset = 0;
         errCode = _pchunkOffsetAtom->getChunkOffsetAt(chunk, offset);
 
         if (errCode != EVERYTHING_FINE)
@@ -1188,7 +1204,7 @@ SampleTableAtom::getNextKeyMediaSample(uint32 &aKeySampleNum, uint32 *n, GAU  *p
 
 
         // Find chunk offset to file
-        uint32 offset = 0;
+        uint64 offset = 0;
         errCode = _pchunkOffsetAtom->getChunkOffsetAt(chunk, offset);
 
         //uint32 offset to int32, possible error for large files
@@ -1216,7 +1232,7 @@ SampleTableAtom::getNextKeyMediaSample(uint32 &aKeySampleNum, uint32 *n, GAU  *p
         }
 
         // Find actual file offset to sample
-        int32 sampleFileOffset = offset + sampleSizeOffset;
+        uint64 sampleFileOffset = offset + sampleSizeOffset;
 
         if (!_pinput->IsOpen())
         {
@@ -1249,12 +1265,12 @@ SampleTableAtom::getNextKeyMediaSample(uint32 &aKeySampleNum, uint32 *n, GAU  *p
             }
         }
 
-        if (sampleFileOffset + sampleSize > _fileSize)
+        if ((TOsclFileOffset)(sampleFileOffset + sampleSize) > _fileSize)
         {
             _currentPlaybackSampleNumber = 0;
             return (READ_FAILED);
         }
-        AtomUtils::seekFromStart(_pinput, sampleFileOffset);
+        AtomUtils::seekFromStart(_pinput, (TOsclFileOffset)sampleFileOffset);
     }
 
     {
@@ -1278,7 +1294,7 @@ SampleTableAtom::getNextKeyMediaSample(uint32 &aKeySampleNum, uint32 *n, GAU  *p
         uint32 offsetIntoRunOfChunks =
             (_currentPlaybackSampleNumber - FirstSampleNumInChunk);
 
-        uint32 offset = 0;
+        uint64 offset = 0;
         errCode = _pchunkOffsetAtom->getChunkOffsetAt(chunk, offset);
 
         if (errCode != EVERYTHING_FINE)
@@ -1312,7 +1328,7 @@ SampleTableAtom::getNextKeyMediaSample(uint32 &aKeySampleNum, uint32 *n, GAU  *p
 // Can optimize this by having the getNext()... use the seekg pointer to maintain the
 // location where to read from
 MP4_ERROR_CODE
-SampleTableAtom::getNextSample(uint8 *buf, uint32 &size, uint32 &index, uint32 &SampleOffset)
+SampleTableAtom::getNextSample(uint8 *buf, uint32 &size, uint32 &index, TOsclFileOffset &SampleOffset)
 {
     int8 aFrameSizes[16] = {12, 13, 15, 17, 19, 20, 26, 31,
                             5,  0,  0,  0,  0,  0,  0,  0
@@ -1941,7 +1957,7 @@ uint64 SampleTableAtom::resetPlayBackbyTime(uint64 time, bool oDependsOn)
         uint32 offsetIntoRunOfChunks =
             (_currentPlaybackSampleNumber - FirstSampleNumInChunk);
 
-        uint32 offset = 0;
+        uint64 offset = 0;
         errCode = _pchunkOffsetAtom->getChunkOffsetAt(chunk, offset);
 
         if (errCode != EVERYTHING_FINE)
@@ -2001,7 +2017,7 @@ check_for_file_pointer_reset:
 
 
         // Find chunk offset to file
-        uint32 offset = 0;
+        uint64 offset = 0;
         errCode = _pchunkOffsetAtom->getChunkOffsetAt(chunk, offset);
 
         //uint32 offset to int32, possible error for large files
@@ -2034,7 +2050,7 @@ check_for_file_pointer_reset:
         }
 
         // Find actual file offset to sample
-        int32 sampleFileOffset = offset + sampleSizeOffset;
+        uint64 sampleFileOffset = offset + sampleSizeOffset;
 
         if (!_pinput->IsOpen())
         {
@@ -2069,14 +2085,14 @@ check_for_file_pointer_reset:
             }
         }
 
-        if (sampleFileOffset + sampleSize > _fileSize)
+        if ((TOsclFileOffset)(sampleFileOffset + sampleSize) > _fileSize)
         {
             trueTS = 0;
             _currentPlaybackSampleNumber = 0;
             trueTS = _trackStartTSOffset;
             return (trueTS);
         }
-        AtomUtils::seekFromStart(_pinput, sampleFileOffset);
+        AtomUtils::seekFromStart(_pinput, (TOsclFileOffset)sampleFileOffset);
     }
 
     return trueTS;
@@ -2104,7 +2120,7 @@ MP4_ERROR_CODE SampleTableAtom::IsResetNeeded(uint64 time)
     return EVERYTHING_FINE;
 }
 
-int32 SampleTableAtom::getTimestampForRandomAccessPoints(uint32 *num, uint64 * tsBuf, uint32* numBuf, uint32* offsetBuf)
+int32 SampleTableAtom::getTimestampForRandomAccessPoints(uint32 *num, uint64 * tsBuf, uint32* numBuf, TOsclFileOffset* offsetBuf)
 {
     if (_psyncSampleAtom == NULL)
     {
@@ -2139,7 +2155,7 @@ int32 SampleTableAtom::getTimestampForRandomAccessPoints(uint32 *num, uint64 * t
         // Timestamps returned here should be presentation timestamps (must include
         // the ctts offset. Calling getTimestampForSampleNumber will take care of it.
         numBuf[i] = numBuf[i] - 1;
-        uint32 offset = 0;
+        TOsclFileOffset offset = 0;
         if (offsetBuf != NULL)
         {
             if (getOffsetByTime(tsBuf[i], &offset) != DEFAULT_ERROR)
@@ -2335,7 +2351,7 @@ int32 SampleTableAtom::getCttsOffsetForSampleNumberGet(uint32 sampleNumber)
 
 // Returns next I-frame at time ts (in milliseconds) - or the very next I-frame in the stream
 int32
-SampleTableAtom::getNextSampleAtTime(uint32 ts, uint8 *buf, uint32 &size, uint32 &index, uint32 &SampleOffset)
+SampleTableAtom::getNextSampleAtTime(uint32 ts, uint8 *buf, uint32 &size, uint32 &index, TOsclFileOffset &SampleOffset)
 {
     if ((_ptimeToSampleAtom  == NULL) ||
             (_psyncSampleAtom    == NULL))
@@ -2648,7 +2664,7 @@ SampleTableAtom::getNextNSamples(uint32 startSampleNum,
 
 
         // Find chunk offset to file
-        uint32 offset = 0;
+        uint64 offset = 0;
         errCode = _pchunkOffsetAtom->getChunkOffsetAt(chunk, offset);
 
 
@@ -2756,8 +2772,7 @@ SampleTableAtom::getNextNSamples(uint32 startSampleNum,
         }
 
         // Find actual file offset to sample
-        int32 sampleFileOffset = offset + _currChunkOffset;
-        Oscl_Int64_Utils::set_uint64(pgau->SampleOffset, 0, (uint32)sampleFileOffset);
+        uint64 sampleFileOffset = offset + _currChunkOffset;
 
         // Open file
         if (!_pinput->IsOpen())
@@ -2793,8 +2808,8 @@ SampleTableAtom::getNextNSamples(uint32 startSampleNum,
             }
         }
 
-        uint32 bufStart = 0;
-        uint32 bufEnd = _fileSize;
+        TOsclFileOffset bufStart = 0;
+        TOsclFileOffset bufEnd = _fileSize;
         uint32 bufCap = AtomUtils::getFileBufferingCapacity(_pinput);
         if (bufCap)
         {
@@ -2816,7 +2831,7 @@ SampleTableAtom::getNextNSamples(uint32 startSampleNum,
             totalFragmentLength += tempgauPtr->buf.fragments[k].len;
         }
 
-        if (((uint32)sampleFileOffset < bufStart) || ((sigmaSampleSize + sampleFileOffset) > bufEnd))
+        if (((TOsclFileOffset)sampleFileOffset < bufStart) || ((TOsclFileOffset)(sigmaSampleSize + sampleFileOffset) > bufEnd))
             _mp4ErrorCode = INSUFFICIENT_DATA;
         else if (totalFragmentLength < sigmaSampleSize)
             _mp4ErrorCode = INSUFFICIENT_BUFFER_SIZE;
@@ -2907,7 +2922,7 @@ SampleTableAtom::getNextNSamples(uint32 startSampleNum,
                 }
                 else
                 {
-                    AtomUtils::skipFromStart(_pinput, sampleFileOffset);
+                    AtomUtils::skipFromStart(_pinput, (TOsclFileOffset)sampleFileOffset);
                 }
             }
 
@@ -2934,16 +2949,16 @@ SampleTableAtom::getNextNSamples(uint32 startSampleNum,
             {
                 if (_currentPlaybackSampleNumber == 0)
                 {
-                    AtomUtils::seekFromStart(_pinput, sampleFileOffset);
+                    AtomUtils::seekFromStart(_pinput, (TOsclFileOffset)sampleFileOffset);
                 }
             }
             else
             {
-                AtomUtils::seekFromStart(_pinput, sampleFileOffset);
+                AtomUtils::seekFromStart(_pinput, (TOsclFileOffset)sampleFileOffset);
             }
         }
         else
-            AtomUtils::seekFromStart(_pinput, sampleFileOffset);
+            AtomUtils::seekFromStart(_pinput, (TOsclFileOffset)sampleFileOffset);
 
 #if (PVLOGGER_INST_LEVEL > PVLOGMSG_INST_LLDBG)
         currticks = OsclTickCount::TickCount();
@@ -3156,7 +3171,7 @@ SampleTableAtom::peekNextNSamples(uint32 startSampleNum,
         }
 
         // Find chunk offset to file
-        uint32 sampleSizeOffset = 0;
+        uint64 sampleSizeOffset = 0;
         _mp4ErrorCode = _pchunkOffsetAtom->getChunkOffsetAt(chunk, sampleSizeOffset);
         if (_mp4ErrorCode != EVERYTHING_FINE)
         {
@@ -3179,7 +3194,7 @@ SampleTableAtom::peekNextNSamples(uint32 startSampleNum,
 
             sampleSizeOffset += tempSize;
         }
-        if (sampleSizeOffset > _fileSize)
+        if ((TOsclFileOffset)sampleSizeOffset > _fileSize)
         {
             *n = 0;
             return READ_FAILED;
@@ -3255,7 +3270,7 @@ SampleTableAtom::peekNextNSamples(uint32 startSampleNum,
     return (_mp4ErrorCode);
 }
 
-MP4_ERROR_CODE SampleTableAtom::getOffsetByTime(uint64 ts, uint32* sampleFileOffset)
+MP4_ERROR_CODE SampleTableAtom::getOffsetByTime(uint64 ts, TOsclFileOffset* sampleFileOffset)
 {
 
     if ((_psampleSizeAtom    == NULL) ||
@@ -3317,7 +3332,7 @@ MP4_ERROR_CODE SampleTableAtom::getOffsetByTime(uint64 ts, uint32* sampleFileOff
 
 
     // Find chunk offset to file
-    uint32 offset = 0;
+    uint64 offset = 0;
     errCode = _pchunkOffsetAtom->getChunkOffsetAt(chunk, offset);
     if (errCode != EVERYTHING_FINE)
     {
@@ -3353,7 +3368,7 @@ MP4_ERROR_CODE SampleTableAtom::getOffsetByTime(uint64 ts, uint32* sampleFileOff
     }
 }
 
-MP4_ERROR_CODE SampleTableAtom::updateFileSize(uint32 filesize)
+MP4_ERROR_CODE SampleTableAtom::updateFileSize(TOsclFileOffset filesize)
 {
     _fileSize = filesize;
     _IsUpdateFileSize = 1;
@@ -3368,7 +3383,7 @@ MP4_ERROR_CODE SampleTableAtom::updateFileSize(uint32 filesize)
 }
 
 MP4_ERROR_CODE
-SampleTableAtom::getMaxTrackTimeStamp(uint32 fileSize, uint64& timeStamp)
+SampleTableAtom::getMaxTrackTimeStamp(TOsclFileOffset fileSize, uint64& timeStamp)
 {
     timeStamp = 0;
 
@@ -3385,7 +3400,7 @@ SampleTableAtom::getMaxTrackTimeStamp(uint32 fileSize, uint64& timeStamp)
         /*
          * Get chunk offset for the chunk
          */
-        uint32 chunkOffset = 0;
+        uint64 chunkOffset = 0;
         _pchunkOffsetAtom->getChunkOffsetAt(chunk, chunkOffset);
 
         /*
@@ -3435,7 +3450,7 @@ SampleTableAtom::getMaxTrackTimeStamp(uint32 fileSize, uint64& timeStamp)
             sampleNum++;
             chunkOffset += tempSize;
 
-            if ((uint32)chunkOffset > fileSize)
+            if ((TOsclFileOffset)chunkOffset > fileSize)
             {
                 sampleNum--;
                 break;
@@ -3460,7 +3475,7 @@ SampleTableAtom::getMaxTrackTimeStamp(uint32 fileSize, uint64& timeStamp)
 MP4_ERROR_CODE
 SampleTableAtom::getSampleNumberClosestToTimeStamp(uint32 &sampleNumber,
         uint64 timeStamp,
-        uint32 sampleOffset)
+        TOsclFileOffset sampleOffset)
 {
     sampleNumber = 0;
 
@@ -3493,7 +3508,7 @@ SampleTableAtom::getSampleNumberClosestToTimeStamp(uint32 &sampleNumber,
         {
             sampleNumber = 0;
         }
-        sampleNumber += sampleOffset;
+        sampleNumber += (uint32)sampleOffset;
         return (EVERYTHING_FINE);
     }
     else

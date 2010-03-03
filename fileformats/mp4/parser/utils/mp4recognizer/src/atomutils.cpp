@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -368,14 +368,14 @@ AtomUtils::readString(MP4_FF_FILE *fp, uint32 inLength, MP4FFParserOriginalCharE
 
         uint32 delta = (inLength - BYTE_ORDER_MASK_SIZE);
 
-        int32 filePos = AtomUtils::getCurrentFilePosition(fp);
+        TOsclFileOffset filePos = AtomUtils::getCurrentFilePosition(fp);
 
         if (!AtomUtils::readUnicodeString(fp, delta, data))
         {
             return false;
         }
-        int32 newfilePos = AtomUtils::getCurrentFilePosition(fp);
-        if (newfilePos != (int32)(filePos + delta))
+        TOsclFileOffset newfilePos = AtomUtils::getCurrentFilePosition(fp);
+        if (newfilePos != (filePos + (TOsclFileOffset)delta))
         {
             AtomUtils::seekFromStart(fp, filePos + delta);
         }
@@ -388,14 +388,14 @@ AtomUtils::readString(MP4_FF_FILE *fp, uint32 inLength, MP4FFParserOriginalCharE
 
         uint32 delta = inLength;
 
-        int32 filePos = AtomUtils::getCurrentFilePosition(fp);
+        TOsclFileOffset filePos = AtomUtils::getCurrentFilePosition(fp);
 
         if (!AtomUtils::readUTF8String(fp, delta, data))
         {
             return false;
         }
-        int32 newfilePos = AtomUtils::getCurrentFilePosition(fp);
-        if (newfilePos != (int32)(filePos + delta))
+        TOsclFileOffset newfilePos = AtomUtils::getCurrentFilePosition(fp);
+        if (newfilePos != (filePos + (TOsclFileOffset)delta))
         {
             AtomUtils::seekFromStart(fp, filePos + delta);
         }
@@ -524,7 +524,7 @@ AtomUtils::getNextAtomType(MP4_FF_FILE *fp, uint32 &size, uint32 &type)
     size = 0;
     type = UNKNOWN_ATOM;
 
-    int32 filePointer;
+    TOsclFileOffset filePointer;
     filePointer = AtomUtils::getCurrentFilePosition(fp);
 
     if (filePointer > (fp->_fileSize - 8))
@@ -754,12 +754,12 @@ OSCL_EXPORT_REF uint8 AtomUtils::peekNextByte(MP4_FF_FILE *fp)
     return tag;
 }
 
-OSCL_EXPORT_REF void AtomUtils::seekFromCurrPos(MP4_FF_FILE *fp, uint32 n)
+OSCL_EXPORT_REF void AtomUtils::seekFromCurrPos(MP4_FF_FILE *fp, TOsclFileOffset n)
 {
     fp->_pvfile.Seek(n, Oscl_File::SEEKCUR);
 }
 
-OSCL_EXPORT_REF void AtomUtils::seekFromStart(MP4_FF_FILE *fp, uint32 n)
+OSCL_EXPORT_REF void AtomUtils::seekFromStart(MP4_FF_FILE *fp, TOsclFileOffset n)
 {
     fp->_pvfile.Seek(n, Oscl_File::SEEKSET);
 }
@@ -774,7 +774,7 @@ OSCL_EXPORT_REF void AtomUtils::rewindFilePointerByN(MP4_FF_FILE *fp, uint32 n)
     fp->_pvfile.Seek((-1 *(int32) n), Oscl_File::SEEKCUR);
 }
 
-OSCL_EXPORT_REF int32 AtomUtils::getCurrentFilePosition(MP4_FF_FILE *fp)
+OSCL_EXPORT_REF TOsclFileOffset AtomUtils::getCurrentFilePosition(MP4_FF_FILE *fp)
 {
     return (fp->_pvfile.Tell());
 }
@@ -812,15 +812,15 @@ OSCL_EXPORT_REF int32  AtomUtils::Flush(MP4_FF_FILE *fp)
     return -1;
 }
 
-OSCL_EXPORT_REF bool AtomUtils::getCurrentFileSize(MP4_FF_FILE *fp, uint32& aCurrentSize)
+OSCL_EXPORT_REF bool AtomUtils::getCurrentFileSize(MP4_FF_FILE *fp, TOsclFileOffset& aCurrentSize)
 {
     if (fp != NULL)
     {
         aCurrentSize = 0;
-        uint32 aRemBytes = 0;
+        TOsclFileOffset aRemBytes = 0;
         if (fp->_pvfile.GetRemainingBytes(aRemBytes))
         {
-            uint32 currPos = (uint32)(fp->_pvfile.Tell());
+            TOsclFileOffset currPos = fp->_pvfile.Tell();
             aCurrentSize = currPos + aRemBytes;
             fp->_fileSize = aCurrentSize;
             return true;
@@ -1016,13 +1016,13 @@ OSCL_EXPORT_REF uint32 AtomUtils::getFileBufferingCapacity(MP4_FF_FILE *fp)
 }
 
 
-OSCL_EXPORT_REF void AtomUtils::skipFromStart(MP4_FF_FILE *fp, uint32 n)
+OSCL_EXPORT_REF void AtomUtils::skipFromStart(MP4_FF_FILE *fp, TOsclFileOffset n)
 {
     fp->_pvfile.Skip(n, Oscl_File::SEEKSET);
 }
 
 
-OSCL_EXPORT_REF void AtomUtils::getCurrentByteRange(MP4_FF_FILE *fp, uint32& aCurrentFirstByteOffset, uint32& aCurrentLastByteOffset)
+OSCL_EXPORT_REF void AtomUtils::getCurrentByteRange(MP4_FF_FILE *fp, TOsclFileOffset& aCurrentFirstByteOffset, TOsclFileOffset& aCurrentLastByteOffset)
 {
     // this returns the byte range in the data stream cache
     // first and last offset inclusive

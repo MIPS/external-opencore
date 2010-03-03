@@ -592,8 +592,8 @@ class PVMFMP4FFParserNode
         void ResetOMA2Flags();
         uint8* iOMA2DecryptionBuffer;
 
-        PVMFStatus GetFileOffsetForAutoResume(uint32& aOffset, bool aPortsAvailable = true);
-        PVMFStatus GetFileOffsetForAutoResume(uint32& aOffset, PVMP4FFNodeTrackPortInfo* aInfo);
+        PVMFStatus GetFileOffsetForAutoResume(TOsclFileOffset& aOffset, bool aPortsAvailable = true);
+        PVMFStatus GetFileOffsetForAutoResume(TOsclFileOffset& aOffset, PVMP4FFNodeTrackPortInfo* aInfo);
 
         PVMFStatus CheckForUnderFlow(PVMP4FFNodeTrackPortInfo* aInfo);
 
@@ -611,11 +611,11 @@ class PVMFMP4FFParserNode
         PVMFDataStreamReadCapacityObserver* iDataStreamReadCapacityObserver;
         PvmiDataStreamSession iDataStreamSessionID;
         PvmiDataStreamCommandId iRequestReadCapacityNotificationID;
-        uint32 iMP4HeaderSize;
+        TOsclFileOffset iMP4HeaderSize;
         bool iDownloadComplete;
         bool iProgressivelyPlayable;
         uint32 iLastNPTCalcInConvertSizeToTime;
-        uint32 iFileSizeLastConvertedToTime;
+        TOsclFileOffset iFileSizeLastConvertedToTime;
         bool iFastTrackSession;
         bool iSmoothStreamingSession;
 

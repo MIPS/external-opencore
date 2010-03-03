@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -136,7 +136,9 @@ OSCL_EXPORT_REF uint32 PVID3ParCom::GetID3TagSize(PVFile* aFile)
     }
     else
     {
-        iInputFile->GetRemainingBytes((uint32&)iFileSizeInBytes);
+        TOsclFileOffset remainingBytes = 0;
+        iInputFile->GetRemainingBytes(remainingBytes);
+        iFileSizeInBytes = (int32)remainingBytes;
         if (iInputFile->Seek(0, Oscl_File::SEEKSET) == -1)
         {
             return 0;
@@ -273,7 +275,7 @@ OSCL_EXPORT_REF PVMFStatus PVID3ParCom::ParseID3Tag(PVFile* aFile, uint32 buffsi
 
     iInputFile = aFile;
 
-    int32 currentFilePosn = 0;
+    TOsclFileOffset currentFilePosn = 0;
 
     // SEEK TO THE END OF THE FILE AND GET FILE SIZE
     currentFilePosn = iInputFile->Tell();
@@ -288,7 +290,9 @@ OSCL_EXPORT_REF PVMFStatus PVID3ParCom::ParseID3Tag(PVFile* aFile, uint32 buffsi
     }
     else
     {
-        iInputFile->GetRemainingBytes((uint32&)iFileSizeInBytes);
+        TOsclFileOffset remainingBytes = 0;
+        iInputFile->GetRemainingBytes(remainingBytes);
+        iFileSizeInBytes = (int32)remainingBytes;
         if (iInputFile->Seek(currentFilePosn, Oscl_File::SEEKSET) == -1)
         {
             iInputFile = NULL;
@@ -597,7 +601,9 @@ OSCL_EXPORT_REF bool PVID3ParCom::IsID3V2Present(PVFile* aFile, int32& aTagSize)
 
     if (CheckForTagID3V2())
     {
-        iInputFile->GetRemainingBytes((uint32&)iFileSizeInBytes);
+        TOsclFileOffset remainingBytes = 0;
+        iInputFile->GetRemainingBytes(remainingBytes);
+        iFileSizeInBytes = (int32)remainingBytes;
         // id3v2 header read failure
         if (ReadHeaderID3V2(false))
         {
@@ -1206,7 +1212,7 @@ int PVID3ParCom::ReadTagID3V2(PVID3Version aVersion)
     PVID3FrameType frameType = PV_ID3_FRAME_EEND;
     uint32 i = 0;
     uint32 currFrameLength = 0;
-    uint32 current_file_pos = iInputFile->Tell();
+    TOsclFileOffset current_file_pos = iInputFile->Tell();
     uint32 data_len_indicator_size = 0;
     uint32 count = 0;
 
@@ -1402,8 +1408,8 @@ bool PVID3ParCom::ValidateFrameV2_4(PVID3FrameType& frameType, bool bUseSyncSafe
 
 uint32 PVID3ParCom::ValidateFrameLengthV2_4(uint32 aFrameSize)
 {
-    int32 currFilePos = iInputFile->Tell();
-    int32 errCode = -1;
+    TOsclFileOffset currFilePos = iInputFile->Tell();
+    TOsclFileOffset errCode = -1;
     int32 actualFrameLen = 0;
 
     // we have already read the complete current frame header
@@ -1418,7 +1424,7 @@ uint32 PVID3ParCom::ValidateFrameLengthV2_4(uint32 aFrameSize)
         //
 
         // Seek to next frame boundary with syncsafe size
-        errCode = iInputFile->Seek(actualFrameLen, Oscl_File::SEEKCUR);
+        errCode = (iInputFile->Seek((TOsclFileOffset)actualFrameLen, Oscl_File::SEEKCUR));
         if (-1 == errCode)
         {
             // proceed with default syncsafe handling
@@ -1442,14 +1448,14 @@ uint32 PVID3ParCom::ValidateFrameLengthV2_4(uint32 aFrameSize)
         }
 
         // Seek back
-        errCode = iInputFile->Seek(currFilePos, Oscl_File::SEEKSET);
+        errCode = (iInputFile->Seek((TOsclFileOffset)currFilePos, Oscl_File::SEEKSET));
         if (-1 == errCode)
         {
             LOG_ERR((0, "PVID3ParCom::ValidateFrameLengthV2_4: Error - iInputFile->Seek failed"));
             OSCL_LEAVE(OsclErrGeneral);
         }
         // Seek to next frame boundary with non-syncsafe size
-        errCode = iInputFile->Seek(aFrameSize, Oscl_File::SEEKCUR);
+        errCode = (iInputFile->Seek((TOsclFileOffset)aFrameSize, Oscl_File::SEEKCUR));
         if (-1 == errCode)
         {
             // proceed with default syncsafe handling
@@ -1490,7 +1496,7 @@ uint32 PVID3ParCom::ValidateFrameLengthV2_4(uint32 aFrameSize)
     while (false);
 
     // Seek back
-    errCode = iInputFile->Seek(currFilePos, Oscl_File::SEEKSET);
+    errCode = (iInputFile->Seek((TOsclFileOffset)currFilePos, Oscl_File::SEEKSET));
     if (-1 == errCode)
     {
         LOG_ERR((0, "PVID3ParCom::ValidateFrameLengthV2_4: Error - iInputFile->Seek failed"));
@@ -3417,7 +3423,7 @@ PVMFStatus PVID3ParCom::GetAlbumArtInfo(PVID3FrameType aFrameType, uint32 aFrame
     uint8 image_format[4] = {0};
     PVMFStatus status = 0;
     uint32 size = 0;
-    uint32 currentfilepos = 0 ;
+    TOsclFileOffset currentfilepos = 0 ;
     if (aFrameType == PV_ID3_FRAME_PIC)
     {
         if (readByteData(iInputFile, ID3V2_IMAGE_FORMAT_SIZE, image_format) == false)
@@ -3500,7 +3506,7 @@ PVMFStatus PVID3ParCom::GetAlbumArtInfo(PVID3FrameType aFrameType, uint32 aFrame
                                         uint8 &aPicType, OSCL_wHeapString<OsclMemAllocator> &aDescription, uint32 &aDataLen)
 {
     uint8 image_format[4] = {0};
-    uint32 currentfilepos = 0;
+    TOsclFileOffset currentfilepos = 0;
     uint32 size = 0;
     if (aFrameType == PV_ID3_FRAME_PIC)
     {

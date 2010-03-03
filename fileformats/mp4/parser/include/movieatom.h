@@ -102,9 +102,9 @@ class MovieAtom : public Atom
         OSCL_IMPORT_REF virtual ~MovieAtom();
 
 
-        int32 updateFileSize(uint32 filesize);
+        int32 updateFileSize(TOsclFileOffset filesize);
 
-        int32 getNextMediaSample(uint32 id, uint8 *buf, uint32 &size, uint32 &index, uint32 &SampleOffset);
+        int32 getNextMediaSample(uint32 id, uint8 *buf, uint32 &size, uint32 &index, TOsclFileOffset &SampleOffset);
 
         //==========================================================================
         // getMediaSample                                                   PUBLIC
@@ -127,7 +127,7 @@ class MovieAtom : public Atom
         //   SampleOffset
         //     [OUT] Number of bytes from start of file to the beginning of sample.
         //
-        int32 getMediaSample(uint32 sampleNumber, uint32 id, uint8 *buf, uint32 &size, uint32 &index, uint32 &SampleOffset);
+        int32 getMediaSample(uint32 sampleNumber, uint32 id, uint8 *buf, uint32 &size, uint32 &index, TOsclFileOffset &SampleOffset);
 
         MP4_ERROR_CODE getKeyMediaSampleNumAt(uint32 aTrackId,
                                               uint32 aKeySampleNum,
@@ -145,7 +145,7 @@ class MovieAtom : public Atom
 
 
         uint64 getTimestampForCurrentSample(uint32 id);
-        int32 getOffsetByTime(uint32 id, uint64 ts, uint32* sampleFileOffset);
+        int32 getOffsetByTime(uint32 id, uint64 ts, TOsclFileOffset* sampleFileOffset);
 
         uint32 getNumKeyFrames(uint32 trackid)
         {
@@ -222,7 +222,7 @@ class MovieAtom : public Atom
             return _fileType;
         }
 
-        int32 getTimestampForRandomAccessPoints(uint32 id, uint32 *num, uint64 *tsBuf, uint32* numBuf, uint32* offsetBuf);
+        int32 getTimestampForRandomAccessPoints(uint32 id, uint32 *num, uint64 *tsBuf, uint32* numBuf, TOsclFileOffset* offsetBuf);
 
         int32 getTimestampForRandomAccessPointsBeforeAfter(uint32 id, uint64 ts, uint64 *tsBuf, uint32* numBuf,
                 uint32& numsamplestoget,
@@ -471,7 +471,7 @@ class MovieAtom : public Atom
 
         uint16 getID3V2LangCode() ;
 
-        MP4_ERROR_CODE GetUserDataAtomInfo(uint32 &atomSize, uint32 &atomPointer);
+        MP4_ERROR_CODE GetUserDataAtomInfo(uint32 &atomSize, TOsclFileOffset &atomPointer);
 
         bool IsID3V2Present()
         {
@@ -502,13 +502,13 @@ class MovieAtom : public Atom
 
 
         MP4_ERROR_CODE getMaxTrackTimeStamp(uint32 trackID,
-                                            uint32 fileSize,
+                                            TOsclFileOffset fileSize,
                                             uint64& timeStamp);
 
         MP4_ERROR_CODE getSampleNumberClosestToTimeStamp(uint32 trackID,
                 uint32 &sampleNumber,
                 uint64 timeStamp,
-                uint32 sampleOffset = 0);
+                TOsclFileOffset sampleOffset = 0);
 
 
         AVCSampleEntry* getAVCSampleEntry(uint32 trackID, uint32 index);
@@ -842,7 +842,7 @@ class MovieAtom : public Atom
 
 
         uint32 iUserDataAtomSize;
-        uint32 iUserDataAtomOffset;
+        TOsclFileOffset iUserDataAtomOffset;
 
 
         MovieExtendsAtom      *_pMovieExtendsAtom;

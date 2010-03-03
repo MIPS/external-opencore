@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1039,7 +1039,7 @@ OSCL_EXPORT_REF EnctBox:: EnctBox(MP4_FF_FILE *fp, uint32 size, uint32 type)
         AtomUtils::readByteData(fp, 4, _pBackgroundRGBA);
         count -= 4;
 
-        uint32 fpos1 = AtomUtils::getCurrentFilePosition(fp);
+        TOsclFileOffset fpos1 = AtomUtils::getCurrentFilePosition(fp);
         PV_MP4_FF_NEW(fp->auditCB, BoxRecord, (fp), _pBoxRecord);
         if (!_pBoxRecord->MP4Success())
         {
@@ -1047,8 +1047,8 @@ OSCL_EXPORT_REF EnctBox:: EnctBox(MP4_FF_FILE *fp, uint32 size, uint32 type)
             _mp4ErrorCode = _pBoxRecord->GetMP4Error();
             return;
         }
-        uint32 fpos2 = AtomUtils::getCurrentFilePosition(fp);
-        count -= (fpos2 - fpos1);
+        TOsclFileOffset fpos2 = AtomUtils::getCurrentFilePosition(fp);
+        count -= (uint32)(fpos2 - fpos1);
 
 
         fpos1 = AtomUtils::getCurrentFilePosition(fp);
@@ -1060,7 +1060,7 @@ OSCL_EXPORT_REF EnctBox:: EnctBox(MP4_FF_FILE *fp, uint32 size, uint32 type)
             return;
         }
         fpos2 = AtomUtils::getCurrentFilePosition(fp);
-        count -= (fpos2 - fpos1);
+        count -= (uint32)(fpos2 - fpos1);
 
         PV_MP4_FF_NEW(fp->auditCB, FontTableAtom, (fp), _pFontTableAtom);
         if (!_pFontTableAtom->MP4Success())

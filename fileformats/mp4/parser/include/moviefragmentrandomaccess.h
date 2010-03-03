@@ -51,14 +51,14 @@ class MovieFragmentRandomAccessAtom : public Atom
                                       uint32 type);
 
         virtual ~MovieFragmentRandomAccessAtom();
-        int32 getSyncSampleInfoClosestToTime(uint32 trackID, uint64 &time, uint32 &moof_offset,
+        int32 getSyncSampleInfoClosestToTime(uint32 trackID, uint64 &time, TOsclFileOffset &moof_offset,
                                              uint32 &traf_number, uint32 &trun_number,
                                              uint32 &sample_num);
         uint64 queryRepositionTime(uint32 trackID, uint64 time, bool oDependsOn, bool bBeforeRequestedTime);
         int32 getTimestampForRandomAccessPointsBeforeAfter(uint32 id, uint64 ts, uint64 *tsBuf, uint32* numBuf,
                 uint32& numsamplestoget,
                 uint32 howManyKeySamples);
-        int32 getTimestampForRandomAccessPoints(uint32 id, uint32 *num, uint64 *tsBuf, uint32* numBuf, uint32* offsetBuff = NULL, uint32 samplesFromMovie = 0);
+        int32 getTimestampForRandomAccessPoints(uint32 id, uint32 *num, uint64 *tsBuf, uint32* numBuf, TOsclFileOffset* offsetBuff = NULL, uint32 samplesFromMovie = 0);
 
         /*
         *  This function will check if TFRA is present for all tracks and the entry count in TFRA for all

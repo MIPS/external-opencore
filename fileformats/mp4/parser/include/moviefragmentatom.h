@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -97,13 +97,13 @@ class MovieFragmentAtom : public Atom
         void resetPlayback();
         uint64 getCurrentTrafDuration(uint32 id);
         uint32 getTotalSampleInTraf(uint32 id);
-        int32 getOffsetByTime(uint32 id, uint64 ts, uint32* sampleFileOffset);
+        int32 getOffsetByTime(uint32 id, uint64 ts, TOsclFileOffset* sampleFileOffset);
     private:
         MovieFragmentHeaderAtom * _pMovieFragmentHeaderAtom;
         TrackFragmentAtom *_pTrackFragmentAtom;
         Oscl_Vector<TrackFragmentAtom*, OsclMemAllocator> *_ptrackFragmentArray;
-        uint32 _pMovieFragmentCurrentOffset;
-        uint32 _pMovieFragmentBaseOffset;
+        TOsclFileOffset _pMovieFragmentCurrentOffset;
+        TOsclFileOffset _pMovieFragmentBaseOffset;
         uint32 _trafIndex;
         PVLogger *iLogger, *iStateVarLogger, *iParsedDataLogger;
         bool parseTrafCompletely;

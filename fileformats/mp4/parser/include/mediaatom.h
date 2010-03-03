@@ -142,7 +142,7 @@ class MediaAtom : public Atom
             }
         }
 
-        int32 updateFileSize(uint32 filesize)
+        int32 updateFileSize(TOsclFileOffset filesize)
         {
             if (_pmediaInformation != NULL)
             {
@@ -152,7 +152,7 @@ class MediaAtom : public Atom
         }
 
         // Returns next video frame
-        int32 getNextSample(uint8 *buf, uint32 &size, uint32 &index, uint32 &SampleOffset)
+        int32 getNextSample(uint8 *buf, uint32 &size, uint32 &index, TOsclFileOffset &SampleOffset)
         {
             if (_pmediaInformation == NULL)
             {
@@ -206,7 +206,7 @@ class MediaAtom : public Atom
             return _pmediaInformation->getNextKeyMediaSample(aKeySampleNum, n, pgau);
         }
 
-        int32 getMediaSample(uint32 sampleNumber, uint8 *buf, uint32& size, uint32 &index, uint32 &SampleOffset)
+        int32 getMediaSample(uint32 sampleNumber, uint8 *buf, uint32& size, uint32 &index, TOsclFileOffset &SampleOffset)
         {
             if (_pmediaInformation == NULL)
             {
@@ -215,7 +215,7 @@ class MediaAtom : public Atom
             return _pmediaInformation->getMediaSample(sampleNumber, buf, size, index, SampleOffset);
         }
 
-        int32 getOffsetByTime(uint64 ts, uint32* sampleFileOffset)
+        int32 getOffsetByTime(uint64 ts, TOsclFileOffset* sampleFileOffset)
         {
             if (_pmediaInformation == NULL)
             {
@@ -612,7 +612,7 @@ class MediaAtom : public Atom
             }
         }
 
-        int32 getTimestampForRandomAccessPoints(uint32 *num, uint64 *tsBuf, uint32* numBuf, uint32 *offsetBuf)
+        int32 getTimestampForRandomAccessPoints(uint32 *num, uint64 *tsBuf, uint32* numBuf, TOsclFileOffset *offsetBuf)
         {
             if (_pmediaInformation != NULL)
             {
@@ -652,7 +652,7 @@ class MediaAtom : public Atom
             }
         }
 
-        MP4_ERROR_CODE getMaxTrackTimeStamp(uint32 fileSize, uint64& timeStamp)
+        MP4_ERROR_CODE getMaxTrackTimeStamp(TOsclFileOffset fileSize, uint64& timeStamp)
         {
             if (_pmediaInformation != NULL)
             {
@@ -666,7 +666,7 @@ class MediaAtom : public Atom
 
         MP4_ERROR_CODE getSampleNumberClosestToTimeStamp(uint32 &sampleNumber,
                 uint64 timeStamp,
-                uint32 sampleOffset = 0)
+                TOsclFileOffset sampleOffset = 0)
         {
             if (_pmediaInformation != NULL)
             {

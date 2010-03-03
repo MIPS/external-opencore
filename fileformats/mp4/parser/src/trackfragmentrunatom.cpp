@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@
 
 typedef Oscl_Vector<TFrunSampleTable*, OsclMemAllocator> _pTFrunSampleTableVecType;
 
-TFrunSampleTable::TFrunSampleTable(MP4_FF_FILE *fp , uint32 tr_flag, uint32 base_data_offset,
+TFrunSampleTable::TFrunSampleTable(MP4_FF_FILE *fp , uint32 tr_flag, TOsclFileOffset base_data_offset,
                                    uint64 sampleTS)
 {
     _sample_duration = 0;
@@ -68,9 +68,9 @@ TFrunSampleTable::TFrunSampleTable(MP4_FF_FILE *fp , uint32 tr_flag, uint32 base
 }
 
 TrackFragmentRunAtom ::TrackFragmentRunAtom(MP4_FF_FILE *fp, uint32 size, uint32 type,
-        uint32 baseDataOffset,
-        uint32 &currentTrunOffset,
-        uint32 &offset,
+        TOsclFileOffset baseDataOffset,
+        TOsclFileOffset &currentTrunOffset,
+        TOsclFileOffset &offset,
         uint64 trackDuration,
         bool bdo_present,
         bool &trunParsingCompleted,
@@ -155,7 +155,7 @@ TrackFragmentRunAtom ::TrackFragmentRunAtom(MP4_FF_FILE *fp, uint32 size, uint32
         }
 
         uint32 sigmaSampleSize = 0;
-        uint32 sample_offset = _trun_start_offset;
+        TOsclFileOffset sample_offset = _trun_start_offset;
         for (uint32 idx = 0; idx < _samplesToBeParsed ; idx++)
         {
             TFrunSampleTable *pTFrunSampleTable = NULL;
@@ -202,7 +202,7 @@ TrackFragmentRunAtom::~TrackFragmentRunAtom()
 }
 
 void TrackFragmentRunAtom::ParseTrunAtom(MP4_FF_FILE *fp,
-        uint32 &offset,
+        TOsclFileOffset &offset,
         bool &trunParsingCompleted,
         uint32 &countOfTrunsParsed)
 {
@@ -225,7 +225,7 @@ void TrackFragmentRunAtom::ParseTrunAtom(MP4_FF_FILE *fp,
     }
 
     uint32 sigmaSampleSize = 0;
-    uint32 sample_offset = _partialTrunOffset;
+    TOsclFileOffset sample_offset = _partialTrunOffset;
     for (uint32 idx = 0; idx < _samplesToBeParsed ; idx++)
     {
         TFrunSampleTable *pTFrunSampleTable = NULL;
@@ -289,7 +289,7 @@ void TrackFragmentRunAtom::setSampleDurationAndTimeStampFromSampleNum(uint32 sta
 void TrackFragmentRunAtom::setDefaultSampleSize(uint32 default_samplesize, uint32 &sigmaSampleSize)
 {
     uint32 sumSampleSize = 0;
-    uint32 sample_offset = _trun_start_offset;
+    TOsclFileOffset sample_offset = _trun_start_offset;
     for (uint32 idx = 0; idx < _sample_count ; idx++)
     {
         TFrunSampleTable *pTFrunSampleTable = NULL;

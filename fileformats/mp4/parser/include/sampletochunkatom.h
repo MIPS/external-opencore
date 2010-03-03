@@ -143,7 +143,7 @@ class SampleToChunkAtom : public FullAtom
         MP4_FF_FILE *_fileptr;
         uint32  _parsed_entry_cnt;
         MP4_FF_FILE *_curr_fptr;
-        uint32 *_stbl_fptr_vec;
+        TOsclFileOffset *_stbl_fptr_vec;
         uint32 _stbl_buff_size;
         uint32 _curr_entry_point;
         uint32 _curr_buff_number;

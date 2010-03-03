@@ -52,6 +52,7 @@
 OSCL_DLL_ENTRY_POINT_DEFAULT()
 
 
+
 /* ======================================================================== */
 OSCL_EXPORT_REF  IMpeg4File *IMpeg4File::readMP4File(OSCL_wString& aFilename,
         PVMFCPMPluginAccessInterfaceFactory* aCPMAccessFactory,
@@ -80,10 +81,6 @@ OSCL_EXPORT_REF  IMpeg4File *IMpeg4File::readMP4File(OSCL_wString& aFilename,
     {
         return NULL;
     }
-
-    uint32 fileSize;
-    AtomUtils::getCurrentFileSize(fp, fileSize);
-    fp->_fileSize = (int32)fileSize;
 
     AtomUtils::seekFromStart(fp, 0);
 
@@ -125,7 +122,7 @@ metaDataSize   : as input. It is the available data size
 OSCL_EXPORT_REF
 int32
 IMpeg4File::IsXXXable(OSCL_wString& filename,
-                      int32 &metaDataSize,
+                      TOsclFileOffset &metaDataSize,
                       int32  &oMoovBeforeMdat,
                       uint32 *pMajorBrand,
                       uint32 *pCompatibleBrands,
@@ -140,7 +137,7 @@ IMpeg4File::IsXXXable(OSCL_wString& filename,
         return DEFAULT_ERROR;
 
     int32 checkType = oMoovBeforeMdat;
-    int32 fileSize = metaDataSize;
+    TOsclFileOffset fileSize = metaDataSize;
 
     MP4_FF_FILE fileStruct;
     MP4_FF_FILE *fp = &fileStruct;
@@ -216,7 +213,7 @@ IMpeg4File::IsXXXable(OSCL_wString& filename,
             }
         }//end of get file type
 
-        int32 fpos = _pFileTypeAtom->getSize();
+        TOsclFileOffset fpos = (TOsclFileOffset)_pFileTypeAtom->getSize();
         PV_MP4_FF_DELETE(NULL, FileTypeAtom, _pFileTypeAtom);
 
         if (checkType == ISMOBILEMP4)
@@ -276,7 +273,7 @@ IMpeg4File::IsXXXable(OSCL_wString& filename,
                     }
                 }
 
-                if ((int32)(fpos + atomSize) > fileSize)
+                if ((fpos + (TOsclFileOffset)atomSize) > fileSize)
                 {
                     mp4ErrorCode = READ_FAILED;
                     break;
@@ -306,7 +303,7 @@ IMpeg4File::IsXXXable(OSCL_wString& filename,
 OSCL_EXPORT_REF
 int32
 IMpeg4File::IsXXXable(MP4_FF_FILE_REFERENCE fileRef,
-                      int32 &metaDataSize,
+                      TOsclFileOffset &metaDataSize,
                       int32  &oMoovBeforeMdat,
                       uint32 *pMajorBrand,
                       uint32 *pCompatibleBrands)
@@ -320,7 +317,7 @@ IMpeg4File::IsXXXable(MP4_FF_FILE_REFERENCE fileRef,
         return DEFAULT_ERROR;
 
     int32 checkType = oMoovBeforeMdat;
-    int32 fileSize = metaDataSize;
+    TOsclFileOffset fileSize = metaDataSize;
 
     MP4_FF_FILE fileStruct;
     MP4_FF_FILE *fp = &fileStruct;
@@ -391,7 +388,7 @@ IMpeg4File::IsXXXable(MP4_FF_FILE_REFERENCE fileRef,
             }
         }//end of get file type
 
-        int32 fpos = _pFileTypeAtom->getSize();
+        TOsclFileOffset fpos = (TOsclFileOffset)_pFileTypeAtom->getSize();
         PV_MP4_FF_DELETE(NULL, FileTypeAtom, _pFileTypeAtom);
 
         if (checkType == ISMOBILEMP4)
@@ -451,7 +448,7 @@ IMpeg4File::IsXXXable(MP4_FF_FILE_REFERENCE fileRef,
                     }
                 }
 
-                if ((int32)(fpos + atomSize) > fileSize)
+                if ((fpos + (TOsclFileOffset)atomSize) > fileSize)
                 {
                     mp4ErrorCode = READ_FAILED;
                     break;
@@ -481,9 +478,9 @@ IMpeg4File::IsXXXable(MP4_FF_FILE_REFERENCE fileRef,
 
 OSCL_EXPORT_REF MP4_ERROR_CODE
 IMpeg4File::IsProgressiveDownloadable(MP4_FF_FILE_REFERENCE filePtr,
-                                      uint32 fileSize,
+                                      TOsclFileOffset fileSize,
                                       bool& oIsProgressiveDownloadable,
-                                      uint32& metaDataSize)
+                                      TOsclFileOffset& metaDataSize)
 {
     oIsProgressiveDownloadable = false;
     metaDataSize  = 0;
@@ -498,7 +495,7 @@ IMpeg4File::IsProgressiveDownloadable(MP4_FF_FILE_REFERENCE filePtr,
         return INSUFFICIENT_DATA;
     }
 
-    int32 filePointer = AtomUtils::getCurrentFilePosition(fp);
+    TOsclFileOffset filePointer = AtomUtils::getCurrentFilePosition(fp);
     AtomUtils::seekFromStart(fp, 0);
 
     fp->_fileSize = fileSize;
@@ -508,11 +505,11 @@ IMpeg4File::IsProgressiveDownloadable(MP4_FF_FILE_REFERENCE filePtr,
     bool oMovieAtomFound     = false;
     bool oMediaDataAtomFound = false;
 
-    int32 fpos = 0;
+    TOsclFileOffset fpos = 0;
 
     MP4_ERROR_CODE mp4ErrorCode = INSUFFICIENT_DATA;
 
-    while ((uint32)(fpos + DEFAULT_ATOM_SIZE) < fileSize)
+    while ((fpos + DEFAULT_ATOM_SIZE) < fileSize)
     {
         AtomUtils::getNextAtomType(fp, atomSize, atomType);
         if (atomSize < DEFAULT_ATOM_SIZE)
@@ -530,7 +527,7 @@ IMpeg4File::IsProgressiveDownloadable(MP4_FF_FILE_REFERENCE filePtr,
                 (atomType == META_DATA_ATOM))
         {
             fpos += atomSize;
-            if ((uint32)fpos > fileSize)
+            if (fpos > fileSize)
             {
                 break;
             }
@@ -571,7 +568,7 @@ IMpeg4File::IsProgressiveDownloadable(MP4_FF_FILE_REFERENCE filePtr,
 OSCL_EXPORT_REF MP4_ERROR_CODE
 IMpeg4File::GetMetaDataSize(PVMFCPMPluginAccessInterfaceFactory* aCPMAccessFactory,
                             bool& oIsProgressivePlayable,
-                            uint32& metaDataSize)
+                            TOsclFileOffset& metaDataSize)
 {
     oIsProgressivePlayable = false;
     metaDataSize  = 0;
@@ -590,9 +587,9 @@ IMpeg4File::GetMetaDataSize(PVMFCPMPluginAccessInterfaceFactory* aCPMAccessFacto
         return FILE_OPEN_FAILED;
     }
 
-    uint32 fileSize;
+    TOsclFileOffset fileSize;
     AtomUtils::getCurrentFileSize(fp, fileSize);
-    fp->_fileSize = (int32)fileSize;
+    fp->_fileSize = fileSize;
 
     AtomUtils::seekFromStart(fp, 0);
 
@@ -607,11 +604,11 @@ IMpeg4File::GetMetaDataSize(PVMFCPMPluginAccessInterfaceFactory* aCPMAccessFacto
     bool oMovieAtomFound     = false;
     bool oMediaDataAtomFound = false;
 
-    int32 fpos = 0;
+    TOsclFileOffset fpos = 0;
 
     MP4_ERROR_CODE mp4ErrorCode = INSUFFICIENT_DATA;
 
-    while ((uint32)(fpos + DEFAULT_ATOM_SIZE) < fileSize)
+    while ((fpos + DEFAULT_ATOM_SIZE) < fileSize)
     {
         AtomUtils::getNextAtomType(fp, atomSize, atomType);
         if (atomSize < DEFAULT_ATOM_SIZE)
@@ -630,7 +627,7 @@ IMpeg4File::GetMetaDataSize(PVMFCPMPluginAccessInterfaceFactory* aCPMAccessFacto
         {
             fpos += atomSize;
             metaDataSize = fpos;
-            if ((uint32)fpos > fileSize)
+            if (fpos > fileSize)
             {
                 break;
             }

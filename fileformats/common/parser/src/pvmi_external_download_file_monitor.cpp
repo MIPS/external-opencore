@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -213,7 +213,7 @@ void PVMIExternalDownloadFileMonitor::Poll(void)
     //Flush the read handle so Symbian sees the size change.
     iFile.Flush();
     iFile.Seek(0, Oscl_File::SEEKEND);
-    uint32 newSize = iFile.Tell();
+    uint32 newSize = (uint32)iFile.Tell();
     if (newSize != iBytesDownloaded)
     {
         iBytesDownloaded = newSize;

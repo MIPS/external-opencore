@@ -1288,13 +1288,13 @@ PVMFStatus PVMFMP4FFParserNode::GetDataPositionForTimestamp(PVMFTrackInfo& aTrac
     uint64 mediats = mcc.get_converted_ts64(iPlaybackParserObj->getTrackMediaTimescale(aTrackInfo.getTrackID()));
 
     // Retrieve the sample number corresponding to the specified timestamp
-    uint32 fileoffset = 0;
+    TOsclFileOffset fileoffset = 0;
     int32 retVal = iPlaybackParserObj->getOffsetByTime(aTrackInfo.getTrackID(), mediats, &fileoffset, 0);
 
     if (retVal == EVERYTHING_FINE || retVal == END_OF_TRACK)
     {
         // Conversion worked
-        aDataPosition = fileoffset;
+        aDataPosition = (uint32)fileoffset;
     }
     else
     {
@@ -2172,7 +2172,7 @@ PVMFStatus PVMFMP4FFParserNode::DoPrepare()
     /* Do initial buffering in case of PDL / FT  or in case of External Download */
     if ((iExternalDownload == true) && (iDownloadComplete == false) && (iPlaybackParserObj != NULL))
     {
-        uint32 offset = 0;
+        TOsclFileOffset offset = 0;
         PVMFStatus status = GetFileOffsetForAutoResume(offset, false);
         if (status == PVMFSuccess)
         {
@@ -2215,8 +2215,10 @@ PVMFStatus PVMFMP4FFParserNode::DoPrepare()
 
                 if ((NULL != iDataStreamInterface) && (0 != iDataStreamInterface->QueryBufferingCapacity()))
                 {
-                    uint32 bytesReady = 0;
-                    PvmiDataStreamStatus status = iDataStreamInterface->QueryReadCapacity(iDataStreamSessionID, bytesReady);
+                    TOsclFileOffset bytesReady = 0;
+                    uint32 tempBytes = 0;
+                    PvmiDataStreamStatus status = iDataStreamInterface->QueryReadCapacity(iDataStreamSessionID, tempBytes);
+                    bytesReady = (TOsclFileOffset)tempBytes;
                     if (status == PVDS_END_OF_STREAM)
                     {
                         return PVMFSuccess;
@@ -2788,7 +2790,7 @@ PVMFStatus PVMFMP4FFParserNode::SetPlaybackStartupTime(uint32& aTargetNPT,
     // Rest the video present before calling the resetPlayback Individually
     parserObj->ResetVideoTrackPresentFlag();
 
-    uint32 minFileOffset = 0x7FFFFFFF;
+    TOsclFileOffset minFileOffset = 0x7FFFFFFF;
     if (0 != trackList[0])
     {
         tempNPT = aTargetNPT;        // For logging Purpose
@@ -2800,10 +2802,10 @@ PVMFStatus PVMFMP4FFParserNode::SetPlaybackStartupTime(uint32& aTargetNPT,
         mcc.set_clock(aTargetNPT, 0);
         uint64 mediats64 = mcc.get_converted_ts64(parserObj->getTrackMediaTimescale(tempTrackId));
 
-        uint32 offset = 0;
+        TOsclFileOffset offset = 0;
         int32 ret = parserObj->getOffsetByTime(tempTrackId, mediats64, &offset, 0);
         PVMF_MP4FFPARSERNODE_LOGDATATRAFFIC((0, "PVMFMP4FFParserNode::SetPlaybackStartupTime() getOffsetByTime ret %d Track %d NPT %d Offset %d",
-                                             ret, trackList[0], aTargetNPT, offset));
+                                             ret, trackList[0], aTargetNPT, (uint32)offset));
 
         OSCL_UNUSED_ARG(ret);
 
@@ -2825,10 +2827,10 @@ PVMFStatus PVMFMP4FFParserNode::SetPlaybackStartupTime(uint32& aTargetNPT,
         mcc.set_clock(aTargetNPT, 0);
         uint64 mediats64 = mcc.get_converted_ts64(parserObj->getTrackMediaTimescale(tempTrackId));
 
-        uint32 offset = 0;
+        TOsclFileOffset offset = 0;
         int32 ret = parserObj->getOffsetByTime(tempTrackId, mediats64, &offset, 0);
         PVMF_MP4FFPARSERNODE_LOGDATATRAFFIC((0, "PVMFMP4FFParserNode::SetPlaybackStartupTime() getOffsetByTime ret %d Track %d NPT %d Offset %d",
-                                             ret, trackList[1], aTargetNPT, offset));
+                                             ret, trackList[1], aTargetNPT, (uint32)offset));
         OSCL_UNUSED_ARG(ret);
 
         if (minFileOffset > offset)
@@ -2857,10 +2859,10 @@ PVMFStatus PVMFMP4FFParserNode::SetPlaybackStartupTime(uint32& aTargetNPT,
         mcc.set_clock(tempNPT, 0);
         uint64 mediats64 = mcc.get_converted_ts64(parserObj->getTrackMediaTimescale(tempTrackId));
 
-        uint32 offset = 0;
+        TOsclFileOffset offset = 0;
         int32 ret = parserObj->getOffsetByTime(tempTrackId, mediats64, &offset, 0);
         PVMF_MP4FFPARSERNODE_LOGDATATRAFFIC((0, "PVMFMP4FFParserNode::SetPlaybackStartupTime() getOffsetByTime ret %d Track %d NPT %d Offset %d",
-                                             ret, trackList[2], tempNPT, offset));
+                                             ret, trackList[2], tempNPT, (uint32)offset));
         OSCL_UNUSED_ARG(ret);
 
         if (minFileOffset > offset)
@@ -4640,7 +4642,7 @@ bool PVMFMP4FFParserNode::RetrieveTrackData(PVMP4FFNodeTrackPortInfo& aTrackPort
             }
             aTrackPortInfo.iState = PVMP4FFNodeTrackPortInfo::TRACKSTATE_DOWNLOAD_AUTOPAUSE;
             autopaused = true;
-            uint32 currentFileSize = 0;
+            TOsclFileOffset currentFileSize = 0;
             iPlaybackParserObj->GetCurrentFileSize(currentFileSize);
             PVMF_MP4FFPARSERNODE_LOGDATATRAFFIC((0, "PVMFMP4FFParserNode::RetrieveTrackData() - Auto Pause Triggered, TS = %d, FileSize=%d",
                                                  Oscl_Int64_Utils::get_uint64_lower32(aTrackPortInfo.iTimestamp), currentFileSize));
@@ -4654,8 +4656,8 @@ bool PVMFMP4FFParserNode::RetrieveTrackData(PVMP4FFNodeTrackPortInfo& aTrackPort
                 cacheSize = iDataStreamInterface->QueryBufferingCapacity();
                 if (cacheSize)
                 {
-                    uint32 *trackOffset = NULL;
-                    trackOffset = (uint32*) OSCL_MALLOC(iNodeTrackPortList.size() * sizeof(uint32));
+                    TOsclFileOffset *trackOffset = NULL;
+                    trackOffset = (TOsclFileOffset*) OSCL_MALLOC(iNodeTrackPortList.size() * sizeof(TOsclFileOffset));
                     if (trackOffset == NULL)
                     {
                         return false;
@@ -4678,7 +4680,7 @@ bool PVMFMP4FFParserNode::RetrieveTrackData(PVMP4FFNodeTrackPortInfo& aTrackPort
                         if (((retval == EVERYTHING_FINE) || (retval == END_OF_TRACK))
                                 && (numSamples > 0))
                         {
-                            uint32 offset = 0;
+                            TOsclFileOffset offset = 0;
 
                             if ((iPlaybackParserObj->getOffsetByTime(iNodeTrackPortList[i].iTrackId, info[numSamples-1].ts, &offset, 0)) == EVERYTHING_FINE)
                             {
@@ -4707,12 +4709,12 @@ bool PVMFMP4FFParserNode::RetrieveTrackData(PVMP4FFNodeTrackPortInfo& aTrackPort
                             );
                     OSCL_FIRST_CATCH_ANY(err, return PVMFErrNoMemory);
 
-                    uint32 maxOffsetDiff = 0;
+                    TOsclFileOffset maxOffsetDiff = 0;
                     for (uint32 ii = 0; ii < iNodeTrackPortList.size(); ii++)
                     {
                         if (trackOffset[ii] != 0x7FFFFFFF)
                         {
-                            uint32 offsetDiff = 0;
+                            TOsclFileOffset offsetDiff = 0;
                             for (uint32 j = ii + 1; j < iNodeTrackPortList.size(); j++)
                             {
                                 if (trackOffset[j] != 0x7FFFFFFF)
@@ -4735,7 +4737,7 @@ bool PVMFMP4FFParserNode::RetrieveTrackData(PVMP4FFNodeTrackPortInfo& aTrackPort
                         }
                     }
 
-                    if (maxOffsetDiff > cacheSize)
+                    if (maxOffsetDiff > (TOsclFileOffset)cacheSize)
                     {
                         // The content is poorly interleaved.
                         ReportMP4FFParserInfoEvent(PVMFInfoPoorlyInterleavedContent);
@@ -4751,7 +4753,7 @@ bool PVMFMP4FFParserNode::RetrieveTrackData(PVMP4FFNodeTrackPortInfo& aTrackPort
         }
         else
         {
-            uint32 offset = 0;
+            TOsclFileOffset offset = 0;
 #if PVMP4FF_UNDERFLOW_REQUST_READSIZE_NOTIFICATION_PER_TRACK
             PVMFStatus status = GetFileOffsetForAutoResume(offset, &aTrackPortInfo);
 #else
@@ -7105,9 +7107,9 @@ void PVMFMP4FFParserNode::CPMCommandCompleted(const PVMFCmdResp& aResponse)
     }
 }
 
-PVMFStatus PVMFMP4FFParserNode::GetFileOffsetForAutoResume(uint32& aOffset, bool aPortsAvailable)
+PVMFStatus PVMFMP4FFParserNode::GetFileOffsetForAutoResume(TOsclFileOffset& aOffset, bool aPortsAvailable)
 {
-    uint32 offset = 0;
+    TOsclFileOffset offset = 0;
     if (aPortsAvailable == false)
     {
         int32 iNumTracks = iPlaybackParserObj->getNumTracks();
@@ -7123,7 +7125,7 @@ PVMFStatus PVMFMP4FFParserNode::GetFileOffsetForAutoResume(uint32& aOffset, bool
             MediaClockConverter mcc(1000, iJitterBufferDurationInMs);
             uint64 mediats64 = mcc.get_converted_ts64(iPlaybackParserObj->getTrackMediaTimescale(trackID));
 
-            uint32 trackOffset = 0;
+            TOsclFileOffset trackOffset = 0;
             int32 retVal =
                 iPlaybackParserObj->getOffsetByTime(trackID, mediats64, &trackOffset, iJitterBufferDurationInMs);
 
@@ -7133,7 +7135,7 @@ PVMFStatus PVMFMP4FFParserNode::GetFileOffsetForAutoResume(uint32& aOffset, bool
                 return PVMFFailure;
             }
 
-            if ((uint32)trackOffset > offset)
+            if (trackOffset > offset)
             {
                 offset = trackOffset;
             }
@@ -7149,7 +7151,7 @@ PVMFStatus PVMFMP4FFParserNode::GetFileOffsetForAutoResume(uint32& aOffset, bool
             MediaClockConverter mcc(1000, iJitterBufferDurationInMs);
             uint64 mediats64 = mcc.get_converted_ts64(iPlaybackParserObj->getTrackMediaTimescale(it->iTrackId));
 
-            uint32 trackOffset = 0;
+            TOsclFileOffset trackOffset = 0;
             uint64 ts = it->iTimestamp + mediats64;
             int32 retVal =
                 iPlaybackParserObj->getOffsetByTime(it->iTrackId, ts, &trackOffset, iJitterBufferDurationInMs);
@@ -7160,7 +7162,7 @@ PVMFStatus PVMFMP4FFParserNode::GetFileOffsetForAutoResume(uint32& aOffset, bool
                 return PVMFFailure;
             }
 
-            if ((uint32)trackOffset > offset)
+            if (trackOffset > offset)
             {
                 offset = trackOffset;
             }
@@ -7170,14 +7172,14 @@ PVMFStatus PVMFMP4FFParserNode::GetFileOffsetForAutoResume(uint32& aOffset, bool
     return PVMFSuccess;
 }
 
-PVMFStatus PVMFMP4FFParserNode::GetFileOffsetForAutoResume(uint32& aOffset, PVMP4FFNodeTrackPortInfo* aInfo)
+PVMFStatus PVMFMP4FFParserNode::GetFileOffsetForAutoResume(TOsclFileOffset& aOffset, PVMP4FFNodeTrackPortInfo* aInfo)
 {
-    uint32 offset = 0;
+    TOsclFileOffset offset = 0;
     /* Convert PVMF_MP4FFPARSER_NODE_PSEUDO_STREAMING_BUFFER_DURATION_IN_MS to media timescale */
     MediaClockConverter mcc(1000, iJitterBufferDurationInMs);
     uint64 mediats64 = mcc.get_converted_ts64(iPlaybackParserObj->getTrackMediaTimescale(aInfo->iTrackId));
 
-    uint32 trackOffset = 0;
+    TOsclFileOffset trackOffset = 0;
     uint64 ts = aInfo->iTimestamp + mediats64;
     int32 retVal =
         iPlaybackParserObj->getOffsetByTime(aInfo->iTrackId, ts, &trackOffset, iJitterBufferDurationInMs);
@@ -7188,7 +7190,7 @@ PVMFStatus PVMFMP4FFParserNode::GetFileOffsetForAutoResume(uint32& aOffset, PVMP
         return PVMFFailure;
     }
 
-    if ((uint32)trackOffset > offset)
+    if (trackOffset > offset)
     {
         offset = trackOffset;
     }
@@ -7438,9 +7440,11 @@ PVMFStatus PVMFMP4FFParserNode::CheckForMP4HeaderAvailability()
          * First check if we have minimum number of bytes to recognize
          * the file and determine the header size.
          */
-        uint32 currCapacity = 0;
+        TOsclFileOffset currCapacity = 0;
+        uint32 tempCurrCapacity = 0;
         iDataStreamInterface->QueryReadCapacity(iDataStreamSessionID,
-                                                currCapacity);
+                                                tempCurrCapacity);
+        currCapacity = (TOsclFileOffset)tempCurrCapacity;
 
         if (currCapacity <  MP4_MIN_BYTES_FOR_GETTING_MOVIE_HDR_SIZE)
         {
@@ -7466,14 +7470,14 @@ PVMFStatus PVMFMP4FFParserNode::CheckForMP4HeaderAvailability()
                 PVMF_MP4FFPARSERNODE_LOGDATATRAFFIC((0, "PVMFMP4FFParserNode::CheckForMP4HeaderAvailability() - MetaData ends at file offset %d", iMP4HeaderSize));
                 iProgressivelyPlayable = true;
                 // inform data stream that a range of bytes needs to be cached persistently (offset 0, size of moov atom)
-                iDataStreamInterface->MakePersistent(0, iMP4HeaderSize);
+                iDataStreamInterface->MakePersistent(0, (uint32)iMP4HeaderSize);
 
                 if (currCapacity < iMP4HeaderSize)
                 {
                     iRequestReadCapacityNotificationID =
                         iDataStreamInterface->RequestReadCapacityNotification(iDataStreamSessionID,
                                 *this,
-                                iMP4HeaderSize);
+                                (uint32)iMP4HeaderSize);
                     iDataStreamRequestPending = true;
                     return PVMFPending;
                 }
@@ -7566,7 +7570,7 @@ PVMFStatus PVMFMP4FFParserNode::CheckForMP4HeaderAvailability()
             iRequestReadCapacityNotificationID =
                 iDataStreamInterface->RequestReadCapacityNotification(iDataStreamSessionID,
                         *this,
-                        (iMP4HeaderSize + MP4_MIN_BYTES_FOR_GETTING_MOVIE_HDR_SIZE));
+                        ((uint32)iMP4HeaderSize + MP4_MIN_BYTES_FOR_GETTING_MOVIE_HDR_SIZE));
             iDataStreamRequestPending = true;
             return PVMFPending;
         }
@@ -7685,7 +7689,7 @@ PVMFStatus PVMFMP4FFParserNode::ReportUnderFlow()
         iClientPlayBackClock->GetCurrentTime32(clientClock32, overload, PVMF_MEDIA_CLOCK_MSEC, timebase32);
 
 
-    uint32 currentFileSize = 0;
+    TOsclFileOffset currentFileSize = 0;
     MP4_ERROR_CODE code = iPlaybackParserObj->GetCurrentFileSize(currentFileSize);
     if (code != EVERYTHING_FINE)
     {
@@ -7695,7 +7699,7 @@ PVMFStatus PVMFMP4FFParserNode::ReportUnderFlow()
 
     iUnderFlowEventReported = false;
     uint32 currNPT = 0;
-    convertSizeToTime(currentFileSize, currNPT);
+    convertSizeToTime((uint32)currentFileSize, currNPT);
 
     PVMF_MP4FFPARSERNODE_LOGDATATRAFFIC((0, "PVMFMP4FFParserNode::ReportUnderFlow - ClientClock = %d", clientClock32));
     PVMF_MP4FFPARSERNODE_LOGDATATRAFFIC((0, "PVMFMP4FFParserNode::ReportUnderFlow - NPTInMS = %d, FileSize = %d", currNPT, currentFileSize));
@@ -7746,12 +7750,12 @@ void PVMFMP4FFParserNode::TimeoutOccurred(int32 timerID,
         if (autopaused == true && iUnderFlowEventReported == false)
         {
             PVMF_MP4FFPARSERNODE_LOGDATATRAFFIC((0, "PVMFMP4FFParserNode::TimeoutOccurred - UnderFlow TimeOut - Still AutoPaused"));
-            uint32 currentFileSize = 0;
+            TOsclFileOffset currentFileSize = 0;
             MP4_ERROR_CODE code = iPlaybackParserObj->GetCurrentFileSize(currentFileSize);
             if (code == EVERYTHING_FINE)
             {
                 uint32 currNPT = 0;
-                convertSizeToTime(currentFileSize, currNPT);
+                convertSizeToTime((uint32)currentFileSize, currNPT);
 
                 uint32 minTS = MAX32BITUINT;
                 Oscl_Vector<PVMP4FFNodeTrackPortInfo, OsclMemAllocator>::iterator it;

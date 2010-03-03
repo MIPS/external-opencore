@@ -97,7 +97,7 @@ int32 AACBitstreamObject::refill()
             return AACBitstreamObject::MISC_ERROR;
         }
 
-        iFileSize = ipAACFile->Tell();
+        iFileSize = (uint32)ipAACFile->Tell();
 
         if (!(iFileSize > 0))
         {
@@ -150,8 +150,10 @@ bool AACBitstreamObject::UpdateFileSize()
     if (ipAACFile != NULL)
     {
         uint32 aRemBytes = 0;
-        if (ipAACFile->GetRemainingBytes(aRemBytes))
+        TOsclFileOffset remainingBytes = 0;
+        if (ipAACFile->GetRemainingBytes(remainingBytes))
         {
+            aRemBytes = (uint32)remainingBytes;
             uint32 currPos = (uint32)(ipAACFile->Tell());
             iFileSize = currPos + aRemBytes;
             return true;
@@ -311,7 +313,7 @@ void AACBitstreamObject::parseID3Header(PVFile& aFile)
             || !ipAACFile->IsOpen())
         return;//error
 
-    int32 curpos = aFile.Tell();
+    int32 curpos = (int32)aFile.Tell();
     AACUtils::SeektoOffset(&aFile, 0, Oscl_File::SEEKSET);
     iID3Parser->ParseID3Tag(&aFile);
     AACUtils::SeektoOffset(&aFile, curpos, Oscl_File::SEEKSET);
@@ -345,12 +347,14 @@ int32 AACBitstreamObject::isAACFile(PVFile* aFilePtr)
     uint32 remainingBytes = 0;
     iAACFormat = EAACUnrecognized;
     int32 retVal = GENERIC_ERROR;
+    TOsclFileOffset remBytes = 0;
 
     // File pointer should be at the audio data
     // ADTS - Takes 8192 bytes to confirm its a AAC Files (max AAC frame size)
     // ADIF - 4 bytes to confirm ADIF files
-    if (fpUsed->GetRemainingBytes(remainingBytes))
+    if (fpUsed->GetRemainingBytes(remBytes))
     {
+        remainingBytes = (uint32)remBytes;
         int32 reset_ret = reset(iAudioStartOffset);
         if (reset_ret != AACBitstreamObject::EVERYTHING_OK)
         {

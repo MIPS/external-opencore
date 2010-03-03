@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,7 +42,7 @@ Atom::Atom(uint32 type)
 
 Atom::Atom(MP4_FF_FILE *fp)
 {
-    int32 currfilePointer; // current file position
+    TOsclFileOffset currfilePointer; // current file position
 
     _success = false;
     _mp4ErrorCode = ZERO_OR_NEGATIVE_ATOM_SIZE;
@@ -53,7 +53,7 @@ Atom::Atom(MP4_FF_FILE *fp)
     if (AtomUtils::read32read32(fp, _size, _type))
     {
         if (((int32)_size >= DEFAULT_ATOM_SIZE) &&
-                ((int32)(currfilePointer + _size) <= fp->_fileSize))
+                ((currfilePointer + (int32)_size) <= fp->_fileSize))
         {
             _success = true;
             _mp4ErrorCode = EVERYTHING_FINE;
@@ -64,7 +64,7 @@ Atom::Atom(MP4_FF_FILE *fp)
 
 Atom::Atom(MP4_FF_FILE *fp, uint32 size, uint32 type)
 {
-    int32 currfilePointer; // current file position
+    TOsclFileOffset currfilePointer; // current file position
 
     _success = false;
     _mp4ErrorCode = ZERO_OR_NEGATIVE_ATOM_SIZE;

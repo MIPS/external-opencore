@@ -97,13 +97,13 @@ class IMpeg4File : public ISucceedFail
            index:   An output parameter which is the index of the sample entry to which the returned sample refers.
            return:  The size in bytes of the data placed into the provided buffer.  If the buffer is not large enough, the return value is the negative of the size that is needed.
         */
-        virtual int32 getNextMediaSample(uint32 id, uint8 *buf, uint32 &size, uint32 &index, uint32 &SampleOffset) = 0;
+        virtual int32 getNextMediaSample(uint32 id, uint8 *buf, uint32 &size, uint32 &index, TOsclFileOffset &SampleOffset) = 0;
 
-        virtual int32 getMediaSample(uint32 id, uint32 sampleNumber, uint8 *buf, uint32 &size, uint32 &index, uint32 &SampleOffset) = 0;
+        virtual int32 getMediaSample(uint32 id, uint32 sampleNumber, uint8 *buf, uint32 &size, uint32 &index, TOsclFileOffset &SampleOffset) = 0;
 
-        virtual int32 getOffsetByTime(uint32 id, uint64 ts, uint32* sampleFileOffset, uint32 jitterbuffersize) = 0;
+        virtual int32 getOffsetByTime(uint32 id, uint64 ts, TOsclFileOffset* sampleFileOffset, uint32 jitterbuffersize) = 0;
 
-        virtual int32 updateFileSize(uint32 filesize) = 0;
+        virtual int32 updateFileSize(TOsclFileOffset filesize) = 0;
 
         virtual MP4_ERROR_CODE getKeyMediaSampleNumAt(uint32 aTrackId,
                 uint32 aKeySampleNum,
@@ -183,7 +183,7 @@ class IMpeg4File : public ISucceedFail
         virtual int32 getFileType() const = 0;
         virtual int32 getScalability() const = 0;
 
-        virtual int32 getTimestampForRandomAccessPoints(uint32 id, uint32 *num, uint64 *tsBuf, uint32* numBuf, uint32* offsetBuf = NULL) = 0;
+        virtual int32 getTimestampForRandomAccessPoints(uint32 id, uint32 *num, uint64 *tsBuf, uint32* numBuf, TOsclFileOffset* offsetBuf = NULL) = 0;
         virtual int32 getTimestampForRandomAccessPointsBeforeAfter(uint32 id, uint64 ts, uint64 *tsBuf, uint32* numBuf,
                 uint32 &numsamplestoget,
                 uint32 howManyKeySamples = 1) = 0;
@@ -243,7 +243,7 @@ class IMpeg4File : public ISucceedFail
 
 
         OSCL_IMPORT_REF static int32 IsXXXable(OSCL_wString& filename,
-                                               int32 &metaDataSize,
+                                               TOsclFileOffset &metaDataSize,
                                                int32  &oMoovBeforeMdat,
                                                uint32 *pMajorBrand,
                                                uint32 *pCompatibleBrands,
@@ -251,7 +251,7 @@ class IMpeg4File : public ISucceedFail
 
 
         OSCL_IMPORT_REF static int32 IsXXXable(Oscl_File* fileRef,
-                                               int32 &metaDataSize,
+                                               TOsclFileOffset &metaDataSize,
                                                int32  &oMoovBeforeMdat,
                                                uint32 *pMajorBrand,
                                                uint32 *pCompatibleBrands);
@@ -273,13 +273,13 @@ class IMpeg4File : public ISucceedFail
          * file. Please note that the file open and close are handled by the
          * caller.
          *
-         * @param uint32 fileSize - Size of the downloaded file, thus far.
+         * @param TOsclFileOffset fileSize - Size of the downloaded file, thus far.
          *
          *
          * @param bool& oIsProgressiveDownloadable - Set to true if the clip is
          * is progressive dowmloadable.
          *
-         * @param uint32& metaDataSize - If the clip is progressive
+         * @param TOsclFileOffset& metaDataSize - If the clip is progressive
          * downloadable then this API also returns the meta data size. Player
          * needs to wait for the file to grow past the metaDataSize before
          * starting playback.This param is valid only if oIsProgressiveDownloadable
@@ -292,9 +292,9 @@ class IMpeg4File : public ISucceedFail
          * Any other return value indicates error.
          */
         OSCL_IMPORT_REF static MP4_ERROR_CODE IsProgressiveDownloadable(Oscl_File* filePtr,
-                uint32  fileSize,
+                TOsclFileOffset  fileSize,
                 bool& oIsProgressiveDownloadable,
-                uint32& metaDataSize);
+                TOsclFileOffset& metaDataSize);
 
         /*
          * @param aCPMAccessFactory aCPMAccessFactory - Pointer to the datastream
@@ -303,7 +303,7 @@ class IMpeg4File : public ISucceedFail
          * @param bool& oIsProgressiveDownloadable - Set to true if the clip is
          * is progressive dowmloadable.
          *
-         * @param uint32& metaDataSize - If the clip is progressive
+         * @param TOsclFileOffset& metaDataSize - If the clip is progressive
          * downloadable then this API also returns the meta data size. Player
          * needs to wait for the file to grow past the metaDataSize before
          * starting playback.This param is valid only if oIsProgressiveDownloadable
@@ -317,7 +317,7 @@ class IMpeg4File : public ISucceedFail
          */
         OSCL_IMPORT_REF static MP4_ERROR_CODE GetMetaDataSize(PVMFCPMPluginAccessInterfaceFactory* aCPMAccessFactory,
                 bool& oIsProgressiveDownloadable,
-                uint32& metaDataSize);
+                TOsclFileOffset& metaDataSize);
 
 
         /*
@@ -340,7 +340,7 @@ class IMpeg4File : public ISucceedFail
          */
 
         virtual MP4_ERROR_CODE getMaxTrackTimeStamp(uint32 trackID,
-                uint32 fileSize,
+                TOsclFileOffset fileSize,
                 uint64& timeStamp) = 0;
 
         /*
@@ -368,7 +368,7 @@ class IMpeg4File : public ISucceedFail
         virtual MP4_ERROR_CODE getSampleNumberClosestToTimeStamp(uint32 trackID,
                 uint32 &sampleNumber,
                 uint64 timeStamp,
-                uint32 sampleOffset = 0) = 0;
+                TOsclFileOffset sampleOffset = 0) = 0;
 
         /*
          * This API returns the size of the "odkm" header if present at the
@@ -390,7 +390,7 @@ class IMpeg4File : public ISucceedFail
          * This API is used to set a callback request on the datastream interface.
          */
         virtual MP4_ERROR_CODE RequestReadCapacityNotification(PvmiDataStreamObserver& aObserver,
-                uint32 aFileOffset,
+                TOsclFileOffset aFileOffset,
                 OsclAny* aContextData = NULL) = 0;
 
         /*
@@ -401,7 +401,7 @@ class IMpeg4File : public ISucceedFail
         /*
          * This API is used to get the current file size from the datastream interface.
          */
-        virtual MP4_ERROR_CODE GetCurrentFileSize(uint32& aFileSize) = 0;
+        virtual MP4_ERROR_CODE GetCurrentFileSize(TOsclFileOffset& aFileSize) = 0;
 
         virtual int32 getTrackTSStartOffset(uint32& aTSOffset, uint32 aTrackID) = 0;
 
@@ -451,7 +451,7 @@ class IMpeg4File : public ISucceedFail
         virtual PVMFStatus InitMetaData(PVMFMetadataList* aAvailableMetadataKeys) = 0;
         virtual void SetMoofAtomsCnt(const uint32 aMoofAtmsCnt) = 0;
         virtual void SetMoofInfo(uint32 aTrackId, uint32 aIndex, uint64 aMoofOffset, uint64 aMoofTimestamp) = 0;
-        virtual MP4_ERROR_CODE GetUserDataAtomInfo(uint32 &atomSize, uint32 &atomPointer) = 0;
+        virtual MP4_ERROR_CODE GetUserDataAtomInfo(uint32 &atomSize, TOsclFileOffset &atomPointer) = 0;
 
 };
 

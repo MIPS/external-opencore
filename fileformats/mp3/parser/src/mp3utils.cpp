@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,7 @@
 int32
 MP3Utils::getCurrentFilePosition(PVFile *fp)
 {
-    return (fp->Tell());
+    return (int32)(fp->Tell());
 }
 
 int32 MP3Utils::OpenFile(OSCL_wHeapString<OsclMemAllocator> filename,
@@ -72,8 +72,10 @@ bool MP3Utils::getCurrentFileSize(PVFile *fp, uint32& aCurrentSize)
     {
         aCurrentSize = 0;
         uint32 aRemBytes = 0;
-        if (fp->GetRemainingBytes(aRemBytes))
+        TOsclFileOffset remainingBytes = 0;
+        if (fp->GetRemainingBytes(remainingBytes))
         {
+            aRemBytes = (uint32)remainingBytes;
             uint32 currPos = (uint32)(fp->Tell());
             aCurrentSize = currPos + aRemBytes;
             return true;

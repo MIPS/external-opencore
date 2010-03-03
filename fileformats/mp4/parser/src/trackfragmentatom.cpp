@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,8 +40,8 @@ typedef Oscl_Vector<uint32, OsclMemAllocator> fragmentptrOffsetVecType;
 TrackFragmentAtom::TrackFragmentAtom(MP4_FF_FILE *fp,
                                      uint32 &size,
                                      uint32 type,
-                                     uint32 movieFragmentCurrentOffset,
-                                     uint32 movieFragmentBaseOffset,
+                                     TOsclFileOffset movieFragmentCurrentOffset,
+                                     TOsclFileOffset movieFragmentBaseOffset,
                                      uint32 moofSize,
                                      TrackDurationContainer *trackDurationContainer,
                                      Oscl_Vector<TrackExtendsAtom*, OsclMemAllocator> *trackExtendAtomVec,
@@ -91,12 +91,12 @@ TrackFragmentAtom::TrackFragmentAtom(MP4_FF_FILE *fp,
     _pinput->_fileSize = fp->_fileSize;
     _pinput->_pvfile.Copy(fp->_pvfile);
 
-    uint32 trun_start = 0;
+    TOsclFileOffset trun_start = 0;
     uint32 count = size - DEFAULT_ATOM_SIZE;
 
-    uint32 _movieFragmentBaseOffset = movieFragmentBaseOffset - DEFAULT_ATOM_SIZE;
+    TOsclFileOffset _movieFragmentBaseOffset = movieFragmentBaseOffset - DEFAULT_ATOM_SIZE;
     bool bdo_present = false;
-    uint32 base_data_offset = _movieFragmentBaseOffset;
+    TOsclFileOffset base_data_offset = _movieFragmentBaseOffset;
     trackId = 0;
     trun_offset = moofSize + DEFAULT_ATOM_SIZE;
 
@@ -128,8 +128,7 @@ TrackFragmentAtom::TrackFragmentAtom(MP4_FF_FILE *fp,
 
                     if (tf_flags & 0x000001)
                     {
-                        uint64 bdo = _pTrackFragmentHeaderAtom->getBaseDataOffset();
-                        base_data_offset = Oscl_Int64_Utils::get_uint64_lower32(bdo);
+                        base_data_offset = _pTrackFragmentHeaderAtom->getBaseDataOffset();
                         bdo_present = true;
                     }
                     else
@@ -214,8 +213,12 @@ TrackFragmentAtom::TrackFragmentAtom(MP4_FF_FILE *fp,
                 }
                 if (!(trunFlags & 0x000200))
                 {
+                    uint32 offset = 0;
                     if (tf_flags & 0x000010)
-                        _pTrackFragmentRunAtom->setDefaultSampleSize(_pTrackFragmentHeaderAtom->getDefaultSampleSize(), trun_offset);
+                    {
+                        _pTrackFragmentRunAtom->setDefaultSampleSize(_pTrackFragmentHeaderAtom->getDefaultSampleSize(), offset);
+                        trun_offset = (TOsclFileOffset)offset;
+                    }
                     else
                     {
                         for (uint32 idx = 0; idx < trackExtendAtomVec->size(); idx++)
@@ -225,7 +228,8 @@ TrackFragmentAtom::TrackFragmentAtom(MP4_FF_FILE *fp,
                             if (id == trackId)
                             {
                                 uint32 trexDefaultSampleSize = pTrackExtendAtom->getDefaultSampleSize();
-                                _pTrackFragmentRunAtom->setDefaultSampleSize(trexDefaultSampleSize, trun_offset);
+                                _pTrackFragmentRunAtom->setDefaultSampleSize(trexDefaultSampleSize, offset);
+                                trun_offset = (TOsclFileOffset)offset;
                             }
                         }
                     }
@@ -262,8 +266,8 @@ TrackFragmentAtom::TrackFragmentAtom(MP4_FF_FILE *fp,
 void TrackFragmentAtom::ParseTrafAtom(MP4_FF_FILE *fp,
                                       uint32 &size,
                                       uint32 type,
-                                      uint32 movieFragmentCurrentOffset,
-                                      uint32 movieFragmentBaseOffset,
+                                      TOsclFileOffset movieFragmentCurrentOffset,
+                                      TOsclFileOffset movieFragmentBaseOffset,
                                       uint32 moofSize,
                                       TrackDurationContainer *trackDurationContainer,
                                       Oscl_Vector<TrackExtendsAtom*, OsclMemAllocator> *trackExtendAtomVec,
@@ -274,10 +278,10 @@ void TrackFragmentAtom::ParseTrafAtom(MP4_FF_FILE *fp,
     OSCL_UNUSED_ARG(movieFragmentCurrentOffset);
     OSCL_UNUSED_ARG(moofSize);
     uint32 count = size;
-    uint32 trun_start = 0;
-    uint32 _movieFragmentBaseOffset = movieFragmentBaseOffset - DEFAULT_ATOM_SIZE;
+    TOsclFileOffset trun_start = 0;
+    TOsclFileOffset _movieFragmentBaseOffset = movieFragmentBaseOffset - DEFAULT_ATOM_SIZE;
     bool bdo_present = false;
-    uint32 base_data_offset = _movieFragmentBaseOffset;
+    TOsclFileOffset base_data_offset = _movieFragmentBaseOffset;
 
     if (tf_flags & 0x000001)
     {
@@ -352,8 +356,12 @@ void TrackFragmentAtom::ParseTrafAtom(MP4_FF_FILE *fp,
                             }
                             if (!(trunFlags & 0x000200))
                             {
+                                uint32 offset = 0;
                                 if (tf_flags & 0x000010)
-                                    _pTrackFragmentRunAtom->setDefaultSampleSize(_pTrackFragmentHeaderAtom->getDefaultSampleSize(), trun_offset);
+                                {
+                                    _pTrackFragmentRunAtom->setDefaultSampleSize(_pTrackFragmentHeaderAtom->getDefaultSampleSize(), offset);
+                                    trun_offset = (TOsclFileOffset)offset;
+                                }
                                 else
                                 {
                                     for (uint32 idx = 0; idx < trackExtendAtomVec->size(); idx++)
@@ -363,7 +371,8 @@ void TrackFragmentAtom::ParseTrafAtom(MP4_FF_FILE *fp,
                                         if (id == trackId)
                                         {
                                             uint32 trexDefaultSampleSize = pTrackExtendAtom->getDefaultSampleSize();
-                                            _pTrackFragmentRunAtom->setDefaultSampleSize(trexDefaultSampleSize, trun_offset);
+                                            _pTrackFragmentRunAtom->setDefaultSampleSize(trexDefaultSampleSize, offset);
+                                            trun_offset = (TOsclFileOffset)offset;
                                         }
                                     }
                                 }
@@ -429,8 +438,12 @@ void TrackFragmentAtom::ParseTrafAtom(MP4_FF_FILE *fp,
                         }
                         if (!(trunFlags & 0x000200))
                         {
+                            uint32 offset = 0;
                             if (tf_flags & 0x000010)
-                                _pTrackFragmentRunAtom->setDefaultSampleSize(_pTrackFragmentHeaderAtom->getDefaultSampleSize(), trun_offset);
+                            {
+                                _pTrackFragmentRunAtom->setDefaultSampleSize(_pTrackFragmentHeaderAtom->getDefaultSampleSize(), offset);
+                                trun_offset = (TOsclFileOffset)offset;
+                            }
                             else
                             {
                                 for (uint32 idx = 0; idx < trackExtendAtomVec->size(); idx++)
@@ -440,7 +453,8 @@ void TrackFragmentAtom::ParseTrafAtom(MP4_FF_FILE *fp,
                                     if (id == trackId)
                                     {
                                         uint32 trexDefaultSampleSize = pTrackExtendAtom->getDefaultSampleSize();
-                                        _pTrackFragmentRunAtom->setDefaultSampleSize(trexDefaultSampleSize, trun_offset);
+                                        _pTrackFragmentRunAtom->setDefaultSampleSize(trexDefaultSampleSize, offset);
+                                        trun_offset = (TOsclFileOffset)offset;
                                     }
                                 }
                             }
@@ -510,7 +524,7 @@ TrackFragmentAtom::getNextNSamples(uint32 startSampleNum,
 
     uint32 samplesYetToBeRead = *n;
     uint32 sampleNum = startSampleNum;
-    uint32 sampleFileOffset = 0;
+    TOsclFileOffset sampleFileOffset = 0;
 
     uint32 sampleBeforeGet = startSampleNum;
 
@@ -586,7 +600,7 @@ TrackFragmentAtom::getNextNSamples(uint32 startSampleNum,
         int32 sampleSizeOffset = 0;
 
         uint32 sigmaSampleSize = 0, k = 0;
-        uint32 debugOffset = _prevSampleOffset + sampleSizeOffset;
+        TOsclFileOffset debugOffset = _prevSampleOffset + sampleSizeOffset;
 
         samplesLeftInChunk = ((sampleCount - _currentTrackFragmentRunSampleNumber));
 
@@ -679,7 +693,7 @@ TrackFragmentAtom::getNextNSamples(uint32 startSampleNum,
         Oscl_Int64_Utils::set_uint64(pgau->SampleOffset, 0, (uint32)sampleFileOffset);
 
         AtomUtils::getCurrentFileSize(_pinput, _fileSize);
-        if ((sampleFileOffset + sigmaSampleSize) > _fileSize)
+        if ((sampleFileOffset + (TOsclFileOffset)sigmaSampleSize) > _fileSize)
         {
             _mp4ErrorCode = INSUFFICIENT_DATA;
             _currentTrackFragmentRunSampleNumber = startSampleNum;
@@ -970,7 +984,7 @@ TrackFragmentAtom::peekNextNSamples(uint32 startSampleNum,
 
     uint32 samplesToBePeek = *n;
     uint32 sampleNum = startSampleNum;
-    int32 sampleFileOffset = 0;
+    TOsclFileOffset sampleFileOffset = 0;
     int32 sampleBeforeGet = (int32)startSampleNum;
     uint32 s = totalSampleRead;
 
@@ -1013,7 +1027,7 @@ TrackFragmentAtom::peekNextNSamples(uint32 startSampleNum,
         int32 sampleSizeOffset = 0;
 
         uint32 sigmaSampleSize = 0, k = 0;
-        uint32 debugOffset = _prevSampleOffset + sampleSizeOffset;
+        TOsclFileOffset debugOffset = _prevSampleOffset + sampleSizeOffset;
 
         samplesLeftInChunk = ((sampleCount - _peekPlaybackSampleNumber));
 
@@ -1253,11 +1267,11 @@ uint64 TrackFragmentAtom::getCurrentTrafDuration()
 }
 
 int32
-TrackFragmentAtom::getOffsetByTime(uint32 id, uint64 time, uint32* sampleFileOffset)
+TrackFragmentAtom::getOffsetByTime(uint32 id, uint64 time, TOsclFileOffset* sampleFileOffset)
 {
     OSCL_UNUSED_ARG(id);
     uint64 prevTime = 0;
-    uint32 prevOffset = 0;
+    TOsclFileOffset prevOffset = 0;
     if (_pTrackFragmentRunAtomVec != NULL)
     {
         for (uint32 idx = 0; idx < _pTrackFragmentRunAtomVec->size(); idx++)

@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -112,8 +112,8 @@ class TrackFragmentAtom : public Atom
         TrackFragmentAtom(MP4_FF_FILE *fp,
                           uint32 &size,
                           uint32 type,
-                          uint32 movieFragmentCurrentOffset,
-                          uint32 movieFragmentBaseOffset,
+                          TOsclFileOffset movieFragmentCurrentOffset,
+                          TOsclFileOffset movieFragmentBaseOffset,
                           uint32 moof_size,
                           TrackDurationContainer *trackDurationContainer,
                           Oscl_Vector<TrackExtendsAtom*, OsclMemAllocator> *trackExtendAtomVec,
@@ -126,8 +126,8 @@ class TrackFragmentAtom : public Atom
         void ParseTrafAtom(MP4_FF_FILE *fp,
                            uint32 &size,
                            uint32 type,
-                           uint32 movieFragmentCurrentOffset,
-                           uint32 movieFragmentBaseOffset,
+                           TOsclFileOffset movieFragmentCurrentOffset,
+                           TOsclFileOffset movieFragmentBaseOffset,
                            uint32 moofSize,
                            TrackDurationContainer *trackDurationContainer,
                            Oscl_Vector<TrackExtendsAtom*, OsclMemAllocator> *trackExtendAtomVec,
@@ -158,7 +158,7 @@ class TrackFragmentAtom : public Atom
         uint32 getSampleNumberFromTimestamp(uint64 time) const;
         MP4_ERROR_CODE getTimestampForSampleNumber(uint32 sampleNumber, uint64& aTimeStamp) const;
         uint64 getCurrentTrafDuration();
-        int32 getOffsetByTime(uint32 id, uint64 ts, uint32* sampleFileOffset);
+        int32 getOffsetByTime(uint32 id, uint64 ts, TOsclFileOffset* sampleFileOffset);
         void resetPlayback();
         uint64 resetPlayback(uint64 time);
         uint64 resetPlayback(uint64 time, uint32 trun_number, uint32 sample_num);
@@ -175,7 +175,7 @@ class TrackFragmentAtom : public Atom
         MP4_FF_FILE *_pinput;
         MP4_FF_FILE *_commonFilePtr;
         uint64 _startTrackFragmentTSOffset;
-        uint32 _fileSize;
+        TOsclFileOffset _fileSize;
         uint32 _movieFragmentOffset;
         uint32 _prevSampleOffset;
         PVLogger *iLogger, *iStateVarLogger, *iParsedDataLogger;
@@ -187,7 +187,7 @@ class TrackFragmentAtom : public Atom
         TrackDurationContainer *_pTrackDurationContainer;
         uint32 trackId;
         uint32 tf_flags;
-        uint32 trun_offset;
+        TOsclFileOffset trun_offset;
         bool trunParsingCompleted;
 };
 

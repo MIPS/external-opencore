@@ -87,11 +87,11 @@ SampleToChunkAtom::SampleToChunkAtom(MP4_FF_FILE *fp, uint32 size, uint32 type, 
             _success = false;
         }
         PVMF_MP4FFPARSER_LOGPARSEDINFO((0, "SampleToChunkAtom::SampleToChunkAtom- _entryCount =%d", _entryCount));
-        uint32 dataSize = _size - (DEFAULT_FULL_ATOM_SIZE + 4);
+        TOsclFileOffset dataSize = _size - (DEFAULT_FULL_ATOM_SIZE + 4);
 
         uint32 entrySize = (4 + 4 + 4);
 
-        if ((_entryCount*entrySize) > dataSize)
+        if ((TOsclFileOffset)(_entryCount*entrySize) > dataSize)
         {
             _success = false;
         }
@@ -107,7 +107,7 @@ SampleToChunkAtom::SampleToChunkAtom(MP4_FF_FILE *fp, uint32 size, uint32 type, 
 
                         uint32 fptrBuffSize = (_entryCount / _stbl_buff_size) + 1;
 
-                        PV_MP4_FF_ARRAY_NEW(NULL, uint32, (fptrBuffSize), _stbl_fptr_vec);
+                        PV_MP4_FF_ARRAY_NEW(NULL, TOsclFileOffset, (fptrBuffSize), _stbl_fptr_vec);
                         if (_stbl_fptr_vec == NULL)
                         {
                             _success = false;
@@ -160,7 +160,7 @@ SampleToChunkAtom::SampleToChunkAtom(MP4_FF_FILE *fp, uint32 size, uint32 type, 
 
                             _fileptr->_fileSize = fp->_fileSize;
                         }
-                        int32 _head_offset = AtomUtils::getCurrentFilePosition(fp);
+                        TOsclFileOffset _head_offset = AtomUtils::getCurrentFilePosition(fp);
                         AtomUtils::seekFromCurrPos(fp, dataSize);
                         AtomUtils::seekFromStart(_fileptr, _head_offset);
 
@@ -267,14 +267,14 @@ bool SampleToChunkAtom::ParseEntryUnit(uint32 sample_cnt)
         _curr_buff_number = _parsed_entry_cnt / _stbl_buff_size;
         if (_curr_buff_number  == _next_buff_number)
         {
-            uint32 currFilePointer = AtomUtils::getCurrentFilePosition(_fileptr);
+            TOsclFileOffset currFilePointer = AtomUtils::getCurrentFilePosition(_fileptr);
             _stbl_fptr_vec[_curr_buff_number] = currFilePointer;
             _next_buff_number++;
         }
 
         if (!_curr_entry_point)
         {
-            uint32 currFilePointer = _stbl_fptr_vec[_curr_buff_number];
+            TOsclFileOffset currFilePointer = _stbl_fptr_vec[_curr_buff_number];
             AtomUtils::seekFromStart(_fileptr, currFilePointer);
         }
         uint32 firstChunk;

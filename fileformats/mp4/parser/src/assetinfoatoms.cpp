@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -419,7 +419,7 @@ AssetInfoClassificationAtom::~AssetInfoClassificationAtom()
 
 AssestInfoKeyWord::AssestInfoKeyWord(MP4_FF_FILE *fp)
 {
-    int32 currfilePos = AtomUtils::getCurrentFilePosition(fp);
+    TOsclFileOffset currfilePos = AtomUtils::getCurrentFilePosition(fp);
 
     uint8 keywordSize = 0;
     if (!AtomUtils::read8(fp, keywordSize))
@@ -455,8 +455,8 @@ AssestInfoKeyWord::AssestInfoKeyWord(MP4_FF_FILE *fp)
             return;
         }
     }
-    int32 newfilePos = AtomUtils::getCurrentFilePosition(fp);
-    size = newfilePos - currfilePos;
+    TOsclFileOffset newfilePos = AtomUtils::getCurrentFilePosition(fp);
+    size = (uint32)(newfilePos - currfilePos);
 }
 
 
@@ -589,14 +589,14 @@ AssetInfoLocationAtom::AssetInfoLocationAtom(MP4_FF_FILE *fp, uint32 size, uint3
         {
             _charType = ORIGINAL_CHAR_TYPE_UTF8;
             // Check to see if the string is actually null-terminated
-            int32 currPos1 = AtomUtils::getCurrentFilePosition(fp);
+            TOsclFileOffset currPos1 = AtomUtils::getCurrentFilePosition(fp);
             if (!AtomUtils::readNullTerminatedString(fp, _defaultNotice))
             {
                 _success = false;
                 return;
             }
-            int32 currPos2 = AtomUtils::getCurrentFilePosition(fp);
-            count -= (currPos2 - currPos1);
+            TOsclFileOffset currPos2 = AtomUtils::getCurrentFilePosition(fp);
+            count -= (int32)(currPos2 - currPos1);
         }
 
         PV_MP4_FF_ARRAY_NEW(NULL, oscl_wchar, _defaultNotice.get_size() + 1, _pLocationStruct->_location_name);
@@ -678,14 +678,14 @@ AssetInfoLocationAtom::AssetInfoLocationAtom(MP4_FF_FILE *fp, uint32 size, uint3
         {
             _charType = ORIGINAL_CHAR_TYPE_UTF8;
             // Check to see if the string is actually null-terminated
-            int32 currPos1 = AtomUtils::getCurrentFilePosition(fp);
+            TOsclFileOffset currPos1 = AtomUtils::getCurrentFilePosition(fp);
             if (!AtomUtils::readNullTerminatedString(fp, _astronomical_body))
             {
                 _success = false;
                 return;
             }
-            int32 currPos2 = AtomUtils::getCurrentFilePosition(fp);
-            count -= (currPos2 - currPos1);
+            TOsclFileOffset currPos2 = AtomUtils::getCurrentFilePosition(fp);
+            count -= (int32)(currPos2 - currPos1);
         }
         PV_MP4_FF_ARRAY_NEW(NULL, oscl_wchar, _astronomical_body.get_size() + 1, _pLocationStruct->_astronomical_body);
         oscl_strncpy(_pLocationStruct->_astronomical_body, _astronomical_body.get_str(), _astronomical_body.get_size());
@@ -726,14 +726,14 @@ AssetInfoLocationAtom::AssetInfoLocationAtom(MP4_FF_FILE *fp, uint32 size, uint3
         {
             _charType = ORIGINAL_CHAR_TYPE_UTF8;
             // Check to see if the string is actually null-terminated
-            int32 currPos1 = AtomUtils::getCurrentFilePosition(fp);
+            TOsclFileOffset currPos1 = AtomUtils::getCurrentFilePosition(fp);
             if (!AtomUtils::readNullTerminatedString(fp, _additional_notes))
             {
                 _success = false;
                 return;
             }
-            int32 currPos2 = AtomUtils::getCurrentFilePosition(fp);
-            count -= (currPos2 - currPos1);
+            TOsclFileOffset currPos2 = AtomUtils::getCurrentFilePosition(fp);
+            count -= (int32)(currPos2 - currPos1);
         }
         PV_MP4_FF_ARRAY_NEW(NULL, oscl_wchar, _additional_notes.get_size() + 1, _pLocationStruct->_additional_notes);
         oscl_strncpy(_pLocationStruct->_additional_notes, _additional_notes.get_str(), _additional_notes.get_size());
@@ -815,14 +815,14 @@ AssetInfoAlbumAtom::AssetInfoAlbumAtom(MP4_FF_FILE *fp, uint32 size, uint32 type
         {
             _charType = ORIGINAL_CHAR_TYPE_UTF8;
             // Check to see if the string is actually null-terminated
-            int32 currPos1 = AtomUtils::getCurrentFilePosition(fp);
+            TOsclFileOffset currPos1 = AtomUtils::getCurrentFilePosition(fp);
             if (!AtomUtils::readNullTerminatedString(fp, _defaultNotice))
             {
                 _success = false;
                 return;
             }
-            int32 currPos2 = AtomUtils::getCurrentFilePosition(fp);
-            count -= (currPos2 - currPos1);
+            TOsclFileOffset currPos2 = AtomUtils::getCurrentFilePosition(fp);
+            count -= (int32)(currPos2 - currPos1);
         }
         if (_defaultNotice.get_size() > size)
         {

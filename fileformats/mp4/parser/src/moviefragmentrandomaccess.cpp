@@ -183,7 +183,7 @@ void MovieFragmentRandomAccessAtom::updateMfraEntry(uint32 aTrackId, uint32 aInd
     }
 }
 
-int32 MovieFragmentRandomAccessAtom::getSyncSampleInfoClosestToTime(uint32 trackID, uint64 &time, uint32 &moof_offset,
+int32 MovieFragmentRandomAccessAtom::getSyncSampleInfoClosestToTime(uint32 trackID, uint64 &time, TOsclFileOffset &moof_offset,
         uint32 &traf_number, uint32 &trun_number,
         uint32 &sample_num)
 {
@@ -317,7 +317,7 @@ uint64 MovieFragmentRandomAccessAtom::queryRepositionTime(uint32 trackID, uint64
     return closestTime;
 }
 
-int32 MovieFragmentRandomAccessAtom::getTimestampForRandomAccessPoints(uint32 id, uint32 *num, uint64 *tsBuf, uint32* numBuf, uint32* offsetBuff, uint32 samplesFromMovie)
+int32 MovieFragmentRandomAccessAtom::getTimestampForRandomAccessPoints(uint32 id, uint32 *num, uint64 *tsBuf, uint32* numBuf, TOsclFileOffset* offsetBuff, uint32 samplesFromMovie)
 {
     uint32 num_tfra = 0;
     uint32 samplesfromMoov = samplesFromMovie;

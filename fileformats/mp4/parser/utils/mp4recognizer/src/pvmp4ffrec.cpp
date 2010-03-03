@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,15 +40,15 @@ OSCL_EXPORT_REF bool MP4FileRecognizer::IsMP4File(OSCL_wString& filename,
         return (oReturn);
     }
 
-    int32 fileSize;
-    int32 filePointer;
+    TOsclFileOffset fileSize;
+    TOsclFileOffset filePointer;
     filePointer = AtomUtils::getCurrentFilePosition(fp);
     AtomUtils::seekToEnd(fp);
     fileSize = AtomUtils::getCurrentFilePosition(fp);
     AtomUtils::seekFromStart(fp, filePointer);
     fp->_fileSize = fileSize;
 
-    int32 fpos = filePointer;
+    TOsclFileOffset fpos = filePointer;
 
     while (fpos < fileSize)
     {
@@ -106,8 +106,8 @@ OSCL_EXPORT_REF bool MP4FileRecognizer::IsMP4File(MP4_FF_FILE_REFERENCE filePtr)
 
     fp->_pvfile.SetFilePtr(filePtr);
 
-    int32 fileSize;
-    int32 filePointer;
+    TOsclFileOffset fileSize;
+    TOsclFileOffset filePointer;
     AtomUtils::seekFromStart(fp, 0);
     filePointer = AtomUtils::getCurrentFilePosition(fp);
     AtomUtils::seekToEnd(fp);
@@ -115,7 +115,7 @@ OSCL_EXPORT_REF bool MP4FileRecognizer::IsMP4File(MP4_FF_FILE_REFERENCE filePtr)
     AtomUtils::seekFromStart(fp, filePointer);
     fp->_fileSize = fileSize;
 
-    int32 fpos = filePointer;
+    TOsclFileOffset fpos = filePointer;
 
     while (fpos < fileSize)
     {
@@ -186,12 +186,12 @@ OSCL_EXPORT_REF bool MP4FileRecognizer::IsMP4File(PVMFCPMPluginAccessInterfaceFa
     }
 
     AtomUtils::seekFromStart(fp, 0);
-    uint32 fileSize = 0;
+    TOsclFileOffset fileSize = 0;
     AtomUtils::getCurrentFileSize(fp, fileSize);
-    fp->_fileSize = (int32)fileSize;
-    int32 fpos = AtomUtils::getCurrentFilePosition(fp);
+    fp->_fileSize = fileSize;
+    TOsclFileOffset fpos = AtomUtils::getCurrentFilePosition(fp);
 
-    while (fpos < (int32)fileSize)
+    while (fpos < fileSize)
     {
         uint32 atomType = UNKNOWN_ATOM;
         uint32 atomSize = 0;
@@ -224,7 +224,7 @@ OSCL_EXPORT_REF bool MP4FileRecognizer::IsMP4File(PVMFCPMPluginAccessInterfaceFa
             {
                 break;
             }
-            if (fileSize < atomSize)
+            if (fileSize < (TOsclFileOffset)atomSize)
             {
                 break;
             }

@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -2004,13 +2004,13 @@ ITunesILSTAtom::ITunesILSTAtom(MP4_FF_FILE *fp, uint32 size, uint32 type): Atom(
     {
         uint32 atomsize = 0;
         uint32 atomType = 0;
-        uint32 currPtr = AtomUtils::getCurrentFilePosition(fp);
+        TOsclFileOffset currPtr = AtomUtils::getCurrentFilePosition(fp);
         AtomUtils::getNextAtomType(fp, atomsize, atomType);
 
         if (count < atomsize)
         {
             AtomUtils::seekFromStart(fp, currPtr);
-            AtomUtils::seekFromCurrPos(fp, count);
+            AtomUtils::seekFromCurrPos(fp, (TOsclFileOffset)count);
             count = 0;
             return;
         }
@@ -2171,7 +2171,7 @@ ITunesILSTAtom::ITunesILSTAtom(MP4_FF_FILE *fp, uint32 size, uint32 type): Atom(
                     (atomsize > 0))
             {
 
-                uint32 currPos = AtomUtils::getCurrentFilePosition(fp);
+                TOsclFileOffset currPos = AtomUtils::getCurrentFilePosition(fp);
                 AtomUtils::getNextAtomType(fp, FreeFormAtomSize, FreeFormAtomType);
                 if (FreeFormAtomType == ITUNES_MEAN_ATOM)
                 {

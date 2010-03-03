@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,7 +55,7 @@ MediaAtom::MediaAtom(MP4_FF_FILE *fp,
         _pparent = NULL;
 
         int32 count = _size - DEFAULT_ATOM_SIZE;
-        uint32 minf_fp = 0;
+        TOsclFileOffset minf_fp = 0;
 
         uint32 atomType = UNKNOWN_ATOM;
         uint32 atomSize = 0;
@@ -93,7 +93,7 @@ MediaAtom::MediaAtom(MP4_FF_FILE *fp,
                     minf_fp = AtomUtils::getCurrentFilePosition(fp);
                     minf_fp -= DEFAULT_ATOM_SIZE;
                 }
-                AtomUtils::seekFromCurrPos(fp, atomSize);
+                AtomUtils::seekFromCurrPos(fp, (TOsclFileOffset)atomSize);
             }
             else if (atomType == MEDIA_HEADER_ATOM)
             {
@@ -143,7 +143,7 @@ MediaAtom::MediaAtom(MP4_FF_FILE *fp,
                     (mediaType == MEDIA_TYPE_VISUAL) ||
                     (mediaType == MEDIA_TYPE_TEXT))
             {
-                int32 filePointer;
+                TOsclFileOffset filePointer;
                 filePointer = AtomUtils::getCurrentFilePosition(fp);
 
                 //move file pointer to the beginning of minf atom

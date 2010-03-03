@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -130,7 +130,7 @@ class MP4_FF_FILE
             return _pvfile.IsOpen();
         }
 
-        int32                 _fileSize;
+        TOsclFileOffset       _fileSize;
         Oscl_FileServer*      _fileServSession;
         PVFile                _pvfile;
 };
@@ -180,15 +180,15 @@ class AtomUtils
         // Peeks and returns the next Nth byte from the file
         OSCL_IMPORT_REF static uint32 peekNextNthBytes(MP4_FF_FILE *fp, int32 n);
         OSCL_IMPORT_REF static uint8  peekNextByte(MP4_FF_FILE *fp);
-        OSCL_IMPORT_REF static void   seekFromCurrPos(MP4_FF_FILE *fp, uint32 n);
-        OSCL_IMPORT_REF static void   seekFromStart(MP4_FF_FILE *fp, uint32 n);
+        OSCL_IMPORT_REF static void   seekFromCurrPos(MP4_FF_FILE *fp, TOsclFileOffset n);
+        OSCL_IMPORT_REF static void   seekFromStart(MP4_FF_FILE *fp, TOsclFileOffset n);
         OSCL_IMPORT_REF static void   seekToEnd(MP4_FF_FILE *fp);
         OSCL_IMPORT_REF static void   rewindFilePointerByN(MP4_FF_FILE *fp, uint32 n);
-        OSCL_IMPORT_REF static int32  getCurrentFilePosition(MP4_FF_FILE *fp);
+        OSCL_IMPORT_REF static TOsclFileOffset  getCurrentFilePosition(MP4_FF_FILE *fp);
         OSCL_IMPORT_REF static int32  OpenMP4File(OSCL_wString& filename, uint32 mode, MP4_FF_FILE *fp);
         OSCL_IMPORT_REF static int32  CloseMP4File(MP4_FF_FILE *fp);
         OSCL_IMPORT_REF static int32  Flush(MP4_FF_FILE *fp);
-        OSCL_IMPORT_REF static bool   getCurrentFileSize(MP4_FF_FILE *fp, uint32& aCurrentSize);
+        OSCL_IMPORT_REF static bool   getCurrentFileSize(MP4_FF_FILE *fp, TOsclFileOffset& aCurrentSize);
 
         OSCL_IMPORT_REF static bool read32(uint8 *&buf, uint32 &data);
         OSCL_IMPORT_REF static bool read32read32(uint8 *&buf, uint32 &data1, uint32 &data2);
@@ -204,11 +204,11 @@ class AtomUtils
         OSCL_IMPORT_REF static uint32 getFileBufferingCapacity(MP4_FF_FILE *fp);
         // peek to a new offset (MBDS only), read pointer does not change
         // this is used to trigger a http request
-        OSCL_IMPORT_REF static void skipFromStart(MP4_FF_FILE *fp, uint32 n);
+        OSCL_IMPORT_REF static void skipFromStart(MP4_FF_FILE *fp, TOsclFileOffset n);
         // for progressive playback seeking
         // returns the range of available bytes in MBDS
         // first + last byte offset inclusive
-        OSCL_IMPORT_REF static void getCurrentByteRange(MP4_FF_FILE *fp, uint32& aCurrentFirstByteOffset, uint32& aCurrentLastByteOffset);
+        OSCL_IMPORT_REF static void getCurrentByteRange(MP4_FF_FILE *fp, TOsclFileOffset& aCurrentFirstByteOffset, TOsclFileOffset& aCurrentLastByteOffset);
 
 
 };

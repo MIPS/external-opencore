@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,7 +37,7 @@
 class TFrunSampleTable
 {
     public:
-        TFrunSampleTable(MP4_FF_FILE *fp , uint32 tr_flag, uint32 base_data_offset,
+        TFrunSampleTable(MP4_FF_FILE *fp , uint32 tr_flag, TOsclFileOffset base_data_offset,
                          uint64 sampleTS);
 
         void setDefaultDuration(uint64 sampleTS, uint32 default_duration)
@@ -45,7 +45,7 @@ class TFrunSampleTable
             _sample_timestamp = sampleTS;
             _sample_duration = default_duration;
         }
-        void setDefaultSampleSize(uint32 sampleoffset, uint32 default_samplesize)
+        void setDefaultSampleSize(TOsclFileOffset sampleoffset, uint32 default_samplesize)
         {
             _sample_offset = sampleoffset;
             _sample_size = default_samplesize;
@@ -57,7 +57,7 @@ class TFrunSampleTable
         uint32 _sample_size;
         uint32 _sample_flags;
         uint32 _sample_composition_time_offset;
-        uint32 _sample_offset;
+        TOsclFileOffset _sample_offset;
         uint64 _sample_timestamp;
     private:
 };
@@ -69,9 +69,9 @@ class TrackFragmentRunAtom : public FullAtom
         TrackFragmentRunAtom(MP4_FF_FILE *fp,
                              uint32 size,
                              uint32 type,
-                             uint32 base_data_offset,
-                             uint32 &currentTrunOffset,
-                             uint32 &offset,
+                             TOsclFileOffset base_data_offset,
+                             TOsclFileOffset &currentTrunOffset,
+                             TOsclFileOffset &offset,
                              uint64 trackDuration,
                              bool bdo_present,
                              bool &trunParsingCompleted,
@@ -80,7 +80,7 @@ class TrackFragmentRunAtom : public FullAtom
         virtual ~TrackFragmentRunAtom();
 
         void ParseTrunAtom(MP4_FF_FILE *fp,
-                           uint32 &offset,
+                           TOsclFileOffset &offset,
                            bool &trunParsingCompleted,
                            uint32 &countOfTrunsParsed);
 
@@ -115,9 +115,9 @@ class TrackFragmentRunAtom : public FullAtom
         uint64 _sampleTimeStamp;
         Oscl_Vector<TFrunSampleTable*, OsclMemAllocator>  *_pTFrunSampleTable;
         PVLogger *iLogger, *iStateVarLogger, *iParsedDataLogger;
-        uint32 _trun_start_offset;
+        TOsclFileOffset _trun_start_offset;
         uint32 _samplesToBeParsed;
-        uint32 _partialTrunOffset;
+        TOsclFileOffset _partialTrunOffset;
 };
 
 #endif

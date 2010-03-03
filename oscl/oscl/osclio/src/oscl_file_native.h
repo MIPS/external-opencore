@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -81,7 +81,7 @@ class OsclNativeFile : public HeapBase
                     , Oscl_FileServer& fileserv);
         uint32 Read(OsclAny *buffer, uint32 size, uint32 numelements);
         uint32 Write(const OsclAny *buffer, uint32 size, uint32 numelements);
-        int32  Seek(TOsclFileOffset offset, Oscl_File::seek_type origin);
+        int32 Seek(TOsclFileOffset offset, Oscl_File::seek_type origin);
         TOsclFileOffset  Tell();
         int32  Flush();
         int32  EndOfFile();
@@ -124,6 +124,12 @@ class OsclNativeFile : public HeapBase
 
     private:
 
+#if (OSCL_HAS_LARGE_FILE_SUPPORT)
+#ifdef ANDROID
+        int32 FindLargeFileOpenMode(uint32 mode);
+#endif
+#endif
+
         //current open mode
         uint32 iMode;
 
@@ -140,6 +146,11 @@ class OsclNativeFile : public HeapBase
         TOsclFileOffset iAssetOffset;
         TOsclFileOffset iAssetSize;
         TOsclFileOffset iAssetLogicalFilePos;
+#if (OSCL_HAS_LARGE_FILE_SUPPORT)
+#ifdef ANDROID
+        int32           iFileDescriptor;
+#endif
+#endif
 };
 
 #endif // OSCL_FILE_NATIVE_H_INCLUDED

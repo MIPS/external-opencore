@@ -348,19 +348,19 @@ class SampleTableAtom : public Atom
         }
 
         // Gets for optional member atoms
-        int32 getTimestampForRandomAccessPoints(uint32 *num, uint64 *tsBuf, uint32* numBuf, uint32* offsetBuf);
+        int32 getTimestampForRandomAccessPoints(uint32 *num, uint64 *tsBuf, uint32* numBuf, TOsclFileOffset* offsetBuf);
         const SyncSampleAtom *getSyncSampleAtom() const
         {
             return _psyncSampleAtom;
         }
 
         // Returns next video frame
-        MP4_ERROR_CODE getNextSample(uint8 *buf, uint32 &size, uint32 &index, uint32 &SampleOffset);
+        MP4_ERROR_CODE getNextSample(uint8 *buf, uint32 &size, uint32 &index, TOsclFileOffset &SampleOffset);
 
-        int32 getMediaSample(uint32 sampleNumber, uint8 *buf, uint32 &size, uint32 &index, uint32 &SampleOffset);
+        int32 getMediaSample(uint32 sampleNumber, uint8 *buf, uint32 &size, uint32 &index, TOsclFileOffset &SampleOffset);
 
         // Returns next I-frame at time ts (in milliseconds) - or the very next I-frame in the stream
-        int32 getNextSampleAtTime(uint32 ts, uint8 *buf, uint32 &size, uint32 &index, uint32 &SampleOffset);
+        int32 getNextSampleAtTime(uint32 ts, uint8 *buf, uint32 &size, uint32 &index, TOsclFileOffset &SampleOffset);
 
         MP4_ERROR_CODE getKeyMediaSampleNumAt(uint32 aKeySampleNum,
                                               GAU    *pgau);
@@ -400,7 +400,7 @@ class SampleTableAtom : public Atom
             _trackStartTSOffset = ts;
         }
 
-        MP4_ERROR_CODE updateFileSize(uint32 filesize);
+        MP4_ERROR_CODE updateFileSize(TOsclFileOffset filesize);
 
         uint32 getSampleDescriptionIndex()
         {
@@ -473,18 +473,18 @@ class SampleTableAtom : public Atom
             }
         }
 
-        MP4_ERROR_CODE getOffsetByTime(uint64 ts, uint32* sampleFileOffset);
+        MP4_ERROR_CODE getOffsetByTime(uint64 ts, TOsclFileOffset* sampleFileOffset);
 
         int32 getNumAMRFramesPerSample()
         {
             return _numAMRFramesPerSample;
         }
 
-        MP4_ERROR_CODE getMaxTrackTimeStamp(uint32 fileSize, uint64& timeStamp);
+        MP4_ERROR_CODE getMaxTrackTimeStamp(TOsclFileOffset fileSize, uint64& timeStamp);
 
         MP4_ERROR_CODE getSampleNumberClosestToTimeStamp(uint32 &sampleNumber,
                 uint64 timeStamp,
-                uint32 sampleOffset = 0);
+                TOsclFileOffset sampleOffset = 0);
 
         AVCSampleEntry* getAVCSampleEntry(uint32 index)
         {
@@ -517,7 +517,7 @@ class SampleTableAtom : public Atom
             return _oMultipleSampleDescription;
         }
 
-        MP4_ERROR_CODE getSample(uint32 sampleNum, uint8 *buf, uint32 &size, uint32 &index, uint32 &SampleOffset);
+        MP4_ERROR_CODE getSample(uint32 sampleNum, uint8 *buf, uint32 &size, uint32 &index, TOsclFileOffset &SampleOffset);
         int32 getTimestampForRandomAccessPointsBeforeAfter(uint64 ts, uint64 *tsBuf, uint32* numBuf,
                 uint32& numsamplestoget,
                 uint32 howManyKeySamples);
@@ -568,7 +568,7 @@ class SampleTableAtom : public Atom
         OSCL_wHeapString<OsclMemAllocator> _filename;
         MP4_FF_FILE *_pinput;
 
-        uint32  _fileSize;
+        TOsclFileOffset _fileSize;
         uint32  _IsUpdateFileSize;
 
         int32 _numAMRFramesPerSample;

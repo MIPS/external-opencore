@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -78,13 +78,13 @@ SampleSizeAtom::SampleSizeAtom(MP4_FF_FILE *fp,
             _success = false;
         }
 
-        uint32 dataSize = _size - (DEFAULT_FULL_ATOM_SIZE + 4 + 4);
+        TOsclFileOffset dataSize = _size - (DEFAULT_FULL_ATOM_SIZE + 4 + 4);
 
         uint32 entrySize = (4);
 
         if (_sampleSize == 0)
         {   //samples have different size
-            if ((_sampleCount*entrySize) > dataSize)
+            if ((TOsclFileOffset)(_sampleCount*entrySize) > dataSize)
             {
                 _success = false;
             }
@@ -97,7 +97,7 @@ SampleSizeAtom::SampleSizeAtom(MP4_FF_FILE *fp,
                     {
                         uint32 fptrBuffSize = (_sampleCount / _stbl_buff_size) + 1;
 
-                        PV_MP4_FF_ARRAY_NEW(NULL, uint32, (fptrBuffSize), _stbl_fptr_vec);
+                        PV_MP4_FF_ARRAY_NEW(NULL, TOsclFileOffset, (fptrBuffSize), _stbl_fptr_vec);
                         if (_stbl_fptr_vec == NULL)
                         {
                             _success = false;
@@ -135,7 +135,7 @@ SampleSizeAtom::SampleSizeAtom(MP4_FF_FILE *fp,
 
                             _fileptr->_fileSize = fp->_fileSize;
                         }
-                        int32 _head_offset = AtomUtils::getCurrentFilePosition(fp);
+                        TOsclFileOffset _head_offset = AtomUtils::getCurrentFilePosition(fp);
                         AtomUtils::seekFromCurrPos(fp, dataSize);
                         AtomUtils::seekFromStart(_fileptr, _head_offset);
 
@@ -220,14 +220,14 @@ bool SampleSizeAtom::ParseEntryUnit(uint32 sample_cnt)
         _curr_buff_number = _parsed_entry_cnt / _stbl_buff_size;
         if (_curr_buff_number  == _next_buff_number)
         {
-            uint32 currFilePointer = AtomUtils::getCurrentFilePosition(_fileptr);
+            TOsclFileOffset currFilePointer = AtomUtils::getCurrentFilePosition(_fileptr);
             _stbl_fptr_vec[_curr_buff_number] = currFilePointer;
             _next_buff_number++;
         }
 
         if (!_curr_entry_point)
         {
-            uint32 currFilePointer = _stbl_fptr_vec[_curr_buff_number];
+            TOsclFileOffset currFilePointer = _stbl_fptr_vec[_curr_buff_number];
             AtomUtils::seekFromStart(_fileptr, currFilePointer);
         }
 

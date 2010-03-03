@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,7 +48,7 @@ MetaDataAtom::MetaDataAtom(MP4_FF_FILE *fp, uint32 size, uint32 type): Atom(fp, 
         uint32 atomType = UNKNOWN_ATOM;
         uint32 atomSize = 0;
 
-        uint32 currPtr = AtomUtils::getCurrentFilePosition(fp);
+        TOsclFileOffset currPtr = AtomUtils::getCurrentFilePosition(fp);
         AtomUtils::getNextAtomType(fp, atomSize, atomType);
 
         if ((atomType == FREE_SPACE_ATOM) || (atomType == UNKNOWN_ATOM))
@@ -63,7 +63,7 @@ MetaDataAtom::MetaDataAtom(MP4_FF_FILE *fp, uint32 size, uint32 type): Atom(fp, 
             if (_count < atomSize)
             {
                 AtomUtils::seekFromStart(fp, currPtr);
-                AtomUtils::seekFromCurrPos(fp, _count);
+                AtomUtils::seekFromCurrPos(fp, (TOsclFileOffset)_count);
                 _count = 0;
                 return;
             }

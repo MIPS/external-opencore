@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -87,7 +87,7 @@ class TimeToSampleAtom : public FullAtom
         MP4_FF_FILE *_fileptr;
 
         MP4_FF_FILE *_curr_fptr;
-        uint32 *_stbl_fptr_vec;
+        TOsclFileOffset *_stbl_fptr_vec;
         uint32 _stbl_buff_size;
         uint32 _curr_entry_point;
         uint32 _curr_buff_number;
