@@ -1343,6 +1343,10 @@ void PVMetadataEngine::HandleSourceNodeInit(PVMEContext& aNodeContext, const PVM
     switch (cmdstatus)
     {
         case PVMFSuccess:
+        case PVMFErrDrmLicenseNotFound:
+        case PVMFErrDrmLicenseExpired:
+        case PVMFErrHTTPAuthenticationRequired:
+        case PVMFErrRedirect:
         {
             SetPVMEState(PVME_INTERNAL_STATE_INITIALIZED);
             //Call GetMetadataValues
@@ -1359,11 +1363,6 @@ void PVMetadataEngine::HandleSourceNodeInit(PVMEContext& aNodeContext, const PVM
         }
         break;
 
-
-        case PVMFErrDrmLicenseNotFound:
-        case PVMFErrDrmLicenseExpired:
-        case PVMFErrHTTPAuthenticationRequired:
-        case PVMFErrRedirect:
         default:
         {
             //Pass the error event as is
