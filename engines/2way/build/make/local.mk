@@ -21,27 +21,13 @@ XCPPFLAGS += -DPV2WAY_USE_OMX
 
 
 XINCDIRS +=  ../../src  ../../include  ../../../common/include  \
-../../../../common/pvdebug/src \
- ../../../../engines/2way/pvlogger/src \
- ../../../../protocols/systems/3g-324m_pvterminal/h324/tsc/include \
- ../../../../protocols/systems/3g-324m_pvterminal/common/include \
- ../../../../protocols/systems/3g-324m_pvterminal/h245/cmn/include \
- ../../../../protocols/systems/3g-324m_pvterminal/h245/per/include \
- ../../../../protocols/systems/3g-324m_pvterminal/h245/se/include \
- ../../../../protocols/systems/3g-324m_pvterminal/h324/srp/include  \
-../../../../protocols/systems/3g-324m_pvterminal/h324/tsc/include  \
-../../../../protocols/systems/3g-324m_pvterminal/h223/include  \
+../../../../protocols/systems/3g-324m_pvterminal/common/include \
 ../../../../protocols/systems/common/include  \
 ../../../../protocols/systems/tools/general/common/include  \
-../../../../nodes/streaming/common/include \
-../../../../nodes/pvmediainputnode/include 
+
 
 # OMX directories
-XINCDIRS +=  ../../../../extern_libs_v2/khronos/openmax/include \
-  ../../../../nodes/pvomxvideodecnode/include \
-  ../../../../nodes/pvomxbasedecnode/include \
-  ../../../../nodes/pvomxaudiodecnode/include \
-  ../../../../nodes/pvomxencnode/include
+XINCDIRS +=  ../../../../extern_libs_v2/khronos/openmax/include 
 
 
 SRCDIR := ../../src

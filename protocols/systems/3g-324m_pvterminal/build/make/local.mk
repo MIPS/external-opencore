@@ -11,7 +11,17 @@ XCPPFLAGS := $(LIP_SYNC_ENABLED)
 
 
 
-XINCDIRS +=  ../../h223/include  ../../h245/cmn/include  ../../h245/per/include  ../../h245/se/include  ../../h324/include  ../../h324/srp/include  ../../h324/tsc/include  ../../common/include  ../../../common/include  ../../../../../engines/common/include  ../../../tools/general/common/include  ../../../../../nodes/streaming/common/include 
+XINCDIRS +=  ../../h223/include  \
+	../../h245/cmn/include  \
+	../../h245/per/include  \
+	../../h245/se/include  \
+	../../h324/include  \
+	../../h324/srp/include  \
+	../../h324/tsc/include  \
+	../../common/include  \
+	../../../common/include  \
+	../../../../../engines/common/include  \
+	../../../tools/general/common/include  \
 
 
 
@@ -78,10 +88,58 @@ SRCS += common/src/pvt_common.cpp \
 HDRS := h324/tsc/include/tsc_h324m_config_interface.h \
 	common/include/pv_2way_h324m_types.h \
 	common/include/pvt_common.h \
+	common/include/h223types.h \
+	common/include/h324utils.h \
         h245/cmn/include/h245def.h \
+        h245/cmn/include/h245.h \
+        h245/cmn/include/h245inf.h \
+        h245/cmn/include/h245msg.h \
+        h245/cmn/include/h245pri.h \
         h245/per/include/per_common.h \
+        h245/per/include/per.h \
         h245/per/include/analyzeper.h \
-        h245/per/include/genericper.h 
+        h245/per/include/h245_deleter.h \
+        h245/per/include/h245_copier.h \
+        h245/per/include/genericper.h \
+        h245/se/include/annex.h \
+        h245/se/include/blc.h \
+        h245/se/include/ce.h \
+        h245/se/include/clc.h \
+        h245/se/include/lc.h \
+        h245/se/include/lcblc.h \
+        h245/se/include/lcblccmn.h \
+        h245/se/include/lcentry.h \
+        h245/se/include/ml.h \
+        h245/se/include/mr.h \
+        h245/se/include/msd.h \
+        h245/se/include/mt.h \
+        h245/se/include/rme.h \
+        h245/se/include/rtd.h \
+        h245/se/include/se.h \
+        h245/se/include/sebase.h \
+        h245/se/include/semsgque.h \
+ 	../common/include/tsc.h \
+	h324/tsc/include/tsc_blc.h \
+	h324/tsc/include/tsc_capability.h \
+	h324/tsc/include/tsc_channelcontrol.h \
+	h324/tsc/include/tsc_clc.h \
+	h324/tsc/include/tsc_component.h \
+	h324/tsc/include/tsc_componentregistry.h \
+	h324/tsc/include/tsc_constants.h \
+	h324/tsc/include/tsc_lc.h \
+	h324/tsc/include/tsc_mt.h \
+	h324/tsc/include/tsc_node_interface.h \
+	h324/tsc/include/tscmain.h \
+	h324/tsc/include/tscsrpbuffer.h \
+	h324/tsc/include/tsc_statemanager.h \
+    h324/srp/include/srp.h \
+	h223/include/adaptationlayer.h \
+	h223/include/pduparcom.h \
+	h223/include/golay.h \
+	h223/include/lowerlayer.h \
+	h223/include/logicalchannel.h \
+	h223/include/cpvh223multiplex.h \
+
 
 include $(MK)/library.mk
 
