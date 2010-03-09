@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,8 +43,10 @@
 
 #define DEFAULT_VALID_MP3_PLAYLIST     "test_valid_mp3_playlist.txt"
 #define DEFAULT_VALID_MP4_PLAYLIST     "test_valid_mp4_playlist.txt"
+#define DEFAULT_VALID_WMA_PLAYLIST     "test_valid_wma_playlist.txt"
 #define DEFAULT_INVALID_MP3_PLAYLIST   "test_invalid_mp3_playlist.txt"
 #define DEFAULT_INVALID_MP4_PLAYLIST   "test_invalid_mp4_playlist.txt"
+#define DEFAULT_INVALID_WMA_PLAYLIST   "test_invalid_wma_playlist.txt"
 
 #define PLAYLIST_READ_BUFFER_SIZE       6 * 1024
 

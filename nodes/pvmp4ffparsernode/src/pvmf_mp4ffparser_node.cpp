@@ -5607,7 +5607,7 @@ void PVMFMP4FFParserNode::CleanupFileSource()
         // delete file parser object, if any
         if (clipInfo.iParserObj)
         {
-            ReleaseMP4FileParser(iClipInfoList.size() - 1);
+            ReleaseMP4FileParser(iClipInfoList.size() - 1, true);
         }
         // clear the vector element
         iClipInfoList.pop_back();
@@ -8883,11 +8883,12 @@ PVMFStatus PVMFMP4FFParserNode::ConstructMP4FileParser(PVMFStatus* aStatus, int3
 }
 
 
-PVMFStatus PVMFMP4FFParserNode::ReleaseMP4FileParser(int32 aClipIndex)
+PVMFStatus PVMFMP4FFParserNode::ReleaseMP4FileParser(int32 aClipIndex, bool cleanParserAtLastIndex)
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVMFMP4FFParserNode::ReleaseMP4FileParser() In ClipIndex[%d]", aClipIndex));
     PVMFStatus status = PVMFFailure;
-    if (aClipIndex >= 0)
+    // don't clean up parser object if there is only one clip in the list, unless it is requested
+    if (aClipIndex >= 0 && (iNumClipsInPlayList > 1 || cleanParserAtLastIndex))
     {
         if (((uint32) aClipIndex == iClipInfoList[iClipInfoList.size() - 1].iClipInfo.GetClipIndex()) ||
                 iPlaylistExhausted)

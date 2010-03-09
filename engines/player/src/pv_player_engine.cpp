@@ -16570,43 +16570,27 @@ PVMFStatus PVPlayerEngine::DoCancelGetLicense(PVMFCommandId aCmdId, PVPlayerEngi
 
 void PVPlayerEngine::IssueSourceNodeAudioSinkEvent(const PVMFAsyncEvent& aEvent)
 {
-    bool retVal = false;
-    int32 datapathIndex = -1;
-    // Make sure there are no video tracks
-    retVal = FindDatapathForTrackUsingMimeString(true, false, false, datapathIndex);
-    if (retVal == false)
+    uint32 *data = (uint32*) aEvent.GetEventData();
+    uint32 clipId = *(data + 1);
+    uint8 localbuffer[8];
+    oscl_memcpy(localbuffer, &clipId, sizeof(uint32));
+
+    int32 eventType = aEvent.GetEventType();
+
+    if (eventType == PVMFInfoStartOfData)
     {
-        // Make sure there are no text tracks
-        retVal = FindDatapathForTrackUsingMimeString(false, false, true, datapathIndex);
-        if (retVal == false)
+        if (iNumPVMFInfoStartOfDataPending == 0)
         {
-            retVal = FindDatapathForTrackUsingMimeString(false, true, false, datapathIndex);
-            if (retVal)
-            {
-                uint32 *data = (uint32*) aEvent.GetEventData();
-                uint32 clipId = *(data + 1);
-                uint8 localbuffer[8];
-                oscl_memcpy(localbuffer, &clipId, sizeof(uint32));
-
-                int32 eventType = aEvent.GetEventType();
-
-                if (eventType == PVMFInfoStartOfData)
-                {
-                    if (iNumPVMFInfoStartOfDataPending == 0)
-                    {
-                        SendInformationalEvent(PVPlayerInfoClipPlaybackStarted, NULL, aEvent.GetEventData(), localbuffer, 8);
-                    }
-                }
-                else // aEvent == PVMFInfoEndOfData
-                {
-                    SendInformationalEvent(PVPlayerInfoClipPlaybackEnded, NULL, aEvent.GetEventData(), localbuffer, 8);
-                }
-                if (clipId + 1 <= iDataSource->GetNumClips())
-                {
-                    iSourceNodeInitIF->AudioSinkEvent(eventType, clipId);
-                }
-            }
+            SendInformationalEvent(PVPlayerInfoClipPlaybackStarted, NULL, aEvent.GetEventData(), localbuffer, 8);
         }
+    }
+    else // aEvent == PVMFInfoEndOfData
+    {
+        SendInformationalEvent(PVPlayerInfoClipPlaybackEnded, NULL, aEvent.GetEventData(), localbuffer, 8);
+    }
+    if (clipId + 1 <= iDataSource->GetNumClips())
+    {
+        iSourceNodeInitIF->AudioSinkEvent(eventType, clipId);
     }
 }
 
