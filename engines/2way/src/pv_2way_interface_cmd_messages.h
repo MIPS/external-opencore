@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -273,24 +273,6 @@ class PV2WayMessageGetLogLevel : public CPVCmnInterfaceCmdMessage
         OsclSharedPtr<char> iTag;
         int32& iLogLevel;
 };
-
-class PV2WayMessageQueryUUID : public CPVCmnInterfaceCmdMessage
-{
-    public:
-        PV2WayMessageQueryUUID(const PvmfMimeString& aMimeType, Oscl_Vector<PVUuid, BasicAlloc> &aUuids, bool aExactUuidsOnly, OsclAny* aContextData)
-                : CPVCmnInterfaceCmdMessage(PVT_COMMAND_QUERY_UUID, aContextData)
-                , iMimeType(aMimeType)
-                , iUuids(aUuids)
-                , iExactUuidsOnly(aExactUuidsOnly)
-
-        {
-        }
-
-        const PvmfMimeString&  iMimeType;
-        Oscl_Vector<PVUuid, BasicAlloc> &iUuids;
-        bool iExactUuidsOnly;
-};
-
 
 class PV2WayMessageQueryInterface : public CPVCmnInterfaceCmdMessage
 {

@@ -362,7 +362,6 @@ class PVMFMP4FFParserNode
         PVMFStatus HandleExtensionAPICommands();
 
         // Node command handlers
-        PVMFStatus DoQueryUuid();
         PVMFStatus DoQueryInterface();
         PVMFStatus DoRequestPort(PVMFPortInterface*&);
         void GetTrackMaxParameters(PVMFFormatType aFormatType, uint32& aMaxDataSize, uint32& aMaxQueueDepth);

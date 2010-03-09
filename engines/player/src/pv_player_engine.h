@@ -353,7 +353,6 @@ typedef enum
     PVP_ENGINE_COMMAND_REMOVE_LOG_APPENDER,
     PVP_ENGINE_COMMAND_SET_LOG_LEVEL,
     PVP_ENGINE_COMMAND_GET_LOG_LEVEL,
-    PVP_ENGINE_COMMAND_QUERY_UUID,
     PVP_ENGINE_COMMAND_QUERY_INTERFACE,
     PVP_ENGINE_COMMAND_CANCEL_COMMAND,
     PVP_ENGINE_COMMAND_CANCEL_ALL_COMMANDS,
@@ -465,8 +464,6 @@ class PVPlayerEngineCommandCompareLess
                 case PVP_ENGINE_COMMAND_SET_LOG_LEVEL:
                     return 5;
                 case PVP_ENGINE_COMMAND_GET_LOG_LEVEL:
-                    return 5;
-                case PVP_ENGINE_COMMAND_QUERY_UUID:
                     return 5;
                 case PVP_ENGINE_COMMAND_QUERY_INTERFACE:
                     return 5;
@@ -891,7 +888,6 @@ class PVPlayerEngine
         PVCommandId RemoveLogAppender(const char* aTag, OsclSharedPtr<PVLoggerAppender>& aAppender, const OsclAny* aContextData = NULL);
         PVCommandId SetLogLevel(const char* aTag, int32 aLevel, bool aSetSubtree = false, const OsclAny* aContextData = NULL);
         PVCommandId GetLogLevel(const char* aTag, PVLogLevelInfo& aLogInfo, const OsclAny* aContextData = NULL);
-        PVCommandId QueryUUID(const PvmfMimeString& aMimeType, Oscl_Vector<PVUuid, OsclMemAllocator>& aUuids, bool aExactUuidsOnly = false, const OsclAny* aContextData = NULL);
         PVCommandId QueryInterface(const PVUuid& aUuid, PVInterface*& aInterfacePtr, const OsclAny* aContextData = NULL);
         PVCommandId CancelCommand(PVCommandId aCancelCmdId, const OsclAny* aContextData = NULL);
         PVCommandId CancelAllCommands(const OsclAny* aContextData = NULL);
@@ -1079,7 +1075,6 @@ class PVPlayerEngine
         PVMFStatus DoRemoveLogAppender(PVPlayerEngineCommand& aCmd);
         PVMFStatus DoSetLogLevel(PVPlayerEngineCommand& aCmd);
         PVMFStatus DoGetLogLevel(PVPlayerEngineCommand& aCmd);
-        PVMFStatus DoQueryUUID(PVPlayerEngineCommand& aCmd);
         PVMFStatus DoQueryInterface(PVPlayerEngineCommand& aCmd);
         PVMFStatus DoGetPVPlayerState(PVPlayerEngineCommand& aCmd, bool aSyncCmd = false);
         PVMFStatus DoAddDataSource(PVPlayerEngineCommand& aCmd);

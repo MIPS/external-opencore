@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -136,11 +136,6 @@ class PvmfMediaInputNode
         OSCL_IMPORT_REF PVMFStatus ThreadLogoff();
         OSCL_IMPORT_REF PVMFStatus GetCapability(PVMFNodeCapability& aNodeCapability);
         OSCL_IMPORT_REF PVMFPortIter* GetPorts(const PVMFPortFilter* aFilter = NULL);
-        OSCL_IMPORT_REF PVMFCommandId QueryUUID(PVMFSessionId aSession
-                                                , const PvmfMimeString& aMimeType
-                                                , Oscl_Vector<PVUuid, OsclMemAllocator>& aUuids
-                                                , bool aExactUuidsOnly = false
-                                                                         , const OsclAny* aContext = NULL) ;
         OSCL_IMPORT_REF PVMFCommandId QueryInterface(PVMFSessionId aSession
                 , const PVUuid& aUuid
                 , PVInterface*& aInterfacePtr
@@ -230,7 +225,6 @@ class PvmfMediaInputNode
         void CommandComplete(PvmfMediaInputNodeCmdQ& aCmdQ, PvmfMediaInputNodeCmd& aCmd, PVMFStatus aStatus, OsclAny*aEventData = NULL);
 
         //generic node Command handlers.
-        PVMFStatus DoQueryUuid(PvmfMediaInputNodeCmd&);
         PVMFStatus DoQueryInterface(PvmfMediaInputNodeCmd&);
         PVMFStatus DoRequestPort(PvmfMediaInputNodeCmd&, OsclAny*&);
         PVMFStatus DoReleasePort(PvmfMediaInputNodeCmd&);

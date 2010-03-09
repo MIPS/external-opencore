@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -246,23 +246,6 @@ OSCL_EXPORT_REF PVMFPortIter* PVMFStreamingManagerNode::GetPorts(const PVMFPortF
 
     PVMF_SM_LOGSTACKTRACE((0, "PVMFStreamingManagerNode::GetPorts - Out portIter[0x%x]", portIter));
     return portIter;
-}
-
-OSCL_EXPORT_REF PVMFCommandId PVMFStreamingManagerNode::QueryUUID(PVMFSessionId aSessId,
-        const PvmfMimeString& aMimeType,
-        Oscl_Vector< PVUuid, OsclMemAllocator >& aUuids,
-        bool aExactUuidsOnly,
-        const OsclAny* aContext)
-{
-    PVMF_SM_LOGERROR((0, "PVMFStreamingManagerNode::QueryUUID - Error Deprecated Interface - Call Not Expected"));
-    OSCL_UNUSED_ARG(aSessId);
-    OSCL_UNUSED_ARG(aMimeType);
-    OSCL_UNUSED_ARG(aUuids);
-    OSCL_UNUSED_ARG(aExactUuidsOnly);
-    OSCL_UNUSED_ARG(aContext);
-    //We dont expect the user of streaming manager node to call QueryUUID, this API is deprecated for SM node.
-    OSCL_LEAVE(OsclErrNotSupported);
-    return 0;
 }
 
 OSCL_EXPORT_REF PVMFCommandId PVMFStreamingManagerNode::QueryInterface(PVMFSessionId aSessId, const PVUuid& aUuid,

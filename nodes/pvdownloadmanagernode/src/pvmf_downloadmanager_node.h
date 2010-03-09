@@ -525,7 +525,6 @@ class PVMFDownloadManagerNode
         PVMFStatus CancelCurrentCommand();
 
         // Node command handlers
-        PVMFStatus DoQueryUuid();
         PVMFStatus DoQueryInterface();
         PVMFStatus DoRequestPort(PVMFPortInterface*& aPort);
         PVMFStatus DoReleasePort();

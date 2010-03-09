@@ -1360,38 +1360,6 @@ PVMFStatus PVMFAACFFParserNode::DoReleasePort()
     return status;
 }
 
-PVMFStatus PVMFAACFFParserNode::DoQueryUuid()
-{
-    //This node supports Query UUID from any state
-    OSCL_String* mimetype;
-    Oscl_Vector<PVUuid, OsclMemAllocator> *uuidvec;
-    bool exactmatch;
-    iCurrentCommand.PVMFNodeCommandBase::Parse(mimetype, uuidvec, exactmatch);
-
-    if (*mimetype == PVMF_DATA_SOURCE_INIT_INTERFACE_MIMETYPE)
-    {
-        PVUuid uuid(PVMF_DATA_SOURCE_INIT_INTERFACE_UUID);
-        uuidvec->push_back(uuid);
-    }
-    else if (*mimetype == PVMF_TRACK_SELECTION_INTERFACE_MIMETYPE)
-    {
-        PVUuid uuid(PVMF_TRACK_SELECTION_INTERFACE_UUID);
-        uuidvec->push_back(uuid);
-    }
-    else if (*mimetype == PVMF_DATA_SOURCE_PLAYBACK_CONTROL_INTERFACE_MIMETYPE)
-    {
-        PVUuid uuid(PvmfDataSourcePlaybackControlUuid);
-        uuidvec->push_back(uuid);
-    }
-    else if (*mimetype == PVMF_META_DATA_EXTENSION_INTERFACE_MIMETYPE)
-    {
-        PVUuid uuid(KPVMFMetadataExtensionUuid);
-        uuidvec->push_back(uuid);
-    }
-    return PVMFSuccess;
-}
-
-
 PVMFStatus PVMFAACFFParserNode::DoQueryInterface()
 {
     PVMF_AACPARSERNODE_LOGSTACKTRACE((0, "PVMFAACParserNode::DoQueryInterface() Called"));

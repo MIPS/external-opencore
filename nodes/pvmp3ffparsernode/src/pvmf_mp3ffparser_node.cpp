@@ -274,53 +274,6 @@ PVMFStatus PVMFMP3FFParserNode::DoReset()
     return status;
 }
 
-// CommandHandler for Query UUID
-PVMFStatus PVMFMP3FFParserNode::DoQueryUuid()
-{
-    // This node supports Query UUID from any state
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                    (0, "PVMFMP3FFParserNode::DoQueryUuid() In"));
-
-    OSCL_String* mimetype;
-    Oscl_Vector<PVUuid, OsclMemAllocator> *uuidvec;
-    bool exactmatch;
-    iCurrentCommand.PVMFNodeCommandBase::Parse(mimetype, uuidvec, exactmatch);
-
-    // Match the input mimetype against any of the custom interfaces
-    // for this node
-    if (*mimetype == PVMF_DATA_SOURCE_INIT_INTERFACE_MIMETYPE)
-    {
-        PVUuid uuid(PVMF_DATA_SOURCE_INIT_INTERFACE_UUID);
-        uuidvec->push_back(uuid);
-    }
-    else if (*mimetype == PVMF_TRACK_SELECTION_INTERFACE_MIMETYPE)
-    {
-        PVUuid uuid(PVMF_TRACK_SELECTION_INTERFACE_UUID);
-        uuidvec->push_back(uuid);
-    }
-    else if (*mimetype == PVMF_META_DATA_EXTENSION_INTERFACE_MIMETYPE)
-    {
-        PVUuid uuid(KPVMFMetadataExtensionUuid);
-        uuidvec->push_back(uuid);
-    }
-    else if (*mimetype == PVMF_FF_PROGDOWNLOAD_SUPPORT_INTERFACE_MIMETYPE)
-    {
-        PVUuid uuid(PVMF_FF_PROGDOWNLOAD_SUPPORT_INTERFACE_UUID);
-        uuidvec->push_back(uuid);
-    }
-    else if (*mimetype == PVMF_DATA_SOURCE_PLAYBACK_CONTROL_INTERFACE_MIMETYPE)
-    {
-        PVUuid uuid(PvmfDataSourcePlaybackControlUuid);
-        uuidvec->push_back(uuid);
-    }
-    else if (*mimetype == PVMI_DATASTREAMUSER_INTERFACE_MIMETYPE)
-    {
-        PVUuid uuid(PVMIDatastreamuserInterfaceUuid);
-        uuidvec->push_back(uuid);
-    }
-    return PVMFSuccess;
-}
-
 // CommandHandler for Query Interface
 PVMFStatus PVMFMP3FFParserNode::DoQueryInterface()
 {

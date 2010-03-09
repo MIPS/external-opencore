@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -125,13 +125,6 @@ class PVMFSMFSPBaseNode
 
         OSCL_IMPORT_REF PVMFStatus GetCapability(PVMFNodeCapability& aNodeCapability);
         OSCL_IMPORT_REF PVMFPortIter* GetPorts(const PVMFPortFilter* aFilter = NULL);
-
-        //Deprecated.Will cause assertion failure
-        OSCL_IMPORT_REF PVMFCommandId QueryUUID(PVMFSessionId,
-                                                const PvmfMimeString& aMimeType,
-                                                Oscl_Vector< PVUuid, OsclMemAllocator >& aUuids,
-                                                bool aExactUuidsOnly = false,
-                                                const OsclAny* aContext = NULL);
 
         //Synchronous add-ons only for quering PVMFDataSourceInitializationExtensionInterface
         OSCL_IMPORT_REF virtual bool queryInterface(const PVUuid& uuid, PVInterface*& iface);

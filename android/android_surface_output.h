@@ -114,9 +114,6 @@ class AndroidSurfaceOutput :    public OsclTimerObject
 
         PVMFStatus disconnect(PvmiMIOSession aSession);
 
-        PVMFCommandId QueryUUID(const PvmfMimeString& aMimeType, Oscl_Vector<PVUuid, OsclMemAllocator>& aUuids,
-                                bool aExactUuidsOnly = false, const OsclAny* aContext = NULL);
-
         PVMFCommandId QueryInterface(const PVUuid& aUuid, PVInterface*& aInterfacePtr, const OsclAny* aContext = NULL);
 
         PvmiMediaTransfer* createMediaTransfer(PvmiMIOSession& aSession, PvmiKvp* read_formats = NULL, int32 read_flags = 0,

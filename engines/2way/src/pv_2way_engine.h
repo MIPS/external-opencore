@@ -315,11 +315,6 @@ enum TPV2WayCommandType
      **/
     PVT_COMMAND_GET_LOG_LEVEL,
     /**
-     * Indicates completion of QueryUUIDL command
-     *
-     **/
-    PVT_COMMAND_QUERY_UUID,
-    /**
      * Indicates completion of QueryInterfaceL command
      *
      **/
@@ -492,7 +487,6 @@ typedef enum
     PV2WAY_NODE_CMD_CANCELCMD,
     PV2WAY_NODE_CMD_CANCELALL,
     PV2WAY_NODE_CMD_INVALID,
-    PV2WAY_NODE_CMD_QUERY_UUID,
     PV2WAY_NODE_CMD_SKIP_MEDIA_DATA
 }  PV2WayNodeCmdType;
 
@@ -502,15 +496,6 @@ class TPV2WayNodeQueryInterfaceParams
         PVUuid *iUuid;
         PVInterface **iInterfacePtr;
 };
-
-class TPV2WayNodeQueryUuidParams
-{
-    public:
-        Oscl_Vector<PVUuid, OsclMemAllocator> *iUuids;
-        OSCL_HeapString<OsclMemAllocator> mimetype;
-};
-
-
 
 class PV2WayNodeInterface
 {
@@ -734,8 +719,6 @@ class CPV324m2Way : OsclActiveObject,
         //PVCommandId SendUserInput(CPVUserInput& user_input, OsclAny* aContextData = NULL);
         //PVCommandId GetCallStatistics(CPVCmn2WayStatistics& aStats, OsclAny* aContextData = NULL);
         PVCommandId QueryInterface(const PVUuid& aUuid, PVInterface*& aInterfacePtr, OsclAny* aContext = NULL);
-        PVCommandId QueryUUID(const PvmfMimeString& aMimeType, Oscl_Vector<PVUuid, BasicAlloc>& aUuids,
-                              bool aExactUuidsOnly = false, OsclAny* aContextData = NULL);
         PVCommandId CancelAllCommands(OsclAny* aContextData = NULL);
 
         // from PVMFNodeCmdEventObserver

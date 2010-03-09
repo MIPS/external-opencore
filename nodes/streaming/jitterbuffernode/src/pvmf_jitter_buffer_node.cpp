@@ -1811,34 +1811,6 @@ void PVMFJitterBufferNode::CommandComplete(PVMFNodeCommand& aCmd, PVMFStatus aSt
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-//Called by the command handler AO to do the Query UUID
-///////////////////////////////////////////////////////////////////////////////
-PVMFStatus PVMFJitterBufferNode::DoQueryUuid()
-{
-    // This node supports Query UUID from any state
-    OSCL_String* mimetype;
-    Oscl_Vector<PVUuid, OsclMemAllocator> *uuidvec;
-    bool exactmatch;
-    iCurrentCommand.PVMFNodeCommandBase::Parse(mimetype, uuidvec, exactmatch);
-
-    // Try to match the input mimetype against any of
-    // the custom interfaces for this node
-
-    // Match against custom interface1...
-    // also match against base mimetypes for custom interface1,
-    // unless exactmatch is set.
-
-    if (*mimetype == PVMF_JITTERBUFFER_CUSTOMINTERFACE_MIMETYPE
-            || (!exactmatch && *mimetype == PVMF_JITTERBUFFER_MIMETYPE)
-            || (!exactmatch && *mimetype == PVMF_JITTERBUFFER_BASEMIMETYPE))
-    {
-        PVUuid uuid(PVMF_JITTERBUFFERNODE_EXTENSIONINTERFACE_UUID);
-        uuidvec->push_back(uuid);
-    }
-    return PVMFSuccess;
-}
-
-///////////////////////////////////////////////////////////////////////////////
 //Called by the command handler AO to do the Query Interface.
 ///////////////////////////////////////////////////////////////////////////////
 PVMFStatus PVMFJitterBufferNode::DoQueryInterface()

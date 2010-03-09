@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -167,25 +167,6 @@ OSCL_EXPORT_REF PVMFStatus PVMFLoopbackNode::GetCapability(PVMFNodeCapability& a
     LOGINFO((0, "PVMFLoopbackNode:GetCapability"));
     aNodeCapability = iCapability;
     return PVMFSuccess;
-}
-
-////////////////////////////////////////////////////////////////////////////
-/**
-//Queue an asynchronous node command
-*/
-OSCL_EXPORT_REF PVMFCommandId PVMFLoopbackNode::QueryUUID(PVMFSessionId s, const PvmfMimeString& aMimeType,
-        Oscl_Vector<PVUuid, OsclMemAllocator>& aUuids,
-        bool aExactUuidsOnly,
-        const OsclAny* aContext)
-{
-    LOGINFO((0, "PVMFLoopbackNode:QueryUUID"));
-    OSCL_UNUSED_ARG(aMimeType);
-    OSCL_UNUSED_ARG(aUuids);
-    OSCL_UNUSED_ARG(aExactUuidsOnly);
-    OSCL_UNUSED_ARG(aContext);
-    OSCL_UNUSED_ARG(s);
-    OSCL_LEAVE(PVMFErrNotSupported);
-    return -1;
 }
 
 /**

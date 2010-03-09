@@ -207,7 +207,6 @@ class PVMFJitterBufferNode : public PVInterface,
         bool PrepareForPlaylistSwitch();
 
         //Async command handling functions
-        PVMFStatus DoQueryUuid();
         PVMFStatus DoQueryInterface();
         PVMFStatus DoRequestPort(PVMFPortInterface* &aPort);
         PVMFStatus DoReleasePort();

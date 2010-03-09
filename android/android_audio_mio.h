@@ -122,8 +122,6 @@ class AndroidAudioMIOActiveTimingSupport :
         OSCL_IMPORT_REF bool queryInterface(const PVUuid& uuid, PVInterface*& iface);
         void NotificationsInterfaceDestroyed();
 
-        void queryUuid(PVUuid& uuid);
-
         void ForceClockUpdate()
         {
             iUpdateClock = true;
@@ -184,10 +182,6 @@ class AndroidAudioMIO : public OsclTimerObject,
         PVMFStatus connect(PvmiMIOSession& aSession, PvmiMIOObserver* aObserver);
 
         PVMFStatus disconnect(PvmiMIOSession aSession);
-
-        virtual PVMFCommandId QueryUUID(const PvmfMimeString& aMimeType,
-                                        Oscl_Vector<PVUuid, OsclMemAllocator>& aUuids,
-                                        bool aExactUuidsOnly = false, const OsclAny* aContext = NULL);
 
         virtual PVMFCommandId QueryInterface(const PVUuid& aUuid, PVInterface*& aInterfacePtr, const OsclAny* aContext = NULL);
 

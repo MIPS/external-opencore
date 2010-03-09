@@ -235,15 +235,10 @@ class TSC_324m : public OsclActiveObject,
             return NULL;
         }
 
-        OSCL_IMPORT_REF PVMFCommandId QueryUUID(PVMFSessionId aSession, const PvmfMimeString& aMimeType,
-                                                Oscl_Vector<PVUuid, OsclMemAllocator>& aUuids,
-                                                bool aExactUuidsOnly = false,
-                                                const OsclAny* aContext = NULL);
         OSCL_IMPORT_REF PVMFCommandId QueryInterface(PVMFSessionId aSession, const PVUuid& aUuid,
                 PVInterface*& aInterfacePtr,
                 const OsclAny* aContext = NULL);
         void DoQueryInterface(Tsc324mNodeCommand& cmd);
-        void DoQueryUuid(Tsc324mNodeCommand& cmd);
 
         OSCL_IMPORT_REF PVMFCommandId CancelAllCommands(PVMFSessionId aSession, const OsclAny* aContextData = NULL);
         void DoCancelAllCommands(Tsc324mNodeCommand& cmd)

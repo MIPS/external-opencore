@@ -191,15 +191,6 @@ void AndroidAudioMIO::ProcessWriteResponseQueue()
     //LOGV("ProcessWriteResponseQueue out");
 }
 
-PVMFCommandId AndroidAudioMIO::QueryUUID(const PvmfMimeString& aMimeType,
-        Oscl_Vector<PVUuid, OsclMemAllocator>& aUuids,
-        bool aExactUuidsOnly, const OsclAny* aContext)
-{
-    LOGV("QueryUUID");
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "AndroidAudioMIO::QueryUUID() called"));
-    return QueueCmdResponse(PVMFFailure, aContext);
-}
-
 PVMFCommandId AndroidAudioMIO::QueryInterface(const PVUuid& aUuid, PVInterface*& aInterfacePtr, const OsclAny* aContext)
 {
     LOGV("QueryInterface");
@@ -721,10 +712,8 @@ void AndroidAudioMIOActiveTimingSupport::NotificationsInterfaceDestroyed()
 OSCL_EXPORT_REF bool AndroidAudioMIOActiveTimingSupport::queryInterface(const PVUuid& aUuid, PVInterface*& aInterface)
 {
     aInterface = NULL;
-    PVUuid uuid;
-    queryUuid(uuid);
     bool status = false;
-    if (uuid == aUuid)
+    if (PvmiClockExtensionInterfaceUuid == aUuid)
     {
         PvmiClockExtensionInterface* myInterface = OSCL_STATIC_CAST(PvmiClockExtensionInterface*, this);
         aInterface = OSCL_STATIC_CAST(PVInterface*, myInterface);
@@ -732,12 +721,6 @@ OSCL_EXPORT_REF bool AndroidAudioMIOActiveTimingSupport::queryInterface(const PV
     }
     LOGV("ATS :: queryInterface out status %d", status);
     return status;
-}
-
-void AndroidAudioMIOActiveTimingSupport::queryUuid(PVUuid& uuid)
-{
-    LOGV("ATS :: queryUuid in");
-    uuid = PvmiClockExtensionInterfaceUuid;
 }
 
 void AndroidAudioMIOActiveTimingSupport::ClockStateUpdated()

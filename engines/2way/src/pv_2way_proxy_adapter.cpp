@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -571,18 +571,6 @@ PVCommandId CPV2WayProxyAdapter::GetLogLevel(const char *aTag, int32 &aLogLevel,
     return iPVProxy->SendCommand(iProxyId, (OsclAny*)msg);
 }
 
-
-PVCommandId CPV2WayProxyAdapter::QueryUUID(const PvmfMimeString& aMimeType, Oscl_Vector<PVUuid, BasicAlloc>& aUuids,
-        bool aExactUuidsOnly, OsclAny* aContextData)
-{
-    PV2WayMessageQueryUUID *msg = OSCL_NEW(PV2WayMessageQueryUUID, (aMimeType, aUuids, aExactUuidsOnly, aContextData));
-    if (msg == NULL)
-    {
-        OSCL_LEAVE(PVMFErrNoMemory);
-    }
-    return iPVProxy->SendCommand(iProxyId, (OsclAny*)msg);
-}
-
 PVCommandId CPV2WayProxyAdapter::QueryInterface(const PVUuid& aUuid, PVInterface*& aInterfacePtr, OsclAny* aContextData)
 {
     PV2WayMessageQueryInterface *msg = OSCL_NEW(PV2WayMessageQueryInterface, (aUuid, aInterfacePtr, aContextData));
@@ -854,14 +842,6 @@ void CPV2WayProxyAdapter::ProcessMessageL(CPVCmnInterfaceCmdMessage *aMsg)
             OSCL_TRY(error, iterminalEngine->GetLogLevel(
                          OSCL_STATIC_CAST(PV2WayMessageGetLogLevel*, aMsg)->iTag,
                          OSCL_STATIC_CAST(PV2WayMessageGetLogLevel*, aMsg)->iLogLevel,
-                         aMsg));
-            break;
-
-        case PVT_COMMAND_QUERY_UUID:
-            OSCL_TRY(error, iterminalEngine->QueryUUID(
-                         OSCL_STATIC_CAST(PV2WayMessageQueryUUID*, aMsg)->iMimeType,
-                         OSCL_STATIC_CAST(PV2WayMessageQueryUUID*, aMsg)->iUuids,
-                         OSCL_STATIC_CAST(PV2WayMessageQueryUUID*, aMsg)->iExactUuidsOnly,
                          aMsg));
             break;
 

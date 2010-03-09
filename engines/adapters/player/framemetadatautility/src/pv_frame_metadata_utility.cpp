@@ -150,25 +150,6 @@ PVMFStatus PVFrameAndMetadataUtility::SetMode(uint32 aMode)
 #endif
 }
 
-PVCommandId PVFrameAndMetadataUtility::QueryUUID(const PvmfMimeString& aMimeType, Oscl_Vector<PVUuid, OsclMemAllocator>& aUuids,
-        bool aExactUuidsOnly, const OsclAny* aContextData)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFrameAndMetadataUtility::QueryUUID()"));
-
-    Oscl_Vector<PVFMUtilityCommandParamUnion, OsclMemAllocator> paramvec;
-    paramvec.reserve(3);
-    paramvec.clear();
-    PVFMUtilityCommandParamUnion param;
-    param.pOsclAny_value = (OsclAny*) & aMimeType;
-    paramvec.push_back(param);
-    param.pOsclAny_value = (OsclAny*) & aUuids;
-    paramvec.push_back(param);
-    param.bool_value = aExactUuidsOnly;
-    paramvec.push_back(param);
-    return AddCommandToQueue(PVFM_UTILITY_COMMAND_QUERY_UUID, (OsclAny*)aContextData, &paramvec);
-}
-
-
 PVCommandId PVFrameAndMetadataUtility::QueryInterface(const PVUuid& aUuid, PVInterface*& aInterfacePtr, const OsclAny* aContextData)
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFrameAndMetadataUtility::QueryInterface()"));
@@ -522,10 +503,6 @@ void PVFrameAndMetadataUtility::Run()
         PVMFStatus cmdstatus = PVMFSuccess;
         switch (cmd.GetCmdType())
         {
-            case PVFM_UTILITY_COMMAND_QUERY_UUID:
-                cmdstatus = DoQueryUUID(cmd);;
-                break;
-
             case PVFM_UTILITY_COMMAND_QUERY_INTERFACE:
                 cmdstatus = DoQueryInterface(cmd);
                 break;
@@ -623,7 +600,6 @@ void PVFrameAndMetadataUtility::CommandCompleted(const PVCmdResponse& aResponse)
         PVFMUtilityContext* context = (PVFMUtilityContext*)(aResponse.GetContext());
         switch (context->iCmdType)
         {
-            case PVFM_CMD_PlayerQueryUUID:
             case PVFM_CMD_PlayerQueryInterface:
             case PVFM_CMD_PlayerQueryCapConfigInterface:
                 HandleCommandComplete(*context, aResponse);
@@ -1071,7 +1047,6 @@ void PVFrameAndMetadataUtility::DoCancelCommandBeingProcessed()
 
     switch (iCmdToCancel[0].GetCmdType())
     {
-        case PVFM_UTILITY_COMMAND_QUERY_UUID:
         case PVFM_UTILITY_COMMAND_QUERY_INTERFACE:
         case PVFM_UTILITY_COMMAND_ADD_DATA_SOURCE:
         case PVFM_UTILITY_COMMAND_GET_METADATA_KEYS:
@@ -1124,37 +1099,6 @@ void PVFrameAndMetadataUtility::DoCancelCommandBeingProcessed()
     }
 
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFrameAndMetadataUtility::DoCancelCommandBeingProcessed() Out"));
-}
-
-
-PVMFStatus PVFrameAndMetadataUtility::DoQueryUUID(PVFMUtilityCommand& aCmd)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFrameAndMetadataUtility::DoQueryUUID() In"));
-
-    PvmfMimeString* mimetype;
-    Oscl_Vector<PVUuid, OsclMemAllocator> *uuidvec;
-    bool exactmatch;
-
-    mimetype = (PvmfMimeString*)(aCmd.GetParam(0).pOsclAny_value);
-    uuidvec = (Oscl_Vector<PVUuid, OsclMemAllocator>*)(aCmd.GetParam(1).pOsclAny_value);
-    exactmatch = aCmd.GetParam(2).bool_value;
-
-    if (mimetype == NULL || uuidvec == NULL)
-    {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVFrameAndMetadataUtility::DoQueryUUID() Passed in parameter invalid."));
-        return PVMFErrArgument;
-    }
-
-    // Call QueryUUID() on the player
-    iUtilityContext.iCmdId = aCmd.GetCmdId();
-    iUtilityContext.iCmdContext = aCmd.GetContext();
-    iUtilityContext.iCmdType = PVFM_CMD_PlayerQueryUUID;
-
-    OSCL_ASSERT(iPlayer != NULL);
-    iPlayer->QueryUUID(*mimetype, *uuidvec, exactmatch, (const OsclAny*)&iUtilityContext);
-    iNumPendingPlayerCommands++;
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFrameAndMetadataUtility::DoQueryUUID() Out"));
-    return PVMFSuccess;
 }
 
 
@@ -1926,7 +1870,7 @@ void PVFrameAndMetadataUtility::HandleCommandComplete(PVFMUtilityContext& aUtilC
     }
     UtilityCommandCompleted(aUtilContext.iCmdId, aUtilContext.iCmdContext, iAPICmdStatus);
     iAPICmdStatus = PVMFSuccess;
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFrameAndMetadataUtility::HandlePlayerQueryUUID() Out"));
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFrameAndMetadataUtility::HandleCommandComplete() Out"));
 }
 
 void PVFrameAndMetadataUtility::HandleDataSourceCommand(PVFMUtilityContext& aUtilContext, const PVCmdResponse& aCmdResp)

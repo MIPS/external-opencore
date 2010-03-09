@@ -265,24 +265,6 @@ PVCommandId PVPlayerEngine::GetLogLevel(const char* aTag, PVLogLevelInfo& aLogIn
 }
 
 
-PVCommandId PVPlayerEngine::QueryUUID(const PvmfMimeString& aMimeType, Oscl_Vector<PVUuid, OsclMemAllocator>& aUuids,
-                                      bool aExactUuidsOnly, const OsclAny* aContextData)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVPlayerEngine::QueryUUID()"));
-    Oscl_Vector<PVPlayerEngineCommandParamUnion, OsclMemAllocator> paramvec;
-    paramvec.reserve(3);
-    paramvec.clear();
-    PVPlayerEngineCommandParamUnion param;
-    param.pOsclAny_value = (OsclAny*) & aMimeType;
-    paramvec.push_back(param);
-    param.pOsclAny_value = (OsclAny*) & aUuids;
-    paramvec.push_back(param);
-    param.bool_value = aExactUuidsOnly;
-    paramvec.push_back(param);
-    return AddCommandToQueue(PVP_ENGINE_COMMAND_QUERY_UUID, (OsclAny*)aContextData, &paramvec);
-}
-
-
 PVCommandId PVPlayerEngine::QueryInterface(const PVUuid& aUuid, PVInterface*& aInterfacePtr, const OsclAny* aContextData)
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVPlayerEngine::QueryInterface()"));
@@ -1543,10 +1525,6 @@ void PVPlayerEngine::Run()
 
             case PVP_ENGINE_COMMAND_GET_LOG_LEVEL:
                 cmdstatus = DoGetLogLevel(cmd);
-                break;
-
-            case PVP_ENGINE_COMMAND_QUERY_UUID:
-                cmdstatus = DoQueryUUID(cmd);;
                 break;
 
             case PVP_ENGINE_COMMAND_QUERY_INTERFACE:
@@ -4089,7 +4067,6 @@ void PVPlayerEngine::DoCancelCommandBeingProcessed(void)
             break;
         }
 
-        case PVP_ENGINE_COMMAND_QUERY_UUID:
         case PVP_ENGINE_COMMAND_QUERY_INTERFACE:
         case PVP_ENGINE_COMMAND_GET_PLAYBACK_RANGE:
         case PVP_ENGINE_COMMAND_GET_PLAYBACK_RATE:
@@ -4444,52 +4421,6 @@ PVMFStatus PVPlayerEngine::DoGetLogLevel(PVPlayerEngineCommand& aCmd)
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVPlayerEngine::DoGetLogLevel() Out"));
     return PVMFSuccess;
 }
-
-
-PVMFStatus PVPlayerEngine::DoQueryUUID(PVPlayerEngineCommand& aCmd)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVPlayerEngine::DoQueryUUID() In"));
-
-    PvmfMimeString* mimetype;
-    Oscl_Vector<PVUuid, OsclMemAllocator> *uuidvec;
-    bool exactmatch;
-
-    mimetype = (PvmfMimeString*)(aCmd.GetParam(0).pOsclAny_value);
-    uuidvec = (Oscl_Vector<PVUuid, OsclMemAllocator>*)(aCmd.GetParam(1).pOsclAny_value);
-    exactmatch = aCmd.GetParam(2).bool_value;
-
-    if (mimetype == NULL || uuidvec == NULL)
-    {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::DoQueryUUID() Passed in parameter invalid."));
-        return PVMFErrArgument;
-    }
-
-    int32 leavecode = 0;
-
-    // For now just return all available extension interface UUID
-    OSCL_TRY(leavecode,
-             // Capability and config interface
-             uuidvec->push_back(PVMI_CAPABILITY_AND_CONFIG_PVUUID);
-             // License acquisition interface
-             uuidvec->push_back(PVPlayerLicenseAcquisitionInterfaceUuid);
-             // Track level info interface from source node
-             if (iSourceNodeTrackLevelInfoIF)
-{
-    uuidvec->push_back(PVMF_TRACK_LEVEL_INFO_INTERFACE_UUID);
-    }
-            );
-    OSCL_FIRST_CATCH_ANY(leavecode,
-                         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::DoQueryUUID() Leaved"));
-                         EngineCommandCompleted(aCmd.GetCmdId(), aCmd.GetContext(), PVMFErrNoMemory);
-                         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVPlayerEngine::DoQueryUUID() Out"));
-                         return PVMFSuccess;);
-
-    EngineCommandCompleted(aCmd.GetCmdId(), aCmd.GetContext(), PVMFSuccess);
-
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVPlayerEngine::DoQueryUUID() Out"));
-    return PVMFSuccess;
-}
-
 
 PVMFStatus PVPlayerEngine::DoQueryInterface(PVPlayerEngineCommand& aCmd)
 {

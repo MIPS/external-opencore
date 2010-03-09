@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -73,7 +73,6 @@
  */
 typedef enum
 {
-    CMD_QUERY_UUID,
     CMD_QUERY_INTERFACE,
     CMD_INIT,
     CMD_START,
@@ -171,10 +170,6 @@ class PvmiMIOCommLoopback
                 int32 write_flags = 0);
         OSCL_IMPORT_REF void deleteMediaTransfer(PvmiMIOSession& aSession,
                 PvmiMediaTransfer* media_transfer);
-        OSCL_IMPORT_REF PVMFCommandId QueryUUID(const PvmfMimeString& aMimeType,
-                                                Oscl_Vector<PVUuid, OsclMemAllocator>& aUuids,
-                                                bool aExactUuidsOnly = false,
-                                                const OsclAny* aContext = NULL);
         OSCL_IMPORT_REF PVMFCommandId QueryInterface(const PVUuid& aUuid,
                 PVInterface*& aInterfacePtr,
                 const OsclAny* aContext = NULL);

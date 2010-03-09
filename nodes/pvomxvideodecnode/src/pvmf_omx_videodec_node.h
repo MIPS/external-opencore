@@ -135,7 +135,6 @@ class PVMFOMXVideoDecNode: public PVMFOMXBaseDecNode
         bool VerifyParametersSync(PvmiMIOSession aSession, PvmiKvp* aParameters, int num_elements);
     private:
 
-        PVMFStatus DoQueryUuid();
         PVMFStatus DoRequestPort(PVMFPortInterface*&);
         PVMFStatus DoGetNodeMetadataKey();
         PVMFStatus DoGetNodeMetadataValue();

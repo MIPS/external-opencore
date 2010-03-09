@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -291,8 +291,7 @@ class PVFMUtilityCommand
 typedef enum
 {
     // Engine API commands
-    PVFM_UTILITY_COMMAND_QUERY_UUID = 1,
-    PVFM_UTILITY_COMMAND_QUERY_INTERFACE,
+    PVFM_UTILITY_COMMAND_QUERY_INTERFACE = 1,
     PVFM_UTILITY_COMMAND_CANCEL_ALL_COMMANDS,
     PVFM_UTILITY_COMMAND_GET_STATE,
     PVFM_UTILITY_COMMAND_ADD_DATA_SOURCE,
@@ -350,8 +349,6 @@ class PVFMUtilityCommandCompareLess
         {
             switch (aCmd.GetCmdType())
             {
-                case PVFM_UTILITY_COMMAND_QUERY_UUID:
-                    return 5;
                 case PVFM_UTILITY_COMMAND_QUERY_INTERFACE:
                     return 5;
                 case PVFM_UTILITY_COMMAND_CANCEL_ALL_COMMANDS:
@@ -416,7 +413,6 @@ class PVFrameAndMetadataUtility
         ~PVFrameAndMetadataUtility();
 
         // From PVFrameAndMetadataInterface
-        PVCommandId QueryUUID(const PvmfMimeString& aMimeType, Oscl_Vector<PVUuid, OsclMemAllocator>& aUuids, bool aExactUuidsOnly = false, const OsclAny* aContextData = NULL);
         PVCommandId QueryInterface(const PVUuid& aUuid, PVInterface*& aInterfacePtr, const OsclAny* aContextData = NULL);
         PVCommandId CancelAllCommands(const OsclAny* aContextData = NULL);
         PVCommandId GetState(PVFrameAndMetadataState& aState, const OsclAny* aContextData = NULL);
@@ -497,9 +493,6 @@ class PVFrameAndMetadataUtility
         void DoCancelAllCommands(PVFMUtilityCommand& aCmd);
         void DoCancelCommandBeingProcessed(void);
 
-        PVMFStatus DoQueryUUID(PVFMUtilityCommand& aCmd);
-        PVMFStatus DoPlayerQueryUUID(PVCommandId aCmdId, OsclAny* aCmdContext, PvmfMimeString& aMIMEType, Oscl_Vector<PVUuid, OsclMemAllocator>& aUUIDVec, bool aExactMatch);
-
         PVMFStatus DoQueryInterface(PVFMUtilityCommand& aCmd);
         PVMFStatus DoPlayerQueryInterface(PVCommandId aCmdId, OsclAny* aCmdContext, PVUuid& aUuid, PVInterface*& aInterfacePtr);
         bool queryInterface(const PVUuid& uuid, PVInterface*& iface, PVCommandId cmdid, OsclAny* context);
@@ -523,7 +516,6 @@ class PVFrameAndMetadataUtility
         enum
         {
             // Player commands
-            PVFM_CMD_PlayerQueryUUID,
             PVFM_CMD_PlayerQueryInterface,
             PVFM_CMD_AddDataSource,
             PVFM_CMD_GetMetadataKeys,

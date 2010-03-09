@@ -637,21 +637,6 @@ bool PVMediaOutputNode::PortQueuesEmpty()
 }
 
 ////////////////////////////////////////////////////////////////////////////
-PVMFStatus PVMediaOutputNode::DoQueryUuid()
-{
-    //This node supports Query UUID from any state
-
-    OSCL_String* mimetype;
-    Oscl_Vector<PVUuid, OsclMemAllocator> *uuidvec;
-    bool exactmatch;
-    iCurrentCommand.PVMFNodeCommandBase::Parse(mimetype, uuidvec, exactmatch);
-
-    uuidvec->push_back(PvmfNodesSyncControlUuid);
-
-    return PVMFSuccess;
-}
-
-////////////////////////////////////////////////////////////////////////////
 PVMFStatus PVMediaOutputNode::DoQueryInterface()
 {
     PVUuid* uuid;

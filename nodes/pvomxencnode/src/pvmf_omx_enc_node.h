@@ -330,7 +330,6 @@ class PVMFOMXEncNodeCommand: public PVMFOMXEncNodeCommandBase
 
         enum PVOMXEncNodeCmdType
         {
-            PVOMXENC_NODE_CMD_QUERYUUID,
             PVOMXENC_NODE_CMD_QUERYINTERFACE,
             PVOMXENC_NODE_CMD_REQUESTPORT,
             PVOMXENC_NODE_CMD_RELEASEPORT,
@@ -903,10 +902,6 @@ class PVMFOMXEncNode
         PVMFStatus ThreadLogoff();
         PVMFStatus GetCapability(PVMFNodeCapability& aNodeCapability);
         PVMFPortIter* GetPorts(const PVMFPortFilter* aFilter = NULL);
-        PVMFCommandId QueryUUID(PVMFSessionId, const PvmfMimeString& aMimeType,
-                                Oscl_Vector<PVUuid, PVMFOMXEncNodeAllocator>& aUuids,
-                                bool aExactUuidsOnly = false,
-                                const OsclAny* aContext = NULL);
         PVMFCommandId QueryInterface(PVMFSessionId, const PVUuid& aUuid,
                                      PVInterface*& aInterfacePtr,
                                      const OsclAny* aContext = NULL);
@@ -1066,7 +1061,6 @@ class PVMFOMXEncNode
     private:
         void CommandComplete(PVMFOMXEncNodeCmdQ& aCmdQ, PVMFOMXEncNodeCommand& aCmd, PVMFStatus aStatus, OsclAny* aEventData = NULL);
 
-        void DoQueryUuid(PVMFOMXEncNodeCommand&);
         void DoQueryInterface(PVMFOMXEncNodeCommand&);
         void DoRequestPort(PVMFOMXEncNodeCommand&);
         void DoReleasePort(PVMFOMXEncNodeCommand&);

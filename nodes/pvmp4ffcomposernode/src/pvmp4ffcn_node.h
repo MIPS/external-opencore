@@ -180,7 +180,6 @@ class PVMp4FFComposerNode
         void Run();
 
         //Command Handlers
-        PVMFStatus DoQueryUuid();
         PVMFStatus DoQueryInterface();
         PVMFStatus DoRequestPort(PVMFPortInterface*& aPort);
         PVMFStatus DoReleasePort();

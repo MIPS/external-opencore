@@ -191,29 +191,6 @@ void AndroidSurfaceOutput::QueueCommandResponse(CommandResponse& aResp)
     RunIfNotReady();
 }
 
-PVMFCommandId AndroidSurfaceOutput::QueryUUID(const PvmfMimeString& aMimeType,
-        Oscl_Vector<PVUuid, OsclMemAllocator>& aUuids,
-        bool aExactUuidsOnly, const OsclAny* aContext)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "AndroidSurfaceOutput::QueryUUID() called"));
-
-    OSCL_UNUSED_ARG(aMimeType);
-    OSCL_UNUSED_ARG(aExactUuidsOnly);
-
-    PVMFCommandId cmdid = iCommandCounter++;
-
-    PVMFStatus status = PVMFFailure;
-    int32 err ;
-    OSCL_TRY(err, aUuids.push_back(PVMI_CAPABILITY_AND_CONFIG_PVUUID););
-    if (err == OsclErrNone)
-        status = PVMFSuccess;
-
-    CommandResponse resp(status, cmdid, aContext);
-    QueueCommandResponse(resp);
-    return cmdid;
-}
-
-
 PVMFCommandId AndroidSurfaceOutput::QueryInterface(const PVUuid& aUuid, PVInterface*& aInterfacePtr, const OsclAny* aContext)
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "AndroidSurfaceOutput::QueryInterface() called"));

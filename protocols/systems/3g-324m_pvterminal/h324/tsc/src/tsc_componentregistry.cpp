@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,21 +30,6 @@ TSCComponentRegistry::TSCComponentRegistry(TSC_statemanager& aTSCStateManager,
         iTSCclc(aTSCclc),
         iTSCmt(aTSCmt)
 {
-}
-
-void TSCComponentRegistry::QueryRegistry(Tsc324mNodeCommand& aCmd)
-{
-
-    OSCL_String* mimetype;
-    Oscl_Vector<PVUuid, OsclMemAllocator>* uuidvec;
-    bool exactMatch;
-    aCmd.Parse(mimetype, uuidvec, exactMatch);
-
-//    uuidvec->clear();
-    if (*mimetype == (TSC_COMPONENT_MIME_TYPE))
-    {
-        uuidvec->push_back((PVUuidH324ComponentInterface));
-    }
 }
 
 TSC_component* TSCComponentRegistry::Create(PVMFSessionId aSession,

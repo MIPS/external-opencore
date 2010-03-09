@@ -212,31 +212,6 @@ class PVPlayerInterface
 
         /**
          * This API is to allow for extensibility of the pvPlayer interface.
-         * It allows a caller to ask for all UUIDs associated with a particular MIME type.
-         * If interfaces of the requested MIME type are found within the system, they are added
-         * to the UUIDs array.
-         * Also added to the UUIDs array will be all interfaces which have the requested MIME
-         * type as a base MIME type. This functionality can be turned off.
-         * This command request is asynchronous. PVCommandStatusObserver's CommandCompleted()
-         * callback handler will be called when this command request completes.
-         *
-         * @param aMimeType
-         *         The MIME type of the desired interfaces
-         * @param aUuids
-         *         An array to hold the discovered UUIDs
-         * @param aExactUuidsOnly
-         *         Turns on/off the retrival of UUIDs with aMimeType as a base type
-         * @param aContextData
-         *         Optional opaque data that will be passed back to the user with the command response
-         *
-         * @exception This method can leave with one of the following error codes
-         *         OsclErrNoMemory if the SDK failed to allocate memory during this operation
-         * @returns A unique command ID for asynchronous completion
-         **/
-        virtual PVCommandId QueryUUID(const PvmfMimeString& aMimeType, Oscl_Vector<PVUuid, OsclMemAllocator>& aUuids,
-                                      bool aExactUuidsOnly = false, const OsclAny* aContextData = NULL) = 0;
-        /**
-         * This API is to allow for extensibility of the pvPlayer interface.
          * It allows a caller to ask for an instance of a particular interface object to be returned.
          * The mechanism is analogous to the COM IUnknown method.  The interfaces are identified with
          * an interface ID that is a UUID as in DCE and a pointer to the interface object is

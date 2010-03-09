@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -184,8 +184,6 @@ class CPV2WayProxyAdapter :
         //PVCommandId SendUserInput(CPVUserInput& user_input, OsclAny* aContextData = NULL);
         //PVCommandId GetCallStatistics(CPVCmn2WayStatistics& aStats, OsclAny* aContextData = NULL);
         PVCommandId QueryInterface(const PVUuid& aUuid, PVInterface*& aInterfacePtr, OsclAny* aContext = NULL);
-        PVCommandId QueryUUID(const PvmfMimeString& aMimeType, Oscl_Vector<PVUuid, BasicAlloc>& aUuids,
-                              bool aExactUuidsOnly = false, OsclAny* aContextData = NULL);
         PVCommandId CancelAllCommands(OsclAny* aContextData = NULL);
 
 

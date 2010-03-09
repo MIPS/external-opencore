@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -83,27 +83,6 @@ PVMFStatus PVAuthorEngineNodeUtility::Disconnect(PVAENodeContainer* aNodeContain
     if (status != PVMFSuccess)
     {
         LOG_ERR((0, "PVAuthorEngineNodeUtility::Disconnect: Error - cmd.ConstructDisconnect failed. status=%d", status));
-        return status;
-    }
-
-    return AddCmdToQueue(cmd);
-}
-
-////////////////////////////////////////////////////////////////////////////
-PVMFStatus PVAuthorEngineNodeUtility::QueryUUID(PVAENodeContainer* aNodeContainer,
-        const PvmfMimeString& aMimeType,
-        Oscl_Vector<PVUuid, OsclMemAllocator>& aUuids,
-        bool aExactUuidsOnly,
-        OsclAny* aContext)
-{
-    LOG_STACK_TRACE((0, "PVAuthorEngineNodeUtility::QueryUUID: &aNodeContainer=0x%x, aMimeType=%s, &aUuids=0x%x, aExactUuidsOnly=%d, aContext=0x%x",
-                     &aNodeContainer, aMimeType.get_cstr(), &aUuids, aExactUuidsOnly, aContext));
-
-    PVAENodeUtilCmd cmd;
-    PVMFStatus status = cmd.ConstructQueryUUID(aNodeContainer, aMimeType, aUuids, aExactUuidsOnly, aContext);
-    if (status != PVMFSuccess)
-    {
-        LOG_ERR((0, "PVAuthorEngineNodeUtility::QueryUUID: Error - cmd.ConstructQueryUUID failed. status=%d", status));
         return status;
     }
 
@@ -367,9 +346,6 @@ void PVAuthorEngineNodeUtility::Run()
             break;
         case PVAENU_CMD_DISCONNECT:
             status = DoDisconnect(cmd);
-            break;
-        case PVAENU_CMD_QUERY_UUID:
-            status = DoQueryUuid(cmd);
             break;
         case PVAENU_CMD_QUERY_INTERFACE:
             status = DoQueryInterface(cmd);
@@ -639,35 +615,6 @@ PVMFStatus PVAuthorEngineNodeUtility::DoDisconnect(const PVAENodeUtilCmd& aCmd)
 
     if (PVMFFailure == ReleasePort(container, port))
         return PVMFFailure;
-
-    return PVMFPending;
-}
-
-////////////////////////////////////////////////////////////////////////////
-PVMFStatus PVAuthorEngineNodeUtility::DoQueryUuid(const PVAENodeUtilCmd& aCmd)
-{
-    LOG_STACK_TRACE((0, "PVAuthorEngineNodeUtility::DoQueryUuid"));
-
-    Oscl_Vector<PVUuid, OsclMemAllocator>* uuids = NULL;
-    bool exactUuidsOnly = false;
-    PVMFStatus status = ((PVAENodeUtilCmd)aCmd).ParseQueryUUID(uuids, exactUuidsOnly);
-    if (status != PVMFSuccess || !uuids)
-    {
-        LOG_ERR((0, "PVAuthorEngineNodeUtility::DoQueryUuid: Error - aCmd.ParseQueryUUID failed. status=%d", status));
-        return status;
-    }
-
-    int32 err = 0;
-    OSCL_TRY(err,
-             aCmd.iNodes[0]->iNode->QueryUUID(aCmd.iNodes[0]->iSessionId, aCmd.iMimeType,
-                                              *uuids, exactUuidsOnly, aCmd.iContext);
-            );
-
-    OSCL_FIRST_CATCH_ANY(err,
-                         LOG_ERR((0, "PVAuthorEngineNodeUtility::DoQueryUuid: Error - QueryUUID failed. node=0x%x",
-                                  aCmd.iNodes[0]->iNode));
-                         return PVMFFailure;
-                        );
 
     return PVMFPending;
 }

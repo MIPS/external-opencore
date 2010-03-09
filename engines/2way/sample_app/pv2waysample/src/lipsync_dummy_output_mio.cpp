@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,27 +46,6 @@ PVMFStatus LipSyncDummyOutputMIO::connect(PvmiMIOSession& aSession, PvmiMIOObser
     iParams = ShareParams::Instance();
     iParams->iObserver = this;
     return PVMFSuccess;
-}
-
-PVMFCommandId LipSyncDummyOutputMIO::QueryUUID(const PvmfMimeString& aMimeType,
-        Oscl_Vector<PVUuid, OsclMemAllocator>& aUuids,
-        bool aExactUuidsOnly,
-        const OsclAny* aContext)
-{
-    LIPSYNCDUMMYOUTPUTMIO_LOGDEBUG((0, "LipSyncDummyOutputMIO::QueryUUID()"));
-
-    OSCL_UNUSED_ARG(aMimeType);
-    OSCL_UNUSED_ARG(aExactUuidsOnly);
-
-    PVMFCommandId cmdid = iCommandCounter++;
-
-    PVMFStatus status = PVMFSuccess;
-    aUuids.push_back(PVMI_CAPABILITY_AND_CONFIG_PVUUID);
-    aUuids.push_back(PvmiClockExtensionInterfaceUuid);
-
-    CommandResponse resp(status, cmdid, aContext);
-    QueueCommandResponse(resp);
-    return cmdid;
 }
 
 PVMFCommandId LipSyncDummyOutputMIO::QueryInterface(const PVUuid& aUuid,

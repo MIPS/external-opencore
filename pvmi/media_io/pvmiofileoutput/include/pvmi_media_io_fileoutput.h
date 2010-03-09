@@ -145,8 +145,6 @@ class PVRefFileOutputActiveTimingSupport: public PvmiClockExtensionInterface
         OSCL_IMPORT_REF void removeRef() ;
         OSCL_IMPORT_REF bool queryInterface(const PVUuid& uuid, PVInterface*& iface) ;
 
-        void queryUuid(PVUuid& uuid);
-
         int32 GetDelayMsec(PVMFTimestamp&);
         void AdjustClock(PVMFTimestamp& aTs);
 
@@ -201,9 +199,6 @@ class PVRefFileOutput
         PVMFStatus connect(PvmiMIOSession& aSession, PvmiMIOObserver* aObserver);
 
         PVMFStatus disconnect(PvmiMIOSession aSession);
-
-        PVMFCommandId QueryUUID(const PvmfMimeString& aMimeType, Oscl_Vector<PVUuid, OsclMemAllocator>& aUuids,
-                                bool aExactUuidsOnly = false, const OsclAny* aContext = NULL);
 
         PVMFCommandId QueryInterface(const PVUuid& aUuid, PVInterface*& aInterfacePtr, const OsclAny* aContext = NULL);
 
@@ -295,7 +290,6 @@ class PVRefFileOutput
         OSCL_IMPORT_REF void addRef() ;
         OSCL_IMPORT_REF void removeRef() ;
         OSCL_IMPORT_REF bool queryInterface(const PVUuid& uuid, PVInterface*& iface) ;
-        void queryUuid(PVUuid& uuid);
 
     private:
         void initData();

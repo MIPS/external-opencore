@@ -1139,29 +1139,6 @@ bool PVMFDownloadManagerNode::FilterPlaybackEventsFromSubNodes(const PVMFAsyncEv
     return false;
 }
 
-PVMFStatus PVMFDownloadManagerNode::DoQueryUuid()
-{
-    //Start executing a node command
-
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFDownloadManagerNode::DoQueryUuid() In"));
-
-    OSCL_String* mimetype;
-    Oscl_Vector<PVUuid, OsclMemAllocator> *uuidvec;
-    bool exactmatch;
-    iCurrentCommand.PVMFNodeCommandBase::Parse(mimetype, uuidvec, exactmatch);
-
-    // @TODO Add MIME string matching
-    // For now just return all available extension interface UUID
-    uuidvec->push_back(PVMF_TRACK_SELECTION_INTERFACE_UUID);
-    uuidvec->push_back(PVMF_DATA_SOURCE_INIT_INTERFACE_UUID);
-    uuidvec->push_back(KPVMFMetadataExtensionUuid);
-    uuidvec->push_back(PvmfDataSourcePlaybackControlUuid);
-    uuidvec->push_back(PVMI_CAPABILITY_AND_CONFIG_PVUUID);
-
-    return PVMFSuccess;
-}
-
-
 PVMFStatus PVMFDownloadManagerNode::DoQueryInterface()
 {
     //Start executing a node command

@@ -464,7 +464,6 @@ bool PVMFSMRTSPUnicastNode::ProcessCommand(PVMFSMFSPBaseNodeCommand& aCmd)
             || iCancelCommand.size() > 0)
         return false;
 
-    OSCL_ASSERT(PVMF_SMFSP_NODE_QUERYUUID != aCmd.iCmd);
     OSCL_ASSERT(PVMF_SMFSP_NODE_SET_DATASOURCE_RATE != aCmd.iCmd);
     switch (aCmd.iCmd)
     {
@@ -3884,9 +3883,7 @@ void PVMFSMRTSPUnicastNode::HandleSocketNodeCommandCompleted(const PVMFCmdResp& 
     PVMF_SM_RTSP_LOGINFO((0, "PVMFSMRTSPUnicastNode::HandleSocketNodeCommandCompleted In - cmd [%d] iSocketNodeContainer->iNodeCmdState [%d] iInterfaceState[%d]", cmdContextData->cmd, iSocketNodeContainer->iNodeCmdState, iInterfaceState));
 
     //RTSPUNICAST plugin uses sync version of QueryInterface to get xtension interface of its various child nodes
-    //Also RTSPUNICAST plugin doesn t call QueryUUID on child node.
-    //So, command completion of async version of QueryUUID and QueryInterface from child node not expected.
-    OSCL_ASSERT(cmdContextData->cmd != PVMF_SM_FSP_SOCKET_NODE_QUERY_UUID);
+    //So, command completion of async version of QueryInterface from child node not expected.
     OSCL_ASSERT(cmdContextData->cmd != PVMF_SM_FSP_SOCKET_NODE_QUERY_INTERFACE);
 
 
@@ -4071,9 +4068,7 @@ void PVMFSMRTSPUnicastNode::HandleRTSPSessionControllerCommandCompleted(const PV
     PVMF_SM_RTSP_LOGINFO((0, "PVMFSMRTSPUnicastNode::HandleRTSPSessionControllerCommandCompleted In - cmd [%d] iSessionControllerNodeContainer->iNodeCmdState [%d] iInterfaceState[%d]", cmdContextData->cmd, iSessionControllerNodeContainer->iNodeCmdState, iInterfaceState));
 
     //RTSPPLUSUNICAST plugin uses sync version of QueryInterface to get xtension interface of its various child nodes
-    //Also RTSPPLUSUNICAST plugin doesn t call QueryUUID on child node.
-    //So, command completion of async version of QueryUUID and QueryInterface from child node not expected.
-    OSCL_ASSERT(cmdContextData->cmd != PVMF_SM_FSP_RTSP_SESSION_CONTROLLER_QUERY_UUID);
+    //So, command completion of async version of QueryInterface from child node not expected.
     OSCL_ASSERT(cmdContextData->cmd != PVMF_SM_FSP_RTSP_SESSION_CONTROLLER_QUERY_INTERFACE);
 
     if (iSessionControllerNodeContainer->iNodeCmdState == PVMFSMFSP_NODE_CMD_PENDING)

@@ -184,19 +184,6 @@ OSCL_EXPORT_REF PVMFPortIter* PVMFNodeInterfaceImpl::GetPorts(const PVMFPortFilt
     return NULL;
 }
 
-OSCL_EXPORT_REF PVMFCommandId PVMFNodeInterfaceImpl::QueryUUID(PVMFSessionId aSessionId,
-        const PvmfMimeString& aMimeType,
-        Oscl_Vector < PVUuid,
-        OsclMemAllocator > & aUuids,
-        bool aExactUuidsOnly,
-        const OsclAny* aContext)
-{
-    PVMF_NODEINTERFACE_IMPL_LOGSTACKTRACE((0, "%s::QueryUUID", iNodeName.Str()));
-    PVMFNodeCommand cmd;
-    cmd.PVMFNodeCommandBase::Construct(aSessionId, PVMF_GENERIC_NODE_QUERYUUID, aMimeType, aUuids, aExactUuidsOnly, aContext);
-    return QueueCommandL(cmd);
-}
-
 OSCL_EXPORT_REF PVMFCommandId PVMFNodeInterfaceImpl::QueryInterface(PVMFSessionId aSessionId,
         const PVUuid& aUuid,
         PVInterface*& aInterfacePtr,
@@ -665,10 +652,6 @@ OSCL_EXPORT_REF bool PVMFNodeInterfaceImpl::ProcessCommand()
 
         switch (iCurrentCommand.iCmd)
         {
-            case PVMF_GENERIC_NODE_QUERYUUID:
-                status = DoQueryUuid();
-                break;
-
             case PVMF_GENERIC_NODE_QUERYINTERFACE:
                 status = DoQueryInterface();
                 break;

@@ -406,23 +406,6 @@ OSCL_EXPORT_REF PVCommandId PVAuthorEngine::Stop(const OsclAny* aContextData)
 }
 
 ////////////////////////////////////////////////////////////////////////////
-OSCL_EXPORT_REF PVCommandId PVAuthorEngine::QueryUUID(const PvmfMimeString& aMimeType,
-        Oscl_Vector<PVUuid, OsclMemAllocator>& aUuids,
-        bool aExactUuidsOnly,
-        const OsclAny* aContextData)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                    (0, "PVAuthorEngine::QueryUUID: &aUuid=0x%x, aExactUuidsOnly=%d, aContextData=0x%x",
-                     &aUuids, aExactUuidsOnly, aContextData));
-
-    PVEngineCommand cmd(PVAE_CMD_QUERY_UUID, iCommandId, (OsclAny*)aContextData,
-                        (OsclAny*)&aUuids, (OsclAny*)&aExactUuidsOnly);
-    cmd.SetMimeType(aMimeType);
-    Dispatch(cmd);
-    return iCommandId++;
-}
-
-////////////////////////////////////////////////////////////////////////////
 OSCL_EXPORT_REF PVCommandId PVAuthorEngine::QueryInterface(const PVUuid& aUuid,
         PVInterface*& aInterfacePtr,
         const OsclAny* aContextData)
@@ -737,7 +720,6 @@ void PVAuthorEngine::Run()
         case PVAE_CMD_REMOVE_LOG_APPENDER:
         case PVAE_CMD_SET_LOG_LEVEL:
         case PVAE_CMD_GET_LOG_LEVEL:
-        case PVAE_CMD_QUERY_UUID:
         case PVAE_CMD_CANCEL_ALL_COMMANDS:
             status = PVMFErrNotSupported;
             break;

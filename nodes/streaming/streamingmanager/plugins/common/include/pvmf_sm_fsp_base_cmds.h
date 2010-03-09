@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,8 +36,7 @@
 enum TPVMFSMFSPBaseNodeCommand
 {
     /* node interface commands*/
-    PVMF_SMFSP_NODE_QUERYUUID = PVMF_GENERIC_NODE_QUERYUUID,
-    PVMF_SMFSP_NODE_QUERYINTERFACE,
+    PVMF_SMFSP_NODE_QUERYINTERFACE = PVMF_GENERIC_NODE_QUERYINTERFACE,
     PVMF_SMFSP_NODE_REQUESTPORT,
     PVMF_SMFSP_NODE_RELEASEPORT,
     PVMF_SMFSP_NODE_INIT,

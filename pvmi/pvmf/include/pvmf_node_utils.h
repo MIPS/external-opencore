@@ -192,34 +192,33 @@ class PVMFPortVector: public PVMFPortIter
 enum TPVMFGenericNodeCommand
 {
     PVMF_GENERIC_NODE_COMMAND_INVALID = -1,
-    PVMF_GENERIC_NODE_QUERYUUID = 0,
-    PVMF_GENERIC_NODE_QUERYINTERFACE, // 1
-    PVMF_GENERIC_NODE_REQUESTPORT, // 2
-    PVMF_GENERIC_NODE_RELEASEPORT, // 3
-    PVMF_GENERIC_NODE_INIT, // 4
-    PVMF_GENERIC_NODE_PREPARE, // 5
-    PVMF_GENERIC_NODE_START, // 6
-    PVMF_GENERIC_NODE_STOP, // 7
-    PVMF_GENERIC_NODE_FLUSH, // 8
-    PVMF_GENERIC_NODE_PAUSE, // 9
-    PVMF_GENERIC_NODE_RESET, //10
-    PVMF_GENERIC_NODE_CANCELALLCOMMANDS, // 11
-    PVMF_GENERIC_NODE_CANCELCOMMAND, // 12
+    PVMF_GENERIC_NODE_QUERYINTERFACE, // 0
+    PVMF_GENERIC_NODE_REQUESTPORT, // 1
+    PVMF_GENERIC_NODE_RELEASEPORT, // 2
+    PVMF_GENERIC_NODE_INIT, // 3
+    PVMF_GENERIC_NODE_PREPARE, // 4
+    PVMF_GENERIC_NODE_START, // 5
+    PVMF_GENERIC_NODE_STOP, // 6
+    PVMF_GENERIC_NODE_FLUSH, // 7
+    PVMF_GENERIC_NODE_PAUSE, // 8
+    PVMF_GENERIC_NODE_RESET, // 9
+    PVMF_GENERIC_NODE_CANCELALLCOMMANDS, // 10
+    PVMF_GENERIC_NODE_CANCELCOMMAND, // 11
     //From PvmfDataSourcePlaybackControlInterface
-    PVMF_GENERIC_NODE_SET_DATASOURCE_POSITION, // 13
-    PVMF_GENERIC_NODE_QUERY_DATASOURCE_POSITION, // 14
-    PVMF_GENERIC_NODE_SET_DATASOURCE_RATE, // 15
+    PVMF_GENERIC_NODE_SET_DATASOURCE_POSITION, // 12
+    PVMF_GENERIC_NODE_QUERY_DATASOURCE_POSITION, // 13
+    PVMF_GENERIC_NODE_SET_DATASOURCE_RATE, // 14
     //From PVMFMetadataExtensionInterface
-    PVMF_GENERIC_NODE_GETNODEMETADATAKEYS, // 16
-    PVMF_GENERIC_NODE_GETNODEMETADATAVALUES, // 17
+    PVMF_GENERIC_NODE_GETNODEMETADATAKEYS, // 15
+    PVMF_GENERIC_NODE_GETNODEMETADATAVALUES, // 16
     //From PvmfDataSourceDirectionControlInterface
-    PVMF_GENERIC_NODE_SET_DATASOURCE_DIRECTION, // 18
+    PVMF_GENERIC_NODE_SET_DATASOURCE_DIRECTION, // 17
     //From PVMFCPMPluginLicenseInterface
-    PVMF_GENERIC_NODE_GET_LICENSE_W, // 19
-    PVMF_GENERIC_NODE_GET_LICENSE, // 20
-    PVMF_GENERIC_NODE_CANCEL_GET_LICENSE, // 21
+    PVMF_GENERIC_NODE_GET_LICENSE_W, // 18
+    PVMF_GENERIC_NODE_GET_LICENSE, // 19
+    PVMF_GENERIC_NODE_CANCEL_GET_LICENSE, // 20
     //Node Private command
-    PVMF_GENERIC_NODE_CAPCONFIG_SETPARAMS, // 22
+    PVMF_GENERIC_NODE_CAPCONFIG_SETPARAMS, // 21
     PVMF_GENERIC_NODE_COMMAND_LAST //a placeholder for adding
     //node-specific commands to this list.
 };
@@ -298,22 +297,6 @@ class PVMFGenericNodeCommand
             aInterface = (PVInterface**)iParam2;
         }
 
-        //for QueryUuids
-        void Construct(PVMFSessionId s, int32 aCmd, const PvmfMimeString& aMimeType,
-                       Oscl_Vector<PVUuid, OsclMemAllocator>& aUuids,
-                       bool aExactUuidsOnly,
-                       const OsclAny* aContext)
-        {
-            BaseConstruct(s, aCmd, aContext);
-            //if input cmd id isn't as expected, memory won't get
-            //cleaned up later, so assert here.
-            OSCL_ASSERT(aCmd == PVMF_GENERIC_NODE_QUERYUUID);
-            //allocate a copy of the mime type string.
-            Oscl_TAlloc<OSCL_HeapString<Alloc>, Alloc> mimetype;
-            iParam1 = mimetype.ALLOC_AND_CONSTRUCT(aMimeType);
-            iParam2 = (OsclAny*) & aUuids;
-            iParam3 = (OsclAny*)aExactUuidsOnly;
-        }
         void Parse(OSCL_String*&aMimetype, Oscl_Vector<PVUuid, OsclMemAllocator>*&aUuids, bool &aExact)
         {
             aMimetype = (OSCL_HeapString<Alloc>*)iParam1;
@@ -351,12 +334,6 @@ class PVMFGenericNodeCommand
         {
             switch (iCmd)
             {
-                case PVMF_GENERIC_NODE_QUERYUUID:
-                {//destroy the allocated mimetype string
-                    Oscl_TAlloc<OSCL_HeapString<Alloc>, Alloc> mimetype;
-                    mimetype.destruct_and_dealloc(iParam1);
-                }
-                break;
                 case PVMF_GENERIC_NODE_REQUESTPORT:
                 {//destroy the allocated mimetype string
                     if (iParam2)
@@ -392,13 +369,6 @@ class PVMFGenericNodeCommand
             iCmd = aCmd.iCmd;
             switch (aCmd.iCmd)
             {
-                case PVMF_GENERIC_NODE_QUERYUUID:
-                {//copy the allocated mimetype string
-                    OSCL_HeapString<Alloc>* aMimetype = (OSCL_HeapString<Alloc>*)aCmd.iParam1;
-                    Oscl_TAlloc<OSCL_HeapString<Alloc>, Alloc> mimetype;
-                    iParam1 = mimetype.ALLOC_AND_CONSTRUCT(*aMimetype);
-                }
-                break;
                 case PVMF_GENERIC_NODE_REQUESTPORT:
                 {//copy the allocated mimetype string
                     OSCL_HeapString<Alloc>* aMimetype = (OSCL_HeapString<Alloc>*)aCmd.iParam2;

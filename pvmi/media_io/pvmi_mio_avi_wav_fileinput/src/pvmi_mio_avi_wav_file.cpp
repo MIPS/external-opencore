@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -155,22 +155,6 @@ OSCL_EXPORT_REF void PvmiMIOAviWavFile::deleteMediaTransfer(PvmiMIOSession& aSes
         // Invalid session ID
         OSCL_LEAVE(OsclErrArgument);
     }
-}
-
-////////////////////////////////////////////////////////////////////////////
-OSCL_EXPORT_REF PVMFCommandId PvmiMIOAviWavFile::QueryUUID(const PvmfMimeString& aMimeType,
-        Oscl_Vector<PVUuid, OsclMemAllocator>& aUuids,
-        bool aExactUuidsOnly,
-        const OsclAny* aContext)
-{
-    OSCL_UNUSED_ARG(aMimeType);
-    OSCL_UNUSED_ARG(aExactUuidsOnly);
-
-    int32 err = 0;
-    OSCL_TRY(err, aUuids.push_back(PVMI_CAPABILITY_AND_CONFIG_PVUUID););
-    OSCL_FIRST_CATCH_ANY(err, OSCL_LEAVE(OsclErrNoMemory););
-
-    return AddCmdToQueue(CMD_QUERY_UUID, aContext);
 }
 
 ////////////////////////////////////////////////////////////////////////////
@@ -880,7 +864,6 @@ void PvmiMIOAviWavFile::Run()
                 DoRead();
                 break;
 
-            case CMD_QUERY_UUID:
             case CMD_QUERY_INTERFACE:
                 DoRequestCompleted(cmd, PVMFSuccess);
                 break;

@@ -493,7 +493,6 @@ class PVMFMP3FFParserNode : public PVMFNodeInterfaceImpl,
 
         //Command handlers for PVMFNodeInterface APIs.
         PVMFStatus DoReset();
-        PVMFStatus DoQueryUuid();
         PVMFStatus DoQueryInterface();
         PVMFStatus DoRequestPort(PVMFPortInterface*&);
         PVMFStatus DoReleasePort();

@@ -1027,32 +1027,6 @@ PVMFStatus PVMFFileOutputNode::ProcessIncomingMsg(PVMFPortInterface* aPort)
     }
 }
 
-
-PVMFStatus PVMFFileOutputNode::DoQueryUuid()
-{
-    //This node supports Query UUID from any state
-
-    OSCL_String* mimetype;
-    Oscl_Vector<PVUuid, OsclMemAllocator> *uuidvec;
-    bool exactmatch;
-    iCurrentCommand.PVMFNodeCommandBase::Parse(mimetype, uuidvec, exactmatch);
-
-    //Try to match the input mimetype against any of
-    //the custom interfaces for this node
-    //Match against custom interface1...
-    if (*mimetype == PVMF_FILE_OUTPUT_NODE_CUSTOM1_MIMETYPE
-            //also match against base mimetypes for custom interface1,
-            //unless exactmatch is set.
-            || (!exactmatch && *mimetype == PVMF_FILE_OUTPUT_NODE_MIMETYPE)
-            || (!exactmatch && *mimetype == PVMF_BASEMIMETYPE))
-    {
-        uuidvec->push_back(PvmfFileOutputNodeConfigUuid);
-        uuidvec->push_back(PvmfComposerSizeAndDurationUuid);
-        uuidvec->push_back(PvmfNodesSyncControlUuid);
-    }
-    return PVMFSuccess;
-}
-
 PVMFStatus PVMFFileOutputNode::DoQueryInterface()
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,

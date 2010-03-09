@@ -449,7 +449,6 @@ bool PVMFSMRTSPTUnicastNode::ProcessCommand(PVMFSMFSPBaseNodeCommand& aCmd)
             || iCancelCommand.size() > 0)
         return false;
 
-    OSCL_ASSERT(PVMF_SMFSP_NODE_QUERYUUID != aCmd.iCmd);
     OSCL_ASSERT(PVMF_SMFSP_NODE_SET_DATASOURCE_RATE != aCmd.iCmd);
     switch (aCmd.iCmd)
     {
@@ -3637,9 +3636,7 @@ void PVMFSMRTSPTUnicastNode::HandleRTSPSessionControllerCommandCompleted(const P
     PVMF_SM_RTSPT_LOGINFO((0, "PVMFSMRTSPTUnicastNode::HandleRTSPSessionControllerCommandCompleted In - cmd [%d] iSessionControllerNodeContainer->iNodeCmdState [%d] iInterfaceState[%d]", cmdContextData->cmd, iSessionControllerNodeContainer->iNodeCmdState, iInterfaceState));
 
     //RTSPPLUSUNICAST plugin uses sync version of QueryInterface to get xtension interface of its various child nodes
-    //Also RTSPPLUSUNICAST plugin doesn t call QueryUUID on child node.
-    //So, command completion of async version of QueryUUID and QueryInterface from child node not expected.
-    OSCL_ASSERT(cmdContextData->cmd != PVMF_SM_FSP_RTSP_SESSION_CONTROLLER_QUERY_UUID);
+    //So, command completion of async version of QueryInterface from child node not expected.
     OSCL_ASSERT(cmdContextData->cmd != PVMF_SM_FSP_RTSP_SESSION_CONTROLLER_QUERY_INTERFACE);
 
     if (iSessionControllerNodeContainer->iNodeCmdState == PVMFSMFSP_NODE_CMD_PENDING)

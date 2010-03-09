@@ -366,39 +366,6 @@ void PVRefFileOutput::QueueCommandResponse(CommandResponse& aResp)
     RunIfNotReady();
 }
 
-PVMFCommandId PVRefFileOutput::QueryUUID(const PvmfMimeString& aMimeType,
-        Oscl_Vector<PVUuid, OsclMemAllocator>& aUuids,
-        bool aExactUuidsOnly, const OsclAny* aContext)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVRefFileOutput::QueryUUID() called"));
-
-    OSCL_UNUSED_ARG(aMimeType);
-    OSCL_UNUSED_ARG(aExactUuidsOnly);
-
-    PVMFCommandId cmdid = iCommandCounter++;
-
-    PVMFStatus status = PVMFFailure;
-    int32 err ;
-    OSCL_TRY(err,
-             aUuids.push_back(PVMI_CAPABILITY_AND_CONFIG_PVUUID);
-             if (iActiveTiming)
-{
-    PVUuid uuid;
-    iActiveTiming->queryUuid(uuid);
-        aUuids.push_back(uuid);
-    }
-            );
-    if (err == OsclErrNone)
-    {
-        status = PVMFSuccess;
-    }
-
-    CommandResponse resp(status, cmdid, aContext);
-    QueueCommandResponse(resp);
-    return cmdid;
-}
-
-
 PVMFCommandId PVRefFileOutput::QueryInterface(const PVUuid& aUuid, PVInterface*& aInterfacePtr, const OsclAny* aContext)
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVRefFileOutput::QueryInterface() called"));
@@ -2143,10 +2110,6 @@ OSCL_EXPORT_REF bool PVRefFileOutput::queryInterface(const PVUuid& aUuid, PVInte
     OSCL_UNUSED_ARG(aUuid);
     return true;
 }
-void PVRefFileOutput::queryUuid(PVUuid& uuid)
-{
-    OSCL_UNUSED_ARG(uuid);
-}
 //
 // For active timing support
 //
@@ -2167,20 +2130,13 @@ OSCL_EXPORT_REF void PVRefFileOutputActiveTimingSupport::removeRef()
 OSCL_EXPORT_REF bool PVRefFileOutputActiveTimingSupport::queryInterface(const PVUuid& aUuid, PVInterface*& aInterface)
 {
     aInterface = NULL;
-    PVUuid uuid;
-    queryUuid(uuid);
-    if (uuid == aUuid)
+    if (PvmiClockExtensionInterfaceUuid == aUuid)
     {
         PvmiClockExtensionInterface* myInterface = OSCL_STATIC_CAST(PvmiClockExtensionInterface*, this);
         aInterface = OSCL_STATIC_CAST(PVInterface*, myInterface);
         return true;
     }
     return false;
-}
-
-void PVRefFileOutputActiveTimingSupport::queryUuid(PVUuid& uuid)
-{
-    uuid = PvmiClockExtensionInterfaceUuid;
 }
 
 bool PVRefFileOutputActiveTimingSupport::FrameStepMode()

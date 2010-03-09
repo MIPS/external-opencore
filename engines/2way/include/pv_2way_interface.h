@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -416,26 +416,6 @@ class CPV2WayInterface
          **/
         OSCL_IMPORT_REF virtual PVCommandId GetLogLevel(const char* aTag,
                 int32& aLogInfo,
-                OsclAny* aContextData = NULL) = 0;
-
-        /**
-         * This API is to allow for extensibility of the pv2way interface.
-         * It allows a caller to ask for all UUIDs associated with a particular MIME type.
-         * If interfaces of the requested MIME type are found within the system, they are added
-         * to the UUIDs array.
-         *
-         * Also added to the UUIDs array will be all interfaces which have the requested MIME
-         * type as a base MIME type.  This functionality can be turned off.
-         *
-         * @param aMimeType The MIME type of the desired interfaces
-         * @param aUuids An array to hold the discovered UUIDs
-         * @param aExactUuidsOnly Turns on/off the retrival of UUIDs with aMimeType as a base type
-         * @param aContextData
-         *         Optional opaque data that will be passed back to the user with the command response
-         **/
-        OSCL_IMPORT_REF virtual PVCommandId QueryUUID(const PvmfMimeString& aMimeType,
-                Oscl_Vector<PVUuid, BasicAlloc>& aUuids,
-                bool aExactUuidsOnly = false,
                 OsclAny* aContextData = NULL) = 0;
 
         /**

@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -83,9 +83,6 @@ class DummyOutputMIO : public OsclActiveObject
         virtual PVMFStatus connect(PvmiMIOSession& aSession, PvmiMIOObserver* aObserver);
 
         PVMFStatus disconnect(PvmiMIOSession aSession);
-
-        virtual PVMFCommandId QueryUUID(const PvmfMimeString& aMimeType, Oscl_Vector<PVUuid, OsclMemAllocator>& aUuids,
-                                        bool aExactUuidsOnly = false, const OsclAny* aContext = NULL);
 
         virtual PVMFCommandId QueryInterface(const PVUuid& aUuid, PVInterface*& aInterfacePtr, const OsclAny* aContext = NULL);
 

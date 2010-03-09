@@ -2834,22 +2834,6 @@ PVCommandId CPV324m2Way::QueryInterface(const PVUuid& aUuid,
     return iCommandId++;
 }
 
-PVCommandId CPV324m2Way::QueryUUID(const PvmfMimeString& aMimeType,
-                                   Oscl_Vector<PVUuid, BasicAlloc>& aUuids,
-                                   bool aExactUuidsOnly,
-                                   OsclAny* aContextData)
-{
-    OSCL_UNUSED_ARG(aMimeType);
-    OSCL_UNUSED_ARG(aUuids);
-    OSCL_UNUSED_ARG(aExactUuidsOnly);
-    OSCL_UNUSED_ARG(aContextData);
-
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                    (0, "CPV324m2Way::QueryUUID\n"));
-    OSCL_LEAVE(PVMFErrNotSupported);
-    return 0;
-}
-
 PVCommandId CPV324m2Way::CancelAllCommands(OsclAny* aContextData)
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
@@ -4718,22 +4702,6 @@ PVMFCommandId CPV324m2Way::SendNodeCmdL(PV2WayNodeCmdType aCmd,
 
     switch (aCmd)
     {
-        case PV2WAY_NODE_CMD_QUERY_UUID:
-            if (aParam != NULL)
-            {
-                TPV2WayNodeQueryUuidParams *queryParam = (TPV2WayNodeQueryUuidParams *) aParam;
-                OSCL_TRY(error, id = nodeIFace->QueryUUID(sessionId,
-                                     queryParam->mimetype, *queryParam->iUuids,
-                                     true, (OsclAny *) & info->context));
-            }
-            else
-            {
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                                (0, "CPV324m2Way::SendNodeCmdL RequestPort param is null!\n"));
-                error = PVMFErrArgument;
-            }
-            break;
-
         case PV2WAY_NODE_CMD_QUERY_INTERFACE:
             if (aParam != NULL)
             {

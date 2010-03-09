@@ -456,27 +456,6 @@ class PVRTSPEngineNode
 
         /**
          * This API is to allow for extensibility of the PVMF Node interface.
-         * It allows a caller to ask for all UUIDs associated with a particular MIME type.
-         * If interfaces of the requested MIME type are found within the system, they are added
-         * to the UUIDs array.
-         *
-         * Also added to the UUIDs array will be all interfaces which have the requested MIME
-         * type as a base MIME type.  This functionality can be turned off.
-         *
-         * @param aMimeType The MIME type of the desired interfaces
-         * @param aUuids A vector to hold the discovered UUIDs
-         * @param aExactUuidsOnly Turns on/off the retrival of UUIDs with aMimeType as a base type
-         * @param aContext Optional opaque data to be passed back to user with the command response
-         * @returns A unique command id for asynchronous completion
-         */
-        OSCL_IMPORT_REF virtual PVMFCommandId QueryUUID(PVMFSessionId aSession
-                , const PvmfMimeString& aMimeType
-                , Oscl_Vector<PVUuid, PVRTSPEngineNodeAllocator>& aUuids
-                , bool aExactUuidsOnly = false
-                                         , const OsclAny* aContext = NULL);
-
-        /**
-         * This API is to allow for extensibility of the PVMF Node interface.
          * It allows a caller to ask for an instance of a particular interface object to be returned.
          * The mechanism is analogous to the COM IUnknown method.  The interfaces are identified with
          * an interface ID that is a UUID as in DCE and a pointer to the interface object is
@@ -850,7 +829,6 @@ class PVRTSPEngineNode
         PVMFStatus DoStartNode(PVRTSPEngineCommand &aCmd);
         PVMFStatus DoPauseNode(PVRTSPEngineCommand &aCmd);
         PVMFStatus DoStopNode(PVRTSPEngineCommand &aCmd);
-        PVMFStatus DoQueryUuid(PVRTSPEngineCommand &aCmd);
         PVMFStatus DoCancelCommand(PVRTSPEngineCommand &aCmd);
         PVMFStatus DoCancelAllCommands(PVRTSPEngineCommand &aCmd);
         PVMFStatus DoFlush(PVRTSPEngineCommand &aCmd);

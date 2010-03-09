@@ -370,18 +370,6 @@ PVMFCommandId PVMFOMXEncNode::QueueCommandL(PVMFOMXEncNodeCommand& aCmd)
 }
 
 /////////////////////////////////////////////////////////////////////////////
-PVMFCommandId PVMFOMXEncNode::QueryUUID(PVMFSessionId s, const PvmfMimeString& aMimeType,
-                                        Oscl_Vector<PVUuid, PVMFOMXEncNodeAllocator>& aUuids,
-                                        bool aExactUuidsOnly,
-                                        const OsclAny* aContext)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFOMXEncNode-%s::QueryUUID() called", iNodeTypeId));
-    PVMFOMXEncNodeCommand cmd;
-    cmd.PVMFOMXEncNodeCommandBase::Construct(s, PVMFOMXEncNodeCommand::PVOMXENC_NODE_CMD_QUERYUUID, aMimeType, aUuids, aExactUuidsOnly, aContext);
-    return QueueCommandL(cmd);
-}
-
-/////////////////////////////////////////////////////////////////////////////
 PVMFCommandId PVMFOMXEncNode::QueryInterface(PVMFSessionId s, const PVUuid& aUuid,
         PVInterface*& aInterfacePtr,
         const OsclAny* aContext)
@@ -1144,10 +1132,6 @@ bool PVMFOMXEncNode::ProcessCommand(PVMFOMXEncNodeCommand& aCmd)
 
     switch (aCmd.iCmd)
     {
-        case PVMFOMXEncNodeCommand::PVOMXENC_NODE_CMD_QUERYUUID:
-            DoQueryUuid(aCmd);
-            break;
-
         case PVMFOMXEncNodeCommand::PVOMXENC_NODE_CMD_QUERYINTERFACE:
             DoQueryInterface(aCmd);
             break;
@@ -8272,33 +8256,6 @@ void PVMFOMXEncNode::DoCancelCommand(PVMFOMXEncNodeCommand& aCmd)
     }
     //if we get here the command isn't queued so the cancel fails.
     CommandComplete(iInputCommands, aCmd, PVMFErrArgument);
-}
-
-/////////////////////////////////////////////////////////////////////////////
-void PVMFOMXEncNode::DoQueryUuid(PVMFOMXEncNodeCommand& aCmd)
-{
-    //This node supports Query UUID from any state
-
-    OSCL_String* mimetype;
-    Oscl_Vector<PVUuid, OsclMemAllocator> *uuidvec;
-    bool exactmatch;
-    aCmd.PVMFOMXEncNodeCommandBase::Parse(mimetype, uuidvec, exactmatch);
-
-    //Try to match the input mimetype against any of
-    //the custom interfaces for this node
-
-    //Match against custom interface1...
-    if (*mimetype == PVMF_OMX_ENC_NODE_CUSTOM1_MIMETYPE
-            //also match against base mimetypes for custom interface1,
-            //unless exactmatch is set.
-            || (!exactmatch && *mimetype == PVMF_OMX_ENC_NODE_MIMETYPE)
-            || (!exactmatch && *mimetype == PVMF_BASEMIMETYPE))
-    {
-
-        PVUuid uuid(PVMF_OMX_ENC_NODE_CUSTOM1_UUID);
-        uuidvec->push_back(uuid);
-    }
-    CommandComplete(iInputCommands, aCmd, PVMFSuccess);
 }
 
 /////////////////////////////////////////////////////////////////////////////

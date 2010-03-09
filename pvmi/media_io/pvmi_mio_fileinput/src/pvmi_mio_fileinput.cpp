@@ -143,22 +143,6 @@ OSCL_EXPORT_REF void PvmiMIOFileInput::deleteMediaTransfer(PvmiMIOSession& arSes
 }
 
 ////////////////////////////////////////////////////////////////////////////
-OSCL_EXPORT_REF PVMFCommandId PvmiMIOFileInput::QueryUUID(const PvmfMimeString& arMimeType,
-        Oscl_Vector<PVUuid, OsclMemAllocator>& arUuids,
-        bool aExactUuidsOnly,
-        const OsclAny* apContext)
-{
-    OSCL_UNUSED_ARG(arMimeType);
-    OSCL_UNUSED_ARG(aExactUuidsOnly);
-
-    int32 err = 0;
-    OSCL_TRY(err, arUuids.push_back(PVMI_CAPABILITY_AND_CONFIG_PVUUID););
-    OSCL_FIRST_CATCH_ANY(err, OSCL_LEAVE(OsclErrNoMemory););
-
-    return AddCmdToQueue(CMD_QUERY_UUID, apContext);
-}
-
-////////////////////////////////////////////////////////////////////////////
 OSCL_EXPORT_REF PVMFCommandId PvmiMIOFileInput::QueryInterface(const PVUuid& arUuid,
         PVInterface*& aInterfacePtr,
         const OsclAny* apContext)
@@ -819,7 +803,6 @@ void PvmiMIOFileInput::Run()
                 }
                 break;
 
-            case CMD_QUERY_UUID:
             case CMD_QUERY_INTERFACE:
                 DoRequestCompleted(cmd, PVMFSuccess);
                 break;

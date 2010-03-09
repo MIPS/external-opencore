@@ -216,11 +216,6 @@ class PVCommsIONode : public OsclActiveObject,
         OSCL_IMPORT_REF PVMFStatus ThreadLogoff();
         OSCL_IMPORT_REF PVMFStatus GetCapability(PVMFNodeCapability& aNodeCapability);
         OSCL_IMPORT_REF PVMFPortIter* GetPorts(const PVMFPortFilter* aFilter = NULL);
-        OSCL_IMPORT_REF PVMFCommandId QueryUUID(PVMFSessionId aSession
-                                                , const PvmfMimeString& aMimeType
-                                                , Oscl_Vector<PVUuid, OsclMemAllocator>& aUuids
-                                                , bool aExactUuidsOnly = false
-                                                                         , const OsclAny* aContext = NULL) ;
         OSCL_IMPORT_REF PVMFCommandId QueryInterface(PVMFSessionId aSession
                 , const PVUuid& aUuid
                 , PVInterface*& aInterfacePtr
@@ -294,7 +289,6 @@ class PVCommsIONode : public OsclActiveObject,
         void CommandComplete(PVCommsIONodeCmdQ& aCmdQ, PVCommsIONodeCmd& aCmd, PVMFStatus aStatus, OsclAny*aEventData = NULL);
 
         //generic node Command handlers.
-        PVMFStatus DoQueryUuid(PVCommsIONodeCmd&);
         PVMFStatus DoQueryInterface(PVCommsIONodeCmd&);
         PVMFStatus DoRequestPort(PVCommsIONodeCmd&, OsclAny*&);
         PVMFStatus DoReleasePort(PVCommsIONodeCmd&);

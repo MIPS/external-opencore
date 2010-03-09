@@ -347,21 +347,6 @@ OSCL_EXPORT_REF PVMFPortIter* PVRTSPEngineNode::GetPorts(const PVMFPortFilter* a
     return NULL;
 }
 
-OSCL_EXPORT_REF PVMFCommandId PVRTSPEngineNode::QueryUUID(PVMFSessionId aSession
-        , const PvmfMimeString& aMimeType
-        , Oscl_Vector<PVUuid, PVRTSPEngineNodeAllocator>& aUuids
-        , bool aExactUuidsOnly
-        , const OsclAny* aContext)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVRTSPEngineNode::QueryUUID() called"));
-
-    PVRTSPEngineCommand cmd;
-    cmd.PVRTSPEngineCommandBase::Construct(aSession, PVMF_GENERIC_NODE_QUERYUUID, aMimeType, \
-                                           aUuids, aExactUuidsOnly, aContext);
-
-    return AddCmdToQueue(cmd);
-}
-
 OSCL_EXPORT_REF void PVRTSPEngineNode::addRef()
 {
 
@@ -1298,10 +1283,6 @@ OSCL_EXPORT_REF PVMFStatus PVRTSPEngineNode::DispatchCommand(PVRTSPEngineCommand
 
     switch (aCmd.iCmd)
     {
-        case PVMF_GENERIC_NODE_QUERYUUID:
-            iRet = DoQueryUuid(aCmd);
-            break;
-
         case PVMF_GENERIC_NODE_INIT:
             iRet = DoInitNode(aCmd);
             if (iRet == PVMFSuccess)
@@ -4186,30 +4167,6 @@ OSCL_EXPORT_REF PVMFStatus PVRTSPEngineNode::SendRtspTeardown(PVRTSPEngineComman
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVRTSPEngineNode::SendRtspTeardown() Out"));
 
     return iRet;
-}
-
-PVMFStatus PVRTSPEngineNode::DoQueryUuid(PVRTSPEngineCommand &aCmd)
-{
-    //This node supports Query UUID from any state
-
-    OSCL_String* mimetype;
-    Oscl_Vector<PVUuid, PVRTSPEngineNodeAllocator> *uuidvec;
-    bool exactmatch;
-    aCmd.PVRTSPEngineCommandBase::Parse(mimetype, uuidvec, exactmatch);
-
-    //Try to match the input mimetype against any of
-    //the custom interfaces for this node
-    //Match against custom interface1...
-    if (*mimetype == PVMF_RTSPENGINENODE_CUSTOM1_MIMETYPE
-            //also match against base mimetypes for custom interface1,
-            //unless exactmatch is set.
-            || (!exactmatch && *mimetype == PVMF_RTSPENGINENODE_MIMETYPE)
-            || (!exactmatch && *mimetype == PVMF_RTSPENGINENODE_BASEMIMETYPE))
-    {
-        uuidvec->push_back(KPVRTSPEngineNodeExtensionUuid);
-    }
-
-    return PVMFSuccess;
 }
 
 OSCL_EXPORT_REF PVMFStatus PVRTSPEngineNode::DoQueryInterface(PVRTSPEngineCommand &aCmd)

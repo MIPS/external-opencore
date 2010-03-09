@@ -3015,32 +3015,6 @@ PVMFStatus PVMFSocketNode::DoReset()
     return status;
 }
 
-PVMFStatus PVMFSocketNode::DoQueryUuid()
-{
-    //This node supports Query UUID from any state
-
-    OSCL_String* mimetype;
-    Oscl_Vector<PVUuid, OsclMemAllocator> *uuidvec;
-    bool exactmatch;
-    iCurrentCommand.PVMFNodeCommandBase::Parse(mimetype, uuidvec, exactmatch);
-
-    //Try to match the input mimetype against any of
-    //the custom interfaces for this node
-
-    //Match against custom interface1...
-    if (*mimetype == PVMF_SOCKET_NODE_EXTENSION_INTERFACE_MIMETYPE
-            //also match against base mimetypes for custom interface1,
-            //unless exactmatch is set.
-            || (!exactmatch && *mimetype == PVMF_SOCKET_NODE_MIMETYPE)
-            || (!exactmatch && *mimetype == PVMF_SOCKET_NODE_BASEMIMETYPE))
-    {
-
-        PVUuid uuid(PVMF_SOCKET_NODE_EXTENSION_INTERFACE_UUID);
-        uuidvec->push_back(uuid);
-    }
-    return PVMFSuccess;
-}
-
 bool PVMFSocketNode::queryInterface(const PVUuid& uuid, PVInterface*& iface)
 {
     iface = NULL;

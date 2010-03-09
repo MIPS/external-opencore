@@ -757,7 +757,6 @@ class PVMFSocketNode
         //Command handlers.
         PVMFStatus DoRequestPort(PVMFPortInterface* &port);
         PVMFStatus DoReset();
-        PVMFStatus DoQueryUuid();
         PVMFStatus DoQueryInterface();
         PVMFStatus DoReleasePort();
         PVMFStatus DoInit();

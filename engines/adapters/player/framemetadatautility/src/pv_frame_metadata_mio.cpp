@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -137,34 +137,6 @@ void PVFMMIO::QueueCommandResponse(CommandResponse& aResp)
 
     RunIfNotReady();
 }
-
-
-PVMFCommandId PVFMMIO::QueryUUID(const PvmfMimeString& aMimeType, Oscl_Vector<PVUuid, OsclMemAllocator>& aUuids,
-                                 bool aExactUuidsOnly, const OsclAny* aContext)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFMMIO::QueryUUID() called"));
-
-    OSCL_UNUSED_ARG(aMimeType);
-    OSCL_UNUSED_ARG(aExactUuidsOnly);
-
-    PVMFCommandId cmdid = iCommandCounter++;
-
-    PVMFStatus status = PVMFFailure;
-    int32 err ;
-    OSCL_TRY(err,
-             aUuids.push_back(PVMI_CAPABILITY_AND_CONFIG_PVUUID);
-            );
-
-    if (err == OsclErrNone)
-    {
-        status = PVMFSuccess;
-    }
-
-    CommandResponse resp(status, cmdid, aContext);
-    QueueCommandResponse(resp);
-    return cmdid;
-}
-
 
 PVMFCommandId PVFMMIO::QueryInterface(const PVUuid& aUuid, PVInterface*& aInterfacePtr, const OsclAny* aContext)
 {
@@ -635,20 +607,13 @@ bool PVFMMIOActiveTimingSupport::queryInterface(const PVUuid& aUuid, PVInterface
 {
     aInterface = NULL;
     PVUuid uuid;
-    queryUuid(uuid);
-    if (uuid == aUuid)
+    if (PvmiClockExtensionInterfaceUuid == aUuid)
     {
         PvmiClockExtensionInterface* myInterface = OSCL_STATIC_CAST(PvmiClockExtensionInterface*, this);
         aInterface = OSCL_STATIC_CAST(PVInterface*, myInterface);
         return true;
     }
     return false;
-}
-
-
-void PVFMMIOActiveTimingSupport::queryUuid(PVUuid& uuid)
-{
-    uuid = PvmiClockExtensionInterfaceUuid;
 }
 
 

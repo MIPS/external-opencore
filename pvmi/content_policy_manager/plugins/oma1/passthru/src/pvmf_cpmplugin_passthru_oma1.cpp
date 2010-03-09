@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -202,24 +202,6 @@ void PVMFCPMPassThruPlugInOMA1::ThreadLogoff()
         RemoveFromScheduler();
         iLoggedOn = false;
     }
-}
-
-OSCL_EXPORT_REF PVMFCommandId
-PVMFCPMPassThruPlugInOMA1::QueryUUID(PVMFSessionId s,
-                                     const PvmfMimeString& aMimeType,
-                                     Oscl_Vector<PVUuid, OsclMemAllocator>& aUuids,
-                                     bool aExactUuidsOnly,
-                                     const OsclAny* aContext)
-{
-    PVMF_CPMPLUGIN_PASSTHRUOMA1_LOGINFO((0, "PVMFCPMPassThruPlugInOMA1:QueryUUID"));
-    PVMFCPMPassThruPlugInOMA1Command cmd;
-    cmd.PVMFCPMPassThruPlugInOMA1CommandBase::Construct(s,
-            PVMF_CPM_PASSTHRU_PLUGIN_OMA1_QUERYUUID,
-            aMimeType,
-            aUuids,
-            aExactUuidsOnly,
-            aContext);
-    return QueueCommandL(cmd);
 }
 
 OSCL_EXPORT_REF PVMFStatus PVMFCPMPassThruPlugInOMA1::QueryInterfaceSync(PVMFSessionId s,
@@ -515,10 +497,6 @@ bool PVMFCPMPassThruPlugInOMA1::ProcessCommand(PVMFCPMPassThruPlugInOMA1Command&
 
     switch (aCmd.iCmd)
     {
-        case PVMF_CPM_PASSTHRU_PLUGIN_OMA1_QUERYUUID:
-            DoQueryUuid(aCmd);
-            break;
-
         case PVMF_CPM_PASSTHRU_PLUGIN_OMA1_QUERYINTERFACE:
             DoQueryInterface(aCmd);
             break;
@@ -578,42 +556,6 @@ bool PVMFCPMPassThruPlugInOMA1::ProcessCommand(PVMFCPMPassThruPlugInOMA1Command&
     }
 
     return true;
-}
-
-/**
- * Called by the command handler AO to do the Query UUID
- */
-void PVMFCPMPassThruPlugInOMA1::DoQueryUuid(PVMFCPMPassThruPlugInOMA1Command& aCmd)
-{
-    OSCL_String* mimetype;
-    Oscl_Vector<PVUuid, OsclMemAllocator> *uuidvec;
-    bool exactmatch;
-    aCmd.PVMFCPMPassThruPlugInOMA1CommandBase::Parse(mimetype, uuidvec, exactmatch);
-
-    if (exactmatch == false)
-    {
-        CommandComplete(iInputCommands, aCmd, PVMFErrArgument);
-    }
-    /*
-     * Try to match the input mimetype against any of
-     * the interfaces supported by this plugin
-     */
-    if (*mimetype == PVMF_CPMPLUGIN_AUTHENTICATION_INTERFACE_MIMETYPE)
-    {
-        PVUuid uuid(PVMFCPMPluginAuthenticationInterfaceUuid);
-        uuidvec->push_back(uuid);
-    }
-    else if (*mimetype == PVMF_CPMPLUGIN_AUTHORIZATION_INTERFACE_MIMETYPE)
-    {
-        PVUuid uuid(PVMFCPMPluginAuthorizationInterfaceUuid);
-        uuidvec->push_back(uuid);
-    }
-    else if (*mimetype == PVMF_CPMPLUGIN_ACCESS_INTERFACE_FACTORY_MIMETYPE)
-    {
-        PVUuid uuid(PVMFCPMPluginAccessInterfaceFactoryUuid);
-        uuidvec->push_back(uuid);
-    }
-    CommandComplete(iInputCommands, aCmd, PVMFSuccess);
 }
 
 /**

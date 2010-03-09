@@ -37,14 +37,15 @@ static uint32 kConversionBufferSize = 4096;
 / This implementation routes audio to a stream interface
 */
 OSCL_EXPORT_REF AndroidAudioStream::AndroidAudioStream() :
-    AndroidAudioMIO("AndroidAudioStream"),
-    iActiveTiming(NULL), mClockUpdated(false)
+        AndroidAudioMIO("AndroidAudioStream"),
+        iActiveTiming(NULL), mClockUpdated(false)
 {
     // create active timing object
     LOGV("constructor");
     OsclMemAllocator alloc;
-    OsclAny*ptr=alloc.allocate(sizeof(AndroidAudioMIOActiveTimingSupport));
-    if (ptr) {
+    OsclAny*ptr = alloc.allocate(sizeof(AndroidAudioMIOActiveTimingSupport));
+    if (ptr)
+    {
         iActiveTiming = new(ptr)AndroidAudioMIOActiveTimingSupport(0, 0);
     }
 }
@@ -53,7 +54,8 @@ OSCL_EXPORT_REF AndroidAudioStream::~AndroidAudioStream()
 {
     LOGV("destructor");
     // cleanup active timing object
-    if (iActiveTiming) {
+    if (iActiveTiming)
+    {
         iActiveTiming->~AndroidAudioMIOActiveTimingSupport();
         OsclMemAllocator alloc;
         alloc.deallocate(iActiveTiming);
@@ -63,8 +65,9 @@ OSCL_EXPORT_REF AndroidAudioStream::~AndroidAudioStream()
 PVMFCommandId AndroidAudioStream::QueryInterface(const PVUuid& aUuid, PVInterface*& aInterfacePtr, const OsclAny* aContext)
 {
     // check for active timing extension
-    if (iActiveTiming && (aUuid == PvmiClockExtensionInterfaceUuid)) {
-        PvmiClockExtensionInterface* myInterface = OSCL_STATIC_CAST(PvmiClockExtensionInterface*,iActiveTiming);
+    if (iActiveTiming && (aUuid == PvmiClockExtensionInterfaceUuid))
+    {
+        PvmiClockExtensionInterface* myInterface = OSCL_STATIC_CAST(PvmiClockExtensionInterface*, iActiveTiming);
         aInterfacePtr = OSCL_STATIC_CAST(PVInterface*, myInterface);
         return QueueCmdResponse(PVMFSuccess, aContext);
     }
@@ -73,27 +76,15 @@ PVMFCommandId AndroidAudioStream::QueryInterface(const PVUuid& aUuid, PVInterfac
     else return AndroidAudioMIO::QueryInterface(aUuid, aInterfacePtr, aContext);
 }
 
-PVMFCommandId AndroidAudioStream::QueryUUID(const PvmfMimeString& aMimeType,
-                                        Oscl_Vector<PVUuid, OsclMemAllocator>& aUuids,
-                                        bool aExactUuidsOnly, const OsclAny* aContext)
-{
-    aUuids.push_back(PVMI_CAPABILITY_AND_CONFIG_PVUUID);
-    if (iActiveTiming) {
-        PVUuid uuid;
-        iActiveTiming->queryUuid(uuid);
-        aUuids.push_back(uuid);
-    }
-    return QueueCmdResponse(PVMFSuccess, aContext);
-}
-
 void AndroidAudioStream::setParametersSync(PvmiMIOSession aSession, PvmiKvp* aParameters,
-                                        int num_elements, PvmiKvp * & aRet_kvp)
+        int num_elements, PvmiKvp * & aRet_kvp)
 {
     AndroidAudioMIO::setParametersSync(aSession, aParameters, num_elements, aRet_kvp);
 
     // initialize audio sink when we have enough information
-    if (iAudioSamplingRateValid && iAudioNumChannelsValid && iAudioFormat != PVMF_MIME_FORMAT_UNKNOWN) {
-        mAudioSink->open(iAudioSamplingRate, iAudioNumChannels, ((iAudioFormat==PVMF_MIME_PCM8)?AudioSystem::PCM_8_BIT:AudioSystem::PCM_16_BIT));
+    if (iAudioSamplingRateValid && iAudioNumChannelsValid && iAudioFormat != PVMF_MIME_FORMAT_UNKNOWN)
+    {
+        mAudioSink->open(iAudioSamplingRate, iAudioNumChannels, ((iAudioFormat == PVMF_MIME_PCM8) ? AudioSystem::PCM_8_BIT : AudioSystem::PCM_16_BIT));
 
         // reset flags for next time
         iAudioSamplingRateValid = false;

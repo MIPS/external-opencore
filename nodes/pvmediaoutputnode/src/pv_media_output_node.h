@@ -174,7 +174,6 @@ class PVMediaOutputNode
 
         //Command handlers for PVMFNodeInterface APIs.
         PVMFStatus DoReset();
-        PVMFStatus DoQueryUuid();
         PVMFStatus DoQueryInterface();
         PVMFStatus DoRequestPort(PVMFPortInterface*& aPort);
         PVMFStatus DoReleasePort();

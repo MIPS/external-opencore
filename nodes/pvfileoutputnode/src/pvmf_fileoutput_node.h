@@ -199,7 +199,6 @@ class PVMFFileOutputNode :  public PVMFNodeInterfaceImpl,
 
         //Command handlers.
         PVMFStatus DoReset();
-        PVMFStatus DoQueryUuid();
         PVMFStatus DoQueryInterface();
         PVMFStatus DoRequestPort(PVMFPortInterface*&);
         PVMFStatus DoReleasePort();

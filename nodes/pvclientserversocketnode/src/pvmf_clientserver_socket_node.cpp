@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -167,16 +167,6 @@ OSCL_EXPORT_REF PVMFPortIter* PVMFClientServerSocketNode::GetPorts(const PVMFPor
     OSCL_UNUSED_ARG(aFilter);
     //retrive a port iterator
     return (PVMFPortIter*)iPVMFPort;
-}
-
-OSCL_EXPORT_REF PVMFCommandId PVMFClientServerSocketNode::QueryUUID(PVMFSessionId s, const PvmfMimeString& aMimeType,
-        Oscl_Vector<PVUuid, OsclMemAllocator>& aUuids,
-        bool aExactUuidsOnly,
-        const OsclAny* aContext)
-{
-    PVMFSocketNodeCommand cmd;
-    cmd.PVMFSocketNodeCommandBase::Construct(s, PVMF_GENERIC_NODE_QUERYUUID, aMimeType, aUuids, aExactUuidsOnly, aContext);
-    return QueueCommandL(cmd);
 }
 
 OSCL_EXPORT_REF PVMFCommandId PVMFClientServerSocketNode::QueryInterface(PVMFSessionId s, const PVUuid& aUuid,
@@ -422,10 +412,6 @@ void PVMFClientServerSocketNode::ProcessCommand(PVMFSocketNodeCmdQ& aCmdQ, PVMFS
 
         switch (aCmd.iCmd)
         {
-            case PVMF_GENERIC_NODE_QUERYUUID:
-                status = DoQueryUuid(aCmd);
-                break;
-
             case PVMF_GENERIC_NODE_QUERYINTERFACE:
                 status = DoQueryInterface(aCmd);
                 break;
@@ -890,34 +876,6 @@ PVMFStatus PVMFClientServerSocketNode::DoReset(PVMFSocketNodeCommand& aCmd)
 
     return DoStopNodeActivity();
 }
-
-PVMFStatus PVMFClientServerSocketNode::DoQueryUuid(PVMFSocketNodeCommand& aCmd)
-{
-    OSCL_UNUSED_ARG(aCmd);
-    /*  //This node supports Query UUID from any state
-
-        OSCL_String* mimetype;
-        Oscl_Vector<PVUuid, OsclMemAllocator> *uuidvec;
-        bool exactmatch;
-        aCmd.PVMFSocketNodeCommandBase::Parse(mimetype,uuidvec,exactmatch);
-
-        //Try to match the input mimetype against any of
-        //the custom interfaces for this node
-
-        //Match against custom interface1...
-        if (*mimetype==PVMF_SOCKET_NODE_EXTENSION_INTERFACE_MIMETYPE
-            //also match against base mimetypes for custom interface1,
-            //unless exactmatch is set.
-            || (!exactmatch && *mimetype==PVMF_SOCKET_NODE_MIMETYPE)
-            || (!exactmatch && *mimetype==PVMF_SOCKET_NODE_BASEMIMETYPE))
-        {
-
-            PVUuid uuid(PVMF_SOCKET_NODE_EXTENSION_INTERFACE_UUID);
-            uuidvec->push_back(uuid);
-        }*/
-    return PVMFSuccess;
-}
-
 
 PVMFStatus PVMFClientServerSocketNode::DoQueryInterface(PVMFSocketNodeCommand&  aCmd)
 {

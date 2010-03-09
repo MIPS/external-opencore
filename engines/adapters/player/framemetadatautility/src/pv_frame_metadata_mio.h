@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -62,8 +62,6 @@ class PVFMMIOActiveTimingSupport: public PvmiClockExtensionInterface
         void removeRef() ;
         bool queryInterface(const PVUuid& uuid, PVInterface*& iface) ;
 
-        void queryUuid(PVUuid& uuid);
-
         PVMFMediaClock* iClock;
 };
 
@@ -82,8 +80,6 @@ class PVFMMIO
         // From PvmiMIOControl
         virtual PVMFStatus connect(PvmiMIOSession& aSession, PvmiMIOObserver* aObserver);
         virtual PVMFStatus disconnect(PvmiMIOSession aSession);
-        virtual PVMFCommandId QueryUUID(const PvmfMimeString& aMimeType, Oscl_Vector<PVUuid, OsclMemAllocator>& aUuids,
-                                        bool aExactUuidsOnly = false, const OsclAny* aContext = NULL);
         virtual PVMFCommandId QueryInterface(const PVUuid& aUuid, PVInterface*& aInterfacePtr, const OsclAny* aContext = NULL);
         virtual PvmiMediaTransfer* createMediaTransfer(PvmiMIOSession& aSession, PvmiKvp* read_formats = NULL, int32 read_flags = 0,
                 PvmiKvp* write_formats = NULL, int32 write_flags = 0);

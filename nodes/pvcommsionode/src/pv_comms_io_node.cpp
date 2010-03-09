@@ -220,19 +220,6 @@ OSCL_EXPORT_REF PVMFPortIter* PVCommsIONode::GetPorts(const PVMFPortFilter* aFil
 }
 
 ////////////////////////////////////////////////////////////////////////////
-OSCL_EXPORT_REF PVMFCommandId PVCommsIONode::QueryUUID(PVMFSessionId s, const PvmfMimeString& aMimeType,
-        Oscl_Vector<PVUuid, OsclMemAllocator>& aUuids,
-        bool aExactUuidsOnly,
-        const OsclAny* aContext)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                    (0, "PVCommsIONode::QueryUUID() called"));
-    PVCommsIONodeCmd cmd;
-    cmd.PVCommsIONodeCmdBase::Construct(s, PVMF_GENERIC_NODE_QUERYUUID, aMimeType, aUuids, aExactUuidsOnly, aContext);
-    return QueueCommandL(cmd);
-}
-
-////////////////////////////////////////////////////////////////////////////
 OSCL_EXPORT_REF PVMFCommandId PVCommsIONode::QueryInterface(PVMFSessionId s, const PVUuid& aUuid,
         PVInterface*& aInterfacePtr,
         const OsclAny* aContext)
@@ -754,10 +741,6 @@ void PVCommsIONode::ProcessCommand()
             //Process the normal pri commands.
             switch (aCmd.iCmd)
             {
-                case PVMF_GENERIC_NODE_QUERYUUID:
-                    cmdstatus = DoQueryUuid(aCmd);
-                    break;
-
                 case PVMF_GENERIC_NODE_QUERYINTERFACE:
                     cmdstatus = DoQueryInterface(aCmd);
                     break;
@@ -935,21 +918,6 @@ void PVCommsIONode::CommandComplete(PVCommsIONodeCmdQ& aCmdQ, PVCommsIONodeCmd& 
     if (!iInputCommands.empty()
             && IsAdded())
         RunIfNotReady();
-}
-
-////////////////////////////////////////////////////////////////////////////
-PVMFStatus PVCommsIONode::DoQueryUuid(PVCommsIONodeCmd& aCmd)
-{
-    //This node supports Query UUID from any state
-
-    OSCL_String* mimetype;
-    Oscl_Vector<PVUuid, OsclMemAllocator> *uuidvec;
-    bool exactmatch;
-    aCmd.PVCommsIONodeCmdBase::Parse(mimetype, uuidvec, exactmatch);
-
-    uuidvec->push_back(PvmfNodesSyncControlUuid);
-
-    return PVMFSuccess;
 }
 
 ////////////////////////////////////////////////////////////////////////////

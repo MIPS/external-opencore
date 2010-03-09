@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -282,10 +282,6 @@ class PVMFClientServerSocketNode  : public PVMFNodeInterface
         OSCL_IMPORT_REF PVMFStatus ThreadLogoff();
         OSCL_IMPORT_REF PVMFStatus GetCapability(PVMFNodeCapability& aNodeCapability);
         OSCL_IMPORT_REF PVMFPortIter* GetPorts(const PVMFPortFilter* aFilter = NULL);
-        OSCL_IMPORT_REF PVMFCommandId QueryUUID(PVMFSessionId, const PvmfMimeString& aMimeType,
-                                                Oscl_Vector<PVUuid, PVMFSocketNodeAllocator>& aUuids,
-                                                bool aExactUuidsOnly = false,
-                                                const OsclAny* aContext = NULL);
         OSCL_IMPORT_REF PVMFCommandId QueryInterface(PVMFSessionId, const PVUuid& aUuid,
                 PVInterface*& aInterfacePtr,
                 const OsclAny* aContext = NULL);
@@ -369,7 +365,6 @@ class PVMFClientServerSocketNode  : public PVMFNodeInterface
         //Command handlers.
         PVMFStatus DoRequestPort(PVMFSocketNodeCommand& aCmd);
         PVMFStatus DoReset(PVMFSocketNodeCommand&);
-        PVMFStatus DoQueryUuid(PVMFSocketNodeCommand&);
         PVMFStatus DoQueryInterface(PVMFSocketNodeCommand&);
         PVMFStatus DoReleasePort(PVMFSocketNodeCommand&);
         PVMFStatus DoInit(PVMFSocketNodeCommand&);

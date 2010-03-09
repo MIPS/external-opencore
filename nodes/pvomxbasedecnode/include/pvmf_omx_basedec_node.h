@@ -327,7 +327,6 @@ class PVMFOMXBaseDecNode: public PVMFNodeInterfaceImpl
         OSCL_IMPORT_REF virtual void Run();
 
     protected:
-        virtual PVMFStatus DoQueryUuid() = 0;
         virtual PVMFStatus DoRequestPort(PVMFPortInterface*&) = 0;
         virtual PVMFStatus DoGetNodeMetadataKey() = 0;
         virtual PVMFStatus DoGetNodeMetadataValue() = 0;

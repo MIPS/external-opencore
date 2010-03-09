@@ -59,7 +59,8 @@
 
 #include <utils/RefBase.h>
 
-namespace android {
+namespace android
+{
 
 static const int32 DEFAULT_AUDIO_NUMBER_OF_CHANNELS = 1;
 static const int32 DEFAULT_AUDIO_SAMPLING_RATE = 8000;
@@ -80,7 +81,6 @@ class Condition;
  */
 typedef enum
 {
-    AI_CMD_QUERY_UUID,
     AI_CMD_QUERY_INTERFACE,
     AI_CMD_INIT,
     AI_CMD_START,
@@ -99,10 +99,10 @@ typedef enum
 // the audio output thread queues the responses, this mio dequeues and processes them
 class WriteResponse
 {
-public:
-    WriteResponse(PVMFStatus s,PVMFCommandId id,const OsclAny* ctx,const PVMFTimestamp& ts)
-            :iStatus(s),iCmdId(id),iContext(ctx),iTimestamp(ts)
-    {}
+    public:
+        WriteResponse(PVMFStatus s, PVMFCommandId id, const OsclAny* ctx, const PVMFTimestamp& ts)
+                : iStatus(s), iCmdId(id), iContext(ctx), iTimestamp(ts)
+        {}
 
         PVMFStatus iStatus;
         PVMFCommandId iCmdId;
@@ -115,61 +115,61 @@ public:
  */
 class AndroidAudioInputCmd
 {
-public:
-    AndroidAudioInputCmd()
-    {
-        iId = 0;
-        iType = AI_INVALID_CMD;
-        iContext = NULL;
-        iData1 = NULL;
-    }
+    public:
+        AndroidAudioInputCmd()
+        {
+            iId = 0;
+            iType = AI_INVALID_CMD;
+            iContext = NULL;
+            iData1 = NULL;
+        }
 
-    AndroidAudioInputCmd(const AndroidAudioInputCmd& aCmd)
-    {
-        Copy(aCmd);
-    }
+        AndroidAudioInputCmd(const AndroidAudioInputCmd& aCmd)
+        {
+            Copy(aCmd);
+        }
 
-    ~AndroidAudioInputCmd() {}
+        ~AndroidAudioInputCmd() {}
 
-    AndroidAudioInputCmd& operator=(const AndroidAudioInputCmd& aCmd)
-    {
-        Copy(aCmd);
-        return (*this);
-    }
+        AndroidAudioInputCmd& operator=(const AndroidAudioInputCmd& aCmd)
+        {
+            Copy(aCmd);
+            return (*this);
+        }
 
-    PVMFCommandId iId; /** ID assigned to this command */
-    int32 iType;  /** AndroidAudioInputCmdType value */
-    OsclAny* iContext;  /** Other data associated with this command */
-    OsclAny* iData1;  /** Other data associated with this command */
+        PVMFCommandId iId; /** ID assigned to this command */
+        int32 iType;  /** AndroidAudioInputCmdType value */
+        OsclAny* iContext;  /** Other data associated with this command */
+        OsclAny* iData1;  /** Other data associated with this command */
 
-private:
+    private:
 
-    void Copy(const AndroidAudioInputCmd& aCmd)
-    {
-        iId = aCmd.iId;
-        iType = aCmd.iType;
-        iContext = aCmd.iContext;
-        iData1 = aCmd.iData1;
-    }
+        void Copy(const AndroidAudioInputCmd& aCmd)
+        {
+            iId = aCmd.iId;
+            iType = aCmd.iType;
+            iContext = aCmd.iContext;
+            iData1 = aCmd.iData1;
+        }
 };
 
 class AndroidAudioInputMediaData
 {
-public:
-    AndroidAudioInputMediaData()
-    {
-        iId = 0;
-        iData = NULL;
-    }
+    public:
+        AndroidAudioInputMediaData()
+        {
+            iId = 0;
+            iData = NULL;
+        }
 
-    AndroidAudioInputMediaData(const AndroidAudioInputMediaData& aData)
-    {
-        iId = aData.iId;
-        iData = aData.iData;
-    }
+        AndroidAudioInputMediaData(const AndroidAudioInputMediaData& aData)
+        {
+            iId = aData.iId;
+            iData = aData.iData;
+        }
 
-    PVMFCommandId iId;
-    OsclAny* iData;
+        PVMFCommandId iId;
+        OsclAny* iData;
 };
 
 
@@ -177,10 +177,10 @@ public:
 // this mio queues the requests, the audio output thread dequeues and processes them
 class OSSRequest
 {
-public:
-    OSSRequest(uint8* data, uint32 len,PVMFCommandId id,const OsclAny* ctx,const PVMFTimestamp& ts)
-            :iData(data),iDataLen(len),iCmdId(id),iContext(ctx),iTimestamp(ts)
-    {}
+    public:
+        OSSRequest(uint8* data, uint32 len, PVMFCommandId id, const OsclAny* ctx, const PVMFTimestamp& ts)
+                : iData(data), iDataLen(len), iCmdId(id), iContext(ctx), iTimestamp(ts)
+        {}
         uint8* iData;
         uint32 iDataLen;
         PVMFCommandId iCmdId;
@@ -190,289 +190,285 @@ public:
 
 class MicData
 {
-public:
-    MicData(uint8* data, uint32 len, PVMFTimestamp& ts, int32 duration)
-        :iData(data),iDataLen(len),iTimestamp(ts),iDuration(duration)
-    {}
-    uint8* iData;
-    uint32 iDataLen;
-    PVMFTimestamp iTimestamp;
-    int32 iDuration;
+    public:
+        MicData(uint8* data, uint32 len, PVMFTimestamp& ts, int32 duration)
+                : iData(data), iDataLen(len), iTimestamp(ts), iDuration(duration)
+        {}
+        uint8* iData;
+        uint32 iDataLen;
+        PVMFTimestamp iTimestamp;
+        int32 iDuration;
 };
 
 
 class AndroidAudioInput : public OsclTimerObject
-    ,public PvmiMIOControl
-    ,public PvmiMediaTransfer
-    ,public PvmiCapabilityAndConfig
-    ,public RefBase
-    ,public PVMFMediaClockStateObserver
+        , public PvmiMIOControl
+        , public PvmiMediaTransfer
+        , public PvmiCapabilityAndConfig
+        , public RefBase
+        , public PVMFMediaClockStateObserver
 {
-public:
-    AndroidAudioInput(uint32 audioSource);
-    virtual ~AndroidAudioInput();
-
-    // Pure virtuals from PvmiMIOControl
-    OSCL_IMPORT_REF PVMFStatus connect(PvmiMIOSession& aSession, PvmiMIOObserver* aObserver);
-    OSCL_IMPORT_REF PVMFStatus disconnect(PvmiMIOSession aSession);
-    OSCL_IMPORT_REF PvmiMediaTransfer* createMediaTransfer(PvmiMIOSession& aSession,
-                                                         PvmiKvp* read_formats=NULL,
-                                                         int32 read_flags=0,
-                                                         PvmiKvp* write_formats=NULL,
-                                                         int32 write_flags=0);
-    OSCL_IMPORT_REF void deleteMediaTransfer(PvmiMIOSession& aSession,
-                                           PvmiMediaTransfer* media_transfer);
-    OSCL_IMPORT_REF PVMFCommandId QueryUUID(const PvmfMimeString& aMimeType,
-                                          Oscl_Vector<PVUuid, OsclMemAllocator>& aUuids,
-                                          bool aExactUuidsOnly=false,
-                                          const OsclAny* aContext=NULL);
-    OSCL_IMPORT_REF PVMFCommandId QueryInterface(const PVUuid& aUuid,
-                                               PVInterface*& aInterfacePtr,
-                                               const OsclAny* aContext=NULL);
-    OSCL_IMPORT_REF PVMFCommandId Init(const OsclAny* aContext=NULL);
-    OSCL_IMPORT_REF PVMFCommandId Start(const OsclAny* aContext=NULL);
-    OSCL_IMPORT_REF PVMFCommandId Reset(const OsclAny* aContext=NULL);
-    OSCL_IMPORT_REF PVMFCommandId Pause(const OsclAny* aContext=NULL);
-    OSCL_IMPORT_REF PVMFCommandId Flush(const OsclAny* aContext=NULL);
-    OSCL_IMPORT_REF PVMFCommandId DiscardData(PVMFTimestamp aTimestamp, const OsclAny* aContext=NULL);
-    OSCL_IMPORT_REF PVMFCommandId DiscardData(const OsclAny* aContext=NULL);
-    OSCL_IMPORT_REF PVMFCommandId Stop(const OsclAny* aContext=NULL);
-    OSCL_IMPORT_REF PVMFCommandId CancelCommand(PVMFCommandId aCmdId, const OsclAny* aContext=NULL);
-    OSCL_IMPORT_REF PVMFCommandId CancelAllCommands(const OsclAny* aContext=NULL);
-    OSCL_IMPORT_REF void ThreadLogon();
-    OSCL_IMPORT_REF void ThreadLogoff();
-
-    // Pure virtuals from PvmiMediaTransfer
-    OSCL_IMPORT_REF void setPeer(PvmiMediaTransfer* aPeer);
-    OSCL_IMPORT_REF void useMemoryAllocators(OsclMemAllocator* write_alloc=NULL);
-    OSCL_IMPORT_REF PVMFCommandId writeAsync(uint8 format_type, int32 format_index,
-                                           uint8* data, uint32 data_len,
-                                           const PvmiMediaXferHeader& data_header_info,
-                                           OsclAny* aContext=NULL);
-    OSCL_IMPORT_REF void writeComplete(PVMFStatus aStatus, PVMFCommandId write_cmd_id,
-                                     OsclAny* aContext);
-    OSCL_IMPORT_REF PVMFCommandId readAsync(uint8* data, uint32 max_data_len, OsclAny* aContext=NULL,
-                                          int32* formats=NULL, uint16 num_formats=0);
-    OSCL_IMPORT_REF void readComplete(PVMFStatus aStatus, PVMFCommandId read_cmd_id,
-                                    int32 format_index,
-                                    const PvmiMediaXferHeader& data_header_info,
-                                    OsclAny* aContext);
-    OSCL_IMPORT_REF void statusUpdate(uint32 status_flags);
-    OSCL_IMPORT_REF void cancelCommand(PVMFCommandId aCmdId);
-    OSCL_IMPORT_REF void cancelAllCommands();
-
-    // Pure virtuals from PvmiCapabilityAndConfig
-    OSCL_IMPORT_REF void setObserver (PvmiConfigAndCapabilityCmdObserver* aObserver);
-    OSCL_IMPORT_REF PVMFStatus getParametersSync(PvmiMIOSession aSession, PvmiKeyType aIdentifier,
-                                               PvmiKvp*& aParameters, int& num_parameter_elements,
-                                               PvmiCapabilityContext aContext);
-    OSCL_IMPORT_REF PVMFStatus releaseParameters(PvmiMIOSession aSession, PvmiKvp* aParameters,
-                                               int num_elements);
-    OSCL_IMPORT_REF void createContext(PvmiMIOSession aSession, PvmiCapabilityContext& aContext);
-    OSCL_IMPORT_REF void setContextParameters(PvmiMIOSession aSession, PvmiCapabilityContext& aContext,
-                                            PvmiKvp* aParameters, int num_parameter_elements);
-    OSCL_IMPORT_REF void DeleteContext(PvmiMIOSession aSession, PvmiCapabilityContext& aContext);
-    OSCL_IMPORT_REF void setParametersSync(PvmiMIOSession aSession, PvmiKvp* aParameters,
-                                         int num_elements, PvmiKvp * & aRet_kvp);
-    OSCL_IMPORT_REF PVMFCommandId setParametersAsync(PvmiMIOSession aSession, PvmiKvp* aParameters,
-                                                   int num_elements, PvmiKvp*& aRet_kvp,
-                                                   OsclAny* context=NULL);
-    OSCL_IMPORT_REF uint32 getCapabilityMetric (PvmiMIOSession aSession);
-    OSCL_IMPORT_REF PVMFStatus verifyParametersSync (PvmiMIOSession aSession,
-                                                   PvmiKvp* aParameters, int num_elements);
-
-    // Android-specific stuff
-
-    /* Returns the max absolute amplitude since the last call of this function. Used for
-     * visualization.
-     */
-    int maxAmplitude();
-
-    /* Sets the input sampling rate */
-    bool setAudioSamplingRate(int32 iSamplingRate);
-
-    /* Set the input number of channels */
-    bool setAudioNumChannels(int32 iNumChannels);
-    /* SendEvent is used to notify peer that we have an error */
-    void SendEvent(PVMFEventCategory aCategory,
-                   PVMFStatus aStatus,
-                   OsclAny* aEventData = NULL,
-                   int32* aEventCode = NULL);
-
-    /* From PVMFMediaClockStateObserver and its base*/
-    void ClockStateUpdated();
-    void NotificationsInterfaceDestroyed();
-
-private:
-    AndroidAudioInput();
-    void Run();
-
-    int audin_thread_func();
-    static int start_audin_thread_func(TOsclThreadFuncArg arg);
-    void SendMicData(void);
-
-    PVMFCommandId AddCmdToQueue(AndroidAudioInputCmdType aType, const OsclAny* aContext, OsclAny* aData1 = NULL);
-    void AddDataEventToQueue(uint32 aMicroSecondsToEvent);
-    void DoRequestCompleted(const AndroidAudioInputCmd& aCmd, PVMFStatus aStatus, OsclAny* aEventData=NULL);
-    PVMFStatus DoInit();
-    PVMFStatus DoStart();
-    PVMFStatus DoReset();
-    PVMFStatus DoPause();
-    PVMFStatus DoFlush();
-    PVMFStatus DoStop();
-    PVMFStatus DoRead();
-
-    /**
-     * Allocate a specified number of key-value pairs and set the keys
-     *
-     * @param aKvp Output parameter to hold the allocated key-value pairs
-     * @param aKey Key for the allocated key-value pairs
-     * @param aNumParams Number of key-value pairs to be allocated
-     * @return Completion status
-     */
-    PVMFStatus AllocateKvp(PvmiKvp*& aKvp, PvmiKeyType aKey, int32 aNumParams);
-
-    /**
-     * Verify one key-value pair parameter against capability of the port and
-     * if the aSetParam flag is set, set the value of the parameter corresponding to
-     * the key.
-     *
-     * @param aKvp Key-value pair parameter to be verified
-     * @param aSetParam If true, set the value of parameter corresponding to the key.
-     * @return PVMFSuccess if parameter is supported, else PVMFFailure
-     */
-    PVMFStatus VerifyAndSetParameter(PvmiKvp* aKvp, bool aSetParam=false);
-
-    // Linearly ramp up the volume from 0 to full over a duration given
-    // in "kAutoRampDurationFrames". The time of the first audio frame
-    // passed in is "timeInFrames".
-    void RampVolume(int32 timeInFrames, int32 kAutoRampDurationFrames,
-                    void *_data, size_t numBytes) const;
-
-    // Send the info/error event to peer using a OSCL_TRY()
-    void sendEventToPeer(uint8 format_type, int32 format_index,
-                           uint8* data, uint32 data_len,
-                           const PvmiMediaXferHeader& data_header_info,
-                           OsclAny* context);
-    void RemoveDestroyClockStateObs();
-
-    // Command queue
-    uint32 iCmdIdCounter;
-    Oscl_Vector<AndroidAudioInputCmd, OsclMemAllocator> iCmdQueue;
-
-    // PvmiMIO sessions
-    Oscl_Vector<PvmiMIOObserver*, OsclMemAllocator> iObservers;
-
-    PvmiMediaTransfer* iPeer;
-
-    // Thread logon
-    bool iThreadLoggedOn;
-
-    // semaphore used to communicate with the audio input thread
-    OsclSemaphore* iAudioThreadSem;
-    // and another one
-    OsclSemaphore* iAudioThreadTermSem;
-
-    volatile bool iExitAudioThread;
-    bool iWriteBusy;
-    uint32 iWriteBusySeqNum;
-
-    PvmiMIOObserver* iObserver;
-
-
-    uint32 iCommandCounter;
-
-    //Control command handling.
-    class CommandResponse
-    {
     public:
-        CommandResponse(PVMFStatus s,PVMFCommandId id,const OsclAny* ctx)
-            :iStatus(s),iCmdId(id),iContext(ctx)
-        {}
+        AndroidAudioInput(uint32 audioSource);
+        virtual ~AndroidAudioInput();
 
-        PVMFStatus iStatus;
-        PVMFCommandId iCmdId;
-        const OsclAny* iContext;
-    };
-    Oscl_Vector<CommandResponse,OsclMemAllocator> iCommandResponseQueue;
+        // Pure virtuals from PvmiMIOControl
+        OSCL_IMPORT_REF PVMFStatus connect(PvmiMIOSession& aSession, PvmiMIOObserver* aObserver);
+        OSCL_IMPORT_REF PVMFStatus disconnect(PvmiMIOSession aSession);
+        OSCL_IMPORT_REF PvmiMediaTransfer* createMediaTransfer(PvmiMIOSession& aSession,
+                PvmiKvp* read_formats = NULL,
+                int32 read_flags = 0,
+                PvmiKvp* write_formats = NULL,
+                int32 write_flags = 0);
+        OSCL_IMPORT_REF void deleteMediaTransfer(PvmiMIOSession& aSession,
+                PvmiMediaTransfer* media_transfer);
+        OSCL_IMPORT_REF PVMFCommandId QueryInterface(const PVUuid& aUuid,
+                PVInterface*& aInterfacePtr,
+                const OsclAny* aContext = NULL);
+        OSCL_IMPORT_REF PVMFCommandId Init(const OsclAny* aContext = NULL);
+        OSCL_IMPORT_REF PVMFCommandId Start(const OsclAny* aContext = NULL);
+        OSCL_IMPORT_REF PVMFCommandId Reset(const OsclAny* aContext = NULL);
+        OSCL_IMPORT_REF PVMFCommandId Pause(const OsclAny* aContext = NULL);
+        OSCL_IMPORT_REF PVMFCommandId Flush(const OsclAny* aContext = NULL);
+        OSCL_IMPORT_REF PVMFCommandId DiscardData(PVMFTimestamp aTimestamp, const OsclAny* aContext = NULL);
+        OSCL_IMPORT_REF PVMFCommandId DiscardData(const OsclAny* aContext = NULL);
+        OSCL_IMPORT_REF PVMFCommandId Stop(const OsclAny* aContext = NULL);
+        OSCL_IMPORT_REF PVMFCommandId CancelCommand(PVMFCommandId aCmdId, const OsclAny* aContext = NULL);
+        OSCL_IMPORT_REF PVMFCommandId CancelAllCommands(const OsclAny* aContext = NULL);
+        OSCL_IMPORT_REF void ThreadLogon();
+        OSCL_IMPORT_REF void ThreadLogoff();
 
-    //Audio parameters.
-    OSCL_HeapString<OsclMemAllocator> iAudioFormatString;
-    PVMFFormatType iAudioFormat;
-    int32 iAudioNumChannels;
-    int32 iAudioSamplingRate;
-    uint32 iAudioSource;
+        // Pure virtuals from PvmiMediaTransfer
+        OSCL_IMPORT_REF void setPeer(PvmiMediaTransfer* aPeer);
+        OSCL_IMPORT_REF void useMemoryAllocators(OsclMemAllocator* write_alloc = NULL);
+        OSCL_IMPORT_REF PVMFCommandId writeAsync(uint8 format_type, int32 format_index,
+                uint8* data, uint32 data_len,
+                const PvmiMediaXferHeader& data_header_info,
+                OsclAny* aContext = NULL);
+        OSCL_IMPORT_REF void writeComplete(PVMFStatus aStatus, PVMFCommandId write_cmd_id,
+                                           OsclAny* aContext);
+        OSCL_IMPORT_REF PVMFCommandId readAsync(uint8* data, uint32 max_data_len, OsclAny* aContext = NULL,
+                                                int32* formats = NULL, uint16 num_formats = 0);
+        OSCL_IMPORT_REF void readComplete(PVMFStatus aStatus, PVMFCommandId read_cmd_id,
+                                          int32 format_index,
+                                          const PvmiMediaXferHeader& data_header_info,
+                                          OsclAny* aContext);
+        OSCL_IMPORT_REF void statusUpdate(uint32 status_flags);
+        OSCL_IMPORT_REF void cancelCommand(PVMFCommandId aCmdId);
+        OSCL_IMPORT_REF void cancelAllCommands();
 
-    int32 iFrameSize;
-    int32 iDataEventCounter;
+        // Pure virtuals from PvmiCapabilityAndConfig
+        OSCL_IMPORT_REF void setObserver(PvmiConfigAndCapabilityCmdObserver* aObserver);
+        OSCL_IMPORT_REF PVMFStatus getParametersSync(PvmiMIOSession aSession, PvmiKeyType aIdentifier,
+                PvmiKvp*& aParameters, int& num_parameter_elements,
+                PvmiCapabilityContext aContext);
+        OSCL_IMPORT_REF PVMFStatus releaseParameters(PvmiMIOSession aSession, PvmiKvp* aParameters,
+                int num_elements);
+        OSCL_IMPORT_REF void createContext(PvmiMIOSession aSession, PvmiCapabilityContext& aContext);
+        OSCL_IMPORT_REF void setContextParameters(PvmiMIOSession aSession, PvmiCapabilityContext& aContext,
+                PvmiKvp* aParameters, int num_parameter_elements);
+        OSCL_IMPORT_REF void DeleteContext(PvmiMIOSession aSession, PvmiCapabilityContext& aContext);
+        OSCL_IMPORT_REF void setParametersSync(PvmiMIOSession aSession, PvmiKvp* aParameters,
+                                               int num_elements, PvmiKvp * & aRet_kvp);
+        OSCL_IMPORT_REF PVMFCommandId setParametersAsync(PvmiMIOSession aSession, PvmiKvp* aParameters,
+                int num_elements, PvmiKvp*& aRet_kvp,
+                OsclAny* context = NULL);
+        OSCL_IMPORT_REF uint32 getCapabilityMetric(PvmiMIOSession aSession);
+        OSCL_IMPORT_REF PVMFStatus verifyParametersSync(PvmiMIOSession aSession,
+                PvmiKvp* aParameters, int num_elements);
 
-    // Functions specific to this MIO
+        // Android-specific stuff
 
-    //request active object which the audio output thread uses to schedule this timer object to run
-    AndroidAudioInputThreadSafeCallbackAO *iWriteCompleteAO;
+        /* Returns the max absolute amplitude since the last call of this function. Used for
+         * visualization.
+         */
+        int maxAmplitude();
 
-    // write response queue, needs to use lock mechanism to access
-    //Oscl_Vector<WriteResponse,OsclMemAllocator> iWriteResponseQueue;
-    Oscl_Vector<MicData,OsclMemAllocator> iWriteResponseQueue;
+        /* Sets the input sampling rate */
+        bool setAudioSamplingRate(int32 iSamplingRate);
 
-    // lock used to access the write response queue
-    OsclMutex iWriteResponseQueueLock;
+        /* Set the input number of channels */
+        bool setAudioNumChannels(int32 iNumChannels);
+        /* SendEvent is used to notify peer that we have an error */
+        void SendEvent(PVMFEventCategory aCategory,
+                       PVMFStatus aStatus,
+                       OsclAny* aEventData = NULL,
+                       int32* aEventCode = NULL);
 
-    // oss request queue, needs to use lock mechanism to access
-    //Oscl_Vector<OSSRequest,OsclMemAllocator> iOSSRequestQueue;
-    Oscl_Vector<uint8*, OsclMemAllocator> iOSSRequestQueue;
+        /* From PVMFMediaClockStateObserver and its base*/
+        void ClockStateUpdated();
+        void NotificationsInterfaceDestroyed();
 
-    // lock used to access the oss request queue
-    OsclMutex iOSSRequestQueueLock;
+    private:
+        AndroidAudioInput();
+        void Run();
 
-    // Timing
-    int32 iMilliSecondsPerDataEvent;
-    int32 iMicroSecondsPerDataEvent;
-    PVMFTimestamp iTimeStamp;
+        int audin_thread_func();
+        static int start_audin_thread_func(TOsclThreadFuncArg arg);
+        void SendMicData(void);
 
-    // Allocator for simple media data buffer
-    OsclMemAllocator iAlloc;
-    OsclMemPoolFixedChunkAllocator* iMediaBufferMemPool;
+        PVMFCommandId AddCmdToQueue(AndroidAudioInputCmdType aType, const OsclAny* aContext, OsclAny* aData1 = NULL);
+        void AddDataEventToQueue(uint32 aMicroSecondsToEvent);
+        void DoRequestCompleted(const AndroidAudioInputCmd& aCmd, PVMFStatus aStatus, OsclAny* aEventData = NULL);
+        PVMFStatus DoInit();
+        PVMFStatus DoStart();
+        PVMFStatus DoReset();
+        PVMFStatus DoPause();
+        PVMFStatus DoFlush();
+        PVMFStatus DoStop();
+        PVMFStatus DoRead();
 
-    Oscl_Vector<AndroidAudioInputMediaData, OsclMemAllocator> iSentMediaData;
+        /**
+         * Allocate a specified number of key-value pairs and set the keys
+         *
+         * @param aKvp Output parameter to hold the allocated key-value pairs
+         * @param aKey Key for the allocated key-value pairs
+         * @param aNumParams Number of key-value pairs to be allocated
+         * @return Completion status
+         */
+        PVMFStatus AllocateKvp(PvmiKvp*& aKvp, PvmiKeyType aKey, int32 aNumParams);
 
-    // State machine
-    enum AndroidAudioInputState
-    {
-        STATE_IDLE,
-        STATE_INITIALIZED,
-        STATE_STARTED,
-        STATE_FLUSHING,
-        STATE_PAUSED,
-        STATE_STOPPED
-    };
+        /**
+         * Verify one key-value pair parameter against capability of the port and
+         * if the aSetParam flag is set, set the value of the parameter corresponding to
+         * the key.
+         *
+         * @param aKvp Key-value pair parameter to be verified
+         * @param aSetParam If true, set the value of parameter corresponding to the key.
+         * @return PVMFSuccess if parameter is supported, else PVMFFailure
+         */
+        PVMFStatus VerifyAndSetParameter(PvmiKvp* aKvp, bool aSetParam = false);
 
-    AndroidAudioInputState iState;
+        // Linearly ramp up the volume from 0 to full over a duration given
+        // in "kAutoRampDurationFrames". The time of the first audio frame
+        // passed in is "timeInFrames".
+        void RampVolume(int32 timeInFrames, int32 kAutoRampDurationFrames,
+                        void *_data, size_t numBytes) const;
 
-    FILE *fp;
+        // Send the info/error event to peer using a OSCL_TRY()
+        void sendEventToPeer(uint8 format_type, int32 format_index,
+                             uint8* data, uint32 data_len,
+                             const PvmiMediaXferHeader& data_header_info,
+                             OsclAny* context);
+        void RemoveDestroyClockStateObs();
 
-    volatile int iMaxAmplitude;
-    volatile bool iTrackMaxAmplitude;
+        // Command queue
+        uint32 iCmdIdCounter;
+        Oscl_Vector<AndroidAudioInputCmd, OsclMemAllocator> iCmdQueue;
 
-    // synchronize startup of audio input thread, so we can return an error
-    // from DoStart() if something goes wrong
-    Mutex *iAudioThreadStartLock;
-    Condition *iAudioThreadStartCV;
-    volatile status_t iAudioThreadStartResult;
-    volatile bool iAudioThreadStarted;
+        // PvmiMIO sessions
+        Oscl_Vector<PvmiMIOObserver*, OsclMemAllocator> iObservers;
 
-    PVMFMediaClock *iAuthorClock;
-    PVMFMediaClockNotificationsInterface *iClockNotificationsInf;
+        PvmiMediaTransfer* iPeer;
 
-    // These variables tracks whether or not first audio frame was received.
-    // This is needed to start the clock since the time origin is synced to the
-    // first audio sample.
-    volatile bool iFirstFrameReceived;
-    volatile PVMFTimestamp iFirstFrameTs;
+        // Thread logon
+        bool iThreadLoggedOn;
 
-    // This stores the Start cmd when Audio MIO is waiting for
-    // first audio frame to be received from the device.
-    AndroidAudioInputCmd iStartCmd;
+        // semaphore used to communicate with the audio input thread
+        OsclSemaphore* iAudioThreadSem;
+        // and another one
+        OsclSemaphore* iAudioThreadTermSem;
+
+        volatile bool iExitAudioThread;
+        bool iWriteBusy;
+        uint32 iWriteBusySeqNum;
+
+        PvmiMIOObserver* iObserver;
+
+
+        uint32 iCommandCounter;
+
+        //Control command handling.
+        class CommandResponse
+        {
+            public:
+                CommandResponse(PVMFStatus s, PVMFCommandId id, const OsclAny* ctx)
+                        : iStatus(s), iCmdId(id), iContext(ctx)
+                {}
+
+                PVMFStatus iStatus;
+                PVMFCommandId iCmdId;
+                const OsclAny* iContext;
+        };
+        Oscl_Vector<CommandResponse, OsclMemAllocator> iCommandResponseQueue;
+
+        //Audio parameters.
+        OSCL_HeapString<OsclMemAllocator> iAudioFormatString;
+        PVMFFormatType iAudioFormat;
+        int32 iAudioNumChannels;
+        int32 iAudioSamplingRate;
+        uint32 iAudioSource;
+
+        int32 iFrameSize;
+        int32 iDataEventCounter;
+
+        // Functions specific to this MIO
+
+        //request active object which the audio output thread uses to schedule this timer object to run
+        AndroidAudioInputThreadSafeCallbackAO *iWriteCompleteAO;
+
+        // write response queue, needs to use lock mechanism to access
+        //Oscl_Vector<WriteResponse,OsclMemAllocator> iWriteResponseQueue;
+        Oscl_Vector<MicData, OsclMemAllocator> iWriteResponseQueue;
+
+        // lock used to access the write response queue
+        OsclMutex iWriteResponseQueueLock;
+
+        // oss request queue, needs to use lock mechanism to access
+        //Oscl_Vector<OSSRequest,OsclMemAllocator> iOSSRequestQueue;
+        Oscl_Vector<uint8*, OsclMemAllocator> iOSSRequestQueue;
+
+        // lock used to access the oss request queue
+        OsclMutex iOSSRequestQueueLock;
+
+        // Timing
+        int32 iMilliSecondsPerDataEvent;
+        int32 iMicroSecondsPerDataEvent;
+        PVMFTimestamp iTimeStamp;
+
+        // Allocator for simple media data buffer
+        OsclMemAllocator iAlloc;
+        OsclMemPoolFixedChunkAllocator* iMediaBufferMemPool;
+
+        Oscl_Vector<AndroidAudioInputMediaData, OsclMemAllocator> iSentMediaData;
+
+        // State machine
+        enum AndroidAudioInputState
+        {
+            STATE_IDLE,
+            STATE_INITIALIZED,
+            STATE_STARTED,
+            STATE_FLUSHING,
+            STATE_PAUSED,
+            STATE_STOPPED
+        };
+
+        AndroidAudioInputState iState;
+
+        FILE *fp;
+
+        volatile int iMaxAmplitude;
+        volatile bool iTrackMaxAmplitude;
+
+        // synchronize startup of audio input thread, so we can return an error
+        // from DoStart() if something goes wrong
+        Mutex *iAudioThreadStartLock;
+        Condition *iAudioThreadStartCV;
+        volatile status_t iAudioThreadStartResult;
+        volatile bool iAudioThreadStarted;
+
+        PVMFMediaClock *iAuthorClock;
+        PVMFMediaClockNotificationsInterface *iClockNotificationsInf;
+
+        // These variables tracks whether or not first audio frame was received.
+        // This is needed to start the clock since the time origin is synced to the
+        // first audio sample.
+        volatile bool iFirstFrameReceived;
+        volatile PVMFTimestamp iFirstFrameTs;
+
+        // This stores the Start cmd when Audio MIO is waiting for
+        // first audio frame to be received from the device.
+        AndroidAudioInputCmd iStartCmd;
 };
 
 }; // namespace android

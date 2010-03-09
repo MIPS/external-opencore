@@ -97,7 +97,6 @@ typedef enum
     PVAE_CMD_PAUSE,
     PVAE_CMD_RESUME,
     PVAE_CMD_STOP,
-    PVAE_CMD_QUERY_UUID,
     PVAE_CMD_QUERY_INTERFACE,
     PVAE_CMD_GET_SDK_INFO,
     PVAE_CMD_GET_SDK_MODULE_INFO,
@@ -191,10 +190,6 @@ class PVAuthorEngine
         OSCL_IMPORT_REF PVCommandId Pause(const OsclAny* aContextData = NULL);
         OSCL_IMPORT_REF PVCommandId Resume(const OsclAny* aContextData = NULL);
         OSCL_IMPORT_REF PVCommandId Stop(const OsclAny* aContextData = NULL);
-        OSCL_IMPORT_REF PVCommandId QueryUUID(const PvmfMimeString& aMimeType,
-                                              Oscl_Vector<PVUuid, OsclMemAllocator>& aUuids,
-                                              bool aExactUuidsOnly = false,
-                                              const OsclAny* aContextData = NULL);
         OSCL_IMPORT_REF PVCommandId QueryInterface(const PVUuid& aUuid,
                 PVInterface*& aInterfacePtr,
                 const OsclAny* aContextData = NULL);

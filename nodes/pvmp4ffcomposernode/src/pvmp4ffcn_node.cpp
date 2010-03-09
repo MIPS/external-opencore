@@ -1000,21 +1000,6 @@ void PVMp4FFComposerNode::Run()
 }
 
 //////////////////////////////////////////////////////////////////////////////////
-PVMFStatus PVMp4FFComposerNode::DoQueryUuid()
-{
-    OSCL_String* mimetype;
-    Oscl_Vector<PVUuid, OsclMemAllocator> *uuidvec;
-    bool exactmatch;
-    iCurrentCommand.PVMFNodeCommandBase::Parse(mimetype, uuidvec, exactmatch);
-
-    uuidvec->push_back(KPVMp4FFCNClipConfigUuid);
-    uuidvec->push_back(KPVMp4FFCNTrackConfigUuid);
-    uuidvec->push_back(PvmfComposerSizeAndDurationUuid);
-
-    return PVMFSuccess;
-}
-
-//////////////////////////////////////////////////////////////////////////////////
 PVMFStatus PVMp4FFComposerNode::DoQueryInterface()
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,

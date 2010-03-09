@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -154,35 +154,6 @@ class PVAENodeUtilCmd
             return PVMFSuccess;
         }
 
-        PVMFStatus ConstructQueryUUID(PVAENodeContainer* aNodeContainer, const PvmfMimeString& aMimeType,
-                                      Oscl_Vector<PVUuid, OsclMemAllocator>& aUuids,
-                                      bool aExactUuidsOnly, OsclAny* aContext)
-        {
-            iType = PVAENU_CMD_QUERY_UUID;
-            iContext = aContext;
-            iParam1 = (OsclAny*) & aUuids;
-            iParam2 = (OsclAny*)aExactUuidsOnly;
-
-            int32 err = 0;
-            OSCL_TRY(err,
-                     iNodes.push_back(aNodeContainer);
-                     iMimeType = aMimeType;
-                    );
-            OSCL_FIRST_CATCH_ANY(err, return PVMFErrNoMemory;);
-
-            return PVMFSuccess;
-        }
-
-        PVMFStatus ParseQueryUUID(Oscl_Vector<PVUuid, OsclMemAllocator>* aUuids, bool& aExactUuidsOnly)
-        {
-            if (iType != PVAENU_CMD_QUERY_UUID)
-                return PVMFFailure;
-
-            aUuids = (Oscl_Vector<PVUuid, OsclMemAllocator>*)iParam1;
-            aExactUuidsOnly = (iParam2 != NULL); // iParam2 is a bool
-            return PVMFSuccess;
-        }
-
         PVMFStatus ConstructQueryInterface(PVAENodeContainer* aNodeContainer,
                                            const PVUuid& aUuid,
                                            PVInterface*& aInterfacePtr,
@@ -319,22 +290,6 @@ class PVAuthorEngineNodeUtility : public OsclTimerObject,
         PVMFStatus Disconnect(PVAENodeContainer* aNodeContainer, OsclAny* aContext = NULL);
 
         /**
-         * Query UUIDs supported by the specified node.
-         *
-         * @param aNodeContainer Container for node to which this query is made
-         * @param aMimeType The MIME type of the desired interfaces
-         * @param aUuids A vector to hold the discovered UUIDs
-         * @param aExactUuidsOnly Turns on/off the retrival of UUIDs with aMimeType as a base type
-         * @param aContext Optional opaque data to be passed back to user with the command response
-         * @returns Completion status
-         */
-        PVMFStatus QueryUUID(PVAENodeContainer* aNodeContainer,
-                             const PvmfMimeString& aMimeType,
-                             Oscl_Vector<PVUuid, OsclMemAllocator>& aUuids,
-                             bool aExactUuidsOnly = false,
-                             OsclAny* aContext = NULL);
-
-        /**
          * Query for interface of specified Uuid from the specified node. The queried interface
          * object will be added to the iExtensions vector and stored in the interface pointer
          * provided by user.  Also, Uuid of the queried interface will be added to the
@@ -444,7 +399,6 @@ class PVAuthorEngineNodeUtility : public OsclTimerObject,
         PVMFStatus DoConnect(const PVAENodeUtilCmd& aCmd);
         PVMFStatus CompleteConnect(const PVAENodeUtilCmd& aCmd, const PVMFCmdResp& aResponse);
         PVMFStatus DoDisconnect(const PVAENodeUtilCmd& aCmd);
-        PVMFStatus DoQueryUuid(const PVAENodeUtilCmd& aCmd);
         PVMFStatus DoQueryInterface(const PVAENodeUtilCmd& aCmd);
         PVMFStatus CompleteQueryInterface(const PVAENodeUtilCmd& aCmd);
         PVMFStatus DoInit(const PVAENodeUtilCmd& aCmd);

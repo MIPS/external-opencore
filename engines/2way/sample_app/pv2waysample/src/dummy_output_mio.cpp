@@ -157,26 +157,6 @@ void DummyOutputMIO::QueueCommandResponse(CommandResponse& aResp)
         PendComplete(OSCL_REQUEST_ERR_NONE);
 }
 
-PVMFCommandId DummyOutputMIO::QueryUUID(const PvmfMimeString& aMimeType,
-                                        Oscl_Vector<PVUuid, OsclMemAllocator>& aUuids,
-                                        bool aExactUuidsOnly,
-                                        const OsclAny* aContext)
-{
-    LIPSYNCDUMMYOUTPUTMIO_LOGDEBUG((0, "DummyOutputMIO::QueryUUID()"));
-
-    OSCL_UNUSED_ARG(aMimeType);
-    OSCL_UNUSED_ARG(aExactUuidsOnly);
-
-    PVMFCommandId cmdid = iCommandCounter++;
-
-    PVMFStatus status = PVMFSuccess;
-    aUuids.push_back(PVMI_CAPABILITY_AND_CONFIG_PVUUID);
-
-    CommandResponse resp(status, cmdid, aContext);
-    QueueCommandResponse(resp);
-    return cmdid;
-}
-
 PVMFCommandId DummyOutputMIO::QueryInterface(const PVUuid& aUuid,
         PVInterface*& aInterfacePtr,
         const OsclAny* aContext)

@@ -467,11 +467,6 @@ class PVMFNodeInterfaceImpl : public PVMFNodeInterface,
         OSCL_IMPORT_REF virtual PVMFStatus Disconnect(PVMFSessionId aSessionId);
         OSCL_IMPORT_REF virtual PVMFStatus GetCapability(PVMFNodeCapability& aNodeCapability);
         OSCL_IMPORT_REF virtual PVMFPortIter* GetPorts(const PVMFPortFilter* aFilter = NULL);
-        OSCL_IMPORT_REF virtual PVMFCommandId QueryUUID(PVMFSessionId aSession,
-                const PvmfMimeString& aMimeType,
-                Oscl_Vector<PVUuid, OsclMemAllocator>& aUuids,
-                bool aExactUuidsOnly = false,
-                const OsclAny* aContext = NULL);
         OSCL_IMPORT_REF virtual PVMFCommandId QueryInterface(PVMFSessionId aSession,
                 const PVUuid& aUuid,
                 PVInterface*& aInterfacePtr,
@@ -522,7 +517,6 @@ class PVMFNodeInterfaceImpl : public PVMFNodeInterface,
         OSCL_IMPORT_REF virtual PVMFStatus CancelCurrentCommand() = 0;
 
         //command handlers
-        OSCL_IMPORT_REF virtual PVMFStatus DoQueryUuid() = 0;
         OSCL_IMPORT_REF virtual PVMFStatus DoQueryInterface() = 0;
         OSCL_IMPORT_REF virtual PVMFStatus DoInit() = 0;
         OSCL_IMPORT_REF virtual PVMFStatus DoStop() = 0;

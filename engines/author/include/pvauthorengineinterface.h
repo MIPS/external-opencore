@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -446,25 +446,6 @@ class PVAuthorEngineInterface
          * @returns A unique command id for synchronous completion
          */
         virtual PVAEState GetPVAuthorState() = 0;
-
-        /**
-         * Discover the UUIDs of interfaces associated with the specified MIME type and node
-         *
-         * This API is to allow for extensibility of the pvAuthor Engine interface. User can query for
-         * all UUIDs associated with a particular MIME type. The UUIDs will be added to the aUuids
-         * vector provided by the user.
-         * Currently this API is NOT SUPPORTED.
-         *
-         * @param aMimeType The MIME type of the desired interfaces
-         * @param aUuids A vector to hold the discovered UUIDs
-         * @param aExactUuidsOnly Turns on/off the retrival of UUIDs with aMimeType as a base type
-         * @param aContextData Optional opaque data to be passed back to user with the command response
-         * @returns A unique command id for asynchronous completion
-         */
-        virtual PVCommandId QueryUUID(const PvmfMimeString& aMimeType,
-                                      Oscl_Vector<PVUuid, OsclMemAllocator>& aUuids,
-                                      bool aExactUuidsOnly = false,
-                                      const OsclAny* aContextData = NULL) = 0;
 
         /**
          * This API is to allow for extensibility of the pvAuthor engine interface.

@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -223,19 +223,6 @@ OSCL_EXPORT_REF PVMFPortIter* PvmfMediaInputNode::GetPorts(const PVMFPortFilter*
     OSCL_UNUSED_ARG(aFilter);//port filter is not implemented.
     iOutPortVector.Reset();
     return &iOutPortVector;
-}
-
-////////////////////////////////////////////////////////////////////////////
-OSCL_EXPORT_REF PVMFCommandId PvmfMediaInputNode::QueryUUID(PVMFSessionId s, const PvmfMimeString& aMimeType,
-        Oscl_Vector<PVUuid, OsclMemAllocator>& aUuids,
-        bool aExactUuidsOnly,
-        const OsclAny* aContext)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                    (0, "PvmfMediaInputNode::QueryUUID() called"));
-    PvmfMediaInputNodeCmd cmd;
-    cmd.PvmfMediaInputNodeCmdBase::Construct(s, PVMF_GENERIC_NODE_QUERYUUID, aMimeType, aUuids, aExactUuidsOnly, aContext);
-    return QueueCommandL(cmd);
 }
 
 ////////////////////////////////////////////////////////////////////////////
@@ -740,10 +727,6 @@ void PvmfMediaInputNode::ProcessCommand()
             //Process the normal pri commands.
             switch (aCmd.iCmd)
             {
-                case PVMF_GENERIC_NODE_QUERYUUID:
-                    cmdstatus = DoQueryUuid(aCmd);
-                    break;
-
                 case PVMF_GENERIC_NODE_QUERYINTERFACE:
                     cmdstatus = DoQueryInterface(aCmd);
                     break;
@@ -918,21 +901,6 @@ void PvmfMediaInputNode::CommandComplete(PvmfMediaInputNodeCmdQ& aCmdQ, PvmfMedi
     if (!iInputCommands.empty()
             && IsAdded())
         RunIfNotReady();
-}
-
-////////////////////////////////////////////////////////////////////////////
-PVMFStatus PvmfMediaInputNode::DoQueryUuid(PvmfMediaInputNodeCmd& aCmd)
-{
-    //This node supports Query UUID from any state
-
-    OSCL_String* mimetype;
-    Oscl_Vector<PVUuid, OsclMemAllocator> *uuidvec;
-    bool exactmatch;
-    aCmd.PvmfMediaInputNodeCmdBase::Parse(mimetype, uuidvec, exactmatch);
-
-    uuidvec->push_back(PvmfNodesSyncControlUuid);
-
-    return PVMFSuccess;
 }
 
 ////////////////////////////////////////////////////////////////////////////

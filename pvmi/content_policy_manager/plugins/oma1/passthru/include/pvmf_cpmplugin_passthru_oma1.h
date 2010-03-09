@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -150,8 +150,7 @@ typedef PVMFNodeCommandQueue<PVMFCPMPassThruPlugInOMA1Command, OsclMemAllocator>
  */
 enum TPVMFCPMPassThruPlugInOMA1Command
 {
-    PVMF_CPM_PASSTHRU_PLUGIN_OMA1_QUERYUUID = PVMF_GENERIC_NODE_QUERYUUID
-    , PVMF_CPM_PASSTHRU_PLUGIN_OMA1_QUERYINTERFACE = PVMF_GENERIC_NODE_QUERYINTERFACE
+    PVMF_CPM_PASSTHRU_PLUGIN_OMA1_QUERYINTERFACE = PVMF_GENERIC_NODE_QUERYINTERFACE
     , PVMF_CPM_PASSTHRU_PLUGIN_OMA1_INIT = PVMF_GENERIC_NODE_COMMAND_LAST
     , PVMF_CPM_PASSTHRU_PLUGIN_OMA1_RESET
     , PVMF_CPM_PASSTHRU_PLUGIN_OMA1_AUTHENTICATE
@@ -193,12 +192,6 @@ class PVMFCPMPassThruPlugInOMA1 : public OsclActiveObject,
         }
         bool queryInterface(const PVUuid& uuid, PVInterface*& iface);
 
-        /* From PVMFCPMPluginInterface */
-        OSCL_IMPORT_REF PVMFCommandId QueryUUID(PVMFSessionId aSession,
-                                                const PvmfMimeString& aMimeType,
-                                                Oscl_Vector<PVUuid, OsclMemAllocator>& aUuids,
-                                                bool aExactUuidsOnly = false,
-                                                const OsclAny* aContext = NULL);
         bool HasQueryInterfaceSync()
         {
             return true;
@@ -319,7 +312,6 @@ class PVMFCPMPassThruPlugInOMA1 : public OsclActiveObject,
                              PVUuid* aEventUUID = NULL,
                              int32* aEventCode = NULL);
 
-        void DoQueryUuid(PVMFCPMPassThruPlugInOMA1Command&);
         void DoQueryInterface(PVMFCPMPassThruPlugInOMA1Command&);
         void DoInit(PVMFCPMPassThruPlugInOMA1Command&);
         void DoReset(PVMFCPMPassThruPlugInOMA1Command&);

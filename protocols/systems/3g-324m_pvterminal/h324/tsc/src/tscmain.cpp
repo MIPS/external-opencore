@@ -1925,10 +1925,6 @@ bool TSC_324m::ProcessCommand(Tsc324mNodeCommand& aCmd)
 {
     switch (aCmd.iCmd)
     {
-        case PVMF_GENERIC_NODE_QUERYUUID:
-            DoQueryUuid(aCmd);
-            break;
-
         case PVMF_GENERIC_NODE_QUERYINTERFACE:
             DoQueryInterface(aCmd);
             break;
@@ -2159,23 +2155,6 @@ OSCL_EXPORT_REF void TSC_324m::SetAlConfig(PV2WayMediaType media_type,
     iTSCcomponent->SetAlConfig(media_type, layer, allow, use);
 }
 
-PVMFCommandId TSC_324m::QueryUUID(PVMFSessionId aSession,
-                                  const PvmfMimeString& aMimeType,
-                                  Oscl_Vector<PVUuid, OsclMemAllocator>& aUuids,
-                                  bool aExactUuidsOnly,
-                                  const OsclAny* aContext)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                    (0, "TSC_324m::QueryUUID"));
-    // create message to be completed later - depending on what it is...
-    Tsc324mNodeCommand cmd;
-    cmd.Construct(aSession, PVMF_GENERIC_NODE_QUERYUUID, aMimeType,
-                  aUuids, aExactUuidsOnly, aContext);
-    iComponentRegistry.QueryRegistry(cmd);
-    //return QueueCommandL(cmd);
-    return 0;
-}
-
 PVMFCommandId TSC_324m::QueryInterface(PVMFSessionId aSession,
                                        const PVUuid& aUuid,
                                        PVInterface*& aInterfacePtr,
@@ -2224,12 +2203,6 @@ PVMFCommandId TSC_324m::QueryInterface(PVMFSessionId aSession,
 }
 
 void TSC_324m::DoQueryInterface(Tsc324mNodeCommand& cmd)
-{
-    OSCL_UNUSED_ARG(cmd);
-    //CommandComplete(iCmdQueue, cmd, PVMFSuccess);
-}
-
-void TSC_324m::DoQueryUuid(Tsc324mNodeCommand& cmd)
 {
     OSCL_UNUSED_ARG(cmd);
     //CommandComplete(iCmdQueue, cmd, PVMFSuccess);
