@@ -267,8 +267,8 @@ static OMX_ERRORTYPE _OMX_MasterInit(OMXMasterCoreGlobalData *data)
                     {
                         for (role = 0; (role < numRoles) && (master_index < MAX_NUMBER_OF_OMX_COMPONENTS); role++)
                         {
-                            strncpy((OMX_STRING)pOMXMasterRegistry[master_index].CompName, ComponentName, PV_OMX_MAX_COMPONENT_NAME_LENGTH);
-                            strncpy((OMX_STRING)pOMXMasterRegistry[master_index].CompRole, (OMX_STRING)ComponentRoles[role], PV_OMX_MAX_COMPONENT_NAME_LENGTH);
+                            oscl_strncpy((OMX_STRING)pOMXMasterRegistry[master_index].CompName, ComponentName, PV_OMX_MAX_COMPONENT_NAME_LENGTH);
+                            oscl_strncpy((OMX_STRING)pOMXMasterRegistry[master_index].CompRole, (OMX_STRING)ComponentRoles[role], PV_OMX_MAX_COMPONENT_NAME_LENGTH);
                             pOMXMasterRegistry[master_index].OMXCoreIndex = jj;
                             pOMXMasterRegistry[master_index].CompIndex = component_index;
                             master_index++;

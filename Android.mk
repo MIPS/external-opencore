@@ -6,8 +6,6 @@ include $(CLEAR_VARS)
 include $(LOCAL_PATH)/Config.mk
 
 include $(PV_TOP)/build_config/opencore_dynamic/Android_opencore_common.mk
-include $(PV_TOP)/build_config/opencore_dynamic/Android_opencore_author.mk
-include $(PV_TOP)/build_config/opencore_dynamic/Android_opencore_player.mk
 include $(PV_TOP)/build_config/opencore_dynamic/Android_omx_sharedlibrary.mk
 include $(PV_TOP)/build_config/opencore_dynamic/Android_omx_avcdec_sharedlibrary.mk
 include $(PV_TOP)/build_config/opencore_dynamic/Android_omx_m4vdec_sharedlibrary.mk
@@ -18,6 +16,7 @@ include $(PV_TOP)/build_config/opencore_dynamic/Android_omx_avcenc_sharedlibrary
 include $(PV_TOP)/build_config/opencore_dynamic/Android_omx_m4venc_sharedlibrary.mk
 include $(PV_TOP)/build_config/opencore_dynamic/Android_omx_amrenc_sharedlibrary.mk
 include $(PV_TOP)/build_config/opencore_dynamic/Android_opencore_net_support.mk
+include $(PV_TOP)/build_config/opencore_dynamic/Android_opencore_player.mk
 include $(PV_TOP)/build_config/opencore_dynamic/Android_opencore_downloadreg.mk
 include $(PV_TOP)/build_config/opencore_dynamic/Android_opencore_download.mk
 include $(PV_TOP)/build_config/opencore_dynamic/Android_opencore_streamingreg.mk
@@ -25,11 +24,12 @@ include $(PV_TOP)/build_config/opencore_dynamic/Android_opencore_streaming.mk
 include $(PV_TOP)/build_config/opencore_dynamic/Android_opencore_mp4localreg.mk
 include $(PV_TOP)/build_config/opencore_dynamic/Android_opencore_mp4local.mk
 include $(PV_TOP)/build_config/opencore_dynamic/Android_pvoma1passthru.mk
+include $(PV_TOP)/build_config/opencore_dynamic/Android_opencore_rtsp.mk
 include $(PV_TOP)/build_config/opencore_dynamic/Android_pvrtspunicast_streaming.mk
 include $(PV_TOP)/build_config/opencore_dynamic/Android_pvrtspunicast_streamingreg.mk
 include $(PV_TOP)/build_config/opencore_dynamic/Android_pvrtsptunicast_streaming.mk
 include $(PV_TOP)/build_config/opencore_dynamic/Android_pvrtsptunicast_streamingreg.mk
-include $(PV_TOP)/build_config/opencore_dynamic/Android_opencore_rtsp.mk
+include $(PV_TOP)/build_config/opencore_dynamic/Android_opencore_author.mk
 ifeq ($(BUILD_PV_2WAY),1)
 include $(PV_TOP)/build_config/opencore_dynamic/Android_opencore_2way.mk
 endif

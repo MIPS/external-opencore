@@ -219,6 +219,7 @@ derive MODS_opencore_pvme from "-lopencore_player -lopencore_common"
 
 derive opencore_common_so_name from pvsplit_so==y ? "opencore_common" : ""
 derive opencore_common_aggregate_libtype from pvsplit_so==y ? "shared":"static"
+derive opencore_common_link_type from "linked"
 derive SOLIBS_opencore_common from (LIBS_oscl_shared.
                        LIBS_omxjointimp_shared.
                        pvdecoder_gsmamr_imp_m_lib.pvavcdecoder_imp_m_lib. 
@@ -286,6 +287,7 @@ derive MODS_opencore_download from "-lopencore_net_support -lopencore_player -lo
 
 derive opencore_downloadreg_so_name from download_support==y ? "opencore_downloadreg" : ""
 derive opencore_downloadreg_aggregate_libtype from download_support==y ? "shared":"static"
+derive opencore_downloadreg_link_type from "loaded"
 derive SOLIBS_opencore_downloadreg from pvdownloadreginterface_m_lib
 derive AGGREGATE_LIBDIRS_opencore_downloadreg from pvdownloadreginterface_m_mk
 derive MODS_opencore_downloadreg from "-lopencore_common"
@@ -299,6 +301,7 @@ derive MODS_opencore_streaming from "-lopencore_net_support -lopencore_player -l
 
 derive opencore_streamingreg_so_name from rtspbasedpluginselected_m_config==y ? "opencore_streamingreg" : ""
 derive opencore_streamingreg_aggregate_libtype from rtspbasedpluginselected_m_config==y ? "shared":"static"
+derive opencore_streamingreg_link_type from "loaded"
 derive SOLIBS_opencore_streamingreg from pvsmreginterface_m_lib
 derive AGGREGATE_LIBDIRS_opencore_streamingreg from pvsmreginterface_m_mk
 derive MODS_opencore_streamingreg from "-lopencore_common"
@@ -330,6 +333,7 @@ derive MODS_pvprotocolengine_asfstreaming from "-lopencore_net_support -lopencor
 
 derive pvprotocolengine_asfstreamingreg_so_name from mshttp_support==m ? "pvprotocolengine_asfstreamingreg" : ""
 derive pvprotocolengine_asfstreamingreg_aggregate_libtype from mshttp_support==m ? "shared":"static"
+derive pvprotocolengine_asfstreamingreg_link_type from "loaded"
 derive SOLIBS_pvprotocolengine_asfstreamingreg from pvprotocolenginewmhttpstreamingpluginreginterface_m_lib
 derive AGGREGATE_LIBDIRS_pvprotocolengine_asfstreamingreg from pvprotocolenginewmhttpstreamingpluginreginterface_m_mk
 derive MODS_pvprotocolengine_asfstreamingreg from "-lopencore_common -lopencore_net_support"
@@ -342,6 +346,7 @@ derive MODS_pvfasttrack_download from "-lopencore_net_support -lopencore_common"
 
 derive pvfasttrack_downloadreg_so_name from fasttrack_download_support==y ? "pvfasttrack_downloadreg" : ""
 derive pvfasttrack_downloadreg_aggregate_libtype from fasttrack_download_support==y ? "shared":"static"
+derive pvfasttrack_downloadreg_link_type from "loaded"
 derive SOLIBS_pvfasttrack_downloadreg from pvprotocolenginefasttrackdownloadpluginreginterface_m_lib
 derive AGGREGATE_LIBDIRS_pvfasttrack_downloadreg from pvprotocolenginefasttrackdownloadpluginreginterface_m_mk
 derive MODS_pvfasttrack_downloadreg from "-lopencore_common -lopencore_net_support"
@@ -372,6 +377,7 @@ derive MODS_pvrtspunicast_streaming from "-lopencore_net_support -lopencore_play
 
 derive pvrtspunicast_streamingreg_so_name from rtspunicast_support==m ? "pvrtspunicast_streamingreg" : ""
 derive pvrtspunicast_streamingreg_aggregate_libtype from rtspunicast_support==m ? "shared":"static"
+derive pvrtspunicast_streamingreg_link_type from "loaded"
 derive SOLIBS_pvrtspunicast_streamingreg from smrtspunicastpluginregpopulator_m_lib
 derive AGGREGATE_LIBDIRS_pvrtspunicast_streamingreg from smrtspunicastpluginregpopulator_m_mk
 derive MODS_pvrtspunicast_streamingreg from "-lopencore_common"
@@ -385,6 +391,7 @@ derive MODS_pvrtsptunicast_streaming from "-lopencore_net_support -lopencore_pla
 
 derive pvrtsptunicast_streamingregreg_so_name from rtsptunicast_support==m ? "pvrtsptunicast_streamingreg" : ""
 derive pvrtsptunicast_streamingreg_aggregate_libtype from rtsptunicast_support==m ? "shared":"static"
+derive pvrtsptunicast_streamingreg_link_type from "loaded"
 derive SOLIBS_pvrtsptunicast_streamingreg from smrtsptpluginregpopulator_m_lib
 derive AGGREGATE_LIBDIRS_pvrtsptunicast_streamingreg from smrtsptpluginregpopulator_m_mk
 derive MODS_pvrtsptunicast_streamingreg from "-lopencore_common"
@@ -392,12 +399,14 @@ derive MODS_pvrtsptunicast_streamingreg from "-lopencore_common"
 #RTSPTWithRealSupport
 derive pvrtsptunicastforrm_streaming_so_name from rtsptunicastwithreal_support==m ? "pvrtsptunicastforrm_streaming" : ""
 derive pvrtsptunicastforrm_streaming_aggregate_libtype from rtsptunicastwithreal_support==m ? "shared":"static"
+derive pvrtsptunicastforrm_streaming_link_type from "loaded"
 derive SOLIBS_pvrtsptunicastforrm_streaming from smrtsptrmplugininterface_m_lib.pvrtsptwithrealfsp_m_lib.realmedia_payload_parser_m_lib.rdt_parser_m_lib.pvrtsp_cli_eng_real_cloaking_node_m_lib.realaudio_deinterleaver_m_lib
 derive AGGREGATE_LIBDIRS_pvrtsptunicastforrm_streaming from smrtsptrmplugininterface_m_mk.pvrtsptwithrealfsp_m_mk.realmedia_payload_parser_m_mk.rdt_parser_m_mk.pvrtsp_cli_eng_real_cloaking_node_m_mk.realaudio_deinterleaver_m_mk
 derive MODS_pvrtsptunicastforrm_streaming from "-lopencore_net_support -lopencore_player -lopencore_common -lpvrtsptunicast_streaming -lopencore_rtsp -lopencore_streaming -lpvwmdrm -lpvrealsupportcommon" 
 
 derive pvrtsptunicastforrm_streamingreg_so_name from rtsptunicastwithreal_support==m ? "pvrtsptunicastforrm_streamingreg" : ""
 derive pvrtsptunicastforrm_streamingreg_aggregate_libtype from rtsptunicastwithreal_support==m ? "shared":"static"
+derive pvrtsptunicastforrm_streamingreg_link_type from "loaded"
 derive SOLIBS_pvrtsptunicastforrm_streamingreg from smrtsptrmpluginregpopulator_m_lib
 derive AGGREGATE_LIBDIRS_pvrtsptunicastforrm_streamingreg from smrtsptrmpluginregpopulator_m_mk
 derive MODS_pvrtsptunicastforrm_streamingreg from "-lopencore_common"
@@ -411,6 +420,7 @@ derive MODS_pvmshttp_streaming from "-lopencore_net_support -lopencore_player -l
 
 derive pvmshttp_streamingreg_so_name from mshttp_support==m ? "pvmshttp_streamingreg" : ""
 derive pvmshttp_streamingreg_aggregate_libtype from mshttp_support==m ? "shared":"static"
+derive pvmshttp_streamingreg_link_type from "loaded"
 derive SOLIBS_pvmshttp_streamingreg from smmshttppluginregpopulator_m_lib
 derive AGGREGATE_LIBDIRS_pvmshttp_streamingreg from smmshttppluginregpopulator_m_mk
 derive MODS_pvmshttp_streamingreg from "-lopencore_common"
@@ -463,6 +473,7 @@ derive MODS_pvwmdrm from "-lopencore_common"
 
 derive pvwmdrmoemsettings_so_name from janus_support==y or mtp_db_support==y ? "pvwmdrmoemsettings" : ""
 derive pvwmdrmoemsettings_aggregate_libtype from janus_support==y or mtp_db_support==y ? "shared":"static"
+derive pvwmdrmoemsettings_link_type from "loaded"
 derive SOLIBS_pvwmdrmoemsettings from pvwmdrmoemsettingsinterface_m_lib
 derive AGGREGATE_LIBDIRS_pvwmdrmoemsettings from pvwmdrmoemsettingsinterface_m_mk
 derive MODS_pvwmdrmoemsettings from "-lopencore_common"
@@ -475,12 +486,14 @@ derive MODS_pvdivxoemsettings from "-lopencore_common"
 
 derive pvdivxdrm_so_name from divxdrm_support==y ? "pvdivxdrm" : ""
 derive pvdivxdrm_aggregate_libtype from divxdrm_support==y ? "shared":"static"
+derive pvdivxdrm_link_type from "loaded"
 derive SOLIBS_pvdivxdrm from pvdivxdrm_m_lib.pvdivxdrmplugin_m_lib.pvdivxdrmplugininterface_m_lib
 derive AGGREGATE_LIBDIRS_pvdivxdrm from pvdivxdrm_m_mk.pvdivxdrmplugin_m_mk.pvdivxdrmplugininterface_m_mk
 derive MODS_pvdivxdrm from "-lopencore_common"
 
 derive pvjanus_so_name from janus_support==y ? "pvjanus" : ""
 derive pvjanus_aggregate_libtype from janus_support==y ? "shared":"static"
+derive pvjanus_link_type from "loaded"
 derive SOLIBS_pvjanus from pvjanusplugin_m_lib.pvjanusplugininterface_m_lib
 derive AGGREGATE_LIBDIRS_pvjanus from pvjanusplugin_m_mk.pvjanusplugininterface_m_mk
 derive MODS_pvjanus from "-lopencore_common -lpvwmdrm" 
@@ -529,12 +542,14 @@ derive MODS_pvoma1passthru from "-lopencore_player -lopencore_common"
 
 derive opencore_mp4local_so_name from mp4local_support==y ? "opencore_mp4local" : ""
 derive opencore_mp4local_aggregate_libtype from mp4local_support==y ? "shared":"static"
+derive opencore_mp4local_link_type from "loaded"
 derive SOLIBS_opencore_mp4local from pvmp4interface_m_lib.pvmp4ffparsernode_m_lib.pvmp4ffparsernodeopencore_m_lib
 derive AGGREGATE_LIBDIRS_opencore_mp4local from pvmp4interface_m_mk.pvmp4ffparsernode_m_mk.pvmp4ffparsernodeopencore_m_mk
 derive MODS_opencore_mp4local from "-lopencore_common -lopencore_player"
 
 derive opencore_mp4localreg_so_name from mp4local_support==y ? "opencore_mp4localreg" : ""
 derive opencore_mp4localreg_aggregate_libtype from mp4local_support==y ? "shared":"static"
+derive opencore_mp4localreg_link_type from "loaded"
 derive SOLIBS_opencore_mp4localreg from pvmp4reginterface_m_lib.pvmp4ffrecognizer_m_lib
 derive AGGREGATE_LIBDIRS_opencore_mp4localreg from pvmp4reginterface_m_mk.pvmp4ffrecognizer_m_mk
 derive MODS_opencore_mp4localreg from "-lopencore_player -lopencore_common"
@@ -547,6 +562,7 @@ derive MODS_pvdivxparser_node from "-lpvdivx_recognizer -lopencore_player -lopen
 
 derive pvdivx_recognizer_so_name from divxlocal_support==y ? "pvdivx_recognizer" : ""
 derive pvdivx_recognizer_aggregate_libtype from divxlocal_support==y ? "shared":"static"
+derive pvdivx_recognizer_link_type from "loaded"
 derive SOLIBS_pvdivx_recognizer from pvdivxreginterface_m_lib.pvdivxffrecognizer_m_lib.divxrecognizer_utility_m_lib
 derive AGGREGATE_LIBDIRS_pvdivx_recognizer from pvdivxreginterface_m_mk.pvdivxffrecognizer_m_mk.divxrecognizer_utility_m_mk
 derive MODS_pvdivx_recognizer from "-lopencore_common"
@@ -559,6 +575,7 @@ derive MODS_pvrmffparser_node from "-lpvrmff_recognizer -lopencore_player -lopen
 
 derive pvrmff_recognizer_so_name from rmff_support==y ? "pvrmff_recognizer" : ""
 derive pvrmff_recognizer_aggregate_libtype from rmff_support==y ? "shared":"static"
+derive pvrmff_recognizer_link_type from "loaded"
 derive SOLIBS_pvrmff_recognizer from pvrmffreginterface_m_lib.pvrmffrecognizer_m_lib.pvrmffrecognizer_utility_m_lib
 derive AGGREGATE_LIBDIRS_pvrmff_recognizer from pvrmffreginterface_m_mk.pvrmffrecognizer_m_mk.pvrmffrecognizer_utility_m_mk
 derive MODS_pvrmff_recognizer from "-lopencore_common"
@@ -582,7 +599,8 @@ derive AGGREGATE_LIBDIRS_pvasflocalpb from pvasflocalpbinterface_m_mk.pvasfffpar
 derive MODS_pvasflocalpb from "-lopencore_player -lopencore_common -lpvasfcommon"
 
 derive pvasflocalpbreg_so_name from asflocal_support==y ? "pvasflocalpbreg" : ""
-derive pvasflocalpbreg_aggregate_libtype from asflocal_support==y ? "shared":"static"  
+derive pvasflocalpbreg_aggregate_libtype from asflocal_support==y ? "shared":"static"
+derive pvasflocalpbreg_link_type from "loaded"
 derive SOLIBS_pvasflocalpbreg from pvasflocalpbreginterface_m_lib.pvasfffrecognizer_m_lib
 derive AGGREGATE_LIBDIRS_pvasflocalpbreg from pvasflocalpbreginterface_m_mk.pvasfffrecognizer_m_mk
 derive MODS_pvasflocalpbreg from "-lopencore_common -lpvasfcommon"
@@ -590,6 +608,7 @@ derive MODS_pvasflocalpbreg from "-lopencore_common -lpvasfcommon"
 # OMX related libraries
 derive omx_sharedlibrary_so_name from omx_mastercore_lib!=n ? "omx_sharedlibrary" : ""
 derive omx_sharedlibrary_aggregate_libtype from omx_mastercore_lib==m ? "shared":"static"
+derive omx_sharedlibrary_link_type from "loaded"
 derive SOLIBS_omx_sharedlibrary from omx_common_m_lib.omx_queue_m_lib.pvomx_proxy_m_lib.omx_baseclass_m_lib.pv_omx_interface_m_lib 
 derive AGGREGATE_LIBDIRS_omx_sharedlibrary from omx_common_m_mk.omx_queue_m_mk.pvomx_proxy_m_mk.omx_baseclass_m_mk.pv_omx_interface_m_mk 
 derive MODS_omx_sharedlibrary from "-lopencore_common"
@@ -684,12 +703,14 @@ derive MODS_omx_aacenc_sharedlibrary from "-lomx_sharedlibrary -lopencore_common
 
 derive pvdbconfigclass_so_name from mtp_db_support==y ? "pvdbconfigclass" : ""
 derive pvdbconfigclass_aggregate_libtype from mtp_db_support==y ? "shared":"static"
+derive pvdbconfigclass_link_type from "loaded"
 derive SOLIBS_pvdbconfigclass from pvdbconfiginterface_m_lib
 derive AGGREGATE_LIBDIRS_pvdbconfigclass from pvdbconfiginterface_m_mk
 derive MODS_pvdbconfigclass from "-lopencore_common"
 
 derive pvmtpconfigclass_so_name from mtp_db_support==y ? "pvmtpconfigclass" : ""
 derive pvmtpconfigclass_aggregate_libtype from mtp_db_support==y ? "shared":"static"
+derive pvmtpconfigclass_link_type from "loaded"
 derive SOLIBS_pvmtpconfigclass from mtpconfiginterface_m_lib
 derive AGGREGATE_LIBDIRS_pvmtpconfigclass from mtpconfiginterface_m_mk
 derive MODS_pvmtpconfigclass from "-lopencore_common"
@@ -708,8 +729,7 @@ derive AGGREGATE_LIBDIRS_pvmp4tu from pvmp4tu_m_mk.getaacaudioinfo_m_mk
 derive MODS_pvmp4tu from "-lopencore_common -lopencore_player -lopencore_author"
 
 
-derive TARGET_aggregate from (pv_so_name.opencore_common_so_name.opencore_author_so_name.opencore_player_so_name.opencore_2way_so_name.
-			   opencore_pvme_so_name.	
+derive TARGET_aggregate from (pv_so_name.opencore_common_so_name.
                            omx_sharedlibrary_so_name.
                            omx_avcdec_sharedlibrary_so_name.
                            omx_m4vdec_sharedlibrary_so_name.
@@ -725,25 +745,27 @@ derive TARGET_aggregate from (pv_so_name.opencore_common_so_name.opencore_author
                            omx_amrenc_sharedlibrary_so_name.
                            omx_aacenc_sharedlibrary_so_name.
                            opencore_net_support_so_name.
-                           opencore_downloadreg_so_name.opencore_download_so_name.
-			   pvfasttrack_downloadreg_so_name.pvfasttrack_download_so_name.
-                           opencore_streamingreg_so_name.opencore_streaming_so_name.
+			   opencore_player_so_name.
+			   opencore_downloadreg_so_name.opencore_download_so_name.
+			   opencore_streamingreg_so_name.opencore_streaming_so_name.
+                           pvfasttrack_downloadreg_so_name.pvfasttrack_download_so_name.
                            pvasfcommon_so_name.
                            pvrealsupportcommon_so_name.
                            pvasflocalpbreg_so_name.pvasflocalpb_so_name.
-			   pvprotocolengine_asfstreamingreg_so_name.pvprotocolengine_asfstreaming_so_name.
+                           pvprotocolengine_asfstreamingreg_so_name.pvprotocolengine_asfstreaming_so_name.
                            opencore_mp4localreg_so_name.opencore_mp4local_so_name.
-			   pvdivx_recognizer_so_name.pvdivxparser_node_so_name.
+                           pvdivx_recognizer_so_name.pvdivxparser_node_so_name.
                            pvrmff_recognizer_so_name.pvrmffparser_node_so_name.
-                           pvwmdrm_so_name.pvwmdrmoemsettings_so_name.pvdivxoemsettings_so_name.pvdivxdrm_so_name.pvsqlite_so_name.pvdb_so_name.pvmtp_so_name.pvmtpip_so_name.pvjanus_so_name.pvoma1passthru_so_name.pvdbconfigclass_so_name.pvmtpconfigclass_so_name.pvdb_recovery_utility_so_name.pviptransport_so_name.
-   			   pvflv_recognizer_so_name.pvflvparser_node_so_name.
-                           pvrtspunicast_streaming_so_name.pvrtspunicast_streamingreg_so_name.
+                           pvwmdrm_so_name.pvwmdrmoemsettings_so_name.
+                           pvdivxoemsettings_so_name.pvdivxdrm_so_name.pvsqlite_so_name.pvdb_so_name.pvmtp_so_name.pvmtpip_so_name.pvjanus_so_name.pvoma1passthru_so_name.pvdbconfigclass_so_name.pvmtpconfigclass_so_name.pvdb_recovery_utility_so_name.pviptransport_so_name.
+                           pvflv_recognizer_so_name.pvflvparser_node_so_name.
+                           opencore_rtsp_so_name.pvrtspunicast_streaming_so_name.pvrtspunicast_streamingreg_so_name.
                            pvrtsptunicast_streaming_so_name.pvrtsptunicast_streamingregreg_so_name.
                            pvrtsptunicastforrm_streaming_so_name.pvrtsptunicastforrm_streamingreg_so_name.
-                           pvmshttp_streaming_so_name.pvmshttp_streamingreg_so_name.
-			   opencore_rtsp_so_name.pvpvrcommonimpl_streaming_so_name.pvrtspunicastwithpvr_streaming_so_name.pvrtspunicastwithpvr_streamingreg_so_name.pvrtspbroadcastwithpvr_streaming_so_name.
-                           pvrtspbroadcastwithpvr_streamingreg_so_name.pvfileplaybackwithpvr_streaming_so_name.pvfileplaybackwithpvr_streamingreg_so_name.pvdtcp_mbds_so_name.
-                           pvmp4tu_so_name)
+                           pvmshttp_streaming_so_name.pvmshttp_streamingreg_so_name.pvpvrcommonimpl_streaming_so_name.
+                           pvrtspunicastwithpvr_streaming_so_name.pvrtspunicastwithpvr_streamingreg_so_name.pvrtspbroadcastwithpvr_streaming_so_name.
+                           pvrtspbroadcastwithpvr_streamingreg_so_name.pvfileplaybackwithpvr_streaming_so_name.pvfileplaybackwithpvr_streamingreg_so_name.
+                           pvdtcp_mbds_so_name.pvmp4tu_so_name.opencore_author_so_name.opencore_2way_so_name.opencore_pvme_so_name)
 
 # Derive compile directives
 derive USE_LOADABLE_MODULES from module_support==y 
