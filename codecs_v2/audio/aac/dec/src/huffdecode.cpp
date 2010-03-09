@@ -326,7 +326,6 @@ Int huffdecode(
      *  In almost all cases it should match.
      */
 
-#if !(PV_ONE_SEGMENT_BROADCAST)
 
     if ((pMcInfo->ch_info[0].cpe != id_syn_ele))
     {
@@ -344,17 +343,12 @@ Int huffdecode(
             status = 1; /* ERROR break if syntax error persist  */
         }
     }
-#endif
 
     if (status == SUCCESS)
     {
         if (id_syn_ele == ID_SCE)
         {
-#if PV_ONE_SEGMENT_BROADCAST
-            if (pVars->current_program < 0)   /* No program config available, change allowed anytime */
-#else
             if ((pVars->current_program < 0) && (pVars->bno <= 1))   /* No program config available */
-#endif
             {
                 /*
                  *  Acquire tags for single or dual mono channel only during first frame
@@ -389,28 +383,9 @@ Int huffdecode(
                 else
                 {
 
-#if PV_ONE_SEGMENT_BROADCAST
-
-                    /*
-                     *  Acquire tags during transtion for single or dual mono channel
-                     *  pMcInfo->ch_info[0].tag was init to 0 and used here as index for dual-mono channels
-                     */
-
-                    pVars->prog_config.front.ele_tag[ pMcInfo->ch_info[0].tag] = tag;
-                    pMcInfo->ch_info[0].tag ^= 1;  /* set index to next dual-mono, if exist */
-
-                    ch = (tag == pVars->prog_config.front.ele_tag[0]) ? LEFT : RIGHT;  /* Assign only L and R channel */
-                    num_channels = ch + 1;
-                    pVars->hasmask = 0;
-
-                    /* Set number of channels 1 mono, 2 dual-mono */
-                    pMcInfo->nch = (pMcInfo->nch > num_channels) ? pMcInfo->nch : num_channels;
-                    pVars->prog_config.front.num_ele = pMcInfo->nch;
-#else
 
                     status = 1; /* ERROR == incorrect tag identifying dual-mono channel  */
 
-#endif  // end  #if PV_ONE_SEGMENT_BROADCAST
                 }
 
                 pMcInfo->nch = pVars->prog_config.front.num_ele;

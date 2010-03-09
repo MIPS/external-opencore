@@ -552,12 +552,6 @@ OSCL_EXPORT_REF Int PVMP4AudioDecodeFrame(
                  * (inside of get_prog_config). Redundant PCE will be accepted too
                  */
 
-#if PV_ONE_SEGMENT_BROADCAST
-                /*
-                 *  Force to accept new PCE
-                 */
-                pVars->current_program = -1;
-#endif
 
                 status = get_prog_config(pVars,
                                          &(pVars->scratch.scratch_prog_config));
