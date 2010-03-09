@@ -25,6 +25,7 @@ SRCS := omx_threadsafe_callbacks.cpp \
 	omxtest_get_role.cpp \
 	omxtest_incomplete_nal.cpp \
 	omxtest_missing_nal.cpp \
+	omxtest_multiple_instance.cpp \
 	omxtest_param_negotiation.cpp \
 	omxtest_partialframes.cpp \
 	omxtest_pause_resume.cpp \

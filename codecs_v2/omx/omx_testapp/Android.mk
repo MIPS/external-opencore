@@ -15,6 +15,7 @@ LOCAL_SRC_FILES := \
  	src/omxtest_get_role.cpp \
  	src/omxtest_incomplete_nal.cpp \
  	src/omxtest_missing_nal.cpp \
+ 	src/omxtest_multiple_instance.cpp \
  	src/omxtest_param_negotiation.cpp \
  	src/omxtest_partialframes.cpp \
  	src/omxtest_pause_resume.cpp \

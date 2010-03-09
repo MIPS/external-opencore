@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,6 +61,7 @@ enum DecTests
     PORT_RECONFIG_TRANSITION_TEST_3,
     FLUSH_PORT_TEST,
     EOS_AFTER_FLUSH_PORT_TEST,
+    MULTIPLE_INSTANCE_TEST,
 
     NORMAL_SEQ_TEST = 11,
     NORMAL_SEQ_TEST_USEBUFF,

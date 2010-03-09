@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -802,6 +802,29 @@ int local_main(FILE* filehandle, cmd_line* command_line)
                 }
                 break;
 
+                case MULTIPLE_INSTANCE_TEST:
+                {
+                    fprintf(filehandle, "\nStarting test %4d: MULTIPLE_INSTANCE_TEST \n", (int32)CurrentTestNumber);
+
+                    pCurrentTest = OSCL_NEW(OmxDecTestMultipleInstance, (filehandle, pInputFile, pOutputFile,
+                                            OutFileName, pRefFileName, ComponentName, Role,
+                                            ComponentFormat, Channels));
+
+                    if (OMX_FALSE == InitSchedulerFlag)
+                    {
+                        pCurrentTest->InitScheduler();
+                        InitSchedulerFlag = OMX_TRUE;
+                    }
+
+                    pCurrentTest->StartTestApp();
+
+                    OSCL_DELETE(pCurrentTest);
+                    pCurrentTest = NULL;
+
+                    CurrentTestNumber++;
+                }
+                break;
+
 
                 case NORMAL_SEQ_TEST:
                 {
@@ -1158,6 +1181,9 @@ int local_main(FILE* filehandle, cmd_line* command_line)
         }
 
     }
+
+    //Uninstall the scheduler
+    OsclScheduler::Cleanup();
 
     // Clean OSCL
     PVLogger::Cleanup();

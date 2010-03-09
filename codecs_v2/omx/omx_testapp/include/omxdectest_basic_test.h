@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -236,6 +236,26 @@ class OmxDecTestEosAfterFlushPort : public OmxComponentDecTest
         OMX_U32 iFrameCount;
         OMX_BOOL iFlushCommandSent;
         OMX_BOOL iFlushCommandCompleted;
+};
+
+
+//TestApplication class to create multiple instance of the same component
+class OmxDecTestMultipleInstance : public OmxComponentDecTest
+{
+    public:
+
+        OmxDecTestMultipleInstance(FILE* aConsOutFile, FILE* aInputFile, FILE* aOutputFile, char aOutFileName[],
+                                   char aRefFileName[], OMX_STRING aName, OMX_STRING aRole,
+                                   char aFormat[], OMX_U32 aChannels) :
+
+                OmxComponentDecTest(aConsOutFile, aInputFile, aOutputFile, aOutFileName,
+                                    aRefFileName, aName, aRole, aFormat,
+                                    aChannels)
+        { };
+
+    private:
+
+        void Run();
 };
 
 
