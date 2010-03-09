@@ -184,17 +184,11 @@ $1: FORCE
 	$$(quiet) echo "ifeq ($$(esc_dollar)(BUILD_PV_2WAY),1)" >> $$@
 	$$(quiet) $$(call include_module_mk_list,$3,$$@)
 	$$(quiet) echo "endif" >> $$@
-	$$(quiet) echo "ifeq ($$(esc_dollar)(BUILD_PV_ME),1)" >> $$@
-	$$(quiet) $$(call include_module_mk_list,$4,$$@)
-	$$(quiet) echo "endif" >> $$@
 	$$(quiet) $$(call include_staticlibs_list,$$(LIBDIR_static),$$@)
 	$$(quiet) echo "ifeq ($$(esc_dollar)(BUILD_PV_TEST_APPS),1)" >> $$@
-	$$(quiet) $$(call include_test_mk_list,$$(TESTAPPS_WO_2WAY_PVME),$$@)
+	$$(quiet) $$(call include_test_mk_list,$$(TESTAPPS_WO_2WAY),$$@)
 	$$(quiet) echo "ifeq ($$(esc_dollar)(BUILD_PV_2WAY),1)" >> $$@
 	$$(quiet) $$(call include_test_mk_list,$$(2WAY_TESTAPP),$$@)
-	$$(quiet) echo "endif" >> $$@
-	$$(quiet) echo "ifeq ($$(esc_dollar)(BUILD_PV_ME),1)" >> $$@
-	$$(quiet) $$(call include_test_mk_list,$$(PVME_TESTAPP),$$@)
 	$$(quiet) echo "endif" >> $$@
 	$$(quiet) echo "endif" >> $$@
 	$$(quiet) $$(call include_extended_features_mk,$$@)
@@ -320,17 +314,13 @@ $(eval $(call create_sdk_specific_aggregate_lib_android_mk,$(WMDRMOEMSETTINGS_SH
 $(eval $(call create_sdk_specific_aggregate_lib_android_mk,$(MTPSERVICE_SHARED_LIB)))
 $(strip $(foreach lib,$(ANDROID_GENERAL_AGGREGATE_LIB_LIST),$(eval $(call create_aggregate_lib_android_mk,$(lib)))))
 
-# Need the ability exclude 2way and pvme by default
+# Need the ability exclude 2way by default
 2WAY_SHARED_LIB := opencore_2way
-PVME_SHARED_LIB := opencore_pvme
 AGGREGATE_LIB_TARGET_LIST_WO_2WAY := $(strip $(subst $(2WAY_SHARED_LIB),,$(ANDROID_AGGREGATE_LIB_LIST)))
-AGGREGATE_LIB_TARGET_LIST_WO_2WAY_PVME := $(strip $(subst $(PVME_SHARED_LIB),,$(AGGREGATE_LIB_TARGET_LIST_WO_2WAY)))
 2WAY_TESTAPP := pv2way_engine_test
-PVME_TESTAPP := pvme_test
 TESTAPPS_WO_2WAY := $(strip $(subst $(2WAY_TESTAPP),,$(TESTAPPS)))
-TESTAPPS_WO_2WAY_PVME := $(strip $(subst $(PVME_TESTAPP),,$(TESTAPPS_WO_2WAY)))
 
-$(eval $(call create_toplevel_android_mk,$(ANDROID_TOPLEVEL_MAKE_NAME),$(AGGREGATE_LIB_TARGET_LIST_WO_2WAY_PVME),$(2WAY_SHARED_LIB),$(PVME_SHARED_LIB)))
+$(eval $(call create_toplevel_android_mk,$(ANDROID_TOPLEVEL_MAKE_NAME),$(AGGREGATE_LIB_TARGET_LIST_WO_2WAY),$(2WAY_SHARED_LIB)))
 $(eval $(call create_opencore_config_mk,$(OPENCORE_CONFIG_MAKE_NAME)))
 
 

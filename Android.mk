@@ -30,11 +30,9 @@ include $(PV_TOP)/build_config/opencore_dynamic/Android_pvrtspunicast_streamingr
 include $(PV_TOP)/build_config/opencore_dynamic/Android_pvrtsptunicast_streaming.mk
 include $(PV_TOP)/build_config/opencore_dynamic/Android_pvrtsptunicast_streamingreg.mk
 include $(PV_TOP)/build_config/opencore_dynamic/Android_opencore_author.mk
+include $(PV_TOP)/build_config/opencore_dynamic/Android_opencore_pvme.mk
 ifeq ($(BUILD_PV_2WAY),1)
 include $(PV_TOP)/build_config/opencore_dynamic/Android_opencore_2way.mk
-endif
-ifeq ($(BUILD_PV_ME),1)
-include $(PV_TOP)/build_config/opencore_dynamic/Android_opencore_pvme.mk
 endif
 include $(PV_TOP)/oscl/unit_test/Android.mk
 ifeq ($(BUILD_PV_TEST_APPS),1)
@@ -43,11 +41,9 @@ include $(PV_TOP)/engines/author/test/Android.mk
 include $(PV_TOP)/engines/2way/sample_app/command_line/Android.mk
 include $(PV_TOP)/codecs_v2/omx/omx_testapp/Android.mk
 include $(PV_TOP)/codecs_v2/omx/omx_testapp_enc/Android.mk
+include $(PV_TOP)/engines/pvme/test/Android.mk
 ifeq ($(BUILD_PV_2WAY),1)
 include $(PV_TOP)/engines/2way/test/Android.mk
-endif
-ifeq ($(BUILD_PV_ME),1)
-include $(PV_TOP)/engines/pvme/test/Android.mk
 endif
 endif
 -include $(PV_TOP)/extern_libs_v2/android/extended_features/Android.mk
