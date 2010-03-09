@@ -1978,7 +1978,6 @@ bool PVMFOMXEncNode::NegotiateVideoComponentParameters()
     OMX_CONFIG_ROTATIONTYPE InputRotationType;
     OMX_VIDEO_PARAM_BITRATETYPE BitRateType;
     OMX_VIDEO_PARAM_QUANTIZATIONTYPE QuantParam;
-    bool  setMaxBitrate = false;
 
     // first get the number of ports and port indices
     OMX_PORT_PARAM_TYPE VideoPortParameters;
@@ -2469,14 +2468,12 @@ bool PVMFOMXEncNode::NegotiateVideoComponentParameters()
             break;
         case PVMFVEN_RATE_CONTROL_VBR:
             BitRateType.eControlRate = OMX_Video_ControlRateVariable;
-            setMaxBitrate = true;
             break;
         case PVMFVEN_RATE_CONTROL_CBR:
             BitRateType.eControlRate = OMX_Video_ControlRateConstant;
             break;
         case PVMFVEN_RATE_CONTROL_VBR_FRAME_SKIPPING:
             BitRateType.eControlRate = OMX_Video_ControlRateVariableSkipFrames;
-            setMaxBitrate = true;
             break;
         case PVMFVEN_RATE_CONTROL_CBR_FRAME_SKIPPING:
             BitRateType.eControlRate = OMX_Video_ControlRateConstantSkipFrames;
@@ -2484,7 +2481,6 @@ bool PVMFOMXEncNode::NegotiateVideoComponentParameters()
         default:
             // Default to VBR
             BitRateType.eControlRate = OMX_Video_ControlRateVariable;
-            setMaxBitrate = true;
             break;
     }
 
