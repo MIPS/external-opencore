@@ -19,7 +19,6 @@
 #include "test_pv_player_engine_testset_playlist_clipinfo.h"
 #include "oscl_error_codes.h"
 #include "oscl_tickcount.h"
-#include "pv_player_datasinkfilename.h"
 #include "pv_player_datasinkpvmfnode.h"
 #include "pvmi_media_io_fileoutput.h"
 #include "pv_media_output_node_factory.h"

@@ -25,18 +25,8 @@
 class PVPlayerDataSinkPVMFNode : public PVPlayerDataSink
 {
     public:
-        PVPlayerDataSinkPVMFNode() : iNode(NULL), iEmptyString(NULL) {};
+        PVPlayerDataSinkPVMFNode() : iNode(NULL) {};
         ~PVPlayerDataSinkPVMFNode() {};
-
-        PVPDataSinkType GetDataSinkType()
-        {
-            return PVP_DATASINKTYPE_SINKNODE;
-        }
-
-        OSCL_wString& GetDataSinkFilename()
-        {
-            return iEmptyString;
-        }
 
         PVMFNodeInterface* GetDataSinkNodeInterface()
         {
@@ -50,7 +40,6 @@ class PVPlayerDataSinkPVMFNode : public PVPlayerDataSink
 
     private:
         PVMFNodeInterface* iNode;
-        OSCL_wStackString<1> iEmptyString;
 };
 
 #endif // PV_PLAYER_DATASINKPVMFNODE_H_INCLUDED

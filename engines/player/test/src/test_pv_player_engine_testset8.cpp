@@ -27,10 +27,6 @@
 #include "oscl_tickcount.h"
 #endif
 
-#ifndef PV_PLAYER_DATASINKFILENAME_H_INCLUDED
-#include "pv_player_datasinkfilename.h"
-#endif
-
 #ifndef PV_PLAYER_DATASINKPVMFNODE_H_INCLUDED
 #include "pv_player_datasinkpvmfnode.h"
 #endif

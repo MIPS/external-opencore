@@ -36,10 +36,6 @@
 
 #include "pvmf_track_level_info_extension.h"
 
-#include "pvmf_fileoutput_factory.h"
-
-#include "pvmf_fileoutput_config.h"
-
 #include "pvmf_nodes_sync_control.h"
 
 #include "pvlogger.h"
@@ -6919,29 +6915,12 @@ PVMFStatus PVPlayerEngine::DoSinkNodeQueryInterfaceMandatory(PVCommandId aCmdId,
             iDatapathList[i].iTrackInfo = NULL;
         }
 
-        if (iDatapathList[i].iDataSink->GetDataSinkType() == PVP_DATASINKTYPE_FILENAME)
+        // Use the specified output node for sink node
+        iDatapathList[i].iSinkNode = iDatapathList[i].iDataSink->GetDataSinkNodeInterface();
+        if (iDatapathList[i].iSinkNode == NULL)
         {
-            // Create file output node for sink
-            leavecode = 0;
-            OSCL_TRY(leavecode, iDatapathList[i].iSinkNode = PVFileOutputNodeFactory::CreateFileOutput());
-            OSCL_FIRST_CATCH_ANY(leavecode,
-                                 PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::DoSinkNodeQueryInterfaceMandatory() Creation of file output node did a leave!"));
-                                 return PVMFErrNoMemory);
-        }
-        else if (iDatapathList[i].iDataSink->GetDataSinkType() == PVP_DATASINKTYPE_SINKNODE)
-        {
-            // Use the specified output node for sink node
-            iDatapathList[i].iSinkNode = iDatapathList[i].iDataSink->GetDataSinkNodeInterface();
-            if (iDatapathList[i].iSinkNode == NULL)
-            {
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::DoSinkNodeQueryInterfaceMandatory() Passed in sink node is NULL"));
-                return PVMFFailure;
-            }
-        }
-        else
-        {
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::DoSinkNodeQueryInterfaceMandatory() Unsupported player data sink type"));
-            return PVMFErrNotSupported;
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::DoSinkNodeQueryInterfaceMandatory() Passed in sink node is NULL"));
+            return PVMFFailure;
         }
 
         if (iDatapathList[i].iSinkNode->ThreadLogon() != PVMFSuccess)
@@ -8123,20 +8102,7 @@ PVMFStatus PVPlayerEngine::DoSinkDecCleanupSourcePrepare(PVCommandId aCmdId, Osc
                         iDatapathList[j].iSinkNodeCapConfigIF->removeRef();
                         iDatapathList[j].iSinkNodeCapConfigIF = NULL;
                     }
-                    if (iDatapathList[j].iDataSink->GetDataSinkType() == PVP_DATASINKTYPE_FILENAME)
-                    {
-                        PVFileOutputNodeFactory::DeleteFileOutput(iDatapathList[j].iSinkNode);
-                        iDatapathList[j].iSinkNode = NULL;
-                    }
-                    else if (iDatapathList[j].iDataSink->GetDataSinkType() == PVP_DATASINKTYPE_SINKNODE)
-                    {
-                        iDatapathList[j].iSinkNode = NULL;
-                    }
-                    else
-                    {
-                        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::DoSinkDecCleanupSourcePrepare() Unsupported player data sink type"));
-                        return PVMFFailure;
-                    }
+                    iDatapathList[j].iSinkNode = NULL;
                 }
             }
         }
@@ -8174,20 +8140,7 @@ PVMFStatus PVPlayerEngine::DoSinkDecCleanupSourcePrepare(PVCommandId aCmdId, Osc
                     iDatapathList[i].iSinkNodeSyncCtrlIF = NULL;
                 }
 
-                if (iDatapathList[i].iDataSink->GetDataSinkType() == PVP_DATASINKTYPE_FILENAME)
-                {
-                    PVFileOutputNodeFactory::DeleteFileOutput(iDatapathList[i].iSinkNode);
-                    iDatapathList[i].iSinkNode = NULL;
-                }
-                else if (iDatapathList[i].iDataSink->GetDataSinkType() == PVP_DATASINKTYPE_SINKNODE)
-                {
-                    iDatapathList[i].iSinkNode = NULL;
-                }
-                else
-                {
-                    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::DoSinkDecCleanupSourcePrepare() Unsupported player data sink type"));
-                    return PVMFFailure;
-                }
+                iDatapathList[i].iSinkNode = NULL;
             }
 
             // next delete the decoder nodes
@@ -10062,20 +10015,6 @@ void PVPlayerEngine::DoEngineDatapathTeardown(PVPlayerEngineDatapath& aDatapath)
             aDatapath.iSinkNodeCapConfigIF = NULL;
         }
 
-        if (aDatapath.iDataSink)
-        {
-            if (aDatapath.iDataSink->GetDataSinkType() == PVP_DATASINKTYPE_FILENAME)
-            {
-                // Remove file output config IF if available
-                if (aDatapath.iSinkNodeFOConfigIF)
-                {
-                    aDatapath.iSinkNodeFOConfigIF->removeRef();
-                    aDatapath.iSinkNodeFOConfigIF = NULL;
-                }
-                // Delete the sink node since engine created it.
-                PVFileOutputNodeFactory::DeleteFileOutput(aDatapath.iSinkNode);
-            }
-        }
         aDatapath.iSinkNode = NULL;
     }
 

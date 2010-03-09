@@ -43,14 +43,6 @@
 
 class PVMFNodeInterface;
 
-typedef enum
-{
-    PVP_DATASINKTYPE_UNKNOWN,
-    PVP_DATASINKTYPE_FILENAME,
-    PVP_DATASINKTYPE_SINKNODE
-} PVPDataSinkType;
-
-
 // CLASS DECLARATION
 /**
  * PVPlayerDataSink is an abstract base class for player engine data sink.
@@ -64,19 +56,6 @@ class PVPlayerDataSink
          **/
         virtual ~PVPlayerDataSink() {};
 
-        /**
-         * Returns this instance's data sink type
-         *
-         * @returns The PVPlayer data sink type
-         **/
-        virtual PVPDataSinkType GetDataSinkType() = 0;
-
-        /**
-         * Returns the filename for the data sink
-         *
-         * @returns The filename as an OSCL_wString
-         **/
-        virtual OSCL_wString& GetDataSinkFilename() = 0;
 
         /**
          * Returns the node interface for the data sink

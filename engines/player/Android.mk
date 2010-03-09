@@ -28,8 +28,7 @@ LOCAL_C_INCLUDES := \
 LOCAL_COPY_HEADERS_TO := $(PV_COPY_HEADERS_TO)
 
 LOCAL_COPY_HEADERS := \
-	include/pv_player_datasinkfilename.h \
- 	include/pv_player_datasource.h \
+	include/pv_player_datasource.h \
  	include/pv_player_events.h \
  	include/pv_player_factory.h \
  	include/pv_player_datasink.h \

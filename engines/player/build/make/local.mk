@@ -20,8 +20,7 @@ SRCS := pv_player_datapath.cpp \
         pv_player_node_registry.cpp \
         ../config/core/pv_player_node_registry_populator.cpp
 
-HDRS := pv_player_datasinkfilename.h \
-	pv_player_datasource.h \
+HDRS :=  pv_player_datasource.h \
         pv_player_events.h \
 	pv_player_factory.h \
 	pv_player_datasink.h \
