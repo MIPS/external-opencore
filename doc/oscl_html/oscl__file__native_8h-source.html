@@ -80,39 +80,35 @@
 00107 
 00108     <span class="keyword">private</span>:
 00109 
-00110 <span class="preprocessor">#if (OSCL_HAS_LARGE_FILE_SUPPORT)</span>
-00111 <span class="preprocessor"></span><span class="preprocessor">#ifdef ANDROID</span>
-00112 <span class="preprocessor"></span>        int32 FindLargeFileOpenMode(uint32 mode);
-00113 <span class="preprocessor">#endif</span>
-00114 <span class="preprocessor"></span><span class="preprocessor">#endif</span>
-00115 <span class="preprocessor"></span>
-00116         <span class="comment">//current open mode</span>
-00117         uint32 iMode;
-00118 
-00119         <span class="comment">//was an open file handle passed in?</span>
-00120         <span class="keywordtype">bool</span> iOpenFileHandle;
-00121 
-00122         <span class="comment">//native file object.</span>
-00123         FILE* iFile;
-00124 
-00125         <span class="comment">//These are used for accessing individual assets that are bundled together</span>
-00126         <span class="comment">//into a single file, where each asset is treated as an independent file.</span>
-00127         <span class="keywordtype">bool</span>            iIsAsset;
-00128         <span class="keywordtype">bool</span>            iIsAssetReadOnly;
-00129         <a class="code" href="osclconfig__io_8h.html#a67">TOsclFileOffset</a> iAssetOffset;
-00130         <a class="code" href="osclconfig__io_8h.html#a67">TOsclFileOffset</a> iAssetSize;
-00131         <a class="code" href="osclconfig__io_8h.html#a67">TOsclFileOffset</a> iAssetLogicalFilePos;
-00132 <span class="preprocessor">#if (OSCL_HAS_LARGE_FILE_SUPPORT)</span>
-00133 <span class="preprocessor"></span><span class="preprocessor">#ifdef ANDROID</span>
-00134 <span class="preprocessor"></span>        int32           iFileDescriptor;
-00135 <span class="preprocessor">#endif</span>
-00136 <span class="preprocessor"></span><span class="preprocessor">#endif</span>
-00137 <span class="preprocessor"></span>};
-00138 
-00139 <span class="preprocessor">#endif // OSCL_FILE_NATIVE_H_INCLUDED</span>
-00140 <span class="preprocessor"></span>
+00110 <span class="preprocessor">#ifdef ANDROID</span>
+00111 <span class="preprocessor"></span>        int32 FindLargeFileOpenMode(uint32 mode);
+00112 <span class="preprocessor">#endif</span>
+00113 <span class="preprocessor"></span>
+00114         <span class="comment">//current open mode</span>
+00115         uint32 iMode;
+00116 
+00117         <span class="comment">//was an open file handle passed in?</span>
+00118         <span class="keywordtype">bool</span> iOpenFileHandle;
+00119 
+00120         <span class="comment">//native file object.</span>
+00121         FILE* iFile;
+00122 
+00123         <span class="comment">//These are used for accessing individual assets that are bundled together</span>
+00124         <span class="comment">//into a single file, where each asset is treated as an independent file.</span>
+00125         <span class="keywordtype">bool</span>            iIsAsset;
+00126         <span class="keywordtype">bool</span>            iIsAssetReadOnly;
+00127         <a class="code" href="osclconfig__io_8h.html#a67">TOsclFileOffset</a> iAssetOffset;
+00128         <a class="code" href="osclconfig__io_8h.html#a67">TOsclFileOffset</a> iAssetSize;
+00129         <a class="code" href="osclconfig__io_8h.html#a67">TOsclFileOffset</a> iAssetLogicalFilePos;
+00130 <span class="preprocessor">#ifdef ANDROID</span>
+00131 <span class="preprocessor"></span>        int32           iFileDescriptor;
+00132 <span class="preprocessor">#endif</span>
+00133 <span class="preprocessor"></span>};
+00134 
+00135 <span class="preprocessor">#endif // OSCL_FILE_NATIVE_H_INCLUDED</span>
+00136 <span class="preprocessor"></span>
 </pre></div><hr size="1"><img src="pvlogo_small.jpg"><address style="align: right;"><small>OSCL API</small>
-<address style="align: left;"><small>Posting Version: CORE_8.503.1.1 </small>
+<address style="align: left;"><small>Posting Version: CORE_8.504.1.1 </small>
 </small></address>
 </body>
 </html>

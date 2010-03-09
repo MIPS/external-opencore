@@ -29,9 +29,8 @@
 <tr><td nowrap align=right valign=top>virtual OSCL_IMPORT_REF PVCommandId&nbsp;</td><td valign=bottom><a class="el" href="classCPV2WayInterface.html#a15">RemoveLogAppender</a> (const char *aTag, OsclSharedPtr&lt; PVLoggerAppender &gt; &amp;aAppender, OsclAny *aContextData=NULL)=0</td></tr>
 <tr><td nowrap align=right valign=top>virtual OSCL_IMPORT_REF PVCommandId&nbsp;</td><td valign=bottom><a class="el" href="classCPV2WayInterface.html#a16">SetLogLevel</a> (const char *aTag, int32 aLevel, bool aSetSubtree=false, OsclAny *aContextData=NULL)=0</td></tr>
 <tr><td nowrap align=right valign=top>virtual OSCL_IMPORT_REF PVCommandId&nbsp;</td><td valign=bottom><a class="el" href="classCPV2WayInterface.html#a17">GetLogLevel</a> (const char *aTag, int32 &amp;aLogInfo, OsclAny *aContextData=NULL)=0</td></tr>
-<tr><td nowrap align=right valign=top>virtual OSCL_IMPORT_REF PVCommandId&nbsp;</td><td valign=bottom><a class="el" href="classCPV2WayInterface.html#a18">QueryUUID</a> (const PvmfMimeString &amp;aMimeType, Oscl_Vector&lt; PVUuid, BasicAlloc &gt; &amp;aUuids, bool aExactUuidsOnly=false, OsclAny *aContextData=NULL)=0</td></tr>
-<tr><td nowrap align=right valign=top>virtual OSCL_IMPORT_REF PVCommandId&nbsp;</td><td valign=bottom><a class="el" href="classCPV2WayInterface.html#a19">QueryInterface</a> (const PVUuid &amp;aUuid, PVInterface *&amp;aInterfacePtr, OsclAny *aContext=NULL)=0</td></tr>
-<tr><td nowrap align=right valign=top>virtual OSCL_IMPORT_REF PVCommandId&nbsp;</td><td valign=bottom><a class="el" href="classCPV2WayInterface.html#a20">CancelAllCommands</a> (OsclAny *aContextData=NULL)=0</td></tr>
+<tr><td nowrap align=right valign=top>virtual OSCL_IMPORT_REF PVCommandId&nbsp;</td><td valign=bottom><a class="el" href="classCPV2WayInterface.html#a18">QueryInterface</a> (const PVUuid &amp;aUuid, PVInterface *&amp;aInterfacePtr, OsclAny *aContext=NULL)=0</td></tr>
+<tr><td nowrap align=right valign=top>virtual OSCL_IMPORT_REF PVCommandId&nbsp;</td><td valign=bottom><a class="el" href="classCPV2WayInterface.html#a19">CancelAllCommands</a> (OsclAny *aContextData=NULL)=0</td></tr>
 </table>
 <hr><a name="_details"></a><h2>Detailed Description</h2>
 CPV2WayInterface Class
@@ -176,7 +175,7 @@ Optional opaque data that will be passed back to the user with the command respo
 A unique command id for asynchronous completion </dl>    </td>
   </tr>
 </table>
-<a name="a20" doxytag="CPV2WayInterface::CancelAllCommands"></a><p>
+<a name="a19" doxytag="CPV2WayInterface::CancelAllCommands"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -609,7 +608,7 @@ Optional opaque data that will be passed back to the user with the command respo
 A unique command id for asynchronous completion </dl>    </td>
   </tr>
 </table>
-<a name="a19" doxytag="CPV2WayInterface::QueryInterface"></a><p>
+<a name="a18" doxytag="CPV2WayInterface::QueryInterface"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -661,69 +660,6 @@ The output pointer to the desired interface </td></tr>
 <table border=0 cellspacing=2 cellpadding=0>
 <tr><td valign=top><em>not_supported</em>&nbsp;</td><td>
  leaves if the specified interface id is not supported. </td></tr>
-</table>
-</dl>    </td>
-  </tr>
-</table>
-<a name="a18" doxytag="CPV2WayInterface::QueryUUID"></a><p>
-<table width="100%" cellpadding="2" cellspacing="0" border="0">
-  <tr>
-    <td class="md">
-      <table cellpadding="0" cellspacing="0" border="0">
-        <tr>
-          <td class="md" nowrap valign="top"> virtual OSCL_IMPORT_REF PVCommandId CPV2WayInterface::QueryUUID </td>
-          <td class="md" valign="top">(&nbsp;</td>
-          <td class="md" nowrap valign="top">const PvmfMimeString &amp;&nbsp;</td>
-          <td class="mdname" nowrap>&nbsp; <em>aMimeType</em>, </td>
-        </tr>
-        <tr>
-          <td></td>
-          <td></td>
-          <td class="md" nowrap>Oscl_Vector&lt; PVUuid, BasicAlloc &gt; &amp;&nbsp;</td>
-          <td class="mdname" nowrap>&nbsp; <em>aUuids</em>, </td>
-        </tr>
-        <tr>
-          <td></td>
-          <td></td>
-          <td class="md" nowrap>bool&nbsp;</td>
-          <td class="mdname" nowrap>&nbsp; <em>aExactUuidsOnly</em> = false, </td>
-        </tr>
-        <tr>
-          <td></td>
-          <td></td>
-          <td class="md" nowrap>OsclAny *&nbsp;</td>
-          <td class="mdname" nowrap>&nbsp; <em>aContextData</em> = NULL</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td class="md">)&nbsp;</td>
-          <td class="md" colspan="2"><code> [pure virtual]</code></td>
-        </tr>
-
-      </table>
-    </td>
-  </tr>
-</table>
-<table cellspacing=5 cellpadding=0 border=0>
-  <tr>
-    <td>
-      &nbsp;
-    </td>
-    <td>
-
-<p>
-This API is to allow for extensibility of the pv2way interface. It allows a caller to ask for all UUIDs associated with a particular MIME type. If interfaces of the requested MIME type are found within the system, they are added to the UUIDs array.
-<p>
-Also added to the UUIDs array will be all interfaces which have the requested MIME type as a base MIME type. This functionality can be turned off.<dl compact><dt><b>Parameters: </b></dt><dd>
-<table border=0 cellspacing=2 cellpadding=0>
-<tr><td valign=top><em>aMimeType</em>&nbsp;</td><td>
-The MIME type of the desired interfaces </td></tr>
-<tr><td valign=top><em>aUuids</em>&nbsp;</td><td>
-An array to hold the discovered UUIDs </td></tr>
-<tr><td valign=top><em>aExactUuidsOnly</em>&nbsp;</td><td>
-Turns on/off the retrival of UUIDs with aMimeType as a base type </td></tr>
-<tr><td valign=top><em>aContextData</em>&nbsp;</td><td>
-Optional opaque data that will be passed back to the user with the command response </td></tr>
 </table>
 </dl>    </td>
   </tr>
@@ -1101,7 +1037,7 @@ A unique command id for asynchronous completion </dl>    </td>
 <hr>The documentation for this class was generated from the following file:<ul>
 <li><a class="el" href="pv__2way__interface_8h-source.html">pv_2way_interface.h</a></ul>
 <hr size="1"><img src="pvlogo_small.jpg"><address style="align: right;"><small>PV2Way Engine</small>
-<address style="align: left;"><small>Posting Version: CORE_8.503.1.1 </small>
+<address style="align: left;"><small>Posting Version: CORE_8.504.1.1 </small>
 </small></address>
 </body>
 </html>

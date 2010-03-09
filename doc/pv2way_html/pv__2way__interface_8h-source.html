@@ -130,25 +130,20 @@
 00401                 int32&amp; aLogInfo,
 00402                 OsclAny* aContextData = NULL) = 0;
 00403 
-00419         OSCL_IMPORT_REF <span class="keyword">virtual</span> PVCommandId <a class="code" href="classCPV2WayInterface.html#a18">QueryUUID</a>(<span class="keyword">const</span> PvmfMimeString&amp; aMimeType,
-00420                 Oscl_Vector&lt;PVUuid, BasicAlloc&gt;&amp; aUuids,
-00421                 <span class="keywordtype">bool</span> aExactUuidsOnly = <span class="keyword">false</span>,
-00422                 OsclAny* aContextData = NULL) = 0;
-00423 
-00436         OSCL_IMPORT_REF <span class="keyword">virtual</span> PVCommandId <a class="code" href="classCPV2WayInterface.html#a19">QueryInterface</a>(<span class="keyword">const</span> PVUuid&amp; aUuid,
-00437                 PVInterface*&amp; aInterfacePtr,
-00438                 OsclAny* aContext = NULL) = 0;
-00439 
-00447         OSCL_IMPORT_REF <span class="keyword">virtual</span> PVCommandId <a class="code" href="classCPV2WayInterface.html#a20">CancelAllCommands</a>(OsclAny* aContextData = NULL) = 0;
-00448 };
-00449 
-00450 
-00451 
-00452 <span class="preprocessor">#endif //</span>
-00453 <span class="preprocessor"></span>
-00454 
+00416         OSCL_IMPORT_REF <span class="keyword">virtual</span> PVCommandId <a class="code" href="classCPV2WayInterface.html#a18">QueryInterface</a>(<span class="keyword">const</span> PVUuid&amp; aUuid,
+00417                 PVInterface*&amp; aInterfacePtr,
+00418                 OsclAny* aContext = NULL) = 0;
+00419 
+00427         OSCL_IMPORT_REF <span class="keyword">virtual</span> PVCommandId <a class="code" href="classCPV2WayInterface.html#a19">CancelAllCommands</a>(OsclAny* aContextData = NULL) = 0;
+00428 };
+00429 
+00430 
+00431 
+00432 <span class="preprocessor">#endif //</span>
+00433 <span class="preprocessor"></span>
+00434 
 </pre></div><hr size="1"><img src="pvlogo_small.jpg"><address style="align: right;"><small>PV2Way Engine</small>
-<address style="align: left;"><small>Posting Version: CORE_8.503.1.1 </small>
+<address style="align: left;"><small>Posting Version: CORE_8.504.1.1 </small>
 </small></address>
 </body>
 </html>
