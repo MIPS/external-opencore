@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -236,18 +236,6 @@ void PVFMAudioMIO::setParametersSync(PvmiMIOSession aSession, PvmiKvp* aParamete
         {
             iAudioFormat = aParameters[i].value.pChar_value;
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFMAudioMIO::setParametersSync() Audio Format Key, Value %s", iAudioFormat.getMIMEStrPtr()));
-        }
-        else if (pv_mime_strcmp(aParameters[i].key, MOUT_AUDIO_SAMPLING_RATE_KEY) == 0)
-        {
-            iAudioSamplingRate = (int32)aParameters[i].value.uint32_value;
-            iAudioSamplingRateValid = true;
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFMAudioMIO::setParametersSync() Audio Sampling Rate Key, Value %d", iAudioSamplingRate));
-        }
-        else if (pv_mime_strcmp(aParameters[i].key, MOUT_AUDIO_NUM_CHANNELS_KEY) == 0)
-        {
-            iAudioNumChannels = (int32)aParameters[i].value.uint32_value;
-            iAudioNumChannelsValid = true;
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFMAudioMIO::setParametersSync() Audio Num Channels Key, Value %d", iAudioNumChannels));
         }
         else if (pv_mime_strcmp(aParameters[i].key, PVMF_FORMAT_SPECIFIC_INFO_KEY) == 0)
         {

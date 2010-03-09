@@ -1628,22 +1628,6 @@ void PVRefFileOutput::setParametersSync(PvmiMIOSession aSession,
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                             (0, "PVRefFileOutput::setParametersSync() Audio Format Key, Value %s", iAudioFormatString.get_str()));
         }
-        else if (pv_mime_strcmp(aParameters[i].key, MOUT_AUDIO_SAMPLING_RATE_KEY) == 0)
-        {
-            iAudioSamplingRate = (int32)aParameters[i].value.uint32_value;
-            iAudioSamplingRateValid = true;
-            iFmtSubchunk.sampleRate = iAudioSamplingRate;
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                            (0, "PVRefFileOutput::setParametersSync() Audio Sampling Rate Key, Value %d", iAudioSamplingRate));
-        }
-        else if (pv_mime_strcmp(aParameters[i].key, MOUT_AUDIO_NUM_CHANNELS_KEY) == 0)
-        {
-            iAudioNumChannels = (int32)aParameters[i].value.uint32_value;
-            iAudioNumChannelsValid = true;
-            iFmtSubchunk.numChannels = iAudioNumChannels;
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                            (0, "PVRefFileOutput::setParametersSync() Audio Num Channels Key, Value %d", iAudioNumChannels));
-        }
         //Check against known video parameter keys...
         else if (pv_mime_strcmp(aParameters[i].key, MOUT_VIDEO_FORMAT_KEY) == 0)
         {
