@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -91,7 +91,14 @@ xml_test_interpreter::interpretation(const test_result& result, _STRING executab
     for (iter = result.subresults().begin(); iter != end; ++iter)
     {
         test_result& sub_result = *iter;
-        doc.addAttribute("name", sub_result.get_name());
+        if (sub_result.get_name() == NULL)
+        {
+            doc.addAttribute("name", "undefined");
+        }
+        else
+        {
+            doc.addAttribute("name", sub_result.get_name());
+        }
         doc.start("testcase");
         add_problems(doc, "failure", sub_result.failures());
         add_problems(doc, "error", sub_result.errors());
