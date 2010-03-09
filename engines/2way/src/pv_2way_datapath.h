@@ -296,13 +296,28 @@ class CPV2WayDatapath : public HeapBase, public MPV2WayNodeCommandObserver
         void SetSourceSinkFormat(PVMFFormatType aFormatType);
         PVMFFormatType GetSourceSinkFormat() const;
     protected:
+        bool NodesPortsConnected(CPVDatapathNode &aNode);
+
+        bool TimeToConnectPort(PVMFNodeInterface* aNode, const CPVDatapathPort& aPort);
+        bool DiscoverPortFormatType(CPVDatapathNode& aNode,
+                                    CPVDatapathPort& aPort,
+                                    CPV2WayPort& aPortToConnectA1,
+                                    CPV2WayPort& aPortToConnectA2,
+                                    CPV2WayPort& aPortToConnectB1,
+                                    CPV2WayPort& aPortToConnectB2,
+                                    bool aInput);
+        bool RequestPort(CPVDatapathNode& aNode,
+                         const CPVDatapathPort& aPort,
+                         CPV2WayPort& aPortToConnect,
+                         const TPVNodeConfigTimeType aConfigTime);
+
         void ConstructL();
 
         bool SendNodeCmd(PV2WayNodeCmdType cmd, int i);
         int SetParametersSync(PvmiCapabilityAndConfig * configPtr,
                               PvmiKvp* portParams,
                               PvmiKvp*& portParamsReturn);
-        bool CheckNodePorts(bool& aCheckPort, int i);
+        bool CheckNodePorts(bool& aPortsConnected, int i);
 
         void SetPort(CPV2WayPort &aDatapathPort, PVMFPortInterface *aPort)
         {
@@ -321,7 +336,7 @@ class CPV2WayDatapath : public HeapBase, public MPV2WayNodeCommandObserver
                                    CPVDatapathNode &aNode,
                                    void *aParam = NULL);
 
-        PVMFStatus CheckConfig(TPVNodeConfigTimeType aConfigTime, CPVDatapathNode &aNode);
+        PVMFStatus ConfigureNode(TPVNodeConfigTimeType aConfigTime, CPVDatapathNode &aNode);
 
         //Can be overriden in derived datapaths
         virtual void CheckOpen();

@@ -716,7 +716,7 @@ void CPV324m2Way::DoAddDataSourceTscNode(CPVDatapathNode& datapathnode,
     datapathnode.iCanNodePause = false;
     datapathnode.iLoggoffOnReset = false;
     datapathnode.iIgnoreNodeState = true;
-    datapathnode.iInputPort.iRequestPortState = EPVMFNodeStarted;
+    datapathnode.iInputPort.iRequestPortState = EPVMFNodeCreated;
     datapathnode.iInputPort.iCanCancelPort = true;
     datapathnode.iInputPort.iPortSetType = EAppDefined;
     datapathnode.iInputPort.iFormatType = datapath->GetFormat();
@@ -1172,7 +1172,7 @@ void CPV324m2Way::DoAddDataSinkTscNode(CPVDatapathNode& datapathnode,
     datapathnode.iConfigure = NULL;
     datapathnode.iCanNodePause = false;
     datapathnode.iIgnoreNodeState = true;
-    datapathnode.iOutputPort.iRequestPortState = EPVMFNodeStarted;
+    datapathnode.iOutputPort.iRequestPortState = EPVMFNodeCreated;
     datapathnode.iOutputPort.iCanCancelPort = true;
     datapathnode.iOutputPort.iPortSetType = EAppDefined;
     datapathnode.iOutputPort.iFormatType = datapath->GetFormat();
@@ -1271,7 +1271,7 @@ void CPV324m2Way::DoAddVideoDecNode(CPVDatapathNode& datapathnode,
     {
         datapathnode.iNode = iVideoDecNode;
         datapathnode.iConfigure = this;
-        datapathnode.iConfigTime = EConfigBeforeStart;
+        datapathnode.iConfigTime = EConfigBeforePrepare;
         datapathnode.iCanNodePause = true;
         datapathnode.iIgnoreNodeState = false;
         datapathnode.iInputPort.iRequestPortState = EPVMFNodeInitialized;
@@ -1302,7 +1302,8 @@ void CPV324m2Way::DoAddAudioDecNode(CPVDatapathNode& datapathnode,
     if (iAudioDecNode)
     {
         datapathnode.iNode = iAudioDecNode;
-        datapathnode.iConfigure = NULL;
+        datapathnode.iConfigure = this;
+        datapathnode.iConfigTime = EConfigBeforePrepare;
         datapathnode.iCanNodePause = true;
         datapathnode.iIgnoreNodeState = false;
         datapathnode.iInputPort.iRequestPortState = EPVMFNodeInitialized;

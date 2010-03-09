@@ -234,6 +234,11 @@ OSCL_EXPORT_REF PVMFStatus PVMFOMXDecPort::Connect(PVMFPortInterface* aPort)
             }
             config->releaseParameters(NULL, kvp, numKvp);
         }
+        else
+        {
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_MLDBG, iLogger, PVLOGMSG_ERR, (0,
+                            "PVMFOMXDecPort::Connect: Error calling getParametersSync for PVMF_FORMAT_SPECIFIC_INFO_KEY"));
+        }
 
     }
 

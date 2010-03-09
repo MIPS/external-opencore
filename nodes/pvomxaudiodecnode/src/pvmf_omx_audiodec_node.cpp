@@ -1358,8 +1358,10 @@ bool PVMFOMXAudioDecNode::NegotiateComponentParameters(OMX_PTR aOutputParameters
                 oscl_strncpy(KvpKey, PVMF_FORMAT_SPECIFIC_INFO_KEY_PCM, KeyLength);
                 int32 err;
 
-                OSCL_TRY(err, ((PVMFOMXDecPort*)iOutPort)->pvmiSetPortFormatSpecificInfoSync(FsiMemfrag, KvpKey););
-                if (err != OsclErrNone)
+                bool success = false;
+
+                OSCL_TRY(err, success = ((PVMFOMXDecPort*)iOutPort)->pvmiSetPortFormatSpecificInfoSync(FsiMemfrag, KvpKey););
+                if (err != OsclErrNone || !success)
                 {
                     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
                                     (0, "PVMFOMXAudioDecNode::NegotiateComponentParameters - Problem to set FSI"));

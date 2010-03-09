@@ -306,11 +306,12 @@ PVMFStatus PVMFOMXVideoDecNode::HandlePortReEnable()
 
                     oscl_strncpy(KvpKey, PVMF_FORMAT_SPECIFIC_INFO_KEY_YUV, KeyLength);
                     int32 err;
+                    bool success = false;
 
-                    OSCL_TRY(err, ((PVMFOMXDecPort*)iOutPort)->pvmiSetPortFormatSpecificInfoSync(yuvFsiMemfrag, KvpKey););
-                    if (err != OsclErrNone)
+                    OSCL_TRY(err, success = ((PVMFOMXDecPort*)iOutPort)->pvmiSetPortFormatSpecificInfoSync(yuvFsiMemfrag, KvpKey););
+                    if (err != OsclErrNone || !success)
                     {
-                        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
+                        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
                                         (0, "PVMFOMXVideoDecNode::HandlePortReEnable - Problem to set FSI"));
 
                     }
@@ -353,9 +354,10 @@ PVMFStatus PVMFOMXVideoDecNode::HandlePortReEnable()
             ipExternalOutputBufferAllocatorInterface = NULL;
         }
 
-        OSCL_TRY(err, ((PVMFOMXDecPort*)iOutPort)->pvmiGetBufferAllocatorSpecificInfoSync(aIdentifier, kvp, numKvp););
+        bool success = false;
+        OSCL_TRY(err, success = ((PVMFOMXDecPort*)iOutPort)->pvmiGetBufferAllocatorSpecificInfoSync(aIdentifier, kvp, numKvp););
 
-        if ((err == OsclErrNone) && (NULL != kvp))
+        if ((err == OsclErrNone) && (NULL != kvp) && success)
         {
             ipExternalOutputBufferAllocatorInterface = (PVInterface*) kvp->value.key_specific_value;
 
@@ -369,7 +371,7 @@ PVMFStatus PVMFOMXVideoDecNode::HandlePortReEnable()
 
                 if (err1 != OsclErrNone)
                 {
-                    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
+                    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
                                     (0, "PVMFOMXVideoDecNode::HandlePortReEnable - Unable to Release Parameters"));
                 }
 
@@ -399,6 +401,11 @@ PVMFStatus PVMFOMXVideoDecNode::HandlePortReEnable()
                     ipExternalOutputBufferAllocatorInterface = NULL;
                 }
             }
+        }
+        else
+        {
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
+                            (0, "PVMFOMXVideoDecNode::HandlePortReEnable - Error calling pvmiGetBufferAllocatorSpecificInfoSync"));
         }
 
         // it is now safe to send command for port reenable
@@ -769,7 +776,6 @@ bool PVMFOMXVideoDecNode::NegotiateComponentParameters(OMX_PTR aOutputParameters
     iNumOutputBuffers = iParamPort.nBufferCountActual;
     if (iNumOutputBuffers > NUMBER_OUTPUT_BUFFER)
         iNumOutputBuffers = NUMBER_OUTPUT_BUFFER; // make sure number of output buffers is not larger than port queue size
-
     iOMXComponentOutputBufferSize = iParamPort.nBufferSize;
     if (iNumOutputBuffers < iParamPort.nBufferCountMin)
         iNumOutputBuffers = iParamPort.nBufferCountMin;
@@ -1065,6 +1071,11 @@ bool PVMFOMXVideoDecNode::NegotiateComponentParameters(OMX_PTR aOutputParameters
             }
         }
     }
+    else
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
+                        (0, "PVMFOMXVideoDecNode::NegotiateComponentParameters - Error calling pvmiGetBufferAllocatorSpecificInfoSync"));
+    }
 
 
     iParamPort.nBufferCountActual = iNumOutputBuffers;
@@ -1076,7 +1087,7 @@ bool PVMFOMXVideoDecNode::NegotiateComponentParameters(OMX_PTR aOutputParameters
     Err = OMX_SetParameter(iOMXDecoder, OMX_IndexParamPortDefinition, &iParamPort);
     if (Err != OMX_ErrorNone)
     {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
                         (0, "PVMFOMXVideoDecNode::NegotiateComponentParameters() Problem setting parameters in output port %d ", iOutputPortIndex));
         return false;
     }
@@ -1116,7 +1127,7 @@ bool PVMFOMXVideoDecNode::NegotiateComponentParameters(OMX_PTR aOutputParameters
     else
     {
         // Illegal codec specified.
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
                         (0, "PVMFOMXVideoDecNode::NegotiateComponentParameters() Problem setting video compression format"));
         return false;
     }
@@ -1163,7 +1174,7 @@ bool PVMFOMXVideoDecNode::NegotiateComponentParameters(OMX_PTR aOutputParameters
         Err = OMX_GetParameter(iOMXDecoder, OMX_IndexParamVideoPortFormat, &VideoPortFormat);
         if (Err != OMX_ErrorNone)
         {
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
                             (0, "PVMFOMXVideoDecNode::NegotiateComponentParameters() Problem setting video compression format"));
             return false;
         }
@@ -1175,7 +1186,7 @@ bool PVMFOMXVideoDecNode::NegotiateComponentParameters(OMX_PTR aOutputParameters
 
     if (ii == PVOMXVIDEO_MAX_SUPPORTED_FORMAT)
     {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
                         (0, "PVMFOMXVideoDecNode::NegotiateComponentParameters() No Video compression format found"));
         return false;
     }
@@ -1184,10 +1195,11 @@ bool PVMFOMXVideoDecNode::NegotiateComponentParameters(OMX_PTR aOutputParameters
     Err = OMX_SetParameter(iOMXDecoder, OMX_IndexParamVideoPortFormat, &VideoPortFormat);
     if (Err != OMX_ErrorNone)
     {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
                         (0, "PVMFOMXVideoDecNode::NegotiateComponentParameters() Problem setting video compression format"));
         return false;
     }
+
 
     return true;
 }
@@ -1674,9 +1686,10 @@ bool PVMFOMXVideoDecNode::QueueOutputBuffer(OsclSharedPtr<PVMFMediaDataImpl> &me
 
                     oscl_strncpy(KvpKey, PVMF_FORMAT_SPECIFIC_INFO_KEY_YUV, KeyLength);
                     int32 err;
+                    bool success = false;
 
-                    OSCL_TRY(err, ((PVMFOMXDecPort*)iOutPort)->pvmiSetPortFormatSpecificInfoSync(yuvFsiMemfrag, KvpKey););
-                    if (err != OsclErrNone)
+                    OSCL_TRY(err, success = ((PVMFOMXDecPort*)iOutPort)->pvmiSetPortFormatSpecificInfoSync(yuvFsiMemfrag, KvpKey););
+                    if (err != OsclErrNone || !success)
                     {
                         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
                                         (0, "PVMFOMXVideoDecNode::QueueOutputBuffer - Problem to set FSI_YUV key, will try to send ordinary FSI"));
