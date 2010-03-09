@@ -1457,7 +1457,7 @@ void PVMediaOutputNodePort::SendReConfigNotification()
     int32 cmdId = 0;
     PvmiMediaXferHeader mediaxferhdr;
     mediaxferhdr.seq_num = iCurrentMediaMsg->getSeqNum();
-    mediaxferhdr.timestamp = 0;
+    mediaxferhdr.timestamp = iCurrentMediaMsg->getTimestamp();
     mediaxferhdr.duration = 0;
     mediaxferhdr.flags = PVMI_MEDIAXFER_MEDIA_DATA_FLAG_NONE;
     mediaxferhdr.stream_id = iCurrentMediaMsg->getStreamID();
@@ -1504,7 +1504,7 @@ void PVMediaOutputNodePort::SendReConfigNotification()
         else
         {
             //log media data info.
-            PVMF_MOPORT_LOGDATAPATH((0, "PVMediaOutputNodePort::SendEndOfData - SyncWrite - Fmt=%s, Seq=%d, TS=%d, ClnUpQSize=%d",
+            PVMF_MOPORT_LOGDATAPATH((0, "PVMediaOutputNodePort::SendReConfigNotification - SyncWrite - Fmt=%s, Seq=%d, TS=%d, ClnUpQSize=%d",
                                      iSinkFormatString.get_str(),
                                      iCurrentMediaMsg->getSeqNum(),
                                      iCurrentMediaMsg->getTimestamp(),
@@ -2329,6 +2329,11 @@ PVMFStatus PVMediaOutputNodePort::ConfigMIO(PvmiKvp* aParameters, PvmiKvp* &aRet
                 {
                     SetMIOParameterUint32((char*)MOUT_AUDIO_NUM_CHANNELS_KEY,
                                           pcm16Info->desiredChannels);
+                    if (status == PVMFSuccess)
+                    {
+                        SetMIOParameterUint32((char*)MOUT_AUDIO_BITS_PER_SAMPLE,
+                                              pcm16Info->bitsPerSample);
+                    }
                 }
             }
             else if (pv_mime_strcmp(aParameters->key, PVMF_FORMAT_SPECIFIC_INFO_KEY_PCM) == 0)

@@ -555,6 +555,8 @@ class PvmfAssetInfo3GPPLocationStruct
 #define MOUT_AUDIO_SAMPLING_RATE_KEY "x-pvmf/audio/render/sampling_rate;valtype=uint32"
 //audio number of channels (1 for mono, 2 for stereo)
 #define MOUT_AUDIO_NUM_CHANNELS_KEY "x-pvmf/audio/render/channels;valtype=uint32"
+//audio number of bits per sample
+#define MOUT_AUDIO_BITS_PER_SAMPLE "x-pvmf/audio/render/bits_per_sample;valtype=uint32"
 
 // Key to configure the Number of frames required in a Media msg
 #define PVMF_NUM_DECODED_FRAMES_CONFIG_KEY "x-pvmf/audio/render/num_decoded_frames;valtype=uint32"
