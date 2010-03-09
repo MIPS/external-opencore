@@ -86,6 +86,9 @@ int32 ReadPlaylistFromFile(const char* aFileName, char**& aPlaylist, FILE* aTest
         return 0;
     }
 
+    OSCL_StackString<64> prependStr = SOURCENAME_PREPEND_STRING;
+    uint32 prependLen = prependStr.get_size();
+
     int32 clipCount = -1;
     char** playlistPtr = NULL;
     int32 clipsInPlaylist = 0;
@@ -218,7 +221,7 @@ int32 ReadPlaylistFromFile(const char* aFileName, char**& aPlaylist, FILE* aTest
                 else
                 {
                     // add 1 for NULL char
-                    char* clipNamePtr = (char *)oscl_malloc(nameLen + 1 * sizeof(char));
+                    char* clipNamePtr = (char *)oscl_malloc(prependLen + nameLen + 1 * sizeof(char));
                     if (NULL == clipNamePtr)
                     {
                         fprintf(aTestMsgOutputFile, "ReadPlaylistFromFile(): ERROR - oscl_malloc failed for clipNamePtr size %d\n", nameLen + 1 * sizeof(char));
@@ -248,6 +251,16 @@ int32 ReadPlaylistFromFile(const char* aFileName, char**& aPlaylist, FILE* aTest
                         // add terminating '\0' and
                         // store pointer in playlist
                         char* nameStrPtr = clipNamePtr;
+                        // add the SOURCENAME_PREPEND_STRING
+                        if (prependLen != 0)
+                        {
+                            char* prependPtr = prependStr.get_str();
+                            for (i = 0; i < (int32)prependLen; i++)
+                            {
+                                *nameStrPtr++ = *prependPtr++;
+                            }
+                        }
+
                         int32 k = startBracketIndex + 1;
                         for (i = 0; i < nameLen; i++)
                         {
@@ -306,8 +319,8 @@ int32 ReadPlaylistFromFile(const char* aFileName, char**& aPlaylist, FILE* aTest
 int32 CreatePlaylist(const char* aFileName, PVMFFormatType& aFileType, char**& aPlaylist, int32 aNumInvalidClips, int32 aInvalidClipAtIndex,
                      FILE* aTestMsgOutputFile, bool& aStaticPlaylist)
 {
-    const char *validFileName = NULL;
-    const char *invalidFileName = NULL;
+    OSCL_StackString<256> validFileName = SOURCENAME_PREPEND_STRING;
+    OSCL_StackString<256> invalidFileName = SOURCENAME_PREPEND_STRING;
     bool defaultPlaylist = false;
     char** validPlaylistPtr = NULL;
     char** invalidPlaylistPtr = NULL;
@@ -317,20 +330,20 @@ int32 CreatePlaylist(const char* aFileName, PVMFFormatType& aFileType, char**& a
     // generate the playlist with default clips
     if (oscl_strstr(aFileName, ".mp3") != NULL || oscl_strstr(aFileName, ".MP3") != NULL)
     {
-        validFileName = DEFAULT_VALID_MP3_PLAYLIST;
-        invalidFileName = DEFAULT_INVALID_MP3_PLAYLIST;
+        validFileName += DEFAULT_VALID_MP3_PLAYLIST;
+        invalidFileName += DEFAULT_INVALID_MP3_PLAYLIST;
         defaultPlaylist = true;
     }
     else if (oscl_strstr(aFileName, ".mp4") != NULL || oscl_strstr(aFileName, ".MP4") != NULL)
     {
-        validFileName = DEFAULT_VALID_MP4_PLAYLIST;
-        invalidFileName = DEFAULT_INVALID_MP4_PLAYLIST;
+        validFileName += DEFAULT_VALID_MP4_PLAYLIST;
+        invalidFileName += DEFAULT_INVALID_MP4_PLAYLIST;
         defaultPlaylist = true;
     }
     else if (oscl_strstr(aFileName, ".txt") != NULL || oscl_strstr(aFileName, ".TXT") != NULL)
     {
         // using input text file from command line
-        validFileName = aFileName;
+        validFileName += aFileName;
         aFileType = PVMF_MIME_FORMAT_UNKNOWN;
     }
     else
@@ -341,16 +354,16 @@ int32 CreatePlaylist(const char* aFileName, PVMFFormatType& aFileType, char**& a
         return 0;
     }
 
-    int32 clipsInPlaylist = ReadPlaylistFromFile(validFileName, validPlaylistPtr, aTestMsgOutputFile);
+    int32 clipsInPlaylist = ReadPlaylistFromFile(validFileName.get_str(), validPlaylistPtr, aTestMsgOutputFile);
 
     // see if we need to replace some valid clips with invalid clips
     if (aNumInvalidClips > 0 && aInvalidClipAtIndex >= 0)
     {
-        int32 invalidClipCount = ReadPlaylistFromFile(invalidFileName, invalidPlaylistPtr, aTestMsgOutputFile);
+        int32 invalidClipCount = ReadPlaylistFromFile(invalidFileName.get_str(), invalidPlaylistPtr, aTestMsgOutputFile);
         if (invalidClipCount < clipsInPlaylist)
         {
             fprintf(aTestMsgOutputFile, "CreatePlaylist(): ERROR - invalid clip count %d in %s < valid clip count %d in %s\n",
-                    invalidClipCount, invalidFileName, clipsInPlaylist, validFileName);
+                    invalidClipCount, invalidFileName.get_str(), clipsInPlaylist, validFileName.get_str());
         }
 
         // we don't want to keep around the entire invalid playlist,
@@ -377,7 +390,6 @@ int32 CreatePlaylist(const char* aFileName, PVMFFormatType& aFileType, char**& a
     aPlaylist = validPlaylistPtr;
     return clipsInPlaylist;
 }
-
 
 
 void DestroyPlaylist(char** aPlaylist, int32 aNumClipsInPlaylist)

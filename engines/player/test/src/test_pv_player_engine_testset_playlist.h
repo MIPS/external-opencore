@@ -241,12 +241,10 @@ class pvplayer_async_test_playlist_playback : public pvplayer_async_test_base
                 , iReferencePCMFileSize(0)
                 , iGaplessFormat(aGaplessFormat)
         {
-            iSinkFileNameSubString = OUTPUTNAME_PREPEND_WSTRING;
-
             if (aGaplessFormat != GAPLESS_FORMAT_UNKNOWN)
             {
                 // this is PCM validation with default playlist
-                iSinkFileNameSubString += _STRLIT_WCHAR("gapless_validate_");
+                iSinkFileNameSubString = _STRLIT_WCHAR("gapless_validate_");
                 switch (iGaplessFormat)
                 {
                     case GAPLESS_FORMAT_LAME_MP3:
@@ -277,7 +275,7 @@ class pvplayer_async_test_playlist_playback : public pvplayer_async_test_base
             else
             {
                 // this is playback test
-                iSinkFileNameSubString += _STRLIT_WCHAR("playback_");
+                iSinkFileNameSubString = _STRLIT_WCHAR("playback_");
 
                 if (aInvalidClipTest)
                 {
@@ -622,8 +620,7 @@ class pvplayer_async_test_playlist_seek_skip : public pvplayer_async_test_base
                 , iUpdateDataSource(false)
                 , iSeekInCurrentTrack(false)
         {
-            iSinkFileNameSubString = OUTPUTNAME_PREPEND_WSTRING;
-            iSinkFileNameSubString += _STRLIT_WCHAR("_");
+            iSinkFileNameSubString = _STRLIT_WCHAR("_");
 
             iNumClipsInPlaylist = CreatePlaylist(iFileName, iFileType, iPlaylist, 0, -1, iTestMsgOutputFile, iStaticPlaylist);
 
@@ -1131,11 +1128,13 @@ class pvplayer_async_test_validate_gapless : public pvplayer_async_test_base
                 , iNewFileName(NULL)
         {
             iGaplessFormat = aGaplessFormat;
+            iTempFileName = SOURCENAME_PREPEND_STRING;
+
             switch (iGaplessFormat)
             {
                 case GAPLESS_FORMAT_LAME_MP3:
                     iTestCaseName = _STRLIT_CHAR("Validate Gapless LAME MP3");
-                    iFileName = DEFAULT_GAPLESS_LAME_MP3_CLIP;
+                    iTempFileName += DEFAULT_GAPLESS_LAME_MP3_CLIP;
                     iFileType = PVMF_MIME_MP3FF;
                     iReferencePCMFileSize = DEFAULT_GAPLESS_LAME_MP3_PCM_OUTPUT_SIZE;
                     iSinkFileNameSubString += _STRLIT_WCHAR("LAME_mp3");
@@ -1143,7 +1142,7 @@ class pvplayer_async_test_validate_gapless : public pvplayer_async_test_base
 
                 case GAPLESS_FORMAT_ITUNES_AAC:
                     iTestCaseName = _STRLIT_CHAR("Validate Gapless iTunes AAC");
-                    iFileName = DEFAULT_GAPLESS_ITUNES_AAC_CLIP;
+                    iTempFileName += DEFAULT_GAPLESS_ITUNES_AAC_CLIP;
                     iFileType = PVMF_MIME_MPEG4FF;
                     iReferencePCMFileSize = DEFAULT_GAPLESS_ITUNES_AAC_PCM_OUTPUT_SIZE;
                     iSinkFileNameSubString += _STRLIT_WCHAR("iTunes_aac");
@@ -1154,12 +1153,14 @@ class pvplayer_async_test_validate_gapless : public pvplayer_async_test_base
                     // falling through
                 case GAPLESS_FORMAT_ITUNES_MP3:
                     iTestCaseName = _STRLIT_CHAR("Validate Gapless iTunes MP3");
-                    iFileName = DEFAULT_GAPLESS_ITUNES_MP3_CLIP;
+                    iTempFileName += DEFAULT_GAPLESS_ITUNES_MP3_CLIP;
                     iFileType = PVMF_MIME_MP3FF;
                     iReferencePCMFileSize = DEFAULT_GAPLESS_ITUNES_MP3_PCM_OUTPUT_SIZE;
                     iSinkFileNameSubString += _STRLIT_WCHAR("iTunes_mp3");
                     break;
             }
+            iFileName = iTempFileName.get_str();
+
             // if there is a path delimiter,
             // need to replace with OSCL_FILE_CHAR_PATH_DELIMITER
             iNewFileName = (char *)oscl_malloc(oscl_strlen(iFileName) + 1);
@@ -1237,6 +1238,7 @@ class pvplayer_async_test_validate_gapless : public pvplayer_async_test_base
         uint32 iReferencePCMFileSize;
         char* iNewFileName;
         OSCL_wHeapString<OsclMemAllocator> iSinkFileNameSubString;
+        OSCL_HeapString<OsclMemAllocator> iTempFileName;
 };
 
 
