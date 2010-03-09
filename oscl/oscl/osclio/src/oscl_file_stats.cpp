@@ -47,7 +47,6 @@ void OsclFileStats::Log(TOsclFileOp aOp, PVLogger* aLogger, uint32 aLogLevel)
 {
     OSCL_UNUSED_ARG(aOp);
     OSCL_UNUSED_ARG(aLogLevel);
-#if OSCL_HAS_LARGE_FILE_SUPPORT
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, aLogger, aLogLevel
                     , (0, "OsclFileStats(0x%x): Op %s Count %d, Param hi:0x%8x lo:0x%08x, Param2 hi:0x%8x lo:0x%08x, StartTick %d TotalTick %d"
                        , iContainer, TOsclFileOpStr[aOp]
@@ -58,15 +57,6 @@ void OsclFileStats::Log(TOsclFileOp aOp, PVLogger* aLogger, uint32 aLogLevel)
                        , Oscl_Int64_Utils::get_int64_lower32((const int64)(iStats[aOp].iParam2))
                        , iStats[aOp].iStartTick, iStats[aOp].iTotalTicks
                       ));
-#else
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, aLogger, aLogLevel
-                    , (0, "OsclFileStats(0x%x): Op %s Count %d, Param %d, Param2 %d, StartTick %d TotalTick %d"
-                       , iContainer, TOsclFileOpStr[aOp]
-                       , iStats[aOp].iOpCount, iStats[aOp].iParam
-                       , iStats[aOp].iParam2
-                       , iStats[aOp].iStartTick, iStats[aOp].iTotalTicks
-                      ));
-#endif
 }
 
 void OsclFileStats::LogAll(PVLogger* aLogger, uint32 aLogLevel)

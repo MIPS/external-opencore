@@ -124,10 +124,8 @@ class OsclNativeFile : public HeapBase
 
     private:
 
-#if (OSCL_HAS_LARGE_FILE_SUPPORT)
 #ifdef ANDROID
         int32 FindLargeFileOpenMode(uint32 mode);
-#endif
 #endif
 
         //current open mode
@@ -146,10 +144,8 @@ class OsclNativeFile : public HeapBase
         TOsclFileOffset iAssetOffset;
         TOsclFileOffset iAssetSize;
         TOsclFileOffset iAssetLogicalFilePos;
-#if (OSCL_HAS_LARGE_FILE_SUPPORT)
 #ifdef ANDROID
         int32           iFileDescriptor;
-#endif
 #endif
 };
 

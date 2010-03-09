@@ -81,10 +81,8 @@
 
 OsclFileHandle* iFileHandle;
 FILE *fp;
-#if (OSCL_HAS_LARGE_FILE_SUPPORT)
 #ifdef ANDROID
 int32 iFileDescriptor;
-#endif
 #endif
 //
 // pvplayer_async_test_printmetadata section
@@ -2851,14 +2849,10 @@ void pvplayer_async_test_playuntileos_using_external_file_handle::Run()
 
             if (!iLocalDataSource)
             {
-#if (OSCL_HAS_LARGE_FILE_SUPPORT)
 #ifdef ANDROID
                 iFileDescriptor = open((char*)iFileName, O_RDONLY | O_LARGEFILE);
                 //Populate FILE*
                 fp = fdopen(iFileDescriptor, "rb");
-#else
-                fp = fopen((char*)iFileName, "rb");
-#endif
 #else
                 fp = fopen((char*)iFileName, "rb");
 #endif

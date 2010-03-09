@@ -42,10 +42,8 @@ OsclNativeFile::OsclNativeFile()
     iAssetSize = 0;
     iAssetLogicalFilePos = 0;
 
-#if (OSCL_HAS_LARGE_FILE_SUPPORT)
 #ifdef ANDROID
     iFileDescriptor = 0;
-#endif
 #endif
 
 }
@@ -70,10 +68,8 @@ int32  OsclNativeFile::Open(const OsclFileHandle& aHandle, uint32 mode
         //Just save the open file handle
         iFile = aHandle.Handle();
 
-#if (OSCL_HAS_LARGE_FILE_SUPPORT)
 #ifdef ANDROID
         iFileDescriptor = fileno(aHandle.Handle());
-#endif
 #endif
     }
 
@@ -114,10 +110,8 @@ int32 OsclNativeFile::Open(const oscl_wchar* filename, uint32 mode
 
         char openmode[4];
         uint32 index = 0;
-#if (OSCL_HAS_LARGE_FILE_SUPPORT)
 #ifdef ANDROID
         int largeFileOpenMode = FindLargeFileOpenMode(mode);
-#endif
 #endif
         if (mode & Oscl_File::MODE_READWRITE)
         {
@@ -179,7 +173,6 @@ int32 OsclNativeFile::Open(const oscl_wchar* filename, uint32 mode
             return -1;
         }
 
-#if (OSCL_HAS_LARGE_FILE_SUPPORT)
 #ifdef ANDROID
         iFileDescriptor = open(convfilename, largeFileOpenMode, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH);
         //Populate iFile
@@ -190,7 +183,6 @@ int32 OsclNativeFile::Open(const oscl_wchar* filename, uint32 mode
         }
         else
             return 0;
-#endif
 #endif
         if ((iFile = fopen(convfilename, openmode)) == NULL)
         {
@@ -228,10 +220,8 @@ int32 OsclNativeFile::Open(const char *filename, uint32 mode
         if (sscanf(filename, format, &iFile, &iAssetOffset, &iAssetSize) == 3)
         {
             if (iFile == NULL) return -1; //Bad handle.
-#if (OSCL_HAS_LARGE_FILE_SUPPORT)
 #ifdef ANDROID
             iFileDescriptor = fileno(iFile);
-#endif
 #endif
             //For this case, the file must already be open.
             iIsAsset = true;
@@ -259,10 +249,8 @@ int32 OsclNativeFile::Open(const char *filename, uint32 mode
 
         char openmode[4];
         uint32 index = 0;
-#if (OSCL_HAS_LARGE_FILE_SUPPORT)
 #ifdef ANDROID
         int largeFileOpenMode = FindLargeFileOpenMode(mode);
-#endif
 #endif
         if (mode & Oscl_File::MODE_READWRITE)
         {
@@ -304,7 +292,6 @@ int32 OsclNativeFile::Open(const char *filename, uint32 mode
 
         openmode[index++] = '\0';
 
-#if (OSCL_HAS_LARGE_FILE_SUPPORT)
 #ifdef ANDROID
         iFileDescriptor = open(filename, largeFileOpenMode, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH);
         //Populate iFile
@@ -315,7 +302,6 @@ int32 OsclNativeFile::Open(const char *filename, uint32 mode
         }
         else
             return 0;
-#endif
 #endif
         if ((iFile = fopen(filename, openmode)) == NULL)
         {
@@ -363,10 +349,8 @@ int32 OsclNativeFile::Close()
         {
             closeret = fclose(iFile);
             iFile = NULL;
-#if (OSCL_HAS_LARGE_FILE_SUPPORT)
 #ifdef ANDROID
             iFileDescriptor = 0;
-#endif
 #endif
 
         }
@@ -406,7 +390,6 @@ uint32 OsclNativeFile::Read(OsclAny *buffer, uint32 size, uint32 numelements)
     if (iFile)
     {
         int32 result = 0;
-#if (OSCL_HAS_LARGE_FILE_SUPPORT)
 #ifdef ANDROID
         {
             int32 bytesToBeRead = size * numelements;
@@ -417,7 +400,6 @@ uint32 OsclNativeFile::Read(OsclAny *buffer, uint32 size, uint32 numelements)
             }
             return -1;
         }
-#endif
 #endif
         {
             result = fread(buffer, OSCL_STATIC_CAST(int32, size), OSCL_STATIC_CAST(int32, numelements), iFile);
@@ -462,7 +444,6 @@ uint32 OsclNativeFile::Write(const OsclAny *buffer, uint32 size, uint32 numeleme
 
     if (iFile)
     {
-#if (OSCL_HAS_LARGE_FILE_SUPPORT)
 #ifdef ANDROID
         int32 num_bytes_written = write(iFileDescriptor, buffer, (size * numelements));
         if (num_bytes_written != -1)
@@ -471,7 +452,6 @@ uint32 OsclNativeFile::Write(const OsclAny *buffer, uint32 size, uint32 numeleme
         }
         else
             return -1;
-#endif
 #endif
         return fwrite(buffer, OSCL_STATIC_CAST(int32, size), OSCL_STATIC_CAST(int32, numelements), iFile);
     }
@@ -513,7 +493,6 @@ int32 OsclNativeFile::Seek(TOsclFileOffset offset, Oscl_File::seek_type origin)
             else if (origin == Oscl_File::SEEKEND)
                 seekmode = SEEK_END;
 
-#if OSCL_HAS_LARGE_FILE_SUPPORT
 #ifdef ANDROID
             TOsclFileOffset seekResult = lseek64(iFileDescriptor, offset, seekmode);
             if (seekResult == -1)
@@ -522,9 +501,6 @@ int32 OsclNativeFile::Seek(TOsclFileOffset offset, Oscl_File::seek_type origin)
                 return 0;
 #endif
             return fseeko(iFile, offset, seekmode);
-#else
-            return fseek(iFile, offset, seekmode);
-#endif
         }
     }
     return -1;
@@ -548,14 +524,10 @@ TOsclFileOffset OsclNativeFile::Tell()
     TOsclFileOffset result = -1;
     if (iFile)
     {
-#if OSCL_HAS_LARGE_FILE_SUPPORT
 #ifdef ANDROID
         return lseek64(iFileDescriptor, 0, SEEK_CUR);
 #endif
         result = ftello(iFile);
-#else
-        result = ftell(iFile);
-#endif
     }
     return result;
 }
@@ -580,13 +552,11 @@ int32 OsclNativeFile::EndOfFile()
         return 0;
     }
 
-#if OSCL_HAS_LARGE_FILE_SUPPORT
 #ifdef ANDROID
     if (iFile)
     {
         return Tell() < Size() ? 0 : 1;
     }
-#endif
 #endif
     if (iFile)
     {
@@ -603,7 +573,6 @@ int32 OsclNativeFile::GetError()
     return 0;
 }
 
-#if (OSCL_HAS_LARGE_FILE_SUPPORT)
 #ifdef ANDROID
 int32 OsclNativeFile::FindLargeFileOpenMode(uint32 mode)
 {
@@ -637,6 +606,5 @@ int32 OsclNativeFile::FindLargeFileOpenMode(uint32 mode)
     largeFileOpenMode |= O_LARGEFILE;
     return largeFileOpenMode;
 }
-#endif
 #endif
 

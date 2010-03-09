@@ -45,11 +45,7 @@ class OsclFileStatsItem
 {
     public:
         uint32 iOpCount;
-#if OSCL_HAS_LARGE_FILE_SUPPORT
         uint64 iParam;
-#else
-        uint32 iParam;
-#endif
         TOsclFileOffset iParam2;
         uint32 iStartTick;
         uint32 iTotalTicks;
