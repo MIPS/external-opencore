@@ -571,7 +571,7 @@
 #define LIBS_omxenc_static "   "
 #define pvstreamingmanagernode_y_mk ""
 #define smmshttpplugininterface_m_lib ""
-#define MODS_pvdb "-lopencore_player -lopencore_common -lpvsqlite -lpvasfcommon -lpvasflocalpbreg"
+#define MODS_pvdb "-lopencore_player -lopencore_common -lpvsqlite -lpvasfcommon -lpvasflocalpbreg -lopencore_pvme"
 #define DYNAMIC_LOAD_OMX_WMV_COMPONENT 0
 #define pvrtsptunicast_streaming_aggregate_libtype "shared"
 #define pvmtp_usb_transport_m_lib ""

@@ -508,7 +508,7 @@ derive pvdb_so_name from mtp_db_support==y ? "pvdb" : ""
 derive pvdb_aggregate_libtype from mtp_db_support==y ? "shared":"static"
 derive SOLIBS_pvdb from pvdbmanager_m_lib
 derive AGGREGATE_LIBDIRS_pvdb from pvdbmanager_m_mk
-derive MODS_pvdb from "-lopencore_player -lopencore_common -lpvsqlite -lpvasfcommon -lpvasflocalpbreg"
+derive MODS_pvdb from "-lopencore_player -lopencore_common -lpvsqlite -lpvasfcommon -lpvasflocalpbreg -lopencore_pvme"
 
 derive pvdb_recovery_utility_so_name from mtp_db_support==y ? "pvdb_recovery_utility" : "" 
 derive pvdb_recovery_utility_aggregate_libtype from mtp_db_support==y ? "shared":"static"
