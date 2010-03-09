@@ -135,6 +135,157 @@ PVMFOMXAudioDecNode::PVMFOMXAudioDecNode(int32 aPriority) :
     iGaplessLogger = PVLogger::GetLoggerObject("gapless.decnode");
 }
 
+
+// this is a utility possibly called multiple times by ProcessIncomingMsg method
+// it returns PVMFSuccess if the msg is a cmd msg and is processed
+// PVMFFailure if the msg is a cmd msg, but cannot be processed correctly
+// PVMFPending if the msg is a data msg
+PVMFStatus PVMFOMXAudioDecNode::CheckIfIncomingMsgIsCmd(PVMFSharedMediaMsgPtr msg)
+{
+
+    PVMFStatus status = PVMFPending; // assume this is a data message
+
+    if (msg->getFormatID() == PVMF_MEDIA_CMD_BOS_FORMAT_ID)
+    {
+        //store the stream id and time stamp of bos message
+        iStreamID = msg->getStreamID();
+        iCurrentClipId = msg->getClipID();
+
+        iClipSampleCount = 0;
+
+        iSendBOS = true;
+
+        // if new BOS arrives, and
+        //if we're in the middle of a partial frame assembly
+        // abandon it and start fresh
+        if (iObtainNewInputBuffer == false)
+        {
+            if (iInputBufferUnderConstruction != NULL)
+            {
+                if (iInBufMemoryPool != NULL)
+                {
+                    iInBufMemoryPool->deallocate((OsclAny *)(iInputBufferUnderConstruction->pMemPoolEntry));
+                }
+                iInputBufferUnderConstruction = NULL;
+            }
+            iObtainNewInputBuffer = true;
+
+        }
+
+        // needed to init the sequence numbers and timestamp for partial frame assembly
+        iFirstDataMsgAfterBOS = true;
+        iKeepDroppingMsgsUntilMarkerBit = false;
+
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                        (0, "PVMFOMXAudioDecNode::ProcessIncomingMsg: Received BOS stream %d, clipId %d", iStreamID, iCurrentClipId));
+
+        status = PVMFSuccess;
+    }
+    else if (msg->getFormatID() == PVMF_MEDIA_CMD_EOS_FORMAT_ID)
+    {
+        // Set EOS flag
+        iEndOfDataReached = true;
+        // Save the timestamp for the EOS cmd
+        iEndOfDataTimestamp = msg->getTimestamp();
+        iCurrentClipId = msg->getClipID();
+
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                        (0, "PVMFOMXAudioDecNode::ProcessIncomingMsg: Received EOS clipId %d", iCurrentClipId));
+
+
+        status = PVMFSuccess;
+    }
+    else if (msg->getFormatID() == PVMF_MEDIA_CMD_BOC_FORMAT_ID)
+    {
+        // get pointer to the data fragment
+        OsclRefCounterMemFrag DataFrag;
+        msg->getFormatSpecificInfo(DataFrag);
+
+        // get format specific info
+        BOCInfo* bocInfoPtr = (BOCInfo*)DataFrag.getMemFragPtr();
+        int32 bocInfoSize = (int32)DataFrag.getMemFragSize();
+        OSCL_UNUSED_ARG(bocInfoSize); // bocInfoSize is used only for logging
+        if (bocInfoPtr == NULL)
+        {
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                            (0, "PVMFOMXAudioDecNode::ProcessIncomingMsg: Received BOC, memFragPtr %x, memFragSize %d, but memFragPtr is NULL",
+                             bocInfoPtr, bocInfoSize));
+
+            return PVMFFailure;
+        }
+
+        iBOCSamplesToSkip = bocInfoPtr->samplesToSkip;
+        iBOCTimeStamp = msg->getTimestamp();
+        iBOCReceived = true;
+
+        if (iNodeConfig.iMimeType == PVMF_MIME_MP3)
+        {
+            iBOCSamplesToSkip += MP3_DECODER_DELAY;
+        }
+
+        CalculateBOCParameters();
+
+        // only count samples if there is gapless metadata (i.e. BOC is sent)
+        iCountSamplesInBuffer = true;
+        iClipSampleCount = 0;
+
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                        (0, "PVMFOMXAudioDecNode::ProcessIncomingMsg: Received BOC, memFragPtr %x, memFragSize %d, samplesToSkipBOC %d",
+                         bocInfoPtr, bocInfoSize, bocInfoPtr->samplesToSkip));
+
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iGaplessLogger, PVLOGMSG_INFO,
+                        (0, "PVMFOMXAudioDecNode::ProcessIncomingMsg() Gapless BOC, bocInfoPtr->samplesToSkip %d, iBOCSamplesToSkip %d",
+                         bocInfoPtr->samplesToSkip, iBOCSamplesToSkip));
+
+        status = PVMFSuccess;
+    }
+    else if (msg->getFormatID() == PVMF_MEDIA_CMD_EOC_FORMAT_ID)
+    {
+        // get pointer to the data fragment
+        OsclRefCounterMemFrag DataFrag;
+        msg->getFormatSpecificInfo(DataFrag);
+
+        // get format specific info
+        EOCInfo* eocInfoPtr = (EOCInfo*)DataFrag.getMemFragPtr();
+        int32 eocInfoSize = (int32)DataFrag.getMemFragSize();
+        OSCL_UNUSED_ARG(eocInfoSize); // eocInfoSize is used only for logging
+
+        if (eocInfoPtr == NULL)
+        {
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                            (0, "PVMFOMXAudioDecNode::ProcessIncomingMsg: Received EOC, memFragPtr %x, memFragSize %d, but memFragPtr is NULL",
+                             eocInfoPtr, eocInfoSize));
+
+            return PVMFFailure;
+        }
+
+        iEOCSamplesToSkip = eocInfoPtr->samplesToSkip;
+        iEOCFramesToFollow = eocInfoPtr->framesToFollow;
+        iEOCTimeStamp = msg->getTimestamp();
+        iEOCReceived = true;
+
+        if (iNodeConfig.iMimeType == PVMF_MIME_MP3)
+        {
+            iEOCSamplesToSkip -= OSCL_MIN(MP3_DECODER_DELAY, iEOCSamplesToSkip);
+        }
+
+        CalculateEOCParameters();
+
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                        (0, "PVMFOMXAudioDecNode::ProcessIncomingMsg: Received EOC, memFragPtr %x, memFragSize %d, framesToFollowEOC % d, samplesToSkipEOC %d",
+                         eocInfoPtr, eocInfoSize, eocInfoPtr->samplesToSkip, eocInfoPtr->framesToFollow));
+
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iGaplessLogger, PVLOGMSG_INFO,
+                        (0, "PVMFOMXAudioDecNode::ProcessIncomingMsg() Gapless EOC, framesToFollowEOC %d, eocInfoPtr->samplesToSkip %d, iEOCSamplesToSkip %d",
+                         iEOCFramesToFollow, eocInfoPtr->samplesToSkip, iEOCSamplesToSkip));
+
+
+        status = PVMFSuccess;
+    }
+
+    return status;
+
+}
 /////////////////////////////////////////////////////////////////////////////
 // This routine will process incomming message from the port
 /////////////////////////////////////////////////////////////////////////////
@@ -246,144 +397,23 @@ bool PVMFOMXAudioDecNode::ProcessIncomingMsg(PVMFPortInterface* aPort)
         return false;
     }
 
-    if (msg->getFormatID() == PVMF_MEDIA_CMD_BOS_FORMAT_ID)
+
+    // check if incoming msg is a cmd msg
+    status = CheckIfIncomingMsgIsCmd(msg);
+    if (PVMFSuccess == status)
     {
-        //store the stream id and time stamp of bos message
-        iStreamID = msg->getStreamID();
-        iCurrentClipId = msg->getClipID();
-
-        iClipSampleCount = 0;
-
-        iSendBOS = true;
-
-        // if new BOS arrives, and
-        //if we're in the middle of a partial frame assembly
-        // abandon it and start fresh
-        if (iObtainNewInputBuffer == false)
-        {
-            if (iInputBufferUnderConstruction != NULL)
-            {
-                if (iInBufMemoryPool != NULL)
-                {
-                    iInBufMemoryPool->deallocate((OsclAny *)(iInputBufferUnderConstruction->pMemPoolEntry));
-                }
-                iInputBufferUnderConstruction = NULL;
-            }
-            iObtainNewInputBuffer = true;
-
-        }
-
-        // needed to init the sequence numbers and timestamp for partial frame assembly
-        iFirstDataMsgAfterBOS = true;
-        iKeepDroppingMsgsUntilMarkerBit = false;
-
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                        (0, "PVMFOMXAudioDecNode::ProcessIncomingMsg: Received BOS stream %d, clipId %d", iStreamID, iCurrentClipId));
+        // if a cmd msg, it was processed inside a helper method above
         ((PVMFOMXDecPort*)aPort)->iNumFramesConsumed++;
         return true;
     }
-    else if (msg->getFormatID() == PVMF_MEDIA_CMD_EOS_FORMAT_ID)
+    else if (PVMFFailure == status)
     {
-        // Set EOS flag
-        iEndOfDataReached = true;
-        // Save the timestamp for the EOS cmd
-        iEndOfDataTimestamp = msg->getTimestamp();
-        iCurrentClipId = msg->getClipID();
-
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                        (0, "PVMFOMXAudioDecNode::ProcessIncomingMsg: Received EOS clipId %d", iCurrentClipId));
-
-        ((PVMFOMXDecPort*)aPort)->iNumFramesConsumed++;
-        return true; // do not do conversion into media data, just set the flag and leave
+        // something went wrong when processing the msg
+        return false;
     }
-    else if (msg->getFormatID() == PVMF_MEDIA_CMD_BOC_FORMAT_ID)
-    {
-        // get pointer to the data fragment
-        OsclRefCounterMemFrag DataFrag;
-        msg->getFormatSpecificInfo(DataFrag);
 
-        // get format specific info
-        BOCInfo* bocInfoPtr = (BOCInfo*)DataFrag.getMemFragPtr();
-        int32 bocInfoSize = (int32)DataFrag.getMemFragSize();
-        OSCL_UNUSED_ARG(bocInfoSize); // bocInfoSize is used only for logging
-        if (bocInfoPtr == NULL)
-        {
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                            (0, "PVMFOMXAudioDecNode::ProcessIncomingMsg: Received BOC, memFragPtr %x, memFragSize %d, but memFragPtr is NULL",
-                             bocInfoPtr, bocInfoSize));
+    // if we end up here, the msg is a data message
 
-            return false;
-        }
-
-        iBOCSamplesToSkip = bocInfoPtr->samplesToSkip;
-        iBOCTimeStamp = msg->getTimestamp();
-        iBOCReceived = true;
-
-        if (iNodeConfig.iMimeType == PVMF_MIME_MP3)
-        {
-            iBOCSamplesToSkip += MP3_DECODER_DELAY;
-        }
-
-        CalculateBOCParameters();
-
-        // only count samples if there is gapless metadata (i.e. BOC is sent)
-        iCountSamplesInBuffer = true;
-        iClipSampleCount = 0;
-
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                        (0, "PVMFOMXAudioDecNode::ProcessIncomingMsg: Received BOC, memFragPtr %x, memFragSize %d, samplesToSkipBOC %d",
-                         bocInfoPtr, bocInfoSize, bocInfoPtr->samplesToSkip));
-
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iGaplessLogger, PVLOGMSG_INFO,
-                        (0, "PVMFOMXAudioDecNode::ProcessIncomingMsg() Gapless BOC, bocInfoPtr->samplesToSkip %d, iBOCSamplesToSkip %d",
-                         bocInfoPtr->samplesToSkip, iBOCSamplesToSkip));
-
-        ((PVMFOMXDecPort*)aPort)->iNumFramesConsumed++;
-        return true;
-    }
-    else if (msg->getFormatID() == PVMF_MEDIA_CMD_EOC_FORMAT_ID)
-    {
-        // get pointer to the data fragment
-        OsclRefCounterMemFrag DataFrag;
-        msg->getFormatSpecificInfo(DataFrag);
-
-        // get format specific info
-        EOCInfo* eocInfoPtr = (EOCInfo*)DataFrag.getMemFragPtr();
-        int32 eocInfoSize = (int32)DataFrag.getMemFragSize();
-        OSCL_UNUSED_ARG(eocInfoSize); // eocInfoSize is used only for logging
-
-        if (eocInfoPtr == NULL)
-        {
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                            (0, "PVMFOMXAudioDecNode::ProcessIncomingMsg: Received EOC, memFragPtr %x, memFragSize %d, but memFragPtr is NULL",
-                             eocInfoPtr, eocInfoSize));
-
-            return false;
-        }
-
-        iEOCSamplesToSkip = eocInfoPtr->samplesToSkip;
-        iEOCFramesToFollow = eocInfoPtr->framesToFollow;
-        iEOCTimeStamp = msg->getTimestamp();
-        iEOCReceived = true;
-
-        if (iNodeConfig.iMimeType == PVMF_MIME_MP3)
-        {
-            iEOCSamplesToSkip -= OSCL_MIN(MP3_DECODER_DELAY, iEOCSamplesToSkip);
-        }
-
-        CalculateEOCParameters();
-
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                        (0, "PVMFOMXAudioDecNode::ProcessIncomingMsg: Received EOC, memFragPtr %x, memFragSize %d, framesToFollowEOC % d, samplesToSkipEOC %d",
-                         eocInfoPtr, eocInfoSize, eocInfoPtr->samplesToSkip, eocInfoPtr->framesToFollow));
-
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iGaplessLogger, PVLOGMSG_INFO,
-                        (0, "PVMFOMXAudioDecNode::ProcessIncomingMsg() Gapless EOC, framesToFollowEOC %d, eocInfoPtr->samplesToSkip %d, iEOCSamplesToSkip %d",
-                         iEOCFramesToFollow, eocInfoPtr->samplesToSkip, iEOCSamplesToSkip));
-
-        ((PVMFOMXDecPort*)aPort)->iNumFramesConsumed++;
-        return true;
-    }
 
 
     ///////////////////////////////////////////////////////////////////////////////////////
@@ -433,20 +463,9 @@ bool PVMFOMXAudioDecNode::ProcessIncomingMsg(PVMFPortInterface* aPort)
 
         do
         {
-            if (msg->getFormatID() == PVMF_MEDIA_CMD_EOS_FORMAT_ID)
-            {
-                // Set EOS flag
-                iEndOfDataReached = true;
-                // Save the timestamp for the EOS cmd
-                iEndOfDataTimestamp = msg->getTimestamp();
 
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                                (0, "PVMFOMXAudioDecNode::ProcessIncomingMsg: Received EOS"));
+            // if we end up here, the msg is a data message
 
-                ((PVMFOMXDecPort*)aPort)->iNumFramesConsumed++;
-                return true; // do not do conversion into media data, just set the flag and leave
-
-            }
             // Convert the next input media msg to media data
             PVMFSharedMediaDataPtr mediaData;
             convertToPVMFMediaData(mediaData, msg);
@@ -465,6 +484,13 @@ bool PVMFOMXAudioDecNode::ProcessIncomingMsg(PVMFPortInterface* aPort)
             if (retval != FRAME_INCOMPLETE && retval != FRAME_ERROR)
                 break;
 
+            // Log parser error
+            if (retval == FRAME_ERROR)
+            {
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
+                                (0, "PVMFAACDecNode::GetInputMediaData() LATM parser error"));
+            }
+
             // frame is not complete, keep looping
             if (aPort->IncomingMsgQueueSize() == 0)
             {
@@ -480,12 +506,20 @@ bool PVMFOMXAudioDecNode::ProcessIncomingMsg(PVMFPortInterface* aPort)
 
             }
 
-            // Log parser error
-            if (retval == FRAME_ERROR)
+            // check if incoming msg is a cmd msg
+            status = CheckIfIncomingMsgIsCmd(msg);
+            if (PVMFSuccess == status)
             {
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                                (0, "PVMFAACDecNode::GetInputMediaData() LATM parser error"));
+                // if a cmd msg, it was processed inside a helper method above
+                ((PVMFOMXDecPort*)aPort)->iNumFramesConsumed++;
+                return true;
             }
+            else if (PVMFFailure == status)
+            {
+                // something went wrong when processing the msg
+                return false;
+            }
+
         }
         while ((retval == FRAME_INCOMPLETE || retval == FRAME_ERROR));
 

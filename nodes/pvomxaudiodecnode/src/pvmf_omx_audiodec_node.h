@@ -102,6 +102,7 @@ class PVMFOMXAudioDecNode: public PVMFOMXBaseDecNode
         PVMFStatus DoRequestPort(PVMFPortInterface*&);
         PVMFStatus DoGetNodeMetadataKey();
         PVMFStatus DoGetNodeMetadataValue();
+        PVMFStatus CheckIfIncomingMsgIsCmd(PVMFSharedMediaMsgPtr msg);
         bool ProcessIncomingMsg(PVMFPortInterface* aPort);
         PVMFStatus HandlePortReEnable();
 
