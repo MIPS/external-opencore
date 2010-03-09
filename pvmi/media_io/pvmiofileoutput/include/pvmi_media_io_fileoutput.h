@@ -373,7 +373,6 @@ class PVRefFileOutput
         int32 iAudioSamplingRate;
         bool iAudioSamplingRateValid;
 
-        /* SRS WOW HD */
 
         // Video parameters
         OSCL_HeapString<OsclMemAllocator> iVideoFormatString;
