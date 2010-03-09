@@ -596,6 +596,30 @@ void PVFMVideoMIO::setParametersSync(PvmiMIOSession aSession, PvmiKvp* aParamete
             iVideoFormat = aParameters[i].value.pChar_value;
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFMVideoMIO::setParametersSync() Video Format Key, Value %s", iVideoFormat.getMIMEStrPtr()));
         }
+        else if (pv_mime_strcmp(aParameters[i].key, MOUT_VIDEO_WIDTH_KEY) == 0)
+        {
+            iVideoWidth = (int32)aParameters[i].value.uint32_value;
+            iVideoWidthValid = true;
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFMVideoMIO::setParametersSync() Video Width Key, Value %d", iVideoWidth));
+        }
+        else if (pv_mime_strcmp(aParameters[i].key, MOUT_VIDEO_HEIGHT_KEY) == 0)
+        {
+            iVideoHeight = (int32)aParameters[i].value.uint32_value;
+            iVideoHeightValid = true;
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFMVideoMIO::setParametersSync() Video Height Key, Value %d", iVideoHeight));
+        }
+        else if (pv_mime_strcmp(aParameters[i].key, MOUT_VIDEO_DISPLAY_HEIGHT_KEY) == 0)
+        {
+            iVideoDisplayHeight = (int32)aParameters[i].value.uint32_value;
+            iVideoDisplayHeightValid = true;
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFMVideoMIO::setParametersSync() Video Display Height Key, Value %d", iVideoDisplayHeight));
+        }
+        else if (pv_mime_strcmp(aParameters[i].key, MOUT_VIDEO_DISPLAY_WIDTH_KEY) == 0)
+        {
+            iVideoDisplayWidth = (int32)aParameters[i].value.uint32_value;
+            iVideoDisplayWidthValid = true;
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFMVideoMIO::setParametersSync() Video Display Width Key, Value %d", iVideoDisplayWidth));
+        }
         else if (pv_mime_strcmp(aParameters[i].key, PVMF_FORMAT_SPECIFIC_INFO_KEY) == 0)
         {
             //  iOutputFile.Write(aParameters[i].value.pChar_value, sizeof(uint8), (int32)aParameters[i].capacity);

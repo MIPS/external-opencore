@@ -793,6 +793,47 @@ void AndroidSurfaceOutput::setParametersSync(PvmiMIOSession aSession, PvmiKvp* a
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                             (0, "AndroidSurfaceOutput::setParametersSync() Video Format Key, Value %s", iVideoFormatString.get_str()));
         }
+        else if (pv_mime_strcmp(aParameters[i].key, MOUT_VIDEO_WIDTH_KEY) == 0)
+        {
+            iVideoWidth = (int32)aParameters[i].value.uint32_value;
+            iVideoParameterFlags |= VIDEO_WIDTH_VALID;
+            LOGV("iVideoWidth=%d", iVideoWidth);
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                            (0, "AndroidSurfaceOutput::setParametersSync() Video Width Key, Value %d", iVideoWidth));
+        }
+        else if (pv_mime_strcmp(aParameters[i].key, MOUT_VIDEO_HEIGHT_KEY) == 0)
+        {
+            iVideoHeight = (int32)aParameters[i].value.uint32_value;
+            iVideoParameterFlags |= VIDEO_HEIGHT_VALID;
+            LOGV("iVideoHeight=%d", iVideoHeight);
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                            (0, "AndroidSurfaceOutput::setParametersSync() Video Height Key, Value %d", iVideoHeight));
+        }
+        else if (pv_mime_strcmp(aParameters[i].key, MOUT_VIDEO_DISPLAY_HEIGHT_KEY) == 0)
+        {
+            iVideoDisplayHeight = (int32)aParameters[i].value.uint32_value;
+            iVideoParameterFlags |= DISPLAY_HEIGHT_VALID;
+            LOGV("iVideoDisplayHeight=%d", iVideoDisplayHeight);
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                            (0, "AndroidSurfaceOutput::setParametersSync() Video Display Height Key, Value %d", iVideoDisplayHeight));
+        }
+        else if (pv_mime_strcmp(aParameters[i].key, MOUT_VIDEO_DISPLAY_WIDTH_KEY) == 0)
+        {
+            iVideoDisplayWidth = (int32)aParameters[i].value.uint32_value;
+            iVideoParameterFlags |= DISPLAY_WIDTH_VALID;
+            LOGV("iVideoDisplayWidth=%d", iVideoDisplayWidth);
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                            (0, "AndroidSurfaceOutput::setParametersSync() Video Display Width Key, Value %d", iVideoDisplayWidth));
+        }
+        else if (pv_mime_strcmp(aParameters[i].key, MOUT_VIDEO_SUBFORMAT_KEY) == 0)
+        {
+            iVideoSubFormat = aParameters[i].value.pChar_value;
+            iVideoParameterFlags |= VIDEO_SUBFORMAT_VALID;
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                            (0, "AndroidSurfaceOutput::setParametersSync() Video SubFormat Key, Value %s", iVideoSubFormat.getMIMEStrPtr()));
+
+            LOGV("VIDEO SUBFORMAT SET TO %s\n", iVideoSubFormat.getMIMEStrPtr());
+        }
         //All FSI for video will be set here in one go
         else if (pv_mime_strcmp(aParameters[i].key, PVMF_FORMAT_SPECIFIC_INFO_KEY_YUV) == 0)
         {

@@ -577,6 +577,22 @@ void AndroidAudioMIO::setParametersSync(PvmiMIOSession aSession, PvmiKvp* aParam
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                             (0, "AndroidAudioOutput::setParametersSync() Audio Format Key, Value %s", aParameters[i].value.pChar_value));
         }
+        else if (pv_mime_strcmp(aParameters[i].key, MOUT_AUDIO_SAMPLING_RATE_KEY) == 0)
+        {
+            iAudioSamplingRate = (int32)aParameters[i].value.uint32_value;
+            iAudioSamplingRateValid = true;
+            // LOGD("iAudioSamplingRate=%d", iAudioSamplingRate);
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                            (0, "AndroidAudioMIO::setParametersSync() Audio Sampling Rate Key, Value %d", iAudioSamplingRate));
+        }
+        else if (pv_mime_strcmp(aParameters[i].key, MOUT_AUDIO_NUM_CHANNELS_KEY) == 0)
+        {
+            iAudioNumChannels = (int32)aParameters[i].value.uint32_value;
+            iAudioNumChannelsValid = true;
+            // LOGD("iAudioNumChannels=%d", iAudioNumChannels);
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                            (0, "AndroidAudioMIO::setParametersSync() Audio Num Channels Key, Value %d", iAudioNumChannels));
+        }
         else if (pv_mime_strcmp(aParameters[i].key, PVMF_FORMAT_SPECIFIC_INFO_KEY_PCM) == 0)
         {
             channelSampleInfo* pcm16Info = (channelSampleInfo*)aParameters->value.key_specific_value;
