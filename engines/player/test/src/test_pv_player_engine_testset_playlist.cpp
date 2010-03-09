@@ -1153,7 +1153,8 @@ void pvplayer_async_test_playlist_playback::Run()
             }
             iAudioSinkFileName += _STRLIT_WCHAR("_audio.dat");
 
-            iMIOFileOutAudio = iMioFactory->CreateAudioOutput((OsclAny*) & iAudioSinkFileName, MEDIATYPE_AUDIO, iCompressedAudio);
+            iMIOFileOutAudio = iMioFactory->CreateAudioOutput((OsclAny*) & iAudioSinkFileName, NULL/*observer*/, true/*active*/,
+                               10/*Queue Limit*/, false, false);
             iIONodeAudio = PVMediaOutputNodeFactory::CreateMediaOutputNode(iMIOFileOutAudio);
             iDataSinkAudio = new PVPlayerDataSinkPVMFNode;
             ((PVPlayerDataSinkPVMFNode*)iDataSinkAudio)->SetDataSinkNode(iIONodeAudio);
@@ -2385,7 +2386,8 @@ void pvplayer_async_test_playlist_seek_skip::Run()
             }
             sinkfilename += _STRLIT_WCHAR("_audio.dat");
 
-            iMIOFileOutAudio = iMioFactory->CreateAudioOutput((OsclAny*) & sinkfilename, MEDIATYPE_AUDIO, iCompressedAudio);
+            iMIOFileOutAudio = iMioFactory->CreateAudioOutput((OsclAny*) & sinkfilename, NULL/*observer*/, true/*active*/,
+                               10/*Queue Limit*/, false, false);
             iIONodeAudio = PVMediaOutputNodeFactory::CreateMediaOutputNode(iMIOFileOutAudio);
             iDataSinkAudio = new PVPlayerDataSinkPVMFNode;
             ((PVPlayerDataSinkPVMFNode*)iDataSinkAudio)->SetDataSinkNode(iIONodeAudio);
@@ -3512,7 +3514,8 @@ void pvplayer_async_test_validate_gapless::Run()
             iAudioSinkFileName += iSinkFileNameSubString;
             iAudioSinkFileName += _STRLIT_WCHAR("_audio.dat");
 
-            iMIOFileOutAudio = iMioFactory->CreateAudioOutput((OsclAny*) & iAudioSinkFileName, MEDIATYPE_AUDIO, iCompressedAudio);
+            iMIOFileOutAudio = iMioFactory->CreateAudioOutput((OsclAny*) & iAudioSinkFileName, NULL/*observer*/, true/*active*/,
+                               10/*Queue Limit*/, false, false);
             iIONodeAudio = PVMediaOutputNodeFactory::CreateMediaOutputNode(iMIOFileOutAudio);
             iDataSinkAudio = new PVPlayerDataSinkPVMFNode;
             ((PVPlayerDataSinkPVMFNode*)iDataSinkAudio)->SetDataSinkNode(iIONodeAudio);

@@ -147,7 +147,7 @@ class PVRefFileOutputActiveTimingSupport: public PvmiClockExtensionInterface
 
         void queryUuid(PVUuid& uuid);
 
-        uint32 GetDelayMsec(PVMFTimestamp&);
+        int32 GetDelayMsec(PVMFTimestamp&);
         void AdjustClock(PVMFTimestamp& aTs);
 
         PVMFTimestamp iLastTimestamp;

@@ -822,52 +822,55 @@ void PVRefFileOutput::LogParameters()
     iParametersLogged = true;
     if (iLogOutputToFile)
     {
-        char string[128];
-        int32 len;
-        if (iVideoFormatString.get_size() > 0)
+        if (iLogStrings)
         {
-            len = oscl_snprintf(string, 128, "Video Format %s ", iVideoFormatString.get_str());
-            iOutputFile.Write(string, sizeof(uint8), len) ;
-        }
-        if (iVideoHeightValid)
-        {
-            len = oscl_snprintf(string, 128, "Video Height %d ", iVideoHeight);
-            iOutputFile.Write(string, sizeof(uint8), len) ;
-        }
-        if (iVideoWidthValid)
-        {
-            len = oscl_snprintf(string, 128, "Video Width %d ", iVideoWidth);
-            iOutputFile.Write(string, sizeof(uint8), len) ;
-        }
-        if (iVideoDisplayHeightValid)
-        {
-            len = oscl_snprintf(string, 128, "Video Display Height %d ", iVideoDisplayHeight);
-            iOutputFile.Write(string, sizeof(uint8), len) ;
-        }
-        if (iVideoDisplayWidthValid)
-        {
-            len = oscl_snprintf(string, 128, "Video Display Width %d ", iVideoDisplayWidth);
-            iOutputFile.Write(string, sizeof(uint8), len) ;
-        }
-        if (iAudioFormatString.get_size() > 0)
-        {
-            len = oscl_snprintf(string, 128, "Audio Format %s ", iAudioFormatString.get_str());
-            iOutputFile.Write(string, sizeof(uint8), len) ;
-        }
-        if (iAudioNumChannelsValid)
-        {
-            len = oscl_snprintf(string, 128, "Audio Num Channels %d ", iAudioNumChannels);
-            iOutputFile.Write(string, sizeof(uint8), len) ;
-        }
-        if (iAudioSamplingRateValid)
-        {
-            len = oscl_snprintf(string, 128, "Audio Sampling Rate %d ", iAudioSamplingRate);
-            iOutputFile.Write(string, sizeof(uint8), len) ;
-        }
-        if (iTextFormatString.get_size() > 0)
-        {
-            len = oscl_snprintf(string, 128, "Text Format %s ", iTextFormatString.get_str());
-            iOutputFile.Write(string, sizeof(uint8), len) ;
+            char string[128];
+            int32 len;
+            if (iVideoFormatString.get_size() > 0)
+            {
+                len = oscl_snprintf(string, 128, "Video Format %s ", iVideoFormatString.get_str());
+                iOutputFile.Write(string, sizeof(uint8), len) ;
+            }
+            if (iVideoHeightValid)
+            {
+                len = oscl_snprintf(string, 128, "Video Height %d ", iVideoHeight);
+                iOutputFile.Write(string, sizeof(uint8), len) ;
+            }
+            if (iVideoWidthValid)
+            {
+                len = oscl_snprintf(string, 128, "Video Width %d ", iVideoWidth);
+                iOutputFile.Write(string, sizeof(uint8), len) ;
+            }
+            if (iVideoDisplayHeightValid)
+            {
+                len = oscl_snprintf(string, 128, "Video Display Height %d ", iVideoDisplayHeight);
+                iOutputFile.Write(string, sizeof(uint8), len) ;
+            }
+            if (iVideoDisplayWidthValid)
+            {
+                len = oscl_snprintf(string, 128, "Video Display Width %d ", iVideoDisplayWidth);
+                iOutputFile.Write(string, sizeof(uint8), len) ;
+            }
+            if (iAudioFormatString.get_size() > 0)
+            {
+                len = oscl_snprintf(string, 128, "Audio Format %s ", iAudioFormatString.get_str());
+                iOutputFile.Write(string, sizeof(uint8), len) ;
+            }
+            if (iAudioNumChannelsValid)
+            {
+                len = oscl_snprintf(string, 128, "Audio Num Channels %d ", iAudioNumChannels);
+                iOutputFile.Write(string, sizeof(uint8), len) ;
+            }
+            if (iAudioSamplingRateValid)
+            {
+                len = oscl_snprintf(string, 128, "Audio Sampling Rate %d ", iAudioSamplingRate);
+                iOutputFile.Write(string, sizeof(uint8), len) ;
+            }
+            if (iTextFormatString.get_size() > 0)
+            {
+                len = oscl_snprintf(string, 128, "Text Format %s ", iTextFormatString.get_str());
+                iOutputFile.Write(string, sizeof(uint8), len) ;
+            }
         }
     }
 }
@@ -1727,9 +1730,9 @@ void PVRefFileOutput::setParametersSync(PvmiMIOSession aSession,
                     LogCodecHeader(0, 0, (int32)aParameters[i].capacity);
                     if (aParameters[i].value.pChar_value != NULL)
                     {
-                        if (iLogOutputToFile && iOutputFile.Write(aParameters[i].value.pChar_value,
-                                sizeof(uint8),
-                                (int32)aParameters[i].capacity) != (uint32)aParameters[i].length)
+                        if (iLogStrings && iOutputFile.Write(aParameters[i].value.pChar_value,
+                                                             sizeof(uint8),
+                                                             (int32)aParameters[i].capacity) != (uint32)aParameters[i].length)
                         {
                             PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_ERR,
                                             (0, "PVRefFileOutput::setParametersSync: Error - File write failed"));
@@ -2236,12 +2239,11 @@ void PVRefFileOutputActiveTimingSupport::AdjustClock(PVMFTimestamp& aTs)
 //This routine does 2 things-- computes the delay before we can render this frame,
 //based on simulated rendering time for the prior frame, and adjusts the
 //player clock when it's time to render this frame.
-uint32 PVRefFileOutputActiveTimingSupport::GetDelayMsec(PVMFTimestamp& aTs)
+int32 PVRefFileOutputActiveTimingSupport::GetDelayMsec(PVMFTimestamp& aTs)
 {
     //This routine can be called twice per frame.  On the first call, if
     //a non-zero delay is returned, it will be called a second time after the delay
     //has elapsed.
-
     if (iDelay > 0)
     {
         //already delayed this frame, so render now.
@@ -2334,7 +2336,7 @@ void PVRefFileOutput::Run()
         if (!iWriteResponseQueue[0].iDiscard
                 && iActiveTiming)
         {
-            uint32 delay = iActiveTiming->GetDelayMsec(iWriteResponseQueue[0].iTimestamp);
+            int32 delay = iActiveTiming->GetDelayMsec(iWriteResponseQueue[0].iTimestamp);
             if (delay > 0)
             {
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
