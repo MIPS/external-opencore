@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -70,8 +70,10 @@
 ----------------------------------------------------------------------------*/
 
 void sbr_extract_extended_data(BIT_BUFFER * hBitBuf
+#ifdef HQ_SBR
 #ifdef PARAMETRICSTEREO         /* Parametric Stereo Decoder */
                                , HANDLE_PS_DEC hParametricStereoDec
+#endif
 #endif
                               );
 

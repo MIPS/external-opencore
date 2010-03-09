@@ -129,6 +129,7 @@ pvra8decoder_lib=n
 pv_srs_wowhd_lib=n
 wmadecoder_lib=n
 useoldwmadecoder=n
+usepv_one_segment_broadcast=n
 wma_audio_support=m
 
 #

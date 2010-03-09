@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -314,7 +314,6 @@
 ; Declare functions defined elsewhere and referenced in this module
 ----------------------------------------------------------------------------*/
 
-void InitSbrSynFilterbank(bool bDownSampleSBR);
 
 
 
@@ -377,7 +376,7 @@ OSCL_EXPORT_REF Int PVMP4AudioDecodeFrame(
 
     sbrDecoderData = (SBRDECODER_DATA *) & pVars->sbrDecoderData;
     sbrDec         = (SBR_DEC *) & pVars->sbrDec;
-    sbrBitStream   = (SBRBITSTREAM *) & pVars->sbrBitStr;
+    sbrBitStream   =  pVars->sbrBitStr;
 
 #ifdef PARAMETRICSTEREO
     sbrDecoderData->hParametricStereoDec = (HANDLE_PS_DEC) & pVars->sbrDecoderData.ParametricStereoDec;
@@ -535,14 +534,7 @@ OSCL_EXPORT_REF Int PVMP4AudioDecodeFrame(
                                     pChVars);
 
 #ifdef AAC_PLUS
-                if (id_syn_ele == ID_SCE)
-                {
-                    sbrBitStream->sbrElement[sbrBitStream->NrElements].ElementID = SBR_ID_SCE;
-                }
-                else
-                {
-                    sbrBitStream->sbrElement[sbrBitStream->NrElements].ElementID = SBR_ID_CPE;
-                }
+                sbrBitStream->sbrElement[sbrBitStream->NrElements].ElementID = id_syn_ele;
                 sbrBitStream->NrElementsCore++;
 
 
@@ -560,13 +552,19 @@ OSCL_EXPORT_REF Int PVMP4AudioDecodeFrame(
                  * (inside of get_prog_config). Redundant PCE will be accepted too
                  */
 
+#if PV_ONE_SEGMENT_BROADCAST
+                /*
+                 *  Force to accept new PCE
+                 */
+                pVars->current_program = -1;
+#endif
 
                 status = get_prog_config(pVars,
                                          &(pVars->scratch.scratch_prog_config));
 
                 if (status != SUCCESS)
                 {
-                    status = MP4AUDEC_INVALID_FRAME;
+                    status = MP4AUDEC_PCE_CHANGE_REQUEST;
                 }
 
                 break;
@@ -681,8 +679,6 @@ OSCL_EXPORT_REF Int PVMP4AudioDecodeFrame(
         }
     }
 #endif
-
-
 
 
     /*

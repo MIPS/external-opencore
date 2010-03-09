@@ -647,6 +647,7 @@ Int get_prog_config(
 
     } /* end for */
 
+
     if (pVars->current_program < 0)
     {
         /*
@@ -654,6 +655,8 @@ Int get_prog_config(
          * its tag number.
          */
         pVars->current_program = tag;
+
+        pVars->mc_info.ch_info[0].tag = 0;
 
     } /* end if (pVars->current_program < 0) */
 
@@ -715,6 +718,23 @@ Int get_prog_config(
 
 
     } /* end if (tag == pVars->current_program) */
+
+
+#if PV_ONE_SEGMENT_BROADCAST
+
+    /*
+     *  Accept the case when similar tag for dual-mono can co-exist in the same frame
+     *  (Not standard), In this case acquire channel tag on the fly
+     */
+
+    if ((pVars->prog_config.front.num_ele > 1)      &&
+            !(pVars->prog_config.front.ele_is_cpe[tag]) &&
+            (pVars->prog_config.front.ele_tag[1] == pVars->prog_config.front.ele_tag[0]))
+    {
+        pVars->current_program = -1;
+    }
+
+#endif
 
     return (status);
 }

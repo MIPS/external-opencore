@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -126,7 +126,11 @@ extern "C"
         MP4AUDEC_SUCCESS           =  0,
         MP4AUDEC_INVALID_FRAME     = 10,
         MP4AUDEC_INCOMPLETE_FRAME  = 20,
-        MP4AUDEC_LOST_FRAME_SYNC   = 30     /* Cannot happen since no ADTS */
+        MP4AUDEC_LOST_FRAME_SYNC   = 30,     /* Cannot happen since no ADTS */
+        MP4AUDEC_PCE_CHANGE_REQUEST = 40      /* PCE change signal a change on
+                                              * parameters that require
+                                              * decoder reconfiguration
+                                              */
     } tPVMP4AudioDecoderErrorCode;
 
 

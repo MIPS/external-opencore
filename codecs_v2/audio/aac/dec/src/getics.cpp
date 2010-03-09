@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -429,6 +429,12 @@ Int getics(
     }
 
     pFrameInfo = pWinMap[pChVars->wnd];
+
+    /* at least, number of window should be 1 or 8 */
+    if ((pFrameInfo->num_win != 1) && (pFrameInfo->num_win != 8))
+    {
+        status = 1;
+    }
 
     /* First, calculate total number of scalefactor bands
      * for this grouping. Then, decode section data
