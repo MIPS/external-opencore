@@ -1819,6 +1819,7 @@ void PVMFMP3FFParserNode::CleanupFileSource()
         }
         // clear the vector element
         iClipInfoList.pop_back();
+        iPlaybackClipIndex = -1;
     }
 
     iPlaybackParserObj = NULL;
