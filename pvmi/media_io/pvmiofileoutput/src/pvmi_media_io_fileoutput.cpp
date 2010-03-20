@@ -29,6 +29,7 @@
 
 
 #define LOG_OUTPUT_TO_FILE  1
+#define FLUSH_ENABLED 0  // enabling this flushes data to disk immediately and degrades performance
 
 // Define entry point for this DLL.
 OSCL_DLL_ENTRY_POINT_DEFAULT()
@@ -270,7 +271,6 @@ void PVRefFileOutput::Cleanup()
 {
     if (iFileOpened && iLogOutputToFile)
     {
-        iOutputFile.Flush();
         iOutputFile.Close();
     }
     iFileOpened = false;
@@ -557,7 +557,9 @@ PVMFCommandId PVRefFileOutput::Flush(const OsclAny* aContext)
         case STATE_STARTED:
             if (iFileOpened && iLogOutputToFile)
             {
+#if (FLUSH_ENABLED)
                 iOutputFile.Flush();
+#endif
             }
             iState = STATE_INITIALIZED;
             status = PVMFSuccess;
@@ -714,7 +716,6 @@ void PVRefFileOutput::ThreadLogoff()
     {
         if (iFileOpened && iLogOutputToFile)
         {
-            iOutputFile.Flush();
             iOutputFile.Close();
         }
         iFileOpened = false;
@@ -2139,6 +2140,11 @@ OSCL_EXPORT_REF bool PVRefFileOutputActiveTimingSupport::queryInterface(const PV
     return false;
 }
 
+void PVRefFileOutputActiveTimingSupport::queryUuid(PVUuid& uuid)
+{
+    uuid = PvmiClockExtensionInterfaceUuid;
+}
+
 bool PVRefFileOutputActiveTimingSupport::FrameStepMode()
 {
     if (iClock && iClock->GetCountTimebase())
@@ -2524,7 +2530,9 @@ void PVRefFileOutput::UpdateWaveChunkSize()
         iOutputFile.Write(&iRIFFChunk.chunkSize, sizeof(uint8), 4);
         iOutputFile.Seek(40, Oscl_File::SEEKSET);
         iOutputFile.Write(&iDataSubchunk.subchunk2Size, sizeof(uint8), 4);
+#if (FLUSH_ENABLED)
         iOutputFile.Flush();
+#endif
     }
 }
 

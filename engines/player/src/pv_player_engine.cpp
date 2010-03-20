@@ -1380,7 +1380,9 @@ void PVPlayerEngine::Run()
                 EngineCommandCompleted(iCurrentCmd[0].GetCmdId(), iCurrentCmd[0].GetContext(), cmdstatus);
             }
         }
-        else if (iCurrentCmd[0].GetCmdType() == PVP_ENGINE_COMMAND_PAUSE)
+        else if ((iCurrentCmd[0].GetCmdType() == PVP_ENGINE_COMMAND_PAUSE) ||
+                 (iCurrentCmd[0].GetCmdType() == PVP_ENGINE_COMMAND_PAUSE_DUE_TO_ENDOFCLIP) ||
+                 (iCurrentCmd[0].GetCmdType() == PVP_ENGINE_COMMAND_PAUSE_DUE_TO_ENDTIME_REACHED))
         {
             PVMFStatus cmdstatus = DoPause(iCurrentCmd[0]);
 

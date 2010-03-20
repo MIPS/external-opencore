@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,10 +34,9 @@ class SharableTextFileAppender : public PVLoggerAppender
     public:
         typedef PVLoggerAppender::message_id_type message_id_type;
 
-        static SharableTextFileAppender<Layout, LayoutBufferSize, Lock>* CreateAppender(OSCL_TCHAR * filename, uint32 cacheSize = 0)
+        static SharableTextFileAppender<Layout, LayoutBufferSize, Lock>* CreateAppender(OSCL_TCHAR * filename, uint32 cacheSize = 0, bool flush = false)
         {
-
-            SharableTextFileAppender<Layout, LayoutBufferSize, Lock> * appender = new SharableTextFileAppender<Layout, LayoutBufferSize, Lock>();
+            SharableTextFileAppender<Layout, LayoutBufferSize, Lock> * appender = new SharableTextFileAppender<Layout, LayoutBufferSize, Lock>(flush);
             if (NULL == appender) return NULL;
 
 #ifdef T_ARM
@@ -118,7 +117,10 @@ class SharableTextFileAppender : public PVLoggerAppender
                     _logFile.Write(_cache.ptr, sizeof(char), _cache.len);
                     _logFile.Write(stringbuf, sizeof(char), size);
                     _logFile.Write(newline, sizeof(char), 2);
-                    _logFile.Flush();
+                    if (_flush)
+                    {
+                        _logFile.Flush();
+                    }
                     _cache.len = 0;
                 }
             }
@@ -126,7 +128,10 @@ class SharableTextFileAppender : public PVLoggerAppender
             {
                 _logFile.Write(stringbuf, sizeof(char), size);
                 _logFile.Write(newline, sizeof(char), 2);
-                _logFile.Flush();
+                if (_flush)
+                {
+                    _logFile.Flush();
+                }
             }
 
             _lock.Unlock();
@@ -161,7 +166,8 @@ class SharableTextFileAppender : public PVLoggerAppender
             va_end(va);
         }
 
-        SharableTextFileAppender()
+        SharableTextFileAppender(bool flush = false) :
+                _flush(flush)
         {
             _cache.len = 0;
             _cache.ptr = 0;
@@ -193,7 +199,7 @@ class SharableTextFileAppender : public PVLoggerAppender
     private:
         Lock _lock;
         char* stringbuf;
-
+        bool _flush;
 
 };
 
@@ -204,10 +210,10 @@ class TextFileAppender : public PVLoggerAppender
         typedef PVLoggerAppender::message_id_type message_id_type;
 
         template<class T>
-        static TextFileAppender<Layout, LayoutBufferSize, Lock>* CreateAppender(const T* filename, uint32 cacheSize = 0)
+        static TextFileAppender<Layout, LayoutBufferSize, Lock>* CreateAppender(const T* filename, uint32 cacheSize = 0, bool flush = false)
         {
 
-            TextFileAppender<Layout, LayoutBufferSize, Lock> * appender = new TextFileAppender<Layout, LayoutBufferSize, Lock>();
+            TextFileAppender<Layout, LayoutBufferSize, Lock> * appender = new TextFileAppender<Layout, LayoutBufferSize, Lock>(flush);
             if (NULL == appender) return NULL;
 
 #ifdef T_ARM
@@ -286,7 +292,10 @@ class TextFileAppender : public PVLoggerAppender
                     _logFile.Write(_cache.ptr, sizeof(char), _cache.len);
                     _logFile.Write(stringbuf, sizeof(char), size);
                     _logFile.Write(newline, sizeof(char), 2);
-                    _logFile.Flush();
+                    if (_flush)
+                    {
+                        _logFile.Flush();
+                    }
                     _cache.len = 0;
                 }
             }
@@ -294,7 +303,10 @@ class TextFileAppender : public PVLoggerAppender
             {
                 _logFile.Write(stringbuf, sizeof(char), size);
                 _logFile.Write(newline, sizeof(char), 2);
-                _logFile.Flush();
+                if (_flush)
+                {
+                    _logFile.Flush();
+                }
             }
 
             _lock.Unlock();
@@ -329,7 +341,8 @@ class TextFileAppender : public PVLoggerAppender
             va_end(va);
         }
 
-        TextFileAppender()
+        TextFileAppender(bool flush = false) :
+                _flush(flush)
         {
             _cache.len = 0;
             _cache.ptr = 0;
@@ -361,7 +374,7 @@ class TextFileAppender : public PVLoggerAppender
     private:
         Lock _lock;
         char* stringbuf;
-
+        bool _flush;
 
 };
 
@@ -371,10 +384,10 @@ class BinaryFileAppender : public PVLoggerAppender
         typedef PVLoggerAppender::message_id_type message_id_type;
 
         template<class T>
-        static BinaryFileAppender* CreateAppender(const T* filename, uint32 cacheSize = 0)
+        static BinaryFileAppender* CreateAppender(const T* filename, uint32 cacheSize = 0, bool flush = false)
         {
 
-            BinaryFileAppender * appender = OSCL_NEW(BinaryFileAppender, ());
+            BinaryFileAppender * appender = new BinaryFileAppender(flush);
             if (NULL == appender) return NULL;
 
 #ifdef T_ARM
@@ -452,14 +465,20 @@ class BinaryFileAppender : public PVLoggerAppender
                     {
                         _logFile.Write(_cache.ptr, sizeof(uint8), _cache.len);
                         _logFile.Write(buffer, sizeof(uint8), length);
-                        _logFile.Flush();
+                        if (_flush)
+                        {
+                            _logFile.Flush();
+                        }
                         _cache.len = 0;
                     }
                 }
                 else
                 {
                     _logFile.Write(buffer, sizeof(uint8), length);
-                    _logFile.Flush();
+                    if (_flush)
+                    {
+                        _logFile.Flush();
+                    }
                 }
             }
             va_end(va);
@@ -473,7 +492,8 @@ class BinaryFileAppender : public PVLoggerAppender
         }
 
     private:
-        BinaryFileAppender()
+        BinaryFileAppender(bool flush = false) :
+                _flush(flush)
         {
             _cache.len = 0;
             _cache.ptr = 0;
@@ -483,6 +503,7 @@ class BinaryFileAppender : public PVLoggerAppender
         Oscl_File _logFile;
         OsclMemoryFragment _cache;
         uint32 _cacheSize;
+        bool _flush;
 };
 
 

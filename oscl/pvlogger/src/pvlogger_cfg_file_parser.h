@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -122,7 +122,8 @@ class PVLoggerCfgFileParser
         {
             ePVLOG_APPENDER_FILE,
             ePVLOG_APPENDER_MEMORY,
-            ePVLOG_APPENDER_STDERR
+            ePVLOG_APPENDER_STDERR,
+            ePVLOG_APPENDER_FILE_FLUSH,
         } eAppenderType_t;
 
         //======================================================================

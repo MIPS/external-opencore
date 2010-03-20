@@ -538,9 +538,12 @@ TOsclFileOffset OsclNativeFile::Tell()
 int32 OsclNativeFile::Flush()
 {
 
-    if (iFile)
-        return fflush(iFile);
-    return EOF;
+
+    if (!iFile || fflush(iFile) == EOF)
+        return EOF;
+    // flush OS buffers to disk
+    return fsync(fileno(iFile));
+
 }
 
 

@@ -159,6 +159,8 @@ PVLoggerCfgFileParser::Parse
                     eAppenderType_t at;
                     if (oscl_strstr(pszLine, _CSTR("LOGTOFILE")))
                         at = ePVLOG_APPENDER_FILE;
+                    else if (oscl_strstr(pszLine, _CSTR("LOGTOFILE_FLUSH")))
+                        at = ePVLOG_APPENDER_FILE_FLUSH;
                     else if (oscl_strstr(pszLine, _CSTR("LOGTOMEM")))
                         at = ePVLOG_APPENDER_MEMORY;
                     else
@@ -299,6 +301,18 @@ PVLoggerCfgFileParser::CreateLogAppender
             OSCL_TRY(
                 err,
                 pAppender = (PVLoggerAppender*)typeAppender::CreateAppender(pszLogFileName);
+                pRC = new OsclRefCounterSA<LogAppenderDestructDealloc<typeAppender> >(pAppender);
+                appenderPtr.Bind(pAppender, pRC);
+            );
+            break;
+        }
+        case ePVLOG_APPENDER_FILE_FLUSH:
+        {
+            OSCL_ASSERT(pszLogFileName);
+            typedef TextFileAppender<TimeAndIdLayout, 1024> typeAppender;
+            OSCL_TRY(
+                err,
+                pAppender = (PVLoggerAppender*)typeAppender::CreateAppender(pszLogFileName, 0, true); // enable flushing
                 pRC = new OsclRefCounterSA<LogAppenderDestructDealloc<typeAppender> >(pAppender);
                 appenderPtr.Bind(pAppender, pRC);
             );
